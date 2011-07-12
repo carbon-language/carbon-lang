@@ -329,7 +329,7 @@ namespace {
     CallBaseDtor(const CXXRecordDecl *Base, bool BaseIsVirtual)
       : BaseClass(Base), BaseIsVirtual(BaseIsVirtual) {}
 
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       const CXXRecordDecl *DerivedClass =
         cast<CXXMethodDecl>(CGF.CurCodeDecl)->getParent();
 
@@ -511,7 +511,7 @@ namespace {
     CallMemberDtor(FieldDecl *Field, CXXDestructorDecl *Dtor)
       : Field(Field), Dtor(Dtor) {}
 
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       // FIXME: Is this OK for C++0x delegating constructors?
       llvm::Value *ThisPtr = CGF.LoadCXXThis();
       LValue LHS = CGF.EmitLValueForField(ThisPtr, Field, 0);
@@ -921,7 +921,7 @@ namespace {
   struct CallDtorDelete : EHScopeStack::Cleanup {
     CallDtorDelete() {}
 
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(CGF.CurCodeDecl);
       const CXXRecordDecl *ClassDecl = Dtor->getParent();
       CGF.EmitDeleteCall(Dtor->getOperatorDelete(), CGF.LoadCXXThis(),
@@ -940,14 +940,14 @@ namespace {
       : field(field), destroyer(*destroyer),
         useEHCleanupForArray(useEHCleanupForArray) {}
 
-    void Emit(CodeGenFunction &CGF, bool isForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       // Find the address of the field.
       llvm::Value *thisValue = CGF.LoadCXXThis();
       LValue LV = CGF.EmitLValueForField(thisValue, field, /*CVRQualifiers=*/0);
       assert(LV.isSimple());
       
       CGF.emitDestroy(LV.getAddress(), field->getType(), destroyer,
-                      !isForEH && useEHCleanupForArray);
+                      flags.isForNormalCleanup() && useEHCleanupForArray);
     }
   };
 }
@@ -1356,7 +1356,7 @@ namespace {
                            CXXDtorType Type)
       : Dtor(D), Addr(Addr), Type(Type) {}
 
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       CGF.EmitCXXDestructorCall(Dtor, Type, /*ForVirtualBase=*/false,
                                 Addr);
     }
@@ -1411,7 +1411,7 @@ namespace {
     CallLocalDtor(const CXXDestructorDecl *D, llvm::Value *Addr)
       : Dtor(D), Addr(Addr) {}
 
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete,
                                 /*ForVirtualBase=*/false, Addr);
     }

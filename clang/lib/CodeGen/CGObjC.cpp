@@ -218,7 +218,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
 
 namespace {
 struct FinishARCDealloc : EHScopeStack::Cleanup {
-  void Emit(CodeGenFunction &CGF, bool isForEH) {
+  void Emit(CodeGenFunction &CGF, Flags flags) {
     const ObjCMethodDecl *method = cast<ObjCMethodDecl>(CGF.CurCodeDecl);
     const ObjCImplementationDecl *impl
       = cast<ObjCImplementationDecl>(method->getDeclContext());
@@ -691,11 +691,11 @@ namespace {
       : addr(addr), ivar(ivar), destroyer(*destroyer),
         useEHCleanupForArray(useEHCleanupForArray) {}
 
-    void Emit(CodeGenFunction &CGF, bool isForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       LValue lvalue
         = CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), addr, ivar, /*CVR*/ 0);
       CGF.emitDestroy(lvalue.getAddress(), ivar->getType(), destroyer,
-                      !isForEH && useEHCleanupForArray);
+                      flags.isForNormalCleanup() && useEHCleanupForArray);
     }
   };
 }
@@ -1213,7 +1213,7 @@ namespace {
     llvm::Value *ptr;
     llvm::Value *condition;
 
-    void Emit(CodeGenFunction &CGF, bool forEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       llvm::Value *object;
 
       // If we're in a conditional branch, we had to stash away in an
@@ -1802,7 +1802,7 @@ namespace {
 
     CallObjCAutoreleasePoolObject(llvm::Value *token) : Token(token) {}
 
-    void Emit(CodeGenFunction &CGF, bool isForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       CGF.EmitObjCAutoreleasePoolPop(Token);
     }
   };
@@ -1811,7 +1811,7 @@ namespace {
 
     CallObjCMRRAutoreleasePoolObject(llvm::Value *token) : Token(token) {}
 
-    void Emit(CodeGenFunction &CGF, bool isForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       CGF.EmitObjCMRRAutoreleasePoolPop(Token);
     }
   };

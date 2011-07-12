@@ -21,7 +21,7 @@ namespace {
     llvm::Value *addr;
     DestroyTemporary(const CXXDestructorDecl *dtor, llvm::Value *addr)
       : dtor(dtor), addr(addr) {}
-    void Emit(CodeGenFunction &CGF, bool forEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       CGF.EmitCXXDestructorCall(dtor, Dtor_Complete, /*ForVirtualBase=*/false,
                                 addr);
     }

@@ -184,6 +184,32 @@ public:
     // Anchor the construction vtable.
     virtual void anchor();
   public:
+    /// Generation flags.
+    class Flags {
+      enum {
+        F_IsForEH             = 0x1,
+        F_IsNormalCleanupKind = 0x2,
+        F_IsEHCleanupKind     = 0x4
+      };
+      unsigned flags;
+
+    public:
+      Flags() : flags(0) {}
+
+      /// isForEH - true if the current emission is for an EH cleanup.
+      bool isForEHCleanup() const { return flags & F_IsForEH; }
+      bool isForNormalCleanup() const { return !isForEHCleanup(); }
+      void setIsForEHCleanup() { flags |= F_IsForEH; }
+
+      bool isNormalCleanupKind() const { return flags & F_IsNormalCleanupKind; }
+      void setIsNormalCleanupKind() { flags |= F_IsNormalCleanupKind; }
+
+      /// isEHCleanupKind - true if the cleanup was pushed as an EH
+      /// cleanup.
+      bool isEHCleanupKind() const { return flags & F_IsEHCleanupKind; }
+      void setIsEHCleanupKind() { flags |= F_IsEHCleanupKind; }
+    };
+
     // Provide a virtual destructor to suppress a very common warning
     // that unfortunately cannot be suppressed without this.  Cleanups
     // should not rely on this destructor ever being called.
@@ -196,7 +222,7 @@ public:
     ///
     // \param IsForEHCleanup true if this is for an EH cleanup, false
     ///  if for a normal cleanup.
-    virtual void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) = 0;
+    virtual void Emit(CodeGenFunction &CGF, Flags flags) = 0;
   };
 
   /// ConditionalCleanupN stores the saved form of its N parameters,
@@ -206,9 +232,9 @@ public:
     typedef typename DominatingValue<A0>::saved_type A0_saved;
     A0_saved a0_saved;
 
-    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
-      T(a0).Emit(CGF, IsForEHCleanup);
+      T(a0).Emit(CGF, flags);
     }
 
   public:
@@ -223,10 +249,10 @@ public:
     A0_saved a0_saved;
     A1_saved a1_saved;
 
-    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
       A1 a1 = DominatingValue<A1>::restore(CGF, a1_saved);
-      T(a0, a1).Emit(CGF, IsForEHCleanup);
+      T(a0, a1).Emit(CGF, flags);
     }
 
   public:
@@ -243,11 +269,11 @@ public:
     A1_saved a1_saved;
     A2_saved a2_saved;
     
-    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
       A1 a1 = DominatingValue<A1>::restore(CGF, a1_saved);
       A2 a2 = DominatingValue<A2>::restore(CGF, a2_saved);
-      T(a0, a1, a2).Emit(CGF, IsForEHCleanup);
+      T(a0, a1, a2).Emit(CGF, flags);
     }
     
   public:
@@ -266,12 +292,12 @@ public:
     A2_saved a2_saved;
     A3_saved a3_saved;
     
-    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
       A1 a1 = DominatingValue<A1>::restore(CGF, a1_saved);
       A2 a2 = DominatingValue<A2>::restore(CGF, a2_saved);
       A3 a3 = DominatingValue<A3>::restore(CGF, a3_saved);
-      T(a0, a1, a2, a3).Emit(CGF, IsForEHCleanup);
+      T(a0, a1, a2, a3).Emit(CGF, flags);
     }
     
   public:

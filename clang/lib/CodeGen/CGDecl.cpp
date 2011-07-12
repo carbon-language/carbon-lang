@@ -316,9 +316,10 @@ namespace {
     CodeGenFunction::Destroyer &destroyer;
     bool useEHCleanupForArray;
 
-    void Emit(CodeGenFunction &CGF, bool isForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       // Don't use an EH cleanup recursively from an EH cleanup.
-      bool useEHCleanupForArray = !isForEH && this->useEHCleanupForArray;
+      bool useEHCleanupForArray =
+        flags.isForNormalCleanup() && this->useEHCleanupForArray;
 
       CGF.emitDestroy(addr, type, destroyer, useEHCleanupForArray);
     }
@@ -334,9 +335,9 @@ namespace {
     llvm::Value *NRVOFlag;
     llvm::Value *Loc;
 
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       // Along the exceptions path we always execute the dtor.
-      bool NRVO = !IsForEH && NRVOFlag;
+      bool NRVO = flags.isForNormalCleanup() && NRVOFlag;
 
       llvm::BasicBlock *SkipDtorBB = 0;
       if (NRVO) {
@@ -358,7 +359,7 @@ namespace {
   struct CallStackRestore : EHScopeStack::Cleanup {
     llvm::Value *Stack;
     CallStackRestore(llvm::Value *Stack) : Stack(Stack) {}
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       llvm::Value *V = CGF.Builder.CreateLoad(Stack, "tmp");
       llvm::Value *F = CGF.CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
       CGF.Builder.CreateCall(F, V);
@@ -369,7 +370,7 @@ namespace {
     const VarDecl &Var;
     ExtendGCLifetime(const VarDecl *var) : Var(*var) {}
 
-    void Emit(CodeGenFunction &CGF, bool forEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       // Compute the address of the local variable, in case it's a
       // byref or something.
       DeclRefExpr DRE(const_cast<VarDecl*>(&Var), Var.getType(), VK_LValue,
@@ -388,7 +389,7 @@ namespace {
                         const VarDecl *Var)
       : CleanupFn(CleanupFn), FnInfo(*Info), Var(*Var) {}
 
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       DeclRefExpr DRE(const_cast<VarDecl*>(&Var), Var.getType(), VK_LValue,
                       SourceLocation());
       // Compute the address of the local variable, in case it's a byref
@@ -1301,7 +1302,7 @@ namespace {
       : ArrayBegin(arrayBegin), ArrayEnd(arrayEnd),
         ElementType(elementType), Destroyer(*destroyer) {}
 
-    void Emit(CodeGenFunction &CGF, bool isForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       emitPartialArrayDestroy(CGF, ArrayBegin, ArrayEnd,
                               ElementType, Destroyer);
     }
@@ -1323,7 +1324,7 @@ namespace {
       : ArrayBegin(arrayBegin), ArrayEndPointer(arrayEndPointer),
         ElementType(elementType), Destroyer(*destroyer) {}
 
-    void Emit(CodeGenFunction &CGF, bool isForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       llvm::Value *arrayEnd = CGF.Builder.CreateLoad(ArrayEndPointer);
       emitPartialArrayDestroy(CGF, ArrayBegin, arrayEnd,
                               ElementType, Destroyer);
@@ -1379,7 +1380,7 @@ namespace {
 
     llvm::Value *Param;
 
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+    void Emit(CodeGenFunction &CGF, Flags flags) {
       CGF.EmitARCRelease(Param, /*precise*/ false);
     }
   };
