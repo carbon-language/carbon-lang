@@ -355,33 +355,6 @@ CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
   return AI;
 }
 
-void
-CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
-                                  llvm::SmallVector<llvm::Value*, 16> &Args) {
-  const RecordType *RT = Ty->getAsStructureType();
-  assert(RT && "Can only expand structure types.");
-
-  RecordDecl *RD = RT->getDecl();
-  assert(RV.isAggregate() && "Unexpected rvalue during struct expansion");
-  llvm::Value *Addr = RV.getAggregateAddr();
-  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
-         i != e; ++i) {
-    FieldDecl *FD = *i;
-    QualType FT = FD->getType();
-
-    // FIXME: What are the right qualifiers here?
-    LValue LV = EmitLValueForField(Addr, FD, 0);
-    if (CodeGenFunction::hasAggregateLLVMType(FT)) {
-      ExpandTypeToArgs(FT, RValue::getAggregate(LV.getAddress()), Args);
-    } else {
-      RValue RV = EmitLoadOfLValue(LV);
-      assert(RV.isScalar() &&
-             "Unexpected non-scalar rvalue during struct expansion.");
-      Args.push_back(RV.getScalarVal());
-    }
-  }
-}
-
 /// EnterStructPointerForCoercedAccess - Given a struct pointer that we are
 /// accessing some number of bytes out of it, try to gep into the struct to get
 /// at its inner goodness.  Dive as deep as possible without entering an element
@@ -1464,6 +1437,43 @@ static void checkArgMatches(llvm::Value *Elt, unsigned &ArgNo,
   ++ArgNo;
 }
 
+void CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
+                                       llvm::SmallVector<llvm::Value*,16> &Args,
+                                       llvm::FunctionType *IRFuncTy) {
+  const RecordType *RT = Ty->getAsStructureType();
+  assert(RT && "Can only expand structure types.");
+  
+  RecordDecl *RD = RT->getDecl();
+  assert(RV.isAggregate() && "Unexpected rvalue during struct expansion");
+  llvm::Value *Addr = RV.getAggregateAddr();
+  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+       i != e; ++i) {
+    FieldDecl *FD = *i;
+    QualType FT = FD->getType();
+    
+    // FIXME: What are the right qualifiers here?
+    LValue LV = EmitLValueForField(Addr, FD, 0);
+    if (CodeGenFunction::hasAggregateLLVMType(FT)) {
+      ExpandTypeToArgs(FT, RValue::getAggregate(LV.getAddress()),
+                       Args, IRFuncTy);
+      continue;
+    }
+    
+    RValue RV = EmitLoadOfLValue(LV);
+    assert(RV.isScalar() &&
+           "Unexpected non-scalar rvalue during struct expansion.");
+
+    // Insert a bitcast as needed.
+    llvm::Value *V = RV.getScalarVal();
+    if (Args.size() < IRFuncTy->getNumParams() &&
+        V->getType() != IRFuncTy->getParamType(Args.size()))
+      V = Builder.CreateBitCast(V, IRFuncTy->getParamType(Args.size()));
+
+    Args.push_back(V);
+  }
+}
+
+
 RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                  llvm::Value *Callee,
                                  ReturnValueSlot ReturnValue,
@@ -1629,7 +1639,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     }
 
     case ABIArgInfo::Expand:
-      ExpandTypeToArgs(I->Ty, RV, Args);
+      ExpandTypeToArgs(I->Ty, RV, Args, IRFuncTy);
       IRArgNo = Args.size();
       break;
     }
