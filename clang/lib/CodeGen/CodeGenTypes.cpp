@@ -451,10 +451,10 @@ llvm::StructType *CodeGenTypes::ConvertRecordDeclType(const RecordDecl *RD) {
   llvm::StructType *&Entry = RecordDeclTypes[Key];
 
   // If we don't have a StructType at all yet, create the forward declaration.
-  if (Entry == 0)
-    Entry = llvm::StructType::createNamed(getLLVMContext(), 
-                                          std::string(RD->getKindName()) + "." +
-                                          RD->getQualifiedNameAsString());
+  if (Entry == 0) {
+    Entry = llvm::StructType::createNamed(getLLVMContext(), "");
+    addRecordTypeName(RD, Entry, "");
+  }
   llvm::StructType *Ty = Entry;
 
   // If this is still a forward declaration, or the LLVM type is already

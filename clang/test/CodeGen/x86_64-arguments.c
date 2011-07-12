@@ -58,7 +58,7 @@ struct s9 { int a; int b; int : 0; } f9(void) { while (1) {} }
 struct s10 { int a; int b; int : 0; };
 void f10(struct s10 a0) {}
 
-// CHECK: define void @f11(%"union.<anonymous>"* sret %agg.result)
+// CHECK: define void @f11(%union.anon* sret %agg.result)
 union { long double a; float b; } f11() { while (1) {} }
 
 // CHECK: define i32 @f12_0()
