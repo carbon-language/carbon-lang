@@ -6168,7 +6168,8 @@ ParmVarDecl *Sema::CheckParameter(DeclContext *DC, SourceLocation StartLoc,
   }
 
   ParmVarDecl *New = ParmVarDecl::Create(Context, DC, StartLoc, NameLoc, Name,
-                                         adjustParameterType(T), TSInfo,
+                                         Context.getAdjustedParameterType(T), 
+                                         TSInfo,
                                          StorageClass, StorageClassAsWritten,
                                          0);
 

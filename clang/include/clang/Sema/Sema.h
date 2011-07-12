@@ -760,7 +760,6 @@ public:
   // Type Analysis / Processing: SemaType.cpp.
   //
 
-  QualType adjustParameterType(QualType T);
   QualType BuildQualifiedType(QualType T, SourceLocation Loc, Qualifiers Qs);
   QualType BuildQualifiedType(QualType T, SourceLocation Loc, unsigned CVR) {
     return BuildQualifiedType(T, Loc, Qualifiers::fromCVRMask(CVR));

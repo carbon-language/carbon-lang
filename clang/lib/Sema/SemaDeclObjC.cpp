@@ -2324,7 +2324,7 @@ Decl *Sema::ActOnMethodDeclaration(
     } else {
       ArgType = GetTypeFromParser(ArgInfo[i].Type, &DI);
       // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
-      ArgType = adjustParameterType(ArgType);
+      ArgType = Context.getAdjustedParameterType(ArgType);
     }
 
     LookupResult R(*this, ArgInfo[i].Name, ArgInfo[i].NameLoc, 
@@ -2371,7 +2371,7 @@ Decl *Sema::ActOnMethodDeclaration(
       ArgType = Context.getObjCIdType();
     else
       // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
-      ArgType = adjustParameterType(ArgType);
+      ArgType = Context.getAdjustedParameterType(ArgType);
     if (ArgType->isObjCObjectType()) {
       Diag(Param->getLocation(),
            diag::err_object_cannot_be_passed_returned_by_value)

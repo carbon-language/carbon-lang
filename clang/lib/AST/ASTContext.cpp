@@ -3315,6 +3315,31 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) const {
                                               VAT->getBracketsRange()));
 }
 
+QualType ASTContext::getAdjustedParameterType(QualType T) {
+  // C99 6.7.5.3p7:
+  //   A declaration of a parameter as "array of type" shall be
+  //   adjusted to "qualified pointer to type", where the type
+  //   qualifiers (if any) are those specified within the [ and ] of
+  //   the array type derivation.
+  if (T->isArrayType())
+    return getArrayDecayedType(T);
+  
+  // C99 6.7.5.3p8:
+  //   A declaration of a parameter as "function returning type"
+  //   shall be adjusted to "pointer to function returning type", as
+  //   in 6.3.2.1.
+  if (T->isFunctionType())
+    return getPointerType(T);
+  
+  return T;  
+}
+
+QualType ASTContext::getSignatureParameterType(QualType T) {
+  T = getVariableArrayDecayedType(T);
+  T = getAdjustedParameterType(T);
+  return T.getUnqualifiedType();
+}
+
 /// getArrayDecayedType - Return the properly qualified result of decaying the
 /// specified array type to a pointer.  This operation is non-trivial when
 /// handling typedefs etc.  The canonical type of "T" must be an array type,

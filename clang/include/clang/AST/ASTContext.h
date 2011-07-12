@@ -1334,6 +1334,18 @@ public:
   /// getConstantArrayElementCount - Returns number of constant array elements.
   uint64_t getConstantArrayElementCount(const ConstantArrayType *CA) const;
 
+  /// \brief Perform adjustment on the parameter type of a function.
+  ///
+  /// This routine adjusts the given parameter type @p T to the actual
+  /// parameter type used by semantic analysis (C99 6.7.5.3p[7,8],
+  /// C++ [dcl.fct]p3). The adjusted parameter type is returned.
+  QualType getAdjustedParameterType(QualType T);
+  
+  /// \brief Retrieve the parameter type as adjusted for use in the signature
+  /// of a function, decaying array and function types and removing top-level
+  /// cv-qualifiers.
+  QualType getSignatureParameterType(QualType T);
+  
   /// getArrayDecayedType - Return the properly qualified result of decaying the
   /// specified array type to a pointer.  This operation is non-trivial when
   /// handling typedefs etc.  The canonical type of "T" must be an array type,

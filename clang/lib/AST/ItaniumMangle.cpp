@@ -452,13 +452,8 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
     FD = PrimaryTemplate->getTemplatedDecl();
   }
 
-  // Do the canonicalization out here because parameter types can
-  // undergo additional canonicalization (e.g. array decay).
-  const FunctionType *FT
-    = cast<FunctionType>(Context.getASTContext()
-                                          .getCanonicalType(FD->getType()));
-
-  mangleBareFunctionType(FT, MangleReturnType);
+  mangleBareFunctionType(FD->getType()->getAs<FunctionType>(), 
+                         MangleReturnType);
 }
 
 static const DeclContext *IgnoreLinkageSpecDecls(const DeclContext *DC) {
@@ -1108,7 +1103,7 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
   case DeclarationName::CXXConversionFunctionName:
     // <operator-name> ::= cv <type>    # (cast)
     Out << "cv";
-    mangleType(Context.getASTContext().getCanonicalType(Name.getCXXNameType()));
+    mangleType(Name.getCXXNameType());
     break;
 
   case DeclarationName::CXXOperatorName: {
@@ -1765,7 +1760,7 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
   for (FunctionProtoType::arg_type_iterator Arg = Proto->arg_type_begin(),
                                          ArgEnd = Proto->arg_type_end();
        Arg != ArgEnd; ++Arg)
-    mangleType(*Arg);
+    mangleType(Context.getASTContext().getSignatureParameterType(*Arg));
 
   FunctionTypeDepth.pop(saved);
 

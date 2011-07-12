@@ -31,32 +31,6 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
-/// \brief Perform adjustment on the parameter type of a function.
-///
-/// This routine adjusts the given parameter type @p T to the actual
-/// parameter type used by semantic analysis (C99 6.7.5.3p[7,8],
-/// C++ [dcl.fct]p3). The adjusted parameter type is returned.
-QualType Sema::adjustParameterType(QualType T) {
-  // C99 6.7.5.3p7:
-  //   A declaration of a parameter as "array of type" shall be
-  //   adjusted to "qualified pointer to type", where the type
-  //   qualifiers (if any) are those specified within the [ and ] of
-  //   the array type derivation.
-  if (T->isArrayType())
-    return Context.getArrayDecayedType(T);
-  
-  // C99 6.7.5.3p8:
-  //   A declaration of a parameter as "function returning type"
-  //   shall be adjusted to "pointer to function returning type", as
-  //   in 6.3.2.1.
-  if (T->isFunctionType())
-    return Context.getPointerType(T);
-
-  return T;
-}
-
-
-
 /// isOmittedBlockReturnType - Return true if this declarator is missing a
 /// return type because this is a omitted return type on a block literal. 
 static bool isOmittedBlockReturnType(const Declarator &D) {
@@ -1447,7 +1421,7 @@ QualType Sema::BuildFunctionType(QualType T,
        
   bool Invalid = false;
   for (unsigned Idx = 0; Idx < NumParamTypes; ++Idx) {
-    QualType ParamType = adjustParameterType(ParamTypes[Idx]);
+    QualType ParamType = Context.getAdjustedParameterType(ParamTypes[Idx]);
     if (ParamType->isVoidType()) {
       Diag(Loc, diag::err_param_with_void_type);
       Invalid = true;
@@ -2164,7 +2138,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
           assert(!ArgTy.isNull() && "Couldn't parse type?");
 
           // Adjust the parameter type.
-          assert((ArgTy == S.adjustParameterType(ArgTy)) && "Unadjusted type?");
+          assert((ArgTy == Context.getAdjustedParameterType(ArgTy)) && 
+                 "Unadjusted type?");
 
           // Look for 'void'.  void is allowed only as a single argument to a
           // function with no other parameters (C99 6.7.5.3p10).  We record
