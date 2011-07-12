@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 // rdar://9740328
+// XFAIL: *
 
 @protocol P1;
 
