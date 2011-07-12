@@ -1414,7 +1414,10 @@ public:
     OBJC_PR_atomic    = 0x100,
     OBJC_PR_weak      = 0x200,
     OBJC_PR_strong    = 0x400,
-    OBJC_PR_unsafe_unretained = 0x800
+    OBJC_PR_unsafe_unretained = 0x800,
+
+    /// \brief Number of bits fitting all the property attributes.
+    OBJC_PR_NumBits = 12
   };
 
   enum SetterKind { Assign, Retain, Copy };
@@ -1422,8 +1425,8 @@ public:
 private:
   SourceLocation AtLoc;   // location of @property
   TypeSourceInfo *DeclType;
-  unsigned PropertyAttributes : 11;
-  unsigned PropertyAttributesAsWritten : 11;
+  unsigned PropertyAttributes : OBJC_PR_NumBits;
+  unsigned PropertyAttributesAsWritten : OBJC_PR_NumBits;
   // @required/@optional
   unsigned PropertyImplementation : 2;
 
@@ -1465,6 +1468,12 @@ public:
 
   PropertyAttributeKind getPropertyAttributesAsWritten() const {
     return PropertyAttributeKind(PropertyAttributesAsWritten);
+  }
+
+  bool hasWrittenStorageAttribute() const {
+    return PropertyAttributesAsWritten & (OBJC_PR_assign | OBJC_PR_copy |
+        OBJC_PR_unsafe_unretained | OBJC_PR_retain | OBJC_PR_strong |
+        OBJC_PR_weak);
   }
   
   void setPropertyAttributesAsWritten(PropertyAttributeKind PRVal) {

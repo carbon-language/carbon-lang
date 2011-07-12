@@ -2602,7 +2602,7 @@ def err_arc_mismatched_cast : Error<
 def err_arc_objc_object_in_struct : Error<
   "ARC forbids Objective-C objects in structs or unions">;
 def err_arc_objc_property_default_assign_on_object : Error<
-  "ARC forbids properties of Objective-C objects "
+  "ARC forbids synthesizing a property of an Objective-C object "
   "with unspecified storage attribute">;
 def err_arc_illegal_selector : Error<
   "ARC forbids use of %0 in a @selector">;
