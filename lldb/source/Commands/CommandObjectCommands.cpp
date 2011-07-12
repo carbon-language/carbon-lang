@@ -30,6 +30,132 @@ using namespace lldb_private;
 // CommandObjectCommandsSource
 //-------------------------------------------------------------------------
 
+class CommandObjectCommandsHistory : public CommandObject
+{
+private:
+
+    class CommandOptions : public Options
+    {
+    public:
+
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter)
+        {
+        }
+
+        virtual
+        ~CommandOptions (){}
+
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            bool success;
+            
+            switch (short_option)
+            {
+                case 'c':
+                    m_end_idx = Args::StringToUInt32(option_arg, UINT_MAX, 0, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("Invalid value for count: %s.\n", option_arg);
+                    if (m_end_idx != 0)
+                        m_end_idx--;
+                    m_start_idx = 0;
+                    break;
+                case 'e':
+                    m_end_idx = Args::StringToUInt32(option_arg, 0, 0, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("Invalid value for end index: %s.\n", option_arg);
+                    break;
+                case 's':
+                    m_start_idx = Args::StringToUInt32(option_arg, 0, 0, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("Invalid value for start index: %s.\n", option_arg);
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+
+        void
+        OptionParsingStarting ()
+        {
+            m_start_idx = 0;
+            m_end_idx = UINT_MAX;
+        }
+
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+
+        // Options table: Required for subclasses of Options.
+
+        static OptionDefinition g_option_table[];
+
+        // Instance variables to hold the values for command options.
+
+        uint32_t m_start_idx;
+        uint32_t m_end_idx;
+    };
+    
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
+public:
+    CommandObjectCommandsHistory(CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "command history",
+                       "Dump the history of commands in this session.",
+                       NULL),
+        m_options (interpreter)
+    {
+    }
+
+    ~CommandObjectCommandsHistory ()
+    {
+    }
+
+    bool
+    Execute
+    (
+        Args& args,
+        CommandReturnObject &result
+    )
+    {
+        
+        m_interpreter.DumpHistory (result.GetOutputStream(),
+                                   m_options.m_start_idx, 
+                                   m_options.m_end_idx);
+        return result.Succeeded();
+
+    }
+};
+
+OptionDefinition
+CommandObjectCommandsHistory::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_1, false, "count", 'c', required_argument, NULL, 0, eArgTypeUnsignedInteger,        "How many history commands to print."},
+{ LLDB_OPT_SET_1, false, "start-index", 's', required_argument, NULL, 0, eArgTypeUnsignedInteger,  "Index at which to start printing history commands."},
+{ LLDB_OPT_SET_1, false, "end-index", 'e', required_argument, NULL, 0, eArgTypeUnsignedInteger,    "Index at which to stop printing history commands."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
+
+//-------------------------------------------------------------------------
+// CommandObjectCommandsSource
+//-------------------------------------------------------------------------
+
 class CommandObjectCommandsSource : public CommandObject
 {
 private:
@@ -1020,6 +1146,7 @@ CommandObjectMultiwordCommands::CommandObjectMultiwordCommands (CommandInterpret
     LoadSubCommand ("alias",   CommandObjectSP (new CommandObjectCommandsAlias (interpreter)));
     LoadSubCommand ("unalias", CommandObjectSP (new CommandObjectCommandsUnalias (interpreter)));
     LoadSubCommand ("regex",   CommandObjectSP (new CommandObjectCommandsAddRegex (interpreter)));
+    LoadSubCommand ("history",   CommandObjectSP (new CommandObjectCommandsHistory (interpreter)));
 }
 
 CommandObjectMultiwordCommands::~CommandObjectMultiwordCommands ()

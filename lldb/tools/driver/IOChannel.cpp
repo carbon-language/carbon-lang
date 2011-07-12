@@ -85,6 +85,12 @@ IOChannel::HandleCompletion (EditLine *e, int ch)
         el_insertstr (m_edit_line, m_completion_key);
         return CC_REDISPLAY;
     }
+    else if (num_completions == -2)
+    {
+        el_deletestr (m_edit_line, line_info->cursor - line_info->buffer);
+        el_insertstr (m_edit_line, completions.GetStringAtIndex(0));
+        return CC_REDISPLAY;
+    }
 
     // If we get a longer match display that first.
     const char *completion_str = completions.GetStringAtIndex(0);

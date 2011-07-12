@@ -391,6 +391,7 @@ namespace lldb {
         eArgTypeThreadID,
         eArgTypeThreadIndex,
         eArgTypeThreadName,
+        eArgTypeUnsignedInteger,
         eArgTypeUnixSignal,
         eArgTypeVarName,
         eArgTypeValue,

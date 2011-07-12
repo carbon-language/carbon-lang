@@ -195,8 +195,11 @@ public:
     // you want returned.  Otherwise set max_return_elements to -1.
     // If you want to start some way into the match list, then set match_start_point to the desired start
     // point.
-    // Returns the total number of completions, or -1 if the completion character should be inserted, or
+    // Returns:
+    // -1 if the completion character should be inserted
+    // -2 if the entire command line should be deleted and replaced with matches.GetStringAtIndex(0)
     // INT_MAX if the number of matches is > max_return_elements, but it is expensive to compute.
+    // Otherwise, returns the number of matches.
     //
     // FIXME: Only max_return_elements == -1 is supported at present.
 
@@ -338,6 +341,16 @@ public:
 
     bool
     GetSynchronous ();
+    
+    void
+    DumpHistory (Stream &stream, uint32_t count) const;
+
+    void
+    DumpHistory (Stream &stream, uint32_t start, uint32_t end) const;
+    
+    const char *
+    FindHistoryString (const char *input_str) const;
+
 
 #ifndef SWIG
     void
@@ -396,6 +409,7 @@ private:
     std::string m_repeat_command;               // Stores the command that will be executed for an empty command string.
     std::auto_ptr<ScriptInterpreter> m_script_interpreter_ap;
     char m_comment_char;
+    char m_repeat_char;
     bool m_batch_command_mode;
 };
 

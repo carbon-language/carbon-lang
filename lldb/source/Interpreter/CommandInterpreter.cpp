@@ -70,6 +70,7 @@ CommandInterpreter::CommandInterpreter
     m_skip_lldbinit_files (false),
     m_script_interpreter_ap (),
     m_comment_char ('#'),
+    m_repeat_char ('!'),
     m_batch_command_mode (false)
 {
     const char *dbg_name = debugger.GetInstanceName().AsCString();
@@ -929,6 +930,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
     std::string next_word;
     bool wants_raw_input = false;
     std::string command_string (command_line);
+    std::string original_command_string (command_line);
     
     LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_COMMANDS));
     Host::SetCrashDescriptionWithFormat ("HandleCommand(command = \"%s\")", command_line);
@@ -959,6 +961,19 @@ CommandInterpreter::HandleCommand (const char *command_line,
             empty_command = true;
         else if (command_string[non_space] == m_comment_char)
              comment_command = true;
+        else if (command_string[non_space] == m_repeat_char)
+        {
+            const char *history_string = FindHistoryString (command_string.c_str() + non_space);
+            if (history_string == NULL)
+            {
+                result.AppendErrorWithFormat ("Could not find entry: %s in history", command_string.c_str());
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+            add_to_history = false;
+            command_string = history_string;
+            original_command_string = history_string;
+        }
     }
     
     if (empty_command)
@@ -975,6 +990,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
             {
                 command_line = m_repeat_command.c_str();
                 command_string = command_line;
+                original_command_string = command_line;
                 if (m_repeat_command.empty())
                 {
                     result.AppendErrorWithFormat("No auto repeat.\n");
@@ -1119,9 +1135,11 @@ CommandInterpreter::HandleCommand (const char *command_line,
             if (repeat_command != NULL)
                 m_repeat_command.assign(repeat_command);
             else
-                m_repeat_command.assign(command_line);
+                m_repeat_command.assign(original_command_string.c_str());
             
-            m_command_history.push_back (command_line);
+            // Don't keep pushing the same command onto the history...
+            if (m_command_history.size() == 0 || m_command_history.back() != original_command_string) 
+                m_command_history.push_back (original_command_string);
         }
         
         command_string = revised_command_line.GetData();
@@ -1276,6 +1294,29 @@ CommandInterpreter::HandleCompletion (const char *current_line,
     Args parsed_line(current_line, last_char - current_line);
     Args partial_parsed_line(current_line, cursor - current_line);
 
+    // Don't complete comments, and if the line we are completing is just the history repeat character, 
+    // substitute the appropriate history line.
+    const char *first_arg = parsed_line.GetArgumentAtIndex(0);
+    if (first_arg)
+    {
+        if (first_arg[0] == m_comment_char)
+            return 0;
+        else if (first_arg[0] == m_repeat_char)
+        {
+            const char *history_string = FindHistoryString (first_arg);
+            if (history_string != NULL)
+            {
+                matches.Clear();
+                matches.InsertStringAtIndex(0, history_string);
+                return -2;
+            }
+            else
+                return 0;
+
+        }
+    }
+    
+    
     int num_args = partial_parsed_line.GetArgumentCount();
     int cursor_index = partial_parsed_line.GetArgumentCount() - 1;
     int cursor_char_position;
@@ -2154,3 +2195,60 @@ CommandInterpreter::UpdateExecutionContext (ExecutionContext *override_context)
     }
 }
 
+void
+CommandInterpreter::DumpHistory (Stream &stream, uint32_t count) const
+{
+    DumpHistory (stream, 0, count - 1);
+}
+
+void
+CommandInterpreter::DumpHistory (Stream &stream, uint32_t start, uint32_t end) const
+{
+    size_t num_history_elements = m_command_history.size();
+    if (start > num_history_elements)
+        return;
+    for (uint32_t i = start; i < num_history_elements && i <= end; i++)
+    {
+        if (!m_command_history[i].empty())
+        {
+            stream.Indent();
+            stream.Printf ("%4d: %s\n", i, m_command_history[i].c_str());
+        }
+    }
+}
+
+const char *
+CommandInterpreter::FindHistoryString (const char *input_str) const
+{
+    if (input_str[0] != m_repeat_char)
+        return NULL;
+    if (input_str[1] == '-')
+    {
+        bool success;
+        uint32_t idx = Args::StringToUInt32 (input_str+2, 0, 0, &success);
+        if (!success)
+            return NULL;
+        if (idx > m_command_history.size())
+            return NULL;
+        idx = m_command_history.size() - idx;
+        return m_command_history[idx].c_str();
+            
+    }
+    else if (input_str[1] == m_repeat_char)
+    {
+        if (m_command_history.empty())
+            return NULL;
+        else
+            return m_command_history.back().c_str();
+    }
+    else
+    {
+        bool success;
+        uint32_t idx = Args::StringToUInt32 (input_str+1, 0, 0, &success);
+        if (!success)
+            return NULL;
+        if (idx >= m_command_history.size())
+            return NULL;
+        return m_command_history[idx].c_str();
+    }
+}
