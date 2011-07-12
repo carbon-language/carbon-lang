@@ -244,22 +244,8 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
   // Create base specifier for any direct or indirect virtual bases.
   data().VBases = new (C) CXXBaseSpecifier[VBases.size()];
   data().NumVBases = VBases.size();
-  for (int I = 0, E = VBases.size(); I != E; ++I) {
-    TypeSourceInfo *VBaseTypeInfo = VBases[I]->getTypeSourceInfo();
-
-    // Skip dependent types; we can't do any checking on them now.
-    if (VBaseTypeInfo->getType()->isDependentType())
-      continue;
-
-    CXXRecordDecl *VBaseClassDecl = cast<CXXRecordDecl>(
-      VBaseTypeInfo->getType()->getAs<RecordType>()->getDecl());
-
-    data().getVBases()[I] =
-      CXXBaseSpecifier(VBaseClassDecl->getSourceRange(), true,
-                       VBaseClassDecl->getTagKind() == TTK_Class,
-                       VBases[I]->getAccessSpecifier(), VBaseTypeInfo,
-                       SourceLocation());
-  }
+  for (int I = 0, E = VBases.size(); I != E; ++I)
+    data().getVBases()[I] = *VBases[I];
 }
 
 /// Callback function for CXXRecordDecl::forallBases that acknowledges
