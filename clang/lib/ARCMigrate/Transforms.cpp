@@ -75,6 +75,8 @@ bool trans::canApplyWeak(ASTContext &Ctx, QualType type) {
     ObjCInterfaceDecl *Class = ObjT->getInterfaceDecl();
     if (!Class || Class->getName() == "NSObject")
       return false; // id/NSObject is not safe for weak.
+    if (Class->isForwardDecl())
+      return false; // forward classes are not verifiable, therefore not safe.
     if (Class->isArcWeakrefUnavailable())
       return false;
     if (isClassInWeakBlacklist(Class))

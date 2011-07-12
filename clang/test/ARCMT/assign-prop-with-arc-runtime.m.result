@@ -9,8 +9,9 @@ __attribute__((objc_arc_weak_reference_unavailable))
 @end
 
 @class _NSCachedAttributedString;
-
 typedef _NSCachedAttributedString *BadClassForWeak;
+
+@class Forw;
 
 @interface Foo : NSObject {
   Foo *__weak x, *__weak w, *__weak q1, *__weak q2;
@@ -19,6 +20,7 @@ typedef _NSCachedAttributedString *BadClassForWeak;
   BadClassForWeak __unsafe_unretained bcw;
   id __unsafe_unretained not_safe1;
   NSObject *__unsafe_unretained not_safe2;
+  Forw *__unsafe_unretained not_safe3;
 }
 @property (readonly,weak) Foo *x;
 @property (weak) Foo *w;
@@ -28,8 +30,9 @@ typedef _NSCachedAttributedString *BadClassForWeak;
 @property (assign) BadClassForWeak bcw;
 @property (assign) id not_safe1;
 @property (assign) NSObject *not_safe2;
+@property (assign) Forw *not_safe3;
 @end
 
 @implementation Foo
-@synthesize x,w,q1,q2,z1,z2,oo,bcw,not_safe1,not_safe2;
+@synthesize x,w,q1,q2,z1,z2,oo,bcw,not_safe1,not_safe2,not_safe3;
 @end
