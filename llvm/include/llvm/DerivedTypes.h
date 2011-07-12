@@ -190,6 +190,10 @@ class StructType : public CompositeType {
   /// 
   void *SymbolTableEntry;
 public:
+  ~StructType() {
+    delete [] ContainedTys; // Delete the body.
+  }
+
   /// StructType::createNamed - This creates a named struct with no body
   /// specified.  If the name is empty, it creates an unnamed struct, which has
   /// a unique identity but no actual name.
