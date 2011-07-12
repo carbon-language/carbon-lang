@@ -13,6 +13,7 @@
 
 #include "LLVMContextImpl.h"
 #include "llvm/Module.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -54,9 +55,7 @@ LLVMContextImpl::~LLVMContextImpl() {
   // will try to remove itself from OwnedModules set.  This would cause
   // iterator invalidation if we iterated on the set directly.
   std::vector<Module*> Modules(OwnedModules.begin(), OwnedModules.end());
-  for (std::vector<Module*>::iterator I = Modules.begin(), E = Modules.end();
-       I != E; ++I)
-    delete *I;
+  DeleteContainerPointers(Modules);
   
   std::for_each(ExprConstants.map_begin(), ExprConstants.map_end(),
                 DropReferences());
@@ -74,14 +73,8 @@ LLVMContextImpl::~LLVMContextImpl() {
   NullPtrConstants.freeConstants();
   UndefValueConstants.freeConstants();
   InlineAsms.freeConstants();
-  for (IntMapTy::iterator I = IntConstants.begin(), E = IntConstants.end(); 
-       I != E; ++I) {
-    delete I->second;
-  }
-  for (FPMapTy::iterator I = FPConstants.begin(), E = FPConstants.end(); 
-       I != E; ++I) {
-    delete I->second;
-  }
+  DeleteContainerSeconds(IntConstants);
+  DeleteContainerSeconds(FPConstants);
   
   // Destroy MDNodes.  ~MDNode can move and remove nodes between the MDNodeSet
   // and the NonUniquedMDNodes sets, so copy the values out first.
@@ -99,7 +92,18 @@ LLVMContextImpl::~LLVMContextImpl() {
   assert(MDNodeSet.empty() && NonUniquedMDNodes.empty() &&
          "Destroying all MDNodes didn't empty the Context's sets.");
   // Destroy MDStrings.
-  for (StringMap<MDString*>::iterator I = MDStringCache.begin(),
-         E = MDStringCache.end(); I != E; ++I)
-    delete I->second;
+  DeleteContainerSeconds(MDStringCache);
+
+  // Destroy types.
+  DeleteContainerSeconds(IntegerTypes);
+  DeleteContainerSeconds(FunctionTypes);
+  DeleteContainerSeconds(AnonStructTypes);
+  DeleteContainerSeconds(ArrayTypes);
+  DeleteContainerSeconds(VectorTypes);
+  DeleteContainerSeconds(PointerTypes);
+  DeleteContainerSeconds(ASPointerTypes);
+
+  for (StringMap<StructType *>::iterator I = NamedStructTypes.begin(), E = NamedStructTypes.end(); I != E; ++I) {
+    delete I->getValue();
+  }
 }
