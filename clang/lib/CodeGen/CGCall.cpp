@@ -1455,6 +1455,15 @@ CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
   return Invoke;
 }
 
+static void checkArgMatches(llvm::Value *Elt, unsigned &ArgNo,
+                            llvm::FunctionType *FTy) {
+  if (ArgNo < FTy->getNumParams())
+    assert(Elt->getType() == FTy->getParamType(ArgNo));
+  else
+    assert(FTy->isVarArg());
+  ++ArgNo;
+}
+
 RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                  llvm::Value *Callee,
                                  ReturnValueSlot ReturnValue,
@@ -1469,6 +1478,11 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   QualType RetTy = CallInfo.getReturnType();
   const ABIArgInfo &RetAI = CallInfo.getReturnInfo();
 
+  // IRArgNo - Keep track of the argument number in the callee we're looking at.
+  unsigned IRArgNo = 0;
+  llvm::FunctionType *IRFuncTy =
+    cast<llvm::FunctionType>(
+                  cast<llvm::PointerType>(Callee->getType())->getElementType());
 
   // If the call returns a temporary with struct return, create a temporary
   // alloca to hold the result, unless one is given to us.
@@ -1477,6 +1491,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     if (!Value)
       Value = CreateMemTemp(RetTy);
     Args.push_back(Value);
+    checkArgMatches(Value, IRArgNo, IRFuncTy);
   }
 
   assert(CallInfo.arg_size() == CallArgs.size() &&
@@ -1497,11 +1512,15 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         if (ArgInfo.getIndirectAlign() > AI->getAlignment())
           AI->setAlignment(ArgInfo.getIndirectAlign());
         Args.push_back(AI);
+        
         if (RV.isScalar())
           EmitStoreOfScalar(RV.getScalarVal(), Args.back(), false,
                             TypeAlign, I->Ty);
         else
           StoreComplexToAddr(RV.getComplexVal(), Args.back(), false);
+        
+        // Validate argument match.
+        checkArgMatches(AI, IRArgNo, IRFuncTy);
       } else {
         // We want to avoid creating an unnecessary temporary+copy here;
         // however, we need one in two cases:
@@ -1521,9 +1540,15 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
             AI->setAlignment(Align);
           Args.push_back(AI);
           EmitAggregateCopy(AI, Addr, I->Ty, RV.isVolatileQualified());
+              
+          // Validate argument match.
+          checkArgMatches(AI, IRArgNo, IRFuncTy);
         } else {
           // Skip the extra memcpy call.
           Args.push_back(Addr);
+          
+          // Validate argument match.
+          checkArgMatches(Addr, IRArgNo, IRFuncTy);
         }
       }
       break;
@@ -1537,10 +1562,16 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       if (!isa<llvm::StructType>(ArgInfo.getCoerceToType()) &&
           ArgInfo.getCoerceToType() == ConvertType(info_it->type) &&
           ArgInfo.getDirectOffset() == 0) {
+        llvm::Value *V;
         if (RV.isScalar())
-          Args.push_back(RV.getScalarVal());
+          V = RV.getScalarVal();
         else
-          Args.push_back(Builder.CreateLoad(RV.getAggregateAddr()));
+          V = Builder.CreateLoad(RV.getAggregateAddr());
+        
+        Args.push_back(V);
+        
+        // Validate argument match.
+        checkArgMatches(V, IRArgNo, IRFuncTy);
         break;
       }
 
@@ -1577,11 +1608,17 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
           // We don't know what we're loading from.
           LI->setAlignment(1);
           Args.push_back(LI);
+          
+          // Validate argument match.
+          checkArgMatches(LI, IRArgNo, IRFuncTy);
         }
       } else {
         // In the simple case, just pass the coerced loaded value.
         Args.push_back(CreateCoercedLoad(SrcPtr, ArgInfo.getCoerceToType(),
                                          *this));
+        
+        // Validate argument match.
+        checkArgMatches(Args.back(), IRArgNo, IRFuncTy);
       }
 
       break;
@@ -1589,6 +1626,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
     case ABIArgInfo::Expand:
       ExpandTypeToArgs(I->Ty, RV, Args);
+      IRArgNo = Args.size();
       break;
     }
   }
@@ -1622,7 +1660,6 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
           Callee = CalleeF;
       }
     }
-
 
   unsigned CallingConv;
   CodeGen::AttributeListType AttributeList;
