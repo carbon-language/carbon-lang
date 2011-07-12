@@ -909,7 +909,7 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
   QualType RHSType =
     Context.getCanonicalType(Property->getType());
 
-  if (!Context.typesAreCompatible(LHSType, RHSType)) {
+  if (!Context.propertyTypesAreCompatible(LHSType, RHSType)) {
     // FIXME: Incorporate this test with typesAreCompatible.
     if (LHSType->isObjCQualifiedIdType() && RHSType->isObjCQualifiedIdType())
       if (Context.ObjCQualifiedIdTypesAreCompatible(LHSType, RHSType, false))

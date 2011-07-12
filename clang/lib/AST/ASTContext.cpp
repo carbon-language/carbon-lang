@@ -5441,6 +5441,10 @@ bool ASTContext::typesAreCompatible(QualType LHS, QualType RHS,
   return !mergeTypes(LHS, RHS, false, CompareUnqualified).isNull();
 }
 
+bool ASTContext::propertyTypesAreCompatible(QualType LHS, QualType RHS) {
+  return !mergeTypes(LHS, RHS, false, false).isNull();
+}
+
 bool ASTContext::typesAreBlockPointerCompatible(QualType LHS, QualType RHS) {
   return !mergeTypes(LHS, RHS, true).isNull();
 }

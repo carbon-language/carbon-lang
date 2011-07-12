@@ -1417,6 +1417,7 @@ public:
   bool typesAreCompatible(QualType T1, QualType T2, 
                           bool CompareUnqualified = false); // C99 6.2.7p1
 
+  bool propertyTypesAreCompatible(QualType, QualType); 
   bool typesAreBlockPointerCompatible(QualType, QualType); 
 
   bool isObjCIdType(QualType T) const {
