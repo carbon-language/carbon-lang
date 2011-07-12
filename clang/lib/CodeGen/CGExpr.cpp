@@ -475,19 +475,23 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
     case Qualifiers::OCL_Strong: {
       bool precise = VD && VD->hasAttr<ObjCPreciseLifetimeAttr>();
       CleanupKind cleanupKind = getARCCleanupKind();
-      pushDestroy(cleanupKind, ReferenceTemporary,
-                  ObjCARCReferenceLifetimeType,
-                  precise ? destroyARCStrongPrecise : destroyARCStrongImprecise,
-                  cleanupKind & EHCleanup);
+      // This local is a GCC and MSVC compiler workaround.
+      Destroyer *destroyer = precise ? &destroyARCStrongPrecise :
+                                       &destroyARCStrongImprecise;
+      pushDestroy(cleanupKind, ReferenceTemporary, ObjCARCReferenceLifetimeType,
+                  *destroyer, cleanupKind & EHCleanup);
       break;
     }
         
-    case Qualifiers::OCL_Weak:
+    case Qualifiers::OCL_Weak: {
+      // This local is a GCC and MSVC compiler workaround.
+      Destroyer *destroyer = &destroyARCWeak;
       // __weak objects always get EH cleanups; otherwise, exceptions
       // could cause really nasty crashes instead of mere leaks.
       pushDestroy(NormalAndEHCleanup, ReferenceTemporary,
-                  ObjCARCReferenceLifetimeType, destroyARCWeak, true);
+                  ObjCARCReferenceLifetimeType, *destroyer, true);
       break;        
+    }
     }
   }
   
