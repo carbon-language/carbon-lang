@@ -107,6 +107,9 @@ int main (int argc, const char * argv[])
     int int_array[] = {1,2,3,4,5};
     
     IUseCharStar iEncapsulateCharStar;
+    
+    char  strarr[32] = "Hello world!";
+    char* strptr     = "Hello world!";
         
     return 0; // Set break point at this line.
 }

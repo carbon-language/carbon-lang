@@ -439,6 +439,10 @@ public:
 
             const char *name_cstr = NULL;
             size_t idx;
+            
+            SummaryFormatSP summary_format_sp;
+            if (!m_option_variable.summary.empty())
+                Debugger::NamedSummaryFormats::Get(ConstString(m_option_variable.summary.c_str()), summary_format_sp);
 
             if (variable_list)
             {
@@ -484,7 +488,8 @@ public:
                                                     if (var_sp->DumpDeclaration(&s, show_fullpaths, show_module))
                                                         s.PutCString (": ");
                                                 }
-                                                
+                                                if (summary_format_sp)
+                                                    valobj_sp->SetCustomSummaryFormat(summary_format_sp);
                                                 ValueObject::DumpValueObject (result.GetOutputStream(), 
                                                                               valobj_sp.get(), 
                                                                               var_sp->GetName().AsCString(), 
@@ -534,6 +539,8 @@ public:
                                     var_sp->GetDeclaration ().DumpStopContext (&s, false);
                                     s.PutCString (": ");
                                 }
+                                if (summary_format_sp)
+                                    valobj_sp->SetCustomSummaryFormat(summary_format_sp);
                                 ValueObject::DumpValueObject (result.GetOutputStream(), 
                                                               valobj_sp.get(), 
                                                               valobj_sp->GetParent() ? name_cstr : NULL, 
@@ -622,6 +629,8 @@ public:
                                             var_sp->GetDeclaration ().DumpStopContext (&s, false);
                                             s.PutCString (": ");
                                         }
+                                        if (summary_format_sp)
+                                            valobj_sp->SetCustomSummaryFormat(summary_format_sp);
                                         ValueObject::DumpValueObject (result.GetOutputStream(), 
                                                                       valobj_sp.get(), 
                                                                       name_cstr, 

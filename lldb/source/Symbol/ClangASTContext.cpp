@@ -2077,7 +2077,30 @@ ClangASTContext::GetTypeInfo
             if (ast && pointee_or_element_clang_type)
                 *pointee_or_element_clang_type = ast->ObjCBuiltinClassTy.getAsOpaquePtr();
             return eTypeIsBuiltIn | eTypeIsPointer | eTypeHasValue;
-
+                break;
+        case clang::BuiltinType::Bool:
+        case clang::BuiltinType::Char_U:
+        case clang::BuiltinType::UChar:
+        case clang::BuiltinType::WChar_U:
+        case clang::BuiltinType::Char16:
+        case clang::BuiltinType::Char32:
+        case clang::BuiltinType::UShort:
+        case clang::BuiltinType::UInt:
+        case clang::BuiltinType::ULong:
+        case clang::BuiltinType::ULongLong:
+        case clang::BuiltinType::UInt128:
+        case clang::BuiltinType::Char_S:
+        case clang::BuiltinType::SChar:
+        case clang::BuiltinType::WChar_S:
+        case clang::BuiltinType::Short:
+        case clang::BuiltinType::Int:
+        case clang::BuiltinType::Long:
+        case clang::BuiltinType::LongLong:
+        case clang::BuiltinType::Int128:
+        case clang::BuiltinType::Float:
+        case clang::BuiltinType::Double:
+        case clang::BuiltinType::LongDouble:
+                return eTypeIsBuiltIn | eTypeHasValue | eTypeIsScalar;
         default: 
             break;
         }
@@ -4645,6 +4668,10 @@ ClangASTContext::GetArraySize (clang_type_t clang_type)
 
         case clang::Type::Typedef:
             return ClangASTContext::GetArraySize(cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+            break;
+                
+        default:
+            break;
         }
     }
     return 0;

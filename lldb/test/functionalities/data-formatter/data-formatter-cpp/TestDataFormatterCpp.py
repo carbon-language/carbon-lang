@@ -73,7 +73,16 @@ class DataFormatterTestCase(TestBase):
         self.expect("frame variable",
             patterns = ['\(Speed\) SPILookHex = 0x[0-9a-f]+' # Speed should look hex-ish now.
                         ]);
-
+        
+        # gcc4.2 on Mac OS X skips typedef chains in the DWARF output
+        if self.getCompiler() in ['clang', 'llvm-gcc']:        
+            self.expect("frame variable",
+                patterns = ['\(SignalMask\) SMILookHex = 0x[0-9a-f]+' # SignalMask should look hex-ish now.
+                            ]);
+            self.expect("frame variable", matching=False,
+                        patterns = ['\(Type4\) T4ILookChar = 0x[0-9a-f]+' # Type4 should NOT look hex-ish now.
+                                    ]);
+        
         # Now let's delete the 'Speed' custom format.
         self.runCmd("type format delete Speed")
 
@@ -85,6 +94,26 @@ class DataFormatterTestCase(TestBase):
         self.expect("type format delete Speed", error=True,
             substrs = ['no custom format for Speed'])
         
+        self.runCmd("type summary add -f \"arr = ${var%s}\" -x \"char \\[[0-9]+\\]\" -v")
+        
+        self.expect("frame variable strarr",
+                    substrs = ['arr = "Hello world!\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0"'])
+        
+        self.runCmd("type summary clear")
+        
+        self.runCmd("type summary add -f \"ptr = ${var%s}\" \"char *\" -v")
+        
+        self.expect("frame variable strptr",
+                    substrs = ['ptr = "Hello world!"'])
+        
+        self.runCmd("type summary add -f \"arr = ${var%s}\" -x \"char \\[[0-9]+\\]\" -v")
+        
+        self.expect("frame variable strarr",
+                    substrs = ['arr = "Hello world!\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0"'])
+        
+        self.expect("frame variable strptr",
+                    substrs = ['ptr = "Hello world!"'])
+
         self.runCmd("type summary add -c Point")
             
         self.expect("frame variable iAmSomewhere",

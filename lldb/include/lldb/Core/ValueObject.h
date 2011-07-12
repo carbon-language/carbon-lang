@@ -93,6 +93,7 @@ public:
         eUnexpectedSymbol,          // something is malformed in the expression
         eTakingAddressFailed,       // impossible to apply & operator
         eDereferencingFailed,       // impossible to apply * operator
+        eRangeOperatorExpanded,     // [] was expanded into a VOList
         eUnknown = 0xFFFF
     };
     
@@ -102,6 +103,7 @@ public:
         eBitfield,                  // a bitfield
         eBoundedRange,              // a range [low-high]
         eUnboundedRange,            // a range []
+        eValueObjectList,           // several items in a VOList
         eInvalid = 0xFFFF
     };
     
@@ -392,6 +394,15 @@ public:
                               const GetValueForExpressionPathOptions& options = GetValueForExpressionPathOptions::DefaultOptions(),
                               ExpressionPathAftermath* final_task_on_target = NULL);
     
+    int
+    GetValuesForExpressionPath(const char* expression,
+                               lldb::ValueObjectListSP& list,
+                               const char** first_unparsed = NULL,
+                               ExpressionPathScanEndReason* reason_to_stop = NULL,
+                               ExpressionPathEndResultType* final_value_type = NULL,
+                               const GetValueForExpressionPathOptions& options = GetValueForExpressionPathOptions::DefaultOptions(),
+                               ExpressionPathAftermath* final_task_on_target = NULL);
+    
     virtual bool
     IsInScope ()
     {
@@ -581,6 +592,17 @@ public:
                      lldb::DynamicValueType use_dynamic,
                      bool scope_already_checked,
                      bool flat_output);
+    
+    // returns true if this is a char* or a char[]
+    // if it is a char* and check_pointer is true,
+    // it also checks that the pointer is valid
+    bool
+    IsCStringContainer(bool check_pointer = false);
+    
+    void
+    ReadPointedString(Stream& s,
+                      Error& error,
+                      uint32_t max_length = 0);
 
     bool
     GetIsConstant () const
@@ -608,6 +630,42 @@ public:
         if (format != m_format)
             m_value_str.clear();
         m_format = format;
+    }
+    
+    void
+    SetCustomSummaryFormat(lldb::SummaryFormatSP format)
+    {
+        m_forced_summary_format = format;
+        m_user_id_of_forced_summary = m_update_point.GetUpdateID();
+        m_summary_str.clear();
+    }
+    
+    lldb::SummaryFormatSP
+    GetCustomSummaryFormat()
+    {
+        return m_forced_summary_format;
+    }
+    
+    void
+    ClearCustomSummaryFormat()
+    {
+        m_forced_summary_format.reset();
+        m_summary_str.clear();
+    }
+    
+    bool
+    HasCustomSummaryFormat()
+    {
+        return (m_forced_summary_format.get());
+    }
+    
+    lldb::SummaryFormatSP
+    GetSummaryFormat()
+    {
+        UpdateFormatsIfNeeded();
+        if (HasCustomSummaryFormat())
+            return m_forced_summary_format;
+        return m_last_summary_format;
     }
 
     // Use GetParent for display purposes, but if you want to tell the parent to update itself
@@ -668,10 +726,12 @@ protected:
                                              // as an independent ValueObjectConstResult, which isn't managed by us.
     ValueObject *m_deref_valobj;
 
-    lldb::Format        m_format;
-    uint32_t            m_last_format_mgr_revision;
-    lldb::SummaryFormatSP m_last_summary_format;
-    lldb::ValueFormatSP m_last_value_format;
+    lldb::Format            m_format;
+    uint32_t                m_last_format_mgr_revision;
+    lldb::SummaryFormatSP   m_last_summary_format;
+    lldb::ValueFormatSP     m_last_value_format;
+    lldb::SummaryFormatSP   m_forced_summary_format;
+    lldb::user_id_t         m_user_id_of_forced_summary;
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
                         m_children_count_valid:1,
@@ -753,12 +813,27 @@ private:
     //------------------------------------------------------------------
     
     lldb::ValueObjectSP
-    GetValueForExpressionPath_Impl(const char* expression,
+    GetValueForExpressionPath_Impl(const char* expression_cstr,
                                    const char** first_unparsed,
                                    ExpressionPathScanEndReason* reason_to_stop,
                                    ExpressionPathEndResultType* final_value_type,
                                    const GetValueForExpressionPathOptions& options,
                                    ExpressionPathAftermath* final_task_on_target);
+        
+    // this method will ONLY expand [] expressions into a VOList and return
+    // the number of elements it added to the VOList
+    // it will NOT loop through expanding the follow-up of the expression_cstr
+    // for all objects in the list
+    int
+    ExpandArraySliceExpression(const char* expression_cstr,
+                               const char** first_unparsed,
+                               lldb::ValueObjectSP root,
+                               lldb::ValueObjectListSP& list,
+                               ExpressionPathScanEndReason* reason_to_stop,
+                               ExpressionPathEndResultType* final_value_type,
+                               const GetValueForExpressionPathOptions& options,
+                               ExpressionPathAftermath* final_task_on_target);
+                               
     
     DISALLOW_COPY_AND_ASSIGN (ValueObject);
 

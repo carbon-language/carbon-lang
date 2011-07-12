@@ -468,6 +468,9 @@ private:
                 case 'x':
                     m_regex = true;
                     break;
+                case 'n':
+                    m_name = new ConstString(option_arg);
+                    break;
                 default:
                     error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
                     break;
@@ -486,6 +489,7 @@ private:
             m_skip_references = false;
             m_skip_pointers = false;
             m_regex = false;
+            m_name = NULL;
         }
         
         const OptionDefinition*
@@ -508,6 +512,7 @@ private:
         bool m_skip_pointers;
         bool m_regex;
         std::string m_format_string;
+        ConstString* m_name;
     };
     
     CommandOptions m_options;
@@ -601,7 +606,7 @@ public:
     {
         const size_t argc = command.GetArgumentCount();
         
-        if (argc < 1)
+        if (argc < 1 && !m_options.m_name)
         {
             result.AppendErrorWithFormat ("%s takes one or more args.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
@@ -636,14 +641,14 @@ public:
         
         for(int i = 0; i < argc; i++) {
             const char* typeA = command.GetArgumentAtIndex(i);
-            if(!typeA || typeA[0] == '\0')
+            if (!typeA || typeA[0] == '\0')
             {
                 result.AppendError("empty typenames not allowed");
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }
             ConstString typeCS(typeA);
-            if(!m_options.m_regex)
+            if (!m_options.m_regex)
             {
                 Debugger::SummaryFormats::Add(typeCS, entry);
             }
@@ -660,6 +665,21 @@ public:
                 Debugger::RegexSummaryFormats::Add(typeRX, entry);
             }
         }
+        
+        if (m_options.m_name)
+        {
+            if( (bool)(*(m_options.m_name)) )
+            {
+                Debugger::NamedSummaryFormats::Add(*(m_options.m_name), entry);
+            }
+            else
+            {
+                result.AppendError("added to types, but not given a name");
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
+        
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
         return result.Succeeded();
     }
@@ -676,7 +696,8 @@ CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeBoolean,    "Type names are actually regular expressions."},
     { LLDB_OPT_SET_1  , true, "inline-children", 'c', no_argument, NULL, 0, eArgTypeBoolean,    "If true, inline all child values into summary string."},
     { LLDB_OPT_SET_2  , true, "format-string", 'f', required_argument, NULL, 0, eArgTypeSummaryString,    "Format string used to display text and object contents."},
-    { LLDB_OPT_SET_2, false, "expand", 'e', no_argument, NULL, 0, eArgTypeBoolean,    "Expand aggregate data types to show children on separate lines."},
+    { LLDB_OPT_SET_2,   false, "expand", 'e', no_argument, NULL, 0, eArgTypeBoolean,    "Expand aggregate data types to show children on separate lines."},
+    { LLDB_OPT_SET_2,   false, "name", 'n', required_argument, NULL, 0, eArgTypeName,    "A name for this summary string."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -734,7 +755,9 @@ public:
         
         bool delete_summary = Debugger::SummaryFormats::Delete(typeCS);
         bool delete_regex = Debugger::RegexSummaryFormats::Delete(typeCS);
-        if (delete_summary || delete_regex)
+        bool delete_named = Debugger::NamedSummaryFormats::Delete(typeCS);
+        
+        if (delete_summary || delete_regex || delete_named)
         {
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
@@ -774,6 +797,7 @@ public:
     {
         Debugger::SummaryFormats::Clear();
         Debugger::RegexSummaryFormats::Clear();
+        Debugger::NamedSummaryFormats::Clear();
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
@@ -847,22 +871,33 @@ public:
         Debugger::SummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
         delete param;
         
-        if(Debugger::RegexSummaryFormats::GetCount() == 0)
+        if(Debugger::RegexSummaryFormats::GetCount() > 0)
         {
-            result.SetStatus(eReturnStatusSuccessFinishResult);
-            return result.Succeeded();
+            result.GetOutputStream().Printf("Regex-based summaries (slower):\n");
+            if (argc == 1) {
+                RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
+                regex->Compile(command.GetArgumentAtIndex(0));
+                rxparam = new CommandObjectTypeRXSummaryList_LoopCallbackParam(this,&result,regex);
+            }
+            else
+                rxparam = new CommandObjectTypeRXSummaryList_LoopCallbackParam(this,&result);
+            Debugger::RegexSummaryFormats::LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, rxparam);
+            delete rxparam;
         }
         
-        result.GetOutputStream().Printf("Regex-based summaries (slower):\n");
-        if (argc == 1) {
-            RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
-            regex->Compile(command.GetArgumentAtIndex(0));
-            rxparam = new CommandObjectTypeRXSummaryList_LoopCallbackParam(this,&result,regex);
+        if(Debugger::NamedSummaryFormats::GetCount() > 0)
+        {
+            result.GetOutputStream().Printf("Named summaries:\n");
+            if (argc == 1) {
+                RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
+                regex->Compile(command.GetArgumentAtIndex(0));
+                param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result,regex);
+            }
+            else
+                param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result);
+            Debugger::NamedSummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
+            delete param;
         }
-        else
-            rxparam = new CommandObjectTypeRXSummaryList_LoopCallbackParam(this,&result);
-        Debugger::RegexSummaryFormats::LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, rxparam);
-        delete rxparam;
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();

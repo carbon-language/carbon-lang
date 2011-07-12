@@ -142,53 +142,66 @@ struct ValueFormat
     }
     
 };
+
+template<typename KeyType, typename ValueType>
+class FormatNavigator;
     
-template<typename MapType, typename CallbackType>
-class FormatNavigator
+template<typename KeyType, typename ValueType>
+class FormatMap
 {
+private:
+    typedef typename ValueType::SharedPointer ValueSP;
+    Mutex m_map_mutex;
+    IFormatChangeListener* listener;
+    
+    friend class FormatNavigator<KeyType, ValueType>;
+    
+public:
+    typedef std::map<KeyType, ValueSP> MapType;
+
+private:    
+    MapType m_map;
+    
+    MapType& map()
+    {
+        return m_map;
+    }
+    
+    Mutex& mutex()
+    {
+        return m_map_mutex;
+    }
+
 public:
 
     typedef typename MapType::iterator MapIterator;
-    typedef typename MapType::key_type MapKeyType;
-    typedef typename MapType::mapped_type MapValueType;
+    typedef bool(*CallbackType)(void*, KeyType, const ValueSP&);
     
-    FormatNavigator(IFormatChangeListener* lst = NULL) :
+    FormatMap(IFormatChangeListener* lst = NULL) :
+    m_map(),
     m_map_mutex(Mutex::eMutexTypeRecursive),
-    m_map(MapType()),
     listener(lst)
     {
     }
-        
-    bool
-    Get(ValueObject& vobj, MapValueType& entry)
-    {
-        Mutex::Locker(m_map_mutex);
-        clang::QualType type = clang::QualType::getFromOpaquePtr(vobj.GetClangType());
-        bool ret = Get(vobj, type, entry);
-        if(ret)
-            entry = MapValueType(entry);
-        else
-            entry = MapValueType();
-        return ret;
-    }
     
     void
-    Add(const MapKeyType &type, const MapValueType& entry)
+    Add(KeyType name,
+        const ValueSP& entry)
     {
         Mutex::Locker(m_map_mutex);
-        m_map[type] = MapValueType(entry);
-        if(listener)
+        m_map[name] = entry;
+        if (listener)
             listener->Changed();
     }
     
     bool
-    Delete(const char* type)
+    Delete(KeyType name)
     {
         Mutex::Locker(m_map_mutex);
-        MapIterator iter = m_map.find(type);
+        MapIterator iter = m_map.find(name);
         if (iter == m_map.end())
             return false;
-        m_map.erase(type);
+        m_map.erase(name);
         if(listener)
             listener->Changed();
         return true;
@@ -203,6 +216,18 @@ public:
             listener->Changed();
     }
     
+    bool
+    Get(KeyType name,
+        ValueSP& entry)
+    {
+        Mutex::Locker(m_map_mutex);
+        MapIterator iter = m_map.find(name);
+        if (iter == m_map.end())
+            return false;
+        entry = iter->second;
+        return true;
+    }
+    
     void
     LoopThrough(CallbackType callback, void* param)
     {
@@ -212,8 +237,8 @@ public:
             MapIterator pos, end = m_map.end();
             for (pos = m_map.begin(); pos != end; pos++)
             {
-                MapKeyType type = pos->first;
-                if(!callback(param, type, MapValueType(pos->second)))
+                KeyType type = pos->first;
+                if(!callback(param, type, pos->second))
                     break;
             }
         }
@@ -225,36 +250,91 @@ public:
         return m_map.size();
     }
     
-    ~FormatNavigator()
+};
+
+template<typename KeyType, typename ValueType>
+class FormatNavigator
+{
+private:
+    typedef FormatMap<KeyType,ValueType> BackEndType;
+    
+    BackEndType m_format_map;
+        
+public:
+    typedef typename BackEndType::MapType MapType;
+    typedef typename MapType::iterator MapIterator;
+    typedef typename MapType::key_type MapKeyType;
+    typedef typename MapType::mapped_type MapValueType;
+    typedef typename BackEndType::CallbackType CallbackType;
+
+    FormatNavigator(IFormatChangeListener* lst = NULL) :
+    m_format_map(lst)
     {
     }
     
-private:
+    void
+    Add(const MapKeyType &type, const MapValueType& entry)
+    {
+        m_format_map.Add(type,entry);
+    }
     
-    Mutex m_map_mutex;
-    MapType m_map;
-    IFormatChangeListener* listener;
+    // using const char* instead of MapKeyType is necessary here
+    // to make the partial template specializations below work
+    bool
+    Delete(const char *type)
+    {
+        return m_format_map.Delete(type);
+    }
+    
+    bool
+    Get(ValueObject& vobj, MapValueType& entry)
+    {
+        clang::QualType type = clang::QualType::getFromOpaquePtr(vobj.GetClangType());
+        bool ret = Get(vobj, type, entry);
+        if(ret)
+            entry = MapValueType(entry);
+        else
+            entry = MapValueType();
+        return ret;
+    }
+    
+    void
+    Clear()
+    {
+        m_format_map.Clear();
+    }
+    
+    void
+    LoopThrough(CallbackType callback, void* param)
+    {
+        m_format_map.LoopThrough(callback,param);
+    }
+    
+    uint32_t
+    GetCount()
+    {
+        return m_format_map.GetCount();
+    }
+
+private:
     
     DISALLOW_COPY_AND_ASSIGN(FormatNavigator);
     
+    // using const char* instead of MapKeyType is necessary here
+    // to make the partial template specializations below work
     bool
     Get(const char* type, MapValueType& entry)
     {
-        Mutex::Locker(m_map_mutex);
-        MapIterator iter = m_map.find(type);
-        if (iter == m_map.end())
-            return false;
-        entry = iter->second;
-        return true;
+        return m_format_map.Get(type, entry);
     }
     
     bool Get(ValueObject& vobj,
-             const clang::QualType& q_type,
+             clang::QualType type,
              MapValueType& entry)
     {
-        if (q_type.isNull())
+        if (type.isNull())
             return false;
-        clang::QualType type = q_type.getUnqualifiedType();
+        // clang::QualType type = q_type.getUnqualifiedType();
         type.removeLocalConst(); type.removeLocalVolatile(); type.removeLocalRestrict();
         const clang::Type* typePtr = type.getTypePtrOrNull();
         if (!typePtr)
@@ -354,40 +434,41 @@ private:
         // try to strip typedef chains
         const clang::TypedefType* type_tdef = type->getAs<clang::TypedefType>();
         if (type_tdef)
+        {
             if ((Get(vobj, type_tdef->getDecl()->getUnderlyingType(), entry)) && entry->m_cascades)
                 return true;
+        }
         return false;
     }
-    
 };
-    
+
 template<>
 bool
-FormatNavigator<std::map<lldb::RegularExpressionSP, SummaryFormat::SharedPointer>, SummaryFormat::RegexSummaryCallback>::Get(const char* key,
-                                                                                                                             SummaryFormat::SharedPointer& value);
+FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Get(const char* key, SummaryFormat::SharedPointer& value);
+
 template<>
 bool
-FormatNavigator<std::map<lldb::RegularExpressionSP, SummaryFormat::SharedPointer>, SummaryFormat::RegexSummaryCallback>::Delete(const char* type);
-    
+FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Delete(const char* type);
+
 class FormatManager : public IFormatChangeListener
 {
-    
-public:
-    
 private:
     
-    typedef std::map<const char*, ValueFormat::SharedPointer> ValueMap;
-    typedef std::map<const char*, SummaryFormat::SharedPointer> SummaryMap;
-    typedef std::map<lldb::RegularExpressionSP, SummaryFormat::SharedPointer> RegexSummaryMap;
+    typedef FormatNavigator<const char*, ValueFormat> ValueNavigator;
+    typedef FormatNavigator<const char*, SummaryFormat> SummaryNavigator;
+    typedef FormatNavigator<lldb::RegularExpressionSP, SummaryFormat> RegexSummaryNavigator;
     
-    typedef FormatNavigator<ValueMap, ValueFormat::ValueCallback> ValueNavigator;
-    typedef FormatNavigator<SummaryMap, SummaryFormat::SummaryCallback> SummaryNavigator;
-    typedef FormatNavigator<RegexSummaryMap, SummaryFormat::RegexSummaryCallback> RegexSummaryNavigator;
+    typedef ValueNavigator::MapType ValueMap;
+    typedef SummaryNavigator::MapType SummaryMap;
+    typedef RegexSummaryNavigator::MapType RegexSummaryMap;
+    typedef FormatMap<const char*, SummaryFormat> NamedSummariesMap;
     
     ValueNavigator m_value_nav;
     SummaryNavigator m_summary_nav;
     RegexSummaryNavigator m_regex_summary_nav;
-        
+    
+    NamedSummariesMap m_named_summaries_map;
+    
     uint32_t m_last_revision;
     
 public:
@@ -396,6 +477,7 @@ public:
     m_value_nav(this),
     m_summary_nav(this),
     m_regex_summary_nav(this),
+    m_named_summaries_map(this),
     m_last_revision(0)
     {
     }
@@ -404,7 +486,7 @@ public:
     ValueNavigator& Value() { return m_value_nav; }
     SummaryNavigator& Summary() { return m_summary_nav; }
     RegexSummaryNavigator& RegexSummary() { return m_regex_summary_nav; }
-
+    NamedSummariesMap& NamedSummary() { return m_named_summaries_map; }
     
     static bool
     GetFormatFromCString (const char *format_cstr,

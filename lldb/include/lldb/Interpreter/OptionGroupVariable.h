@@ -53,6 +53,7 @@ namespace lldb_private {
              show_scope:1,
              show_decl:1;
         lldb::Format format;
+        std::string summary;
 
     private:
         DISALLOW_COPY_AND_ASSIGN(OptionGroupVariable);

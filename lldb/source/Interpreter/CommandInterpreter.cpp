@@ -935,7 +935,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
     
     // Make a scoped cleanup object that will clear the crash description string 
     // on exit of this function.
-    lldb_utility::CleanUp <const char *, void> crash_description_cleanup(NULL, Host::SetCrashDescription);
+    lldb_utility::CleanUp <const char *> crash_description_cleanup(NULL, Host::SetCrashDescription);
 
     if (log)
         log->Printf ("Processing command: %s", command_line);

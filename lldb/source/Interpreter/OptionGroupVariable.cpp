@@ -19,6 +19,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
+// if you add any options here, remember to update the counters in OptionGroupVariable::GetNumDefinitions()
 static OptionDefinition
 g_option_table[] =
 {
@@ -28,7 +29,8 @@ g_option_table[] =
     { LLDB_OPT_SET_1, false, "show-declaration",'c', no_argument,       NULL, 0, eArgTypeNone,    "Show variable declaration information (source file and line where the variable was declared)."},
     { LLDB_OPT_SET_1, false, "format",          'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format that the variable output should use."},
     { LLDB_OPT_SET_1, false, "regex",           'r', no_argument,       NULL, 0, eArgTypeRegularExpression,    "The <variable-name> argument for name lookups are regular expressions."},
-    { LLDB_OPT_SET_1, false, "scope",           's', no_argument,       NULL, 0, eArgTypeNone,    "Show variable scope (argument, local, global, static)."}
+    { LLDB_OPT_SET_1, false, "scope",           's', no_argument,       NULL, 0, eArgTypeNone,    "Show variable scope (argument, local, global, static)."},
+    { LLDB_OPT_SET_1, false, "summary",         'y', required_argument, NULL, 0, eArgTypeName,  "Specify the summary that the variable output should use."},
 };
 
 
@@ -62,7 +64,9 @@ OptionGroupVariable::SetOptionValue (CommandInterpreter &interpreter,
         case 's':
             show_scope = true;
             break;
-            
+        case 'y':
+            summary = std::string(option_arg);
+            break;
         default:
             error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
             break;
@@ -81,6 +85,7 @@ OptionGroupVariable::OptionParsingStarting (CommandInterpreter &interpreter)
     format        = lldb::eFormatDefault;
     use_regex     = false;
     show_scope    = false;
+    summary       = "";
 }
 
 
@@ -101,9 +106,9 @@ uint32_t
 OptionGroupVariable::GetNumDefinitions ()
 {
     if (include_frame_options)
-        return 7;
+        return 8;
     else
-        return 4;
+        return 5;
 }
 
 

@@ -1821,6 +1821,48 @@ Debugger::RegexSummaryFormats::GetCount()
     return GetFormatManager().RegexSummary().GetCount();
 }
 
+bool
+Debugger::NamedSummaryFormats::Get(const ConstString &type, SummaryFormat::SharedPointer &entry)
+{
+    return GetFormatManager().NamedSummary().Get(type.AsCString(),entry);
+}
+
+void
+Debugger::NamedSummaryFormats::Add(const ConstString &type, const SummaryFormat::SharedPointer &entry)
+{
+    GetFormatManager().NamedSummary().Add(type.AsCString(),entry);
+}
+
+bool
+Debugger::NamedSummaryFormats::Delete(const ConstString &type)
+{
+    return GetFormatManager().NamedSummary().Delete(type.AsCString());
+}
+
+void
+Debugger::NamedSummaryFormats::Clear()
+{
+    GetFormatManager().NamedSummary().Clear();
+}
+
+void
+Debugger::NamedSummaryFormats::LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton)
+{
+    GetFormatManager().NamedSummary().LoopThrough(callback, callback_baton);
+}
+
+uint32_t
+Debugger::NamedSummaryFormats::GetCurrentRevision()
+{
+    return GetFormatManager().GetCurrentRevision();
+}
+
+uint32_t
+Debugger::NamedSummaryFormats::GetCount()
+{
+    return GetFormatManager().NamedSummary().GetCount();
+}
+
 #pragma mark Debugger::SettingsController
 
 //--------------------------------------------------

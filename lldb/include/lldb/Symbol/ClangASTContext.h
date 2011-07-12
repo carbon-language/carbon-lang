@@ -49,7 +49,8 @@ public:
         eTypeIsStructUnion      = (1u << 13),
         eTypeIsTemplate         = (1u << 14),
         eTypeIsTypedef          = (1u << 15),
-        eTypeIsVector           = (1u << 16)
+        eTypeIsVector           = (1u << 16),
+        eTypeIsScalar           = (1u << 17),
     };
 
     typedef void (*CompleteTagDeclCallback)(void *baton, clang::TagDecl *);

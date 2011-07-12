@@ -52,7 +52,7 @@ namespace lldb_utility {
 //  // malloc/free example
 //  CleanUp <void *, void> malloced_bytes(malloc(32), NULL, free);
 //----------------------------------------------------------------------
-template <typename T, typename R>
+template <typename T, typename R = void>
 class CleanUp
 {
 public:
@@ -181,6 +181,140 @@ private:
 
     // Outlaw default constructor, copy constructor and the assignment operator
     DISALLOW_COPY_AND_ASSIGN (CleanUp);                 
+};
+    
+template <typename T, typename R, typename A0>
+class CleanUp2
+{
+public:
+    typedef T value_type;
+    typedef R (*CallbackType)(value_type, A0);
+    
+    //----------------------------------------------------------------------
+    // Constructor that sets the current value only. No values are 
+    // considered to be invalid and the cleanup function will be called
+    // regardless of the value of m_current_value.
+    //----------------------------------------------------------------------
+    CleanUp2 (value_type value, CallbackType callback, A0 arg) : 
+    m_current_value (value),
+    m_invalid_value (),
+    m_callback (callback),
+    m_callback_called (false),
+    m_invalid_value_is_valid (false),
+    m_argument(arg)
+    {
+    }
+    
+    //----------------------------------------------------------------------
+    // Constructor that sets the current value and also the invalid value.
+    // The cleanup function will be called on "m_value" as long as it isn't
+    // equal to "m_invalid_value".
+    //----------------------------------------------------------------------
+    CleanUp2 (value_type value, value_type invalid, CallbackType callback, A0 arg) : 
+    m_current_value (value),
+    m_invalid_value (invalid),
+    m_callback (callback),
+    m_callback_called (false),
+    m_invalid_value_is_valid (true),
+    m_argument(arg)
+    {
+    }
+    
+    //----------------------------------------------------------------------
+    // Automatically cleanup when this object goes out of scope.
+    //----------------------------------------------------------------------
+    ~CleanUp2 ()
+    {
+        clean();
+    }
+    
+    //----------------------------------------------------------------------
+    // Access the value stored in this class
+    //----------------------------------------------------------------------
+    value_type get() 
+    {
+        return m_current_value; 
+    }
+    
+    //----------------------------------------------------------------------
+    // Access the value stored in this class
+    //----------------------------------------------------------------------
+    const value_type
+    get() const 
+    {
+        return m_current_value; 
+    }
+    
+    //----------------------------------------------------------------------
+    // Reset the owned value to "value". If a current value is valid and
+    // the cleanup callback hasn't been called, the previous value will
+    // be cleaned up (see void CleanUp::clean()). 
+    //----------------------------------------------------------------------
+    void 
+    set (const value_type value)
+    {
+        // Cleanup the current value if needed
+        clean ();
+        // Now set the new value and mark our callback as not called
+        m_callback_called = false;
+        m_current_value = value;
+    }
+    
+    //----------------------------------------------------------------------
+    // Checks is "m_current_value" is valid. The value is considered valid
+    // no invalid value was supplied during construction of this object or
+    // if an invalid value was supplied and "m_current_value" is not equal
+    // to "m_invalid_value".
+    //
+    // Returns true if "m_current_value" is valid, false otherwise.
+    //----------------------------------------------------------------------
+    bool 
+    is_valid() const 
+    {
+        if (m_invalid_value_is_valid)
+            return m_current_value != m_invalid_value; 
+        return true;
+    }
+    
+    //----------------------------------------------------------------------
+    // This function will call the cleanup callback provided in the 
+    // constructor one time if the value is considered valid (See is_valid()).
+    // This function sets m_callback_called to true so we don't call the
+    // cleanup callback multiple times on the same value.
+    //----------------------------------------------------------------------
+    void 
+    clean()
+    {
+        if (m_callback && !m_callback_called)
+        {
+            m_callback_called = true;
+            if (is_valid())
+                m_callback(m_current_value, m_argument);
+        }
+    }
+    
+    //----------------------------------------------------------------------
+    // Cancels the cleanup that would have been called on "m_current_value" 
+    // if it was valid. This function can be used to release the value 
+    // contained in this object so ownership can be transfered to the caller.
+    //----------------------------------------------------------------------
+    value_type
+    release ()
+    {
+        m_callback_called = true;
+        return m_current_value;
+    }
+    
+private:
+    value_type      m_current_value;
+    const   value_type      m_invalid_value;
+    CallbackType    m_callback;
+    bool            m_callback_called;
+    bool            m_invalid_value_is_valid;
+    A0              m_argument;
+    
+    // Outlaw default constructor, copy constructor and the assignment operator
+    DISALLOW_COPY_AND_ASSIGN (CleanUp2);                 
 };
 
 } // namespace lldb_utility
