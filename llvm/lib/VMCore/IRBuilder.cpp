@@ -34,7 +34,7 @@ Value *IRBuilderBase::CreateGlobalString(StringRef Str, const Twine &Name) {
   return GV;
 }
 
-const Type *IRBuilderBase::getCurrentFunctionReturnType() const {
+Type *IRBuilderBase::getCurrentFunctionReturnType() const {
   assert(BB && BB->getParent() && "No current function!");
   return BB->getParent()->getReturnType();
 }

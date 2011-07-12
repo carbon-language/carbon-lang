@@ -111,7 +111,7 @@ public:
 
   /// getCurrentDebugLocation - Get location information used by debugging
   /// information.
-  const DebugLoc &getCurrentDebugLocation() const { return CurDbgLocation; }
+  DebugLoc getCurrentDebugLocation() const { return CurDbgLocation; }
 
   /// SetInstDebugLocation - If this builder has a current debug location, set
   /// it on the specified instruction.
@@ -122,7 +122,7 @@ public:
 
   /// getCurrentFunctionReturnType - Get the return type of the current function
   /// that we're emitting into.
-  const Type *getCurrentFunctionReturnType() const;
+  Type *getCurrentFunctionReturnType() const;
 
   /// InsertPoint - A saved insertion point.
   class InsertPoint {
@@ -222,46 +222,46 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// getInt1Ty - Fetch the type representing a single bit
-  const IntegerType *getInt1Ty() {
+  IntegerType *getInt1Ty() {
     return Type::getInt1Ty(Context);
   }
 
   /// getInt8Ty - Fetch the type representing an 8-bit integer.
-  const IntegerType *getInt8Ty() {
+  IntegerType *getInt8Ty() {
     return Type::getInt8Ty(Context);
   }
 
   /// getInt16Ty - Fetch the type representing a 16-bit integer.
-  const IntegerType *getInt16Ty() {
+  IntegerType *getInt16Ty() {
     return Type::getInt16Ty(Context);
   }
 
   /// getInt32Ty - Fetch the type resepresenting a 32-bit integer.
-  const IntegerType *getInt32Ty() {
+  IntegerType *getInt32Ty() {
     return Type::getInt32Ty(Context);
   }
 
   /// getInt64Ty - Fetch the type representing a 64-bit integer.
-  const IntegerType *getInt64Ty() {
+  IntegerType *getInt64Ty() {
     return Type::getInt64Ty(Context);
   }
 
   /// getFloatTy - Fetch the type representing a 32-bit floating point value.
-  const Type *getFloatTy() {
+  Type *getFloatTy() {
     return Type::getFloatTy(Context);
   }
 
   /// getDoubleTy - Fetch the type representing a 64-bit floating point value.
-  const Type *getDoubleTy() {
+  Type *getDoubleTy() {
     return Type::getDoubleTy(Context);
   }
 
   /// getVoidTy - Fetch the type representing void.
-  const Type *getVoidTy() {
+  Type *getVoidTy() {
     return Type::getVoidTy(Context);
   }
 
-  const PointerType *getInt8PtrTy(unsigned AddrSpace = 0) {
+  PointerType *getInt8PtrTy(unsigned AddrSpace = 0) {
     return Type::getInt8PtrTy(Context, AddrSpace);
   }
 
@@ -1257,7 +1257,7 @@ public:
   Value *CreatePtrDiff(Value *LHS, Value *RHS, const Twine &Name = "") {
     assert(LHS->getType() == RHS->getType() &&
            "Pointer subtraction operand types must match!");
-    const PointerType *ArgType = cast<PointerType>(LHS->getType());
+    PointerType *ArgType = cast<PointerType>(LHS->getType());
     Value *LHS_int = CreatePtrToInt(LHS, Type::getInt64Ty(Context));
     Value *RHS_int = CreatePtrToInt(RHS, Type::getInt64Ty(Context));
     Value *Difference = CreateSub(LHS_int, RHS_int);
