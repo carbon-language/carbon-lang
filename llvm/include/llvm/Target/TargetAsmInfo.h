@@ -86,7 +86,10 @@ public:
   }
 
   int getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
-                               int DataAlignmentFactor, bool IsEH) const;
+                               int DataAlignmentFactor,
+                               bool IsEH) const {
+    return TFI->getCompactUnwindEncoding(Instrs, DataAlignmentFactor, IsEH);
+  }
 
   const unsigned *getCalleeSavedRegs(MachineFunction *MF = 0) const {
     return TRI->getCalleeSavedRegs(MF);
