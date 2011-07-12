@@ -8496,10 +8496,6 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 
   BSI->TheDecl->setBody(cast<CompoundStmt>(Body));
 
-  BlockExpr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy);
-
-  const AnalysisBasedWarnings::Policy &WP = AnalysisWarnings.getDefaultPolicy();
-  PopFunctionOrBlockScope(&WP, Result->getBlockDecl(), Result);
   for (BlockDecl::capture_const_iterator ci = BSI->TheDecl->capture_begin(),
        ce = BSI->TheDecl->capture_end(); ci != ce; ++ci) {
     const VarDecl *variable = ci->getVariable();
@@ -8508,6 +8504,10 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     if (destructKind != QualType::DK_none)
       getCurFunction()->setHasBranchProtectedScope();
   }
+
+  BlockExpr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy);
+  const AnalysisBasedWarnings::Policy &WP = AnalysisWarnings.getDefaultPolicy();
+  PopFunctionOrBlockScope(&WP, Result->getBlockDecl(), Result);
 
   return Owned(Result);
 }
