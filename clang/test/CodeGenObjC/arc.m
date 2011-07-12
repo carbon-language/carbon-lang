@@ -641,12 +641,11 @@ int (^test25(int x))(void) {
 // CHECK-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [4 x i8*]* [[X]], i32 0, i32 0
 // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds i8** [[BEGIN]], i64 4
 // CHECK-NEXT: br label
-// CHECK:      [[CUR:%.*]] = phi i8**
-// CHECK-NEXT: [[ISDONE:%.*]] = icmp eq i8** [[CUR]], [[END]]
+// CHECK:      [[PAST:%.*]] = phi i8** [ [[END]], {{%.*}} ], [ [[CUR:%.*]], {{%.*}} ]
+// CHECK-NEXT: [[CUR]] = getelementptr inbounds i8** [[PAST]], i64 -1
+// CHECK-NEXT: call void @objc_storeStrong(i8** [[CUR]], i8* null)
+// CHECK-NEXT: [[ISDONE:%.*]] = icmp eq i8** [[CUR]], [[BEGIN]]
 // CHECK-NEXT: br i1 [[ISDONE]],
-// CHECK:      call void @objc_storeStrong(i8** [[CUR]], i8* null)
-// CHECK-NEXT: [[NEXT:%.*]] = getelementptr inbounds i8** [[CUR]], i32 1
-// CHECK-NEXT: br label
 // CHECK:      ret void
 
 // Check that 'init' retains self.

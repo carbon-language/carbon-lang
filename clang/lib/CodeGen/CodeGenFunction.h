@@ -255,6 +255,30 @@ public:
       : a0_saved(a0), a1_saved(a1), a2_saved(a2) {}
   };
 
+  template <class T, class A0, class A1, class A2, class A3>
+  class ConditionalCleanup4 : public Cleanup {
+    typedef typename DominatingValue<A0>::saved_type A0_saved;
+    typedef typename DominatingValue<A1>::saved_type A1_saved;
+    typedef typename DominatingValue<A2>::saved_type A2_saved;
+    typedef typename DominatingValue<A3>::saved_type A3_saved;
+    A0_saved a0_saved;
+    A1_saved a1_saved;
+    A2_saved a2_saved;
+    A3_saved a3_saved;
+    
+    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
+      A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
+      A1 a1 = DominatingValue<A1>::restore(CGF, a1_saved);
+      A2 a2 = DominatingValue<A2>::restore(CGF, a2_saved);
+      A3 a3 = DominatingValue<A3>::restore(CGF, a3_saved);
+      T(a0, a1, a2, a3).Emit(CGF, IsForEHCleanup);
+    }
+    
+  public:
+    ConditionalCleanup4(A0_saved a0, A1_saved a1, A2_saved a2, A3_saved a3)
+      : a0_saved(a0), a1_saved(a1), a2_saved(a2), a3_saved(a3) {}
+  };
+
 private:
   // The implementation for this class is in CGException.h and
   // CGException.cpp; the definition is here because it's used as a
@@ -710,6 +734,28 @@ public:
     initFullExprCleanup();
   }
 
+  /// pushFullExprCleanup - Push a cleanup to be run at the end of the
+  /// current full-expression.  Safe against the possibility that
+  /// we're currently inside a conditionally-evaluated expression.
+  template <class T, class A0, class A1, class A2, class A3>
+  void pushFullExprCleanup(CleanupKind kind, A0 a0, A1 a1, A2 a2, A3 a3) {
+    // If we're not in a conditional branch, or if none of the
+    // arguments requires saving, then use the unconditional cleanup.
+    if (!isInConditionalBranch()) {
+      return EHStack.pushCleanup<T>(kind, a0, a1, a2, a3);
+    }
+    
+    typename DominatingValue<A0>::saved_type a0_saved = saveValueInCond(a0);
+    typename DominatingValue<A1>::saved_type a1_saved = saveValueInCond(a1);
+    typename DominatingValue<A2>::saved_type a2_saved = saveValueInCond(a2);
+    typename DominatingValue<A3>::saved_type a3_saved = saveValueInCond(a3);
+    
+    typedef EHScopeStack::ConditionalCleanup4<T, A0, A1, A2, A3> CleanupType;
+    EHStack.pushCleanup<CleanupType>(kind, a0_saved, a1_saved,
+                                     a2_saved, a3_saved);
+    initFullExprCleanup();
+  }
+
   /// PushDestructorCleanup - Push a cleanup to call the
   /// complete-object destructor of an object of the given type at the
   /// given address.  Does nothing if T is not a C++ class type with a
@@ -1126,7 +1172,8 @@ public:
                                       QualType elementType,
                                       Destroyer &destroyer);
 
-  Destroyer &getDestroyer(QualType::DestructionKind destructionKind);
+  void pushDestroy(QualType::DestructionKind dtorKind,
+                   llvm::Value *addr, QualType type);
   void pushDestroy(CleanupKind kind, llvm::Value *addr, QualType type,
                    Destroyer &destroyer, bool useEHCleanupForArray);
   void emitDestroy(llvm::Value *addr, QualType type, Destroyer &destroyer,
@@ -1134,6 +1181,8 @@ public:
   void emitArrayDestroy(llvm::Value *begin, llvm::Value *end,
                         QualType type, Destroyer &destroyer,
                         bool useEHCleanup);
+
+  Destroyer &getDestroyer(QualType::DestructionKind destructionKind);
 
   /// Determines whether an EH cleanup is required to destroy a type
   /// with the given destruction kind.
@@ -1149,6 +1198,10 @@ public:
              CGM.getCodeGenOpts().ObjCAutoRefCountExceptions;
     }
     llvm_unreachable("bad destruction kind");
+  }
+
+  CleanupKind getCleanupKind(QualType::DestructionKind kind) {
+    return (needsEHCleanup(kind) ? NormalAndEHCleanup : NormalCleanup);
   }
 
   //===--------------------------------------------------------------------===//
@@ -2109,27 +2162,9 @@ public:
   llvm::Value *EmitARCRetainScalarExpr(const Expr *expr);
   llvm::Value *EmitARCRetainAutoreleaseScalarExpr(const Expr *expr);
 
-  void PushARCReleaseCleanup(CleanupKind kind, QualType type,
-                             llvm::Value *addr, bool precise,
-                             bool forFullExpr = false);
-  void PushARCArrayReleaseCleanup(CleanupKind kind, QualType elementType,
-                                  llvm::Value *addr,
-                                  llvm::Value *countOrCountPtr,
-                                  bool precise, bool forFullExpr = false);
-  void PushARCWeakReleaseCleanup(CleanupKind kind, QualType type,
-                                 llvm::Value *addr, bool forFullExpr = false);
-  void PushARCArrayWeakReleaseCleanup(CleanupKind kind, QualType elementType,
-                                      llvm::Value *addr,
-                                      llvm::Value *countOrCountPtr,
-                                      bool forFullExpr = false);
   static Destroyer destroyARCStrongImprecise;
   static Destroyer destroyARCStrongPrecise;
   static Destroyer destroyARCWeak;
-
-  void PushARCFieldReleaseCleanup(CleanupKind cleanupKind,
-                                  const FieldDecl *Field);
-  void PushARCFieldWeakReleaseCleanup(CleanupKind cleanupKind,
-                                      const FieldDecl *Field);
 
   void EmitObjCAutoreleasePoolPop(llvm::Value *Ptr); 
   llvm::Value *EmitObjCAutoreleasePoolPush();

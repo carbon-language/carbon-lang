@@ -929,47 +929,25 @@ namespace {
     }
   };
 
-  struct CallArrayFieldDtor : EHScopeStack::Cleanup {
-    const FieldDecl *Field;
-    CallArrayFieldDtor(const FieldDecl *Field) : Field(Field) {}
+  class DestroyField  : public EHScopeStack::Cleanup {
+    const FieldDecl *field;
+    CodeGenFunction::Destroyer &destroyer;
+    bool useEHCleanupForArray;
 
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
-      QualType FieldType = Field->getType();      
-      QualType BaseType = CGF.getContext().getBaseElementType(FieldType);
-      const CXXRecordDecl *FieldClassDecl = BaseType->getAsCXXRecordDecl();
+  public:
+    DestroyField(const FieldDecl *field, CodeGenFunction::Destroyer *destroyer,
+                 bool useEHCleanupForArray)
+      : field(field), destroyer(*destroyer),
+        useEHCleanupForArray(useEHCleanupForArray) {}
 
-      llvm::Value *ThisPtr = CGF.LoadCXXThis();
-      LValue LHS = CGF.EmitLValueForField(ThisPtr, Field, 
-                                          // FIXME: Qualifiers?
-                                          /*CVRQualifiers=*/0);
-
-      const llvm::Type *BasePtr 
-        = CGF.ConvertType(BaseType)->getPointerTo();
-      llvm::Value *BaseAddrPtr
-        = CGF.Builder.CreateBitCast(LHS.getAddress(), BasePtr);
-      const ConstantArrayType *Array
-        = CGF.getContext().getAsConstantArrayType(FieldType);
-      CGF.EmitCXXAggrDestructorCall(FieldClassDecl->getDestructor(),
-                                    Array, BaseAddrPtr);
-    }
-  };
-
-  struct CallFieldDtor : EHScopeStack::Cleanup {
-    const FieldDecl *Field;
-    CallFieldDtor(const FieldDecl *Field) : Field(Field) {}
-
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
-      const CXXRecordDecl *FieldClassDecl =
-        Field->getType()->getAsCXXRecordDecl();
-
-      llvm::Value *ThisPtr = CGF.LoadCXXThis();
-      LValue LHS = CGF.EmitLValueForField(ThisPtr, Field, 
-                                          // FIXME: Qualifiers?
-                                          /*CVRQualifiers=*/0);
-
-      CGF.EmitCXXDestructorCall(FieldClassDecl->getDestructor(),
-                                Dtor_Complete, /*ForVirtualBase=*/false,
-                                LHS.getAddress());
+    void Emit(CodeGenFunction &CGF, bool isForEH) {
+      // Find the address of the field.
+      llvm::Value *thisValue = CGF.LoadCXXThis();
+      LValue LV = CGF.EmitLValueForField(thisValue, field, /*CVRQualifiers=*/0);
+      assert(LV.isSimple());
+      
+      CGF.emitDestroy(LV.getAddress(), field->getType(), destroyer,
+                      !isForEH && useEHCleanupForArray);
     }
   };
 }
@@ -1043,33 +1021,15 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
   llvm::SmallVector<const FieldDecl *, 16> FieldDecls;
   for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); I != E; ++I) {
-    const FieldDecl *Field = *I;
-    
-    QualType FieldType = getContext().getCanonicalType(Field->getType());
-    const ConstantArrayType *Array = 
-      getContext().getAsConstantArrayType(FieldType);
-    if (Array)
-      FieldType = getContext().getBaseElementType(Array->getElementType());
+    const FieldDecl *field = *I;
+    QualType type = field->getType();
+    QualType::DestructionKind dtorKind = type.isDestructedType();
+    if (!dtorKind) continue;
 
-    switch (FieldType.isDestructedType()) {
-    case QualType::DK_none:
-      continue;
-        
-    case QualType::DK_cxx_destructor:
-      if (Array)
-        EHStack.pushCleanup<CallArrayFieldDtor>(NormalAndEHCleanup, Field);
-      else
-        EHStack.pushCleanup<CallFieldDtor>(NormalAndEHCleanup, Field);
-      break;
-        
-    case QualType::DK_objc_strong_lifetime:
-      PushARCFieldReleaseCleanup(getARCCleanupKind(), Field);
-      break;
-
-    case QualType::DK_objc_weak_lifetime:
-      PushARCFieldWeakReleaseCleanup(getARCCleanupKind(), Field);
-      break;
-    }
+    CleanupKind cleanupKind = getCleanupKind(dtorKind);
+    EHStack.pushCleanup<DestroyField>(cleanupKind, field,
+                                      getDestroyer(dtorKind),
+                                      cleanupKind & EHCleanup);
   }
 }
 

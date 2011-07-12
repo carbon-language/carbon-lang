@@ -677,56 +677,36 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   FinishFunction();
 }
 
-// FIXME: these are stolen from CGClass.cpp, which is lame.
 namespace {
-  struct CallArrayIvarDtor : EHScopeStack::Cleanup {
+  struct DestroyIvar : EHScopeStack::Cleanup {
+  private:
+    llvm::Value *addr;
     const ObjCIvarDecl *ivar;
-    llvm::Value *self;
-    CallArrayIvarDtor(const ObjCIvarDecl *ivar, llvm::Value *self)
-      : ivar(ivar), self(self) {}
+    CodeGenFunction::Destroyer &destroyer;
+    bool useEHCleanupForArray;
+  public:
+    DestroyIvar(llvm::Value *addr, const ObjCIvarDecl *ivar,
+                CodeGenFunction::Destroyer *destroyer,
+                bool useEHCleanupForArray)
+      : addr(addr), ivar(ivar), destroyer(*destroyer),
+        useEHCleanupForArray(useEHCleanupForArray) {}
 
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
-      LValue lvalue =
-        CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), self, ivar, 0);
-
-      QualType type = ivar->getType();
-      const ConstantArrayType *arrayType
-        = CGF.getContext().getAsConstantArrayType(type);
-      QualType baseType = CGF.getContext().getBaseElementType(arrayType);
-      const CXXRecordDecl *classDecl = baseType->getAsCXXRecordDecl();
-
-      llvm::Value *base
-        = CGF.Builder.CreateBitCast(lvalue.getAddress(),
-                                    CGF.ConvertType(baseType)->getPointerTo());
-      CGF.EmitCXXAggrDestructorCall(classDecl->getDestructor(),
-                                    arrayType, base);
-    }
-  };
-
-  struct CallIvarDtor : EHScopeStack::Cleanup {
-    const ObjCIvarDecl *ivar;
-    llvm::Value *self;
-    CallIvarDtor(const ObjCIvarDecl *ivar, llvm::Value *self)
-      : ivar(ivar), self(self) {}
-
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
-      LValue lvalue =
-        CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), self, ivar, 0);
-
-      QualType type = ivar->getType();
-      const CXXRecordDecl *classDecl = type->getAsCXXRecordDecl();
-
-      CGF.EmitCXXDestructorCall(classDecl->getDestructor(),
-                                Dtor_Complete, /*ForVirtualBase=*/false,
-                                lvalue.getAddress());
+    void Emit(CodeGenFunction &CGF, bool isForEH) {
+      LValue lvalue
+        = CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), addr, ivar, /*CVR*/ 0);
+      CGF.emitDestroy(lvalue.getAddress(), ivar->getType(), destroyer,
+                      !isForEH && useEHCleanupForArray);
     }
   };
 }
 
-static void pushReleaseForIvar(CodeGenFunction &CGF, ObjCIvarDecl *ivar,
-                               llvm::Value *self);
-static void pushWeakReleaseForIvar(CodeGenFunction &CGF, ObjCIvarDecl *ivar,
-                                   llvm::Value *self);
+/// Like CodeGenFunction::destroyARCStrong, but do it with a call.
+static void destroyARCStrongWithStore(CodeGenFunction &CGF,
+                                      llvm::Value *addr,
+                                      QualType type) {
+  llvm::Value *null = getNullForVariable(addr);
+  CGF.EmitARCStoreStrongCall(addr, null, /*ignored*/ true);
+}
 
 static void emitCXXDestructMethod(CodeGenFunction &CGF,
                                   ObjCImplementationDecl *impl) {
@@ -740,37 +720,26 @@ static void emitCXXDestructMethod(CodeGenFunction &CGF,
        ivar; ivar = ivar->getNextIvar()) {
     QualType type = ivar->getType();
 
-    // Drill down to the base element type.
-    QualType baseType = type;
-    const ConstantArrayType *arrayType = 
-      CGF.getContext().getAsConstantArrayType(baseType);
-    if (arrayType) baseType = CGF.getContext().getBaseElementType(arrayType);
-
     // Check whether the ivar is a destructible type.
-    QualType::DestructionKind destructKind = baseType.isDestructedType();
-    assert(destructKind == type.isDestructedType());
+    QualType::DestructionKind dtorKind = type.isDestructedType();
+    if (!dtorKind) continue;
 
-    switch (destructKind) {
-    case QualType::DK_none:
-      continue;
+    CodeGenFunction::Destroyer *destroyer = 0;
 
-    case QualType::DK_cxx_destructor:
-      if (arrayType)
-        CGF.EHStack.pushCleanup<CallArrayIvarDtor>(NormalAndEHCleanup,
-                                                   ivar, self);
-      else
-        CGF.EHStack.pushCleanup<CallIvarDtor>(NormalAndEHCleanup,
-                                              ivar, self);
-      break;
+    // Use a call to objc_storeStrong to destroy strong ivars, for the
+    // general benefit of the tools.
+    if (dtorKind == QualType::DK_objc_strong_lifetime) {
+      destroyer = &destroyARCStrongWithStore;
 
-    case QualType::DK_objc_strong_lifetime:
-      pushReleaseForIvar(CGF, ivar, self);
-      break;
-
-    case QualType::DK_objc_weak_lifetime:
-      pushWeakReleaseForIvar(CGF, ivar, self);
-      break;
+    // Otherwise use the default for the destruction kind.
+    } else {
+      destroyer = &CGF.getDestroyer(dtorKind);
     }
+
+    CleanupKind cleanupKind = CGF.getCleanupKind(dtorKind);
+
+    CGF.EHStack.pushCleanup<DestroyIvar>(cleanupKind, self, ivar, destroyer,
+                                         cleanupKind & EHCleanup);
   }
 
   assert(scope.requiresCleanups() && "nothing to do in .cxx_destruct?");
@@ -1828,157 +1797,6 @@ void CodeGenFunction::destroyARCWeak(CodeGenFunction &CGF,
 }
 
 namespace {
-  struct ObjCReleasingCleanup : EHScopeStack::Cleanup {
-  private:
-    QualType type;
-    llvm::Value *addr;
-    CodeGenFunction::Destroyer &destroyer;
-
-  protected:
-    ObjCReleasingCleanup(QualType type, llvm::Value *addr,
-                         CodeGenFunction::Destroyer *destroyer)
-      : type(type), addr(addr), destroyer(*destroyer) {}
-
-    virtual llvm::Value *getAddress(CodeGenFunction &CGF,
-                                    llvm::Value *addr) {
-      return addr;
-    }
-
-  public:
-    void Emit(CodeGenFunction &CGF, bool isForEH) {
-      const ArrayType *arrayType = CGF.getContext().getAsArrayType(type);
-
-      llvm::Value *addr = getAddress(CGF, this->addr);
-
-      // If we don't have an array type, this is easy.
-      if (!arrayType)
-        return destroyer(CGF, addr, type);
-
-      llvm::Value *begin = addr;
-      QualType baseType;
-
-      // Otherwise, this is more painful.
-      llvm::Value *count = CGF.emitArrayLength(arrayType, baseType, begin);
-
-      assert(baseType == CGF.getContext().getBaseElementType(arrayType));
-
-      llvm::BasicBlock *incomingBB = CGF.Builder.GetInsertBlock();
-
-      //   id *cur = begin;
-      //   id *end = begin + count;
-      llvm::Value *end =
-        CGF.Builder.CreateInBoundsGEP(begin, count, "array.end");
-
-      // loopBB:
-      llvm::BasicBlock *loopBB = CGF.createBasicBlock("release-loop");
-      CGF.EmitBlock(loopBB);
-
-      llvm::PHINode *cur = CGF.Builder.CreatePHI(begin->getType(), 2, "cur");
-      cur->addIncoming(begin, incomingBB);
-
-      //   if (cur == end) goto endBB;
-      llvm::Value *eq = CGF.Builder.CreateICmpEQ(cur, end, "release-loop.done");
-      llvm::BasicBlock *bodyBB = CGF.createBasicBlock("release-loop.body");
-      llvm::BasicBlock *endBB = CGF.createBasicBlock("release-loop.cont");
-      CGF.Builder.CreateCondBr(eq, endBB, bodyBB);
-      CGF.EmitBlock(bodyBB);
-
-      // Release the value at 'cur'.
-      destroyer(CGF, cur, baseType);
-
-      //   ++cur;
-      //   goto loopBB;
-      llvm::Value *next = CGF.Builder.CreateConstInBoundsGEP1_32(cur, 1);
-      cur->addIncoming(next, CGF.Builder.GetInsertBlock());
-      CGF.Builder.CreateBr(loopBB);
-
-      // endBB:
-      CGF.EmitBlock(endBB);
-    }
-  };
-
-  /// A cleanup that calls @objc_release on all the objects to release.
-  struct CallReleaseForObject : ObjCReleasingCleanup {
-    CallReleaseForObject(QualType type, llvm::Value *addr,
-                         CodeGenFunction::Destroyer *destroyer)
-      : ObjCReleasingCleanup(type, addr, destroyer) {}
-  };
-
-  /// A cleanup that calls @objc_storeStrong(nil) on all the objects to
-  /// release in an ivar.
-  struct CallReleaseForIvar : ObjCReleasingCleanup {
-    const ObjCIvarDecl *ivar;
-    CallReleaseForIvar(const ObjCIvarDecl *ivar, llvm::Value *self)
-      : ObjCReleasingCleanup(ivar->getType(), self,
-                             destroyARCStrongIvar), ivar(ivar) {}
-
-    llvm::Value *getAddress(CodeGenFunction &CGF, llvm::Value *addr) {
-      LValue lvalue
-        = CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), addr, ivar, /*CVR*/ 0);
-      return lvalue.getAddress();
-    }
-
-    static void destroyARCStrongIvar(CodeGenFunction &CGF,
-                                     llvm::Value *addr,
-                                     QualType type) {
-      llvm::Value *null = getNullForVariable(addr);
-      CGF.EmitARCStoreStrongCall(addr, null, /*ignored*/ true);
-    }
-  };
-
-  /// A cleanup that calls @objc_release on all of the objects to release in
-  /// a field.
-  struct CallReleaseForField : CallReleaseForObject {
-    const FieldDecl *Field;
-    
-    explicit CallReleaseForField(const FieldDecl *Field)
-      : CallReleaseForObject(Field->getType(), 0,
-                             CodeGenFunction::destroyARCStrongPrecise),
-        Field(Field) { }
-    
-    llvm::Value *getAddress(CodeGenFunction &CGF, llvm::Value *) {
-      llvm::Value *This = CGF.LoadCXXThis();      
-      LValue LV = CGF.EmitLValueForField(This, Field, 0);
-      return LV.getAddress();
-    }
-  };
-  
-  /// A cleanup that calls @objc_weak_release on all the objects to
-  /// release in an object.
-  struct CallWeakReleaseForObject : ObjCReleasingCleanup {
-    CallWeakReleaseForObject(QualType type, llvm::Value *addr)
-      : ObjCReleasingCleanup(type, addr, CodeGenFunction::destroyARCWeak) {}
-  };
-
-  
-  /// A cleanup that calls @objc_weak_release on all the objects to
-  /// release in an ivar.
-  struct CallWeakReleaseForIvar : CallWeakReleaseForObject {
-    const ObjCIvarDecl *ivar;
-    CallWeakReleaseForIvar(const ObjCIvarDecl *ivar, llvm::Value *self)
-    : CallWeakReleaseForObject(ivar->getType(), self), ivar(ivar) {}
-    
-    llvm::Value *getAddress(CodeGenFunction &CGF, llvm::Value *addr) {
-      LValue lvalue
-      = CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), addr, ivar, /*CVR*/ 0);
-      return lvalue.getAddress();
-    }
-  };
-
-  /// A cleanup that calls @objc_weak_release on all the objects to
-  /// release in a field;
-  struct CallWeakReleaseForField : CallWeakReleaseForObject {
-    const FieldDecl *Field;
-    CallWeakReleaseForField(const FieldDecl *Field)
-      : CallWeakReleaseForObject(Field->getType(), 0), Field(Field) {}
-    
-    llvm::Value *getAddress(CodeGenFunction &CGF, llvm::Value *) {
-      llvm::Value *This = CGF.LoadCXXThis();      
-      LValue LV = CGF.EmitLValueForField(This, Field, 0);
-      return LV.getAddress();
-    }
-  };
-  
   struct CallObjCAutoreleasePoolObject : EHScopeStack::Cleanup {
     llvm::Value *Token;
 
@@ -2004,59 +1822,6 @@ void CodeGenFunction::EmitObjCAutoreleasePoolCleanup(llvm::Value *Ptr) {
     EHStack.pushCleanup<CallObjCAutoreleasePoolObject>(NormalCleanup, Ptr);
   else
     EHStack.pushCleanup<CallObjCMRRAutoreleasePoolObject>(NormalCleanup, Ptr);
-}
-
-/// PushARCReleaseCleanup - Enter a cleanup to perform a release on a
-/// given object or array of objects.
-void CodeGenFunction::PushARCReleaseCleanup(CleanupKind cleanupKind,
-                                            QualType type,
-                                            llvm::Value *addr,
-                                            bool precise,
-                                            bool forFullExpr) {
-  Destroyer *dtor =
-    (precise ? destroyARCStrongPrecise : destroyARCStrongImprecise);
-  if (forFullExpr)
-    pushFullExprCleanup<CallReleaseForObject>(cleanupKind, type, addr, dtor);
-  else
-    EHStack.pushCleanup<CallReleaseForObject>(cleanupKind, type, addr, dtor);
-}
-
-/// PushARCWeakReleaseCleanup - Enter a cleanup to perform a weak
-/// release on the given object or array of objects.
-void CodeGenFunction::PushARCWeakReleaseCleanup(CleanupKind cleanupKind,
-                                                QualType type,
-                                                llvm::Value *addr,
-                                                bool forFullExpr) {
-  if (forFullExpr)
-    pushFullExprCleanup<CallWeakReleaseForObject>(cleanupKind, type, addr);
-  else
-    EHStack.pushCleanup<CallWeakReleaseForObject>(cleanupKind, type, addr);
-}
-
-/// PushARCReleaseCleanup - Enter a cleanup to perform a release on a
-/// given object or array of objects.
-void CodeGenFunction::PushARCFieldReleaseCleanup(CleanupKind cleanupKind,
-                                                 const FieldDecl *field) {
-  EHStack.pushCleanup<CallReleaseForField>(cleanupKind, field);
-}
-
-/// PushARCWeakReleaseCleanup - Enter a cleanup to perform a weak
-/// release on the given object or array of objects.
-void CodeGenFunction::PushARCFieldWeakReleaseCleanup(CleanupKind cleanupKind,
-                                                     const FieldDecl *field) {
-  EHStack.pushCleanup<CallWeakReleaseForField>(cleanupKind, field);
-}
-
-static void pushReleaseForIvar(CodeGenFunction &CGF, ObjCIvarDecl *ivar,
-                               llvm::Value *self) {
-  CGF.EHStack.pushCleanup<CallReleaseForIvar>(CGF.getARCCleanupKind(),
-                                              ivar, self);
-}
-
-static void pushWeakReleaseForIvar(CodeGenFunction &CGF, ObjCIvarDecl *ivar,
-                                   llvm::Value *self) {
-  CGF.EHStack.pushCleanup<CallWeakReleaseForIvar>(CGF.getARCCleanupKind(),
-                                                  ivar, self);
 }
 
 static TryEmitResult tryEmitARCRetainLoadOfScalar(CodeGenFunction &CGF,

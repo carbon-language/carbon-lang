@@ -124,10 +124,17 @@ void test_ObjCBlockMember_copy_assign(ObjCBlockMember m1, ObjCBlockMember m2) {
 // CHECK: ret
 
 // Implicitly-generated destructor for ObjCArrayMember
-// CHECK: define linkonce_odr void @_ZN15ObjCArrayMemberD2Ev
-// CHECK: call void @objc_release
-// CHECK: br label
-// CHECK: ret
+// CHECK:    define linkonce_odr void @_ZN15ObjCArrayMemberD2Ev
+// CHECK:      [[BEGIN:%.*]] = getelementptr inbounds [2 x [3 x i8*]]*
+// CHECK-NEXT: [[END:%.*]] = getelementptr inbounds i8** [[BEGIN]], i64 6
+// CHECK-NEXT: br label
+// CHECK:      [[PAST:%.*]] = phi i8** [ [[END]], {{%.*}} ], [ [[CUR:%.*]], {{%.*}} ]
+// CHECK-NEXT: [[CUR]] = getelementptr inbounds i8** [[PAST]], i64 -1
+// CHECK-NEXT: [[T0:%.*]] = load i8** [[CUR]]
+// CHECK-NEXT: call void @objc_release(i8* [[T0]])
+// CHECK-NEXT: [[T1:%.*]] = icmp eq i8** [[CUR]], [[BEGIN]]
+// CHECK-NEXT: br i1 [[T1]], 
+// CHECK:      ret void
 
 // Implicitly-generated default constructor for ObjCArrayMember
 // CHECK: define linkonce_odr void @_ZN15ObjCArrayMemberC2Ev

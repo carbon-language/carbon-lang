@@ -283,19 +283,24 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
         case Qualifiers::OCL_Autoreleasing:
           break;
             
-        case Qualifiers::OCL_Strong:
-          CGF.PushARCReleaseCleanup(CGF.getARCCleanupKind(), 
-                                    ObjCARCReferenceLifetimeType, 
-                                    ReferenceTemporary,
-                                    /*Precise lifetime=*/false, 
-                                    /*For full expression=*/true);
+        case Qualifiers::OCL_Strong: {
+          assert(!ObjCARCReferenceLifetimeType->isArrayType());
+          CleanupKind cleanupKind = CGF.getARCCleanupKind();
+          CGF.pushDestroy(cleanupKind, 
+                          ReferenceTemporary,
+                          ObjCARCReferenceLifetimeType,
+                          CodeGenFunction::destroyARCStrongImprecise,
+                          cleanupKind & EHCleanup);
           break;
+        }
           
         case Qualifiers::OCL_Weak:
-          CGF.PushARCWeakReleaseCleanup(NormalAndEHCleanup, 
-                                        ObjCARCReferenceLifetimeType, 
-                                        ReferenceTemporary,
-                                        /*For full expression=*/true);
+          assert(!ObjCARCReferenceLifetimeType->isArrayType());
+          CGF.pushDestroy(NormalAndEHCleanup, 
+                          ReferenceTemporary,
+                          ObjCARCReferenceLifetimeType,
+                          CodeGenFunction::destroyARCWeak,
+                          /*useEHCleanupForArray*/ true);
           break;
         }
         
@@ -467,18 +472,21 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
       // Nothing to do.
       break;        
         
-    case Qualifiers::OCL_Strong:
-      PushARCReleaseCleanup(getARCCleanupKind(), ObjCARCReferenceLifetimeType, 
-                            ReferenceTemporary,
-                            VD && VD->hasAttr<ObjCPreciseLifetimeAttr>());
+    case Qualifiers::OCL_Strong: {
+      bool precise = VD && VD->hasAttr<ObjCPreciseLifetimeAttr>();
+      CleanupKind cleanupKind = getARCCleanupKind();
+      pushDestroy(cleanupKind, ReferenceTemporary,
+                  ObjCARCReferenceLifetimeType,
+                  precise ? destroyARCStrongPrecise : destroyARCStrongImprecise,
+                  cleanupKind & EHCleanup);
       break;
+    }
         
     case Qualifiers::OCL_Weak:
       // __weak objects always get EH cleanups; otherwise, exceptions
       // could cause really nasty crashes instead of mere leaks.
-      PushARCWeakReleaseCleanup(NormalAndEHCleanup, 
-                                ObjCARCReferenceLifetimeType, 
-                                ReferenceTemporary);
+      pushDestroy(NormalAndEHCleanup, ReferenceTemporary,
+                  ObjCARCReferenceLifetimeType, destroyARCWeak, true);
       break;        
     }
   }

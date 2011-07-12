@@ -427,9 +427,14 @@ static void EmitAutoVarWithLifetime(CodeGenFunction &CGF, const VarDecl &var,
     break;
 
   case Qualifiers::OCL_Strong: {
-    CGF.PushARCReleaseCleanup(CGF.getARCCleanupKind(),
-                              var.getType(), addr,
-                              var.hasAttr<ObjCPreciseLifetimeAttr>());
+    CodeGenFunction::Destroyer &destroyer =
+      (var.hasAttr<ObjCPreciseLifetimeAttr>()
+       ? CodeGenFunction::destroyARCStrongPrecise
+       : CodeGenFunction::destroyARCStrongImprecise);
+
+    CleanupKind cleanupKind = CGF.getARCCleanupKind();
+    CGF.pushDestroy(cleanupKind, addr, var.getType(), destroyer,
+                    cleanupKind & EHCleanup);
     break;
   }
   case Qualifiers::OCL_Autoreleasing:
@@ -439,7 +444,9 @@ static void EmitAutoVarWithLifetime(CodeGenFunction &CGF, const VarDecl &var,
   case Qualifiers::OCL_Weak:
     // __weak objects always get EH cleanups; otherwise, exceptions
     // could cause really nasty crashes instead of mere leaks.
-    CGF.PushARCWeakReleaseCleanup(NormalAndEHCleanup, var.getType(), addr);
+    CGF.pushDestroy(NormalAndEHCleanup, addr, var.getType(),
+                    CodeGenFunction::destroyARCWeak,
+                    /*useEHCleanup*/ true);
     break;
   }
 }
@@ -1129,11 +1136,21 @@ CodeGenFunction::getDestroyer(QualType::DestructionKind kind) {
   return *destroyer;
 }
 
+/// pushDestroy - Push the standard destructor for the given type.
+void CodeGenFunction::pushDestroy(QualType::DestructionKind dtorKind,
+                                  llvm::Value *addr, QualType type) {
+  assert(dtorKind && "cannot push destructor for trivial type");
+
+  CleanupKind cleanupKind = getCleanupKind(dtorKind);
+  pushDestroy(cleanupKind, addr, type, getDestroyer(dtorKind),
+              cleanupKind & EHCleanup);
+}
+
 void CodeGenFunction::pushDestroy(CleanupKind cleanupKind, llvm::Value *addr,
                                   QualType type, Destroyer &destroyer,
                                   bool useEHCleanupForArray) {
-  EHStack.pushCleanup<DestroyObject>(cleanupKind, addr, type, destroyer,
-                                     useEHCleanupForArray);
+  pushFullExprCleanup<DestroyObject>(cleanupKind, addr, type,
+                                     destroyer, useEHCleanupForArray);
 }
 
 /// emitDestroy - Immediately perform the destruction of the given
@@ -1324,13 +1341,12 @@ namespace {
 /// \param destructionKind - the kind of destruction required
 /// \param initializedElementCount - a value of type size_t* holding
 ///   the number of successfully-constructed elements
-void CodeGenFunction::pushIrregularPartialArrayCleanup(llvm::Value *array,
+void CodeGenFunction::pushIrregularPartialArrayCleanup(llvm::Value *arrayBegin,
                                                  llvm::Value *arrayEndPointer,
                                                        QualType elementType,
                                                        Destroyer &destroyer) {
-  // FIXME: can this be in a conditional expression?
-  EHStack.pushCleanup<IrregularPartialArrayDestroy>(EHCleanup, array,
-                                                    arrayEndPointer,
+  pushFullExprCleanup<IrregularPartialArrayDestroy>(EHCleanup,
+                                                    arrayBegin, arrayEndPointer,
                                                     elementType, &destroyer);
 }
 
@@ -1348,8 +1364,7 @@ void CodeGenFunction::pushRegularPartialArrayCleanup(llvm::Value *arrayBegin,
                                                      llvm::Value *arrayEnd,
                                                      QualType elementType,
                                                      Destroyer &destroyer) {
-  // FIXME: can this be in a conditional expression?
-  EHStack.pushCleanup<RegularPartialArrayDestroy>(EHCleanup,
+  pushFullExprCleanup<RegularPartialArrayDestroy>(EHCleanup,
                                                   arrayBegin, arrayEnd,
                                                   elementType, &destroyer);
 }
