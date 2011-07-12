@@ -44,6 +44,9 @@ void removeEmptyStatementsAndDealloc(MigrationPass &pass);
 // Helpers.
 //===----------------------------------------------------------------------===//
 
+/// \brief Determine whether we can add weak to the given type.
+bool canApplyWeak(ASTContext &Ctx, QualType type);
+
 /// \brief 'Loc' is the end of a statement range. This returns the location
 /// immediately after the semicolon following the statement.
 /// If no semicolon is found or the location is inside a macro, the returned

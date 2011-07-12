@@ -98,12 +98,12 @@ public:
         BlocksAttr *attr = var->getAttr<BlocksAttr>();
         if(!attr)
           continue;
-        bool hasWeak = Pass.Ctx.getLangOptions().ObjCRuntimeHasWeak;
+        bool useWeak = canApplyWeak(Pass.Ctx, var->getType());
         SourceManager &SM = Pass.Ctx.getSourceManager();
         Transaction Trans(Pass.TA);
         Pass.TA.replaceText(SM.getInstantiationLoc(attr->getLocation()),
                             "__block",
-                            hasWeak ? "__weak" : "__unsafe_unretained");
+                            useWeak ? "__weak" : "__unsafe_unretained");
       }
 
     }

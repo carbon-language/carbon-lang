@@ -112,7 +112,7 @@ public:
   }
 
   void applyWeak(PropData &prop) {
-    assert(Pass.Ctx.getLangOptions().ObjCRuntimeHasWeak);
+    assert(canApplyWeak(Pass.Ctx, prop.IvarD->getType()));
 
     Transaction Trans(Pass.TA);
     Pass.TA.insert(prop.IvarD->getLocation(), "__weak "); 
@@ -157,7 +157,7 @@ public:
     // There is a "error: existing ivar for assign property must be
     // __unsafe_unretained"; fix it.
 
-    if (!Pass.Ctx.getLangOptions().ObjCRuntimeHasWeak) {
+    if (!canApplyWeak(Pass.Ctx, ivarD->getType())) {
       // We will just add __unsafe_unretained to the ivar.
       Transaction Trans(Pass.TA);
       Pass.TA.insert(ivarD->getLocation(), "__unsafe_unretained ");

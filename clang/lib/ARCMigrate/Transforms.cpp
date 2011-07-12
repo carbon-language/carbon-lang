@@ -29,6 +29,61 @@ using llvm::StringRef;
 // Helpers.
 //===----------------------------------------------------------------------===//
 
+/// \brief True if the class is one that does not support weak.
+static bool isClassInWeakBlacklist(ObjCInterfaceDecl *cls) {
+  if (!cls)
+    return false;
+
+  bool inList = llvm::StringSwitch<bool>(cls->getName())
+                 .Case("NSColorSpace", true)
+                 .Case("NSFont", true)
+                 .Case("NSFontPanel", true)
+                 .Case("NSImage", true)
+                 .Case("NSLazyBrowserCell", true)
+                 .Case("NSWindow", true)
+                 .Case("NSWindowController", true)
+                 .Case("NSMenuView", true)
+                 .Case("NSPersistentUIWindowInfo", true)
+                 .Case("NSTableCellView", true)
+                 .Case("NSATSTypeSetter", true)
+                 .Case("NSATSGlyphStorage", true)
+                 .Case("NSLineFragmentRenderingContext", true)
+                 .Case("NSAttributeDictionary", true)
+                 .Case("NSParagraphStyle", true)
+                 .Case("NSTextTab", true)
+                 .Case("NSSimpleHorizontalTypesetter", true)
+                 .Case("_NSCachedAttributedString", true)
+                 .Case("NSStringDrawingTextStorage", true)
+                 .Case("NSTextView", true)
+                 .Case("NSSubTextStorage", true)
+                 .Default(false);
+
+  if (inList)
+    return true;
+
+  return isClassInWeakBlacklist(cls->getSuperClass());
+}
+
+bool trans::canApplyWeak(ASTContext &Ctx, QualType type) {
+  if (!Ctx.getLangOptions().ObjCRuntimeHasWeak)
+    return false;
+
+  QualType T = type;
+  while (const PointerType *ptr = T->getAs<PointerType>())
+    T = ptr->getPointeeType();
+  if (const ObjCObjectPointerType *ObjT = T->getAs<ObjCObjectPointerType>()) {
+    ObjCInterfaceDecl *Class = ObjT->getInterfaceDecl();
+    if (!Class || Class->getName() == "NSObject")
+      return false; // id/NSObject is not safe for weak.
+    if (Class->isArcWeakrefUnavailable())
+      return false;
+    if (isClassInWeakBlacklist(Class))
+      return false;
+  }
+
+  return true;
+}
+
 /// \brief 'Loc' is the end of a statement range. This returns the location
 /// immediately after the semicolon following the statement.
 /// If no semicolon is found or the location is inside a macro, the returned

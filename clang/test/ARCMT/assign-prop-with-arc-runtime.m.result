@@ -4,16 +4,32 @@
 
 #include "Common.h"
 
+__attribute__((objc_arc_weak_reference_unavailable))
+@interface WeakOptOut
+@end
+
+@class _NSCachedAttributedString;
+
+typedef _NSCachedAttributedString *BadClassForWeak;
+
 @interface Foo : NSObject {
-  NSObject *__weak x, *__weak w, *__weak q1, *__weak q2;
-  NSObject *__unsafe_unretained z1, *__unsafe_unretained z2;
+  Foo *__weak x, *__weak w, *__weak q1, *__weak q2;
+  Foo *__unsafe_unretained z1, *__unsafe_unretained z2;
+  WeakOptOut *__unsafe_unretained oo;
+  BadClassForWeak __unsafe_unretained bcw;
+  id __unsafe_unretained not_safe1;
+  NSObject *__unsafe_unretained not_safe2;
 }
-@property (readonly,weak) id x;
-@property (weak) id w;
-@property (weak) id q1, q2;
-@property (assign) id z1, z2;
+@property (readonly,weak) Foo *x;
+@property (weak) Foo *w;
+@property (weak) Foo *q1, *q2;
+@property (assign) Foo *z1, *z2;
+@property (assign) WeakOptOut *oo;
+@property (assign) BadClassForWeak bcw;
+@property (assign) id not_safe1;
+@property (assign) NSObject *not_safe2;
 @end
 
 @implementation Foo
-@synthesize x,w,q1,q2,z1,z2;
+@synthesize x,w,q1,q2,z1,z2,oo,bcw,not_safe1,not_safe2;
 @end
