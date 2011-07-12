@@ -103,6 +103,8 @@ public:
   /// a FunctionType.
   ///
   static FunctionType *get(const Type *Result,
+                           ArrayRef<const Type*> Params, bool isVarArg);
+  static FunctionType *get(const Type *Result,
                            ArrayRef<Type*> Params, bool isVarArg);
 
   /// FunctionType::get - Create a FunctionType taking no parameters.
@@ -204,6 +206,11 @@ public:
 
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
+  ///
+  /// FIXME: Remove the 'const Type*' version of this when types are pervasively
+  /// de-constified.
+  static StructType *get(LLVMContext &Context, ArrayRef<const Type*> Elements,
+                         bool isPacked = false);
   static StructType *get(LLVMContext &Context, ArrayRef<Type*> Elements,
                          bool isPacked = false);
 
@@ -215,7 +222,7 @@ public:
   /// structure types by specifying the elements as arguments.  Note that this
   /// method always returns a non-packed struct, and requires at least one
   /// element type.
-  static StructType *get(Type *elt1, ...) END_WITH_NULL;
+  static StructType *get(const Type *elt1, ...) END_WITH_NULL;
 
   bool isPacked() const { return (getSubclassData() & SCDB_Packed) != 0; }
   

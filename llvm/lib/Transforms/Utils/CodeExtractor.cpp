@@ -258,7 +258,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   default: RetTy = Type::getInt16Ty(header->getContext()); break;
   }
 
-  std::vector<Type*> paramTy;
+  std::vector<const Type*> paramTy;
 
   // Add the types of the input values to the function's argument list
   for (Values::const_iterator i = inputs.begin(),
@@ -279,7 +279,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   }
 
   DEBUG(dbgs() << "Function type: " << *RetTy << " f(");
-  for (std::vector<Type*>::iterator i = paramTy.begin(),
+  for (std::vector<const Type*>::iterator i = paramTy.begin(),
          e = paramTy.end(); i != e; ++i)
     DEBUG(dbgs() << **i << ", ");
   DEBUG(dbgs() << ")\n");
@@ -403,7 +403,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
   AllocaInst *Struct = 0;
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
-    std::vector<Type*> ArgTypes;
+    std::vector<const Type*> ArgTypes;
     for (Values::iterator v = StructValues.begin(),
            ve = StructValues.end(); v != ve; ++v)
       ArgTypes.push_back((*v)->getType());

@@ -1498,8 +1498,8 @@ void ObjCARCOpt::getAnalysisUsage(AnalysisUsage &AU) const {
 Constant *ObjCARCOpt::getRetainRVCallee(Module *M) {
   if (!RetainRVCallee) {
     LLVMContext &C = M->getContext();
-    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    std::vector<Type *> Params;
+    const Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
+    std::vector<const Type *> Params;
     Params.push_back(I8X);
     const FunctionType *FTy =
       FunctionType::get(I8X, Params, /*isVarArg=*/false);
@@ -1515,8 +1515,8 @@ Constant *ObjCARCOpt::getRetainRVCallee(Module *M) {
 Constant *ObjCARCOpt::getAutoreleaseRVCallee(Module *M) {
   if (!AutoreleaseRVCallee) {
     LLVMContext &C = M->getContext();
-    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    std::vector<Type *> Params;
+    const Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
+    std::vector<const Type *> Params;
     Params.push_back(I8X);
     const FunctionType *FTy =
       FunctionType::get(I8X, Params, /*isVarArg=*/false);
@@ -1532,7 +1532,7 @@ Constant *ObjCARCOpt::getAutoreleaseRVCallee(Module *M) {
 Constant *ObjCARCOpt::getReleaseCallee(Module *M) {
   if (!ReleaseCallee) {
     LLVMContext &C = M->getContext();
-    std::vector<Type *> Params;
+    std::vector<const Type *> Params;
     Params.push_back(PointerType::getUnqual(Type::getInt8Ty(C)));
     AttrListPtr Attributes;
     Attributes.addAttr(~0u, Attribute::NoUnwind);
@@ -1548,7 +1548,7 @@ Constant *ObjCARCOpt::getReleaseCallee(Module *M) {
 Constant *ObjCARCOpt::getRetainCallee(Module *M) {
   if (!RetainCallee) {
     LLVMContext &C = M->getContext();
-    std::vector<Type *> Params;
+    std::vector<const Type *> Params;
     Params.push_back(PointerType::getUnqual(Type::getInt8Ty(C)));
     AttrListPtr Attributes;
     Attributes.addAttr(~0u, Attribute::NoUnwind);
@@ -1564,7 +1564,7 @@ Constant *ObjCARCOpt::getRetainCallee(Module *M) {
 Constant *ObjCARCOpt::getAutoreleaseCallee(Module *M) {
   if (!AutoreleaseCallee) {
     LLVMContext &C = M->getContext();
-    std::vector<Type *> Params;
+    std::vector<const Type *> Params;
     Params.push_back(PointerType::getUnqual(Type::getInt8Ty(C)));
     AttrListPtr Attributes;
     Attributes.addAttr(~0u, Attribute::NoUnwind);
@@ -3269,9 +3269,9 @@ void ObjCARCContract::getAnalysisUsage(AnalysisUsage &AU) const {
 Constant *ObjCARCContract::getStoreStrongCallee(Module *M) {
   if (!StoreStrongCallee) {
     LLVMContext &C = M->getContext();
-    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    Type *I8XX = PointerType::getUnqual(I8X);
-    std::vector<Type *> Params;
+    const Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
+    const Type *I8XX = PointerType::getUnqual(I8X);
+    std::vector<const Type *> Params;
     Params.push_back(I8XX);
     Params.push_back(I8X);
 
@@ -3291,8 +3291,8 @@ Constant *ObjCARCContract::getStoreStrongCallee(Module *M) {
 Constant *ObjCARCContract::getRetainAutoreleaseCallee(Module *M) {
   if (!RetainAutoreleaseCallee) {
     LLVMContext &C = M->getContext();
-    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    std::vector<Type *> Params;
+    const Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
+    std::vector<const Type *> Params;
     Params.push_back(I8X);
     const FunctionType *FTy =
       FunctionType::get(I8X, Params, /*isVarArg=*/false);
@@ -3307,8 +3307,8 @@ Constant *ObjCARCContract::getRetainAutoreleaseCallee(Module *M) {
 Constant *ObjCARCContract::getRetainAutoreleaseRVCallee(Module *M) {
   if (!RetainAutoreleaseRVCallee) {
     LLVMContext &C = M->getContext();
-    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    std::vector<Type *> Params;
+    const Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
+    std::vector<const Type *> Params;
     Params.push_back(I8X);
     const FunctionType *FTy =
       FunctionType::get(I8X, Params, /*isVarArg=*/false);

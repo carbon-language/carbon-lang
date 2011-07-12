@@ -92,7 +92,7 @@ bool MBlazeIntrinsicInfo::isOverloaded(unsigned IntrID) const {
 
 static const FunctionType *getType(LLVMContext &Context, unsigned id) {
   const Type *ResultTy = NULL;
-  std::vector<Type*> ArgTys;
+  std::vector<const Type*> ArgTys;
   bool IsVarArg = false;
 
 #define GET_INTRINSIC_GENERATOR

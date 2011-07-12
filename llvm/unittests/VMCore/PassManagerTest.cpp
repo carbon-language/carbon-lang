@@ -405,13 +405,13 @@ namespace llvm {
       mod->setTargetTriple("x86_64-unknown-linux-gnu");
 
       // Type Definitions
-      std::vector<Type*>FuncTy_0_args;
+      std::vector<const Type*>FuncTy_0_args;
       FunctionType* FuncTy_0 = FunctionType::get(
         /*Result=*/IntegerType::get(getGlobalContext(), 32),
         /*Params=*/FuncTy_0_args,
         /*isVarArg=*/false);
 
-      std::vector<Type*>FuncTy_2_args;
+      std::vector<const Type*>FuncTy_2_args;
       FuncTy_2_args.push_back(IntegerType::get(getGlobalContext(), 1));
       FunctionType* FuncTy_2 = FunctionType::get(
         /*Result=*/Type::getVoidTy(getGlobalContext()),

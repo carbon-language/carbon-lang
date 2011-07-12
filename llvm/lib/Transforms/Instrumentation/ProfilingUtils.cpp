@@ -134,7 +134,7 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
 void llvm::InsertProfilingShutdownCall(Function *Callee, Module *Mod) {
   // llvm.global_dtors is an array of type { i32, void ()* }. Prepare those
   // types.
-  Type *GlobalDtorElems[2] = {
+  const Type *GlobalDtorElems[2] = {
     Type::getInt32Ty(Mod->getContext()),
     FunctionType::get(Type::getVoidTy(Mod->getContext()), false)->getPointerTo()
   };

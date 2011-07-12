@@ -29,7 +29,7 @@ static void EnsureFunctionExists(Module &M, const char *Name,
                                  ArgIt ArgBegin, ArgIt ArgEnd,
                                  const Type *RetTy) {
   // Insert a correctly-typed definition now.
-  std::vector<Type *> ParamTys;
+  std::vector<const Type *> ParamTys;
   for (ArgIt I = ArgBegin; I != ArgEnd; ++I)
     ParamTys.push_back(I->getType());
   M.getOrInsertFunction(Name, FunctionType::get(RetTy, ParamTys, false));
@@ -69,7 +69,7 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
   // program already contains a function with this name.
   Module *M = CI->getParent()->getParent()->getParent();
   // Get or insert the definition now.
-  std::vector<Type *> ParamTys;
+  std::vector<const Type *> ParamTys;
   for (ArgIt I = ArgBegin; I != ArgEnd; ++I)
     ParamTys.push_back((*I)->getType());
   Constant* FCache = M->getOrInsertFunction(NewFn,
@@ -553,12 +553,12 @@ bool IntrinsicLowering::LowerToByteSwap(CallInst *CI) {
       !CI->getType()->isIntegerTy())
     return false;
 
-  IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
+  const IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
   if (!Ty)
     return false;
 
   // Okay, we can do this xform, do so now.
-  Type *Tys[] = { Ty };
+  const Type *Tys[] = { Ty };
   Module *M = CI->getParent()->getParent()->getParent();
   Constant *Int = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 1);
 

@@ -663,7 +663,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
   
   LLVMContext &Context = Arg->getContext();
 
-  Type *VoidPtrTy = Type::getInt8PtrTy(Context);
+  const Type *VoidPtrTy = Type::getInt8PtrTy(Context);
   
   // Create the alloca.  If we have TargetData, use nice alignment.
   unsigned Align = 1;
@@ -680,7 +680,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
   Value *NewAlloca = new AllocaInst(AggTy, 0, Align, Arg->getName(), 
                                     &*Caller->begin()->begin());
   // Emit a memcpy.
-  Type *Tys[3] = {VoidPtrTy, VoidPtrTy, Type::getInt64Ty(Context)};
+  const Type *Tys[3] = {VoidPtrTy, VoidPtrTy, Type::getInt64Ty(Context)};
   Function *MemCpyFn = Intrinsic::getDeclaration(Caller->getParent(),
                                                  Intrinsic::memcpy, 
                                                  Tys, 3);

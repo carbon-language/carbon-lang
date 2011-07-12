@@ -173,7 +173,7 @@ void llvm::DeleteFunctionBody(Function *F) {
 static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
   assert(!TorList.empty() && "Don't create empty tor list!");
   std::vector<Constant*> ArrayElts;
-  Type *Int32Ty = Type::getInt32Ty(TorList[0].first->getContext());
+  const Type *Int32Ty = Type::getInt32Ty(TorList[0].first->getContext());
   
   const StructType *STy =
     StructType::get(Int32Ty, TorList[0].first->getType(), NULL);

@@ -493,7 +493,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but has modified arguments.
   const FunctionType *FTy = F->getFunctionType();
-  std::vector<Type*> Params;
+  std::vector<const Type*> Params;
 
   typedef std::set<IndicesVector> ScalarizeTable;
 

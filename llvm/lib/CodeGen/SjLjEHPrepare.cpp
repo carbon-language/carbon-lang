@@ -87,8 +87,9 @@ FunctionPass *llvm::createSjLjEHPass(const TargetLowering *TLI) {
 bool SjLjEHPass::doInitialization(Module &M) {
   // Build the function context structure.
   // builtin_setjmp uses a five word jbuf
-  Type *VoidPtrTy = Type::getInt8PtrTy(M.getContext());
-  Type *Int32Ty = Type::getInt32Ty(M.getContext());
+  const Type *VoidPtrTy =
+          Type::getInt8PtrTy(M.getContext());
+  const Type *Int32Ty = Type::getInt32Ty(M.getContext());
   FunctionContextTy =
     StructType::get(VoidPtrTy,                        // __prev
                     Int32Ty,                          // call_site

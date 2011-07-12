@@ -216,8 +216,8 @@ Constant *Module::getOrInsertFunction(StringRef Name,
   va_start(Args, RetTy);
 
   // Build the list of argument types...
-  std::vector<Type*> ArgTys;
-  while (Type *ArgTy = va_arg(Args, Type*))
+  std::vector<const Type*> ArgTys;
+  while (const Type *ArgTy = va_arg(Args, const Type*))
     ArgTys.push_back(ArgTy);
 
   va_end(Args);
@@ -234,8 +234,8 @@ Constant *Module::getOrInsertFunction(StringRef Name,
   va_start(Args, RetTy);
 
   // Build the list of argument types...
-  std::vector<Type*> ArgTys;
-  while (Type *ArgTy = va_arg(Args, Type*))
+  std::vector<const Type*> ArgTys;
+  while (const Type *ArgTy = va_arg(Args, const Type*))
     ArgTys.push_back(ArgTy);
 
   va_end(Args);

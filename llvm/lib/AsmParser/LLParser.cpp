@@ -1442,7 +1442,7 @@ bool LLParser::ParseFunctionType(Type *&Result) {
                    "argument attributes invalid in function type");
   }
 
-  SmallVector<Type*, 16> ArgListTy;
+  SmallVector<const Type*, 16> ArgListTy;
   for (unsigned i = 0, e = ArgList.size(); i != e; ++i)
     ArgListTy.push_back(ArgList[i].Ty);
 
@@ -2655,7 +2655,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
 
   // Okay, if we got here, the function is syntactically valid.  Convert types
   // and do semantic checks.
-  std::vector<Type*> ParamTypeList;
+  std::vector<const Type*> ParamTypeList;
   SmallVector<AttributeWithIndex, 8> Attrs;
 
   if (RetAttrs != Attribute::None)
@@ -3171,7 +3171,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   if (!(PFTy = dyn_cast<PointerType>(RetType)) ||
       !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
     // Pull out the types of all of the arguments...
-    std::vector<Type*> ParamTypes;
+    std::vector<const Type*> ParamTypes;
     for (unsigned i = 0, e = ArgList.size(); i != e; ++i)
       ParamTypes.push_back(ArgList[i].V->getType());
 
@@ -3508,7 +3508,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   if (!(PFTy = dyn_cast<PointerType>(RetType)) ||
       !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
     // Pull out the types of all of the arguments...
-    std::vector<Type*> ParamTypes;
+    std::vector<const Type*> ParamTypes;
     for (unsigned i = 0, e = ArgList.size(); i != e; ++i)
       ParamTypes.push_back(ArgList[i].V->getType());
 

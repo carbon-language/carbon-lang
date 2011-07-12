@@ -535,7 +535,7 @@ unsigned TargetData::getPreferredTypeAlignmentShift(const Type *Ty) const {
 
 /// getIntPtrType - Return an unsigned integer type that is the same size or
 /// greater to the host pointer size.
-IntegerType *TargetData::getIntPtrType(LLVMContext &C) const {
+const IntegerType *TargetData::getIntPtrType(LLVMContext &C) const {
   return IntegerType::get(C, getPointerSizeInBits());
 }
 
