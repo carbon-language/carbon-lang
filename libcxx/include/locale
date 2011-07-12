@@ -2516,7 +2516,11 @@ class __time_put
 {
     locale_t __loc_;
 protected:
+#ifdef _LIBCPP_STABLE_APPLE_ABI
     _LIBCPP_ALWAYS_INLINE __time_put() : __loc_(0) {}
+#else   // _LIBCPP_STABLE_APPLE_ABI
+    _LIBCPP_ALWAYS_INLINE __time_put() : __loc_(__cloc()) {}
+#endif  // _LIBCPP_STABLE_APPLE_ABI
     __time_put(const char* __nm);
     __time_put(const string& __nm);
     ~__time_put();
