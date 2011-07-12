@@ -1603,7 +1603,9 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
 
   bool IvarLookupFollowUp = false;
   // Perform the required lookup.
-  LookupResult R(*this, NameInfo, LookupOrdinaryName);
+  LookupResult R(*this, NameInfo, 
+                 (Id.getKind() == UnqualifiedId::IK_ImplicitSelfParam) 
+                  ? LookupObjCImplicitSelfParam : LookupOrdinaryName);
   if (TemplateArgs) {
     // Lookup the template name again to correctly establish the context in
     // which it was found. This is really unfortunate as we already did the
@@ -1834,6 +1836,7 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
       IdentifierInfo &II = Context.Idents.get("self");
       UnqualifiedId SelfName;
       SelfName.setIdentifier(&II, SourceLocation());
+      SelfName.setKind(UnqualifiedId::IK_ImplicitSelfParam);
       CXXScopeSpec SelfScopeSpec;
       ExprResult SelfExpr = ActOnIdExpression(S, SelfScopeSpec,
                                               SelfName, false, false);
@@ -1845,27 +1848,6 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
         return ExprError();
 
       MarkDeclarationReferenced(Loc, IV);
-      Expr *base = SelfExpr.take();
-      base = base->IgnoreParenImpCasts();
-      if (const DeclRefExpr *DE = dyn_cast<DeclRefExpr>(base)) {
-        const NamedDecl *ND = DE->getDecl();
-        if (!isa<ImplicitParamDecl>(ND)) {
-          // relax the rule such that it is allowed to have a shadow 'self'
-          // where stand-alone ivar can be found in this 'self' object. 
-          // This is to match gcc's behavior.
-          ObjCInterfaceDecl *selfIFace = 0;
-          if (const ObjCObjectPointerType *OPT =
-              base->getType()->getAsObjCInterfacePointerType())
-            selfIFace = OPT->getInterfaceDecl();
-          if (!selfIFace || 
-              !selfIFace->lookupInstanceVariable(IV->getIdentifier())) {
-            Diag(Loc, diag::error_implicit_ivar_access)
-            << IV->getDeclName();
-            Diag(ND->getLocation(), diag::note_declared_at);
-            return ExprError();
-          }
-        }
-      }
       return Owned(new (Context)
                    ObjCIvarRefExpr(IV, IV->getType(), Loc,
                                    SelfExpr.take(), true, true));

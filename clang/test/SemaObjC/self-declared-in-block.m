@@ -7,11 +7,12 @@
 @implementation Blocky {
     int _a;
 }
-- (void)doAThing {
+- (int)doAThing {
     ^{
-        char self; // expected-note {{declared here}}
-        _a; // expected-error {{instance variable '_a' cannot be accessed because 'self' has been redeclared}}
+        char self;
+        return _a;
     }();
+    return _a;
 }
 
 @end
@@ -37,14 +38,14 @@
         (void)_anIvar;
     }
     {
-      C* self;	// expected-note {{declared here}}
-      (void) _anIvar; // expected-error {{instance variable '_anIvar' cannot be accessed because 'self' has been redeclared}}
+      C* self;	
+      (void) _anIvar;
     }
 }
 - (void)doAThing {
     ^{
-        id self;	// expected-note {{declared here}}
-	(void)_anIvar; // expected-error {{instance variable '_anIvar' cannot be accessed because 'self' has been redeclared}}
+        id self;
+	(void)_anIvar;
     }();
 }
 @end

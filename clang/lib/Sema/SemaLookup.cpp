@@ -209,6 +209,7 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
                                bool Redeclaration) {
   unsigned IDNS = 0;
   switch (NameKind) {
+  case Sema::LookupObjCImplicitSelfParam:
   case Sema::LookupOrdinaryName:
   case Sema::LookupRedeclarationWithLinkage:
     IDNS = Decl::IDNS_Ordinary;
@@ -1097,7 +1098,10 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
           if (LeftStartingScope && !((*I)->hasLinkage()))
             continue;
         }
-
+        else if (NameKind == LookupObjCImplicitSelfParam &&
+                 !isa<ImplicitParamDecl>(*I))
+          continue;
+        
         R.addDecl(*I);
 
         if ((*I)->getAttr<OverloadableAttr>()) {
@@ -1381,6 +1385,7 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
   // Look for this member in our base classes
   CXXRecordDecl::BaseMatchesCallback *BaseCallback = 0;
   switch (R.getLookupKind()) {
+    case LookupObjCImplicitSelfParam:
     case LookupOrdinaryName:
     case LookupMemberName:
     case LookupRedeclarationWithLinkage:
