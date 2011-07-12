@@ -22,6 +22,9 @@
 #include "llvm/Support/system_error.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/ADT/Statistic.h"
+
+#define DEBUG_TYPE "polly-import-jscop"
 
 #include "json/reader.h"
 #include "json/writer.h"
@@ -35,6 +38,8 @@
 
 using namespace llvm;
 using namespace polly;
+
+STATISTIC(NewAccessMapFound,  "Number of updated access functions");
 
 namespace {
 static cl::opt<std::string>
@@ -243,6 +248,31 @@ bool JSONImporter::runOnScop(Scop &scop) {
 
      if (NewScattering.find(Stmt) != NewScattering.end())
        Stmt->setScattering(NewScattering[Stmt]);
+  }
+
+  int statementIdx = 0;
+  int memoryAccessIdx = 0;
+  for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
+    ScopStmt *Stmt = *SI;
+
+    if (Stmt->isFinalRead())
+      continue;
+
+    for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
+         ME = Stmt->memacc_end(); MI != ME; ++MI) {
+      Json::Value accesses = jscop["statements"][statementIdx]
+                                  ["accesses"][memoryAccessIdx]["relation"];
+      isl_map *newAccessMap = isl_map_read_from_str(S->getCtx(),
+                                                    accesses.asCString(), -1);
+      isl_map *currentAccessMap = (*MI)->getAccessFunction();
+      if (!isl_map_is_equal(newAccessMap, currentAccessMap)) {
+        // Statistics.
+        ++NewAccessMapFound;
+        (*MI)->setNewAccessFunction(newAccessMap);
+      }
+      memoryAccessIdx++;
+    }
+    statementIdx++;
   }
 
   return false;

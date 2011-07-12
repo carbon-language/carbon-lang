@@ -156,6 +156,7 @@ isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
 }
 
 MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
+  newAccessRelation = NULL;
   BaseAddr = AffFunc.getBaseAddr();
   Type = AffFunc.isRead() ? Read : Write;
   statement = Statement;
@@ -191,6 +192,7 @@ MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
 }
 
 MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement) {
+  newAccessRelation = NULL;
   BaseAddr = BaseAddress;
   Type = Read;
   statement = Statement;
@@ -334,6 +336,9 @@ bool MemoryAccess::isStrideOne(const isl_set *domainSubset) const {
   return isl_set_is_equal(stride, strideZero);
 }
 
+void MemoryAccess::setNewAccessFunction(isl_map *newAccessRelation) {
+  newAccessRelation = newAccessRelation;
+}
 
 //===----------------------------------------------------------------------===//
 void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {

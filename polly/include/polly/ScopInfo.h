@@ -95,6 +95,8 @@ private:
   void setBaseName();
   ScopStmt *statement;
 
+  /// Updated access relation read from JSCOP file.
+  isl_map *newAccessRelation;
 public:
   // @brief Create an affine memory access.
   //
@@ -143,6 +145,8 @@ public:
   /// @brief Get the statement that contains this memory access.
   ScopStmt *getStatement() const { return statement; }
 
+  /// @brief Set the updated access relation read from JSCOP file.
+  void setNewAccessFunction(isl_map *newAccessRelation);
   /// @brief Print the MemoryAccess.
   ///
   /// @param OS The output stream the MemoryAccess is printed to.
