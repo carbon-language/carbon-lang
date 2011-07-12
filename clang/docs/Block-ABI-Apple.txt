@@ -476,7 +476,7 @@ struct _block_byref_obj {
     int size;
     void (*byref_keep)(struct _block_byref_i *dst, struct _block_byref_i *src);
     void (*byref_dispose)(struct _block_byref_i *);
-    int captured_obj;
+    id captured_obj;
 };
 
 void _block_byref_obj_keep(struct _block_byref_voidBlock *dst, struct _block_byref_voidBlock *src) {
