@@ -1274,6 +1274,14 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
   }
 }
 
+static llvm::Value *
+EmitBitCastOfLValueToProperType(llvm::IRBuilder<> &Builder, 
+                                llvm::Value *V, llvm::Type *IRType,
+                                llvm::StringRef Name = llvm::StringRef()) {
+  unsigned AS = cast<llvm::PointerType>(V->getType())->getAddressSpace();
+  return Builder.CreateBitCast(V, IRType->getPointerTo(AS), Name);
+}
+
 static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
                                       const Expr *E, const VarDecl *VD) {
   assert((VD->hasExternalStorage() || VD->isFileVarDecl()) &&
@@ -1282,8 +1290,11 @@ static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
   llvm::Value *V = CGF.CGM.GetAddrOfGlobalVar(VD);
   if (VD->getType()->isReferenceType())
     V = CGF.Builder.CreateLoad(V, "tmp");
-  unsigned Alignment = CGF.getContext().getDeclAlign(VD).getQuantity();
   
+  V = EmitBitCastOfLValueToProperType(CGF.Builder, V,
+                                CGF.getTypes().ConvertTypeForMem(E->getType()));
+
+  unsigned Alignment = CGF.getContext().getDeclAlign(VD).getQuantity();
   LValue LV = CGF.MakeAddrLValue(V, E->getType(), Alignment);
   setObjCGCLValueClass(CGF.getContext(), E, LV);
   return LV;
@@ -1338,6 +1349,9 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     
     if (VD->getType()->isReferenceType())
       V = Builder.CreateLoad(V, "tmp");
+
+    V = EmitBitCastOfLValueToProperType(Builder, V,
+                                    getTypes().ConvertTypeForMem(E->getType()));
 
     LValue LV = MakeAddrLValue(V, E->getType(), Alignment);
     if (NonGCable) {
@@ -1836,11 +1850,9 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value *baseAddr,
   // for both unions and structs.  A union needs a bitcast, a struct element
   // will need a bitcast if the LLVM type laid out doesn't match the desired
   // type.
-  const llvm::Type *llvmType = CGM.getTypes().ConvertTypeForMem(type);
-  unsigned AS = cast<llvm::PointerType>(baseAddr->getType())->getAddressSpace();
-  addr = Builder.CreateBitCast(addr, llvmType->getPointerTo(AS),
-                               field->getName());
-
+  addr = EmitBitCastOfLValueToProperType(Builder, addr,
+                                         CGM.getTypes().ConvertTypeForMem(type),
+                                         field->getName());
 
   unsigned alignment = getContext().getDeclAlign(field).getQuantity();
   LValue LV = MakeAddrLValue(addr, type, alignment);

@@ -92,7 +92,6 @@ llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T){
   // Otherwise, return an integer of the target-specified size.
   return llvm::IntegerType::get(getLLVMContext(),
                                 (unsigned)Context.getTypeSize(T));
-
 }
 
 /// isFuncTypeArgumentConvertible - Return true if the specified type in a 
@@ -318,8 +317,14 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     const IncompleteArrayType *A = cast<IncompleteArrayType>(Ty);
     assert(A->getIndexTypeCVRQualifiers() == 0 &&
            "FIXME: We only handle trivial array types so far!");
-    // int X[] -> [0 x int]
-    ResultType = llvm::ArrayType::get(ConvertTypeForMem(A->getElementType()),0);
+    // int X[] -> [0 x int], unless the element type is not sized.  If it is
+    // unsized (e.g. an incomplete struct) just use [0 x i8].
+    ResultType = ConvertTypeForMem(A->getElementType());
+    if (!ResultType->isSized()) {
+      SkippedLayout = true;
+      ResultType = llvm::Type::getInt8Ty(getLLVMContext());
+    }
+    ResultType = llvm::ArrayType::get(ResultType, 0);
     break;
   }
   case Type::ConstantArray: {
