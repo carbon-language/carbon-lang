@@ -3744,6 +3744,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       case LookupResult::FoundOverloaded:
       case LookupResult::FoundUnresolvedValue:
         I->second.setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
+        // FIXME: This sets the CorrectionDecl to NULL for overloaded functions.
+        // It would be nice to find the right one with overload resolution.
         ++I;
         break;
       }
@@ -3835,7 +3837,6 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     // wasn't actually in scope.
     if (ED == 0 && Result.isKeyword()) return TypoCorrection();
 
-    assert(Result.isResolved() && "correction has not been looked up");
     // Record the correction for unqualified lookup.
     if (IsUnqualifiedLookup)
       UnqualifiedTyposCorrected[Typo] = Result;

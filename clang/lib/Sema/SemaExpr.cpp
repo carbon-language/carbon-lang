@@ -1404,8 +1404,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
     std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
     R.setLookupName(Corrected.getCorrection());
 
-    if (!Corrected.isKeyword()) {
-      NamedDecl *ND = Corrected.getCorrectionDecl();
+    if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
       R.addDecl(ND);
       if (isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND)) {
         if (SS.isEmpty())
