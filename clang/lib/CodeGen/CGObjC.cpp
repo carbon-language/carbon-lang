@@ -1902,23 +1902,6 @@ namespace {
     CallReleaseForObject(QualType type, llvm::Value *addr,
                          CodeGenFunction::Destroyer *destroyer)
       : ObjCReleasingCleanup(type, addr, destroyer) {}
-
-    using ObjCReleasingCleanup::Emit;
-    static void Emit(CodeGenFunction &CGF, bool IsForEH,
-                     QualType type, llvm::Value *addr,
-                     CodeGenFunction::Destroyer *destroyer) {
-      // EHScopeStack::Cleanup objects can never have their destructors called,
-      // so use placement new to construct our temporary object.
-      union {
-        void* align;
-        char data[sizeof(CallReleaseForObject)];
-      };
-      
-      CallReleaseForObject *Object
-        = new (&align) CallReleaseForObject(type, addr, destroyer);
-      Object->Emit(CGF, IsForEH);
-      (void)data[0];
-    }
   };
 
   /// A cleanup that calls @objc_storeStrong(nil) on all the objects to
@@ -1965,22 +1948,6 @@ namespace {
   struct CallWeakReleaseForObject : ObjCReleasingCleanup {
     CallWeakReleaseForObject(QualType type, llvm::Value *addr)
       : ObjCReleasingCleanup(type, addr, CodeGenFunction::destroyARCWeak) {}
-
-    using ObjCReleasingCleanup::Emit;
-    static void Emit(CodeGenFunction &CGF, bool IsForEH,
-                     QualType type, llvm::Value *addr) {
-      // EHScopeStack::Cleanup objects can never have their destructors called,
-      // so use placement new to construct our temporary object.
-      union {
-        void* align;
-        char data[sizeof(CallWeakReleaseForObject)];
-      };
-      
-      CallWeakReleaseForObject *Object
-        = new (&align) CallWeakReleaseForObject(type, addr);
-      Object->Emit(CGF, IsForEH);
-      (void)data[0];
-    }
   };
 
   

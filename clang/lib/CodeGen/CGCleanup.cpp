@@ -256,9 +256,7 @@ void CodeGenFunction::initFullExprCleanup() {
   if (cleanup.isEHCleanup()) cleanup.setTestFlagInEHCleanup();
 }
 
-EHScopeStack::Cleanup::~Cleanup() {
-  llvm_unreachable("Cleanup is indestructable");
-}
+void EHScopeStack::Cleanup::anchor() {}
 
 /// All the branch fixups on the EH stack have propagated out past the
 /// outermost normal cleanup; resolve them all by adding cases to the

@@ -181,15 +181,13 @@ public:
   /// Cleanup implementations should generally be declared in an
   /// anonymous namespace.
   class Cleanup {
+    // Anchor the construction vtable.
+    virtual void anchor();
   public:
-    // Anchor the construction vtable.  We use the destructor because
-    // gcc gives an obnoxious warning if there are virtual methods
-    // with an accessible non-virtual destructor.  Unfortunately,
-    // declaring this destructor makes it non-trivial, but there
-    // doesn't seem to be any other way around this warning.
-    //
-    // This destructor will never be called.
-    virtual ~Cleanup();
+    // Provide a virtual destructor to suppress a very common warning
+    // that unfortunately cannot be suppressed without this.  Cleanups
+    // should not rely on this destructor ever being called.
+    virtual ~Cleanup() {}
 
     /// Emit the cleanup.  For normal cleanups, this is run in the
     /// same EH context as when the cleanup was pushed, i.e. the
@@ -201,38 +199,6 @@ public:
     virtual void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) = 0;
   };
 
-  /// UnconditionalCleanupN stores its N parameters and just passes
-  /// them to the real cleanup function.
-  template <class T, class A0>
-  class UnconditionalCleanup1 : public Cleanup {
-    A0 a0;
-  public:
-    UnconditionalCleanup1(A0 a0) : a0(a0) {}
-    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
-      T::Emit(CGF, IsForEHCleanup, a0);
-    }
-  };
-
-  template <class T, class A0, class A1>
-  class UnconditionalCleanup2 : public Cleanup {
-    A0 a0; A1 a1;
-  public:
-    UnconditionalCleanup2(A0 a0, A1 a1) : a0(a0), a1(a1) {}
-    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
-      T::Emit(CGF, IsForEHCleanup, a0, a1);
-    }
-  };
-
-  template <class T, class A0, class A1, class A2>
-  class UnconditionalCleanup3 : public Cleanup {
-    A0 a0; A1 a1; A2 a2;
-  public:
-    UnconditionalCleanup3(A0 a0, A1 a1, A2 a2) : a0(a0), a1(a1), a2(a2) {}
-    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
-      T::Emit(CGF, IsForEHCleanup, a0, a1, a2);
-    }
-  };
-
   /// ConditionalCleanupN stores the saved form of its N parameters,
   /// then restores them and performs the cleanup.
   template <class T, class A0>
@@ -242,7 +208,7 @@ public:
 
     void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
       A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
-      T::Emit(CGF, IsForEHCleanup, a0);
+      T(a0).Emit(CGF, IsForEHCleanup);
     }
 
   public:
@@ -260,7 +226,7 @@ public:
     void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
       A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
       A1 a1 = DominatingValue<A1>::restore(CGF, a1_saved);
-      T::Emit(CGF, IsForEHCleanup, a0, a1);
+      T(a0, a1).Emit(CGF, IsForEHCleanup);
     }
 
   public:
@@ -281,12 +247,12 @@ public:
       A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
       A1 a1 = DominatingValue<A1>::restore(CGF, a1_saved);
       A2 a2 = DominatingValue<A2>::restore(CGF, a2_saved);
-      T::Emit(CGF, IsForEHCleanup, a0, a1, a2);
+      T(a0, a1, a2).Emit(CGF, IsForEHCleanup);
     }
     
   public:
     ConditionalCleanup3(A0_saved a0, A1_saved a1, A2_saved a2)
-    : a0_saved(a0), a1_saved(a1), a2_saved(a2) {}
+      : a0_saved(a0), a1_saved(a1), a2_saved(a2) {}
   };
 
 private:
@@ -696,10 +662,8 @@ public:
   void pushFullExprCleanup(CleanupKind kind, A0 a0) {
     // If we're not in a conditional branch, or if none of the
     // arguments requires saving, then use the unconditional cleanup.
-    if (!isInConditionalBranch()) {
-      typedef EHScopeStack::UnconditionalCleanup1<T, A0> CleanupType;
-      return EHStack.pushCleanup<CleanupType>(kind, a0);
-    }
+    if (!isInConditionalBranch())
+      return EHStack.pushCleanup<T>(kind, a0);
 
     typename DominatingValue<A0>::saved_type a0_saved = saveValueInCond(a0);
 
@@ -715,10 +679,8 @@ public:
   void pushFullExprCleanup(CleanupKind kind, A0 a0, A1 a1) {
     // If we're not in a conditional branch, or if none of the
     // arguments requires saving, then use the unconditional cleanup.
-    if (!isInConditionalBranch()) {
-      typedef EHScopeStack::UnconditionalCleanup2<T, A0, A1> CleanupType;
-      return EHStack.pushCleanup<CleanupType>(kind, a0, a1);
-    }
+    if (!isInConditionalBranch())
+      return EHStack.pushCleanup<T>(kind, a0, a1);
 
     typename DominatingValue<A0>::saved_type a0_saved = saveValueInCond(a0);
     typename DominatingValue<A1>::saved_type a1_saved = saveValueInCond(a1);
@@ -736,8 +698,7 @@ public:
     // If we're not in a conditional branch, or if none of the
     // arguments requires saving, then use the unconditional cleanup.
     if (!isInConditionalBranch()) {
-      typedef EHScopeStack::UnconditionalCleanup3<T, A0, A1, A2> CleanupType;
-      return EHStack.pushCleanup<CleanupType>(kind, a0, a1, a2);
+      return EHStack.pushCleanup<T>(kind, a0, a1, a2);
     }
     
     typename DominatingValue<A0>::saved_type a0_saved = saveValueInCond(a0);
