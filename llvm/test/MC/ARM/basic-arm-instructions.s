@@ -16,6 +16,7 @@ _func:
   adc r1, r2, #0xf000000f
   adcs r1, r2, #0xf00
   adcseq r1, r2, #0xf00
+  adceq r1, r2, #0xf00
 
 @ CHECK: adc	r1, r2, #15             @ encoding: [0x0f,0x10,0xa2,0xe2]
 @ CHECK: adc	r1, r2, #240            @ encoding: [0xf0,0x10,0xa2,0xe2]
@@ -29,3 +30,4 @@ _func:
 
 @ CHECK: adcs	r1, r2, #3840           @ encoding: [0x0f,0x1c,0xb2,0xe2]
 @ CHECK: adcseq	r1, r2, #3840           @ encoding: [0x0f,0x1c,0xb2,0x02]
+@ CHECK: adceq	r1, r2, #3840           @ encoding: [0x0f,0x1c,0xa2,0x02]
