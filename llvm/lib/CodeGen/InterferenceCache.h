@@ -127,14 +127,10 @@ public:
     Entry *CacheEntry;
     BlockInterference *Current;
   public:
-    /// Cursor - Create a dangling cursor.
-    Cursor() : CacheEntry(0), Current(0) {}
-
-    /// setPhysReg - Point this cursor to PhysReg's interference.
-    void setPhysReg(InterferenceCache &Cache, unsigned PhysReg) {
-      CacheEntry = Cache.get(PhysReg);
-      Current = 0;
-    }
+    /// Cursor - Create a cursor for the interference allocated to PhysReg and
+    /// all its aliases.
+    Cursor(InterferenceCache &Cache, unsigned PhysReg)
+      : CacheEntry(Cache.get(PhysReg)), Current(0) {}
 
     /// moveTo - Move cursor to basic block MBBNum.
     void moveToBlock(unsigned MBBNum) {
