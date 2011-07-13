@@ -220,10 +220,12 @@ namespace {
 struct FinishARCDealloc : EHScopeStack::Cleanup {
   void Emit(CodeGenFunction &CGF, Flags flags) {
     const ObjCMethodDecl *method = cast<ObjCMethodDecl>(CGF.CurCodeDecl);
-    const ObjCImplementationDecl *impl
-      = cast<ObjCImplementationDecl>(method->getDeclContext());
+
+    const ObjCImplDecl *impl = cast<ObjCImplDecl>(method->getDeclContext());
     const ObjCInterfaceDecl *iface = impl->getClassInterface();
     if (!iface->getSuperClass()) return;
+
+    bool isCategory = isa<ObjCCategoryImplDecl>(impl);
 
     // Call [super dealloc] if we have a superclass.
     llvm::Value *self = CGF.LoadObjCSelf();
@@ -233,7 +235,7 @@ struct FinishARCDealloc : EHScopeStack::Cleanup {
                                                       CGF.getContext().VoidTy,
                                                       method->getSelector(),
                                                       iface,
-                                                      /*is category*/ false,
+                                                      isCategory,
                                                       self,
                                                       /*is class msg*/ false,
                                                       args,

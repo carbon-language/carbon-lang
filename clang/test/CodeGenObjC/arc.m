@@ -1542,3 +1542,13 @@ void test54(int first, ...) {
   // CHECK: call void @objc_release
   // CHECK: ret void
 }
+
+// PR10228
+@interface Test55Base @end
+@interface Test55 : Test55Base @end
+@implementation Test55 (Category)
+- (void) dealloc {}
+@end
+// CHECK:   define internal void @"\01-[Test55(Category) dealloc]"(
+// CHECK-NOT: ret
+// CHECK:     call void bitcast (i8* ({{%.*}}*, i8*, ...)* @objc_msgSendSuper2 to void ({{%.*}}*, i8*)*)(
