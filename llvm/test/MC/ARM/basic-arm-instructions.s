@@ -178,3 +178,61 @@ _func:
 @ CHECK: add	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0x86,0xe0]
 @ CHECK: add	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x86,0xe0]
 @ CHECK: add	r4, r4, r5, rrx         @ encoding: [0x65,0x40,0x84,0xe0]
+
+
+@------------------------------------------------------------------------------
+@ AND
+@------------------------------------------------------------------------------
+  and r10, r1, #0xf
+  and r10, r1, r6
+  and r10, r1, r6, lsl #10
+  and r10, r1, r6, lsr #10
+  and r10, r1, r6, lsr #10
+  and r10, r1, r6, asr #10
+  and r10, r1, r6, ror #10
+  and r6, r7, r8, lsl r2
+  and r6, r7, r8, lsr r2
+  and r6, r7, r8, asr r2
+  and r6, r7, r8, ror r2
+  and r10, r1, r6, rrx
+
+  @ destination register is optional
+  and r1, #0xf
+  and r10, r1
+  and r10, r1, lsl #10
+  and r10, r1, lsr #10
+  and r10, r1, lsr #10
+  and r10, r1, asr #10
+  and r10, r1, ror #10
+  and r6, r7, lsl r2
+  and r6, r7, lsr r2
+  and r6, r7, asr r2
+  and r6, r7, ror r2
+  and r10, r1, rrx
+
+@ CHECK: and	r10, r1, #15            @ encoding: [0x0f,0xa0,0x01,0xe2]
+@ CHECK: and	r10, r1, r6             @ encoding: [0x06,0xa0,0x01,0xe0]
+@ CHECK: and	r10, r1, r6, lsl #10    @ encoding: [0x06,0xa5,0x01,0xe0]
+@ CHECK: and	r10, r1, r6, lsr #10    @ encoding: [0x26,0xa5,0x01,0xe0]
+@ CHECK: and	r10, r1, r6, lsr #10    @ encoding: [0x26,0xa5,0x01,0xe0]
+@ CHECK: and	r10, r1, r6, asr #10    @ encoding: [0x46,0xa5,0x01,0xe0]
+@ CHECK: and	r10, r1, r6, ror #10    @ encoding: [0x66,0xa5,0x01,0xe0]
+@ CHECK: and	r6, r7, r8, lsl r2      @ encoding: [0x18,0x62,0x07,0xe0]
+@ CHECK: and	r6, r7, r8, lsr r2      @ encoding: [0x38,0x62,0x07,0xe0]
+@ CHECK: and	r6, r7, r8, asr r2      @ encoding: [0x58,0x62,0x07,0xe0]
+@ CHECK: and	r6, r7, r8, ror r2      @ encoding: [0x78,0x62,0x07,0xe0]
+@ CHECK: and	r10, r1, r6, rrx        @ encoding: [0x66,0xa0,0x01,0xe0]
+
+@ CHECK: and	r1, r1, #15             @ encoding: [0x0f,0x10,0x01,0xe2]
+@ CHECK: and	r10, r10, r1            @ encoding: [0x01,0xa0,0x0a,0xe0]
+@ CHECK: and	r10, r10, r1, lsl #10   @ encoding: [0x01,0xa5,0x0a,0xe0]
+@ CHECK: and	r10, r10, r1, lsr #10   @ encoding: [0x21,0xa5,0x0a,0xe0]
+@ CHECK: and	r10, r10, r1, lsr #10   @ encoding: [0x21,0xa5,0x0a,0xe0]
+@ CHECK: and	r10, r10, r1, asr #10   @ encoding: [0x41,0xa5,0x0a,0xe0]
+@ CHECK: and	r10, r10, r1, ror #10   @ encoding: [0x61,0xa5,0x0a,0xe0]
+@ CHECK: and	r6, r6, r7, lsl r2      @ encoding: [0x17,0x62,0x06,0xe0]
+@ CHECK: and	r6, r6, r7, lsr r2      @ encoding: [0x37,0x62,0x06,0xe0]
+@ CHECK: and	r6, r6, r7, asr r2      @ encoding: [0x57,0x62,0x06,0xe0]
+@ CHECK: and	r6, r6, r7, ror r2      @ encoding: [0x77,0x62,0x06,0xe0]
+@ CHECK: and	r10, r10, r1, rrx       @ encoding: [0x61,0xa0,0x0a,0xe0]
+
