@@ -175,7 +175,7 @@ public:
                   const char *working_directory);
     
 #ifdef SWIG
-    %feature("autodoc", "
+    %feature("docstring", "
 #endif
     //------------------------------------------------------------------
     /// Attach to process with pid.
@@ -204,7 +204,7 @@ public:
                            lldb::SBError& error);
 
 #ifdef SWIG
-    %feature("autodoc", "
+    %feature("docstring", "
 #endif
     //------------------------------------------------------------------
     /// Attach to process with name.
@@ -237,7 +237,7 @@ public:
                              lldb::SBError& error);
 
 #ifdef SWIG
-    %feature("autodoc", "
+    %feature("docstring", "
 #endif
     //------------------------------------------------------------------
     /// Attach to process with name.
@@ -284,6 +284,36 @@ public:
     lldb::SBModule
     FindModule (const lldb::SBFileSpec &file_spec);
 
+#ifdef SWIG
+    %feature("docstring", "
+#endif
+    //------------------------------------------------------------------
+    /// Find functions by name.
+    ///
+    /// @param[in] name
+    ///     The name of the function we are looking for.
+    ///
+    /// @param[in] name_type_mask
+    ///     A logical OR of one or more FunctionNameType enum bits that
+    ///     indicate what kind of names should be used when doing the
+    ///     lookup. Bits include fully qualified names, base names,
+    ///     C++ methods, or ObjC selectors. 
+    ///     See FunctionNameType for more details.
+    ///
+    /// @param[in] append
+    ///     If true, any matches will be appended to \a sc_list, else
+    ///     matches replace the contents of \a sc_list.
+    ///
+    /// @param[out] sc_list
+    ///     A symbol context list that gets filled in with all of the
+    ///     matches.
+    ///
+    /// @return
+    ///     The number of matches added to \a sc_list.
+    //------------------------------------------------------------------
+#ifdef SWIG
+    ") FindFunctions;
+#endif
     uint32_t
     FindFunctions (const char *name, 
                    uint32_t name_type_mask, // Logical OR one or more FunctionNameType enum bits
@@ -291,7 +321,7 @@ public:
                    lldb::SBSymbolContextList& sc_list);
 
 #ifdef SWIG
-    %feature("autodoc", "
+    %feature("docstring", "
 #endif
     //------------------------------------------------------------------
     /// Find global and static variables by name.
