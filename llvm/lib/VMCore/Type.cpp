@@ -343,8 +343,6 @@ FunctionType *FunctionType::get(const Type *ReturnType,
     FT = (FunctionType*) operator new(sizeof(FunctionType) +
                                     sizeof(Type*)*(Params.size()+1));
     new (FT) FunctionType(ReturnType, Params, isVarArg);
-
-    ReturnType->getContext().pImpl->FunctionTypes[Key] = FT;
   }
 
   return FT;
@@ -395,9 +393,6 @@ StructType *StructType::get(LLVMContext &Context, ArrayRef<Type*> ETypes,
   ST = new StructType(Context);
   ST->setSubclassData(SCDB_IsAnonymous);  // Anonymous struct.
   ST->setBody(ETypes, isPacked);
-
-  Context.pImpl->AnonStructTypes[Key] = ST;
-
   return ST;
 }
 
