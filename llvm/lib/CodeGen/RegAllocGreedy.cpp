@@ -1243,16 +1243,18 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   DEBUG(dbgs() << "Cost of isolating all blocks = " << BestCost << '\n');
   const unsigned NoCand = ~0u;
   unsigned BestCand = NoCand;
+  unsigned NumCands = 0;
 
   Order.rewind();
-  for (unsigned Cand = 0; unsigned PhysReg = Order.next(); ++Cand) {
-    if (GlobalCand.size() <= Cand)
-      GlobalCand.resize(Cand+1);
-    GlobalCand[Cand].reset(IntfCache, PhysReg);
+  while (unsigned PhysReg = Order.next()) {
+    if (GlobalCand.size() <= NumCands)
+      GlobalCand.resize(NumCands+1);
+    GlobalSplitCandidate &Cand = GlobalCand[NumCands];
+    Cand.reset(IntfCache, PhysReg);
 
-    SpillPlacer->prepare(GlobalCand[Cand].LiveBundles);
+    SpillPlacer->prepare(Cand.LiveBundles);
     float Cost;
-    if (!addSplitConstraints(GlobalCand[Cand].Intf, Cost)) {
+    if (!addSplitConstraints(Cand.Intf, Cost)) {
       DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tno positive bundles\n");
       continue;
     }
@@ -1267,28 +1269,29 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       });
       continue;
     }
-    growRegion(GlobalCand[Cand]);
+    growRegion(Cand);
 
     SpillPlacer->finish();
 
     // No live bundles, defer to splitSingleBlocks().
-    if (!GlobalCand[Cand].LiveBundles.any()) {
+    if (!Cand.LiveBundles.any()) {
       DEBUG(dbgs() << " no bundles.\n");
       continue;
     }
 
-    Cost += calcGlobalSplitCost(GlobalCand[Cand]);
+    Cost += calcGlobalSplitCost(Cand);
     DEBUG({
       dbgs() << ", total = " << Cost << " with bundles";
-      for (int i = GlobalCand[Cand].LiveBundles.find_first(); i>=0;
-           i = GlobalCand[Cand].LiveBundles.find_next(i))
+      for (int i = Cand.LiveBundles.find_first(); i>=0;
+           i = Cand.LiveBundles.find_next(i))
         dbgs() << " EB#" << i;
       dbgs() << ".\n";
     });
     if (Cost < BestCost) {
-      BestCand = Cand;
+      BestCand = NumCands;
       BestCost = Hysteresis * Cost; // Prevent rounding effects.
     }
+    ++NumCands;
   }
 
   if (BestCand == NoCand)
