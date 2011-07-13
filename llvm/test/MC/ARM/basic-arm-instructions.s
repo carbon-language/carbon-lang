@@ -389,3 +389,62 @@ _func:
 
 @ CHECK: clz r1, r2                      @ encoding: [0x12,0x1f,0x6f,0xe1]
 @ CHECK: clzeq r1, r2                    @ encoding: [0x12,0x1f,0x6f,0x01]
+
+@------------------------------------------------------------------------------
+@ CMN
+@------------------------------------------------------------------------------
+  cmn r1, #0xf
+  cmn r1, r6
+  cmn r1, r6, lsl #10
+  cmn r1, r6, lsr #10
+  cmn sp, r6, lsr #10
+  cmn r1, r6, asr #10
+  cmn r1, r6, ror #10
+  cmn r7, r8, lsl r2
+  cmn sp, r8, lsr r2
+  cmn r7, r8, asr r2
+  cmn r7, r8, ror r2
+  cmn r1, r6, rrx
+
+@ CHECK: cmn	r1, #15                 @ encoding: [0x0f,0x00,0x71,0xe3]
+@ CHECK: cmn	r1, r6                  @ encoding: [0x06,0x00,0x71,0xe1]
+@ CHECK: cmn	r1, r6, lsl #10         @ encoding: [0x06,0x05,0x71,0xe1]
+@ CHECK: cmn	r1, r6, lsr #10         @ encoding: [0x26,0x05,0x71,0xe1]
+@ CHECK: cmn	sp, r6, lsr #10         @ encoding: [0x26,0x05,0x7d,0xe1]
+@ CHECK: cmn	r1, r6, asr #10         @ encoding: [0x46,0x05,0x71,0xe1]
+@ CHECK: cmn	r1, r6, ror #10         @ encoding: [0x66,0x05,0x71,0xe1]
+@ CHECK: cmn	r7, r8, lsl r2          @ encoding: [0x18,0x02,0x77,0xe1]
+@ CHECK: cmn	sp, r8, lsr r2          @ encoding: [0x38,0x02,0x7d,0xe1]
+@ CHECK: cmn	r7, r8, asr r2          @ encoding: [0x58,0x02,0x77,0xe1]
+@ CHECK: cmn	r7, r8, ror r2          @ encoding: [0x78,0x02,0x77,0xe1]
+@ CHECK: cmn	r1, r6, rrx             @ encoding: [0x66,0x00,0x71,0xe1]
+
+@------------------------------------------------------------------------------
+@ CMP
+@------------------------------------------------------------------------------
+  cmp r1, #0xf
+  cmp r1, r6
+  cmp r1, r6, lsl #10
+  cmp r1, r6, lsr #10
+  cmp sp, r6, lsr #10
+  cmp r1, r6, asr #10
+  cmp r1, r6, ror #10
+  cmp r7, r8, lsl r2
+  cmp sp, r8, lsr r2
+  cmp r7, r8, asr r2
+  cmp r7, r8, ror r2
+  cmp r1, r6, rrx
+
+@ CHECK: cmp	r1, #15                 @ encoding: [0x0f,0x00,0x51,0xe3]
+@ CHECK: cmp	r1, r6                  @ encoding: [0x06,0x00,0x51,0xe1]
+@ CHECK: cmp	r1, r6, lsl #10         @ encoding: [0x06,0x05,0x51,0xe1]
+@ CHECK: cmp	r1, r6, lsr #10         @ encoding: [0x26,0x05,0x51,0xe1]
+@ CHECK: cmp	sp, r6, lsr #10         @ encoding: [0x26,0x05,0x5d,0xe1]
+@ CHECK: cmp	r1, r6, asr #10         @ encoding: [0x46,0x05,0x51,0xe1]
+@ CHECK: cmp	r1, r6, ror #10         @ encoding: [0x66,0x05,0x51,0xe1]
+@ CHECK: cmp	r7, r8, lsl r2          @ encoding: [0x18,0x02,0x57,0xe1]
+@ CHECK: cmp	sp, r8, lsr r2          @ encoding: [0x38,0x02,0x5d,0xe1]
+@ CHECK: cmp	r7, r8, asr r2          @ encoding: [0x58,0x02,0x57,0xe1]
+@ CHECK: cmp	r7, r8, ror r2          @ encoding: [0x78,0x02,0x57,0xe1]
+@ CHECK: cmp	r1, r6, rrx             @ encoding: [0x66,0x00,0x51,0xe1]
+
