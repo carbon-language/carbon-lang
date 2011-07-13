@@ -34,7 +34,7 @@ class DagRecTy;
 class RecordRecTy;
 
 // Init subclasses.
-struct Init;
+class Init;
 class UnsetInit;
 class BitInit;
 class BitsInit;
@@ -453,7 +453,8 @@ RecTy *resolveTypes(RecTy *T1, RecTy *T2);
 //  Initializer Classes
 //===----------------------------------------------------------------------===//
 
-struct Init {
+class Init {
+public:
   virtual ~Init() {}
 
   /// isComplete - This virtual method should be overridden by values that may

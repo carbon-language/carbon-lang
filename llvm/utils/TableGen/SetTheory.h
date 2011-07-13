@@ -55,7 +55,7 @@
 namespace llvm {
 
 class DagInit;
-struct Init;
+class Init;
 class Record;
 class RecordKeeper;
 

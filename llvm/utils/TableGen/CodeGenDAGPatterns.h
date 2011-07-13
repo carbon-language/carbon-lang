@@ -26,7 +26,7 @@
 
 namespace llvm {
   class Record;
-  struct Init;
+  class Init;
   class ListInit;
   class DagInit;
   class SDNodeInfo;
