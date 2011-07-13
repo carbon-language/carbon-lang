@@ -1031,13 +1031,55 @@ X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
 }
 
+static uint32_t permuteEncode(unsigned SavedCount, unsigned Registers[6]) {
+   uint32_t RenumRegs[6];
+   for (int i = 6 - SavedCount; i < 6; ++i) {
+       int countless = 0;
+       for (int j = 6 - SavedCount; j < i; ++j)
+           if (Registers[j] < Registers[i])
+               ++countless;
+
+       RenumRegs[i] = Registers[i] - countless - 1;
+   }
+
+   uint32_t permutationEncoding = 0;
+   switch (SavedCount) {
+   case 6:
+     permutationEncoding |= 120 * RenumRegs[0] + 24 * RenumRegs[1] 
+                            + 6 * RenumRegs[2] +  2 * RenumRegs[3] 
+                            +     RenumRegs[4];
+     break;
+   case 5:
+     permutationEncoding |= 120 * RenumRegs[1] + 24 * RenumRegs[2] 
+                            + 6 * RenumRegs[3] +  2 * RenumRegs[4] 
+                            +     RenumRegs[5];
+     break;
+   case 4:
+     permutationEncoding |= 60 * RenumRegs[2] + 12 * RenumRegs[3] 
+                           + 3 * RenumRegs[4] +      RenumRegs[5];
+     break;
+   case 3:
+     permutationEncoding |= 20 * RenumRegs[3] + 4 * RenumRegs[4] 
+                               + RenumRegs[5];
+     break;
+   case 2:
+     permutationEncoding |=  5 * RenumRegs[4] + RenumRegs[5];
+     break;
+   case 1:
+     permutationEncoding |= RenumRegs[5];
+     break;
+   }
+   return permutationEncoding;
+}
+
 uint32_t X86FrameLowering::
 getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
                          int DataAlignmentFactor, bool IsEH) const {
   uint32_t Encoding = 0;
   int CFAOffset = 0;
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
-  SmallVector<unsigned, 8> SavedRegs;
+  unsigned SavedRegs[6] = { 0, 0, 0, 0, 0, 0 };
+  unsigned SavedRegIdx = 0;
   int FramePointerReg = -1;
 
   for (ArrayRef<MCCFIInstruction>::const_iterator
@@ -1102,15 +1144,19 @@ getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
       return 0;
     } else if (Reg < 64) {
       // DW_CFA_offset + Reg
+      if (SavedRegIdx >= 6) return 0;
       int CURegNum = TRI->getCompactUnwindRegNum(Reg, IsEH);
       if (CURegNum == -1) return 0;
-      SavedRegs.push_back(CURegNum);
+      SavedRegs[SavedRegIdx++] = CURegNum;
     } else {
       // FIXME: Handle?
       // DW_CFA_offset_extended
       return 0;
     }
   }
+
+  // Bail if there are too many registers to encode.
+  if (SavedRegIdx > 6) return 0;
 
   // Check if the offset is too big.
   CFAOffset /= 4;
@@ -1119,20 +1165,16 @@ getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
   Encoding |= (CFAOffset & 0xFF) << 16; // Size encoding.
 
   if (FramePointerReg != -1) {
-    // Bail if there are too many registers to encode.
-    if (SavedRegs.size() - 1 > 5) return 0;
-
-    Encoding |= 1 << 24;        // EBP/RBP Unwind Frame
-
-    unsigned Idx = 0;
-    for (SmallVectorImpl<unsigned>::iterator
-           I = SavedRegs.begin(), E = SavedRegs.end(); I != E; ++I) {
-      unsigned Reg = *I;
+    Encoding |= 0x01000000;     // EBP/RBP Unwind Frame
+    for (unsigned I = 0; I != SavedRegIdx; ++I) {
+      unsigned Reg = SavedRegs[I];
       if (Reg == unsigned(FramePointerReg)) continue;
-      Encoding |= (Reg & 0x7) << (Idx++ * 3); // Register encoding
+      Encoding |= (Reg & 0x7) << (I * 3); // Register encoding
     }
   } else {
-    // FIXME: Handle frameless version!
+    Encoding |= 0x02000000;     // Frameless unwind with small stack
+    Encoding |= (SavedRegIdx & 0x7) << 10;
+    Encoding |= permuteEncode(SavedRegIdx, SavedRegs);
   }
 
   return Encoding;
