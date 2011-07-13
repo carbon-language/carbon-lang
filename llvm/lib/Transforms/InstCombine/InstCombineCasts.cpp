@@ -1216,7 +1216,8 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
   CallInst *Call = dyn_cast<CallInst>(CI.getOperand(0));
   if (Call && Call->getCalledFunction() &&
       Call->getCalledFunction()->getName() == "sqrt" &&
-      Call->getNumArgOperands() == 1) {
+      Call->getNumArgOperands() == 1 &&
+      Call->hasOneUse()) {
     CastInst *Arg = dyn_cast<CastInst>(Call->getArgOperand(0));
     if (Arg && Arg->getOpcode() == Instruction::FPExt &&
         CI.getType()->isFloatTy() &&
