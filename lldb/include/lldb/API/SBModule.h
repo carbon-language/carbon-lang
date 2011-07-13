@@ -175,12 +175,15 @@ public:
     //------------------------------------------------------------------
     /// Find global and static variables by name.
     ///
+    /// @param[in] target
+    ///     A valid SBTarget instance representing the debuggee.
+    ///
     /// @param[in] name
     ///     The name of the global or static variable we are looking
     ///     for.
     ///
-    /// @param[in] target
-    ///     The target program where the variables reside.
+    /// @param[in] max_matches
+    ///     Allow the number of matches to be limited to \a max_matches.
     ///
     /// @return
     ///     A list of matched variables in an SBValueList.

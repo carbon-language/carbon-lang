@@ -290,6 +290,25 @@ public:
                    bool append, 
                    lldb::SBSymbolContextList& sc_list);
 
+#ifdef SWIG
+    %feature("autodoc", "
+#endif
+    //------------------------------------------------------------------
+    /// Find global and static variables by name.
+    ///
+    /// @param[in] name
+    ///     The name of the global or static variable we are looking
+    ///     for.
+    ///
+    /// @param[in] max_matches
+    ///     Allow the number of matches to be limited to \a max_matches.
+    ///
+    /// @return
+    ///     A list of matched variables in an SBValueList.
+    //------------------------------------------------------------------
+#ifdef SWIG
+    ") FindGlobalVariables;
+#endif
     lldb::SBValueList
     FindGlobalVariables (const char *name, 
                          uint32_t max_matches);
