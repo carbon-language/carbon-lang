@@ -153,3 +153,17 @@ namespace test2 {
   }
 
 }
+
+// PR10351
+namespace test3 {
+  struct A { A(); ~A(); void *p; };
+  struct B {
+    B() {}
+    A a;
+  };
+
+  B *test() {
+    return new B[10];
+    // invoke void @_ZN5test31BD1Ev(
+  }
+}

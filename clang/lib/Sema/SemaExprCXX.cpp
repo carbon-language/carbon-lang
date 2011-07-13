@@ -1148,7 +1148,17 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (OperatorDelete)
     MarkDeclarationReferenced(StartLoc, OperatorDelete);
 
-  // FIXME: Also check that the destructor is accessible. (C++ 5.3.4p16)
+  // C++0x [expr.new]p17:
+  //   If the new expression creates an array of objects of class type,
+  //   access and ambiguity control are done for the destructor.
+  if (ArraySize && Constructor) {
+    if (CXXDestructorDecl *dtor = LookupDestructor(Constructor->getParent())) {
+      MarkDeclarationReferenced(StartLoc, dtor);
+      CheckDestructorAccess(StartLoc, dtor, 
+                            PDiag(diag::err_access_dtor)
+                              << Context.getBaseElementType(AllocType));
+    }
+  }
 
   PlacementArgs.release();
   ConstructorArgs.release();

@@ -389,3 +389,11 @@ namespace PR7702 {
     new DoesNotExist; // expected-error {{expected a type}}
   }
 }
+
+namespace ArrayNewNeedsDtor {
+  struct A { A(); private: ~A(); }; // expected-note {{declared private here}}
+  struct B { B(); A a; }; // expected-error {{field of type 'ArrayNewNeedsDtor::A' has private destructor}}
+  B *test9() {
+    return new B[5]; // expected-note {{implicit default destructor for 'ArrayNewNeedsDtor::B' first required here}}
+  }
+}
