@@ -318,3 +318,20 @@ _func:
 
 @ CHECK: bkpt  #10                      @ encoding: [0x7a,0x00,0x20,0xe1]
 @ CHECK: bkpt  #65535                   @ encoding: [0x7f,0xff,0x2f,0xe1]
+
+@------------------------------------------------------------------------------
+@ BL/BLX (immediate)
+@------------------------------------------------------------------------------
+
+  bl _bar
+  @ FIXME: blx _bar
+
+  blx r2
+  blxne r2
+
+@ CHECK: bl  _bar @ encoding: [A,A,A,0xeb]
+@ CHECK:   @   fixup A - offset: 0, value: _bar, kind: fixup_arm_uncondbranch
+@ CHECK: blx r2                         @ encoding: [0x32,0xff,0x2f,0xe1]
+@ CHECK: blxne r2                       @ encoding: [0x32,0xff,0x2f,0x11]
+
+
