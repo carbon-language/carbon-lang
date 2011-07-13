@@ -307,7 +307,7 @@ private:
 
   bool hasNoBackingIvars(PropsTy &props) const {
     for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I)
-      if (isUserDeclared(I->IvarD))
+      if (I->IvarD)
         return false;
 
     return true;

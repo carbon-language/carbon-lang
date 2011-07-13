@@ -30,10 +30,11 @@ typedef _NSCachedAttributedString *BadClassForWeak;
 @property () NSObject *not_safe2;
 @property Forw *not_safe3;
 
-@property (assign) Foo *no_back_ivar;
+@property (assign) Foo *no_user_ivar1;
+@property (readonly) Foo *no_user_ivar2;
 @end
 
 @implementation Foo
 @synthesize x,w,q1,q2,oo,bcw,not_safe1,not_safe2,not_safe3;
-@synthesize no_back_ivar;
+@synthesize no_user_ivar1, no_user_ivar2;
 @end
