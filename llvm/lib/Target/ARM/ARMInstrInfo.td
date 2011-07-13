@@ -950,9 +950,9 @@ multiclass AI_exta_rrot_np<bits<8> opcod, string opc> {
 }
 
 /// AI1_adde_sube_irs - Define instructions and patterns for adde and sube.
-let Uses = [CPSR] in {
 multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
-                             bit Commutable = 0> {
+                             string baseOpc, bit Commutable = 0> {
+  let Uses = [CPSR] in {
   def ri : AsI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 DPFrm, IIC_iALUi, opc, "\t$Rd, $Rn, $imm",
                [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>,
@@ -991,7 +991,24 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
     let Inst{15-12} = Rd;
     let Inst{19-16} = Rn;
   }
-}
+  }
+  // Assembly aliases for optional destination operand when it's the same
+  // as the source operand.
+  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $imm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "ri")) GPR:$Rdn, GPR:$Rdn,
+                                                    so_imm:$imm, pred:$p,
+                                                    cc_out:$s)>,
+     Requires<[IsARM]>;
+  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $Rm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "rr")) GPR:$Rdn, GPR:$Rdn,
+                                                    GPR:$Rm, pred:$p,
+                                                    cc_out:$s)>,
+     Requires<[IsARM]>;
+  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $shift"),
+     (!cast<Instruction>(!strconcat(baseOpc, "rs")) GPR:$Rdn, GPR:$Rdn,
+                                                    so_reg:$shift, pred:$p,
+                                                    cc_out:$s)>,
+     Requires<[IsARM]>;
 }
 
 // Carry setting variants
@@ -2252,9 +2269,11 @@ defm SUBS : AI1_bin_s_irs<0b0010, "subs",
                           BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 
 defm ADC : AI1_adde_sube_irs<0b0101, "adc",
-                          BinOpFrag<(adde_dead_carry node:$LHS, node:$RHS)>, 1>;
+                          BinOpFrag<(adde_dead_carry node:$LHS, node:$RHS)>,
+                          "ADC", 1>;
 defm SBC : AI1_adde_sube_irs<0b0110, "sbc",
-                          BinOpFrag<(sube_dead_carry node:$LHS, node:$RHS)>>;
+                          BinOpFrag<(sube_dead_carry node:$LHS, node:$RHS)>,
+                          "SBC">;
 
 // ADC and SUBC with 's' bit set.
 let usesCustomInserter = 1 in {
