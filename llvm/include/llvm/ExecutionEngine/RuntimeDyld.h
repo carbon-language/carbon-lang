@@ -53,6 +53,7 @@ class RuntimeDyld {
   // RuntimeDyldImpl is the actual class. RuntimeDyld is just the public
   // interface.
   RuntimeDyldImpl *Dyld;
+  RTDyldMemoryManager *MM;
 public:
   RuntimeDyld(RTDyldMemoryManager*);
   ~RuntimeDyld();
