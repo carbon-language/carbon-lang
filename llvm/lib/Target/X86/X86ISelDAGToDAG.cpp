@@ -192,6 +192,7 @@ namespace {
     SDNode *SelectAtomicLoadAdd(SDNode *Node, EVT NVT);
     SDNode *SelectAtomicLoadArith(SDNode *Node, EVT NVT);
 
+    bool FoldOffsetIntoAddress(uint64_t Offset, X86ISelAddressMode &AM);
     bool MatchLoadInAddress(LoadSDNode *N, X86ISelAddressMode &AM);
     bool MatchWrapper(SDValue N, X86ISelAddressMode &AM);
     bool MatchAddress(SDValue N, X86ISelAddressMode &AM);
@@ -547,6 +548,18 @@ void X86DAGToDAGISel::EmitFunctionEntryCode() {
       EmitSpecialCodeForMain(MF->begin(), MF->getFrameInfo());
 }
 
+bool X86DAGToDAGISel::FoldOffsetIntoAddress(uint64_t Offset,
+                                            X86ISelAddressMode &AM) {
+  int64_t Val = AM.Disp + Offset;
+  CodeModel::Model M = TM.getCodeModel();
+  if (!Subtarget->is64Bit() ||
+      X86::isOffsetSuitableForCodeModel(Val, M,
+                                        AM.hasSymbolicDisplacement())) {
+    AM.Disp = Val;
+    return false;
+  }
+  return true;
+}
 
 bool X86DAGToDAGISel::MatchLoadInAddress(LoadSDNode *N, X86ISelAddressMode &AM){
   SDValue Address = N->getOperand(1);
@@ -596,18 +609,22 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
       // must allow RIP.
       !AM.hasBaseOrIndexReg() && N.getOpcode() == X86ISD::WrapperRIP) {
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
-      int64_t Offset = AM.Disp + G->getOffset();
-      if (!X86::isOffsetSuitableForCodeModel(Offset, M)) return true;
+      X86ISelAddressMode Backup = AM;
       AM.GV = G->getGlobal();
-      AM.Disp = Offset;
       AM.SymbolFlags = G->getTargetFlags();
+      if (FoldOffsetIntoAddress(G->getOffset(), AM)) {
+        AM = Backup;
+        return true;
+      }
     } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
-      int64_t Offset = AM.Disp + CP->getOffset();
-      if (!X86::isOffsetSuitableForCodeModel(Offset, M)) return true;
+      X86ISelAddressMode Backup = AM;
       AM.CP = CP->getConstVal();
       AM.Align = CP->getAlignment();
-      AM.Disp = Offset;
       AM.SymbolFlags = CP->getTargetFlags();
+      if (FoldOffsetIntoAddress(CP->getOffset(), AM)) {
+        AM = Backup;
+        return true;
+      }
     } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(N0)) {
       AM.ES = S->getSymbol();
       AM.SymbolFlags = S->getTargetFlags();
@@ -689,7 +706,6 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM) {
 
 bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
                                               unsigned Depth) {
-  bool is64Bit = Subtarget->is64Bit();
   DebugLoc dl = N.getDebugLoc();
   DEBUG({
       dbgs() << "MatchAddress: ";
@@ -698,8 +714,6 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
   // Limit recursion.
   if (Depth > 5)
     return MatchAddressBase(N, AM);
-
-  CodeModel::Model M = TM.getCodeModel();
 
   // If this is already a %rip relative address, we can only merge immediates
   // into it.  Instead of handling this in every case, we handle it here.
@@ -710,14 +724,9 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     // consistency.
     if (!AM.ES && AM.JT != -1) return true;
 
-    if (ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(N)) {
-      int64_t Val = AM.Disp + Cst->getSExtValue();
-      if (X86::isOffsetSuitableForCodeModel(Val, M,
-                                            AM.hasSymbolicDisplacement())) {
-        AM.Disp = Val;
+    if (ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(N))
+      if (!FoldOffsetIntoAddress(Cst->getSExtValue(), AM))
         return false;
-      }
-    }
     return true;
   }
 
@@ -725,12 +734,8 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
   default: break;
   case ISD::Constant: {
     uint64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
-    if (!is64Bit ||
-        X86::isOffsetSuitableForCodeModel(AM.Disp + Val, M,
-                                          AM.hasSymbolicDisplacement())) {
-      AM.Disp += Val;
+    if (!FoldOffsetIntoAddress(Val, AM))
       return false;
-    }
     break;
   }
 
@@ -776,16 +781,12 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
           AM.IndexReg = ShVal.getNode()->getOperand(0);
           ConstantSDNode *AddVal =
             cast<ConstantSDNode>(ShVal.getNode()->getOperand(1));
-          uint64_t Disp = AM.Disp + (AddVal->getSExtValue() << Val);
-          if (!is64Bit ||
-              X86::isOffsetSuitableForCodeModel(Disp, M,
-                                                AM.hasSymbolicDisplacement()))
-            AM.Disp = Disp;
-          else
-            AM.IndexReg = ShVal;
-        } else {
-          AM.IndexReg = ShVal;
+          uint64_t Disp = AddVal->getSExtValue() << Val;
+          if (!FoldOffsetIntoAddress(Disp, AM))
+            return false;
         }
+
+        AM.IndexReg = ShVal;
         return false;
       }
     break;
@@ -819,13 +820,8 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
             Reg = MulVal.getNode()->getOperand(0);
             ConstantSDNode *AddVal =
               cast<ConstantSDNode>(MulVal.getNode()->getOperand(1));
-            uint64_t Disp = AM.Disp + AddVal->getSExtValue() *
-                                      CN->getZExtValue();
-            if (!is64Bit ||
-                X86::isOffsetSuitableForCodeModel(Disp, M,
-                                                  AM.hasSymbolicDisplacement()))
-              AM.Disp = Disp;
-            else
+            uint64_t Disp = AddVal->getSExtValue() * CN->getZExtValue();
+            if (FoldOffsetIntoAddress(Disp, AM))
               Reg = N.getNode()->getOperand(0);
           } else {
             Reg = N.getNode()->getOperand(0);
@@ -950,19 +946,11 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     if (CurDAG->isBaseWithConstantOffset(N)) {
       X86ISelAddressMode Backup = AM;
       ConstantSDNode *CN = cast<ConstantSDNode>(N.getOperand(1));
-      uint64_t Offset = CN->getSExtValue();
 
       // Start with the LHS as an addr mode.
       if (!MatchAddressRecursively(N.getOperand(0), AM, Depth+1) &&
-          // Address could not have picked a GV address for the displacement.
-          AM.GV == NULL &&
-          // On x86-64, the resultant disp must fit in 32-bits.
-          (!is64Bit ||
-           X86::isOffsetSuitableForCodeModel(AM.Disp + Offset, M,
-                                             AM.hasSymbolicDisplacement()))) {
-        AM.Disp += Offset;
+          !FoldOffsetIntoAddress(CN->getSExtValue(), AM))
         return false;
-      }
       AM = Backup;
     }
     break;
