@@ -1473,98 +1473,68 @@ let neverHasSideEffects = 1, Pattern = []<dag>, isCommutable = 0 in
 /// sse12_fp_packed_logical - SSE 1 & 2 packed FP logical ops
 ///
 multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
-                                 SDNode OpNode, int HasPat = 0,
-                                 list<list<dag>> Pattern = []> {
+                                   SDNode OpNode> {
   let Pattern = []<dag> in {
     defm V#NAME#PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
          !strconcat(OpcodeStr, "ps"), f128mem,
-         !if(HasPat, Pattern[0], // rr
-                     [(set VR128:$dst, (v2i64 (OpNode VR128:$src1,
-                                                      VR128:$src2)))]),
-         !if(HasPat, Pattern[2], // rm
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
-                                               (memopv2i64 addr:$src2)))]), 0>,
-                                               VEX_4V;
+         [(set VR128:$dst, (v2i64 (OpNode VR128:$src1, VR128:$src2)))],
+         [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
+                                   (memopv2i64 addr:$src2)))], 0>, VEX_4V;
 
     defm V#NAME#PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
          !strconcat(OpcodeStr, "pd"), f128mem,
-         !if(HasPat, Pattern[1], // rr
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                               (bc_v2i64 (v2f64
-                                               VR128:$src2))))]),
-         !if(HasPat, Pattern[3], // rm
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                               (memopv2i64 addr:$src2)))]), 0>,
-                                                               OpSize, VEX_4V;
+         [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                   (bc_v2i64 (v2f64 VR128:$src2))))],
+         [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                   (memopv2i64 addr:$src2)))], 0>,
+                                                   OpSize, VEX_4V;
   }
   let Constraints = "$src1 = $dst" in {
     defm PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
          !strconcat(OpcodeStr, "ps"), f128mem,
-         !if(HasPat, Pattern[0], // rr
-                     [(set VR128:$dst, (v2i64 (OpNode VR128:$src1,
-                                                      VR128:$src2)))]),
-         !if(HasPat, Pattern[2], // rm
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
-                                               (memopv2i64 addr:$src2)))])>, TB;
+         [(set VR128:$dst, (v2i64 (OpNode VR128:$src1, VR128:$src2)))],
+         [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
+                                   (memopv2i64 addr:$src2)))]>, TB;
 
     defm PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
          !strconcat(OpcodeStr, "pd"), f128mem,
-         !if(HasPat, Pattern[1], // rr
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                               (bc_v2i64 (v2f64
-                                               VR128:$src2))))]),
-         !if(HasPat, Pattern[3], // rm
-                     [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                               (memopv2i64 addr:$src2)))])>,
-                                                                    TB, OpSize;
+         [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                   (bc_v2i64 (v2f64 VR128:$src2))))],
+         [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                   (memopv2i64 addr:$src2)))]>, TB, OpSize;
   }
 }
 
 /// sse12_fp_packed_logical_y - AVX 256-bit SSE 1 & 2 logical ops forms
 ///
 multiclass sse12_fp_packed_logical_y<bits<8> opc, string OpcodeStr,
-                                     SDNode OpNode, int HasNoPat = 0> {
+                                     SDNode OpNode> {
     defm PSY : sse12_fp_packed_logical_rm<opc, VR256, SSEPackedSingle,
           !strconcat(OpcodeStr, "ps"), f256mem,
-          !if(HasNoPat, []<dag>, // rr
-              [(set VR256:$dst, (v4i64 (OpNode VR256:$src1,
-                                               VR256:$src2)))]),
-          !if(HasNoPat, []<dag>, // rm
-              [(set VR256:$dst, (OpNode (bc_v4i64 (v8f32 VR256:$src1)),
-                                        (memopv4i64 addr:$src2)))]), 0>, VEX_4V;
+          [(set VR256:$dst, (v4i64 (OpNode VR256:$src1, VR256:$src2)))],
+          [(set VR256:$dst, (OpNode (bc_v4i64 (v8f32 VR256:$src1)),
+                                    (memopv4i64 addr:$src2)))], 0>, VEX_4V;
 
     defm PDY : sse12_fp_packed_logical_rm<opc, VR256, SSEPackedDouble,
           !strconcat(OpcodeStr, "pd"), f256mem,
-          !if(HasNoPat, []<dag>, // rr
-              [(set VR256:$dst, (OpNode (bc_v4i64 (v4f64 VR256:$src1)),
-                                        (bc_v4i64 (v4f64 VR256:$src2))))]),
-          !if(HasNoPat, []<dag>, // rm
-              [(set VR256:$dst, (OpNode (bc_v4i64 (v4f64 VR256:$src1)),
-                                        (memopv4i64 addr:$src2)))]), 0>,
-                                        OpSize, VEX_4V;
+          [(set VR256:$dst, (OpNode (bc_v4i64 (v4f64 VR256:$src1)),
+                                    (bc_v4i64 (v4f64 VR256:$src2))))],
+          [(set VR256:$dst, (OpNode (bc_v4i64 (v4f64 VR256:$src1)),
+                                    (memopv4i64 addr:$src2)))], 0>,
+                                    OpSize, VEX_4V;
 }
 
 // AVX 256-bit packed logical ops forms
-defm VAND : sse12_fp_packed_logical_y<0x54, "and", and>;
-defm VOR  : sse12_fp_packed_logical_y<0x56, "or", or>;
-defm VXOR : sse12_fp_packed_logical_y<0x57, "xor", xor>;
-let isCommutable = 0 in {
-  defm VANDN : sse12_fp_packed_logical_y<0x55, "andn", undef /* dummy */, 1>;
-}
+defm VAND  : sse12_fp_packed_logical_y<0x54, "and", and>;
+defm VOR   : sse12_fp_packed_logical_y<0x56, "or", or>;
+defm VXOR  : sse12_fp_packed_logical_y<0x57, "xor", xor>;
+defm VANDN : sse12_fp_packed_logical_y<0x55, "andn", X86andnp>;
 
 defm AND  : sse12_fp_packed_logical<0x54, "and", and>;
 defm OR   : sse12_fp_packed_logical<0x56, "or", or>;
 defm XOR  : sse12_fp_packed_logical<0x57, "xor", xor>;
 let isCommutable = 0 in
-  defm ANDN : sse12_fp_packed_logical<0x55, "andn", undef /* dummy */, 1, [
-    // single r+r
-    [(set VR128:$dst, (X86andnp VR128:$src1, VR128:$src2))],
-    // double r+r
-    [],
-    // single r+m
-    [(set VR128:$dst, (X86andnp VR128:$src1, (memopv2i64 addr:$src2)))],
-    // double r+m
-    []]>;
+  defm ANDN : sse12_fp_packed_logical<0x55, "andn", X86andnp>;
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Arithmetic Instructions
@@ -3678,6 +3648,7 @@ let Predicates = [HasAVX] in {
   def : Pat<(v4f64 (bitconvert (v4i64 VR256:$src))), (v4f64 VR256:$src)>;
   def : Pat<(v8f32 (bitconvert (v4i64 VR256:$src))), (v8f32 VR256:$src)>;
   def : Pat<(v4i64 (bitconvert (v8f32 VR256:$src))), (v4i64 VR256:$src)>;
+  def : Pat<(v4i64 (bitconvert (v4f64 VR256:$src))), (v4i64 VR256:$src)>;
 }
 
 // Move scalar to XMM zero-extended

@@ -11821,10 +11821,12 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
   if (R.getNode())
     return R;
 
-  // Want to form ANDNP nodes, in the hopes of then easily combining them with
-  // OR and AND nodes to form PBLEND/PSIGN.
+  // Want to form ANDNP nodes:
+  // 1) In the hopes of then easily combining them with OR and AND nodes
+  //    to form PBLEND/PSIGN.
+  // 2) To match ANDN packed intrinsics
   EVT VT = N->getValueType(0);
-  if (VT != MVT::v2i64)
+  if (VT != MVT::v2i64 && VT != MVT::v4i64)
     return SDValue();
 
   SDValue N0 = N->getOperand(0);

@@ -114,3 +114,48 @@ entry:
   ret <8 x float> %1
 }
 
+; CHECK: vandnpd
+define <4 x double> @andnotpd256(<4 x double> %y, <4 x double> %x) nounwind uwtable readnone ssp {
+entry:
+  %0 = bitcast <4 x double> %x to <4 x i64>
+  %neg.i = xor <4 x i64> %0, <i64 -1, i64 -1, i64 -1, i64 -1>
+  %1 = bitcast <4 x double> %y to <4 x i64>
+  %and.i = and <4 x i64> %1, %neg.i
+  %2 = bitcast <4 x i64> %and.i to <4 x double>
+  ret <4 x double> %2
+}
+
+; CHECK: vandnpd (%
+define <4 x double> @andnotpd256fold(<4 x double> %y, <4 x double>* nocapture %x) nounwind uwtable readonly ssp {
+entry:
+  %tmp2 = load <4 x double>* %x, align 32
+  %0 = bitcast <4 x double> %y to <4 x i64>
+  %neg.i = xor <4 x i64> %0, <i64 -1, i64 -1, i64 -1, i64 -1>
+  %1 = bitcast <4 x double> %tmp2 to <4 x i64>
+  %and.i = and <4 x i64> %1, %neg.i
+  %2 = bitcast <4 x i64> %and.i to <4 x double>
+  ret <4 x double> %2
+}
+
+; CHECK: vandnps
+define <8 x float> @andnotps256(<8 x float> %y, <8 x float> %x) nounwind uwtable readnone ssp {
+entry:
+  %0 = bitcast <8 x float> %x to <8 x i32>
+  %neg.i = xor <8 x i32> %0, <i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1>
+  %1 = bitcast <8 x float> %y to <8 x i32>
+  %and.i = and <8 x i32> %1, %neg.i
+  %2 = bitcast <8 x i32> %and.i to <8 x float>
+  ret <8 x float> %2
+}
+
+; CHECK: vandnps (%
+define <8 x float> @andnotps256fold(<8 x float> %y, <8 x float>* nocapture %x) nounwind uwtable readonly ssp {
+entry:
+  %tmp2 = load <8 x float>* %x, align 32
+  %0 = bitcast <8 x float> %y to <8 x i32>
+  %neg.i = xor <8 x i32> %0, <i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1>
+  %1 = bitcast <8 x float> %tmp2 to <8 x i32>
+  %and.i = and <8 x i32> %1, %neg.i
+  %2 = bitcast <8 x i32> %and.i to <8 x float>
+  ret <8 x float> %2
+}
