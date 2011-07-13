@@ -21,3 +21,19 @@ void Interpret() {
   // CHECK: call void ({{.*}}, ...)* @JS_ReportErrorNumber({{.*}}@js_GetErrorMessage
 }
 
+
+
+
+// PR10337
+struct sigaction { int (*_sa_handler)(int); };
+typedef int SigHandler ();
+typedef struct sigaction sighandler_cxt;
+SigHandler *rl_set_sighandler(ohandler)
+sighandler_cxt *ohandler;  {
+  return 0;
+}
+
+void rl_set_signals() {
+  SigHandler *oh;
+  oh = rl_set_sighandler(0);
+}

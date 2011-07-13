@@ -1742,8 +1742,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   case ABIArgInfo::Extend:
   case ABIArgInfo::Direct: {
-    if (RetAI.getCoerceToType() == ConvertType(RetTy) &&
-        RetAI.getDirectOffset() == 0) {
+    llvm::Type *RetIRTy = ConvertType(RetTy);
+    if (RetAI.getCoerceToType() == RetIRTy && RetAI.getDirectOffset() == 0) {
       if (RetTy->isAnyComplexType()) {
         llvm::Value *Real = Builder.CreateExtractValue(CI, 0);
         llvm::Value *Imag = Builder.CreateExtractValue(CI, 1);
@@ -1760,7 +1760,13 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         BuildAggStore(*this, CI, DestPtr, DestIsVolatile, false);
         return RValue::getAggregate(DestPtr);
       }
-      return RValue::get(CI);
+      
+      // If the argument doesn't match, perform a bitcast to coerce it.  This
+      // can happen due to trivial type mismatches.
+      llvm::Value *V = CI;
+      if (V->getType() != RetIRTy)
+        V = Builder.CreateBitCast(V, RetIRTy);
+      return RValue::get(V);
     }
 
     llvm::Value *DestPtr = ReturnValue.getValue();
