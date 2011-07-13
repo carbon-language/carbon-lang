@@ -1059,13 +1059,21 @@ getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
     const bool IsRelative = (Operation == MCCFIInstruction::RelMove);
 
     if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
-      if (Src.getReg() == MachineLocation::VirtualFP) {
-        // DW_CFA_def_cfa_offset
-        if (IsRelative)
-          CFAOffset += Src.getOffset();
-        else
-          CFAOffset -= Src.getOffset();
-      } // else DW_CFA_def_cfa
+      if (Src.getReg() != MachineLocation::VirtualFP) {
+        // DW_CFA_def_cfa
+        assert(FramePointerReg == -1 &&"Defining more than one frame pointer?");
+        FramePointerReg = Src.getReg();
+        if (TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::EBP &&
+            TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::RBP)
+          // The frame pointer isn't EBP/RBP. Cannot make unwind information
+          // compact.
+          return 0;
+      } // else DW_CFA_def_cfa_offset
+
+      if (IsRelative)
+        CFAOffset += Src.getOffset();
+      else
+        CFAOffset -= Src.getOffset();
 
       continue;
     }

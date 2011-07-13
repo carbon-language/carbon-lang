@@ -1018,8 +1018,10 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
     const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
     if (IsEH && AsmInfo.getCompactUnwindSection() &&
-        Emitter.EmitCompactUnwind(Streamer, Frame))
+        Emitter.EmitCompactUnwind(Streamer, Frame)) {
+      FDEEnd = NULL;
       continue;
+    }
 
     CIEKey Key(Frame.Personality, Frame.PersonalityEncoding,
                Frame.LsdaEncoding);
