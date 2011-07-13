@@ -36,7 +36,7 @@ class targetCommandTestCase(TestBase):
 
     # rdar://problem/9763907
     # 'target variable' command fails if the target program has been run
-    #@unittest2.expectedFailure
+    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_target_variable_command_with_dsym(self):
         """Test 'target variable' command before and after starting the inferior."""
