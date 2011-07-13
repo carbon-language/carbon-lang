@@ -39,7 +39,7 @@ namespace llvm {
     const T *Data;
     
     /// The number of elements.
-    size_t Length;
+    size_type Length;
     
   public:
     /// @name Constructors
@@ -55,6 +55,10 @@ namespace llvm {
     /// Construct an ArrayRef from a pointer and length.
     /*implicit*/ ArrayRef(const T *data, size_t length)
       : Data(data), Length(length) {}
+    
+    /// Construct an ArrayRef from a range.
+    ArrayRef(const T *begin, const T *end)
+      : Data(begin), Length(end - begin) {}
     
     /// Construct an ArrayRef from a SmallVector.
     /*implicit*/ ArrayRef(const SmallVectorImpl<T> &Vec)
@@ -96,6 +100,16 @@ namespace llvm {
       return Data[Length-1];
     }
     
+    /// equals - Check for element-wise equality.
+    bool equals(ArrayRef RHS) const {
+      if (Length != RHS.Length)
+        return false;
+      for (size_type i = 0; i != Length; i++)
+        if (Data[i] != RHS.Data[i])
+          return false;
+      return true;
+    }
+
     /// slice(n) - Chop off the first N elements of the array.
     ArrayRef<T> slice(unsigned N) {
       assert(N <= size() && "Invalid specifier");
@@ -134,6 +148,21 @@ namespace llvm {
     /// @}
   };
   
+  /// @name ArrayRef Comparison Operators
+  /// @{
+
+  template<typename T>
+  inline bool operator==(ArrayRef<T> LHS, ArrayRef<T> RHS) {
+    return LHS.equals(RHS);
+  }
+
+  template<typename T>
+  inline bool operator!=(ArrayRef<T> LHS, ArrayRef<T> RHS) {
+    return !(LHS == RHS);
+  }
+
+  /// @}
+
   // ArrayRefs can be treated like a POD type.
   template <typename T> struct isPodLike;
   template <typename T> struct isPodLike<ArrayRef<T> > {
