@@ -2190,11 +2190,8 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
         }
       }
 
-      // Fallthrough and construct a default initializer for the union as
-      // a whole, which can call its default constructor if such a thing exists
-      // (C++0x perhaps). FIXME: It's not clear that this is the correct
-      // behavior going forward with C++0x, when anonymous unions there are
-      // finalized, we should revisit this.
+      // FIXME: C++0x unrestricted unions might call a default constructor here.
+      return false;
     } else {
       // For structs, we simply descend through to initialize all members where
       // necessary.

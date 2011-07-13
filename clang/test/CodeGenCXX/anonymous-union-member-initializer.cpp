@@ -114,3 +114,19 @@ template <typename T> struct Foo {
   };
 };
 Foo<int> f;
+
+namespace PR9683 {
+  struct QueueEntry {
+    union {
+      struct {
+        void* mPtr;
+        union {
+          unsigned mSubmissionTag;
+        };
+      };
+      unsigned mValue;
+    };
+    QueueEntry() {}
+  };
+  QueueEntry QE;
+}
