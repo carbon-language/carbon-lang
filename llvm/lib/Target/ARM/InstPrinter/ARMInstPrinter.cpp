@@ -142,6 +142,8 @@ void ARMInstPrinter::printSORegOperand(const MCInst *MI, unsigned OpNum,
   // Print the shift opc.
   ARM_AM::ShiftOpc ShOpc = ARM_AM::getSORegShOp(MO3.getImm());
   O << ", " << ARM_AM::getShiftOpcStr(ShOpc);
+  if (ShOpc == ARM_AM::rrx)
+    return;
   if (MO2.getReg()) {
     O << ' ' << getRegisterName(MO2.getReg());
     assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);

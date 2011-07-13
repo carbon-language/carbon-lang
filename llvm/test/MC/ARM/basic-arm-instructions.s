@@ -1,6 +1,13 @@
 @ RUN: llvm-mc -triple=armv7-apple-darwin -show-encoding < %s | FileCheck %s
   .syntax unified
   .globl _func
+
+@ Check that the assembler can handle the documented syntax from the ARM ARM.
+@ For complex constructs like shifter operands, check more thoroughly for them
+@ once then spot check that following instructions accept the form generally.
+@ This gives us good coverage while keeping the overall size of the test
+@ more reasonable.
+
 _func:
 @ CHECK: _func
 
@@ -31,3 +38,44 @@ _func:
 @ CHECK: adcs	r1, r2, #3840           @ encoding: [0x0f,0x1c,0xb2,0xe2]
 @ CHECK: adcseq	r1, r2, #3840           @ encoding: [0x0f,0x1c,0xb2,0x02]
 @ CHECK: adceq	r1, r2, #3840           @ encoding: [0x0f,0x1c,0xa2,0x02]
+
+@ ADC (register)
+  adc r4, r5, r6
+  @ Constant shifts
+  adc r4, r5, r6, lsl #1
+  adc r4, r5, r6, lsl #31
+  adc r4, r5, r6, lsr #1
+  adc r4, r5, r6, lsr #31
+  adc r4, r5, r6, lsr #32
+  adc r4, r5, r6, asr #1
+  adc r4, r5, r6, asr #31
+  adc r4, r5, r6, asr #32
+  adc r4, r5, r6, ror #1
+  adc r4, r5, r6, ror #31
+
+  @ Register shifts
+  adc r6, r7, r8, lsl r9
+  adc r6, r7, r8, lsr r9
+  adc r6, r7, r8, asr r9
+  adc r6, r7, r8, ror r9
+  adc r4, r5, r6, rrx
+
+@ CHECK: adc	r4, r5, r6              @ encoding: [0x06,0x40,0xa5,0xe0]
+
+@ CHECK: adc	r4, r5, r6, lsl #1      @ encoding: [0x86,0x40,0xa5,0xe0]
+@ CHECK: adc	r4, r5, r6, lsl #31     @ encoding: [0x86,0x4f,0xa5,0xe0]
+@ CHECK: adc	r4, r5, r6, lsr #1      @ encoding: [0xa6,0x40,0xa5,0xe0]
+@ CHECK: adc	r4, r5, r6, lsr #31     @ encoding: [0xa6,0x4f,0xa5,0xe0]
+@ CHECK: adc	r4, r5, r6, lsr #32     @ encoding: [0x26,0x40,0xa5,0xe0]
+@ CHECK: adc	r4, r5, r6, asr #1      @ encoding: [0xc6,0x40,0xa5,0xe0]
+@ CHECK: adc	r4, r5, r6, asr #31     @ encoding: [0xc6,0x4f,0xa5,0xe0]
+@ CHECK: adc	r4, r5, r6, asr #32     @ encoding: [0x46,0x40,0xa5,0xe0]
+@ CHECK: adc	r4, r5, r6, ror #1      @ encoding: [0xe6,0x40,0xa5,0xe0]
+@ CHECK: adc	r4, r5, r6, ror #31     @ encoding: [0xe6,0x4f,0xa5,0xe0]
+
+@ CHECK: adc	r6, r7, r8, lsl r9      @ encoding: [0x18,0x69,0xa7,0xe0]
+@ CHECK: adc	r6, r7, r8, lsr r9      @ encoding: [0x38,0x69,0xa7,0xe0]
+@ CHECK: adc	r6, r7, r8, asr r9      @ encoding: [0x58,0x69,0xa7,0xe0]
+@ CHECK: adc	r6, r7, r8, ror r9      @ encoding: [0x78,0x69,0xa7,0xe0]
+@ CHECK: adc	r4, r5, r6, rrx         @ encoding: [0x66,0x40,0xa5,0xe0]
+

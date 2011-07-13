@@ -164,6 +164,7 @@ class ARMOperand : public MCParsedAsmOperand {
     RegisterList,
     DPRRegisterList,
     SPRRegisterList,
+    ShiftedRegister,
     Shifter,
     Token
   } Kind;
@@ -225,8 +226,14 @@ class ARMOperand : public MCParsedAsmOperand {
 
     struct {
       ARM_AM::ShiftOpc ShiftTy;
-      unsigned RegNum;
+      unsigned Imm;
     } Shift;
+    struct {
+      ARM_AM::ShiftOpc ShiftTy;
+      unsigned SrcReg;
+      unsigned ShiftReg;
+      unsigned ShiftImm;
+    } ShiftedReg;
   };
 
   ARMOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
@@ -272,6 +279,9 @@ public:
       break;
     case Shifter:
       Shift = o.Shift;
+      break;
+    case ShiftedRegister:
+      ShiftedReg = o.ShiftedReg;
       break;
     }
   }
@@ -392,6 +402,7 @@ public:
   bool isMemBarrierOpt() const { return Kind == MemBarrierOpt; }
   bool isMemory() const { return Kind == Memory; }
   bool isShifter() const { return Kind == Shifter; }
+  bool isShiftedReg() const { return Kind == ShiftedRegister; }
   bool isMemMode2() const {
     if (getMemAddrMode() != ARMII::AddrMode2)
       return false;
@@ -520,6 +531,18 @@ public:
   void addRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getReg()));
+  }
+
+  void addShiftedRegOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 3 && "Invalid number of operands!");
+    assert(isShiftedReg() && "addShiftedRegOperands() on non ShiftedReg!");
+    assert((ShiftedReg.ShiftReg == 0 ||
+            ARM_AM::getSORegOffset(ShiftedReg.ShiftImm) == 0) &&
+           "Invalid shifted register operand!");
+    Inst.addOperand(MCOperand::CreateReg(ShiftedReg.SrcReg));
+    Inst.addOperand(MCOperand::CreateReg(ShiftedReg.ShiftReg));
+    Inst.addOperand(MCOperand::CreateImm(
+      ARM_AM::getSORegOpc(ShiftedReg.ShiftTy, ShiftedReg.ShiftImm)));
   }
 
   void addShifterOperands(MCInst &Inst, unsigned N) const {
@@ -743,6 +766,21 @@ public:
     return Op;
   }
 
+  static ARMOperand *CreateShiftedRegister(ARM_AM::ShiftOpc ShTy,
+                                           unsigned SrcReg,
+                                           unsigned ShiftReg,
+                                           unsigned ShiftImm,
+                                           SMLoc S, SMLoc E) {
+    ARMOperand *Op = new ARMOperand(ShiftedRegister);
+    Op->ShiftedReg.ShiftTy = ShTy;
+    Op->ShiftedReg.SrcReg = SrcReg;
+    Op->ShiftedReg.ShiftReg = ShiftReg;
+    Op->ShiftedReg.ShiftImm = ShiftImm;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
   static ARMOperand *CreateShifter(ARM_AM::ShiftOpc ShTy,
                                    SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(Shifter);
@@ -907,7 +945,15 @@ void ARMOperand::print(raw_ostream &OS) const {
     OS << "<register " << getReg() << ">";
     break;
   case Shifter:
-    OS << "<shifter " << getShiftOpcStr(Shift.ShiftTy) << ">";
+    OS << "<shifter " << ARM_AM::getShiftOpcStr(Shift.ShiftTy) << ">";
+    break;
+  case ShiftedRegister:
+    OS << "<so_reg"
+       << ShiftedReg.SrcReg
+       << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(ShiftedReg.ShiftImm))
+       << ", " << ShiftedReg.ShiftReg << ", "
+       << ARM_AM::getSORegOffset(ShiftedReg.ShiftImm)
+       << ">";
     break;
   case RegisterList:
   case DPRRegisterList:
@@ -994,13 +1040,56 @@ bool ARMAsmParser::TryParseShiftRegister(
   if (ShiftTy == ARM_AM::no_shift)
     return true;
 
-  Parser.Lex(); // Eat shift-type operand;
-  int RegNum = TryParseRegister();
-  if (RegNum == -1)
-    return Error(Parser.getTok().getLoc(), "register expected");
+  Parser.Lex(); // Eat the operator.
 
-  Operands.push_back(ARMOperand::CreateReg(RegNum,S, Parser.getTok().getLoc()));
-  Operands.push_back(ARMOperand::CreateShifter(ShiftTy,
+  // The source register for the shift has already been added to the
+  // operand list, so we need to pop it off and combine it into the shifted
+  // register operand instead.
+  ARMOperand *PrevOp = (ARMOperand*)Operands.pop_back_val();
+  if (!PrevOp->isReg())
+    return Error(PrevOp->getStartLoc(), "shift must be of a register");
+  int SrcReg = PrevOp->getReg();
+  int64_t Imm = 0;
+  int ShiftReg = 0;
+  if (ShiftTy == ARM_AM::rrx) {
+    // RRX Doesn't have an explicit shift amount. The encoder expects
+    // the shift register to be the same as the source register. Seems odd,
+    // but OK.
+    ShiftReg = SrcReg;
+  } else {
+    // Figure out if this is shifted by a constant or a register (for non-RRX).
+    if (Parser.getTok().is(AsmToken::Hash)) {
+      Parser.Lex(); // Eat hash.
+      SMLoc ImmLoc = Parser.getTok().getLoc();
+      const MCExpr *ShiftExpr = 0;
+      if (getParser().ParseExpression(ShiftExpr))
+        return Error(ImmLoc, "invalid immediate shift value");
+      // The expression must be evaluatable as an immediate.
+      const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(ShiftExpr);
+      if (!CE)
+        return Error(ImmLoc, "invalid immediate shift value");
+      // Range check the immediate.
+      // lsl, ror: 0 <= imm <= 31
+      // lsr, asr: 0 <= imm <= 32
+      Imm = CE->getValue();
+      if (Imm < 0 ||
+          ((ShiftTy == ARM_AM::lsl || ShiftTy == ARM_AM::ror) && Imm > 31) ||
+          ((ShiftTy == ARM_AM::lsr || ShiftTy == ARM_AM::asr) && Imm > 32)) {
+        return Error(ImmLoc, "immediate shift value out of range");
+      }
+    } else if (Parser.getTok().is(AsmToken::Identifier)) {
+      ShiftReg = TryParseRegister();
+      SMLoc L = Parser.getTok().getLoc();
+      if (ShiftReg == -1)
+        return Error (L, "expected immediate or register in shift operand");
+    } else
+      return Error (Parser.getTok().getLoc(),
+                    "expected immediate or register in shift operand");
+  }
+
+
+  Operands.push_back(ARMOperand::CreateShiftedRegister(ShiftTy, SrcReg,
+                                                       ShiftReg, Imm,
                                                S, Parser.getTok().getLoc()));
 
   return false;

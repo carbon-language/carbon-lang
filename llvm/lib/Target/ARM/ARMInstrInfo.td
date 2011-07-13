@@ -412,14 +412,20 @@ def shift_imm : Operand<i32> {
   let ParserMatchClass = ShifterAsmOperand;
 }
 
+def ShiftedRegAsmOperand : AsmOperandClass {
+  let Name = "ShiftedReg";
+}
+
 // shifter_operand operands: so_reg and so_imm.
 def so_reg : Operand<i32>,    // reg reg imm
              ComplexPattern<i32, 3, "SelectShifterOperandReg",
                             [shl,srl,sra,rotr]> {
   let EncoderMethod = "getSORegOpValue";
   let PrintMethod = "printSORegOperand";
+  let ParserMatchClass = ShiftedRegAsmOperand;
   let MIOperandInfo = (ops GPR, GPR, shift_imm);
 }
+// FIXME: Does this need to be distinct from so_reg?
 def shift_so_reg : Operand<i32>,    // reg reg imm
                    ComplexPattern<i32, 3, "SelectShiftShifterOperandReg",
                                   [shl,srl,sra,rotr]> {
