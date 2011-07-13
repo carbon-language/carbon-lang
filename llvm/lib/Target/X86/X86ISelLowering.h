@@ -169,8 +169,8 @@ namespace llvm {
       /// PSHUFB - Shuffle 16 8-bit values within a vector.
       PSHUFB,
 
-      /// PANDN - and with not'd value.
-      PANDN,
+      /// ANDNP - Bitwise Logical AND NOT of Packed FP values.
+      ANDNP,
 
       /// PSIGNB/W/D - Copy integer sign.
       PSIGNB, PSIGNW, PSIGND,

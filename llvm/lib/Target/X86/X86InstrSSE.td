@@ -1558,11 +1558,11 @@ defm XOR  : sse12_fp_packed_logical<0x57, "xor", xor>;
 let isCommutable = 0 in
   defm ANDN : sse12_fp_packed_logical<0x55, "andn", undef /* dummy */, 1, [
     // single r+r
-    [(set VR128:$dst, (X86pandn VR128:$src1, VR128:$src2))],
+    [(set VR128:$dst, (X86andnp VR128:$src1, VR128:$src2))],
     // double r+r
     [],
     // single r+m
-    [(set VR128:$dst, (X86pandn VR128:$src1, (memopv2i64 addr:$src2)))],
+    [(set VR128:$dst, (X86andnp VR128:$src1, (memopv2i64 addr:$src2)))],
     // double r+m
     []]>;
 

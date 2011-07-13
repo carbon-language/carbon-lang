@@ -9470,7 +9470,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PINSRB:             return "X86ISD::PINSRB";
   case X86ISD::PINSRW:             return "X86ISD::PINSRW";
   case X86ISD::PSHUFB:             return "X86ISD::PSHUFB";
-  case X86ISD::PANDN:              return "X86ISD::PANDN";
+  case X86ISD::ANDNP:              return "X86ISD::ANDNP";
   case X86ISD::PSIGNB:             return "X86ISD::PSIGNB";
   case X86ISD::PSIGNW:             return "X86ISD::PSIGNW";
   case X86ISD::PSIGND:             return "X86ISD::PSIGND";
@@ -11821,7 +11821,7 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
   if (R.getNode())
     return R;
 
-  // Want to form PANDN nodes, in the hopes of then easily combining them with
+  // Want to form ANDNP nodes, in the hopes of then easily combining them with
   // OR and AND nodes to form PBLEND/PSIGN.
   EVT VT = N->getValueType(0);
   if (VT != MVT::v2i64)
@@ -11834,12 +11834,12 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
   // Check LHS for vnot
   if (N0.getOpcode() == ISD::XOR &&
       ISD::isBuildVectorAllOnes(N0.getOperand(1).getNode()))
-    return DAG.getNode(X86ISD::PANDN, DL, VT, N0.getOperand(0), N1);
+    return DAG.getNode(X86ISD::ANDNP, DL, VT, N0.getOperand(0), N1);
 
   // Check RHS for vnot
   if (N1.getOpcode() == ISD::XOR &&
       ISD::isBuildVectorAllOnes(N1.getOperand(1).getNode()))
-    return DAG.getNode(X86ISD::PANDN, DL, VT, N1.getOperand(0), N0);
+    return DAG.getNode(X86ISD::ANDNP, DL, VT, N1.getOperand(0), N0);
 
   return SDValue();
 }
@@ -11865,10 +11865,10 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
   if (Subtarget->hasSSSE3()) {
     if (VT == MVT::v2i64) {
       // Canonicalize pandn to RHS
-      if (N0.getOpcode() == X86ISD::PANDN)
+      if (N0.getOpcode() == X86ISD::ANDNP)
         std::swap(N0, N1);
       // or (and (m, x), (pandn m, y))
-      if (N0.getOpcode() == ISD::AND && N1.getOpcode() == X86ISD::PANDN) {
+      if (N0.getOpcode() == ISD::AND && N1.getOpcode() == X86ISD::ANDNP) {
         SDValue Mask = N1.getOperand(0);
         SDValue X    = N1.getOperand(1);
         SDValue Y;
@@ -11877,7 +11877,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
         if (N0.getOperand(1) == Mask)
           Y = N0.getOperand(0);
 
-        // Check to see if the mask appeared in both the AND and PANDN and
+        // Check to see if the mask appeared in both the AND and ANDNP and
         if (!Y.getNode())
           return SDValue();
 

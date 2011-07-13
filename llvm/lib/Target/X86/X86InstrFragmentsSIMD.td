@@ -46,7 +46,7 @@ def X86cmpsd   : SDNode<"X86ISD::FSETCCsd",    SDTX86Cmpsd>;
 def X86pshufb  : SDNode<"X86ISD::PSHUFB",
                  SDTypeProfile<1, 2, [SDTCisVT<0, v16i8>, SDTCisSameAs<0,1>,
                                       SDTCisSameAs<0,2>]>>;
-def X86pandn   : SDNode<"X86ISD::PANDN", 
+def X86andnp   : SDNode<"X86ISD::ANDNP",
                  SDTypeProfile<1, 2, [SDTCisVT<0, v2i64>, SDTCisSameAs<0,1>,
                                       SDTCisSameAs<0,2>]>>;
 def X86psignb  : SDNode<"X86ISD::PSIGNB", 
