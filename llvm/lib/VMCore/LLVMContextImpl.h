@@ -179,6 +179,7 @@ public:
   std::map<std::vector<Type*>, FunctionType*> FunctionTypes;
   std::map<std::vector<Type*>, StructType*> AnonStructTypes;
   StringMap<StructType*> NamedStructTypes;
+  SmallPtrSet<StructType*, 16> EmptyNamedStructTypes;
   unsigned NamedStructTypesUniqueID;
     
   DenseMap<std::pair<Type *, uint64_t>, ArrayType*> ArrayTypes;

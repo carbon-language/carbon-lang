@@ -81,14 +81,12 @@ LLVMContextImpl::~LLVMContextImpl() {
   SmallVector<MDNode*, 8> MDNodes;
   MDNodes.reserve(MDNodeSet.size() + NonUniquedMDNodes.size());
   for (FoldingSetIterator<MDNode> I = MDNodeSet.begin(), E = MDNodeSet.end();
-       I != E; ++I) {
+       I != E; ++I)
     MDNodes.push_back(&*I);
-  }
   MDNodes.append(NonUniquedMDNodes.begin(), NonUniquedMDNodes.end());
   for (SmallVectorImpl<MDNode *>::iterator I = MDNodes.begin(),
-         E = MDNodes.end(); I != E; ++I) {
+         E = MDNodes.end(); I != E; ++I)
     (*I)->destroy();
-  }
   assert(MDNodeSet.empty() && NonUniquedMDNodes.empty() &&
          "Destroying all MDNodes didn't empty the Context's sets.");
   // Destroy MDStrings.
@@ -103,7 +101,10 @@ LLVMContextImpl::~LLVMContextImpl() {
   DeleteContainerSeconds(PointerTypes);
   DeleteContainerSeconds(ASPointerTypes);
 
-  for (StringMap<StructType *>::iterator I = NamedStructTypes.begin(), E = NamedStructTypes.end(); I != E; ++I) {
+  for (StringMap<StructType *>::iterator I = NamedStructTypes.begin(),
+       E = NamedStructTypes.end(); I != E; ++I)
     delete I->getValue();
-  }
+  for (SmallPtrSet<StructType*, 16>::iterator I = EmptyNamedStructTypes.begin(),
+       E = EmptyNamedStructTypes.end(); I != E; ++I)
+    delete *I;
 }

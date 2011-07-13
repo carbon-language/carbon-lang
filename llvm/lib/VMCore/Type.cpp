@@ -412,7 +412,10 @@ void StructType::setBody(ArrayRef<Type*> Elements, bool isPacked) {
 
 StructType *StructType::createNamed(LLVMContext &Context, StringRef Name) {
   StructType *ST = new StructType(Context);
-  ST->setName(Name);
+  if (!Name.empty())
+    ST->setName(Name);
+  else
+    Context.pImpl->EmptyNamedStructTypes.insert(ST);
   return ST;
 }
 
@@ -423,11 +426,16 @@ void StructType::setName(StringRef Name) {
   if (SymbolTableEntry) {
     getContext().pImpl->NamedStructTypes.erase(getName());
     SymbolTableEntry = 0;
+  } else {
+    getContext().pImpl->EmptyNamedStructTypes.erase(this);
   }
   
   // If this is just removing the name, we're done.
-  if (Name.empty())
+  if (Name.empty()) {
+    // Keep track of types with no names so we can free them.
+    getContext().pImpl->EmptyNamedStructTypes.insert(this);
     return;
+  }
   
   // Look up the entry for the name.
   StringMapEntry<StructType*> *Entry =
