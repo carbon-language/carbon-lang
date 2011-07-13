@@ -1539,12 +1539,14 @@ def BLXi : AXI<(outs), (ins br_target:$target), BrMiscFrm, NoItinerary,
   let Inst{24} = target{0};
 }
 
-// Branch and Exchange Jazelle -- for disassembly only
+// Branch and Exchange Jazelle
 def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
-              [/* For disassembly only; pattern left blank */]> {
+              [/* pattern left blank */]> {
+  bits<4> func;
   let Inst{23-20} = 0b0010;
-  //let Inst{19-8} = 0xfff;
+  let Inst{19-8} = 0xfff;
   let Inst{7-4} = 0b0010;
+  let Inst{3-0} = func;
 }
 
 // Tail calls.
