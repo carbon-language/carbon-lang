@@ -1378,9 +1378,8 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
     let Inst{3-0}  = dst;
   }
 
-  // For disassembly only.
-  def BX_pred : AXI<(outs), (ins GPR:$dst, pred:$p), BrMiscFrm, IIC_Br,
-                  "bx$p\t$dst", [/* pattern left blank */]>,
+  def BX_pred : AI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br,
+                  "bx", "\t$dst", [/* pattern left blank */]>,
               Requires<[IsARM, HasV4T]> {
     bits<4> dst;
     let Inst{27-4} = 0b000100101111111111110001;
