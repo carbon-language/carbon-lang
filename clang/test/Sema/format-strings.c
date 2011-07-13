@@ -363,3 +363,12 @@ int printf(const char * restrict, ...) __attribute__((__format__ (__printf__, 1,
 void rdar9612060(void) {
   printf("%s", 2); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int'}}
 }
+
+void check_char(unsigned char x, signed char y) {
+  printf("%c", y); // no-warning
+  printf("%hhu", x); // no-warning
+  printf("%hhi", y); // no-warning
+  printf("%hhi", x); // expected-warning{{conversion specifies type 'signed char' but the argument has type 'unsigned char'}}
+  printf("%c", x); // no-warning
+  printf("%hhu", y); // expected-warning{{conversion specifies type 'unsigned char' but the argument has type 'signed char'}}
+}
