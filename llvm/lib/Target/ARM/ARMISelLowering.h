@@ -244,6 +244,7 @@ namespace llvm {
       EmitInstrWithCustomInserter(MachineInstr *MI,
                                   MachineBasicBlock *MBB) const;
 
+    SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG) const;
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
     bool isDesirableToTransformToIntegerOp(unsigned Opc, EVT VT) const;

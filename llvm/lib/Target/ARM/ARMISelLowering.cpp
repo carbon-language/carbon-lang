@@ -2754,7 +2754,7 @@ SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
     SDValue ARMcc;
     SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
     SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMcc, DAG, dl);
-    return DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, TrueVal, ARMcc, CCR,Cmp);
+    return DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, TrueVal, ARMcc, CCR, Cmp);
   }
 
   ARMCC::CondCodes CondCode, CondCode2;
@@ -6960,6 +6960,70 @@ static SDValue PerformSELECT_CCCombine(SDNode *N, SelectionDAG &DAG,
   return DAG.getNode(Opcode, N->getDebugLoc(), N->getValueType(0), LHS, RHS);
 }
 
+/// PerformCMOVCombine - Target-specific DAG combining for ARMISD::CMOV.
+SDValue
+ARMTargetLowering::PerformCMOVCombine(SDNode *N, SelectionDAG &DAG) const {
+  SDValue Cmp = N->getOperand(4);
+  if (Cmp.getOpcode() != ARMISD::CMPZ)
+    // Only looking at EQ and NE cases.
+    return SDValue();
+
+  EVT VT = N->getValueType(0);
+  DebugLoc dl = N->getDebugLoc();
+  SDValue LHS = Cmp.getOperand(0);
+  SDValue RHS = Cmp.getOperand(1);
+  SDValue FalseVal = N->getOperand(0);
+  SDValue TrueVal = N->getOperand(1);
+  SDValue ARMcc = N->getOperand(2);
+  ARMCC::CondCodes CC = (ARMCC::CondCodes)cast<ConstantSDNode>(ARMcc)->getZExtValue();
+
+  // Simplify
+  //   mov     r1, r0
+  //   cmp     r1, x
+  //   mov     r0, y
+  //   moveq   r0, x
+  // to
+  //   cmp     r0, x
+  //   movne   r0, y
+  //
+  //   mov     r1, r0
+  //   cmp     r1, x
+  //   mov     r0, x
+  //   movne   r0, y
+  // to
+  //   cmp     r0, x
+  //   movne   r0, y
+  /// FIXME: Turn this into a target neutral optimization?
+  SDValue Res;
+  if (CC == ARMCC::NE && FalseVal == RHS) {
+    Res = DAG.getNode(ARMISD::CMOV, dl, VT, LHS, TrueVal, ARMcc,
+                      N->getOperand(3), Cmp);
+  } else if (CC == ARMCC::EQ && TrueVal == RHS) {
+    SDValue ARMcc;
+    SDValue NewCmp = getARMCmp(LHS, RHS, ISD::SETNE, ARMcc, DAG, dl);
+    Res = DAG.getNode(ARMISD::CMOV, dl, VT, LHS, FalseVal, ARMcc,
+                      N->getOperand(3), NewCmp);
+  }
+
+  if (Res.getNode()) {
+    APInt KnownZero, KnownOne;
+    APInt Mask = APInt::getAllOnesValue(VT.getScalarType().getSizeInBits());
+    DAG.ComputeMaskedBits(SDValue(N,0), Mask, KnownZero, KnownOne);
+    // Capture demanded bits information that would be otherwise lost.
+    if (KnownZero == 0xfffffffe)
+      Res = DAG.getNode(ISD::AssertZext, dl, MVT::i32, Res,
+                        DAG.getValueType(MVT::i1));
+    else if (KnownZero == 0xffffff00)
+      Res = DAG.getNode(ISD::AssertZext, dl, MVT::i32, Res,
+                        DAG.getValueType(MVT::i8));
+    else if (KnownZero == 0xffff0000)
+      Res = DAG.getNode(ISD::AssertZext, dl, MVT::i32, Res,
+                        DAG.getValueType(MVT::i16));
+  }
+
+  return Res;
+}
+
 SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   switch (N->getOpcode()) {
@@ -6988,6 +7052,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND: return PerformExtendCombine(N, DCI.DAG, Subtarget);
   case ISD::SELECT_CC:  return PerformSELECT_CCCombine(N, DCI.DAG, Subtarget);
+  case ARMISD::CMOV: return PerformCMOVCombine(N, DCI.DAG);
   case ARMISD::VLD2DUP:
   case ARMISD::VLD3DUP:
   case ARMISD::VLD4DUP:

@@ -76,3 +76,39 @@ entry:
   %1 = select i1 %0, i32 4283826005, i32 %x
   ret i32 %1
 }
+
+; rdar://9758317
+define i32 @t5(i32 %a) nounwind {
+entry:
+; ARM: t5:
+; ARM-NOT: mov
+; ARM: cmp r0, #1
+; ARM-NOT: mov
+; ARM: movne r0, #0
+
+; THUMB2: t5:
+; THUMB2-NOT: mov
+; THUMB2: cmp r0, #1
+; THUMB2: it ne
+; THUMB2: movne r0, #0
+  %cmp = icmp eq i32 %a, 1
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+}
+
+define i32 @t6(i32 %a) nounwind {
+entry:
+; ARM: t6:
+; ARM-NOT: mov
+; ARM: cmp r0, #0
+; ARM: movne r0, #1
+
+; THUMB2: t6:
+; THUMB2-NOT: mov
+; THUMB2: cmp r0, #0
+; THUMB2: it ne
+; THUMB2: movne r0, #1
+  %tobool = icmp ne i32 %a, 0
+  %lnot.ext = zext i1 %tobool to i32
+  ret i32 %lnot.ext
+}
