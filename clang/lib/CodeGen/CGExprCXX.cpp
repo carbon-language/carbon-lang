@@ -1364,26 +1364,16 @@ static void EmitArrayDelete(CodeGenFunction &CGF,
   if (QualType::DestructionKind dtorKind = elementType.isDestructedType()) {
     assert(numElements && "no element count for a type with a destructor!");
 
-    // It's legal to allocate a zero-length array, but emitArrayDestroy
-    // won't handle that correctly, so we need to check that here.
-    llvm::Value *iszero =
-      CGF.Builder.CreateIsNull(numElements, "delete.isempty");
-
-    // We'll patch the 'true' successor of this to lead to the end of
-    // the emitArrayDestroy loop.
-    llvm::BasicBlock *destroyBB = CGF.createBasicBlock("delete.destroy");
-    llvm::BranchInst *br =
-      CGF.Builder.CreateCondBr(iszero, destroyBB, destroyBB);
-    CGF.EmitBlock(destroyBB);
-
     llvm::Value *arrayEnd =
       CGF.Builder.CreateInBoundsGEP(deletedPtr, numElements, "delete.end");
+
+    // Note that it is legal to allocate a zero-length array, and we
+    // can never fold the check away because the length should always
+    // come from a cookie.
     CGF.emitArrayDestroy(deletedPtr, arrayEnd, elementType,
                          CGF.getDestroyer(dtorKind),
+                         /*checkZeroLength*/ true,
                          CGF.needsEHCleanup(dtorKind));
-
-    assert(CGF.Builder.GetInsertBlock()->empty());
-    br->setSuccessor(0, CGF.Builder.GetInsertBlock());
   }
 
   // Pop the cleanup block.

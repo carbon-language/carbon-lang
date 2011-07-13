@@ -1174,8 +1174,20 @@ void CodeGenFunction::emitDestroy(llvm::Value *addr, QualType type,
 
   llvm::Value *begin = addr;
   llvm::Value *length = emitArrayLength(arrayType, type, begin);
+
+  // Normally we have to check whether the array is zero-length.
+  bool checkZeroLength = true;
+
+  // But if the array length is constant, we can suppress that.
+  if (llvm::ConstantInt *constLength = dyn_cast<llvm::ConstantInt>(length)) {
+    // ...and if it's constant zero, we can just skip the entire thing.
+    if (constLength->isZero()) return;
+    checkZeroLength = false;
+  }
+
   llvm::Value *end = Builder.CreateInBoundsGEP(begin, length);
-  emitArrayDestroy(begin, end, type, destroyer, useEHCleanupForArray);
+  emitArrayDestroy(begin, end, type, destroyer,
+                   checkZeroLength, useEHCleanupForArray);
 }
 
 /// emitArrayDestroy - Destroys all the elements of the given array,
@@ -1192,6 +1204,7 @@ void CodeGenFunction::emitArrayDestroy(llvm::Value *begin,
                                        llvm::Value *end,
                                        QualType type,
                                        Destroyer &destroyer,
+                                       bool checkZeroLength,
                                        bool useEHCleanup) {
   assert(!type->isArrayType());
 
@@ -1199,6 +1212,12 @@ void CodeGenFunction::emitArrayDestroy(llvm::Value *begin,
   // need to check for the zero-element case.
   llvm::BasicBlock *bodyBB = createBasicBlock("arraydestroy.body");
   llvm::BasicBlock *doneBB = createBasicBlock("arraydestroy.done");
+
+  if (checkZeroLength) {
+    llvm::Value *isEmpty = Builder.CreateICmpEQ(begin, end,
+                                                "arraydestroy.isempty");
+    Builder.CreateCondBr(isEmpty, doneBB, bodyBB);
+  }
 
   // Enter the loop body, making that address the current address.
   llvm::BasicBlock *entryBB = Builder.GetInsertBlock();
@@ -1232,58 +1251,34 @@ void CodeGenFunction::emitArrayDestroy(llvm::Value *begin,
 
 /// Perform partial array destruction as if in an EH cleanup.  Unlike
 /// emitArrayDestroy, the element type here may still be an array type.
-///
-/// Essentially does an emitArrayDestroy, but checking for the
-/// possibility of a zero-length array (in case the initializer for
-/// the first element throws).
 static void emitPartialArrayDestroy(CodeGenFunction &CGF,
                                     llvm::Value *begin, llvm::Value *end,
                                     QualType type,
                                     CodeGenFunction::Destroyer &destroyer) {
-  // Check whether the array is empty.  For the sake of prettier IR,
-  // we want to jump to the end of the array destroy loop instead of
-  // jumping to yet another block.  We can do this with some modest
-  // assumptions about how emitArrayDestroy works.
-
-  llvm::Value *earlyTest =
-    CGF.Builder.CreateICmpEQ(begin, end, "pad.isempty");
-
-  llvm::BasicBlock *nextBB = CGF.createBasicBlock("pad.arraydestroy");
-
-  // Temporarily, build the conditional branch with identical
-  // successors.  We'll patch this in a bit.
-  llvm::BranchInst *br =
-    CGF.Builder.CreateCondBr(earlyTest, nextBB, nextBB);
-  CGF.EmitBlock(nextBB);
-
-  llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, 0);
-
   // If the element type is itself an array, drill down.
-  llvm::SmallVector<llvm::Value*,4> gepIndices;
-  gepIndices.push_back(zero);
+  unsigned arrayDepth = 0;
   while (const ArrayType *arrayType = CGF.getContext().getAsArrayType(type)) {
     // VLAs don't require a GEP index to walk into.
     if (!isa<VariableArrayType>(arrayType))
-      gepIndices.push_back(zero);
+      arrayDepth++;
     type = arrayType->getElementType();
   }
-  if (gepIndices.size() != 1) {
+
+  if (arrayDepth) {
+    llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, arrayDepth+1);
+
+    llvm::SmallVector<llvm::Value*,4> gepIndices(arrayDepth, zero);
     begin = CGF.Builder.CreateInBoundsGEP(begin, gepIndices.begin(),
                                           gepIndices.end(), "pad.arraybegin");
     end = CGF.Builder.CreateInBoundsGEP(end, gepIndices.begin(),
                                         gepIndices.end(), "pad.arrayend");
   }
 
-  // Now that we know that the array isn't empty, destroy it.  We
-  // don't ever need an EH cleanup because we assume that we're in an
-  // EH cleanup ourselves, so a throwing destructor causes an
-  // immediate terminate.
-  CGF.emitArrayDestroy(begin, end, type, destroyer, /*useEHCleanup*/ false);
-
-  // Set the conditional branch's 'false' successor to doneBB.
-  llvm::BasicBlock *doneBB = CGF.Builder.GetInsertBlock();
-  assert(CGF.Builder.GetInsertPoint() == doneBB->begin());
-  br->setSuccessor(0, doneBB);
+  // Destroy the array.  We don't ever need an EH cleanup because we
+  // assume that we're in an EH cleanup ourselves, so a throwing
+  // destructor causes an immediate terminate.
+  CGF.emitArrayDestroy(begin, end, type, destroyer,
+                       /*checkZeroLength*/ true, /*useEHCleanup*/ false);
 }
 
 namespace {

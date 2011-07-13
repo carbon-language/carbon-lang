@@ -1210,7 +1210,7 @@ public:
                                         bool useEHCleanupForArray);
   void emitArrayDestroy(llvm::Value *begin, llvm::Value *end,
                         QualType type, Destroyer &destroyer,
-                        bool useEHCleanup);
+                        bool checkZeroLength, bool useEHCleanup);
 
   Destroyer &getDestroyer(QualType::DestructionKind destructionKind);
 

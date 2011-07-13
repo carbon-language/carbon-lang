@@ -75,10 +75,9 @@ namespace test1 {
     // CHECK-NEXT: [[ALLOC:%.*]] = getelementptr inbounds i8* [[T0]], i64 -8
     // CHECK-NEXT: [[T1:%.*]] = bitcast i8* [[ALLOC]] to i64*
     // CHECK-NEXT: [[COUNT:%.*]] = load i64* [[T1]]
-    // CHECK-NEXT: [[ISZERO:%.*]] = icmp eq i64 [[COUNT]], 0
-    // CHECK-NEXT: br i1 [[ISZERO]],
     // CHECK:      [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 [[COUNT]]
-    // CHECK-NEXT: br label
+    // CHECK-NEXT: [[ISEMPTY:%.*]] = icmp eq [[A]]* [[BEGIN]], [[END]]
+    // CHECK-NEXT: br i1 [[ISEMPTY]],
     // CHECK:      [[PAST:%.*]] = phi [[A]]* [ [[END]], {{%.*}} ], [ [[CUR:%.*]], {{%.*}} ]
     // CHECK-NEXT: [[CUR:%.*]] = getelementptr inbounds [[A]]* [[PAST]], i64 -1
     // CHECK-NEXT: call void @_ZN5test11AD1Ev([[A]]* [[CUR]])
