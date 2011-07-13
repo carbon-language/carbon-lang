@@ -1194,7 +1194,7 @@ bool AsmParser::ParseStatement() {
     for (unsigned i = 0; i != ParsedOperands.size(); ++i) {
       if (i != 0)
         OS << ", ";
-      ParsedOperands[i]->dump(OS);
+      ParsedOperands[i]->print(OS);
     }
     OS << "]";
 

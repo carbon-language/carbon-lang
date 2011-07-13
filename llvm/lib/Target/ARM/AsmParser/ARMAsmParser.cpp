@@ -692,7 +692,7 @@ public:
     Inst.addOperand(MCOperand::CreateImm(unsigned(getProcIFlags())));
   }
 
-  virtual void dump(raw_ostream &OS) const;
+  virtual void print(raw_ostream &OS) const;
 
   static ARMOperand *CreateCondCode(ARMCC::CondCodes CC, SMLoc S) {
     ARMOperand *Op = new ARMOperand(CondCode);
@@ -846,7 +846,7 @@ public:
 
 } // end anonymous namespace.
 
-void ARMOperand::dump(raw_ostream &OS) const {
+void ARMOperand::print(raw_ostream &OS) const {
   switch (Kind) {
   case CondCode:
     OS << "<ARMCC::" << ARMCondCodeToString(getCondCode()) << ">";

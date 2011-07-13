@@ -145,7 +145,7 @@ struct X86Operand : public MCParsedAsmOperand {
   /// getEndLoc - Get the location of the last token of this operand.
   SMLoc getEndLoc() const { return EndLoc; }
 
-  virtual void dump(raw_ostream &OS) const {}
+  virtual void print(raw_ostream &OS) const {}
 
   StringRef getToken() const {
     assert(Kind == Token && "Invalid access!");

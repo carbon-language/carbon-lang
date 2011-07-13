@@ -219,7 +219,7 @@ public:
     return StringRef(Tok.Data, Tok.Length);
   }
 
-  virtual void dump(raw_ostream &OS) const;
+  virtual void print(raw_ostream &OS) const;
 
   static MBlazeOperand *CreateToken(StringRef Str, SMLoc S) {
     MBlazeOperand *Op = new MBlazeOperand(Token);
@@ -279,7 +279,7 @@ public:
 
 } // end anonymous namespace.
 
-void MBlazeOperand::dump(raw_ostream &OS) const {
+void MBlazeOperand::print(raw_ostream &OS) const {
   switch (Kind) {
   case Immediate:
     getImm()->print(OS);
