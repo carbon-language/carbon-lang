@@ -53,7 +53,7 @@ class ARMAsmParser : public TargetAsmParser {
   int TryParseRegister();
   virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
   bool TryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &);
-  bool TryParseShiftRegister(SmallVectorImpl<MCParsedAsmOperand*> &);
+  int TryParseShiftRegister(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &,
                    ARMII::AddrMode AddrMode);
@@ -1017,11 +1017,12 @@ int ARMAsmParser::TryParseRegister() {
   return RegNum;
 }
 
-/// Try to parse a register name.  The token must be an Identifier when called,
-/// and if it is a register name the token is eaten and the register number is
-/// returned.  Otherwise return -1.
-///
-bool ARMAsmParser::TryParseShiftRegister(
+// Try to parse a shifter  (e.g., "lsl <amt>"). On success, return 0.
+// If a recoverable error occurs, return 1. If an irrecoverable error
+// occurs, return -1. An irrecoverable error is one where tokens have been
+// consumed in the process of trying to parse the shifter (i.e., when it is
+// indeed a shifter operand, but malformed).
+int ARMAsmParser::TryParseShiftRegister(
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
@@ -1038,7 +1039,7 @@ bool ARMAsmParser::TryParseShiftRegister(
       .Default(ARM_AM::no_shift);
 
   if (ShiftTy == ARM_AM::no_shift)
-    return true;
+    return 1;
 
   Parser.Lex(); // Eat the operator.
 
@@ -1062,12 +1063,16 @@ bool ARMAsmParser::TryParseShiftRegister(
       Parser.Lex(); // Eat hash.
       SMLoc ImmLoc = Parser.getTok().getLoc();
       const MCExpr *ShiftExpr = 0;
-      if (getParser().ParseExpression(ShiftExpr))
-        return Error(ImmLoc, "invalid immediate shift value");
+      if (getParser().ParseExpression(ShiftExpr)) {
+        Error(ImmLoc, "invalid immediate shift value");
+        return -1;
+      }
       // The expression must be evaluatable as an immediate.
       const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(ShiftExpr);
-      if (!CE)
-        return Error(ImmLoc, "invalid immediate shift value");
+      if (!CE) {
+        Error(ImmLoc, "invalid immediate shift value");
+        return -1;
+      }
       // Range check the immediate.
       // lsl, ror: 0 <= imm <= 31
       // lsr, asr: 0 <= imm <= 32
@@ -1075,24 +1080,28 @@ bool ARMAsmParser::TryParseShiftRegister(
       if (Imm < 0 ||
           ((ShiftTy == ARM_AM::lsl || ShiftTy == ARM_AM::ror) && Imm > 31) ||
           ((ShiftTy == ARM_AM::lsr || ShiftTy == ARM_AM::asr) && Imm > 32)) {
-        return Error(ImmLoc, "immediate shift value out of range");
+        Error(ImmLoc, "immediate shift value out of range");
+        return -1;
       }
     } else if (Parser.getTok().is(AsmToken::Identifier)) {
       ShiftReg = TryParseRegister();
       SMLoc L = Parser.getTok().getLoc();
-      if (ShiftReg == -1)
-        return Error (L, "expected immediate or register in shift operand");
-    } else
-      return Error (Parser.getTok().getLoc(),
+      if (ShiftReg == -1) {
+        Error (L, "expected immediate or register in shift operand");
+        return -1;
+      }
+    } else {
+      Error (Parser.getTok().getLoc(),
                     "expected immediate or register in shift operand");
+      return -1;
+    }
   }
-
 
   Operands.push_back(ARMOperand::CreateShiftedRegister(ShiftTy, SrcReg,
                                                        ShiftReg, Imm,
                                                S, Parser.getTok().getLoc()));
 
-  return false;
+  return 0;
 }
 
 
@@ -1737,15 +1746,18 @@ bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   default:
     Error(Parser.getTok().getLoc(), "unexpected token in operand");
     return true;
-  case AsmToken::Identifier:
+  case AsmToken::Identifier: {
     if (!TryParseRegisterWithWriteBack(Operands))
       return false;
-    if (!TryParseShiftRegister(Operands))
+    int Res = TryParseShiftRegister(Operands);
+    if (Res == 0) // success
       return false;
-
+    else if (Res == -1) // irrecoverable error
+      return true;
 
     // Fall though for the Identifier case that is not a register or a
     // special name.
+  }
   case AsmToken::Integer: // things like 1f and 2b as a branch targets
   case AsmToken::Dot: {   // . as a branch target
     // This was not a register so parse other operands that start with an
