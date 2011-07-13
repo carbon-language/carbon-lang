@@ -841,8 +841,9 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
                              MI.getOperand(0).getReg())
                      .addOperand(MI.getOperand(1))
                      .addReg(0)
-                     .addImm(ARM_AM::getSORegOpc((Opcode == ARM::MOVsrl_flag ? ARM_AM::lsr
-                                                  : ARM_AM::asr), 1)))
+                     .addImm(ARM_AM::getSORegOpc((Opcode == ARM::MOVsrl_flag ?
+                                                  ARM_AM::lsr : ARM_AM::asr),
+                                                 1)))
         .addReg(ARM::CPSR, RegState::Define);
       MI.eraseFromParent();
       return true;
@@ -905,10 +906,10 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       const MachineOperand &MO1 = MI.getOperand(1);
       const GlobalValue *GV = MO1.getGlobal();
       unsigned TF = MO1.getTargetFlags();
-      bool isARM = (Opcode != ARM::t2MOV_ga_pcrel && Opcode != ARM::t2MOV_ga_dyn);
+      bool isARM = (Opcode != ARM::t2MOV_ga_pcrel && Opcode!=ARM::t2MOV_ga_dyn);
       bool isPIC = (Opcode != ARM::MOV_ga_dyn && Opcode != ARM::t2MOV_ga_dyn);
       unsigned LO16Opc = isARM ? ARM::MOVi16_ga_pcrel : ARM::t2MOVi16_ga_pcrel;
-      unsigned HI16Opc = isARM ? ARM::MOVTi16_ga_pcrel : ARM::t2MOVTi16_ga_pcrel;
+      unsigned HI16Opc = isARM ? ARM::MOVTi16_ga_pcrel :ARM::t2MOVTi16_ga_pcrel;
       unsigned LO16TF = isPIC
         ? ARMII::MO_LO16_NONLAZY_PIC : ARMII::MO_LO16_NONLAZY;
       unsigned HI16TF = isPIC
