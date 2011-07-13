@@ -2586,14 +2586,23 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     case BO_NE:
       return IntRange::forBoolType();
 
-    // The type of these compound assignments is the type of the LHS,
-    // so the RHS is not necessarily an integer.
+    // The type of the assignments is the type of the LHS, so the RHS
+    // is not necessarily the same type.
     case BO_MulAssign:
     case BO_DivAssign:
     case BO_RemAssign:
     case BO_AddAssign:
     case BO_SubAssign:
+    case BO_XorAssign:
+    case BO_OrAssign:
+      // TODO: bitfields?
       return IntRange::forValueOfType(C, E->getType());
+
+    // Simple assignments just pass through the RHS, which will have
+    // been coerced to the LHS type.
+    case BO_Assign:
+      // TODO: bitfields?
+      return GetExprRange(C, BO->getRHS(), MaxWidth);
 
     // Operations with opaque sources are black-listed.
     case BO_PtrMemD:
