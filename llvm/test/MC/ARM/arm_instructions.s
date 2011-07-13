@@ -167,12 +167,6 @@
 @ CHECK: cdp2  p7, #1, c1, c1, c1, #4 @ encoding: [0x81,0x17,0x11,0xfe]
         cdp2  p7, #1, c1, c1, c1, #4
 
-@ CHECK: clrex @ encoding: [0x1f,0xf0,0x7f,0xf5]
-        clrex
-
-@ CHECK: clz  r9, r0 @ encoding: [0x10,0x9f,0x6f,0xe1]
-        clz  r9, r0
-
 @ CHECK: qadd  r1, r2, r3 @ encoding: [0x52,0x10,0x03,0xe1]
         qadd  r1, r2, r3
 
