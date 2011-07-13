@@ -49,7 +49,7 @@ public:
     IsValid () const;
 
 #ifdef SWIG
-    %feature("autodoc", "
+    %feature("docstring", "
 #endif
     //------------------------------------------------------------------
     /// Get const accessor for the module file specification.
@@ -68,7 +68,7 @@ public:
     GetFileSpec () const;
 
 #ifdef SWIG
-    %feature("autodoc", "
+    %feature("docstring", "
 #endif
     //------------------------------------------------------------------
     /// Get accessor for the module platform file specification.
@@ -100,7 +100,7 @@ public:
 #endif
 
 #ifdef SWIG
-    %feature("autodoc",
+    %feature("docstring",
              "Returns the UUID of the module as a Python string."
              ) GetUUIDString;
 #endif
@@ -134,7 +134,7 @@ public:
     GetSymbolAtIndex (size_t idx);
 
 #ifdef SWIG
-    %feature("autodoc", "
+    %feature("docstring", "
 #endif
     //------------------------------------------------------------------
     /// Find functions by name.
@@ -170,7 +170,7 @@ public:
                    lldb::SBSymbolContextList& sc_list);
 
 #ifdef SWIG
-    %feature("autodoc", "
+    %feature("docstring", "
 #endif
     //------------------------------------------------------------------
     /// Find global and static variables by name.
