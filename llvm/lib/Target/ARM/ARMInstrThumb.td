@@ -26,10 +26,6 @@ def imm_comp_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(~((uint32_t)N->getZExtValue()), MVT::i32);
 }]>;
 
-/// imm0_7 predicate - True if the 32-bit immediate is in the range [0,7].
-def imm0_7 : ImmLeaf<i32, [{
-  return Imm >= 0 && Imm < 8;
-}]>;
 def imm0_7_neg : PatLeaf<(i32 imm), [{
   return (uint32_t)-N->getZExtValue() < 8;
 }], imm_neg_XFORM>;

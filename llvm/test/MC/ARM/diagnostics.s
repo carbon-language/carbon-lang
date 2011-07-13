@@ -46,3 +46,16 @@
         bkpt #65536
 
 @ CHECK-ERRORS: error: invalid operand for instruction
+
+        @ Out of range 4 and 3 bit immediates on CDP[2]
+
+        @ Out of range immediates for CDP/CDP2
+        cdp  p7, #2, c1, c1, c1, #8
+        cdp  p7, #1, c1, c1, c1, #8
+        cdp2  p7, #2, c1, c1, c1, #8
+        cdp2  p7, #1, c1, c1, c1, #8
+
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction

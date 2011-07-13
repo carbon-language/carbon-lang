@@ -459,6 +459,22 @@ def arm_i32imm : PatLeaf<(imm), [{
   return ARM_AM::isSOImmTwoPartVal((unsigned)N->getZExtValue());
 }]>;
 
+/// imm0_7 predicate - Immediate in the range [0,31].
+def Imm0_7AsmOperand: AsmOperandClass { let Name = "Imm0_7"; }
+def imm0_7 : Operand<i32>, ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 8;
+}]> {
+  let ParserMatchClass = Imm0_7AsmOperand;
+}
+
+/// imm0_15 predicate - Immediate in the range [0,31].
+def Imm0_15AsmOperand: AsmOperandClass { let Name = "Imm0_15"; }
+def imm0_15 : Operand<i32>, ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 16;
+}]> {
+  let ParserMatchClass = Imm0_15AsmOperand;
+}
+
 /// imm0_31 predicate - True if the 32-bit immediate is in the range [0,31].
 def imm0_31 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 32;
@@ -3465,8 +3481,8 @@ def SWPB : AIswp<1, (outs GPR:$Rt), (ins GPR:$Rt2, GPR:$Rn), "swpb",
 // Coprocessor Instructions.
 //
 
-def CDP : ABI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
-            c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+def CDP : ABI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
+            c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, imm0_7:$opc2),
             NoItinerary, "cdp", "\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
             [(int_arm_cdp imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
                           imm:$CRm, imm:$opc2)]> {
@@ -3486,8 +3502,8 @@ def CDP : ABI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
   let Inst{23-20} = opc1;
 }
 
-def CDP2 : ABXI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
-               c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+def CDP2 : ABXI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
+               c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, imm0_7:$opc2),
                NoItinerary, "cdp2\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
                [(int_arm_cdp2 imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
                               imm:$CRm, imm:$opc2)]> {

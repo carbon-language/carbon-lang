@@ -3421,8 +3421,8 @@ def t2MRRC2 : t2MovRRCopro<0b1111, "mrrc2", 1>;
 // Other Coprocessor Instructions.
 //
 
-def tCDP : T2Cop<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
-                 c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+def tCDP : T2Cop<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
+                 c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, imm0_7:$opc2),
                  "cdp\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
                  [(int_arm_cdp imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
                                imm:$CRm, imm:$opc2)]> {
@@ -3444,8 +3444,8 @@ def tCDP : T2Cop<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
   let Inst{23-20} = opc1;
 }
 
-def t2CDP2 : T2Cop<0b1111, (outs), (ins p_imm:$cop, i32imm:$opc1,
-                   c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+def t2CDP2 : T2Cop<0b1111, (outs), (ins p_imm:$cop, imm0_15:$opc1,
+                   c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, imm0_7:$opc2),
                    "cdp2\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
                    [(int_arm_cdp2 imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
                                   imm:$CRm, imm:$opc2)]> {
