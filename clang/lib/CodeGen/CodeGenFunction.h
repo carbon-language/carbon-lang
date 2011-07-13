@@ -1204,6 +1204,10 @@ public:
                    Destroyer &destroyer, bool useEHCleanupForArray);
   void emitDestroy(llvm::Value *addr, QualType type, Destroyer &destroyer,
                    bool useEHCleanupForArray);
+  llvm::Function *generateDestroyHelper(llvm::Constant *addr,
+                                        QualType type,
+                                        Destroyer &destroyer,
+                                        bool useEHCleanupForArray);
   void emitArrayDestroy(llvm::Value *begin, llvm::Value *end,
                         QualType type, Destroyer &destroyer,
                         bool useEHCleanup);
@@ -1707,10 +1711,6 @@ public:
   void EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
                                  llvm::Value *NumElements,
                                  llvm::Value *This);
-
-  llvm::Function *GenerateCXXAggrDestructorHelper(const CXXDestructorDecl *D,
-                                                  const ArrayType *Array,
-                                                  llvm::Value *This);
 
   void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
                              bool ForVirtualBase, llvm::Value *This);
