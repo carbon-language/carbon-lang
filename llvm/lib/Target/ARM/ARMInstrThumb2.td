@@ -3329,9 +3329,9 @@ def t2MSR : T2SpecialReg<0b111100111000 /* op31-20 */, 0b10 /* op15-14 */,
 // Move between coprocessor and ARM core register
 //
 
-class tMovRCopro<string opc, bit direction, dag oops, dag iops,
-                 list<dag> pattern>
-  : T2Cop<0b1110, oops, iops,
+class t2MovRCopro<bits<4> Op, string opc, bit direction, dag oops, dag iops,
+                  list<dag> pattern>
+  : T2Cop<Op, oops, iops,
           !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
           pattern> {
   let Inst{27-24} = 0b1110;
@@ -3353,113 +3353,69 @@ class tMovRCopro<string opc, bit direction, dag oops, dag iops,
   let Inst{19-16} = CRn;
 }
 
-def tMCR : tMovRCopro<"mcr", 0 /* from ARM core register to coprocessor */,
+class t2MovRRCopro<bits<4> Op, string opc, bit direction,
+                   list<dag> pattern = []>
+  : T2Cop<Op, (outs),
+          (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
+          !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
+  let Inst{27-24} = 0b1100;
+  let Inst{23-21} = 0b010;
+  let Inst{20} = direction;
+
+  bits<4> Rt;
+  bits<4> Rt2;
+  bits<4> cop;
+  bits<4> opc1;
+  bits<4> CRm;
+
+  let Inst{15-12} = Rt;
+  let Inst{19-16} = Rt2;
+  let Inst{11-8}  = cop;
+  let Inst{7-4}   = opc1;
+  let Inst{3-0}   = CRm;
+}
+
+/* from ARM core register to coprocessor */
+def t2MCR : t2MovRCopro<0b1110, "mcr", 0,
            (outs),
            (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, c_imm:$CRn,
                 c_imm:$CRm, i32imm:$opc2),
            [(int_arm_mcr imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
                          imm:$CRm, imm:$opc2)]>;
-def tMRC : tMovRCopro<"mrc", 1 /* from coprocessor to ARM core register */,
-           (outs GPR:$Rt),
-           (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
-           []>;
-
-def : Pat<(int_arm_mrc imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2),
-          (tMRC imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2)>,
-          Requires<[IsThumb, HasV6T2]>;
-
-class tMovRRCopro<string opc, bit direction,
-                  list<dag> pattern = [/* For disassembly only */]>
-  : T2Cop<0b1110, (outs),
-          (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
-          !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
-  let Inst{27-24} = 0b1100;
-  let Inst{23-21} = 0b010;
-  let Inst{20} = direction;
-
-  bits<4> Rt;
-  bits<4> Rt2;
-  bits<4> cop;
-  bits<4> opc1;
-  bits<4> CRm;
-
-  let Inst{15-12} = Rt;
-  let Inst{19-16} = Rt2;
-  let Inst{11-8}  = cop;
-  let Inst{7-4}   = opc1;
-  let Inst{3-0}   = CRm;
-}
-
-def tMCRR : tMovRRCopro<"mcrr", 0 /* from ARM core register to coprocessor */,
-                        [(int_arm_mcrr imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2,
-                                       imm:$CRm)]>;
-def tMRRC : tMovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
-
-class t2MovRCopro<string opc, bit direction, dag oops, dag iops,
-                  list<dag> pattern>
-  : T2Cop<0b1111, oops, iops,
-          !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
-          pattern> {
-  let Inst{27-24} = 0b1110;
-  let Inst{20} = direction;
-  let Inst{4} = 1;
-
-  bits<4> Rt;
-  bits<4> cop;
-  bits<3> opc1;
-  bits<3> opc2;
-  bits<4> CRm;
-  bits<4> CRn;
-
-  let Inst{15-12} = Rt;
-  let Inst{11-8}  = cop;
-  let Inst{23-21} = opc1;
-  let Inst{7-5}   = opc2;
-  let Inst{3-0}   = CRm;
-  let Inst{19-16} = CRn;
-}
-
-def t2MCR2 : t2MovRCopro<"mcr2", 0 /* from ARM core register to coprocessor */,
+def t2MCR2 : t2MovRCopro<0b1111, "mcr2", 0,
              (outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, c_imm:$CRn,
                           c_imm:$CRm, i32imm:$opc2),
              [(int_arm_mcr2 imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
                             imm:$CRm, imm:$opc2)]>;
-def t2MRC2 : t2MovRCopro<"mrc2", 1 /* from coprocessor to ARM core register */,
+
+/* from coprocessor to ARM core register */
+def t2MRC : t2MovRCopro<0b1110, "mrc", 1,
+           (outs GPR:$Rt),
+           (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+           []>;
+
+def t2MRC2 : t2MovRCopro<0b1111, "mrc2", 1,
              (outs GPR:$Rt), (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn,
                                   c_imm:$CRm, i32imm:$opc2), []>;
 
-def : T2v6Pat<(int_arm_mrc2 imm:$cop, imm:$opc1, imm:$CRn,
-                            imm:$CRm, imm:$opc2),
+def : T2v6Pat<(int_arm_mrc  imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2),
+              (t2MRC imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2)>;
+
+def : T2v6Pat<(int_arm_mrc2 imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2),
               (t2MRC2 imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2)>;
 
-class t2MovRRCopro<string opc, bit direction,
-                   list<dag> pattern = [/* For disassembly only */]>
-  : T2Cop<0b1111, (outs),
-          (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
-          !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
-  let Inst{27-24} = 0b1100;
-  let Inst{23-21} = 0b010;
-  let Inst{20} = direction;
 
-  bits<4> Rt;
-  bits<4> Rt2;
-  bits<4> cop;
-  bits<4> opc1;
-  bits<4> CRm;
-
-  let Inst{15-12} = Rt;
-  let Inst{19-16} = Rt2;
-  let Inst{11-8}  = cop;
-  let Inst{7-4}   = opc1;
-  let Inst{3-0}   = CRm;
-}
-
-def t2MCRR2 : t2MovRRCopro<"mcrr2",
-                           0 /* from ARM core register to coprocessor */,
+/* from ARM core register to coprocessor */
+def t2MCRR : t2MovRRCopro<0b1110, "mcrr", 0,
+                        [(int_arm_mcrr imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2,
+                                       imm:$CRm)]>;
+def t2MCRR2 : t2MovRRCopro<0b1111, "mcrr2", 0,
                            [(int_arm_mcrr2 imm:$cop, imm:$opc1, GPR:$Rt,
                                            GPR:$Rt2, imm:$CRm)]>;
-def t2MRRC2 : t2MovRRCopro<"mrrc2",
-                           1 /* from coprocessor to ARM core register */>;
+/* from coprocessor to ARM core register */
+def t2MRRC : t2MovRRCopro<0b1110, "mrrc", 1>;
+
+def t2MRRC2 : t2MovRRCopro<0b1111, "mrrc2", 1>;
 
 //===----------------------------------------------------------------------===//
 // Other Coprocessor Instructions.
