@@ -338,11 +338,9 @@ static int AssembleInput(const char *ProgName) {
   formatted_raw_ostream FOS(Out->os());
   OwningPtr<MCStreamer> Str;
 
-#if 0
   const TargetLoweringObjectFile &TLOF =
     TM->getTargetLowering()->getObjFileLowering();
   const_cast<TargetLoweringObjectFile&>(TLOF).Initialize(Ctx, *TM);
-#endif
 
   OwningPtr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
   OwningPtr<MCSubtargetInfo>
