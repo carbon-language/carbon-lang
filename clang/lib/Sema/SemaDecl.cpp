@@ -536,9 +536,6 @@ Corrected:
            UnqualifiedDiag = diag::err_unknown_typename_suggest;
            QualifiedDiag = diag::err_unknown_nested_typename_suggest;
          }
-        
-        if (Corrected.getCorrectionSpecifier())
-          SS.MakeTrivial(Context, Corrected.getCorrectionSpecifier(), SourceRange(NameLoc));
 
         if (SS.isEmpty())
           Diag(NameLoc, UnqualifiedDiag)

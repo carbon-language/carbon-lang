@@ -43,7 +43,7 @@ namespace N {
   }
 
   void f() {
-    myvector v; // expected-error{{no type named 'myvector' in namespace 'N::inner'; did you mean 'inner::myvector'?}}
+    myvector v; // expected-error{{unknown type name 'myvector'; did you mean 'inner::myvector'?}}
   }
 }
 
@@ -56,6 +56,17 @@ namespace realstd {
 }
 
 void f() {
-  mylinkedlist v; // expected-error{{no type named 'mylinkedlist' in namespace 'realstd'; did you mean 'realstd::mylinkedlist'?}}
-  nylinkedlist w; // expected-error{{no type named 'nylinkedlist' in namespace 'realstd'; did you mean 'realstd::mylinkedlist'?}}
+  mylinkedlist v; // expected-error{{unknown type name 'mylinkedlist'; did you mean 'realstd::mylinkedlist'?}}
+  nylinkedlist w; // expected-error{{unknown type name 'nylinkedlist'; did you mean 'realstd::mylinkedlist'?}}
+}
+
+// Test case from http://llvm.org/bugs/show_bug.cgi?id=10318
+namespace llvm {
+ template <typename T> class GraphWriter {}; // expected-note{{'llvm::GraphWriter' declared here}}
+}
+
+struct S {};
+void bar() {
+ GraphWriter<S> x; //expected-error{{no template named 'GraphWriter'; did you mean 'llvm::GraphWriter'?}}
+
 }
