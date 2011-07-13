@@ -43,6 +43,19 @@ using namespace dwarf;
 //                                  ELF
 //===----------------------------------------------------------------------===//
 
+TargetLoweringObjectFileELF::TargetLoweringObjectFileELF()
+  : TargetLoweringObjectFile(),
+    TLSDataSection(0),
+    TLSBSSSection(0),
+    DataRelSection(0),
+    DataRelLocalSection(0),
+    DataRelROSection(0),
+    DataRelROLocalSection(0),
+    MergeableConst4Section(0),
+    MergeableConst8Section(0),
+    MergeableConst16Section(0) {
+}
+
 void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                              const TargetMachine &TM) {
   TargetLoweringObjectFile::Initialize(Ctx, TM);
@@ -480,6 +493,27 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
 //                                 MachO
 //===----------------------------------------------------------------------===//
 
+TargetLoweringObjectFileMachO::TargetLoweringObjectFileMachO()
+  : TargetLoweringObjectFile(),
+    TLSDataSection(0),
+    TLSBSSSection(0),
+    TLSTLVSection(0),
+    TLSThreadInitSection(0),
+    CStringSection(0),
+    UStringSection(0),
+    TextCoalSection(0),
+    ConstTextCoalSection(0),
+    ConstDataSection(0),
+    DataCoalSection(0),
+    DataCommonSection(0),
+    DataBSSSection(0),
+    FourByteConstantSection(0),
+    EightByteConstantSection(0),
+    SixteenByteConstantSection(0),
+    LazySymbolPointerSection(0),
+    NonLazySymbolPointerSection(0) {
+}
+
 void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                                const TargetMachine &TM) {
   IsFunctionEHFrameSymbolPrivate = false;
@@ -890,6 +924,13 @@ unsigned TargetLoweringObjectFileMachO::getTTypeEncoding() const {
 //===----------------------------------------------------------------------===//
 //                                  COFF
 //===----------------------------------------------------------------------===//
+
+TargetLoweringObjectFileCOFF::TargetLoweringObjectFileCOFF()
+  : TargetLoweringObjectFile(),
+    DrectveSection(0),
+    PDataSection(0),
+    XDataSection(0) {
+}
 
 void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
                                               const TargetMachine &TM) {

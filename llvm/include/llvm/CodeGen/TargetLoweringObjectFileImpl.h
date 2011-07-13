@@ -52,7 +52,7 @@ protected:
   const MCSection *MergeableConst8Section;
   const MCSection *MergeableConst16Section;
 public:
-  TargetLoweringObjectFileELF() {}
+  TargetLoweringObjectFileELF();
   ~TargetLoweringObjectFileELF() {}
 
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
@@ -131,7 +131,7 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const MCSection *LazySymbolPointerSection;
   const MCSection *NonLazySymbolPointerSection;
 public:
-  TargetLoweringObjectFileMachO() {}
+  TargetLoweringObjectFileMachO();
   ~TargetLoweringObjectFileMachO() {}
 
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
@@ -207,7 +207,7 @@ class TargetLoweringObjectFileCOFF : public TargetLoweringObjectFile {
   const MCSection *PDataSection;
   const MCSection *XDataSection;
 public:
-  TargetLoweringObjectFileCOFF() {}
+  TargetLoweringObjectFileCOFF();
   ~TargetLoweringObjectFileCOFF() {}
 
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
