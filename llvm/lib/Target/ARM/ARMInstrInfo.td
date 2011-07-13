@@ -1175,8 +1175,7 @@ def SEV : AI<(outs), (ins), MiscFrm, NoItinerary, "sev", "",
 // The i32imm operand $val can be used by a debugger to store more information
 // about the breakpoint.
 def BKPT : AI<(outs), (ins i32imm:$val), MiscFrm, NoItinerary, "bkpt", "\t$val",
-              [/* For disassembly only; pattern left blank */]>,
-           Requires<[IsARM]> {
+              []>, Requires<[IsARM]> {
   bits<16> val;
   let Inst{3-0} = val{3-0};
   let Inst{19-8} = val{15-4};
