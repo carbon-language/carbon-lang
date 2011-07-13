@@ -197,14 +197,11 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 locale_t __cloc();
 #endif
 
-typedef _VSTD::remove_pointer<locale_t>::type __locale_struct;
-typedef _VSTD::unique_ptr<__locale_struct, decltype(&freelocale)> __locale_unique_ptr;
-typedef _VSTD::unique_ptr<__locale_struct, decltype(&uselocale)> __locale_raii;
-
 // OSX has nice foo_l() functions that let you turn off use of the global
 // locale.  Linux, not so much.  The following functions avoid the locale when
 // that's possible and otherwise do the wrong thing.  FIXME.
-#ifdef _LIBCPP_STABLE_APPLE_ABI
+#if __APPLE__
+
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 int
@@ -272,195 +269,77 @@ __nolocale_isdigit(int __c)
     return isdigit_l(__c, 0);
 }
 
-#else  // _LIBCPP_STABLE_APPLE_ABI
-
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-decltype(MB_CUR_MAX_L(_VSTD::declval<locale_t>()))
+#else  // __APPLE__
+inline
+#ifndef _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
+_LIBCPP_INLINE_VISIBILITY
+#endif
+int
+__nolocale_sprintf(char* __restrict __str,
+                   const char* __restrict __format, ...)
+{
+    va_list __ap;
+    va_start(__ap, __format);
+    int __result = vsprintf(__str, __format, __ap);
+    va_end(__ap);
+    return __result;
+}
+inline
+#ifndef _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
+_LIBCPP_INLINE_VISIBILITY
+#endif
+int
+__nolocale_snprintf(char* __restrict __str, size_t __size,
+                    const char* __restrict __format, ...)
+{
+    va_list __ap;
+    va_start(__ap, __format);
+    int __result = vsnprintf(__str, __size, __format, __ap);
+    va_end(__ap);
+    return __result;
+}
+inline
+#ifndef _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
+_LIBCPP_INLINE_VISIBILITY
+#endif
+int
+__nolocale_asprintf(char** __ret,
+                    const char* __restrict __format, ...)
+{
+    va_list __ap;
+    va_start(__ap, __format);
+    int __result = vasprintf(__ret, __format, __ap);
+    va_end(__ap);
+    return __result;
+}
+inline
+#ifndef _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
+_LIBCPP_INLINE_VISIBILITY
+#endif
+int
+__nolocale_sscanf(const char* __restrict __str,
+                  const char* __restrict __format, ...)
+{
+    va_list __ap;
+    va_start(__ap, __format);
+    int __result = vsscanf(__str, __format, __ap);
+    va_end(__ap);
+    return __result;
+}
 inline _LIBCPP_INLINE_VISIBILITY
-__mb_cur_max_l(locale_t __l)
+int
+__nolocale_isxdigit(int __c)
 {
-  return MB_CUR_MAX_L(__l);
+    return isxdigit(__c);
 }
-#else  // _LIBCPP_LOCALE__L_EXTENSIONS
-_LIBCPP_ALWAYS_INLINE inline
-decltype(MB_CUR_MAX) __mb_cur_max_l(locale_t __l)
+
+inline _LIBCPP_INLINE_VISIBILITY
+int
+__nolocale_isdigit(int __c)
 {
-  __locale_raii __current(uselocale(__l), uselocale);
-  return MB_CUR_MAX;
+    return isdigit(__c);
 }
-#endif // _LIBCPP_LOCALE__L_EXTENSIONS
-
-_LIBCPP_ALWAYS_INLINE inline
-wint_t __btowc_l(int __c, locale_t __l)
-{
-#ifdef _LIBCPP_STABLE_APPLE_ABI
-  return btowc_l(__c, __l);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  return btowc(__c);
-#endif
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-int __wctob_l(wint_t __c, locale_t __l)
-{
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  return wctob_l(__c, __l);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  return wctob(__c);
-#endif
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-size_t __wcsnrtombs_l(char *__dest, const wchar_t **__src, size_t __nwc,
-                      size_t __len, mbstate_t *__ps, locale_t __l)
-{
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  return wcsnrtombs_l(__dest, __src, __nwc, __len, __ps, __l);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  return wcsnrtombs(__dest, __src, __nwc, __len, __ps);
-#endif
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-size_t __wcrtomb_l(char *__s, wchar_t __wc, mbstate_t *__ps, locale_t __l)
-{
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  return wcrtomb_l(__s, __wc, __ps, __l);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  return wcrtomb(__s, __wc, __ps);
-#endif
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-size_t __mbsnrtowcs_l(wchar_t * __dest, const char **__src, size_t __nms,
-                      size_t __len, mbstate_t *__ps, locale_t __l)
-{
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  return mbsnrtowcs_l(__dest, __src, __nms__len, __ps, __l);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  return mbsnrtowcs(__dest, __src, __nms, __len, __ps);
-#endif
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-size_t __mbrtowc_l(wchar_t *__pwc, const char *__s, size_t __n,
-                   mbstate_t *__ps, locale_t __l)
-{
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  return mbrtowc_l(__pwc, __s, __n, __ps, __l);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  return mbrtowc(__pwc, __s, __n, __ps);
-#endif
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-int __mbtowc_l(wchar_t *__pwc, const char *__pmb, size_t __max, locale_t __l)
-{
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  return mbtowc(__pwc, __pmb, __max, __l);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  return mbtowc(__pwc, __pmb, __max);
-#endif
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-size_t __mbrlen_l(const char *__s, size_t __n, mbstate_t *__ps, locale_t __l)
-{
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  return mbrlen_l(__s, __n, __ps, __l);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  return mbrlen(__s, __n, __ps);
-#endif
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-lconv *__localeconv_l(locale_t __l)
-{
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  return localeconv_l(__l);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  return localeconv();
-#endif
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-size_t __mbsrtowcs_l(wchar_t *__dest, const char **__src, size_t __len,
-                     mbstate_t *__ps, locale_t __l)
-{
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  return mbsrtowcs_l(__dest, __src, __len, __ps, __l);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  return mbsrtowcs(__dest, __src, __len, __ps);
-#endif
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-int __sprintf_l(char *__s, locale_t __l, const char *__format, ...) {
-  va_list __va;
-  va_start(__va, __format);
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  int __res = vsprintf_l(__s, __l, __format, __va);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  int __res = vsprintf(__s, __format, __va);
-#endif
-  va_end(__va);
-  return __res;
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-int __snprintf_l(char *__s, size_t __n, locale_t __l, const char *__format, ...) {
-  va_list __va;
-  va_start(__va, __format);
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  int __res = vsnprintf_l(__s, __n, __l, __format, __va);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  int __res = vsnprintf(__s, __n, __format, __va);
-#endif
-  va_end(__va);
-  return __res;
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-int __asprintf_l(char **__s, locale_t __l, const char *__format, ...) {
-  va_list __va;
-  va_start(__va, __format);
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  int __res = vasprintf_l(__s, __l, __format, __va);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  int __res = vasprintf(__s, __format, __va);
-#endif
-  va_end(__va);
-  return __res;
-}
-
-_LIBCPP_ALWAYS_INLINE inline
-int __sscanf_l(const char *__s, locale_t __l, const char *__format, ...) {
-  va_list __va;
-  va_start(__va, __format);
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  int __res = vsscanf_l(__s, __l, __format, __va);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  int __res = vsscanf(__s, __format, __va);
-#endif
-  va_end(__va);
-  return __res;
-}
-
-#endif  // _LIBCPP_STABLE_APPLE_ABI
+#endif  // __APPLE__
 
 // __scan_keyword
 // Scans [__b, __e) until a match is found in the basic_strings range
@@ -874,11 +753,7 @@ __num_get_signed_integral(const char* __a, const char* __a_end,
         int __save_errno = errno;
         errno = 0;
         char *__p2;
-#ifdef _LIBCXX_APPLE_STABLE_ABI
         long long __ll = strtoll_l(__a, &__p2, __base, 0);
-#else
-        long long __ll = strtoll_l(__a, &__p2, __base, __cloc());
-#endif
         int __current_errno = errno;
         if (__current_errno == 0)
             errno = __save_errno;
@@ -918,11 +793,7 @@ __num_get_unsigned_integral(const char* __a, const char* __a_end,
         int __save_errno = errno;
         errno = 0;
         char *__p2;
-#ifdef _LIBCXX_APPLE_STABLE_ABI
         unsigned long long __ll = strtoull_l(__a, &__p2, __base, 0);
-#else
-        unsigned long long __ll = strtoull_l(__a, &__p2, __base, __cloc());
-#endif
         int __current_errno = errno;
         if (__current_errno == 0)
             errno = __save_errno;
@@ -950,11 +821,7 @@ __num_get_float(const char* __a, const char* __a_end, ios_base::iostate& __err)
     if (__a != __a_end)
     {
         char *__p2;
-#ifdef _LIBCXX_APPLE_STABLE_ABI
         long double __ld = strtold_l(__a, &__p2, 0);
-#else
-        long double __ld = strtold_l(__a, &__p2, __cloc());
-#endif
         if (__p2 != __a_end)
         {
             __err = ios_base::failbit;
@@ -1359,11 +1226,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
             break;
     // Stage 3
     __a[sizeof(__a)-1] = 0;
-#ifdef _LIBCPP_STABLE_APPLE_ABI
     if (__nolocale_sscanf(__a, "%p", &__v) != 1)
-#else
-    if (__sscanf_l(__a, __cloc(), "%p", &__v) != 1)
-#endif
         __err = ios_base::failbit;
     // EOF checked
     if (__b == __e)
@@ -1468,21 +1331,13 @@ __num_put<_CharT>::__widen_and_group_float(char* __nb, char* __np, char* __ne,
         *__oe++ = __ct.widen(*__nf++);
         *__oe++ = __ct.widen(*__nf++);
         for (__ns = __nf; __ns < __ne; ++__ns)
-#ifdef _LIBCPP_STABLE_APPLE_ABI
             if (!__nolocale_isxdigit(*__ns))
-#else
-            if (!isxdigit_l(*__ns, __cloc()))
-#endif
                 break;
     }
     else
     {
         for (__ns = __nf; __ns < __ne; ++__ns)
-#ifdef _LIBCPP_STABLE_APPLE_ABI
             if (!__nolocale_isdigit(*__ns))
-#else
-            if (!isdigit_l(*__ns, __cloc()))
-#endif
                 break;
     }
     if (__grouping.empty())
@@ -1680,11 +1535,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + ((numeric_limits<long>::digits % 3) != 0)
                           + 1;
     char __nar[__nbuf];
-#ifdef _LIBCPP_STABLE_APPLE_ABI
     int __nc = __nolocale_sprintf(__nar, __fmt, __v);
-#else
-    int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
-#endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
     // Stage 2 - Widen __nar while adding thousands separators
@@ -1710,11 +1561,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + ((numeric_limits<long long>::digits % 3) != 0)
                           + 1;
     char __nar[__nbuf];
-#ifdef _LIBCPP_STABLE_APPLE_ABI
     int __nc = __nolocale_sprintf(__nar, __fmt, __v);
-#else
-    int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
-#endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
     // Stage 2 - Widen __nar while adding thousands separators
@@ -1740,11 +1587,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + ((numeric_limits<unsigned long>::digits % 3) != 0)
                           + 1;
     char __nar[__nbuf];
-#ifdef _LIBCPP_STABLE_APPLE_ABI
     int __nc = __nolocale_sprintf(__nar, __fmt, __v);
-#else
-    int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
-#endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
     // Stage 2 - Widen __nar while adding thousands separators
@@ -1770,11 +1613,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + ((numeric_limits<unsigned long long>::digits % 3) != 0)
                           + 1;
     char __nar[__nbuf];
-#ifdef _LIBCPP_STABLE_APPLE_ABI
     int __nc = __nolocale_sprintf(__nar, __fmt, __v);
-#else
-    int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
-#endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
     // Stage 2 - Widen __nar while adding thousands separators
@@ -1801,36 +1640,18 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     char* __nb = __nar;
     int __nc;
     if (__specify_precision)
-#ifdef _LIBCPP_STABLE_APPLE_ABI
         __nc = __nolocale_snprintf(__nb, __nbuf, __fmt,
                                    (int)__iob.precision(), __v);
-#else
-        __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt,
-                            (int)__iob.precision(), __v);
-#endif
     else
-#ifdef _LIBCPP_STABLE_APPLE_ABI
         __nc = __nolocale_snprintf(__nb, __nbuf, __fmt, __v);
-#else
-        __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt, __v);
-#endif
     unique_ptr<char, void(*)(void*)> __nbh(0, free);
     if (__nc > static_cast<int>(__nbuf-1))
     {
         if (__specify_precision)
-#ifdef _LIBCPP_STABLE_APPLE_ABI
             __nc = __nolocale_asprintf(&__nb, __fmt, (int)__iob.precision(),
                                        __v);
-#else
-            __nc = __asprintf_l(&__nb, __cloc(), __fmt,
-                              (int)__iob.precision());
-#endif
         else
-#ifdef _LIBCPP_STABLE_APPLE_ABI
             __nc = __nolocale_asprintf(&__nb, __fmt, __v);
-#else
-            __nc = __asprintf_l(&__nb, __cloc(), __fmt, (int)__iob.precision());
-#endif
         if (__nb == 0)
             __throw_bad_alloc();
         __nbh.reset(__nb);
@@ -1871,36 +1692,18 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     char* __nb = __nar;
     int __nc;
     if (__specify_precision)
-#ifdef _LIBCPP_STABLE_APPLE_ABI
         __nc = __nolocale_snprintf(__nb, __nbuf, __fmt,
                                    (int)__iob.precision(), __v);
-#else
-        __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt,
-                            (int)__iob.precision(), __v);
-#endif
     else
-#ifdef _LIBCPP_STABLE_APPLE_ABI
         __nc = __nolocale_snprintf(__nb, __nbuf, __fmt, __v);
-#else
-        __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt, __v);
-#endif
     unique_ptr<char, void(*)(void*)> __nbh(0, free);
     if (__nc > static_cast<int>(__nbuf-1))
     {
         if (__specify_precision)
-#ifdef _LIBCPP_STABLE_APPLE_ABI
             __nc = __nolocale_asprintf(&__nb, __fmt, (int)__iob.precision(),
                                        __v);
-#else
-            __nc = __asprintf_l(&__nb, __cloc(), __fmt,
-                              (int)__iob.precision());
-#endif
         else
-#ifdef _LIBCPP_STABLE_APPLE_ABI
             __nc = __nolocale_asprintf(&__nb, __fmt, __v);
-#else
-            __nc = __asprintf_l(&__nb, __cloc(), __fmt, (int)__iob.precision());
-#endif
         if (__nb == 0)
             __throw_bad_alloc();
         __nbh.reset(__nb);
@@ -1936,11 +1739,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     char __fmt[6] = "%p";
     const unsigned __nbuf = 20;
     char __nar[__nbuf];
-#ifdef _LIBCPP_STABLE_APPLE_ABI
     int __nc = __nolocale_sprintf(__nar, __fmt, __v);
-#else
-    int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
-#endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
     // Stage 2 - Widen __nar
@@ -3624,11 +3423,7 @@ money_put<_CharT, _OutputIterator>::do_put(iter_type __s, bool __intl,
     // secure memory for digit storage
     if (__n > __bs-1)
     {
-#ifdef _LIBCPP_STABLE_APPLE_ABI
         __n = __nolocale_asprintf(&__bb, "%.0Lf", __units);
-#else
-        __n = __asprintf_l(&__bb, __cloc(), "%.0Lf", __units);
-#endif
         if (__bb == 0)
             __throw_bad_alloc();
         __hn.reset(__bb);
