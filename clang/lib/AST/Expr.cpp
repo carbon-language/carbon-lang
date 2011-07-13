@@ -2529,9 +2529,13 @@ FieldDecl *Expr::getBitField() {
       if (Field->isBitField())
         return Field;
 
-  if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(E))
+  if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(E)) {
     if (BinOp->isAssignmentOp() && BinOp->getLHS())
       return BinOp->getLHS()->getBitField();
+
+    if (BinOp->getOpcode() == BO_Comma && BinOp->getRHS())
+      return BinOp->getRHS()->getBitField();
+  }
 
   return 0;
 }
