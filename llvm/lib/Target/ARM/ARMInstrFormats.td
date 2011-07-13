@@ -922,13 +922,6 @@ class TIx2<bits<5> opcod1, bits<2> opcod2, bit opcod3,
   let Inst{12}    = opcod3;
 }
 
-// Move to/from coprocessor instructions
-class T1Cop<dag oops, dag iops, string asm, list<dag> pattern>
-  : ThumbI<oops, iops, AddrModeNone, Size4Bytes, NoItinerary, asm, "", pattern>,
-    Encoding, Requires<[IsThumb, HasV6]> {
-  let Inst{31-28} = 0b1110;
-}
-
 // BR_JT instructions
 class TJTI<dag oops, dag iops, InstrItinClass itin, string asm,
            list<dag> pattern>
@@ -1180,8 +1173,13 @@ class T2JTI<dag oops, dag iops, InstrItinClass itin,
   : Thumb2XI<oops, iops, AddrModeNone, SizeSpecial, itin, asm, "", pattern>;
 
 // Move to/from coprocessor instructions
+class T1Cop<dag oops, dag iops, string asm, list<dag> pattern>
+  : T2XI <oops, iops, NoItinerary, asm, pattern>, Requires<[IsThumb2]> {
+  let Inst{31-28} = 0b1110;
+}
+
 class T2Cop<dag oops, dag iops, string asm, list<dag> pattern>
-  : T2XI<oops, iops, NoItinerary, asm, pattern>, Requires<[IsThumb2, HasV6]> {
+  : T2XI<oops, iops, NoItinerary, asm, pattern>, Requires<[IsThumb2]> {
   let Inst{31-28} = 0b1111;
 }
 

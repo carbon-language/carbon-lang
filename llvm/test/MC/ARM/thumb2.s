@@ -189,6 +189,18 @@
 @ CHECK: vmsr  fpsid, r0 @ encoding: [0xe0,0xee,0x10,0x0a]
   vmsr  fpsid, r0
 
+@ CHECK: mcr  p7, #1, r5, c1, c1, #4 @ encoding: [0x21,0xee,0x91,0x57]
+        mcr  p7, #1, r5, c1, c1, #4
+
+@ CHECK: mrc  p14, #0, r1, c1, c2, #4 @ encoding: [0x11,0xee,0x92,0x1e]
+        mrc  p14, #0, r1, c1, c2, #4
+
+@ CHECK: mcrr  p7, #1, r5, r4, c1 @ encoding: [0x44,0xec,0x11,0x57]
+        mcrr  p7, #1, r5, r4, c1
+
+@ CHECK: mrrc  p7, #1, r5, r4, c1 @ encoding: [0x54,0xec,0x11,0x57]
+        mrrc  p7, #1, r5, r4, c1
+
 @ CHECK: mcr2  p7, #1, r5, c1, c1, #4 @ encoding: [0x21,0xfe,0x91,0x57]
         mcr2  p7, #1, r5, c1, c1, #4
 
@@ -200,6 +212,9 @@
 
 @ CHECK: mrrc2  p7, #1, r5, r4, c1 @ encoding: [0x54,0xfc,0x11,0x57]
         mrrc2  p7, #1, r5, r4, c1
+
+@ CHECK: cdp  p7, #1, c1, c1, c1, #4 @ encoding: [0x11,0xee,0x81,0x17]
+        cdp  p7, #1, c1, c1, c1, #4
 
 @ CHECK: cdp2  p7, #1, c1, c1, c1, #4 @ encoding: [0x11,0xfe,0x81,0x17]
         cdp2  p7, #1, c1, c1, c1, #4

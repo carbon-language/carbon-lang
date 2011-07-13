@@ -3326,8 +3326,72 @@ def t2MSR : T2SpecialReg<0b111100111000 /* op31-20 */, 0b10 /* op15-14 */,
 }
 
 //===----------------------------------------------------------------------===//
-// Move between coprocessor and ARM core register -- for disassembly only
+// Move between coprocessor and ARM core register
 //
+
+class tMovRCopro<string opc, bit direction, dag oops, dag iops,
+                 list<dag> pattern>
+  : T1Cop<oops, iops, !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
+          pattern> {
+  let Inst{27-24} = 0b1110;
+  let Inst{20} = direction;
+  let Inst{4} = 1;
+
+  bits<4> Rt;
+  bits<4> cop;
+  bits<3> opc1;
+  bits<3> opc2;
+  bits<4> CRm;
+  bits<4> CRn;
+
+  let Inst{15-12} = Rt;
+  let Inst{11-8}  = cop;
+  let Inst{23-21} = opc1;
+  let Inst{7-5}   = opc2;
+  let Inst{3-0}   = CRm;
+  let Inst{19-16} = CRn;
+}
+
+def tMCR : tMovRCopro<"mcr", 0 /* from ARM core register to coprocessor */,
+           (outs),
+           (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, c_imm:$CRn,
+                c_imm:$CRm, i32imm:$opc2),
+           [(int_arm_mcr imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
+                         imm:$CRm, imm:$opc2)]>;
+def tMRC : tMovRCopro<"mrc", 1 /* from coprocessor to ARM core register */,
+           (outs GPR:$Rt),
+           (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+           []>;
+
+def : Pat<(int_arm_mrc imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2),
+          (tMRC imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2)>,
+          Requires<[IsThumb, HasV6T2]>;
+
+class tMovRRCopro<string opc, bit direction,
+                  list<dag> pattern = [/* For disassembly only */]>
+  : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
+          !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
+  let Inst{27-24} = 0b1100;
+  let Inst{23-21} = 0b010;
+  let Inst{20} = direction;
+
+  bits<4> Rt;
+  bits<4> Rt2;
+  bits<4> cop;
+  bits<4> opc1;
+  bits<4> CRm;
+
+  let Inst{15-12} = Rt;
+  let Inst{19-16} = Rt2;
+  let Inst{11-8}  = cop;
+  let Inst{7-4}   = opc1;
+  let Inst{3-0}   = CRm;
+}
+
+def tMCRR : tMovRRCopro<"mcrr", 0 /* from ARM core register to coprocessor */,
+                        [(int_arm_mcrr imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2,
+                                       imm:$CRm)]>;
+def tMRRC : tMovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
 
 class t2MovRCopro<string opc, bit direction, dag oops, dag iops,
                   list<dag> pattern>
@@ -3394,8 +3458,31 @@ def t2MRRC2 : t2MovRRCopro<"mrrc2",
                            1 /* from coprocessor to ARM core register */>;
 
 //===----------------------------------------------------------------------===//
-// Other Coprocessor Instructions.  For disassembly only.
+// Other Coprocessor Instructions.
 //
+
+def tCDP : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
+                 c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+                 "cdp\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
+                 [(int_arm_cdp imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
+                               imm:$CRm, imm:$opc2)]> {
+  let Inst{27-24} = 0b1110;
+
+  bits<4> opc1;
+  bits<4> CRn;
+  bits<4> CRd;
+  bits<4> cop;
+  bits<3> opc2;
+  bits<4> CRm;
+
+  let Inst{3-0}   = CRm;
+  let Inst{4}     = 0;
+  let Inst{7-5}   = opc2;
+  let Inst{11-8}  = cop;
+  let Inst{15-12} = CRd;
+  let Inst{19-16} = CRn;
+  let Inst{23-20} = opc1;
+}
 
 def t2CDP2 : T2Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
                    c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
