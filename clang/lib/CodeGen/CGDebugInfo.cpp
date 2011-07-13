@@ -1524,10 +1524,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
 #include "clang/AST/TypeNodes.def"
     assert(false && "Dependent types cannot show up in debug information");
 
-  // FIXME: Handle these.
   case Type::ExtVector:
-    return llvm::DIType();
-
   case Type::Vector:
     return CreateType(cast<VectorType>(Ty), Unit);
   case Type::ObjCObjectPointer:
