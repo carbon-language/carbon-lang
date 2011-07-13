@@ -1073,13 +1073,12 @@ getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
     if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
       // DW_CFA_def_cfa_register
       assert(FramePointerReg == -1 && "Defining more than one frame pointer?");
+      FramePointerReg = Dst.getReg();
       if (TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::EBP &&
           TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::RBP)
         // The frame pointer isn't EBP/RBP. Cannot make unwind information
         // compact.
         return 0;
-
-      FramePointerReg = Dst.getReg();
       continue;
     }
 
