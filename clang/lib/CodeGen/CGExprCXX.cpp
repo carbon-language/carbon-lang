@@ -1351,90 +1351,50 @@ namespace {
 /// Emit the code for deleting an array of objects.
 static void EmitArrayDelete(CodeGenFunction &CGF,
                             const CXXDeleteExpr *E,
-                            llvm::Value *Ptr,
-                            QualType ElementType) {
-  llvm::Value *NumElements = 0;
-  llvm::Value *AllocatedPtr = 0;
-  CharUnits CookieSize;
-  CGF.CGM.getCXXABI().ReadArrayCookie(CGF, Ptr, E, ElementType,
-                                      NumElements, AllocatedPtr, CookieSize);
+                            llvm::Value *deletedPtr,
+                            QualType elementType) {
+  llvm::Value *numElements = 0;
+  llvm::Value *allocatedPtr = 0;
+  CharUnits cookieSize;
+  CGF.CGM.getCXXABI().ReadArrayCookie(CGF, deletedPtr, E, elementType,
+                                      numElements, allocatedPtr, cookieSize);
 
-  assert(AllocatedPtr && "ReadArrayCookie didn't set AllocatedPtr");
+  assert(allocatedPtr && "ReadArrayCookie didn't set allocated pointer");
 
   // Make sure that we call delete even if one of the dtors throws.
-  const FunctionDecl *OperatorDelete = E->getOperatorDelete();
+  const FunctionDecl *operatorDelete = E->getOperatorDelete();
   CGF.EHStack.pushCleanup<CallArrayDelete>(NormalAndEHCleanup,
-                                           AllocatedPtr, OperatorDelete,
-                                           NumElements, ElementType,
-                                           CookieSize);
+                                           allocatedPtr, operatorDelete,
+                                           numElements, elementType,
+                                           cookieSize);
 
-  if (const CXXRecordDecl *RD = ElementType->getAsCXXRecordDecl()) {
-    if (!RD->hasTrivialDestructor()) {
-      assert(NumElements && "ReadArrayCookie didn't find element count"
-                            " for a class with destructor");
-      CGF.EmitCXXAggrDestructorCall(RD->getDestructor(), NumElements, Ptr);
-    }
-  } else if (CGF.getLangOptions().ObjCAutoRefCount &&
-             ElementType->isObjCLifetimeType() &&
-             (ElementType.getObjCLifetime() == Qualifiers::OCL_Strong ||
-              ElementType.getObjCLifetime() == Qualifiers::OCL_Weak)) {
-    bool IsStrong = ElementType.getObjCLifetime() == Qualifiers::OCL_Strong;
-    const llvm::Type *SizeLTy = CGF.ConvertType(CGF.getContext().getSizeType());
-    llvm::Value *One = llvm::ConstantInt::get(SizeLTy, 1);
-    
-    // Create a temporary for the loop index and initialize it with count of
-    // array elements.
-    llvm::Value *IndexPtr = CGF.CreateTempAlloca(SizeLTy, "loop.index");
-    
-    // Store the number of elements in the index pointer.
-    CGF.Builder.CreateStore(NumElements, IndexPtr);
-    
-    // Start the loop with a block that tests the condition.
-    llvm::BasicBlock *CondBlock = CGF.createBasicBlock("for.cond");
-    llvm::BasicBlock *AfterFor = CGF.createBasicBlock("for.end");
-    
-    CGF.EmitBlock(CondBlock);
-    
-    llvm::BasicBlock *ForBody = CGF.createBasicBlock("for.body");
-    
-    // Generate: if (loop-index != 0 fall to the loop body,
-    // otherwise, go to the block after the for-loop.
-    llvm::Value* zeroConstant = llvm::Constant::getNullValue(SizeLTy);
-    llvm::Value *Counter = CGF.Builder.CreateLoad(IndexPtr);
-    llvm::Value *IsNE = CGF.Builder.CreateICmpNE(Counter, zeroConstant,
-                                                 "isne");
-    // If the condition is true, execute the body.
-    CGF.Builder.CreateCondBr(IsNE, ForBody, AfterFor);
-    
-    CGF.EmitBlock(ForBody);
-    
-    llvm::BasicBlock *ContinueBlock = CGF.createBasicBlock("for.inc");
-    // Inside the loop body, emit the constructor call on the array element.
-    Counter = CGF.Builder.CreateLoad(IndexPtr);
-    Counter = CGF.Builder.CreateSub(Counter, One);
-    llvm::Value *Address = CGF.Builder.CreateInBoundsGEP(Ptr, Counter, 
-                                                         "arrayidx");
-    if (IsStrong)
-      CGF.EmitARCRelease(CGF.Builder.CreateLoad(Address, 
-                                          ElementType.isVolatileQualified()),
-                         /*precise*/ true);
-    else
-      CGF.EmitARCDestroyWeak(Address);
-    
-    CGF.EmitBlock(ContinueBlock);
-    
-    // Emit the decrement of the loop counter.
-    Counter = CGF.Builder.CreateLoad(IndexPtr);
-    Counter = CGF.Builder.CreateSub(Counter, One, "dec");
-    CGF.Builder.CreateStore(Counter, IndexPtr);
-    
-    // Finally, branch back up to the condition for the next iteration.
-    CGF.EmitBranch(CondBlock);
-    
-    // Emit the fall-through block.
-    CGF.EmitBlock(AfterFor, true);    
+  // Destroy the elements.
+  if (QualType::DestructionKind dtorKind = elementType.isDestructedType()) {
+    assert(numElements && "no element count for a type with a destructor!");
+
+    // It's legal to allocate a zero-length array, but emitArrayDestroy
+    // won't handle that correctly, so we need to check that here.
+    llvm::Value *iszero =
+      CGF.Builder.CreateIsNull(numElements, "delete.isempty");
+
+    // We'll patch the 'true' successor of this to lead to the end of
+    // the emitArrayDestroy loop.
+    llvm::BasicBlock *destroyBB = CGF.createBasicBlock("delete.destroy");
+    llvm::BranchInst *br =
+      CGF.Builder.CreateCondBr(iszero, destroyBB, destroyBB);
+    CGF.EmitBlock(destroyBB);
+
+    llvm::Value *arrayEnd =
+      CGF.Builder.CreateInBoundsGEP(deletedPtr, numElements, "delete.end");
+    CGF.emitArrayDestroy(deletedPtr, arrayEnd, elementType,
+                         CGF.getDestroyer(dtorKind),
+                         CGF.needsEHCleanup(dtorKind));
+
+    assert(CGF.Builder.GetInsertBlock()->empty());
+    br->setSuccessor(0, CGF.Builder.GetInsertBlock());
   }
 
+  // Pop the cleanup block.
   CGF.PopCleanupBlock();
 }
 

@@ -67,31 +67,23 @@ namespace test1 {
   // CHECK: define void @_ZN5test14testEPA10_A20_NS_1AE(
   void test(A (*arr)[10][20]) {
     delete [] arr;
-    // CHECK:      icmp eq [10 x [20 x [[S:%.*]]]]* [[PTR:%.*]], null
+    // CHECK:      icmp eq [10 x [20 x [[A:%.*]]]]* [[PTR:%.*]], null
     // CHECK-NEXT: br i1
 
-    // CHECK:      [[ARR:%.*]] = getelementptr inbounds [10 x [20 x [[S]]]]* [[PTR]], i32 0, i32 0, i32 0
-    // CHECK-NEXT: bitcast {{.*}} to i8*
-    // CHECK-NEXT: [[ALLOC:%.*]] = getelementptr inbounds {{.*}}, i64 -8
-    // CHECK-NEXT: bitcast i8* [[ALLOC]] to i64*
-    // CHECK-NEXT: load
-    // CHECK-NEXT: store i64 {{.*}}, i64* [[IDX:%.*]]
-
-    // CHECK:      load i64* [[IDX]]
-    // CHECK-NEXT: icmp ne {{.*}}, 0
-    // CHECK-NEXT: br i1
-
-    // CHECK:      load i64* [[IDX]]
-    // CHECK-NEXT: [[I:%.*]] = sub i64 {{.*}}, 1
-    // CHECK-NEXT: getelementptr inbounds [[S]]* [[ARR]], i64 [[I]]
-    // CHECK-NEXT: call void @_ZN5test11AD1Ev(
+    // CHECK:      [[BEGIN:%.*]] = getelementptr inbounds [10 x [20 x [[A]]]]* [[PTR]], i32 0, i32 0, i32 0
+    // CHECK-NEXT: [[T0:%.*]] = bitcast [[A]]* [[BEGIN]] to i8*
+    // CHECK-NEXT: [[ALLOC:%.*]] = getelementptr inbounds i8* [[T0]], i64 -8
+    // CHECK-NEXT: [[T1:%.*]] = bitcast i8* [[ALLOC]] to i64*
+    // CHECK-NEXT: [[COUNT:%.*]] = load i64* [[T1]]
+    // CHECK-NEXT: [[ISZERO:%.*]] = icmp eq i64 [[COUNT]], 0
+    // CHECK-NEXT: br i1 [[ISZERO]],
+    // CHECK:      [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 [[COUNT]]
     // CHECK-NEXT: br label
-
-    // CHECK:      load i64* [[IDX]]
-    // CHECK-NEXT: sub
-    // CHECK-NEXT: store {{.*}}, i64* [[IDX]]
-    // CHECK-NEXT: br label
-
+    // CHECK:      [[PAST:%.*]] = phi [[A]]* [ [[END]], {{%.*}} ], [ [[CUR:%.*]], {{%.*}} ]
+    // CHECK-NEXT: [[CUR:%.*]] = getelementptr inbounds [[A]]* [[PAST]], i64 -1
+    // CHECK-NEXT: call void @_ZN5test11AD1Ev([[A]]* [[CUR]])
+    // CHECK-NEXT: [[ISDONE:%.*]] = icmp eq [[A]]* [[CUR]], [[BEGIN]]
+    // CHECK-NEXT: br i1 [[ISDONE]]
     // CHECK:      call void @_ZdaPv(i8* [[ALLOC]])
   }
 }
