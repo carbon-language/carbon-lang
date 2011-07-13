@@ -122,6 +122,7 @@ public:
   unsigned short  NumOperands;   // Num of args (may be more if variable_ops)
   unsigned short  NumDefs;       // Num of args that are definitions
   unsigned short  SchedClass;    // enum identifying instr sched class
+  unsigned short  Size;          // Number of bytes in encoding.
   const char *    Name;          // Name of the instruction record in td file
   unsigned        Flags;         // Flags identifying machine instr class
   uint64_t        TSFlags;       // Target Specific Flag values
@@ -255,6 +256,12 @@ public:
     return SchedClass;
   }
   
+  /// getSize - Return the number of bytes in the encoding of this instruction,
+  /// or zero if the encoding size cannot be known from the opcode.
+  unsigned getSize() const {
+    return Size;
+  }
+
   bool isReturn() const {
     return Flags & (1 << MCID::Return);
   }

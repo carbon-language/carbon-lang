@@ -716,18 +716,18 @@ let usesCustomInserter = 1 in {
 multiclass T2I_adde_sube_s_irs<PatFrag opnode, bit Commutable = 0> {
    // shifted imm
    def ri : t2PseudoInst<(outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_imm:$imm),
-                Size4Bytes, IIC_iALUi,
+                4, IIC_iALUi,
                 [(set rGPR:$Rd, (opnode rGPR:$Rn, t2_so_imm:$imm))]>;
    // register
    def rr : t2PseudoInst<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm),
-                Size4Bytes, IIC_iALUr,
+                4, IIC_iALUr,
                 [(set rGPR:$Rd, (opnode rGPR:$Rn, rGPR:$Rm))]> {
      let isCommutable = Commutable;
    }
    // shifted register
    def rs : t2PseudoInst<
                 (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_reg:$ShiftedRm),
-                Size4Bytes, IIC_iALUsi,
+                4, IIC_iALUsi,
                 [(set rGPR:$Rd, (opnode rGPR:$Rn, t2_so_reg:$ShiftedRm))]>;
 }
 }
@@ -1164,10 +1164,10 @@ def t2ADR : T2PCOneRegImm<(outs rGPR:$Rd),
 
 let neverHasSideEffects = 1, isReMaterializable = 1 in
 def t2LEApcrel   : t2PseudoInst<(outs rGPR:$Rd), (ins i32imm:$label, pred:$p),
-                                Size4Bytes, IIC_iALUi, []>;
+                                4, IIC_iALUi, []>;
 def t2LEApcrelJT : t2PseudoInst<(outs rGPR:$Rd),
                                 (ins i32imm:$label, nohash_imm:$id, pred:$p),
-                                Size4Bytes, IIC_iALUi,
+                                4, IIC_iALUi,
                                 []>;
 
 
@@ -2709,14 +2709,14 @@ defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
 let neverHasSideEffects = 1 in {
 def t2MOVCCr : t2PseudoInst<(outs rGPR:$Rd),
                             (ins rGPR:$false, rGPR:$Rm, pred:$p),
-                            Size4Bytes, IIC_iCMOVr,
+                            4, IIC_iCMOVr,
    [/*(set rGPR:$Rd, (ARMcmov rGPR:$false, rGPR:$Rm, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $Rd">;
 
 let isMoveImm = 1 in
 def t2MOVCCi : t2PseudoInst<(outs rGPR:$Rd),
                             (ins rGPR:$false, t2_so_imm:$imm, pred:$p),
-                   Size4Bytes, IIC_iCMOVi,
+                   4, IIC_iCMOVi,
 [/*(set rGPR:$Rd,(ARMcmov rGPR:$false,t2_so_imm:$imm, imm:$cc, CCR:$ccr))*/]>,
                    RegConstraint<"$false = $Rd">;
 
@@ -2823,7 +2823,7 @@ def t2ISB : AInoP<(outs), (ins), ThumbFrm, NoItinerary, "isb", "",
   let Inst{3-0} = 0b1111;
 }
 
-class T2I_ldrex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+class T2I_ldrex<bits<2> opcod, dag oops, dag iops, AddrMode am, int sz,
                 InstrItinClass itin, string opc, string asm, string cstr,
                 list<dag> pattern, bits<4> rt2 = 0b1111>
   : Thumb2I<oops, iops, am, sz, itin, opc, asm, cstr, pattern> {
@@ -2839,7 +2839,7 @@ class T2I_ldrex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let Inst{19-16} = addr;
   let Inst{15-12} = Rt;
 }
-class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, int sz,
                 InstrItinClass itin, string opc, string asm, string cstr,
                 list<dag> pattern, bits<4> rt2 = 0b1111>
   : Thumb2I<oops, iops, am, sz, itin, opc, asm, cstr, pattern> {
@@ -2859,13 +2859,13 @@ class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
 
 let mayLoad = 1 in {
 def t2LDREXB : T2I_ldrex<0b00, (outs rGPR:$Rt), (ins t2addrmode_reg:$addr),
-                         AddrModeNone, Size4Bytes, NoItinerary,
+                         AddrModeNone, 4, NoItinerary,
                          "ldrexb", "\t$Rt, $addr", "", []>;
 def t2LDREXH : T2I_ldrex<0b01, (outs rGPR:$Rt), (ins t2addrmode_reg:$addr),
-                         AddrModeNone, Size4Bytes, NoItinerary,
+                         AddrModeNone, 4, NoItinerary,
                          "ldrexh", "\t$Rt, $addr", "", []>;
 def t2LDREX  : Thumb2I<(outs rGPR:$Rt), (ins t2addrmode_reg:$addr),
-                       AddrModeNone, Size4Bytes, NoItinerary,
+                       AddrModeNone, 4, NoItinerary,
                        "ldrex", "\t$Rt, $addr", "", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0000101;
@@ -2880,7 +2880,7 @@ def t2LDREX  : Thumb2I<(outs rGPR:$Rt), (ins t2addrmode_reg:$addr),
 let hasExtraDefRegAllocReq = 1 in
 def t2LDREXD : T2I_ldrex<0b11, (outs rGPR:$Rt, rGPR:$Rt2),
                          (ins t2addrmode_reg:$addr),
-                         AddrModeNone, Size4Bytes, NoItinerary,
+                         AddrModeNone, 4, NoItinerary,
                          "ldrexd", "\t$Rt, $Rt2, $addr", "",
                          [], {?, ?, ?, ?}> {
   bits<4> Rt2;
@@ -2891,14 +2891,14 @@ def t2LDREXD : T2I_ldrex<0b11, (outs rGPR:$Rt, rGPR:$Rt2),
 let mayStore = 1, Constraints = "@earlyclobber $Rd" in {
 def t2STREXB : T2I_strex<0b00, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, t2addrmode_reg:$addr),
-                         AddrModeNone, Size4Bytes, NoItinerary,
+                         AddrModeNone, 4, NoItinerary,
                          "strexb", "\t$Rd, $Rt, $addr", "", []>;
 def t2STREXH : T2I_strex<0b01, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, t2addrmode_reg:$addr),
-                         AddrModeNone, Size4Bytes, NoItinerary,
+                         AddrModeNone, 4, NoItinerary,
                          "strexh", "\t$Rd, $Rt, $addr", "", []>;
 def t2STREX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt, t2addrmode_reg:$addr),
-                  AddrModeNone, Size4Bytes, NoItinerary,
+                  AddrModeNone, 4, NoItinerary,
                   "strex", "\t$Rd, $Rt, $addr", "",
                   []> {
   let Inst{31-27} = 0b11101;
@@ -2917,7 +2917,7 @@ def t2STREX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt, t2addrmode_reg:$addr),
 let hasExtraSrcRegAllocReq = 1, Constraints = "@earlyclobber $Rd" in
 def t2STREXD : T2I_strex<0b11, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, rGPR:$Rt2, t2addrmode_reg:$addr),
-                         AddrModeNone, Size4Bytes, NoItinerary,
+                         AddrModeNone, 4, NoItinerary,
                          "strexd", "\t$Rd, $Rt, $Rt2, $addr", "", [],
                          {?, ?, ?, ?}> {
   bits<4> Rt2;
@@ -2955,7 +2955,7 @@ let Defs =
     QQQQ0, QQQQ1, QQQQ2, QQQQ3 ],
   hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1 in {
   def t2Int_eh_sjlj_setjmp : Thumb2XI<(outs), (ins tGPR:$src, tGPR:$val),
-                               AddrModeNone, SizeSpecial, NoItinerary, "", "",
+                               AddrModeNone, 0, NoItinerary, "", "",
                           [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>,
                              Requires<[IsThumb2, HasVFP2]>;
 }
@@ -2964,7 +2964,7 @@ let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR, CPSR ],
   hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1 in {
   def t2Int_eh_sjlj_setjmp_nofp : Thumb2XI<(outs), (ins tGPR:$src, tGPR:$val),
-                               AddrModeNone, SizeSpecial, NoItinerary, "", "",
+                               AddrModeNone, 0, NoItinerary, "", "",
                           [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>,
                                   Requires<[IsThumb2, NoVFP]>;
 }
@@ -2980,7 +2980,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
 def t2LDMIA_RET: t2PseudoExpand<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
                                                    reglist:$regs, variable_ops),
-                              Size4Bytes, IIC_iLoad_mBr, [],
+                              4, IIC_iLoad_mBr, [],
             (t2LDMIA_UPD GPR:$wb, GPR:$Rn, pred:$p, reglist:$regs)>,
                          RegConstraint<"$Rn = $wb">;
 
@@ -3004,17 +3004,17 @@ def t2B   : T2XI<(outs), (ins uncondbrtarget:$target), IIC_Br,
 let isNotDuplicable = 1, isIndirectBranch = 1 in {
 def t2BR_JT : t2PseudoInst<(outs),
           (ins GPR:$target, GPR:$index, i32imm:$jt, i32imm:$id),
-           SizeSpecial, IIC_Br,
+           0, IIC_Br,
           [(ARMbr2jt GPR:$target, GPR:$index, tjumptable:$jt, imm:$id)]>;
 
 // FIXME: Add a non-pc based case that can be predicated.
 def t2TBB_JT : t2PseudoInst<(outs),
         (ins GPR:$index, i32imm:$jt, i32imm:$id),
-         SizeSpecial, IIC_Br, []>;
+         0, IIC_Br, []>;
 
 def t2TBH_JT : t2PseudoInst<(outs),
         (ins GPR:$index, i32imm:$jt, i32imm:$id),
-         SizeSpecial, IIC_Br, []>;
+         0, IIC_Br, []>;
 
 def t2TBB : T2I<(outs), (ins GPR:$Rn, GPR:$Rm), IIC_Br,
                     "tbb", "\t[$Rn, $Rm]", []> {
@@ -3069,7 +3069,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
       Uses = [SP] in
   def tTAILJMPd: tPseudoExpand<(outs), (ins uncondbrtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br, [],
+                   4, IIC_Br, [],
                    (t2B uncondbrtarget:$dst)>,
                  Requires<[IsThumb2, IsDarwin]>;
 }
@@ -3077,7 +3077,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 // IT block
 let Defs = [ITSTATE] in
 def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),
-                    AddrModeNone, Size2Bytes,  IIC_iALUx,
+                    AddrModeNone, 2,  IIC_iALUx,
                     "it$mask\t$cc", "", []> {
   // 16-bit instruction.
   let Inst{31-16} = 0x0000;

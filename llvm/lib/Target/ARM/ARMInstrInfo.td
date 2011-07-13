@@ -1034,15 +1034,15 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
 let usesCustomInserter = 1 in {
 multiclass AI1_adde_sube_s_irs<PatFrag opnode, bit Commutable = 0> {
   def ri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
-               Size4Bytes, IIC_iALUi,
+               4, IIC_iALUi,
                [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>;
   def rr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
-               Size4Bytes, IIC_iALUr,
+               4, IIC_iALUr,
                [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]> {
     let isCommutable = Commutable;
   }
   def rs : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
-               Size4Bytes, IIC_iALUsr,
+               4, IIC_iALUsr,
                [(set GPR:$Rd, (opnode GPR:$Rn, so_reg:$shift))]>;
 }
 }
@@ -1301,40 +1301,40 @@ def TRAP : AXI<(outs), (ins), MiscFrm, NoItinerary,
 // Address computation and loads and stores in PIC mode.
 let isNotDuplicable = 1 in {
 def PICADD  : ARMPseudoInst<(outs GPR:$dst), (ins GPR:$a, pclabel:$cp, pred:$p),
-                            Size4Bytes, IIC_iALUr,
+                            4, IIC_iALUr,
                             [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;
 
 let AddedComplexity = 10 in {
 def PICLDR  : ARMPseudoInst<(outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
-                            Size4Bytes, IIC_iLoad_r,
+                            4, IIC_iLoad_r,
                             [(set GPR:$dst, (load addrmodepc:$addr))]>;
 
 def PICLDRH : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            Size4Bytes, IIC_iLoad_bh_r,
+                            4, IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (zextloadi16 addrmodepc:$addr))]>;
 
 def PICLDRB : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            Size4Bytes, IIC_iLoad_bh_r,
+                            4, IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (zextloadi8 addrmodepc:$addr))]>;
 
 def PICLDRSH : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            Size4Bytes, IIC_iLoad_bh_r,
+                            4, IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (sextloadi16 addrmodepc:$addr))]>;
 
 def PICLDRSB : ARMPseudoInst<(outs GPR:$Rt), (ins addrmodepc:$addr, pred:$p),
-                            Size4Bytes, IIC_iLoad_bh_r,
+                            4, IIC_iLoad_bh_r,
                             [(set GPR:$Rt, (sextloadi8 addrmodepc:$addr))]>;
 }
 let AddedComplexity = 10 in {
 def PICSTR  : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-      Size4Bytes, IIC_iStore_r, [(store GPR:$src, addrmodepc:$addr)]>;
+      4, IIC_iStore_r, [(store GPR:$src, addrmodepc:$addr)]>;
 
 def PICSTRH : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-      Size4Bytes, IIC_iStore_bh_r, [(truncstorei16 GPR:$src,
+      4, IIC_iStore_bh_r, [(truncstorei16 GPR:$src,
                                                    addrmodepc:$addr)]>;
 
 def PICSTRB : ARMPseudoInst<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
-      Size4Bytes, IIC_iStore_bh_r, [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
+      4, IIC_iStore_bh_r, [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
 }
 } // isNotDuplicable = 1
 
@@ -1356,11 +1356,11 @@ def ADR : AI1<{0,?,?,0}, (outs GPR:$Rd), (ins adrlabel:$label),
   let Inst{11-0} = label;
 }
 def LEApcrel : ARMPseudoInst<(outs GPR:$Rd), (ins i32imm:$label, pred:$p),
-                    Size4Bytes, IIC_iALUi, []>;
+                    4, IIC_iALUi, []>;
 
 def LEApcrelJT : ARMPseudoInst<(outs GPR:$Rd),
                       (ins i32imm:$label, nohash_imm:$id, pred:$p),
-                      Size4Bytes, IIC_iALUi, []>;
+                      4, IIC_iALUi, []>;
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.
@@ -1451,12 +1451,12 @@ let isCall = 1,
   // ARMv4T
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
   def BX_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
-                   Size8Bytes, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
+                   8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
                    Requires<[IsARM, HasV4T, IsNotDarwin]>;
 
   // ARMv4
   def BMOVPCRX_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
-                   Size8Bytes, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
+                   8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
                    Requires<[IsARM, NoV4T, IsNotDarwin]>;
 }
 
@@ -1467,26 +1467,26 @@ let isCall = 1,
   Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR, QQQQ0, QQQQ2, QQQQ3, CPSR, FPSCR],
   Uses = [R7, SP] in {
   def BLr9  : ARMPseudoExpand<(outs), (ins bl_target:$func, variable_ops),
-                Size4Bytes, IIC_Br,
+                4, IIC_Br,
                 [(ARMcall tglobaladdr:$func)], (BL bl_target:$func)>,
               Requires<[IsARM, IsDarwin]>;
 
   def BLr9_pred : ARMPseudoExpand<(outs),
                    (ins bl_target:$func, pred:$p, variable_ops),
-                   Size4Bytes, IIC_Br,
+                   4, IIC_Br,
                    [(ARMcall_pred tglobaladdr:$func)],
                    (BL_pred bl_target:$func, pred:$p)>,
                   Requires<[IsARM, IsDarwin]>;
 
   // ARMv5T and above
   def BLXr9 : ARMPseudoExpand<(outs), (ins GPR:$func, variable_ops),
-                Size4Bytes, IIC_Br,
+                4, IIC_Br,
                 [(ARMcall GPR:$func)],
                 (BLX GPR:$func)>,
                Requires<[IsARM, HasV5T, IsDarwin]>;
 
   def BLXr9_pred: ARMPseudoExpand<(outs), (ins GPR:$func, pred:$p,variable_ops),
-                Size4Bytes, IIC_Br,
+                4, IIC_Br,
                 [(ARMcall_pred GPR:$func)],
                 (BLX_pred GPR:$func, pred:$p)>,
                    Requires<[IsARM, HasV5T, IsDarwin]>;
@@ -1494,12 +1494,12 @@ let isCall = 1,
   // ARMv4T
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
   def BXr9_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
-                  Size8Bytes, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
+                  8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
                   Requires<[IsARM, HasV4T, IsDarwin]>;
 
   // ARMv4
   def BMOVPCRXr9_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
-                  Size8Bytes, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
+                  8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
                   Requires<[IsARM, NoV4T, IsDarwin]>;
 }
 
@@ -1519,24 +1519,24 @@ let isBranch = 1, isTerminator = 1 in {
     // FIXME: We shouldn't need this pseudo at all. Just using Bcc directly
     // should be sufficient.
     // FIXME: Is B really a Barrier? That doesn't seem right.
-    def B : ARMPseudoExpand<(outs), (ins br_target:$target), Size4Bytes, IIC_Br,
+    def B : ARMPseudoExpand<(outs), (ins br_target:$target), 4, IIC_Br,
                 [(br bb:$target)], (Bcc br_target:$target, (ops 14, zero_reg))>;
 
     let isNotDuplicable = 1, isIndirectBranch = 1 in {
     def BR_JTr : ARMPseudoInst<(outs),
                       (ins GPR:$target, i32imm:$jt, i32imm:$id),
-                      SizeSpecial, IIC_Br,
+                      0, IIC_Br,
                       [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]>;
     // FIXME: This shouldn't use the generic "addrmode2," but rather be split
     // into i12 and rs suffixed versions.
     def BR_JTm : ARMPseudoInst<(outs),
                      (ins addrmode2:$target, i32imm:$jt, i32imm:$id),
-                     SizeSpecial, IIC_Br,
+                     0, IIC_Br,
                      [(ARMbrjt (i32 (load addrmode2:$target)), tjumptable:$jt,
                        imm:$id)]>;
     def BR_JTadd : ARMPseudoInst<(outs),
                    (ins GPR:$target, GPR:$idx, i32imm:$jt, i32imm:$id),
-                   SizeSpecial, IIC_Br,
+                   0, IIC_Br,
                    [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt,
                      imm:$id)]>;
     } // isNotDuplicable = 1, isIndirectBranch = 1
@@ -1577,12 +1577,12 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                        IIC_Br, []>, Requires<[IsDarwin]>;
 
     def TAILJMPd : ARMPseudoExpand<(outs), (ins br_target:$dst, variable_ops),
-                   Size4Bytes, IIC_Br, [],
+                   4, IIC_Br, [],
                    (Bcc br_target:$dst, (ops 14, zero_reg))>,
                    Requires<[IsARM, IsDarwin]>;
 
     def TAILJMPr : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
-                   Size4Bytes, IIC_Br, [],
+                   4, IIC_Br, [],
                    (BX GPR:$dst)>,
                    Requires<[IsARM, IsDarwin]>;
 
@@ -1598,12 +1598,12 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                        IIC_Br, []>, Requires<[IsNotDarwin]>;
 
     def TAILJMPdND : ARMPseudoExpand<(outs), (ins brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br, [],
+                   4, IIC_Br, [],
                    (Bcc br_target:$dst, (ops 14, zero_reg))>,
                    Requires<[IsARM, IsNotDarwin]>;
 
     def TAILJMPrND : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
-                     Size4Bytes, IIC_Br, [],
+                     4, IIC_Br, [],
                      (BX GPR:$dst)>,
                      Requires<[IsARM, IsNotDarwin]>;
   }
@@ -2063,7 +2063,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
 def LDMIA_RET : ARMPseudoExpand<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
                                                  reglist:$regs, variable_ops),
-                     Size4Bytes, IIC_iLoad_mBr, [],
+                     4, IIC_iLoad_mBr, [],
                      (LDMIA_UPD GPR:$wb, GPR:$Rn, pred:$p, reglist:$regs)>,
       RegConstraint<"$Rn = $wb">;
 
@@ -2234,7 +2234,7 @@ defm UXTAB16 : AI_exta_rrot_np<0b01101100, "uxtab16">;
 
 def SBFX  : I<(outs GPR:$Rd),
               (ins GPR:$Rn, imm0_31:$lsb, imm0_31_m1:$width),
-               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
+               AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
                "sbfx", "\t$Rd, $Rn, $lsb, $width", "", []>,
                Requires<[IsARM, HasV6T2]> {
   bits<4> Rd;
@@ -2251,7 +2251,7 @@ def SBFX  : I<(outs GPR:$Rd),
 
 def UBFX  : I<(outs GPR:$Rd),
               (ins GPR:$Rn, imm0_31:$lsb, imm0_31_m1:$width),
-               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
+               AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
                "ubfx", "\t$Rd, $Rn, $lsb, $width", "", []>,
                Requires<[IsARM, HasV6T2]> {
   bits<4> Rd;
@@ -2343,13 +2343,13 @@ def RSBrs : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
 // NOTE: CPSR def omitted because it will be handled by the custom inserter.
 let usesCustomInserter = 1 in {
 def RSBSri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
-                 Size4Bytes, IIC_iALUi,
+                 4, IIC_iALUi,
                  [(set GPR:$Rd, (subc so_imm:$imm, GPR:$Rn))]>;
 def RSBSrr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
-                 Size4Bytes, IIC_iALUr,
+                 4, IIC_iALUr,
                  [/* For disassembly only; pattern left blank */]>;
 def RSBSrs : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
-                 Size4Bytes, IIC_iALUsr,
+                 4, IIC_iALUsr,
                  [(set GPR:$Rd, (subc so_reg:$shift, GPR:$Rn))]>;
 }
 
@@ -2397,10 +2397,10 @@ def RSCrs : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
 // NOTE: CPSR def omitted because it will be handled by the custom inserter.
 let usesCustomInserter = 1, Uses = [CPSR] in {
 def RSCSri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
-                  Size4Bytes, IIC_iALUi,
+                  4, IIC_iALUi,
                   [(set GPR:$Rd, (sube_dead_carry so_imm:$imm, GPR:$Rn))]>;
 def RSCSrs : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
-                  Size4Bytes, IIC_iALUsr,
+                  4, IIC_iALUsr,
                   [(set GPR:$Rd, (sube_dead_carry so_reg:$shift, GPR:$Rn))]>;
 }
 
@@ -2612,7 +2612,7 @@ defm BIC   : AsI1_bin_irs<0b1110, "bic",
                           BinOpFrag<(and node:$LHS, (not node:$RHS))>, "BIC">;
 
 def BFC    : I<(outs GPR:$Rd), (ins GPR:$src, bf_inv_mask_imm:$imm),
-               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
+               AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
                "bfc", "\t$Rd, $imm", "$src = $Rd",
                [(set GPR:$Rd, (and GPR:$src, bf_inv_mask_imm:$imm))]>,
                Requires<[IsARM, HasV6T2]> {
@@ -2627,7 +2627,7 @@ def BFC    : I<(outs GPR:$Rd), (ins GPR:$src, bf_inv_mask_imm:$imm),
 
 // A8.6.18  BFI - Bitfield insert (Encoding A1)
 def BFI    : I<(outs GPR:$Rd), (ins GPR:$src, GPR:$Rn, bf_inv_mask_imm:$imm),
-               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
+               AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
                "bfi", "\t$Rd, $Rn, $imm", "$src = $Rd",
                [(set GPR:$Rd, (ARMbfi GPR:$src, GPR:$Rn,
                                 bf_inv_mask_imm:$imm))]>,
@@ -2647,7 +2647,7 @@ def BFI    : I<(outs GPR:$Rd), (ins GPR:$src, GPR:$Rn, bf_inv_mask_imm:$imm),
 let isAsmParserOnly = 1 in
 def BFI4p : I<(outs GPR:$Rd), (ins GPR:$src, GPR:$Rn,
                                    lsb_pos_imm:$lsb, width_imm:$width),
-               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iUNAsi,
+               AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
                "bfi", "\t$Rd, $Rn, $lsb, $width", "$src = $Rd",
                []>, Requires<[IsARM, HasV6T2]> {
   bits<4> Rd;
@@ -2738,7 +2738,7 @@ def MUL  : AsMul1I32<0b0000000, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
 let Constraints = "@earlyclobber $Rd" in
 def MULv5: ARMPseudoExpand<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
                                             pred:$p, cc_out:$s),
-                          Size4Bytes, IIC_iMUL32,
+                          4, IIC_iMUL32,
                          [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))],
                          (MUL GPR:$Rd, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
                         Requires<[IsARM, NoV6]>;
@@ -2755,7 +2755,7 @@ def MLA  : AsMul1I32<0b0000001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
 let Constraints = "@earlyclobber $Rd" in
 def MLAv5: ARMPseudoExpand<(outs GPR:$Rd),
                           (ins GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s),
-                          Size4Bytes, IIC_iMAC32,
+                          4, IIC_iMAC32,
                         [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))],
                   (MLA GPR:$Rd, GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s)>,
                         Requires<[IsARM, NoV6]>;
@@ -2790,13 +2790,13 @@ def UMULL : AsMul1I64<0b0000100, (outs GPR:$RdLo, GPR:$RdHi),
 let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
 def SMULLv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
                             (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                            Size4Bytes, IIC_iMUL64, [],
+                            4, IIC_iMUL64, [],
           (SMULL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
                            Requires<[IsARM, NoV6]>;
 
 def UMULLv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
                             (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                            Size4Bytes, IIC_iMUL64, [],
+                            4, IIC_iMUL64, [],
           (UMULL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
                            Requires<[IsARM, NoV6]>;
 }
@@ -2829,17 +2829,17 @@ def UMAAL : AMul1I <0b0000010, (outs GPR:$RdLo, GPR:$RdHi),
 let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
 def SMLALv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
                               (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                              Size4Bytes, IIC_iMAC64, [],
+                              4, IIC_iMAC64, [],
           (SMLAL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
                            Requires<[IsARM, NoV6]>;
 def UMLALv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
                               (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                              Size4Bytes, IIC_iMAC64, [],
+                              4, IIC_iMAC64, [],
           (UMLAL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
                            Requires<[IsARM, NoV6]>;
 def UMAALv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
                               (ins GPR:$Rn, GPR:$Rm, pred:$p),
-                              Size4Bytes, IIC_iMAC64, [],
+                              4, IIC_iMAC64, [],
           (UMAAL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p)>,
                            Requires<[IsARM, NoV6]>;
 }
@@ -3247,26 +3247,26 @@ def BCCZi64 : PseudoInst<(outs),
 // a two-value operand where a dag node expects two operands. :(
 let neverHasSideEffects = 1 in {
 def MOVCCr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$false, GPR:$Rm, pred:$p),
-                           Size4Bytes, IIC_iCMOVr,
+                           4, IIC_iCMOVr,
   [/*(set GPR:$Rd, (ARMcmov GPR:$false, GPR:$Rm, imm:$cc, CCR:$ccr))*/]>,
       RegConstraint<"$false = $Rd">;
 def MOVCCs : ARMPseudoInst<(outs GPR:$Rd),
                            (ins GPR:$false, so_reg:$shift, pred:$p),
-                           Size4Bytes, IIC_iCMOVsr,
+                           4, IIC_iCMOVsr,
   [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_reg:$shift, imm:$cc, CCR:$ccr))*/]>,
       RegConstraint<"$false = $Rd">;
 
 let isMoveImm = 1 in
 def MOVCCi16 : ARMPseudoInst<(outs GPR:$Rd),
                              (ins GPR:$false, i32imm_hilo16:$imm, pred:$p),
-                             Size4Bytes, IIC_iMOVi,
+                             4, IIC_iMOVi,
                              []>,
       RegConstraint<"$false = $Rd">, Requires<[IsARM, HasV6T2]>;
 
 let isMoveImm = 1 in
 def MOVCCi : ARMPseudoInst<(outs GPR:$Rd),
                            (ins GPR:$false, so_imm:$imm, pred:$p),
-                           Size4Bytes, IIC_iCMOVi,
+                           4, IIC_iCMOVi,
    [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_imm:$imm, imm:$cc, CCR:$ccr))*/]>,
       RegConstraint<"$false = $Rd">;
 
@@ -3274,12 +3274,12 @@ def MOVCCi : ARMPseudoInst<(outs GPR:$Rd),
 let isMoveImm = 1 in
 def MOVCCi32imm : ARMPseudoInst<(outs GPR:$Rd),
                                 (ins GPR:$false, i32imm:$src, pred:$p),
-                  Size8Bytes, IIC_iCMOVix2, []>, RegConstraint<"$false = $Rd">;
+                  8, IIC_iCMOVix2, []>, RegConstraint<"$false = $Rd">;
 
 let isMoveImm = 1 in
 def MVNCCi : ARMPseudoInst<(outs GPR:$Rd),
                            (ins GPR:$false, so_imm:$imm, pred:$p),
-                           Size4Bytes, IIC_iCMOVi,
+                           4, IIC_iCMOVi,
  [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_imm_not:$imm, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $Rd">;
 } // neverHasSideEffects
@@ -3525,7 +3525,7 @@ def CDP2 : ABXI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
 
 class ACI<dag oops, dag iops, string opc, string asm,
           IndexMode im = IndexModeNone>
-  : InoP<oops, iops, AddrModeNone, Size4Bytes, im, BrFrm, NoItinerary,
+  : InoP<oops, iops, AddrModeNone, 4, im, BrFrm, NoItinerary,
          opc, asm, "", [/* For disassembly only; pattern left blank */]> {
   let Inst{27-25} = 0b110;
 }
@@ -3885,7 +3885,7 @@ def Int_eh_sjlj_dispatchsetup :
 // ARMv4 indirect branch using (MOVr PC, dst)
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in
   def MOVPCRX : ARMPseudoExpand<(outs), (ins GPR:$dst),
-                    Size4Bytes, IIC_Br, [(brind GPR:$dst)],
+                    4, IIC_Br, [(brind GPR:$dst)],
                     (MOVr PC, GPR:$dst, (ops 14, zero_reg), zero_reg)>,
                   Requires<[IsARM, NoV4T]>;
 

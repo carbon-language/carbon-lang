@@ -1296,13 +1296,13 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   uint64_t TSFlags = Desc.TSFlags;
   if ((TSFlags & ARMII::FormMask) == ARMII::Pseudo)
     return;
+
   int Size;
-  // Basic size info comes from the TSFlags field.
-  switch ((TSFlags & ARMII::SizeMask) >> ARMII::SizeShift) {
-  default: llvm_unreachable("Unexpected instruction size!");
-  case ARMII::Size2Bytes: Size = 2; break;
-  case ARMII::Size4Bytes: Size = 4; break;
-  }
+  if (Desc.getSize() == 2 || Desc.getSize() == 4)
+    Size = Desc.getSize();
+  else
+    llvm_unreachable("Unexpected instruction size!");
+  
   uint32_t Binary = getBinaryCodeForInstr(MI, Fixups);
   // Thumb 32-bit wide instructions need to emit the high order halfword
   // first.

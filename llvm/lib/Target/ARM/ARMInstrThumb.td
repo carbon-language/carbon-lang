@@ -369,12 +369,12 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 }
 
 let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
-  def tBX_RET : tPseudoExpand<(outs), (ins pred:$p), Size2Bytes, IIC_Br,
+  def tBX_RET : tPseudoExpand<(outs), (ins pred:$p), 2, IIC_Br,
                    [(ARMretflag)], (tBX LR, pred:$p)>;
 
   // Alternative return instruction used by vararg functions.
   def tBX_RET_vararg : tPseudoExpand<(outs), (ins tGPR:$Rm, pred:$p),
-                   Size2Bytes, IIC_Br, [],
+                   2, IIC_Br, [],
                    (tBX GPR:$Rm, pred:$p)>;
 }
 
@@ -425,7 +425,7 @@ let isCall = 1,
 
   // ARMv4T
   def tBX_CALL : tPseudoInst<(outs), (ins tGPR:$func, variable_ops),
-                  Size4Bytes, IIC_Br,
+                  4, IIC_Br,
                   [(ARMcall_nolink tGPR:$func)]>,
             Requires<[IsThumb, IsThumb1Only, IsNotDarwin]>;
 }
@@ -477,7 +477,7 @@ let isCall = 1,
 
   // ARMv4T
   def tBXr9_CALL : tPseudoInst<(outs), (ins tGPR:$func, variable_ops),
-                   Size4Bytes, IIC_Br,
+                   4, IIC_Br,
                    [(ARMcall_nolink tGPR:$func)]>,
               Requires<[IsThumb, IsThumb1Only, IsDarwin]>;
 }
@@ -496,11 +496,11 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   // the clobber of LR.
   let Defs = [LR] in
   def tBfar : tPseudoExpand<(outs), (ins t_bltarget:$target),
-                          Size4Bytes, IIC_Br, [], (tBL t_bltarget:$target)>;
+                          4, IIC_Br, [], (tBL t_bltarget:$target)>;
 
   def tBR_JTr : tPseudoInst<(outs),
                       (ins tGPR:$target, i32imm:$jt, i32imm:$id),
-                      SizeSpecial, IIC_Br,
+                      0, IIC_Br,
                       [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]> {
     list<Predicate> Predicates = [IsThumb, IsThumb1Only];
   }
@@ -552,7 +552,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
     // tTAILJMPd: Darwin version uses a Thumb2 branch (no Thumb1 tail calls
     // on Darwin), so it's in ARMInstrThumb2.td.
     def tTAILJMPr : tPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
-                     Size4Bytes, IIC_Br, [],
+                     4, IIC_Br, [],
                      (tBX GPR:$dst, (ops 14, zero_reg))>,
                      Requires<[IsThumb, IsDarwin]>;
   }
@@ -560,11 +560,11 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   let Defs = [R0, R1, R2, R3, R12, QQQQ0, QQQQ2, QQQQ3, PC],
       Uses = [SP] in {
     def tTAILJMPdND : tPseudoExpand<(outs), (ins t_brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br, [],
+                   4, IIC_Br, [],
                    (tB t_brtarget:$dst)>,
                  Requires<[IsThumb, IsNotDarwin]>;
     def tTAILJMPrND : tPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
-                     Size4Bytes, IIC_Br, [],
+                     4, IIC_Br, [],
                      (tBX GPR:$dst, (ops 14, zero_reg))>,
                      Requires<[IsThumb, IsNotDarwin]>;
   }
@@ -1049,7 +1049,7 @@ def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins imm0_255:$imm8), IIC_iMOVi,
 
 let neverHasSideEffects = 1 in {
 def tMOVr : Thumb1pI<(outs GPR:$Rd), (ins GPR:$Rm), AddrModeNone,
-                      Size2Bytes, IIC_iMOVr,
+                      2, IIC_iMOVr,
                       "mov", "\t$Rd, $Rm", "", []>,
                   T1Special<{1,0,?,?}> {
   // A8.6.97
@@ -1223,11 +1223,11 @@ def tADR : T1I<(outs tGPR:$Rd), (ins t_adrlabel:$addr, pred:$p),
 
 let neverHasSideEffects = 1, isReMaterializable = 1 in
 def tLEApcrel   : tPseudoInst<(outs tGPR:$Rd), (ins i32imm:$label, pred:$p),
-                              Size2Bytes, IIC_iALUi, []>;
+                              2, IIC_iALUi, []>;
 
 def tLEApcrelJT : tPseudoInst<(outs tGPR:$Rd),
                               (ins i32imm:$label, nohash_imm:$id, pred:$p),
-                              Size2Bytes, IIC_iALUi, []>;
+                              2, IIC_iALUi, []>;
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions
@@ -1237,7 +1237,7 @@ def tLEApcrelJT : tPseudoInst<(outs tGPR:$Rd),
 // This is a pseudo inst so that we can get the encoding right,
 // complete with fixup for the aeabi_read_tp function.
 let isCall = 1, Defs = [R0, R12, LR, CPSR], Uses = [SP] in
-def tTPsoft : tPseudoInst<(outs), (ins), Size4Bytes, IIC_Br,
+def tTPsoft : tPseudoInst<(outs), (ins), 4, IIC_Br,
                           [(set R0, ARMthread_pointer)]>;
 
 //===----------------------------------------------------------------------===//
@@ -1257,14 +1257,14 @@ def tTPsoft : tPseudoInst<(outs), (ins), Size4Bytes, IIC_Br,
 let Defs = [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12, CPSR ],
     hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1 in
 def tInt_eh_sjlj_setjmp : ThumbXI<(outs),(ins tGPR:$src, tGPR:$val),
-                                  AddrModeNone, SizeSpecial, NoItinerary, "","",
+                                  AddrModeNone, 0, NoItinerary, "","",
                           [(set R0, (ARMeh_sjlj_setjmp tGPR:$src, tGPR:$val))]>;
 
 // FIXME: Non-Darwin version(s)
 let isBarrier = 1, hasSideEffects = 1, isTerminator = 1, isCodeGenOnly = 1,
     Defs = [ R7, LR, SP ] in
 def tInt_eh_sjlj_longjmp : XI<(outs), (ins GPR:$src, GPR:$scratch),
-                              AddrModeNone, SizeSpecial, IndexModeNone,
+                              AddrModeNone, 0, IndexModeNone,
                               Pseudo, NoItinerary, "", "",
                               [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
                              Requires<[IsThumb, IsDarwin]>;
@@ -1383,12 +1383,12 @@ def tLDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
 def tPOP_RET : tPseudoExpand<(outs), (ins pred:$p, reglist:$regs, variable_ops),
-                           Size2Bytes, IIC_iPop_Br, [],
+                           2, IIC_iPop_Br, [],
                            (tPOP pred:$p, reglist:$regs)>;
 
 // Indirect branch using "mov pc, $Rm"
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def tBRIND : tPseudoExpand<(outs), (ins GPR:$Rm, pred:$p),
-                  Size2Bytes, IIC_Br, [(brind GPR:$Rm)],
+                  2, IIC_Br, [(brind GPR:$Rm)],
                   (tMOVr PC, GPR:$Rm, pred:$p)>;
 }

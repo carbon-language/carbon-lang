@@ -39,24 +39,16 @@ namespace ARMII {
     // This four-bit field describes the addressing mode used.
     AddrModeMask  = 0x1f, // The AddrMode enums are declared in ARMBaseInfo.h
 
-    // Size* - Flags to keep track of the size of an instruction.
-    SizeShift     = 5,
-    SizeMask      = 7 << SizeShift,
-    SizeSpecial   = 1,   // 0 byte pseudo or special case.
-    Size8Bytes    = 2,
-    Size4Bytes    = 3,
-    Size2Bytes    = 4,
-
     // IndexMode - Unindex, pre-indexed, or post-indexed are valid for load
     // and store ops only.  Generic "updating" flag is used for ld/st multiple.
     // The index mode enums are declared in ARMBaseInfo.h
-    IndexModeShift = 8,
+    IndexModeShift = 5,
     IndexModeMask  = 3 << IndexModeShift,
 
     //===------------------------------------------------------------------===//
     // Instruction encoding formats.
     //
-    FormShift     = 10,
+    FormShift     = 7,
     FormMask      = 0x3f << FormShift,
 
     // Pseudo instructions
@@ -129,15 +121,15 @@ namespace ARMII {
 
     // UnaryDP - Indicates this is a unary data processing instruction, i.e.
     // it doesn't have a Rn operand.
-    UnaryDP       = 1 << 16,
+    UnaryDP       = 1 << 13,
 
     // Xform16Bit - Indicates this Thumb2 instruction may be transformed into
     // a 16-bit Thumb instruction if certain conditions are met.
-    Xform16Bit    = 1 << 17,
+    Xform16Bit    = 1 << 14,
 
     //===------------------------------------------------------------------===//
     // Code domain.
-    DomainShift   = 18,
+    DomainShift   = 15,
     DomainMask    = 7 << DomainShift,
     DomainGeneral = 0 << DomainShift,
     DomainVFP     = 1 << DomainShift,

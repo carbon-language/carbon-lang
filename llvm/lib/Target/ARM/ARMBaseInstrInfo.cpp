@@ -529,35 +529,23 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   const MachineFunction *MF = MBB.getParent();
   const MCAsmInfo *MAI = MF->getTarget().getMCAsmInfo();
 
-  // Basic size info comes from the TSFlags field.
   const MCInstrDesc &MCID = MI->getDesc();
-  uint64_t TSFlags = MCID.TSFlags;
+  if (MCID.getSize())
+    return MCID.getSize();
 
-  unsigned Opc = MI->getOpcode();
-  switch ((TSFlags & ARMII::SizeMask) >> ARMII::SizeShift) {
-  default: {
     // If this machine instr is an inline asm, measure it.
     if (MI->getOpcode() == ARM::INLINEASM)
       return getInlineAsmLength(MI->getOperand(0).getSymbolName(), *MAI);
     if (MI->isLabel())
       return 0;
+  unsigned Opc = MI->getOpcode();
     switch (Opc) {
-    default:
-      llvm_unreachable("Unknown or unset size field for instr!");
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:
     case TargetOpcode::PROLOG_LABEL:
     case TargetOpcode::EH_LABEL:
     case TargetOpcode::DBG_VALUE:
       return 0;
-    }
-    break;
-  }
-  case ARMII::Size8Bytes: return 8;          // ARM instruction x 2.
-  case ARMII::Size4Bytes: return 4;          // ARM / Thumb2 instruction.
-  case ARMII::Size2Bytes: return 2;          // Thumb1 instruction.
-  case ARMII::SizeSpecial: {
-    switch (Opc) {
     case ARM::MOVi16_ga_pcrel:
     case ARM::MOVTi16_ga_pcrel:
     case ARM::t2MOVi16_ga_pcrel:
@@ -621,8 +609,6 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       // Otherwise, pseudo-instruction sizes are zero.
       return 0;
     }
-  }
-  }
   return 0; // Not reached
 }
 

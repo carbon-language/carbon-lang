@@ -293,7 +293,12 @@ class Instruction {
   // code.
   list<Predicate> Predicates = [];
 
-  // Code size.
+  // Size - Size of encoded instruction, or zero if the size cannot be determined
+  // from the opcode.
+  int Size = 0;
+
+  // Code size, for instruction selection.
+  // FIXME: What does this actually mean?
   int CodeSize = 0;
 
   // Added complexity passed onto matching pattern.
