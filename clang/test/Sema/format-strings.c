@@ -368,7 +368,7 @@ void check_char(unsigned char x, signed char y) {
   printf("%c", y); // no-warning
   printf("%hhu", x); // no-warning
   printf("%hhi", y); // no-warning
-  printf("%hhi", x); // expected-warning{{conversion specifies type 'signed char' but the argument has type 'unsigned char'}}
+  printf("%hhi", x); // no-warning
   printf("%c", x); // no-warning
-  printf("%hhu", y); // expected-warning{{conversion specifies type 'unsigned char' but the argument has type 'signed char'}}
+  printf("%hhu", y); // no-warning
 }

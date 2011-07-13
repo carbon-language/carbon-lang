@@ -219,16 +219,17 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
       argTy = C.getCanonicalType(argTy).getUnqualifiedType();
       if (T == argTy)
         return true;
+      // Check for "compatible types".
       if (const BuiltinType *BT = argTy->getAs<BuiltinType>())
         switch (BT->getKind()) {
           default:
             break;
           case BuiltinType::Char_S:
           case BuiltinType::SChar:
-            return T == C.SignedCharTy;
-          case BuiltinType::Char_U:
-          case BuiltinType::UChar:
             return T == C.UnsignedCharTy;
+          case BuiltinType::Char_U:
+          case BuiltinType::UChar:                    
+            return T == C.SignedCharTy;
           case BuiltinType::Short:
             return T == C.UnsignedShortTy;
           case BuiltinType::UShort:
