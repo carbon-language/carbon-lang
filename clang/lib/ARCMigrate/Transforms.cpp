@@ -265,7 +265,7 @@ void trans::collectRemovables(Stmt *S, ExprSet &exprs) {
 
 static void independentTransforms(MigrationPass &pass) {
   rewriteAutoreleasePool(pass);
-  changeIvarsOfAssignProperties(pass);
+  rewriteProperties(pass);
   removeRetainReleaseDealloc(pass);
   rewriteUnusedInitDelegate(pass);
   removeZeroOutPropsInDealloc(pass);

@@ -34,7 +34,7 @@ void rewriteUnbridgedCasts(MigrationPass &pass);
 void makeAssignARCSafe(MigrationPass &pass);
 void removeRetainReleaseDealloc(MigrationPass &pass);
 void removeZeroOutPropsInDealloc(MigrationPass &pass);
-void changeIvarsOfAssignProperties(MigrationPass &pass);
+void rewriteProperties(MigrationPass &pass);
 void rewriteBlockObjCVariable(MigrationPass &pass);
 void rewriteUnusedInitDelegate(MigrationPass &pass);
 

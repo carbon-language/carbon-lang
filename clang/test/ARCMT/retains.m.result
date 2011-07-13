@@ -9,7 +9,7 @@ id IhaveSideEffect();
 @interface Foo : NSObject {
   id bar;
 }
-@property (retain) id bar;
+@property (strong) id bar;
 -(id)test:(id)obj;
 -(id)something;
 @end

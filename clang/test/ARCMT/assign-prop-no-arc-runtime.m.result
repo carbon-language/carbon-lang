@@ -7,7 +7,7 @@
 @interface Foo : NSObject {
   NSObject *__unsafe_unretained x;
 }
-@property (readonly,assign) id x;
+@property (readonly,unsafe_unretained) id x;
 @end
 
 @implementation Foo

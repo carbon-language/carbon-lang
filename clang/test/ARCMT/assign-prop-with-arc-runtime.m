@@ -15,7 +15,6 @@ typedef _NSCachedAttributedString *BadClassForWeak;
 
 @interface Foo : NSObject {
   Foo *x, *w, *q1, *q2;
-  Foo *z1, *__unsafe_unretained z2;
   WeakOptOut *oo;
   BadClassForWeak bcw;
   id not_safe1;
@@ -24,15 +23,17 @@ typedef _NSCachedAttributedString *BadClassForWeak;
 }
 @property (readonly,assign) Foo *x;
 @property (assign) Foo *w;
-@property (assign) Foo *q1, *q2;
-@property (assign) Foo *z1, *z2;
+@property Foo *q1, *q2;
 @property (assign) WeakOptOut *oo;
 @property (assign) BadClassForWeak bcw;
 @property (assign) id not_safe1;
-@property (assign) NSObject *not_safe2;
-@property (assign) Forw *not_safe3;
+@property () NSObject *not_safe2;
+@property Forw *not_safe3;
+
+@property (assign) Foo *no_back_ivar;
 @end
 
 @implementation Foo
-@synthesize x,w,q1,q2,z1,z2,oo,bcw,not_safe1,not_safe2,not_safe3;
+@synthesize x,w,q1,q2,oo,bcw,not_safe1,not_safe2,not_safe3;
+@synthesize no_back_ivar;
 @end

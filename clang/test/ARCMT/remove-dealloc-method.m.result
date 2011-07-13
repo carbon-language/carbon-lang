@@ -5,10 +5,10 @@
 #define nil ((void*) 0)
 
 @interface Foo 
-@property (retain) id x;
-@property (retain) id y;
-@property (retain) id w;
-@property (retain) id z;
+@property (strong) id x;
+@property (strong) id y;
+@property (strong) id w;
+@property (strong) id z;
 @end
 
 @implementation Foo 
