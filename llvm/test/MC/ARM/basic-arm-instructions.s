@@ -458,3 +458,35 @@ _func:
 @ CHECK: dbg #0                         @ encoding: [0xf0,0xf0,0x20,0xe3]
 @ CHECK: dbg #5                         @ encoding: [0xf5,0xf0,0x20,0xe3]
 @ CHECK: dbg #15                        @ encoding: [0xff,0xf0,0x20,0xe3]
+
+
+@------------------------------------------------------------------------------
+@ DMB
+@------------------------------------------------------------------------------
+  dmb sy
+  dmb st
+  dmb sh
+  dmb ish
+  dmb shst
+  dmb ishst
+  dmb un
+  dmb nsh
+  dmb unst
+  dmb nshst
+  dmb osh
+  dmb oshst
+  dmb
+
+@ CHECK: dmb	sy                      @ encoding: [0x5f,0xf0,0x7f,0xf5]
+@ CHECK: dmb	st                      @ encoding: [0x5e,0xf0,0x7f,0xf5]
+@ CHECK: dmb	ish                     @ encoding: [0x5b,0xf0,0x7f,0xf5]
+@ CHECK: dmb	ish                     @ encoding: [0x5b,0xf0,0x7f,0xf5]
+@ CHECK: dmb	ishst                   @ encoding: [0x5a,0xf0,0x7f,0xf5]
+@ CHECK: dmb	ishst                   @ encoding: [0x5a,0xf0,0x7f,0xf5]
+@ CHECK: dmb	nsh                     @ encoding: [0x57,0xf0,0x7f,0xf5]
+@ CHECK: dmb	nsh                     @ encoding: [0x57,0xf0,0x7f,0xf5]
+@ CHECK: dmb	nshst                   @ encoding: [0x56,0xf0,0x7f,0xf5]
+@ CHECK: dmb	nshst                   @ encoding: [0x56,0xf0,0x7f,0xf5]
+@ CHECK: dmb	osh                     @ encoding: [0x53,0xf0,0x7f,0xf5]
+@ CHECK: dmb	oshst                   @ encoding: [0x52,0xf0,0x7f,0xf5]
+@ CHECK: dmb	sy                      @ encoding: [0x5f,0xf0,0x7f,0xf5]
