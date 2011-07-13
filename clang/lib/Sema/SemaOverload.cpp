@@ -4535,19 +4535,19 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
                                 CK_FunctionToPointerDecay,
                                 &ConversionRef, VK_RValue);
 
-  QualType CallResultType
-    = Conversion->getConversionType().getNonLValueExprType(Context);
-  if (RequireCompleteType(From->getLocStart(), CallResultType, 0)) {
+  QualType ConversionType = Conversion->getConversionType();
+  if (RequireCompleteType(From->getLocStart(), ConversionType, 0)) {
     Candidate.Viable = false;
     Candidate.FailureKind = ovl_fail_bad_final_conversion;
     return;
   }
 
-  ExprValueKind VK = Expr::getValueKindForType(Conversion->getConversionType());
+  ExprValueKind VK = Expr::getValueKindForType(ConversionType);
 
   // Note that it is safe to allocate CallExpr on the stack here because
   // there are 0 arguments (i.e., nothing is allocated using ASTContext's
   // allocator).
+  QualType CallResultType = ConversionType.getNonLValueExprType(Context);
   CallExpr Call(Context, &ConversionFn, 0, 0, CallResultType, VK,
                 From->getLocStart());
   ImplicitConversionSequence ICS =

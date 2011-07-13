@@ -378,3 +378,17 @@ namespace PR9336 {
   generic_list<generic_list<int> > l;
   array<array<int> > a = l;
 }
+
+namespace PR8800 {
+  struct A;
+  struct C {
+    operator A&();
+  };
+  void f() {
+    C c;
+    A& a1(c);
+    A& a2 = c;
+    A& a3 = static_cast<A&>(c);
+    A& a4 = (A&)c;
+  }
+}
