@@ -154,8 +154,13 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
   // from the enum to be recomputed.
   if (const EnumDecl *ED = dyn_cast<EnumDecl>(TD)) {
     // Only flush the cache if we've actually already converted this type.
-    if (TypeCache.count(ED->getTypeForDecl()))
-      TypeCache.clear();
+    if (TypeCache.count(ED->getTypeForDecl())) {
+      // Okay, we formed some types based on this.  We speculated that the enum
+      // would be lowered to i32, so we only need to flush the cache if this
+      // didn't happen.
+      if (!ConvertType(ED->getIntegerType())->isIntegerTy(32))
+        TypeCache.clear();
+    }
     return;
   }
   
@@ -416,12 +421,14 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     break;
   }
 
-   case Type::Enum: {
+  case Type::Enum: {
     const EnumDecl *ED = cast<EnumType>(Ty)->getDecl();
     if (ED->isDefinition() || ED->isFixed())
       return ConvertType(ED->getIntegerType());
-    // Return a placeholder '{}' type.
-    ResultType = llvm::StructType::get(getLLVMContext());
+    // Return a placeholder 'i32' type.  This can be changed later when the
+    // type is defined (see UpdateCompletedType), but is likely to be the
+    // "right" answer.
+    ResultType = llvm::Type::getInt32Ty(getLLVMContext());
     break;
   }
 
