@@ -301,6 +301,7 @@ def bc_v2i64 : PatFrag<(ops node:$in), (v2i64 (bitconvert node:$in))>;
 
 // 256-bit bitconvert pattern fragments
 def bc_v8i32 : PatFrag<(ops node:$in), (v8i32 (bitconvert node:$in))>;
+def bc_v4i64 : PatFrag<(ops node:$in), (v4i64 (bitconvert node:$in))>;
 
 def vzmovl_v2i64 : PatFrag<(ops node:$src),
                            (bitconvert (v2i64 (X86vzmovl
