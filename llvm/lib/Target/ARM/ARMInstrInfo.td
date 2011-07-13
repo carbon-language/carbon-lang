@@ -255,9 +255,8 @@ def lo16AllZero : PatLeaf<(i32 imm), [{
   return (((uint32_t)N->getZExtValue()) & 0xFFFFUL) == 0;
 }], hi16>;
 
-/// imm0_65535 predicate - True if the 32-bit immediate is in the range
-/// [0.65535].
-def imm0_65535 : ImmLeaf<i32, [{
+/// imm0_65535 - An immediate is in the range [0.65535].
+def imm0_65535 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 65536;
 }]>;
 
@@ -1174,8 +1173,8 @@ def SEV : AI<(outs), (ins), MiscFrm, NoItinerary, "sev", "",
 
 // The i32imm operand $val can be used by a debugger to store more information
 // about the breakpoint.
-def BKPT : AI<(outs), (ins i32imm:$val), MiscFrm, NoItinerary, "bkpt", "\t$val",
-              []>, Requires<[IsARM]> {
+def BKPT : AI<(outs), (ins imm0_65535:$val), MiscFrm, NoItinerary,
+              "bkpt", "\t$val", []>, Requires<[IsARM]> {
   bits<16> val;
   let Inst{3-0} = val{3-0};
   let Inst{19-8} = val{15-4};

@@ -590,6 +590,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("nModImm");
   IMM("imm0_255");
   IMM("imm0_4095");
+  IMM("imm0_65535");
   IMM("jt2block_operand");
   IMM("t_imm_s4");
   IMM("pclabel");
