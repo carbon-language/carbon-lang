@@ -686,6 +686,43 @@ type.</p>
 <p>If an ownership qualifier appears anywhere else in a declarator, it
 applies to the type there.</p>
 
+<div id="ownership.spelling.property">
+<h1>Property declarations</h1>
+
+<p>A property of retainable object pointer type may have ownership.
+If the property's type is ownership-qualified, then the property has
+that ownership.  If the property has one of the following modifiers,
+then the property has the corresponding ownership.  A property is
+ill-formed if it has conflicting sources of ownership, or if it has
+redundant ownership modifiers, or if it has <tt>__autoreleasing</tt>
+ownership.</p>
+
+<ul>
+<li><tt>assign</tt> implies <tt>__unsafe_unretained</tt> ownership.</li>
+<li><tt>copy</tt> implies <tt>__strong</tt> ownership, as well as the
+  usual behavior of copy semantics on the setter.</li>
+<li><tt>retain</tt> implies <tt>__strong</tt> ownership.</li>
+<li><tt>strong</tt> implies <tt>__strong</tt> ownership.</li>
+<li><tt>unsafe_unretained</tt> implies <tt>__unsafe_unretained</tt>
+  ownership.</li>
+<li><tt>weak</tt> implies <tt>__weak</tt> ownership.</li>
+</ul>
+
+<p>With the exception of <tt>weak</tt>, these modifiers are available
+in non-ARC modes.</p>
+
+<p>A property's specified ownership is preserved in its metadata, but
+otherwise the meaning is purely conventional unless the property is
+synthesized.  If a property is synthesized, then the
+<span class="term">associated instance variable</span> is the
+instance variable which is named, possibly implicitly, by the
+<tt>@synthesize</tt> declaration.  If the associated instance variable
+already exists, then its ownership qualification must equal the
+ownership of the property; otherwise, the instance variable is created
+with that ownership qualification.</p>
+
+</div> <!-- ownership.spelling.property -->
+
 </div> <!-- ownership.spelling -->
 
 <div id="ownership.semantics">
