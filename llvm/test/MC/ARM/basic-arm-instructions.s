@@ -448,3 +448,13 @@ _func:
 @ CHECK: cmp	r7, r8, ror r2          @ encoding: [0x78,0x02,0x57,0xe1]
 @ CHECK: cmp	r1, r6, rrx             @ encoding: [0x66,0x00,0x51,0xe1]
 
+@------------------------------------------------------------------------------
+@ DBG
+@------------------------------------------------------------------------------
+  dbg #0
+  dbg #5
+  dbg #15
+
+@ CHECK: dbg #0                         @ encoding: [0xf0,0xf0,0x20,0xe3]
+@ CHECK: dbg #5                         @ encoding: [0xf5,0xf0,0x20,0xe3]
+@ CHECK: dbg #15                        @ encoding: [0xff,0xf0,0x20,0xe3]

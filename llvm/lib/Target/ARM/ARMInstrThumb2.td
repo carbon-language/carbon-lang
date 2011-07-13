@@ -3157,8 +3157,7 @@ def t2WFE   : T2I_hint<0b00000010, "wfe",   ".w">;
 def t2WFI   : T2I_hint<0b00000011, "wfi",   ".w">;
 def t2SEV   : T2I_hint<0b00000100, "sev",   ".w">;
 
-def t2DBG : T2I<(outs),(ins i32imm:$opt), NoItinerary, "dbg", "\t$opt",
-                [/* For disassembly only; pattern left blank */]> {
+def t2DBG : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "dbg", "\t$opt", []> {
   let Inst{31-20} = 0xf3a;
   let Inst{15-14} = 0b10;
   let Inst{12} = 0;
