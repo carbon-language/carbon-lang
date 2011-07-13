@@ -134,3 +134,18 @@ namespace test7 {
   // CHECK: define void @_ZN5test71zENS_1AES0_S0_S0_S0_NS_12StringDoubleE({{.*}} byval align 8)
   // CHECK: define void @_ZN5test72zzENS_1AES0_S0_S0_NS_12StringDoubleE({{.*}} i8*
 }
+
+namespace test8 {
+  // CHECK: declare void @_ZN5test83fooENS_1BE(%"class.test8::B"* byval align 8)
+  class A {
+   char big[17];
+  };
+
+  class B : public A {};
+
+  void foo(B b);
+  void bar() {
+   B b;
+   foo(b);
+  }
+}
