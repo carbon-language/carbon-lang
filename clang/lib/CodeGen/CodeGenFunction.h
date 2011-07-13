@@ -1702,15 +1702,7 @@ public:
                                   CallExpr::const_arg_iterator ArgEnd,
                                   bool ZeroInitialization = false);
 
-  void EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
-                                 const ArrayType *Array,
-                                 llvm::Value *This);
-
   static Destroyer destroyCXXObject;
-
-  void EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
-                                 llvm::Value *NumElements,
-                                 llvm::Value *This);
 
   void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
                              bool ForVirtualBase, llvm::Value *This);
