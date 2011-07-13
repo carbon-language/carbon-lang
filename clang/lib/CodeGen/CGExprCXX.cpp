@@ -1211,7 +1211,8 @@ namespace {
 static void EmitObjectDelete(CodeGenFunction &CGF,
                              const FunctionDecl *OperatorDelete,
                              llvm::Value *Ptr,
-                             QualType ElementType) {
+                             QualType ElementType,
+                             bool UseGlobalDelete) {
   // Find the destructor for the type, if applicable.  If the
   // destructor is virtual, we'll just emit the vcall and return.
   const CXXDestructorDecl *Dtor = 0;
@@ -1221,17 +1222,30 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
       Dtor = RD->getDestructor();
 
       if (Dtor->isVirtual()) {
+        if (UseGlobalDelete) {
+          // If we're supposed to call the global delete, make sure we do so
+          // even if the destructor throws.
+          CGF.EHStack.pushCleanup<CallObjectDelete>(NormalAndEHCleanup,
+                                                    Ptr, OperatorDelete, 
+                                                    ElementType);
+        }
+        
         const llvm::Type *Ty =
           CGF.getTypes().GetFunctionType(CGF.getTypes().getFunctionInfo(Dtor,
                                                                Dtor_Complete),
                                          /*isVariadic=*/false);
           
         llvm::Value *Callee
-          = CGF.BuildVirtualCall(Dtor, Dtor_Deleting, Ptr, Ty);
+          = CGF.BuildVirtualCall(Dtor, 
+                                 UseGlobalDelete? Dtor_Complete : Dtor_Deleting,
+                                 Ptr, Ty);
         CGF.EmitCXXMemberCall(Dtor, Callee, ReturnValueSlot(), Ptr, /*VTT=*/0,
                               0, 0);
 
-        // The dtor took care of deleting the object.
+        if (UseGlobalDelete) {
+          CGF.PopCleanupBlock();
+        }
+        
         return;
       }
     }
@@ -1477,7 +1491,8 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   if (E->isArrayForm()) {
     EmitArrayDelete(*this, E, Ptr, DeleteTy);
   } else {
-    EmitObjectDelete(*this, E->getOperatorDelete(), Ptr, DeleteTy);
+    EmitObjectDelete(*this, E->getOperatorDelete(), Ptr, DeleteTy,
+                     E->isGlobalDelete());
   }
 
   EmitBlock(DeleteEnd);

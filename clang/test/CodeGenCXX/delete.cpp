@@ -112,3 +112,22 @@ namespace test3 {
     delete a;
   }
 }
+
+namespace test4 {
+  // PR10341: ::delete with a virtual destructor
+  struct X {
+    virtual ~X();
+    void operator delete (void *);
+  };
+
+  // CHECK: define void @_ZN5test421global_delete_virtualEPNS_1XE
+  void global_delete_virtual(X *xp) {
+    // CHECK: [[VTABLE:%.*]] = load void ([[X:%.*]])***
+    // CHECK-NEXT: [[VFN:%.*]] = getelementptr inbounds void ([[X]])** [[VTABLE]], i64 0
+    // CHECK-NEXT: [[VFNPTR:%.*]] = load void ([[X]])** [[VFN]]
+    // CHECK-NEXT: call void [[VFNPTR]]([[X]] [[OBJ:%.*]])
+    // CHECK-NEXT: [[OBJVOID:%.*]] = bitcast [[X]] [[OBJ]] to i8*
+    // CHECK-NEXT: call void @_ZdlPv(i8* [[OBJVOID]]) nounwind
+    ::delete xp;
+  }
+}
