@@ -104,3 +104,14 @@ namespace test0 {
     C tmp = in;
   }
 }
+
+namespace test1 {
+  struct A { A(); void *ptr; };
+  struct B { B(); int x; A a[0]; };
+  B::B() {}
+  // CHECK:    define void @_ZN5test11BC2Ev(
+  // CHECK:      [[THIS:%.*]] = load [[B:%.*]]**
+  // CHECK-NEXT: [[A:%.*]] = getelementptr inbounds [[B:%.*]]* [[THIS]], i32 0, i32 1
+  // CHECK-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [0 x {{%.*}}]* [[A]], i32 0, i32 0
+  // CHECK-NEXT: ret void
+}

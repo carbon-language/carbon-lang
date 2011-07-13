@@ -1063,7 +1063,7 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
 ///
 /// \param ctor the constructor to call for each element
 /// \param numElements the number of elements in the array;
-///   assumed to be non-zero
+///   may be zero
 /// \param argBegin,argEnd the arguments to evaluate and pass to the
 ///   constructor
 /// \param arrayBegin a T*, where T is the type constructed by ctor
@@ -1076,6 +1076,29 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
                                          CallExpr::const_arg_iterator argBegin,
                                            CallExpr::const_arg_iterator argEnd,
                                             bool zeroInitialize) {
+
+  // It's legal for numElements to be zero.  This can happen both
+  // dynamically, because x can be zero in 'new A[x]', and statically,
+  // because of GCC extensions that permit zero-length arrays.  There
+  // are probably legitimate places where we could assume that this
+  // doesn't happen, but it's not clear that it's worth it.
+  llvm::BranchInst *zeroCheckBranch = 0;
+
+  // Optimize for a constant count.
+  llvm::ConstantInt *constantCount
+    = dyn_cast<llvm::ConstantInt>(numElements);
+  if (constantCount) {
+    // Just skip out if the constant count is zero.
+    if (constantCount->isZero()) return;
+
+  // Otherwise, emit the check.
+  } else {
+    llvm::BasicBlock *loopBB = createBasicBlock("new.ctorloop");
+    llvm::Value *iszero = Builder.CreateIsNull(numElements, "isempty");
+    zeroCheckBranch = Builder.CreateCondBr(iszero, loopBB, loopBB);
+    EmitBlock(loopBB);
+  }
+      
   // Find the end of the array.
   llvm::Value *arrayEnd = Builder.CreateInBoundsGEP(arrayBegin, numElements,
                                                     "arrayctor.end");
@@ -1129,6 +1152,9 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
   llvm::Value *done = Builder.CreateICmpEQ(next, arrayEnd, "arrayctor.done");
   llvm::BasicBlock *contBB = createBasicBlock("arrayctor.cont");
   Builder.CreateCondBr(done, contBB, loopBB);
+
+  // Patch the earlier check to skip over the loop.
+  if (zeroCheckBranch) zeroCheckBranch->setSuccessor(0, contBB);
 
   EmitBlock(contBB);
 }
