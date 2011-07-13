@@ -681,3 +681,21 @@ is compiled and optimized to:
     str    r1, [r0]
 
 //===---------------------------------------------------------------------===//
+
+Improve codegen for select's:
+if (x != 0) x = 1
+if (x == 1) x = 1
+
+ARM codegen used to look like this:
+       mov     r1, r0
+       cmp     r1, #1
+       mov     r0, #0
+       moveq   r0, #1
+
+The naive lowering select between two different values. It should recognize the
+test is equality test so it's more a conditional move rather than a select:
+       cmp     r0, #1
+       movne   r0, #0
+
+Currently this is a ARM specific dag combine. We probably should make it into a
+target-neutral one.
