@@ -160,11 +160,13 @@ class RAGreedy : public MachineFunctionPass,
   /// Global live range splitting candidate info.
   struct GlobalSplitCandidate {
     unsigned PhysReg;
+    InterferenceCache::Cursor Intf;
     BitVector LiveBundles;
     SmallVector<unsigned, 8> ActiveBlocks;
 
-    void reset(unsigned Reg) {
+    void reset(InterferenceCache &Cache, unsigned Reg) {
       PhysReg = Reg;
+      Intf.setPhysReg(Cache, Reg);
       LiveBundles.clear();
       ActiveBlocks.clear();
     }
@@ -206,8 +208,8 @@ private:
   float calcSpillCost();
   bool addSplitConstraints(InterferenceCache::Cursor, float&);
   void addThroughConstraints(InterferenceCache::Cursor, ArrayRef<unsigned>);
-  void growRegion(GlobalSplitCandidate &Cand, InterferenceCache::Cursor);
-  float calcGlobalSplitCost(GlobalSplitCandidate&, InterferenceCache::Cursor);
+  void growRegion(GlobalSplitCandidate &Cand);
+  float calcGlobalSplitCost(GlobalSplitCandidate&);
   void splitAroundRegion(LiveInterval&, GlobalSplitCandidate&,
                          SmallVectorImpl<LiveInterval*>&);
   void calcGapWeights(unsigned, SmallVectorImpl<float>&);
@@ -720,8 +722,7 @@ void RAGreedy::addThroughConstraints(InterferenceCache::Cursor Intf,
   SpillPlacer->addLinks(ArrayRef<unsigned>(TBS, T));
 }
 
-void RAGreedy::growRegion(GlobalSplitCandidate &Cand,
-                          InterferenceCache::Cursor Intf) {
+void RAGreedy::growRegion(GlobalSplitCandidate &Cand) {
   // Keep track of through blocks that have not been added to SpillPlacer.
   BitVector Todo = SA->getThroughBlocks();
   SmallVectorImpl<unsigned> &ActiveBlocks = Cand.ActiveBlocks;
@@ -753,7 +754,7 @@ void RAGreedy::growRegion(GlobalSplitCandidate &Cand,
     // Any new blocks to add?
     if (ActiveBlocks.size() == AddedTo)
       break;
-    addThroughConstraints(Intf,
+    addThroughConstraints(Cand.Intf,
                           ArrayRef<unsigned>(ActiveBlocks).slice(AddedTo));
     AddedTo = ActiveBlocks.size();
 
@@ -794,8 +795,7 @@ float RAGreedy::calcSpillCost() {
 /// pattern in LiveBundles. This cost should be added to the local cost of the
 /// interference pattern in SplitConstraints.
 ///
-float RAGreedy::calcGlobalSplitCost(GlobalSplitCandidate &Cand,
-                                    InterferenceCache::Cursor Intf) {
+float RAGreedy::calcGlobalSplitCost(GlobalSplitCandidate &Cand) {
   float GlobalCost = 0;
   const BitVector &LiveBundles = Cand.LiveBundles;
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
@@ -822,8 +822,8 @@ float RAGreedy::calcGlobalSplitCost(GlobalSplitCandidate &Cand,
       continue;
     if (RegIn && RegOut) {
       // We need double spill code if this block has interference.
-      Intf.moveToBlock(Number);
-      if (Intf.hasInterference())
+      Cand.Intf.moveToBlock(Number);
+      if (Cand.Intf.hasInterference())
         GlobalCost += 2*SpillPlacer->getBlockFrequency(Number);
       continue;
     }
@@ -853,7 +853,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
     dbgs() << ".\n";
   });
 
-  InterferenceCache::Cursor Intf(IntfCache, Cand.PhysReg);
+  InterferenceCache::Cursor &Intf = Cand.Intf;
   LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
   SE->reset(LREdit);
 
@@ -1248,12 +1248,11 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   for (unsigned Cand = 0; unsigned PhysReg = Order.next(); ++Cand) {
     if (GlobalCand.size() <= Cand)
       GlobalCand.resize(Cand+1);
-    GlobalCand[Cand].reset(PhysReg);
+    GlobalCand[Cand].reset(IntfCache, PhysReg);
 
     SpillPlacer->prepare(GlobalCand[Cand].LiveBundles);
     float Cost;
-    InterferenceCache::Cursor Intf(IntfCache, PhysReg);
-    if (!addSplitConstraints(Intf, Cost)) {
+    if (!addSplitConstraints(GlobalCand[Cand].Intf, Cost)) {
       DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tno positive bundles\n");
       continue;
     }
@@ -1268,7 +1267,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       });
       continue;
     }
-    growRegion(GlobalCand[Cand], Intf);
+    growRegion(GlobalCand[Cand]);
 
     SpillPlacer->finish();
 
@@ -1278,7 +1277,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       continue;
     }
 
-    Cost += calcGlobalSplitCost(GlobalCand[Cand], Intf);
+    Cost += calcGlobalSplitCost(GlobalCand[Cand]);
     DEBUG({
       dbgs() << ", total = " << Cost << " with bundles";
       for (int i = GlobalCand[Cand].LiveBundles.find_first(); i>=0;
