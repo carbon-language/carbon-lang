@@ -3331,7 +3331,8 @@ def t2MSR : T2SpecialReg<0b111100111000 /* op31-20 */, 0b10 /* op15-14 */,
 
 class tMovRCopro<string opc, bit direction, dag oops, dag iops,
                  list<dag> pattern>
-  : T1Cop<oops, iops, !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
+  : T2Cop<0b1110, oops, iops,
+          !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
           pattern> {
   let Inst{27-24} = 0b1110;
   let Inst{20} = direction;
@@ -3369,7 +3370,8 @@ def : Pat<(int_arm_mrc imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2),
 
 class tMovRRCopro<string opc, bit direction,
                   list<dag> pattern = [/* For disassembly only */]>
-  : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
+  : T2Cop<0b1110, (outs),
+          (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
           !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
   let Inst{27-24} = 0b1100;
   let Inst{23-21} = 0b010;
@@ -3395,7 +3397,8 @@ def tMRRC : tMovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
 
 class t2MovRCopro<string opc, bit direction, dag oops, dag iops,
                   list<dag> pattern>
-  : T2Cop<oops, iops, !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
+  : T2Cop<0b1111, oops, iops,
+          !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
           pattern> {
   let Inst{27-24} = 0b1110;
   let Inst{20} = direction;
@@ -3431,7 +3434,8 @@ def : T2v6Pat<(int_arm_mrc2 imm:$cop, imm:$opc1, imm:$CRn,
 
 class t2MovRRCopro<string opc, bit direction,
                    list<dag> pattern = [/* For disassembly only */]>
-  : T2Cop<(outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
+  : T2Cop<0b1111, (outs),
+          (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
           !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
   let Inst{27-24} = 0b1100;
   let Inst{23-21} = 0b010;
@@ -3461,7 +3465,7 @@ def t2MRRC2 : t2MovRRCopro<"mrrc2",
 // Other Coprocessor Instructions.
 //
 
-def tCDP : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
+def tCDP : T2Cop<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
                  c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
                  "cdp\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
                  [(int_arm_cdp imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
@@ -3484,7 +3488,7 @@ def tCDP : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
   let Inst{23-20} = opc1;
 }
 
-def t2CDP2 : T2Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
+def t2CDP2 : T2Cop<0b1111, (outs), (ins p_imm:$cop, i32imm:$opc1,
                    c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
                    "cdp2\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
                    [(int_arm_cdp2 imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
