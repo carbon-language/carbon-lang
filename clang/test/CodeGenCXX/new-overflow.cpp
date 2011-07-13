@@ -18,7 +18,7 @@ namespace test0 {
   // CHECK-NEXT: [[T2:%.*]] = extractvalue { i32, i1 } [[T0]], 0
   // CHECK-NEXT: [[T3:%.*]] = select i1 [[T1]], i32 -1, i32 [[T2]]
   // CHECK-NEXT: call noalias i8* @_Znaj(i32 [[T3]])
-  // CHECK:      icmp ult i32 {{.*}}, [[N]]
+  // CHECK:      getelementptr inbounds {{.*}}, i32 [[N]]
   elt *test(short s) {
     return new elt[s];
   }
@@ -41,7 +41,7 @@ namespace test1 {
   // CHECK-NEXT: [[T3:%.*]] = mul i32 [[N]], 100
   // CHECK-NEXT: [[T4:%.*]] = select i1 [[T1]], i32 -1, i32 [[T2]]
   // CHECK-NEXT: call noalias i8* @_Znaj(i32 [[T4]])
-  // CHECK:      icmp ult i32 {{.*}}, [[T3]]
+  // CHECK:      getelementptr inbounds {{.*}}, i32 [[T3]]
   elt *test(short s) {
     return new elt[s];
   }
@@ -69,7 +69,7 @@ namespace test2 {
   // CHECK-NEXT: [[T7:%.*]] = extractvalue { i32, i1 } [[T4]], 0
   // CHECK-NEXT: [[T8:%.*]] = select i1 [[T6]], i32 -1, i32 [[T7]]
   // CHECK-NEXT: call noalias i8* @_Znaj(i32 [[T8]])
-  // CHECK:      icmp ult i32 {{.*}}, [[T3]]
+  // CHECK:      getelementptr inbounds {{.*}}, i32 [[T3]]
   elt *test(short s) {
     return new elt[s];
   }
@@ -88,7 +88,7 @@ namespace test4 {
   // CHECK-NEXT: [[T0:%.*]] = icmp slt i32 [[N]], 0
   // CHECK-NEXT: [[T1:%.*]] = select i1 [[T0]], i32 -1, i32 [[N]]
   // CHECK-NEXT: call noalias i8* @_Znaj(i32 [[T1]])
-  // CHECK:      icmp ult i32 {{.*}}, [[N]]
+  // CHECK:      getelementptr inbounds {{.*}}, i32 [[N]]
   elt *test(short s) {
     return new elt[s];
   }
@@ -107,7 +107,7 @@ namespace test5 {
   // CHECK-NEXT: [[T0:%.*]] = icmp slt i32 [[N]], 0
   // CHECK-NEXT: [[T1:%.*]] = select i1 [[T0]], i32 -1, i32 [[N]]
   // CHECK-NEXT: call noalias i8* @_Znaj(i32 [[T1]])
-  // CHECK:      icmp ult i32 {{.*}}, [[N]]
+  // CHECK:      getelementptr inbounds {{.*}}, i32 [[N]]
   elt *test(int s) {
     return new elt[s];
   }
@@ -129,7 +129,7 @@ namespace test6 {
   // CHECK-NEXT: [[T2:%.*]] = extractvalue { i32, i1 } [[T0]], 0
   // CHECK-NEXT: [[T3:%.*]] = select i1 [[T1]], i32 -1, i32 [[T2]]
   // CHECK-NEXT: call noalias i8* @_Znaj(i32 [[T3]])
-  // CHECK:      icmp ult i32 {{.*}}, [[N]]
+  // CHECK:      getelementptr inbounds {{.*}}, i32 [[N]]
   elt *test(unsigned short s) {
     return new elt[s];
   }
@@ -152,7 +152,7 @@ namespace test7 {
   // CHECK-NEXT: [[T3:%.*]] = mul i32 [[N]], 100
   // CHECK-NEXT: [[T4:%.*]] = select i1 [[T1]], i32 -1, i32 [[T2]]
   // CHECK-NEXT: call noalias i8* @_Znaj(i32 [[T4]])
-  // CHECK:      icmp ult i32 {{.*}}, [[T3]]
+  // CHECK:      getelementptr inbounds {{.*}}, i32 [[T3]]
   elt *test(unsigned short s) {
     return new elt[s];
   }
@@ -177,7 +177,7 @@ namespace test8 {
   // CHECK-NEXT: [[T5:%.*]] = extractvalue { i32, i1 } [[T2]], 0
   // CHECK-NEXT: [[T6:%.*]] = select i1 [[T4]], i32 -1, i32 [[T5]]
   // CHECK-NEXT: call noalias i8* @_Znaj(i32 [[T6]])
-  // CHECK:      icmp ult i32 {{.*}}, [[T1]]
+  // CHECK:      getelementptr inbounds {{.*}}, i32 [[T1]]
   elt *test(long long s) {
     return new elt[s];
   }
@@ -202,7 +202,7 @@ namespace test9 {
   // CHECK-NEXT: [[T5:%.*]] = extractvalue { i32, i1 } [[T2]], 0
   // CHECK-NEXT: [[T6:%.*]] = select i1 [[T4]], i32 -1, i32 [[T5]]
   // CHECK-NEXT: call noalias i8* @_Znaj(i32 [[T6]])
-  // CHECK:      icmp ult i32 {{.*}}, [[T1]]
+  // CHECK:      getelementptr inbounds {{.*}}, i32 [[T1]]
   elt *test(unsigned long long s) {
     return new elt[s];
   }

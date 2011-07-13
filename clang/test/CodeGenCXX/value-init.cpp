@@ -204,7 +204,6 @@ namespace test6 {
   };
   // CHECK:    define void @_ZN5test64testEv()
   // CHECK:      [[ARR:%.*]] = alloca [10 x [20 x [[A:%.*]]]],
-  // CHECK-NEXT: [[IDX:%.*]] = alloca i64
 
   // CHECK-NEXT: [[INNER:%.*]] = getelementptr inbounds [10 x [20 x [[A]]]]* [[ARR]], i64 0, i64 0
   // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [20 x [[A]]]* [[INNER]], i64 0, i64 0
@@ -222,23 +221,17 @@ namespace test6 {
   // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [20 x [[A]]]* [[INNER]], i64 10
   // CHECK-NEXT: br label
   // CHECK:      [[CUR:%.*]] = phi [20 x [[A]]]* [ [[BEGIN]], {{%.*}} ], [ [[NEXT:%.*]], {{%.*}} ]
-  // CHECK-NEXT: [[FIRST:%.*]] = bitcast [20 x [[A]]]* [[CUR]] to [[A]]*
 
-  // TODO: this loop should use phis, too, and for preference would be
-  // merged with the outer loop.
-  // CHECK-NEXT: store i64 0, i64* [[IDX]]
+  // Inner loop.
+  // CHECK-NEXT: [[IBEGIN:%.*]] = getelementptr inbounds [20 x [[A]]]* [[CUR]], i32 0, i32 0
+  // CHECK-NEXT: [[IEND:%.*]] = getelementptr inbounds [[A]]* [[IBEGIN]], i64 20
   // CHECK-NEXT: br label
-  // CHECK:      [[T0:%.*]] = load i64* [[IDX]]
-  // CHECK-NEXT: [[T1:%.*]] = icmp ult i64 [[T0]], 20
-  // CHECK-NEXT: br i1 [[T1]]
-  // CHECK:      [[T0:%.*]] = load i64* [[IDX]]
-  // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[A]]* [[FIRST]], i64 [[T0]]
-  // CHECK-NEXT: call void @_ZN5test61AC1Ev([[A]]* [[T1]])
-  // CHECK-NEXT: br label
-  // CHECK:      [[T0:%.*]] = load i64* [[IDX]]
-  // CHECK-NEXT: [[T1:%.*]] = add i64 [[T0]], 1
-  // CHECK-NEXT: store i64 [[T1]], i64* [[IDX]]
-  // CHECK-NEXT: br label
+  // CHECK:      [[ICUR:%.*]] = phi [[A]]* [ [[IBEGIN]], {{%.*}} ], [ [[INEXT:%.*]], {{%.*}} ]
+  // CHECK-NEXT: call void @_ZN5test61AC1Ev([[A]]* [[ICUR]])
+  // CHECK-NEXT: [[INEXT:%.*]] = getelementptr inbounds [[A]]* [[ICUR]], i64 1
+  // CHECK-NEXT: [[T0:%.*]] = icmp eq [[A]]* [[INEXT]], [[IEND]]
+  // CHECK-NEXT: br i1 [[T0]],
+
   // CHECK:      [[NEXT]] = getelementptr inbounds [20 x [[A]]]* [[CUR]], i64 1
   // CHECK-NEXT: [[T0:%.*]] = icmp eq [20 x [[A]]]* [[NEXT]], [[END]]
   // CHECK-NEXT: br i1 [[T0]]

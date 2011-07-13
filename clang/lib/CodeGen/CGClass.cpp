@@ -1033,73 +1033,68 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
   }
 }
 
-/// EmitCXXAggrConstructorCall - This routine essentially creates a (nested)
-/// for-loop to call the default constructor on individual members of the
-/// array. 
-/// 'D' is the default constructor for elements of the array, 'ArrayTy' is the
-/// array type and 'ArrayPtr' points to the beginning fo the array.
-/// It is assumed that all relevant checks have been made by the caller.
+/// EmitCXXAggrConstructorCall - Emit a loop to call a particular
+/// constructor for each of several members of an array.
 ///
-/// \param ZeroInitialization True if each element should be zero-initialized
-/// before it is constructed.
+/// \param ctor the constructor to call for each element
+/// \param argBegin,argEnd the arguments to evaluate and pass to the
+///   constructor
+/// \param arrayType the type of the array to initialize
+/// \param arrayBegin an arrayType*
+/// \param zeroInitialize true if each element should be
+///   zero-initialized before it is constructed
 void
-CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
-                                            const ConstantArrayType *ArrayTy,
-                                            llvm::Value *ArrayPtr,
-                                            CallExpr::const_arg_iterator ArgBeg,
-                                            CallExpr::const_arg_iterator ArgEnd,
-                                            bool ZeroInitialization) {
+CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
+                                            const ConstantArrayType *arrayType,
+                                            llvm::Value *arrayBegin,
+                                          CallExpr::const_arg_iterator argBegin,
+                                            CallExpr::const_arg_iterator argEnd,
+                                            bool zeroInitialize) {
+  QualType elementType;
+  llvm::Value *numElements =
+    emitArrayLength(arrayType, elementType, arrayBegin);
 
-  const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
-  llvm::Value * NumElements =
-    llvm::ConstantInt::get(SizeTy, 
-                           getContext().getConstantArrayElementCount(ArrayTy));
-
-  EmitCXXAggrConstructorCall(D, NumElements, ArrayPtr, ArgBeg, ArgEnd,
-                             ZeroInitialization);
+  EmitCXXAggrConstructorCall(ctor, numElements, arrayBegin,
+                             argBegin, argEnd, zeroInitialize);
 }
 
+/// EmitCXXAggrConstructorCall - Emit a loop to call a particular
+/// constructor for each of several members of an array.
+///
+/// \param ctor the constructor to call for each element
+/// \param numElements the number of elements in the array;
+///   assumed to be non-zero
+/// \param argBegin,argEnd the arguments to evaluate and pass to the
+///   constructor
+/// \param arrayBegin a T*, where T is the type constructed by ctor
+/// \param zeroInitialize true if each element should be
+///   zero-initialized before it is constructed
 void
-CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
-                                          llvm::Value *NumElements,
-                                          llvm::Value *ArrayPtr,
-                                          CallExpr::const_arg_iterator ArgBeg,
-                                          CallExpr::const_arg_iterator ArgEnd,
-                                            bool ZeroInitialization) {
-  const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
+CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
+                                            llvm::Value *numElements,
+                                            llvm::Value *arrayBegin,
+                                         CallExpr::const_arg_iterator argBegin,
+                                           CallExpr::const_arg_iterator argEnd,
+                                            bool zeroInitialize) {
+  // Find the end of the array.
+  llvm::Value *arrayEnd = Builder.CreateInBoundsGEP(arrayBegin, numElements,
+                                                    "arrayctor.end");
 
-  // Create a temporary for the loop index and initialize it with 0.
-  llvm::Value *IndexPtr = CreateTempAlloca(SizeTy, "loop.index");
-  llvm::Value *Zero = llvm::Constant::getNullValue(SizeTy);
-  Builder.CreateStore(Zero, IndexPtr);
+  // Enter the loop, setting up a phi for the current location to initialize.
+  llvm::BasicBlock *entryBB = Builder.GetInsertBlock();
+  llvm::BasicBlock *loopBB = createBasicBlock("arrayctor.loop");
+  EmitBlock(loopBB);
+  llvm::PHINode *cur = Builder.CreatePHI(arrayBegin->getType(), 2,
+                                         "arrayctor.cur");
+  cur->addIncoming(arrayBegin, entryBB);
 
-  // Start the loop with a block that tests the condition.
-  llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
-  llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
-
-  EmitBlock(CondBlock);
-
-  llvm::BasicBlock *ForBody = createBasicBlock("for.body");
-
-  // Generate: if (loop-index < number-of-elements fall to the loop body,
-  // otherwise, go to the block after the for-loop.
-  llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
-  llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElements, "isless");
-  // If the condition is true, execute the body.
-  Builder.CreateCondBr(IsLess, ForBody, AfterFor);
-
-  EmitBlock(ForBody);
-
-  llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
   // Inside the loop body, emit the constructor call on the array element.
-  Counter = Builder.CreateLoad(IndexPtr);
-  llvm::Value *Address = Builder.CreateInBoundsGEP(ArrayPtr, Counter, 
-                                                   "arrayidx");
+
+  QualType type = getContext().getTypeDeclType(ctor->getParent());
 
   // Zero initialize the storage, if requested.
-  if (ZeroInitialization)
-    EmitNullInitialization(Address, 
-                           getContext().getTypeDeclType(D->getParent()));
+  if (zeroInitialize)
+    EmitNullInitialization(cur, type);
   
   // C++ [class.temporary]p4: 
   // There are two contexts in which temporaries are destroyed at a different
@@ -1109,27 +1104,33 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   // every temporary created in a default argument expression is sequenced 
   // before the construction of the next array element, if any.
   
-  // Keep track of the current number of live temporaries.
   {
     RunCleanupsScope Scope(*this);
 
-    EmitCXXConstructorCall(D, Ctor_Complete, /*ForVirtualBase=*/false, Address,
-                           ArgBeg, ArgEnd);
+    // Evaluate the constructor and its arguments in a regular
+    // partial-destroy cleanup.
+    if (getLangOptions().Exceptions &&
+        !ctor->getParent()->hasTrivialDestructor()) {
+      Destroyer *destroyer = destroyCXXObject;
+      pushRegularPartialArrayCleanup(arrayBegin, cur, type, *destroyer);
+    }
+
+    EmitCXXConstructorCall(ctor, Ctor_Complete, /*ForVirtualBase=*/ false,
+                           cur, argBegin, argEnd);
   }
 
-  EmitBlock(ContinueBlock);
+  // Go to the next element.
+  llvm::Value *next =
+    Builder.CreateInBoundsGEP(cur, llvm::ConstantInt::get(SizeTy, 1),
+                              "arrayctor.next");
+  cur->addIncoming(next, Builder.GetInsertBlock());
 
-  // Emit the increment of the loop counter.
-  llvm::Value *NextVal = llvm::ConstantInt::get(SizeTy, 1);
-  Counter = Builder.CreateLoad(IndexPtr);
-  NextVal = Builder.CreateAdd(Counter, NextVal, "inc");
-  Builder.CreateStore(NextVal, IndexPtr);
+  // Check whether that's the end of the loop.
+  llvm::Value *done = Builder.CreateICmpEQ(next, arrayEnd, "arrayctor.done");
+  llvm::BasicBlock *contBB = createBasicBlock("arrayctor.cont");
+  Builder.CreateCondBr(done, contBB, loopBB);
 
-  // Finally, branch back up to the condition for the next iteration.
-  EmitBranch(CondBlock);
-
-  // Emit the fall-through block.
-  EmitBlock(AfterFor, true);
+  EmitBlock(contBB);
 }
 
 void CodeGenFunction::destroyCXXObject(CodeGenFunction &CGF,

@@ -379,19 +379,11 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
     }
   }
   
-  const ConstantArrayType *Array 
-    = getContext().getAsConstantArrayType(E->getType());
-  if (Array) {
-    QualType BaseElementTy = getContext().getBaseElementType(Array);
-    const llvm::Type *BasePtr = ConvertType(BaseElementTy);
-    BasePtr = llvm::PointerType::getUnqual(BasePtr);
-    llvm::Value *BaseAddrPtr =
-      Builder.CreateBitCast(Dest.getAddr(), BasePtr);
-    
-    EmitCXXAggrConstructorCall(CD, Array, BaseAddrPtr, 
+  if (const ConstantArrayType *arrayType 
+        = getContext().getAsConstantArrayType(E->getType())) {
+    EmitCXXAggrConstructorCall(CD, arrayType, Dest.getAddr(), 
                                E->arg_begin(), E->arg_end());
-  }
-  else {
+  } else {
     CXXCtorType Type = Ctor_Complete;
     bool ForVirtualBase = false;
 
@@ -805,11 +797,37 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
 
         RequiresZeroInitialization = true;
       }
+
+      // It's legal for NumElements to be zero, but
+      // EmitCXXAggrConstructorCall doesn't handle that, so we need to.
+      llvm::BranchInst *br = 0;
+
+      // Optimize for a constant count.
+      llvm::ConstantInt *constantCount
+        = dyn_cast<llvm::ConstantInt>(NumElements);
+      if (constantCount) {
+        // Just skip out if the constant count is zero.
+        if (constantCount->isZero()) return;
+
+      // Otherwise, emit the check.
+      } else {
+        llvm::BasicBlock *loopBB = CGF.createBasicBlock("new.ctorloop");
+        llvm::Value *iszero = CGF.Builder.CreateIsNull(NumElements, "isempty");
+        br = CGF.Builder.CreateCondBr(iszero, loopBB, loopBB);
+        CGF.EmitBlock(loopBB);
+      }
       
       CGF.EmitCXXAggrConstructorCall(Ctor, NumElements, NewPtr, 
                                      E->constructor_arg_begin(), 
                                      E->constructor_arg_end(),
                                      RequiresZeroInitialization);
+
+      // Patch the earlier check to skip over the loop.
+      if (br) {
+        assert(CGF.Builder.GetInsertBlock()->empty());
+        br->setSuccessor(0, CGF.Builder.GetInsertBlock());
+      }
+
       return;
     } else if (E->getNumConstructorArgs() == 1 &&
                isa<ImplicitValueInitExpr>(E->getConstructorArg(0))) {

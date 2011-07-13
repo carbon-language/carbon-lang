@@ -118,3 +118,38 @@ namespace test1 {
   // CHECK:      invoke void @_ZN5test11AD1Ev([[A]]* [[Y]])
   // CHECK:      invoke void @_ZN5test11AD1Ev([[A]]* [[X]])
 }
+
+namespace test2 {
+  struct A { A(); ~A(); };
+
+  void test() {
+    A v[4][7];
+
+    // CHECK:    define void @_ZN5test24testEv()
+    // CHECK:      [[V:%.*]] = alloca [4 x [7 x [[A:%.*]]]], align 1
+    // CHECK-NEXT: alloca i8*
+    // CHECK-NEXT: alloca i32
+    // CHECK-NEXT: alloca i32
+
+    // Main initialization loop.
+    // CHECK-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [4 x [7 x [[A]]]]* [[V]], i32 0, i32 0, i32 0
+    // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 28
+    // CHECK-NEXT: br label
+    // CHECK:      [[CUR:%.*]] = phi [[A]]* [ [[BEGIN]], {{%.*}} ], [ [[NEXT:%.*]], {{%.*}} ]
+    // CHECK-NEXT: invoke void @_ZN5test21AC1Ev([[A]]* [[CUR]])
+    // CHECK:      [[NEXT:%.*]] = getelementptr inbounds [[A]]* [[CUR]], i64 1
+    // CHECK-NEXT: [[DONE:%.*]] = icmp eq [[A]]* [[NEXT]], [[END]]
+    // CHECK-NEXT: br i1 [[DONE]],
+
+    // Partial destruction landing pad.
+    // CHECK:      llvm.eh.exception()
+    // CHECK:      [[EMPTY:%.*]] = icmp eq [[A]]* [[BEGIN]], [[CUR]]
+    // CHECK-NEXT: br i1 [[EMPTY]],
+    // CHECK:      [[PAST:%.*]] = phi [[A]]* [ [[CUR]], {{%.*}} ], [ [[DEL:%.*]], {{%.*}} ]
+    // CHECK-NEXT: [[DEL]] = getelementptr inbounds [[A]]* [[PAST]], i64 -1
+    // CHECK-NEXT: invoke void @_ZN5test21AD1Ev([[A]]* [[DEL]])
+    // CHECK:      [[T0:%.*]] = icmp eq [[A]]* [[DEL]], [[BEGIN]]
+    // CHECK-NEXT: br i1 [[T0]],
+  }
+
+}
