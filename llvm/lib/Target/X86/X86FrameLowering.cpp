@@ -1064,7 +1064,7 @@ getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
         if (IsRelative)
           CFAOffset += Src.getOffset();
         else
-          CFAOffset = -Src.getOffset();
+          CFAOffset -= Src.getOffset();
       } // else DW_CFA_def_cfa
 
       continue;
@@ -1072,6 +1072,13 @@ getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
 
     if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
       // DW_CFA_def_cfa_register
+      assert(FramePointerReg != -1 && "Defining more than one frame pointer?");
+      if (TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::EBP &&
+          TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::RBP)
+        // The frame pointer isn't EBP/RBP. Cannot make unwind information
+        // compact.
+        return 0;
+
       FramePointerReg = Dst.getReg();
       continue;
     }
@@ -1088,7 +1095,9 @@ getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
       return 0;
     } else if (Reg < 64) {
       // DW_CFA_offset + Reg
-      SavedRegs.push_back(Reg);
+      int CURegNum = TRI->getCompactUnwindRegNum(Reg, IsEH);
+      if (CURegNum == -1) return 0;
+      SavedRegs.push_back(CURegNum);
     } else {
       // FIXME: Handle?
       // DW_CFA_offset_extended
@@ -1096,33 +1105,27 @@ getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
     }
   }
 
-  CFAOffset /= 4;
-
   // Check if the offset is too big.
+  CFAOffset /= 4;
   if ((CFAOffset & 0xFF) != CFAOffset)
     return 0;
+  Encoding |= (CFAOffset & 0xFF) << 16; // Size encoding.
 
-  // Bail if there are too many registers to encode.
-  unsigned NumRegsToEncode = SavedRegs.size() - (FramePointerReg != -1 ? 1 : 0);
-  if (NumRegsToEncode > 5) return 0;
+  if (FramePointerReg != -1) {
+    // Bail if there are too many registers to encode.
+    if (SavedRegs.size() - 1 > 5) return 0;
 
-  if (TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::EBP &&
-      TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::RBP)
+    Encoding |= 1 << 24;        // EBP/RBP Unwind Frame
+
+    unsigned Idx = 0;
+    for (SmallVectorImpl<unsigned>::iterator
+           I = SavedRegs.begin(), E = SavedRegs.end(); I != E; ++I) {
+      unsigned Reg = *I;
+      if (Reg == unsigned(FramePointerReg)) continue;
+      Encoding |= (Reg & 0x7) << (Idx++ * 3); // Register encoding
+    }
+  } else {
     // FIXME: Handle frameless version!
-    return 0;
-
-  Encoding |= 1 << 24;
-  Encoding |= (CFAOffset & 0xFF) << 16;
-
-  unsigned Idx = 0;
-  for (SmallVectorImpl<unsigned>::iterator
-         I = SavedRegs.begin(), E = SavedRegs.end(); I != E; ++I) {
-    if (*I == unsigned(FramePointerReg)) continue;
-
-    int CURegNum = TRI->getCompactUnwindRegNum(*I, IsEH);
-    if (CURegNum == -1) return 0;
-
-    Encoding |= (CURegNum & 0x7) << (Idx++ * 3);
   }
 
   return Encoding;
