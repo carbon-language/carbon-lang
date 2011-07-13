@@ -9552,9 +9552,6 @@ ExprResult RebuildUnknownAnyExpr::VisitCallExpr(CallExpr *call) {
 }
 
 ExprResult RebuildUnknownAnyExpr::VisitObjCMessageExpr(ObjCMessageExpr *msg) {
-  ObjCMethodDecl *method = msg->getMethodDecl();
-  assert(method && "__unknown_anytype message without result type?");
-
   // Verify that this is a legal result type of a call.
   if (DestType->isArrayType() || DestType->isFunctionType()) {
     S.Diag(msg->getExprLoc(), diag::err_func_returning_array_function)
@@ -9562,8 +9559,11 @@ ExprResult RebuildUnknownAnyExpr::VisitObjCMessageExpr(ObjCMessageExpr *msg) {
     return ExprError();
   }
 
-  assert(method->getResultType() == S.Context.UnknownAnyTy);
-  method->setResultType(DestType);
+  // Rewrite the method result type if available.
+  if (ObjCMethodDecl *method = msg->getMethodDecl()) {
+    assert(method->getResultType() == S.Context.UnknownAnyTy);
+    method->setResultType(DestType);
+  }
 
   // Change the type of the message.
   msg->setType(DestType.getNonReferenceType());

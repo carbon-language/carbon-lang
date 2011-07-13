@@ -582,6 +582,8 @@ def fdelayed_template_parsing : Flag<"-fdelayed-template-parsing">,
            "translation unit ">;
 def funknown_anytype : Flag<"-funknown-anytype">,
   HelpText<"Enable parser support for the __unknown_anytype type; for testing purposes only">;
+def fdebugger_support : Flag<"-fdebugger-support">,
+  HelpText<"Enable special debugger support behavior">;
 def fdeprecated_macro : Flag<"-fdeprecated-macro">,
   HelpText<"Defines the __DEPRECATED macro">;
 def fno_deprecated_macro : Flag<"-fno-deprecated-macro">,

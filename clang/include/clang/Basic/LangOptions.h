@@ -119,6 +119,8 @@ public:
   unsigned InlineVisibilityHidden : 1; // Whether inline C++ methods have
                                        // hidden visibility by default.
   unsigned ParseUnknownAnytype: 1; /// Let the user write __unknown_anytype.
+  unsigned DebuggerSupport : 1;   /// Do things that only make sense when
+                                  /// supporting a debugger
 
   unsigned SpellChecking : 1; // Whether to perform spell-checking for error
                               // recovery.
@@ -241,7 +243,7 @@ public:
     FakeAddressSpaceMap = 0;
     MRTD = 0;
     DelayedTemplateParsing = 0;
-    ParseUnknownAnytype = 0;
+    ParseUnknownAnytype = DebuggerSupport = 0;
   }
 
   GCMode getGCMode() const { return (GCMode) GC; }
