@@ -395,7 +395,8 @@ def print_stacktrace(thread, string_buffer = False):
             print >> output, "  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}".format(
                 num=i, addr=load_addr, mod=mods[i],
                 func='%s [inlined]' % funcs[i] if frame.IsInlined() else funcs[i],
-                file=files[i], line=lines[i], args=get_args_as_string(frame, showFuncName=False))
+                file=files[i], line=lines[i],
+                args=get_args_as_string(frame, showFuncName=False) if not frame.IsInlined() else '()')
 
     if string_buffer:
         return output.getvalue()

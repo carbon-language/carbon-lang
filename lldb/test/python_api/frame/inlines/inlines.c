@@ -43,9 +43,9 @@ main (int argc, char **argv)
   int (*func_ptr) (int);
   func_ptr = outer_inline;
 
-  outer_inline (argc);
+  outer_inline (argc); // This should correspond to the first break stop.
 
-  func_ptr (argc);
+  func_ptr (argc); // This should correspond to the second break stop.
 
   return 0;
 }
