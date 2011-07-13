@@ -11,7 +11,9 @@
 _func:
 @ CHECK: _func
 
+@------------------------------------------------------------------------------
 @ ADC (immediate)
+@------------------------------------------------------------------------------
   adc r1, r2, #0xf
   adc r1, r2, #0xf0
   adc r1, r2, #0xf00
@@ -39,7 +41,10 @@ _func:
 @ CHECK: adcseq	r1, r2, #3840           @ encoding: [0x0f,0x1c,0xb2,0x02]
 @ CHECK: adceq	r1, r2, #3840           @ encoding: [0x0f,0x1c,0xa2,0x02]
 
+@------------------------------------------------------------------------------
 @ ADC (register)
+@ ADC (shifted register)
+@------------------------------------------------------------------------------
   adc r4, r5, r6
   @ Constant shifts
   adc r4, r5, r6, lsl #1
@@ -115,3 +120,61 @@ _func:
 @ CHECK: adc	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0xa6,0xe0]
 @ CHECK: adc	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0xa6,0xe0]
 @ CHECK: adc	r4, r4, r5, rrx         @ encoding: [0x65,0x40,0xa4,0xe0]
+
+
+@------------------------------------------------------------------------------
+@ ADD
+@------------------------------------------------------------------------------
+  add r4, r5, #0xf000
+  add r4, r5, r6
+  add r4, r5, r6, lsl #5
+  add r4, r5, r6, lsr #5
+  add r4, r5, r6, lsr #5
+  add r4, r5, r6, asr #5
+  add r4, r5, r6, ror #5
+  add r6, r7, r8, lsl r9
+  add r6, r7, r8, lsr r9
+  add r6, r7, r8, asr r9
+  add r6, r7, r8, ror r9
+  add r4, r5, r6, rrx
+
+  @ destination register is optional
+  add r5, #0xf000
+  add r4, r5
+  add r4, r5, lsl #5
+  add r4, r5, lsr #5
+  add r4, r5, lsr #5
+  add r4, r5, asr #5
+  add r4, r5, ror #5
+  add r6, r7, lsl r9
+  add r6, r7, lsr r9
+  add r6, r7, asr r9
+  add r6, r7, ror r9
+  add r4, r5, rrx
+
+@ CHECK: add	r4, r5, #61440          @ encoding: [0x0f,0x4a,0x85,0xe2]
+@ CHECK: add	r4, r5, r6              @ encoding: [0x06,0x40,0x85,0xe0]
+@ CHECK: add	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0x85,0xe0]
+@ CHECK: add	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x85,0xe0]
+@ CHECK: add	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x85,0xe0]
+@ CHECK: add	r4, r5, r6, asr #5      @ encoding: [0xc6,0x42,0x85,0xe0]
+@ CHECK: add	r4, r5, r6, ror #5      @ encoding: [0xe6,0x42,0x85,0xe0]
+@ CHECK: add	r6, r7, r8, lsl r9      @ encoding: [0x18,0x69,0x87,0xe0]
+@ CHECK: add	r6, r7, r8, lsr r9      @ encoding: [0x38,0x69,0x87,0xe0]
+@ CHECK: add	r6, r7, r8, asr r9      @ encoding: [0x58,0x69,0x87,0xe0]
+@ CHECK: add	r6, r7, r8, ror r9      @ encoding: [0x78,0x69,0x87,0xe0]
+@ CHECK: add	r4, r5, r6, rrx         @ encoding: [0x66,0x40,0x85,0xe0]
+
+
+@ CHECK: add	r5, r5, #61440          @ encoding: [0x0f,0x5a,0x85,0xe2]
+@ CHECK: add	r4, r4, r5              @ encoding: [0x05,0x40,0x84,0xe0]
+@ CHECK: add	r4, r4, r5, lsl #5      @ encoding: [0x85,0x42,0x84,0xe0]
+@ CHECK: add	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0x84,0xe0]
+@ CHECK: add	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0x84,0xe0]
+@ CHECK: add	r4, r4, r5, asr #5      @ encoding: [0xc5,0x42,0x84,0xe0]
+@ CHECK: add	r4, r4, r5, ror #5      @ encoding: [0xe5,0x42,0x84,0xe0]
+@ CHECK: add	r6, r6, r7, lsl r9      @ encoding: [0x17,0x69,0x86,0xe0]
+@ CHECK: add	r6, r6, r7, lsr r9      @ encoding: [0x37,0x69,0x86,0xe0]
+@ CHECK: add	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0x86,0xe0]
+@ CHECK: add	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x86,0xe0]
+@ CHECK: add	r4, r4, r5, rrx         @ encoding: [0x65,0x40,0x84,0xe0]
