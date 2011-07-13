@@ -107,6 +107,8 @@ class targetCommandTestCase(TestBase):
             substrs = ["my_global_char", "'X'"])
         self.expect("target variable my_global_str", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['my_global_str', '"abc"'])
+        self.expect("target variable my_static_int", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ['my_static_int', '228'])
 
         self.runCmd("run")
 
@@ -116,6 +118,8 @@ class targetCommandTestCase(TestBase):
             substrs = ["my_global_char", "'X'"])
         self.expect("target variable my_global_str", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['my_global_str', '"abc"'])
+        self.expect("target variable my_static_int", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ['my_static_int', '228'])
 
 
 if __name__ == '__main__':
