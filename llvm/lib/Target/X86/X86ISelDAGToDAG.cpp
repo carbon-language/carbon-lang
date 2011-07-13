@@ -548,17 +548,33 @@ void X86DAGToDAGISel::EmitFunctionEntryCode() {
       EmitSpecialCodeForMain(MF->begin(), MF->getFrameInfo());
 }
 
+static bool isDispSafeForFrameIndex(int64_t Val) {
+  // On 64-bit platforms, we can run into an issue where a frame index
+  // includes a displacement that, when added to the explicit displacement,
+  // will overflow the displacement field. Assuming that the frame index
+  // displacement fits into a 31-bit integer  (which is only slightly more
+  // aggressive than the current fundamental assumption that it fits into
+  // a 32-bit integer), a 31-bit disp should always be safe.
+  return isInt<31>(Val);
+}
+
 bool X86DAGToDAGISel::FoldOffsetIntoAddress(uint64_t Offset,
                                             X86ISelAddressMode &AM) {
   int64_t Val = AM.Disp + Offset;
   CodeModel::Model M = TM.getCodeModel();
-  if (!Subtarget->is64Bit() ||
-      X86::isOffsetSuitableForCodeModel(Val, M,
-                                        AM.hasSymbolicDisplacement())) {
-    AM.Disp = Val;
-    return false;
+  if (Subtarget->is64Bit()) {
+    if (!X86::isOffsetSuitableForCodeModel(Val, M,
+                                           AM.hasSymbolicDisplacement()))
+      return true;
+    // In addition to the checks required for a register base, check that
+    // we do not try to use an unsafe Disp with a frame index.
+    if (AM.BaseType == X86ISelAddressMode::FrameIndexBase &&
+        !isDispSafeForFrameIndex(Val))
+      return true;
   }
-  return true;
+  AM.Disp = Val;
+  return false;
+
 }
 
 bool X86DAGToDAGISel::MatchLoadInAddress(LoadSDNode *N, X86ISelAddressMode &AM){
@@ -751,8 +767,9 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     break;
 
   case ISD::FrameIndex:
-    if (AM.BaseType == X86ISelAddressMode::RegBase
-        && AM.Base_Reg.getNode() == 0) {
+    if (AM.BaseType == X86ISelAddressMode::RegBase &&
+        AM.Base_Reg.getNode() == 0 &&
+        (!Subtarget->is64Bit() || isDispSafeForFrameIndex(AM.Disp))) {
       AM.BaseType = X86ISelAddressMode::FrameIndexBase;
       AM.Base_FrameIndex = cast<FrameIndexSDNode>(N)->getIndex();
       return false;
