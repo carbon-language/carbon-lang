@@ -585,8 +585,10 @@ __assoc_state<_R>::set_value(_Arg& __arg)
 #endif
 {
     unique_lock<mutex> __lk(this->__mut_);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (this->__has_value())
         throw future_error(make_error_code(future_errc::promise_already_satisfied));
+#endif
     ::new(&__value_) _R(_VSTD::forward<_Arg>(__arg));
     this->__state_ |= base::__constructed | base::ready;
     __lk.unlock();
@@ -603,8 +605,10 @@ __assoc_state<_R>::set_value_at_thread_exit(_Arg& __arg)
 #endif
 {
     unique_lock<mutex> __lk(this->__mut_);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (this->__has_value())
         throw future_error(make_error_code(future_errc::promise_already_satisfied));
+#endif
     ::new(&__value_) _R(_VSTD::forward<_Arg>(__arg));
     this->__state_ |= base::__constructed;
     __thread_local_data()->__make_ready_at_thread_exit(this);
@@ -663,8 +667,10 @@ void
 __assoc_state<_R&>::set_value(_R& __arg)
 {
     unique_lock<mutex> __lk(this->__mut_);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (this->__has_value())
         throw future_error(make_error_code(future_errc::promise_already_satisfied));
+#endif
     __value_ = &__arg;
     this->__state_ |= base::__constructed | base::ready;
     __lk.unlock();
@@ -676,8 +682,10 @@ void
 __assoc_state<_R&>::set_value_at_thread_exit(_R& __arg)
 {
     unique_lock<mutex> __lk(this->__mut_);
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (this->__has_value())
         throw future_error(make_error_code(future_errc::promise_already_satisfied));
+#endif
     __value_ = &__arg;
     this->__state_ |= base::__constructed;
     __thread_local_data()->__make_ready_at_thread_exit(this);
@@ -1066,8 +1074,10 @@ template <class _R>
 future<_R>::future(__assoc_state<_R>* __state)
     : __state_(__state)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_->__has_future_attached())
         throw future_error(make_error_code(future_errc::future_already_retrieved));
+#endif
     __state_->__add_shared();
     __state_->__set_future_attached();
 }
@@ -1168,8 +1178,10 @@ template <class _R>
 future<_R&>::future(__assoc_state<_R&>* __state)
     : __state_(__state)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_->__has_future_attached())
         throw future_error(make_error_code(future_errc::future_already_retrieved));
+#endif
     __state_->__add_shared();
     __state_->__set_future_attached();
 }
@@ -1368,8 +1380,10 @@ template <class _R>
 future<_R>
 promise<_R>::get_future()
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     return future<_R>(__state_);
 }
 
@@ -1377,8 +1391,10 @@ template <class _R>
 void
 promise<_R>::set_value(const _R& __r)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     __state_->set_value(__r);
 }
 
@@ -1388,8 +1404,10 @@ template <class _R>
 void
 promise<_R>::set_value(_R&& __r)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     __state_->set_value(_VSTD::move(__r));
 }
 
@@ -1399,8 +1417,10 @@ template <class _R>
 void
 promise<_R>::set_exception(exception_ptr __p)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     __state_->set_exception(__p);
 }
 
@@ -1408,8 +1428,10 @@ template <class _R>
 void
 promise<_R>::set_value_at_thread_exit(const _R& __r)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     __state_->set_value_at_thread_exit(__r);
 }
 
@@ -1419,8 +1441,10 @@ template <class _R>
 void
 promise<_R>::set_value_at_thread_exit(_R&& __r)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     __state_->set_value_at_thread_exit(_VSTD::move(__r));
 }
 
@@ -1430,8 +1454,10 @@ template <class _R>
 void
 promise<_R>::set_exception_at_thread_exit(exception_ptr __p)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     __state_->set_exception_at_thread_exit(__p);
 }
 
@@ -1527,8 +1553,10 @@ template <class _R>
 future<_R&>
 promise<_R&>::get_future()
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     return future<_R&>(__state_);
 }
 
@@ -1536,8 +1564,10 @@ template <class _R>
 void
 promise<_R&>::set_value(_R& __r)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     __state_->set_value(__r);
 }
 
@@ -1545,8 +1575,10 @@ template <class _R>
 void
 promise<_R&>::set_exception(exception_ptr __p)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     __state_->set_exception(__p);
 }
 
@@ -1554,8 +1586,10 @@ template <class _R>
 void
 promise<_R&>::set_value_at_thread_exit(_R& __r)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     __state_->set_value_at_thread_exit(__r);
 }
 
@@ -1563,8 +1597,10 @@ template <class _R>
 void
 promise<_R&>::set_exception_at_thread_exit(exception_ptr __p)
 {
+#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
+#endif
     __state_->set_exception_at_thread_exit(__p);
 }
 
