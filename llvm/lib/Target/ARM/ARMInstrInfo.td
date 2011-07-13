@@ -3305,15 +3305,14 @@ def DMB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
 }
 
 def DSB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
-                "dsb", "\t$opt",
-                [/* For disassembly only; pattern left blank */]>,
+                "dsb", "\t$opt", []>,
                 Requires<[IsARM, HasDB]> {
   bits<4> opt;
   let Inst{31-4} = 0xf57ff04;
   let Inst{3-0} = opt;
 }
 
-// ISB has only full system option -- for disassembly only
+// ISB has only full system option
 def ISB : AInoP<(outs), (ins), MiscFrm, NoItinerary, "isb", "", []>,
                 Requires<[IsARM, HasDB]> {
   let Inst{31-4} = 0xf57ff06;
