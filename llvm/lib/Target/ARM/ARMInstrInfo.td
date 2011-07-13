@@ -256,9 +256,12 @@ def lo16AllZero : PatLeaf<(i32 imm), [{
 }], hi16>;
 
 /// imm0_65535 - An immediate is in the range [0.65535].
+def Imm0_65535AsmOperand: AsmOperandClass { let Name = "Imm0_65535"; }
 def imm0_65535 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 65536;
-}]>;
+}]> {
+  let ParserMatchClass = Imm0_65535AsmOperand;
+}
 
 class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
 class UnOpFrag <dag res> : PatFrag<(ops node:$Src), res>;

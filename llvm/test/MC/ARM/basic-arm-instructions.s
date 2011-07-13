@@ -316,6 +316,5 @@ _func:
   bkpt #10
   bkpt #65535
 
-@ CHECK: bkpt  #10                     @ encoding: [0x7a,0x00,0x20,0xe1]
-@ CHECK: bkpt  #65535                  @ encoding: [0x7f,0xff,0x2f,0xe1]
-
+@ CHECK: bkpt  #10                      @ encoding: [0x7a,0x00,0x20,0xe1]
+@ CHECK: bkpt  #65535                   @ encoding: [0x7f,0xff,0x2f,0xe1]

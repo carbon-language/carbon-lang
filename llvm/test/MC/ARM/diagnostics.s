@@ -40,4 +40,9 @@
 @ CHECK-ERRORS:                              ^
 @ CHECK-ERRORS: error: immediate shift value out of range
 @ CHECK-ERRORS:         adc r4, r5, r6, ror #32
-@ CHECK-ERRORS:                              ^
+
+
+        @ Out of range 16-bit immediate on BKPT
+        bkpt #65536
+
+@ CHECK-ERRORS: error: invalid operand for instruction
