@@ -910,12 +910,15 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
     Context.getCanonicalType(Property->getType());
 
   if (!Context.propertyTypesAreCompatible(LHSType, RHSType)) {
-    // FIXME: Incorporate this test with typesAreCompatible.
-    if (LHSType->isObjCQualifiedIdType() && RHSType->isObjCQualifiedIdType())
-      if (Context.ObjCQualifiedIdTypesAreCompatible(LHSType, RHSType, false))
-        return;
-    Diag(Property->getLocation(), diag::warn_property_types_are_incompatible)
-      << Property->getType() << SuperProperty->getType() << inheritedName;
+    // Do cases not handled in above.
+    // FIXME. For future support of covariant property types, revisit this.
+    bool IncompatibleObjC = false;
+    QualType ConvertedType;
+    if (!isObjCPointerConversion(RHSType, LHSType, 
+                                 ConvertedType, IncompatibleObjC) ||
+        IncompatibleObjC)
+        Diag(Property->getLocation(), diag::warn_property_types_are_incompatible)
+        << Property->getType() << SuperProperty->getType() << inheritedName;
   }
 }
 

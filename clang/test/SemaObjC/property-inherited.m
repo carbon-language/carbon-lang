@@ -1,6 +1,8 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify 
+// RUN: %clang_cc1 -x objective-c++ %s -fsyntax-only -verify 
 
-// <rdar://problem/6497242> Inherited overridden protocol declared objects don't work
+// rdar://6497242 Inherited overridden protocol declared objects don't work
+// rdar://9740328 Case for c++
 
 @protocol NSObject @end
 @interface NSObject @end
