@@ -1097,6 +1097,10 @@ struct DeclaratorChunk {
     /// If this is an invalid location, there is no ref-qualifier.
     unsigned RefQualifierLoc;
 
+    /// \brief The location of the 'mutable' qualifer in a lambda-declarator, if
+    /// any.
+    unsigned MutableLoc;
+
     /// \brief When ExceptionSpecType isn't EST_None or EST_Delayed, the
     /// location of the keyword introducing the spec.
     unsigned ExceptionSpecLoc;
@@ -1158,9 +1162,18 @@ struct DeclaratorChunk {
       return SourceLocation::getFromRawEncoding(RefQualifierLoc);
     }
 
+    /// \brief Retrieve the location of the 'mutable' qualifier, if any.
+    SourceLocation getMutableLoc() const {
+      return SourceLocation::getFromRawEncoding(MutableLoc);
+    }
+
     /// \brief Determine whether this function declaration contains a 
     /// ref-qualifier.
     bool hasRefQualifier() const { return getRefQualifierLoc().isValid(); }
+
+    /// \brief Determine whether this lambda-declarator contains a 'mutable'
+    /// qualifier.
+    bool hasMutableQualifier() const { return getMutableLoc().isValid(); }
 
     /// \brief Get the type of exception specification this function has.
     ExceptionSpecificationType getExceptionSpecType() const {
@@ -1285,6 +1298,7 @@ struct DeclaratorChunk {
                                      unsigned TypeQuals, 
                                      bool RefQualifierIsLvalueRef,
                                      SourceLocation RefQualifierLoc,
+                                     SourceLocation MutableLoc,
                                      ExceptionSpecificationType ESpecType,
                                      SourceLocation ESpecLoc,
                                      ParsedType *Exceptions,
