@@ -20,6 +20,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Attributes.h"
 #include "llvm/CallingConv.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include <iterator>
 
@@ -1428,70 +1429,18 @@ class ExtractValueInst : public UnaryInstruction {
   SmallVector<unsigned, 4> Indices;
 
   ExtractValueInst(const ExtractValueInst &EVI);
-  void init(const unsigned *Idx, unsigned NumIdx,
-            const Twine &NameStr);
-  void init(unsigned Idx, const Twine &NameStr);
-
-  template<typename RandomAccessIterator>
-  void init(RandomAccessIterator IdxBegin,
-            RandomAccessIterator IdxEnd,
-            const Twine &NameStr,
-            // This argument ensures that we have an iterator we can
-            // do arithmetic on in constant time
-            std::random_access_iterator_tag) {
-    unsigned NumIdx = static_cast<unsigned>(std::distance(IdxBegin, IdxEnd));
-
-    // There's no fundamental reason why we require at least one index
-    // (other than weirdness with &*IdxBegin being invalid; see
-    // getelementptr's init routine for example). But there's no
-    // present need to support it.
-    assert(NumIdx > 0 && "ExtractValueInst must have at least one index");
-
-    // This requires that the iterator points to contiguous memory.
-    init(&*IdxBegin, NumIdx, NameStr); // FIXME: for the general case
-                                         // we have to build an array here
-  }
-
-  /// getIndexedType - Returns the type of the element that would be extracted
-  /// with an extractvalue instruction with the specified parameters.
-  ///
-  /// Null is returned if the indices are invalid for the specified type.
-  ///
-  /// FIXME: Use ArrayRef
-  static Type *getIndexedType(const Type *Agg,
-                              const unsigned *Idx, unsigned NumIdx);
-
-  template<typename RandomAccessIterator>
-  static Type *getIndexedType(const Type *Ptr,
-                              RandomAccessIterator IdxBegin,
-                              RandomAccessIterator IdxEnd,
-                              // This argument ensures that we
-                              // have an iterator we can do
-                              // arithmetic on in constant time
-                              std::random_access_iterator_tag) {
-    unsigned NumIdx = static_cast<unsigned>(std::distance(IdxBegin, IdxEnd));
-
-    if (NumIdx > 0)
-      // This requires that the iterator points to contiguous memory.
-      return getIndexedType(Ptr, &*IdxBegin, NumIdx);
-    else
-      return getIndexedType(Ptr, (const unsigned *)0, NumIdx);
-  }
+  void init(ArrayRef<unsigned> Idxs, const Twine &NameStr);
 
   /// Constructors - Create a extractvalue instruction with a base aggregate
   /// value and a list of indices.  The first ctor can optionally insert before
   /// an existing instruction, the second appends the new instruction to the
   /// specified BasicBlock.
-  template<typename RandomAccessIterator>
   inline ExtractValueInst(Value *Agg,
-                          RandomAccessIterator IdxBegin,
-                          RandomAccessIterator IdxEnd,
+                          ArrayRef<unsigned> Idxs,
                           const Twine &NameStr,
                           Instruction *InsertBefore);
-  template<typename RandomAccessIterator>
   inline ExtractValueInst(Value *Agg,
-                          RandomAccessIterator IdxBegin,
-                          RandomAccessIterator IdxEnd,
+                          ArrayRef<unsigned> Idxs,
                           const Twine &NameStr, BasicBlock *InsertAtEnd);
 
   // allocate space for exactly one operand
@@ -1502,55 +1451,25 @@ protected:
   virtual ExtractValueInst *clone_impl() const;
 
 public:
-  template<typename RandomAccessIterator>
   static ExtractValueInst *Create(Value *Agg,
-                                  RandomAccessIterator IdxBegin,
-                                  RandomAccessIterator IdxEnd,
+                                  ArrayRef<unsigned> Idxs,
                                   const Twine &NameStr = "",
                                   Instruction *InsertBefore = 0) {
     return new
-      ExtractValueInst(Agg, IdxBegin, IdxEnd, NameStr, InsertBefore);
+      ExtractValueInst(Agg, Idxs, NameStr, InsertBefore);
   }
-  template<typename RandomAccessIterator>
   static ExtractValueInst *Create(Value *Agg,
-                                  RandomAccessIterator IdxBegin,
-                                  RandomAccessIterator IdxEnd,
+                                  ArrayRef<unsigned> Idxs,
                                   const Twine &NameStr,
                                   BasicBlock *InsertAtEnd) {
-    return new ExtractValueInst(Agg, IdxBegin, IdxEnd, NameStr, InsertAtEnd);
-  }
-
-  /// Constructors - These two creators are convenience methods because one
-  /// index extractvalue instructions are much more common than those with
-  /// more than one.
-  static ExtractValueInst *Create(Value *Agg, unsigned Idx,
-                                  const Twine &NameStr = "",
-                                  Instruction *InsertBefore = 0) {
-    unsigned Idxs[1] = { Idx };
-    return new ExtractValueInst(Agg, Idxs, Idxs + 1, NameStr, InsertBefore);
-  }
-  static ExtractValueInst *Create(Value *Agg, unsigned Idx,
-                                  const Twine &NameStr,
-                                  BasicBlock *InsertAtEnd) {
-    unsigned Idxs[1] = { Idx };
-    return new ExtractValueInst(Agg, Idxs, Idxs + 1, NameStr, InsertAtEnd);
+    return new ExtractValueInst(Agg, Idxs, NameStr, InsertAtEnd);
   }
 
   /// getIndexedType - Returns the type of the element that would be extracted
   /// with an extractvalue instruction with the specified parameters.
   ///
   /// Null is returned if the indices are invalid for the specified type.
-  ///
-  /// FIXME: Remove the templates and just use ArrayRef.
-  template<typename RandomAccessIterator>
-  static Type *getIndexedType(const Type *Ptr,
-                              RandomAccessIterator IdxBegin,
-                              RandomAccessIterator IdxEnd) {
-    return getIndexedType(Ptr, IdxBegin, IdxEnd,
-                          typename std::iterator_traits<RandomAccessIterator>::
-                          iterator_category());
-  }
-  static Type *getIndexedType(const Type *Ptr, unsigned Idx);
+  static Type *getIndexedType(const Type *Agg, ArrayRef<unsigned> Idxs);
 
   typedef const unsigned* idx_iterator;
   inline idx_iterator idx_begin() const { return Indices.begin(); }
@@ -1566,7 +1485,11 @@ public:
     return 0U;                      // get index for modifying correct operand
   }
 
-  unsigned getNumIndices() const {  // Note: always non-negative
+  ArrayRef<unsigned> getIndices() const {
+    return Indices;
+  }
+
+  unsigned getNumIndices() const {
     return (unsigned)Indices.size();
   }
 
@@ -1584,31 +1507,21 @@ public:
   }
 };
 
-template<typename RandomAccessIterator>
 ExtractValueInst::ExtractValueInst(Value *Agg,
-                                   RandomAccessIterator IdxBegin,
-                                   RandomAccessIterator IdxEnd,
+                                   ArrayRef<unsigned> Idxs,
                                    const Twine &NameStr,
                                    Instruction *InsertBefore)
-  : UnaryInstruction(checkGEPType(getIndexedType(Agg->getType(),
-                                                 IdxBegin, IdxEnd)),
+  : UnaryInstruction(checkGEPType(getIndexedType(Agg->getType(), Idxs)),
                      ExtractValue, Agg, InsertBefore) {
-  init(IdxBegin, IdxEnd, NameStr,
-       typename std::iterator_traits<RandomAccessIterator>
-       ::iterator_category());
+  init(Idxs, NameStr);
 }
-template<typename RandomAccessIterator>
 ExtractValueInst::ExtractValueInst(Value *Agg,
-                                   RandomAccessIterator IdxBegin,
-                                   RandomAccessIterator IdxEnd,
+                                   ArrayRef<unsigned> Idxs,
                                    const Twine &NameStr,
                                    BasicBlock *InsertAtEnd)
-  : UnaryInstruction(checkGEPType(getIndexedType(Agg->getType(),
-                                                 IdxBegin, IdxEnd)),
+  : UnaryInstruction(checkGEPType(getIndexedType(Agg->getType(), Idxs)),
                      ExtractValue, Agg, InsertAtEnd) {
-  init(IdxBegin, IdxEnd, NameStr,
-       typename std::iterator_traits<RandomAccessIterator>
-       ::iterator_category());
+  init(Idxs, NameStr);
 }
 
 
@@ -1624,44 +1537,19 @@ class InsertValueInst : public Instruction {
 
   void *operator new(size_t, unsigned); // Do not implement
   InsertValueInst(const InsertValueInst &IVI);
-  void init(Value *Agg, Value *Val, const unsigned *Idx, unsigned NumIdx,
+  void init(Value *Agg, Value *Val, ArrayRef<unsigned> Idxs,
             const Twine &NameStr);
-  void init(Value *Agg, Value *Val, unsigned Idx, const Twine &NameStr);
-
-  template<typename RandomAccessIterator>
-  void init(Value *Agg, Value *Val,
-            RandomAccessIterator IdxBegin, RandomAccessIterator IdxEnd,
-            const Twine &NameStr,
-            // This argument ensures that we have an iterator we can
-            // do arithmetic on in constant time
-            std::random_access_iterator_tag) {
-    unsigned NumIdx = static_cast<unsigned>(std::distance(IdxBegin, IdxEnd));
-
-    // There's no fundamental reason why we require at least one index
-    // (other than weirdness with &*IdxBegin being invalid; see
-    // getelementptr's init routine for example). But there's no
-    // present need to support it.
-    assert(NumIdx > 0 && "InsertValueInst must have at least one index");
-
-    // This requires that the iterator points to contiguous memory.
-    init(Agg, Val, &*IdxBegin, NumIdx, NameStr); // FIXME: for the general case
-                                              // we have to build an array here
-  }
 
   /// Constructors - Create a insertvalue instruction with a base aggregate
   /// value, a value to insert, and a list of indices.  The first ctor can
   /// optionally insert before an existing instruction, the second appends
   /// the new instruction to the specified BasicBlock.
-  template<typename RandomAccessIterator>
   inline InsertValueInst(Value *Agg, Value *Val,
-                         RandomAccessIterator IdxBegin,
-                         RandomAccessIterator IdxEnd,
+                         ArrayRef<unsigned> Idxs,
                          const Twine &NameStr,
                          Instruction *InsertBefore);
-  template<typename RandomAccessIterator>
   inline InsertValueInst(Value *Agg, Value *Val,
-                         RandomAccessIterator IdxBegin,
-                         RandomAccessIterator IdxEnd,
+                         ArrayRef<unsigned> Idxs,
                          const Twine &NameStr, BasicBlock *InsertAtEnd);
 
   /// Constructors - These two constructors are convenience methods because one
@@ -1679,37 +1567,17 @@ public:
     return User::operator new(s, 2);
   }
 
-  template<typename RandomAccessIterator>
   static InsertValueInst *Create(Value *Agg, Value *Val,
-                                 RandomAccessIterator IdxBegin,
-                                 RandomAccessIterator IdxEnd,
+                                 ArrayRef<unsigned> Idxs,
                                  const Twine &NameStr = "",
                                  Instruction *InsertBefore = 0) {
-    return new InsertValueInst(Agg, Val, IdxBegin, IdxEnd,
-                               NameStr, InsertBefore);
+    return new InsertValueInst(Agg, Val, Idxs, NameStr, InsertBefore);
   }
-  template<typename RandomAccessIterator>
   static InsertValueInst *Create(Value *Agg, Value *Val,
-                                 RandomAccessIterator IdxBegin,
-                                 RandomAccessIterator IdxEnd,
+                                 ArrayRef<unsigned> Idxs,
                                  const Twine &NameStr,
                                  BasicBlock *InsertAtEnd) {
-    return new InsertValueInst(Agg, Val, IdxBegin, IdxEnd,
-                               NameStr, InsertAtEnd);
-  }
-
-  /// Constructors - These two creators are convenience methods because one
-  /// index insertvalue instructions are much more common than those with
-  /// more than one.
-  static InsertValueInst *Create(Value *Agg, Value *Val, unsigned Idx,
-                                 const Twine &NameStr = "",
-                                 Instruction *InsertBefore = 0) {
-    return new InsertValueInst(Agg, Val, Idx, NameStr, InsertBefore);
-  }
-  static InsertValueInst *Create(Value *Agg, Value *Val, unsigned Idx,
-                                 const Twine &NameStr,
-                                 BasicBlock *InsertAtEnd) {
-    return new InsertValueInst(Agg, Val, Idx, NameStr, InsertAtEnd);
+    return new InsertValueInst(Agg, Val, Idxs, NameStr, InsertAtEnd);
   }
 
   /// Transparently provide more efficient getOperand methods.
@@ -1739,7 +1607,11 @@ public:
     return 1U;                      // get index for modifying correct operand
   }
 
-  unsigned getNumIndices() const {  // Note: always non-negative
+  ArrayRef<unsigned> getIndices() const {
+    return Indices;
+  }
+
+  unsigned getNumIndices() const {
     return (unsigned)Indices.size();
   }
 
@@ -1762,33 +1634,25 @@ struct OperandTraits<InsertValueInst> :
   public FixedNumOperandTraits<InsertValueInst, 2> {
 };
 
-template<typename RandomAccessIterator>
 InsertValueInst::InsertValueInst(Value *Agg,
                                  Value *Val,
-                                 RandomAccessIterator IdxBegin,
-                                 RandomAccessIterator IdxEnd,
+                                 ArrayRef<unsigned> Idxs,
                                  const Twine &NameStr,
                                  Instruction *InsertBefore)
   : Instruction(Agg->getType(), InsertValue,
                 OperandTraits<InsertValueInst>::op_begin(this),
                 2, InsertBefore) {
-  init(Agg, Val, IdxBegin, IdxEnd, NameStr,
-       typename std::iterator_traits<RandomAccessIterator>
-       ::iterator_category());
+  init(Agg, Val, Idxs, NameStr);
 }
-template<typename RandomAccessIterator>
 InsertValueInst::InsertValueInst(Value *Agg,
                                  Value *Val,
-                                 RandomAccessIterator IdxBegin,
-                                 RandomAccessIterator IdxEnd,
+                                 ArrayRef<unsigned> Idxs,
                                  const Twine &NameStr,
                                  BasicBlock *InsertAtEnd)
   : Instruction(Agg->getType(), InsertValue,
                 OperandTraits<InsertValueInst>::op_begin(this),
                 2, InsertAtEnd) {
-  init(Agg, Val, IdxBegin, IdxEnd, NameStr,
-       typename std::iterator_traits<RandomAccessIterator>
-       ::iterator_category());
+  init(Agg, Val, Idxs, NameStr);
 }
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InsertValueInst, Value)

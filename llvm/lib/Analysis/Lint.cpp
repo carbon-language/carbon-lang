@@ -592,8 +592,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
       return findValueImpl(CI->getOperand(0), OffsetOk, Visited);
   } else if (ExtractValueInst *Ex = dyn_cast<ExtractValueInst>(V)) {
     if (Value *W = FindInsertedValue(Ex->getAggregateOperand(),
-                                     Ex->idx_begin(),
-                                     Ex->idx_end()))
+                                     Ex->getIndices()))
       if (W != V)
         return findValueImpl(W, OffsetOk, Visited);
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
@@ -607,9 +606,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
         return findValueImpl(CE->getOperand(0), OffsetOk, Visited);
     } else if (CE->getOpcode() == Instruction::ExtractValue) {
       ArrayRef<unsigned> Indices = CE->getIndices();
-      if (Value *W = FindInsertedValue(CE->getOperand(0),
-                                       Indices.begin(),
-                                       Indices.end()))
+      if (Value *W = FindInsertedValue(CE->getOperand(0), Indices))
         if (W != V)
           return findValueImpl(W, OffsetOk, Visited);
     }

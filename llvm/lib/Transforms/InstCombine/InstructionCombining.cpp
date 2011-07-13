@@ -1199,7 +1199,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       if (EV.getNumIndices() > 1)
         // Extract the remaining indices out of the constant indexed by the
         // first index
-        return ExtractValueInst::Create(V, EV.idx_begin() + 1, EV.idx_end());
+        return ExtractValueInst::Create(V, EV.getIndices().slice(1));
       else
         return ReplaceInstUsesWith(EV, V);
     }
@@ -1222,7 +1222,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
         // with
         // %E = extractvalue { i32, { i32 } } %A, 0
         return ExtractValueInst::Create(IV->getAggregateOperand(),
-                                        EV.idx_begin(), EV.idx_end());
+                                        EV.getIndices());
     }
     if (exti == exte && insi == inse)
       // Both iterators are at the end: Index lists are identical. Replace
@@ -1240,9 +1240,9 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       // by switching the order of the insert and extract (though the
       // insertvalue should be left in, since it may have other uses).
       Value *NewEV = Builder->CreateExtractValue(IV->getAggregateOperand(),
-                                                 EV.idx_begin(), EV.idx_end());
+                                                 EV.getIndices());
       return InsertValueInst::Create(NewEV, IV->getInsertedValueOperand(),
-                                     insi, inse);
+                                     ArrayRef<unsigned>(insi, inse));
     }
     if (insi == inse)
       // The insert list is a prefix of the extract list
@@ -1254,7 +1254,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       // with
       // %E extractvalue { i32 } { i32 42 }, 0
       return ExtractValueInst::Create(IV->getInsertedValueOperand(), 
-                                      exti, exte);
+                                      ArrayRef<unsigned>(exti, exte));
   }
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Agg)) {
     // We're extracting from an intrinsic, see if we're the only user, which

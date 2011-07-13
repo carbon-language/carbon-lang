@@ -2086,11 +2086,9 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
 
     if (!Val->getType()->isAggregateType())
       return Error(ID.Loc, "extractvalue operand must be aggregate type");
-    if (!ExtractValueInst::getIndexedType(Val->getType(), Indices.begin(),
-                                          Indices.end()))
+    if (!ExtractValueInst::getIndexedType(Val->getType(), Indices))
       return Error(ID.Loc, "invalid indices for extractvalue");
-    ID.ConstantVal =
-      ConstantExpr::getExtractValue(Val, Indices.data(), Indices.size());
+    ID.ConstantVal = ConstantExpr::getExtractValue(Val, Indices);
     ID.Kind = ValID::t_Constant;
     return false;
   }
@@ -2107,11 +2105,9 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
       return true;
     if (!Val0->getType()->isAggregateType())
       return Error(ID.Loc, "insertvalue operand must be aggregate type");
-    if (!ExtractValueInst::getIndexedType(Val0->getType(), Indices.begin(),
-                                          Indices.end()))
+    if (!ExtractValueInst::getIndexedType(Val0->getType(), Indices))
       return Error(ID.Loc, "invalid indices for insertvalue");
-    ID.ConstantVal = ConstantExpr::getInsertValue(Val0, Val1,
-                       Indices.data(), Indices.size());
+    ID.ConstantVal = ConstantExpr::getInsertValue(Val0, Val1, Indices);
     ID.Kind = ValID::t_Constant;
     return false;
   }
@@ -3690,10 +3686,9 @@ int LLParser::ParseExtractValue(Instruction *&Inst, PerFunctionState &PFS) {
   if (!Val->getType()->isAggregateType())
     return Error(Loc, "extractvalue operand must be aggregate type");
 
-  if (!ExtractValueInst::getIndexedType(Val->getType(), Indices.begin(),
-                                        Indices.end()))
+  if (!ExtractValueInst::getIndexedType(Val->getType(), Indices))
     return Error(Loc, "invalid indices for extractvalue");
-  Inst = ExtractValueInst::Create(Val, Indices.begin(), Indices.end());
+  Inst = ExtractValueInst::Create(Val, Indices);
   return AteExtraComma ? InstExtraComma : InstNormal;
 }
 
@@ -3712,10 +3707,9 @@ int LLParser::ParseInsertValue(Instruction *&Inst, PerFunctionState &PFS) {
   if (!Val0->getType()->isAggregateType())
     return Error(Loc0, "insertvalue operand must be aggregate type");
 
-  if (!ExtractValueInst::getIndexedType(Val0->getType(), Indices.begin(),
-                                        Indices.end()))
+  if (!ExtractValueInst::getIndexedType(Val0->getType(), Indices))
     return Error(Loc0, "invalid indices for insertvalue");
-  Inst = InsertValueInst::Create(Val0, Val1, Indices.begin(), Indices.end());
+  Inst = InsertValueInst::Create(Val0, Val1, Indices);
   return AteExtraComma ? InstExtraComma : InstNormal;
 }
 

@@ -16,6 +16,7 @@
 
 #include "llvm/Instructions.h"
 #include "llvm/InlineAsm.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
@@ -36,6 +37,12 @@ unsigned ComputeLinearIndex(const Type *Ty,
                             const unsigned *Indices,
                             const unsigned *IndicesEnd,
                             unsigned CurIndex = 0);
+
+inline unsigned ComputeLinearIndex(const Type *Ty,
+                                   ArrayRef<unsigned> Indices,
+                                   unsigned CurIndex = 0) {
+  return ComputeLinearIndex(Ty, Indices.begin(), Indices.end(), CurIndex);
+}
 
 /// ComputeValueVTs - Given an LLVM IR type, compute a sequence of
 /// EVTs that represent all the individual underlying

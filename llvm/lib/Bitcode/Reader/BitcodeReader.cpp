@@ -2206,8 +2206,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         EXTRACTVALIdx.push_back((unsigned)Index);
       }
 
-      I = ExtractValueInst::Create(Agg,
-                                   EXTRACTVALIdx.begin(), EXTRACTVALIdx.end());
+      I = ExtractValueInst::Create(Agg, EXTRACTVALIdx);
       InstructionList.push_back(I);
       break;
     }
@@ -2231,8 +2230,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         INSERTVALIdx.push_back((unsigned)Index);
       }
 
-      I = InsertValueInst::Create(Agg, Val,
-                                  INSERTVALIdx.begin(), INSERTVALIdx.end());
+      I = InsertValueInst::Create(Agg, Val, INSERTVALIdx);
       InstructionList.push_back(I);
       break;
     }

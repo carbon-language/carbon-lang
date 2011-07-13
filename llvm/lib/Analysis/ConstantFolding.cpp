@@ -771,12 +771,12 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
     return ConstantExpr::getInsertValue(
                                 cast<Constant>(IVI->getAggregateOperand()),
                                 cast<Constant>(IVI->getInsertedValueOperand()),
-                                IVI->idx_begin(), IVI->getNumIndices());
+                                IVI->getIndices());
 
   if (ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(I))
     return ConstantExpr::getExtractValue(
                                     cast<Constant>(EVI->getAggregateOperand()),
-                                    EVI->idx_begin(), EVI->getNumIndices());
+                                    EVI->getIndices());
 
   return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
                                   Ops.data(), Ops.size(), TD);

@@ -21,6 +21,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/InstrTypes.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Analysis/ConstantFolding.h"
 
 namespace llvm {
@@ -226,14 +227,14 @@ public:
     return Fold(ConstantExpr::getShuffleVector(V1, V2, Mask));
   }
 
-  Constant *CreateExtractValue(Constant *Agg, const unsigned *IdxList,
-                               unsigned NumIdx) const {
-    return Fold(ConstantExpr::getExtractValue(Agg, IdxList, NumIdx));
+  Constant *CreateExtractValue(Constant *Agg,
+                               ArrayRef<unsigned> IdxList) const {
+    return Fold(ConstantExpr::getExtractValue(Agg, IdxList));
   }
 
   Constant *CreateInsertValue(Constant *Agg, Constant *Val,
-                              const unsigned *IdxList, unsigned NumIdx) const {
-    return Fold(ConstantExpr::getInsertValue(Agg, Val, IdxList, NumIdx));
+                              ArrayRef<unsigned> IdxList) const {
+    return Fold(ConstantExpr::getInsertValue(Agg, Val, IdxList));
   }
 };
 

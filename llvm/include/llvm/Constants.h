@@ -855,10 +855,9 @@ public:
   static Constant *getExtractElement(Constant *Vec, Constant *Idx);
   static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
   static Constant *getShuffleVector(Constant *V1, Constant *V2, Constant *Mask);
-  static Constant *getExtractValue(Constant *Agg,
-                                   const unsigned *IdxList, unsigned NumIdx);
+  static Constant *getExtractValue(Constant *Agg, ArrayRef<unsigned> Idxs);
   static Constant *getInsertValue(Constant *Agg, Constant *Val,
-                                  const unsigned *IdxList, unsigned NumIdx);
+                                  ArrayRef<unsigned> Idxs);
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.

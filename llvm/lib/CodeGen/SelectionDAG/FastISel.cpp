@@ -852,7 +852,7 @@ FastISel::SelectExtractValue(const User *U) {
     return false; // fast-isel can't handle aggregate constants at the moment
 
   // Get the actual result register, which is an offset from the base register.
-  unsigned VTIndex = ComputeLinearIndex(AggTy, EVI->idx_begin(), EVI->idx_end());
+  unsigned VTIndex = ComputeLinearIndex(AggTy, EVI->getIndices());
 
   SmallVector<EVT, 4> AggValueVTs;
   ComputeValueVTs(TLI, AggTy, AggValueVTs);

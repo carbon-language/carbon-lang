@@ -19,6 +19,8 @@
 #ifndef CONSTANTFOLDING_H
 #define CONSTANTFOLDING_H
 
+#include "llvm/ADT/ArrayRef.h"
+
 namespace llvm {
   class Value;
   class Constant;
@@ -38,11 +40,9 @@ namespace llvm {
   Constant *ConstantFoldShuffleVectorInstruction(Constant *V1, Constant *V2,
                                                  Constant *Mask);
   Constant *ConstantFoldExtractValueInstruction(Constant *Agg,
-                                                const unsigned *Idxs,
-                                                unsigned NumIdx);
+                                                ArrayRef<unsigned> Idxs);
   Constant *ConstantFoldInsertValueInstruction(Constant *Agg, Constant *Val,
-                                               const unsigned *Idxs,
-                                               unsigned NumIdx);
+                                               ArrayRef<unsigned> Idxs);
   Constant *ConstantFoldBinaryInstruction(unsigned Opcode, Constant *V1,
                                           Constant *V2);
   Constant *ConstantFoldCompareInstruction(unsigned short predicate, 

@@ -204,22 +204,10 @@ bool Instruction::isIdenticalToWhenDefined(const Instruction *I) const {
   if (const InvokeInst *CI = dyn_cast<InvokeInst>(this))
     return CI->getCallingConv() == cast<InvokeInst>(I)->getCallingConv() &&
            CI->getAttributes() == cast<InvokeInst>(I)->getAttributes();
-  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(this)) {
-    if (IVI->getNumIndices() != cast<InsertValueInst>(I)->getNumIndices())
-      return false;
-    for (unsigned i = 0, e = IVI->getNumIndices(); i != e; ++i)
-      if (IVI->idx_begin()[i] != cast<InsertValueInst>(I)->idx_begin()[i])
-        return false;
-    return true;
-  }
-  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(this)) {
-    if (EVI->getNumIndices() != cast<ExtractValueInst>(I)->getNumIndices())
-      return false;
-    for (unsigned i = 0, e = EVI->getNumIndices(); i != e; ++i)
-      if (EVI->idx_begin()[i] != cast<ExtractValueInst>(I)->idx_begin()[i])
-        return false;
-    return true;
-  }
+  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(this))
+    return IVI->getIndices() == cast<InsertValueInst>(I)->getIndices();
+  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(this))
+    return EVI->getIndices() == cast<ExtractValueInst>(I)->getIndices();
 
   return true;
 }
@@ -256,22 +244,10 @@ bool Instruction::isSameOperationAs(const Instruction *I) const {
     return CI->getCallingConv() == cast<InvokeInst>(I)->getCallingConv() &&
            CI->getAttributes() ==
              cast<InvokeInst>(I)->getAttributes();
-  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(this)) {
-    if (IVI->getNumIndices() != cast<InsertValueInst>(I)->getNumIndices())
-      return false;
-    for (unsigned i = 0, e = IVI->getNumIndices(); i != e; ++i)
-      if (IVI->idx_begin()[i] != cast<InsertValueInst>(I)->idx_begin()[i])
-        return false;
-    return true;
-  }
-  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(this)) {
-    if (EVI->getNumIndices() != cast<ExtractValueInst>(I)->getNumIndices())
-      return false;
-    for (unsigned i = 0, e = EVI->getNumIndices(); i != e; ++i)
-      if (EVI->idx_begin()[i] != cast<ExtractValueInst>(I)->idx_begin()[i])
-        return false;
-    return true;
-  }
+  if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(this))
+    return IVI->getIndices() == cast<InsertValueInst>(I)->getIndices();
+  if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(this))
+    return EVI->getIndices() == cast<ExtractValueInst>(I)->getIndices();
 
   return true;
 }

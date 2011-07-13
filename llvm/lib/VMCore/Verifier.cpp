@@ -1318,7 +1318,7 @@ void Verifier::visitAllocaInst(AllocaInst &AI) {
 
 void Verifier::visitExtractValueInst(ExtractValueInst &EVI) {
   Assert1(ExtractValueInst::getIndexedType(EVI.getAggregateOperand()->getType(),
-                                           EVI.idx_begin(), EVI.idx_end()) ==
+                                           EVI.getIndices()) ==
           EVI.getType(),
           "Invalid ExtractValueInst operands!", &EVI);
   
@@ -1327,7 +1327,7 @@ void Verifier::visitExtractValueInst(ExtractValueInst &EVI) {
 
 void Verifier::visitInsertValueInst(InsertValueInst &IVI) {
   Assert1(ExtractValueInst::getIndexedType(IVI.getAggregateOperand()->getType(),
-                                           IVI.idx_begin(), IVI.idx_end()) ==
+                                           IVI.getIndices()) ==
           IVI.getOperand(1)->getType(),
           "Invalid InsertValueInst operands!", &IVI);
   

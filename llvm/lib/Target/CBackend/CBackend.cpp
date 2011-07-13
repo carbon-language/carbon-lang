@@ -3560,7 +3560,8 @@ void CWriter::visitInsertValueInst(InsertValueInst &IVI) {
   for (const unsigned *b = IVI.idx_begin(), *i = b, *e = IVI.idx_end();
        i != e; ++i) {
     const Type *IndexedTy =
-      ExtractValueInst::getIndexedType(IVI.getOperand(0)->getType(), b, i+1);
+      ExtractValueInst::getIndexedType(IVI.getOperand(0)->getType(),
+                                       ArrayRef<unsigned>(b, i+1));
     if (IndexedTy->isArrayTy())
       Out << ".array[" << *i << "]";
     else
@@ -3581,7 +3582,8 @@ void CWriter::visitExtractValueInst(ExtractValueInst &EVI) {
     for (const unsigned *b = EVI.idx_begin(), *i = b, *e = EVI.idx_end();
          i != e; ++i) {
       const Type *IndexedTy =
-        ExtractValueInst::getIndexedType(EVI.getOperand(0)->getType(), b, i+1);
+        ExtractValueInst::getIndexedType(EVI.getOperand(0)->getType(),
+                                         ArrayRef<unsigned>(b, i+1));
       if (IndexedTy->isArrayTy())
         Out << ".array[" << *i << "]";
       else

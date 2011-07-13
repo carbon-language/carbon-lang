@@ -880,42 +880,38 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(Constant *V1,
 }
 
 Constant *llvm::ConstantFoldExtractValueInstruction(Constant *Agg,
-                                                    const unsigned *Idxs,
-                                                    unsigned NumIdx) {
+                                                    ArrayRef<unsigned> Idxs) {
   // Base case: no indices, so return the entire value.
-  if (NumIdx == 0)
+  if (Idxs.empty())
     return Agg;
 
   if (isa<UndefValue>(Agg))  // ev(undef, x) -> undef
     return UndefValue::get(ExtractValueInst::getIndexedType(Agg->getType(),
-                                                            Idxs,
-                                                            Idxs + NumIdx));
+                                                            Idxs));
 
   if (isa<ConstantAggregateZero>(Agg))  // ev(0, x) -> 0
     return
       Constant::getNullValue(ExtractValueInst::getIndexedType(Agg->getType(),
-                                                              Idxs,
-                                                              Idxs + NumIdx));
+                                                              Idxs));
 
   // Otherwise recurse.
   if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Agg))
-    return ConstantFoldExtractValueInstruction(CS->getOperand(*Idxs),
-                                               Idxs+1, NumIdx-1);
+    return ConstantFoldExtractValueInstruction(CS->getOperand(Idxs[0]),
+                                               Idxs.slice(1));
 
   if (ConstantArray *CA = dyn_cast<ConstantArray>(Agg))
-    return ConstantFoldExtractValueInstruction(CA->getOperand(*Idxs),
-                                               Idxs+1, NumIdx-1);
+    return ConstantFoldExtractValueInstruction(CA->getOperand(Idxs[0]),
+                                               Idxs.slice(1));
   ConstantVector *CV = cast<ConstantVector>(Agg);
-  return ConstantFoldExtractValueInstruction(CV->getOperand(*Idxs),
-                                             Idxs+1, NumIdx-1);
+  return ConstantFoldExtractValueInstruction(CV->getOperand(Idxs[0]),
+                                             Idxs.slice(1));
 }
 
 Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
                                                    Constant *Val,
-                                                   const unsigned *Idxs,
-                                                   unsigned NumIdx) {
+                                                   ArrayRef<unsigned> Idxs) {
   // Base case: no indices, so replace the entire value.
-  if (NumIdx == 0)
+  if (Idxs.empty())
     return Val;
 
   if (isa<UndefValue>(Agg)) {
@@ -937,9 +933,9 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
     for (unsigned i = 0; i < numOps; ++i) {
       const Type *MemberTy = AggTy->getTypeAtIndex(i);
       Constant *Op =
-        (*Idxs == i) ?
+        (Idxs[0] == i) ?
         ConstantFoldInsertValueInstruction(UndefValue::get(MemberTy),
-                                           Val, Idxs+1, NumIdx-1) :
+                                           Val, Idxs.slice(1)) :
         UndefValue::get(MemberTy);
       Ops[i] = Op;
     }
@@ -968,9 +964,9 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
     for (unsigned i = 0; i < numOps; ++i) {
       const Type *MemberTy = AggTy->getTypeAtIndex(i);
       Constant *Op =
-        (*Idxs == i) ?
+        (Idxs[0] == i) ?
         ConstantFoldInsertValueInstruction(Constant::getNullValue(MemberTy),
-                                           Val, Idxs+1, NumIdx-1) :
+                                           Val, Idxs.slice(1)) :
         Constant::getNullValue(MemberTy);
       Ops[i] = Op;
     }
@@ -985,8 +981,8 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
     std::vector<Constant*> Ops(Agg->getNumOperands());
     for (unsigned i = 0; i < Agg->getNumOperands(); ++i) {
       Constant *Op = cast<Constant>(Agg->getOperand(i));
-      if (*Idxs == i)
-        Op = ConstantFoldInsertValueInstruction(Op, Val, Idxs+1, NumIdx-1);
+      if (Idxs[0] == i)
+        Op = ConstantFoldInsertValueInstruction(Op, Val, Idxs.slice(1));
       Ops[i] = Op;
     }
     

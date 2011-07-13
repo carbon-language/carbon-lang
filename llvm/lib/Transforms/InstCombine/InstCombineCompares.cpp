@@ -278,8 +278,7 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
     
     // If this is indexing an array of structures, get the structure element.
     if (!LaterIndices.empty())
-      Elt = ConstantExpr::getExtractValue(Elt, LaterIndices.data(),
-                                          LaterIndices.size());
+      Elt = ConstantExpr::getExtractValue(Elt, LaterIndices);
     
     // If the element is masked, handle it.
     if (AndCst) Elt = ConstantExpr::getAnd(Elt, AndCst);

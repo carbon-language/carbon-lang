@@ -210,14 +210,14 @@ public:
     return ConstantExpr::getShuffleVector(V1, V2, Mask);
   }
 
-  Constant *CreateExtractValue(Constant *Agg, const unsigned *IdxList,
-                               unsigned NumIdx) const {
-    return ConstantExpr::getExtractValue(Agg, IdxList, NumIdx);
+  Constant *CreateExtractValue(Constant *Agg,
+                               ArrayRef<unsigned> IdxList) const {
+    return ConstantExpr::getExtractValue(Agg, IdxList);
   }
 
   Constant *CreateInsertValue(Constant *Agg, Constant *Val,
-                              const unsigned *IdxList, unsigned NumIdx) const {
-    return ConstantExpr::getInsertValue(Agg, Val, IdxList, NumIdx);
+                              ArrayRef<unsigned> IdxList) const {
+    return ConstantExpr::getInsertValue(Agg, Val, IdxList);
   }
 };
 

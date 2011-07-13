@@ -1386,27 +1386,22 @@ int ShuffleVectorInst::getMaskValue(unsigned i) const {
 //                             InsertValueInst Class
 //===----------------------------------------------------------------------===//
 
-void InsertValueInst::init(Value *Agg, Value *Val, const unsigned *Idx, 
-                           unsigned NumIdx, const Twine &Name) {
+void InsertValueInst::init(Value *Agg, Value *Val, ArrayRef<unsigned> Idxs, 
+                           const Twine &Name) {
   assert(NumOperands == 2 && "NumOperands not initialized?");
-  assert(ExtractValueInst::getIndexedType(Agg->getType(), Idx, Idx + NumIdx) ==
+
+  // There's no fundamental reason why we require at least one index
+  // (other than weirdness with &*IdxBegin being invalid; see
+  // getelementptr's init routine for example). But there's no
+  // present need to support it.
+  assert(Idxs.size() > 0 && "InsertValueInst must have at least one index");
+
+  assert(ExtractValueInst::getIndexedType(Agg->getType(), Idxs) ==
          Val->getType() && "Inserted value must match indexed type!");
   Op<0>() = Agg;
   Op<1>() = Val;
 
-  Indices.append(Idx, Idx + NumIdx);
-  setName(Name);
-}
-
-void InsertValueInst::init(Value *Agg, Value *Val, unsigned Idx, 
-                           const Twine &Name) {
-  assert(NumOperands == 2 && "NumOperands not initialized?");
-  assert(ExtractValueInst::getIndexedType(Agg->getType(), Idx) == Val->getType()
-         && "Inserted value must match indexed type!");
-  Op<0>() = Agg;
-  Op<1>() = Val;
-
-  Indices.push_back(Idx);
+  Indices.append(Idxs.begin(), Idxs.end());
   setName(Name);
 }
 
@@ -1419,44 +1414,18 @@ InsertValueInst::InsertValueInst(const InsertValueInst &IVI)
   SubclassOptionalData = IVI.SubclassOptionalData;
 }
 
-InsertValueInst::InsertValueInst(Value *Agg,
-                                 Value *Val,
-                                 unsigned Idx, 
-                                 const Twine &Name,
-                                 Instruction *InsertBefore)
-  : Instruction(Agg->getType(), InsertValue,
-                OperandTraits<InsertValueInst>::op_begin(this),
-                2, InsertBefore) {
-  init(Agg, Val, Idx, Name);
-}
-
-InsertValueInst::InsertValueInst(Value *Agg,
-                                 Value *Val,
-                                 unsigned Idx, 
-                                 const Twine &Name,
-                                 BasicBlock *InsertAtEnd)
-  : Instruction(Agg->getType(), InsertValue,
-                OperandTraits<InsertValueInst>::op_begin(this),
-                2, InsertAtEnd) {
-  init(Agg, Val, Idx, Name);
-}
-
 //===----------------------------------------------------------------------===//
 //                             ExtractValueInst Class
 //===----------------------------------------------------------------------===//
 
-void ExtractValueInst::init(const unsigned *Idx, unsigned NumIdx,
-                            const Twine &Name) {
+void ExtractValueInst::init(ArrayRef<unsigned> Idxs, const Twine &Name) {
   assert(NumOperands == 1 && "NumOperands not initialized?");
 
-  Indices.append(Idx, Idx + NumIdx);
-  setName(Name);
-}
+  // There's no fundamental reason why we require at least one index.
+  // But there's no present need to support it.
+  assert(Idxs.size() > 0 && "ExtractValueInst must have at least one index");
 
-void ExtractValueInst::init(unsigned Idx, const Twine &Name) {
-  assert(NumOperands == 1 && "NumOperands not initialized?");
-
-  Indices.push_back(Idx);
+  Indices.append(Idxs.begin(), Idxs.end());
   setName(Name);
 }
 
@@ -1473,9 +1442,8 @@ ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
 // pointer type.
 //
 Type *ExtractValueInst::getIndexedType(const Type *Agg,
-                                       const unsigned *Idxs,
-                                       unsigned NumIdx) {
-  for (unsigned CurIdx = 0; CurIdx != NumIdx; ++CurIdx) {
+                                       ArrayRef<unsigned> Idxs) {
+  for (unsigned CurIdx = 0; CurIdx != Idxs.size(); ++CurIdx) {
     unsigned Index = Idxs[CurIdx];
     // We can't use CompositeType::indexValid(Index) here.
     // indexValid() always returns true for arrays because getelementptr allows
@@ -1497,10 +1465,6 @@ Type *ExtractValueInst::getIndexedType(const Type *Agg,
     Agg = cast<CompositeType>(Agg)->getTypeAtIndex(Index);
   }
   return const_cast<Type*>(Agg);
-}
-
-Type *ExtractValueInst::getIndexedType(const Type *Agg, unsigned Idx) {
-  return getIndexedType(Agg, &Idx, 1);
 }
 
 //===----------------------------------------------------------------------===//

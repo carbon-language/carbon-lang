@@ -15,6 +15,7 @@
 #ifndef LLVM_ANALYSIS_VALUETRACKING_H
 #define LLVM_ANALYSIS_VALUETRACKING_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
 
@@ -108,18 +109,9 @@ namespace llvm {
   /// If InsertBefore is not null, this function will duplicate (modified)
   /// insertvalues when a part of a nested struct is extracted.
   Value *FindInsertedValue(Value *V,
-                           const unsigned *idx_begin,
-                           const unsigned *idx_end,
+                           ArrayRef<unsigned> idx_range,
                            Instruction *InsertBefore = 0);
 
-  /// This is a convenience wrapper for finding values indexed by a single index
-  /// only.
-  inline Value *FindInsertedValue(Value *V, const unsigned Idx,
-                                  Instruction *InsertBefore = 0) {
-    const unsigned Idxs[1] = { Idx };
-    return FindInsertedValue(V, &Idxs[0], &Idxs[1], InsertBefore);
-  }
-  
   /// GetPointerBaseWithConstantOffset - Analyze the specified pointer to see if
   /// it can be expressed as a base pointer plus a constant offset.  Return the
   /// base and offset to the caller.

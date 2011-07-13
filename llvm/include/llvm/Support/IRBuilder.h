@@ -1194,43 +1194,21 @@ public:
     return Insert(new ShuffleVectorInst(V1, V2, Mask), Name);
   }
 
-  Value *CreateExtractValue(Value *Agg, unsigned Idx,
-                            const Twine &Name = "") {
-    if (Constant *AggC = dyn_cast<Constant>(Agg))
-      return Insert(Folder.CreateExtractValue(AggC, &Idx, 1), Name);
-    return Insert(ExtractValueInst::Create(Agg, Idx), Name);
-  }
-
-  template<typename RandomAccessIterator>
   Value *CreateExtractValue(Value *Agg,
-                            RandomAccessIterator IdxBegin,
-                            RandomAccessIterator IdxEnd,
+                            ArrayRef<unsigned> Idxs,
                             const Twine &Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
-      return Insert(Folder.CreateExtractValue(AggC, IdxBegin, IdxEnd-IdxBegin),
-                    Name);
-    return Insert(ExtractValueInst::Create(Agg, IdxBegin, IdxEnd), Name);
+      return Insert(Folder.CreateExtractValue(AggC, Idxs), Name);
+    return Insert(ExtractValueInst::Create(Agg, Idxs), Name);
   }
 
-  Value *CreateInsertValue(Value *Agg, Value *Val, unsigned Idx,
-                           const Twine &Name = "") {
-    if (Constant *AggC = dyn_cast<Constant>(Agg))
-      if (Constant *ValC = dyn_cast<Constant>(Val))
-        return Insert(Folder.CreateInsertValue(AggC, ValC, &Idx, 1), Name);
-    return Insert(InsertValueInst::Create(Agg, Val, Idx), Name);
-  }
-
-  template<typename RandomAccessIterator>
   Value *CreateInsertValue(Value *Agg, Value *Val,
-                           RandomAccessIterator IdxBegin,
-                           RandomAccessIterator IdxEnd,
+                           ArrayRef<unsigned> Idxs,
                            const Twine &Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))
       if (Constant *ValC = dyn_cast<Constant>(Val))
-        return Insert(Folder.CreateInsertValue(AggC, ValC, IdxBegin,
-                                               IdxEnd - IdxBegin),
-                      Name);
-    return Insert(InsertValueInst::Create(Agg, Val, IdxBegin, IdxEnd), Name);
+        return Insert(Folder.CreateInsertValue(AggC, ValC, Idxs), Name);
+    return Insert(InsertValueInst::Create(Agg, Val, Idxs), Name);
   }
 
   //===--------------------------------------------------------------------===//

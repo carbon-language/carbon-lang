@@ -1715,30 +1715,29 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
 }
 
 Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
-                                     const unsigned *Idxs, unsigned NumIdx) {
-  assert(ExtractValueInst::getIndexedType(Agg->getType(), Idxs,
-                                          Idxs+NumIdx) == Val->getType() &&
+                                       ArrayRef<unsigned> Idxs) {
+  assert(ExtractValueInst::getIndexedType(Agg->getType(),
+                                          Idxs) == Val->getType() &&
          "insertvalue indices invalid!");
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant insertvalue expression");
-  Constant *FC = ConstantFoldInsertValueInstruction(Agg, Val, Idxs, NumIdx);
+  Constant *FC = ConstantFoldInsertValueInstruction(Agg, Val, Idxs);
   assert(FC && "insertvalue constant expr couldn't be folded!");
   return FC;
 }
 
 Constant *ConstantExpr::getExtractValue(Constant *Agg,
-                                     const unsigned *Idxs, unsigned NumIdx) {
+                                        ArrayRef<unsigned> Idxs) {
   assert(Agg->getType()->isFirstClassType() &&
          "Tried to create extractelement operation on non-first-class type!");
 
-  const Type *ReqTy =
-    ExtractValueInst::getIndexedType(Agg->getType(), Idxs, Idxs+NumIdx);
+  const Type *ReqTy = ExtractValueInst::getIndexedType(Agg->getType(), Idxs);
   (void)ReqTy;
   assert(ReqTy && "extractvalue indices invalid!");
   
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant extractvalue expression");
-  Constant *FC = ConstantFoldExtractValueInstruction(Agg, Idxs, NumIdx);
+  Constant *FC = ConstantFoldExtractValueInstruction(Agg, Idxs);
   assert(FC && "ExtractValue constant expr couldn't be folded!");
   return FC;
 }
@@ -2086,8 +2085,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     if (Agg == From) Agg = To;
     
     ArrayRef<unsigned> Indices = getIndices();
-    Replacement = ConstantExpr::getExtractValue(Agg,
-                                                &Indices[0], Indices.size());
+    Replacement = ConstantExpr::getExtractValue(Agg, Indices);
   } else if (getOpcode() == Instruction::InsertValue) {
     Constant *Agg = getOperand(0);
     Constant *Val = getOperand(1);
@@ -2095,8 +2093,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     if (Val == From) Val = To;
     
     ArrayRef<unsigned> Indices = getIndices();
-    Replacement = ConstantExpr::getInsertValue(Agg, Val,
-                                               &Indices[0], Indices.size());
+    Replacement = ConstantExpr::getInsertValue(Agg, Val, Indices);
   } else if (isCast()) {
     assert(getOperand(0) == From && "Cast only has one use!");
     Replacement = ConstantExpr::getCast(getOpcode(), To, getType());
