@@ -407,7 +407,7 @@
               <p>In the example, the command we type was:</p>
                 <table class="stats" width="620" cellspacing="0">
                         <td class="content">
-                            <b>(lldb)</b> frame variable counter -f hex
+                            <b>(lldb)</b> type summary add -f "int = ${var.integer}, float = ${var.floating}, char = ${var.character%u}" i_am_cool
                         </td>
                 <table>
             </div>
@@ -415,8 +415,11 @@
           <div class="post">
             <h1 class="postheader">Summary Strings</h1>
             <div class="postcontent">
-              <p>So what is the format of the summary strings? Summary
-                strings can contain plain text, control characters and
+              <p>While you may already have guessed a lot about the format of 
+                summary strings from the above example, a detailed description
+                of their format follows.</p>
+                
+                <p>Summary strings can contain plain text, control characters and
                 special symbols that have access to information about
                 the current object and the overall program state.</p>
               <p>Normal characters are any text that doesn't contain a <code><b>'{'</b></code>,
@@ -434,22 +437,20 @@
               <p>The simplest thing you can do is grab a member variable
                 of a class or structure by typing its <i>expression
                   path</i>. In the previous example, the expression path
-                for the floating member is simply <code>.floating</code>,
-                because all you have to do to get at it given an object
-                of type <code>i_am_cool</code> is access it straight
-                away. Thus, to ask the summary string to display <code>floating</code>
+                for the floating member is simply <code>.floating</code>.
+                Thus, to ask the summary string to display <code>floating</code>
                 you would type <code>${var.floating}</code> (<code>${var</code>
                 is a placeholder token replaced with whatever variable
                 is being displayed).</p>
               <p>If you have code like the following: <br>
                 <code> struct A {<br>
-                  int x;<br>
-                  int y;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;int x;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;int y;<br>
                   };<br>
                   struct B {<br>
-                  A x;<br>
-                  A y;<br>
-                  int z;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;A x;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;A y;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;int z;<br>
                   };<br>
                 </code> the expression path for the <code>y</code>
                 member of the <code>x</code> member of an object of
@@ -465,9 +466,9 @@
                 or even if the actual definition of <code>B</code>
                 were: <code><br>
                   struct B {<br>
-                  A *x;<br>
-                  A y;<br>
-                  int z;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;A *x;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;A y;<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;int z;<br>
                   };<br>
                 </code> </p>
               <p>This is unlike the behaviour of <code>frame variable</code>
@@ -480,11 +481,7 @@
                 members' information, a pointer to an object is just as
                 good as the object itself for the purpose.</p>
               <p>Of course, you can have multiple entries in one summary
-                string. For instance, the command used to produce the
-                above summary string for i_am_cool was: <br>
-                <code>type summary add -f "int = ${var.integer}, float =
-                  ${var.floating}, char = ${var.character%u}" i_am_cool
-                </code> </p>
+                string, as shown in the previous example.</p>
               <p>As you can see, the last expression path also contains
                 a <code>%u</code> symbol which is nowhere to be found
                 in the actual member variable name. The symbol is
@@ -492,8 +489,9 @@
                 in fact it has a similar effect. If you add a % sign
                 followed by any one format name or abbreviation from the
                 above table after an expression path, the resulting
-                object will be displyed using exactly that format
-                instead of the LLDB default one. </p>
+                object will be displyed using the chosen format (this is
+                applicable to non-aggregate types only, with a few
+                special exceptions discussed below). </p>
               <p>There are two more special format symbols that you can
                 use only as part of a summary string: <code>%V</code>
                 and <code>%@</code>. The first one tells LLDB to ignore
@@ -518,17 +516,28 @@
                 e.g. <code> <br>
                   <b>(lldb)</b> fr var -T c<br>
                   (Couple) c = {<br>
-                  (SimpleWithPointers) sp = {<br>
-                  (int *) x = 0x00000001001000b0<br>
-                  (float *) y = 0x00000001001000c0<br>
-                  (char *) z = 0x00000001001000d0 "X"<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;(SimpleWithPointers) sp = {<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int *) x = 0x00000001001000b0<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(float *) y = 0x00000001001000c0<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(char *) z = 0x00000001001000d0 "X"<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;(Simple *) s = 0x00000001001000e0<br>
                   }<br>
-                  (Simple *) s = 0x00000001001000e0<br>
-                  }<br>
-                  <b>(lldb)</b> type summary add -f "int = ${*var.sp.x},
+                  </code><br>
+                  
+                  If one types the following commands:
+                  
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add -f "int = ${*var.sp.x},
                   float = ${*var.sp.y}, char = ${*var.sp.z%u}, Simple =
                   ${*var.s}" Couple<br>
-                  <b>(lldb)</b> type summary add -c -p Simple<br>
+                        	<b>(lldb)</b> type summary add -c -p Simple<br>
+                        </td>
+                <table><br>
+
+				the output becomes: <br><code>
+                  
                   <b>(lldb)</b> fr var c<br>
                   (Couple) c = int = 9, float = 9.99, char = 88, Simple
                   = (x=9, y=9.99, z='X')<br>
@@ -536,22 +545,24 @@
               <p>Option <code>-c</code> to <code>type summary add</code>
                 tells LLDB not to look for a summary string, but instead
                 to just print a listing of all the object's children on
-                one line, lay out as in the previous example. The <code>-p</code>
-                flag is used as a trick to show that aggregate types can
-                be dereferenced as well as primitive ones. The above
-                output would be shown even by typing <code>type summary
-                  add -f "int = ${*var.sp.x}, float = ${*var.sp.y}, char
-                  = ${*var.sp.z%u}, Simple = ${var.s}" Couple</code> if
-                one took away the <code>-p</code> flag from the summary
-                for type <code>Simple</code>. </p>
+                one line, as shown in the summary for object Simple.</p>
+                <p> We are using the <code>-p</code> flag here to show that
+                aggregate types can be dereferenced as well as basic types.
+                The following command sequence would work just as well and
+                produce the same output:
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add -f "int = ${*var.sp.x},
+                  float = ${*var.sp.y}, char = ${*var.sp.z%u}, Simple =
+                  ${var.s}" Couple<br>
+                        	<b>(lldb)</b> type summary add -c Simple<br>
+                        </td>
+                <table><br>
             </div>
           </div>
           <div class="post">
-            <h1 class="postheader">More on summary strings</h1>
+            <h1 class="postheader">Bitfields and array syntax</h1>
             <div class="postcontent">
-              <p>What was described above are the main features that you
-                can use in summary strings. However, there are three
-                more features to them.</p>
               <p>Sometimes, a basic type's value actually represents
                 several different values packed together in a bitfield.
                 With the classical view, there is no way to look at
@@ -570,54 +581,69 @@
                 a pair of indices separated by a <code>-</code>. <br>
                 e.g. <br>
                 <code> <b>(lldb)</b> fr var float_point<br>
-                  (float) float_point = -3.14159<br>
-                  <b>(lldb)</b> type summary add -f "Sign: ${var[31]%B}
+                  (float) float_point = -3.14159<br> </code>
+                    <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add -f "Sign: ${var[31]%B}
                   Exponent: ${var[30-23]%x} Mantissa: ${var[0-22]%u}"
-                  float<br>
+                  float
+                        </td>
+                <table><br>
+				
+				<code> 
                   <b>(lldb)</b> fr var float_point<br>
                   (float) float_point = -3.14159 Sign: true Exponent:
                   0x00000080 Mantissa: 4788184<br>
                 </code> In this example, LLDB shows the internal
                 representation of a <code>float</code> variable by
-                extracting bitfields out of a float object. If you give
-                a single index, only that one bit will be extracted. If
-                you give a pair of indices, all the bits in the range
-                (extremes included) will be extracted. Ranges can be
-                specified either by giving the lower index first, or
-                higher index first (as is often customary in describing
-                packed data-type formats). </p>
-              <p>The second additional feature allows you to display
+                extracting bitfields out of a float object.</p>
+                
+                <p> As far as the syntax is concerned, it looks
+                much like the normal C array syntax, but also allows you
+                to specify 2 indices, separated by a - symbol (a range).
+                Ranges can be given either with the lower or the higher index
+                first, and range extremes are always included in the bits extracted. </p>
+                
+              <p>LLDB also allows to use a similar syntax to display
                 array members inside a summary string. For instance, you
                 may want to display all arrays of a given type using a
                 more compact notation than the default, and then just
                 delve into individual array members that prove
-                interesting to your debugging task. You can use a
-                similar syntax to the one used for bitfields to tell
-                LLDB to format arrays in special ways. <br>
+                interesting to your debugging task. You can tell
+                LLDB to format arrays in special ways, possibly
+                independent of the way the array members' datatype is formatted. <br>
                 e.g. <br>
                 <code> <b>(lldb)</b> fr var sarray<br>
                   (Simple [3]) sarray = {<br>
-                  [0] = {<br>
-                  x = 1<br>
-                  y = 2<br>
-                  z = '\x03'<br>
-                  }<br>
-                  [1] = {<br>
-                  x = 4<br>
-                  y = 5<br>
-                  z = '\x06'<br>
-                  }<br>
-                  [2] = {<br>
-                  x = 7<br>
-                  y = 8<br>
-                  z = '\t'<br>
-                  }<br>
-                  }<br>
-                  <b>(lldb)</b> type summary add -f "${var[].x}" "Simple
-                  [3]"<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;[0] = {<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x = 1<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y = 2<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z = '\x03'<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;[1] = {<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x = 4<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y = 5<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z = '\x06'<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;[2] = {<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x = 7<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y = 8<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z = '\t'<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                  }<br></code>
+                  
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add -f "${var[].x}" "Simple
+                  [3]"
+                        </td>
+                <table><br>
+                  
+                  <code>
                   <b>(lldb)</b> fr var sarray<br>
-                  (Simple [3]) sarray = [1,4,7]<br>
-                </code> The <code>[]</code> symbol amounts to: <i>if <code>var</code>
+                  (Simple [3]) sarray = [1,4,7]<br></code></p>
+                  
+                <p>The <code>[]</code> symbol amounts to: <i>if <code>var</code>
                   is an array and I knows its size, apply this summary
                   string to every element of the array</i>. Here, we are
                 asking LLDB to display <code>.x</code> for every
@@ -627,21 +653,75 @@
                 the array format getting in the way: <br>
                 <code> <b>(lldb)</b> fr var sarray[1]<br>
                   (Simple) sarray[1] = {<br>
-                  x = 4<br>
-                  y = 5<br>
-                  z = '\x06'<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;x = 4<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;y = 5<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;z = '\x06'<br>
                   }<br>
                 </code> </p>
               <p>You can also ask LLDB to only print a subset of the
                 array range by using the same syntax used to extract bit
-                for bitfields.</p>
+                for bitfields:
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add -f "${var[1-2].x}" "Simple
+                  [3]"
+                        </td>
+                <table><br>
+                  <code>
+                  <b>(lldb)</b> fr var sarray<br>
+                  (Simple [3]) sarray = [4,7]<br></code></p>
+
               <p>The same logic works if you are printing a pointer
-                instead of an array, however in this latter case, <code>[]</code>
+                instead of an array, however in this latter case, the empty
+                square brackets operator <code>[]</code>
                 cannot be used and you need to give exact range limits.</p>
-              <p>The third, and last, additional feature does not
-                directly apply to the summary strings themselves, but is
-                an additional option to the <code>type summary add</code>
-                command: <code>-x</code></p>
+                
+            <p>In general, LLDB needs the square brackets operator <code>[]</code> in
+            order to handle arrays and pointers correctly, and for pointers it also
+            needs a range. However, a few special cases are defined to make your life easier:
+            <ul>
+				<li>you can print a 0-terminated string (<i>C-string</i>) using the %s format,
+				omitting square brackets, as in:
+				<table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add -f "${var%s}" "char *"
+                        </td>
+                <table>
+                
+                This works for <code>char*</code> and <code>char[]</code> objects, and uses the
+                <code>\0</code> terminator
+                when possible to terminate the string, instead of relying on array length.
+                
+				</li>            </ul>
+            <ul>
+
+				<li>anyone of the array formats (<code>int8_t[]</code>,
+				<code>float32{}</code>, ...), and the <code>y</code>, <code>Y</code>
+				and <code>a</code> formats
+				work to print an array of a non-aggregate
+				type, even if square brackets are omitted.
+				<table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add -f "${var%int32_t[]}" "int [10]"
+                        </td>
+                <table>
+                
+            </ul>
+                This feature, however, is not enabled for pointers because there is no
+                way for LLDB to detect the end of the pointed data.
+                <br>
+                This also does not work for other formats (e.g. <code>boolean</code>), and you must
+                specify the square brackets operator to get the expected output.
+            </p>
+        </div>
+          </div>
+          
+        <div class="post">
+            <h1 class="postheader">Regular expression typenames</h1>
+            <div class="postcontent">
+            </div>
+        </div>
+
               <p>As you noticed, in order to associate the custom
                 summary string to the array types, one must give the
                 array size as part of the typename. This can long become
@@ -651,9 +731,17 @@
                   [12]</code>, ...</p>
               <p>If you use the <code>-x</code> option, type names are
                 treated as regular expressions instead of type names.
-                This would let you rephrase the above example as: <br>
-                <code> <b>(lldb)</b> type summary add -f "${var[].x}"
-                  -x "Simple \[[0-9]+\]"<br>
+                This would let you rephrase the above example
+                for arrays of type <code>Simple [3]</code> as: <br>
+                
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add -f "${var[].x}"
+                  -x "Simple \[[0-9]+\]"
+                        </td>
+                <table>
+                
+                <code> 
                   <b>(lldb)</b> fr var sarray<br>
                   (Simple [3]) sarray = [1,4,7]<br>
                 </code> The above scenario works for <code>Simple [3]</code>
@@ -670,6 +758,36 @@
                 regular expression match for your type itself.</p>
             </div>
           </div>
+          
+        <div class="post">
+            <h1 class="postheader">Named summaries</h1>
+            <div class="postcontent">
+            <p>For a given datatype, there may be different meaningful summary
+            representations. However, currently, only one summary can be associated
+            to a given datatype. If you need to temporarily override the association
+            for a variable, without changing the summary string bound to the datatype,
+            you can use named summaries.</p>
+            
+            <p>Named summaries work by attaching a name to a summary string when creating
+            it. Then, when there is a need to attach the summary string to a variable, the
+            <code>frame variable</code> command, supports a <code>--summary</code> option
+            that tells LLDB to use the named summary given instead of the default one.</p>
+            
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add -f "x=${var.integer}" --name NamedSummary
+                        </td>
+                <table>
+                <code> <b>(lldb)</b> fr var one<br>
+                  (i_am_cool) one = int = 3, float = 3.14159, char = 69<br>
+                  <b>(lldb)</b> fr var one --summary NamedSummary<br>
+                  (i_am_cool) one = x=3<br>
+                </code> </p>
+
+            </div>
+        </div>
+
+          
           <div class="post">
             <h1 class="postheader">Finding summaries 101</h1>
             <div class="postcontent">
