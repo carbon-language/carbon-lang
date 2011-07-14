@@ -2071,20 +2071,22 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   bool CanAcceptCarrySet, CanAcceptPredicationCode;
   GetMnemonicAcceptInfo(Head, CanAcceptCarrySet, CanAcceptPredicationCode);
 
+  // If we had a carry-set on an instruction that can't do that, issue an
+  // error.
+  if (!CanAcceptCarrySet && CarrySetting) {
+    Parser.EatToEndOfStatement();
+    return Error(NameLoc, "instruction '" + Head +
+                 "' can not set flags, but 's' suffix specified");
+  }
+
   // Add the carry setting operand, if necessary.
   //
   // FIXME: It would be awesome if we could somehow invent a location such that
   // match errors on this operand would print a nice diagnostic about how the
   // 's' character in the mnemonic resulted in a CCOut operand.
-  if (CanAcceptCarrySet) {
+  if (CanAcceptCarrySet)
     Operands.push_back(ARMOperand::CreateCCOut(CarrySetting ? ARM::CPSR : 0,
                                                NameLoc));
-  } else {
-    // This mnemonic can't ever accept a carry set, but the user wrote one (or
-    // misspelled another mnemonic).
-
-    // FIXME: Issue a nice error.
-  }
 
   // Add the predication code operand, if necessary.
   if (CanAcceptPredicationCode) {

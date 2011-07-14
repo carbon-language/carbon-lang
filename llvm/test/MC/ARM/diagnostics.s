@@ -3,6 +3,12 @@
 
 @ Check for various assembly diagnostic messages on invalid input.
 
+@ 's' bit on an instruction that can't accept it.
+        mlss r1, r2, r3, r4
+@ CHECK-ERRORS: error: instruction 'mls' can not set flags,
+@ CHECK-ERRORS: but 's' suffix specified
+
+
         @ Out of range shift immediate values.
         adc r1, r2, r3, lsl #invalid
         adc r4, r5, r6, lsl #-1
