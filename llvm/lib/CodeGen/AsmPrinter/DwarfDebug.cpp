@@ -1743,6 +1743,11 @@ bool DwarfDebug::extractScopeInformation() {
         // If we have alread seen a beginning of a instruction range and
         // current instruction scope does not match scope of first instruction
         // in this range then create a new instruction range.
+        DEBUG(dbgs() << "Createing new instruction range :\n");
+        DEBUG(dbgs() << "Begin Range at " << *RangeBeginMI);
+        DEBUG(dbgs() << "End Range at " << *PrevMI);
+        DEBUG(dbgs() << "New Range starting at " << *MInsn);
+        DEBUG(dbgs() << "------------------------\n");
         DbgRange R(RangeBeginMI, PrevMI);
         MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevScope,
                                                         PrevInlinedAt);
