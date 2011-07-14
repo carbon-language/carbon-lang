@@ -63,12 +63,14 @@ void GlobalValue::setAlignment(unsigned Align) {
 }
 
 bool GlobalValue::isDeclaration() const {
+  // Globals are definitions if they have an initializer.
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(this))
     return GV->getNumOperands() == 0;
 
+  // Functions are definitions if they have a body.
   if (const Function *F = dyn_cast<Function>(this))
     return F->empty();
-  
+
   const GlobalAlias *GA = cast<GlobalAlias>(this);
   if (const GlobalValue *AV = GA->getAliasedGlobal())
     return AV->isDeclaration();
