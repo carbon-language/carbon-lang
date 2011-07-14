@@ -224,39 +224,5 @@ namespace aggregate {
     S s3{ 1, 2, 3, 4, 5, 6 }; // xpected-error
     S s4{ {1, 2}, {3, 4}, {5, 6}, { {7, 8} } }; // xpected-error
     S s5{ {1, 2}, {3, 4}, { {5}, {6} }, {7, 8} }; // xpected-error
-    // May still omit stuff, though.
-    S s6{ {1}, {}, { {}, {} } };
   }
-}
-
-namespace references {
-  // From [dcl.init.list]p3 bullet 5:
-  struct S {
-    S(std::initializer_list<double>);
-    S(const std::string&);
-  };
-  void test() {
-    const S &r1 = { 1, 2, 3.0 }; // no-error (constructor #1)
-    const S &r2{ "Spinach" }; // no-error (constructor #2)
-    S &r3 = { 1, 2, 3 }; // xpected-error (binding to non-const)
-    const int &i1 = { 1 }; // no-error
-    const int &i2 = { 1.1 }; // xpected-error {{narrowing}}
-    const int (&iar)[2] = { 1, 2 }; // no-error
-
-    // Edge case: the standard says this must create a temporary and thus
-    // fail to bind, but that's almost certainly a defect.
-    int i;
-    int &ri1{ i };
-    int &ri2 = { i };
-    S s{ "Spinach" };
-    S &rs1{ s };
-    S &rs2 = { s };
-  }
-}
-
-namespace incomplete {
-  // Just to make sure it doesn't crash.
-  struct S;
-  S s { 1, 2, 3 }; // expected-error {{incomplete}}
-  S t = { 1, 2, 3 }; // expected-error {{incomplete}}
 }
