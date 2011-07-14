@@ -1975,10 +1975,12 @@ def STRHT: AI3sthpo<(outs GPR:$base_wb), (ins GPR:$Rt, addrmode3:$addr),
 
 multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
                          InstrItinClass itin, InstrItinClass itin_upd> {
+  // IA is the default, so no need for an explicit suffix on the
+  // mnemonic here. Without it is the cannonical spelling.
   def IA :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
-         !strconcat(asm, "ia${p}\t$Rn, $regs"), "", []> {
+         !strconcat(asm, "${p}\t$Rn, $regs"), "", []> {
     let Inst{24-23} = 0b01;       // Increment After
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
@@ -1986,7 +1988,7 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
   def IA_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
-         !strconcat(asm, "ia${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+         !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
     let Inst{24-23} = 0b01;       // Increment After
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
@@ -2052,10 +2054,11 @@ defm STM : arm_ldst_mult<"stm", 0, LdStMulFrm, IIC_iStore_m, IIC_iStore_mu>;
 } // neverHasSideEffects
 
 // Load / Store Multiple Mnemonic Aliases
-def : MnemonicAlias<"ldmfd", "ldmia">;
+def : MnemonicAlias<"ldmfd", "ldm">;
+def : MnemonicAlias<"ldmia", "ldm">;
 def : MnemonicAlias<"stmfd", "stmdb">;
-def : MnemonicAlias<"ldm", "ldmia">;
-def : MnemonicAlias<"stm", "stmia">;
+def : MnemonicAlias<"stmia", "stm">;
+def : MnemonicAlias<"stmea", "stm">;
 
 // FIXME: remove when we have a way to marking a MI with these properties.
 // FIXME: Should pc be an implicit operand like PICADD, etc?
