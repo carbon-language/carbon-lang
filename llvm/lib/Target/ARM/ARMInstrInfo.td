@@ -3304,7 +3304,7 @@ def DMB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
 }
 }
 
-def : InstAlias<"dmb", (DMB 0xf)>;
+def : InstAlias<"dmb", (DMB 0xf)>, Requires<[IsARM, HasDB]>;
 
 def DSB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
                 "dsb", "\t$opt", []>,
