@@ -304,6 +304,19 @@ LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes,
                                  ElementCount, Packed);
 }
 
+LLVMTypeRef LLVMStructCreateNamed(LLVMContextRef C, const char *Name)
+{
+  return wrap(StructType::createNamed(*unwrap(C), Name));
+}
+
+void LLVMStructSetBody(LLVMTypeRef StructTy, LLVMTypeRef *ElementTypes,
+                       unsigned ElementCount, LLVMBool Packed) {
+  std::vector<Type*> Tys;
+  for (LLVMTypeRef *I = ElementTypes,
+                   *E = ElementTypes + ElementCount; I != E; ++I)
+    Tys.push_back(unwrap(*I));  
+  unwrap<StructType>(StructTy)->setBody(Tys, Packed != 0);
+}
 
 unsigned LLVMCountStructElementTypes(LLVMTypeRef StructTy) {
   return unwrap<StructType>(StructTy)->getNumElements();

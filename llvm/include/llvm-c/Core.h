@@ -387,6 +387,10 @@ LLVMTypeRef LLVMStructTypeInContext(LLVMContextRef C, LLVMTypeRef *ElementTypes,
                                     unsigned ElementCount, LLVMBool Packed);
 LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes, unsigned ElementCount,
                            LLVMBool Packed);
+LLVMTypeRef LLVMStructCreateNamed(LLVMContextRef C, const char *Name);
+void LLVMStructSetBody(LLVMTypeRef StructTy, LLVMTypeRef *ElementTypes,
+                       unsigned ElementCount, LLVMBool Packed);
+
 unsigned LLVMCountStructElementTypes(LLVMTypeRef StructTy);
 void LLVMGetStructElementTypes(LLVMTypeRef StructTy, LLVMTypeRef *Dest);
 LLVMBool LLVMIsPackedStruct(LLVMTypeRef StructTy);
@@ -408,7 +412,6 @@ LLVMTypeRef LLVMX86MMXTypeInContext(LLVMContextRef C);
 
 LLVMTypeRef LLVMVoidType(void);
 LLVMTypeRef LLVMLabelType(void);
-LLVMTypeRef LLVMOpaqueType(void);
 LLVMTypeRef LLVMX86MMXType(void);
 
 /*===-- Values ------------------------------------------------------------===*/
