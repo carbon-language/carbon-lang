@@ -1582,19 +1582,9 @@ DbgScope *DwarfDebug::getOrCreateDbgScope(DebugLoc DL, LLVMContext &Ctx) {
         getOrCreateDbgScope(DebugLoc::getFromDILexicalBlock(Scope), Ctx);
       WScope->setParent(Parent);
       Parent->addScope(WScope);
-    }
-
-    if (!WScope->getParent()) {
-      StringRef SPName = DISubprogram(Scope).getLinkageName();
-      // We used to check only for a linkage name, but that fails
-      // since we began omitting the linkage name for private
-      // functions.  The new way is to check for the name in metadata,
-      // but that's not supported in old .ll test cases.  Ergo, we
-      // check both.
-      if (SPName == Asm->MF->getFunction()->getName() ||
-          DISubprogram(Scope).getFunction() == Asm->MF->getFunction())
-        CurrentFnDbgScope = WScope;
-    }
+    } else if (DIDescriptor(Scope).isSubprogram()
+               && DISubprogram(Scope).describes(Asm->MF->getFunction()))
+      CurrentFnDbgScope = WScope;
 
     return WScope;
   }
