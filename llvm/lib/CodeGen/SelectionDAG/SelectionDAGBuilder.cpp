@@ -5706,10 +5706,13 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
       SDISelAsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
 
       if (OpInfo.ConstraintVT != Input.ConstraintVT) {
+	std::pair<unsigned, const TargetRegisterClass*> MatchRC =
+	  TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode, OpInfo.ConstraintVT);
+	std::pair<unsigned, const TargetRegisterClass*> InputRC =
+	  TLI.getRegForInlineAsmConstraint(Input.ConstraintCode, Input.ConstraintVT);
         if ((OpInfo.ConstraintVT.isInteger() !=
              Input.ConstraintVT.isInteger()) ||
-            (OpInfo.ConstraintVT.getSizeInBits() !=
-             Input.ConstraintVT.getSizeInBits())) {
+            (MatchRC.second != InputRC.second)) {
           report_fatal_error("Unsupported asm: input constraint"
                              " with a matching output constraint of"
                              " incompatible type!");
@@ -5972,8 +5975,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
              "Don't know how to handle indirect register inputs yet!");
 
       // Copy the input into the appropriate registers.
-      if (OpInfo.AssignedRegs.Regs.empty() ||
-          !OpInfo.AssignedRegs.areValueTypesLegal(TLI))
+      if (OpInfo.AssignedRegs.Regs.empty())
         report_fatal_error("Couldn't allocate input reg for constraint '" +
                            Twine(OpInfo.ConstraintCode) + "'!");
 

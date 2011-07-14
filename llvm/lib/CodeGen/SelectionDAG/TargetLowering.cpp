@@ -2966,10 +2966,13 @@ TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
       AsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
 
       if (OpInfo.ConstraintVT != Input.ConstraintVT) {
+	std::pair<unsigned, const TargetRegisterClass*> MatchRC =
+	  getRegForInlineAsmConstraint(OpInfo.ConstraintCode, OpInfo.ConstraintVT);
+	std::pair<unsigned, const TargetRegisterClass*> InputRC =
+	  getRegForInlineAsmConstraint(Input.ConstraintCode, Input.ConstraintVT);
         if ((OpInfo.ConstraintVT.isInteger() !=
              Input.ConstraintVT.isInteger()) ||
-            (OpInfo.ConstraintVT.getSizeInBits() !=
-             Input.ConstraintVT.getSizeInBits())) {
+            (MatchRC.second != InputRC.second)) {
           report_fatal_error("Unsupported asm: input constraint"
                              " with a matching output constraint of"
                              " incompatible type!");

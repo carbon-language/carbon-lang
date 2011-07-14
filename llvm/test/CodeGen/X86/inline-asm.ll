@@ -30,3 +30,16 @@ entry:
   %0 = tail call i32 asm "test", "=l,~{dirflag},~{fpsr},~{flags}"() nounwind
   ret i32 0
 }
+
+; rdar://9777108 PR10352
+define void @test6(i1 zeroext %desired) nounwind {
+entry:
+  tail call void asm sideeffect "foo $0", "q,~{dirflag},~{fpsr},~{flags}"(i1 %desired) nounwind
+  ret void
+}
+
+define void @test7(i1 zeroext %desired, i32* %p) nounwind {
+entry:
+  %0 = tail call i8 asm sideeffect "xchg $0, $1", "=r,*m,0,~{memory},~{dirflag},~{fpsr},~{flags}"(i32* %p, i1 %desired) nounwind
+  ret void
+}

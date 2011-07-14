@@ -12971,7 +12971,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 	  return std::make_pair(0U, X86::GR32RegisterClass);
 	else if (VT == MVT::i16)
 	  return std::make_pair(0U, X86::GR16RegisterClass);
-	else if (VT == MVT::i8)
+	else if (VT == MVT::i8 || VT == MVT::i1)
 	  return std::make_pair(0U, X86::GR8RegisterClass);
 	else if (VT == MVT::i64 || VT == MVT::f64)
 	  return std::make_pair(0U, X86::GR64RegisterClass);
@@ -12983,14 +12983,14 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 	return std::make_pair(0U, X86::GR32_ABCDRegisterClass);
       else if (VT == MVT::i16)
 	return std::make_pair(0U, X86::GR16_ABCDRegisterClass);
-      else if (VT == MVT::i8)
+      else if (VT == MVT::i8 || VT == MVT::i1)
 	return std::make_pair(0U, X86::GR8_ABCD_LRegisterClass);
       else if (VT == MVT::i64)
 	return std::make_pair(0U, X86::GR64_ABCDRegisterClass);
       break;
     case 'r':   // GENERAL_REGS
     case 'l':   // INDEX_REGS
-      if (VT == MVT::i8)
+      if (VT == MVT::i8 || VT == MVT::i1)
         return std::make_pair(0U, X86::GR8RegisterClass);
       if (VT == MVT::i16)
         return std::make_pair(0U, X86::GR16RegisterClass);
@@ -12998,7 +12998,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
         return std::make_pair(0U, X86::GR32RegisterClass);
       return std::make_pair(0U, X86::GR64RegisterClass);
     case 'R':   // LEGACY_REGS
-      if (VT == MVT::i8)
+      if (VT == MVT::i8 || VT == MVT::i1)
         return std::make_pair(0U, X86::GR8_NOREXRegisterClass);
       if (VT == MVT::i16)
         return std::make_pair(0U, X86::GR16_NOREXRegisterClass);
