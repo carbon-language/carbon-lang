@@ -83,8 +83,8 @@ class LLDBIteratorTestCase(TestBase):
         for i in range(target.GetNumBreakpoints()):
             yours.append(target.GetBreakpointAtIndex(i))
         mine = []
-        for m in target.breakpoint_iter():
-            mine.append(m)
+        for b in target.breakpoint_iter():
+            mine.append(b)
 
         self.assertTrue(len(yours) == len(mine))
         for i in range(len(yours)):
