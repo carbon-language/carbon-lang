@@ -59,15 +59,15 @@ class TokenLexer {
   ///
   unsigned CurToken;
 
-  /// InstantiateLocStart/End - The source location range where this macro was
-  /// instantiated.
-  SourceLocation InstantiateLocStart, InstantiateLocEnd;
+  /// ExpandLocStart/End - The source location range where this macro was
+  /// expanded.
+  SourceLocation ExpandLocStart, ExpandLocEnd;
 
   /// \brief Source location pointing at the source location entry chunk that
-  /// was reserved for the current macro instantiation.
+  /// was reserved for the current macro expansion.
   SourceLocation MacroExpansionStart;
   
-  /// \brief The offset of the macro instantiation in the
+  /// \brief The offset of the macro expansion in the
   /// "source location address space".
   unsigned MacroStartSLocOffset;
 
@@ -162,7 +162,7 @@ private:
   /// HandleMicrosoftCommentPaste - In microsoft compatibility mode, /##/ pastes
   /// together to form a comment that comments out everything in the current
   /// macro, other active macros, and anything left on the current physical
-  /// source line of the instantiated buffer.  Handle this by returning the
+  /// source line of the expanded buffer.  Handle this by returning the
   /// first token on the next line.
   void HandleMicrosoftCommentPaste(Token &Tok);
 

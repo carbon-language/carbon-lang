@@ -23,7 +23,7 @@ using namespace clang;
 
 /// Create a TokenLexer for the specified macro with the specified actual
 /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
-void TokenLexer::Init(Token &Tok, SourceLocation ILEnd, MacroArgs *Actuals) {
+void TokenLexer::Init(Token &Tok, SourceLocation ELEnd, MacroArgs *Actuals) {
   // If the client is reusing a TokenLexer, make sure to free any memory
   // associated with it.
   destroy();
@@ -32,8 +32,8 @@ void TokenLexer::Init(Token &Tok, SourceLocation ILEnd, MacroArgs *Actuals) {
   ActualArgs = Actuals;
   CurToken = 0;
 
-  InstantiateLocStart = Tok.getLocation();
-  InstantiateLocEnd = ILEnd;
+  ExpandLocStart = Tok.getLocation();
+  ExpandLocEnd = ELEnd;
   AtStartOfLine = Tok.isAtStartOfLine();
   HasLeadingSpace = Tok.hasLeadingSpace();
   Tokens = &*Macro->tokens_begin();
@@ -49,7 +49,7 @@ void TokenLexer::Init(Token &Tok, SourceLocation ILEnd, MacroArgs *Actuals) {
     assert(Tokens[0].getLocation().isValid());
     assert((Tokens[0].getLocation().isFileID() || Tokens[0].is(tok::comment)) &&
            "Macro defined in macro?");
-    assert(InstantiateLocStart.isValid());
+    assert(ExpandLocStart.isValid());
 
     // Reserve a source location entry chunk for the length of the macro
     // definition. Tokens that get lexed directly from the definition will
@@ -58,8 +58,8 @@ void TokenLexer::Init(Token &Tok, SourceLocation ILEnd, MacroArgs *Actuals) {
     SourceLocation macroStart = SM.getInstantiationLoc(Tokens[0].getLocation());
     MacroDefStartInfo = SM.getDecomposedLoc(macroStart);
     MacroExpansionStart = SM.createInstantiationLoc(macroStart,
-                                              InstantiateLocStart,
-                                              InstantiateLocEnd,
+                                              ExpandLocStart,
+                                              ExpandLocEnd,
                                               Macro->getDefinitionLength(SM));
   }
 
@@ -91,7 +91,7 @@ void TokenLexer::Init(const Token *TokArray, unsigned NumToks,
   DisableMacroExpansion = disableMacroExpansion;
   NumTokens = NumToks;
   CurToken = 0;
-  InstantiateLocStart = InstantiateLocEnd = SourceLocation();
+  ExpandLocStart = ExpandLocEnd = SourceLocation();
   AtStartOfLine = false;
   HasLeadingSpace = false;
   MacroExpansionStart = SourceLocation();
@@ -145,7 +145,7 @@ void TokenLexer::ExpandFunctionArguments() {
       assert(ArgNo != -1 && "Token following # is not an argument?");
 
       SourceLocation hashInstLoc;
-      if(InstantiateLocStart.isValid()) {
+      if(ExpandLocStart.isValid()) {
         hashInstLoc = getMacroExpansionLocation(CurTok.getLocation());
         assert(hashInstLoc.isValid() && "Expected '#' to come from definition");
       }
@@ -224,7 +224,7 @@ void TokenLexer::ExpandFunctionArguments() {
             Tok.setKind(tok::unknown);
         }
 
-        if(InstantiateLocStart.isValid()) {
+        if(ExpandLocStart.isValid()) {
           SourceLocation curInst =
               getMacroExpansionLocation(CurTok.getLocation());
           assert(curInst.isValid() &&
@@ -281,7 +281,7 @@ void TokenLexer::ExpandFunctionArguments() {
           Tok.setKind(tok::unknown);
       }
 
-      if (InstantiateLocStart.isValid()) {
+      if (ExpandLocStart.isValid()) {
         SourceLocation curInst =
             getMacroExpansionLocation(CurTok.getLocation());
         assert(curInst.isValid() &&
@@ -413,17 +413,17 @@ void TokenLexer::Lex(Token &Tok) {
   // The token's current location indicate where the token was lexed from.  We
   // need this information to compute the spelling of the token, but any
   // diagnostics for the expanded token should appear as if they came from
-  // InstantiationLoc.  Pull this information together into a new SourceLocation
+  // ExpansionLoc.  Pull this information together into a new SourceLocation
   // that captures all of this.
-  if (InstantiateLocStart.isValid() &&   // Don't do this for token streams.
+  if (ExpandLocStart.isValid() &&   // Don't do this for token streams.
       // Check that the token's location was not already set properly.
       SM.isBeforeInSourceLocationOffset(Tok.getLocation(),
                                         MacroStartSLocOffset)) {
     SourceLocation instLoc;
     if (Tok.is(tok::comment)) {
       instLoc = SM.createInstantiationLoc(Tok.getLocation(),
-                                          InstantiateLocStart,
-                                          InstantiateLocEnd,
+                                          ExpandLocStart,
+                                          ExpandLocEnd,
                                           Tok.getLength());
     } else {
       instLoc = getMacroExpansionLocation(Tok.getLocation());
@@ -570,12 +570,12 @@ bool TokenLexer::PasteTokens(Token &Tok) {
 
         // Do not emit the error when preprocessing assembler code.
         if (!PP.getLangOptions().AsmPreprocessor) {
-          // Explicitly convert the token location to have proper instantiation
+          // Explicitly convert the token location to have proper expansion
           // information so that the user knows where it came from.
           SourceManager &SM = PP.getSourceManager();
           SourceLocation Loc =
-            SM.createInstantiationLoc(PasteOpLoc, InstantiateLocStart,
-                                      InstantiateLocEnd, 2);
+            SM.createInstantiationLoc(PasteOpLoc, ExpandLocStart,
+                                      ExpandLocEnd, 2);
           // If we're in microsoft extensions mode, downgrade this from a hard
           // error to a warning that defaults to an error.  This allows
           // disabling it.
@@ -607,9 +607,9 @@ bool TokenLexer::PasteTokens(Token &Tok) {
   // The token's current location indicate where the token was lexed from.  We
   // need this information to compute the spelling of the token, but any
   // diagnostics for the expanded token should appear as if the token was
-  // instantiated from the (##) operator. Pull this information together into
+  // expanded from the (##) operator. Pull this information together into
   // a new SourceLocation that captures all of this.
-  if (InstantiateLocStart.isValid()) {
+  if (ExpandLocStart.isValid()) {
     SourceManager &SM = PP.getSourceManager();
     SourceLocation pasteLocInst =
         getMacroExpansionLocation(PasteOpLoc);
@@ -652,7 +652,7 @@ bool TokenLexer::isParsingPreprocessorDirective() const {
 /// HandleMicrosoftCommentPaste - In microsoft compatibility mode, /##/ pastes
 /// together to form a comment that comments out everything in the current
 /// macro, other active macros, and anything left on the current physical
-/// source line of the instantiated buffer.  Handle this by returning the
+/// source line of the expanded buffer.  Handle this by returning the
 /// first token on the next line.
 void TokenLexer::HandleMicrosoftCommentPaste(Token &Tok) {
   // We 'comment out' the rest of this macro by just ignoring the rest of the
@@ -670,7 +670,7 @@ void TokenLexer::HandleMicrosoftCommentPaste(Token &Tok) {
 /// definition, returns the appropriate source location pointing at the
 /// macro expansion source location entry.
 SourceLocation TokenLexer::getMacroExpansionLocation(SourceLocation loc) const {
-  assert(InstantiateLocStart.isValid() && MacroExpansionStart.isValid() &&
+  assert(ExpandLocStart.isValid() && MacroExpansionStart.isValid() &&
          "Not appropriate for token streams");
   assert(loc.isValid());
   
