@@ -578,3 +578,13 @@ _func:
 @ CHECK: eor	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0x26,0xe0]
 @ CHECK: eor	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x26,0xe0]
 @ CHECK: eor	r4, r4, r5, rrx         @ encoding: [0x65,0x40,0x24,0xe0]
+
+
+@------------------------------------------------------------------------------
+@ ISB
+@------------------------------------------------------------------------------
+        isb sy
+        isb
+
+@ CHECK: isb sy                         @ encoding: [0x6f,0xf0,0x7f,0xf5]
+@ CHECK: isb sy                         @ encoding: [0x6f,0xf0,0x7f,0xf5]
