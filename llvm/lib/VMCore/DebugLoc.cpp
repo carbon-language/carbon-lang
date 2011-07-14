@@ -144,6 +144,22 @@ DebugLoc DebugLoc::getFromDILexicalBlock(MDNode *N) {
   return get(LineNo, ColNo, Scope, NULL);
 }
 
+void DebugLoc::dump(const LLVMContext &Ctx) const {
+#ifndef NDEBUG
+  if (!isUnknown()) {
+    dbgs() << getLine();
+    if (getCol() != 0)
+      dbgs() << ',' << getCol();
+    DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(getInlinedAt(Ctx));
+    if (!InlinedAtDL.isUnknown()) {
+      dbgs() << " @ ";
+      InlinedAtDL.dump(Ctx);
+    } else
+      dbgs() << "\n";
+  }
+#endif
+}
+
 //===----------------------------------------------------------------------===//
 // DenseMap specialization
 //===----------------------------------------------------------------------===//

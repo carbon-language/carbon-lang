@@ -97,6 +97,8 @@ namespace llvm {
       return LineCol == DL.LineCol && ScopeIdx == DL.ScopeIdx;
     }
     bool operator!=(const DebugLoc &DL) const { return !(*this == DL); }
+
+    void dump(const LLVMContext &Ctx) const;
   };
 
   template <>
