@@ -59,7 +59,10 @@ if( LLVM_ENABLE_PIC )
 endif()
 
 if( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/clang/CMakeLists.txt )
-  add_subdirectory( ${CMAKE_CURRENT_SOURCE_DIR}/clang )
+  option(LLVM_BUILD_CLANG "Whether to build Clang as part of LLVM" ON)
+  if (${LLVM_BUILD_CLANG})
+    add_subdirectory( ${CMAKE_CURRENT_SOURCE_DIR}/clang )
+  endif()
 endif( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/clang/CMakeLists.txt )
 
 set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} PARENT_SCOPE)
