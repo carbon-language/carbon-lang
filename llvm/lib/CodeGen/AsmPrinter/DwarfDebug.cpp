@@ -1315,7 +1315,6 @@ bool DwarfDebug::addCurrentFnArgument(const MachineFunction *MF,
 void
 DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction * MF,
                                    SmallPtrSet<const MDNode *, 16> &Processed) {
-  const LLVMContext &Ctx = Asm->MF->getFunction()->getContext();
   MachineModuleInfo::VariableDbgInfoMapTy &VMap = MMI->getVariableDbgInfo();
   for (MachineModuleInfo::VariableDbgInfoMapTy::iterator VI = VMap.begin(),
          VE = VMap.end(); VI != VE; ++VI) {
@@ -1325,11 +1324,7 @@ DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction * MF,
     DIVariable DV(Var);
     const std::pair<unsigned, DebugLoc> &VP = VI->second;
 
-    DbgScope *Scope = 0;
-    if (const MDNode *IA = VP.second.getInlinedAt(Ctx))
-      Scope = ConcreteScopes.lookup(IA);
-    if (Scope == 0)
-      Scope = DbgScopeMap.lookup(VP.second.getScope(Ctx));
+    DbgScope *Scope = findDbgScope(VP.second);
 
     // If variable scope is not found then skip this variable.
     if (Scope == 0)
@@ -1412,7 +1407,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
         DISubprogram(DV.getContext()).describes(MF->getFunction()))
       Scope = CurrentFnDbgScope;
     else
-      Scope = findDbgScope(MInsn);
+      Scope = findDbgScope(MInsn->getDebugLoc());
     // If variable scope is not found then skip this variable.
     if (!Scope)
       continue;
@@ -2081,17 +2076,13 @@ bool DwarfDebug::findVariableFrameIndex(const DbgVariable *V, int *FI) {
   return true;
 }
 
-/// findDbgScope - Find DbgScope for the debug loc attached with an
-/// instruction.
-DbgScope *DwarfDebug::findDbgScope(const MachineInstr *MInsn) {
-  DbgScope *Scope = NULL;
-  LLVMContext &Ctx =
-    MInsn->getParent()->getParent()->getFunction()->getContext();
-  DebugLoc DL = MInsn->getDebugLoc();
-
+/// findDbgScope - Find DbgScope for the debug loc.
+DbgScope *DwarfDebug::findDbgScope(DebugLoc DL) {
   if (DL.isUnknown())
-    return Scope;
+    return NULL;
 
+  DbgScope *Scope = NULL;
+  LLVMContext &Ctx = Asm->MF->getFunction()->getContext();
   if (const MDNode *IA = DL.getInlinedAt(Ctx))
     Scope = ConcreteScopes.lookup(IA);
   if (Scope == 0)

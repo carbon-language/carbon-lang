@@ -450,9 +450,8 @@ private:
   /// is found. Update FI to hold value of the index.
   bool findVariableFrameIndex(const DbgVariable *V, int *FI);
 
-  /// findDbgScope - Find DbgScope for the debug loc attached with an 
-  /// instruction.
-  DbgScope *findDbgScope(const MachineInstr *MI);
+  /// findDbgScope - Find DbgScope for the debug loc.
+  DbgScope *findDbgScope(DebugLoc DL);
 
   /// identifyScopeMarkers() - Indentify instructions that are marking
   /// beginning of or end of a scope.
