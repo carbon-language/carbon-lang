@@ -515,6 +515,7 @@ Corrected:
     // Perform typo correction to determine if there is another name that is
     // close to this name.
     if (!SecondTry) {
+      SecondTry = true;
       if (TypoCorrection Corrected = CorrectTypo(Result.getLookupNameInfo(),
                                                  Result.getLookupKind(), S, &SS)) {
         unsigned UnqualifiedDiag = diag::err_undeclared_var_use_suggest;
@@ -560,8 +561,9 @@ Corrected:
         if (Corrected.isKeyword())
           return Corrected.getCorrectionAsIdentifierInfo();
         
-        Diag(FirstDecl->getLocation(), diag::note_previous_decl)
-          << CorrectedQuotedStr;
+        if (FirstDecl)
+          Diag(FirstDecl->getLocation(), diag::note_previous_decl)
+            << CorrectedQuotedStr;
 
         // If we found an Objective-C instance variable, let
         // LookupInObjCMethod build the appropriate expression to
