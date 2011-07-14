@@ -261,7 +261,7 @@ executable.
     %feature("docstring", "
 #endif
     //------------------------------------------------------------------
-    /// Attach to process with name.
+    /// Connect to a remote debug server with url.
     ///
     /// @param[in] listener
     ///     An optional listener that will receive all process events.
