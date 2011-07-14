@@ -336,6 +336,7 @@ else ()
   message(STATUS "Native target architecture is ${LLVM_NATIVE_ARCH}")
   set(LLVM_NATIVE_TARGET LLVMInitialize${LLVM_NATIVE_ARCH}Target)
   set(LLVM_NATIVE_TARGETINFO LLVMInitialize${LLVM_NATIVE_ARCH}TargetInfo)
+  set(LLVM_NATIVE_MCASMINFO LLVMInitialize${LLVM_NATIVE_ARCH}MCAsmInfo)
   set(LLVM_NATIVE_ASMPRINTER LLVMInitialize${LLVM_NATIVE_ARCH}AsmPrinter)
 endif ()
 

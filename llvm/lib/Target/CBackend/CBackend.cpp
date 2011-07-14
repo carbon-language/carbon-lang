@@ -62,13 +62,11 @@ extern "C" void LLVMInitializeCBackendTarget() {
   RegisterTargetMachine<CTargetMachine> X(TheCBackendTarget);
 }
 
-extern "C" void LLVMInitializeCBackendMCInstrInfo() {
-  RegisterMCInstrInfo<MCInstrInfo> X(TheCBackendTarget);
-}
+extern "C" void LLVMInitializeCBackendMCAsmInfo() {}
 
-extern "C" void LLVMInitializeCBackendMCSubtargetInfo() {
-  RegisterMCSubtargetInfo<MCSubtargetInfo> X(TheCBackendTarget);
-}
+extern "C" void LLVMInitializeCBackendMCInstrInfo() {}
+
+extern "C" void LLVMInitializeCBackendMCSubtargetInfo() {}
 
 namespace {
   class CBEMCAsmInfo : public MCAsmInfo {
@@ -1664,7 +1662,7 @@ bool CWriter::doInitialization(Module &M) {
 
   std::string E;
   if (const Target *Match = TargetRegistry::lookupTarget(Triple, E))
-    TAsm = Match->createAsmInfo(Triple);
+    TAsm = Match->createMCAsmInfo(Triple);
 #endif
   TAsm = new CBEMCAsmInfo();
   TCtx = new MCContext(*TAsm, NULL);
@@ -3167,7 +3165,7 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
 
   std::string E;
   if (const Target *Match = TargetRegistry::lookupTarget(Triple, E))
-    TargetAsm = Match->createAsmInfo(Triple);
+    TargetAsm = Match->createMCAsmInfo(Triple);
   else
     return c.Codes[0];
 

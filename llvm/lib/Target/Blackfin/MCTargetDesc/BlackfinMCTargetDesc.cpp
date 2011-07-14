@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BlackfinMCTargetDesc.h"
+#include "BlackfinMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -29,7 +30,7 @@
 using namespace llvm;
 
 
-MCInstrInfo *createBlackfinMCInstrInfo() {
+static MCInstrInfo *createBlackfinMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitBlackfinMCInstrInfo(X);
   return X;
@@ -41,8 +42,9 @@ extern "C" void LLVMInitializeBlackfinMCInstrInfo() {
 }
 
 
-MCSubtargetInfo *createBlackfinMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                               StringRef FS) {
+static MCSubtargetInfo *createBlackfinMCSubtargetInfo(StringRef TT,
+                                                      StringRef CPU,
+                                                      StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitBlackfinMCSubtargetInfo(X, TT, CPU, FS);
   return X;
@@ -51,4 +53,8 @@ MCSubtargetInfo *createBlackfinMCSubtargetInfo(StringRef TT, StringRef CPU,
 extern "C" void LLVMInitializeBlackfinMCSubtargetInfo() {
   TargetRegistry::RegisterMCSubtargetInfo(TheBlackfinTarget,
                                           createBlackfinMCSubtargetInfo);
+}
+
+extern "C" void LLVMInitializeBlackfinMCAsmInfo() {
+  RegisterMCAsmInfo<BlackfinMCAsmInfo> X(TheBlackfinTarget);
 }

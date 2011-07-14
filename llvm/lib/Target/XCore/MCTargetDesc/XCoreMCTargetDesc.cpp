@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "XCoreMCTargetDesc.h"
+#include "XCoreMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -28,7 +29,7 @@
 
 using namespace llvm;
 
-MCInstrInfo *createXCoreMCInstrInfo() {
+static MCInstrInfo *createXCoreMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitXCoreMCInstrInfo(X);
   return X;
@@ -38,8 +39,8 @@ extern "C" void LLVMInitializeXCoreMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheXCoreTarget, createXCoreMCInstrInfo);
 }
 
-MCSubtargetInfo *createXCoreMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                            StringRef FS) {
+static MCSubtargetInfo *createXCoreMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                                   StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitXCoreMCSubtargetInfo(X, TT, CPU, FS);
   return X;
@@ -48,4 +49,8 @@ MCSubtargetInfo *createXCoreMCSubtargetInfo(StringRef TT, StringRef CPU,
 extern "C" void LLVMInitializeXCoreMCSubtargetInfo() {
   TargetRegistry::RegisterMCSubtargetInfo(TheXCoreTarget,
                                           createXCoreMCSubtargetInfo);
+}
+
+extern "C" void LLVMInitializeXCoreMCAsmInfo() {
+  RegisterMCAsmInfo<XCoreMCAsmInfo> X(TheXCoreTarget);
 }

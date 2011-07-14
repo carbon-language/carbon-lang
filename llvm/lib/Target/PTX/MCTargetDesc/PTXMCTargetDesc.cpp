@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PTXMCTargetDesc.h"
+#include "PTXMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -28,7 +29,7 @@
 
 using namespace llvm;
 
-MCInstrInfo *createPTXMCInstrInfo() {
+static MCInstrInfo *createPTXMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitPTXMCInstrInfo(X);
   return X;
@@ -39,8 +40,8 @@ extern "C" void LLVMInitializePTXMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(ThePTX64Target, createPTXMCInstrInfo);
 }
 
-MCSubtargetInfo *createPTXMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                            StringRef FS) {
+static MCSubtargetInfo *createPTXMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                                 StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitPTXMCSubtargetInfo(X, TT, CPU, FS);
   return X;
@@ -51,4 +52,9 @@ extern "C" void LLVMInitializePTXMCSubtargetInfo() {
                                           createPTXMCSubtargetInfo);
   TargetRegistry::RegisterMCSubtargetInfo(ThePTX64Target,
                                           createPTXMCSubtargetInfo);
+}
+
+extern "C" void LLVMInitializePTXMCAsmInfo() {
+  RegisterMCAsmInfo<PTXMCAsmInfo> X(ThePTX32Target);
+  RegisterMCAsmInfo<PTXMCAsmInfo> Y(ThePTX64Target);
 }

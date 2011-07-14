@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MBlazeMCTargetDesc.h"
+#include "MBlazeMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -29,7 +30,7 @@
 using namespace llvm;
 
 
-MCInstrInfo *createMBlazeMCInstrInfo() {
+static MCInstrInfo *createMBlazeMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitMBlazeMCInstrInfo(X);
   return X;
@@ -39,8 +40,8 @@ extern "C" void LLVMInitializeMBlazeMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheMBlazeTarget, createMBlazeMCInstrInfo);
 }
 
-MCSubtargetInfo *createMBlazeMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                            StringRef FS) {
+static MCSubtargetInfo *createMBlazeMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                                    StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitMBlazeMCSubtargetInfo(X, TT, CPU, FS);
   return X;
@@ -49,4 +50,16 @@ MCSubtargetInfo *createMBlazeMCSubtargetInfo(StringRef TT, StringRef CPU,
 extern "C" void LLVMInitializeMBlazeMCSubtargetInfo() {
   TargetRegistry::RegisterMCSubtargetInfo(TheMBlazeTarget,
                                           createMBlazeMCSubtargetInfo);
+}
+
+static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
+  Triple TheTriple(TT);
+  switch (TheTriple.getOS()) {
+  default:
+    return new MBlazeMCAsmInfo();
+  }
+}
+
+extern "C" void LLVMInitializeMBlazeMCAsmInfo() {
+  RegisterMCAsmInfoFn X(TheMBlazeTarget, createMCAsmInfo);
 }

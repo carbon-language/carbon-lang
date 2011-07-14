@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SPUMCTargetDesc.h"
+#include "SPUMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -28,7 +29,7 @@
 
 using namespace llvm;
 
-MCInstrInfo *createSPUMCInstrInfo() {
+static MCInstrInfo *createSPUMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitSPUMCInstrInfo(X);
   return X;
@@ -38,8 +39,8 @@ extern "C" void LLVMInitializeCellSPUMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheCellSPUTarget, createSPUMCInstrInfo);
 }
 
-MCSubtargetInfo *createSPUMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                          StringRef FS) {
+static MCSubtargetInfo *createSPUMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                                 StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitSPUMCSubtargetInfo(X, TT, CPU, FS);
   return X;
@@ -48,4 +49,8 @@ MCSubtargetInfo *createSPUMCSubtargetInfo(StringRef TT, StringRef CPU,
 extern "C" void LLVMInitializeCellSPUMCSubtargetInfo() {
   TargetRegistry::RegisterMCSubtargetInfo(TheCellSPUTarget,
                                           createSPUMCSubtargetInfo);
+}
+
+extern "C" void LLVMInitializeCellSPUMCAsmInfo() {
+  RegisterMCAsmInfo<SPULinuxMCAsmInfo> X(TheCellSPUTarget);
 }

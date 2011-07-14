@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Alpha.h"
-#include "AlphaMCAsmInfo.h"
 #include "AlphaTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/FormattedStream.h"
@@ -21,7 +20,6 @@ using namespace llvm;
 extern "C" void LLVMInitializeAlphaTarget() { 
   // Register the target.
   RegisterTargetMachine<AlphaTargetMachine> X(TheAlphaTarget);
-  RegisterAsmInfo<AlphaMCAsmInfo> Y(TheAlphaTarget);
 }
 
 AlphaTargetMachine::AlphaTargetMachine(const Target &T, const std::string &TT,

@@ -196,7 +196,7 @@ static int AsLexInput(const char *ProgName) {
   if (!TheTarget)
     return 1;
 
-  llvm::OwningPtr<MCAsmInfo> MAI(TheTarget->createAsmInfo(TripleName));
+  llvm::OwningPtr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(TripleName));
   assert(MAI && "Unable to create target asm info!");
 
   AsmLexer Lexer(*MAI);
@@ -306,7 +306,7 @@ static int AssembleInput(const char *ProgName) {
   SrcMgr.setIncludeDirs(IncludeDirs);
 
 
-  llvm::OwningPtr<MCAsmInfo> MAI(TheTarget->createAsmInfo(TripleName));
+  llvm::OwningPtr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(TripleName));
   assert(MAI && "Unable to create target asm info!");
 
   // Package up features to be passed to target/subtarget
@@ -436,6 +436,7 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargetInfos();
   // FIXME: We shouldn't need to initialize the Target(Machine)s.
   llvm::InitializeAllTargets();
+  llvm::InitializeAllMCAsmInfos();
   llvm::InitializeAllMCInstrInfos();
   llvm::InitializeAllMCSubtargetInfos();
   llvm::InitializeAllAsmPrinters();

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsMCTargetDesc.h"
+#include "MipsMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -28,7 +29,7 @@
 
 using namespace llvm;
 
-MCInstrInfo *createMipsMCInstrInfo() {
+static MCInstrInfo *createMipsMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitMipsMCInstrInfo(X);
   return X;
@@ -39,8 +40,8 @@ extern "C" void LLVMInitializeMipsMCInstrInfo() {
 }
 
 
-MCSubtargetInfo *createMipsMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                           StringRef FS) {
+static MCSubtargetInfo *createMipsMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                                  StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitMipsMCSubtargetInfo(X, TT, CPU, FS);
   return X;
@@ -49,4 +50,9 @@ MCSubtargetInfo *createMipsMCSubtargetInfo(StringRef TT, StringRef CPU,
 extern "C" void LLVMInitializeMipsMCSubtargetInfo() {
   TargetRegistry::RegisterMCSubtargetInfo(TheMipsTarget,
                                           createMipsMCSubtargetInfo);
+}
+
+extern "C" void LLVMInitializeMipsMCAsmInfo() {
+  RegisterMCAsmInfo<MipsMCAsmInfo> X(TheMipsTarget);
+  RegisterMCAsmInfo<MipsMCAsmInfo> Y(TheMipselTarget);
 }

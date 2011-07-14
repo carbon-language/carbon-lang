@@ -66,8 +66,8 @@ namespace llvm {
 
     typedef unsigned (*TripleMatchQualityFnTy)(const std::string &TT);
 
-    typedef MCAsmInfo *(*AsmInfoCtorFnTy)(const Target &T,
-                                          StringRef TT);
+    typedef MCAsmInfo *(*MCAsmInfoCtorFnTy)(const Target &T,
+                                            StringRef TT);
     typedef MCInstrInfo *(*MCInstrInfoCtorFnTy)(void);
     typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(void);
     typedef MCSubtargetInfo *(*MCSubtargetInfoCtorFnTy)(StringRef TT,
@@ -128,9 +128,9 @@ namespace llvm {
     /// HasJIT - Whether this target supports the JIT.
     bool HasJIT;
 
-    /// AsmInfoCtorFn - Constructor function for this target's MCAsmInfo, if
+    /// MCAsmInfoCtorFn - Constructor function for this target's MCAsmInfo, if
     /// registered.
-    AsmInfoCtorFnTy AsmInfoCtorFn;
+    MCAsmInfoCtorFnTy MCAsmInfoCtorFn;
 
     /// MCInstrInfoCtorFn - Constructor function for this target's MCInstrInfo,
     /// if registered.
@@ -240,17 +240,17 @@ namespace llvm {
     /// @name Feature Constructors
     /// @{
 
-    /// createAsmInfo - Create a MCAsmInfo implementation for the specified
+    /// createMCAsmInfo - Create a MCAsmInfo implementation for the specified
     /// target triple.
     ///
     /// \arg Triple - This argument is used to determine the target machine
     /// feature set; it should always be provided. Generally this should be
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
-    MCAsmInfo *createAsmInfo(StringRef Triple) const {
-      if (!AsmInfoCtorFn)
+    MCAsmInfo *createMCAsmInfo(StringRef Triple) const {
+      if (!MCAsmInfoCtorFn)
         return 0;
-      return AsmInfoCtorFn(*this, Triple);
+      return MCAsmInfoCtorFn(*this, Triple);
     }
 
     /// createMCInstrInfo - Create a MCInstrInfo implementation.
@@ -485,7 +485,7 @@ namespace llvm {
                                Target::TripleMatchQualityFnTy TQualityFn,
                                bool HasJIT = false);
 
-    /// RegisterAsmInfo - Register a MCAsmInfo implementation for the
+    /// RegisterMCAsmInfo - Register a MCAsmInfo implementation for the
     /// given target.
     ///
     /// Clients are responsible for ensuring that registration doesn't occur
@@ -494,10 +494,10 @@ namespace llvm {
     ///
     /// @param T - The target being registered.
     /// @param Fn - A function to construct a MCAsmInfo for the target.
-    static void RegisterAsmInfo(Target &T, Target::AsmInfoCtorFnTy Fn) {
+    static void RegisterMCAsmInfo(Target &T, Target::MCAsmInfoCtorFnTy Fn) {
       // Ignore duplicate registration.
-      if (!T.AsmInfoCtorFn)
-        T.AsmInfoCtorFn = Fn;
+      if (!T.MCAsmInfoCtorFn)
+        T.MCAsmInfoCtorFn = Fn;
     }
 
     /// RegisterMCInstrInfo - Register a MCInstrInfo implementation for the
@@ -722,18 +722,18 @@ namespace llvm {
     }
   };
 
-  /// RegisterAsmInfo - Helper template for registering a target assembly info
+  /// RegisterMCAsmInfo - Helper template for registering a target assembly info
   /// implementation.  This invokes the static "Create" method on the class to
   /// actually do the construction.  Usage:
   ///
   /// extern "C" void LLVMInitializeFooTarget() {
   ///   extern Target TheFooTarget;
-  ///   RegisterAsmInfo<FooMCAsmInfo> X(TheFooTarget);
+  ///   RegisterMCAsmInfo<FooMCAsmInfo> X(TheFooTarget);
   /// }
   template<class MCAsmInfoImpl>
-  struct RegisterAsmInfo {
-    RegisterAsmInfo(Target &T) {
-      TargetRegistry::RegisterAsmInfo(T, &Allocator);
+  struct RegisterMCAsmInfo {
+    RegisterMCAsmInfo(Target &T) {
+      TargetRegistry::RegisterMCAsmInfo(T, &Allocator);
     }
   private:
     static MCAsmInfo *Allocator(const Target &T, StringRef TT) {
@@ -742,17 +742,17 @@ namespace llvm {
 
   };
 
-  /// RegisterAsmInfoFn - Helper template for registering a target assembly info
+  /// RegisterMCAsmInfoFn - Helper template for registering a target assembly info
   /// implementation.  This invokes the specified function to do the
   /// construction.  Usage:
   ///
   /// extern "C" void LLVMInitializeFooTarget() {
   ///   extern Target TheFooTarget;
-  ///   RegisterAsmInfoFn X(TheFooTarget, TheFunction);
+  ///   RegisterMCAsmInfoFn X(TheFooTarget, TheFunction);
   /// }
-  struct RegisterAsmInfoFn {
-    RegisterAsmInfoFn(Target &T, Target::AsmInfoCtorFnTy Fn) {
-      TargetRegistry::RegisterAsmInfo(T, Fn);
+  struct RegisterMCAsmInfoFn {
+    RegisterMCAsmInfoFn(Target &T, Target::MCAsmInfoCtorFnTy Fn) {
+      TargetRegistry::RegisterMCAsmInfo(T, Fn);
     }
   };
 

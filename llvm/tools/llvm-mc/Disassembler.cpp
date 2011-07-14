@@ -132,7 +132,7 @@ int Disassembler::disassemble(const Target &T,
                               MemoryBuffer &Buffer,
                               raw_ostream &Out) {
   // Set up disassembler.
-  OwningPtr<const MCAsmInfo> AsmInfo(T.createAsmInfo(Triple));
+  OwningPtr<const MCAsmInfo> AsmInfo(T.createMCAsmInfo(Triple));
 
   if (!AsmInfo) {
     errs() << "error: no assembly info for target " << Triple << "\n";

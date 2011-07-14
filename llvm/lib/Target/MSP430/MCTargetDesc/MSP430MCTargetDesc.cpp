@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MSP430MCTargetDesc.h"
+#include "MSP430MCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -29,7 +30,7 @@
 using namespace llvm;
 
 
-MCInstrInfo *createMSP430MCInstrInfo() {
+static MCInstrInfo *createMSP430MCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitMSP430MCInstrInfo(X);
   return X;
@@ -40,8 +41,8 @@ extern "C" void LLVMInitializeMSP430MCInstrInfo() {
 }
 
 
-MCSubtargetInfo *createMSP430MCSubtargetInfo(StringRef TT, StringRef CPU,
-                                             StringRef FS) {
+static MCSubtargetInfo *createMSP430MCSubtargetInfo(StringRef TT, StringRef CPU,
+                                                    StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitMSP430MCSubtargetInfo(X, TT, CPU, FS);
   return X;
@@ -50,4 +51,8 @@ MCSubtargetInfo *createMSP430MCSubtargetInfo(StringRef TT, StringRef CPU,
 extern "C" void LLVMInitializeMSP430MCSubtargetInfo() {
   TargetRegistry::RegisterMCSubtargetInfo(TheMSP430Target,
                                           createMSP430MCSubtargetInfo);
+}
+
+extern "C" void LLVMInitializeMSP430MCAsmInfo() {
+  RegisterMCAsmInfo<MSP430MCAsmInfo> X(TheMSP430Target);
 }

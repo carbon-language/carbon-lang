@@ -105,7 +105,7 @@ EnableFastISelOption("fast-isel", cl::Hidden,
 LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
                                      StringRef CPU, StringRef FS)
   : TargetMachine(T, Triple, CPU, FS) {
-  AsmInfo = T.createAsmInfo(Triple);
+  AsmInfo = T.createMCAsmInfo(Triple);
 }
 
 // Set the default code model for the JIT for a generic target.

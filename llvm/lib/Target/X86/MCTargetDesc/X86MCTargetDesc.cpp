@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86MCTargetDesc.h"
+#include "X86MCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -130,22 +131,29 @@ MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-MCInstrInfo *createX86MCInstrInfo() {
+// Force static initialization.
+extern "C" void LLVMInitializeX86MCSubtargetInfo() {
+  TargetRegistry::RegisterMCSubtargetInfo(TheX86_32Target,
+                                          X86_MC::createX86MCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheX86_64Target,
+                                          X86_MC::createX86MCSubtargetInfo);
+}
+
+static MCInstrInfo *createX86MCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitX86MCInstrInfo(X);
   return X;
 }
 
-MCRegisterInfo *createX86MCRegisterInfo() {
-  MCRegisterInfo *X = new MCRegisterInfo();
-  InitX86MCRegisterInfo(X);
-  return X;
-}
-
-// Force static initialization.
 extern "C" void LLVMInitializeX86MCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheX86_32Target, createX86MCInstrInfo);
   TargetRegistry::RegisterMCInstrInfo(TheX86_64Target, createX86MCInstrInfo);
+}
+
+static MCRegisterInfo *createX86MCRegisterInfo() {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitX86MCRegisterInfo(X);
+  return X;
 }
 
 extern "C" void LLVMInitializeX86MCRegInfo() {
@@ -154,9 +162,24 @@ extern "C" void LLVMInitializeX86MCRegInfo() {
 }
 
 
-extern "C" void LLVMInitializeX86MCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheX86_32Target,
-                                          X86_MC::createX86MCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheX86_64Target,
-                                          X86_MC::createX86MCSubtargetInfo);
+static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
+  Triple TheTriple(TT);
+
+  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO) {
+    if (TheTriple.getArch() == Triple::x86_64)
+      return new X86_64MCAsmInfoDarwin(TheTriple);
+    else
+      return new X86MCAsmInfoDarwin(TheTriple);
+  }
+
+  if (TheTriple.isOSWindows())
+    return new X86MCAsmInfoCOFF(TheTriple);
+
+  return new X86ELFMCAsmInfo(TheTriple);
+}
+
+extern "C" void LLVMInitializeX86MCAsmInfo() {
+  // Register the target asm info.
+  RegisterMCAsmInfoFn A(TheX86_32Target, createMCAsmInfo);
+  RegisterMCAsmInfoFn B(TheX86_64Target, createMCAsmInfo);
 }

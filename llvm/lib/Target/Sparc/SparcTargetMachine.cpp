@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sparc.h"
-#include "SparcMCAsmInfo.h"
 #include "SparcTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -21,10 +20,6 @@ extern "C" void LLVMInitializeSparcTarget() {
   // Register the target.
   RegisterTargetMachine<SparcV8TargetMachine> X(TheSparcTarget);
   RegisterTargetMachine<SparcV9TargetMachine> Y(TheSparcV9Target);
-
-  RegisterAsmInfo<SparcELFMCAsmInfo> A(TheSparcTarget);
-  RegisterAsmInfo<SparcELFMCAsmInfo> B(TheSparcV9Target);
-
 }
 
 /// SparcTargetMachine ctor - Create an ILP32 architecture model

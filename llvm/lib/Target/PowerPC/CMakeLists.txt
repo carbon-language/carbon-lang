@@ -20,7 +20,6 @@ add_llvm_target(PowerPCCodeGen
   PPCISelLowering.cpp
   PPCFrameLowering.cpp
   PPCJITInfo.cpp
-  PPCMCAsmInfo.cpp
   PPCMCCodeEmitter.cpp
   PPCMCInstLower.cpp
   PPCPredicates.cpp

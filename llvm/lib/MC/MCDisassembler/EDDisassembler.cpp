@@ -107,6 +107,7 @@ void EDDisassembler::initialize() {
   
   InitializeAllTargetInfos();
   InitializeAllTargets();
+  InitializeAllMCAsmInfos();
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
   InitializeAllDisassemblers();
@@ -180,7 +181,7 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
     
   initMaps(*registerInfo);
   
-  AsmInfo.reset(Tgt->createAsmInfo(tripleString));
+  AsmInfo.reset(Tgt->createMCAsmInfo(tripleString));
   
   if (!AsmInfo)
     return;

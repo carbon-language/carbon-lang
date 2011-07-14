@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZMCTargetDesc.h"
+#include "SystemZMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -28,7 +29,7 @@
 
 using namespace llvm;
 
-MCInstrInfo *createSystemZMCInstrInfo() {
+static MCInstrInfo *createSystemZMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitSystemZMCInstrInfo(X);
   return X;
@@ -39,8 +40,9 @@ extern "C" void LLVMInitializeSystemZMCInstrInfo() {
                                       createSystemZMCInstrInfo);
 }
 
-MCSubtargetInfo *createSystemZMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                              StringRef FS) {
+static MCSubtargetInfo *createSystemZMCSubtargetInfo(StringRef TT,
+                                                     StringRef CPU,
+                                                     StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitSystemZMCSubtargetInfo(X, TT, CPU, FS);
   return X;
@@ -49,4 +51,8 @@ MCSubtargetInfo *createSystemZMCSubtargetInfo(StringRef TT, StringRef CPU,
 extern "C" void LLVMInitializeSystemZMCSubtargetInfo() {
   TargetRegistry::RegisterMCSubtargetInfo(TheSystemZTarget,
                                           createSystemZMCSubtargetInfo);
+}
+
+extern "C" void LLVMInitializeSystemZMCAsmInfo() {
+  RegisterMCAsmInfo<SystemZMCAsmInfo> X(TheSystemZTarget);
 }

@@ -27,6 +27,10 @@ extern "C" {
 #include "llvm/Config/Targets.def"
   
 #define LLVM_TARGET(TargetName) \
+  void LLVMInitialize##TargetName##MCAsmInfo();
+#include "llvm/Config/Targets.def"
+
+#define LLVM_TARGET(TargetName) \
   void LLVMInitialize##TargetName##MCInstrInfo();
 #include "llvm/Config/Targets.def"
 
@@ -69,6 +73,17 @@ namespace llvm {
     InitializeAllTargetInfos();
 
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##Target();
+#include "llvm/Config/Targets.def"
+  }
+  
+  /// InitializeAllMCAsmInfos - The main program should call this function
+  /// if it wants access to all available assembly infos for targets that
+  /// LLVM is configured to support, to make them available via the
+  /// TargetRegistry.
+  ///
+  /// It is legal for a client to make multiple calls to this function.
+  inline void InitializeAllMCAsmInfos() {
+#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##MCAsmInfo();
 #include "llvm/Config/Targets.def"
   }
   
@@ -133,6 +148,7 @@ namespace llvm {
 #ifdef LLVM_NATIVE_TARGET
     LLVM_NATIVE_TARGETINFO();
     LLVM_NATIVE_TARGET();
+    LLVM_NATIVE_MCASMINFO();
     return false;
 #else
     return true;

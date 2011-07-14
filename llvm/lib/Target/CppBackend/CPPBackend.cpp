@@ -22,6 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -75,6 +76,8 @@ extern "C" void LLVMInitializeCppBackendTarget() {
   // Register the target.
   RegisterTargetMachine<CPPTargetMachine> X(TheCppBackendTarget);
 }
+
+extern "C" void LLVMInitializeCppBackendMCAsmInfo() {}
 
 extern "C" void LLVMInitializeCppBackendMCInstrInfo() {
   RegisterMCInstrInfo<MCInstrInfo> X(TheCppBackendTarget);

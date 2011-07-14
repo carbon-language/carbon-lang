@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMMCTargetDesc.h"
+#include "ARMMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -97,22 +98,29 @@ MCSubtargetInfo *ARM_MC::createARMMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-MCInstrInfo *createARMMCInstrInfo() {
+// Force static initialization.
+extern "C" void LLVMInitializeARMMCSubtargetInfo() {
+  TargetRegistry::RegisterMCSubtargetInfo(TheARMTarget,
+                                          ARM_MC::createARMMCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheThumbTarget,
+                                          ARM_MC::createARMMCSubtargetInfo);
+}
+
+static MCInstrInfo *createARMMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitARMMCInstrInfo(X);
   return X;
 }
 
-MCRegisterInfo *createARMMCRegisterInfo() {
-  MCRegisterInfo *X = new MCRegisterInfo();
-  InitARMMCRegisterInfo(X);
-  return X;
-}
-
-// Force static initialization.
 extern "C" void LLVMInitializeARMMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheARMTarget, createARMMCInstrInfo);
   TargetRegistry::RegisterMCInstrInfo(TheThumbTarget, createARMMCInstrInfo);
+}
+
+static MCRegisterInfo *createARMMCRegisterInfo() {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitARMMCRegisterInfo(X);
+  return X;
 }
 
 extern "C" void LLVMInitializeARMMCRegInfo() {
@@ -120,9 +128,17 @@ extern "C" void LLVMInitializeARMMCRegInfo() {
   TargetRegistry::RegisterMCRegInfo(TheThumbTarget, createARMMCRegisterInfo);
 }
 
-extern "C" void LLVMInitializeARMMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheARMTarget,
-                                          ARM_MC::createARMMCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheThumbTarget,
-                                          ARM_MC::createARMMCSubtargetInfo);
+static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
+  Triple TheTriple(TT);
+
+  if (TheTriple.isOSDarwin())
+    return new ARMMCAsmInfoDarwin();
+
+  return new ARMELFMCAsmInfo();
+}
+
+extern "C" void LLVMInitializeARMMCAsmInfo() {
+  // Register the target asm info.
+  RegisterMCAsmInfoFn A(TheARMTarget, createMCAsmInfo);
+  RegisterMCAsmInfoFn B(TheThumbTarget, createMCAsmInfo);
 }

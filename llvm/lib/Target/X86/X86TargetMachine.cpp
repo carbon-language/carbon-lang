@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "X86MCAsmInfo.h"
 #include "X86TargetMachine.h"
 #include "X86.h"
 #include "llvm/PassManager.h"
@@ -23,22 +22,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
-
-static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
-  Triple TheTriple(TT);
-
-  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO) {
-    if (TheTriple.getArch() == Triple::x86_64)
-      return new X86_64MCAsmInfoDarwin(TheTriple);
-    else
-      return new X86MCAsmInfoDarwin(TheTriple);
-  }
-
-  if (TheTriple.isOSWindows())
-    return new X86MCAsmInfoCOFF(TheTriple);
-
-  return new X86ELFMCAsmInfo(TheTriple);
-}
 
 static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
                                     MCContext &Ctx, TargetAsmBackend &TAB,
@@ -61,10 +44,6 @@ extern "C" void LLVMInitializeX86Target() {
   // Register the target.
   RegisterTargetMachine<X86_32TargetMachine> X(TheX86_32Target);
   RegisterTargetMachine<X86_64TargetMachine> Y(TheX86_64Target);
-
-  // Register the target asm info.
-  RegisterAsmInfoFn A(TheX86_32Target, createMCAsmInfo);
-  RegisterAsmInfoFn B(TheX86_64Target, createMCAsmInfo);
 
   // Register the code emitter.
   TargetRegistry::RegisterCodeEmitter(TheX86_32Target,

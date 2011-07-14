@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AlphaMCTargetDesc.h"
+#include "AlphaMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -29,7 +30,7 @@
 using namespace llvm;
 
 
-MCInstrInfo *createAlphaMCInstrInfo() {
+static MCInstrInfo *createAlphaMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitAlphaMCInstrInfo(X);
   return X;
@@ -39,9 +40,8 @@ extern "C" void LLVMInitializeAlphaMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheAlphaTarget, createAlphaMCInstrInfo);
 }
 
-
-MCSubtargetInfo *createAlphaMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                            StringRef FS) {
+static MCSubtargetInfo *createAlphaMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                                   StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitAlphaMCSubtargetInfo(X, TT, CPU, FS);
   return X;
@@ -50,4 +50,8 @@ MCSubtargetInfo *createAlphaMCSubtargetInfo(StringRef TT, StringRef CPU,
 extern "C" void LLVMInitializeAlphaMCSubtargetInfo() {
   TargetRegistry::RegisterMCSubtargetInfo(TheAlphaTarget,
                                           createAlphaMCSubtargetInfo);
+}
+
+extern "C" void LLVMInitializeAlphaMCAsmInfo() {
+  RegisterMCAsmInfo<AlphaMCAsmInfo> X(TheAlphaTarget);
 }

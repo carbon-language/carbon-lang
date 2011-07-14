@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "PTX.h"
-#include "PTXMCAsmInfo.h"
 #include "PTXTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -34,9 +33,6 @@ extern "C" void LLVMInitializePTXTarget() {
 
   RegisterTargetMachine<PTX32TargetMachine> X(ThePTX32Target);
   RegisterTargetMachine<PTX64TargetMachine> Y(ThePTX64Target);
-
-  RegisterAsmInfo<PTXMCAsmInfo> Z(ThePTX32Target);
-  RegisterAsmInfo<PTXMCAsmInfo> W(ThePTX64Target);
 
   TargetRegistry::RegisterAsmStreamer(ThePTX32Target, createPTXAsmStreamer);
   TargetRegistry::RegisterAsmStreamer(ThePTX64Target, createPTXAsmStreamer);

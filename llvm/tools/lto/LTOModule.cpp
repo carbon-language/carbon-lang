@@ -135,6 +135,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
   static bool Initialized = false;
   if (!Initialized) {
     InitializeAllTargets();
+    InitializeAllMCAsmInfos();
     InitializeAllMCSubtargetInfos();
     InitializeAllAsmParsers();
     Initialized = true;

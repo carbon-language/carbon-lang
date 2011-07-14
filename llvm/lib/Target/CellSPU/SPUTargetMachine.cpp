@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "SPU.h"
-#include "SPUMCAsmInfo.h"
 #include "SPUTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
@@ -24,7 +23,6 @@ using namespace llvm;
 extern "C" void LLVMInitializeCellSPUTarget() { 
   // Register the target.
   RegisterTargetMachine<SPUTargetMachine> X(TheCellSPUTarget);
-  RegisterAsmInfo<SPULinuxMCAsmInfo> Y(TheCellSPUTarget);
 }
 
 const std::pair<unsigned, int> *

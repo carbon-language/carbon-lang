@@ -1,1 +1,4 @@
-add_llvm_library(LLVMMBlazeDesc MBlazeMCTargetDesc.cpp)
+add_llvm_library(LLVMMBlazeDesc
+  MBlazeMCTargetDesc.cpp
+  MBlazeMCAsmInfo.cpp
+  )

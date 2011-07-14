@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "MBlaze.h"
-#include "MBlazeMCAsmInfo.h"
 #include "MBlazeTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
@@ -20,14 +19,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
-
-static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
-  Triple TheTriple(TT);
-  switch (TheTriple.getOS()) {
-  default:
-    return new MBlazeMCAsmInfo();
-  }
-}
 
 static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
                                     MCContext &Ctx, TargetAsmBackend &TAB,
@@ -54,9 +45,6 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
 extern "C" void LLVMInitializeMBlazeTarget() {
   // Register the target.
   RegisterTargetMachine<MBlazeTargetMachine> X(TheMBlazeTarget);
-
-  // Register the target asm info.
-  RegisterAsmInfoFn A(TheMBlazeTarget, createMCAsmInfo);
 
   // Register the MC code emitter
   TargetRegistry::RegisterCodeEmitter(TheMBlazeTarget,

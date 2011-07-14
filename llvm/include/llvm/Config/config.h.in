@@ -573,6 +573,9 @@
 /* LLVM name for the native AsmPrinter init function, if available */
 #undef LLVM_NATIVE_ASMPRINTER
 
+/* LLVM name for the native MCAsmInfo init function, if available */
+#undef LLVM_NATIVE_MCASMINFO
+
 /* LLVM name for the native Target init function, if available */
 #undef LLVM_NATIVE_TARGET
 

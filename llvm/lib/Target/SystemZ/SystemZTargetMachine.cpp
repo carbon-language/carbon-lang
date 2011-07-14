@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SystemZMCAsmInfo.h"
 #include "SystemZTargetMachine.h"
 #include "SystemZ.h"
 #include "llvm/PassManager.h"
@@ -17,7 +16,6 @@ using namespace llvm;
 extern "C" void LLVMInitializeSystemZTarget() {
   // Register the target.
   RegisterTargetMachine<SystemZTargetMachine> X(TheSystemZTarget);
-  RegisterAsmInfo<SystemZMCAsmInfo> Y(TheSystemZTarget);
 }
 
 /// SystemZTargetMachine ctor - Create an ILP64 architecture model

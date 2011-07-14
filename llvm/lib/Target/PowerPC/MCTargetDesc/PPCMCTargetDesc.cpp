@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCMCTargetDesc.h"
+#include "PPCMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -28,7 +29,7 @@
 
 using namespace llvm;
 
-MCInstrInfo *createPPCMCInstrInfo() {
+static MCInstrInfo *createPPCMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitPPCMCInstrInfo(X);
   return X;
@@ -40,8 +41,8 @@ extern "C" void LLVMInitializePowerPCMCInstrInfo() {
 }
 
 
-MCSubtargetInfo *createPPCMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                          StringRef FS) {
+static MCSubtargetInfo *createPPCMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                                 StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitPPCMCSubtargetInfo(X, TT, CPU, FS);
   return X;
@@ -52,4 +53,18 @@ extern "C" void LLVMInitializePowerPCMCSubtargetInfo() {
                                           createPPCMCSubtargetInfo);
   TargetRegistry::RegisterMCSubtargetInfo(ThePPC64Target,
                                           createPPCMCSubtargetInfo);
+}
+
+static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
+  Triple TheTriple(TT);
+  bool isPPC64 = TheTriple.getArch() == Triple::ppc64;
+  if (TheTriple.isOSDarwin())
+    return new PPCMCAsmInfoDarwin(isPPC64);
+  return new PPCLinuxMCAsmInfo(isPPC64);
+  
+}
+
+extern "C" void LLVMInitializePowerPCMCAsmInfo() {
+  RegisterMCAsmInfoFn C(ThePPC32Target, createMCAsmInfo);
+  RegisterMCAsmInfoFn D(ThePPC64Target, createMCAsmInfo);  
 }

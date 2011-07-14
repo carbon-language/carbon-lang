@@ -1,1 +1,4 @@
-add_llvm_library(LLVMAlphaDesc AlphaMCTargetDesc.cpp)
+add_llvm_library(LLVMAlphaDesc
+  AlphaMCTargetDesc.cpp
+  AlphaMCAsmInfo.cpp
+  )

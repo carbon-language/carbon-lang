@@ -174,7 +174,7 @@ static void DisassembleInput(const StringRef &Filename) {
     outs() << "Disassembly of section " << name << ":\n\n";
 
     // Set up disassembler.
-    OwningPtr<const MCAsmInfo> AsmInfo(TheTarget->createAsmInfo(TripleName));
+    OwningPtr<const MCAsmInfo> AsmInfo(TheTarget->createMCAsmInfo(TripleName));
 
     if (!AsmInfo) {
       errs() << "error: no assembly info for target " << TripleName << "\n";
@@ -236,6 +236,7 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargetInfos();
   // FIXME: We shouldn't need to initialize the Target(Machine)s.
   llvm::InitializeAllTargets();
+  llvm::InitializeAllMCAsmInfos();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllDisassemblers();

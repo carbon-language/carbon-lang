@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcMCTargetDesc.h"
+#include "SparcMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -28,7 +29,7 @@
 
 using namespace llvm;
 
-MCInstrInfo *createSparcMCInstrInfo() {
+static MCInstrInfo *createSparcMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitSparcMCInstrInfo(X);
   return X;
@@ -38,8 +39,8 @@ extern "C" void LLVMInitializeSparcMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheSparcTarget, createSparcMCInstrInfo);
 }
 
-MCSubtargetInfo *createSparcMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                            StringRef FS) {
+static MCSubtargetInfo *createSparcMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                                   StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitSparcMCSubtargetInfo(X, TT, CPU, FS);
   return X;
@@ -48,4 +49,9 @@ MCSubtargetInfo *createSparcMCSubtargetInfo(StringRef TT, StringRef CPU,
 extern "C" void LLVMInitializeSparcMCSubtargetInfo() {
   TargetRegistry::RegisterMCSubtargetInfo(TheSparcTarget,
                                           createSparcMCSubtargetInfo);
+}
+
+extern "C" void LLVMInitializeSparcMCAsmInfo() {
+  RegisterMCAsmInfo<SparcELFMCAsmInfo> X(TheSparcTarget);
+  RegisterMCAsmInfo<SparcELFMCAsmInfo> Y(TheSparcV9Target);
 }

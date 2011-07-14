@@ -58,6 +58,9 @@
 /* LLVM name for the native TargetInfo init function, if available */
 #undef LLVM_NATIVE_TARGETINFO
 
+/* LLVM name for the native MCAsmInfo init function, if available */
+#undef LLVM_NATIVE_MCASMINFO
+
 /* LLVM name for the native AsmPrinter init function, if available */
 #undef LLVM_NATIVE_ASMPRINTER
 

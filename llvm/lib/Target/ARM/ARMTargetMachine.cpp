@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMTargetMachine.h"
-#include "ARMMCAsmInfo.h"
 #include "ARMFrameLowering.h"
 #include "ARM.h"
 #include "llvm/PassManager.h"
@@ -21,15 +20,6 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
-
-static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
-  Triple TheTriple(TT);
-
-  if (TheTriple.isOSDarwin())
-    return new ARMMCAsmInfoDarwin();
-
-  return new ARMELFMCAsmInfo();
-}
 
 // This is duplicated code. Refactor this.
 static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
@@ -55,10 +45,6 @@ extern "C" void LLVMInitializeARMTarget() {
   // Register the target.
   RegisterTargetMachine<ARMTargetMachine> X(TheARMTarget);
   RegisterTargetMachine<ThumbTargetMachine> Y(TheThumbTarget);
-
-  // Register the target asm info.
-  RegisterAsmInfoFn A(TheARMTarget, createMCAsmInfo);
-  RegisterAsmInfoFn B(TheThumbTarget, createMCAsmInfo);
 
   // Register the MC Code Emitter
   TargetRegistry::RegisterCodeEmitter(TheARMTarget, createARMMCCodeEmitter);
