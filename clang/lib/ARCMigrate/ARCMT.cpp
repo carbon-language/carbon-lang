@@ -262,6 +262,10 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
 
   DiagClient->EndSourceFile();
 
+  // If we are migrating code that gets the '-fobjc-arc' flag, make sure
+  // to remove it so that we don't get errors from normal compilation.
+  origCI.getLangOpts().ObjCAutoRefCount = false;
+
   return capturedDiags.hasErrors();
 }
 
@@ -302,8 +306,12 @@ static bool applyTransforms(CompilerInvocation &origCI,
   if (outputDir.empty()) {
     origCI.getLangOpts().ObjCAutoRefCount = true;
     return migration.getRemapper().overwriteOriginal(*Diags);
-  } else
+  } else {
+    // If we are migrating code that gets the '-fobjc-arc' flag, make sure
+    // to remove it so that we don't get errors from normal compilation.
+    origCI.getLangOpts().ObjCAutoRefCount = false;
     return migration.getRemapper().flushToDisk(outputDir, *Diags);
+  }
 }
 
 bool arcmt::applyTransformations(CompilerInvocation &origCI,
