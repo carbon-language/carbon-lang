@@ -22,11 +22,11 @@ template <class T> struct Derived: Base<int>, Base<char> {
 namespace PR6717 {
   template <typename T>
   class WebVector {
-  }
+  } // expected-error {{expected ';' after class}}
 
-    WebVector(const WebVector<T>& other) { } 
+    WebVector(const WebVector<T>& other) { } // expected-error{{undeclared identifier 'T'}} \
+                                                expected-error{{requires a type specifier}}
 
   template <typename C>
-  WebVector<T>& operator=(const C& other) { } // expected-error{{unknown type name 'WebVector'}} \
-  // expected-error{{unqualified-id}}
+  WebVector<T>& operator=(const C& other) { } // expected-error{{undeclared identifier 'T'}}
 }

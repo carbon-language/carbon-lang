@@ -1291,6 +1291,11 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       break;
     }
 
+    // C++ [temp]p3 In a template-declaration which defines a class, no
+    // declarator is permitted.
+    if (TemplateInfo.Kind)
+      ExpectedSemi = true;
+
     if (ExpectedSemi) {
       ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
                        TagType == DeclSpec::TST_class ? "class"
