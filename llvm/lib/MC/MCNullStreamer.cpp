@@ -44,7 +44,8 @@ namespace {
     virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol){}
     virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                           const MCSymbol *LastLabel,
-                                          const MCSymbol *Label) {}
+                                          const MCSymbol *Label,
+                                          unsigned PointerSize) {}
 
     virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute){}
 

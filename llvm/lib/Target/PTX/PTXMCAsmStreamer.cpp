@@ -115,7 +115,8 @@ public:
 
   virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                         const MCSymbol *LastLabel,
-                                        const MCSymbol *Label);
+                                        const MCSymbol *Label,
+                                        unsigned PointerSize);
 
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
 
@@ -260,7 +261,8 @@ void PTXMCAsmStreamer::EmitWeakReference(MCSymbol *Alias,
 
 void PTXMCAsmStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                                 const MCSymbol *LastLabel,
-                                                const MCSymbol *Label) {
+                                                const MCSymbol *Label,
+                                                unsigned PointerSize) {
   report_fatal_error("Unimplemented.");
 }
 

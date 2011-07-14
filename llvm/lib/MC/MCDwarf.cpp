@@ -172,7 +172,9 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
     // At this point we want to emit/create the sequence to encode the delta in
     // line numbers and the increment of the address from the previous Label
     // and the current Label.
-    MCOS->EmitDwarfAdvanceLineAddr(LineDelta, LastLabel, Label);
+    const TargetAsmInfo &asmInfo = MCOS->getContext().getTargetAsmInfo();
+    MCOS->EmitDwarfAdvanceLineAddr(LineDelta, LastLabel, Label,
+                                   asmInfo.getPointerSize());
 
     LastLine = it->getLine();
     LastLabel = Label;
@@ -196,7 +198,9 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
   // Switch back the the dwarf line section.
   MCOS->SwitchSection(context.getTargetAsmInfo().getDwarfLineSection());
 
-  MCOS->EmitDwarfAdvanceLineAddr(INT64_MAX, LastLabel, SectionEnd);
+  const TargetAsmInfo &asmInfo = MCOS->getContext().getTargetAsmInfo();
+  MCOS->EmitDwarfAdvanceLineAddr(INT64_MAX, LastLabel, SectionEnd,
+                                 asmInfo.getPointerSize());
 }
 
 //

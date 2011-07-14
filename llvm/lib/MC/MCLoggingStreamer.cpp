@@ -85,9 +85,11 @@ public:
 
   virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                         const MCSymbol *LastLabel,
-                                        const MCSymbol *Label) {
+                                        const MCSymbol *Label,
+                                        unsigned PointerSize) {
     LogCall("EmitDwarfAdvanceLineAddr");
-    return Child->EmitDwarfAdvanceLineAddr(LineDelta, LastLabel, Label);
+    return Child->EmitDwarfAdvanceLineAddr(LineDelta, LastLabel, Label,
+                                           PointerSize);
   }
 
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) {

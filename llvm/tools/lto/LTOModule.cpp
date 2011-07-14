@@ -598,7 +598,8 @@ namespace {
     virtual void EmitFileDirective(StringRef Filename) {}
     virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                           const MCSymbol *LastLabel,
-                                        const MCSymbol *Label) {}
+                                          const MCSymbol *Label,
+                                          unsigned PointerSize) {}
 
     virtual void EmitInstruction(const MCInst &Inst) {
       // Scan for values.
