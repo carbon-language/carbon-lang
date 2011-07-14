@@ -229,6 +229,7 @@ public:
 void DbgScope::dump() const {
   raw_ostream &err = dbgs();
   err.indent(IndentLevel);
+  err << "DFSIn: " << DFSIn << " DFSOut: " << DFSOut << "\n";
   const MDNode *N = Desc;
   N->dump();
   if (AbstractScope)
@@ -1566,7 +1567,8 @@ void DwarfDebug::endInstruction(const MachineInstr *MI) {
 }
 
 /// getOrCreateDbgScope - Create DbgScope for the scope.
-DbgScope *DwarfDebug::getOrCreateDbgScope(DebugLoc DL, LLVMContext &Ctx) {
+DbgScope *DwarfDebug::getOrCreateDbgScope(DebugLoc DL) {
+  LLVMContext &Ctx = Asm->MF->getFunction()->getContext();
   MDNode *Scope = NULL;
   MDNode *InlinedAt = NULL;
   DL.getScopeAndInlinedAt(Scope, InlinedAt, Ctx);
@@ -1579,7 +1581,7 @@ DbgScope *DwarfDebug::getOrCreateDbgScope(DebugLoc DL, LLVMContext &Ctx) {
     DbgScopeMap.insert(std::make_pair(Scope, WScope));
     if (DIDescriptor(Scope).isLexicalBlock()) {
       DbgScope *Parent =
-        getOrCreateDbgScope(DebugLoc::getFromDILexicalBlock(Scope), Ctx);
+        getOrCreateDbgScope(DebugLoc::getFromDILexicalBlock(Scope));
       WScope->setParent(Parent);
       Parent->addScope(WScope);
     } else if (DIDescriptor(Scope).isSubprogram()
@@ -1597,7 +1599,7 @@ DbgScope *DwarfDebug::getOrCreateDbgScope(DebugLoc DL, LLVMContext &Ctx) {
   WScope = new DbgScope(NULL, DIDescriptor(Scope), InlinedAt);
   DbgScopeMap.insert(std::make_pair(InlinedAt, WScope));
   DbgScope *Parent =
-    getOrCreateDbgScope(DebugLoc::getFromDILocation(InlinedAt), Ctx);
+    getOrCreateDbgScope(DebugLoc::getFromDILocation(InlinedAt));
   WScope->setParent(Parent);
   Parent->addScope(WScope);
 
@@ -1636,10 +1638,11 @@ static void calculateDominanceGraph(DbgScope *Scope) {
 
 /// printDbgScopeInfo - Print DbgScope info for each machine instruction.
 static
-void printDbgScopeInfo(LLVMContext &Ctx, const MachineFunction *MF,
+void printDbgScopeInfo(const MachineFunction *MF,
                        DenseMap<const MachineInstr *, DbgScope *> &MI2ScopeMap)
 {
 #ifndef NDEBUG
+  LLVMContext &Ctx = MF->getFunction()->getContext();
   unsigned PrevDFSIn = 0;
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
        I != E; ++I) {
@@ -1682,7 +1685,6 @@ bool DwarfDebug::extractScopeInformation() {
     return false;
 
   // Scan each instruction and create scopes. First build working set of scopes.
-  LLVMContext &Ctx = Asm->MF->getFunction()->getContext();
   SmallVector<DbgRange, 4> MIRanges;
   DenseMap<const MachineInstr *, DbgScope *> MI2ScopeMap;
   DebugLoc PrevDL;
@@ -1721,7 +1723,7 @@ bool DwarfDebug::extractScopeInformation() {
         DEBUG(dbgs() << "Next Range starting at " << *MInsn);
         DEBUG(dbgs() << "------------------------\n");
         DbgRange R(RangeBeginMI, PrevMI);
-        MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevDL, Ctx);
+        MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevDL);
         MIRanges.push_back(R);
       }
 
@@ -1738,7 +1740,7 @@ bool DwarfDebug::extractScopeInformation() {
   if (RangeBeginMI && PrevMI && !PrevDL.isUnknown()) {
     DbgRange R(RangeBeginMI, PrevMI);
     MIRanges.push_back(R);
-    MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevDL, Ctx);
+    MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevDL);
   }
 
   if (!CurrentFnDbgScope)
@@ -1746,7 +1748,7 @@ bool DwarfDebug::extractScopeInformation() {
 
   calculateDominanceGraph(CurrentFnDbgScope);
   if (PrintDbgScope)
-    printDbgScopeInfo(Ctx, Asm->MF, MI2ScopeMap);
+    printDbgScopeInfo(Asm->MF, MI2ScopeMap);
 
   // Find ranges of instructions covered by each DbgScope;
   DbgScope *PrevDbgScope = NULL;

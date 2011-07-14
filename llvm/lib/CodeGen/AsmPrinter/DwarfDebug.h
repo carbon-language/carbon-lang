@@ -319,7 +319,7 @@ private:
   void assignAbbrevNumber(DIEAbbrev &Abbrev);
 
   /// getOrCreateDbgScope - Create DbgScope for the scope.
-  DbgScope *getOrCreateDbgScope(DebugLoc DL, LLVMContext &Ctx);
+  DbgScope *getOrCreateDbgScope(DebugLoc DL);
 
   DbgScope *getOrCreateAbstractScope(const MDNode *N);
 
