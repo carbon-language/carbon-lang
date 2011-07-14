@@ -833,10 +833,10 @@ enum CXTranslationUnit_Flags {
   
   /**
    * \brief Used to indicate that the "detailed" preprocessing record,
-   * if requested, should also contain nested macro instantiations.
+   * if requested, should also contain nested macro expansions.
    *
-   * Nested macro instantiations (i.e., macro instantiations that occur
-   * inside another macro instantiation) can, in some code bases, require
+   * Nested macro expansions (i.e., macro expansions that occur
+   * inside another macro expansion) can, in some code bases, require
    * a large amount of storage to due preprocessor metaprogramming. Moreover,
    * its fairly rare that this information is useful for libclang clients.
    */
@@ -844,7 +844,7 @@ enum CXTranslationUnit_Flags {
 
   /**
    * \brief Legacy name to indicate that the "detailed" preprocessing record,
-   * if requested, should contain nested macro instantiations.
+   * if requested, should contain nested macro expansions.
    *
    * \see CXTranslationUnit_NestedMacroExpansions for the current name for this
    * value, and its semantics. This is just an alias.
