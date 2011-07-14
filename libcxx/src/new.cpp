@@ -28,6 +28,9 @@
 __attribute__((__weak__, __visibility__("default")))
 void *
 operator new(std::size_t size)
+#if !__has_feature(cxx_noexcept)
+    throw(std::bad_alloc)
+#endif
 {
     if (size == 0)
         size = 1;
@@ -71,6 +74,9 @@ operator new(size_t size, const std::nothrow_t&) _NOEXCEPT
 __attribute__((__weak__, __visibility__("default")))
 void*
 operator new[](size_t size)
+#if !__has_feature(cxx_noexcept)
+    throw(std::bad_alloc)
+#endif
 {
     return ::operator new(size);
 }
