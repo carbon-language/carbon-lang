@@ -1774,7 +1774,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
   llvm::Type *opTy = CGF.CGM.getTypes().ConvertType(Ops.Ty);
 
-  llvm::Function *intrinsic = CGF.CGM.getIntrinsic(IID, &opTy, 1);
+  llvm::Function *intrinsic = CGF.CGM.getIntrinsic(IID, opTy);
 
   Value *resultAndOverflow = Builder.CreateCall2(intrinsic, Ops.LHS, Ops.RHS);
   Value *result = Builder.CreateExtractValue(resultAndOverflow, 0);

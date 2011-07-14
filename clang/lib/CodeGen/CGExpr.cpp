@@ -516,8 +516,7 @@ void CodeGenFunction::EmitCheck(llvm::Value *Address, unsigned Size) {
   // This needs to be to the standard address space.
   Address = Builder.CreateBitCast(Address, Int8PtrTy);
 
-  llvm::Type *IntPtrT = IntPtrTy;
-  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, &IntPtrT, 1);
+  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, IntPtrTy);
 
   // In time, people may want to control this and use a 1 here.
   llvm::Value *Arg = Builder.getFalse();
@@ -1524,7 +1523,7 @@ llvm::BasicBlock *CodeGenFunction::getTrapBB() {
   TrapBB = createBasicBlock("trap");
   EmitBlock(TrapBB);
 
-  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::trap, 0, 0);
+  llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::trap);
   llvm::CallInst *TrapCall = Builder.CreateCall(F);
   TrapCall->setDoesNotReturn();
   TrapCall->setDoesNotThrow();

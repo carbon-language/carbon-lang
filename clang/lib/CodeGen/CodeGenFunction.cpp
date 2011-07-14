@@ -221,7 +221,7 @@ void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
 
   llvm::Constant *F = CGM.CreateRuntimeFunction(FunctionTy, Fn);
   llvm::CallInst *CallSite = Builder.CreateCall(
-    CGM.getIntrinsic(llvm::Intrinsic::returnaddress, 0, 0),
+    CGM.getIntrinsic(llvm::Intrinsic::returnaddress),
     llvm::ConstantInt::get(Int32Ty, 0),
     "callsite");
 
