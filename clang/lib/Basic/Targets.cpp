@@ -3055,7 +3055,8 @@ TargetInfo *TargetInfo::CreateTargetInfo(Diagnostic &Diags,
   Opts.Features.clear();
   for (llvm::StringMap<bool>::const_iterator it = Features.begin(),
          ie = Features.end(); it != ie; ++it)
-    Opts.Features.push_back(std::string(it->second ? "+" : "-") + it->first());
+    Opts.Features.push_back(std::string(it->second ? "+" : "-") +
+                            llvm::StringRef(it->first()).str());
   Target->HandleTargetFeatures(Opts.Features);
 
   return Target.take();

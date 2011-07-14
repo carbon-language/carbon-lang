@@ -1174,8 +1174,8 @@ void ASTWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
   for (MemorizeStatCalls::iterator Stat = StatCalls.begin(),
                                 StatEnd = StatCalls.end();
        Stat != StatEnd; ++Stat, ++NumStatEntries) {
-    const char *Filename = Stat->first();
-    Generator.insert(Filename, Stat->second);
+    llvm::StringRef Filename = Stat->first();
+    Generator.insert(Filename.data(), Stat->second);
   }
 
   // Create the on-disk hash table in a buffer.
