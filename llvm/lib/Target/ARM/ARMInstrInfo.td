@@ -314,16 +314,19 @@ def fsub_mlx : PatFrag<(ops node:$lhs, node:$rhs),(fsub node:$lhs, node:$rhs),[{
 // FIXME: rename brtarget to t2_brtarget
 def brtarget : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValue";
+  let OperandType = "OPERAND_PCREL";
 }
 
 // FIXME: get rid of this one?
 def uncondbrtarget : Operand<OtherVT> {
   let EncoderMethod = "getUnconditionalBranchTargetOpValue";
+  let OperandType = "OPERAND_PCREL";
 }
 
 // Branch target for ARM. Handles conditional/unconditional
 def br_target : Operand<OtherVT> {
   let EncoderMethod = "getARMBranchTargetOpValue";
+  let OperandType = "OPERAND_PCREL";
 }
 
 // Call target.
@@ -331,6 +334,7 @@ def br_target : Operand<OtherVT> {
 def bltarget : Operand<i32> {
   // Encoded the same as branch targets.
   let EncoderMethod = "getBranchTargetOpValue";
+  let OperandType = "OPERAND_PCREL";
 }
 
 // Call target for ARM. Handles conditional/unconditional
@@ -338,6 +342,7 @@ def bltarget : Operand<i32> {
 def bl_target : Operand<i32> {
   // Encoded the same as branch targets.
   let EncoderMethod = "getARMBranchTargetOpValue";
+  let OperandType = "OPERAND_PCREL";
 }
 
 

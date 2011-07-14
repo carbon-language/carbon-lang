@@ -168,11 +168,13 @@ def ssmem : Operand<v4f32> {
   let PrintMethod = "printf32mem";
   let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc_nosp, i32imm, i8imm);
   let ParserMatchClass = X86MemAsmOperand;
+  let OperandType = "OPERAND_MEMORY";
 }
 def sdmem : Operand<v2f64> {
   let PrintMethod = "printf64mem";
   let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc_nosp, i32imm, i8imm);
   let ParserMatchClass = X86MemAsmOperand;
+  let OperandType = "OPERAND_MEMORY";
 }
 
 //===----------------------------------------------------------------------===//
