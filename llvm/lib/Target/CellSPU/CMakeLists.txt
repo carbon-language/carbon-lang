@@ -24,3 +24,4 @@ add_llvm_target(CellSPUCodeGen
   )
 
 add_subdirectory(TargetInfo)
+add_subdirectory(MCTargetDesc)

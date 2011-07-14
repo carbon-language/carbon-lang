@@ -81,8 +81,7 @@ unsigned SubtargetEmitter::FeatureKeyValues(raw_ostream &OS) {
 
   // Begin feature table
   OS << "// Sorted (by key) array of values for CPU features.\n"
-     << "static const llvm::SubtargetFeatureKV "
-     << Target << "FeatureKV[] = {\n";
+     << "llvm::SubtargetFeatureKV " << Target << "FeatureKV[] = {\n";
 
   // For each feature
   unsigned NumFeatures = 0;
@@ -141,8 +140,7 @@ unsigned SubtargetEmitter::CPUKeyValues(raw_ostream &OS) {
 
   // Begin processor table
   OS << "// Sorted (by key) array of values for CPU subtype.\n"
-     << "static const llvm::SubtargetFeatureKV "
-     << Target << "SubTypeKV[] = {\n";
+     << "llvm::SubtargetFeatureKV " << Target << "SubTypeKV[] = {\n";
 
   // For each processor
   for (unsigned i = 0, N = ProcessorList.size(); i < N;) {
@@ -329,9 +327,9 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
       OS << "\n// Pipeline forwarding pathes for itineraries \"" << Name
          << "\"\n" << "namespace " << Name << "Bypass {\n";
 
-      OS << "  const unsigned NoBypass = 0;\n";
+      OS << "  unsigned NoBypass = 0;\n";
       for (unsigned j = 0, BPN = BPs.size(); j < BPN; ++j)
-        OS << "  const unsigned " << BPs[j]->getName()
+        OS << "  unsigned " << BPs[j]->getName()
            << " = 1 << " << j << ";\n";
 
       OS << "}\n";
@@ -339,17 +337,16 @@ void SubtargetEmitter::EmitStageAndOperandCycleData(raw_ostream &OS,
   }
 
   // Begin stages table
-  std::string StageTable = "\nstatic const llvm::InstrStage " + Target +
-    "Stages[] = {\n";
+  std::string StageTable = "\nllvm::InstrStage " + Target + "Stages[] = {\n";
   StageTable += "  { 0, 0, 0, llvm::InstrStage::Required }, // No itinerary\n";
 
   // Begin operand cycle table
-  std::string OperandCycleTable = "static const unsigned " + Target +
+  std::string OperandCycleTable = "unsigned " + Target +
     "OperandCycles[] = {\n";
   OperandCycleTable += "  0, // No itinerary\n";
 
   // Begin pipeline bypass table
-  std::string BypassTable = "static const unsigned " + Target +
+  std::string BypassTable = "unsigned " + Target +
     "ForwardingPathes[] = {\n";
   BypassTable += "  0, // No itinerary\n";
 
@@ -491,7 +488,7 @@ EmitProcessorData(raw_ostream &OS,
 
     // Begin processor itinerary table
     OS << "\n";
-    OS << "static const llvm::InstrItinerary " << Name << "[] = {\n";
+    OS << "llvm::InstrItinerary " << Name << "[] = {\n";
 
     // For each itinerary class
     std::vector<InstrItinerary> &ItinList = *ProcListIter++;
@@ -533,7 +530,7 @@ void SubtargetEmitter::EmitProcessorLookup(raw_ostream &OS) {
   // Begin processor table
   OS << "\n";
   OS << "// Sorted (by key) array of itineraries for CPU subtype.\n"
-     << "static const llvm::SubtargetInfoKV "
+     << "llvm::SubtargetInfoKV "
      << Target << "ProcItinKV[] = {\n";
 
   // For each processor
@@ -657,12 +654,18 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_SUBTARGETINFO_MC_DESC\n";
 
   OS << "namespace llvm {\n";
+#if 0
+  OS << "namespace {\n";
+#endif
   unsigned NumFeatures = FeatureKeyValues(OS);
-  OS<<"\n";
+  OS << "\n";
   unsigned NumProcs = CPUKeyValues(OS);
-  OS<<"\n";
+  OS << "\n";
   EmitData(OS);
-  OS<<"\n";
+  OS << "\n";
+#if 0
+  OS << "}\n";
+#endif
 
   // MCInstrInfo initialization routine.
   OS << "static inline void Init" << Target
@@ -717,6 +720,15 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_SUBTARGETINFO_CTOR\n";
 
   OS << "namespace llvm {\n";
+  OS << "extern const llvm::SubtargetFeatureKV " << Target << "FeatureKV[];\n";
+  OS << "extern const llvm::SubtargetFeatureKV " << Target << "SubTypeKV[];\n";
+  if (HasItineraries) {
+    OS << "extern const llvm::SubtargetInfoKV " << Target << "ProcItinKV[];\n";
+    OS << "extern const llvm::InstrStage " << Target << "Stages[];\n";
+    OS << "extern const unsigned " << Target << "OperandCycles[];\n";
+    OS << "extern const unsigned " << Target << "ForwardingPathes[];\n";
+  }
+
   OS << ClassName << "::" << ClassName << "(StringRef TT, StringRef CPU, "
      << "StringRef FS)\n"
      << "  : TargetSubtargetInfo() {\n"

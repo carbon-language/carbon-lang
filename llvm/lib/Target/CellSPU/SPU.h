@@ -15,6 +15,7 @@
 #ifndef LLVM_TARGET_IBMCELLSPU_H
 #define LLVM_TARGET_IBMCELLSPU_H
 
+#include "MCTargetDesc/SPUMCTargetDesc.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -25,12 +26,6 @@ namespace llvm {
   FunctionPass *createSPUISelDag(SPUTargetMachine &TM);
   FunctionPass *createSPUNopFillerPass(SPUTargetMachine &tm);
 
-  extern Target TheCellSPUTarget;
 }
-
-// Defines symbolic names for the SPU instructions.
-//
-#define GET_INSTRINFO_ENUM
-#include "SPUGenInstrInfo.inc"
 
 #endif /* LLVM_TARGET_IBMCELLSPU_H */

@@ -17,8 +17,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 
-#define GET_SUBTARGETINFO_ENUM
-#define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "SystemZGenSubtargetInfo.inc"
@@ -53,16 +51,4 @@ bool SystemZSubtarget::GVRequiresExtraLoad(const GlobalValue* GV,
   }
 
   return false;
-}
-
-MCSubtargetInfo *createSystemZMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                              StringRef FS) {
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitSystemZMCSubtargetInfo(X, TT, CPU, FS);
-  return X;
-}
-
-extern "C" void LLVMInitializeSystemZMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheSystemZTarget,
-                                          createSystemZMCSubtargetInfo);
 }

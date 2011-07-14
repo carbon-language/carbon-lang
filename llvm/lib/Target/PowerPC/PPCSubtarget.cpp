@@ -18,8 +18,6 @@
 #include "llvm/Target/TargetRegistry.h"
 #include <cstdlib>
 
-#define GET_SUBTARGETINFO_ENUM
-#define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "PPCGenSubtargetInfo.inc"
@@ -140,18 +138,4 @@ bool PPCSubtarget::hasLazyResolverStub(const GlobalValue *GV,
     return false;
   return GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
          GV->hasCommonLinkage() || isDecl;
-}
-
-MCSubtargetInfo *createPPCMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                          StringRef FS) {
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitPPCMCSubtargetInfo(X, TT, CPU, FS);
-  return X;
-}
-
-extern "C" void LLVMInitializePowerPCMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(ThePPC32Target,
-                                          createPPCMCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(ThePPC64Target,
-                                          createPPCMCSubtargetInfo);
 }

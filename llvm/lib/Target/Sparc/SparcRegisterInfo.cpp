@@ -24,7 +24,6 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 
-#define GET_REGINFO_MC_DESC
 #define GET_REGINFO_TARGET_DESC
 #include "SparcGenRegisterInfo.inc"
 

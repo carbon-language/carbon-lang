@@ -16,7 +16,6 @@
 #include "SPUTargetMachine.h"
 #include "SPUHazardRecognizers.h"
 #include "SPUFrameLowering.h"
-#include "SPURegisterNames.h"
 #include "SPUTargetMachine.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

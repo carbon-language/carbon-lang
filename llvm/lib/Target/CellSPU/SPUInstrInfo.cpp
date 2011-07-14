@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SPURegisterNames.h"
 #include "SPUInstrInfo.h"
 #include "SPUInstrBuilder.h"
 #include "SPUTargetMachine.h"
@@ -24,7 +23,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 #define GET_INSTRINFO_CTOR
-#define GET_INSTRINFO_MC_DESC
 #include "SPUGenInstrInfo.inc"
 
 using namespace llvm;
@@ -450,14 +448,4 @@ SPUInstrInfo::ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond)
   }
 
   return true;
-}
-
-MCInstrInfo *createSPUMCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitSPUMCInstrInfo(X);
-  return X;
-}
-
-extern "C" void LLVMInitializeCellSPUMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheCellSPUTarget, createSPUMCInstrInfo);
 }

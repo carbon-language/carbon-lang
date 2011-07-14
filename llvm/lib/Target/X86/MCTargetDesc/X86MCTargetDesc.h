@@ -54,4 +54,7 @@ namespace X86_MC {
 #define GET_INSTRINFO_ENUM
 #include "X86GenInstrInfo.inc"
 
+#define GET_SUBTARGETINFO_ENUM
+#include "X86GenSubtargetInfo.inc"
+
 #endif

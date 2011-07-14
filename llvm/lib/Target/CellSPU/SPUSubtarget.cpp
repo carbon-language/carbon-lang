@@ -17,8 +17,6 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallVector.h"
 
-#define GET_SUBTARGETINFO_ENUM
-#define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "SPUGenSubtargetInfo.inc"
@@ -65,16 +63,4 @@ bool SPUSubtarget::enablePostRAScheduler(
   CriticalPathRCs.push_back(&SPU::R64CRegClass);
   CriticalPathRCs.push_back(&SPU::VECREGRegClass);
   return OptLevel >= CodeGenOpt::Default;
-}
-
-MCSubtargetInfo *createSPUMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                          StringRef FS) {
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitSPUMCSubtargetInfo(X, TT, CPU, FS);
-  return X;
-}
-
-extern "C" void LLVMInitializeCellSPUMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheCellSPUTarget,
-                                          createSPUMCSubtargetInfo);
 }

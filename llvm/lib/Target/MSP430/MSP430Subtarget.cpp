@@ -15,8 +15,6 @@
 #include "MSP430.h"
 #include "llvm/Target/TargetRegistry.h"
 
-#define GET_SUBTARGETINFO_ENUM
-#define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "MSP430GenSubtargetInfo.inc"
@@ -31,16 +29,4 @@ MSP430Subtarget::MSP430Subtarget(const std::string &TT,
 
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);
-}
-
-MCSubtargetInfo *createMSP430MCSubtargetInfo(StringRef TT, StringRef CPU,
-                                             StringRef FS) {
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitMSP430MCSubtargetInfo(X, TT, CPU, FS);
-  return X;
-}
-
-extern "C" void LLVMInitializeMSP430MCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheMSP430Target,
-                                          createMSP430MCSubtargetInfo);
 }

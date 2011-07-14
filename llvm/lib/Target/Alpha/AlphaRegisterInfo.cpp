@@ -34,7 +34,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
 
-#define GET_REGINFO_MC_DESC
 #define GET_REGINFO_TARGET_DESC
 #include "AlphaGenRegisterInfo.inc"
 

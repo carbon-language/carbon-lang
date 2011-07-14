@@ -21,7 +21,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
 
-#define GET_INSTRINFO_MC_DESC
 #define GET_INSTRINFO_CTOR
 #include "AlphaGenInstrInfo.inc"
 using namespace llvm;
@@ -381,14 +380,4 @@ unsigned AlphaInstrInfo::getGlobalRetAddr(MachineFunction *MF) const {
 
   AlphaFI->setGlobalRetAddr(GlobalRetAddr);
   return GlobalRetAddr;
-}
-
-MCInstrInfo *createAlphaMCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitAlphaMCInstrInfo(X);
-  return X;
-}
-
-extern "C" void LLVMInitializeAlphaMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheAlphaTarget, createAlphaMCInstrInfo);
 }

@@ -15,6 +15,7 @@
 #ifndef LLVM_TARGET_MSP430_H
 #define LLVM_TARGET_MSP430_H
 
+#include "MCTargetDesc/MSP430MCTargetDesc.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace MSP430CC {
@@ -41,17 +42,6 @@ namespace llvm {
 
   FunctionPass *createMSP430BranchSelectionPass();
 
-  extern Target TheMSP430Target;
-
 } // end namespace llvm;
-
-// Defines symbolic names for MSP430 registers.
-// This defines a mapping from register name to register number.
-#define GET_REGINFO_ENUM
-#include "MSP430GenRegisterInfo.inc"
-
-// Defines symbolic names for the MSP430 instructions.
-#define GET_INSTRINFO_ENUM
-#include "MSP430GenInstrInfo.inc"
 
 #endif

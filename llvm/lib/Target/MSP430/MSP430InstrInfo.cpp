@@ -24,7 +24,6 @@
 #include "llvm/Support/ErrorHandling.h"
 
 #define GET_INSTRINFO_CTOR
-#define GET_INSTRINFO_MC_DESC
 #include "MSP430GenInstrInfo.inc"
 
 using namespace llvm;
@@ -334,14 +333,4 @@ unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   }
 
   return 6;
-}
-
-MCInstrInfo *createMSP430MCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitMSP430MCInstrInfo(X);
-  return X;
-}
-
-extern "C" void LLVMInitializeMSP430MCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheMSP430Target, createMSP430MCInstrInfo);
 }

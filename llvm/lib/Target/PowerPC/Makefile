@@ -18,6 +18,6 @@ BUILT_SOURCES = PPCGenRegisterInfo.inc \
                 PPCGenSubtargetInfo.inc PPCGenCallingConv.inc \
                 PPCGenMCCodeEmitter.inc
 
-DIRS = InstPrinter TargetInfo
+DIRS = InstPrinter TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common

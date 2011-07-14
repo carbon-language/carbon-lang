@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SPURegisterNames.h"
 #include "SPUISelLowering.h"
 #include "SPUTargetMachine.h"
 #include "SPUFrameLowering.h"

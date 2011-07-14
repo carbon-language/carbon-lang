@@ -26,7 +26,6 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Support/ErrorHandling.h"
 
-#define GET_REGINFO_MC_DESC
 #define GET_REGINFO_TARGET_DESC
 #include "MSP430GenRegisterInfo.inc"
 

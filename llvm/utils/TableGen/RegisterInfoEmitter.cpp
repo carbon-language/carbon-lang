@@ -162,16 +162,17 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
       OS << getQualifiedName(SR[j]->TheDef) << ", ";
     OS << "0 };\n";
   }
+  OS << "}\n";       // End of anonymous namespace...
 
-  OS << "\n  const MCRegisterDesc " << TargetName
+  OS << "\nMCRegisterDesc " << TargetName
      << "RegDesc[] = { // Descriptors\n";
-  OS << "    { \"NOREG\",\t0,\t0,\t0 },\n";
+  OS << "  { \"NOREG\",\t0,\t0,\t0 },\n";
 
   // Now that register alias and sub-registers sets have been emitted, emit the
   // register descriptors now.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     const CodeGenRegister &Reg = *Regs[i];
-    OS << "    { \"";
+    OS << "  { \"";
     OS << Reg.getName() << "\",\t" << Reg.getName() << "_Overlaps,\t";
     if (!Reg.getSubRegs().empty())
       OS << Reg.getName() << "_SubRegsSet,\t";
@@ -183,9 +184,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
       OS << "Empty_SuperRegsSet";
     OS << " },\n";
   }
-  OS << "  };\n";      // End of register descriptors...
-
-  OS << "}\n\n";       // End of anonymous namespace...
+  OS << "};\n\n";      // End of register descriptors...
 
   // MCRegisterInfo initialization routine.
   OS << "static inline void Init" << TargetName
@@ -545,6 +544,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     OS << "    &" << getQualifiedName(RegisterClasses[i].TheDef)
        << "RegClass,\n";
   OS << "  };\n";
+  OS << "}\n";       // End of anonymous namespace...
 
   // Emit extra information about registers.
   const std::string &TargetName = Target.getName();
@@ -569,7 +569,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit SubRegIndex names, skipping 0
   const std::vector<Record*> &SubRegIndices = RegBank.getSubRegIndices();
-  OS << "\n  const char *const SubRegIndexTable[] = { \"";
+  OS << "\n  static const char *const " << TargetName
+     << "SubRegIndexTable[] = { \"";
   for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
     OS << SubRegIndices[i]->getName();
     if (i+1 != e)
@@ -587,7 +588,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     }
     OS << "\n  };\n\n";
   }
-  OS << "}\n\n";       // End of anonymous namespace...
+  OS << "\n";
 
   std::string ClassName = Target.getName() + "GenRegisterInfo";
 
@@ -658,11 +659,13 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "  }\n}\n\n";
 
   // Emit the constructor of the class...
+  OS << "extern const MCRegisterDesc " << TargetName << "RegDesc[];\n";
+
   OS << ClassName << "::" << ClassName
      << "()\n"
      << "  : TargetRegisterInfo(" << TargetName << "RegInfoDesc"
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n"
-     << "                 SubRegIndexTable) {\n"
+     << "                 " << TargetName << "SubRegIndexTable) {\n"
      << "  InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ");\n"
      << "}\n\n";

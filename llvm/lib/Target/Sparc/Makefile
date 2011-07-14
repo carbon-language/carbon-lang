@@ -16,7 +16,7 @@ BUILT_SOURCES = SparcGenRegisterInfo.inc SparcGenInstrInfo.inc \
 		SparcGenAsmWriter.inc SparcGenDAGISel.inc \
 		SparcGenSubtargetInfo.inc SparcGenCallingConv.inc
 
-DIRS = TargetInfo
+DIRS = TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common
 

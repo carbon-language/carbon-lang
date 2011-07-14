@@ -32,3 +32,4 @@ add_llvm_target(PowerPCCodeGen
 
 add_subdirectory(InstPrinter)
 add_subdirectory(TargetInfo)
+add_subdirectory(MCTargetDesc)

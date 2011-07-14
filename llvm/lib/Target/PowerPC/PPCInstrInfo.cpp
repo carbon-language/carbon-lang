@@ -31,7 +31,6 @@
 #include "llvm/ADT/STLExtras.h"
 
 #define GET_INSTRINFO_CTOR
-#define GET_INSTRINFO_MC_DESC
 #include "PPCGenInstrInfo.inc"
 
 namespace llvm {
@@ -653,15 +652,4 @@ unsigned PPCInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   default:
     return 4; // PowerPC instructions are all 4 bytes
   }
-}
-
-MCInstrInfo *createPPCMCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitPPCMCInstrInfo(X);
-  return X;
-}
-
-extern "C" void LLVMInitializePowerPCMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(ThePPC32Target, createPPCMCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(ThePPC64Target, createPPCMCInstrInfo);
 }

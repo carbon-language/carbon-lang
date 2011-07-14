@@ -17,7 +17,7 @@ BUILT_SOURCES = BlackfinGenRegisterInfo.inc BlackfinGenInstrInfo.inc \
                 BlackfinGenDAGISel.inc BlackfinGenSubtargetInfo.inc \
 		BlackfinGenCallingConv.inc BlackfinGenIntrinsics.inc
 
-DIRS = TargetInfo
+DIRS = TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common
 

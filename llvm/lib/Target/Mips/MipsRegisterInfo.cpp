@@ -37,7 +37,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/DebugInfo.h"
 
-#define GET_REGINFO_MC_DESC
 #define GET_REGINFO_TARGET_DESC
 #include "MipsGenRegisterInfo.inc"
 

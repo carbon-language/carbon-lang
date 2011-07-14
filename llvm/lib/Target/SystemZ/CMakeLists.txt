@@ -21,3 +21,4 @@ add_llvm_target(SystemZCodeGen
   )
 
 add_subdirectory(TargetInfo)
+add_subdirectory(MCTargetDesc)

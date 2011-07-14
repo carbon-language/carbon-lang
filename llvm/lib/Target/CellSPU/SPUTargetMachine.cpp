@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "SPU.h"
-#include "SPURegisterNames.h"
 #include "SPUMCAsmInfo.h"
 #include "SPUTargetMachine.h"
 #include "llvm/PassManager.h"

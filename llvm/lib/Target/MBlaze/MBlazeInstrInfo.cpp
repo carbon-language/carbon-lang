@@ -23,7 +23,6 @@
 #include "llvm/ADT/STLExtras.h"
 
 #define GET_INSTRINFO_CTOR
-#define GET_INSTRINFO_MC_DESC
 #include "MBlazeGenInstrInfo.inc"
 
 using namespace llvm;
@@ -294,14 +293,4 @@ unsigned MBlazeInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
 
   MBlazeFI->setGlobalBaseReg(GlobalBaseReg);
   return GlobalBaseReg;
-}
-
-MCInstrInfo *createMBlazeMCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitMBlazeMCInstrInfo(X);
-  return X;
-}
-
-extern "C" void LLVMInitializeMBlazeMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheMBlazeTarget, createMBlazeMCInstrInfo);
 }

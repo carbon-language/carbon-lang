@@ -15,6 +15,7 @@
 #ifndef TARGET_BLACKFIN_H
 #define TARGET_BLACKFIN_H
 
+#include "MCTargetDesc/BlackfinMCTargetDesc.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -24,17 +25,7 @@ namespace llvm {
 
   FunctionPass *createBlackfinISelDag(BlackfinTargetMachine &TM,
                                       CodeGenOpt::Level OptLevel);
-  extern Target TheBlackfinTarget;
 
 } // end namespace llvm
-
-// Defines symbolic names for Blackfin registers.  This defines a mapping from
-// register name to register number.
-#define GET_REGINFO_ENUM
-#include "BlackfinGenRegisterInfo.inc"
-
-// Defines symbolic names for the Blackfin instructions.
-#define GET_INSTRINFO_ENUM
-#include "BlackfinGenInstrInfo.inc"
 
 #endif

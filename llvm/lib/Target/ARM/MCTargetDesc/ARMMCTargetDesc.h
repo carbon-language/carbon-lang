@@ -46,4 +46,7 @@ namespace ARM_MC {
 #define GET_INSTRINFO_ENUM
 #include "ARMGenInstrInfo.inc"
 
+#define GET_SUBTARGETINFO_ENUM
+#include "ARMGenSubtargetInfo.inc"
+
 #endif

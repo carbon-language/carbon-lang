@@ -36,7 +36,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/STLExtras.h"
 
-#define GET_INSTRINFO_MC_DESC
 #define GET_INSTRINFO_CTOR
 #include "ARMGenInstrInfo.inc"
 

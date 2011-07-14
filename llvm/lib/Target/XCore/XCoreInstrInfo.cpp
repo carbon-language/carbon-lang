@@ -24,7 +24,6 @@
 #include "llvm/Support/ErrorHandling.h"
 
 #define GET_INSTRINFO_CTOR
-#define GET_INSTRINFO_MC_DESC
 #include "XCoreGenInstrInfo.inc"
 
 namespace llvm {
@@ -396,14 +395,4 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
           "Invalid XCore branch condition!");
   Cond[0].setImm(GetOppositeBranchCondition((XCore::CondCode)Cond[0].getImm()));
   return false;
-}
-
-MCInstrInfo *createXCoreMCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitXCoreMCInstrInfo(X);
-  return X;
-}
-
-extern "C" void LLVMInitializeXCoreMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheXCoreTarget, createXCoreMCInstrInfo);
 }

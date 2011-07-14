@@ -16,7 +16,7 @@ BUILT_SOURCES = SystemZGenRegisterInfo.inc SystemZGenInstrInfo.inc \
 		SystemZGenAsmWriter.inc SystemZGenDAGISel.inc \
 		SystemZGenSubtargetInfo.inc SystemZGenCallingConv.inc
 
-DIRS = TargetInfo
+DIRS = TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common
 

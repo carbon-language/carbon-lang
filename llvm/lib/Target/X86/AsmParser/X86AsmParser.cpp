@@ -28,9 +28,6 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 
-#define GET_SUBTARGETINFO_ENUM
-#include "X86GenSubtargetInfo.inc"
-
 using namespace llvm;
 
 namespace {

@@ -31,9 +31,6 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 
-#define GET_SUBTARGETINFO_ENUM
-#include "ARMGenSubtargetInfo.inc"
-
 using namespace llvm;
 
 namespace {

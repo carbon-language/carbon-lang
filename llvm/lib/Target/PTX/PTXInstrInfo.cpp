@@ -23,7 +23,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 #define GET_INSTRINFO_CTOR
-#define GET_INSTRINFO_MC_DESC
 #include "PTXGenInstrInfo.inc"
 
 using namespace llvm;
@@ -408,15 +407,4 @@ MachineBasicBlock *PTXInstrInfo::GetBranchTarget(const MachineInstr& inst) {
   const MachineOperand& target = inst.getOperand(0);
   assert(target.isMBB() && "FIXME: detect branch target operand");
   return target.getMBB();
-}
-
-MCInstrInfo *createPTXMCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitPTXMCInstrInfo(X);
-  return X;
-}
-
-extern "C" void LLVMInitializePTXMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(ThePTX32Target, createPTXMCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(ThePTX64Target, createPTXMCInstrInfo);
 }

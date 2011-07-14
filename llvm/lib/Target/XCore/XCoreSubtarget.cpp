@@ -15,8 +15,6 @@
 #include "XCore.h"
 #include "llvm/Target/TargetRegistry.h"
 
-#define GET_SUBTARGETINFO_ENUM
-#define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "XCoreGenSubtargetInfo.inc"
@@ -27,17 +25,4 @@ XCoreSubtarget::XCoreSubtarget(const std::string &TT,
                                const std::string &CPU, const std::string &FS)
   : XCoreGenSubtargetInfo(TT, CPU, FS)
 {
-}
-
-
-MCSubtargetInfo *createXCoreMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                            StringRef FS) {
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitXCoreMCSubtargetInfo(X, TT, CPU, FS);
-  return X;
-}
-
-extern "C" void LLVMInitializeXCoreMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheXCoreTarget,
-                                          createXCoreMCSubtargetInfo);
 }

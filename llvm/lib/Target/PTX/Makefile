@@ -19,6 +19,6 @@ BUILT_SOURCES = PTXGenAsmWriter.inc \
 		PTXGenRegisterInfo.inc \
 		PTXGenSubtargetInfo.inc
 
-DIRS = TargetInfo
+DIRS = TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common

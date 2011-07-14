@@ -23,3 +23,4 @@ add_llvm_target(SparcCodeGen
   )
 
 add_subdirectory(TargetInfo)
+add_subdirectory(MCTargetDesc)

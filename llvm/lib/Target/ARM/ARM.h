@@ -16,6 +16,7 @@
 #define TARGET_ARM_H
 
 #include "ARMBaseInfo.h"
+#include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
@@ -56,8 +57,6 @@ FunctionPass *createNEONMoveFixPass();
 FunctionPass *createMLxExpansionPass();
 FunctionPass *createThumb2ITBlockPass();
 FunctionPass *createThumb2SizeReductionPass();
-
-extern Target TheARMTarget, TheThumbTarget;
 
 void LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                   ARMAsmPrinter &AP);

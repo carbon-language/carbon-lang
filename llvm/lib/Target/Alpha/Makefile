@@ -16,6 +16,6 @@ BUILT_SOURCES = AlphaGenRegisterInfo.inc AlphaGenInstrInfo.inc \
                 AlphaGenAsmWriter.inc AlphaGenDAGISel.inc \
                 AlphaGenCallingConv.inc AlphaGenSubtargetInfo.inc
 
-DIRS = TargetInfo
+DIRS = TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common

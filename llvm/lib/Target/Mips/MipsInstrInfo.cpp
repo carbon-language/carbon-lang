@@ -22,7 +22,6 @@
 #include "llvm/ADT/STLExtras.h"
 
 #define GET_INSTRINFO_CTOR
-#define GET_INSTRINFO_MC_DESC
 #include "MipsGenInstrInfo.inc"
 
 using namespace llvm;
@@ -459,14 +458,4 @@ unsigned MipsInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
 
   MipsFI->setGlobalBaseReg(GlobalBaseReg);
   return GlobalBaseReg;
-}
-
-MCInstrInfo *createMipsMCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitMipsMCInstrInfo(X);
-  return X;
-}
-
-extern "C" void LLVMInitializeMipsMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheMipsTarget, createMipsMCInstrInfo);
 }

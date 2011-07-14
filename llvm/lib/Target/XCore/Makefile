@@ -17,7 +17,7 @@ BUILT_SOURCES = XCoreGenRegisterInfo.inc XCoreGenInstrInfo.inc \
                 XCoreGenDAGISel.inc XCoreGenCallingConv.inc \
 		XCoreGenSubtargetInfo.inc
 
-DIRS = TargetInfo
+DIRS = TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common
 

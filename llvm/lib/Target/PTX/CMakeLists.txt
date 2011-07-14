@@ -22,3 +22,4 @@ add_llvm_target(PTXCodeGen
   )
 
 add_subdirectory(TargetInfo)
+add_subdirectory(MCTargetDesc)

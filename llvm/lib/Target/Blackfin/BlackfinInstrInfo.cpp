@@ -22,7 +22,6 @@
 #include "llvm/Support/ErrorHandling.h"
 
 #define GET_INSTRINFO_CTOR
-#define GET_INSTRINFO_MC_DESC
 #include "BlackfinGenInstrInfo.inc"
 
 using namespace llvm;
@@ -254,15 +253,4 @@ loadRegFromAddr(MachineFunction &MF,
                 const TargetRegisterClass *RC,
                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   llvm_unreachable("loadRegFromAddr not implemented");
-}
-
-MCInstrInfo *createBlackfinMCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitBlackfinMCInstrInfo(X);
-  return X;
-}
-
-extern "C" void LLVMInitializeBlackfinMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheBlackfinTarget,
-                                      createBlackfinMCInstrInfo);
 }

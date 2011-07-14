@@ -26,9 +26,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/raw_ostream.h"
 
-#define GET_SUBTARGETINFO_ENUM
-#include "ARMGenSubtargetInfo.inc"
-
 using namespace llvm;
 
 STATISTIC(MCNumEmitted, "Number of MC instructions emitted.");

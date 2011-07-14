@@ -23,3 +23,4 @@ add_llvm_target(BlackfinCodeGen
   )
 
 add_subdirectory(TargetInfo)
+add_subdirectory(MCTargetDesc)

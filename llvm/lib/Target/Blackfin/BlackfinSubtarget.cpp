@@ -15,8 +15,6 @@
 #include "Blackfin.h"
 #include "llvm/Target/TargetRegistry.h"
 
-#define GET_SUBTARGETINFO_ENUM
-#define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "BlackfinGenSubtargetInfo.inc"
@@ -43,16 +41,4 @@ BlackfinSubtarget::BlackfinSubtarget(const std::string &TT,
     CPUName = "generic";
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);
-}
-
-MCSubtargetInfo *createBlackfinMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                               StringRef FS) {
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitBlackfinMCSubtargetInfo(X, TT, CPU, FS);
-  return X;
-}
-
-extern "C" void LLVMInitializeBlackfinMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheBlackfinTarget,
-                                          createBlackfinMCSubtargetInfo);
 }

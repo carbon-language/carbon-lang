@@ -15,6 +15,7 @@
 #ifndef TARGET_MBLAZE_H
 #define TARGET_MBLAZE_H
 
+#include "MCTargetDesc/MBlazeMCTargetDesc.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -36,16 +37,6 @@ namespace llvm {
   FunctionPass *createMBlazeISelDag(MBlazeTargetMachine &TM);
   FunctionPass *createMBlazeDelaySlotFillerPass(MBlazeTargetMachine &TM);
 
-  extern Target TheMBlazeTarget;
 } // end namespace llvm;
-
-// Defines symbolic names for MBlaze registers.  This defines a mapping from
-// register name to register number.
-#define GET_REGINFO_ENUM
-#include "MBlazeGenRegisterInfo.inc"
-
-// Defines symbolic names for the MBlaze instructions.
-#define GET_INSTRINFO_ENUM
-#include "MBlazeGenInstrInfo.inc"
 
 #endif

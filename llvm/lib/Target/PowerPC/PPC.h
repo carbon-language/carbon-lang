@@ -15,6 +15,7 @@
 #ifndef LLVM_TARGET_POWERPC_H
 #define LLVM_TARGET_POWERPC_H
 
+#include "MCTargetDesc/PPCMCTargetDesc.h"
 #include <string>
 
 // GCC #defines PPC on Linux but we use it as our namespace name
@@ -48,9 +49,6 @@ namespace llvm {
   void LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                     AsmPrinter &AP, bool isDarwin);
   
-  extern Target ThePPC32Target;
-  extern Target ThePPC64Target;
-  
   namespace PPCII {
     
   /// Target Operand Flag enum.
@@ -83,16 +81,5 @@ namespace llvm {
   } // end namespace PPCII
   
 } // end namespace llvm;
-
-// Defines symbolic names for PowerPC registers.  This defines a mapping from
-// register name to register number.
-//
-#define GET_REGINFO_ENUM
-#include "PPCGenRegisterInfo.inc"
-
-// Defines symbolic names for the PowerPC instructions.
-//
-#define GET_INSTRINFO_ENUM
-#include "PPCGenInstrInfo.inc"
 
 #endif

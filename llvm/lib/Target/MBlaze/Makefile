@@ -18,7 +18,7 @@ BUILT_SOURCES = MBlazeGenRegisterInfo.inc MBlazeGenInstrInfo.inc \
                 MBlazeGenSubtargetInfo.inc MBlazeGenIntrinsics.inc \
                 MBlazeGenEDInfo.inc
 
-DIRS = InstPrinter AsmParser Disassembler TargetInfo
+DIRS = InstPrinter AsmParser Disassembler TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common
 

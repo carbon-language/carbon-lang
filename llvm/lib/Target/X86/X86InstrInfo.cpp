@@ -36,7 +36,6 @@
 #include <limits>
 
 #define GET_INSTRINFO_CTOR
-#define GET_INSTRINFO_MC_DESC
 #include "X86GenInstrInfo.inc"
 
 using namespace llvm;

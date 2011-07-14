@@ -23,7 +23,6 @@
 #include "llvm/ADT/SmallVector.h"
 
 #define GET_INSTRINFO_CTOR
-#define GET_INSTRINFO_MC_DESC
 #include "SparcGenInstrInfo.inc"
 
 using namespace llvm;
@@ -344,14 +343,4 @@ unsigned SparcInstrInfo::getGlobalBaseReg(MachineFunction *MF) const
   BuildMI(FirstMBB, MBBI, dl, get(SP::GETPCX), GlobalBaseReg);
   SparcFI->setGlobalBaseReg(GlobalBaseReg);
   return GlobalBaseReg;
-}
-
-MCInstrInfo *createSparcMCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitSparcMCInstrInfo(X);
-  return X;
-}
-
-extern "C" void LLVMInitializeSparcMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheSparcTarget, createSparcMCInstrInfo);
 }

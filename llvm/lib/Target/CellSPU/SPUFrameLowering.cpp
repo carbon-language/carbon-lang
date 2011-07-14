@@ -13,7 +13,6 @@
 
 #include "SPU.h"
 #include "SPUFrameLowering.h"
-#include "SPURegisterNames.h"
 #include "SPUInstrBuilder.h"
 #include "SPUInstrInfo.h"
 #include "llvm/Function.h"

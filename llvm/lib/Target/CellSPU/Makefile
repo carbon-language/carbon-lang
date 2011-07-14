@@ -15,6 +15,6 @@ BUILT_SOURCES = SPUGenInstrInfo.inc SPUGenRegisterInfo.inc \
 		SPUGenDAGISel.inc \
 		SPUGenSubtargetInfo.inc SPUGenCallingConv.inc
 
-DIRS = TargetInfo
+DIRS = TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common

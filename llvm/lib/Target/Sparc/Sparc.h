@@ -15,6 +15,7 @@
 #ifndef TARGET_SPARC_H
 #define TARGET_SPARC_H
 
+#include "MCTargetDesc/SparcMCTargetDesc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cassert>
@@ -28,22 +29,7 @@ namespace llvm {
   FunctionPass *createSparcDelaySlotFillerPass(TargetMachine &TM);
   FunctionPass *createSparcFPMoverPass(TargetMachine &TM);
 
-  extern Target TheSparcTarget;
-  extern Target TheSparcV9Target;
-
 } // end namespace llvm;
-
-// Defines symbolic names for Sparc registers.  This defines a mapping from
-// register name to register number.
-//
-#define GET_REGINFO_ENUM
-#include "SparcGenRegisterInfo.inc"
-
-// Defines symbolic names for the Sparc instructions.
-//
-#define GET_INSTRINFO_ENUM
-#include "SparcGenInstrInfo.inc"
-
 
 namespace llvm {
   // Enums corresponding to Sparc condition codes, both icc's and fcc's.  These

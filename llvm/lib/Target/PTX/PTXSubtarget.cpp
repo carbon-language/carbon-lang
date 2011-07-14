@@ -16,8 +16,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetRegistry.h"
 
-#define GET_SUBTARGETINFO_ENUM
-#define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "PTXGenSubtargetInfo.inc"
@@ -65,19 +63,4 @@ std::string PTXSubtarget::getPTXVersionString() const {
     case PTX_VERSION_2_2: return "2.2";
     case PTX_VERSION_2_3: return "2.3";
   }
-}
-
-
-MCSubtargetInfo *createPTXMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                            StringRef FS) {
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitPTXMCSubtargetInfo(X, TT, CPU, FS);
-  return X;
-}
-
-extern "C" void LLVMInitializePTXMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(ThePTX32Target,
-                                          createPTXMCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(ThePTX64Target,
-                                          createPTXMCSubtargetInfo);
 }

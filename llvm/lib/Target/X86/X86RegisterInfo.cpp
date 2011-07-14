@@ -40,7 +40,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/CommandLine.h"
 
-#define GET_REGINFO_MC_DESC
 #define GET_REGINFO_TARGET_DESC
 #include "X86GenRegisterInfo.inc"
 

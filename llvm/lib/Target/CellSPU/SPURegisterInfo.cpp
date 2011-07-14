@@ -14,7 +14,6 @@
 #define DEBUG_TYPE "reginfo"
 #include "SPU.h"
 #include "SPURegisterInfo.h"
-#include "SPURegisterNames.h"
 #include "SPUInstrBuilder.h"
 #include "SPUSubtarget.h"
 #include "SPUMachineFunction.h"
@@ -43,7 +42,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
 
-#define GET_REGINFO_MC_DESC
 #define GET_REGINFO_TARGET_DESC
 #include "SPUGenRegisterInfo.inc"
 

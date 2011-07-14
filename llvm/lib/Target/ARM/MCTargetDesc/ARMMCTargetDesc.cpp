@@ -23,7 +23,6 @@
 #define GET_INSTRINFO_MC_DESC
 #include "ARMGenInstrInfo.inc"
 
-#define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_MC_DESC
 #include "ARMGenSubtargetInfo.inc"
 
