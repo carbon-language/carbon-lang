@@ -167,10 +167,9 @@ void llvm::RemapInstruction(Instruction *I, ValueToValueMapTy &VMap,
     }
   }
 
-  // Remap attached metadata.  Don't bother remapping DebugLoc, it can never
-  // have mappings to do.
+  // Remap attached metadata.
   SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
-  I->getAllMetadataOtherThanDebugLoc(MDs);
+  I->getAllMetadata(MDs);
   for (SmallVectorImpl<std::pair<unsigned, MDNode *> >::iterator
        MI = MDs.begin(), ME = MDs.end(); MI != ME; ++MI) {
     MDNode *Old = MI->second;
