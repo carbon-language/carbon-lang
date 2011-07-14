@@ -71,9 +71,8 @@ bool GlobalValue::isDeclaration() const {
   if (const Function *F = dyn_cast<Function>(this))
     return F->empty();
 
-  const GlobalAlias *GA = cast<GlobalAlias>(this);
-  if (const GlobalValue *AV = GA->getAliasedGlobal())
-    return AV->isDeclaration();
+  // Aliases are always definitions.
+  assert(isa<GlobalAlias>(this));
   return false;
 }
   
