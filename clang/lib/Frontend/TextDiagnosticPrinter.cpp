@@ -410,7 +410,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
           OS << PLoc.getColumn() << ':';
         OS << ' ';
       }
-      OS << "note: instantiated from:\n";
+      OS << "note: expanded from:\n";
 
       EmitCaretDiagnostic(Loc, Ranges, NumRanges, SM, 0, 0,
                           Columns, OnMacroInst + 1, MacroSkipStart,
@@ -421,7 +421,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     if (OnMacroInst == MacroSkipStart) {
       // Tell the user that we've skipped contexts.
       OS << "note: (skipping " << (MacroSkipEnd - MacroSkipStart) 
-      << " contexts in backtrace; use -fmacro-backtrace-limit=0 to see "
+      << " expansions in backtrace; use -fmacro-backtrace-limit=0 to see "
       "all)\n";
     }
     

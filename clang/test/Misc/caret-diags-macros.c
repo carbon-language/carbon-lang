@@ -6,8 +6,8 @@ void foo() {
   M1(
     M2);
   // CHECK: :7:{{[0-9]+}}: warning: expression result unused
-  // CHECK: :4:{{[0-9]+}}: note: instantiated from:
-  // CHECK: :3:{{[0-9]+}}: note: instantiated from:
+  // CHECK: :4:{{[0-9]+}}: note: expanded from:
+  // CHECK: :3:{{[0-9]+}}: note: expanded from:
 }
 
 #define A 1
@@ -16,9 +16,9 @@ void foo() {
 void bar() {
   C;
   // CHECK: :17:3: warning: expression result unused
-  // CHECK: :15:11: note: instantiated from:
-  // CHECK: :14:11: note: instantiated from:
-  // CHECK: :13:11: note: instantiated from:
+  // CHECK: :15:11: note: expanded from:
+  // CHECK: :14:11: note: expanded from:
+  // CHECK: :13:11: note: expanded from:
 }
 
 // rdar://7597492
@@ -46,28 +46,28 @@ void test() {
   // its easy to FileCheck.
   // CHECK-NEXT: macro_args3(1);
   // CHECK-NEXT: ~~~~~~~~~~~~^~
-  // CHECK: {{.*}}:36:36: note: instantiated from:
-  // CHECK: {{.*}}:35:36: note: instantiated from:
-  // CHECK: {{.*}}:34:24: note: instantiated from:
+  // CHECK: {{.*}}:36:36: note: expanded from:
+  // CHECK: {{.*}}:35:36: note: expanded from:
+  // CHECK: {{.*}}:34:24: note: expanded from:
 
   macro_many_args3(
     1,
     2,
     3);
   // CHECK: {{.*}}:55:5: warning: expression result unused
-  // CHECK: {{.*}}:40:55: note: instantiated from:
-  // CHECK: {{.*}}:39:55: note: instantiated from:
-  // CHECK: {{.*}}:38:35: note: instantiated from:
+  // CHECK: {{.*}}:40:55: note: expanded from:
+  // CHECK: {{.*}}:39:55: note: expanded from:
+  // CHECK: {{.*}}:38:35: note: expanded from:
 
   macro_many_args3(
     1,
     M2,
     3);
   // CHECK: {{.*}}:64:5: warning: expression result unused
-  // CHECK: {{.*}}:4:12: note: instantiated from:
-  // CHECK: {{.*}}:40:55: note: instantiated from:
-  // CHECK: {{.*}}:39:55: note: instantiated from:
-  // CHECK: {{.*}}:38:35: note: instantiated from:
+  // CHECK: {{.*}}:4:12: note: expanded from:
+  // CHECK: {{.*}}:40:55: note: expanded from:
+  // CHECK: {{.*}}:39:55: note: expanded from:
+  // CHECK: {{.*}}:38:35: note: expanded from:
 
   macro_many_args3(
     1,
@@ -78,11 +78,11 @@ void test() {
   // arguments.
   // CHECK-NEXT: macro_args2(2),
   // CHECK-NEXT: ~~~~~~~~~~~~^~~
-  // CHECK: {{.*}}:35:36: note: instantiated from:
-  // CHECK: {{.*}}:34:24: note: instantiated from:
-  // CHECK: {{.*}}:40:55: note: instantiated from:
-  // CHECK: {{.*}}:39:55: note: instantiated from:
-  // CHECK: {{.*}}:38:35: note: instantiated from:
+  // CHECK: {{.*}}:35:36: note: expanded from:
+  // CHECK: {{.*}}:34:24: note: expanded from:
+  // CHECK: {{.*}}:40:55: note: expanded from:
+  // CHECK: {{.*}}:39:55: note: expanded from:
+  // CHECK: {{.*}}:38:35: note: expanded from:
 }
 
 #define variadic_args1(x, y, ...) y
@@ -94,9 +94,9 @@ void test2() {
   // CHECK: {{.*}}:93:21: warning: expression result unused
   // CHECK-NEXT: variadic_args3(1, 2, 3, 4);
   // CHECK-NEXT: ~~~~~~~~~~~~~~~~~~^~~~~~~~
-  // CHECK: {{.*}}:90:53: note: instantiated from:
-  // CHECK: {{.*}}:89:50: note: instantiated from:
-  // CHECK: {{.*}}:88:35: note: instantiated from:
+  // CHECK: {{.*}}:90:53: note: expanded from:
+  // CHECK: {{.*}}:89:50: note: expanded from:
+  // CHECK: {{.*}}:88:35: note: expanded from:
 }
 
 #define variadic_pasting_args1(x, y, z) y
@@ -108,16 +108,16 @@ void test2() {
 void test3() {
   variadic_pasting_args3(1, 2, 3, 4);
   // CHECK: {{.*}}:109:32: warning: expression result unused
-  // CHECK: {{.*}}:105:72: note: instantiated from:
-  // CHECK: {{.*}}:103:68: note: instantiated from:
-  // CHECK: {{.*}}:102:41: note: instantiated from:
+  // CHECK: {{.*}}:105:72: note: expanded from:
+  // CHECK: {{.*}}:103:68: note: expanded from:
+  // CHECK: {{.*}}:102:41: note: expanded from:
 
   variadic_pasting_args3a(1, 2, 3, 4);
   // FIXME: It'd be really nice to retain the start location of the first token
   // involved in the token paste instead of falling back on the full macro
   // location in the first two locations here.
   // CHECK: {{.*}}:115:3: warning: expression result unused
-  // CHECK: {{.*}}:106:44: note: instantiated from:
-  // CHECK: {{.*}}:104:72: note: instantiated from:
-  // CHECK: {{.*}}:102:41: note: instantiated from:
+  // CHECK: {{.*}}:106:44: note: expanded from:
+  // CHECK: {{.*}}:104:72: note: expanded from:
+  // CHECK: {{.*}}:102:41: note: expanded from:
 }
