@@ -61,6 +61,11 @@ class HelpCommandTestCase(TestBase):
         self.expect("version",
             patterns = ['LLDB-' + (version_str if version_str else '[0-9]+')])
 
+    def test_help_should_not_crash_lldb(self):
+        """Command 'help disasm' should not crash lldb."""
+        self.runCmd("help disasm", check=False)
+        self.runCmd("help unsigned-integer")
+
     def test_help_should_not_hang_emacsshell(self):
         """Command 'settings set term-width 0' should not hang the help command."""
         self.runCmd("settings set term-width 0")

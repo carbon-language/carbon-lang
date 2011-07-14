@@ -623,8 +623,9 @@ CommandObject::LookupArgumentName (const char *arg_name)
         && arg_name[len-1] == '>')
         arg_name_str = arg_name_str.substr (1, len-2);
 
+    const ArgumentTableEntry *table = GetArgumentTable();
     for (int i = 0; i < eArgTypeLastArg; ++i)
-        if (arg_name_str.compare (g_arguments_data[i].arg_name) == 0)
+        if (arg_name_str.compare (table[i].arg_name) == 0)
             return_type = g_arguments_data[i].arg_type;
 
     return return_type;
@@ -778,6 +779,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeThreadID, "thread-id", CommandCompletions::eNoCompletion, { NULL, false }, "Thread ID number." },
     { eArgTypeThreadIndex, "thread-index", CommandCompletions::eNoCompletion, { NULL, false }, "Index into the process' list of threads." },
     { eArgTypeThreadName, "thread-name", CommandCompletions::eNoCompletion, { NULL, false }, "The thread's name." },
+    { eArgTypeUnsignedInteger, "unsigned-integer", CommandCompletions::eNoCompletion, { NULL, false }, "An unsigned integer." },
     { eArgTypeUnixSignal, "unix-signal", CommandCompletions::eNoCompletion, { NULL, false }, "A valid Unix signal name or number (e.g. SIGKILL, KILL or 9)." },
     { eArgTypeVarName, "variable-name", CommandCompletions::eNoCompletion, { NULL, false }, "The name of a variable in your program." },
     { eArgTypeValue, "value", CommandCompletions::eNoCompletion, { NULL, false }, "A value could be anything, depending on where and how it is used." },
