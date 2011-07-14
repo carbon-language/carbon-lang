@@ -437,10 +437,8 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
   assert(!Src->hasLocalLinkage() &&
          "If Src has internal linkage, Dest shouldn't be set!");
   
-  // FIXME: GlobalAlias::isDeclaration is broken, should always be
-  // false.
-  bool SrcIsDeclaration = Src->isDeclaration() && !isa<GlobalAlias>(Src);
-  bool DestIsDeclaration = Dest->isDeclaration() && !isa<GlobalAlias>(Dest);
+  bool SrcIsDeclaration = Src->isDeclaration();
+  bool DestIsDeclaration = Dest->isDeclaration();
   
   if (SrcIsDeclaration) {
     // If Src is external or if both Src & Dest are external..  Just link the
