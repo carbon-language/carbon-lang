@@ -71,10 +71,12 @@ def t_adrlabel : Operand<i32> {
 // Scaled 4 immediate.
 def t_imm_s4 : Operand<i32> {
   let PrintMethod = "printThumbS4ImmOperand";
+  let OperandType = "OPERAND_IMMEDIATE";
 }
 
 // Define Thumb specific addressing modes.
 
+let OperandType = "OPERAND_PCREL" in {
 def t_brtarget : Operand<OtherVT> {
   let EncoderMethod = "getThumbBRTargetOpValue";
 }
@@ -93,6 +95,7 @@ def t_bltarget : Operand<i32> {
 
 def t_blxtarget : Operand<i32> {
   let EncoderMethod = "getThumbBLXTargetOpValue";
+}
 }
 
 def MemModeRegThumbAsmOperand : AsmOperandClass {
