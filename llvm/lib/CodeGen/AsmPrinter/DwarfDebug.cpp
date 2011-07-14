@@ -1614,26 +1614,6 @@ DbgScope *DwarfDebug::getOrCreateDbgScope(const MDNode *Scope,
   return WScope;
 }
 
-/// hasValidLocation - Return true if debug location entry attached with
-/// machine instruction encodes valid location info.
-static bool hasValidLocation(LLVMContext &Ctx,
-                             const MachineInstr *MInsn,
-                             const MDNode *&Scope, const MDNode *&InlinedAt) {
-  DebugLoc DL = MInsn->getDebugLoc();
-  if (DL.isUnknown()) return false;
-
-  const MDNode *S = DL.getScope(Ctx);
-
-  // There is no need to create another DIE for compile unit. For all
-  // other scopes, create one DbgScope now. This will be translated
-  // into a scope DIE at the end.
-  if (DIScope(S).isCompileUnit()) return false;
-
-  Scope = S;
-  InlinedAt = DL.getInlinedAt(Ctx);
-  return true;
-}
-
 /// calculateDominanceGraph - Calculate dominance graph for DbgScope
 /// hierarchy.
 static void calculateDominanceGraph(DbgScope *Scope) {
@@ -1674,11 +1654,13 @@ void printDbgScopeInfo(LLVMContext &Ctx, const MachineFunction *MF,
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
-      const MDNode *Scope = NULL;
-      const MDNode *InlinedAt = NULL;
+      MDNode *Scope = NULL;
+      MDNode *InlinedAt = NULL;
 
       // Check if instruction has valid location information.
-      if (hasValidLocation(Ctx, MInsn, Scope, InlinedAt)) {
+      DebugLoc MIDL = MInsn->getDebugLoc();
+      if (!MIDL.isUnknown()) {
+        MIDL.getScopeAndInlinedAt(Scope, InlinedAt, Ctx);
         dbgs() << " [ ";
         if (InlinedAt)
           dbgs() << "*";
@@ -1720,14 +1702,16 @@ bool DwarfDebug::extractScopeInformation() {
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
-      const MDNode *Scope = NULL;
-      const MDNode *InlinedAt = NULL;
+      MDNode *Scope = NULL;
+      MDNode *InlinedAt = NULL;
 
       // Check if instruction has valid location information.
-      if (!hasValidLocation(Ctx, MInsn, Scope, InlinedAt)) {
+      const DebugLoc MIDL = MInsn->getDebugLoc();
+      if (MIDL.isUnknown()) {
         PrevMI = MInsn;
         continue;
       }
+      MIDL.getScopeAndInlinedAt(Scope, InlinedAt, Ctx);
 
       // If scope has not changed then skip this instruction.
       if (Scope == PrevScope && PrevInlinedAt == InlinedAt) {
