@@ -854,11 +854,6 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
   });
 
   InterferenceCache::Cursor &Intf = Cand.Intf;
-
-  // FIXME: We need cache reference counts to guarantee that Intf hasn't been
-  // clobbered.
-  Intf.setPhysReg(IntfCache, Cand.PhysReg);
-
   LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
   SE->reset(LREdit);
 
@@ -1252,6 +1247,22 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
   Order.rewind();
   while (unsigned PhysReg = Order.next()) {
+    // Discard bad candidates before we run out of interference cache cursors.
+    // This will only affect register classes with a lot of registers (>32).
+    if (NumCands == IntfCache.getMaxCursors()) {
+      unsigned WorstCount = ~0u;
+      unsigned Worst = 0;
+      for (unsigned i = 0; i != NumCands; ++i) {
+        if (i == BestCand)
+          continue;
+        unsigned Count = GlobalCand[i].LiveBundles.count();
+        if (Count < WorstCount)
+          Worst = i, WorstCount = Count;
+      }
+      --NumCands;
+      GlobalCand[Worst] = GlobalCand[NumCands];
+    }
+
     if (GlobalCand.size() <= NumCands)
       GlobalCand.resize(NumCands+1);
     GlobalSplitCandidate &Cand = GlobalCand[NumCands];
