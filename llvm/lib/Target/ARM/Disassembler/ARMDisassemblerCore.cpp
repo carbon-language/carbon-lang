@@ -3380,7 +3380,7 @@ static bool DisassemblePreLoadFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 static bool DisassembleMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
-  if (Opcode == ARM::DMB || Opcode == ARM::DSB) {
+  if (Opcode == ARM::DMB || Opcode == ARM::DSB || Opcode == ARM::ISB) {
     // Inst{3-0} encodes the memory barrier option for the variants.
     unsigned opt = slice(insn, 3, 0);
     switch (opt) {

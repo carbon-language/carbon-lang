@@ -3317,11 +3317,15 @@ def DSB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
 def : InstAlias<"dsb", (DSB 0xf)>, Requires<[IsARM, HasDB]>;
 
 // ISB has only full system option
-def ISB : AInoP<(outs), (ins), MiscFrm, NoItinerary, "isb", "", []>,
+def ISB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
+                "isb", "\t$opt", []>,
                 Requires<[IsARM, HasDB]> {
+  bits<4> opt;
   let Inst{31-4} = 0xf57ff06;
-  let Inst{3-0} = 0b1111;
+  let Inst{3-0} = opt;
 }
+
+def : InstAlias<"isb", (ISB 0xf)>, Requires<[IsARM, HasDB]>;
 
 let usesCustomInserter = 1 in {
   let Uses = [CPSR] in {
