@@ -755,14 +755,14 @@ public:
 
   /// \brief Returns true if the given MacroID location points at the first
   /// token of the macro instantiation.
-  bool isAtStartOfMacroInstantiation(SourceLocation loc) const {
-    return Lexer::isAtStartOfMacroInstantiation(loc, SourceMgr, Features);
+  bool isAtStartOfMacroExpansion(SourceLocation loc) const {
+    return Lexer::isAtStartOfMacroExpansion(loc, SourceMgr, Features);
   }
 
   /// \brief Returns true if the given MacroID location points at the last
   /// token of the macro instantiation.
-  bool isAtEndOfMacroInstantiation(SourceLocation loc) const {
-    return Lexer::isAtEndOfMacroInstantiation(loc, SourceMgr, Features);
+  bool isAtEndOfMacroExpansion(SourceLocation loc) const {
+    return Lexer::isAtEndOfMacroExpansion(loc, SourceMgr, Features);
   }
 
   /// DumpToken - Print the token to stderr, used for debugging.

@@ -156,7 +156,7 @@ Lexer::Lexer(FileID FID, const llvm::MemoryBuffer *FromFile,
 ///
 /// On entrance to this routine, TokStartLoc is a macro location which has a
 /// spelling loc that indicates the bytes to be lexed for the token and an
-/// instantiation location that indicates where all lexed tokens should be
+/// expansion location that indicates where all lexed tokens should be
 /// "expanded from".
 ///
 /// FIXME: It would really be nice to make _Pragma just be a wrapper around a
@@ -166,8 +166,8 @@ Lexer::Lexer(FileID FID, const llvm::MemoryBuffer *FromFile,
 /// out of the critical path of the lexer!
 ///
 Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc,
-                                 SourceLocation InstantiationLocStart,
-                                 SourceLocation InstantiationLocEnd,
+                                 SourceLocation ExpansionLocStart,
+                                 SourceLocation ExpansionLocEnd,
                                  unsigned TokLen, Preprocessor &PP) {
   SourceManager &SM = PP.getSourceManager();
 
@@ -188,8 +188,8 @@ Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc,
   // Set the SourceLocation with the remapping information.  This ensures that
   // GetMappedTokenLoc will remap the tokens as they are lexed.
   L->FileLoc = SM.createInstantiationLoc(SM.getLocForStartOfFile(SpellingFID),
-                                         InstantiationLocStart,
-                                         InstantiationLocEnd, TokLen);
+                                         ExpansionLocStart,
+                                         ExpansionLocEnd, TokLen);
 
   // Ensure that the lexer thinks it is inside a directive, so that end \n will
   // return an EOD token.
@@ -621,7 +621,7 @@ SourceLocation Lexer::AdvanceToTokenCharacter(SourceLocation TokStart,
                                               unsigned CharNo,
                                               const SourceManager &SM,
                                               const LangOptions &Features) {
-  // Figure out how many physical characters away the specified instantiation
+  // Figure out how many physical characters away the specified expansion
   // character is.  This needs to take into consideration newlines and
   // trigraphs.
   bool Invalid = false;
@@ -683,10 +683,10 @@ SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
     return SourceLocation();
 
   if (Loc.isMacroID()) {
-    if (Offset > 0 || !isAtEndOfMacroInstantiation(Loc, SM, Features))
-      return SourceLocation(); // Points inside the macro instantiation.
+    if (Offset > 0 || !isAtEndOfMacroExpansion(Loc, SM, Features))
+      return SourceLocation(); // Points inside the macro expansion.
 
-    // Continue and find the location just after the macro instantiation.
+    // Continue and find the location just after the macro expansion.
     Loc = SM.getInstantiationRange(Loc).second;
   }
 
@@ -700,8 +700,8 @@ SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
 }
 
 /// \brief Returns true if the given MacroID location points at the first
-/// token of the macro instantiation.
-bool Lexer::isAtStartOfMacroInstantiation(SourceLocation loc,
+/// token of the macro expansion.
+bool Lexer::isAtStartOfMacroExpansion(SourceLocation loc,
                                           const SourceManager &SM,
                                           const LangOptions &LangOpts) {
   assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
@@ -712,17 +712,18 @@ bool Lexer::isAtStartOfMacroInstantiation(SourceLocation loc,
   if (infoLoc.second > 0)
     return false; // Does not point at the start of token.
 
-  SourceLocation instLoc = 
-      SM.getSLocEntry(infoLoc.first).getInstantiation().getInstantiationLocStart();
-  if (instLoc.isFileID())
-    return true; // No other macro instantiations, this is the first.
+  SourceLocation expansionLoc =
+    SM.getSLocEntry(infoLoc.first)
+      .getInstantiation().getInstantiationLocStart();
+  if (expansionLoc.isFileID())
+    return true; // No other macro expansions, this is the first.
 
-  return isAtStartOfMacroInstantiation(instLoc, SM, LangOpts);
+  return isAtStartOfMacroExpansion(expansionLoc, SM, LangOpts);
 }
 
 /// \brief Returns true if the given MacroID location points at the last
-/// token of the macro instantiation.
-bool Lexer::isAtEndOfMacroInstantiation(SourceLocation loc,
+/// token of the macro expansion.
+bool Lexer::isAtEndOfMacroExpansion(SourceLocation loc,
                                         const SourceManager &SM,
                                         const LangOptions &LangOpts) {
   assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
@@ -742,12 +743,12 @@ bool Lexer::isAtEndOfMacroInstantiation(SourceLocation loc,
   if (FID == SM.getFileID(afterLoc))
     return false; // Still in the same FileID, does not point to the last token.
   
-  SourceLocation instLoc = 
+  SourceLocation expansionLoc =
     SM.getSLocEntry(FID).getInstantiation().getInstantiationLocEnd();
-  if (instLoc.isFileID())
-    return true; // No other macro instantiations.
+  if (expansionLoc.isFileID())
+    return true; // No other macro expansions.
 
-  return isAtEndOfMacroInstantiation(instLoc, SM, LangOpts);
+  return isAtEndOfMacroExpansion(expansionLoc, SM, LangOpts);
 }
 
 //===----------------------------------------------------------------------===//
@@ -888,7 +889,7 @@ static inline bool isNumberBody(unsigned char c) {
 //===----------------------------------------------------------------------===//
 
 /// GetMappedTokenLoc - If lexing out of a 'mapped buffer', where we pretend the
-/// lexer buffer was all instantiated at a single point, perform the mapping.
+/// lexer buffer was all expanded at a single point, perform the mapping.
 /// This is currently only used for _Pragma implementation, so it is the slow
 /// path of the hot getSourceLocation method.  Do not allow it to be inlined.
 static LLVM_ATTRIBUTE_NOINLINE SourceLocation GetMappedTokenLoc(
@@ -896,14 +897,14 @@ static LLVM_ATTRIBUTE_NOINLINE SourceLocation GetMappedTokenLoc(
 static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
                                         SourceLocation FileLoc,
                                         unsigned CharNo, unsigned TokLen) {
-  assert(FileLoc.isMacroID() && "Must be an instantiation");
+  assert(FileLoc.isMacroID() && "Must be a macro expansion");
 
   // Otherwise, we're lexing "mapped tokens".  This is used for things like
-  // _Pragma handling.  Combine the instantiation location of FileLoc with the
+  // _Pragma handling.  Combine the expansion location of FileLoc with the
   // spelling location.
   SourceManager &SM = PP.getSourceManager();
 
-  // Create a new SLoc which is expanded from Instantiation(FileLoc) but whose
+  // Create a new SLoc which is expanded from Expansion(FileLoc) but whose
   // characters come from spelling(FileLoc)+Offset.
   SourceLocation SpellingLoc = SM.getSpellingLoc(FileLoc);
   SpellingLoc = SpellingLoc.getFileLocWithOffset(CharNo);

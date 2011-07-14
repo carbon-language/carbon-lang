@@ -94,7 +94,7 @@ SourceLocation trans::findLocationAfterSemi(SourceLocation loc,
                                             ASTContext &Ctx) {
   SourceManager &SM = Ctx.getSourceManager();
   if (loc.isMacroID()) {
-    if (!Lexer::isAtEndOfMacroInstantiation(loc, SM, Ctx.getLangOptions()))
+    if (!Lexer::isAtEndOfMacroExpansion(loc, SM, Ctx.getLangOptions()))
       return SourceLocation();
     loc = SM.getInstantiationRange(loc).second;
   }
