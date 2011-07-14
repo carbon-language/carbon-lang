@@ -36,10 +36,16 @@ struct UnsafeS {
 - (oneway void)release { } // expected-error {{ARC forbids implementation}}
 @end
 
+id global_foo;
+
 void test1(A *a, BOOL b, struct UnsafeS *unsafeS) {
   [unsafeS->unsafeObj retain]; // expected-error {{it is not safe to remove 'retain' message on an __unsafe_unretained type}} \
                                // expected-error {{ARC forbids explicit message send}}
   id foo = [unsafeS->unsafeObj retain]; // no warning.
+  [global_foo retain]; // expected-error {{it is not safe to remove 'retain' message on a global variable}} \
+                       // expected-error {{ARC forbids explicit message send}}
+  [global_foo release]; // expected-error {{it is not safe to remove 'release' message on a global variable}} \
+                        // expected-error {{ARC forbids explicit message send}}
   [a dealloc];
   [a retain];
   [a retainCount]; // expected-error {{ARC forbids explicit message send of 'retainCount'}}

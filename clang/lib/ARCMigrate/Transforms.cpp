@@ -152,6 +152,17 @@ bool trans::hasSideEffects(Expr *E, ASTContext &Ctx) {
   return true;
 }
 
+bool trans::isGlobalVar(Expr *E) {
+  E = E->IgnoreParenCasts();
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+    return DRE->getDecl()->getDeclContext()->isFileContext();
+  if (ConditionalOperator *condOp = dyn_cast<ConditionalOperator>(E))
+    return isGlobalVar(condOp->getTrueExpr()) &&
+           isGlobalVar(condOp->getFalseExpr());
+
+  return false;  
+}
+
 namespace {
 
 class ReferenceClear : public RecursiveASTVisitor<ReferenceClear> {

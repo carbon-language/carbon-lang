@@ -78,6 +78,15 @@ public:
             Pass.TA.reportError(err, rec->getLocStart());
             return true;
           }
+
+          if (isGlobalVar(rec) &&
+              (E->getMethodFamily() != OMF_retain || isRemovable(E))) {
+            std::string err = "it is not safe to remove '";
+            err += E->getSelector().getAsString() + "' message on "
+                "a global variable";
+            Pass.TA.reportError(err, rec->getLocStart());
+            return true;
+          }
         }
     case OMF_dealloc:
       break;

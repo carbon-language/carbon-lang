@@ -54,6 +54,8 @@ bool canApplyWeak(ASTContext &Ctx, QualType type);
 SourceLocation findLocationAfterSemi(SourceLocation loc, ASTContext &Ctx);
 
 bool hasSideEffects(Expr *E, ASTContext &Ctx);
+bool isGlobalVar(Expr *E);
+
 
 template <typename BODY_TRANS>
 class BodyTransform : public RecursiveASTVisitor<BodyTransform<BODY_TRANS> > {

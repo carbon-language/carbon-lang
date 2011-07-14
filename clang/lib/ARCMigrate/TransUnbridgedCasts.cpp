@@ -193,17 +193,6 @@ private:
         return true;
     return false;
   }
-
-  static bool isGlobalVar(Expr *E) {
-    E = E->IgnoreParenCasts();
-    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
-      return DRE->getDecl()->getDeclContext()->isFileContext();
-    if (ConditionalOperator *condOp = dyn_cast<ConditionalOperator>(E))
-      return isGlobalVar(condOp->getTrueExpr()) &&
-             isGlobalVar(condOp->getFalseExpr());
-
-    return false;  
-  }
 };
 
 } // end anonymous namespace
