@@ -1031,45 +1031,67 @@ X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
 }
 
+/// permuteEncode - Create the permutation encoding used with frameless
+/// stacks. It is passed the number of registers to be saved and an array of the
+/// registers saved.
 static uint32_t permuteEncode(unsigned SavedCount, unsigned Registers[6]) {
-   uint32_t RenumRegs[6];
-   for (int i = 6 - SavedCount; i < 6; ++i) {
-       int countless = 0;
-       for (int j = 6 - SavedCount; j < i; ++j)
-           if (Registers[j] < Registers[i])
-               ++countless;
+  // The saved registers are numbered from 1 to 6. In order to encode the order
+  // in which they were saved, we re-number them according to their place in the
+  // register order. The re-numbering is relative to the last re-numbered
+  // register. E.g., if we have registers {6, 2, 4, 5} saved in that order:
+  //
+  //    Orig  Re-Num
+  //    ----  ------
+  //     6       6
+  //     2       2
+  //     4       3
+  //     5       3
+  //
+  bool Used[7] = { false, false, false, false, false, false, false };
+  uint32_t RenumRegs[6];
+  for (unsigned I = 0; I < SavedCount; ++I) {
+    uint32_t Renum = 0;
+    for (unsigned U = 1; U < 7; ++U) {
+      if (U == Registers[I])
+        break;
+      if (!Used[U])
+        ++Renum;
+    }
 
-       RenumRegs[i] = Registers[i] - countless - 1;
-   }
+    Used[Registers[I]] = true;
+    RenumRegs[I] = Renum;
+  }
 
-   uint32_t permutationEncoding = 0;
-   switch (SavedCount) {
-   case 6:
-     permutationEncoding |= 120 * RenumRegs[0] + 24 * RenumRegs[1] 
-                            + 6 * RenumRegs[2] +  2 * RenumRegs[3] 
-                            +     RenumRegs[4];
-     break;
-   case 5:
-     permutationEncoding |= 120 * RenumRegs[1] + 24 * RenumRegs[2] 
-                            + 6 * RenumRegs[3] +  2 * RenumRegs[4] 
-                            +     RenumRegs[5];
-     break;
-   case 4:
-     permutationEncoding |= 60 * RenumRegs[2] + 12 * RenumRegs[3] 
-                           + 3 * RenumRegs[4] +      RenumRegs[5];
-     break;
-   case 3:
-     permutationEncoding |= 20 * RenumRegs[3] + 4 * RenumRegs[4] 
-                               + RenumRegs[5];
-     break;
-   case 2:
-     permutationEncoding |=  5 * RenumRegs[4] + RenumRegs[5];
-     break;
-   case 1:
-     permutationEncoding |= RenumRegs[5];
-     break;
-   }
-   return permutationEncoding;
+  // Take the renumbered values and encode them into a 10-bit number.
+  uint32_t permutationEncoding = 0;
+  switch (SavedCount) {
+  case 6:
+    permutationEncoding |= 120 * RenumRegs[0] + 24 * RenumRegs[1]
+                           + 6 * RenumRegs[2] +  2 * RenumRegs[3]
+                           +     RenumRegs[4];
+    break;
+  case 5:
+    permutationEncoding |= 120 * RenumRegs[0] + 24 * RenumRegs[1]
+                           + 6 * RenumRegs[2] +  2 * RenumRegs[3]
+                           +     RenumRegs[4];
+    break;
+  case 4:
+    permutationEncoding |= 60 * RenumRegs[0] + 12 * RenumRegs[1]
+                          + 3 * RenumRegs[2] +      RenumRegs[3];
+    break;
+  case 3:
+    permutationEncoding |= 20 * RenumRegs[0] + 4 * RenumRegs[1]
+                              + RenumRegs[2];
+    break;
+  case 2:
+    permutationEncoding |=  5 * RenumRegs[0] +     RenumRegs[1];
+    break;
+  case 1:
+    permutationEncoding |=      RenumRegs[0];
+    break;
+  }
+
+  return permutationEncoding;
 }
 
 uint32_t X86FrameLowering::
@@ -1104,12 +1126,12 @@ getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
       if (Src.getReg() != MachineLocation::VirtualFP) {
         // DW_CFA_def_cfa
         assert(FramePointerReg == -1 &&"Defining more than one frame pointer?");
-        FramePointerReg = Src.getReg();
-        if (TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::EBP &&
-            TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::RBP)
+        if (TRI->getLLVMRegNum(Src.getReg(), IsEH) != X86::EBP &&
+            TRI->getLLVMRegNum(Src.getReg(), IsEH) != X86::RBP)
           // The frame pointer isn't EBP/RBP. Cannot make unwind information
           // compact.
           return 0;
+        FramePointerReg = TRI->getCompactUnwindRegNum(Src.getReg(), IsEH);
       } // else DW_CFA_def_cfa_offset
 
       if (IsRelative)
@@ -1123,12 +1145,19 @@ getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
     if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
       // DW_CFA_def_cfa_register
       assert(FramePointerReg == -1 && "Defining more than one frame pointer?");
-      FramePointerReg = Dst.getReg();
-      if (TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::EBP &&
-          TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::RBP)
+
+      if (TRI->getLLVMRegNum(Dst.getReg(), IsEH) != X86::EBP &&
+          TRI->getLLVMRegNum(Dst.getReg(), IsEH) != X86::RBP)
         // The frame pointer isn't EBP/RBP. Cannot make unwind information
         // compact.
         return 0;
+
+      FramePointerReg = TRI->getCompactUnwindRegNum(Dst.getReg(), IsEH);
+      if (SavedRegIdx != 1 || SavedRegs[0] != unsigned(FramePointerReg))
+        return 0;
+
+      SavedRegs[0] = 0;
+      SavedRegIdx = 0;
       continue;
     }
 
