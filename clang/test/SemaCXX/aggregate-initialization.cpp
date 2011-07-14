@@ -1,9 +1,7 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s 
+// RUN: %clang_cc1 -fsyntax-only -verify %s 
 
 // Verify that we can't initialize non-aggregates with an initializer
 // list.
-// FIXME: Note that due to a (likely) standard bug, this is technically an
-//        aggregate.
 struct NonAggr1 {
   NonAggr1(int) { }
 
@@ -24,7 +22,7 @@ struct NonAggr4 {
   virtual void f();
 };
 
-NonAggr1 na1 = { 17 };
+NonAggr1 na1 = { 17 }; // expected-error{{non-aggregate type 'NonAggr1' cannot be initialized with an initializer list}}
 NonAggr2 na2 = { 17 }; // expected-error{{non-aggregate type 'NonAggr2' cannot be initialized with an initializer list}}
 NonAggr3 na3 = { 17 }; // expected-error{{non-aggregate type 'NonAggr3' cannot be initialized with an initializer list}}
 NonAggr4 na4 = { 17 }; // expected-error{{non-aggregate type 'NonAggr4' cannot be initialized with an initializer list}}
@@ -48,8 +46,9 @@ struct A {
   A();
   A(int);
   ~A();
-  
-  A(const A&) = delete; // expected-note 2 {{function has been explicitly marked deleted here}}
+
+private:
+  A(const A&) {} // expected-note 4 {{declared private here}}
 };
 
 struct B {
@@ -62,10 +61,10 @@ struct C {
 
 void f() {
   A as1[1] = { };
-  A as2[1] = { 1 }; // expected-error {{copying array element of type 'A' invokes deleted constructor}}
+  A as2[1] = { 1 }; // expected-error {{calling a private constructor of class 'A'}} expected-warning {{requires an accessible copy constructor}}
 
   B b1 = { };
-  B b2 = { 1 }; // expected-error {{copying member subobject of type 'A' invokes deleted constructor}}
+  B b2 = { 1 }; // expected-error {{field of type 'A' has private copy constructor}} expected-warning {{requires an accessible copy constructor}}
   
   C c1 = { 1 };
 }

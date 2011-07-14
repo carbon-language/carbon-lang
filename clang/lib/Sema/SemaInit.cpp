@@ -7,9 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements semantic analysis for initializers. The main entry
-// point is Sema::CheckInitList(), but all of the work is performed
-// within the InitListChecker class.
+// This file implements semantic analysis for initializers.
 //
 //===----------------------------------------------------------------------===//
 
@@ -712,7 +710,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
   } else if (SemaRef.getLangOptions().CPlusPlus) {
     // C++ [dcl.init.aggr]p12:
     //   All implicit type conversions (clause 4) are considered when
-    //   initializing the aggregate member with an ini- tializer from
+    //   initializing the aggregate member with an initializer from
     //   an initializer-list. If the initializer can initialize a
     //   member, the member is initialized. [...]
 
@@ -2384,52 +2382,10 @@ static void MaybeProduceObjCObject(Sema &S,
   }
 }
 
-/// \brief Attempt list initialization (C++0x [dcl.init.list])
-static void TryListInitialization(Sema &S,
-                                  const InitializedEntity &Entity,
-                                  const InitializationKind &Kind,
-                                  InitListExpr *InitList,
-                                  InitializationSequence &Sequence) {
-  // FIXME: We only perform rudimentary checking of list
-  // initializations at this point, then assume that any list
-  // initialization of an array, aggregate, or scalar will be
-  // well-formed. When we actually "perform" list initialization, we'll
-  // do all of the necessary checking.  C++0x initializer lists will
-  // force us to perform more checking here.
-
-  QualType DestType = Entity.getType();
-
-  // C++ [dcl.init]p13:
-  //   If T is a scalar type, then a declaration of the form
-  //
-  //     T x = { a };
-  //
-  //   is equivalent to
-  //
-  //     T x = a;
-  if (DestType->isScalarType()) {
-    if (InitList->getNumInits() > 1 && S.getLangOptions().CPlusPlus) {
-      Sequence.SetFailed(InitializationSequence::FK_TooManyInitsForScalar);
-      return;
-    }
-
-    // Assume scalar initialization from a single value works.
-  } else if (DestType->isAggregateType()) {
-    // Assume aggregate initialization works.
-  } else if (DestType->isVectorType()) {
-    // Assume vector initialization works.
-  } else if (DestType->isReferenceType()) {
-    // FIXME: C++0x defines behavior for this.
-    Sequence.SetFailed(InitializationSequence::FK_ReferenceBindingToInitList);
-    return;
-  } else if (DestType->isRecordType()) {
-    // FIXME: C++0x defines behavior for this
-    Sequence.SetFailed(InitializationSequence::FK_InitListBadDestinationType);
-  }
-
-  // Add a general "list initialization" step.
-  Sequence.AddListInitializationStep(DestType);
-}
+static void SelectInitialization(Sema &S, const InitializedEntity &Entity,
+                                 const InitializationKind &Kind,
+                                 Expr **Args, unsigned NumArgs,
+                                 InitializationSequence &Sequence);
 
 /// \brief Try a reference initialization that involves calling a conversion
 /// function.
@@ -3288,6 +3244,185 @@ static void checkIndirectCopyRestoreSource(Sema &S, Expr *src) {
     << src->getSourceRange();
 }
 
+static bool hasDefaultConstructor(Sema &S, CXXRecordDecl *decl) {
+  DeclContext::lookup_const_iterator Con, ConEnd;
+  for (llvm::tie(Con, ConEnd) = S.LookupConstructors(decl);
+       Con != ConEnd; ++Con) {
+    // FIXME: A constructor template can be a default constructor, but we don't
+    // handle this in other places as well.
+    if (isa<FunctionTemplateDecl>(*Con))
+      continue;
+    CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
+    if (Constructor->isDefaultConstructor())
+      return true;
+  }
+  return false;
+}
+
+/// \brief Attempt list initialization (C++0x [dcl.init.list])
+static void TryListInitialization(Sema &S,
+                                  const InitializedEntity &Entity,
+                                  const InitializationKind &Kind,
+                                  InitListExpr *InitList,
+                                  InitializationSequence &Sequence) {
+  QualType DestType = Entity.getType();
+
+  // If we're not in C++ mode, defer everything to the init list checker.
+  if (!S.getLangOptions().CPlusPlus) {
+    Sequence.AddListInitializationStep(DestType);
+    return;
+  }
+
+  // Early error return for some C++11 features when we're in 98 mode.
+  if (!S.getLangOptions().CPlusPlus0x) {
+    if (DestType->isReferenceType()) {
+      Sequence.SetFailed(InitializationSequence::FK_ReferenceBindingToInitList);
+      return;
+    }
+    if (DestType->isRecordType() && !DestType->isAggregateType()) {
+      Sequence.SetFailed(InitializationSequence::FK_InitListBadDestinationType);
+      return;
+    }
+  }
+
+  // If we have a reference and not exactly one initializer (see below), unwrap
+  // the reference.
+  bool wasReference = false;
+  if (InitList->getNumInits() != 1) {
+    if (const ReferenceType *ref = DestType->getAs<ReferenceType>()) {
+      wasReference = true;
+      DestType = ref->getPointeeType();
+    }
+  }
+  // Create an object that automatically adds a ref binding step on successful
+  // return.
+  class AddRefBinding {
+    InitializationSequence &Sequence;
+    bool Bind;
+    QualType RefType;
+  public:
+    AddRefBinding(InitializationSequence &sequence, bool bind, QualType refType)
+        : Sequence(sequence), Bind(bind), RefType(refType) {}
+    ~AddRefBinding() {
+      if (Bind && Sequence) {
+        Sequence.AddReferenceBindingStep(RefType, /*temporary*/true);
+      }
+    }
+  } addRefBinding(Sequence, wasReference, Entity.getType());
+
+  // C++11 [dcl.init.list]p3:
+  //   List-initialization of an object or reference of type T is defined as
+  //   follows:
+  //
+  //    - If the initializer list has no elements and T is a class type with
+  //      a default constructor, the object is value-initialized.
+  //
+  // See DR990. This case is handled specially because if we let it get to
+  // overload resolution, std::initializer_list constructors would be chosen
+  // over the default constructor. When there's more than one initlist ctor,
+  // this would actually be ambiguous and fail.
+
+  const RecordType *recordType = DestType->getAs<RecordType>();
+  CXXRecordDecl *recordDecl = recordType ?
+      dyn_cast<CXXRecordDecl>(recordType->getDecl()) : 0;
+  if (recordDecl && InitList->getNumInits() == 0 &&
+      hasDefaultConstructor(S, recordDecl)) {
+    TryValueInitialization(S, Entity, Kind, Sequence);
+    return;
+  }
+
+  //    - Otherwise, if T is an aggregate, aggregate initialization is
+  //      performed.
+  //
+  // Aggregate initialization is the most complicated part. We delegate to
+  // an InitListChecker to build a representation of what's happening.
+  // We also treat vector types the same as aggregates.
+  if (DestType->isAggregateType() || DestType->isVectorType()) {
+    // FIXME: Deeper analysis necessary.
+    Sequence.AddListInitializationStep(DestType);
+    return;
+  }
+
+  //    - Otherwise, if T is a specialization of std::initializer_list<E>, an
+  //      initializer_list object is constructed as described below and used
+  //      to initialize the object according to the rules for initialization
+  //      of an object from a class of the same type.
+  //
+  // FIXME: Implement this case.
+
+  //    - Otherwise, if T is a class type, constructors are considered. The
+  //      applicable constructors are enumerated and the best one is chosen
+  //      through overload resolution.
+  if (recordDecl) {
+    // FIXME: initializer_list constructors are applicable.
+    TryConstructorInitialization(S, Entity, Kind, InitList->getInits(),
+                                 InitList->getNumInits(), DestType, Sequence);
+    return;
+  }
+
+  // At this point, there is most likely a defect in the standard. The next
+  // bullet grabs all reference targets and creates temporaries from the init
+  // list. However, this means that code such as this doesn't work:
+  //   int i;
+  //   int &ri { i }; // error: non-const lvalue ref cannot bind to temporary.
+  // This is rather startling, since this code works:
+  //   int &si ( i );
+  //
+  // DR934 (CD2 status) tried to address the problem by making the bullet about
+  // references be only about references to class types, letting references to
+  // other things fall through. This means the above works, but this still
+  // doesn't:
+  //   string s;
+  //   string &rs { s }; // cannot bind to temporary
+  //   string &ss ( s ); // fine
+  // And this works, but has different semantics:
+  //   const string &cs { s }; // binds to temporary copy
+  //   const string &ds ( s ); // binds directly to s
+  // Also, the wording change from that DR somehow got lost in the FDIS.
+  //
+  // DR1095 (FDIS status) again discovered the problem, but didn't actually
+  // fix it.
+  //
+  // GCC implements it this way. We swap the next two bullets instead, thus
+  // always letting a reference bind to the single element of an initializer
+  // list, and constructing a temporary only if the isn't exactly one element.
+  // So in our order, the next bullet is:
+  //
+  //    - Otherwise, if the initializer list has a single element, the object
+  //      or reference is initialized from that element;
+  if (InitList->getNumInits() == 1) {
+    SelectInitialization(S, Entity, Kind, InitList->getInits(),
+                         InitList->getNumInits(), Sequence);
+    // Adjust the type of the whole init list to be the same as that of the
+    // single initializer.
+    InitList->setType(InitList->getInits()[0]->getType());
+    return;
+  }
+
+  //    - Otherwise, if T is a reference type, a prvalue temporary of the type
+  //      referenced by T is list-initialized, and the reference is bound to
+  //      that temporary.
+  //
+  // We implement this by unwrapping references at the start of the function
+  // and adding a reference binding step at the bottom.
+
+  //    - Otherwise, if the initializer list has no elements, the object is
+  //      value-initialized.
+  if (InitList->getNumInits() == 0) {
+    TryValueInitialization(S, Entity, Kind, Sequence);
+    return;
+  }
+
+  //    - Otherwise, the program is ill-formed.
+  //
+  // The only way to get here ought to be for scalar types with > 1 inits.
+  assert(DestType->isScalarType() && "Something strange is list-initialized.");
+  assert(InitList->getNumInits() > 1 && "Strange number of initializers.");
+
+  Sequence.SetFailed(InitializationSequence::FK_TooManyInitsForScalar);
+  return;
+}
+
 /// \brief Determine whether we have compatible array types for the
 /// purposes of GNU by-copy array initialization.
 static bool hasCompatibleArrayTypes(ASTContext &Context,
@@ -3360,7 +3495,6 @@ InitializationSequence::InitializationSequence(Sema &S,
                                                Expr **Args,
                                                unsigned NumArgs)
     : FailedCandidateSet(Kind.getLocation()) {
-  ASTContext &Context = S.Context;
 
   // C++0x [dcl.init]p16:
   //   The semantics of initializers are as follows. The destination type is
@@ -3368,9 +3502,8 @@ InitializationSequence::InitializationSequence(Sema &S,
   //   type is the type of the initializer expression. The source type is not
   //   defined when the initializer is a braced-init-list or when it is a
   //   parenthesized list of expressions.
-  QualType DestType = Entity.getType();
 
-  if (DestType->isDependentType() ||
+  if (Entity.getType()->isDependentType() ||
       Expr::hasAnyTypeDependentArguments(Args, NumArgs)) {
     SequenceKind = DependentSequence;
     return;
@@ -3379,11 +3512,22 @@ InitializationSequence::InitializationSequence(Sema &S,
   // Almost everything is a normal sequence.
   setSequenceKind(NormalSequence);
 
+  SelectInitialization(S, Entity, Kind, Args, NumArgs, *this);
+}
+
+static void SelectInitialization(Sema &S, const InitializedEntity &Entity,
+                                 const InitializationKind &Kind,
+                                 Expr **Args, unsigned NumArgs,
+                                 InitializationSequence &Sequence) {
+  ASTContext &Context = S.Context;
+  QualType DestType = Entity.getType();
+
   for (unsigned I = 0; I != NumArgs; ++I)
     if (Args[I]->getObjectKind() == OK_ObjCProperty) {
       ExprResult Result = S.ConvertPropertyForRValue(Args[I]);
       if (Result.isInvalid()) {
-        SetFailed(FK_ConversionFromPropertyFailed);
+        Sequence.SetFailed(
+            InitializationSequence::FK_ConversionFromPropertyFailed);
         return;
       }
       Args[I] = Result.take();
@@ -3400,7 +3544,7 @@ InitializationSequence::InitializationSequence(Sema &S,
   //     - If the initializer is a braced-init-list, the object is
   //       list-initialized (8.5.4).
   if (InitListExpr *InitList = dyn_cast_or_null<InitListExpr>(Initializer)) {
-    TryListInitialization(S, Entity, Kind, InitList, *this);
+    TryListInitialization(S, Entity, Kind, InitList, Sequence);
     return;
   }
 
@@ -3412,22 +3556,22 @@ InitializationSequence::InitializationSequence(Sema &S,
     //   by an object that can be converted into a T.
     // (Therefore, multiple arguments are not permitted.)
     if (NumArgs != 1)
-      SetFailed(FK_TooManyInitsForReference);
+      Sequence.SetFailed(InitializationSequence::FK_TooManyInitsForReference);
     else
-      TryReferenceInitialization(S, Entity, Kind, Args[0], *this);
+      TryReferenceInitialization(S, Entity, Kind, Args[0], Sequence);
     return;
   }
 
   //     - If the initializer is (), the object is value-initialized.
   if (Kind.getKind() == InitializationKind::IK_Value ||
       (Kind.getKind() == InitializationKind::IK_Direct && NumArgs == 0)) {
-    TryValueInitialization(S, Entity, Kind, *this);
+    TryValueInitialization(S, Entity, Kind, Sequence);
     return;
   }
 
   // Handle default initialization.
   if (Kind.getKind() == InitializationKind::IK_Default) {
-    TryDefaultInitialization(S, Entity, Kind, *this);
+    TryDefaultInitialization(S, Entity, Kind, Sequence);
     return;
   }
 
@@ -3438,7 +3582,7 @@ InitializationSequence::InitializationSequence(Sema &S,
   //       ill-formed.
   if (const ArrayType *DestAT = Context.getAsArrayType(DestType)) {
     if (Initializer && IsStringInit(Initializer, DestAT, Context)) {
-      TryStringLiteralInitialization(S, Entity, Kind, Initializer, *this);
+      TryStringLiteralInitialization(S, Entity, Kind, Initializer, Sequence);
       return;
     }
 
@@ -3451,16 +3595,17 @@ InitializationSequence::InitializationSequence(Sema &S,
       const ArrayType *SourceAT
         = Context.getAsArrayType(Initializer->getType());
       if (!hasCompatibleArrayTypes(S.Context, DestAT, SourceAT))
-        SetFailed(FK_ArrayTypeMismatch);
+        Sequence.SetFailed(InitializationSequence::FK_ArrayTypeMismatch);
       else if (Initializer->HasSideEffects(S.Context))
-        SetFailed(FK_NonConstantArrayInit);
+        Sequence.SetFailed(InitializationSequence::FK_NonConstantArrayInit);
       else {
-        AddArrayInitStep(DestType);
+        Sequence.AddArrayInitStep(DestType);
       }
     } else if (DestAT->getElementType()->isAnyCharacterType())
-      SetFailed(FK_ArrayNeedsInitListOrStringLiteral);
+      Sequence.SetFailed(
+          InitializationSequence::FK_ArrayNeedsInitListOrStringLiteral);
     else
-      SetFailed(FK_ArrayNeedsInitList);
+      Sequence.SetFailed(InitializationSequence::FK_ArrayNeedsInitList);
 
     return;
   }
@@ -3475,13 +3620,13 @@ InitializationSequence::InitializationSequence(Sema &S,
   if (!S.getLangOptions().CPlusPlus) {
     // If allowed, check whether this is an Objective-C writeback conversion.
     if (allowObjCWritebackConversion &&
-        tryObjCWritebackConversion(S, *this, Entity, Initializer)) {
+        tryObjCWritebackConversion(S, Sequence, Entity, Initializer)) {
       return;
     }
     
     // Handle initialization in C
-    AddCAssignmentStep(DestType);
-    MaybeProduceObjCObject(S, *this, Entity);
+    Sequence.AddCAssignmentStep(DestType);
+    MaybeProduceObjCObject(S, Sequence, Entity);
     return;
   }
 
@@ -3498,7 +3643,7 @@ InitializationSequence::InitializationSequence(Sema &S,
          (Context.hasSameUnqualifiedType(SourceType, DestType) ||
           S.IsDerivedFrom(SourceType, DestType))))
       TryConstructorInitialization(S, Entity, Kind, Args, NumArgs,
-                                   Entity.getType(), *this);
+                                   Entity.getType(), Sequence);
     //     - Otherwise (i.e., for the remaining copy-initialization cases),
     //       user-defined conversion sequences that can convert from the source
     //       type to the destination type or (when a conversion function is
@@ -3506,12 +3651,12 @@ InitializationSequence::InitializationSequence(Sema &S,
     //       13.3.1.4, and the best one is chosen through overload resolution
     //       (13.3).
     else
-      TryUserDefinedConversion(S, Entity, Kind, Initializer, *this);
+      TryUserDefinedConversion(S, Entity, Kind, Initializer, Sequence);
     return;
   }
 
   if (NumArgs > 1) {
-    SetFailed(FK_TooManyInitsForScalar);
+    Sequence.SetFailed(InitializationSequence::FK_TooManyInitsForScalar);
     return;
   }
   assert(NumArgs == 1 && "Zero-argument case handled above");
@@ -3519,8 +3664,8 @@ InitializationSequence::InitializationSequence(Sema &S,
   //    - Otherwise, if the source type is a (possibly cv-qualified) class
   //      type, conversion functions are considered.
   if (!SourceType.isNull() && SourceType->isRecordType()) {
-    TryUserDefinedConversion(S, Entity, Kind, Initializer, *this);
-    MaybeProduceObjCObject(S, *this, Entity);
+    TryUserDefinedConversion(S, Entity, Kind, Initializer, Sequence);
+    MaybeProduceObjCObject(S, Sequence, Entity);
     return;
   }
 
@@ -3556,22 +3701,22 @@ InitializationSequence::InitializationSequence(Sema &S,
       LvalueICS.Standard.setAsIdentityConversion();
       LvalueICS.Standard.setAllToTypes(ICS.Standard.getToType(0));
       LvalueICS.Standard.First = ICS.Standard.First;
-      AddConversionSequenceStep(LvalueICS, ICS.Standard.getToType(0));
+      Sequence.AddConversionSequenceStep(LvalueICS, ICS.Standard.getToType(0));
     }
-    
-    AddPassByIndirectCopyRestoreStep(Entity.getType(), ShouldCopy);
+
+    Sequence.AddPassByIndirectCopyRestoreStep(Entity.getType(), ShouldCopy);
   } else if (ICS.isBad()) {
     DeclAccessPair dap;
     if (Initializer->getType() == Context.OverloadTy && 
           !S.ResolveAddressOfOverloadedFunction(Initializer
                       , DestType, false, dap))
-      SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
+      Sequence.SetFailed(InitializationSequence::FK_AddressOfOverloadFailed);
     else
-      SetFailed(InitializationSequence::FK_ConversionFailed);
+      Sequence.SetFailed(InitializationSequence::FK_ConversionFailed);
   } else {
-    AddConversionSequenceStep(ICS, Entity.getType());
+    Sequence.AddConversionSequenceStep(ICS, Entity.getType());
 
-    MaybeProduceObjCObject(S, *this, Entity);
+    MaybeProduceObjCObject(S, Sequence, Entity);
   }
 }
 
