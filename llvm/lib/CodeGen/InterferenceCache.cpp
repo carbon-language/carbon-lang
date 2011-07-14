@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "regalloc"
 #include "InterferenceCache.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 
@@ -40,9 +41,18 @@ InterferenceCache::Entry *InterferenceCache::get(unsigned PhysReg) {
   E = RoundRobin;
   if (++RoundRobin == CacheEntries)
     RoundRobin = 0;
-  Entries[E].reset(PhysReg, LIUArray, TRI, MF);
-  PhysRegEntries[PhysReg] = E;
-  return &Entries[E];
+  for (unsigned i = 0; i != CacheEntries; ++i) {
+    // Skip entries that are in use.
+    if (Entries[E].hasRefs()) {
+      if (++E == CacheEntries)
+        E = 0;
+      continue;
+    }
+    Entries[E].reset(PhysReg, LIUArray, TRI, MF);
+    PhysRegEntries[PhysReg] = E;
+    return &Entries[E];
+  }
+  llvm_unreachable("Ran out of interference cache entries.");
 }
 
 /// revalidate - LIU contents have changed, update tags.
@@ -59,6 +69,7 @@ void InterferenceCache::Entry::reset(unsigned physReg,
                                      LiveIntervalUnion *LIUArray,
                                      const TargetRegisterInfo *TRI,
                                      const MachineFunction *MF) {
+  assert(!hasRefs() && "Cannot reset cache entry with references");
   // LIU's changed, invalidate cache.
   ++Tag;
   PhysReg = physReg;
