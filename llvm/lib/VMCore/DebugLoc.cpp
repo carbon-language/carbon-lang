@@ -128,6 +128,22 @@ DebugLoc DebugLoc::getFromDILocation(MDNode *N) {
   return get(LineNo, ColNo, Scope, dyn_cast_or_null<MDNode>(N->getOperand(3)));
 }
 
+/// getFromDILexicalBlock - Translate the DILexicalBlock into a DebugLoc.
+DebugLoc DebugLoc::getFromDILexicalBlock(MDNode *N) {
+  if (N == 0 || N->getNumOperands() < 3) return DebugLoc();
+  
+  MDNode *Scope = dyn_cast_or_null<MDNode>(N->getOperand(1));
+  if (Scope == 0) return DebugLoc();
+  
+  unsigned LineNo = 0, ColNo = 0;
+  if (ConstantInt *Line = dyn_cast_or_null<ConstantInt>(N->getOperand(2)))
+    LineNo = Line->getZExtValue();
+  if (ConstantInt *Col = dyn_cast_or_null<ConstantInt>(N->getOperand(3)))
+    ColNo = Col->getZExtValue();
+  
+  return get(LineNo, ColNo, Scope, NULL);
+}
+
 //===----------------------------------------------------------------------===//
 // DenseMap specialization
 //===----------------------------------------------------------------------===//

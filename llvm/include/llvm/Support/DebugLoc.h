@@ -61,7 +61,10 @@ namespace llvm {
     
     /// getFromDILocation - Translate the DILocation quad into a DebugLoc.
     static DebugLoc getFromDILocation(MDNode *N);
-    
+
+    /// getFromDILexicalBlock - Translate the DILexicalBlock into a DebugLoc.
+    static DebugLoc getFromDILexicalBlock(MDNode *N);
+
     /// isUnknown - Return true if this is an unknown location.
     bool isUnknown() const { return ScopeIdx == 0; }
     

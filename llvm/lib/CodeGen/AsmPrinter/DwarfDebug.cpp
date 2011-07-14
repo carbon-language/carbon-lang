@@ -1566,8 +1566,11 @@ void DwarfDebug::endInstruction(const MachineInstr *MI) {
 }
 
 /// getOrCreateDbgScope - Create DbgScope for the scope.
-DbgScope *DwarfDebug::getOrCreateDbgScope(const MDNode *Scope,
-                                          const MDNode *InlinedAt) {
+DbgScope *DwarfDebug::getOrCreateDbgScope(DebugLoc DL, LLVMContext &Ctx) {
+  MDNode *Scope = NULL;
+  MDNode *InlinedAt = NULL;
+  DL.getScopeAndInlinedAt(Scope, InlinedAt, Ctx);
+
   if (!InlinedAt) {
     DbgScope *WScope = DbgScopeMap.lookup(Scope);
     if (WScope)
@@ -1576,7 +1579,7 @@ DbgScope *DwarfDebug::getOrCreateDbgScope(const MDNode *Scope,
     DbgScopeMap.insert(std::make_pair(Scope, WScope));
     if (DIDescriptor(Scope).isLexicalBlock()) {
       DbgScope *Parent =
-        getOrCreateDbgScope(DILexicalBlock(Scope).getContext(), NULL);
+        getOrCreateDbgScope(DebugLoc::getFromDILexicalBlock(Scope), Ctx);
       WScope->setParent(Parent);
       Parent->addScope(WScope);
     }
@@ -1603,9 +1606,8 @@ DbgScope *DwarfDebug::getOrCreateDbgScope(const MDNode *Scope,
 
   WScope = new DbgScope(NULL, DIDescriptor(Scope), InlinedAt);
   DbgScopeMap.insert(std::make_pair(InlinedAt, WScope));
-  DILocation DL(InlinedAt);
   DbgScope *Parent =
-    getOrCreateDbgScope(DL.getScope(), DL.getOrigLocation());
+    getOrCreateDbgScope(DebugLoc::getFromDILocation(InlinedAt), Ctx);
   WScope->setParent(Parent);
   Parent->addScope(WScope);
 
@@ -1693,8 +1695,7 @@ bool DwarfDebug::extractScopeInformation() {
   LLVMContext &Ctx = Asm->MF->getFunction()->getContext();
   SmallVector<DbgRange, 4> MIRanges;
   DenseMap<const MachineInstr *, DbgScope *> MI2ScopeMap;
-  const MDNode *PrevScope = NULL;
-  const MDNode *PrevInlinedAt = NULL;
+  DebugLoc PrevDL;
   const MachineInstr *RangeBeginMI = NULL;
   const MachineInstr *PrevMI = NULL;
   for (MachineFunction::const_iterator I = Asm->MF->begin(), E = Asm->MF->end();
@@ -1702,8 +1703,6 @@ bool DwarfDebug::extractScopeInformation() {
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
-      MDNode *Scope = NULL;
-      MDNode *InlinedAt = NULL;
 
       // Check if instruction has valid location information.
       const DebugLoc MIDL = MInsn->getDebugLoc();
@@ -1711,10 +1710,9 @@ bool DwarfDebug::extractScopeInformation() {
         PrevMI = MInsn;
         continue;
       }
-      MIDL.getScopeAndInlinedAt(Scope, InlinedAt, Ctx);
 
       // If scope has not changed then skip this instruction.
-      if (Scope == PrevScope && PrevInlinedAt == InlinedAt) {
+      if (MIDL == PrevDL) {
         PrevMI = MInsn;
         continue;
       }
@@ -1733,8 +1731,7 @@ bool DwarfDebug::extractScopeInformation() {
         DEBUG(dbgs() << "Next Range starting at " << *MInsn);
         DEBUG(dbgs() << "------------------------\n");
         DbgRange R(RangeBeginMI, PrevMI);
-        MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevScope,
-                                                        PrevInlinedAt);
+        MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevDL, Ctx);
         MIRanges.push_back(R);
       }
 
@@ -1743,16 +1740,15 @@ bool DwarfDebug::extractScopeInformation() {
 
       // Reset previous markers.
       PrevMI = MInsn;
-      PrevScope = Scope;
-      PrevInlinedAt = InlinedAt;
+      PrevDL = MIDL;
     }
   }
 
   // Create last instruction range.
-  if (RangeBeginMI && PrevMI && PrevScope) {
+  if (RangeBeginMI && PrevMI && !PrevDL.isUnknown()) {
     DbgRange R(RangeBeginMI, PrevMI);
     MIRanges.push_back(R);
-    MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevScope, PrevInlinedAt);
+    MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevDL, Ctx);
   }
 
   if (!CurrentFnDbgScope)
