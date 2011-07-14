@@ -599,9 +599,49 @@ from the previous release.</p>
   LLVM API changes are:</p>
 
 <ul>
-<!--
-<li></ld>
--->
+
+<li><code>PHINode::reserveOperandSpace</code> has been removed. Instead, you
+  must specify how many operands to reserve space for when you create the
+  PHINode, by passing an extra argument into <code>PHINode::Create</code>.</li>
+
+<li>PHINodes no longer store their incoming BasicBlocks as operands. Instead,
+  the list of incoming BasicBlocks is stored separately, and can be accessed
+  with new functions <code>PHINode::block_begin</code>
+  and <code>PHINode::block_end</code>.</li>
+
+<li>Various functions now take an <code>ArrayRef</code> instead of either a pair
+  of pointers (or iterators) to the beginning and end of a range, or a pointer
+  and a length. Others now return an <code>ArrayRef</code> instead of a
+  reference to a <code>SmallVector</code> or <code>std::vector</code>. These
+  include:
+<ul>
+<!-- Please keep this list sorted. -->
+<li><code>ComputeLinearIndex</code> (in <code>llvm/CodeGen/Analysis.h</code>)</li>
+<li><code>ConstantArray::get</code></li>
+<li><code>ConstantExpr::getExtractElement</code></li>
+<li><code>ConstantExpr::getIndices</code></li>
+<li><code>ConstantExpr::getInsertElement</code></li>
+<li><code>ConstantExpr::getWithOperands</code></li>
+<li><code>ConstantVector::get</code></li>
+<li><code>DIBuilder::createComplexVariable</code></li>
+<li><code>DIBuilder::getOrCreateArray</code></li>
+<li><code>ExtractValueInst::Create</code></li>
+<li><code>ExtractValueInst::getIndexedType</code></li>
+<li><code>ExtractValueInst::getIndices</code></li>
+<li><code>FindInsertedValue</code> (in <code>llvm/Analysis/ValueTracking.h</code>)</li>
+<li><code>IRBuilder::CreateExtractValue</code></li>
+<li><code>IRBuilder::CreateInsertValue</code></li>
+<li><code>InsertValueInst::Create</code></li>
+<li><code>InsertValueInst::getIndices</code></li>
+<li><code>MDNode::get</code></li>
+<li><code>MDNode::getIfExists</code></li>
+<li><code>MDNode::getTemporary</code></li>
+<li><code>MDNode::getWhenValsUnresolved</code></li>
+</ul></li>
+
+<li>All forms of <code>StringMap::getOrCreateValue</code> have been remove
+  except for the one which takes a <code>StringRef</code>.</li>
+
 </ul>
 </div>
 
