@@ -224,15 +224,17 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
       if (T == argTy)
         return true;
       // Check for "compatible types".
-      if (const BuiltinType *BT = argTy->getAs<BuiltinType>())
+      if (const BuiltinType *BT = argTy->getAs<BuiltinType>()) {
+        if (!T->isIntegerType())
+          return false;
         switch (BT->getKind()) {
           default:
             break;
           case BuiltinType::Char_S:
           case BuiltinType::SChar:
           case BuiltinType::Char_U:
-          case BuiltinType::UChar:                    
-            return hasSameSize(C, T, C.UnsignedCharTy);            
+          case BuiltinType::UChar:
+            return hasSameSize(C, T, C.UnsignedCharTy);
           case BuiltinType::Short:
           case BuiltinType::UShort:
             return hasSameSize(C, T, C.ShortTy);
@@ -246,6 +248,7 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
           case BuiltinType::ULongLong:
             return hasSameSize(C, T, C.LongLongTy);
         }
+      }
       return false;
     }
 
