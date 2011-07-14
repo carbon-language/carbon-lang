@@ -521,3 +521,60 @@ _func:
 @ CHECK: dsb	osh                     @ encoding: [0x43,0xf0,0x7f,0xf5]
 @ CHECK: dsb	oshst                   @ encoding: [0x42,0xf0,0x7f,0xf5]
 @ CHECK: dsb	sy                      @ encoding: [0x4f,0xf0,0x7f,0xf5]
+
+@------------------------------------------------------------------------------
+@ EOR
+@------------------------------------------------------------------------------
+  eor r4, r5, #0xf000
+  eor r4, r5, r6
+  eor r4, r5, r6, lsl #5
+  eor r4, r5, r6, lsr #5
+  eor r4, r5, r6, lsr #5
+  eor r4, r5, r6, asr #5
+  eor r4, r5, r6, ror #5
+  eor r6, r7, r8, lsl r9
+  eor r6, r7, r8, lsr r9
+  eor r6, r7, r8, asr r9
+  eor r6, r7, r8, ror r9
+  eor r4, r5, r6, rrx
+
+  @ destination register is optional
+  eor r5, #0xf000
+  eor r4, r5
+  eor r4, r5, lsl #5
+  eor r4, r5, lsr #5
+  eor r4, r5, lsr #5
+  eor r4, r5, asr #5
+  eor r4, r5, ror #5
+  eor r6, r7, lsl r9
+  eor r6, r7, lsr r9
+  eor r6, r7, asr r9
+  eor r6, r7, ror r9
+  eor r4, r5, rrx
+
+@ CHECK: eor	r4, r5, #61440          @ encoding: [0x0f,0x4a,0x25,0xe2]
+@ CHECK: eor	r4, r5, r6              @ encoding: [0x06,0x40,0x25,0xe0]
+@ CHECK: eor	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0x25,0xe0]
+@ CHECK: eor	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x25,0xe0]
+@ CHECK: eor	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x25,0xe0]
+@ CHECK: eor	r4, r5, r6, asr #5      @ encoding: [0xc6,0x42,0x25,0xe0]
+@ CHECK: eor	r4, r5, r6, ror #5      @ encoding: [0xe6,0x42,0x25,0xe0]
+@ CHECK: eor	r6, r7, r8, lsl r9      @ encoding: [0x18,0x69,0x27,0xe0]
+@ CHECK: eor	r6, r7, r8, lsr r9      @ encoding: [0x38,0x69,0x27,0xe0]
+@ CHECK: eor	r6, r7, r8, asr r9      @ encoding: [0x58,0x69,0x27,0xe0]
+@ CHECK: eor	r6, r7, r8, ror r9      @ encoding: [0x78,0x69,0x27,0xe0]
+@ CHECK: eor	r4, r5, r6, rrx         @ encoding: [0x66,0x40,0x25,0xe0]
+
+
+@ CHECK: eor	r5, r5, #61440          @ encoding: [0x0f,0x5a,0x25,0xe2]
+@ CHECK: eor	r4, r4, r5              @ encoding: [0x05,0x40,0x24,0xe0]
+@ CHECK: eor	r4, r4, r5, lsl #5      @ encoding: [0x85,0x42,0x24,0xe0]
+@ CHECK: eor	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0x24,0xe0]
+@ CHECK: eor	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0x24,0xe0]
+@ CHECK: eor	r4, r4, r5, asr #5      @ encoding: [0xc5,0x42,0x24,0xe0]
+@ CHECK: eor	r4, r4, r5, ror #5      @ encoding: [0xe5,0x42,0x24,0xe0]
+@ CHECK: eor	r6, r6, r7, lsl r9      @ encoding: [0x17,0x69,0x26,0xe0]
+@ CHECK: eor	r6, r6, r7, lsr r9      @ encoding: [0x37,0x69,0x26,0xe0]
+@ CHECK: eor	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0x26,0xe0]
+@ CHECK: eor	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x26,0xe0]
+@ CHECK: eor	r4, r4, r5, rrx         @ encoding: [0x65,0x40,0x24,0xe0]
