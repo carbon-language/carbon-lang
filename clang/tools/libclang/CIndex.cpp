@@ -2391,7 +2391,7 @@ clang_createTranslationUnitFromSourceFile(CXIndex CIdx,
                                           unsigned num_unsaved_files,
                                           struct CXUnsavedFile *unsaved_files) {
   unsigned Options = CXTranslationUnit_DetailedPreprocessingRecord |
-                     CXTranslationUnit_NestedMacroInstantiations;
+                     CXTranslationUnit_NestedMacroExpansions;
   return clang_parseTranslationUnit(CIdx, source_filename,
                                     command_line_args, num_command_line_args,
                                     unsaved_files, num_unsaved_files,
@@ -2496,12 +2496,12 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     Args->push_back(source_filename);
 
   // Do we need the detailed preprocessing record?
-  bool NestedMacroInstantiations = false;
+  bool NestedMacroExpansions = false;
   if (options & CXTranslationUnit_DetailedPreprocessingRecord) {
     Args->push_back("-Xclang");
     Args->push_back("-detailed-preprocessing-record");
-    NestedMacroInstantiations
-      = (options & CXTranslationUnit_NestedMacroInstantiations);
+    NestedMacroExpansions
+      = (options & CXTranslationUnit_NestedMacroExpansions);
   }
   
   unsigned NumErrors = Diags->getClient()->getNumErrors();
@@ -2521,7 +2521,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                  CacheCodeCompetionResults,
                                  CXXPrecompilePreamble,
                                  CXXChainedPCH,
-                                 NestedMacroInstantiations));
+                                 NestedMacroExpansions));
 
   if (NumErrors != Diags->getClient()->getNumErrors()) {
     // Make sure to check that 'Unit' is non-NULL.

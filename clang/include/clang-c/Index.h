@@ -840,7 +840,17 @@ enum CXTranslationUnit_Flags {
    * a large amount of storage to due preprocessor metaprogramming. Moreover,
    * its fairly rare that this information is useful for libclang clients.
    */
-  CXTranslationUnit_NestedMacroInstantiations = 0x40
+  CXTranslationUnit_NestedMacroExpansions = 0x40,
+
+  /**
+   * \brief Legacy name to indicate that the "detailed" preprocessing record,
+   * if requested, should contain nested macro instantiations.
+   *
+   * \see CXTranslationUnit_NestedMacroExpansions for the current name for this
+   * value, and its semantics. This is just an alias.
+   */
+  CXTranslationUnit_NestedMacroInstantiations =
+    CXTranslationUnit_NestedMacroExpansions
 };
 
 /**

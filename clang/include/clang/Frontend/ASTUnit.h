@@ -249,9 +249,9 @@ private:
   /// \brief Whether we should be caching code-completion results.
   bool ShouldCacheCodeCompletionResults;
   
-  /// \brief Whether we want to include nested macro instantiations in the
+  /// \brief Whether we want to include nested macro expansions in the
   /// detailed preprocessing record.
-  bool NestedMacroInstantiations;
+  bool NestedMacroExpansions;
   
   static void ConfigureDiags(llvm::IntrusiveRefCntPtr<Diagnostic> &Diags,
                              const char **ArgBegin, const char **ArgEnd,
@@ -612,7 +612,7 @@ public:
                                              bool PrecompilePreamble = false,
                                           bool CompleteTranslationUnit = true,
                                        bool CacheCodeCompletionResults = false,
-                                       bool NestedMacroInstantiations = true);
+                                       bool NestedMacroExpansions = true);
 
   /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
   /// arguments, which must specify exactly one source file.
@@ -642,7 +642,7 @@ public:
                                       bool CacheCodeCompletionResults = false,
                                       bool CXXPrecompilePreamble = false,
                                       bool CXXChainedPCH = false,
-                                      bool NestedMacroInstantiations = true);
+                                      bool NestedMacroExpansions = true);
   
   /// \brief Reparse the source files using the same command-line options that
   /// were originally used to produce this translation unit.
