@@ -38,6 +38,15 @@ namespace MCOI {
     Predicate,
     OptionalDef
   };
+
+  /// Operand Type - Operands are tagged with one of the values of this enum.
+  enum OperandType {
+    OPERAND_UNKNOWN,
+    OPERAND_IMMEDIATE,
+    OPERAND_REGISTER,
+    OPERAND_MEMORY,
+    OPERAND_PCREL
+  };
 }
 
 /// MCOperandInfo - This holds information about one operand of a machine
@@ -57,6 +66,9 @@ public:
   /// Lower 16 bits are used to specify which constraints are set. The higher 16
   /// bits are used to specify the value of constraints (4 bits each).
   unsigned Constraints;
+
+  /// OperandType - Information about the type of the operand.
+  MCOI::OperandType OperandType;
   /// Currently no other information.
   
   /// isLookupPtrRegClass - Set if this operand is a pointer value and it

@@ -78,6 +78,10 @@ namespace llvm {
       /// for binary encoding. "getMachineOpValue" by default.
       std::string EncoderMethodName;
 
+      /// OperandType - A value from MCOI::OperandType representing the type of
+      /// the operand.
+      std::string OperandType;
+
       /// MIOperandNo - Currently (this is meant to be phased out), some logical
       /// operands correspond to multiple MachineInstr operands.  In the X86
       /// target for example, one address operand is represented as 4
@@ -101,10 +105,11 @@ namespace llvm {
       std::vector<ConstraintInfo> Constraints;
 
       OperandInfo(Record *R, const std::string &N, const std::string &PMN,
-                  const std::string &EMN, unsigned MION, unsigned MINO,
-                  DagInit *MIOI)
+                  const std::string &EMN, const std::string &OT, unsigned MION,
+                  unsigned MINO, DagInit *MIOI)
       : Rec(R), Name(N), PrinterMethodName(PMN), EncoderMethodName(EMN),
-        MIOperandNo(MION), MINumOperands(MINO), MIOperandInfo(MIOI) {}
+        OperandType(OT), MIOperandNo(MION), MINumOperands(MINO),
+        MIOperandInfo(MIOI) {}
 
 
       /// getTiedOperand - If this operand is tied to another one, return the

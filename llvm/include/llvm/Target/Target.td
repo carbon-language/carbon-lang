@@ -500,6 +500,7 @@ class Operand<ValueType ty> {
   string EncoderMethod = "";
   string DecoderMethod = "";
   string AsmOperandLowerMethod = ?;
+  string OperandType = "OPERAND_UNKNOWN";
   dag MIOperandInfo = (ops);
 
   // ParserMatchClass - The "match class" that operands of this type fit
@@ -531,6 +532,7 @@ class RegisterOperand<RegisterClass regclass, string pm = "printOperand"> {
   AsmOperandClass ParserMatchClass;
 }
 
+let OperandType = "OPERAND_IMMEDIATE" in {
 def i1imm  : Operand<i1>;
 def i8imm  : Operand<i8>;
 def i16imm : Operand<i16>;
@@ -539,6 +541,7 @@ def i64imm : Operand<i64>;
 
 def f32imm : Operand<f32>;
 def f64imm : Operand<f64>;
+}
 
 /// zero_reg definition - Special node to stand for the zero register.
 ///

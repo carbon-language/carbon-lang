@@ -121,6 +121,11 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
                     " << 16) | (1 << MCOI::TIED_TO))";
       }
 
+      // Fill in operand type.
+      Res += ", MCOI::";
+      assert(!Inst.Operands[i].OperandType.empty() && "Invalid operand type.");
+      Res += Inst.Operands[i].OperandType;
+
       Result.push_back(Res);
     }
   }
