@@ -20,7 +20,9 @@ o SBFrame: Represents one of the stack frames associated with a thread. SBThread
 o SBSymbolContext: A container that stores various debugger related info.
 o SBValue: Represents the value of a variable, a register, or an expression.
 o SBModule: Represents an executable image and its associated object and symbol
-      files.
+      files.  SBTarget conatins SBModule(s).
+o SBBreakpoint: Represents a logical breakpoint and its associated settings.
+      SBTarget conatins SBBreakpoint(s).
 o SBSymbol: Represents the symbol possibly associated with a stack frame.
 o SBCompileUnit: Represents a compilation unit, or compiled source file.
 o SBFunction: Represents a generic function, which can be inlined or not.
