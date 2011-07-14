@@ -2806,7 +2806,7 @@ void clang_getInstantiationLocation(CXSourceLocation location,
     *static_cast<const SourceManager*>(location.ptr_data[0]);
   SourceLocation InstLoc = SM.getInstantiationLoc(Loc);
 
-  // Check that the FileID is invalid on the instantiation location.
+  // Check that the FileID is invalid on the expansion location.
   // This can manifest in invalid code.
   FileID fileID = SM.getFileID(InstLoc);
   bool Invalid = false;
@@ -4541,8 +4541,8 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   }
   
   if (clang_isPreprocessing(cursor.kind)) {    
-    // For macro instantiations, just note where the beginning of the macro
-    // instantiation occurs.
+    // For macro expansions, just note where the beginning of the macro
+    // expansion occurs.
     if (cursor.kind == CXCursor_MacroExpansion) {
       Annotated[Loc.int_data] = cursor;
       return CXChildVisit_Recurse;
