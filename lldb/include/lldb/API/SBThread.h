@@ -22,24 +22,25 @@ class SBFrame;
 %feature("docstring",
 "Represents a thread of execution. SBProcess contains SBThread(s).
 
-For example (from test/lldbutil.py),
+SBThread supports frame iteration. For example (from test/python_api/
+lldbutil/iter/TestLLDBIterator.py),
 
-# ==================================================
-# Utility functions related to Threads and Processes
-# ==================================================
+        from lldbutil import print_stacktrace
+        stopped_due_to_breakpoint = False
+        for thread in process:
+            if self.TraceOn():
+                print_stacktrace(thread)
+            ID = thread.GetThreadID()
+            if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+                stopped_due_to_breakpoint = True
+            for frame in thread:
+                self.assertTrue(frame.GetThread().GetThreadID() == ID)
+                if self.TraceOn():
+                    print frame
 
-def get_stopped_threads(process, reason):
-    '''Returns the thread(s) with the specified stop reason in a list.
+        self.assertTrue(stopped_due_to_breakpoint)
 
-    The list can be empty if no such thread exists.
-    '''
-    threads = []
-    for t in process:
-        if t.GetStopReason() == reason:
-            threads.append(t)
-    return threads
-
-...
+See also SBProcess and SBFrame.
 "
          ) SBThread;
 #endif
