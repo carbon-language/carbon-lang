@@ -722,6 +722,10 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
                                  getDataAlignmentFactor(Streamer), IsEH);
   if (!Encoding) return false;
 
+  // The encoding needs to know we have an LSDA.
+  if (Frame.Lsda)
+    Encoding |= 0x40000000;
+
   Streamer.SwitchSection(TAI.getCompactUnwindSection());
 
   // Range Start
@@ -743,7 +747,7 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   Streamer.EmitIntValue(Encoding, Size);
 
   // Personality Function
-  Size = getSizeForEncoding(Streamer, Frame.PersonalityEncoding);
+  Size = getSizeForEncoding(Streamer, dwarf::DW_EH_PE_absptr);
   if (VerboseAsm) Streamer.AddComment("Personality Function");
   if (Frame.Personality)
     Streamer.EmitSymbolValue(Frame.Personality, Size);
