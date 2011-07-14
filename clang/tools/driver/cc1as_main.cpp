@@ -256,7 +256,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
   // it later.
   SrcMgr.setIncludeDirs(Opts.IncludePaths);
 
-  OwningPtr<MCAsmInfo> MAI(TheTarget->createAsmInfo(Opts.Triple));
+  OwningPtr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(Opts.Triple));
   assert(MAI && "Unable to create target asm info!");
 
   bool IsBinary = Opts.OutputType == AssemblerInvocation::FT_Obj;
@@ -356,6 +356,7 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
   InitializeAllTargetInfos();
   // FIXME: We shouldn't need to initialize the Target(Machine)s.
   InitializeAllTargets();
+  InitializeAllMCAsmInfos();
   InitializeAllMCInstrInfos();
   InitializeAllMCSubtargetInfos();
   InitializeAllAsmPrinters();
