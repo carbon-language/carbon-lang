@@ -260,10 +260,7 @@ LLVMTypeRef LLVMX86MMXType(void) {
 LLVMTypeRef LLVMFunctionType(LLVMTypeRef ReturnType,
                              LLVMTypeRef *ParamTypes, unsigned ParamCount,
                              LLVMBool IsVarArg) {
-  std::vector<Type*> Tys;
-  for (LLVMTypeRef *I = ParamTypes, *E = ParamTypes + ParamCount; I != E; ++I)
-    Tys.push_back(unwrap(*I));
-  
+  ArrayRef<Type*> Tys(unwrap(ParamTypes), ParamCount);
   return wrap(FunctionType::get(unwrap(ReturnType), Tys, IsVarArg != 0));
 }
 
@@ -290,11 +287,7 @@ void LLVMGetParamTypes(LLVMTypeRef FunctionTy, LLVMTypeRef *Dest) {
 
 LLVMTypeRef LLVMStructTypeInContext(LLVMContextRef C, LLVMTypeRef *ElementTypes,
                            unsigned ElementCount, LLVMBool Packed) {
-  std::vector<Type*> Tys;
-  for (LLVMTypeRef *I = ElementTypes,
-                   *E = ElementTypes + ElementCount; I != E; ++I)
-    Tys.push_back(unwrap(*I));
-  
+  ArrayRef<Type*> Tys(unwrap(ElementTypes), ElementCount);
   return wrap(StructType::get(*unwrap(C), Tys, Packed != 0));
 }
 
@@ -311,10 +304,7 @@ LLVMTypeRef LLVMStructCreateNamed(LLVMContextRef C, const char *Name)
 
 void LLVMStructSetBody(LLVMTypeRef StructTy, LLVMTypeRef *ElementTypes,
                        unsigned ElementCount, LLVMBool Packed) {
-  std::vector<Type*> Tys;
-  for (LLVMTypeRef *I = ElementTypes,
-                   *E = ElementTypes + ElementCount; I != E; ++I)
-    Tys.push_back(unwrap(*I));  
+  ArrayRef<Type*> Tys(unwrap(ElementTypes), ElementCount);
   unwrap<StructType>(StructTy)->setBody(Tys, Packed != 0);
 }
 
