@@ -21,7 +21,7 @@ o SBSymbolContext: A container that stores various debugger related info.
 o SBValue: Represents the value of a variable, a register, or an expression.
 o SBModule: Represents an executable image and its associated object and symbol
       files.
-o SBSymbol: Represents the symbol associated with a stack frame.
+o SBSymbol: Represents the symbol possibly associated with a stack frame.
 o SBCompileUnit: Represents a compilation unit, or compiled source file.
 o SBFunction: Represents a generic function, which can be inlined or not.
 o SBBlock: Represents a lexical block. SBFunction contains SBBlock(s).
