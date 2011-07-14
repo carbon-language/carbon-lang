@@ -491,10 +491,7 @@ public:
     DependentSequence,
 
     /// \brief A normal sequence.
-    NormalSequence,
-
-    /// \brief A reference binding.
-    ReferenceBinding // FIXME: Still looks redundant, but complicated.
+    NormalSequence
   };
   
   /// \brief Describes the kind of a particular step in an initialization
