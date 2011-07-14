@@ -732,7 +732,8 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // Offset is a 32-bit integer.
     int Imm = (int)(MI.getOperand(i + 3).getImm());
     int Offset = FIOffset + Imm;
-    assert(isInt<32>((long long)FIOffset + Imm) && "Overflowing offset!");
+    assert((!Is64Bit || isInt<32>((long long)FIOffset + Imm)) &&
+           "Requesting 64-bit offset in 32-bit immediate!");
     MI.getOperand(i + 3).ChangeToImmediate(Offset);
   } else {
     // Offset is symbolic. This is extremely rare.
