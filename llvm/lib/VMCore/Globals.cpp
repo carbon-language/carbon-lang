@@ -210,31 +210,26 @@ bool GlobalAlias::isDeclaration() const {
     return false;
 }
 
-void GlobalAlias::setAliasee(Constant *Aliasee) 
-{
-  if (Aliasee)
-    assert(Aliasee->getType() == getType() &&
-           "Alias and aliasee types should match!");
+void GlobalAlias::setAliasee(Constant *Aliasee) {
+  assert((!Aliasee || Aliasee->getType() == getType()) &&
+         "Alias and aliasee types should match!");
   
   setOperand(0, Aliasee);
 }
 
 const GlobalValue *GlobalAlias::getAliasedGlobal() const {
   const Constant *C = getAliasee();
-  if (C) {
-    if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
-      return GV;
-    else {
-      const ConstantExpr *CE = 0;
-      if ((CE = dyn_cast<ConstantExpr>(C)) &&
-          (CE->getOpcode() == Instruction::BitCast || 
-           CE->getOpcode() == Instruction::GetElementPtr))
-        return dyn_cast<GlobalValue>(CE->getOperand(0));
-      else
-        llvm_unreachable("Unsupported aliasee");
-    }
-  }
-  return 0;
+  if (C == 0) return 0;
+  
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
+    return GV;
+
+  const ConstantExpr *CE = cast<ConstantExpr>(C);
+  assert((CE->getOpcode() == Instruction::BitCast || 
+          CE->getOpcode() == Instruction::GetElementPtr) &&
+         "Unsupported aliasee");
+  
+  return dyn_cast<GlobalValue>(CE->getOperand(0));
 }
 
 const GlobalValue *GlobalAlias::resolveAliasedGlobal(bool stopOnWeak) const {
@@ -255,7 +250,7 @@ const GlobalValue *GlobalAlias::resolveAliasedGlobal(bool stopOnWeak) const {
     GV = GA->getAliasedGlobal();
 
     if (!Visited.insert(GV))
-      return NULL;
+      return 0;
   }
 
   return GV;
