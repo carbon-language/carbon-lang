@@ -2659,14 +2659,54 @@ IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     case BO_Sub:
       if (BO->getLHS()->getType()->isPointerType())
         return IntRange::forValueOfType(C, E->getType());
-      // fallthrough
+      break;
 
-    default:
+    // The width of a division result is mostly determined by the size
+    // of the LHS.
+    case BO_Div: {
+      // Don't 'pre-truncate' the operands.
+      unsigned opWidth = C.getIntWidth(E->getType());
+      IntRange L = GetExprRange(C, BO->getLHS(), opWidth);
+
+      // If the divisor is constant, use that.
+      llvm::APSInt divisor;
+      if (BO->getRHS()->isIntegerConstantExpr(divisor, C)) {
+        unsigned log2 = divisor.logBase2(); // floor(log_2(divisor))
+        if (log2 >= L.Width)
+          L.Width = (L.NonNegative ? 0 : 1);
+        else
+          L.Width = std::min(L.Width - log2, MaxWidth);
+        return L;
+      }
+
+      // Otherwise, just use the LHS's width.
+      IntRange R = GetExprRange(C, BO->getRHS(), opWidth);
+      return IntRange(L.Width, L.NonNegative && R.NonNegative);
+    }
+
+    // The result of a remainder can't be larger than the result of
+    // either side.
+    case BO_Rem: {
+      // Don't 'pre-truncate' the operands.
+      unsigned opWidth = C.getIntWidth(E->getType());
+      IntRange L = GetExprRange(C, BO->getLHS(), opWidth);
+      IntRange R = GetExprRange(C, BO->getRHS(), opWidth);
+
+      IntRange meet = IntRange::meet(L, R);
+      meet.Width = std::min(meet.Width, MaxWidth);
+      return meet;
+    }
+
+    // The default behavior is okay for these.
+    case BO_Mul:
+    case BO_Add:
+    case BO_Xor:
+    case BO_Or:
       break;
     }
 
-    // Treat every other operator as if it were closed on the
-    // narrowest type that encompasses both operands.
+    // The default case is to treat the operation as if it were closed
+    // on the narrowest type that encompasses both operands.
     IntRange L = GetExprRange(C, BO->getLHS(), MaxWidth);
     IntRange R = GetExprRange(C, BO->getRHS(), MaxWidth);
     return IntRange::join(L, R);

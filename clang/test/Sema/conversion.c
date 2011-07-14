@@ -335,3 +335,11 @@ void test_8559831(enum E8559831b value_a, E8559831c value_c) {
    enum E8559831a a3 = value_d;
    a3 = value_d;
 }
+
+void test26(int si, long sl) {
+  si = sl % sl; // expected-warning {{implicit conversion loses integer precision: 'long' to 'int'}}
+  si = sl % si;
+  si = si % sl;
+  si = si / sl;
+  si = sl / si; // expected-warning {{implicit conversion loses integer precision: 'long' to 'int'}}
+}
