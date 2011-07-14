@@ -51,7 +51,7 @@ protected:
 
     // Iterator tests
     StringMap<uint32_t>::iterator it = testMap.begin();
-    EXPECT_STREQ(testKey, it->first());
+    EXPECT_STREQ(testKey, it->first().data());
     EXPECT_EQ(testValue, it->second);
     ++it;
     EXPECT_TRUE(it == testMap.end());
@@ -157,7 +157,7 @@ TEST_F(StringMapTest, IterationTest) {
       it != testMap.end(); ++it) {
     std::stringstream ss;
     ss << "key_" << it->second;
-    ASSERT_STREQ(ss.str().c_str(), it->first());
+    ASSERT_STREQ(ss.str().c_str(), it->first().data());
     visited[it->second] = true;
   }
 
@@ -189,7 +189,7 @@ TEST_F(StringMapTest, StringMapEntryTest) {
   StringMap<uint32_t>::value_type* entry =
       StringMap<uint32_t>::value_type::Create(
           testKeyFirst, testKeyFirst + testKeyLength, 1u);
-  EXPECT_STREQ(testKey, entry->first());
+  EXPECT_STREQ(testKey, entry->first().data());
   EXPECT_EQ(1u, entry->second);
   free(entry);
 }

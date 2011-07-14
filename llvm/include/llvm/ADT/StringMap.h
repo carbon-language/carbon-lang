@@ -140,7 +140,7 @@ public:
   /// StringMapEntry object.
   const char *getKeyData() const {return reinterpret_cast<const char*>(this+1);}
 
-  const char *first() const { return getKeyData(); }
+  StringRef first() const { return StringRef(getKeyData(), getKeyLength()); }
 
   /// Create - Create a StringMapEntry for the specified key and default
   /// construct the value.
