@@ -70,7 +70,8 @@ public:
       if (E->getReceiverKind() == ObjCMessageExpr::Instance)
         if (Expr *rec = E->getInstanceReceiver()) {
           rec = rec->IgnoreParenImpCasts();
-          if (rec->getType().getObjCLifetime() == Qualifiers::OCL_ExplicitNone){
+          if (rec->getType().getObjCLifetime() == Qualifiers::OCL_ExplicitNone &&
+              (E->getMethodFamily() != OMF_retain || isRemovable(E))) {
             std::string err = "it is not safe to remove '";
             err += E->getSelector().getAsString() + "' message on "
                 "an __unsafe_unretained type";

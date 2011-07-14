@@ -39,6 +39,7 @@ struct UnsafeS {
 void test1(A *a, BOOL b, struct UnsafeS *unsafeS) {
   [unsafeS->unsafeObj retain]; // expected-error {{it is not safe to remove 'retain' message on an __unsafe_unretained type}} \
                                // expected-error {{ARC forbids explicit message send}}
+  id foo = [unsafeS->unsafeObj retain]; // no warning.
   [a dealloc];
   [a retain];
   [a retainCount]; // expected-error {{ARC forbids explicit message send of 'retainCount'}}
