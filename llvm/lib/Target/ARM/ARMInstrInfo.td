@@ -3314,6 +3314,8 @@ def DSB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
   let Inst{3-0} = opt;
 }
 
+def : InstAlias<"dsb", (DSB 0xf)>, Requires<[IsARM, HasDB]>;
+
 // ISB has only full system option
 def ISB : AInoP<(outs), (ins), MiscFrm, NoItinerary, "isb", "", []>,
                 Requires<[IsARM, HasDB]> {

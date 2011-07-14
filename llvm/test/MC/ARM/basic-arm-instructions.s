@@ -490,3 +490,34 @@ _func:
 @ CHECK: dmb	osh                     @ encoding: [0x53,0xf0,0x7f,0xf5]
 @ CHECK: dmb	oshst                   @ encoding: [0x52,0xf0,0x7f,0xf5]
 @ CHECK: dmb	sy                      @ encoding: [0x5f,0xf0,0x7f,0xf5]
+
+@------------------------------------------------------------------------------
+@ DSB
+@------------------------------------------------------------------------------
+  dsb sy
+  dsb st
+  dsb sh
+  dsb ish
+  dsb shst
+  dsb ishst
+  dsb un
+  dsb nsh
+  dsb unst
+  dsb nshst
+  dsb osh
+  dsb oshst
+  dsb
+
+@ CHECK: dsb	sy                      @ encoding: [0x4f,0xf0,0x7f,0xf5]
+@ CHECK: dsb	st                      @ encoding: [0x4e,0xf0,0x7f,0xf5]
+@ CHECK: dsb	ish                     @ encoding: [0x4b,0xf0,0x7f,0xf5]
+@ CHECK: dsb	ish                     @ encoding: [0x4b,0xf0,0x7f,0xf5]
+@ CHECK: dsb	ishst                   @ encoding: [0x4a,0xf0,0x7f,0xf5]
+@ CHECK: dsb	ishst                   @ encoding: [0x4a,0xf0,0x7f,0xf5]
+@ CHECK: dsb	nsh                     @ encoding: [0x47,0xf0,0x7f,0xf5]
+@ CHECK: dsb	nsh                     @ encoding: [0x47,0xf0,0x7f,0xf5]
+@ CHECK: dsb	nshst                   @ encoding: [0x46,0xf0,0x7f,0xf5]
+@ CHECK: dsb	nshst                   @ encoding: [0x46,0xf0,0x7f,0xf5]
+@ CHECK: dsb	osh                     @ encoding: [0x43,0xf0,0x7f,0xf5]
+@ CHECK: dsb	oshst                   @ encoding: [0x42,0xf0,0x7f,0xf5]
+@ CHECK: dsb	sy                      @ encoding: [0x4f,0xf0,0x7f,0xf5]
