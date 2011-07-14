@@ -226,7 +226,7 @@ Retry:
   case tok::semi: {                 // C99 6.8.3p3: expression[opt] ';'
     SourceLocation LeadingEmptyMacroLoc;
     if (Tok.hasLeadingEmptyMacro())
-      LeadingEmptyMacroLoc = PP.getLastEmptyMacroInstantiationLoc();
+      LeadingEmptyMacroLoc = PP.getLastEmptyMacroExpansionLoc();
     return Actions.ActOnNullStmt(ConsumeToken(), LeadingEmptyMacroLoc);
   }
 

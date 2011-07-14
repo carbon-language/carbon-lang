@@ -1800,12 +1800,12 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
       SerializationListener->SerializedPreprocessedEntity(*E, 
                                                     Stream.GetCurrentBitNo());
 
-    if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {          
+    if (MacroExpansion *ME = dyn_cast<MacroExpansion>(*E)) {
       Record.push_back(IndexBase + NumPreprocessingRecords++);
-      AddSourceLocation(MI->getSourceRange().getBegin(), Record);
-      AddSourceLocation(MI->getSourceRange().getEnd(), Record);
-      AddIdentifierRef(MI->getName(), Record);
-      Record.push_back(getMacroDefinitionID(MI->getDefinition()));
+      AddSourceLocation(ME->getSourceRange().getBegin(), Record);
+      AddSourceLocation(ME->getSourceRange().getEnd(), Record);
+      AddIdentifierRef(ME->getName(), Record);
+      Record.push_back(getMacroDefinitionID(ME->getDefinition()));
       Stream.EmitRecord(PPD_MACRO_INSTANTIATION, Record);
       continue;
     }

@@ -544,8 +544,8 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
         // do so.
         PreprocessingRecord::iterator E, EEnd;
         for (llvm::tie(E, EEnd) = getPreprocessedEntities(); E != EEnd; ++E) {
-          if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {
-            if (Visit(MakeMacroInstantiationCursor(MI, tu)))
+          if (MacroExpansion *ME = dyn_cast<MacroExpansion>(*E)) {
+            if (Visit(MakeMacroExpansionCursor(ME, tu)))
               return true;
             
             continue;
@@ -3152,7 +3152,7 @@ CXString clang_getCursorSpelling(CXCursor C) {
   }
   
   if (C.kind == CXCursor_MacroInstantiation)
-    return createCXString(getCursorMacroInstantiation(C)->getName()
+    return createCXString(getCursorMacroExpansion(C)->getName()
                                                            ->getNameStart());
 
   if (C.kind == CXCursor_MacroDefinition)
@@ -3674,7 +3674,7 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
 
   if (C.kind == CXCursor_MacroInstantiation) {
     SourceLocation L
-      = cxcursor::getCursorMacroInstantiation(C)->getSourceRange().getBegin();
+      = cxcursor::getCursorMacroExpansion(C)->getSourceRange().getBegin();
     return cxloc::translateSourceLocation(getCursorContext(C), L);
   }
 
@@ -3760,7 +3760,7 @@ static SourceRange getRawCursorExtent(CXCursor C) {
     return cxcursor::getCursorPreprocessingDirective(C);
 
   if (C.kind == CXCursor_MacroInstantiation)
-    return cxcursor::getCursorMacroInstantiation(C)->getSourceRange();
+    return cxcursor::getCursorMacroExpansion(C)->getSourceRange();
 
   if (C.kind == CXCursor_MacroDefinition)
     return cxcursor::getCursorMacroDefinition(C)->getSourceRange();
@@ -3877,7 +3877,7 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
   }
   
   if (C.kind == CXCursor_MacroInstantiation) {
-    if (MacroDefinition *Def = getCursorMacroInstantiation(C)->getDefinition())
+    if (MacroDefinition *Def = getCursorMacroExpansion(C)->getDefinition())
       return MakeMacroDefinitionCursor(Def, tu);
   }
 

@@ -195,9 +195,9 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   /// invocation.
   MacroArgs *Args = 0;
 
-  // Remember where the end of the instantiation occurred.  For an object-like
+  // Remember where the end of the expansion occurred.  For an object-like
   // macro, this is the identifier.  For a function-like macro, this is the ')'.
-  SourceLocation InstantiationEnd = Identifier.getLocation();
+  SourceLocation ExpansionEnd = Identifier.getLocation();
 
   // If this is a function-like macro, read the arguments.
   if (MI->isFunctionLike()) {
@@ -210,7 +210,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     // Preprocessor directives used inside macro arguments are not portable, and
     // this enables the warning.
     InMacroArgs = true;
-    Args = ReadFunctionLikeMacroArgs(Identifier, MI, InstantiationEnd);
+    Args = ReadFunctionLikeMacroArgs(Identifier, MI, ExpansionEnd);
 
     // Finished parsing args.
     InMacroArgs = false;
@@ -230,8 +230,8 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   
   // If we started lexing a macro, enter the macro expansion body.
 
-  // Remember where the token is instantiated.
-  SourceLocation InstantiateLoc = Identifier.getLocation();
+  // Remember where the token is expanded.
+  SourceLocation ExpandLoc = Identifier.getLocation();
 
   // If this macro expands to no tokens, don't bother to push it onto the
   // expansion stack, only to take it right back off.
@@ -255,7 +255,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
       if (HadLeadingSpace) Identifier.setFlag(Token::LeadingSpace);
     }
     Identifier.setFlag(Token::LeadingEmptyMacro);
-    LastEmptyMacroInstantiationLoc = InstantiateLoc;
+    LastEmptyMacroExpansionLoc = ExpandLoc;
     ++NumFastMacroExpanded;
     return false;
 
@@ -281,11 +281,11 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     Identifier.setFlagValue(Token::StartOfLine , isAtStartOfLine);
     Identifier.setFlagValue(Token::LeadingSpace, hasLeadingSpace);
 
-    // Update the tokens location to include both its instantiation and physical
+    // Update the tokens location to include both its expansion and physical
     // locations.
     SourceLocation Loc =
-      SourceMgr.createInstantiationLoc(Identifier.getLocation(), InstantiateLoc,
-                                       InstantiationEnd,Identifier.getLength());
+      SourceMgr.createInstantiationLoc(Identifier.getLocation(), ExpandLoc,
+                                       ExpansionEnd,Identifier.getLength());
     Identifier.setLocation(Loc);
 
     // If this is a disabled macro or #define X X, we must mark the result as
@@ -303,7 +303,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   }
 
   // Start expanding the macro.
-  EnterMacro(Identifier, InstantiationEnd, Args);
+  EnterMacro(Identifier, ExpansionEnd, Args);
 
   // Now that the macro is at the top of the include stack, ask the
   // preprocessor to read the next token from it.
@@ -833,10 +833,10 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     Loc = AdvanceToTokenCharacter(Loc, 0);
 
     // One wrinkle here is that GCC expands __LINE__ to location of the *end* of
-    // a macro instantiation.  This doesn't matter for object-like macros, but
+    // a macro expansion.  This doesn't matter for object-like macros, but
     // can matter for a function-like macro that expands to contain __LINE__.
-    // Skip down through instantiation points until we find a file loc for the
-    // end of the instantiation history.
+    // Skip down through expansion points until we find a file loc for the
+    // end of the expansion history.
     Loc = SourceMgr.getInstantiationRange(Loc).second;
     PresumedLoc PLoc = SourceMgr.getPresumedLoc(Loc);
 

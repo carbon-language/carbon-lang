@@ -1560,13 +1560,13 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(PerFileData &F) {
     if (PreprocessedEntity *PE = PPRec.getPreprocessedEntity(Record[0]))
       return PE;
     
-    MacroInstantiation *MI
-      = new (PPRec) MacroInstantiation(DecodeIdentifierInfo(Record[3]),
+    MacroExpansion *ME =
+      new (PPRec) MacroExpansion(DecodeIdentifierInfo(Record[3]),
                                  SourceRange(ReadSourceLocation(F, Record[1]),
                                              ReadSourceLocation(F, Record[2])),
-                                       getMacroDefinition(Record[4]));
-    PPRec.SetPreallocatedEntity(Record[0], MI);
-    return MI;
+                                 getMacroDefinition(Record[4]));
+    PPRec.SetPreallocatedEntity(Record[0], ME);
+    return ME;
   }
       
   case PPD_MACRO_DEFINITION: {

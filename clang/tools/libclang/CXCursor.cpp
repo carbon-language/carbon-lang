@@ -378,15 +378,15 @@ MacroDefinition *cxcursor::getCursorMacroDefinition(CXCursor C) {
   return static_cast<MacroDefinition *>(C.data[0]);
 }
 
-CXCursor cxcursor::MakeMacroInstantiationCursor(MacroInstantiation *MI, 
-                                                CXTranslationUnit TU) {
+CXCursor cxcursor::MakeMacroExpansionCursor(MacroExpansion *MI, 
+                                            CXTranslationUnit TU) {
   CXCursor C = { CXCursor_MacroInstantiation, { MI, 0, TU } };
   return C;
 }
 
-MacroInstantiation *cxcursor::getCursorMacroInstantiation(CXCursor C) {
+MacroExpansion *cxcursor::getCursorMacroExpansion(CXCursor C) {
   assert(C.kind == CXCursor_MacroInstantiation);
-  return static_cast<MacroInstantiation *>(C.data[0]);
+  return static_cast<MacroExpansion *>(C.data[0]);
 }
 
 CXCursor cxcursor::MakeInclusionDirectiveCursor(InclusionDirective *ID, 

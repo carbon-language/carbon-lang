@@ -121,7 +121,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
 
   /// Selectors - This table contains all the selectors in the program. Unlike
   /// IdentifierTable above, this table *isn't* populated by the preprocessor.
-  /// It is declared/instantiated here because it's role/lifetime is
+  /// It is declared/expanded here because it's role/lifetime is
   /// conceptually similar the IdentifierTable. In addition, the current control
   /// flow (in clang::ParseAST()), make it convenient to put here.
   /// FIXME: Make sure the lifetime of Identifiers/Selectors *isn't* tied to
@@ -220,9 +220,9 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// previous macro value.
   llvm::DenseMap<IdentifierInfo*, std::vector<MacroInfo*> > PragmaPushMacroInfo;
 
-  /// \brief Instantiation source location for the last macro that expanded
+  /// \brief Expansion source location for the last macro that expanded
   /// to no tokens.
-  SourceLocation LastEmptyMacroInstantiationLoc;
+  SourceLocation LastEmptyMacroExpansionLoc;
 
   // Various statistics we track for performance analysis.
   unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
@@ -249,7 +249,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   llvm::SmallVector<Token, 16> MacroExpandedTokens;
   std::vector<std::pair<TokenLexer *, size_t> > MacroExpandingLexersStack;
 
-  /// \brief A record of the macro definitions and instantiations that
+  /// \brief A record of the macro definitions and expansions that
   /// occurred during preprocessing. 
   ///
   /// This is an optional side structure that can be enabled with
@@ -380,10 +380,10 @@ public:
   macro_iterator macro_begin(bool IncludeExternalMacros = true) const;
   macro_iterator macro_end(bool IncludeExternalMacros = true) const;
 
-  /// \brief Instantiation source location for the last macro that expanded
+  /// \brief Expansion source location for the last macro that expanded
   /// to no tokens.
-  SourceLocation getLastEmptyMacroInstantiationLoc() const {
-    return LastEmptyMacroInstantiationLoc;
+  SourceLocation getLastEmptyMacroExpansionLoc() const {
+    return LastEmptyMacroExpansionLoc;
   }
 
   const std::string &getPredefines() const { return Predefines; }
@@ -451,7 +451,7 @@ public:
   
   /// \brief Create a new preprocessing record, which will keep track of 
   /// all macro expansions, macro definitions, etc.
-  void createPreprocessingRecord(bool IncludeNestedMacroInstantiations);
+  void createPreprocessingRecord(bool IncludeNestedMacroExpansions);
   
   /// EnterMainSourceFile - Enter the specified FileID as the main source file,
   /// which implicitly adds the builtin defines etc.
@@ -667,7 +667,7 @@ public:
 
   /// getSpelling() - Return the 'spelling' of the token at the given
   /// location; does not go up to the spelling location or down to the
-  /// instantiation location.
+  /// expansion location.
   ///
   /// \param buffer A buffer which will be used only if the token requires
   ///   "cleaning", e.g. if it contains trigraphs or escaped newlines
@@ -730,7 +730,7 @@ public:
 
   /// CreateString - Plop the specified string into a scratch buffer and set the
   /// specified token's location and length to it.  If specified, the source
-  /// location provides a location of the instantiation point of the token.
+  /// location provides a location of the expansion point of the token.
   void CreateString(const char *Buf, unsigned Len,
                     Token &Tok, SourceLocation SourceLoc = SourceLocation());
 
@@ -754,13 +754,13 @@ public:
   }
 
   /// \brief Returns true if the given MacroID location points at the first
-  /// token of the macro instantiation.
+  /// token of the macro expansion.
   bool isAtStartOfMacroExpansion(SourceLocation loc) const {
     return Lexer::isAtStartOfMacroExpansion(loc, SourceMgr, Features);
   }
 
   /// \brief Returns true if the given MacroID location points at the last
-  /// token of the macro instantiation.
+  /// token of the macro expansion.
   bool isAtEndOfMacroExpansion(SourceLocation loc) const {
     return Lexer::isAtEndOfMacroExpansion(loc, SourceMgr, Features);
   }
@@ -1019,7 +1019,7 @@ private:
   /// invoked to read all of the formal arguments specified for the macro
   /// invocation.  This returns null on error.
   MacroArgs *ReadFunctionLikeMacroArgs(Token &MacroName, MacroInfo *MI,
-                                       SourceLocation &InstantiationEnd);
+                                       SourceLocation &ExpansionEnd);
 
   /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
   /// as a builtin macro, handle it and return the next token as 'Tok'.

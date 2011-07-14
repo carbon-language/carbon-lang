@@ -31,7 +31,7 @@ class FieldDecl;
 class InclusionDirective;
 class LabelStmt;
 class MacroDefinition;
-class MacroInstantiation;
+class MacroExpansion;
 class NamedDecl;
 class ObjCInterfaceDecl;
 class ObjCProtocolDecl;
@@ -134,13 +134,13 @@ CXCursor MakeMacroDefinitionCursor(MacroDefinition *, CXTranslationUnit TU);
 /// source range.
 MacroDefinition *getCursorMacroDefinition(CXCursor C);
 
-/// \brief Create a macro instantiation cursor.
-CXCursor MakeMacroInstantiationCursor(MacroInstantiation *,
-                                      CXTranslationUnit TU);
+/// \brief Create a macro expansion cursor.
+CXCursor MakeMacroExpansionCursor(MacroExpansion *,
+                                  CXTranslationUnit TU);
 
-/// \brief Unpack a given macro instantiation cursor to retrieve its
+/// \brief Unpack a given macro expansion cursor to retrieve its
 /// source range.
-MacroInstantiation *getCursorMacroInstantiation(CXCursor C);
+MacroExpansion *getCursorMacroExpansion(CXCursor C);
 
 /// \brief Create an inclusion directive cursor.
 CXCursor MakeInclusionDirectiveCursor(InclusionDirective *,

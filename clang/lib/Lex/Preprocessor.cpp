@@ -328,15 +328,15 @@ llvm::StringRef Preprocessor::getSpelling(const Token &Tok,
 /// location for it.  If specified, the source location provides a source
 /// location for the token.
 void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
-                                SourceLocation InstantiationLoc) {
+                                SourceLocation ExpansionLoc) {
   Tok.setLength(Len);
 
   const char *DestPtr;
   SourceLocation Loc = ScratchBuf->getToken(Buf, Len, DestPtr);
 
-  if (InstantiationLoc.isValid())
-    Loc = SourceMgr.createInstantiationLoc(Loc, InstantiationLoc,
-                                           InstantiationLoc, Len);
+  if (ExpansionLoc.isValid())
+    Loc = SourceMgr.createInstantiationLoc(Loc, ExpansionLoc,
+                                           ExpansionLoc, Len);
   Tok.setLocation(Loc);
 
   // If this is a raw identifier or a literal token, set the pointer data.
@@ -534,10 +534,10 @@ CommentHandler::~CommentHandler() { }
 CodeCompletionHandler::~CodeCompletionHandler() { }
 
 void Preprocessor::createPreprocessingRecord(
-                                      bool IncludeNestedMacroInstantiations) {
+                                      bool IncludeNestedMacroExpansions) {
   if (Record)
     return;
   
-  Record = new PreprocessingRecord(IncludeNestedMacroInstantiations);
+  Record = new PreprocessingRecord(IncludeNestedMacroExpansions);
   addPPCallbacks(Record);
 }
