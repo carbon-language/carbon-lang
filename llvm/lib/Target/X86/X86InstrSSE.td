@@ -2022,7 +2022,10 @@ def V_SET0PI : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
 }
 
 // The same as done above but for AVX. The 128-bit versions are the
-// same, but re-encoded. The 256-bit does not support PI version.
+// same, but re-encoded. The 256-bit does not support PI version, and
+// doesn't need it because on sandy bridge the register is set to zero
+// at the rename stage without using any execution unit, so SET0PSY
+// and SET0PDY can be used for vector int instructions without penalty
 // FIXME: Change encoding to pseudo! This is blocked right now by the x86
 // JIT implementatioan, it does not expand the instructions below like
 // X86MCInstLower does.
@@ -2037,8 +2040,8 @@ def AVX_SET0PSY : PSI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
 def AVX_SET0PDY : PDI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
                    [(set VR256:$dst, (v4f64 immAllZerosV))]>, VEX_4V;
 let ExeDomain = SSEPackedInt in
-def AVX_SET0PI : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
-                 [(set VR128:$dst, (v4i32 immAllZerosV))]>;
+def AVX_SET0PI  : PDI<0xEF, MRMInitReg, (outs VR128:$dst), (ins), "",
+                   [(set VR128:$dst, (v4i32 immAllZerosV))]>;
 }
 
 def : Pat<(v2i64 immAllZerosV), (V_SET0PI)>;
@@ -3831,6 +3834,8 @@ def : Pat<(v4i32 (fp_to_sint (v4f32 VR128:$src))),
           (CVTTPS2DQrr VR128:$src)>, Requires<[HasSSE2]>;
 
 // Use movaps / movups for SSE integer load / store (one byte shorter).
+// The instructions selected below are then converted to MOVDQA/MOVDQU
+// during the SSE domain pass.
 let Predicates = [HasSSE1] in {
   def : Pat<(alignedloadv4i32 addr:$src),
             (MOVAPSrm addr:$src)>;
@@ -3859,8 +3864,9 @@ let Predicates = [HasSSE1] in {
             (MOVUPSmr addr:$dst, VR128:$src)>;
 }
 
-// Use vmovaps/vmovups for AVX 128-bit integer load/store (one byte shorter).
+// Use vmovaps/vmovups for AVX integer load/store.
 let Predicates = [HasAVX] in {
+  // 128-bit load/store
   def : Pat<(alignedloadv4i32 addr:$src),
             (VMOVAPSrm addr:$src)>;
   def : Pat<(loadv4i32 addr:$src),
@@ -3886,6 +3892,24 @@ let Predicates = [HasAVX] in {
             (VMOVUPSmr addr:$dst, VR128:$src)>;
   def : Pat<(store (v16i8 VR128:$src), addr:$dst),
             (VMOVUPSmr addr:$dst, VR128:$src)>;
+
+  // 256-bit load/store
+  def : Pat<(alignedloadv4i64 addr:$src),
+            (VMOVAPSYrm addr:$src)>;
+  def : Pat<(loadv4i64 addr:$src),
+            (VMOVUPSYrm addr:$src)>;
+  def : Pat<(alignedloadv8i32 addr:$src),
+            (VMOVAPSYrm addr:$src)>;
+  def : Pat<(loadv8i32 addr:$src),
+            (VMOVUPSYrm addr:$src)>;
+  def : Pat<(alignedstore (v4i64 VR256:$src), addr:$dst),
+            (VMOVAPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(alignedstore (v8i32 VR256:$src), addr:$dst),
+            (VMOVAPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(store (v4i64 VR256:$src), addr:$dst),
+            (VMOVUPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(store (v8i32 VR256:$src), addr:$dst),
+            (VMOVUPSYmr addr:$dst, VR256:$src)>;
 }
 
 //===----------------------------------------------------------------------===//
