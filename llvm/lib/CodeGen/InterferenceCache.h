@@ -43,9 +43,6 @@ class InterferenceCache {
     /// change.
     unsigned Tag;
 
-    /// RefCount - The total number of Cursor instances referring to this Entry.
-    unsigned RefCount;
-
     /// MF - The current function.
     MachineFunction *MF;
 
@@ -71,20 +68,15 @@ class InterferenceCache {
     void update(unsigned MBBNum);
 
   public:
-    Entry() : PhysReg(0), Tag(0), RefCount(0), Indexes(0) {}
+    Entry() : PhysReg(0), Tag(0), Indexes(0) {}
 
     void clear(MachineFunction *mf, SlotIndexes *indexes) {
-      assert(!hasRefs() && "Cannot clear cache entry with references");
       PhysReg = 0;
       MF = mf;
       Indexes = indexes;
     }
 
     unsigned getPhysReg() const { return PhysReg; }
-
-    void addRef(int Delta) { RefCount += Delta; }
-
-    bool hasRefs() const { return RefCount > 0; }
 
     void revalidate();
 
@@ -130,47 +122,18 @@ public:
   void init(MachineFunction*, LiveIntervalUnion*, SlotIndexes*,
             const TargetRegisterInfo *);
 
-  /// getMaxCursors - Return the maximum number of concurrent cursors that can
-  /// be supported.
-  unsigned getMaxCursors() const { return CacheEntries; }
-
   /// Cursor - The primary query interface for the block interference cache.
   class Cursor {
     Entry *CacheEntry;
     BlockInterference *Current;
-
-    void setEntry(Entry *E) {
-      // Update reference counts. Nothing happens when RefCount reaches 0, so
-      // we don't have to check for E == CacheEntry etc.
-      if (CacheEntry)
-        CacheEntry->addRef(-1);
-      CacheEntry = E;
-      if (CacheEntry)
-        CacheEntry->addRef(+1);
-      Current = 0;
-    }
-
   public:
     /// Cursor - Create a dangling cursor.
     Cursor() : CacheEntry(0), Current(0) {}
-    ~Cursor() { setEntry(0); }
-
-    Cursor(const Cursor &O) {
-      setEntry(O.CacheEntry);
-    }
-
-    Cursor &operator=(const Cursor &O) {
-      setEntry(O.CacheEntry);
-      return *this;
-    }
 
     /// setPhysReg - Point this cursor to PhysReg's interference.
     void setPhysReg(InterferenceCache &Cache, unsigned PhysReg) {
-      // Release reference before getting a new one. That guarantees we can
-      // actually have CacheEntries live cursors.
-      setEntry(0);
-      if (PhysReg)
-        setEntry(Cache.get(PhysReg));
+      CacheEntry = Cache.get(PhysReg);
+      Current = 0;
     }
 
     /// moveTo - Move cursor to basic block MBBNum.
