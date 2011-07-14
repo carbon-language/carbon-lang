@@ -3151,7 +3151,7 @@ CXString clang_getCursorSpelling(CXCursor C) {
     return createCXString("");
   }
   
-  if (C.kind == CXCursor_MacroInstantiation)
+  if (C.kind == CXCursor_MacroExpansion)
     return createCXString(getCursorMacroExpansion(C)->getName()
                                                            ->getNameStart());
 
@@ -3352,8 +3352,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("preprocessing directive");
   case CXCursor_MacroDefinition:
     return createCXString("macro definition");
-  case CXCursor_MacroInstantiation:
-    return createCXString("macro instantiation");
+  case CXCursor_MacroExpansion:
+    return createCXString("macro expansion");
   case CXCursor_InclusionDirective:
     return createCXString("inclusion directive");
   case CXCursor_Namespace:
@@ -3672,7 +3672,7 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     return cxloc::translateSourceLocation(getCursorContext(C), L);
   }
 
-  if (C.kind == CXCursor_MacroInstantiation) {
+  if (C.kind == CXCursor_MacroExpansion) {
     SourceLocation L
       = cxcursor::getCursorMacroExpansion(C)->getSourceRange().getBegin();
     return cxloc::translateSourceLocation(getCursorContext(C), L);
@@ -3759,7 +3759,7 @@ static SourceRange getRawCursorExtent(CXCursor C) {
   if (C.kind == CXCursor_PreprocessingDirective)
     return cxcursor::getCursorPreprocessingDirective(C);
 
-  if (C.kind == CXCursor_MacroInstantiation)
+  if (C.kind == CXCursor_MacroExpansion)
     return cxcursor::getCursorMacroExpansion(C)->getSourceRange();
 
   if (C.kind == CXCursor_MacroDefinition)
@@ -3876,7 +3876,7 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
     return clang_getNullCursor();
   }
   
-  if (C.kind == CXCursor_MacroInstantiation) {
+  if (C.kind == CXCursor_MacroExpansion) {
     if (MacroDefinition *Def = getCursorMacroExpansion(C)->getDefinition())
       return MakeMacroDefinitionCursor(Def, tu);
   }
@@ -3945,7 +3945,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     WasReference = true;
   }
 
-  if (C.kind == CXCursor_MacroInstantiation)
+  if (C.kind == CXCursor_MacroExpansion)
     return clang_getCursorReferenced(C);
 
   if (!clang_isDeclaration(C.kind))
@@ -4543,7 +4543,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   if (clang_isPreprocessing(cursor.kind)) {    
     // For macro instantiations, just note where the beginning of the macro
     // instantiation occurs.
-    if (cursor.kind == CXCursor_MacroInstantiation) {
+    if (cursor.kind == CXCursor_MacroExpansion) {
       Annotated[Loc.int_data] = cursor;
       return CXChildVisit_Recurse;
     }

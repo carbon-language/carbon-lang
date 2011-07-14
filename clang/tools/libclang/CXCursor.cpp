@@ -380,12 +380,12 @@ MacroDefinition *cxcursor::getCursorMacroDefinition(CXCursor C) {
 
 CXCursor cxcursor::MakeMacroExpansionCursor(MacroExpansion *MI, 
                                             CXTranslationUnit TU) {
-  CXCursor C = { CXCursor_MacroInstantiation, { MI, 0, TU } };
+  CXCursor C = { CXCursor_MacroExpansion, { MI, 0, TU } };
   return C;
 }
 
 MacroExpansion *cxcursor::getCursorMacroExpansion(CXCursor C) {
-  assert(C.kind == CXCursor_MacroInstantiation);
+  assert(C.kind == CXCursor_MacroExpansion);
   return static_cast<MacroExpansion *>(C.data[0]);
 }
 

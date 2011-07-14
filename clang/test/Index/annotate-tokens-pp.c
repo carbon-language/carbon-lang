@@ -53,14 +53,14 @@ void test() {
 // CHECK: Identifier: "X" [4:22 - 4:23] macro definition=WIBBLE
 // CHECK: Punctuation: "##" [4:23 - 4:25] macro definition=WIBBLE
 // CHECK: Identifier: "Y" [4:25 - 4:26] macro definition=WIBBLE
-// CHECK: Identifier: "NOTHING" [5:1 - 5:8] macro instantiation=NOTHING:1:9
+// CHECK: Identifier: "NOTHING" [5:1 - 5:8] macro expansion=NOTHING:1:9
 // CHECK: Punctuation: "(" [5:8 - 5:9]
 // CHECK: Identifier: "more" [5:9 - 5:13]
 // CHECK: Punctuation: "," [5:13 - 5:14]
 // CHECK: Identifier: "junk" [5:14 - 5:18]
 // CHECK: Punctuation: ")" [5:18 - 5:19]
 // CHECK: Keyword: "float" [5:20 - 5:25]
-// CHECK: Identifier: "WIBBLE" [5:26 - 5:32] macro instantiation=WIBBLE:4:9
+// CHECK: Identifier: "WIBBLE" [5:26 - 5:32] macro expansion=WIBBLE:4:9
 // CHECK: Punctuation: "(" [5:32 - 5:33]
 // CHECK: Keyword: "int" [5:33 - 5:36]
 // CHECK: Punctuation: "," [5:36 - 5:37]
@@ -68,8 +68,8 @@ void test() {
 // CHECK: Punctuation: ")" [5:43 - 5:44]
 // CHECK: Punctuation: ";" [5:44 - 5:45]
 // CHECK: Keyword: "int" [6:1 - 6:4]
-// CHECK: Identifier: "BAR" [6:5 - 6:8] macro instantiation=BAR:3:9
-// CHECK: Identifier: "STILL_NOTHING" [6:9 - 6:22] macro instantiation=STILL_NOTHING:2:9
+// CHECK: Identifier: "BAR" [6:5 - 6:8] macro expansion=BAR:3:9
+// CHECK: Identifier: "STILL_NOTHING" [6:9 - 6:22] macro expansion=STILL_NOTHING:2:9
 // CHECK: Punctuation: ";" [6:22 - 6:23]
 // CHECK: Punctuation: "#" [7:1 - 7:2] inclusion directive=foo.h
 // CHECK: Identifier: "include" [7:2 - 7:9] inclusion directive=foo.h
@@ -115,7 +115,7 @@ void test() {
 // CHECK: Keyword: "int" [16:3 - 16:6] VarDecl=k:16:7 (Definition)
 // CHECK: Identifier: "k" [16:7 - 16:8] VarDecl=k:16:7 (Definition)
 // CHECK: Punctuation: "=" [16:9 - 16:10] VarDecl=k:16:7 (Definition)
-// CHECK: Identifier: "REVERSE_MACRO" [16:11 - 16:24] macro instantiation=REVERSE_MACRO:10:9
+// CHECK: Identifier: "REVERSE_MACRO" [16:11 - 16:24] macro expansion=REVERSE_MACRO:10:9
 // CHECK: Punctuation: "(" [16:24 - 16:25] UnexposedStmt=
 // CHECK: Identifier: "t" [16:25 - 16:26] DeclRefExpr=t:15:7
 // CHECK: Punctuation: "," [16:26 - 16:27] UnexposedStmt=
@@ -125,7 +125,7 @@ void test() {
 // CHECK: Keyword: "int" [17:3 - 17:6] VarDecl=j:17:7 (Definition)
 // CHECK: Identifier: "j" [17:7 - 17:8] VarDecl=j:17:7 (Definition)
 // CHECK: Punctuation: "=" [17:9 - 17:10] VarDecl=j:17:7 (Definition)
-// CHECK: Identifier: "TWICE_MACRO" [17:11 - 17:22] macro instantiation=TWICE_MACRO:11:9
+// CHECK: Identifier: "TWICE_MACRO" [17:11 - 17:22] macro expansion=TWICE_MACRO:11:9
 // CHECK: Punctuation: "(" [17:22 - 17:23] UnexposedStmt=
 // CHECK: Identifier: "k" [17:23 - 17:24] DeclRefExpr=k:16:7
 // CHECK: Punctuation: "+" [17:25 - 17:26] UnexposedStmt=
@@ -170,7 +170,7 @@ void test() {
 // CHECK: Punctuation: "=" [24:9 - 24:10] VarDecl=x:24:7 (Definition)
 // CHECK: Literal: "10" [24:11 - 24:13] UnexposedExpr=
 // CHECK: Punctuation: ";" [24:13 - 24:14] UnexposedStmt=
-// CHECK: Identifier: "fun_with_macro_bodies" [25:3 - 25:24] macro instantiation=fun_with_macro_bodies:21:9
+// CHECK: Identifier: "fun_with_macro_bodies" [25:3 - 25:24] macro expansion=fun_with_macro_bodies:21:9
 // CHECK: Punctuation: "(" [25:24 - 25:25] UnexposedStmt=
 // CHECK: Identifier: "x" [25:25 - 25:26] DeclRefExpr=x:24:7
 // CHECK: Punctuation: "," [25:26 - 25:27] UnexposedStmt=
