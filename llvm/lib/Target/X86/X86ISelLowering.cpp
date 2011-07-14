@@ -1063,6 +1063,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
   }
 
+
+  // SIGN_EXTEND_INREGs are evaluated by the extend type. Handle the expansion
+  // of this type with custom code.
+  for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+         VT != (unsigned)MVT::LAST_VECTOR_VALUETYPE; VT++) {
+    setOperationAction(ISD::SIGN_EXTEND_INREG, (MVT::SimpleValueType)VT, Custom);
+  }
+
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
@@ -8928,8 +8936,8 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // Lower SHL with variable shift amount.
-  // Cannot lower SHL without SSE4.1 or later.
-  if (!Subtarget->hasSSE41()) return SDValue();
+  // Cannot lower SHL without SSE2 or later.
+  if (!Subtarget->hasSSE2()) return SDValue();
 
   if (VT == MVT::v4i32 && Op->getOpcode() == ISD::SHL) {
     Op = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
@@ -9075,6 +9083,58 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
   DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), SetCC);
   return Sum;
 }
+
+SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const{
+  DebugLoc dl = Op.getDebugLoc();
+  SDNode* Node = Op.getNode();
+  EVT ExtraVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
+  EVT VT = Node->getValueType(0);
+
+  if (Subtarget->hasSSE2() && VT.isVector()) {
+    unsigned BitsDiff = VT.getScalarType().getSizeInBits() -
+                        ExtraVT.getScalarType().getSizeInBits();
+    SDValue ShAmt = DAG.getConstant(BitsDiff, MVT::i32);
+
+    unsigned SHLIntrinsicsID = 0;
+    unsigned SRAIntrinsicsID = 0;
+    switch (VT.getSimpleVT().SimpleTy) {
+      default:
+        return SDValue();
+      case MVT::v2i64: {
+        SHLIntrinsicsID = Intrinsic::x86_sse2_pslli_q;
+        SRAIntrinsicsID = 0;
+        break;
+      }
+      case MVT::v4i32: {
+        SHLIntrinsicsID = Intrinsic::x86_sse2_pslli_d;
+        SRAIntrinsicsID = Intrinsic::x86_sse2_psrai_d;
+        break;
+      }
+      case MVT::v8i16: {
+        SHLIntrinsicsID = Intrinsic::x86_sse2_pslli_w;
+        SRAIntrinsicsID = Intrinsic::x86_sse2_psrai_w;
+        break;
+      }
+    }
+
+    SDValue Tmp1 = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                         DAG.getConstant(SHLIntrinsicsID, MVT::i32),
+                         Node->getOperand(0), ShAmt);
+
+    // In case of 1 bit sext, no need to shr
+    if (ExtraVT.getScalarType().getSizeInBits() == 1) return Tmp1;
+
+    if (SRAIntrinsicsID) {
+      Tmp1 = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                         DAG.getConstant(SRAIntrinsicsID, MVT::i32),
+                         Tmp1, ShAmt);
+    }
+    return Tmp1;
+  }
+
+  return SDValue();
+}
+
 
 SDValue X86TargetLowering::LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG) const{
   DebugLoc dl = Op.getDebugLoc();
@@ -9238,6 +9298,7 @@ static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
 SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Should not custom lower this!");
+  case ISD::SIGN_EXTEND_INREG:  return LowerSIGN_EXTEND_INREG(Op,DAG);
   case ISD::MEMBARRIER:         return LowerMEMBARRIER(Op,DAG);
   case ISD::ATOMIC_CMP_SWAP:    return LowerCMP_SWAP(Op,DAG);
   case ISD::ATOMIC_LOAD_SUB:    return LowerLOAD_SUB(Op,DAG);
@@ -9336,6 +9397,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   default:
     assert(false && "Do not know how to custom type legalize this operation!");
     return;
+  case ISD::SIGN_EXTEND_INREG:
   case ISD::ADDC:
   case ISD::ADDE:
   case ISD::SUBC:
