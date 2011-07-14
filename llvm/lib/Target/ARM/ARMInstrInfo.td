@@ -1629,7 +1629,6 @@ def SVC : ABI<0b1111, (outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc",
   let Inst{23-0} = svc;
 }
 }
-def : MnemonicAlias<"swi", "svc">;
 
 // Store Return State is a system instruction -- for disassembly only
 let isCodeGenOnly = 1 in {  // FIXME: This should not use submode!
@@ -2052,13 +2051,6 @@ let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 defm STM : arm_ldst_mult<"stm", 0, LdStMulFrm, IIC_iStore_m, IIC_iStore_mu>;
 
 } // neverHasSideEffects
-
-// Load / Store Multiple Mnemonic Aliases
-def : MnemonicAlias<"ldmfd", "ldm">;
-def : MnemonicAlias<"ldmia", "ldm">;
-def : MnemonicAlias<"stmfd", "stmdb">;
-def : MnemonicAlias<"stmia", "stm">;
-def : MnemonicAlias<"stmea", "stm">;
 
 // FIXME: remove when we have a way to marking a MI with these properties.
 // FIXME: Should pc be an implicit operand like PICADD, etc?
@@ -3307,8 +3299,6 @@ def DMB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
 }
 }
 
-def : InstAlias<"dmb", (DMB 0xf)>, Requires<[IsARM, HasDB]>;
-
 def DSB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
                 "dsb", "\t$opt", []>,
                 Requires<[IsARM, HasDB]> {
@@ -3316,8 +3306,6 @@ def DSB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
   let Inst{31-4} = 0xf57ff04;
   let Inst{3-0} = opt;
 }
-
-def : InstAlias<"dsb", (DSB 0xf)>, Requires<[IsARM, HasDB]>;
 
 // ISB has only full system option
 def ISB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
@@ -3327,8 +3315,6 @@ def ISB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
   let Inst{31-4} = 0xf57ff06;
   let Inst{3-0} = opt;
 }
-
-def : InstAlias<"isb", (ISB 0xf)>, Requires<[IsARM, HasDB]>;
 
 let usesCustomInserter = 1 in {
   let Uses = [CPSR] in {
@@ -4063,4 +4049,23 @@ include "ARMInstrVFP.td"
 //
 
 include "ARMInstrNEON.td"
+
+//===----------------------------------------------------------------------===//
+// Assembler aliases
+//
+
+// Memory barriers
+def : InstAlias<"dmb", (DMB 0xf)>, Requires<[IsARM, HasDB]>;
+def : InstAlias<"dsb", (DSB 0xf)>, Requires<[IsARM, HasDB]>;
+def : InstAlias<"isb", (ISB 0xf)>, Requires<[IsARM, HasDB]>;
+
+// System instructions
+def : MnemonicAlias<"swi", "svc">;
+
+// Load / Store Multiple
+def : MnemonicAlias<"ldmfd", "ldm">;
+def : MnemonicAlias<"ldmia", "ldm">;
+def : MnemonicAlias<"stmfd", "stmdb">;
+def : MnemonicAlias<"stmia", "stm">;
+def : MnemonicAlias<"stmea", "stm">;
 
