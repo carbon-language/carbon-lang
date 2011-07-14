@@ -478,7 +478,7 @@ namespace {
               incorporateValue(*OI);
             
             // Incorporate types hiding in metadata.
-            I.getAllMetadata(MDForInst);
+            I.getAllMetadataOtherThanDebugLoc(MDForInst);
             for (unsigned i = 0, e = MDForInst.size(); i != e; ++i)
               incorporateMDNode(MDForInst[i].second);
             MDForInst.clear();
