@@ -3377,13 +3377,13 @@ class t2MovRRCopro<bits<4> Op, string opc, bit direction,
 /* from ARM core register to coprocessor */
 def t2MCR : t2MovRCopro<0b1110, "mcr", 0,
            (outs),
-           (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, c_imm:$CRn,
-                c_imm:$CRm, i32imm:$opc2),
+           (ins p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
+                c_imm:$CRm, imm0_7:$opc2),
            [(int_arm_mcr imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
                          imm:$CRm, imm:$opc2)]>;
 def t2MCR2 : t2MovRCopro<0b1111, "mcr2", 0,
-             (outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, c_imm:$CRn,
-                          c_imm:$CRm, i32imm:$opc2),
+             (outs), (ins p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
+                          c_imm:$CRm, imm0_7:$opc2),
              [(int_arm_mcr2 imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
                             imm:$CRm, imm:$opc2)]>;
 

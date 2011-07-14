@@ -3649,8 +3649,8 @@ class MovRCopro<string opc, bit direction, dag oops, dag iops,
 
 def MCR : MovRCopro<"mcr", 0 /* from ARM core register to coprocessor */,
                     (outs),
-                    (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, c_imm:$CRn,
-                         c_imm:$CRm, i32imm:$opc2),
+                    (ins p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
+                         c_imm:$CRm, imm0_7:$opc2),
                     [(int_arm_mcr imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
                                   imm:$CRm, imm:$opc2)]>;
 def MRC : MovRCopro<"mrc", 1 /* from coprocessor to ARM core register */,
@@ -3686,8 +3686,8 @@ class MovRCopro2<string opc, bit direction, dag oops, dag iops,
 
 def MCR2 : MovRCopro2<"mcr2", 0 /* from ARM core register to coprocessor */,
                       (outs),
-                      (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, c_imm:$CRn,
-                           c_imm:$CRm, i32imm:$opc2),
+                      (ins p_imm:$cop, imm0_7:$opc1, GPR:$Rt, c_imm:$CRn,
+                           c_imm:$CRm, imm0_7:$opc2),
                       [(int_arm_mcr2 imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
                                      imm:$CRm, imm:$opc2)]>;
 def MRC2 : MovRCopro2<"mrc2", 1 /* from coprocessor to ARM core register */,
