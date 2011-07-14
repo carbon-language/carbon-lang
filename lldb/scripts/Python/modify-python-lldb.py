@@ -47,6 +47,9 @@ def char_to_str_xform(line):
     """This transforms the 'char', i.e, 'char *' to 'str', Python string."""
     line = line.replace(' char', ' str')
     line = line.replace('char ', 'str ')
+    # Special case handling of 'char **argv' and 'char **envp'.
+    line = line.replace('str argv', 'list argv')
+    line = line.replace('str envp', 'list envp')
     return line
 
 #

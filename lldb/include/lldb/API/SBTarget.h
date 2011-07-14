@@ -63,7 +63,7 @@ public:
     GetProcess ();
 
 #ifdef SWIG
-    %feature("autodoc", "
+    %feature("docstring", "
 #endif
     //------------------------------------------------------------------
     /// Launch a new process.
@@ -122,6 +122,20 @@ public:
     ///      A process object for the newly created process.
     //------------------------------------------------------------------
 #ifdef SWIG
+
+For example,
+
+    process = target.Launch(self.dbg.GetListener(), None, None,
+                            None, '/tmp/stdout.txt', None,
+                            None, 0, False, error)
+
+launches a new process by passing nothing for both the args and the envs
+and redirect the standard output of the inferior to the /tmp/stdout.txt
+file. It does not specify a working directory so that the debug server
+will use its idea of what the current working directory is for the
+inferior. Also, we ask the debugger not to stop the inferior at the
+entry point. If no breakpoint is specified for the inferior, it should
+run to completion if no user interaction is required.
     ") Launch;
 #endif
     lldb::SBProcess
@@ -138,7 +152,7 @@ public:
             
     
 #ifdef SWIG
-    %feature("autodoc", "
+    %feature("docstring", "
 #endif
     //------------------------------------------------------------------
     /// Launch a new process with sensible defaults.
@@ -167,6 +181,13 @@ public:
     ///      A process object for the newly created process.
     //------------------------------------------------------------------
 #ifdef SWIG
+
+For example,
+
+    process = target.LaunchSimple(['X', 'Y', 'Z'], None, os.getcwd())
+
+launches a new process by passing 'X', 'Y', 'Z' as the args to the
+executable.
     ") LaunchSimple;
 #endif
     lldb::SBProcess
