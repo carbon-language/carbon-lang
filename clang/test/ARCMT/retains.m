@@ -38,8 +38,8 @@ id IhaveSideEffect();
 
   [[self retain] something];
 
-  [[IhaveSideEffect() retain] autorelease];
-  [[x retain] autorelease];
+  [[IhaveSideEffect() retain] release];
+  [[x retain] release];
   // do stuff with x;
   [x release];
   return [self retain];

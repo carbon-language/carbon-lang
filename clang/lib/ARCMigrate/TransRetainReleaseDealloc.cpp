@@ -52,14 +52,26 @@ public:
     switch (E->getMethodFamily()) {
     default:
       return true;
+    case OMF_autorelease:
+      if (isRemovable(E)) {
+        // An unused autorelease is badness. If we remove it the receiver
+        // will likely die immediately while previously it was kept alive
+        // by the autorelease pool. This is bad practice in general, leave it
+        // and emit an error to force the user to restructure his code.
+        std::string err = "it is not safe to remove an unused '";
+        err += E->getSelector().getAsString() + "'; its receiver may be "
+            "destroyed immediately";
+        Pass.TA.reportError(err, E->getLocStart(), E->getSourceRange());
+        return true;
+      }
+      // Pass through.
     case OMF_retain:
     case OMF_release:
-    case OMF_autorelease:
       if (E->getReceiverKind() == ObjCMessageExpr::Instance)
         if (Expr *rec = E->getInstanceReceiver()) {
           rec = rec->IgnoreParenImpCasts();
           if (rec->getType().getObjCLifetime() == Qualifiers::OCL_ExplicitNone){
-            std::string err = "It is not safe to remove '";
+            std::string err = "it is not safe to remove '";
             err += E->getSelector().getAsString() + "' message on "
                 "an __unsafe_unretained type";
             Pass.TA.reportError(err, rec->getLocStart());

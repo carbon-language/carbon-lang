@@ -12,7 +12,7 @@ struct foo {
     NSString *s;
     foo(NSString *s): s([s retain]){
         NSAutoreleasePool *pool = [NSAutoreleasePool new];
-        [[NSString string] autorelease];
+        [[[NSString string] retain] release];
         [pool drain];
     }
     ~foo(){ [s release]; }

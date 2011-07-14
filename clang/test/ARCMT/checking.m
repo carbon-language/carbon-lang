@@ -37,13 +37,14 @@ struct UnsafeS {
 @end
 
 void test1(A *a, BOOL b, struct UnsafeS *unsafeS) {
-  [unsafeS->unsafeObj retain]; // expected-error {{It is not safe to remove 'retain' message on an __unsafe_unretained type}} \
+  [unsafeS->unsafeObj retain]; // expected-error {{it is not safe to remove 'retain' message on an __unsafe_unretained type}} \
                                // expected-error {{ARC forbids explicit message send}}
   [a dealloc];
   [a retain];
   [a retainCount]; // expected-error {{ARC forbids explicit message send of 'retainCount'}}
   [a release];
-  [a autorelease];
+  [a autorelease]; // expected-error {{it is not safe to remove an unused 'autorelease'; its receiver may be destroyed immediately}} \
+                   // expected-error {{ARC forbids explicit message send}}
 
   CFStringRef cfstr;
   NSString *str = (NSString *)cfstr; // expected-error {{cast of C pointer type 'CFStringRef' (aka 'const struct __CFString *') to Objective-C pointer type 'NSString *' requires a bridged cast}} \

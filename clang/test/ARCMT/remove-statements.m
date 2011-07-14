@@ -13,7 +13,7 @@
 
 @implementation myController
 -(id) test:(id) x {
-  [[x retain] autorelease];
+  [[x retain] release];
   return [[x retain] autorelease];
 }
 
