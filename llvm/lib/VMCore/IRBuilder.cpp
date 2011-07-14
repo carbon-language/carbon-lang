@@ -67,7 +67,7 @@ CreateMemSet(Value *Ptr, Value *Val, Value *Size, unsigned Align,
   Value *Ops[] = { Ptr, Val, Size, getInt32(Align), getInt1(isVolatile) };
   Type *Tys[] = { Ptr->getType(), Size->getType() };
   Module *M = BB->getParent()->getParent();
-  Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memset, Tys, 2);
+  Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memset, Tys);
   
   CallInst *CI = createCallHelper(TheFn, Ops, 5, this);
   
@@ -87,7 +87,7 @@ CreateMemCpy(Value *Dst, Value *Src, Value *Size, unsigned Align,
   Value *Ops[] = { Dst, Src, Size, getInt32(Align), getInt1(isVolatile) };
   Type *Tys[] = { Dst->getType(), Src->getType(), Size->getType() };
   Module *M = BB->getParent()->getParent();
-  Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memcpy, Tys, 3);
+  Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memcpy, Tys);
   
   CallInst *CI = createCallHelper(TheFn, Ops, 5, this);
   
@@ -107,7 +107,7 @@ CreateMemMove(Value *Dst, Value *Src, Value *Size, unsigned Align,
   Value *Ops[] = { Dst, Src, Size, getInt32(Align), getInt1(isVolatile) };
   Type *Tys[] = { Dst->getType(), Src->getType(), Size->getType() };
   Module *M = BB->getParent()->getParent();
-  Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memmove, Tys, 3);
+  Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memmove, Tys);
   
   CallInst *CI = createCallHelper(TheFn, Ops, 5, this);
   

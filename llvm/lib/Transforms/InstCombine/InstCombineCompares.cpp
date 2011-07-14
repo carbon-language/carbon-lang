@@ -1684,7 +1684,7 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
   
   Type *NewType = IntegerType::get(OrigAdd->getContext(), NewWidth);
   Value *F = Intrinsic::getDeclaration(M, Intrinsic::sadd_with_overflow,
-                                       &NewType, 1);
+                                       NewType);
 
   InstCombiner::BuilderTy *Builder = IC.Builder;
   
@@ -1725,7 +1725,7 @@ static Instruction *ProcessUAddIdiom(Instruction &I, Value *OrigAddV,
 
   Module *M = I.getParent()->getParent()->getParent();
   Type *Ty = LHS->getType();
-  Value *F = Intrinsic::getDeclaration(M, Intrinsic::uadd_with_overflow, &Ty,1);
+  Value *F = Intrinsic::getDeclaration(M, Intrinsic::uadd_with_overflow, Ty);
   CallInst *Call = Builder->CreateCall2(F, LHS, RHS, "uadd");
   Value *Add = Builder->CreateExtractValue(Call, 0);
 

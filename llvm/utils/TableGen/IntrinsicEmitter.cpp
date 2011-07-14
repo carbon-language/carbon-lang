@@ -259,7 +259,7 @@ static void EmitTypeGenerate(raw_ostream &OS, const Record *ArgType,
   } else if (VT == MVT::iPTRAny) {
     // Make sure the user has passed us an argument type to overload. If not,
     // treat it as an ordinary (not overloaded) intrinsic.
-    OS << "(" << ArgNo << " < numTys) ? Tys[" << ArgNo 
+    OS << "(" << ArgNo << " < Tys.size()) ? Tys[" << ArgNo
     << "] : PointerType::getUnqual(";
     EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
     OS << ")";

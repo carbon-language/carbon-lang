@@ -16,6 +16,7 @@
 #ifndef LLVM_INTRINSICS_H
 #define LLVM_INTRINSICS_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include <string>
 
 namespace llvm {
@@ -44,12 +45,12 @@ namespace Intrinsic {
   
   /// Intrinsic::getName(ID) - Return the LLVM name for an intrinsic, such as
   /// "llvm.ppc.altivec.lvx".
-  std::string getName(ID id, Type **Tys = 0, unsigned numTys = 0);
+  std::string getName(ID id, ArrayRef<Type*> Tys = ArrayRef<Type*>());
   
   /// Intrinsic::getType(ID) - Return the function type for an intrinsic.
   ///
   const FunctionType *getType(LLVMContext &Context, ID id,
-                              Type **Tys = 0, unsigned numTys = 0);
+                              ArrayRef<Type*> Tys = ArrayRef<Type*>());
 
   /// Intrinsic::isOverloaded(ID) - Returns true if the intrinsic can be
   /// overloaded.
@@ -67,8 +68,8 @@ namespace Intrinsic {
   /// overloaded intrinsic, Tys should point to an array of numTys pointers to
   /// Type, and must provide exactly one type for each overloaded type in the
   /// intrinsic.
-  Function *getDeclaration(Module *M, ID id, Type **Tys = 0, 
-                           unsigned numTys = 0);
+  Function *getDeclaration(Module *M, ID id,
+                           ArrayRef<Type*> Tys = ArrayRef<Type*>());
                            
   /// Map a GCC builtin name to an intrinsic ID.
   ID getIntrinsicForGCCBuiltin(const char *Prefix, const char *BuiltinName);

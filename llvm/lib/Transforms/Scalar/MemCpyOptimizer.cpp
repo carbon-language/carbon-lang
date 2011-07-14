@@ -844,7 +844,7 @@ bool MemCpyOpt::processMemMove(MemMoveInst *M) {
                       M->getRawSource()->getType(),
                       M->getLength()->getType() };
   M->setCalledFunction(Intrinsic::getDeclaration(Mod, Intrinsic::memcpy,
-                                                 ArgTys, 3));
+                                                 ArgTys));
 
   // MemDep may have over conservative information about this instruction, just
   // conservatively flush it from the cache.

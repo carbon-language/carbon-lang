@@ -683,7 +683,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
   Type *Tys[3] = {VoidPtrTy, VoidPtrTy, Type::getInt64Ty(Context)};
   Function *MemCpyFn = Intrinsic::getDeclaration(Caller->getParent(),
                                                  Intrinsic::memcpy, 
-                                                 Tys, 3);
+                                                 Tys);
   Value *DestCast = new BitCastInst(NewAlloca, VoidPtrTy, "tmp", TheCall);
   Value *SrcCast = new BitCastInst(Arg, VoidPtrTy, "tmp", TheCall);
   
