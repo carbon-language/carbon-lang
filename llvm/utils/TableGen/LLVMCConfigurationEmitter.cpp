@@ -2969,8 +2969,8 @@ void EmitHookDeclarations(const ToolDescriptions& ToolDescs,
 
   for (HookInfoMap::const_iterator B = HookNames.begin(),
          E = HookNames.end(); B != E; ++B) {
-    const char* HookName = B->first();
-    const HookInfo& Info = B->second;
+    StringRef HookName = B->first();
+    const HookInfo &Info = B->second;
 
     O.indent(Indent1) << "std::string " << HookName << "(";
 
