@@ -69,11 +69,15 @@
 @  Double-check that we're synced up with the right diagnostics.
 @ CHECK-ERRORS: dbg #16
 
-        @ Out of range immediate for MCR/MCR2
+        @ Out of range immediate for MCR/MCR2/MCRR/MCRR2
         mcr  p7, #8, r5, c1, c1, #4
         mcr  p7, #2, r5, c1, c1, #8
         mcr2  p7, #8, r5, c1, c1, #4
         mcr2  p7, #1, r5, c1, c1, #8
+        mcrr  p7, #16, r5, r4, c1
+        mcrr2  p7, #16, r5, r4, c1
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS: error: invalid operand for instruction

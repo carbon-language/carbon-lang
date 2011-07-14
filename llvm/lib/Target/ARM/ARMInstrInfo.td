@@ -3701,7 +3701,7 @@ def : ARMV5TPat<(int_arm_mrc2 imm:$cop, imm:$opc1, imm:$CRn,
 
 class MovRRCopro<string opc, bit direction,
                  list<dag> pattern = [/* For disassembly only */]>
-  : ABI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
+  : ABI<0b1100, (outs), (ins p_imm:$cop, imm0_15:$opc1,
         GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
         NoItinerary, opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm", pattern> {
   let Inst{23-21} = 0b010;
@@ -3727,7 +3727,7 @@ def MRRC : MovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
 
 class MovRRCopro2<string opc, bit direction,
                   list<dag> pattern = [/* For disassembly only */]>
-  : ABXI<0b1100, (outs), (ins p_imm:$cop, i32imm:$opc1,
+  : ABXI<0b1100, (outs), (ins p_imm:$cop, imm0_15:$opc1,
          GPR:$Rt, GPR:$Rt2, c_imm:$CRm), NoItinerary,
          !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
   let Inst{31-28} = 0b1111;

@@ -3355,7 +3355,7 @@ class t2MovRCopro<bits<4> Op, string opc, bit direction, dag oops, dag iops,
 class t2MovRRCopro<bits<4> Op, string opc, bit direction,
                    list<dag> pattern = []>
   : T2Cop<Op, (outs),
-          (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
+          (ins p_imm:$cop, imm0_15:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
           !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
   let Inst{27-24} = 0b1100;
   let Inst{23-21} = 0b010;
