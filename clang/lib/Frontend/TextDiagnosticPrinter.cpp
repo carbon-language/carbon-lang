@@ -292,11 +292,11 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
   }
 }
 
-/// Look through spelling locations for a macro argument instantiation, and
+/// Look through spelling locations for a macro argument expansion, and
 /// if found skip to it so that we can trace the argument rather than the macros
-/// in which that argument is used. If no macro argument instantiation is found,
+/// in which that argument is used. If no macro argument expansion is found,
 /// don't skip anything and return the starting location.
-static SourceLocation skipToMacroArgInstantiation(const SourceManager &SM,
+static SourceLocation skipToMacroArgExpansion(const SourceManager &SM,
                                                   SourceLocation StartLoc) {
   for (SourceLocation L = StartLoc; L.isMacroID();
        L = SM.getImmediateSpellingLoc(L)) {
@@ -321,7 +321,7 @@ static SourceLocation getImmediateMacroCallerLoc(const SourceManager &SM,
     return SM.getImmediateSpellingLoc(Loc);
 
   // Otherwise, the caller of the macro is located where this macro is
-  // instantiated (while the spelling is part of the macro definition).
+  // expanded (while the spelling is part of the macro definition).
   return SM.getImmediateInstantiationRange(Loc).first;
 }
 
@@ -332,7 +332,7 @@ static SourceLocation getImmediateMacroCalleeLoc(const SourceManager &SM,
   if (!Loc.isMacroID()) return Loc;
 
   // When we have the location of (part of) an expanded parameter, its
-  // instantiation location points to the unexpanded paramater reference within
+  // expansion location points to the unexpanded paramater reference within
   // the macro definition (or callee).
   if (SM.isMacroArgInstantiation(Loc))
     return SM.getImmediateInstantiationRange(Loc).first;
@@ -356,16 +356,16 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   assert(!Loc.isInvalid() && "must have a valid source location here");
 
   // If this is a macro ID, first emit information about where this was
-  // instantiated (recursively) then emit information about where the token was
+  // expanded (recursively) then emit information about where the token was
   // spelled from.
   if (!Loc.isFileID()) {
-    // Whether to suppress printing this macro instantiation.
+    // Whether to suppress printing this macro expansion.
     bool Suppressed 
       = OnMacroInst >= MacroSkipStart && OnMacroInst < MacroSkipEnd;
 
-    // When processing macros, skip over the instantiations leading up to
-    // a macro argument, and trace the argument's instantiation stack instead.
-    Loc = skipToMacroArgInstantiation(SM, Loc);
+    // When processing macros, skip over the expansions leading up to
+    // a macro argument, and trace the argument's expansion stack instead.
+    Loc = skipToMacroArgExpansion(SM, Loc);
 
     SourceLocation OneLevelUp = getImmediateMacroCallerLoc(SM, Loc);
 
@@ -388,7 +388,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     }
 
     if (!Suppressed) {
-      // Don't print recursive instantiation notes from an instantiation note.
+      // Don't print recursive expansion notes from an expansion note.
       Loc = SM.getSpellingLoc(Loc);
 
       // Get the pretty name, according to #line directives etc.
@@ -833,7 +833,7 @@ static PresumedLoc getDiagnosticPresumedLoc(const SourceManager &SM,
   // This is a condensed form of the algorithm used by EmitCaretDiagnostic to
   // walk to the top of the macro call stack.
   while (Loc.isMacroID()) {
-    Loc = skipToMacroArgInstantiation(SM, Loc);
+    Loc = skipToMacroArgExpansion(SM, Loc);
     Loc = getImmediateMacroCallerLoc(SM, Loc);
   }
 
@@ -1114,13 +1114,13 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     const SourceManager &SM = LastLoc.getManager();
     unsigned MacroInstSkipStart = 0, MacroInstSkipEnd = 0;
     if (DiagOpts && DiagOpts->MacroBacktraceLimit && !LastLoc.isFileID()) {
-      // Compute the length of the macro-instantiation backtrace, so that we
+      // Compute the length of the macro-expansion backtrace, so that we
       // can establish which steps in the macro backtrace we'll skip.
       SourceLocation Loc = LastLoc;
       unsigned Depth = 0;
       do {
         ++Depth;
-        Loc = skipToMacroArgInstantiation(SM, Loc);
+        Loc = skipToMacroArgExpansion(SM, Loc);
         Loc = getImmediateMacroCallerLoc(SM, Loc);
       } while (!Loc.isFileID());
       
