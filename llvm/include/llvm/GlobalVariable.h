@@ -68,11 +68,6 @@ public:
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
-  /// isDeclaration - Is this global variable lacking an initializer?  If so,
-  /// the global variable is defined in some other translation unit, and is thus
-  /// only a declaration here.
-  virtual bool isDeclaration() const { return getNumOperands() == 0; }
-
   /// hasInitializer - Unless a global variable isExternal(), it has an
   /// initializer.  The initializer for the global variable/constant is held by
   /// Initializer if an initializer is specified.

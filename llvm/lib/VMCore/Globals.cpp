@@ -61,6 +61,19 @@ void GlobalValue::setAlignment(unsigned Align) {
   Alignment = Log2_32(Align) + 1;
   assert(getAlignment() == Align && "Alignment representation error!");
 }
+
+bool GlobalValue::isDeclaration() const {
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(this))
+    return GV->getNumOperands() == 0;
+
+  if (const Function *F = dyn_cast<Function>(this))
+    return F->empty();
+  
+  const GlobalAlias *GA = cast<GlobalAlias>(this);
+  if (const GlobalValue *AV = GA->getAliasedGlobal())
+    return AV->isDeclaration();
+  return false;
+}
   
 //===----------------------------------------------------------------------===//
 // GlobalVariable Implementation
@@ -200,14 +213,6 @@ void GlobalAlias::removeFromParent() {
 
 void GlobalAlias::eraseFromParent() {
   getParent()->getAliasList().erase(this);
-}
-
-bool GlobalAlias::isDeclaration() const {
-  const GlobalValue* AV = getAliasedGlobal();
-  if (AV)
-    return AV->isDeclaration();
-  else
-    return false;
 }
 
 void GlobalAlias::setAliasee(Constant *Aliasee) {

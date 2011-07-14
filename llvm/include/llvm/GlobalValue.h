@@ -266,8 +266,8 @@ public:
   virtual void destroyConstant();
 
   /// isDeclaration - Return true if the primary definition of this global 
-  /// value is outside of the current translation unit...
-  virtual bool isDeclaration() const = 0;
+  /// value is outside of the current translation unit.
+  bool isDeclaration() const;
 
   /// removeFromParent - This method unlinks 'this' from the containing module,
   /// but does not delete it.
