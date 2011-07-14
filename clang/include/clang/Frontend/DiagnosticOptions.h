@@ -49,8 +49,7 @@ public:
                                  /// input source file.
 
   unsigned ErrorLimit;           /// Limit # errors emitted.
-  unsigned MacroBacktraceLimit;  /// Limit depth of macro instantiation 
-                                 /// backtrace.
+  unsigned MacroBacktraceLimit;  /// Limit depth of macro expansion backtrace.
   unsigned TemplateBacktraceLimit; /// Limit depth of instantiation backtrace.
 
   /// The distance between tab stops.

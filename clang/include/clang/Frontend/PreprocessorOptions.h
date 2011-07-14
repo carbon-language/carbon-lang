@@ -48,7 +48,7 @@ public:
 
   unsigned DetailedRecord : 1; /// Whether we should maintain a detailed
                                /// record of all macro definitions and
-                               /// instantiations.
+                               /// expansions.
   
   /// \brief Whether the detailed preprocessing record includes nested macro 
   /// expansions.

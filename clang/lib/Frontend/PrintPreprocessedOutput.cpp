@@ -196,7 +196,7 @@ bool PrintPPOutputPPCallbacks::MoveToLine(unsigned LineNo) {
     if (LineNo-CurLine == 1)
       OS << '\n';
     else if (LineNo == CurLine)
-      return false;    // Spelling line moved, but instantiation line didn't.
+      return false;    // Spelling line moved, but expansion line didn't.
     else {
       const char *NewLines = "\n\n\n\n\n\n\n\n";
       OS.write(NewLines, LineNo-CurLine);
@@ -410,7 +410,7 @@ PragmaDiagnostic(SourceLocation Loc, llvm::StringRef Namespace,
 /// is called for the first token on each new line.  If this really is the start
 /// of a new logical line, handle it and return true, otherwise return false.
 /// This may not be the start of a logical line because the "start of line"
-/// marker is set for spelling lines, not instantiation ones.
+/// marker is set for spelling lines, not expansion ones.
 bool PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
   // Figure out what line we went to and insert the appropriate number of
   // newline characters.
