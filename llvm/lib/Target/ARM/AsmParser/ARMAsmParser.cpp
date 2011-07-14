@@ -1085,7 +1085,7 @@ int ARMAsmParser::TryParseShiftRegister(
   // The source register for the shift has already been added to the
   // operand list, so we need to pop it off and combine it into the shifted
   // register operand instead.
-  ARMOperand *PrevOp = (ARMOperand*)Operands.pop_back_val();
+  OwningPtr<ARMOperand> PrevOp((ARMOperand*)Operands.pop_back_val());
   if (!PrevOp->isReg())
     return Error(PrevOp->getStartLoc(), "shift must be of a register");
   int SrcReg = PrevOp->getReg();
