@@ -323,6 +323,14 @@ LLVMBool LLVMIsPackedStruct(LLVMTypeRef StructTy) {
   return unwrap<StructType>(StructTy)->isPacked();
 }
 
+LLVMBool LLVMIsOpaqueStruct(LLVMTypeRef StructTy) {
+  return unwrap<StructType>(StructTy)->isOpaque();
+}
+
+LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const char *Name) {
+  return wrap(unwrap(M)->getTypeByName(Name));
+}
+
 /*--.. Operations on array, pointer, and vector types (sequence types) .....--*/
 
 LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, unsigned ElementCount) {
