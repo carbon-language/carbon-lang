@@ -206,6 +206,10 @@ clang::analyze_format_string::ParseLengthModifier(FormatSpecifier &FS,
 // Methods on ArgTypeResult.
 //===----------------------------------------------------------------------===//
 
+static bool hasSameSize(ASTContext &astContext, QualType typeA, QualType typeB) {
+  return astContext.getTypeSize(typeA) == astContext.getTypeSize(typeB);
+}
+
 bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
   switch (K) {
     case InvalidTy:
@@ -226,26 +230,21 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
             break;
           case BuiltinType::Char_S:
           case BuiltinType::SChar:
-            return T == C.UnsignedCharTy;
           case BuiltinType::Char_U:
           case BuiltinType::UChar:                    
-            return T == C.SignedCharTy;
+            return hasSameSize(C, T, C.UnsignedCharTy);            
           case BuiltinType::Short:
-            return T == C.UnsignedShortTy;
           case BuiltinType::UShort:
-            return T == C.ShortTy;
+            return hasSameSize(C, T, C.ShortTy);
           case BuiltinType::Int:
-            return T == C.UnsignedIntTy;
           case BuiltinType::UInt:
-            return T == C.IntTy;
+            return hasSameSize(C, T, C.IntTy);
           case BuiltinType::Long:
-            return T == C.UnsignedLongTy;
           case BuiltinType::ULong:
-            return T == C.LongTy;
+            return hasSameSize(C, T, C.LongTy);
           case BuiltinType::LongLong:
-            return T == C.UnsignedLongLongTy;
           case BuiltinType::ULongLong:
-            return T == C.LongLongTy;
+            return hasSameSize(C, T, C.LongLongTy);
         }
       return false;
     }

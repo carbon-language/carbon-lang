@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral %s
+// RUN: %clang_cc1 -triple x86_64-apple-macosx10.7.0 -fsyntax-only -verify -Wformat-nonliteral %s
 
 #include <stdarg.h>
 typedef __typeof(sizeof(int)) size_t;
