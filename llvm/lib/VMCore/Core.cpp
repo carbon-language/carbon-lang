@@ -595,6 +595,16 @@ LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
   return LLVMConstStructInContext(LLVMGetGlobalContext(), ConstantVals, Count,
                                   Packed);
 }
+
+LLVMValueRef LLVMConstNamedStruct(LLVMTypeRef StructTy,
+                                  LLVMValueRef *ConstantVals,
+                                  unsigned Count) {
+  Constant **Elements = unwrap<Constant>(ConstantVals, Count);
+  const StructType *Ty = cast<StructType>(unwrap(StructTy));
+
+  return wrap(ConstantStruct::get(Ty, ArrayRef<Constant*>(Elements, Count)));
+}
+
 LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
   return wrap(ConstantVector::get(ArrayRef<Constant*>(
                             unwrap<Constant>(ScalarConstantVals, Size), Size)));

@@ -565,6 +565,9 @@ LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
                             LLVMValueRef *ConstantVals, unsigned Length);
 LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
                              LLVMBool Packed);
+LLVMValueRef LLVMConstNamedStruct(LLVMTypeRef StructTy,
+                                  LLVMValueRef *ConstantVals,
+                                  unsigned Count);
 LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size);
 
 /* Constant expressions */
