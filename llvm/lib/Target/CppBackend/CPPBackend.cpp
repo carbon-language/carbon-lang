@@ -101,8 +101,6 @@ namespace {
     uint64_t uniqueNum;
     TypeMap TypeNames;
     ValueMap ValueNames;
-    TypeMap UnresolvedTypes;
-    TypeList TypeStack;
     NameSet UsedNames;
     TypeSet DefinedTypes;
     ValueSet DefinedValues;
@@ -149,8 +147,7 @@ namespace {
     inline void printCppName(const Value* val);
 
     void printAttributes(const AttrListPtr &PAL, const std::string &name);
-    bool printTypeInternal(const Type* Ty);
-    inline void printType(const Type* Ty);
+    void printType(const Type* Ty);
     void printTypes(const Module* M);
 
     void printConstant(const Constant *CPV);
@@ -499,65 +496,38 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
   }
 }
 
-bool CppWriter::printTypeInternal(const Type* Ty) {
+void CppWriter::printType(const Type* Ty) {
   // We don't print definitions for primitive types
   if (Ty->isPrimitiveType() || Ty->isIntegerTy())
-    return false;
+    return;
 
   // If we already defined this type, we don't need to define it again.
   if (DefinedTypes.find(Ty) != DefinedTypes.end())
-    return false;
+    return;
 
   // Everything below needs the name for the type so get it now.
   std::string typeName(getCppName(Ty));
-
-  // Search the type stack for recursion. If we find it, then generate this
-  // as an OpaqueType, but make sure not to do this multiple times because
-  // the type could appear in multiple places on the stack. Once the opaque
-  // definition is issued, it must not be re-issued. Consequently we have to
-  // check the UnresolvedTypes list as well.
-  TypeList::const_iterator TI = std::find(TypeStack.begin(), TypeStack.end(),
-                                          Ty);
-  if (TI != TypeStack.end()) {
-    TypeMap::const_iterator I = UnresolvedTypes.find(Ty);
-    if (I == UnresolvedTypes.end()) {
-      Out << "PATypeHolder " << typeName;
-      Out << "_fwd = OpaqueType::get(mod->getContext());";
-      nl(Out);
-      UnresolvedTypes[Ty] = typeName;
-    }
-    return true;
-  }
-
-  // We're going to print a derived type which, by definition, contains other
-  // types. So, push this one we're printing onto the type stack to assist with
-  // recursive definitions.
-  TypeStack.push_back(Ty);
 
   // Print the type definition
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID:  {
     const FunctionType* FT = cast<FunctionType>(Ty);
-    Out << "std::vector<const Type*>" << typeName << "_args;";
+    Out << "std::vector<Type*>" << typeName << "_args;";
     nl(Out);
     FunctionType::param_iterator PI = FT->param_begin();
     FunctionType::param_iterator PE = FT->param_end();
     for (; PI != PE; ++PI) {
       const Type* argTy = static_cast<const Type*>(*PI);
-      bool isForward = printTypeInternal(argTy);
+      printType(argTy);
       std::string argName(getCppName(argTy));
       Out << typeName << "_args.push_back(" << argName;
-      if (isForward)
-        Out << "_fwd";
       Out << ");";
       nl(Out);
     }
-    bool isForward = printTypeInternal(FT->getReturnType());
+    printType(FT->getReturnType());
     std::string retTypeName(getCppName(FT->getReturnType()));
     Out << "FunctionType* " << typeName << " = FunctionType::get(";
     in(); nl(Out) << "/*Result=*/" << retTypeName;
-    if (isForward)
-      Out << "_fwd";
     Out << ",";
     nl(Out) << "/*Params=*/" << typeName << "_args,";
     nl(Out) << "/*isVarArg=*/" << (FT->isVarArg() ? "true" : "false") << ");";
@@ -567,31 +537,36 @@ bool CppWriter::printTypeInternal(const Type* Ty) {
   }
   case Type::StructTyID: {
     const StructType* ST = cast<StructType>(Ty);
-    Out << "std::vector<const Type*>" << typeName << "_fields;";
+    if (!ST->isAnonymous()) {
+      Out << "StructType *" << typeName << " = ";
+      Out << "StructType::createNamed(mod->getContext(), \"";
+      printEscapedString(ST->getName());
+      Out << "\");";
+      nl(Out);
+      // Indicate that this type is now defined.
+      DefinedTypes.insert(Ty);
+    }
+
+    Out << "std::vector<Type*>" << typeName << "_fields;";
     nl(Out);
     StructType::element_iterator EI = ST->element_begin();
     StructType::element_iterator EE = ST->element_end();
     for (; EI != EE; ++EI) {
       const Type* fieldTy = static_cast<const Type*>(*EI);
-      bool isForward = printTypeInternal(fieldTy);
+      printType(fieldTy);
       std::string fieldName(getCppName(fieldTy));
       Out << typeName << "_fields.push_back(" << fieldName;
-      if (isForward)
-        Out << "_fwd";
       Out << ");";
       nl(Out);
     }
-    
-    Out << "StructType *" << typeName << " = ";
+
     if (ST->isAnonymous()) {
+      Out << "StructType *" << typeName << " = ";
       Out << "StructType::get(" << "mod->getContext(), ";
     } else {
-      Out << "StructType::createNamed(mod->getContext(), \"";
-      printEscapedString(ST->getName());
-      Out << "\");";
-      nl(Out);
       Out << typeName << "->setBody(";
     }
+
     Out << typeName << "_fields, /*isPacked=*/"
         << (ST->isPacked() ? "true" : "false") << ");";
     nl(Out);
@@ -600,83 +575,51 @@ bool CppWriter::printTypeInternal(const Type* Ty) {
   case Type::ArrayTyID: {
     const ArrayType* AT = cast<ArrayType>(Ty);
     const Type* ET = AT->getElementType();
-    bool isForward = printTypeInternal(ET);
-    std::string elemName(getCppName(ET));
-    Out << "ArrayType* " << typeName << " = ArrayType::get("
-        << elemName << (isForward ? "_fwd" : "")
-        << ", " << utostr(AT->getNumElements()) << ");";
-    nl(Out);
+    printType(ET);
+    if (DefinedTypes.find(Ty) == DefinedTypes.end()) {
+      std::string elemName(getCppName(ET));
+      Out << "ArrayType* " << typeName << " = ArrayType::get("
+          << elemName
+          << ", " << utostr(AT->getNumElements()) << ");";
+      nl(Out);
+    }
     break;
   }
   case Type::PointerTyID: {
     const PointerType* PT = cast<PointerType>(Ty);
     const Type* ET = PT->getElementType();
-    bool isForward = printTypeInternal(ET);
-    std::string elemName(getCppName(ET));
-    Out << "PointerType* " << typeName << " = PointerType::get("
-        << elemName << (isForward ? "_fwd" : "")
-        << ", " << utostr(PT->getAddressSpace()) << ");";
-    nl(Out);
+    printType(ET);
+    if (DefinedTypes.find(Ty) == DefinedTypes.end()) {
+      std::string elemName(getCppName(ET));
+      Out << "PointerType* " << typeName << " = PointerType::get("
+          << elemName
+          << ", " << utostr(PT->getAddressSpace()) << ");";
+      nl(Out);
+    }
     break;
   }
   case Type::VectorTyID: {
     const VectorType* PT = cast<VectorType>(Ty);
     const Type* ET = PT->getElementType();
-    bool isForward = printTypeInternal(ET);
-    std::string elemName(getCppName(ET));
-    Out << "VectorType* " << typeName << " = VectorType::get("
-        << elemName << (isForward ? "_fwd" : "")
-        << ", " << utostr(PT->getNumElements()) << ");";
-    nl(Out);
+    printType(ET);
+    if (DefinedTypes.find(Ty) == DefinedTypes.end()) {
+      std::string elemName(getCppName(ET));
+      Out << "VectorType* " << typeName << " = VectorType::get("
+          << elemName
+          << ", " << utostr(PT->getNumElements()) << ");";
+      nl(Out);
+    }
     break;
   }
   default:
     error("Invalid TypeID");
   }
 
-  // Pop us off the type stack
-  TypeStack.pop_back();
-
   // Indicate that this type is now defined.
   DefinedTypes.insert(Ty);
 
-  // Early resolve as many unresolved types as possible. Search the unresolved
-  // types map for the type we just printed. Now that its definition is complete
-  // we can resolve any previous references to it. This prevents a cascade of
-  // unresolved types.
-  TypeMap::iterator I = UnresolvedTypes.find(Ty);
-  if (I != UnresolvedTypes.end()) {
-    Out << "cast<OpaqueType>(" << I->second
-        << "_fwd.get())->refineAbstractTypeTo(" << I->second << ");";
-    nl(Out);
-    Out << I->second << " = cast<";
-    switch (Ty->getTypeID()) {
-    case Type::FunctionTyID: Out << "FunctionType"; break;
-    case Type::ArrayTyID:    Out << "ArrayType"; break;
-    case Type::StructTyID:   Out << "StructType"; break;
-    case Type::VectorTyID:   Out << "VectorType"; break;
-    case Type::PointerTyID:  Out << "PointerType"; break;
-    default:                 Out << "NoSuchDerivedType"; break;
-    }
-    Out << ">(" << I->second << "_fwd.get());";
-    nl(Out); nl(Out);
-    UnresolvedTypes.erase(I);
-  }
-
   // Finally, separate the type definition from other with a newline.
   nl(Out);
-
-  // We weren't a recursive type
-  return false;
-}
-
-// Prints a type definition. Returns true if it could not resolve all the
-// types in the definition but had to use a forward reference.
-void CppWriter::printType(const Type* Ty) {
-  assert(TypeStack.empty());
-  TypeStack.clear();
-  printTypeInternal(Ty);
-  assert(TypeStack.empty());
 }
 
 void CppWriter::printTypes(const Module* M) {
