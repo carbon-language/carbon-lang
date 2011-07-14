@@ -79,3 +79,23 @@ if.end:                                           ; preds = %entry
 }
 
 declare void @bar()
+
+define void @test3(i32 %x) nounwind {
+; CHECK: test3:
+; CHECK: cmpl $5
+; CHECK: ja
+; CHECK: cmpl $4
+; CHECK: jne
+  switch i32 %x, label %if.end [
+    i32 0, label %if.then
+    i32 1, label %if.then
+    i32 2, label %if.then
+    i32 3, label %if.then
+    i32 5, label %if.then
+  ]
+if.then:
+  tail call void @bar() nounwind
+  ret void
+if.end:
+  ret void
+}
