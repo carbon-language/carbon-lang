@@ -103,9 +103,8 @@ public:
   void LegalizeDAG();
 
 private:
-  /// LegalizeOp - We know that the specified value has a legal type.
-  /// Recursively ensure that the operands have legal types, then return the
-  /// result.
+  /// LegalizeOp - Return a legal replacement for the given operation, with
+  /// all legal operands.
   SDValue LegalizeOp(SDValue O);
 
   SDValue OptimizeFloatStore(StoreSDNode *ST);
@@ -794,10 +793,8 @@ SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
   return SDValue(0, 0);
 }
 
-/// LegalizeOp - We know that the specified value has a legal type, and
-/// that its operands are legal.  Now ensure that the operation itself
-/// is legal, recursively ensuring that the operands' operations remain
-/// legal.
+/// LegalizeOp - Return a legal replacement for the given operation, with
+/// all legal operands.
 SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   if (Op.getOpcode() == ISD::TargetConstant) // Allow illegal target nodes.
     return Op;
