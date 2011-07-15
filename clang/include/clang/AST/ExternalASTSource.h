@@ -32,6 +32,20 @@ class Selector;
 class Stmt;
 class TagDecl;
 
+/// \brief Enumeration describing the result of loading information from
+/// an external source.
+enum ExternalLoadResult {
+  /// \brief Loading the external information has succeeded.
+  ELR_Success,
+  
+  /// \brief Loading the external information has failed.
+  ELR_Failure,
+  
+  /// \brief The external information has already been loaded, and therefore
+  /// no additional processing is required.
+  ELR_AlreadyLoaded
+};
+  
 /// \brief Abstract interface for external sources of AST nodes.
 ///
 /// External AST sources provide AST nodes constructed from some
@@ -132,10 +146,10 @@ public:
   /// declaration kind is one we are looking for. If NULL, all declarations
   /// are returned.
   ///
-  /// \return true if an error occurred
+  /// \return an indication of whether the load succeeded or failed.
   ///
   /// The default implementation of this method is a no-op.
-  virtual bool FindExternalLexicalDecls(const DeclContext *DC,
+  virtual ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
                                         bool (*isKindWeWant)(Decl::Kind),
                                         llvm::SmallVectorImpl<Decl*> &Result);
 
@@ -143,14 +157,14 @@ public:
   /// DeclContext.
   ///
   /// \return true if an error occurred
-  bool FindExternalLexicalDecls(const DeclContext *DC,
+  ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
                                 llvm::SmallVectorImpl<Decl*> &Result) {
     return FindExternalLexicalDecls(DC, 0, Result);
   }
 
   template <typename DeclTy>
-  bool FindExternalLexicalDeclsBy(const DeclContext *DC,
-                                llvm::SmallVectorImpl<Decl*> &Result) {
+  ExternalLoadResult FindExternalLexicalDeclsBy(const DeclContext *DC,
+                                  llvm::SmallVectorImpl<Decl*> &Result) {
     return FindExternalLexicalDecls(DC, DeclTy::classofKind, Result);
   }
 

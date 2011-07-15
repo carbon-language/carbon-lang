@@ -51,11 +51,11 @@ ExternalASTSource::FindExternalVisibleDeclsByName(const DeclContext *DC,
 
 void ExternalASTSource::MaterializeVisibleDecls(const DeclContext *DC) { }
 
-bool 
+ExternalLoadResult 
 ExternalASTSource::FindExternalLexicalDecls(const DeclContext *DC,
                                             bool (*isKindWeWant)(Decl::Kind),
                                          llvm::SmallVectorImpl<Decl*> &Result) {
-  return true;
+  return ELR_AlreadyLoaded;
 }
 
 void ExternalASTSource::getMemoryBufferSizes(MemoryBufferSizes &sizes) const { }

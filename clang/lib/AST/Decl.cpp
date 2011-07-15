@@ -2361,16 +2361,21 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
   ExternalASTSource::Deserializing TheFields(Source);
 
   llvm::SmallVector<Decl*, 64> Decls;
-  if (Source->FindExternalLexicalDeclsBy<FieldDecl>(this, Decls))
+  LoadedFieldsFromExternalStorage = true;  
+  switch (Source->FindExternalLexicalDeclsBy<FieldDecl>(this, Decls)) {
+  case ELR_Success:
+    break;
+    
+  case ELR_AlreadyLoaded:
+  case ELR_Failure:
     return;
+  }
 
 #ifndef NDEBUG
   // Check that all decls we got were FieldDecls.
   for (unsigned i=0, e=Decls.size(); i != e; ++i)
     assert(isa<FieldDecl>(Decls[i]));
 #endif
-
-  LoadedFieldsFromExternalStorage = true;
 
   if (Decls.empty())
     return;

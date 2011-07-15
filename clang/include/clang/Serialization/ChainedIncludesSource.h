@@ -47,7 +47,7 @@ protected:
   virtual DeclContextLookupResult
   FindExternalVisibleDeclsByName(const DeclContext *DC, DeclarationName Name);
   virtual void MaterializeVisibleDecls(const DeclContext *DC);
-  virtual bool FindExternalLexicalDecls(const DeclContext *DC,
+  virtual ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
                                         bool (*isKindWeWant)(Decl::Kind),
                                         llvm::SmallVectorImpl<Decl*> &Result);
   virtual void CompleteType(TagDecl *Tag);

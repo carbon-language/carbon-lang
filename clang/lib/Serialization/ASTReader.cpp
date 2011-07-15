@@ -4008,12 +4008,9 @@ Stmt *ASTReader::GetExternalDeclStmt(uint64_t Offset) {
   llvm_unreachable("Broken chain");
 }
 
-bool ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
+ExternalLoadResult ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
                                          bool (*isKindWeWant)(Decl::Kind),
                                          llvm::SmallVectorImpl<Decl*> &Decls) {
-  assert(DC->hasExternalLexicalStorage() &&
-         "DeclContext has no lexical decls in storage");
-
   // There might be lexical decls in multiple parts of the chain, for the TU
   // at least.
   // DeclContextOffsets might reallocate as we load additional decls below,
@@ -4038,7 +4035,7 @@ bool ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
   }
 
   ++NumLexicalDeclContextsRead;
-  return false;
+  return ELR_Success;
 }
 
 DeclContext::lookup_result

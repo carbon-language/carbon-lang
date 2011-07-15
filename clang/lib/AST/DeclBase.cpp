@@ -839,12 +839,17 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
   // Notify that we have a DeclContext that is initializing.
   ExternalASTSource::Deserializing ADeclContext(Source);
 
+  // Load the external declarations, if any.
   llvm::SmallVector<Decl*, 64> Decls;
-  if (Source->FindExternalLexicalDecls(this, Decls))
-    return;
-
-  // There is no longer any lexical storage in this context
   ExternalLexicalStorage = false;
+  switch (Source->FindExternalLexicalDecls(this, Decls)) {
+  case ELR_Success:
+    break;
+    
+  case ELR_Failure:
+  case ELR_AlreadyLoaded:
+    return;
+  }
 
   if (Decls.empty())
     return;

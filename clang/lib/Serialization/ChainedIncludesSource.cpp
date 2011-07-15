@@ -185,7 +185,8 @@ ChainedIncludesSource::FindExternalVisibleDeclsByName(const DeclContext *DC,
 void ChainedIncludesSource::MaterializeVisibleDecls(const DeclContext *DC) {
   return getFinalReader().MaterializeVisibleDecls(DC);
 }
-bool ChainedIncludesSource::FindExternalLexicalDecls(const DeclContext *DC,
+ExternalLoadResult 
+ChainedIncludesSource::FindExternalLexicalDecls(const DeclContext *DC,
                                       bool (*isKindWeWant)(Decl::Kind),
                                       llvm::SmallVectorImpl<Decl*> &Result) {
   return getFinalReader().FindExternalLexicalDecls(DC, isKindWeWant, Result);

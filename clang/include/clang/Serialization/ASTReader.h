@@ -1070,7 +1070,7 @@ public:
   ///
   /// \returns true if there was an error while reading the
   /// declarations for this declaration context.
-  virtual bool FindExternalLexicalDecls(const DeclContext *DC,
+  virtual ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
                                         bool (*isKindWeWant)(Decl::Kind),
                                         llvm::SmallVectorImpl<Decl*> &Decls);
 
