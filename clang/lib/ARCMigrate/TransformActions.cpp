@@ -173,7 +173,7 @@ private:
 
   /// \brief Computes the source location just past the end of the token at
   /// the given source location. If the location points at a macro, the whole
-  /// macro instantiation is skipped.
+  /// macro expansion is skipped.
   static SourceLocation getLocForEndOfToken(SourceLocation loc,
                                             SourceManager &SM,Preprocessor &PP);
 };
@@ -586,7 +586,7 @@ StringRef TransformActionsImpl::getUniqueText(StringRef text) {
 
 /// \brief Computes the source location just past the end of the token at
 /// the given source location. If the location points at a macro, the whole
-/// macro instantiation is skipped.
+/// macro expansion is skipped.
 SourceLocation TransformActionsImpl::getLocForEndOfToken(SourceLocation loc,
                                                          SourceManager &SM,
                                                          Preprocessor &PP) {
