@@ -82,19 +82,6 @@ class SelectionDAGLegalize {
 public:
   explicit SelectionDAGLegalize(SelectionDAG &DAG);
 
-  /// getTypeAction - Return how we should legalize values of this type, either
-  /// it is already legal or we need to expand it into multiple registers of
-  /// smaller integer type, or we need to promote it to a larger type.
-  LegalizeAction getTypeAction(EVT VT) const {
-    return (LegalizeAction)TLI.getTypeAction(*DAG.getContext(), VT);
-  }
-
-  /// isTypeLegal - Return true if this type is legal on this target.
-  ///
-  bool isTypeLegal(EVT VT) const {
-    return getTypeAction(VT) == Legal;
-  }
-
   void LegalizeDAG();
 
 private:
@@ -744,7 +731,7 @@ SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
   DebugLoc dl = ST->getDebugLoc();
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(ST->getValue())) {
     if (CFP->getValueType(0) == MVT::f32 &&
-        getTypeAction(MVT::i32) == Legal) {
+        TLI.isTypeLegal(MVT::i32)) {
       Tmp3 = DAG.getConstant(CFP->getValueAPF().
                                       bitcastToAPInt().zextOrTrunc(32),
                               MVT::i32);
@@ -754,14 +741,14 @@ SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
 
     if (CFP->getValueType(0) == MVT::f64) {
       // If this target supports 64-bit registers, do a single 64-bit store.
-      if (getTypeAction(MVT::i64) == Legal) {
+      if (TLI.isTypeLegal(MVT::i64)) {
         Tmp3 = DAG.getConstant(CFP->getValueAPF().bitcastToAPInt().
                                   zextOrTrunc(64), MVT::i64);
         return DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
                             isVolatile, isNonTemporal, Alignment);
       }
 
-      if (getTypeAction(MVT::i32) == Legal && !ST->isVolatile()) {
+      if (TLI.isTypeLegal(MVT::i32) && !ST->isVolatile()) {
         // Otherwise, if the target supports 32-bit registers, use 2 32-bit
         // stores.  If the target supports neither 32- nor 64-bits, this
         // xform is certainly not worth it.
@@ -795,11 +782,14 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
   DebugLoc dl = Node->getDebugLoc();
 
   for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
-    assert(getTypeAction(Node->getValueType(i)) == Legal &&
+    assert(TLI.getTypeAction(*DAG.getContext(), Node->getValueType(i)) ==
+             TargetLowering::TypeLegal &&
            "Unexpected illegal type!");
 
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
-    assert((isTypeLegal(Node->getOperand(i).getValueType()) ||
+    assert((TLI.getTypeAction(*DAG.getContext(),
+                              Node->getOperand(i).getValueType()) ==
+              TargetLowering::TypeLegal ||
             Node->getOperand(i).getOpcode() == ISD::TargetConstant) &&
            "Unexpected illegal type!");
 
@@ -1343,7 +1333,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         }
         break;
       case TargetLowering::Expand:
-        if (!TLI.isLoadExtLegal(ISD::EXTLOAD, SrcVT) && isTypeLegal(SrcVT)) {
+        if (!TLI.isLoadExtLegal(ISD::EXTLOAD, SrcVT) && TLI.isTypeLegal(SrcVT)) {
           SDValue Load = DAG.getLoad(SrcVT, dl, Tmp1, Tmp2,
                                      LD->getPointerInfo(),
                                      LD->isVolatile(), LD->isNonTemporal(),
@@ -1367,7 +1357,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // If this is a promoted vector load, and the vector element types are
         // legal, then scalarize it.
         if (ExtType == ISD::EXTLOAD && SrcVT.isVector() &&
-          isTypeLegal(Node->getValueType(0).getScalarType())) {
+          TLI.isTypeLegal(Node->getValueType(0).getScalarType())) {
           SmallVector<SDValue, 8> LoadVals;
           SmallVector<SDValue, 8> LoadChains;
           unsigned NumElem = SrcVT.getVectorNumElements();
@@ -1629,8 +1619,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
           // The Store type is illegal, must scalarize the vector store.
           SmallVector<SDValue, 8> Stores;
-          bool ScalarLegal = isTypeLegal(WideScalarVT);
-          if (!isTypeLegal(StVT) && StVT.isVector() && ScalarLegal) {
+          bool ScalarLegal = TLI.isTypeLegal(WideScalarVT);
+          if (!TLI.isTypeLegal(StVT) && StVT.isVector() && ScalarLegal) {
             unsigned NumElem = StVT.getVectorNumElements();
 
             unsigned ScalarSize = StVT.getScalarType().getSizeInBits();
@@ -1666,7 +1656,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // The Store type is illegal, must scalarize the vector store.
           // However, the scalar type is illegal. Must bitcast the result
           // and store it in smaller parts.
-          if (!isTypeLegal(StVT) && StVT.isVector()) {
+          if (!TLI.isTypeLegal(StVT) && StVT.isVector()) {
             unsigned WideNumElem = StVT.getVectorNumElements();
             unsigned Stride = NarrowScalarVT.getSizeInBits()/8;
 
@@ -1706,7 +1696,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
 
           // TRUNCSTORE:i16 i32 -> STORE i16
-          assert(isTypeLegal(StVT) && "Do not know how to expand this store!");
+          assert(TLI.isTypeLegal(StVT) && "Do not know how to expand this store!");
           Tmp3 = DAG.getNode(ISD::TRUNCATE, dl, StVT, Tmp3);
           Result = DAG.getStore(Tmp1, dl, Tmp3, Tmp2, ST->getPointerInfo(),
                                 isVolatile, isNonTemporal, Alignment);
@@ -1865,7 +1855,7 @@ SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
   SDValue SignBit;
   EVT FloatVT = Tmp2.getValueType();
   EVT IVT = EVT::getIntegerVT(*DAG.getContext(), FloatVT.getSizeInBits());
-  if (isTypeLegal(IVT)) {
+  if (TLI.isTypeLegal(IVT)) {
     // Convert to an integer with the same sign bit.
     SignBit = DAG.getNode(ISD::BITCAST, dl, IVT, Tmp2);
   } else {
@@ -3187,7 +3177,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
 
     EVT VT = Node->getValueType(0);
     EVT EltVT = VT.getVectorElementType();
-    if (getTypeAction(EltVT) == Promote)
+    if (!TLI.isTypeLegal(EltVT))
       EltVT = TLI.getTypeToTransformTo(*DAG.getContext(), EltVT);
     unsigned NumElems = VT.getVectorNumElements();
     SmallVector<SDValue, 8> Ops;
