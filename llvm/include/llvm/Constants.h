@@ -149,14 +149,6 @@ public:
   static bool isValueValidForType(const Type *Ty, uint64_t V);
   static bool isValueValidForType(const Type *Ty, int64_t V);
 
-  /// This function will return true iff this constant represents the "null"
-  /// value that would be returned by the getNullValue method.
-  /// @returns true if this is the null integer value.
-  /// @brief Determine if the value is null.
-  virtual bool isNullValue() const { 
-    return Val == 0; 
-  }
-  
   bool isNegative() const { return Val.isNegative(); }
 
   /// This is just a convenience method to make client code smaller for a
@@ -267,11 +259,6 @@ public:
   static bool isValueValidForType(const Type *Ty, const APFloat &V);
   inline const APFloat &getValueAPF() const { return Val; }
 
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  For ConstantFP, this is +0.0, but not -0.0.  To handle the
-  /// two the same, use isZero().
-  virtual bool isNullValue() const;
-  
   /// isZero - Return true if the value is positive or negative zero.
   bool isZero() const { return Val.isZero(); }
 
@@ -323,10 +310,6 @@ protected:
 public:
   static ConstantAggregateZero* get(const Type *Ty);
   
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.
-  virtual bool isNullValue() const { return true; }
-
   virtual void destroyConstant();
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -392,11 +375,6 @@ public:
   ///
   std::string getAsCString() const;
 
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  This always returns false because zero arrays are always
-  /// created as ConstantAggregateZero objects.
-  virtual bool isNullValue() const { return false; }
-
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
@@ -457,13 +435,6 @@ public:
     return reinterpret_cast<const StructType*>(Value::getType());
   }
 
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  This always returns false because zero structs are always
-  /// created as ConstantAggregateZero objects.
-  virtual bool isNullValue() const {
-    return false;
-  }
-
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
@@ -505,11 +476,6 @@ public:
     return reinterpret_cast<const VectorType*>(Value::getType());
   }
   
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  This always returns false because zero vectors are always
-  /// created as ConstantAggregateZero objects.
-  virtual bool isNullValue() const { return false; }
-
   /// This function will return true iff every element in this vector constant
   /// is set to all ones.
   /// @returns true iff this constant's emements are all set to all ones.
@@ -558,10 +524,6 @@ public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantPointerNull *get(const PointerType *T);
 
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.
-  virtual bool isNullValue() const { return true; }
-
   virtual void destroyConstant();
 
   /// getType - Specialize the getType() method to always return an PointerType,
@@ -597,10 +559,6 @@ public:
   
   Function *getFunction() const { return (Function*)Op<0>().get(); }
   BasicBlock *getBasicBlock() const { return (BasicBlock*)Op<1>().get(); }
-  
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.
-  virtual bool isNullValue() const { return false; }
   
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
@@ -858,10 +816,6 @@ public:
   static Constant *getInsertValue(Constant *Agg, Constant *Val,
                                   ArrayRef<unsigned> Idxs);
 
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.
-  virtual bool isNullValue() const { return false; }
-
   /// getOpcode - Return the opcode at the root of this constant expression
   unsigned getOpcode() const { return getSubclassDataFromValue(); }
 
@@ -943,10 +897,6 @@ public:
   /// type.
   ///
   static UndefValue *get(const Type *T);
-
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.
-  virtual bool isNullValue() const { return false; }
 
   virtual void destroyConstant();
 

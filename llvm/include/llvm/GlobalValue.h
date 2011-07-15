@@ -258,10 +258,6 @@ public:
 
 /// @}
 
-  /// Override from Constant class. No GlobalValue's are null values so this
-  /// always returns false.
-  virtual bool isNullValue() const { return false; }
-
   /// Override from Constant class.
   virtual void destroyConstant();
 

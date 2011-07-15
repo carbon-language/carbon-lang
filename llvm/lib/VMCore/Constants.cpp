@@ -49,6 +49,19 @@ bool Constant::isNegativeZeroValue() const {
   return isNullValue();
 }
 
+bool Constant::isNullValue() const {
+  // 0 is null.
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(this))
+    return CI->isZero();
+  
+  // +0.0 is null.
+  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(this))
+    return CFP->isZero() && !CFP->isNegative();
+
+  // constant zero is zero for aggregates and cpnull is null for pointers.
+  return isa<ConstantAggregateZero>(this) || isa<ConstantPointerNull>(this);
+}
+
 // Constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getTypeID()) {
@@ -551,11 +564,7 @@ ConstantFP::ConstantFP(const Type *Ty, const APFloat& V)
          "FP type Mismatch");
 }
 
-bool ConstantFP::isNullValue() const {
-  return Val.isZero() && !Val.isNegative();
-}
-
-bool ConstantFP::isExactlyValue(const APFloat& V) const {
+bool ConstantFP::isExactlyValue(const APFloat &V) const {
   return Val.bitwiseIsEqual(V);
 }
 

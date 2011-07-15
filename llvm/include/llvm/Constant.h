@@ -50,7 +50,7 @@ protected:
 public:
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
-  virtual bool isNullValue() const = 0;
+  bool isNullValue() const;
 
   /// isNegativeZeroValue - Return true if the value is what would be returned 
   /// by getZeroValueForNegation.
