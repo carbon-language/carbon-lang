@@ -21,7 +21,7 @@ def fuzz_obj(obj):
     obj.GetLocation()
     obj.SetValueFromCString("my_new_value")
     obj.GetChildAtIndex(1)
-    obj.GetChildAtIndex(2, lldb.eNoDynamicValues)
+    obj.GetChildAtIndex(2, lldb.eNoDynamicValues, False)
     obj.GetIndexOfChildWithName("my_first_child")
     obj.GetChildMemberWithName("my_first_child")
     obj.GetChildMemberWithName("my_first_child", lldb.eNoDynamicValues)

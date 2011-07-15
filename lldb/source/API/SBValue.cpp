@@ -361,17 +361,15 @@ SBValue::SetValueFromCString (const char *value_str)
 SBValue
 SBValue::GetChildAtIndex (uint32_t idx)
 {
+    const bool can_create_synthetic = false;
+    lldb::DynamicValueType use_dynamic = eNoDynamicValues;
     if (m_opaque_sp)
-    {
-        lldb::DynamicValueType use_dynamic_value = m_opaque_sp->GetUpdatePoint().GetTarget()->GetPreferDynamicValue();
-        return GetChildAtIndex (idx, use_dynamic_value);
-    }
-    else
-        return GetChildAtIndex (idx, eNoDynamicValues);
+        use_dynamic = m_opaque_sp->GetUpdatePoint().GetTarget()->GetPreferDynamicValue();
+    return GetChildAtIndex (idx, use_dynamic, can_create_synthetic);
 }
 
 SBValue
-SBValue::GetChildAtIndex (uint32_t idx, lldb::DynamicValueType use_dynamic)
+SBValue::GetChildAtIndex (uint32_t idx, lldb::DynamicValueType use_dynamic, bool can_create_synthetic)
 {
     lldb::ValueObjectSP child_sp;
 
@@ -380,13 +378,25 @@ SBValue::GetChildAtIndex (uint32_t idx, lldb::DynamicValueType use_dynamic)
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
         {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
-        
-            child_sp = m_opaque_sp->GetChildAtIndex (idx, true);
-            if (use_dynamic != lldb::eNoDynamicValues)
+            const bool can_create = true;
+            child_sp = m_opaque_sp->GetChildAtIndex (idx, can_create);
+            if (can_create_synthetic && !child_sp)
             {
-                if (child_sp)
+                if (m_opaque_sp->IsPointerType())
                 {
-                    lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue (use_dynamic);
+                    child_sp = m_opaque_sp->GetSyntheticArrayMemberFromPointer(idx, can_create);
+                }
+                else if (m_opaque_sp->IsArrayType())
+                {
+                    child_sp = m_opaque_sp->GetSyntheticArrayMemberFromArray(idx, can_create);
+                }
+            }
+                
+            if (child_sp)
+            {
+                if (use_dynamic != lldb::eNoDynamicValues)
+                {
+                    lldb::ValueObjectSP dynamic_sp(child_sp->GetDynamicValue (use_dynamic));
                     if (dynamic_sp)
                         child_sp = dynamic_sp;
                 }
