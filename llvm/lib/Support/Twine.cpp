@@ -14,6 +14,11 @@
 using namespace llvm;
 
 std::string Twine::str() const {
+  // If we're storing only a std::string, just return it.
+  if (LHSKind == StdStringKind && RHSKind == EmptyKind)
+    return *static_cast<const std::string*>(LHS);
+
+  // Otherwise, flatten and copy the contents first.
   SmallString<256> Vec;
   return toStringRef(Vec).str();
 }
@@ -37,9 +42,9 @@ StringRef Twine::toNullTerminatedStringRef(SmallVectorImpl<char> &Out) const {
       // Already null terminated, yay!
       return StringRef(static_cast<const char*>(LHS));
     case StdStringKind: {
-        const std::string *str = static_cast<const std::string*>(LHS);
-        return StringRef(str->c_str(), str->size());
-      }
+      const std::string *str = static_cast<const std::string*>(LHS);
+      return StringRef(str->c_str(), str->size());
+    }
     default:
       break;
     }
