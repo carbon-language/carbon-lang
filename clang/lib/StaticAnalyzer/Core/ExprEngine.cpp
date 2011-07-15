@@ -479,6 +479,7 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     
     // We don't handle default arguments either yet, but we can fake it
     // for now by just skipping them.
+    case Stmt::SubstNonTypeTemplateParmExprClass:
     case Stmt::CXXDefaultArgExprClass: {
       Dst.Add(Pred);
       break;

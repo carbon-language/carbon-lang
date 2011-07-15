@@ -120,6 +120,7 @@ def UnresolvedMemberExpr : DStmt<OverloadExpr>;
 def CXXNoexceptExpr : DStmt<Expr>;
 def PackExpansionExpr : DStmt<Expr>;
 def SizeOfPackExpr : DStmt<Expr>;
+def SubstNonTypeTemplateParmExpr : DStmt<Expr>;
 def SubstNonTypeTemplateParmPackExpr : DStmt<Expr>;
 def MaterializeTemporaryExpr : DStmt<Expr>;
 

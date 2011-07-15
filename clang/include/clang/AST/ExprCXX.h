@@ -2957,6 +2957,48 @@ public:
   child_range children() { return child_range(); }
 };
 
+/// \brief Represents a reference to a non-type template parameter
+/// that has been substituted with a template argument.
+class SubstNonTypeTemplateParmExpr : public Expr {
+  /// \brief The replaced parameter.
+  NonTypeTemplateParmDecl *Param;
+
+  /// \brief The replacement expression.
+  Stmt *Replacement;
+
+  /// \brief The location of the non-type template parameter reference.
+  SourceLocation NameLoc;
+
+public:
+  SubstNonTypeTemplateParmExpr(QualType type, 
+                               ExprValueKind valueKind,
+                               SourceLocation loc,
+                               NonTypeTemplateParmDecl *param,
+                               Expr *replacement)
+    : Expr(SubstNonTypeTemplateParmExprClass, type, valueKind, OK_Ordinary,
+           replacement->isTypeDependent(), replacement->isValueDependent(),
+           replacement->isInstantiationDependent(),
+           replacement->containsUnexpandedParameterPack()),
+      Param(param), Replacement(replacement), NameLoc(loc) {}
+
+  SourceLocation getNameLoc() const { return NameLoc; }
+  SourceRange getSourceRange() const { return NameLoc; }
+
+  Expr *getReplacement() const { return cast<Expr>(Replacement); }
+    
+  NonTypeTemplateParmDecl *getParameter() const { return Param; }
+
+  static bool classof(const Stmt *s) {
+    return s->getStmtClass() == SubstNonTypeTemplateParmExprClass;
+  }
+  static bool classof(const SubstNonTypeTemplateParmExpr *) { 
+    return true; 
+  }
+  
+  // Iterators
+  child_range children() { return child_range(&Replacement, &Replacement+1); }
+};
+
 /// \brief Represents a reference to a non-type template parameter pack that
 /// has been substituted with a non-template argument pack.
 ///

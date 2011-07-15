@@ -7665,6 +7665,14 @@ TreeTransform<Derived>::TransformSubstNonTypeTemplateParmPackExpr(
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformSubstNonTypeTemplateParmExpr(
+                                          SubstNonTypeTemplateParmExpr *E) {
+  // Default behavior is to do nothing with this transformation.
+  return SemaRef.Owned(E);
+}
+
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformMaterializeTemporaryExpr(
                                                   MaterializeTemporaryExpr *E) {
   return getDerived().TransformExpr(E->GetTemporaryExpr());

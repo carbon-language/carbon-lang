@@ -85,6 +85,9 @@ public:
     Visit(GE->getResultExpr());
   }
   void VisitUnaryExtension(UnaryOperator *E) { Visit(E->getSubExpr()); }
+  void VisitSubstNonTypeTemplateParmExpr(SubstNonTypeTemplateParmExpr *E) {
+    return Visit(E->getReplacement());
+  }
 
   // l-values.
   void VisitDeclRefExpr(DeclRefExpr *DRE) { EmitAggLoadOfLValue(DRE); }

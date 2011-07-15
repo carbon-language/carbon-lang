@@ -112,6 +112,10 @@ public:
     return Visit(GE->getResultExpr());
   }
   ComplexPairTy VisitImaginaryLiteral(const ImaginaryLiteral *IL);
+  ComplexPairTy
+  VisitSubstNonTypeTemplateParmExpr(SubstNonTypeTemplateParmExpr *PE) {
+    return Visit(PE->getReplacement());
+  }
 
   // l-values.
   ComplexPairTy VisitDeclRefExpr(const Expr *E) { return EmitLoadOfLValue(E); }

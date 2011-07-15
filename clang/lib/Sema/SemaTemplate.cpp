@@ -3316,8 +3316,7 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   QualType ArgType = Arg->getType();
 
   // See through any implicit casts we added to fix the type.
-  while (ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(Arg))
-    Arg = Cast->getSubExpr();
+  Arg = Arg->IgnoreImpCasts();
 
   // C++ [temp.arg.nontype]p1:
   //
@@ -3330,7 +3329,6 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
   //        expressed as & id-expression where the & is optional if
   //        the name refers to a function or array, or if the
   //        corresponding template-parameter is a reference; or
-  DeclRefExpr *DRE = 0;
 
   // In C++98/03 mode, give an extension warning on any extra parentheses.
   // See http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#773
@@ -3346,29 +3344,30 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
     Arg = Parens->getSubExpr();
   }
 
+  while (SubstNonTypeTemplateParmExpr *subst =
+           dyn_cast<SubstNonTypeTemplateParmExpr>(Arg))
+    Arg = subst->getReplacement()->IgnoreImpCasts();
+
   bool AddressTaken = false;
   SourceLocation AddrOpLoc;
   if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg)) {
     if (UnOp->getOpcode() == UO_AddrOf) {
-      // Support &__uuidof(class_with_uuid) as a non-type template argument.
-      // Very common in Microsoft COM headers.
-      if (S.getLangOptions().Microsoft && 
-        isa<CXXUuidofExpr>(UnOp->getSubExpr())) {
-        Converted = TemplateArgument(ArgIn);
-        return false;
-      }
-
-      DRE = dyn_cast<DeclRefExpr>(UnOp->getSubExpr());
+      Arg = UnOp->getSubExpr();
       AddressTaken = true;
       AddrOpLoc = UnOp->getOperatorLoc();
     }
-  } else {
-    if (S.getLangOptions().Microsoft && isa<CXXUuidofExpr>(Arg)) {
-      Converted = TemplateArgument(ArgIn);
-      return false;
-    }
-    DRE = dyn_cast<DeclRefExpr>(Arg);
   }
+
+  if (S.getLangOptions().Microsoft && isa<CXXUuidofExpr>(Arg)) {
+    Converted = TemplateArgument(ArgIn);
+    return false;
+  }
+
+  while (SubstNonTypeTemplateParmExpr *subst =
+           dyn_cast<SubstNonTypeTemplateParmExpr>(Arg))
+    Arg = subst->getReplacement()->IgnoreImpCasts();
+
+  DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Arg);
   if (!DRE) {
     S.Diag(Arg->getLocStart(), diag::err_template_arg_not_decl_ref)
       << Arg->getSourceRange();
@@ -3563,10 +3562,10 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
       // We can't perform this conversion or binding.
       if (ParamType->isReferenceType())
         S.Diag(Arg->getLocStart(), diag::err_template_arg_no_ref_bind)
-          << ParamType << Arg->getType() << Arg->getSourceRange();
+          << ParamType << ArgIn->getType() << Arg->getSourceRange();
       else
         S.Diag(Arg->getLocStart(),  diag::err_template_arg_not_convertible)
-          << Arg->getType() << ParamType << Arg->getSourceRange();
+          << ArgIn->getType() << ParamType << Arg->getSourceRange();
       S.Diag(Param->getLocation(), diag::note_template_param_here);
       return true;
     }
@@ -3609,6 +3608,10 @@ bool Sema::CheckTemplateArgumentPointerToMember(Expr *Arg,
 
     Arg = Parens->getSubExpr();
   }
+
+  while (SubstNonTypeTemplateParmExpr *subst =
+           dyn_cast<SubstNonTypeTemplateParmExpr>(Arg))
+    Arg = subst->getReplacement()->IgnoreImpCasts();
 
   // A pointer-to-member constant written &Class::member.
   if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg)) {
@@ -4149,16 +4152,7 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
   else
     BT = T;
 
-  Expr *E = IntegerLiteral::Create(Context, *Arg.getAsIntegral(), BT, Loc);
-  if (T->isEnumeralType()) {
-    // FIXME: This is a hack. We need a better way to handle substituted
-    // non-type template parameters.
-    E = CStyleCastExpr::Create(Context, T, VK_RValue, CK_IntegralCast, E, 0, 
-                               Context.getTrivialTypeSourceInfo(T, Loc),
-                               Loc, Loc);
-  }
-  
-  return Owned(E);
+  return Owned(IntegerLiteral::Create(Context, *Arg.getAsIntegral(), BT, Loc));
 }
 
 /// \brief Match two template parameters within template parameter lists.

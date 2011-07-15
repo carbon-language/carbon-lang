@@ -2279,6 +2279,11 @@ recurse:
     mangleExpression(cast<CXXDefaultArgExpr>(E)->getExpr(), Arity);
     break;
 
+  case Expr::SubstNonTypeTemplateParmExprClass:
+    mangleExpression(cast<SubstNonTypeTemplateParmExpr>(E)->getReplacement(),
+                     Arity);
+    break;
+
   case Expr::CXXMemberCallExprClass: // fallthrough
   case Expr::CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(E);

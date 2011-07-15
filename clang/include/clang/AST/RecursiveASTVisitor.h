@@ -1978,6 +1978,7 @@ DEF_TRAVERSE_STMT(CXXNoexceptExpr, { })
 DEF_TRAVERSE_STMT(PackExpansionExpr, { })
 DEF_TRAVERSE_STMT(SizeOfPackExpr, { })
 DEF_TRAVERSE_STMT(SubstNonTypeTemplateParmPackExpr, { })
+DEF_TRAVERSE_STMT(SubstNonTypeTemplateParmExpr, { })
 DEF_TRAVERSE_STMT(MaterializeTemporaryExpr, { })
 
 // These literals (all of them) do not need any action.

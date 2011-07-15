@@ -165,6 +165,9 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
     return Cl::CL_PRValue;
 
     // Next come the complicated cases.
+  case Expr::SubstNonTypeTemplateParmExprClass:
+    return ClassifyInternal(Ctx,
+                 cast<SubstNonTypeTemplateParmExpr>(E)->getReplacement());
 
     // C++ [expr.sub]p1: The result is an lvalue of type "T".
     // However, subscripting vector types is more like member access.

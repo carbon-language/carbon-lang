@@ -1413,6 +1413,11 @@ void StmtPrinter::VisitSubstNonTypeTemplateParmPackExpr(
   OS << Node->getParameterPack()->getNameAsString();
 }
 
+void StmtPrinter::VisitSubstNonTypeTemplateParmExpr(
+                                       SubstNonTypeTemplateParmExpr *Node) {
+  Visit(Node->getReplacement());
+}
+
 void StmtPrinter::VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *Node){
   PrintExpr(Node->GetTemporaryExpr());
 }

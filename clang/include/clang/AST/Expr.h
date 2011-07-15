@@ -538,6 +538,10 @@ public:
   ///        the rules of C++ [expr.unary.noexcept].
   CanThrowResult CanThrow(ASTContext &C) const;
 
+  /// IgnoreImpCasts - Skip past any implicit casts which might
+  /// surround this expression.  Only skips ImplicitCastExprs.
+  Expr *IgnoreImpCasts();
+
   /// IgnoreImplicit - Skip past any implicit AST nodes which might
   /// surround this expression.
   Expr *IgnoreImplicit() { return cast<Expr>(Stmt::IgnoreImplicit()); }
@@ -596,7 +600,10 @@ public:
 
   /// \brief Whether this expression is an implicit reference to 'this' in C++.
   bool isImplicitCXXThis() const;
-  
+
+  const Expr *IgnoreImpCasts() const {
+    return const_cast<Expr*>(this)->IgnoreImpCasts();
+  }
   const Expr *IgnoreParens() const {
     return const_cast<Expr*>(this)->IgnoreParens();
   }
@@ -2486,6 +2493,13 @@ public:
   }
   static bool classof(const ImplicitCastExpr *) { return true; }
 };
+
+inline Expr *Expr::IgnoreImpCasts() {
+  Expr *e = this;
+  while (ImplicitCastExpr *ice = dyn_cast<ImplicitCastExpr>(e))
+    e = ice->getSubExpr();
+  return e;
+}
 
 /// ExplicitCastExpr - An explicit cast written in the source
 /// code.

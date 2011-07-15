@@ -406,6 +406,8 @@ public:
     { return StmtVisitorTy::Visit(E->getChosenSubExpr(Info.Ctx)); }
   RetTy VisitGenericSelectionExpr(const GenericSelectionExpr *E)
     { return StmtVisitorTy::Visit(E->getResultExpr()); }
+  RetTy VisitSubstNonTypeTemplateParmExpr(const SubstNonTypeTemplateParmExpr *E)
+    { return StmtVisitorTy::Visit(E->getReplacement()); }
 
   RetTy VisitBinaryConditionalOperator(const BinaryConditionalOperator *E) {
     OpaqueValueEvaluation opaque(Info, E->getOpaqueValue(), E->getCommon());
@@ -2805,6 +2807,10 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::GNUNullExprClass:
     // GCC considers the GNU __null value to be an integral constant expression.
     return NoDiag();
+
+  case Expr::SubstNonTypeTemplateParmExprClass:
+    return
+      CheckICE(cast<SubstNonTypeTemplateParmExpr>(E)->getReplacement(), Ctx);
 
   case Expr::ParenExprClass:
     return CheckICE(cast<ParenExpr>(E)->getSubExpr(), Ctx);

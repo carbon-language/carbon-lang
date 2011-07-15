@@ -481,6 +481,11 @@ public:
     return Visit(PE->getSubExpr());
   }
 
+  llvm::Constant *
+  VisitSubstNonTypeTemplateParmExpr(SubstNonTypeTemplateParmExpr *PE) {
+    return Visit(PE->getReplacement());
+  }
+
   llvm::Constant *VisitGenericSelectionExpr(GenericSelectionExpr *GE) {
     return Visit(GE->getResultExpr());
   }
