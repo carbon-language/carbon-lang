@@ -516,7 +516,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
     }
 
     // Okay, we have the first token of a macro expansion: highlight the
-    // instantiation by inserting a start tag before the macro instantiation and
+    // expansion by inserting a start tag before the macro expansion and
     // end tag after it.
     std::pair<SourceLocation, SourceLocation> LLoc =
       SM.getInstantiationRange(Tok.getLocation());
