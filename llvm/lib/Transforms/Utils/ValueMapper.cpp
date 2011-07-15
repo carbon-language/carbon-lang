@@ -15,6 +15,7 @@
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Metadata.h"
 using namespace llvm;
@@ -31,8 +32,23 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
   
   // Global values do not need to be seeded into the VM if they
   // are using the identity mapping.
-  if (isa<GlobalValue>(V) || isa<InlineAsm>(V) || isa<MDString>(V))
+  if (isa<GlobalValue>(V) || isa<MDString>(V))
     return VM[V] = const_cast<Value*>(V);
+  
+  if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
+    // Inline asm may need *type* remapping.
+    FunctionType *NewTy = IA->getFunctionType();
+    if (TypeMapper) {
+      NewTy = cast<FunctionType>(TypeMapper->remapType(NewTy));
+
+      if (NewTy != IA->getFunctionType())
+        V = InlineAsm::get(NewTy, IA->getAsmString(), IA->getConstraintString(),
+                           IA->hasSideEffects(), IA->isAlignStack());
+    }
+    
+    return VM[V] = const_cast<Value*>(V);
+  }
+  
 
   if (const MDNode *MD = dyn_cast<MDNode>(V)) {
     // If this is a module-level metadata and we know that nothing at the module
