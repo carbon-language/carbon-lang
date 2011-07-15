@@ -722,9 +722,6 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
                                  getDataAlignmentFactor(Streamer), IsEH);
   if (!Encoding) return false;
 
-  // The encoding needs to know we have a personality function.
-  if (Frame.Personality)
-    Encoding |= 0x10000000;
   // The encoding needs to know we have an LSDA.
   if (Frame.Lsda)
     Encoding |= 0x40000000;
