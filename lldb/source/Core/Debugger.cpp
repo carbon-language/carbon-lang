@@ -733,6 +733,8 @@ ScanFormatDescriptor(const char* var_name_begin,
             // if this is a V, print the value using the default format
             if (*format_name == 'V')
                 *val_obj_display = ValueObject::eDisplayValue;
+            if (*format_name == 'L')
+                *val_obj_display = ValueObject::eDisplayLocation;
         }
         // a good custom format tells us to print the value using it
         else

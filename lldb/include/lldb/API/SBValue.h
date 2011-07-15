@@ -167,6 +167,10 @@ public:
     // classes.
     lldb::SBValue
     GetChildMemberWithName (const char *name, lldb::DynamicValueType use_dynamic);
+    
+    // Expands nested expressions like .a->b[0].c[1]->d
+    lldb::SBValue
+    GetValueForExpressionPath(const char* expr_path);
 
     uint32_t
     GetNumChildren ();
@@ -190,11 +194,11 @@ public:
     bool
     GetExpressionPath (lldb::SBStream &description, bool qualify_cxx_base_classes);
 
+    SBValue (const lldb::ValueObjectSP &value_sp);
+    
 protected:
     friend class SBValueList;
     friend class SBFrame;
-
-    SBValue (const lldb::ValueObjectSP &value_sp);
 
 #ifndef SWIG
 

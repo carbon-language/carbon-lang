@@ -51,6 +51,14 @@ Error::Error (const Error &rhs) :
 {
 }
 
+Error::Error (const char* err_str):
+    m_code (0),
+    m_type (eErrorTypeInvalid),
+    m_string ()
+{
+    SetErrorString(err_str);
+}
+
 //----------------------------------------------------------------------
 // Assignment operator
 //----------------------------------------------------------------------

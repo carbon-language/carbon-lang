@@ -576,8 +576,6 @@ public:
         static uint32_t
         GetCount();
     };
-
-    
 };
 
 } // namespace lldb_private

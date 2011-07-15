@@ -26,6 +26,13 @@ public:
                                                     const char *session_dictionary_name,
                                                     const lldb::StackFrameSP& frame_sp,
                                                     const lldb::BreakpointLocationSP &bp_loc_sp);
+    
+    typedef 
+    
+    typedef std::string (*SWIGPythonTypeScriptCallbackFunction) (const char *python_function_name,
+                                                                 const char *session_dictionary_name,
+                                                                 const lldb::ValueObjectSP& valobj_sp);
+
     typedef enum
     {
         eCharPtr,
@@ -77,6 +84,25 @@ public:
     {
         return false;
     }
+    
+    virtual bool
+    GenerateTypeScriptFunction (StringList &input, StringList &output)
+    {
+        return false;
+    }
+    
+    // use this if the function code is just a one-liner script
+    virtual bool
+    GenerateTypeScriptFunction (const char* oneliner, StringList &output)
+    {
+        return false;
+    }
+    
+    virtual bool
+    GenerateFunction(std::string& signature, StringList &input, StringList &output)
+    {
+        return false;
+    }
 
     virtual void 
     CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
@@ -104,7 +130,8 @@ public:
     
     static void
     InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
-                           SWIGBreakpointCallbackFunction python_swig_breakpoint_callback);
+                           SWIGBreakpointCallbackFunction python_swig_breakpoint_callback,
+                           SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback);
 
     static void
     TerminateInterpreter ();

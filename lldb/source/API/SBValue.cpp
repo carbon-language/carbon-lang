@@ -472,6 +472,28 @@ SBValue::GetChildMemberWithName (const char *name, lldb::DynamicValueType use_dy
     return sb_value;
 }
 
+lldb::SBValue
+SBValue::GetValueForExpressionPath(const char* expr_path)
+{
+    lldb::ValueObjectSP child_sp;
+    if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+            // using default values for all the fancy options, just do it if you can
+            child_sp = m_opaque_sp->GetValueForExpressionPath(expr_path);
+        }
+    }
+    
+    SBValue sb_value (child_sp);
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBValue(%p)::GetValueForExpressionPath (expr_path=\"%s\") => SBValue(%p)", m_opaque_sp.get(), expr_path, sb_value.get());
+    
+    return sb_value;
+}
 
 uint32_t
 SBValue::GetNumChildren ()

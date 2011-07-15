@@ -69,6 +69,9 @@ public:
     explicit
     Error (ValueType err, lldb::ErrorType type = lldb::eErrorTypeGeneric);
 
+    explicit
+    Error (const char* err_str);
+    
     Error (const Error &rhs);
     //------------------------------------------------------------------
     /// Assignment operator.

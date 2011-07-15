@@ -56,11 +56,13 @@ namespace lldb {
     typedef SharedPtr<lldb_private::RegularExpression>::Type RegularExpressionSP;
     typedef SharedPtr<lldb_private::Section>::Type SectionSP;
     typedef SharedPtr<lldb_private::SearchFilter>::Type SearchFilterSP;
+    typedef SharedPtr<lldb_private::ScriptSummaryFormat>::Type ScriptFormatSP;
     typedef SharedPtr<lldb_private::StackFrame>::Type StackFrameSP;
     typedef SharedPtr<lldb_private::StackFrameList>::Type StackFrameListSP;
     typedef SharedPtr<lldb_private::StopInfo>::Type StopInfoSP;
     typedef SharedPtr<lldb_private::StoppointLocation>::Type StoppointLocationSP;
     typedef SharedPtr<lldb_private::Stream>::Type StreamSP;
+    typedef SharedPtr<lldb_private::StringSummaryFormat>::Type StringSummaryFormatSP;
     typedef SharedPtr<lldb_private::SummaryFormat>::Type SummaryFormatSP;
     typedef SharedPtr<lldb_private::SymbolFile>::Type SymbolFileSP;
     typedef SharedPtr<lldb_private::SymbolContextSpecifier>::Type SymbolContextSpecifierSP;

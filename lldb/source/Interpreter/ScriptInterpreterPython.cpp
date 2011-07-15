@@ -34,6 +34,7 @@ using namespace lldb_private;
 
 static ScriptInterpreter::SWIGInitCallback g_swig_init_callback = NULL;
 static ScriptInterpreter::SWIGBreakpointCallbackFunction g_swig_breakpoint_callback = NULL;
+static ScriptInterpreter::SWIGPythonTypeScriptCallbackFunction g_swig_typescript_callback = NULL;
 
 
 static int
@@ -1140,6 +1141,117 @@ ScriptInterpreterPython::ExportFunctionDefinitionToInterpreter (StringList &func
     return ExecuteMultipleLines (function_def_string.c_str());
 }
 
+// TODO move both GenerateTypeScriptFunction and GenerateBreakpointCommandCallbackData to actually
+// use this code to generate their functions
+bool
+ScriptInterpreterPython::GenerateFunction(std::string& signature, StringList &input, StringList &output)
+{
+    int num_lines = input.GetSize ();
+    if (num_lines == 0)
+        return false;
+    StreamString sstr;
+    StringList auto_generated_function;
+    auto_generated_function.AppendString (signature.c_str());
+    auto_generated_function.AppendString ("     global_dict = globals()");   // Grab the global dictionary
+    auto_generated_function.AppendString ("     new_keys = dict.keys()");    // Make a list of keys in the session dict
+    auto_generated_function.AppendString ("     old_keys = global_dict.keys()"); // Save list of keys in global dict
+    auto_generated_function.AppendString ("     global_dict.update (dict)"); // Add the session dictionary to the 
+    // global dictionary.
+    
+    // Wrap everything up inside the function, increasing the indentation.
+    
+    for (int i = 0; i < num_lines; ++i)
+    {
+        sstr.Clear ();
+        sstr.Printf ("     %s", input.GetStringAtIndex (i));
+        auto_generated_function.AppendString (sstr.GetData());
+    }
+    auto_generated_function.AppendString ("     for key in new_keys:");  // Iterate over all the keys from session dict
+    auto_generated_function.AppendString ("         dict[key] = global_dict[key]");  // Update session dict values
+    auto_generated_function.AppendString ("         if key not in old_keys:");       // If key was not originally in global dict
+    auto_generated_function.AppendString ("             del global_dict[key]");      //  ...then remove key/value from global dict
+    
+    // Verify that the results are valid Python.
+    
+    if (!ExportFunctionDefinitionToInterpreter (auto_generated_function))
+        return false;
+    
+    return true;
+
+}
+
+// this implementation is identical to GenerateBreakpointCommandCallbackData (apart from the name
+// given to generated functions, of course)
+bool
+ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, StringList &output)
+{
+    static int num_created_functions = 0;
+    user_input.RemoveBlankLines ();
+    int num_lines = user_input.GetSize ();
+    StreamString sstr;
+    
+    // Check to see if we have any data; if not, just return.
+    if (user_input.GetSize() == 0)
+        return false;
+    
+    // Take what the user wrote, wrap it all up inside one big auto-generated Python function, passing in the
+    // ValueObject as parameter to the function.
+    
+    sstr.Printf ("lldb_autogen_python_type_print_func_%d", num_created_functions);
+    ++num_created_functions;
+    std::string auto_generated_function_name = sstr.GetData();
+    
+    sstr.Clear();
+    StringList auto_generated_function;
+    
+    // Create the function name & definition string.
+    
+    sstr.Printf ("def %s (valobj, dict):", auto_generated_function_name.c_str());
+    auto_generated_function.AppendString (sstr.GetData());
+    
+    // Pre-pend code for setting up the session dictionary.
+    
+    auto_generated_function.AppendString ("     global_dict = globals()");   // Grab the global dictionary
+    auto_generated_function.AppendString ("     new_keys = dict.keys()");    // Make a list of keys in the session dict
+    auto_generated_function.AppendString ("     old_keys = global_dict.keys()"); // Save list of keys in global dict
+    auto_generated_function.AppendString ("     global_dict.update (dict)"); // Add the session dictionary to the 
+    // global dictionary.
+    
+    // Wrap everything up inside the function, increasing the indentation.
+    
+    for (int i = 0; i < num_lines; ++i)
+    {
+        sstr.Clear ();
+        sstr.Printf ("     %s", user_input.GetStringAtIndex (i));
+        auto_generated_function.AppendString (sstr.GetData());
+    }
+    
+    // Append code to clean up the global dictionary and update the session dictionary (all updates in the function
+    // got written to the values in the global dictionary, not the session dictionary).
+    
+    auto_generated_function.AppendString ("     for key in new_keys:");  // Iterate over all the keys from session dict
+    auto_generated_function.AppendString ("         dict[key] = global_dict[key]");  // Update session dict values
+    auto_generated_function.AppendString ("         if key not in old_keys:");       // If key was not originally in global dict
+    auto_generated_function.AppendString ("             del global_dict[key]");      //  ...then remove key/value from global dict
+    
+    // Verify that the results are valid Python.
+    
+    if (!ExportFunctionDefinitionToInterpreter (auto_generated_function))
+        return false;
+    
+    // Store the name of the auto-generated function to be called.
+    
+    output.AppendString (auto_generated_function_name.c_str());
+    return true;
+}
+
+bool
+ScriptInterpreterPython::GenerateTypeScriptFunction (const char* oneliner, StringList &output)
+{
+    StringList input(oneliner);
+    return GenerateTypeScriptFunction(input, output);
+}
+
 bool
 ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user_input, StringList &callback_data)
 {
@@ -1204,6 +1316,63 @@ ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user
 
     callback_data.AppendString (auto_generated_function_name.c_str());
     return true;
+}
+
+std::string
+ScriptInterpreterPython::CallPythonScriptFunction (const char *python_function_name,
+                                                   lldb::ValueObjectSP valobj)
+{
+    
+    if (!python_function_name || !(*python_function_name))
+        return "<no function>";
+    
+    if (!valobj.get())
+        return "<no object>";
+        
+    Target *target = valobj->GetUpdatePoint().GetTarget();
+    
+    if (!target)
+        return "<no target>";
+    
+    Debugger &debugger = target->GetDebugger();
+    ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
+    ScriptInterpreterPython *python_interpreter = (ScriptInterpreterPython *) script_interpreter;
+    
+    if (!script_interpreter)
+        return "<no python>";
+    
+    std::string ret_val;
+    
+    if (python_function_name 
+        && *python_function_name)
+    {
+        FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
+        if (CurrentThreadHasPythonLock())
+        {
+            python_interpreter->EnterSession ();
+            ret_val = g_swig_typescript_callback (python_function_name, 
+                                                  python_interpreter->m_dictionary_name.c_str(),
+                                                  valobj);
+            python_interpreter->LeaveSession ();
+        }
+        else
+        {
+            while (!GetPythonLock (1))
+                fprintf (tmp_fh, 
+                         "Python interpreter locked on another thread; waiting to acquire lock...\n");
+            python_interpreter->EnterSession ();
+            ret_val = g_swig_typescript_callback (python_function_name, 
+                                                  python_interpreter->m_dictionary_name.c_str(), 
+                                                  valobj);
+            python_interpreter->LeaveSession ();
+            ReleasePythonLock ();
+        }
+    }
+    else
+        return "<no function name>";
+    
+    return ret_val;
+    
 }
 
 bool
@@ -1399,10 +1568,12 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
 
 void
 ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
-                                                SWIGBreakpointCallbackFunction python_swig_breakpoint_callback)
+                                                SWIGBreakpointCallbackFunction python_swig_breakpoint_callback,
+                                                SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback)
 {
     g_swig_init_callback = python_swig_init_callback;
-    g_swig_breakpoint_callback = python_swig_breakpoint_callback; 
+    g_swig_breakpoint_callback = python_swig_breakpoint_callback;
+    g_swig_typescript_callback = python_swig_typescript_callback;
 }
 
 void

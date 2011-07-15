@@ -50,6 +50,16 @@ public:
     ExportFunctionDefinitionToInterpreter (StringList &function_def);
 
     bool
+    GenerateTypeScriptFunction (StringList &input, StringList &output);
+    
+    // use this if the function code is just a one-liner script
+    bool
+    GenerateTypeScriptFunction (const char* oneliner, StringList &output);
+    
+    bool
+    GenerateFunction(std::string& signature, StringList &input, StringList &output);
+    
+    bool
     GenerateBreakpointCommandCallbackData (StringList &input, StringList &output);
 
     static size_t
@@ -64,6 +74,10 @@ public:
                                 StoppointCallbackContext *context, 
                                 lldb::user_id_t break_id,
                                 lldb::user_id_t break_loc_id);
+    
+    static std::string
+    CallPythonScriptFunction (const char *python_function_name,
+                              lldb::ValueObjectSP valobj);
 
     void
     CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
@@ -88,7 +102,8 @@ public:
 
     static void
     InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
-                           SWIGBreakpointCallbackFunction python_swig_breakpoint_callback);
+                           SWIGBreakpointCallbackFunction python_swig_breakpoint_callback,
+                           SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback);
 
 protected:
 

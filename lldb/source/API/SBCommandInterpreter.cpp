@@ -314,6 +314,15 @@ LLDBSwigPythonBreakpointCallbackFunction
     const lldb::BreakpointLocationSP& sb_bp_loc
 );
 
+extern "C" std::string
+LLDBSwigPythonCallTypeScript 
+(
+    const char *python_function_name,
+    const char *session_dictionary_name,
+    const lldb::ValueObjectSP& valobj_sp
+);
+
+
 extern "C" void init_lldb(void);
 
 void
@@ -324,6 +333,7 @@ SBCommandInterpreter::InitializeSWIG ()
     {
         g_initialized = true;
         ScriptInterpreter::InitializeInterpreter (init_lldb, 
-                                                  LLDBSwigPythonBreakpointCallbackFunction);
+                                                  LLDBSwigPythonBreakpointCallbackFunction,
+                                                  LLDBSwigPythonCallTypeScript);
     }
 }

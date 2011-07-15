@@ -50,8 +50,10 @@ namespace std
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Core/ValueObject.h"
+#include "lldb/Interpreter/ScriptInterpreterPython.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Platform.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/TargetList.h"
 
 namespace lldb_private {
@@ -67,7 +69,262 @@ public:
     
 };
 
+struct ValueFormat
+{
+    bool m_cascades;
+    bool m_skip_pointers;
+    bool m_skip_references;
+    lldb::Format m_format;
+    ValueFormat (lldb::Format f = lldb::eFormatInvalid,
+                 bool casc = false,
+                 bool skipptr = false,
+                 bool skipref = false) : 
+    m_cascades(casc),
+    m_skip_pointers(skipptr),
+    m_skip_references(skipref),
+    m_format (f)
+    {
+    }
+    
+    typedef lldb::SharedPtr<ValueFormat>::Type SharedPointer;
+    typedef bool(*ValueCallback)(void*, const char*, const ValueFormat::SharedPointer&);
+    
+    ~ValueFormat()
+    {
+    }
+    
+    bool
+    Cascades()
+    {
+        return m_cascades;
+    }
+    bool
+    SkipsPointers()
+    {
+        return m_skip_pointers;
+    }
+    bool
+    SkipsReferences()
+    {
+        return m_skip_references;
+    }
+    
+    lldb::Format
+    GetFormat()
+    {
+        return m_format;
+    }
+    
+    std::string
+    FormatObject(lldb::ValueObjectSP object)
+    {
+        if (!object.get())
+            return "NULL";
+        
+        StreamString sstr;
+        
+        if (ClangASTType::DumpTypeValue (object->GetClangAST(),            // The clang AST
+                                         object->GetClangType(),           // The clang type to display
+                                         &sstr,
+                                         m_format,                          // Format to display this type with
+                                         object->GetDataExtractor(),       // Data to extract from
+                                         0,                                // Byte offset into "data"
+                                         object->GetByteSize(),            // Byte size of item in "data"
+                                         object->GetBitfieldBitSize(),     // Bitfield bit size
+                                         object->GetBitfieldBitOffset()))  // Bitfield bit offset
+            return (sstr.GetString());
+        else
+        {
+            return ("unsufficient data for value");
+        }
+        
+    }
+    
+};
+
 struct SummaryFormat
+{
+    bool m_cascades;
+    bool m_skip_pointers;
+    bool m_skip_references;
+    bool m_dont_show_children;
+    bool m_dont_show_value;
+    bool m_show_members_oneliner;
+    
+    SummaryFormat(bool casc = false,
+                  bool skipptr = false,
+                  bool skipref = false,
+                  bool nochildren = true,
+                  bool novalue = true,
+                  bool oneliner = false) :
+    m_cascades(casc),
+    m_skip_pointers(skipptr),
+    m_skip_references(skipref),
+    m_dont_show_children(nochildren),
+    m_dont_show_value(novalue),
+    m_show_members_oneliner(oneliner)
+    {
+    }
+    
+    bool
+    Cascades()
+    {
+        return m_cascades;
+    }
+    bool
+    SkipsPointers()
+    {
+        return m_skip_pointers;
+    }
+    bool
+    SkipsReferences()
+    {
+        return m_skip_references;
+    }
+    
+    bool
+    DoesPrintChildren() const
+    {
+        return !m_dont_show_children;
+    }
+    
+    bool
+    DoesPrintValue() const
+    {
+        return !m_dont_show_value;
+    }
+    
+    bool
+    IsOneliner() const
+    {
+        return m_show_members_oneliner;
+    }
+    
+    virtual
+    ~SummaryFormat()
+    {
+    }
+    
+    virtual std::string
+    FormatObject(lldb::ValueObjectSP object) = 0;
+    
+    virtual std::string
+    GetDescription() = 0;
+    
+    typedef lldb::SharedPtr<SummaryFormat>::Type SharedPointer;
+    typedef bool(*SummaryCallback)(void*, const char*, const SummaryFormat::SharedPointer&);
+    typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const SummaryFormat::SharedPointer&);
+    
+};
+
+// simple string-based summaries, using ${var to show data
+struct StringSummaryFormat : public SummaryFormat
+{
+    std::string m_format;
+    
+    StringSummaryFormat(bool casc = false,
+                        bool skipptr = false,
+                        bool skipref = false,
+                        bool nochildren = true,
+                        bool novalue = true,
+                        bool oneliner = false,
+                        std::string f = "") :
+    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner),
+    m_format(f)
+    {
+    }
+    
+    std::string
+    GetFormat()
+    {
+        return m_format;
+    }
+    
+    virtual
+    ~StringSummaryFormat()
+    {
+    }
+    
+    virtual std::string
+    FormatObject(lldb::ValueObjectSP object);
+    
+    virtual std::string
+    GetDescription()
+    {
+        StreamString sstr;
+        sstr.Printf ("`%s`%s%s%s%s%s%s\n",      m_format.c_str(),
+                                                m_cascades ? "" : " (not cascading)",
+                                                m_dont_show_children ? "" : " (show children)",
+                                                m_dont_show_value ? " (hide value)" : "",
+                                                m_show_members_oneliner ? " (one-line printout)" : "",
+                                                m_skip_pointers ? " (skip pointers)" : "",
+                                                m_skip_references ? " (skip references)" : "");
+        return sstr.GetString();
+    }
+        
+};
+    
+// Python-based summaries, running script code to show data
+struct ScriptSummaryFormat : public SummaryFormat
+{
+    std::string m_function_name;
+    std::string m_python_script;
+    
+    ScriptSummaryFormat(bool casc = false,
+                        bool skipptr = false,
+                        bool skipref = false,
+                        bool nochildren = true,
+                        bool novalue = true,
+                        bool oneliner = false,
+                        std::string fname = "",
+                        std::string pscri = "") :
+    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner),
+    m_function_name(fname),
+    m_python_script(pscri)
+    {
+    }
+    
+    std::string
+    GetFunctionName()
+    {
+        return m_function_name;
+    }
+    
+    std::string
+    GetPythonScript()
+    {
+        return m_python_script;
+    }
+    
+    virtual
+    ~ScriptSummaryFormat()
+    {
+    }
+    
+    virtual std::string
+    FormatObject(lldb::ValueObjectSP object)
+    {
+        return std::string(ScriptInterpreterPython::CallPythonScriptFunction(m_function_name.c_str(),
+                                                                             object).c_str());
+    }
+    
+    virtual std::string
+    GetDescription()
+    {
+        StreamString sstr;
+        sstr.Printf ("%s%s%s\n%s\n",      m_cascades ? "" : " (not cascading)",
+                                          m_skip_pointers ? " (skip pointers)" : "",
+                                          m_skip_references ? " (skip references)" : "",
+                                          m_python_script.c_str());
+        return sstr.GetString();
+
+    }
+        
+    typedef lldb::SharedPtr<ScriptSummaryFormat>::Type SharedPointer;
+
+};
+    
+/*struct SummaryFormat
 {
     std::string m_format;
     bool m_dont_show_children;
@@ -116,32 +373,35 @@ struct SummaryFormat
     typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const SummaryFormat::SharedPointer&);
     
 };
-
-struct ValueFormat
+    
+struct ScriptFormat
 {
-    lldb::Format m_format;
+    std::string m_function_name;
+    std::string m_python_script;
     bool m_cascades;
     bool m_skip_references;
     bool m_skip_pointers;
-    ValueFormat (lldb::Format f = lldb::eFormatInvalid,
-                 bool c = false,
-                 bool skipptr = false,
-                 bool skipref = false) : 
-    m_format (f), 
+    ScriptFormat (std::string n,
+                  std::string s = "",
+                  bool c = false,
+                  bool skipptr = false,
+                  bool skipref = false) : 
+    m_function_name (n),
+    m_python_script(s),
     m_cascades (c),
     m_skip_references(skipref),
     m_skip_pointers(skipptr)
     {
     }
     
-    typedef lldb::SharedPtr<ValueFormat>::Type SharedPointer;
-    typedef bool(*ValueCallback)(void*, const char*, const ValueFormat::SharedPointer&);
+    typedef lldb::SharedPtr<ScriptFormat>::Type SharedPointer;
+    typedef bool(*ScriptCallback)(void*, const char*, const ScriptFormat::SharedPointer&);
     
-    ~ValueFormat()
+    ~ScriptFormat()
     {
     }
     
-};
+};*/
 
 template<typename KeyType, typename ValueType>
 class FormatNavigator;
@@ -457,17 +717,21 @@ private:
     typedef FormatNavigator<const char*, ValueFormat> ValueNavigator;
     typedef FormatNavigator<const char*, SummaryFormat> SummaryNavigator;
     typedef FormatNavigator<lldb::RegularExpressionSP, SummaryFormat> RegexSummaryNavigator;
+    typedef FormatNavigator<const char*, SummaryFormat> ScriptNavigator;
     
     typedef ValueNavigator::MapType ValueMap;
     typedef SummaryNavigator::MapType SummaryMap;
     typedef RegexSummaryNavigator::MapType RegexSummaryMap;
     typedef FormatMap<const char*, SummaryFormat> NamedSummariesMap;
+    typedef ScriptNavigator::MapType ScriptMap;
     
     ValueNavigator m_value_nav;
     SummaryNavigator m_summary_nav;
     RegexSummaryNavigator m_regex_summary_nav;
     
     NamedSummariesMap m_named_summaries_map;
+    
+    ScriptNavigator m_script_nav;
     
     uint32_t m_last_revision;
     
@@ -478,6 +742,7 @@ public:
     m_summary_nav(this),
     m_regex_summary_nav(this),
     m_named_summaries_map(this),
+    m_script_nav(this),
     m_last_revision(0)
     {
     }
@@ -487,6 +752,7 @@ public:
     SummaryNavigator& Summary() { return m_summary_nav; }
     RegexSummaryNavigator& RegexSummary() { return m_regex_summary_nav; }
     NamedSummariesMap& NamedSummary() { return m_named_summaries_map; }
+    ScriptNavigator& Script() { return m_script_nav; }
     
     static bool
     GetFormatFromCString (const char *format_cstr,

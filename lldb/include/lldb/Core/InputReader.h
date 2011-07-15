@@ -12,7 +12,7 @@
 
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
-#include "lldb/Core/Debugger.h"
+#include "lldb/Core/Error.h"
 #include "lldb/Host/Predicate.h"
 
 
@@ -27,6 +27,31 @@ public:
                                 lldb::InputReaderAction notification,
                                 const char *bytes, 
                                 size_t bytes_len);
+    
+    struct HandlerData
+    {
+        InputReader& reader;
+        const char *bytes;
+        size_t bytes_len;
+        void* baton;
+        
+        HandlerData(InputReader& r,
+                    const char* b,
+                    size_t l,
+                    void* t) : 
+        reader(r),
+        bytes(b),
+        bytes_len(l),
+        baton(t)
+        {
+        }
+        
+        lldb::StreamSP
+        GetOutStream();
+        
+        bool
+        GetBatchMode();
+    };
 
     InputReader (Debugger &debugger);
 
@@ -40,6 +65,41 @@ public:
                 const char *end_token,
                 const char *prompt,
                 bool echo);
+    
+    virtual Error Initialize(void* baton,
+                             lldb::InputReaderGranularity token_size = lldb::eInputReaderGranularityLine,
+                             const char* end_token = "DONE",
+                             const char *prompt = "> ",
+                             bool echo = true)
+    {
+        return Error("unimplemented");
+    }
+    
+    // to use these handlers instead of the Callback function, you must subclass
+    // InputReaderEZ, and redefine the handlers for the events you care about
+    virtual void
+    ActivateHandler(HandlerData&) {}
+    
+    virtual void
+    DeactivateHandler(HandlerData&) {}
+    
+    virtual void
+    ReactivateHandler(HandlerData&) {}
+    
+    virtual void
+    AsynchronousOutputWrittenHandler(HandlerData&) {}
+    
+    virtual void
+    GotTokenHandler(HandlerData&) {}
+    
+    virtual void
+    InterruptHandler(HandlerData&) {}
+    
+    virtual void
+    EOFHandler(HandlerData&) {}
+    
+    virtual void
+    DoneHandler(HandlerData&) {}
     
     bool
     IsDone () const

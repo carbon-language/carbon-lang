@@ -14,6 +14,8 @@
 // Other libraries and framework includes
 // Project includes
 
+#include "lldb/Core/Debugger.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -217,3 +219,54 @@ FormatManager::GetSingleItemFormat(lldb::Format vector_format)
             return lldb::eFormatInvalid;
     }
 }
+
+std::string
+StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
+{
+    if (!object.get())
+        return "NULL";
+    
+    StreamString s;
+    ExecutionContext exe_ctx;
+    object->GetExecutionContextScope()->CalculateExecutionContext(exe_ctx);
+    SymbolContext sc;
+    if (exe_ctx.frame)
+        sc = exe_ctx.frame->GetSymbolContext(lldb::eSymbolContextEverything);
+    
+    if (m_show_members_oneliner)
+    {
+        const uint32_t num_children = object->GetNumChildren();
+        if (num_children)
+        {
+            s.PutChar('(');
+            
+            for (uint32_t idx=0; idx<num_children; ++idx)
+            {
+                lldb::ValueObjectSP child_sp(object->GetChildAtIndex(idx, true));
+                if (child_sp.get())
+                {
+                    if (idx)
+                        s.PutCString(", ");
+                    s.PutCString(child_sp.get()->GetName().AsCString());
+                    s.PutChar('=');
+                    s.PutCString(child_sp.get()->GetPrintableRepresentation());
+                }
+            }
+            
+            s.PutChar(')');
+            
+            return s.GetString();
+        }
+        else
+            return "";
+        
+    }
+    else
+    {
+        if (Debugger::FormatPrompt(m_format.c_str(), &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s, NULL, object.get()))
+            return s.GetString();
+        else
+            return "";
+    }
+}
+

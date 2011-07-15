@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/StringList.h"
+
+#include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
 
 #include <string>
@@ -204,4 +206,34 @@ StringList::RemoveBlankLines ()
         else
             idx++;
     }
+}
+
+std::string
+StringList::CopyList(const char* item_preamble,
+                     const char* items_sep)
+{
+    StreamString strm;
+    for (int i = 0; i < GetSize(); i++)
+    {
+        if (i && items_sep && items_sep[0])
+            strm << items_sep;
+        if (item_preamble)
+            strm << item_preamble;
+        strm << GetStringAtIndex(i);
+    }
+    return std::string(strm.GetData());
+}
+
+StringList&
+StringList::operator << (const char* str)
+{
+    AppendString(str);
+    return *this;
+}
+
+StringList&
+StringList::operator << (StringList strings)
+{
+    AppendList(strings);
+    return *this;
 }

@@ -68,7 +68,17 @@ public:
 
     size_t
     SplitIntoLines (const char *lines, size_t len);
+    
+    std::string
+    CopyList(const char* item_preamble = NULL,
+             const char* items_sep = "\n");
+    
+    StringList&
+    operator << (const char* str);
 
+    StringList&
+    operator << (StringList strings);
+        
 private:
 
     STLStringArray m_strings;

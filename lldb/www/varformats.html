@@ -784,6 +784,17 @@
                   (i_am_cool) one = x=3<br>
                 </code> </p>
 
+			<p>When defining a named summmary, binding it to one or more types becomes optional.
+			Even if you bind the named summary to a type, and later change the summary string
+			for that type, the named summary will not be changed by that. You can delete
+			named summaries by using the <code>type summary delete</code> command, as if the
+			summary name was the datatype that the summary is applied to</p>
+			
+			<p>A summary attached to a variable using the </code>--summary</code> option,
+			has the same semantics that a custom format attached using the <code>-f</code>
+			option has: it stays attached till you attach a new one, or till you let
+			your program run again.</p>
+
             </div>
         </div>
 

@@ -20,8 +20,6 @@ namespace lldb_utility {
 // RefCounter ref(ptr);
 // (of course, the pointer is a shared resource, and must be accessible to
 // everyone who needs it). Synchronization is handled by RefCounter itself
-// To check if more than 1 RefCounter is attached to the same value, you can
-// either call shared(), or simply cast ref to bool
 // The counter is decreased each time a RefCounter to it goes out of scope
 //----------------------------------------------------------------------
 class RefCounter

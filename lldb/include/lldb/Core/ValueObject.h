@@ -27,6 +27,7 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/StackID.h"
+#include "lldb/Utility/PriorityPointerPair.h"
 #include "lldb/Utility/SharedCluster.h"
 
 namespace lldb_private {
@@ -75,7 +76,8 @@ public:
     {
         eDisplayValue = 1,
         eDisplaySummary,
-        eDisplayLanguageSpecific
+        eDisplayLanguageSpecific,
+        eDisplayLocation
     };
     
     enum ExpressionPathScanEndReason
@@ -731,8 +733,8 @@ protected:
     lldb::Format            m_format;
     uint32_t                m_last_format_mgr_revision;
     lldb::SummaryFormatSP   m_last_summary_format;
-    lldb::ValueFormatSP     m_last_value_format;
     lldb::SummaryFormatSP   m_forced_summary_format;
+    lldb::ValueFormatSP     m_last_value_format;
     lldb::user_id_t         m_user_id_of_forced_summary;
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
@@ -802,6 +804,9 @@ protected:
 
     void
     SetValueIsValid (bool valid);
+    
+    void
+    ClearUserVisibleData();
 
 public:
     lldb::addr_t

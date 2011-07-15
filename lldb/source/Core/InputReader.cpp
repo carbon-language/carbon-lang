@@ -370,3 +370,14 @@ InputReader::GranularityAsCString (lldb::InputReaderGranularity granularity)
     return unknown_state_string;
 }
 
+bool
+InputReader::HandlerData::GetBatchMode()
+{
+    return reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
+}
+
+lldb::StreamSP
+InputReader::HandlerData::GetOutStream()
+{
+    return reader.GetDebugger().GetAsyncOutputStream();
+}
