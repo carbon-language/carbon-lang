@@ -33,6 +33,53 @@ public:
     {
         eBroadcastBitRunPacketSent = kLoUserBroadcastBit
     };
+    
+    const static uint32_t kMaxPacketSize = 1200;
+    const static uint32_t kMaxDataSize = 1024;
+    
+    typedef enum 
+    {
+        eRequestTypeConnect = 0u,
+        eRequestTypeDisconnect,
+        eRequestTypeHostInfo,
+        eRequestTypeVersion,
+        eRequestTypeMaxBytes,
+        eRequestTypeReadMemory,
+        eRequestTypeWriteMemory,
+        eRequestTypeReadRegisters,
+        eRequestTypeWriteRegisters,
+        eRequestTypeLoad,
+        eRequestTypeImagePath,
+        eRequestTypeSuspend,
+        eRequestTypeResume,
+        eRequestTypeException,
+        eRequestTypeTermination,
+        eRequestTypeBreakpointSet,
+        eRequestTypeBreakpointRemove,
+        eRequestTypeRegions,
+        eRequestTypeReattach,
+        eRequestTypeHostReboot,
+        eRequestTypeReadMemory64,
+        eRequestTypeWriteMemory64,
+        eRequestTypeBreakpointSet64,
+        eRequestTypeBreakpointRemove64,
+        eRequestTypeKernelVersion
+    } RequestType;
+
+    typedef enum 
+    {
+        eErrorSuccess = 0,
+        eErrorAlreadyConnected,
+        eErrorPacketToBig,
+        eErrorInvalidRegisterFlavor,
+        eErrorUnimplemented
+    } ErrorType;
+    
+    typedef enum
+    {
+        ePacketTypeRequest  = 0u,
+        ePacketTypeReply    = 1u
+    } PacketType;
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
@@ -41,33 +88,13 @@ public:
     virtual
     ~CommunicationKDP();
 
-    size_t
-    SendPacket (const char *payload);
-
-    size_t
-    SendPacket (const char *payload,
-                size_t payload_length);
-
-    size_t
-    SendPacket (lldb_private::StreamString &response);
+    bool
+    SendRequestPacket (const lldb_private::StreamString &request_packet);
 
     // Wait for a packet within 'nsec' seconds
     size_t
     WaitForPacketWithTimeoutMicroSeconds (StringExtractor &response,
                                           uint32_t usec);
-
-    char
-    GetAck ();
-
-    size_t
-    SendAck ();
-
-    size_t
-    SendNack ();
-
-    char
-    CalculcateChecksum (const char *payload,
-                        size_t payload_length);
 
     bool
     GetSequenceMutex(lldb_private::Mutex::Locker& locker);
@@ -80,12 +107,6 @@ public:
     IsRunning() const
     {
         return m_public_is_running.GetValue();
-    }
-
-    bool
-    GetSendAcks ()
-    {
-        return m_send_acks;
     }
 
     //------------------------------------------------------------------
@@ -119,12 +140,19 @@ public:
                              lldb_private::ProcessLaunchInfo &launch_info); 
 
     
+    ErrorType
+    Connect (uint16_t reply_port, 
+             uint16_t exc_port, 
+             const char *greeting);
+
+    ErrorType
+    Disconnect ();
+
 protected:
     typedef std::list<std::string> packet_collection;
 
-    size_t
-    SendPacketNoLock (const char *payload, 
-                      size_t payload_length);
+    bool
+    SendRequestPacketNoLock (const lldb_private::StreamString &request_packet);
 
     size_t
     WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractor &response, 
@@ -133,6 +161,10 @@ protected:
     bool
     WaitForNotRunningPrivate (const lldb_private::TimeValue *timeout_ptr);
 
+    void
+    MakeRequestPacketHeader (RequestType request_type, 
+                             lldb_private::StreamString &request_packet);
+
     //------------------------------------------------------------------
     // Classes that inherit from CommunicationKDP can see and modify these
     //------------------------------------------------------------------
@@ -140,8 +172,9 @@ protected:
     lldb_private::Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
     lldb_private::Predicate<bool> m_public_is_running;
     lldb_private::Predicate<bool> m_private_is_running;
-    bool m_send_acks;
-
+    uint32_t m_session_key;
+    uint8_t m_request_sequence_id;
+    uint8_t m_exception_sequence_id;
 private:
     //------------------------------------------------------------------
     // For CommunicationKDP only

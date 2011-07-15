@@ -16,6 +16,12 @@
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
 		263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263E949D13661AE400E7D1CE /* UnwindAssembly-x86.cpp */; };
+		2642FBAE13D003B400ED6808 /* CommunicationKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBA813D003B400ED6808 /* CommunicationKDP.cpp */; };
+		2642FBAF13D003B400ED6808 /* CommunicationKDP.h in Headers */ = {isa = PBXBuildFile; fileRef = 2642FBA913D003B400ED6808 /* CommunicationKDP.h */; };
+		2642FBB013D003B400ED6808 /* ProcessKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBAA13D003B400ED6808 /* ProcessKDP.cpp */; };
+		2642FBB113D003B400ED6808 /* ProcessKDP.h in Headers */ = {isa = PBXBuildFile; fileRef = 2642FBAB13D003B400ED6808 /* ProcessKDP.h */; };
+		2642FBB213D003B400ED6808 /* ProcessKDPLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBAC13D003B400ED6808 /* ProcessKDPLog.cpp */; };
+		2642FBB313D003B400ED6808 /* ProcessKDPLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 2642FBAD13D003B400ED6808 /* ProcessKDPLog.h */; };
 		264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */; };
 		264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264D8D4F13661BD7003A368F /* UnwindAssembly.cpp */; };
 		265ABF6310F42EE900531910 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
@@ -640,6 +646,12 @@
 		263FEDA5112CC1DA00E4C208 /* ThreadSafeSTLMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeSTLMap.h; path = include/lldb/Core/ThreadSafeSTLMap.h; sourceTree = "<group>"; };
 		26424E3C125986CB0016D82C /* ValueObjectConstResult.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectConstResult.cpp; path = source/Core/ValueObjectConstResult.cpp; sourceTree = "<group>"; };
 		26424E3E125986D30016D82C /* ValueObjectConstResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectConstResult.h; path = include/lldb/Core/ValueObjectConstResult.h; sourceTree = "<group>"; };
+		2642FBA813D003B400ED6808 /* CommunicationKDP.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CommunicationKDP.cpp; sourceTree = "<group>"; };
+		2642FBA913D003B400ED6808 /* CommunicationKDP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommunicationKDP.h; sourceTree = "<group>"; };
+		2642FBAA13D003B400ED6808 /* ProcessKDP.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessKDP.cpp; sourceTree = "<group>"; };
+		2642FBAB13D003B400ED6808 /* ProcessKDP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessKDP.h; sourceTree = "<group>"; };
+		2642FBAC13D003B400ED6808 /* ProcessKDPLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessKDPLog.cpp; sourceTree = "<group>"; };
+		2642FBAD13D003B400ED6808 /* ProcessKDPLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessKDPLog.h; sourceTree = "<group>"; };
 		264334381110F63100CDB6C6 /* ValueObjectRegister.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectRegister.cpp; path = source/Core/ValueObjectRegister.cpp; sourceTree = "<group>"; };
 		2643343A1110F63C00CDB6C6 /* ValueObjectRegister.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectRegister.h; path = include/lldb/Core/ValueObjectRegister.h; sourceTree = "<group>"; };
 		264723A511FA076E00DE380C /* CleanUp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CleanUp.h; path = include/lldb/Utility/CleanUp.h; sourceTree = "<group>"; };
@@ -1483,6 +1495,7 @@
 			isa = PBXGroup;
 			children = (
 				4CEE62F71145F1C70064CF93 /* GDB Remote */,
+				2642FBA713D003B400ED6808 /* MacOSX-Kernel */,
 				260C898B10F57C5600BB2B04 /* MacOSX-User */,
 				26B4666E11A2080F00CF6220 /* Utility */,
 			);
@@ -1721,6 +1734,19 @@
 				9A35758D116CFE0F00E8ED2F /* SBValueList.cpp */,
 			);
 			name = API;
+			sourceTree = "<group>";
+		};
+		2642FBA713D003B400ED6808 /* MacOSX-Kernel */ = {
+			isa = PBXGroup;
+			children = (
+				2642FBA813D003B400ED6808 /* CommunicationKDP.cpp */,
+				2642FBA913D003B400ED6808 /* CommunicationKDP.h */,
+				2642FBAA13D003B400ED6808 /* ProcessKDP.cpp */,
+				2642FBAB13D003B400ED6808 /* ProcessKDP.h */,
+				2642FBAC13D003B400ED6808 /* ProcessKDPLog.cpp */,
+				2642FBAD13D003B400ED6808 /* ProcessKDPLog.h */,
+			);
+			path = "MacOSX-Kernel";
 			sourceTree = "<group>";
 		};
 		264A97BC133918A30017F0BE /* GDB Server */ = {
@@ -2686,6 +2712,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				9A9E1F0113980943005AC039 /* InputReaderStack.h in Headers */,
+				2642FBAF13D003B400ED6808 /* CommunicationKDP.h in Headers */,
+				2642FBB113D003B400ED6808 /* ProcessKDP.h in Headers */,
+				2642FBB313D003B400ED6808 /* ProcessKDPLog.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3279,6 +3308,9 @@
 				26F4214413C6515B00E04E5E /* DynamicLoaderMacOSXKernel.cpp in Sources */,
 				94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */,
 				94031A9E13CF486700DCFF3C /* InputReaderEZ.cpp in Sources */,
+				2642FBAE13D003B400ED6808 /* CommunicationKDP.cpp in Sources */,
+				2642FBB013D003B400ED6808 /* ProcessKDP.cpp in Sources */,
+				2642FBB213D003B400ED6808 /* ProcessKDPLog.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

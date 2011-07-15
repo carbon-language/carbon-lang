@@ -61,8 +61,11 @@ protected:
     SocketListen (uint16_t listen_port_num, Error *error_ptr);
 
     lldb::ConnectionStatus
-    SocketConnect (const char *host_and_port, Error *error_ptr);
-
+    ConnectTCP (const char *host_and_port, Error *error_ptr);
+    
+    lldb::ConnectionStatus
+    ConnectUDP (const char *host_and_port, Error *error_ptr);
+    
     lldb::ConnectionStatus
     NamedSocketAccept (const char *socket_name, Error *error_ptr);
 

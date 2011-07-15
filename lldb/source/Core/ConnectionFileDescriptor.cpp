@@ -97,7 +97,15 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
         }
         else if (strstr(s, "connect://"))
         {
-            return SocketConnect (s + strlen("connect://"), error_ptr);
+            return ConnectTCP (s + strlen("connect://"), error_ptr);
+        }
+        else if (strstr(s, "tcp://"))
+        {
+            return ConnectTCP (s + strlen("tcp://"), error_ptr);
+        }
+        else if (strstr(s, "udp://"))
+        {
+            return ConnectUDP (s + strlen("udp://"), error_ptr);
         }
         else if (strstr(s, "fd://"))
         {
@@ -626,10 +634,10 @@ ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_p
 }
 
 ConnectionStatus
-ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error_ptr)
+ConnectionFileDescriptor::ConnectTCP (const char *host_and_port, Error *error_ptr)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION,
-                                 "%p ConnectionFileDescriptor::SocketConnect (host/port = %s)",
+                                 "%p ConnectionFileDescriptor::ConnectTCP (host/port = %s)",
                                  this, host_and_port);
     Close (m_fd, NULL);
     m_is_socket = true;
@@ -708,6 +716,96 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
         return eConnectionStatusError;
     }
 
+    // Keep our TCP packets coming without any delays.
+    SetSocketOption (m_fd, IPPROTO_TCP, TCP_NODELAY, 1);
+    if (error_ptr)
+        error_ptr->Clear();
+    return eConnectionStatusSuccess;
+}
+
+ConnectionStatus
+ConnectionFileDescriptor::ConnectUDP (const char *host_and_port, Error *error_ptr)
+{
+    lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION,
+                                         "%p ConnectionFileDescriptor::ConnectUDP (host/port = %s)",
+                                         this, host_and_port);
+    Close (m_fd, NULL);
+    m_is_socket = true;
+    
+    RegularExpression regex ("([^:]+):([0-9]+)");
+    if (regex.Execute (host_and_port, 2) == false)
+    {
+        if (error_ptr)
+            error_ptr->SetErrorStringWithFormat("invalid host:port specification: '%s'", host_and_port);
+        return eConnectionStatusError;
+    }
+    std::string host_str;
+    std::string port_str;
+    if (regex.GetMatchAtIndex (host_and_port, 1, host_str) == false ||
+        regex.GetMatchAtIndex (host_and_port, 2, port_str) == false)
+    {
+        if (error_ptr)
+            error_ptr->SetErrorStringWithFormat("invalid host:port specification '%s'", host_and_port);
+        return eConnectionStatusError;
+    }
+    
+    int32_t port = Args::StringToSInt32 (port_str.c_str(), INT32_MIN);
+    if (port == INT32_MIN)
+    {
+        if (error_ptr)
+            error_ptr->SetErrorStringWithFormat("invalid port '%s'", port_str.c_str());
+        return eConnectionStatusError;
+    }
+    // Create the socket
+    m_fd = ::socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (m_fd == -1)
+    {
+        if (error_ptr)
+            error_ptr->SetErrorToErrno();
+        return eConnectionStatusError;
+    }
+    
+    m_should_close_fd = true;
+    
+    // Enable local address reuse
+    SetSocketOption (m_fd, SOL_SOCKET, SO_REUSEADDR, 1);
+    
+    struct sockaddr_in sa;
+    ::memset (&sa, 0, sizeof (sa));
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons (port);
+    
+    int inet_pton_result = ::inet_pton (AF_INET, host_str.c_str(), &sa.sin_addr);
+    
+    if (inet_pton_result <= 0)
+    {
+        struct hostent *host_entry = gethostbyname (host_str.c_str());
+        if (host_entry)
+            host_str = ::inet_ntoa (*(struct in_addr *)*host_entry->h_addr_list);
+        inet_pton_result = ::inet_pton (AF_INET, host_str.c_str(), &sa.sin_addr);
+        if (inet_pton_result <= 0)
+        {
+            
+            if (error_ptr)
+            {
+                if (inet_pton_result == -1)
+                    error_ptr->SetErrorToErrno();
+                else
+                    error_ptr->SetErrorStringWithFormat("invalid host string: '%s'", host_str.c_str());
+            }
+            Close (m_fd, NULL);
+            return eConnectionStatusError;
+        }
+    }
+    
+    if (-1 == ::connect (m_fd, (const struct sockaddr *)&sa, sizeof(sa)))
+    {
+        if (error_ptr)
+            error_ptr->SetErrorToErrno();
+        Close (m_fd, NULL);
+        return eConnectionStatusError;
+    }
+    
     // Keep our TCP packets coming without any delays.
     SetSocketOption (m_fd, IPPROTO_TCP, TCP_NODELAY, 1);
     if (error_ptr)

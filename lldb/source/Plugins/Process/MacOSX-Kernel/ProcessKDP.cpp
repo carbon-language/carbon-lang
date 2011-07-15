@@ -16,6 +16,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Target/Target.h"
 
 // Project includes
 #include "ProcessKDP.h"
@@ -414,7 +415,7 @@ ProcessKDP::DoDetach()
     
     m_thread_list.DiscardThreadPlans();
     
-    size_t response_size = m_comm.SendPacket ("D", 1);
+    size_t response_size = m_comm.Disconnect ();
     if (log)
     {
         if (response_size)
