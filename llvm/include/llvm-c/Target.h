@@ -147,12 +147,6 @@ unsigned LLVMElementAtOffset(LLVMTargetDataRef, LLVMTypeRef StructTy,
 unsigned long long LLVMOffsetOfElement(LLVMTargetDataRef, LLVMTypeRef StructTy,
                                        unsigned Element);
 
-/** Struct layouts are speculatively cached. If a TargetDataRef is alive when
-    types are being refined and removed, this method must be called whenever a
-    struct type is removed to avoid a dangling pointer in this cache.
-    See the method llvm::TargetData::InvalidateStructLayoutInfo. */
-void LLVMInvalidateStructLayout(LLVMTargetDataRef, LLVMTypeRef StructTy);
-
 /** Deallocates a TargetData.
     See the destructor llvm::TargetData::~TargetData. */
 void LLVMDisposeTargetData(LLVMTargetDataRef);

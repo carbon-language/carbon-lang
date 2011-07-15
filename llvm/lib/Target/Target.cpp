@@ -97,10 +97,6 @@ unsigned long long LLVMOffsetOfElement(LLVMTargetDataRef TD, LLVMTypeRef StructT
   return unwrap(TD)->getStructLayout(STy)->getElementOffset(Element);
 }
 
-void LLVMInvalidateStructLayout(LLVMTargetDataRef TD, LLVMTypeRef StructTy) {
-  unwrap(TD)->InvalidateStructLayoutInfo(unwrap<StructType>(StructTy));
-}
-
 void LLVMDisposeTargetData(LLVMTargetDataRef TD) {
   delete unwrap(TD);
 }

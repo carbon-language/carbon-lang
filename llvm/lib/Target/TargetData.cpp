@@ -329,15 +329,6 @@ public:
     }
   }
 
-  void InvalidateEntry(const StructType *Ty) {
-    LayoutInfoTy::iterator I = LayoutInfo.find(Ty);
-    if (I == LayoutInfo.end()) return;
-    
-    I->second->~StructLayout();
-    free(I->second);
-    LayoutInfo.erase(I);
-  }
-
   StructLayout *&operator[](const StructType *STy) {
     return LayoutInfo[STy];
   }
@@ -373,16 +364,6 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
   new (L) StructLayout(Ty, *this);
 
   return L;
-}
-
-/// InvalidateStructLayoutInfo - TargetData speculatively caches StructLayout
-/// objects.  If a TargetData object is alive when types are being refined and
-/// removed, this method must be called whenever a StructType is removed to
-/// avoid a dangling pointer in this cache.
-void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
-  if (!LayoutMap) return;  // No cache.
-
-  static_cast<StructLayoutMap*>(LayoutMap)->InvalidateEntry(Ty);
 }
 
 std::string TargetData::getStringRepresentation() const {
