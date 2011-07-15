@@ -150,6 +150,9 @@ public:
     lldb::SBValue
     GetChildAtIndex (uint32_t idx);
 
+#ifdef SWIG
+    %feature("docstring", "
+#endif
     //------------------------------------------------------------------
     /// Get a child value by index from a value.
     ///
@@ -167,20 +170,20 @@ public:
     /// points to a simple type, the child at index zero
     /// is the only child value available, unless \a synthetic_allowed 
     /// is \b true, in which case the pointer will be used as an array
-    /// and can create "synthetic" child values using positive or 
+    /// and can create 'synthetic' child values using positive or 
     /// negative indexes. If the pointer points to an aggregate type 
     /// (an array, class, union, struct), then the pointee is 
     /// transparently skipped and any children are going to be the indexes
     /// of the child values within the aggregate type. For example if
-    /// we have a "Point" type and we have a SBValue that contains a
-    /// pointer to a "Point" type, then the child at index zero will be
-    /// the "x" member, and the child at index 1 will be the "y" member
-    /// (the child at index zero won't be a "Point" instance).
+    /// we have a 'Point' type and we have a SBValue that contains a
+    /// pointer to a 'Point' type, then the child at index zero will be
+    /// the 'x' member, and the child at index 1 will be the 'y' member
+    /// (the child at index zero won't be a 'Point' instance).
     /// 
     /// Arrays have a preset number of children that can be accessed by
     /// index and will returns invalid child values for indexes that are
     /// out of bounds unless the \a synthetic_allowed is \b true. In this
-    /// case the array can create "synthetic" child values for indexes 
+    /// case the array can create 'synthetic' child values for indexes 
     /// that aren't in the array bounds using positive or negative 
     /// indexes.
     ///
@@ -200,6 +203,9 @@ public:
     /// @return
     ///     A new SBValue object that represents the child member value.
     //------------------------------------------------------------------
+#ifdef SWIG
+    ") GetChildAtIndex;
+#endif
     lldb::SBValue
     GetChildAtIndex (uint32_t idx, 
                      lldb::DynamicValueType use_dynamic,

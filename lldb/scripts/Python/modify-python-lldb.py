@@ -223,7 +223,7 @@ for line in content.splitlines():
                 # Adding support for eq and ne for the matched SB class.
                 state |= DEFINING_EQUALITY
 
-    elif (state & DEFINING_ITERATOR) or (state & DEFINING_EQUALITY):
+    if (state & DEFINING_ITERATOR) or (state & DEFINING_EQUALITY):
         match = init_pattern.search(line)
         if match:
             # We found the beginning of the __init__ method definition.
@@ -244,15 +244,16 @@ for line in content.splitlines():
             # Next state will be NORMAL.
             state = NORMAL
 
-    elif (state & CLEANUP_DOCSTRING):
+    if (state & CLEANUP_DOCSTRING):
         # Cleanse the lldb.py of the autodoc'ed residues.
         if c_ifdef_swig in line or c_endif_swig in line:
             continue
         # As well as the comment marker line and trailing blank line.
         if c_comment_marker in line or line == trailing_blank_line:
             continue
-        # Also remove the '\a ' substrings.
+        # Also remove the '\a ' and '\b 'substrings.
         line = line.replace('\a ', '')
+        line = line.replace('\b ', '')
         # And the leading '///' substring.
         doxygen_comment_match = doxygen_comment_start.match(line)
         if doxygen_comment_match:

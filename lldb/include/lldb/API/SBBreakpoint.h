@@ -71,6 +71,12 @@ TestBreakpointIgnoreCount.py),
 
         process.Continue()
 
+SBBreakpoint supports breakpoint location iteration. For example,
+
+    for bl in breakpoint:
+        print 'breakpoint location load addr: %s' % hex(bl.GetLoadAddress())
+        print 'breakpoint location condition: %s' % hex(bl.GetCondition())
+
 "
          ) SBBreakpoint;
 #endif
