@@ -15,7 +15,6 @@ add_llvm_target(BlackfinCodeGen
   BlackfinISelDAGToDAG.cpp
   BlackfinISelLowering.cpp
   BlackfinFrameLowering.cpp
-  BlackfinMCAsmInfo.cpp
   BlackfinRegisterInfo.cpp
   BlackfinSubtarget.cpp
   BlackfinTargetMachine.cpp

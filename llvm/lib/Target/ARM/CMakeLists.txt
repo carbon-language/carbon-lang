@@ -36,7 +36,6 @@ add_llvm_target(ARMCodeGen
   ARMMCCodeEmitter.cpp
   ARMMCExpr.cpp
   ARMLoadStoreOptimizer.cpp
-  ARMMCAsmInfo.cpp
   ARMMCInstLower.cpp
   ARMRegisterInfo.cpp
   ARMSelectionDAGInfo.cpp

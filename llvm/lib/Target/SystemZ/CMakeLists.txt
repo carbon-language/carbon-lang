@@ -13,7 +13,6 @@ add_llvm_target(SystemZCodeGen
   SystemZISelLowering.cpp
   SystemZInstrInfo.cpp
   SystemZFrameLowering.cpp
-  SystemZMCAsmInfo.cpp
   SystemZRegisterInfo.cpp
   SystemZSubtarget.cpp
   SystemZTargetMachine.cpp
