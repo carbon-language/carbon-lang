@@ -1028,8 +1028,7 @@ public:
 
     Function *parallelStartFunction =
       M->getFunction("GOMP_parallel_loop_runtime_start");
-    Builder.CreateCall(parallelStartFunction, Arguments.begin(),
-                       Arguments.end());
+    Builder.CreateCall(parallelStartFunction, Arguments);
 
     // Create call to the subfunction.
     Builder.CreateCall(SubFunction, subfunctionParam);
