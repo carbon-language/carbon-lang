@@ -97,10 +97,7 @@ public:
       return true;
     case ObjCMessageExpr::SuperInstance: {
       Transaction Trans(Pass.TA);
-      Pass.TA.clearDiagnostic(diag::err_arc_illegal_explicit_message,
-                              diag::err_unavailable,
-                              diag::err_unavailable_message,
-                              E->getSuperLoc());
+      clearDiagnostics(E->getSuperLoc());
       if (tryRemoving(E))
         return true;
       Pass.TA.replace(E->getSourceRange(), "self");
@@ -114,10 +111,17 @@ public:
     if (!rec) return true;
 
     Transaction Trans(Pass.TA);
-    Pass.TA.clearDiagnostic(diag::err_arc_illegal_explicit_message,
-                            diag::err_unavailable,
-                            diag::err_unavailable_message,
-                            rec->getExprLoc());
+    clearDiagnostics(rec->getExprLoc());
+
+    if (E->getMethodFamily() == OMF_release &&
+        isRemovable(E) && isInAtFinally(E)) {
+      // Change the -release to "receiver = 0" in a finally to avoid a leak
+      // when an exception is thrown.
+      Pass.TA.replace(E->getSourceRange(), rec->getSourceRange());
+      Pass.TA.insertAfterToken(rec->getLocEnd(), " = 0");
+      return true;
+    }
+
     if (!hasSideEffects(E, Pass.Ctx)) {
       if (tryRemoving(E))
         return true;
@@ -128,6 +132,25 @@ public:
   }
 
 private:
+  void clearDiagnostics(SourceLocation loc) const {
+    Pass.TA.clearDiagnostic(diag::err_arc_illegal_explicit_message,
+                            diag::err_unavailable,
+                            diag::err_unavailable_message,
+                            loc);
+  }
+
+  bool isInAtFinally(Expr *E) const {
+    assert(E);
+    Stmt *S = E;
+    while (S) {
+      if (isa<ObjCAtFinallyStmt>(S))
+        return true;
+      S = StmtMap->getParent(S);
+    }
+
+    return false;
+  }
+
   bool isRemovable(Expr *E) const {
     return Removables.count(E);
   }
