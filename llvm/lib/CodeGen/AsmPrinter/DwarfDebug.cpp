@@ -1587,22 +1587,18 @@ DbgScope *DwarfDebug::getOrCreateDbgScope(DebugLoc DL) {
   }
 
   getOrCreateAbstractScope(Scope);
-  DbgScope *WScope = NULL;
-  const MDNode *Key = InlinedAt;
-  if (const MDNode *Nest = DILocation(InlinedAt).getOrigLocation())
-    Key = Nest;
-  WScope = DbgScopeMap.lookup(Key);
+  DbgScope *WScope = DbgScopeMap.lookup(InlinedAt);
   if (WScope)
     return WScope;
 
   WScope = new DbgScope(NULL, DIDescriptor(Scope), InlinedAt);
-  DbgScopeMap[Key] = WScope;
+  DbgScopeMap.insert(std::make_pair(InlinedAt, WScope));
   DbgScope *Parent =
     getOrCreateDbgScope(DebugLoc::getFromDILocation(InlinedAt));
   WScope->setParent(Parent);
   Parent->addScope(WScope);
 
-  ConcreteScopes[Key] = WScope;
+  ConcreteScopes[InlinedAt] = WScope;
 
   return WScope;
 }
@@ -2087,12 +2083,8 @@ DbgScope *DwarfDebug::findDbgScope(DebugLoc DL) {
 
   DbgScope *Scope = NULL;
   LLVMContext &Ctx = Asm->MF->getFunction()->getContext();
-  if (const MDNode *IA = DL.getInlinedAt(Ctx)) {
-    const MDNode *Key = IA;
-    if (const MDNode *Nest = DILocation(IA).getOrigLocation())
-      Key = Nest;
-    Scope = ConcreteScopes.lookup(Key);
-  }
+  if (const MDNode *IA = DL.getInlinedAt(Ctx))
+    Scope = ConcreteScopes.lookup(IA);
   if (Scope == 0)
     Scope = DbgScopeMap.lookup(DL.getScope(Ctx));
 
