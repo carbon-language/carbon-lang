@@ -12,9 +12,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcMCAsmInfo.h"
+#include "llvm/ADT/Triple.h"
+
 using namespace llvm;
 
 SparcELFMCAsmInfo::SparcELFMCAsmInfo(const Target &T, StringRef TT) {
+  IsLittleEndian = false;
+  Triple TheTriple(TT);
+  if (TheTriple.getArch() == Triple::sparcv9)
+    PointerSize = 8;
+
   Data16bitsDirective = "\t.half\t";
   Data32bitsDirective = "\t.word\t";
   Data64bitsDirective = 0;  // .xword is only supported by V9.

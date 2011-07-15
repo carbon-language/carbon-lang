@@ -15,6 +15,8 @@
 using namespace llvm;
 
 SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, StringRef TT) {
+  IsLittleEndian = false;
+
   ZeroDirective = "\t.space\t";
   Data64bitsDirective = "\t.quad\t";
   AlignmentIsInBytes = false;

@@ -15,6 +15,8 @@
 using namespace llvm;
 
 MSP430MCAsmInfo::MSP430MCAsmInfo(const Target &T, StringRef TT) {
+  PointerSize = 2;
+
   PrivateGlobalPrefix = ".L";
   WeakRefDirective ="\t.weak\t";
   PCSymbol=".";

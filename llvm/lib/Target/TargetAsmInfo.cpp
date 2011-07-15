@@ -17,12 +17,7 @@ using namespace llvm;
 
 TargetAsmInfo::TargetAsmInfo(const TargetMachine &TM) {
   TLOF = &TM.getTargetLowering()->getObjFileLowering();
-  const TargetData &TD = *TM.getTargetData();
-  IsLittleEndian = TD.isLittleEndian();
-  PointerSize = TD.getPointerSize();
-
   TFI = TM.getFrameLowering();
-  StackDir = TFI->getStackGrowthDirection();
   TRI = TM.getRegisterInfo();
   TFI->getInitialFrameState(InitialFrameState);
 }

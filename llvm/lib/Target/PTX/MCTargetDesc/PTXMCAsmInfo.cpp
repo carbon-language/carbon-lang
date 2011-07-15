@@ -12,10 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "PTXMCAsmInfo.h"
+#include "llvm/ADT/Triple.h"
 
 using namespace llvm;
 
 PTXMCAsmInfo::PTXMCAsmInfo(const Target &T, const StringRef &TT) {
+  Triple TheTriple(TT);
+  if (TheTriple.getArch() == Triple::ptx64)
+    PointerSize = 8;
+
   CommentString = "//";
 
   PrivateGlobalPrefix = "$L__";

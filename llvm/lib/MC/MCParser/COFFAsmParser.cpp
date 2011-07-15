@@ -401,14 +401,14 @@ bool COFFAsmParser::ParseAtUnwindOrAtExcept(bool &unwind, bool &except) {
 bool COFFAsmParser::ParseSEHRegisterNumber(unsigned &RegNo) {
   SMLoc startLoc = getLexer().getLoc();
   if (getLexer().is(AsmToken::Percent)) {
-    const TargetAsmInfo &asmInfo = getContext().getTargetAsmInfo();
+    const TargetAsmInfo &TAI = getContext().getTargetAsmInfo();
     SMLoc endLoc;
     unsigned LLVMRegNo;
     if (getParser().getTargetParser().ParseRegister(LLVMRegNo,startLoc,endLoc))
       return true;
 
     // Check that this is a non-volatile register.
-    const unsigned *NVRegs = asmInfo.getCalleeSavedRegs();
+    const unsigned *NVRegs = TAI.getCalleeSavedRegs();
     unsigned i;
     for (i = 0; NVRegs[i] != 0; ++i)
       if (NVRegs[i] == LLVMRegNo)
@@ -416,7 +416,7 @@ bool COFFAsmParser::ParseSEHRegisterNumber(unsigned &RegNo) {
     if (NVRegs[i] == 0)
       return Error(startLoc, "expected non-volatile register");
 
-    int SEHRegNo = asmInfo.getSEHRegNum(LLVMRegNo);
+    int SEHRegNo = TAI.getSEHRegNum(LLVMRegNo);
     if (SEHRegNo < 0)
       return Error(startLoc,"register can't be represented in SEH unwind info");
     RegNo = SEHRegNo;

@@ -18,6 +18,8 @@
 using namespace llvm;
 
 SystemZMCAsmInfo::SystemZMCAsmInfo(const Target &T, StringRef TT) {
+  IsLittleEndian = false;
+  PointerSize = 8;
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
   PCSymbol = ".";

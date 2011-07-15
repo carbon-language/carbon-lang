@@ -12,9 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsMCAsmInfo.h"
+#include "llvm/ADT/Triple.h"
+
 using namespace llvm;
 
 MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, StringRef TT) {
+  Triple TheTriple(TT);
+  if (TheTriple.getArch() == Triple::mips)
+    IsLittleEndian = false;
+
   AlignmentIsInBytes          = false;
   Data16bitsDirective         = "\t.2byte\t";
   Data32bitsDirective         = "\t.4byte\t";

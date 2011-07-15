@@ -128,7 +128,7 @@ extern "C" void LLVMInitializeARMMCRegInfo() {
   TargetRegistry::RegisterMCRegInfo(TheThumbTarget, createARMMCRegisterInfo);
 }
 
-static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
+static MCAsmInfo *createARMMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin())
@@ -139,6 +139,6 @@ static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
 
 extern "C" void LLVMInitializeARMMCAsmInfo() {
   // Register the target asm info.
-  RegisterMCAsmInfoFn A(TheARMTarget, createMCAsmInfo);
-  RegisterMCAsmInfoFn B(TheThumbTarget, createMCAsmInfo);
+  RegisterMCAsmInfoFn A(TheARMTarget, createARMMCAsmInfo);
+  RegisterMCAsmInfoFn B(TheThumbTarget, createARMMCAsmInfo);
 }

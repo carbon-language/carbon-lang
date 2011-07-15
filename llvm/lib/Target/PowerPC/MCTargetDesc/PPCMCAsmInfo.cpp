@@ -15,6 +15,10 @@
 using namespace llvm;
 
 PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) {
+  if (is64Bit)
+    PointerSize = 8;
+  IsLittleEndian = false;
+
   PCSymbol = ".";
   CommentString = ";";
   ExceptionsType = ExceptionHandling::DwarfCFI;

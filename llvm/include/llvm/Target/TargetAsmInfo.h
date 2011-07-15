@@ -28,9 +28,6 @@ namespace llvm {
   class TargetLoweringObjectFile;
 
 class TargetAsmInfo {
-  unsigned PointerSize;
-  bool IsLittleEndian;
-  TargetFrameLowering::StackDirection StackDir;
   std::vector<MachineMove> InitialFrameState;
   const TargetRegisterInfo *TRI;
   const TargetFrameLowering *TFI;
@@ -38,20 +35,6 @@ class TargetAsmInfo {
 
 public:
   explicit TargetAsmInfo(const TargetMachine &TM);
-
-  /// getPointerSize - Get the pointer size in bytes.
-  unsigned getPointerSize() const {
-    return PointerSize;
-  }
-
-  /// islittleendian - True if the target is little endian.
-  bool isLittleEndian() const {
-    return IsLittleEndian;
-  }
-
-  TargetFrameLowering::StackDirection getStackGrowthDirection() const {
-    return StackDir;
-  }
 
   const MCSection *getDwarfLineSection() const {
     return TLOF->getDwarfLineSection();

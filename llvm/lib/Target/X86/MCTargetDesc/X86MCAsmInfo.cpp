@@ -49,11 +49,13 @@ static const char *const x86_asm_table[] = {
   "{cc}", "cc",
   0,0};
 
-X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple) {
+X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &T) {
+  bool is64Bit = T.getArch() == Triple::x86_64;
+  if (is64Bit)
+    PointerSize = 8;
+
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
-
-  bool is64Bit = Triple.getArch() == Triple::x86_64;
 
   TextAlignFillValue = 0x90;
 
@@ -75,22 +77,14 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple) {
   ExceptionsType = ExceptionHandling::DwarfCFI;
 }
 
-const MCExpr *
-X86_64MCAsmInfoDarwin::getExprForPersonalitySymbol(const MCSymbol *Sym,
-                                                   unsigned Encoding,
-                                                   MCStreamer &Streamer) const {
-  MCContext &Context = Streamer.getContext();
-  const MCExpr *Res =
-    MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, Context);
-  const MCExpr *Four = MCConstantExpr::Create(4, Context);
-  return MCBinaryExpr::CreateAdd(Res, Four, Context);
-}
-
 X86_64MCAsmInfoDarwin::X86_64MCAsmInfoDarwin(const Triple &Triple)
   : X86MCAsmInfoDarwin(Triple) {
 }
 
 X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
+  if (T.getArch() == Triple::x86_64)
+    PointerSize = 8;
+
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
 
@@ -113,6 +107,17 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
   // .words.
   if (T.getOS() == Triple::OpenBSD && T.getArch() == Triple::x86)
     Data64bitsDirective = 0;
+}
+
+const MCExpr *
+X86_64MCAsmInfoDarwin::getExprForPersonalitySymbol(const MCSymbol *Sym,
+                                                   unsigned Encoding,
+                                                   MCStreamer &Streamer) const {
+  MCContext &Context = Streamer.getContext();
+  const MCExpr *Res =
+    MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, Context);
+  const MCExpr *Four = MCConstantExpr::Create(4, Context);
+  return MCBinaryExpr::CreateAdd(Res, Four, Context);
 }
 
 const MCSection *X86ELFMCAsmInfo::

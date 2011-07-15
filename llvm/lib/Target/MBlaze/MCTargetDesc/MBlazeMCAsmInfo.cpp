@@ -15,6 +15,8 @@
 using namespace llvm;
 
 MBlazeMCAsmInfo::MBlazeMCAsmInfo() {
+  IsLittleEndian              = false;
+  StackGrowsUp                = false;
   SupportsDebugInformation    = true;
   AlignmentIsInBytes          = false;
   PrivateGlobalPrefix         = "$";

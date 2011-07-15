@@ -162,7 +162,7 @@ extern "C" void LLVMInitializeX86MCRegInfo() {
 }
 
 
-static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
+static MCAsmInfo *createX86MCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO) {
@@ -180,6 +180,6 @@ static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
 
 extern "C" void LLVMInitializeX86MCAsmInfo() {
   // Register the target asm info.
-  RegisterMCAsmInfoFn A(TheX86_32Target, createMCAsmInfo);
-  RegisterMCAsmInfoFn B(TheX86_64Target, createMCAsmInfo);
+  RegisterMCAsmInfoFn A(TheX86_32Target, createX86MCAsmInfo);
+  RegisterMCAsmInfoFn B(TheX86_64Target, createX86MCAsmInfo);
 }

@@ -23,6 +23,9 @@
 using namespace llvm;
 
 MCAsmInfo::MCAsmInfo() {
+  PointerSize = 4;
+  IsLittleEndian = true;
+  StackGrowsUp = false;
   HasSubsectionsViaSymbols = false;
   HasMachoZeroFillDirective = false;
   HasMachoTBSSDirective = false;

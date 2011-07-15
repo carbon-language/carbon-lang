@@ -604,7 +604,7 @@ void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
     int64_t IntValue;
     if (!Value->EvaluateAsAbsolute(IntValue))
       report_fatal_error("Don't know how to emit this value.");
-    if (getContext().getTargetAsmInfo().isLittleEndian()) {
+    if (getContext().getAsmInfo().isLittleEndian()) {
       EmitIntValue((uint32_t)(IntValue >> 0 ), 4, AddrSpace);
       EmitIntValue((uint32_t)(IntValue >> 32), 4, AddrSpace);
     } else {
@@ -827,8 +827,8 @@ void MCAsmStreamer::EmitCFIEndProc() {
 
 void MCAsmStreamer::EmitRegisterName(int64_t Register) {
   if (InstPrinter && !MAI.useDwarfRegNumForCFI()) {
-    const TargetAsmInfo &asmInfo = getContext().getTargetAsmInfo();
-    unsigned LLVMRegister = asmInfo.getLLVMRegNum(Register, true);
+    const TargetAsmInfo &TAI = getContext().getTargetAsmInfo();
+    unsigned LLVMRegister = TAI.getLLVMRegNum(Register, true);
     InstPrinter->printRegName(OS, LLVMRegister);
   } else {
     OS << Register;
@@ -1124,7 +1124,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
         unsigned Bit = (Code[i] >> j) & 1;
 
         unsigned FixupBit;
-        if (getContext().getTargetAsmInfo().isLittleEndian())
+        if (getContext().getAsmInfo().isLittleEndian())
           FixupBit = i * 8 + j;
         else
           FixupBit = i * 8 + (7-j);

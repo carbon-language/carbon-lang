@@ -225,9 +225,9 @@ void MCWin64EHUnwindEmitter::EmitUnwindInfo(MCStreamer &streamer,
   // Switch sections (the static function above is meant to be called from
   // here and from Emit().
   MCContext &context = streamer.getContext();
-  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+  const TargetAsmInfo &TAI = context.getTargetAsmInfo();
   const MCSection *xdataSect =
-    asmInfo.getWin64EHTableSection(GetSectionSuffix(info->Function));
+    TAI.getWin64EHTableSection(GetSectionSuffix(info->Function));
   streamer.SwitchSection(xdataSect);
 
   llvm::EmitUnwindInfo(streamer, info);
@@ -236,11 +236,11 @@ void MCWin64EHUnwindEmitter::EmitUnwindInfo(MCStreamer &streamer,
 void MCWin64EHUnwindEmitter::Emit(MCStreamer &streamer) {
   MCContext &context = streamer.getContext();
   // Emit the unwind info structs first.
-  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+  const TargetAsmInfo &TAI = context.getTargetAsmInfo();
   for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i) {
     MCWin64EHUnwindInfo &info = streamer.getW64UnwindInfo(i);
     const MCSection *xdataSect =
-      asmInfo.getWin64EHTableSection(GetSectionSuffix(info.Function));
+      TAI.getWin64EHTableSection(GetSectionSuffix(info.Function));
     streamer.SwitchSection(xdataSect);
     llvm::EmitUnwindInfo(streamer, &info);
   }
@@ -248,7 +248,7 @@ void MCWin64EHUnwindEmitter::Emit(MCStreamer &streamer) {
   for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i) {
     MCWin64EHUnwindInfo &info = streamer.getW64UnwindInfo(i);
     const MCSection *pdataSect =
-      asmInfo.getWin64EHFuncTableSection(GetSectionSuffix(info.Function));
+      TAI.getWin64EHFuncTableSection(GetSectionSuffix(info.Function));
     streamer.SwitchSection(pdataSect);
     EmitRuntimeFunction(streamer, &info);
   }

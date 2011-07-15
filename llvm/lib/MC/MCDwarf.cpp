@@ -172,7 +172,7 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
     // At this point we want to emit/create the sequence to encode the delta in
     // line numbers and the increment of the address from the previous Label
     // and the current Label.
-    const TargetAsmInfo &asmInfo = MCOS->getContext().getTargetAsmInfo();
+    const MCAsmInfo &asmInfo = MCOS->getContext().getAsmInfo();
     MCOS->EmitDwarfAdvanceLineAddr(LineDelta, LastLabel, Label,
                                    asmInfo.getPointerSize());
 
@@ -198,7 +198,7 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
   // Switch back the the dwarf line section.
   MCOS->SwitchSection(context.getTargetAsmInfo().getDwarfLineSection());
 
-  const TargetAsmInfo &asmInfo = MCOS->getContext().getTargetAsmInfo();
+  const MCAsmInfo &asmInfo = MCOS->getContext().getAsmInfo();
   MCOS->EmitDwarfAdvanceLineAddr(INT64_MAX, LastLabel, SectionEnd,
                                  asmInfo.getPointerSize());
 }
@@ -431,25 +431,24 @@ void MCDwarfFile::dump() const {
 
 static int getDataAlignmentFactor(MCStreamer &streamer) {
   MCContext &context = streamer.getContext();
-  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+  const MCAsmInfo &asmInfo = context.getAsmInfo();
   int size = asmInfo.getPointerSize();
-  if (asmInfo.getStackGrowthDirection() == TargetFrameLowering::StackGrowsUp)
+  if (asmInfo.isStackGrowthDirectionUp())
     return size;
- else
-   return -size;
+  else
+    return -size;
 }
 
 static unsigned getSizeForEncoding(MCStreamer &streamer,
                                    unsigned symbolEncoding) {
   MCContext &context = streamer.getContext();
-  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   unsigned format = symbolEncoding & 0x0f;
   switch (format) {
   default:
     assert(0 && "Unknown Encoding");
   case dwarf::DW_EH_PE_absptr:
   case dwarf::DW_EH_PE_signed:
-    return asmInfo.getPointerSize();
+    return context.getAsmInfo().getPointerSize();
   case dwarf::DW_EH_PE_udata2:
   case dwarf::DW_EH_PE_sdata2:
     return 2;
@@ -486,11 +485,11 @@ static void EmitPersonality(MCStreamer &streamer, const MCSymbol &symbol,
 }
 
 static const MachineLocation TranslateMachineLocation(
-                                                  const TargetAsmInfo &AsmInfo,
+                                                  const TargetAsmInfo &TAI,
                                                   const MachineLocation &Loc) {
   unsigned Reg = Loc.getReg() == MachineLocation::VirtualFP ?
     MachineLocation::VirtualFP :
-    unsigned(AsmInfo.getDwarfRegNum(Loc.getReg(), true));
+    unsigned(TAI.getDwarfRegNum(Loc.getReg(), true));
   const MachineLocation &NewLoc = Loc.isReg() ?
     MachineLocation(Reg) : MachineLocation(Reg, Loc.getOffset());
   return NewLoc;
@@ -772,11 +771,11 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
                                           const MCSymbol *lsda,
                                           unsigned lsdaEncoding) {
   MCContext &context = streamer.getContext();
-  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+  const TargetAsmInfo &TAI = context.getTargetAsmInfo();
   bool verboseAsm = streamer.isVerboseAsm();
 
   MCSymbol *sectionStart;
-  if (asmInfo.isFunctionEHFrameSymbolPrivate() || !IsEH)
+  if (TAI.isFunctionEHFrameSymbolPrivate() || !IsEH)
     sectionStart = context.CreateTempSymbol();
   else
     sectionStart = context.GetOrCreateSymbol(Twine("EH_frame") + Twine(CIENum));
@@ -825,7 +824,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
 
   // Return Address Register
   if (verboseAsm) streamer.AddComment("CIE Return Address Column");
-  streamer.EmitULEB128IntValue(asmInfo.getDwarfRARegNum(true));
+  streamer.EmitULEB128IntValue(TAI.getDwarfRARegNum(true));
 
   // Augmentation Data Length (optional)
 
@@ -859,21 +858,21 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
       EmitEncodingByte(streamer, lsdaEncoding, "LSDA Encoding");
 
     // Encoding of the FDE pointers
-    EmitEncodingByte(streamer, asmInfo.getFDEEncoding(UsingCFI),
+    EmitEncodingByte(streamer, TAI.getFDEEncoding(UsingCFI),
                      "FDE Encoding");
   }
 
   // Initial Instructions
 
-  const std::vector<MachineMove> &Moves = asmInfo.getInitialFrameState();
+  const std::vector<MachineMove> &Moves = TAI.getInitialFrameState();
   std::vector<MCCFIInstruction> Instructions;
 
   for (int i = 0, n = Moves.size(); i != n; ++i) {
     MCSymbol *Label = Moves[i].getLabel();
     const MachineLocation &Dst =
-      TranslateMachineLocation(asmInfo, Moves[i].getDestination());
+      TranslateMachineLocation(TAI, Moves[i].getDestination());
     const MachineLocation &Src =
-      TranslateMachineLocation(asmInfo, Moves[i].getSource());
+      TranslateMachineLocation(TAI, Moves[i].getSource());
     MCCFIInstruction Inst(Label, Dst, Src);
     Instructions.push_back(Inst);
   }
@@ -881,7 +880,8 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   EmitCFIInstructions(streamer, Instructions, NULL);
 
   // Padding
-  streamer.EmitValueToAlignment(IsEH ? 4 : asmInfo.getPointerSize());
+  streamer.EmitValueToAlignment(IsEH
+                                ? 4 : context.getAsmInfo().getPointerSize());
 
   streamer.EmitLabel(sectionEnd);
   return *sectionStart;
@@ -893,10 +893,10 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   MCContext &context = streamer.getContext();
   MCSymbol *fdeStart = context.CreateTempSymbol();
   MCSymbol *fdeEnd = context.CreateTempSymbol();
-  const TargetAsmInfo &TAsmInfo = context.getTargetAsmInfo();
+  const TargetAsmInfo &TAI = context.getTargetAsmInfo();
   bool verboseAsm = streamer.isVerboseAsm();
 
-  if (!TAsmInfo.isFunctionEHFrameSymbolPrivate() && IsEH) {
+  if (!TAI.isFunctionEHFrameSymbolPrivate() && IsEH) {
     MCSymbol *EHSym =
       context.GetOrCreateSymbol(frame.Function->getName() + Twine(".eh"));
     streamer.EmitEHSymAttributes(frame.Function, EHSym);
@@ -925,7 +925,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
     streamer.EmitSymbolValue(&cieStart, 4);
   }
 
-  unsigned fdeEncoding = TAsmInfo.getFDEEncoding(UsingCFI);
+  unsigned fdeEncoding = TAI.getFDEEncoding(UsingCFI);
   unsigned size = getSizeForEncoding(streamer, fdeEncoding);
 
   // PC Begin
@@ -1011,9 +1011,9 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
                                bool UsingCFI,
                                bool IsEH) {
   MCContext &Context = Streamer.getContext();
-  const TargetAsmInfo &AsmInfo = Context.getTargetAsmInfo();
-  const MCSection &Section = IsEH ? *AsmInfo.getEHFrameSection() :
-                                    *AsmInfo.getDwarfFrameSection();
+  const TargetAsmInfo &TAI = Context.getTargetAsmInfo();
+  const MCSection &Section = IsEH ? *TAI.getEHFrameSection() :
+                                    *TAI.getDwarfFrameSection();
   Streamer.SwitchSection(&Section);
   MCSymbol *SectionStart = Context.CreateTempSymbol();
   Streamer.EmitLabel(SectionStart);
@@ -1025,7 +1025,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   const MCSymbol *DummyDebugKey = NULL;
   for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
     const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
-    if (IsEH && AsmInfo.getCompactUnwindSection() &&
+    if (IsEH && TAI.getCompactUnwindSection() &&
         Emitter.EmitCompactUnwind(Streamer, Frame)) {
       FDEEnd = NULL;
       continue;
@@ -1045,7 +1045,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
       Streamer.EmitLabel(FDEEnd);
   }
 
-  Streamer.EmitValueToAlignment(AsmInfo.getPointerSize());
+  Streamer.EmitValueToAlignment(Context.getAsmInfo().getPointerSize());
   if (FDEEnd)
     Streamer.EmitLabel(FDEEnd);
 }
