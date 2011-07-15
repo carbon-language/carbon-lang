@@ -2098,7 +2098,7 @@ APFloat::convertToInteger(APSInt &result,
   opStatus status = convertToInteger(
     parts.data(), bitWidth, result.isSigned(), rounding_mode, isExact);
   // Keeps the original signed-ness.
-  result = APInt(bitWidth, parts.size(), parts.data());
+  result = APInt(bitWidth, (unsigned)parts.size(), parts.data());
   return status;
 }
 
