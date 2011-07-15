@@ -201,8 +201,10 @@ class DwarfDebug {
 
   /// DbgScopeMap - Tracks the scopes in the current function.  Owns the
   /// contained DbgScope*s.
-  ///
   DenseMap<const MDNode *, DbgScope *> DbgScopeMap;
+
+  /// InlinedDbgScopeMap - Tracks inlined function scopes in current function.
+  DenseMap<DebugLoc, DbgScope *> InlinedDbgScopeMap;
 
   /// AbstractScopes - Tracks the abstract scopes a module. These scopes are
   /// not included DbgScopeMap.  AbstractScopes owns its DbgScope*s.
