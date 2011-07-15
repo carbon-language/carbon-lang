@@ -95,8 +95,9 @@ an undeclared parameter):</p>
 <pre>
 exception Error of string
 
-let the_module = create_module (global_context ()) "my cool jit"
-let builder = builder (global_context ())
+let context = global_context ()
+let the_module = create_module context "my cool jit"
+let builder = builder context
 let named_values:(string, llvalue) Hashtbl.t = Hashtbl.create 10
 let double_type = double_type context
 </pre>
@@ -176,9 +177,9 @@ variables</a>.</p>
       let rhs_val = codegen_expr rhs in
       begin
         match op with
-        | '+' -&gt; build_add lhs_val rhs_val "addtmp" builder
-        | '-' -&gt; build_sub lhs_val rhs_val "subtmp" builder
-        | '*' -&gt; build_mul lhs_val rhs_val "multmp" builder
+        | '+' -&gt; build_fadd lhs_val rhs_val "addtmp" builder
+        | '-' -&gt; build_fsub lhs_val rhs_val "subtmp" builder
+        | '*' -&gt; build_fmul lhs_val rhs_val "multmp" builder
         | '&lt;' -&gt;
             (* Convert bool 0/1 to double 0.0 or 1.0 *)
             let i = build_fcmp Fcmp.Ult lhs_val rhs_val "cmptmp" builder in
