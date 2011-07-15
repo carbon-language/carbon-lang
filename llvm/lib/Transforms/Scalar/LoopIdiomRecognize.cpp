@@ -173,6 +173,11 @@ static void deleteIfDeadInstruction(Value *V, ScalarEvolution &SE) {
 bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   CurLoop = L;
 
+  // Disable loop idiom recognition if the function's name is a common idiom. 
+  StringRef Name = L->getHeader()->getParent()->getName();
+  if (Name == "memset" || Name == "memcpy")
+    return false;
+
   // The trip count of the loop must be analyzable.
   SE = &getAnalysis<ScalarEvolution>();
   if (!SE->hasLoopInvariantBackedgeTakenCount(L))
