@@ -510,7 +510,10 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       break;
 
     case Stmt::GNUNullExprClass: {
-      MakeNode(Dst, S, Pred, GetState(Pred)->BindExpr(S, svalBuilder.makeNull()));
+      // GNU __null is a pointer-width integer, not an actual pointer.
+      const GRState *state = GetState(Pred);
+      state = state->BindExpr(S, svalBuilder.makeIntValWithPtrWidth(0, false));
+      MakeNode(Dst, S, Pred, state);
       break;
     }
 

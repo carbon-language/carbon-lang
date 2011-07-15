@@ -39,3 +39,11 @@ void foo4(void) {
     *np = 0;  // no-warning
 }
 
+
+int pr10372(void *& x) {
+  // GNU null is a pointer-sized integer, not a pointer.
+  x = __null;
+  // This used to crash.
+  return __null;
+}
+
