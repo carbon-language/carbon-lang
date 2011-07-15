@@ -812,7 +812,7 @@ Value *Reassociate::OptimizeAdd(Instruction *I,
       // because we can percolate the negate out.  Watch for minint, which
       // cannot be positivified.
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Factor))
-        if (CI->getValue().isNegative() && !CI->getValue().isMinSignedValue()) {
+        if (CI->isNegative() && !CI->isMinValue(true)) {
           Factor = ConstantInt::get(CI->getContext(), -CI->getValue());
           assert(!Duplicates.count(Factor) &&
                  "Shouldn't have two constant factors, missed a canonicalize");

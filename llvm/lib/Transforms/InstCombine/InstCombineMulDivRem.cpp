@@ -691,14 +691,14 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
     bool hasNegative = false;
     for (unsigned i = 0; !hasNegative && i != VWidth; ++i)
       if (ConstantInt *RHS = dyn_cast<ConstantInt>(RHSV->getOperand(i)))
-        if (RHS->getValue().isNegative())
+        if (RHS->isNegative())
           hasNegative = true;
 
     if (hasNegative) {
       std::vector<Constant *> Elts(VWidth);
       for (unsigned i = 0; i != VWidth; ++i) {
         if (ConstantInt *RHS = dyn_cast<ConstantInt>(RHSV->getOperand(i))) {
-          if (RHS->getValue().isNegative())
+          if (RHS->isNegative())
             Elts[i] = cast<ConstantInt>(ConstantExpr::getNeg(RHS));
           else
             Elts[i] = RHS;

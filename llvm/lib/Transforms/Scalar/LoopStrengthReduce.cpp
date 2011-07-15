@@ -2767,7 +2767,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
         // value to the immediate would produce a value closer to zero than the
         // immediate itself, then the formula isn't worthwhile.
         if (const SCEVConstant *C = dyn_cast<SCEVConstant>(NewF.ScaledReg))
-          if (C->getValue()->getValue().isNegative() !=
+          if (C->getValue()->isNegative() !=
                 (NewF.AM.BaseOffs < 0) &&
               (C->getValue()->getValue().abs() * APInt(BitWidth, F.AM.Scale))
                 .ule(abs64(NewF.AM.BaseOffs)))
