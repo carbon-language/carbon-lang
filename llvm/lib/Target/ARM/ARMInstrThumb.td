@@ -390,8 +390,8 @@ let isCall = 1,
   Uses = [SP] in {
   // Also used for Thumb2
   def tBL  : TIx2<0b11110, 0b11, 1,
-                  (outs), (ins t_bltarget:$func, variable_ops), IIC_Br,
-                  "bl\t$func",
+                  (outs), (ins pred:$p, t_bltarget:$func, variable_ops), IIC_Br,
+                  "bl${p}\t$func",
                   [(ARMtcall tglobaladdr:$func)]>,
              Requires<[IsThumb, IsNotDarwin]> {
     bits<21> func;
@@ -403,8 +403,8 @@ let isCall = 1,
 
   // ARMv5T and above, also used for Thumb2
   def tBLXi : TIx2<0b11110, 0b11, 0,
-                   (outs), (ins t_blxtarget:$func, variable_ops), IIC_Br,
-                   "blx\t$func",
+                   (outs), (ins pred:$p, t_blxtarget:$func, variable_ops), IIC_Br,
+                   "blx${p}\t$func",
                    [(ARMcall tglobaladdr:$func)]>,
               Requires<[IsThumb, HasV5T, IsNotDarwin]> {
     bits<21> func;
@@ -416,8 +416,8 @@ let isCall = 1,
   }
 
   // Also used for Thumb2
-  def tBLXr : TI<(outs), (ins GPR:$func, variable_ops), IIC_Br,
-                  "blx\t$func",
+  def tBLXr : TI<(outs), (ins pred:$p, GPR:$func, variable_ops), IIC_Br,
+                  "blx${p}\t$func",
                   [(ARMtcall GPR:$func)]>,
               Requires<[IsThumb, HasV5T, IsNotDarwin]>,
               T1Special<{1,1,1,?}> { // A6.2.3 & A8.6.24;
@@ -440,43 +440,22 @@ let isCall = 1,
   Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR, QQQQ0, QQQQ2, QQQQ3, CPSR, FPSCR],
   Uses = [R7, SP] in {
   // Also used for Thumb2
-  def tBLr9 : TIx2<0b11110, 0b11, 1,
-                   (outs), (ins pred:$p, t_bltarget:$func, variable_ops),
-                   IIC_Br, "bl${p}\t$func",
-                   [(ARMtcall tglobaladdr:$func)]>,
-              Requires<[IsThumb, IsDarwin]> {
-    bits<21> func;
-    let Inst{25-16} = func{20-11};
-    let Inst{13} = 1;
-    let Inst{11} = 1;
-    let Inst{10-0} = func{10-0};
-  }
+  def tBLr9 : tPseudoExpand<(outs), (ins pred:$p, t_bltarget:$func, variable_ops),
+                          4, IIC_Br, [(ARMtcall tglobaladdr:$func)],
+                          (tBL pred:$p, t_bltarget:$func)>,
+              Requires<[IsThumb, IsDarwin]>;
 
   // ARMv5T and above, also used for Thumb2
-  def tBLXi_r9 : TIx2<0b11110, 0b11, 0,
-                      (outs), (ins pred:$p, t_blxtarget:$func, variable_ops),
-                      IIC_Br, "blx${p}\t$func",
-                      [(ARMcall tglobaladdr:$func)]>,
-                 Requires<[IsThumb, HasV5T, IsDarwin]> {
-    bits<21> func;
-    let Inst{25-16} = func{20-11};
-    let Inst{13} = 1;
-    let Inst{11} = 1;
-    let Inst{10-1} = func{10-1};
-    let Inst{0} = 0; // func{0} is assumed zero
-  }
+  def tBLXi_r9 : tPseudoExpand<(outs), (ins pred:$p, t_blxtarget:$func, variable_ops),
+                      4, IIC_Br, [(ARMcall tglobaladdr:$func)],
+                      (tBLXi pred:$p, t_blxtarget:$func)>,
+                 Requires<[IsThumb, HasV5T, IsDarwin]>;
 
   // Also used for Thumb2
-  def tBLXr_r9 : TI<(outs), (ins pred:$p, GPR:$func, variable_ops), IIC_Br,
-                    "blx${p}\t$func",
-                    [(ARMtcall GPR:$func)]>,
-                 Requires<[IsThumb, HasV5T, IsDarwin]>,
-                 T1Special<{1,1,1,?}> {
-    // A6.2.3 & A8.6.24
-    bits<4> func;
-    let Inst{6-3} = func;
-    let Inst{2-0} = 0b000;
-  }
+  def tBLXr_r9 : tPseudoExpand<(outs), (ins pred:$p, GPR:$func, variable_ops),
+                    2, IIC_Br, [(ARMtcall GPR:$func)],
+                    (tBLXr pred:$p, GPR:$func)>,
+                 Requires<[IsThumb, HasV5T, IsDarwin]>;
 
   // ARMv4T
   def tBXr9_CALL : tPseudoInst<(outs), (ins tGPR:$func, variable_ops),
@@ -498,8 +477,8 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   // Just a pseudo for a tBL instruction. Needed to let regalloc know about
   // the clobber of LR.
   let Defs = [LR] in
-  def tBfar : tPseudoExpand<(outs), (ins t_bltarget:$target),
-                          4, IIC_Br, [], (tBL t_bltarget:$target)>;
+  def tBfar : tPseudoExpand<(outs), (ins pred:$p, t_bltarget:$target),
+                          4, IIC_Br, [], (tBL pred:$p, t_bltarget:$target)>;
 
   def tBR_JTr : tPseudoInst<(outs),
                       (ins tGPR:$target, i32imm:$jt, i32imm:$id),
