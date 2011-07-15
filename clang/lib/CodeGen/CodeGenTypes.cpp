@@ -31,7 +31,6 @@ CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
                            CGCXXABI &CXXABI, const CodeGenOptions &CGO)
   : Context(Ctx), Target(Ctx.Target), TheModule(M), TheTargetData(TD),
     TheABIInfo(Info), TheCXXABI(CXXABI), CodeGenOpts(CGO) {
-  RecursionState = RS_Normal;
   SkippedLayout = false;
 }
 
@@ -94,27 +93,114 @@ llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T){
                                 (unsigned)Context.getTypeSize(T));
 }
 
+
+/// isRecordLayoutComplete - Return true if the specified type is already
+/// completely laid out.
+bool CodeGenTypes::isRecordLayoutComplete(const Type *Ty) const {
+  llvm::DenseMap<const Type*, llvm::StructType *>::const_iterator I = 
+  RecordDeclTypes.find(Ty);
+  return I != RecordDeclTypes.end() && !I->second->isOpaque();
+}
+
+static bool
+isSafeToConvert(QualType T, CodeGenTypes &CGT,
+                llvm::SmallPtrSet<const RecordDecl*, 16> &AlreadyChecked);
+
+
+/// isSafeToConvert - Return true if it is safe to convert the specified record
+/// decl to IR and lay it out, false if doing so would cause us to get into a
+/// recursive compilation mess.
+static bool 
+isSafeToConvert(const RecordDecl *RD, CodeGenTypes &CGT,
+                llvm::SmallPtrSet<const RecordDecl*, 16> &AlreadyChecked) {
+  // If we have already checked this type (maybe the same type is used by-value
+  // multiple times in multiple structure fields, don't check again.
+  if (!AlreadyChecked.insert(RD)) return true;
+  
+  const Type *Key = CGT.getContext().getTagDeclType(RD).getTypePtr();
+  
+  // If this type is already laid out, converting it is a noop.
+  if (CGT.isRecordLayoutComplete(Key)) return true;
+  
+  // If this type is currently being laid out, we can't recursively compile it.
+  if (CGT.isRecordBeingLaidOut(Key))
+    return false;
+  
+  // If this type would require laying out bases that are currently being laid
+  // out, don't do it.  This includes virtual base classes which get laid out
+  // when a class is translated, even though they aren't embedded by-value into
+  // the class.
+  if (const CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
+    for (CXXRecordDecl::base_class_const_iterator I = CRD->bases_begin(),
+         E = CRD->bases_end(); I != E; ++I)
+      if (!isSafeToConvert(I->getType()->getAs<RecordType>()->getDecl(),
+                           CGT, AlreadyChecked))
+        return false;
+  }
+  
+  // If this type would require laying out members that are currently being laid
+  // out, don't do it.
+  for (RecordDecl::field_iterator I = RD->field_begin(),
+       E = RD->field_end(); I != E; ++I)
+    if (!isSafeToConvert(I->getType(), CGT, AlreadyChecked))
+      return false;
+  
+  // If there are no problems, lets do it.
+  return true;
+}
+
+/// isSafeToConvert - Return true if it is safe to convert this field type,
+/// which requires the structure elements contained by-value to all be
+/// recursively safe to convert.
+static bool
+isSafeToConvert(QualType T, CodeGenTypes &CGT,
+                llvm::SmallPtrSet<const RecordDecl*, 16> &AlreadyChecked) {
+  T = T.getCanonicalType();
+  
+  // If this is a record, check it.
+  if (const RecordType *RT = dyn_cast<RecordType>(T))
+    return isSafeToConvert(RT->getDecl(), CGT, AlreadyChecked);
+  
+  // If this is an array, check the elements, which are embedded inline.
+  if (const ArrayType *AT = dyn_cast<ArrayType>(T))
+    return isSafeToConvert(AT->getElementType(), CGT, AlreadyChecked);
+
+  // Otherwise, there is no concern about transforming this.  We only care about
+  // things that are contained by-value in a structure that can have another 
+  // structure as a member.
+  return true;
+}
+
+
+/// isSafeToConvert - Return true if it is safe to convert the specified record
+/// decl to IR and lay it out, false if doing so would cause us to get into a
+/// recursive compilation mess.
+static bool isSafeToConvert(const RecordDecl *RD, CodeGenTypes &CGT) {
+  // If no structs are being laid out, we can certainly do this one.
+  if (CGT.noRecordsBeingLaidOut()) return true;
+  
+  llvm::SmallPtrSet<const RecordDecl*, 16> AlreadyChecked;
+  return isSafeToConvert(RD, CGT, AlreadyChecked);
+}
+
+
 /// isFuncTypeArgumentConvertible - Return true if the specified type in a 
 /// function argument or result position can be converted to an IR type at this
 /// point.  This boils down to being whether it is complete, as well as whether
 /// we've temporarily deferred expanding the type because we're in a recursive
 /// context.
-bool CodeGenTypes::isFuncTypeArgumentConvertible(QualType Ty){
+bool CodeGenTypes::isFuncTypeArgumentConvertible(QualType Ty) {
   // If this isn't a tagged type, we can convert it!
   const TagType *TT = Ty->getAs<TagType>();
   if (TT == 0) return true;
   
   
-  // If it's a tagged type, but is a forward decl, we can't convert it.
-  if (!TT->getDecl()->isDefinition())
+  // If it's a tagged type used by-value, but is just a forward decl, we can't
+  // convert it.  Note that getDefinition()==0 is not the same as !isDefinition.
+  if (TT->getDecl()->getDefinition() == 0)
     return false;
   
-  // If we're not under a pointer under a struct, then we can convert it if
-  // needed.
-  if (RecursionState != RS_StructPointer)
-    return true;
-
-  // If this is an enum, then it is safe to convert.
+  // If this is an enum, then it is always safe to convert.
   const RecordType *RT = dyn_cast<RecordType>(TT);
   if (RT == 0) return true;
 
@@ -125,7 +211,7 @@ bool CodeGenTypes::isFuncTypeArgumentConvertible(QualType Ty){
   //
   // We decide this by checking whether ConvertRecordDeclType returns us an
   // opaque type for a struct that we know is defined.
-  return !ConvertRecordDeclType(RT->getDecl())->isOpaque();
+  return isSafeToConvert(RT->getDecl(), *this);
 }
 
 
@@ -289,7 +375,6 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   }
   case Type::LValueReference:
   case Type::RValueReference: {
-    RecursionStatePointerRAII X(RecursionState);
     const ReferenceType *RTy = cast<ReferenceType>(Ty);
     QualType ETy = RTy->getPointeeType();
     llvm::Type *PointeeType = ConvertTypeForMem(ETy);
@@ -298,7 +383,6 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     break;
   }
   case Type::Pointer: {
-    RecursionStatePointerRAII X(RecursionState);
     const PointerType *PTy = cast<PointerType>(Ty);
     QualType ETy = PTy->getPointeeType();
     llvm::Type *PointeeType = ConvertTypeForMem(ETy);
@@ -347,49 +431,62 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   }
   case Type::FunctionNoProto:
   case Type::FunctionProto: {
+    const FunctionType *FT = cast<FunctionType>(Ty);
     // First, check whether we can build the full function type.  If the
     // function type depends on an incomplete type (e.g. a struct or enum), we
     // cannot lower the function type.
-    if (RecursionState == RS_StructPointer ||
-        !isFuncTypeConvertible(cast<FunctionType>(Ty))) {
+    if (!isFuncTypeConvertible(FT)) {
       // This function's type depends on an incomplete tag type.
       // Return a placeholder type.
       ResultType = llvm::StructType::get(getLLVMContext());
       
-      SkippedLayout |= RecursionState == RS_StructPointer;
+      SkippedLayout = true;
       break;
     }
 
     // While we're converting the argument types for a function, we don't want
     // to recursively convert any pointed-to structs.  Converting directly-used
     // structs is ok though.
-    RecursionStateTy SavedRecursionState = RecursionState;
-    RecursionState = RS_Struct;
+    if (!RecordsBeingLaidOut.insert(Ty)) {
+      ResultType = llvm::StructType::get(getLLVMContext());
+      
+      SkippedLayout = true;
+      break;
+    }
     
     // The function type can be built; call the appropriate routines to
     // build it.
     const CGFunctionInfo *FI;
     bool isVariadic;
-    if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Ty)) {
+    if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT)) {
       FI = &getFunctionInfo(
                    CanQual<FunctionProtoType>::CreateUnsafe(QualType(FPT, 0)));
       isVariadic = FPT->isVariadic();
     } else {
-      const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(Ty);
+      const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(FT);
       FI = &getFunctionInfo(
                 CanQual<FunctionNoProtoType>::CreateUnsafe(QualType(FNPT, 0)));
       isVariadic = true;
     }
     
-    ResultType = GetFunctionType(*FI, isVariadic);
-    
-    // Restore our recursion state.
-    RecursionState = SavedRecursionState;
+    // If there is something higher level prodding our CGFunctionInfo, then
+    // don't recurse into it again.
+    if (FunctionsBeingProcessed.count(FI)) {
+
+      ResultType = llvm::StructType::get(getLLVMContext());
+      SkippedLayout = true;
+    } else {
+
+      // Otherwise, we're good to go, go ahead and convert it.
+      ResultType = GetFunctionType(*FI, isVariadic);
+    }
+
+    RecordsBeingLaidOut.erase(Ty);
 
     if (SkippedLayout)
       TypeCache.clear();
     
-    if (RecursionState == RS_Normal)
+    if (RecordsBeingLaidOut.empty())
       while (!DeferredRecords.empty())
         ConvertRecordDeclType(DeferredRecords.pop_back_val());
     break;
@@ -411,7 +508,6 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   }
 
   case Type::ObjCObjectPointer: {
-    RecursionStatePointerRAII X(RecursionState);
     // Protocol qualifications do not influence the LLVM type, we just return a
     // pointer to the underlying interface type. We don't need to worry about
     // recursive conversion.
@@ -433,7 +529,6 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   }
 
   case Type::BlockPointer: {
-    RecursionStatePointerRAII X(RecursionState);
     const QualType FTy = cast<BlockPointerType>(Ty)->getPointeeType();
     llvm::Type *PointeeType = ConvertTypeForMem(FTy);
     unsigned AS = Context.getTargetAddressSpace(FTy);
@@ -471,29 +566,27 @@ llvm::StructType *CodeGenTypes::ConvertRecordDeclType(const RecordDecl *RD) {
 
   // If this is still a forward declaration, or the LLVM type is already
   // complete, there's nothing more to do.
-  if (!RD->isDefinition() || !Ty->isOpaque())
+  RD = RD->getDefinition();
+  if (RD == 0 || !Ty->isOpaque())
     return Ty;
   
-  // If we're recursively nested inside the conversion of a pointer inside the
-  // struct, defer conversion.
-  if (RecursionState == RS_StructPointer) {
+  // If converting this type would cause us to infinitely loop, don't do it!
+  if (!isSafeToConvert(RD, *this)) {
     DeferredRecords.push_back(RD);
     return Ty;
   }
 
   // Okay, this is a definition of a type.  Compile the implementation now.
-  RecursionStateTy SavedRecursionState = RecursionState;
-  RecursionState = RS_Struct;
-
+  bool InsertResult = RecordsBeingLaidOut.insert(Key); (void)InsertResult;
+  assert(InsertResult && "Recursively compiling a struct?");
+  
   // Force conversion of non-virtual base classes recursively.
   if (const CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
     for (CXXRecordDecl::base_class_const_iterator i = CRD->bases_begin(),
          e = CRD->bases_end(); i != e; ++i) {
-      if (!i->isVirtual()) {
-        const CXXRecordDecl *Base =
-          cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
-        ConvertRecordDeclType(Base);
-      }
+      if (i->isVirtual()) continue;
+      
+      ConvertRecordDeclType(i->getType()->getAs<RecordType>()->getDecl());
     }
   }
 
@@ -501,18 +594,19 @@ llvm::StructType *CodeGenTypes::ConvertRecordDeclType(const RecordDecl *RD) {
   CGRecordLayout *Layout = ComputeRecordLayout(RD, Ty);
   CGRecordLayouts[Key] = Layout;
 
+  // We're done laying out this struct.
+  bool EraseResult = RecordsBeingLaidOut.erase(Key); (void)EraseResult;
+  assert(EraseResult && "struct not in RecordsBeingLaidOut set?");
+   
   // If this struct blocked a FunctionType conversion, then recompute whatever
   // was derived from that.
   // FIXME: This is hugely overconservative.
   if (SkippedLayout)
     TypeCache.clear();
-  
-  
-  // Restore our recursion state.  If we're done converting the outer-most
-  // record, then convert any deferred structs as well.
-  RecursionState = SavedRecursionState;
-  
-  if (RecursionState == RS_Normal)
+    
+  // If we're done converting the outer-most record, then convert any deferred
+  // structs as well.
+  if (RecordsBeingLaidOut.empty())
     while (!DeferredRecords.empty())
       ConvertRecordDeclType(DeferredRecords.pop_back_val());
 

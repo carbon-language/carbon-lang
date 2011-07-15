@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm-only
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
 typedef struct _zend_ini_entry zend_ini_entry;
 struct _zend_ini_entry {
@@ -29,3 +29,11 @@ typedef struct __simd64_uint32_t {
 void foo() {
     const uint32x2_t signBit = { (uint2) 0x80000000 };
 }
+
+// CHECK: %struct.fp_struct_foo = type { void (i32)* }
+struct fp_struct_bar { int a; };
+
+struct fp_struct_foo {
+  void (*FP)(struct fp_struct_bar);
+} G;
+

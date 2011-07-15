@@ -265,8 +265,14 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
                           ArgTys.data(), ArgTys.size());
   FunctionInfos.InsertNode(FI, InsertPos);
 
+  bool Inserted = FunctionsBeingProcessed.insert(FI); (void)Inserted;
+  assert(Inserted && "Recursively being processed?");
+  
   // Compute ABI information.
   getABIInfo().computeInfo(*FI);
+
+  bool Erased = FunctionsBeingProcessed.erase(FI); (void)Erased;
+  assert(Erased && "Not in set?");
 
   // Loop over all of the computed argument and return value info.  If any of
   // them are direct or extend without a specified coerce type, specify the
@@ -604,6 +610,10 @@ llvm::FunctionType *CodeGenTypes::GetFunctionType(GlobalDecl GD) {
 
 llvm::FunctionType *
 CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool isVariadic) {
+  
+  bool Inserted = FunctionsBeingProcessed.insert(&FI); (void)Inserted;
+  assert(Inserted && "Recursively being processed?");
+  
   llvm::SmallVector<llvm::Type*, 8> argTypes;
   const llvm::Type *resultType = 0;
 
@@ -669,6 +679,9 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool isVariadic) {
     }
   }
 
+  bool Erased = FunctionsBeingProcessed.erase(&FI); (void)Erased;
+  assert(Erased && "Not in set?");
+  
   return llvm::FunctionType::get(resultType, argTypes, isVariadic);
 }
 

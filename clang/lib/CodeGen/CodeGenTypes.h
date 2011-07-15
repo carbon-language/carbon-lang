@@ -81,31 +81,19 @@ class CodeGenTypes {
   /// FunctionInfos - Hold memoized CGFunctionInfo results.
   llvm::FoldingSet<CGFunctionInfo> FunctionInfos;
 
-  enum RecursionStateTy {
-    RS_Normal,        // Normal type conversion.
-    RS_Struct,        // Recursively inside a struct conversion.
-    RS_StructPointer  // Recursively inside a pointer in a struct.
-  } RecursionState;
-
-  /// SkippedLayout - True if we didn't layout a function bit due to a
-  /// RS_StructPointer RecursionState.
+  /// RecordsBeingLaidOut - This set keeps track of records that we're currently
+  /// converting to an IR type.  For example, when converting:
+  /// struct A { struct B { int x; } } when processing 'x', the 'A' and 'B'
+  /// types will be in this set.
+  llvm::SmallPtrSet<const Type*, 4> RecordsBeingLaidOut;
+  
+  llvm::SmallPtrSet<const CGFunctionInfo*, 4> FunctionsBeingProcessed;
+  
+  /// SkippedLayout - True if we didn't layout a function due to a being inside
+  /// a recursive struct conversion, set this to true.
   bool SkippedLayout;
 
   llvm::SmallVector<const RecordDecl *, 8> DeferredRecords;
-  
-  struct RecursionStatePointerRAII {
-    RecursionStateTy &Val;
-    RecursionStateTy Saved;
-    
-    RecursionStatePointerRAII(RecursionStateTy &V) : Val(V), Saved(V) {
-      if (Val == RS_Struct)
-        Val = RS_StructPointer;
-    }
-    
-    ~RecursionStatePointerRAII() {
-      Val = Saved;
-    }
-  };
   
 private:
   /// TypeCache - This map keeps cache of llvm::Types
@@ -232,6 +220,15 @@ public:  // These are internal details of CGT that shouldn't be used externally.
   /// IsZeroInitializable - Return whether a record type can be
   /// zero-initialized (in the C++ sense) with an LLVM zeroinitializer.
   bool isZeroInitializable(const CXXRecordDecl *RD);
+  
+  bool isRecordLayoutComplete(const Type *Ty) const;
+  bool noRecordsBeingLaidOut() const {
+    return RecordsBeingLaidOut.empty();
+  }
+  bool isRecordBeingLaidOut(const Type *Ty) const {
+    return RecordsBeingLaidOut.count(Ty);
+  }
+                            
 };
 
 }  // end namespace CodeGen
