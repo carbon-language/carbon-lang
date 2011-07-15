@@ -168,7 +168,7 @@ void BranchProbabilityAnalysis::calcPointerHeuristics(BasicBlock *BB) {
 
   Value *Cond = BI->getCondition();
   ICmpInst *CI = dyn_cast<ICmpInst>(Cond);
-  if (!CI)
+  if (!CI || !CI->isEquality())
     return;
 
   Value *LHS = CI->getOperand(0);
@@ -185,7 +185,7 @@ void BranchProbabilityAnalysis::calcPointerHeuristics(BasicBlock *BB) {
   // p == 0   ->   isProb = false
   // p != q   ->   isProb = true
   // p == q   ->   isProb = false;
-  bool isProb = !CI->isEquality();
+  bool isProb = CI->getPredicate() == ICmpInst::ICMP_NE;
   if (!isProb)
     std::swap(Taken, NonTaken);
 
