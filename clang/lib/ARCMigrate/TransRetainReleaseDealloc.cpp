@@ -19,9 +19,7 @@
 
 #include "Transforms.h"
 #include "Internals.h"
-#include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaDiagnostic.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/AST/ParentMap.h"
 
 using namespace clang;
@@ -39,9 +37,14 @@ class RetainReleaseDeallocRemover :
   ExprSet Removables;
   llvm::OwningPtr<ParentMap> StmtMap;
 
+  Selector DelegateSel;
+
 public:
   RetainReleaseDeallocRemover(MigrationPass &pass)
-    : Body(0), Pass(pass) { }
+    : Body(0), Pass(pass) {
+    DelegateSel =
+        Pass.Ctx.Selectors.getNullarySelector(&Pass.Ctx.Idents.get("delegate"));
+  }
 
   void transformBody(Stmt *body) {
     Body = body;
@@ -60,10 +63,9 @@ public:
         // will likely die immediately while previously it was kept alive
         // by the autorelease pool. This is bad practice in general, leave it
         // and emit an error to force the user to restructure his code.
-        std::string err = "it is not safe to remove an unused '";
-        err += E->getSelector().getAsString() + "'; its receiver may be "
-            "destroyed immediately";
-        Pass.TA.reportError(err, E->getLocStart(), E->getSourceRange());
+        Pass.TA.reportError("it is not safe to remove an unused 'autorelease' "
+            "message; its receiver may be destroyed immediately",
+            E->getLocStart(), E->getSourceRange());
         return true;
       }
       // Pass through.
@@ -87,6 +89,14 @@ public:
             err += E->getSelector().getAsString() + "' message on "
                 "a global variable";
             Pass.TA.reportError(err, rec->getLocStart());
+            return true;
+          }
+
+          if (E->getMethodFamily() == OMF_release && isDelegateMessage(rec)) {
+            Pass.TA.reportError("it is not safe to remove 'retain' "
+                "message on the result of a 'delegate' message; "
+                "the object that was passed to 'setDelegate:' may not be "
+                "properly retained", rec->getLocStart());
             return true;
           }
         }
@@ -120,8 +130,7 @@ public:
       // Change the -release to "receiver = nil" in a finally to avoid a leak
       // when an exception is thrown.
       Pass.TA.replace(E->getSourceRange(), rec->getSourceRange());
-      if (Pass.SemaRef.getPreprocessor()
-                        .getIdentifierInfo("nil")->hasMacroDefinition())
+      if (Pass.Ctx.Idents.get("nil").hasMacroDefinition())
         Pass.TA.insertAfterToken(rec->getLocEnd(), " = nil");
       else
         Pass.TA.insertAfterToken(rec->getLocEnd(), " = 0");
@@ -143,6 +152,19 @@ private:
                             diag::err_unavailable,
                             diag::err_unavailable_message,
                             loc);
+  }
+
+  bool isDelegateMessage(Expr *E) const {
+    if (!E) return false;
+
+    E = E->IgnoreParenCasts();
+    if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E))
+      return (ME->isInstanceMessage() && ME->getSelector() == DelegateSel);
+
+    if (ObjCPropertyRefExpr *propE = dyn_cast<ObjCPropertyRefExpr>(E))
+      return propE->getGetterSelector() == DelegateSel;
+
+    return false;
   }
 
   bool isInAtFinally(Expr *E) const {
