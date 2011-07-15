@@ -58,12 +58,6 @@ class SelectionDAGLegalize {
   /// against each other, including inserted libcalls.
   SmallVector<SDValue, 8> LastCALLSEQ;
 
-  enum LegalizeAction {
-    Legal,      // The target natively supports this operation.
-    Promote,    // This operation should be executed in a larger type.
-    Expand      // Try to expand this to other ops, otherwise use a libcall.
-  };
-
   /// LegalizedNodes - For nodes that are of legal width, and that have more
   /// than one use, this map indicates what regularized operand to use.  This
   /// allows us to avoid legalizing the same thing more than once.
@@ -1612,7 +1606,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         case TargetLowering::Custom:
           Result = TLI.LowerOperation(Result, DAG);
           break;
-        case Expand:
+        case TargetLowering::Expand:
 
           EVT WideScalarVT = Tmp3.getValueType().getScalarType();
           EVT NarrowScalarVT = StVT.getScalarType();
