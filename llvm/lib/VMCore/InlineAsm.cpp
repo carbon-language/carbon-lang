@@ -51,7 +51,7 @@ void InlineAsm::destroyConstant() {
   delete this;
 }
 
-const FunctionType *InlineAsm::getFunctionType() const {
+FunctionType *InlineAsm::getFunctionType() const {
   return cast<FunctionType>(getType()->getElementType());
 }
     

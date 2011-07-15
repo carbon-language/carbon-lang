@@ -64,13 +64,13 @@ public:
   
   /// getType - InlineAsm's are always pointers.
   ///
-  const PointerType *getType() const {
-    return reinterpret_cast<const PointerType*>(Value::getType());
+  PointerType *getType() const {
+    return reinterpret_cast<PointerType*>(Value::getType());
   }
   
   /// getFunctionType - InlineAsm's are always pointers to functions.
   ///
-  const FunctionType *getFunctionType() const;
+  FunctionType *getFunctionType() const;
   
   const std::string &getAsmString() const { return AsmString; }
   const std::string &getConstraintString() const { return Constraints; }
