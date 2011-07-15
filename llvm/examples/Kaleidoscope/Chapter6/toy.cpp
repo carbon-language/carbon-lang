@@ -589,7 +589,7 @@ Value *BinaryExprAST::Codegen() {
   assert(F && "binary operator not found!");
   
   Value *Ops[] = { L, R };
-  return Builder.CreateCall(F, Ops, Ops+2, "binop");
+  return Builder.CreateCall(F, Ops, "binop");
 }
 
 Value *CallExprAST::Codegen() {
@@ -608,7 +608,7 @@ Value *CallExprAST::Codegen() {
     if (ArgsV.back() == 0) return 0;
   }
   
-  return Builder.CreateCall(CalleeF, ArgsV.begin(), ArgsV.end(), "calltmp");
+  return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
 }
 
 Value *IfExprAST::Codegen() {

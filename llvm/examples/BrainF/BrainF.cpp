@@ -99,7 +99,7 @@ void BrainF::header(LLVMContext& C) {
     };
 
     CallInst *memset_call = builder->
-      CreateCall(memset_func, memset_params, array_endof(memset_params));
+      CreateCall(memset_func, memset_params);
     memset_call->setTailCall(false);
   }
 
@@ -171,7 +171,7 @@ void BrainF::header(LLVMContext& C) {
 
       CallInst *puts_call =
         CallInst::Create(puts_func,
-                         puts_params, array_endof(puts_params),
+                         puts_params,
                          "", aberrorbb);
       puts_call->setTailCall(false);
     }
@@ -229,7 +229,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb,
           };
           CallInst *putchar_call = builder->
             CreateCall(putchar_func,
-                       putchar_params, array_endof(putchar_params));
+                       putchar_params);
           putchar_call->setTailCall(false);
         }
         break;
