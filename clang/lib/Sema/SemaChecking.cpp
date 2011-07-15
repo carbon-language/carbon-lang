@@ -3030,18 +3030,16 @@ void DiagnoseFloatingLiteralImpCast(Sema &S, FloatingLiteral *FL, QualType T,
   if (&Value.getSemantics() == &llvm::APFloat::PPCDoubleDouble)
     return;
 
-  // Try to convert this exactly to an 64-bit integer. FIXME: It would be
-  // nice to support arbitrarily large integers here.
+  // Try to convert this exactly to an integer.
   bool isExact = false;
-  uint64_t IntegerPart;
-  if (Value.convertToInteger(&IntegerPart, 64, /*isSigned=*/true,
+  llvm::APSInt IntegerValue(S.Context.getIntWidth(T),
+                            T->hasUnsignedIntegerRepresentation());
+  if (Value.convertToInteger(IntegerValue,
                              llvm::APFloat::rmTowardZero, &isExact)
       != llvm::APFloat::opOK || !isExact)
     return;
 
-  llvm::APInt IntegerValue(64, IntegerPart, /*isSigned=*/true);
-
-  std::string LiteralValue = IntegerValue.toString(10, /*isSigned=*/true);
+  std::string LiteralValue = IntegerValue.toString(10);
   S.Diag(FL->getExprLoc(), diag::note_fix_integral_float_as_integer)
     << FixItHint::CreateReplacement(FL->getSourceRange(), LiteralValue);
 }

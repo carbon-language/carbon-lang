@@ -224,11 +224,10 @@ static APSInt HandleFloatToIntCast(QualType DestType, QualType SrcType,
   bool DestSigned = DestType->isSignedIntegerOrEnumerationType();
 
   // FIXME: Warning for overflow.
-  uint64_t Space[4];
+  APSInt Result(DestWidth, !DestSigned);
   bool ignored;
-  (void)Value.convertToInteger(Space, DestWidth, DestSigned,
-                               llvm::APFloat::rmTowardZero, &ignored);
-  return APSInt(llvm::APInt(DestWidth, 4, Space), !DestSigned);
+  (void)Value.convertToInteger(Result, llvm::APFloat::rmTowardZero, &ignored);
+  return Result;
 }
 
 static APFloat HandleFloatToFloatCast(QualType DestType, QualType SrcType,
