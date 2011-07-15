@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86MCAsmInfo.h"
-#include "X86TargetMachine.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
