@@ -173,13 +173,17 @@ public:
   Type X86_FP80Ty, FP128Ty, PPC_FP128Ty, X86_MMXTy;
   IntegerType Int1Ty, Int8Ty, Int16Ty, Int32Ty, Int64Ty;
 
+  
+  /// TypeAllocator - All dynamically allocated types are allocated from this.
+  /// They live forever until the context is torn down.
+  BumpPtrAllocator TypeAllocator;
+  
   DenseMap<unsigned, IntegerType*> IntegerTypes;
   
   // TODO: Optimize FunctionTypes/AnonStructTypes!
   std::map<std::vector<Type*>, FunctionType*> FunctionTypes;
   std::map<std::vector<Type*>, StructType*> AnonStructTypes;
   StringMap<StructType*> NamedStructTypes;
-  SmallPtrSet<StructType*, 16> EmptyNamedStructTypes;
   unsigned NamedStructTypesUniqueID;
     
   DenseMap<std::pair<Type *, uint64_t>, ArrayType*> ArrayTypes;

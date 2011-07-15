@@ -91,20 +91,4 @@ LLVMContextImpl::~LLVMContextImpl() {
          "Destroying all MDNodes didn't empty the Context's sets.");
   // Destroy MDStrings.
   DeleteContainerSeconds(MDStringCache);
-
-  // Destroy types.
-  DeleteContainerSeconds(IntegerTypes);
-  DeleteContainerSeconds(FunctionTypes);
-  DeleteContainerSeconds(AnonStructTypes);
-  DeleteContainerSeconds(ArrayTypes);
-  DeleteContainerSeconds(VectorTypes);
-  DeleteContainerSeconds(PointerTypes);
-  DeleteContainerSeconds(ASPointerTypes);
-
-  for (StringMap<StructType *>::iterator I = NamedStructTypes.begin(),
-       E = NamedStructTypes.end(); I != E; ++I)
-    delete I->getValue();
-  for (SmallPtrSet<StructType*, 16>::iterator I = EmptyNamedStructTypes.begin(),
-       E = EmptyNamedStructTypes.end(); I != E; ++I)
-    delete *I;
 }

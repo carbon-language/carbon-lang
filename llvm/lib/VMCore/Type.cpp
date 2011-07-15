@@ -288,7 +288,7 @@ IntegerType *IntegerType::get(LLVMContext &C, unsigned NumBits) {
   IntegerType *&Entry = C.pImpl->IntegerTypes[NumBits];
   
   if (Entry == 0)
-    Entry = new IntegerType(C, NumBits);
+    Entry = new (C.pImpl->TypeAllocator) IntegerType(C, NumBits);
   
   return Entry;
 }
@@ -337,11 +337,13 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   if (isVarArg)
     Key.push_back(0);
   
-  FunctionType *&FT = ReturnType->getContext().pImpl->FunctionTypes[Key];
+  LLVMContextImpl *pImpl = ReturnType->getContext().pImpl;
+  FunctionType *&FT = pImpl->FunctionTypes[Key];
   
   if (FT == 0) {
-    FT = (FunctionType*) operator new(sizeof(FunctionType) +
-                                    sizeof(Type*)*(Params.size()+1));
+    FT = (FunctionType*) pImpl->TypeAllocator.
+      Allocate(sizeof(FunctionType) + sizeof(Type*)*(Params.size()+1),
+               AlignOf<FunctionType>::Alignment);
     new (FT) FunctionType(ReturnType, Params, isVarArg);
   }
 
@@ -386,11 +388,10 @@ StructType *StructType::get(LLVMContext &Context, ArrayRef<Type*> ETypes,
     Key.push_back(0);
   
   StructType *&ST = Context.pImpl->AnonStructTypes[Key];
-    
   if (ST) return ST;
   
   // Value not found.  Create a new type!
-  ST = new StructType(Context);
+  ST = new (Context.pImpl->TypeAllocator) StructType(Context);
   ST->setSubclassData(SCDB_IsAnonymous);  // Anonymous struct.
   ST->setBody(ETypes, isPacked);
   return ST;
@@ -403,7 +404,8 @@ void StructType::setBody(ArrayRef<Type*> Elements, bool isPacked) {
   if (isPacked)
     setSubclassData(getSubclassData() | SCDB_Packed);
   
-  Type **Elts = new Type*[Elements.size()];
+  Type **Elts = getContext().pImpl->
+    TypeAllocator.Allocate<Type*>(Elements.size());
   memcpy(Elts, Elements.data(), sizeof(Elements[0])*Elements.size());
   
   ContainedTys = Elts;
@@ -411,11 +413,9 @@ void StructType::setBody(ArrayRef<Type*> Elements, bool isPacked) {
 }
 
 StructType *StructType::createNamed(LLVMContext &Context, StringRef Name) {
-  StructType *ST = new StructType(Context);
+  StructType *ST = new (Context.pImpl->TypeAllocator) StructType(Context);
   if (!Name.empty())
     ST->setName(Name);
-  else
-    Context.pImpl->EmptyNamedStructTypes.insert(ST);
   return ST;
 }
 
@@ -426,16 +426,11 @@ void StructType::setName(StringRef Name) {
   if (SymbolTableEntry) {
     getContext().pImpl->NamedStructTypes.erase(getName());
     SymbolTableEntry = 0;
-  } else {
-    getContext().pImpl->EmptyNamedStructTypes.erase(this);
   }
   
   // If this is just removing the name, we're done.
-  if (Name.empty()) {
-    // Keep track of types with no names so we can free them.
-    getContext().pImpl->EmptyNamedStructTypes.insert(this);
+  if (Name.empty())
     return;
-  }
   
   // Look up the entry for the name.
   StringMapEntry<StructType*> *Entry =
@@ -614,11 +609,12 @@ ArrayType *ArrayType::get(const Type *elementType, uint64_t NumElements) {
   Type *ElementType = const_cast<Type*>(elementType);
   assert(isValidElementType(ElementType) && "Invalid type for array element!");
     
-  ArrayType *&Entry = ElementType->getContext().pImpl
-     ->ArrayTypes[std::make_pair(ElementType, NumElements)];
+  LLVMContextImpl *pImpl = ElementType->getContext().pImpl;
+  ArrayType *&Entry = 
+    pImpl->ArrayTypes[std::make_pair(ElementType, NumElements)];
   
   if (Entry == 0)
-    Entry = new ArrayType(ElementType, NumElements);
+    Entry = new (pImpl->TypeAllocator) ArrayType(ElementType, NumElements);
   return Entry;
 }
 
@@ -642,11 +638,12 @@ VectorType *VectorType::get(const Type *elementType, unsigned NumElements) {
   assert(isValidElementType(ElementType) &&
          "Elements of a VectorType must be a primitive type");
   
+  LLVMContextImpl *pImpl = ElementType->getContext().pImpl;
   VectorType *&Entry = ElementType->getContext().pImpl
     ->VectorTypes[std::make_pair(ElementType, NumElements)];
   
   if (Entry == 0)
-    Entry = new VectorType(ElementType, NumElements);
+    Entry = new (pImpl->TypeAllocator) VectorType(ElementType, NumElements);
   return Entry;
 }
 
@@ -670,7 +667,7 @@ PointerType *PointerType::get(const Type *eltTy, unsigned AddressSpace) {
      : CImpl->ASPointerTypes[std::make_pair(EltTy, AddressSpace)];
 
   if (Entry == 0)
-    Entry = new PointerType(EltTy, AddressSpace);
+    Entry = new (CImpl->TypeAllocator) PointerType(EltTy, AddressSpace);
   return Entry;
 }
 
