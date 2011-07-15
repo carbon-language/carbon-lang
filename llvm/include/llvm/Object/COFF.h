@@ -96,6 +96,8 @@ protected:
   virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const;
   virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const;
+  virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
+                                           bool &Result) const;
 
 public:
   COFFObjectFile(MemoryBuffer *Object, error_code &ec);

@@ -293,6 +293,14 @@ error_code COFFObjectFile::isSectionText(DataRefImpl Sec,
   return object_error::success;
 }
 
+error_code COFFObjectFile::sectionContainsSymbol(DataRefImpl Sec,
+                                                 DataRefImpl Symb,
+                                                 bool &Result) const {
+  // FIXME: Unimplemented.
+  Result = false;
+  return object_error::success;
+}
+
 COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
   : ObjectFile(Binary::isCOFF, Object, ec) {
   // Check that we at least have enough room for a header.

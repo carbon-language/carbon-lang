@@ -60,6 +60,8 @@ protected:
   virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const;
   virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const;
   virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const;
+  virtual error_code sectionContainsSymbol(DataRefImpl DRI, DataRefImpl S,
+                                           bool &Result) const;
 
 private:
   MachOObject *MachOObj;
@@ -379,6 +381,21 @@ error_code MachOObjectFile::isSectionText(DataRefImpl DRI,
     InMemoryStruct<macho::Section> Sect;
     getSection(DRI, Sect);
     Result = !strcmp(Sect->Name, "__text");
+  }
+  return object_error::success;
+}
+
+error_code MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec,
+                                                  DataRefImpl Symb,
+                                                  bool &Result) const {
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(Symb, Entry);
+    Result = Entry->SectionIndex == 1 + Sec.d.a + Sec.d.b;
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(Symb, Entry);
+    Result = Entry->SectionIndex == 1 + Sec.d.a + Sec.d.b;
   }
   return object_error::success;
 }

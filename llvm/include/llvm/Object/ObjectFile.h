@@ -58,6 +58,7 @@ public:
 /// SymbolRef - This is a value type class that represents a single symbol in
 /// the list of symbols in the object file.
 class SymbolRef {
+  friend class SectionRef;
   DataRefImpl SymbolPimpl;
   const ObjectFile *OwningObject;
 
@@ -88,6 +89,7 @@ public:
 /// SectionRef - This is a value type class that represents a single section in
 /// the list of sections in the object file.
 class SectionRef {
+  friend class SymbolRef;
   DataRefImpl SectionPimpl;
   const ObjectFile *OwningObject;
 
@@ -109,6 +111,8 @@ public:
 
   // FIXME: Move to the normalization layer when it's created.
   error_code isText(bool &Result) const;
+
+  error_code containsSymbol(SymbolRef S, bool &Result) const;
 };
 
 const uint64_t UnknownAddressOrSize = ~0ULL;
@@ -152,6 +156,8 @@ protected:
   virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const = 0;
   virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res)const=0;
   virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const = 0;
+  virtual error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
+                                           bool &Result) const = 0;
 
 
 public:
@@ -285,6 +291,11 @@ inline error_code SectionRef::getContents(StringRef &Result) const {
 
 inline error_code SectionRef::isText(bool &Result) const {
   return OwningObject->isSectionText(SectionPimpl, Result);
+}
+
+inline error_code SectionRef::containsSymbol(SymbolRef S, bool &Result) const {
+  return OwningObject->sectionContainsSymbol(SectionPimpl, S.SymbolPimpl,
+                                             Result);
 }
 
 } // end namespace object
