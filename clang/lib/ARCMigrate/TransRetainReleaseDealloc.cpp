@@ -19,7 +19,9 @@
 
 #include "Transforms.h"
 #include "Internals.h"
+#include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/AST/ParentMap.h"
 
 using namespace clang;
@@ -115,10 +117,14 @@ public:
 
     if (E->getMethodFamily() == OMF_release &&
         isRemovable(E) && isInAtFinally(E)) {
-      // Change the -release to "receiver = 0" in a finally to avoid a leak
+      // Change the -release to "receiver = nil" in a finally to avoid a leak
       // when an exception is thrown.
       Pass.TA.replace(E->getSourceRange(), rec->getSourceRange());
-      Pass.TA.insertAfterToken(rec->getLocEnd(), " = 0");
+      if (Pass.SemaRef.getPreprocessor()
+                        .getIdentifierInfo("nil")->hasMacroDefinition())
+        Pass.TA.insertAfterToken(rec->getLocEnd(), " = nil");
+      else
+        Pass.TA.insertAfterToken(rec->getLocEnd(), " = 0");
       return true;
     }
 

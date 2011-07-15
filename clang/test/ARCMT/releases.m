@@ -2,6 +2,8 @@
 // RUN: arcmt-test --args -triple x86_64-apple-darwin10 -fobjc-exceptions -fblocks -fobjc-nonfragile-abi -fsyntax-only -x objective-c %s > %t
 // RUN: diff %t %s.result
 
+#define nil 0
+
 typedef int BOOL;
 
 id IhaveSideEffect();
