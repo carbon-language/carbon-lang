@@ -3649,9 +3649,18 @@ let Predicates = [HasXMMInt] in {
 let Predicates = [HasAVX] in {
   def : Pat<(v4f64 (bitconvert (v8f32 VR256:$src))), (v4f64 VR256:$src)>;
   def : Pat<(v4f64 (bitconvert (v4i64 VR256:$src))), (v4f64 VR256:$src)>;
+  def : Pat<(v4f64 (bitconvert (v32i8 VR256:$src))), (v4f64 VR256:$src)>;
   def : Pat<(v8f32 (bitconvert (v4i64 VR256:$src))), (v8f32 VR256:$src)>;
+  def : Pat<(v8f32 (bitconvert (v4f64 VR256:$src))), (v8f32 VR256:$src)>;
+  def : Pat<(v8f32 (bitconvert (v32i8 VR256:$src))), (v8f32 VR256:$src)>;
   def : Pat<(v4i64 (bitconvert (v8f32 VR256:$src))), (v4i64 VR256:$src)>;
   def : Pat<(v4i64 (bitconvert (v4f64 VR256:$src))), (v4i64 VR256:$src)>;
+  def : Pat<(v4i64 (bitconvert (v32i8 VR256:$src))), (v4i64 VR256:$src)>;
+  def : Pat<(v32i8 (bitconvert (v4f64 VR256:$src))), (v32i8 VR256:$src)>;
+  def : Pat<(v32i8 (bitconvert (v4i64 VR256:$src))), (v32i8 VR256:$src)>;
+  def : Pat<(v32i8 (bitconvert (v8f32 VR256:$src))), (v32i8 VR256:$src)>;
+  def : Pat<(v32i8 (bitconvert (v8i32 VR256:$src))), (v32i8 VR256:$src)>;
+  def : Pat<(v8i32 (bitconvert (v32i8 VR256:$src))), (v8i32 VR256:$src)>;
 }
 
 // Move scalar to XMM zero-extended
