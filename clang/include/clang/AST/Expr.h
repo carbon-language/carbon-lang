@@ -797,9 +797,10 @@ class DeclRefExpr : public Expr {
   void computeDependence();
 
 public:
-  DeclRefExpr(ValueDecl *D, QualType T, ExprValueKind VK, SourceLocation L)
+  DeclRefExpr(ValueDecl *D, QualType T, ExprValueKind VK, SourceLocation L,
+              const DeclarationNameLoc &LocInfo = DeclarationNameLoc())
     : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false, false),
-      D(D), Loc(L) {
+      D(D), Loc(L), DNLoc(LocInfo) {
     DeclRefExprBits.HasQualifier = 0;
     DeclRefExprBits.HasExplicitTemplateArgs = 0;
     DeclRefExprBits.HasFoundDecl = 0;
