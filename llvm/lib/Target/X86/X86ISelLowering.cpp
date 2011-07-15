@@ -988,7 +988,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     addRegisterClass(MVT::v32i8, X86::VR256RegisterClass);
 
     setOperationAction(ISD::LOAD,               MVT::v8f32, Legal);
-    setOperationAction(ISD::LOAD,               MVT::v8i32, Legal);
     setOperationAction(ISD::LOAD,               MVT::v4f64, Legal);
     setOperationAction(ISD::LOAD,               MVT::v4i64, Legal);
 
@@ -1006,63 +1005,50 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FSQRT,              MVT::v4f64, Legal);
     setOperationAction(ISD::FNEG,               MVT::v4f64, Custom);
 
-    // Custom lower build_vector, vector_shuffle, scalar_to_vector,
-    // insert_vector_elt extract_subvector and extract_vector_elt for
-    // 256-bit types.
+    // Custom lower several nodes for 256-bit types.
     for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-         i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE;
-         ++i) {
-      MVT::SimpleValueType VT = (MVT::SimpleValueType)i;
-      // Do not attempt to custom lower non-256-bit vectors
-      if (!isPowerOf2_32(MVT(VT).getVectorNumElements())
-          || (MVT(VT).getSizeInBits() < 256))
-        continue;
-      setOperationAction(ISD::BUILD_VECTOR,       VT, Custom);
-      setOperationAction(ISD::VECTOR_SHUFFLE,     VT, Custom);
-      setOperationAction(ISD::INSERT_VECTOR_ELT,  VT, Custom);
-      setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
-      setOperationAction(ISD::SCALAR_TO_VECTOR,   VT, Custom);
-    }
-    // Custom-lower insert_subvector and extract_subvector based on
-    // the result type.
-    for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-         i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE;
-         ++i) {
-      MVT::SimpleValueType VT = (MVT::SimpleValueType)i;
-      // Do not attempt to custom lower non-256-bit vectors
-      if (!isPowerOf2_32(MVT(VT).getVectorNumElements()))
+                  i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
+      MVT::SimpleValueType SVT = (MVT::SimpleValueType)i;
+      EVT VT = SVT;
+
+      // Extract subvector is special because the value type
+      // (result) is 128-bit but the source is 256-bit wide.
+      if (VT.is128BitVector())
+        setOperationAction(ISD::EXTRACT_SUBVECTOR, SVT, Custom);
+
+      // Do not attempt to custom lower other non-256-bit vectors
+      if (!VT.is256BitVector())
         continue;
 
-      if (MVT(VT).getSizeInBits() == 128) {
-        setOperationAction(ISD::EXTRACT_SUBVECTOR,  VT, Custom);
-      }
-      else if (MVT(VT).getSizeInBits() == 256) {
-        setOperationAction(ISD::INSERT_SUBVECTOR,  VT, Custom);
-      }
+      setOperationAction(ISD::BUILD_VECTOR,       SVT, Custom);
+      setOperationAction(ISD::VECTOR_SHUFFLE,     SVT, Custom);
+      setOperationAction(ISD::INSERT_VECTOR_ELT,  SVT, Custom);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, SVT, Custom);
+      setOperationAction(ISD::SCALAR_TO_VECTOR,   SVT, Custom);
+      setOperationAction(ISD::INSERT_SUBVECTOR,   SVT, Custom);
     }
 
     // Promote v32i8, v16i16, v8i32 select, and, or, xor to v4i64.
-    // Don't promote loads because we need them for VPERM vector index versions.
+    for (unsigned i = (unsigned)MVT::v32i8; i != (unsigned)MVT::v4i64; ++i) {
+      MVT::SimpleValueType SVT = (MVT::SimpleValueType)i;
+      EVT VT = SVT;
 
-    for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-         VT != (unsigned)MVT::LAST_VECTOR_VALUETYPE;
-         VT++) {
-      if (!isPowerOf2_32(MVT((MVT::SimpleValueType)VT).getVectorNumElements())
-          || (MVT((MVT::SimpleValueType)VT).getSizeInBits() < 256))
+      // Do not attempt to promote non-256-bit vectors
+      if (!VT.is256BitVector())
         continue;
-      setOperationAction(ISD::AND,    (MVT::SimpleValueType)VT, Promote);
-      AddPromotedToType (ISD::AND,    (MVT::SimpleValueType)VT, MVT::v4i64);
-      setOperationAction(ISD::OR,     (MVT::SimpleValueType)VT, Promote);
-      AddPromotedToType (ISD::OR,     (MVT::SimpleValueType)VT, MVT::v4i64);
-      setOperationAction(ISD::XOR,    (MVT::SimpleValueType)VT, Promote);
-      AddPromotedToType (ISD::XOR,    (MVT::SimpleValueType)VT, MVT::v4i64);
-      //setOperationAction(ISD::LOAD,   (MVT::SimpleValueType)VT, Promote);
-      //AddPromotedToType (ISD::LOAD,   (MVT::SimpleValueType)VT, MVT::v4i64);
-      setOperationAction(ISD::SELECT, (MVT::SimpleValueType)VT, Promote);
-      AddPromotedToType (ISD::SELECT, (MVT::SimpleValueType)VT, MVT::v4i64);
+
+      setOperationAction(ISD::AND,    SVT, Promote);
+      AddPromotedToType (ISD::AND,    SVT, MVT::v4i64);
+      setOperationAction(ISD::OR,     SVT, Promote);
+      AddPromotedToType (ISD::OR,     SVT, MVT::v4i64);
+      setOperationAction(ISD::XOR,    SVT, Promote);
+      AddPromotedToType (ISD::XOR,    SVT, MVT::v4i64);
+      setOperationAction(ISD::LOAD,   SVT, Promote);
+      AddPromotedToType (ISD::LOAD,   SVT, MVT::v4i64);
+      setOperationAction(ISD::SELECT, SVT, Promote);
+      AddPromotedToType (ISD::SELECT, SVT, MVT::v4i64);
     }
   }
-
 
   // SIGN_EXTEND_INREGs are evaluated by the extend type. Handle the expansion
   // of this type with custom code.
@@ -3852,18 +3838,23 @@ static SDValue getZeroVector(EVT VT, bool HasSSE2, SelectionDAG &DAG,
 }
 
 /// getOnesVector - Returns a vector of specified type with all bits set.
-///
+/// Always build ones vectors as <4 x i32> or <8 x i32> bitcasted to
+/// their original type, ensuring they get CSE'd.
 static SDValue getOnesVector(EVT VT, SelectionDAG &DAG, DebugLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
+  assert((VT.is128BitVector() || VT.is256BitVector())
+         && "Expected a 128-bit or 256-bit vector type");
 
-  // Always build ones vectors as <4 x i32> or <2 x i32> bitcasted to their dest
-  // type.  This ensures they get CSE'd.
   SDValue Cst = DAG.getTargetConstant(~0U, MVT::i32);
+
   SDValue Vec;
-  Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
+  if (VT.is256BitVector()) {
+    SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
+    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32, Ops, 8);
+  } else
+    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
   return DAG.getNode(ISD::BITCAST, dl, VT, Vec);
 }
-
 
 /// NormalizeMask - V2 is a splat, modify the mask (if needed) so all elements
 /// that point to V2 points to its first element.
@@ -4479,17 +4470,17 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     return ConcatVectors(Lower, Upper, DAG);
   }
 
-  // All zero's are handled with pxor in SSE2 and above, xorps in SSE1.
-  // All one's are handled with pcmpeqd. In AVX, zero's are handled with
-  // vpxor in 128-bit and xor{pd,ps} in 256-bit, but no 256 version of pcmpeqd
-  // is present, so AllOnes is ignored.
+  // All zero's:
+  //  - pxor (SSE2), xorps (SSE1), vpxor (128 AVX), xorp[s|d] (256 AVX)
+  // All one's:
+  //  - pcmpeqd (SSE2 and 128 AVX), fallback to constant pools (256 AVX)
   if (ISD::isBuildVectorAllZeros(Op.getNode()) ||
-      (Op.getValueType().getSizeInBits() != 256 &&
-       ISD::isBuildVectorAllOnes(Op.getNode()))) {
-    // Canonicalize this to <4 x i32> (SSE) to
+      ISD::isBuildVectorAllOnes(Op.getNode())) {
+    // Canonicalize this to <4 x i32> or <8 x 32> (SSE) to
     // 1) ensure the zero vectors are CSE'd, and 2) ensure that i64 scalars are
     // eliminated on x86-32 hosts.
-    if (Op.getValueType() == MVT::v4i32)
+    if (Op.getValueType() == MVT::v4i32 ||
+        Op.getValueType() == MVT::v8i32)
       return Op;
 
     if (ISD::isBuildVectorAllOnes(Op.getNode()))
