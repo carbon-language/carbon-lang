@@ -70,6 +70,11 @@ typedef struct X0 X1;
 struct X0;
 struct X0  {};
 
+@interface TestAttributes()
+// <rdar://problem/9561076>
+@property (retain) IBOutlet id anotherOutlet;
+@end
+
 // CHECK: c-index-api-loadTU-test.m:4:12: ObjCInterfaceDecl=Foo:4:12 Extent=[4:1 - 12:5]
 // CHECK: c-index-api-loadTU-test.m:6:32: ObjCIvarDecl=myoutlet:6:32 (Definition) Extent=[6:3 - 6:40]
 // CHECK: <invalid loc>:0:0: attribute(iboutlet)=
@@ -149,4 +154,10 @@ struct X0  {};
 // CHECK: c-index-api-loadTU-test.m:69:16: TypeRef=struct X0:71:8 Extent=[69:16 - 69:18]
 // CHECK: c-index-api-loadTU-test.m:70:8: StructDecl=X0:70:8 Extent=[70:1 - 70:10]
 // CHECK: c-index-api-loadTU-test.m:71:8: StructDecl=X0:71:8 (Definition) Extent=[71:1 - 71:14]
+
+// CHECK: <invalid loc>:0:0: attribute(iboutlet)=
+// CHECK: c-index-api-loadTU-test.m:75:29: TypeRef=id:0:0 Extent=[75:29 - 75:31]
+// CHECK: c-index-api-loadTU-test.m:75:32: ObjCInstanceMethodDecl=anotherOutlet:75:32 Extent=[75:32 - 75:45]
+// CHECK: c-index-api-loadTU-test.m:75:32: ObjCInstanceMethodDecl=setAnotherOutlet::75:32 Extent=[75:32 - 75:45]
+// CHECK: c-index-api-loadTU-test.m:75:32: ParmDecl=anotherOutlet:75:32 (Definition) Extent=[75:32 - 75:45]
 

@@ -179,6 +179,7 @@ Sema::HandlePropertyInClassExtension(Scope *S, ObjCCategoryDecl *CDecl,
   // Set setter/getter selector name. Needed later.
   PDecl->setGetterName(GetterSel);
   PDecl->setSetterName(SetterSel);
+  ProcessDeclAttributes(S, PDecl, FD.D);
   DC->addDecl(PDecl);
 
   // We need to look in the @interface to see if the @property was
