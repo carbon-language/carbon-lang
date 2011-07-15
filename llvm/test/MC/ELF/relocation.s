@@ -92,23 +92,23 @@ bar:
 // CHECK: # Relocation 0x0000000b
 // CHECK-NEXT:  (('r_offset', 0x0000004e)
 // CHECK-NEXT:   ('r_sym', 0x00000002)
-// CHECK-NEXT:   ('r_type', 0x0000000e)
+// CHECK-NEXT:   ('r_type', 0x0000000b)
 // CHECK-NEXT:   ('r_addend', 0x00000000)
 
 // CHECK: # Relocation 0x0000000c
-// CHECK-NEXT: (('r_offset', 0x00000052)
+// CHECK-NEXT: (('r_offset', 0x00000055)
 // CHECK-NEXT:  ('r_sym', 0x00000006)
 // CHECK-NEXT:  ('r_type', 0x00000002)
 // CHECK-NEXT:  ('r_addend', 0xfffffffc)
 
 // CHECK: # Relocation 0x0000000d
-// CHECK-NEXT: (('r_offset', 0x00000059)
+// CHECK-NEXT: (('r_offset', 0x0000005c)
 // CHECK-NEXT:  ('r_sym', 0x00000006)
 // CHECK-NEXT:  ('r_type', 0x00000002)
-// CHECK-NEXT:  ('r_addend', 0x00000059)
+// CHECK-NEXT:  ('r_addend', 0x0000005c)
 
 // CHECK: # Relocation 0x0000000e
-// CHECK-NEXT: (('r_offset', 0x00000060)
+// CHECK-NEXT: (('r_offset', 0x00000063)
 // CHECK-NEXT:  ('r_sym', 0x00000002)
 // CHECK-NEXT:  ('r_type', 0x0000000b)
 // CHECK-NEXT:  ('r_addend', 0x00000000)
