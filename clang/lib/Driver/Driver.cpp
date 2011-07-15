@@ -1252,6 +1252,15 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     NamedOutput = C.getArgs().MakeArgString(Suffixed.c_str());
   }
 
+  // If we're saving temps and the temp filename conflicts with the input 
+  // filename, then avoid overwriting input file.
+  if (!AtTopLevel && C.getArgs().hasArg(options::OPT_save_temps) &&
+    NamedOutput == BaseName) {
+    std::string TmpName =
+      GetTemporaryPath(types::getTypeTempSuffix(JA.getType()));
+    return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
+  }
+
   // As an annoying special case, PCH generation doesn't strip the pathname.
   if (JA.getType() == types::TY_PCH) {
     llvm::sys::path::remove_filename(BasePath);
