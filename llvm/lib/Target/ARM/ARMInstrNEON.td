@@ -4704,11 +4704,10 @@ def VEXTd32 : VEXTd<"vext", "32", v2i32> {
   let Inst{11-10} = index{1-0};
   let Inst{9-8}    = 0b00;
 }
-def VEXTdf  : VEXTd<"vext", "32", v2f32> {
-  let Inst{11-10}    = index{1-0};
-  let Inst{9-8}  = 0b00;
-
-}
+def : Pat<(v2f32 (NEONvext (v2f32 DPR:$Vn),
+                           (v2f32 DPR:$Vm),
+                           (i32 imm:$index))),
+          (VEXTd32 DPR:$Vn, DPR:$Vm, imm:$index)>;
 
 def VEXTq8  : VEXTq<"vext", "8",  v16i8> {
   let Inst{11-8} = index{3-0};
@@ -4721,10 +4720,10 @@ def VEXTq32 : VEXTq<"vext", "32", v4i32> {
   let Inst{11-10} = index{1-0};
   let Inst{9-8}    = 0b00;
 }
-def VEXTqf  : VEXTq<"vext", "32", v4f32> {
-  let Inst{11-10} = index{1-0};
-  let Inst{9-8}   = 0b00;
-}
+def : Pat<(v4f32 (NEONvext (v4f32 QPR:$Vn),
+                           (v4f32 QPR:$Vm),
+                           (i32 imm:$index))),
+          (VEXTq32 QPR:$Vn, QPR:$Vm, imm:$index)>;
 
 //   VTRN     : Vector Transpose
 
