@@ -95,7 +95,7 @@ if target:
                         #print value
                         print "%s (number of children = %d):" % (value.GetName(), value.GetNumChildren())
                         for child in value:
-                            print "Name: ", child.GetName(), " Value: ", child.GetValue(frame)
+                            print "Name: ", child.GetName(), " Value: ", child.GetValue()
 
             print "Hit the breakpoint at main, enter to continue and wait for program to exit or 'Ctrl-D'/'quit' to terminate the program"
             next = sys.stdin.readline()

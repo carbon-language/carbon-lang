@@ -19,7 +19,7 @@ namespace lldb {
 "Represents a collection of SBValues.  Both SBFrame's GetVariables() and
 GetRegisters() return a SBValueList.
 
-For example (from test/lldbutil.py),
+SBValueList supports SBValue iteration. For example (from test/lldbutil.py),
 
 def get_registers(frame, kind):
     '''Returns the registers given the frame and the kind of registers desired.
