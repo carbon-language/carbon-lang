@@ -518,7 +518,7 @@ void f17(int x, CFTypeRef p) {
 @implementation TestReturnNotOwnedWhenExpectedOwned
 - (NSString*)newString {
   NSString *s = [NSString stringWithUTF8String:"hello"];
-  return s; // expected-warning{{Object with +0 retain counts returned to caller where a +1 (owning) retain count is expected}}
+  return s; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
 }
 @end
 
@@ -736,7 +736,7 @@ typedef CFTypeRef OtherRef;
 - (id)initReturningNewClassBad2 {
   [self release];
   self = [[RDar6320065Subclass alloc] init];
-  return [self autorelease]; // expected-warning{{Object with +0 retain counts returned to caller where a +1 (owning) retain count is expected}}
+  return [self autorelease]; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
 }
 
 @end
@@ -1303,7 +1303,7 @@ CFDateRef returnsRetainedCFDate()  {
 }
 
 - (CFDateRef) newCFRetainedAsCFNoAttr {
-  return (CFDateRef)[(id)[self returnsCFRetainedAsCF] autorelease]; // expected-warning{{Object with +0 retain counts returned to caller where a +1 (owning) retain count is expected}}
+  return (CFDateRef)[(id)[self returnsCFRetainedAsCF] autorelease]; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
 }
 
 - (NSDate*) alsoReturnsRetained {
