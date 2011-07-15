@@ -16,6 +16,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
@@ -158,7 +159,7 @@ static void DisassembleInput(const StringRef &Filename) {
 
   outs() << '\n';
   outs() << Filename
-         << ":\tfile format " << Obj->getFileFormatName() << "\n\n\n";
+         << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
 
   error_code ec;
   for (ObjectFile::section_iterator i = Obj->begin_sections(),
@@ -169,9 +170,32 @@ static void DisassembleInput(const StringRef &Filename) {
     if (error(i->isText(text))) break;
     if (!text) continue;
 
+    // Make a list of all the symbols in this section.
+    std::vector<std::pair<uint64_t, StringRef> > Symbols;
+    for (ObjectFile::symbol_iterator si = Obj->begin_symbols(),
+                                     se = Obj->end_symbols();
+                                     si != se; si.increment(ec)) {
+      bool contains;
+      if (!error(i->containsSymbol(*si, contains)) && contains) {
+        uint64_t Address;
+        if (error(si->getAddress(Address))) break;
+        StringRef Name;
+        if (error(si->getName(Name))) break;
+        Symbols.push_back(std::make_pair(Address, Name));
+      }
+    }
+
+    // Sort the symbols by address, just in case they didn't come in that way.
+    array_pod_sort(Symbols.begin(), Symbols.end());
+
     StringRef name;
     if (error(i->getName(name))) break;
-    outs() << "Disassembly of section " << name << ":\n\n";
+    outs() << "Disassembly of section " << name << ':';
+
+    // If the section has no symbols just insert a dummy one and disassemble
+    // the whole section.
+    if (Symbols.empty())
+      Symbols.push_back(std::make_pair(0, name));
 
     // Set up disassembler.
     OwningPtr<const MCAsmInfo> AsmInfo(TheTarget->createMCAsmInfo(TripleName));
@@ -200,27 +224,36 @@ static void DisassembleInput(const StringRef &Filename) {
     StringRefMemoryObject memoryObject(Bytes);
     uint64_t Size;
     uint64_t Index;
+    uint64_t SectSize;
+    if (error(i->getSize(SectSize))) break;
 
-    for (Index = 0; Index < Bytes.size(); Index += Size) {
-      MCInst Inst;
+    // Disassemble symbol by symbol.
+    for (unsigned si = 0, se = Symbols.size(); si != se; ++si) {
+      uint64_t Start = Symbols[si].first;
+      uint64_t End = si == se-1 ? SectSize : Symbols[si + 1].first - 1;
+      outs() << '\n' << Symbols[si].second << ":\n";
 
-#     ifndef NDEBUG
-      raw_ostream &DebugOut = DebugFlag ? dbgs() : nulls();
-#     else
-      raw_ostream &DebugOut = nulls();
-#     endif
+      for (Index = Start; Index < End; Index += Size) {
+        MCInst Inst;
 
-      if (DisAsm->getInstruction(Inst, Size, memoryObject, Index, DebugOut)) {
-        uint64_t addr;
-        if (error(i->getAddress(addr))) break;
-        outs() << format("%8x:\t", addr + Index);
-        DumpBytes(StringRef(Bytes.data() + Index, Size));
-        IP->printInst(&Inst, outs());
-        outs() << "\n";
-      } else {
-        errs() << ToolName << ": warning: invalid instruction encoding\n";
-        if (Size == 0)
-          Size = 1; // skip illegible bytes
+#ifndef NDEBUG
+        raw_ostream &DebugOut = DebugFlag ? dbgs() : nulls();
+#else
+        raw_ostream &DebugOut = nulls();
+#endif
+
+        if (DisAsm->getInstruction(Inst, Size, memoryObject, Index, DebugOut)) {
+          uint64_t addr;
+          if (error(i->getAddress(addr))) break;
+          outs() << format("%8x:\t", addr + Index);
+          DumpBytes(StringRef(Bytes.data() + Index, Size));
+          IP->printInst(&Inst, outs());
+          outs() << "\n";
+        } else {
+          errs() << ToolName << ": warning: invalid instruction encoding\n";
+          if (Size == 0)
+            Size = 1; // skip illegible bytes
+        }
       }
     }
   }

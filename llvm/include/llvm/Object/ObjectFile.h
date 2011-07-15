@@ -172,6 +172,10 @@ public:
       return &Current;
     }
 
+    const content_type &operator*() const {
+      return Current;
+    }
+
     bool operator==(const content_iterator &other) const {
       return Current == other.Current;
     }
