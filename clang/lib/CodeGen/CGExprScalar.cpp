@@ -2578,7 +2578,7 @@ Value *ScalarExprEmitter::VisitBlockExpr(const BlockExpr *block) {
 
 Value *ScalarExprEmitter::VisitAsTypeExpr(AsTypeExpr *E) {
   Value *Src  = CGF.EmitScalarExpr(E->getSrcExpr());
-  const llvm::Type * DstTy = ConvertType(E->getDstType());
+  const llvm::Type *DstTy = ConvertType(E->getType());
   
   // Going from vec4->vec3 or vec3->vec4 is a special case and requires
   // a shuffle vector instead of a bitcast.
