@@ -1,4 +1,4 @@
-//===-- ProcessKDPLog.cpp ---------------------------------*- C++ -*-===//
+//===-- ProcessKDPLog.cpp ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

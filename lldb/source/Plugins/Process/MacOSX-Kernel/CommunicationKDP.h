@@ -1,4 +1,4 @@
-//===-- CommunicationKDP.h --------------------------------*- C++ -*-===//
+//===-- CommunicationKDP.h --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
