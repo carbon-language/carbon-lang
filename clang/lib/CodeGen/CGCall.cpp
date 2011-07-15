@@ -271,9 +271,6 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
   // Compute ABI information.
   getABIInfo().computeInfo(*FI);
 
-  bool Erased = FunctionsBeingProcessed.erase(FI); (void)Erased;
-  assert(Erased && "Not in set?");
-
   // Loop over all of the computed argument and return value info.  If any of
   // them are direct or extend without a specified coerce type, specify the
   // default now.
@@ -286,6 +283,9 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
     if (I->info.canHaveCoerceToType() && I->info.getCoerceToType() == 0)
       I->info.setCoerceToType(ConvertType(I->type));
 
+  bool Erased = FunctionsBeingProcessed.erase(FI); (void)Erased;
+  assert(Erased && "Not in set?");
+  
   return *FI;
 }
 
