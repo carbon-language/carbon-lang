@@ -939,6 +939,14 @@ if test "x$WITH_BINUTILS_INCDIR" != xdefault ; then
   fi
 fi
 
+dnl Specify the URL where bug reports should be submitted.
+AC_ARG_WITH(bug-report-url,
+  AS_HELP_STRING([--with-bug-report-url],
+    [Specify the URL where bug reports should be submitted (default=http://llvm.org)]),,
+    withval="http://llvm.org")
+AC_DEFINE_UNQUOTED(BUG_REPORT_URL,"$withval",
+                   [Bug report URL.])
+
 dnl --enable-libffi : check whether the user wants to turn off libffi:
 AC_ARG_ENABLE(libffi,AS_HELP_STRING(
   --enable-libffi,[Check for the presence of libffi (default is NO)]),
