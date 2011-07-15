@@ -720,13 +720,13 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_SUBTARGETINFO_CTOR\n";
 
   OS << "namespace llvm {\n";
-  OS << "extern const llvm::SubtargetFeatureKV " << Target << "FeatureKV[];\n";
-  OS << "extern const llvm::SubtargetFeatureKV " << Target << "SubTypeKV[];\n";
+  OS << "extern llvm::SubtargetFeatureKV " << Target << "FeatureKV[];\n";
+  OS << "extern llvm::SubtargetFeatureKV " << Target << "SubTypeKV[];\n";
   if (HasItineraries) {
-    OS << "extern const llvm::SubtargetInfoKV " << Target << "ProcItinKV[];\n";
-    OS << "extern const llvm::InstrStage " << Target << "Stages[];\n";
-    OS << "extern const unsigned " << Target << "OperandCycles[];\n";
-    OS << "extern const unsigned " << Target << "ForwardingPathes[];\n";
+    OS << "extern llvm::SubtargetInfoKV " << Target << "ProcItinKV[];\n";
+    OS << "extern llvm::InstrStage " << Target << "Stages[];\n";
+    OS << "extern unsigned " << Target << "OperandCycles[];\n";
+    OS << "extern unsigned " << Target << "ForwardingPathes[];\n";
   }
 
   OS << ClassName << "::" << ClassName << "(StringRef TT, StringRef CPU, "

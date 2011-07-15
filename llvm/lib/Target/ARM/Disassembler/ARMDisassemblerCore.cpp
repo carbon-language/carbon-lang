@@ -72,7 +72,7 @@
 ///
 
 namespace llvm {
-extern const MCInstrDesc ARMInsts[];
+extern MCInstrDesc ARMInsts[];
 }
 
 using namespace llvm;

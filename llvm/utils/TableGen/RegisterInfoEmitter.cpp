@@ -659,7 +659,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "  }\n}\n\n";
 
   // Emit the constructor of the class...
-  OS << "extern const MCRegisterDesc " << TargetName << "RegDesc[];\n";
+  OS << "extern MCRegisterDesc " << TargetName << "RegDesc[];\n";
 
   OS << ClassName << "::" << ClassName
      << "()\n"

@@ -30,7 +30,7 @@
 #include "MBlazeGenEDInfo.inc"
 
 namespace llvm {
-extern const MCInstrDesc MBlazeInsts[];
+extern MCInstrDesc MBlazeInsts[];
 }
 
 using namespace llvm;
