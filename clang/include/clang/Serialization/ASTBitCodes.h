@@ -392,8 +392,8 @@ namespace clang {
       /// SM_SLOC_BUFFER_ENTRY record.
       SM_SLOC_BUFFER_BLOB = 3,
       /// \brief Describes a source location entry (SLocEntry) for a
-      /// macro instantiation.
-      SM_SLOC_INSTANTIATION_ENTRY = 4,
+      /// macro expansion.
+      SM_SLOC_EXPANSION_ENTRY = 4,
       /// \brief Describes the SourceManager's line table, with
       /// information about #line directives.
       SM_LINE_TABLE = 5
@@ -420,9 +420,8 @@ namespace clang {
 
     /// \brief Record types used within a preprocessor detail block.
     enum PreprocessorDetailRecordTypes {
-      /// \brief Describes a macro instantiation within the preprocessing 
-      /// record.
-      PPD_MACRO_INSTANTIATION = 0,
+      /// \brief Describes a macro expansion within the preprocessing record.
+      PPD_MACRO_EXPANSION = 0,
       
       /// \brief Describes a macro definition within the preprocessing record.
       PPD_MACRO_DEFINITION = 1,

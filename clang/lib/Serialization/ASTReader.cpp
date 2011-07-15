@@ -1195,7 +1195,7 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(PerFileData &F) {
 
     case SM_SLOC_FILE_ENTRY:
     case SM_SLOC_BUFFER_ENTRY:
-    case SM_SLOC_INSTANTIATION_ENTRY:
+    case SM_SLOC_EXPANSION_ENTRY:
       // Once we hit one of the source location entries, we're done.
       return Success;
     }
@@ -1365,7 +1365,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
     break;
   }
 
-  case SM_SLOC_INSTANTIATION_ENTRY: {
+  case SM_SLOC_EXPANSION_ENTRY: {
     SourceLocation SpellingLoc = ReadSourceLocation(*F, Record[1]);
     SourceMgr.createInstantiationLoc(SpellingLoc,
                                      ReadSourceLocation(*F, Record[2]),
@@ -1556,7 +1556,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(PerFileData &F) {
     (PreprocessorDetailRecordTypes)F.PreprocessorDetailCursor.ReadRecord(
                                              Code, Record, BlobStart, BlobLen);
   switch (RecType) {
-  case PPD_MACRO_INSTANTIATION: {
+  case PPD_MACRO_EXPANSION: {
     if (PreprocessedEntity *PE = PPRec.getPreprocessedEntity(Record[0]))
       return PE;
     

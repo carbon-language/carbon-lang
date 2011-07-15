@@ -789,7 +789,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(SM_SLOC_FILE_ENTRY);
   RECORD(SM_SLOC_BUFFER_ENTRY);
   RECORD(SM_SLOC_BUFFER_BLOB);
-  RECORD(SM_SLOC_INSTANTIATION_ENTRY);
+  RECORD(SM_SLOC_EXPANSION_ENTRY);
   RECORD(SM_LINE_TABLE);
 
   // Preprocessor Block.
@@ -896,7 +896,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   AddStmtsExprs(Stream, Record);
 
   BLOCK(PREPROCESSOR_DETAIL_BLOCK);
-  RECORD(PPD_MACRO_INSTANTIATION);
+  RECORD(PPD_MACRO_EXPANSION);
   RECORD(PPD_MACRO_DEFINITION);
   RECORD(PPD_INCLUSION_DIRECTIVE);
   
@@ -1250,12 +1250,12 @@ static unsigned CreateSLocBufferBlobAbbrev(llvm::BitstreamWriter &Stream) {
   return Stream.EmitAbbrev(Abbrev);
 }
 
-/// \brief Create an abbreviation for the SLocEntry that refers to an
-/// buffer.
-static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &Stream) {
+/// \brief Create an abbreviation for the SLocEntry that refers to a macro
+/// expansion.
+static unsigned CreateSLocExpansionAbbrev(llvm::BitstreamWriter &Stream) {
   using namespace llvm;
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(SM_SLOC_INSTANTIATION_ENTRY));
+  Abbrev->Add(BitCodeAbbrevOp(SM_SLOC_EXPANSION_ENTRY));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Offset
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Spelling location
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8)); // Start location
@@ -1414,7 +1414,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   unsigned SLocFileAbbrv = CreateSLocFileAbbrev(Stream);
   unsigned SLocBufferAbbrv = CreateSLocBufferAbbrev(Stream);
   unsigned SLocBufferBlobAbbrv = CreateSLocBufferBlobAbbrev(Stream);
-  unsigned SLocInstantiationAbbrv = CreateSLocInstantiationAbbrev(Stream);
+  unsigned SLocExpansionAbbrv = CreateSLocExpansionAbbrev(Stream);
 
   // Write the line table.
   if (SourceMgr.hasLineTable()) {
@@ -1479,7 +1479,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
       } else
         Code = SM_SLOC_BUFFER_ENTRY;
     } else
-      Code = SM_SLOC_INSTANTIATION_ENTRY;
+      Code = SM_SLOC_EXPANSION_ENTRY;
     Record.clear();
     Record.push_back(Code);
 
@@ -1539,7 +1539,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
           PreloadSLocs.push_back(BaseSLocID + SLocEntryOffsets.size());
       }
     } else {
-      // The source location entry is an instantiation.
+      // The source location entry is a macro expansion.
       const SrcMgr::InstantiationInfo &Inst = SLoc->getInstantiation();
       Record.push_back(Inst.getSpellingLoc().getRawEncoding());
       Record.push_back(Inst.getInstantiationLocStart().getRawEncoding());
@@ -1550,7 +1550,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
       if (I + 1 != N)
         NextOffset = SourceMgr.getSLocEntry(I + 1).getOffset();
       Record.push_back(NextOffset - SLoc->getOffset() - 1);
-      Stream.EmitRecordWithAbbrev(SLocInstantiationAbbrv, Record);
+      Stream.EmitRecordWithAbbrev(SLocExpansionAbbrv, Record);
     }
   }
 
@@ -1806,7 +1806,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
       AddSourceLocation(ME->getSourceRange().getEnd(), Record);
       AddIdentifierRef(ME->getName(), Record);
       Record.push_back(getMacroDefinitionID(ME->getDefinition()));
-      Stream.EmitRecord(PPD_MACRO_INSTANTIATION, Record);
+      Stream.EmitRecord(PPD_MACRO_EXPANSION, Record);
       continue;
     }
 

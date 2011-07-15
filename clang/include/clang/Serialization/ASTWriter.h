@@ -383,7 +383,7 @@ public:
   /// are relative to the given system root.
   ///
   /// \param PPRec Record of the preprocessing actions that occurred while
-  /// preprocessing this file, e.g., macro instantiations
+  /// preprocessing this file, e.g., macro expansions
   void WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                 const std::string &OutputFile,
                 const char* isysroot);
