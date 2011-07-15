@@ -67,133 +67,9 @@ namespace clang {
                                           unsigned NumTemplateArgs);
 
     void VisitStmt(Stmt *S);
-    void VisitNullStmt(NullStmt *S);
-    void VisitCompoundStmt(CompoundStmt *S);
-    void VisitSwitchCase(SwitchCase *S);
-    void VisitCaseStmt(CaseStmt *S);
-    void VisitDefaultStmt(DefaultStmt *S);
-    void VisitLabelStmt(LabelStmt *S);
-    void VisitIfStmt(IfStmt *S);
-    void VisitSwitchStmt(SwitchStmt *S);
-    void VisitWhileStmt(WhileStmt *S);
-    void VisitDoStmt(DoStmt *S);
-    void VisitForStmt(ForStmt *S);
-    void VisitGotoStmt(GotoStmt *S);
-    void VisitIndirectGotoStmt(IndirectGotoStmt *S);
-    void VisitContinueStmt(ContinueStmt *S);
-    void VisitBreakStmt(BreakStmt *S);
-    void VisitReturnStmt(ReturnStmt *S);
-    void VisitDeclStmt(DeclStmt *S);
-    void VisitAsmStmt(AsmStmt *S);
-    void VisitExpr(Expr *E);
-    void VisitPredefinedExpr(PredefinedExpr *E);
-    void VisitDeclRefExpr(DeclRefExpr *E);
-    void VisitIntegerLiteral(IntegerLiteral *E);
-    void VisitFloatingLiteral(FloatingLiteral *E);
-    void VisitImaginaryLiteral(ImaginaryLiteral *E);
-    void VisitStringLiteral(StringLiteral *E);
-    void VisitCharacterLiteral(CharacterLiteral *E);
-    void VisitParenExpr(ParenExpr *E);
-    void VisitParenListExpr(ParenListExpr *E);
-    void VisitUnaryOperator(UnaryOperator *E);
-    void VisitOffsetOfExpr(OffsetOfExpr *E);
-    void VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E);
-    void VisitArraySubscriptExpr(ArraySubscriptExpr *E);
-    void VisitCallExpr(CallExpr *E);
-    void VisitMemberExpr(MemberExpr *E);
-    void VisitCastExpr(CastExpr *E);
-    void VisitBinaryOperator(BinaryOperator *E);
-    void VisitCompoundAssignOperator(CompoundAssignOperator *E);
-    void VisitConditionalOperator(ConditionalOperator *E);
-    void VisitBinaryConditionalOperator(BinaryConditionalOperator *E);
-    void VisitImplicitCastExpr(ImplicitCastExpr *E);
-    void VisitExplicitCastExpr(ExplicitCastExpr *E);
-    void VisitCStyleCastExpr(CStyleCastExpr *E);
-    void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
-    void VisitExtVectorElementExpr(ExtVectorElementExpr *E);
-    void VisitInitListExpr(InitListExpr *E);
-    void VisitDesignatedInitExpr(DesignatedInitExpr *E);
-    void VisitImplicitValueInitExpr(ImplicitValueInitExpr *E);
-    void VisitVAArgExpr(VAArgExpr *E);
-    void VisitAddrLabelExpr(AddrLabelExpr *E);
-    void VisitStmtExpr(StmtExpr *E);
-    void VisitChooseExpr(ChooseExpr *E);
-    void VisitGNUNullExpr(GNUNullExpr *E);
-    void VisitShuffleVectorExpr(ShuffleVectorExpr *E);
-    void VisitBlockExpr(BlockExpr *E);
-    void VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
-    void VisitGenericSelectionExpr(GenericSelectionExpr *E);
-    void VisitObjCStringLiteral(ObjCStringLiteral *E);
-    void VisitObjCEncodeExpr(ObjCEncodeExpr *E);
-    void VisitObjCSelectorExpr(ObjCSelectorExpr *E);
-    void VisitObjCProtocolExpr(ObjCProtocolExpr *E);
-    void VisitObjCIvarRefExpr(ObjCIvarRefExpr *E);
-    void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
-    void VisitObjCMessageExpr(ObjCMessageExpr *E);
-    void VisitObjCIsaExpr(ObjCIsaExpr *E);
-    void VisitObjCIndirectCopyRestoreExpr(ObjCIndirectCopyRestoreExpr *E);
-    void VisitObjCBridgedCastExpr(ObjCBridgedCastExpr *E);
-
-    void VisitObjCForCollectionStmt(ObjCForCollectionStmt *);
-    void VisitObjCAtCatchStmt(ObjCAtCatchStmt *);
-    void VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *);
-    void VisitObjCAtTryStmt(ObjCAtTryStmt *);
-    void VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *);
-    void VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
-    void VisitObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt *);
-
-    // C++ Statements
-    void VisitCXXCatchStmt(CXXCatchStmt *S);
-    void VisitCXXTryStmt(CXXTryStmt *S);
-    void VisitCXXForRangeStmt(CXXForRangeStmt *);
-
-    void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
-    void VisitCXXConstructExpr(CXXConstructExpr *E);
-    void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E);
-    void VisitCXXNamedCastExpr(CXXNamedCastExpr *E);
-    void VisitCXXStaticCastExpr(CXXStaticCastExpr *E);
-    void VisitCXXDynamicCastExpr(CXXDynamicCastExpr *E);
-    void VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr *E);
-    void VisitCXXConstCastExpr(CXXConstCastExpr *E);
-    void VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E);
-    void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *E);
-    void VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *E);
-    void VisitCXXTypeidExpr(CXXTypeidExpr *E);
-    void VisitCXXUuidofExpr(CXXUuidofExpr *E);
-    void VisitCXXThisExpr(CXXThisExpr *E);
-    void VisitCXXThrowExpr(CXXThrowExpr *E);
-    void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E);
-    void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
-    
-    void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
-    void VisitCXXNewExpr(CXXNewExpr *E);
-    void VisitCXXDeleteExpr(CXXDeleteExpr *E);
-    void VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E);
-    
-    void VisitExprWithCleanups(ExprWithCleanups *E);
-    
-    void VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E);
-    void VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E);
-    void VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E);
-
-    void VisitOverloadExpr(OverloadExpr *E);
-    void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E);
-    void VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E);
-
-    void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
-    void VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E);
-    void VisitArrayTypeTraitExpr(ArrayTypeTraitExpr *E);
-    void VisitExpressionTraitExpr(ExpressionTraitExpr *E);
-    void VisitCXXNoexceptExpr(CXXNoexceptExpr *E);
-    void VisitPackExpansionExpr(PackExpansionExpr *E);
-    void VisitSizeOfPackExpr(SizeOfPackExpr *E);
-    void VisitSubstNonTypeTemplateParmPackExpr(
-                                           SubstNonTypeTemplateParmPackExpr *E);
-    void VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E);
-    void VisitOpaqueValueExpr(OpaqueValueExpr *E);
-    
-    // CUDA Expressions
-    void VisitCUDAKernelCallExpr(CUDAKernelCallExpr *E);    
+#define STMT(Type, Base) \
+    void Visit##Type(Type *);
+#include "clang/AST/StmtNodes.inc"
   };
 }
 
@@ -592,6 +468,10 @@ void ASTStmtReader::VisitCallExpr(CallExpr *E) {
   E->setCallee(Reader.ReadSubExpr());
   for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
     E->setArg(I, Reader.ReadSubExpr());
+}
+
+void ASTStmtReader::VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
+  VisitCallExpr(E);
 }
 
 void ASTStmtReader::VisitMemberExpr(MemberExpr *E) {
@@ -1151,18 +1031,6 @@ void ASTStmtReader::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
   // typeid(42+2)
   E->setExprOperand(Reader.ReadSubExpr());
 }
-void ASTStmtReader::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
-  VisitExpr(E);
-  E->setSourceRange(ReadSourceRange(Record, Idx));
-  if (E->isTypeOperand()) { // __uuidof(ComType)
-    E->setTypeOperandSourceInfo(
-        GetTypeSourceInfo(Record, Idx));
-    return;
-  }
-  
-  // __uuidof(expr)
-  E->setExprOperand(Reader.ReadSubExpr());
-}
 
 void ASTStmtReader::VisitCXXThisExpr(CXXThisExpr *E) {
   VisitExpr(E);
@@ -1415,6 +1283,15 @@ void ASTStmtReader::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
   E->Pack = cast_or_null<NamedDecl>(Reader.GetDecl(Record[Idx++]));
 }
 
+void ASTStmtReader::VisitSubstNonTypeTemplateParmExpr(
+                                              SubstNonTypeTemplateParmExpr *E) {
+  VisitExpr(E);
+  E->Param
+    = cast_or_null<NonTypeTemplateParmDecl>(Reader.GetDecl(Record[Idx++]));
+  E->NameLoc = ReadSourceLocation(Record, Idx);
+  E->Replacement = Reader.ReadSubExpr();
+}
+
 void ASTStmtReader::VisitSubstNonTypeTemplateParmPackExpr(
                                           SubstNonTypeTemplateParmPackExpr *E) {
   VisitExpr(E);
@@ -1441,6 +1318,43 @@ void ASTStmtReader::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
 }
 
 //===----------------------------------------------------------------------===//
+// Microsoft Expressions and Statements
+//===----------------------------------------------------------------------===//
+void ASTStmtReader::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
+  VisitExpr(E);
+  E->setSourceRange(ReadSourceRange(Record, Idx));
+  if (E->isTypeOperand()) { // __uuidof(ComType)
+    E->setTypeOperandSourceInfo(
+        GetTypeSourceInfo(Record, Idx));
+    return;
+  }
+  
+  // __uuidof(expr)
+  E->setExprOperand(Reader.ReadSubExpr());
+}
+
+void ASTStmtReader::VisitSEHExceptStmt(SEHExceptStmt *S) {
+  VisitStmt(S);
+  S->Loc = ReadSourceLocation(Record, Idx);
+  S->Children[SEHExceptStmt::FILTER_EXPR] = Reader.ReadSubStmt();
+  S->Children[SEHExceptStmt::BLOCK] = Reader.ReadSubStmt();
+}
+
+void ASTStmtReader::VisitSEHFinallyStmt(SEHFinallyStmt *S) {
+  VisitStmt(S);
+  S->Loc = ReadSourceLocation(Record, Idx);
+  S->Block = Reader.ReadSubStmt();
+}
+
+void ASTStmtReader::VisitSEHTryStmt(SEHTryStmt *S) {
+  VisitStmt(S);
+  S->IsCXXTry = Record[Idx++];
+  S->TryLoc = ReadSourceLocation(Record, Idx);
+  S->Children[SEHTryStmt::TRY] = Reader.ReadSubStmt();
+  S->Children[SEHTryStmt::HANDLER] = Reader.ReadSubStmt();
+}
+
+//===----------------------------------------------------------------------===//
 // CUDA Expressions and Statements
 //===----------------------------------------------------------------------===//
 
@@ -1448,6 +1362,20 @@ void ASTStmtReader::VisitCUDAKernelCallExpr(CUDAKernelCallExpr *E) {
   VisitCallExpr(E);
   E->setConfig(cast<CallExpr>(Reader.ReadSubExpr()));
 }
+
+//===----------------------------------------------------------------------===//
+// OpenCL Expressions and Statements.
+//===----------------------------------------------------------------------===//
+void ASTStmtReader::VisitAsTypeExpr(AsTypeExpr *E) {
+  VisitExpr(E);
+  E->BuiltinLoc = ReadSourceLocation(Record, Idx);
+  E->RParenLoc = ReadSourceLocation(Record, Idx);
+  E->SrcExpr = Reader.ReadSubExpr();
+}
+
+//===----------------------------------------------------------------------===//
+// ASTReader Implementation
+//===----------------------------------------------------------------------===//
 
 Stmt *ASTReader::ReadStmt(PerFileData &F) {
   switch (ReadingKind) {
@@ -1845,6 +1773,15 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
     case STMT_OBJC_AUTORELEASE_POOL:
       S = new (Context) ObjCAutoreleasePoolStmt(Empty);
       break;
+    case STMT_SEH_EXCEPT:
+      S = new (Context) SEHExceptStmt(Empty);
+      break;
+    case STMT_SEH_FINALLY:
+      S = new (Context) SEHFinallyStmt(Empty);
+      break;
+    case STMT_SEH_TRY:
+      S = new (Context) SEHTryStmt(Empty);
+      break;
     case STMT_CXX_CATCH:
       S = new (Context) CXXCatchStmt(Empty);
       break;
@@ -2016,6 +1953,10 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
         
     case EXPR_SIZEOF_PACK:
       S = new (Context) SizeOfPackExpr(Empty);
+      break;
+        
+    case EXPR_SUBST_NON_TYPE_TEMPLATE_PARM:
+      S = new (Context) SubstNonTypeTemplateParmExpr(Empty);
       break;
         
     case EXPR_SUBST_NON_TYPE_TEMPLATE_PARM_PACK:

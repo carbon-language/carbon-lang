@@ -976,8 +976,6 @@ namespace clang {
       EXPR_CXX_NULL_PTR_LITERAL,  // CXXNullPtrLiteralExpr
       EXPR_CXX_TYPEID_EXPR,       // CXXTypeidExpr (of expr).
       EXPR_CXX_TYPEID_TYPE,       // CXXTypeidExpr (of type).
-      EXPR_CXX_UUIDOF_EXPR,       // CXXUuidofExpr (of expr).
-      EXPR_CXX_UUIDOF_TYPE,       // CXXUuidofExpr (of type).
       EXPR_CXX_THIS,              // CXXThisExpr
       EXPR_CXX_THROW,             // CXXThrowExpr
       EXPR_CXX_DEFAULT_ARG,       // CXXDefaultArgExpr
@@ -1007,6 +1005,7 @@ namespace clang {
       
       EXPR_PACK_EXPANSION,        // PackExpansionExpr
       EXPR_SIZEOF_PACK,           // SizeOfPackExpr
+      EXPR_SUBST_NON_TYPE_TEMPLATE_PARM, // SubstNonTypeTemplateParmExpr
       EXPR_SUBST_NON_TYPE_TEMPLATE_PARM_PACK,// SubstNonTypeTemplateParmPackExpr
       EXPR_MATERIALIZE_TEMPORARY, // MaterializeTemporaryExpr
       
@@ -1015,6 +1014,13 @@ namespace clang {
 
       // OpenCL
       EXPR_ASTYPE,                 // AsTypeExpr
+
+      // Microsoft
+      EXPR_CXX_UUIDOF_EXPR,       // CXXUuidofExpr (of expr).
+      EXPR_CXX_UUIDOF_TYPE,       // CXXUuidofExpr (of type).
+      STMT_SEH_EXCEPT,            // SEHExceptStmt
+      STMT_SEH_FINALLY,           // SEHFinallyStmt
+      STMT_SEH_TRY,               // SEHTryStmt
       
       // ARC
       EXPR_OBJC_BRIDGED_CAST       // ObjCBridgedCastExpr

@@ -2969,6 +2969,11 @@ class SubstNonTypeTemplateParmExpr : public Expr {
   /// \brief The location of the non-type template parameter reference.
   SourceLocation NameLoc;
 
+  friend class ASTReader;
+  friend class ASTStmtReader;
+  explicit SubstNonTypeTemplateParmExpr(EmptyShell Empty) 
+    : Expr(SubstNonTypeTemplateParmExprClass, Empty) { }
+
 public:
   SubstNonTypeTemplateParmExpr(QualType type, 
                                ExprValueKind valueKind,
@@ -3025,17 +3030,16 @@ class SubstNonTypeTemplateParmPackExpr : public Expr {
   /// \brief The location of the non-type template parameter pack reference.
   SourceLocation NameLoc;
   
+  friend class ASTReader;
   friend class ASTStmtReader;
-  friend class ASTStmtWriter;
+  explicit SubstNonTypeTemplateParmPackExpr(EmptyShell Empty) 
+    : Expr(SubstNonTypeTemplateParmPackExprClass, Empty) { }
   
 public:
   SubstNonTypeTemplateParmPackExpr(QualType T, 
                                    NonTypeTemplateParmDecl *Param,
                                    SourceLocation NameLoc,
                                    const TemplateArgument &ArgPack);
-  
-  SubstNonTypeTemplateParmPackExpr(EmptyShell Empty) 
-    : Expr(SubstNonTypeTemplateParmPackExprClass, Empty) { }
   
   /// \brief Retrieve the non-type template parameter pack being substituted.
   NonTypeTemplateParmDecl *getParameterPack() const { return Param; }
