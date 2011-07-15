@@ -276,10 +276,9 @@ error_code MachOObjectFile::getSectionContents(DataRefImpl DRI,
 
 error_code MachOObjectFile::isSectionText(DataRefImpl DRI,
                                           bool &Result) const {
-  InMemoryStruct<macho::SegmentLoadCommand> SLC;
-  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-  MachOObj->ReadSegmentLoadCommand(LCI, SLC);
-  Result = !strcmp(SLC->Name, "__TEXT");
+  InMemoryStruct<macho::Section> Sect;
+  getSection(DRI, Sect);
+  Result = !strcmp(Sect->Name, "__text");
   return object_error::success;
 }
 
