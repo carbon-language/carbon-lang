@@ -56,7 +56,7 @@ class DataFormatterTestCase(TestBase):
         # Set the script here to ease the formatting
         script = 'a = valobj.GetChildMemberWithName(\'integer\'); a_val = a.GetValue(); str = \'Hello from Python, \' + a_val + \' time\'; return str + (\'!\' if a_val == \'1\' else \'s!\');'
 
-        self.runCmd("type summary add add i_am_cool -s \"%s\"" % script)
+        self.runCmd("type summary add i_am_cool -s \"%s\"" % script)
 
         self.expect("frame variable one",
             substrs = ['Hello from Python',
@@ -85,6 +85,9 @@ class DataFormatterTestCase(TestBase):
 
         self.expect("frame variable two",
                     substrs = ['int says 1'])
+        
+        self.expect("frame variable twoptr",
+                    substrs = ['int says 1'])
 
         # Change the summary
         self.runCmd("type summary add -f \"int says ${var.integer}, and float says ${var.floating}\" i_am_cool")
@@ -102,6 +105,72 @@ class DataFormatterTestCase(TestBase):
 
         self.expect("frame variable twoptr", matching=False,
                     substrs = ['and float says 2.71'])
+
+        script = 'return \'Python summary\'';
+
+        self.runCmd("type summary add --name test_summary -s \"%s\"" % script)
+
+        # attach the Python named summary to someone
+        self.runCmd("frame variable one --summary test_summary")
+
+        self.expect("frame variable one",
+                substrs = ['Python summary'])
+
+        # should not bind to the type
+        self.expect("frame variable two", matching=False,
+                    substrs = ['Python summary'])
+
+        self.runCmd("type summary add i_am_cool -f \"Text summary\"")
+
+        self.expect("frame variable one",
+                    substrs = ['Python summary'])
+
+        # use the type summary
+        self.expect("frame variable two",
+                    substrs = ['Text summary'])
+
+        self.runCmd("n"); # skip ahead to make values change
+
+        # both should use the type summary now
+        self.expect("frame variable one",
+                    substrs = ['Text summary'])
+        
+        self.expect("frame variable two",
+                    substrs = ['Text summary'])
+
+        # disable type summary for pointers, and make a Python regex summary
+        self.runCmd("type summary add i_am_cool -p -f \"Text summary\"")
+        self.runCmd("type summary add -x cool -s \"%s\"" % script)
+
+        # variables should stick to the type summary
+        self.expect("frame variable one",
+                    substrs = ['Text summary'])
+
+        self.expect("frame variable two",
+                    substrs = ['Text summary'])
+
+        # array and pointer should match the Python one
+        self.expect("frame variable twoptr",
+                    substrs = ['Python summary'])
+        
+        self.expect("frame variable array",
+                    substrs = ['Python summary'])
+
+        # return pointers to the type summary
+        self.runCmd("type summary add i_am_cool -f \"Text summary\"")
+
+        self.expect("frame variable one",
+                    substrs = ['Text summary'])
+        
+        self.expect("frame variable two",
+                    substrs = ['Text summary'])
+        
+        self.expect("frame variable twoptr",
+                    substrs = ['Text summary'])
+        
+        self.expect("frame variable array",
+                    substrs = ['Python summary'])
+
 
 if __name__ == '__main__':
     import atexit

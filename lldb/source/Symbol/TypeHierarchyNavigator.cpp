@@ -61,7 +61,7 @@ TypeHierarchyNavigator::LoopThrough(const clang::QualType& qual_type,
          */
         Error error;
         ValueObject* target = m_value_object.Dereference(error).get();
-        if(error.Fail() || !target)
+        if (error.Fail() || !target)
             return true;
         if (LoopThrough(typePtr->getPointeeType(), callback, eStrippedPointer, callback_baton) == false)
             return false;
@@ -73,10 +73,10 @@ TypeHierarchyNavigator::LoopThrough(const clang::QualType& qual_type,
         if (ClangASTContext::GetCompleteType(ast, m_value_object.GetClangType()) && !objc_class_type->isObjCId())
         {
             clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
-            if(class_interface_decl)
+            if (class_interface_decl)
             {
                 clang::ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
-                if(superclass_interface_decl)
+                if (superclass_interface_decl)
                 {
                     clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
                     return LoopThrough(ivar_qual_type, callback, eObjCBaseClass, callback_baton);
@@ -95,7 +95,7 @@ TypeHierarchyNavigator::LoopThrough(const clang::QualType& qual_type,
             if (record->hasDefinition())
             {
                 clang::CXXRecordDecl::base_class_iterator pos,end;
-                if( record->getNumBases() > 0)
+                if ( record->getNumBases() > 0)
                 {
                     end = record->bases_end();
                     for (pos = record->bases_begin(); pos != end; pos++)

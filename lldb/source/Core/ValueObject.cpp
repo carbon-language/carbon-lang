@@ -209,8 +209,14 @@ ValueObject::UpdateFormatsIfNeeded()
         if (m_last_value_format.get())
             m_last_value_format.reset((ValueFormat*)NULL);
         Debugger::ValueFormats::Get(*this, m_last_value_format);
+        // to find a summary we look for a direct summary, then if there is none
+        // we look for a regex summary. if there is none we look for a system
+        // summary (direct), and if also that fails, we look for a system
+        // regex summary
         if (!Debugger::SummaryFormats::Get(*this, m_last_summary_format))
-            Debugger::RegexSummaryFormats::Get(*this, m_last_summary_format);
+            if (!Debugger::RegexSummaryFormats::Get(*this, m_last_summary_format))
+                if (!Debugger::SystemSummaryFormats::Get(*this, m_last_summary_format))
+                    Debugger::SystemRegexSummaryFormats::Get(*this, m_last_summary_format);
         m_last_format_mgr_revision = Debugger::ValueFormats::GetCurrentRevision();
 
         ClearUserVisibleData();
@@ -518,7 +524,7 @@ ValueObject::GetSummaryAsCString ()
             {
                 clang_type_t clang_type = GetClangType();
 
-                // See if this is a pointer to a C string?
+                // Do some default printout for function pointers
                 if (clang_type)
                 {
                     StreamString sstr;
@@ -530,116 +536,7 @@ ValueObject::GetSummaryAsCString ()
                     ExecutionContextScope *exe_scope = GetExecutionContextScope();
                     if (exe_scope)
                     {
-                        if (type_flags.AnySet (ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer) &&
-                            ClangASTContext::IsCharType (elem_or_pointee_clang_type))
-                        {
-                            Target *target = exe_scope->CalculateTarget();
-                            if (target != NULL)
-                            {
-                                lldb::addr_t cstr_address = LLDB_INVALID_ADDRESS;
-                                AddressType cstr_address_type = eAddressTypeInvalid;
-
-                                size_t cstr_len = 0;
-                                bool capped_data = false;
-                                if (type_flags.Test (ClangASTContext::eTypeIsArray))
-                                {
-                                    // We have an array
-                                    cstr_len = ClangASTContext::GetArraySize (clang_type);
-                                    if (cstr_len > 512) // TODO: make cap a setting
-                                    {
-                                        cstr_len = ClangASTContext::GetArraySize (clang_type);
-                                        if (cstr_len > 512) // TODO: make cap a setting
-                                        {
-                                            capped_data = true;
-                                            cstr_len = 512;
-                                        }
-                                    }
-                                    cstr_address = GetAddressOf (cstr_address_type, true);
-                                }
-                                else
-                                {
-                                    // We have a pointer
-                                    cstr_address = GetPointerValue (cstr_address_type, true);
-                                }
-                                if (cstr_address != LLDB_INVALID_ADDRESS)
-                                {
-                                    Address cstr_so_addr (NULL, cstr_address);
-                                    DataExtractor data;
-                                    size_t bytes_read = 0;
-                                    std::vector<char> data_buffer;
-                                    Error error;
-                                    bool prefer_file_cache = false;
-                                    if (cstr_len > 0)
-                                    {
-                                        data_buffer.resize(cstr_len);
-                                        data.SetData (&data_buffer.front(), data_buffer.size(), lldb::endian::InlHostByteOrder());
-                                        bytes_read = target->ReadMemory (cstr_so_addr, 
-                                                                         prefer_file_cache, 
-                                                                         &data_buffer.front(), 
-                                                                         cstr_len, 
-                                                                         error);
-                                        if (bytes_read > 0)
-                                        {
-                                            sstr << '"';
-                                            data.Dump (&sstr,
-                                                       0,                 // Start offset in "data"
-                                                       eFormatCharArray,  // Print as characters
-                                                       1,                 // Size of item (1 byte for a char!)
-                                                       bytes_read,        // How many bytes to print?
-                                                       UINT32_MAX,        // num per line
-                                                       LLDB_INVALID_ADDRESS,// base address
-                                                       0,                 // bitfield bit size
-                                                       0);                // bitfield bit offset
-                                            if (capped_data)
-                                                sstr << "...";
-                                            sstr << '"';
-                                        }
-                                    }
-                                    else
-                                    {
-                                        const size_t k_max_buf_size = 256;
-                                        data_buffer.resize (k_max_buf_size + 1);
-                                        // NULL terminate in case we don't get the entire C string
-                                        data_buffer.back() = '\0';
-
-                                        sstr << '"';
-
-                                        data.SetData (&data_buffer.front(), data_buffer.size(), endian::InlHostByteOrder());
-                                        while ((bytes_read = target->ReadMemory (cstr_so_addr, 
-                                                                                 prefer_file_cache,
-                                                                                 &data_buffer.front(), 
-                                                                                 k_max_buf_size, 
-                                                                                 error)) > 0)
-                                        {
-                                            size_t len = strlen(&data_buffer.front());
-                                            if (len == 0)
-                                                break;
-                                            if (len > bytes_read)
-                                                len = bytes_read;
-
-                                            data.Dump (&sstr,
-                                                       0,                 // Start offset in "data"
-                                                       eFormatCharArray,  // Print as characters
-                                                       1,                 // Size of item (1 byte for a char!)
-                                                       len,               // How many bytes to print?
-                                                       UINT32_MAX,        // num per line
-                                                       LLDB_INVALID_ADDRESS,// base address
-                                                       0,                 // bitfield bit size
-                                                       0);                // bitfield bit offset
-                                            
-                                            if (len < k_max_buf_size)
-                                                break;
-                                            cstr_so_addr.Slide (k_max_buf_size);
-                                        }
-                                        sstr << '"';
-                                    }
-                                }
-                            }
-                            
-                            if (sstr.GetSize() > 0)
-                                m_summary_str.assign (sstr.GetData(), sstr.GetSize());
-                        }
-                        else if (ClangASTContext::IsFunctionPointerType (clang_type))
+                        if (ClangASTContext::IsFunctionPointerType (clang_type))
                         {
                             AddressType func_ptr_address_type = eAddressTypeInvalid;
                             lldb::addr_t func_ptr_address = GetPointerValue (func_ptr_address_type, true);
@@ -988,7 +885,7 @@ ValueObject::GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_d
 
     RefCounter ref(&m_dump_printable_counter);
     
-    if(custom_format != lldb::eFormatInvalid)
+    if (custom_format != lldb::eFormatInvalid)
         SetFormat(custom_format);
     
     const char * return_value;
@@ -1146,10 +1043,10 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
             return false;
     }
     const char *targetvalue = GetPrintableRepresentation(val_obj_display, custom_format);
-    if(targetvalue)
+    if (targetvalue)
         s.PutCString(targetvalue);
     bool var_success = (targetvalue != NULL);
-    if(custom_format != eFormatInvalid)
+    if (custom_format != eFormatInvalid)
         SetFormat(eFormatDefault);
     return var_success;
 }
@@ -1624,7 +1521,7 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
 {
     const bool is_deref_of_parent = IsDereferenceOfParent ();
 
-    if(is_deref_of_parent && epformat == eDereferencePointers) {
+    if (is_deref_of_parent && epformat == eDereferencePointers) {
         // this is the original format of GetExpressionPath() producing code like *(a_ptr).memberName, which is entirely
         // fine, until you put this into StackFrame::GetValueForVariableExpressionPath() which prefers to see a_ptr->memberName.
         // the eHonorPointers mode is meant to produce strings in this latter format
@@ -1639,7 +1536,7 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
     // if we are a deref_of_parent just because we are synthetic array
     // members made up to allow ptr[%d] syntax to work in variable
     // printing, then add our name ([%d]) to the expression path
-    if(m_is_array_item_for_pointer && epformat == eHonorPointers)
+    if (m_is_array_item_for_pointer && epformat == eHonorPointers)
         s.PutCString(m_name.AsCString());
             
     if (!IsBaseClass())
@@ -1654,7 +1551,7 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
                 {
                     const uint32_t non_base_class_parent_type_info = ClangASTContext::GetTypeInfo (non_base_class_parent_clang_type, NULL, NULL);
                     
-                    if(parent && parent->IsDereferenceOfParent() && epformat == eHonorPointers)
+                    if (parent && parent->IsDereferenceOfParent() && epformat == eHonorPointers)
                     {
                         s.PutCString("->");
                     }
@@ -2584,7 +2481,7 @@ ValueObject::DumpValueObject
                 if (val_cstr && (!entry || entry->DoesPrintValue() || !sum_cstr))
                     s.Printf(" %s", valobj->GetValueAsCString());
 
-                if(sum_cstr)
+                if (sum_cstr)
                 {
                     // for some reason, using %@ (ObjC description) in a summary string, makes
                     // us believe we need to reset ourselves, thus invalidating the content of

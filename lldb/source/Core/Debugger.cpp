@@ -1798,6 +1798,48 @@ Debugger::SummaryFormats::GetCount()
 }
 
 bool
+Debugger::SystemSummaryFormats::Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry)
+{
+    return GetFormatManager().SystemSummary().Get(vobj,entry);
+}
+
+void
+Debugger::SystemSummaryFormats::Add(const ConstString &type, const SummaryFormat::SharedPointer &entry)
+{
+    GetFormatManager().SystemSummary().Add(type.AsCString(),entry);
+}
+
+bool
+Debugger::SystemSummaryFormats::Delete(const ConstString &type)
+{
+    return GetFormatManager().SystemSummary().Delete(type.AsCString());
+}
+
+void
+Debugger::SystemSummaryFormats::Clear()
+{
+    GetFormatManager().SystemSummary().Clear();
+}
+
+void
+Debugger::SystemSummaryFormats::LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton)
+{
+    GetFormatManager().SystemSummary().LoopThrough(callback, callback_baton);
+}
+
+uint32_t
+Debugger::SystemSummaryFormats::GetCurrentRevision()
+{
+    return GetFormatManager().GetCurrentRevision();
+}
+
+uint32_t
+Debugger::SystemSummaryFormats::GetCount()
+{
+    return GetFormatManager().SystemSummary().GetCount();
+}
+
+bool
 Debugger::RegexSummaryFormats::Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry)
 {
     return GetFormatManager().RegexSummary().Get(vobj,entry);
@@ -1837,6 +1879,48 @@ uint32_t
 Debugger::RegexSummaryFormats::GetCount()
 {
     return GetFormatManager().RegexSummary().GetCount();
+}
+
+bool
+Debugger::SystemRegexSummaryFormats::Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry)
+{
+    return GetFormatManager().SystemRegexSummary().Get(vobj,entry);
+}
+
+void
+Debugger::SystemRegexSummaryFormats::Add(const lldb::RegularExpressionSP &type, const SummaryFormat::SharedPointer &entry)
+{
+    GetFormatManager().SystemRegexSummary().Add(type,entry);
+}
+
+bool
+Debugger::SystemRegexSummaryFormats::Delete(const ConstString &type)
+{
+    return GetFormatManager().SystemRegexSummary().Delete(type.AsCString());
+}
+
+void
+Debugger::SystemRegexSummaryFormats::Clear()
+{
+    GetFormatManager().SystemRegexSummary().Clear();
+}
+
+void
+Debugger::SystemRegexSummaryFormats::LoopThrough(SummaryFormat::RegexSummaryCallback callback, void* callback_baton)
+{
+    GetFormatManager().SystemRegexSummary().LoopThrough(callback, callback_baton);
+}
+
+uint32_t
+Debugger::SystemRegexSummaryFormats::GetCurrentRevision()
+{
+    return GetFormatManager().GetCurrentRevision();
+}
+
+uint32_t
+Debugger::SystemRegexSummaryFormats::GetCount()
+{
+    return GetFormatManager().SystemRegexSummary().GetCount();
 }
 
 bool

@@ -41,9 +41,13 @@ int main (int argc, const char * argv[])
     
     i_am_cool* twoptr = &two;
     
+    i_am_cool array[5];
+    
     i_am_cooler three(10,4,1985,1/1/2011,'B','E'); // Set break point at this line.
     
     two.integer = 1;
+    
+    int dummy = 1;
     
     return 0;
 }

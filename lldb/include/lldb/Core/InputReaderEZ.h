@@ -10,6 +10,8 @@
 #ifndef liblldb_InputReaderEZ_h_
 #define liblldb_InputReaderEZ_h_
 
+#include <string.h>
+
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/Debugger.h"
@@ -30,7 +32,7 @@ private:
                          const char *bytes, 
                          size_t bytes_len);    
 public:
-
+    
     InputReaderEZ (Debugger &debugger) :
     InputReader(debugger)
     {}
@@ -38,11 +40,15 @@ public:
     virtual
     ~InputReaderEZ ();
 
-    virtual Error Initialize(void* baton,
-                             lldb::InputReaderGranularity token_size = lldb::eInputReaderGranularityLine,
-                             const char* end_token = "DONE",
-                             const char *prompt = "> ",
-                             bool echo = true);
+    virtual Error
+    Initialize(void* baton,
+               lldb::InputReaderGranularity token_size = lldb::eInputReaderGranularityLine,
+               const char* end_token = "DONE",
+               const char *prompt = "> ",
+               bool echo = true);
+        
+    virtual Error
+    Initialize(InitializationParameters& params);
     
     virtual void
     ActivateHandler(HandlerData&) {}

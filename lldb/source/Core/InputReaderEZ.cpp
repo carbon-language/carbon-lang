@@ -75,6 +75,16 @@ InputReaderEZ::Initialize(void* baton,
                                    echo);
 }
 
+Error
+InputReaderEZ::Initialize(InitializationParameters& params)
+{
+    return Initialize(params.m_baton,
+                      params.m_token_size,
+                      params.m_end_token,
+                      params.m_prompt,
+                      params.m_echo);
+}
+
 InputReaderEZ::~InputReaderEZ ()
 {
 }

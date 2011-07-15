@@ -150,19 +150,22 @@ struct SummaryFormat
     bool m_dont_show_children;
     bool m_dont_show_value;
     bool m_show_members_oneliner;
+    bool m_is_system;
     
     SummaryFormat(bool casc = false,
                   bool skipptr = false,
                   bool skipref = false,
                   bool nochildren = true,
                   bool novalue = true,
-                  bool oneliner = false) :
+                  bool oneliner = false,
+                  bool system = false) :
     m_cascades(casc),
     m_skip_pointers(skipptr),
     m_skip_references(skipref),
     m_dont_show_children(nochildren),
     m_dont_show_value(novalue),
-    m_show_members_oneliner(oneliner)
+    m_show_members_oneliner(oneliner),
+    m_is_system(system)
     {
     }
     
@@ -200,6 +203,12 @@ struct SummaryFormat
         return m_show_members_oneliner;
     }
     
+    bool
+    IsSystem() const
+    {
+        return m_is_system;
+    }
+    
     virtual
     ~SummaryFormat()
     {
@@ -228,8 +237,9 @@ struct StringSummaryFormat : public SummaryFormat
                         bool nochildren = true,
                         bool novalue = true,
                         bool oneliner = false,
+                        bool system = false,
                         std::string f = "") :
-    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner),
+    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner,system),
     m_format(f)
     {
     }
@@ -252,13 +262,14 @@ struct StringSummaryFormat : public SummaryFormat
     GetDescription()
     {
         StreamString sstr;
-        sstr.Printf ("`%s`%s%s%s%s%s%s\n",      m_format.c_str(),
+        sstr.Printf ("`%s`%s%s%s%s%s%s%s",      m_format.c_str(),
                                                 m_cascades ? "" : " (not cascading)",
                                                 m_dont_show_children ? "" : " (show children)",
                                                 m_dont_show_value ? " (hide value)" : "",
                                                 m_show_members_oneliner ? " (one-line printout)" : "",
                                                 m_skip_pointers ? " (skip pointers)" : "",
-                                                m_skip_references ? " (skip references)" : "");
+                                                m_skip_references ? " (skip references)" : "",
+                                                m_is_system ? " (system)" : "");
         return sstr.GetString();
     }
         
@@ -276,9 +287,10 @@ struct ScriptSummaryFormat : public SummaryFormat
                         bool nochildren = true,
                         bool novalue = true,
                         bool oneliner = false,
+                        bool system = false,
                         std::string fname = "",
                         std::string pscri = "") :
-    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner),
+    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner,system),
     m_function_name(fname),
     m_python_script(pscri)
     {
@@ -312,10 +324,14 @@ struct ScriptSummaryFormat : public SummaryFormat
     GetDescription()
     {
         StreamString sstr;
-        sstr.Printf ("%s%s%s\n%s\n",      m_cascades ? "" : " (not cascading)",
-                                          m_skip_pointers ? " (skip pointers)" : "",
-                                          m_skip_references ? " (skip references)" : "",
-                                          m_python_script.c_str());
+        sstr.Printf ("%s%s%s%s%s%s%s\n%s",       m_cascades ? "" : " (not cascading)",
+                                                 m_dont_show_children ? "" : " (show children)",
+                                                 m_dont_show_value ? " (hide value)" : "",
+                                                 m_show_members_oneliner ? " (one-line printout)" : "",
+                                                 m_skip_pointers ? " (skip pointers)" : "",
+                                                 m_skip_references ? " (skip references)" : "",
+                                                 m_is_system ? " (system)" : "",
+                                                 m_python_script.c_str());
         return sstr.GetString();
 
     }
@@ -727,12 +743,12 @@ private:
     
     ValueNavigator m_value_nav;
     SummaryNavigator m_summary_nav;
+    SummaryNavigator m_system_summary_nav;
     RegexSummaryNavigator m_regex_summary_nav;
-    
+    RegexSummaryNavigator m_system_regex_summary_nav;
+
     NamedSummariesMap m_named_summaries_map;
-    
-    ScriptNavigator m_script_nav;
-    
+        
     uint32_t m_last_revision;
     
 public:
@@ -740,19 +756,48 @@ public:
     FormatManager() : 
     m_value_nav(this),
     m_summary_nav(this),
+    m_system_summary_nav(this),
     m_regex_summary_nav(this),
+    m_system_regex_summary_nav(this),
     m_named_summaries_map(this),
-    m_script_nav(this),
     m_last_revision(0)
     {
+        // add some default stuff
+        // most formats, summaries, ... actually belong to the users' lldbinit file rather than here
+        SummaryFormat::SharedPointer string_format(new StringSummaryFormat(false,
+                                                                           true,
+                                                                           false,
+                                                                           true,
+                                                                           false,
+                                                                           false,
+                                                                           true,
+                                                                           "${var%s}"));
+        
+        
+        SummaryFormat::SharedPointer string_array_format(new StringSummaryFormat(false,
+                                                                           true,
+                                                                           false,
+                                                                           false,
+                                                                           false,
+                                                                           false,
+                                                                           true,
+                                                                           "${var%s}"));
+        
+        lldb::RegularExpressionSP any_size_char_arr(new RegularExpression("char \\[[0-9]+\\]"));
+                                              
+        
+        SystemSummary().Add(ConstString("char *").GetCString(), string_format);
+        SystemSummary().Add(ConstString("const char *").GetCString(), string_format);
+        SystemRegexSummary().Add(any_size_char_arr, string_array_format);
     }
 
 
     ValueNavigator& Value() { return m_value_nav; }
     SummaryNavigator& Summary() { return m_summary_nav; }
+    SummaryNavigator& SystemSummary() { return m_system_summary_nav; }
     RegexSummaryNavigator& RegexSummary() { return m_regex_summary_nav; }
+    RegexSummaryNavigator& SystemRegexSummary() { return m_system_regex_summary_nav; }
     NamedSummariesMap& NamedSummary() { return m_named_summaries_map; }
-    ScriptNavigator& Script() { return m_script_nav; }
     
     static bool
     GetFormatFromCString (const char *format_cstr,

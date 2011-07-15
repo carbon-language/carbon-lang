@@ -176,7 +176,7 @@ public:
             return false;
         }
         
-        if(m_options.m_format == eFormatInvalid)
+        if (m_options.m_format == eFormatInvalid)
         {
             result.AppendErrorWithFormat ("%s needs a valid format.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
@@ -265,7 +265,7 @@ public:
         const char* typeA = command.GetArgumentAtIndex(0);
         ConstString typeCS(typeA);
         
-        if(!typeCS)
+        if (!typeCS)
         {
             result.AppendError("empty typenames not allowed");
             result.SetStatus(eReturnStatusFailed);
@@ -418,34 +418,8 @@ CommandObjectTypeFormatList_LoopCallback (
 // CommandObjectTypeSummaryAdd
 //-------------------------------------------------------------------------
 
-class ScriptAddOptions
-{
-    
-public:
-    
-    bool m_skip_pointers;
-    bool m_skip_references;
-    bool m_cascade;
-    bool m_callback_is_synchronous;
-    StringList m_target_types;
-    StringList m_user_source;
-    
-    ScriptAddOptions(bool p,
-                     bool r,
-                     bool c) :
-    m_skip_pointers(p),
-    m_skip_references(r),
-    m_cascade(c),
-    m_target_types(),
-    m_user_source()
-    {
-    }
-    
-    typedef lldb::SharedPtr<ScriptAddOptions>::Type SharedPointer;
-    
-};
-
-static const char *g_reader_instructions = "Enter your Python command(s). Type 'DONE' to end.";
+static const char *g_reader_instructions = "Enter your Python command(s). Type 'DONE' to end.\n"
+                                           "def function (valobj,dict):";
 
 class TypeScriptAddInputReader : public InputReaderEZ
 {
@@ -560,25 +534,565 @@ public:
         script_format.reset(new ScriptSummaryFormat(options->m_cascade,
                                                     options->m_skip_pointers,
                                                     options->m_skip_references,
-                                                    true,
-                                                    true,
-                                                    false,
+                                                    options->m_no_children,
+                                                    options->m_no_value,
+                                                    options->m_one_liner,
+                                                    options->m_is_system,
                                                     std::string(funct_name),
                                                     options->m_user_source.CopyList("     ")));
+        
+        Error error;
         
         for (int i = 0; i < options->m_target_types.GetSize(); i++)
         {
             const char *type_name = options->m_target_types.GetStringAtIndex(i);
-            Debugger::SummaryFormats::Add(ConstString(type_name), script_format);
+            CommandObjectTypeSummaryAdd::AddSummary(ConstString(type_name),
+                                                    script_format,
+                                                    (options->m_regex ? CommandObjectTypeSummaryAdd::eRegexSummary : CommandObjectTypeSummaryAdd::eRegularSummary),
+                                                    options->m_is_system,
+                                                    &error);
+            if (error.Fail())
+            {
+                out_stream->Printf (error.AsCString());
+                out_stream->Flush();
+                return;
+            }
+        }
+        
+        if (options->m_name)
+        {
+            if ( (bool)(*(options->m_name)) )
+            {
+                CommandObjectTypeSummaryAdd::AddSummary(*(options->m_name),
+                                                                  script_format,
+                                                                  CommandObjectTypeSummaryAdd::eNamedSummary,
+                                                                  options->m_is_system,
+                                                                  &error);
+                if (error.Fail())
+                {
+                    out_stream->Printf (error.AsCString());
+                    out_stream->Flush();
+                    return;
+                }
+            }
+            else
+            {
+                out_stream->Printf (error.AsCString());
+                out_stream->Flush();
+                return;
+            }
         }
     }
 };
 
-class CommandObjectTypeSummaryAdd : public CommandObject
+Error
+CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
 {
+    Error error;
+    char short_option = (char) m_getopt_table[option_idx].val;
+    bool success;
     
+    switch (short_option)
+    {
+        case 'C':
+            m_cascade = Args::StringToBoolean(option_arg, true, &success);
+            if (!success)
+                error.SetErrorStringWithFormat("Invalid value for cascade: %s.\n", option_arg);
+            break;
+        case 'e':
+            m_no_children = false;
+            break;
+        case 'v':
+            m_no_value = true;
+            break;
+        case 'c':
+            m_one_liner = true;
+            break;
+        case 'f':
+            m_format_string = std::string(option_arg);
+            break;
+        case 'p':
+            m_skip_pointers = true;
+            break;
+        case 'r':
+            m_skip_references = true;
+            break;
+        case 'x':
+            m_regex = true;
+            break;
+        case 'n':
+            m_name = new ConstString(option_arg);
+            break;
+        case 's':
+            m_python_script = std::string(option_arg);
+            m_is_add_script = true;
+            break;
+        case 'F':
+            m_python_function = std::string(option_arg);
+            m_is_add_script = true;
+            break;
+        case 'P':
+            m_is_add_script = true;
+            break;
+        case 'w':
+            m_is_system = true;
+            break;
+        default:
+            error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+            break;
+    }
+    
+    return error;
+}
+
+void
+CommandObjectTypeSummaryAdd::CommandOptions::OptionParsingStarting ()
+{
+    m_cascade = true;
+    m_no_children = true;
+    m_no_value = false;
+    m_one_liner = false;
+    m_skip_references = false;
+    m_skip_pointers = false;
+    m_regex = false;
+    m_name = NULL;
+    m_python_script = "";
+    m_python_function = "";
+    m_is_add_script = false;
+    m_is_system = false;
+}
+
+void
+CommandObjectTypeSummaryAdd::CollectPythonScript (ScriptAddOptions *options,
+                                                  CommandReturnObject &result)
+{
+    InputReaderSP reader_sp (new TypeScriptAddInputReader(m_interpreter.GetDebugger()));
+    if (reader_sp && options)
+    {
+        
+        InputReaderEZ::InitializationParameters ipr;
+        
+        Error err (reader_sp->Initialize (ipr.SetBaton(options).SetPrompt("     ")));
+        if (err.Success())
+        {
+            m_interpreter.GetDebugger().PushInputReader (reader_sp);
+            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+        }
+        else
+        {
+            result.AppendError (err.AsCString());
+            result.SetStatus (eReturnStatusFailed);
+        }
+    }
+    else
+    {
+        result.AppendError("out of memory");
+        result.SetStatus (eReturnStatusFailed);
+    }
+    
+}
+
+bool
+CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturnObject &result)
+{
+    const size_t argc = command.GetArgumentCount();
+    
+    if (argc < 1 && !m_options.m_name)
+    {
+        result.AppendErrorWithFormat ("%s takes one or more args.\n", m_cmd_name.c_str());
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+    }
+    
+    SummaryFormatSP script_format;
+    
+    if (!m_options.m_python_function.empty()) // we have a Python function ready to use
+    {
+        ScriptInterpreter *interpreter = m_interpreter.GetScriptInterpreter();
+        if (!interpreter)
+        {
+            result.AppendError ("Internal error #1N: no script attached.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        const char *funct_name = m_options.m_python_function.c_str();
+        if (!funct_name || !funct_name[0])
+        {
+            result.AppendError ("Internal error #2N: no script attached.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        script_format.reset(new ScriptSummaryFormat(m_options.m_cascade,
+                                                    m_options.m_skip_pointers,
+                                                    m_options.m_skip_references,
+                                                    m_options.m_no_children,
+                                                    m_options.m_no_value,
+                                                    m_options.m_one_liner,
+                                                    m_options.m_is_system,
+                                                    std::string(funct_name),
+                                                    "     " + m_options.m_python_function + "(valobj,dict)"));
+    }
+    else if (!m_options.m_python_script.empty()) // we have a quick 1-line script, just use it
+    {
+        ScriptInterpreter *interpreter = m_interpreter.GetScriptInterpreter();
+        if (!interpreter)
+        {
+            result.AppendError ("Internal error #1Q: no script attached.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        StringList funct_sl;
+        funct_sl << m_options.m_python_script.c_str();
+        StringList funct_name_sl;
+        if (!interpreter->GenerateTypeScriptFunction (funct_sl, 
+                                                      funct_name_sl))
+        {
+            result.AppendError ("Internal error #2Q: no script attached.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        if (funct_name_sl.GetSize() == 0)
+        {
+            result.AppendError ("Internal error #3Q: no script attached.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        const char *funct_name = funct_name_sl.GetStringAtIndex(0);
+        if (!funct_name || !funct_name[0])
+        {
+            result.AppendError ("Internal error #4Q: no script attached.\n");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        script_format.reset(new ScriptSummaryFormat(m_options.m_cascade,
+                                                    m_options.m_skip_pointers,
+                                                    m_options.m_skip_references,
+                                                    m_options.m_no_children,
+                                                    m_options.m_no_value,
+                                                    m_options.m_one_liner,
+                                                    m_options.m_is_system,
+                                                    std::string(funct_name),
+                                                    "     " + m_options.m_python_script));
+    }
+    else // use an InputReader to grab Python code from the user
+    {        
+        ScriptAddOptions *options = new ScriptAddOptions(m_options.m_skip_pointers,
+                                                         m_options.m_skip_references,
+                                                         m_options.m_cascade,
+                                                         m_options.m_no_children,
+                                                         m_options.m_no_value,
+                                                         m_options.m_one_liner,
+                                                         m_options.m_regex,
+                                                         m_options.m_is_system,
+                                                         m_options.m_name);
+        
+        for(int i = 0; i < argc; i++) {
+            const char* typeA = command.GetArgumentAtIndex(i);
+            if (typeA && *typeA)
+                options->m_target_types << typeA;
+            else
+            {
+                result.AppendError("empty typenames not allowed");
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
+        
+        CollectPythonScript(options,result);
+        return result.Succeeded();
+    }
+    
+    // if I am here, script_format must point to something good, so I can add that
+    // as a script summary to all interested parties
+    
+    Error error;
+    
+    for (int i = 0; i < command.GetArgumentCount(); i++)
+    {
+        const char *type_name = command.GetArgumentAtIndex(i);
+        CommandObjectTypeSummaryAdd::AddSummary(ConstString(type_name),
+                                                script_format,
+                                                (m_options.m_regex ? eRegexSummary : eRegularSummary),
+                                                m_options.m_is_system,
+                                                &error);
+        if (error.Fail())
+        {
+            result.AppendError(error.AsCString());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+    }
+    
+    if (m_options.m_name)
+    {
+        if ( (bool)(*(m_options.m_name)) )
+        {
+            AddSummary(*(m_options.m_name), script_format, eNamedSummary, m_options.m_is_system, &error);
+            if (error.Fail())
+            {
+                result.AppendError(error.AsCString());
+                result.AppendError("added to types, but not given a name");
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
+        else
+        {
+            result.AppendError("added to types, but not given a name");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+    }
+    
+    return result.Succeeded();
+}
+
+bool
+CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturnObject &result)
+{
+    const size_t argc = command.GetArgumentCount();
+    
+    if (argc < 1 && !m_options.m_name)
+    {
+        result.AppendErrorWithFormat ("%s takes one or more args.\n", m_cmd_name.c_str());
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+    }
+    
+    if (!m_options.m_one_liner && m_options.m_format_string.empty())
+    {
+        result.AppendError("empty summary strings not allowed");
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+    }
+    
+    const char* format_cstr = (m_options.m_one_liner ? "" : m_options.m_format_string.c_str());
+    
+    Error error;
+    
+    SummaryFormat::SharedPointer entry(new StringSummaryFormat(m_options.m_cascade,
+                                                               m_options.m_skip_pointers,
+                                                               m_options.m_skip_references,
+                                                               m_options.m_no_children,
+                                                               m_options.m_no_value,
+                                                               m_options.m_one_liner,
+                                                               m_options.m_is_system,
+                                                               format_cstr));
+    
+    if (error.Fail()) 
+    {
+        result.AppendError(error.AsCString());
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+    }
+    
+    // now I have a valid format, let's add it to every type
+    
+    for(int i = 0; i < argc; i++) {
+        const char* typeA = command.GetArgumentAtIndex(i);
+        if (!typeA || typeA[0] == '\0')
+        {
+            result.AppendError("empty typenames not allowed");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        ConstString typeCS(typeA);
+        
+        AddSummary(typeCS,
+                   entry,
+                   (m_options.m_regex ? eRegexSummary : eRegularSummary),
+                   m_options.m_is_system,
+                   &error);
+        
+        if (error.Fail())
+        {
+            result.AppendError(error.AsCString());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+    }
+    
+    if (m_options.m_name)
+    {
+        if ( (bool)(*(m_options.m_name)) )
+        {
+            AddSummary(*(m_options.m_name), entry, eNamedSummary, m_options.m_is_system, &error);
+            if (error.Fail())
+            {
+                result.AppendError(error.AsCString());
+                result.AppendError("added to types, but not given a name");
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
+        else
+        {
+            result.AppendError("added to types, but not given a name");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+    }
+    
+    result.SetStatus(eReturnStatusSuccessFinishNoResult);
+    return result.Succeeded();
+}
+
+CommandObjectTypeSummaryAdd::CommandObjectTypeSummaryAdd (CommandInterpreter &interpreter) :
+CommandObject (interpreter,
+               "type summary add",
+               "Add a new summary style for a type.",
+               NULL), m_options (interpreter)
+{
+    CommandArgumentEntry type_arg;
+    CommandArgumentData type_style_arg;
+    
+    type_style_arg.arg_type = eArgTypeName;
+    type_style_arg.arg_repetition = eArgRepeatPlus;
+    
+    type_arg.push_back (type_style_arg);
+    
+    m_arguments.push_back (type_arg);
+    
+    SetHelpLong(
+                "Some examples of using this command.\n"
+                "We use as reference the following snippet of code:\n"
+                "struct JustADemo\n"
+                "{\n"
+                "int* ptr;\n"
+                "float value;\n"
+                "JustADemo(int p = 1, float v = 0.1) : ptr(new int(p)), value(v) {}\n"
+                "};\n"
+                "JustADemo object(42,3.14);\n"
+                "struct AnotherDemo : public JustADemo\n"
+                "{\n"
+                "uint8_t byte;\n"
+                "AnotherDemo(uint8_t b = 'E', int p = 1, float v = 0.1) : JustADemo(p,v), byte(b) {}\n"
+                "};\n"
+                "AnotherDemo *another_object = new AnotherDemo('E',42,3.14);\n"
+                "\n"
+                "type summary add -f \"the answer is ${*var.ptr}\" JustADemo\n"
+                "when typing frame variable object you will get \"the answer is 42\"\n"
+                "type summary add -f \"the answer is ${*var.ptr}, and the question is ${var.value}\" JustADemo\n"
+                "when typing frame variable object you will get \"the answer is 42 and the question is 3.14\"\n"
+                "\n"
+                "Alternatively, you could also say\n"
+                "type summary add -f \"${var%V} -> ${*var}\" \"int *\"\n"
+                "and replace the above summary string with\n"
+                "type summary add -f \"the answer is ${var.ptr}, and the question is ${var.value}\" JustADemo\n"
+                "to obtain a similar result\n"
+                "\n"
+                "To add a summary valid for both JustADemo and AnotherDemo you can use the scoping operator, as in:\n"
+                "type summary add -f \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes\n"
+                "\n"
+                "This will be used for both variables of type JustADemo and AnotherDemo. To prevent this, change the -C to read -C no\n"
+                "If you do not want pointers to be shown using that summary, you can use the -p option, as in:\n"
+                "type summary add -f \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes -p\n"
+                "A similar option -r exists for references.\n"
+                "\n"
+                "If you simply want a one-line summary of the content of your variable, without typing an explicit string to that effect\n"
+                "you can use the -c option, without giving any summary string:\n"
+                "type summary add -c JustADemo\n"
+                "frame variable object\n"
+                "the output being similar to (ptr=0xsomeaddress, value=3.14)\n"
+                "\n"
+                "If you want to display some summary text, but also expand the structure of your object, you can add the -e option, as in:\n"
+                "type summary add -e -f \"*ptr = ${*var.ptr}\" JustADemo\n"
+                "Here the value of the int* is displayed, followed by the standard LLDB sequence of children objects, one per line.\n"
+                "to get an output like:\n"
+                "\n"
+                "*ptr = 42 {\n"
+                " ptr = 0xsomeaddress\n"
+                " value = 3.14\n"
+                "}\n"
+                "\n"
+                "A command you may definitely want to try if you're doing C++ debugging is:\n"
+                "type summary add -f \"${var._M_dataplus._M_p}\" std::string\n"
+                );
+}
+
+bool
+CommandObjectTypeSummaryAdd::Execute (Args& command, CommandReturnObject &result)
+{
+    if (m_options.m_is_add_script)
+        return Execute_ScriptSummary(command, result);
+    else
+        return Execute_StringSummary(command, result);
+}
+
+bool
+CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
+                                        SummaryFormatSP entry,
+                                        SummaryFormatType type,
+                                        bool is_system,
+                                        Error* error)
+{
+    if (type == eRegexSummary)
+    {
+        RegularExpressionSP typeRX(new RegularExpression());
+        if (!typeRX->Compile(type_name.GetCString()))
+        {
+            if (error)
+                error->SetErrorString("regex format error (maybe this is not really a regex?)");
+            return false;
+        }
+        
+        if (!is_system)
+        {
+            Debugger::RegexSummaryFormats::Delete(type_name);
+            Debugger::RegexSummaryFormats::Add(typeRX, entry);
+        }
+        else
+        {
+            Debugger::SystemRegexSummaryFormats::Delete(type_name);
+            Debugger::SystemRegexSummaryFormats::Add(typeRX, entry);
+        }
+        return true;
+    }
+    else if (type == eNamedSummary)
+    {
+        // system named summaries do not exist (yet?)
+        Debugger::NamedSummaryFormats::Add(type_name,entry);
+        return true;
+    }
+    else
+    {
+        if (!is_system)
+            Debugger::SummaryFormats::Add(type_name,entry);
+        else
+            Debugger::SystemSummaryFormats::Add(type_name,entry);
+        return true;
+    }
+}    
+
+OptionDefinition
+CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "system", 'w', no_argument, NULL, 0, eArgTypeBoolean,    "This is a system summary (makes it harder to delete it by accident)."},
+    { LLDB_OPT_SET_ALL, false, "cascade", 'C', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
+    { LLDB_OPT_SET_ALL, false, "no-value", 'v', no_argument, NULL, 0, eArgTypeBoolean,         "Don't show the value, just show the summary, for this type."},
+    { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for pointers-to-type objects."},
+    { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for references-to-type objects."},
+    { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeBoolean,    "Type names are actually regular expressions."},
+    { LLDB_OPT_SET_1  , true, "inline-children", 'c', no_argument, NULL, 0, eArgTypeBoolean,    "If true, inline all child values into summary string."},
+    { LLDB_OPT_SET_2  , true, "format-string", 'f', required_argument, NULL, 0, eArgTypeSummaryString,    "Format string used to display text and object contents."},
+    { LLDB_OPT_SET_3, false, "python-script", 's', required_argument, NULL, 0, eArgTypeName, "Give a one-liner Python script as part of the command."},
+    { LLDB_OPT_SET_3, false, "python-function", 'F', required_argument, NULL, 0, eArgTypeName, "Give the name of a Python function to use for this type."},
+    { LLDB_OPT_SET_3, false, "input-python", 'P', no_argument, NULL, 0, eArgTypeName, "Input Python code to use for this type manually."},
+    { LLDB_OPT_SET_2 | LLDB_OPT_SET_3,   false, "expand", 'e', no_argument, NULL, 0, eArgTypeBoolean,    "Expand aggregate data types to show children on separate lines."},
+    { LLDB_OPT_SET_2 | LLDB_OPT_SET_3,   false, "name", 'n', required_argument, NULL, 0, eArgTypeName,    "A name for this summary string."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
+
+//-------------------------------------------------------------------------
+// CommandObjectTypeSummaryDelete
+//-------------------------------------------------------------------------
+
+class CommandObjectTypeSummaryDelete : public CommandObject
+{
 private:
-    
     class CommandOptions : public Options
     {
     public:
@@ -596,49 +1110,11 @@ private:
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
-            bool success;
             
             switch (short_option)
             {
-                case 'C':
-                    m_cascade = Args::StringToBoolean(option_arg, true, &success);
-                    if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for cascade: %s.\n", option_arg);
-                    break;
-                case 'e':
-                    m_no_children = false;
-                    break;
-                case 'v':
-                    m_no_value = true;
-                    break;
-                case 'c':
-                    m_one_liner = true;
-                    break;
-                case 'f':
-                    m_format_string = std::string(option_arg);
-                    break;
-                case 'p':
-                    m_skip_pointers = true;
-                    break;
-                case 'r':
-                    m_skip_references = true;
-                    break;
-                case 'x':
-                    m_regex = true;
-                    break;
-                case 'n':
-                    m_name = new ConstString(option_arg);
-                    break;
-                case 's':
-                    m_python_script = std::string(option_arg);
-                    m_is_add_script = true;
-                    break;
-                case 'F':
-                    m_python_function = std::string(option_arg);
-                    m_is_add_script = true;
-                    break;
-                case 'P':
-                    m_is_add_script = true;
+                case 'a':
+                    m_delete_system = true;
                     break;
                 default:
                     error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
@@ -651,17 +1127,7 @@ private:
         void
         OptionParsingStarting ()
         {
-            m_cascade = true;
-            m_no_children = true;
-            m_no_value = false;
-            m_one_liner = false;
-            m_skip_references = false;
-            m_skip_pointers = false;
-            m_regex = false;
-            m_name = NULL;
-            m_python_script = "";
-            m_python_function = "";
-            m_is_add_script = false;
+            m_delete_system = false;
         }
         
         const OptionDefinition*
@@ -676,18 +1142,7 @@ private:
         
         // Instance variables to hold the values for command options.
         
-        bool m_cascade;
-        bool m_no_children;
-        bool m_no_value;
-        bool m_one_liner;
-        bool m_skip_references;
-        bool m_skip_pointers;
-        bool m_regex;
-        std::string m_format_string;
-        ConstString* m_name;
-        std::string m_python_script;
-        std::string m_python_function;
-        bool m_is_add_script;
+        bool m_delete_system;
     };
     
     CommandOptions m_options;
@@ -697,364 +1152,13 @@ private:
     {
         return &m_options;
     }
-    
-public:
-    CommandObjectTypeSummaryAdd (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "type summary add",
-                   "Add a new summary style for a type.",
-                   NULL), m_options (interpreter)
-    {
-        CommandArgumentEntry type_arg;
-        CommandArgumentData type_style_arg;
-        
-        type_style_arg.arg_type = eArgTypeName;
-        type_style_arg.arg_repetition = eArgRepeatPlus;
-        
-        type_arg.push_back (type_style_arg);
-        
-        m_arguments.push_back (type_arg);
-        
-        SetHelpLong(
-                    "Some examples of using this command.\n"
-                    "We use as reference the following snippet of code:\n"
-                    "struct JustADemo\n"
-                    "{\n"
-                    "int* ptr;\n"
-                    "float value;\n"
-                    "JustADemo(int p = 1, float v = 0.1) : ptr(new int(p)), value(v) {}\n"
-                    "};\n"
-                    "JustADemo object(42,3.14);\n"
-                    "struct AnotherDemo : public JustADemo\n"
-                    "{\n"
-                    "uint8_t byte;\n"
-                    "AnotherDemo(uint8_t b = 'E', int p = 1, float v = 0.1) : JustADemo(p,v), byte(b) {}\n"
-                    "};\n"
-                    "AnotherDemo *another_object = new AnotherDemo('E',42,3.14);\n"
-                    "\n"
-                    "type summary add -f \"the answer is ${*var.ptr}\" JustADemo\n"
-                    "when typing frame variable object you will get \"the answer is 42\"\n"
-                    "type summary add -f \"the answer is ${*var.ptr}, and the question is ${var.value}\" JustADemo\n"
-                    "when typing frame variable object you will get \"the answer is 42 and the question is 3.14\"\n"
-                    "\n"
-                    "Alternatively, you could also say\n"
-                    "type summary add -f \"${var%V} -> ${*var}\" \"int *\"\n"
-                    "and replace the above summary string with\n"
-                    "type summary add -f \"the answer is ${var.ptr}, and the question is ${var.value}\" JustADemo\n"
-                    "to obtain a similar result\n"
-                    "\n"
-                    "To add a summary valid for both JustADemo and AnotherDemo you can use the scoping operator, as in:\n"
-                    "type summary add -f \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes\n"
-                    "\n"
-                    "This will be used for both variables of type JustADemo and AnotherDemo. To prevent this, change the -C to read -C no\n"
-                    "If you do not want pointers to be shown using that summary, you can use the -p option, as in:\n"
-                    "type summary add -f \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes -p\n"
-                    "A similar option -r exists for references.\n"
-                    "\n"
-                    "If you simply want a one-line summary of the content of your variable, without typing an explicit string to that effect\n"
-                    "you can use the -c option, without giving any summary string:\n"
-                    "type summary add -c JustADemo\n"
-                    "frame variable object\n"
-                    "the output being similar to (ptr=0xsomeaddress, value=3.14)\n"
-                    "\n"
-                    "If you want to display some summary text, but also expand the structure of your object, you can add the -e option, as in:\n"
-                    "type summary add -e -f \"*ptr = ${*var.ptr}\" JustADemo\n"
-                    "Here the value of the int* is displayed, followed by the standard LLDB sequence of children objects, one per line.\n"
-                    "to get an output like:\n"
-                    "\n"
-                    "*ptr = 42 {\n"
-                    " ptr = 0xsomeaddress\n"
-                    " value = 3.14\n"
-                    "}\n"
-                    "\n"
-                    "A command you may definitely want to try if you're doing C++ debugging is:\n"
-                    "type summary add -f \"${var._M_dataplus._M_p}\" std::string\n"
-        );
-    }
-    
-    ~CommandObjectTypeSummaryAdd ()
-    {
-    }
-    
-    void
-    CollectPythonScript
-    (
-     ScriptAddOptions *options,
-     CommandReturnObject &result
-     )
-    {
-        InputReaderSP reader_sp (new TypeScriptAddInputReader(m_interpreter.GetDebugger()));
-        if (reader_sp && options)
-        {
-            
-            Error err (reader_sp->Initialize (options));
-            if (err.Success())
-            {
-                m_interpreter.GetDebugger().PushInputReader (reader_sp);
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
-            }
-            else
-            {
-                result.AppendError (err.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-            }
-        }
-        else
-        {
-            result.AppendError("out of memory");
-            result.SetStatus (eReturnStatusFailed);
-        }
-        
-    }
 
-    bool
-    Execute (Args& command, CommandReturnObject &result)
-    {
-        if (m_options.m_is_add_script)
-            return Execute_ScriptSummary(command, result);
-        else
-            return Execute_StringSummary(command, result);
-    }
-    
-    bool
-    Execute_ScriptSummary (Args& command, CommandReturnObject &result)
-    {
-        const size_t argc = command.GetArgumentCount();
-        
-        if (argc < 1)
-        {
-            result.AppendErrorWithFormat ("%s takes one or more args.\n", m_cmd_name.c_str());
-            result.SetStatus(eReturnStatusFailed);
-            return false;
-        }
-        
-        if (!m_options.m_python_function.empty()) // we have a Python function ready to use
-        {
-            ScriptInterpreter *interpreter = m_interpreter.GetScriptInterpreter();
-            if (!interpreter)
-            {
-                result.AppendError ("Internal error #1N: no script attached.\n");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-            const char *funct_name = m_options.m_python_function.c_str();
-            if (!funct_name || !funct_name[0])
-            {
-                result.AppendError ("Internal error #2N: no script attached.\n");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-            // now I have a valid function name, let's add this as script for every type in the list
-            
-            SummaryFormatSP script_format;
-            script_format.reset(new ScriptSummaryFormat(m_options.m_cascade,
-                                                        m_options.m_skip_pointers,
-                                                        m_options.m_skip_references,
-                                                        true,
-                                                        true,
-                                                        false,
-                                                        std::string(funct_name),
-                                                        "     " + m_options.m_python_function + "(valobj,dict)"));
-            
-            for (int i = 0; i < command.GetArgumentCount(); i++)
-            {
-                const char *type_name = command.GetArgumentAtIndex(i);
-                Debugger::SummaryFormats::Add(ConstString(type_name), script_format);
-            }
-        }
-        else if (m_options.m_python_script.empty()) // use an InputReader to grab Python code from the user
-        {        
-            ScriptAddOptions *options = new ScriptAddOptions(m_options.m_skip_pointers,
-                                                             m_options.m_skip_references,
-                                                             m_options.m_cascade);
-            
-            for(int i = 0; i < argc; i++) {
-                const char* typeA = command.GetArgumentAtIndex(i);
-                if (typeA && *typeA)
-                    options->m_target_types << typeA;
-                else
-                {
-                    result.AppendError("empty typenames not allowed");
-                    result.SetStatus(eReturnStatusFailed);
-                    return false;
-                }
-            }
-            
-            CollectPythonScript(options,result);
-            return result.Succeeded();
-        }
-        else // we have a quick 1-line script, just use it
-        {
-            ScriptInterpreter *interpreter = m_interpreter.GetScriptInterpreter();
-            if (!interpreter)
-            {
-                result.AppendError ("Internal error #1Q: no script attached.\n");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-            StringList funct_sl;
-            funct_sl << m_options.m_python_script.c_str();
-            StringList funct_name_sl;
-            if (!interpreter->GenerateTypeScriptFunction (funct_sl, 
-                                                          funct_name_sl))
-            {
-                result.AppendError ("Internal error #2Q: no script attached.\n");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-            if (funct_name_sl.GetSize() == 0)
-            {
-                result.AppendError ("Internal error #3Q: no script attached.\n");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-            const char *funct_name = funct_name_sl.GetStringAtIndex(0);
-            if (!funct_name || !funct_name[0])
-            {
-                result.AppendError ("Internal error #4Q: no script attached.\n");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-            // now I have a valid function name, let's add this as script for every type in the list
-            
-            ScriptFormatSP script_format;
-            script_format.reset(new ScriptSummaryFormat(m_options.m_cascade,
-                                                        m_options.m_skip_pointers,
-                                                        m_options.m_skip_references,
-                                                        true,
-                                                        true,
-                                                        false,
-                                                        std::string(funct_name),
-                                                        "     " + m_options.m_python_script));
-            
-            for (int i = 0; i < command.GetArgumentCount(); i++)
-            {
-                const char *type_name = command.GetArgumentAtIndex(i);
-                Debugger::SummaryFormats::Add(ConstString(type_name), script_format);
-            }
-        }
-        
-        return result.Succeeded();
-    }
-
-    bool
-    Execute_StringSummary (Args& command, CommandReturnObject &result)
-    {
-        const size_t argc = command.GetArgumentCount();
-        
-        if (argc < 1 && !m_options.m_name)
-        {
-            result.AppendErrorWithFormat ("%s takes one or more args.\n", m_cmd_name.c_str());
-            result.SetStatus(eReturnStatusFailed);
-            return false;
-        }
-        
-        if(!m_options.m_one_liner && m_options.m_format_string.empty())
-        {
-            result.AppendError("empty summary strings not allowed");
-            result.SetStatus(eReturnStatusFailed);
-            return false;
-        }
-        
-        const char* format_cstr = (m_options.m_one_liner ? "" : m_options.m_format_string.c_str());
-        
-        Error error;
-        
-        SummaryFormat::SharedPointer entry(new StringSummaryFormat(m_options.m_cascade,
-                                                                       m_options.m_skip_pointers,
-                                                                       m_options.m_skip_references,
-                                                                       m_options.m_no_children,
-                                                                       m_options.m_no_value,
-                                                                       m_options.m_one_liner,
-                                                                       format_cstr));
-        
-        if (error.Fail()) 
-        {
-            result.AppendError(error.AsCString());
-            result.SetStatus(eReturnStatusFailed);
-            return false;
-        }
-        
-        // now I have a valid format, let's add it to every type
-        
-        for(int i = 0; i < argc; i++) {
-            const char* typeA = command.GetArgumentAtIndex(i);
-            if (!typeA || typeA[0] == '\0')
-            {
-                result.AppendError("empty typenames not allowed");
-                result.SetStatus(eReturnStatusFailed);
-                return false;
-            }
-            ConstString typeCS(typeA);
-            if (!m_options.m_regex)
-            {
-                Debugger::SummaryFormats::Add(typeCS, entry);
-            }
-            else
-            {
-                RegularExpressionSP typeRX(new RegularExpression());
-                if(!typeRX->Compile(typeA))
-                {
-                    result.AppendError("regex format error (maybe this is not really a regex?)");
-                    result.SetStatus(eReturnStatusFailed);
-                    return false;
-                }
-                Debugger::RegexSummaryFormats::Delete(typeCS);
-                Debugger::RegexSummaryFormats::Add(typeRX, entry);
-            }
-        }
-        
-        if (m_options.m_name)
-        {
-            if( (bool)(*(m_options.m_name)) )
-            {
-                Debugger::NamedSummaryFormats::Add(*(m_options.m_name), entry);
-            }
-            else
-            {
-                result.AppendError("added to types, but not given a name");
-                result.SetStatus(eReturnStatusFailed);
-                return false;
-            }
-        }
-        
-        result.SetStatus(eReturnStatusSuccessFinishNoResult);
-        return result.Succeeded();
-    }
-    
-};
-
-OptionDefinition
-CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
-{
-    { LLDB_OPT_SET_ALL, false, "cascade", 'C', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
-    { LLDB_OPT_SET_ALL, false, "no-value", 'v', no_argument, NULL, 0, eArgTypeBoolean,         "Don't show the value, just show the summary, for this type."},
-    { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for pointers-to-type objects."},
-    { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for references-to-type objects."},
-    { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeBoolean,    "Type names are actually regular expressions."},
-    { LLDB_OPT_SET_1  , true, "inline-children", 'c', no_argument, NULL, 0, eArgTypeBoolean,    "If true, inline all child values into summary string."},
-    { LLDB_OPT_SET_2  , true, "format-string", 'f', required_argument, NULL, 0, eArgTypeSummaryString,    "Format string used to display text and object contents."},
-    { LLDB_OPT_SET_2,   false, "expand", 'e', no_argument, NULL, 0, eArgTypeBoolean,    "Expand aggregate data types to show children on separate lines."},
-    { LLDB_OPT_SET_2,   false, "name", 'n', required_argument, NULL, 0, eArgTypeName,    "A name for this summary string."},
-    { LLDB_OPT_SET_3, false, "python-script", 's', required_argument, NULL, 0, eArgTypeName, "Give a one-liner Python script as part of the command."},
-    { LLDB_OPT_SET_3, false, "python-function", 'F', required_argument, NULL, 0, eArgTypeName, "Give the name of a Python function to use for this type."},
-    { LLDB_OPT_SET_3, false, "input-python", 'P', no_argument, NULL, 0, eArgTypeName, "Input Python code to use for this type manually."},
-    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
-};
-
-
-//-------------------------------------------------------------------------
-// CommandObjectTypeSummaryDelete
-//-------------------------------------------------------------------------
-
-class CommandObjectTypeSummaryDelete : public CommandObject
-{
 public:
     CommandObjectTypeSummaryDelete (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "type summary delete",
                    "Delete an existing summary style for a type.",
-                   NULL)
+                   NULL), m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -1087,7 +1191,7 @@ public:
         const char* typeA = command.GetArgumentAtIndex(0);
         ConstString typeCS(typeA);
         
-        if(!typeCS)
+        if (!typeCS)
         {
             result.AppendError("empty typenames not allowed");
             result.SetStatus(eReturnStatusFailed);
@@ -1097,8 +1201,10 @@ public:
         bool delete_summary = Debugger::SummaryFormats::Delete(typeCS);
         bool delete_regex = Debugger::RegexSummaryFormats::Delete(typeCS);
         bool delete_named = Debugger::NamedSummaryFormats::Delete(typeCS);
+        bool delete_sys = m_options.m_delete_system ? Debugger::SystemSummaryFormats::Delete(typeCS) : false;
+        bool delete_sys_regex = m_options.m_delete_system ? Debugger::SystemRegexSummaryFormats::Delete(typeCS) : false;
         
-        if (delete_summary || delete_regex || delete_named)
+        if (delete_summary || delete_regex || delete_named || delete_sys || delete_sys_regex)
         {
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
@@ -1111,7 +1217,13 @@ public:
         }
         
     }
-    
+};
+
+OptionDefinition
+CommandObjectTypeSummaryDelete::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "all", 'a', no_argument, NULL, 0, eArgTypeBoolean,  "Also delete system summaries (not recommended)."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -1120,12 +1232,74 @@ public:
 
 class CommandObjectTypeSummaryClear : public CommandObject
 {
+private:
+    
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions (){}
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            
+            switch (short_option)
+            {
+                case 'a':
+                    m_delete_system = true;
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            m_delete_system = false;
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        bool m_delete_system;
+    };
+    
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+
 public:
     CommandObjectTypeSummaryClear (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "type summary clear",
                    "Delete all existing summary styles.",
-                   NULL)
+                   NULL), m_options(interpreter)
     {
     }
     
@@ -1139,10 +1313,24 @@ public:
         Debugger::SummaryFormats::Clear();
         Debugger::RegexSummaryFormats::Clear();
         Debugger::NamedSummaryFormats::Clear();
+        
+        if (m_options.m_delete_system)
+        {
+            Debugger::SystemSummaryFormats::Clear();
+            Debugger::SystemRegexSummaryFormats::Clear();
+        }
+        
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
     
+};
+
+OptionDefinition
+CommandObjectTypeSummaryClear::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "all", 'a', no_argument, NULL, 0, eArgTypeBoolean,  "Also clear system summaries (not recommended)."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -1210,9 +1398,10 @@ public:
         else
             param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result);
         Debugger::SummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
+        Debugger::SystemSummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
         delete param;
         
-        if(Debugger::RegexSummaryFormats::GetCount() > 0)
+        if (Debugger::RegexSummaryFormats::GetCount() > 0 || Debugger::SystemRegexSummaryFormats::GetCount() > 0 )
         {
             result.GetOutputStream().Printf("Regex-based summaries (slower):\n");
             if (argc == 1) {
@@ -1223,10 +1412,11 @@ public:
             else
                 rxparam = new CommandObjectTypeRXSummaryList_LoopCallbackParam(this,&result);
             Debugger::RegexSummaryFormats::LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, rxparam);
+            Debugger::SystemRegexSummaryFormats::LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, rxparam);
             delete rxparam;
         }
         
-        if(Debugger::NamedSummaryFormats::GetCount() > 0)
+        if (Debugger::NamedSummaryFormats::GetCount() > 0)
         {
             result.GetOutputStream().Printf("Named summaries:\n");
             if (argc == 1) {
@@ -1259,7 +1449,6 @@ private:
     
     friend bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, const char* type, const SummaryFormat::SharedPointer& entry);
     friend bool CommandObjectTypeRXSummaryList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SummaryFormat::SharedPointer& entry);
-
 };
 
 bool
@@ -1281,7 +1470,6 @@ CommandObjectTypeRXSummaryList_LoopCallback (
     CommandObjectTypeRXSummaryList_LoopCallbackParam* param = (CommandObjectTypeRXSummaryList_LoopCallbackParam*)pt2self;
     return param->self->LoopCallback(regex->GetText(), entry, param->regex, param->result);
 }
-
 
 class CommandObjectTypeFormat : public CommandObjectMultiword
 {

@@ -117,7 +117,7 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
                 clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
                 // We currently can't complete objective C types through the newly added ASTContext
                 // because it only supports TagDecl objects right now...
-                if(class_interface_decl)
+                if (class_interface_decl)
                 {
                     bool is_forward_decl = class_interface_decl->isForwardDecl();
                     if (is_forward_decl && class_interface_decl->hasExternalLexicalStorage())
