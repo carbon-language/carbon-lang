@@ -264,7 +264,7 @@ error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
     InMemoryStruct<macho::Section64> Sect;
     MachOObj->ReadSection64(LCI, DRI.d.b, Sect);
 
-    strcpy(result, SLC->Name);
+    strcpy(result, Sect->SegmentName);
     strcat(result, ",");
     strcat(result, Sect->Name);
   } else {
@@ -274,7 +274,7 @@ error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
     InMemoryStruct<macho::Section> Sect;
     MachOObj->ReadSection(LCI, DRI.d.b, Sect);
 
-    strcpy(result, SLC->Name);
+    strcpy(result, Sect->SegmentName);
     strcat(result, ",");
     strcat(result, Sect->Name);
   }
