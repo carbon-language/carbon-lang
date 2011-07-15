@@ -870,16 +870,6 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
                   LiveBundles[Bundles->getBundle(BI.MBB->getNumber(), 1)];
 
     // Create separate intervals for isolated blocks with multiple uses.
-    //
-    //     |---o---o---|    Enter and leave on the stack.
-    //     ____-----____    Create local interval for uses.
-    //
-    //     |   o---o---|    Defined in block, leave on stack.
-    //         -----____    Create local interval for uses.
-    //
-    //     |---o---x   |    Enter on stack, killed in block.
-    //     ____-----        Create local interval for uses.
-    //
     if (!RegIn && !RegOut) {
       DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " isolated.\n");
       if (!BI.isOneInstr()) {
@@ -889,304 +879,28 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
       continue;
     }
 
-    SlotIndex Start, Stop;
-    tie(Start, Stop) = Indexes->getMBBRange(BI.MBB);
     Intf.moveToBlock(BI.MBB->getNumber());
-    DEBUG(dbgs() << "EB#" << Bundles->getBundle(BI.MBB->getNumber(), 0)
-                 << (BI.LiveIn ? (RegIn ? " => " : " -> ") : "    ")
-                 << "BB#" << BI.MBB->getNumber()
-                 << (BI.LiveOut ? (RegOut ? " => " : " -> ") : "    ")
-                 << " EB#" << Bundles->getBundle(BI.MBB->getNumber(), 1)
-                 << " [" << Start << ';'
-                 << SA->getLastSplitPoint(BI.MBB->getNumber()) << '-' << Stop
-                 << ") uses [" << BI.FirstUse << ';' << BI.LastUse
-                 << ") intf [" << Intf.first() << ';' << Intf.last() << ')');
 
-    // The interference interval should either be invalid or overlap MBB.
-    assert((!Intf.hasInterference() || Intf.first() < Stop)
-           && "Bad interference");
-    assert((!Intf.hasInterference() || Intf.last() > Start)
-           && "Bad interference");
-
-    // We are now ready to decide where to split in the current block.  There
-    // are many variables guiding the decision:
-    //
-    // - RegIn / RegOut: The global splitting algorithm's decisions for our
-    //   ingoing and outgoing bundles.
-    //
-    // - BI.BlockIn / BI.BlockOut: Is the live range live-in and/or live-out
-    //   from this block.
-    //
-    // - Intf.hasInterference(): Is there interference in this block.
-    //
-    // - Intf.first() / Inft.last(): The range of interference.
-    //
-    // The live range should be split such that MainIntv is live-in when RegIn
-    // is set, and live-out when RegOut is set.  MainIntv should never overlap
-    // the interference, and the stack interval should never have more than one
-    // use per block.
-
-    // No splits can be inserted after LastSplitPoint, overlap instead.
-    SlotIndex LastSplitPoint = Stop;
-    if (BI.LiveOut)
-      LastSplitPoint = SA->getLastSplitPoint(BI.MBB->getNumber());
-
-    // At this point, we know that either RegIn or RegOut is set. We dealt with
-    // the all-stack case above.
-
-    // Blocks without interference are relatively easy.
-    if (!Intf.hasInterference()) {
-      DEBUG(dbgs() << ", no interference.\n");
-      SE->selectIntv(MainIntv);
-      // The easiest case has MainIntv live through.
-      //
-      //     |---o---o---|    Live-in, live-out.
-      //     =============    Use MainIntv everywhere.
-      //
-      SlotIndex From = Start, To = Stop;
-
-      // Block entry. Reload before the first use if MainIntv is not live-in.
-      //
-      //     |---o--    Enter on stack.
-      //     ____===    Reload before first use.
-      //
-      //     |   o--    Defined in block.
-      //         ===    Use MainIntv from def.
-      //
-      if (!RegIn)
-        From = SE->enterIntvBefore(BI.FirstUse);
-
-      // Block exit. Handle cases where MainIntv is not live-out.
-      if (!BI.LiveOut)
-        //
-        //     --x   |    Killed in block.
-        //     ===        Use MainIntv up to kill.
-        //
-        To = SE->leaveIntvAfter(BI.LastUse);
-      else if (!RegOut) {
-        //
-        //     --o---|    Live-out on stack.
-        //     ===____    Use MainIntv up to last use, switch to stack.
-        //
-        //     -----o|    Live-out on stack, last use after last split point.
-        //     ======     Extend MainIntv to last use, overlapping.
-        //       \____    Copy to stack interval before last split point.
-        //
-        if (BI.LastUse < LastSplitPoint)
-          To = SE->leaveIntvAfter(BI.LastUse);
-        else {
-          // The last use is after the last split point, it is probably an
-          // indirect branch.
-          To = SE->leaveIntvBefore(LastSplitPoint);
-          // Run a double interval from the split to the last use.  This makes
-          // it possible to spill the complement without affecting the indirect
-          // branch.
-          SE->overlapIntv(To, BI.LastUse);
-        }
-      }
-
-      // Paint in MainIntv liveness for this block.
-      SE->useIntv(From, To);
-      continue;
-    }
-
-    // We are now looking at a block with interference, and we know that either
-    // RegIn or RegOut is set.
-    assert(Intf.hasInterference() && (RegIn || RegOut) && "Bad invariant");
-
-    // If the live range is not live through the block, it is possible that the
-    // interference doesn't even overlap.  Deal with those cases first.  Since
-    // no copy instructions are required, we can tolerate interference starting
-    // or ending at the same instruction that kills or defines our live range.
-
-    // Live-in, killed before interference.
-    //
-    //               ~~~    Interference after kill.
-    //     |---o---x   |    Killed in block.
-    //     =========        Use MainIntv everywhere.
-    //
-    if (RegIn && !BI.LiveOut && BI.LastUse <= Intf.first()) {
-      DEBUG(dbgs() << ", live-in, killed before interference.\n");
-      SE->selectIntv(MainIntv);
-      SlotIndex To = SE->leaveIntvAfter(BI.LastUse);
-      SE->useIntv(Start, To);
-      continue;
-    }
-
-    // Live-out, defined after interference.
-    //
-    //     ~~~              Interference before def.
-    //     |   o---o---|    Defined in block.
-    //         =========    Use MainIntv everywhere.
-    //
-    if (RegOut && !BI.LiveIn && BI.FirstUse >= Intf.last()) {
-      DEBUG(dbgs() << ", live-out, defined after interference.\n");
-      SE->selectIntv(MainIntv);
-      SlotIndex From = SE->enterIntvBefore(BI.FirstUse);
-      SE->useIntv(From, Stop);
-      continue;
-    }
-
-    // The interference is now known to overlap the live range, but it may
-    // still be easy to avoid if all the interference is on one side of the
-    // uses, and we enter or leave on the stack.
-
-    // Live-out on stack, interference after last use.
-    //
-    //               ~~~    Interference after last use.
-    //     |---o---o---|    Live-out on stack.
-    //     =========____    Leave MainIntv after last use.
-    //
-    //                 ~    Interference after last use.
-    //     |---o---o--o|    Live-out on stack, late last use.
-    //     ============     Copy to stack after LSP, overlap MainIntv.
-    //            \_____    Stack interval is live-out.
-    //
-    if (!RegOut && Intf.first() > BI.LastUse.getBoundaryIndex()) {
-      assert(RegIn && "Stack-in, stack-out should already be handled");
-      if (BI.LastUse < LastSplitPoint) {
-        DEBUG(dbgs() << ", live-in, stack-out, interference after last use.\n");
-        SE->selectIntv(MainIntv);
-        SlotIndex To = SE->leaveIntvAfter(BI.LastUse);
-        assert(To <= Intf.first() && "Expected to avoid interference");
-        SE->useIntv(Start, To);
-      } else {
-        DEBUG(dbgs() << ", live-in, stack-out, avoid last split point\n");
-        SE->selectIntv(MainIntv);
-        SlotIndex To = SE->leaveIntvBefore(LastSplitPoint);
-        assert(To <= Intf.first() && "Expected to avoid interference");
-        SE->overlapIntv(To, BI.LastUse);
-        SE->useIntv(Start, To);
-      }
-      continue;
-    }
-
-    // Live-in on stack, interference before first use.
-    //
-    //     ~~~              Interference before first use.
-    //     |---o---o---|    Live-in on stack.
-    //     ____=========    Enter MainIntv before first use.
-    //
-    if (!RegIn && Intf.last() < BI.FirstUse.getBaseIndex()) {
-      assert(RegOut && "Stack-in, stack-out should already be handled");
-      DEBUG(dbgs() << ", stack-in, interference before first use.\n");
-      SE->selectIntv(MainIntv);
-      SlotIndex From = SE->enterIntvBefore(BI.FirstUse);
-      assert(From >= Intf.last() && "Expected to avoid interference");
-      SE->useIntv(From, Stop);
-      continue;
-    }
-
-    // The interference is overlapping somewhere we wanted to use MainIntv. That
-    // means we need to create a local interval that can be allocated a
-    // different register.
-    unsigned LocalIntv = SE->openIntv();
-    DEBUG(dbgs() << ", creating local interval " << LocalIntv << ".\n");
-
-    // We may be creating copies directly between MainIntv and LocalIntv,
-    // bypassing the stack interval. When we do that, we should never use the
-    // leaveIntv* methods as they define values in the stack interval. By
-    // starting from the end of the block and working our way backwards, we can
-    // get by with only enterIntv* methods.
-    //
-    // When selecting split points, we generally try to maximize the stack
-    // interval as long at it contains no uses, maximize the main interval as
-    // long as it doesn't overlap interference, and minimize the local interval
-    // that we don't know how to allocate yet.
-
-    // Handle the block exit, set Pos to the first handled slot.
-    SlotIndex Pos = BI.LastUse;
-    if (RegOut) {
-      assert(Intf.last() < LastSplitPoint && "Cannot be live-out in register");
-      // Create a snippet of MainIntv that is live-out.
-      //
-      //     ~~~        Interference overlapping uses.
-      //     --o---|    Live-out in MainIntv.
-      //     ----===    Switch from LocalIntv to MainIntv after interference.
-      //
-      SE->selectIntv(MainIntv);
-      Pos = SE->enterIntvAfter(Intf.last());
-      assert(Pos >= Intf.last() && "Expected to avoid interference");
-      SE->useIntv(Pos, Stop);
-      SE->selectIntv(LocalIntv);
-    } else if (BI.LiveOut) {
-      if (BI.LastUse < LastSplitPoint) {
-        // Live-out on the stack.
-        //
-        //     ~~~        Interference overlapping uses.
-        //     --o---|    Live-out on stack.
-        //     ---____    Switch from LocalIntv to stack after last use.
-        //
-        Pos = SE->leaveIntvAfter(BI.LastUse);
-      } else {
-        // Live-out on the stack, last use after last split point.
-        //
-        //     ~~~        Interference overlapping uses.
-        //     --o--o|    Live-out on stack, late use.
-        //     ------     Copy to stack before LSP, overlap LocalIntv.
-        //         \__
-        //
-        Pos = SE->leaveIntvBefore(LastSplitPoint);
-        // We need to overlap LocalIntv so it can reach LastUse.
-        SE->overlapIntv(Pos, BI.LastUse);
-      }
-    }
-
-    // When not live-out, leave Pos at LastUse. We have handled everything from
-    // Pos to Stop. Find the starting point for LocalIntv.
-    assert(SE->currentIntv() == LocalIntv && "Expecting local interval");
-
-    if (RegIn) {
-      assert(Start < Intf.first() && "Cannot be live-in with interference");
-      // Live-in in MainIntv, only use LocalIntv for interference.
-      //
-      //         ~~~    Interference overlapping uses.
-      //     |---o--    Live-in in MainIntv.
-      //     ====---    Switch to LocalIntv before interference.
-      //
-      SlotIndex Switch = SE->enterIntvBefore(std::min(Pos, Intf.first()));
-      assert(Switch <= Intf.first() && "Expected to avoid interference");
-      SE->useIntv(Switch, Pos);
-      SE->selectIntv(MainIntv);
-      SE->useIntv(Start, Switch);
-    } else {
-      // Live-in on stack, enter LocalIntv before first use.
-      //
-      //         ~~~    Interference overlapping uses.
-      //     |---o--    Live-in in MainIntv.
-      //     ____---    Reload to LocalIntv before interference.
-      //
-      // Defined in block.
-      //
-      //         ~~~    Interference overlapping uses.
-      //     |   o--    Defined in block.
-      //         ---    Begin LocalIntv at first use.
-      //
-      SlotIndex Switch = SE->enterIntvBefore(std::min(Pos, BI.FirstUse));
-      SE->useIntv(Switch, Pos);
-    }
+    if (RegIn && RegOut)
+      SE->splitLiveThroughBlock(BI.MBB->getNumber(),
+                                MainIntv, Intf.first(),
+                                MainIntv, Intf.last());
+    else if (RegIn)
+      SE->splitRegInBlock(BI, MainIntv, Intf.first());
+    else
+      SE->splitRegOutBlock(BI, MainIntv, Intf.last());
   }
 
   // Handle live-through blocks.
-  SE->selectIntv(MainIntv);
   for (unsigned i = 0, e = Cand.ActiveBlocks.size(); i != e; ++i) {
     unsigned Number = Cand.ActiveBlocks[i];
     bool RegIn  = LiveBundles[Bundles->getBundle(Number, 0)];
     bool RegOut = LiveBundles[Bundles->getBundle(Number, 1)];
-    DEBUG(dbgs() << "Live through BB#" << Number << '\n');
-    if (RegIn && RegOut) {
-      Intf.moveToBlock(Number);
-      if (!Intf.hasInterference()) {
-        SE->useIntv(Indexes->getMBBStartIdx(Number),
-                    Indexes->getMBBEndIdx(Number));
-        continue;
-      }
-    }
-    MachineBasicBlock *MBB = MF->getBlockNumbered(Number);
-    if (RegIn)
-      SE->leaveIntvAtTop(*MBB);
-    if (RegOut)
-      SE->enterIntvAtEnd(*MBB);
+    if (!RegIn && !RegOut)
+      continue;
+    Intf.moveToBlock(Number);
+    SE->splitLiveThroughBlock(Number, RegIn  ? MainIntv : 0, Intf.first(),
+                                      RegOut ? MainIntv : 0, Intf.last());
   }
 
   ++NumGlobalSplits;

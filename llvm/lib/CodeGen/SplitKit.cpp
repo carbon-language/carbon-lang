@@ -1124,3 +1124,262 @@ void SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
   }
   finish();
 }
+
+
+//===----------------------------------------------------------------------===//
+//                    Global Live Range Splitting Support
+//===----------------------------------------------------------------------===//
+
+// These methods support a method of global live range splitting that uses a
+// global algorithm to decide intervals for CFG edges. They will insert split
+// points and color intervals in basic blocks while avoiding interference.
+//
+// Note that splitSingleBlock is also useful for blocks where both CFG edges
+// are on the stack.
+
+void SplitEditor::splitLiveThroughBlock(unsigned MBBNum,
+                                        unsigned IntvIn, SlotIndex LeaveBefore,
+                                        unsigned IntvOut, SlotIndex EnterAfter){
+  SlotIndex Start, Stop;
+  tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(MBBNum);
+
+  DEBUG(dbgs() << "BB#" << MBBNum << " [" << Start << ';' << Stop
+               << ") intf " << LeaveBefore << '-' << EnterAfter
+               << ", live-through " << IntvIn << " -> " << IntvOut);
+
+  assert((IntvIn || IntvOut) && "Use splitSingleBlock for isolated blocks");
+
+  if (!IntvOut) {
+    DEBUG(dbgs() << ", spill on entry.\n");
+    //
+    //        <<<<<<<<<    Possible LeaveBefore interference.
+    //    |-----------|    Live through.
+    //    -____________    Spill on entry.
+    //
+    selectIntv(IntvIn);
+    MachineBasicBlock *MBB = VRM.getMachineFunction().getBlockNumbered(MBBNum);
+    SlotIndex Idx = leaveIntvAtTop(*MBB);
+    assert((!LeaveBefore || Idx <= LeaveBefore) && "Interference");
+    (void)Idx;
+    return;
+  }
+
+  if (!IntvIn) {
+    DEBUG(dbgs() << ", reload on exit.\n");
+    //
+    //    >>>>>>>          Possible EnterAfter interference.
+    //    |-----------|    Live through.
+    //    ___________--    Reload on exit.
+    //
+    selectIntv(IntvOut);
+    MachineBasicBlock *MBB = VRM.getMachineFunction().getBlockNumbered(MBBNum);
+    SlotIndex Idx = enterIntvAtEnd(*MBB);
+    assert((!EnterAfter || Idx >= EnterAfter) && "Interference");
+    (void)Idx;
+    return;
+  }
+
+  if (IntvIn == IntvOut && !LeaveBefore && !EnterAfter) {
+    DEBUG(dbgs() << ", straight through.\n");
+    //
+    //    |-----------|    Live through.
+    //    -------------    Straight through, same intv, no interference.
+    //
+    selectIntv(IntvOut);
+    useIntv(Start, Stop);
+    return;
+  }
+
+  // We cannot legally insert splits after LSP.
+  SlotIndex LSP = SA.getLastSplitPoint(MBBNum);
+
+  if (IntvIn != IntvOut && (!LeaveBefore || !EnterAfter ||
+                  LeaveBefore.getBaseIndex() > EnterAfter.getBoundaryIndex())) {
+    DEBUG(dbgs() << ", switch avoiding interference.\n");
+    //
+    //    >>>>     <<<<    Non-overlapping EnterAfter/LeaveBefore interference.
+    //    |-----------|    Live through.
+    //    ------=======    Switch intervals between interference.
+    //
+    SlotIndex Cut = (LeaveBefore && LeaveBefore < LSP) ? LeaveBefore : LSP;
+    selectIntv(IntvOut);
+    SlotIndex Idx = enterIntvBefore(Cut);
+    useIntv(Idx, Stop);
+    selectIntv(IntvIn);
+    useIntv(Start, Idx);
+    assert((!LeaveBefore || Idx <= LeaveBefore) && "Interference");
+    assert((!EnterAfter || Idx >= EnterAfter) && "Interference");
+    return;
+  }
+
+  DEBUG(dbgs() << ", create local intv for interference.\n");
+  //
+  //    >>><><><><<<<    Overlapping EnterAfter/LeaveBefore interference.
+  //    |-----------|    Live through.
+  //    ==---------==    Switch intervals before/after interference.
+  //
+  assert(LeaveBefore <= EnterAfter && "Missed case");
+
+  selectIntv(IntvOut);
+  SlotIndex Idx = enterIntvAfter(EnterAfter);
+  useIntv(Idx, Stop);
+  assert((!EnterAfter || Idx >= EnterAfter) && "Interference");
+
+  selectIntv(IntvIn);
+  Idx = leaveIntvBefore(LeaveBefore);
+  useIntv(Start, Idx);
+  assert((!LeaveBefore || Idx <= LeaveBefore) && "Interference");
+}
+
+
+void SplitEditor::splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
+                                  unsigned IntvIn, SlotIndex LeaveBefore) {
+  SlotIndex Start, Stop;
+  tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
+
+  DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " [" << Start << ';' << Stop
+               << "), uses " << BI.FirstUse << '-' << BI.LastUse
+               << ", reg-in " << IntvIn << ", leave before " << LeaveBefore
+               << (BI.LiveOut ? ", stack-out" : ", killed in block"));
+
+  assert(IntvIn && "Must have register in");
+  assert(BI.LiveIn && "Must be live-in");
+  assert((!LeaveBefore || LeaveBefore > Start) && "Bad interference");
+
+  if (!BI.LiveOut && (!LeaveBefore || LeaveBefore >= BI.LastUse)) {
+    DEBUG(dbgs() << " before interference.\n");
+    //
+    //               <<<    Interference after kill.
+    //     |---o---x   |    Killed in block.
+    //     =========        Use IntvIn everywhere.
+    //
+    selectIntv(IntvIn);
+    useIntv(Start, BI.LastUse);
+    return;
+  }
+
+  SlotIndex LSP = SA.getLastSplitPoint(BI.MBB->getNumber());
+
+  if (!LeaveBefore || LeaveBefore > BI.LastUse.getBoundaryIndex()) {
+    //
+    //               <<<    Possible interference after last use.
+    //     |---o---o---|    Live-out on stack.
+    //     =========____    Leave IntvIn after last use.
+    //
+    //                 <    Interference after last use.
+    //     |---o---o--o|    Live-out on stack, late last use.
+    //     ============     Copy to stack after LSP, overlap IntvIn.
+    //            \_____    Stack interval is live-out.
+    //
+    if (BI.LastUse < LSP) {
+      DEBUG(dbgs() << ", spill after last use before interference.\n");
+      selectIntv(IntvIn);
+      SlotIndex Idx = leaveIntvAfter(BI.LastUse);
+      useIntv(Start, Idx);
+      assert((!LeaveBefore || Idx <= LeaveBefore) && "Interference");
+    } else {
+      DEBUG(dbgs() << ", spill before last split point.\n");
+      selectIntv(IntvIn);
+      SlotIndex Idx = leaveIntvAfter(LSP);
+      overlapIntv(Idx, BI.LastUse);
+      useIntv(Start, Idx);
+      assert((!LeaveBefore || Idx <= LeaveBefore) && "Interference");
+    }
+    return;
+  }
+
+  // The interference is overlapping somewhere we wanted to use IntvIn. That
+  // means we need to create a local interval that can be allocated a
+  // different register.
+  unsigned LocalIntv = openIntv();
+  DEBUG(dbgs() << ", creating local interval " << LocalIntv << ".\n");
+
+  if (!BI.LiveOut || BI.LastUse < LSP) {
+    //
+    //           <<<<<<<    Interference overlapping uses.
+    //     |---o---o---|    Live-out on stack.
+    //     =====----____    Leave IntvIn before interference, then spill.
+    //
+    SlotIndex To = leaveIntvAfter(BI.LastUse);
+    SlotIndex From = enterIntvBefore(LeaveBefore);
+    useIntv(From, To);
+    selectIntv(IntvIn);
+    useIntv(Start, From);
+    assert((!LeaveBefore || From <= LeaveBefore) && "Interference");
+    return;
+  }
+
+  //           <<<<<<<    Interference overlapping uses.
+  //     |---o---o--o|    Live-out on stack, late last use.
+  //     =====-------     Copy to stack before LSP, overlap LocalIntv.
+  //            \_____    Stack interval is live-out.
+  //
+  SlotIndex To = leaveIntvBefore(LSP);
+  overlapIntv(To, BI.LastUse);
+  SlotIndex From = enterIntvBefore(std::min(To, LeaveBefore));
+  useIntv(From, To);
+  selectIntv(IntvIn);
+  useIntv(Start, From);
+  assert((!LeaveBefore || From <= LeaveBefore) && "Interference");
+}
+
+void SplitEditor::splitRegOutBlock(const SplitAnalysis::BlockInfo &BI,
+                                   unsigned IntvOut, SlotIndex EnterAfter) {
+  SlotIndex Start, Stop;
+  tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
+
+  DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " [" << Start << ';' << Stop
+               << "), uses " << BI.FirstUse << '-' << BI.LastUse
+               << ", reg-out " << IntvOut << ", enter after " << EnterAfter
+               << (BI.LiveIn ? ", stack-in" : ", defined in block"));
+
+  SlotIndex LSP = SA.getLastSplitPoint(BI.MBB->getNumber());
+
+  assert(IntvOut && "Must have register out");
+  assert(BI.LiveOut && "Must be live-out");
+  assert((!EnterAfter || EnterAfter < LSP) && "Bad interference");
+
+  if (!BI.LiveIn && (!EnterAfter || EnterAfter <= BI.FirstUse)) {
+    DEBUG(dbgs() << " after interference.\n");
+    //
+    //    >>>>             Interference before def.
+    //    |   o---o---|    Defined in block.
+    //        =========    Use IntvOut everywhere.
+    //
+    selectIntv(IntvOut);
+    useIntv(BI.FirstUse, Stop);
+    return;
+  }
+
+  if (!EnterAfter || EnterAfter < BI.FirstUse.getBaseIndex()) {
+    DEBUG(dbgs() << ", reload after interference.\n");
+    //
+    //    >>>>             Interference before def.
+    //    |---o---o---|    Live-through, stack-in.
+    //    ____=========    Enter IntvOut before first use.
+    //
+    selectIntv(IntvOut);
+    SlotIndex Idx = enterIntvBefore(std::min(LSP, BI.FirstUse));
+    useIntv(Idx, Stop);
+    assert((!EnterAfter || Idx >= EnterAfter) && "Interference");
+    return;
+  }
+
+  // The interference is overlapping somewhere we wanted to use IntvOut. That
+  // means we need to create a local interval that can be allocated a
+  // different register.
+  DEBUG(dbgs() << ", interference overlaps uses.\n");
+  //
+  //    >>>>>>>          Interference overlapping uses.
+  //    |---o---o---|    Live-through, stack-in.
+  //    ____---======    Create local interval for interference range.
+  //
+  selectIntv(IntvOut);
+  SlotIndex Idx = enterIntvAfter(EnterAfter);
+  useIntv(Idx, Stop);
+  assert((!EnterAfter || Idx >= EnterAfter) && "Interference");
+
+  openIntv();
+  SlotIndex From = enterIntvBefore(std::min(Idx, BI.FirstUse));
+  useIntv(From, Idx);
+}

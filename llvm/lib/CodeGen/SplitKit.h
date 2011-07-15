@@ -426,6 +426,42 @@ public:
   /// splitSingleBlocks - Split CurLI into a separate live interval inside each
   /// basic block in Blocks.
   void splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks);
+
+  /// splitLiveThroughBlock - Split CurLI in the given block such that it
+  /// enters the block in IntvIn and leaves it in IntvOut. There may be uses in
+  /// the block, but they will be ignored when placing split points.
+  ///
+  /// @param MBBNum      Block number.
+  /// @param IntvIn      Interval index entering the block.
+  /// @param LeaveBefore When set, leave IntvIn before this point.
+  /// @param IntvOut     Interval index leaving the block.
+  /// @param EnterAfter  When set, enter IntvOut after this point.
+  void splitLiveThroughBlock(unsigned MBBNum,
+                             unsigned IntvIn, SlotIndex LeaveBefore,
+                             unsigned IntvOut, SlotIndex EnterAfter);
+
+  /// splitRegInBlock - Split CurLI in the given block such that it enters the
+  /// block in IntvIn and leaves it on the stack (or not at all). Split points
+  /// are placed in a way that avoids putting uses in the stack interval. This
+  /// may require creating a local interval when there is interference.
+  ///
+  /// @param BI          Block descriptor.
+  /// @param IntvIn      Interval index entering the block. Not 0.
+  /// @param LeaveBefore When set, leave IntvIn before this point.
+  void splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
+                       unsigned IntvIn, SlotIndex LeaveBefore);
+
+  /// splitRegOutBlock - Split CurLI in the given block such that it enters the
+  /// block on the stack (or isn't live-in at all) and leaves it in IntvOut.
+  /// Split points are placed to avoid interference and such that the uses are
+  /// not in the stack interval. This may require creating a local interval
+  /// when there is interference.
+  ///
+  /// @param BI          Block descriptor.
+  /// @param IntvOut     Interval index leaving the block.
+  /// @param EnterAfter  When set, enter IntvOut after this point.
+  void splitRegOutBlock(const SplitAnalysis::BlockInfo &BI,
+                        unsigned IntvOut, SlotIndex EnterAfter);
 };
 
 }
