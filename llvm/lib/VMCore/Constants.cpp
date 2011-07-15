@@ -1059,10 +1059,6 @@ std::string ConstantArray::getAsCString() const {
 //---- ConstantStruct::get() implementation...
 //
 
-namespace llvm {
-
-}
-
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantStruct::destroyConstant() {
@@ -1202,7 +1198,7 @@ void BlockAddress::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
   assert(NewBA != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.
-  uncheckedReplaceAllUsesWith(NewBA);
+  replaceAllUsesWith(NewBA);
   
   destroyConstant();
 }
@@ -1984,7 +1980,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.
-  uncheckedReplaceAllUsesWith(Replacement);
+  replaceAllUsesWith(Replacement);
   
   // Delete the old constant!
   destroyConstant();
@@ -2050,7 +2046,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.
-  uncheckedReplaceAllUsesWith(Replacement);
+  replaceAllUsesWith(Replacement);
   
   // Delete the old constant!
   destroyConstant();
@@ -2072,7 +2068,7 @@ void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.
-  uncheckedReplaceAllUsesWith(Replacement);
+  replaceAllUsesWith(Replacement);
   
   // Delete the old constant!
   destroyConstant();
@@ -2170,7 +2166,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.
-  uncheckedReplaceAllUsesWith(Replacement);
+  replaceAllUsesWith(Replacement);
   
   // Delete the old constant!
   destroyConstant();

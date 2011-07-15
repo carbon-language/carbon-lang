@@ -280,17 +280,16 @@ void Value::takeName(Value *V) {
 }
 
 
-// uncheckedReplaceAllUsesWith - This is exactly the same as replaceAllUsesWith,
-// except that it doesn't have all of the asserts.  The asserts fail because we
-// are half-way done resolving types, which causes some types to exist as two
-// different Type*'s at the same time.  This is a sledgehammer to work around
-// this problem.
-//
-void Value::uncheckedReplaceAllUsesWith(Value *New) {
+void Value::replaceAllUsesWith(Value *New) {
+  assert(New && "Value::replaceAllUsesWith(<null>) is invalid!");
+  assert(New != this && "this->replaceAllUsesWith(this) is NOT valid!");
+  assert(New->getType() == getType() &&
+         "replaceAllUses of value with new value of different type!");
+
   // Notify all ValueHandles (if present) that this value is going away.
   if (HasValueHandle)
     ValueHandleBase::ValueIsRAUWd(this, New);
-
+  
   while (!use_empty()) {
     Use &U = *UseList;
     // Must handle Constants specially, we cannot call replaceUsesOfWith on a
@@ -301,21 +300,12 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
         continue;
       }
     }
-
+    
     U.set(New);
   }
-
+  
   if (BasicBlock *BB = dyn_cast<BasicBlock>(this))
     BB->replaceSuccessorsPhiUsesWith(cast<BasicBlock>(New));
-}
-
-void Value::replaceAllUsesWith(Value *New) {
-  assert(New && "Value::replaceAllUsesWith(<null>) is invalid!");
-  assert(New != this && "this->replaceAllUsesWith(this) is NOT valid!");
-  assert(New->getType() == getType() &&
-         "replaceAllUses of value with new value of different type!");
-
-  uncheckedReplaceAllUsesWith(New);
 }
 
 Value *Value::stripPointerCasts() {

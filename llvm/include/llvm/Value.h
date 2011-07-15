@@ -147,10 +147,6 @@ public:
   ///
   void replaceAllUsesWith(Value *V);
 
-  // uncheckedReplaceAllUsesWith - Just like replaceAllUsesWith but dangerous.
-  // Only use when in type resolution situations!
-  void uncheckedReplaceAllUsesWith(Value *V);
-
   //----------------------------------------------------------------------
   // Methods for handling the chain of uses of this Value.
   //
