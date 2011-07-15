@@ -19,7 +19,7 @@ entry:
   %5 = call <2 x float> @llvm.arm.neon.vpadd.v2f32(<2 x float> %3, <2 x float> %4) nounwind ; <<2 x float>> [#uses=2]
   %6 = call <2 x float> @llvm.arm.neon.vpadd.v2f32(<2 x float> %5, <2 x float> %5) nounwind ; <<2 x float>> [#uses=2]
   %7 = shufflevector <2 x float> %6, <2 x float> %6, <4 x i32> <i32 0, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=2]
-;CHECK: vmov
+;CHECK: vorr
   %8 = call <4 x float> @llvm.arm.neon.vrsqrte.v4f32(<4 x float> %7) nounwind ; <<4 x float>> [#uses=3]
   %9 = fmul <4 x float> %8, %8                    ; <<4 x float>> [#uses=1]
   %10 = call <4 x float> @llvm.arm.neon.vrsqrts.v4f32(<4 x float> %9, <4 x float> %7) nounwind ; <<4 x float>> [#uses=1]

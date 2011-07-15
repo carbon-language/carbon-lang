@@ -4214,17 +4214,12 @@ def  VSWPq    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 1, 0,
 // Vector Move Operations.
 
 //   VMOV     : Vector Move (Register)
+def : InstAlias<"vmov${p} $Vd, $Vm",
+                (VORRd DPR:$Vd, DPR:$Vm, DPR:$Vm, pred:$p)>;
+def : InstAlias<"vmov${p} $Vd, $Vm",
+                (VORRq QPR:$Vd, QPR:$Vm, QPR:$Vm, pred:$p)>;
 
 let neverHasSideEffects = 1 in {
-def  VMOVDneon: N3VX<0, 0, 0b10, 0b0001, 0, 1, (outs DPR:$Vd), (ins DPR:$Vm),
-                     N3RegFrm, IIC_VMOV, "vmov", "$Vd, $Vm", "", []> {
-  let Vn{4-0} = Vm{4-0};
-}
-def  VMOVQ    : N3VX<0, 0, 0b10, 0b0001, 1, 1, (outs QPR:$Vd), (ins QPR:$Vm),
-                     N3RegFrm, IIC_VMOV, "vmov", "$Vd, $Vm", "", []> {
-  let Vn{4-0} = Vm{4-0};
-}
-
 // Pseudo vector move instructions for QQ and QQQQ registers. This should
 // be expanded after register allocation is completed.
 def  VMOVQQ   : PseudoInst<(outs QQPR:$dst), (ins QQPR:$src),

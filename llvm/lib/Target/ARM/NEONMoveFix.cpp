@@ -77,7 +77,7 @@ bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
       }
 
       if (inNEONDomain(Domain, isA8)) {
-        // Convert VMOVD to VMOVDneon
+        // Convert VMOVD to VORRd
         unsigned DestReg = MI->getOperand(0).getReg();
 
         DEBUG({errs() << "vmov convert: "; MI->dump();});
@@ -88,7 +88,8 @@ bool NEONMoveFixPass::InsertMoves(MachineBasicBlock &MBB) {
         //  - The imp-defs / imp-uses are superregs only, we don't care about
         //    them.
         AddDefaultPred(BuildMI(MBB, *MI, MI->getDebugLoc(),
-                             TII->get(ARM::VMOVDneon), DestReg).addReg(SrcReg));
+                             TII->get(ARM::VORRd), DestReg)
+          .addReg(SrcReg).addReg(SrcReg));
         MBB.erase(MI);
         MachineBasicBlock::iterator I = prior(NextMII);
         MI = &*I;

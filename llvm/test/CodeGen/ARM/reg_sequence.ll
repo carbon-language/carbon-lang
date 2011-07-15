@@ -124,7 +124,7 @@ return1:
 return2:
 ; CHECK:        %return2
 ; CHECK:        vadd.i32
-; CHECK:        vmov {{q[0-9]+}}, {{q[0-9]+}}
+; CHECK:        vorr {{q[0-9]+}}, {{q[0-9]+}}
 ; CHECK-NOT:    vmov
 ; CHECK:        vst2.32 {d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}}
   %tmp100 = extractvalue %struct.__neon_int32x4x2_t %tmp2, 0 ; <<4 x i32>> [#uses=1]
@@ -139,7 +139,7 @@ define <8 x i16> @t5(i16* %A, <8 x i16>* %B) nounwind {
 ; CHECK:        t5:
 ; CHECK:        vldmia
 ; How can FileCheck match Q and D registers? We need a lisp interpreter.
-; CHECK:        vmov {{q[0-9]+}}, {{q[0-9]+}}
+; CHECK:        vorr {{q[0-9]+}}, {{q[0-9]+}}, {{q[0-9]+}}
 ; CHECK-NOT:    vmov
 ; CHECK:        vld2.16 {d{{[0-9]+}}[1], d{{[0-9]+}}[1]}, [r0]
 ; CHECK-NOT:    vmov
@@ -156,7 +156,7 @@ define <8 x i16> @t5(i16* %A, <8 x i16>* %B) nounwind {
 define <8 x i8> @t6(i8* %A, <8 x i8>* %B) nounwind {
 ; CHECK:        t6:
 ; CHECK:        vldr.64
-; CHECK:        vmov d[[D0:[0-9]+]], d[[D1:[0-9]+]]
+; CHECK:        vorr d[[D0:[0-9]+]], d[[D1:[0-9]+]]
 ; CHECK-NEXT:   vld2.8 {d[[D1]][1], d[[D0]][1]}
   %tmp1 = load <8 x i8>* %B                       ; <<8 x i8>> [#uses=2]
   %tmp2 = call %struct.__neon_int8x8x2_t @llvm.arm.neon.vld2lane.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 1, i32 1) ; <%struct.__neon_int8x8x2_t> [#uses=2]
@@ -172,7 +172,7 @@ entry:
 ; CHECK:        vld2.32
 ; CHECK:        vst2.32
 ; CHECK:        vld1.32 {d{{[0-9]+}}, d{{[0-9]+}}},
-; CHECK:        vmov q[[Q0:[0-9]+]], q[[Q1:[0-9]+]]
+; CHECK:        vorr q[[Q0:[0-9]+]], q[[Q1:[0-9]+]], q[[Q1:[0-9]+]]
 ; CHECK-NOT:    vmov
 ; CHECK:        vuzp.32 q[[Q1]], q[[Q0]]
 ; CHECK:        vst1.32
@@ -272,8 +272,8 @@ define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
 define arm_aapcs_vfpcc i32 @t10() nounwind {
 entry:
 ; CHECK: t10:
-; CHECK: vmul.f32 q8, q8, d0[0]
 ; CHECK: vmov.i32 q[[Q0:[0-9]+]], #0x3F000000
+; CHECK: vmul.f32 q8, q8, d0[0]
 ; CHECK: vadd.f32 q8, q8, q8
   %0 = shufflevector <4 x float> zeroinitializer, <4 x float> undef, <4 x i32> zeroinitializer ; <<4 x float>> [#uses=1]
   %1 = insertelement <4 x float> %0, float undef, i32 1 ; <<4 x float>> [#uses=1]

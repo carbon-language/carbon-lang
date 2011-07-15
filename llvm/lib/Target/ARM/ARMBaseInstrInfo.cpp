@@ -637,7 +637,7 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   else if (ARM::DPRRegClass.contains(DestReg, SrcReg))
     Opc = ARM::VMOVD;
   else if (ARM::QPRRegClass.contains(DestReg, SrcReg))
-    Opc = ARM::VMOVQ;
+    Opc = ARM::VORRq;
   else if (ARM::QQPRRegClass.contains(DestReg, SrcReg))
     Opc = ARM::VMOVQQ;
   else if (ARM::QQQQPRRegClass.contains(DestReg, SrcReg))
@@ -647,6 +647,8 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(Opc), DestReg);
   MIB.addReg(SrcReg, getKillRegState(KillSrc));
+  if (Opc == ARM::VORRq)
+    MIB.addReg(SrcReg, getKillRegState(KillSrc));
   if (Opc != ARM::VMOVQQ && Opc != ARM::VMOVQQQQ)
     AddDefaultPred(MIB);
 }

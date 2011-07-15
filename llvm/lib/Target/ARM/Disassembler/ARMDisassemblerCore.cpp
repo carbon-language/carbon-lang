@@ -3093,11 +3093,6 @@ static bool DisassembleNVdVnVmOptImm(MCInst &MI, unsigned Opcode, uint32_t insn,
                                          : decodeNEONRm(insn))));
   ++OpIdx;
 
-  // Special case handling for VMOVDneon and VMOVQ because they are marked as
-  // N3RegFrm.
-  if (Opcode == ARM::VMOVDneon || Opcode == ARM::VMOVQ)
-    return true;
-
   // Dm = Inst{5:3-0} => NEON Rm
   // or
   // Dm is restricted to D0-D7 if size is 16, D0-D15 otherwise
