@@ -450,9 +450,7 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
         NewSelector.push_back(Outer->getArgOperand(i));
 
       CallInst *NewInner =
-        IRBuilder<>(Inner).CreateCall(Inner->getCalledValue(),
-                                      NewSelector.begin(),
-                                      NewSelector.end());
+        IRBuilder<>(Inner).CreateCall(Inner->getCalledValue(), NewSelector);
       // No need to copy attributes, calling convention, etc.
       NewInner->takeName(Inner);
       Inner->replaceAllUsesWith(NewInner);
@@ -488,8 +486,7 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     InvokeInst *II =
       InvokeInst::Create(CI->getCalledValue(), Split,
                          Invoke.getOuterUnwindDest(),
-                         InvokeArgs.begin(), InvokeArgs.end(),
-                         CI->getName(), BB);
+                         InvokeArgs, CI->getName(), BB);
     II->setCallingConv(CI->getCallingConv());
     II->setAttributes(CI->getAttributes());
     
@@ -702,7 +699,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
     ConstantInt::get(Type::getInt32Ty(Context), 1),
     ConstantInt::getFalse(Context) // isVolatile
   };
-  IRBuilder<>(TheCall).CreateCall(MemCpyFn, CallArgs, CallArgs+5);
+  IRBuilder<>(TheCall).CreateCall(MemCpyFn, CallArgs);
   
   // Uses of the argument in the function should use our new alloca
   // instead.

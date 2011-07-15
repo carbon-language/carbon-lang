@@ -3421,7 +3421,7 @@ void ObjCARCContract::ContractRelease(Instruction *Release,
     Args[1] = new BitCastInst(Args[1], I8X, "", Store);
   CallInst *StoreStrong =
     CallInst::Create(getStoreStrongCallee(BB->getParent()->getParent()),
-                     Args, array_endof(Args), "", Store);
+                     Args, "", Store);
   StoreStrong->setDoesNotThrow();
   StoreStrong->setDebugLoc(Store->getDebugLoc());
 

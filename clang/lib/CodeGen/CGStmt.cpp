@@ -1591,7 +1591,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   llvm::InlineAsm *IA =
     llvm::InlineAsm::get(FTy, AsmString, Constraints,
                          S.isVolatile() || S.getNumOutputs() == 0);
-  llvm::CallInst *Result = Builder.CreateCall(IA, Args.begin(), Args.end());
+  llvm::CallInst *Result = Builder.CreateCall(IA, Args);
   Result->addAttribute(~0, llvm::Attribute::NoUnwind);
 
   // Slap the source location of the inline asm into a !srcloc metadata on the

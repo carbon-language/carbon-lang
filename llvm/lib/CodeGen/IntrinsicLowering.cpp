@@ -77,7 +77,7 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
 
   IRBuilder<> Builder(CI->getParent(), CI);
   SmallVector<Value *, 8> Args(ArgBegin, ArgEnd);
-  CallInst *NewCI = Builder.CreateCall(FCache, Args.begin(), Args.end());
+  CallInst *NewCI = Builder.CreateCall(FCache, Args);
   NewCI->setName(CI->getName());
   if (!CI->use_empty())
     CI->replaceAllUsesWith(NewCI);

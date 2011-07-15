@@ -62,8 +62,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   }
   Args[3] = ConstantInt::get(Type::getInt32Ty(Context), NumElements);
 
-  CallInst *InitCall = CallInst::Create(InitFn, Args.begin(), Args.end(),
-                                        "newargc", InsertPos);
+  CallInst *InitCall = CallInst::Create(InitFn, Args, "newargc", InsertPos);
 
   // If argc or argv are not available in main, just pass null values in.
   Function::arg_iterator AI;

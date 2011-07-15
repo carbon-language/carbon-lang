@@ -91,8 +91,7 @@ static void ChangeToUnreachable(Instruction *I, bool UseLLVMTrap) {
 static void ChangeToCall(InvokeInst *II) {
   BasicBlock *BB = II->getParent();
   SmallVector<Value*, 8> Args(II->op_begin(), II->op_end() - 3);
-  CallInst *NewCall = CallInst::Create(II->getCalledValue(), Args.begin(),
-                                       Args.end(), "", II);
+  CallInst *NewCall = CallInst::Create(II->getCalledValue(), Args, "", II);
   NewCall->takeName(II);
   NewCall->setCallingConv(II->getCallingConv());
   NewCall->setAttributes(II->getAttributes());

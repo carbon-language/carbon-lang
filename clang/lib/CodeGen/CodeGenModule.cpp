@@ -1413,8 +1413,7 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     // Okay, we can transform this.  Create the new call instruction and copy
     // over the required information.
     ArgList.append(CS.arg_begin(), CS.arg_begin() + ArgNo);
-    llvm::CallInst *NewCall = llvm::CallInst::Create(NewFn, ArgList.begin(),
-                                                     ArgList.end(), "", CI);
+    llvm::CallInst *NewCall = llvm::CallInst::Create(NewFn, ArgList, "", CI);
     ArgList.clear();
     if (!NewCall->getType()->isVoidTy())
       NewCall->takeName(CI);

@@ -2465,8 +2465,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         }
       }
 
-      I = InvokeInst::Create(Callee, NormalBB, UnwindBB,
-                             Ops.begin(), Ops.end());
+      I = InvokeInst::Create(Callee, NormalBB, UnwindBB, Ops);
       InstructionList.push_back(I);
       cast<InvokeInst>(I)->setCallingConv(
         static_cast<CallingConv::ID>(CCInfo));
@@ -2579,7 +2578,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         }
       }
 
-      I = CallInst::Create(Callee, Args.begin(), Args.end());
+      I = CallInst::Create(Callee, Args);
       InstructionList.push_back(I);
       cast<CallInst>(I)->setCallingConv(
         static_cast<CallingConv::ID>(CCInfo>>1));

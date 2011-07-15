@@ -336,8 +336,7 @@ bool DwarfEHPrepare::HandleURoRInvokes() {
       Args.push_back(EHCatchAllValue->getInitializer()); // Catch-all indicator.
 
       CallInst *NewSelector =
-        CallInst::Create(SelectorIntrinsic, Args.begin(), Args.end(),
-                         "eh.sel.catch.all", II);
+        CallInst::Create(SelectorIntrinsic, Args, "eh.sel.catch.all", II);
 
       NewSelector->setTailCall(II->isTailCall());
       NewSelector->setAttributes(II->getAttributes());

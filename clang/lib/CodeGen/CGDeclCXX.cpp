@@ -149,7 +149,7 @@ CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
   llvm::Value *Args[3] = { llvm::ConstantExpr::getBitCast(DtorFn, DtorFnTy),
                            llvm::ConstantExpr::getBitCast(DeclPtr, Int8PtrTy),
                            llvm::ConstantExpr::getBitCast(Handle, Int8PtrTy) };
-  Builder.CreateCall(AtExitFn, &Args[0], llvm::array_endof(Args));
+  Builder.CreateCall(AtExitFn, Args);
 }
 
 void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,

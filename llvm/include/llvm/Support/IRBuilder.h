@@ -449,34 +449,30 @@ public:
 
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
                            BasicBlock *UnwindDest, const Twine &Name = "") {
-    Value *Args[] = { 0 };
-    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args,
-                                     Args), Name);
+    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest,
+                                     ArrayRef<Value *>()),
+                  Name);
   }
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
                            BasicBlock *UnwindDest, Value *Arg1,
                            const Twine &Name = "") {
-    Value *Args[] = { Arg1 };
-    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args,
-                                     Args+1), Name);
+    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Arg1),
+                  Name);
   }
   InvokeInst *CreateInvoke3(Value *Callee, BasicBlock *NormalDest,
                             BasicBlock *UnwindDest, Value *Arg1,
                             Value *Arg2, Value *Arg3,
                             const Twine &Name = "") {
     Value *Args[] = { Arg1, Arg2, Arg3 };
-    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args,
-                                     Args+3), Name);
+    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args),
+                  Name);
   }
   /// CreateInvoke - Create an invoke instruction.
-  template<typename RandomAccessIterator>
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
-                           BasicBlock *UnwindDest,
-                           RandomAccessIterator ArgBegin,
-                           RandomAccessIterator ArgEnd,
+                           BasicBlock *UnwindDest, ArrayRef<Value *> Args,
                            const Twine &Name = "") {
-    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest,
-                                     ArgBegin, ArgEnd), Name);
+    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args),
+                  Name);
   }
 
   UnwindInst *CreateUnwind() {
@@ -1126,33 +1122,27 @@ public:
   CallInst *CreateCall2(Value *Callee, Value *Arg1, Value *Arg2,
                         const Twine &Name = "") {
     Value *Args[] = { Arg1, Arg2 };
-    return Insert(CallInst::Create(Callee, Args, Args+2), Name);
+    return Insert(CallInst::Create(Callee, Args), Name);
   }
   CallInst *CreateCall3(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
                         const Twine &Name = "") {
     Value *Args[] = { Arg1, Arg2, Arg3 };
-    return Insert(CallInst::Create(Callee, Args, Args+3), Name);
+    return Insert(CallInst::Create(Callee, Args), Name);
   }
   CallInst *CreateCall4(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
                         Value *Arg4, const Twine &Name = "") {
     Value *Args[] = { Arg1, Arg2, Arg3, Arg4 };
-    return Insert(CallInst::Create(Callee, Args, Args+4), Name);
+    return Insert(CallInst::Create(Callee, Args), Name);
   }
   CallInst *CreateCall5(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
                         Value *Arg4, Value *Arg5, const Twine &Name = "") {
     Value *Args[] = { Arg1, Arg2, Arg3, Arg4, Arg5 };
-    return Insert(CallInst::Create(Callee, Args, Args+5), Name);
+    return Insert(CallInst::Create(Callee, Args), Name);
   }
 
-  CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Arg,
+  CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Args,
                        const Twine &Name = "") {
-    return Insert(CallInst::Create(Callee, Arg.begin(), Arg.end(), Name));
-  }
-
-  template<typename RandomAccessIterator>
-  CallInst *CreateCall(Value *Callee, RandomAccessIterator ArgBegin,
-                       RandomAccessIterator ArgEnd, const Twine &Name = "") {
-    return Insert(CallInst::Create(Callee, ArgBegin, ArgEnd), Name);
+    return Insert(CallInst::Create(Callee, Args, Name));
   }
 
   Value *CreateSelect(Value *C, Value *True, Value *False,

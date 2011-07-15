@@ -842,46 +842,17 @@ public:
 class CallInst : public Instruction {
   AttrListPtr AttributeList; ///< parameter attributes for call
   CallInst(const CallInst &CI);
-  void init(Value *Func, Value* const *Params, unsigned NumParams);
-  void init(Value *Func, Value *Actual1, Value *Actual2);
-  void init(Value *Func, Value *Actual);
-  void init(Value *Func);
+  void init(Value *Func, ArrayRef<Value *> Args, const Twine &NameStr);
+  void init(Value *Func, const Twine &NameStr);
 
-  template<typename RandomAccessIterator>
-  void init(Value *Func,
-            RandomAccessIterator ArgBegin,
-            RandomAccessIterator ArgEnd,
-            const Twine &NameStr,
-            // This argument ensures that we have an iterator we can
-            // do arithmetic on in constant time
-            std::random_access_iterator_tag) {
-    unsigned NumArgs = (unsigned)std::distance(ArgBegin, ArgEnd);
-
-    // This requires that the iterator points to contiguous memory.
-    init(Func, NumArgs ? &*ArgBegin : 0, NumArgs);
-    setName(NameStr);
-  }
-
-  /// Construct a CallInst given a range of arguments. RandomAccessIterator
-  /// must be a random-access iterator pointing to contiguous storage
-  /// (e.g. a std::vector<>::iterator). Checks are made for
-  /// random-accessness but not for contiguous storage as that would
-  /// incur runtime overhead.
+  /// Construct a CallInst given a range of arguments.
   /// @brief Construct a CallInst from a range of arguments
-  template<typename RandomAccessIterator>
-  CallInst(Value *Func,
-           RandomAccessIterator ArgBegin, RandomAccessIterator ArgEnd,
-           const Twine &NameStr, Instruction *InsertBefore);
+  inline CallInst(Value *Func, ArrayRef<Value *> Args,
+                  const Twine &NameStr, Instruction *InsertBefore);
 
-  /// Construct a CallInst given a range of arguments.  RandomAccessIterator
-  /// must be a random-access iterator pointing to contiguous storage
-  /// (e.g. a std::vector<>::iterator).  Checks are made for
-  /// random-accessness but not for contiguous storage as that would
-  /// incur runtime overhead.
+  /// Construct a CallInst given a range of arguments.
   /// @brief Construct a CallInst from a range of arguments
-  template<typename RandomAccessIterator>
-  inline CallInst(Value *Func,
-                  RandomAccessIterator ArgBegin, RandomAccessIterator ArgEnd,
+  inline CallInst(Value *Func, ArrayRef<Value *> Args,
                   const Twine &NameStr, BasicBlock *InsertAtEnd);
 
   CallInst(Value *F, Value *Actual, const Twine &NameStr,
@@ -894,31 +865,18 @@ class CallInst : public Instruction {
 protected:
   virtual CallInst *clone_impl() const;
 public:
-  template<typename RandomAccessIterator>
   static CallInst *Create(Value *Func,
-                          RandomAccessIterator ArgBegin,
-                          RandomAccessIterator ArgEnd,
+                          ArrayRef<Value *> Args,
                           const Twine &NameStr = "",
                           Instruction *InsertBefore = 0) {
-    return new(unsigned(ArgEnd - ArgBegin + 1))
-      CallInst(Func, ArgBegin, ArgEnd, NameStr, InsertBefore);
+    return new(unsigned(Args.size() + 1))
+      CallInst(Func, Args, NameStr, InsertBefore);
   }
-  template<typename RandomAccessIterator>
   static CallInst *Create(Value *Func,
-                          RandomAccessIterator ArgBegin,
-                          RandomAccessIterator ArgEnd,
+                          ArrayRef<Value *> Args,
                           const Twine &NameStr, BasicBlock *InsertAtEnd) {
-    return new(unsigned(ArgEnd - ArgBegin + 1))
-      CallInst(Func, ArgBegin, ArgEnd, NameStr, InsertAtEnd);
-  }
-  static CallInst *Create(Value *F, Value *Actual,
-                          const Twine &NameStr = "",
-                          Instruction *InsertBefore = 0) {
-    return new(2) CallInst(F, Actual, NameStr, InsertBefore);
-  }
-  static CallInst *Create(Value *F, Value *Actual, const Twine &NameStr,
-                          BasicBlock *InsertAtEnd) {
-    return new(2) CallInst(F, Actual, NameStr, InsertAtEnd);
+    return new(unsigned(Args.size() + 1))
+      CallInst(Func, Args, NameStr, InsertAtEnd);
   }
   static CallInst *Create(Value *F, const Twine &NameStr = "",
                           Instruction *InsertBefore = 0) {
@@ -1093,32 +1051,24 @@ template <>
 struct OperandTraits<CallInst> : public VariadicOperandTraits<CallInst, 1> {
 };
 
-template<typename RandomAccessIterator>
-CallInst::CallInst(Value *Func,
-                   RandomAccessIterator ArgBegin, RandomAccessIterator ArgEnd,
+CallInst::CallInst(Value *Func, ArrayRef<Value *> Args,
                    const Twine &NameStr, BasicBlock *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
                 Instruction::Call,
-                OperandTraits<CallInst>::op_end(this) - (ArgEnd - ArgBegin + 1),
-                unsigned(ArgEnd - ArgBegin + 1), InsertAtEnd) {
-  init(Func, ArgBegin, ArgEnd, NameStr,
-       typename std::iterator_traits<RandomAccessIterator>
-       ::iterator_category());
+                OperandTraits<CallInst>::op_end(this) - (Args.size() + 1),
+                unsigned(Args.size() + 1), InsertAtEnd) {
+  init(Func, Args, NameStr);
 }
 
-template<typename RandomAccessIterator>
-CallInst::CallInst(Value *Func,
-                   RandomAccessIterator ArgBegin, RandomAccessIterator ArgEnd,
+CallInst::CallInst(Value *Func, ArrayRef<Value *> Args,
                    const Twine &NameStr, Instruction *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
                 Instruction::Call,
-                OperandTraits<CallInst>::op_end(this) - (ArgEnd - ArgBegin + 1),
-                unsigned(ArgEnd - ArgBegin + 1), InsertBefore) {
-  init(Func, ArgBegin, ArgEnd, NameStr,
-       typename std::iterator_traits<RandomAccessIterator>
-       ::iterator_category());
+                OperandTraits<CallInst>::op_end(this) - (Args.size() + 1),
+                unsigned(Args.size() + 1), InsertBefore) {
+  init(Func, Args, NameStr);
 }
 
 
@@ -2282,71 +2232,39 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(IndirectBrInst, Value)
 class InvokeInst : public TerminatorInst {
   AttrListPtr AttributeList;
   InvokeInst(const InvokeInst &BI);
-  void init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
-            Value* const *Args, unsigned NumArgs);
-
-  template<typename RandomAccessIterator>
   void init(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
-            RandomAccessIterator ArgBegin, RandomAccessIterator ArgEnd,
-            const Twine &NameStr,
-            // This argument ensures that we have an iterator we can
-            // do arithmetic on in constant time
-            std::random_access_iterator_tag) {
-    unsigned NumArgs = (unsigned)std::distance(ArgBegin, ArgEnd);
-
-    // This requires that the iterator points to contiguous memory.
-    init(Func, IfNormal, IfException, NumArgs ? &*ArgBegin : 0, NumArgs);
-    setName(NameStr);
-  }
+            ArrayRef<Value *> Args, const Twine &NameStr);
 
   /// Construct an InvokeInst given a range of arguments.
-  /// RandomAccessIterator must be a random-access iterator pointing to
-  /// contiguous storage (e.g. a std::vector<>::iterator).  Checks are
-  /// made for random-accessness but not for contiguous storage as
-  /// that would incur runtime overhead.
   ///
   /// @brief Construct an InvokeInst from a range of arguments
-  template<typename RandomAccessIterator>
   inline InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
-                    RandomAccessIterator ArgBegin, RandomAccessIterator ArgEnd,
-                    unsigned Values,
+                    ArrayRef<Value *> Args, unsigned Values,
                     const Twine &NameStr, Instruction *InsertBefore);
 
   /// Construct an InvokeInst given a range of arguments.
-  /// RandomAccessIterator must be a random-access iterator pointing to
-  /// contiguous storage (e.g. a std::vector<>::iterator).  Checks are
-  /// made for random-accessness but not for contiguous storage as
-  /// that would incur runtime overhead.
   ///
   /// @brief Construct an InvokeInst from a range of arguments
-  template<typename RandomAccessIterator>
   inline InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
-                    RandomAccessIterator ArgBegin, RandomAccessIterator ArgEnd,
-                    unsigned Values,
+                    ArrayRef<Value *> Args, unsigned Values,
                     const Twine &NameStr, BasicBlock *InsertAtEnd);
 protected:
   virtual InvokeInst *clone_impl() const;
 public:
-  template<typename RandomAccessIterator>
   static InvokeInst *Create(Value *Func,
                             BasicBlock *IfNormal, BasicBlock *IfException,
-                            RandomAccessIterator ArgBegin,
-                            RandomAccessIterator ArgEnd,
-                            const Twine &NameStr = "",
+                            ArrayRef<Value *> Args, const Twine &NameStr = "",
                             Instruction *InsertBefore = 0) {
-    unsigned Values(ArgEnd - ArgBegin + 3);
-    return new(Values) InvokeInst(Func, IfNormal, IfException, ArgBegin, ArgEnd,
+    unsigned Values = unsigned(Args.size()) + 3;
+    return new(Values) InvokeInst(Func, IfNormal, IfException, Args,
                                   Values, NameStr, InsertBefore);
   }
-  template<typename RandomAccessIterator>
   static InvokeInst *Create(Value *Func,
                             BasicBlock *IfNormal, BasicBlock *IfException,
-                            RandomAccessIterator ArgBegin,
-                            RandomAccessIterator ArgEnd,
-                            const Twine &NameStr,
+                            ArrayRef<Value *> Args, const Twine &NameStr,
                             BasicBlock *InsertAtEnd) {
-    unsigned Values(ArgEnd - ArgBegin + 3);
-    return new(Values) InvokeInst(Func, IfNormal, IfException, ArgBegin, ArgEnd,
+    unsigned Values = unsigned(Args.size()) + 3;
+    return new(Values) InvokeInst(Func, IfNormal, IfException, Args,
                                   Values, NameStr, InsertAtEnd);
   }
 
@@ -2512,37 +2430,27 @@ template <>
 struct OperandTraits<InvokeInst> : public VariadicOperandTraits<InvokeInst, 3> {
 };
 
-template<typename RandomAccessIterator>
 InvokeInst::InvokeInst(Value *Func,
                        BasicBlock *IfNormal, BasicBlock *IfException,
-                       RandomAccessIterator ArgBegin,
-                       RandomAccessIterator ArgEnd,
-                       unsigned Values,
+                       ArrayRef<Value *> Args, unsigned Values,
                        const Twine &NameStr, Instruction *InsertBefore)
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
                                       ->getElementType())->getReturnType(),
                    Instruction::Invoke,
                    OperandTraits<InvokeInst>::op_end(this) - Values,
                    Values, InsertBefore) {
-  init(Func, IfNormal, IfException, ArgBegin, ArgEnd, NameStr,
-       typename std::iterator_traits<RandomAccessIterator>
-       ::iterator_category());
+  init(Func, IfNormal, IfException, Args, NameStr);
 }
-template<typename RandomAccessIterator>
 InvokeInst::InvokeInst(Value *Func,
                        BasicBlock *IfNormal, BasicBlock *IfException,
-                       RandomAccessIterator ArgBegin,
-                       RandomAccessIterator ArgEnd,
-                       unsigned Values,
+                       ArrayRef<Value *> Args, unsigned Values,
                        const Twine &NameStr, BasicBlock *InsertAtEnd)
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
                                       ->getElementType())->getReturnType(),
                    Instruction::Invoke,
                    OperandTraits<InvokeInst>::op_end(this) - Values,
                    Values, InsertAtEnd) {
-  init(Func, IfNormal, IfException, ArgBegin, ArgEnd, NameStr,
-       typename std::iterator_traits<RandomAccessIterator>
-       ::iterator_category());
+  init(Func, IfNormal, IfException, Args, NameStr);
 }
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InvokeInst, Value)

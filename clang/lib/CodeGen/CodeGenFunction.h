@@ -21,6 +21,7 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Basic/ABI.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ValueHandle.h"
@@ -2073,8 +2074,9 @@ public:
                       ReturnValueSlot ReturnValue = ReturnValueSlot());
 
   llvm::CallSite EmitCallOrInvoke(llvm::Value *Callee,
-                                  llvm::Value * const *ArgBegin,
-                                  llvm::Value * const *ArgEnd,
+                                  llvm::ArrayRef<llvm::Value *> Args,
+                                  const llvm::Twine &Name = "");
+  llvm::CallSite EmitCallOrInvoke(llvm::Value *Callee,
                                   const llvm::Twine &Name = "");
 
   llvm::Value *BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,

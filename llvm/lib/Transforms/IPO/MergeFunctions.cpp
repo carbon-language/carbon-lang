@@ -732,7 +732,7 @@ void MergeFunctions::writeThunk(Function *F, Function *G) {
     ++i;
   }
 
-  CallInst *CI = Builder.CreateCall(F, Args.begin(), Args.end());
+  CallInst *CI = Builder.CreateCall(F, Args);
   CI->setTailCall();
   CI->setCallingConv(F->getCallingConv());
   if (NewG->getReturnType()->isVoidTy()) {

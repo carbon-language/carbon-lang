@@ -1680,7 +1680,7 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef B, LLVMValueRef Fn,
                              LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch,
                              const char *Name) {
   return wrap(unwrap(B)->CreateInvoke(unwrap(Fn), unwrap(Then), unwrap(Catch),
-                                      unwrap(Args), unwrap(Args) + NumArgs,
+                                      ArrayRef<Value *>(unwrap(Args), NumArgs),
                                       Name));
 }
 
@@ -2063,8 +2063,9 @@ LLVMValueRef LLVMBuildPhi(LLVMBuilderRef B, LLVMTypeRef Ty, const char *Name) {
 LLVMValueRef LLVMBuildCall(LLVMBuilderRef B, LLVMValueRef Fn,
                            LLVMValueRef *Args, unsigned NumArgs,
                            const char *Name) {
-  return wrap(unwrap(B)->CreateCall(unwrap(Fn), unwrap(Args),
-                                    unwrap(Args) + NumArgs, Name));
+  return wrap(unwrap(B)->CreateCall(unwrap(Fn),
+                                    ArrayRef<Value *>(unwrap(Args), NumArgs),
+                                    Name));
 }
 
 LLVMValueRef LLVMBuildSelect(LLVMBuilderRef B, LLVMValueRef If,

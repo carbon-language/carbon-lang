@@ -3218,8 +3218,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   // Finish off the Attributes and check them
   AttrListPtr PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
 
-  InvokeInst *II = InvokeInst::Create(Callee, NormalBB, UnwindBB,
-                                      Args.begin(), Args.end());
+  InvokeInst *II = InvokeInst::Create(Callee, NormalBB, UnwindBB, Args);
   II->setCallingConv(CC);
   II->setAttributes(PAL);
   Inst = II;
@@ -3555,7 +3554,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   // Finish off the Attributes and check them
   AttrListPtr PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
 
-  CallInst *CI = CallInst::Create(Callee, Args.begin(), Args.end());
+  CallInst *CI = CallInst::Create(Callee, Args);
   CI->setTailCall(isTail);
   CI->setCallingConv(CC);
   CI->setAttributes(PAL);

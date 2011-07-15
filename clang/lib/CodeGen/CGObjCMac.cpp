@@ -2697,14 +2697,12 @@ FragileHazards::FragileHazards(CodeGenFunction &CGF) : CGF(CGF) {
 void FragileHazards::emitWriteHazard() {
   if (Locals.empty()) return;
 
-  CGF.Builder.CreateCall(WriteHazard, Locals.begin(), Locals.end())
-    ->setDoesNotThrow();
+  CGF.Builder.CreateCall(WriteHazard, Locals)->setDoesNotThrow();
 }
 
 void FragileHazards::emitReadHazard(CGBuilderTy &Builder) {
   assert(!Locals.empty());
-  Builder.CreateCall(ReadHazard, Locals.begin(), Locals.end())
-    ->setDoesNotThrow();
+  Builder.CreateCall(ReadHazard, Locals)->setDoesNotThrow();
 }
 
 /// Emit read hazards in all the protected blocks, i.e. all the blocks
@@ -6048,12 +6046,10 @@ void CGObjCNonFragileABIMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
     llvm::Value *Exception = CGF.EmitScalarExpr(ThrowExpr);
     Exception = CGF.Builder.CreateBitCast(Exception, ObjCTypes.ObjectPtrTy,
                                           "tmp");
-    llvm::Value *Args[] = { Exception };
-    CGF.EmitCallOrInvoke(ObjCTypes.getExceptionThrowFn(),
-                         Args, Args+1)
+    CGF.EmitCallOrInvoke(ObjCTypes.getExceptionThrowFn(), Exception)
       .setDoesNotReturn();
   } else {
-    CGF.EmitCallOrInvoke(ObjCTypes.getExceptionRethrowFn(), 0, 0)
+    CGF.EmitCallOrInvoke(ObjCTypes.getExceptionRethrowFn())
       .setDoesNotReturn();
   }
 

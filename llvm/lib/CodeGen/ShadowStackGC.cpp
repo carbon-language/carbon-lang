@@ -165,8 +165,7 @@ namespace {
 
           InvokeInst *II = InvokeInst::Create(CI->getCalledValue(),
                                               NewBB, CleanupBB,
-                                              Args.begin(), Args.end(),
-                                              CI->getName(), CallBB);
+                                              Args, CI->getName(), CallBB);
           II->setCallingConv(CI->getCallingConv());
           II->setAttributes(CI->getAttributes());
           CI->replaceAllUsesWith(II);

@@ -157,7 +157,7 @@ namespace {
         return;
       }
 
-      CGF.EmitCallOrInvoke(Fn, 0, 0);
+      CGF.EmitCallOrInvoke(Fn);
     }
   };
 }

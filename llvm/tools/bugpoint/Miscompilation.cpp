@@ -794,8 +794,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
       // Call the old main function and return its result
       BasicBlock *BB = BasicBlock::Create(Safe->getContext(), "entry", newMain);
-      CallInst *call = CallInst::Create(oldMainProto, args.begin(), args.end(),
-                                        "", BB);
+      CallInst *call = CallInst::Create(oldMainProto, args, "", BB);
 
       // If the type of old function wasn't void, return value of call
       ReturnInst::Create(Safe->getContext(), call, BB);
@@ -873,8 +872,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
           //
           // call resolver(GetElementPtr...)
           CallInst *Resolver =
-            CallInst::Create(resolverFunc, ResolverArgs.begin(),
-                             ResolverArgs.end(), "resolver", LookupBB);
+            CallInst::Create(resolverFunc, ResolverArgs, "resolver", LookupBB);
 
           // Cast the result from the resolver to correctly-typed function.
           CastInst *CastedResolver =
@@ -899,10 +897,10 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
           // Pass on the arguments to the real function, return its result
           if (F->getReturnType()->isVoidTy()) {
-            CallInst::Create(FuncPtr, Args.begin(), Args.end(), "", DoCallBB);
+            CallInst::Create(FuncPtr, Args, "", DoCallBB);
             ReturnInst::Create(F->getContext(), DoCallBB);
           } else {
-            CallInst *Call = CallInst::Create(FuncPtr, Args.begin(), Args.end(),
+            CallInst *Call = CallInst::Create(FuncPtr, Args,
                                               "retval", DoCallBB);
             ReturnInst::Create(F->getContext(),Call, DoCallBB);
           }

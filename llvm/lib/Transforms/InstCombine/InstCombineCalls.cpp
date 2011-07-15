@@ -1118,13 +1118,13 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   Instruction *NC;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
     NC = Builder->CreateInvoke(Callee, II->getNormalDest(),
-                               II->getUnwindDest(), Args.begin(), Args.end());
+                               II->getUnwindDest(), Args);
     NC->takeName(II);
     cast<InvokeInst>(NC)->setCallingConv(II->getCallingConv());
     cast<InvokeInst>(NC)->setAttributes(NewCallerPAL);
   } else {
     CallInst *CI = cast<CallInst>(Caller);
-    NC = Builder->CreateCall(Callee, Args.begin(), Args.end());
+    NC = Builder->CreateCall(Callee, Args);
     NC->takeName(CI);
     if (CI->isTailCall())
       cast<CallInst>(NC)->setTailCall();
@@ -1289,11 +1289,11 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
       if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
         NewCaller = InvokeInst::Create(NewCallee,
                                        II->getNormalDest(), II->getUnwindDest(),
-                                       NewArgs.begin(), NewArgs.end());
+                                       NewArgs);
         cast<InvokeInst>(NewCaller)->setCallingConv(II->getCallingConv());
         cast<InvokeInst>(NewCaller)->setAttributes(NewPAL);
       } else {
-        NewCaller = CallInst::Create(NewCallee, NewArgs.begin(), NewArgs.end());
+        NewCaller = CallInst::Create(NewCallee, NewArgs);
         if (cast<CallInst>(Caller)->isTailCall())
           cast<CallInst>(NewCaller)->setTailCall();
         cast<CallInst>(NewCaller)->

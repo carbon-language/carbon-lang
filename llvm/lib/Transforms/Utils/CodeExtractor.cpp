@@ -429,7 +429,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
   }
 
   // Emit the call to the function
-  CallInst *call = CallInst::Create(newFunction, params.begin(), params.end(),
+  CallInst *call = CallInst::Create(newFunction, params,
                                     NumExitBlocks > 1 ? "targetBlock" : "");
   codeReplacer->getInstList().push_back(call);
 

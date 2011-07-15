@@ -52,9 +52,9 @@ Value *IRBuilderBase::getCastedInt8PtrValue(Value *Ptr) {
   return BCI;
 }
 
-static CallInst *createCallHelper(Value *Callee, Value *const* Ops,
-                                  unsigned NumOps, IRBuilderBase *Builder) {
-  CallInst *CI = CallInst::Create(Callee, Ops, Ops + NumOps, "");
+static CallInst *createCallHelper(Value *Callee, ArrayRef<Value *> Ops,
+                                  IRBuilderBase *Builder) {
+  CallInst *CI = CallInst::Create(Callee, Ops, "");
   Builder->GetInsertBlock()->getInstList().insert(Builder->GetInsertPoint(),CI);
   Builder->SetInstDebugLocation(CI);
   return CI;  
@@ -69,7 +69,7 @@ CreateMemSet(Value *Ptr, Value *Val, Value *Size, unsigned Align,
   Module *M = BB->getParent()->getParent();
   Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memset, Tys);
   
-  CallInst *CI = createCallHelper(TheFn, Ops, 5, this);
+  CallInst *CI = createCallHelper(TheFn, Ops, this);
   
   // Set the TBAA info if present.
   if (TBAATag)
@@ -89,7 +89,7 @@ CreateMemCpy(Value *Dst, Value *Src, Value *Size, unsigned Align,
   Module *M = BB->getParent()->getParent();
   Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memcpy, Tys);
   
-  CallInst *CI = createCallHelper(TheFn, Ops, 5, this);
+  CallInst *CI = createCallHelper(TheFn, Ops, this);
   
   // Set the TBAA info if present.
   if (TBAATag)
@@ -109,7 +109,7 @@ CreateMemMove(Value *Dst, Value *Src, Value *Size, unsigned Align,
   Module *M = BB->getParent()->getParent();
   Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memmove, Tys);
   
-  CallInst *CI = createCallHelper(TheFn, Ops, 5, this);
+  CallInst *CI = createCallHelper(TheFn, Ops, this);
   
   // Set the TBAA info if present.
   if (TBAATag)
@@ -130,7 +130,7 @@ CallInst *IRBuilderBase::CreateLifetimeStart(Value *Ptr, ConstantInt *Size) {
   Value *Ops[] = { Size, Ptr };
   Module *M = BB->getParent()->getParent();
   Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::lifetime_start);
-  return createCallHelper(TheFn, Ops, 2, this);
+  return createCallHelper(TheFn, Ops, this);
 }
 
 CallInst *IRBuilderBase::CreateLifetimeEnd(Value *Ptr, ConstantInt *Size) {
@@ -145,5 +145,5 @@ CallInst *IRBuilderBase::CreateLifetimeEnd(Value *Ptr, ConstantInt *Size) {
   Value *Ops[] = { Size, Ptr };
   Module *M = BB->getParent()->getParent();
   Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::lifetime_end);
-  return createCallHelper(TheFn, Ops, 2, this);
+  return createCallHelper(TheFn, Ops, this);
 }

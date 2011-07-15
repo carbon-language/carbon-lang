@@ -786,7 +786,7 @@ Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
   Value *Args[] = { MDNode::get(Storage->getContext(), Storage), VarInfo };
-  return CallInst::Create(DeclareFn, Args, Args+2, "", InsertBefore);
+  return CallInst::Create(DeclareFn, Args, "", InsertBefore);
 }
 
 /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.
@@ -802,9 +802,9 @@ Instruction *DIBuilder::insertDeclare(Value *Storage, DIVariable VarInfo,
   // If this block already has a terminator then insert this intrinsic
   // before the terminator.
   if (TerminatorInst *T = InsertAtEnd->getTerminator())
-    return CallInst::Create(DeclareFn, Args, Args+2, "", T);
+    return CallInst::Create(DeclareFn, Args, "", T);
   else
-    return CallInst::Create(DeclareFn, Args, Args+2, "", InsertAtEnd);
+    return CallInst::Create(DeclareFn, Args, "", InsertAtEnd);
 }
 
 /// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
@@ -819,7 +819,7 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
   Value *Args[] = { MDNode::get(V->getContext(), V),
                     ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
                     VarInfo };
-  return CallInst::Create(ValueFn, Args, Args+3, "", InsertBefore);
+  return CallInst::Create(ValueFn, Args, "", InsertBefore);
 }
 
 /// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
@@ -834,6 +834,6 @@ Instruction *DIBuilder::insertDbgValueIntrinsic(Value *V, uint64_t Offset,
   Value *Args[] = { MDNode::get(V->getContext(), V),
                     ConstantInt::get(Type::getInt64Ty(V->getContext()), Offset),
                     VarInfo };
-  return CallInst::Create(ValueFn, Args, Args+3, "", InsertAtEnd);
+  return CallInst::Create(ValueFn, Args, "", InsertAtEnd);
 }
 

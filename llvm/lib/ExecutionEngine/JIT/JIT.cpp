@@ -533,8 +533,7 @@ GenericValue JIT::runFunction(Function *F,
     Args.push_back(C);
   }
 
-  CallInst *TheCall = CallInst::Create(F, Args.begin(), Args.end(),
-                                       "", StubBB);
+  CallInst *TheCall = CallInst::Create(F, Args, "", StubBB);
   TheCall->setCallingConv(F->getCallingConv());
   TheCall->setTailCall();
   if (!TheCall->getType()->isVoidTy())

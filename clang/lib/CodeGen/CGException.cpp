@@ -788,7 +788,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   // Tell the backend how to generate the landing pad.
   llvm::CallInst *Selection =
     Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::eh_selector),
-                       EHSelector.begin(), EHSelector.end(), "eh.selector");
+                       EHSelector, "eh.selector");
   Selection->setDoesNotThrow();
 
   // Save the selector value in mandatory-cleanup mode.
@@ -928,7 +928,7 @@ namespace {
         return;
       }
 
-      CGF.EmitCallOrInvoke(getEndCatchFn(CGF), 0, 0);
+      CGF.EmitCallOrInvoke(getEndCatchFn(CGF));
     }
   };
 }
@@ -1141,7 +1141,7 @@ static void BeginCatch(CodeGenFunction &CGF, const CXXCatchStmt *S) {
 namespace {
   struct CallRethrow : EHScopeStack::Cleanup {
     void Emit(CodeGenFunction &CGF, Flags flags) {
-      CGF.EmitCallOrInvoke(getReThrowFn(CGF), 0, 0);
+      CGF.EmitCallOrInvoke(getReThrowFn(CGF));
     }
   };
 }
@@ -1221,7 +1221,7 @@ namespace {
         CGF.Builder.CreateLoad(ForEHVar, "finally.endcatch");
       CGF.Builder.CreateCondBr(ShouldEndCatch, EndCatchBB, CleanupContBB);
       CGF.EmitBlock(EndCatchBB);
-      CGF.EmitCallOrInvoke(EndCatchFn, 0, 0); // catch-all, so might throw
+      CGF.EmitCallOrInvoke(EndCatchFn); // catch-all, so might throw
       CGF.EmitBlock(CleanupContBB);
     }
   };
@@ -1266,10 +1266,9 @@ namespace {
 
         CGF.EmitBlock(RethrowBB);
         if (SavedExnVar) {
-          llvm::Value *Args[] = { CGF.Builder.CreateLoad(SavedExnVar) };
-          CGF.EmitCallOrInvoke(RethrowFn, Args, Args+1);
+          CGF.EmitCallOrInvoke(RethrowFn, CGF.Builder.CreateLoad(SavedExnVar));
         } else {
-          CGF.EmitCallOrInvoke(RethrowFn, 0, 0);
+          CGF.EmitCallOrInvoke(RethrowFn);
         }
         CGF.Builder.CreateUnreachable();
 
@@ -1417,7 +1416,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {
   llvm::Value *Args[3] = { Exn, getOpaquePersonalityFn(CGM, Personality),
                            getCatchAllValue(*this) };
   Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::eh_selector),
-                     Args, Args+3, "eh.selector")
+                     Args, "eh.selector")
     ->setDoesNotThrow();
 
   llvm::CallInst *TerminateCall = Builder.CreateCall(getTerminateFn(*this));

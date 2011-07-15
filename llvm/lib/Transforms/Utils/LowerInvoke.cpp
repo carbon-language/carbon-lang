@@ -176,8 +176,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       SmallVector<Value*,16> CallArgs(II->op_begin(), II->op_end() - 3);
       // Insert a normal call instruction...
       CallInst *NewCall = CallInst::Create(II->getCalledValue(),
-                                           CallArgs.begin(), CallArgs.end(),
-                                           "",II);
+                                           CallArgs, "", II);
       NewCall->takeName(II);
       NewCall->setCallingConv(II->getCallingConv());
       NewCall->setAttributes(II->getAttributes());
@@ -257,8 +256,7 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
   // Insert a normal call instruction.
   SmallVector<Value*,16> CallArgs(II->op_begin(), II->op_end() - 3);
   CallInst *NewCall = CallInst::Create(II->getCalledValue(),
-                                       CallArgs.begin(), CallArgs.end(), "",
-                                       II);
+                                       CallArgs, "", II);
   NewCall->takeName(II);
   NewCall->setCallingConv(II->getCallingConv());
   NewCall->setAttributes(II->getAttributes());
@@ -565,7 +563,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
              Type::getInt8PtrTy(F.getContext()),
                            "tmp", UnwindBlock);
   Idx[1] = ConstantInt::get(Type::getInt32Ty(F.getContext()), 1);
-  CallInst::Create(LongJmpFn, &Idx[0], &Idx[2], "", UnwindBlock);
+  CallInst::Create(LongJmpFn, Idx, "", UnwindBlock);
   new UnreachableInst(F.getContext(), UnwindBlock);
 
   // Set up the term block ("throw without a catch").

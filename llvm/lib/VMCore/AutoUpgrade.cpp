@@ -198,7 +198,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     Value *Operands[4] = { CI->getArgOperand(0), CI->getArgOperand(1),
                            CI->getArgOperand(2),
                            llvm::ConstantInt::get(I32Ty, 1) };
-    CallInst *NewCI = CallInst::Create(NewFn, Operands, Operands+4,
+    CallInst *NewCI = CallInst::Create(NewFn, Operands,
                                        CI->getName(), CI);
     NewCI->setTailCall(CI->isTailCall());
     NewCI->setCallingConv(CI->getCallingConv());

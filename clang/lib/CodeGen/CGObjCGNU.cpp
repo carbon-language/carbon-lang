@@ -531,7 +531,7 @@ protected:
       CGBuilderTy &Builder = CGF.Builder;
       llvm::Value *lookupArgs[] = {EnforceType(Builder, ObjCSuper,
           PtrToObjCSuperTy), cmd};
-      return Builder.CreateCall(MsgLookupSuperFn, lookupArgs, lookupArgs+2);
+      return Builder.CreateCall(MsgLookupSuperFn, lookupArgs);
     }
   public:
     CGObjCGCC(CodeGenModule &Mod) : CGObjCGNU(Mod, 8, 2) {
@@ -600,8 +600,7 @@ class CGObjCGNUstep : public CGObjCGNU {
       CGBuilderTy &Builder = CGF.Builder;
       llvm::Value *lookupArgs[] = {ObjCSuper, cmd};
 
-      llvm::CallInst *slot = Builder.CreateCall(SlotLookupSuperFn, lookupArgs,
-          lookupArgs+2);
+      llvm::CallInst *slot = Builder.CreateCall(SlotLookupSuperFn, lookupArgs);
       slot->setOnlyReadsMemory();
 
       return Builder.CreateLoad(Builder.CreateStructGEP(slot, 4));
@@ -2310,8 +2309,8 @@ void CGObjCGNU::EmitThrowStmt(CodeGenFunction &CGF,
     CGF.Builder.CreateCall(ExceptionThrowFn, ExceptionAsObject);
     CGF.Builder.CreateUnreachable();
   } else {
-    CGF.Builder.CreateInvoke(ExceptionThrowFn, UnwindBB, UnwindBB, &ExceptionAsObject,
-        &ExceptionAsObject+1);
+    CGF.Builder.CreateInvoke(ExceptionThrowFn, UnwindBB, UnwindBB,
+                             ExceptionAsObject);
   }
   // Clear the insertion point to indicate we are in unreachable code.
   CGF.Builder.ClearInsertionPoint();

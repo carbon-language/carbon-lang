@@ -1427,18 +1427,23 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
 /// on the current state of the EH stack.
 llvm::CallSite
 CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
-                                  llvm::Value * const *ArgBegin,
-                                  llvm::Value * const *ArgEnd,
+                                  llvm::ArrayRef<llvm::Value *> Args,
                                   const llvm::Twine &Name) {
   llvm::BasicBlock *InvokeDest = getInvokeDest();
   if (!InvokeDest)
-    return Builder.CreateCall(Callee, ArgBegin, ArgEnd, Name);
+    return Builder.CreateCall(Callee, Args, Name);
 
   llvm::BasicBlock *ContBB = createBasicBlock("invoke.cont");
   llvm::InvokeInst *Invoke = Builder.CreateInvoke(Callee, ContBB, InvokeDest,
-                                                  ArgBegin, ArgEnd, Name);
+                                                  Args, Name);
   EmitBlock(ContBB);
   return Invoke;
+}
+
+llvm::CallSite
+CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
+                                  const llvm::Twine &Name) {
+  return EmitCallOrInvoke(Callee, llvm::ArrayRef<llvm::Value *>(), Name);
 }
 
 static void checkArgMatches(llvm::Value *Elt, unsigned &ArgNo,
@@ -1700,11 +1705,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   llvm::CallSite CS;
   if (!InvokeDest) {
-    CS = Builder.CreateCall(Callee, Args.data(), Args.data()+Args.size());
+    CS = Builder.CreateCall(Callee, Args);
   } else {
     llvm::BasicBlock *Cont = createBasicBlock("invoke.cont");
-    CS = Builder.CreateInvoke(Callee, Cont, InvokeDest,
-                              Args.data(), Args.data()+Args.size());
+    CS = Builder.CreateInvoke(Callee, Cont, InvokeDest, Args);
     EmitBlock(Cont);
   }
   if (callOrInvoke)

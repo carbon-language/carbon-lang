@@ -1062,7 +1062,7 @@ void PathProfiler::insertCounterIncrement(Value* incValue,
 
     CallInst::Create(
       increment ? llvmIncrementHashFunction : llvmDecrementHashFunction,
-      args.begin(), args.end(), "", insertPoint);
+      args, "", insertPoint);
   }
 }
 

@@ -1448,7 +1448,7 @@ static llvm::Constant *getBadTypeidFn(CodeGenFunction &CGF) {
 
 static void EmitBadTypeidCall(CodeGenFunction &CGF) {
   llvm::Value *Fn = getBadTypeidFn(CGF);
-  CGF.EmitCallOrInvoke(Fn, 0, 0).setDoesNotReturn();
+  CGF.EmitCallOrInvoke(Fn).setDoesNotReturn();
   CGF.Builder.CreateUnreachable();
 }
 
@@ -1546,7 +1546,7 @@ static llvm::Constant *getBadCastFn(CodeGenFunction &CGF) {
 
 static void EmitBadCastCall(CodeGenFunction &CGF) {
   llvm::Value *Fn = getBadCastFn(CGF);
-  CGF.EmitCallOrInvoke(Fn, 0, 0).setDoesNotReturn();
+  CGF.EmitCallOrInvoke(Fn).setDoesNotReturn();
   CGF.Builder.CreateUnreachable();
 }
 
