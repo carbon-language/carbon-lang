@@ -294,6 +294,10 @@ E: peckw@wesleypeck.com
 W: http://wesleypeck.com/
 D: MicroBlaze backend
 
+N: Francois Pichet
+E: pichet2000@gmail.com
+D: MSVC support
+
 N: Vladimir Prus
 W: http://vladimir_prus.blogspot.com
 E: ghost@cs.msu.su
