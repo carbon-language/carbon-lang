@@ -204,10 +204,6 @@ class DwarfDebug {
   ///
   DenseMap<const MDNode *, DbgScope *> DbgScopeMap;
 
-  /// ConcreteScopes - Tracks the concrete scopees in the current function.
-  /// These scopes are also included in DbgScopeMap.
-  DenseMap<const MDNode *, DbgScope *> ConcreteScopes;
-
   /// AbstractScopes - Tracks the abstract scopes a module. These scopes are
   /// not included DbgScopeMap.  AbstractScopes owns its DbgScope*s.
   DenseMap<const MDNode *, DbgScope *> AbstractScopes;

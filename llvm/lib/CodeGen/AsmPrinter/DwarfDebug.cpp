@@ -1597,9 +1597,6 @@ DbgScope *DwarfDebug::getOrCreateDbgScope(DebugLoc DL) {
     getOrCreateDbgScope(DebugLoc::getFromDILocation(InlinedAt));
   WScope->setParent(Parent);
   Parent->addScope(WScope);
-
-  ConcreteScopes[InlinedAt] = WScope;
-
   return WScope;
 }
 
@@ -2049,7 +2046,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   DeleteContainerSeconds(DbgScopeMap);
   UserVariables.clear();
   DbgValues.clear();
-  ConcreteScopes.clear();
   DeleteContainerSeconds(AbstractScopes);
   AbstractScopesList.clear();
   AbstractVariables.clear();
@@ -2083,11 +2079,10 @@ DbgScope *DwarfDebug::findDbgScope(DebugLoc DL) {
 
   DbgScope *Scope = NULL;
   LLVMContext &Ctx = Asm->MF->getFunction()->getContext();
+  const MDNode *N = DL.getScope(Ctx);
   if (const MDNode *IA = DL.getInlinedAt(Ctx))
-    Scope = ConcreteScopes.lookup(IA);
-  if (Scope == 0)
-    Scope = DbgScopeMap.lookup(DL.getScope(Ctx));
-
+    N = IA;
+  Scope = DbgScopeMap.lookup(N);
   return Scope;
 }
 
