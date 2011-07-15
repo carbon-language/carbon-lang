@@ -27,8 +27,6 @@ public:
                                                     const lldb::StackFrameSP& frame_sp,
                                                     const lldb::BreakpointLocationSP &bp_loc_sp);
     
-    typedef 
-    
     typedef std::string (*SWIGPythonTypeScriptCallbackFunction) (const char *python_function_name,
                                                                  const char *session_dictionary_name,
                                                                  const lldb::ValueObjectSP& valobj_sp);
