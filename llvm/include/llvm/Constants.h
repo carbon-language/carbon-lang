@@ -156,6 +156,8 @@ public:
   virtual bool isNullValue() const { 
     return Val == 0; 
   }
+  
+  bool isNegative() const { return Val.isNegative(); }
 
   /// This is just a convenience method to make client code smaller for a
   /// common code. It also correctly performs the comparison without the
@@ -263,21 +265,18 @@ public:
   
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(const Type *Ty, const APFloat &V);
-  inline const APFloat& getValueAPF() const { return Val; }
+  inline const APFloat &getValueAPF() const { return Val; }
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  For ConstantFP, this is +0.0, but not -0.0.  To handle the
   /// two the same, use isZero().
   virtual bool isNullValue() const;
   
-  /// isNegativeZeroValue - Return true if the value is what would be returned 
-  /// by getZeroValueForNegation.
-  virtual bool isNegativeZeroValue() const {
-    return Val.isZero() && Val.isNegative();
-  }
-
   /// isZero - Return true if the value is positive or negative zero.
   bool isZero() const { return Val.isZero(); }
+
+  /// isNegative - Return true if the sign bit is set.
+  bool isNegative() const { return Val.isNegative(); }
 
   /// isNaN - Return true if the value is a NaN.
   bool isNaN() const { return Val.isNaN(); }

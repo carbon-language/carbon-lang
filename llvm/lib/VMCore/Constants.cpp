@@ -40,6 +40,15 @@ using namespace llvm;
 //                              Constant Class
 //===----------------------------------------------------------------------===//
 
+bool Constant::isNegativeZeroValue() const {
+  // Floating point values have an explicit -0.0 value.
+  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(this))
+    return CFP->isZero() && CFP->isNegative();
+  
+  // Otherwise, just use +0.0.
+  return isNullValue();
+}
+
 // Constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
   switch (Ty->getTypeID()) {

@@ -54,7 +54,7 @@ public:
 
   /// isNegativeZeroValue - Return true if the value is what would be returned 
   /// by getZeroValueForNegation.
-  virtual bool isNegativeZeroValue() const { return isNullValue(); }
+  bool isNegativeZeroValue() const;
 
   /// canTrap - Return true if evaluation of this constant could trap.  This is
   /// true for things like constant expressions that could divide by zero.
