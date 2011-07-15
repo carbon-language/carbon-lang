@@ -1656,6 +1656,10 @@ static void EmitValidateOperandClass(AsmMatcherInfo &Info,
   OS << "  " << Info.Target.getName() << "Operand &Operand = *("
      << Info.Target.getName() << "Operand*)GOp;\n";
 
+  // The InvalidMatchClass is not to match any operand.
+  OS << "  if (Kind == InvalidMatchClass)\n";
+  OS << "    return false;\n\n";
+
   // Check for Token operands first.
   OS << "  if (Operand.isToken())\n";
   OS << "    return MatchTokenString(Operand.getToken()) == Kind;\n\n";
