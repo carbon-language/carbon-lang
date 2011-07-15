@@ -1122,12 +1122,6 @@ protected:
       ClassInterface(classInterface) {}
 
 public:
-  virtual Decl *getCanonicalDecl() {
-    if (Decl *interface = getClassInterface())
-      return interface;
-    return this;
-  }
-
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   void setClassInterface(ObjCInterfaceDecl *IFace);
