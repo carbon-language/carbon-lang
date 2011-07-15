@@ -68,6 +68,8 @@ private:
   void moveToNextSection(DataRefImpl &DRI) const;
   void getSymbolTableEntry(DataRefImpl DRI,
                            InMemoryStruct<macho::SymbolTableEntry> &Res) const;
+  void getSymbol64TableEntry(DataRefImpl DRI,
+                          InMemoryStruct<macho::Symbol64TableEntry> &Res) const;
   void moveToNextSymbol(DataRefImpl &DRI) const;
   void getSection(DataRefImpl DRI, InMemoryStruct<macho::Section> &Res) const;
   void getSection64(DataRefImpl DRI,
@@ -116,6 +118,21 @@ void MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI,
                                  Res);
 }
 
+void MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI,
+    InMemoryStruct<macho::Symbol64TableEntry> &Res) const {
+  InMemoryStruct<macho::SymtabLoadCommand> SymtabLoadCmd;
+  LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
+  MachOObj->ReadSymtabLoadCommand(LCI, SymtabLoadCmd);
+
+  if (RegisteredStringTable != DRI.d.a) {
+    MachOObj->RegisterStringTable(*SymtabLoadCmd);
+    RegisteredStringTable = DRI.d.a;
+  }
+
+  MachOObj->ReadSymbol64TableEntry(SymtabLoadCmd->SymbolTableOffset, DRI.d.b,
+                                   Res);
+}
+
 
 error_code MachOObjectFile::getSymbolNext(DataRefImpl DRI,
                                           SymbolRef &Result) const {
@@ -127,17 +144,29 @@ error_code MachOObjectFile::getSymbolNext(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
                                           StringRef &Result) const {
-  InMemoryStruct<macho::SymbolTableEntry> Entry;
-  getSymbolTableEntry(DRI, Entry);
-  Result = MachOObj->getStringAtIndex(Entry->StringIndex);
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(DRI, Entry);
+    Result = MachOObj->getStringAtIndex(Entry->StringIndex);
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(DRI, Entry);
+    Result = MachOObj->getStringAtIndex(Entry->StringIndex);
+  }
   return object_error::success;
 }
 
 error_code MachOObjectFile::getSymbolAddress(DataRefImpl DRI,
                                              uint64_t &Result) const {
-  InMemoryStruct<macho::SymbolTableEntry> Entry;
-  getSymbolTableEntry(DRI, Entry);
-  Result = Entry->Value;
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(DRI, Entry);
+    Result = Entry->Value;
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(DRI, Entry);
+    Result = Entry->Value;
+  }
   return object_error::success;
 }
 
@@ -149,11 +178,21 @@ error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
 
 error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI,
                                                 char &Result) const {
-  InMemoryStruct<macho::SymbolTableEntry> Entry;
-  getSymbolTableEntry(DRI, Entry);
+  uint8_t Type, Flags;
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(DRI, Entry);
+    Type = Entry->Type;
+    Flags = Entry->Flags;
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(DRI, Entry);
+    Type = Entry->Type;
+    Flags = Entry->Flags;
+  }
 
   char Char;
-  switch (Entry->Type & macho::STF_TypeMask) {
+  switch (Type & macho::STF_TypeMask) {
     case macho::STT_Undefined:
       Char = 'u';
       break;
@@ -166,7 +205,7 @@ error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI,
       break;
   }
 
-  if (Entry->Flags & (macho::STF_External | macho::STF_PrivateExtern))
+  if (Flags & (macho::STF_External | macho::STF_PrivateExtern))
     Char = toupper(Char);
   Result = Char;
   return object_error::success;
@@ -174,9 +213,15 @@ error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI,
 
 error_code MachOObjectFile::isSymbolInternal(DataRefImpl DRI,
                                              bool &Result) const {
-  InMemoryStruct<macho::SymbolTableEntry> Entry;
-  getSymbolTableEntry(DRI, Entry);
-  Result = Entry->Flags & macho::STF_StabsEntryMask;
+  if (MachOObj->is64Bit()) {
+    InMemoryStruct<macho::Symbol64TableEntry> Entry;
+    getSymbol64TableEntry(DRI, Entry);
+    Result = Entry->Flags & macho::STF_StabsEntryMask;
+  } else {
+    InMemoryStruct<macho::SymbolTableEntry> Entry;
+    getSymbolTableEntry(DRI, Entry);
+    Result = Entry->Flags & macho::STF_StabsEntryMask;
+  }
   return object_error::success;
 }
 
