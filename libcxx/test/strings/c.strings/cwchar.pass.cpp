@@ -32,10 +32,14 @@ int main()
 {
     std::mbstate_t mb = {0};
     std::size_t s = 0;
-    std::tm tm = {0};
+    std::tm *tm = 0;
     std::wint_t w = 0;
     ::FILE* fp = 0;
+#ifdef __APPLE__
     __darwin_va_list va;
+#else
+    __builtin_va_list va;
+#endif
     char* ns = 0;
     wchar_t* ws = 0;
     static_assert((std::is_same<decltype(std::fwprintf(fp, L"")), int>::value), "");
@@ -93,7 +97,7 @@ int main()
     static_assert((std::is_same<decltype(std::wmemcpy(ws, L"", s)), wchar_t*>::value), "");
     static_assert((std::is_same<decltype(std::wmemmove(ws, L"", s)), wchar_t*>::value), "");
     static_assert((std::is_same<decltype(std::wmemset(ws, L' ', s)), wchar_t*>::value), "");
-    static_assert((std::is_same<decltype(std::wcsftime(ws, s, L"", &tm)), std::size_t>::value), "");
+    static_assert((std::is_same<decltype(std::wcsftime(ws, s, L"", tm)), std::size_t>::value), "");
     static_assert((std::is_same<decltype(std::btowc(0)), wint_t>::value), "");
     static_assert((std::is_same<decltype(std::wctob(w)), int>::value), "");
     static_assert((std::is_same<decltype(std::mbsinit(&mb)), int>::value), "");
