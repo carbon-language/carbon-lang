@@ -6528,8 +6528,8 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   // is a constant.
   if (lex.get()->getType()->isIntegerType() && !lex.get()->getType()->isBooleanType() &&
       rex.get()->getType()->isIntegerType() && !rex.get()->isValueDependent() &&
-      // Don't warn in macros.
-      !Loc.isMacroID()) {
+      // Don't warn in macros or template instantiations.
+      !Loc.isMacroID() && ActiveTemplateInstantiations.empty()) {
     // If the RHS can be constant folded, and if it constant folds to something
     // that isn't 0 or 1 (which indicate a potential logical operation that
     // happened to fold to true/false) then warn.

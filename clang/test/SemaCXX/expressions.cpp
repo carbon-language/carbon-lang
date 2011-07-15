@@ -63,3 +63,25 @@ int test2(int x) {
   return x && (-1); // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
   return x && (5); // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
 }
+
+template<unsigned int A, unsigned int B> struct S
+{
+  enum {
+    e1 = A && B,
+    e2 = A && 7      // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+  };
+
+  int foo() {
+    int x = A && B;
+    int y = B && 3;  // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+
+    return x + y;
+  }
+};
+
+void test3() {
+  S<5, 8> s1;
+  S<2, 7> s2;
+  (void)s1.foo();
+  (void)s2.foo();
+}
