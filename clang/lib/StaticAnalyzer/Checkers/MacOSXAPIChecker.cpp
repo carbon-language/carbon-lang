@@ -31,22 +31,17 @@ using namespace ento;
 
 namespace {
 class MacOSXAPIChecker : public Checker< check::PreStmt<CallExpr> > {
-  enum SubChecks {
-    DispatchOnce = 0,
-    DispatchOnceF,
-    NumChecks
-  };
-
-  mutable BugType *BTypes[NumChecks];
+  mutable llvm::OwningPtr<BugType> BT_dispatchOnce;
 
 public:
-  MacOSXAPIChecker() { memset(BTypes, 0, sizeof(*BTypes) * NumChecks); }
-  ~MacOSXAPIChecker() {
-    for (unsigned i=0; i != NumChecks; ++i)
-      delete BTypes[i];
-  }
-
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
+
+  void CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
+                         const IdentifierInfo *FI) const;
+
+  typedef void (MacOSXAPIChecker::*SubChecker)(CheckerContext &,
+                                               const CallExpr *,
+                                               const IdentifierInfo *) const;
 };
 } //end anonymous namespace
 
@@ -54,16 +49,8 @@ public:
 // dispatch_once and dispatch_once_f
 //===----------------------------------------------------------------------===//
 
-static void CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
-                              BugType *&BT, const IdentifierInfo *FI) {
-
-  if (!BT) {
-    llvm::SmallString<128> S;
-    llvm::raw_svector_ostream os(S);
-    os << "Improper use of '" << FI->getName() << '\'';
-    BT = new BugType(os.str(), "Mac OS X API");
-  }
-
+void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
+                                         const IdentifierInfo *FI) const {
   if (CE->getNumArgs() < 1)
     return;
 
@@ -78,6 +65,10 @@ static void CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
   if (!N)
     return;
 
+  if (!BT_dispatchOnce)
+    BT_dispatchOnce.reset(new BugType("Improper use of 'dispatch_once'",
+                                      "Mac OS X API"));
+
   llvm::SmallString<256> S;
   llvm::raw_svector_ostream os(S);
   os << "Call to '" << FI->getName() << "' uses";
@@ -90,7 +81,7 @@ static void CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
   if (isa<VarRegion>(R) && isa<StackLocalsSpaceRegion>(R->getMemorySpace()))
     os << "  Perhaps you intended to declare the variable as 'static'?";
 
-  EnhancedBugReport *report = new EnhancedBugReport(*BT, os.str(), N);
+  RangedBugReport *report = new RangedBugReport(*BT_dispatchOnce, os.str(), N);
   report->addRange(CE->getArg(0)->getSourceRange());
   C.EmitReport(report);
 }
@@ -99,47 +90,29 @@ static void CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
 // Central dispatch function.
 //===----------------------------------------------------------------------===//
 
-typedef void (*SubChecker)(CheckerContext &C, const CallExpr *CE, BugType *&BT,
-                           const IdentifierInfo *FI);
-namespace {
-  class SubCheck {
-    SubChecker SC;
-    BugType **BT;
-  public:
-    SubCheck(SubChecker sc, BugType *& bt) : SC(sc), BT(&bt) {}
-    SubCheck() : SC(NULL), BT(NULL) {}
-
-    void run(CheckerContext &C, const CallExpr *CE,
-             const IdentifierInfo *FI) const {
-      if (SC)
-        SC(C, CE, *BT, FI);
-    }
-  };
-} // end anonymous namespace
-
 void MacOSXAPIChecker::checkPreStmt(const CallExpr *CE,
                                     CheckerContext &C) const {
-  // FIXME: Mostly copy and paste from UnixAPIChecker.  Should refactor.
+  // FIXME: This sort of logic is common to several checkers, including
+  // UnixAPIChecker, PthreadLockChecker, and CStringChecker.  Should refactor.
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
-  const FunctionTextRegion *Fn =
-    dyn_cast_or_null<FunctionTextRegion>(state->getSVal(Callee).getAsRegion());
+  const FunctionDecl *Fn = state->getSVal(Callee).getAsFunctionDecl();
 
   if (!Fn)
     return;
 
-  const IdentifierInfo *FI = Fn->getDecl()->getIdentifier();
+  const IdentifierInfo *FI = Fn->getIdentifier();
   if (!FI)
     return;
 
-  const SubCheck &SC =
-    llvm::StringSwitch<SubCheck>(FI->getName())
-      .Case("dispatch_once", SubCheck(CheckDispatchOnce, BTypes[DispatchOnce]))
-      .Case("dispatch_once_f", SubCheck(CheckDispatchOnce,
-                                        BTypes[DispatchOnceF]))
-      .Default(SubCheck());
+  SubChecker SC =
+    llvm::StringSwitch<SubChecker>(FI->getName())
+      .Cases("dispatch_once", "dispatch_once_f",
+             &MacOSXAPIChecker::CheckDispatchOnce)
+      .Default(NULL);
 
-  SC.run(C, CE, FI);
+  if (SC)
+    (this->*SC)(C, CE, FI);
 }
 
 //===----------------------------------------------------------------------===//
