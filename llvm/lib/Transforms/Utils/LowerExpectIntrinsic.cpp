@@ -116,7 +116,7 @@ bool LowerExpectIntrinsic::HandleIfExpect(BranchInst *BI) {
     ConstantInt::get(Int32Ty, Likely ? UnlikelyBranchWeight : LikelyBranchWeight)
   };
 
-  MDNode *WeightsNode = MDNode::get(Context, ArrayRef<Value *>(Ops, 3));
+  MDNode *WeightsNode = MDNode::get(Context, Ops);
   BI->setMetadata(LLVMContext::MD_prof, WeightsNode);
 
   CmpI->setOperand(0, ArgValue);
