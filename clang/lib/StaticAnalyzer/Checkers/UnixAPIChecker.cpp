@@ -28,26 +28,18 @@ using llvm::Optional;
 
 namespace {
 class UnixAPIChecker : public Checker< check::PreStmt<CallExpr> > {
-  enum SubChecks {
-    OpenFn = 0,
-    PthreadOnceFn = 1,
-    MallocZero = 2,
-    NumChecks
-  };
-
-  mutable BugType *BTypes[NumChecks];
-
-public:
+  mutable llvm::OwningPtr<BugType> BT_open, BT_pthreadOnce, BT_mallocZero;
   mutable Optional<uint64_t> Val_O_CREAT;
 
 public:
-  UnixAPIChecker() { memset(BTypes, 0, sizeof(*BTypes) * NumChecks); }
-  ~UnixAPIChecker() {
-    for (unsigned i=0; i != NumChecks; ++i)
-      delete BTypes[i];
-  }
-
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
+
+  void CheckOpen(CheckerContext &C, const CallExpr *CE) const;
+  void CheckPthreadOnce(CheckerContext &C, const CallExpr *CE) const;
+  void CheckMallocZero(CheckerContext &C, const CallExpr *CE) const;
+
+  typedef void (UnixAPIChecker::*SubChecker)(CheckerContext &,
+                                             const CallExpr *) const;
 };
 } //end anonymous namespace
 
@@ -55,23 +47,23 @@ public:
 // Utility functions.
 //===----------------------------------------------------------------------===//
 
-static inline void LazyInitialize(BugType *&BT, const char *name) {
+static inline void LazyInitialize(llvm::OwningPtr<BugType> &BT,
+                                  const char *name) {
   if (BT)
     return;
-  BT = new BugType(name, "Unix API");
+  BT.reset(new BugType(name, "Unix API"));
 }
 
 //===----------------------------------------------------------------------===//
 // "open" (man 2 open)
 //===----------------------------------------------------------------------===//
 
-static void CheckOpen(CheckerContext &C, const UnixAPIChecker &UC,
-                      const CallExpr *CE, BugType *&BT) {
+void UnixAPIChecker::CheckOpen(CheckerContext &C, const CallExpr *CE) const {
   // The definition of O_CREAT is platform specific.  We need a better way
   // of querying this information from the checking environment.
-  if (!UC.Val_O_CREAT.hasValue()) {
+  if (!Val_O_CREAT.hasValue()) {
     if (C.getASTContext().Target.getTriple().getVendor() == llvm::Triple::Apple)
-      UC.Val_O_CREAT = 0x0200;
+      Val_O_CREAT = 0x0200;
     else {
       // FIXME: We need a more general way of getting the O_CREAT value.
       // We could possibly grovel through the preprocessor state, but
@@ -79,8 +71,6 @@ static void CheckOpen(CheckerContext &C, const UnixAPIChecker &UC,
       return;
     }
   }
-
-  LazyInitialize(BT, "Improper use of 'open'");
 
   // Look at the 'oflags' argument for the O_CREAT flag.
   const GRState *state = C.getState();
@@ -101,7 +91,7 @@ static void CheckOpen(CheckerContext &C, const UnixAPIChecker &UC,
   }
   NonLoc oflags = cast<NonLoc>(V);
   NonLoc ocreateFlag =
-    cast<NonLoc>(C.getSValBuilder().makeIntVal(UC.Val_O_CREAT.getValue(),
+    cast<NonLoc>(C.getSValBuilder().makeIntVal(Val_O_CREAT.getValue(),
                                                 oflagsEx->getType()));
   SVal maskedFlagsUC = C.getSValBuilder().evalBinOpNN(state, BO_And,
                                                       oflags, ocreateFlag,
@@ -124,8 +114,10 @@ static void CheckOpen(CheckerContext &C, const UnixAPIChecker &UC,
     if (!N)
       return;
 
-    EnhancedBugReport *report =
-      new EnhancedBugReport(*BT,
+    LazyInitialize(BT_open, "Improper use of 'open'");
+
+    RangedBugReport *report =
+      new RangedBugReport(*BT_open,
                             "Call to 'open' requires a third argument when "
                             "the 'O_CREAT' flag is set", N);
     report->addRange(oflagsEx->getSourceRange());
@@ -137,13 +129,11 @@ static void CheckOpen(CheckerContext &C, const UnixAPIChecker &UC,
 // pthread_once
 //===----------------------------------------------------------------------===//
 
-static void CheckPthreadOnce(CheckerContext &C, const UnixAPIChecker &,
-                             const CallExpr *CE, BugType *&BT) {
+void UnixAPIChecker::CheckPthreadOnce(CheckerContext &C,
+                                      const CallExpr *CE) const {
 
   // This is similar to 'CheckDispatchOnce' in the MacOSXAPIChecker.
   // They can possibly be refactored.
-
-  LazyInitialize(BT, "Improper use of 'pthread_once'");
 
   if (CE->getNumArgs() < 1)
     return;
@@ -171,7 +161,9 @@ static void CheckPthreadOnce(CheckerContext &C, const UnixAPIChecker &,
   if (isa<VarRegion>(R) && isa<StackLocalsSpaceRegion>(R->getMemorySpace()))
     os << "  Perhaps you intended to declare the variable as 'static'?";
 
-  EnhancedBugReport *report = new EnhancedBugReport(*BT, os.str(), N);
+  LazyInitialize(BT_pthreadOnce, "Improper use of 'pthread_once'");
+
+  RangedBugReport *report = new RangedBugReport(*BT_pthreadOnce, os.str(), N);
   report->addRange(CE->getArg(0)->getSourceRange());
   C.EmitReport(report);
 }
@@ -182,8 +174,8 @@ static void CheckPthreadOnce(CheckerContext &C, const UnixAPIChecker &,
 
 // FIXME: Eventually this should be rolled into the MallocChecker, but this
 // check is more basic and is valuable for widespread use.
-static void CheckMallocZero(CheckerContext &C, const UnixAPIChecker &UC,
-                            const CallExpr *CE, BugType *&BT) {
+void UnixAPIChecker::CheckMallocZero(CheckerContext &C,
+                                     const CallExpr *CE) const {
 
   // Sanity check that malloc takes one argument.
   if (CE->getNumArgs() != 1)
@@ -208,11 +200,11 @@ static void CheckMallocZero(CheckerContext &C, const UnixAPIChecker &UC,
     // FIXME: Add reference to CERT advisory, and/or C99 standard in bug
     // output.
 
-    LazyInitialize(BT, "Undefined allocation of 0 bytes");
+    LazyInitialize(BT_mallocZero, "Undefined allocation of 0 bytes");
     
     EnhancedBugReport *report =
-      new EnhancedBugReport(*BT, "Call to 'malloc' has an allocation size"
-                                 " of 0 bytes", N);
+      new EnhancedBugReport(*BT_mallocZero, "Call to 'malloc' has an allocation"
+                                            " size of 0 bytes", N);
     report->addRange(CE->getArg(0)->getSourceRange());
     report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                               CE->getArg(0));
@@ -230,51 +222,29 @@ static void CheckMallocZero(CheckerContext &C, const UnixAPIChecker &UC,
 // Central dispatch function.
 //===----------------------------------------------------------------------===//
 
-typedef void (*SubChecker)(CheckerContext &C, const UnixAPIChecker &UC,
-                           const CallExpr *CE, BugType *&BT);
-namespace {
-  class SubCheck {
-    SubChecker SC;
-    const UnixAPIChecker *UC;
-    BugType **BT;
-  public:
-    SubCheck(SubChecker sc, const UnixAPIChecker *uc, BugType *& bt)
-      : SC(sc), UC(uc), BT(&bt) {}
-    SubCheck() : SC(NULL), UC(NULL), BT(NULL) {}
-
-    void run(CheckerContext &C, const CallExpr *CE) const {
-      if (SC)
-        SC(C, *UC, CE, *BT);
-    }
-  };
-} // end anonymous namespace
-
 void UnixAPIChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
   // Get the callee.  All the functions we care about are C functions
   // with simple identifiers.
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
-  const FunctionTextRegion *Fn =
-    dyn_cast_or_null<FunctionTextRegion>(state->getSVal(Callee).getAsRegion());
+  const FunctionDecl *Fn = state->getSVal(Callee).getAsFunctionDecl();
 
   if (!Fn)
     return;
 
-  const IdentifierInfo *FI = Fn->getDecl()->getIdentifier();
+  const IdentifierInfo *FI = Fn->getIdentifier();
   if (!FI)
     return;
 
-  const SubCheck &SC =
-    llvm::StringSwitch<SubCheck>(FI->getName())
-      .Case("open",
-            SubCheck(CheckOpen, this, BTypes[OpenFn]))
-      .Case("pthread_once",
-            SubCheck(CheckPthreadOnce, this, BTypes[PthreadOnceFn]))
-      .Case("malloc",
-            SubCheck(CheckMallocZero, this, BTypes[MallocZero]))
-      .Default(SubCheck());
+  SubChecker SC =
+    llvm::StringSwitch<SubChecker>(FI->getName())
+      .Case("open", &UnixAPIChecker::CheckOpen)
+      .Case("pthread_once", &UnixAPIChecker::CheckPthreadOnce)
+      .Case("malloc", &UnixAPIChecker::CheckMallocZero)
+      .Default(NULL);
 
-  SC.run(C, CE);
+  if (SC)
+    (this->*SC)(C, CE);
 }
 
 //===----------------------------------------------------------------------===//
