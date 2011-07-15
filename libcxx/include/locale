@@ -874,7 +874,7 @@ __num_get_signed_integral(const char* __a, const char* __a_end,
         int __save_errno = errno;
         errno = 0;
         char *__p2;
-#ifdef _LIBCXX_STABLE_APPLE_ABI
+#ifdef _LIBCPP_STABLE_APPLE_ABI
         long long __ll = strtoll_l(__a, &__p2, __base, 0);
 #else
         long long __ll = strtoll_l(__a, &__p2, __base, __cloc());
@@ -918,7 +918,7 @@ __num_get_unsigned_integral(const char* __a, const char* __a_end,
         int __save_errno = errno;
         errno = 0;
         char *__p2;
-#ifdef _LIBCXX_STABLE_APPLE_ABI
+#ifdef _LIBCPP_STABLE_APPLE_ABI
         unsigned long long __ll = strtoull_l(__a, &__p2, __base, 0);
 #else
         unsigned long long __ll = strtoull_l(__a, &__p2, __base, __cloc());
@@ -950,7 +950,7 @@ __num_get_float(const char* __a, const char* __a_end, ios_base::iostate& __err)
     if (__a != __a_end)
     {
         char *__p2;
-#ifdef _LIBCXX_STABLE_APPLE_ABI
+#ifdef _LIBCPP_STABLE_APPLE_ABI
         long double __ld = strtold_l(__a, &__p2, 0);
 #else
         long double __ld = strtold_l(__a, &__p2, __cloc());
