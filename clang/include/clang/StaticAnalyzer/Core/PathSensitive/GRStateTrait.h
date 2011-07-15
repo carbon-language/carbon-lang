@@ -124,6 +124,10 @@ namespace ento {
       return F.add(K, L);
     }
 
+    static bool Contains(data_type L, key_type K) {
+      return L.contains(K);
+    }
+
     static inline data_type MakeData(void* const* p) {
       return p ? data_type((const llvm::ImmutableListImpl<T>*) *p)
                : data_type(0);
