@@ -4152,7 +4152,16 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
   else
     BT = T;
 
-  return Owned(IntegerLiteral::Create(Context, *Arg.getAsIntegral(), BT, Loc));
+  Expr *E = IntegerLiteral::Create(Context, *Arg.getAsIntegral(), BT, Loc);
+  if (T->isEnumeralType()) {
+    // FIXME: This is a hack. We need a better way to handle substituted
+    // non-type template parameters.
+    E = CStyleCastExpr::Create(Context, T, VK_RValue, CK_IntegralCast, E, 0, 
+                               Context.getTrivialTypeSourceInfo(T, Loc),
+                               Loc, Loc);
+  }
+  
+  return Owned(E);
 }
 
 /// \brief Match two template parameters within template parameter lists.

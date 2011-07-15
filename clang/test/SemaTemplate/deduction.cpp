@@ -150,3 +150,15 @@ namespace test3 {
     }
   };
 }
+
+// Verify that we can deduce enum-typed arguments correctly.
+namespace test14 {
+  enum E { E0, E1 };
+  template <E> struct A {};
+  template <E e> void foo(const A<e> &a) {}
+
+  void test() {
+    A<E0> a;
+    foo(a);
+  }
+}
