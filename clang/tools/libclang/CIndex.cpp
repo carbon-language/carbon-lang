@@ -4142,6 +4142,10 @@ CXCursor clang_getCanonicalCursor(CXCursor C) {
     return C;
   
   if (Decl *D = getCursorDecl(C)) {
+    if (ObjCCategoryImplDecl *CatImplD = dyn_cast<ObjCCategoryImplDecl>(D))
+      if (ObjCCategoryDecl *CatD = CatImplD->getCategoryDecl())
+        return MakeCXCursor(CatD, getCursorTU(C));
+
     if (ObjCImplDecl *ImplD = dyn_cast<ObjCImplDecl>(D))
       if (ObjCInterfaceDecl *IFD = ImplD->getClassInterface())
         return MakeCXCursor(IFD, getCursorTU(C));
