@@ -12,6 +12,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -342,6 +343,54 @@ TEST(APFloatTest, toString) {
   ASSERT_EQ("4.940656458412465E-324", convertToString(4.9406564584124654e-324, 0, 3));
   ASSERT_EQ("873.1834", convertToString(873.1834, 0, 1));
   ASSERT_EQ("8.731834E+2", convertToString(873.1834, 0, 0));
+}
+
+TEST(APFloatTest, toInteger) {
+  bool isExact = false;
+  APSInt result(5, /*isUnsigned=*/true);
+
+  EXPECT_EQ(APFloat::opOK,
+            APFloat(APFloat::IEEEdouble, "10")
+            .convertToInteger(result, APFloat::rmTowardZero, &isExact));
+  EXPECT_TRUE(isExact);
+  EXPECT_EQ(APSInt(APInt(5, 10), true), result);
+
+  EXPECT_EQ(APFloat::opInvalidOp,
+            APFloat(APFloat::IEEEdouble, "-10")
+            .convertToInteger(result, APFloat::rmTowardZero, &isExact));
+  EXPECT_FALSE(isExact);
+  EXPECT_EQ(APSInt::getMinValue(5, true), result);
+
+  EXPECT_EQ(APFloat::opInvalidOp,
+            APFloat(APFloat::IEEEdouble, "32")
+            .convertToInteger(result, APFloat::rmTowardZero, &isExact));
+  EXPECT_FALSE(isExact);
+  EXPECT_EQ(APSInt::getMaxValue(5, true), result);
+
+  EXPECT_EQ(APFloat::opInexact,
+            APFloat(APFloat::IEEEdouble, "7.9")
+            .convertToInteger(result, APFloat::rmTowardZero, &isExact));
+  EXPECT_FALSE(isExact);
+  EXPECT_EQ(APSInt(APInt(5, 7), true), result);
+
+  result.setIsUnsigned(false);
+  EXPECT_EQ(APFloat::opOK,
+            APFloat(APFloat::IEEEdouble, "-10")
+            .convertToInteger(result, APFloat::rmTowardZero, &isExact));
+  EXPECT_TRUE(isExact);
+  EXPECT_EQ(APSInt(APInt(5, -10, true), false), result);
+
+  EXPECT_EQ(APFloat::opInvalidOp,
+            APFloat(APFloat::IEEEdouble, "-17")
+            .convertToInteger(result, APFloat::rmTowardZero, &isExact));
+  EXPECT_FALSE(isExact);
+  EXPECT_EQ(APSInt::getMinValue(5, false), result);
+
+  EXPECT_EQ(APFloat::opInvalidOp,
+            APFloat(APFloat::IEEEdouble, "16")
+            .convertToInteger(result, APFloat::rmTowardZero, &isExact));
+  EXPECT_FALSE(isExact);
+  EXPECT_EQ(APSInt::getMaxValue(5, false), result);
 }
 
 static APInt nanbits(const fltSemantics &Sem,

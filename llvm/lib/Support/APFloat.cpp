@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -2082,6 +2083,23 @@ APFloat::convertToInteger(integerPart *parts, unsigned int width,
   }
 
   return fs;
+}
+
+/* Same as convertToInteger(integerPart*, ...), except the result is returned in
+   an APSInt, whose initial bit-width and signed-ness are used to determine the
+   precision of the conversion.
+ */
+APFloat::opStatus
+APFloat::convertToInteger(APSInt &result,
+                          roundingMode rounding_mode, bool *isExact) const
+{
+  unsigned bitWidth = result.getBitWidth();
+  SmallVector<uint64_t, 4> parts(result.getNumWords());
+  opStatus status = convertToInteger(
+    parts.data(), bitWidth, result.isSigned(), rounding_mode, isExact);
+  // Keeps the original signed-ness.
+  result = APInt(bitWidth, parts.size(), parts.data());
+  return status;
 }
 
 /* Convert an unsigned integer SRC to a floating point number,

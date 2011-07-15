@@ -109,6 +109,7 @@ namespace llvm {
   typedef signed short exponent_t;
 
   struct fltSemantics;
+  class APSInt;
   class StringRef;
 
   /* When bits of a floating point number are truncated, this enum is
@@ -283,6 +284,7 @@ namespace llvm {
     opStatus convert(const fltSemantics &, roundingMode, bool *);
     opStatus convertToInteger(integerPart *, unsigned int, bool,
                               roundingMode, bool *) const;
+    opStatus convertToInteger(APSInt&, roundingMode, bool *) const;
     opStatus convertFromAPInt(const APInt &,
                               bool, roundingMode);
     opStatus convertFromSignExtendedInteger(const integerPart *, unsigned int,
