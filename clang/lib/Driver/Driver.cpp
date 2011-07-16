@@ -458,11 +458,20 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
     }
     llvm::outs() << "\n";
     llvm::outs() << "libraries: =";
+
+    std::string sysroot;
+    if (Arg *A = C.getArgs().getLastArg(options::OPT__sysroot_EQ))
+      sysroot = A->getValue(C.getArgs());
+
     for (ToolChain::path_list::const_iterator it = TC.getFilePaths().begin(),
            ie = TC.getFilePaths().end(); it != ie; ++it) {
       if (it != TC.getFilePaths().begin())
         llvm::outs() << ':';
-      llvm::outs() << *it;
+      const char *path = it->c_str();
+      if (path[0] == '=')
+        llvm::outs() << sysroot << path + 1;
+      else
+        llvm::outs() << path;
     }
     llvm::outs() << "\n";
     return false;
