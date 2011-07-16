@@ -251,13 +251,13 @@ bool JSONImporter::runOnScop(Scop &scop) {
   }
 
   int statementIdx = 0;
-  int memoryAccessIdx = 0;
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
 
     if (Stmt->isFinalRead())
       continue;
 
+    int memoryAccessIdx = 0;
     for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
          ME = Stmt->memacc_end(); MI != ME; ++MI) {
       Json::Value accesses = jscop["statements"][statementIdx]
