@@ -479,7 +479,7 @@ static bool DisassembleThumb1DP(MCInst &MI, unsigned Opcode, uint32_t insn,
 // tBX: Rm
 // tBX_RET: 0 operand
 // tBX_RET_vararg: Rm
-// tBLXr: Rm
+// tBLXr_r9: Rm
 // tBRIND: Rm
 static bool DisassembleThumb1Special(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
@@ -489,8 +489,8 @@ static bool DisassembleThumb1Special(MCInst &MI, unsigned Opcode, uint32_t insn,
     return true;
 
   // BX/BLX/tBRIND (indirect branch, i.e, mov pc, Rm) has 1 reg operand: Rm.
-  if (Opcode==ARM::tBLXr || Opcode==ARM::tBX || Opcode==ARM::tBRIND) {
-    if (Opcode == ARM::tBLXr) {
+  if (Opcode==ARM::tBLXr_r9 || Opcode==ARM::tBX || Opcode==ARM::tBRIND) {
+    if (Opcode == ARM::tBLXr_r9) {
       // Handling the two predicate operands before the reg operand.
       if (!B->DoPredicateOperands(MI, Opcode, insn, NumOps))
         return false;
@@ -1729,7 +1729,7 @@ static inline bool t2MiscCtrlInstr(uint32_t insn) {
 // Branches: t2TPsoft -> no operand
 //
 // A8.6.23 BL, BLX (immediate)
-// Branches (defined in ARMInstrThumb.td): tBL, tBLXi -> imm operand
+// Branches (defined in ARMInstrThumb.td): tBLr9, tBLXi_r9 -> imm operand
 //
 // A8.6.26
 // t2BXJ -> Rn
@@ -1844,7 +1844,7 @@ static bool DisassembleThumb2BrMiscCtrl(MCInst &MI, unsigned Opcode,
   }
 
   // Some instructions have predicate operands first before the immediate.
-  if (Opcode == ARM::tBLXi || Opcode == ARM::tBL) {
+  if (Opcode == ARM::tBLXi_r9 || Opcode == ARM::tBLr9) {
     // Handling the two predicate operands before the imm operand.
     if (B->DoPredicateOperands(MI, Opcode, insn, NumOps))
       NumOpsAdded += 2;
@@ -1867,10 +1867,10 @@ static bool DisassembleThumb2BrMiscCtrl(MCInst &MI, unsigned Opcode,
   case ARM::t2Bcc:
     Offset = decodeImm32_B_EncodingT3(insn);
     break;
-  case ARM::tBL:
+  case ARM::tBLr9:
     Offset = decodeImm32_BL(insn);
     break;
-  case ARM::tBLXi:
+  case ARM::tBLXi_r9:
     Offset = decodeImm32_BLX(insn);
     break;
   }
