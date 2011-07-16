@@ -223,7 +223,7 @@ o SBLineEntry: Specifies an association with a contiguous range of instructions
 %include "lldb/API/SBSymbol.h"
 %include "lldb/API/SBSymbolContext.h"
 %include "lldb/API/SBSymbolContextList.h"
-%include "lldb/API/SBTarget.h"
+%include "./Python/interface/SBTarget.i"
 %include "lldb/API/SBThread.h"
 %include "lldb/API/SBType.h"
 %include "lldb/API/SBValue.h"

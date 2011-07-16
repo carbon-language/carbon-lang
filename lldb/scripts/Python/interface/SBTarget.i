@@ -1,4 +1,4 @@
-//===-- SBTarget.h ----------------------------------------------*- C++ -*-===//
+//===-- SWIG Interface for SBTarget -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,19 +7,39 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_SBTarget_h_
-#define LLDB_SBTarget_h_
-
-#include "lldb/API/SBDefines.h"
-#include "lldb/API/SBBroadcaster.h"
-#include "lldb/API/SBFileSpec.h"
-
 namespace lldb {
 
-class SBBreakpoint;
+%feature("docstring",
+"Represents the target program running under the debugger.
 
+SBTarget supports module and breakpoint iterations. For example,
+
+    for m in target.module_iter():
+        print m
+
+produces:
+
+(x86_64) /Volumes/data/lldb/svn/trunk/test/python_api/lldbutil/iter/a.out
+(x86_64) /usr/lib/dyld
+(x86_64) /usr/lib/libstdc++.6.dylib
+(x86_64) /usr/lib/libSystem.B.dylib
+(x86_64) /usr/lib/system/libmathCommon.A.dylib
+(x86_64) /usr/lib/libSystem.B.dylib(__commpage)
+
+and,
+
+    for b in target.breakpoint_iter():
+        print b
+
+produces:
+
+SBBreakpoint: id = 1, file ='main.cpp', line = 66, locations = 1
+SBBreakpoint: id = 2, file ='main.cpp', line = 85, locations = 1
+"
+         ) SBTarget;
 class SBTarget
 {
+    %feature("autodoc", "1");
 public:
     //------------------------------------------------------------------
     // Broadcaster bits.
@@ -54,6 +74,7 @@ public:
     lldb::SBProcess
     GetProcess ();
 
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Launch a new process.
     ///
@@ -110,6 +131,21 @@ public:
     /// @return
     ///      A process object for the newly created process.
     //------------------------------------------------------------------
+
+    For example,
+
+        process = target.Launch(self.dbg.GetListener(), None, None,
+                                None, '/tmp/stdout.txt', None,
+                                None, 0, False, error)
+
+    launches a new process by passing nothing for both the args and the envs
+    and redirect the standard output of the inferior to the /tmp/stdout.txt
+    file. It does not specify a working directory so that the debug server
+    will use its idea of what the current working directory is for the
+    inferior. Also, we ask the debugger not to stop the inferior at the
+    entry point. If no breakpoint is specified for the inferior, it should
+    run to completion if no user interaction is required.
+    ") Launch;
     lldb::SBProcess
     Launch (SBListener &listener, 
             char const **argv,
@@ -122,7 +158,7 @@ public:
             bool stop_at_entry,
             lldb::SBError& error);
             
-    
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Launch a new process with sensible defaults.
     ///
@@ -149,11 +185,20 @@ public:
     /// @return
     ///      A process object for the newly created process.
     //------------------------------------------------------------------
+
+    For example,
+
+        process = target.LaunchSimple(['X', 'Y', 'Z'], None, os.getcwd())
+
+    launches a new process by passing 'X', 'Y', 'Z' as the args to the
+    executable.
+    ") LaunchSimple;
     lldb::SBProcess
     LaunchSimple (const char **argv, 
                   const char **envp,
                   const char *working_directory);
     
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Attach to process with pid.
     ///
@@ -172,11 +217,13 @@ public:
     /// @return
     ///      A process object for the attached process.
     //------------------------------------------------------------------
+    ") AttachToProcessWithID;
     lldb::SBProcess
     AttachToProcessWithID (SBListener &listener,
                            lldb::pid_t pid,
                            lldb::SBError& error);
 
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Attach to process with name.
     ///
@@ -198,12 +245,14 @@ public:
     /// @return
     ///      A process object for the attached process.
     //------------------------------------------------------------------
+    ") AttachToProcessWithName;
     lldb::SBProcess
     AttachToProcessWithName (SBListener &listener,
                              const char *name,
                              bool wait_for,
                              lldb::SBError& error);
 
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Connect to a remote debug server with url.
     ///
@@ -225,6 +274,7 @@ public:
     /// @return
     ///      A process object for the connected process.
     //------------------------------------------------------------------
+    ") ConnectRemote;
     lldb::SBProcess
     ConnectRemote (SBListener &listener,
                    const char *url,
@@ -246,6 +296,7 @@ public:
     lldb::SBModule
     FindModule (const lldb::SBFileSpec &file_spec);
 
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Find functions by name.
     ///
@@ -270,12 +321,14 @@ public:
     /// @return
     ///     The number of matches added to \a sc_list.
     //------------------------------------------------------------------
+    ") FindFunctions;
     uint32_t
     FindFunctions (const char *name, 
                    uint32_t name_type_mask, // Logical OR one or more FunctionNameType enum bits
                    bool append, 
                    lldb::SBSymbolContextList& sc_list);
 
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Find global and static variables by name.
     ///
@@ -289,6 +342,7 @@ public:
     /// @return
     ///     A list of matched variables in an SBValueList.
     //------------------------------------------------------------------
+    ") FindGlobalVariables;
     lldb::SBValueList
     FindGlobalVariables (const char *name, 
                          uint32_t max_matches);
@@ -393,5 +447,3 @@ private:
 };
 
 } // namespace lldb
-
-#endif  // LLDB_SBTarget_h_

@@ -36,9 +36,8 @@ else:
 c_endif_swig = "#endif"
 c_ifdef_swig = "#ifdef SWIG"
 c_comment_marker = "//------------"
-trailing_blank_line = '            '
 # The pattern for recognizing the doxygen comment block line.
-doxygen_comment_start = re.compile("^\s*(    /// ?)")
+doxygen_comment_start = re.compile("^\s*(/// ?)")
 # The demarcation point for turning on/off residue removal state.
 # When bracketed by the lines, the CLEANUP_DOCSTRING state (see below) is ON.
 toggle_docstring_cleanup_line = '        """'
@@ -150,8 +149,31 @@ def list_to_frag(list):
         frag.write("self.{0}() == other.{0}()".format(list[i]))
     return frag.getvalue()
 
+class NewContent(StringIO.StringIO):
+    """Simple facade to keep track of the previous line to be committed."""
+    def __init__(self):
+        StringIO.StringIO.__init__(self)
+        self.prev_line = None
+    def add_line(self, a_line):
+        """Add a line to the content, if there is a previous line, commit it."""
+        if self.prev_line != None:
+            print >> self, self.prev_line
+        self.prev_line = a_line
+    def del_line(self):
+        """Forget about the previous line, do not commit it."""
+        self.prev_line = None
+    def del_blank_line(self):
+        """Forget about the previous line if it is a blank line."""
+        if self.prev_line != None and not self.prev_line.strip():
+            self.prev_line = None
+    def finish(self):
+        """Call this when you're finished with populating content."""
+        if self.prev_line != None:
+            print >> self, self.prev_line
+        self.prev_line = None
+
 # The new content will have the iteration protocol defined for our lldb objects.
-new_content = StringIO.StringIO()
+new_content = NewContent()
 
 with open(output_name, 'r') as f_in:
     content = f_in.read()
@@ -200,6 +222,9 @@ for line in content.splitlines():
     # CLEANUP_DOCSTRING state or out of it.
     if line == toggle_docstring_cleanup_line:
         if state & CLEANUP_DOCSTRING:
+            # Special handling of the trailing blank line right before the '"""'
+            # end docstring marker.
+            new_content.del_blank_line()
             state ^= CLEANUP_DOCSTRING
         else:
             state |= CLEANUP_DOCSTRING
@@ -208,7 +233,7 @@ for line in content.splitlines():
         match = class_pattern.search(line)
         # Inserts the lldb_iter() definition before the first class definition.
         if not lldb_iter_defined and match:
-            print >> new_content, lldb_iter_def
+            new_content.add_line(lldb_iter_def)
             lldb_iter_defined = True
 
         # If we are at the beginning of the class definitions, prepare to
@@ -231,15 +256,15 @@ for line in content.splitlines():
             #
             # But note that SBTarget has two types of iterations.
             if cls == "SBTarget":
-                print >> new_content, module_iter % (d[cls]['module'])
-                print >> new_content, breakpoint_iter % (d[cls]['breakpoint'])
+                new_content.add_line(module_iter % (d[cls]['module']))
+                new_content.add_line(breakpoint_iter % (d[cls]['breakpoint']))
             else:
                 if (state & DEFINING_ITERATOR):
-                    print >> new_content, iter_def % d[cls]
-                    print >> new_content, len_def % d[cls][0]
+                    new_content.add_line(iter_def % d[cls])
+                    new_content.add_line(len_def % d[cls][0])
                 if (state & DEFINING_EQUALITY):
-                    print >> new_content, eq_def % (cls, list_to_frag(e[cls]))
-                    print >> new_content, ne_def
+                    new_content.add_line(eq_def % (cls, list_to_frag(e[cls])))
+                    new_content.add_line(ne_def)
 
             # Next state will be NORMAL.
             state = NORMAL
@@ -248,9 +273,10 @@ for line in content.splitlines():
         # Cleanse the lldb.py of the autodoc'ed residues.
         if c_ifdef_swig in line or c_endif_swig in line:
             continue
-        # As well as the comment marker line and trailing blank line.
-        if c_comment_marker in line or line == trailing_blank_line:
+        # As well as the comment marker line.
+        if c_comment_marker in line:
             continue
+
         # Also remove the '\a ' and '\b 'substrings.
         line = line.replace('\a ', '')
         line = line.replace('\b ', '')
@@ -272,11 +298,14 @@ for line in content.splitlines():
     # Look for 'def IsValid(*args):', and once located, add implementation
     # of truth value testing for this object by delegation.
     if isvalid_pattern.search(line):
-        print >> new_content, nonzero_def
+        new_content.add_line(nonzero_def)
 
     # Pass the original line of content to new_content.
-    print >> new_content, line
-    
+    new_content.add_line(line)
+
+# We are finished with recording new content.
+new_content.finish()
+
 with open(output_name, 'w') as f_out:
     f_out.write(new_content.getvalue())
     f_out.write("debugger_unique_id = 0\n")
