@@ -10,6 +10,8 @@
 #ifndef liblldb_InputReader_h_
 #define liblldb_InputReader_h_
 
+#include <string.h>
+
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/Error.h"
