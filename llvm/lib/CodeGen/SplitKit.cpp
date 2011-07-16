@@ -1280,7 +1280,7 @@ void SplitEditor::splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
     } else {
       DEBUG(dbgs() << ", spill before last split point.\n");
       selectIntv(IntvIn);
-      SlotIndex Idx = leaveIntvAfter(LSP);
+      SlotIndex Idx = leaveIntvBefore(LSP);
       overlapIntv(Idx, BI.LastUse);
       useIntv(Start, Idx);
       assert((!LeaveBefore || Idx <= LeaveBefore) && "Interference");
