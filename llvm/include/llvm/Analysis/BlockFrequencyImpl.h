@@ -18,8 +18,10 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include <vector>
 #include <sstream>
 #include <string>
@@ -28,6 +30,8 @@ namespace llvm {
 
 
 class BlockFrequency;
+class MachineBlockFrequency;
+
 /// BlockFrequencyImpl implements block frequency algorithm for IR and
 /// Machine Instructions. Algorithm starts with value 1024 (START_FREQ)
 /// for the entry block and then propagates frequencies using branch weights
@@ -53,9 +57,8 @@ class BlockFrequencyImpl {
   std::string getBlockName(MachineBasicBlock *MBB) const {
     std::stringstream ss;
     ss << "BB#" << MBB->getNumber();
-    const BasicBlock *BB = MBB->getBasicBlock();
 
-    if (BB)
+    if (const BasicBlock *BB = MBB->getBasicBlock())
       ss << " derived from LLVM BB " << BB->getNameStr();
 
     return ss.str();
@@ -261,6 +264,7 @@ class BlockFrequencyImpl {
   }
 
   friend class BlockFrequency;
+  friend class MachineBlockFrequency;
 
   void doFunction(FunctionT *fn, BlockProbInfoT *bpi) {
     Fn = fn;
