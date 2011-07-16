@@ -140,7 +140,7 @@ namespace {
 
     void RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter);
 
-    ICmpInst *LinearFunctionTestReplace(Loop *L, const SCEV *IVLimit,
+    ICmpInst *LinearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
                                         PHINode *IndVar,
                                         SCEVExpander &Rewriter);
 
@@ -1823,7 +1823,18 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
            "canonical IV disrupted BackedgeTaken expansion");
     assert(NeedCannIV &&
            "LinearFunctionTestReplace requires a canonical induction variable");
-    NewICmp = LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar, Rewriter);
+    // Check preconditions for proper SCEVExpander operation. SCEV does not
+    // express SCEVExpander's dependencies, such as LoopSimplify. Instead any
+    // pass that uses the SCEVExpander must do it. This does not work well for
+    // loop passes because SCEVExpander makes assumptions about all loops, while
+    // LoopPassManager only forces the current loop to be simplified.
+    //
+    // FIXME: SCEV expansion has no way to bail out, so the caller must
+    // explicitly check any assumptions made by SCEV. Brittle.
+    const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(BackedgeTakenCount);
+    if (!AR || AR->getLoop()->getLoopPreheader())
+      NewICmp =
+        LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar, Rewriter);
   }
   // Rewrite IV-derived expressions.
   if (!DisableIVRewrite)
