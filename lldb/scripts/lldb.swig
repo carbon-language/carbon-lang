@@ -31,9 +31,11 @@ o SBLineEntry: Specifies an association with a contiguous range of instructions
       and a source file location. SBCompileUnit contains SBLineEntry(s)."
 %enddef
 
-/*  The name of the module to be created.  */
+// The name of the module to be created.
 %module(docstring=DOCSTRING) lldb
 
+// Parameter types will be used in the autodoc string.
+%feature("autodoc", "1");
 
 /* Typemap definitions, to allow SWIG to properly handle 'char**' data types. */
 

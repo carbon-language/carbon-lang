@@ -39,7 +39,6 @@ SBBreakpoint: id = 2, file ='main.cpp', line = 85, locations = 1
          ) SBTarget;
 class SBTarget
 {
-    %feature("autodoc", "1");
 public:
     //------------------------------------------------------------------
     // Broadcaster bits.
