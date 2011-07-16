@@ -495,11 +495,9 @@ void TransferFunctions::VisitBinaryOperator(clang::BinaryOperator *bo) {
 
       ValueVector::reference val = vals[vd];
       if (isUninitialized(val)) {
-        if (bo->getOpcode() != BO_Assign) {
+        if (bo->getOpcode() != BO_Assign)
           reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
-          val = Unknown;
-        } else
-          val = Initialized;
+        val = Initialized;
       }
       return;
     }
@@ -528,7 +526,7 @@ void TransferFunctions::VisitUnaryOperator(clang::UnaryOperator *uo) {
         if (isUninitialized(val)) {
           reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
           // Don't cascade warnings.
-          val = Unknown;
+          val = Initialized;
         }
         return;
       }
@@ -560,7 +558,7 @@ void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
         if (isUninitialized(val)) {
           reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
           // Don't cascade warnings.
-          vals[vd] = Unknown;
+          vals[vd] = Initialized;
         }
       }
       return;
