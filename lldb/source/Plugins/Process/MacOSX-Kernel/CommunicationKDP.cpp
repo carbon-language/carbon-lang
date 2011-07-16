@@ -16,14 +16,13 @@
 
 // C++ Includes
 // Other libraries and framework includes
+#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/Process.h"
-#include "Utility/StringExtractor.h"
 
 // Project includes
 #include "ProcessKDPLog.h"
@@ -38,13 +37,19 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 CommunicationKDP::CommunicationKDP (const char *comm_name) :
     Communication(comm_name),
+    m_byte_order (eByteOrderLittle),
     m_packet_timeout (1),
     m_sequence_mutex (Mutex::eMutexTypeRecursive),
     m_public_is_running (false),
     m_private_is_running (false),
-    m_session_key (0),
-    m_request_sequence_id (0),
-    m_exception_sequence_id (0)
+    m_session_key (0u),
+    m_request_sequence_id (0u),
+    m_exception_sequence_id (0u),
+    m_kdp_version_version (0u),
+    m_kdp_version_feature (0u),
+    m_kdp_hostinfo_cpu_mask (0u),
+    m_kdp_hostinfo_cpu_type (0u),
+    m_kdp_hostinfo_cpu_subtype (0u)
 {
 }
 
@@ -60,27 +65,61 @@ CommunicationKDP::~CommunicationKDP()
 }
 
 bool
-CommunicationKDP::SendRequestPacket (const StreamString &request_packet)
+CommunicationKDP::SendRequestPacket (const PacketStreamType &request_packet)
 {
     Mutex::Locker locker(m_sequence_mutex);
     return SendRequestPacketNoLock (request_packet);
 }
 
+#if 0
+typedef struct {
+	uint8_t     request;	// Either: CommandType | ePacketTypeRequest, or CommandType | ePacketTypeReply
+	uint8_t     sequence;
+	uint16_t    length;		// Length of entire packet including this header
+	uint32_t	key;		// Session key
+} kdp_hdr_t;
+#endif
+
 void
-CommunicationKDP::MakeRequestPacketHeader (RequestType request_type, 
-                                           StreamString &request_packet)
+CommunicationKDP::MakeRequestPacketHeader (CommandType request_type, 
+                                           PacketStreamType &request_packet,
+                                           uint16_t request_length)
 {
     request_packet.Clear();
-    request_packet.PutHex32 (request_type);             // Set the request type
-    request_packet.PutHex8  (ePacketTypeRequest);       // Set the packet type
-    request_packet.PutHex8  (++m_request_sequence_id);  // Sequence number
-    request_packet.PutHex16 (0);                        // Pad1 and Pad2 bytes
-    request_packet.PutHex32 (m_session_key);            // Session key
+    request_packet.PutHex8 (request_type | ePacketTypeRequest); // Set the request type
+    request_packet.PutHex8 (m_request_sequence_id++);           // Sequence number
+    request_packet.PutHex16 (request_length);                   // Length of the packet including this header
+    request_packet.PutHex32 (m_session_key);                    // Session key
 }
 
+bool
+CommunicationKDP::SendRequestAndGetReply (const CommandType command,
+                                          const uint8_t request_sequence_id,
+                                          const PacketStreamType &request_packet, 
+                                          DataExtractor &reply_packet)
+{
+
+    Mutex::Locker locker(m_sequence_mutex);    
+    if (SendRequestPacketNoLock(request_packet))
+    {
+        if (WaitForPacketWithTimeoutMicroSecondsNoLock (reply_packet, m_packet_timeout))
+        {
+            uint32_t offset = 0;
+            const uint8_t reply_command = reply_packet.GetU8 (&offset);
+            const uint8_t reply_sequence_id = reply_packet.GetU8 (&offset);
+            if ((reply_command & eCommandTypeMask) == command)
+            {
+                if (request_sequence_id == reply_sequence_id)
+                    return true;
+            }
+        }
+    }
+    reply_packet.Clear();
+    return false;
+}
 
 bool
-CommunicationKDP::SendRequestPacketNoLock (const StreamString &request_packet)
+CommunicationKDP::SendRequestPacketNoLock (const PacketStreamType &request_packet)
 {
     if (IsConnected())
     {
@@ -90,22 +129,11 @@ CommunicationKDP::SendRequestPacketNoLock (const StreamString &request_packet)
         LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PACKETS));
         if (log)
         {
-            StreamString log_strm;
-            DataExtractor data (packet_data, 
-                                packet_size,
-                                request_packet.GetByteOrder(),
-                                request_packet.GetAddressByteSize());
-            data.Dump (&log_strm, 
-                       0, 
-                       eFormatBytes,
-                       1, 
-                       packet_size,
-                       32,  // Num bytes per line
-                       0,   // Base address
-                       0, 
-                       0);
+            PacketStreamType log_strm;
             
-            log->Printf("request packet: <%u>\n%s", packet_size, log_strm.GetString().c_str());
+            DataExtractor::DumpHexBytes (&log_strm, packet_data, packet_size, 0);
+            
+            log->Printf("request packet: <%u>\n%s", packet_size, log_strm.GetData());
         }
         ConnectionStatus status = eConnectionStatusSuccess;
 
@@ -137,14 +165,14 @@ CommunicationKDP::WaitForNotRunningPrivate (const TimeValue *timeout_ptr)
 }
 
 size_t
-CommunicationKDP::WaitForPacketWithTimeoutMicroSeconds (StringExtractor &packet, uint32_t timeout_usec)
+CommunicationKDP::WaitForPacketWithTimeoutMicroSeconds (DataExtractor &packet, uint32_t timeout_usec)
 {
     Mutex::Locker locker(m_sequence_mutex);
     return WaitForPacketWithTimeoutMicroSecondsNoLock (packet, timeout_usec);
 }
 
 size_t
-CommunicationKDP::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractor &packet, uint32_t timeout_usec)
+CommunicationKDP::WaitForPacketWithTimeoutMicroSecondsNoLock (DataExtractor &packet, uint32_t timeout_usec)
 {
     uint8_t buffer[8192];
     Error error;
@@ -153,7 +181,7 @@ CommunicationKDP::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractor &p
 
     // Check for a packet from our cache first without trying any reading...
     if (CheckForPacket (NULL, 0, packet))
-        return packet.GetStringRef().size();
+        return packet.GetByteSize();
 
     bool timed_out = false;
     while (IsConnected() && !timed_out)
@@ -172,7 +200,7 @@ CommunicationKDP::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractor &p
         if (bytes_read > 0)
         {
             if (CheckForPacket (buffer, bytes_read, packet))
-                return packet.GetStringRef().size();
+                return packet.GetByteSize();
         }
         else
         {
@@ -199,7 +227,7 @@ CommunicationKDP::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractor &p
 }
 
 bool
-CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, StringExtractor &packet)
+CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, DataExtractor &packet)
 {
     // Put the packet data into the buffer in a thread safe fashion
     Mutex::Locker locker(m_bytes_mutex);
@@ -210,43 +238,229 @@ CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, StringExtr
     {
         if (log && log->GetVerbose())
         {
-            StreamString s;
-            log->Printf ("CommunicationKDP::%s adding %u bytes: %.*s",
+            PacketStreamType log_strm;
+            DataExtractor::DumpHexBytes (&log_strm, src, src_len, 0);
+            log->Printf ("CommunicationKDP::%s adding %u bytes: %s",
                          __FUNCTION__, 
                          (uint32_t)src_len, 
-                         (uint32_t)src_len, 
-                         src);
+                         log_strm.GetData());
         }
         m_bytes.append ((const char *)src, src_len);
     }
 
-    // Parse up the packets into gdb remote packets
-    if (!m_bytes.empty())
+    // Make sure we at least have enough bytes for a packet header
+    const size_t bytes_available = m_bytes.size();
+    if (bytes_available >= 8)
     {
-        // TODO: Figure out if we have a full packet reply
+        packet.SetData (&m_bytes[0], bytes_available, m_byte_order);
+        uint32_t offset = 0;
+        uint8_t reply_command = packet.GetU8(&offset);
+        switch (reply_command)
+        {
+        case ePacketTypeReply | eCommandTypeConnect:
+        case ePacketTypeReply | eCommandTypeDisconnect:
+        case ePacketTypeReply | eCommandTypeHostInfo:
+        case ePacketTypeReply | eCommandTypeVersion:
+        case ePacketTypeReply | eCommandTypeMaxBytes:
+        case ePacketTypeReply | eCommandTypeReadMemory:
+        case ePacketTypeReply | eCommandTypeWriteMemory:
+        case ePacketTypeReply | eCommandTypeReadRegisters:
+        case ePacketTypeReply | eCommandTypeWriteRegisters:
+        case ePacketTypeReply | eCommandTypeLoad:
+        case ePacketTypeReply | eCommandTypeImagePath:
+        case ePacketTypeReply | eCommandTypeSuspend:
+        case ePacketTypeReply | eCommandTypeResume:
+        case ePacketTypeReply | eCommandTypeException:
+        case ePacketTypeReply | eCommandTypeTermination:
+        case ePacketTypeReply | eCommandTypeBreakpointSet:
+        case ePacketTypeReply | eCommandTypeBreakpointRemove:
+        case ePacketTypeReply | eCommandTypeRegions:
+        case ePacketTypeReply | eCommandTypeReattach:
+        case ePacketTypeReply | eCommandTypeHostReboot:
+        case ePacketTypeReply | eCommandTypeReadMemory64:
+        case ePacketTypeReply | eCommandTypeWriteMemory64:
+        case ePacketTypeReply | eCommandTypeBreakpointSet64:
+        case ePacketTypeReply | eCommandTypeBreakpointRemove64:
+        case ePacketTypeReply | eCommandTypeKernelVersion:
+            {
+                offset = 2;
+                const uint16_t length = packet.GetU16 (&offset);
+                if (length <= bytes_available)
+                {
+                    // We have an entire packet ready, we need to copy the data
+                    // bytes into a buffer that will be owned by the packet and
+                    // erase the bytes from our communcation buffer "m_bytes"
+                    packet.SetData (DataBufferSP (new DataBufferHeap (&m_bytes[0], length)));
+                    m_bytes.erase (0, length);
+                    return true;
+                }
+            }
+            break;
+
+        default:
+            // Unrecognized reply command byte, erase this byte and try to get back on track
+            if (log)
+                log->Printf ("CommunicationKDP::%s: tossing junk byte: 0x%2.2x", 
+                             __FUNCTION__, 
+                             (uint8_t)m_bytes[0]);
+            m_bytes.erase(0, 1);
+            break;
+        }
     }
     packet.Clear();
     return false;
 }
 
 
-CommunicationKDP::ErrorType
+bool
 CommunicationKDP::Connect (uint16_t reply_port, 
                            uint16_t exc_port, 
                            const char *greeting)
 {
-    StreamString request_packet (Stream::eBinary, 4, eByteOrderLittle);
-    MakeRequestPacketHeader (eRequestTypeConnect, request_packet);
+    PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
+    if (greeting == NULL)
+        greeting = "";
+
+    const CommandType command = eCommandTypeConnect;
+    // Length is 82 uint16_t and the length of the greeting C string
+    const uint32_t command_length = 8 + 2 + 2 + ::strlen(greeting);
+    const uint32_t request_sequence_id = m_request_sequence_id;
+    MakeRequestPacketHeader (command, request_packet, command_length);
     request_packet.PutHex16(reply_port);
     request_packet.PutHex16(exc_port);
     request_packet.PutCString(greeting);
-    
-    return eErrorUnimplemented;
+    DataExtractor reply_packet;
+    return SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet);
 }
 
-CommunicationKDP::ErrorType
+void
+CommunicationKDP::ClearKDPSettings ()
+{
+    m_request_sequence_id = 0;
+    m_kdp_version_version = 0;
+    m_kdp_version_feature = 0;
+    m_kdp_hostinfo_cpu_mask = 0;
+    m_kdp_hostinfo_cpu_type = 0;
+    m_kdp_hostinfo_cpu_subtype = 0;
+}
+
+bool
+CommunicationKDP::Reattach (uint16_t reply_port)
+{
+    PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
+    const CommandType command = eCommandTypeReattach;
+    // Length is 8 bytes for the header plus 2 bytes for the reply UDP port
+    const uint32_t command_length = 8 + 2;
+    const uint32_t request_sequence_id = m_request_sequence_id;
+    MakeRequestPacketHeader (command, request_packet, command_length);
+    request_packet.PutHex16(reply_port);
+    DataExtractor reply_packet;
+    if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
+    {
+        // Reset the sequence ID to zero for reattach
+        ClearKDPSettings ();
+        uint32_t offset = 4;
+        m_session_key = reply_packet.GetU32 (&offset);
+        return true;
+    }
+    return false;
+}
+
+uint32_t
+CommunicationKDP::GetVersion ()
+{
+    if (!VersionIsValid())
+        SendRequestVersion();
+    return m_kdp_version_version;
+}
+
+uint32_t
+CommunicationKDP::GetFeatureFlags ()
+{
+    if (!VersionIsValid())
+        SendRequestVersion();
+    return m_kdp_version_feature;
+}
+
+bool
+CommunicationKDP::SendRequestVersion ()
+{
+    PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
+    const CommandType command = eCommandTypeVersion;
+    const uint32_t command_length = 8;
+    const uint32_t request_sequence_id = m_request_sequence_id;
+    MakeRequestPacketHeader (command, request_packet, command_length);
+    DataExtractor reply_packet;
+    if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
+    {
+        // Reset the sequence ID to zero for reattach
+        uint32_t offset = 8;
+        m_kdp_version_version = reply_packet.GetU32 (&offset);
+        m_kdp_version_feature = reply_packet.GetU32 (&offset);
+        return true;
+    }
+    return false;
+}
+
+uint32_t
+CommunicationKDP::GetCPUMask ()
+{
+    if (!HostInfoIsValid())
+        SendRequestHostInfo();
+    return m_kdp_hostinfo_cpu_mask;
+}
+
+uint32_t
+CommunicationKDP::GetCPUType ()
+{
+    if (!HostInfoIsValid())
+        SendRequestHostInfo();
+    return m_kdp_hostinfo_cpu_type;
+}
+
+uint32_t
+CommunicationKDP::GetCPUSubtype ()
+{
+    if (!HostInfoIsValid())
+        SendRequestHostInfo();
+    return m_kdp_hostinfo_cpu_subtype;
+}
+
+bool
+CommunicationKDP::SendRequestHostInfo ()
+{
+    PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
+    const CommandType command = eCommandTypeHostInfo;
+    const uint32_t command_length = 8;
+    const uint32_t request_sequence_id = m_request_sequence_id;
+    MakeRequestPacketHeader (command, request_packet, command_length);
+    DataExtractor reply_packet;
+    if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
+    {
+        // Reset the sequence ID to zero for reattach
+        uint32_t offset = 8;
+        m_kdp_hostinfo_cpu_mask = reply_packet.GetU32 (&offset);
+        m_kdp_hostinfo_cpu_type = reply_packet.GetU32 (&offset);
+        m_kdp_hostinfo_cpu_subtype = reply_packet.GetU32 (&offset);
+        return true;
+    }
+    return false;
+}
+
+bool
 CommunicationKDP::Disconnect ()
 {
-    return eErrorUnimplemented;
+    PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
+    const CommandType command = eCommandTypeDisconnect;
+    const uint32_t command_length = 8;
+    const uint32_t request_sequence_id = m_request_sequence_id;
+    MakeRequestPacketHeader (command, request_packet, command_length);
+    DataExtractor reply_packet;
+    if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
+    {
+        // Are we supposed to get a reply for disconnect?
+    }
+    ClearKDPSettings ();
+    return true;
 }
 

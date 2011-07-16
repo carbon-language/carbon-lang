@@ -11,6 +11,10 @@
 #define liblldb_ConnectionFileDescriptor_h_
 
 // C Includes
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
@@ -75,8 +79,16 @@ protected:
     lldb::ConnectionStatus
     Close (int& fd, Error *error);
 
+    typedef enum
+    {
+        eFDTypeFile,        // Other FD requireing read/write
+        eFDTypeSocket,      // Socket requiring send/recv
+        eFDTypeSocketUDP    // Unconnected UDP socket requiring sendto/recvfrom
+    } FDType;
     int m_fd;    // Socket we use to communicate once conn established
-    bool m_is_socket;
+    FDType m_fd_type;
+    struct sockaddr_storage m_udp_sockaddr;
+    socklen_t m_udp_sockaddr_len;
     bool m_should_close_fd; // True if this class should close the file descriptor when it goes away.
     uint32_t m_socket_timeout_usec;
     

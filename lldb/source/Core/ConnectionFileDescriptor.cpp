@@ -38,33 +38,42 @@ using namespace lldb_private;
 ConnectionFileDescriptor::ConnectionFileDescriptor () :
     Connection(),
     m_fd (-1),
-    m_is_socket (false),
+    m_fd_type (eFDTypeFile),
+    m_udp_sockaddr (),
+    m_udp_sockaddr_len (0),
     m_should_close_fd (false), 
     m_socket_timeout_usec(0)
 {
+    memset (&m_udp_sockaddr, 0, sizeof(m_udp_sockaddr));
+    
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT,
-                                 "%p ConnectionFileDescriptor::ConnectionFileDescriptor ()",
-                                 this);
+                                         "%p ConnectionFileDescriptor::ConnectionFileDescriptor ()",
+                                         this);
 }
 
 ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
     Connection(),
     m_fd (fd),
-    m_is_socket (false),
+    m_fd_type (eFDTypeFile),
+    m_udp_sockaddr (),
+    m_udp_sockaddr_len (0),
     m_should_close_fd (owns_fd),
     m_socket_timeout_usec(0)
 {
+    memset (&m_udp_sockaddr, 0, sizeof(m_udp_sockaddr));
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT,
-                                 "%p ConnectionFileDescriptor::ConnectionFileDescriptor (fd = %i, owns_fd = %i)",
-                                 this, fd, owns_fd);
+                                         "%p ConnectionFileDescriptor::ConnectionFileDescriptor (fd = %i, owns_fd = %i)",
+                                         this, 
+                                         fd, 
+                                         owns_fd);
 }
 
 
 ConnectionFileDescriptor::~ConnectionFileDescriptor ()
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT,
-                                 "%p ConnectionFileDescriptor::~ConnectionFileDescriptor ()",
-                                 this);
+                                         "%p ConnectionFileDescriptor::~ConnectionFileDescriptor ()",
+                                         this);
     Disconnect (NULL);
 }
 
@@ -78,8 +87,9 @@ ConnectionStatus
 ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION,
-                                 "%p ConnectionFileDescriptor::Connect (url = '%s')",
-                                 this, s);
+                                         "%p ConnectionFileDescriptor::Connect (url = '%s')",
+                                         this, 
+                                         s);
 
     if (s && s[0])
     {
@@ -134,7 +144,9 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
                     // Try and get a socket option from this file descriptor to 
                     // see if this is a socket and set m_is_socket accordingly.
                     int resuse;
-                    m_is_socket = GetSocketOption (m_fd, SOL_SOCKET, SO_REUSEADDR, resuse) == 0;
+                    bool is_socket = GetSocketOption (m_fd, SOL_SOCKET, SO_REUSEADDR, resuse) == 0;
+                    if (is_socket)
+                        m_fd_type = eFDTypeSocket;
                     m_should_close_fd = true;
                     return eConnectionStatusSuccess;
                 }
@@ -204,28 +216,40 @@ ConnectionFileDescriptor::Read (void *dst,
         log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %zu)...",
                      this, m_fd, dst, dst_len);
 
-    if (timeout_usec == UINT32_MAX)
+    ssize_t bytes_read = 0;
+    struct sockaddr_storage from;
+    socklen_t from_len = sizeof(from);
+
+    switch (m_fd_type)
     {
-        if (m_is_socket && SetSocketReceiveTimeout (timeout_usec))
+    case eFDTypeFile:       // Other FD requireing read/write
+        status = BytesAvailable (timeout_usec, error_ptr);
+        if (status == eConnectionStatusSuccess)
+            bytes_read = ::read (m_fd, dst, dst_len);
+        break;
+
+    case eFDTypeSocket:     // Socket requiring send/recv
+        if (SetSocketReceiveTimeout (timeout_usec))
+        {
             status = eConnectionStatusSuccess;
-    }
-    else
-    {
-        if (m_is_socket && SetSocketReceiveTimeout (timeout_usec))
+            bytes_read = ::recv (m_fd, dst, dst_len, 0);
+        }
+        break;
+
+    case eFDTypeSocketUDP:  // Unconnected UDP socket requiring sendto/recvfrom
+        if (SetSocketReceiveTimeout (timeout_usec))
+        {
             status = eConnectionStatusSuccess;
-        else
-            status = BytesAvailable (timeout_usec, error_ptr);
+            ::memset (&from, 0, sizeof(from));
+            bytes_read = ::recvfrom (m_fd, dst, dst_len, 0, (struct sockaddr *)&from, &from_len);
+        }
+        break;
     }
+
     if (status != eConnectionStatusSuccess)
         return 0;
 
     Error error;
-    ssize_t bytes_read;
-    if (m_is_socket)
-        bytes_read = ::recv (m_fd, dst, dst_len, 0);
-    else
-        bytes_read = ::read (m_fd, dst, dst_len);
-
     if (bytes_read == 0)
     {
         error.Clear(); // End-of-file.  Do not automatically close; pass along for the end-of-file handlers.
@@ -319,10 +343,26 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
 
     ssize_t bytes_sent = 0;
 
-    if (m_is_socket)
-        bytes_sent = ::send (m_fd, src, src_len, 0);
-    else
-        bytes_sent = ::write (m_fd, src, src_len);
+    switch (m_fd_type)
+    {
+        case eFDTypeFile:       // Other FD requireing read/write
+            bytes_sent = ::write (m_fd, src, src_len);
+            break;
+            
+        case eFDTypeSocket:     // Socket requiring send/recv
+            bytes_sent = ::send (m_fd, src, src_len, 0);
+            break;
+            
+        case eFDTypeSocketUDP:  // Unconnected UDP socket requiring sendto/recvfrom
+            assert (m_udp_sockaddr_len != 0);
+            bytes_sent = ::sendto (m_fd, 
+                                   src, 
+                                   src_len, 
+                                   0, 
+                                   (struct sockaddr *)&m_udp_sockaddr, 
+                                   m_udp_sockaddr_len);
+            break;
+    }
 
     if (bytes_sent < 0)
         error.SetErrorToErrno ();
@@ -331,12 +371,38 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
 
     if (log)
     {
-        if (m_is_socket)
-            log->Printf ("%p ConnectionFileDescriptor::Write()  ::send (socket = %i, src = %p, src_len = %zu, flags = 0) => %zi (error = %s)",
-                         this, m_fd, src, src_len, bytes_sent, error.AsCString());
-        else
-            log->Printf ("%p ConnectionFileDescriptor::Write()  ::write (fd = %i, src = %p, src_len = %zu) => %zi (error = %s)",
-                         this, m_fd, src, src_len, bytes_sent, error.AsCString());
+        switch (m_fd_type)
+        {
+            case eFDTypeFile:       // Other FD requireing read/write
+                log->Printf ("%p ConnectionFileDescriptor::Write()  ::write (fd = %i, src = %p, src_len = %zu) => %zi (error = %s)",
+                             this, 
+                             m_fd, 
+                             src, 
+                             src_len, 
+                             bytes_sent, 
+                             error.AsCString());
+                break;
+                
+            case eFDTypeSocket:     // Socket requiring send/recv
+                log->Printf ("%p ConnectionFileDescriptor::Write()  ::send (socket = %i, src = %p, src_len = %zu, flags = 0) => %zi (error = %s)",
+                             this, 
+                             m_fd, 
+                             src, 
+                             src_len, 
+                             bytes_sent, 
+                             error.AsCString());
+                break;
+                
+            case eFDTypeSocketUDP:  // Unconnected UDP socket requiring sendto/recvfrom
+                log->Printf ("%p ConnectionFileDescriptor::Write()  ::sendto (socket = %i, src = %p, src_len = %zu, flags = 0) => %zi (error = %s)",
+                             this, 
+                             m_fd, 
+                             src, 
+                             src_len, 
+                             bytes_sent, 
+                             error.AsCString());
+                break;
+        }
     }
 
     if (error_ptr)
@@ -477,7 +543,7 @@ ConnectionFileDescriptor::Close (int& fd, Error *error_ptr)
         }
         fd = -1;
     }
-    m_is_socket = false;
+    m_fd_type = eFDTypeFile;
     if (success)
         return eConnectionStatusSuccess;
     else
@@ -490,7 +556,7 @@ ConnectionFileDescriptor::NamedSocketAccept (const char *socket_name, Error *err
     ConnectionStatus result = eConnectionStatusError;
     struct sockaddr_un saddr_un;
 
-    m_is_socket = true;
+    m_fd_type = eFDTypeSocket;
     
     int listen_socket = ::socket (AF_UNIX, SOCK_STREAM, 0);
     if (listen_socket == -1)
@@ -537,7 +603,7 @@ ConnectionStatus
 ConnectionFileDescriptor::NamedSocketConnect (const char *socket_name, Error *error_ptr)
 {
     Close (m_fd, NULL);
-    m_is_socket = true;
+    m_fd_type = eFDTypeSocket;
 
     // Open the socket that was passed in as an option
     struct sockaddr_un saddr_un;
@@ -576,7 +642,7 @@ ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_p
                                  this, listen_port_num);
 
     Close (m_fd, NULL);
-    m_is_socket = true;
+    m_fd_type = eFDTypeSocket;
     int listen_port = ::socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (listen_port == -1)
     {
@@ -640,7 +706,7 @@ ConnectionFileDescriptor::ConnectTCP (const char *host_and_port, Error *error_pt
                                  "%p ConnectionFileDescriptor::ConnectTCP (host/port = %s)",
                                  this, host_and_port);
     Close (m_fd, NULL);
-    m_is_socket = true;
+    m_fd_type = eFDTypeSocket;
 
     RegularExpression regex ("([^:]+):([0-9]+)");
     if (regex.Execute (host_and_port, 2) == false)
@@ -730,7 +796,7 @@ ConnectionFileDescriptor::ConnectUDP (const char *host_and_port, Error *error_pt
                                          "%p ConnectionFileDescriptor::ConnectUDP (host/port = %s)",
                                          this, host_and_port);
     Close (m_fd, NULL);
-    m_is_socket = true;
+    m_fd_type = eFDTypeSocketUDP;
     
     RegularExpression regex ("([^:]+):([0-9]+)");
     if (regex.Execute (host_and_port, 2) == false)
@@ -839,20 +905,27 @@ ConnectionFileDescriptor::SetSocketOption(int fd, int level, int option_name, in
 bool
 ConnectionFileDescriptor::SetSocketReceiveTimeout (uint32_t timeout_usec)
 {
-    if (m_is_socket)
+    switch (m_fd_type)
     {
-        // Check in case timeout for m_fd has already been set to this value
-        if (timeout_usec == m_socket_timeout_usec)
-            return true;
-        //printf ("ConnectionFileDescriptor::SetSocketReceiveTimeout (timeout_usec = %u)\n", timeout_usec);
-
-        struct timeval timeout;
-        timeout.tv_sec = timeout_usec / TimeValue::MicroSecPerSec;
-        timeout.tv_usec = timeout_usec % TimeValue::MicroSecPerSec;
-        if (::setsockopt (m_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == 0)
+        case eFDTypeFile:       // Other FD requireing read/write
+            break;
+            
+        case eFDTypeSocket:     // Socket requiring send/recv
+        case eFDTypeSocketUDP:  // Unconnected UDP socket requiring sendto/recvfrom
         {
-            m_socket_timeout_usec = timeout_usec;
-            return true;
+            // Check in case timeout for m_fd has already been set to this value
+            if (timeout_usec == m_socket_timeout_usec)
+                return true;
+            //printf ("ConnectionFileDescriptor::SetSocketReceiveTimeout (timeout_usec = %u)\n", timeout_usec);
+
+            struct timeval timeout;
+            timeout.tv_sec = timeout_usec / TimeValue::MicroSecPerSec;
+            timeout.tv_usec = timeout_usec % TimeValue::MicroSecPerSec;
+            if (::setsockopt (m_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == 0)
+            {
+                m_socket_timeout_usec = timeout_usec;
+                return true;
+            }
         }
     }
     return false;

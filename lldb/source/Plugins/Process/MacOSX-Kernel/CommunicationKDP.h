@@ -20,11 +20,10 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/Listener.h"
+#include "lldb/Core/StreamBuffer.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/Predicate.h"
 #include "lldb/Host/TimeValue.h"
-
-class StringExtractor;
 
 class CommunicationKDP : public lldb_private::Communication
 {
@@ -36,49 +35,50 @@ public:
     
     const static uint32_t kMaxPacketSize = 1200;
     const static uint32_t kMaxDataSize = 1024;
-    
+    typedef lldb_private::StreamBuffer<1024> PacketStreamType;
     typedef enum 
     {
-        eRequestTypeConnect = 0u,
-        eRequestTypeDisconnect,
-        eRequestTypeHostInfo,
-        eRequestTypeVersion,
-        eRequestTypeMaxBytes,
-        eRequestTypeReadMemory,
-        eRequestTypeWriteMemory,
-        eRequestTypeReadRegisters,
-        eRequestTypeWriteRegisters,
-        eRequestTypeLoad,
-        eRequestTypeImagePath,
-        eRequestTypeSuspend,
-        eRequestTypeResume,
-        eRequestTypeException,
-        eRequestTypeTermination,
-        eRequestTypeBreakpointSet,
-        eRequestTypeBreakpointRemove,
-        eRequestTypeRegions,
-        eRequestTypeReattach,
-        eRequestTypeHostReboot,
-        eRequestTypeReadMemory64,
-        eRequestTypeWriteMemory64,
-        eRequestTypeBreakpointSet64,
-        eRequestTypeBreakpointRemove64,
-        eRequestTypeKernelVersion
-    } RequestType;
+        eCommandTypeConnect = 0u,
+        eCommandTypeDisconnect,
+        eCommandTypeHostInfo,
+        eCommandTypeVersion,
+        eCommandTypeMaxBytes,
+        eCommandTypeReadMemory,
+        eCommandTypeWriteMemory,
+        eCommandTypeReadRegisters,
+        eCommandTypeWriteRegisters,
+        eCommandTypeLoad,
+        eCommandTypeImagePath,
+        eCommandTypeSuspend,
+        eCommandTypeResume,
+        eCommandTypeException,
+        eCommandTypeTermination,
+        eCommandTypeBreakpointSet,
+        eCommandTypeBreakpointRemove,
+        eCommandTypeRegions,
+        eCommandTypeReattach,
+        eCommandTypeHostReboot,
+        eCommandTypeReadMemory64,
+        eCommandTypeWriteMemory64,
+        eCommandTypeBreakpointSet64,
+        eCommandTypeBreakpointRemove64,
+        eCommandTypeKernelVersion
+    } CommandType;
 
-    typedef enum 
+    typedef enum
     {
-        eErrorSuccess = 0,
-        eErrorAlreadyConnected,
-        eErrorPacketToBig,
-        eErrorInvalidRegisterFlavor,
-        eErrorUnimplemented
-    } ErrorType;
+        KDP_PROTERR_SUCCESS = 0,
+        KDP_PROTERR_ALREADY_CONNECTED,
+        KDP_PROTERR_BAD_NBYTES,
+        KDP_PROTERR_BADFLAVOR
+    } KDPError;
     
     typedef enum
     {
-        ePacketTypeRequest  = 0u,
-        ePacketTypeReply    = 1u
+        ePacketTypeRequest  = 0x00u,
+        ePacketTypeReply    = 0x80u,
+        ePacketTypeMask     = 0x80u,
+        eCommandTypeMask    = 0x7fu
     } PacketType;
     //------------------------------------------------------------------
     // Constructors and Destructors
@@ -89,11 +89,11 @@ public:
     ~CommunicationKDP();
 
     bool
-    SendRequestPacket (const lldb_private::StreamString &request_packet);
+    SendRequestPacket (const PacketStreamType &request_packet);
 
     // Wait for a packet within 'nsec' seconds
     size_t
-    WaitForPacketWithTimeoutMicroSeconds (StringExtractor &response,
+    WaitForPacketWithTimeoutMicroSeconds (lldb_private::DataExtractor &response,
                                           uint32_t usec);
 
     bool
@@ -102,7 +102,7 @@ public:
     bool
     CheckForPacket (const uint8_t *src, 
                     size_t src_len, 
-                    StringExtractor &packet);
+                    lldb_private::DataExtractor &packet);
     bool
     IsRunning() const
     {
@@ -140,34 +140,81 @@ public:
                              lldb_private::ProcessLaunchInfo &launch_info); 
 
     
-    ErrorType
+    bool
     Connect (uint16_t reply_port, 
              uint16_t exc_port, 
              const char *greeting);
 
-    ErrorType
+    bool
+    Reattach (uint16_t reply_port);
+
+    bool
     Disconnect ();
+    
+    uint32_t
+    GetVersion ();
+
+    uint32_t
+    GetFeatureFlags ();
+
+    uint32_t
+    GetCPUMask ();
+    
+    uint32_t
+    GetCPUType ();
+    
+    uint32_t
+    GetCPUSubtype ();
 
 protected:
     typedef std::list<std::string> packet_collection;
 
     bool
-    SendRequestPacketNoLock (const lldb_private::StreamString &request_packet);
+    SendRequestPacketNoLock (const PacketStreamType &request_packet);
 
     size_t
-    WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractor &response, 
+    WaitForPacketWithTimeoutMicroSecondsNoLock (lldb_private::DataExtractor &response, 
                                                 uint32_t timeout_usec);
 
     bool
     WaitForNotRunningPrivate (const lldb_private::TimeValue *timeout_ptr);
 
     void
-    MakeRequestPacketHeader (RequestType request_type, 
-                             lldb_private::StreamString &request_packet);
+    MakeRequestPacketHeader (CommandType request_type, 
+                             PacketStreamType &request_packet,
+                             uint16_t request_length);
 
+    bool
+    SendRequestVersion ();
+    
+
+    bool
+    VersionIsValid() const
+    {
+        return m_kdp_version_version != 0;
+    }
+
+    bool
+    HostInfoIsValid() const
+    {
+        return m_kdp_hostinfo_cpu_type != 0;
+    }
+
+    bool
+    SendRequestHostInfo ();
+
+    void
+    ClearKDPSettings ();
+    
+    bool
+    SendRequestAndGetReply (const CommandType command,
+                            const uint8_t request_sequence_id,
+                            const PacketStreamType &request_packet, 
+                            lldb_private::DataExtractor &reply_packet);
     //------------------------------------------------------------------
     // Classes that inherit from CommunicationKDP can see and modify these
     //------------------------------------------------------------------
+    lldb::ByteOrder m_byte_order;
     uint32_t m_packet_timeout;
     lldb_private::Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
     lldb_private::Predicate<bool> m_public_is_running;
@@ -175,6 +222,11 @@ protected:
     uint32_t m_session_key;
     uint8_t m_request_sequence_id;
     uint8_t m_exception_sequence_id;
+    uint32_t m_kdp_version_version;
+    uint32_t m_kdp_version_feature;
+    uint32_t m_kdp_hostinfo_cpu_mask;
+    uint32_t m_kdp_hostinfo_cpu_type;
+    uint32_t m_kdp_hostinfo_cpu_subtype;
 private:
     //------------------------------------------------------------------
     // For CommunicationKDP only

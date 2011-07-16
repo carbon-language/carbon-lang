@@ -47,14 +47,6 @@ StreamString::Clear()
     m_packet.clear();
 }
 
-void
-StreamString::Dump(FILE *f)
-{
-    int size = GetSize();
-    if (size > 0)
-        fprintf(f, "%*.*s", size, size, m_packet.c_str());
-}
-
 const char *
 StreamString::GetData () const
 {

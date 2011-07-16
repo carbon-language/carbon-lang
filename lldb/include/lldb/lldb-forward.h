@@ -129,6 +129,7 @@ class   Stoppoint;
 class   StoppointCallbackContext;
 class   StoppointLocation;
 class   Stream;
+template <unsigned N> class StreamBuffer;
 class   StreamFile;
 class   StreamString;
 class   StringList;

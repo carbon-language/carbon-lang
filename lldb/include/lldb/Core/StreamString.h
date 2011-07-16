@@ -37,9 +37,6 @@ public:
     void
     Clear();
 
-    void
-    Dump(FILE *f);
-
     const char *
     GetData () const;
 

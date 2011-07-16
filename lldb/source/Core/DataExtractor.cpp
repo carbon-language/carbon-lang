@@ -1789,4 +1789,19 @@ DataExtractor::DumpUUID (Stream *s, uint32_t offset) const
     }
 }
 
-
+void
+DataExtractor::DumpHexBytes (Stream *s, 
+                             const void *src, 
+                             size_t src_len, 
+                             addr_t base_addr)
+{
+    DataExtractor data (src, src_len, eByteOrderLittle, 4);
+    data.Dump (s, 
+               0,               // Offset into "src"
+               eFormatBytes,    // Dump as hex bytes
+               1,               // Size of each item is 1 for single bytes
+               src_len,         // Number of bytes
+               32,              // Num bytes per line
+               base_addr,       // Base address
+               0, 0);           // Bitfield info
+}

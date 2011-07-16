@@ -638,6 +638,7 @@
 		261B5A5311C3F2AD00AABD0A /* SharingPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharingPtr.h; path = include/lldb/Utility/SharingPtr.h; sourceTree = "<group>"; };
 		26217930133BC8640083B112 /* lldb-private-types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-private-types.h"; path = "include/lldb/lldb-private-types.h"; sourceTree = "<group>"; };
 		26217932133BCB850083B112 /* lldb-private-enumerations.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-private-enumerations.h"; path = "include/lldb/lldb-private-enumerations.h"; sourceTree = "<group>"; };
+		2623096E13D0EFFB006381D9 /* StreamBuffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StreamBuffer.h; path = include/lldb/Core/StreamBuffer.h; sourceTree = "<group>"; };
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		263664941140A4C10075843B /* Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = Debugger.h; path = include/lldb/Core/Debugger.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		26368A3B126B697600E8659F /* darwin-debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "darwin-debug.cpp"; path = "tools/darwin-debug/darwin-debug.cpp"; sourceTree = "<group>"; };
@@ -2003,6 +2004,7 @@
 				26BC7E9110F1B85900F91463 /* Stream.cpp */,
 				9A4F35111368A54100823F52 /* StreamAsynchronousIO.h */,
 				9A4F350F1368A51A00823F52 /* StreamAsynchronousIO.cpp */,
+				2623096E13D0EFFB006381D9 /* StreamBuffer.h */,
 				26BC7D7A10F1B77400F91463 /* StreamFile.h */,
 				26BC7E9210F1B85900F91463 /* StreamFile.cpp */,
 				26BC7D7B10F1B77400F91463 /* StreamString.h */,

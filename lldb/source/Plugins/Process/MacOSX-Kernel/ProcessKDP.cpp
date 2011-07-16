@@ -63,7 +63,6 @@ ProcessKDP::CanDebug(Target &target)
         if (triple_ref.getOS() == llvm::Triple::Darwin && 
             triple_ref.getVendor() == llvm::Triple::Apple)
         {
-
             ObjectFile *exe_objfile = exe_module_sp->GetObjectFile();
             if (exe_objfile->GetType() == ObjectFile::eTypeExecutable && 
                 exe_objfile->GetStrata() == ObjectFile::eStrataKernel)
