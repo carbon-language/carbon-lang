@@ -849,7 +849,7 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
                                         const Loop *L,
                                         const Type *ExpandTy,
                                         const Type *IntTy) {
-  assert(!IVIncInsertLoop || IVIncInsertPos && "Uninitialized insert position");
+  assert((!IVIncInsertLoop||IVIncInsertPos) && "Uninitialized insert position");
 
   // Reuse a previously-inserted PHI, if present.
   for (BasicBlock::iterator I = L->getHeader()->begin();
@@ -926,10 +926,9 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
                                 L->getHeader()->begin());
 
   // StartV must be hoisted into L's preheader to dominate the new phi.
-  Instruction *StartI = dyn_cast<Instruction>(StartV);
-  assert(!StartI || SE.DT->properlyDominates(StartI->getParent(),
-                                             L->getHeader()) && "");
-  (void)StartI;
+  assert(!isa<Instruction>(StartV) ||
+         SE.DT->properlyDominates(cast<Instruction>(StartV)->getParent(),
+                                  L->getHeader()));
 
   // Expand code for the step value. Insert instructions right before the
   // terminator corresponding to the back-edge. Do this before creating the PHI
