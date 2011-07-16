@@ -723,7 +723,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
       != Diagnostic::Ignored) {
     if (CFG *cfg = AC.getCFG()) {
       UninitValsDiagReporter reporter(S);
-      UninitVariablesAnalysisStats stats = {};
+      UninitVariablesAnalysisStats stats;
       runUninitializedVariablesAnalysis(*cast<DeclContext>(D), *cfg, AC,
                                         reporter, stats);
 
