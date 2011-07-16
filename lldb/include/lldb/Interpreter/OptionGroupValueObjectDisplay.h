@@ -47,7 +47,7 @@ public:
     OptionParsingStarting (CommandInterpreter &interpreter);
     
     bool show_types;
-    bool show_summary;
+    uint32_t no_summary_depth;
     bool show_location;
     bool flat_output;
     bool use_objc;

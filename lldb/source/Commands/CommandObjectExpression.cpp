@@ -329,7 +329,8 @@ CommandObjectExpression::EvaluateExpression
                                               m_options.print_object,   // Print the objective C object?
                                               use_dynamic,
                                               true,                     // Scope is already checked. Const results are always in scope.
-                                              false);                   // Don't flatten output
+                                              false,                    // Don't flatten output
+                                              0);                       // Always use summaries (you might want an option --no-summary like there is for frame variable)
                 if (result)
                     result->SetStatus (eReturnStatusSuccessFinishResult);
             }

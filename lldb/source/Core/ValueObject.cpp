@@ -2398,7 +2398,8 @@ ValueObject::DumpValueObject
     bool use_objc,
     lldb::DynamicValueType use_dynamic,
     bool scope_already_checked,
-    bool flat_output
+    bool flat_output,
+    uint32_t omit_summary_depth
 )
 {
     if (valobj)
@@ -2458,6 +2459,9 @@ ValueObject::DumpValueObject
         const char *sum_cstr = NULL;
         SummaryFormat* entry = valobj->GetSummaryFormat().get();
         
+        if (omit_summary_depth > 0)
+            entry = NULL;
+        
         if (err_cstr == NULL)
         {
             val_cstr = valobj->GetValueAsCString();
@@ -2474,7 +2478,7 @@ ValueObject::DumpValueObject
             if (print_valobj)
             {
                 
-                sum_cstr = valobj->GetSummaryAsCString();
+                sum_cstr = (omit_summary_depth == 0) ? valobj->GetSummaryAsCString() : NULL;
 
                 // We must calculate this value in realtime because entry might alter this variable's value
                 // (e.g. by saying ${var%fmt}) and render precached values useless
@@ -2571,7 +2575,8 @@ ValueObject::DumpValueObject
                                                  false,
                                                  use_dynamic,
                                                  true,
-                                                 flat_output);
+                                                 flat_output,
+                                                 omit_summary_depth > 1 ? omit_summary_depth - 1 : 0);
                             }
                         }
 

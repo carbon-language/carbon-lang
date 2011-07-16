@@ -658,7 +658,8 @@ public:
                                                   m_varobj_options.use_objc,
                                                   m_varobj_options.use_dynamic,
                                                   scope_already_checked,
-                                                  m_varobj_options.flat_output);
+                                                  m_varobj_options.flat_output,
+                                                  0);
                 }
                 else
                 {

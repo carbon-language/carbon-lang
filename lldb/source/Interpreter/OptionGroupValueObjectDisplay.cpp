@@ -38,7 +38,7 @@ g_option_table[] =
     { LLDB_OPT_SET_1, false, "objc",            'O', no_argument,       NULL, 0, eArgTypeNone,      "Print as an Objective-C object."},
     { LLDB_OPT_SET_1, false, "ptr-depth",       'P', required_argument, NULL, 0, eArgTypeCount,     "The number of pointers to be traversed when dumping values (default is zero)."},
     { LLDB_OPT_SET_1, false, "show-types",      'T', no_argument,       NULL, 0, eArgTypeNone,      "Show variable types when dumping values."},
-    { LLDB_OPT_SET_1, false, "no-summary",      'Y', no_argument,       NULL, 0, eArgTypeNone,      "Omit summary information."},
+    { LLDB_OPT_SET_1, false, "no-summary-depth",'Y', optional_argument, NULL, 0, eArgTypeCount,     "Set a depth for omitting summary information (default is 1)."},
     { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 
@@ -80,7 +80,6 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
             }
             break;
         case 'T':   show_types   = true;  break;
-        case 'Y':   show_summary = false; break;
         case 'L':   show_location= true;  break;
         case 'F':   flat_output  = true;  break;
         case 'O':   use_objc = true;      break;
@@ -96,6 +95,17 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
                 error.SetErrorStringWithFormat("Invalid pointer depth '%s'.\n", option_arg);
             break;
             
+        case 'Y':
+            if (option_arg)
+            {
+                no_summary_depth = Args::StringToUInt32 (option_arg, 0, 0, &success);
+                if (!success)
+                    error.SetErrorStringWithFormat("Invalid pointer depth '%s'.\n", option_arg);
+            }
+            else
+                no_summary_depth = 1;
+            break;
+
         default:
             error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
             break;
@@ -107,13 +117,13 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
 void
 OptionGroupValueObjectDisplay::OptionParsingStarting (CommandInterpreter &interpreter)
 {
-    show_types    = false;
-    show_summary  = true;
-    show_location = false;
-    flat_output   = false;
-    use_objc      = false;
-    max_depth     = UINT32_MAX;
-    ptr_depth     = 0;
+    show_types        = false;
+    no_summary_depth  = 0;
+    show_location     = false;
+    flat_output       = false;
+    use_objc          = false;
+    max_depth         = UINT32_MAX;
+    ptr_depth         = 0;
     
     Target *target = interpreter.GetExecutionContext().target;
     if (target != NULL)

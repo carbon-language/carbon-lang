@@ -1009,6 +1009,18 @@ CommandObject (interpreter,
                 "\n"
                 "A command you may definitely want to try if you're doing C++ debugging is:\n"
                 "type summary add -f \"${var._M_dataplus._M_p}\" std::string\n"
+                "\n"
+                "You can also add Python summaries, in which case you will use lldb public API to gather information from your variables"
+                "and elaborate them to a meaningful summary inside a script written in Python. The variable object will be passed to your"
+                "script as an SBValue object. The following example might help you when starting to use the Python summaries feature:\n"
+                "type summary add JustADemo -s \"value = valobj.GetChildMemberWithName('value'); return 'My value is ' + value.GetValue();\"\n"
+                "If you prefer to type your scripts on multiple lines, you will use the -P option and then type your script, ending it with "
+                "the word DONE on a line by itself to mark you're finished editing your code:\n"
+                "(lldb)type summary add JustADemo -P\n"
+                "     value = valobj.GetChildMemberWithName('value');\n"
+                "     return 'My value is ' + value.GetValue();\n"
+                "DONE\n"
+                "(lldb)"
                 );
 }
 

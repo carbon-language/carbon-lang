@@ -489,7 +489,8 @@ public:
                                       m_varobj_options.use_objc,
                                       m_varobj_options.use_dynamic,
                                       false,
-                                      m_varobj_options.flat_output);                                        
+                                      m_varobj_options.flat_output,
+                                      m_varobj_options.no_summary_depth);                                        
 
     }
     

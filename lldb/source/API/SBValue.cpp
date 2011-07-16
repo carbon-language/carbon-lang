@@ -658,7 +658,8 @@ SBValue::GetDescription (SBStream &description)
                                       use_objc, 
                                       use_dynamic, 
                                       scope_already_checked, 
-                                      flat_output);
+                                      flat_output,
+                                      0);
     }
     else
         description.Printf ("No value");
