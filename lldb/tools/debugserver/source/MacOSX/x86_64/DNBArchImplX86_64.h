@@ -16,6 +16,7 @@
 
 #if defined (__i386__) || defined (__x86_64__)
 #include "DNBArch.h"
+#include "../HasAVX.h"
 #include "MachRegisterStatesX86_64.h"
 
 class MachThread;
@@ -206,10 +207,10 @@ protected:
     GetRegisterSetInfo(nub_size_t *num_reg_sets);
     
     static bool
-    HasAVX()
+    CPUHasAVX()
     {
         if (s_has_avx == kAVXUnknown)
-            s_has_avx = kAVXNotPresent;
+            s_has_avx = (::HasAVX() ? kAVXPresent : kAVXNotPresent);
         
         return (s_has_avx == kAVXPresent);
     }

@@ -330,7 +330,7 @@ DNBArchImplI386::GetFPUState(bool force)
     {
         if (DEBUG_FPU_REGS)
         {
-            if (HasAVX() || FORCE_AVX_REGS)
+            if (CPUHasAVX() || FORCE_AVX_REGS)
             {
                 m_state.context.fpu.avx.__fpu_reserved[0] = -1;
                 m_state.context.fpu.avx.__fpu_reserved[1] = -1;
@@ -460,7 +460,7 @@ DNBArchImplI386::GetFPUState(bool force)
         }
         else
         {
-            if (HasAVX() || FORCE_AVX_REGS)
+            if (CPUHasAVX() || FORCE_AVX_REGS)
             {
                 mach_msg_type_number_t count = e_regSetWordSizeAVX;
                 m_state.SetError(e_regSetFPU, Read, ::thread_get_state(m_thread->ThreadID(), __i386_AVX_STATE, (thread_state_t)&m_state.context.fpu.avx, &count));
@@ -503,7 +503,7 @@ DNBArchImplI386::SetFPUState()
     }
     else
     {
-        if (HasAVX() || FORCE_AVX_REGS)
+        if (CPUHasAVX() || FORCE_AVX_REGS)
             m_state.SetError(e_regSetFPU, Write, ::thread_set_state(m_thread->ThreadID(), __i386_AVX_STATE, (thread_state_t)&m_state.context.fpu.avx, e_regSetWordSizeAVX));
         else
             m_state.SetError(e_regSetFPU, Write, ::thread_set_state(m_thread->ThreadID(), __i386_FLOAT_STATE, (thread_state_t)&m_state.context.fpu.no_avx, e_regSetWordSizeFPR));
@@ -813,7 +813,7 @@ const DNBRegisterSetInfo *
 DNBArchImplI386::GetRegisterSetInfo(nub_size_t *num_reg_sets)
 {
     *num_reg_sets = k_num_register_sets;
-    if (HasAVX() || FORCE_AVX_REGS)
+    if (CPUHasAVX() || FORCE_AVX_REGS)
         return g_reg_sets_avx;
     else
         return g_reg_sets_no_avx;
@@ -886,7 +886,7 @@ DNBArchImplI386::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
             break;
 
         case e_regSetFPU:
-            if (HasAVX() || FORCE_AVX_REGS)
+            if (CPUHasAVX() || FORCE_AVX_REGS)
             {
                 switch (reg)
                 {
@@ -1033,7 +1033,7 @@ DNBArchImplI386::SetRegisterValue(int set, int reg, const DNBRegisterValue *valu
             break;
 
         case e_regSetFPU:
-            if (HasAVX() || FORCE_AVX_REGS)
+            if (CPUHasAVX() || FORCE_AVX_REGS)
             {
                 switch (reg)
                 {

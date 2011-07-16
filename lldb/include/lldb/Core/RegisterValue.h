@@ -28,7 +28,7 @@ namespace lldb_private {
     public:
         enum
         {
-            kMaxRegisterByteSize = 16u
+            kMaxRegisterByteSize = 32u
         };
         enum Type
         {
