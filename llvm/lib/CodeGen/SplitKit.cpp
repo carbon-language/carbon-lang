@@ -1292,6 +1292,7 @@ void SplitEditor::splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
   // means we need to create a local interval that can be allocated a
   // different register.
   unsigned LocalIntv = openIntv();
+  (void)LocalIntv;
   DEBUG(dbgs() << ", creating local interval " << LocalIntv << ".\n");
 
   if (!BI.LiveOut || BI.LastUse < LSP) {
