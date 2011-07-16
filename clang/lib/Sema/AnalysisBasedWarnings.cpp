@@ -724,6 +724,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     if (CFG *cfg = AC.getCFG()) {
       UninitValsDiagReporter reporter(S);
       UninitVariablesAnalysisStats stats;
+      std::memset(&stats, 0, sizeof(UninitVariablesAnalysisStats));
       runUninitializedVariablesAnalysis(*cast<DeclContext>(D), *cfg, AC,
                                         reporter, stats);
 
