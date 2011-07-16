@@ -512,6 +512,26 @@ defm VCVTSI2SDL  : sse12_vcvt_avx<0x2A, GR32, FR64, i32mem, "cvtsi2sd{l}">, XD,
 defm VCVTSI2SD64 : sse12_vcvt_avx<0x2A, GR64, FR64, i64mem, "cvtsi2sd{q}">, XD,
                                   VEX_4V, VEX_W;
 
+let Predicates = [HasAVX] in {
+  def : Pat<(f32 (sint_to_fp (loadi32 addr:$src))),
+            (VCVTSI2SSrm (f32 (IMPLICIT_DEF)), addr:$src)>;
+  def : Pat<(f32 (sint_to_fp (loadi64 addr:$src))),
+            (VCVTSI2SS64rm (f32 (IMPLICIT_DEF)), addr:$src)>;
+  def : Pat<(f64 (sint_to_fp (loadi32 addr:$src))),
+            (VCVTSI2SDrm (f64 (IMPLICIT_DEF)), addr:$src)>;
+  def : Pat<(f64 (sint_to_fp (loadi64 addr:$src))),
+            (VCVTSI2SD64rm (f64 (IMPLICIT_DEF)), addr:$src)>;
+
+  def : Pat<(f32 (sint_to_fp GR32:$src)),
+            (VCVTSI2SSrr (f32 (IMPLICIT_DEF)), GR32:$src)>;
+  def : Pat<(f32 (sint_to_fp GR64:$src)),
+            (VCVTSI2SS64rr (f32 (IMPLICIT_DEF)), GR64:$src)>;
+  def : Pat<(f64 (sint_to_fp GR32:$src)),
+            (VCVTSI2SDrr (f64 (IMPLICIT_DEF)), GR32:$src)>;
+  def : Pat<(f64 (sint_to_fp GR64:$src)),
+            (VCVTSI2SD64rr (f64 (IMPLICIT_DEF)), GR64:$src)>;
+}
+
 defm CVTTSS2SI : sse12_cvt_s<0x2C, FR32, GR32, fp_to_sint, f32mem, loadf32,
                       "cvttss2si\t{$src, $dst|$dst, $src}">, XS;
 defm CVTTSS2SI64 : sse12_cvt_s<0x2C, FR32, GR64, fp_to_sint, f32mem, loadf32,
