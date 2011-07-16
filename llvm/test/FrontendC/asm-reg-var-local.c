@@ -11,7 +11,7 @@ int foo() {
 
   asm volatile("; %0 This asm defines rsi" : "=r"(a));
 // CHECK: %1 = call i32 asm sideeffect "; $0 This asm defines rsi", "={rsi}
-// CHECK: store i32 %asmtmp, i32* %a
+// CHECK: store i32 %1, i32* %a
 
   a = 42;
 // CHECK:  store i32 42, i32* %a, align 4
