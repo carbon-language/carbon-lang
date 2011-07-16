@@ -606,7 +606,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
       continue;
     
     // Ignore CF references, which can be toll-free bridged.
-    if (cocoa::isCFObjectRef(ArgTy))
+    if (coreFoundation::isCFObjectRef(ArgTy))
       continue;
 
     // Generate only one error node to use for all bug reports.

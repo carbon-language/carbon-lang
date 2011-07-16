@@ -86,12 +86,12 @@ bool cocoa::isRefType(QualType RetTy, llvm::StringRef Prefix,
   return Name.startswith(Prefix);
 }
 
-bool cocoa::isCFObjectRef(QualType T) {
-  return isRefType(T, "CF") || // Core Foundation.
-         isRefType(T, "CG") || // Core Graphics.
-         isRefType(T, "DADisk") || // Disk Arbitration API.
-         isRefType(T, "DADissenter") ||
-         isRefType(T, "DASessionRef");
+bool coreFoundation::isCFObjectRef(QualType T) {
+  return cocoa::isRefType(T, "CF") || // Core Foundation.
+         cocoa::isRefType(T, "CG") || // Core Graphics.
+         cocoa::isRefType(T, "DADisk") || // Disk Arbitration API.
+         cocoa::isRefType(T, "DADissenter") ||
+         cocoa::isRefType(T, "DASessionRef");
 }
 
 
@@ -125,4 +125,9 @@ bool cocoa::isCocoaObjectRef(QualType Ty) {
       return true;
   
   return false;
+}
+
+bool coreFoundation::followsCreateRule(llvm::StringRef functionName) {
+  return functionName.find("Create") != StringRef::npos ||
+         functionName.find("Copy") != StringRef::npos;
 }

@@ -1135,8 +1135,7 @@ RetainSummary* RetainSummaryManager::getSummary(const FunctionDecl* FD) {
 RetainSummary*
 RetainSummaryManager::getCFCreateGetRuleSummary(const FunctionDecl* FD,
                                                 StringRef FName) {
-  if (FName.find("Create") != StringRef::npos ||
-      FName.find("Copy") != StringRef::npos)
+  if (coreFoundation::followsCreateRule(FName))
     return getCFSummaryCreateRule(FD);
 
   return getCFSummaryGetRule(FD);
@@ -1206,7 +1205,8 @@ RetainSummaryManager::getInitMethodSummary(QualType RetTy) {
   assert(ScratchArgs.isEmpty());
   // 'init' methods conceptually return a newly allocated object and claim
   // the receiver.
-  if (cocoa::isCocoaObjectRef(RetTy) || cocoa::isCFObjectRef(RetTy))
+  if (cocoa::isCocoaObjectRef(RetTy) ||
+      coreFoundation::isCFObjectRef(RetTy))
     return getPersistentSummary(ObjCInitRetE, DecRefMsg);
 
   return getDefaultSummary();
@@ -1356,7 +1356,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
   }
 
   // Look for methods that return an owned core foundation object.
-  if (cocoa::isCFObjectRef(RetTy)) {
+  if (coreFoundation::isCFObjectRef(RetTy)) {
     RetEffect E = cocoa::followsFundamentalRule(S, MD)
       ? RetEffect::MakeOwned(RetEffect::CF, true)
       : RetEffect::MakeNotOwned(RetEffect::CF);
