@@ -128,6 +128,45 @@ bool cocoa::isCocoaObjectRef(QualType Ty) {
 }
 
 bool coreFoundation::followsCreateRule(llvm::StringRef functionName) {
-  return functionName.find("Create") != StringRef::npos ||
-         functionName.find("Copy") != StringRef::npos;
+  llvm::StringRef::iterator it = functionName.begin();
+  llvm::StringRef::iterator start = it;
+  llvm::StringRef::iterator endI = functionName.end();
+    
+  while (true) {
+    // Scan for the start of 'create' or 'copy'.
+    for ( ; it != endI ; ++it) {
+      // Search for the first character.  It can either be 'C' or 'c'.
+      char ch = *it;
+      if (ch == 'C' || ch == 'c') {
+        ++it;
+        break;
+      }
+    }
+
+    // Did we hit the end of the string?  If so, we didn't find a match.
+    if (it == endI)
+      return false;
+    
+    // Scan for *lowercase* 'reate' or 'opy', followed by no lowercase
+    // character.
+    llvm::StringRef suffix = functionName.substr(it - start);
+    if (suffix.startswith("reate")) {
+      it += 5;
+    }
+    else if (suffix.startswith("opy")) {
+      it += 3;
+    }
+    else {
+      // Keep scanning.
+      continue;
+    }
+    
+    if (it == endI || !islower(*it))
+      return true;
+  
+    // If we matched a lowercase character, it isn't the end of the
+    // word.  Keep scanning.
+  }
+  
+  return false;
 }

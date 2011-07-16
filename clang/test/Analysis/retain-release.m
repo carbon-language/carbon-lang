@@ -1487,3 +1487,56 @@ void rdar9726279() {
   NSValue *value = [[NSValue alloc] _prefix_initWithTwoDoubles:twoDoubles];
   [value release];
 }
+
+// <rdar://problem/9732321>
+// Test camelcase support for CF conventions.  While Core Foundation APIs
+// don't use camel casing, other code is allowed to use it.
+CFArrayRef camelcase_create_1() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+}
+
+CFArrayRef camelcase_createno() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning {{leak}}
+}
+
+CFArrayRef camelcase_copy() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+}
+
+CFArrayRef camelcase_copying() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning {{leak}}
+}
+
+CFArrayRef copyCamelCase() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+}
+
+CFArrayRef __copyCamelCase() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+}
+
+CFArrayRef __createCamelCase() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+}
+
+CFArrayRef camel_create() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+}
+
+
+CFArrayRef camel_creat() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning {{leak}}
+}
+
+CFArrayRef camel_copy() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+}
+
+CFArrayRef camel_copyMachine() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // no-warning
+}
+
+CFArrayRef camel_copymachine() {
+  return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning {{leak}}
+}
+
