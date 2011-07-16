@@ -1448,7 +1448,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
     CheckProtocolMethodDefs(ImpLoc, *PI, IncompleteImpl, InsMap, ClsMap, IDecl);
 }
 
-/// MatchAllMethodDeclarations - Check methods declaraed in interface or
+/// MatchAllMethodDeclarations - Check methods declared in interface
 /// or protocol against those declared in their implementations.
 ///
 void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
