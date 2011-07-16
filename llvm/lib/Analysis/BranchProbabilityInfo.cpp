@@ -13,6 +13,7 @@
 
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -257,6 +258,10 @@ bool BranchProbabilityAnalysis::runOnFunction(Function &F) {
   return false;
 }
 
+void BranchProbabilityInfo::getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired<LoopInfo>();
+    AU.setPreservesAll();
+}
 
 bool BranchProbabilityInfo::runOnFunction(Function &F) {
   LoopInfo &LI = getAnalysis<LoopInfo>();

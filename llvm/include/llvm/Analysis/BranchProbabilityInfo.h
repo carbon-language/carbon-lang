@@ -15,8 +15,9 @@
 #define LLVM_ANALYSIS_BRANCHPROBABILITYINFO_H
 
 #include "llvm/InitializePasses.h"
+#include "llvm/Pass.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/BranchProbability.h"
-#include "llvm/Analysis/LoopInfo.h"
 
 namespace llvm {
 
@@ -46,10 +47,7 @@ public:
     initializeBranchProbabilityInfoPass(*PassRegistry::getPassRegistry());
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<LoopInfo>();
-    AU.setPreservesAll();
-  }
+  void getAnalysisUsage(AnalysisUsage &AU) const;
 
   bool runOnFunction(Function &F);
 
