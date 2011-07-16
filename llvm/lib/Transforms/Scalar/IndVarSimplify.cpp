@@ -81,15 +81,12 @@ static cl::opt<bool> DisableIVRewrite(
 
 namespace {
   class IndVarSimplify : public LoopPass {
-    typedef DenseMap< const SCEV *, AssertingVH<PHINode> > ExprToIVMapTy;
-
     IVUsers         *IU;
     LoopInfo        *LI;
     ScalarEvolution *SE;
     DominatorTree   *DT;
     TargetData      *TD;
 
-    ExprToIVMapTy ExprToIVMap;
     SmallVector<WeakVH, 16> DeadInsts;
     bool Changed;
   public:
@@ -120,7 +117,6 @@ namespace {
 
   private:
     virtual void releaseMemory() {
-      ExprToIVMap.clear();
       DeadInsts.clear();
     }
 
@@ -1409,13 +1405,14 @@ void IndVarSimplify::SimplifyIVUsersNoRewrite(Loop *L, SCEVExpander &Rewriter) {
 /// populate ExprToIVMap for use later.
 ///
 void IndVarSimplify::SimplifyCongruentIVs(Loop *L) {
+  DenseMap<const SCEV *, PHINode *> ExprToIVMap;
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I) {
     PHINode *Phi = cast<PHINode>(I);
     if (!SE->isSCEVable(Phi->getType()))
       continue;
 
     const SCEV *S = SE->getSCEV(Phi);
-    ExprToIVMapTy::const_iterator Pos;
+    DenseMap<const SCEV *, PHINode *>::const_iterator Pos;
     bool Inserted;
     tie(Pos, Inserted) = ExprToIVMap.insert(std::make_pair(S, Phi));
     if (Inserted)
@@ -1709,7 +1706,6 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   DT = &getAnalysis<DominatorTree>();
   TD = getAnalysisIfAvailable<TargetData>();
 
-  ExprToIVMap.clear();
   DeadInsts.clear();
   Changed = false;
 
@@ -1746,8 +1742,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!DisableIVRewrite)
     SimplifyIVUsers(Rewriter);
 
-  // Eliminate redundant IV cycles and populate ExprToIVMap.
-  // TODO: use ExprToIVMap to allow LFTR without canonical IVs
+  // Eliminate redundant IV cycles.
   if (DisableIVRewrite)
     SimplifyCongruentIVs(L);
 
@@ -1838,7 +1833,6 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // can be deleted in the loop below, causing the AssertingVH in the cache to
   // trigger.
   Rewriter.clear();
-  ExprToIVMap.clear();
 
   // Now that we're done iterating through lists, clean up any instructions
   // which are now dead.
