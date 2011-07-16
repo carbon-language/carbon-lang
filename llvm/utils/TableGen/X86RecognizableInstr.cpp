@@ -229,6 +229,30 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasFROperands    = hasFROperands();
   HasVEX_LPrefix   = has256BitOperands() || Rec->getValueAsBit("hasVEX_L");
   
+  // Check for 64-bit inst which does not require REX
+  Is64Bit = false;
+  // FIXME: Is there some better way to check for In64BitMode?
+  std::vector<Record*> Predicates = Rec->getValueAsListOfDefs("Predicates");
+  for (unsigned i = 0, e = Predicates.size(); i != e; ++i) {
+    if (Predicates[i]->getName().find("64Bit") != Name.npos) {
+      Is64Bit = true;
+      break;
+    }
+  }
+  // FIXME: These instructions aren't marked as 64-bit in any way
+  Is64Bit |= Rec->getName() == "JMP64pcrel32" || 
+             Rec->getName() == "MASKMOVDQU64" || 
+             Rec->getName() == "POPFS64" || 
+             Rec->getName() == "POPGS64" || 
+             Rec->getName() == "PUSHFS64" || 
+             Rec->getName() == "PUSHGS64" ||
+             Rec->getName() == "REX64_PREFIX" ||
+             Rec->getName().find("VMREAD64") != Name.npos ||
+             Rec->getName().find("VMWRITE64") != Name.npos ||
+             Rec->getName().find("MOV64") != Name.npos || 
+             Rec->getName().find("PUSH64") != Name.npos ||
+             Rec->getName().find("POP64") != Name.npos;
+
   ShouldBeEmitted  = true;
 }
   
@@ -276,7 +300,7 @@ InstructionContext RecognizableInstr::insnContext() const {
       insnContext = IC_VEX_XS;
     else
       insnContext = IC_VEX;
-  } else if (Name.find("64") != Name.npos || HasREX_WPrefix) {
+  } else if (Is64Bit || HasREX_WPrefix) {
     if (HasREX_WPrefix && HasOpSizePrefix)
       insnContext = IC_64BIT_REXW_OPSIZE;
     else if (HasOpSizePrefix)

@@ -1,0 +1,26 @@
+# RUN: llvm-mc --disassemble %s -triple=i686-apple-darwin9 | FileCheck %s
+
+# Coverage
+
+# CHECK: pushl
+0xff 0x34 0x24
+
+# CHECK: popl
+0x58
+
+# CHECK: calll
+0xff 0xd0
+
+# CHECK: incl
+0x40
+
+# CHECK: leave
+0xc9
+
+# PR8873: some instructions not recognized in 32-bit mode
+
+# CHECK: fld
+0xdd 0x04 0x24
+
+# CHECK: pshufb
+0x0f 0x38 0x00 0xc0
