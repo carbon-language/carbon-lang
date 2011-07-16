@@ -19,6 +19,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/STLExtras.h"
+
 using namespace llvm;
 
 /// ReuseOrCreateCast - Arrange for there to be a cast of V to Ty at IP,
@@ -848,6 +849,8 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
                                         const Loop *L,
                                         const Type *ExpandTy,
                                         const Type *IntTy) {
+  assert(!IVIncInsertLoop || IVIncInsertPos && "Uninitialized insert position");
+
   // Reuse a previously-inserted PHI, if present.
   for (BasicBlock::iterator I = L->getHeader()->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I)
@@ -872,13 +875,15 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
           // If any of the operands don't dominate the insert position, bail.
           // Addrec operands are always loop-invariant, so this can only happen
           // if there are instructions which haven't been hoisted.
-          for (User::op_iterator OI = IncV->op_begin()+1,
-               OE = IncV->op_end(); OI != OE; ++OI)
-            if (Instruction *OInst = dyn_cast<Instruction>(OI))
-              if (!SE.DT->dominates(OInst, IVIncInsertPos)) {
-                IncV = 0;
-                break;
-              }
+          if (L == IVIncInsertLoop) {
+            for (User::op_iterator OI = IncV->op_begin()+1,
+                   OE = IncV->op_end(); OI != OE; ++OI)
+              if (Instruction *OInst = dyn_cast<Instruction>(OI))
+                if (!SE.DT->dominates(OInst, IVIncInsertPos)) {
+                  IncV = 0;
+                  break;
+                }
+          }
           if (!IncV)
             break;
           // Advance to the next instruction.
@@ -919,6 +924,12 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
   // Expand code for the start value.
   Value *StartV = expandCodeFor(Normalized->getStart(), ExpandTy,
                                 L->getHeader()->begin());
+
+  // StartV must be hoisted into L's preheader to dominate the new phi.
+  Instruction *StartI = dyn_cast<Instruction>(StartV);
+  assert(!StartI || SE.DT->properlyDominates(StartI->getParent(),
+                                             L->getHeader()) && "");
+  (void)StartI;
 
   // Expand code for the step value. Insert instructions right before the
   // terminator corresponding to the back-edge. Do this before creating the PHI
