@@ -28,5 +28,3 @@ E: etherzhhb@gmail.com
 D: Co-founder
 D: scop detection, automake/cmake infrastructure, scopinfo, scoppasses, ...
 D: Google Summer of Code student 2010
-
-
