@@ -785,8 +785,7 @@ ArrayRef<unsigned> ConstantExpr::getIndices() const {
 }
 
 unsigned ConstantExpr::getPredicate() const {
-  assert(getOpcode() == Instruction::FCmp || 
-         getOpcode() == Instruction::ICmp);
+  assert(isCompare());
   return ((const CompareConstantExpr*)this)->predicate;
 }
 
@@ -1028,8 +1027,7 @@ bool ConstantArray::isCString() const {
 
 
 /// convertToString - Helper function for getAsString() and getAsCString().
-static std::string convertToString(const User *U, unsigned len)
-{
+static std::string convertToString(const User *U, unsigned len) {
   std::string Result;
   Result.reserve(len);
   for (unsigned i = 0; i != len; ++i)
@@ -1075,7 +1073,7 @@ void ConstantVector::destroyConstant() {
 
 /// This function will return true iff every element in this vector constant
 /// is set to all ones.
-/// @returns true iff this constant's emements are all set to all ones.
+/// @returns true iff this constant's elements are all set to all ones.
 /// @brief Determine if the value is all ones.
 bool ConstantVector::isAllOnesValue() const {
   // Check out first element.
@@ -1083,9 +1081,10 @@ bool ConstantVector::isAllOnesValue() const {
   const ConstantInt *CI = dyn_cast<ConstantInt>(Elt);
   if (!CI || !CI->isAllOnesValue()) return false;
   // Then make sure all remaining elements point to the same value.
-  for (unsigned I = 1, E = getNumOperands(); I < E; ++I) {
-    if (getOperand(I) != Elt) return false;
-  }
+  for (unsigned I = 1, E = getNumOperands(); I < E; ++I)
+    if (getOperand(I) != Elt)
+      return false;
+  
   return true;
 }
 
@@ -1096,7 +1095,8 @@ Constant *ConstantVector::getSplatValue() const {
   Constant *Elt = getOperand(0);
   // Then make sure all remaining elements point to the same value.
   for (unsigned I = 1, E = getNumOperands(); I < E; ++I)
-    if (getOperand(I) != Elt) return 0;
+    if (getOperand(I) != Elt)
+      return 0;
   return Elt;
 }
 
