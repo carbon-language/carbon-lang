@@ -167,6 +167,12 @@ public:
 
     bool
     HasConnection () const;
+    
+    lldb_private::Connection *
+    GetConnection ()
+    {
+        return m_connection_sp.get();
+    }
     //------------------------------------------------------------------
     /// Read bytes from the current connection.
     ///

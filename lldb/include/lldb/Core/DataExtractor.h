@@ -58,7 +58,8 @@ public:
     DumpHexBytes (Stream *s, 
                   const void *src, 
                   size_t src_len, 
-                  lldb::addr_t base_addr = LLDB_INVALID_ADDRESS);
+                  uint32_t bytes_per_line,
+                  lldb::addr_t base_addr); // Pass LLDB_INVALID_ADDRESS to not show address at start of line
     //------------------------------------------------------------------
     /// Default constructor.
     ///

@@ -208,7 +208,7 @@ ProcessMacOSX::CreateInstance (Target &target, Listener &listener)
 }
 
 bool
-ProcessMacOSX::CanDebug(Target &target)
+ProcessMacOSX::CanDebug(Target &target, bool plugin_specified_by_name)
 {
     // For now we are just making sure the file exists for a given module
     ModuleSP exe_module_sp(target.GetExecutableModule());

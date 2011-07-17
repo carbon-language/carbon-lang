@@ -141,15 +141,15 @@ public:
 
     
     bool
-    Connect (uint16_t reply_port, 
-             uint16_t exc_port, 
-             const char *greeting);
+    SendRequestConnect (uint16_t reply_port, 
+                        uint16_t exc_port, 
+                        const char *greeting);
 
     bool
-    Reattach (uint16_t reply_port);
+    SendRequestReattach (uint16_t reply_port);
 
     bool
-    Disconnect ();
+    SendRequestDisconnect ();
     
     uint32_t
     GetVersion ();

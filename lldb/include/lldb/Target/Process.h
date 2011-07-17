@@ -1169,7 +1169,8 @@ public:
     ///     debug the executable, \b false otherwise.
     //------------------------------------------------------------------
     virtual bool
-    CanDebug (Target &target) = 0;
+    CanDebug (Target &target,
+              bool plugin_specified_by_name) = 0;
 
 
     //------------------------------------------------------------------

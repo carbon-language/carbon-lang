@@ -102,7 +102,7 @@ CommunicationKDP::SendRequestAndGetReply (const CommandType command,
     Mutex::Locker locker(m_sequence_mutex);    
     if (SendRequestPacketNoLock(request_packet))
     {
-        if (WaitForPacketWithTimeoutMicroSecondsNoLock (reply_packet, m_packet_timeout))
+        if (WaitForPacketWithTimeoutMicroSecondsNoLock (reply_packet, GetPacketTimeoutInMicroSeconds ()))
         {
             uint32_t offset = 0;
             const uint8_t reply_command = reply_packet.GetU8 (&offset);
@@ -131,9 +131,11 @@ CommunicationKDP::SendRequestPacketNoLock (const PacketStreamType &request_packe
         {
             PacketStreamType log_strm;
             
-            DataExtractor::DumpHexBytes (&log_strm, packet_data, packet_size, 0);
+            DataExtractor::DumpHexBytes (&log_strm, packet_data, packet_size, UINT32_MAX, LLDB_INVALID_ADDRESS);
             
-            log->Printf("request packet: <%u>\n%s", packet_size, log_strm.GetData());
+            log->Printf("send kdp-packet: %.*s", 
+                        (uint32_t)log_strm.GetSize(), 
+                        log_strm.GetData());
         }
         ConnectionStatus status = eConnectionStatusSuccess;
 
@@ -239,7 +241,7 @@ CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, DataExtrac
         if (log && log->GetVerbose())
         {
             PacketStreamType log_strm;
-            DataExtractor::DumpHexBytes (&log_strm, src, src_len, 0);
+            DataExtractor::DumpHexBytes (&log_strm, src, src_len, UINT32_MAX, LLDB_INVALID_ADDRESS);
             log->Printf ("CommunicationKDP::%s adding %u bytes: %s",
                          __FUNCTION__, 
                          (uint32_t)src_len, 
@@ -292,6 +294,23 @@ CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, DataExtrac
                     // erase the bytes from our communcation buffer "m_bytes"
                     packet.SetData (DataBufferSP (new DataBufferHeap (&m_bytes[0], length)));
                     m_bytes.erase (0, length);
+                    
+                    if (log)
+                    {
+                        PacketStreamType log_strm;
+                        packet.Dump (&log_strm,             // Stream to dump to
+                                     0,                     // Offset into "packet"
+                                     eFormatBytes,          // Dump as hex bytes
+                                     1,                     // Size of each item is 1 for single bytes
+                                     length,                // Number of bytes
+                                     UINT32_MAX,            // Num bytes per line
+                                     LLDB_INVALID_ADDRESS,  // Base address
+                                     0, 0);                 // Bitfield info set to not do anything bitfield related
+                        
+                        log->Printf("recv kdp-packet: %.*s", 
+                                    (uint32_t)log_strm.GetSize(), 
+                                    log_strm.GetData());
+                    }
                     return true;
                 }
             }
@@ -313,22 +332,25 @@ CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, DataExtrac
 
 
 bool
-CommunicationKDP::Connect (uint16_t reply_port, 
-                           uint16_t exc_port, 
-                           const char *greeting)
+CommunicationKDP::SendRequestConnect (uint16_t reply_port, 
+                                      uint16_t exc_port, 
+                                      const char *greeting)
 {
     PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
     if (greeting == NULL)
         greeting = "";
 
     const CommandType command = eCommandTypeConnect;
-    // Length is 82 uint16_t and the length of the greeting C string
-    const uint32_t command_length = 8 + 2 + 2 + ::strlen(greeting);
+    // Length is 82 uint16_t and the length of the greeting C string with the terminating NULL
+    const uint32_t command_length = 8 + 2 + 2 + ::strlen(greeting) + 1;
     const uint32_t request_sequence_id = m_request_sequence_id;
     MakeRequestPacketHeader (command, request_packet, command_length);
-    request_packet.PutHex16(reply_port);
-    request_packet.PutHex16(exc_port);
-    request_packet.PutCString(greeting);
+    // Always send connect ports as little endian
+    request_packet.SetByteOrder (eByteOrderLittle);
+    request_packet.PutHex16 (reply_port);
+    request_packet.PutHex16 (exc_port);
+    request_packet.SetByteOrder (m_byte_order);
+    request_packet.PutCString (greeting);
     DataExtractor reply_packet;
     return SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet);
 }
@@ -345,7 +367,7 @@ CommunicationKDP::ClearKDPSettings ()
 }
 
 bool
-CommunicationKDP::Reattach (uint16_t reply_port)
+CommunicationKDP::SendRequestReattach (uint16_t reply_port)
 {
     PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
     const CommandType command = eCommandTypeReattach;
@@ -353,7 +375,10 @@ CommunicationKDP::Reattach (uint16_t reply_port)
     const uint32_t command_length = 8 + 2;
     const uint32_t request_sequence_id = m_request_sequence_id;
     MakeRequestPacketHeader (command, request_packet, command_length);
+    // Always send connect ports as little endian
+    request_packet.SetByteOrder (eByteOrderLittle);
     request_packet.PutHex16(reply_port);
+    request_packet.SetByteOrder (m_byte_order);
     DataExtractor reply_packet;
     if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
     {
@@ -448,7 +473,7 @@ CommunicationKDP::SendRequestHostInfo ()
 }
 
 bool
-CommunicationKDP::Disconnect ()
+CommunicationKDP::SendRequestDisconnect ()
 {
     PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
     const CommandType command = eCommandTypeDisconnect;

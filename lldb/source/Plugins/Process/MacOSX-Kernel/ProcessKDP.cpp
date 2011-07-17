@@ -13,6 +13,7 @@
 
 // C++ Includes
 // Other libraries and framework includes
+#include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
@@ -53,7 +54,7 @@ ProcessKDP::CreateInstance (Target &target, Listener &listener)
 }
 
 bool
-ProcessKDP::CanDebug(Target &target)
+ProcessKDP::CanDebug(Target &target, bool plugin_specified_by_name)
 {
     // For now we are just making sure the file exists for a given module
     ModuleSP exe_module_sp(target.GetExecutableModule());
@@ -68,8 +69,10 @@ ProcessKDP::CanDebug(Target &target)
                 exe_objfile->GetStrata() == ObjectFile::eStrataKernel)
                 return true;
         }
+        return false;
     }
-    return false;
+    // No target executable, assume we can debug if our plug-in was specified by name
+    return plugin_specified_by_name;
 }
 
 //----------------------------------------------------------------------
@@ -143,7 +146,63 @@ ProcessKDP::DoConnectRemote (const char *remote_url)
 {
     // TODO: fill in the remote connection to the remote KDP here!
     Error error;
-    error.SetErrorString ("attaching to a by process name not supported in kdp-remote plug-in");
+    
+    if (remote_url == NULL || remote_url[0] == '\0')
+        remote_url = "udp://localhost:41139";
+
+    std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
+    if (conn_ap.get())
+    {
+        // Only try once for now.
+        // TODO: check if we should be retrying?
+        const uint32_t max_retry_count = 1;
+        for (uint32_t retry_count = 0; retry_count < max_retry_count; ++retry_count)
+        {
+            if (conn_ap->Connect(remote_url, &error) == eConnectionStatusSuccess)
+                break;
+            usleep (100000);
+        }
+    }
+
+    if (conn_ap->IsConnected())
+    {
+        const uint16_t reply_port = conn_ap->GetReadPort ();
+
+        if (reply_port != 0)
+        {
+            m_comm.SetConnection(conn_ap.release());
+
+            if (m_comm.SendRequestReattach(reply_port))
+            {
+                if (m_comm.SendRequestConnect(reply_port, reply_port, "Greetings from LLDB..."))
+                {
+                    m_comm.GetVersion();
+                    uint32_t cpu = m_comm.GetCPUType();
+                    uint32_t sub = m_comm.GetCPUSubtype();
+                    ArchSpec kernel_arch;
+                    kernel_arch.SetArchitecture(eArchTypeMachO, cpu, sub);
+                    m_target.SetArchitecture(kernel_arch);
+                    // TODO: thread registers based off of architecture...
+                }
+            }
+            else
+            {
+                error.SetErrorString("KDP reattach failed");
+            }
+        }
+        else
+        {
+            error.SetErrorString("invalid reply port from UDP connection");
+        }
+    }
+    else
+    {
+        if (error.Success())
+            error.SetErrorStringWithFormat ("failed to connect to '%s'", remote_url);
+    }
+    if (error.Fail())
+        m_comm.Disconnect();
+
     return error;
 }
 
@@ -414,13 +473,19 @@ ProcessKDP::DoDetach()
     
     m_thread_list.DiscardThreadPlans();
     
-    size_t response_size = m_comm.Disconnect ();
-    if (log)
+    if (m_comm.IsConnected())
     {
-        if (response_size)
-            log->PutCString ("ProcessKDP::DoDetach() detach packet sent successfully");
-        else
-            log->PutCString ("ProcessKDP::DoDetach() detach packet send failed");
+
+        m_comm.SendRequestDisconnect();
+
+        size_t response_size = m_comm.Disconnect ();
+        if (log)
+        {
+            if (response_size)
+                log->PutCString ("ProcessKDP::DoDetach() detach packet sent successfully");
+            else
+                log->PutCString ("ProcessKDP::DoDetach() detach packet send failed");
+        }
     }
     // Sleep for one second to let the process get all detached...
     StopAsyncThread ();
@@ -446,6 +511,8 @@ ProcessKDP::DoDestroy ()
     // Interrupt if our inferior is running...
     if (m_comm.IsConnected())
     {
+        m_comm.SendRequestDisconnect();
+
         if (m_public_state.GetValue() == eStateAttaching)
         {
             // We are being asked to halt during an attach. We need to just close

@@ -45,6 +45,7 @@
 #include "Plugins/ObjectContainer/Universal-Mach-O/ObjectContainerUniversalMachO.h"
 #include "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h"
 #include "Plugins/Process/MacOSX-User/source/ProcessMacOSX.h"
+#include "Plugins/Process/MacOSX-Kernel/ProcessKDP.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemote.h"
 #include "Plugins/Platform/MacOSX/PlatformMacOSX.h"
 #include "Plugins/Platform/MacOSX/PlatformRemoteiOS.h"
@@ -102,6 +103,7 @@ lldb_private::Initialize ()
         AppleObjCRuntimeV1::Initialize();
         ObjectContainerUniversalMachO::Initialize();
         ObjectFileMachO::Initialize();
+        ProcessKDP::Initialize();
         ProcessGDBRemote::Initialize();
         //ProcessMacOSX::Initialize();
         SymbolVendorMacOSX::Initialize();
@@ -167,6 +169,7 @@ lldb_private::Terminate ()
     AppleObjCRuntimeV1::Terminate();
     ObjectContainerUniversalMachO::Terminate();
     ObjectFileMachO::Terminate();
+    ProcessKDP::Terminate();
     ProcessGDBRemote::Terminate();
     //ProcessMacOSX::Terminate();
     SymbolVendorMacOSX::Terminate();

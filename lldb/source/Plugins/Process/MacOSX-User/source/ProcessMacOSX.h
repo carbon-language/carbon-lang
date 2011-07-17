@@ -81,7 +81,8 @@ public:
     // Check if a given Process
     //------------------------------------------------------------------
     virtual bool
-    CanDebug (lldb_private::Target &target);
+    CanDebug (lldb_private::Target &target,
+              bool plugin_specified_by_name);
 
     //------------------------------------------------------------------
     // Creating a new process, or attaching to an existing one

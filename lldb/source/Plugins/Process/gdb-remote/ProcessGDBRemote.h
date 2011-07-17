@@ -66,7 +66,8 @@ public:
     // Check if a given Process
     //------------------------------------------------------------------
     virtual bool
-    CanDebug (lldb_private::Target &target);
+    CanDebug (lldb_private::Target &target,
+              bool plugin_specified_by_name);
 
 //    virtual uint32_t
 //    ListProcessesMatchingName (const char *name, lldb_private::StringList &matches, std::vector<lldb::pid_t> &pids);

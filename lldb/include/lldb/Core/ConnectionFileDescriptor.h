@@ -56,6 +56,16 @@ public:
            lldb::ConnectionStatus &status, 
            Error *error_ptr);
 
+    // If the read file descriptor is a socket, then return
+    // the port number that is being used by the socket.
+    in_port_t
+    GetReadPort () const;
+    
+    // If the write file descriptor is a socket, then return
+    // the port number that is being used by the socket.
+    in_port_t
+    GetWritePort () const;
+
 protected:
     
     lldb::ConnectionStatus
@@ -68,7 +78,7 @@ protected:
     ConnectTCP (const char *host_and_port, Error *error_ptr);
     
     lldb::ConnectionStatus
-    ConnectUDP (const char *host_and_port, Error *error_ptr);
+    ConnectUDP (const char *args, Error *error_ptr);
     
     lldb::ConnectionStatus
     NamedSocketAccept (const char *socket_name, Error *error_ptr);
@@ -85,13 +95,27 @@ protected:
         eFDTypeSocket,      // Socket requiring send/recv
         eFDTypeSocketUDP    // Unconnected UDP socket requiring sendto/recvfrom
     } FDType;
-    int m_fd;    // Socket we use to communicate once conn established
-    FDType m_fd_type;
-    struct sockaddr_storage m_udp_sockaddr;
-    socklen_t m_udp_sockaddr_len;
+    
+    typedef union sockaddr_tag
+    {
+        struct sockaddr         sa;
+        struct sockaddr_in      sa_ipv4;
+        struct sockaddr_in6     sa_ipv6;
+        struct sockaddr_storage sa_storage;
+    } sockaddr_t;
+    
+
+    int m_fd_send;
+    int m_fd_recv;
+    FDType m_fd_send_type;
+    FDType m_fd_recv_type;
+    sockaddr_t m_udp_send_sockaddr;
     bool m_should_close_fd; // True if this class should close the file descriptor when it goes away.
     uint32_t m_socket_timeout_usec;
     
+    static in_port_t
+    GetSocketPort (int fd);
+
     static int
     GetSocketOption(int fd, int level, int option_name, int &option_value);
 

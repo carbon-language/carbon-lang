@@ -549,7 +549,7 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
         if (create_callback)
         {
             std::auto_ptr<Process> debugger_ap(create_callback(target, listener));
-            if (debugger_ap->CanDebug(target))
+            if (debugger_ap->CanDebug(target, true))
                 return debugger_ap.release();
         }
     }
@@ -558,7 +558,7 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
         for (uint32_t idx = 0; (create_callback = PluginManager::GetProcessCreateCallbackAtIndex(idx)) != NULL; ++idx)
         {
             std::auto_ptr<Process> debugger_ap(create_callback(target, listener));
-            if (debugger_ap->CanDebug(target))
+            if (debugger_ap->CanDebug(target, false))
                 return debugger_ap.release();
         }
     }
