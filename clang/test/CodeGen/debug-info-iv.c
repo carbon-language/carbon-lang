@@ -26,7 +26,7 @@ int main() {
       Array[i][j] = 0;
   test_indvars(Array[0], Array);
 
-//CHECK:	.loc	2 30 3
+//CHECK:	.loc	2 30 8
   for (i=0; i < 100; i+=2)
     for (j=0; j < 200; j++)
       sum += Array[i][j];

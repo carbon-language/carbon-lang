@@ -1740,9 +1740,11 @@ void CGDebugInfo::EmitStopPoint(CGBuilderTy &Builder) {
   // Don't bother if things are the same as last time.
   SourceManager &SM = CGM.getContext().getSourceManager();
   if (CurLoc == PrevLoc
-       || (SM.getInstantiationLineNumber(CurLoc) ==
-           SM.getInstantiationLineNumber(PrevLoc)
-           && SM.isFromSameFile(CurLoc, PrevLoc)))
+      || ((SM.getInstantiationLineNumber(CurLoc)
+           == SM.getInstantiationLineNumber(PrevLoc))
+          && (SM.getInstantiationColumnNumber(CurLoc) 
+              == SM.getInstantiationColumnNumber(PrevLoc))
+          && SM.isFromSameFile(CurLoc, PrevLoc)))
     // New Builder may not be in sync with CGDebugInfo.
     if (!Builder.getCurrentDebugLocation().isUnknown())
       return;
