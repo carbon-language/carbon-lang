@@ -649,6 +649,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("is_trivially_copyable", LangOpts.CPlusPlus)
            .Case("is_union", LangOpts.CPlusPlus)
            .Case("tls", PP.getTargetInfo().isTLSSupported())
+           .Case("underlying_type", LangOpts.CPlusPlus)
            .Default(false);
 }
 
