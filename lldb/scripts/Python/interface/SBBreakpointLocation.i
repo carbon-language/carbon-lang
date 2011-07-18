@@ -1,4 +1,4 @@
-//===-- SBBreakpointLocation.h ----------------------------------*- C++ -*-===//
+//===-- SWIG Interface for SBBreakpointLocation -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_SBBreakpointLocation_h_
-#define LLDB_SBBreakpointLocation_h_
-
-#include "lldb/API/SBDefines.h"
-#include "lldb/API/SBBreakpoint.h"
-
 namespace lldb {
 
+%feature("docstring",
+"Represents one unique instance (by address) of a logical breakpoint.
+
+A breakpoint location is defined by the breakpoint that produces it,
+and the address that resulted in this particular instantiation.
+Each breakpoint location has its settable options.
+
+SBBreakpoint contains SBBreakpointLocation(s). See docstring of SBBreakpoint
+for retrieval of an SBBreakpointLocation from an SBBreakpoint."
+) SBBreakpointLocation;
 class SBBreakpointLocation
 {
 public:
@@ -24,11 +28,6 @@ public:
     SBBreakpointLocation (const lldb::SBBreakpointLocation &rhs);
 
     ~SBBreakpointLocation ();
-
-#ifndef SWIG
-    const lldb::SBBreakpointLocation &
-    operator = (const lldb::SBBreakpointLocation &rhs);
-#endif
 
     bool
     IsValid() const;
@@ -86,22 +85,6 @@ public:
 
     SBBreakpoint
     GetBreakpoint ();
-
-#ifndef SWIG
-    SBBreakpointLocation (const lldb::BreakpointLocationSP &break_loc_sp);
-#endif
-
-private:
-    friend class SBBreakpoint;
-    friend class lldb_private::ScriptInterpreterPython;
-    
-    void
-    SetLocation (const lldb::BreakpointLocationSP &break_loc_sp);
-
-    lldb::BreakpointLocationSP m_opaque_sp;
-
 };
 
 } // namespace lldb
-
-#endif  // LLDB_SBBreakpointLocation_h_

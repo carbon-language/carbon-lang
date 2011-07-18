@@ -14,16 +14,8 @@
 
 namespace lldb {
 
-#ifdef SWIG
-%feature("docstring",
-         "Represents a lexical block. SBFunction contains SBBlock(s)."
-         ) SBBlock;
-#endif
 class SBBlock
 {
-#ifdef SWIG
-    %feature("autodoc", "1");
-#endif
 public:
 
     SBBlock ();
@@ -37,68 +29,30 @@ public:
     operator = (const lldb::SBBlock &rhs);
 #endif
 
-#ifdef SWIG
-    %feature("docstring",
-             "Does this block represent an inlined function?"
-             ) IsInlined;
-#endif
     bool
     IsInlined () const;
 
     bool
     IsValid () const;
 
-#ifdef SWIG
-    %feature("autodoc",
-             "Get the function name if this block represents an inlined function;\n"
-             "otherwise, return None."
-             ) GetInlinedName;
-#endif
     const char *
     GetInlinedName () const;
 
-#ifdef SWIG
-    %feature("docstring",
-             "Get the call site file if this block represents an inlined function;\n"
-             "otherwise, return an invalid file spec."
-             ) GetInlinedCallSiteFile;
-#endif
     lldb::SBFileSpec
     GetInlinedCallSiteFile () const;
 
-#ifdef SWIG
-    %feature("docstring",
-             "Get the call site line if this block represents an inlined function;\n"
-             "otherwise, return 0."
-             ) GetInlinedCallSiteLine;
-#endif
     uint32_t 
     GetInlinedCallSiteLine () const;
 
-#ifdef SWIG
-    %feature("docstring",
-             "Get the call site column if this block represents an inlined function;\n"
-             "otherwise, return 0."
-             ) GetInlinedCallSiteColumn;
-#endif
     uint32_t
     GetInlinedCallSiteColumn () const;
 
-#ifdef SWIG
-    %feature("docstring", "Get the parent block.") GetParent;
-#endif
     lldb::SBBlock
     GetParent ();
     
-#ifdef SWIG
-    %feature("docstring", "Get the sibling block for this block.") GetSibling;
-#endif
     lldb::SBBlock
     GetSibling ();
     
-#ifdef SWIG
-    %feature("docstring", "Get the first child block.") GetFirstChild;
-#endif
     lldb::SBBlock
     GetFirstChild ();
 
