@@ -370,7 +370,8 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Install a MachineModuleInfo class, which is an immutable pass that holds
   // all the per-module stuff we're generating, including MCContext.
   TargetAsmInfo *TAI = new TargetAsmInfo(*this);
-  MachineModuleInfo *MMI = new MachineModuleInfo(*getMCAsmInfo(), TAI);
+  MachineModuleInfo *MMI = new MachineModuleInfo(*getMCAsmInfo(),
+                                                 *getRegisterInfo(), TAI);
   PM.add(MMI);
   OutContext = &MMI->getContext(); // Return the MCContext specifically by-ref.
 

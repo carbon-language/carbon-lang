@@ -27,6 +27,7 @@ class MCContext;
 class MCAsmInfo;
 class MCDisassembler;
 class MCInstPrinter; 
+class MCRegisterInfo;
 class Target;
 class TargetMachine;
 
@@ -58,6 +59,8 @@ private:
   const Target *TheTarget;
   // The assembly information for the target architecture.
   llvm::OwningPtr<const llvm::MCAsmInfo> MAI;
+  // The register information for the target architecture.
+  llvm::OwningPtr<const llvm::MCRegisterInfo> MRI;
   // The target machine instance.
   llvm::OwningPtr<llvm::TargetMachine> TM;
   // The disassembler for the target architecture.
@@ -76,6 +79,7 @@ public:
                     LLVMOpInfoCallback getOpInfo,
                     LLVMSymbolLookupCallback symbolLookUp,
                     const Target *theTarget, const MCAsmInfo *mAI,
+                    const MCRegisterInfo *mRI,
                     llvm::TargetMachine *tM, const TargetAsmInfo *tai,
                     llvm::MCContext *ctx, const MCDisassembler *disAsm,
                     MCInstPrinter *iP) : TripleName(tripleName),
@@ -83,6 +87,7 @@ public:
                     SymbolLookUp(symbolLookUp), TheTarget(theTarget), Tai(tai) {
     TM.reset(tM);
     MAI.reset(mAI);
+    MRI.reset(mRI);
     Ctx.reset(ctx);
     DisAsm.reset(disAsm);
     IP.reset(iP);

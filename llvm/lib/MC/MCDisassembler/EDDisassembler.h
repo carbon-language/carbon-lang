@@ -29,22 +29,23 @@
 
 namespace llvm {
 class AsmLexer;
+class AsmParser;
 class AsmToken;
 class MCContext;
 class MCAsmInfo;
 class MCAsmLexer;
-class AsmParser;
-class TargetAsmLexer;
-class TargetAsmParser;
 class MCDisassembler;
 class MCInstPrinter;
 class MCInst;
 class MCParsedAsmOperand;
+class MCRegisterInfo;
 class MCStreamer;
 class MCSubtargetInfo;
 template <typename T> class SmallVectorImpl;
 class SourceMgr;
 class Target;
+class TargetAsmLexer;
+class TargetAsmParser;
 class TargetMachine;
 class TargetRegisterInfo;
 
@@ -140,6 +141,8 @@ struct EDDisassembler {
   llvm::OwningPtr<llvm::TargetMachine> TargetMachine;
   /// The assembly information for the target architecture
   llvm::OwningPtr<const llvm::MCAsmInfo> AsmInfo;
+  // The register information for the target architecture.
+  llvm::OwningPtr<const llvm::MCRegisterInfo> MRI;
   /// The disassembler for the target architecture
   llvm::OwningPtr<const llvm::MCDisassembler> Disassembler;
   /// The output string for the instruction printer; must be guarded with 

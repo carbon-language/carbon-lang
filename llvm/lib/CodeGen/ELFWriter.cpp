@@ -51,6 +51,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -65,7 +66,8 @@ char ELFWriter::ID = 0;
 
 ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
   : MachineFunctionPass(ID), O(o), TM(tm),
-    OutContext(*new MCContext(*TM.getMCAsmInfo(), new TargetAsmInfo(tm))),
+    OutContext(*new MCContext(*TM.getMCAsmInfo(), *TM.getRegisterInfo(),
+                              new TargetAsmInfo(tm))),
     TLOF(TM.getTargetLowering()->getObjFileLowering()),
     is64Bit(TM.getTargetData()->getPointerSizeInBits() == 64),
     isLittleEndian(TM.getTargetData()->isLittleEndian()),

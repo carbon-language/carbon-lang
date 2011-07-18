@@ -37,7 +37,7 @@ using namespace llvm;
 
 BlackfinRegisterInfo::BlackfinRegisterInfo(BlackfinSubtarget &st,
                                            const TargetInstrInfo &tii)
-  : BlackfinGenRegisterInfo(), Subtarget(st), TII(tii) {}
+  : BlackfinGenRegisterInfo(BF::RETS), Subtarget(st), TII(tii) {}
 
 const unsigned*
 BlackfinRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
@@ -327,10 +327,6 @@ BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 }
 
-unsigned BlackfinRegisterInfo::getRARegister() const {
-  return BF::RETS;
-}
-
 unsigned
 BlackfinRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
@@ -346,15 +342,4 @@ unsigned BlackfinRegisterInfo::getEHExceptionRegister() const {
 unsigned BlackfinRegisterInfo::getEHHandlerRegister() const {
   llvm_unreachable("What is the exception handler register");
   return 0;
-}
-
-int BlackfinRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  llvm_unreachable("What is the dwarf register number");
-  return -1;
-}
-
-int BlackfinRegisterInfo::getLLVMRegNum(unsigned DwarfRegNum,
-                                        bool isEH) const {
-  llvm_unreachable("What is the dwarf register number");
-  return -1;
 }

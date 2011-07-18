@@ -44,7 +44,7 @@ using namespace llvm;
 
 MBlazeRegisterInfo::
 MBlazeRegisterInfo(const MBlazeSubtarget &ST, const TargetInstrInfo &tii)
-  : MBlazeGenRegisterInfo(), Subtarget(ST), TII(tii) {}
+  : MBlazeGenRegisterInfo(MBlaze::R15), Subtarget(ST), TII(tii) {}
 
 /// getRegisterNumbering - Given the enum value for some register, e.g.
 /// MBlaze::R0, return the number that it corresponds to (e.g. 0).
@@ -334,10 +334,6 @@ processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
     MFI->setObjectOffset(MBlazeFI->getGPFI(), MBlazeFI->getGPStackOffset());
 }
 
-unsigned MBlazeRegisterInfo::getRARegister() const {
-  return MBlaze::R15;
-}
-
 unsigned MBlazeRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 
@@ -352,12 +348,4 @@ unsigned MBlazeRegisterInfo::getEHExceptionRegister() const {
 unsigned MBlazeRegisterInfo::getEHHandlerRegister() const {
   llvm_unreachable("What is the exception handler register");
   return 0;
-}
-
-int MBlazeRegisterInfo::getDwarfRegNum(unsigned RegNo, bool isEH) const {
-  return MBlazeGenRegisterInfo::getDwarfRegNumFull(RegNo,0);
-}
-
-int MBlazeRegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
-  return MBlazeGenRegisterInfo::getLLVMRegNumFull(DwarfRegNo,0);
 }

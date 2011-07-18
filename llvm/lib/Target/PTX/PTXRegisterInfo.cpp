@@ -24,7 +24,8 @@ using namespace llvm;
 
 PTXRegisterInfo::PTXRegisterInfo(PTXTargetMachine &TM,
                                  const TargetInstrInfo &TII)
-  : PTXGenRegisterInfo() {
+  // PTX does not have a return address register.
+  : PTXGenRegisterInfo(0) {
 }
 
 void PTXRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,

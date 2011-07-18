@@ -485,11 +485,11 @@ static void EmitPersonality(MCStreamer &streamer, const MCSymbol &symbol,
 }
 
 static const MachineLocation TranslateMachineLocation(
-                                                  const TargetAsmInfo &TAI,
+                                                  const MCRegisterInfo &MRI,
                                                   const MachineLocation &Loc) {
   unsigned Reg = Loc.getReg() == MachineLocation::VirtualFP ?
     MachineLocation::VirtualFP :
-    unsigned(TAI.getDwarfRegNum(Loc.getReg(), true));
+    unsigned(MRI.getDwarfRegNum(Loc.getReg(), true));
   const MachineLocation &NewLoc = Loc.isReg() ?
     MachineLocation(Reg) : MachineLocation(Reg, Loc.getOffset());
   return NewLoc;
@@ -771,6 +771,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
                                           const MCSymbol *lsda,
                                           unsigned lsdaEncoding) {
   MCContext &context = streamer.getContext();
+  const MCRegisterInfo &MRI = context.getRegisterInfo();
   const TargetAsmInfo &TAI = context.getTargetAsmInfo();
   bool verboseAsm = streamer.isVerboseAsm();
 
@@ -824,7 +825,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
 
   // Return Address Register
   if (verboseAsm) streamer.AddComment("CIE Return Address Column");
-  streamer.EmitULEB128IntValue(TAI.getDwarfRARegNum(true));
+  streamer.EmitULEB128IntValue(MRI.getDwarfRegNum(MRI.getRARegister(), true));
 
   // Augmentation Data Length (optional)
 
@@ -870,9 +871,9 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   for (int i = 0, n = Moves.size(); i != n; ++i) {
     MCSymbol *Label = Moves[i].getLabel();
     const MachineLocation &Dst =
-      TranslateMachineLocation(TAI, Moves[i].getDestination());
+      TranslateMachineLocation(MRI, Moves[i].getDestination());
     const MachineLocation &Src =
-      TranslateMachineLocation(TAI, Moves[i].getSource());
+      TranslateMachineLocation(MRI, Moves[i].getSource());
     MCCFIInstruction Inst(Label, Dst, Src);
     Instructions.push_back(Inst);
   }

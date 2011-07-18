@@ -91,6 +91,117 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
   OS << "#endif // GET_REGINFO_ENUM\n\n";
 }
 
+void
+RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
+                                    const std::vector<CodeGenRegister*> &Regs,
+                                    bool isCtor) {
+
+  // Collect all information about dwarf register numbers
+  typedef std::map<Record*, std::vector<int64_t>, LessRecord> DwarfRegNumsMapTy;
+  DwarfRegNumsMapTy DwarfRegNums;
+
+  // First, just pull all provided information to the map
+  unsigned maxLength = 0;
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    Record *Reg = Regs[i]->TheDef;
+    std::vector<int64_t> RegNums = Reg->getValueAsListOfInts("DwarfNumbers");
+    maxLength = std::max((size_t)maxLength, RegNums.size());
+    if (DwarfRegNums.count(Reg))
+      errs() << "Warning: DWARF numbers for register " << getQualifiedName(Reg)
+             << "specified multiple times\n";
+    DwarfRegNums[Reg] = RegNums;
+  }
+
+  if (!maxLength)
+    return;
+
+  // Now we know maximal length of number list. Append -1's, where needed
+  for (DwarfRegNumsMapTy::iterator
+       I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I)
+    for (unsigned i = I->second.size(), e = maxLength; i != e; ++i)
+      I->second.push_back(-1);
+
+  // Emit reverse information about the dwarf register numbers.
+  for (unsigned j = 0; j < 2; ++j) {
+    OS << "  switch (";
+    if (j == 0)
+      OS << "DwarfFlavour";
+    else
+      OS << "EHFlavour";
+    OS << ") {\n"
+     << "  default:\n"
+     << "    assert(0 && \"Unknown DWARF flavour\");\n"
+     << "    break;\n";
+
+    for (unsigned i = 0, e = maxLength; i != e; ++i) {
+      OS << "  case " << i << ":\n";
+      for (DwarfRegNumsMapTy::iterator
+             I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
+        int DwarfRegNo = I->second[i];
+        if (DwarfRegNo < 0)
+          continue;
+        OS << "    ";
+        if (!isCtor)
+          OS << "RI->";
+        OS << "mapDwarfRegToLLVMReg(" << DwarfRegNo << ", "
+           << getQualifiedName(I->first) << ", ";
+        if (j == 0)
+          OS << "false";
+        else
+          OS << "true";
+        OS << " );\n";
+      }
+      OS << "    break;\n";
+    }
+    OS << "  }\n";
+  }
+
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    Record *Reg = Regs[i]->TheDef;
+    const RecordVal *V = Reg->getValue("DwarfAlias");
+    if (!V || !V->getValue())
+      continue;
+
+    DefInit *DI = dynamic_cast<DefInit*>(V->getValue());
+    Record *Alias = DI->getDef();
+    DwarfRegNums[Reg] = DwarfRegNums[Alias];
+  }
+
+  // Emit information about the dwarf register numbers.
+  for (unsigned j = 0; j < 2; ++j) {
+    OS << "  switch (";
+    if (j == 0)
+      OS << "DwarfFlavour";
+    else
+      OS << "EHFlavour";
+    OS << ") {\n"
+       << "  default:\n"
+       << "    assert(0 && \"Unknown DWARF flavour\");\n"
+       << "    break;\n";
+
+    for (unsigned i = 0, e = maxLength; i != e; ++i) {
+      OS << "  case " << i << ":\n";
+      // Sort by name to get a stable order.
+      for (DwarfRegNumsMapTy::iterator
+             I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
+        int RegNo = I->second[i];
+        OS << "    ";
+        if (!isCtor)
+          OS << "RI->";
+        OS << "mapLLVMRegToDwarfReg(" << getQualifiedName(I->first) << ", "
+           <<  RegNo << ", ";
+        if (j == 0)
+          OS << "false";
+        else
+          OS << "true";
+        OS << " );\n";
+      }
+      OS << "    break;\n";
+    }
+    OS << "  }\n";
+  }
+}
+
 //
 // runMCDesc - Print out MC register descriptions.
 //
@@ -188,9 +299,15 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // MCRegisterInfo initialization routine.
   OS << "static inline void Init" << TargetName
-     << "MCRegisterInfo(MCRegisterInfo *RI) {\n";
+     << "MCRegisterInfo(MCRegisterInfo *RI, unsigned RA, "
+     << "unsigned DwarfFlavour = 0, unsigned EHFlavour = 0) {\n";
   OS << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
-     << Regs.size()+1 << ");\n}\n\n";
+     << Regs.size()+1 << ", RA);\n\n";
+
+  EmitRegMapping(OS, Regs, false);
+
+  OS << "}\n\n";
+
 
   OS << "} // End llvm namespace \n";
   OS << "#endif // GET_REGINFO_MC_DESC\n\n";
@@ -213,12 +330,8 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
   OS << "namespace llvm {\n\n";
 
   OS << "struct " << ClassName << " : public TargetRegisterInfo {\n"
-     << "  explicit " << ClassName << "();\n"
-     << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
-     << "unsigned Flavour) const;\n"
-     << "  virtual int getLLVMRegNumFull(unsigned DwarfRegNum, "
-     << "unsigned Flavour) const;\n"
-     << "  virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const = 0;\n"
+     << "  explicit " << ClassName
+     << "(unsigned RA, unsigned D = 0, unsigned E = 0);\n"
      << "  virtual bool needsStackRealignment(const MachineFunction &) const\n"
      << "     { return false; }\n"
      << "  unsigned getSubReg(unsigned RegNo, unsigned Index) const;\n"
@@ -662,102 +775,16 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "extern MCRegisterDesc " << TargetName << "RegDesc[];\n";
 
   OS << ClassName << "::" << ClassName
-     << "()\n"
+     << "(unsigned RA, unsigned DwarfFlavour, unsigned EHFlavour)\n"
      << "  : TargetRegisterInfo(" << TargetName << "RegInfoDesc"
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n"
      << "                 " << TargetName << "SubRegIndexTable) {\n"
      << "  InitMCRegisterInfo(" << TargetName << "RegDesc, "
-     << Regs.size()+1 << ");\n"
-     << "}\n\n";
+     << Regs.size()+1 << ", RA);\n\n";
 
-  // Collect all information about dwarf register numbers
-  typedef std::map<Record*, std::vector<int64_t>, LessRecord> DwarfRegNumsMapTy;
-  DwarfRegNumsMapTy DwarfRegNums;
+  EmitRegMapping(OS, Regs, true);
 
-  // First, just pull all provided information to the map
-  unsigned maxLength = 0;
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    Record *Reg = Regs[i]->TheDef;
-    std::vector<int64_t> RegNums = Reg->getValueAsListOfInts("DwarfNumbers");
-    maxLength = std::max((size_t)maxLength, RegNums.size());
-    if (DwarfRegNums.count(Reg))
-      errs() << "Warning: DWARF numbers for register " << getQualifiedName(Reg)
-             << "specified multiple times\n";
-    DwarfRegNums[Reg] = RegNums;
-  }
-
-  // Now we know maximal length of number list. Append -1's, where needed
-  for (DwarfRegNumsMapTy::iterator
-       I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I)
-    for (unsigned i = I->second.size(), e = maxLength; i != e; ++i)
-      I->second.push_back(-1);
-
-  // Emit reverse information about the dwarf register numbers.
-  OS << "int " << ClassName << "::getLLVMRegNumFull(unsigned DwarfRegNum, "
-     << "unsigned Flavour) const {\n"
-     << "  switch (Flavour) {\n"
-     << "  default:\n"
-     << "    assert(0 && \"Unknown DWARF flavour\");\n"
-     << "    return -1;\n";
-
-  for (unsigned i = 0, e = maxLength; i != e; ++i) {
-    OS << "  case " << i << ":\n"
-       << "    switch (DwarfRegNum) {\n"
-       << "    default:\n"
-       << "      assert(0 && \"Invalid DwarfRegNum\");\n"
-       << "      return -1;\n";
-
-    for (DwarfRegNumsMapTy::iterator
-           I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
-      int DwarfRegNo = I->second[i];
-      if (DwarfRegNo >= 0)
-        OS << "    case " <<  DwarfRegNo << ":\n"
-           << "      return " << getQualifiedName(I->first) << ";\n";
-    }
-    OS << "    };\n";
-  }
-
-  OS << "  };\n}\n\n";
-
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    Record *Reg = Regs[i]->TheDef;
-    const RecordVal *V = Reg->getValue("DwarfAlias");
-    if (!V || !V->getValue())
-      continue;
-
-    DefInit *DI = dynamic_cast<DefInit*>(V->getValue());
-    Record *Alias = DI->getDef();
-    DwarfRegNums[Reg] = DwarfRegNums[Alias];
-  }
-
-  // Emit information about the dwarf register numbers.
-  OS << "int " << ClassName << "::getDwarfRegNumFull(unsigned RegNum, "
-     << "unsigned Flavour) const {\n"
-     << "  switch (Flavour) {\n"
-     << "  default:\n"
-     << "    assert(0 && \"Unknown DWARF flavour\");\n"
-     << "    return -1;\n";
-
-  for (unsigned i = 0, e = maxLength; i != e; ++i) {
-    OS << "  case " << i << ":\n"
-       << "    switch (RegNum) {\n"
-       << "    default:\n"
-       << "      assert(0 && \"Invalid RegNum\");\n"
-       << "      return -1;\n";
-
-    // Sort by name to get a stable order.
-
-
-    for (DwarfRegNumsMapTy::iterator
-           I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
-      int RegNo = I->second[i];
-      OS << "    case " << getQualifiedName(I->first) << ":\n"
-         << "      return " << RegNo << ";\n";
-    }
-    OS << "    };\n";
-  }
-
-  OS << "  };\n}\n\n";
+  OS << "}\n\n";
 
   OS << "} // End llvm namespace \n";
   OS << "#endif // GET_REGINFO_TARGET_DESC\n\n";

@@ -39,6 +39,17 @@ extern "C" void LLVMInitializeCellSPUMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheCellSPUTarget, createSPUMCInstrInfo);
 }
 
+static MCRegisterInfo *createCellSPUMCRegisterInfo(StringRef TT) {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitSPUMCRegisterInfo(X, SPU::R0);
+  return X;
+}
+
+extern "C" void LLVMInitializeCellSPUMCRegisterInfo() {
+  TargetRegistry::RegisterMCRegInfo(TheCellSPUTarget,
+                                    createCellSPUMCRegisterInfo);
+}
+
 static MCSubtargetInfo *createSPUMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                  StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();

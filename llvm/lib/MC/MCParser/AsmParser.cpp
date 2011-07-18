@@ -2416,7 +2416,7 @@ bool GenericAsmParser::ParseRegisterOrRegisterNumber(int64_t &Register,
     if (getParser().getTargetParser().ParseRegister(RegNo, DirectiveLoc,
       DirectiveLoc))
       return true;
-    Register = getContext().getTargetAsmInfo().getDwarfRegNum(RegNo, true);
+    Register = getContext().getRegisterInfo().getDwarfRegNum(RegNo, true);
   } else
     return getParser().ParseAbsoluteExpression(Register);
 

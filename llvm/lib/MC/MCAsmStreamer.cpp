@@ -15,6 +15,7 @@
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -827,8 +828,8 @@ void MCAsmStreamer::EmitCFIEndProc() {
 
 void MCAsmStreamer::EmitRegisterName(int64_t Register) {
   if (InstPrinter && !MAI.useDwarfRegNumForCFI()) {
-    const TargetAsmInfo &TAI = getContext().getTargetAsmInfo();
-    unsigned LLVMRegister = TAI.getLLVMRegNum(Register, true);
+    const MCRegisterInfo &MRI = getContext().getRegisterInfo();
+    unsigned LLVMRegister = MRI.getLLVMRegNum(Register, true);
     InstPrinter->printRegName(OS, LLVMRegister);
   } else {
     OS << Register;

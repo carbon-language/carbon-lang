@@ -170,7 +170,8 @@ public:
 
   MachineModuleInfo();  // DUMMY CONSTRUCTOR, DO NOT CALL.
   // Real constructor.
-  MachineModuleInfo(const MCAsmInfo &MAI, const TargetAsmInfo *TAI);
+  MachineModuleInfo(const MCAsmInfo &MAI, const MCRegisterInfo &MRI,
+                    const TargetAsmInfo *TAI);
   ~MachineModuleInfo();
 
   bool doInitialization();

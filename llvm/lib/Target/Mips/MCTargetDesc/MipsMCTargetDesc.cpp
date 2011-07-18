@@ -39,6 +39,16 @@ extern "C" void LLVMInitializeMipsMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheMipsTarget, createMipsMCInstrInfo);
 }
 
+static MCRegisterInfo *createMipsMCRegisterInfo(StringRef TT) {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitMipsMCRegisterInfo(X, Mips::RA);
+  return X;
+}
+
+extern "C" void LLVMInitializeMipsMCRegisterInfo() {
+  TargetRegistry::RegisterMCRegInfo(TheMipsTarget, createMipsMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheMipselTarget, createMipsMCRegisterInfo);
+}
 
 static MCSubtargetInfo *createMipsMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                   StringRef FS) {

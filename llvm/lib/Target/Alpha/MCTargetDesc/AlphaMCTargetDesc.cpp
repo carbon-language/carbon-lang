@@ -40,6 +40,16 @@ extern "C" void LLVMInitializeAlphaMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheAlphaTarget, createAlphaMCInstrInfo);
 }
 
+static MCRegisterInfo *createAlphaMCRegisterInfo(StringRef TT) {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitAlphaMCRegisterInfo(X, Alpha::R26);
+  return X;
+}
+
+extern "C" void LLVMInitializeAlphaMCRegisterInfo() {
+  TargetRegistry::RegisterMCRegInfo(TheAlphaTarget, createAlphaMCRegisterInfo);
+}
+
 static MCSubtargetInfo *createAlphaMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                    StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();

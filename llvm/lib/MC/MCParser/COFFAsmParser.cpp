@@ -12,10 +12,10 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Support/COFF.h"
 using namespace llvm;
@@ -401,11 +401,15 @@ bool COFFAsmParser::ParseAtUnwindOrAtExcept(bool &unwind, bool &except) {
 bool COFFAsmParser::ParseSEHRegisterNumber(unsigned &RegNo) {
   SMLoc startLoc = getLexer().getLoc();
   if (getLexer().is(AsmToken::Percent)) {
-    const TargetAsmInfo &TAI = getContext().getTargetAsmInfo();
+    const MCRegisterInfo &MRI = getContext().getRegisterInfo();
     SMLoc endLoc;
     unsigned LLVMRegNo;
     if (getParser().getTargetParser().ParseRegister(LLVMRegNo,startLoc,endLoc))
       return true;
+
+#if 0
+    // FIXME: TargetAsmInfo::getCalleeSavedRegs() commits a serious layering
+    // violation so this validation code is disabled.
 
     // Check that this is a non-volatile register.
     const unsigned *NVRegs = TAI.getCalleeSavedRegs();
@@ -415,8 +419,9 @@ bool COFFAsmParser::ParseSEHRegisterNumber(unsigned &RegNo) {
         break;
     if (NVRegs[i] == 0)
       return Error(startLoc, "expected non-volatile register");
+#endif
 
-    int SEHRegNo = TAI.getSEHRegNum(LLVMRegNo);
+    int SEHRegNo = MRI.getSEHRegNum(LLVMRegNo);
     if (SEHRegNo < 0)
       return Error(startLoc,"register can't be represented in SEH unwind info");
     RegNo = SEHRegNo;

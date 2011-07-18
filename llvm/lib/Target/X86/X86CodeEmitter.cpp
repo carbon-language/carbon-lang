@@ -98,8 +98,6 @@ namespace {
     void emitMemModRMByte(const MachineInstr &MI,
                           unsigned Op, unsigned RegOpcodeField,
                           intptr_t PCAdj = 0);
-
-    unsigned getX86RegNum(unsigned RegNo) const;
   };
 
 template<class CodeEmitter>
@@ -346,11 +344,6 @@ void Emitter<CodeEmitter>::emitJumpTableAddress(unsigned JTI, unsigned Reloc,
     MCE.emitWordLE(0);
 }
 
-template<class CodeEmitter>
-unsigned Emitter<CodeEmitter>::getX86RegNum(unsigned RegNo) const {
-  return X86RegisterInfo::getX86RegNum(RegNo);
-}
-
 inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
                                       unsigned RM) {
   assert(Mod < 4 && RegOpcode < 8 && RM < 8 && "ModRM Fields out of range!");
@@ -360,7 +353,7 @@ inline static unsigned char ModRMByte(unsigned Mod, unsigned RegOpcode,
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitRegModRMByte(unsigned ModRMReg,
                                             unsigned RegOpcodeFld){
-  MCE.emitByte(ModRMByte(3, RegOpcodeFld, getX86RegNum(ModRMReg)));
+  MCE.emitByte(ModRMByte(3, RegOpcodeFld, X86_MC::getX86RegNum(ModRMReg)));
 }
 
 template<class CodeEmitter>
@@ -498,7 +491,7 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
   // 2-7) and absolute references.
   unsigned BaseRegNo = -1U;
   if (BaseReg != 0 && BaseReg != X86::RIP)
-    BaseRegNo = getX86RegNum(BaseReg);
+    BaseRegNo = X86_MC::getX86RegNum(BaseReg);
 
   if (// The SIB byte must be used if there is an index register.
       IndexReg.getReg() == 0 && 
@@ -574,15 +567,15 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
     // Manual 2A, table 2-7. The displacement has already been output.
     unsigned IndexRegNo;
     if (IndexReg.getReg())
-      IndexRegNo = getX86RegNum(IndexReg.getReg());
+      IndexRegNo = X86_MC::getX86RegNum(IndexReg.getReg());
     else // Examples: [ESP+1*<noreg>+4] or [scaled idx]+disp32 (MOD=0,BASE=5)
       IndexRegNo = 4;
     emitSIBByte(SS, IndexRegNo, 5);
   } else {
-    unsigned BaseRegNo = getX86RegNum(BaseReg);
+    unsigned BaseRegNo = X86_MC::getX86RegNum(BaseReg);
     unsigned IndexRegNo;
     if (IndexReg.getReg())
-      IndexRegNo = getX86RegNum(IndexReg.getReg());
+      IndexRegNo = X86_MC::getX86RegNum(IndexReg.getReg());
     else
       IndexRegNo = 4;   // For example [ESP+1*<noreg>+4]
     emitSIBByte(SS, IndexRegNo, BaseRegNo);
@@ -809,7 +802,8 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   }
       
   case X86II::AddRegFrm: {
-    MCE.emitByte(BaseOpcode + getX86RegNum(MI.getOperand(CurOp++).getReg()));
+    MCE.emitByte(BaseOpcode +
+                 X86_MC::getX86RegNum(MI.getOperand(CurOp++).getReg()));
     
     if (CurOp == NumOps)
       break;
@@ -844,7 +838,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   case X86II::MRMDestReg: {
     MCE.emitByte(BaseOpcode);
     emitRegModRMByte(MI.getOperand(CurOp).getReg(),
-                     getX86RegNum(MI.getOperand(CurOp+1).getReg()));
+                     X86_MC::getX86RegNum(MI.getOperand(CurOp+1).getReg()));
     CurOp += 2;
     if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(),
@@ -854,7 +848,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   case X86II::MRMDestMem: {
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp,
-                     getX86RegNum(MI.getOperand(CurOp + X86::AddrNumOperands)
+                X86_MC::getX86RegNum(MI.getOperand(CurOp + X86::AddrNumOperands)
                                   .getReg()));
     CurOp +=  X86::AddrNumOperands + 1;
     if (CurOp != NumOps)
@@ -866,7 +860,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   case X86II::MRMSrcReg:
     MCE.emitByte(BaseOpcode);
     emitRegModRMByte(MI.getOperand(CurOp+1).getReg(),
-                     getX86RegNum(MI.getOperand(CurOp).getReg()));
+                     X86_MC::getX86RegNum(MI.getOperand(CurOp).getReg()));
     CurOp += 2;
     if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(),
@@ -880,8 +874,8 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
       X86II::getSizeOfImm(Desc->TSFlags) : 0;
 
     MCE.emitByte(BaseOpcode);
-    emitMemModRMByte(MI, CurOp+1, getX86RegNum(MI.getOperand(CurOp).getReg()),
-                     PCAdj);
+    emitMemModRMByte(MI, CurOp+1,
+                     X86_MC::getX86RegNum(MI.getOperand(CurOp).getReg()),PCAdj);
     CurOp += AddrOperands + 1;
     if (CurOp != NumOps)
       emitConstant(MI.getOperand(CurOp++).getImm(),
@@ -968,7 +962,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     MCE.emitByte(BaseOpcode);
     // Duplicate register, used by things like MOV8r0 (aka xor reg,reg).
     emitRegModRMByte(MI.getOperand(CurOp).getReg(),
-                     getX86RegNum(MI.getOperand(CurOp).getReg()));
+                     X86_MC::getX86RegNum(MI.getOperand(CurOp).getReg()));
     ++CurOp;
     break;
       

@@ -34,7 +34,7 @@ using namespace llvm;
 // FIXME: Provide proper call frame setup / destroy opcodes.
 MSP430RegisterInfo::MSP430RegisterInfo(MSP430TargetMachine &tm,
                                        const TargetInstrInfo &tii)
-  : MSP430GenRegisterInfo(), TM(tm), TII(tii) {
+  : MSP430GenRegisterInfo(MSP430::PCW), TM(tm), TII(tii) {
   StackAlign = TM.getFrameLowering()->getStackAlignment();
 }
 
@@ -233,22 +233,8 @@ MSP430RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
   }
 }
 
-unsigned MSP430RegisterInfo::getRARegister() const {
-  return MSP430::PCW;
-}
-
 unsigned MSP430RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 
   return TFI->hasFP(MF) ? MSP430::FPW : MSP430::SPW;
-}
-
-int MSP430RegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  llvm_unreachable("Not implemented yet!");
-  return 0;
-}
-
-int MSP430RegisterInfo::getLLVMRegNum(unsigned RegNum, bool isEH) const {
-  llvm_unreachable("Not implemented yet!");
-  return 0;
 }

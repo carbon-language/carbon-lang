@@ -37,6 +37,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
@@ -64,6 +65,8 @@ extern "C" void LLVMInitializeCBackendTarget() {
 
 extern "C" void LLVMInitializeCBackendMCAsmInfo() {}
 
+extern "C" void LLVMInitializeCBackendMCRegisterInfo() {}
+
 extern "C" void LLVMInitializeCBackendMCInstrInfo() {}
 
 extern "C" void LLVMInitializeCBackendMCSubtargetInfo() {}
@@ -86,6 +89,7 @@ namespace {
     LoopInfo *LI;
     const Module *TheModule;
     const MCAsmInfo* TAsm;
+    const MCRegisterInfo *MRI;
     MCContext *TCtx;
     const TargetData* TD;
     
@@ -105,7 +109,7 @@ namespace {
     static char ID;
     explicit CWriter(formatted_raw_ostream &o)
       : FunctionPass(ID), Out(o), IL(0), Mang(0), LI(0),
-        TheModule(0), TAsm(0), TCtx(0), TD(0), OpaqueCounter(0),
+        TheModule(0), TAsm(0), MRI(0), TCtx(0), TD(0), OpaqueCounter(0),
         NextAnonValueNumber(0) {
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
       FPCounter = 0;
@@ -145,6 +149,7 @@ namespace {
       delete Mang;
       delete TCtx;
       delete TAsm;
+      delete MRI;
       FPConstantMap.clear();
       ByValParams.clear();
       intrinsicPrototypesAlreadyGenerated.clear();
@@ -1665,7 +1670,8 @@ bool CWriter::doInitialization(Module &M) {
     TAsm = Match->createMCAsmInfo(Triple);
 #endif
   TAsm = new CBEMCAsmInfo();
-  TCtx = new MCContext(*TAsm, NULL);
+  MRI  = new MCRegisterInfo();
+  TCtx = new MCContext(*TAsm, *MRI, NULL);
   Mang = new Mangler(*TCtx, *TD);
 
   // Keep track of which functions are static ctors/dtors so they can have

@@ -69,15 +69,11 @@ struct MBlazeRegisterInfo : public MBlazeGenRegisterInfo {
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
   /// Debug information queries.
-  unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
 
   /// Exception handling queries.
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;
-
-  int getDwarfRegNum(unsigned RegNum, bool isEH) const;
-  int getLLVMRegNum(unsigned RegNum, bool isEH) const;
 };
 
 } // end namespace llvm

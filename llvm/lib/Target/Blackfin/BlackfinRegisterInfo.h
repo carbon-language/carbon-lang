@@ -53,14 +53,10 @@ namespace llvm {
                              int SPAdj, RegScavenger *RS = NULL) const;
 
     unsigned getFrameRegister(const MachineFunction &MF) const;
-    unsigned getRARegister() const;
 
     // Exception handling queries.
     unsigned getEHExceptionRegister() const;
     unsigned getEHHandlerRegister() const;
-
-    int getDwarfRegNum(unsigned RegNum, bool isEH) const;
-    int getLLVMRegNum(unsigned RegNum, bool isEH) const;
 
     // Utility functions
     void adjustRegister(MachineBasicBlock &MBB,

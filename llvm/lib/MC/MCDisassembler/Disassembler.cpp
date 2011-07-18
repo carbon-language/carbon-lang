@@ -41,6 +41,7 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
   // FIXME: We shouldn't need to initialize the Target(Machine)s.
   llvm::InitializeAllTargets();
   llvm::InitializeAllMCAsmInfos();
+  llvm::InitializeAllMCRegisterInfos();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllDisassemblers();
@@ -53,6 +54,9 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
   // Get the assembler info needed to setup the MCContext.
   const MCAsmInfo *MAI = TheTarget->createMCAsmInfo(TripleName);
   assert(MAI && "Unable to create target asm info!");
+
+  const MCRegisterInfo *MRI = TheTarget->createMCRegInfo(TripleName);
+  assert(MRI && "Unable to create target register info!");
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
@@ -70,7 +74,7 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
   assert(tai && "Unable to create target assembler!");
 
   // Set up the MCContext for creating symbols and MCExpr's.
-  MCContext *Ctx = new MCContext(*MAI, tai);
+  MCContext *Ctx = new MCContext(*MAI, *MRI, tai);
   assert(Ctx && "Unable to create MCContext!");
 
   // Set up disassembler.
@@ -86,8 +90,8 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
 
   LLVMDisasmContext *DC = new LLVMDisasmContext(TripleName, DisInfo, TagType,
                                                 GetOpInfo, SymbolLookUp,
-                                                TheTarget, MAI, TM, tai, Ctx,
-                                                DisAsm, IP);
+                                                TheTarget, MAI, MRI, TM, tai,
+                                                Ctx, DisAsm, IP);
   assert(DC && "Allocation failure!");
   return DC;
 }

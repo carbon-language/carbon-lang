@@ -40,6 +40,17 @@ extern "C" void LLVMInitializeMBlazeMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheMBlazeTarget, createMBlazeMCInstrInfo);
 }
 
+static MCRegisterInfo *createMBlazeMCRegisterInfo(StringRef TT) {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitMBlazeMCRegisterInfo(X, MBlaze::R15);
+  return X;
+}
+
+extern "C" void LLVMInitializeMBlazeMCRegisterInfo() {
+  TargetRegistry::RegisterMCRegInfo(TheMBlazeTarget,
+                                    createMBlazeMCRegisterInfo);
+}
+
 static MCSubtargetInfo *createMBlazeMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                     StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();

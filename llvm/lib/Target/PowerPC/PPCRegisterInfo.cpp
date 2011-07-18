@@ -113,7 +113,10 @@ unsigned PPCRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
 
 PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
                                  const TargetInstrInfo &tii)
-  : PPCGenRegisterInfo(), Subtarget(ST), TII(tii) {
+  : PPCGenRegisterInfo(ST.isPPC64() ? PPC::LR8 : PPC::LR,
+                       ST.isPPC64() ? 0 : 1,
+                       ST.isPPC64() ? 0 : 1),
+    Subtarget(ST), TII(tii) {
   ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;
   ImmToIdxMap[PPC::LBZ]  = PPC::LBZX;   ImmToIdxMap[PPC::STB]  = PPC::STBX;
   ImmToIdxMap[PPC::LHZ]  = PPC::LHZX;   ImmToIdxMap[PPC::LHA]  = PPC::LHAX;
@@ -668,10 +671,6 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MI.getOperand(OperandBase + 1).ChangeToRegister(SReg, false);
 }
 
-unsigned PPCRegisterInfo::getRARegister() const {
-  return !Subtarget.isPPC64() ? PPC::LR : PPC::LR8;
-}
-
 unsigned PPCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 
@@ -687,28 +686,4 @@ unsigned PPCRegisterInfo::getEHExceptionRegister() const {
 
 unsigned PPCRegisterInfo::getEHHandlerRegister() const {
   return !Subtarget.isPPC64() ? PPC::R4 : PPC::X4;
-}
-
-/// DWARFFlavour - Flavour of dwarf regnumbers
-///
-namespace DWARFFlavour {
-  enum {
-    PPC64 = 0, PPC32 = 1
-  };
-}
-
-int PPCRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  // FIXME: Most probably dwarf numbers differs for Linux and Darwin
-  unsigned Flavour = Subtarget.isPPC64() ?
-    DWARFFlavour::PPC64 : DWARFFlavour::PPC32;
-
-  return PPCGenRegisterInfo::getDwarfRegNumFull(RegNum, Flavour);
-}
-
-int PPCRegisterInfo::getLLVMRegNum(unsigned RegNum, bool isEH) const {
-  // FIXME: Most probably dwarf numbers differs for Linux and Darwin
-  unsigned Flavour = Subtarget.isPPC64() ?
-    DWARFFlavour::PPC64 : DWARFFlavour::PPC32;
-
-  return PPCGenRegisterInfo::getLLVMRegNumFull(RegNum, Flavour);
 }

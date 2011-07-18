@@ -40,6 +40,21 @@ extern "C" void LLVMInitializePowerPCMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(ThePPC64Target, createPPCMCInstrInfo);
 }
 
+static MCRegisterInfo *createPPCMCRegisterInfo(StringRef TT) {
+  Triple TheTriple(TT);
+  bool isPPC64 = (TheTriple.getArch() == Triple::ppc64);
+  unsigned Flavour = isPPC64 ? 0 : 1;
+  unsigned RA = isPPC64 ? PPC::LR8 : PPC::LR;
+
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitPPCMCRegisterInfo(X, RA, Flavour, Flavour);
+  return X;
+}
+
+extern "C" void LLVMInitializePowerPCMCRegisterInfo() {
+  TargetRegistry::RegisterMCRegInfo(ThePPC32Target, createPPCMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(ThePPC64Target, createPPCMCRegisterInfo);
+}
 
 static MCSubtargetInfo *createPPCMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                  StringRef FS) {

@@ -41,6 +41,16 @@ extern "C" void LLVMInitializeBlackfinMCInstrInfo() {
                                       createBlackfinMCInstrInfo);
 }
 
+static MCRegisterInfo *createBlackfinMCRegisterInfo(StringRef TT) {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitBlackfinMCRegisterInfo(X, BF::RETS);
+  return X;
+}
+
+extern "C" void LLVMInitializeBlackfinMCRegisterInfo() {
+  TargetRegistry::RegisterMCRegInfo(TheBlackfinTarget,
+                                    createBlackfinMCRegisterInfo);
+}
 
 static MCSubtargetInfo *createBlackfinMCSubtargetInfo(StringRef TT,
                                                       StringRef CPU,

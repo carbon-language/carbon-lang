@@ -18,6 +18,5 @@ using namespace llvm;
 TargetAsmInfo::TargetAsmInfo(const TargetMachine &TM) {
   TLOF = &TM.getTargetLowering()->getObjFileLowering();
   TFI = TM.getFrameLowering();
-  TRI = TM.getRegisterInfo();
   TFI->getInitialFrameState(InitialFrameState);
 }

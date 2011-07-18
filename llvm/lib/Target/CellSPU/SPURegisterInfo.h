@@ -74,18 +74,12 @@ namespace llvm {
     void eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
                              RegScavenger *RS = NULL) const;
 
-    //! Get return address register (LR, aka R0)
-    unsigned getRARegister() const;
     //! Get the stack frame register (SP, aka R1)
     unsigned getFrameRegister(const MachineFunction &MF) const;
 
     //------------------------------------------------------------------------
     // New methods added:
     //------------------------------------------------------------------------
-
-    //! Get DWARF debugging register number
-    int getDwarfRegNum(unsigned RegNum, bool isEH) const;
-    int getLLVMRegNum(unsigned RegNum, bool isEH) const;
 
     //! Convert D-form load/store to X-form load/store
     /*!

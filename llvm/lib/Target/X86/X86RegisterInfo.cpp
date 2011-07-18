@@ -53,7 +53,13 @@ ForceStackAlign("force-align-stack",
 
 X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
                                  const TargetInstrInfo &tii)
-  : X86GenRegisterInfo(), TM(tm), TII(tii) {
+  : X86GenRegisterInfo(tm.getSubtarget<X86Subtarget>().is64Bit()
+                         ? X86::RIP : X86::EIP,
+                       X86_MC::getDwarfRegFlavour(tm.getTargetTriple(), false),
+                       X86_MC::getDwarfRegFlavour(tm.getTargetTriple(), true)),
+                       TM(tm), TII(tii) {
+  X86_MC::InitLLVM2SEHRegisterMapping(this);
+
   // Cache some information.
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   Is64Bit = Subtarget->is64Bit();
@@ -68,40 +74,6 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
     StackPtr = X86::ESP;
     FramePtr = X86::EBP;
   }
-}
-
-static unsigned getFlavour(const X86Subtarget *Subtarget, bool isEH) {
-  if (!Subtarget->is64Bit()) {
-    if (Subtarget->isTargetDarwin()) {
-      if (isEH)
-        return DWARFFlavour::X86_32_DarwinEH;
-      else
-        return DWARFFlavour::X86_32_Generic;
-    } else if (Subtarget->isTargetCygMing()) {
-      // Unsupported by now, just quick fallback
-      return DWARFFlavour::X86_32_Generic;
-    } else {
-      return DWARFFlavour::X86_32_Generic;
-    }
-  }
-  return DWARFFlavour::X86_64;
-}
-
-/// getDwarfRegNum - This function maps LLVM register identifiers to the DWARF
-/// specific numbering, used in debug info and exception tables.
-int X86RegisterInfo::getDwarfRegNum(unsigned RegNo, bool isEH) const {
-  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-  unsigned Flavour = getFlavour(Subtarget, isEH);
-
-  return X86GenRegisterInfo::getDwarfRegNumFull(RegNo, Flavour);
-}
-
-/// getLLVMRegNum - This function maps DWARF register numbers to LLVM register.
-int X86RegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
-  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-  unsigned Flavour = getFlavour(Subtarget, isEH);
-
-  return X86GenRegisterInfo::getLLVMRegNumFull(DwarfRegNo, Flavour);
 }
 
 /// getCompactUnwindRegNum - This function maps the register to the number for
@@ -121,7 +93,7 @@ int X86RegisterInfo::getCompactUnwindRegNum(unsigned RegNum, bool isEH) const {
 
 int
 X86RegisterInfo::getSEHRegNum(unsigned i) const {
-  int reg = getX86RegNum(i);
+  int reg = X86_MC::getX86RegNum(i);
   switch (i) {
   case X86::R8:  case X86::R8D:  case X86::R8W:  case X86::R8B:
   case X86::R9:  case X86::R9D:  case X86::R9W:  case X86::R9B:
@@ -138,98 +110,6 @@ X86RegisterInfo::getSEHRegNum(unsigned i) const {
     reg += 8;
   }
   return reg;
-}
-
-/// getX86RegNum - This function maps LLVM register identifiers to their X86
-/// specific numbering, which is used in various places encoding instructions.
-unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) {
-  switch(RegNo) {
-  case X86::RAX: case X86::EAX: case X86::AX: case X86::AL: return N86::EAX;
-  case X86::RCX: case X86::ECX: case X86::CX: case X86::CL: return N86::ECX;
-  case X86::RDX: case X86::EDX: case X86::DX: case X86::DL: return N86::EDX;
-  case X86::RBX: case X86::EBX: case X86::BX: case X86::BL: return N86::EBX;
-  case X86::RSP: case X86::ESP: case X86::SP: case X86::SPL: case X86::AH:
-    return N86::ESP;
-  case X86::RBP: case X86::EBP: case X86::BP: case X86::BPL: case X86::CH:
-    return N86::EBP;
-  case X86::RSI: case X86::ESI: case X86::SI: case X86::SIL: case X86::DH:
-    return N86::ESI;
-  case X86::RDI: case X86::EDI: case X86::DI: case X86::DIL: case X86::BH:
-    return N86::EDI;
-
-  case X86::R8:  case X86::R8D:  case X86::R8W:  case X86::R8B:
-    return N86::EAX;
-  case X86::R9:  case X86::R9D:  case X86::R9W:  case X86::R9B:
-    return N86::ECX;
-  case X86::R10: case X86::R10D: case X86::R10W: case X86::R10B:
-    return N86::EDX;
-  case X86::R11: case X86::R11D: case X86::R11W: case X86::R11B:
-    return N86::EBX;
-  case X86::R12: case X86::R12D: case X86::R12W: case X86::R12B:
-    return N86::ESP;
-  case X86::R13: case X86::R13D: case X86::R13W: case X86::R13B:
-    return N86::EBP;
-  case X86::R14: case X86::R14D: case X86::R14W: case X86::R14B:
-    return N86::ESI;
-  case X86::R15: case X86::R15D: case X86::R15W: case X86::R15B:
-    return N86::EDI;
-
-  case X86::ST0: case X86::ST1: case X86::ST2: case X86::ST3:
-  case X86::ST4: case X86::ST5: case X86::ST6: case X86::ST7:
-    return RegNo-X86::ST0;
-
-  case X86::XMM0: case X86::XMM8:
-  case X86::YMM0: case X86::YMM8: case X86::MM0:
-    return 0;
-  case X86::XMM1: case X86::XMM9:
-  case X86::YMM1: case X86::YMM9: case X86::MM1:
-    return 1;
-  case X86::XMM2: case X86::XMM10:
-  case X86::YMM2: case X86::YMM10: case X86::MM2:
-    return 2;
-  case X86::XMM3: case X86::XMM11:
-  case X86::YMM3: case X86::YMM11: case X86::MM3:
-    return 3;
-  case X86::XMM4: case X86::XMM12:
-  case X86::YMM4: case X86::YMM12: case X86::MM4:
-    return 4;
-  case X86::XMM5: case X86::XMM13:
-  case X86::YMM5: case X86::YMM13: case X86::MM5:
-    return 5;
-  case X86::XMM6: case X86::XMM14:
-  case X86::YMM6: case X86::YMM14: case X86::MM6:
-    return 6;
-  case X86::XMM7: case X86::XMM15:
-  case X86::YMM7: case X86::YMM15: case X86::MM7:
-    return 7;
-
-  case X86::ES: return 0;
-  case X86::CS: return 1;
-  case X86::SS: return 2;
-  case X86::DS: return 3;
-  case X86::FS: return 4;
-  case X86::GS: return 5;
-
-  case X86::CR0: case X86::CR8 : case X86::DR0: return 0;
-  case X86::CR1: case X86::CR9 : case X86::DR1: return 1;
-  case X86::CR2: case X86::CR10: case X86::DR2: return 2;
-  case X86::CR3: case X86::CR11: case X86::DR3: return 3;
-  case X86::CR4: case X86::CR12: case X86::DR4: return 4;
-  case X86::CR5: case X86::CR13: case X86::DR5: return 5;
-  case X86::CR6: case X86::CR14: case X86::DR6: return 6;
-  case X86::CR7: case X86::CR15: case X86::DR7: return 7;
-
-  // Pseudo index registers are equivalent to a "none"
-  // scaled index (See Intel Manual 2A, table 2-3)
-  case X86::EIZ:
-  case X86::RIZ:
-    return 4;
-
-  default:
-    assert(isVirtualRegister(RegNo) && "Unknown physical register!");
-    llvm_unreachable("Register allocator hasn't allocated reg correctly yet!");
-    return 0;
-  }
 }
 
 const TargetRegisterClass *
@@ -739,11 +619,6 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     uint64_t Offset = FIOffset + (uint64_t)MI.getOperand(i+3).getOffset();
     MI.getOperand(i+3).setOffset(Offset);
   }
-}
-
-unsigned X86RegisterInfo::getRARegister() const {
-  return Is64Bit ? X86::RIP     // Should have dwarf #16.
-                 : X86::EIP;    // Should have dwarf #8.
 }
 
 unsigned X86RegisterInfo::getFrameRegister(const MachineFunction &MF) const {

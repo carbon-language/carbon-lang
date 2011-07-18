@@ -29,7 +29,6 @@
 
 using namespace llvm;
 
-
 static MCInstrInfo *createMSP430MCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitMSP430MCInstrInfo(X);
@@ -40,6 +39,17 @@ extern "C" void LLVMInitializeMSP430MCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheMSP430Target, createMSP430MCInstrInfo);
 }
 
+
+static MCRegisterInfo *createMSP430MCRegisterInfo(StringRef TT) {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitMSP430MCRegisterInfo(X, MSP430::PCW);
+  return X;
+}
+
+extern "C" void LLVMInitializeMSP430MCRegisterInfo() {
+  TargetRegistry::RegisterMCRegInfo(TheMSP430Target,
+                                    createMSP430MCRegisterInfo);
+}
 
 static MCSubtargetInfo *createMSP430MCSubtargetInfo(StringRef TT, StringRef CPU,
                                                     StringRef FS) {

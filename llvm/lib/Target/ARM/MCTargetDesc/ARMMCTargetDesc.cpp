@@ -117,13 +117,13 @@ extern "C" void LLVMInitializeARMMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheThumbTarget, createARMMCInstrInfo);
 }
 
-static MCRegisterInfo *createARMMCRegisterInfo() {
+static MCRegisterInfo *createARMMCRegisterInfo(StringRef Triple) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitARMMCRegisterInfo(X);
+  InitARMMCRegisterInfo(X, ARM::LR);
   return X;
 }
 
-extern "C" void LLVMInitializeARMMCRegInfo() {
+extern "C" void LLVMInitializeARMMCRegisterInfo() {
   TargetRegistry::RegisterMCRegInfo(TheARMTarget, createARMMCRegisterInfo);
   TargetRegistry::RegisterMCRegInfo(TheThumbTarget, createARMMCRegisterInfo);
 }

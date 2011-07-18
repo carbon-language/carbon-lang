@@ -79,13 +79,11 @@ extern "C" void LLVMInitializeCppBackendTarget() {
 
 extern "C" void LLVMInitializeCppBackendMCAsmInfo() {}
 
-extern "C" void LLVMInitializeCppBackendMCInstrInfo() {
-  RegisterMCInstrInfo<MCInstrInfo> X(TheCppBackendTarget);
-}
+extern "C" void LLVMInitializeCppBackendMCRegisterInfo() {}
 
-extern "C" void LLVMInitializeCppBackendMCSubtargetInfo() {
-  RegisterMCSubtargetInfo<MCSubtargetInfo> X(TheCppBackendTarget);
-}
+extern "C" void LLVMInitializeCppBackendMCInstrInfo() {}
+
+extern "C" void LLVMInitializeCppBackendMCSubtargetInfo() {}
 
 namespace {
   typedef std::vector<Type*> TypeList;

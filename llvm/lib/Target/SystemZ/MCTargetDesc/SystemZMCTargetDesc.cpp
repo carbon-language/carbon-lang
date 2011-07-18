@@ -40,6 +40,17 @@ extern "C" void LLVMInitializeSystemZMCInstrInfo() {
                                       createSystemZMCInstrInfo);
 }
 
+static MCRegisterInfo *createSystemZMCRegisterInfo(StringRef TT) {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitSystemZMCRegisterInfo(X, 0);
+  return X;
+}
+
+extern "C" void LLVMInitializeSystemZMCRegisterInfo() {
+  TargetRegistry::RegisterMCRegInfo(TheSystemZTarget,
+                                    createSystemZMCRegisterInfo);
+}
+
 static MCSubtargetInfo *createSystemZMCSubtargetInfo(StringRef TT,
                                                      StringRef CPU,
                                                      StringRef FS) {

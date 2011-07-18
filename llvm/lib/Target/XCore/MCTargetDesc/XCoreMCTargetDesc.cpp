@@ -39,6 +39,16 @@ extern "C" void LLVMInitializeXCoreMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(TheXCoreTarget, createXCoreMCInstrInfo);
 }
 
+static MCRegisterInfo *createXCoreMCRegisterInfo(StringRef TT) {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitXCoreMCRegisterInfo(X, XCore::LR);
+  return X;
+}
+
+extern "C" void LLVMInitializeXCoreMCRegisterInfo() {
+  TargetRegistry::RegisterMCRegInfo(TheXCoreTarget, createXCoreMCRegisterInfo);
+}
+
 static MCSubtargetInfo *createXCoreMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                    StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();

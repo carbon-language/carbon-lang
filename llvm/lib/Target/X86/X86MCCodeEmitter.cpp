@@ -45,7 +45,7 @@ public:
   }
 
   static unsigned GetX86RegNum(const MCOperand &MO) {
-    return X86RegisterInfo::getX86RegNum(MO.getReg());
+    return X86_MC::getX86RegNum(MO.getReg());
   }
 
   // On regular x86, both XMM0-XMM7 and XMM8-XMM15 are encoded in the range

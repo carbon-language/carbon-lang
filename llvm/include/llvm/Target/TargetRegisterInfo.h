@@ -699,27 +699,9 @@ public:
   //===--------------------------------------------------------------------===//
   /// Debug information queries.
 
-  /// getDwarfRegNum - Map a target register to an equivalent dwarf register
-  /// number.  Returns -1 if there is no equivalent value.  The second
-  /// parameter allows targets to use different numberings for EH info and
-  /// debugging info.
-  virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const = 0;
-
-  virtual int getLLVMRegNum(unsigned RegNum, bool isEH) const = 0;
-
   /// getFrameRegister - This method should return the register used as a base
   /// for values allocated in the current stack frame.
   virtual unsigned getFrameRegister(const MachineFunction &MF) const = 0;
-
-  /// getRARegister - This method should return the register where the return
-  /// address can be found.
-  virtual unsigned getRARegister() const = 0;
-
-  /// getSEHRegNum - Map a target register to an equivalent SEH register
-  /// number.  Returns -1 if there is no equivalent value.
-  virtual int getSEHRegNum(unsigned i) const {
-    return i;
-  }
 
   /// getCompactUnwindRegNum - This function maps the register to the number for
   /// compact unwind encoding. Return -1 if the register isn't valid.

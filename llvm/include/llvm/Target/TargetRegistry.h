@@ -69,7 +69,7 @@ namespace llvm {
     typedef MCAsmInfo *(*MCAsmInfoCtorFnTy)(const Target &T,
                                             StringRef TT);
     typedef MCInstrInfo *(*MCInstrInfoCtorFnTy)(void);
-    typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(void);
+    typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(StringRef TT);
     typedef MCSubtargetInfo *(*MCSubtargetInfoCtorFnTy)(StringRef TT,
                                                         StringRef CPU,
                                                         StringRef Features);
@@ -263,10 +263,10 @@ namespace llvm {
 
     /// createMCRegInfo - Create a MCRegisterInfo implementation.
     ///
-    MCRegisterInfo *createMCRegInfo() const {
+    MCRegisterInfo *createMCRegInfo(StringRef Triple) const {
       if (!MCRegInfoCtorFn)
         return 0;
-      return MCRegInfoCtorFn();
+      return MCRegInfoCtorFn(Triple);
     }
 
     /// createMCSubtargetInfo - Create a MCSubtargetInfo implementation.
@@ -803,7 +803,7 @@ namespace llvm {
       TargetRegistry::RegisterMCRegInfo(T, &Allocator);
     }
   private:
-    static MCRegisterInfo *Allocator() {
+    static MCRegisterInfo *Allocator(StringRef TT) {
       return new MCRegisterInfoImpl();
     }
   };

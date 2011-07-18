@@ -40,6 +40,18 @@ extern "C" void LLVMInitializePTXMCInstrInfo() {
   TargetRegistry::RegisterMCInstrInfo(ThePTX64Target, createPTXMCInstrInfo);
 }
 
+static MCRegisterInfo *createPTXMCRegisterInfo(StringRef TT) {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  // PTX does not have a return address register.
+  InitPTXMCRegisterInfo(X, 0);
+  return X;
+}
+
+extern "C" void LLVMInitializePTXMCRegisterInfo() {
+  TargetRegistry::RegisterMCRegInfo(ThePTX32Target, createPTXMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(ThePTX64Target, createPTXMCRegisterInfo);
+}
+
 static MCSubtargetInfo *createPTXMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                  StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();

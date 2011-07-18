@@ -57,7 +57,7 @@ EnableBasePointer("arm-use-base-pointer", cl::Hidden, cl::init(true),
 
 ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii,
                                          const ARMSubtarget &sti)
-  : ARMGenRegisterInfo(), TII(tii), STI(sti),
+  : ARMGenRegisterInfo(ARM::LR), TII(tii), STI(sti),
     FramePtr((STI.isTargetDarwin() || STI.isThumb()) ? ARM::R7 : ARM::R11),
     BasePtr(ARM::R6) {
 }
@@ -649,10 +649,6 @@ cannotEliminateFrame(const MachineFunction &MF) const {
     || needsStackRealignment(MF);
 }
 
-unsigned ARMBaseRegisterInfo::getRARegister() const {
-  return ARM::LR;
-}
-
 unsigned
 ARMBaseRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
@@ -670,14 +666,6 @@ unsigned ARMBaseRegisterInfo::getEHExceptionRegister() const {
 unsigned ARMBaseRegisterInfo::getEHHandlerRegister() const {
   llvm_unreachable("What is the exception handler register");
   return 0;
-}
-
-int ARMBaseRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  return ARMGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
-}
-
-int ARMBaseRegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
-  return ARMGenRegisterInfo::getLLVMRegNumFull(DwarfRegNo,0);
 }
 
 unsigned ARMBaseRegisterInfo::getRegisterPairEven(unsigned Reg,

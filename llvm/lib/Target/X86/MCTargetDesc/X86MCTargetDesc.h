@@ -17,11 +17,28 @@
 #include <string>
 
 namespace llvm {
+class MCRegisterInfo;
 class MCSubtargetInfo;
 class Target;
 class StringRef;
 
 extern Target TheX86_32Target, TheX86_64Target;
+
+/// DWARFFlavour - Flavour of dwarf regnumbers
+///
+namespace DWARFFlavour {
+  enum {
+    X86_64 = 0, X86_32_DarwinEH = 1, X86_32_Generic = 2
+  };
+} 
+  
+/// N86 namespace - Native X86 register numbers
+///
+namespace N86 {
+  enum {
+    EAX = 0, ECX = 1, EDX = 2, EBX = 3, ESP = 4, EBP = 5, ESI = 6, EDI = 7
+  };
+}
 
 namespace X86_MC {
   std::string ParseX86Triple(StringRef TT);
@@ -33,7 +50,13 @@ namespace X86_MC {
 
   void DetectFamilyModel(unsigned EAX, unsigned &Family, unsigned &Model);
 
-  /// createARMMCSubtargetInfo - Create a X86 MCSubtargetInfo instance.
+  unsigned getDwarfRegFlavour(StringRef TT, bool isEH);
+
+  unsigned getX86RegNum(unsigned RegNo);
+
+  void InitLLVM2SEHRegisterMapping(MCRegisterInfo *MRI);
+
+  /// createX86MCSubtargetInfo - Create a X86 MCSubtargetInfo instance.
   /// This is exposed so Asm parser, etc. do not need to go through
   /// TargetRegistry.
   MCSubtargetInfo *createX86MCSubtargetInfo(StringRef TT, StringRef CPU,

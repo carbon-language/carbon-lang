@@ -26,6 +26,7 @@ namespace llvm {
   class MCLabel;
   class MCDwarfFile;
   class MCDwarfLoc;
+  class MCRegisterInfo;
   class MCLineSection;
   class StringRef;
   class Twine;
@@ -45,6 +46,9 @@ namespace llvm {
 
     /// The MCAsmInfo for this target.
     const MCAsmInfo &MAI;
+
+    /// The MCRegisterInfo for this target.
+    const MCRegisterInfo &MRI;
 
     const TargetAsmInfo *TAI;
 
@@ -110,10 +114,13 @@ namespace llvm {
     MCSymbol *CreateSymbol(StringRef Name);
 
   public:
-    explicit MCContext(const MCAsmInfo &MAI, const TargetAsmInfo *TAI);
+    explicit MCContext(const MCAsmInfo &MAI, const MCRegisterInfo &MRI,
+                       const TargetAsmInfo *TAI);
     ~MCContext();
 
     const MCAsmInfo &getAsmInfo() const { return MAI; }
+
+    const MCRegisterInfo &getRegisterInfo() const { return MRI; }
 
     const TargetAsmInfo &getTargetAsmInfo() const { return *TAI; }
 

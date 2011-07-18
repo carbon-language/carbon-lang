@@ -29,7 +29,6 @@ namespace llvm {
 
 class TargetAsmInfo {
   std::vector<MachineMove> InitialFrameState;
-  const TargetRegisterInfo *TRI;
   const TargetFrameLowering *TFI;
   const TargetLoweringObjectFile *TLOF;
 
@@ -74,28 +73,8 @@ public:
     return TFI->getCompactUnwindEncoding(Instrs, DataAlignmentFactor, IsEH);
   }
 
-  const unsigned *getCalleeSavedRegs(MachineFunction *MF = 0) const {
-    return TRI->getCalleeSavedRegs(MF);
-  }
-
-  unsigned getDwarfRARegNum(bool isEH) const {
-    return TRI->getDwarfRegNum(TRI->getRARegister(), isEH);
-  }
-
   const std::vector<MachineMove> &getInitialFrameState() const {
     return InitialFrameState;
-  }
-
-  int getDwarfRegNum(unsigned RegNum, bool isEH) const {
-    return TRI->getDwarfRegNum(RegNum, isEH);
-  }
-
-  int getLLVMRegNum(unsigned DwarfRegNum, bool isEH) const {
-    return TRI->getLLVMRegNum(DwarfRegNum, isEH);
-  }
-
-  int getSEHRegNum(unsigned RegNum) const {
-    return TRI->getSEHRegNum(RegNum);
   }
 };
 

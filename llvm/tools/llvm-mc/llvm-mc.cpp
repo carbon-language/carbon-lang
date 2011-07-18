@@ -309,6 +309,9 @@ static int AssembleInput(const char *ProgName) {
   llvm::OwningPtr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(TripleName));
   assert(MAI && "Unable to create target asm info!");
 
+  llvm::OwningPtr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
+  assert(MRI && "Unable to create target register info!");
+
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
 
@@ -327,7 +330,7 @@ static int AssembleInput(const char *ProgName) {
   }
 
   const TargetAsmInfo *tai = new TargetAsmInfo(*TM);
-  MCContext Ctx(*MAI, tai);
+  MCContext Ctx(*MAI, *MRI, tai);
   if (SaveTempLabels)
     Ctx.setAllowTemporaryLabels(false);
 
@@ -438,6 +441,7 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargets();
   llvm::InitializeAllMCAsmInfos();
   llvm::InitializeAllMCInstrInfos();
+  llvm::InitializeAllMCRegisterInfos();
   llvm::InitializeAllMCSubtargetInfos();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();

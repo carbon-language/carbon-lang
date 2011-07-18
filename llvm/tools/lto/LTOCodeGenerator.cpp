@@ -31,6 +31,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
 #include "llvm/Support/CommandLine.h"
@@ -74,6 +75,7 @@ LTOCodeGenerator::LTOCodeGenerator()
 {
     InitializeAllTargets();
     InitializeAllMCAsmInfos();
+    InitializeAllMCRegisterInfos();
     InitializeAllMCSubtargetInfos();
     InitializeAllAsmPrinters();
 }
@@ -308,7 +310,8 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   passes.add(createVerifierPass());
 
   // mark which symbols can not be internalized 
-  MCContext Context(*_target->getMCAsmInfo(), NULL);
+  MCContext Context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(),
+                    NULL);
   Mangler mangler(Context, *_target->getTargetData());
   std::vector<const char*> mustPreserveList;
   SmallPtrSet<GlobalValue*, 8> asmUsed;
