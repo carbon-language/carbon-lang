@@ -18,12 +18,12 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
-#include "llvm/Support/ErrorHandling.h"
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -45,7 +45,7 @@ unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F,
   TD = TM.getTargetData();
   stackGrowthDirection = TM.getFrameLowering()->getStackGrowthDirection();
   RI = TM.getRegisterInfo();
-  TFI = TM.getFrameLowering();
+  MAI = TM.getMCAsmInfo();
   JCE = &jce;
 
   unsigned char* ExceptionTable = EmitExceptionTable(&F, StartFunction,
@@ -523,9 +523,7 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
     JCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
   }
 
-  std::vector<MachineMove> Moves;
-  TFI->getInitialFrameState(Moves);
-  EmitFrameMoves(0, Moves);
+  EmitFrameMoves(0, MAI->getInitialFrameState());
 
   JCE->emitAlignmentWithFill(PointerSize, dwarf::DW_CFA_nop);
 

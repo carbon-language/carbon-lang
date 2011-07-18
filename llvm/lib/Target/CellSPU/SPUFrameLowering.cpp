@@ -249,14 +249,6 @@ void SPUFrameLowering::emitEpilogue(MachineFunction &MF,
   }
 }
 
-void SPUFrameLowering::getInitialFrameState(std::vector<MachineMove> &Moves)
-                                                                         const {
-  // Initial state of the frame pointer is R1.
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(SPU::R1, 0);
-  Moves.push_back(MachineMove(0, Dst, Src));
-}
-
 void SPUFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                         RegScavenger *RS) const{
   // Mark LR and SP unused, since the prolog spills them to stack and

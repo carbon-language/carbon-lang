@@ -34,7 +34,7 @@
 #include "llvm/Pass.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Metadata.h"
-#include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DebugLoc.h"

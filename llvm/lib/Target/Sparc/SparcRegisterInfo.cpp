@@ -17,7 +17,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Type.h"

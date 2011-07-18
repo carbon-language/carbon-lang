@@ -14,7 +14,6 @@
 #ifndef LLVM_TARGET_TARGETASMINFO_H
 #define LLVM_TARGET_TARGETASMINFO_H
 
-#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -22,13 +21,10 @@
 namespace llvm {
   template <typename T> class ArrayRef;
   class MCSection;
-  class MCContext;
-  class MachineFunction;
   class TargetMachine;
   class TargetLoweringObjectFile;
 
 class TargetAsmInfo {
-  std::vector<MachineMove> InitialFrameState;
   const TargetFrameLowering *TFI;
   const TargetLoweringObjectFile *TLOF;
 
@@ -71,10 +67,6 @@ public:
                                int DataAlignmentFactor,
                                bool IsEH) const {
     return TFI->getCompactUnwindEncoding(Instrs, DataAlignmentFactor, IsEH);
-  }
-
-  const std::vector<MachineMove> &getInitialFrameState() const {
-    return InitialFrameState;
   }
 };
 

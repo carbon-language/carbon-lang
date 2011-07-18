@@ -13,7 +13,7 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"

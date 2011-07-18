@@ -61,6 +61,17 @@ extern "C" void LLVMInitializeXCoreMCSubtargetInfo() {
                                           createXCoreMCSubtargetInfo);
 }
 
+static MCAsmInfo *createXCoreMCAsmInfo(const Target &T, StringRef TT) {
+  MCAsmInfo *MAI = new XCoreMCAsmInfo(T, TT);
+
+  // Initial state of the frame pointer is SP.
+  MachineLocation Dst(MachineLocation::VirtualFP);
+  MachineLocation Src(XCore::SP, 0);
+  MAI->addInitialFrameState(0, Dst, Src);
+
+  return MAI;
+}
+
 extern "C" void LLVMInitializeXCoreMCAsmInfo() {
-  RegisterMCAsmInfo<XCoreMCAsmInfo> X(TheXCoreTarget);
+  RegisterMCAsmInfoFn X(TheXCoreTarget, createXCoreMCAsmInfo);
 }

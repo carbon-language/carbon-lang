@@ -27,7 +27,6 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"

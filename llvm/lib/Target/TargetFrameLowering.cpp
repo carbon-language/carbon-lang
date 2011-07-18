@@ -23,14 +23,6 @@ using namespace llvm;
 TargetFrameLowering::~TargetFrameLowering() {
 }
 
-/// getInitialFrameState - Returns a list of machine moves that are assumed
-/// on entry to a function.
-void
-TargetFrameLowering::getInitialFrameState(std::vector<MachineMove> &Moves)
-                                                                         const {
-  // Default is to do nothing.
-}
-
 /// getFrameIndexOffset - Returns the displacement from the frame register to
 /// the stack frame of the specified index. This is the default implementation
 /// which is overridden for some targets.

@@ -13,6 +13,7 @@
 
 #include "SPUMCTargetDesc.h"
 #include "SPUMCAsmInfo.h"
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -62,6 +63,17 @@ extern "C" void LLVMInitializeCellSPUMCSubtargetInfo() {
                                           createSPUMCSubtargetInfo);
 }
 
+static MCAsmInfo *createSPUMCAsmInfo(const Target &T, StringRef TT) {
+  MCAsmInfo *MAI = new SPULinuxMCAsmInfo(T, TT);
+
+  // Initial state of the frame pointer is R1.
+  MachineLocation Dst(MachineLocation::VirtualFP);
+  MachineLocation Src(SPU::R1, 0);
+  MAI->addInitialFrameState(0, Dst, Src);
+
+  return MAI;
+}
+
 extern "C" void LLVMInitializeCellSPUMCAsmInfo() {
-  RegisterMCAsmInfo<SPULinuxMCAsmInfo> X(TheCellSPUTarget);
+  RegisterMCAsmInfoFn X(TheCellSPUTarget, createSPUMCAsmInfo);
 }

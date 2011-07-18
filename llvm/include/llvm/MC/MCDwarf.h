@@ -16,15 +16,13 @@
 #define LLVM_MC_MCDWARF_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/CodeGen/MachineLocation.h" // FIXME
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Dwarf.h"
 #include <vector>
 
 namespace llvm {
-  class TargetAsmInfo;
-  class MachineMove;
   class MCContext;
   class MCExpr;
   class MCSection;

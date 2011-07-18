@@ -161,11 +161,6 @@ public:
     return hasReservedCallFrame(MF) || hasFP(MF);
   }
 
-  /// getInitialFrameState - Returns a list of machine moves that are assumed
-  /// on entry to all functions.  Note that LabelID is ignored (assumed to be
-  /// the beginning of the function.)
-  virtual void getInitialFrameState(std::vector<MachineMove> &Moves) const;
-
   /// getFrameIndexOffset - Returns the displacement from the frame register to
   /// the stack frame of the specified index.
   virtual int getFrameIndexOffset(const MachineFunction &MF, int FI) const;

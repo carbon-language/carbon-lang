@@ -865,7 +865,8 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
 
   // Initial Instructions
 
-  const std::vector<MachineMove> &Moves = TAI.getInitialFrameState();
+  const MCAsmInfo &MAI = context.getAsmInfo();
+  const std::vector<MachineMove> &Moves = MAI.getInitialFrameState();
   std::vector<MCCFIInstruction> Instructions;
 
   for (int i = 0, n = Moves.size(); i != n; ++i) {

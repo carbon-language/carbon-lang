@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/MachineLocation.h --------------------------*- C++ -*-===//
+//===-- llvm/MC/MachineLocation.h -------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,8 +18,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef LLVM_CODEGEN_MACHINELOCATION_H
-#define LLVM_CODEGEN_MACHINELOCATION_H
+#ifndef LLVM_MC_MACHINELOCATION_H
+#define LLVM_MC_MACHINELOCATION_H
 
 namespace llvm {
   class MCSymbol;
@@ -36,11 +36,11 @@ public:
     VirtualFP = ~0U
   };
   MachineLocation()
-  : IsRegister(false), Register(0), Offset(0) {}
+    : IsRegister(false), Register(0), Offset(0) {}
   explicit MachineLocation(unsigned R)
-  : IsRegister(true), Register(R), Offset(0) {}
+    : IsRegister(true), Register(R), Offset(0) {}
   MachineLocation(unsigned R, int O)
-  : IsRegister(false), Register(R), Offset(O) {}
+    : IsRegister(false), Register(R), Offset(O) {}
 
   bool operator==(const MachineLocation &Other) const {
       return IsRegister == Other.IsRegister && Register == Other.Register &&

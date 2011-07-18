@@ -57,7 +57,6 @@ public:
   bool hasFP(const MachineFunction &MF) const;
   bool hasReservedCallFrame(const MachineFunction &MF) const;
 
-  void getInitialFrameState(std::vector<MachineMove> &Moves) const;
   int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
 
   uint32_t getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,

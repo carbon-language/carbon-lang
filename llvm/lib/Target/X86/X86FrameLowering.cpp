@@ -844,23 +844,6 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   }
 }
 
-void
-X86FrameLowering::getInitialFrameState(std::vector<MachineMove> &Moves) const {
-  // Calculate amount of bytes used for return address storing
-  int stackGrowth = (STI.is64Bit() ? -8 : -4);
-  const X86RegisterInfo *RI = TM.getRegisterInfo();
-
-  // Initial state of the frame pointer is esp+stackGrowth.
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(RI->getStackRegister(), stackGrowth);
-  Moves.push_back(MachineMove(0, Dst, Src));
-
-  // Add return address to move list
-  MachineLocation CSDst(RI->getStackRegister(), stackGrowth);
-  MachineLocation CSSrc(RI->getRARegister());
-  Moves.push_back(MachineMove(0, CSDst, CSSrc));
-}
-
 int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF, int FI) const {
   const X86RegisterInfo *RI =
     static_cast<const X86RegisterInfo*>(MF.getTarget().getRegisterInfo());

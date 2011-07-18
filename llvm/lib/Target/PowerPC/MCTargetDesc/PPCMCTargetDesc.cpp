@@ -13,6 +13,7 @@
 
 #include "PPCMCTargetDesc.h"
 #include "PPCMCAsmInfo.h"
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -70,16 +71,25 @@ extern "C" void LLVMInitializePowerPCMCSubtargetInfo() {
                                           createPPCMCSubtargetInfo);
 }
 
-static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
+static MCAsmInfo *createPPCMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
   bool isPPC64 = TheTriple.getArch() == Triple::ppc64;
+
+  MCAsmInfo *MAI;
   if (TheTriple.isOSDarwin())
-    return new PPCMCAsmInfoDarwin(isPPC64);
-  return new PPCLinuxMCAsmInfo(isPPC64);
-  
+    MAI = new PPCMCAsmInfoDarwin(isPPC64);
+  else
+    MAI = new PPCLinuxMCAsmInfo(isPPC64);
+
+  // Initial state of the frame pointer is R1.
+  MachineLocation Dst(MachineLocation::VirtualFP);
+  MachineLocation Src(PPC::R1, 0);
+  MAI->addInitialFrameState(0, Dst, Src);
+
+  return MAI;
 }
 
 extern "C" void LLVMInitializePowerPCMCAsmInfo() {
-  RegisterMCAsmInfoFn C(ThePPC32Target, createMCAsmInfo);
-  RegisterMCAsmInfoFn D(ThePPC64Target, createMCAsmInfo);  
+  RegisterMCAsmInfoFn C(ThePPC32Target, createPPCMCAsmInfo);
+  RegisterMCAsmInfoFn D(ThePPC64Target, createPPCMCAsmInfo);  
 }

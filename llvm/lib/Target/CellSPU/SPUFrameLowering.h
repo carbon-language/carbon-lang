@@ -43,9 +43,6 @@ namespace llvm {
     void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                               RegScavenger *RS = NULL) const;
 
-    //! Perform target-specific stack frame setup.
-    void getInitialFrameState(std::vector<MachineMove> &Moves) const;
-
     //! Return a function's saved spill slots
     /*!
       For CellSPU, a function's saved spill slots is just the link register.

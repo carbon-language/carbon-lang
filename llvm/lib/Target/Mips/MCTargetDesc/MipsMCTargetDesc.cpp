@@ -13,6 +13,7 @@
 
 #include "MipsMCTargetDesc.h"
 #include "MipsMCAsmInfo.h"
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -62,7 +63,17 @@ extern "C" void LLVMInitializeMipsMCSubtargetInfo() {
                                           createMipsMCSubtargetInfo);
 }
 
+static MCAsmInfo *createMipsMCAsmInfo(const Target &T, StringRef TT) {
+  MCAsmInfo *MAI = new MipsMCAsmInfo(T, TT);
+
+  MachineLocation Dst(MachineLocation::VirtualFP);
+  MachineLocation Src(Mips::SP, 0);
+  MAI->addInitialFrameState(0, Dst, Src);
+
+  return MAI;
+}
+
 extern "C" void LLVMInitializeMipsMCAsmInfo() {
-  RegisterMCAsmInfo<MipsMCAsmInfo> X(TheMipsTarget);
-  RegisterMCAsmInfo<MipsMCAsmInfo> Y(TheMipselTarget);
+  RegisterMCAsmInfoFn X(TheMipsTarget, createMipsMCAsmInfo);
+  RegisterMCAsmInfoFn Y(TheMipselTarget, createMipsMCAsmInfo);
 }

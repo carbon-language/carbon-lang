@@ -270,14 +270,6 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
   }
 }
 
-void XCoreFrameLowering::getInitialFrameState(std::vector<MachineMove> &Moves)
-                                                                        const {
-  // Initial state of the frame pointer is SP.
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(XCore::SP, 0);
-  Moves.push_back(MachineMove(0, Dst, Src));
-}
-
 bool XCoreFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                                MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,

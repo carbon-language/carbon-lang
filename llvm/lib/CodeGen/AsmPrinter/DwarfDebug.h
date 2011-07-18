@@ -15,7 +15,7 @@
 #define CODEGEN_ASMPRINTER_DWARFDEBUG_H__
 
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "DIE.h"
 #include "llvm/ADT/DenseMap.h"

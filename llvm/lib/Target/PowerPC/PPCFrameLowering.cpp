@@ -712,13 +712,6 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
   }
 }
 
-void PPCFrameLowering::getInitialFrameState(std::vector<MachineMove> &Moves) const {
-  // Initial state of the frame pointer is R1.
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(PPC::R1, 0);
-  Moves.push_back(MachineMove(0, Dst, Src));
-}
-
 static bool spillsCR(const MachineFunction &MF) {
   const PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
   return FuncInfo->isCRSpilled();

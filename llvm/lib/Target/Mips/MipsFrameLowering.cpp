@@ -300,13 +300,6 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
   }
 }
 
-void
-MipsFrameLowering::getInitialFrameState(std::vector<MachineMove> &Moves) const {
-  MachineLocation Dst(MachineLocation::VirtualFP);
-  MachineLocation Src(Mips::SP, 0);
-  Moves.push_back(MachineMove(0, Dst, Src));
-}
-
 void MipsFrameLowering::
 processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {

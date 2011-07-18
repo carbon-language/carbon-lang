@@ -16,8 +16,10 @@
 #ifndef LLVM_TARGET_ASM_INFO_H
 #define LLVM_TARGET_ASM_INFO_H
 
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCDirectives.h"
 #include <cassert>
+#include <vector>
 
 namespace llvm {
   class MCExpr;
@@ -304,6 +306,10 @@ namespace llvm {
 
     const char *const *AsmTransCBE;          // Defaults to empty
 
+    //===--- Prologue State ----------------------------------------------===//
+
+    std::vector<MachineMove> InitialFrameState;
+
   public:
     explicit MCAsmInfo();
     virtual ~MCAsmInfo();
@@ -511,6 +517,14 @@ namespace llvm {
     }
     const char *const *getAsmCBE() const {
       return AsmTransCBE;
+    }
+
+    void addInitialFrameState(MCSymbol *label, const MachineLocation &D,
+                              const MachineLocation &S) {
+      InitialFrameState.push_back(MachineMove(label, D, S));
+    }
+    const std::vector<MachineMove> &getInitialFrameState() const {
+      return InitialFrameState;
     }
   };
 }

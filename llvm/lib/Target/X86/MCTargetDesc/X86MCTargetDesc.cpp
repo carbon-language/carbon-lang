@@ -13,6 +13,7 @@
 
 #include "X86MCTargetDesc.h"
 #include "X86MCAsmInfo.h"
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -301,18 +302,35 @@ extern "C" void LLVMInitializeX86MCRegisterInfo() {
 
 static MCAsmInfo *createX86MCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
+  bool is64Bit = TheTriple.getArch() == Triple::x86_64;
 
+  MCAsmInfo *MAI;
   if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO) {
-    if (TheTriple.getArch() == Triple::x86_64)
-      return new X86_64MCAsmInfoDarwin(TheTriple);
+    if (is64Bit)
+      MAI = new X86_64MCAsmInfoDarwin(TheTriple);
     else
-      return new X86MCAsmInfoDarwin(TheTriple);
+      MAI = new X86MCAsmInfoDarwin(TheTriple);
+  } else if (TheTriple.isOSWindows()) {
+    MAI = new X86MCAsmInfoCOFF(TheTriple);
+  } else {
+    MAI = new X86ELFMCAsmInfo(TheTriple);
   }
 
-  if (TheTriple.isOSWindows())
-    return new X86MCAsmInfoCOFF(TheTriple);
+  // Initialize initial frame state.
+  // Calculate amount of bytes used for return address storing
+  int stackGrowth = is64Bit ? -8 : -4;
 
-  return new X86ELFMCAsmInfo(TheTriple);
+  // Initial state of the frame pointer is esp+stackGrowth.
+  MachineLocation Dst(MachineLocation::VirtualFP);
+  MachineLocation Src(is64Bit ? X86::RSP : X86::ESP, stackGrowth);
+  MAI->addInitialFrameState(0, Dst, Src);
+
+  // Add return address to move list
+  MachineLocation CSDst(is64Bit ? X86::RSP : X86::ESP, stackGrowth);
+  MachineLocation CSSrc(is64Bit ? X86::RIP : X86::EIP);
+  MAI->addInitialFrameState(0, CSDst, CSSrc);
+
+  return MAI;
 }
 
 extern "C" void LLVMInitializeX86MCAsmInfo() {
