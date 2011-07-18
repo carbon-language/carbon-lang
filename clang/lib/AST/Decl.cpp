@@ -1782,9 +1782,10 @@ bool FunctionDecl::doesDeclarationForceExternallyVisibleDefinition() const {
     return false;
   if (getLinkage() != ExternalLinkage || isInlineSpecified())
     return false;
-  const FunctionDecl *InlineDefinition = 0;
-  if (hasBody(InlineDefinition))
-    return InlineDefinition->isInlineDefinitionExternallyVisible();
+  const FunctionDecl *Definition = 0;
+  if (hasBody(Definition))
+    return Definition->isInlined() &&
+           Definition->isInlineDefinitionExternallyVisible();
   return false;
 }
 

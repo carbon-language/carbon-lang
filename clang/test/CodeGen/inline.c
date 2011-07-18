@@ -91,3 +91,9 @@ void test_test5() { test5(); }
 
 __inline int test6() { return 0; }
 extern int test6();
+
+
+// No PR#, but this once crashed clang in C99 mode due to buggy extern inline
+// redeclaration detection.
+void test7() { }
+void test7();
