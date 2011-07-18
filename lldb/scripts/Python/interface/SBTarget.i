@@ -57,11 +57,6 @@ public:
 
     SBTarget (const lldb::SBTarget& rhs);
 
-#ifndef SWIG
-    const lldb::SBTarget&
-    operator = (const lldb::SBTarget& rhs);
-#endif
-
     //------------------------------------------------------------------
     // Destructor
     //------------------------------------------------------------------
@@ -396,53 +391,8 @@ public:
     lldb::SBBroadcaster
     GetBroadcaster () const;
 
-#ifndef SWIG
-    bool
-    operator == (const lldb::SBTarget &rhs) const;
-
-    bool
-    operator != (const lldb::SBTarget &rhs) const;
-
-#endif
-
-#ifndef SWIG
-    bool
-    GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level);
-#endif
-
     bool
     GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level) const;
-
-protected:
-    friend class SBAddress;
-    friend class SBDebugger;
-    friend class SBFunction;
-    friend class SBProcess;
-    friend class SBSymbol;
-    friend class SBModule;
-
-    //------------------------------------------------------------------
-    // Constructors are private, use static Target::Create function to
-    // create an instance of this class.
-    //------------------------------------------------------------------
-
-    SBTarget (const lldb::TargetSP& target_sp);
-
-    void
-    reset (const lldb::TargetSP& target_sp);
-
-    lldb_private::Target *
-    operator ->() const;
-
-    lldb_private::Target *
-    get() const;
-
-private:
-    //------------------------------------------------------------------
-    // For Target only
-    //------------------------------------------------------------------
-
-    lldb::TargetSP m_opaque_sp;
 };
 
 } // namespace lldb
