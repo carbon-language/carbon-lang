@@ -15,7 +15,6 @@
 #define LLVM_TARGET_TARGETASMINFO_H
 
 #include "llvm/Target/TargetLoweringObjectFile.h"
-#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
@@ -25,7 +24,6 @@ namespace llvm {
   class TargetLoweringObjectFile;
 
 class TargetAsmInfo {
-  const TargetFrameLowering *TFI;
   const TargetLoweringObjectFile *TLOF;
 
 public:
@@ -61,12 +59,6 @@ public:
 
   bool isFunctionEHFrameSymbolPrivate() const {
     return TLOF->isFunctionEHFrameSymbolPrivate();
-  }
-
-  int getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
-                               int DataAlignmentFactor,
-                               bool IsEH) const {
-    return TFI->getCompactUnwindEncoding(Instrs, DataAlignmentFactor, IsEH);
   }
 };
 

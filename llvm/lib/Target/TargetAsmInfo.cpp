@@ -8,14 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
 TargetAsmInfo::TargetAsmInfo(const TargetMachine &TM) {
   TLOF = &TM.getTargetLowering()->getObjFileLowering();
-  TFI = TM.getFrameLowering();
 }
