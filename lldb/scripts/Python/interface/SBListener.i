@@ -1,4 +1,4 @@
-//===-- SBListener.h --------------------------------------------*- C++ -*-===//
+//===-- SWIG Interface for SBListener ---------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_SBListener_h_
-#define LLDB_SBListener_h_
-
-#include "lldb/API/SBDefines.h"
-
 namespace lldb {
 
+%feature("docstring",
+"API clients can register its own listener to debugger events.
+
+See aslo SBEvent for example usage of creating and adding a listener."
+) SBListener;
 class SBListener
 {
 public:
@@ -24,11 +24,6 @@ public:
     SBListener (const SBListener &rhs);
 
     ~SBListener ();
-
-#ifndef SWIG
-    const lldb::SBListener &
-    operator = (const lldb::SBListener &rhs);
-#endif
 
     void
     AddEvent (const lldb::SBEvent &event);
@@ -89,43 +84,6 @@ public:
 
     bool
     HandleBroadcastEvent (const lldb::SBEvent &event);
-
-protected:
-    friend class SBBroadcaster;
-    friend class SBCommandInterpreter;
-    friend class SBDebugger;
-    friend class SBTarget;
-
-    SBListener (lldb_private::Listener &listener);
-
-private:
-
-#ifndef SWIG
-
-    lldb_private::Listener *
-    operator->() const;
-
-    lldb_private::Listener *
-    get() const;
-
-    lldb_private::Listener &
-    ref() const;
-        
-    lldb_private::Listener &
-    operator *();
-
-    const lldb_private::Listener &
-    operator *() const;
-
-    void
-    reset(lldb_private::Listener *listener, bool transfer_ownership);
-
-#endif
-
-    lldb::ListenerSP m_opaque_sp;
-    lldb_private::Listener *m_opaque_ptr;
 };
 
 } // namespace lldb
-
-#endif  // LLDB_SBListener_h_

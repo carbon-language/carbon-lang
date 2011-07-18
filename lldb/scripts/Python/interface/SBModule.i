@@ -1,4 +1,4 @@
-//===-- SBModule.h ----------------------------------------------*- C++ -*-===//
+//===-- SWIG Interface for SBModule -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,15 +7,32 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_SBModule_h_
-#define LLDB_SBModule_h_
-
-#include "lldb/API/SBDefines.h"
-#include "lldb/API/SBSymbolContext.h"
-#include "lldb/API/SBValueList.h"
-
 namespace lldb {
 
+%feature("docstring",
+"Represents an executable image and its associated object and symbol files.
+
+The module is designed to be able to select a single slice of an
+executable image as it would appear on disk and during program
+execution.
+
+You can retrieve SBModule from SBSymbolContext, which in turn is available
+from SBFrame.
+
+SBModule supports symbol iteration, for example,
+
+    for symbol in module:
+        name = symbol.GetName()
+        saddr = symbol.GetStartAddress()
+        eaddr = symbol.GetEndAddress()
+
+and rich comparion methods which allow the API program to use,
+
+    if thisModule == thatModule:
+        print 'This module is the same as that module'
+
+to test module equality."
+) SBModule;
 class SBModule
 {
 public:
@@ -24,16 +41,12 @@ public:
 
     SBModule (const SBModule &rhs);
     
-#ifndef SWIG
-    const SBModule &
-    operator = (const SBModule &rhs);
-#endif
-
     ~SBModule ();
 
     bool
     IsValid () const;
 
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Get const accessor for the module file specification.
     ///
@@ -44,9 +57,11 @@ public:
     /// @return
     ///     A const reference to the file specification object.
     //------------------------------------------------------------------
+    ") GetFileSpec;
     lldb::SBFileSpec
     GetFileSpec () const;
 
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Get accessor for the module platform file specification.
     ///
@@ -62,28 +77,17 @@ public:
     /// @return
     ///     A const reference to the file specification object.
     //------------------------------------------------------------------
+    ") GetPlatformFileSpec;
     lldb::SBFileSpec
     GetPlatformFileSpec () const;
 
     bool
     SetPlatformFileSpec (const lldb::SBFileSpec &platform_file);
 
-#ifndef SWIG
-    const uint8_t *
-    GetUUIDBytes () const;
-#endif
-
+    %feature("docstring", "Returns the UUID of the module as a Python string."
+    ) GetUUIDString;
     const char *
     GetUUIDString () const;
-
-#ifndef SWIG
-    bool
-    operator == (const lldb::SBModule &rhs) const;
-
-    bool
-    operator != (const lldb::SBModule &rhs) const;
-
-#endif
 
     bool
     ResolveFileAddress (lldb::addr_t vm_addr, 
@@ -102,6 +106,7 @@ public:
     lldb::SBSymbol
     GetSymbolAtIndex (size_t idx);
 
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Find functions by name.
     ///
@@ -126,12 +131,14 @@ public:
     /// @return
     ///     The number of matches added to \a sc_list.
     //------------------------------------------------------------------
+    ") FindFunctions;
     uint32_t
     FindFunctions (const char *name, 
                    uint32_t name_type_mask, // Logical OR one or more FunctionNameType enum bits
                    bool append, 
                    lldb::SBSymbolContextList& sc_list);
 
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Find global and static variables by name.
     ///
@@ -148,46 +155,11 @@ public:
     /// @return
     ///     A list of matched variables in an SBValueList.
     //------------------------------------------------------------------
+    ") FindGlobalVariables;
     lldb::SBValueList
     FindGlobalVariables (lldb::SBTarget &target, 
                          const char *name, 
                          uint32_t max_matches);
-    
-
-private:
-    friend class SBAddress;
-    friend class SBFrame;
-    friend class SBSymbolContext;
-    friend class SBTarget;
-
-    explicit SBModule (const lldb::ModuleSP& module_sp);
-
-    void
-    SetModule (const lldb::ModuleSP& module_sp);
-#ifndef SWIG
-
-    lldb::ModuleSP &
-    operator *();
-
-
-    lldb_private::Module *
-    operator ->();
-
-    const lldb_private::Module *
-    operator ->() const;
-
-    lldb_private::Module *
-    get();
-
-    const lldb_private::Module *
-    get() const;
-
-#endif
-
-    lldb::ModuleSP m_opaque_sp;
 };
 
-
 } // namespace lldb
-
-#endif // LLDB_SBModule_h_
