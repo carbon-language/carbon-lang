@@ -730,7 +730,7 @@ SlotIndex SplitEditor::leaveIntvBefore(SlotIndex Idx) {
   DEBUG(dbgs() << "    leaveIntvBefore " << Idx);
 
   // The interval must be live into the instruction at Idx.
-  Idx = Idx.getBoundaryIndex();
+  Idx = Idx.getBaseIndex();
   VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(Idx);
   if (!ParentVNI) {
     DEBUG(dbgs() << ": not live\n");
