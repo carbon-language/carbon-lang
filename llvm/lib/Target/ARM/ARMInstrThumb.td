@@ -657,7 +657,7 @@ def tLDRspi : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
 
 // Load tconstpool
 // FIXME: Use ldr.n to work around a Darwin assembler bug.
-let canFoldAsLoad = 1, isReMaterializable = 1 in
+let canFoldAsLoad = 1, isReMaterializable = 1, isCodeGenOnly = 1 in
 def tLDRpci : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_pc:$addr), IIC_iLoad_i,
                   "ldr", ".n\t$Rt, $addr",
                   [(set tGPR:$Rt, (load (ARMWrapper tconstpool:$addr)))]>,
