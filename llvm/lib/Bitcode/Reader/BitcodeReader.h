@@ -76,8 +76,8 @@ public:
     ValuePtrs.resize(N);
   }
   
-  Constant *getConstantFwdRef(unsigned Idx, const Type *Ty);
-  Value *getValueFwdRef(unsigned Idx, const Type *Ty);
+  Constant *getConstantFwdRef(unsigned Idx, Type *Ty);
+  Value *getValueFwdRef(unsigned Idx, Type *Ty);
   
   void AssignValue(Value *V, unsigned Idx);
   
@@ -212,7 +212,7 @@ public:
 private:
   Type *getTypeByID(unsigned ID);
   Type *getTypeByIDOrNull(unsigned ID);
-  Value *getFnValueByID(unsigned ID, const Type *Ty) {
+  Value *getFnValueByID(unsigned ID, Type *Ty) {
     if (Ty && Ty->isMetadataTy())
       return MDValueList.getValueFwdRef(ID);
     return ValueList.getValueFwdRef(ID, Ty);
@@ -248,7 +248,7 @@ private:
     return ResVal == 0;
   }
   bool getValue(SmallVector<uint64_t, 64> &Record, unsigned &Slot,
-                const Type *Ty, Value *&ResVal) {
+                Type *Ty, Value *&ResVal) {
     if (Slot == Record.size()) return true;
     unsigned ValNo = (unsigned)Record[Slot++];
     ResVal = getFnValueByID(ValNo, Ty);

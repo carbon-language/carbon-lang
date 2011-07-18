@@ -21,16 +21,16 @@
 namespace llvm {
   template<typename ItTy = User::const_op_iterator>
   class generic_gep_type_iterator
-    : public std::iterator<std::forward_iterator_tag, const Type *, ptrdiff_t> {
+    : public std::iterator<std::forward_iterator_tag, Type *, ptrdiff_t> {
     typedef std::iterator<std::forward_iterator_tag,
-                          const Type *, ptrdiff_t> super;
+                          Type *, ptrdiff_t> super;
 
     ItTy OpIt;
-    const Type *CurTy;
+    Type *CurTy;
     generic_gep_type_iterator() {}
   public:
 
-    static generic_gep_type_iterator begin(const Type *Ty, ItTy It) {
+    static generic_gep_type_iterator begin(Type *Ty, ItTy It) {
       generic_gep_type_iterator I;
       I.CurTy = Ty;
       I.OpIt = It;
@@ -50,23 +50,23 @@ namespace llvm {
       return !operator==(x);
     }
 
-    const Type *operator*() const {
+    Type *operator*() const {
       return CurTy;
     }
 
-    const Type *getIndexedType() const {
-      const CompositeType *CT = cast<CompositeType>(CurTy);
+    Type *getIndexedType() const {
+      CompositeType *CT = cast<CompositeType>(CurTy);
       return CT->getTypeAtIndex(getOperand());
     }
 
     // This is a non-standard operator->.  It allows you to call methods on the
     // current type directly.
-    const Type *operator->() const { return operator*(); }
+    Type *operator->() const { return operator*(); }
 
     Value *getOperand() const { return *OpIt; }
 
     generic_gep_type_iterator& operator++() {   // Preincrement
-      if (const CompositeType *CT = dyn_cast<CompositeType>(CurTy)) {
+      if (CompositeType *CT = dyn_cast<CompositeType>(CurTy)) {
         CurTy = CT->getTypeAtIndex(getOperand());
       } else {
         CurTy = 0;
@@ -99,13 +99,13 @@ namespace llvm {
 
   template<typename ItTy>
   inline generic_gep_type_iterator<ItTy>
-  gep_type_begin(const Type *Op0, ItTy I, ItTy E) {
+  gep_type_begin(Type *Op0, ItTy I, ItTy E) {
     return generic_gep_type_iterator<ItTy>::begin(Op0, I);
   }
 
   template<typename ItTy>
   inline generic_gep_type_iterator<ItTy>
-  gep_type_end(const Type *Op0, ItTy I, ItTy E) {
+  gep_type_end(Type *Op0, ItTy I, ItTy E) {
     return generic_gep_type_iterator<ItTy>::end(E);
   }
 } // end namespace llvm

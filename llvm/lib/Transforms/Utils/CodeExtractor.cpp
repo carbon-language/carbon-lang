@@ -50,7 +50,7 @@ namespace {
     DominatorTree* DT;
     bool AggregateArgs;
     unsigned NumExitBlocks;
-    const Type *RetTy;
+    Type *RetTy;
   public:
     CodeExtractor(DominatorTree* dt = 0, bool AggArgs = false)
       : DT(dt), AggregateArgs(AggArgs||AggregateArgsOpt), NumExitBlocks(~0U) {}
@@ -290,7 +290,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
     paramTy.clear();
     paramTy.push_back(StructPtr);
   }
-  const FunctionType *funcType =
+  FunctionType *funcType =
                   FunctionType::get(RetTy, paramTy, false);
 
   // Create the new function
@@ -580,7 +580,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
   }
 
   // Now that we've done the deed, simplify the switch instruction.
-  const Type *OldFnRetTy = TheSwitch->getParent()->getParent()->getReturnType();
+  Type *OldFnRetTy = TheSwitch->getParent()->getParent()->getReturnType();
   switch (NumExitBlocks) {
   case 0:
     // There are no successors (the block containing the switch itself), which

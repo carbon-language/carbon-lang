@@ -139,7 +139,7 @@ public:
 
   unsigned CreateReg(EVT VT);
   
-  unsigned CreateRegs(const Type *Ty);
+  unsigned CreateRegs(Type *Ty);
   
   unsigned InitializeRegForValue(const Value *V) {
     unsigned &R = ValueMap[V];

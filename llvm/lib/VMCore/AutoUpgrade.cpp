@@ -34,7 +34,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     return false;
   Name = Name.substr(5); // Strip off "llvm."
 
-  const FunctionType *FTy = F->getFunctionType();
+  FunctionType *FTy = F->getFunctionType();
   Module *M = F->getParent();
   
   switch (Name[0]) {
@@ -139,8 +139,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         F->getName() == "llvm.x86.sse2.loadu.dq" ||
         F->getName() == "llvm.x86.sse2.loadu.pd") {
       // Convert to a native, unaligned load.
-      const Type *VecTy = CI->getType();
-      const Type *IntTy = IntegerType::get(C, 128);
+      Type *VecTy = CI->getType();
+      Type *IntTy = IntegerType::get(C, 128);
       IRBuilder<> Builder(C);
       Builder.SetInsertPoint(CI->getParent(), CI);
 
@@ -192,7 +192,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   case Intrinsic::prefetch: {
     IRBuilder<> Builder(C);
     Builder.SetInsertPoint(CI->getParent(), CI);
-    const llvm::Type *I32Ty = llvm::Type::getInt32Ty(CI->getContext());
+    llvm::Type *I32Ty = llvm::Type::getInt32Ty(CI->getContext());
 
     // Add the extra "data cache" argument
     Value *Operands[4] = { CI->getArgOperand(0), CI->getArgOperand(1),

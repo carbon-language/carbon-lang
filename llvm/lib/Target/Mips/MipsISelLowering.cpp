@@ -1361,11 +1361,11 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
     ArgListTy Args;
     ArgListEntry Entry;
     Entry.Node = Argument;
-    Entry.Ty = (const Type *) Type::getInt32Ty(*DAG.getContext());
+    Entry.Ty = (Type *) Type::getInt32Ty(*DAG.getContext());
     Args.push_back(Entry);
     std::pair<SDValue, SDValue> CallResult =
         LowerCallTo(DAG.getEntryNode(),
-                    (const Type *) Type::getInt32Ty(*DAG.getContext()),
+                    (Type *) Type::getInt32Ty(*DAG.getContext()),
                     false, false, false, false, 0, CallingConv::C, false, true,
                     DAG.getExternalSymbol("__tls_get_addr", PtrVT), Args, DAG,
                     dl);
@@ -2313,7 +2313,7 @@ MipsTargetLowering::getSingleConstraintMatchWeight(
     // but allow it at the lowest weight.
   if (CallOperandVal == NULL)
     return CW_Default;
-  const Type *type = CallOperandVal->getType();
+  Type *type = CallOperandVal->getType();
   // Look at the constraint type.
   switch (*constraint) {
   default:

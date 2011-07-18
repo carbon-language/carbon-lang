@@ -90,9 +90,9 @@ private:
   void setAlignment(AlignTypeEnum align_type, unsigned abi_align,
                     unsigned pref_align, uint32_t bit_width);
   unsigned getAlignmentInfo(AlignTypeEnum align_type, uint32_t bit_width,
-                            bool ABIAlign, const Type *Ty) const;
+                            bool ABIAlign, Type *Ty) const;
   //! Internal helper method that returns requested alignment for type.
-  unsigned getAlignment(const Type *Ty, bool abi_or_pref) const;
+  unsigned getAlignment(Type *Ty, bool abi_or_pref) const;
 
   /// Valid alignment predicate.
   ///
@@ -200,19 +200,19 @@ public:
 
   /// getTypeSizeInBits - Return the number of bits necessary to hold the
   /// specified type.  For example, returns 36 for i36 and 80 for x86_fp80.
-  uint64_t getTypeSizeInBits(const Type* Ty) const;
+  uint64_t getTypeSizeInBits(Type* Ty) const;
 
   /// getTypeStoreSize - Return the maximum number of bytes that may be
   /// overwritten by storing the specified type.  For example, returns 5
   /// for i36 and 10 for x86_fp80.
-  uint64_t getTypeStoreSize(const Type *Ty) const {
+  uint64_t getTypeStoreSize(Type *Ty) const {
     return (getTypeSizeInBits(Ty)+7)/8;
   }
 
   /// getTypeStoreSizeInBits - Return the maximum number of bits that may be
   /// overwritten by storing the specified type; always a multiple of 8.  For
   /// example, returns 40 for i36 and 80 for x86_fp80.
-  uint64_t getTypeStoreSizeInBits(const Type *Ty) const {
+  uint64_t getTypeStoreSizeInBits(Type *Ty) const {
     return 8*getTypeStoreSize(Ty);
   }
 
@@ -220,7 +220,7 @@ public:
   /// of the specified type, including alignment padding.  This is the amount
   /// that alloca reserves for this type.  For example, returns 12 or 16 for
   /// x86_fp80, depending on alignment.
-  uint64_t getTypeAllocSize(const Type* Ty) const {
+  uint64_t getTypeAllocSize(Type* Ty) const {
     // Round up to the next alignment boundary.
     return RoundUpAlignment(getTypeStoreSize(Ty), getABITypeAlignment(Ty));
   }
@@ -229,13 +229,13 @@ public:
   /// objects of the specified type, including alignment padding; always a
   /// multiple of 8.  This is the amount that alloca reserves for this type.
   /// For example, returns 96 or 128 for x86_fp80, depending on alignment.
-  uint64_t getTypeAllocSizeInBits(const Type* Ty) const {
+  uint64_t getTypeAllocSizeInBits(Type* Ty) const {
     return 8*getTypeAllocSize(Ty);
   }
 
   /// getABITypeAlignment - Return the minimum ABI-required alignment for the
   /// specified type.
-  unsigned getABITypeAlignment(const Type *Ty) const;
+  unsigned getABITypeAlignment(Type *Ty) const;
   
   /// getABIIntegerTypeAlignment - Return the minimum ABI-required alignment for
   /// an integer type of the specified bitwidth.
@@ -244,17 +244,17 @@ public:
 
   /// getCallFrameTypeAlignment - Return the minimum ABI-required alignment
   /// for the specified type when it is part of a call frame.
-  unsigned getCallFrameTypeAlignment(const Type *Ty) const;
+  unsigned getCallFrameTypeAlignment(Type *Ty) const;
 
 
   /// getPrefTypeAlignment - Return the preferred stack/global alignment for
   /// the specified type.  This is always at least as good as the ABI alignment.
-  unsigned getPrefTypeAlignment(const Type *Ty) const;
+  unsigned getPrefTypeAlignment(Type *Ty) const;
 
   /// getPreferredTypeAlignmentShift - Return the preferred alignment for the
   /// specified type, returned as log2 of the value (a shift amount).
   ///
-  unsigned getPreferredTypeAlignmentShift(const Type *Ty) const;
+  unsigned getPreferredTypeAlignmentShift(Type *Ty) const;
 
   /// getIntPtrType - Return an unsigned integer type that is the same size or
   /// greater to the host pointer size.
@@ -264,13 +264,13 @@ public:
   /// getIndexedOffset - return the offset from the beginning of the type for
   /// the specified indices.  This is used to implement getelementptr.
   ///
-  uint64_t getIndexedOffset(const Type *Ty,
+  uint64_t getIndexedOffset(Type *Ty,
                             Value* const* Indices, unsigned NumIndices) const;
 
   /// getStructLayout - Return a StructLayout object, indicating the alignment
   /// of the struct, its size, and the offsets of its fields.  Note that this
   /// information is lazily cached.
-  const StructLayout *getStructLayout(const StructType *Ty) const;
+  const StructLayout *getStructLayout(StructType *Ty) const;
 
   /// getPreferredAlignment - Return the preferred alignment of the specified
   /// global.  This includes an explicitly requested alignment (if the global
@@ -333,7 +333,7 @@ public:
 
 private:
   friend class TargetData;   // Only TargetData can create this class
-  StructLayout(const StructType *ST, const TargetData &TD);
+  StructLayout(StructType *ST, const TargetData &TD);
 };
 
 } // End llvm namespace

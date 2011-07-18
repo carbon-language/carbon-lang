@@ -631,8 +631,8 @@ SparcTargetLowering::getSRetArgSize(SelectionDAG &DAG, SDValue Callee) const
   assert(CalleeFn->hasStructRetAttr() &&
          "Callee does not have the StructRet attribute.");
 
-  const PointerType *Ty = cast<PointerType>(CalleeFn->arg_begin()->getType());
-  const Type *ElementTy = Ty->getElementType();
+  PointerType *Ty = cast<PointerType>(CalleeFn->arg_begin()->getType());
+  Type *ElementTy = Ty->getElementType();
   return getTargetData()->getTypeAllocSize(ElementTy);
 }
 

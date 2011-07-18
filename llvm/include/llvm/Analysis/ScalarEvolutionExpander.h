@@ -89,12 +89,12 @@ namespace llvm {
     /// loop (inserting one if there is none).  A canonical induction variable
     /// starts at zero and steps by one on each iteration.
     PHINode *getOrInsertCanonicalInductionVariable(const Loop *L,
-                                                   const Type *Ty);
+                                                   Type *Ty);
 
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
-    Value *expandCodeFor(const SCEV *SH, const Type *Ty, Instruction *I);
+    Value *expandCodeFor(const SCEV *SH, Type *Ty, Instruction *I);
 
     /// setIVIncInsertPos - Set the current IV increment loop and position.
     void setIVIncInsertPos(const Loop *L, Instruction *Pos) {
@@ -145,20 +145,20 @@ namespace llvm {
     /// reusing an existing cast if a suitable one exists, moving an existing
     /// cast if a suitable one exists but isn't in the right place, or
     /// or creating a new one.
-    Value *ReuseOrCreateCast(Value *V, const Type *Ty,
+    Value *ReuseOrCreateCast(Value *V, Type *Ty,
                              Instruction::CastOps Op,
                              BasicBlock::iterator IP);
 
     /// InsertNoopCastOfTo - Insert a cast of V to the specified type,
     /// which must be possible with a noop cast, doing what we can to
     /// share the casts.
-    Value *InsertNoopCastOfTo(Value *V, const Type *Ty);
+    Value *InsertNoopCastOfTo(Value *V, Type *Ty);
 
     /// expandAddToGEP - Expand a SCEVAddExpr with a pointer type into a GEP
     /// instead of using ptrtoint+arithmetic+inttoptr.
     Value *expandAddToGEP(const SCEV *const *op_begin,
                           const SCEV *const *op_end,
-                          const PointerType *PTy, const Type *Ty, Value *V);
+                          PointerType *PTy, Type *Ty, Value *V);
 
     Value *expand(const SCEV *S);
 
@@ -166,7 +166,7 @@ namespace llvm {
     /// expression into the program.  The inserted code is inserted into the
     /// SCEVExpander's current insertion point. If a type is specified, the
     /// result will be expanded to have that type, with a cast if necessary.
-    Value *expandCodeFor(const SCEV *SH, const Type *Ty = 0);
+    Value *expandCodeFor(const SCEV *SH, Type *Ty = 0);
 
     /// isInsertedInstruction - Return true if the specified instruction was
     /// inserted by the code rewriter.  If so, the client should not modify the
@@ -211,8 +211,8 @@ namespace llvm {
     Value *expandAddRecExprLiterally(const SCEVAddRecExpr *);
     PHINode *getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
                                        const Loop *L,
-                                       const Type *ExpandTy,
-                                       const Type *IntTy);
+                                       Type *ExpandTy,
+                                       Type *IntTy);
   };
 }
 

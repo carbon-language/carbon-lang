@@ -600,7 +600,7 @@ LLVMValueRef LLVMConstNamedStruct(LLVMTypeRef StructTy,
                                   LLVMValueRef *ConstantVals,
                                   unsigned Count) {
   Constant **Elements = unwrap<Constant>(ConstantVals, Count);
-  const StructType *Ty = cast<StructType>(unwrap(StructTy));
+  StructType *Ty = cast<StructType>(unwrap(StructTy));
 
   return wrap(ConstantStruct::get(Ty, ArrayRef<Constant*>(Elements, Count)));
 }
@@ -1861,7 +1861,7 @@ LLVMValueRef LLVMBuildNot(LLVMBuilderRef B, LLVMValueRef V, const char *Name) {
 
 LLVMValueRef LLVMBuildMalloc(LLVMBuilderRef B, LLVMTypeRef Ty,
                              const char *Name) {
-  const Type* ITy = Type::getInt32Ty(unwrap(B)->GetInsertBlock()->getContext());
+  Type* ITy = Type::getInt32Ty(unwrap(B)->GetInsertBlock()->getContext());
   Constant* AllocSize = ConstantExpr::getSizeOf(unwrap(Ty));
   AllocSize = ConstantExpr::getTruncOrBitCast(AllocSize, ITy);
   Instruction* Malloc = CallInst::CreateMalloc(unwrap(B)->GetInsertBlock(), 
@@ -1872,7 +1872,7 @@ LLVMValueRef LLVMBuildMalloc(LLVMBuilderRef B, LLVMTypeRef Ty,
 
 LLVMValueRef LLVMBuildArrayMalloc(LLVMBuilderRef B, LLVMTypeRef Ty,
                                   LLVMValueRef Val, const char *Name) {
-  const Type* ITy = Type::getInt32Ty(unwrap(B)->GetInsertBlock()->getContext());
+  Type* ITy = Type::getInt32Ty(unwrap(B)->GetInsertBlock()->getContext());
   Constant* AllocSize = ConstantExpr::getSizeOf(unwrap(Ty));
   AllocSize = ConstantExpr::getTruncOrBitCast(AllocSize, ITy);
   Instruction* Malloc = CallInst::CreateMalloc(unwrap(B)->GetInsertBlock(), 

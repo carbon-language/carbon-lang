@@ -314,7 +314,7 @@ public:
   /// GenericValue *.  It is not a pointer to a GenericValue containing the
   /// address at which to store Val.
   void StoreValueToMemory(const GenericValue &Val, GenericValue *Ptr,
-                          const Type *Ty);
+                          Type *Ty);
 
   void InitializeMemory(const Constant *Init, void *Addr);
 
@@ -440,7 +440,7 @@ protected:
 
   GenericValue getConstantValue(const Constant *C);
   void LoadValueFromMemory(GenericValue &Result, GenericValue *Ptr,
-                           const Type *Ty);
+                           Type *Ty);
 };
 
 namespace EngineKind {

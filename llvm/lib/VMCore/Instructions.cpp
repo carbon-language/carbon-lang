@@ -62,11 +62,11 @@ const char *SelectInst::areInvalidOperands(Value *Op0, Value *Op1, Value *Op2) {
   if (Op1->getType() != Op2->getType())
     return "both values to select must have same type";
   
-  if (const VectorType *VT = dyn_cast<VectorType>(Op0->getType())) {
+  if (VectorType *VT = dyn_cast<VectorType>(Op0->getType())) {
     // Vector select.
     if (VT->getElementType() != Type::getInt1Ty(Op0->getContext()))
       return "vector select condition element type must be i1";
-    const VectorType *ET = dyn_cast<VectorType>(Op1->getType());
+    VectorType *ET = dyn_cast<VectorType>(Op1->getType());
     if (ET == 0)
       return "selected values for vector select must be vectors";
     if (ET->getNumElements() != VT->getNumElements())
@@ -179,7 +179,7 @@ void CallInst::init(Value *Func, ArrayRef<Value *> Args, const Twine &NameStr) {
   Op<-1>() = Func;
 
 #ifndef NDEBUG
-  const FunctionType *FTy =
+  FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
   assert((Args.size() == FTy->getNumParams() ||
@@ -201,7 +201,7 @@ void CallInst::init(Value *Func, const Twine &NameStr) {
   Op<-1>() = Func;
 
 #ifndef NDEBUG
-  const FunctionType *FTy =
+  FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
   assert(FTy->getNumParams() == 0 && "Calling a function with bad signature");
@@ -269,8 +269,8 @@ static bool IsConstantOne(Value *val) {
 }
 
 static Instruction *createMalloc(Instruction *InsertBefore,
-                                 BasicBlock *InsertAtEnd, const Type *IntPtrTy,
-                                 const Type *AllocTy, Value *AllocSize, 
+                                 BasicBlock *InsertAtEnd, Type *IntPtrTy,
+                                 Type *AllocTy, Value *AllocSize, 
                                  Value *ArraySize, Function *MallocF,
                                  const Twine &Name) {
   assert(((!InsertBefore && InsertAtEnd) || (InsertBefore && !InsertAtEnd)) &&
@@ -319,7 +319,7 @@ static Instruction *createMalloc(Instruction *InsertBefore,
   if (!MallocFunc)
     // prototype malloc as "void *malloc(size_t)"
     MallocFunc = M->getOrInsertFunction("malloc", BPTy, IntPtrTy, NULL);
-  const PointerType *AllocPtrType = PointerType::getUnqual(AllocTy);
+  PointerType *AllocPtrType = PointerType::getUnqual(AllocTy);
   CallInst *MCall = NULL;
   Instruction *Result = NULL;
   if (InsertBefore) {
@@ -354,7 +354,7 @@ static Instruction *createMalloc(Instruction *InsertBefore,
 /// 2. Call malloc with that argument.
 /// 3. Bitcast the result of the malloc call to the specified type.
 Instruction *CallInst::CreateMalloc(Instruction *InsertBefore,
-                                    const Type *IntPtrTy, const Type *AllocTy,
+                                    Type *IntPtrTy, Type *AllocTy,
                                     Value *AllocSize, Value *ArraySize,
                                     Function * MallocF,
                                     const Twine &Name) {
@@ -371,7 +371,7 @@ Instruction *CallInst::CreateMalloc(Instruction *InsertBefore,
 /// Note: This function does not add the bitcast to the basic block, that is the
 /// responsibility of the caller.
 Instruction *CallInst::CreateMalloc(BasicBlock *InsertAtEnd,
-                                    const Type *IntPtrTy, const Type *AllocTy,
+                                    Type *IntPtrTy, Type *AllocTy,
                                     Value *AllocSize, Value *ArraySize, 
                                     Function *MallocF, const Twine &Name) {
   return createMalloc(NULL, InsertAtEnd, IntPtrTy, AllocTy, AllocSize,
@@ -388,8 +388,8 @@ static Instruction* createFree(Value* Source, Instruction *InsertBefore,
   BasicBlock* BB = InsertBefore ? InsertBefore->getParent() : InsertAtEnd;
   Module* M = BB->getParent()->getParent();
 
-  const Type *VoidTy = Type::getVoidTy(M->getContext());
-  const Type *IntPtrTy = Type::getInt8PtrTy(M->getContext());
+  Type *VoidTy = Type::getVoidTy(M->getContext());
+  Type *IntPtrTy = Type::getInt8PtrTy(M->getContext());
   // prototype free as "void free(void*)"
   Value *FreeFunc = M->getOrInsertFunction("free", VoidTy, IntPtrTy, NULL);
   CallInst* Result = NULL;
@@ -436,7 +436,7 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
   Op<-1>() = IfException;
 
 #ifndef NDEBUG
-  const FunctionType *FTy =
+  FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
 
   assert(((Args.size() == FTy->getNumParams()) ||
@@ -692,7 +692,7 @@ static Value *getAISize(LLVMContext &Context, Value *Amt) {
   return Amt;
 }
 
-AllocaInst::AllocaInst(const Type *Ty, Value *ArraySize,
+AllocaInst::AllocaInst(Type *Ty, Value *ArraySize,
                        const Twine &Name, Instruction *InsertBefore)
   : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
                      getAISize(Ty->getContext(), ArraySize), InsertBefore) {
@@ -701,7 +701,7 @@ AllocaInst::AllocaInst(const Type *Ty, Value *ArraySize,
   setName(Name);
 }
 
-AllocaInst::AllocaInst(const Type *Ty, Value *ArraySize,
+AllocaInst::AllocaInst(Type *Ty, Value *ArraySize,
                        const Twine &Name, BasicBlock *InsertAtEnd)
   : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
                      getAISize(Ty->getContext(), ArraySize), InsertAtEnd) {
@@ -710,7 +710,7 @@ AllocaInst::AllocaInst(const Type *Ty, Value *ArraySize,
   setName(Name);
 }
 
-AllocaInst::AllocaInst(const Type *Ty, const Twine &Name,
+AllocaInst::AllocaInst(Type *Ty, const Twine &Name,
                        Instruction *InsertBefore)
   : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
                      getAISize(Ty->getContext(), 0), InsertBefore) {
@@ -719,7 +719,7 @@ AllocaInst::AllocaInst(const Type *Ty, const Twine &Name,
   setName(Name);
 }
 
-AllocaInst::AllocaInst(const Type *Ty, const Twine &Name,
+AllocaInst::AllocaInst(Type *Ty, const Twine &Name,
                        BasicBlock *InsertAtEnd)
   : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
                      getAISize(Ty->getContext(), 0), InsertAtEnd) {
@@ -728,7 +728,7 @@ AllocaInst::AllocaInst(const Type *Ty, const Twine &Name,
   setName(Name);
 }
 
-AllocaInst::AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
+AllocaInst::AllocaInst(Type *Ty, Value *ArraySize, unsigned Align,
                        const Twine &Name, Instruction *InsertBefore)
   : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
                      getAISize(Ty->getContext(), ArraySize), InsertBefore) {
@@ -737,7 +737,7 @@ AllocaInst::AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
   setName(Name);
 }
 
-AllocaInst::AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
+AllocaInst::AllocaInst(Type *Ty, Value *ArraySize, unsigned Align,
                        const Twine &Name, BasicBlock *InsertAtEnd)
   : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
                      getAISize(Ty->getContext(), ArraySize), InsertAtEnd) {
@@ -1067,9 +1067,9 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
 /// pointer type.
 ///
 template <typename IndexTy>
-static Type *getIndexedTypeInternal(const Type *Ptr, IndexTy const *Idxs,
+static Type *getIndexedTypeInternal(Type *Ptr, IndexTy const *Idxs,
                                     unsigned NumIdx) {
-  const PointerType *PTy = dyn_cast<PointerType>(Ptr);
+  PointerType *PTy = dyn_cast<PointerType>(Ptr);
   if (!PTy) return 0;   // Type isn't a pointer type!
   Type *Agg = PTy->getElementType();
 
@@ -1093,25 +1093,25 @@ static Type *getIndexedTypeInternal(const Type *Ptr, IndexTy const *Idxs,
   return CurIdx == NumIdx ? Agg : 0;
 }
 
-Type *GetElementPtrInst::getIndexedType(const Type *Ptr, Value* const *Idxs,
+Type *GetElementPtrInst::getIndexedType(Type *Ptr, Value* const *Idxs,
                                         unsigned NumIdx) {
   return getIndexedTypeInternal(Ptr, Idxs, NumIdx);
 }
 
-Type *GetElementPtrInst::getIndexedType(const Type *Ptr,
+Type *GetElementPtrInst::getIndexedType(Type *Ptr,
                                         Constant* const *Idxs,
                                         unsigned NumIdx) {
   return getIndexedTypeInternal(Ptr, Idxs, NumIdx);
 }
 
-Type *GetElementPtrInst::getIndexedType(const Type *Ptr,
+Type *GetElementPtrInst::getIndexedType(Type *Ptr,
                                         uint64_t const *Idxs,
                                         unsigned NumIdx) {
   return getIndexedTypeInternal(Ptr, Idxs, NumIdx);
 }
 
-Type *GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
-  const PointerType *PTy = dyn_cast<PointerType>(Ptr);
+Type *GetElementPtrInst::getIndexedType(Type *Ptr, Value *Idx) {
+  PointerType *PTy = dyn_cast<PointerType>(Ptr);
   if (!PTy) return 0;   // Type isn't a pointer type!
 
   // Check the pointer index.
@@ -1286,13 +1286,13 @@ bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
   if (!V1->getType()->isVectorTy() || V1->getType() != V2->getType())
     return false;
   
-  const VectorType *MaskTy = dyn_cast<VectorType>(Mask->getType());
+  VectorType *MaskTy = dyn_cast<VectorType>(Mask->getType());
   if (MaskTy == 0 || !MaskTy->getElementType()->isIntegerTy(32))
     return false;
 
   // Check to see if Mask is valid.
   if (const ConstantVector *MV = dyn_cast<ConstantVector>(Mask)) {
-    const VectorType *VTy = cast<VectorType>(V1->getType());
+    VectorType *VTy = cast<VectorType>(V1->getType());
     for (unsigned i = 0, e = MV->getNumOperands(); i != e; ++i) {
       if (ConstantInt* CI = dyn_cast<ConstantInt>(MV->getOperand(i))) {
         if (CI->uge(VTy->getNumElements()*2))
@@ -1382,7 +1382,7 @@ ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
 // A null type is returned if the indices are invalid for the specified
 // pointer type.
 //
-Type *ExtractValueInst::getIndexedType(const Type *Agg,
+Type *ExtractValueInst::getIndexedType(Type *Agg,
                                        ArrayRef<unsigned> Idxs) {
   for (unsigned CurIdx = 0; CurIdx != Idxs.size(); ++CurIdx) {
     unsigned Index = Idxs[CurIdx];
@@ -1392,10 +1392,10 @@ Type *ExtractValueInst::getIndexedType(const Type *Agg,
     // insertvalue we need to check array indexing manually.
     // Since the only other types we can index into are struct types it's just
     // as easy to check those manually as well.
-    if (const ArrayType *AT = dyn_cast<ArrayType>(Agg)) {
+    if (ArrayType *AT = dyn_cast<ArrayType>(Agg)) {
       if (Index >= AT->getNumElements())
         return 0;
-    } else if (const StructType *ST = dyn_cast<StructType>(Agg)) {
+    } else if (StructType *ST = dyn_cast<StructType>(Agg)) {
       if (Index >= ST->getNumElements())
         return 0;
     } else {
@@ -1413,7 +1413,7 @@ Type *ExtractValueInst::getIndexedType(const Type *Agg,
 //===----------------------------------------------------------------------===//
 
 BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
-                               const Type *Ty, const Twine &Name,
+                               Type *Ty, const Twine &Name,
                                Instruction *InsertBefore)
   : Instruction(Ty, iType,
                 OperandTraits<BinaryOperator>::op_begin(this),
@@ -1426,7 +1426,7 @@ BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
 }
 
 BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2, 
-                               const Type *Ty, const Twine &Name,
+                               Type *Ty, const Twine &Name,
                                BasicBlock *InsertAtEnd)
   : Instruction(Ty, iType,
                 OperandTraits<BinaryOperator>::op_begin(this),
@@ -1589,7 +1589,7 @@ BinaryOperator *BinaryOperator::CreateFNeg(Value *Op, const Twine &Name,
 BinaryOperator *BinaryOperator::CreateNot(Value *Op, const Twine &Name,
                                           Instruction *InsertBefore) {
   Constant *C;
-  if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
+  if (VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
     C = Constant::getAllOnesValue(PTy->getElementType());
     C = ConstantVector::get(
                               std::vector<Constant*>(PTy->getNumElements(), C));
@@ -1604,7 +1604,7 @@ BinaryOperator *BinaryOperator::CreateNot(Value *Op, const Twine &Name,
 BinaryOperator *BinaryOperator::CreateNot(Value *Op, const Twine &Name,
                                           BasicBlock *InsertAtEnd) {
   Constant *AllOnes;
-  if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
+  if (VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
     // Create a vector of all ones values.
     Constant *Elt = Constant::getAllOnesValue(PTy->getElementType());
     AllOnes = ConstantVector::get(
@@ -1743,8 +1743,8 @@ bool CastInst::isLosslessCast() const {
     return false;
 
   // Identity cast is always lossless
-  const Type* SrcTy = getOperand(0)->getType();
-  const Type* DstTy = getType();
+  Type* SrcTy = getOperand(0)->getType();
+  Type* DstTy = getType();
   if (SrcTy == DstTy)
     return true;
   
@@ -1763,9 +1763,9 @@ bool CastInst::isLosslessCast() const {
 /// # ptrtoint i32* %x to i32     ; on 32-bit plaforms only
 /// @brief Determine if the described cast is a no-op.
 bool CastInst::isNoopCast(Instruction::CastOps Opcode,
-                          const Type *SrcTy,
-                          const Type *DestTy,
-                          const Type *IntPtrTy) {
+                          Type *SrcTy,
+                          Type *DestTy,
+                          Type *IntPtrTy) {
   switch (Opcode) {
     default:
       assert(!"Invalid CastOp");
@@ -1791,7 +1791,7 @@ bool CastInst::isNoopCast(Instruction::CastOps Opcode,
 }
 
 /// @brief Determine if a cast is a no-op.
-bool CastInst::isNoopCast(const Type *IntPtrTy) const {
+bool CastInst::isNoopCast(Type *IntPtrTy) const {
   return isNoopCast(getOpcode(), getOperand(0)->getType(), getType(), IntPtrTy);
 }
 
@@ -1805,7 +1805,7 @@ bool CastInst::isNoopCast(const Type *IntPtrTy) const {
 /// If no such cast is permited, the function returns 0.
 unsigned CastInst::isEliminableCastPair(
   Instruction::CastOps firstOp, Instruction::CastOps secondOp,
-  const Type *SrcTy, const Type *MidTy, const Type *DstTy, const Type *IntPtrTy)
+  Type *SrcTy, Type *MidTy, Type *DstTy, Type *IntPtrTy)
 {
   // Define the 144 possibilities for these two cast instructions. The values
   // in this matrix determine what to do in a given situation and select the
@@ -1967,7 +1967,7 @@ unsigned CastInst::isEliminableCastPair(
   return 0;
 }
 
-CastInst *CastInst::Create(Instruction::CastOps op, Value *S, const Type *Ty, 
+CastInst *CastInst::Create(Instruction::CastOps op, Value *S, Type *Ty, 
   const Twine &Name, Instruction *InsertBefore) {
   assert(castIsValid(op, S, Ty) && "Invalid cast!");
   // Construct and return the appropriate CastInst subclass
@@ -1990,7 +1990,7 @@ CastInst *CastInst::Create(Instruction::CastOps op, Value *S, const Type *Ty,
   return 0;
 }
 
-CastInst *CastInst::Create(Instruction::CastOps op, Value *S, const Type *Ty,
+CastInst *CastInst::Create(Instruction::CastOps op, Value *S, Type *Ty,
   const Twine &Name, BasicBlock *InsertAtEnd) {
   assert(castIsValid(op, S, Ty) && "Invalid cast!");
   // Construct and return the appropriate CastInst subclass
@@ -2013,7 +2013,7 @@ CastInst *CastInst::Create(Instruction::CastOps op, Value *S, const Type *Ty,
   return 0;
 }
 
-CastInst *CastInst::CreateZExtOrBitCast(Value *S, const Type *Ty, 
+CastInst *CastInst::CreateZExtOrBitCast(Value *S, Type *Ty, 
                                         const Twine &Name,
                                         Instruction *InsertBefore) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
@@ -2021,7 +2021,7 @@ CastInst *CastInst::CreateZExtOrBitCast(Value *S, const Type *Ty,
   return Create(Instruction::ZExt, S, Ty, Name, InsertBefore);
 }
 
-CastInst *CastInst::CreateZExtOrBitCast(Value *S, const Type *Ty, 
+CastInst *CastInst::CreateZExtOrBitCast(Value *S, Type *Ty, 
                                         const Twine &Name,
                                         BasicBlock *InsertAtEnd) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
@@ -2029,7 +2029,7 @@ CastInst *CastInst::CreateZExtOrBitCast(Value *S, const Type *Ty,
   return Create(Instruction::ZExt, S, Ty, Name, InsertAtEnd);
 }
 
-CastInst *CastInst::CreateSExtOrBitCast(Value *S, const Type *Ty, 
+CastInst *CastInst::CreateSExtOrBitCast(Value *S, Type *Ty, 
                                         const Twine &Name,
                                         Instruction *InsertBefore) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
@@ -2037,7 +2037,7 @@ CastInst *CastInst::CreateSExtOrBitCast(Value *S, const Type *Ty,
   return Create(Instruction::SExt, S, Ty, Name, InsertBefore);
 }
 
-CastInst *CastInst::CreateSExtOrBitCast(Value *S, const Type *Ty, 
+CastInst *CastInst::CreateSExtOrBitCast(Value *S, Type *Ty, 
                                         const Twine &Name,
                                         BasicBlock *InsertAtEnd) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
@@ -2045,7 +2045,7 @@ CastInst *CastInst::CreateSExtOrBitCast(Value *S, const Type *Ty,
   return Create(Instruction::SExt, S, Ty, Name, InsertAtEnd);
 }
 
-CastInst *CastInst::CreateTruncOrBitCast(Value *S, const Type *Ty,
+CastInst *CastInst::CreateTruncOrBitCast(Value *S, Type *Ty,
                                          const Twine &Name,
                                          Instruction *InsertBefore) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
@@ -2053,7 +2053,7 @@ CastInst *CastInst::CreateTruncOrBitCast(Value *S, const Type *Ty,
   return Create(Instruction::Trunc, S, Ty, Name, InsertBefore);
 }
 
-CastInst *CastInst::CreateTruncOrBitCast(Value *S, const Type *Ty,
+CastInst *CastInst::CreateTruncOrBitCast(Value *S, Type *Ty,
                                          const Twine &Name, 
                                          BasicBlock *InsertAtEnd) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
@@ -2061,7 +2061,7 @@ CastInst *CastInst::CreateTruncOrBitCast(Value *S, const Type *Ty,
   return Create(Instruction::Trunc, S, Ty, Name, InsertAtEnd);
 }
 
-CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty,
+CastInst *CastInst::CreatePointerCast(Value *S, Type *Ty,
                                       const Twine &Name,
                                       BasicBlock *InsertAtEnd) {
   assert(S->getType()->isPointerTy() && "Invalid cast");
@@ -2074,7 +2074,7 @@ CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty,
 }
 
 /// @brief Create a BitCast or a PtrToInt cast instruction
-CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty, 
+CastInst *CastInst::CreatePointerCast(Value *S, Type *Ty, 
                                       const Twine &Name, 
                                       Instruction *InsertBefore) {
   assert(S->getType()->isPointerTy() && "Invalid cast");
@@ -2086,7 +2086,7 @@ CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty,
   return Create(Instruction::BitCast, S, Ty, Name, InsertBefore);
 }
 
-CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty, 
+CastInst *CastInst::CreateIntegerCast(Value *C, Type *Ty, 
                                       bool isSigned, const Twine &Name,
                                       Instruction *InsertBefore) {
   assert(C->getType()->isIntOrIntVectorTy() && Ty->isIntOrIntVectorTy() &&
@@ -2100,7 +2100,7 @@ CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty,
   return Create(opcode, C, Ty, Name, InsertBefore);
 }
 
-CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty, 
+CastInst *CastInst::CreateIntegerCast(Value *C, Type *Ty, 
                                       bool isSigned, const Twine &Name,
                                       BasicBlock *InsertAtEnd) {
   assert(C->getType()->isIntOrIntVectorTy() && Ty->isIntOrIntVectorTy() &&
@@ -2114,7 +2114,7 @@ CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty,
   return Create(opcode, C, Ty, Name, InsertAtEnd);
 }
 
-CastInst *CastInst::CreateFPCast(Value *C, const Type *Ty, 
+CastInst *CastInst::CreateFPCast(Value *C, Type *Ty, 
                                  const Twine &Name, 
                                  Instruction *InsertBefore) {
   assert(C->getType()->isFPOrFPVectorTy() && Ty->isFPOrFPVectorTy() &&
@@ -2127,7 +2127,7 @@ CastInst *CastInst::CreateFPCast(Value *C, const Type *Ty,
   return Create(opcode, C, Ty, Name, InsertBefore);
 }
 
-CastInst *CastInst::CreateFPCast(Value *C, const Type *Ty, 
+CastInst *CastInst::CreateFPCast(Value *C, Type *Ty, 
                                  const Twine &Name, 
                                  BasicBlock *InsertAtEnd) {
   assert(C->getType()->isFPOrFPVectorTy() && Ty->isFPOrFPVectorTy() &&
@@ -2142,15 +2142,15 @@ CastInst *CastInst::CreateFPCast(Value *C, const Type *Ty,
 
 // Check whether it is valid to call getCastOpcode for these types.
 // This routine must be kept in sync with getCastOpcode.
-bool CastInst::isCastable(const Type *SrcTy, const Type *DestTy) {
+bool CastInst::isCastable(Type *SrcTy, Type *DestTy) {
   if (!SrcTy->isFirstClassType() || !DestTy->isFirstClassType())
     return false;
 
   if (SrcTy == DestTy)
     return true;
 
-  if (const VectorType *SrcVecTy = dyn_cast<VectorType>(SrcTy))
-    if (const VectorType *DestVecTy = dyn_cast<VectorType>(DestTy))
+  if (VectorType *SrcVecTy = dyn_cast<VectorType>(SrcTy))
+    if (VectorType *DestVecTy = dyn_cast<VectorType>(DestTy))
       if (SrcVecTy->getNumElements() == DestVecTy->getNumElements()) {
         // An element by element cast.  Valid if casting the elements is valid.
         SrcTy = SrcVecTy->getElementType();
@@ -2212,8 +2212,8 @@ bool CastInst::isCastable(const Type *SrcTy, const Type *DestTy) {
 // This routine must be kept in sync with isCastable.
 Instruction::CastOps
 CastInst::getCastOpcode(
-  const Value *Src, bool SrcIsSigned, const Type *DestTy, bool DestIsSigned) {
-  const Type *SrcTy = Src->getType();
+  const Value *Src, bool SrcIsSigned, Type *DestTy, bool DestIsSigned) {
+  Type *SrcTy = Src->getType();
 
   assert(SrcTy->isFirstClassType() && DestTy->isFirstClassType() &&
          "Only first class types are castable!");
@@ -2221,8 +2221,8 @@ CastInst::getCastOpcode(
   if (SrcTy == DestTy)
     return BitCast;
 
-  if (const VectorType *SrcVecTy = dyn_cast<VectorType>(SrcTy))
-    if (const VectorType *DestVecTy = dyn_cast<VectorType>(DestTy))
+  if (VectorType *SrcVecTy = dyn_cast<VectorType>(SrcTy))
+    if (VectorType *DestVecTy = dyn_cast<VectorType>(DestTy))
       if (SrcVecTy->getNumElements() == DestVecTy->getNumElements()) {
         // An element by element cast.  Find the appropriate opcode based on the
         // element types.
@@ -2320,10 +2320,10 @@ CastInst::getCastOpcode(
 /// it in one place and to eliminate the redundant code for getting the sizes
 /// of the types involved.
 bool 
-CastInst::castIsValid(Instruction::CastOps op, Value *S, const Type *DstTy) {
+CastInst::castIsValid(Instruction::CastOps op, Value *S, Type *DstTy) {
 
   // Check for type sanity on the arguments
-  const Type *SrcTy = S->getType();
+  Type *SrcTy = S->getType();
   if (!SrcTy->isFirstClassType() || !DstTy->isFirstClassType() ||
       SrcTy->isAggregateType() || DstTy->isAggregateType())
     return false;
@@ -2384,144 +2384,144 @@ CastInst::castIsValid(Instruction::CastOps op, Value *S, const Type *DstTy) {
 }
 
 TruncInst::TruncInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, Trunc, S, Name, InsertBefore) {
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal Trunc");
 }
 
 TruncInst::TruncInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, Trunc, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal Trunc");
 }
 
 ZExtInst::ZExtInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 )  : CastInst(Ty, ZExt, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal ZExt");
 }
 
 ZExtInst::ZExtInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 )  : CastInst(Ty, ZExt, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal ZExt");
 }
 SExtInst::SExtInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, SExt, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal SExt");
 }
 
 SExtInst::SExtInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 )  : CastInst(Ty, SExt, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal SExt");
 }
 
 FPTruncInst::FPTruncInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPTrunc, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPTrunc");
 }
 
 FPTruncInst::FPTruncInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPTrunc, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPTrunc");
 }
 
 FPExtInst::FPExtInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPExt, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPExt");
 }
 
 FPExtInst::FPExtInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPExt, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPExt");
 }
 
 UIToFPInst::UIToFPInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, UIToFP, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal UIToFP");
 }
 
 UIToFPInst::UIToFPInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, UIToFP, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal UIToFP");
 }
 
 SIToFPInst::SIToFPInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, SIToFP, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal SIToFP");
 }
 
 SIToFPInst::SIToFPInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, SIToFP, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal SIToFP");
 }
 
 FPToUIInst::FPToUIInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPToUI, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToUI");
 }
 
 FPToUIInst::FPToUIInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPToUI, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToUI");
 }
 
 FPToSIInst::FPToSIInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPToSI, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToSI");
 }
 
 FPToSIInst::FPToSIInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPToSI, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToSI");
 }
 
 PtrToIntInst::PtrToIntInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, PtrToInt, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal PtrToInt");
 }
 
 PtrToIntInst::PtrToIntInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, PtrToInt, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal PtrToInt");
 }
 
 IntToPtrInst::IntToPtrInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, IntToPtr, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal IntToPtr");
 }
 
 IntToPtrInst::IntToPtrInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, IntToPtr, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal IntToPtr");
 }
 
 BitCastInst::BitCastInst(
-  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
+  Value *S, Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, BitCast, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal BitCast");
 }
 
 BitCastInst::BitCastInst(
-  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
+  Value *S, Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, BitCast, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal BitCast");
 }
@@ -2532,7 +2532,7 @@ BitCastInst::BitCastInst(
 
 void CmpInst::Anchor() const {}
 
-CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
+CmpInst::CmpInst(Type *ty, OtherOps op, unsigned short predicate,
                  Value *LHS, Value *RHS, const Twine &Name,
                  Instruction *InsertBefore)
   : Instruction(ty, op,
@@ -2545,7 +2545,7 @@ CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
   setName(Name);
 }
 
-CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
+CmpInst::CmpInst(Type *ty, OtherOps op, unsigned short predicate,
                  Value *LHS, Value *RHS, const Twine &Name,
                  BasicBlock *InsertAtEnd)
   : Instruction(ty, op,

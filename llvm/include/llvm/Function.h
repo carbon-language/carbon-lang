@@ -117,11 +117,11 @@ private:
   /// function is automatically inserted into the end of the function list for
   /// the module.
   ///
-  Function(const FunctionType *Ty, LinkageTypes Linkage,
+  Function(FunctionType *Ty, LinkageTypes Linkage,
            const Twine &N = "", Module *M = 0);
 
 public:
-  static Function *Create(const FunctionType *Ty, LinkageTypes Linkage,
+  static Function *Create(FunctionType *Ty, LinkageTypes Linkage,
                           const Twine &N = "", Module *M = 0) {
     return new(0) Function(Ty, Linkage, N, M);
   }

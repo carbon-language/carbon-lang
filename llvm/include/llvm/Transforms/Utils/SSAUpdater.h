@@ -39,7 +39,7 @@ private:
   void *AV;
 
   /// ProtoType holds the type of the values being rewritten.
-  const Type *ProtoType;
+  Type *ProtoType;
 
   // PHI nodes are given a name based on ProtoName.
   std::string ProtoName;
@@ -56,7 +56,7 @@ public:
 
   /// Initialize - Reset this object to get ready for a new set of SSA
   /// updates with type 'Ty'.  PHI nodes get a name based on 'Name'.
-  void Initialize(const Type *Ty, StringRef Name);
+  void Initialize(Type *Ty, StringRef Name);
 
   /// AddAvailableValue - Indicate that a rewritten value is available at the
   /// end of the specified block with the specified value.

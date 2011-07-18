@@ -26,7 +26,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-static std::string getTypeString(const Type *T) {
+static std::string getTypeString(Type *T) {
   std::string Result;
   raw_string_ostream Tmp(Result);
   Tmp << *T;
@@ -744,9 +744,9 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
 /// GetGlobalVal - Get a value with the specified name or ID, creating a
 /// forward reference record if needed.  This can return null if the value
 /// exists but does not have the right type.
-GlobalValue *LLParser::GetGlobalVal(const std::string &Name, const Type *Ty,
+GlobalValue *LLParser::GetGlobalVal(const std::string &Name, Type *Ty,
                                     LocTy Loc) {
-  const PointerType *PTy = dyn_cast<PointerType>(Ty);
+  PointerType *PTy = dyn_cast<PointerType>(Ty);
   if (PTy == 0) {
     Error(Loc, "global variable reference must have pointer type");
     return 0;
@@ -775,7 +775,7 @@ GlobalValue *LLParser::GetGlobalVal(const std::string &Name, const Type *Ty,
 
   // Otherwise, create a new forward reference for this value and remember it.
   GlobalValue *FwdVal;
-  if (const FunctionType *FT = dyn_cast<FunctionType>(PTy->getElementType()))
+  if (FunctionType *FT = dyn_cast<FunctionType>(PTy->getElementType()))
     FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, Name, M);
   else
     FwdVal = new GlobalVariable(*M, PTy->getElementType(), false,
@@ -785,8 +785,8 @@ GlobalValue *LLParser::GetGlobalVal(const std::string &Name, const Type *Ty,
   return FwdVal;
 }
 
-GlobalValue *LLParser::GetGlobalVal(unsigned ID, const Type *Ty, LocTy Loc) {
-  const PointerType *PTy = dyn_cast<PointerType>(Ty);
+GlobalValue *LLParser::GetGlobalVal(unsigned ID, Type *Ty, LocTy Loc) {
+  PointerType *PTy = dyn_cast<PointerType>(Ty);
   if (PTy == 0) {
     Error(Loc, "global variable reference must have pointer type");
     return 0;
@@ -813,7 +813,7 @@ GlobalValue *LLParser::GetGlobalVal(unsigned ID, const Type *Ty, LocTy Loc) {
 
   // Otherwise, create a new forward reference for this value and remember it.
   GlobalValue *FwdVal;
-  if (const FunctionType *FT = dyn_cast<FunctionType>(PTy->getElementType()))
+  if (FunctionType *FT = dyn_cast<FunctionType>(PTy->getElementType()))
     FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, "", M);
   else
     FwdVal = new GlobalVariable(*M, PTy->getElementType(), false,
@@ -1668,7 +1668,7 @@ bool LLParser::PerFunctionState::FinishFunction() {
 /// forward reference record if needed.  This can return null if the value
 /// exists but does not have the right type.
 Value *LLParser::PerFunctionState::GetVal(const std::string &Name,
-                                          const Type *Ty, LocTy Loc) {
+                                          Type *Ty, LocTy Loc) {
   // Look this name up in the normal function symbol table.
   Value *Val = F.getValueSymbolTable().lookup(Name);
 
@@ -1709,7 +1709,7 @@ Value *LLParser::PerFunctionState::GetVal(const std::string &Name,
   return FwdVal;
 }
 
-Value *LLParser::PerFunctionState::GetVal(unsigned ID, const Type *Ty,
+Value *LLParser::PerFunctionState::GetVal(unsigned ID, Type *Ty,
                                           LocTy Loc) {
   // Look this name up in the normal function symbol table.
   Value *Val = ID < NumberedVals.size() ? NumberedVals[ID] : 0;
@@ -2323,7 +2323,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
 }
 
 /// ParseGlobalValue - Parse a global value with the specified type.
-bool LLParser::ParseGlobalValue(const Type *Ty, Constant *&C) {
+bool LLParser::ParseGlobalValue(Type *Ty, Constant *&C) {
   C = 0;
   ValID ID;
   Value *V = NULL;
@@ -2410,7 +2410,7 @@ bool LLParser::ParseMetadataValue(ValID &ID, PerFunctionState *PFS) {
 // Function Parsing.
 //===----------------------------------------------------------------------===//
 
-bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
+bool LLParser::ConvertValIDToValue(Type *Ty, ValID &ID, Value *&V,
                                    PerFunctionState *PFS) {
   if (Ty->isFunctionTy())
     return Error(ID.Loc, "functions are not values, refer to them as pointers");
@@ -2426,8 +2426,8 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
     V = PFS->GetVal(ID.StrVal, Ty, ID.Loc);
     return (V == 0);
   case ValID::t_InlineAsm: {
-    const PointerType *PTy = dyn_cast<PointerType>(Ty);
-    const FunctionType *FTy = 
+    PointerType *PTy = dyn_cast<PointerType>(Ty);
+    FunctionType *FTy = 
       PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
     if (!FTy || !InlineAsm::Verify(FTy, ID.StrVal2))
       return Error(ID.Loc, "invalid type for inline asm constraint string");
@@ -2506,7 +2506,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
     return false;
   case ValID::t_ConstantStruct:
   case ValID::t_PackedConstantStruct:
-    if (const StructType *ST = dyn_cast<StructType>(Ty)) {
+    if (StructType *ST = dyn_cast<StructType>(Ty)) {
       if (ST->getNumElements() != ID.UIntVal)
         return Error(ID.Loc,
                      "initializer with struct type has wrong # elements");
@@ -2527,7 +2527,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
   }
 }
 
-bool LLParser::ParseValue(const Type *Ty, Value *&V, PerFunctionState *PFS) {
+bool LLParser::ParseValue(Type *Ty, Value *&V, PerFunctionState *PFS) {
   V = 0;
   ValID ID;
   return ParseValID(ID, PFS) ||
@@ -2671,9 +2671,9 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   if (PAL.paramHasAttr(1, Attribute::StructRet) && !RetType->isVoidTy())
     return Error(RetTypeLoc, "functions with 'sret' argument must return void");
 
-  const FunctionType *FT =
+  FunctionType *FT =
     FunctionType::get(RetType, ParamTypeList, isVarArg);
-  const PointerType *PFT = PointerType::getUnqual(FT);
+  PointerType *PFT = PointerType::getUnqual(FT);
 
   Fn = 0;
   if (!FunctionName.empty()) {
@@ -3162,8 +3162,8 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   // If RetType is a non-function pointer type, then this is the short syntax
   // for the call, which means that RetType is just the return type.  Infer the
   // rest of the function argument types from the arguments that are present.
-  const PointerType *PFTy = 0;
-  const FunctionType *Ty = 0;
+  PointerType *PFTy = 0;
+  FunctionType *Ty = 0;
   if (!(PFTy = dyn_cast<PointerType>(RetType)) ||
       !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
     // Pull out the types of all of the arguments...
@@ -3194,7 +3194,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   FunctionType::param_iterator I = Ty->param_begin();
   FunctionType::param_iterator E = Ty->param_end();
   for (unsigned i = 0, e = ArgList.size(); i != e; ++i) {
-    const Type *ExpectedTy = 0;
+    Type *ExpectedTy = 0;
     if (I != E) {
       ExpectedTy = *I++;
     } else if (!Ty->isVarArg()) {
@@ -3498,8 +3498,8 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   // If RetType is a non-function pointer type, then this is the short syntax
   // for the call, which means that RetType is just the return type.  Infer the
   // rest of the function argument types from the arguments that are present.
-  const PointerType *PFTy = 0;
-  const FunctionType *Ty = 0;
+  PointerType *PFTy = 0;
+  FunctionType *Ty = 0;
   if (!(PFTy = dyn_cast<PointerType>(RetType)) ||
       !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
     // Pull out the types of all of the arguments...
@@ -3530,7 +3530,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   FunctionType::param_iterator I = Ty->param_begin();
   FunctionType::param_iterator E = Ty->param_end();
   for (unsigned i = 0, e = ArgList.size(); i != e; ++i) {
-    const Type *ExpectedTy = 0;
+    Type *ExpectedTy = 0;
     if (I != E) {
       ExpectedTy = *I++;
     } else if (!Ty->isVarArg()) {

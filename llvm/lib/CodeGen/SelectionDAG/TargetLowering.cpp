@@ -996,7 +996,7 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
 /// type of the given function.  This does not require a DAG or a return value,
 /// and is suitable for use before any DAGs for the function are constructed.
 /// TODO: Move this out of TargetLowering.cpp.
-void llvm::GetReturnInfo(const Type* ReturnType, Attributes attr,
+void llvm::GetReturnInfo(Type* ReturnType, Attributes attr,
                          SmallVectorImpl<ISD::OutputArg> &Outs,
                          const TargetLowering &TLI,
                          SmallVectorImpl<uint64_t> *Offsets) {
@@ -1054,7 +1054,7 @@ void llvm::GetReturnInfo(const Type* ReturnType, Attributes attr,
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
 /// function arguments in the caller parameter area.  This is the actual
 /// alignment, not its logarithm.
-unsigned TargetLowering::getByValTypeAlignment(const Type *Ty) const {
+unsigned TargetLowering::getByValTypeAlignment(Type *Ty) const {
   return TD->getCallFrameTypeAlignment(Ty);
 }
 
@@ -2840,7 +2840,7 @@ TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
       // corresponding argument.
       assert(!CS.getType()->isVoidTy() &&
              "Bad inline asm!");
-      if (const StructType *STy = dyn_cast<StructType>(CS.getType())) {
+      if (StructType *STy = dyn_cast<StructType>(CS.getType())) {
         OpInfo.ConstraintVT = getValueType(STy->getElementType(ResNo));
       } else {
         assert(ResNo == 0 && "Asm only has one result!");
@@ -2857,16 +2857,16 @@ TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
     }
 
     if (OpInfo.CallOperandVal) {
-      const llvm::Type *OpTy = OpInfo.CallOperandVal->getType();
+      llvm::Type *OpTy = OpInfo.CallOperandVal->getType();
       if (OpInfo.isIndirect) {
-        const llvm::PointerType *PtrTy = dyn_cast<PointerType>(OpTy);
+        llvm::PointerType *PtrTy = dyn_cast<PointerType>(OpTy);
         if (!PtrTy)
           report_fatal_error("Indirect operand for inline asm not a pointer!");
         OpTy = PtrTy->getElementType();
       }
 
       // Look for vector wrapped in a struct. e.g. { <16 x i8> }.
-      if (const StructType *STy = dyn_cast<StructType>(OpTy))
+      if (StructType *STy = dyn_cast<StructType>(OpTy))
         if (STy->getNumElements() == 1)
           OpTy = STy->getElementType(0);
 
@@ -3187,7 +3187,7 @@ void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo,
 /// isLegalAddressingMode - Return true if the addressing mode represented
 /// by AM is legal for this target, for a load/store of the specified type.
 bool TargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                           const Type *Ty) const {
+                                           Type *Ty) const {
   // The default implementation of this implements a conservative RISCy, r+r and
   // r+i addr mode.
 

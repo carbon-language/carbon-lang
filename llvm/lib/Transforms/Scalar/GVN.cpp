@@ -63,7 +63,7 @@ static cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
 namespace {
   struct Expression {
     uint32_t opcode;
-    const Type *type;
+    Type *type;
     SmallVector<uint32_t, 4> varargs;
 
     Expression(uint32_t o = ~2U) : opcode(o) { }
@@ -655,7 +655,7 @@ SpeculationFailure:
 /// CanCoerceMustAliasedValueToLoad - Return true if
 /// CoerceAvailableValueToLoadType will succeed.
 static bool CanCoerceMustAliasedValueToLoad(Value *StoredVal,
-                                            const Type *LoadTy,
+                                            Type *LoadTy,
                                             const TargetData &TD) {
   // If the loaded or stored value is an first class array or struct, don't try
   // to transform them.  We need to be able to bitcast to integer.
@@ -680,14 +680,14 @@ static bool CanCoerceMustAliasedValueToLoad(Value *StoredVal,
 ///
 /// If we can't do it, return null.
 static Value *CoerceAvailableValueToLoadType(Value *StoredVal, 
-                                             const Type *LoadedTy,
+                                             Type *LoadedTy,
                                              Instruction *InsertPt,
                                              const TargetData &TD) {
   if (!CanCoerceMustAliasedValueToLoad(StoredVal, LoadedTy, TD))
     return 0;
   
   // If this is already the right type, just return it.
-  const Type *StoredValTy = StoredVal->getType();
+  Type *StoredValTy = StoredVal->getType();
   
   uint64_t StoreSize = TD.getTypeStoreSizeInBits(StoredValTy);
   uint64_t LoadSize = TD.getTypeStoreSizeInBits(LoadedTy);
@@ -704,7 +704,7 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
       StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", InsertPt);
     }
     
-    const Type *TypeToCastTo = LoadedTy;
+    Type *TypeToCastTo = LoadedTy;
     if (TypeToCastTo->isPointerTy())
       TypeToCastTo = TD.getIntPtrType(StoredValTy->getContext());
     
@@ -743,7 +743,7 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
   }
   
   // Truncate the integer to the right size now.
-  const Type *NewIntTy = IntegerType::get(StoredValTy->getContext(), LoadSize);
+  Type *NewIntTy = IntegerType::get(StoredValTy->getContext(), LoadSize);
   StoredVal = new TruncInst(StoredVal, NewIntTy, "trunc", InsertPt);
   
   if (LoadedTy == NewIntTy)
@@ -765,7 +765,7 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
 /// Check this case to see if there is anything more we can do before we give
 /// up.  This returns -1 if we have to give up, or a byte number in the stored
 /// value of the piece that feeds the load.
-static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
+static int AnalyzeLoadFromClobberingWrite(Type *LoadTy, Value *LoadPtr,
                                           Value *WritePtr,
                                           uint64_t WriteSizeInBits,
                                           const TargetData &TD) {
@@ -839,7 +839,7 @@ static int AnalyzeLoadFromClobberingWrite(const Type *LoadTy, Value *LoadPtr,
 
 /// AnalyzeLoadFromClobberingStore - This function is called when we have a
 /// memdep query of a load that ends up being a clobbering store.
-static int AnalyzeLoadFromClobberingStore(const Type *LoadTy, Value *LoadPtr,
+static int AnalyzeLoadFromClobberingStore(Type *LoadTy, Value *LoadPtr,
                                           StoreInst *DepSI,
                                           const TargetData &TD) {
   // Cannot handle reading from store of first-class aggregate yet.
@@ -856,7 +856,7 @@ static int AnalyzeLoadFromClobberingStore(const Type *LoadTy, Value *LoadPtr,
 /// AnalyzeLoadFromClobberingLoad - This function is called when we have a
 /// memdep query of a load that ends up being clobbered by another load.  See if
 /// the other load can feed into the second load.
-static int AnalyzeLoadFromClobberingLoad(const Type *LoadTy, Value *LoadPtr,
+static int AnalyzeLoadFromClobberingLoad(Type *LoadTy, Value *LoadPtr,
                                          LoadInst *DepLI, const TargetData &TD){
   // Cannot handle reading from store of first-class aggregate yet.
   if (DepLI->getType()->isStructTy() || DepLI->getType()->isArrayTy())
@@ -883,7 +883,7 @@ static int AnalyzeLoadFromClobberingLoad(const Type *LoadTy, Value *LoadPtr,
 
 
 
-static int AnalyzeLoadFromClobberingMemInst(const Type *LoadTy, Value *LoadPtr,
+static int AnalyzeLoadFromClobberingMemInst(Type *LoadTy, Value *LoadPtr,
                                             MemIntrinsic *MI,
                                             const TargetData &TD) {
   // If the mem operation is a non-constant size, we can't handle it.
@@ -934,7 +934,7 @@ static int AnalyzeLoadFromClobberingMemInst(const Type *LoadTy, Value *LoadPtr,
 /// mustalias.  Check this case to see if there is anything more we can do
 /// before we give up.
 static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
-                                   const Type *LoadTy,
+                                   Type *LoadTy,
                                    Instruction *InsertPt, const TargetData &TD){
   LLVMContext &Ctx = SrcVal->getType()->getContext();
   
@@ -974,7 +974,7 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
 /// because the pointers don't mustalias.  Check this case to see if there is
 /// anything more we can do before we give up.
 static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
-                                  const Type *LoadTy, Instruction *InsertPt,
+                                  Type *LoadTy, Instruction *InsertPt,
                                   GVN &gvn) {
   const TargetData &TD = *gvn.getTargetData();
   // If Offset+LoadTy exceeds the size of SrcVal, then we must be wanting to
@@ -996,7 +996,7 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
     // memdep queries will find the new load.  We can't easily remove the old
     // load completely because it is already in the value numbering table.
     IRBuilder<> Builder(SrcVal->getParent(), ++BasicBlock::iterator(SrcVal));
-    const Type *DestPTy = 
+    Type *DestPTy = 
       IntegerType::get(LoadTy->getContext(), NewLoadSize*8);
     DestPTy = PointerType::get(DestPTy, 
                        cast<PointerType>(PtrVal->getType())->getAddressSpace());
@@ -1034,7 +1034,7 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
 /// GetMemInstValueForLoad - This function is called when we have a
 /// memdep query of a load that ends up being a clobbering mem intrinsic.
 static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
-                                     const Type *LoadTy, Instruction *InsertPt,
+                                     Type *LoadTy, Instruction *InsertPt,
                                      const TargetData &TD){
   LLVMContext &Ctx = LoadTy->getContext();
   uint64_t LoadSize = TD.getTypeSizeInBits(LoadTy)/8;
@@ -1154,7 +1154,7 @@ struct AvailableValueInBlock {
   
   /// MaterializeAdjustedValue - Emit code into this block to adjust the value
   /// defined here to the specified type.  This handles various coercion cases.
-  Value *MaterializeAdjustedValue(const Type *LoadTy, GVN &gvn) const {
+  Value *MaterializeAdjustedValue(Type *LoadTy, GVN &gvn) const {
     Value *Res;
     if (isSimpleValue()) {
       Res = getSimpleValue();
@@ -1213,7 +1213,7 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
   SSAUpdater SSAUpdate(&NewPHIs);
   SSAUpdate.Initialize(LI->getType(), LI->getName());
   
-  const Type *LoadTy = LI->getType();
+  Type *LoadTy = LI->getType();
   
   for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i) {
     const AvailableValueInBlock &AV = ValuesPerBlock[i];

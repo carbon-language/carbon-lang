@@ -40,7 +40,7 @@ namespace {
 
     const TargetLowering *TLI;
 
-    const Type *FunctionContextTy;
+    Type *FunctionContextTy;
     Constant *RegisterFn;
     Constant *UnregisterFn;
     Constant *BuiltinSetjmpFn;
@@ -204,7 +204,7 @@ splitLiveRangesAcrossInvokes(SmallVector<InvokeInst*,16> &Invokes) {
     ++AfterAllocaInsertPt;
   for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
        AI != E; ++AI) {
-    const Type *Ty = AI->getType();
+    Type *Ty = AI->getType();
     // Aggregate types can't be cast, but are legal argument types, so we have
     // to handle them differently. We use an extract/insert pair as a
     // lightweight method to achieve the same goal.
@@ -381,7 +381,7 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
                    "fcn_context", F.begin()->begin());
 
   Value *Idxs[2];
-  const Type *Int32Ty = Type::getInt32Ty(F.getContext());
+  Type *Int32Ty = Type::getInt32Ty(F.getContext());
   Value *Zero = ConstantInt::get(Int32Ty, 0);
   // We need to also keep around a reference to the call_site field
   Idxs[0] = Zero;
@@ -423,7 +423,7 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
     // instruction hasn't already been removed.
     if (!I->getParent()) continue;
     Value *Val = new LoadInst(ExceptionAddr, "exception", true, I);
-    const Type *Ty = Type::getInt8PtrTy(F.getContext());
+    Type *Ty = Type::getInt8PtrTy(F.getContext());
     Val = CastInst::Create(Instruction::IntToPtr, Val, Ty, "", I);
 
     I->replaceAllUsesWith(Val);

@@ -501,7 +501,7 @@ public:
   /// This is fixed by the LLVM operations except for the pointer size.  If
   /// AllowUnknown is true, this will return MVT::Other for types with no EVT
   /// counterpart (e.g. structs), otherwise it will assert.
-  EVT getValueType(const Type *Ty, bool AllowUnknown = false) const {
+  EVT getValueType(Type *Ty, bool AllowUnknown = false) const {
     EVT VT = EVT::getEVT(Ty, AllowUnknown);
     return VT == MVT::iPTR ? PointerTy : VT;
   }
@@ -509,7 +509,7 @@ public:
   /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
   /// function arguments in the caller parameter area.  This is the actual
   /// alignment, not its logarithm.
-  virtual unsigned getByValTypeAlignment(const Type *Ty) const;
+  virtual unsigned getByValTypeAlignment(Type *Ty) const;
 
   /// getRegisterType - Return the type of registers that this ValueType will
   /// eventually require.
@@ -1166,7 +1166,7 @@ public:
   /// lowering.
   struct ArgListEntry {
     SDValue Node;
-    const Type* Ty;
+    Type* Ty;
     bool isSExt  : 1;
     bool isZExt  : 1;
     bool isInReg : 1;
@@ -1180,7 +1180,7 @@ public:
   };
   typedef std::vector<ArgListEntry> ArgListTy;
   std::pair<SDValue, SDValue>
-  LowerCallTo(SDValue Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
+  LowerCallTo(SDValue Chain, Type *RetTy, bool RetSExt, bool RetZExt,
               bool isVarArg, bool isInreg, unsigned NumFixedArgs,
               CallingConv::ID CallConv, bool isTailCall,
               bool isReturnValueUsed, SDValue Callee, ArgListTy &Args,
@@ -1485,12 +1485,12 @@ public:
   /// The type may be VoidTy, in which case only return true if the addressing
   /// mode is legal for a load/store of any legal type.
   /// TODO: Handle pre/postinc as well.
-  virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty) const;
+  virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const;
 
   /// isTruncateFree - Return true if it's free to truncate a value of
   /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
   /// register EAX to i16 by referencing its sub-register AX.
-  virtual bool isTruncateFree(const Type *Ty1, const Type *Ty2) const {
+  virtual bool isTruncateFree(Type *Ty1, Type *Ty2) const {
     return false;
   }
 
@@ -1506,7 +1506,7 @@ public:
   /// does not necessarily apply to truncate instructions. e.g. on x86-64,
   /// all instructions that define 32-bit values implicit zero-extend the
   /// result out to 64 bits.
-  virtual bool isZExtFree(const Type *Ty1, const Type *Ty2) const {
+  virtual bool isZExtFree(Type *Ty1, Type *Ty2) const {
     return false;
   }
 
@@ -1963,7 +1963,7 @@ private:
 /// GetReturnInfo - Given an LLVM IR type and return type attributes,
 /// compute the return value EVTs and flags, and optionally also
 /// the offsets, if the return value is being lowered to memory.
-void GetReturnInfo(const Type* ReturnType, Attributes attr,
+void GetReturnInfo(Type* ReturnType, Attributes attr,
                    SmallVectorImpl<ISD::OutputArg> &Outs,
                    const TargetLowering &TLI,
                    SmallVectorImpl<uint64_t> *Offsets = 0);

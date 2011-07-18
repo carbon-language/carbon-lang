@@ -103,7 +103,7 @@ namespace llvm {
 
     /// getType - Return the LLVM type of this SCEV expression.
     ///
-    const Type *getType() const;
+    Type *getType() const;
 
     /// isZero - Return true if the expression is a constant zero.
     ///
@@ -479,17 +479,17 @@ namespace llvm {
     /// the SCEV framework. This primarily includes integer types, and it
     /// can optionally include pointer types if the ScalarEvolution class
     /// has access to target-specific information.
-    bool isSCEVable(const Type *Ty) const;
+    bool isSCEVable(Type *Ty) const;
 
     /// getTypeSizeInBits - Return the size in bits of the specified type,
     /// for which isSCEVable must return true.
-    uint64_t getTypeSizeInBits(const Type *Ty) const;
+    uint64_t getTypeSizeInBits(Type *Ty) const;
 
     /// getEffectiveSCEVType - Return a type with the same bitwidth as
     /// the given type and which represents how SCEV will treat the given
     /// type, for which isSCEVable must return true. For pointer types,
     /// this is the pointer-sized integer type.
-    const Type *getEffectiveSCEVType(const Type *Ty) const;
+    Type *getEffectiveSCEVType(Type *Ty) const;
 
     /// getSCEV - Return a SCEV expression for the full generality of the
     /// specified expression.
@@ -497,11 +497,11 @@ namespace llvm {
 
     const SCEV *getConstant(ConstantInt *V);
     const SCEV *getConstant(const APInt& Val);
-    const SCEV *getConstant(const Type *Ty, uint64_t V, bool isSigned = false);
-    const SCEV *getTruncateExpr(const SCEV *Op, const Type *Ty);
-    const SCEV *getZeroExtendExpr(const SCEV *Op, const Type *Ty);
-    const SCEV *getSignExtendExpr(const SCEV *Op, const Type *Ty);
-    const SCEV *getAnyExtendExpr(const SCEV *Op, const Type *Ty);
+    const SCEV *getConstant(Type *Ty, uint64_t V, bool isSigned = false);
+    const SCEV *getTruncateExpr(const SCEV *Op, Type *Ty);
+    const SCEV *getZeroExtendExpr(const SCEV *Op, Type *Ty);
+    const SCEV *getSignExtendExpr(const SCEV *Op, Type *Ty);
+    const SCEV *getAnyExtendExpr(const SCEV *Op, Type *Ty);
     const SCEV *getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
                            SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap);
     const SCEV *getAddExpr(const SCEV *LHS, const SCEV *RHS,
@@ -550,19 +550,19 @@ namespace llvm {
 
     /// getSizeOfExpr - Return an expression for sizeof on the given type.
     ///
-    const SCEV *getSizeOfExpr(const Type *AllocTy);
+    const SCEV *getSizeOfExpr(Type *AllocTy);
 
     /// getAlignOfExpr - Return an expression for alignof on the given type.
     ///
-    const SCEV *getAlignOfExpr(const Type *AllocTy);
+    const SCEV *getAlignOfExpr(Type *AllocTy);
 
     /// getOffsetOfExpr - Return an expression for offsetof on the given field.
     ///
-    const SCEV *getOffsetOfExpr(const StructType *STy, unsigned FieldNo);
+    const SCEV *getOffsetOfExpr(StructType *STy, unsigned FieldNo);
 
     /// getOffsetOfExpr - Return an expression for offsetof on the given field.
     ///
-    const SCEV *getOffsetOfExpr(const Type *CTy, Constant *FieldNo);
+    const SCEV *getOffsetOfExpr(Type *CTy, Constant *FieldNo);
 
     /// getNegativeSCEV - Return the SCEV object corresponding to -V.
     ///
@@ -579,33 +579,33 @@ namespace llvm {
     /// getTruncateOrZeroExtend - Return a SCEV corresponding to a conversion
     /// of the input value to the specified type.  If the type must be
     /// extended, it is zero extended.
-    const SCEV *getTruncateOrZeroExtend(const SCEV *V, const Type *Ty);
+    const SCEV *getTruncateOrZeroExtend(const SCEV *V, Type *Ty);
 
     /// getTruncateOrSignExtend - Return a SCEV corresponding to a conversion
     /// of the input value to the specified type.  If the type must be
     /// extended, it is sign extended.
-    const SCEV *getTruncateOrSignExtend(const SCEV *V, const Type *Ty);
+    const SCEV *getTruncateOrSignExtend(const SCEV *V, Type *Ty);
 
     /// getNoopOrZeroExtend - Return a SCEV corresponding to a conversion of
     /// the input value to the specified type.  If the type must be extended,
     /// it is zero extended.  The conversion must not be narrowing.
-    const SCEV *getNoopOrZeroExtend(const SCEV *V, const Type *Ty);
+    const SCEV *getNoopOrZeroExtend(const SCEV *V, Type *Ty);
 
     /// getNoopOrSignExtend - Return a SCEV corresponding to a conversion of
     /// the input value to the specified type.  If the type must be extended,
     /// it is sign extended.  The conversion must not be narrowing.
-    const SCEV *getNoopOrSignExtend(const SCEV *V, const Type *Ty);
+    const SCEV *getNoopOrSignExtend(const SCEV *V, Type *Ty);
 
     /// getNoopOrAnyExtend - Return a SCEV corresponding to a conversion of
     /// the input value to the specified type. If the type must be extended,
     /// it is extended with unspecified bits. The conversion must not be
     /// narrowing.
-    const SCEV *getNoopOrAnyExtend(const SCEV *V, const Type *Ty);
+    const SCEV *getNoopOrAnyExtend(const SCEV *V, Type *Ty);
 
     /// getTruncateOrNoop - Return a SCEV corresponding to a conversion of the
     /// input value to the specified type.  The conversion must not be
     /// widening.
-    const SCEV *getTruncateOrNoop(const SCEV *V, const Type *Ty);
+    const SCEV *getTruncateOrNoop(const SCEV *V, Type *Ty);
 
     /// getUMaxFromMismatchedTypes - Promote the operands to the wider of
     /// the types using zero-extension, and then perform a umax operation

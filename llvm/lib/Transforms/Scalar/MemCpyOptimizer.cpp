@@ -54,7 +54,7 @@ static int64_t GetOffsetFromIndex(const GetElementPtrInst *GEP, unsigned Idx,
     if (OpC->isZero()) continue;  // No offset.
 
     // Handle struct indices, which add their field offset to the pointer.
-    if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+    if (StructType *STy = dyn_cast<StructType>(*GTI)) {
       Offset += TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
       continue;
     }
@@ -448,7 +448,7 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
     // Determine alignment
     unsigned Alignment = Range.Alignment;
     if (Alignment == 0) {
-      const Type *EltType = 
+      Type *EltType = 
         cast<PointerType>(StartPtr->getType())->getElementType();
       Alignment = TD->getABITypeAlignment(EltType);
     }
@@ -616,7 +616,7 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
     if (!A->hasStructRetAttr())
       return false;
 
-    const Type *StructTy = cast<PointerType>(A->getType())->getElementType();
+    Type *StructTy = cast<PointerType>(A->getType())->getElementType();
     uint64_t destSize = TD->getTypeAllocSize(StructTy);
 
     if (destSize < srcSize)
@@ -860,7 +860,7 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
 
   // Find out what feeds this byval argument.
   Value *ByValArg = CS.getArgument(ArgNo);
-  const Type *ByValTy =cast<PointerType>(ByValArg->getType())->getElementType();
+  Type *ByValTy =cast<PointerType>(ByValArg->getType())->getElementType();
   uint64_t ByValSize = TD->getTypeAllocSize(ByValTy);
   MemDepResult DepInfo =
     MD->getPointerDependencyFrom(AliasAnalysis::Location(ByValArg, ByValSize),

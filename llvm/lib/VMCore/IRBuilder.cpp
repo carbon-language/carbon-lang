@@ -40,7 +40,7 @@ Type *IRBuilderBase::getCurrentFunctionReturnType() const {
 }
 
 Value *IRBuilderBase::getCastedInt8PtrValue(Value *Ptr) {
-  const PointerType *PT = cast<PointerType>(Ptr->getType());
+  PointerType *PT = cast<PointerType>(Ptr->getType());
   if (PT->getElementType()->isIntegerTy(8))
     return Ptr;
   

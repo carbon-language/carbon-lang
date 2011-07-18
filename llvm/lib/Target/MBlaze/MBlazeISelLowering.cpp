@@ -1096,7 +1096,7 @@ MBlazeTargetLowering::getSingleConstraintMatchWeight(
     // but allow it at the lowest weight.
   if (CallOperandVal == NULL)
     return CW_Default;
-  const Type *type = CallOperandVal->getType();
+  Type *type = CallOperandVal->getType();
   // Look at the constraint type.
   switch (*constraint) {
   default:

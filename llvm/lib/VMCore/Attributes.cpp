@@ -92,7 +92,7 @@ std::string Attribute::getAsString(Attributes Attrs) {
   return Result;
 }
 
-Attributes Attribute::typeIncompatible(const Type *Ty) {
+Attributes Attribute::typeIncompatible(Type *Ty) {
   Attributes Incompatible = None;
   
   if (!Ty->isIntegerTy())

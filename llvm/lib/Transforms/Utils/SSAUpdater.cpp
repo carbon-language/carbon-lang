@@ -44,7 +44,7 @@ SSAUpdater::~SSAUpdater() {
 
 /// Initialize - Reset this object to get ready for a new set of SSA
 /// updates with type 'Ty'.  PHI nodes get a name based on 'Name'.
-void SSAUpdater::Initialize(const Type *Ty, StringRef Name) {
+void SSAUpdater::Initialize(Type *Ty, StringRef Name) {
   if (AV == 0)
     AV = new AvailableValsTy();
   else

@@ -102,7 +102,7 @@ namespace llvm {
     /// isTruncateFree - Return true if it's free to truncate a value of type
     /// Ty1 to type Ty2. e.g. On msp430 it's free to truncate a i16 value in
     /// register R15W to i8 by referencing its sub-register R15B.
-    virtual bool isTruncateFree(const Type *Ty1, const Type *Ty2) const;
+    virtual bool isTruncateFree(Type *Ty1, Type *Ty2) const;
     virtual bool isTruncateFree(EVT VT1, EVT VT2) const;
 
     /// isZExtFree - Return true if any actual instruction that defines a value
@@ -113,7 +113,7 @@ namespace llvm {
     /// necessarily apply to truncate instructions. e.g. on msp430, all
     /// instructions that define 8-bit values implicit zero-extend the result
     /// out to 16 bits.
-    virtual bool isZExtFree(const Type *Ty1, const Type *Ty2) const;
+    virtual bool isZExtFree(Type *Ty1, Type *Ty2) const;
     virtual bool isZExtFree(EVT VT1, EVT VT2) const;
 
     MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,

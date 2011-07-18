@@ -1291,7 +1291,7 @@ public:
   unsigned getAlignment() const { return Alignment; }
   unsigned char getTargetFlags() const { return TargetFlags; }
 
-  const Type *getType() const;
+  Type *getType() const;
 
   static bool classof(const ConstantPoolSDNode *) { return true; }
   static bool classof(const SDNode *N) {

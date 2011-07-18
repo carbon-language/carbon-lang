@@ -770,7 +770,7 @@ static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP,
     MachineConstantPoolEntry CPE = Constants[i];
     unsigned AlignMask = CPE.getAlignment() - 1;
     Size = (Size + AlignMask) & ~AlignMask;
-    const Type *Ty = CPE.getType();
+    Type *Ty = CPE.getType();
     Size += TD->getTypeAllocSize(Ty);
   }
   return Size;
@@ -1098,7 +1098,7 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
     DEBUG(dbgs() << "JIT:   CP" << i << " at [0x";
           dbgs().write_hex(CAddr) << "]\n");
 
-    const Type *Ty = CPE.Val.ConstVal->getType();
+    Type *Ty = CPE.Val.ConstVal->getType();
     Offset += TheJIT->getTargetData()->getTypeAllocSize(Ty);
   }
 }

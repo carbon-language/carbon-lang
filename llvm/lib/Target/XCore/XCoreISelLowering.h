@@ -101,7 +101,7 @@ namespace llvm {
                                   MachineBasicBlock *MBB) const;
 
     virtual bool isLegalAddressingMode(const AddrMode &AM,
-                                       const Type *Ty) const;
+                                       Type *Ty) const;
 
   private:
     const XCoreTargetMachine &TM;

@@ -91,7 +91,7 @@ protected:
   /// printing behavior.
   virtual void printCustom(raw_ostream &O) const;
 
-  Value(const Type *Ty, unsigned scid);
+  Value(Type *Ty, unsigned scid);
 public:
   virtual ~Value();
 

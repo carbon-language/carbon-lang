@@ -26,7 +26,7 @@ TEST(InstructionsTest, ReturnInst) {
   EXPECT_EQ(r0->getNumOperands(), 0U);
   EXPECT_EQ(r0->op_begin(), r0->op_end());
 
-  const IntegerType* Int1 = IntegerType::get(C, 1);
+  IntegerType* Int1 = IntegerType::get(C, 1);
   Constant* One = ConstantInt::get(Int1, 1, true);
   const ReturnInst* r1 = ReturnInst::Create(C, One);
   EXPECT_EQ(r1->getNumOperands(), 1U);
@@ -64,7 +64,7 @@ TEST(InstructionsTest, BranchInst) {
 
   EXPECT_EQ(llvm::next(b0->op_begin()), b0->op_end());
 
-  const IntegerType* Int1 = IntegerType::get(C, 1);
+  IntegerType* Int1 = IntegerType::get(C, 1);
   Constant* One = ConstantInt::get(Int1, 1, true);
 
   // Conditional BranchInst
@@ -111,11 +111,11 @@ TEST(InstructionsTest, BranchInst) {
 TEST(InstructionsTest, CastInst) {
   LLVMContext &C(getGlobalContext());
 
-  const Type* Int8Ty = Type::getInt8Ty(C);
-  const Type* Int64Ty = Type::getInt64Ty(C);
-  const Type* V8x8Ty = VectorType::get(Int8Ty, 8);
-  const Type* V8x64Ty = VectorType::get(Int64Ty, 8);
-  const Type* X86MMXTy = Type::getX86_MMXTy(C);
+  Type* Int8Ty = Type::getInt8Ty(C);
+  Type* Int64Ty = Type::getInt64Ty(C);
+  Type* V8x8Ty = VectorType::get(Int8Ty, 8);
+  Type* V8x64Ty = VectorType::get(Int64Ty, 8);
+  Type* X86MMXTy = Type::getX86_MMXTy(C);
 
   const Constant* c8 = Constant::getNullValue(V8x8Ty);
   const Constant* c64 = Constant::getNullValue(V8x64Ty);

@@ -33,12 +33,12 @@ class SelectionDAG;
 /// of insertvalue or extractvalue indices that identify a member, return
 /// the linearized index of the start of the member.
 ///
-unsigned ComputeLinearIndex(const Type *Ty,
+unsigned ComputeLinearIndex(Type *Ty,
                             const unsigned *Indices,
                             const unsigned *IndicesEnd,
                             unsigned CurIndex = 0);
 
-inline unsigned ComputeLinearIndex(const Type *Ty,
+inline unsigned ComputeLinearIndex(Type *Ty,
                                    ArrayRef<unsigned> Indices,
                                    unsigned CurIndex = 0) {
   return ComputeLinearIndex(Ty, Indices.begin(), Indices.end(), CurIndex);
@@ -51,7 +51,7 @@ inline unsigned ComputeLinearIndex(const Type *Ty,
 /// If Offsets is non-null, it points to a vector to be filled in
 /// with the in-memory offsets of each of the individual values.
 ///
-void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
+void ComputeValueVTs(const TargetLowering &TLI, Type *Ty,
                      SmallVectorImpl<EVT> &ValueVTs,
                      SmallVectorImpl<uint64_t> *Offsets = 0,
                      uint64_t StartingOffset = 0);

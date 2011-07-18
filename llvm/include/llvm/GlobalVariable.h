@@ -50,12 +50,12 @@ public:
   }
   /// GlobalVariable ctor - If a parent module is specified, the global is
   /// automatically inserted into the end of the specified modules global list.
-  GlobalVariable(const Type *Ty, bool isConstant, LinkageTypes Linkage,
+  GlobalVariable(Type *Ty, bool isConstant, LinkageTypes Linkage,
                  Constant *Initializer = 0, const Twine &Name = "",
                  bool ThreadLocal = false, unsigned AddressSpace = 0);
   /// GlobalVariable ctor - This creates a global and inserts it before the
   /// specified other global.
-  GlobalVariable(Module &M, const Type *Ty, bool isConstant,
+  GlobalVariable(Module &M, Type *Ty, bool isConstant,
                  LinkageTypes Linkage, Constant *Initializer,
                  const Twine &Name,
                  GlobalVariable *InsertBefore = 0, bool ThreadLocal = false,

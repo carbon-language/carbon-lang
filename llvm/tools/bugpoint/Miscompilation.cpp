@@ -384,7 +384,7 @@ static bool ExtractLoops(BugDriver &BD,
 
     outs() << "*** Loop extraction successful!\n";
 
-    std::vector<std::pair<std::string, const FunctionType*> > MisCompFunctions;
+    std::vector<std::pair<std::string, FunctionType*> > MisCompFunctions;
     for (Module::iterator I = ToOptimizeLoopExtracted->begin(),
            E = ToOptimizeLoopExtracted->end(); I != E; ++I)
       if (!I->isDeclaration())
@@ -569,7 +569,7 @@ static bool ExtractBlocks(BugDriver &BD,
   // together.
   delete ToExtract;
 
-  std::vector<std::pair<std::string, const FunctionType*> > MisCompFunctions;
+  std::vector<std::pair<std::string, FunctionType*> > MisCompFunctions;
   for (Module::iterator I = Extracted->begin(), E = Extracted->end();
        I != E; ++I)
     if (!I->isDeclaration())
@@ -850,7 +850,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
                                NullPtr,F->getName()+".fpcache");
 
           // Construct a new stub function that will re-route calls to F
-          const FunctionType *FuncTy = F->getFunctionType();
+          FunctionType *FuncTy = F->getFunctionType();
           Function *FuncWrapper = Function::Create(FuncTy,
                                                    GlobalValue::InternalLinkage,
                                                    F->getName() + "_wrapper",

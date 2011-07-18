@@ -421,7 +421,7 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
 
 /// dyn_castZExtVal - Checks if V is a zext or constant that can
 /// be truncated to Ty without losing bits.
-static Value *dyn_castZExtVal(Value *V, const Type *Ty) {
+static Value *dyn_castZExtVal(Value *V, Type *Ty) {
   if (ZExtInst *Z = dyn_cast<ZExtInst>(V)) {
     if (Z->getSrcTy() == Ty)
       return Z->getOperand(0);

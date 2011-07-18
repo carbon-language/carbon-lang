@@ -30,7 +30,7 @@ namespace llvm {
   Constant *ConstantFoldCastInstruction(
     unsigned opcode,     ///< The opcode of the cast
     Constant *V,         ///< The source constant
-    const Type *DestTy   ///< The destination type
+    Type *DestTy   ///< The destination type
   );
   Constant *ConstantFoldSelectInstruction(Constant *Cond,
                                           Constant *V1, Constant *V2);

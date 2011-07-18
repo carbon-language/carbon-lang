@@ -42,8 +42,8 @@ class Value;
 struct DenseMapAPIntKeyInfo {
   struct KeyTy {
     APInt val;
-    const Type* type;
-    KeyTy(const APInt& V, const Type* Ty) : val(V), type(Ty) {}
+    Type* type;
+    KeyTy(const APInt& V, Type* Ty) : val(V), type(Ty) {}
     KeyTy(const KeyTy& that) : val(that.val), type(that.type) {}
     bool operator==(const KeyTy& that) const {
       return type == that.type && this->val == that.val;

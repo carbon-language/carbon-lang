@@ -987,8 +987,8 @@ const char *MSP430TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-bool MSP430TargetLowering::isTruncateFree(const Type *Ty1,
-                                          const Type *Ty2) const {
+bool MSP430TargetLowering::isTruncateFree(Type *Ty1,
+                                          Type *Ty2) const {
   if (!Ty1->isIntegerTy() || !Ty2->isIntegerTy())
     return false;
 
@@ -1002,7 +1002,7 @@ bool MSP430TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
   return (VT1.getSizeInBits() > VT2.getSizeInBits());
 }
 
-bool MSP430TargetLowering::isZExtFree(const Type *Ty1, const Type *Ty2) const {
+bool MSP430TargetLowering::isZExtFree(Type *Ty1, Type *Ty2) const {
   // MSP430 implicitly zero-extends 8-bit results in 16-bit registers.
   return 0 && Ty1->isIntegerTy(8) && Ty2->isIntegerTy(16);
 }

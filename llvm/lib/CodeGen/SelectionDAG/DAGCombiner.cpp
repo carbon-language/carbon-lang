@@ -6479,7 +6479,7 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
         PtrOff = (BitWidth + 7 - NewBW) / 8 - PtrOff;
 
       unsigned NewAlign = MinAlign(LD->getAlignment(), PtrOff);
-      const Type *NewVTTy = NewVT.getTypeForEVT(*DAG.getContext());
+      Type *NewVTTy = NewVT.getTypeForEVT(*DAG.getContext());
       if (NewAlign < TLI.getTargetData()->getABITypeAlignment(NewVTTy))
         return SDValue();
 
@@ -6542,7 +6542,7 @@ SDValue DAGCombiner::TransformFPLoadStorePair(SDNode *N) {
 
     unsigned LDAlign = LD->getAlignment();
     unsigned STAlign = ST->getAlignment();
-    const Type *IntVTTy = IntVT.getTypeForEVT(*DAG.getContext());
+    Type *IntVTTy = IntVT.getTypeForEVT(*DAG.getContext());
     unsigned ABIAlign = TLI.getTargetData()->getABITypeAlignment(IntVTTy);
     if (LDAlign < ABIAlign || STAlign < ABIAlign)
       return SDValue();
@@ -7447,7 +7447,7 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
           const_cast<ConstantFP*>(FV->getConstantFPValue()),
           const_cast<ConstantFP*>(TV->getConstantFPValue())
         };
-        const Type *FPTy = Elts[0]->getType();
+        Type *FPTy = Elts[0]->getType();
         const TargetData &TD = *TLI.getTargetData();
 
         // Create a ConstantArray of the two constants.

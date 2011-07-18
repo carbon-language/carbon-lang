@@ -184,14 +184,14 @@ class MyPortableType {
 namespace llvm {
 template<bool cross> class TypeBuilder<MyType, cross> {
 public:
-  static const StructType *get(LLVMContext &Context) {
+  static StructType *get(LLVMContext &Context) {
     // Using the static result variable ensures that the type is
     // only looked up once.
     std::vector<Type*> st;
     st.push_back(TypeBuilder<int, cross>::get(Context));
     st.push_back(TypeBuilder<int*, cross>::get(Context));
     st.push_back(TypeBuilder<void*[], cross>::get(Context));
-    static const StructType *const result = StructType::get(Context, st);
+    static StructType *const result = StructType::get(Context, st);
     return result;
   }
 
@@ -207,14 +207,14 @@ public:
 
 template<bool cross> class TypeBuilder<MyPortableType, cross> {
 public:
-  static const StructType *get(LLVMContext &Context) {
+  static StructType *get(LLVMContext &Context) {
     // Using the static result variable ensures that the type is
     // only looked up once.
     std::vector<Type*> st;
     st.push_back(TypeBuilder<types::i<32>, cross>::get(Context));
     st.push_back(TypeBuilder<types::i<32>*, cross>::get(Context));
     st.push_back(TypeBuilder<types::i<8>*[], cross>::get(Context));
-    static const StructType *const result = StructType::get(Context, st);
+    static StructType *const result = StructType::get(Context, st);
     return result;
   }
 

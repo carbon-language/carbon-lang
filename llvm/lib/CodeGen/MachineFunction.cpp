@@ -619,7 +619,7 @@ void MachineJumpTableInfo::dump() const { print(dbgs()); }
 //  MachineConstantPool implementation
 //===----------------------------------------------------------------------===//
 
-const Type *MachineConstantPoolEntry::getType() const {
+Type *MachineConstantPoolEntry::getType() const {
   if (isMachineConstantPoolEntry())
     return Val.MachineCPVal->getType();
   return Val.ConstVal->getType();

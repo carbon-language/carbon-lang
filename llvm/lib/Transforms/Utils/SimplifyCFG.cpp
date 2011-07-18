@@ -322,7 +322,7 @@ static ConstantInt *GetConstantInt(Value *V, const TargetData *TD) {
 
   // This is some kind of pointer constant. Turn it into a pointer-sized
   // ConstantInt if possible.
-  const IntegerType *PtrTy = TD->getIntPtrType(V->getContext());
+  IntegerType *PtrTy = TD->getIntPtrType(V->getContext());
 
   // Null pointer means 0, see SelectionDAGBuilder::getValue(const Value*).
   if (isa<ConstantPointerNull>(V))

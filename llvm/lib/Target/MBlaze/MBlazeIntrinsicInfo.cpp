@@ -37,7 +37,7 @@ namespace mblazeIntrinsic {
 #undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 }
 
-std::string MBlazeIntrinsicInfo::getName(unsigned IntrID, const Type **Tys,
+std::string MBlazeIntrinsicInfo::getName(unsigned IntrID, Type **Tys,
                                          unsigned numTys) const {
   static const char *const names[] = {
 #define GET_INTRINSIC_NAME_TABLE
@@ -90,8 +90,8 @@ bool MBlazeIntrinsicInfo::isOverloaded(unsigned IntrID) const {
 #include "MBlazeGenIntrinsics.inc"
 #undef GET_INTRINSIC_ATTRIBUTES
 
-static const FunctionType *getType(LLVMContext &Context, unsigned id) {
-  const Type *ResultTy = NULL;
+static FunctionType *getType(LLVMContext &Context, unsigned id) {
+  Type *ResultTy = NULL;
   std::vector<Type*> ArgTys;
   bool IsVarArg = false;
 
@@ -103,7 +103,7 @@ static const FunctionType *getType(LLVMContext &Context, unsigned id) {
 }
 
 Function *MBlazeIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
-                                                const Type **Tys,
+                                                Type **Tys,
                                                 unsigned numTy) const {
   assert(!isOverloaded(IntrID) && "MBlaze intrinsics are not overloaded");
   AttrListPtr AList = getAttributes((mblazeIntrinsic::ID) IntrID);

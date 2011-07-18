@@ -216,7 +216,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
 
   // Loop over all of the types, emitting each in turn.
   for (unsigned i = 0, e = TypeList.size(); i != e; ++i) {
-    const Type *T = TypeList[i];
+    Type *T = TypeList[i];
     int AbbrevToUse = 0;
     unsigned Code = 0;
 
@@ -237,7 +237,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       TypeVals.push_back(cast<IntegerType>(T)->getBitWidth());
       break;
     case Type::PointerTyID: {
-      const PointerType *PTy = cast<PointerType>(T);
+      PointerType *PTy = cast<PointerType>(T);
       // POINTER: [pointee type, address space]
       Code = bitc::TYPE_CODE_POINTER;
       TypeVals.push_back(VE.getTypeID(PTy->getElementType()));
@@ -247,7 +247,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       break;
     }
     case Type::FunctionTyID: {
-      const FunctionType *FT = cast<FunctionType>(T);
+      FunctionType *FT = cast<FunctionType>(T);
       // FUNCTION: [isvararg, attrid, retty, paramty x N]
       Code = bitc::TYPE_CODE_FUNCTION;
       TypeVals.push_back(FT->isVarArg());
@@ -259,7 +259,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       break;
     }
     case Type::StructTyID: {
-      const StructType *ST = cast<StructType>(T);
+      StructType *ST = cast<StructType>(T);
       // STRUCT: [ispacked, eltty x N]
       TypeVals.push_back(ST->isPacked());
       // Output all of the element types.
@@ -286,7 +286,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       break;
     }
     case Type::ArrayTyID: {
-      const ArrayType *AT = cast<ArrayType>(T);
+      ArrayType *AT = cast<ArrayType>(T);
       // ARRAY: [numelts, eltty]
       Code = bitc::TYPE_CODE_ARRAY;
       TypeVals.push_back(AT->getNumElements());
@@ -295,7 +295,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       break;
     }
     case Type::VectorTyID: {
-      const VectorType *VT = cast<VectorType>(T);
+      VectorType *VT = cast<VectorType>(T);
       // VECTOR [numelts, eltty]
       Code = bitc::TYPE_CODE_VECTOR;
       TypeVals.push_back(VT->getNumElements());
@@ -716,7 +716,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   SmallVector<uint64_t, 64> Record;
 
   const ValueEnumerator::ValueList &Vals = VE.getValues();
-  const Type *LastTy = 0;
+  Type *LastTy = 0;
   for (unsigned i = FirstVal; i != LastVal; ++i) {
     const Value *V = Vals[i].first;
     // If we need to switch types, do so now.
@@ -781,7 +781,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       }
     } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       Code = bitc::CST_CODE_FLOAT;
-      const Type *Ty = CFP->getType();
+      Type *Ty = CFP->getType();
       if (Ty->isFloatTy() || Ty->isDoubleTy()) {
         Record.push_back(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
       } else if (Ty->isX86_FP80Ty()) {
@@ -1083,8 +1083,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::Invoke: {
     const InvokeInst *II = cast<InvokeInst>(&I);
     const Value *Callee(II->getCalledValue());
-    const PointerType *PTy = cast<PointerType>(Callee->getType());
-    const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+    PointerType *PTy = cast<PointerType>(Callee->getType());
+    FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
     Code = bitc::FUNC_CODE_INST_INVOKE;
 
     Vals.push_back(VE.getAttributeID(II->getAttributes()));
@@ -1149,8 +1149,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     break;
   case Instruction::Call: {
     const CallInst &CI = cast<CallInst>(I);
-    const PointerType *PTy = cast<PointerType>(CI.getCalledValue()->getType());
-    const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+    PointerType *PTy = cast<PointerType>(CI.getCalledValue()->getType());
+    FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
 
     Code = bitc::FUNC_CODE_INST_CALL;
 

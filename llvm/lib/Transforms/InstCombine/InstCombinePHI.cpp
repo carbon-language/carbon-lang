@@ -28,8 +28,8 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   Value *LHSVal = FirstInst->getOperand(0);
   Value *RHSVal = FirstInst->getOperand(1);
     
-  const Type *LHSType = LHSVal->getType();
-  const Type *RHSType = RHSVal->getType();
+  Type *LHSType = LHSVal->getType();
+  Type *RHSType = RHSVal->getType();
   
   bool isNUW = false, isNSW = false, isExact = false;
   if (OverflowingBinaryOperator *BO =
@@ -397,7 +397,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   // the same type or "+42") we can pull the operation through the PHI, reducing
   // code size and simplifying code.
   Constant *ConstantOp = 0;
-  const Type *CastSrcTy = 0;
+  Type *CastSrcTy = 0;
   bool isNUW = false, isNSW = false, isExact = false;
   
   if (isa<CastInst>(FirstInst)) {
@@ -572,7 +572,7 @@ struct LoweredPHIRecord {
   unsigned Shift;     // The amount shifted.
   unsigned Width;     // The width extracted.
   
-  LoweredPHIRecord(PHINode *pn, unsigned Sh, const Type *Ty)
+  LoweredPHIRecord(PHINode *pn, unsigned Sh, Type *Ty)
     : PN(pn), Shift(Sh), Width(Ty->getPrimitiveSizeInBits()) {}
   
   // Ctor form used by DenseMap.
@@ -701,7 +701,7 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
     unsigned PHIId = PHIUsers[UserI].PHIId;
     PHINode *PN = PHIsToSlice[PHIId];
     unsigned Offset = PHIUsers[UserI].Shift;
-    const Type *Ty = PHIUsers[UserI].Inst->getType();
+    Type *Ty = PHIUsers[UserI].Inst->getType();
     
     PHINode *EltPHI;
     

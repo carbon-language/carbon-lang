@@ -382,7 +382,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
           // location is 1 byte at P+1).  If so, return it as a load/load
           // clobber result, allowing the client to decide to widen the load if
           // it wants to.
-          if (const IntegerType *ITy = dyn_cast<IntegerType>(LI->getType()))
+          if (IntegerType *ITy = dyn_cast<IntegerType>(LI->getType()))
             if (LI->getAlignment()*8 > ITy->getPrimitiveSizeInBits() &&
                 isLoadLoadClobberIfExtendedToFullWidth(MemLoc, MemLocBase,
                                                        MemLocOffset, LI, TD))

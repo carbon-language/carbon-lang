@@ -149,7 +149,7 @@ void Module::getMDKindNames(SmallVectorImpl<StringRef> &Result) const {
 // the symbol table directly for this common task.
 //
 Constant *Module::getOrInsertFunction(StringRef Name,
-                                      const FunctionType *Ty,
+                                      FunctionType *Ty,
                                       AttrListPtr AttributeList) {
   // See if we have a definition for the specified function already.
   GlobalValue *F = getNamedValue(Name);
@@ -182,7 +182,7 @@ Constant *Module::getOrInsertFunction(StringRef Name,
 }
 
 Constant *Module::getOrInsertTargetIntrinsic(StringRef Name,
-                                             const FunctionType *Ty,
+                                             FunctionType *Ty,
                                              AttrListPtr AttributeList) {
   // See if we have a definition for the specified function already.
   GlobalValue *F = getNamedValue(Name);
@@ -199,7 +199,7 @@ Constant *Module::getOrInsertTargetIntrinsic(StringRef Name,
 }
 
 Constant *Module::getOrInsertFunction(StringRef Name,
-                                      const FunctionType *Ty) {
+                                      FunctionType *Ty) {
   AttrListPtr AttributeList = AttrListPtr::get((AttributeWithIndex *)0, 0);
   return getOrInsertFunction(Name, Ty, AttributeList);
 }
@@ -211,7 +211,7 @@ Constant *Module::getOrInsertFunction(StringRef Name,
 //
 Constant *Module::getOrInsertFunction(StringRef Name,
                                       AttrListPtr AttributeList,
-                                      const Type *RetTy, ...) {
+                                      Type *RetTy, ...) {
   va_list Args;
   va_start(Args, RetTy);
 
@@ -229,7 +229,7 @@ Constant *Module::getOrInsertFunction(StringRef Name,
 }
 
 Constant *Module::getOrInsertFunction(StringRef Name,
-                                      const Type *RetTy, ...) {
+                                      Type *RetTy, ...) {
   va_list Args;
   va_start(Args, RetTy);
 
@@ -279,7 +279,7 @@ GlobalVariable *Module::getGlobalVariable(StringRef Name,
 ///      with a constantexpr cast to the right type.
 ///   3. Finally, if the existing global is the correct delclaration, return the
 ///      existing global.
-Constant *Module::getOrInsertGlobal(StringRef Name, const Type *Ty) {
+Constant *Module::getOrInsertGlobal(StringRef Name, Type *Ty) {
   // See if we have a definition for the specified global already.
   GlobalVariable *GV = dyn_cast_or_null<GlobalVariable>(getNamedValue(Name));
   if (GV == 0) {
@@ -436,7 +436,7 @@ namespace {
     // To avoid walking constant expressions multiple times and other IR
     // objects, we keep several helper maps.
     DenseSet<const Value*> VisitedConstants;
-    DenseSet<const Type*> VisitedTypes;
+    DenseSet<Type*> VisitedTypes;
     
     std::vector<StructType*> &StructTypes;
   public:

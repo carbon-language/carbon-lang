@@ -124,8 +124,8 @@ GenericValue MCJIT::runFunction(Function *F,
 
   void *FPtr = getPointerToFunction(F);
   assert(FPtr && "Pointer to fn's code was null after getPointerToFunction");
-  const FunctionType *FTy = F->getFunctionType();
-  const Type *RetTy = FTy->getReturnType();
+  FunctionType *FTy = F->getFunctionType();
+  Type *RetTy = FTy->getReturnType();
 
   assert((FTy->getNumParams() == ArgValues.size() ||
           (FTy->isVarArg() && FTy->getNumParams() <= ArgValues.size())) &&

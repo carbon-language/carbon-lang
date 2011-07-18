@@ -193,7 +193,7 @@ public:
   /// are valid for types of the same size only where no re-interpretation of 
   /// the bits is done.
   /// @brief Determine if this type could be losslessly bitcast to Ty
-  bool canLosslesslyBitCastTo(const Type *Ty) const;
+  bool canLosslesslyBitCastTo(Type *Ty) const;
 
   /// isEmptyTy - Return true if this type is empty, that is, it has no
   /// elements or all its elements are empty.
@@ -262,7 +262,7 @@ public:
   /// getScalarSizeInBits - If this is a vector type, return the
   /// getPrimitiveSizeInBits value for the element type. Otherwise return the
   /// getPrimitiveSizeInBits value for this type.
-  unsigned getScalarSizeInBits() const;
+  unsigned getScalarSizeInBits();
 
   /// getFPMantissaWidth - Return the width of the mantissa of this type.  This
   /// is only valid on floating point types.  If the FP type does not
@@ -271,7 +271,7 @@ public:
 
   /// getScalarType - If this is a vector type, return the element type,
   /// otherwise return 'this'.
-  const Type *getScalarType() const;
+  Type *getScalarType();
 
   //===--------------------------------------------------------------------===//
   // Type Iteration support.
@@ -342,7 +342,7 @@ public:
 
   /// getPointerTo - Return a pointer to the current type.  This is equivalent
   /// to PointerType::get(Foo, AddrSpace).
-  PointerType *getPointerTo(unsigned AddrSpace = 0) const;
+  PointerType *getPointerTo(unsigned AddrSpace = 0);
 
 private:
   /// isSizedDerivedType - Derived types like structures and arrays are sized
@@ -352,7 +352,7 @@ private:
 };
 
 // Printing of types.
-static inline raw_ostream &operator<<(raw_ostream &OS, const Type &T) {
+static inline raw_ostream &operator<<(raw_ostream &OS, Type &T) {
   T.print(OS);
   return OS;
 }
@@ -387,7 +387,7 @@ template <> struct GraphTraits<const Type*> {
   typedef const Type NodeType;
   typedef Type::subtype_iterator ChildIteratorType;
 
-  static inline NodeType *getEntryNode(const Type *T) { return T; }
+  static inline NodeType *getEntryNode(NodeType *T) { return T; }
   static inline ChildIteratorType child_begin(NodeType *N) {
     return N->subtype_begin();
   }

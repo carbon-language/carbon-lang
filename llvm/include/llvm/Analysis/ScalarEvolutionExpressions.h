@@ -42,7 +42,7 @@ namespace llvm {
   public:
     ConstantInt *getValue() const { return V; }
 
-    const Type *getType() const { return V->getType(); }
+    Type *getType() const { return V->getType(); }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVConstant *S) { return true; }
@@ -57,14 +57,14 @@ namespace llvm {
   class SCEVCastExpr : public SCEV {
   protected:
     const SCEV *Op;
-    const Type *Ty;
+    Type *Ty;
 
     SCEVCastExpr(const FoldingSetNodeIDRef ID,
-                 unsigned SCEVTy, const SCEV *op, const Type *ty);
+                 unsigned SCEVTy, const SCEV *op, Type *ty);
 
   public:
     const SCEV *getOperand() const { return Op; }
-    const Type *getType() const { return Ty; }
+    Type *getType() const { return Ty; }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVCastExpr *S) { return true; }
@@ -83,7 +83,7 @@ namespace llvm {
     friend class ScalarEvolution;
 
     SCEVTruncateExpr(const FoldingSetNodeIDRef ID,
-                     const SCEV *op, const Type *ty);
+                     const SCEV *op, Type *ty);
 
   public:
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -101,7 +101,7 @@ namespace llvm {
     friend class ScalarEvolution;
 
     SCEVZeroExtendExpr(const FoldingSetNodeIDRef ID,
-                       const SCEV *op, const Type *ty);
+                       const SCEV *op, Type *ty);
 
   public:
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -119,7 +119,7 @@ namespace llvm {
     friend class ScalarEvolution;
 
     SCEVSignExtendExpr(const FoldingSetNodeIDRef ID,
-                       const SCEV *op, const Type *ty);
+                       const SCEV *op, Type *ty);
 
   public:
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -158,7 +158,7 @@ namespace llvm {
     op_iterator op_begin() const { return Operands; }
     op_iterator op_end() const { return Operands + NumOperands; }
 
-    const Type *getType() const { return getOperand(0)->getType(); }
+    Type *getType() const { return getOperand(0)->getType(); }
 
     NoWrapFlags getNoWrapFlags(NoWrapFlags Mask = NoWrapMask) const {
       return (NoWrapFlags)(SubclassData & Mask);
@@ -214,7 +214,7 @@ namespace llvm {
     }
 
   public:
-    const Type *getType() const {
+    Type *getType() const {
       // Use the type of the last operand, which is likely to be a pointer
       // type, if there is one. This doesn't usually matter, but it can help
       // reduce casts when the expressions are expanded.
@@ -263,7 +263,7 @@ namespace llvm {
     const SCEV *getLHS() const { return LHS; }
     const SCEV *getRHS() const { return RHS; }
 
-    const Type *getType() const {
+    Type *getType() const {
       // In most cases the types of LHS and RHS will be the same, but in some
       // crazy cases one or the other may be a pointer. ScalarEvolution doesn't
       // depend on the type for correctness, but handling types carefully can
@@ -441,11 +441,11 @@ namespace llvm {
     /// folded with other operations into something unrecognizable. This
     /// is mainly only useful for pretty-printing and other situations
     /// where it isn't absolutely required for these to succeed.
-    bool isSizeOf(const Type *&AllocTy) const;
-    bool isAlignOf(const Type *&AllocTy) const;
-    bool isOffsetOf(const Type *&STy, Constant *&FieldNo) const;
+    bool isSizeOf(Type *&AllocTy) const;
+    bool isAlignOf(Type *&AllocTy) const;
+    bool isOffsetOf(Type *&STy, Constant *&FieldNo) const;
 
-    const Type *getType() const { return getValPtr()->getType(); }
+    Type *getType() const { return getValPtr()->getType(); }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVUnknown *S) { return true; }

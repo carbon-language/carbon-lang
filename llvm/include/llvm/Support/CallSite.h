@@ -147,7 +147,7 @@ public:
   
   /// getType - Return the type of the instruction that generated this call site
   ///
-  const Type *getType() const { return (*this)->getType(); }
+  Type *getType() const { return (*this)->getType(); }
 
   /// getCaller - Return the caller function for this call site
   ///

@@ -34,15 +34,15 @@ class raw_ostream;
 /// Abstract base class for all machine specific constantpool value subclasses.
 ///
 class MachineConstantPoolValue {
-  const Type *Ty;
+  Type *Ty;
 
 public:
-  explicit MachineConstantPoolValue(const Type *ty) : Ty(ty) {}
+  explicit MachineConstantPoolValue(Type *ty) : Ty(ty) {}
   virtual ~MachineConstantPoolValue() {}
 
   /// getType - get type of this MachineConstantPoolValue.
   ///
-  const Type *getType() const { return Ty; }
+  Type *getType() const { return Ty; }
 
   
   /// getRelocationInfo - This method classifies the entry according to
@@ -104,7 +104,7 @@ public:
     return Alignment & ~(1 << (sizeof(unsigned)*CHAR_BIT-1));
   }
 
-  const Type *getType() const;
+  Type *getType() const;
   
   /// getRelocationInfo - This method classifies the entry according to
   /// whether or not it may generate a relocation entry.  This must be

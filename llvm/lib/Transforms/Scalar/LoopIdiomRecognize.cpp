@@ -498,7 +498,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
 
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
-  const Type *IntPtr = TD->getIntPtrType(DestPtr->getContext());
+  Type *IntPtr = TD->getIntPtrType(DestPtr->getContext());
   BECount = SE->getTruncateOrZeroExtend(BECount, IntPtr);
 
   const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1),
@@ -604,7 +604,7 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
 
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
-  const Type *IntPtr = TD->getIntPtrType(SI->getContext());
+  Type *IntPtr = TD->getIntPtrType(SI->getContext());
   BECount = SE->getTruncateOrZeroExtend(BECount, IntPtr);
 
   const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1),

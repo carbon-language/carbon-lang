@@ -34,7 +34,7 @@ namespace bfinIntrinsic {
 
 }
 
-std::string BlackfinIntrinsicInfo::getName(unsigned IntrID, const Type **Tys,
+std::string BlackfinIntrinsicInfo::getName(unsigned IntrID, Type **Tys,
                                            unsigned numTys) const {
   static const char *const names[] = {
 #define GET_INTRINSIC_NAME_TABLE
@@ -81,8 +81,8 @@ bool BlackfinIntrinsicInfo::isOverloaded(unsigned IntrID) const {
 #include "BlackfinGenIntrinsics.inc"
 #undef GET_INTRINSIC_ATTRIBUTES
 
-static const FunctionType *getType(LLVMContext &Context, unsigned id) {
-  const Type *ResultTy = NULL;
+static FunctionType *getType(LLVMContext &Context, unsigned id) {
+  Type *ResultTy = NULL;
   std::vector<Type*> ArgTys;
   bool IsVarArg = false;
   
@@ -94,7 +94,7 @@ static const FunctionType *getType(LLVMContext &Context, unsigned id) {
 }
 
 Function *BlackfinIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
-                                                const Type **Tys,
+                                                Type **Tys,
                                                 unsigned numTy) const {
   assert(!isOverloaded(IntrID) && "Blackfin intrinsics are not overloaded");
   AttrListPtr AList = getAttributes((bfinIntrinsic::ID) IntrID);

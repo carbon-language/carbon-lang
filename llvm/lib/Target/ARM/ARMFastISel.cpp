@@ -171,8 +171,8 @@ class ARMFastISel : public FastISel {
 
     // Utility routines.
   private:
-    bool isTypeLegal(const Type *Ty, MVT &VT);
-    bool isLoadTypeLegal(const Type *Ty, MVT &VT);
+    bool isTypeLegal(Type *Ty, MVT &VT);
+    bool isLoadTypeLegal(Type *Ty, MVT &VT);
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr);
     bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr);
     bool ARMComputeAddress(const Value *Obj, Address &Addr);
@@ -673,7 +673,7 @@ unsigned ARMFastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
   return 0;
 }
 
-bool ARMFastISel::isTypeLegal(const Type *Ty, MVT &VT) {
+bool ARMFastISel::isTypeLegal(Type *Ty, MVT &VT) {
   EVT evt = TLI.getValueType(Ty, true);
 
   // Only handle simple types.
@@ -685,7 +685,7 @@ bool ARMFastISel::isTypeLegal(const Type *Ty, MVT &VT) {
   return TLI.isTypeLegal(VT);
 }
 
-bool ARMFastISel::isLoadTypeLegal(const Type *Ty, MVT &VT) {
+bool ARMFastISel::isLoadTypeLegal(Type *Ty, MVT &VT) {
   if (isTypeLegal(Ty, VT)) return true;
 
   // If this is a type than can be sign or zero-extended to a basic operation
@@ -714,7 +714,7 @@ bool ARMFastISel::ARMComputeAddress(const Value *Obj, Address &Addr) {
     U = C;
   }
 
-  if (const PointerType *Ty = dyn_cast<PointerType>(Obj->getType()))
+  if (PointerType *Ty = dyn_cast<PointerType>(Obj->getType()))
     if (Ty->getAddressSpace() > 255)
       // Fast instruction selection doesn't support the special
       // address spaces.
@@ -749,7 +749,7 @@ bool ARMFastISel::ARMComputeAddress(const Value *Obj, Address &Addr) {
       for (User::const_op_iterator i = U->op_begin() + 1, e = U->op_end();
            i != e; ++i, ++GTI) {
         const Value *Op = *i;
-        if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+        if (StructType *STy = dyn_cast<StructType>(*GTI)) {
           const StructLayout *SL = TD.getStructLayout(STy);
           unsigned Idx = cast<ConstantInt>(Op)->getZExtValue();
           TmpOffset += SL->getElementOffset(Idx);
@@ -1085,7 +1085,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   // TODO: Factor this out.
   if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
     MVT SourceVT;
-    const Type *Ty = CI->getOperand(0)->getType();
+    Type *Ty = CI->getOperand(0)->getType();
     if (CI->hasOneUse() && (CI->getParent() == I->getParent())
         && isTypeLegal(Ty, SourceVT)) {
       bool isFloat = (Ty->isDoubleTy() || Ty->isFloatTy());
@@ -1201,7 +1201,7 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
   const CmpInst *CI = cast<CmpInst>(I);
 
   MVT VT;
-  const Type *Ty = CI->getOperand(0)->getType();
+  Type *Ty = CI->getOperand(0)->getType();
   if (!isTypeLegal(Ty, VT))
     return false;
 
@@ -1309,7 +1309,7 @@ bool ARMFastISel::SelectSIToFP(const Instruction *I) {
   if (!Subtarget->hasVFP2()) return false;
 
   MVT DstVT;
-  const Type *Ty = I->getType();
+  Type *Ty = I->getType();
   if (!isTypeLegal(Ty, DstVT))
     return false;
 
@@ -1343,7 +1343,7 @@ bool ARMFastISel::SelectFPToSI(const Instruction *I) {
   if (!Subtarget->hasVFP2()) return false;
 
   MVT DstVT;
-  const Type *RetTy = I->getType();
+  Type *RetTy = I->getType();
   if (!isTypeLegal(RetTy, DstVT))
     return false;
 
@@ -1351,7 +1351,7 @@ bool ARMFastISel::SelectFPToSI(const Instruction *I) {
   if (Op == 0) return false;
 
   unsigned Opc;
-  const Type *OpTy = I->getOperand(0)->getType();
+  Type *OpTy = I->getOperand(0)->getType();
   if (OpTy->isFloatTy()) Opc = ARM::VTOSIZS;
   else if (OpTy->isDoubleTy()) Opc = ARM::VTOSIZD;
   else return 0;
@@ -1401,7 +1401,7 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
 
 bool ARMFastISel::SelectSDiv(const Instruction *I) {
   MVT VT;
-  const Type *Ty = I->getType();
+  Type *Ty = I->getType();
   if (!isTypeLegal(Ty, VT))
     return false;
 
@@ -1429,7 +1429,7 @@ bool ARMFastISel::SelectSDiv(const Instruction *I) {
 
 bool ARMFastISel::SelectSRem(const Instruction *I) {
   MVT VT;
-  const Type *Ty = I->getType();
+  Type *Ty = I->getType();
   if (!isTypeLegal(Ty, VT))
     return false;
 
@@ -1456,7 +1456,7 @@ bool ARMFastISel::SelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
   // operations, but can't figure out how to. Just use the vfp instructions
   // if we have them.
   // FIXME: It'd be nice to use NEON instructions.
-  const Type *Ty = I->getType();
+  Type *Ty = I->getType();
   bool isFloat = (Ty->isDoubleTy() || Ty->isFloatTy());
   if (isFloat && !Subtarget->hasVFP2())
     return false;
@@ -1778,7 +1778,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   CallingConv::ID CC = TLI.getLibcallCallingConv(Call);
 
   // Handle *simple* calls for now.
-  const Type *RetTy = I->getType();
+  Type *RetTy = I->getType();
   MVT RetVT;
   if (RetTy->isVoidTy())
     RetVT = MVT::isVoid;
@@ -1802,7 +1802,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
     unsigned Arg = getRegForValue(Op);
     if (Arg == 0) return false;
 
-    const Type *ArgTy = Op->getType();
+    Type *ArgTy = Op->getType();
     MVT ArgVT;
     if (!isTypeLegal(ArgTy, ArgVT)) return false;
 
@@ -1870,13 +1870,13 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   // TODO: Avoid some calling conventions?
 
   // Let SDISel handle vararg functions.
-  const PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
-  const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
+  PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
+  FunctionType *FTy = cast<FunctionType>(PT->getElementType());
   if (FTy->isVarArg())
     return false;
 
   // Handle *simple* calls for now.
-  const Type *RetTy = I->getType();
+  Type *RetTy = I->getType();
   MVT RetVT;
   if (RetTy->isVoidTy())
     RetVT = MVT::isVoid;
@@ -1915,7 +1915,7 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
         CS.paramHasAttr(AttrInd, Attribute::ByVal))
       return false;
 
-    const Type *ArgTy = (*i)->getType();
+    Type *ArgTy = (*i)->getType();
     MVT ArgVT;
     if (!isTypeLegal(ArgTy, ArgVT))
       return false;
@@ -1969,9 +1969,9 @@ bool ARMFastISel::SelectIntCast(const Instruction *I) {
   // On ARM, in general, integer casts don't involve legal types; this code
   // handles promotable integers.  The high bits for a type smaller than
   // the register size are assumed to be undefined.
-  const Type *DestTy = I->getType();
+  Type *DestTy = I->getType();
   Value *Op = I->getOperand(0);
-  const Type *SrcTy = Op->getType();
+  Type *SrcTy = Op->getType();
 
   EVT SrcVT, DestVT;
   SrcVT = TLI.getValueType(SrcTy, true);

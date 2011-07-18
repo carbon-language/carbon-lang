@@ -26,7 +26,7 @@ ARMConstantPoolValue::ARMConstantPoolValue(const Constant *cval, unsigned id,
                                            unsigned char PCAdj,
                                            ARMCP::ARMCPModifier Modif,
                                            bool AddCA)
-  : MachineConstantPoolValue((const Type*)cval->getType()),
+  : MachineConstantPoolValue((Type*)cval->getType()),
     CVal(cval), S(NULL), LabelId(id), Kind(K), PCAdjust(PCAdj),
     Modifier(Modif), AddCurrentAddress(AddCA) {}
 
@@ -35,13 +35,13 @@ ARMConstantPoolValue::ARMConstantPoolValue(LLVMContext &C,
                                            unsigned char PCAdj,
                                            ARMCP::ARMCPModifier Modif,
                                            bool AddCA)
-  : MachineConstantPoolValue((const Type*)Type::getInt32Ty(C)),
+  : MachineConstantPoolValue((Type*)Type::getInt32Ty(C)),
     CVal(NULL), S(strdup(s)), LabelId(id), Kind(ARMCP::CPExtSymbol),
     PCAdjust(PCAdj), Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(const GlobalValue *gv,
                                            ARMCP::ARMCPModifier Modif)
-  : MachineConstantPoolValue((const Type*)Type::getInt32Ty(gv->getContext())),
+  : MachineConstantPoolValue((Type*)Type::getInt32Ty(gv->getContext())),
     CVal(gv), S(NULL), LabelId(0), Kind(ARMCP::CPValue), PCAdjust(0),
     Modifier(Modif), AddCurrentAddress(false) {}
 

@@ -252,8 +252,8 @@ static inline SDValue BuildGetId(SelectionDAG &DAG, DebugLoc dl) {
                      DAG.getConstant(Intrinsic::xcore_getid, MVT::i32));
 }
 
-static inline bool isZeroLengthArray(const Type *Ty) {
-  const ArrayType *AT = dyn_cast_or_null<ArrayType>(Ty);
+static inline bool isZeroLengthArray(Type *Ty) {
+  ArrayType *AT = dyn_cast_or_null<ArrayType>(Ty);
   return AT && (AT->getNumElements() == 0);
 }
 
@@ -275,7 +275,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
     llvm_unreachable("Thread local object not a GlobalVariable?");
     return SDValue();
   }
-  const Type *Ty = cast<PointerType>(GV->getType())->getElementType();
+  Type *Ty = cast<PointerType>(GV->getType())->getElementType();
   if (!Ty->isSized() || isZeroLengthArray(Ty)) {
 #ifndef NDEBUG
     errs() << "Size of thread local object " << GVar->getName()
@@ -465,7 +465,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // Lower to a call to __misaligned_load(BasePtr).
-  const Type *IntPtrTy = getTargetData()->getIntPtrType(*DAG.getContext());
+  Type *IntPtrTy = getTargetData()->getIntPtrType(*DAG.getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
 
@@ -524,7 +524,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG) const
   }
 
   // Lower to a call to __misaligned_store(BasePtr, Value).
-  const Type *IntPtrTy = getTargetData()->getIntPtrType(*DAG.getContext());
+  Type *IntPtrTy = getTargetData()->getIntPtrType(*DAG.getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
 
@@ -1548,7 +1548,7 @@ static inline bool isImmUs4(int64_t val)
 /// by AM is legal for this target, for a load/store of the specified type.
 bool
 XCoreTargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                              const Type *Ty) const {
+                                              Type *Ty) const {
   if (Ty->getTypeID() == Type::VoidTyID)
     return AM.Scale == 0 && isImmUs(AM.BaseOffs) && isImmUs4(AM.BaseOffs);
 

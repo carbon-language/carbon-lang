@@ -47,7 +47,7 @@ TEST(VerifierTest, Branch_i1) {
 TEST(VerifierTest, AliasUnnamedAddr) {
   LLVMContext &C = getGlobalContext();
   Module M("M", C);
-  const Type *Ty = Type::getInt8Ty(C);
+  Type *Ty = Type::getInt8Ty(C);
   Constant *Init = Constant::getNullValue(Ty);
   GlobalVariable *Aliasee = new GlobalVariable(M, Ty, true,
                                                GlobalValue::ExternalLinkage,

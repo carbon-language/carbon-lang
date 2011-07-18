@@ -365,9 +365,9 @@ protected:
     return getSubclassDataFromValue() & ~HasMetadataBit;
   }
   
-  Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
+  Instruction(Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
               Instruction *InsertBefore = 0);
-  Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
+  Instruction(Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
               BasicBlock *InsertAtEnd);
   virtual Instruction *clone_impl() const = 0;
   

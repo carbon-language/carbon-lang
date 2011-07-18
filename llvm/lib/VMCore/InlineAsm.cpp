@@ -25,7 +25,7 @@ InlineAsm::~InlineAsm() {
 }
 
 
-InlineAsm *InlineAsm::get(const FunctionType *Ty, StringRef AsmString,
+InlineAsm *InlineAsm::get(FunctionType *Ty, StringRef AsmString,
                           StringRef Constraints, bool hasSideEffects,
                           bool isAlignStack) {
   InlineAsmKeyType Key(AsmString, Constraints, hasSideEffects, isAlignStack);
@@ -33,7 +33,7 @@ InlineAsm *InlineAsm::get(const FunctionType *Ty, StringRef AsmString,
   return pImpl->InlineAsms.getOrCreate(PointerType::getUnqual(Ty), Key);
 }
 
-InlineAsm::InlineAsm(const PointerType *Ty, const std::string &asmString,
+InlineAsm::InlineAsm(PointerType *Ty, const std::string &asmString,
                      const std::string &constraints, bool hasSideEffects,
                      bool isAlignStack)
   : Value(Ty, Value::InlineAsmVal),
@@ -242,7 +242,7 @@ InlineAsm::ParseConstraints(StringRef Constraints) {
 
 /// Verify - Verify that the specified constraint string is reasonable for the
 /// specified function type, and otherwise validate the constraint string.
-bool InlineAsm::Verify(const FunctionType *Ty, StringRef ConstStr) {
+bool InlineAsm::Verify(FunctionType *Ty, StringRef ConstStr) {
   if (Ty->isVarArg()) return false;
   
   ConstraintInfoVector Constraints = ParseConstraints(ConstStr);
@@ -282,7 +282,7 @@ bool InlineAsm::Verify(const FunctionType *Ty, StringRef ConstStr) {
     if (Ty->getReturnType()->isStructTy()) return false;
     break;
   default:
-    const StructType *STy = dyn_cast<StructType>(Ty->getReturnType());
+    StructType *STy = dyn_cast<StructType>(Ty->getReturnType());
     if (STy == 0 || STy->getNumElements() != NumOutputs)
       return false;
     break;

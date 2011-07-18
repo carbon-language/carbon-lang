@@ -197,7 +197,7 @@ void SCEV::print(raw_ostream &OS) const {
   }
   case scUnknown: {
     const SCEVUnknown *U = cast<SCEVUnknown>(this);
-    const Type *AllocTy;
+    Type *AllocTy;
     if (U->isSizeOf(AllocTy)) {
       OS << "sizeof(" << *AllocTy << ")";
       return;
@@ -207,7 +207,7 @@ void SCEV::print(raw_ostream &OS) const {
       return;
     }
 
-    const Type *CTy;
+    Type *CTy;
     Constant *FieldNo;
     if (U->isOffsetOf(CTy, FieldNo)) {
       OS << "offsetof(" << *CTy << ", ";
@@ -228,7 +228,7 @@ void SCEV::print(raw_ostream &OS) const {
   llvm_unreachable("Unknown SCEV kind!");
 }
 
-const Type *SCEV::getType() const {
+Type *SCEV::getType() const {
   switch (getSCEVType()) {
   case scConstant:
     return cast<SCEVConstant>(this)->getType();
@@ -297,17 +297,17 @@ const SCEV *ScalarEvolution::getConstant(const APInt& Val) {
 }
 
 const SCEV *
-ScalarEvolution::getConstant(const Type *Ty, uint64_t V, bool isSigned) {
-  const IntegerType *ITy = cast<IntegerType>(getEffectiveSCEVType(Ty));
+ScalarEvolution::getConstant(Type *Ty, uint64_t V, bool isSigned) {
+  IntegerType *ITy = cast<IntegerType>(getEffectiveSCEVType(Ty));
   return getConstant(ConstantInt::get(ITy, V, isSigned));
 }
 
 SCEVCastExpr::SCEVCastExpr(const FoldingSetNodeIDRef ID,
-                           unsigned SCEVTy, const SCEV *op, const Type *ty)
+                           unsigned SCEVTy, const SCEV *op, Type *ty)
   : SCEV(ID, SCEVTy), Op(op), Ty(ty) {}
 
 SCEVTruncateExpr::SCEVTruncateExpr(const FoldingSetNodeIDRef ID,
-                                   const SCEV *op, const Type *ty)
+                                   const SCEV *op, Type *ty)
   : SCEVCastExpr(ID, scTruncate, op, ty) {
   assert((Op->getType()->isIntegerTy() || Op->getType()->isPointerTy()) &&
          (Ty->isIntegerTy() || Ty->isPointerTy()) &&
@@ -315,7 +315,7 @@ SCEVTruncateExpr::SCEVTruncateExpr(const FoldingSetNodeIDRef ID,
 }
 
 SCEVZeroExtendExpr::SCEVZeroExtendExpr(const FoldingSetNodeIDRef ID,
-                                       const SCEV *op, const Type *ty)
+                                       const SCEV *op, Type *ty)
   : SCEVCastExpr(ID, scZeroExtend, op, ty) {
   assert((Op->getType()->isIntegerTy() || Op->getType()->isPointerTy()) &&
          (Ty->isIntegerTy() || Ty->isPointerTy()) &&
@@ -323,7 +323,7 @@ SCEVZeroExtendExpr::SCEVZeroExtendExpr(const FoldingSetNodeIDRef ID,
 }
 
 SCEVSignExtendExpr::SCEVSignExtendExpr(const FoldingSetNodeIDRef ID,
-                                       const SCEV *op, const Type *ty)
+                                       const SCEV *op, Type *ty)
   : SCEVCastExpr(ID, scSignExtend, op, ty) {
   assert((Op->getType()->isIntegerTy() || Op->getType()->isPointerTy()) &&
          (Ty->isIntegerTy() || Ty->isPointerTy()) &&
@@ -354,7 +354,7 @@ void SCEVUnknown::allUsesReplacedWith(Value *New) {
   setValPtr(New);
 }
 
-bool SCEVUnknown::isSizeOf(const Type *&AllocTy) const {
+bool SCEVUnknown::isSizeOf(Type *&AllocTy) const {
   if (ConstantExpr *VCE = dyn_cast<ConstantExpr>(getValue()))
     if (VCE->getOpcode() == Instruction::PtrToInt)
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(VCE->getOperand(0)))
@@ -371,15 +371,15 @@ bool SCEVUnknown::isSizeOf(const Type *&AllocTy) const {
   return false;
 }
 
-bool SCEVUnknown::isAlignOf(const Type *&AllocTy) const {
+bool SCEVUnknown::isAlignOf(Type *&AllocTy) const {
   if (ConstantExpr *VCE = dyn_cast<ConstantExpr>(getValue()))
     if (VCE->getOpcode() == Instruction::PtrToInt)
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(VCE->getOperand(0)))
         if (CE->getOpcode() == Instruction::GetElementPtr &&
             CE->getOperand(0)->isNullValue()) {
-          const Type *Ty =
+          Type *Ty =
             cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
-          if (const StructType *STy = dyn_cast<StructType>(Ty))
+          if (StructType *STy = dyn_cast<StructType>(Ty))
             if (!STy->isPacked() &&
                 CE->getNumOperands() == 3 &&
                 CE->getOperand(1)->isNullValue()) {
@@ -396,7 +396,7 @@ bool SCEVUnknown::isAlignOf(const Type *&AllocTy) const {
   return false;
 }
 
-bool SCEVUnknown::isOffsetOf(const Type *&CTy, Constant *&FieldNo) const {
+bool SCEVUnknown::isOffsetOf(Type *&CTy, Constant *&FieldNo) const {
   if (ConstantExpr *VCE = dyn_cast<ConstantExpr>(getValue()))
     if (VCE->getOpcode() == Instruction::PtrToInt)
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(VCE->getOperand(0)))
@@ -404,7 +404,7 @@ bool SCEVUnknown::isOffsetOf(const Type *&CTy, Constant *&FieldNo) const {
             CE->getNumOperands() == 3 &&
             CE->getOperand(0)->isNullValue() &&
             CE->getOperand(1)->isNullValue()) {
-          const Type *Ty =
+          Type *Ty =
             cast<PointerType>(CE->getOperand(0)->getType())->getElementType();
           // Ignore vector types here so that ScalarEvolutionExpander doesn't
           // emit getelementptrs that index into vectors.
@@ -652,7 +652,7 @@ static void GroupByComplexity(SmallVectorImpl<const SCEV *> &Ops,
 /// Assume, K > 0.
 static const SCEV *BinomialCoefficient(const SCEV *It, unsigned K,
                                        ScalarEvolution &SE,
-                                       const Type* ResultTy) {
+                                       Type* ResultTy) {
   // Handle the simplest case efficiently.
   if (K == 1)
     return SE.getTruncateOrZeroExtend(It, ResultTy);
@@ -742,7 +742,7 @@ static const SCEV *BinomialCoefficient(const SCEV *It, unsigned K,
   MultiplyFactor = MultiplyFactor.trunc(W);
 
   // Calculate the product, at width T+W
-  const IntegerType *CalculationTy = IntegerType::get(SE.getContext(),
+  IntegerType *CalculationTy = IntegerType::get(SE.getContext(),
                                                       CalculationBits);
   const SCEV *Dividend = SE.getTruncateOrZeroExtend(It, CalculationTy);
   for (unsigned i = 1; i != K; ++i) {
@@ -790,7 +790,7 @@ const SCEV *SCEVAddRecExpr::evaluateAtIteration(const SCEV *It,
 //===----------------------------------------------------------------------===//
 
 const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
-                                             const Type *Ty) {
+                                             Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) > getTypeSizeInBits(Ty) &&
          "This is not a truncating conversion!");
   assert(isSCEVable(Ty) &&
@@ -877,7 +877,7 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
 }
 
 const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
-                                               const Type *Ty) {
+                                               Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
          "This is not an extending conversion!");
   assert(isSCEVable(Ty) &&
@@ -954,7 +954,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
         const SCEV *RecastedMaxBECount =
           getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType());
         if (MaxBECount == RecastedMaxBECount) {
-          const Type *WideTy = IntegerType::get(getContext(), BitWidth * 2);
+          Type *WideTy = IntegerType::get(getContext(), BitWidth * 2);
           // Check whether Start+Step*MaxBECount has no unsigned overflow.
           const SCEV *ZMul = getMulExpr(CastedMaxBECount, Step);
           const SCEV *Add = getAddExpr(Start, ZMul);
@@ -1062,7 +1062,7 @@ static const SCEV *getOverflowLimitForStep(const SCEV *Step,
 // result, the expression "Step + sext(PreIncAR)" is congruent with
 // "sext(PostIncAR)"
 static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
-                                            const Type *Ty,
+                                            Type *Ty,
                                             ScalarEvolution *SE) {
   const Loop *L = AR->getLoop();
   const SCEV *Start = AR->getStart();
@@ -1086,7 +1086,7 @@ static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
 
   // 2. Direct overflow check on the step operation's expression.
   unsigned BitWidth = SE->getTypeSizeInBits(AR->getType());
-  const Type *WideTy = IntegerType::get(SE->getContext(), BitWidth * 2);
+  Type *WideTy = IntegerType::get(SE->getContext(), BitWidth * 2);
   const SCEV *OperandExtendedStart =
     SE->getAddExpr(SE->getSignExtendExpr(PreStart, WideTy),
                    SE->getSignExtendExpr(Step, WideTy));
@@ -1112,7 +1112,7 @@ static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
 
 // Get the normalized sign-extended expression for this AddRec's Start.
 static const SCEV *getSignExtendAddRecStart(const SCEVAddRecExpr *AR,
-                                            const Type *Ty,
+                                            Type *Ty,
                                             ScalarEvolution *SE) {
   const SCEV *PreStart = getPreStartForSignExtend(AR, Ty, SE);
   if (!PreStart)
@@ -1123,7 +1123,7 @@ static const SCEV *getSignExtendAddRecStart(const SCEVAddRecExpr *AR,
 }
 
 const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
-                                               const Type *Ty) {
+                                               Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
          "This is not an extending conversion!");
   assert(isSCEVable(Ty) &&
@@ -1208,7 +1208,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
         const SCEV *RecastedMaxBECount =
           getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType());
         if (MaxBECount == RecastedMaxBECount) {
-          const Type *WideTy = IntegerType::get(getContext(), BitWidth * 2);
+          Type *WideTy = IntegerType::get(getContext(), BitWidth * 2);
           // Check whether Start+Step*MaxBECount has no signed overflow.
           const SCEV *SMul = getMulExpr(CastedMaxBECount, Step);
           const SCEV *Add = getAddExpr(Start, SMul);
@@ -1275,7 +1275,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
 /// unspecified bits out to the given type.
 ///
 const SCEV *ScalarEvolution::getAnyExtendExpr(const SCEV *Op,
-                                              const Type *Ty) {
+                                              Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
          "This is not an extending conversion!");
   assert(isSCEVable(Ty) &&
@@ -1438,7 +1438,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
   assert(!Ops.empty() && "Cannot get empty add!");
   if (Ops.size() == 1) return Ops[0];
 #ifndef NDEBUG
-  const Type *ETy = getEffectiveSCEVType(Ops[0]->getType());
+  Type *ETy = getEffectiveSCEVType(Ops[0]->getType());
   for (unsigned i = 1, e = Ops.size(); i != e; ++i)
     assert(getEffectiveSCEVType(Ops[i]->getType()) == ETy &&
            "SCEVAddExpr operand types don't match!");
@@ -1488,7 +1488,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
   // Okay, check to see if the same value occurs in the operand list more than
   // once.  If so, merge them together into an multiply expression.  Since we
   // sorted the list, these values are required to be adjacent.
-  const Type *Ty = Ops[0]->getType();
+  Type *Ty = Ops[0]->getType();
   bool FoundMatch = false;
   for (unsigned i = 0, e = Ops.size(); i != e-1; ++i)
     if (Ops[i] == Ops[i+1]) {      //  X + Y + Y  -->  X + Y*2
@@ -1515,8 +1515,8 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
   // if the contents of the resulting outer trunc fold to something simple.
   for (; Idx < Ops.size() && isa<SCEVTruncateExpr>(Ops[Idx]); ++Idx) {
     const SCEVTruncateExpr *Trunc = cast<SCEVTruncateExpr>(Ops[Idx]);
-    const Type *DstType = Trunc->getType();
-    const Type *SrcType = Trunc->getOperand()->getType();
+    Type *DstType = Trunc->getType();
+    Type *SrcType = Trunc->getOperand()->getType();
     SmallVector<const SCEV *, 8> LargeOps;
     bool Ok = true;
     // Check all the operands to see if they can be represented in the
@@ -1809,7 +1809,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
   assert(!Ops.empty() && "Cannot get empty mul!");
   if (Ops.size() == 1) return Ops[0];
 #ifndef NDEBUG
-  const Type *ETy = getEffectiveSCEVType(Ops[0]->getType());
+  Type *ETy = getEffectiveSCEVType(Ops[0]->getType());
   for (unsigned i = 1, e = Ops.size(); i != e; ++i)
     assert(getEffectiveSCEVType(Ops[i]->getType()) == ETy &&
            "SCEVMulExpr operand types don't match!");
@@ -2042,14 +2042,14 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
       // Determine if the division can be folded into the operands of
       // its operands.
       // TODO: Generalize this to non-constants by using known-bits information.
-      const Type *Ty = LHS->getType();
+      Type *Ty = LHS->getType();
       unsigned LZ = RHSC->getValue()->getValue().countLeadingZeros();
       unsigned MaxShiftAmt = getTypeSizeInBits(Ty) - LZ - 1;
       // For non-power-of-two values, effectively round the value up to the
       // nearest power of two.
       if (!RHSC->getValue()->getValue().isPowerOf2())
         ++MaxShiftAmt;
-      const IntegerType *ExtTy =
+      IntegerType *ExtTy =
         IntegerType::get(getContext(), getTypeSizeInBits(Ty) + MaxShiftAmt);
       // {X,+,N}/C --> {X/C,+,N/C} if safe and N/C can be folded.
       if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS))
@@ -2151,7 +2151,7 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
                                const Loop *L, SCEV::NoWrapFlags Flags) {
   if (Operands.size() == 1) return Operands[0];
 #ifndef NDEBUG
-  const Type *ETy = getEffectiveSCEVType(Operands[0]->getType());
+  Type *ETy = getEffectiveSCEVType(Operands[0]->getType());
   for (unsigned i = 1, e = Operands.size(); i != e; ++i)
     assert(getEffectiveSCEVType(Operands[i]->getType()) == ETy &&
            "SCEVAddRecExpr operand types don't match!");
@@ -2269,7 +2269,7 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   assert(!Ops.empty() && "Cannot get empty smax!");
   if (Ops.size() == 1) return Ops[0];
 #ifndef NDEBUG
-  const Type *ETy = getEffectiveSCEVType(Ops[0]->getType());
+  Type *ETy = getEffectiveSCEVType(Ops[0]->getType());
   for (unsigned i = 1, e = Ops.size(); i != e; ++i)
     assert(getEffectiveSCEVType(Ops[i]->getType()) == ETy &&
            "SCEVSMaxExpr operand types don't match!");
@@ -2373,7 +2373,7 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   assert(!Ops.empty() && "Cannot get empty umax!");
   if (Ops.size() == 1) return Ops[0];
 #ifndef NDEBUG
-  const Type *ETy = getEffectiveSCEVType(Ops[0]->getType());
+  Type *ETy = getEffectiveSCEVType(Ops[0]->getType());
   for (unsigned i = 1, e = Ops.size(); i != e; ++i)
     assert(getEffectiveSCEVType(Ops[i]->getType()) == ETy &&
            "SCEVUMaxExpr operand types don't match!");
@@ -2476,7 +2476,7 @@ const SCEV *ScalarEvolution::getUMinExpr(const SCEV *LHS,
   return getNotSCEV(getUMaxExpr(getNotSCEV(LHS), getNotSCEV(RHS)));
 }
 
-const SCEV *ScalarEvolution::getSizeOfExpr(const Type *AllocTy) {
+const SCEV *ScalarEvolution::getSizeOfExpr(Type *AllocTy) {
   // If we have TargetData, we can bypass creating a target-independent
   // constant expression and then folding it back into a ConstantInt.
   // This is just a compile-time optimization.
@@ -2488,20 +2488,20 @@ const SCEV *ScalarEvolution::getSizeOfExpr(const Type *AllocTy) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
       C = Folded;
-  const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
+  Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
 
-const SCEV *ScalarEvolution::getAlignOfExpr(const Type *AllocTy) {
+const SCEV *ScalarEvolution::getAlignOfExpr(Type *AllocTy) {
   Constant *C = ConstantExpr::getAlignOf(AllocTy);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
       C = Folded;
-  const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
+  Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
 
-const SCEV *ScalarEvolution::getOffsetOfExpr(const StructType *STy,
+const SCEV *ScalarEvolution::getOffsetOfExpr(StructType *STy,
                                              unsigned FieldNo) {
   // If we have TargetData, we can bypass creating a target-independent
   // constant expression and then folding it back into a ConstantInt.
@@ -2514,17 +2514,17 @@ const SCEV *ScalarEvolution::getOffsetOfExpr(const StructType *STy,
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
       C = Folded;
-  const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(STy));
+  Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(STy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
 
-const SCEV *ScalarEvolution::getOffsetOfExpr(const Type *CTy,
+const SCEV *ScalarEvolution::getOffsetOfExpr(Type *CTy,
                                              Constant *FieldNo) {
   Constant *C = ConstantExpr::getOffsetOf(CTy, FieldNo);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
       C = Folded;
-  const Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(CTy));
+  Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(CTy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
 }
 
@@ -2558,14 +2558,14 @@ const SCEV *ScalarEvolution::getUnknown(Value *V) {
 /// the SCEV framework. This primarily includes integer types, and it
 /// can optionally include pointer types if the ScalarEvolution class
 /// has access to target-specific information.
-bool ScalarEvolution::isSCEVable(const Type *Ty) const {
+bool ScalarEvolution::isSCEVable(Type *Ty) const {
   // Integers and pointers are always SCEVable.
   return Ty->isIntegerTy() || Ty->isPointerTy();
 }
 
 /// getTypeSizeInBits - Return the size in bits of the specified type,
 /// for which isSCEVable must return true.
-uint64_t ScalarEvolution::getTypeSizeInBits(const Type *Ty) const {
+uint64_t ScalarEvolution::getTypeSizeInBits(Type *Ty) const {
   assert(isSCEVable(Ty) && "Type is not SCEVable!");
 
   // If we have a TargetData, use it!
@@ -2586,7 +2586,7 @@ uint64_t ScalarEvolution::getTypeSizeInBits(const Type *Ty) const {
 /// the given type and which represents how SCEV will treat the given
 /// type, for which isSCEVable must return true. For pointer types,
 /// this is the pointer-sized integer type.
-const Type *ScalarEvolution::getEffectiveSCEVType(const Type *Ty) const {
+Type *ScalarEvolution::getEffectiveSCEVType(Type *Ty) const {
   assert(isSCEVable(Ty) && "Type is not SCEVable!");
 
   if (Ty->isIntegerTy())
@@ -2628,7 +2628,7 @@ const SCEV *ScalarEvolution::getNegativeSCEV(const SCEV *V) {
     return getConstant(
                cast<ConstantInt>(ConstantExpr::getNeg(VC->getValue())));
 
-  const Type *Ty = V->getType();
+  Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
   return getMulExpr(V,
                   getConstant(cast<ConstantInt>(Constant::getAllOnesValue(Ty))));
@@ -2640,7 +2640,7 @@ const SCEV *ScalarEvolution::getNotSCEV(const SCEV *V) {
     return getConstant(
                 cast<ConstantInt>(ConstantExpr::getNot(VC->getValue())));
 
-  const Type *Ty = V->getType();
+  Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
   const SCEV *AllOnes =
                    getConstant(cast<ConstantInt>(Constant::getAllOnesValue(Ty)));
@@ -2664,8 +2664,8 @@ const SCEV *ScalarEvolution::getMinusSCEV(const SCEV *LHS, const SCEV *RHS,
 /// input value to the specified type.  If the type must be extended, it is zero
 /// extended.
 const SCEV *
-ScalarEvolution::getTruncateOrZeroExtend(const SCEV *V, const Type *Ty) {
-  const Type *SrcTy = V->getType();
+ScalarEvolution::getTruncateOrZeroExtend(const SCEV *V, Type *Ty) {
+  Type *SrcTy = V->getType();
   assert((SrcTy->isIntegerTy() || SrcTy->isPointerTy()) &&
          (Ty->isIntegerTy() || Ty->isPointerTy()) &&
          "Cannot truncate or zero extend with non-integer arguments!");
@@ -2681,8 +2681,8 @@ ScalarEvolution::getTruncateOrZeroExtend(const SCEV *V, const Type *Ty) {
 /// extended.
 const SCEV *
 ScalarEvolution::getTruncateOrSignExtend(const SCEV *V,
-                                         const Type *Ty) {
-  const Type *SrcTy = V->getType();
+                                         Type *Ty) {
+  Type *SrcTy = V->getType();
   assert((SrcTy->isIntegerTy() || SrcTy->isPointerTy()) &&
          (Ty->isIntegerTy() || Ty->isPointerTy()) &&
          "Cannot truncate or zero extend with non-integer arguments!");
@@ -2697,8 +2697,8 @@ ScalarEvolution::getTruncateOrSignExtend(const SCEV *V,
 /// input value to the specified type.  If the type must be extended, it is zero
 /// extended.  The conversion must not be narrowing.
 const SCEV *
-ScalarEvolution::getNoopOrZeroExtend(const SCEV *V, const Type *Ty) {
-  const Type *SrcTy = V->getType();
+ScalarEvolution::getNoopOrZeroExtend(const SCEV *V, Type *Ty) {
+  Type *SrcTy = V->getType();
   assert((SrcTy->isIntegerTy() || SrcTy->isPointerTy()) &&
          (Ty->isIntegerTy() || Ty->isPointerTy()) &&
          "Cannot noop or zero extend with non-integer arguments!");
@@ -2713,8 +2713,8 @@ ScalarEvolution::getNoopOrZeroExtend(const SCEV *V, const Type *Ty) {
 /// input value to the specified type.  If the type must be extended, it is sign
 /// extended.  The conversion must not be narrowing.
 const SCEV *
-ScalarEvolution::getNoopOrSignExtend(const SCEV *V, const Type *Ty) {
-  const Type *SrcTy = V->getType();
+ScalarEvolution::getNoopOrSignExtend(const SCEV *V, Type *Ty) {
+  Type *SrcTy = V->getType();
   assert((SrcTy->isIntegerTy() || SrcTy->isPointerTy()) &&
          (Ty->isIntegerTy() || Ty->isPointerTy()) &&
          "Cannot noop or sign extend with non-integer arguments!");
@@ -2730,8 +2730,8 @@ ScalarEvolution::getNoopOrSignExtend(const SCEV *V, const Type *Ty) {
 /// it is extended with unspecified bits. The conversion must not be
 /// narrowing.
 const SCEV *
-ScalarEvolution::getNoopOrAnyExtend(const SCEV *V, const Type *Ty) {
-  const Type *SrcTy = V->getType();
+ScalarEvolution::getNoopOrAnyExtend(const SCEV *V, Type *Ty) {
+  Type *SrcTy = V->getType();
   assert((SrcTy->isIntegerTy() || SrcTy->isPointerTy()) &&
          (Ty->isIntegerTy() || Ty->isPointerTy()) &&
          "Cannot noop or any extend with non-integer arguments!");
@@ -2745,8 +2745,8 @@ ScalarEvolution::getNoopOrAnyExtend(const SCEV *V, const Type *Ty) {
 /// getTruncateOrNoop - Return a SCEV corresponding to a conversion of the
 /// input value to the specified type.  The conversion must not be widening.
 const SCEV *
-ScalarEvolution::getTruncateOrNoop(const SCEV *V, const Type *Ty) {
-  const Type *SrcTy = V->getType();
+ScalarEvolution::getTruncateOrNoop(const SCEV *V, Type *Ty) {
+  Type *SrcTy = V->getType();
   assert((SrcTy->isIntegerTy() || SrcTy->isPointerTy()) &&
          (Ty->isIntegerTy() || Ty->isPointerTy()) &&
          "Cannot truncate or noop with non-integer arguments!");
@@ -3032,7 +3032,7 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
   // context.
   bool isInBounds = GEP->isInBounds();
 
-  const Type *IntPtrTy = getEffectiveSCEVType(GEP->getType());
+  Type *IntPtrTy = getEffectiveSCEVType(GEP->getType());
   Value *Base = GEP->getOperand(0);
   // Don't attempt to analyze GEPs over unsized objects.
   if (!cast<PointerType>(Base->getType())->getElementType()->isSized())
@@ -3044,7 +3044,7 @@ const SCEV *ScalarEvolution::createNodeForGEP(GEPOperator *GEP) {
        I != E; ++I) {
     Value *Index = *I;
     // Compute the (potentially symbolic) offset in bytes for this index.
-    if (const StructType *STy = dyn_cast<StructType>(*GTI++)) {
+    if (StructType *STy = dyn_cast<StructType>(*GTI++)) {
       // For a struct, add the member offset.
       unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
       const SCEV *FieldOffset = getOffsetOfExpr(STy, FieldNo);
@@ -3244,7 +3244,7 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
 
     // TODO: non-affine addrec
     if (AddRec->isAffine()) {
-      const Type *Ty = AddRec->getType();
+      Type *Ty = AddRec->getType();
       const SCEV *MaxBECount = getMaxBackedgeTakenCount(AddRec->getLoop());
       if (!isa<SCEVCouldNotCompute>(MaxBECount) &&
           getTypeSizeInBits(MaxBECount->getType()) <= BitWidth) {
@@ -3396,7 +3396,7 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
 
     // TODO: non-affine addrec
     if (AddRec->isAffine()) {
-      const Type *Ty = AddRec->getType();
+      Type *Ty = AddRec->getType();
       const SCEV *MaxBECount = getMaxBackedgeTakenCount(AddRec->getLoop());
       if (!isa<SCEVCouldNotCompute>(MaxBECount) &&
           getTypeSizeInBits(MaxBECount->getType()) <= BitWidth) {
@@ -3601,9 +3601,9 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
               LCI->getValue() == CI->getValue())
             if (const SCEVZeroExtendExpr *Z =
                   dyn_cast<SCEVZeroExtendExpr>(getSCEV(U->getOperand(0)))) {
-              const Type *UTy = U->getType();
+              Type *UTy = U->getType();
               const SCEV *Z0 = Z->getOperand();
-              const Type *Z0Ty = Z0->getType();
+              Type *Z0Ty = Z0->getType();
               unsigned Z0TySize = getTypeSizeInBits(Z0Ty);
 
               // If C is a low-bits mask, the zero extend is serving to
@@ -4321,10 +4321,10 @@ GetAddressedElementFromGlobal(GlobalVariable *GV,
       if (Idx >= CA->getNumOperands()) return 0;  // Bogus program
       Init = cast<Constant>(CA->getOperand(Idx));
     } else if (isa<ConstantAggregateZero>(Init)) {
-      if (const StructType *STy = dyn_cast<StructType>(Init->getType())) {
+      if (StructType *STy = dyn_cast<StructType>(Init->getType())) {
         assert(Idx < STy->getNumElements() && "Bad struct index!");
         Init = Constant::getNullValue(STy->getElementType(Idx));
-      } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Init->getType())) {
+      } else if (ArrayType *ATy = dyn_cast<ArrayType>(Init->getType())) {
         if (Idx >= ATy->getNumElements()) return 0;  // Bogus program
         Init = Constant::getNullValue(ATy->getElementType());
       } else {
@@ -5741,7 +5741,7 @@ const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
   assert(!isKnownNegative(Step) &&
          "This code doesn't handle negative strides yet!");
 
-  const Type *Ty = Start->getType();
+  Type *Ty = Start->getType();
 
   // When Start == End, we have an exact BECount == 0. Short-circuit this case
   // here because SCEV may not be able to determine that the unsigned division
@@ -5760,7 +5760,7 @@ const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
   if (!NoWrap) {
     // Check Add for unsigned overflow.
     // TODO: More sophisticated things could be done here.
-    const Type *WideTy = IntegerType::get(getContext(),
+    Type *WideTy = IntegerType::get(getContext(),
                                           getTypeSizeInBits(Ty) + 1);
     const SCEV *EDiff = getZeroExtendExpr(Diff, WideTy);
     const SCEV *ERoundUp = getZeroExtendExpr(RoundUp, WideTy);

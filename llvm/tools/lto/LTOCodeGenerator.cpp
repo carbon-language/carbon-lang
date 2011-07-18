@@ -329,7 +329,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   if (LLVMCompilerUsed)
     LLVMCompilerUsed->eraseFromParent();
 
-  const llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(_context);
+  llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(_context);
   std::vector<Constant*> asmUsed2;
   for (SmallPtrSet<GlobalValue*, 16>::const_iterator i = asmUsed.begin(),
          e = asmUsed.end(); i !=e; ++i) {

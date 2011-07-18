@@ -83,7 +83,7 @@ void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
 /// ShouldChangeType - Return true if it is desirable to convert a computation
 /// from 'From' to 'To'.  We don't want to convert from a legal to an illegal
 /// type for example, or from a smaller to a larger illegal type.
-bool InstCombiner::ShouldChangeType(const Type *From, const Type *To) const {
+bool InstCombiner::ShouldChangeType(Type *From, Type *To) const {
   assert(From->isIntegerTy() && To->isIntegerTy());
   
   // If we don't have TD, we don't know if the source/dest are legal.
@@ -516,8 +516,8 @@ Instruction *InstCombiner::FoldOpIntoSelect(Instruction &Op, SelectInst *SI) {
     // If it's a bitcast involving vectors, make sure it has the same number of
     // elements on both sides.
     if (BitCastInst *BC = dyn_cast<BitCastInst>(&Op)) {
-      const VectorType *DestTy = dyn_cast<VectorType>(BC->getDestTy());
-      const VectorType *SrcTy = dyn_cast<VectorType>(BC->getSrcTy());
+      VectorType *DestTy = dyn_cast<VectorType>(BC->getDestTy());
+      VectorType *SrcTy = dyn_cast<VectorType>(BC->getSrcTy());
 
       // Verify that either both or neither are vectors.
       if ((SrcTy == NULL) != (DestTy == NULL)) return 0;
@@ -654,7 +654,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     }
   } else { 
     CastInst *CI = cast<CastInst>(&I);
-    const Type *RetTy = CI->getType();
+    Type *RetTy = CI->getType();
     for (unsigned i = 0; i != NumPHIValues; ++i) {
       Value *InV;
       if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i)))
@@ -680,7 +680,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
 /// or not there is a sequence of GEP indices into the type that will land us at
 /// the specified offset.  If so, fill them into NewIndices and return the
 /// resultant element type, otherwise return null.
-const Type *InstCombiner::FindElementAtOffset(const Type *Ty, int64_t Offset, 
+Type *InstCombiner::FindElementAtOffset(Type *Ty, int64_t Offset, 
                                           SmallVectorImpl<Value*> &NewIndices) {
   if (!TD) return 0;
   if (!Ty->isSized()) return 0;
@@ -688,7 +688,7 @@ const Type *InstCombiner::FindElementAtOffset(const Type *Ty, int64_t Offset,
   // Start with the index over the outer type.  Note that the type size
   // might be zero (even if the offset isn't zero) if the indexed type
   // is something like [0 x {int, int}]
-  const Type *IntPtrTy = TD->getIntPtrType(Ty->getContext());
+  Type *IntPtrTy = TD->getIntPtrType(Ty->getContext());
   int64_t FirstIdx = 0;
   if (int64_t TySize = TD->getTypeAllocSize(Ty)) {
     FirstIdx = Offset/TySize;
@@ -711,7 +711,7 @@ const Type *InstCombiner::FindElementAtOffset(const Type *Ty, int64_t Offset,
     if (uint64_t(Offset*8) >= TD->getTypeSizeInBits(Ty))
       return 0;
     
-    if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    if (StructType *STy = dyn_cast<StructType>(Ty)) {
       const StructLayout *SL = TD->getStructLayout(STy);
       assert(Offset < (int64_t)SL->getSizeInBytes() &&
              "Offset must stay within the indexed type");
@@ -722,7 +722,7 @@ const Type *InstCombiner::FindElementAtOffset(const Type *Ty, int64_t Offset,
       
       Offset -= SL->getElementOffset(Elt);
       Ty = STy->getElementType(Elt);
-    } else if (const ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
+    } else if (ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
       uint64_t EltSize = TD->getTypeAllocSize(AT->getElementType());
       assert(EltSize && "Cannot index into a zero-sized array");
       NewIndices.push_back(ConstantInt::get(IntPtrTy,Offset/EltSize));
@@ -751,13 +751,13 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // by multiples of a zero size type with zero.
   if (TD) {
     bool MadeChange = false;
-    const Type *IntPtrTy = TD->getIntPtrType(GEP.getContext());
+    Type *IntPtrTy = TD->getIntPtrType(GEP.getContext());
 
     gep_type_iterator GTI = gep_type_begin(GEP);
     for (User::op_iterator I = GEP.op_begin() + 1, E = GEP.op_end();
          I != E; ++I, ++GTI) {
       // Skip indices into struct types.
-      const SequentialType *SeqTy = dyn_cast<SequentialType>(*GTI);
+      SequentialType *SeqTy = dyn_cast<SequentialType>(*GTI);
       if (!SeqTy) continue;
 
       // If the element type has zero size then any index over it is equivalent
@@ -859,7 +859,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   // Handle gep(bitcast x) and gep(gep x, 0, 0, 0).
   Value *StrippedPtr = PtrOp->stripPointerCasts();
-  const PointerType *StrippedPtrTy =cast<PointerType>(StrippedPtr->getType());
+  PointerType *StrippedPtrTy =cast<PointerType>(StrippedPtr->getType());
   if (StrippedPtr != PtrOp &&
     StrippedPtrTy->getAddressSpace() == GEP.getPointerAddressSpace()) {
 
@@ -875,8 +875,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     //
     // This occurs when the program declares an array extern like "int X[];"
     if (HasZeroPointerIndex) {
-      const PointerType *CPTy = cast<PointerType>(PtrOp->getType());
-      if (const ArrayType *CATy =
+      PointerType *CPTy = cast<PointerType>(PtrOp->getType());
+      if (ArrayType *CATy =
           dyn_cast<ArrayType>(CPTy->getElementType())) {
         // GEP (bitcast i8* X to [0 x i8]*), i32 0, ... ?
         if (CATy->getElementType() == StrippedPtrTy->getElementType()) {
@@ -889,7 +889,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           return Res;
         }
         
-        if (const ArrayType *XATy =
+        if (ArrayType *XATy =
               dyn_cast<ArrayType>(StrippedPtrTy->getElementType())){
           // GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ... ?
           if (CATy->getElementType() == XATy->getElementType()) {
@@ -907,8 +907,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // Transform things like:
       // %t = getelementptr i32* bitcast ([2 x i32]* %str to i32*), i32 %V
       // into:  %t1 = getelementptr [2 x i32]* %str, i32 0, i32 %V; bitcast
-      const Type *SrcElTy = StrippedPtrTy->getElementType();
-      const Type *ResElTy=cast<PointerType>(PtrOp->getType())->getElementType();
+      Type *SrcElTy = StrippedPtrTy->getElementType();
+      Type *ResElTy=cast<PointerType>(PtrOp->getType())->getElementType();
       if (TD && SrcElTy->isArrayTy() &&
           TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
           TD->getTypeAllocSize(ResElTy)) {
@@ -1023,7 +1023,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // field at Offset in 'A's type.  If so, we can pull the cast through the
       // GEP.
       SmallVector<Value*, 8> NewIndices;
-      const Type *InTy =
+      Type *InTy =
         cast<PointerType>(BCI->getOperand(0)->getType())->getElementType();
       if (FindElementAtOffset(InTy, Offset, NewIndices)) {
         Value *NGEP = GEP.isInBounds() ?

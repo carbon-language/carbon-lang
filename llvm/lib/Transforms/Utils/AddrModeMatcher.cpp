@@ -222,7 +222,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     const TargetData *TD = TLI.getTargetData();
     gep_type_iterator GTI = gep_type_begin(AddrInst);
     for (unsigned i = 1, e = AddrInst->getNumOperands(); i != e; ++i, ++GTI) {
-      if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+      if (StructType *STy = dyn_cast<StructType>(*GTI)) {
         const StructLayout *SL = TD->getStructLayout(STy);
         unsigned Idx =
           cast<ConstantInt>(AddrInst->getOperand(i))->getZExtValue();
@@ -557,7 +557,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
     Value *Address = User->getOperand(OpNo);
     if (!Address->getType()->isPointerTy())
       return false;
-    const Type *AddressAccessTy =
+    Type *AddressAccessTy =
       cast<PointerType>(Address->getType())->getElementType();
     
     // Do a match against the root of this address, ignoring profitability. This

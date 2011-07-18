@@ -261,8 +261,8 @@ public:
 
   /// getPointerOperandType - Method to return the pointer operand as a
   /// PointerType.
-  const PointerType *getPointerOperandType() const {
-    return reinterpret_cast<const PointerType*>(getPointerOperand()->getType());
+  PointerType *getPointerOperandType() const {
+    return reinterpret_cast<PointerType*>(getPointerOperand()->getType());
   }
 
   unsigned getNumIndices() const {  // Note: always non-negative

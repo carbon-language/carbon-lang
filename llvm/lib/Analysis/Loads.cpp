@@ -90,7 +90,7 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
   if (TD)
     Base = getUnderlyingObjectWithOffset(V, TD, ByteOffset);
 
-  const Type *BaseType = 0;
+  Type *BaseType = 0;
   unsigned BaseAlign = 0;
   if (const AllocaInst *AI = dyn_cast<AllocaInst>(Base)) {
     // An alloca is safe to load from as load as it is suitably aligned.
@@ -114,7 +114,7 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
         return true; // Loading directly from an alloca or global is OK.
 
       // Check if the load is within the bounds of the underlying object.
-      const PointerType *AddrTy = cast<PointerType>(V->getType());
+      PointerType *AddrTy = cast<PointerType>(V->getType());
       uint64_t LoadSize = TD->getTypeStoreSize(AddrTy->getElementType());
       if (ByteOffset + LoadSize <= TD->getTypeAllocSize(BaseType) &&
           (Align == 0 || (ByteOffset % Align) == 0))
@@ -169,7 +169,7 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
   // If we're using alias analysis to disambiguate get the size of *Ptr.
   uint64_t AccessSize = 0;
   if (AA) {
-    const Type *AccessTy = cast<PointerType>(Ptr->getType())->getElementType();
+    Type *AccessTy = cast<PointerType>(Ptr->getType())->getElementType();
     AccessSize = AA->getTypeStoreSize(AccessTy);
   }
   

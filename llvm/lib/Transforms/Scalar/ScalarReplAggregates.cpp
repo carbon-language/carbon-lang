@@ -129,11 +129,11 @@ namespace {
                                          AllocaInfo &Info);
     void isSafeGEP(GetElementPtrInst *GEPI, uint64_t &Offset, AllocaInfo &Info);
     void isSafeMemAccess(uint64_t Offset, uint64_t MemSize,
-                         const Type *MemOpType, bool isStore, AllocaInfo &Info,
+                         Type *MemOpType, bool isStore, AllocaInfo &Info,
                          Instruction *TheAccess, bool AllowWholeAccess);
-    bool TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size);
-    uint64_t FindElementAndOffset(const Type *&T, uint64_t &Offset,
-                                  const Type *&IdxTy);
+    bool TypeHasComponent(Type *T, uint64_t Offset, uint64_t Size);
+    uint64_t FindElementAndOffset(Type *&T, uint64_t &Offset,
+                                  Type *&IdxTy);
 
     void DoScalarReplacement(AllocaInst *AI,
                              std::vector<AllocaInst*> &WorkList);
@@ -253,7 +253,7 @@ class ConvertToScalarInfo {
   /// VectorTy - This tracks the type that we should promote the vector to if
   /// it is possible to turn it into a vector.  This starts out null, and if it
   /// isn't possible to turn into a vector type, it gets set to VoidTy.
-  const VectorType *VectorTy;
+  VectorType *VectorTy;
 
   /// HadNonMemTransferAccess - True if there is at least one access to the 
   /// alloca that is not a MemTransferInst.  We don't want to turn structs into
@@ -269,11 +269,11 @@ public:
 
 private:
   bool CanConvertToScalar(Value *V, uint64_t Offset);
-  void MergeInTypeForLoadOrStore(const Type *In, uint64_t Offset);
-  bool MergeInVectorType(const VectorType *VInTy, uint64_t Offset);
+  void MergeInTypeForLoadOrStore(Type *In, uint64_t Offset);
+  bool MergeInVectorType(VectorType *VInTy, uint64_t Offset);
   void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
 
-  Value *ConvertScalar_ExtractValue(Value *NV, const Type *ToType,
+  Value *ConvertScalar_ExtractValue(Value *NV, Type *ToType,
                                     uint64_t Offset, IRBuilder<> &Builder);
   Value *ConvertScalar_InsertValue(Value *StoredVal, Value *ExistingVal,
                                    uint64_t Offset, IRBuilder<> &Builder);
@@ -306,7 +306,7 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
   // random stuff that doesn't use vectors (e.g. <9 x double>) because then
   // we just get a lot of insert/extracts.  If at least one vector is
   // involved, then we probably really do have a union of vector/array.
-  const Type *NewTy;
+  Type *NewTy;
   if (ScalarKind == Vector) {
     assert(VectorTy && "Missing type for vector scalar.");
     DEBUG(dbgs() << "CONVERT TO VECTOR: " << *AI << "\n  TYPE = "
@@ -344,7 +344,7 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
 ///      large) integer type with extract and insert operations where the loads
 ///      and stores would mutate the memory.  We mark this by setting VectorTy
 ///      to VoidTy.
-void ConvertToScalarInfo::MergeInTypeForLoadOrStore(const Type *In,
+void ConvertToScalarInfo::MergeInTypeForLoadOrStore(Type *In,
                                                     uint64_t Offset) {
   // If we already decided to turn this into a blob of integer memory, there is
   // nothing to be done.
@@ -355,7 +355,7 @@ void ConvertToScalarInfo::MergeInTypeForLoadOrStore(const Type *In,
 
   // If the In type is a vector that is the same size as the alloca, see if it
   // matches the existing VecTy.
-  if (const VectorType *VInTy = dyn_cast<VectorType>(In)) {
+  if (VectorType *VInTy = dyn_cast<VectorType>(In)) {
     if (MergeInVectorType(VInTy, Offset))
       return;
   } else if (In->isFloatTy() || In->isDoubleTy() ||
@@ -395,7 +395,7 @@ void ConvertToScalarInfo::MergeInTypeForLoadOrStore(const Type *In,
 
 /// MergeInVectorType - Handles the vector case of MergeInTypeForLoadOrStore,
 /// returning true if the type was successfully merged and false otherwise.
-bool ConvertToScalarInfo::MergeInVectorType(const VectorType *VInTy,
+bool ConvertToScalarInfo::MergeInVectorType(VectorType *VInTy,
                                             uint64_t Offset) {
   // TODO: Support nonzero offsets?
   if (Offset != 0)
@@ -422,8 +422,8 @@ bool ConvertToScalarInfo::MergeInVectorType(const VectorType *VInTy,
     return true;
   }
 
-  const Type *ElementTy = VectorTy->getElementType();
-  const Type *InElementTy = VInTy->getElementType();
+  Type *ElementTy = VectorTy->getElementType();
+  Type *InElementTy = VInTy->getElementType();
 
   // Do not allow mixed integer and floating-point accesses from vectors of
   // different sizes.
@@ -668,8 +668,8 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
         // pointer (bitcasted), then a store to our new alloca.
         assert(MTI->getRawDest() == Ptr && "Neither use is of pointer?");
         Value *SrcPtr = MTI->getSource();
-        const PointerType* SPTy = cast<PointerType>(SrcPtr->getType());
-        const PointerType* AIPTy = cast<PointerType>(NewAI->getType());
+        PointerType* SPTy = cast<PointerType>(SrcPtr->getType());
+        PointerType* AIPTy = cast<PointerType>(NewAI->getType());
         if (SPTy->getAddressSpace() != AIPTy->getAddressSpace()) {
           AIPTy = PointerType::get(AIPTy->getElementType(),
                                    SPTy->getAddressSpace());
@@ -685,8 +685,8 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
         assert(MTI->getRawSource() == Ptr && "Neither use is of pointer?");
         LoadInst *SrcVal = Builder.CreateLoad(NewAI, "srcval");
 
-        const PointerType* DPTy = cast<PointerType>(MTI->getDest()->getType());
-        const PointerType* AIPTy = cast<PointerType>(NewAI->getType());
+        PointerType* DPTy = cast<PointerType>(MTI->getDest()->getType());
+        PointerType* AIPTy = cast<PointerType>(NewAI->getType());
         if (DPTy->getAddressSpace() != AIPTy->getAddressSpace()) {
           AIPTy = PointerType::get(AIPTy->getElementType(),
                                    DPTy->getAddressSpace());
@@ -711,7 +711,7 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
 /// access of an alloca. The input types must be integer or floating-point
 /// scalar or vector types, and the resulting type is an integer, float or
 /// double.
-static const Type *getScaledElementType(const Type *Ty1, const Type *Ty2,
+static Type *getScaledElementType(Type *Ty1, Type *Ty2,
                                         unsigned NewBitWidth) {
   bool IsFP1 = Ty1->isFloatingPointTy() ||
                (Ty1->isVectorTy() &&
@@ -737,11 +737,11 @@ static const Type *getScaledElementType(const Type *Ty1, const Type *Ty2,
 /// CreateShuffleVectorCast - Creates a shuffle vector to convert one vector
 /// to another vector of the same element type which has the same allocation
 /// size but different primitive sizes (e.g. <3 x i32> and <4 x i32>).
-static Value *CreateShuffleVectorCast(Value *FromVal, const Type *ToType,
+static Value *CreateShuffleVectorCast(Value *FromVal, Type *ToType,
                                       IRBuilder<> &Builder) {
-  const Type *FromType = FromVal->getType();
-  const VectorType *FromVTy = cast<VectorType>(FromType);
-  const VectorType *ToVTy = cast<VectorType>(ToType);
+  Type *FromType = FromVal->getType();
+  VectorType *FromVTy = cast<VectorType>(FromType);
+  VectorType *ToVTy = cast<VectorType>(ToType);
   assert((ToVTy->getElementType() == FromVTy->getElementType()) &&
          "Vectors must have the same element type");
    Value *UnV = UndefValue::get(FromType);
@@ -749,7 +749,7 @@ static Value *CreateShuffleVectorCast(Value *FromVal, const Type *ToType,
    unsigned numEltsTo = ToVTy->getNumElements();
 
    SmallVector<Constant*, 3> Args;
-   const Type* Int32Ty = Builder.getInt32Ty();
+   Type* Int32Ty = Builder.getInt32Ty();
    unsigned minNumElts = std::min(numEltsFrom, numEltsTo);
    unsigned i;
    for (i=0; i != minNumElts; ++i)
@@ -775,16 +775,16 @@ static Value *CreateShuffleVectorCast(Value *FromVal, const Type *ToType,
 /// Offset is an offset from the original alloca, in bits that need to be
 /// shifted to the right.
 Value *ConvertToScalarInfo::
-ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
+ConvertScalar_ExtractValue(Value *FromVal, Type *ToType,
                            uint64_t Offset, IRBuilder<> &Builder) {
   // If the load is of the whole new alloca, no conversion is needed.
-  const Type *FromType = FromVal->getType();
+  Type *FromType = FromVal->getType();
   if (FromType == ToType && Offset == 0)
     return FromVal;
 
   // If the result alloca is a vector type, this is either an element
   // access or a bitcast to another vector type of the same size.
-  if (const VectorType *VTy = dyn_cast<VectorType>(FromType)) {
+  if (VectorType *VTy = dyn_cast<VectorType>(FromType)) {
     unsigned FromTypeSize = TD.getTypeAllocSize(FromType);
     unsigned ToTypeSize = TD.getTypeAllocSize(ToType);
     if (FromTypeSize == ToTypeSize) {
@@ -803,12 +803,12 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
       assert(!(ToType->isVectorTy() && Offset != 0) && "Can't extract a value "
              "of a smaller vector type at a nonzero offset.");
 
-      const Type *CastElementTy = getScaledElementType(FromType, ToType,
+      Type *CastElementTy = getScaledElementType(FromType, ToType,
                                                        ToTypeSize * 8);
       unsigned NumCastVectorElements = FromTypeSize / ToTypeSize;
 
       LLVMContext &Context = FromVal->getContext();
-      const Type *CastTy = VectorType::get(CastElementTy,
+      Type *CastTy = VectorType::get(CastElementTy,
                                            NumCastVectorElements);
       Value *Cast = Builder.CreateBitCast(FromVal, CastTy, "tmp");
 
@@ -837,7 +837,7 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
 
   // If ToType is a first class aggregate, extract out each of the pieces and
   // use insertvalue's to form the FCA.
-  if (const StructType *ST = dyn_cast<StructType>(ToType)) {
+  if (StructType *ST = dyn_cast<StructType>(ToType)) {
     const StructLayout &Layout = *TD.getStructLayout(ST);
     Value *Res = UndefValue::get(ST);
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
@@ -849,7 +849,7 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
     return Res;
   }
 
-  if (const ArrayType *AT = dyn_cast<ArrayType>(ToType)) {
+  if (ArrayType *AT = dyn_cast<ArrayType>(ToType)) {
     uint64_t EltSize = TD.getTypeAllocSizeInBits(AT->getElementType());
     Value *Res = UndefValue::get(AT);
     for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
@@ -861,7 +861,7 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   }
 
   // Otherwise, this must be a union that was converted to an integer value.
-  const IntegerType *NTy = cast<IntegerType>(FromVal->getType());
+  IntegerType *NTy = cast<IntegerType>(FromVal->getType());
 
   // If this is a big-endian system and the load is narrower than the
   // full alloca type, we need to do a shift to get the right bits.
@@ -927,10 +927,10 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
                           uint64_t Offset, IRBuilder<> &Builder) {
   // Convert the stored type to the actual type, shift it left to insert
   // then 'or' into place.
-  const Type *AllocaType = Old->getType();
+  Type *AllocaType = Old->getType();
   LLVMContext &Context = Old->getContext();
 
-  if (const VectorType *VTy = dyn_cast<VectorType>(AllocaType)) {
+  if (VectorType *VTy = dyn_cast<VectorType>(AllocaType)) {
     uint64_t VecSize = TD.getTypeAllocSizeInBits(VTy);
     uint64_t ValSize = TD.getTypeAllocSizeInBits(SV->getType());
 
@@ -952,12 +952,12 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
       assert(!(SV->getType()->isVectorTy() && Offset != 0) && "Can't insert a "
              "value of a smaller vector type at a nonzero offset.");
 
-      const Type *CastElementTy = getScaledElementType(VTy, SV->getType(),
+      Type *CastElementTy = getScaledElementType(VTy, SV->getType(),
                                                        ValSize);
       unsigned NumCastVectorElements = VecSize / ValSize;
 
       LLVMContext &Context = SV->getContext();
-      const Type *OldCastTy = VectorType::get(CastElementTy,
+      Type *OldCastTy = VectorType::get(CastElementTy,
                                               NumCastVectorElements);
       Value *OldCast = Builder.CreateBitCast(Old, OldCastTy, "tmp");
 
@@ -982,7 +982,7 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
   }
 
   // If SV is a first-class aggregate value, insert each value recursively.
-  if (const StructType *ST = dyn_cast<StructType>(SV->getType())) {
+  if (StructType *ST = dyn_cast<StructType>(SV->getType())) {
     const StructLayout &Layout = *TD.getStructLayout(ST);
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
       Value *Elt = Builder.CreateExtractValue(SV, i, "tmp");
@@ -993,7 +993,7 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
     return Old;
   }
 
-  if (const ArrayType *AT = dyn_cast<ArrayType>(SV->getType())) {
+  if (ArrayType *AT = dyn_cast<ArrayType>(SV->getType())) {
     uint64_t EltSize = TD.getTypeAllocSizeInBits(AT->getElementType());
     for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
       Value *Elt = Builder.CreateExtractValue(SV, i, "tmp");
@@ -1393,7 +1393,7 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const TargetData *TD) {
       continue;
     }
     
-    const Type *LoadTy = cast<PointerType>(PN->getType())->getElementType();
+    Type *LoadTy = cast<PointerType>(PN->getType())->getElementType();
     PHINode *NewPN = PHINode::Create(LoadTy, PN->getNumIncomingValues(),
                                      PN->getName()+".ld", PN);
 
@@ -1483,13 +1483,13 @@ bool SROA::performPromotion(Function &F) {
 /// ShouldAttemptScalarRepl - Decide if an alloca is a good candidate for
 /// SROA.  It must be a struct or array type with a small number of elements.
 static bool ShouldAttemptScalarRepl(AllocaInst *AI) {
-  const Type *T = AI->getAllocatedType();
+  Type *T = AI->getAllocatedType();
   // Do not promote any struct into more than 32 separate vars.
-  if (const StructType *ST = dyn_cast<StructType>(T))
+  if (StructType *ST = dyn_cast<StructType>(T))
     return ST->getNumElements() <= 32;
   // Arrays are much less likely to be safe for SROA; only consider
   // them if they are very small.
-  if (const ArrayType *AT = dyn_cast<ArrayType>(T))
+  if (ArrayType *AT = dyn_cast<ArrayType>(T))
     return AT->getNumElements() <= 8;
   return false;
 }
@@ -1594,7 +1594,7 @@ void SROA::DoScalarReplacement(AllocaInst *AI,
                                std::vector<AllocaInst*> &WorkList) {
   DEBUG(dbgs() << "Found inst to SROA: " << *AI << '\n');
   SmallVector<AllocaInst*, 32> ElementAllocas;
-  if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
+  if (StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
     ElementAllocas.reserve(ST->getNumContainedTypes());
     for (unsigned i = 0, e = ST->getNumContainedTypes(); i != e; ++i) {
       AllocaInst *NA = new AllocaInst(ST->getContainedType(i), 0,
@@ -1604,9 +1604,9 @@ void SROA::DoScalarReplacement(AllocaInst *AI,
       WorkList.push_back(NA);  // Add to worklist for recursive processing
     }
   } else {
-    const ArrayType *AT = cast<ArrayType>(AI->getAllocatedType());
+    ArrayType *AT = cast<ArrayType>(AI->getAllocatedType());
     ElementAllocas.reserve(AT->getNumElements());
-    const Type *ElTy = AT->getElementType();
+    Type *ElTy = AT->getElementType();
     for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
       AllocaInst *NA = new AllocaInst(ElTy, 0, AI->getAlignment(),
                                       AI->getName() + "." + Twine(i), AI);
@@ -1672,7 +1672,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, uint64_t Offset,
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       if (LI->isVolatile())
         return MarkUnsafe(Info, User);
-      const Type *LIType = LI->getType();
+      Type *LIType = LI->getType();
       isSafeMemAccess(Offset, TD->getTypeAllocSize(LIType),
                       LIType, false, Info, LI, true /*AllowWholeAccess*/);
       Info.hasALoadOrStore = true;
@@ -1682,7 +1682,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, uint64_t Offset,
       if (SI->isVolatile() || SI->getOperand(0) == I)
         return MarkUnsafe(Info, User);
         
-      const Type *SIType = SI->getOperand(0)->getType();
+      Type *SIType = SI->getOperand(0)->getType();
       isSafeMemAccess(Offset, TD->getTypeAllocSize(SIType),
                       SIType, true, Info, SI, true /*AllowWholeAccess*/);
       Info.hasALoadOrStore = true;
@@ -1727,7 +1727,7 @@ void SROA::isSafePHISelectUseForScalarRepl(Instruction *I, uint64_t Offset,
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       if (LI->isVolatile())
         return MarkUnsafe(Info, User);
-      const Type *LIType = LI->getType();
+      Type *LIType = LI->getType();
       isSafeMemAccess(Offset, TD->getTypeAllocSize(LIType),
                       LIType, false, Info, LI, false /*AllowWholeAccess*/);
       Info.hasALoadOrStore = true;
@@ -1737,7 +1737,7 @@ void SROA::isSafePHISelectUseForScalarRepl(Instruction *I, uint64_t Offset,
       if (SI->isVolatile() || SI->getOperand(0) == I)
         return MarkUnsafe(Info, User);
       
-      const Type *SIType = SI->getOperand(0)->getType();
+      Type *SIType = SI->getOperand(0)->getType();
       isSafeMemAccess(Offset, TD->getTypeAllocSize(SIType),
                       SIType, true, Info, SI, false /*AllowWholeAccess*/);
       Info.hasALoadOrStore = true;
@@ -1786,14 +1786,14 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI,
 /// elements of the same type (which is always true for arrays).  If so,
 /// return true with NumElts and EltTy set to the number of elements and the
 /// element type, respectively.
-static bool isHomogeneousAggregate(const Type *T, unsigned &NumElts,
-                                   const Type *&EltTy) {
-  if (const ArrayType *AT = dyn_cast<ArrayType>(T)) {
+static bool isHomogeneousAggregate(Type *T, unsigned &NumElts,
+                                   Type *&EltTy) {
+  if (ArrayType *AT = dyn_cast<ArrayType>(T)) {
     NumElts = AT->getNumElements();
     EltTy = (NumElts == 0 ? 0 : AT->getElementType());
     return true;
   }
-  if (const StructType *ST = dyn_cast<StructType>(T)) {
+  if (StructType *ST = dyn_cast<StructType>(T)) {
     NumElts = ST->getNumContainedTypes();
     EltTy = (NumElts == 0 ? 0 : ST->getContainedType(0));
     for (unsigned n = 1; n < NumElts; ++n) {
@@ -1807,12 +1807,12 @@ static bool isHomogeneousAggregate(const Type *T, unsigned &NumElts,
 
 /// isCompatibleAggregate - Check if T1 and T2 are either the same type or are
 /// "homogeneous" aggregates with the same element type and number of elements.
-static bool isCompatibleAggregate(const Type *T1, const Type *T2) {
+static bool isCompatibleAggregate(Type *T1, Type *T2) {
   if (T1 == T2)
     return true;
 
   unsigned NumElts1, NumElts2;
-  const Type *EltTy1, *EltTy2;
+  Type *EltTy1, *EltTy2;
   if (isHomogeneousAggregate(T1, NumElts1, EltTy1) &&
       isHomogeneousAggregate(T2, NumElts2, EltTy2) &&
       NumElts1 == NumElts2 &&
@@ -1830,7 +1830,7 @@ static bool isCompatibleAggregate(const Type *T1, const Type *T2) {
 /// If AllowWholeAccess is true, then this allows uses of the entire alloca as a
 /// unit.  If false, it only allows accesses known to be in a single element.
 void SROA::isSafeMemAccess(uint64_t Offset, uint64_t MemSize,
-                           const Type *MemOpType, bool isStore,
+                           Type *MemOpType, bool isStore,
                            AllocaInfo &Info, Instruction *TheAccess,
                            bool AllowWholeAccess) {
   // Check if this is a load/store of the entire alloca.
@@ -1857,7 +1857,7 @@ void SROA::isSafeMemAccess(uint64_t Offset, uint64_t MemSize,
     }
   }
   // Check if the offset/size correspond to a component within the alloca type.
-  const Type *T = Info.AI->getAllocatedType();
+  Type *T = Info.AI->getAllocatedType();
   if (TypeHasComponent(T, Offset, MemSize)) {
     Info.hasSubelementAccess = true;
     return;
@@ -1868,16 +1868,16 @@ void SROA::isSafeMemAccess(uint64_t Offset, uint64_t MemSize,
 
 /// TypeHasComponent - Return true if T has a component type with the
 /// specified offset and size.  If Size is zero, do not check the size.
-bool SROA::TypeHasComponent(const Type *T, uint64_t Offset, uint64_t Size) {
-  const Type *EltTy;
+bool SROA::TypeHasComponent(Type *T, uint64_t Offset, uint64_t Size) {
+  Type *EltTy;
   uint64_t EltSize;
-  if (const StructType *ST = dyn_cast<StructType>(T)) {
+  if (StructType *ST = dyn_cast<StructType>(T)) {
     const StructLayout *Layout = TD->getStructLayout(ST);
     unsigned EltIdx = Layout->getElementContainingOffset(Offset);
     EltTy = ST->getContainedType(EltIdx);
     EltSize = TD->getTypeAllocSize(EltTy);
     Offset -= Layout->getElementOffset(EltIdx);
-  } else if (const ArrayType *AT = dyn_cast<ArrayType>(T)) {
+  } else if (ArrayType *AT = dyn_cast<ArrayType>(T)) {
     EltTy = AT->getElementType();
     EltSize = TD->getTypeAllocSize(EltTy);
     if (Offset >= AT->getNumElements() * EltSize)
@@ -1926,7 +1926,7 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
     }
     
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      const Type *LIType = LI->getType();
+      Type *LIType = LI->getType();
       
       if (isCompatibleAggregate(LIType, AI->getAllocatedType())) {
         // Replace:
@@ -1956,7 +1956,7 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
     
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       Value *Val = SI->getOperand(0);
-      const Type *SIType = Val->getType();
+      Type *SIType = Val->getType();
       if (isCompatibleAggregate(SIType, AI->getAllocatedType())) {
         // Replace:
         //   store { i32, i32 } %val, { i32, i32 }* %alloc
@@ -2026,10 +2026,10 @@ void SROA::RewriteBitCast(BitCastInst *BC, AllocaInst *AI, uint64_t Offset,
 /// Sets T to the type of the element and Offset to the offset within that
 /// element.  IdxTy is set to the type of the index result to be used in a
 /// GEP instruction.
-uint64_t SROA::FindElementAndOffset(const Type *&T, uint64_t &Offset,
-                                    const Type *&IdxTy) {
+uint64_t SROA::FindElementAndOffset(Type *&T, uint64_t &Offset,
+                                    Type *&IdxTy) {
   uint64_t Idx = 0;
-  if (const StructType *ST = dyn_cast<StructType>(T)) {
+  if (StructType *ST = dyn_cast<StructType>(T)) {
     const StructLayout *Layout = TD->getStructLayout(ST);
     Idx = Layout->getElementContainingOffset(Offset);
     T = ST->getContainedType(Idx);
@@ -2037,7 +2037,7 @@ uint64_t SROA::FindElementAndOffset(const Type *&T, uint64_t &Offset,
     IdxTy = Type::getInt32Ty(T->getContext());
     return Idx;
   }
-  const ArrayType *AT = cast<ArrayType>(T);
+  ArrayType *AT = cast<ArrayType>(T);
   T = AT->getElementType();
   uint64_t EltSize = TD->getTypeAllocSize(T);
   Idx = Offset / EltSize;
@@ -2058,8 +2058,8 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
 
   RewriteForScalarRepl(GEPI, AI, Offset, NewElts);
 
-  const Type *T = AI->getAllocatedType();
-  const Type *IdxTy;
+  Type *T = AI->getAllocatedType();
+  Type *IdxTy;
   uint64_t OldIdx = FindElementAndOffset(T, OldOffset, IdxTy);
   if (GEPI->getOperand(0) == AI)
     OldIdx = ~0ULL; // Force the GEP to be rewritten.
@@ -2073,7 +2073,7 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
   if (Idx == OldIdx)
     return;
 
-  const Type *i32Ty = Type::getInt32Ty(AI->getContext());
+  Type *i32Ty = Type::getInt32Ty(AI->getContext());
   SmallVector<Value*, 8> NewArgs;
   NewArgs.push_back(Constant::getNullValue(i32Ty));
   while (EltOffset != 0) {
@@ -2139,7 +2139,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
 
     // If the pointer is not the right type, insert a bitcast to the right
     // type.
-    const Type *NewTy =
+    Type *NewTy =
       PointerType::get(AI->getType()->getElementType(), AddrSpace);
 
     if (OtherPtr->getType() != NewTy)
@@ -2163,12 +2163,12 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
                                               OtherPtr->getName()+"."+Twine(i),
                                                    MI);
       uint64_t EltOffset;
-      const PointerType *OtherPtrTy = cast<PointerType>(OtherPtr->getType());
-      const Type *OtherTy = OtherPtrTy->getElementType();
-      if (const StructType *ST = dyn_cast<StructType>(OtherTy)) {
+      PointerType *OtherPtrTy = cast<PointerType>(OtherPtr->getType());
+      Type *OtherTy = OtherPtrTy->getElementType();
+      if (StructType *ST = dyn_cast<StructType>(OtherTy)) {
         EltOffset = TD->getStructLayout(ST)->getElementOffset(i);
       } else {
-        const Type *EltTy = cast<SequentialType>(OtherTy)->getElementType();
+        Type *EltTy = cast<SequentialType>(OtherTy)->getElementType();
         EltOffset = TD->getTypeAllocSize(EltTy)*i;
       }
 
@@ -2181,7 +2181,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
     }
 
     Value *EltPtr = NewElts[i];
-    const Type *EltTy = cast<PointerType>(EltPtr->getType())->getElementType();
+    Type *EltTy = cast<PointerType>(EltPtr->getType())->getElementType();
 
     // If we got down to a scalar, insert a load or store as appropriate.
     if (EltTy->isSingleValueType()) {
@@ -2207,7 +2207,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
           StoreVal = Constant::getNullValue(EltTy);  // 0.0, null, 0, <0,0>
         } else {
           // If EltTy is a vector type, get the element type.
-          const Type *ValTy = EltTy->getScalarType();
+          Type *ValTy = EltTy->getScalarType();
 
           // Construct an integer with the right value.
           unsigned EltSize = TD->getTypeSizeInBits(ValTy);
@@ -2271,7 +2271,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
   // Extract each element out of the integer according to its structure offset
   // and store the element value to the individual alloca.
   Value *SrcVal = SI->getOperand(0);
-  const Type *AllocaEltTy = AI->getAllocatedType();
+  Type *AllocaEltTy = AI->getAllocatedType();
   uint64_t AllocaSizeBits = TD->getTypeAllocSizeInBits(AllocaEltTy);
 
   IRBuilder<> Builder(SI);
@@ -2286,12 +2286,12 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
 
   // There are two forms here: AI could be an array or struct.  Both cases
   // have different ways to compute the element offset.
-  if (const StructType *EltSTy = dyn_cast<StructType>(AllocaEltTy)) {
+  if (StructType *EltSTy = dyn_cast<StructType>(AllocaEltTy)) {
     const StructLayout *Layout = TD->getStructLayout(EltSTy);
 
     for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
       // Get the number of bits to shift SrcVal to get the value.
-      const Type *FieldTy = EltSTy->getElementType(i);
+      Type *FieldTy = EltSTy->getElementType(i);
       uint64_t Shift = Layout->getElementOffsetInBits(i);
 
       if (TD->isBigEndian())
@@ -2327,8 +2327,8 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
     }
 
   } else {
-    const ArrayType *ATy = cast<ArrayType>(AllocaEltTy);
-    const Type *ArrayEltTy = ATy->getElementType();
+    ArrayType *ATy = cast<ArrayType>(AllocaEltTy);
+    Type *ArrayEltTy = ATy->getElementType();
     uint64_t ElementOffset = TD->getTypeAllocSizeInBits(ArrayEltTy);
     uint64_t ElementSizeBits = TD->getTypeSizeInBits(ArrayEltTy);
 
@@ -2384,7 +2384,7 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
                                         SmallVector<AllocaInst*, 32> &NewElts) {
   // Extract each element out of the NewElts according to its structure offset
   // and form the result value.
-  const Type *AllocaEltTy = AI->getAllocatedType();
+  Type *AllocaEltTy = AI->getAllocatedType();
   uint64_t AllocaSizeBits = TD->getTypeAllocSizeInBits(AllocaEltTy);
 
   DEBUG(dbgs() << "PROMOTING LOAD OF WHOLE ALLOCA: " << *AI << '\n' << *LI
@@ -2394,10 +2394,10 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
   // have different ways to compute the element offset.
   const StructLayout *Layout = 0;
   uint64_t ArrayEltBitOffset = 0;
-  if (const StructType *EltSTy = dyn_cast<StructType>(AllocaEltTy)) {
+  if (StructType *EltSTy = dyn_cast<StructType>(AllocaEltTy)) {
     Layout = TD->getStructLayout(EltSTy);
   } else {
-    const Type *ArrayEltTy = cast<ArrayType>(AllocaEltTy)->getElementType();
+    Type *ArrayEltTy = cast<ArrayType>(AllocaEltTy)->getElementType();
     ArrayEltBitOffset = TD->getTypeAllocSizeInBits(ArrayEltTy);
   }
 
@@ -2408,14 +2408,14 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
     // Load the value from the alloca.  If the NewElt is an aggregate, cast
     // the pointer to an integer of the same size before doing the load.
     Value *SrcField = NewElts[i];
-    const Type *FieldTy =
+    Type *FieldTy =
       cast<PointerType>(SrcField->getType())->getElementType();
     uint64_t FieldSizeBits = TD->getTypeSizeInBits(FieldTy);
 
     // Ignore zero sized fields like {}, they obviously contain no data.
     if (FieldSizeBits == 0) continue;
 
-    const IntegerType *FieldIntTy = IntegerType::get(LI->getContext(),
+    IntegerType *FieldIntTy = IntegerType::get(LI->getContext(),
                                                      FieldSizeBits);
     if (!FieldTy->isIntegerTy() && !FieldTy->isFloatingPointTy() &&
         !FieldTy->isVectorTy())
@@ -2468,14 +2468,14 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
 /// HasPadding - Return true if the specified type has any structure or
 /// alignment padding in between the elements that would be split apart
 /// by SROA; return false otherwise.
-static bool HasPadding(const Type *Ty, const TargetData &TD) {
-  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+static bool HasPadding(Type *Ty, const TargetData &TD) {
+  if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     Ty = ATy->getElementType();
     return TD.getTypeSizeInBits(Ty) != TD.getTypeAllocSizeInBits(Ty);
   }
 
   // SROA currently handles only Arrays and Structs.
-  const StructType *STy = cast<StructType>(Ty);
+  StructType *STy = cast<StructType>(Ty);
   const StructLayout *SL = TD.getStructLayout(STy);
   unsigned PrevFieldBitOffset = 0;
   for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
@@ -2530,7 +2530,7 @@ bool SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   // and fusion code.
   if (!Info.hasSubelementAccess && Info.hasALoadOrStore) {
     // If the struct/array just has one element, use basic SRoA.
-    if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
+    if (StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
       if (ST->getNumElements() > 1) return false;
     } else {
       if (cast<ArrayType>(AI->getAllocatedType())->getNumElements() > 1)

@@ -38,13 +38,13 @@ namespace {
 
 Function *makeReturnGlobal(std::string Name, GlobalVariable *G, Module *M) {
   std::vector<Type*> params;
-  const FunctionType *FTy = FunctionType::get(G->getType()->getElementType(),
+  FunctionType *FTy = FunctionType::get(G->getType()->getElementType(),
                                               params, false);
   Function *F = Function::Create(FTy, GlobalValue::ExternalLinkage, Name, M);
   BasicBlock *Entry = BasicBlock::Create(M->getContext(), "entry", F);
   IRBuilder<> builder(Entry);
   Value *Load = builder.CreateLoad(G);
-  const Type *GTy = G->getType()->getElementType();
+  Type *GTy = G->getType()->getElementType();
   Value *Add = builder.CreateAdd(Load, ConstantInt::get(GTy, 1LL));
   builder.CreateStore(Add, G);
   builder.CreateRet(Add);
@@ -236,7 +236,7 @@ TEST(JIT, GlobalInFunction) {
   ASSERT_EQ(Error, "");
 
   // Create a global variable.
-  const Type *GTy = Type::getInt32Ty(context);
+  Type *GTy = Type::getInt32Ty(context);
   GlobalVariable *G = new GlobalVariable(
       *M,
       GTy,
@@ -320,11 +320,11 @@ TEST_F(JITTest, FarCallToKnownFunction) {
 TEST_F(JITTest, NonLazyCompilationStillNeedsStubs) {
   TheJIT->DisableLazyCompilation(true);
 
-  const FunctionType *Func1Ty =
+  FunctionType *Func1Ty =
       cast<FunctionType>(TypeBuilder<void(void), false>::get(Context));
   std::vector<Type*> arg_types;
   arg_types.push_back(Type::getInt1Ty(Context));
-  const FunctionType *FuncTy = FunctionType::get(
+  FunctionType *FuncTy = FunctionType::get(
       Type::getVoidTy(Context), arg_types, false);
   Function *Func1 = Function::Create(Func1Ty, Function::ExternalLinkage,
                                      "func1", M);
@@ -377,7 +377,7 @@ TEST_F(JITTest, NonLazyLeaksNoStubs) {
   TheJIT->DisableLazyCompilation(true);
 
   // Create two functions with a single basic block each.
-  const FunctionType *FuncTy =
+  FunctionType *FuncTy =
       cast<FunctionType>(TypeBuilder<int(), false>::get(Context));
   Function *Func1 = Function::Create(FuncTy, Function::ExternalLinkage,
                                      "func1", M);

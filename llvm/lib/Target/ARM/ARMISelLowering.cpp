@@ -1982,11 +1982,11 @@ ARMTargetLowering::LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
   ArgListTy Args;
   ArgListEntry Entry;
   Entry.Node = Argument;
-  Entry.Ty = (const Type *) Type::getInt32Ty(*DAG.getContext());
+  Entry.Ty = (Type *) Type::getInt32Ty(*DAG.getContext());
   Args.push_back(Entry);
   // FIXME: is there useful debug info available here?
   std::pair<SDValue, SDValue> CallResult =
-    LowerCallTo(Chain, (const Type *) Type::getInt32Ty(*DAG.getContext()),
+    LowerCallTo(Chain, (Type *) Type::getInt32Ty(*DAG.getContext()),
                 false, false, false, false,
                 0, CallingConv::C, false, /*isReturnValueUsed=*/true,
                 DAG.getExternalSymbol("__tls_get_addr", PtrVT), Args, DAG, dl);
@@ -7235,7 +7235,7 @@ bool ARMTargetLowering::isLegalT2ScaledAddressingMode(const AddrMode &AM,
 /// isLegalAddressingMode - Return true if the addressing mode represented
 /// by AM is legal for this target, for a load/store of the specified type.
 bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                              const Type *Ty) const {
+                                              Type *Ty) const {
   EVT VT = getValueType(Ty, true);
   if (!isLegalAddressImmediate(AM.BaseOffs, VT, Subtarget))
     return false;
@@ -7536,7 +7536,7 @@ bool ARMTargetLowering::ExpandInlineAsm(CallInst *CI) const {
     if (AsmPieces.size() == 3 &&
         AsmPieces[0] == "rev" && AsmPieces[1] == "$0" && AsmPieces[2] == "$1" &&
         IA->getConstraintString().compare(0, 4, "=l,l") == 0) {
-      const IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
+      IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
       if (Ty && Ty->getBitWidth() == 32)
         return IntrinsicLowering::LowerToByteSwap(CI);
     }
@@ -7582,7 +7582,7 @@ ARMTargetLowering::getSingleConstraintMatchWeight(
     // but allow it at the lowest weight.
   if (CallOperandVal == NULL)
     return CW_Default;
-  const Type *type = CallOperandVal->getType();
+  Type *type = CallOperandVal->getType();
   // Look at the constraint type.
   switch (*constraint) {
   default:
@@ -7933,7 +7933,7 @@ bool ARMTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     // Conservatively set memVT to the entire set of vectors stored.
     unsigned NumElts = 0;
     for (unsigned ArgI = 1, ArgE = I.getNumArgOperands(); ArgI < ArgE; ++ArgI) {
-      const Type *ArgTy = I.getArgOperand(ArgI)->getType();
+      Type *ArgTy = I.getArgOperand(ArgI)->getType();
       if (!ArgTy->isVectorTy())
         break;
       NumElts += getTargetData()->getTypeAllocSize(ArgTy) / 8;

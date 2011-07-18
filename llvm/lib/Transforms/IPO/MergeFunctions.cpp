@@ -76,7 +76,7 @@ STATISTIC(NumDoubleWeak, "Number of new functions created");
 /// functions that will compare equal, without looking at the instructions
 /// inside the function.
 static unsigned profileFunction(const Function *F) {
-  const FunctionType *FTy = F->getFunctionType();
+  FunctionType *FTy = F->getFunctionType();
 
   FoldingSetNodeID ID;
   ID.AddInteger(F->size());
@@ -185,7 +185,7 @@ private:
   }
 
   /// Compare two Types, treating all pointer types as equal.
-  bool isEquivalentType(const Type *Ty1, const Type *Ty2) const;
+  bool isEquivalentType(Type *Ty1, Type *Ty2) const;
 
   // The two functions undergoing comparison.
   const Function *F1, *F2;
@@ -200,8 +200,8 @@ private:
 
 // Any two pointers in the same address space are equivalent, intptr_t and
 // pointers are equivalent. Otherwise, standard type equivalence rules apply.
-bool FunctionComparator::isEquivalentType(const Type *Ty1,
-                                          const Type *Ty2) const {
+bool FunctionComparator::isEquivalentType(Type *Ty1,
+                                          Type *Ty2) const {
   if (Ty1 == Ty2)
     return true;
   if (Ty1->getTypeID() != Ty2->getTypeID()) {
@@ -233,14 +233,14 @@ bool FunctionComparator::isEquivalentType(const Type *Ty1,
     return true;
 
   case Type::PointerTyID: {
-    const PointerType *PTy1 = cast<PointerType>(Ty1);
-    const PointerType *PTy2 = cast<PointerType>(Ty2);
+    PointerType *PTy1 = cast<PointerType>(Ty1);
+    PointerType *PTy2 = cast<PointerType>(Ty2);
     return PTy1->getAddressSpace() == PTy2->getAddressSpace();
   }
 
   case Type::StructTyID: {
-    const StructType *STy1 = cast<StructType>(Ty1);
-    const StructType *STy2 = cast<StructType>(Ty2);
+    StructType *STy1 = cast<StructType>(Ty1);
+    StructType *STy2 = cast<StructType>(Ty2);
     if (STy1->getNumElements() != STy2->getNumElements())
       return false;
 
@@ -255,8 +255,8 @@ bool FunctionComparator::isEquivalentType(const Type *Ty1,
   }
 
   case Type::FunctionTyID: {
-    const FunctionType *FTy1 = cast<FunctionType>(Ty1);
-    const FunctionType *FTy2 = cast<FunctionType>(Ty2);
+    FunctionType *FTy1 = cast<FunctionType>(Ty1);
+    FunctionType *FTy2 = cast<FunctionType>(Ty2);
     if (FTy1->getNumParams() != FTy2->getNumParams() ||
         FTy1->isVarArg() != FTy2->isVarArg())
       return false;
@@ -272,8 +272,8 @@ bool FunctionComparator::isEquivalentType(const Type *Ty1,
   }
 
   case Type::ArrayTyID: {
-    const ArrayType *ATy1 = cast<ArrayType>(Ty1);
-    const ArrayType *ATy2 = cast<ArrayType>(Ty2);
+    ArrayType *ATy1 = cast<ArrayType>(Ty1);
+    ArrayType *ATy2 = cast<ArrayType>(Ty2);
     return ATy1->getNumElements() == ATy2->getNumElements() &&
            isEquivalentType(ATy1->getElementType(), ATy2->getElementType());
   }
@@ -725,7 +725,7 @@ void MergeFunctions::writeThunk(Function *F, Function *G) {
 
   SmallVector<Value *, 16> Args;
   unsigned i = 0;
-  const FunctionType *FFTy = F->getFunctionType();
+  FunctionType *FFTy = F->getFunctionType();
   for (Function::arg_iterator AI = NewG->arg_begin(), AE = NewG->arg_end();
        AI != AE; ++AI) {
     Args.push_back(Builder.CreateBitCast(AI, FFTy->getParamType(i)));

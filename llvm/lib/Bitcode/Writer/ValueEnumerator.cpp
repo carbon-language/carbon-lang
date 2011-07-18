@@ -315,7 +315,7 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
 }
 
 
-void ValueEnumerator::EnumerateType(const Type *Ty) {
+void ValueEnumerator::EnumerateType(Type *Ty) {
   unsigned *TypeID = &TypeMap[Ty];
 
   // We've already seen this type.
@@ -325,7 +325,7 @@ void ValueEnumerator::EnumerateType(const Type *Ty) {
   // If it is a non-anonymous struct, mark the type as being visited so that we
   // don't recursively visit it.  This is safe because we allow forward
   // references of these in the bitcode reader.
-  if (const StructType *STy = dyn_cast<StructType>(Ty))
+  if (StructType *STy = dyn_cast<StructType>(Ty))
     if (!STy->isAnonymous())
       *TypeID = ~0U;
   

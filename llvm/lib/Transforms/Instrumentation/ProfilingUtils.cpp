@@ -25,9 +25,9 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
                                    GlobalValue *Array,
                                    PointerType *arrayType) {
   LLVMContext &Context = MainFn->getContext();
-  const Type *ArgVTy =
+  Type *ArgVTy =
     PointerType::getUnqual(Type::getInt8PtrTy(Context));
-  const PointerType *UIntPtr = arrayType ? arrayType :
+  PointerType *UIntPtr = arrayType ? arrayType :
     Type::getInt32PtrTy(Context);
   Module &M = *MainFn->getParent();
   Constant *InitFn = M.getOrInsertFunction(FnName, Type::getInt32Ty(Context),
@@ -137,7 +137,7 @@ void llvm::InsertProfilingShutdownCall(Function *Callee, Module *Mod) {
     Type::getInt32Ty(Mod->getContext()),
     FunctionType::get(Type::getVoidTy(Mod->getContext()), false)->getPointerTo()
   };
-  const StructType *GlobalDtorElemTy =
+  StructType *GlobalDtorElemTy =
       StructType::get(Mod->getContext(), GlobalDtorElems, false);
 
   // Construct the new element we'll be adding.

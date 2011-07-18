@@ -61,7 +61,7 @@ namespace {
   private:
     bool IsNullValue(Value *V);
     Constant *GetFrameMap(Function &F);
-    const Type* GetConcreteStackEntryType(Function &F);
+    Type* GetConcreteStackEntryType(Function &F);
     void CollectRoots(Function &F);
     static GetElementPtrInst *CreateGEP(LLVMContext &Context, 
                                         IRBuilder<> &B, Value *BasePtr,
@@ -190,7 +190,7 @@ ShadowStackGC::ShadowStackGC() : Head(0), StackEntryTy(0) {
 
 Constant *ShadowStackGC::GetFrameMap(Function &F) {
   // doInitialization creates the abstract type of this value.
-  const Type *VoidPtr = Type::getInt8PtrTy(F.getContext());
+  Type *VoidPtr = Type::getInt8PtrTy(F.getContext());
 
   // Truncate the ShadowStackDescriptor if some metadata is null.
   unsigned NumMeta = 0;
@@ -203,7 +203,7 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
   }
   Metadata.resize(NumMeta);
 
-  const Type *Int32Ty = Type::getInt32Ty(F.getContext());
+  Type *Int32Ty = Type::getInt32Ty(F.getContext());
   
   Constant *BaseElts[] = {
     ConstantInt::get(Int32Ty, Roots.size(), false),
@@ -244,7 +244,7 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
   return ConstantExpr::getGetElementPtr(GV, GEPIndices, 2);
 }
 
-const Type* ShadowStackGC::GetConcreteStackEntryType(Function &F) {
+Type* ShadowStackGC::GetConcreteStackEntryType(Function &F) {
   // doInitialization creates the generic version of this type.
   std::vector<Type*> EltTys;
   EltTys.push_back(StackEntryTy);
@@ -282,7 +282,7 @@ bool ShadowStackGC::initializeCustomLowering(Module &M) {
   EltTys.push_back(PointerType::getUnqual(StackEntryTy));
   EltTys.push_back(FrameMapPtrTy);
   StackEntryTy->setBody(EltTys);
-  const PointerType *StackEntryPtrTy = PointerType::getUnqual(StackEntryTy);
+  PointerType *StackEntryPtrTy = PointerType::getUnqual(StackEntryTy);
 
   // Get the root chain if it already exists.
   Head = M.getGlobalVariable("llvm_gc_root_chain");
@@ -373,7 +373,7 @@ bool ShadowStackGC::performCustomLowering(Function &F) {
 
   // Build the constant map and figure the type of the shadow stack entry.
   Value *FrameMap = GetFrameMap(F);
-  const Type *ConcreteStackEntryTy = GetConcreteStackEntryType(F);
+  Type *ConcreteStackEntryTy = GetConcreteStackEntryType(F);
 
   // Build the shadow stack entry at the very start of the function.
   BasicBlock::iterator IP = F.getEntryBlock().begin();

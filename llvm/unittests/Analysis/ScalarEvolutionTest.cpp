@@ -22,13 +22,13 @@ TEST(ScalarEvolutionsTest, SCEVUnknownRAUW) {
   LLVMContext Context;
   Module M("world", Context);
 
-  const FunctionType *FTy = FunctionType::get(Type::getVoidTy(Context),
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(Context),
                                               std::vector<Type *>(), false);
   Function *F = cast<Function>(M.getOrInsertFunction("f", FTy));
   BasicBlock *BB = BasicBlock::Create(Context, "entry", F);
   ReturnInst::Create(Context, 0, BB);
 
-  const Type *Ty = Type::getInt1Ty(Context);
+  Type *Ty = Type::getInt1Ty(Context);
   Constant *Init = Constant::getNullValue(Ty);
   Value *V0 = new GlobalVariable(M, Ty, false, GlobalValue::ExternalLinkage, Init, "V0");
   Value *V1 = new GlobalVariable(M, Ty, false, GlobalValue::ExternalLinkage, Init, "V1");

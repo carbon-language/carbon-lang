@@ -104,7 +104,7 @@ namespace {
     void EliminateMostlyEmptyBlock(BasicBlock *BB);
     bool OptimizeBlock(BasicBlock &BB);
     bool OptimizeInst(Instruction *I);
-    bool OptimizeMemoryInst(Instruction *I, Value *Addr, const Type *AccessTy);
+    bool OptimizeMemoryInst(Instruction *I, Value *Addr, Type *AccessTy);
     bool OptimizeInlineAsmInst(CallInst *CS);
     bool OptimizeCallInst(CallInst *CI);
     bool MoveExtToFormExtLoad(Instruction *I);
@@ -528,7 +528,7 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI);
   if (II && II->getIntrinsicID() == Intrinsic::objectsize) {
     bool Min = (cast<ConstantInt>(II->getArgOperand(1))->getZExtValue() == 1);
-    const Type *ReturnTy = CI->getType();
+    Type *ReturnTy = CI->getType();
     Constant *RetVal = ConstantInt::get(ReturnTy, Min ? 0 : -1ULL);    
     
     // Substituting this can cause recursive simplifications, which can
@@ -724,7 +724,7 @@ static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
 /// This method is used to optimize both load/store and inline asms with memory
 /// operands.
 bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
-                                        const Type *AccessTy) {
+                                        Type *AccessTy) {
   Value *Repl = Addr;
   
   // Try to collapse single-value PHI nodes.  This is necessary to undo 
@@ -837,7 +837,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   } else {
     DEBUG(dbgs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst);
-    const Type *IntPtrTy =
+    Type *IntPtrTy =
           TLI->getTargetData()->getIntPtrType(AccessTy->getContext());
 
     Value *Result = 0;

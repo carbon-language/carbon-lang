@@ -27,7 +27,7 @@ using namespace llvm;
 template <class ArgIt>
 static void EnsureFunctionExists(Module &M, const char *Name,
                                  ArgIt ArgBegin, ArgIt ArgEnd,
-                                 const Type *RetTy) {
+                                 Type *RetTy) {
   // Insert a correctly-typed definition now.
   std::vector<Type *> ParamTys;
   for (ArgIt I = ArgBegin; I != ArgEnd; ++I)
@@ -64,7 +64,7 @@ static void EnsureFPIntrinsicsExist(Module &M, Function *Fn,
 template <class ArgIt>
 static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
                                  ArgIt ArgBegin, ArgIt ArgEnd,
-                                 const Type *RetTy) {
+                                 Type *RetTy) {
   // If we haven't already looked up this function, check to see if the
   // program already contains a function with this name.
   Module *M = CI->getParent()->getParent()->getParent();
@@ -462,7 +462,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;   // Strip out annotate intrinsic
     
   case Intrinsic::memcpy: {
-    const IntegerType *IntPtr = TD.getIntPtrType(Context);
+    IntegerType *IntPtr = TD.getIntPtrType(Context);
     Value *Size = Builder.CreateIntCast(CI->getArgOperand(2), IntPtr,
                                         /* isSigned */ false);
     Value *Ops[3];
@@ -473,7 +473,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::memmove: {
-    const IntegerType *IntPtr = TD.getIntPtrType(Context);
+    IntegerType *IntPtr = TD.getIntPtrType(Context);
     Value *Size = Builder.CreateIntCast(CI->getArgOperand(2), IntPtr,
                                         /* isSigned */ false);
     Value *Ops[3];
@@ -484,7 +484,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::memset: {
-    const IntegerType *IntPtr = TD.getIntPtrType(Context);
+    IntegerType *IntPtr = TD.getIntPtrType(Context);
     Value *Size = Builder.CreateIntCast(CI->getArgOperand(2), IntPtr,
                                         /* isSigned */ false);
     Value *Ops[3];

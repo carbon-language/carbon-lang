@@ -365,7 +365,7 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
         // smaller type.
         TLI.isLoadExtLegal(ISD::EXTLOAD, SVT) &&
         TLI.ShouldShrinkFPConstant(OrigVT)) {
-      const Type *SType = SVT.getTypeForEVT(*DAG.getContext());
+      Type *SType = SVT.getTypeForEVT(*DAG.getContext());
       LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC, SType));
       VT = SVT;
       Extend = true;
@@ -1124,7 +1124,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // If this is an unaligned load and the target doesn't support it,
         // expand it.
         if (!TLI.allowsUnalignedMemoryAccesses(LD->getMemoryVT())) {
-          const Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
+          Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
           unsigned ABIAlignment = TLI.getTargetData()->getABITypeAlignment(Ty);
           if (LD->getAlignment() < ABIAlignment){
             Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.getNode()),
@@ -1311,7 +1311,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // If this is an unaligned load and the target doesn't support it,
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses(LD->getMemoryVT())) {
-            const Type *Ty =
+            Type *Ty =
               LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
             unsigned ABIAlignment =
               TLI.getTargetData()->getABITypeAlignment(Ty);
@@ -1491,7 +1491,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // If this is an unaligned store and the target doesn't support it,
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses(ST->getMemoryVT())) {
-            const Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
+            Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
             unsigned ABIAlignment= TLI.getTargetData()->getABITypeAlignment(Ty);
             if (ST->getAlignment() < ABIAlignment)
               Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()),
@@ -1596,7 +1596,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // If this is an unaligned store and the target doesn't support it,
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses(ST->getMemoryVT())) {
-            const Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
+            Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
             unsigned ABIAlignment= TLI.getTargetData()->getABITypeAlignment(Ty);
             if (ST->getAlignment() < ABIAlignment)
               Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()),
@@ -1999,7 +1999,7 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
   unsigned SrcSize = SrcOp.getValueType().getSizeInBits();
   unsigned SlotSize = SlotVT.getSizeInBits();
   unsigned DestSize = DestVT.getSizeInBits();
-  const Type *DestType = DestVT.getTypeForEVT(*DAG.getContext());
+  Type *DestType = DestVT.getTypeForEVT(*DAG.getContext());
   unsigned DestAlign = TLI.getTargetData()->getPrefTypeAlignment(DestType);
 
   // Emit a store to the stack slot.  Use a truncstore if the input value is
@@ -2106,7 +2106,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
         }
       } else {
         assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
-        const Type *OpNTy = EltVT.getTypeForEVT(*DAG.getContext());
+        Type *OpNTy = EltVT.getTypeForEVT(*DAG.getContext());
         CV.push_back(UndefValue::get(OpNTy));
       }
     }
@@ -2159,7 +2159,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
     EVT ArgVT = Node->getOperand(i).getValueType();
-    const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+    Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
     Entry.Node = Node->getOperand(i); Entry.Ty = ArgTy;
     Entry.isSExt = isSigned;
     Entry.isZExt = !isSigned;
@@ -2169,7 +2169,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
                                          TLI.getPointerTy());
 
   // Splice the libcall in wherever FindInputOutputChains tells us to.
-  const Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
+  Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
 
   // isTailCall may be true since the callee does not reference caller stack
   // frame. Check if it's in the right position.
@@ -2210,7 +2210,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, EVT RetVT,
   SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
                                          TLI.getPointerTy());
 
-  const Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
+  Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
   std::pair<SDValue,SDValue> CallInfo =
   TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                   false, 0, TLI.getLibcallCallingConv(LC), false,
@@ -2237,7 +2237,7 @@ SelectionDAGLegalize::ExpandChainLibCall(RTLIB::Libcall LC,
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i) {
     EVT ArgVT = Node->getOperand(i).getValueType();
-    const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+    Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
     Entry.Node = Node->getOperand(i);
     Entry.Ty = ArgTy;
     Entry.isSExt = isSigned;
@@ -2248,7 +2248,7 @@ SelectionDAGLegalize::ExpandChainLibCall(RTLIB::Libcall LC,
                                          TLI.getPointerTy());
 
   // Splice the libcall in wherever FindInputOutputChains tells us to.
-  const Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
+  Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                     0, TLI.getLibcallCallingConv(LC), /*isTailCall=*/false,
@@ -2360,13 +2360,13 @@ SelectionDAGLegalize::ExpandDivRemLibCall(SDNode *Node,
   SDValue InChain = DAG.getEntryNode();
 
   EVT RetVT = Node->getValueType(0);
-  const Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
+  Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
     EVT ArgVT = Node->getOperand(i).getValueType();
-    const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+    Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
     Entry.Node = Node->getOperand(i); Entry.Ty = ArgTy;
     Entry.isSExt = isSigned;
     Entry.isZExt = !isSigned;

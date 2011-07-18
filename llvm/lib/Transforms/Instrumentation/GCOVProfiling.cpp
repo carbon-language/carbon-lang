@@ -444,7 +444,7 @@ bool GCOVProfiler::emitProfileArcs(DebugInfoFinder &DIF) {
         Edges += TI->getNumSuccessors();
     }
 
-    const ArrayType *CounterTy =
+    ArrayType *CounterTy =
         ArrayType::get(Type::getInt64Ty(*Ctx), Edges);
     GlobalVariable *Counters =
         new GlobalVariable(*M, CounterTy, false,
@@ -499,7 +499,7 @@ bool GCOVProfiler::emitProfileArcs(DebugInfoFinder &DIF) {
                                ComplexEdgePreds, ComplexEdgeSuccs);
       GlobalVariable *EdgeState = getEdgeStateValue();
 
-      const Type *Int32Ty = Type::getInt32Ty(*Ctx);
+      Type *Int32Ty = Type::getInt32Ty(*Ctx);
       for (int i = 0, e = ComplexEdgePreds.size(); i != e; ++i) {
         IRBuilder<> Builder(ComplexEdgePreds[i+1]->getTerminator());
         Builder.CreateStore(ConstantInt::get(Int32Ty, i), EdgeState);
@@ -535,8 +535,8 @@ GlobalVariable *GCOVProfiler::buildEdgeLookupTable(
   // read it. Threads and invoke make this untrue.
 
   // emit [(succs * preds) x i64*], logically [succ x [pred x i64*]].
-  const Type *Int64PtrTy = Type::getInt64PtrTy(*Ctx);
-  const ArrayType *EdgeTableTy = ArrayType::get(
+  Type *Int64PtrTy = Type::getInt64PtrTy(*Ctx);
+  ArrayType *EdgeTableTy = ArrayType::get(
       Int64PtrTy, Succs.size() * Preds.size());
 
   Constant **EdgeTable = new Constant*[Succs.size() * Preds.size()];
@@ -572,7 +572,7 @@ GlobalVariable *GCOVProfiler::buildEdgeLookupTable(
 }
 
 Constant *GCOVProfiler::getStartFileFunc() {
-  const FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
                                               Type::getInt8PtrTy(*Ctx), false);
   return M->getOrInsertFunction("llvm_gcda_start_file", FTy);
 }
@@ -582,7 +582,7 @@ Constant *GCOVProfiler::getIncrementIndirectCounterFunc() {
     Type::getInt32PtrTy(*Ctx),                  // uint32_t *predecessor
     Type::getInt64PtrTy(*Ctx)->getPointerTo(),  // uint64_t **state_table_row
   };
-  const FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
                                               Args, false);
   return M->getOrInsertFunction("llvm_gcda_increment_indirect_counter", FTy);
 }
@@ -592,7 +592,7 @@ Constant *GCOVProfiler::getEmitFunctionFunc() {
     Type::getInt32Ty(*Ctx),    // uint32_t ident
     Type::getInt8PtrTy(*Ctx),  // const char *function_name
   };
-  const FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
                                               Args, false);
   return M->getOrInsertFunction("llvm_gcda_emit_function", FTy);
 }
@@ -602,13 +602,13 @@ Constant *GCOVProfiler::getEmitArcsFunc() {
     Type::getInt32Ty(*Ctx),     // uint32_t num_counters
     Type::getInt64PtrTy(*Ctx),  // uint64_t *counters
   };
-  const FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
                                               Args, false);
   return M->getOrInsertFunction("llvm_gcda_emit_arcs", FTy);
 }
 
 Constant *GCOVProfiler::getEndFileFunc() {
-  const FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
   return M->getOrInsertFunction("llvm_gcda_end_file", FTy);
 }
 
@@ -628,7 +628,7 @@ GlobalVariable *GCOVProfiler::getEdgeStateValue() {
 void GCOVProfiler::insertCounterWriteout(
     DebugInfoFinder &DIF,
     SmallVector<std::pair<GlobalVariable *, MDNode *>, 8> &CountersBySP) {
-  const FunctionType *WriteoutFTy =
+  FunctionType *WriteoutFTy =
       FunctionType::get(Type::getVoidTy(*Ctx), false);
   Function *WriteoutF = Function::Create(WriteoutFTy,
                                          GlobalValue::InternalLinkage,

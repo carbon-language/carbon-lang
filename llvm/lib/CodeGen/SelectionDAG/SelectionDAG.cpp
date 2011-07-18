@@ -821,7 +821,7 @@ static void VerifyMachineNode(SDNode *N) {
 /// given type.
 ///
 unsigned SelectionDAG::getEVTAlignment(EVT VT) const {
-  const Type *Ty = VT == MVT::iPTR ?
+  Type *Ty = VT == MVT::iPTR ?
                    PointerType::get(Type::getInt8Ty(*getContext()), 0) :
                    VT.getTypeForEVT(*getContext());
 
@@ -1432,7 +1432,7 @@ SDValue SelectionDAG::getShiftAmountOperand(EVT LHSTy, SDValue Op) {
 SDValue SelectionDAG::CreateStackTemporary(EVT VT, unsigned minAlign) {
   MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
   unsigned ByteSize = VT.getStoreSize();
-  const Type *Ty = VT.getTypeForEVT(*getContext());
+  Type *Ty = VT.getTypeForEVT(*getContext());
   unsigned StackAlign =
   std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty), minAlign);
 
@@ -1445,8 +1445,8 @@ SDValue SelectionDAG::CreateStackTemporary(EVT VT, unsigned minAlign) {
 SDValue SelectionDAG::CreateStackTemporary(EVT VT1, EVT VT2) {
   unsigned Bytes = std::max(VT1.getStoreSizeInBits(),
                             VT2.getStoreSizeInBits())/8;
-  const Type *Ty1 = VT1.getTypeForEVT(*getContext());
-  const Type *Ty2 = VT2.getTypeForEVT(*getContext());
+  Type *Ty1 = VT1.getTypeForEVT(*getContext());
+  Type *Ty2 = VT2.getTypeForEVT(*getContext());
   const TargetData *TD = TLI.getTargetData();
   unsigned Align = std::max(TD->getPrefTypeAlignment(Ty1),
                             TD->getPrefTypeAlignment(Ty2));
@@ -3425,7 +3425,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
     return SDValue();
 
   if (DstAlignCanChange) {
-    const Type *Ty = MemOps[0].getTypeForEVT(*DAG.getContext());
+    Type *Ty = MemOps[0].getTypeForEVT(*DAG.getContext());
     unsigned NewAlign = (unsigned) TLI.getTargetData()->getABITypeAlignment(Ty);
     if (NewAlign > Align) {
       // Give the stack frame object a larger alignment if needed.
@@ -3514,7 +3514,7 @@ static SDValue getMemmoveLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
     return SDValue();
 
   if (DstAlignCanChange) {
-    const Type *Ty = MemOps[0].getTypeForEVT(*DAG.getContext());
+    Type *Ty = MemOps[0].getTypeForEVT(*DAG.getContext());
     unsigned NewAlign = (unsigned) TLI.getTargetData()->getABITypeAlignment(Ty);
     if (NewAlign > Align) {
       // Give the stack frame object a larger alignment if needed.
@@ -3589,7 +3589,7 @@ static SDValue getMemsetStores(SelectionDAG &DAG, DebugLoc dl,
     return SDValue();
 
   if (DstAlignCanChange) {
-    const Type *Ty = MemOps[0].getTypeForEVT(*DAG.getContext());
+    Type *Ty = MemOps[0].getTypeForEVT(*DAG.getContext());
     unsigned NewAlign = (unsigned) TLI.getTargetData()->getABITypeAlignment(Ty);
     if (NewAlign > Align) {
       // Give the stack frame object a larger alignment if needed.
@@ -3782,7 +3782,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
     return Result;
 
   // Emit a library call.
-  const Type *IntPtrTy = TLI.getTargetData()->getIntPtrType(*getContext());
+  Type *IntPtrTy = TLI.getTargetData()->getIntPtrType(*getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Entry.Node = Dst; Entry.Ty = IntPtrTy;
@@ -6528,7 +6528,7 @@ unsigned GlobalAddressSDNode::getAddressSpace() const {
 }
 
 
-const Type *ConstantPoolSDNode::getType() const {
+Type *ConstantPoolSDNode::getType() const {
   if (isMachineConstantPoolEntry())
     return Val.MachineCPVal->getType();
   return Val.ConstVal->getType();

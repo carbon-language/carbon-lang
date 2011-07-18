@@ -380,7 +380,7 @@ namespace llvm {
   struct EVT {
   private:
     MVT V;
-    const Type *LLVMTy;
+    Type *LLVMTy;
 
   public:
     EVT() : V((MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE)),
@@ -645,12 +645,12 @@ namespace llvm {
     /// getTypeForEVT - This method returns an LLVM type corresponding to the
     /// specified EVT.  For integer types, this returns an unsigned type.  Note
     /// that this will abort for types that cannot be represented.
-    const Type *getTypeForEVT(LLVMContext &Context) const;
+    Type *getTypeForEVT(LLVMContext &Context) const;
 
     /// getEVT - Return the value type corresponding to the specified type.
     /// This returns all pointers as iPTR.  If HandleUnknown is true, unknown
     /// types are returned as Other, otherwise they are invalid.
-    static EVT getEVT(const Type *Ty, bool HandleUnknown = false);
+    static EVT getEVT(Type *Ty, bool HandleUnknown = false);
 
     intptr_t getRawBits() {
       if (isSimple())

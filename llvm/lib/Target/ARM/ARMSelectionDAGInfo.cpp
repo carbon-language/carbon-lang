@@ -155,7 +155,7 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
   TargetLowering::ArgListEntry Entry;
 
   // First argument: data pointer
-  const Type *IntPtrTy = TLI.getTargetData()->getIntPtrType(*DAG.getContext());
+  Type *IntPtrTy = TLI.getTargetData()->getIntPtrType(*DAG.getContext());
   Entry.Node = Dst;
   Entry.Ty = IntPtrTy;
   Args.push_back(Entry);

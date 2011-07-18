@@ -107,7 +107,7 @@ static int GetDecodedCastOpcode(unsigned Val) {
   case bitc::CAST_BITCAST : return Instruction::BitCast;
   }
 }
-static int GetDecodedBinaryOpcode(unsigned Val, const Type *Ty) {
+static int GetDecodedBinaryOpcode(unsigned Val, Type *Ty) {
   switch (Val) {
   default: return -1;
   case bitc::BINOP_ADD:
@@ -142,7 +142,7 @@ namespace {
     void *operator new(size_t s) {
       return User::operator new(s, 1);
     }
-    explicit ConstantPlaceHolder(const Type *Ty, LLVMContext& Context)
+    explicit ConstantPlaceHolder(Type *Ty, LLVMContext& Context)
       : ConstantExpr(Ty, Instruction::UserOp1, &Op<0>(), 1) {
       Op<0>() = UndefValue::get(Type::getInt32Ty(Context));
     }
@@ -198,7 +198,7 @@ void BitcodeReaderValueList::AssignValue(Value *V, unsigned Idx) {
 
 
 Constant *BitcodeReaderValueList::getConstantFwdRef(unsigned Idx,
-                                                    const Type *Ty) {
+                                                    Type *Ty) {
   if (Idx >= size())
     resize(Idx + 1);
 
@@ -213,7 +213,7 @@ Constant *BitcodeReaderValueList::getConstantFwdRef(unsigned Idx,
   return C;
 }
 
-Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, const Type *Ty) {
+Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, Type *Ty) {
   if (Idx >= size())
     resize(Idx + 1);
 
@@ -1063,7 +1063,7 @@ bool BitcodeReader::ParseMetadata() {
       unsigned Size = Record.size();
       SmallVector<Value*, 8> Elts;
       for (unsigned i = 0; i != Size; i += 2) {
-        const Type *Ty = getTypeByID(Record[i]);
+        Type *Ty = getTypeByID(Record[i]);
         if (!Ty) return Error("Invalid METADATA_NODE record");
         if (Ty->isMetadataTy())
           Elts.push_back(MDValueList.getValueFwdRef(Record[i+1]));
@@ -1163,7 +1163,7 @@ bool BitcodeReader::ParseConstants() {
   SmallVector<uint64_t, 64> Record;
 
   // Read all the records for this value table.
-  const Type *CurTy = Type::getInt32Ty(Context);
+  Type *CurTy = Type::getInt32Ty(Context);
   unsigned NextCstNo = ValueList.size();
   while (1) {
     unsigned Code = Stream.ReadCode();
@@ -1250,18 +1250,18 @@ bool BitcodeReader::ParseConstants() {
       unsigned Size = Record.size();
       std::vector<Constant*> Elts;
 
-      if (const StructType *STy = dyn_cast<StructType>(CurTy)) {
+      if (StructType *STy = dyn_cast<StructType>(CurTy)) {
         for (unsigned i = 0; i != Size; ++i)
           Elts.push_back(ValueList.getConstantFwdRef(Record[i],
                                                      STy->getElementType(i)));
         V = ConstantStruct::get(STy, Elts);
-      } else if (const ArrayType *ATy = dyn_cast<ArrayType>(CurTy)) {
-        const Type *EltTy = ATy->getElementType();
+      } else if (ArrayType *ATy = dyn_cast<ArrayType>(CurTy)) {
+        Type *EltTy = ATy->getElementType();
         for (unsigned i = 0; i != Size; ++i)
           Elts.push_back(ValueList.getConstantFwdRef(Record[i], EltTy));
         V = ConstantArray::get(ATy, Elts);
-      } else if (const VectorType *VTy = dyn_cast<VectorType>(CurTy)) {
-        const Type *EltTy = VTy->getElementType();
+      } else if (VectorType *VTy = dyn_cast<VectorType>(CurTy)) {
+        Type *EltTy = VTy->getElementType();
         for (unsigned i = 0; i != Size; ++i)
           Elts.push_back(ValueList.getConstantFwdRef(Record[i], EltTy));
         V = ConstantVector::get(Elts);
@@ -1274,8 +1274,8 @@ bool BitcodeReader::ParseConstants() {
       if (Record.empty())
         return Error("Invalid CST_AGGREGATE record");
 
-      const ArrayType *ATy = cast<ArrayType>(CurTy);
-      const Type *EltTy = ATy->getElementType();
+      ArrayType *ATy = cast<ArrayType>(CurTy);
+      Type *EltTy = ATy->getElementType();
 
       unsigned Size = Record.size();
       std::vector<Constant*> Elts;
@@ -1288,8 +1288,8 @@ bool BitcodeReader::ParseConstants() {
       if (Record.empty())
         return Error("Invalid CST_AGGREGATE record");
 
-      const ArrayType *ATy = cast<ArrayType>(CurTy);
-      const Type *EltTy = ATy->getElementType();
+      ArrayType *ATy = cast<ArrayType>(CurTy);
+      Type *EltTy = ATy->getElementType();
 
       unsigned Size = Record.size();
       std::vector<Constant*> Elts;
@@ -1335,7 +1335,7 @@ bool BitcodeReader::ParseConstants() {
       if (Opc < 0) {
         V = UndefValue::get(CurTy);  // Unknown cast.
       } else {
-        const Type *OpTy = getTypeByID(Record[1]);
+        Type *OpTy = getTypeByID(Record[1]);
         if (!OpTy) return Error("Invalid CE_CAST record");
         Constant *Op = ValueList.getConstantFwdRef(Record[2], OpTy);
         V = ConstantExpr::getCast(Opc, Op, CurTy);
@@ -1347,7 +1347,7 @@ bool BitcodeReader::ParseConstants() {
       if (Record.size() & 1) return Error("Invalid CE_GEP record");
       SmallVector<Constant*, 16> Elts;
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        const Type *ElTy = getTypeByID(Record[i]);
+        Type *ElTy = getTypeByID(Record[i]);
         if (!ElTy) return Error("Invalid CE_GEP record");
         Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
       }
@@ -1368,7 +1368,7 @@ bool BitcodeReader::ParseConstants() {
       break;
     case bitc::CST_CODE_CE_EXTRACTELT: { // CE_EXTRACTELT: [opty, opval, opval]
       if (Record.size() < 3) return Error("Invalid CE_EXTRACTELT record");
-      const VectorType *OpTy =
+      VectorType *OpTy =
         dyn_cast_or_null<VectorType>(getTypeByID(Record[0]));
       if (OpTy == 0) return Error("Invalid CE_EXTRACTELT record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
@@ -1377,7 +1377,7 @@ bool BitcodeReader::ParseConstants() {
       break;
     }
     case bitc::CST_CODE_CE_INSERTELT: { // CE_INSERTELT: [opval, opval, opval]
-      const VectorType *OpTy = dyn_cast<VectorType>(CurTy);
+      VectorType *OpTy = dyn_cast<VectorType>(CurTy);
       if (Record.size() < 3 || OpTy == 0)
         return Error("Invalid CE_INSERTELT record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[0], OpTy);
@@ -1388,26 +1388,26 @@ bool BitcodeReader::ParseConstants() {
       break;
     }
     case bitc::CST_CODE_CE_SHUFFLEVEC: { // CE_SHUFFLEVEC: [opval, opval, opval]
-      const VectorType *OpTy = dyn_cast<VectorType>(CurTy);
+      VectorType *OpTy = dyn_cast<VectorType>(CurTy);
       if (Record.size() < 3 || OpTy == 0)
         return Error("Invalid CE_SHUFFLEVEC record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[0], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[1], OpTy);
-      const Type *ShufTy = VectorType::get(Type::getInt32Ty(Context),
+      Type *ShufTy = VectorType::get(Type::getInt32Ty(Context),
                                                  OpTy->getNumElements());
       Constant *Op2 = ValueList.getConstantFwdRef(Record[2], ShufTy);
       V = ConstantExpr::getShuffleVector(Op0, Op1, Op2);
       break;
     }
     case bitc::CST_CODE_CE_SHUFVEC_EX: { // [opty, opval, opval, opval]
-      const VectorType *RTy = dyn_cast<VectorType>(CurTy);
-      const VectorType *OpTy =
+      VectorType *RTy = dyn_cast<VectorType>(CurTy);
+      VectorType *OpTy =
         dyn_cast_or_null<VectorType>(getTypeByID(Record[0]));
       if (Record.size() < 4 || RTy == 0 || OpTy == 0)
         return Error("Invalid CE_SHUFVEC_EX record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[2], OpTy);
-      const Type *ShufTy = VectorType::get(Type::getInt32Ty(Context),
+      Type *ShufTy = VectorType::get(Type::getInt32Ty(Context),
                                                  RTy->getNumElements());
       Constant *Op2 = ValueList.getConstantFwdRef(Record[3], ShufTy);
       V = ConstantExpr::getShuffleVector(Op0, Op1, Op2);
@@ -1415,7 +1415,7 @@ bool BitcodeReader::ParseConstants() {
     }
     case bitc::CST_CODE_CE_CMP: {     // CE_CMP: [opty, opval, opval, pred]
       if (Record.size() < 4) return Error("Invalid CE_CMP record");
-      const Type *OpTy = getTypeByID(Record[0]);
+      Type *OpTy = getTypeByID(Record[0]);
       if (OpTy == 0) return Error("Invalid CE_CMP record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[2], OpTy);
@@ -1442,14 +1442,14 @@ bool BitcodeReader::ParseConstants() {
         AsmStr += (char)Record[2+i];
       for (unsigned i = 0; i != ConstStrSize; ++i)
         ConstrStr += (char)Record[3+AsmStrSize+i];
-      const PointerType *PTy = cast<PointerType>(CurTy);
+      PointerType *PTy = cast<PointerType>(CurTy);
       V = InlineAsm::get(cast<FunctionType>(PTy->getElementType()),
                          AsmStr, ConstrStr, HasSideEffects, IsAlignStack);
       break;
     }
     case bitc::CST_CODE_BLOCKADDRESS:{
       if (Record.size() < 3) return Error("Invalid CE_BLOCKADDRESS record");
-      const Type *FnTy = getTypeByID(Record[0]);
+      Type *FnTy = getTypeByID(Record[0]);
       if (FnTy == 0) return Error("Invalid CE_BLOCKADDRESS record");
       Function *Fn =
         dyn_cast_or_null<Function>(ValueList.getConstantFwdRef(Record[1],FnTy));
@@ -1662,7 +1662,7 @@ bool BitcodeReader::ParseModule() {
     case bitc::MODULE_CODE_GLOBALVAR: {
       if (Record.size() < 6)
         return Error("Invalid MODULE_CODE_GLOBALVAR record");
-      const Type *Ty = getTypeByID(Record[0]);
+      Type *Ty = getTypeByID(Record[0]);
       if (!Ty) return Error("Invalid MODULE_CODE_GLOBALVAR record");
       if (!Ty->isPointerTy())
         return Error("Global not a pointer type!");
@@ -1711,11 +1711,11 @@ bool BitcodeReader::ParseModule() {
     case bitc::MODULE_CODE_FUNCTION: {
       if (Record.size() < 8)
         return Error("Invalid MODULE_CODE_FUNCTION record");
-      const Type *Ty = getTypeByID(Record[0]);
+      Type *Ty = getTypeByID(Record[0]);
       if (!Ty) return Error("Invalid MODULE_CODE_FUNCTION record");
       if (!Ty->isPointerTy())
         return Error("Function not a pointer type!");
-      const FunctionType *FTy =
+      FunctionType *FTy =
         dyn_cast<FunctionType>(cast<PointerType>(Ty)->getElementType());
       if (!FTy)
         return Error("Function not a pointer to function type!");
@@ -1757,7 +1757,7 @@ bool BitcodeReader::ParseModule() {
     case bitc::MODULE_CODE_ALIAS: {
       if (Record.size() < 3)
         return Error("Invalid MODULE_ALIAS record");
-      const Type *Ty = getTypeByID(Record[0]);
+      Type *Ty = getTypeByID(Record[0]);
       if (!Ty) return Error("Invalid MODULE_ALIAS record");
       if (!Ty->isPointerTy())
         return Error("Function not a pointer type!");
@@ -2160,7 +2160,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           OpNum+2 != Record.size())
         return Error("Invalid CAST record");
 
-      const Type *ResTy = getTypeByID(Record[OpNum]);
+      Type *ResTy = getTypeByID(Record[OpNum]);
       int Opc = GetDecodedCastOpcode(Record[OpNum+1]);
       if (Opc == -1 || ResTy == 0)
         return Error("Invalid CAST record");
@@ -2261,8 +2261,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         return Error("Invalid SELECT record");
 
       // select condition can be either i1 or [N x i1]
-      if (const VectorType* vector_type =
-          dyn_cast<const VectorType>(Cond->getType())) {
+      if (VectorType* vector_type =
+          dyn_cast<VectorType>(Cond->getType())) {
         // expect <n x i1>
         if (vector_type->getElementType() != Type::getInt1Ty(Context))
           return Error("Invalid SELECT condition type");
@@ -2381,7 +2381,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_SWITCH: { // SWITCH: [opty, op0, op1, ...]
       if (Record.size() < 3 || (Record.size() & 1) == 0)
         return Error("Invalid SWITCH record");
-      const Type *OpTy = getTypeByID(Record[0]);
+      Type *OpTy = getTypeByID(Record[0]);
       Value *Cond = getFnValueByID(Record[1], OpTy);
       BasicBlock *Default = getBasicBlock(Record[2]);
       if (OpTy == 0 || Cond == 0 || Default == 0)
@@ -2405,7 +2405,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_INDIRECTBR: { // INDIRECTBR: [opty, op0, op1, ...]
       if (Record.size() < 2)
         return Error("Invalid INDIRECTBR record");
-      const Type *OpTy = getTypeByID(Record[0]);
+      Type *OpTy = getTypeByID(Record[0]);
       Value *Address = getFnValueByID(Record[1], OpTy);
       if (OpTy == 0 || Address == 0)
         return Error("Invalid INDIRECTBR record");
@@ -2437,8 +2437,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, OpNum, NextValueNo, Callee))
         return Error("Invalid INVOKE record");
 
-      const PointerType *CalleeTy = dyn_cast<PointerType>(Callee->getType());
-      const FunctionType *FTy = !CalleeTy ? 0 :
+      PointerType *CalleeTy = dyn_cast<PointerType>(Callee->getType());
+      FunctionType *FTy = !CalleeTy ? 0 :
         dyn_cast<FunctionType>(CalleeTy->getElementType());
 
       // Check that the right number of fixed parameters are here.
@@ -2483,7 +2483,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_PHI: { // PHI: [ty, val0,bb0, ...]
       if (Record.size() < 1 || ((Record.size()-1)&1))
         return Error("Invalid PHI record");
-      const Type *Ty = getTypeByID(Record[0]);
+      Type *Ty = getTypeByID(Record[0]);
       if (!Ty) return Error("Invalid PHI record");
 
       PHINode *PN = PHINode::Create(Ty, (Record.size()-1)/2);
@@ -2502,9 +2502,9 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_ALLOCA: { // ALLOCA: [instty, opty, op, align]
       if (Record.size() != 4)
         return Error("Invalid ALLOCA record");
-      const PointerType *Ty =
+      PointerType *Ty =
         dyn_cast_or_null<PointerType>(getTypeByID(Record[0]));
-      const Type *OpTy = getTypeByID(Record[1]);
+      Type *OpTy = getTypeByID(Record[1]);
       Value *Size = getFnValueByID(Record[2], OpTy);
       unsigned Align = Record[3];
       if (!Ty || !Size) return Error("Invalid ALLOCA record");
@@ -2549,8 +2549,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, OpNum, NextValueNo, Callee))
         return Error("Invalid CALL record");
 
-      const PointerType *OpTy = dyn_cast<PointerType>(Callee->getType());
-      const FunctionType *FTy = 0;
+      PointerType *OpTy = dyn_cast<PointerType>(Callee->getType());
+      FunctionType *FTy = 0;
       if (OpTy) FTy = dyn_cast<FunctionType>(OpTy->getElementType());
       if (!FTy || Record.size() < FTy->getNumParams()+OpNum)
         return Error("Invalid CALL record");
@@ -2589,9 +2589,9 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_VAARG: { // VAARG: [valistty, valist, instty]
       if (Record.size() < 3)
         return Error("Invalid VAARG record");
-      const Type *OpTy = getTypeByID(Record[0]);
+      Type *OpTy = getTypeByID(Record[0]);
       Value *Op = getFnValueByID(Record[1], OpTy);
-      const Type *ResTy = getTypeByID(Record[2]);
+      Type *ResTy = getTypeByID(Record[2]);
       if (!OpTy || !Op || !ResTy)
         return Error("Invalid VAARG record");
       I = new VAArgInst(Op, ResTy);

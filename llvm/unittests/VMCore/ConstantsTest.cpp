@@ -16,7 +16,7 @@ namespace llvm {
 namespace {
 
 TEST(ConstantsTest, Integer_i1) {
-  const IntegerType* Int1 = IntegerType::get(getGlobalContext(), 1);
+  IntegerType* Int1 = IntegerType::get(getGlobalContext(), 1);
   Constant* One = ConstantInt::get(Int1, 1, true);
   Constant* Zero = ConstantInt::get(Int1, 0);
   Constant* NegOne = ConstantInt::get(Int1, static_cast<uint64_t>(-1), true);
@@ -97,7 +97,7 @@ TEST(ConstantsTest, Integer_i1) {
 }
 
 TEST(ConstantsTest, IntSigns) {
-  const IntegerType* Int8Ty = Type::getInt8Ty(getGlobalContext());
+  IntegerType* Int8Ty = Type::getInt8Ty(getGlobalContext());
   EXPECT_EQ(100, ConstantInt::get(Int8Ty, 100, false)->getSExtValue());
   EXPECT_EQ(100, ConstantInt::get(Int8Ty, 100, true)->getSExtValue());
   EXPECT_EQ(100, ConstantInt::getSigned(Int8Ty, 100)->getSExtValue());
@@ -110,9 +110,9 @@ TEST(ConstantsTest, IntSigns) {
 }
 
 TEST(ConstantsTest, FP128Test) {
-  const Type *FP128Ty = Type::getFP128Ty(getGlobalContext());
+  Type *FP128Ty = Type::getFP128Ty(getGlobalContext());
 
-  const IntegerType *Int128Ty = Type::getIntNTy(getGlobalContext(), 128);
+  IntegerType *Int128Ty = Type::getIntNTy(getGlobalContext(), 128);
   Constant *Zero128 = Constant::getNullValue(Int128Ty);
   Constant *X = ConstantExpr::getUIToFP(Zero128, FP128Ty);
   EXPECT_TRUE(isa<ConstantFP>(X));

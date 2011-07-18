@@ -58,7 +58,7 @@ class AddressingModeMatcher {
 
   /// AccessTy/MemoryInst - This is the type for the access (e.g. double) and
   /// the memory instruction that we're computing this address for.
-  const Type *AccessTy;
+  Type *AccessTy;
   Instruction *MemoryInst;
   
   /// AddrMode - This is the addressing mode that we're building up.  This is
@@ -71,7 +71,7 @@ class AddressingModeMatcher {
   bool IgnoreProfitability;
   
   AddressingModeMatcher(SmallVectorImpl<Instruction*> &AMI,
-                        const TargetLowering &T, const Type *AT,
+                        const TargetLowering &T, Type *AT,
                         Instruction *MI, ExtAddrMode &AM)
     : AddrModeInsts(AMI), TLI(T), AccessTy(AT), MemoryInst(MI), AddrMode(AM) {
     IgnoreProfitability = false;
@@ -81,7 +81,7 @@ public:
   /// Match - Find the maximal addressing mode that a load/store of V can fold,
   /// give an access type of AccessTy.  This returns a list of involved
   /// instructions in AddrModeInsts.
-  static ExtAddrMode Match(Value *V, const Type *AccessTy,
+  static ExtAddrMode Match(Value *V, Type *AccessTy,
                            Instruction *MemoryInst,
                            SmallVectorImpl<Instruction*> &AddrModeInsts,
                            const TargetLowering &TLI) {

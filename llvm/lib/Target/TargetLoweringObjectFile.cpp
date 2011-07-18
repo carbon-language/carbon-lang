@@ -93,7 +93,7 @@ static bool isSuitableForBSS(const GlobalVariable *GV) {
 /// known to have a type that is an array of 1/2/4 byte elements) ends with a
 /// nul value and contains no other nuls in it.
 static bool IsNullTerminatedString(const Constant *C) {
-  const ArrayType *ATy = cast<ArrayType>(C->getType());
+  ArrayType *ATy = cast<ArrayType>(C->getType());
 
   // First check: is we have constant array of i8 terminated with zero
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(C)) {
@@ -188,8 +188,8 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
         
       // If initializer is a null-terminated string, put it in a "cstring"
       // section of the right width.
-      if (const ArrayType *ATy = dyn_cast<ArrayType>(C->getType())) {
-        if (const IntegerType *ITy =
+      if (ArrayType *ATy = dyn_cast<ArrayType>(C->getType())) {
+        if (IntegerType *ITy =
               dyn_cast<IntegerType>(ATy->getElementType())) {
           if ((ITy->getBitWidth() == 8 || ITy->getBitWidth() == 16 ||
                ITy->getBitWidth() == 32) &&

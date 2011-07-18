@@ -167,7 +167,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
     
   // Check to see if this function returns a constant.
   SmallVector<Value *,4> RetVals;
-  const StructType *STy = dyn_cast<StructType>(F.getReturnType());
+  StructType *STy = dyn_cast<StructType>(F.getReturnType());
   if (STy)
     for (unsigned i = 0, e = STy->getNumElements(); i < e; ++i) 
       RetVals.push_back(UndefValue::get(STy->getElementType(i)));

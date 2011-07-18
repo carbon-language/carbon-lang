@@ -30,7 +30,7 @@ protected:
     ASSERT_TRUE(Engine.get() != NULL);
   }
 
-  GlobalVariable *NewExtGlobal(const Type *T, const Twine &Name) {
+  GlobalVariable *NewExtGlobal(Type *T, const Twine &Name) {
     return new GlobalVariable(*M, T, false,  // Not constant.
                               GlobalValue::ExternalLinkage, NULL, Name);
   }

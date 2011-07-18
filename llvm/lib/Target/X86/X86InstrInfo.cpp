@@ -2515,7 +2515,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
 
     // Create a constant-pool entry.
     MachineConstantPool &MCP = *MF.getConstantPool();
-    const Type *Ty;
+    Type *Ty;
     unsigned Opc = LoadMI->getOpcode();
     if (Opc == X86::FsFLD0SS || Opc == X86::VFsFLD0SS)
       Ty = Type::getFloatTy(MF.getFunction()->getContext());

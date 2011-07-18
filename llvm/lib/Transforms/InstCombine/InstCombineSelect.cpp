@@ -363,7 +363,7 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
       case ICmpInst::ICMP_UGT:
       case ICmpInst::ICMP_SGT: {
         // These transformations only work for selects over integers.
-        const IntegerType *SelectTy = dyn_cast<IntegerType>(SI.getType());
+        IntegerType *SelectTy = dyn_cast<IntegerType>(SI.getType());
         if (!SelectTy)
           break;
 
@@ -443,7 +443,7 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
   // FIXME: Type and constness constraints could be lifted, but we have to
   //        watch code size carefully. We should consider xor instead of
   //        sub/add when we decide to do that.
-  if (const IntegerType *Ty = dyn_cast<IntegerType>(CmpLHS->getType())) {
+  if (IntegerType *Ty = dyn_cast<IntegerType>(CmpLHS->getType())) {
     if (TrueVal->getType() == Ty) {
       if (ConstantInt *Cmp = dyn_cast<ConstantInt>(CmpRHS)) {
         ConstantInt *C1 = NULL, *C2 = NULL;

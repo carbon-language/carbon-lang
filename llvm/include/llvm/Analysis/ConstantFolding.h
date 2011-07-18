@@ -47,7 +47,7 @@ Constant *ConstantFoldConstantExpression(const ConstantExpr *CE,
 /// fold instructions like loads and stores, which have no constant expression 
 /// form.
 ///
-Constant *ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
+Constant *ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
                                    Constant *const *Ops, unsigned NumOps,
                                    const TargetData *TD = 0);
 

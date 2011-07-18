@@ -69,7 +69,7 @@ namespace {
     TargetLowering::ArgListEntry Entry;
     for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i) {
       EVT ArgVT = Op.getOperand(i).getValueType();
-      const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+      Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
       Entry.Node = Op.getOperand(i);
       Entry.Ty = ArgTy;
       Entry.isSExt = isSigned;
@@ -80,7 +80,7 @@ namespace {
                                            TLI.getPointerTy());
 
     // Splice the libcall in wherever FindInputOutputChains tells us to.
-    const Type *RetTy =
+    Type *RetTy =
                 Op.getNode()->getValueType(0).getTypeForEVT(*DAG.getContext());
     std::pair<SDValue, SDValue> CallInfo =
             TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
@@ -3216,7 +3216,7 @@ SPUTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
 /// isLegalAddressImmediate - Return true if the integer value can be used
 /// as the offset of the target addressing mode.
 bool SPUTargetLowering::isLegalAddressImmediate(int64_t V,
-                                                const Type *Ty) const {
+                                                Type *Ty) const {
   // SPU's addresses are 256K:
   return (V > -(1 << 18) && V < (1 << 18) - 1);
 }
@@ -3239,7 +3239,7 @@ bool SPUTargetLowering::isLegalICmpImmediate(int64_t Imm) const {
 
 bool
 SPUTargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                         const Type * ) const{
+                                         Type * ) const{
 
   // A-form: 18bit absolute address.
   if (AM.BaseGV && !AM.HasBaseReg && AM.Scale == 0 && AM.BaseOffs == 0)

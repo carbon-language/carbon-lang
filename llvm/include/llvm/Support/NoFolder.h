@@ -200,37 +200,37 @@ public:
   //===--------------------------------------------------------------------===//
 
   Instruction *CreateCast(Instruction::CastOps Op, Constant *C,
-                    const Type *DestTy) const {
+                    Type *DestTy) const {
     return CastInst::Create(Op, C, DestTy);
   }
-  Instruction *CreatePointerCast(Constant *C, const Type *DestTy) const {
+  Instruction *CreatePointerCast(Constant *C, Type *DestTy) const {
     return CastInst::CreatePointerCast(C, DestTy);
   }
-  Instruction *CreateIntCast(Constant *C, const Type *DestTy,
+  Instruction *CreateIntCast(Constant *C, Type *DestTy,
                        bool isSigned) const {
     return CastInst::CreateIntegerCast(C, DestTy, isSigned);
   }
-  Instruction *CreateFPCast(Constant *C, const Type *DestTy) const {
+  Instruction *CreateFPCast(Constant *C, Type *DestTy) const {
     return CastInst::CreateFPCast(C, DestTy);
   }
 
-  Instruction *CreateBitCast(Constant *C, const Type *DestTy) const {
+  Instruction *CreateBitCast(Constant *C, Type *DestTy) const {
     return CreateCast(Instruction::BitCast, C, DestTy);
   }
-  Instruction *CreateIntToPtr(Constant *C, const Type *DestTy) const {
+  Instruction *CreateIntToPtr(Constant *C, Type *DestTy) const {
     return CreateCast(Instruction::IntToPtr, C, DestTy);
   }
-  Instruction *CreatePtrToInt(Constant *C, const Type *DestTy) const {
+  Instruction *CreatePtrToInt(Constant *C, Type *DestTy) const {
     return CreateCast(Instruction::PtrToInt, C, DestTy);
   }
-  Instruction *CreateZExtOrBitCast(Constant *C, const Type *DestTy) const {
+  Instruction *CreateZExtOrBitCast(Constant *C, Type *DestTy) const {
     return CastInst::CreateZExtOrBitCast(C, DestTy);
   }
-  Instruction *CreateSExtOrBitCast(Constant *C, const Type *DestTy) const {
+  Instruction *CreateSExtOrBitCast(Constant *C, Type *DestTy) const {
     return CastInst::CreateSExtOrBitCast(C, DestTy);
   }
 
-  Instruction *CreateTruncOrBitCast(Constant *C, const Type *DestTy) const {
+  Instruction *CreateTruncOrBitCast(Constant *C, Type *DestTy) const {
     return CastInst::CreateTruncOrBitCast(C, DestTy);
   }
 

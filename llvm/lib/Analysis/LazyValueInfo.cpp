@@ -630,7 +630,7 @@ bool LazyValueInfoCache::solveBlockValueNonLocal(LVILatticeVal &BBLV,
   if (BB == &BB->getParent()->getEntryBlock()) {
     assert(isa<Argument>(Val) && "Unknown live-in to the entry block");
     if (NotNull) {
-      const PointerType *PTy = cast<PointerType>(Val->getType());
+      PointerType *PTy = cast<PointerType>(Val->getType());
       Result = LVILatticeVal::getNot(ConstantPointerNull::get(PTy));
     } else {
       Result.markOverdefined();
@@ -658,7 +658,7 @@ bool LazyValueInfoCache::solveBlockValueNonLocal(LVILatticeVal &BBLV,
       // If we previously determined that this is a pointer that can't be null
       // then return that rather than giving up entirely.
       if (NotNull) {
-        const PointerType *PTy = cast<PointerType>(Val->getType());
+        PointerType *PTy = cast<PointerType>(Val->getType());
         Result = LVILatticeVal::getNot(ConstantPointerNull::get(PTy));
       }
       
@@ -728,7 +728,7 @@ bool LazyValueInfoCache::solveBlockValueConstantRange(LVILatticeVal &BBLV,
   
   ConstantRange LHSRange = LHSVal.getConstantRange();
   ConstantRange RHSRange(1);
-  const IntegerType *ResultTy = cast<IntegerType>(BBI->getType());
+  IntegerType *ResultTy = cast<IntegerType>(BBI->getType());
   if (isa<BinaryOperator>(BBI)) {
     if (ConstantInt *RHS = dyn_cast<ConstantInt>(BBI->getOperand(1))) {
       RHSRange = ConstantRange(RHS->getValue());

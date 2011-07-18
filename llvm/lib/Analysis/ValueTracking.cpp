@@ -34,7 +34,7 @@ const unsigned MaxDepth = 6;
 
 /// getBitWidth - Returns the bitwidth of the given scalar or pointer type (if
 /// unknown returns 0).  For vector types, returns the element type's bitwidth.
-static unsigned getBitWidth(const Type *Ty, const TargetData *TD) {
+static unsigned getBitWidth(Type *Ty, const TargetData *TD) {
   if (unsigned BitWidth = Ty->getScalarSizeInBits())
     return BitWidth;
   assert(isa<PointerType>(Ty) && "Expected a pointer type!");
@@ -103,7 +103,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     unsigned Align = GV->getAlignment();
     if (Align == 0 && TD && GV->getType()->getElementType()->isSized()) {
-      const Type *ObjectType = GV->getType()->getElementType();
+      Type *ObjectType = GV->getType()->getElementType();
       // If the object is defined in the current Module, we'll be giving
       // it the preferred alignment. Otherwise, we have to assume that it
       // may only have the minimum ABI alignment.
@@ -268,7 +268,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     // FALL THROUGH and handle them the same as zext/trunc.
   case Instruction::ZExt:
   case Instruction::Trunc: {
-    const Type *SrcTy = I->getOperand(0)->getType();
+    Type *SrcTy = I->getOperand(0)->getType();
     
     unsigned SrcBitWidth;
     // Note that we handle pointer operands here because of inttoptr/ptrtoint
@@ -291,7 +291,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     return;
   }
   case Instruction::BitCast: {
-    const Type *SrcTy = I->getOperand(0)->getType();
+    Type *SrcTy = I->getOperand(0)->getType();
     if ((SrcTy->isIntegerTy() || SrcTy->isPointerTy()) &&
         // TODO: For now, not handling conversions like:
         // (bitcast i64 %x to <2 x i32>)
@@ -559,7 +559,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     gep_type_iterator GTI = gep_type_begin(I);
     for (unsigned i = 1, e = I->getNumOperands(); i != e; ++i, ++GTI) {
       Value *Index = I->getOperand(i);
-      if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+      if (StructType *STy = dyn_cast<StructType>(*GTI)) {
         // Handle struct member offset arithmetic.
         if (!TD) return;
         const StructLayout *SL = TD->getStructLayout(STy);
@@ -569,7 +569,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
                           CountTrailingZeros_64(Offset));
       } else {
         // Handle array index arithmetic.
-        const Type *IndexedTy = GTI.getIndexedType();
+        Type *IndexedTy = GTI.getIndexedType();
         if (!IndexedTy->isSized()) return;
         unsigned GEPOpiBits = Index->getType()->getScalarSizeInBits();
         uint64_t TypeSize = TD ? TD->getTypeAllocSize(IndexedTy) : 1;
@@ -898,7 +898,7 @@ unsigned llvm::ComputeNumSignBits(Value *V, const TargetData *TD,
   assert((TD || V->getType()->isIntOrIntVectorTy()) &&
          "ComputeNumSignBits requires a TargetData object to operate "
          "on non-integer values!");
-  const Type *Ty = V->getType();
+  Type *Ty = V->getType();
   unsigned TyBits = TD ? TD->getTypeSizeInBits(V->getType()->getScalarType()) :
                          Ty->getScalarSizeInBits();
   unsigned Tmp, Tmp2;
@@ -1078,7 +1078,7 @@ bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
   assert(Depth <= MaxDepth && "Limit Search Depth");
   assert(V->getType()->isIntegerTy() && "Not integer or pointer type!");
 
-  const Type *T = V->getType();
+  Type *T = V->getType();
 
   ConstantInt *CI = dyn_cast<ConstantInt>(V);
 
@@ -1315,11 +1315,11 @@ Value *llvm::isBytewiseValue(Value *V) {
 // indices from Idxs that should be left out when inserting into the resulting
 // struct. To is the result struct built so far, new insertvalue instructions
 // build on that.
-static Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
+static Value *BuildSubAggregate(Value *From, Value* To, Type *IndexedType,
                                 SmallVector<unsigned, 10> &Idxs,
                                 unsigned IdxSkip,
                                 Instruction *InsertBefore) {
-  const llvm::StructType *STy = llvm::dyn_cast<llvm::StructType>(IndexedType);
+  llvm::StructType *STy = llvm::dyn_cast<llvm::StructType>(IndexedType);
   if (STy) {
     // Save the original To argument so we can modify it
     Value *OrigTo = To;
@@ -1378,7 +1378,7 @@ static Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
 static Value *BuildSubAggregate(Value *From, ArrayRef<unsigned> idx_range,
                                 Instruction *InsertBefore) {
   assert(InsertBefore && "Must have someplace to insert!");
-  const Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(),
+  Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(),
                                                              idx_range);
   Value *To = UndefValue::get(IndexedType);
   SmallVector<unsigned, 10> Idxs(idx_range.begin(), idx_range.end());
@@ -1404,7 +1404,7 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
          && "Not looking at a struct or array?");
   assert(ExtractValueInst::getIndexedType(V->getType(), idx_range)
          && "Invalid indices for type?");
-  const CompositeType *PTy = cast<CompositeType>(V->getType());
+  CompositeType *PTy = cast<CompositeType>(V->getType());
 
   if (isa<UndefValue>(V))
     return UndefValue::get(ExtractValueInst::getIndexedType(PTy,
@@ -1506,7 +1506,7 @@ Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
     if (OpC->isZero()) continue;
     
     // Handle a struct and array indices which add their offset to the pointer.
-    if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+    if (StructType *STy = dyn_cast<StructType>(*GTI)) {
       Offset += TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
     } else {
       uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
@@ -1557,8 +1557,8 @@ bool llvm::GetConstantStringInfo(const Value *V, std::string &Str,
       return false;
     
     // Make sure the index-ee is a pointer to array of i8.
-    const PointerType *PT = cast<PointerType>(GEP->getOperand(0)->getType());
-    const ArrayType *AT = dyn_cast<ArrayType>(PT->getElementType());
+    PointerType *PT = cast<PointerType>(GEP->getOperand(0)->getType());
+    ArrayType *AT = dyn_cast<ArrayType>(PT->getElementType());
     if (AT == 0 || !AT->getElementType()->isIntegerTy(8))
       return false;
     

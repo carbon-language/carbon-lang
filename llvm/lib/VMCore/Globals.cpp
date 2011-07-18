@@ -80,7 +80,7 @@ bool GlobalValue::isDeclaration() const {
 // GlobalVariable Implementation
 //===----------------------------------------------------------------------===//
 
-GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
+GlobalVariable::GlobalVariable(Type *Ty, bool constant, LinkageTypes Link,
                                Constant *InitVal, const Twine &Name,
                                bool ThreadLocal, unsigned AddressSpace)
   : GlobalValue(PointerType::get(Ty, AddressSpace), 
@@ -97,7 +97,7 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
   LeakDetector::addGarbageObject(this);
 }
 
-GlobalVariable::GlobalVariable(Module &M, const Type *Ty, bool constant,
+GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
                                LinkageTypes Link, Constant *InitVal,
                                const Twine &Name,
                                GlobalVariable *Before, bool ThreadLocal,
@@ -186,7 +186,7 @@ void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
 // GlobalAlias Implementation
 //===----------------------------------------------------------------------===//
 
-GlobalAlias::GlobalAlias(const Type *Ty, LinkageTypes Link,
+GlobalAlias::GlobalAlias(Type *Ty, LinkageTypes Link,
                          const Twine &Name, Constant* aliasee,
                          Module *ParentModule)
   : GlobalValue(Ty, Value::GlobalAliasVal, &Op<0>(), 1, Link, Name) {

@@ -120,7 +120,7 @@ FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI,
 // doInitialization - Make sure that there is a prototype for abort in the
 // current module.
 bool LowerInvoke::doInitialization(Module &M) {
-  const Type *VoidPtrTy = Type::getInt8PtrTy(M.getContext());
+  Type *VoidPtrTy = Type::getInt8PtrTy(M.getContext());
   if (useExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
     unsigned JBSize = TLI ? TLI->getJumpBufSize() : 0;
@@ -131,7 +131,7 @@ bool LowerInvoke::doInitialization(Module &M) {
     Type *Elts[] = { JmpBufTy, PointerType::getUnqual(JBLinkTy) };
     JBLinkTy->setBody(Elts);
 
-    const Type *PtrJBList = PointerType::getUnqual(JBLinkTy);
+    Type *PtrJBList = PointerType::getUnqual(JBLinkTy);
 
     // Now that we've done that, insert the jmpbuf list head global, unless it
     // already exists.
@@ -305,7 +305,7 @@ splitLiveRangesLiveAcrossInvokes(SmallVectorImpl<InvokeInst*> &Invokes) {
     ++AfterAllocaInsertPt;
   for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
        AI != E; ++AI) {
-    const Type *Ty = AI->getType();
+    Type *Ty = AI->getType();
     // Aggregate types can't be cast, but are legal argument types, so we have
     // to handle them differently. We use an extract/insert pair as a
     // lightweight method to achieve the same goal.

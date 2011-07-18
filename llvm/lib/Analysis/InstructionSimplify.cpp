@@ -1372,7 +1372,7 @@ Value *llvm::SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
   return ::SimplifyXorInst(Op0, Op1, TD, DT, RecursionLimit);
 }
 
-static const Type *GetCompareTy(Value *Op) {
+static Type *GetCompareTy(Value *Op) {
   return CmpInst::makeCmpResultType(Op->getType());
 }
 
@@ -1413,8 +1413,8 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     Pred = CmpInst::getSwappedPredicate(Pred);
   }
 
-  const Type *ITy = GetCompareTy(LHS); // The return type.
-  const Type *OpTy = LHS->getType();   // The operand type.
+  Type *ITy = GetCompareTy(LHS); // The return type.
+  Type *OpTy = LHS->getType();   // The operand type.
 
   // icmp X, X -> true/false
   // X icmp undef -> true/false.  For example, icmp ugt %X, undef -> false
@@ -1593,8 +1593,8 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   if (isa<CastInst>(LHS) && (isa<Constant>(RHS) || isa<CastInst>(RHS))) {
     Instruction *LI = cast<CastInst>(LHS);
     Value *SrcOp = LI->getOperand(0);
-    const Type *SrcTy = SrcOp->getType();
-    const Type *DstTy = LI->getType();
+    Type *SrcTy = SrcOp->getType();
+    Type *DstTy = LI->getType();
 
     // Turn icmp (ptrtoint x), (ptrtoint/constant) into a compare of the input
     // if the integer type is the same size as the pointer type.
@@ -2222,7 +2222,7 @@ Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
 Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
                              const TargetData *TD, const DominatorTree *) {
   // The type of the GEP pointer operand.
-  const PointerType *PtrTy = cast<PointerType>(Ops[0]->getType());
+  PointerType *PtrTy = cast<PointerType>(Ops[0]->getType());
 
   // getelementptr P -> P.
   if (NumOps == 1)
@@ -2230,9 +2230,9 @@ Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
 
   if (isa<UndefValue>(Ops[0])) {
     // Compute the (pointer) type returned by the GEP instruction.
-    const Type *LastType = GetElementPtrInst::getIndexedType(PtrTy, &Ops[1],
+    Type *LastType = GetElementPtrInst::getIndexedType(PtrTy, &Ops[1],
                                                              NumOps-1);
-    const Type *GEPTy = PointerType::get(LastType, PtrTy->getAddressSpace());
+    Type *GEPTy = PointerType::get(LastType, PtrTy->getAddressSpace());
     return UndefValue::get(GEPTy);
   }
 
@@ -2243,7 +2243,7 @@ Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
         return Ops[0];
     // getelementptr P, N -> P if P points to a type of zero size.
     if (TD) {
-      const Type *Ty = PtrTy->getElementType();
+      Type *Ty = PtrTy->getElementType();
       if (Ty->isSized() && TD->getTypeAllocSize(Ty) == 0)
         return Ops[0];
     }

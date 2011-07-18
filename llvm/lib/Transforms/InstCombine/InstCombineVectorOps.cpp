@@ -77,7 +77,7 @@ static std::vector<int> getShuffleMask(const ShuffleVectorInst *SVI) {
 /// extracted from the vector.
 static Value *FindScalarElement(Value *V, unsigned EltNo) {
   assert(V->getType()->isVectorTy() && "Not looking at a vector?");
-  const VectorType *PTy = cast<VectorType>(V->getType());
+  VectorType *PTy = cast<VectorType>(V->getType());
   unsigned Width = PTy->getNumElements();
   if (EltNo >= Width)  // Out of range access.
     return UndefValue::get(PTy->getElementType());
@@ -175,7 +175,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     // the same number of elements, see if we can find the source element from
     // it.  In this case, we will end up needing to bitcast the scalars.
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(EI.getOperand(0))) {
-      if (const VectorType *VT =
+      if (VectorType *VT =
           dyn_cast<VectorType>(BCI->getOperand(0)->getType()))
         if (VT->getNumElements() == VectorWidth)
           if (Value *Elt = FindScalarElement(BCI->getOperand(0), IndexVal))
@@ -225,7 +225,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
           SrcIdx -= LHSWidth;
           Src = SVI->getOperand(1);
         }
-        const Type *Int32Ty = Type::getInt32Ty(EI.getContext());
+        Type *Int32Ty = Type::getInt32Ty(EI.getContext());
         return ExtractElementInst::Create(Src,
                                           ConstantInt::get(Int32Ty,
                                                            SrcIdx, false));
@@ -555,7 +555,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
         // shuffle mask, do the replacement.
         if (isSplat || NewMask == LHSMask || NewMask == Mask) {
           std::vector<Constant*> Elts;
-          const Type *Int32Ty = Type::getInt32Ty(SVI.getContext());
+          Type *Int32Ty = Type::getInt32Ty(SVI.getContext());
           for (unsigned i = 0, e = NewMask.size(); i != e; ++i) {
             if (NewMask[i] < 0) {
               Elts.push_back(UndefValue::get(Int32Ty));

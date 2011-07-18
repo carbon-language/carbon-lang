@@ -107,7 +107,7 @@ const Attributes MutuallyIncompatible[4] = {
 };
 
 /// @brief Which attributes cannot be applied to a type.
-Attributes typeIncompatible(const Type *Ty);
+Attributes typeIncompatible(Type *Ty);
 
 /// This turns an int alignment (a power of 2, normally) into the
 /// form used internally in Attributes.

@@ -482,7 +482,7 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
       EmitGlobalConstantLargeInt(CI, GblS);
     return;
   } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
-    const VectorType *PTy = CP->getType();
+    VectorType *PTy = CP->getType();
     for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
       EmitGlobalConstant(CP->getOperand(I), GblS);
     return;
@@ -552,7 +552,7 @@ CstExprResTy ELFWriter::ResolveConstantExpr(const Constant *CV) {
   }
   case Instruction::PtrToInt: {
     Constant *Op = CE->getOperand(0);
-    const Type *Ty = CE->getType();
+    Type *Ty = CE->getType();
 
     // We can emit the pointer value into this slot if the slot is an
     // integer slot greater or equal to the size of the pointer.

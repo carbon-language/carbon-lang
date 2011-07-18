@@ -744,7 +744,7 @@ public:
   // Instruction creation methods: Memory Instructions
   //===--------------------------------------------------------------------===//
 
-  AllocaInst *CreateAlloca(const Type *Ty, Value *ArraySize = 0,
+  AllocaInst *CreateAlloca(Type *Ty, Value *ArraySize = 0,
                            const Twine &Name = "") {
     return Insert(new AllocaInst(Ty, ArraySize), Name);
   }
@@ -910,47 +910,47 @@ public:
   // Instruction creation methods: Cast/Conversion Operators
   //===--------------------------------------------------------------------===//
 
-  Value *CreateTrunc(Value *V, const Type *DestTy, const Twine &Name = "") {
+  Value *CreateTrunc(Value *V, Type *DestTy, const Twine &Name = "") {
     return CreateCast(Instruction::Trunc, V, DestTy, Name);
   }
-  Value *CreateZExt(Value *V, const Type *DestTy, const Twine &Name = "") {
+  Value *CreateZExt(Value *V, Type *DestTy, const Twine &Name = "") {
     return CreateCast(Instruction::ZExt, V, DestTy, Name);
   }
-  Value *CreateSExt(Value *V, const Type *DestTy, const Twine &Name = "") {
+  Value *CreateSExt(Value *V, Type *DestTy, const Twine &Name = "") {
     return CreateCast(Instruction::SExt, V, DestTy, Name);
   }
-  Value *CreateFPToUI(Value *V, const Type *DestTy, const Twine &Name = ""){
+  Value *CreateFPToUI(Value *V, Type *DestTy, const Twine &Name = ""){
     return CreateCast(Instruction::FPToUI, V, DestTy, Name);
   }
-  Value *CreateFPToSI(Value *V, const Type *DestTy, const Twine &Name = ""){
+  Value *CreateFPToSI(Value *V, Type *DestTy, const Twine &Name = ""){
     return CreateCast(Instruction::FPToSI, V, DestTy, Name);
   }
-  Value *CreateUIToFP(Value *V, const Type *DestTy, const Twine &Name = ""){
+  Value *CreateUIToFP(Value *V, Type *DestTy, const Twine &Name = ""){
     return CreateCast(Instruction::UIToFP, V, DestTy, Name);
   }
-  Value *CreateSIToFP(Value *V, const Type *DestTy, const Twine &Name = ""){
+  Value *CreateSIToFP(Value *V, Type *DestTy, const Twine &Name = ""){
     return CreateCast(Instruction::SIToFP, V, DestTy, Name);
   }
-  Value *CreateFPTrunc(Value *V, const Type *DestTy,
+  Value *CreateFPTrunc(Value *V, Type *DestTy,
                        const Twine &Name = "") {
     return CreateCast(Instruction::FPTrunc, V, DestTy, Name);
   }
-  Value *CreateFPExt(Value *V, const Type *DestTy, const Twine &Name = "") {
+  Value *CreateFPExt(Value *V, Type *DestTy, const Twine &Name = "") {
     return CreateCast(Instruction::FPExt, V, DestTy, Name);
   }
-  Value *CreatePtrToInt(Value *V, const Type *DestTy,
+  Value *CreatePtrToInt(Value *V, Type *DestTy,
                         const Twine &Name = "") {
     return CreateCast(Instruction::PtrToInt, V, DestTy, Name);
   }
-  Value *CreateIntToPtr(Value *V, const Type *DestTy,
+  Value *CreateIntToPtr(Value *V, Type *DestTy,
                         const Twine &Name = "") {
     return CreateCast(Instruction::IntToPtr, V, DestTy, Name);
   }
-  Value *CreateBitCast(Value *V, const Type *DestTy,
+  Value *CreateBitCast(Value *V, Type *DestTy,
                        const Twine &Name = "") {
     return CreateCast(Instruction::BitCast, V, DestTy, Name);
   }
-  Value *CreateZExtOrBitCast(Value *V, const Type *DestTy,
+  Value *CreateZExtOrBitCast(Value *V, Type *DestTy,
                              const Twine &Name = "") {
     if (V->getType() == DestTy)
       return V;
@@ -958,7 +958,7 @@ public:
       return Insert(Folder.CreateZExtOrBitCast(VC, DestTy), Name);
     return Insert(CastInst::CreateZExtOrBitCast(V, DestTy), Name);
   }
-  Value *CreateSExtOrBitCast(Value *V, const Type *DestTy,
+  Value *CreateSExtOrBitCast(Value *V, Type *DestTy,
                              const Twine &Name = "") {
     if (V->getType() == DestTy)
       return V;
@@ -966,7 +966,7 @@ public:
       return Insert(Folder.CreateSExtOrBitCast(VC, DestTy), Name);
     return Insert(CastInst::CreateSExtOrBitCast(V, DestTy), Name);
   }
-  Value *CreateTruncOrBitCast(Value *V, const Type *DestTy,
+  Value *CreateTruncOrBitCast(Value *V, Type *DestTy,
                               const Twine &Name = "") {
     if (V->getType() == DestTy)
       return V;
@@ -974,7 +974,7 @@ public:
       return Insert(Folder.CreateTruncOrBitCast(VC, DestTy), Name);
     return Insert(CastInst::CreateTruncOrBitCast(V, DestTy), Name);
   }
-  Value *CreateCast(Instruction::CastOps Op, Value *V, const Type *DestTy,
+  Value *CreateCast(Instruction::CastOps Op, Value *V, Type *DestTy,
                     const Twine &Name = "") {
     if (V->getType() == DestTy)
       return V;
@@ -982,7 +982,7 @@ public:
       return Insert(Folder.CreateCast(Op, VC, DestTy), Name);
     return Insert(CastInst::Create(Op, V, DestTy), Name);
   }
-  Value *CreatePointerCast(Value *V, const Type *DestTy,
+  Value *CreatePointerCast(Value *V, Type *DestTy,
                            const Twine &Name = "") {
     if (V->getType() == DestTy)
       return V;
@@ -990,7 +990,7 @@ public:
       return Insert(Folder.CreatePointerCast(VC, DestTy), Name);
     return Insert(CastInst::CreatePointerCast(V, DestTy), Name);
   }
-  Value *CreateIntCast(Value *V, const Type *DestTy, bool isSigned,
+  Value *CreateIntCast(Value *V, Type *DestTy, bool isSigned,
                        const Twine &Name = "") {
     if (V->getType() == DestTy)
       return V;
@@ -1001,9 +1001,9 @@ public:
 private:
   // Provided to resolve 'CreateIntCast(Ptr, Ptr, "...")', giving a compile time
   // error, instead of converting the string to bool for the isSigned parameter.
-  Value *CreateIntCast(Value *, const Type *, const char *); // DO NOT IMPLEMENT
+  Value *CreateIntCast(Value *, Type *, const char *); // DO NOT IMPLEMENT
 public:
-  Value *CreateFPCast(Value *V, const Type *DestTy, const Twine &Name = "") {
+  Value *CreateFPCast(Value *V, Type *DestTy, const Twine &Name = "") {
     if (V->getType() == DestTy)
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
@@ -1108,7 +1108,7 @@ public:
   // Instruction creation methods: Other Instructions
   //===--------------------------------------------------------------------===//
 
-  PHINode *CreatePHI(const Type *Ty, unsigned NumReservedValues,
+  PHINode *CreatePHI(Type *Ty, unsigned NumReservedValues,
                      const Twine &Name = "") {
     return Insert(PHINode::Create(Ty, NumReservedValues), Name);
   }
@@ -1154,7 +1154,7 @@ public:
     return Insert(SelectInst::Create(C, True, False), Name);
   }
 
-  VAArgInst *CreateVAArg(Value *List, const Type *Ty, const Twine &Name = "") {
+  VAArgInst *CreateVAArg(Value *List, Type *Ty, const Twine &Name = "") {
     return Insert(new VAArgInst(List, Ty), Name);
   }
 

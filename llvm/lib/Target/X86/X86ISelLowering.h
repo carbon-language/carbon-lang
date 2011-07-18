@@ -505,7 +505,7 @@ namespace llvm {
     /// function arguments in the caller parameter area. For X86, aggregates
     /// that contains are placed at 16-byte boundaries while the rest are at
     /// 4-byte boundaries.
-    virtual unsigned getByValTypeAlignment(const Type *Ty) const;
+    virtual unsigned getByValTypeAlignment(Type *Ty) const;
 
     /// getOptimalMemOpType - Returns the target specific optimal type for load
     /// and store operations as a result of memset, memcpy, and memmove
@@ -617,12 +617,12 @@ namespace llvm {
 
     /// isLegalAddressingMode - Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.
-    virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty)const;
+    virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty)const;
 
     /// isTruncateFree - Return true if it's free to truncate a value of
     /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
     /// register EAX to i16 by referencing its sub-register AX.
-    virtual bool isTruncateFree(const Type *Ty1, const Type *Ty2) const;
+    virtual bool isTruncateFree(Type *Ty1, Type *Ty2) const;
     virtual bool isTruncateFree(EVT VT1, EVT VT2) const;
 
     /// isZExtFree - Return true if any actual instruction that defines a
@@ -633,7 +633,7 @@ namespace llvm {
     /// does not necessarily apply to truncate instructions. e.g. on x86-64,
     /// all instructions that define 32-bit values implicit zero-extend the
     /// result out to 64 bits.
-    virtual bool isZExtFree(const Type *Ty1, const Type *Ty2) const;
+    virtual bool isZExtFree(Type *Ty1, Type *Ty2) const;
     virtual bool isZExtFree(EVT VT1, EVT VT2) const;
 
     /// isNarrowingProfitable - Return true if it's profitable to narrow

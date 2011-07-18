@@ -51,14 +51,14 @@ const CallInst *isArrayMalloc(const Value *I, const TargetData *TD);
 ///   0: PointerType is the malloc calls' return type.
 ///   1: PointerType is the bitcast's result type.
 ///  >1: Unique PointerType cannot be determined, return NULL.
-const PointerType *getMallocType(const CallInst *CI);
+PointerType *getMallocType(const CallInst *CI);
 
 /// getMallocAllocatedType - Returns the Type allocated by malloc call.
 /// The Type depends on the number of bitcast uses of the malloc call:
 ///   0: PointerType is the malloc calls' return type.
 ///   1: PointerType is the bitcast's result type.
 ///  >1: Unique PointerType cannot be determined, return NULL.
-const Type *getMallocAllocatedType(const CallInst *CI);
+Type *getMallocAllocatedType(const CallInst *CI);
 
 /// getMallocArraySize - Returns the array size of a malloc call.  If the 
 /// argument passed to malloc is a multiple of the size of the malloced type,

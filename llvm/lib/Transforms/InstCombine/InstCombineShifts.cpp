@@ -528,7 +528,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     
     uint32_t AmtSum = ShiftAmt1+ShiftAmt2;   // Fold into one big shift.
     
-    const IntegerType *Ty = cast<IntegerType>(I.getType());
+    IntegerType *Ty = cast<IntegerType>(I.getType());
     
     // Check for (X << c1) << c2  and  (X >> c1) >> c2
     if (I.getOpcode() == ShiftOp->getOpcode()) {

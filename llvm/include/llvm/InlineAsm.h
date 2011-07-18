@@ -43,7 +43,7 @@ class InlineAsm : public Value {
   bool HasSideEffects;
   bool IsAlignStack;
   
-  InlineAsm(const PointerType *Ty, const std::string &AsmString,
+  InlineAsm(PointerType *Ty, const std::string &AsmString,
             const std::string &Constraints, bool hasSideEffects,
             bool isAlignStack);
   virtual ~InlineAsm();
@@ -55,7 +55,7 @@ public:
 
   /// InlineAsm::get - Return the specified uniqued inline asm string.
   ///
-  static InlineAsm *get(const FunctionType *Ty, StringRef AsmString,
+  static InlineAsm *get(FunctionType *Ty, StringRef AsmString,
                         StringRef Constraints, bool hasSideEffects,
                         bool isAlignStack = false);
   
@@ -79,7 +79,7 @@ public:
   /// the specified constraint string is legal for the type.  This returns true
   /// if legal, false if not.
   ///
-  static bool Verify(const FunctionType *Ty, StringRef Constraints);
+  static bool Verify(FunctionType *Ty, StringRef Constraints);
 
   // Constraint String Parsing 
   enum ConstraintPrefix {

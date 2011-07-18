@@ -1046,7 +1046,7 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, EVT RetVT,
   SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
                                          TLI.getPointerTy());
 
-  const Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
+  Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
   std::pair<SDValue,SDValue> CallInfo =
     TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                     false, 0, TLI.getLibcallCallingConv(LC), false,
@@ -1067,7 +1067,7 @@ DAGTypeLegalizer::ExpandChainLibCall(RTLIB::Libcall LC,
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i) {
     EVT ArgVT = Node->getOperand(i).getValueType();
-    const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+    Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
     Entry.Node = Node->getOperand(i);
     Entry.Ty = ArgTy;
     Entry.isSExt = isSigned;
@@ -1078,7 +1078,7 @@ DAGTypeLegalizer::ExpandChainLibCall(RTLIB::Libcall LC,
                                          TLI.getPointerTy());
 
   // Splice the libcall in wherever FindInputOutputChains tells us to.
-  const Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
+  Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                     0, TLI.getLibcallCallingConv(LC), /*isTailCall=*/false,

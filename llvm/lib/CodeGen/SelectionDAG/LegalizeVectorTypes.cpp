@@ -670,7 +670,7 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
   // Store the new element.  This may be larger than the vector element type,
   // so use a truncating store.
   SDValue EltPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
-  const Type *VecType = VecVT.getTypeForEVT(*DAG.getContext());
+  Type *VecType = VecVT.getTypeForEVT(*DAG.getContext());
   unsigned Alignment =
     TLI.getTargetData()->getPrefTypeAlignment(VecType);
   Store = DAG.getTruncStore(Store, dl, Elt, EltPtr, MachinePointerInfo(), EltVT,

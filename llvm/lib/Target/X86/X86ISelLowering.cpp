@@ -1131,18 +1131,18 @@ MVT::SimpleValueType X86TargetLowering::getSetCCResultType(EVT VT) const {
 
 /// getMaxByValAlign - Helper for getByValTypeAlignment to determine
 /// the desired ByVal argument alignment.
-static void getMaxByValAlign(const Type *Ty, unsigned &MaxAlign) {
+static void getMaxByValAlign(Type *Ty, unsigned &MaxAlign) {
   if (MaxAlign == 16)
     return;
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+  if (VectorType *VTy = dyn_cast<VectorType>(Ty)) {
     if (VTy->getBitWidth() == 128)
       MaxAlign = 16;
-  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+  } else if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     unsigned EltAlign = 0;
     getMaxByValAlign(ATy->getElementType(), EltAlign);
     if (EltAlign > MaxAlign)
       MaxAlign = EltAlign;
-  } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+  } else if (StructType *STy = dyn_cast<StructType>(Ty)) {
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       unsigned EltAlign = 0;
       getMaxByValAlign(STy->getElementType(i), EltAlign);
@@ -1159,7 +1159,7 @@ static void getMaxByValAlign(const Type *Ty, unsigned &MaxAlign) {
 /// function arguments in the caller parameter area. For X86, aggregates
 /// that contain SSE vectors are placed at 16-byte boundaries while the rest
 /// are at 4-byte boundaries.
-unsigned X86TargetLowering::getByValTypeAlignment(const Type *Ty) const {
+unsigned X86TargetLowering::getByValTypeAlignment(Type *Ty) const {
   if (Subtarget->is64Bit()) {
     // Max of 8 and alignment of type.
     unsigned TyAlign = TD->getABITypeAlignment(Ty);
@@ -8118,7 +8118,7 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
 
   EVT ArgVT = Op.getNode()->getValueType(0);
-  const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+  Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
   uint32_t ArgSize = getTargetData()->getTypeAllocSize(ArgTy);
   uint8_t ArgMode;
 
@@ -8619,7 +8619,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
       NestReg = X86::ECX;
 
       // Check that ECX wasn't needed by an 'inreg' parameter.
-      const FunctionType *FTy = Func->getFunctionType();
+      FunctionType *FTy = Func->getFunctionType();
       const AttrListPtr &Attrs = Func->getAttributes();
 
       if (!Attrs.isEmpty() && !Func->isVarArg()) {
@@ -9619,7 +9619,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
 // isLegalAddressingMode - Return true if the addressing mode represented
 // by AM is legal for this target, for a load/store of the specified type.
 bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                              const Type *Ty) const {
+                                              Type *Ty) const {
   // X86 supports extremely general addressing modes.
   CodeModel::Model M = getTargetMachine().getCodeModel();
   Reloc::Model R = getTargetMachine().getRelocationModel();
@@ -9671,7 +9671,7 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
 }
 
 
-bool X86TargetLowering::isTruncateFree(const Type *Ty1, const Type *Ty2) const {
+bool X86TargetLowering::isTruncateFree(Type *Ty1, Type *Ty2) const {
   if (!Ty1->isIntegerTy() || !Ty2->isIntegerTy())
     return false;
   unsigned NumBits1 = Ty1->getPrimitiveSizeInBits();
@@ -9691,7 +9691,7 @@ bool X86TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
   return true;
 }
 
-bool X86TargetLowering::isZExtFree(const Type *Ty1, const Type *Ty2) const {
+bool X86TargetLowering::isZExtFree(Type *Ty1, Type *Ty2) const {
   // x86-64 implicitly zero-extends 32-bit results in 64-bit registers.
   return Ty1->isIntegerTy(32) && Ty2->isIntegerTy(64) && Subtarget->is64Bit();
 }
@@ -12551,7 +12551,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
          AsmPieces[1] == "${0:q}")) {
       // No need to check constraints, nothing other than the equivalent of
       // "=r,0" would be valid here.
-      const IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
+      IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
       if (!Ty || Ty->getBitWidth() % 16 != 0)
         return false;
       return IntrinsicLowering::LowerToByteSwap(CI);
@@ -12572,7 +12572,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
           AsmPieces[1] == "~{dirflag}" &&
           AsmPieces[2] == "~{flags}" &&
           AsmPieces[3] == "~{fpsr}") {
-        const IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
+        IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
         if (!Ty || Ty->getBitWidth() % 16 != 0)
           return false;
         return IntrinsicLowering::LowerToByteSwap(CI);
@@ -12603,7 +12603,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
                 AsmPieces[1] == "~{dirflag}" &&
                 AsmPieces[2] == "~{flags}" &&
                 AsmPieces[3] == "~{fpsr}") {
-              const IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
+              IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
               if (!Ty || Ty->getBitWidth() % 16 != 0)
                 return false;
               return IntrinsicLowering::LowerToByteSwap(CI);
@@ -12629,7 +12629,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
             SplitString(AsmPieces[2], Words, " \t,");
             if (Words.size() == 3 && Words[0] == "xchgl" && Words[1] == "%eax" &&
                 Words[2] == "%edx") {
-              const IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
+              IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
               if (!Ty || Ty->getBitWidth() % 16 != 0)
                 return false;
               return IntrinsicLowering::LowerToByteSwap(CI);
@@ -12700,7 +12700,7 @@ TargetLowering::ConstraintWeight
     // but allow it at the lowest weight.
   if (CallOperandVal == NULL)
     return CW_Default;
-  const Type *type = CallOperandVal->getType();
+  Type *type = CallOperandVal->getType();
   // Look at the constraint type.
   switch (*constraint) {
   default:

@@ -47,7 +47,7 @@ static bool isMallocCall(const CallInst *CI) {
   // Check malloc prototype.
   // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
   // attribute will exist.
-  const FunctionType *FTy = Callee->getFunctionType();
+  FunctionType *FTy = Callee->getFunctionType();
   if (FTy->getNumParams() != 1)
     return false;
   return FTy->getParamType(0)->isIntegerTy(32) ||
@@ -94,12 +94,12 @@ static Value *computeArraySize(const CallInst *CI, const TargetData *TD,
     return NULL;
 
   // The size of the malloc's result type must be known to determine array size.
-  const Type *T = getMallocAllocatedType(CI);
+  Type *T = getMallocAllocatedType(CI);
   if (!T || !T->isSized() || !TD)
     return NULL;
 
   unsigned ElementSize = TD->getTypeAllocSize(T);
-  if (const StructType *ST = dyn_cast<StructType>(T))
+  if (StructType *ST = dyn_cast<StructType>(T))
     ElementSize = TD->getStructLayout(ST)->getSizeInBytes();
 
   // If malloc call's arg can be determined to be a multiple of ElementSize,
@@ -133,10 +133,10 @@ const CallInst *llvm::isArrayMalloc(const Value *I, const TargetData *TD) {
 ///   0: PointerType is the calls' return type.
 ///   1: PointerType is the bitcast's result type.
 ///  >1: Unique PointerType cannot be determined, return NULL.
-const PointerType *llvm::getMallocType(const CallInst *CI) {
+PointerType *llvm::getMallocType(const CallInst *CI) {
   assert(isMalloc(CI) && "getMallocType and not malloc call");
   
-  const PointerType *MallocType = NULL;
+  PointerType *MallocType = NULL;
   unsigned NumOfBitCastUses = 0;
 
   // Determine if CallInst has a bitcast use.
@@ -164,8 +164,8 @@ const PointerType *llvm::getMallocType(const CallInst *CI) {
 ///   0: PointerType is the malloc calls' return type.
 ///   1: PointerType is the bitcast's result type.
 ///  >1: Unique PointerType cannot be determined, return NULL.
-const Type *llvm::getMallocAllocatedType(const CallInst *CI) {
-  const PointerType *PT = getMallocType(CI);
+Type *llvm::getMallocAllocatedType(const CallInst *CI) {
+  PointerType *PT = getMallocType(CI);
   return PT ? PT->getElementType() : NULL;
 }
 
@@ -201,7 +201,7 @@ const CallInst *llvm::isFreeCall(const Value *I) {
   // Check free prototype.
   // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
   // attribute will exist.
-  const FunctionType *FTy = Callee->getFunctionType();
+  FunctionType *FTy = Callee->getFunctionType();
   if (!FTy->getReturnType()->isVoidTy())
     return 0;
   if (FTy->getNumParams() != 1)

@@ -1457,7 +1457,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   default: Out << "cc" << F->getCallingConv() << " "; break;
   }
 
-  const FunctionType *FT = F->getFunctionType();
+  FunctionType *FT = F->getFunctionType();
   const AttrListPtr &Attrs = F->getAttributes();
   Attributes RetAttrs = Attrs.getRetAttributes();
   if (RetAttrs != Attribute::None)

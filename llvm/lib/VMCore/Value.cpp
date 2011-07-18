@@ -35,12 +35,12 @@ using namespace llvm;
 //                                Value Class
 //===----------------------------------------------------------------------===//
 
-static inline Type *checkType(const Type *Ty) {
+static inline Type *checkType(Type *Ty) {
   assert(Ty && "Value defined with a null type: Error!");
   return const_cast<Type*>(Ty);
 }
 
-Value::Value(const Type *ty, unsigned scid)
+Value::Value(Type *ty, unsigned scid)
   : SubclassID(scid), HasValueHandle(0),
     SubclassOptionalData(0), SubclassData(0), VTy((Type*)checkType(ty)),
     UseList(0), Name(0) {
@@ -369,7 +369,7 @@ bool Value::isDereferenceablePointer() const {
     for (User::const_op_iterator I = GEP->op_begin()+1,
          E = GEP->op_end(); I != E; ++I) {
       Value *Index = *I;
-      const Type *Ty = *GTI++;
+      Type *Ty = *GTI++;
       // Struct indices can't be out of bounds.
       if (isa<StructType>(Ty))
         continue;
@@ -380,7 +380,7 @@ bool Value::isDereferenceablePointer() const {
       if (CI->isZero())
         continue;
       // Check to see that it's within the bounds of an array.
-      const ArrayType *ATy = dyn_cast<ArrayType>(Ty);
+      ArrayType *ATy = dyn_cast<ArrayType>(Ty);
       if (!ATy)
         return false;
       if (CI->getValue().getActiveBits() > 64)

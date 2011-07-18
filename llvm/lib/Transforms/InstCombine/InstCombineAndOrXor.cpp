@@ -1224,7 +1224,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   // fold (and (cast A), (cast B)) -> (cast (and A, B))
   if (CastInst *Op0C = dyn_cast<CastInst>(Op0))
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1)) {
-      const Type *SrcTy = Op0C->getOperand(0)->getType();
+      Type *SrcTy = Op0C->getOperand(0)->getType();
       if (Op0C->getOpcode() == Op1C->getOpcode() && // same cast kind ?
           SrcTy == Op1C->getOperand(0)->getType() &&
           SrcTy->isIntOrIntVectorTy()) {
@@ -2008,7 +2008,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
     CastInst *Op1C = dyn_cast<CastInst>(Op1);
     if (Op1C && Op0C->getOpcode() == Op1C->getOpcode()) {// same cast kind ?
-      const Type *SrcTy = Op0C->getOperand(0)->getType();
+      Type *SrcTy = Op0C->getOperand(0)->getType();
       if (SrcTy == Op1C->getOperand(0)->getType() &&
           SrcTy->isIntOrIntVectorTy()) {
         Value *Op0COp = Op0C->getOperand(0), *Op1COp = Op1C->getOperand(0);
@@ -2288,7 +2288,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (Op0C->getOpcode() == Op1C->getOpcode()) { // same cast kind?
-        const Type *SrcTy = Op0C->getOperand(0)->getType();
+        Type *SrcTy = Op0C->getOperand(0)->getType();
         if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isIntegerTy() &&
             // Only do this if the casts both really cause code to be generated.
             ShouldOptimizeCast(Op0C->getOpcode(), Op0C->getOperand(0), 

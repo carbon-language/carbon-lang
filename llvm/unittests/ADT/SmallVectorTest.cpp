@@ -383,7 +383,7 @@ TEST_F(SmallVectorTest, ComparisonTest) {
 
 // Constant vector tests.
 TEST_F(SmallVectorTest, ConstVectorTest) {
-  const VectorType constVector;
+  VectorType constVector;
 
   EXPECT_EQ(0u, constVector.size());
   EXPECT_TRUE(constVector.empty());

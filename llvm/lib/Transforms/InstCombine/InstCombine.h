@@ -103,7 +103,7 @@ public:
   //
   Instruction *visitAdd(BinaryOperator &I);
   Instruction *visitFAdd(BinaryOperator &I);
-  Value *OptimizePointerDifference(Value *LHS, Value *RHS, const Type *Ty);
+  Value *OptimizePointerDifference(Value *LHS, Value *RHS, Type *Ty);
   Instruction *visitSub(BinaryOperator &I);
   Instruction *visitFSub(BinaryOperator &I);
   Instruction *visitMul(BinaryOperator &I);
@@ -197,10 +197,10 @@ public:
   Instruction *visitInstruction(Instruction &I) { return 0; }
 
 private:
-  bool ShouldChangeType(const Type *From, const Type *To) const;
+  bool ShouldChangeType(Type *From, Type *To) const;
   Value *dyn_castNegVal(Value *V) const;
   Value *dyn_castFNegVal(Value *V) const;
-  const Type *FindElementAtOffset(const Type *Ty, int64_t Offset, 
+  Type *FindElementAtOffset(Type *Ty, int64_t Offset, 
                                   SmallVectorImpl<Value*> &NewIndices);
   Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI);
                                  
@@ -209,7 +209,7 @@ private:
   /// the cast can be eliminated by some other simple transformation, we prefer
   /// to do the simplification first.
   bool ShouldOptimizeCast(Instruction::CastOps opcode,const Value *V,
-                          const Type *Ty);
+                          Type *Ty);
 
   Instruction *visitCallSite(CallSite CS);
   Instruction *tryOptimizeCall(CallInst *CI, const TargetData *TD);
@@ -357,7 +357,7 @@ private:
   Instruction *SimplifyMemSet(MemSetInst *MI);
 
 
-  Value *EvaluateInDifferentType(Value *V, const Type *Ty, bool isSigned);
+  Value *EvaluateInDifferentType(Value *V, Type *Ty, bool isSigned);
 };
 
       

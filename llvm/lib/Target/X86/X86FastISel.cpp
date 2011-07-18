@@ -134,7 +134,7 @@ private:
       (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
   }
 
-  bool isTypeLegal(const Type *Ty, MVT &VT, bool AllowI1 = false);
+  bool isTypeLegal(Type *Ty, MVT &VT, bool AllowI1 = false);
 
   bool IsMemcpySmall(uint64_t Len);
 
@@ -144,7 +144,7 @@ private:
 
 } // end anonymous namespace.
 
-bool X86FastISel::isTypeLegal(const Type *Ty, MVT &VT, bool AllowI1) {
+bool X86FastISel::isTypeLegal(Type *Ty, MVT &VT, bool AllowI1) {
   EVT evt = TLI.getValueType(Ty, /*HandleUnknown=*/true);
   if (evt == MVT::Other || !evt.isSimple())
     // Unhandled type. Halt "fast" selection and bail.
@@ -336,7 +336,7 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
     U = C;
   }
 
-  if (const PointerType *Ty = dyn_cast<PointerType>(V->getType()))
+  if (PointerType *Ty = dyn_cast<PointerType>(V->getType()))
     if (Ty->getAddressSpace() > 255)
       // Fast instruction selection doesn't support the special
       // address spaces.
@@ -399,7 +399,7 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
     for (User::const_op_iterator i = U->op_begin() + 1, e = U->op_end();
          i != e; ++i, ++GTI) {
       const Value *Op = *i;
-      if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+      if (StructType *STy = dyn_cast<StructType>(*GTI)) {
         const StructLayout *SL = TD.getStructLayout(STy);
         Disp += SL->getElementOffset(cast<ConstantInt>(Op)->getZExtValue());
         continue;
@@ -1411,7 +1411,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     // Replace "add with overflow" intrinsics with an "add" instruction followed
     // by a seto/setc instruction.
     const Function *Callee = I.getCalledFunction();
-    const Type *RetTy =
+    Type *RetTy =
       cast<StructType>(Callee->getReturnType())->getTypeAtIndex(unsigned(0));
 
     MVT VT;
@@ -1484,8 +1484,8 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   if (CC == CallingConv::Fast && GuaranteedTailCallOpt)
     return false;
 
-  const PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
-  const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
+  PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
+  FunctionType *FTy = cast<FunctionType>(PT->getElementType());
   bool isVarArg = FTy->isVarArg();
 
   // Don't know how to handle Win64 varargs yet.  Nothing special needed for
@@ -1547,8 +1547,8 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
       Flags.setZExt();
 
     if (CS.paramHasAttr(AttrInd, Attribute::ByVal)) {
-      const PointerType *Ty = cast<PointerType>(ArgVal->getType());
-      const Type *ElementTy = Ty->getElementType();
+      PointerType *Ty = cast<PointerType>(ArgVal->getType());
+      Type *ElementTy = Ty->getElementType();
       unsigned FrameSize = TD.getTypeAllocSize(ElementTy);
       unsigned FrameAlign = CS.getParamAlignment(AttrInd);
       if (!FrameAlign)
@@ -1600,7 +1600,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
     if (ArgReg == 0) return false;
 
-    const Type *ArgTy = ArgVal->getType();
+    Type *ArgTy = ArgVal->getType();
     MVT ArgVT;
     if (!isTypeLegal(ArgTy, ArgVT))
       return false;

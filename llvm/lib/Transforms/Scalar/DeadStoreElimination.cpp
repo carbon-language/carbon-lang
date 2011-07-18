@@ -264,7 +264,7 @@ static uint64_t getPointerSize(Value *V, AliasAnalysis &AA) {
   }
   
   assert(isa<Argument>(V) && "Expected AllocaInst or Argument!");
-  const PointerType *PT = cast<PointerType>(V->getType());
+  PointerType *PT = cast<PointerType>(V->getType());
   return TD->getTypeAllocSize(PT->getElementType());
 }
 

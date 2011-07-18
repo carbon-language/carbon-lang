@@ -390,7 +390,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
       return;
   }
 
-  const IntegerType *Int32Ty = Type::getInt32Ty(PN->getContext());
+  IntegerType *Int32Ty = Type::getInt32Ty(PN->getContext());
 
   // Insert new integer induction variable.
   PHINode *NewPHI = PHINode::Create(Int32Ty, 2, PN->getName()+".int", PN);
@@ -665,7 +665,7 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
   // of different sizes.
   for (IVUsers::iterator UI = IU->begin(), E = IU->end(); UI != E; ++UI) {
     Value *Op = UI->getOperandValToReplace();
-    const Type *UseTy = Op->getType();
+    Type *UseTy = Op->getType();
     Instruction *User = UI->getUser();
 
     // Compute the final addrec to expand into code.
@@ -747,7 +747,7 @@ namespace {
   // extend operations. This information is recorded by CollectExtend and
   // provides the input to WidenIV.
   struct WideIVInfo {
-    const Type *WidestNativeType; // Widest integer type created [sz]ext
+    Type *WidestNativeType; // Widest integer type created [sz]ext
     bool IsSigned;                // Was an sext user seen before a zext?
 
     WideIVInfo() : WidestNativeType(0), IsSigned(false) {}
@@ -759,7 +759,7 @@ namespace {
 /// the final width of the IV before actually widening it.
 static void CollectExtend(CastInst *Cast, bool IsSigned, WideIVInfo &WI,
                           ScalarEvolution *SE, const TargetData *TD) {
-  const Type *Ty = Cast->getType();
+  Type *Ty = Cast->getType();
   uint64_t Width = SE->getTypeSizeInBits(Ty);
   if (TD && !TD->isLegalInteger(Width))
     return;
@@ -787,7 +787,7 @@ namespace {
 class WidenIV {
   // Parameters
   PHINode *OrigPhi;
-  const Type *WideType;
+  Type *WideType;
   bool IsSigned;
 
   // Context
@@ -839,7 +839,7 @@ protected:
 };
 } // anonymous namespace
 
-static Value *getExtend( Value *NarrowOper, const Type *WideType,
+static Value *getExtend( Value *NarrowOper, Type *WideType,
                                bool IsSigned, IRBuilder<> &Builder) {
   return IsSigned ? Builder.CreateSExt(NarrowOper, WideType) :
                     Builder.CreateZExt(NarrowOper, WideType);
@@ -1489,7 +1489,7 @@ static bool canExpandBackedgeTakenCount(Loop *L, ScalarEvolution *SE) {
 /// through Truncs.
 ///
 /// TODO: Unnecessary if LFTR does not force a canonical IV.
-static const Type *getBackedgeIVType(Loop *L) {
+static Type *getBackedgeIVType(Loop *L) {
   if (!L->getExitingBlock())
     return 0;
 
@@ -1502,7 +1502,7 @@ static const Type *getBackedgeIVType(Loop *L) {
   if (!Cond)
     return 0;
 
-  const Type *Ty = 0;
+  Type *Ty = 0;
   for(User::op_iterator OI = Cond->op_begin(), OE = Cond->op_end();
       OI != OE; ++OI) {
     assert((!Ty || Ty == (*OI)->getType()) && "bad icmp operand types");
@@ -1748,7 +1748,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Compute the type of the largest recurrence expression, and decide whether
   // a canonical induction variable should be inserted.
-  const Type *LargestType = 0;
+  Type *LargestType = 0;
   bool NeedCannIV = false;
   bool ExpandBECount = canExpandBackedgeTakenCount(L, SE);
   if (ExpandBECount) {
@@ -1756,7 +1756,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     // rewriting the loop exit test condition below, which requires a
     // canonical induction variable.
     NeedCannIV = true;
-    const Type *Ty = BackedgeTakenCount->getType();
+    Type *Ty = BackedgeTakenCount->getType();
     if (DisableIVRewrite) {
       // In this mode, SimplifyIVUsers may have already widened the IV used by
       // the backedge test and inserted a Trunc on the compare's operand. Get
@@ -1772,7 +1772,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!DisableIVRewrite) {
     for (IVUsers::const_iterator I = IU->begin(), E = IU->end(); I != E; ++I) {
       NeedCannIV = true;
-      const Type *Ty =
+      Type *Ty =
         SE->getEffectiveSCEVType(I->getOperandValToReplace()->getType());
       if (!LargestType ||
           SE->getTypeSizeInBits(Ty) >

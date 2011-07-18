@@ -636,7 +636,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
                                   const Function *CalledFunc,
                                   InlineFunctionInfo &IFI,
                                   unsigned ByValAlignment) {
-  const Type *AggTy = cast<PointerType>(Arg->getType())->getElementType();
+  Type *AggTy = cast<PointerType>(Arg->getType())->getElementType();
 
   // If the called function is readonly, then it could not mutate the caller's
   // copy of the byval'd memory.  In this case, it is safe to elide the copy and
@@ -726,7 +726,7 @@ static bool isUsedByLifetimeMarker(Value *V) {
 // hasLifetimeMarkers - Check whether the given alloca already has
 // lifetime.start or lifetime.end intrinsics.
 static bool hasLifetimeMarkers(AllocaInst *AI) {
-  const Type *Int8PtrTy = Type::getInt8PtrTy(AI->getType()->getContext());
+  Type *Int8PtrTy = Type::getInt8PtrTy(AI->getType()->getContext());
   if (AI->getType() == Int8PtrTy)
     return isUsedByLifetimeMarker(AI);
 
@@ -1090,7 +1090,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
 
   // Handle all of the return instructions that we just cloned in, and eliminate
   // any users of the original call/invoke instruction.
-  const Type *RTy = CalledFunc->getReturnType();
+  Type *RTy = CalledFunc->getReturnType();
 
   PHINode *PHI = 0;
   if (Returns.size() > 1) {

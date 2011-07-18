@@ -22,7 +22,7 @@ namespace {
 
 Function *makeFakeFunction() {
   std::vector<Type*> params;
-  const FunctionType *FTy =
+  FunctionType *FTy =
       FunctionType::get(Type::getVoidTy(getGlobalContext()), params, false);
   return Function::Create(FTy, GlobalValue::ExternalLinkage);
 }

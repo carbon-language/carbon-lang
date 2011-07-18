@@ -188,7 +188,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     return BinaryOperator::CreateMul(LHS, AddOne(C2));
 
   // A+B --> A|B iff A and B have no bits set in common.
-  if (const IntegerType *IT = dyn_cast<IntegerType>(I.getType())) {
+  if (IntegerType *IT = dyn_cast<IntegerType>(I.getType())) {
     APInt Mask = APInt::getAllOnesValue(IT->getBitWidth());
     APInt LHSKnownOne(IT->getBitWidth(), 0);
     APInt LHSKnownZero(IT->getBitWidth(), 0);
@@ -401,7 +401,7 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
 Value *InstCombiner::EmitGEPOffset(User *GEP) {
   TargetData &TD = *getTargetData();
   gep_type_iterator GTI = gep_type_begin(GEP);
-  const Type *IntPtrTy = TD.getIntPtrType(GEP->getContext());
+  Type *IntPtrTy = TD.getIntPtrType(GEP->getContext());
   Value *Result = Constant::getNullValue(IntPtrTy);
 
   // If the GEP is inbounds, we know that none of the addressing operations will
@@ -420,7 +420,7 @@ Value *InstCombiner::EmitGEPOffset(User *GEP) {
       if (OpC->isZero()) continue;
       
       // Handle a struct index, which adds its field offset to the pointer.
-      if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+      if (StructType *STy = dyn_cast<StructType>(*GTI)) {
         Size = TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
         
         if (Size)
@@ -460,7 +460,7 @@ Value *InstCombiner::EmitGEPOffset(User *GEP) {
 /// operands to the ptrtoint instructions for the LHS/RHS of the subtract.
 ///
 Value *InstCombiner::OptimizePointerDifference(Value *LHS, Value *RHS,
-                                               const Type *Ty) {
+                                               Type *Ty) {
   assert(TD && "Must have target data info for this");
   
   // If LHS is a gep based on RHS or RHS is a gep based on LHS, we can optimize

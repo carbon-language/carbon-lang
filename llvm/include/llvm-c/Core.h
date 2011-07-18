@@ -1136,7 +1136,7 @@ namespace llvm {
     return reinterpret_cast<Type**>(Tys);
   }
   
-  inline LLVMTypeRef *wrap(const Type **Tys) {
+  inline LLVMTypeRef *wrap(Type **Tys) {
     return reinterpret_cast<LLVMTypeRef*>(const_cast<Type**>(Tys));
   }
   

@@ -88,7 +88,7 @@ void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
   assert(((GV->hasExternalLinkage() ||
     GV->hasWeakLinkage()) ||
     GV->hasLinkOnceLinkage()) && "Unexpected linkage");
-  if (const ArrayType *ATy = dyn_cast<ArrayType>(
+  if (ArrayType *ATy = dyn_cast<ArrayType>(
     cast<PointerType>(GV->getType())->getElementType())) {
     OutStreamer.EmitSymbolAttribute(Sym, MCSA_Global);
     // FIXME: MCStreamerize.

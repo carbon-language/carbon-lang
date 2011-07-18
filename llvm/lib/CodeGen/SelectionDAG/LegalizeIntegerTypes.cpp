@@ -2176,9 +2176,9 @@ void DAGTypeLegalizer::ExpandIntRes_UADDSUBO(SDNode *N,
 void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
                                           SDValue &Lo, SDValue &Hi) {
   EVT VT = N->getValueType(0);
-  const Type *RetTy = VT.getTypeForEVT(*DAG.getContext());
+  Type *RetTy = VT.getTypeForEVT(*DAG.getContext());
   EVT PtrVT = TLI.getPointerTy();
-  const Type *PtrTy = PtrVT.getTypeForEVT(*DAG.getContext());
+  Type *PtrTy = PtrVT.getTypeForEVT(*DAG.getContext());
   DebugLoc dl = N->getDebugLoc();
 
   // A divide for UMULO should be faster than a function call.
@@ -2222,7 +2222,7 @@ void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     EVT ArgVT = N->getOperand(i).getValueType();
-    const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+    Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
     Entry.Node = N->getOperand(i);
     Entry.Ty = ArgTy;
     Entry.isSExt = true;

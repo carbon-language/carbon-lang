@@ -100,8 +100,8 @@ namespace {
       GlobalCmp(const TargetData *td) : TD(td) { }
 
       bool operator()(const GlobalVariable *GV1, const GlobalVariable *GV2) {
-        const Type *Ty1 = cast<PointerType>(GV1->getType())->getElementType();
-        const Type *Ty2 = cast<PointerType>(GV2->getType())->getElementType();
+        Type *Ty1 = cast<PointerType>(GV1->getType())->getElementType();
+        Type *Ty2 = cast<PointerType>(GV2->getType())->getElementType();
 
         return (TD->getTypeAllocSize(Ty1) < TD->getTypeAllocSize(Ty2));
       }
@@ -123,7 +123,7 @@ bool ARMGlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
   // FIXME: Find better heuristics
   std::stable_sort(Globals.begin(), Globals.end(), GlobalCmp(TD));
 
-  const Type *Int32Ty = Type::getInt32Ty(M.getContext());
+  Type *Int32Ty = Type::getInt32Ty(M.getContext());
 
   for (size_t i = 0, e = Globals.size(); i != e; ) {
     size_t j = 0;
@@ -176,7 +176,7 @@ bool ARMGlobalMerge::doInitialization(Module &M) {
 
     // Ignore fancy-aligned globals for now.
     unsigned Alignment = I->getAlignment();
-    const Type *Ty = I->getType()->getElementType();
+    Type *Ty = I->getType()->getElementType();
     if (Alignment > TD->getABITypeAlignment(Ty))
       continue;
 

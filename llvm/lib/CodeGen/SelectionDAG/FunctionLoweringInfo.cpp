@@ -78,7 +78,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
   for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
     if (const AllocaInst *AI = dyn_cast<AllocaInst>(I))
       if (const ConstantInt *CUI = dyn_cast<ConstantInt>(AI->getArraySize())) {
-        const Type *Ty = AI->getAllocatedType();
+        Type *Ty = AI->getAllocatedType();
         uint64_t TySize = TLI.getTargetData()->getTypeAllocSize(Ty);
         unsigned Align =
           std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty),
@@ -216,7 +216,7 @@ unsigned FunctionLoweringInfo::CreateReg(EVT VT) {
 /// In the case that the given value has struct or array type, this function
 /// will assign registers for each member or element.
 ///
-unsigned FunctionLoweringInfo::CreateRegs(const Type *Ty) {
+unsigned FunctionLoweringInfo::CreateRegs(Type *Ty) {
   SmallVector<EVT, 4> ValueVTs;
   ComputeValueVTs(TLI, Ty, ValueVTs);
 
@@ -260,7 +260,7 @@ FunctionLoweringInfo::GetLiveOutRegInfo(unsigned Reg, unsigned BitWidth) {
 /// ComputePHILiveOutRegInfo - Compute LiveOutInfo for a PHI's destination
 /// register based on the LiveOutInfo of its operands.
 void FunctionLoweringInfo::ComputePHILiveOutRegInfo(const PHINode *PN) {
-  const Type *Ty = PN->getType();
+  Type *Ty = PN->getType();
   if (!Ty->isIntegerTy() || Ty->isVectorTy())
     return;
 

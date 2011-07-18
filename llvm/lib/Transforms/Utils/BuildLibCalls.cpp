@@ -58,8 +58,8 @@ Value *llvm::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B,
   AttributeWithIndex AWI =
     AttributeWithIndex::get(~0u, Attribute::ReadOnly | Attribute::NoUnwind);
 
-  const Type *I8Ptr = B.getInt8PtrTy();
-  const Type *I32Ty = B.getInt32Ty();
+  Type *I8Ptr = B.getInt8PtrTy();
+  Type *I32Ty = B.getInt32Ty();
   Constant *StrChr = M->getOrInsertFunction("strchr", AttrListPtr::get(&AWI, 1),
                                             I8Ptr, I8Ptr, I32Ty, NULL);
   CallInst *CI = B.CreateCall2(StrChr, CastToCStr(Ptr, B),
@@ -102,7 +102,7 @@ Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
   AttributeWithIndex AWI[2];
   AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
   AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
-  const Type *I8Ptr = B.getInt8PtrTy();
+  Type *I8Ptr = B.getInt8PtrTy();
   Value *StrCpy = M->getOrInsertFunction(Name, AttrListPtr::get(AWI, 2),
                                          I8Ptr, I8Ptr, I8Ptr, NULL);
   CallInst *CI = B.CreateCall2(StrCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
@@ -120,7 +120,7 @@ Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
   AttributeWithIndex AWI[2];
   AWI[0] = AttributeWithIndex::get(2, Attribute::NoCapture);
   AWI[1] = AttributeWithIndex::get(~0u, Attribute::NoUnwind);
-  const Type *I8Ptr = B.getInt8PtrTy();
+  Type *I8Ptr = B.getInt8PtrTy();
   Value *StrNCpy = M->getOrInsertFunction(Name, AttrListPtr::get(AWI, 2),
                                           I8Ptr, I8Ptr, I8Ptr,
                                           Len->getType(), NULL);
@@ -361,7 +361,7 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
   this->CI = CI;
   Function *Callee = CI->getCalledFunction();
   StringRef Name = Callee->getName();
-  const FunctionType *FT = Callee->getFunctionType();
+  FunctionType *FT = Callee->getFunctionType();
   LLVMContext &Context = CI->getParent()->getContext();
   IRBuilder<> B(CI);
 

@@ -47,7 +47,7 @@ struct ConvertConstantType;
 class ConstantInt : public Constant {
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
-  ConstantInt(const IntegerType *Ty, const APInt& V);
+  ConstantInt(IntegerType *Ty, const APInt& V);
   APInt Val;
 protected:
   // allocate space for exactly zero operands
@@ -57,12 +57,12 @@ protected:
 public:
   static ConstantInt *getTrue(LLVMContext &Context);
   static ConstantInt *getFalse(LLVMContext &Context);
-  static Constant *getTrue(const Type *Ty);
-  static Constant *getFalse(const Type *Ty);
+  static Constant *getTrue(Type *Ty);
+  static Constant *getFalse(Type *Ty);
   
   /// If Ty is a vector type, return a Constant with a splat of the given
   /// value. Otherwise return a ConstantInt for the given value.
-  static Constant *get(const Type *Ty, uint64_t V, bool isSigned = false);
+  static Constant *get(Type *Ty, uint64_t V, bool isSigned = false);
                               
   /// Return a ConstantInt with the specified integer value for the specified
   /// type. If the type is wider than 64 bits, the value will be zero-extended
@@ -70,7 +70,7 @@ public:
   /// be interpreted as a 64-bit signed integer and sign-extended to fit
   /// the type.
   /// @brief Get a ConstantInt for a specific value.
-  static ConstantInt *get(const IntegerType *Ty, uint64_t V,
+  static ConstantInt *get(IntegerType *Ty, uint64_t V,
                           bool isSigned = false);
 
   /// Return a ConstantInt with the specified value for the specified type. The
@@ -78,8 +78,8 @@ public:
   /// either getSExtValue() or getZExtValue() will yield a correctly sized and
   /// signed value for the type Ty.
   /// @brief Get a ConstantInt for a specific signed value.
-  static ConstantInt *getSigned(const IntegerType *Ty, int64_t V);
-  static Constant *getSigned(const Type *Ty, int64_t V);
+  static ConstantInt *getSigned(IntegerType *Ty, int64_t V);
+  static Constant *getSigned(Type *Ty, int64_t V);
   
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.
@@ -87,12 +87,12 @@ public:
 
   /// Return a ConstantInt constructed from the string strStart with the given
   /// radix. 
-  static ConstantInt *get(const IntegerType *Ty, StringRef Str,
+  static ConstantInt *get(IntegerType *Ty, StringRef Str,
                           uint8_t radix);
   
   /// If Ty is a vector type, return a Constant with a splat of the given
   /// value. Otherwise return a ConstantInt for the given value.
-  static Constant *get(const Type* Ty, const APInt& V);
+  static Constant *get(Type* Ty, const APInt& V);
   
   /// Return the constant as an APInt value reference. This allows clients to
   /// obtain a copy of the value, with all its precision in tact.
@@ -133,8 +133,8 @@ public:
   /// getType - Specialize the getType() method to always return an IntegerType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
-  inline const IntegerType *getType() const {
-    return reinterpret_cast<const IntegerType*>(Value::getType());
+  inline IntegerType *getType() const {
+    return reinterpret_cast<IntegerType*>(Value::getType());
   }
 
   /// This static method returns true if the type Ty is big enough to 
@@ -146,8 +146,8 @@ public:
   /// to the appropriate unsigned type before calling the method.
   /// @returns true if V is a valid value for type Ty
   /// @brief Determine if the value is in range for the given type.
-  static bool isValueValidForType(const Type *Ty, uint64_t V);
-  static bool isValueValidForType(const Type *Ty, int64_t V);
+  static bool isValueValidForType(Type *Ty, uint64_t V);
+  static bool isValueValidForType(Type *Ty, int64_t V);
 
   bool isNegative() const { return Val.isNegative(); }
 
@@ -233,7 +233,7 @@ class ConstantFP : public Constant {
   ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
   friend class LLVMContextImpl;
 protected:
-  ConstantFP(const Type *Ty, const APFloat& V);
+  ConstantFP(Type *Ty, const APFloat& V);
 protected:
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
@@ -243,20 +243,20 @@ public:
   /// Floating point negation must be implemented with f(x) = -0.0 - x. This
   /// method returns the negative zero constant for floating point or vector
   /// floating point types; for all other types, it returns the null value.
-  static Constant *getZeroValueForNegation(const Type *Ty);
+  static Constant *getZeroValueForNegation(Type *Ty);
   
   /// get() - This returns a ConstantFP, or a vector containing a splat of a
   /// ConstantFP, for the specified value in the specified type.  This should
   /// only be used for simple constant values like 2.0/1.0 etc, that are
   /// known-valid both as host double and as the target format.
-  static Constant *get(const Type* Ty, double V);
-  static Constant *get(const Type* Ty, StringRef Str);
+  static Constant *get(Type* Ty, double V);
+  static Constant *get(Type* Ty, StringRef Str);
   static ConstantFP *get(LLVMContext &Context, const APFloat &V);
-  static ConstantFP *getNegativeZero(const Type* Ty);
-  static ConstantFP *getInfinity(const Type *Ty, bool Negative = false);
+  static ConstantFP *getNegativeZero(Type* Ty);
+  static ConstantFP *getInfinity(Type *Ty, bool Negative = false);
   
   /// isValueValidForType - return true if Ty is big enough to represent V.
-  static bool isValueValidForType(const Type *Ty, const APFloat &V);
+  static bool isValueValidForType(Type *Ty, const APFloat &V);
   inline const APFloat &getValueAPF() const { return Val; }
 
   /// isZero - Return true if the value is positive or negative zero.
@@ -300,7 +300,7 @@ class ConstantAggregateZero : public Constant {
   void *operator new(size_t, unsigned);                      // DO NOT IMPLEMENT
   ConstantAggregateZero(const ConstantAggregateZero &);      // DO NOT IMPLEMENT
 protected:
-  explicit ConstantAggregateZero(const Type *ty)
+  explicit ConstantAggregateZero(Type *ty)
     : Constant(ty, ConstantAggregateZeroVal, 0, 0) {}
 protected:
   // allocate space for exactly zero operands
@@ -308,7 +308,7 @@ protected:
     return User::operator new(s, 0);
   }
 public:
-  static ConstantAggregateZero* get(const Type *Ty);
+  static ConstantAggregateZero* get(Type *Ty);
   
   virtual void destroyConstant();
 
@@ -329,10 +329,10 @@ class ConstantArray : public Constant {
                                     std::vector<Constant*> >;
   ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
 protected:
-  ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
+  ConstantArray(ArrayType *T, const std::vector<Constant*> &Val);
 public:
   // ConstantArray accessors
-  static Constant *get(const ArrayType *T, ArrayRef<Constant*> V);
+  static Constant *get(ArrayType *T, ArrayRef<Constant*> V);
                              
   /// This method constructs a ConstantArray and initializes it with a text
   /// string. The default behavior (AddNull==true) causes a null terminator to
@@ -349,8 +349,8 @@ public:
   /// getType - Specialize the getType() method to always return an ArrayType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
-  inline const ArrayType *getType() const {
-    return reinterpret_cast<const ArrayType*>(Value::getType());
+  inline ArrayType *getType() const {
+    return reinterpret_cast<ArrayType*>(Value::getType());
   }
 
   /// isString - This method returns true if the array is an array of i8 and
@@ -400,11 +400,11 @@ class ConstantStruct : public Constant {
                                     std::vector<Constant*> >;
   ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
 protected:
-  ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
+  ConstantStruct(StructType *T, const std::vector<Constant*> &Val);
 public:
   // ConstantStruct accessors
-  static Constant *get(const StructType *T, ArrayRef<Constant*> V);
-  static Constant *get(const StructType *T, ...) END_WITH_NULL;
+  static Constant *get(StructType *T, ArrayRef<Constant*> V);
+  static Constant *get(StructType *T, ...) END_WITH_NULL;
 
   /// getAnon - Return an anonymous struct that has the specified
   /// elements.  If the struct is possibly empty, then you must specify a
@@ -431,8 +431,8 @@ public:
 
   /// getType() specialization - Reduce amount of casting...
   ///
-  inline const StructType *getType() const {
-    return reinterpret_cast<const StructType*>(Value::getType());
+  inline StructType *getType() const {
+    return reinterpret_cast<StructType*>(Value::getType());
   }
 
   virtual void destroyConstant();
@@ -461,7 +461,7 @@ class ConstantVector : public Constant {
                                     std::vector<Constant*> >;
   ConstantVector(const ConstantVector &);      // DO NOT IMPLEMENT
 protected:
-  ConstantVector(const VectorType *T, const std::vector<Constant*> &Val);
+  ConstantVector(VectorType *T, const std::vector<Constant*> &Val);
 public:
   // ConstantVector accessors
   static Constant *get(ArrayRef<Constant*> V);
@@ -472,8 +472,8 @@ public:
   /// getType - Specialize the getType() method to always return a VectorType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
-  inline const VectorType *getType() const {
-    return reinterpret_cast<const VectorType*>(Value::getType());
+  inline VectorType *getType() const {
+    return reinterpret_cast<VectorType*>(Value::getType());
   }
   
   /// This function will return true iff every element in this vector constant
@@ -511,8 +511,8 @@ class ConstantPointerNull : public Constant {
   void *operator new(size_t, unsigned);                  // DO NOT IMPLEMENT
   ConstantPointerNull(const ConstantPointerNull &);      // DO NOT IMPLEMENT
 protected:
-  explicit ConstantPointerNull(const PointerType *T)
-    : Constant(reinterpret_cast<const Type*>(T),
+  explicit ConstantPointerNull(PointerType *T)
+    : Constant(reinterpret_cast<Type*>(T),
                Value::ConstantPointerNullVal, 0, 0) {}
 
 protected:
@@ -522,15 +522,15 @@ protected:
   }
 public:
   /// get() - Static factory methods - Return objects of the specified value
-  static ConstantPointerNull *get(const PointerType *T);
+  static ConstantPointerNull *get(PointerType *T);
 
   virtual void destroyConstant();
 
   /// getType - Specialize the getType() method to always return an PointerType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
-  inline const PointerType *getType() const {
-    return reinterpret_cast<const PointerType*>(Value::getType());
+  inline PointerType *getType() const {
+    return reinterpret_cast<PointerType*>(Value::getType());
   }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -591,7 +591,7 @@ class ConstantExpr : public Constant {
   friend struct ConvertConstantType<ConstantExpr, Type>;
 
 protected:
-  ConstantExpr(const Type *ty, unsigned Opcode, Use *Ops, unsigned NumOps)
+  ConstantExpr(Type *ty, unsigned Opcode, Use *Ops, unsigned NumOps)
     : Constant(ty, ConstantExprVal, Ops, NumOps) {
     // Operation type (an Instruction opcode) is stored as the SubclassData.
     setValueSubclassData(Opcode);
@@ -605,23 +605,23 @@ public:
 
   /// getAlignOf constant expr - computes the alignment of a type in a target
   /// independent way (Note: the return type is an i64).
-  static Constant *getAlignOf(const Type *Ty);
+  static Constant *getAlignOf(Type *Ty);
   
   /// getSizeOf constant expr - computes the (alloc) size of a type (in
   /// address-units, not bits) in a target independent way (Note: the return
   /// type is an i64).
   ///
-  static Constant *getSizeOf(const Type *Ty);
+  static Constant *getSizeOf(Type *Ty);
 
   /// getOffsetOf constant expr - computes the offset of a struct field in a 
   /// target independent way (Note: the return type is an i64).
   ///
-  static Constant *getOffsetOf(const StructType *STy, unsigned FieldNo);
+  static Constant *getOffsetOf(StructType *STy, unsigned FieldNo);
 
   /// getOffsetOf constant expr - This is a generalized form of getOffsetOf,
   /// which supports any aggregate type, and any Constant index.
   ///
-  static Constant *getOffsetOf(const Type *Ty, Constant *FieldNo);
+  static Constant *getOffsetOf(Type *Ty, Constant *FieldNo);
   
   static Constant *getNeg(Constant *C, bool HasNUW = false, bool HasNSW =false);
   static Constant *getFNeg(Constant *C);
@@ -648,18 +648,18 @@ public:
                           bool HasNUW = false, bool HasNSW = false);
   static Constant *getLShr(Constant *C1, Constant *C2, bool isExact = false);
   static Constant *getAShr(Constant *C1, Constant *C2, bool isExact = false);
-  static Constant *getTrunc   (Constant *C, const Type *Ty);
-  static Constant *getSExt    (Constant *C, const Type *Ty);
-  static Constant *getZExt    (Constant *C, const Type *Ty);
-  static Constant *getFPTrunc (Constant *C, const Type *Ty);
-  static Constant *getFPExtend(Constant *C, const Type *Ty);
-  static Constant *getUIToFP  (Constant *C, const Type *Ty);
-  static Constant *getSIToFP  (Constant *C, const Type *Ty);
-  static Constant *getFPToUI  (Constant *C, const Type *Ty);
-  static Constant *getFPToSI  (Constant *C, const Type *Ty);
-  static Constant *getPtrToInt(Constant *C, const Type *Ty);
-  static Constant *getIntToPtr(Constant *C, const Type *Ty);
-  static Constant *getBitCast (Constant *C, const Type *Ty);
+  static Constant *getTrunc   (Constant *C, Type *Ty);
+  static Constant *getSExt    (Constant *C, Type *Ty);
+  static Constant *getZExt    (Constant *C, Type *Ty);
+  static Constant *getFPTrunc (Constant *C, Type *Ty);
+  static Constant *getFPExtend(Constant *C, Type *Ty);
+  static Constant *getUIToFP  (Constant *C, Type *Ty);
+  static Constant *getSIToFP  (Constant *C, Type *Ty);
+  static Constant *getFPToUI  (Constant *C, Type *Ty);
+  static Constant *getFPToSI  (Constant *C, Type *Ty);
+  static Constant *getPtrToInt(Constant *C, Type *Ty);
+  static Constant *getIntToPtr(Constant *C, Type *Ty);
+  static Constant *getBitCast (Constant *C, Type *Ty);
 
   static Constant *getNSWNeg(Constant *C) { return getNeg(C, false, true); }
   static Constant *getNUWNeg(Constant *C) { return getNeg(C, true, false); }
@@ -708,44 +708,44 @@ public:
   static Constant *getCast(
     unsigned ops,  ///< The opcode for the conversion
     Constant *C,   ///< The constant to be converted
-    const Type *Ty ///< The type to which the constant is converted
+    Type *Ty ///< The type to which the constant is converted
   );
 
   // @brief Create a ZExt or BitCast cast constant expression
   static Constant *getZExtOrBitCast(
     Constant *C,   ///< The constant to zext or bitcast
-    const Type *Ty ///< The type to zext or bitcast C to
+    Type *Ty ///< The type to zext or bitcast C to
   );
 
   // @brief Create a SExt or BitCast cast constant expression 
   static Constant *getSExtOrBitCast(
     Constant *C,   ///< The constant to sext or bitcast
-    const Type *Ty ///< The type to sext or bitcast C to
+    Type *Ty ///< The type to sext or bitcast C to
   );
 
   // @brief Create a Trunc or BitCast cast constant expression
   static Constant *getTruncOrBitCast(
     Constant *C,   ///< The constant to trunc or bitcast
-    const Type *Ty ///< The type to trunc or bitcast C to
+    Type *Ty ///< The type to trunc or bitcast C to
   );
 
   /// @brief Create a BitCast or a PtrToInt cast constant expression
   static Constant *getPointerCast(
     Constant *C,   ///< The pointer value to be casted (operand 0)
-    const Type *Ty ///< The type to which cast should be made
+    Type *Ty ///< The type to which cast should be made
   );
 
   /// @brief Create a ZExt, Bitcast or Trunc for integer -> integer casts
   static Constant *getIntegerCast(
     Constant *C,    ///< The integer constant to be casted 
-    const Type *Ty, ///< The integer type to cast to
+    Type *Ty, ///< The integer type to cast to
     bool isSigned   ///< Whether C should be treated as signed or not
   );
 
   /// @brief Create a FPExt, Bitcast or FPTrunc for fp -> fp casts
   static Constant *getFPCast(
     Constant *C,    ///< The integer constant to be casted 
-    const Type *Ty ///< The integer type to cast to
+    Type *Ty ///< The integer type to cast to
   );
 
   /// @brief Return true if this is a convert constant expression
@@ -845,7 +845,7 @@ public:
   /// operands replaced with the specified values and with the specified result
   /// type.  The specified array must have the same number of operands as our
   /// current one.
-  Constant *getWithOperands(ArrayRef<Constant*> Ops, const Type *Ty) const;
+  Constant *getWithOperands(ArrayRef<Constant*> Ops, Type *Ty) const;
 
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
@@ -886,7 +886,7 @@ class UndefValue : public Constant {
   void *operator new(size_t, unsigned); // DO NOT IMPLEMENT
   UndefValue(const UndefValue &);      // DO NOT IMPLEMENT
 protected:
-  explicit UndefValue(const Type *T) : Constant(T, UndefValueVal, 0, 0) {}
+  explicit UndefValue(Type *T) : Constant(T, UndefValueVal, 0, 0) {}
 protected:
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
@@ -896,7 +896,7 @@ public:
   /// get() - Static factory methods - Return an 'undef' object of the specified
   /// type.
   ///
-  static UndefValue *get(const Type *T);
+  static UndefValue *get(Type *T);
 
   virtual void destroyConstant();
 

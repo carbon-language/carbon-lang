@@ -103,7 +103,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
   assert(V != 0 && "Null pointer of Value???");
   assert(Depth <= 6 && "Limit Search Depth");
   uint32_t BitWidth = DemandedMask.getBitWidth();
-  const Type *VTy = V->getType();
+  Type *VTy = V->getType();
   assert((TD || !VTy->isPointerTy()) &&
          "SimplifyDemandedBits needs to know bit widths!");
   assert((!TD || TD->getTypeSizeInBits(VTy->getScalarType()) == BitWidth) &&
@@ -404,8 +404,8 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     if (!I->getOperand(0)->getType()->isIntOrIntVectorTy())
       return 0;  // vector->int or fp->int?
 
-    if (const VectorType *DstVTy = dyn_cast<VectorType>(I->getType())) {
-      if (const VectorType *SrcVTy =
+    if (VectorType *DstVTy = dyn_cast<VectorType>(I->getType())) {
+      if (VectorType *SrcVTy =
             dyn_cast<VectorType>(I->getOperand(0)->getType())) {
         if (DstVTy->getNumElements() != SrcVTy->getNumElements())
           // Don't touch a bitcast between vectors of different element counts.
@@ -826,7 +826,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
 
   UndefElts = 0;
   if (ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
-    const Type *EltTy = cast<VectorType>(V->getType())->getElementType();
+    Type *EltTy = cast<VectorType>(V->getType())->getElementType();
     Constant *Undef = UndefValue::get(EltTy);
 
     std::vector<Constant*> Elts;
@@ -855,7 +855,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     if (DemandedElts.isAllOnesValue())
       return 0;
     
-    const Type *EltTy = cast<VectorType>(V->getType())->getElementType();
+    Type *EltTy = cast<VectorType>(V->getType())->getElementType();
     Constant *Zero = Constant::getNullValue(EltTy);
     Constant *Undef = UndefValue::get(EltTy);
     std::vector<Constant*> Elts;
@@ -992,7 +992,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
   }
   case Instruction::BitCast: {
     // Vector->vector casts only.
-    const VectorType *VTy = dyn_cast<VectorType>(I->getOperand(0)->getType());
+    VectorType *VTy = dyn_cast<VectorType>(I->getOperand(0)->getType());
     if (!VTy) break;
     unsigned InVWidth = VTy->getNumElements();
     APInt InputDemandedElts(InVWidth, 0);

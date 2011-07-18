@@ -35,12 +35,12 @@ class MDSymbolTable;
 
 class ValueEnumerator {
 public:
-  typedef std::vector<const Type*> TypeList;
+  typedef std::vector<Type*> TypeList;
 
   // For each value, we remember its Value* and occurrence frequency.
   typedef std::vector<std::pair<const Value*, unsigned> > ValueList;
 private:
-  typedef DenseMap<const Type*, unsigned> TypeMapType;
+  typedef DenseMap<Type*, unsigned> TypeMapType;
   TypeMapType TypeMap;
   TypeList Types;
 
@@ -85,7 +85,7 @@ public:
 
   unsigned getValueID(const Value *V) const;
 
-  unsigned getTypeID(const Type *T) const {
+  unsigned getTypeID(Type *T) const {
     TypeMapType::const_iterator I = TypeMap.find(T);
     assert(I != TypeMap.end() && "Type not in ValueEnumerator!");
     return I->second-1;
@@ -140,7 +140,7 @@ private:
   void EnumerateFunctionLocalMetadata(const MDNode *N);
   void EnumerateNamedMDNode(const NamedMDNode *NMD);
   void EnumerateValue(const Value *V);
-  void EnumerateType(const Type *T);
+  void EnumerateType(Type *T);
   void EnumerateOperandType(const Value *V);
   void EnumerateAttributes(const AttrListPtr &PAL);
   

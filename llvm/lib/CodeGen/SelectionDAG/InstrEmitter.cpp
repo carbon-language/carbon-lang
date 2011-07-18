@@ -356,7 +356,7 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
   } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op)) {
     int Offset = CP->getOffset();
     unsigned Align = CP->getAlignment();
-    const Type *Type = CP->getType();
+    Type *Type = CP->getType();
     // MachineConstantPool wants an explicit alignment.
     if (Align == 0) {
       Align = TM->getTargetData()->getPrefTypeAlignment(Type);

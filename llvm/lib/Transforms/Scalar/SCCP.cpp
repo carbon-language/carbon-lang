@@ -241,7 +241,7 @@ public:
   /// this method must be called.
   void AddTrackedFunction(Function *F) {
     // Add an entry, F -> undef.
-    if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
+    if (StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
       MRVFunctionsTracked.insert(F);
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
         TrackedMultipleRetVals.insert(std::make_pair(std::make_pair(F, i),
@@ -302,7 +302,7 @@ public:
   /// markAnythingOverdefined - Mark the specified value overdefined.  This
   /// works with both scalars and structs.
   void markAnythingOverdefined(Value *V) {
-    if (const StructType *STy = dyn_cast<StructType>(V->getType()))
+    if (StructType *STy = dyn_cast<StructType>(V->getType()))
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
         markOverdefined(getStructValueState(V, i), V);
     else
@@ -417,7 +417,7 @@ private:
       else if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C))
         LV.markConstant(CS->getOperand(i));      // Constants are constant.
       else if (isa<ConstantAggregateZero>(C)) {
-        const Type *FieldTy = cast<StructType>(V->getType())->getElementType(i);
+        Type *FieldTy = cast<StructType>(V->getType())->getElementType(i);
         LV.markConstant(Constant::getNullValue(FieldTy));
       } else
         LV.markOverdefined();      // Unknown sort of constant.
@@ -772,7 +772,7 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
   
   // Handle functions that return multiple values.
   if (!TrackedMultipleRetVals.empty()) {
-    if (const StructType *STy = dyn_cast<StructType>(ResultOp->getType()))
+    if (StructType *STy = dyn_cast<StructType>(ResultOp->getType()))
       if (MRVFunctionsTracked.count(F))
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
           mergeInValue(TrackedMultipleRetVals[std::make_pair(F, i)], F,
@@ -825,7 +825,7 @@ void SCCPSolver::visitExtractValueInst(ExtractValueInst &EVI) {
 }
 
 void SCCPSolver::visitInsertValueInst(InsertValueInst &IVI) {
-  const StructType *STy = dyn_cast<StructType>(IVI.getType());
+  StructType *STy = dyn_cast<StructType>(IVI.getType());
   if (STy == 0)
     return markOverdefined(&IVI);
   
@@ -925,7 +925,7 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
         // Could annihilate value.
         if (I.getOpcode() == Instruction::And)
           markConstant(IV, &I, Constant::getNullValue(I.getType()));
-        else if (const VectorType *PT = dyn_cast<VectorType>(I.getType()))
+        else if (VectorType *PT = dyn_cast<VectorType>(I.getType()))
           markConstant(IV, &I, Constant::getAllOnesValue(PT));
         else
           markConstant(IV, &I,
@@ -1303,7 +1303,7 @@ CallOverdefined:
         continue;
       }
       
-      if (const StructType *STy = dyn_cast<StructType>(AI->getType())) {
+      if (StructType *STy = dyn_cast<StructType>(AI->getType())) {
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
           LatticeVal CallArg = getStructValueState(*CAI, i);
           mergeInValue(getStructValueState(AI, i), AI, CallArg);
@@ -1315,7 +1315,7 @@ CallOverdefined:
   }
   
   // If this is a single/zero retval case, see if we're tracking the function.
-  if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
+  if (StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
     if (!MRVFunctionsTracked.count(F))
       goto CallOverdefined;  // Not tracking this callee.
     
@@ -1419,7 +1419,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
       // Look for instructions which produce undef values.
       if (I->getType()->isVoidTy()) continue;
       
-      if (const StructType *STy = dyn_cast<StructType>(I->getType())) {
+      if (StructType *STy = dyn_cast<StructType>(I->getType())) {
         // Only a few things that can be structs matter for undef.  Just send
         // all their results to overdefined.  We could be more precise than this
         // but it isn't worth bothering.
@@ -1457,7 +1457,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
       
       // If this is an instructions whose result is defined even if the input is
       // not fully defined, propagate the information.
-      const Type *ITy = I->getType();
+      Type *ITy = I->getType();
       switch (I->getOpcode()) {
       default: break;          // Leave the instruction as an undef.
       case Instruction::ZExt:

@@ -88,11 +88,11 @@ extern "C" void LLVMInitializeCppBackendMCSubtargetInfo() {
 }
 
 namespace {
-  typedef std::vector<const Type*> TypeList;
-  typedef std::map<const Type*,std::string> TypeMap;
+  typedef std::vector<Type*> TypeList;
+  typedef std::map<Type*,std::string> TypeMap;
   typedef std::map<const Value*,std::string> ValueMap;
   typedef std::set<std::string> NameSet;
-  typedef std::set<const Type*> TypeSet;
+  typedef std::set<Type*> TypeSet;
   typedef std::set<const Value*> ValueSet;
   typedef std::map<const Value*,std::string> ForwardRefMap;
 
@@ -143,14 +143,14 @@ namespace {
     void printEscapedString(const std::string& str);
     void printCFP(const ConstantFP* CFP);
 
-    std::string getCppName(const Type* val);
-    inline void printCppName(const Type* val);
+    std::string getCppName(Type* val);
+    inline void printCppName(Type* val);
 
     std::string getCppName(const Value* val);
     inline void printCppName(const Value* val);
 
     void printAttributes(const AttrListPtr &PAL, const std::string &name);
-    void printType(const Type* Ty);
+    void printType(Type* Ty);
     void printTypes(const Module* M);
 
     void printConstant(const Constant *CPV);
@@ -184,7 +184,7 @@ static inline void sanitize(std::string &str) {
       str[i] = '_';
 }
 
-static std::string getTypePrefix(const Type *Ty) {
+static std::string getTypePrefix(Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:     return "void_";
   case Type::IntegerTyID:
@@ -339,7 +339,7 @@ void CppWriter::printEscapedString(const std::string &Str) {
   }
 }
 
-std::string CppWriter::getCppName(const Type* Ty) {
+std::string CppWriter::getCppName(Type* Ty) {
   // First, handle the primitive types .. easy
   if (Ty->isPrimitiveType() || Ty->isIntegerTy()) {
     switch (Ty->getTypeID()) {
@@ -379,7 +379,7 @@ std::string CppWriter::getCppName(const Type* Ty) {
 
   // See if the type has a name in the symboltable and build accordingly
   std::string name;
-  if (const StructType *STy = dyn_cast<StructType>(Ty))
+  if (StructType *STy = dyn_cast<StructType>(Ty))
     if (STy->hasName())
       name = STy->getName();
   
@@ -393,7 +393,7 @@ std::string CppWriter::getCppName(const Type* Ty) {
   return TypeNames[Ty] = name;
 }
 
-void CppWriter::printCppName(const Type* Ty) {
+void CppWriter::printCppName(Type* Ty) {
   printEscapedString(getCppName(Ty));
 }
 
@@ -499,7 +499,7 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
   }
 }
 
-void CppWriter::printType(const Type* Ty) {
+void CppWriter::printType(Type* Ty) {
   // We don't print definitions for primitive types
   if (Ty->isPrimitiveType() || Ty->isIntegerTy())
     return;
@@ -514,13 +514,13 @@ void CppWriter::printType(const Type* Ty) {
   // Print the type definition
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID:  {
-    const FunctionType* FT = cast<FunctionType>(Ty);
+    FunctionType* FT = cast<FunctionType>(Ty);
     Out << "std::vector<Type*>" << typeName << "_args;";
     nl(Out);
     FunctionType::param_iterator PI = FT->param_begin();
     FunctionType::param_iterator PE = FT->param_end();
     for (; PI != PE; ++PI) {
-      const Type* argTy = static_cast<const Type*>(*PI);
+      Type* argTy = static_cast<Type*>(*PI);
       printType(argTy);
       std::string argName(getCppName(argTy));
       Out << typeName << "_args.push_back(" << argName;
@@ -539,7 +539,7 @@ void CppWriter::printType(const Type* Ty) {
     break;
   }
   case Type::StructTyID: {
-    const StructType* ST = cast<StructType>(Ty);
+    StructType* ST = cast<StructType>(Ty);
     if (!ST->isAnonymous()) {
       Out << "StructType *" << typeName << " = ";
       Out << "StructType::createNamed(mod->getContext(), \"";
@@ -555,7 +555,7 @@ void CppWriter::printType(const Type* Ty) {
     StructType::element_iterator EI = ST->element_begin();
     StructType::element_iterator EE = ST->element_end();
     for (; EI != EE; ++EI) {
-      const Type* fieldTy = static_cast<const Type*>(*EI);
+      Type* fieldTy = static_cast<Type*>(*EI);
       printType(fieldTy);
       std::string fieldName(getCppName(fieldTy));
       Out << typeName << "_fields.push_back(" << fieldName;
@@ -576,8 +576,8 @@ void CppWriter::printType(const Type* Ty) {
     break;
   }
   case Type::ArrayTyID: {
-    const ArrayType* AT = cast<ArrayType>(Ty);
-    const Type* ET = AT->getElementType();
+    ArrayType* AT = cast<ArrayType>(Ty);
+    Type* ET = AT->getElementType();
     printType(ET);
     if (DefinedTypes.find(Ty) == DefinedTypes.end()) {
       std::string elemName(getCppName(ET));
@@ -589,8 +589,8 @@ void CppWriter::printType(const Type* Ty) {
     break;
   }
   case Type::PointerTyID: {
-    const PointerType* PT = cast<PointerType>(Ty);
-    const Type* ET = PT->getElementType();
+    PointerType* PT = cast<PointerType>(Ty);
+    Type* ET = PT->getElementType();
     printType(ET);
     if (DefinedTypes.find(Ty) == DefinedTypes.end()) {
       std::string elemName(getCppName(ET));
@@ -602,8 +602,8 @@ void CppWriter::printType(const Type* Ty) {
     break;
   }
   case Type::VectorTyID: {
-    const VectorType* PT = cast<VectorType>(Ty);
-    const Type* ET = PT->getElementType();
+    VectorType* PT = cast<VectorType>(Ty);
+    Type* ET = PT->getElementType();
     printType(ET);
     if (DefinedTypes.find(Ty) == DefinedTypes.end()) {
       std::string elemName(getCppName(ET));
@@ -1873,7 +1873,7 @@ void CppWriter::printVariable(const std::string& fname,
 
 void CppWriter::printType(const std::string &fname,
                           const std::string &typeName) {
-  const Type* Ty = TheModule->getTypeByName(typeName);
+  Type* Ty = TheModule->getTypeByName(typeName);
   if (!Ty) {
     error(std::string("Type '") + typeName + "' not found in input module");
     return;

@@ -104,7 +104,7 @@ MDNode *DebugLoc::getAsMDNode(const LLVMContext &Ctx) const {
   assert(Scope && "If scope is null, this should be isUnknown()");
   
   LLVMContext &Ctx2 = Scope->getContext();
-  const Type *Int32 = Type::getInt32Ty(Ctx2);
+  Type *Int32 = Type::getInt32Ty(Ctx2);
   Value *Elts[] = {
     ConstantInt::get(Int32, getLine()), ConstantInt::get(Int32, getCol()),
     Scope, IA

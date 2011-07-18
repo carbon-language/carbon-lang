@@ -29,7 +29,7 @@ INITIALIZE_PASS(FindUsedTypes, "print-used-types",
 // IncorporateType - Incorporate one type and all of its subtypes into the
 // collection of used types.
 //
-void FindUsedTypes::IncorporateType(const Type *Ty) {
+void FindUsedTypes::IncorporateType(Type *Ty) {
   // If ty doesn't already exist in the used types map, add it now, otherwise
   // return.
   if (!UsedTypes.insert(Ty)) return;  // Already contain Ty.
@@ -94,7 +94,7 @@ bool FindUsedTypes::runOnModule(Module &m) {
 //
 void FindUsedTypes::print(raw_ostream &OS, const Module *M) const {
   OS << "Types in use by this module:\n";
-  for (SetVector<const Type *>::const_iterator I = UsedTypes.begin(),
+  for (SetVector<Type *>::const_iterator I = UsedTypes.begin(),
        E = UsedTypes.end(); I != E; ++I) {
     OS << "   " << **I << '\n';
   }

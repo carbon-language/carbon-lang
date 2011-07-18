@@ -48,7 +48,7 @@ using namespace llvm;
 
 static ManagedStatic<sys::Mutex> FunctionsLock;
 
-typedef GenericValue (*ExFunc)(const FunctionType *,
+typedef GenericValue (*ExFunc)(FunctionType *,
                                const std::vector<GenericValue> &);
 static ManagedStatic<std::map<const Function *, ExFunc> > ExportedFunctions;
 static std::map<std::string, ExFunc> FuncNames;
@@ -60,7 +60,7 @@ static ManagedStatic<std::map<const Function *, RawFunc> > RawFunctions;
 
 static Interpreter *TheInterpreter;
 
-static char getTypeID(const Type *Ty) {
+static char getTypeID(Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:    return 'V';
   case Type::IntegerTyID:
@@ -91,7 +91,7 @@ static ExFunc lookupFunction(const Function *F) {
   // Function not found, look it up... start by figuring out what the
   // composite function name should be.
   std::string ExtName = "lle_";
-  const FunctionType *FT = F->getFunctionType();
+  FunctionType *FT = F->getFunctionType();
   for (unsigned i = 0, e = FT->getNumContainedTypes(); i != e; ++i)
     ExtName += getTypeID(FT->getContainedType(i));
   ExtName + "_" + F->getNameStr();
@@ -109,7 +109,7 @@ static ExFunc lookupFunction(const Function *F) {
 }
 
 #ifdef USE_LIBFFI
-static ffi_type *ffiTypeFor(const Type *Ty) {
+static ffi_type *ffiTypeFor(Type *Ty) {
   switch (Ty->getTypeID()) {
     case Type::VoidTyID: return &ffi_type_void;
     case Type::IntegerTyID:
@@ -129,7 +129,7 @@ static ffi_type *ffiTypeFor(const Type *Ty) {
   return NULL;
 }
 
-static void *ffiValueFor(const Type *Ty, const GenericValue &AV,
+static void *ffiValueFor(Type *Ty, const GenericValue &AV,
                          void *ArgDataPtr) {
   switch (Ty->getTypeID()) {
     case Type::IntegerTyID:
@@ -181,7 +181,7 @@ static bool ffiInvoke(RawFunc Fn, Function *F,
                       const std::vector<GenericValue> &ArgVals,
                       const TargetData *TD, GenericValue &Result) {
   ffi_cif cif;
-  const FunctionType *FTy = F->getFunctionType();
+  FunctionType *FTy = F->getFunctionType();
   const unsigned NumArgs = F->arg_size();
 
   // TODO: We don't have type information about the remaining arguments, because
@@ -197,7 +197,7 @@ static bool ffiInvoke(RawFunc Fn, Function *F,
   for (Function::const_arg_iterator A = F->arg_begin(), E = F->arg_end();
        A != E; ++A) {
     const unsigned ArgNo = A->getArgNo();
-    const Type *ArgTy = FTy->getParamType(ArgNo);
+    Type *ArgTy = FTy->getParamType(ArgNo);
     args[ArgNo] = ffiTypeFor(ArgTy);
     ArgBytes += TD->getTypeStoreSize(ArgTy);
   }
@@ -209,12 +209,12 @@ static bool ffiInvoke(RawFunc Fn, Function *F,
   for (Function::const_arg_iterator A = F->arg_begin(), E = F->arg_end();
        A != E; ++A) {
     const unsigned ArgNo = A->getArgNo();
-    const Type *ArgTy = FTy->getParamType(ArgNo);
+    Type *ArgTy = FTy->getParamType(ArgNo);
     values[ArgNo] = ffiValueFor(ArgTy, ArgVals[ArgNo], ArgDataPtr);
     ArgDataPtr += TD->getTypeStoreSize(ArgTy);
   }
 
-  const Type *RetTy = FTy->getReturnType();
+  Type *RetTy = FTy->getReturnType();
   ffi_type *rtype = ffiTypeFor(RetTy);
 
   if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, NumArgs, rtype, &args[0]) == FFI_OK) {
@@ -304,7 +304,7 @@ GenericValue Interpreter::callExternalFunction(Function *F,
 extern "C" {  // Don't add C++ manglings to llvm mangling :)
 
 // void atexit(Function*)
-GenericValue lle_X_atexit(const FunctionType *FT,
+GenericValue lle_X_atexit(FunctionType *FT,
                           const std::vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   TheInterpreter->addAtExitHandler((Function*)GVTOP(Args[0]));
@@ -314,14 +314,14 @@ GenericValue lle_X_atexit(const FunctionType *FT,
 }
 
 // void exit(int)
-GenericValue lle_X_exit(const FunctionType *FT,
+GenericValue lle_X_exit(FunctionType *FT,
                         const std::vector<GenericValue> &Args) {
   TheInterpreter->exitCalled(Args[0]);
   return GenericValue();
 }
 
 // void abort(void)
-GenericValue lle_X_abort(const FunctionType *FT,
+GenericValue lle_X_abort(FunctionType *FT,
                          const std::vector<GenericValue> &Args) {
   //FIXME: should we report or raise here?
   //report_fatal_error("Interpreted program raised SIGABRT");
@@ -331,7 +331,7 @@ GenericValue lle_X_abort(const FunctionType *FT,
 
 // int sprintf(char *, const char *, ...) - a very rough implementation to make
 // output useful.
-GenericValue lle_X_sprintf(const FunctionType *FT,
+GenericValue lle_X_sprintf(FunctionType *FT,
                            const std::vector<GenericValue> &Args) {
   char *OutputBuffer = (char *)GVTOP(Args[0]);
   const char *FmtStr = (const char *)GVTOP(Args[1]);
@@ -413,7 +413,7 @@ GenericValue lle_X_sprintf(const FunctionType *FT,
 
 // int printf(const char *, ...) - a very rough implementation to make output
 // useful.
-GenericValue lle_X_printf(const FunctionType *FT,
+GenericValue lle_X_printf(FunctionType *FT,
                           const std::vector<GenericValue> &Args) {
   char Buffer[10000];
   std::vector<GenericValue> NewArgs;
@@ -425,7 +425,7 @@ GenericValue lle_X_printf(const FunctionType *FT,
 }
 
 // int sscanf(const char *format, ...);
-GenericValue lle_X_sscanf(const FunctionType *FT,
+GenericValue lle_X_sscanf(FunctionType *FT,
                           const std::vector<GenericValue> &args) {
   assert(args.size() < 10 && "Only handle up to 10 args to sscanf right now!");
 
@@ -440,7 +440,7 @@ GenericValue lle_X_sscanf(const FunctionType *FT,
 }
 
 // int scanf(const char *format, ...);
-GenericValue lle_X_scanf(const FunctionType *FT,
+GenericValue lle_X_scanf(FunctionType *FT,
                          const std::vector<GenericValue> &args) {
   assert(args.size() < 10 && "Only handle up to 10 args to scanf right now!");
 
@@ -456,7 +456,7 @@ GenericValue lle_X_scanf(const FunctionType *FT,
 
 // int fprintf(FILE *, const char *, ...) - a very rough implementation to make
 // output useful.
-GenericValue lle_X_fprintf(const FunctionType *FT,
+GenericValue lle_X_fprintf(FunctionType *FT,
                            const std::vector<GenericValue> &Args) {
   assert(Args.size() >= 2);
   char Buffer[10000];

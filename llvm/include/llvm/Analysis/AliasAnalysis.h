@@ -88,7 +88,7 @@ public:
   /// getTypeStoreSize - Return the TargetData store size for the given type,
   /// if known, or a conservative value otherwise.
   ///
-  uint64_t getTypeStoreSize(const Type *Ty);
+  uint64_t getTypeStoreSize(Type *Ty);
 
   //===--------------------------------------------------------------------===//
   /// Alias Queries...

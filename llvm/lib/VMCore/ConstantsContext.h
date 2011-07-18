@@ -36,7 +36,7 @@ public:
   void *operator new(size_t s) {
     return User::operator new(s, 1);
   }
-  UnaryConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
+  UnaryConstantExpr(unsigned Opcode, Constant *C, Type *Ty)
     : ConstantExpr(Ty, Opcode, &Op<0>(), 1) {
     Op<0>() = C;
   }
@@ -159,7 +159,7 @@ public:
   }
   ExtractValueConstantExpr(Constant *Agg,
                            const SmallVector<unsigned, 4> &IdxList,
-                           const Type *DestTy)
+                           Type *DestTy)
     : ConstantExpr(DestTy, Instruction::ExtractValue, &Op<0>(), 1),
       Indices(IdxList) {
     Op<0>() = Agg;
@@ -184,7 +184,7 @@ public:
   }
   InsertValueConstantExpr(Constant *Agg, Constant *Val,
                           const SmallVector<unsigned, 4> &IdxList,
-                          const Type *DestTy)
+                          Type *DestTy)
     : ConstantExpr(DestTy, Instruction::InsertValue, &Op<0>(), 2),
       Indices(IdxList) {
     Op<0>() = Agg;
@@ -203,11 +203,11 @@ public:
 /// used behind the scenes to implement getelementpr constant exprs.
 class GetElementPtrConstantExpr : public ConstantExpr {
   GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
-                            const Type *DestTy);
+                            Type *DestTy);
 public:
   static GetElementPtrConstantExpr *Create(Constant *C,
                                            const std::vector<Constant*>&IdxList,
-                                           const Type *DestTy,
+                                           Type *DestTy,
                                            unsigned Flags) {
     GetElementPtrConstantExpr *Result =
       new(IdxList.size() + 1) GetElementPtrConstantExpr(C, IdxList, DestTy);
@@ -228,7 +228,7 @@ struct CompareConstantExpr : public ConstantExpr {
     return User::operator new(s, 2);
   }
   unsigned short predicate;
-  CompareConstantExpr(const Type *ty, Instruction::OtherOps opc,
+  CompareConstantExpr(Type *ty, Instruction::OtherOps opc,
                       unsigned short pred,  Constant* LHS, Constant* RHS)
     : ConstantExpr(ty, opc, &Op<0>(), 2), predicate(pred) {
     Op<0>() = LHS;
@@ -392,7 +392,7 @@ struct ConstantTraits<Constant *> {
 
 template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator {
-  static ConstantClass *create(const TypeClass *Ty, const ValType &V) {
+  static ConstantClass *create(TypeClass *Ty, const ValType &V) {
     return new(ConstantTraits<ValType>::uses(V)) ConstantClass(Ty, V);
   }
 };
@@ -407,7 +407,7 @@ struct ConstantKeyData {
 
 template<>
 struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
-  static ConstantExpr *create(const Type *Ty, const ExprMapKeyType &V,
+  static ConstantExpr *create(Type *Ty, const ExprMapKeyType &V,
       unsigned short pred = 0) {
     if (Instruction::isCast(V.opcode))
       return new UnaryConstantExpr(V.opcode, V.operands[0], Ty);
@@ -470,7 +470,7 @@ struct ConstantKeyData<ConstantExpr> {
 // ConstantAggregateZero does not take extra "value" argument...
 template<class ValType>
 struct ConstantCreator<ConstantAggregateZero, Type, ValType> {
-  static ConstantAggregateZero *create(const Type *Ty, const ValType &V){
+  static ConstantAggregateZero *create(Type *Ty, const ValType &V){
     return new ConstantAggregateZero(Ty);
   }
 };
@@ -522,7 +522,7 @@ struct ConstantKeyData<ConstantStruct> {
 // ConstantPointerNull does not take extra "value" argument...
 template<class ValType>
 struct ConstantCreator<ConstantPointerNull, PointerType, ValType> {
-  static ConstantPointerNull *create(const PointerType *Ty, const ValType &V){
+  static ConstantPointerNull *create(PointerType *Ty, const ValType &V){
     return new ConstantPointerNull(Ty);
   }
 };
@@ -538,7 +538,7 @@ struct ConstantKeyData<ConstantPointerNull> {
 // UndefValue does not take extra "value" argument...
 template<class ValType>
 struct ConstantCreator<UndefValue, Type, ValType> {
-  static UndefValue *create(const Type *Ty, const ValType &V) {
+  static UndefValue *create(Type *Ty, const ValType &V) {
     return new UndefValue(Ty);
   }
 };
@@ -553,7 +553,7 @@ struct ConstantKeyData<UndefValue> {
 
 template<>
 struct ConstantCreator<InlineAsm, PointerType, InlineAsmKeyType> {
-  static InlineAsm *create(const PointerType *Ty, const InlineAsmKeyType &Key) {
+  static InlineAsm *create(PointerType *Ty, const InlineAsmKeyType &Key) {
     return new InlineAsm(Ty, Key.asm_string, Key.constraints,
                          Key.has_side_effects, Key.is_align_stack);
   }
@@ -572,7 +572,7 @@ template<class ValType, class ValRefType, class TypeClass, class ConstantClass,
          bool HasLargeKey = false /*true for arrays and structs*/ >
 class ConstantUniqueMap {
 public:
-  typedef std::pair<const TypeClass*, ValType> MapKey;
+  typedef std::pair<TypeClass*, ValType> MapKey;
   typedef std::map<MapKey, ConstantClass *> MapTy;
   typedef std::map<ConstantClass *, typename MapTy::iterator> InverseMapTy;
 private:
@@ -623,7 +623,7 @@ private:
     }
       
     typename MapTy::iterator I =
-      Map.find(MapKey(static_cast<const TypeClass*>(CP->getType()),
+      Map.find(MapKey(static_cast<TypeClass*>(CP->getType()),
                       ConstantKeyData<ConstantClass>::getValType(CP)));
     if (I == Map.end() || I->second != CP) {
       // FIXME: This should not use a linear scan.  If this gets to be a
@@ -634,7 +634,7 @@ private:
     return I;
   }
 
-  ConstantClass *Create(const TypeClass *Ty, ValRefType V,
+  ConstantClass *Create(TypeClass *Ty, ValRefType V,
                         typename MapTy::iterator I) {
     ConstantClass* Result =
       ConstantCreator<ConstantClass,TypeClass,ValType>::create(Ty, V);
@@ -651,7 +651,7 @@ public:
     
   /// getOrCreate - Return the specified constant from the map, creating it if
   /// necessary.
-  ConstantClass *getOrCreate(const TypeClass *Ty, ValRefType V) {
+  ConstantClass *getOrCreate(TypeClass *Ty, ValRefType V) {
     MapKey Lookup(Ty, V);
     ConstantClass* Result = 0;
     

@@ -115,7 +115,7 @@ static const char *getStateSpaceName(unsigned addressSpace) {
   return NULL;
 }
 
-static const char *getTypeName(const Type* type) {
+static const char *getTypeName(Type* type) {
   while (true) {
     switch (type->getTypeID()) {
       default: llvm_unreachable("Unknown type");
@@ -130,7 +130,7 @@ static const char *getTypeName(const Type* type) {
         }
       case Type::ArrayTyID:
       case Type::PointerTyID:
-        type = dyn_cast<const SequentialType>(type)->getElementType();
+        type = dyn_cast<SequentialType>(type)->getElementType();
         break;
     }
   }
@@ -406,8 +406,8 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
 
 
   if (PointerType::classof(gv->getType())) {
-    const PointerType* pointerTy = dyn_cast<const PointerType>(gv->getType());
-    const Type* elementTy = pointerTy->getElementType();
+    PointerType* pointerTy = dyn_cast<PointerType>(gv->getType());
+    Type* elementTy = pointerTy->getElementType();
 
     decl += ".b8 ";
     decl += gvsym->getName();
@@ -417,14 +417,14 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
     {
       assert(elementTy->isArrayTy() && "Only pointers to arrays are supported");
 
-      const ArrayType* arrayTy = dyn_cast<const ArrayType>(elementTy);
+      ArrayType* arrayTy = dyn_cast<ArrayType>(elementTy);
       elementTy = arrayTy->getElementType();
 
       unsigned numElements = arrayTy->getNumElements();
 
       while (elementTy->isArrayTy()) {
 
-        arrayTy = dyn_cast<const ArrayType>(elementTy);
+        arrayTy = dyn_cast<ArrayType>(elementTy);
         elementTy = arrayTy->getElementType();
 
         numElements *= arrayTy->getNumElements();

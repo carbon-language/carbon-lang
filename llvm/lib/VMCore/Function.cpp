@@ -38,7 +38,7 @@ template class llvm::SymbolTableListTraits<BasicBlock, Function>;
 // Argument Implementation
 //===----------------------------------------------------------------------===//
 
-Argument::Argument(const Type *Ty, const Twine &Name, Function *Par)
+Argument::Argument(Type *Ty, const Twine &Name, Function *Par)
   : Value(Ty, Value::ArgumentVal) {
   Parent = 0;
 
@@ -158,7 +158,7 @@ void Function::eraseFromParent() {
 // Function Implementation
 //===----------------------------------------------------------------------===//
 
-Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
+Function::Function(FunctionType *Ty, LinkageTypes Linkage,
                    const Twine &name, Module *ParentModule)
   : GlobalValue(PointerType::getUnqual(Ty), 
                 Value::FunctionVal, 0, 0, Linkage, name) {
@@ -195,7 +195,7 @@ Function::~Function() {
 
 void Function::BuildLazyArguments() const {
   // Create the arguments vector, all arguments start out unnamed.
-  const FunctionType *FT = getFunctionType();
+  FunctionType *FT = getFunctionType();
   for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i) {
     assert(!FT->getParamType(i)->isVoidTy() &&
            "Cannot have void typed arguments!");
@@ -345,7 +345,7 @@ std::string Intrinsic::getName(ID id, ArrayRef<Type*> Tys) {
     return Table[id];
   std::string Result(Table[id]);
   for (unsigned i = 0; i < Tys.size(); ++i) {
-    if (const PointerType* PTyp = dyn_cast<PointerType>(Tys[i])) {
+    if (PointerType* PTyp = dyn_cast<PointerType>(Tys[i])) {
       Result += ".p" + llvm::utostr(PTyp->getAddressSpace()) + 
                 EVT::getEVT(PTyp->getElementType()).getEVTString();
     }
@@ -355,9 +355,9 @@ std::string Intrinsic::getName(ID id, ArrayRef<Type*> Tys) {
   return Result;
 }
 
-const FunctionType *Intrinsic::getType(LLVMContext &Context,
+FunctionType *Intrinsic::getType(LLVMContext &Context,
                                        ID id, ArrayRef<Type*> Tys) {
-  const Type *ResultTy = NULL;
+  Type *ResultTy = NULL;
   std::vector<Type*> ArgTys;
   bool IsVarArg = false;
   

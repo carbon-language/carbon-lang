@@ -390,8 +390,8 @@ GenericValue JIT::runFunction(Function *F,
 
   void *FPtr = getPointerToFunction(F);
   assert(FPtr && "Pointer to fn's code was null after getPointerToFunction");
-  const FunctionType *FTy = F->getFunctionType();
-  const Type *RetTy = FTy->getReturnType();
+  FunctionType *FTy = F->getFunctionType();
+  Type *RetTy = FTy->getReturnType();
 
   assert((FTy->getNumParams() == ArgValues.size() ||
           (FTy->isVarArg() && FTy->getNumParams() <= ArgValues.size())) &&
@@ -500,7 +500,7 @@ GenericValue JIT::runFunction(Function *F,
   SmallVector<Value*, 8> Args;
   for (unsigned i = 0, e = ArgValues.size(); i != e; ++i) {
     Constant *C = 0;
-    const Type *ArgTy = FTy->getParamType(i);
+    Type *ArgTy = FTy->getParamType(i);
     const GenericValue &AV = ArgValues[i];
     switch (ArgTy->getTypeID()) {
     default: llvm_unreachable("Unknown argument type for function call!");
@@ -788,7 +788,7 @@ char* JIT::getMemoryForGV(const GlobalVariable* GV) {
   // be allocated into the same buffer, but in general globals are allocated
   // through the memory manager which puts them near the code but not in the
   // same buffer.
-  const Type *GlobalType = GV->getType()->getElementType();
+  Type *GlobalType = GV->getType()->getElementType();
   size_t S = getTargetData()->getTypeAllocSize(GlobalType);
   size_t A = getTargetData()->getPreferredAlignment(GV);
   if (GV->isThreadLocal()) {

@@ -100,7 +100,7 @@ static bool isEscapeSource(const Value *V) {
 /// getObjectSize - Return the size of the object specified by V, or
 /// UnknownSize if unknown.
 static uint64_t getObjectSize(const Value *V, const TargetData &TD) {
-  const Type *AccessTy;
+  Type *AccessTy;
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     if (!GV->hasDefinitiveInitializer())
       return AliasAnalysis::UnknownSize;
@@ -317,7 +317,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
          E = GEPOp->op_end(); I != E; ++I) {
       Value *Index = *I;
       // Compute the (potentially symbolic) offset in bytes for this index.
-      if (const StructType *STy = dyn_cast<StructType>(*GTI++)) {
+      if (StructType *STy = dyn_cast<StructType>(*GTI++)) {
         // For a struct, add the member offset.
         unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
         if (FieldNo == 0) continue;

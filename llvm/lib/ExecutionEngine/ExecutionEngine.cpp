@@ -93,7 +93,7 @@ public:
   /// \brief Returns the address the GlobalVariable should be written into.  The
   /// GVMemoryBlock object prefixes that.
   static char *Create(const GlobalVariable *GV, const TargetData& TD) {
-    const Type *ElTy = GV->getType()->getElementType();
+    Type *ElTy = GV->getType()->getElementType();
     size_t GVSize = (size_t)TD.getTypeAllocSize(ElTy);
     void *RawMemory = ::operator new(
       TargetData::RoundUpAlignment(sizeof(GVMemoryBlock),
@@ -272,7 +272,7 @@ void *ArgvArray::reset(LLVMContext &C, ExecutionEngine *EE,
   Array = new char[(InputArgv.size()+1)*PtrSize];
 
   DEBUG(dbgs() << "JIT: ARGV = " << (void*)Array << "\n");
-  const Type *SBytePtr = Type::getInt8PtrTy(C);
+  Type *SBytePtr = Type::getInt8PtrTy(C);
 
   for (unsigned i = 0; i != InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;
@@ -361,8 +361,8 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
 
   // Check main() type
   unsigned NumArgs = Fn->getFunctionType()->getNumParams();
-  const FunctionType *FTy = Fn->getFunctionType();
-  const Type* PPInt8Ty = Type::getInt8PtrTy(Fn->getContext())->getPointerTo();
+  FunctionType *FTy = Fn->getFunctionType();
+  Type* PPInt8Ty = Type::getInt8PtrTy(Fn->getContext())->getPointerTo();
 
   // Check the argument types.
   if (NumArgs > 3)
@@ -651,7 +651,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
     case Instruction::BitCast: {
       GenericValue GV = getConstantValue(Op0);
-      const Type* DestTy = CE->getType();
+      Type* DestTy = CE->getType();
       switch (Op0->getType()->getTypeID()) {
         default: llvm_unreachable("Invalid bitcast operand");
         case Type::IntegerTyID:
@@ -847,7 +847,7 @@ static void StoreIntToMemory(const APInt &IntVal, uint8_t *Dst,
 }
 
 void ExecutionEngine::StoreValueToMemory(const GenericValue &Val,
-                                         GenericValue *Ptr, const Type *Ty) {
+                                         GenericValue *Ptr, Type *Ty) {
   const unsigned StoreBytes = getTargetData()->getTypeStoreSize(Ty);
 
   switch (Ty->getTypeID()) {
@@ -909,7 +909,7 @@ static void LoadIntFromMemory(APInt &IntVal, uint8_t *Src, unsigned LoadBytes) {
 ///
 void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
                                           GenericValue *Ptr,
-                                          const Type *Ty) {
+                                          Type *Ty) {
   const unsigned LoadBytes = getTargetData()->getTypeStoreSize(Ty);
 
   switch (Ty->getTypeID()) {
@@ -986,7 +986,7 @@ void ExecutionEngine::emitGlobals() {
   // Loop over all of the global variables in the program, allocating the memory
   // to hold them.  If there is more than one module, do a prepass over globals
   // to figure out how the different modules should link together.
-  std::map<std::pair<std::string, const Type*>,
+  std::map<std::pair<std::string, Type*>,
            const GlobalValue*> LinkedGlobalsMap;
 
   if (Modules.size() != 1) {
@@ -1101,7 +1101,7 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   if (!GV->isThreadLocal())
     InitializeMemory(GV->getInitializer(), GA);
 
-  const Type *ElTy = GV->getType()->getElementType();
+  Type *ElTy = GV->getType()->getElementType();
   size_t GVSize = (size_t)getTargetData()->getTypeAllocSize(ElTy);
   NumInitBytes += (unsigned)GVSize;
   ++NumGlobals;
