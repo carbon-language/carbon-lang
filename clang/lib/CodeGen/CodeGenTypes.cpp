@@ -418,7 +418,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   }
   case Type::ConstantArray: {
     const ConstantArrayType *A = cast<ConstantArrayType>(Ty);
-    const llvm::Type *EltTy = ConvertTypeForMem(A->getElementType());
+    llvm::Type *EltTy = ConvertTypeForMem(A->getElementType());
     ResultType = llvm::ArrayType::get(EltTy, A->getSize().getZExtValue());
     break;
   }
@@ -511,7 +511,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     // Protocol qualifications do not influence the LLVM type, we just return a
     // pointer to the underlying interface type. We don't need to worry about
     // recursive conversion.
-    const llvm::Type *T =
+    llvm::Type *T =
       ConvertType(cast<ObjCObjectPointerType>(Ty)->getPointeeType());
     ResultType = T->getPointerTo();
     break;

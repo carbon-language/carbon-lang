@@ -312,7 +312,7 @@ void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val, llvm::Value *Ptr,
 
 ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
   CGF.ErrorUnsupported(E, "complex expression");
-  const llvm::Type *EltTy =
+  llvm::Type *EltTy =
     CGF.ConvertType(E->getType()->getAs<ComplexType>()->getElementType());
   llvm::Value *U = llvm::UndefValue::get(EltTy);
   return ComplexPairTy(U, U);
@@ -740,7 +740,7 @@ ComplexPairTy ComplexExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
   // Empty init list intializes to null
   QualType Ty = E->getType()->getAs<ComplexType>()->getElementType();
-  const llvm::Type* LTy = CGF.ConvertType(Ty);
+  llvm::Type* LTy = CGF.ConvertType(Ty);
   llvm::Value* zeroConstant = llvm::Constant::getNullValue(LTy);
   return ComplexPairTy(zeroConstant, zeroConstant);
 }
@@ -751,7 +751,7 @@ ComplexPairTy ComplexExprEmitter::VisitVAArgExpr(VAArgExpr *E) {
 
   if (!ArgPtr) {
     CGF.ErrorUnsupported(E, "complex va_arg expression");
-    const llvm::Type *EltTy =
+    llvm::Type *EltTy =
       CGF.ConvertType(E->getType()->getAs<ComplexType>()->getElementType());
     llvm::Value *U = llvm::UndefValue::get(EltTy);
     return ComplexPairTy(U, U);

@@ -136,7 +136,7 @@ CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
 
   // Get the __cxa_atexit function type
   // extern "C" int __cxa_atexit ( void (*f)(void *), void *p, void *d );
-  const llvm::FunctionType *AtExitFnTy =
+  llvm::FunctionType *AtExitFnTy =
     llvm::FunctionType::get(ConvertType(getContext().IntTy), Params, false);
 
   llvm::Constant *AtExitFn = CGM.CreateRuntimeFunction(AtExitFnTy,
@@ -167,7 +167,7 @@ void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
 
 static llvm::Function *
 CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
-                                   const llvm::FunctionType *FTy,
+                                   llvm::FunctionType *FTy,
                                    llvm::StringRef Name) {
   llvm::Function *Fn =
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
@@ -188,7 +188,7 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
 void
 CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
                                             llvm::GlobalVariable *Addr) {
-  const llvm::FunctionType *FTy
+  llvm::FunctionType *FTy
     = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
                               false);
 
@@ -225,7 +225,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
   if (CXXGlobalInits.empty() && PrioritizedCXXGlobalInits.empty())
     return;
 
-  const llvm::FunctionType *FTy
+  llvm::FunctionType *FTy
     = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
                               false);
 
@@ -259,7 +259,7 @@ void CodeGenModule::EmitCXXGlobalDtorFunc() {
   if (CXXGlobalDtors.empty())
     return;
 
-  const llvm::FunctionType *FTy
+  llvm::FunctionType *FTy
     = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
                               false);
 
@@ -351,7 +351,7 @@ CodeGenFunction::generateDestroyHelper(llvm::Constant *addr,
   const CGFunctionInfo &FI = 
     CGM.getTypes().getFunctionInfo(getContext().VoidTy, args, 
                                    FunctionType::ExtInfo());
-  const llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
+  llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
   llvm::Function *fn = 
     CreateGlobalInitOrDestructFunction(CGM, FTy, "__cxx_global_array_dtor");
 

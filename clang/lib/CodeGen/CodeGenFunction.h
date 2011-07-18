@@ -1135,7 +1135,7 @@ private:
 
   /// ByrefValueInfoMap - For each __block variable, contains a pair of the LLVM
   /// type as well as the field number that contains the actual data.
-  llvm::DenseMap<const ValueDecl *, std::pair<const llvm::Type *,
+  llvm::DenseMap<const ValueDecl *, std::pair<llvm::Type *,
                                               unsigned> > ByRefValueInfo;
 
   llvm::BasicBlock *TerminateLandingPad;
@@ -1269,7 +1269,7 @@ public:
   llvm::Value *EmitBlockLiteral(const BlockExpr *);
   llvm::Constant *BuildDescriptorBlockDecl(const BlockExpr *,
                                            const CGBlockInfo &Info,
-                                           const llvm::StructType *,
+                                           llvm::StructType *,
                                            llvm::Constant *BlockVarLayout);
 
   llvm::Function *GenerateBlockFunction(GlobalDecl GD,
@@ -1298,7 +1298,7 @@ public:
     return GetAddrOfBlockDecl(E->getDecl(), E->isByRef());
   }
   llvm::Value *GetAddrOfBlockDecl(const VarDecl *var, bool ByRef);
-  const llvm::Type *BuildByRefType(const VarDecl *var);
+  llvm::Type *BuildByRefType(const VarDecl *var);
 
   void GenerateCode(GlobalDecl GD, llvm::Function *Fn,
                     const CGFunctionInfo &FnInfo);
@@ -1352,7 +1352,7 @@ public:
 
   /// GetVTablePtr - Return the Value of the vtable pointer member pointed
   /// to by This.
-  llvm::Value *GetVTablePtr(llvm::Value *This, const llvm::Type *Ty);
+  llvm::Value *GetVTablePtr(llvm::Value *This, llvm::Type *Ty);
 
   /// EnterDtorCleanups - Enter the cleanups necessary to complete the
   /// given phase of destruction for a destructor.  The end result
@@ -1486,7 +1486,7 @@ public:
   /// CreateTempAlloca - This creates a alloca and inserts it into the entry
   /// block. The caller is responsible for setting an appropriate alignment on
   /// the alloca.
-  llvm::AllocaInst *CreateTempAlloca(const llvm::Type *Ty,
+  llvm::AllocaInst *CreateTempAlloca(llvm::Type *Ty,
                                      const llvm::Twine &Name = "tmp");
 
   /// InitTempAlloca - Provide an initial value for the given alloca.
@@ -2080,12 +2080,12 @@ public:
                                   const llvm::Twine &Name = "");
 
   llvm::Value *BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
-                                const llvm::Type *Ty);
+                                llvm::Type *Ty);
   llvm::Value *BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type,
-                                llvm::Value *This, const llvm::Type *Ty);
+                                llvm::Value *This, llvm::Type *Ty);
   llvm::Value *BuildAppleKextVirtualCall(const CXXMethodDecl *MD, 
                                          NestedNameSpecifier *Qual,
-                                         const llvm::Type *Ty);
+                                         llvm::Type *Ty);
   
   llvm::Value *BuildAppleKextVirtualDestructorCall(const CXXDestructorDecl *DD,
                                                    CXXDtorType Type, 
@@ -2126,7 +2126,7 @@ public:
                             const char *name,
                             unsigned shift = 0, bool rightshift = false);
   llvm::Value *EmitNeonSplat(llvm::Value *V, llvm::Constant *Idx);
-  llvm::Value *EmitNeonShiftVector(llvm::Value *V, const llvm::Type *Ty,
+  llvm::Value *EmitNeonShiftVector(llvm::Value *V, llvm::Type *Ty,
                                    bool negateForRightShift);
 
   llvm::Value *BuildVector(const llvm::SmallVectorImpl<llvm::Value*> &Ops);
@@ -2439,7 +2439,7 @@ private:
   void EmitDeclMetadata();
 
   CodeGenModule::ByrefHelpers *
-  buildByrefHelpers(const llvm::StructType &byrefType,
+  buildByrefHelpers(llvm::StructType &byrefType,
                     const AutoVarEmission &emission);
 };
 

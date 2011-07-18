@@ -138,7 +138,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     return true;
 
   // Derive the type for the alias.
-  const llvm::PointerType *AliasType
+  llvm::PointerType *AliasType
     = getTypes().GetFunctionType(AliasDecl)->getPointerTo();
 
   // Find the referrent.  Some aliases might require a bitcast, in
@@ -221,7 +221,7 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *ctor,
   if (!fnInfo) fnInfo = &getTypes().getFunctionInfo(ctor, ctorType);
 
   const FunctionProtoType *proto = ctor->getType()->castAs<FunctionProtoType>();
-  const llvm::FunctionType *fnType =
+  llvm::FunctionType *fnType =
     getTypes().GetFunctionType(*fnInfo, proto->isVariadic());
   return cast<llvm::Function>(GetOrCreateLLVMFunction(name, fnType, GD,
                                                       /*ForVTable=*/false));
@@ -288,7 +288,7 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *dtor,
 
   if (!fnInfo) fnInfo = &getTypes().getFunctionInfo(dtor, dtorType);
 
-  const llvm::FunctionType *fnType =
+  llvm::FunctionType *fnType =
     getTypes().GetFunctionType(*fnInfo, false);
 
   return cast<llvm::Function>(GetOrCreateLLVMFunction(name, fnType, GD,
@@ -296,7 +296,7 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *dtor,
 }
 
 static llvm::Value *BuildVirtualCall(CodeGenFunction &CGF, uint64_t VTableIndex, 
-                                     llvm::Value *This, const llvm::Type *Ty) {
+                                     llvm::Value *This, llvm::Type *Ty) {
   Ty = Ty->getPointerTo()->getPointerTo();
   
   llvm::Value *VTable = CGF.GetVTablePtr(This, Ty);
@@ -307,7 +307,7 @@ static llvm::Value *BuildVirtualCall(CodeGenFunction &CGF, uint64_t VTableIndex,
 
 llvm::Value *
 CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
-                                  const llvm::Type *Ty) {
+                                  llvm::Type *Ty) {
   MD = MD->getCanonicalDecl();
   uint64_t VTableIndex = CGM.getVTables().getMethodVTableIndex(MD);
   
@@ -320,7 +320,7 @@ CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
 llvm::Value *
 CodeGenFunction::BuildAppleKextVirtualCall(const CXXMethodDecl *MD, 
                                   NestedNameSpecifier *Qual,
-                                  const llvm::Type *Ty) {
+                                  llvm::Type *Ty) {
   llvm::Value *VTable = 0;
   assert((Qual->getKind() == NestedNameSpecifier::TypeSpec) &&
          "BuildAppleKextVirtualCall - bad Qual kind");
@@ -366,7 +366,7 @@ CodeGenFunction::BuildAppleKextVirtualDestructorCall(
     &CGM.getTypes().getFunctionInfo(cast<CXXDestructorDecl>(MD),
                                     Dtor_Complete);
     const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-    const llvm::Type *Ty
+    llvm::Type *Ty
       = CGM.getTypes().GetFunctionType(*FInfo, FPT->isVariadic());
 
     llvm::Value *VTable = CGM.getVTables().GetAddrOfVTable(RD);
@@ -387,7 +387,7 @@ CodeGenFunction::BuildAppleKextVirtualDestructorCall(
 
 llvm::Value *
 CodeGenFunction::BuildVirtualCall(const CXXDestructorDecl *DD, CXXDtorType Type, 
-                                  llvm::Value *This, const llvm::Type *Ty) {
+                                  llvm::Value *This, llvm::Type *Ty) {
   DD = cast<CXXDestructorDecl>(DD->getCanonicalDecl());
   uint64_t VTableIndex = 
     CGM.getVTables().getMethodVTableIndex(GlobalDecl(DD, Type));

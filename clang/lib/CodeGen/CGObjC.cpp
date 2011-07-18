@@ -33,7 +33,7 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e);
 /// Given the address of a variable of pointer type, find the correct
 /// null to store into it.
 static llvm::Constant *getNullForVariable(llvm::Value *addr) {
-  const llvm::Type *type =
+  llvm::Type *type =
     cast<llvm::PointerType>(addr->getType())->getElementType();
   return llvm::ConstantPointerNull::get(cast<llvm::PointerType>(type));
 }
@@ -206,7 +206,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
 
     // The delegate return type isn't necessarily a matching type; in
     // fact, it's quite likely to be 'id'.
-    const llvm::Type *selfTy =
+    llvm::Type *selfTy =
       cast<llvm::PointerType>(selfAddr->getType())->getElementType();
     newSelf = Builder.CreateBitCast(newSelf, selfTy);
 
@@ -896,7 +896,7 @@ void CodeGenFunction::EmitStoreThroughPropertyRefLValue(RValue Src,
   if (Src.isScalar()) {
     llvm::Value *SrcVal = Src.getScalarVal();
     QualType DstType = getContext().getCanonicalType(ArgType);
-    const llvm::Type *DstTy = ConvertType(DstType);
+    llvm::Type *DstTy = ConvertType(DstType);
     if (SrcVal->getType() != DstTy)
       Src = 
         RValue::get(EmitScalarConversion(SrcVal, E->getType(), DstType));
@@ -985,7 +985,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   Args.add(RValue::get(ItemsPtr), getContext().getPointerType(ItemsTy));
 
   // The third argument is the capacity of that temporary array.
-  const llvm::Type *UnsignedLongLTy = ConvertType(getContext().UnsignedLongTy);
+  llvm::Type *UnsignedLongLTy = ConvertType(getContext().UnsignedLongTy);
   llvm::Constant *Count = llvm::ConstantInt::get(UnsignedLongLTy, NumItems);
   Args.add(RValue::get(Count), getContext().UnsignedLongTy);
 
@@ -1089,7 +1089,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     elementType = cast<Expr>(S.getElement())->getType();
     elementIsVariable = false;
   }
-  const llvm::Type *convertedElementType = ConvertType(elementType);
+  llvm::Type *convertedElementType = ConvertType(elementType);
 
   // Fetch the buffer out of the enumeration state.
   // TODO: this pointer should actually be invariant between
@@ -1276,7 +1276,7 @@ llvm::Value *CodeGenFunction::EmitObjCExtendObjectLifetime(QualType type,
 
 
 static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
-                                                const llvm::FunctionType *type,
+                                                llvm::FunctionType *type,
                                                 llvm::StringRef fnName) {
   llvm::Constant *fn = CGM.CreateRuntimeFunction(type, fnName);
 
@@ -1300,13 +1300,13 @@ static llvm::Value *emitARCValueOperation(CodeGenFunction &CGF,
 
   if (!fn) {
     std::vector<llvm::Type*> args(1, CGF.Int8PtrTy);
-    const llvm::FunctionType *fnType =
+    llvm::FunctionType *fnType =
       llvm::FunctionType::get(CGF.Int8PtrTy, args, false);
     fn = createARCRuntimeFunction(CGF.CGM, fnType, fnName);
   }
 
   // Cast the argument to 'id'.
-  const llvm::Type *origType = value->getType();
+  llvm::Type *origType = value->getType();
   value = CGF.Builder.CreateBitCast(value, CGF.Int8PtrTy);
 
   // Call the function.
@@ -1325,13 +1325,13 @@ static llvm::Value *emitARCLoadOperation(CodeGenFunction &CGF,
                                          llvm::StringRef fnName) {
   if (!fn) {
     std::vector<llvm::Type*> args(1, CGF.Int8PtrPtrTy);
-    const llvm::FunctionType *fnType =
+    llvm::FunctionType *fnType =
       llvm::FunctionType::get(CGF.Int8PtrTy, args, false);
     fn = createARCRuntimeFunction(CGF.CGM, fnType, fnName);
   }
 
   // Cast the argument to 'id*'.
-  const llvm::Type *origType = addr->getType();
+  llvm::Type *origType = addr->getType();
   addr = CGF.Builder.CreateBitCast(addr, CGF.Int8PtrPtrTy);
 
   // Call the function.
@@ -1363,12 +1363,12 @@ static llvm::Value *emitARCStoreOperation(CodeGenFunction &CGF,
     argTypes[0] = CGF.Int8PtrPtrTy;
     argTypes[1] = CGF.Int8PtrTy;
 
-    const llvm::FunctionType *fnType
+    llvm::FunctionType *fnType
       = llvm::FunctionType::get(CGF.Int8PtrTy, argTypes, false);
     fn = createARCRuntimeFunction(CGF.CGM, fnType, fnName);
   }
 
-  const llvm::Type *origType = value->getType();
+  llvm::Type *origType = value->getType();
 
   addr = CGF.Builder.CreateBitCast(addr, CGF.Int8PtrPtrTy);
   value = CGF.Builder.CreateBitCast(value, CGF.Int8PtrTy);
@@ -1392,7 +1392,7 @@ static void emitARCCopyOperation(CodeGenFunction &CGF,
 
   if (!fn) {
     std::vector<llvm::Type*> argTypes(2, CGF.Int8PtrPtrTy);
-    const llvm::FunctionType *fnType
+    llvm::FunctionType *fnType
       = llvm::FunctionType::get(CGF.Builder.getVoidTy(), argTypes, false);
     fn = createARCRuntimeFunction(CGF.CGM, fnType, fnName);
   }
@@ -1490,7 +1490,7 @@ void CodeGenFunction::EmitARCRelease(llvm::Value *value, bool precise) {
   llvm::Constant *&fn = CGM.getARCEntrypoints().objc_release;
   if (!fn) {
     std::vector<llvm::Type*> args(1, Int8PtrTy);
-    const llvm::FunctionType *fnType =
+    llvm::FunctionType *fnType =
       llvm::FunctionType::get(Builder.getVoidTy(), args, false);
     fn = createARCRuntimeFunction(CGM, fnType, "objc_release");
   }
@@ -1520,7 +1520,7 @@ llvm::Value *CodeGenFunction::EmitARCStoreStrongCall(llvm::Value *addr,
   llvm::Constant *&fn = CGM.getARCEntrypoints().objc_storeStrong;
   if (!fn) {
     llvm::Type *argTypes[] = { Int8PtrPtrTy, Int8PtrTy };
-    const llvm::FunctionType *fnType
+    llvm::FunctionType *fnType
       = llvm::FunctionType::get(Builder.getVoidTy(), argTypes, false);
     fn = createARCRuntimeFunction(CGM, fnType, "objc_storeStrong");
   }
@@ -1607,7 +1607,7 @@ llvm::Value *CodeGenFunction::EmitARCRetainAutorelease(QualType type,
 
   if (isa<llvm::ConstantPointerNull>(value)) return value;
 
-  const llvm::Type *origType = value->getType();
+  llvm::Type *origType = value->getType();
   value = Builder.CreateBitCast(value, Int8PtrTy);
   value = EmitARCRetainBlock(value);
   value = EmitARCAutorelease(value);
@@ -1674,7 +1674,7 @@ void CodeGenFunction::EmitARCDestroyWeak(llvm::Value *addr) {
   llvm::Constant *&fn = CGM.getARCEntrypoints().objc_destroyWeak;
   if (!fn) {
     std::vector<llvm::Type*> args(1, Int8PtrPtrTy);
-    const llvm::FunctionType *fnType =
+    llvm::FunctionType *fnType =
       llvm::FunctionType::get(Builder.getVoidTy(), args, false);
     fn = createARCRuntimeFunction(CGM, fnType, "objc_destroyWeak");
   }
@@ -1709,7 +1709,7 @@ void CodeGenFunction::EmitARCCopyWeak(llvm::Value *dst, llvm::Value *src) {
 llvm::Value *CodeGenFunction::EmitObjCAutoreleasePoolPush() {
   llvm::Constant *&fn = CGM.getRREntrypoints().objc_autoreleasePoolPush;
   if (!fn) {
-    const llvm::FunctionType *fnType =
+    llvm::FunctionType *fnType =
       llvm::FunctionType::get(Int8PtrTy, false);
     fn = createARCRuntimeFunction(CGM, fnType, "objc_autoreleasePoolPush");
   }
@@ -1728,7 +1728,7 @@ void CodeGenFunction::EmitObjCAutoreleasePoolPop(llvm::Value *value) {
   llvm::Constant *&fn = CGM.getRREntrypoints().objc_autoreleasePoolPop;
   if (!fn) {
     std::vector<llvm::Type*> args(1, Int8PtrTy);
-    const llvm::FunctionType *fnType =
+    llvm::FunctionType *fnType =
       llvm::FunctionType::get(Builder.getVoidTy(), args, false);
 
     // We don't want to use a weak import here; instead we should not
@@ -1917,7 +1917,7 @@ static TryEmitResult
 tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
   // The desired result type, if it differs from the type of the
   // ultimate opaque expression.
-  const llvm::Type *resultType = 0;
+  llvm::Type *resultType = 0;
 
   // If we're loading retained from a __strong xvalue, we can avoid 
   // an extra retain/release pair by zeroing out the source of this

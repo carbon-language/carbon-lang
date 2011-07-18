@@ -26,7 +26,7 @@ class RTTIBuilder {
   CodeGenModule &CGM;  // Per-module state.
   llvm::LLVMContext &VMContext;
   
-  const llvm::Type *Int8PtrTy;
+  llvm::Type *Int8PtrTy;
   
   /// Fields - The fields of the RTTI descriptor currently being built.
   llvm::SmallVector<llvm::Constant *, 16> Fields;
@@ -479,7 +479,7 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
   llvm::Constant *VTable = 
     CGM.getModule().getOrInsertGlobal(VTableName, Int8PtrTy);
     
-  const llvm::Type *PtrDiffTy = 
+  llvm::Type *PtrDiffTy = 
     CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
 
   // The vtable address point is 2.
@@ -580,7 +580,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   // And the name.
   llvm::GlobalVariable *TypeName = GetAddrOfTypeName(Ty, Linkage);
 
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
   Fields.push_back(llvm::ConstantExpr::getBitCast(TypeName, Int8PtrTy));
 
   switch (Ty->getTypeClass()) {
@@ -822,7 +822,7 @@ static unsigned ComputeVMIClassTypeInfoFlags(const CXXRecordDecl *RD) {
 /// classes with bases that do not satisfy the abi::__si_class_type_info 
 /// constraints, according ti the Itanium C++ ABI, 2.9.5p5c.
 void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
-  const llvm::Type *UnsignedIntLTy = 
+  llvm::Type *UnsignedIntLTy = 
     CGM.getTypes().ConvertType(CGM.getContext().UnsignedIntTy);
   
   // Itanium C++ ABI 2.9.5p6c:
@@ -840,7 +840,7 @@ void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
   if (!RD->getNumBases())
     return;
   
-  const llvm::Type *LongLTy = 
+  llvm::Type *LongLTy = 
     CGM.getTypes().ConvertType(CGM.getContext().LongTy);
 
   // Now add the base class descriptions.
@@ -916,7 +916,7 @@ void RTTIBuilder::BuildPointerTypeInfo(QualType PointeeTy) {
   if (ContainsIncompleteClassType(UnqualifiedPointeeTy))
     Flags |= PTI_Incomplete;
 
-  const llvm::Type *UnsignedIntLTy = 
+  llvm::Type *UnsignedIntLTy = 
     CGM.getTypes().ConvertType(CGM.getContext().UnsignedIntTy);
   Fields.push_back(llvm::ConstantInt::get(UnsignedIntLTy, Flags));
   
@@ -953,7 +953,7 @@ void RTTIBuilder::BuildPointerToMemberTypeInfo(const MemberPointerType *Ty) {
   if (IsIncompleteClassType(ClassType))
     Flags |= PTI_ContainingClassIncomplete;
   
-  const llvm::Type *UnsignedIntLTy = 
+  llvm::Type *UnsignedIntLTy = 
     CGM.getTypes().ConvertType(CGM.getContext().UnsignedIntTy);
   Fields.push_back(llvm::ConstantInt::get(UnsignedIntLTy, Flags));
   
@@ -977,7 +977,7 @@ llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty,
   // FIXME: should we even be calling this method if RTTI is disabled
   // and it's not for EH?
   if (!ForEH && !getContext().getLangOptions().RTTI) {
-    const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+    llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
     return llvm::Constant::getNullValue(Int8PtrTy);
   }
   

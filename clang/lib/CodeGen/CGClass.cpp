@@ -62,7 +62,7 @@ CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
   if (Offset.isZero())
     return 0;
   
-  const llvm::Type *PtrDiffTy = 
+  llvm::Type *PtrDiffTy = 
   Types.ConvertType(getContext().getPointerDiffType());
   
   return llvm::ConstantInt::get(PtrDiffTy, Offset.getQuantity());
@@ -95,7 +95,7 @@ CodeGenFunction::GetAddressOfDirectBaseInCompleteClass(llvm::Value *This,
   // TODO: for complete types, this should be possible with a GEP.
   llvm::Value *V = This;
   if (Offset.isPositive()) {
-    const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
+    llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
     V = Builder.CreateBitCast(V, Int8PtrTy);
     V = Builder.CreateConstInBoundsGEP1_64(V, Offset.getQuantity());
   }
@@ -107,7 +107,7 @@ CodeGenFunction::GetAddressOfDirectBaseInCompleteClass(llvm::Value *This,
 static llvm::Value *
 ApplyNonVirtualAndVirtualOffset(CodeGenFunction &CGF, llvm::Value *ThisPtr,
                                 CharUnits NonVirtual, llvm::Value *Virtual) {
-  const llvm::Type *PtrDiffTy = 
+  llvm::Type *PtrDiffTy = 
     CGF.ConvertType(CGF.getContext().getPointerDiffType());
   
   llvm::Value *NonVirtualOffset = 0;
@@ -125,7 +125,7 @@ ApplyNonVirtualAndVirtualOffset(CodeGenFunction &CGF, llvm::Value *ThisPtr,
     BaseOffset = NonVirtualOffset;
   
   // Apply the base offset.
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   ThisPtr = CGF.Builder.CreateBitCast(ThisPtr, Int8PtrTy);
   ThisPtr = CGF.Builder.CreateGEP(ThisPtr, BaseOffset, "add.ptr");
 
@@ -155,7 +155,7 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
                                      Start, PathEnd);
 
   // Get the base pointer type.
-  const llvm::Type *BasePtrTy = 
+  llvm::Type *BasePtrTy = 
     ConvertType((PathEnd[-1])->getType())->getPointerTo();
   
   if (NonVirtualOffset.isZero() && !VBase) {
@@ -225,7 +225,7 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
 
   QualType DerivedTy =
     getContext().getCanonicalType(getContext().getTagDeclType(Derived));
-  const llvm::Type *DerivedPtrTy = ConvertType(DerivedTy)->getPointerTo();
+  llvm::Type *DerivedPtrTy = ConvertType(DerivedTy)->getPointerTo();
   
   llvm::Value *NonVirtualOffset =
     CGM.GetNonVirtualBaseClassOffset(Derived, PathBegin, PathEnd);
@@ -567,13 +567,13 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
       = CGF.getContext().getAsConstantArrayType(FieldType);
     if (Array && Constructor->isImplicit() && 
         Constructor->isCopyConstructor()) {
-      const llvm::Type *SizeTy
+      llvm::Type *SizeTy
         = CGF.ConvertType(CGF.getContext().getSizeType());
       
       // The LHS is a pointer to the first object we'll be constructing, as
       // a flat array.
       QualType BaseElementTy = CGF.getContext().getBaseElementType(Array);
-      const llvm::Type *BasePtr = CGF.ConvertType(BaseElementTy);
+      llvm::Type *BasePtr = CGF.ConvertType(BaseElementTy);
       BasePtr = llvm::PointerType::getUnqual(BasePtr);
       llvm::Value *BaseAddrPtr = CGF.Builder.CreateBitCast(LHS.getAddress(), 
                                                            BasePtr);
@@ -1236,7 +1236,7 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
   
   // Push the src ptr.
   QualType QT = *(FPT->arg_type_begin());
-  const llvm::Type *t = CGM.getTypes().ConvertType(QT);
+  llvm::Type *t = CGM.getTypes().ConvertType(QT);
   Src = Builder.CreateBitCast(Src, t);
   Args.add(RValue::get(Src), QT);
   
@@ -1399,7 +1399,7 @@ CodeGenFunction::GetVirtualBaseClassOffset(llvm::Value *This,
   llvm::Value *VBaseOffsetPtr = 
     Builder.CreateConstGEP1_64(VTablePtr, VBaseOffsetOffset.getQuantity(), 
                                "vbase.offset.ptr");
-  const llvm::Type *PtrDiffTy = 
+  llvm::Type *PtrDiffTy = 
     ConvertType(getContext().getPointerDiffType());
   
   VBaseOffsetPtr = Builder.CreateBitCast(VBaseOffsetPtr, 
@@ -1465,7 +1465,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
                                                   VirtualOffset);
 
   // Finally, store the address point.
-  const llvm::Type *AddressPointPtrTy =
+  llvm::Type *AddressPointPtrTy =
     VTableAddressPoint->getType()->getPointerTo();
   VTableField = Builder.CreateBitCast(VTableField, AddressPointPtrTy);
   Builder.CreateStore(VTableAddressPoint, VTableField);
@@ -1549,7 +1549,7 @@ void CodeGenFunction::InitializeVTablePointers(const CXXRecordDecl *RD) {
 }
 
 llvm::Value *CodeGenFunction::GetVTablePtr(llvm::Value *This,
-                                           const llvm::Type *Ty) {
+                                           llvm::Type *Ty) {
   llvm::Value *VTablePtrSrc = Builder.CreateBitCast(This, Ty->getPointerTo());
   return Builder.CreateLoad(VTablePtrSrc, "vtable");
 }
@@ -1677,7 +1677,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallee(const CXXOperatorCallExpr *E,
                                              const CXXMethodDecl *MD,
                                              llvm::Value *This) {
   const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
-  const llvm::Type *Ty =
+  llvm::Type *Ty =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
 

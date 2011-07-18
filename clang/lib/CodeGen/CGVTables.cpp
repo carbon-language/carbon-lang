@@ -2532,7 +2532,7 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
     getCXXABI().getMangleContext().mangleThunk(MD, Thunk, Out);
   Out.flush();
 
-  const llvm::Type *Ty = getTypes().GetFunctionTypeForVTable(GD);
+  llvm::Type *Ty = getTypes().GetFunctionTypeForVTable(GD);
   return GetOrCreateLLVMFunction(Name, Ty, GD, /*ForVTable=*/true);
 }
 
@@ -2543,7 +2543,7 @@ static llvm::Value *PerformTypeAdjustment(CodeGenFunction &CGF,
   if (!NonVirtualAdjustment && !VirtualAdjustment)
     return Ptr;
 
-  const llvm::Type *Int8PtrTy = 
+  llvm::Type *Int8PtrTy = 
     llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   
   llvm::Value *V = CGF.Builder.CreateBitCast(Ptr, Int8PtrTy);
@@ -2554,7 +2554,7 @@ static llvm::Value *PerformTypeAdjustment(CodeGenFunction &CGF,
   }
 
   if (VirtualAdjustment) {
-    const llvm::Type *PtrDiffTy = 
+    llvm::Type *PtrDiffTy = 
       CGF.ConvertType(CGF.getContext().getPointerDiffType());
 
     // Do the virtual adjustment.
@@ -2704,7 +2704,7 @@ void CodeGenFunction::GenerateVarArgsThunk(
   QualType ResultType = FPT->getResultType();
 
   // Get the original function
-  const llvm::Type *Ty =
+  llvm::Type *Ty =
     CGM.getTypes().GetFunctionType(FnInfo, /*IsVariadic*/true);
   llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty, /*ForVTable=*/true);
   llvm::Function *BaseFn = cast<llvm::Function>(Callee);
@@ -2811,7 +2811,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   }
 
   // Get our callee.
-  const llvm::Type *Ty =
+  llvm::Type *Ty =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(GD),
                                    FPT->isVariadic());
   llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty, /*ForVTable=*/true);
@@ -3066,9 +3066,9 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
                                         const VTableThunksTy &VTableThunks) {
   llvm::SmallVector<llvm::Constant *, 64> Inits;
 
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   
-  const llvm::Type *PtrDiffTy = 
+  llvm::Type *PtrDiffTy = 
     CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
 
   QualType ClassType = CGM.getContext().getTagDeclType(RD);
@@ -3126,7 +3126,7 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
       if (cast<CXXMethodDecl>(GD.getDecl())->isPure()) {
         // We have a pure virtual member function.
         if (!PureVirtualFn) {
-          const llvm::FunctionType *Ty = 
+          llvm::FunctionType *Ty = 
             llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()), 
                                     /*isVarArg=*/false);
           PureVirtualFn = 
@@ -3147,7 +3147,7 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
 
           NextVTableThunkIndex++;
         } else {
-          const llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVTable(GD);
+          llvm::Type *Ty = CGM.getTypes().GetFunctionTypeForVTable(GD);
         
           Init = CGM.GetAddrOfFunction(GD, Ty, /*ForVTable=*/true);
         }
@@ -3178,7 +3178,7 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
 
   ComputeVTableRelatedInformation(RD, /*VTableRequired=*/true);
   
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 
     llvm::ArrayType::get(Int8PtrTy, getNumVTableComponents(RD));
 
@@ -3246,7 +3246,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   Out.flush();
   llvm::StringRef Name = OutName.str();
 
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 
     llvm::ArrayType::get(Int8PtrTy, Builder.getNumVTableComponents());
 

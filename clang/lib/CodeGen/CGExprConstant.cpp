@@ -213,7 +213,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
         // padding and then an hole for our i8 to get plopped into.
         assert(isa<llvm::ArrayType>(LastElt->getType()) &&
                "Expected array padding of undefs");
-        const llvm::ArrayType *AT = cast<llvm::ArrayType>(LastElt->getType());
+        llvm::ArrayType *AT = cast<llvm::ArrayType>(LastElt->getType());
         assert(AT->getElementType()->isIntegerTy(CharWidth) &&
                AT->getNumElements() != 0 &&
                "Expected non-empty array padding of undefs");
@@ -281,7 +281,7 @@ void ConstStructBuilder::AppendPadding(CharUnits PadSize) {
   if (PadSize.isZero())
     return;
 
-  const llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
+  llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
   if (PadSize > CharUnits::One())
     Ty = llvm::ArrayType::get(Ty, PadSize.getQuantity());
 
@@ -317,7 +317,7 @@ void ConstStructBuilder::ConvertStructToPacked() {
       CharUnits NumChars =
         AlignedElementOffsetInChars - ElementOffsetInChars;
 
-      const llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
+      llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
       if (NumChars > CharUnits::One())
         Ty = llvm::ArrayType::get(Ty, NumChars.getQuantity());
 
@@ -435,11 +435,11 @@ llvm::Constant *ConstStructBuilder::
   
   // Pick the type to use.  If the type is layout identical to the ConvertType
   // type then use it, otherwise use whatever the builder produced for us.
-  const llvm::StructType *STy =
+  llvm::StructType *STy =
       llvm::ConstantStruct::getTypeForElements(CGM.getLLVMContext(),
                                                Builder.Elements,Builder.Packed);
-  const llvm::Type *ILETy = CGM.getTypes().ConvertType(ILE->getType());
-  if (const llvm::StructType *ILESTy = dyn_cast<llvm::StructType>(ILETy)) {
+  llvm::Type *ILETy = CGM.getTypes().ConvertType(ILE->getType());
+  if (llvm::StructType *ILESTy = dyn_cast<llvm::StructType>(ILETy)) {
     if (ILESTy->isLayoutIdentical(STy))
       STy = ILESTy;
   }
@@ -513,7 +513,7 @@ public:
     llvm::Constant *RHS = CGM.EmitConstantExpr(E->getRHS(),
                                                E->getRHS()->getType(), CGF);
 
-    const llvm::Type *ResultType = ConvertType(E->getType());
+    llvm::Type *ResultType = ConvertType(E->getType());
     LHS = llvm::ConstantExpr::getPtrToInt(LHS, ResultType);
     RHS = llvm::ConstantExpr::getPtrToInt(RHS, ResultType);
         
@@ -527,7 +527,7 @@ public:
     llvm::Constant *C = CGM.EmitConstantExpr(subExpr, subExpr->getType(), CGF);
     if (!C) return 0;
 
-    const llvm::Type *destType = ConvertType(E->getType());
+    llvm::Type *destType = ConvertType(E->getType());
 
     switch (E->getCastKind()) {
     case CK_ToUnion: {
@@ -680,9 +680,9 @@ public:
       return Visit(ILE->getInit(0));
 
     std::vector<llvm::Constant*> Elts;
-    const llvm::ArrayType *AType =
+    llvm::ArrayType *AType =
         cast<llvm::ArrayType>(ConvertType(ILE->getType()));
-    const llvm::Type *ElemTy = AType->getElementType();
+    llvm::Type *ElemTy = AType->getElementType();
     unsigned NumElements = AType->getNumElements();
 
     // Initialising an array requires us to automatically
@@ -719,7 +719,7 @@ public:
       std::vector<llvm::Type*> Types;
       for (unsigned i = 0; i < Elts.size(); ++i)
         Types.push_back(Elts[i]->getType());
-      const llvm::StructType *SType = llvm::StructType::get(AType->getContext(),
+      llvm::StructType *SType = llvm::StructType::get(AType->getContext(),
                                                             Types, true);
       return llvm::ConstantStruct::get(SType, Elts);
     }
@@ -831,7 +831,7 @@ public:
   }
 
   // Utility methods
-  const llvm::Type *ConvertType(QualType T) {
+  llvm::Type *ConvertType(QualType T) {
     return CGM.getTypes().ConvertType(T);
   }
 
@@ -951,7 +951,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       assert(0 && "Constant expressions should be initialized.");
       return 0;
     case APValue::LValue: {
-      const llvm::Type *DestTy = getTypes().ConvertTypeForMem(DestType);
+      llvm::Type *DestTy = getTypes().ConvertTypeForMem(DestType);
       llvm::Constant *Offset =
         llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
                                Result.Val.getLValueOffset().getQuantity());
@@ -962,7 +962,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
 
         // Apply offset if necessary.
         if (!Offset->isNullValue()) {
-          const llvm::Type *Type = llvm::Type::getInt8PtrTy(VMContext);
+          llvm::Type *Type = llvm::Type::getInt8PtrTy(VMContext);
           llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, Type);
           Casted = llvm::ConstantExpr::getGetElementPtr(Casted, &Offset, 1);
           C = llvm::ConstantExpr::getBitCast(Casted, C->getType());
@@ -994,7 +994,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                                  Result.Val.getInt());
 
       if (C->getType()->isIntegerTy(1)) {
-        const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
+        llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
         C = llvm::ConstantExpr::getZExt(C, BoolTy);
       }
       return C;
@@ -1064,7 +1064,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
 
   llvm::Constant* C = ConstExprEmitter(*this, CGF).Visit(const_cast<Expr*>(E));
   if (C && C->getType()->isIntegerTy(1)) {
-    const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
+    llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
     C = llvm::ConstantExpr::getZExt(C, BoolTy);
   }
   return C;
@@ -1181,14 +1181,14 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
 }
 
 static llvm::Constant *EmitNullConstantForBase(CodeGenModule &CGM,
-                                               const llvm::Type *baseType,
+                                               llvm::Type *baseType,
                                                const CXXRecordDecl *base);
 
 static llvm::Constant *EmitNullConstant(CodeGenModule &CGM,
                                         const CXXRecordDecl *record,
                                         bool asCompleteObject) {
   const CGRecordLayout &layout = CGM.getTypes().getCGRecordLayout(record);
-  const llvm::StructType *structure =
+  llvm::StructType *structure =
     (asCompleteObject ? layout.getLLVMType()
                       : layout.getBaseSubobjectLLVMType());
 
@@ -1212,7 +1212,7 @@ static llvm::Constant *EmitNullConstant(CodeGenModule &CGM,
       continue;
     
     unsigned fieldIndex = layout.getNonVirtualBaseLLVMFieldNo(base);
-    const llvm::Type *baseType = structure->getElementType(fieldIndex);
+    llvm::Type *baseType = structure->getElementType(fieldIndex);
     elements[fieldIndex] = EmitNullConstantForBase(CGM, baseType, base);
   }
 
@@ -1245,7 +1245,7 @@ static llvm::Constant *EmitNullConstant(CodeGenModule &CGM,
       // We might have already laid this field out.
       if (elements[fieldIndex]) continue;
 
-      const llvm::Type *baseType = structure->getElementType(fieldIndex);
+      llvm::Type *baseType = structure->getElementType(fieldIndex);
       elements[fieldIndex] = EmitNullConstantForBase(CGM, baseType, base);
     }
   }
@@ -1261,7 +1261,7 @@ static llvm::Constant *EmitNullConstant(CodeGenModule &CGM,
 
 /// Emit the null constant for a base subobject.
 static llvm::Constant *EmitNullConstantForBase(CodeGenModule &CGM,
-                                               const llvm::Type *baseType,
+                                               llvm::Type *baseType,
                                                const CXXRecordDecl *base) {
   const CGRecordLayout &baseLayout = CGM.getTypes().getCGRecordLayout(base);
 
@@ -1277,7 +1277,7 @@ static llvm::Constant *EmitNullConstantForBase(CodeGenModule &CGM,
   // Otherwise, some bases are represented as arrays of i8 if the size
   // of the base is smaller than its corresponding LLVM type.  Figure
   // out how many elements this base array has.
-  const llvm::ArrayType *baseArrayType = cast<llvm::ArrayType>(baseType);
+  llvm::ArrayType *baseArrayType = cast<llvm::ArrayType>(baseType);
   unsigned numBaseElements = baseArrayType->getNumElements();
 
   // Fill in null data member pointers.
@@ -1287,7 +1287,7 @@ static llvm::Constant *EmitNullConstantForBase(CodeGenModule &CGM,
 
   // Now go through all other elements and zero them out.
   if (numBaseElements) {
-    const llvm::Type *i8 = llvm::Type::getInt8Ty(CGM.getLLVMContext());
+    llvm::Type *i8 = llvm::Type::getInt8Ty(CGM.getLLVMContext());
     llvm::Constant *i8_zero = llvm::Constant::getNullValue(i8);
     for (unsigned i = 0; i != numBaseElements; ++i) {
       if (!baseElements[i])
@@ -1312,7 +1312,7 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
     for (unsigned i = 0; i != NumElements; ++i)
       Array[i] = Element;
 
-    const llvm::ArrayType *ATy =
+    llvm::ArrayType *ATy =
       cast<llvm::ArrayType>(getTypes().ConvertTypeForMem(T));
     return llvm::ConstantArray::get(ATy, Array);
   }

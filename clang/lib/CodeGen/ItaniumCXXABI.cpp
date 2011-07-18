@@ -215,11 +215,11 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   const CXXRecordDecl *RD = 
     cast<CXXRecordDecl>(MPT->getClass()->getAs<RecordType>()->getDecl());
 
-  const llvm::FunctionType *FTy = 
+  llvm::FunctionType *FTy = 
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(RD, FPT),
                                    FPT->isVariadic());
 
-  const llvm::IntegerType *ptrdiff = getPtrDiffTy();
+  llvm::IntegerType *ptrdiff = getPtrDiffTy();
   llvm::Constant *ptrdiff_1 = llvm::ConstantInt::get(ptrdiff, 1);
 
   llvm::BasicBlock *FnVirtual = CGF.createBasicBlock("memptr.virtual");
@@ -259,7 +259,7 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
   CGF.EmitBlock(FnVirtual);
 
   // Cast the adjusted this to a pointer to vtable pointer and load.
-  const llvm::Type *VTableTy = Builder.getInt8PtrTy();
+  llvm::Type *VTableTy = Builder.getInt8PtrTy();
   llvm::Value *VTable = Builder.CreateBitCast(This, VTableTy->getPointerTo());
   VTable = Builder.CreateLoad(VTable, "memptr.vtable");
 
@@ -307,7 +307,7 @@ llvm::Value *ItaniumCXXABI::EmitMemberDataPointerAddress(CodeGenFunction &CGF,
 
   // Cast the address to the appropriate pointer type, adopting the
   // address space of the base pointer.
-  const llvm::Type *PType
+  llvm::Type *PType
     = CGF.ConvertTypeForMem(MPT->getPointeeType())->getPointerTo(AS);
   return Builder.CreateBitCast(Addr, PType);
 }
@@ -478,7 +478,7 @@ ItaniumCXXABI::EmitMemberPointerConversion(llvm::Constant *C,
 
 llvm::Constant *
 ItaniumCXXABI::EmitNullMemberPointer(const MemberPointerType *MPT) {
-  const llvm::Type *ptrdiff_t = getPtrDiffTy();
+  llvm::Type *ptrdiff_t = getPtrDiffTy();
 
   // Itanium C++ ABI 2.3:
   //   A NULL pointer is represented as -1.
@@ -504,7 +504,7 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
   MD = MD->getCanonicalDecl();
 
   CodeGenTypes &Types = CGM.getTypes();
-  const llvm::Type *ptrdiff_t = getPtrDiffTy();
+  llvm::Type *ptrdiff_t = getPtrDiffTy();
 
   // Get the function pointer (or index if this is a virtual function).
   llvm::Constant *MemPtr[2];
@@ -535,7 +535,7 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
     }
   } else {
     const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
-    const llvm::Type *Ty;
+    llvm::Type *Ty;
     // Check whether the function has a computable LLVM signature.
     if (Types.isFuncTypeConvertible(FPT)) {
       // The function has a computable LLVM signature; use the correct type.
@@ -784,7 +784,7 @@ void ARMCXXABI::EmitReturnFromThunk(CodeGenFunction &CGF,
     return ItaniumCXXABI::EmitReturnFromThunk(CGF, RV, ResultType);
 
   // Destructor thunks in the ARM ABI have indeterminate results.
-  const llvm::Type *T =
+  llvm::Type *T =
     cast<llvm::PointerType>(CGF.ReturnValue->getType())->getElementType();
   RValue Undef = RValue::get(llvm::UndefValue::get(T));
   return ItaniumCXXABI::EmitReturnFromThunk(CGF, Undef, ResultType);
@@ -907,7 +907,7 @@ void ItaniumCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
                                     CharUnits &CookieSize) {
   // Derive a char* in the same address space as the pointer.
   unsigned AS = cast<llvm::PointerType>(Ptr->getType())->getAddressSpace();
-  const llvm::Type *CharPtrTy = CGF.Builder.getInt8Ty()->getPointerTo(AS);
+  llvm::Type *CharPtrTy = CGF.Builder.getInt8Ty()->getPointerTo(AS);
 
   // If we don't need an array cookie, bail out early.
   if (!NeedsArrayCookie(expr, ElementType)) {
@@ -919,7 +919,7 @@ void ItaniumCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
 
   QualType SizeTy = getContext().getSizeType();
   CharUnits SizeSize = getContext().getTypeSizeInChars(SizeTy);
-  const llvm::Type *SizeLTy = CGF.ConvertType(SizeTy);
+  llvm::Type *SizeLTy = CGF.ConvertType(SizeTy);
   
   CookieSize
     = std::max(SizeSize, getContext().getTypeAlignInChars(ElementType));
@@ -968,7 +968,7 @@ llvm::Value *ARMCXXABI::InitializeArrayCookie(CodeGenFunction &CGF,
 
   ASTContext &Ctx = getContext();
   CharUnits SizeSize = Ctx.getTypeSizeInChars(Ctx.getSizeType());
-  const llvm::IntegerType *SizeTy =
+  llvm::IntegerType *SizeTy =
     cast<llvm::IntegerType>(CGF.ConvertType(Ctx.getSizeType()));
 
   // The cookie is always at the start of the buffer.
@@ -1000,7 +1000,7 @@ void ARMCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
                                 CharUnits &CookieSize) {
   // Derive a char* in the same address space as the pointer.
   unsigned AS = cast<llvm::PointerType>(Ptr->getType())->getAddressSpace();
-  const llvm::Type *CharPtrTy = CGF.Builder.getInt8Ty()->getPointerTo(AS);
+  llvm::Type *CharPtrTy = CGF.Builder.getInt8Ty()->getPointerTo(AS);
 
   // If we don't need an array cookie, bail out early.
   if (!NeedsArrayCookie(expr, ElementType)) {
@@ -1012,7 +1012,7 @@ void ARMCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
 
   QualType SizeTy = getContext().getSizeType();
   CharUnits SizeSize = getContext().getTypeSizeInChars(SizeTy);
-  const llvm::Type *SizeLTy = CGF.ConvertType(SizeTy);
+  llvm::Type *SizeLTy = CGF.ConvertType(SizeTy);
   
   // The cookie size is always 2 * sizeof(size_t).
   CookieSize = 2 * SizeSize;
@@ -1037,7 +1037,7 @@ static llvm::Constant *getGuardAcquireFn(CodeGenModule &CGM,
                                          llvm::PointerType *GuardPtrTy) {
   // int __cxa_guard_acquire(__guard *guard_object);
   llvm::Type *ArgTys[] = { GuardPtrTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGM.getTypes().ConvertType(CGM.getContext().IntTy),
                             ArgTys, /*isVarArg=*/false);
   
@@ -1048,7 +1048,7 @@ static llvm::Constant *getGuardReleaseFn(CodeGenModule &CGM,
                                          llvm::PointerType *GuardPtrTy) {
   // void __cxa_guard_release(__guard *guard_object);
   llvm::Type *ArgTys[] = { GuardPtrTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()),
                             ArgTys, /*isVarArg=*/false);
   
@@ -1059,7 +1059,7 @@ static llvm::Constant *getGuardAbortFn(CodeGenModule &CGM,
                                        llvm::PointerType *GuardPtrTy) {
   // void __cxa_guard_abort(__guard *guard_object);
   llvm::Type *ArgTys[] = { GuardPtrTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()),
                             ArgTys, /*isVarArg=*/false);
   
@@ -1090,7 +1090,7 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   bool threadsafe =
     (getContext().getLangOptions().ThreadsafeStatics && D.isLocalVarDecl());
 
-  const llvm::IntegerType *GuardTy;
+  llvm::IntegerType *GuardTy;
 
   // If we have a global variable with internal linkage and thread-safe statics
   // are disabled, we can just let the guard variable be of type i8.
@@ -1152,7 +1152,7 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   //     }
   } else {
     // Load the first byte of the guard variable.
-    const llvm::Type *PtrTy = Builder.getInt8PtrTy();
+    llvm::Type *PtrTy = Builder.getInt8PtrTy();
     llvm::Value *V = 
       Builder.CreateLoad(Builder.CreateBitCast(GuardVariable, PtrTy), "tmp");
 

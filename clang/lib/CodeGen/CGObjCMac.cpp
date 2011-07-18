@@ -212,7 +212,7 @@ public:
     Params.push_back(SelType);
     Params.push_back(Ctx.getPointerDiffType()->getCanonicalTypeUnqualified());
     Params.push_back(Ctx.BoolTy);
-    const llvm::FunctionType *FTy =
+    llvm::FunctionType *FTy =
       Types.GetFunctionType(Types.getFunctionInfo(IdType, Params,
                                                   FunctionType::ExtInfo()),
                             false);
@@ -232,7 +232,7 @@ public:
     Params.push_back(IdType);
     Params.push_back(Ctx.BoolTy);
     Params.push_back(Ctx.BoolTy);
-    const llvm::FunctionType *FTy =
+    llvm::FunctionType *FTy =
       Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params,
                                                   FunctionType::ExtInfo()),
                             false);
@@ -250,7 +250,7 @@ public:
     Params.push_back(Ctx.LongTy);
     Params.push_back(Ctx.BoolTy);
     Params.push_back(Ctx.BoolTy);
-    const llvm::FunctionType *FTy =
+    llvm::FunctionType *FTy =
       Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params,
                                                   FunctionType::ExtInfo()),
                             false);
@@ -263,7 +263,7 @@ public:
     // void objc_enumerationMutation (id)
     llvm::SmallVector<CanQualType,1> Params;
     Params.push_back(Ctx.getCanonicalParamType(Ctx.getObjCIdType()));
-    const llvm::FunctionType *FTy =
+    llvm::FunctionType *FTy =
       Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params,
                                                   FunctionType::ExtInfo()),
                             false);
@@ -1510,7 +1510,7 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   }
   // FIXME: We shouldn't need to do this cast, rectify the ASTContext and
   // ObjCTypes types.
-  const llvm::Type *ClassTy =
+  llvm::Type *ClassTy =
     CGM.getTypes().ConvertType(CGF.getContext().getObjCClassType());
   Target = CGF.Builder.CreateBitCast(Target, ClassTy);
   CGF.Builder.CreateStore(Target,
@@ -1557,7 +1557,7 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
                                                        FunctionType::ExtInfo());
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
   if (Method)
@@ -2501,7 +2501,7 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
   GetNameForMethod(OMD, CD, Name);
 
   CodeGenTypes &Types = CGM.getTypes();
-  const llvm::FunctionType *MethodTy =
+  llvm::FunctionType *MethodTy =
     Types.GetFunctionType(Types.getFunctionInfo(OMD), OMD->isVariadic());
   llvm::Function *Method =
     llvm::Function::Create(MethodTy,
@@ -2519,7 +2519,7 @@ CGObjCCommonMac::CreateMetadataVar(llvm::Twine Name,
                                    const char *Section,
                                    unsigned Align,
                                    bool AddToUsed) {
-  const llvm::Type *Ty = Init->getType();
+  llvm::Type *Ty = Init->getType();
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), Ty, false,
                              llvm::GlobalValue::InternalLinkage, Init, Name);
@@ -3230,7 +3230,7 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
 ///
 llvm::Value * CGObjCMac::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
                                           llvm::Value *AddrWeakObj) {
-  const llvm::Type* DestTy =
+  llvm::Type* DestTy =
     cast<llvm::PointerType>(AddrWeakObj->getType())->getElementType();
   AddrWeakObj = CGF.Builder.CreateBitCast(AddrWeakObj,
                                           ObjCTypes.PtrObjectPtrTy);
@@ -3245,7 +3245,7 @@ llvm::Value * CGObjCMac::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
 ///
 void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst) {
-  const llvm::Type * SrcTy = src->getType();
+  llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
@@ -3266,7 +3266,7 @@ void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                      llvm::Value *src, llvm::Value *dst,
                                      bool threadlocal) {
-  const llvm::Type * SrcTy = src->getType();
+  llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
@@ -3292,7 +3292,7 @@ void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
                                    llvm::Value *src, llvm::Value *dst,
                                    llvm::Value *ivarOffset) {
   assert(ivarOffset && "EmitObjCIvarAssign - ivarOffset is NULL");
-  const llvm::Type * SrcTy = src->getType();
+  llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
@@ -3312,7 +3312,7 @@ void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
 ///
 void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *src, llvm::Value *dst) {
-  const llvm::Type * SrcTy = src->getType();
+  llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
@@ -3394,7 +3394,7 @@ void CGObjCCommonMac::EmitImageInfo() {
   // We never allow @synthesize of a superclass property.
   flags |= eImageInfo_CorrectedSynthesize;
 
-  const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
+  llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
   
   // Emitted as int[2];
   llvm::Constant *values[2] = {
@@ -3575,7 +3575,7 @@ void CGObjCCommonMac::BuildAggrIvarRecordLayout(const RecordType *RT,
   const RecordDecl *RD = RT->getDecl();
   // FIXME - Use iterator.
   llvm::SmallVector<FieldDecl*, 16> Fields(RD->field_begin(), RD->field_end());
-  const llvm::Type *Ty = CGM.getTypes().ConvertType(QualType(RT, 0));
+  llvm::Type *Ty = CGM.getTypes().ConvertType(QualType(RT, 0));
   const llvm::StructLayout *RecLayout =
     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(Ty));
 
@@ -3754,7 +3754,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
 /// filled already by the caller.
 llvm::Constant *CGObjCCommonMac::BuildIvarLayoutBitmap(std::string& BitMap) {
   unsigned int WordsToScan, WordsToSkip;
-  const llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
   
   // Build the string of skip/scan nibbles
   llvm::SmallVector<SKIP_SCAN, 32> SkipScanIvars;
@@ -3898,7 +3898,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   bool ForStrongLayout) {
   bool hasUnion = false;
 
-  const llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
   if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC &&
       !CGM.getLangOptions().ObjCAutoRefCount)
     return llvm::Constant::getNullValue(PtrTy);
@@ -4125,7 +4125,7 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
 
   // FIXME: It would be nice to unify this with the opaque type, so that the IR
   // comes out a bit cleaner.
-  const llvm::Type *T = Types.ConvertType(Ctx.getObjCProtoType());
+  llvm::Type *T = Types.ConvertType(Ctx.getObjCProtoType());
   ExternalProtocolPtrTy = llvm::PointerType::getUnqual(T);
 
   // I'm not sure I like this. The implicit coordination is a bit
@@ -5273,7 +5273,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
                                 ComputeIvarBaseOffset(CGM, ID, IVD));
     Ivar[1] = GetMethodVarName(IVD->getIdentifier());
     Ivar[2] = GetMethodVarType(IVD);
-    const llvm::Type *FieldTy =
+    llvm::Type *FieldTy =
       CGM.getTypes().ConvertTypeForMem(IVD->getType());
     unsigned Size = CGM.getTargetData().getTypeAllocSize(FieldTy);
     unsigned Align = CGM.getContext().getPreferredTypeAlign(
@@ -5669,7 +5669,7 @@ CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
   callee = CGF.Builder.CreateLoad(callee, "msgSend_fn");
 
   bool variadic = method ? method->isVariadic() : false;
-  const llvm::FunctionType *fnType = 
+  llvm::FunctionType *fnType = 
     CGF.getTypes().GetFunctionType(fnInfo, variadic);
   callee = CGF.Builder.CreateBitCast(callee,
                                      llvm::PointerType::getUnqual(fnType));
@@ -5847,7 +5847,7 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
 
   // FIXME: We shouldn't need to do this cast, rectify the ASTContext and
   // ObjCTypes types.
-  const llvm::Type *ClassTy =
+  llvm::Type *ClassTy =
     CGM.getTypes().ConvertType(CGF.getContext().getObjCClassType());
   Target = CGF.Builder.CreateBitCast(Target, ClassTy);
   CGF.Builder.CreateStore(Target,
@@ -5890,7 +5890,7 @@ void CGObjCNonFragileABIMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
                                                 llvm::Value *src,
                                                 llvm::Value *dst,
                                                 llvm::Value *ivarOffset) {
-  const llvm::Type * SrcTy = src->getType();
+  llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
@@ -5911,7 +5911,7 @@ void CGObjCNonFragileABIMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCNonFragileABIMac::EmitObjCStrongCastAssign(
   CodeGen::CodeGenFunction &CGF,
   llvm::Value *src, llvm::Value *dst) {
-  const llvm::Type * SrcTy = src->getType();
+  llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
@@ -5944,7 +5944,7 @@ void CGObjCNonFragileABIMac::EmitGCMemmoveCollectable(
 llvm::Value * CGObjCNonFragileABIMac::EmitObjCWeakRead(
   CodeGen::CodeGenFunction &CGF,
   llvm::Value *AddrWeakObj) {
-  const llvm::Type* DestTy =
+  llvm::Type* DestTy =
     cast<llvm::PointerType>(AddrWeakObj->getType())->getElementType();
   AddrWeakObj = CGF.Builder.CreateBitCast(AddrWeakObj, ObjCTypes.PtrObjectPtrTy);
   llvm::Value *read_weak = CGF.Builder.CreateCall(ObjCTypes.getGcReadWeakFn(),
@@ -5958,7 +5958,7 @@ llvm::Value * CGObjCNonFragileABIMac::EmitObjCWeakRead(
 ///
 void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
                                                 llvm::Value *src, llvm::Value *dst) {
-  const llvm::Type * SrcTy = src->getType();
+  llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");
@@ -5979,7 +5979,7 @@ void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                           llvm::Value *src, llvm::Value *dst,
                                           bool threadlocal) {
-  const llvm::Type * SrcTy = src->getType();
+  llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
     assert(Size <= 8 && "does not support size > 8");

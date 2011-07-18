@@ -236,7 +236,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     FInfo = &CGM.getTypes().getFunctionInfo(MD);
 
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-  const llvm::Type *Ty
+  llvm::Type *Ty
     = CGM.getTypes().GetFunctionType(*FInfo, FPT->isVariadic());
 
   // C++ [class.virtual]p12:
@@ -483,7 +483,7 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
   // the cookie size would bring the total size >= 0.
   bool isSigned 
     = e->getArraySize()->getType()->isSignedIntegerOrEnumerationType();
-  const llvm::IntegerType *numElementsType
+  llvm::IntegerType *numElementsType
     = cast<llvm::IntegerType>(numElements->getType());
   unsigned numElementsWidth = numElementsType->getBitWidth();
 
@@ -716,7 +716,7 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
   if (E->getNumConstructorArgs() == 0)
     return;
   
-  const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
+  llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
   
   // Create a temporary for the loop index and initialize it with 0.
   llvm::Value *IndexPtr = CreateTempAlloca(SizeTy, "loop.index");
@@ -1105,7 +1105,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     operatorDeleteCleanup = EHStack.stable_begin();
   }
 
-  const llvm::Type *elementPtrTy
+  llvm::Type *elementPtrTy
     = ConvertTypeForMem(allocType)->getPointerTo(AS);
   llvm::Value *result = Builder.CreateBitCast(allocation, elementPtrTy);
 
@@ -1115,7 +1115,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     // NewPtr is a pointer to the base element type.  If we're
     // allocating an array of arrays, we'll need to cast back to the
     // array pointer type.
-    const llvm::Type *resultType = ConvertTypeForMem(E->getType());
+    llvm::Type *resultType = ConvertTypeForMem(E->getType());
     if (result->getType() != resultType)
       result = Builder.CreateBitCast(result, resultType);
   } else {
@@ -1218,7 +1218,7 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
                                                     ElementType);
         }
         
-        const llvm::Type *Ty =
+        llvm::Type *Ty =
           CGF.getTypes().GetFunctionType(CGF.getTypes().getFunctionInfo(Dtor,
                                                                Dtor_Complete),
                                          /*isVariadic=*/false);
@@ -1307,7 +1307,7 @@ namespace {
       // Pass the original requested size as the second argument.
       if (DeleteFTy->getNumArgs() == 2) {
         QualType size_t = DeleteFTy->getArgType(1);
-        const llvm::IntegerType *SizeTy
+        llvm::IntegerType *SizeTy
           = cast<llvm::IntegerType>(CGF.ConvertType(size_t));
         
         CharUnits ElementTypeSize =
@@ -1439,8 +1439,8 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
 static llvm::Constant *getBadTypeidFn(CodeGenFunction &CGF) {
   // void __cxa_bad_typeid();
   
-  const llvm::Type *VoidTy = llvm::Type::getVoidTy(CGF.getLLVMContext());
-  const llvm::FunctionType *FTy =
+  llvm::Type *VoidTy = llvm::Type::getVoidTy(CGF.getLLVMContext());
+  llvm::FunctionType *FTy =
   llvm::FunctionType::get(VoidTy, false);
   
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_bad_typeid");
@@ -1454,7 +1454,7 @@ static void EmitBadTypeidCall(CodeGenFunction &CGF) {
 
 static llvm::Value *EmitTypeidFromVTable(CodeGenFunction &CGF,
                                          const Expr *E, 
-                                         const llvm::Type *StdTypeInfoPtrTy) {
+                                         llvm::Type *StdTypeInfoPtrTy) {
   // Get the vtable pointer.
   llvm::Value *ThisPtr = CGF.EmitLValue(E).getAddress();
 
@@ -1487,7 +1487,7 @@ static llvm::Value *EmitTypeidFromVTable(CodeGenFunction &CGF,
 }
 
 llvm::Value *CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
-  const llvm::Type *StdTypeInfoPtrTy = 
+  llvm::Type *StdTypeInfoPtrTy = 
     ConvertType(E->getType())->getPointerTo();
   
   if (E->isTypeOperand()) {
@@ -1528,7 +1528,7 @@ static llvm::Constant *getDynamicCastFn(CodeGenFunction &CGF) {
 
   llvm::Type *Args[4] = { Int8PtrTy, Int8PtrTy, Int8PtrTy, PtrDiffTy };
   
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(Int8PtrTy, Args, false);
   
   return CGF.CGM.CreateRuntimeFunction(FTy, "__dynamic_cast");
@@ -1537,8 +1537,8 @@ static llvm::Constant *getDynamicCastFn(CodeGenFunction &CGF) {
 static llvm::Constant *getBadCastFn(CodeGenFunction &CGF) {
   // void __cxa_bad_cast();
   
-  const llvm::Type *VoidTy = llvm::Type::getVoidTy(CGF.getLLVMContext());
-  const llvm::FunctionType *FTy =
+  llvm::Type *VoidTy = llvm::Type::getVoidTy(CGF.getLLVMContext());
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(VoidTy, false);
   
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_bad_cast");
@@ -1554,9 +1554,9 @@ static llvm::Value *
 EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
                     QualType SrcTy, QualType DestTy,
                     llvm::BasicBlock *CastEnd) {
-  const llvm::Type *PtrDiffLTy = 
+  llvm::Type *PtrDiffLTy = 
     CGF.ConvertType(CGF.getContext().getPointerDiffType());
-  const llvm::Type *DestLTy = CGF.ConvertType(DestTy);
+  llvm::Type *DestLTy = CGF.ConvertType(DestTy);
 
   if (const PointerType *PTy = DestTy->getAs<PointerType>()) {
     if (PTy->getPointeeType()->isVoidType()) {
@@ -1626,7 +1626,7 @@ EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
 
 static llvm::Value *EmitDynamicCastToNull(CodeGenFunction &CGF,
                                           QualType DestTy) {
-  const llvm::Type *DestLTy = CGF.ConvertType(DestTy);
+  llvm::Type *DestLTy = CGF.ConvertType(DestTy);
   if (DestTy->isPointerType())
     return llvm::Constant::getNullValue(DestLTy);
 

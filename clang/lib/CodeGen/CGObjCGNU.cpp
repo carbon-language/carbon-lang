@@ -82,7 +82,7 @@ class LazyRuntimeFunction {
      if (!Function) {
        if (0 == FunctionName) return 0;
        // We put the return type on the end of the vector, so pop it back off
-       const llvm::Type *RetTy = ArgTys.back();
+       llvm::Type *RetTy = ArgTys.back();
        ArgTys.pop_back();
        llvm::FunctionType *FTy = llvm::FunctionType::get(RetTy, ArgTys, false);
        Function =
@@ -111,17 +111,17 @@ protected:
   llvm::Module &TheModule;
   /// strut objc_super.  Used for sending messages to super.  This structure
   /// contains the receiver (object) and the expected class.
-  const llvm::StructType *ObjCSuperTy;
+  llvm::StructType *ObjCSuperTy;
   /// struct objc_super*.  The type of the argument to the superclass message
   /// lookup functions.  
-  const llvm::PointerType *PtrToObjCSuperTy;
+  llvm::PointerType *PtrToObjCSuperTy;
   /// LLVM type for selectors.  Opaque pointer (i8*) unless a header declaring
   /// SEL is included in a header somewhere, in which case it will be whatever
   /// type is declared in that header, most likely {i8*, i8*}.
   llvm::PointerType *SelectorTy;
   /// LLVM i8 type.  Cached here to avoid repeatedly getting it in all of the
   /// places where it's used
-  const llvm::IntegerType *Int8Ty;
+  llvm::IntegerType *Int8Ty;
   /// Pointer to i8 - LLVM type of char*, for all of the places where the
   /// runtime needs to deal with C strings.
   llvm::PointerType *PtrToInt8Ty;
@@ -138,7 +138,7 @@ protected:
   llvm::PointerType *IdTy;
   /// Pointer to a pointer to an Objective-C object.  Used in the new ABI
   /// message lookup function and some GC-related functions.
-  const llvm::PointerType *PtrToIdTy;
+  llvm::PointerType *PtrToIdTy;
   /// The clang type of id.  Used when using the clang CGCall infrastructure to
   /// call Objective-C methods.
   CanQualType ASTIdTy;
@@ -153,14 +153,14 @@ protected:
   /// compatibility with GCC...
   llvm::IntegerType *LongTy;
   /// LLVM type for C size_t.  Used in various runtime data structures.
-  const llvm::IntegerType *SizeTy;
+  llvm::IntegerType *SizeTy;
   /// LLVM type for C ptrdiff_t.  Mainly used in property accessor functions.
-  const llvm::IntegerType *PtrDiffTy;
+  llvm::IntegerType *PtrDiffTy;
   /// LLVM type for C int*.  Used for GCC-ABI-compatible non-fragile instance
   /// variables.
-  const llvm::PointerType *PtrToIntTy;
+  llvm::PointerType *PtrToIntTy;
   /// LLVM type for Objective-C BOOL type.
-  const llvm::Type *BoolTy;
+  llvm::Type *BoolTy;
   /// Metadata kind used to tie method lookups to message sends.  The GNUstep
   /// runtime provides some LLVM passes that can use this to do things like
   /// automatic IMP caching and speculative inlining.
@@ -191,7 +191,7 @@ protected:
   /// Generates a global structure, initialized by the elements in the vector.
   /// The element types must match the types of the structure elements in the
   /// first argument.
-  llvm::GlobalVariable *MakeGlobal(const llvm::StructType *Ty,
+  llvm::GlobalVariable *MakeGlobal(llvm::StructType *Ty,
                                    std::vector<llvm::Constant*> &V,
                                    llvm::StringRef Name="",
                                    llvm::GlobalValue::LinkageTypes linkage
@@ -203,7 +203,7 @@ protected:
   /// Generates a global array.  The vector must contain the same number of
   /// elements that the array type declares, of the type specified as the array
   /// element type.
-  llvm::GlobalVariable *MakeGlobal(const llvm::ArrayType *Ty,
+  llvm::GlobalVariable *MakeGlobal(llvm::ArrayType *Ty,
                                    std::vector<llvm::Constant*> &V,
                                    llvm::StringRef Name="",
                                    llvm::GlobalValue::LinkageTypes linkage
@@ -214,7 +214,7 @@ protected:
   }
   /// Generates a global array, inferring the array type from the specified
   /// element type and the size of the initialiser.  
-  llvm::GlobalVariable *MakeGlobalArray(const llvm::Type *Ty,
+  llvm::GlobalVariable *MakeGlobalArray(llvm::Type *Ty,
                                         std::vector<llvm::Constant*> &V,
                                         llvm::StringRef Name="",
                                         llvm::GlobalValue::LinkageTypes linkage
@@ -225,7 +225,7 @@ protected:
   /// Ensures that the value has the required type, by inserting a bitcast if
   /// required.  This function lets us avoid inserting bitcasts that are
   /// redundant.
-  llvm::Value* EnforceType(CGBuilderTy B, llvm::Value *V, const llvm::Type *Ty){
+  llvm::Value* EnforceType(CGBuilderTy B, llvm::Value *V, llvm::Type *Ty){
     if (V->getType() == Ty) return V;
     return B.CreateBitCast(V, Ty);
   }
@@ -1048,7 +1048,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
   Builder.CreateStore(ReceiverClass, Builder.CreateStructGEP(ObjCSuper, 1));
 
   ObjCSuper = EnforceType(Builder, ObjCSuper, PtrToObjCSuperTy);
-  const llvm::FunctionType *impType =
+  llvm::FunctionType *impType =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
   // Get the IMP
@@ -1148,7 +1148,7 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
                                                        FunctionType::ExtInfo());
-  const llvm::FunctionType *impType =
+  llvm::FunctionType *impType =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
   imp = EnforceType(Builder, imp, llvm::PointerType::getUnqual(impType));
 
@@ -1175,7 +1175,7 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
     } else if (msgRet.isAggregate()) {
       llvm::Value *v = msgRet.getAggregateAddr();
       llvm::PHINode *phi = Builder.CreatePHI(v->getType(), 2);
-      const llvm::PointerType *RetTy = cast<llvm::PointerType>(v->getType());
+      llvm::PointerType *RetTy = cast<llvm::PointerType>(v->getType());
       llvm::AllocaInst *NullVal = 
           CGF.CreateTempAlloca(RetTy->getElementType(), "null");
       CGF.InitTempAlloca(NullVal,
@@ -1438,7 +1438,7 @@ llvm::Constant *CGObjCGNU::GenerateProtocolList(
 llvm::Value *CGObjCGNU::GenerateProtocolRef(CGBuilderTy &Builder,
                                             const ObjCProtocolDecl *PD) {
   llvm::Value *protocol = ExistingProtocols[PD->getNameAsString()];
-  const llvm::Type *T =
+  llvm::Type *T =
     CGM.getTypes().ConvertType(CGM.getContext().getObjCProtoType());
   return Builder.CreateBitCast(protocol, llvm::PointerType::getUnqual(T));
 }
@@ -1963,7 +1963,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   // setting up the alias.  These are: The base address for the global, the
   // ivar array (second field), the ivar in this list (set for each ivar), and
   // the offset (third field in ivar structure)
-  const llvm::Type *IndexTy = llvm::Type::getInt32Ty(VMContext);
+  llvm::Type *IndexTy = llvm::Type::getInt32Ty(VMContext);
   llvm::Constant *offsetPointerIndexes[] = {Zeros[0],
       llvm::ConstantInt::get(IndexTy, 1), 0,
       llvm::ConstantInt::get(IndexTy, 2) };
@@ -2033,7 +2033,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   // Add all referenced protocols to a category.
   GenerateProtocolHolderCategory();
 
-  const llvm::StructType *SelStructTy = dyn_cast<llvm::StructType>(
+  llvm::StructType *SelStructTy = dyn_cast<llvm::StructType>(
           SelectorTy->getElementType());
   llvm::Type *SelStructPtrTy = SelectorTy;
   if (SelStructTy == 0) {
@@ -2225,7 +2225,7 @@ llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD,
   bool isClassMethod = !OMD->isInstanceMethod();
 
   CodeGenTypes &Types = CGM.getTypes();
-  const llvm::FunctionType *MethodTy =
+  llvm::FunctionType *MethodTy =
     Types.GetFunctionType(Types.getFunctionInfo(OMD), OMD->isVariadic());
   std::string FunctionName = SymbolNameForMethod(ClassName, CategoryName,
       MethodName, isClassMethod);

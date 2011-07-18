@@ -174,7 +174,7 @@ private:
   /// the passed size.
   void AppendTailPadding(CharUnits RecordSize);
 
-  CharUnits getTypeAlignment(const llvm::Type *Ty) const;
+  CharUnits getTypeAlignment(llvm::Type *Ty) const;
 
   /// getAlignmentAsLLVMStruct - Returns the maximum alignment of all the
   /// LLVM element types.
@@ -230,7 +230,7 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
                                uint64_t FieldSize,
                                uint64_t ContainingTypeSizeInBits,
                                unsigned ContainingTypeAlign) {
-  const llvm::Type *Ty = Types.ConvertTypeForMem(FD->getType());
+  llvm::Type *Ty = Types.ConvertTypeForMem(FD->getType());
   CharUnits TypeSizeInBytes =
     CharUnits::fromQuantity(Types.getTargetData().getTypeAllocSize(Ty));
   uint64_t TypeSizeInBits = Types.getContext().toBits(TypeSizeInBytes);
@@ -672,10 +672,10 @@ CGRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD,
   // Check if we need to add a vtable pointer.
   if (RD->isDynamicClass()) {
     if (!PrimaryBase) {
-      const llvm::Type *FunctionType =
+      llvm::Type *FunctionType =
         llvm::FunctionType::get(llvm::Type::getInt32Ty(Types.getLLVMContext()),
                                 /*isVarArg=*/true);
-      const llvm::Type *VTableTy = FunctionType->getPointerTo();
+      llvm::Type *VTableTy = FunctionType->getPointerTo();
 
       assert(NextFieldOffset.isZero() &&
              "VTable pointer must come first!");
@@ -882,7 +882,7 @@ void CGRecordLayoutBuilder::AppendBytes(CharUnits numBytes) {
   AppendField(NextFieldOffset, getByteArrayType(numBytes));
 }
 
-CharUnits CGRecordLayoutBuilder::getTypeAlignment(const llvm::Type *Ty) const {
+CharUnits CGRecordLayoutBuilder::getTypeAlignment(llvm::Type *Ty) const {
   if (Packed)
     return CharUnits::One();
 
@@ -983,7 +983,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
   }
                                      
   // Verify that the LLVM and AST field offsets agree.
-  const llvm::StructType *ST =
+  llvm::StructType *ST =
     dyn_cast<llvm::StructType>(RL->getLLVMType());
   const llvm::StructLayout *SL = getTargetData().getStructLayout(ST);
 

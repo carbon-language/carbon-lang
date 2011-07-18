@@ -184,7 +184,7 @@ bool AggExprEmitter::TypeRequiresGCollection(QualType T) {
 void AggExprEmitter::EmitGCMove(const Expr *E, RValue Src) {
   if (Dest.requiresGCollection()) {
     CharUnits size = CGF.getContext().getTypeSizeInChars(E->getType());
-    const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
+    llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
     llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size.getQuantity());
     CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF, Dest.getAddr(),
                                                     Src.getAggregateAddr(),
@@ -215,7 +215,7 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
 
   if (Dest.requiresGCollection()) {
     CharUnits size = CGF.getContext().getTypeSizeInChars(E->getType());
-    const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
+    llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
     llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size.getQuantity());
     CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF,
                                                       Dest.getAddr(),
@@ -647,9 +647,9 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
   // Handle initialization of an array.
   if (E->getType()->isArrayType()) {
-    const llvm::PointerType *APType =
+    llvm::PointerType *APType =
       cast<llvm::PointerType>(DestPtr->getType());
-    const llvm::ArrayType *AType =
+    llvm::ArrayType *AType =
       cast<llvm::ArrayType>(APType->getElementType());
 
     uint64_t NumInitElements = E->getNumInits();
@@ -999,7 +999,7 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
   CharUnits Align = TypeInfo.second;
 
   llvm::Value *Loc = Slot.getAddr();
-  const llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   
   Loc = CGF.Builder.CreateBitCast(Loc, BP);
   CGF.Builder.CreateMemSet(Loc, CGF.Builder.getInt8(0), SizeVal, 
@@ -1088,13 +1088,13 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // we need to use a different call here.  We use isVolatile to indicate when
   // either the source or the destination is volatile.
 
-  const llvm::PointerType *DPT = cast<llvm::PointerType>(DestPtr->getType());
-  const llvm::Type *DBP =
+  llvm::PointerType *DPT = cast<llvm::PointerType>(DestPtr->getType());
+  llvm::Type *DBP =
     llvm::Type::getInt8PtrTy(getLLVMContext(), DPT->getAddressSpace());
   DestPtr = Builder.CreateBitCast(DestPtr, DBP, "tmp");
 
-  const llvm::PointerType *SPT = cast<llvm::PointerType>(SrcPtr->getType());
-  const llvm::Type *SBP =
+  llvm::PointerType *SPT = cast<llvm::PointerType>(SrcPtr->getType());
+  llvm::Type *SBP =
     llvm::Type::getInt8PtrTy(getLLVMContext(), SPT->getAddressSpace());
   SrcPtr = Builder.CreateBitCast(SrcPtr, SBP, "tmp");
 
@@ -1105,7 +1105,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
     RecordDecl *Record = RecordTy->getDecl();
     if (Record->hasObjectMember()) {
       CharUnits size = TypeInfo.first;
-      const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
+      llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
       llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size.getQuantity());
       CGM.getObjCRuntime().EmitGCMemmoveCollectable(*this, DestPtr, SrcPtr, 
                                                     SizeVal);
@@ -1116,7 +1116,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
     if (const RecordType *RecordTy = BaseType->getAs<RecordType>()) {
       if (RecordTy->getDecl()->hasObjectMember()) {
         CharUnits size = TypeInfo.first;
-        const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
+        llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
         llvm::Value *SizeVal = 
           llvm::ConstantInt::get(SizeTy, size.getQuantity());
         CGM.getObjCRuntime().EmitGCMemmoveCollectable(*this, DestPtr, SrcPtr, 

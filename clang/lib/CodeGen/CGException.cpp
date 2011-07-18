@@ -30,7 +30,7 @@ static llvm::Constant *getAllocateExceptionFn(CodeGenFunction &CGF) {
   // void *__cxa_allocate_exception(size_t thrown_size);
 
   llvm::Type *ArgTys[] = { CGF.SizeTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.Int8PtrTy, ArgTys, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_allocate_exception");
@@ -40,7 +40,7 @@ static llvm::Constant *getFreeExceptionFn(CodeGenFunction &CGF) {
   // void __cxa_free_exception(void *thrown_exception);
 
   llvm::Type *ArgTys[] = { CGF.Int8PtrTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.VoidTy, ArgTys, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_free_exception");
@@ -51,7 +51,7 @@ static llvm::Constant *getThrowFn(CodeGenFunction &CGF) {
   //                  void (*dest) (void *));
 
   llvm::Type *Args[3] = { CGF.Int8PtrTy, CGF.Int8PtrTy, CGF.Int8PtrTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.VoidTy, Args, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_throw");
@@ -60,7 +60,7 @@ static llvm::Constant *getThrowFn(CodeGenFunction &CGF) {
 static llvm::Constant *getReThrowFn(CodeGenFunction &CGF) {
   // void __cxa_rethrow();
 
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.VoidTy, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_rethrow");
@@ -70,7 +70,7 @@ static llvm::Constant *getGetExceptionPtrFn(CodeGenFunction &CGF) {
   // void *__cxa_get_exception_ptr(void*);
 
   llvm::Type *ArgTys[] = { CGF.Int8PtrTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.Int8PtrTy, ArgTys, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_get_exception_ptr");
@@ -80,7 +80,7 @@ static llvm::Constant *getBeginCatchFn(CodeGenFunction &CGF) {
   // void *__cxa_begin_catch(void*);
 
   llvm::Type *ArgTys[] = { CGF.Int8PtrTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.Int8PtrTy, ArgTys, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_begin_catch");
@@ -89,7 +89,7 @@ static llvm::Constant *getBeginCatchFn(CodeGenFunction &CGF) {
 static llvm::Constant *getEndCatchFn(CodeGenFunction &CGF) {
   // void __cxa_end_catch();
 
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.VoidTy, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_end_catch");
@@ -99,7 +99,7 @@ static llvm::Constant *getUnexpectedFn(CodeGenFunction &CGF) {
   // void __cxa_call_unexepcted(void *thrown_exception);
 
   llvm::Type *ArgTys[] = { CGF.Int8PtrTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.VoidTy, ArgTys, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_call_unexpected");
@@ -107,7 +107,7 @@ static llvm::Constant *getUnexpectedFn(CodeGenFunction &CGF) {
 
 llvm::Constant *CodeGenFunction::getUnwindResumeFn() {
   llvm::Type *ArgTys[] = { Int8PtrTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(VoidTy, ArgTys, /*IsVarArgs=*/false);
 
   if (CGM.getLangOptions().SjLjExceptions)
@@ -117,7 +117,7 @@ llvm::Constant *CodeGenFunction::getUnwindResumeFn() {
 
 llvm::Constant *CodeGenFunction::getUnwindResumeOrRethrowFn() {
   llvm::Type *ArgTys[] = { Int8PtrTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(VoidTy, ArgTys, /*IsVarArgs=*/false);
 
   if (CGM.getLangOptions().SjLjExceptions)
@@ -128,7 +128,7 @@ llvm::Constant *CodeGenFunction::getUnwindResumeOrRethrowFn() {
 static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
   // void __terminate();
 
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.VoidTy, /*IsVarArgs=*/false);
 
   llvm::StringRef name;
@@ -147,7 +147,7 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
 static llvm::Constant *getCatchallRethrowFn(CodeGenFunction &CGF,
                                             llvm::StringRef Name) {
   llvm::Type *ArgTys[] = { CGF.Int8PtrTy };
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.VoidTy, ArgTys, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, Name);
@@ -346,7 +346,7 @@ static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *e,
 
   // __cxa_allocate_exception returns a void*;  we need to cast this
   // to the appropriate type for the object.
-  const llvm::Type *ty = CGF.ConvertTypeForMem(e->getType())->getPointerTo();
+  llvm::Type *ty = CGF.ConvertTypeForMem(e->getType())->getPointerTo();
   llvm::Value *typedAddr = CGF.Builder.CreateBitCast(addr, ty);
 
   // FIXME: this isn't quite right!  If there's a final unelided call
@@ -397,7 +397,7 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
   QualType ThrowType = E->getSubExpr()->getType();
 
   // Now allocate the exception object.
-  const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
+  llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
   uint64_t TypeSize = getContext().getTypeSizeInChars(ThrowType).getQuantity();
 
   llvm::Constant *AllocExceptionFn = getAllocateExceptionFn(*this);
@@ -958,7 +958,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
 
   CanQualType CatchType =
     CGF.CGM.getContext().getCanonicalType(CatchParam.getType());
-  const llvm::Type *LLVMCatchTy = CGF.ConvertTypeForMem(CatchType);
+  llvm::Type *LLVMCatchTy = CGF.ConvertTypeForMem(CatchType);
 
   // If we're catching by reference, we can just cast the object
   // pointer to the appropriate pointer.
@@ -1001,7 +1001,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
       // pad.  The best solution is to fix the personality function.
       } else {
         // Pull the pointer for the reference type off.
-        const llvm::Type *PtrTy =
+        llvm::Type *PtrTy =
           cast<llvm::PointerType>(LLVMCatchTy)->getElementType();
 
         // Create the temporary and write the adjusted pointer into it.
@@ -1037,7 +1037,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
 
     // Otherwise, it returns a pointer into the exception object.
 
-    const llvm::Type *PtrTy = LLVMCatchTy->getPointerTo(0); // addrspace 0 ok
+    llvm::Type *PtrTy = LLVMCatchTy->getPointerTo(0); // addrspace 0 ok
     llvm::Value *Cast = CGF.Builder.CreateBitCast(AdjustedExn, PtrTy);
 
     if (IsComplex) {
@@ -1055,7 +1055,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
 
   assert(isa<RecordType>(CatchType) && "unexpected catch type!");
 
-  const llvm::Type *PtrTy = LLVMCatchTy->getPointerTo(0); // addrspace 0 ok
+  llvm::Type *PtrTy = LLVMCatchTy->getPointerTo(0); // addrspace 0 ok
 
   // Check for a copy expression.  If we don't have a copy expression,
   // that means a trivial copy is okay.
@@ -1315,7 +1315,7 @@ void CodeGenFunction::FinallyInfo::enter(CodeGenFunction &CGF,
   // In the latter case we need to pass it the exception object.
   // But we can't use the exception slot because the @finally might
   // have a landing pad (which would overwrite the exception slot).
-  const llvm::FunctionType *rethrowFnTy =
+  llvm::FunctionType *rethrowFnTy =
     cast<llvm::FunctionType>(
       cast<llvm::PointerType>(rethrowFn->getType())->getElementType());
   SavedExnVar = 0;

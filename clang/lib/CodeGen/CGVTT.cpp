@@ -210,7 +210,7 @@ void VTTBuilder::AddVTablePointer(BaseSubobject Base, llvm::Constant *VTable,
   llvm::Constant *Init = 
     llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Idxs, 2);
   
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   Init = llvm::ConstantExpr::getBitCast(Init, Int8PtrTy);
   
   VTTComponents.push_back(Init);
@@ -385,8 +385,8 @@ CodeGenVTables::EmitVTTDefinition(llvm::GlobalVariable *VTT,
                                   const CXXRecordDecl *RD) {
   VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/true, Linkage);
 
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
-  const llvm::ArrayType *ArrayType = 
+  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::ArrayType *ArrayType = 
     llvm::ArrayType::get(Int8PtrTy, Builder.getVTTComponents().size());
   
   llvm::Constant *Init = 
@@ -414,9 +414,9 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTT(const CXXRecordDecl *RD) {
 
   VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/false);
 
-  const llvm::Type *Int8PtrTy = 
+  llvm::Type *Int8PtrTy = 
     llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
-  const llvm::ArrayType *ArrayType = 
+  llvm::ArrayType *ArrayType = 
     llvm::ArrayType::get(Int8PtrTy, Builder.getVTTComponents().size());
 
   llvm::GlobalVariable *GV =

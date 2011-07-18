@@ -175,7 +175,7 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
 
   std::string Name = GetStaticDeclName(*this, D, Separator);
 
-  const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
+  llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), LTy,
                              Ty.isConstant(getContext()), Linkage,
@@ -290,8 +290,8 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   //
   // FIXME: It is really dangerous to store this in the map; if anyone
   // RAUW's the GV uses of this constant will be invalid.
-  const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
-  const llvm::Type *LPtrTy =
+  llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
+  llvm::Type *LPtrTy =
     LTy->getPointerTo(CGM.getContext().getTargetAddressSpace(D.getType()));
   DMEntry = llvm::ConstantExpr::getBitCast(GV, LPtrTy);
 
@@ -519,7 +519,7 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
                                    getByRefValueLLVMField(cast<VarDecl>(D))));
     }
 
-    const llvm::PointerType *ty
+    llvm::PointerType *ty
       = cast<llvm::PointerType>(tempLV.getAddress()->getType());
     ty = cast<llvm::PointerType>(ty->getElementType());
 
@@ -762,7 +762,7 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       
       // A normal fixed sized variable becomes an alloca in the entry block,
       // unless it's an NRVO variable.
-      const llvm::Type *LTy = ConvertTypeForMem(Ty);
+      llvm::Type *LTy = ConvertTypeForMem(Ty);
       
       if (NRVO) {
         // The named return value optimization: allocate this variable in the
@@ -829,7 +829,7 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
     QualType elementType;
     llvm::tie(elementCount, elementType) = getVLASize(Ty);
 
-    const llvm::Type *llvmTy = ConvertTypeForMem(elementType);
+    llvm::Type *llvmTy = ConvertTypeForMem(elementType);
 
     // Allocate memory for the array.
     llvm::AllocaInst *vla = Builder.CreateAlloca(llvmTy, elementCount, "vla");
@@ -953,7 +953,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
     llvm::ConstantInt::get(IntPtrTy, 
                            getContext().getTypeSizeInChars(type).getQuantity());
 
-  const llvm::Type *BP = Int8PtrTy;
+  llvm::Type *BP = Int8PtrTy;
   if (Loc->getType() != BP)
     Loc = Builder.CreateBitCast(Loc, BP, "tmp");
 

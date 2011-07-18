@@ -34,7 +34,7 @@ llvm::Value *CodeGenFunction::EmitCastToVoidPtr(llvm::Value *value) {
   unsigned addressSpace =
     cast<llvm::PointerType>(value->getType())->getAddressSpace();
 
-  const llvm::PointerType *destType = Int8PtrTy;
+  llvm::PointerType *destType = Int8PtrTy;
   if (addressSpace)
     destType = llvm::Type::getInt8PtrTy(getLLVMContext(), addressSpace);
 
@@ -44,7 +44,7 @@ llvm::Value *CodeGenFunction::EmitCastToVoidPtr(llvm::Value *value) {
 
 /// CreateTempAlloca - This creates a alloca and inserts it into the entry
 /// block.
-llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
+llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(llvm::Type *Ty,
                                                     const llvm::Twine &Name) {
   if (!Builder.isNamePreserving())
     return new llvm::AllocaInst(Ty, 0, "", AllocaInsertPt);
@@ -183,7 +183,7 @@ CreateReferenceTemporary(CodeGenFunction& CGF, QualType Type,
       CGF.CGM.getCXXABI().getMangleContext().mangleReferenceTemporary(VD, Out);
       Out.flush();
 
-      const llvm::Type *RefTempTy = CGF.ConvertTypeForMem(Type);
+      llvm::Type *RefTempTy = CGF.ConvertTypeForMem(Type);
   
       // Create the reference temporary.
       llvm::GlobalValue *RefTemp =
@@ -578,7 +578,7 @@ RValue CodeGenFunction::GetUndefRValue(QualType Ty) {
     return RValue::get(0);
   
   if (const ComplexType *CTy = Ty->getAs<ComplexType>()) {
-    const llvm::Type *EltTy = ConvertType(CTy->getElementType());
+    llvm::Type *EltTy = ConvertType(CTy->getElementType());
     llvm::Value *U = llvm::UndefValue::get(EltTy);
     return RValue::getComplex(std::make_pair(U, U));
   }
@@ -833,7 +833,7 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV) {
   const CGBitFieldInfo &Info = LV.getBitFieldInfo();
 
   // Get the output type.
-  const llvm::Type *ResLTy = ConvertType(LV.getType());
+  llvm::Type *ResLTy = ConvertType(LV.getType());
   unsigned ResSizeInBits = CGM.getTargetData().getTypeSizeInBits(ResLTy);
 
   // Compute the result as an OR of all of the individual component accesses.
@@ -857,7 +857,7 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV) {
     }
 
     // Cast to the access type.
-    const llvm::Type *PTy = llvm::Type::getIntNPtrTy(getLLVMContext(),
+    llvm::Type *PTy = llvm::Type::getIntNPtrTy(getLLVMContext(),
                                                      AI.AccessWidth,
                        CGM.getContext().getTargetAddressSpace(LV.getType()));
     Ptr = Builder.CreateBitCast(Ptr, PTy);
@@ -1002,7 +1002,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst) {
     llvm::Value *src = Src.getScalarVal();
     if (Dst.isObjCIvar()) {
       assert(Dst.getBaseIvarExp() && "BaseIvarExp is NULL");
-      const llvm::Type *ResultType = ConvertType(getContext().LongTy);
+      llvm::Type *ResultType = ConvertType(getContext().LongTy);
       llvm::Value *RHS = EmitScalarExpr(Dst.getBaseIvarExp());
       llvm::Value *dst = RHS;
       RHS = Builder.CreatePtrToInt(RHS, ResultType, "sub.ptr.rhs.cast");
@@ -1029,7 +1029,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
   const CGBitFieldInfo &Info = Dst.getBitFieldInfo();
 
   // Get the output type.
-  const llvm::Type *ResLTy = ConvertTypeForMem(Dst.getType());
+  llvm::Type *ResLTy = ConvertTypeForMem(Dst.getType());
   unsigned ResSizeInBits = CGM.getTargetData().getTypeSizeInBits(ResLTy);
 
   // Get the source value, truncated to the width of the bit-field.
@@ -1045,7 +1045,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
   // Return the new value of the bit-field, if requested.
   if (Result) {
     // Cast back to the proper type for result.
-    const llvm::Type *SrcTy = Src.getScalarVal()->getType();
+    llvm::Type *SrcTy = Src.getScalarVal()->getType();
     llvm::Value *ReloadVal = Builder.CreateIntCast(SrcVal, SrcTy, false,
                                                    "bf.reload.val");
 
@@ -1082,10 +1082,10 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
     }
 
     // Cast to the access type.
-    const llvm::Type *AccessLTy =
+    llvm::Type *AccessLTy =
       llvm::Type::getIntNTy(getLLVMContext(), AI.AccessWidth);
 
-    const llvm::Type *PTy = AccessLTy->getPointerTo(addressSpace);
+    llvm::Type *PTy = AccessLTy->getPointerTo(addressSpace);
     Ptr = Builder.CreateBitCast(Ptr, PTy);
 
     // Extract the piece of the bit-field value to write in this access, limited
@@ -1684,7 +1684,7 @@ llvm::Constant *GenerateConstantVector(llvm::LLVMContext &VMContext,
                                        llvm::SmallVector<unsigned, 4> &Elts) {
   llvm::SmallVector<llvm::Constant*, 4> CElts;
 
-  const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
+  llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
   for (unsigned i = 0, e = Elts.size(); i != e; ++i)
     CElts.push_back(llvm::ConstantInt::get(Int32Ty, Elts[i]));
 
@@ -1904,7 +1904,7 @@ CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value *BaseValue,
   // for both unions and structs.  A union needs a bitcast, a struct element
   // will need a bitcast if the LLVM type laid out doesn't match the desired
   // type.
-  const llvm::Type *llvmType = ConvertTypeForMem(FieldType);
+  llvm::Type *llvmType = ConvertTypeForMem(FieldType);
   unsigned AS = cast<llvm::PointerType>(V->getType())->getAddressSpace();
   V = Builder.CreateBitCast(V, llvmType->getPointerTo(AS));
   

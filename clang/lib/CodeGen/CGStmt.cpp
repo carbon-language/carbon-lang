@@ -1301,7 +1301,7 @@ CodeGenFunction::EmitAsmInputLValue(const AsmStmt &S,
     if (!CodeGenFunction::hasAggregateLLVMType(InputType)) {
       Arg = EmitLoadOfLValue(InputValue).getScalarVal();
     } else {
-      const llvm::Type *Ty = ConvertType(InputType);
+      llvm::Type *Ty = ConvertType(InputType);
       uint64_t Size = CGM.getTargetData().getTypeSizeInBits(Ty);
       if (Size <= 64 && llvm::isPowerOf2_64(Size)) {
         Ty = llvm::IntegerType::get(getLLVMContext(), Size);
@@ -1530,14 +1530,14 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
         // Use ptrtoint as appropriate so that we can do our extension.
         if (isa<llvm::PointerType>(Arg->getType()))
           Arg = Builder.CreatePtrToInt(Arg, IntPtrTy);
-        const llvm::Type *OutputTy = ConvertType(OutputType);
+        llvm::Type *OutputTy = ConvertType(OutputType);
         if (isa<llvm::IntegerType>(OutputTy))
           Arg = Builder.CreateZExt(Arg, OutputTy);
         else
           Arg = Builder.CreateFPExt(Arg, OutputTy);
       }
     }
-    if (const llvm::Type* AdjTy = 
+    if (llvm::Type* AdjTy = 
               getTargetHooks().adjustInlineAsmType(*this, InputConstraint,
                                                    Arg->getType()))
       Arg = Builder.CreateBitCast(Arg, AdjTy);
@@ -1577,7 +1577,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     Constraints += MachineClobbers;
   }
 
-  const llvm::Type *ResultType;
+  llvm::Type *ResultType;
   if (ResultRegTypes.empty())
     ResultType = llvm::Type::getVoidTy(getLLVMContext());
   else if (ResultRegTypes.size() == 1)
@@ -1585,7 +1585,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   else
     ResultType = llvm::StructType::get(getLLVMContext(), ResultRegTypes);
 
-  const llvm::FunctionType *FTy =
+  llvm::FunctionType *FTy =
     llvm::FunctionType::get(ResultType, ArgTypes, false);
 
   llvm::InlineAsm *IA =
@@ -1615,7 +1615,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     // If the result type of the LLVM IR asm doesn't match the result type of
     // the expression, do the conversion.
     if (ResultRegTypes[i] != ResultTruncRegTypes[i]) {
-      const llvm::Type *TruncTy = ResultTruncRegTypes[i];
+      llvm::Type *TruncTy = ResultTruncRegTypes[i];
       
       // Truncate the integer result to the right size, note that TruncTy can be
       // a pointer.

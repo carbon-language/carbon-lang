@@ -367,12 +367,12 @@ CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
 /// with an in-memory size smaller than DstSize.
 static llvm::Value *
 EnterStructPointerForCoercedAccess(llvm::Value *SrcPtr,
-                                   const llvm::StructType *SrcSTy,
+                                   llvm::StructType *SrcSTy,
                                    uint64_t DstSize, CodeGenFunction &CGF) {
   // We can't dive into a zero-element struct.
   if (SrcSTy->getNumElements() == 0) return SrcPtr;
 
-  const llvm::Type *FirstElt = SrcSTy->getElementType(0);
+  llvm::Type *FirstElt = SrcSTy->getElementType(0);
 
   // If the first elt is at least as large as what we're looking for, or if the
   // first element is the same size as the whole struct, we can enter it.
@@ -386,9 +386,9 @@ EnterStructPointerForCoercedAccess(llvm::Value *SrcPtr,
   SrcPtr = CGF.Builder.CreateConstGEP2_32(SrcPtr, 0, 0, "coerce.dive");
 
   // If the first element is a struct, recurse.
-  const llvm::Type *SrcTy =
+  llvm::Type *SrcTy =
     cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
-  if (const llvm::StructType *SrcSTy = dyn_cast<llvm::StructType>(SrcTy))
+  if (llvm::StructType *SrcSTy = dyn_cast<llvm::StructType>(SrcTy))
     return EnterStructPointerForCoercedAccess(SrcPtr, SrcSTy, DstSize, CGF);
 
   return SrcPtr;
@@ -398,7 +398,7 @@ EnterStructPointerForCoercedAccess(llvm::Value *SrcPtr,
 /// are either integers or pointers.  This does a truncation of the value if it
 /// is too large or a zero extension if it is too small.
 static llvm::Value *CoerceIntOrPtrToIntOrPtr(llvm::Value *Val,
-                                             const llvm::Type *Ty,
+                                             llvm::Type *Ty,
                                              CodeGenFunction &CGF) {
   if (Val->getType() == Ty)
     return Val;
@@ -412,7 +412,7 @@ static llvm::Value *CoerceIntOrPtrToIntOrPtr(llvm::Value *Val,
     Val = CGF.Builder.CreatePtrToInt(Val, CGF.IntPtrTy, "coerce.val.pi");
   }
 
-  const llvm::Type *DestIntTy = Ty;
+  llvm::Type *DestIntTy = Ty;
   if (isa<llvm::PointerType>(DestIntTy))
     DestIntTy = CGF.IntPtrTy;
 
@@ -433,9 +433,9 @@ static llvm::Value *CoerceIntOrPtrToIntOrPtr(llvm::Value *Val,
 /// destination type; in this situation the values of bits which not
 /// present in the src are undefined.
 static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
-                                      const llvm::Type *Ty,
+                                      llvm::Type *Ty,
                                       CodeGenFunction &CGF) {
-  const llvm::Type *SrcTy =
+  llvm::Type *SrcTy =
     cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
 
   // If SrcTy and Ty are the same, just do a load.
@@ -444,7 +444,7 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
 
   uint64_t DstSize = CGF.CGM.getTargetData().getTypeAllocSize(Ty);
 
-  if (const llvm::StructType *SrcSTy = dyn_cast<llvm::StructType>(SrcTy)) {
+  if (llvm::StructType *SrcSTy = dyn_cast<llvm::StructType>(SrcTy)) {
     SrcPtr = EnterStructPointerForCoercedAccess(SrcPtr, SrcSTy, DstSize, CGF);
     SrcTy = cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
   }
@@ -495,7 +495,7 @@ static void BuildAggStore(CodeGenFunction &CGF, llvm::Value *Val,
                           llvm::Value *DestPtr, bool DestIsVolatile,
                           bool LowAlignment) {
   // Prefer scalar stores to first-class aggregate stores.
-  if (const llvm::StructType *STy =
+  if (llvm::StructType *STy =
         dyn_cast<llvm::StructType>(Val->getType())) {
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       llvm::Value *EltPtr = CGF.Builder.CreateConstGEP2_32(DestPtr, 0, i);
@@ -519,8 +519,8 @@ static void CreateCoercedStore(llvm::Value *Src,
                                llvm::Value *DstPtr,
                                bool DstIsVolatile,
                                CodeGenFunction &CGF) {
-  const llvm::Type *SrcTy = Src->getType();
-  const llvm::Type *DstTy =
+  llvm::Type *SrcTy = Src->getType();
+  llvm::Type *DstTy =
     cast<llvm::PointerType>(DstPtr->getType())->getElementType();
   if (SrcTy == DstTy) {
     CGF.Builder.CreateStore(Src, DstPtr, DstIsVolatile);
@@ -529,7 +529,7 @@ static void CreateCoercedStore(llvm::Value *Src,
 
   uint64_t SrcSize = CGF.CGM.getTargetData().getTypeAllocSize(SrcTy);
 
-  if (const llvm::StructType *DstSTy = dyn_cast<llvm::StructType>(DstTy)) {
+  if (llvm::StructType *DstSTy = dyn_cast<llvm::StructType>(DstTy)) {
     DstPtr = EnterStructPointerForCoercedAccess(DstPtr, DstSTy, SrcSize, CGF);
     DstTy = cast<llvm::PointerType>(DstPtr->getType())->getElementType();
   }
@@ -615,7 +615,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool isVariadic) {
   assert(Inserted && "Recursively being processed?");
   
   llvm::SmallVector<llvm::Type*, 8> argTypes;
-  const llvm::Type *resultType = 0;
+  llvm::Type *resultType = 0;
 
   const ABIArgInfo &retAI = FI.getReturnInfo();
   switch (retAI.getKind()) {
@@ -632,7 +632,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool isVariadic) {
     resultType = llvm::Type::getVoidTy(getLLVMContext());
 
     QualType ret = FI.getReturnType();
-    const llvm::Type *ty = ConvertType(ret);
+    llvm::Type *ty = ConvertType(ret);
     unsigned addressSpace = Context.getTargetAddressSpace(ret);
     argTypes.push_back(llvm::PointerType::get(ty, addressSpace));
     break;
@@ -653,7 +653,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool isVariadic) {
 
     case ABIArgInfo::Indirect: {
       // indirect arguments are always on the stack, which is addr space #0.
-      const llvm::Type *LTy = ConvertTypeForMem(it->type);
+      llvm::Type *LTy = ConvertTypeForMem(it->type);
       argTypes.push_back(LTy->getPointerTo());
       break;
     }
@@ -664,7 +664,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool isVariadic) {
       // way is semantically identical, but fast-isel and the optimizer
       // generally likes scalar values better than FCAs.
       llvm::Type *argType = argAI.getCoerceToType();
-      if (const llvm::StructType *st = dyn_cast<llvm::StructType>(argType)) {
+      if (llvm::StructType *st = dyn_cast<llvm::StructType>(argType)) {
         for (unsigned i = 0, e = st->getNumElements(); i != e; ++i)
           argTypes.push_back(st->getElementType(i));
       } else {
@@ -685,7 +685,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool isVariadic) {
   return llvm::FunctionType::get(resultType, argTypes, isVariadic);
 }
 
-const llvm::Type *CodeGenTypes::GetFunctionTypeForVTable(GlobalDecl GD) {
+llvm::Type *CodeGenTypes::GetFunctionTypeForVTable(GlobalDecl GD) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
 
@@ -803,7 +803,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       }
       // FIXME: handle sseregparm someday...
 
-      if (const llvm::StructType *STy =
+      if (llvm::StructType *STy =
             dyn_cast<llvm::StructType>(AI.getCoerceToType()))
         Index += STy->getNumElements()-1;  // 1 will be added below.
       break;
@@ -847,7 +847,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 static llvm::Value *emitArgumentDemotion(CodeGenFunction &CGF,
                                          const VarDecl *var,
                                          llvm::Value *value) {
-  const llvm::Type *varType = CGF.ConvertType(var->getType());
+  llvm::Type *varType = CGF.ConvertType(var->getType());
 
   // This can happen with promotions that actually don't change the
   // underlying type, like the enum promotions.
@@ -872,7 +872,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CurFuncDecl)) {
     if (FD->hasImplicitReturnZero()) {
       QualType RetTy = FD->getResultType().getUnqualifiedType();
-      const llvm::Type* LLVMTy = CGM.getTypes().ConvertType(RetTy);
+      llvm::Type* LLVMTy = CGM.getTypes().ConvertType(RetTy);
       llvm::Constant* Zero = llvm::Constant::getNullValue(LLVMTy);
       Builder.CreateStore(Zero, ReturnValue);
     }
@@ -918,7 +918,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           //
           // FIXME: We should have a common utility for generating an aggregate
           // copy.
-          const llvm::Type *I8PtrTy = Builder.getInt8PtrTy();
+          llvm::Type *I8PtrTy = Builder.getInt8PtrTy();
           CharUnits Size = getContext().getTypeSizeInChars(Ty);
           llvm::Value *Dst = Builder.CreateBitCast(AlignedTemp, I8PtrTy);
           llvm::Value *Src = Builder.CreateBitCast(V, I8PtrTy);
@@ -985,7 +985,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // If the coerce-to type is a first class aggregate, we flatten it and
       // pass the elements. Either way is semantically identical, but fast-isel
       // and the optimizer generally likes scalar values better than FCAs.
-      if (const llvm::StructType *STy =
+      if (llvm::StructType *STy =
             dyn_cast<llvm::StructType>(ArgI.getCoerceToType())) {
         Ptr = Builder.CreateBitCast(Ptr, llvm::PointerType::getUnqual(STy));
 
@@ -1054,7 +1054,7 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
   if (BB->empty()) return 0;
   if (&BB->back() != result) return 0;
 
-  const llvm::Type *resultType = result->getType();
+  llvm::Type *resultType = result->getType();
 
   // result is in a BasicBlock and is therefore an Instruction.
   llvm::Instruction *generator = cast<llvm::Instruction>(result);
@@ -1324,7 +1324,7 @@ static void emitWritebackArg(CodeGenFunction &CGF, CallArgList &args,
   // The dest and src types don't necessarily match in LLVM terms
   // because of the crazy ObjC compatibility rules.
 
-  const llvm::PointerType *destType =
+  llvm::PointerType *destType =
     cast<llvm::PointerType>(CGF.ConvertType(CRE->getType()));
 
   // If the address is a constant null, just pass the appropriate null.
@@ -1630,7 +1630,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       // If the coerce-to type is a first class aggregate, we flatten it and
       // pass the elements. Either way is semantically identical, but fast-isel
       // and the optimizer generally likes scalar values better than FCAs.
-      if (const llvm::StructType *STy =
+      if (llvm::StructType *STy =
             dyn_cast<llvm::StructType>(ArgInfo.getCoerceToType())) {
         SrcPtr = Builder.CreateBitCast(SrcPtr,
                                        llvm::PointerType::getUnqual(STy));
@@ -1668,10 +1668,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // with unprototyped functions.
   if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Callee))
     if (llvm::Function *CalleeF = dyn_cast<llvm::Function>(CE->getOperand(0))) {
-      const llvm::PointerType *CurPT=cast<llvm::PointerType>(Callee->getType());
-      const llvm::FunctionType *CurFT =
+      llvm::PointerType *CurPT=cast<llvm::PointerType>(Callee->getType());
+      llvm::FunctionType *CurFT =
         cast<llvm::FunctionType>(CurPT->getElementType());
-      const llvm::FunctionType *ActualFT = CalleeF->getFunctionType();
+      llvm::FunctionType *ActualFT = CalleeF->getFunctionType();
 
       if (CE->getOpcode() == llvm::Instruction::BitCast &&
           ActualFT->getReturnType() == CurFT->getReturnType() &&

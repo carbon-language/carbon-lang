@@ -433,7 +433,7 @@ public:
   /// variable with the right type will be created and all uses of the old
   /// variable will be replaced with a bitcast to the new variable.
   llvm::GlobalVariable *
-  CreateOrReplaceCXXRuntimeVariable(llvm::StringRef Name, const llvm::Type *Ty,
+  CreateOrReplaceCXXRuntimeVariable(llvm::StringRef Name, llvm::Type *Ty,
                                     llvm::GlobalValue::LinkageTypes Linkage);
 
   /// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
@@ -441,14 +441,14 @@ public:
   /// then it will be greated with the specified type instead of whatever the
   /// normal requested type would be.
   llvm::Constant *GetAddrOfGlobalVar(const VarDecl *D,
-                                     const llvm::Type *Ty = 0);
+                                     llvm::Type *Ty = 0);
 
 
   /// GetAddrOfFunction - Return the address of the given function.  If Ty is
   /// non-null, then this function will use the specified type if it has to
   /// create it.
   llvm::Constant *GetAddrOfFunction(GlobalDecl GD,
-                                    const llvm::Type *Ty = 0,
+                                    llvm::Type *Ty = 0,
                                     bool ForVTable = false);
 
   /// GetAddrOfRTTIDescriptor - Get the address of the RTTI descriptor 
@@ -594,13 +594,13 @@ public:
 
   /// CreateRuntimeFunction - Create a new runtime function with the specified
   /// type and name.
-  llvm::Constant *CreateRuntimeFunction(const llvm::FunctionType *Ty,
+  llvm::Constant *CreateRuntimeFunction(llvm::FunctionType *Ty,
                                         llvm::StringRef Name,
                                         llvm::Attributes ExtraAttrs =
                                           llvm::Attribute::None);
   /// CreateRuntimeVariable - Create a new runtime global variable with the
   /// specified type and name.
-  llvm::Constant *CreateRuntimeVariable(const llvm::Type *Ty,
+  llvm::Constant *CreateRuntimeVariable(llvm::Type *Ty,
                                         llvm::StringRef Name);
 
   ///@name Custom Blocks Runtime Interfaces
@@ -709,7 +709,7 @@ public:
 
   /// GetTargetTypeStoreSize - Return the store size, in character units, of
   /// the given LLVM type.
-  CharUnits GetTargetTypeStoreSize(const llvm::Type *Ty) const;
+  CharUnits GetTargetTypeStoreSize(llvm::Type *Ty) const;
   
   /// GetLLVMLinkageVarDefinition - Returns LLVM linkage for a global 
   /// variable.
@@ -723,13 +723,13 @@ private:
   llvm::GlobalValue *GetGlobalValue(llvm::StringRef Ref);
 
   llvm::Constant *GetOrCreateLLVMFunction(llvm::StringRef MangledName,
-                                          const llvm::Type *Ty,
+                                          llvm::Type *Ty,
                                           GlobalDecl D,
                                           bool ForVTable,
                                           llvm::Attributes ExtraAttrs =
                                             llvm::Attribute::None);
   llvm::Constant *GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
-                                        const llvm::PointerType *PTy,
+                                        llvm::PointerType *PTy,
                                         const VarDecl *D,
                                         bool UnnamedAddr = false);
 

@@ -176,7 +176,7 @@ public:
   /// because it gets set later in the block-creation process.
   mutable bool UsesStret : 1;
 
-  const llvm::StructType *StructureType;
+  llvm::StructType *StructureType;
   const BlockExpr *Block;
   CharUnits BlockSize;
   CharUnits BlockAlign;

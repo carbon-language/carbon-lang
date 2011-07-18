@@ -215,7 +215,7 @@ void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
   // void __cyg_profile_func_{enter,exit} (void *this_fn, void *call_site);
   llvm::PointerType *PointerTy = Int8PtrTy;
   llvm::Type *ProfileFuncArgs[] = { PointerTy, PointerTy };
-  const llvm::FunctionType *FunctionTy =
+  llvm::FunctionType *FunctionTy =
     llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()),
                             ProfileFuncArgs, false);
 
@@ -645,7 +645,7 @@ static void emitNonZeroVLAInit(CodeGenFunction &CGF, QualType baseType,
   llvm::Value *baseSizeInChars
     = llvm::ConstantInt::get(CGF.IntPtrTy, baseSizeAndAlign.first.getQuantity());
 
-  const llvm::Type *i8p = Builder.getInt8PtrTy();
+  llvm::Type *i8p = Builder.getInt8PtrTy();
 
   llvm::Value *begin = Builder.CreateBitCast(dest, i8p, "vla.begin");
   llvm::Value *end = Builder.CreateInBoundsGEP(dest, sizeInChars, "vla.end");
@@ -690,7 +690,7 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
   // Cast the dest ptr to the appropriate i8 pointer type.
   unsigned DestAS =
     cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
-  const llvm::Type *BP = Builder.getInt8PtrTy(DestAS);
+  llvm::Type *BP = Builder.getInt8PtrTy(DestAS);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
 
@@ -828,7 +828,7 @@ llvm::Value *CodeGenFunction::emitArrayLength(const ArrayType *origArrayType,
   // constant-length arrays than to re-evaluate the array bounds.
   uint64_t countFromCLAs = 1;
 
-  const llvm::ArrayType *llvmArrayType =
+  llvm::ArrayType *llvmArrayType =
     cast<llvm::ArrayType>(
       cast<llvm::PointerType>(addr->getType())->getElementType());
   while (true) {
