@@ -182,7 +182,7 @@ struct TupleExpander : SetTheory::Expander {
 
     // Precompute some types.
     Record *RegisterCl = Def->getRecords().getClass("Register");
-    RecTy *RegisterRecTy = new RecordRecTy(RegisterCl);
+    RecTy *RegisterRecTy = RecordRecTy::get(RegisterCl);
     StringInit *BlankName = new StringInit("");
 
     // Zip them up.
@@ -195,7 +195,7 @@ struct TupleExpander : SetTheory::Expander {
         Record *Reg = Lists[i][n];
         if (i) Name += '_';
         Name += Reg->getName();
-        Tuple.push_back(new DefInit(Reg));
+        Tuple.push_back(DefInit::get(Reg));
         CostPerUse = std::max(CostPerUse,
                               unsigned(Reg->getValueAsInt("CostPerUse")));
       }

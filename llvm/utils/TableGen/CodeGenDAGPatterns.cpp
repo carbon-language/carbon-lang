@@ -1771,7 +1771,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
 
   if (BitsInit *BI = dynamic_cast<BitsInit*>(TheInit)) {
     // Turn this into an IntInit.
-    Init *II = BI->convertInitializerTo(new IntRecTy());
+    Init *II = BI->convertInitializerTo(IntRecTy::get());
     if (II == 0 || !dynamic_cast<IntInit*>(II))
       error("Bits value must be constants!");
     return ParseTreePattern(II, OpName);
@@ -2180,7 +2180,7 @@ void CodeGenDAGPatterns::ParseDefaultOperands() {
 
   // Find some SDNode.
   assert(!SDNodes.empty() && "No SDNodes parsed?");
-  Init *SomeSDNode = new DefInit(SDNodes.begin()->first);
+  Init *SomeSDNode = DefInit::get(SDNodes.begin()->first);
 
   for (unsigned iter = 0; iter != 2; ++iter) {
     for (unsigned i = 0, e = DefaultOps[iter].size(); i != e; ++i) {

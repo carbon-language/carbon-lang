@@ -106,9 +106,9 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, const std::string &ValName,
       return Error(Loc, "Value '" + ValName + "' is not a bits type");
 
     // Convert the incoming value to a bits type of the appropriate size...
-    Init *BI = V->convertInitializerTo(new BitsRecTy(BitList.size()));
+    Init *BI = V->convertInitializerTo(BitsRecTy::get(BitList.size()));
     if (BI == 0) {
-      V->convertInitializerTo(new BitsRecTy(BitList.size()));
+      V->convertInitializerTo(BitsRecTy::get(BitList.size()));
       return Error(Loc, "Initializer is not compatible with bit range");
     }
 
@@ -581,13 +581,13 @@ bool TGParser::ParseOptionalBitList(std::vector<unsigned> &Ranges) {
 RecTy *TGParser::ParseType() {
   switch (Lex.getCode()) {
   default: TokError("Unknown token when expecting a type"); return 0;
-  case tgtok::String: Lex.Lex(); return new StringRecTy();
-  case tgtok::Bit:    Lex.Lex(); return new BitRecTy();
-  case tgtok::Int:    Lex.Lex(); return new IntRecTy();
-  case tgtok::Code:   Lex.Lex(); return new CodeRecTy();
-  case tgtok::Dag:    Lex.Lex(); return new DagRecTy();
+  case tgtok::String: Lex.Lex(); return StringRecTy::get();
+  case tgtok::Bit:    Lex.Lex(); return BitRecTy::get();
+  case tgtok::Int:    Lex.Lex(); return IntRecTy::get();
+  case tgtok::Code:   Lex.Lex(); return CodeRecTy::get();
+  case tgtok::Dag:    Lex.Lex(); return DagRecTy::get();
   case tgtok::Id:
-    if (Record *R = ParseClassID()) return new RecordRecTy(R);
+    if (Record *R = ParseClassID()) return RecordRecTy::get(R);
     return 0;
   case tgtok::Bits: {
     if (Lex.Lex() != tgtok::less) { // Eat 'bits'
@@ -604,7 +604,7 @@ RecTy *TGParser::ParseType() {
       return 0;
     }
     Lex.Lex();  // Eat '>'
-    return new BitsRecTy(Val);
+    return BitsRecTy::get(Val);
   }
   case tgtok::List: {
     if (Lex.Lex() != tgtok::less) { // Eat 'bits'
@@ -620,7 +620,7 @@ RecTy *TGParser::ParseType() {
       return 0;
     }
     Lex.Lex();  // Eat '>'
-    return new ListRecTy(SubType);
+    return ListRecTy::get(SubType);
   }
   }
 }
@@ -667,7 +667,7 @@ Init *TGParser::ParseIDValue(Record *CurRec,
   }
 
   if (Record *D = Records.getDef(Name))
-    return new DefInit(D);
+    return DefInit::get(D);
 
   Error(NameLoc, "Variable not defined: '" + Name + "'");
   return 0;
@@ -715,7 +715,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     case tgtok::XEmpty:
       Lex.Lex();  // eat the operation
       Code = UnOpInit::EMPTY;
-      Type = new IntRecTy;
+      Type = IntRecTy::get();
       break;
     }
     if (Lex.getCode() != tgtok::l_paren) {
@@ -767,7 +767,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
           if (Code == UnOpInit::HEAD) {
             Type = Itemt->getType();
           } else {
-            Type = new ListRecTy(Itemt->getType());
+            Type = ListRecTy::get(Itemt->getType());
           }
         } else {
           assert(LHSt && "expected list type argument in unary operator");
@@ -808,14 +808,14 @@ Init *TGParser::ParseOperation(Record *CurRec) {
 
     switch (OpTok) {
     default: assert(0 && "Unhandled code!");
-    case tgtok::XConcat: Code = BinOpInit::CONCAT; Type = new DagRecTy(); break;
-    case tgtok::XSRA:    Code = BinOpInit::SRA;    Type = new IntRecTy(); break;
-    case tgtok::XSRL:    Code = BinOpInit::SRL;    Type = new IntRecTy(); break;
-    case tgtok::XSHL:    Code = BinOpInit::SHL;    Type = new IntRecTy(); break;
-    case tgtok::XEq:     Code = BinOpInit::EQ;     Type = new BitRecTy(); break;
+    case tgtok::XConcat: Code = BinOpInit::CONCAT;Type = DagRecTy::get(); break;
+    case tgtok::XSRA:    Code = BinOpInit::SRA;   Type = IntRecTy::get(); break;
+    case tgtok::XSRL:    Code = BinOpInit::SRL;   Type = IntRecTy::get(); break;
+    case tgtok::XSHL:    Code = BinOpInit::SHL;   Type = IntRecTy::get(); break;
+    case tgtok::XEq:     Code = BinOpInit::EQ;    Type = BitRecTy::get(); break;
     case tgtok::XStrConcat:
       Code = BinOpInit::STRCONCAT;
-      Type = new StringRecTy();
+      Type = StringRecTy::get();
       break;
     }
 
@@ -932,14 +932,14 @@ Init *TGParser::ParseOperation(Record *CurRec) {
 
         if (MHSbits && RHSbits &&
             MHSbits->getNumBits() == RHSbits->getNumBits()) {
-          Type = new BitRecTy();
+          Type = BitRecTy::get();
           break;
         } else {
           BitInit *MHSbit = dynamic_cast<BitInit*>(MHS);
           BitInit *RHSbit = dynamic_cast<BitInit*>(RHS);
 
           if (MHSbit && RHSbit) {
-            Type = new BitRecTy();
+            Type = BitRecTy::get();
             break;
           }
         }
@@ -1110,7 +1110,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
     Records.addDef(NewRec);
 
     // The result of the expression is a reference to the new record.
-    return new DefInit(NewRec);
+    return DefInit::get(NewRec);
   }
   case tgtok::l_brace: {           // Value ::= '{' ValueList '}'
     SMLoc BraceLoc = Lex.getLoc();
@@ -1129,7 +1129,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
 
     BitsInit *Result = new BitsInit(Vals.size());
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
-      Init *Bit = Vals[i]->convertInitializerTo(new BitRecTy());
+      Init *Bit = Vals[i]->convertInitializerTo(BitRecTy::get());
       if (Bit == 0) {
         Error(BraceLoc, "Element #" + utostr(i) + " (" + Vals[i]->getAsString()+
               ") is not convertable to a bit");

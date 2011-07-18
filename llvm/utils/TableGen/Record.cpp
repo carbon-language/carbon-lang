@@ -23,7 +23,19 @@ using namespace llvm;
 //    Type implementations
 //===----------------------------------------------------------------------===//
 
+BitRecTy BitRecTy::Shared;
+IntRecTy IntRecTy::Shared;
+StringRecTy StringRecTy::Shared;
+CodeRecTy CodeRecTy::Shared;
+DagRecTy DagRecTy::Shared;
+
 void RecTy::dump() const { print(errs()); }
+
+ListRecTy *RecTy::getListTy() {
+  if (!ListTy)
+    ListTy = new ListRecTy(this);
+  return ListTy;
+}
 
 Init *BitRecTy::convertValue(BitsInit *BI) {
   if (BI->getNumBits() != 1) return 0; // Only accept if just one bit!
@@ -45,6 +57,16 @@ Init *BitRecTy::convertValue(TypedInit *VI) {
   if (dynamic_cast<BitRecTy*>(VI->getType()))
     return VI;  // Accept variable if it is already of bit type!
   return 0;
+}
+
+BitsRecTy *BitsRecTy::get(unsigned Sz) {
+  static std::vector<BitsRecTy*> Shared;
+  if (Sz >= Shared.size())
+    Shared.resize(Sz + 1);
+  BitsRecTy *&Ty = Shared[Sz];
+  if (!Ty)
+    Ty = new BitsRecTy(Sz);
+  return Ty;
 }
 
 std::string BitsRecTy::getAsString() const {
@@ -231,7 +253,7 @@ Init *ListRecTy::convertValue(ListInit *LI) {
     return 0;
   }
 
-  return new ListInit(Elements, new ListRecTy(Ty));
+  return new ListInit(Elements, this);
 }
 
 Init *ListRecTy::convertValue(TypedInit *TI) {
@@ -275,6 +297,10 @@ Init *DagRecTy::convertValue(BinOpInit *BO) {
     return BO;
   }
   return 0;
+}
+
+RecordRecTy *RecordRecTy::get(Record *R) {
+  return &dynamic_cast<RecordRecTy&>(*R->getDefInit()->getType());
 }
 
 std::string RecordRecTy::getAsString() const {
@@ -326,7 +352,7 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
               iend = T1SuperClasses.end();
             i != iend;
             ++i) {
-          RecordRecTy *SuperRecTy1 = new RecordRecTy(*i);
+          RecordRecTy *SuperRecTy1 = RecordRecTy::get(*i);
           RecTy *NewType1 = resolveTypes(SuperRecTy1, T2);
           if (NewType1 != 0) {
             if (NewType1 != SuperRecTy1) {
@@ -345,7 +371,7 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
               iend = T2SuperClasses.end();
             i != iend;
             ++i) {
-          RecordRecTy *SuperRecTy2 = new RecordRecTy(*i);
+          RecordRecTy *SuperRecTy2 = RecordRecTy::get(*i);
           RecTy *NewType2 = resolveTypes(T1, SuperRecTy2);
           if (NewType2 != 0) {
             if (NewType2 != SuperRecTy2) {
@@ -577,7 +603,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
         }
 
         if (Record *D = (CurRec->getRecords()).getDef(Name))
-          return new DefInit(D);
+          return DefInit::get(D);
 
         throw TGError(CurRec->getLoc(), "Undefined reference:'" + Name + "'\n");
       }
@@ -687,9 +713,9 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
     // try to fold eq comparison for 'bit' and 'int', otherwise fallback
     // to string objects.
     IntInit* L =
-      dynamic_cast<IntInit*>(LHS->convertInitializerTo(new IntRecTy()));
+      dynamic_cast<IntInit*>(LHS->convertInitializerTo(IntRecTy::get()));
     IntInit* R =
-      dynamic_cast<IntInit*>(RHS->convertInitializerTo(new IntRecTy()));
+      dynamic_cast<IntInit*>(RHS->convertInitializerTo(IntRecTy::get()));
 
     if (L && R)
       return new IntInit(L->getValue() == R->getValue());
@@ -902,7 +928,7 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
         if (LHSd->getAsString() == RHSd->getAsString()) {
           Val = MHSd->getDef();
         }
-        return new DefInit(Val);
+        return DefInit::get(Val);
       }
       if (RHSv) {
         std::string Val = RHSv->getName();
@@ -941,7 +967,7 @@ Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
 
   case IF: {
     IntInit *LHSi = dynamic_cast<IntInit*>(LHS);
-    if (Init *I = LHS->convertInitializerTo(new IntRecTy()))
+    if (Init *I = LHS->convertInitializerTo(IntRecTy::get()))
       LHSi = dynamic_cast<IntInit*>(I);
     if (LHSi) {
       if (LHSi->getValue()) {
@@ -962,7 +988,7 @@ Init *TernOpInit::resolveReferences(Record &R, const RecordVal *RV) {
 
   if (Opc == IF && lhs != LHS) {
     IntInit *Value = dynamic_cast<IntInit*>(lhs);
-    if (Init *I = lhs->convertInitializerTo(new IntRecTy()))
+    if (Init *I = lhs->convertInitializerTo(IntRecTy::get()))
       Value = dynamic_cast<IntInit*>(I);
     if (Value != 0) {
       // Short-circuit
@@ -1156,6 +1182,10 @@ resolveListElementReference(Record &R, const RecordVal *RV, unsigned Elt) {
   return 0;
 }
 
+DefInit *DefInit::get(Record *R) {
+  return R->getDefInit();
+}
+
 RecTy *DefInit::getFieldType(const std::string &FieldName) const {
   if (const RecordVal *RV = Def->getValue(FieldName))
     return RV->getType();
@@ -1269,6 +1299,12 @@ void RecordVal::print(raw_ostream &OS, bool PrintSem) const {
 }
 
 unsigned Record::LastID = 0;
+
+DefInit *Record::getDefInit() {
+  if (!TheInit)
+    TheInit = new DefInit(this, new RecordRecTy(this));
+  return TheInit;
+}
 
 void Record::setName(const std::string &Name) {
   if (TrackedRecords.getDef(getName()) == this) {

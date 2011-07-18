@@ -63,7 +63,10 @@ class RecordKeeper;
 //  Type Classes
 //===----------------------------------------------------------------------===//
 
-struct RecTy {
+class RecTy {
+  ListRecTy *ListTy;
+public:
+  RecTy() : ListTy(0) {}
   virtual ~RecTy() {}
 
   virtual std::string getAsString() const = 0;
@@ -73,6 +76,9 @@ struct RecTy {
   /// typeIsConvertibleTo - Return true if all values of 'this' type can be
   /// converted to the specified type.
   virtual bool typeIsConvertibleTo(const RecTy *RHS) const = 0;
+
+  /// getListTy - Returns the type representing list<this>.
+  ListRecTy *getListTy();
 
 public:   // These methods should only be called from subclasses of Init
   virtual Init *convertValue( UnsetInit *UI) { return 0; }
@@ -124,7 +130,11 @@ inline raw_ostream &operator<<(raw_ostream &OS, const RecTy &Ty) {
 /// BitRecTy - 'bit' - Represent a single bit
 ///
 class BitRecTy : public RecTy {
+  static BitRecTy Shared;
+  BitRecTy() {}
 public:
+  static BitRecTy *get() { return &Shared; }
+
   virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
   virtual Init *convertValue(   BitInit *BI) { return (Init*)BI; }
   virtual Init *convertValue(  BitsInit *BI);
@@ -164,8 +174,9 @@ public:
 ///
 class BitsRecTy : public RecTy {
   unsigned Size;
-public:
   explicit BitsRecTy(unsigned Sz) : Size(Sz) {}
+public:
+  static BitsRecTy *get(unsigned Sz);
 
   unsigned getNumBits() const { return Size; }
 
@@ -208,7 +219,11 @@ public:
 /// IntRecTy - 'int' - Represent an integer value of no particular size
 ///
 class IntRecTy : public RecTy {
+  static IntRecTy Shared;
+  IntRecTy() {}
 public:
+  static IntRecTy *get() { return &Shared; }
+
   virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
   virtual Init *convertValue(   BitInit *BI);
   virtual Init *convertValue(  BitsInit *BI);
@@ -246,7 +261,11 @@ public:
 /// StringRecTy - 'string' - Represent an string value
 ///
 class StringRecTy : public RecTy {
+  static StringRecTy Shared;
+  StringRecTy() {}
 public:
+  static StringRecTy *get() { return &Shared; }
+
   virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
   virtual Init *convertValue(   BitInit *BI) { return 0; }
   virtual Init *convertValue(  BitsInit *BI) { return 0; }
@@ -288,9 +307,10 @@ public:
 ///
 class ListRecTy : public RecTy {
   RecTy *Ty;
-public:
   explicit ListRecTy(RecTy *T) : Ty(T) {}
-
+  friend ListRecTy *RecTy::getListTy();
+public:
+  static ListRecTy *get(RecTy *T) { return T->getListTy(); }
   RecTy *getElementType() const { return Ty; }
 
   virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
@@ -331,7 +351,11 @@ public:
 /// CodeRecTy - 'code' - Represent an code fragment, function or method.
 ///
 class CodeRecTy : public RecTy {
+  static CodeRecTy Shared;
+  CodeRecTy() {}
 public:
+  static CodeRecTy *get() { return &Shared; }
+
   virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
   virtual Init *convertValue(   BitInit *BI) { return 0; }
   virtual Init *convertValue(  BitsInit *BI) { return 0; }
@@ -367,7 +391,11 @@ public:
 /// DagRecTy - 'dag' - Represent a dag fragment
 ///
 class DagRecTy : public RecTy {
+  static DagRecTy Shared;
+  DagRecTy() {}
 public:
+  static DagRecTy *get() { return &Shared; }
+
   virtual Init *convertValue( UnsetInit *UI) { return (Init*)UI; }
   virtual Init *convertValue(   BitInit *BI) { return 0; }
   virtual Init *convertValue(  BitsInit *BI) { return 0; }
@@ -407,8 +435,10 @@ public:
 ///
 class RecordRecTy : public RecTy {
   Record *Rec;
-public:
   explicit RecordRecTy(Record *R) : Rec(R) {}
+  friend class Record;
+public:
+  static RecordRecTy *get(Record *R);
 
   Record *getRecord() const { return Rec; }
 
@@ -633,7 +663,7 @@ public:
 class IntInit : public TypedInit {
   int64_t Value;
 public:
-  explicit IntInit(int64_t V) : TypedInit(new IntRecTy), Value(V) {}
+  explicit IntInit(int64_t V) : TypedInit(IntRecTy::get()), Value(V) {}
 
   int64_t getValue() const { return Value; }
 
@@ -671,7 +701,7 @@ class StringInit : public TypedInit {
   std::string Value;
 public:
   explicit StringInit(const std::string &V)
-    : TypedInit(new StringRecTy), Value(V) {}
+    : TypedInit(StringRecTy::get()), Value(V) {}
 
   const std::string &getValue() const { return Value; }
 
@@ -726,11 +756,11 @@ public:
   typedef std::vector<Init*>::const_iterator const_iterator;
 
   explicit ListInit(std::vector<Init*> &Vs, RecTy *EltTy)
-    : TypedInit(new ListRecTy(EltTy)) {
+    : TypedInit(ListRecTy::get(EltTy)) {
     Values.swap(Vs);
   }
   explicit ListInit(iterator Start, iterator End, RecTy *EltTy)
-      : TypedInit(new ListRecTy(EltTy)), Values(Start, End) {}
+      : TypedInit(ListRecTy::get(EltTy)), Values(Start, End) {}
 
   unsigned getSize() const { return Values.size(); }
   Init *getElement(unsigned i) const {
@@ -1034,8 +1064,10 @@ public:
 ///
 class DefInit : public TypedInit {
   Record *Def;
+  DefInit(Record *D, RecordRecTy *T) : TypedInit(T), Def(D) {}
+  friend class Record;
 public:
-  explicit DefInit(Record *D) : TypedInit(new RecordRecTy(D)), Def(D) {}
+  static DefInit *get(Record*);
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
@@ -1111,7 +1143,7 @@ class DagInit : public TypedInit {
 public:
   DagInit(Init *V, std::string VN,
           const std::vector<std::pair<Init*, std::string> > &args)
-    : TypedInit(new DagRecTy), Val(V), ValName(VN) {
+    : TypedInit(DagRecTy::get()), Val(V), ValName(VN) {
     Args.reserve(args.size());
     ArgNames.reserve(args.size());
     for (unsigned i = 0, e = args.size(); i != e; ++i) {
@@ -1121,7 +1153,7 @@ public:
   }
   DagInit(Init *V, std::string VN, const std::vector<Init*> &args,
           const std::vector<std::string> &argNames)
-    : TypedInit(new DagRecTy), Val(V), ValName(VN), Args(args),
+    : TypedInit(DagRecTy::get()), Val(V), ValName(VN), Args(args),
       ArgNames(argNames) { }
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
@@ -1235,11 +1267,13 @@ class Record {
   // Tracks Record instances. Not owned by Record.
   RecordKeeper &TrackedRecords;
 
+  DefInit *TheInit;
+
 public:
 
   // Constructs a record.
   explicit Record(const std::string &N, SMLoc loc, RecordKeeper &records) :
-    ID(LastID++), Name(N), Loc(loc), TrackedRecords(records) {}
+    ID(LastID++), Name(N), Loc(loc), TrackedRecords(records), TheInit(0) {}
   ~Record() {}
 
 
@@ -1252,6 +1286,9 @@ public:
   void setName(const std::string &Name);  // Also updates RecordKeeper.
 
   SMLoc getLoc() const { return Loc; }
+
+  /// get the corresponding DefInit.
+  DefInit *getDefInit();
 
   const std::vector<std::string> &getTemplateArgs() const {
     return TemplateArgs;
