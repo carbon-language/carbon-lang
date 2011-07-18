@@ -53,7 +53,9 @@ _mm_malloc(size_t size, size_t align)
     align = sizeof(void *);
 
   void *mallocedMemory;
-#ifdef _WIN32
+#if defined(__MINGW32__)
+  mallocedMemory = __mingw_aligned_malloc(size, align);
+#elif defined(_WIN32)
   mallocedMemory = _aligned_malloc(size, align);
 #else
   if (posix_memalign(&mallocedMemory, align, size))
