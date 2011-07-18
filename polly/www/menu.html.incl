@@ -15,12 +15,13 @@
   </div>
 
   <div class="submenu">
-    <label>Communication</label>
+    <label>Development </label>
     <a href="http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits">
-      llvm-commits List
+      llvm-commits Mailing List
     </a>
-    <a href="http://groups.google.com/group/polly-dev">polly-dev List</a>
+    <a href="http://groups.google.com/group/polly-dev">polly-dev Mailing List</a>
     <a href="/bugs.html">Bug Reports</a>
+    <a href="http://google1.osuosl.org:8011/console">Buildbot</a>
   </div>
 
   <div class="submenu">
