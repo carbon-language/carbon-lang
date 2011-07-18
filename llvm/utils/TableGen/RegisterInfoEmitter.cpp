@@ -526,9 +526,9 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
           OS << " };\n";
         }
         OS << "  static const ArrayRef<unsigned> Order[] = {\n"
-           << "    ArrayRef<unsigned>(" << RC.getName();
+           << "    makeArrayRef(" << RC.getName();
         for (unsigned oi = 1, oe = RC.getNumOrders(); oi != oe; ++oi)
-          OS << "),\n    ArrayRef<unsigned>(AltOrder" << oi;
+          OS << "),\n    makeArrayRef(AltOrder" << oi;
         OS << ")\n  };\n  const unsigned Select = " << RC.getName()
            << "AltOrderSelect(MF);\n  assert(Select < " << RC.getNumOrders()
            << ");\n  return Order[Select];\n}\n";

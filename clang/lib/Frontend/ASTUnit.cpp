@@ -1780,8 +1780,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       StoredDiagnostics);
 
     CI = clang::createInvocationFromCommandLine(
-                        llvm::ArrayRef<const char *>(ArgBegin, ArgEnd-ArgBegin),
-                        Diags);
+                                           llvm::makeArrayRef(ArgBegin, ArgEnd),
+                                           Diags);
     if (!CI)
       return 0;
   }

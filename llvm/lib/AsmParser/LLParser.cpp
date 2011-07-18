@@ -2519,8 +2519,8 @@ bool LLParser::ConvertValIDToValue(Type *Ty, ValID &ID, Value *&V,
           return Error(ID.Loc, "element " + Twine(i) +
                     " of struct initializer doesn't match struct element type");
       
-      V = ConstantStruct::get(ST, ArrayRef<Constant*>(ID.ConstantStructElts,
-                                                      ID.UIntVal));
+      V = ConstantStruct::get(ST, makeArrayRef(ID.ConstantStructElts,
+                                               ID.UIntVal));
     } else
       return Error(ID.Loc, "constant expression type mismatch");
     return false;

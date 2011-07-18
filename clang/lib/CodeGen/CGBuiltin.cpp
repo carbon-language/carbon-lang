@@ -1457,8 +1457,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
     Ops[3] = Builder.CreateBitCast(Ops[3], Ty);
     Ops.push_back(GetPointeeAlignment(*this, E->getArg(1)));
-    Ops[1] = Builder.CreateCall(F,
-                                ArrayRef<Value *>(Ops.begin() + 1, Ops.end()),
+    Ops[1] = Builder.CreateCall(F, makeArrayRef(Ops.begin() + 1, Ops.end()),
                                 "vld2_lane");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1471,8 +1470,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops[3] = Builder.CreateBitCast(Ops[3], Ty);
     Ops[4] = Builder.CreateBitCast(Ops[4], Ty);
     Ops.push_back(GetPointeeAlignment(*this, E->getArg(1)));
-    Ops[1] = Builder.CreateCall(F,
-                                ArrayRef<Value *>(Ops.begin() + 1, Ops.end()),
+    Ops[1] = Builder.CreateCall(F, makeArrayRef(Ops.begin() + 1, Ops.end()),
                                 "vld3_lane");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1486,8 +1484,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops[4] = Builder.CreateBitCast(Ops[4], Ty);
     Ops[5] = Builder.CreateBitCast(Ops[5], Ty);
     Ops.push_back(GetPointeeAlignment(*this, E->getArg(1)));
-    Ops[1] = Builder.CreateCall(F,
-                                ArrayRef<Value *>(Ops.begin() + 1, Ops.end()),
+    Ops[1] = Builder.CreateCall(F, makeArrayRef(Ops.begin() + 1, Ops.end()),
                                 "vld3_lane");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -2163,7 +2160,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       
       // create i32 constant
       llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_mmx_psrl_q);
-      return Builder.CreateCall(F, ArrayRef<Value *>(&Ops[0], 2), "palignr");
+      return Builder.CreateCall(F, makeArrayRef(&Ops[0], 2), "palignr");
     }
     
     // If palignr is shifting the pair of vectors more than 32 bytes, emit zero.
@@ -2193,7 +2190,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       
       // create i32 constant
       llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse2_psrl_dq);
-      return Builder.CreateCall(F, ArrayRef<Value *>(&Ops[0], 2), "palignr");
+      return Builder.CreateCall(F, makeArrayRef(&Ops[0], 2), "palignr");
     }
     
     // If palignr is shifting the pair of vectors more than 32 bytes, emit zero.

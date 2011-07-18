@@ -684,7 +684,7 @@ void RAGreedy::addThroughConstraints(InterferenceCache::Cursor Intf,
       assert(T < GroupSize && "Array overflow");
       TBS[T] = Number;
       if (++T == GroupSize) {
-        SpillPlacer->addLinks(ArrayRef<unsigned>(TBS, T));
+        SpillPlacer->addLinks(makeArrayRef(TBS, T));
         T = 0;
       }
       continue;
@@ -714,7 +714,7 @@ void RAGreedy::addThroughConstraints(InterferenceCache::Cursor Intf,
 
   ArrayRef<SpillPlacement::BlockConstraint> Array(BCS, B);
   SpillPlacer->addConstraints(Array);
-  SpillPlacer->addLinks(ArrayRef<unsigned>(TBS, T));
+  SpillPlacer->addLinks(makeArrayRef(TBS, T));
 }
 
 void RAGreedy::growRegion(GlobalSplitCandidate &Cand) {
@@ -749,8 +749,7 @@ void RAGreedy::growRegion(GlobalSplitCandidate &Cand) {
     // Any new blocks to add?
     if (ActiveBlocks.size() == AddedTo)
       break;
-    addThroughConstraints(Cand.Intf,
-                          ArrayRef<unsigned>(ActiveBlocks).slice(AddedTo));
+    addThroughConstraints(Cand.Intf, makeArrayRef(ActiveBlocks).slice(AddedTo));
     AddedTo = ActiveBlocks.size();
 
     // Perhaps iterating can enable more bundles?

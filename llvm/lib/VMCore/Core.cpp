@@ -506,7 +506,7 @@ LLVMValueRef LLVMMDString(const char *Str, unsigned SLen) {
 LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef *Vals,
                                  unsigned Count) {
   return wrap(MDNode::get(*unwrap(C),
-                          ArrayRef<Value*>(unwrap<Value>(Vals, Count), Count)));
+                          makeArrayRef(unwrap<Value>(Vals, Count), Count)));
 }
 
 LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count) {
@@ -575,8 +575,7 @@ LLVMValueRef LLVMConstStructInContext(LLVMContextRef C,
                                       LLVMValueRef *ConstantVals,
                                       unsigned Count, LLVMBool Packed) {
   Constant **Elements = unwrap<Constant>(ConstantVals, Count);
-  return wrap(ConstantStruct::getAnon(*unwrap(C),
-                                      ArrayRef<Constant*>(Elements, Count),
+  return wrap(ConstantStruct::getAnon(*unwrap(C), makeArrayRef(Elements, Count),
                                       Packed != 0));
 }
 
@@ -602,11 +601,11 @@ LLVMValueRef LLVMConstNamedStruct(LLVMTypeRef StructTy,
   Constant **Elements = unwrap<Constant>(ConstantVals, Count);
   StructType *Ty = cast<StructType>(unwrap(StructTy));
 
-  return wrap(ConstantStruct::get(Ty, ArrayRef<Constant*>(Elements, Count)));
+  return wrap(ConstantStruct::get(Ty, makeArrayRef(Elements, Count)));
 }
 
 LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
-  return wrap(ConstantVector::get(ArrayRef<Constant*>(
+  return wrap(ConstantVector::get(makeArrayRef(
                             unwrap<Constant>(ScalarConstantVals, Size), Size)));
 }
 /*--.. Constant expressions ................................................--*/
@@ -934,8 +933,7 @@ LLVMValueRef LLVMConstShuffleVector(LLVMValueRef VectorAConstant,
 LLVMValueRef LLVMConstExtractValue(LLVMValueRef AggConstant, unsigned *IdxList,
                                    unsigned NumIdx) {
   return wrap(ConstantExpr::getExtractValue(unwrap<Constant>(AggConstant),
-                                            ArrayRef<unsigned>(IdxList,
-                                                               NumIdx)));
+                                            makeArrayRef(IdxList, NumIdx)));
 }
 
 LLVMValueRef LLVMConstInsertValue(LLVMValueRef AggConstant,
@@ -943,8 +941,7 @@ LLVMValueRef LLVMConstInsertValue(LLVMValueRef AggConstant,
                                   unsigned *IdxList, unsigned NumIdx) {
   return wrap(ConstantExpr::getInsertValue(unwrap<Constant>(AggConstant),
                                          unwrap<Constant>(ElementValueConstant),
-                                           ArrayRef<unsigned>(IdxList,
-                                                              NumIdx)));
+                                           makeArrayRef(IdxList, NumIdx)));
 }
 
 LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty, const char *AsmString,
@@ -1680,7 +1677,7 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef B, LLVMValueRef Fn,
                              LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch,
                              const char *Name) {
   return wrap(unwrap(B)->CreateInvoke(unwrap(Fn), unwrap(Then), unwrap(Catch),
-                                      ArrayRef<Value *>(unwrap(Args), NumArgs),
+                                      makeArrayRef(unwrap(Args), NumArgs),
                                       Name));
 }
 
@@ -2064,7 +2061,7 @@ LLVMValueRef LLVMBuildCall(LLVMBuilderRef B, LLVMValueRef Fn,
                            LLVMValueRef *Args, unsigned NumArgs,
                            const char *Name) {
   return wrap(unwrap(B)->CreateCall(unwrap(Fn),
-                                    ArrayRef<Value *>(unwrap(Args), NumArgs),
+                                    makeArrayRef(unwrap(Args), NumArgs),
                                     Name));
 }
 

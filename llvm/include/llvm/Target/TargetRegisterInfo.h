@@ -234,7 +234,7 @@ public:
   ///
   virtual
   ArrayRef<unsigned> getRawAllocationOrder(const MachineFunction &MF) const {
-    return ArrayRef<unsigned>(begin(), getNumRegs());
+    return makeArrayRef(begin(), getNumRegs());
   }
 
   /// getSize - Return the size of the register in bytes, which is also the size

@@ -3559,7 +3559,7 @@ void CWriter::visitInsertValueInst(InsertValueInst &IVI) {
        i != e; ++i) {
     Type *IndexedTy =
       ExtractValueInst::getIndexedType(IVI.getOperand(0)->getType(),
-                                       ArrayRef<unsigned>(b, i+1));
+                                       makeArrayRef(b, i+1));
     if (IndexedTy->isArrayTy())
       Out << ".array[" << *i << "]";
     else
@@ -3581,7 +3581,7 @@ void CWriter::visitExtractValueInst(ExtractValueInst &EVI) {
          i != e; ++i) {
       Type *IndexedTy =
         ExtractValueInst::getIndexedType(EVI.getOperand(0)->getType(),
-                                         ArrayRef<unsigned>(b, i+1));
+                                         makeArrayRef(b, i+1));
       if (IndexedTy->isArrayTy())
         Out << ".array[" << *i << "]";
       else

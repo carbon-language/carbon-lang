@@ -261,7 +261,7 @@ Type *TypeMapTy::getImpl(Type *Ty) {
                                       cast<PointerType>(Ty)->getAddressSpace());
     case Type::FunctionTyID:
       return *Entry = FunctionType::get(ElementTypes[0],
-                                        ArrayRef<Type*>(ElementTypes).slice(1),
+                                        makeArrayRef(ElementTypes).slice(1),
                                         cast<FunctionType>(Ty)->isVarArg());
     case Type::StructTyID:
       // Note that this is only reached for anonymous structs.

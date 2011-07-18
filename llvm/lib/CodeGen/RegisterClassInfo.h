@@ -32,7 +32,7 @@ class RegisterClassInfo {
 
     RCInfo() : Tag(0), NumRegs(0) {}
     operator ArrayRef<unsigned>() const {
-      return ArrayRef<unsigned>(Order.get(), NumRegs);
+      return makeArrayRef(Order.get(), NumRegs);
     }
   };
 

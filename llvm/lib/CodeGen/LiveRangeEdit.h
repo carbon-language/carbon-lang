@@ -115,7 +115,7 @@ public:
   LiveInterval *get(unsigned idx) const { return newRegs_[idx+firstNew_]; }
 
   ArrayRef<LiveInterval*> regs() const {
-    return ArrayRef<LiveInterval*>(newRegs_).slice(firstNew_);
+    return makeArrayRef(newRegs_).slice(firstNew_);
   }
 
   /// FIXME: Temporary accessors until we can get rid of

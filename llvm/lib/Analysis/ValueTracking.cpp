@@ -1358,8 +1358,7 @@ static Value *BuildSubAggregate(Value *From, Value* To, Type *IndexedType,
     return NULL;
 
   // Insert the value in the new (sub) aggregrate
-  return llvm::InsertValueInst::Create(To, V,
-                                       ArrayRef<unsigned>(Idxs).slice(IdxSkip),
+  return llvm::InsertValueInst::Create(To, V, makeArrayRef(Idxs).slice(IdxSkip),
                                        "tmp", InsertBefore);
 }
 
@@ -1435,9 +1434,7 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
           // %C = insertvalue {i32, i32 } %A, i32 11, 1
           // which allows the unused 0,0 element from the nested struct to be
           // removed.
-          return BuildSubAggregate(V,
-                                   ArrayRef<unsigned>(idx_range.begin(),
-                                                      req_idx),
+          return BuildSubAggregate(V, makeArrayRef(idx_range.begin(), req_idx),
                                    InsertBefore);
         else
           // We can't handle this without inserting insertvalues
@@ -1455,7 +1452,7 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
     // requested (though possibly only partially). Now we recursively look at
     // the inserted value, passing any remaining indices.
     return FindInsertedValue(I->getInsertedValueOperand(),
-                             ArrayRef<unsigned>(req_idx, idx_range.end()),
+                             makeArrayRef(req_idx, idx_range.end()),
                              InsertBefore);
   } else if (ExtractValueInst *I = dyn_cast<ExtractValueInst>(V)) {
     // If we're extracting a value from an aggregrate that was extracted from

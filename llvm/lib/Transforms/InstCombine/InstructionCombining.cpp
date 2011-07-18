@@ -1242,7 +1242,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       Value *NewEV = Builder->CreateExtractValue(IV->getAggregateOperand(),
                                                  EV.getIndices());
       return InsertValueInst::Create(NewEV, IV->getInsertedValueOperand(),
-                                     ArrayRef<unsigned>(insi, inse));
+                                     makeArrayRef(insi, inse));
     }
     if (insi == inse)
       // The insert list is a prefix of the extract list
@@ -1254,7 +1254,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       // with
       // %E extractvalue { i32 } { i32 42 }, 0
       return ExtractValueInst::Create(IV->getInsertedValueOperand(), 
-                                      ArrayRef<unsigned>(exti, exte));
+                                      makeArrayRef(exti, exte));
   }
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Agg)) {
     // We're extracting from an intrinsic, see if we're the only user, which
