@@ -42,6 +42,7 @@ int A::count = 0;
 
 int main()
 {
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         std::shared_ptr<A> pA(new A);
         A* ptrA = pA.get();
@@ -118,4 +119,5 @@ int main()
     }
     assert(B::count == 0);
     assert(A::count == 0);
+#endif // _LIBCXX_HAS_NO_RVALUE_REFERENCES
 }

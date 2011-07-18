@@ -85,9 +85,17 @@ int main()
     }
     catch (...)
     {
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
         assert(A::count == 1);
         assert(B::count == 1);
         assert(ptr.get() == raw_ptr);
+#else
+        // Without rvalue references, ptr got copied into
+        // the shared_ptr destructor and the copy was
+        // destroyed during unwinding.
+        assert(A::count == 0);
+        assert(B::count == 0);
+#endif
     }
     }
     assert(A::count == 0);

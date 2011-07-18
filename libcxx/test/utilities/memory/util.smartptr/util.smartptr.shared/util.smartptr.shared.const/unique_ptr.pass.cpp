@@ -77,9 +77,15 @@ int main()
     }
     catch (...)
     {
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
         assert(A::count == 1);
         assert(B::count == 1);
         assert(ptr.get() == raw_ptr);
+#else
+        assert(A::count == 0);
+        assert(B::count == 0);
+        assert(ptr.get() == 0);
+#endif
     }
     }
     assert(A::count == 0);
