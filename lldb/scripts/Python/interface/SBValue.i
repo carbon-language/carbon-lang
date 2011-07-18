@@ -49,9 +49,8 @@ Name:  rip  Value:  0x0000000100000dae
 Name:  rflags  Value:  0x0000000000000206
 Name:  cs  Value:  0x0000000000000027
 Name:  fs  Value:  0x0000000000000010
-Name:  gs  Value:  0x0000000000000048
-"
-         ) SBValue;
+Name:  gs  Value:  0x0000000000000048"
+) SBValue;
 class SBValue
 {
 public:

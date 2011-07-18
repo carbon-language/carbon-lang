@@ -1,4 +1,4 @@
-//===-- SBProcess.h ---------------------------------------------*- C++ -*-===//
+//===-- SWIG Interface for SBProcess ----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,18 +7,31 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_SBProcess_h_
-#define LLDB_SBProcess_h_
-
-#include "lldb/API/SBDefines.h"
-#include "lldb/API/SBError.h"
-#include "lldb/API/SBTarget.h"
-#include <stdio.h>
-
 namespace lldb {
 
-class SBEvent;
+%feature("docstring",
+"Represents the process associated with the target program.
 
+SBProcess supports thread iteration. For example (from test/lldbutil.py),
+
+# ==================================================
+# Utility functions related to Threads and Processes
+# ==================================================
+
+def get_stopped_threads(process, reason):
+    '''Returns the thread(s) with the specified stop reason in a list.
+
+    The list can be empty if no such thread exists.
+    '''
+    threads = []
+    for t in process:
+        if t.GetStopReason() == reason:
+            threads.append(t)
+    return threads
+
+...
+"
+) SBProcess;
 class SBProcess
 {
 public:
@@ -36,11 +49,6 @@ public:
     SBProcess ();
 
     SBProcess (const lldb::SBProcess& rhs);
-
-#ifndef SWIG
-    const lldb::SBProcess&
-    operator = (const lldb::SBProcess& rhs);
-#endif
 
     ~SBProcess();
 
@@ -71,15 +79,20 @@ public:
     void
     AppendEventStateReport (const lldb::SBEvent &event, lldb::SBCommandReturnObject &result);
 
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Remote connection related functions. These will fail if the
     /// process is not in eStateConnected. They are intended for use
     /// when connecting to an externally managed debugserver instance.
     //------------------------------------------------------------------
+    ") RemoteAttachToProcessWithID;
     bool
     RemoteAttachToProcessWithID (lldb::pid_t pid,
                                  lldb::SBError& error);
     
+    %feature("docstring",
+    "See SBTarget.Launch for argument description and usage."
+    ) RemoteLaunch;
     bool
     RemoteLaunch (char const **argv,
                   char const **envp,
@@ -131,6 +144,10 @@ public:
     uint32_t
     GetAddressByteSize() const;
 
+    %feature("docstring", "
+    Kills the process and shuts down all threads that were spawned to
+    track and monitor process.
+    ") Destroy;
     lldb::SBError
     Destroy ();
 
@@ -140,18 +157,40 @@ public:
     lldb::SBError
     Stop ();
 
+    %feature("docstring", "Same as Destroy(self).") Destroy;
     lldb::SBError
     Kill ();
 
     lldb::SBError
     Detach ();
 
+    %feature("docstring", "Sends the process a unix signal.") Signal;
     lldb::SBError
     Signal (int signal);
 
+    %feature("autodoc", "
+    Reads memory from the current process's address space and removes any
+    traps that may have been inserted into the memory. It returns the byte
+    buffer in a Python string. Example:
+
+    # Read 4 bytes from address 'addr' and assume error.Success() is True.
+    content = process.ReadMemory(addr, 4, error)
+    # Use 'ascii' encoding as each byte of 'content' is within [0..255].
+    new_bytes = bytearray(content, 'ascii')
+    ") ReadMemory;
     size_t
     ReadMemory (addr_t addr, void *buf, size_t size, lldb::SBError &error);
 
+    %feature("autodoc", "
+    Writes memory to the current process's address space and maintains any
+    traps that might be present due to software breakpoints. Example:
+
+    # Create a Python string from the byte array.
+    new_value = str(bytes)
+    result = process.WriteMemory(addr, new_value, error)
+    if not error.Success() or result != len(bytes):
+        print 'SBProcess.WriteMemory() failed!'
+    ") WriteMemory;
     size_t
     WriteMemory (addr_t addr, const void *buf, size_t size, lldb::SBError &error);
 
@@ -176,38 +215,6 @@ public:
     
     lldb::SBError
     UnloadImage (uint32_t image_token);
-
-protected:
-    friend class SBAddress;
-    friend class SBBreakpoint;
-    friend class SBBreakpointLocation;
-    friend class SBCommandInterpreter;
-    friend class SBDebugger;
-    friend class SBFunction;
-    friend class SBTarget;
-    friend class SBThread;
-    friend class SBValue;
-
-#ifndef SWIG
-
-    lldb_private::Process *
-    operator->() const;
-
-    // Mimic shared pointer...
-    lldb_private::Process *
-    get() const;
-
-#endif
-
-
-    SBProcess (const lldb::ProcessSP &process_sp);
-
-    void
-    SetProcess (const lldb::ProcessSP &process_sp);
-
-    lldb::ProcessSP m_opaque_sp;
 };
 
 }  // namespace lldb
-
-#endif  // LLDB_SBProcess_h_

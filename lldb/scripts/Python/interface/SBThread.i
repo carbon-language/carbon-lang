@@ -1,4 +1,4 @@
-//===-- SBThread.h ----------------------------------------------*- C++ -*-===//
+//===-- SWIG Interface for SBThread -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,17 +7,31 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_SBThread_h_
-#define LLDB_SBThread_h_
-
-#include "lldb/API/SBDefines.h"
-
-#include <stdio.h>
-
 namespace lldb {
 
-class SBFrame;
+%feature("docstring",
+"Represents a thread of execution. SBProcess contains SBThread(s).
 
+SBThread supports frame iteration. For example (from test/python_api/
+lldbutil/iter/TestLLDBIterator.py),
+
+        from lldbutil import print_stacktrace
+        stopped_due_to_breakpoint = False
+        for thread in process:
+            if self.TraceOn():
+                print_stacktrace(thread)
+            ID = thread.GetThreadID()
+            if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+                stopped_due_to_breakpoint = True
+            for frame in thread:
+                self.assertTrue(frame.GetThread().GetThreadID() == ID)
+                if self.TraceOn():
+                    print frame
+
+        self.assertTrue(stopped_due_to_breakpoint)
+
+See also SBProcess and SBFrame."
+) SBThread;
 class SBThread
 {
 public:
@@ -36,11 +50,14 @@ public:
     lldb::StopReason
     GetStopReason();
 
+    %feature("docstring", "
     /// Get the number of words associated with the stop reason.
     /// See also GetStopReasonDataAtIndex().
+    ") GetStopReasonDataCount;
     size_t
     GetStopReasonDataCount();
 
+    %feature("docstring", "
     //--------------------------------------------------------------------------
     /// Get information associated with a stop reason.
     ///
@@ -58,6 +75,7 @@ public:
     /// eStopReasonException     N     exception data
     /// eStopReasonPlanComplete  0
     //--------------------------------------------------------------------------
+    ") GetStopReasonDataAtIndex;
     uint64_t
     GetStopReasonDataAtIndex(uint32_t idx);
 
@@ -99,6 +117,7 @@ public:
     void
     RunToAddress (lldb::addr_t addr);
 
+    %feature("docstring", "
     //--------------------------------------------------------------------------
     /// LLDB currently supports process centric debugging which means when any
     /// thread in a process stops, all other threads are stopped. The Suspend()
@@ -120,6 +139,7 @@ public:
     /// anyone has the need for them to be reference counted, please let us
     /// know.
     //--------------------------------------------------------------------------
+    ") Suspend;
     bool
     Suspend();
     
@@ -144,64 +164,8 @@ public:
     lldb::SBProcess
     GetProcess ();
 
-#ifndef SWIG
-
-    const lldb::SBThread &
-    operator = (const lldb::SBThread &rhs);
-
-    bool
-    operator == (const lldb::SBThread &rhs) const;
-
-    bool
-    operator != (const lldb::SBThread &rhs) const;
-
-#endif
-
     bool
     GetDescription (lldb::SBStream &description) const;
-
-protected:
-    friend class SBBreakpoint;
-    friend class SBBreakpointLocation;
-    friend class SBFrame;
-    friend class SBProcess;
-    friend class SBDebugger;
-    friend class SBValue;
-
-
-#ifndef SWIG
-
-    lldb_private::Thread *
-    get ();
-
-    const lldb_private::Thread *
-    operator->() const;
-
-    const lldb_private::Thread &
-    operator*() const;
-
-
-    lldb_private::Thread *
-    operator->();
-
-    lldb_private::Thread &
-    operator*();
-
-#endif
-
-    SBThread (const lldb::ThreadSP& lldb_object_sp);
-
-    void
-    SetThread (const lldb::ThreadSP& lldb_object_sp);
-
-private:
-    //------------------------------------------------------------------
-    // Classes that inherit from Thread can see and modify these
-    //------------------------------------------------------------------
-
-    lldb::ThreadSP m_opaque_sp;
 };
 
 } // namespace lldb
-
-#endif  // LLDB_SBThread_h_

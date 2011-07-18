@@ -34,9 +34,8 @@ and,
 produces:
 
 SBBreakpoint: id = 1, file ='main.cpp', line = 66, locations = 1
-SBBreakpoint: id = 2, file ='main.cpp', line = 85, locations = 1
-"
-         ) SBTarget;
+SBBreakpoint: id = 2, file ='main.cpp', line = 85, locations = 1"
+) SBTarget;
 class SBTarget
 {
 public:

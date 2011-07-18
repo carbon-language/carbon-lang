@@ -64,9 +64,8 @@ def get_ESRs(frame):
             print '%s => %s' % (reg.GetName(), reg.GetValue())
         ...
     '''
-    return get_registers(frame, 'exception state')
-"
-         ) SBValueList;
+    return get_registers(frame, 'exception state')"
+) SBValueList;
 class SBValueList
 {
 public:

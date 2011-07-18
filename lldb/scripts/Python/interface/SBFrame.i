@@ -1,4 +1,4 @@
-//===-- SBFrame.h -----------------------------------------------*- C++ -*-===//
+//===-- SWIG Interface for SBFrame ------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_SBFrame_h_
-#define LLDB_SBFrame_h_
-
-#include "lldb/API/SBDefines.h"
-#include "lldb/API/SBValueList.h"
-
 namespace lldb {
 
-class SBValue;
-
+%feature("docstring",
+"Represents one of the stack frames associated with a thread.
+SBThread contains SBFrame(s)."
+) SBFrame;
 class SBFrame
 {
 public:
@@ -24,11 +20,6 @@ public:
 
     SBFrame (const lldb::SBFrame &rhs);
     
-#ifndef SWIG
-    const lldb::SBFrame &
-    operator =(const lldb::SBFrame &rhs);
-#endif
-
    ~SBFrame();
 
     bool
@@ -67,12 +58,15 @@ public:
     lldb::SBSymbol
     GetSymbol () const;
 
+    %feature("docstring", "
     /// Gets the deepest block that contains the frame PC.
     ///
     /// See also GetFrameBlock().
+    ") GetBlock;
     lldb::SBBlock
     GetBlock () const;
 
+    %feature("docstring", "
     /// Get the appropriate function name for this frame. Inlined functions in
     /// LLDB are represented by Blocks that have inlined function information, so
     /// just looking at the SBFunction or SBSymbol for a frame isn't enough.
@@ -86,23 +80,29 @@ public:
     /// - NULL
     ///
     /// See also IsInlined().
+    ") GetFunctionName;
     const char *
     GetFunctionName();
 
+    %feature("docstring", "
     /// Return true if this frame represents an inlined function.
     ///
     /// See also GetFunctionName().
+    ") IsInlined;
     bool
     IsInlined();
     
+    %feature("docstring", "
     /// The version that doesn't supply a 'use_dynamic' value will use the
     /// target's default.
+    ") EvaluateExpression;
     lldb::SBValue
     EvaluateExpression (const char *expr);    
 
     lldb::SBValue
     EvaluateExpression (const char *expr, lldb::DynamicValueType use_dynamic);
 
+    %feature("docstring", "
     /// Gets the lexical block that defines the stack frame. Another way to think
     /// of this is it will return the block that contains all of the variables
     /// for a stack frame. Inlined functions are represented as SBBlock objects
@@ -115,6 +115,7 @@ public:
     /// in one of those inlined functions, this method will return the inlined
     /// block that defines this frame. If the PC isn't currently in an inlined
     /// function, the lexical block that defines the function is returned.
+    ") GetFrameBlock;
     lldb::SBBlock
     GetFrameBlock () const;
 
@@ -139,8 +140,10 @@ public:
 
 #endif
 
+    %feature("docstring", "
     /// The version that doesn't supply a 'use_dynamic' value will use the
     /// target's default.
+    ") GetVariables;
     lldb::SBValueList
     GetVariables (bool arguments,
                   bool locals,
@@ -157,19 +160,23 @@ public:
     lldb::SBValueList
     GetRegisters ();
 
+    %feature("docstring", "
     /// The version that doesn't supply a 'use_dynamic' value will use the
     /// target's default.
+    ") FindVariable;
     lldb::SBValue
     FindVariable (const char *var_name);
 
     lldb::SBValue
     FindVariable (const char *var_name, lldb::DynamicValueType use_dynamic);
 
+    %feature("docstring", "
     /// Find variables, register sets, registers, or persistent variables using
     /// the frame as the scope.
     ///
     /// The version that doesn't supply a 'use_dynamic' value will use the
     /// target's default.
+    ") FindValue;
     lldb::SBValue
     FindValue (const char *name, ValueType value_type);
 
@@ -179,39 +186,6 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
-#ifndef SWIG
-    SBFrame (const lldb::StackFrameSP &lldb_object_sp);
-#endif
-
-protected:
-    friend class SBValue;
-
-private:
-    friend class SBThread;
-    friend class SBInstruction;
-    friend class lldb_private::ScriptInterpreterPython;
-
-#ifndef SWIG
-
-    lldb_private::StackFrame *
-    operator->() const;
-
-    // Mimic shared pointer...
-    lldb_private::StackFrame *
-    get() const;
-
-    const lldb::StackFrameSP &
-    get_sp() const;
-    
-#endif
-
-
-    void
-    SetFrame (const lldb::StackFrameSP &lldb_object_sp);
-
-    lldb::StackFrameSP m_opaque_sp;
 };
 
 } // namespace lldb
-
-#endif  // LLDB_SBFrame_h_
