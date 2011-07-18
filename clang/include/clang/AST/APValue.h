@@ -19,6 +19,7 @@
 
 namespace clang {
   class CharUnits;
+  class DiagnosticBuilder;
   class Expr;
 
 /// APValue - This class implements a discriminated union of [uninitialized]
@@ -237,6 +238,10 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const APValue &V) {
   V.print(OS);
   return OS;
 }
+
+// Writes a concise representation of V to DB, in a single << operation.
+const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                    const APValue &V);
 
 } // end namespace clang.
 
