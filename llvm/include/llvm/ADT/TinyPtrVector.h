@@ -37,9 +37,9 @@ public:
       delete V;
   }
   
-  /// empty() - This vector can be empty if it contains no element, or if it
-  /// contains a pointer to an empty vector.
   bool empty() const {
+    // This vector can be empty if it contains no element, or if it
+    // contains a pointer to an empty vector.
     if (Val.isNull()) return true;
     if (VecTy *Vec = Val.template dyn_cast<VecTy*>())
       return Vec->empty();
@@ -49,9 +49,9 @@ public:
   unsigned size() const {
     if (empty())
       return 0;
-    if (Val. template is<EltTy>())
+    if (Val.template is<EltTy>())
       return 1;
-    return Val. template get<VecTy*>()->size();
+    return Val.template get<VecTy*>()->size();
   }
   
   typedef const EltTy *iterator;
@@ -83,9 +83,9 @@ public:
       return V;
     }
     
-    assert(i < Val. template get<VecTy*>()->size() && 
+    assert(i < Val.template get<VecTy*>()->size() && 
            "tinyvector index out of range");
-    return (*Val. template get<VecTy*>())[i];
+    return (*Val.template get<VecTy*>())[i];
   }
   
   EltTy front() const {
@@ -105,7 +105,7 @@ public:
     }
     
     // If we have a single value, convert to a vector.
-    if (EltTy V = Val.template  dyn_cast<EltTy>()) {
+    if (EltTy V = Val.template dyn_cast<EltTy>()) {
       Val = new VecTy();
       Val.template get<VecTy*>()->push_back(V);
     }
