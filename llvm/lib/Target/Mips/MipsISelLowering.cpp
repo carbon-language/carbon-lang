@@ -819,7 +819,6 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp4 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp5 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp6 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp7 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp8 = RegInfo.createVirtualRegister(RC);
@@ -863,14 +862,8 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::ORi), Tmp3).addReg(Mips::ZERO).addImm(MaskImm);
   BuildMI(BB, dl, TII->get(Mips::SLL), Mask).addReg(Tmp3).addReg(Shift);
   BuildMI(BB, dl, TII->get(Mips::NOR), Mask2).addReg(Mips::ZERO).addReg(Mask);
-  if (BinOpcode != Mips::SUBu) {
-    BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp4).addReg(Incr).addImm(MaskImm);
-    BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Tmp4).addReg(Shift);
-  } else {
-    BuildMI(BB, dl, TII->get(Mips::SUBu), Tmp4).addReg(Mips::ZERO).addReg(Incr);
-    BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp5).addReg(Tmp4).addImm(MaskImm);
-    BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Tmp5).addReg(Shift);
-  }
+  BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp4).addReg(Incr).addImm(MaskImm);
+  BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Tmp4).addReg(Shift);
 
   BB->addSuccessor(loopMBB);
 
@@ -899,9 +892,6 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
     //  nor tmp7, $0, tmp6
     BuildMI(BB, dl, TII->get(Mips::AND), Tmp6).addReg(Oldval).addReg(Incr2);
     BuildMI(BB, dl, TII->get(Mips::NOR), Tmp7).addReg(Mips::ZERO).addReg(Tmp6);
-  } else if (BinOpcode == Mips::SUBu) {
-    //  addu tmp7, oldval, incr2
-    BuildMI(BB, dl, TII->get(Mips::ADDu), Tmp7).addReg(Oldval).addReg(Incr2);
   } else if (BinOpcode) {
     //  <binop> tmp7, oldval, incr2
     BuildMI(BB, dl, TII->get(BinOpcode), Tmp7).addReg(Oldval).addReg(Incr2);
