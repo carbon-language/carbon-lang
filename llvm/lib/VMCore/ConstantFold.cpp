@@ -590,7 +590,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
       uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       (void) V.convertToInteger(x, DestBitWidth, opc==Instruction::FPToSI,
                                 APFloat::rmTowardZero, &ignored);
-      APInt Val(DestBitWidth, 2, x);
+      APInt Val(DestBitWidth, x);
       return ConstantInt::get(FPC->getContext(), Val);
     }
     return 0; // Can't fold.

@@ -83,23 +83,31 @@ void APInt::initSlowCase(const APInt& that) {
   memcpy(pVal, that.pVal, getNumWords() * APINT_WORD_SIZE);
 }
 
-
-APInt::APInt(unsigned numBits, unsigned numWords, const uint64_t bigVal[])
-  : BitWidth(numBits), VAL(0) {
+void APInt::initFromArray(ArrayRef<uint64_t> bigVal) {
   assert(BitWidth && "Bitwidth too small");
-  assert(bigVal && "Null pointer detected!");
+  assert(bigVal.data() && "Null pointer detected!");
   if (isSingleWord())
     VAL = bigVal[0];
   else {
     // Get memory, cleared to 0
     pVal = getClearedMemory(getNumWords());
     // Calculate the number of words to copy
-    unsigned words = std::min<unsigned>(numWords, getNumWords());
+    unsigned words = std::min<unsigned>(bigVal.size(), getNumWords());
     // Copy the words from bigVal to pVal
-    memcpy(pVal, bigVal, words * APINT_WORD_SIZE);
+    memcpy(pVal, bigVal.data(), words * APINT_WORD_SIZE);
   }
   // Make sure unused high bits are cleared
   clearUnusedBits();
+}
+
+APInt::APInt(unsigned numBits, ArrayRef<uint64_t> bigVal)
+  : BitWidth(numBits), VAL(0) {
+  initFromArray(bigVal);
+}
+
+APInt::APInt(unsigned numBits, unsigned numWords, const uint64_t bigVal[])
+  : BitWidth(numBits), VAL(0) {
+  initFromArray(makeArrayRef(bigVal, numWords));
 }
 
 APInt::APInt(unsigned numbits, StringRef Str, uint8_t radix)

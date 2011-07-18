@@ -932,7 +932,7 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
     // FIXME: Will not trap if loading a signaling NaN.
     uint64_t y[2];
     memcpy(y, Ptr, 10);
-    Result.IntVal = APInt(80, 2, y);
+    Result.IntVal = APInt(80, y);
     break;
   }
   default:

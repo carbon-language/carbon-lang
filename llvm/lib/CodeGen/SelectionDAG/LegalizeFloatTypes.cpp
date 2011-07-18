@@ -879,10 +879,10 @@ void DAGTypeLegalizer::ExpandFloatRes_ConstantFP(SDNode *N, SDValue &Lo,
   assert(NVT.getSizeInBits() == integerPartWidth &&
          "Do not know how to expand this float constant!");
   APInt C = cast<ConstantFPSDNode>(N)->getValueAPF().bitcastToAPInt();
-  Lo = DAG.getConstantFP(APFloat(APInt(integerPartWidth, 1,
-                                       &C.getRawData()[1])), NVT);
-  Hi = DAG.getConstantFP(APFloat(APInt(integerPartWidth, 1,
-                                       &C.getRawData()[0])), NVT);
+  Lo = DAG.getConstantFP(APFloat(APInt(integerPartWidth, C.getRawData()[1])),
+                         NVT);
+  Hi = DAG.getConstantFP(APFloat(APInt(integerPartWidth, C.getRawData()[0])),
+                         NVT);
 }
 
 void DAGTypeLegalizer::ExpandFloatRes_FABS(SDNode *N, SDValue &Lo,
@@ -1201,7 +1201,7 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
   static const uint64_t TwoE32[]  = { 0x41f0000000000000LL, 0 };
   static const uint64_t TwoE64[]  = { 0x43f0000000000000LL, 0 };
   static const uint64_t TwoE128[] = { 0x47f0000000000000LL, 0 };
-  const uint64_t *Parts = 0;
+  ArrayRef<uint64_t> Parts;
 
   switch (SrcVT.getSimpleVT().SimpleTy) {
   default:
@@ -1218,7 +1218,7 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
   }
 
   Lo = DAG.getNode(ISD::FADD, dl, VT, Hi,
-                   DAG.getConstantFP(APFloat(APInt(128, 2, Parts)),
+                   DAG.getConstantFP(APFloat(APInt(128, Parts)),
                                      MVT::ppcf128));
   Lo = DAG.getNode(ISD::SELECT_CC, dl, VT, Src, DAG.getConstant(0, SrcVT),
                    Lo, Hi, DAG.getCondCode(ISD::SETLT));
@@ -1373,7 +1373,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_FP_TO_UINT(SDNode *N) {
     assert(N->getOperand(0).getValueType() == MVT::ppcf128 &&
            "Logic only correct for ppcf128!");
     const uint64_t TwoE31[] = {0x41e0000000000000LL, 0};
-    APFloat APF = APFloat(APInt(128, 2, TwoE31));
+    APFloat APF = APFloat(APInt(128, TwoE31));
     SDValue Tmp = DAG.getConstantFP(APF, MVT::ppcf128);
     //  X>=2^31 ? (int)(X-2^31)+0x80000000 : (int)X
     // FIXME: generated code sucks.

@@ -239,6 +239,10 @@ TEST(APIntTest, fromString) {
   EXPECT_EQ(APInt(32, uint64_t(-32LL)), APInt(32, "-20", 16));
 }
 
+TEST(APIntTest, FromArray) {
+  EXPECT_EQ(APInt(32, uint64_t(1)), APInt(32, ArrayRef<uint64_t>(1)));
+}
+
 TEST(APIntTest, StringBitsNeeded2) {
   EXPECT_EQ(1U, APInt::getBitsNeeded(  "0", 2));
   EXPECT_EQ(1U, APInt::getBitsNeeded(  "1", 2));

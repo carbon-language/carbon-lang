@@ -1218,7 +1218,7 @@ bool BitcodeReader::ParseConstants() {
         Words[i] = DecodeSignRotatedValue(Record[i]);
       V = ConstantInt::get(Context,
                            APInt(cast<IntegerType>(CurTy)->getBitWidth(),
-                           NumWords, &Words[0]));
+                                 Words));
       break;
     }
     case bitc::CST_CODE_FLOAT: {    // FLOAT: [fpval]
@@ -1233,11 +1233,11 @@ bool BitcodeReader::ParseConstants() {
         uint64_t Rearrange[2];
         Rearrange[0] = (Record[1] & 0xffffLL) | (Record[0] << 16);
         Rearrange[1] = Record[0] >> 48;
-        V = ConstantFP::get(Context, APFloat(APInt(80, 2, Rearrange)));
+        V = ConstantFP::get(Context, APFloat(APInt(80, Rearrange)));
       } else if (CurTy->isFP128Ty())
-        V = ConstantFP::get(Context, APFloat(APInt(128, 2, &Record[0]), true));
+        V = ConstantFP::get(Context, APFloat(APInt(128, Record), true));
       else if (CurTy->isPPC_FP128Ty())
-        V = ConstantFP::get(Context, APFloat(APInt(128, 2, &Record[0])));
+        V = ConstantFP::get(Context, APFloat(APInt(128, Record)));
       else
         V = UndefValue::get(CurTy);
       break;

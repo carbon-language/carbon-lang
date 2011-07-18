@@ -525,7 +525,8 @@ LLVMValueRef LLVMConstIntOfArbitraryPrecision(LLVMTypeRef IntTy,
                                               const uint64_t Words[]) {
     IntegerType *Ty = unwrap<IntegerType>(IntTy);
     return wrap(ConstantInt::get(Ty->getContext(),
-                                 APInt(Ty->getBitWidth(), NumWords, Words)));
+                                 APInt(Ty->getBitWidth(),
+                                       makeArrayRef(Words, NumWords))));
 }
 
 LLVMValueRef LLVMConstIntOfString(LLVMTypeRef IntTy, const char Str[],

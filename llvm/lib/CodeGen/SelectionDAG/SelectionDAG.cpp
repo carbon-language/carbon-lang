@@ -2437,7 +2437,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
                               APFloat::rmTowardZero, &ignored);
         if (s==APFloat::opInvalidOp)     // inexact is OK, in fact usual
           break;
-        APInt api(VT.getSizeInBits(), 2, x);
+        APInt api(VT.getSizeInBits(), x);
         return getConstant(api, VT);
       }
       case ISD::BITCAST:

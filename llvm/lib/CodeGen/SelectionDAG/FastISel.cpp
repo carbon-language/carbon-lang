@@ -183,7 +183,7 @@ unsigned FastISel::materializeRegForValue(const Value *V, MVT VT) {
       (void) Flt.convertToInteger(x, IntBitWidth, /*isSigned=*/true,
                                 APFloat::rmTowardZero, &isExact);
       if (isExact) {
-        APInt IntVal(IntBitWidth, 2, x);
+        APInt IntVal(IntBitWidth, x);
 
         unsigned IntegerReg =
           getRegForValue(ConstantInt::get(V->getContext(), IntVal));
