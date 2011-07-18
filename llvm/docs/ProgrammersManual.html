@@ -59,6 +59,7 @@ option</a></li>
       <li><a href="#dss_arrayref">llvm/ADT/ArrayRef.h</a></li>
       <li><a href="#dss_fixedarrays">Fixed Size Arrays</a></li>
       <li><a href="#dss_heaparrays">Heap Allocated Arrays</a></li>
+      <li><a href="#dss_tinyptrvector">"llvm/ADT/TinyPtrVector.h"</a></li>
       <li><a href="#dss_smallvector">"llvm/ADT/SmallVector.h"</a></li>
       <li><a href="#dss_vector">&lt;vector&gt;</a></li>
       <li><a href="#dss_deque">&lt;deque&gt;</a></li>
@@ -925,6 +926,24 @@ if you are allocating an array of a type with a constructor, the constructor and
 destructors will be run for every element in the array (re-sizable vectors only
 construct those elements actually used).</p>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_tinyptrvector">"llvm/ADT/TinyPtrVector.h"</a>
+</h4>
+
+
+<div>
+<p><tt>TinyPtrVector&lt;Type&gt;</tt> is a highly specialized collection class
+that is optimized to avoid allocation in the case when a vector has zero or one
+elements.  It has two major restrictions: 1) it can only hold values of pointer
+type, and 2) it cannot hold a null pointer.</p>
+  
+<p>Since this container is highly specialized, it is rarely used.</p>
+  
+</div>
+    
+<div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
