@@ -1,4 +1,4 @@
-//===-- SWIG Interface for SBTarget -----------------------------*- C++ -*-===//
+//===-- SWIG Interface for SBValueList --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

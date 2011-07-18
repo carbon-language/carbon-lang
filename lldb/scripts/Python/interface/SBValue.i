@@ -1,4 +1,4 @@
-//===-- SBValue.h -----------------------------------------------*- C++ -*-===//
+//===-- SWIG Interface for SBValue ------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
