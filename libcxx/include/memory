@@ -595,6 +595,7 @@ void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
 #include <limits>
 #include <iterator>
 #include <__functional_base>
+#include <iosfwd>
 #if defined(_LIBCPP_NO_EXCEPTIONS)
     #include <cassert>
 #endif
@@ -4147,6 +4148,11 @@ struct _LIBCPP_VISIBLE hash<shared_ptr<_Tp> >
         return hash<_Tp*>()(__ptr.get());
     }
 };
+
+template<class _CharT, class _Traits, class _Y>
+inline _LIBCPP_INLINE_VISIBILITY
+basic_ostream<_CharT, _Traits>&
+operator<<(basic_ostream<_CharT, _Traits>& __os, shared_ptr<_Y> const& __p);
 
 //enum class
 struct _LIBCPP_VISIBLE pointer_safety
