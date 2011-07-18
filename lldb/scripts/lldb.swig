@@ -463,22 +463,26 @@ LLDBSwigPythonCallTypeScript
                 }
                 else if (PyErr_Occurred ())
                 {
+                    PyErr_Print();
                     PyErr_Clear();
                 }
                 Py_INCREF (session_dict);
             }
             else if (PyErr_Occurred())
             {
+                PyErr_Print();
                 PyErr_Clear();
             }
         }
         else if (PyErr_Occurred())
         {
+            PyErr_Print();
             PyErr_Clear();
         }
     }
     else if (PyErr_Occurred ())
     {
+        PyErr_Print();
         PyErr_Clear ();
     }
     return retval;
