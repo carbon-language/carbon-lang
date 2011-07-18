@@ -1448,6 +1448,54 @@ void IndVarSimplify::SimplifyCongruentIVs(Loop *L) {
 //  LinearFunctionTestReplace and its kin. Rewrite the loop exit condition.
 //===----------------------------------------------------------------------===//
 
+// Check for expressions that ScalarEvolution generates to compute
+// BackedgeTakenInfo. If these expressions have not been reduced, then expanding
+// them may incur additional cost (albeit in the loop preheader).
+static bool isHighCostExpansion(const SCEV *S, BranchInst *BI,
+                                ScalarEvolution *SE) {
+  // If the backedge-taken count is a UDiv, it's very likely a UDiv that
+  // ScalarEvolution's HowFarToZero or HowManyLessThans produced to compute a
+  // precise expression, rather than a UDiv from the user's code. If we can't
+  // find a UDiv in the code with some simple searching, assume the former and
+  // forego rewriting the loop.
+  if (isa<SCEVUDivExpr>(S)) {
+    ICmpInst *OrigCond = dyn_cast<ICmpInst>(BI->getCondition());
+    if (!OrigCond) return true;
+    const SCEV *R = SE->getSCEV(OrigCond->getOperand(1));
+    R = SE->getMinusSCEV(R, SE->getConstant(R->getType(), 1));
+    if (R != S) {
+      const SCEV *L = SE->getSCEV(OrigCond->getOperand(0));
+      L = SE->getMinusSCEV(L, SE->getConstant(L->getType(), 1));
+      if (L != S)
+        return true;
+    }
+  }
+
+  if (!DisableIVRewrite)
+    return false;
+
+  // Recurse past add expressions, which commonly occur in the
+  // BackedgeTakenCount. They may already exist in program code, and if not,
+  // they are not too expensive rematerialize.
+  if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
+    for (SCEVAddExpr::op_iterator I = Add->op_begin(), E = Add->op_end();
+         I != E; ++I) {
+      if (isHighCostExpansion(*I, BI, SE))
+        return true;
+    }
+    return false;
+  }
+
+  // HowManyLessThans uses a Max expression whenever the loop is not guarded by
+  // the exit condition.
+  if (isa<SCEVSMaxExpr>(S) || isa<SCEVUMaxExpr>(S))
+    return true;
+
+  // If we haven't recognized an expensive SCEV patter, assume its an expression
+  // produced by program code.
+  return false;
+}
+
 /// canExpandBackedgeTakenCount - Return true if this loop's backedge taken
 /// count expression can be safely and cheaply expanded into an instruction
 /// sequence that can be used by LinearFunctionTestReplace.
@@ -1465,23 +1513,9 @@ static bool canExpandBackedgeTakenCount(Loop *L, ScalarEvolution *SE) {
   if (!BI)
     return false;
 
-  // Special case: If the backedge-taken count is a UDiv, it's very likely a
-  // UDiv that ScalarEvolution produced in order to compute a precise
-  // expression, rather than a UDiv from the user's code. If we can't find a
-  // UDiv in the code with some simple searching, assume the former and forego
-  // rewriting the loop.
-  if (isa<SCEVUDivExpr>(BackedgeTakenCount)) {
-    ICmpInst *OrigCond = dyn_cast<ICmpInst>(BI->getCondition());
-    if (!OrigCond) return false;
-    const SCEV *R = SE->getSCEV(OrigCond->getOperand(1));
-    R = SE->getMinusSCEV(R, SE->getConstant(R->getType(), 1));
-    if (R != BackedgeTakenCount) {
-      const SCEV *L = SE->getSCEV(OrigCond->getOperand(0));
-      L = SE->getMinusSCEV(L, SE->getConstant(L->getType(), 1));
-      if (L != BackedgeTakenCount)
-        return false;
-    }
-  }
+  if (isHighCostExpansion(BackedgeTakenCount, BI, SE))
+    return false;
+
   return true;
 }
 
