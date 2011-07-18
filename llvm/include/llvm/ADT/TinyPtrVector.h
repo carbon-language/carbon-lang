@@ -6,10 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the Type class.
-//
-//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ADT_TINYPTRVECTOR_H
 #define LLVM_ADT_TINYPTRVECTOR_H
