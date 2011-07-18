@@ -717,7 +717,7 @@ def tSTRspi : T1pIs<(outs), (ins tGPR:$Rt, t_addrmode_sp:$addr), IIC_iStore_i,
 
 multiclass thumb_ldst_mult<string asm, InstrItinClass itin,
                            InstrItinClass itin_upd, bits<6> T1Enc,
-                           bit L_bit> {
+                           bit L_bit, string baseOpc> {
   def IA :
     T1I<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
         itin, !strconcat(asm, "ia${p}\t$Rn, $regs"), []>,
@@ -727,14 +727,19 @@ multiclass thumb_ldst_mult<string asm, InstrItinClass itin,
     let Inst{10-8} = Rn;
     let Inst{7-0}  = regs;
   }
+
   def IA_UPD :
-    T1It<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
-         itin_upd, !strconcat(asm, "ia${p}\t$Rn!, $regs"), "$Rn = $wb", []>,
-        T1Encoding<T1Enc> {
-    bits<3> Rn;
-    bits<8> regs;
-    let Inst{10-8} = Rn;
-    let Inst{7-0}  = regs;
+    InstTemplate<AddrModeNone, 0, IndexModeNone, Pseudo, GenericDomain, 
+                 "$Rn = $wb", itin_upd>,
+    PseudoInstExpansion<(!cast<Instruction>(!strconcat(baseOpc, "IA"))
+                       GPR:$Rn, pred:$p, reglist:$regs)> {
+    let Size = 2;
+    let OutOperandList = (outs GPR:$wb);
+    let InOperandList = (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops);
+    let Pattern = [];
+    let isCodeGenOnly = 1;
+    let isPseudo = 1;
+    list<Predicate> Predicates = [IsThumb];
   }
 }
 
@@ -743,11 +748,11 @@ let neverHasSideEffects = 1 in {
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
 defm tLDM : thumb_ldst_mult<"ldm", IIC_iLoad_m, IIC_iLoad_mu,
-                            {1,1,0,0,1,?}, 1>;
+                            {1,1,0,0,1,?}, 1, "tLDM">;
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 defm tSTM : thumb_ldst_mult<"stm", IIC_iStore_m, IIC_iStore_mu,
-                            {1,1,0,0,0,?}, 0>;
+                            {1,1,0,0,0,?}, 0, "tSTM">;
 
 } // neverHasSideEffects
 

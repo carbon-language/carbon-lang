@@ -891,8 +891,8 @@ static bool DisassembleThumb1Misc(MCInst &MI, unsigned Opcode, uint32_t insn,
 static bool DisassembleThumb1LdStMul(bool Ld, MCInst &MI, unsigned Opcode,
                                      uint32_t insn, unsigned short NumOps,
                                      unsigned &NumOpsAdded, BO B) {
-  assert((Opcode == ARM::tLDMIA || Opcode == ARM::tLDMIA_UPD ||
-          Opcode == ARM::tSTMIA_UPD) && "Unexpected opcode");
+  assert((Opcode == ARM::tLDMIA || Opcode == ARM::tSTMIA) &&
+         "Unexpected opcode");
 
   unsigned tRt = getT1tRt(insn);
   NumOpsAdded = 0;

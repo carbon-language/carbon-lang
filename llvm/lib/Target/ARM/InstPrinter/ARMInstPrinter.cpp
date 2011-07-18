@@ -109,6 +109,29 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     return;
   }
 
+  if (Opcode == ARM::tLDMIA || Opcode == ARM::tSTMIA) {
+    bool Writeback = true;
+    unsigned BaseReg = MI->getOperand(0).getReg();
+    for (unsigned i = 3; i < MI->getNumOperands(); ++i) {
+      if (MI->getOperand(i).getReg() == BaseReg)
+        Writeback = false;
+    }
+
+    if (Opcode == ARM::tLDMIA)
+      O << "\tldmia";
+    else if (Opcode == ARM::tSTMIA)
+      O << "\tstmia";
+    else
+      llvm_unreachable("Unknown opcode!");
+
+    printPredicateOperand(MI, 1, O);
+    O << '\t' << getRegisterName(BaseReg);
+    if (Writeback) O << "!";
+    O << ", ";
+    printRegisterList(MI, 3, O);
+    return;
+  }
+
   printInstruction(MI, O);
 }
 

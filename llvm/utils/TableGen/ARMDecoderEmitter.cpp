@@ -1614,11 +1614,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     if (!thumbInstruction(Form))
       return false;
 
-    // A8.6.189 STM / STMIA / STMEA -- Encoding T1
-    // There's only STMIA_UPD for Thumb1.
-    if (Name == "tSTMIA")
-      return false;
-
     // A8.6.25 BX.  Use the generic tBX_Rm, ignore tBX_RET and tBX_RET_vararg.
     if (Name == "tBX_RET" || Name == "tBX_RET_vararg")
       return false;
