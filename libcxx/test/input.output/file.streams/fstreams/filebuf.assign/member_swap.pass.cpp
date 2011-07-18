@@ -19,10 +19,12 @@
 
 int main()
 {
+    char temp[L_tmpnam];
+    tmpnam(temp);
     {
         std::filebuf f;
-        assert(f.open("test.dat", std::ios_base::out | std::ios_base::in
-                                                     | std::ios_base::trunc) != 0);
+        assert(f.open(temp, std::ios_base::out | std::ios_base::in
+                                               | std::ios_base::trunc) != 0);
         assert(f.is_open());
         assert(f.sputn("123", 3) == 3);
         f.pubseekoff(1, std::ios_base::beg);
@@ -33,11 +35,11 @@ int main()
         assert(f2.is_open());
         assert(f2.sgetc() == '2');
     }
-    remove("test.dat");
+    remove(temp);
     {
         std::wfilebuf f;
-        assert(f.open("test.dat", std::ios_base::out | std::ios_base::in
-                                                     | std::ios_base::trunc) != 0);
+        assert(f.open(temp, std::ios_base::out | std::ios_base::in
+                                               | std::ios_base::trunc) != 0);
         assert(f.is_open());
         assert(f.sputn(L"123", 3) == 3);
         f.pubseekoff(1, std::ios_base::beg);
@@ -48,5 +50,5 @@ int main()
         assert(f2.is_open());
         assert(f2.sgetc() == L'2');
     }
-    remove("test.dat");
+    remove(temp);
 }

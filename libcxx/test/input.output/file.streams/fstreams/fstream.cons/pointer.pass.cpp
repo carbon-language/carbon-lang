@@ -19,24 +19,26 @@
 
 int main()
 {
+    char temp[L_tmpnam];
+    tmpnam(temp);
     {
-        std::fstream fs("test.dat", std::ios_base::in | std::ios_base::out
-                                                      | std::ios_base::trunc);
+        std::fstream fs(temp, std::ios_base::in | std::ios_base::out
+                                                | std::ios_base::trunc);
         double x = 0;
         fs << 3.25;
         fs.seekg(0);
         fs >> x;
         assert(x == 3.25);
     }
-    std::remove("test.dat");
+    std::remove(temp);
     {
-        std::wfstream fs("test.dat", std::ios_base::in | std::ios_base::out
-                                                       | std::ios_base::trunc);
+        std::wfstream fs(temp, std::ios_base::in | std::ios_base::out
+                                                 | std::ios_base::trunc);
         double x = 0;
         fs << 3.25;
         fs.seekg(0);
         fs >> x;
         assert(x == 3.25);
     }
-    std::remove("test.dat");
+    std::remove(temp);
 }

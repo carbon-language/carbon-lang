@@ -19,22 +19,24 @@
 
 int main()
 {
+    char temp[L_tmpnam];
+    tmpnam(temp);
     {
         std::fstream fs;
         assert(!fs.is_open());
-        fs.open("test.dat", std::ios_base::out);
+        fs.open(temp, std::ios_base::out);
         assert(fs.is_open());
         fs.close();
         assert(!fs.is_open());
     }
-    remove("test.dat");
+    remove(temp);
     {
         std::wfstream fs;
         assert(!fs.is_open());
-        fs.open("test.dat", std::ios_base::out);
+        fs.open(temp, std::ios_base::out);
         assert(fs.is_open());
         fs.close();
         assert(!fs.is_open());
     }
-    remove("test.dat");
+    remove(temp);
 }

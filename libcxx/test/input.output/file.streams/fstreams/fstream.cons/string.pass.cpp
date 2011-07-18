@@ -19,7 +19,7 @@
 
 int main()
 {
-    char temp [L_tmpnam];
+    char temp[L_tmpnam];
     tmpnam(temp);
     {
         std::fstream fs(std::string(temp),

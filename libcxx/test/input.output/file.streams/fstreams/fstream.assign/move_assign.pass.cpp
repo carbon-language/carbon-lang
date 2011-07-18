@@ -20,9 +20,10 @@
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    char temp[L_tmpnam];
     {
-        std::fstream fso("test.dat", std::ios_base::in | std::ios_base::out
-                                                       | std::ios_base::trunc);
+        std::fstream fso(temp, std::ios_base::in | std::ios_base::out
+                                                 | std::ios_base::trunc);
         std::fstream fs;
         fs = move(fso);
         double x = 0;
@@ -31,10 +32,10 @@ int main()
         fs >> x;
         assert(x == 3.25);
     }
-    std::remove("test.dat");
+    std::remove(temp);
     {
-        std::wfstream fso("test.dat", std::ios_base::in | std::ios_base::out
-                                                        | std::ios_base::trunc);
+        std::wfstream fso(temp, std::ios_base::in | std::ios_base::out
+                                                  | std::ios_base::trunc);
         std::wfstream fs;
         fs = move(fso);
         double x = 0;
@@ -43,6 +44,6 @@ int main()
         fs >> x;
         assert(x == 3.25);
     }
-    std::remove("test.dat");
+    std::remove(temp);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

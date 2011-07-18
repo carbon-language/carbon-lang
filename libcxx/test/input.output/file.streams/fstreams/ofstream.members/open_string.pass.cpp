@@ -19,38 +19,40 @@
 
 int main()
 {
+    char temp[L_tmpnam];
+    tmpnam(temp);
     {
         std::ofstream fs;
         assert(!fs.is_open());
         char c = 'a';
         fs << c;
         assert(fs.fail());
-        fs.open(std::string("test.dat"));
+        fs.open(std::string(temp));
         assert(fs.is_open());
         fs << c;
     }
     {
-        std::ifstream fs("test.dat");
+        std::ifstream fs(temp);
         char c = 0;
         fs >> c;
         assert(c == 'a');
     }
-    remove("test.dat");
+    remove(temp);
     {
         std::wofstream fs;
         assert(!fs.is_open());
         wchar_t c = L'a';
         fs << c;
         assert(fs.fail());
-        fs.open(std::string("test.dat"));
+        fs.open(std::string(temp));
         assert(fs.is_open());
         fs << c;
     }
     {
-        std::wifstream fs("test.dat");
+        std::wifstream fs(temp);
         wchar_t c = 0;
         fs >> c;
         assert(c == L'a');
     }
-    remove("test.dat");
+    remove(temp);
 }

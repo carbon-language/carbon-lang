@@ -19,16 +19,18 @@
 
 int main()
 {
+    char temp[L_tmpnam];
+    tmpnam(temp);
     {
-        std::ofstream fs("test.dat");
+        std::ofstream fs(temp);
         std::filebuf* fb = fs.rdbuf();
         assert(fb->sputc('r') == 'r');
     }
-    remove("test.dat");
+    remove(temp);
     {
-        std::wofstream fs("test.dat");
+        std::wofstream fs(temp);
         std::wfilebuf* fb = fs.rdbuf();
         assert(fb->sputc(L'r') == L'r');
     }
-    remove("test.dat");
+    remove(temp);
 }

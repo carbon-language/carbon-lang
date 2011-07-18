@@ -19,26 +19,28 @@
 
 int main()
 {
+    char temp[L_tmpnam];
+    tmpnam(temp);
     {
-        std::ofstream fs(std::string("test.dat"));
+        std::ofstream fs((std::string(temp)));
         fs << 3.25;
     }
     {
-        std::ifstream fs(std::string("test.dat"));
+        std::ifstream fs((std::string(temp)));
         double x = 0;
         fs >> x;
         assert(x == 3.25);
     }
-    remove("test.dat");
+    remove(temp);
     {
-        std::wofstream fs(std::string("test.dat"));
+        std::wofstream fs((std::string(temp)));
         fs << 3.25;
     }
     {
-        std::wifstream fs(std::string("test.dat"));
+        std::wifstream fs((std::string(temp)));
         double x = 0;
         fs >> x;
         assert(x == 3.25);
     }
-    remove("test.dat");
+    remove(temp);
 }

@@ -20,31 +20,33 @@
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    char temp[L_tmpnam];
+    tmpnam(temp);
     {
-        std::ofstream fso("test.dat");
+        std::ofstream fso(temp);
         std::ofstream fs;
         fs = move(fso);
         fs << 3.25;
     }
     {
-        std::ifstream fs("test.dat");
+        std::ifstream fs(temp);
         double x = 0;
         fs >> x;
         assert(x == 3.25);
     }
-    remove("test.dat");
+    remove(temp);
     {
-        std::wofstream fso("test.dat");
+        std::wofstream fso(temp);
         std::wofstream fs;
         fs = move(fso);
         fs << 3.25;
     }
     {
-        std::wifstream fs("test.dat");
+        std::wifstream fs(temp);
         double x = 0;
         fs >> x;
         assert(x == 3.25);
     }
-    remove("test.dat");
+    remove(temp);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }
