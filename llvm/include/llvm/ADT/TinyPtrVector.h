@@ -58,6 +58,28 @@ public:
     return Val. template get<VecTy*>()->size();
   }
   
+  typedef const EltTy *iterator;
+  iterator begin() const {
+    if (empty())
+      return 0;
+    
+    if (Val.template is<EltTy>())
+      return Val.template getAddrOf<EltTy>();
+    
+    return Val.template get<VecTy *>()->begin();
+
+  }
+  iterator end() const {
+    if (empty())
+      return 0;
+    
+    if (Val.template is<EltTy>())
+      return begin() + 1;
+    
+    return Val.template get<VecTy *>()->end();
+  }
+
+  
   EltTy operator[](unsigned i) const {
     assert(!Val.isNull() && "can't index into an empty vector");
     if (EltTy V = Val.template dyn_cast<EltTy>()) {
