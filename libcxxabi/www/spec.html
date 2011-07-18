@@ -27,11 +27,13 @@
 </p>
 <blockquote>
 <p>
-<i>Effects:</i> Allocates <tt>thrown_size</tt> bytes of memory.  If memory
-can not be allocated, call <tt>std::terminate()</tt>.
+<i>Effects:</i> Allocates memory to hold the exception to be thrown.
+<tt>thrown_size</tt> is the size of the exception object. Can allocate
+additional memory to hold private data. If memory can not be allocated, call
+<tt>std::terminate()</tt>.
 </p>
 <p>
-<i>Returns:</i> A pointer to the allocated memory.
+<i>Returns:</i> A pointer to the memory allocated for the exception object.
 </p>
 </blockquote>
 </td>
@@ -47,7 +49,7 @@ can not be allocated, call <tt>std::terminate()</tt>.
 </p>
 <blockquote>
 <p>
-<i>Effects:</i> Deallocates the memory pointed to.
+<i>Effects:</i> Frees memory allocated by <tt>__cxa_allocate_exception</tt>.
 </p>
 </blockquote>
 </td>
