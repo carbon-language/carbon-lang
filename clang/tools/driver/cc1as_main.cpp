@@ -30,6 +30,7 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -259,6 +260,9 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
   OwningPtr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(Opts.Triple));
   assert(MAI && "Unable to create target asm info!");
 
+  OwningPtr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(Opts.Triple));
+  assert(MRI && "Unable to create target register info!");
+
   bool IsBinary = Opts.OutputType == AssemblerInvocation::FT_Obj;
   formatted_raw_ostream *Out = GetOutputStream(Opts, Diags, IsBinary);
   if (!Out)
@@ -273,7 +277,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
   }
 
   const TargetAsmInfo *tai = new TargetAsmInfo(*TM);
-  MCContext Ctx(*MAI, tai);
+  MCContext Ctx(*MAI, *MRI, tai);
   if (Opts.SaveTemporaryLabels)
     Ctx.setAllowTemporaryLabels(false);
 
@@ -358,6 +362,7 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
   InitializeAllTargets();
   InitializeAllMCAsmInfos();
   InitializeAllMCInstrInfos();
+  InitializeAllMCRegisterInfos();
   InitializeAllMCSubtargetInfos();
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
