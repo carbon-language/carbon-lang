@@ -111,6 +111,10 @@ class MachineModuleInfo : public ImmutablePass {
   // frame maps by debug and exception handling consumers.
   std::vector<MachineMove> FrameMoves;
 
+  // CompactEncoding - If the target supports it, this is the compact unwind
+  // encoding. It replaces a function's CIE and FDE.
+  uint32_t CompactEncoding;
+
   // LandingPads - List of LandingPadInfo describing the landing pad information
   // in the current function.
   std::vector<LandingPadInfo> LandingPads;
@@ -229,6 +233,11 @@ public:
   /// function's prologue.  Used to construct frame maps for debug and exception
   /// handling comsumers.
   std::vector<MachineMove> &getFrameMoves() { return FrameMoves; }
+
+  /// getCompactEncoding - Returns the compact unwind encoding for a function if
+  /// the target supports the encoding. This encoding replaces a function's CIE
+  /// and FDE.
+  uint32_t getCompactEncoding() const { return CompactEncoding; }
 
   /// getAddrLabelSymbol - Return the symbol to be used for the specified basic
   /// block when its address is taken.  This cannot be its normal LBB label

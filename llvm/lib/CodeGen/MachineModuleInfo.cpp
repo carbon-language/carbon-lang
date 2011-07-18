@@ -257,9 +257,9 @@ MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI,
                                      const MCRegisterInfo &MRI,
                                      const TargetAsmInfo *TAI)
   : ImmutablePass(ID), Context(MAI, MRI, TAI),
-  ObjFileMMI(0),
-  CurCallSite(0), CallsEHReturn(0), CallsUnwindInit(0), DbgInfoAvailable(false),
-  CallsExternalVAFunctionWithFloatingPointArguments(false) {
+    ObjFileMMI(0), CompactEncoding(0), CurCallSite(0), CallsEHReturn(0),
+    CallsUnwindInit(0), DbgInfoAvailable(false),
+    CallsExternalVAFunctionWithFloatingPointArguments(false) {
   initializeMachineModuleInfoPass(*PassRegistry::getPassRegistry());
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(NULL);
@@ -312,6 +312,7 @@ void MachineModuleInfo::EndFunction() {
   FilterEnds.clear();
   CallsEHReturn = 0;
   CallsUnwindInit = 0;
+  CompactEncoding = 0;
   VariableDbgInfo.clear();
 }
 
