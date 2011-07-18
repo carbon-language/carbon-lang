@@ -599,7 +599,10 @@ from the previous release.</p>
   LLVM API changes are:</p>
 
 <ul>
-
+<li>The biggest and most pervasive change is that llvm::Type's are no longer
+    returned or accepted as 'const' values.  Instead, just pass around non-const
+    Type's.</li>
+  
 <li><code>PHINode::reserveOperandSpace</code> has been removed. Instead, you
   must specify how many operands to reserve space for when you create the
   PHINode, by passing an extra argument into <code>PHINode::Create</code>.</li>
