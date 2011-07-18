@@ -37,6 +37,7 @@ void removeZeroOutPropsInDealloc(MigrationPass &pass);
 void rewriteProperties(MigrationPass &pass);
 void rewriteBlockObjCVariable(MigrationPass &pass);
 void rewriteUnusedInitDelegate(MigrationPass &pass);
+void checkAPIUses(MigrationPass &pass);
 
 void removeEmptyStatementsAndDealloc(MigrationPass &pass);
 
@@ -65,7 +66,8 @@ public:
   BodyTransform(MigrationPass &pass) : Pass(pass) { }
 
   bool TraverseStmt(Stmt *rootS) {
-    BODY_TRANS(Pass).transformBody(rootS);
+    if (rootS)
+      BODY_TRANS(Pass).transformBody(rootS);
     return true;
   }
 };

@@ -283,6 +283,7 @@ static void independentTransforms(MigrationPass &pass) {
   makeAssignARCSafe(pass);
   rewriteUnbridgedCasts(pass);
   rewriteBlockObjCVariable(pass);
+  checkAPIUses(pass);
 }
 
 std::vector<TransformFn> arcmt::getAllTransformations() {

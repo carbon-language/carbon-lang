@@ -37,6 +37,7 @@ public:
 class TransformActions {
   Diagnostic &Diags;
   CapturedDiagList &CapturedDiags;
+  bool ReportedErrors;
   void *Impl; // TransformActionsImpl.
 
 public:
@@ -87,6 +88,8 @@ public:
                    SourceRange range = SourceRange());
   void reportNote(llvm::StringRef note, SourceLocation loc,
                   SourceRange range = SourceRange());
+
+  bool hasReportedErrors() const { return ReportedErrors; }
 
   class RewriteReceiver {
   public:

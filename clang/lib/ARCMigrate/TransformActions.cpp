@@ -600,7 +600,7 @@ TransformActions::RewriteReceiver::~RewriteReceiver() { }
 TransformActions::TransformActions(Diagnostic &diag,
                                    CapturedDiagList &capturedDiags,
                                    ASTContext &ctx, Preprocessor &PP)
-  : Diags(diag), CapturedDiags(capturedDiags) {
+  : Diags(diag), CapturedDiags(capturedDiags), ReportedErrors(false) {
   Impl = new TransformActionsImpl(capturedDiags, ctx, PP);
 }
 
@@ -683,6 +683,7 @@ void TransformActions::reportError(llvm::StringRef error, SourceLocation loc,
      = Diags.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Error,
                                                  rewriteErr);
   Diags.Report(loc, diagID) << range;
+  ReportedErrors = true;
 }
 
 void TransformActions::reportNote(llvm::StringRef note, SourceLocation loc,

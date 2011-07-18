@@ -266,7 +266,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   // to remove it so that we don't get errors from normal compilation.
   origCI.getLangOpts().ObjCAutoRefCount = false;
 
-  return capturedDiags.hasErrors();
+  return capturedDiags.hasErrors() || testAct.hasReportedErrors();
 }
 
 //===----------------------------------------------------------------------===//
