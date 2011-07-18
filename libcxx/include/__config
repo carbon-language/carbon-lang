@@ -188,6 +188,10 @@ namespace std {
 #  define _NOEXCEPT_(x)
 #endif
 
+#if __has_feature(underlying_type)
+#  define _LIBCXX_UNDERLYING_TYPE(T) __underlying_type(T)
+#endif
+
 // end defined(__clang__)
 
 #elif defined(__GNUC__)

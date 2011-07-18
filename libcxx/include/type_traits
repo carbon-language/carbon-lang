@@ -3092,6 +3092,26 @@ struct __is_nothrow_swappable
 
 #endif  // __has_feature(cxx_noexcept)
 
+#ifdef _LIBCXX_UNDERLYING_TYPE
+
+template <class _Tp>
+struct underlying_type
+{
+    typedef _LIBCXX_UNDERLYING_TYPE(_Tp) type;
+};
+
+#else  // _LIBCXX_UNDERLYING_TYPE
+
+template <class _Tp, bool _Support = false>
+struct underlying_type
+{
+    static_assert(_Support, "The underyling_type trait requires compiler "
+                            "support. Either no such support exists or "
+                            "libc++ does not know how to use it.");
+};
+
+#endif // _LIBCXX_UNDERLYING_TYPE
+
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_TYPE_TRAITS
