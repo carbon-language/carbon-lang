@@ -219,21 +219,19 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     ASTContext &Ctx(*m_ast_context);
-    
-    CompoundStmt *compound_stmt = dyn_cast<CompoundStmt>(Body);
-    
-    if (!compound_stmt)
+        
+    if (!Body)
         return false;
     
-    if (compound_stmt->body_empty())
+    if (Body->body_empty())
         return false;
     
-    Stmt **last_stmt_ptr = compound_stmt->body_end() - 1;
+    Stmt **last_stmt_ptr = Body->body_end() - 1;
     Stmt *last_stmt = *last_stmt_ptr;
     
     while (dyn_cast<NullStmt>(last_stmt))
     {
-        if (last_stmt_ptr != compound_stmt->body_begin())
+        if (last_stmt_ptr != Body->body_begin())
         {
             last_stmt_ptr--;
             last_stmt = *last_stmt_ptr;
