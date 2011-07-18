@@ -590,10 +590,10 @@ def SH      : StoreM<0x29, "sh", truncstorei16>;
 def SW      : StoreM<0x2b, "sw", store>;
 
 /// Load-linked, Store-conditional
-let hasDelaySlot = 1 in
+let mayLoad = 1, hasDelaySlot = 1 in
   def LL    : FI<0x30, (outs CPURegs:$dst), (ins mem:$addr),
               "ll\t$dst, $addr", [], IILoad>;
-let Constraints = "$src = $dst" in
+let mayStore = 1, Constraints = "$src = $dst" in
   def SC    : FI<0x38, (outs CPURegs:$dst), (ins CPURegs:$src, mem:$addr),
               "sc\t$src, $addr", [], IIStore>;
 

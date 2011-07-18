@@ -733,11 +733,10 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
 
-  unsigned Dest = MI->getOperand(0).getReg();
+  unsigned Oldval = MI->getOperand(0).getReg();
   unsigned Ptr = MI->getOperand(1).getReg();
   unsigned Incr = MI->getOperand(2).getReg();
 
-  unsigned Oldval = RegInfo.createVirtualRegister(RC);
   unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
@@ -759,38 +758,16 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
 
   //  thisMBB:
   //    ...
-  //    sw incr, fi(sp)           // store incr to stack (when BinOpcode == 0)
   //    fallthrough --> loopMBB
-
-  // Note: for atomic.swap (when BinOpcode == 0), storing incr to stack before
-  // the loop and then loading it from stack in block loopMBB is necessary to
-  // prevent MachineLICM pass to hoist "or" instruction out of the block
-  // loopMBB.
-
-  int fi = 0;
-  if (BinOpcode == 0 && !Nand) {
-    // Get or create a temporary stack location.
-    MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
-    fi = MipsFI->getAtomicFrameIndex();
-    if (fi == -1) {
-      fi = MF->getFrameInfo()->CreateStackObject(Size, Size, false);
-      MipsFI->setAtomicFrameIndex(fi);
-    }
-
-    BuildMI(BB, dl, TII->get(Mips::SW))
-        .addReg(Incr).addFrameIndex(fi).addImm(0);
-  }
   BB->addSuccessor(loopMBB);
 
   //  loopMBB:
   //    ll oldval, 0(ptr)
-  //    or dest, $0, oldval
   //    <binop> tmp1, oldval, incr
   //    sc tmp1, 0(ptr)
   //    beq tmp1, $0, loopMBB
   BB = loopMBB;
   BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addReg(Ptr).addImm(0);
-  BuildMI(BB, dl, TII->get(Mips::OR), Dest).addReg(Mips::ZERO).addReg(Oldval);
   if (Nand) {
     //  and tmp2, oldval, incr
     //  nor tmp1, $0, tmp2
@@ -800,10 +777,7 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
     //  <binop> tmp1, oldval, incr
     BuildMI(BB, dl, TII->get(BinOpcode), Tmp1).addReg(Oldval).addReg(Incr);
   } else {
-    //  lw tmp2, fi(sp)              // load incr from stack
-    //  or tmp1, $zero, tmp2
-    BuildMI(BB, dl, TII->get(Mips::LW), Tmp2).addFrameIndex(fi).addImm(0);
-    BuildMI(BB, dl, TII->get(Mips::OR), Tmp1).addReg(Mips::ZERO).addReg(Tmp2);
+    Tmp1 = Incr;
   }
   BuildMI(BB, dl, TII->get(Mips::SC), Tmp3).addReg(Tmp1).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
@@ -880,12 +854,6 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   //    nor     mask2,$0,mask
   //    andi    tmp4,incr,255
   //    sll     incr2,tmp4,shift
-  //    sw      incr2, fi(sp)      // store incr2 to stack (when BinOpcode == 0)
-
-  // Note: for atomic.swap (when BinOpcode == 0), storing incr2 to stack before
-  // the loop and then loading it from stack in block loopMBB is necessary to
-  // prevent MachineLICM pass to hoist "or" instruction out of the block
-  // loopMBB.
 
   int64_t MaskImm = (Size == 1) ? 255 : 65535;
   BuildMI(BB, dl, TII->get(Mips::ADDiu), Tmp1).addReg(Mips::ZERO).addImm(-4);
@@ -904,21 +872,9 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
     BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Tmp5).addReg(Shift);
   }
 
-  int fi = 0;
-  if (BinOpcode == 0 && !Nand) {
-    // Get or create a temporary stack location.
-    MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
-    fi = MipsFI->getAtomicFrameIndex();
-    if (fi == -1) {
-      fi = MF->getFrameInfo()->CreateStackObject(Size, Size, false);
-      MipsFI->setAtomicFrameIndex(fi);
-    }
-
-    BuildMI(BB, dl, TII->get(Mips::SW))
-        .addReg(Incr2).addFrameIndex(fi).addImm(0);
-  }
   BB->addSuccessor(loopMBB);
 
+  // atomic.load.binop
   // loopMBB:
   //   ll      oldval,0(addr)
   //   binop   tmp7,oldval,incr2
@@ -927,6 +883,15 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   //   or      tmp9,tmp8,newval
   //   sc      tmp9,0(addr)
   //   beq     tmp9,$0,loopMBB
+  
+  // atomic.swap
+  // loopMBB:
+  //   ll      oldval,0(addr)
+  //   and     tmp8,oldval,mask2
+  //   or      tmp9,tmp8,incr2
+  //   sc      tmp9,0(addr)
+  //   beq     tmp9,$0,loopMBB
+
   BB = loopMBB;
   BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addReg(Addr).addImm(0);
   if (Nand) {
@@ -940,15 +905,14 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   } else if (BinOpcode) {
     //  <binop> tmp7, oldval, incr2
     BuildMI(BB, dl, TII->get(BinOpcode), Tmp7).addReg(Oldval).addReg(Incr2);
-  } else {
-    //  lw tmp6, fi(sp)              // load incr2 from stack
-    //  or tmp7, $zero, tmp6
-    BuildMI(BB, dl, TII->get(Mips::LW), Tmp6).addFrameIndex(fi).addImm(0);
-    BuildMI(BB, dl, TII->get(Mips::OR), Tmp7).addReg(Mips::ZERO).addReg(Tmp6);
   }
-  BuildMI(BB, dl, TII->get(Mips::AND), Newval).addReg(Tmp7).addReg(Mask);
+  if (BinOpcode != 0 || Nand)
+    BuildMI(BB, dl, TII->get(Mips::AND), Newval).addReg(Tmp7).addReg(Mask);
   BuildMI(BB, dl, TII->get(Mips::AND), Tmp8).addReg(Oldval).addReg(Mask2);
-  BuildMI(BB, dl, TII->get(Mips::OR), Tmp9).addReg(Tmp8).addReg(Newval);
+  if (BinOpcode != 0 || Nand)
+    BuildMI(BB, dl, TII->get(Mips::OR), Tmp9).addReg(Tmp8).addReg(Newval);
+  else
+    BuildMI(BB, dl, TII->get(Mips::OR), Tmp9).addReg(Tmp8).addReg(Incr2);
   BuildMI(BB, dl, TII->get(Mips::SC), Tmp13)
     .addReg(Tmp9).addReg(Addr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
@@ -996,7 +960,6 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   unsigned Newval  = MI->getOperand(3).getReg();
 
   unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
@@ -1016,25 +979,9 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
                   BB->end());
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
-  // Get or create a temporary stack location.
-  MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
-  int fi = MipsFI->getAtomicFrameIndex();
-  if (fi == -1) {
-    fi = MF->getFrameInfo()->CreateStackObject(Size, Size, false);
-    MipsFI->setAtomicFrameIndex(fi);
-  }
-
   //  thisMBB:
   //    ...
-  //    sw newval, fi(sp)           // store newval to stack
   //    fallthrough --> loop1MBB
-
-  // Note: storing newval to stack before the loop and then loading it from
-  // stack in block loop2MBB is necessary to prevent MachineLICM pass to
-  // hoist "or" instruction out of the block loop2MBB.
-
-  BuildMI(BB, dl, TII->get(Mips::SW))
-      .addReg(Newval).addFrameIndex(fi).addImm(0);
   BB->addSuccessor(loop1MBB);
 
   // loop1MBB:
@@ -1048,13 +995,11 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   BB->addSuccessor(loop2MBB);
 
   // loop2MBB:
-  //   lw tmp2, fi(sp)              // load newval from stack
-  //   or tmp1, $0, tmp2
+  //   or tmp1, $0, newval
   //   sc tmp1, 0(ptr)
   //   beq tmp1, $0, loop1MBB
   BB = loop2MBB;
-  BuildMI(BB, dl, TII->get(Mips::LW), Tmp2).addFrameIndex(fi).addImm(0);
-  BuildMI(BB, dl, TII->get(Mips::OR), Tmp1).addReg(Mips::ZERO).addReg(Tmp2);
+  BuildMI(BB, dl, TII->get(Mips::OR), Tmp1).addReg(Mips::ZERO).addReg(Newval);
   BuildMI(BB, dl, TII->get(Mips::SC), Tmp3).addReg(Tmp1).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
     .addReg(Tmp3).addReg(Mips::ZERO).addMBB(loop1MBB);

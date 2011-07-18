@@ -51,16 +51,12 @@ private:
   mutable int DynAllocFI; // Frame index of dynamically allocated stack area.   
   unsigned MaxCallFrameSize;
 
-  /// AtomicFrameIndex - To implement atomic.swap and atomic.cmp.swap
-  /// intrinsics, it is necessary to use a temporary stack location.
-  /// This field holds the frame index of this location.
-  int AtomicFrameIndex;
 public:
   MipsFunctionInfo(MachineFunction& MF)
   : MF(MF), SRetReturnReg(0), GlobalBaseReg(0),
     VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)),
     OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), DynAllocFI(0),
-    MaxCallFrameSize(0), AtomicFrameIndex(-1)
+    MaxCallFrameSize(0)
   {}
 
   bool isInArgFI(int FI) const {
@@ -104,9 +100,6 @@ public:
 
   unsigned getMaxCallFrameSize() const { return MaxCallFrameSize; }
   void setMaxCallFrameSize(unsigned S) { MaxCallFrameSize = S; }
-
-  int getAtomicFrameIndex() const { return AtomicFrameIndex; }
-  void setAtomicFrameIndex(int Index) { AtomicFrameIndex = Index; }
 };
 
 } // end of namespace llvm

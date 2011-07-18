@@ -24,7 +24,6 @@ entry:
 ; CHECK:   lw      $[[R0:[0-9]+]], %got(x)($gp)
 ; CHECK:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK:   ll      $[[R1:[0-9]+]], 0($[[R0]])
-; CHECK:   or      $2, $zero, $[[R1]]
 ; CHECK:   addu    $[[R2:[0-9]+]], $[[R1]], $4
 ; CHECK:   sc      $[[R2]], 0($[[R0]])
 ; CHECK:   beq     $[[R2]], $zero, $[[BB0]]
@@ -39,43 +38,42 @@ entry:
 ; CHECK:   lw      $[[R0:[0-9]+]], %got(x)($gp)
 ; CHECK:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK:   ll      $[[R1:[0-9]+]], 0($[[R0]])
-; CHECK:   or      $2, $zero, $[[R1]]
-; CHECK:   and     $[[R1]], $[[R1]], $4
-; CHECK:   nor     $[[R2:[0-9]+]], $zero, $[[R1]]
+; CHECK:   and     $[[R3:[0-9]+]], $[[R1]], $4
+; CHECK:   nor     $[[R2:[0-9]+]], $zero, $[[R3]]
 ; CHECK:   sc      $[[R2]], 0($[[R0]])
 ; CHECK:   beq     $[[R2]], $zero, $[[BB0]]
 }
 
-define i32 @AtomicSwap32(i32 %oldval) nounwind {
+define i32 @AtomicSwap32(i32 %newval) nounwind {
 entry:
-  %0 = call i32 @llvm.atomic.swap.i32.p0i32(i32* @x, i32 %oldval)
+  %newval.addr = alloca i32, align 4
+  store i32 %newval, i32* %newval.addr, align 4
+  %tmp = load i32* %newval.addr, align 4
+  %0 = call i32 @llvm.atomic.swap.i32.p0i32(i32* @x, i32 %tmp)
   ret i32 %0
 
 ; CHECK:   AtomicSwap32:
 ; CHECK:   lw      $[[R0:[0-9]+]], %got(x)($gp)
-; CHECK:   sw      $4, [[OFFSET:[0-9]+]]($sp)
 ; CHECK:   $[[BB0:[A-Z_0-9]+]]:
-; CHECK:   ll      $[[R1:[0-9]+]], 0($[[R0]])
-; CHECK:   or      $2, $zero, $[[R1]]
-; CHECK:   lw      $[[R2:[0-9]+]], [[OFFSET]]($sp)
-; CHECK:   or      $[[R3:[0-9]+]], $zero, $[[R2]]
-; CHECK:   sc      $[[R3]], 0($[[R0]])
-; CHECK:   beq     $[[R3]], $zero, $[[BB0]]
+; CHECK:   ll      ${{[0-9]+}}, 0($[[R0]])
+; CHECK:   sc      $[[R2:[0-9]+]], 0($[[R0]])
+; CHECK:   beq     $[[R2]], $zero, $[[BB0]]
 }
 
 define i32 @AtomicCmpSwap32(i32 %oldval, i32 %newval) nounwind {
 entry:
-  %0 = call i32 @llvm.atomic.cmp.swap.i32.p0i32(i32* @x, i32 %oldval, i32 %newval)
+  %newval.addr = alloca i32, align 4
+  store i32 %newval, i32* %newval.addr, align 4
+  %tmp = load i32* %newval.addr, align 4
+  %0 = call i32 @llvm.atomic.cmp.swap.i32.p0i32(i32* @x, i32 %oldval, i32 %tmp)
   ret i32 %0
 
 ; CHECK:   AtomicCmpSwap32:
 ; CHECK:   lw      $[[R0:[0-9]+]], %got(x)($gp)
-; CHECK:   sw      $5, [[OFFSET:[0-9]+]]($sp)
 ; CHECK:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK:   ll      $2, 0($[[R0]])
 ; CHECK:   bne     $2, $4, $[[BB1:[A-Z_0-9]+]]
-; CHECK:   lw      $[[R1:[0-9]+]], [[OFFSET]]($sp)
-; CHECK:   or      $[[R2:[0-9]+]], $zero, $[[R1]]
+; CHECK:   or      $[[R2:[0-9]+]], $zero, $5
 ; CHECK:   sc      $[[R2]], 0($[[R0]])
 ; CHECK:   beq     $[[R2]], $zero, $[[BB0]]
 ; CHECK:   $[[BB1]]:
@@ -183,9 +181,9 @@ entry:
 ; CHECK:   sra     $2, $[[R17]], 24
 }
 
-define signext i8 @AtomicSwap8(i8 signext %oldval) nounwind {
+define signext i8 @AtomicSwap8(i8 signext %newval) nounwind {
 entry:
-  %0 = call i8 @llvm.atomic.swap.i8.p0i8(i8* @y, i8 %oldval)
+  %0 = call i8 @llvm.atomic.swap.i8.p0i8(i8* @y, i8 %newval)
   ret i8 %0
 
 ; CHECK:   AtomicSwap8:
@@ -199,15 +197,11 @@ entry:
 ; CHECK:   nor     $[[R7:[0-9]+]], $zero, $[[R6]]
 ; CHECK:   andi    $[[R8:[0-9]+]], $4, 255
 ; CHECK:   sll     $[[R9:[0-9]+]], $[[R8]], $[[R4]]
-; CHECK:   sw      $[[R9]], [[OFFSET:[0-9]+]]($sp)
 
 ; CHECK:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK:   ll      $[[R10:[0-9]+]], 0($[[R2]])
-; CHECK:   lw      $[[R18:[0-9]+]], [[OFFSET]]($sp)
-; CHECK:   or      $[[R11:[0-9]+]], $zero, $[[R18]]
-; CHECK:   and     $[[R12:[0-9]+]], $[[R11]], $[[R6]]
 ; CHECK:   and     $[[R13:[0-9]+]], $[[R10]], $[[R7]]
-; CHECK:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
+; CHECK:   or      $[[R14:[0-9]+]], $[[R13]], $[[R9]]
 ; CHECK:   sc      $[[R14]], 0($[[R2]])
 ; CHECK:   beq     $[[R14]], $zero, $[[BB0]]
 
