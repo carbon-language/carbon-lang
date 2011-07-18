@@ -720,8 +720,15 @@ def VCVTSS2SDrm : I<0x5A, MRMSrcMem, (outs FR64:$dst),
                     (ins FR32:$src1, f32mem:$src2),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     []>, XS, VEX_4V, Requires<[HasAVX, OptForSize]>;
-def : Pat<(f64 (fextend FR32:$src)), (VCVTSS2SDrr FR32:$src, FR32:$src)>,
-        Requires<[HasAVX]>;
+
+let Predicates = [HasAVX] in {
+  def : Pat<(f64 (fextend FR32:$src)),
+            (VCVTSS2SDrr FR32:$src, FR32:$src)>;
+  def : Pat<(fextend (loadf32 addr:$src)),
+            (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>;
+  def : Pat<(extloadf32 addr:$src),
+            (VCVTSS2SDrm (f32 (IMPLICIT_DEF)), addr:$src)>;
+}
 
 def CVTSS2SDrr : I<0x5A, MRMSrcReg, (outs FR64:$dst), (ins FR32:$src),
                    "cvtss2sd\t{$src, $dst|$dst, $src}",
@@ -2081,15 +2088,6 @@ def : Pat<(v16i8 immAllZerosV), (V_SET0PI)>;
 
 def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
           (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
-
-// FIXME: According to the intel manual, DEST[127:64] <- SRC1[127:64], while
-// in the non-AVX version bits 127:64 aren't touched. Find a better way to
-// represent this instead of always zeroing SRC1. One possible solution is
-// to represent the instruction w/ something similar as the "$src1 = $dst"
-// constraint but without the tied operands.
-def : Pat<(extloadf32 addr:$src),
-          (VCVTSS2SDrm (f32 (EXTRACT_SUBREG (AVX_SET0PS), sub_ss)), addr:$src)>,
-      Requires<[HasAVX, OptForSpeed]>;
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Load/Store XCSR register
@@ -3633,15 +3631,7 @@ let Predicates = [HasSSE2] in
  def : Pat<(fextend (loadf32 addr:$src)),
            (CVTSS2SDrm addr:$src)>;
 
-// FIXME: According to the intel manual, DEST[127:64] <- SRC1[127:64], while
-// in the non-AVX version bits 127:64 aren't touched. Find a better way to
-// represent this instead of always zeroing SRC1. One possible solution is
-// to represent the instruction w/ something similar as the "$src1 = $dst"
-// constraint but without the tied operands.
-let Predicates = [HasAVX] in
- def : Pat<(fextend (loadf32 addr:$src)),
-           (VCVTSS2SDrm (f32 (EXTRACT_SUBREG (AVX_SET0PS), sub_ss)),
-                        addr:$src)>;
+
 
 // bit_convert
 let Predicates = [HasXMMInt] in {
