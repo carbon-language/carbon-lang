@@ -1894,6 +1894,17 @@ let Predicates = [HasAVX] in {
                 sse1_fp_unop_p_int<0x53, "vrcp", int_x86_sse_rcp_ps>, VEX;
 }
 
+def : Pat<(f32 (fsqrt FR32:$src)),
+          (VSQRTSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
+def : Pat<(f64 (fsqrt FR64:$src)),
+          (VSQRTSDr (f64 (IMPLICIT_DEF)), FR64:$src)>, Requires<[HasAVX]>;
+def : Pat<(f64 (fsqrt (load addr:$src))),
+          (VSQRTSDm (f64 (IMPLICIT_DEF)), addr:$src)>,
+          Requires<[HasAVX, OptForSize]>;
+def : Pat<(f32 (fsqrt (load addr:$src))),
+          (VSQRTSSm (f32 (IMPLICIT_DEF)), addr:$src)>,
+          Requires<[HasAVX, OptForSize]>;
+
 // Square root.
 defm SQRT  : sse1_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse_sqrt_ss>,
              sse1_fp_unop_p<0x51, "sqrt",  fsqrt>,

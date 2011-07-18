@@ -52,3 +52,21 @@ entry:
   %conv = sitofp i64 %tmp1 to float
   ret float %conv
 }
+
+; CHECK: vsqrtss
+define float @sqrtA(float %a) nounwind uwtable readnone ssp {
+entry:
+  %conv1 = tail call float @sqrtf(float %a) nounwind readnone
+  ret float %conv1
+}
+
+declare double @sqrt(double) readnone
+
+; CHECK: vsqrtsd
+define double @sqrtB(double %a) nounwind uwtable readnone ssp {
+entry:
+  %call = tail call double @sqrt(double %a) nounwind readnone
+  ret double %call
+}
+
+declare float @sqrtf(float) readnone
