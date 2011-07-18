@@ -111,7 +111,7 @@ static void createLoop(IRBuilder<> *Builder, Value *LB, Value *UB, APInt Stride,
   assert(LB->getType() == UB->getType()
          && "Different types for upper and lower bound.");
 
-  const IntegerType *LoopIVType = dyn_cast<IntegerType>(UB->getType());
+  IntegerType *LoopIVType = dyn_cast<IntegerType>(UB->getType());
   assert(LoopIVType && "UB is not integer?");
 
   // IV
@@ -211,11 +211,11 @@ public:
     return const_cast<Value*>(OldOperand);
   }
 
-  const Type *getVectorPtrTy(const Value *V, int vectorWidth) {
-    const PointerType *pointerType = dyn_cast<PointerType>(V->getType());
+  Type *getVectorPtrTy(const Value *V, int vectorWidth) {
+    PointerType *pointerType = dyn_cast<PointerType>(V->getType());
     assert(pointerType && "PointerType expected");
 
-    const Type *scalarType = pointerType->getElementType();
+    Type *scalarType = pointerType->getElementType();
     VectorType *vectorType = VectorType::get(scalarType, vectorWidth);
 
     return PointerType::getUnqual(vectorType);
@@ -232,7 +232,7 @@ public:
   Value *generateStrideOneLoad(const LoadInst *load, ValueMapT &BBMap,
                                int size) {
     const Value *pointer = load->getPointerOperand();
-    const Type *vectorPtrType = getVectorPtrTy(pointer, size);
+    Type *vectorPtrType = getVectorPtrTy(pointer, size);
     Value *newPointer = getOperand(pointer, BBMap);
     Value *VectorPtr = Builder.CreateBitCast(newPointer, vectorPtrType,
                                              "vector_ptr");
@@ -258,7 +258,7 @@ public:
   Value *generateStrideZeroLoad(const LoadInst *load, ValueMapT &BBMap,
                                 int size) {
     const Value *pointer = load->getPointerOperand();
-    const Type *vectorPtrType = getVectorPtrTy(pointer, 1);
+    Type *vectorPtrType = getVectorPtrTy(pointer, 1);
     Value *newPointer = getOperand(pointer, BBMap);
     Value *vectorPtr = Builder.CreateBitCast(newPointer, vectorPtrType,
                                              load->getNameStr() + "_p_vec_p");
@@ -417,7 +417,7 @@ public:
         Value *vector = getOperand(store->getValueOperand(), BBMap, &vectorMap);
 
         if (Access.isStrideOne(scatteringDomain)) {
-          const Type *vectorPtrType = getVectorPtrTy(pointer, vectorWidth);
+          Type *vectorPtrType = getVectorPtrTy(pointer, vectorWidth);
           Value *newPointer = getOperand(pointer, BBMap, &vectorMap);
 
           Value *VectorPtr = Builder.CreateBitCast(newPointer, vectorPtrType,
@@ -528,7 +528,7 @@ class ClastExpCodeGen {
   IRBuilder<> &Builder;
   const CharMapT *IVS;
 
-  Value *codegen(const clast_name *e, const Type *Ty) {
+  Value *codegen(const clast_name *e, Type *Ty) {
     CharMapT::const_iterator I = IVS->find(e->name);
 
     if (I != IVS->end())
@@ -537,7 +537,7 @@ class ClastExpCodeGen {
       llvm_unreachable("Clast name not found");
   }
 
-  Value *codegen(const clast_term *e, const Type *Ty) {
+  Value *codegen(const clast_term *e, Type *Ty) {
     APInt a = APInt_from_MPZ(e->val);
 
     Value *ConstOne = ConstantInt::get(Builder.getContext(), a);
@@ -551,7 +551,7 @@ class ClastExpCodeGen {
     return ConstOne;
   }
 
-  Value *codegen(const clast_binary *e, const Type *Ty) {
+  Value *codegen(const clast_binary *e, Type *Ty) {
     Value *LHS = codegen(e->LHS, Ty);
 
     APInt RHS_AP = APInt_from_MPZ(e->RHS);
@@ -595,7 +595,7 @@ class ClastExpCodeGen {
     };
   }
 
-  Value *codegen(const clast_reduction *r, const Type *Ty) {
+  Value *codegen(const clast_reduction *r, Type *Ty) {
     assert((   r->type == clast_red_min
             || r->type == clast_red_max
             || r->type == clast_red_sum)
@@ -644,7 +644,7 @@ public:
   //
   // @param e The expression to calculate.
   // @return The Value that holds the result.
-  Value *codegen(const clast_expr *e, const Type *Ty) {
+  Value *codegen(const clast_expr *e, Type *Ty) {
     switch(e->type) {
       case clast_expr_name:
 	return codegen((const clast_name *)e, Ty);
@@ -914,7 +914,7 @@ public:
                                 SetVector<Value*> OMPDataVals) {
     Module *M = Builder.GetInsertBlock()->getParent()->getParent();
     LLVMContext &Context = FN->getContext();
-    const IntegerType *intPtrTy = TD->getIntPtrType(Context);
+    IntegerType *intPtrTy = TD->getIntPtrType(Context);
 
     // Store the previous basic block.
     BasicBlock *PrevBB = Builder.GetInsertBlock();
@@ -994,7 +994,7 @@ public:
   /// statement.
   void codegenForOpenMP(const clast_for *f) {
     Module *M = Builder.GetInsertBlock()->getParent()->getParent();
-    const IntegerType *intPtrTy = TD->getIntPtrType(Builder.getContext());
+    IntegerType *intPtrTy = TD->getIntPtrType(Builder.getContext());
 
     Function *SubFunction = addOpenMPSubfunction(M);
     SetVector<Value*> OMPDataVals = createOpenMPStructValues();
@@ -1099,7 +1099,7 @@ public:
       TD->getIntPtrType(Builder.getContext()));
 
     APInt Stride = APInt_from_MPZ(f->stride);
-    const IntegerType *LoopIVType = dyn_cast<IntegerType>(LB->getType());
+    IntegerType *LoopIVType = dyn_cast<IntegerType>(LB->getType());
     Stride =  Stride.zext(LoopIVType->getBitWidth());
     Value *StrideValue = ConstantInt::get(LoopIVType, Stride);
 
@@ -1214,7 +1214,7 @@ public:
       assert(i < names->nb_parameters && "Not enough parameter names");
 
       const SCEV *Param = *PI;
-      const Type *Ty = Param->getType();
+      Type *Ty = Param->getType();
 
       Instruction *insertLocation = --(Builder.GetInsertBlock()->end());
       Value *V = Rewriter.expandCodeFor(Param, Ty, insertLocation);

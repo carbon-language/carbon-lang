@@ -28,7 +28,7 @@ using namespace llvm;
 namespace polly {
 
 /// @brief The itertor transform the scalar expressions to the form of sum of
-/// (constant * varialbe)s, and return the variable/constant pairs one by one
+/// (constant * variable)s, and return the variable/constant pairs one by one
 /// on the fly.
 ///
 /// For example, we can write SCEV:
@@ -85,7 +85,7 @@ private:
   }
 
   value_type visitUnknown(const SCEVUnknown* S) {
-    const Type *AllocTy;
+    Type *AllocTy;
     Constant *FieldNo;
     // We treat these as constant.
     if (S->isSizeOf  (AllocTy) ||
@@ -235,7 +235,7 @@ public:
     if (isa<SCEVCouldNotCompute>(S))
       return;
 
-    const Type *Ty = S->getType();
+    Type *Ty = S->getType();
 
     // Init the constant component.
     visitStack.push_back(SE->getConstant(Ty, 0));
