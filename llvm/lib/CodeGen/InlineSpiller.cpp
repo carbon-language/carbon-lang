@@ -637,7 +637,7 @@ void InlineSpiller::markValueUsed(LiveInterval *LI, VNInfo *VNI) {
 bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
                                      MachineBasicBlock::iterator MI) {
   SlotIndex UseIdx = LIS.getInstructionIndex(MI).getUseIndex();
-  VNInfo *ParentVNI = VirtReg.getVNInfoAt(UseIdx);
+  VNInfo *ParentVNI = VirtReg.getVNInfoAt(UseIdx.getBaseIndex());
 
   if (!ParentVNI) {
     DEBUG(dbgs() << "\tadding <undef> flags: ");
