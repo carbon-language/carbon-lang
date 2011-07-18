@@ -1900,6 +1900,25 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Clean up dead instructions.
   Changed |= DeleteDeadPHIs(L->getHeader());
   // Check a post-condition.
-  assert(L->isLCSSAForm(*DT) && "Indvars did not leave the loop in lcssa form!");
+  assert(L->isLCSSAForm(*DT) &&
+         "Indvars did not leave the loop in lcssa form!");
+
+  // Verify that LFTR, and any other change have not interfered with SCEV's
+  // ability to compute trip count.
+#ifndef NDEBUG
+  if (DisableIVRewrite && !isa<SCEVCouldNotCompute>(BackedgeTakenCount)) {
+    SE->forgetLoop(L);
+    const SCEV *NewBECount = SE->getBackedgeTakenCount(L);
+    if (SE->getTypeSizeInBits(BackedgeTakenCount->getType()) <
+        SE->getTypeSizeInBits(NewBECount->getType()))
+      NewBECount = SE->getTruncateOrNoop(NewBECount,
+                                         BackedgeTakenCount->getType());
+    else
+      BackedgeTakenCount = SE->getTruncateOrNoop(BackedgeTakenCount,
+                                                 NewBECount->getType());
+    assert(BackedgeTakenCount == NewBECount && "indvars must preserve SCEV");
+  }
+#endif
+
   return Changed;
 }
