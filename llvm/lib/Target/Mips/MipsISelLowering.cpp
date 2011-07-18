@@ -740,6 +740,7 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   unsigned Oldval = RegInfo.createVirtualRegister(RC);
   unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -804,9 +805,9 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
     BuildMI(BB, dl, TII->get(Mips::LW), Tmp2).addFrameIndex(fi).addImm(0);
     BuildMI(BB, dl, TII->get(Mips::OR), Tmp1).addReg(Mips::ZERO).addReg(Tmp2);
   }
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp1).addReg(Tmp1).addReg(Ptr).addImm(0);
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp3).addReg(Tmp1).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
-    .addReg(Tmp1).addReg(Mips::ZERO).addMBB(loopMBB);
+    .addReg(Tmp3).addReg(Mips::ZERO).addMBB(loopMBB);
   BB->addSuccessor(loopMBB);
   BB->addSuccessor(exitMBB);
 
@@ -852,6 +853,7 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   unsigned Tmp10 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp11 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp12 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp13 = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -947,9 +949,10 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::AND), Newval).addReg(Tmp7).addReg(Mask);
   BuildMI(BB, dl, TII->get(Mips::AND), Tmp8).addReg(Oldval).addReg(Mask2);
   BuildMI(BB, dl, TII->get(Mips::OR), Tmp9).addReg(Tmp8).addReg(Newval);
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp9).addReg(Tmp9).addReg(Addr).addImm(0);
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp13)
+    .addReg(Tmp9).addReg(Addr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
-      .addReg(Tmp9).addReg(Mips::ZERO).addMBB(loopMBB);
+    .addReg(Tmp13).addReg(Mips::ZERO).addMBB(loopMBB);
   BB->addSuccessor(loopMBB);
   BB->addSuccessor(exitMBB);
 
@@ -994,6 +997,7 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
 
   unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -1051,9 +1055,9 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   BB = loop2MBB;
   BuildMI(BB, dl, TII->get(Mips::LW), Tmp2).addFrameIndex(fi).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::OR), Tmp1).addReg(Mips::ZERO).addReg(Tmp2);
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp1).addReg(Tmp1).addReg(Ptr).addImm(0);
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp3).addReg(Tmp1).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
-    .addReg(Tmp1).addReg(Mips::ZERO).addMBB(loop1MBB);
+    .addReg(Tmp3).addReg(Mips::ZERO).addMBB(loop1MBB);
   BB->addSuccessor(loop1MBB);
   BB->addSuccessor(exitMBB);
 
@@ -1097,6 +1101,7 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   unsigned Tmp7 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp8 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp9 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp10 = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -1161,10 +1166,10 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   BB = loop2MBB;
   BuildMI(BB, dl, TII->get(Mips::AND), Tmp6).addReg(Oldval3).addReg(Mask2);
   BuildMI(BB, dl, TII->get(Mips::OR), Tmp7).addReg(Tmp6).addReg(Newval2);
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp7)
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp10)
       .addReg(Tmp7).addReg(Addr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
-      .addReg(Tmp7).addReg(Mips::ZERO).addMBB(loop1MBB);
+      .addReg(Tmp10).addReg(Mips::ZERO).addMBB(loop1MBB);
   BB->addSuccessor(loop1MBB);
   BB->addSuccessor(exitMBB);
 
