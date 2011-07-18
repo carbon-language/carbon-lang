@@ -19,8 +19,10 @@
 
 int main()
 {
+    char temp [L_tmpnam];
+    tmpnam(temp);
     {
-        std::fstream fs(std::string("test.dat"),
+        std::fstream fs(std::string(temp),
                         std::ios_base::in | std::ios_base::out
                                           | std::ios_base::trunc);
         double x = 0;
@@ -29,9 +31,9 @@ int main()
         fs >> x;
         assert(x == 3.25);
     }
-    std::remove("test.dat");
+    std::remove(temp);
     {
-        std::wfstream fs(std::string("test.dat"),
+        std::wfstream fs(std::string(temp),
                          std::ios_base::in | std::ios_base::out
                                            | std::ios_base::trunc);
         double x = 0;
@@ -40,5 +42,5 @@ int main()
         fs >> x;
         assert(x == 3.25);
     }
-    std::remove("test.dat");
+    std::remove(temp);
 }
