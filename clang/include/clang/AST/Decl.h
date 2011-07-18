@@ -1773,6 +1773,8 @@ public:
   bool isInlined() const;
 
   bool isInlineDefinitionExternallyVisible() const;
+
+  bool doesDeclarationForceExternallyVisibleDefinition() const;
                        
   /// isOverloadedOperator - Whether this function declaration
   /// represents an C++ overloaded operator, e.g., "operator+".

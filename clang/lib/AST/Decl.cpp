@@ -1762,6 +1762,32 @@ bool FunctionDecl::isInlined() const {
   return false;
 }
 
+/// \brief For a function declaration in C or C++, determine whether this
+/// declaration causes the definition to be externally visible.
+///
+/// Determines whether this is the first non-inline redeclaration of an inline
+/// function in a language where "inline" does not normally require an
+/// externally visible definition.
+bool FunctionDecl::doesDeclarationForceExternallyVisibleDefinition() const {
+  assert(!doesThisDeclarationHaveABody() &&
+         "Must have a declaration without a body.");
+
+  ASTContext &Context = getASTContext();
+
+  // In C99 mode, a function may have an inline definition (causing it to
+  // be deferred) then redeclared later.  As a special case, "extern inline"
+  // is not required to produce an external symbol.
+  if (Context.getLangOptions().GNUInline || !Context.getLangOptions().C99 ||
+      Context.getLangOptions().CPlusPlus)
+    return false;
+  if (getLinkage() != ExternalLinkage || isInlineSpecified())
+    return false;
+  const FunctionDecl *InlineDefinition = 0;
+  if (hasBody(InlineDefinition))
+    return InlineDefinition->isInlineDefinitionExternallyVisible();
+  return false;
+}
+
 /// \brief For an inline function definition in C or C++, determine whether the 
 /// definition will be externally visible.
 ///

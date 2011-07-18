@@ -12,6 +12,7 @@
 // RUN: grep "define void @test3()" %t
 // RUN: grep "define available_externally i32 @test4" %t
 // RUN: grep "define available_externally i32 @test5" %t
+// RUN: grep "define i32 @test6" %t
 
 // RUN: echo "\nC99 tests:"
 // RUN: %clang %s -O1 -emit-llvm -S -o %t -std=c99
@@ -27,6 +28,7 @@
 // RUN: grep "define void @test3" %t
 // RUN: grep "define available_externally i32 @test4" %t
 // RUN: grep "define available_externally i32 @test5" %t
+// RUN: grep "define i32 @test6" %t
 
 // RUN: echo "\nC++ tests:"
 // RUN: %clang -x c++ %s -O1 -emit-llvm -S -o %t -std=c++98
@@ -84,3 +86,8 @@ extern __inline int __attribute__ ((__gnu_inline__)) test5(void)
 }
 
 void test_test5() { test5(); }
+
+// PR10233
+
+__inline int test6() { return 0; }
+extern int test6();
