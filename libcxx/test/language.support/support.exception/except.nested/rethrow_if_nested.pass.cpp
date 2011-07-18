@@ -22,7 +22,7 @@ class A
     int data_;
 public:
     explicit A(int data) : data_(data) {}
-    virtual ~A() {}
+    virtual ~A() _NOEXCEPT {}
 
     friend bool operator==(const A& x, const A& y) {return x.data_ == y.data_;}
 };
