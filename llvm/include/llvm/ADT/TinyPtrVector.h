@@ -98,7 +98,7 @@ public:
   
   void clear() {
     // If we have a single value, convert to empty.
-    if (EltTy V = Val.template dyn_cast<EltTy>()) {
+    if (Val.template is<EltTy>()) {
       Val = (EltTy)0;
     } else if (VecTy *Vec = Val.template dyn_cast<VecTy*>()) {
       // If we have a vector form, just clear it.
