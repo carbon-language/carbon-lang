@@ -1832,9 +1832,9 @@ LinearFunctionTestReplace(Loop *L,
   if (isPtrIV) {
       Value *IVStart = IndVar->getIncomingValueForBlock(L->getLoopPreheader());
       assert(AR->getStart() == SE->getSCEV(IVStart) && "bad loop counter");
-      const PointerType *PointerTy = cast<PointerType>(IVStart->getType());
-      assert(SE->getSizeOfExpr(PointerTy->getElementType())->isOne() &&
-             "unit stride pointer IV must be i8*");
+      assert(SE->getSizeOfExpr(
+               cast<PointerType>(IVStart->getType())->getElementType())->isOne()
+             && "unit stride pointer IV must be i8*");
 
       Builder.SetInsertPoint(L->getLoopPreheader()->getTerminator());
       ExitCnt = Builder.CreateGEP(IVStart, ExitCnt, "lftr.limit");
