@@ -13,6 +13,8 @@
 //
 // - NSInvocation's [get/set]ReturnValue and [get/set]Argument are only safe
 //   with __unsafe_unretained objects.
+// - When a NSData's 'bytes' family of methods are used on a local var,
+//   add __attribute__((objc_precise_lifetime)) to make it safer.
 //
 //===----------------------------------------------------------------------===//
 
@@ -28,9 +30,13 @@ namespace {
 
 class APIChecker : public RecursiveASTVisitor<APIChecker> {
   MigrationPass &Pass;
+
   Selector getReturnValueSel, setReturnValueSel;
   Selector getArgumentSel, setArgumentSel;
 
+  Selector bytesSel, getBytesSel, getBytesLengthSel, getBytesRangeSel;
+
+  llvm::DenseSet<VarDecl *> ChangedNSDataVars;
 public:
   APIChecker(MigrationPass &pass) : Pass(pass) {
     SelectorTable &sels = Pass.Ctx.Selectors;
@@ -44,6 +50,14 @@ public:
     getArgumentSel = sels.getSelector(2, selIds);
     selIds[0] = &ids.get("setArgument");
     setArgumentSel = sels.getSelector(2, selIds);
+
+    bytesSel = sels.getNullarySelector(&ids.get("bytes"));
+    getBytesSel = sels.getUnarySelector(&ids.get("getBytes"));
+    selIds[0] = &ids.get("getBytes");
+    selIds[1] = &ids.get("length");
+    getBytesLengthSel = sels.getSelector(2, selIds);
+    selIds[1] = &ids.get("range");
+    getBytesRangeSel = sels.getSelector(2, selIds);
   }
 
   bool VisitObjCMessageExpr(ObjCMessageExpr *E) {
@@ -76,6 +90,26 @@ public:
         Pass.TA.reportError(err, parm->getLocStart(), parm->getSourceRange());
       }
       return true;
+    }
+
+    if (E->isInstanceMessage() &&
+        E->getReceiverInterface() &&
+        E->getReceiverInterface()->getName() == "NSData" &&
+        E->getInstanceReceiver() &&
+        (E->getSelector() == bytesSel ||
+         E->getSelector() == getBytesSel ||
+         E->getSelector() == getBytesLengthSel ||
+         E->getSelector() == getBytesRangeSel)) {
+      Expr *rec = E->getInstanceReceiver();
+      rec = rec->IgnoreParenCasts();
+      if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(rec))
+        if (VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
+          if (VD->hasLocalStorage() && !ChangedNSDataVars.count(VD)) {
+            Transaction Trans(Pass.TA);
+            Pass.TA.insertAfterToken(VD->getLocation(),
+                                     " __attribute__((objc_precise_lifetime))");
+            ChangedNSDataVars.insert(VD);
+          }
     }
 
     return true;
