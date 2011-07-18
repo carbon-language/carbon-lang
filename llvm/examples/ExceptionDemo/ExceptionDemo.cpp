@@ -209,7 +209,7 @@ typedef std::vector<llvm::Type*> ArgTypes;
 /// @param isVarArg function uses vararg arguments
 /// @returns function instance
 llvm::Function *createFunction(llvm::Module &module,
-                               const llvm::Type *retType,
+                               llvm::Type *retType,
                                const ArgTypes &theArgTypes,
                                const ArgNames &theArgNames,
                                const std::string &functName,
@@ -246,7 +246,7 @@ llvm::Function *createFunction(llvm::Module &module,
 /// @returns AllocaInst instance
 static llvm::AllocaInst *createEntryBlockAlloca(llvm::Function &function,
                                                 const std::string &varName,
-                                                const llvm::Type *type,
+                                                llvm::Type *type,
                                                 llvm::Constant *initWith = 0) {
   llvm::BasicBlock &block = function.getEntryBlock(); 
   llvm::IRBuilder<> tmp(&block, block.begin());
@@ -986,8 +986,7 @@ static llvm::BasicBlock *createFinallyBlock(llvm::LLVMContext &context,
                          ourExceptionNotThrownState->getType(),
                          ourExceptionNotThrownState);
   
-  const llvm::PointerType *exceptionStorageType = 
-      builder.getInt8PtrTy();
+  llvm::PointerType *exceptionStorageType = builder.getInt8PtrTy();
   *exceptionStorage = 
   createEntryBlockAlloca(toAddTo,
                          "exceptionStorage",
@@ -1181,8 +1180,7 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   builder.CreateInvoke(&toInvoke, 
                        normalBlock, 
                        exceptionBlock, 
-                       args.begin(), 
-                       args.end());
+                       args);
   
   // End Block
   
@@ -1263,9 +1261,7 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   // handles this call. This landing pad (this exception block), will be 
   // called either because it nees to cleanup (call finally) or a type 
   // info was found which matched the thrown exception.
-  llvm::Value *retTypeInfoIndex = builder.CreateCall(ehSelector, 
-                                                     args.begin(), 
-                                                     args.end());
+  llvm::Value *retTypeInfoIndex = builder.CreateCall(ehSelector, args);
   
   // Retrieve exception_class member from thrown exception 
   // (_Unwind_Exception instance). This member tells us whether or not
@@ -1724,7 +1720,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   
   // print32Int
   
-  const llvm::Type *retType = builder.getVoidTy();
+  llvm::Type *retType = builder.getVoidTy();
   
   argTypes.clear();
   argTypes.push_back(builder.getInt32Ty());
