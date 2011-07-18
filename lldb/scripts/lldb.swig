@@ -228,8 +228,8 @@ o SBLineEntry: Specifies an association with a contiguous range of instructions
 %include "./Python/interface/SBTarget.i"
 %include "lldb/API/SBThread.h"
 %include "lldb/API/SBType.h"
-%include "lldb/API/SBValue.h"
-%include "lldb/API/SBValueList.h"
+%include "./Python/interface/SBValue.i"
+%include "./Python/interface/SBValueList.i"
 
 %include "./Python/python-extensions.swig"
 

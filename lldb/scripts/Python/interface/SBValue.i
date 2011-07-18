@@ -7,26 +7,57 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_SBValue_h_
-#define LLDB_SBValue_h_
-
-#include "lldb/API/SBDefines.h"
-
-#include <stdio.h>
-
 namespace lldb {
 
+%feature("docstring",
+"Represents the value of a variable, a register, or an expression.
+
+SBValue supports iteration through its child, which in turn is represented
+as an SBValue.  For example, we can get the general purpose registers of a
+frame as an SBValue, and iterate through all the registers,
+
+    registerSet = frame.GetRegisters() # Returns an SBValueList.
+    for regs in registerSet:
+        if 'general purpose registers' in regs.getName().lower():
+            GPRs = regs
+            break
+
+    print '%s (number of children = %d):' % (GPRs.GetName(), GPRs.GetNumChildren())
+    for reg in GPRs:
+        print 'Name: ', reg.GetName(), ' Value: ', reg.GetValue()
+
+produces the output:
+
+General Purpose Registers (number of children = 21):
+Name:  rax  Value:  0x0000000100000c5c
+Name:  rbx  Value:  0x0000000000000000
+Name:  rcx  Value:  0x00007fff5fbffec0
+Name:  rdx  Value:  0x00007fff5fbffeb8
+Name:  rdi  Value:  0x0000000000000001
+Name:  rsi  Value:  0x00007fff5fbffea8
+Name:  rbp  Value:  0x00007fff5fbffe80
+Name:  rsp  Value:  0x00007fff5fbffe60
+Name:  r8  Value:  0x0000000008668682
+Name:  r9  Value:  0x0000000000000000
+Name:  r10  Value:  0x0000000000001200
+Name:  r11  Value:  0x0000000000000206
+Name:  r12  Value:  0x0000000000000000
+Name:  r13  Value:  0x0000000000000000
+Name:  r14  Value:  0x0000000000000000
+Name:  r15  Value:  0x0000000000000000
+Name:  rip  Value:  0x0000000100000dae
+Name:  rflags  Value:  0x0000000000000206
+Name:  cs  Value:  0x0000000000000027
+Name:  fs  Value:  0x0000000000000010
+Name:  gs  Value:  0x0000000000000048
+"
+         ) SBValue;
 class SBValue
 {
 public:
     SBValue ();
 
     SBValue (const SBValue &rhs);
-
-#ifndef SWIG
-    const SBValue &
-    operator =(const SBValue &rhs);
-#endif
 
     ~SBValue ();
 
@@ -102,6 +133,7 @@ public:
     lldb::SBValue
     GetChildAtIndex (uint32_t idx);
 
+    %feature("docstring", "
     //------------------------------------------------------------------
     /// Get a child value by index from a value.
     ///
@@ -152,27 +184,56 @@ public:
     /// @return
     ///     A new SBValue object that represents the child member value.
     //------------------------------------------------------------------
+    ") GetChildAtIndex;
     lldb::SBValue
     GetChildAtIndex (uint32_t idx, 
                      lldb::DynamicValueType use_dynamic,
                      bool can_create_synthetic);
 
-    // Matches children of this object only and will match base classes and
-    // member names if this is a clang typed object.
+    %feature("docstring", "
+    //------------------------------------------------------------------
+    /// Returns the child member index.
+    ///
+    /// Matches children of this object only and will match base classes and
+    /// member names if this is a clang typed object.
+    ///
+    /// @param[in] name
+    ///     The name of the child value to get
+    ///
+    /// @return
+    ///     An index to the child member value.
+    //------------------------------------------------------------------
+    ") GetIndexOfChildWithName;
     uint32_t
     GetIndexOfChildWithName (const char *name);
 
-    // Matches child members of this object and child members of any base
-    // classes.
     lldb::SBValue
     GetChildMemberWithName (const char *name);
 
-    // Matches child members of this object and child members of any base
-    // classes.
+    %feature("docstring", "
+    //------------------------------------------------------------------
+    /// Returns the child member value.
+    ///
+    /// Matches child members of this object and child members of any base
+    /// classes.
+    ///
+    /// @param[in] name
+    ///     The name of the child value to get
+    ///
+    /// @param[in] use_dynamic
+    ///     An enumeration that specifies wether to get dynamic values,
+    ///     and also if the target can be run to figure out the dynamic
+    ///     type of the child value.
+    ///
+    /// @return
+    ///     A new SBValue object that represents the child member value.
+    //------------------------------------------------------------------
+    ") GetChildMemberWithName;
     lldb::SBValue
     GetChildMemberWithName (const char *name, lldb::DynamicValueType use_dynamic);
     
-    // Expands nested expressions like .a->b[0].c[1]->d
+    %feature("docstring", "Expands nested expressions like .a->b[0].c[1]->d."
+    ) GetValueForExpressionPath;
     lldb::SBValue
     GetValueForExpressionPath(const char* expr_path);
 
@@ -195,36 +256,10 @@ public:
     bool
     GetExpressionPath (lldb::SBStream &description);
     
+    %feature("docstring", "Returns an expression path for this value."
+    ) GetValueForExpressionPath;
     bool
     GetExpressionPath (lldb::SBStream &description, bool qualify_cxx_base_classes);
-
-    SBValue (const lldb::ValueObjectSP &value_sp);
-    
-protected:
-    friend class SBValueList;
-    friend class SBFrame;
-
-#ifndef SWIG
-
-    // Mimic shared pointer...
-    lldb_private::ValueObject *
-    get() const;
-
-    lldb_private::ValueObject *
-    operator->() const;
-
-    lldb::ValueObjectSP &
-    operator*();
-
-    const lldb::ValueObjectSP &
-    operator*() const;
-
-#endif
-
-private:
-    lldb::ValueObjectSP m_opaque_sp;
 };
 
 } // namespace lldb
-
-#endif  // LLDB_SBValue_h_
