@@ -4492,8 +4492,7 @@ static Constant *EvaluateExpression(Value *V, Constant *PHIVal,
   if (const CmpInst *CI = dyn_cast<CmpInst>(I))
     return ConstantFoldCompareInstOperands(CI->getPredicate(), Operands[0],
                                            Operands[1], TD);
-  return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                  &Operands[0], Operands.size(), TD);
+  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Operands, TD);
 }
 
 /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
@@ -4703,7 +4702,7 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
                                                 Operands[0], Operands[1], TD);
           else
             C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                         &Operands[0], Operands.size(), TD);
+                                         Operands, TD);
           if (!C) return V;
           return getSCEV(C);
         }

@@ -338,8 +338,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
             return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(),
                                                           CE);
 
-  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), &Ops[0],
-                                  Ops.size(), TD);
+  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Ops, TD);
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,

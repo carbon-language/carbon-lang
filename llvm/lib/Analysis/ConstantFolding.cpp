@@ -536,7 +536,7 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
 /// CastGEPIndices - If array indices are not pointer-sized integers,
 /// explicitly cast them so that they aren't implicitly casted by the
 /// getelementptr.
-static Constant *CastGEPIndices(Constant *const *Ops, unsigned NumOps,
+static Constant *CastGEPIndices(ArrayRef<Constant *> Ops,
                                 Type *ResultTy,
                                 const TargetData *TD) {
   if (!TD) return 0;
@@ -544,10 +544,10 @@ static Constant *CastGEPIndices(Constant *const *Ops, unsigned NumOps,
 
   bool Any = false;
   SmallVector<Constant*, 32> NewIdxs;
-  for (unsigned i = 1; i != NumOps; ++i) {
+  for (unsigned i = 1, e = Ops.size(); i != e; ++i) {
     if ((i == 1 ||
          !isa<StructType>(GetElementPtrInst::getIndexedType(Ops[0]->getType(),
-                                        reinterpret_cast<Value *const *>(Ops+1),
+                                                            Ops.data() + 1,
                                                             i-1))) &&
         Ops[i]->getType() != IntPtrTy) {
       Any = true;
@@ -571,7 +571,7 @@ static Constant *CastGEPIndices(Constant *const *Ops, unsigned NumOps,
 
 /// SymbolicallyEvaluateGEP - If we can symbolically evaluate the specified GEP
 /// constant expression, do so.
-static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
+static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
                                          Type *ResultTy,
                                          const TargetData *TD) {
   Constant *Ptr = Ops[0];
@@ -582,12 +582,12 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
 
   // If this is a constant expr gep that is effectively computing an
   // "offsetof", fold it into 'cast int Size to T*' instead of 'gep 0, 0, 12'
-  for (unsigned i = 1; i != NumOps; ++i)
+  for (unsigned i = 1, e = Ops.size(); i != e; ++i)
     if (!isa<ConstantInt>(Ops[i])) {
       
       // If this is "gep i8* Ptr, (sub 0, V)", fold this as:
       // "inttoptr (sub (ptrtoint Ptr), V)"
-      if (NumOps == 2 &&
+      if (Ops.size() == 2 &&
           cast<PointerType>(ResultTy)->getElementType()->isIntegerTy(8)) {
         ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[1]);
         assert((CE == 0 || CE->getType() == IntPtrTy) &&
@@ -608,7 +608,8 @@ static Constant *SymbolicallyEvaluateGEP(Constant *const *Ops, unsigned NumOps,
   unsigned BitWidth = TD->getTypeSizeInBits(IntPtrTy);
   APInt Offset = APInt(BitWidth,
                        TD->getIndexedOffset(Ptr->getType(),
-                                            (Value**)Ops+1, NumOps-1));
+                                            (Value**)Ops.data() + 1,
+                                            Ops.size() - 1));
   Ptr = cast<Constant>(Ptr->stripPointerCasts());
 
   // If this is a GEP of a GEP, fold it all into a single GEP.
@@ -778,8 +779,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
                                     cast<Constant>(EVI->getAggregateOperand()),
                                     EVI->getIndices());
 
-  return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                  Ops.data(), Ops.size(), TD);
+  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Ops, TD);
 }
 
 /// ConstantFoldConstantExpression - Attempt to fold the constant expression
@@ -800,8 +800,7 @@ Constant *llvm::ConstantFoldConstantExpression(const ConstantExpr *CE,
   if (CE->isCompare())
     return ConstantFoldCompareInstOperands(CE->getPredicate(), Ops[0], Ops[1],
                                            TD);
-  return ConstantFoldInstOperands(CE->getOpcode(), CE->getType(),
-                                  Ops.data(), Ops.size(), TD);
+  return ConstantFoldInstOperands(CE->getOpcode(), CE->getType(), Ops, TD);
 }
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
@@ -815,7 +814,7 @@ Constant *llvm::ConstantFoldConstantExpression(const ConstantExpr *CE,
 /// folding using this function strips this information.
 ///
 Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy, 
-                                         Constant* const* Ops, unsigned NumOps,
+                                         ArrayRef<Constant *> Ops,
                                          const TargetData *TD) {
   // Handle easy binops first.
   if (Instruction::isBinaryOp(Opcode)) {
@@ -831,9 +830,9 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
   case Instruction::ICmp:
   case Instruction::FCmp: assert(0 && "Invalid for compares");
   case Instruction::Call:
-    if (Function *F = dyn_cast<Function>(Ops[NumOps - 1]))
+    if (Function *F = dyn_cast<Function>(Ops.back()))
       if (canConstantFoldCallTo(F))
-        return ConstantFoldCall(F, Ops, NumOps - 1);
+        return ConstantFoldCall(F, Ops.slice(0, Ops.size() - 1));
     return 0;
   case Instruction::PtrToInt:
     // If the input is a inttoptr, eliminate the pair.  This requires knowing
@@ -887,12 +886,13 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
   case Instruction::ShuffleVector:
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
   case Instruction::GetElementPtr:
-    if (Constant *C = CastGEPIndices(Ops, NumOps, DestTy, TD))
+    if (Constant *C = CastGEPIndices(Ops, DestTy, TD))
       return C;
-    if (Constant *C = SymbolicallyEvaluateGEP(Ops, NumOps, DestTy, TD))
+    if (Constant *C = SymbolicallyEvaluateGEP(Ops, DestTy, TD))
       return C;
     
-    return ConstantExpr::getGetElementPtr(Ops[0], Ops+1, NumOps-1);
+    return ConstantExpr::getGetElementPtr(Ops[0], Ops.data() + 1,
+                                          Ops.size() - 1);
   }
 }
 
@@ -967,7 +967,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
       unsigned OpC = 
         Predicate == ICmpInst::ICMP_EQ ? Instruction::And : Instruction::Or;
       Constant *Ops[] = { LHS, RHS };
-      return ConstantFoldInstOperands(OpC, LHS->getType(), Ops, 2, TD);
+      return ConstantFoldInstOperands(OpC, LHS->getType(), Ops, TD);
     }
   }
   
@@ -1167,13 +1167,12 @@ static Constant *ConstantFoldConvertToInt(ConstantFP *Op, bool roundTowardZero,
 /// ConstantFoldCall - Attempt to constant fold a call to the specified function
 /// with the specified arguments, returning null if unsuccessful.
 Constant *
-llvm::ConstantFoldCall(Function *F, 
-                       Constant *const *Operands, unsigned NumOperands) {
+llvm::ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands) {
   if (!F->hasName()) return 0;
   StringRef Name = F->getName();
 
   Type *Ty = F->getReturnType();
-  if (NumOperands == 1) {
+  if (Operands.size() == 1) {
     if (ConstantFP *Op = dyn_cast<ConstantFP>(Operands[0])) {
       if (F->getIntrinsicID() == Intrinsic::convert_to_fp16) {
         APFloat Val(Op->getValueAPF());
@@ -1327,7 +1326,7 @@ llvm::ConstantFoldCall(Function *F,
     return 0;
   }
 
-  if (NumOperands == 2) {
+  if (Operands.size() == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {
       if (!Ty->isFloatTy() && !Ty->isDoubleTy())
         return 0;

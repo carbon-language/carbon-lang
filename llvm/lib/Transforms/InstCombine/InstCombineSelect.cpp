@@ -325,7 +325,7 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
     // All operands were constants, fold it.
     if (ConstOps.size() == I->getNumOperands())
       return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                      ConstOps.data(), ConstOps.size(), TD);
+                                      ConstOps, TD);
   }
 
   return 0;

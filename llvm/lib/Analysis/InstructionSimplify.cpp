@@ -526,7 +526,7 @@ static Value *SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
     if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { CLHS, CRHS };
       return ConstantFoldInstOperands(Instruction::Add, CLHS->getType(),
-                                      Ops, 2, TD);
+                                      Ops, TD);
     }
 
     // Canonicalize the constant to the RHS.
@@ -595,7 +595,7 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
     if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { CLHS, CRHS };
       return ConstantFoldInstOperands(Instruction::Sub, CLHS->getType(),
-                                      Ops, 2, TD);
+                                      Ops, TD);
     }
 
   // X - undef -> undef
@@ -715,7 +715,7 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const TargetData *TD,
     if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { CLHS, CRHS };
       return ConstantFoldInstOperands(Instruction::Mul, CLHS->getType(),
-                                      Ops, 2, TD);
+                                      Ops, TD);
     }
 
     // Canonicalize the constant to the RHS.
@@ -788,7 +788,7 @@ static Value *SimplifyDiv(Instruction::BinaryOps Opcode, Value *Op0, Value *Op1,
   if (Constant *C0 = dyn_cast<Constant>(Op0)) {
     if (Constant *C1 = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { C0, C1 };
-      return ConstantFoldInstOperands(Opcode, C0->getType(), Ops, 2, TD);
+      return ConstantFoldInstOperands(Opcode, C0->getType(), Ops, TD);
     }
   }
 
@@ -909,7 +909,7 @@ static Value *SimplifyRem(Instruction::BinaryOps Opcode, Value *Op0, Value *Op1,
   if (Constant *C0 = dyn_cast<Constant>(Op0)) {
     if (Constant *C1 = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { C0, C1 };
-      return ConstantFoldInstOperands(Opcode, C0->getType(), Ops, 2, TD);
+      return ConstantFoldInstOperands(Opcode, C0->getType(), Ops, TD);
     }
   }
 
@@ -1012,7 +1012,7 @@ static Value *SimplifyShift(unsigned Opcode, Value *Op0, Value *Op1,
   if (Constant *C0 = dyn_cast<Constant>(Op0)) {
     if (Constant *C1 = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { C0, C1 };
-      return ConstantFoldInstOperands(Opcode, C0->getType(), Ops, 2, TD);
+      return ConstantFoldInstOperands(Opcode, C0->getType(), Ops, TD);
     }
   }
 
@@ -1138,7 +1138,7 @@ static Value *SimplifyAndInst(Value *Op0, Value *Op1, const TargetData *TD,
     if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { CLHS, CRHS };
       return ConstantFoldInstOperands(Instruction::And, CLHS->getType(),
-                                      Ops, 2, TD);
+                                      Ops, TD);
     }
 
     // Canonicalize the constant to the RHS.
@@ -1227,7 +1227,7 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const TargetData *TD,
     if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { CLHS, CRHS };
       return ConstantFoldInstOperands(Instruction::Or, CLHS->getType(),
-                                      Ops, 2, TD);
+                                      Ops, TD);
     }
 
     // Canonicalize the constant to the RHS.
@@ -1321,7 +1321,7 @@ static Value *SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
     if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
       Constant *Ops[] = { CLHS, CRHS };
       return ConstantFoldInstOperands(Instruction::Xor, CLHS->getType(),
-                                      Ops, 2, TD);
+                                      Ops, TD);
     }
 
     // Canonicalize the constant to the RHS.
@@ -2328,7 +2328,7 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
     if (Constant *CLHS = dyn_cast<Constant>(LHS))
       if (Constant *CRHS = dyn_cast<Constant>(RHS)) {
         Constant *COps[] = {CLHS, CRHS};
-        return ConstantFoldInstOperands(Opcode, LHS->getType(), COps, 2, TD);
+        return ConstantFoldInstOperands(Opcode, LHS->getType(), COps, TD);
       }
 
     // If the operation is associative, try some generic simplifications.
