@@ -443,10 +443,12 @@ def shift_so_reg : Operand<i32>,    // reg reg imm
 
 // so_imm - Match a 32-bit shifter_operand immediate operand, which is an
 // 8-bit immediate rotated by an arbitrary number of bits.
+def SOImmAsmOperand: AsmOperandClass { let Name = "ARMSOImm"; }
 def so_imm : Operand<i32>, ImmLeaf<i32, [{
     return ARM_AM::getSOImmVal(Imm) != -1;
   }]> {
   let EncoderMethod = "getSOImmOpValue";
+  let ParserMatchClass = SOImmAsmOperand;
 }
 
 // Break so_imm's up into two pieces.  This handles immediates with up to 16
