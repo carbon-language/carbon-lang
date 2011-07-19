@@ -1390,18 +1390,82 @@ struct CommandObjectTypeSummaryList_LoopCallbackParam {
     CommandObjectTypeSummaryList* self;
     CommandReturnObject* result;
     RegularExpression* regex;
+    RegularExpression* cate_regex;
     CommandObjectTypeSummaryList_LoopCallbackParam(CommandObjectTypeSummaryList* S, CommandReturnObject* R,
-                                                  RegularExpression* X = NULL) : self(S), result(R), regex(X) {}
+                                                  RegularExpression* X = NULL,
+                                                  RegularExpression* CX = NULL) : self(S), result(R), regex(X), cate_regex(CX) {}
 };
 
 class CommandObjectTypeSummaryList : public CommandObject
 {
+    
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions (){}
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            
+            switch (short_option)
+            {
+                case 'w':
+                    m_category_regex = std::string(option_arg);
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            m_category_regex = "";
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        std::string m_category_regex;
+        
+    };
+    
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
 public:
     CommandObjectTypeSummaryList (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "type summary list",
                    "Show a list of current summary styles.",
-                   NULL)
+                   NULL), m_options(interpreter)
     {
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
@@ -1424,14 +1488,17 @@ public:
         const size_t argc = command.GetArgumentCount();
         
         CommandObjectTypeSummaryList_LoopCallbackParam *param;
+        RegularExpression* cate_regex = 
+        m_options.m_category_regex.empty() ? NULL :
+        new RegularExpression(m_options.m_category_regex.c_str());
         
         if (argc == 1) {
             RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
             regex->Compile(command.GetArgumentAtIndex(0));
-            param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result,regex);
+            param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result,regex,cate_regex);
         }
         else
-            param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result);
+            param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result,NULL,cate_regex);
         
         Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback,param);
                 
@@ -1449,6 +1516,9 @@ public:
             delete param;
         }
         
+        if (cate_regex)
+            delete cate_regex;
+        
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
@@ -1456,23 +1526,33 @@ public:
 private:
     
     static bool
-    PerCategoryCallback(void* param,
+    PerCategoryCallback(void* param_vp,
                         const char* cate_name,
                         const FormatCategory::SharedPointer& cate)
     {
         
-        CommandReturnObject* result = ((CommandObjectTypeSummaryList_LoopCallbackParam*)param)->result;
-
+        CommandObjectTypeSummaryList_LoopCallbackParam* param = 
+            (CommandObjectTypeSummaryList_LoopCallbackParam*)param_vp;
+        CommandReturnObject* result = param->result;
+        
+        // if the category is disabled or empty and there is no regex, just skip it
+        if ((cate->IsEnabled() == false || cate->GetCount() == 0) && param->cate_regex == NULL)
+            return true;
+        
+        // if we have a regex and this category does not match it, just skip it
+        if(param->cate_regex != NULL && param->cate_regex->Execute(cate_name) == false)
+            return true;
+        
         result->GetOutputStream().Printf("-----------------------\nCategory: %s (%s)\n-----------------------\n",
                                          cate_name,
                                          (cate->IsEnabled() ? "enabled" : "disabled"));
-        
-        cate->Summary()->LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
+                
+        cate->Summary()->LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param_vp);
         
         if (cate->RegexSummary()->GetCount() > 0)
         {
             result->GetOutputStream().Printf("Regex-based summaries (slower):\n");
-            cate->RegexSummary()->LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, param);
+            cate->RegexSummary()->LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, param_vp);
         }
         return true;
     }
@@ -1511,6 +1591,13 @@ CommandObjectTypeRXSummaryList_LoopCallback (
     CommandObjectTypeSummaryList_LoopCallbackParam* param = (CommandObjectTypeSummaryList_LoopCallbackParam*)pt2self;
     return param->self->LoopCallback(regex->GetText(), entry, param->regex, param->result);
 }
+
+OptionDefinition
+CommandObjectTypeSummaryList::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "category-regex", 'w', required_argument, NULL, 0, eArgTypeName,  "Only show categories matching this filter."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
 
 //-------------------------------------------------------------------------
 // CommandObjectTypeCategoryEnable
@@ -1714,13 +1801,33 @@ public:
 class CommandObjectTypeCategoryList : public CommandObject
 {
 private:
+    
+    struct CommandObjectTypeCategoryList_CallbackParam
+    {
+        CommandReturnObject* result;
+        RegularExpression* regex;
+        
+        CommandObjectTypeCategoryList_CallbackParam(CommandReturnObject* res,
+                                                    RegularExpression* rex = NULL) :
+        result(res),
+        regex(rex)
+        {
+        }
+        
+    };
+    
     static bool
-    PerCategoryCallback(void* param,
+    PerCategoryCallback(void* param_vp,
                         const char* cate_name,
                         const FormatCategory::SharedPointer& cate)
     {
-        CommandReturnObject* result = (CommandReturnObject*)param;
-        result->GetOutputStream().Printf("Category %s is%s enabled\n",
+        CommandObjectTypeCategoryList_CallbackParam* param =
+            (CommandObjectTypeCategoryList_CallbackParam*)param_vp;
+        CommandReturnObject* result = param->result;
+        RegularExpression* regex = param->regex;
+        
+        if (regex == NULL || regex->Execute(cate_name))
+            result->GetOutputStream().Printf("Category %s is%s enabled\n",
                                        cate_name,
                                        (cate->IsEnabled() ? "" : " not"));
         return true;
@@ -1732,6 +1839,15 @@ public:
                    "Provide a list of all existing categories.",
                    NULL)
     {
+        CommandArgumentEntry type_arg;
+        CommandArgumentData type_style_arg;
+        
+        type_style_arg.arg_type = eArgTypeName;
+        type_style_arg.arg_repetition = eArgRepeatOptional;
+        
+        type_arg.push_back (type_style_arg);
+        
+        m_arguments.push_back (type_arg);
     }
     
     ~CommandObjectTypeCategoryList ()
@@ -1741,7 +1857,28 @@ public:
     bool
     Execute (Args& command, CommandReturnObject &result)
     {
-        Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, (void*)&result);
+        const size_t argc = command.GetArgumentCount();
+        RegularExpression* regex = NULL;
+        
+        if (argc == 0)
+            ;
+        else if (argc == 1)
+            regex = new RegularExpression(command.GetArgumentAtIndex(0));
+        else
+        {
+            result.AppendErrorWithFormat ("%s takes 0 or one arg.\n", m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        
+        CommandObjectTypeCategoryList_CallbackParam param(&result,
+                                                          regex);
+        
+        Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, &param);
+        
+        if (regex)
+            delete regex;
+        
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }

@@ -507,6 +507,12 @@ public:
         return (del_sum || del_rex);
     }
     
+    uint32_t
+    GetCount()
+    {
+        return Summary()->GetCount() + RegexSummary()->GetCount();
+    }
+    
     typedef lldb::SharedPtr<FormatCategory>::Type SharedPointer;
 };
 
@@ -642,18 +648,59 @@ public:
         return true;
     }
     
+    class match_category_to_name
+    {
+    private:
+        FormatCategory* addr;
+    public:
+        
+        match_category_to_name(FormatCategory* ptr) : addr(ptr)
+        {}
+        
+        bool operator()(std::pair<const char*,FormatCategory::SharedPointer> map_entry)
+        {
+            if (addr == map_entry.second.get())
+                return true;
+            return false;
+        }
+    };
+    
     void
     LoopThrough(CallbackType callback, void* param)
     {
         if (callback)
         {
             Mutex::Locker(m_map_mutex);
-            MapIterator pos, end = m_map.end();
-            for (pos = m_map.begin(); pos != end; pos++)
+            
+            // loop through enabled categories in respective order
             {
-                KeyType type = pos->first;
-                if (!callback(param, type, pos->second))
-                    break;
+                ActiveCategoriesIterator begin, end = m_active_categories.end();
+                for (begin = m_active_categories.begin(); begin != end; begin++)
+                {
+                    FormatCategory::SharedPointer category = *begin;
+                    const char* type;
+                    MapIterator type_position = 
+                    std::find_if(m_map.begin(),m_map.end(),match_category_to_name(category.get()));
+                    if (type_position != m_map.end())
+                        type = type_position->first;
+                    else
+                        continue;
+                    if (!callback(param, type, category))
+                        break;
+                }
+            }
+            
+            // loop through disabled categories in just any order
+            {
+                MapIterator pos, end = m_map.end();
+                for (pos = m_map.begin(); pos != end; pos++)
+                {
+                    if (pos->second->IsEnabled())
+                        continue;
+                    KeyType type = pos->first;
+                    if (!callback(param, type, pos->second))
+                        break;
+                }
             }
         }
     }
