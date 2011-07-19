@@ -337,6 +337,8 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
         }
 
         // For each unique exit block...
+        // FIXME: This code is functionally equivalent to the corresponding
+        // loop in LoopSimplify.
         SmallVector<BasicBlock *, 4> ExitBlocks;
         TIL->getExitBlocks(ExitBlocks);
         for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
@@ -348,10 +350,15 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
           for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit);
                I != E; ++I) {
             BasicBlock *P = *I;
-            if (TIL->contains(P))
+            if (TIL->contains(P)) {
+              if (isa<IndirectBrInst>(P->getTerminator())) {
+                Preds.clear();
+                break;
+              }
               Preds.push_back(P);
-            else
+            } else {
               HasPredOutsideOfLoop = true;
+            }
           }
           // If there are any preds not in the loop, we'll need to split
           // the edges. The Preds.empty() check is needed because a block
