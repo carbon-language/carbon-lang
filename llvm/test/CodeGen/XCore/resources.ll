@@ -22,6 +22,8 @@ declare void @llvm.xcore.eeu.p1i8(i8 addrspace(1)* %r)
 declare void @llvm.xcore.setclk.p1i8.p1i8(i8 addrspace(1)* %a, i8 addrspace(1)* %b)
 declare void @llvm.xcore.setrdy.p1i8.p1i8(i8 addrspace(1)* %a, i8 addrspace(1)* %b)
 declare void @llvm.xcore.setpsc.p1i8(i8 addrspace(1)* %r, i32 %value)
+declare i32 @llvm.xcore.peek.p1i8(i8 addrspace(1)* %r)
+declare i32 @llvm.xcore.endin.p1i8(i8 addrspace(1)* %r)
 
 define i8 addrspace(1)* @getr() {
 ; CHECK: getr:
@@ -197,4 +199,18 @@ define void @setpsc(i8 addrspace(1)* %r, i32 %value) {
 ; CHECK: setpsc res[r0], r1
 	call void @llvm.xcore.setpsc.p1i8(i8 addrspace(1)* %r, i32 %value)
 	ret void
+}
+
+define i32 @peek(i8 addrspace(1)* %r) {
+; CHECK: peek:
+; CHECK: peek r0, res[r0]
+	%result = call i32 @llvm.xcore.peek.p1i8(i8 addrspace(1)* %r)
+	ret i32 %result
+}
+
+define i32 @endin(i8 addrspace(1)* %r) {
+; CHECK: endin:
+; CHECK: endin r0, res[r0]
+	%result = call i32 @llvm.xcore.endin.p1i8(i8 addrspace(1)* %r)
+	ret i32 %result
 }

@@ -65,6 +65,10 @@ let TargetPrefix = "xcore" in {  // All intrinsics start with "llvm.xcore.".
                                    [NoCapture<0>, NoCapture<1>]>;
   def int_xcore_setpsc : Intrinsic<[],[llvm_anyptr_ty, llvm_i32_ty],
                                    [NoCapture<0>]>;
+  def int_xcore_peek : Intrinsic<[llvm_i32_ty],[llvm_anyptr_ty],
+                                 [NoCapture<0>]>;
+  def int_xcore_endin : Intrinsic<[llvm_i32_ty],[llvm_anyptr_ty],
+                                 [NoCapture<0>]>;
 
   // Intrinsics for events.
   def int_xcore_waitevent : Intrinsic<[llvm_ptr_ty],[], [IntrReadMem]>;
