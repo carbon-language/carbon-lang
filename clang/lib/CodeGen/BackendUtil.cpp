@@ -237,16 +237,6 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   TargetMachine::setDataSections    (CodeGenOpts.DataSections);
 
   // FIXME: Parse this earlier.
-  if (CodeGenOpts.RelocationModel == "static") {
-    TargetMachine::setRelocationModel(llvm::Reloc::Static);
-  } else if (CodeGenOpts.RelocationModel == "pic") {
-    TargetMachine::setRelocationModel(llvm::Reloc::PIC_);
-  } else {
-    assert(CodeGenOpts.RelocationModel == "dynamic-no-pic" &&
-           "Invalid PIC model!");
-    TargetMachine::setRelocationModel(llvm::Reloc::DynamicNoPIC);
-  }
-  // FIXME: Parse this earlier.
   if (CodeGenOpts.CodeModel == "small") {
     TargetMachine::setCodeModel(llvm::CodeModel::Small);
   } else if (CodeGenOpts.CodeModel == "kernel") {
@@ -287,8 +277,20 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
       Features.AddFeature(*it);
     FeaturesStr = Features.getString();
   }
+
+  llvm::Reloc::Model RM = llvm::Reloc::Default;
+  if (CodeGenOpts.RelocationModel == "static") {
+    RM = llvm::Reloc::Static;
+  } else if (CodeGenOpts.RelocationModel == "pic") {
+    RM = llvm::Reloc::PIC_;
+  } else {
+    assert(CodeGenOpts.RelocationModel == "dynamic-no-pic" &&
+           "Invalid PIC model!");
+    RM = llvm::Reloc::DynamicNoPIC;
+  }
+
   TargetMachine *TM = TheTarget->createTargetMachine(Triple, TargetOpts.CPU,
-                                                     FeaturesStr);
+                                                     FeaturesStr, RM);
 
   if (CodeGenOpts.RelaxAll)
     TM->setMCRelaxAll(true);

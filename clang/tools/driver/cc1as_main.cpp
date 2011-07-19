@@ -361,6 +361,7 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
   // FIXME: We shouldn't need to initialize the Target(Machine)s.
   InitializeAllTargets();
   InitializeAllMCAsmInfos();
+  InitializeAllMCCodeGenInfos();
   InitializeAllMCInstrInfos();
   InitializeAllMCRegisterInfos();
   InitializeAllMCSubtargetInfos();
