@@ -84,11 +84,8 @@ static BitsInit &getBitsField(const Record &def, const char *str) {
 // Forward declaration.
 class FilterChooser;
 
-// FIXME: Possibly auto-detected?
-#define BIT_WIDTH 32
-
 // Representation of the instruction to work on.
-typedef bit_value_t insn_t[BIT_WIDTH];
+typedef std::vector<bit_value_t> insn_t;
 
 /// Filter - Filter works with FilterChooser to produce the decoding tree for
 /// the ISA.
@@ -230,7 +227,7 @@ protected:
 
   // Array of bit values passed down from our parent.
   // Set to all BIT_UNFILTERED's for Parent == NULL.
-  bit_value_t FilterBitValues[BIT_WIDTH];
+  std::vector<bit_value_t> FilterBitValues;
 
   // Links to the FilterChooser above us in the decoding tree.
   FilterChooser *Parent;
@@ -238,21 +235,24 @@ protected:
   // Index of the best filter from Filters.
   int BestIndex;
 
+  // Width of instructions
+  unsigned BitWidth;
+
 public:
   FilterChooser(const FilterChooser &FC) :
     AllInstructions(FC.AllInstructions), Opcodes(FC.Opcodes),
-      Operands(FC.Operands), Filters(FC.Filters), Parent(FC.Parent),
-      BestIndex(FC.BestIndex) {
-    memcpy(FilterBitValues, FC.FilterBitValues, sizeof(FilterBitValues));
-  }
+      Operands(FC.Operands), Filters(FC.Filters),
+      FilterBitValues(FC.FilterBitValues), Parent(FC.Parent),
+      BestIndex(FC.BestIndex), BitWidth(FC.BitWidth) { }
 
   FilterChooser(const std::vector<const CodeGenInstruction*> &Insts,
                 const std::vector<unsigned> &IDs,
-    std::map<unsigned, std::vector<OperandInfo> > &Ops) :
+    std::map<unsigned, std::vector<OperandInfo> > &Ops,
+                unsigned BW) :
       AllInstructions(Insts), Opcodes(IDs), Operands(Ops), Filters(),
-      Parent(NULL), BestIndex(-1) {
-    for (unsigned i = 0; i < BIT_WIDTH; ++i)
-      FilterBitValues[i] = BIT_UNFILTERED;
+      Parent(NULL), BestIndex(-1), BitWidth(BW) {
+    for (unsigned i = 0; i < BitWidth; ++i)
+      FilterBitValues.push_back(BIT_UNFILTERED);
 
     doFilter();
   }
@@ -260,13 +260,11 @@ public:
   FilterChooser(const std::vector<const CodeGenInstruction*> &Insts,
                 const std::vector<unsigned> &IDs,
         std::map<unsigned, std::vector<OperandInfo> > &Ops,
-                bit_value_t (&ParentFilterBitValues)[BIT_WIDTH],
+                std::vector<bit_value_t> &ParentFilterBitValues,
                 FilterChooser &parent) :
       AllInstructions(Insts), Opcodes(IDs), Operands(Ops),
-      Filters(), Parent(&parent), BestIndex(-1) {
-    for (unsigned i = 0; i < BIT_WIDTH; ++i)
-      FilterBitValues[i] = ParentFilterBitValues[i];
-
+      Filters(), FilterBitValues(ParentFilterBitValues),
+      Parent(&parent), BestIndex(-1), BitWidth(parent.BitWidth) {
     doFilter();
   }
 
@@ -274,15 +272,15 @@ public:
   bool isTopLevel() { return Parent == NULL; }
 
   // Emit the top level typedef and decodeInstruction() function.
-  void emitTop(raw_ostream &o, unsigned Indentation);
+  void emitTop(raw_ostream &o, unsigned Indentation, std::string Namespace);
 
 protected:
   // Populates the insn given the uid.
   void insnWithID(insn_t &Insn, unsigned Opcode) const {
     BitsInit &Bits = getBitsField(*AllInstructions[Opcode]->TheDef, "Inst");
 
-    for (unsigned i = 0; i < BIT_WIDTH; ++i)
-      Insn[i] = bitFromBits(Bits, i);
+    for (unsigned i = 0; i < BitWidth; ++i)
+      Insn.push_back(bitFromBits(Bits, i));
   }
 
   // Returns the record name.
@@ -300,7 +298,7 @@ protected:
 
   /// dumpFilterArray - dumpFilterArray prints out debugging info for the given
   /// filter array as a series of chars.
-  void dumpFilterArray(raw_ostream &o, bit_value_t (&filter)[BIT_WIDTH]);
+  void dumpFilterArray(raw_ostream &o, std::vector<bit_value_t> & filter);
 
   /// dumpStack - dumpStack traverses the filter chooser chain and calls
   /// dumpFilterArray on each filter chooser up to the top level one.
@@ -375,7 +373,7 @@ Filter::Filter(const Filter &f) :
 Filter::Filter(FilterChooser &owner, unsigned startBit, unsigned numBits,
     bool mixed) : Owner(&owner), StartBit(startBit), NumBits(numBits),
                   Mixed(mixed) {
-  assert(StartBit + NumBits - 1 < BIT_WIDTH);
+  assert(StartBit + NumBits - 1 < Owner->BitWidth);
 
   NumFiltered = 0;
   LastOpcFiltered = 0;
@@ -427,9 +425,8 @@ Filter::~Filter() {
 void Filter::recurse() {
   std::map<uint64_t, std::vector<unsigned> >::const_iterator mapIterator;
 
-  bit_value_t BitValueArray[BIT_WIDTH];
   // Starts by inheriting our parent filter chooser's filter bit values.
-  memcpy(BitValueArray, Owner->FilterBitValues, sizeof(BitValueArray));
+  std::vector<bit_value_t> BitValueArray(Owner->FilterBitValues);
 
   unsigned bitIndex;
 
@@ -493,8 +490,9 @@ void Filter::emit(raw_ostream &o, unsigned &Indentation) {
 
   o << StartBit << "} ...\n";
 
-  o.indent(Indentation) << "switch (fieldFromInstruction(insn, "
-                        << StartBit << ", " << NumBits << ")) {\n";
+  o.indent(Indentation) << "switch (fieldFromInstruction" << Owner->BitWidth
+                        << "(insn, " << StartBit << ", "
+                        << NumBits << ")) {\n";
 
   std::map<unsigned, FilterChooser*>::iterator filterIterator;
 
@@ -559,60 +557,12 @@ unsigned Filter::usefulness() const {
 //////////////////////////////////
 
 // Emit the top level typedef and decodeInstruction() function.
-void FilterChooser::emitTop(raw_ostream &o, unsigned Indentation) {
-  switch (BIT_WIDTH) {
-  case 8:
-    o.indent(Indentation) << "typedef uint8_t field_t;\n";
-    break;
-  case 16:
-    o.indent(Indentation) << "typedef uint16_t field_t;\n";
-    break;
-  case 32:
-    o.indent(Indentation) << "typedef uint32_t field_t;\n";
-    break;
-  case 64:
-    o.indent(Indentation) << "typedef uint64_t field_t;\n";
-    break;
-  default:
-    assert(0 && "Unexpected instruction size!");
-  }
-
-  o << '\n';
-
-  o.indent(Indentation) << "static field_t " <<
-    "fieldFromInstruction(field_t insn, unsigned startBit, unsigned numBits)\n";
-
-  o.indent(Indentation) << "{\n";
-
-  ++Indentation; ++Indentation;
-  o.indent(Indentation) << "assert(startBit + numBits <= " << BIT_WIDTH
-                        << " && \"Instruction field out of bounds!\");\n";
-  o << '\n';
-  o.indent(Indentation) << "field_t fieldMask;\n";
-  o << '\n';
-  o.indent(Indentation) << "if (numBits == " << BIT_WIDTH << ")\n";
-
-  ++Indentation; ++Indentation;
-  o.indent(Indentation) << "fieldMask = (field_t)-1;\n";
-  --Indentation; --Indentation;
-
-  o.indent(Indentation) << "else\n";
-
-  ++Indentation; ++Indentation;
-  o.indent(Indentation) << "fieldMask = ((1 << numBits) - 1) << startBit;\n";
-  --Indentation; --Indentation;
-
-  o << '\n';
-  o.indent(Indentation) << "return (insn & fieldMask) >> startBit;\n";
-  --Indentation; --Indentation;
-
-  o.indent(Indentation) << "}\n";
-
-  o << '\n';
-
+void FilterChooser::emitTop(raw_ostream &o, unsigned Indentation,
+                            std::string Namespace) {
   o.indent(Indentation) <<
-    "static bool decodeInstruction(MCInst &MI, field_t insn, "
-    "uint64_t Address, const void *Decoder) {\n";
+    "static bool decode" << Namespace << "Instruction" << BitWidth
+    << "(MCInst &MI, uint" << BitWidth << "_t insn, uint64_t Address, "
+    << "const void *Decoder) {\n";
   o.indent(Indentation) << "  unsigned tmp = 0;\n";
 
   ++Indentation; ++Indentation;
@@ -651,10 +601,10 @@ bool FilterChooser::fieldFromInsn(uint64_t &Field, insn_t &Insn,
 /// dumpFilterArray - dumpFilterArray prints out debugging info for the given
 /// filter array as a series of chars.
 void FilterChooser::dumpFilterArray(raw_ostream &o,
-                                    bit_value_t (&filter)[BIT_WIDTH]) {
+                                    std::vector<bit_value_t> &filter) {
   unsigned bitIndex;
 
-  for (bitIndex = BIT_WIDTH; bitIndex > 0; bitIndex--) {
+  for (bitIndex = BitWidth; bitIndex > 0; bitIndex--) {
     switch (filter[bitIndex - 1]) {
     case BIT_UNFILTERED:
       o << ".";
@@ -727,7 +677,7 @@ unsigned FilterChooser::getIslands(std::vector<unsigned> &StartBits,
   int State = 0;
   int Val = -1;
 
-  for (unsigned i = 0; i < BIT_WIDTH; ++i) {
+  for (unsigned i = 0; i < BitWidth; ++i) {
     Val = Value(Insn[i]);
     bool Filtered = PositionFiltered(i);
     switch (State) {
@@ -761,7 +711,7 @@ unsigned FilterChooser::getIslands(std::vector<unsigned> &StartBits,
   }
   // If we are still in Island after the loop, do some housekeeping.
   if (State == 2) {
-    EndBits.push_back(BIT_WIDTH - 1);
+    EndBits.push_back(BitWidth - 1);
     FieldVals.push_back(FieldVal);
     ++Num;
   }
@@ -802,8 +752,8 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
       }
 
       o.indent(Indentation)
-        << "  tmp = fieldFromInstruction(insn, " << I->FieldBase
-        << ", " << I->FieldLength << ");\n";
+        << "  tmp = fieldFromInstruction" << BitWidth
+        << "(insn, " << I->FieldBase << ", " << I->FieldLength << ");\n";
       if (I->Decoder != "") {
         o.indent(Indentation) << "  " << I->Decoder
                               << "(MI, tmp, Address, Decoder);\n";
@@ -836,7 +786,8 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
 
   for (I = Size; I != 0; --I) {
     NumBits = EndBits[I-1] - StartBits[I-1] + 1;
-    o << "fieldFromInstruction(insn, " << StartBits[I-1] << ", " << NumBits
+    o << "fieldFromInstruction" << BitWidth << "(insn, "
+      << StartBits[I-1] << ", " << NumBits
       << ") == " << FieldVals[I-1];
     if (I > 1)
       o << " && ";
@@ -855,7 +806,8 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
     }
 
     o.indent(Indentation)
-      << "  tmp = fieldFromInstruction(insn, " << I->FieldBase
+      << "  tmp = fieldFromInstruction" << BitWidth
+      << "(insn, " << I->FieldBase
       << ", " << I->FieldLength << ");\n";
     if (I->Decoder != "") {
       o.indent(Indentation) << "  " << I->Decoder
@@ -965,23 +917,23 @@ bool FilterChooser::filterProcessor(bool AllowMixed, bool Greedy) {
   // (MIXED) ------ . ----> (MIXED)
   // (FILTERED)---- . ----> (FILTERED)
 
-  bitAttr_t bitAttrs[BIT_WIDTH];
+  std::vector<bitAttr_t> bitAttrs;
 
   // FILTERED bit positions provide no entropy and are not worthy of pursuing.
   // Filter::recurse() set either BIT_TRUE or BIT_FALSE for each position.
-  for (BitIndex = 0; BitIndex < BIT_WIDTH; ++BitIndex)
+  for (BitIndex = 0; BitIndex < BitWidth; ++BitIndex)
     if (FilterBitValues[BitIndex] == BIT_TRUE ||
         FilterBitValues[BitIndex] == BIT_FALSE)
-      bitAttrs[BitIndex] = ATTR_FILTERED;
+      bitAttrs.push_back(ATTR_FILTERED);
     else
-      bitAttrs[BitIndex] = ATTR_NONE;
+      bitAttrs.push_back(ATTR_NONE);
 
   for (InsnIndex = 0; InsnIndex < numInstructions; ++InsnIndex) {
     insn_t insn;
 
     insnWithID(insn, Opcodes[InsnIndex]);
 
-    for (BitIndex = 0; BitIndex < BIT_WIDTH; ++BitIndex) {
+    for (BitIndex = 0; BitIndex < BitWidth; ++BitIndex) {
       switch (bitAttrs[BitIndex]) {
       case ATTR_NONE:
         if (insn[BitIndex] == BIT_UNSET)
@@ -1027,7 +979,7 @@ bool FilterChooser::filterProcessor(bool AllowMixed, bool Greedy) {
   bitAttr_t RA = ATTR_NONE;
   unsigned StartBit = 0;
 
-  for (BitIndex = 0; BitIndex < BIT_WIDTH; BitIndex++) {
+  for (BitIndex = 0; BitIndex < BitWidth; BitIndex++) {
     bitAttr_t bitAttr = bitAttrs[BitIndex];
 
     assert(bitAttr != ATTR_NONE && "Bit without attributes");
@@ -1216,8 +1168,9 @@ bool FilterChooser::emit(raw_ostream &o, unsigned &Indentation) {
   return true;
 }
 
-bool FixedLenDecoderEmitter::populateInstruction(const CodeGenInstruction &CGI,
-                                                 unsigned Opc){
+static bool populateInstruction(const CodeGenInstruction &CGI,
+                                unsigned Opc,
+                      std::map<unsigned, std::vector<OperandInfo> >& Operands){
   const Record &Def = *CGI.TheDef;
   // If all the bit positions are not specified; do not decode this instruction.
   // We are bound to fail!  For proper disassembly, the well-known encoding bits
@@ -1351,16 +1304,43 @@ bool FixedLenDecoderEmitter::populateInstruction(const CodeGenInstruction &CGI,
   return true;
 }
 
-void FixedLenDecoderEmitter::populateInstructions() {
-  for (unsigned i = 0, e = NumberedInstructions.size(); i < e; ++i) {
-    Record *R = NumberedInstructions[i]->TheDef;
-    if (R->getValueAsString("Namespace") == "TargetOpcode" ||
-        R->getValueAsBit("isPseudo"))
-      continue;
+static void emitHelper(llvm::raw_ostream &o, unsigned BitWidth) {
+  unsigned Indentation = 0;
+  std::string WidthStr = "uint" + utostr(BitWidth) + "_t";
 
-    if (populateInstruction(*NumberedInstructions[i], i))
-      Opcodes.push_back(i);
-  }
+  o << '\n';
+
+  o.indent(Indentation) << "static " << WidthStr <<
+    " fieldFromInstruction" << BitWidth <<
+    "(" << WidthStr <<" insn, unsigned startBit, unsigned numBits)\n";
+
+  o.indent(Indentation) << "{\n";
+
+  ++Indentation; ++Indentation;
+  o.indent(Indentation) << "assert(startBit + numBits <= " << BitWidth
+                        << " && \"Instruction field out of bounds!\");\n";
+  o << '\n';
+  o.indent(Indentation) << WidthStr << " fieldMask;\n";
+  o << '\n';
+  o.indent(Indentation) << "if (numBits == " << BitWidth << ")\n";
+
+  ++Indentation; ++Indentation;
+  o.indent(Indentation) << "fieldMask = (" << WidthStr << ")-1;\n";
+  --Indentation; --Indentation;
+
+  o.indent(Indentation) << "else\n";
+
+  ++Indentation; ++Indentation;
+  o.indent(Indentation) << "fieldMask = ((1 << numBits) - 1) << startBit;\n";
+  --Indentation; --Indentation;
+
+  o << '\n';
+  o.indent(Indentation) << "return (insn & fieldMask) >> startBit;\n";
+  --Indentation; --Indentation;
+
+  o.indent(Indentation) << "}\n";
+
+  o << '\n';
 }
 
 // Emits disassembler code for instruction decoding.
@@ -1372,10 +1352,47 @@ void FixedLenDecoderEmitter::run(raw_ostream &o)
   o << '\n';
   o << "namespace llvm {\n\n";
 
+  // Parameterize the decoders based on namespace and instruction width.
   NumberedInstructions = Target.getInstructionsByEnumValue();
-  populateInstructions();
-  FilterChooser FC(NumberedInstructions, Opcodes, Operands);
-  FC.emitTop(o, 0);
+  std::map<std::pair<std::string, unsigned>,
+           std::vector<unsigned> > OpcMap;
+  std::map<unsigned, std::vector<OperandInfo> > Operands;
+
+  for (unsigned i = 0; i < NumberedInstructions.size(); ++i) {
+    const CodeGenInstruction *Inst = NumberedInstructions[i];
+    Record *Def = Inst->TheDef;
+    unsigned Size = Def->getValueAsInt("Size");
+    if (Def->getValueAsString("Namespace") == "TargetOpcode" ||
+        Def->getValueAsBit("isPseudo") ||
+        Def->getValueAsBit("isAsmParserOnly") ||
+        Def->getValueAsBit("isCodeGenOnly"))
+      continue;
+
+    std::string DecoderNamespace = Def->getValueAsString("DecoderNamespace");
+
+    if (Size) {
+      if (populateInstruction(*Inst, i, Operands)) {
+        OpcMap[std::make_pair(DecoderNamespace, Size)].push_back(i);
+      }
+    }
+  }
+
+  std::set<unsigned> Sizes;
+  for (std::map<std::pair<std::string, unsigned>,
+                std::vector<unsigned> >::iterator
+       I = OpcMap.begin(), E = OpcMap.end(); I != E; ++I) {
+    // If we haven't visited this instruction width before, emit the
+    // helper method to extract fields.
+    if (!Sizes.count(I->first.second)) {
+      emitHelper(o, 8*I->first.second);
+      Sizes.insert(I->first.second);
+    }
+
+    // Emit the decoder for this namespace+width combination.
+    FilterChooser FC(NumberedInstructions, I->second, Operands,
+                     8*I->first.second);
+    FC.emitTop(o, 0, I->first.first);
+  }
 
   o << "\n} // End llvm namespace \n";
 }

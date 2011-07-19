@@ -47,8 +47,6 @@ private:
   std::vector<unsigned> Opcodes;
   std::map<unsigned, std::vector<OperandInfo> > Operands;
 
-  bool populateInstruction(const CodeGenInstruction &CGI, unsigned Opc);
-  void populateInstructions();
 };
 
 } // end llvm namespace

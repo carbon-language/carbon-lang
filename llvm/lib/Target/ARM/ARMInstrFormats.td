@@ -262,13 +262,17 @@ class Encoding {
 
 class InstARM<AddrMode am, int sz, IndexMode im,
               Format f, Domain d, string cstr, InstrItinClass itin>
-  : InstTemplate<am, sz, im, f, d, cstr, itin>, Encoding;
+  : InstTemplate<am, sz, im, f, d, cstr, itin>, Encoding {
+  let DecoderNamespace = "ARM";
+}
 
 // This Encoding-less class is used by Thumb1 to specify the encoding bits later
 // on by adding flavors to specific instructions.
 class InstThumb<AddrMode am, int sz, IndexMode im,
                 Format f, Domain d, string cstr, InstrItinClass itin>
-  : InstTemplate<am, sz, im, f, d, cstr, itin>;
+  : InstTemplate<am, sz, im, f, d, cstr, itin> {
+  let DecoderNamespace = "Thumb";
+}
 
 class PseudoInst<dag oops, dag iops, InstrItinClass itin, list<dag> pattern>
   : InstTemplate<AddrModeNone, 0, IndexModeNone, Pseudo,
@@ -1071,6 +1075,7 @@ class Thumb2I<dag oops, dag iops, AddrMode am, int sz,
   let AsmString = !strconcat(opc, "${p}", asm);
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb2];
+  let DecoderNamespace = "Thumb2";
 }
 
 // Same as Thumb2I except it can optionally modify CPSR. Note it's modeled as an
@@ -1091,6 +1096,7 @@ class Thumb2sI<dag oops, dag iops, AddrMode am, int sz,
   let AsmString = !strconcat(opc, "${s}${p}", asm);
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb2];
+  let DecoderNamespace = "Thumb2";
 }
 
 // Special cases
@@ -1103,6 +1109,7 @@ class Thumb2XI<dag oops, dag iops, AddrMode am, int sz,
   let AsmString = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb2];
+  let DecoderNamespace = "Thumb2";
 }
 
 class ThumbXI<dag oops, dag iops, AddrMode am, int sz,
@@ -1114,6 +1121,7 @@ class ThumbXI<dag oops, dag iops, AddrMode am, int sz,
   let AsmString = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb, IsThumb1Only];
+  let DecoderNamespace = "Thumb";
 }
 
 class T2I<dag oops, dag iops, InstrItinClass itin,
@@ -1183,6 +1191,7 @@ class T2Iidxldst<bit signed, bits<2> opcod, bit load, bit pre,
   let AsmString = !strconcat(opc, "${p}", asm);
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb2];
+  let DecoderNamespace = "Thumb2";
   let Inst{31-27} = 0b11111;
   let Inst{26-25} = 0b00;
   let Inst{24}    = signed;

@@ -297,6 +297,10 @@ class Instruction {
   // from the opcode.
   int Size = 0;
 
+  // DecoderNamespace - The "namespace" in which this instruction exists, on
+  // targets like ARM which multiple ISA namespaces exist.
+  string DecoderNamespace = "";
+
   // Code size, for instruction selection.
   // FIXME: What does this actually mean?
   int CodeSize = 0;
