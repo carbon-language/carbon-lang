@@ -1268,14 +1268,18 @@ void DwarfDebug::endModule() {
 }
 
 /// findAbstractVariable - Find abstract variable, if any, associated with Var.
-DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &Var,
+DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
                                               DebugLoc ScopeLoc) {
+  LLVMContext &Ctx = DV->getContext();
+
+  // More then one inlined variable corresponds to one abstract variable.
+  DIVariable Var = cleanseInlinedVariable(DV, Ctx);
 
   DbgVariable *AbsDbgVariable = AbstractVariables.lookup(Var);
   if (AbsDbgVariable)
     return AbsDbgVariable;
 
-  LLVMContext &Ctx = Var->getContext();
+
   DbgScope *Scope = AbstractScopes.lookup(ScopeLoc.getScope(Ctx));
   if (!Scope)
     return NULL;
