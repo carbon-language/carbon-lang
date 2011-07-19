@@ -73,8 +73,7 @@ entry:
 ; CHECK:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK:   ll      $2, 0($[[R0]])
 ; CHECK:   bne     $2, $4, $[[BB1:[A-Z_0-9]+]]
-; CHECK:   or      $[[R2:[0-9]+]], $zero, $5
-; CHECK:   sc      $[[R2]], 0($[[R0]])
+; CHECK:   sc      $[[R2:[0-9]+]], 0($[[R0]])
 ; CHECK:   beq     $[[R2]], $zero, $[[BB0]]
 ; CHECK:   $[[BB1]]:
 }
@@ -97,8 +96,7 @@ entry:
 ; CHECK:   ori     $[[R5:[0-9]+]], $zero, 255
 ; CHECK:   sll     $[[R6:[0-9]+]], $[[R5]], $[[R4]]
 ; CHECK:   nor     $[[R7:[0-9]+]], $zero, $[[R6]]
-; CHECK:   andi    $[[R8:[0-9]+]], $4, 255
-; CHECK:   sll     $[[R9:[0-9]+]], $[[R8]], $[[R4]]
+; CHECK:   sll     $[[R9:[0-9]+]], $4, $[[R4]]
 
 ; CHECK:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK:   ll      $[[R10:[0-9]+]], 0($[[R2]])
@@ -129,8 +127,7 @@ entry:
 ; CHECK:   ori     $[[R5:[0-9]+]], $zero, 255
 ; CHECK:   sll     $[[R6:[0-9]+]], $[[R5]], $[[R4]]
 ; CHECK:   nor     $[[R7:[0-9]+]], $zero, $[[R6]]
-; CHECK:   andi    $[[R8:[0-9]+]], $4, 255
-; CHECK:   sll     $[[R9:[0-9]+]], $[[R8]], $[[R4]]
+; CHECK:   sll     $[[R9:[0-9]+]], $4, $[[R4]]
 
 ; CHECK:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK:   ll      $[[R10:[0-9]+]], 0($[[R2]])
@@ -161,8 +158,7 @@ entry:
 ; CHECK:   ori     $[[R5:[0-9]+]], $zero, 255
 ; CHECK:   sll     $[[R6:[0-9]+]], $[[R5]], $[[R4]]
 ; CHECK:   nor     $[[R7:[0-9]+]], $zero, $[[R6]]
-; CHECK:   andi    $[[R8:[0-9]+]], $4, 255
-; CHECK:   sll     $[[R9:[0-9]+]], $[[R8]], $[[R4]]
+; CHECK:   sll     $[[R9:[0-9]+]], $4, $[[R4]]
 
 ; CHECK:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK:   ll      $[[R10:[0-9]+]], 0($[[R2]])
@@ -194,8 +190,7 @@ entry:
 ; CHECK:   ori     $[[R5:[0-9]+]], $zero, 255
 ; CHECK:   sll     $[[R6:[0-9]+]], $[[R5]], $[[R4]]
 ; CHECK:   nor     $[[R7:[0-9]+]], $zero, $[[R6]]
-; CHECK:   andi    $[[R8:[0-9]+]], $4, 255
-; CHECK:   sll     $[[R9:[0-9]+]], $[[R8]], $[[R4]]
+; CHECK:   sll     $[[R9:[0-9]+]], $4, $[[R4]]
 
 ; CHECK:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK:   ll      $[[R10:[0-9]+]], 0($[[R2]])

@@ -818,7 +818,6 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp4 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp6 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp7 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp8 = RegInfo.createVirtualRegister(RC);
@@ -858,8 +857,7 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   //    ori     tmp3,$0,255               # 0xff
   //    sll     mask,tmp3,shift
   //    nor     mask2,$0,mask
-  //    andi    tmp4,incr,255
-  //    sll     incr2,tmp4,shift
+  //    sll     incr2,incr,shift
 
   int64_t MaskImm = (Size == 1) ? 255 : 65535;
   BuildMI(BB, dl, TII->get(Mips::ADDiu), Tmp1).addReg(Mips::ZERO).addImm(-4);
@@ -869,8 +867,7 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::ORi), Tmp3).addReg(Mips::ZERO).addImm(MaskImm);
   BuildMI(BB, dl, TII->get(Mips::SLL), Mask).addReg(Tmp3).addReg(Shift);
   BuildMI(BB, dl, TII->get(Mips::NOR), Mask2).addReg(Mips::ZERO).addReg(Mask);
-  BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp4).addReg(Incr).addImm(MaskImm);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Tmp4).addReg(Shift);
+  BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Incr).addReg(Shift);
 
 
   // atomic.load.binop
@@ -886,8 +883,9 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   // atomic.swap
   // loopMBB:
   //   ll      oldval,0(addr)
+  //   and     newval,incr2,mask
   //   and     tmp8,oldval,mask2
-  //   or      tmp9,tmp8,incr2
+  //   or      tmp9,tmp8,newval
   //   sc      tmp9,0(addr)
   //   beq     tmp9,$0,loopMBB
 
@@ -898,17 +896,17 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
     //  nor tmp7, $0, tmp6
     BuildMI(BB, dl, TII->get(Mips::AND), Tmp6).addReg(Oldval).addReg(Incr2);
     BuildMI(BB, dl, TII->get(Mips::NOR), Tmp7).addReg(Mips::ZERO).addReg(Tmp6);
+    BuildMI(BB, dl, TII->get(Mips::AND), Newval).addReg(Tmp7).addReg(Mask);
   } else if (BinOpcode) {
     //  <binop> tmp7, oldval, incr2
     BuildMI(BB, dl, TII->get(BinOpcode), Tmp7).addReg(Oldval).addReg(Incr2);
-  }
-  if (BinOpcode != 0 || Nand)
     BuildMI(BB, dl, TII->get(Mips::AND), Newval).addReg(Tmp7).addReg(Mask);
+  } else {// atomic.swap
+    BuildMI(BB, dl, TII->get(Mips::ANDi), Newval).addReg(Incr2).addReg(Mask);    
+  }
+    
   BuildMI(BB, dl, TII->get(Mips::AND), Tmp8).addReg(Oldval).addReg(Mask2);
-  if (BinOpcode != 0 || Nand)
-    BuildMI(BB, dl, TII->get(Mips::OR), Tmp9).addReg(Tmp8).addReg(Newval);
-  else
-    BuildMI(BB, dl, TII->get(Mips::OR), Tmp9).addReg(Tmp8).addReg(Incr2);
+  BuildMI(BB, dl, TII->get(Mips::OR), Tmp9).addReg(Tmp8).addReg(Newval);
   BuildMI(BB, dl, TII->get(Mips::SC), Tmp13)
     .addReg(Tmp9).addReg(Addr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
@@ -953,7 +951,6 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   unsigned Oldval  = MI->getOperand(2).getReg();
   unsigned Newval  = MI->getOperand(3).getReg();
 
-  unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
   unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
@@ -991,12 +988,10 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
     .addReg(Dest).addReg(Oldval).addMBB(exitMBB);
 
   // loop2MBB:
-  //   or tmp1, $0, newval
   //   sc tmp1, 0(ptr)
   //   beq tmp1, $0, loop1MBB
   BB = loop2MBB;
-  BuildMI(BB, dl, TII->get(Mips::OR), Tmp1).addReg(Mips::ZERO).addReg(Newval);
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp3).addReg(Tmp1).addReg(Ptr).addImm(0);
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp3).addReg(Newval).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
     .addReg(Tmp3).addReg(Mips::ZERO).addMBB(loop1MBB);
 
@@ -1068,6 +1063,7 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   loop2MBB->addSuccessor(sinkMBB);
   sinkMBB->addSuccessor(exitMBB);
 
+  // FIXME: computation of newval2 can be moved to loop2MBB.
   //  thisMBB:
   //    addiu   tmp1,$0,-4                # 0xfffffffc
   //    and     addr,ptr,tmp1
