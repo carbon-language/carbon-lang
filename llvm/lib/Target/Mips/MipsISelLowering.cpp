@@ -760,6 +760,8 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   //    ...
   //    fallthrough --> loopMBB
   BB->addSuccessor(loopMBB);
+  loopMBB->addSuccessor(loopMBB);
+  loopMBB->addSuccessor(exitMBB);
 
   //  loopMBB:
   //    ll oldval, 0(ptr)
@@ -782,8 +784,6 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   BuildMI(BB, dl, TII->get(Mips::SC), Tmp3).addReg(Tmp1).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
     .addReg(Tmp3).addReg(Mips::ZERO).addMBB(loopMBB);
-  BB->addSuccessor(loopMBB);
-  BB->addSuccessor(exitMBB);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
@@ -845,6 +845,11 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
                   BB->end());
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
+  BB->addSuccessor(loopMBB);
+  loopMBB->addSuccessor(loopMBB);
+  loopMBB->addSuccessor(sinkMBB);
+  sinkMBB->addSuccessor(exitMBB);
+
   //  thisMBB:
   //    addiu   tmp1,$0,-4                # 0xfffffffc
   //    and     addr,ptr,tmp1
@@ -867,7 +872,6 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp4).addReg(Incr).addImm(MaskImm);
   BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Tmp4).addReg(Shift);
 
-  BB->addSuccessor(loopMBB);
 
   // atomic.load.binop
   // loopMBB:
@@ -909,8 +913,6 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
     .addReg(Tmp9).addReg(Addr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
     .addReg(Tmp13).addReg(Mips::ZERO).addMBB(loopMBB);
-  BB->addSuccessor(loopMBB);
-  BB->addSuccessor(sinkMBB);
 
   //  sinkMBB:
   //    and     tmp10,oldval,mask
@@ -928,8 +930,6 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
       .addReg(Tmp11).addImm(ShiftImm);
   BuildMI(BB, dl, TII->get(Mips::SRA), Dest)
       .addReg(Tmp12).addImm(ShiftImm);
-
-  sinkMBB->addSuccessor(exitMBB);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
@@ -977,6 +977,10 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   //    ...
   //    fallthrough --> loop1MBB
   BB->addSuccessor(loop1MBB);
+  loop1MBB->addSuccessor(exitMBB);
+  loop1MBB->addSuccessor(loop2MBB);
+  loop2MBB->addSuccessor(loop1MBB);
+  loop2MBB->addSuccessor(exitMBB);
 
   // loop1MBB:
   //   ll dest, 0(ptr)
@@ -985,8 +989,6 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::LL), Dest).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BNE))
     .addReg(Dest).addReg(Oldval).addMBB(exitMBB);
-  BB->addSuccessor(exitMBB);
-  BB->addSuccessor(loop2MBB);
 
   // loop2MBB:
   //   or tmp1, $0, newval
@@ -997,8 +999,6 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::SC), Tmp3).addReg(Tmp1).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
     .addReg(Tmp3).addReg(Mips::ZERO).addMBB(loop1MBB);
-  BB->addSuccessor(loop1MBB);
-  BB->addSuccessor(exitMBB);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
@@ -1061,6 +1061,13 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
                   BB->end());
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
+  BB->addSuccessor(loop1MBB);
+  loop1MBB->addSuccessor(sinkMBB);
+  loop1MBB->addSuccessor(loop2MBB);
+  loop2MBB->addSuccessor(loop1MBB);
+  loop2MBB->addSuccessor(sinkMBB);
+  sinkMBB->addSuccessor(exitMBB);
+
   //  thisMBB:
   //    addiu   tmp1,$0,-4                # 0xfffffffc
   //    and     addr,ptr,tmp1
@@ -1085,7 +1092,6 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::SLL), Oldval2).addReg(Tmp4).addReg(Shift);
   BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp5).addReg(Newval).addImm(MaskImm);
   BuildMI(BB, dl, TII->get(Mips::SLL), Newval2).addReg(Tmp5).addReg(Shift);
-  BB->addSuccessor(loop1MBB);
 
   //  loop1MBB:
   //    ll      oldval3,0(addr)
@@ -1096,8 +1102,6 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::AND), Oldval4).addReg(Oldval3).addReg(Mask);
   BuildMI(BB, dl, TII->get(Mips::BNE))
       .addReg(Oldval4).addReg(Oldval2).addMBB(sinkMBB);
-  BB->addSuccessor(sinkMBB);
-  BB->addSuccessor(loop2MBB);
 
   //  loop2MBB:
   //    and     tmp6,oldval3,mask2
@@ -1111,8 +1115,6 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
       .addReg(Tmp7).addReg(Addr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
       .addReg(Tmp10).addReg(Mips::ZERO).addMBB(loop1MBB);
-  BB->addSuccessor(loop1MBB);
-  BB->addSuccessor(sinkMBB);
 
   //  sinkMBB:
   //    srl     tmp8,oldval4,shift
@@ -1127,8 +1129,6 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
       .addReg(Tmp8).addImm(ShiftImm);
   BuildMI(BB, dl, TII->get(Mips::SRA), Dest)
       .addReg(Tmp9).addImm(ShiftImm);
-
-  sinkMBB->addSuccessor(exitMBB);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
