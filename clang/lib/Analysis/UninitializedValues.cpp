@@ -462,7 +462,8 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
           // appropriately, but we need to continue to analyze subsequent uses
           // of the variable.
           if (init == lastLoad) {
-            DeclRefExpr *DR = cast<DeclRefExpr>(lastLoad->getSubExpr());
+            DeclRefExpr *DR =
+              cast<DeclRefExpr>(lastLoad->getSubExpr()->IgnoreParens());
             vals[vd] = (DR->getDecl() == vd) ? Uninitialized : Initialized;
             lastLoad = 0;
             if (lastDR == DR)
@@ -562,7 +563,7 @@ void TransferFunctions::ProcessUses(Stmt *s) {
     // If we reach here, we have seen a load of an uninitialized value
     // and it hasn't been casted to void or otherwise handled.  In this
     // situation, report the incident.
-    DeclRefExpr *DR = cast<DeclRefExpr>(lastLoad->getSubExpr());
+    DeclRefExpr *DR = cast<DeclRefExpr>(lastLoad->getSubExpr()->IgnoreParens());
     VarDecl *VD = cast<VarDecl>(DR->getDecl());
     reportUninit(DR, VD, isAlwaysUninit(vals[VD]));
     lastLoad = 0;
