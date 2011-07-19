@@ -214,7 +214,7 @@ SocketAddress::SetAddress (const struct addrinfo *hints_ptr,
         if (addr_info_ptr)
             ::memset (addr_info_ptr, 0, sizeof(struct addrinfo));
     }
-    return IsValid();
+    return is_valid;
 }
 
 
