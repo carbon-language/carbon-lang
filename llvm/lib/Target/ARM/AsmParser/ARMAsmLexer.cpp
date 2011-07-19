@@ -15,7 +15,7 @@
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 
 #include "llvm/Target/TargetAsmLexer.h"
-#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetMachine.h"  // FIXME
 #include "llvm/Target/TargetRegistry.h"
 
 #include "llvm/ADT/OwningPtr.h"

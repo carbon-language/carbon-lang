@@ -29,12 +29,12 @@
 namespace llvm {
   
 class formatted_raw_ostream;
+class StringRef;
 
 class X86TargetMachine : public LLVMTargetMachine {
   X86Subtarget      Subtarget;
   X86FrameLowering  FrameLowering;
   X86ELFWriterInfo  ELFWriterInfo;
-  Reloc::Model      DefRelocModel; // Reloc model before it's overridden.
 
 private:
   // We have specific defaults for X86.
@@ -42,9 +42,9 @@ private:
   virtual void setCodeModelForStatic();
   
 public:
-  X86TargetMachine(const Target &T, const std::string &TT, 
-                   const std::string &CPU, const std::string &FS,
-                   bool is64Bit);
+  X86TargetMachine(const Target &T, StringRef TT, 
+                   StringRef CPU, StringRef FS,
+                   Reloc::Model RM, bool is64Bit);
 
   virtual const X86InstrInfo     *getInstrInfo() const {
     llvm_unreachable("getInstrInfo not implemented");
@@ -87,8 +87,8 @@ class X86_32TargetMachine : public X86TargetMachine {
   X86TargetLowering TLInfo;
   X86JITInfo        JITInfo;
 public:
-  X86_32TargetMachine(const Target &T, const std::string &M,
-                      const std::string &CPU, const std::string &FS);
+  X86_32TargetMachine(const Target &T, StringRef TT,
+                      StringRef CPU, StringRef FS, Reloc::Model RM);
   virtual const TargetData *getTargetData() const { return &DataLayout; }
   virtual const X86TargetLowering *getTargetLowering() const {
     return &TLInfo;
@@ -113,8 +113,8 @@ class X86_64TargetMachine : public X86TargetMachine {
   X86TargetLowering TLInfo;
   X86JITInfo        JITInfo;
 public:
-  X86_64TargetMachine(const Target &T, const std::string &TT,
-                      const std::string &CPU, const std::string &FS);
+  X86_64TargetMachine(const Target &T, StringRef TT,
+                      StringRef CPU, StringRef FS, Reloc::Model RM);
   virtual const TargetData *getTargetData() const { return &DataLayout; }
   virtual const X86TargetLowering *getTargetLowering() const {
     return &TLInfo;

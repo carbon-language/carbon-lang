@@ -46,6 +46,11 @@ typedef struct LLVMStructLayout *LLVMStructLayoutRef;
 #include "llvm/Config/Targets.def"
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
   
+#define LLVM_TARGET(TargetName) \
+  void LLVMInitialize##TargetName##MCCodeGenInfo(void);
+#include "llvm/Config/Targets.def"
+#undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
+  
 /** LLVMInitializeAllTargetInfos - The main program should call this function if
     it wants access to all available targets that LLVM is configured to
     support. */
@@ -73,6 +78,7 @@ static inline LLVMBool LLVMInitializeNativeTarget(void) {
   LLVM_NATIVE_TARGETINFO();
   LLVM_NATIVE_TARGET();
   LLVM_NATIVE_MCASMINFO();
+  LLVM_NATIVE_MCCODEGENINFO();
   return 0;
 #else
   return 1;

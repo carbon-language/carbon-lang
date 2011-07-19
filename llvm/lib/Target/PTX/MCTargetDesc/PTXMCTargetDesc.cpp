@@ -70,3 +70,14 @@ extern "C" void LLVMInitializePTXMCAsmInfo() {
   RegisterMCAsmInfo<PTXMCAsmInfo> X(ThePTX32Target);
   RegisterMCAsmInfo<PTXMCAsmInfo> Y(ThePTX64Target);
 }
+
+MCCodeGenInfo *createPTXMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+  MCCodeGenInfo *X = new MCCodeGenInfo();
+  X->InitMCCodeGenInfo(RM);
+  return X;
+}
+
+extern "C" void LLVMInitializePTXMCCodeGenInfo() {
+  TargetRegistry::RegisterMCCodeGenInfo(ThePTX32Target, createPTXMCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(ThePTX64Target, createPTXMCCodeGenInfo);
+}

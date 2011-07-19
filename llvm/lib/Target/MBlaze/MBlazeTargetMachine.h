@@ -41,8 +41,8 @@ namespace llvm {
     InstrItineraryData     InstrItins;
 
   public:
-    MBlazeTargetMachine(const Target &T, const std::string &TT,
-                        const std::string &CPU, const std::string &FS);
+    MBlazeTargetMachine(const Target &T, StringRef TT,
+                        StringRef CPU, StringRef FS, Reloc::Model RM);
 
     virtual const MBlazeInstrInfo *getInstrInfo() const
     { return &InstrInfo; }

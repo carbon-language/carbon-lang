@@ -142,3 +142,17 @@ extern "C" void LLVMInitializeARMMCAsmInfo() {
   RegisterMCAsmInfoFn A(TheARMTarget, createARMMCAsmInfo);
   RegisterMCAsmInfoFn B(TheThumbTarget, createARMMCAsmInfo);
 }
+
+MCCodeGenInfo *createARMMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+  MCCodeGenInfo *X = new MCCodeGenInfo();
+  if (RM == Reloc::Default)
+    RM = Reloc::DynamicNoPIC;
+  X->InitMCCodeGenInfo(RM);
+  return X;
+}
+
+extern "C" void LLVMInitializeARMMCCodeGenInfo() {
+  TargetRegistry::RegisterMCCodeGenInfo(TheARMTarget, createARMMCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(TheThumbTarget, createARMMCCodeGenInfo);
+}
+

@@ -659,6 +659,7 @@ for a_target in $TARGETS_TO_BUILD; do
     LLVM_NATIVE_TARGET="LLVMInitialize${LLVM_NATIVE_ARCH}Target"
     LLVM_NATIVE_TARGETINFO="LLVMInitialize${LLVM_NATIVE_ARCH}TargetInfo"
     LLVM_NATIVE_MCASMINFO="LLVMInitialize${LLVM_NATIVE_ARCH}MCAsmInfo"
+    LLVM_NATIVE_MCCODEGENINFO="LLVMInitialize${LLVM_NATIVE_ARCH}MCCodeGenInfo"
     LLVM_NATIVE_ASMPRINTER="LLVMInitialize${LLVM_NATIVE_ARCH}AsmPrinter"
     if test -f ${srcdir}/lib/Target/${LLVM_NATIVE_ARCH}/AsmParser/Makefile ; then
       LLVM_NATIVE_ASMPARSER="LLVMInitialize${LLVM_NATIVE_ARCH}AsmParser"
@@ -669,6 +670,8 @@ for a_target in $TARGETS_TO_BUILD; do
       [LLVM name for the native TargetInfo init function, if available])
     AC_DEFINE_UNQUOTED(LLVM_NATIVE_MCASMINFO, $LLVM_NATIVE_MCASMINFO,
       [LLVM name for the native MCAsmInfo init function, if available])
+    AC_DEFINE_UNQUOTED(LLVM_NATIVE_MCCODEGENINFO, $LLVM_NATIVE_MCCODEGENINFO,
+      [LLVM name for the native MCCodeGenInfo init function, if available])
     AC_DEFINE_UNQUOTED(LLVM_NATIVE_ASMPRINTER, $LLVM_NATIVE_ASMPRINTER,
       [LLVM name for the native AsmPrinter init function, if available])
     if test -f ${srcdir}/lib/Target/${LLVM_NATIVE_ARCH}/AsmParser/Makefile ; then

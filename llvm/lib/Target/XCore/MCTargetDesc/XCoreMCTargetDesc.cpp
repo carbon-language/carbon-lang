@@ -75,3 +75,14 @@ static MCAsmInfo *createXCoreMCAsmInfo(const Target &T, StringRef TT) {
 extern "C" void LLVMInitializeXCoreMCAsmInfo() {
   RegisterMCAsmInfoFn X(TheXCoreTarget, createXCoreMCAsmInfo);
 }
+
+MCCodeGenInfo *createXCoreMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+  MCCodeGenInfo *X = new MCCodeGenInfo();
+  X->InitMCCodeGenInfo(RM);
+  return X;
+}
+
+extern "C" void LLVMInitializeXCoreMCCodeGenInfo() {
+  TargetRegistry::RegisterMCCodeGenInfo(TheXCoreTarget,
+                                        createXCoreMCCodeGenInfo);
+}

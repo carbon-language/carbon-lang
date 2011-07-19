@@ -75,6 +75,7 @@ LTOCodeGenerator::LTOCodeGenerator()
 {
     InitializeAllTargets();
     InitializeAllMCAsmInfos();
+    InitializeAllMCCodeGenInfos();
     InitializeAllMCRegisterInfos();
     InitializeAllMCSubtargetInfos();
     InitializeAllAsmPrinters();
@@ -252,15 +253,16 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
 
         // The relocation model is actually a static member of TargetMachine
         // and needs to be set before the TargetMachine is instantiated.
+        Reloc::Model RelocModel = Reloc::Default;
         switch( _codeModel ) {
         case LTO_CODEGEN_PIC_MODEL_STATIC:
-            TargetMachine::setRelocationModel(Reloc::Static);
+            RelocModel = Reloc::Static;
             break;
         case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
-            TargetMachine::setRelocationModel(Reloc::PIC_);
+            RelocModel = Reloc::PIC_;
             break;
         case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
-            TargetMachine::setRelocationModel(Reloc::DynamicNoPIC);
+            RelocModel = Reloc::DynamicNoPIC;
             break;
         }
 
@@ -268,7 +270,8 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
         SubtargetFeatures Features;
         Features.getDefaultSubtargetFeatures(llvm::Triple(Triple));
         std::string FeatureStr = Features.getString();
-        _target = march->createTargetMachine(Triple, _mCpu, FeatureStr);
+        _target = march->createTargetMachine(Triple, _mCpu, FeatureStr,
+                                             RelocModel);
     }
     return false;
 }

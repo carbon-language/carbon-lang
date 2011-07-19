@@ -1,5 +1,4 @@
 ; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | not grep it
 ; If-conversion defeats the purpose of this test, which is to check CBZ
 ; generation, so use memory barrier instruction to make sure it doesn't
 ; happen and we get actual branches.

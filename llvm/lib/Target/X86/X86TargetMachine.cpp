@@ -65,10 +65,10 @@ extern "C" void LLVMInitializeX86Target() {
 }
 
 
-X86_32TargetMachine::X86_32TargetMachine(const Target &T, const std::string &TT,
-                                         const std::string &CPU,
-                                         const std::string &FS)
-  : X86TargetMachine(T, TT, CPU, FS, false),
+X86_32TargetMachine::X86_32TargetMachine(const Target &T, StringRef TT,
+                                         StringRef CPU, StringRef FS,
+                                         Reloc::Model RM)
+  : X86TargetMachine(T, TT, CPU, FS, RM, false),
     DataLayout(getSubtargetImpl()->isTargetDarwin() ?
                "e-p:32:32-f64:32:64-i64:32:64-f80:128:128-f128:128:128-n8:16:32" :
                (getSubtargetImpl()->isTargetCygMing() ||
@@ -82,10 +82,10 @@ X86_32TargetMachine::X86_32TargetMachine(const Target &T, const std::string &TT,
 }
 
 
-X86_64TargetMachine::X86_64TargetMachine(const Target &T, const std::string &TT,
-                                         const std::string &CPU, 
-                                         const std::string &FS)
-  : X86TargetMachine(T, TT, CPU, FS, true),
+X86_64TargetMachine::X86_64TargetMachine(const Target &T, StringRef TT,
+                                         StringRef CPU, StringRef FS,
+                                         Reloc::Model RM)
+  : X86TargetMachine(T, TT, CPU, FS, RM, true),
     DataLayout("e-p:64:64-s:64-f64:64:64-i64:64:64-f80:128:128-f128:128:128-n8:16:32:64"),
     InstrInfo(*this),
     TSInfo(*this),
@@ -95,52 +95,13 @@ X86_64TargetMachine::X86_64TargetMachine(const Target &T, const std::string &TT,
 
 /// X86TargetMachine ctor - Create an X86 target.
 ///
-X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT,
-                                   const std::string &CPU,
-                                   const std::string &FS, bool is64Bit)
-  : LLVMTargetMachine(T, TT, CPU, FS),
+X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
+                                   StringRef CPU, StringRef FS,
+                                   Reloc::Model RM, bool is64Bit)
+  : LLVMTargetMachine(T, TT, CPU, FS, RM),
     Subtarget(TT, CPU, FS, StackAlignmentOverride, is64Bit),
     FrameLowering(*this, Subtarget),
     ELFWriterInfo(is64Bit, true) {
-  DefRelocModel = getRelocationModel();
-
-  // If no relocation model was picked, default as appropriate for the target.
-  if (getRelocationModel() == Reloc::Default) {
-    // Darwin defaults to PIC in 64 bit mode and dynamic-no-pic in 32 bit mode.
-    // Win64 requires rip-rel addressing, thus we force it to PIC. Otherwise we
-    // use static relocation model by default.
-    if (Subtarget.isTargetDarwin()) {
-      if (Subtarget.is64Bit())
-        setRelocationModel(Reloc::PIC_);
-      else
-        setRelocationModel(Reloc::DynamicNoPIC);
-    } else if (Subtarget.isTargetWin64())
-      setRelocationModel(Reloc::PIC_);
-    else
-      setRelocationModel(Reloc::Static);
-  }
-
-  assert(getRelocationModel() != Reloc::Default &&
-         "Relocation mode not picked");
-
-  // ELF and X86-64 don't have a distinct DynamicNoPIC model.  DynamicNoPIC
-  // is defined as a model for code which may be used in static or dynamic
-  // executables but not necessarily a shared library. On X86-32 we just
-  // compile in -static mode, in x86-64 we use PIC.
-  if (getRelocationModel() == Reloc::DynamicNoPIC) {
-    if (is64Bit)
-      setRelocationModel(Reloc::PIC_);
-    else if (!Subtarget.isTargetDarwin())
-      setRelocationModel(Reloc::Static);
-  }
-
-  // If we are on Darwin, disallow static relocation model in X86-64 mode, since
-  // the Mach-O file format doesn't support it.
-  if (getRelocationModel() == Reloc::Static &&
-      Subtarget.isTargetDarwin() &&
-      is64Bit)
-    setRelocationModel(Reloc::PIC_);
-
   // Determine the PICStyle based on the target selected.
   if (getRelocationModel() == Reloc::Static) {
     // Unless we're in PIC or DynamicNoPIC mode, set the PIC style to None.
@@ -160,10 +121,6 @@ X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT,
   } else if (Subtarget.isTargetELF()) {
     Subtarget.setPICStyle(PICStyles::GOT);
   }
-
-  // Finally, if we have "none" as our PIC style, force to static mode.
-  if (Subtarget.getPICStyle() == PICStyles::None)
-    setRelocationModel(Reloc::Static);
 
   // default to hard float ABI
   if (FloatABIType == FloatABI::Default)
@@ -210,15 +167,6 @@ bool X86TargetMachine::addPreEmitPass(PassManagerBase &PM,
 bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
                                       JITCodeEmitter &JCE) {
-  // FIXME: Move this to TargetJITInfo!
-  // On Darwin, do not override 64-bit setting made in X86TargetMachine().
-  if (DefRelocModel == Reloc::Default &&
-      (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit())) {
-    setRelocationModel(Reloc::Static);
-    Subtarget.setPICStyle(PICStyles::None);
-  }
-
-
   PM.add(createX86JITCodeEmitterPass(*this, JCE));
 
   return false;

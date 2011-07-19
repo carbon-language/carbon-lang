@@ -560,6 +560,9 @@
 /* LLVM name for the native MCAsmInfo init function, if available */
 #cmakedefine LLVM_NATIVE_MCASMINFO LLVMInitialize${LLVM_NATIVE_ARCH}MCAsmInfo
 
+/* LLVM name for the native MCCodeGenInfo init function, if available */
+#cmakedefine LLVM_NATIVE_MCCODEGENINFO LLVMInitialize${LLVM_NATIVE_ARCH}MCCodeGenInfo
+
 /* Define if this is Unixish platform */
 #cmakedefine LLVM_ON_UNIX ${LLVM_ON_UNIX}
 

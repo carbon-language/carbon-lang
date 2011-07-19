@@ -47,11 +47,11 @@ namespace {
 
 // DataLayout and FrameLowering are filled with dummy data
 PTXTargetMachine::PTXTargetMachine(const Target &T,
-                                   const std::string &TT,
-                                   const std::string &CPU,
-                                   const std::string &FS,
-                                   bool is64Bit)
-  : LLVMTargetMachine(T, TT, CPU, FS),
+                                   StringRef TT,
+                                   StringRef CPU,
+                                   StringRef FS,
+                                   Reloc::Model RM, bool is64Bit)
+  : LLVMTargetMachine(T, TT, CPU, FS, RM),
     DataLayout(is64Bit ? DataLayout64 : DataLayout32),
     Subtarget(TT, CPU, FS, is64Bit),
     FrameLowering(Subtarget),
@@ -59,18 +59,16 @@ PTXTargetMachine::PTXTargetMachine(const Target &T,
     TLInfo(*this) {
 }
 
-PTX32TargetMachine::PTX32TargetMachine(const Target &T,
-                                       const std::string& TT,
-                                       const std::string& CPU,
-                                       const std::string& FS)
-  : PTXTargetMachine(T, TT, CPU, FS, false) {
+PTX32TargetMachine::PTX32TargetMachine(const Target &T, StringRef TT,
+                                       StringRef CPU, StringRef FS,
+                                       Reloc::Model RM)
+  : PTXTargetMachine(T, TT, CPU, FS, RM, false) {
 }
 
-PTX64TargetMachine::PTX64TargetMachine(const Target &T,
-                                       const std::string& TT,
-                                       const std::string& CPU,
-                                       const std::string& FS)
-  : PTXTargetMachine(T, TT, CPU, FS, true) {
+PTX64TargetMachine::PTX64TargetMachine(const Target &T, StringRef TT,
+                                       StringRef CPU, StringRef FS,
+                                       Reloc::Model RM)
+  : PTXTargetMachine(T, TT, CPU, FS, RM, true) {
 }
 
 bool PTXTargetMachine::addInstSelector(PassManagerBase &PM,

@@ -76,6 +76,21 @@ MAttrs("mattr",
   cl::desc("Target specific attributes (-mattr=help for details)"),
   cl::value_desc("a1,+a2,-a3,..."));
 
+static cl::opt<Reloc::Model>
+RelocModel("relocation-model",
+             cl::desc("Choose relocation model"),
+             cl::init(Reloc::Default),
+             cl::values(
+            clEnumValN(Reloc::Default, "default",
+                       "Target default relocation model"),
+            clEnumValN(Reloc::Static, "static",
+                       "Non-relocatable code"),
+            clEnumValN(Reloc::PIC_, "pic",
+                       "Fully relocatable, position independent code"),
+            clEnumValN(Reloc::DynamicNoPIC, "dynamic-no-pic",
+                       "Relocatable external references, non-relocatable code"),
+            clEnumValEnd));
+
 static cl::opt<bool>
 RelaxAll("mc-relax-all",
   cl::desc("When used with filetype=obj, "
@@ -202,6 +217,7 @@ int main(int argc, char **argv) {
   // Initialize targets first, so that --version shows registered targets.
   InitializeAllTargets();
   InitializeAllMCAsmInfos();
+  InitializeAllMCCodeGenInfos();
   InitializeAllMCSubtargetInfos();
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
@@ -272,7 +288,7 @@ int main(int argc, char **argv) {
 
   std::auto_ptr<TargetMachine>
     target(TheTarget->createTargetMachine(TheTriple.getTriple(), MCPU,
-                                          FeaturesStr));
+                                          FeaturesStr, RelocModel));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
 

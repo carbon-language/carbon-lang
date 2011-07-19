@@ -77,3 +77,24 @@ extern "C" void LLVMInitializeMipsMCAsmInfo() {
   RegisterMCAsmInfoFn X(TheMipsTarget, createMipsMCAsmInfo);
   RegisterMCAsmInfoFn Y(TheMipselTarget, createMipsMCAsmInfo);
 }
+
+MCCodeGenInfo *createMipsMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+  MCCodeGenInfo *X = new MCCodeGenInfo();
+  if (RM == Reloc::Default) {
+    // Abicall enables PIC by default
+    if (TT.find("mipsallegrex") != std::string::npos ||
+        TT.find("psp") != std::string::npos)
+      RM = Reloc::Static;
+    else
+      RM = Reloc::PIC_;
+  }
+  X->InitMCCodeGenInfo(RM);
+  return X;
+}
+
+extern "C" void LLVMInitializeMipsMCCodeGenInfo() {
+  TargetRegistry::RegisterMCCodeGenInfo(TheMipsTarget,
+                                        createMipsMCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(TheMipselTarget,
+                                        createMipsMCCodeGenInfo);
+}

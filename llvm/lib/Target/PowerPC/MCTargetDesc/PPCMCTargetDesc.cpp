@@ -93,3 +93,22 @@ extern "C" void LLVMInitializePowerPCMCAsmInfo() {
   RegisterMCAsmInfoFn C(ThePPC32Target, createPPCMCAsmInfo);
   RegisterMCAsmInfoFn D(ThePPC64Target, createPPCMCAsmInfo);  
 }
+
+MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+  MCCodeGenInfo *X = new MCCodeGenInfo();
+
+  if (RM == Reloc::Default) {
+    Triple T(TT);
+    if (T.isOSDarwin())
+      RM = Reloc::DynamicNoPIC;
+    else
+      RM = Reloc::Static;
+  }
+  X->InitMCCodeGenInfo(RM);
+  return X;
+}
+
+extern "C" void LLVMInitializePowerPCMCCodeGenInfo() {
+  TargetRegistry::RegisterMCCodeGenInfo(ThePPC32Target, createPPCMCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(ThePPC64Target, createPPCMCCodeGenInfo);
+}

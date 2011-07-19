@@ -31,9 +31,9 @@ SPUFrameLowering::getCalleeSaveSpillSlots(unsigned &NumEntries) const {
   return &LR[0];
 }
 
-SPUTargetMachine::SPUTargetMachine(const Target &T, const std::string &TT,
-                                   const std::string &CPU,const std::string &FS)
-  : LLVMTargetMachine(T, TT, CPU, FS),
+SPUTargetMachine::SPUTargetMachine(const Target &T, StringRef TT,
+                                   StringRef CPU,StringRef FS, Reloc::Model RM)
+  : LLVMTargetMachine(T, TT, CPU, FS, RM),
     Subtarget(TT, CPU, FS),
     DataLayout(Subtarget.getTargetDataString()),
     InstrInfo(*this),
@@ -41,9 +41,6 @@ SPUTargetMachine::SPUTargetMachine(const Target &T, const std::string &TT,
     TLInfo(*this),
     TSInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {
-  // For the time being, use static relocations, since there's really no
-  // support for PIC yet.
-  setRelocationModel(Reloc::Static);
 }
 
 //===----------------------------------------------------------------------===//

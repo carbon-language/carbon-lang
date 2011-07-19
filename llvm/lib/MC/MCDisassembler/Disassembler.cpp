@@ -41,6 +41,7 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
   // FIXME: We shouldn't need to initialize the Target(Machine)s.
   llvm::InitializeAllTargets();
   llvm::InitializeAllMCAsmInfos();
+  llvm::InitializeAllMCCodeGenInfos();
   llvm::InitializeAllMCRegisterInfos();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();

@@ -31,10 +31,10 @@ extern "C" void LLVMInitializeMipsTarget() {
 // an easier handling.
 // Using CodeModel::Large enables different CALL behavior.
 MipsTargetMachine::
-MipsTargetMachine(const Target &T, const std::string &TT,
-                  const std::string &CPU, const std::string &FS,
+MipsTargetMachine(const Target &T, StringRef TT,
+                  StringRef CPU, StringRef FS, Reloc::Model RM,
                   bool isLittle=false):
-  LLVMTargetMachine(T, TT, CPU, FS),
+  LLVMTargetMachine(T, TT, CPU, FS, RM),
   Subtarget(TT, CPU, FS, isLittle),
   DataLayout(isLittle ? 
              std::string("e-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32") :
@@ -42,19 +42,12 @@ MipsTargetMachine(const Target &T, const std::string &TT,
   InstrInfo(*this),
   FrameLowering(Subtarget),
   TLInfo(*this), TSInfo(*this) {
-  // Abicall enables PIC by default
-  if (getRelocationModel() == Reloc::Default) {
-    if (Subtarget.isABI_O32())
-      setRelocationModel(Reloc::PIC_);
-    else
-      setRelocationModel(Reloc::Static);
-  }
 }
 
 MipselTargetMachine::
-MipselTargetMachine(const Target &T, const std::string &TT,
-                    const std::string &CPU, const std::string &FS) :
-  MipsTargetMachine(T, TT, CPU, FS, true) {}
+MipselTargetMachine(const Target &T, StringRef TT,
+                    StringRef CPU, StringRef FS, Reloc::Model RM) :
+  MipsTargetMachine(T, TT, CPU, FS, RM, true) {}
 
 // Install an instruction selector pass using
 // the ISelDag to gen Mips code.

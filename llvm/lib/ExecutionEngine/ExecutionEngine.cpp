@@ -422,6 +422,7 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M,
                                             JITMemoryManager *JMM,
                                             CodeGenOpt::Level OptLevel,
                                             bool GVsWithCode,
+                                            Reloc::Model RM,
                                             CodeModel::Model CMM) {
   if (ExecutionEngine::JITCtor == 0) {
     if (ErrorStr)
@@ -436,7 +437,7 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M,
   SmallVector<std::string, 1> MAttrs;
 
   TargetMachine *TM =
-          EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs, ErrorStr);
+    EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs, RM, ErrorStr);
   if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
   TM->setCodeModel(CMM);
 
@@ -465,8 +466,8 @@ ExecutionEngine *EngineBuilder::create() {
   // Unless the interpreter was explicitly selected or the JIT is not linked,
   // try making a JIT.
   if (WhichEngine & EngineKind::JIT) {
-    if (TargetMachine *TM =
-        EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs, ErrorStr)) {
+    if (TargetMachine *TM = EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs,
+                                                        RelocModel, ErrorStr)) {
       TM->setCodeModel(CMModel);
 
       if (UseMCJIT && ExecutionEngine::MCJITCtor) {

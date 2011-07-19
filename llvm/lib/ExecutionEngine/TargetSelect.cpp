@@ -30,6 +30,7 @@ TargetMachine *EngineBuilder::selectTarget(Module *Mod,
                               StringRef MArch,
                               StringRef MCPU,
                               const SmallVectorImpl<std::string>& MAttrs,
+                              Reloc::Model RM,
                               std::string *ErrorStr) {
   Triple TheTriple(Mod->getTargetTriple());
   if (TheTriple.getTriple().empty())
@@ -83,8 +84,8 @@ TargetMachine *EngineBuilder::selectTarget(Module *Mod,
   }
 
   // Allocate a target...
-  TargetMachine *Target =
-    TheTarget->createTargetMachine(TheTriple.getTriple(), MCPU, FeaturesStr);
+  TargetMachine *Target = TheTarget->createTargetMachine(TheTriple.getTriple(),
+                                                         MCPU, FeaturesStr, RM);
   assert(Target && "Could not allocate target machine!");
   return Target;
 }

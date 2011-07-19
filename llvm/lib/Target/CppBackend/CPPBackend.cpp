@@ -85,6 +85,8 @@ extern "C" void LLVMInitializeCppBackendMCInstrInfo() {}
 
 extern "C" void LLVMInitializeCppBackendMCSubtargetInfo() {}
 
+extern "C" void LLVMInitializeCppBackendMCCodeGenInfo() {}
+
 namespace {
   typedef std::vector<Type*> TypeList;
   typedef std::map<Type*,std::string> TypeMap;

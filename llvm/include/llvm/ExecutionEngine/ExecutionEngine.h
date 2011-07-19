@@ -18,6 +18,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ValueMap.h"
@@ -201,6 +202,7 @@ public:
                                     CodeGenOpt::Level OptLevel =
                                       CodeGenOpt::Default,
                                     bool GVsWithCode = true,
+                                    Reloc::Model RM = Reloc::Default,
                                     CodeModel::Model CMM =
                                       CodeModel::Default);
 
@@ -463,6 +465,7 @@ private:
   CodeGenOpt::Level OptLevel;
   JITMemoryManager *JMM;
   bool AllocateGVsWithCode;
+  Reloc::Model RelocModel;
   CodeModel::Model CMModel;
   std::string MArch;
   std::string MCPU;
@@ -476,6 +479,7 @@ private:
     OptLevel = CodeGenOpt::Default;
     JMM = NULL;
     AllocateGVsWithCode = false;
+    RelocModel = Reloc::Default;
     CMModel = CodeModel::Default;
     UseMCJIT = false;
   }
@@ -514,6 +518,13 @@ public:
   /// defaults to CodeGenOpt::Default.
   EngineBuilder &setOptLevel(CodeGenOpt::Level l) {
     OptLevel = l;
+    return *this;
+  }
+
+  /// setRelocationModel - Set the relocation model that the ExecutionEngine
+  /// target is using. Defaults to target specific default "Reloc::Default".
+  EngineBuilder &setRelocationModel(Reloc::Model RM) {
+    RelocModel = RM;
     return *this;
   }
 
@@ -569,6 +580,7 @@ public:
                                      StringRef MArch,
                                      StringRef MCPU,
                                      const SmallVectorImpl<std::string>& MAttrs,
+                                     Reloc::Model RM,
                                      std::string *Err);
 
   ExecutionEngine *create();

@@ -66,3 +66,14 @@ extern "C" void LLVMInitializeMSP430MCSubtargetInfo() {
 extern "C" void LLVMInitializeMSP430MCAsmInfo() {
   RegisterMCAsmInfo<MSP430MCAsmInfo> X(TheMSP430Target);
 }
+
+MCCodeGenInfo *createMSP430MCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+  MCCodeGenInfo *X = new MCCodeGenInfo();
+  X->InitMCCodeGenInfo(RM);
+  return X;
+}
+
+extern "C" void LLVMInitializeMSP430MCCodeGenInfo() {
+  TargetRegistry::RegisterMCCodeGenInfo(TheMSP430Target,
+                                        createMSP430MCCodeGenInfo);
+}

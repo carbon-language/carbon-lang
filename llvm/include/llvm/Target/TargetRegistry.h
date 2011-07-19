@@ -19,6 +19,7 @@
 #ifndef LLVM_TARGET_TARGETREGISTRY_H
 #define LLVM_TARGET_TARGETREGISTRY_H
 
+#include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/ADT/Triple.h"
 #include <string>
 #include <cassert>
@@ -37,6 +38,7 @@ namespace llvm {
   class MCRegisterInfo;
   class MCStreamer;
   class MCSubtargetInfo;
+  class MCCodeGenInfo;
   class TargetAsmBackend;
   class TargetAsmLexer;
   class TargetAsmParser;
@@ -68,15 +70,17 @@ namespace llvm {
 
     typedef MCAsmInfo *(*MCAsmInfoCtorFnTy)(const Target &T,
                                             StringRef TT);
+    typedef MCCodeGenInfo *(*MCCodeGenInfoCtorFnTy)(StringRef TT, Reloc::Model M);
     typedef MCInstrInfo *(*MCInstrInfoCtorFnTy)(void);
     typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(StringRef TT);
     typedef MCSubtargetInfo *(*MCSubtargetInfoCtorFnTy)(StringRef TT,
                                                         StringRef CPU,
                                                         StringRef Features);
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
-                                                  const std::string &TT,
-                                                  const std::string &CPU,
-                                                  const std::string &Features);
+                                                  StringRef TT,
+                                                  StringRef CPU,
+                                                  StringRef Features,
+                                                  Reloc::Model RM);
     typedef AsmPrinter *(*AsmPrinterCtorTy)(TargetMachine &TM,
                                             MCStreamer &Streamer);
     typedef TargetAsmBackend *(*AsmBackendCtorTy)(const Target &T,
@@ -131,6 +135,10 @@ namespace llvm {
     /// MCAsmInfoCtorFn - Constructor function for this target's MCAsmInfo, if
     /// registered.
     MCAsmInfoCtorFnTy MCAsmInfoCtorFn;
+
+    /// MCCodeGenInfoCtorFn - Constructor function for this target's MCCodeGenInfo,
+    /// if registered.
+    MCCodeGenInfoCtorFnTy MCCodeGenInfoCtorFn;
 
     /// MCInstrInfoCtorFn - Constructor function for this target's MCInstrInfo,
     /// if registered.
@@ -253,6 +261,14 @@ namespace llvm {
       return MCAsmInfoCtorFn(*this, Triple);
     }
 
+    /// createMCCodeGenInfo - Create a MCCodeGenInfo implementation.
+    ///
+    MCCodeGenInfo *createMCCodeGenInfo(StringRef Triple, Reloc::Model M) const {
+      if (!MCCodeGenInfoCtorFn)
+        return 0;
+      return MCCodeGenInfoCtorFn(Triple, M);
+    }
+
     /// createMCInstrInfo - Create a MCInstrInfo implementation.
     ///
     MCInstrInfo *createMCInstrInfo() const {
@@ -292,12 +308,12 @@ namespace llvm {
     /// feature set; it should always be provided. Generally this should be
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
-    TargetMachine *createTargetMachine(const std::string &Triple,
-                                       const std::string &CPU,
-                                       const std::string &Features) const {
+    TargetMachine *createTargetMachine(StringRef Triple, StringRef CPU,
+                                       StringRef Features,
+                                       Reloc::Model RM = Reloc::Default) const {
       if (!TargetMachineCtorFn)
         return 0;
-      return TargetMachineCtorFn(*this, Triple, CPU, Features);
+      return TargetMachineCtorFn(*this, Triple, CPU, Features, RM);
     }
 
     /// createAsmBackend - Create a target specific assembly parser.
@@ -498,6 +514,22 @@ namespace llvm {
       // Ignore duplicate registration.
       if (!T.MCAsmInfoCtorFn)
         T.MCAsmInfoCtorFn = Fn;
+    }
+
+    /// RegisterMCCodeGenInfo - Register a MCCodeGenInfo implementation for the
+    /// given target.
+    ///
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct a MCCodeGenInfo for the target.
+    static void RegisterMCCodeGenInfo(Target &T,
+                                     Target::MCCodeGenInfoCtorFnTy Fn) {
+      // Ignore duplicate registration.
+      if (!T.MCCodeGenInfoCtorFn)
+        T.MCCodeGenInfoCtorFn = Fn;
     }
 
     /// RegisterMCInstrInfo - Register a MCInstrInfo implementation for the
@@ -756,6 +788,39 @@ namespace llvm {
     }
   };
 
+  /// RegisterMCCodeGenInfo - Helper template for registering a target codegen info
+  /// implementation.  This invokes the static "Create" method on the class
+  /// to actually do the construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCCodeGenInfo<FooMCCodeGenInfo> X(TheFooTarget);
+  /// }
+  template<class MCCodeGenInfoImpl>
+  struct RegisterMCCodeGenInfo {
+    RegisterMCCodeGenInfo(Target &T) {
+      TargetRegistry::RegisterMCCodeGenInfo(T, &Allocator);
+    }
+  private:
+    static MCCodeGenInfo *Allocator(StringRef TT, Reloc::Model M) {
+      return new MCCodeGenInfoImpl();
+    }
+  };
+
+  /// RegisterMCCodeGenInfoFn - Helper template for registering a target codegen
+  /// info implementation.  This invokes the specified function to do the
+  /// construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCCodeGenInfoFn X(TheFooTarget, TheFunction);
+  /// }
+  struct RegisterMCCodeGenInfoFn {
+    RegisterMCCodeGenInfoFn(Target &T, Target::MCCodeGenInfoCtorFnTy Fn) {
+      TargetRegistry::RegisterMCCodeGenInfo(T, Fn);
+    }
+  };
+
   /// RegisterMCInstrInfo - Helper template for registering a target instruction
   /// info implementation.  This invokes the static "Create" method on the class
   /// to actually do the construction.  Usage:
@@ -871,10 +936,10 @@ namespace llvm {
     }
 
   private:
-    static TargetMachine *Allocator(const Target &T, const std::string &TT,
-                                    const std::string &CPU,
-                                    const std::string &FS) {
-      return new TargetMachineImpl(T, TT, CPU, FS);
+    static TargetMachine *Allocator(const Target &T, StringRef TT,
+                                    StringRef CPU, StringRef FS,
+                                    Reloc::Model RM) {
+      return new TargetMachineImpl(T, TT, CPU, FS, RM);
     }
   };
 

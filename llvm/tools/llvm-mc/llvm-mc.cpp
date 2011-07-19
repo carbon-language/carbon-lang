@@ -111,6 +111,21 @@ MCPU("mcpu",
      cl::value_desc("cpu-name"),
      cl::init(""));
 
+static cl::opt<Reloc::Model>
+RelocModel("relocation-model",
+             cl::desc("Choose relocation model"),
+             cl::init(Reloc::Default),
+             cl::values(
+            clEnumValN(Reloc::Default, "default",
+                       "Target default relocation model"),
+            clEnumValN(Reloc::Static, "static",
+                       "Non-relocatable code"),
+            clEnumValN(Reloc::PIC_, "pic",
+                       "Fully relocatable, position independent code"),
+            clEnumValN(Reloc::DynamicNoPIC, "dynamic-no-pic",
+                       "Relocatable external references, non-relocatable code"),
+            clEnumValEnd));
+
 static cl::opt<bool>
 NoInitialTextSection("n", cl::desc("Don't assume assembly file starts "
                                    "in the text section"));
@@ -321,7 +336,8 @@ static int AssembleInput(const char *ProgName) {
   //        the .cpu and .code16 directives).
   OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName,
                                                              MCPU,
-                                                             FeaturesStr));
+                                                             FeaturesStr,
+                                                             RelocModel));
 
   if (!TM) {
     errs() << ProgName << ": error: could not create target for triple '"
@@ -440,6 +456,7 @@ int main(int argc, char **argv) {
   // FIXME: We shouldn't need to initialize the Target(Machine)s.
   llvm::InitializeAllTargets();
   llvm::InitializeAllMCAsmInfos();
+  llvm::InitializeAllMCCodeGenInfos();
   llvm::InitializeAllMCInstrInfos();
   llvm::InitializeAllMCRegisterInfos();
   llvm::InitializeAllMCSubtargetInfos();

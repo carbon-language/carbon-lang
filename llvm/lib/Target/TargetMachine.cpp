@@ -40,7 +40,6 @@ namespace llvm {
   bool JITExceptionHandling;
   bool JITEmitDebugInfo;
   bool JITEmitDebugInfoToDisk;
-  Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
   bool GuaranteedTailCallOpt;
   unsigned StackAlignmentOverride;
@@ -143,21 +142,6 @@ EmitJitDebugInfoToDisk("jit-emit-debug-to-disk",
   cl::location(JITEmitDebugInfoToDisk),
   cl::init(false));
 
-static cl::opt<llvm::Reloc::Model, true>
-DefRelocationModel("relocation-model",
-  cl::desc("Choose relocation model"),
-  cl::location(RelocationModel),
-  cl::init(Reloc::Default),
-  cl::values(
-    clEnumValN(Reloc::Default, "default",
-               "Target default relocation model"),
-    clEnumValN(Reloc::Static, "static",
-               "Non-relocatable code"),
-    clEnumValN(Reloc::PIC_, "pic",
-               "Fully relocatable, position independent code"),
-    clEnumValN(Reloc::DynamicNoPIC, "dynamic-no-pic",
-               "Relocatable external references, non-relocatable code"),
-    clEnumValEnd));
 static cl::opt<llvm::CodeModel::Model, true>
 DefCodeModel("code-model",
   cl::desc("Choose code model"),
@@ -236,13 +220,10 @@ TargetMachine::~TargetMachine() {
 
 /// getRelocationModel - Returns the code generation relocation model. The
 /// choices are static, PIC, and dynamic-no-pic, and target default.
-Reloc::Model TargetMachine::getRelocationModel() {
-  return RelocationModel;
-}
-
-/// setRelocationModel - Sets the code generation relocation model.
-void TargetMachine::setRelocationModel(Reloc::Model Model) {
-  RelocationModel = Model;
+Reloc::Model TargetMachine::getRelocationModel() const {
+  if (!CodeGenInfo)
+    return Reloc::Default;
+  return CodeGenInfo->getRelocationModel();
 }
 
 /// getCodeModel - Returns the code model. The choices are small, kernel,

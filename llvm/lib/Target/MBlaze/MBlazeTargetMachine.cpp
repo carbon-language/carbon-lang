@@ -67,19 +67,15 @@ extern "C" void LLVMInitializeMBlazeTarget() {
 // offset from the stack/frame pointer, using StackGrowsUp enables
 // an easier handling.
 MBlazeTargetMachine::
-MBlazeTargetMachine(const Target &T, const std::string &TT,
-                    const std::string &CPU, const std::string &FS):
-  LLVMTargetMachine(T, TT, CPU, FS),
+MBlazeTargetMachine(const Target &T, StringRef TT,
+                    StringRef CPU, StringRef FS, Reloc::Model RM):
+  LLVMTargetMachine(T, TT, CPU, FS, RM),
   Subtarget(TT, CPU, FS),
   DataLayout("E-p:32:32:32-i8:8:8-i16:16:16"),
   InstrInfo(*this),
   FrameLowering(Subtarget),
   TLInfo(*this), TSInfo(*this), ELFWriterInfo(*this),
   InstrItins(Subtarget.getInstrItineraryData()) {
-  if (getRelocationModel() == Reloc::Default) {
-      setRelocationModel(Reloc::Static);
-  }
-
   if (getCodeModel() == CodeModel::Default)
     setCodeModel(CodeModel::Small);
 }

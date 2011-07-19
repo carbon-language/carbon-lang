@@ -338,3 +338,50 @@ extern "C" void LLVMInitializeX86MCAsmInfo() {
   RegisterMCAsmInfoFn A(TheX86_32Target, createX86MCAsmInfo);
   RegisterMCAsmInfoFn B(TheX86_64Target, createX86MCAsmInfo);
 }
+
+MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+  MCCodeGenInfo *X = new MCCodeGenInfo();
+
+  Triple T(TT);
+  bool is64Bit = T.getArch() == Triple::x86_64;
+
+  if (RM == Reloc::Default) {
+    // Darwin defaults to PIC in 64 bit mode and dynamic-no-pic in 32 bit mode.
+    // Win64 requires rip-rel addressing, thus we force it to PIC. Otherwise we
+    // use static relocation model by default.
+    if (T.isOSDarwin()) {
+      if (is64Bit)
+        RM = Reloc::PIC_;
+      else
+        RM = Reloc::DynamicNoPIC;
+    } else if (T.isOSWindows() && is64Bit)
+      RM = Reloc::PIC_;
+    else
+      RM = Reloc::Static;
+  }
+
+  // ELF and X86-64 don't have a distinct DynamicNoPIC model.  DynamicNoPIC
+  // is defined as a model for code which may be used in static or dynamic
+  // executables but not necessarily a shared library. On X86-32 we just
+  // compile in -static mode, in x86-64 we use PIC.
+  if (RM == Reloc::DynamicNoPIC) {
+    if (is64Bit)
+      RM = Reloc::PIC_;
+    else if (!T.isOSDarwin())
+      RM = Reloc::Static;
+  }
+
+  // If we are on Darwin, disallow static relocation model in X86-64 mode, since
+  // the Mach-O file format doesn't support it.
+  if (RM == Reloc::Static && T.isOSDarwin() && is64Bit)
+    RM = Reloc::PIC_;
+
+  X->InitMCCodeGenInfo(RM);
+  return X;
+}
+
+extern "C" void LLVMInitializeX86MCCodeGenInfo() {
+  // Register the target asm info.
+  RegisterMCCodeGenInfoFn A(TheX86_32Target, createX86MCCodeGenInfo);
+  RegisterMCCodeGenInfoFn B(TheX86_64Target, createX86MCCodeGenInfo);
+}

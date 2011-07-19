@@ -108,6 +108,7 @@ void EDDisassembler::initialize() {
   
   InitializeAllTargetInfos();
   InitializeAllTargets();
+  InitializeAllMCCodeGenInfos();
   InitializeAllMCAsmInfos();
   InitializeAllMCRegisterInfos();
   InitializeAllMCSubtargetInfos();

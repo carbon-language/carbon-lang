@@ -61,6 +61,9 @@
 /* LLVM name for the native MCAsmInfo init function, if available */
 #cmakedefine LLVM_NATIVE_MCASMINFO LLVMInitialize${LLVM_NATIVE_ARCH}MCAsmInfo
 
+/* LLVM name for the native MCCodeGenInfo init function, if available */
+#cmakedefine LLVM_NATIVE_MCCODEGENINFO LLVMInitialize${LLVM_NATIVE_ARCH}MCCodeGenInfo
+
 /* LLVM name for the native AsmPrinter init function, if available */
 #cmakedefine LLVM_NATIVE_ASMPRINTER LLVMInitialize${LLVM_NATIVE_ARCH}AsmPrinter
 

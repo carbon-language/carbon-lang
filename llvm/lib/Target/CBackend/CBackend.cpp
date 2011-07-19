@@ -71,6 +71,8 @@ extern "C" void LLVMInitializeCBackendMCInstrInfo() {}
 
 extern "C" void LLVMInitializeCBackendMCSubtargetInfo() {}
 
+extern "C" void LLVMInitializeCBackendMCCodeGenInfo() {}
+
 namespace {
   class CBEMCAsmInfo : public MCAsmInfo {
   public:

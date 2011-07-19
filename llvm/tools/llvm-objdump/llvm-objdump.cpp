@@ -270,6 +270,7 @@ int main(int argc, char **argv) {
   // FIXME: We shouldn't need to initialize the Target(Machine)s.
   llvm::InitializeAllTargets();
   llvm::InitializeAllMCAsmInfos();
+  llvm::InitializeAllMCCodeGenInfos();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllDisassemblers();

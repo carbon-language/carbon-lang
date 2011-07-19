@@ -25,10 +25,10 @@ extern "C" void LLVMInitializeMSP430Target() {
 }
 
 MSP430TargetMachine::MSP430TargetMachine(const Target &T,
-                                         const std::string &TT,
-                                         const std::string &CPU,
-                                         const std::string &FS)
-  : LLVMTargetMachine(T, TT, CPU, FS),
+                                         StringRef TT,
+                                         StringRef CPU,
+                                         StringRef FS, Reloc::Model RM)
+  : LLVMTargetMachine(T, TT, CPU, FS, RM),
     Subtarget(TT, CPU, FS),
     // FIXME: Check TargetData string.
     DataLayout("e-p:16:16:16-i8:8:8-i16:16:16-i32:16:32-n8:16"),

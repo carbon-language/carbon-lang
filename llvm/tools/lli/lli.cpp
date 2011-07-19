@@ -108,6 +108,21 @@ namespace {
   NoLazyCompilation("disable-lazy-compilation",
                   cl::desc("Disable JIT lazy compilation"),
                   cl::init(false));
+
+  cl::opt<Reloc::Model>
+  RelocModel("relocation-model",
+             cl::desc("Choose relocation model"),
+             cl::init(Reloc::Default),
+             cl::values(
+            clEnumValN(Reloc::Default, "default",
+                       "Target default relocation model"),
+            clEnumValN(Reloc::Static, "static",
+                       "Non-relocatable code"),
+            clEnumValN(Reloc::PIC_, "pic",
+                       "Fully relocatable, position independent code"),
+            clEnumValN(Reloc::DynamicNoPIC, "dynamic-no-pic",
+                       "Relocatable external references, non-relocatable code"),
+            clEnumValEnd));
 }
 
 static ExecutionEngine *EE = 0;
@@ -164,6 +179,7 @@ int main(int argc, char **argv, char * const *envp) {
   builder.setMArch(MArch);
   builder.setMCPU(MCPU);
   builder.setMAttrs(MAttrs);
+  builder.setRelocationModel(RelocModel);
   builder.setErrorStr(&ErrorMsg);
   builder.setEngineKind(ForceInterpreter
                         ? EngineKind::Interpreter

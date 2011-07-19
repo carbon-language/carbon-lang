@@ -37,11 +37,10 @@ protected:
 private:
   ARMJITInfo          JITInfo;
   InstrItineraryData  InstrItins;
-  Reloc::Model        DefRelocModel;    // Reloc model before it's overridden.
 
 public:
-  ARMBaseTargetMachine(const Target &T, const std::string &TT,
-                       const std::string &CPU, const std::string &FS);
+  ARMBaseTargetMachine(const Target &T, StringRef TT,
+                       StringRef CPU, StringRef FS, Reloc::Model RM);
 
   virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
   virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }
@@ -69,8 +68,8 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   ARMSelectionDAGInfo TSInfo;
   ARMFrameLowering    FrameLowering;
  public:
-  ARMTargetMachine(const Target &T, const std::string &TT,
-                   const std::string &CPU, const std::string &FS);
+  ARMTargetMachine(const Target &T, StringRef TT,
+                   StringRef CPU, StringRef FS, Reloc::Model RM);
 
   virtual const ARMRegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
@@ -108,8 +107,8 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
   // Either Thumb1FrameLowering or ARMFrameLowering.
   OwningPtr<ARMFrameLowering> FrameLowering;
 public:
-  ThumbTargetMachine(const Target &T, const std::string &TT,
-                     const std::string &CPU, const std::string &FS);
+  ThumbTargetMachine(const Target &T, StringRef TT,
+                     StringRef CPU, StringRef FS, Reloc::Model RM);
 
   /// returns either Thumb1RegisterInfo or Thumb2RegisterInfo
   virtual const ARMBaseRegisterInfo *getRegisterInfo() const {

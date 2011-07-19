@@ -34,9 +34,9 @@ namespace llvm {
     MipsTargetLowering  TLInfo;
     MipsSelectionDAGInfo TSInfo;
   public:
-    MipsTargetMachine(const Target &T, const std::string &TT,
-                      const std::string &CPU, const std::string &FS,
-                      bool isLittle);
+    MipsTargetMachine(const Target &T, StringRef TT,
+                      StringRef CPU, StringRef FS,
+                      Reloc::Model RM, bool isLittle);
 
     virtual const MipsInstrInfo   *getInstrInfo()     const
     { return &InstrInfo; }
@@ -73,8 +73,8 @@ namespace llvm {
 ///
 class MipselTargetMachine : public MipsTargetMachine {
 public:
-  MipselTargetMachine(const Target &T, const std::string &TT,
-                      const std::string &CPU, const std::string &FS);
+  MipselTargetMachine(const Target &T, StringRef TT,
+                      StringRef CPU, StringRef FS, Reloc::Model RM);
 };
 
 } // End llvm namespace

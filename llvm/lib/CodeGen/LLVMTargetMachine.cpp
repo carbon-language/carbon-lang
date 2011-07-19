@@ -103,8 +103,10 @@ EnableFastISelOption("fast-isel", cl::Hidden,
   cl::desc("Enable the \"fast\" instruction selector"));
 
 LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
-                                     StringRef CPU, StringRef FS)
+                                     StringRef CPU, StringRef FS,
+                                     Reloc::Model RM)
   : TargetMachine(T, Triple, CPU, FS) {
+  CodeGenInfo = T.createMCCodeGenInfo(Triple, RM);
   AsmInfo = T.createMCAsmInfo(Triple);
 }
 

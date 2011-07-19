@@ -22,18 +22,16 @@ extern "C" void LLVMInitializeAlphaTarget() {
   RegisterTargetMachine<AlphaTargetMachine> X(TheAlphaTarget);
 }
 
-AlphaTargetMachine::AlphaTargetMachine(const Target &T, const std::string &TT,
-                                       const std::string &CPU,
-                                       const std::string &FS)
-  : LLVMTargetMachine(T, TT, CPU, FS),
+AlphaTargetMachine::AlphaTargetMachine(const Target &T, StringRef TT,
+                                       StringRef CPU,
+                                       StringRef FS, Reloc::Model RM)
+  : LLVMTargetMachine(T, TT, CPU, FS, RM),
     DataLayout("e-f128:128:128-n64"),
     FrameLowering(Subtarget),
     Subtarget(TT, CPU, FS),
     TLInfo(*this),
     TSInfo(*this) {
-  setRelocationModel(Reloc::PIC_);
 }
-
 
 //===----------------------------------------------------------------------===//
 // Pass Pipeline Configuration

@@ -31,6 +31,10 @@ extern "C" {
 #include "llvm/Config/Targets.def"
 
 #define LLVM_TARGET(TargetName) \
+  void LLVMInitialize##TargetName##MCCodeGenInfo();
+#include "llvm/Config/Targets.def"
+
+#define LLVM_TARGET(TargetName) \
   void LLVMInitialize##TargetName##MCInstrInfo();
 #include "llvm/Config/Targets.def"
 
@@ -88,6 +92,16 @@ namespace llvm {
   /// It is legal for a client to make multiple calls to this function.
   inline void InitializeAllMCAsmInfos() {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##MCAsmInfo();
+#include "llvm/Config/Targets.def"
+  }
+  
+  /// InitializeAllMCCodeGenInfos - The main program should call this function
+  /// if it wants access to all targets machines that LLVM is configured to
+  /// support, to make them available via the TargetRegistry.
+  ///
+  /// It is legal for a client to make multiple calls to this function.
+  inline void InitializeAllMCCodeGenInfos() {
+#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##MCCodeGenInfo();
 #include "llvm/Config/Targets.def"
   }
   
@@ -164,6 +178,7 @@ namespace llvm {
     LLVM_NATIVE_TARGETINFO();
     LLVM_NATIVE_TARGET();
     LLVM_NATIVE_MCASMINFO();
+    LLVM_NATIVE_MCCODEGENINFO();
     return false;
 #else
     return true;

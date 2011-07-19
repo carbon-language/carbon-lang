@@ -61,6 +61,9 @@
 /* LLVM name for the native MCAsmInfo init function, if available */
 #undef LLVM_NATIVE_MCASMINFO
 
+/* LLVM name for the native MCCodeGenInfo init function, if available */
+#undef LLVM_NATIVE_MCCODEGENINFO
+
 /* LLVM name for the native AsmPrinter init function, if available */
 #undef LLVM_NATIVE_ASMPRINTER
 

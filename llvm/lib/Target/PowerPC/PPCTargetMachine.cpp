@@ -52,40 +52,32 @@ extern "C" void LLVMInitializePowerPCTarget() {
   TargetRegistry::RegisterObjectStreamer(ThePPC64Target, createMCStreamer);
 }
 
-
-PPCTargetMachine::PPCTargetMachine(const Target &T, const std::string &TT,
-                                   const std::string &CPU,
-                                   const std::string &FS, bool is64Bit)
-  : LLVMTargetMachine(T, TT, CPU, FS),
+PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT,
+                                   StringRef CPU, StringRef FS,
+                                   Reloc::Model RM, bool is64Bit)
+  : LLVMTargetMachine(T, TT, CPU, FS, RM),
     Subtarget(TT, CPU, FS, is64Bit),
     DataLayout(Subtarget.getTargetDataString()), InstrInfo(*this),
     FrameLowering(Subtarget), JITInfo(*this, is64Bit),
     TLInfo(*this), TSInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {
-
-  if (getRelocationModel() == Reloc::Default) {
-    if (Subtarget.isDarwin())
-      setRelocationModel(Reloc::DynamicNoPIC);
-    else
-      setRelocationModel(Reloc::Static);
-  }
 }
 
 /// Override this for PowerPC.  Tail merging happily breaks up instruction issue
 /// groups, which typically degrades performance.
 bool PPCTargetMachine::getEnableTailMergeDefault() const { return false; }
 
-PPC32TargetMachine::PPC32TargetMachine(const Target &T, const std::string &TT, 
-                                       const std::string &CPU,
-                                       const std::string &FS) 
-  : PPCTargetMachine(T, TT, CPU, FS, false) {
+PPC32TargetMachine::PPC32TargetMachine(const Target &T, StringRef TT, 
+                                       StringRef CPU,
+                                       StringRef FS, Reloc::Model RM) 
+  : PPCTargetMachine(T, TT, CPU, FS, RM, false) {
 }
 
 
-PPC64TargetMachine::PPC64TargetMachine(const Target &T, const std::string &TT, 
-                                       const std::string &CPU, 
-                                       const std::string &FS)
-  : PPCTargetMachine(T, TT, CPU, FS, true) {
+PPC64TargetMachine::PPC64TargetMachine(const Target &T, StringRef TT, 
+                                       StringRef CPU, 
+                                       StringRef FS, Reloc::Model RM)
+  : PPCTargetMachine(T, TT, CPU, FS, RM, true) {
 }
 
 
@@ -110,19 +102,11 @@ bool PPCTargetMachine::addPreEmitPass(PassManagerBase &PM,
 bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
                                       JITCodeEmitter &JCE) {
-  // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
   // FIXME: This should be moved to TargetJITInfo!!
-  if (Subtarget.isPPC64()) {
-    // We use PIC codegen in ppc64 mode, because otherwise we'd have to use many
-    // instructions to materialize arbitrary global variable + function +
-    // constant pool addresses.
-    setRelocationModel(Reloc::PIC_);
+  if (Subtarget.isPPC64())
     // Temporary workaround for the inability of PPC64 JIT to handle jump
     // tables.
     DisableJumpTables = true;      
-  } else {
-    setRelocationModel(Reloc::Static);
-  }
   
   // Inform the subtarget that we are in JIT mode.  FIXME: does this break macho
   // writing?
