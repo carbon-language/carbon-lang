@@ -528,6 +528,12 @@ namespace clang {
     ovl_fail_final_conversion_not_exact
   };
 
+  enum OverloadFixItKind {
+    OFIK_Undefined = 0,
+    OFIK_Dereference,
+    OFIK_TakeAddress
+  };
+
   /// OverloadCandidate - A single candidate in an overload set (C++ 13.3).
   struct OverloadCandidate {
     /// Function - The actual function that this candidate
@@ -555,6 +561,21 @@ namespace clang {
     /// Conversions - The conversion sequences used to convert the
     /// function arguments to the function parameters.
     llvm::SmallVector<ImplicitConversionSequence, 4> Conversions;
+
+    /// The FixIt hints which can be used to fix the Bad candidate.
+    struct FixInfo {
+      /// The list of Hints (all have to be applied).
+      llvm::SmallVector<FixItHint, 4> Hints;
+
+      /// The number of Conversions fixed. This can be different from the size
+      /// of the Hints vector since we allow multiple FixIts per conversion.
+      unsigned NumConversionsFixed;
+
+      /// The type of fix applied.
+      OverloadFixItKind Kind;
+
+      FixInfo(): NumConversionsFixed(0), Kind(OFIK_Undefined) {}
+    } Fix;
 
     /// Viable - True to indicate that this overload candidate is viable.
     bool Viable;

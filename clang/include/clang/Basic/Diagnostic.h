@@ -615,7 +615,7 @@ private:
   /// only support 10 ranges, could easily be extended if needed.
   CharSourceRange DiagRanges[10];
 
-  enum { MaxFixItHints = 3 };
+  enum { MaxFixItHints = 6 };
 
   /// FixItHints - If valid, provides a hint with some code
   /// to insert, remove, or modify at a particular position.
