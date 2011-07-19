@@ -521,15 +521,16 @@ IntegerType *TargetData::getIntPtrType(LLVMContext &C) const {
 }
 
 
-uint64_t TargetData::getIndexedOffset(Type *ptrTy, Value* const* Indices,
-                                      unsigned NumIndices) const {
+uint64_t TargetData::getIndexedOffset(Type *ptrTy,
+                                      ArrayRef<Value *> Indices) const {
   Type *Ty = ptrTy;
   assert(Ty->isPointerTy() && "Illegal argument for getIndexedOffset()");
   uint64_t Result = 0;
 
   generic_gep_type_iterator<Value* const*>
-    TI = gep_type_begin(ptrTy, Indices, Indices+NumIndices);
-  for (unsigned CurIDX = 0; CurIDX != NumIndices; ++CurIDX, ++TI) {
+    TI = gep_type_begin(ptrTy, Indices.begin(), Indices.end());
+  for (unsigned CurIDX = 0, EndIDX = Indices.size(); CurIDX != EndIDX;
+       ++CurIDX, ++TI) {
     if (StructType *STy = dyn_cast<StructType>(*TI)) {
       assert(Indices[CurIDX]->getType() ==
              Type::getInt32Ty(ptrTy->getContext()) &&

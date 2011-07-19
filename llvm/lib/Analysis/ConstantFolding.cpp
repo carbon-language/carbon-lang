@@ -606,10 +606,10 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
     }
   
   unsigned BitWidth = TD->getTypeSizeInBits(IntPtrTy);
-  APInt Offset = APInt(BitWidth,
-                       TD->getIndexedOffset(Ptr->getType(),
-                                            (Value**)Ops.data() + 1,
-                                            Ops.size() - 1));
+  APInt Offset =
+    APInt(BitWidth, TD->getIndexedOffset(Ptr->getType(),
+                                         makeArrayRef((Value **)Ops.data() + 1,
+                                                      Ops.size() - 1)));
   Ptr = cast<Constant>(Ptr->stripPointerCasts());
 
   // If this is a GEP of a GEP, fold it all into a single GEP.
@@ -628,9 +628,7 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
 
     Ptr = cast<Constant>(GEP->getOperand(0));
     Offset += APInt(BitWidth,
-                    TD->getIndexedOffset(Ptr->getType(),
-                                         (Value**)NestedOps.data(),
-                                         NestedOps.size()));
+                    TD->getIndexedOffset(Ptr->getType(), NestedOps));
     Ptr = cast<Constant>(Ptr->stripPointerCasts());
   }
 

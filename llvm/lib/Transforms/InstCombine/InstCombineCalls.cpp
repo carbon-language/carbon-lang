@@ -266,8 +266,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       // Get the current byte offset into the thing. Use the original
       // operand in case we're looking through a bitcast.
       SmallVector<Value*, 8> Ops(GEP->idx_begin(), GEP->idx_end());
-      Offset = TD->getIndexedOffset(GEP->getPointerOperandType(),
-                                    Ops.data(), Ops.size());
+      Offset = TD->getIndexedOffset(GEP->getPointerOperandType(), Ops);
 
       Op1 = GEP->getPointerOperand()->stripPointerCasts();
 

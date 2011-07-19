@@ -549,8 +549,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       // Compute the index
       GenericValue Result = getConstantValue(Op0);
       SmallVector<Value*, 8> Indices(CE->op_begin()+1, CE->op_end());
-      uint64_t Offset =
-        TD->getIndexedOffset(Op0->getType(), &Indices[0], Indices.size());
+      uint64_t Offset = TD->getIndexedOffset(Op0->getType(), Indices);
 
       char* tmp = (char*) Result.PointerVal;
       Result = PTOGV(tmp + Offset);

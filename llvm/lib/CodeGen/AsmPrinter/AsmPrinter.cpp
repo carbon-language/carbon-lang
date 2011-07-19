@@ -1409,8 +1409,7 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
     // Generate a symbolic expression for the byte address
     const Constant *PtrVal = CE->getOperand(0);
     SmallVector<Value*, 8> IdxVec(CE->op_begin()+1, CE->op_end());
-    int64_t Offset = TD.getIndexedOffset(PtrVal->getType(), &IdxVec[0],
-                                         IdxVec.size());
+    int64_t Offset = TD.getIndexedOffset(PtrVal->getType(), IdxVec);
 
     const MCExpr *Base = LowerConstant(CE->getOperand(0), AP);
     if (Offset == 0)

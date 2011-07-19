@@ -516,7 +516,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       // Compute the offset that this GEP adds to the pointer.
       SmallVector<Value*, 8> Indices(GEP->op_begin()+1, GEP->op_end());
       uint64_t GEPOffset = TD.getIndexedOffset(GEP->getPointerOperandType(),
-                                               &Indices[0], Indices.size());
+                                               Indices);
       // See if all uses can be converted.
       if (!CanConvertToScalar(GEP, Offset+GEPOffset))
         return false;
@@ -589,7 +589,7 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
       // Compute the offset that this GEP adds to the pointer.
       SmallVector<Value*, 8> Indices(GEP->op_begin()+1, GEP->op_end());
       uint64_t GEPOffset = TD.getIndexedOffset(GEP->getPointerOperandType(),
-                                               &Indices[0], Indices.size());
+                                               Indices);
       ConvertUsesToScalar(GEP, NewAI, Offset+GEPOffset*8);
       GEP->eraseFromParent();
       continue;
@@ -1776,8 +1776,7 @@ void SROA::isSafeGEP(GetElementPtrInst *GEPI,
   // Compute the offset due to this GEP and check if the alloca has a
   // component element at that offset.
   SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
-  Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(),
-                                 &Indices[0], Indices.size());
+  Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(), Indices);
   if (!TypeHasComponent(Info.AI->getAllocatedType(), Offset, 0))
     MarkUnsafe(Info, GEPI);
 }
@@ -2053,8 +2052,7 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
                       SmallVector<AllocaInst*, 32> &NewElts) {
   uint64_t OldOffset = Offset;
   SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
-  Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(),
-                                 &Indices[0], Indices.size());
+  Offset += TD->getIndexedOffset(GEPI->getPointerOperandType(), Indices);
 
   RewriteForScalarRepl(GEPI, AI, Offset, NewElts);
 

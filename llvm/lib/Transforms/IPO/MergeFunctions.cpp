@@ -346,9 +346,9 @@ bool FunctionComparator::isEquivalentGEP(const GEPOperator *GEP1,
     SmallVector<Value *, 8> Indices1(GEP1->idx_begin(), GEP1->idx_end());
     SmallVector<Value *, 8> Indices2(GEP2->idx_begin(), GEP2->idx_end());
     uint64_t Offset1 = TD->getIndexedOffset(GEP1->getPointerOperandType(),
-                                            Indices1.data(), Indices1.size());
+                                            Indices1);
     uint64_t Offset2 = TD->getIndexedOffset(GEP2->getPointerOperandType(),
-                                            Indices2.data(), Indices2.size());
+                                            Indices2);
     return Offset1 == Offset2;
   }
 

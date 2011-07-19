@@ -33,6 +33,8 @@ class StructType;
 class StructLayout;
 class GlobalVariable;
 class LLVMContext;
+template<typename T>
+class ArrayRef;
 
 /// Enum used to categorize the alignment types stored by TargetAlignElem
 enum AlignTypeEnum {
@@ -264,8 +266,7 @@ public:
   /// getIndexedOffset - return the offset from the beginning of the type for
   /// the specified indices.  This is used to implement getelementptr.
   ///
-  uint64_t getIndexedOffset(Type *Ty,
-                            Value* const* Indices, unsigned NumIndices) const;
+  uint64_t getIndexedOffset(Type *Ty, ArrayRef<Value *> Indices) const;
 
   /// getStructLayout - Return a StructLayout object, indicating the alignment
   /// of the struct, its size, and the offsets of its fields.  Note that this

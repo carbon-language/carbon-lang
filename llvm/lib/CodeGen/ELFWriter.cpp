@@ -542,8 +542,7 @@ CstExprResTy ELFWriter::ResolveConstantExpr(const Constant *CV) {
   case Instruction::GetElementPtr: {
     const Constant *ptrVal = CE->getOperand(0);
     SmallVector<Value*, 8> idxVec(CE->op_begin()+1, CE->op_end());
-    int64_t Offset = TD->getIndexedOffset(ptrVal->getType(), &idxVec[0],
-                                          idxVec.size());
+    int64_t Offset = TD->getIndexedOffset(ptrVal->getType(), idxVec);
     return std::make_pair(ptrVal, Offset);
   }
   case Instruction::IntToPtr: {

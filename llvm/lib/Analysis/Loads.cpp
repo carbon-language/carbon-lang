@@ -63,7 +63,7 @@ static Value *getUnderlyingObjectWithOffset(Value *V, const TargetData *TD,
         return V;
       SmallVector<Value*, 8> Indices(GEP->op_begin() + 1, GEP->op_end());
       ByteOffset += TD->getIndexedOffset(GEP->getPointerOperandType(),
-                                         &Indices[0], Indices.size());
+                                         Indices);
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
       V = cast<Operator>(V)->getOperand(0);
