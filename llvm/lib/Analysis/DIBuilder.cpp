@@ -626,7 +626,8 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
     File,
     ConstantInt::get(Type::getInt32Ty(VMContext), (LineNo | (ArgNo << 24))),
     Ty,
-    ConstantInt::get(Type::getInt32Ty(VMContext), Flags)
+    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
+    Constant::getNullValue(Type::getInt32Ty(VMContext)),
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
   if (AlwaysPreserve) {
@@ -660,6 +661,7 @@ DIVariable DIBuilder::createComplexVariable(unsigned Tag, DIDescriptor Scope,
   Elts.push_back(F);
   Elts.push_back(ConstantInt::get(Type::getInt32Ty(VMContext), (LineNo | (ArgNo << 24))));
   Elts.push_back(Ty);
+  Elts.push_back(llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)));
   Elts.push_back(llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)));
   Elts.append(Addr.begin(), Addr.end());
 
