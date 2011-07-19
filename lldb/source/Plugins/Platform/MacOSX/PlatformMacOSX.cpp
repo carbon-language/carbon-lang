@@ -161,14 +161,14 @@ PlatformMacOSX::GetSharedModule (const FileSpec &platform_file,
     if (!module_sp)
     {
         // Fall back to the local platform and find the file locally
-        error = Platform::GetSharedModule(platform_file,
-                                          arch,
-                                          uuid_ptr,
-                                          object_name_ptr,
-                                          object_offset,
-                                          module_sp,
-                                          old_module_sp_ptr,
-                                          did_create_ptr);
+        error = Platform::GetSharedModule (platform_file,
+                                           arch,
+                                           uuid_ptr,
+                                           object_name_ptr,
+                                           object_offset,
+                                           module_sp,
+                                           old_module_sp_ptr,
+                                           did_create_ptr);
     }
     if (module_sp)
         module_sp->SetPlatformFileSpec(platform_file);

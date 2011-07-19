@@ -140,6 +140,9 @@ public:
                              lldb_private::ProcessLaunchInfo &launch_info); 
 
     
+    //------------------------------------------------------------------
+    // Public Request Packets
+    //------------------------------------------------------------------
     bool
     SendRequestConnect (uint16_t reply_port, 
                         uint16_t exc_port, 
@@ -150,6 +153,24 @@ public:
 
     bool
     SendRequestDisconnect ();
+    
+    uint32_t
+    SendRequestReadMemory (lldb::addr_t addr, 
+                           void *buf, 
+                           uint32_t size,
+                           lldb_private::Error &error);
+
+    uint32_t
+    SendRequestReadRegisters (uint32_t cpu,
+                              uint32_t flavor,
+                              void *dst, 
+                              uint32_t dst_size,
+                              lldb_private::Error &error);
+//    size_t
+//    SendRequestWriteMemory (lldb::addr_t addr, 
+//                            const void *buf, 
+//                            size_t size,
+//                            lldb_private::Error &error);
     
     uint32_t
     GetVersion ();
@@ -184,9 +205,25 @@ protected:
                              PacketStreamType &request_packet,
                              uint16_t request_length);
 
+    //------------------------------------------------------------------
+    // Protected Request Packets (use public accessors which will cache
+    // results.
+    //------------------------------------------------------------------
     bool
     SendRequestVersion ();
     
+    bool
+    SendRequestHostInfo ();
+
+    
+    void
+    DumpPacket (lldb_private::Stream &s, 
+                const void *data, 
+                uint32_t data_len);
+
+    void
+    DumpPacket (lldb_private::Stream &s, 
+                const lldb_private::DataExtractor& extractor);
 
     bool
     VersionIsValid() const
@@ -201,7 +238,21 @@ protected:
     }
 
     bool
-    SendRequestHostInfo ();
+    ExtractIsReply (uint8_t first_packet_byte) const
+    {
+        // TODO: handle big endian...
+        return (first_packet_byte & ePacketTypeMask) != 0;
+    }
+
+    CommandType
+    ExtractCommand (uint8_t first_packet_byte) const
+    {
+        // TODO: handle big endian...
+        return (CommandType)(first_packet_byte & eCommandTypeMask);
+    }
+    
+    static const char *
+    GetCommandAsCString (uint8_t command);
 
     void
     ClearKDPSettings ();
@@ -214,6 +265,7 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from CommunicationKDP can see and modify these
     //------------------------------------------------------------------
+    uint32_t m_addr_byte_size;
     lldb::ByteOrder m_byte_order;
     uint32_t m_packet_timeout;
     lldb_private::Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time

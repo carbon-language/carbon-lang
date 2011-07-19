@@ -192,7 +192,15 @@ protected:
 
     };
 
-    enum { KERNEL_MODULE_MAX_NAME = 64u };
+    enum
+    {
+        KERNEL_MODULE_MAX_NAME = 64u,
+        // Versions less than 2 didn't have an entry size,
+        // they had a 64 bit name, 16 byte UUID, 8 byte addr,
+        // 8 byte size, 8 byte version, 4 byte load tag, and
+        // 4 byte flags
+        KERNEL_MODULE_ENTRY_SIZE_VERSION_1 = 64u + 16u + 8u + 8u + 8u + 4u + 4u
+    };
     
     struct OSKextLoadedKextSummary
     {
@@ -327,16 +335,27 @@ protected:
         uint32_t version;
         uint32_t entry_size;
         uint32_t entry_count;
-        uint32_t reserved; /* explicit alignment for gdb  */
         lldb::addr_t image_infos_addr;
 
         OSKextLoadedKextSummaryHeader() :
             version (0),
             entry_size (0),
             entry_count (0),
-            reserved (0),
             image_infos_addr (LLDB_INVALID_ADDRESS)
         {
+        }
+
+        uint32_t
+        GetSize()
+        {
+            switch (version)
+            {
+                case 0: return 0;   // Can't know the size without a valid version
+                case 1: return 8;   // Version 1 only had a version + entry_count
+                default: break;
+            }
+            // Version 2 and above has version, entry_size, entry_count, and reserved
+            return 16; 
         }
 
         void
@@ -345,7 +364,6 @@ protected:
             version = 0;
             entry_size = 0;
             entry_count = 0;
-            reserved = 0;
             image_infos_addr = LLDB_INVALID_ADDRESS;
         }
 

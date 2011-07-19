@@ -183,6 +183,12 @@ public:
     virtual lldb_private::Error
     DisableWatchpoint (lldb_private::WatchpointLocation *wp_loc);
     
+    CommunicationKDP &
+    GetCommunication()
+    {
+        return m_comm;
+    }
+
 protected:
     friend class ThreadKDP;
     friend class CommunicationKDP;
@@ -228,12 +234,6 @@ protected:
     
     uint32_t
     UpdateThreadListIfNeeded ();
-    
-    CommunicationKDP &
-    GetCommunication()
-    {
-        return m_comm;
-    }
     
     enum
     {

@@ -1,4 +1,4 @@
-//===-- RegisterContextMach_x86_64.h ------------------------------*- C++ -*-===//
+//===-- RegisterContextKDP_arm.h --------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,26 +7,30 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_RegisterContextMach_x86_64_h_
-#define liblldb_RegisterContextMach_x86_64_h_
+#ifndef liblldb_RegisterContextKDP_arm_h_
+#define liblldb_RegisterContextKDP_arm_h_
 
 // C Includes
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "Plugins/Process/Utility/RegisterContextDarwin_x86_64.h"
+#include "Plugins/Process/Utility/RegisterContextDarwin_arm.h"
 
-class RegisterContextMach_x86_64 : public RegisterContextDarwin_x86_64
+class ThreadKDP;
+
+class RegisterContextKDP_arm : public RegisterContextDarwin_arm
 {
 public:
-    
-    RegisterContextMach_x86_64(lldb_private::Thread &thread, uint32_t concrete_frame_idx);
-    
+
+    RegisterContextKDP_arm (ThreadKDP &thread, 
+                            uint32_t concrete_frame_idx);
+
     virtual
-    ~RegisterContextMach_x86_64();
-    
+    ~RegisterContextKDP_arm();
+
 protected:
-    
+
     virtual int
     DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr);
     
@@ -37,6 +41,9 @@ protected:
     DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc);
     
     int
+    DoReadDBG (lldb::tid_t tid, int flavor, DBG &dbg);
+    
+    int
     DoWriteGPR (lldb::tid_t tid, int flavor, const GPR &gpr);
     
     int
@@ -44,6 +51,11 @@ protected:
     
     int
     DoWriteEXC (lldb::tid_t tid, int flavor, const EXC &exc);
+    
+    int
+    DoWriteDBG (lldb::tid_t tid, int flavor, const DBG &dbg);
+    
+    ThreadKDP &m_kdp_thread;
 };
 
-#endif  // liblldb_RegisterContextMach_x86_64_h_
+#endif  // liblldb_RegisterContextKDP_arm_h_

@@ -746,7 +746,9 @@ ModuleList::GetSharedModule
 
     // Fixup the incoming path in case the path points to a valid file, yet
     // the arch or UUID (if one was passed in) don't match.
-    FileSpec file_spec = Symbols::LocateExecutableObjectFile (&in_file_spec, arch.IsValid() ? &arch : NULL, uuid_ptr);
+    FileSpec file_spec = Symbols::LocateExecutableObjectFile (in_file_spec ? &in_file_spec : NULL, 
+                                                              arch.IsValid() ? &arch : NULL, 
+                                                              uuid_ptr);
 
     // Don't look for the file if it appears to be the same one we already
     // checked for above...

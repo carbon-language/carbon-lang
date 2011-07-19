@@ -29,6 +29,9 @@
 #include "Host/macosx/cfcpp/CFCString.h"
 #include "mach/machine.h"
 
+#include "CFCBundle.h"
+
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace llvm::MachO;
@@ -291,7 +294,7 @@ LocateMacOSXFilesUsingDebugSymbols
         const UInt8 *module_uuid = (const UInt8 *)uuid->GetBytes();
         if (module_uuid != NULL)
         {
-            CFCReleaser<CFUUIDRef> module_uuid_ref(::CFUUIDCreateWithBytes ( NULL,
+            CFCReleaser<CFUUIDRef> module_uuid_ref(::CFUUIDCreateWithBytes (NULL,
                                                                             module_uuid[0],
                                                                             module_uuid[1],
                                                                             module_uuid[2],
@@ -363,6 +366,57 @@ LocateMacOSXFilesUsingDebugSymbols
                                 {
                                     ++items_found;
                                     out_exec_fspec->SetFile(path, path[0] == '~');
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // No dictionary, check near the dSYM bundle for an executable that matches...
+                            if (::CFURLGetFileSystemRepresentation (dsym_url.get(), true, (UInt8*)path, sizeof(path)-1))
+                            {
+                                char *dsym_extension_pos = ::strstr (path, ".dSYM");
+                                if (dsym_extension_pos)
+                                {
+                                    *dsym_extension_pos = '\0';
+                                    FileSpec file_spec (path, true);
+                                    switch (file_spec.GetFileType())
+                                    {
+                                        case FileSpec::eFileTypeDirectory:  // Bundle directory?
+                                            {
+                                                CFCBundle bundle (path);
+                                                CFCReleaser<CFURLRef> bundle_exe_url (bundle.CopyExecutableURL ());
+                                                if (bundle_exe_url.get())
+                                                {
+                                                    if (::CFURLGetFileSystemRepresentation (bundle_exe_url.get(), true, (UInt8*)path, sizeof(path)-1))
+                                                    {
+                                                        FileSpec bundle_exe_file_spec (path, true);
+                                                        
+                                                        if (FileAtPathContainsArchAndUUID (bundle_exe_file_spec, arch, uuid))
+                                                        {
+                                                            ++items_found;
+                                                            *out_exec_fspec = bundle_exe_file_spec;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                            
+                                        case FileSpec::eFileTypePipe:       // Forget pipes
+                                        case FileSpec::eFileTypeSocket:     // We can't process socket files
+                                        case FileSpec::eFileTypeInvalid:    // File doesn't exist...
+                                            break;
+
+                                        case FileSpec::eFileTypeUnknown:
+                                        case FileSpec::eFileTypeRegular:
+                                        case FileSpec::eFileTypeSymbolicLink:
+                                        case FileSpec::eFileTypeOther:
+                                            if (FileAtPathContainsArchAndUUID (file_spec, arch, uuid))
+                                            {
+                                                ++items_found;
+                                                *out_exec_fspec = file_spec;
+                                            }
+                                            break;
+                                    }
                                 }
                             }
                         }

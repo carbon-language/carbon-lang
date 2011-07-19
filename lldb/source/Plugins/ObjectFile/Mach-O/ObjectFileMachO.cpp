@@ -604,7 +604,7 @@ ObjectFileMachO::ParseSections ()
                             segment_name.Clear();
                         }
                     }
-                    if (m_header.filetype == HeaderFileTypeDSYM)
+                    if (segment_sp && m_header.filetype == HeaderFileTypeDSYM)
                     {
                         if (first_segment_sectID <= sectID)
                         {

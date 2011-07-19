@@ -18,11 +18,12 @@
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
 
 // Project includes
 #include "ProcessKDP.h"
 #include "ProcessKDPLog.h"
-//#include "ThreadKDP.h"
+#include "ThreadKDP.h"
 #include "StopInfoMachException.h"
 
 using namespace lldb;
@@ -182,7 +183,10 @@ ProcessKDP::DoConnectRemote (const char *remote_url)
                     ArchSpec kernel_arch;
                     kernel_arch.SetArchitecture(eArchTypeMachO, cpu, sub);
                     m_target.SetArchitecture(kernel_arch);
-                    // TODO: thread registers based off of architecture...
+                    
+                    SetID (1);
+                    UpdateThreadListIfNeeded ();
+                    SetPrivateState (eStateStopped);
                 }
             }
             else
@@ -295,34 +299,24 @@ ProcessKDP::UpdateThreadListIfNeeded ()
         log->Printf ("ProcessKDP::%s (pid = %i)", __FUNCTION__, GetID());
     
     Mutex::Locker locker (m_thread_list.GetMutex ());
-    // TODO: get the thread list here!
     const uint32_t stop_id = GetStopID();
-    if (m_thread_list.GetSize(false) == 0 || stop_id != m_thread_list.GetStopID())
+    if (m_thread_list.GetSize(false) == 0)
     {
-        // Update the thread list's stop id immediately so we don't recurse into this function.
-//        ThreadList curr_thread_list (this);
-//        curr_thread_list.SetStopID(stop_id);
-//        
-//        std::vector<lldb::tid_t> thread_ids;
-//        bool sequence_mutex_unavailable = false;
-//        const size_t num_thread_ids = m_comm.GetCurrentThreadIDs (thread_ids, sequence_mutex_unavailable);
-//        if (num_thread_ids > 0)
-//        {
-//            for (size_t i=0; i<num_thread_ids; ++i)
-//            {
-//                tid_t tid = thread_ids[i];
-//                ThreadSP thread_sp (GetThreadList().FindThreadByID (tid, false));
-//                if (!thread_sp)
-//                    thread_sp.reset (new ThreadGDBRemote (*this, tid));
-//                curr_thread_list.AddThread(thread_sp);
-//            }
-//        }
-//        
-//        if (sequence_mutex_unavailable == false)
-//        {
-//            m_thread_list = curr_thread_list;
-//            SetThreadStopInfo (m_last_stop_packet);
-//        }
+        // We currently are making only one thread per core and we
+        // actually don't know about actual threads. Eventually we
+        // want to get the thread list from memory and note which
+        // threads are on CPU as those are the only ones that we 
+        // will be able to resume.
+        ThreadList curr_thread_list (this);
+        curr_thread_list.SetStopID(stop_id);
+        const uint32_t cpu_mask = m_comm.GetCPUMask();
+        for (uint32_t cpu_mask_bit = 1; cpu_mask_bit & cpu_mask; cpu_mask_bit <<= 1)
+        {
+            // The thread ID is currently the CPU mask bit
+            ThreadSP thread_sp (new ThreadKDP (*this, cpu_mask_bit));
+                curr_thread_list.AddThread(thread_sp);
+        }
+        m_thread_list = curr_thread_list;
     }
     return GetThreadList().GetSize(false);
 }
@@ -549,7 +543,9 @@ ProcessKDP::IsAlive ()
 size_t
 ProcessKDP::DoReadMemory (addr_t addr, void *buf, size_t size, Error &error)
 {
-    error.SetErrorString ("ProcessKDP::DoReadMemory not implemented");
+    if (m_comm.IsConnected())
+        return m_comm.SendRequestReadMemory (addr, buf, size, error);
+    error.SetErrorString ("not connected");
     return 0;
 }
 

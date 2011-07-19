@@ -15,10 +15,13 @@
 #include <string.h>
 
 // C++ Includes
+#include "llvm/Support/MachO.h"
+
 // Other libraries and framework includes
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/State.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/TimeValue.h"
@@ -37,6 +40,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 CommunicationKDP::CommunicationKDP (const char *comm_name) :
     Communication(comm_name),
+    m_addr_byte_size (4),
     m_byte_order (eByteOrderLittle),
     m_packet_timeout (1),
     m_sequence_mutex (Mutex::eMutexTypeRecursive),
@@ -129,13 +133,9 @@ CommunicationKDP::SendRequestPacketNoLock (const PacketStreamType &request_packe
         LogSP log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PACKETS));
         if (log)
         {
-            PacketStreamType log_strm;
-            
-            DataExtractor::DumpHexBytes (&log_strm, packet_data, packet_size, UINT32_MAX, LLDB_INVALID_ADDRESS);
-            
-            log->Printf("send kdp-packet: %.*s", 
-                        (uint32_t)log_strm.GetSize(), 
-                        log_strm.GetData());
+            PacketStreamType log_strm;            
+            DumpPacket (log_strm, packet_data, packet_size);
+            log->Printf("%.*s", (uint32_t)log_strm.GetSize(), log_strm.GetData());
         }
         ConnectionStatus status = eConnectionStatusSuccess;
 
@@ -298,18 +298,9 @@ CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, DataExtrac
                     if (log)
                     {
                         PacketStreamType log_strm;
-                        packet.Dump (&log_strm,             // Stream to dump to
-                                     0,                     // Offset into "packet"
-                                     eFormatBytes,          // Dump as hex bytes
-                                     1,                     // Size of each item is 1 for single bytes
-                                     length,                // Number of bytes
-                                     UINT32_MAX,            // Num bytes per line
-                                     LLDB_INVALID_ADDRESS,  // Base address
-                                     0, 0);                 // Bitfield info set to not do anything bitfield related
+                        DumpPacket (log_strm, packet);
                         
-                        log->Printf("recv kdp-packet: %.*s", 
-                                    (uint32_t)log_strm.GetSize(), 
-                                    log_strm.GetData());
+                        log->Printf("%.*s", (uint32_t)log_strm.GetSize(), log_strm.GetData());
                     }
                     return true;
                 }
@@ -336,7 +327,7 @@ CommunicationKDP::SendRequestConnect (uint16_t reply_port,
                                       uint16_t exc_port, 
                                       const char *greeting)
 {
-    PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
+    PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
     if (greeting == NULL)
         greeting = "";
 
@@ -369,7 +360,7 @@ CommunicationKDP::ClearKDPSettings ()
 bool
 CommunicationKDP::SendRequestReattach (uint16_t reply_port)
 {
-    PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
+    PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
     const CommandType command = eCommandTypeReattach;
     // Length is 8 bytes for the header plus 2 bytes for the reply UDP port
     const uint32_t command_length = 8 + 2;
@@ -410,7 +401,7 @@ CommunicationKDP::GetFeatureFlags ()
 bool
 CommunicationKDP::SendRequestVersion ()
 {
-    PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
+    PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
     const CommandType command = eCommandTypeVersion;
     const uint32_t command_length = 8;
     const uint32_t request_sequence_id = m_request_sequence_id;
@@ -454,7 +445,7 @@ CommunicationKDP::GetCPUSubtype ()
 bool
 CommunicationKDP::SendRequestHostInfo ()
 {
-    PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
+    PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
     const CommandType command = eCommandTypeHostInfo;
     const uint32_t command_length = 8;
     const uint32_t request_sequence_id = m_request_sequence_id;
@@ -464,9 +455,17 @@ CommunicationKDP::SendRequestHostInfo ()
     {
         // Reset the sequence ID to zero for reattach
         uint32_t offset = 8;
-        m_kdp_hostinfo_cpu_mask = reply_packet.GetU32 (&offset);
-        m_kdp_hostinfo_cpu_type = reply_packet.GetU32 (&offset);
-        m_kdp_hostinfo_cpu_subtype = reply_packet.GetU32 (&offset);
+        m_kdp_hostinfo_cpu_mask     = reply_packet.GetU32 (&offset);
+        m_kdp_hostinfo_cpu_type     = reply_packet.GetU32 (&offset);
+        m_kdp_hostinfo_cpu_subtype  = reply_packet.GetU32 (&offset);
+        
+        ArchSpec kernel_arch;
+        kernel_arch.SetArchitecture (eArchTypeMachO, 
+                                     m_kdp_hostinfo_cpu_type, 
+                                     m_kdp_hostinfo_cpu_subtype);
+    
+        m_addr_byte_size = kernel_arch.GetAddressByteSize();
+        m_byte_order = kernel_arch.GetByteOrder();
         return true;
     }
     return false;
@@ -475,7 +474,7 @@ CommunicationKDP::SendRequestHostInfo ()
 bool
 CommunicationKDP::SendRequestDisconnect ()
 {
-    PacketStreamType request_packet (Stream::eBinary, 4, m_byte_order);
+    PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
     const CommandType command = eCommandTypeDisconnect;
     const uint32_t command_length = 8;
     const uint32_t request_sequence_id = m_request_sequence_id;
@@ -487,5 +486,333 @@ CommunicationKDP::SendRequestDisconnect ()
     }
     ClearKDPSettings ();
     return true;
+}
+
+uint32_t
+CommunicationKDP::SendRequestReadMemory (lldb::addr_t addr, 
+                                         void *dst, 
+                                         uint32_t dst_len,
+                                         Error &error)
+{
+    PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
+    bool use_64 = (GetVersion() >= 11);
+    uint32_t command_addr_byte_size = use_64 ? 8 : 4;
+    const CommandType command = use_64 ? eCommandTypeReadMemory64 : eCommandTypeReadMemory;
+    // Size is header + address size + uint32_t length
+    const uint32_t command_length = 8 + command_addr_byte_size + 4;
+    const uint32_t request_sequence_id = m_request_sequence_id;
+    MakeRequestPacketHeader (command, request_packet, command_length);
+    request_packet.PutMaxHex64 (addr, command_addr_byte_size);
+    request_packet.PutHex32 (dst_len);
+    DataExtractor reply_packet;
+    if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
+    {
+        // Reset the sequence ID to zero for reattach
+        uint32_t offset = 8;
+        uint32_t kdp_error = reply_packet.GetU32 (&offset);
+        uint32_t src_len = reply_packet.GetByteSize() - 12;
+        
+        if (src_len > 0)
+        {
+            const void *src = reply_packet.GetData(&offset, src_len);
+            if (src)
+            {
+                ::memcpy (dst, src, src_len);
+                error.Clear();
+                return src_len;
+            }
+        }
+        if (kdp_error)
+            error.SetErrorStringWithFormat ("kdp read memory failed (error %u)", kdp_error);
+        else
+            error.SetErrorString ("kdp read memory failed");
+    }
+    return 0;
+}
+
+const char *
+CommunicationKDP::GetCommandAsCString (uint8_t command)
+{
+    switch (command)
+    {
+    case eCommandTypeConnect:               return "KDP_CONNECT";
+    case eCommandTypeDisconnect:            return "KDP_DISCONNECT";
+    case eCommandTypeHostInfo:              return "KDP_HOSTINFO";
+    case eCommandTypeVersion:               return "KDP_VERSION";
+    case eCommandTypeMaxBytes:              return "KDP_MAXBYTES";
+    case eCommandTypeReadMemory:            return "KDP_READMEM";
+    case eCommandTypeWriteMemory:           return "KDP_WRITEMEM";
+    case eCommandTypeReadRegisters:         return "KDP_READREGS";
+    case eCommandTypeWriteRegisters:        return "KDP_WRITEREGS";
+    case eCommandTypeLoad:                  return "KDP_LOAD";
+    case eCommandTypeImagePath:             return "KDP_IMAGEPATH";
+    case eCommandTypeSuspend:               return "KDP_SUSPEND";
+    case eCommandTypeResume:                return "KDP_RESUMECPUS";
+    case eCommandTypeException:             return "KDP_EXCEPTION";
+    case eCommandTypeTermination:           return "KDP_TERMINATION";
+    case eCommandTypeBreakpointSet:         return "KDP_BREAKPOINT_SET";
+    case eCommandTypeBreakpointRemove:      return "KDP_BREAKPOINT_REMOVE";
+    case eCommandTypeRegions:               return "KDP_REGIONS";
+    case eCommandTypeReattach:              return "KDP_REATTACH";
+    case eCommandTypeHostReboot:            return "KDP_HOSTREBOOT";
+    case eCommandTypeReadMemory64:          return "KDP_READMEM64";
+    case eCommandTypeWriteMemory64:         return "KDP_WRITEMEM64";
+    case eCommandTypeBreakpointSet64:       return "KDP_BREAKPOINT64_SET";
+    case eCommandTypeBreakpointRemove64:    return "KDP_BREAKPOINT64_REMOVE";
+    case eCommandTypeKernelVersion:         return "KDP_KERNELVERSION";
+    }
+    return NULL;
+}
+
+void
+CommunicationKDP::DumpPacket (Stream &s, const void *data, uint32_t data_len)
+{
+    DataExtractor extractor (data, data_len, m_byte_order, m_addr_byte_size);
+    DumpPacket (s, extractor);
+}
+
+void
+CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
+{
+    const char *error_desc = NULL;
+    if (packet.GetByteSize() < 8)
+    {
+        error_desc = "error: invalid packet (too short): ";
+    }
+    else
+    {
+        uint32_t offset = 0;
+        const uint8_t first_packet_byte = packet.GetU8 (&offset);
+        const uint8_t sequence_id = packet.GetU8 (&offset);
+        const uint16_t length = packet.GetU16 (&offset);
+        const uint32_t key = packet.GetU32 (&offset);
+        const CommandType command = ExtractCommand (first_packet_byte);
+        const char *command_name = GetCommandAsCString (command);
+        if (command_name)
+        {
+            const bool is_reply = ExtractIsReply(first_packet_byte);
+            s.Printf ("%s {%u:%u} <0x%4.4x> %s", 
+                      is_reply ? "<--" : "-->", 
+                      key,
+                      sequence_id,
+                      length,
+                      command_name);
+            
+            if (is_reply)
+            {
+                // Dump request reply packets
+                switch (command)
+                {
+                    case eCommandTypeConnect:
+                        {
+                            const uint32_t error = packet.GetU32 (&offset);
+                            s.Printf(" (error=0x%8.8x)", error);
+                        }
+                        break;
+                    
+                    case eCommandTypeDisconnect:
+                    case eCommandTypeReattach:
+                    case eCommandTypeHostReboot:
+                        // No return value for the reply, just the header to ack
+                        break;
+
+                    case eCommandTypeHostInfo:
+                        {
+                            const uint32_t cpu_mask = packet.GetU32 (&offset);
+                            const uint32_t cpu_type = packet.GetU32 (&offset);
+                            const uint32_t cpu_subtype = packet.GetU32 (&offset);
+                            s.Printf(" (cpu_mask=0x%8.8x, cpu_type=0x%8.8x, cpu_subtype=0x%8.8x)", cpu_mask, cpu_type, cpu_subtype);
+                        }
+                        break;
+                        
+                    case eCommandTypeVersion:
+                        {
+                            const uint32_t version = packet.GetU32 (&offset);
+                            const uint32_t feature = packet.GetU32 (&offset);
+                            s.Printf(" (version=0x%8.8x, feature=0x%8.8x)", version, feature);
+                        }
+                        break;
+                        
+                    case eCommandTypeRegions:
+                        {
+                            const uint32_t region_count = packet.GetU32 (&offset);
+                            s.Printf(" (count = %u", region_count); 
+                            for (uint32_t i=0; i<region_count; ++i)
+                            {
+                                const addr_t region_addr = packet.GetPointer (&offset);
+                                const uint32_t region_size = packet.GetU32 (&offset);
+                                const uint32_t region_prot = packet.GetU32 (&offset);
+                                s.Printf("\n\tregion[%i] = { range = [0x%16.16llx - 0x%16.16llx), size = 0x%8.8x, prot = %s }", region_addr, region_addr + region_size, region_size, GetPermissionsAsCString (region_prot)); 
+                            }
+                        }
+                        break;
+
+                    case eCommandTypeReadMemory:
+                    case eCommandTypeReadMemory64:
+                    case eCommandTypeReadRegisters:
+                        {
+                            const uint32_t error = packet.GetU32 (&offset);
+                            const uint32_t count = packet.GetByteSize() - 12;
+                            s.Printf(" (error = 0x%8.8x <0x%x>:\n", error, count); 
+                            if (count > 0)
+                                DataExtractor::DumpHexBytes(&s, packet.GetData(&offset, count), count, 32, LLDB_INVALID_ADDRESS);
+                        }
+                        break;
+
+                    case eCommandTypeMaxBytes:
+                    case eCommandTypeWriteMemory:
+                    case eCommandTypeWriteRegisters:
+                    case eCommandTypeLoad:
+                    case eCommandTypeImagePath:
+                    case eCommandTypeSuspend:
+                    case eCommandTypeResume:
+                    case eCommandTypeException:
+                    case eCommandTypeTermination:
+                    case eCommandTypeBreakpointSet:
+                    case eCommandTypeBreakpointRemove:
+                    case eCommandTypeWriteMemory64:
+                    case eCommandTypeBreakpointSet64:
+                    case eCommandTypeBreakpointRemove64:
+                    case eCommandTypeKernelVersion:
+                        break;
+                    
+                } 
+            }
+            else
+            {
+                // Dump request packets
+                switch (command)
+                {
+                    case eCommandTypeConnect:               
+                        {
+                            const uint16_t reply_port = packet.GetU16 (&offset);
+                            const uint16_t exc_port = packet.GetU16 (&offset);
+                            s.Printf(" (reply_port=%u, exc_port=%u, greeting=\"%s\")", reply_port, exc_port, packet.GetCStr(&offset));
+                        }
+                        break;
+                                 
+                    case eCommandTypeDisconnect:
+                    case eCommandTypeHostReboot:
+                    case eCommandTypeHostInfo:
+                    case eCommandTypeVersion:
+                    case eCommandTypeRegions:
+                        // No args, just the header in the request...
+                        break;
+
+                    case eCommandTypeReadMemory:
+                        {
+                            const uint32_t addr = packet.GetU32 (&offset);
+                            const uint32_t size = packet.GetU32 (&offset);
+                            s.Printf(" (addr = 0x%8.8x, size=%u)", addr, size);
+                        }
+                        break;
+
+                    case eCommandTypeReadMemory64:
+                        {
+                            const uint64_t addr = packet.GetU64 (&offset);
+                            const uint32_t size = packet.GetU32 (&offset);
+                            s.Printf(" (addr = 0x%16.16llx, size=%u)", addr, size);
+                        }
+                        break;
+
+                    case eCommandTypeReadRegisters:
+                        {
+                            const uint32_t cpu = packet.GetU32 (&offset);
+                            const uint32_t flavor = packet.GetU32 (&offset);
+                            s.Printf(" (cpu = %u, flavor=%u)", cpu, flavor);
+                        }
+                        break;
+
+                    case eCommandTypeMaxBytes:
+                    case eCommandTypeWriteMemory:
+                    case eCommandTypeWriteRegisters:
+                    case eCommandTypeLoad:
+                    case eCommandTypeImagePath:
+                    case eCommandTypeSuspend:
+                    case eCommandTypeResume:
+                    case eCommandTypeException:
+                    case eCommandTypeTermination:
+                    case eCommandTypeBreakpointSet:
+                    case eCommandTypeBreakpointRemove:
+                        break;
+
+                    case eCommandTypeReattach:
+                        {
+                            const uint16_t reply_port = packet.GetU16 (&offset);
+                            s.Printf(" (reply_port=%u)", reply_port);
+                        }
+                        break;
+
+                    case eCommandTypeWriteMemory64:
+                    case eCommandTypeBreakpointSet64:
+                    case eCommandTypeBreakpointRemove64:
+                    case eCommandTypeKernelVersion:
+                        break;
+                }
+            }
+        }
+        else
+        {
+            error_desc = "error: invalid packet command: ";
+        }
+    }
+
+    if (error_desc)
+    {
+        s.PutCString (error_desc);
+
+        packet.Dump (&s,                    // Stream to dump to
+                     0,                     // Offset into "packet"
+                     eFormatBytes,          // Dump as hex bytes
+                     1,                     // Size of each item is 1 for single bytes
+                     packet.GetByteSize(),  // Number of bytes
+                     UINT32_MAX,            // Num bytes per line
+                     LLDB_INVALID_ADDRESS,  // Base address
+                     0, 0);                 // Bitfield info set to not do anything bitfield related
+    }
+}
+
+uint32_t
+CommunicationKDP::SendRequestReadRegisters (uint32_t cpu,
+                                            uint32_t flavor,
+                                            void *dst, 
+                                            uint32_t dst_len,
+                                            Error &error)
+{
+    PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
+    const CommandType command = eCommandTypeReadRegisters;
+    // Size is header + 4 byte cpu and 4 byte flavor
+    const uint32_t command_length = 8 + 4 + 4;
+    const uint32_t request_sequence_id = m_request_sequence_id;
+    MakeRequestPacketHeader (command, request_packet, command_length);
+    request_packet.PutHex32 (cpu);
+    request_packet.PutHex32 (flavor);
+    DataExtractor reply_packet;
+    if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
+    {
+        // Reset the sequence ID to zero for reattach
+        uint32_t offset = 8;
+        uint32_t kdp_error = reply_packet.GetU32 (&offset);
+        uint32_t src_len = reply_packet.GetByteSize() - 12;
+        
+        if (src_len > 0)
+        {
+            const uint32_t bytes_to_copy = std::min<uint32_t>(src_len, dst_len);
+            const void *src = reply_packet.GetData(&offset, bytes_to_copy);
+            if (src)
+            {
+                ::memcpy (dst, src, bytes_to_copy);
+                error.Clear();
+                // Return the number of bytes we could have returned regardless if
+                // we copied them or not, just so we know when things don't match up
+                return src_len; 
+            }
+        }
+        if (kdp_error)
+            error.SetErrorStringWithFormat("failed to read kdp registers for cpu %u flavor %u (error %u)", cpu, flavor, kdp_error);
+        else
+            error.SetErrorStringWithFormat("failed to read kdp registers for cpu %u flavor %u", cpu, flavor);
+    }
+    return 0;
 }
 

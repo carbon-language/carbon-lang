@@ -241,8 +241,8 @@ DynamicLoaderMacOSXKernel::FindTargetModule (OSKextLoadedKextSummary &image_info
         if (image_info_uuid_is_valid)
         {
             image_info.module_sp = m_process->GetTarget().GetSharedModule (FileSpec(),
-                                                                arch,
-                                                                &image_info.uuid);
+                                                                           arch,
+                                                                           &image_info.uuid);
             if (did_create_ptr)
                 *did_create_ptr = image_info.module_sp;
         }
@@ -306,26 +306,48 @@ DynamicLoaderMacOSXKernel::UpdateImageLoadAddress (OSKextLoadedKextSummary& info
                 uint32_t num_segments = info.segments.size();
                 for (uint32_t i=0; i<num_segments; ++i)
                 {
-                    SectionSP section_sp(section_list->FindSectionByName(info.segments[i].name));
                     const addr_t new_section_load_addr = info.segments[i].vmaddr;
-                    if (section_sp)
+                    if (section_list->FindSectionByName(info.segments[i].name))
                     {
-                        const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
-                        if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
-                            old_section_load_addr != new_section_load_addr)
+                        SectionSP section_sp(section_list->FindSectionByName(info.segments[i].name));
+                        if (section_sp)
                         {
-                            if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), new_section_load_addr))
-                                changed = true;
+                            const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
+                            if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
+                                old_section_load_addr != new_section_load_addr)
+                            {
+                                if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), new_section_load_addr))
+                                    changed = true;
+                            }
+                        }
+                        else
+                        {
+                            fprintf (stderr, 
+                                     "warning: unable to find and load segment named '%s' at 0x%llx in '%s/%s' in macosx dynamic loader plug-in.\n",
+                                     info.segments[i].name.AsCString("<invalid>"),
+                                     (uint64_t)new_section_load_addr,
+                                     image_object_file->GetFileSpec().GetDirectory().AsCString(),
+                                     image_object_file->GetFileSpec().GetFilename().AsCString());
                         }
                     }
                     else
                     {
-                        fprintf (stderr, 
-                                 "warning: unable to find and load segment named '%s' at 0x%llx in '%s/%s' in macosx dynamic loader plug-in.\n",
-                                 info.segments[i].name.AsCString("<invalid>"),
-                                 (uint64_t)new_section_load_addr,
-                                 image_object_file->GetFileSpec().GetDirectory().AsCString(),
-                                 image_object_file->GetFileSpec().GetFilename().AsCString());
+                        // The segment name is empty which means this is a .o file.
+                        // Object files in LLDB end up getting reorganized so that
+                        // the segment name that is in the section is promoted into
+                        // an actual segment, so we just need to go through all sections
+                        // and slide them by a single amount.
+                        
+                        uint32_t num_sections = section_list->GetSize();
+                        for (uint32_t i=0; i<num_sections; ++i)
+                        {
+                            Section* section = section_list->GetSectionAtIndex (i).get();
+                            if (section)
+                            {
+                                if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section, section->GetFileAddress() + new_section_load_addr))
+                                    changed = true;
+                            }
+                        }
                     }
                 }
             }
@@ -442,10 +464,17 @@ DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
                 if (bytes_read == count)
                 {
                     uint32_t offset = 0;
-                    m_kext_summary_header.version       = data.GetU32(&offset);
-                    m_kext_summary_header.entry_size    = data.GetU32(&offset);
-                    m_kext_summary_header.entry_count   = data.GetU32(&offset);
-                    m_kext_summary_header.reserved      = data.GetU32(&offset);
+                    m_kext_summary_header.version = data.GetU32(&offset);
+                    if (m_kext_summary_header.version >= 2)
+                    {
+                        m_kext_summary_header.entry_size = data.GetU32(&offset);
+                    }
+                    else
+                    {
+                        // Versions less than 2 didn't have an entry size, it was hard coded
+                        m_kext_summary_header.entry_size = KERNEL_MODULE_ENTRY_SIZE_VERSION_1;
+                    }
+                    m_kext_summary_header.entry_count = data.GetU32(&offset);
                     return true;
                 }
             }
@@ -472,14 +501,14 @@ DynamicLoaderMacOSXKernel::ParseKextSummaries (const Address &kext_summary_addr,
 
     for (uint32_t i = 0; i < count; i++)
     {
-        if (!kext_summaries[i].UUIDValid())
+        DataExtractor data; // Load command data
+        if (ReadMachHeader (kext_summaries[i], &data))
         {
-            DataExtractor data; // Load command data
-            if (!ReadMachHeader (kext_summaries[i], &data))
-                continue;
-            
             ParseLoadCommands (data, kext_summaries[i]);
         }
+        
+        if (log)
+            kext_summaries[i].PutToLog (log.get());
     }
     bool return_value = AddModulesUsingImageInfos (kext_summaries);
     return return_value;
@@ -560,11 +589,14 @@ DynamicLoaderMacOSXKernel::ReadKextSummaries (const Address &kext_summary_addr,
                                                                  error);
     if (bytes_read == count)
     {
-        uint32_t offset = 0;
+        
         DataExtractor extractor (data.GetBytes(), data.GetByteSize(), endian, addr_size);
         uint32_t i=0;
-        for (; i < image_infos.size() && extractor.ValidOffsetForDataOfSize(offset, m_kext_summary_header.entry_size); ++i)
+        for (uint32_t kext_summary_offset = 0;
+             i < image_infos.size() && extractor.ValidOffsetForDataOfSize(kext_summary_offset, m_kext_summary_header.entry_size); 
+             ++i, kext_summary_offset += m_kext_summary_header.entry_size)
         {
+            uint32_t offset = kext_summary_offset;
             const void *name_data = extractor.GetData(&offset, KERNEL_MODULE_MAX_NAME);
             if (name_data == NULL)
                 break;
@@ -577,7 +609,14 @@ DynamicLoaderMacOSXKernel::ReadKextSummaries (const Address &kext_summary_addr,
             image_infos[i].version          = extractor.GetU64(&offset);
             image_infos[i].load_tag         = extractor.GetU32(&offset);
             image_infos[i].flags            = extractor.GetU32(&offset);
-            image_infos[i].reference_list   = extractor.GetU64(&offset);
+            if ((offset - kext_summary_offset) < m_kext_summary_header.entry_size)
+            {
+                image_infos[i].reference_list = extractor.GetU64(&offset);
+            }
+            else
+            {
+                image_infos[i].reference_list = 0;
+            }
         }
         if (i < image_infos.size())
             image_infos.resize(i);
@@ -601,7 +640,7 @@ DynamicLoaderMacOSXKernel::ReadAllKextSummaries ()
         if (m_kext_summary_header.entry_count > 0 && m_kext_summary_header_addr.IsValid())
         {
             Address summary_addr (m_kext_summary_header_addr);
-            summary_addr.Slide(16);
+            summary_addr.Slide(m_kext_summary_header.GetSize());
             if (!ParseKextSummaries (summary_addr, m_kext_summary_header.entry_count))
             {
                 m_kext_summaries.clear();
@@ -835,7 +874,7 @@ DynamicLoaderMacOSXKernel::OSKextLoadedKextSummary::PutToLog (Log *log) const
     {
         if (u)
         {
-            log->Printf("\t                           uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X name='%s' (UNLOADED)",
+            log->Printf("\tuuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X name=\"%s\" (UNLOADED)",
                         u[ 0], u[ 1], u[ 2], u[ 3],
                         u[ 4], u[ 5], u[ 6], u[ 7],
                         u[ 8], u[ 9], u[10], u[11],
@@ -843,23 +882,23 @@ DynamicLoaderMacOSXKernel::OSKextLoadedKextSummary::PutToLog (Log *log) const
                         name);
         }
         else
-            log->Printf("\t                           name='%s' (UNLOADED)", name);
+            log->Printf("\tname=\"%s\" (UNLOADED)", name);
     }
     else
     {
         if (u)
         {
-            log->Printf("\taddress=0x%16.16llx uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X name='%s'",
-                        address,
-                        u[ 0], u[ 1], u[ 2], u[ 3],
-                        u[ 4], u[ 5], u[ 6], u[ 7],
-                        u[ 8], u[ 9], u[10], u[11],
-                        u[12], u[13], u[14], u[15],
+            log->Printf("\taddr=0x%16.16llx size=0x%16.16llx version=0x%16.16llx load-tag=0x%8.8x flags=0x%8.8x ref-list=0x%16.16llx uuid=%2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X name=\"%s\"",
+                        address, size, version, load_tag, flags, reference_list,
+                        u[ 0], u[ 1], u[ 2], u[ 3], u[ 4], u[ 5], u[ 6], u[ 7],
+                        u[ 8], u[ 9], u[10], u[11], u[12], u[13], u[14], u[15],
                         name);
         }
         else
         {
-            log->Printf("\taddress=0x%16.16llx path='%s/%s'", address, name);
+            log->Printf("\t[0x%16.16llx - 0x%16.16llx) version=0x%16.16llx load-tag=0x%8.8x flags=0x%8.8x ref-list=0x%16.16llx name=\"%s\"",
+                        address, address+size, version, load_tag, flags, reference_list,
+                        name);
         }
         for (uint32_t i=0; i<segments.size(); ++i)
             segments[i].PutToLog(log, 0);
@@ -877,12 +916,11 @@ DynamicLoaderMacOSXKernel::PutToLog(Log *log) const
         return;
 
     Mutex::Locker locker(m_mutex);
-    log->Printf("gLoadedKextSummaries = 0x%16.16llx { version=%u, entry_size=%u, entry_count=%u, reserved=%u }",
+    log->Printf("gLoadedKextSummaries = 0x%16.16llx { version=%u, entry_size=%u, entry_count=%u }",
                 m_kext_summary_header_addr.GetFileAddress(),
                 m_kext_summary_header.version,
                 m_kext_summary_header.entry_size,
-                m_kext_summary_header.entry_count,
-                m_kext_summary_header.reserved);
+                m_kext_summary_header.entry_count);
 
     size_t i;
     const size_t count = m_kext_summaries.size();
