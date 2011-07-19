@@ -24,7 +24,7 @@
 #ifndef __FLOAT_H
 #define __FLOAT_H
 
-/* If we're on MinGW, fall baack to the system's float.h, which might have
+/* If we're on MinGW, fall back to the system's float.h, which might have
  * additional definitions provided for Windows.
  * For more details see http://msdn.microsoft.com/en-us/library/y0ybw9fy.aspx
  */
