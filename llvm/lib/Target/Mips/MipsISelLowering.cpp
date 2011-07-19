@@ -822,7 +822,7 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   unsigned MaskUpper = RegInfo.createVirtualRegister(RC);
   unsigned AndRes = RegInfo.createVirtualRegister(RC);
   unsigned BinOpRes = RegInfo.createVirtualRegister(RC);
-  unsigned MaskOldVal0 = RegInfo.createVirtualRegister(RC);
+  unsigned MaskedOldVal0 = RegInfo.createVirtualRegister(RC);
   unsigned StoreVal = RegInfo.createVirtualRegister(RC);
   unsigned MaskedOldVal1 = RegInfo.createVirtualRegister(RC);
   unsigned SrlRes = RegInfo.createVirtualRegister(RC);
@@ -915,10 +915,10 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
     BuildMI(BB, dl, TII->get(Mips::AND), NewVal).addReg(Incr2).addReg(Mask);
   }
     
-  BuildMI(BB, dl, TII->get(Mips::AND), MaskOldVal0)
+  BuildMI(BB, dl, TII->get(Mips::AND), MaskedOldVal0)
     .addReg(OldVal).addReg(Mask2);
   BuildMI(BB, dl, TII->get(Mips::OR), StoreVal)
-    .addReg(MaskOldVal0).addReg(NewVal);
+    .addReg(MaskedOldVal0).addReg(NewVal);
   BuildMI(BB, dl, TII->get(Mips::SC), Success)
     .addReg(StoreVal).addReg(AlignedAddr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
