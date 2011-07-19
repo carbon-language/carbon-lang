@@ -93,3 +93,9 @@
         @ Out of range immediate for MOV
         movw r9, 0x10000
 @ CHECK-ERRORS: error: invalid operand for instruction
+
+        @ Invalid 's' bit usage for MOVW
+        movs r6, #0xffff
+        movwseq r9, #0xffff
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: instruction 'movw' can not set flags, but 's' suffix specified

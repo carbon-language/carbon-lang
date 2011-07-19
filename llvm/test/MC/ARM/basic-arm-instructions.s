@@ -678,12 +678,31 @@ _func:
     mov r5, #0xff0000
     mov r6, #0xffff
     movw r9, #0xffff
+    movs r3, #7
+    moveq r4, #0xff0
+    movseq r5, #0xff0000
 
 @ CHECK: mov	r3, #7                  @ encoding: [0x07,0x30,0xa0,0xe3]
 @ CHECK: mov	r4, #4080               @ encoding: [0xff,0x4e,0xa0,0xe3]
 @ CHECK: mov	r5, #16711680           @ encoding: [0xff,0x58,0xa0,0xe3]
 @ CHECK: movw	r6, #65535              @ encoding: [0xff,0x6f,0x0f,0xe3]
 @ CHECK: movw	r9, #65535              @ encoding: [0xff,0x9f,0x0f,0xe3]
+@ CHECK: movs	r3, #7                  @ encoding: [0x07,0x30,0xb0,0xe3]
+@ CHECK: moveq	r4, #4080               @ encoding: [0xff,0x4e,0xa0,0x03]
+@ CHECK: movseq	r5, #16711680           @ encoding: [0xff,0x58,0xb0,0x03]
+
+@------------------------------------------------------------------------------
+@ MOV (register)
+@------------------------------------------------------------------------------
+        mov r2, r3
+        movs r2, r3
+        moveq r2, r3
+        movseq r2, r3
+
+@ CHECK: mov	r2, r3                  @ encoding: [0x03,0x20,0xa0,0xe1]
+@ CHECK: movs	r2, r3                  @ encoding: [0x03,0x20,0xb0,0xe1]
+@ CHECK: moveq	r2, r3                  @ encoding: [0x03,0x20,0xa0,0x01]
+@ CHECK: movseq	r2, r3                  @ encoding: [0x03,0x20,0xb0,0x01]
 
 @------------------------------------------------------------------------------
 @ STM*

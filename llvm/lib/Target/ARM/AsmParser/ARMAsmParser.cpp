@@ -79,6 +79,8 @@ class ARMAsmParser : public TargetAsmParser {
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out);
+  StringRef SplitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
+                          bool &CarrySetting, unsigned &ProcessorIMod);
   void GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
                              bool &CanAcceptPredicationCode);
 
@@ -1952,10 +1954,10 @@ ARMAsmParser::ApplyPrefixToExpr(const MCExpr *E,
 /// setting letters to form a canonical mnemonic and flags.
 //
 // FIXME: Would be nice to autogen this.
-static StringRef SplitMnemonic(StringRef Mnemonic,
-                               unsigned &PredicationCode,
-                               bool &CarrySetting,
-                               unsigned &ProcessorIMod) {
+StringRef ARMAsmParser::SplitMnemonic(StringRef Mnemonic,
+                                      unsigned &PredicationCode,
+                                      bool &CarrySetting,
+                                      unsigned &ProcessorIMod) {
   PredicationCode = ARMCC::AL;
   CarrySetting = false;
   ProcessorIMod = 0;
@@ -1963,19 +1965,19 @@ static StringRef SplitMnemonic(StringRef Mnemonic,
   // Ignore some mnemonics we know aren't predicated forms.
   //
   // FIXME: Would be nice to autogen this.
-  if (Mnemonic == "teq"   || Mnemonic == "vceq"  || Mnemonic == "movs"   ||
-      Mnemonic == "svc"   || Mnemonic == "mls"   || Mnemonic == "smmls"  ||
-      Mnemonic == "vcls"  || Mnemonic == "vmls"  || Mnemonic == "vnmls"  ||
-      Mnemonic == "vacge" || Mnemonic == "vcge"  || Mnemonic == "vclt"   ||
-      Mnemonic == "vacgt" || Mnemonic == "vcgt"  || Mnemonic == "vcle"   ||
-      Mnemonic == "smlal" || Mnemonic == "umaal" || Mnemonic == "umlal"  ||
-      Mnemonic == "vabal" || Mnemonic == "vmlal" || Mnemonic == "vpadal" ||
-      Mnemonic == "vqdmlal")
+  if ((Mnemonic == "movs" && isThumb()) ||
+      Mnemonic == "teq"   || Mnemonic == "vceq"   || Mnemonic == "svc"   ||
+      Mnemonic == "mls"   || Mnemonic == "smmls"  || Mnemonic == "vcls"  ||
+      Mnemonic == "vmls"  || Mnemonic == "vnmls"  || Mnemonic == "vacge" ||
+      Mnemonic == "vcge"  || Mnemonic == "vclt"   || Mnemonic == "vacgt" ||
+      Mnemonic == "vcgt"  || Mnemonic == "vcle"   || Mnemonic == "smlal" ||
+      Mnemonic == "umaal" || Mnemonic == "umlal"  || Mnemonic == "vabal" ||
+      Mnemonic == "vmlal" || Mnemonic == "vpadal" || Mnemonic == "vqdmlal")
     return Mnemonic;
 
   // First, split out any predication code. Ignore mnemonics we know aren't
   // predicated but do have a carry-set and so weren't caught above.
-  if (Mnemonic != "adcs" && Mnemonic != "bics") {
+  if (Mnemonic != "adcs" && Mnemonic != "bics" && Mnemonic != "movs") {
     unsigned CC = StringSwitch<unsigned>(Mnemonic.substr(Mnemonic.size()-2))
       .Case("eq", ARMCC::EQ)
       .Case("ne", ARMCC::NE)
@@ -2005,10 +2007,10 @@ static StringRef SplitMnemonic(StringRef Mnemonic,
   // the instructions we know end in 's'.
   if (Mnemonic.endswith("s") &&
       !(Mnemonic == "asrs" || Mnemonic == "cps" || Mnemonic == "mls" ||
-        Mnemonic == "movs" || Mnemonic == "mrs" || Mnemonic == "smmls" ||
-        Mnemonic == "vabs" || Mnemonic == "vcls" || Mnemonic == "vmls" ||
-        Mnemonic == "vmrs" || Mnemonic == "vnmls" || Mnemonic == "vqabs" ||
-        Mnemonic == "vrecps" || Mnemonic == "vrsqrts")) {
+        Mnemonic == "mrs" || Mnemonic == "smmls" || Mnemonic == "vabs" ||
+        Mnemonic == "vcls" || Mnemonic == "vmls" || Mnemonic == "vmrs" ||
+        Mnemonic == "vnmls" || Mnemonic == "vqabs" || Mnemonic == "vrecps" ||
+        Mnemonic == "vrsqrts" || (Mnemonic == "movs" && isThumb()))) {
     Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 1);
     CarrySetting = true;
   }
@@ -2056,8 +2058,8 @@ GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "cps" || Mnemonic == "mcr2" || Mnemonic == "it" ||
       Mnemonic == "mcrr2" || Mnemonic == "cbz" || Mnemonic == "cdp2" ||
       Mnemonic == "trap" || Mnemonic == "mrc2" || Mnemonic == "mrrc2" ||
-      Mnemonic == "dsb" || Mnemonic == "movs" || Mnemonic == "isb" ||
-      Mnemonic == "clrex" || Mnemonic.startswith("cps")) {
+      Mnemonic == "dsb" || Mnemonic == "isb" || Mnemonic == "clrex" ||
+      Mnemonic.startswith("cps") || (Mnemonic == "movs" && isThumb())) {
     CanAcceptPredicationCode = false;
   } else {
     CanAcceptPredicationCode = true;
