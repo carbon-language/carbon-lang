@@ -1963,18 +1963,14 @@ static StringRef SplitMnemonic(StringRef Mnemonic,
   // Ignore some mnemonics we know aren't predicated forms.
   //
   // FIXME: Would be nice to autogen this.
-  if (Mnemonic == "teq" || Mnemonic == "vceq" ||
-      Mnemonic == "movs" ||
-      Mnemonic == "svc" ||
-      (Mnemonic == "mls" || Mnemonic == "smmls" || Mnemonic == "vcls" ||
-       Mnemonic == "vmls" || Mnemonic == "vnmls") ||
-      Mnemonic == "vacge" || Mnemonic == "vcge" ||
-      Mnemonic == "vclt" ||
-      Mnemonic == "vacgt" || Mnemonic == "vcgt" ||
-      Mnemonic == "vcle" ||
-      (Mnemonic == "smlal" || Mnemonic == "umaal" || Mnemonic == "umlal" ||
-       Mnemonic == "vabal" || Mnemonic == "vmlal" || Mnemonic == "vpadal" ||
-       Mnemonic == "vqdmlal"))
+  if (Mnemonic == "teq"   || Mnemonic == "vceq"  || Mnemonic == "movs"   ||
+      Mnemonic == "svc"   || Mnemonic == "mls"   || Mnemonic == "smmls"  ||
+      Mnemonic == "vcls"  || Mnemonic == "vmls"  || Mnemonic == "vnmls"  ||
+      Mnemonic == "vacge" || Mnemonic == "vcge"  || Mnemonic == "vclt"   ||
+      Mnemonic == "vacgt" || Mnemonic == "vcgt"  || Mnemonic == "vcle"   ||
+      Mnemonic == "smlal" || Mnemonic == "umaal" || Mnemonic == "umlal"  ||
+      Mnemonic == "vabal" || Mnemonic == "vmlal" || Mnemonic == "vpadal" ||
+      Mnemonic == "vqdmlal")
     return Mnemonic;
 
   // First, split out any predication code. Ignore mnemonics we know aren't
