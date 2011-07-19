@@ -292,28 +292,6 @@ void FastISel::recomputeInsertPt() {
     ++FuncInfo.InsertPt;
 }
 
-/// recomputeDebugLocForMaterializedRegs - Recompute debug location for
-/// very first instruction in a basic block. All instructions emitted
-/// to materialize registers do not have location information, see
-/// enterLocalValueArea(), becase they may not be emited at the right
-/// location.
-void FastISel::recomputeDebugLocForMaterializedRegs() {
-  if (!getLastLocalValue())
-    return;
-  MachineInstr *First = FuncInfo.MBB->getFirstNonPHI();
-  if (!First->getDebugLoc().isUnknown())
-    return;
-
-  for (MachineBasicBlock::iterator I = FuncInfo.MBB->begin(),
-         E = FuncInfo.MBB->end(); I != E; ++I) {
-    DebugLoc DL = I->getDebugLoc();
-    if (!DL.isUnknown()) {
-      First->setDebugLoc(DL);
-      return;
-    }
-  }
-}
-
 FastISel::SavePoint FastISel::enterLocalValueArea() {
   MachineBasicBlock::iterator OldInsertPt = FuncInfo.InsertPt;
   DebugLoc OldDL = DL;
