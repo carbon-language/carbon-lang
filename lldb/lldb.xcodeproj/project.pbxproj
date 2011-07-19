@@ -367,6 +367,7 @@
 		26D265BC136B4269002EEE45 /* lldb-public.h in Headers */ = {isa = PBXBuildFile; fileRef = 26651A14133BEC76005B64B7 /* lldb-public.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */; };
 		26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */; };
+		26D7E45D13D5E30A007FD12B /* SocketAddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D7E45C13D5E30A007FD12B /* SocketAddress.cpp */; };
 		26DB3E161379E7AD0080DC73 /* ABIMacOSX_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E071379E7AD0080DC73 /* ABIMacOSX_arm.cpp */; };
 		26DB3E1C1379E7AD0080DC73 /* ABIMacOSX_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E0F1379E7AD0080DC73 /* ABIMacOSX_i386.cpp */; };
 		26DB3E1F1379E7AD0080DC73 /* ABISysV_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E131379E7AD0080DC73 /* ABISysV_x86_64.cpp */; };
@@ -1040,6 +1041,8 @@
 		26D5E160135BAEB0006EA0A7 /* OptionGroupArchitecture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupArchitecture.h; path = include/lldb/Interpreter/OptionGroupArchitecture.h; sourceTree = "<group>"; };
 		26D5E161135BB040006EA0A7 /* OptionGroupPlatform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupPlatform.h; path = include/lldb/Interpreter/OptionGroupPlatform.h; sourceTree = "<group>"; };
 		26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupPlatform.cpp; path = source/Interpreter/OptionGroupPlatform.cpp; sourceTree = "<group>"; };
+		26D7E45B13D5E2F9007FD12B /* SocketAddress.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SocketAddress.h; path = include/lldb/Host/SocketAddress.h; sourceTree = "<group>"; };
+		26D7E45C13D5E30A007FD12B /* SocketAddress.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SocketAddress.cpp; path = source/Host/common/SocketAddress.cpp; sourceTree = "<group>"; };
 		26D9FDC612F784E60003F2EE /* EmulateInstruction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulateInstruction.h; path = include/lldb/Core/EmulateInstruction.h; sourceTree = "<group>"; };
 		26D9FDC812F784FD0003F2EE /* EmulateInstruction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EmulateInstruction.cpp; path = source/Core/EmulateInstruction.cpp; sourceTree = "<group>"; };
 		26DAFD9711529BC7005A394E /* ExecutionContextScope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExecutionContextScope.h; path = include/lldb/Target/ExecutionContextScope.h; sourceTree = "<group>"; };
@@ -2293,6 +2296,8 @@
 				26BC7DD410F1B7D500F91463 /* Host.h */,
 				26BC7DD510F1B7D500F91463 /* Mutex.h */,
 				26BC7DD610F1B7D500F91463 /* Predicate.h */,
+				26D7E45B13D5E2F9007FD12B /* SocketAddress.h */,
+				26D7E45C13D5E30A007FD12B /* SocketAddress.cpp */,
 				2689B0A4113EE3CD00A4AEDB /* Symbols.h */,
 				268DA871130095D000C9483A /* Terminal.h */,
 				26B4E26E112F35F700AB3F64 /* TimeValue.h */,
@@ -3349,6 +3354,7 @@
 				265205AC13D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp in Sources */,
 				2628A4D513D4977900F5487A /* ThreadKDP.cpp in Sources */,
 				2676045A13D49D2300AB1B6A /* ProcessControl-mig.defs in Sources */,
+				26D7E45D13D5E30A007FD12B /* SocketAddress.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

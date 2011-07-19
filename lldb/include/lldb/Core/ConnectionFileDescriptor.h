@@ -19,6 +19,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Connection.h"
+#include "lldb/Host/SocketAddress.h"
 
 namespace lldb_private {
 
@@ -96,20 +97,11 @@ protected:
         eFDTypeSocketUDP    // Unconnected UDP socket requiring sendto/recvfrom
     } FDType;
     
-    typedef union sockaddr_tag
-    {
-        struct sockaddr         sa;
-        struct sockaddr_in      sa_ipv4;
-        struct sockaddr_in6     sa_ipv6;
-        struct sockaddr_storage sa_storage;
-    } sockaddr_t;
-    
-
     int m_fd_send;
     int m_fd_recv;
     FDType m_fd_send_type;
     FDType m_fd_recv_type;
-    sockaddr_t m_udp_send_sockaddr;
+    SocketAddress m_udp_send_sockaddr;
     bool m_should_close_fd; // True if this class should close the file descriptor when it goes away.
     uint32_t m_socket_timeout_usec;
     

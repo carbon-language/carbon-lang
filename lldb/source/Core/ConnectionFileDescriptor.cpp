@@ -71,11 +71,10 @@ ConnectionFileDescriptor::ConnectionFileDescriptor () :
     m_fd_recv (-1),
     m_fd_send_type (eFDTypeFile),
     m_fd_recv_type (eFDTypeFile),
+    m_udp_send_sockaddr (),
     m_should_close_fd (false), 
     m_socket_timeout_usec(0)
 {
-    memset (&m_udp_send_sockaddr, 0, sizeof(m_udp_send_sockaddr));
-    
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::ConnectionFileDescriptor ()", this);
@@ -87,10 +86,10 @@ ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
     m_fd_recv (fd),
     m_fd_send_type (eFDTypeFile),
     m_fd_recv_type (eFDTypeFile),
+    m_udp_send_sockaddr (),
     m_should_close_fd (owns_fd),
     m_socket_timeout_usec(0)
 {
-    memset (&m_udp_send_sockaddr, 0, sizeof(m_udp_send_sockaddr));
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::ConnectionFileDescriptor (fd = %i, owns_fd = %i)", this, fd, owns_fd);
@@ -285,8 +284,8 @@ ConnectionFileDescriptor::Read (void *dst,
         if (SetSocketReceiveTimeout (timeout_usec))
         {
             status = eConnectionStatusSuccess;
-            sockaddr_t from = m_udp_send_sockaddr;
-            socklen_t from_len = m_udp_send_sockaddr.sa.sa_len;
+            SocketAddress from (m_udp_send_sockaddr);
+            socklen_t from_len = m_udp_send_sockaddr.GetLength();
             bytes_read = ::recvfrom (m_fd_recv, dst, dst_len, 0, (struct sockaddr *)&from, &from_len);
         }
         break;
@@ -401,13 +400,13 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
             break;
             
         case eFDTypeSocketUDP:  // Unconnected UDP socket requiring sendto/recvfrom
-            assert (m_udp_send_sockaddr.sa_storage.ss_family != 0);
+            assert (m_udp_send_sockaddr.GetFamily() != 0);
             bytes_sent = ::sendto (m_fd_send, 
                                    src, 
                                    src_len, 
                                    0, 
-                                   &m_udp_send_sockaddr.sa, 
-                                   m_udp_send_sockaddr.sa.sa_len);
+                                   m_udp_send_sockaddr, 
+                                   m_udp_send_sockaddr.GetLength());
             break;
     }
 
@@ -896,10 +895,7 @@ ConnectionFileDescriptor::ConnectUDP (const char *host_and_port, Error *error_pt
         
         if (m_fd_send != -1)
         {
-            ::memset (&m_udp_send_sockaddr, 0, sizeof(m_udp_send_sockaddr));
-            ::memcpy (&m_udp_send_sockaddr, 
-                      service_info_ptr->ai_addr, 
-                      service_info_ptr->ai_addrlen);
+            m_udp_send_sockaddr = service_info_ptr;
             break;
         }
         else
@@ -977,18 +973,12 @@ in_port_t
 ConnectionFileDescriptor::GetSocketPort (int fd)
 {
     // We bound to port zero, so we need to figure out which port we actually bound to
-    sockaddr_t sock_addr;
-    socklen_t sock_addr_len = sizeof (sock_addr);
-    if (::getsockname (fd, &sock_addr.sa, &sock_addr_len) == 0)
-    {
-        switch (sock_addr.sa.sa_family)
-        {
-            case AF_INET:   return sock_addr.sa_ipv4.sin_port;
-            case AF_INET6:  return sock_addr.sa_ipv6.sin6_port;
-        }
-    }
-    return 0;
+    SocketAddress sock_addr;
+    socklen_t sock_addr_len = sock_addr.GetMaxLength ();
+    if (::getsockname (fd, sock_addr, &sock_addr_len) == 0)
+        return sock_addr.GetPort ();
 
+    return 0;
 }
 
 // If the read file descriptor is a socket, then return
