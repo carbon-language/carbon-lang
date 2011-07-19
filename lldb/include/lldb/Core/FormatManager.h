@@ -77,19 +77,20 @@ class FormatNavigator;
 template<typename KeyType, typename ValueType>
 class FormatMap
 {
-private:
-    typedef typename ValueType::SharedPointer ValueSP;
-    Mutex m_map_mutex;
-    IFormatChangeListener* listener;
-    
     friend class FormatNavigator<KeyType, ValueType>;
     friend class FormatManager;
-    
-public:
-    typedef std::map<KeyType, ValueSP> MapType;
 
-private:    
-    MapType m_map;
+public:
+
+    typedef typename ValueType::SharedPointer ValueSP;
+    typedef std::map<KeyType, ValueSP> MapType;
+    typedef typename MapType::iterator MapIterator;
+    typedef bool(*CallbackType)(void*, KeyType, const ValueSP&);
+    
+private:
+    MapType m_map;    
+    Mutex m_map_mutex;
+    IFormatChangeListener* listener;
     
     MapType& map()
     {
@@ -102,9 +103,6 @@ private:
     }
 
 public:
-
-    typedef typename MapType::iterator MapIterator;
-    typedef bool(*CallbackType)(void*, KeyType, const ValueSP&);
     
     FormatMap(IFormatChangeListener* lst = NULL) :
     m_map(),

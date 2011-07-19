@@ -72,6 +72,11 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_dynamic_value (NULL),
     m_deref_valobj(NULL),
     m_format (eFormatDefault),
+    m_last_format_mgr_revision(0),
+    m_last_summary_format(),
+    m_forced_summary_format(),
+    m_last_value_format(),
+    m_user_id_of_forced_summary(0),
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
@@ -80,10 +85,6 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_is_deref_of_parent (false),
     m_is_array_item_for_pointer(false),
     m_is_bitfield_for_scalar(false),
-    m_last_format_mgr_revision(0),
-    m_last_value_format(),
-    m_last_summary_format(),
-    m_forced_summary_format(),
     m_dump_printable_counter(0)
 {
     m_manager->ManageObject(this);
@@ -111,6 +112,11 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_dynamic_value (NULL),
     m_deref_valobj(NULL),
     m_format (eFormatDefault),
+    m_last_format_mgr_revision(0),
+    m_last_summary_format(),
+    m_forced_summary_format(),
+    m_last_value_format(),
+    m_user_id_of_forced_summary(0),
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
@@ -119,10 +125,6 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_is_deref_of_parent (false),
     m_is_array_item_for_pointer(false),
     m_is_bitfield_for_scalar(false),
-    m_last_format_mgr_revision(0),
-    m_last_value_format(),
-    m_last_summary_format(),
-    m_forced_summary_format(),
     m_dump_printable_counter(0)
 {
     m_manager = new ValueObjectManager();
