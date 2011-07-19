@@ -752,15 +752,15 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                 // able to find the child member
                                 break;
                             }
-                            else if(end && *end == '-')
+                            else if (end && *end == '-')
                             {
                                 // this is most probably a BitField, let's take a look
                                 char *real_end = NULL;
                                 long final_index = ::strtol (end+1, &real_end, 0);
-                                if(real_end && *real_end == ']')
+                                if (real_end && *real_end == ']')
                                 {
                                     // if the format given is [high-low], swap range
-                                    if(child_index > final_index)
+                                    if (child_index > final_index)
                                     {
                                         long temp = child_index;
                                         child_index = final_index;

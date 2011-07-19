@@ -325,7 +325,7 @@ InstructionLLVM::Dump
 
                 if (show_token)
                 {
-                    if(EDGetTokenString(&tokenStr, token))
+                    if (EDGetTokenString(&tokenStr, token))
                     {
                         printTokenized = false;
                         break;

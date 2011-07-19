@@ -492,16 +492,14 @@ namespace lldb {
     
     // this enum determines how a FormatNavigator picked a specific format for a datatype
     // these values can be used together (e.g. eFormatterStrippedPointerReference | eFormatterNavigatedBaseClasses
-    // if you went from DerivedType& to BaseType to find a valid format). the priority rules are embedded in the
-    // ordering of these values (i.e. if you want to make a choice look really bad, give it a high value in this
-    // enum). eFormatterDirectChoice should always be left at 0 because it's our favorite choice all the time
+    // if you went from DerivedType& to BaseType to find a valid format)
     typedef enum FormatterChoiceCriterion
     {
         eFormatterDirectChoice =                  0x00000000,
         eFormatterStrippedPointerReference =      0x00000001,
         eFormatterNavigatedTypedefs =             0x00000002,
         eFormatterNavigatedBaseClasses =          0x00000004,
-        eFormatterRegularExpressionSummary =      0x00000004
+        eFormatterRegularExpressionSummary =      0x00000008
     } FormatterChoiceCriterion;
     
 

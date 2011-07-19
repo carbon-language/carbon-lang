@@ -39,8 +39,6 @@ public:
     bool m_one_liner;
     bool m_regex;
     
-    bool m_is_system;
-    
     ConstString* m_name;
     
     const char* m_category;
@@ -52,7 +50,6 @@ public:
                      bool novl,
                      bool onel,
                      bool regx,
-                     bool syst,
                      ConstString* name,
                      const char* catg) :
     m_skip_pointers(sptr),
@@ -64,7 +61,6 @@ public:
     m_no_value(novl),
     m_one_liner(onel),
     m_regex(regx),
-    m_is_system(syst),
     m_name(name),
     m_category(catg)
     {
@@ -130,7 +126,6 @@ private:
         std::string m_python_script;
         std::string m_python_function;
         bool m_is_add_script;
-        bool m_is_system;
         const char* m_category;
     };
     

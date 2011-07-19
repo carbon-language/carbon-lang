@@ -45,13 +45,18 @@ class DataFormatterTestCase(TestBase):
                        'stop reason = breakpoint'])
 
         # This is the function to remove the custom formats in order to have a
-        # clean slate for the next test case.
+        # clean slate for the next test case (most of these categories do not
+        # exist anymore, but we just make sure we delete all of them)
         def cleanup():
             self.runCmd('type format clear', check=False)
             self.runCmd('type summary clear', check=False)
             self.runCmd('type category delete Category1', check=False)
             self.runCmd('type category delete Category2', check=False)
             self.runCmd('type category delete NewCategory', check=False)
+            self.runCmd("type category delete CircleCategory", check=False)
+            self.runCmd("type category delete RectangleStarCategory", check=False)
+            self.runCmd("type category delete BaseCategory", check=False)
+
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
@@ -99,8 +104,8 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("type summary add -f \"Width = ${var.w}, Height = ${var.h}\" Rectangle -w Category1")
         self.runCmd("type summary add -s \"return 'Area = ' + str( int(valobj.GetChildMemberWithName('w').GetValue()) * int(valobj.GetChildMemberWithName('h').GetValue()) );\" Rectangle -w Category2")
 
-        self.runCmd("type category enable Category2")
-        self.runCmd("type category enable Category1")
+        # check that enable A B is the same as enable B enable A
+        self.runCmd("type category enable Category1 Category2")
         
         self.expect("frame variable r1 r2 r3",
                     substrs = ['r1 = Width = ',
@@ -149,8 +154,7 @@ class DataFormatterTestCase(TestBase):
                                'r3 = Width = '])
 
         # Now add another summary to another category and switch back and forth
-        self.runCmd("type category delete Category1")
-        self.runCmd("type category delete Category2")
+        self.runCmd("type category delete Category1 Category2")
 
         self.runCmd("type summary add Rectangle -f \"Category1\" -w Category1")
         self.runCmd("type summary add Rectangle -f \"Category2\" -w Category2")
@@ -170,7 +174,7 @@ class DataFormatterTestCase(TestBase):
                                'r2 = Category2',
                                'r3 = Category2'])
 
-        self.runCmd("type category disable Category1")
+        # Check that re-enabling an enabled category works
         self.runCmd("type category enable Category1")
 
         self.expect("frame variable r1 r2 r3",
@@ -244,6 +248,79 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['c1 = summary2',
                                'c2 = summary2',
                                'c3 = summary2'])
+
+        # Check that our order of priority works. Start by clearing categories
+        self.runCmd("type category delete Category1")
+
+        self.runCmd("type summary add Shape -w BaseCategory -f \"AShape\"")
+        self.runCmd("type category enable BaseCategory")
+
+        self.expect("frame variable c1 r1 c_ptr r_ptr",
+            substrs = ['AShape',
+                       'AShape',
+                       'AShape',
+                       'AShape'])
+    
+        self.runCmd("type summary add Circle -w CircleCategory -f \"ACircle\"")
+        self.runCmd("type summary add Rectangle -w RectangleCategory -f \"ARectangle\"")
+        self.runCmd("type category enable CircleCategory")
+
+        self.expect("frame variable c1 r1 c_ptr r_ptr",
+                    substrs = ['ACircle',
+                               'AShape',
+                               'ACircle',
+                               'AShape'])
+
+        self.runCmd("type summary add \"Rectangle *\" -w RectangleStarCategory -f \"ARectangleStar\"")
+        self.runCmd("type category enable RectangleStarCategory")
+
+        self.expect("frame variable c1 r1 c_ptr r_ptr",
+                substrs = ['ACircle',
+                           'AShape',
+                           'ACircle',
+                           'ARectangleStar'])
+
+        self.runCmd("type category enable RectangleCategory")
+
+        self.expect("frame variable c1 r1 c_ptr r_ptr",
+                    substrs = ['ACircle',
+                               'ARectangle',
+                               'ACircle',
+                               'ARectangleStar'])
+
+        # Check that abruptly deleting an enabled category does not crash us
+        self.runCmd("type category delete RectangleCategory")
+
+        self.expect("frame variable c1 r1 c_ptr r_ptr",
+                    substrs = ['ACircle',
+                               'AShape',
+                               'ACircle',
+                               'ARectangleStar'])
+        
+        # check that list commands work
+        self.expect("type category list",
+                substrs = ['RectangleStarCategory',
+                           'is enabled'])
+
+        self.expect("type summary list",
+                substrs = ['ARectangleStar'])
+
+        # Disable a category and check that it fallsback
+        self.runCmd("type category disable CircleCategory")
+        
+        # check that list commands work
+        self.expect("type category list",
+                    substrs = ['CircleCategory',
+                               'not enabled'])
+
+        self.expect("frame variable c1 r1 c_ptr r_ptr",
+                    substrs = ['AShape',
+                               'AShape',
+                               'AShape',
+                               'ARectangleStar'])
+
+        # Now delete all categories
+        self.runCmd("type category delete CircleCategory RectangleStarCategory BaseCategory")
 
 if __name__ == '__main__':
     import atexit

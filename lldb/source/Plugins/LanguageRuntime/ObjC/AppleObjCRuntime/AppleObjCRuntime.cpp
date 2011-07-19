@@ -167,7 +167,7 @@ AppleObjCRuntime::GetPrintForDebuggerAddr()
         SymbolContextList contexts;
         SymbolContext context;
         
-        if((!modules.FindSymbolsWithNameAndType(ConstString ("_NSPrintForDebugger"), eSymbolTypeCode, contexts)) &&
+        if ((!modules.FindSymbolsWithNameAndType(ConstString ("_NSPrintForDebugger"), eSymbolTypeCode, contexts)) &&
            (!modules.FindSymbolsWithNameAndType(ConstString ("_CFPrintForDebugger"), eSymbolTypeCode, contexts)))
             return NULL;
         

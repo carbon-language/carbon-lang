@@ -179,7 +179,7 @@ ClangUserExpression::Parse (Stream &error_stream,
         
         m_needs_object_ptr = true;
     }
-    else if(m_objectivec)
+    else if (m_objectivec)
     {
         const char *function_name = FunctionName();
         

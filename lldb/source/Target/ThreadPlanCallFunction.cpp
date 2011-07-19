@@ -339,7 +339,7 @@ ThreadPlanCallFunction::PlanExplainsStop ()
     
     // If our subplan knows why we stopped, even if it's done (which would forward the question to us)
     // we answer yes.
-    if(m_subplan_sp.get() != NULL && m_subplan_sp->PlanExplainsStop())
+    if (m_subplan_sp.get() != NULL && m_subplan_sp->PlanExplainsStop())
         return true;
     
     // Check if the breakpoint is one of ours.

@@ -754,7 +754,7 @@ DataExtractor::GetMaxU64Bitfield (uint32_t *offset_ptr, uint32_t size, uint32_t 
         if (bitfield_bit_offset > 0)
             uval64 >>= bitfield_bit_offset;
         uint64_t bitfield_mask = ((1ul << bitfield_bit_size) - 1);
-        if(!bitfield_mask && bitfield_bit_offset == 0 && bitfield_bit_size == 64)
+        if (!bitfield_mask && bitfield_bit_offset == 0 && bitfield_bit_size == 64)
             return uval64;
         uval64 &= bitfield_mask;
     }

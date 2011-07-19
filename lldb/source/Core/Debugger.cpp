@@ -1755,12 +1755,6 @@ Debugger::Formatting::ValueFormats::GetCount()
     return GetFormatManager().Value().GetCount();
 }
 
-lldb::FormatCategorySP
-Debugger::Formatting::SummaryFormats(const char* category_name)
-{
-    return GetFormatManager().Category(category_name);
-}
-
 bool
 Debugger::Formatting::GetSummaryFormat(ValueObject& vobj,
                                        lldb::SummaryFormatSP& entry)
@@ -1804,15 +1798,10 @@ void
 Debugger::Formatting::Categories::Enable(ConstString& category)
 {
     if (GetFormatManager().Category(category.GetCString())->IsEnabled() == false)
-    {
-        //GetFormatManager().Category(category.GetCString())->Enable();
         GetFormatManager().EnableCategory(category.GetCString());
-    }
     else
     {
-        //GetFormatManager().Category(category.GetCString())->Disable();
         GetFormatManager().DisableCategory(category.GetCString());
-        //GetFormatManager().Category(category.GetCString())->Enable();
         GetFormatManager().EnableCategory(category.GetCString());
     }
 }
@@ -1821,10 +1810,7 @@ void
 Debugger::Formatting::Categories::Disable(ConstString& category)
 {
     if (GetFormatManager().Category(category.GetCString())->IsEnabled() == true)
-    {
-        //GetFormatManager().Category(category.GetCString())->Disable();
         GetFormatManager().DisableCategory(category.GetCString());
-    }
 }
 
 void

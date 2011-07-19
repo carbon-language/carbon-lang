@@ -43,6 +43,7 @@ namespace std
 #include "lldb/lldb-enumerations.h"
 
 #include "lldb/Core/Communication.h"
+#include "lldb/Core/FormatClasses.h"
 #include "lldb/Core/InputReaderStack.h"
 #include "lldb/Core/Listener.h"
 #include "lldb/Core/RegularExpression.h"
@@ -69,380 +70,10 @@ public:
     ~IFormatChangeListener() {}
     
 };
-
-struct ValueFormat
-{
-    bool m_cascades;
-    bool m_skip_pointers;
-    bool m_skip_references;
-    lldb::Format m_format;
-    ValueFormat (lldb::Format f = lldb::eFormatInvalid,
-                 bool casc = false,
-                 bool skipptr = false,
-                 bool skipref = false) : 
-    m_cascades(casc),
-    m_skip_pointers(skipptr),
-    m_skip_references(skipref),
-    m_format (f)
-    {
-    }
     
-    typedef lldb::SharedPtr<ValueFormat>::Type SharedPointer;
-    typedef bool(*ValueCallback)(void*, const char*, const ValueFormat::SharedPointer&);
-    
-    ~ValueFormat()
-    {
-    }
-    
-    bool
-    Cascades()
-    {
-        return m_cascades;
-    }
-    bool
-    SkipsPointers()
-    {
-        return m_skip_pointers;
-    }
-    bool
-    SkipsReferences()
-    {
-        return m_skip_references;
-    }
-    
-    lldb::Format
-    GetFormat()
-    {
-        return m_format;
-    }
-    
-    std::string
-    FormatObject(lldb::ValueObjectSP object)
-    {
-        if (!object.get())
-            return "NULL";
-        
-        StreamString sstr;
-        
-        if (ClangASTType::DumpTypeValue (object->GetClangAST(),            // The clang AST
-                                         object->GetClangType(),           // The clang type to display
-                                         &sstr,
-                                         m_format,                          // Format to display this type with
-                                         object->GetDataExtractor(),       // Data to extract from
-                                         0,                                // Byte offset into "data"
-                                         object->GetByteSize(),            // Byte size of item in "data"
-                                         object->GetBitfieldBitSize(),     // Bitfield bit size
-                                         object->GetBitfieldBitOffset()))  // Bitfield bit offset
-            return (sstr.GetString());
-        else
-        {
-            return ("unsufficient data for value");
-        }
-        
-    }
-    
-};
-
-struct SummaryFormat
-{
-    bool m_cascades;
-    bool m_skip_pointers;
-    bool m_skip_references;
-    bool m_dont_show_children;
-    bool m_dont_show_value;
-    bool m_show_members_oneliner;
-    bool m_is_system;
-    
-    uint32_t m_priority;
-    
-    SummaryFormat(bool casc = false,
-                  bool skipptr = false,
-                  bool skipref = false,
-                  bool nochildren = true,
-                  bool novalue = true,
-                  bool oneliner = false,
-                  bool system = false,
-                  uint32_t priority = 2) :
-    m_cascades(casc),
-    m_skip_pointers(skipptr),
-    m_skip_references(skipref),
-    m_dont_show_children(nochildren),
-    m_dont_show_value(novalue),
-    m_show_members_oneliner(oneliner),
-    m_is_system(system),
-    m_priority(priority)
-    {
-    }
-    
-    bool
-    Cascades()
-    {
-        return m_cascades;
-    }
-    bool
-    SkipsPointers()
-    {
-        return m_skip_pointers;
-    }
-    bool
-    SkipsReferences()
-    {
-        return m_skip_references;
-    }
-    
-    bool
-    DoesPrintChildren() const
-    {
-        return !m_dont_show_children;
-    }
-    
-    bool
-    DoesPrintValue() const
-    {
-        return !m_dont_show_value;
-    }
-    
-    bool
-    IsOneliner() const
-    {
-        return m_show_members_oneliner;
-    }
-    
-    bool
-    IsSystem() const
-    {
-        return m_is_system;
-    }
-    
-    uint32_t
-    GetPriority() const
-    {
-        return m_priority;
-    }
-    
-    void
-    SetPriority(uint32_t newprio)
-    {
-        m_priority = newprio;
-    }
-    
-    virtual
-    ~SummaryFormat()
-    {
-    }
-    
-    virtual std::string
-    FormatObject(lldb::ValueObjectSP object) = 0;
-    
-    virtual std::string
-    GetDescription() = 0;
-    
-    typedef lldb::SharedPtr<SummaryFormat>::Type SharedPointer;
-    typedef bool(*SummaryCallback)(void*, const char*, const SummaryFormat::SharedPointer&);
-    typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const SummaryFormat::SharedPointer&);
-    
-};
-
-// simple string-based summaries, using ${var to show data
-struct StringSummaryFormat : public SummaryFormat
-{
-    std::string m_format;
-    
-    StringSummaryFormat(bool casc = false,
-                        bool skipptr = false,
-                        bool skipref = false,
-                        bool nochildren = true,
-                        bool novalue = true,
-                        bool oneliner = false,
-                        bool system = false,
-                        std::string f = "",
-                        uint32_t priority = 2) :
-    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner,system, priority),
-    m_format(f)
-    {
-    }
-    
-    std::string
-    GetFormat()
-    {
-        return m_format;
-    }
-    
-    virtual
-    ~StringSummaryFormat()
-    {
-    }
-    
-    virtual std::string
-    FormatObject(lldb::ValueObjectSP object);
-    
-    virtual std::string
-    GetDescription()
-    {
-        StreamString sstr;
-        sstr.Printf ("`%s`%s%s%s%s%s%s%s",      m_format.c_str(),
-                                                m_cascades ? "" : " (not cascading)",
-                                                m_dont_show_children ? "" : " (show children)",
-                                                m_dont_show_value ? " (hide value)" : "",
-                                                m_show_members_oneliner ? " (one-line printout)" : "",
-                                                m_skip_pointers ? " (skip pointers)" : "",
-                                                m_skip_references ? " (skip references)" : "",
-                                                m_is_system ? " (system)" : "");
-        return sstr.GetString();
-    }
-        
-};
-    
-// Python-based summaries, running script code to show data
-struct ScriptSummaryFormat : public SummaryFormat
-{
-    std::string m_function_name;
-    std::string m_python_script;
-    
-    ScriptSummaryFormat(bool casc = false,
-                        bool skipptr = false,
-                        bool skipref = false,
-                        bool nochildren = true,
-                        bool novalue = true,
-                        bool oneliner = false,
-                        bool system = false,
-                        std::string fname = "",
-                        std::string pscri = "",
-                        uint32_t priority = 2) :
-    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner,system,priority),
-    m_function_name(fname),
-    m_python_script(pscri)
-    {
-    }
-    
-    std::string
-    GetFunctionName()
-    {
-        return m_function_name;
-    }
-    
-    std::string
-    GetPythonScript()
-    {
-        return m_python_script;
-    }
-    
-    virtual
-    ~ScriptSummaryFormat()
-    {
-    }
-    
-    virtual std::string
-    FormatObject(lldb::ValueObjectSP object)
-    {
-        return std::string(ScriptInterpreterPython::CallPythonScriptFunction(m_function_name.c_str(),
-                                                                             object).c_str());
-    }
-    
-    virtual std::string
-    GetDescription()
-    {
-        StreamString sstr;
-        sstr.Printf ("%s%s%s%s%s%s%s\n%s",       m_cascades ? "" : " (not cascading)",
-                                                 m_dont_show_children ? "" : " (show children)",
-                                                 m_dont_show_value ? " (hide value)" : "",
-                                                 m_show_members_oneliner ? " (one-line printout)" : "",
-                                                 m_skip_pointers ? " (skip pointers)" : "",
-                                                 m_skip_references ? " (skip references)" : "",
-                                                 m_is_system ? " (system)" : "",
-                                                 m_python_script.c_str());
-        return sstr.GetString();
-
-    }
-        
-    typedef lldb::SharedPtr<ScriptSummaryFormat>::Type SharedPointer;
-
-};
-    
-/*struct SummaryFormat
-{
-    std::string m_format;
-    bool m_dont_show_children;
-    bool m_dont_show_value;
-    bool m_show_members_oneliner;
-    bool m_cascades;
-    bool m_skip_references;
-    bool m_skip_pointers;
-    SummaryFormat(std::string f = "",
-                  bool c = false,
-                  bool nochildren = true,
-                  bool novalue = true,
-                  bool oneliner = false,
-                  bool skipptr = false,
-                  bool skipref = false) :
-    m_format(f),
-    m_dont_show_children(nochildren),
-    m_dont_show_value(novalue),
-    m_show_members_oneliner(oneliner),
-    m_cascades(c),
-    m_skip_references(skipref),
-    m_skip_pointers(skipptr)
-    {
-    }
-    
-    bool
-    DoesPrintChildren() const
-    {
-        return !m_dont_show_children;
-    }
-    
-    bool
-    DoesPrintValue() const
-    {
-        return !m_dont_show_value;
-    }
-    
-    bool
-    IsOneliner() const
-    {
-        return m_show_members_oneliner;
-    }
-    
-    typedef lldb::SharedPtr<SummaryFormat>::Type SharedPointer;
-    typedef bool(*SummaryCallback)(void*, const char*, const SummaryFormat::SharedPointer&);
-    typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const SummaryFormat::SharedPointer&);
-    
-};
-    
-struct ScriptFormat
-{
-    std::string m_function_name;
-    std::string m_python_script;
-    bool m_cascades;
-    bool m_skip_references;
-    bool m_skip_pointers;
-    ScriptFormat (std::string n,
-                  std::string s = "",
-                  bool c = false,
-                  bool skipptr = false,
-                  bool skipref = false) : 
-    m_function_name (n),
-    m_python_script(s),
-    m_cascades (c),
-    m_skip_references(skipref),
-    m_skip_pointers(skipptr)
-    {
-    }
-    
-    typedef lldb::SharedPtr<ScriptFormat>::Type SharedPointer;
-    typedef bool(*ScriptCallback)(void*, const char*, const ScriptFormat::SharedPointer&);
-    
-    ~ScriptFormat()
-    {
-    }
-    
-};*/
-
 template<typename KeyType, typename ValueType>
 class FormatNavigator;
-    
-class FormatManager;
-    
+
 template<typename KeyType, typename ValueType>
 class FormatMap
 {
@@ -500,7 +131,7 @@ public:
         if (iter == m_map.end())
             return false;
         m_map.erase(name);
-        if(listener)
+        if (listener)
             listener->Changed();
         return true;
     }
@@ -510,7 +141,7 @@ public:
     {
         Mutex::Locker(m_map_mutex);
         m_map.clear();
-        if(listener)
+        if (listener)
             listener->Changed();
     }
     
@@ -536,7 +167,7 @@ public:
             for (pos = m_map.begin(); pos != end; pos++)
             {
                 KeyType type = pos->first;
-                if(!callback(param, type, pos->second))
+                if (!callback(param, type, pos->second))
                     break;
             }
         }
@@ -549,8 +180,6 @@ public:
     }
     
 };
-
-class FormatCategory;
     
 template<typename KeyType, typename ValueType>
 class FormatNavigator
@@ -650,7 +279,7 @@ private:
         if (!typePtr)
             return false;
         ConstString name(ClangASTType::GetTypeNameForQualType(type).c_str());
-        if(vobj.GetBitfieldBitSize() > 0)
+        if (vobj.GetBitfieldBitSize() > 0)
         {
             // for bitfields, append size to the typename so one can custom format them
             StreamString sstring;
@@ -687,7 +316,7 @@ private:
              */
             Error error;
             ValueObject* target = vobj.Dereference(error).get();
-            if(error.Fail() || !target)
+            if (error.Fail() || !target)
                 return false;
             if (Get(*target, typePtr->getPointeeType(), entry, reason) && !entry->m_skip_pointers)
             {
@@ -703,12 +332,12 @@ private:
             if (ClangASTContext::GetCompleteType(ast, vobj.GetClangType()) && !objc_class_type->isObjCId())
             {
                 clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
-                if(class_interface_decl)
+                if (class_interface_decl)
                 {
                     //printf("down here\n");
                     clang::ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
                     //printf("one further step and we're there...\n");
-                    if(superclass_interface_decl)
+                    if (superclass_interface_decl)
                     {
                         //printf("the end is here\n");
                         clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
@@ -732,12 +361,12 @@ private:
                 if (record->hasDefinition())
                 {
                     clang::CXXRecordDecl::base_class_iterator pos,end;
-                    if( record->getNumBases() > 0)
+                    if (record->getNumBases() > 0)
                     {
                         end = record->bases_end();
                         for (pos = record->bases_begin(); pos != end; pos++)
                         {
-                            if((Get(vobj, pos->getType(), entry, reason)) && entry->m_cascades)
+                            if ((Get(vobj, pos->getType(), entry, reason)) && entry->m_cascades)
                             {
                                 reason |= lldb::eFormatterNavigatedBaseClasses;
                                 return true;
@@ -749,7 +378,7 @@ private:
                         end = record->vbases_end();
                         for (pos = record->vbases_begin(); pos != end; pos++)
                         {
-                            if((Get(vobj, pos->getType(), entry, reason)) && entry->m_cascades)
+                            if ((Get(vobj, pos->getType(), entry, reason)) && entry->m_cascades)
                             {
                                 reason |= lldb::eFormatterNavigatedBaseClasses;
                                 return true;
@@ -781,6 +410,8 @@ template<>
 bool
 FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Delete(const char* type);
 
+class CategoryMap;
+    
 class FormatCategory
 {
 private:
@@ -798,6 +429,23 @@ private:
     IFormatChangeListener* m_change_listener;
     
     Mutex m_mutex;
+    
+    void
+    Enable(bool value = true)
+    {
+        Mutex::Locker(m_mutex);
+        m_enabled = value;        
+        if (m_change_listener)
+            m_change_listener->Changed();
+    }
+    
+    void
+    Disable()
+    {
+        Enable(false);
+    }
+    
+    friend class CategoryMap;
     
 public:
     
@@ -829,22 +477,7 @@ public:
     {
         return m_enabled;
     }
-    
-    void
-    Enable(bool value = true)
-    {
-        Mutex::Locker(m_mutex);
-        m_enabled = value;        
-        if(m_change_listener)
-            m_change_listener->Changed();
-    }
-    
-    void
-    Disable()
-    {
-        Enable(false);
-    }
-    
+        
     bool
     Get(ValueObject& vobj,
         lldb::SummaryFormatSP& entry,
@@ -856,7 +489,7 @@ public:
             return true;
         bool regex = RegexSummary()->Get(vobj, entry, reason);
         if (regex && reason)
-            *reason |= lldb::eFormatterRegularExpressionSummary; // penalize regex summaries over normal ones
+            *reason |= lldb::eFormatterRegularExpressionSummary;
         return regex;
     }
     
@@ -876,144 +509,93 @@ public:
         return (del_sum || del_rex);
     }
     
-    void
-    ChooseAsPreferential(const char* name);
-    
     typedef lldb::SharedPtr<FormatCategory>::Type SharedPointer;
 };
 
-class FormatManager : public IFormatChangeListener
+class CategoryMap
 {
 private:
-    
-    typedef FormatNavigator<const char*, ValueFormat> ValueNavigator;
-
-    typedef FormatMap<const char*, FormatCategory> CategoryMap;
-
-    typedef ValueNavigator::MapType ValueMap;
-    typedef FormatMap<const char*, SummaryFormat> NamedSummariesMap;
-    
+    typedef const char* KeyType;
+    typedef FormatCategory ValueType;
+    typedef ValueType::SharedPointer ValueSP;
     typedef std::list<FormatCategory::SharedPointer> ActiveCategoriesList;
-    
     typedef ActiveCategoriesList::iterator ActiveCategoriesIterator;
     
-    ValueNavigator m_value_nav;
-    NamedSummariesMap m_named_summaries_map;
-    uint32_t m_last_revision;
-    CategoryMap m_categories_map;
-    ActiveCategoriesList m_active_categories;
-
-    const char* m_default_category_name;
-    const char* m_system_category_name;
-        
-    typedef CategoryMap::MapType::iterator CategoryMapIterator;
+    Mutex m_map_mutex;
+    IFormatChangeListener* listener;
     
-    bool
-    Get_ExactMatch(ValueObject& vobj,
-                   lldb::SummaryFormatSP& entry)
+    
+    friend class FormatNavigator<KeyType, ValueType>;
+    friend class FormatManager;
+    
+public:
+    typedef std::map<KeyType, ValueSP> MapType;
+    
+private:    
+    MapType m_map;
+    ActiveCategoriesList m_active_categories;
+    
+    MapType& map()
     {
-        ActiveCategoriesIterator begin, end = m_active_categories.end();
-        
-        SummaryFormat::SharedPointer current_category_pick;
-        uint32_t reason_to_pick_current;
-        
-        for (begin = m_active_categories.begin(); begin != end; begin++)
-        {
-            FormatCategory::SharedPointer category = *begin;
-            if ( category->Get(vobj, current_category_pick, &reason_to_pick_current) && reason_to_pick_current == lldb::eFormatterDirectChoice )
-            {
-                entry = SummaryFormat::SharedPointer(current_category_pick);
-                return true;
-            }
-        }
-        return false;
+        return m_map;
     }
-        
-    bool
-    Get_AnyMatch(ValueObject& vobj,
-                 lldb::SummaryFormatSP& entry)
+    
+    ActiveCategoriesList& active_list()
     {
-        ActiveCategoriesIterator begin, end = m_active_categories.end();
-        
-        SummaryFormat::SharedPointer current_category_pick;
-        
-        for (begin = m_active_categories.begin(); begin != end; begin++)
-        {
-            FormatCategory::SharedPointer category = *begin;
-            if ( category->Get(vobj, current_category_pick, NULL) )
-            {
-                entry = SummaryFormat::SharedPointer(current_category_pick);
-                return true;
-            }
-        }
-        return false;
+        return m_active_categories;
+    }
+    
+    Mutex& mutex()
+    {
+        return m_map_mutex;
     }
     
 public:
     
-    typedef bool (*CategoryCallback)(void*, const char*, const FormatCategory::SharedPointer&);
+    typedef MapType::iterator MapIterator;
+    typedef bool(*CallbackType)(void*, KeyType, const ValueSP&);
     
-    FormatManager() : 
-    m_value_nav(this),
-    m_named_summaries_map(this),
-    m_last_revision(0),
-    m_categories_map(this),
+    CategoryMap(IFormatChangeListener* lst = NULL) :
+    m_map_mutex(Mutex::eMutexTypeRecursive),
+    listener(lst),
+    m_map(),
     m_active_categories()
     {
-        
-        // build default categories
-        
-        m_default_category_name = ConstString("default").GetCString();
-        m_system_category_name = ConstString("system").GetCString();
-                
-        Category(m_default_category_name)->Enable();
-        Category(m_system_category_name)->Enable();
-        
-        // add some default stuff
-        // most formats, summaries, ... actually belong to the users' lldbinit file rather than here
-        SummaryFormat::SharedPointer string_format(new StringSummaryFormat(false,
-                                                                           true,
-                                                                           false,
-                                                                           true,
-                                                                           false,
-                                                                           false,
-                                                                           true,
-                                                                           "${var%s}",
-                                                                           1));
-        
-        
-        SummaryFormat::SharedPointer string_array_format(new StringSummaryFormat(false,
-                                                                                 true,
-                                                                                 false,
-                                                                                 false,
-                                                                                 false,
-                                                                                 false,
-                                                                                 true,
-                                                                                 "${var%s}",
-                                                                                 1));
-        
-        lldb::RegularExpressionSP any_size_char_arr(new RegularExpression("char \\[[0-9]+\\]"));
-        
-        
-        Summary(m_system_category_name)->Add(ConstString("char *").GetCString(), string_format);
-        Summary(m_system_category_name)->Add(ConstString("const char *").GetCString(), string_format);
-        RegexSummary(m_system_category_name)->Add(any_size_char_arr, string_array_format);
-        
-        m_active_categories.push_front(Category(m_system_category_name));
-        m_active_categories.push_front(Category(m_default_category_name));
-        
     }
-
     
-    CategoryMap& Categories() { return m_categories_map; }
-    ValueNavigator& Value() { return m_value_nav; }
-    NamedSummariesMap& NamedSummary() { return m_named_summaries_map; }
-
     void
-    EnableCategory(const char* category_name)
+    Add(KeyType name,
+        const ValueSP& entry)
     {
-        Category(category_name)->Enable();
-        m_active_categories.push_front(Category(category_name));
+        Mutex::Locker(m_map_mutex);
+        m_map[name] = entry;
+        if (listener)
+            listener->Changed();
+    }
+    
+    bool
+    Delete(KeyType name)
+    {
+        Mutex::Locker(m_map_mutex);
+        MapIterator iter = m_map.find(name);
+        if (iter == m_map.end())
+            return false;
+        m_map.erase(name);
+        DisableCategory(name);
+        if (listener)
+            listener->Changed();
+        return true;
+    }
+    
+    void
+    EnableCategory(KeyType category_name)
+    {
+        Mutex::Locker(m_map_mutex);
+        ValueSP category;
+        if (!Get(category_name,category))
+            return;
+        category->Enable();
+        m_active_categories.push_front(category);
     }
     
     class delete_matching_categories
@@ -1030,44 +612,195 @@ public:
     };
     
     void
+    DisableCategory(KeyType category_name)
+    {
+        Mutex::Locker(m_map_mutex);
+        ValueSP category;
+        if (!Get(category_name,category))
+            return;
+        category->Disable();
+        m_active_categories.remove_if(delete_matching_categories(category));
+    }
+    
+    void
+    Clear()
+    {
+        Mutex::Locker(m_map_mutex);
+        m_map.clear();
+        m_active_categories.clear();
+        if (listener)
+            listener->Changed();
+    }
+    
+    bool
+    Get(KeyType name,
+        ValueSP& entry)
+    {
+        Mutex::Locker(m_map_mutex);
+        MapIterator iter = m_map.find(name);
+        if (iter == m_map.end())
+            return false;
+        entry = iter->second;
+        return true;
+    }
+    
+    void
+    LoopThrough(CallbackType callback, void* param)
+    {
+        if (callback)
+        {
+            Mutex::Locker(m_map_mutex);
+            MapIterator pos, end = m_map.end();
+            for (pos = m_map.begin(); pos != end; pos++)
+            {
+                KeyType type = pos->first;
+                if (!callback(param, type, pos->second))
+                    break;
+            }
+        }
+    }
+    
+    uint32_t
+    GetCount()
+    {
+        return m_map.size();
+    }
+    
+    bool
+    Get(ValueObject& vobj,
+        lldb::SummaryFormatSP& entry)
+    {
+        Mutex::Locker(m_map_mutex);
+        
+        uint32_t reason_why;
+        bool first = true;
+        
+        ActiveCategoriesIterator begin, end = m_active_categories.end();
+        
+        for (begin = m_active_categories.begin(); begin != end; begin++)
+        {
+            FormatCategory::SharedPointer category = *begin;
+            lldb::SummaryFormatSP current_format;
+            if (!category->Get(vobj, current_format, &reason_why))
+                continue;
+            if (reason_why == lldb::eFormatterDirectChoice)
+            {
+                entry = current_format;
+                return true;
+            }
+            else if (first)
+            {
+                entry = current_format;
+                first = false;
+            }
+        }
+        return !first;
+    }
+};
+
+
+class FormatManager : public IFormatChangeListener
+{
+private:
+    
+    typedef FormatNavigator<const char*, ValueFormat> ValueNavigator;
+
+    typedef ValueNavigator::MapType ValueMap;
+    typedef FormatMap<const char*, SummaryFormat> NamedSummariesMap;
+        
+    ValueNavigator m_value_nav;
+    NamedSummariesMap m_named_summaries_map;
+    uint32_t m_last_revision;
+    CategoryMap m_categories_map;
+    
+    const char* m_default_category_name;
+    const char* m_system_category_name;
+        
+    typedef CategoryMap::MapType::iterator CategoryMapIterator;
+        
+public:
+    
+    typedef bool (*CategoryCallback)(void*, const char*, const FormatCategory::SharedPointer&);
+    
+    FormatManager() : 
+    m_value_nav(this),
+    m_named_summaries_map(this),
+    m_last_revision(0),
+    m_categories_map(this)
+    {
+        
+        // build default categories
+        
+        m_default_category_name = ConstString("default").GetCString();
+        m_system_category_name = ConstString("system").GetCString();
+
+        // add some default stuff
+        // most formats, summaries, ... actually belong to the users' lldbinit file rather than here
+        SummaryFormat::SharedPointer string_format(new StringSummaryFormat(false,
+                                                                           true,
+                                                                           false,
+                                                                           true,
+                                                                           false,
+                                                                           false,
+                                                                           "${var%s}"));
+        
+        
+        SummaryFormat::SharedPointer string_array_format(new StringSummaryFormat(false,
+                                                                                 true,
+                                                                                 false,
+                                                                                 false,
+                                                                                 false,
+                                                                                 false,
+                                                                                 "${var%s}"));
+        
+        lldb::RegularExpressionSP any_size_char_arr(new RegularExpression("char \\[[0-9]+\\]"));
+        
+        
+        Category(m_system_category_name)->Summary()->Add(ConstString("char *").GetCString(), string_format);
+        Category(m_system_category_name)->Summary()->Add(ConstString("const char *").GetCString(), string_format);
+        Category(m_system_category_name)->RegexSummary()->Add(any_size_char_arr, string_array_format);
+        
+        Category(m_default_category_name); // this call is there to force LLDB into creating an empty "default" category
+        
+        // the order of these two calls IS important, if you invert it "system" summaries will prevail over the user's
+        EnableCategory(m_system_category_name);
+        EnableCategory(m_default_category_name);
+        
+    }
+
+    
+    CategoryMap& Categories() { return m_categories_map; }
+    ValueNavigator& Value() { return m_value_nav; }
+    NamedSummariesMap& NamedSummary() { return m_named_summaries_map; }
+
+    void
+    EnableCategory(const char* category_name)
+    {
+        m_categories_map.EnableCategory(category_name);
+    }
+    
+    void
     DisableCategory(const char* category_name)
     {
-        Category(category_name)->Disable();
-        m_active_categories.remove_if(delete_matching_categories(Category(category_name)));
+        m_categories_map.DisableCategory(category_name);
     }
     
     void
     LoopThroughCategories(CategoryCallback callback, void* param)
     {
-        CategoryMapIterator begin, end = m_categories_map.m_map.end();
-        
-        for (begin = m_categories_map.m_map.begin(); begin != end; begin++)
-        {
-            if (!callback(param, begin->first, begin->second))
-                return;
-        }
+        m_categories_map.LoopThrough(callback, param);
     }
     
     FormatCategory::SummaryNavigatorSP
     Summary(const char* category_name = NULL)
     {
-        if (!category_name)
-            return Summary(m_default_category_name);
-        lldb::FormatCategorySP category;
-        if (m_categories_map.Get(category_name, category))
-            return category->Summary();
-        return FormatCategory::SummaryNavigatorSP();
+        return Category(category_name)->Summary();
     }
     
     FormatCategory::RegexSummaryNavigatorSP
     RegexSummary(const char* category_name = NULL)
     {
-        if (!category_name)
-            return RegexSummary(m_default_category_name);
-        lldb::FormatCategorySP category;
-        if (m_categories_map.Get(category_name, category))
-            return category->RegexSummary();
-        return FormatCategory::RegexSummaryNavigatorSP();
+        return Category(category_name)->RegexSummary();
     }
     
     lldb::FormatCategorySP
@@ -1086,9 +819,7 @@ public:
     Get(ValueObject& vobj,
         lldb::SummaryFormatSP& entry)
     {
-        if ( Get_ExactMatch(vobj,entry) )
-            return true;
-        return Get_AnyMatch(vobj,entry);
+        return m_categories_map.Get(vobj, entry);
     }
 
     static bool

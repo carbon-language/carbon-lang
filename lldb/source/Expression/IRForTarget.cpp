@@ -253,7 +253,7 @@ IRForTarget::MaybeSetCastResult (lldb_private::TypeFromParser type)
         {
             next_value = cast_inst->getOperand(0);
         }
-        else if(load_inst)
+        else if (load_inst)
         {
             if (isa<LoadInst>(load_inst->getPointerOperand()))
             {
@@ -1064,7 +1064,7 @@ IRForTarget::RewriteObjCSelectors (BasicBlock &basic_block)
             if (m_error_stream)
                 m_error_stream->Printf("Internal error [IRForTarget]: Couldn't change a static reference to an Objective-C selector to a dynamic reference\n");
             
-            if(log)
+            if (log)
                 log->PutCString("Couldn't rewrite a reference to an Objective-C selector");
             
             return false;
@@ -1198,7 +1198,7 @@ IRForTarget::RewritePersistentAllocs(llvm::BasicBlock &basic_block)
             if (m_error_stream)
                 m_error_stream->Printf("Internal error [IRForTarget]: Couldn't rewrite the creation of a persistent variable\n");
             
-            if(log)
+            if (log)
                 log->PutCString("Couldn't rewrite the creation of a persistent variable");
             
             return false;

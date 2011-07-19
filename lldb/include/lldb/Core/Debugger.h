@@ -501,10 +501,7 @@ public:
             static uint32_t
             GetCount();
         };
-        
-        static lldb::FormatCategorySP
-        SummaryFormats(const char* category_name = NULL);
-        
+
         static bool
         GetSummaryFormat(ValueObject& vobj,
                          lldb::SummaryFormatSP& entry);

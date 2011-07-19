@@ -192,7 +192,7 @@ public:
 
         // now I have a valid format, let's add it to every type
         
-        for(int i = 0; i < argc; i++) {
+        for (int i = 0; i < argc; i++) {
             const char* typeA = command.GetArgumentAtIndex(i);
             ConstString typeCS(typeA);
             if (typeCS)
@@ -537,7 +537,6 @@ public:
                                                     options->m_no_children,
                                                     options->m_no_value,
                                                     options->m_one_liner,
-                                                    options->m_is_system,
                                                     std::string(funct_name),
                                                     options->m_user_source.CopyList("     ")));
         
@@ -659,7 +658,6 @@ CommandObjectTypeSummaryAdd::CommandOptions::OptionParsingStarting ()
     m_python_script = "";
     m_python_function = "";
     m_is_add_script = false;
-    m_is_system = false;
     m_category = NULL;
 }
 
@@ -730,7 +728,6 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
                                                     m_options.m_no_children,
                                                     m_options.m_no_value,
                                                     m_options.m_one_liner,
-                                                    m_options.m_is_system,
                                                     std::string(funct_name),
                                                     "     " + m_options.m_python_function + "(valobj,dict)"));
     }
@@ -773,7 +770,6 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
                                                     m_options.m_no_children,
                                                     m_options.m_no_value,
                                                     m_options.m_one_liner,
-                                                    m_options.m_is_system,
                                                     std::string(funct_name),
                                                     "     " + m_options.m_python_script));
     }
@@ -786,11 +782,10 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
                                                          m_options.m_no_value,
                                                          m_options.m_one_liner,
                                                          m_options.m_regex,
-                                                         m_options.m_is_system,
                                                          m_options.m_name,
                                                          m_options.m_category);
         
-        for(int i = 0; i < argc; i++) {
+        for (int i = 0; i < argc; i++) {
             const char* typeA = command.GetArgumentAtIndex(i);
             if (typeA && *typeA)
                 options->m_target_types << typeA;
@@ -880,7 +875,6 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
                                                                m_options.m_no_children,
                                                                m_options.m_no_value,
                                                                m_options.m_one_liner,
-                                                               m_options.m_is_system,
                                                                format_cstr));
     
     if (error.Fail()) 
@@ -892,7 +886,7 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
     
     // now I have a valid format, let's add it to every type
     
-    for(int i = 0; i < argc; i++) {
+    for (int i = 0; i < argc; i++) {
         const char* typeA = command.GetArgumentAtIndex(i);
         if (!typeA || typeA[0] == '\0')
         {
@@ -1039,9 +1033,12 @@ bool
 CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
                                         SummaryFormatSP entry,
                                         SummaryFormatType type,
-                                        const char* category,
+                                        const char* category_name,
                                         Error* error)
 {
+    lldb::FormatCategorySP category;
+    Debugger::Formatting::Categories::Get(ConstString(category_name), category);
+    
     if (type == eRegexSummary)
     {
         RegularExpressionSP typeRX(new RegularExpression());
@@ -1052,8 +1049,8 @@ CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
             return false;
         }
         
-        Debugger::Formatting::SummaryFormats(category)->RegexSummary()->Delete(type_name.GetCString());
-        Debugger::Formatting::SummaryFormats(category)->RegexSummary()->Add(typeRX, entry);
+        category->RegexSummary()->Delete(type_name.GetCString());
+        category->RegexSummary()->Add(typeRX, entry);
         
         return true;
     }
@@ -1065,7 +1062,7 @@ CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
     }
     else
     {
-        Debugger::Formatting::SummaryFormats(category)->Summary()->Add(type_name.GetCString(), entry);
+        category->Summary()->Add(type_name.GetCString(), entry);
         return true;
     }
 }    
@@ -1226,7 +1223,10 @@ public:
             return result.Succeeded();
         }
         
-        bool delete_category = Debugger::Formatting::SummaryFormats(m_options.m_category)->Delete(typeCS.GetCString());
+        lldb::FormatCategorySP category;
+        Debugger::Formatting::Categories::Get(ConstString(m_options.m_category), category);
+        
+        bool delete_category = category->Delete(typeCS.GetCString());
         bool delete_named = Debugger::Formatting::NamedSummaryFormats::Delete(typeCS);
         
         if (delete_category || delete_named)
@@ -1347,14 +1347,20 @@ public:
         
         if (m_options.m_delete_all)
             Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, NULL);
-        else if (command.GetArgumentCount() > 0)
-        {
-            const char* cat_name = command.GetArgumentAtIndex(0);
-            ConstString cat_nameCS(cat_name);
-            Debugger::Formatting::SummaryFormats(cat_nameCS.GetCString())->Clear();
-        }
+        
         else
-            Debugger::Formatting::SummaryFormats()->Clear();
+        {        
+            lldb::FormatCategorySP category;
+            if (command.GetArgumentCount() > 0)
+            {
+                const char* cat_name = command.GetArgumentAtIndex(0);
+                ConstString cat_nameCS(cat_name);
+                Debugger::Formatting::Categories::Get(cat_nameCS, category);
+            }
+            else
+                Debugger::Formatting::Categories::Get(ConstString(NULL), category);
+            category->Clear();
+        }
         
         Debugger::Formatting::NamedSummaryFormats::Clear();
         
@@ -1523,7 +1529,7 @@ public:
         CommandArgumentData type_style_arg;
         
         type_style_arg.arg_type = eArgTypeName;
-        type_style_arg.arg_repetition = eArgRepeatPlain;
+        type_style_arg.arg_repetition = eArgRepeatPlus;
         
         type_arg.push_back (type_style_arg);
         
@@ -1540,24 +1546,27 @@ public:
     {
         const size_t argc = command.GetArgumentCount();
         
-        if (argc != 1)
+        if (argc < 1)
         {
-            result.AppendErrorWithFormat ("%s takes 1 arg.\n", m_cmd_name.c_str());
+            result.AppendErrorWithFormat ("%s takes 1 or more args.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
         
-        const char* typeA = command.GetArgumentAtIndex(0);
-        ConstString typeCS(typeA);
-        
-        if (!typeCS)
+        for (int i = argc - 1; i >= 0; i--)
         {
-            result.AppendError("empty category name not allowed");
-            result.SetStatus(eReturnStatusFailed);
-            return false;
+            const char* typeA = command.GetArgumentAtIndex(i);
+            ConstString typeCS(typeA);
+            
+            if (!typeCS)
+            {
+                result.AppendError("empty category name not allowed");
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+            Debugger::Formatting::Categories::Enable(typeCS);
         }
         
-        Debugger::Formatting::Categories::Enable(typeCS);
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
@@ -1581,7 +1590,7 @@ public:
         CommandArgumentData type_style_arg;
         
         type_style_arg.arg_type = eArgTypeName;
-        type_style_arg.arg_repetition = eArgRepeatPlain;
+        type_style_arg.arg_repetition = eArgRepeatPlus;
         
         type_arg.push_back (type_style_arg);
         
@@ -1598,36 +1607,42 @@ public:
     {
         const size_t argc = command.GetArgumentCount();
         
-        if (argc != 1)
+        if (argc < 1)
         {
-            result.AppendErrorWithFormat ("%s takes 1 arg.\n", m_cmd_name.c_str());
+            result.AppendErrorWithFormat ("%s takes 1 or more arg.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
         
-        const char* typeA = command.GetArgumentAtIndex(0);
-        ConstString typeCS(typeA);
+        bool success = true;
         
-        if (!typeCS)
+        // the order is not relevant here
+        for (int i = argc - 1; i >= 0; i--)
         {
-            result.AppendError("empty category name not allowed");
-            result.SetStatus(eReturnStatusFailed);
-            return false;
+            const char* typeA = command.GetArgumentAtIndex(i);
+            ConstString typeCS(typeA);
+            
+            if (!typeCS)
+            {
+                result.AppendError("empty category name not allowed");
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+            if (!Debugger::Formatting::Categories::Delete(typeCS))
+                success = false; // keep deleting even if we hit an error
         }
-        
-        if (Debugger::Formatting::Categories::Delete(typeCS))
+        if (success)
         {
             result.SetStatus(eReturnStatusSuccessFinishResult);
             return result.Succeeded();
         }
         else
         {
-            result.AppendErrorWithFormat ("cannot delete category %s.\n", typeA);
+            result.AppendError("cannot delete one or more categories\n");
             result.SetStatus(eReturnStatusFailed);
             return false;
-        }        
+        }
     }
-    
 };
 
 //-------------------------------------------------------------------------
@@ -1647,7 +1662,7 @@ public:
         CommandArgumentData type_style_arg;
         
         type_style_arg.arg_type = eArgTypeName;
-        type_style_arg.arg_repetition = eArgRepeatPlain;
+        type_style_arg.arg_repetition = eArgRepeatPlus;
         
         type_arg.push_back (type_style_arg);
         
@@ -1664,24 +1679,28 @@ public:
     {
         const size_t argc = command.GetArgumentCount();
         
-        if (argc != 1)
+        if (argc < 1)
         {
-            result.AppendErrorWithFormat ("%s takes 1 arg.\n", m_cmd_name.c_str());
+            result.AppendErrorWithFormat ("%s takes 1 or more args.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
         
-        const char* typeA = command.GetArgumentAtIndex(0);
-        ConstString typeCS(typeA);
-        
-        if (!typeCS)
+        // the order is not relevant here
+        for (int i = argc - 1; i >= 0; i--)
         {
-            result.AppendError("empty category name not allowed");
-            result.SetStatus(eReturnStatusFailed);
-            return false;
+            const char* typeA = command.GetArgumentAtIndex(i);
+            ConstString typeCS(typeA);
+            
+            if (!typeCS)
+            {
+                result.AppendError("empty category name not allowed");
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+            Debugger::Formatting::Categories::Disable(typeCS);
         }
-        
-        Debugger::Formatting::Categories::Disable(typeCS);
+
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }

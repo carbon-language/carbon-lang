@@ -307,7 +307,7 @@ private:
     {
         lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-        if(log)
+        if (log)
             log->Printf("Instrumenting load/store instruction: %s\n", 
                         PrintValue(inst).c_str());
         

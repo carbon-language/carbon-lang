@@ -506,7 +506,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
     }
     else
     {
-        if(log)
+        if (log)
             log->Printf("Found function %s for %s", function_name.c_str(), m_expr.FunctionName());
     }
     
@@ -733,7 +733,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
         return ret;
     }
     
-    if(log)
+    if (log)
         log->Printf("Found function, has local address 0x%llx and remote address 0x%llx", (uint64_t)func_local_addr, (uint64_t)func_remote_addr);
     
     std::pair <lldb::addr_t, lldb::addr_t> func_range;
@@ -747,7 +747,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
         return ret;
     }
     
-    if(log)
+    if (log)
         log->Printf("Function's code range is [0x%llx-0x%llx]", func_range.first, func_range.second);
     
     if (!exe_ctx.target)

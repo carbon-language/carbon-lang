@@ -184,7 +184,7 @@ FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Delete(const char* ty
         if ( ::strcmp(type,regex->GetText()) == 0)
         {
             m_format_map.map().erase(pos);
-            if(m_format_map.listener)
+            if (m_format_map.listener)
                 m_format_map.listener->Changed();
             return true;
         }
@@ -220,75 +220,4 @@ FormatManager::GetSingleItemFormat(lldb::Format vector_format)
         default:
             return lldb::eFormatInvalid;
     }
-}
-
-std::string
-StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
-{
-    if (!object.get())
-        return "NULL";
-    
-    StreamString s;
-    ExecutionContext exe_ctx;
-    object->GetExecutionContextScope()->CalculateExecutionContext(exe_ctx);
-    SymbolContext sc;
-    if (exe_ctx.frame)
-        sc = exe_ctx.frame->GetSymbolContext(lldb::eSymbolContextEverything);
-    
-    if (m_show_members_oneliner)
-    {
-        const uint32_t num_children = object->GetNumChildren();
-        if (num_children)
-        {
-            s.PutChar('(');
-            
-            for (uint32_t idx=0; idx<num_children; ++idx)
-            {
-                lldb::ValueObjectSP child_sp(object->GetChildAtIndex(idx, true));
-                if (child_sp.get())
-                {
-                    if (idx)
-                        s.PutCString(", ");
-                    s.PutCString(child_sp.get()->GetName().AsCString());
-                    s.PutChar('=');
-                    s.PutCString(child_sp.get()->GetPrintableRepresentation());
-                }
-            }
-            
-            s.PutChar(')');
-            
-            return s.GetString();
-        }
-        else
-            return "";
-        
-    }
-    else
-    {
-        if (Debugger::FormatPrompt(m_format.c_str(), &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s, NULL, object.get()))
-            return s.GetString();
-        else
-            return "";
-    }
-}
-
-void
-FormatCategory::ChooseAsPreferential(const char* name)
-{
-    Mutex::Locker(m_mutex);
-    lldb::SummaryFormatSP format;
-    
-    uint32_t revision = Debugger::Formatting::ValueFormats::GetCurrentRevision();
-    
-    if ( Summary()->Get(name, format) )
-        format->SetPriority(revision);
-    
-    format.reset();
-    
-    if ( RegexSummary()->Get(name, format) )
-        format->SetPriority(revision);
-    
-    if(m_change_listener)
-        m_change_listener->Changed();
-    
 }

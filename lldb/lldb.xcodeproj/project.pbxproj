@@ -419,6 +419,7 @@
 		94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94611EB113CCA4A4003A22AF /* RefCounter.cpp */; };
 		9463D4CD13B1798800C230D4 /* CommandObjectType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9463D4CC13B1798800C230D4 /* CommandObjectType.cpp */; };
 		9467E65213C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */; };
+		94A9112E13D5DF210046D8A6 /* FormatClasses.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
 		9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A22A15D135E30370024DDC3 /* EmulateInstructionARM.cpp */; };
@@ -1215,6 +1216,8 @@
 		9463D4CE13B179A500C230D4 /* CommandObjectType.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CommandObjectType.h; path = source/Commands/CommandObjectType.h; sourceTree = "<group>"; };
 		9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeHierarchyNavigator.cpp; path = source/Symbol/TypeHierarchyNavigator.cpp; sourceTree = "<group>"; };
 		9467E65413C3D98900B3B6F3 /* TypeHierarchyNavigator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TypeHierarchyNavigator.h; path = include/lldb/Symbol/TypeHierarchyNavigator.h; sourceTree = "<group>"; };
+		94A9112B13D5DEF80046D8A6 /* FormatClasses.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FormatClasses.h; path = include/lldb/Core/FormatClasses.h; sourceTree = "<group>"; };
+		94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FormatClasses.cpp; path = source/Core/FormatClasses.cpp; sourceTree = "<group>"; };
 		961FABB81235DE1600F93A47 /* FuncUnwinders.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FuncUnwinders.cpp; path = source/Symbol/FuncUnwinders.cpp; sourceTree = "<group>"; };
 		961FABB91235DE1600F93A47 /* UnwindPlan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindPlan.cpp; path = source/Symbol/UnwindPlan.cpp; sourceTree = "<group>"; };
 		961FABBA1235DE1600F93A47 /* UnwindTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindTable.cpp; path = source/Symbol/UnwindTable.cpp; sourceTree = "<group>"; };
@@ -1990,6 +1993,8 @@
 				26BC7D6310F1B77400F91463 /* FileSpecList.h */,
 				26BC7E7B10F1B85900F91463 /* FileSpecList.cpp */,
 				26BC7D6410F1B77400F91463 /* Flags.h */,
+				94A9112B13D5DEF80046D8A6 /* FormatClasses.h */,
+				94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */,
 				9415F61613B2C0DC00A52B36 /* FormatManager.h */,
 				9415F61713B2C0EF00A52B36 /* FormatManager.cpp */,
 				26F7305F139D8FC900FD51C7 /* History.h */,
