@@ -787,7 +787,7 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
 
   MI->eraseFromParent();   // The instruction is gone now.
 
-  return BB;
+  return exitMBB;
 }
 
 MachineBasicBlock *
@@ -831,10 +831,12 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   // insert new blocks after the current block
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   MachineBasicBlock *loopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *sinkMBB = MF->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
   MachineFunction::iterator It = BB;
   ++It;
   MF->insert(It, loopMBB);
+  MF->insert(It, sinkMBB);
   MF->insert(It, exitMBB);
 
   // Transfer the remainder of BB and its successor edges to exitMBB.
@@ -908,29 +910,30 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::BEQ))
     .addReg(Tmp13).addReg(Mips::ZERO).addMBB(loopMBB);
   BB->addSuccessor(loopMBB);
-  BB->addSuccessor(exitMBB);
+  BB->addSuccessor(sinkMBB);
 
-  //  exitMBB:
+  //  sinkMBB:
   //    and     tmp10,oldval,mask
   //    srl     tmp11,tmp10,shift
   //    sll     tmp12,tmp11,24
   //    sra     dest,tmp12,24
-  BB = exitMBB;
+  BB = sinkMBB;
   int64_t ShiftImm = (Size == 1) ? 24 : 16;
 
-  MachineBasicBlock::iterator II = BB->begin();
-  BuildMI(*BB, II, dl, TII->get(Mips::AND), Tmp10)
+  BuildMI(BB, dl, TII->get(Mips::AND), Tmp10)
     .addReg(Oldval).addReg(Mask);
-  BuildMI(*BB, II, dl, TII->get(Mips::SRL), Tmp11)
+  BuildMI(BB, dl, TII->get(Mips::SRL), Tmp11)
       .addReg(Tmp10).addReg(Shift);
-  BuildMI(*BB, II, dl, TII->get(Mips::SLL), Tmp12)
+  BuildMI(BB, dl, TII->get(Mips::SLL), Tmp12)
       .addReg(Tmp11).addImm(ShiftImm);
-  BuildMI(*BB, II, dl, TII->get(Mips::SRA), Dest)
+  BuildMI(BB, dl, TII->get(Mips::SRA), Dest)
       .addReg(Tmp12).addImm(ShiftImm);
+
+  sinkMBB->addSuccessor(exitMBB);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
-  return BB;
+  return exitMBB;
 }
 
 MachineBasicBlock *
@@ -999,7 +1002,7 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
 
   MI->eraseFromParent();   // The instruction is gone now.
 
-  return BB;
+  return exitMBB;
 }
 
 MachineBasicBlock *
@@ -1043,11 +1046,13 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   MachineBasicBlock *loop1MBB = MF->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *loop2MBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *sinkMBB = MF->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
   MachineFunction::iterator It = BB;
   ++It;
   MF->insert(It, loop1MBB);
   MF->insert(It, loop2MBB);
+  MF->insert(It, sinkMBB);
   MF->insert(It, exitMBB);
 
   // Transfer the remainder of BB and its successor edges to exitMBB.
@@ -1085,13 +1090,13 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   //  loop1MBB:
   //    ll      oldval3,0(addr)
   //    and     oldval4,oldval3,mask
-  //    bne     oldval4,oldval2,exitMBB
+  //    bne     oldval4,oldval2,sinkMBB
   BB = loop1MBB;
   BuildMI(BB, dl, TII->get(Mips::LL), Oldval3).addReg(Addr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::AND), Oldval4).addReg(Oldval3).addReg(Mask);
   BuildMI(BB, dl, TII->get(Mips::BNE))
-      .addReg(Oldval4).addReg(Oldval2).addMBB(exitMBB);
-  BB->addSuccessor(exitMBB);
+      .addReg(Oldval4).addReg(Oldval2).addMBB(sinkMBB);
+  BB->addSuccessor(sinkMBB);
   BB->addSuccessor(loop2MBB);
 
   //  loop2MBB:
@@ -1107,26 +1112,27 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::BEQ))
       .addReg(Tmp10).addReg(Mips::ZERO).addMBB(loop1MBB);
   BB->addSuccessor(loop1MBB);
-  BB->addSuccessor(exitMBB);
+  BB->addSuccessor(sinkMBB);
 
-  //  exitMBB:
+  //  sinkMBB:
   //    srl     tmp8,oldval4,shift
   //    sll     tmp9,tmp8,24
   //    sra     dest,tmp9,24
-  BB = exitMBB;
+  BB = sinkMBB;
   int64_t ShiftImm = (Size == 1) ? 24 : 16;
 
-  MachineBasicBlock::iterator II = BB->begin();
-  BuildMI(*BB, II, dl, TII->get(Mips::SRL), Tmp8)
+  BuildMI(BB, dl, TII->get(Mips::SRL), Tmp8)
       .addReg(Oldval4).addReg(Shift);
-  BuildMI(*BB, II, dl, TII->get(Mips::SLL), Tmp9)
+  BuildMI(BB, dl, TII->get(Mips::SLL), Tmp9)
       .addReg(Tmp8).addImm(ShiftImm);
-  BuildMI(*BB, II, dl, TII->get(Mips::SRA), Dest)
+  BuildMI(BB, dl, TII->get(Mips::SRA), Dest)
       .addReg(Tmp9).addImm(ShiftImm);
+
+  sinkMBB->addSuccessor(exitMBB);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
-  return BB;
+  return exitMBB;
 }
 
 //===----------------------------------------------------------------------===//
