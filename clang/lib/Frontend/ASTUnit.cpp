@@ -976,7 +976,14 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   if (!Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0].second,
                             Clang->getFrontendOpts().Inputs[0].first))
     goto error;
-  
+
+  if (OverrideMainBuffer) {
+    std::string ModName = "$" + PreambleFile;
+    TranslateStoredDiagnostics(Clang->getModuleManager(), ModName,
+                               getSourceManager(), PreambleDiagnostics,
+                               StoredDiagnostics);
+  }
+
   Act->Execute();
   
   // Steal the created target, context, and preprocessor.
@@ -1170,7 +1177,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> > NewPreamble 
     = ComputePreamble(*PreambleInvocation, MaxLines, CreatedPreambleBuffer);
 
-  // If ComputePreamble() Take ownership of the
+  // If ComputePreamble() Take ownership of the preamble buffer.
   llvm::OwningPtr<llvm::MemoryBuffer> OwnedPreambleBuffer;
   if (CreatedPreambleBuffer)
     OwnedPreambleBuffer.reset(NewPreamble.first);
@@ -1271,10 +1278,6 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
         ProcessWarningOptions(getDiagnostics(), 
                               PreambleInvocation->getDiagnosticOpts());
         getDiagnostics().setNumWarnings(NumWarningsInPreamble);
-        if (StoredDiagnostics.size() > NumStoredDiagnosticsInPreamble)
-          StoredDiagnostics.erase(
-            StoredDiagnostics.begin() + NumStoredDiagnosticsInPreamble,
-                                  StoredDiagnostics.end());
 
         // Create a version of the main file buffer that is padded to
         // buffer size we reserved when creating the preamble.
@@ -1291,6 +1294,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
 
     // We can't reuse the previously-computed preamble. Build a new one.
     Preamble.clear();
+    PreambleDiagnostics.clear();
     llvm::sys::Path(PreambleFile).eraseFromDisk();
     PreambleRebuildCounter = 1;
   } else if (!AllowRebuild) {
@@ -1446,9 +1450,18 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     return 0;
   }
   
+  // Transfer any diagnostics generated when parsing the preamble into the set
+  // of preamble diagnostics.
+  PreambleDiagnostics.clear();
+  PreambleDiagnostics.insert(PreambleDiagnostics.end(), 
+                   StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver,
+                             StoredDiagnostics.end());
+  StoredDiagnostics.erase(
+                    StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver,
+                          StoredDiagnostics.end());
+  
   // Keep track of the preamble we precompiled.
   PreambleFile = FrontendOpts.OutputFile;
-  NumStoredDiagnosticsInPreamble = StoredDiagnostics.size();
   NumWarningsInPreamble = getDiagnostics().getNumWarnings();
   
   // Keep track of all of the files that the source manager knows about,
@@ -1776,6 +1789,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   llvm::IntrusiveRefCntPtr<CompilerInvocation> CI;
 
   {
+
     CaptureDroppedDiagnostics Capture(CaptureDiagnostics, *Diags, 
                                       StoredDiagnostics);
 
@@ -1826,7 +1840,6 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST->CompleteTranslationUnit = CompleteTranslationUnit;
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->NumStoredDiagnosticsFromDriver = StoredDiagnostics.size();
-  AST->NumStoredDiagnosticsInPreamble = StoredDiagnostics.size();
   AST->StoredDiagnostics.swap(StoredDiagnostics);
   AST->Invocation = CI;
   AST->NestedMacroExpansions = NestedMacroExpansions;
@@ -2272,17 +2285,6 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
     PreprocessorOpts.ImplicitPCHInclude = PreambleFile;
     PreprocessorOpts.DisablePCHValidation = true;
     
-    // The stored diagnostics have the old source manager. Copy them
-    // to our output set of stored diagnostics, updating the source
-    // manager to the one we were given.
-    for (unsigned I = NumStoredDiagnosticsFromDriver, 
-                  N = this->StoredDiagnostics.size(); 
-         I < N; ++I) {
-      StoredDiagnostics.push_back(this->StoredDiagnostics[I]);
-      FullSourceLoc Loc(StoredDiagnostics[I].getLocation(), SourceMgr);
-      StoredDiagnostics[I].setLocation(Loc);
-    }
-
     OwnedBuffers.push_back(OverrideMainBuffer);
   } else {
     PreprocessorOpts.PrecompiledPreambleBytes.first = 0;
@@ -2296,6 +2298,12 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   Act.reset(new SyntaxOnlyAction);
   if (Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0].second,
                            Clang->getFrontendOpts().Inputs[0].first)) {
+    if (OverrideMainBuffer) {
+      std::string ModName = "$" + PreambleFile;
+      TranslateStoredDiagnostics(Clang->getModuleManager(), ModName,
+                                 getSourceManager(), PreambleDiagnostics,
+                                 StoredDiagnostics);
+    }
     Act->Execute();
     Act->EndSourceFile();
   }
@@ -2332,4 +2340,72 @@ bool ASTUnit::serialize(llvm::raw_ostream &OS) {
     OS.write((char *)&Buffer.front(), Buffer.size());
 
   return false;
+}
+
+typedef ContinuousRangeMap<unsigned, int, 2> SLocRemap;
+
+static void TranslateSLoc(SourceLocation &L, SLocRemap &Remap) {
+  unsigned Raw = L.getRawEncoding();
+  const unsigned MacroBit = 1U << 31;
+  L = SourceLocation::getFromRawEncoding((Raw & MacroBit) |
+      ((Raw & ~MacroBit) + Remap.find(Raw & ~MacroBit)->second));
+}
+
+void ASTUnit::TranslateStoredDiagnostics(
+                          ASTReader *MMan,
+                          llvm::StringRef ModName,
+                          SourceManager &SrcMgr,
+                          const llvm::SmallVectorImpl<StoredDiagnostic> &Diags,
+                          llvm::SmallVectorImpl<StoredDiagnostic> &Out) {
+  // The stored diagnostic has the old source manager in it; update
+  // the locations to refer into the new source manager. We also need to remap
+  // all the locations to the new view. This includes the diag location, any
+  // associated source ranges, and the source ranges of associated fix-its.
+  // FIXME: There should be a cleaner way to do this.
+
+  llvm::SmallVector<StoredDiagnostic, 4> Result;
+  Result.reserve(Diags.size());
+  assert(MMan && "Don't have a module manager");
+  ASTReader::PerFileData *Mod = MMan->Modules.lookup(ModName);
+  assert(Mod && "Don't have preamble module");
+  SLocRemap &Remap = Mod->SLocRemap;
+  for (unsigned I = 0, N = Diags.size(); I != N; ++I) {
+    // Rebuild the StoredDiagnostic.
+    const StoredDiagnostic &SD = Diags[I];
+    SourceLocation L = SD.getLocation();
+    TranslateSLoc(L, Remap);
+    FullSourceLoc Loc(L, SrcMgr);
+
+    llvm::SmallVector<CharSourceRange, 4> Ranges;
+    Ranges.reserve(SD.range_size());
+    for (StoredDiagnostic::range_iterator I = SD.range_begin(),
+                                          E = SD.range_end();
+         I != E; ++I) {
+      SourceLocation BL = I->getBegin();
+      TranslateSLoc(BL, Remap);
+      SourceLocation EL = I->getEnd();
+      TranslateSLoc(EL, Remap);
+      Ranges.push_back(CharSourceRange(SourceRange(BL, EL), I->isTokenRange()));
+    }
+
+    llvm::SmallVector<FixItHint, 2> FixIts;
+    FixIts.reserve(SD.fixit_size());
+    for (StoredDiagnostic::fixit_iterator I = SD.fixit_begin(),
+                                          E = SD.fixit_end();
+         I != E; ++I) {
+      FixIts.push_back(FixItHint());
+      FixItHint &FH = FixIts.back();
+      FH.CodeToInsert = I->CodeToInsert;
+      SourceLocation BL = I->RemoveRange.getBegin();
+      TranslateSLoc(BL, Remap);
+      SourceLocation EL = I->RemoveRange.getEnd();
+      TranslateSLoc(EL, Remap);
+      FH.RemoveRange = CharSourceRange(SourceRange(BL, EL),
+                                       I->RemoveRange.isTokenRange());
+    }
+
+    Result.push_back(StoredDiagnostic(SD.getLevel(), SD.getID(), 
+                                      SD.getMessage(), Loc, Ranges, FixIts));
+  }
+  Result.swap(Out);
 }

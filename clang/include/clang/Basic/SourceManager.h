@@ -46,7 +46,7 @@ namespace SrcMgr {
   /// holds normal user code, system code, or system code which is implicitly
   /// 'extern "C"' in C++ mode.  Entire directories can be tagged with this
   /// (this is maintained by DirectoryLookup and friends) as can specific
-  /// FileIDInfos when a #pragma system_header is seen or various other cases.
+  /// FileInfos when a #pragma system_header is seen or various other cases.
   ///
   enum CharacteristicKind {
     C_User, C_System, C_ExternCSystem
@@ -356,11 +356,12 @@ class ExternalSLocEntrySource {
 public:
   virtual ~ExternalSLocEntrySource();
 
-  /// \brief Read the source location entry with index ID.
+  /// \brief Read the source location entry with index ID, which will always be
+  /// less than -1.
   ///
   /// \returns true if an error occurred that prevented the source-location
   /// entry from being loaded.
-  virtual bool ReadSLocEntry(unsigned ID) = 0;
+  virtual bool ReadSLocEntry(int ID) = 0;
 };
   
 
@@ -414,8 +415,9 @@ public:
   
 };
 
-/// SourceManager - This file handles loading and caching of source files into
-/// memory.  This object owns the MemoryBuffer objects for all of the loaded
+/// \brief This class handles loading and caching of source files into memory.
+///
+/// This object owns the MemoryBuffer objects for all of the loaded
 /// files and assigns unique FileID's for each unique #include chain.
 ///
 /// The SourceManager can be queried for information about SourceLocation
@@ -451,16 +453,33 @@ class SourceManager : public llvm::RefCountedBase<SourceManager> {
   /// as they do not refer to a file.
   std::vector<SrcMgr::ContentCache*> MemBufferInfos;
 
-  /// SLocEntryTable - This is an array of SLocEntry's that we have created.
-  /// FileID is an index into this vector.  This array is sorted by the offset.
-  std::vector<SrcMgr::SLocEntry> SLocEntryTable;
-  /// NextOffset - This is the next available offset that a new SLocEntry can
-  /// start at.  It is SLocEntryTable.back().getOffset()+size of back() entry.
-  unsigned NextOffset;
+  /// \brief The table of SLocEntries that are local to this module.
+  ///
+  /// Positive FileIDs are indexes into this table. Entry 0 indicates an invalid
+  /// instantiation.
+  std::vector<SrcMgr::SLocEntry> LocalSLocEntryTable;
 
-  /// \brief If source location entries are being lazily loaded from
-  /// an external source, this vector indicates whether the Ith source
-  /// location entry has already been loaded from the external storage.
+  /// \brief The table of SLocEntries that are loaded from other modules.
+  ///
+  /// Negative FileIDs are indexes into this table. To get from ID to an index,
+  /// use (-ID - 2).
+  std::vector<SrcMgr::SLocEntry> LoadedSLocEntryTable;
+
+  /// \brief The starting offset of the next local SLocEntry.
+  ///
+  /// This is LocalSLocEntryTable.back().Offset + the size of that entry.
+  unsigned NextLocalOffset;
+
+  /// \brief The starting offset of the latest batch of loaded SLocEntries.
+  ///
+  /// This is LoadedSLocEntryTable.back().Offset, except that that entry might
+  /// not have been loaded, so that value would be unknown.
+  unsigned CurrentLoadedOffset;
+
+  /// \brief A bitmap that indicates whether the entries of LoadedSLocEntryTable
+  /// have already been loaded from the external source.
+  ///
+  /// Same indexing as LoadedSLocEntryTable.
   std::vector<bool> SLocEntryLoaded;
 
   /// \brief An external source for source location entries.
@@ -513,6 +532,15 @@ public:
     OverridenFilesKeepOriginalName = value;
   }
 
+  /// createMainFileIDForMembuffer - Create the FileID for a memory buffer
+  ///  that will represent the FileID for the main source.  One example
+  ///  of when this would be used is when the main source is read from STDIN.
+  FileID createMainFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
+    assert(MainFileID.isInvalid() && "MainFileID already set!");
+    MainFileID = createFileIDForMemBuffer(Buffer);
+    return MainFileID;
+  }
+
   //===--------------------------------------------------------------------===//
   // MainFileID creation and querying methods.
   //===--------------------------------------------------------------------===//
@@ -541,34 +569,21 @@ public:
   /// createFileID - Create a new FileID that represents the specified file
   /// being #included from the specified IncludePosition.  This translates NULL
   /// into standard input.
-  /// PreallocateID should be non-zero to specify which pre-allocated,
-  /// lazily computed source location is being filled in by this operation.
   FileID createFileID(const FileEntry *SourceFile, SourceLocation IncludePos,
                       SrcMgr::CharacteristicKind FileCharacter,
-                      unsigned PreallocatedID = 0,
-                      unsigned Offset = 0) {
+                      int LoadedID = 0, unsigned LoadedOffset = 0) {
     const SrcMgr::ContentCache *IR = getOrCreateContentCache(SourceFile);
     assert(IR && "getOrCreateContentCache() cannot return NULL");
-    return createFileID(IR, IncludePos, FileCharacter, PreallocatedID, Offset);
+    return createFileID(IR, IncludePos, FileCharacter, LoadedID, LoadedOffset);
   }
 
   /// createFileIDForMemBuffer - Create a new FileID that represents the
   /// specified memory buffer.  This does no caching of the buffer and takes
   /// ownership of the MemoryBuffer, so only pass a MemoryBuffer to this once.
   FileID createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer,
-                                  unsigned PreallocatedID = 0,
-                                  unsigned Offset = 0) {
+                                  int LoadedID = 0, unsigned LoadedOffset = 0) {
     return createFileID(createMemBufferContentCache(Buffer), SourceLocation(),
-                        SrcMgr::C_User, PreallocatedID, Offset);
-  }
-
-  /// createMainFileIDForMembuffer - Create the FileID for a memory buffer
-  ///  that will represent the FileID for the main source.  One example
-  ///  of when this would be used is when the main source is read from STDIN.
-  FileID createMainFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
-    assert(MainFileID.isInvalid() && "MainFileID already set!");
-    MainFileID = createFileIDForMemBuffer(Buffer);
-    return MainFileID;
+                        SrcMgr::C_User, LoadedID, LoadedOffset);
   }
 
   /// createMacroArgInstantiationLoc - Return a new SourceLocation that encodes
@@ -586,8 +601,8 @@ public:
                                         SourceLocation InstantiationLocStart,
                                         SourceLocation InstantiationLocEnd,
                                         unsigned TokLength,
-                                        unsigned PreallocatedID = 0,
-                                        unsigned Offset = 0);
+                                        int LoadedID = 0,
+                                        unsigned LoadedOffset = 0);
 
   /// \brief Retrieve the memory buffer associated with the given file.
   ///
@@ -702,7 +717,6 @@ public:
   /// getLocForStartOfFile - Return the source location corresponding to the
   /// first byte of the specified file.
   SourceLocation getLocForStartOfFile(FileID FID) const {
-    assert(FID.ID < SLocEntryTable.size() && "FileID out of range");
     bool Invalid = false;
     const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &Invalid);
     if (Invalid || !Entry.isFile())
@@ -900,10 +914,12 @@ public:
 #ifndef NDEBUG
     // Make sure offset/length describe a chunk inside the given FileID.
     unsigned NextOffset;
-    if (FID.ID+1 == SLocEntryTable.size())
-      NextOffset = getNextOffset();
+    if (FID.ID == -2)
+      NextOffset = 1U << 31U;
+    else if (FID.ID+1 == (int)LocalSLocEntryTable.size())
+      NextOffset = getNextLocalOffset();
     else
-      NextOffset = getSLocEntry(FID.ID+1).getOffset();
+      NextOffset = getSLocEntryByID(FID.ID+1).getOffset();
     assert(start < NextOffset);
     assert(end   < NextOffset);
 #endif
@@ -979,15 +995,23 @@ public:
 
   /// \brief Determines the order of 2 source locations in the "source location
   /// address space".
-  static bool isBeforeInSourceLocationOffset(SourceLocation LHS,
-                                             SourceLocation RHS) {
+  bool isBeforeInSourceLocationOffset(SourceLocation LHS, 
+                                      SourceLocation RHS) const {
     return isBeforeInSourceLocationOffset(LHS, RHS.getOffset());
   }
 
   /// \brief Determines the order of a source location and a source location
   /// offset in the "source location address space".
-  static bool isBeforeInSourceLocationOffset(SourceLocation LHS, unsigned RHS) {
-    return LHS.getOffset() < RHS;
+  ///
+  /// Note that we always consider source locations loaded from 
+  bool isBeforeInSourceLocationOffset(SourceLocation LHS, unsigned RHS) const {
+    unsigned LHSOffset = LHS.getOffset();
+    bool LHSLoaded = LHSOffset >= CurrentLoadedOffset;
+    bool RHSLoaded = RHS >= CurrentLoadedOffset;
+    if (LHSLoaded == RHSLoaded)
+      return LHS.getOffset() < RHS;
+    
+    return LHSLoaded;
   }
 
   // Iterators over FileInfos.
@@ -1003,53 +1027,70 @@ public:
   ///
   void PrintStats() const;
 
-  unsigned sloc_entry_size() const { return SLocEntryTable.size(); }
-
-  // FIXME: Exposing this is a little gross; what we want is a good way
-  //  to iterate the entries that were not defined in an AST file (or
-  //  any other external source).
-  unsigned sloc_loaded_entry_size() const { return SLocEntryLoaded.size(); }
-
-  const SrcMgr::SLocEntry &getSLocEntry(unsigned ID, bool *Invalid = 0) const {
-    assert(ID < SLocEntryTable.size() && "Invalid id");
-    // If we haven't loaded this source-location entry from the external source
-    // yet, do so now.
-    if (ExternalSLocEntries &&
-        ID < SLocEntryLoaded.size() &&
-        !SLocEntryLoaded[ID] &&
-        ExternalSLocEntries->ReadSLocEntry(ID) &&
-        Invalid)
-      *Invalid = true;
-
-    return SLocEntryTable[ID];
+  /// \brief Get the number of local SLocEntries we have.
+  unsigned local_sloc_entry_size() const { return LocalSLocEntryTable.size(); }
+  
+  /// \brief Get a local SLocEntry. This is exposed for indexing.
+  const SrcMgr::SLocEntry &getLocalSLocEntry(unsigned Index, 
+                                             bool *Invalid = 0) const {
+    assert(Index < LocalSLocEntryTable.size() && "Invalid index");
+    return LocalSLocEntryTable[Index];
   }
-
+  
+  /// \brief Get the number of loaded SLocEntries we have.
+  unsigned loaded_sloc_entry_size() const { return LoadedSLocEntryTable.size();}
+  
+  /// \brief Get a loaded SLocEntry. This is exposed for indexing.
+  const SrcMgr::SLocEntry &getLoadedSLocEntry(unsigned Index, bool *Invalid=0) const {
+    assert(Index < LoadedSLocEntryTable.size() && "Invalid index");
+    if (!SLocEntryLoaded[Index])
+      ExternalSLocEntries->ReadSLocEntry(-(static_cast<int>(Index) + 2));
+    return LoadedSLocEntryTable[Index];
+  }
+  
   const SrcMgr::SLocEntry &getSLocEntry(FileID FID, bool *Invalid = 0) const {
-    return getSLocEntry(FID.ID, Invalid);
+    return getSLocEntryByID(FID.ID);
   }
 
-  unsigned getNextOffset() const { return NextOffset; }
-
-  /// \brief Preallocate some number of source location entries, which
-  /// will be loaded as needed from the given external source.
-  void PreallocateSLocEntries(ExternalSLocEntrySource *Source,
-                              unsigned NumSLocEntries,
-                              unsigned NextOffset);
-
-  /// \brief Clear out any preallocated source location entries that
-  /// haven't already been loaded.
-  void ClearPreallocatedSLocEntries();
-
+  unsigned getNextLocalOffset() const { return NextLocalOffset; }
+  
+  void setExternalSLocEntrySource(ExternalSLocEntrySource *Source) {
+    assert(LoadedSLocEntryTable.empty() &&
+           "Invalidating existing loaded entries");
+    ExternalSLocEntries = Source;
+  }
+  
+  /// \brief Allocate a number of loaded SLocEntries, which will be actually
+  /// loaded on demand from the external source.
+  ///
+  /// NumSLocEntries will be allocated, which occupy a total of TotalSize space
+  /// in the global source view. The lowest ID and the base offset of the
+  /// entries will be returned.
+  std::pair<int, unsigned>
+  AllocateLoadedSLocEntries(unsigned NumSLocEntries, unsigned TotalSize);
+  
 private:
   const llvm::MemoryBuffer *getFakeBufferForRecovery() const;
 
+  /// \brief Get the entry with the given unwrapped FileID.
+  const SrcMgr::SLocEntry &getSLocEntryByID(int ID) const {
+    assert(ID != -1 && "Using FileID sentinel value");
+    if (ID < 0)
+      return getLoadedSLocEntryByID(ID);
+    return getLocalSLocEntry(static_cast<unsigned>(ID));
+  }
+  
+  const SrcMgr::SLocEntry &getLoadedSLocEntryByID(int ID) const {
+    return getLoadedSLocEntry(static_cast<unsigned>(-ID - 2));
+  }
+  
   /// createInstantiationLoc - Implements the common elements of storing an
   /// instantiation info struct into the SLocEntry table and producing a source
   /// location that refers to it.
   SourceLocation createInstantiationLocImpl(const SrcMgr::InstantiationInfo &II,
                                             unsigned TokLength,
-                                            unsigned PreallocatedID = 0,
-                                            unsigned Offset = 0);
+                                            int LoadedID = 0,
+                                            unsigned LoadedOffset = 0);
 
   /// isOffsetInFileID - Return true if the specified FileID contains the
   /// specified SourceLocation offset.  This is a very hot method.
@@ -1058,10 +1099,17 @@ private:
     // If the entry is after the offset, it can't contain it.
     if (SLocOffset < Entry.getOffset()) return false;
 
-    // If this is the last entry than it does.  Otherwise, the entry after it
-    // has to not include it.
-    if (FID.ID+1 == SLocEntryTable.size()) return true;
+    // If this is the very last entry then it does.
+    if (FID.ID == -2)
+      return true;
 
+    // If it is the last local entry, then it does if the location is local.
+    if (static_cast<unsigned>(FID.ID+1) == LocalSLocEntryTable.size()) {
+      return SLocOffset < NextLocalOffset;
+    }
+
+    // Otherwise, the entry after it has to not include it. This works for both
+    // local and loaded entries.
     return SLocOffset < getSLocEntry(FileID::get(FID.ID+1)).getOffset();
   }
 
@@ -1071,8 +1119,7 @@ private:
   FileID createFileID(const SrcMgr::ContentCache* File,
                       SourceLocation IncludePos,
                       SrcMgr::CharacteristicKind DirCharacter,
-                      unsigned PreallocatedID = 0,
-                      unsigned Offset = 0);
+                      int LoadedID, unsigned LoadedOffset);
 
   const SrcMgr::ContentCache *
     getOrCreateContentCache(const FileEntry *SourceFile);
@@ -1083,6 +1130,8 @@ private:
   createMemBufferContentCache(const llvm::MemoryBuffer *Buf);
 
   FileID getFileIDSlow(unsigned SLocOffset) const;
+  FileID getFileIDLocal(unsigned SLocOffset) const;
+  FileID getFileIDLoaded(unsigned SLocOffset) const;
 
   SourceLocation getInstantiationLocSlowCase(SourceLocation Loc) const;
   SourceLocation getSpellingLocSlowCase(SourceLocation Loc) const;

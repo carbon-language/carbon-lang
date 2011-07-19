@@ -30,18 +30,21 @@ void clang_getInclusions(CXTranslationUnit TU, CXInclusionVisitor CB,
   ASTContext &Ctx = CXXUnit->getASTContext();
 
   llvm::SmallVector<CXSourceLocation, 10> InclusionStack;
-  unsigned i = SM.sloc_loaded_entry_size();
-  unsigned n =  SM.sloc_entry_size();
+  unsigned n =  SM.local_sloc_entry_size();
 
   // In the case where all the SLocEntries are in an external source, traverse
   // those SLocEntries as well.  This is the case where we are looking
   // at the inclusion stack of an AST/PCH file.
-  if (i >= n)
-    i = 0;
-  
-  for ( ; i < n ; ++i) {
+  const SrcMgr::SLocEntry &(SourceManager::*Getter)(unsigned, bool*) const;
+  if (n == 1) {
+    Getter = &SourceManager::getLoadedSLocEntry;
+    n = SM.loaded_sloc_entry_size();
+  } else
+    Getter = &SourceManager::getLocalSLocEntry;
+
+  for (unsigned i = 0 ; i < n ; ++i) {
     bool Invalid = false;
-    const SrcMgr::SLocEntry &SL = SM.getSLocEntry(i, &Invalid);
+    const SrcMgr::SLocEntry &SL = (SM.*Getter)(i, &Invalid);
     
     if (!SL.isFile() || Invalid)
       continue;

@@ -186,7 +186,7 @@ unsigned LineTableInfo::getLineTableFilenameID(llvm::StringRef Name) {
 /// AddLineNote - Add a line note to the line table that indicates that there
 /// is a #line at the specified FID/Offset location which changes the presumed
 /// location to LineNo/FilenameID.
-void LineTableInfo::AddLineNote(unsigned FID, unsigned Offset,
+void LineTableInfo::AddLineNote(int FID, unsigned Offset,
                                 unsigned LineNo, int FilenameID) {
   std::vector<LineEntry> &Entries = LineEntries[FID];
 
@@ -217,7 +217,7 @@ void LineTableInfo::AddLineNote(unsigned FID, unsigned Offset,
 /// presumed #include stack.  If it is 1, this is a file entry, if it is 2 then
 /// this is a file exit.  FileKind specifies whether this is a system header or
 /// extern C system header.
-void LineTableInfo::AddLineNote(unsigned FID, unsigned Offset,
+void LineTableInfo::AddLineNote(int FID, unsigned Offset,
                                 unsigned LineNo, int FilenameID,
                                 unsigned EntryExit,
                                 SrcMgr::CharacteristicKind FileKind) {
@@ -251,7 +251,7 @@ void LineTableInfo::AddLineNote(unsigned FID, unsigned Offset,
 
 /// FindNearestLineEntry - Find the line entry nearest to FID that is before
 /// it.  If there is no line entry before Offset in FID, return null.
-const LineEntry *LineTableInfo::FindNearestLineEntry(unsigned FID,
+const LineEntry *LineTableInfo::FindNearestLineEntry(int FID,
                                                      unsigned Offset) {
   const std::vector<LineEntry> &Entries = LineEntries[FID];
   assert(!Entries.empty() && "No #line entries for this FID after all!");
@@ -270,7 +270,7 @@ const LineEntry *LineTableInfo::FindNearestLineEntry(unsigned FID,
 
 /// \brief Add a new line entry that has already been encoded into
 /// the internal representation of the line table.
-void LineTableInfo::AddEntry(unsigned FID,
+void LineTableInfo::AddEntry(int FID,
                              const std::vector<LineEntry> &Entries) {
   LineEntries[FID] = Entries;
 }
@@ -391,7 +391,9 @@ SourceManager::~SourceManager() {
 
 void SourceManager::clearIDTables() {
   MainFileID = FileID();
-  SLocEntryTable.clear();
+  LocalSLocEntryTable.clear();
+  LoadedSLocEntryTable.clear();
+  SLocEntryLoaded.clear();
   LastLineNoFileIDQuery = FileID();
   LastLineNoContentCache = 0;
   LastFileIDLookup = FileID();
@@ -400,7 +402,10 @@ void SourceManager::clearIDTables() {
     LineTable->clear();
 
   // Use up FileID #0 as an invalid instantiation.
-  NextOffset = 0;
+  NextLocalOffset = 0;
+  // The highest possible offset is 2^31-1, so CurrentLoadedOffset starts at
+  // 2^31.
+  CurrentLoadedOffset = 1U << 31U;
   createInstantiationLoc(SourceLocation(),SourceLocation(),SourceLocation(), 1);
 }
 
@@ -452,33 +457,16 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
   return Entry;
 }
 
-void SourceManager::PreallocateSLocEntries(ExternalSLocEntrySource *Source,
-                                           unsigned NumSLocEntries,
-                                           unsigned NextOffset) {
-  ExternalSLocEntries = Source;
-  this->NextOffset = NextOffset;
-  unsigned CurPrealloc = SLocEntryLoaded.size();
-  // If we've ever preallocated, we must not count the dummy entry.
-  if (CurPrealloc) --CurPrealloc;
-  SLocEntryLoaded.resize(NumSLocEntries + 1);
-  SLocEntryLoaded[0] = true;
-  SLocEntryTable.resize(SLocEntryTable.size() + NumSLocEntries - CurPrealloc);
-}
-
-void SourceManager::ClearPreallocatedSLocEntries() {
-  unsigned I = 0;
-  for (unsigned N = SLocEntryLoaded.size(); I != N; ++I)
-    if (!SLocEntryLoaded[I])
-      break;
-
-  // We've already loaded all preallocated source location entries.
-  if (I == SLocEntryLoaded.size())
-    return;
-
-  // Remove everything from location I onward.
-  SLocEntryTable.resize(I);
-  SLocEntryLoaded.clear();
-  ExternalSLocEntries = 0;
+std::pair<int, unsigned>
+SourceManager::AllocateLoadedSLocEntries(unsigned NumSLocEntries,
+                                         unsigned TotalSize) {
+  assert(ExternalSLocEntries && "Don't have an external sloc source");
+  LoadedSLocEntryTable.resize(LoadedSLocEntryTable.size() + NumSLocEntries);
+  SLocEntryLoaded.resize(LoadedSLocEntryTable.size());
+  CurrentLoadedOffset -= TotalSize;
+  assert(CurrentLoadedOffset >= NextLocalOffset && "Out of source locations");
+  int ID = LoadedSLocEntryTable.size();
+  return std::make_pair(-ID - 1, CurrentLoadedOffset);
 }
 
 /// \brief As part of recovering from missing or changed content, produce a
@@ -501,33 +489,31 @@ const llvm::MemoryBuffer *SourceManager::getFakeBufferForRecovery() const {
 FileID SourceManager::createFileID(const ContentCache *File,
                                    SourceLocation IncludePos,
                                    SrcMgr::CharacteristicKind FileCharacter,
-                                   unsigned PreallocatedID,
-                                   unsigned Offset) {
-  if (PreallocatedID) {
-    // If we're filling in a preallocated ID, just load in the file
-    // entry and return.
-    assert(PreallocatedID < SLocEntryLoaded.size() &&
-           "Preallocate ID out-of-range");
-    assert(!SLocEntryLoaded[PreallocatedID] &&
-           "Source location entry already loaded");
-    assert(Offset && "Preallocate source location cannot have zero offset");
-    SLocEntryTable[PreallocatedID]
-      = SLocEntry::get(Offset, FileInfo::get(IncludePos, File, FileCharacter));
-    SLocEntryLoaded[PreallocatedID] = true;
-    FileID FID = FileID::get(PreallocatedID);
-    return FID;
+                                   int LoadedID, unsigned LoadedOffset) {
+  if (LoadedID < 0) {
+    assert(LoadedID != -1 && "Loading sentinel FileID");
+    unsigned Index = unsigned(-LoadedID) - 2;
+    assert(Index < LoadedSLocEntryTable.size() && "FileID out of range");
+    assert(!SLocEntryLoaded[Index] && "FileID already loaded");
+    LoadedSLocEntryTable[Index] = SLocEntry::get(LoadedOffset,
+        FileInfo::get(IncludePos, File, FileCharacter));
+    SLocEntryLoaded[Index] = true;
+    return FileID::get(LoadedID);
   }
-
-  SLocEntryTable.push_back(SLocEntry::get(NextOffset,
-                                          FileInfo::get(IncludePos, File,
-                                                        FileCharacter)));
+  LocalSLocEntryTable.push_back(SLocEntry::get(NextLocalOffset,
+                                               FileInfo::get(IncludePos, File,
+                                                             FileCharacter)));
   unsigned FileSize = File->getSize();
-  assert(NextOffset+FileSize+1 > NextOffset && "Ran out of source locations!");
-  NextOffset += FileSize+1;
+  assert(NextLocalOffset + FileSize + 1 > NextLocalOffset &&
+         NextLocalOffset + FileSize + 1 <= CurrentLoadedOffset &&
+         "Ran out of source locations!");
+  // We do a +1 here because we want a SourceLocation that means "the end of the
+  // file", e.g. for the "no newline at the end of the file" diagnostic.
+  NextLocalOffset += FileSize + 1;
 
   // Set LastFileIDLookup to the newly created file.  The next getFileID call is
   // almost guaranteed to be from that file.
-  FileID FID = FileID::get(SLocEntryTable.size()-1);
+  FileID FID = FileID::get(LocalSLocEntryTable.size()-1);
   return LastFileIDLookup = FID;
 }
 
@@ -544,34 +530,34 @@ SourceLocation SourceManager::createInstantiationLoc(SourceLocation SpellingLoc,
                                                      SourceLocation ILocStart,
                                                      SourceLocation ILocEnd,
                                                      unsigned TokLength,
-                                                     unsigned PreallocatedID,
-                                                     unsigned Offset) {
+                                                     int LoadedID,
+                                                     unsigned LoadedOffset) {
   InstantiationInfo II =
     InstantiationInfo::create(SpellingLoc, ILocStart, ILocEnd);
-  return createInstantiationLocImpl(II, TokLength, PreallocatedID, Offset);
+  return createInstantiationLocImpl(II, TokLength, LoadedID, LoadedOffset);
 }
 
 SourceLocation
 SourceManager::createInstantiationLocImpl(const InstantiationInfo &II,
                                           unsigned TokLength,
-                                          unsigned PreallocatedID,
-                                          unsigned Offset) {
-  if (PreallocatedID) {
-    // If we're filling in a preallocated ID, just load in the
-    // instantiation entry and return.
-    assert(PreallocatedID < SLocEntryLoaded.size() &&
-           "Preallocate ID out-of-range");
-    assert(!SLocEntryLoaded[PreallocatedID] &&
-           "Source location entry already loaded");
-    assert(Offset && "Preallocate source location cannot have zero offset");
-    SLocEntryTable[PreallocatedID] = SLocEntry::get(Offset, II);
-    SLocEntryLoaded[PreallocatedID] = true;
-    return SourceLocation::getMacroLoc(Offset);
+                                          int LoadedID,
+                                          unsigned LoadedOffset) {
+  if (LoadedID < 0) {
+    assert(LoadedID != -1 && "Loading sentinel FileID");
+    unsigned Index = unsigned(-LoadedID) - 2;
+    assert(Index < LoadedSLocEntryTable.size() && "FileID out of range");
+    assert(!SLocEntryLoaded[Index] && "FileID already loaded");
+    LoadedSLocEntryTable[Index] = SLocEntry::get(LoadedOffset, II);
+    SLocEntryLoaded[Index] = true;
+    return SourceLocation::getMacroLoc(LoadedOffset);
   }
-  SLocEntryTable.push_back(SLocEntry::get(NextOffset, II));
-  assert(NextOffset+TokLength+1 > NextOffset && "Ran out of source locations!");
-  NextOffset += TokLength+1;
-  return SourceLocation::getMacroLoc(NextOffset-(TokLength+1));
+  LocalSLocEntryTable.push_back(SLocEntry::get(NextLocalOffset, II));
+  assert(NextLocalOffset + TokLength + 1 > NextLocalOffset &&
+         NextLocalOffset + TokLength + 1 <= CurrentLoadedOffset &&
+         "Ran out of source locations!");
+  // See createFileID for that +1.
+  NextLocalOffset += TokLength + 1;
+  return SourceLocation::getMacroLoc(NextLocalOffset - (TokLength + 1));
 }
 
 const llvm::MemoryBuffer *
@@ -604,7 +590,7 @@ void SourceManager::overrideFileContents(const FileEntry *SourceFile,
 
 llvm::StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
   bool MyInvalid = false;
-  const SLocEntry &SLoc = getSLocEntry(FID.ID, &MyInvalid);
+  const SLocEntry &SLoc = getSLocEntry(FID, &MyInvalid);
   if (!SLoc.isFile() || MyInvalid) {
     if (Invalid) 
       *Invalid = true;
@@ -627,14 +613,28 @@ llvm::StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
 // SourceLocation manipulation methods.
 //===----------------------------------------------------------------------===//
 
-/// getFileIDSlow - Return the FileID for a SourceLocation.  This is a very hot
-/// method that is used for all SourceManager queries that start with a
-/// SourceLocation object.  It is responsible for finding the entry in
-/// SLocEntryTable which contains the specified location.
+/// \brief Return the FileID for a SourceLocation.
 ///
+/// This is the cache-miss path of getFileID. Not as hot as that function, but
+/// still very important. It is responsible for finding the entry in the
+/// SLocEntry tables that contains the specified location.
 FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
   if (!SLocOffset)
     return FileID::get(0);
+
+  // Now it is time to search for the correct file. See where the SLocOffset
+  // sits in the global view and consult local or loaded buffers for it.
+  if (SLocOffset < NextLocalOffset)
+    return getFileIDLocal(SLocOffset);
+  return getFileIDLoaded(SLocOffset);
+}
+
+/// \brief Return the FileID for a SourceLocation with a low offset.
+///
+/// This function knows that the SourceLocation is in a local buffer, not a
+/// loaded one.
+FileID SourceManager::getFileIDLocal(unsigned SLocOffset) const {
+  assert(SLocOffset < NextLocalOffset && "Bad function choice");
 
   // After the first and second level caches, I see two common sorts of
   // behavior: 1) a lot of searched FileID's are "near" the cached file location
@@ -649,12 +649,13 @@ FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
   // most newly created FileID.
   std::vector<SrcMgr::SLocEntry>::const_iterator I;
 
-  if (SLocEntryTable[LastFileIDLookup.ID].getOffset() < SLocOffset) {
+  if (LastFileIDLookup.ID < 0 ||
+      LocalSLocEntryTable[LastFileIDLookup.ID].getOffset() < SLocOffset) {
     // Neither loc prunes our search.
-    I = SLocEntryTable.end();
+    I = LocalSLocEntryTable.end();
   } else {
     // Perhaps it is near the file point.
-    I = SLocEntryTable.begin()+LastFileIDLookup.ID;
+    I = LocalSLocEntryTable.begin()+LastFileIDLookup.ID;
   }
 
   // Find the FileID that contains this.  "I" is an iterator that points to a
@@ -662,21 +663,8 @@ FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
   unsigned NumProbes = 0;
   while (1) {
     --I;
-    if (ExternalSLocEntries) {
-      bool Invalid = false;
-      getSLocEntry(FileID::get(I - SLocEntryTable.begin()), &Invalid);
-      if (Invalid)
-        return FileID::get(0);
-    }
-    
     if (I->getOffset() <= SLocOffset) {
-#if 0
-      printf("lin %d -> %d [%s] %d %d\n", SLocOffset,
-             I-SLocEntryTable.begin(),
-             I->isInstantiation() ? "inst" : "file",
-             LastFileIDLookup.ID,  int(SLocEntryTable.end()-I));
-#endif
-      FileID Res = FileID::get(I-SLocEntryTable.begin());
+      FileID Res = FileID::get(int(I - LocalSLocEntryTable.begin()));
 
       // If this isn't an instantiation, remember it.  We have good locality
       // across FileID lookups.
@@ -691,7 +679,7 @@ FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
 
   // Convert "I" back into an index.  We know that it is an entry whose index is
   // larger than the offset we are looking for.
-  unsigned GreaterIndex = I-SLocEntryTable.begin();
+  unsigned GreaterIndex = I - LocalSLocEntryTable.begin();
   // LessIndex - This is the lower bound of the range that we're searching.
   // We know that the offset corresponding to the FileID is is less than
   // SLocOffset.
@@ -700,8 +688,7 @@ FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
   while (1) {
     bool Invalid = false;
     unsigned MiddleIndex = (GreaterIndex-LessIndex)/2+LessIndex;
-    unsigned MidOffset = getSLocEntry(FileID::get(MiddleIndex), &Invalid)
-                                                                  .getOffset();
+    unsigned MidOffset = getLocalSLocEntry(MiddleIndex, &Invalid).getOffset();
     if (Invalid)
       return FileID::get(0);
     
@@ -715,24 +702,82 @@ FileID SourceManager::getFileIDSlow(unsigned SLocOffset) const {
     }
 
     // If the middle index contains the value, succeed and return.
+    // FIXME: This could be made faster by using a function that's aware of
+    // being in the local area.
     if (isOffsetInFileID(FileID::get(MiddleIndex), SLocOffset)) {
-#if 0
-      printf("bin %d -> %d [%s] %d %d\n", SLocOffset,
-             I-SLocEntryTable.begin(),
-             I->isInstantiation() ? "inst" : "file",
-             LastFileIDLookup.ID, int(SLocEntryTable.end()-I));
-#endif
       FileID Res = FileID::get(MiddleIndex);
 
       // If this isn't an instantiation, remember it.  We have good locality
       // across FileID lookups.
-      if (!I->isInstantiation())
+      if (!LocalSLocEntryTable[MiddleIndex].isInstantiation())
         LastFileIDLookup = Res;
       NumBinaryProbes += NumProbes;
       return Res;
     }
 
     // Otherwise, move the low-side up to the middle index.
+    LessIndex = MiddleIndex;
+  }
+}
+
+/// \brief Return the FileID for a SourceLocation with a high offset.
+///
+/// This function knows that the SourceLocation is in a loaded buffer, not a
+/// local one.
+FileID SourceManager::getFileIDLoaded(unsigned SLocOffset) const {
+  assert(SLocOffset >= CurrentLoadedOffset && "Bad function choice");
+
+  // Essentially the same as the local case, but the loaded array is sorted
+  // in the other direction.
+
+  // First do a linear scan from the last lookup position, if possible.
+  unsigned I;
+  int LastID = LastFileIDLookup.ID;
+  if (LastID >= 0 || getLoadedSLocEntryByID(LastID).getOffset() < SLocOffset)
+    I = 0;
+  else
+    I = (-LastID - 2) + 1;
+
+  unsigned NumProbes;
+  for (NumProbes = 0; NumProbes < 8; ++NumProbes, ++I) {
+    // Make sure the entry is loaded!
+    const SrcMgr::SLocEntry &E = getLoadedSLocEntry(I);
+    if (E.getOffset() <= SLocOffset) {
+      FileID Res = FileID::get(-int(I) - 2);
+
+      if (!E.isInstantiation())
+        LastFileIDLookup = Res;
+      NumLinearScans += NumProbes + 1;
+      return Res;
+    }
+  }
+
+  // Linear scan failed. Do the binary search. Note the reverse sorting of the
+  // table: GreaterIndex is the one where the offset is greater, which is
+  // actually a lower index!
+  unsigned GreaterIndex = I;
+  unsigned LessIndex = LoadedSLocEntryTable.size();
+  NumProbes = 0;
+  while (1) {
+    ++NumProbes;
+    unsigned MiddleIndex = (LessIndex - GreaterIndex) / 2 + GreaterIndex;
+    const SrcMgr::SLocEntry &E = getLoadedSLocEntry(MiddleIndex);
+
+    ++NumProbes;
+
+    if (E.getOffset() > SLocOffset) {
+      GreaterIndex = MiddleIndex;
+      continue;
+    }
+
+    if (isOffsetInFileID(FileID::get(-int(MiddleIndex) - 2), SLocOffset)) {
+      FileID Res = FileID::get(-int(MiddleIndex) - 2);
+      if (!E.isInstantiation())
+        LastFileIDLookup = Res;
+      NumBinaryProbes += NumProbes;
+      return Res;
+    }
+
     LessIndex = MiddleIndex;
   }
 }
@@ -1259,7 +1304,7 @@ static llvm::Optional<ino_t> getActualFileInode(const FileEntry *File) {
 /// \brief Get the source location for the given file:line:col triplet.
 ///
 /// If the source file is included multiple times, the source location will
-/// be based upon the first inclusion.
+/// be based upon an arbitrary inclusion.
 SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
                                           unsigned Line, unsigned Col) {
   assert(SourceFile && "Null source file!");
@@ -1308,10 +1353,10 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
 
   if (FirstFID.isInvalid()) {
     // The location we're looking for isn't in the main file; look
-    // through all of the source locations.
-    for (unsigned I = 0, N = sloc_entry_size(); I != N; ++I) {
+    // through all of the local source locations.
+    for (unsigned I = 0, N = local_sloc_entry_size(); I != N; ++I) {
       bool Invalid = false;
-      const SLocEntry &SLoc = getSLocEntry(I, &Invalid);
+      const SLocEntry &SLoc = getLocalSLocEntry(I, &Invalid);
       if (Invalid)
         return SourceLocation();
       
@@ -1320,6 +1365,18 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
           SLoc.getFile().getContentCache()->OrigEntry == SourceFile) {
         FirstFID = FileID::get(I);
         break;
+      }
+    }
+    // If that still didn't help, try the modules.
+    if (FirstFID.isInvalid()) {
+      for (unsigned I = 0, N = loaded_sloc_entry_size(); I != N; ++I) {
+        const SLocEntry &SLoc = getLoadedSLocEntry(I);
+        if (SLoc.isFile() && 
+            SLoc.getFile().getContentCache() &&
+            SLoc.getFile().getContentCache()->OrigEntry == SourceFile) {
+          FirstFID = FileID::get(-int(I) - 2);
+          break;
+        }
       }
     }
   }
@@ -1333,8 +1390,10 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
       (SourceFileInode ||
        (SourceFileInode = getActualFileInode(SourceFile)))) {
     bool Invalid = false;
-    for (unsigned I = 0, N = sloc_entry_size(); I != N; ++I) {
-      const SLocEntry &SLoc = getSLocEntry(I, &Invalid);
+    for (unsigned I = 0, N = local_sloc_entry_size(); I != N; ++I) {
+      FileID IFileID;
+      IFileID.ID = I;
+      const SLocEntry &SLoc = getSLocEntry(IFileID, &Invalid);
       if (Invalid)
         return SourceLocation();
       
@@ -1368,7 +1427,7 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
     return SourceLocation();
     
   // If this is the first use of line information for this buffer, compute the
-  /// SourceLineCache for it on demand.
+  // SourceLineCache for it on demand.
   if (Content->SourceLineCache == 0) {
     bool MyInvalid = false;
     ComputeLineNumbers(Diag, Content, ContentCacheAlloc, *this, MyInvalid);
@@ -1447,39 +1506,25 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   // Okay, we missed in the cache, start updating the cache for this query.
   IsBeforeInTUCache.setQueryFIDs(LOffs.first, ROffs.first);
 
-  // "Traverse" the include/instantiation stacks of both locations and try to
-  // find a common "ancestor".  FileIDs build a tree-like structure that
-  // reflects the #include hierarchy, and this algorithm needs to find the
-  // nearest common ancestor between the two locations.  For example, if you
-  // have a.c that includes b.h and c.h, and are comparing a location in b.h to
-  // a location in c.h, we need to find that their nearest common ancestor is
-  // a.c, and compare the locations of the two #includes to find their relative
-  // ordering.
-  //
-  // SourceManager assigns FileIDs in order of parsing.  This means that an
-  // includee always has a larger FileID than an includer.  While you might
-  // think that we could just compare the FileID's here, that doesn't work to
-  // compare a point at the end of a.c with a point within c.h.  Though c.h has
-  // a larger FileID, we have to compare the include point of c.h to the
-  // location in a.c.
-  //
-  // Despite not being able to directly compare FileID's, we can tell that a
-  // larger FileID is necessarily more deeply nested than a lower one and use
-  // this information to walk up the tree to the nearest common ancestor.
+  // We need to find the common ancestor. The only way of doing this is to
+  // build the complete include chain for one and then walking up the chain
+  // of the other looking for a match.
+  // We use a map from FileID to Offset to store the chain. Easier than writing
+  // a custom set hash info that only depends on the first part of a pair.
+  typedef llvm::DenseMap<FileID, unsigned> LocSet;
+  LocSet LChain;
   do {
-    // If LOffs is larger than ROffs, then LOffs must be more deeply nested than
-    // ROffs, walk up the #include chain.
-    if (LOffs.first.ID > ROffs.first.ID) {
-      if (MoveUpIncludeHierarchy(LOffs, *this))
-        break; // We reached the top.
-      
-    } else {
-      // Otherwise, ROffs is larger than LOffs, so ROffs must be more deeply
-      // nested than LOffs, walk up the #include chain.
-      if (MoveUpIncludeHierarchy(ROffs, *this))
-        break; // We reached the top.
-    }
-  } while (LOffs.first != ROffs.first);
+    LChain.insert(LOffs);
+    // We catch the case where LOffs is in a file included by ROffs and
+    // quit early. The other way round unfortunately remains suboptimal.
+  } while (LOffs.first != ROffs.first && !MoveUpIncludeHierarchy(LOffs, *this));
+  LocSet::iterator I;
+  while((I = LChain.find(ROffs.first)) == LChain.end()) {
+    if (MoveUpIncludeHierarchy(ROffs, *this))
+      break; // Met at topmost file.
+  }
+  if (I != LChain.end())
+    LOffs = *I;
 
   // If we exited because we found a nearest common ancestor, compare the
   // locations within the common file and cache them.
@@ -1488,26 +1533,21 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
     return IsBeforeInTUCache.getCachedResult(LOffs.second, ROffs.second);
   }
 
-  // There is no common ancestor, most probably because one location is in the
-  // predefines buffer or an AST file.
-  // FIXME: We should rearrange the external interface so this simply never
-  // happens; it can't conceptually happen. Also see PR5662.
-  IsBeforeInTUCache.setQueryFIDs(FileID(), FileID()); // Don't try caching.
-
-  // Zip both entries up to the top level record.
-  while (!MoveUpIncludeHierarchy(LOffs, *this)) /*empty*/;
-  while (!MoveUpIncludeHierarchy(ROffs, *this)) /*empty*/;
-  
-  // If exactly one location is a memory buffer, assume it precedes the other.
-  
-  // Strip off macro instantation locations, going up to the top-level File
-  // SLocEntry.
-  bool LIsMB = getFileEntryForID(LOffs.first) == 0;
-  bool RIsMB = getFileEntryForID(ROffs.first) == 0;
-  if (LIsMB != RIsMB)
-    return LIsMB;
-
-  // Otherwise, just assume FileIDs were created in order.
+  // This can happen if a location is in a built-ins buffer.
+  // But see PR5662.
+  // Clear the lookup cache, it depends on a common location.
+  IsBeforeInTUCache.setQueryFIDs(FileID(), FileID());
+  bool LIsBuiltins = strcmp("<built-in>",
+                            getBuffer(LOffs.first)->getBufferIdentifier()) == 0;
+  bool RIsBuiltins = strcmp("<built-in>",
+                            getBuffer(ROffs.first)->getBufferIdentifier()) == 0;
+  // built-in is before non-built-in
+  if (LIsBuiltins != RIsBuiltins)
+    return LIsBuiltins;
+  assert(LIsBuiltins && RIsBuiltins &&
+         "Non-built-in locations must be rooted in the main file");
+  // Both are in built-in buffers, but from different files. We just claim that
+  // lower IDs come first.
   return LOffs.first < ROffs.first;
 }
 
@@ -1517,11 +1557,15 @@ void SourceManager::PrintStats() const {
   llvm::errs() << "\n*** Source Manager Stats:\n";
   llvm::errs() << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
                << " mem buffers mapped.\n";
-  llvm::errs() << SLocEntryTable.size() << " SLocEntry's allocated ("
-               << SLocEntryTable.capacity()*sizeof(SrcMgr::SLocEntry)
+  llvm::errs() << LocalSLocEntryTable.size() << " local SLocEntry's allocated ("
+               << LocalSLocEntryTable.capacity()*sizeof(SrcMgr::SLocEntry)
                << " bytes of capacity), "
-               << NextOffset << "B of Sloc address space used.\n";
-
+               << NextLocalOffset << "B of Sloc address space used.\n";
+  llvm::errs() << LoadedSLocEntryTable.size()
+               << " loaded SLocEntries allocated, "
+               << (1U << 31U) - CurrentLoadedOffset
+               << "B of Sloc address space used.\n";
+  
   unsigned NumLineNumsComputed = 0;
   unsigned NumFileBytesMapped = 0;
   for (fileinfo_iterator I = fileinfo_begin(), E = fileinfo_end(); I != E; ++I){

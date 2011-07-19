@@ -49,6 +49,7 @@
 #include <iterator>
 #include <cstdio>
 #include <sys/stat.h>
+#include <iostream>
 
 using namespace clang;
 using namespace clang::serialization;
@@ -1010,6 +1011,9 @@ bool ASTReader::ParseLineTable(PerFileData &F,
   std::vector<LineEntry> Entries;
   while (Idx < Record.size()) {
     int FID = Record[Idx++];
+    assert(FID >= 0 && "Serialized line entries for non-local file.");
+    // Remap FileID from 1-based old view.
+    FID += F.SLocEntryBaseID - 1;
 
     // Extract the line entries
     unsigned NumEntries = Record[Idx++];
@@ -1188,11 +1192,6 @@ ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(PerFileData &F) {
     default:  // Default behavior: ignore.
       break;
 
-    case SM_LINE_TABLE:
-      if (ParseLineTable(F, Record))
-        return Failure;
-      break;
-
     case SM_SLOC_FILE_ENTRY:
     case SM_SLOC_BUFFER_ENTRY:
     case SM_SLOC_EXPANSION_ENTRY:
@@ -1235,38 +1234,20 @@ resolveFileRelativeToOriginalDir(const std::string &Filename,
   return currPCHPath.str();
 }
 
-/// \brief Get a cursor that's correctly positioned for reading the source
-/// location entry with the given ID.
-ASTReader::PerFileData *ASTReader::SLocCursorForID(unsigned ID) {
-  assert(ID != 0 && ID <= TotalNumSLocEntries &&
-         "SLocCursorForID should only be called for real IDs.");
-
-  ID -= 1;
-  PerFileData *F = 0;
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    F = Chain[N - I - 1];
-    if (ID < F->LocalNumSLocEntries)
-      break;
-    ID -= F->LocalNumSLocEntries;
-  }
-  assert(F && F->LocalNumSLocEntries > ID && "Chain corrupted");
-
-  F->SLocEntryCursor.JumpToBit(F->SLocOffsets[ID]);
-  return F;
-}
-
 /// \brief Read in the source location entry with the given ID.
-ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
+ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
   if (ID == 0)
     return Success;
 
-  if (ID > TotalNumSLocEntries) {
+  if (unsigned(-ID) - 2 >= TotalNumSLocEntries || ID > 0) {
     Error("source location entry ID out-of-range for AST file");
     return Failure;
   }
 
-  PerFileData *F = SLocCursorForID(ID);
+  PerFileData *F = GlobalSLocEntryMap.find(-ID)->second;
+  F->SLocEntryCursor.JumpToBit(F->SLocEntryOffsets[ID - F->SLocEntryBaseID]);
   llvm::BitstreamCursor &SLocEntryCursor = F->SLocEntryCursor;
+  unsigned BaseOffset = F->SLocEntryBaseOffset;
 
   ++NumSLocEntriesRead;
   unsigned Code = SLocEntryCursor.ReadCode();
@@ -1326,9 +1307,14 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
       return Failure;
     }
 
-    FileID FID = SourceMgr.createFileID(File, ReadSourceLocation(*F, Record[1]),
+    SourceLocation IncludeLoc = ReadSourceLocation(*F, Record[1]);
+    if (IncludeLoc.isInvalid() && F->Type != MainFile) {
+      // This is the module's main file.
+      IncludeLoc = getImportLocation(F);
+    }
+    FileID FID = SourceMgr.createFileID(File, IncludeLoc,
                                         (SrcMgr::CharacteristicKind)Record[2],
-                                        ID, Record[0]);
+                                        ID, BaseOffset + Record[0]);
     if (Record[3])
       const_cast<SrcMgr::FileInfo&>(SourceMgr.getSLocEntry(FID).getFile())
         .setHasLineDirectives();
@@ -1352,7 +1338,8 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
     llvm::MemoryBuffer *Buffer
     = llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(BlobStart, BlobLen - 1),
                                        Name);
-    FileID BufferID = SourceMgr.createFileIDForMemBuffer(Buffer, ID, Offset);
+    FileID BufferID = SourceMgr.createFileIDForMemBuffer(Buffer, ID,
+                                                         BaseOffset + Offset);
 
     if (strcmp(Name, "<built-in>") == 0) {
       PCHPredefinesBlock Block = {
@@ -1372,12 +1359,29 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
                                      ReadSourceLocation(*F, Record[3]),
                                      Record[4],
                                      ID,
-                                     Record[0]);
+                                     BaseOffset + Record[0]);
     break;
   }
   }
 
   return Success;
+}
+
+/// \brief Find the location where the module F is imported.
+SourceLocation ASTReader::getImportLocation(PerFileData *F) {
+  if (F->ImportLoc.isValid())
+    return F->ImportLoc;
+  // Otherwise we have a PCH. It's considered to be "imported" at the first
+  // location of its includer.
+  if (F->Loaders.empty() || !F->Loaders[0]) {
+    // Main file is the importer. We assume that it is the first entry in the
+    // entry table. We can't ask the manager, because at the time of PCH loading
+    // the main file entry doesn't exist yet.
+    // The very first entry is the invalid instantiation loc, which takes up
+    // offsets 0 and 1.
+    return SourceLocation::getFromRawEncoding(2U);
+  }
+  return F->Loaders[0]->FirstLoc;
 }
 
 /// ReadBlockAbbrevs - Enter a subblock of the specified BlockID with the
@@ -2191,10 +2195,53 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         Listener->ReadCounter(Record[0]);
       break;
 
-    case SOURCE_LOCATION_OFFSETS:
-      F.SLocOffsets = (const uint32_t *)BlobStart;
+    case SOURCE_LOCATION_OFFSETS: {
+      F.SLocEntryOffsets = (const uint32_t *)BlobStart;
       F.LocalNumSLocEntries = Record[0];
-      F.LocalSLocSize = Record[1];
+      llvm::tie(F.SLocEntryBaseID, F.SLocEntryBaseOffset) =
+          SourceMgr.AllocateLoadedSLocEntries(F.LocalNumSLocEntries, Record[1]);
+      // Make our entry in the range map. BaseID is negative and growing, so
+      // we invert it. Because we invert it, though, we need the other end of
+      // the range.
+      unsigned RangeStart =
+          unsigned(-F.SLocEntryBaseID) - F.LocalNumSLocEntries + 1;
+      GlobalSLocEntryMap.insert(std::make_pair(RangeStart, &F));
+      F.FirstLoc = SourceLocation::getFromRawEncoding(F.SLocEntryBaseOffset);
+
+      // Initialize the remapping table.
+      // Invalid stays invalid.
+      F.SLocRemap.insert(std::make_pair(0U, 0));
+      // This module. Base was 2 when being compiled.
+      F.SLocRemap.insert(std::make_pair(2U,
+                                  static_cast<int>(F.SLocEntryBaseOffset - 2)));
+      break;
+    }
+
+    case SOURCE_LOCATION_MAP: {
+      // Additional remapping information.
+      const unsigned char *Data = (const unsigned char*)BlobStart;
+      const unsigned char *DataEnd = Data + BlobLen;
+      while(Data < DataEnd) {
+        uint32_t Offset = io::ReadUnalignedLE32(Data);
+        uint16_t Len = io::ReadUnalignedLE16(Data);
+        llvm::StringRef Name = llvm::StringRef((const char*)Data, Len);
+        PerFileData *OM = Modules.lookup(Name);
+        if (!OM) {
+          Error("SourceLocation remap refers to unknown module");
+          return Failure;
+        }
+        // My Offset is mapped to OM->SLocEntryBaseOffset.
+        F.SLocRemap.insert(std::make_pair(Offset,
+                        static_cast<int>(OM->SLocEntryBaseOffset - Offset)));
+        Data += Len;
+      }
+      break;
+    }
+
+
+    case SOURCE_MANAGER_LINE_TABLE:
+      if (ParseLineTable(F, Record))
+        return Failure;
       break;
 
     case FILE_SOURCE_LOCATION_OFFSETS:
@@ -2202,13 +2249,14 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       F.LocalNumSLocFileEntries = Record[0];
       break;
 
-    case SOURCE_LOCATION_PRELOADS:
-      if (PreloadSLocEntries.empty())
-        PreloadSLocEntries.swap(Record);
-      else
-        PreloadSLocEntries.insert(PreloadSLocEntries.end(),
-            Record.begin(), Record.end());
+    case SOURCE_LOCATION_PRELOADS: {
+      // Need to transform from the local view (1-based IDs) to the global view,
+      // which is based off F.SLocEntryBaseID.
+      PreloadSLocEntries.reserve(PreloadSLocEntries.size() + Record.size());
+      for (unsigned I = 0, N = Record.size(); I != N; ++I)
+        PreloadSLocEntries.push_back(int(Record[I] - 1) + F.SLocEntryBaseID);
       break;
+    }
 
     case STAT_CACHE: {
       if (!DisableStatCache) {
@@ -2326,11 +2374,12 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         Error("invalid DIAG_USER_MAPPINGS block in AST file");
         return Failure;
       }
-      if (PragmaDiagMappings.empty())
-        PragmaDiagMappings.swap(Record);
+        
+      if (F.PragmaDiagMappings.empty())
+        F.PragmaDiagMappings.swap(Record);
       else
-        PragmaDiagMappings.insert(PragmaDiagMappings.end(),
-                                Record.begin(), Record.end());
+        F.PragmaDiagMappings.insert(F.PragmaDiagMappings.end(),
+                                    Record.begin(), Record.end());
       break;
         
     case CUDA_SPECIAL_DECL_REFS:
@@ -2478,7 +2527,6 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
            TotalNumSelectors = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     TotalNumSLocEntries += Chain[I]->LocalNumSLocEntries;
-    NextSLocOffset += Chain[I]->LocalSLocSize;
     TotalNumIdentifiers += Chain[I]->LocalNumIdentifiers;
     TotalNumTypes += Chain[I]->LocalNumTypes;
     TotalNumDecls += Chain[I]->LocalNumDecls;
@@ -2487,7 +2535,6 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     TotalNumMacroDefs += Chain[I]->LocalNumMacroDefinitions;
     TotalNumSelectors += Chain[I]->LocalNumSelectors;
   }
-  SourceMgr.PreallocateSLocEntries(this, TotalNumSLocEntries, NextSLocOffset);
   IdentifiersLoaded.resize(TotalNumIdentifiers);
   TypesLoaded.resize(TotalNumTypes);
   DeclsLoaded.resize(TotalNumDecls);
@@ -2507,7 +2554,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   for (unsigned I = 0, N = PreloadSLocEntries.size(); I != N; ++I) {
     ASTReadResult Result = ReadSLocEntryRecord(PreloadSLocEntries[I]);
     if (Result != Success)
-      return Result;
+      return Failure;
   }
 
   // Check the predefines buffers.
@@ -2572,7 +2619,11 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
       if (Loc.isValid())
         OriginalFileID = SourceMgr.getDecomposedLoc(Loc).first;
     }
-    
+    else {
+      OriginalFileID = FileID::get(Chain[0]->SLocEntryBaseID 
+                                        + OriginalFileID.getOpaqueValue() - 1);
+    }
+
     if (!OriginalFileID.isInvalid())
       SourceMgr.SetPreambleFileID(OriginalFileID);
   }
@@ -2590,6 +2641,8 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
   else
     FirstInSource = &F;
   F.Loaders.push_back(Prev);
+  // A non-module AST file's module name is $filename.
+  Modules["$" + FileName.str()] = &F;
 
   // Set the AST file name.
   F.FileName = FileName;
@@ -2668,9 +2721,8 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
         // AST block, skipping subblocks, to see if there are other
         // AST blocks elsewhere.
 
-        // Clear out any preallocated source location entries, so that
-        // the source manager does not try to resolve them later.
-        SourceMgr.ClearPreallocatedSLocEntries();
+        // FIXME: We can't clear loaded slocentries anymore.
+        //SourceMgr.ClearPreallocatedSLocEntries();
 
         // Remove the stat cache.
         if (F.StatCache)
@@ -3062,21 +3114,25 @@ HeaderFileInfo ASTReader::GetHeaderFileInfo(const FileEntry *FE) {
 }
 
 void ASTReader::ReadPragmaDiagnosticMappings(Diagnostic &Diag) {
-  unsigned Idx = 0;
-  while (Idx < PragmaDiagMappings.size()) {
-    SourceLocation
-      Loc = SourceLocation::getFromRawEncoding(PragmaDiagMappings[Idx++]);
-    while (1) {
-      assert(Idx < PragmaDiagMappings.size() &&
-             "Invalid data, didn't find '-1' marking end of diag/map pairs");
-      if (Idx >= PragmaDiagMappings.size())
-        break; // Something is messed up but at least avoid infinite loop in
-               // release build.
-      unsigned DiagID = PragmaDiagMappings[Idx++];
-      if (DiagID == (unsigned)-1)
-        break; // no more diag/map pairs for this location.
-      diag::Mapping Map = (diag::Mapping)PragmaDiagMappings[Idx++];
-      Diag.setDiagnosticMapping(DiagID, Map, Loc);
+  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
+    PerFileData &F = *Chain[I];
+    unsigned Idx = 0;
+    while (Idx < F.PragmaDiagMappings.size()) {
+      SourceLocation Loc = ReadSourceLocation(F, F.PragmaDiagMappings[Idx++]);
+      while (1) {
+        assert(Idx < F.PragmaDiagMappings.size() &&
+               "Invalid data, didn't find '-1' marking end of diag/map pairs");
+        if (Idx >= F.PragmaDiagMappings.size()) {
+          break; // Something is messed up but at least avoid infinite loop in
+                 // release build.
+        }
+        unsigned DiagID = F.PragmaDiagMappings[Idx++];
+        if (DiagID == (unsigned)-1) {
+          break; // no more diag/map pairs for this location.
+        }
+        diag::Mapping Map = (diag::Mapping)F.PragmaDiagMappings[Idx++];
+        Diag.setDiagnosticMapping(DiagID, Map, Loc);
+      }
     }
   }
 }
@@ -4571,7 +4627,7 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(unsigned ID) {
   return IdentifiersLoaded[ID];
 }
 
-bool ASTReader::ReadSLocEntry(unsigned ID) {
+bool ASTReader::ReadSLocEntry(int ID) {
   return ReadSLocEntryRecord(ID) != Success;
 }
 
@@ -5175,9 +5231,10 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
-    Consumer(0), isysroot(isysroot), DisableValidation(DisableValidation),
+    Consumer(0), FirstInSource(0), RelocatablePCH(false), isysroot(isysroot), 
+    DisableValidation(DisableValidation),
     DisableStatCache(DisableStatCache), NumStatHits(0), NumStatMisses(0), 
-    NumSLocEntriesRead(0), TotalNumSLocEntries(0), NextSLocOffset(0), 
+    NumSLocEntriesRead(0), TotalNumSLocEntries(0), 
     NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0), 
     TotalNumMacros(0), NumSelectorsRead(0), NumMethodPoolEntriesRead(0), 
     NumMethodPoolMisses(0), TotalNumMethodPoolEntries(0), 
@@ -5185,24 +5242,25 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
     NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0), 
     NumCurrentElementsDeserializing(0) 
 {
-  RelocatablePCH = false;
+  SourceMgr.setExternalSLocEntrySource(this);
 }
 
 ASTReader::ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      Diagnostic &Diags, const char *isysroot,
                      bool DisableValidation, bool DisableStatCache)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
-    Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
-    isysroot(isysroot), DisableValidation(DisableValidation), 
-    DisableStatCache(DisableStatCache), NumStatHits(0), NumStatMisses(0), 
-    NumSLocEntriesRead(0), TotalNumSLocEntries(0),
-    NextSLocOffset(0), NumStatementsRead(0), TotalNumStatements(0),
-    NumMacrosRead(0), TotalNumMacros(0), NumSelectorsRead(0),
-    NumMethodPoolEntriesRead(0), NumMethodPoolMisses(0),
+    Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0), FirstInSource(0),
+    RelocatablePCH(false), isysroot(isysroot), 
+    DisableValidation(DisableValidation), DisableStatCache(DisableStatCache), 
+    NumStatHits(0), NumStatMisses(0), NumSLocEntriesRead(0), 
+    TotalNumSLocEntries(0), NumStatementsRead(0), 
+    TotalNumStatements(0), NumMacrosRead(0), TotalNumMacros(0), 
+    NumSelectorsRead(0), NumMethodPoolEntriesRead(0), NumMethodPoolMisses(0),
     TotalNumMethodPoolEntries(0), NumLexicalDeclContextsRead(0),
     TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
-    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) {
-  RelocatablePCH = false;
+    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) 
+{
+  SourceMgr.setExternalSLocEntrySource(this);
 }
 
 ASTReader::~ASTReader() {
@@ -5231,13 +5289,13 @@ ASTReader::~ASTReader() {
 }
 
 ASTReader::PerFileData::PerFileData(ASTFileType Ty)
-  : Type(Ty), SizeInBits(0), LocalNumSLocEntries(0), SLocOffsets(0),
-    SLocFileOffsets(0), LocalSLocSize(0),
-    LocalNumIdentifiers(0), IdentifierOffsets(0), IdentifierTableData(0),
+  : Type(Ty), SizeInBits(0), LocalNumSLocEntries(0), SLocEntryBaseID(0),
+    SLocEntryBaseOffset(0), SLocEntryOffsets(0),
+    SLocFileOffsets(0), LocalNumIdentifiers(0), 
+    IdentifierOffsets(0), IdentifierTableData(0),
     IdentifierLookupTable(0), LocalNumMacroDefinitions(0),
-    MacroDefinitionOffsets(0), 
-    LocalNumHeaderFileInfos(0), HeaderFileInfoTableData(0),
-    HeaderFileInfoTable(0),
+    MacroDefinitionOffsets(0), LocalNumHeaderFileInfos(0), 
+    HeaderFileInfoTableData(0), HeaderFileInfoTable(0),
     LocalNumSelectors(0), SelectorOffsets(0),
     SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
     DeclOffsets(0), LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),

@@ -375,8 +375,14 @@ namespace clang {
       
       /// \brief Record code for the set of known namespaces, which are used
       /// for typo correction.
-      KNOWN_NAMESPACES = 46
+      KNOWN_NAMESPACES = 46,
 
+      /// \brief Record code for the source location remapping information.
+      SOURCE_LOCATION_MAP = 47,
+
+      /// \brief Record code for the source manager line table information,
+      /// which stores information about #line directives.
+      SOURCE_MANAGER_LINE_TABLE = 48
     };
 
     /// \brief Record types used within a source manager block.
@@ -393,10 +399,7 @@ namespace clang {
       SM_SLOC_BUFFER_BLOB = 3,
       /// \brief Describes a source location entry (SLocEntry) for a
       /// macro expansion.
-      SM_SLOC_EXPANSION_ENTRY = 4,
-      /// \brief Describes the SourceManager's line table, with
-      /// information about #line directives.
-      SM_LINE_TABLE = 5
+      SM_SLOC_EXPANSION_ENTRY = 4
     };
 
     /// \brief Record types used within a preprocessor block.

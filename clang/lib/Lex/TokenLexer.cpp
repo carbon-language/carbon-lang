@@ -43,7 +43,7 @@ void TokenLexer::Init(Token &Tok, SourceLocation ELEnd, MacroArgs *Actuals) {
   MacroExpansionStart = SourceLocation();
 
   SourceManager &SM = PP.getSourceManager();
-  MacroStartSLocOffset = SM.getNextOffset();
+  MacroStartSLocOffset = SM.getNextLocalOffset();
 
   if (NumTokens > 0) {
     assert(Tokens[0].getLocation().isValid());

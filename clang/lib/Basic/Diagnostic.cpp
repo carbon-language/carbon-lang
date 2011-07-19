@@ -726,6 +726,16 @@ StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level,
     FixIts.push_back(Info.getFixItHint(I));
 }
 
+StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level, unsigned ID, 
+                                   llvm::StringRef Message, FullSourceLoc Loc,
+                                   llvm::ArrayRef<CharSourceRange> Ranges,
+                                   llvm::ArrayRef<FixItHint> Fixits)
+  : ID(ID), Level(Level), Loc(Loc), Message(Message) 
+{
+  this->Ranges.assign(Ranges.begin(), Ranges.end());
+  this->FixIts.assign(FixIts.begin(), FixIts.end());
+}
+
 StoredDiagnostic::~StoredDiagnostic() { }
 
 /// IncludeInDiagnosticCounts - This method (whose default implementation

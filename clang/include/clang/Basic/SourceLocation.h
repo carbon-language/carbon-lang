@@ -35,8 +35,9 @@ class SourceManager;
 /// a source file (MemoryBuffer) along with its #include path and #line data.
 ///
 class FileID {
-  /// ID - Opaque identifier, 0 is "invalid".
-  unsigned ID;
+  /// ID - Opaque identifier, 0 is "invalid". >0 is this module, <-1 is
+  /// something loaded from another module.
+  int ID;
 public:
   FileID() : ID(0) {}
 
@@ -49,26 +50,38 @@ public:
   bool operator>(const FileID &RHS) const { return RHS < *this; }
   bool operator>=(const FileID &RHS) const { return RHS <= *this; }
 
-  static FileID getSentinel() { return get(~0U); }
-  unsigned getHashValue() const { return ID; }
+  static FileID getSentinel() { return get(-1); }
+  unsigned getHashValue() const { return static_cast<unsigned>(ID); }
 
 private:
   friend class SourceManager;
   friend class ASTWriter;
   friend class ASTReader;
   
-  static FileID get(unsigned V) {
+  static FileID get(int V) {
     FileID F;
     F.ID = V;
     return F;
   }
-  unsigned getOpaqueValue() const { return ID; }
+  int getOpaqueValue() const { return ID; }
 };
 
 
-/// SourceLocation - This is a carefully crafted 32-bit identifier that encodes
-/// a full include stack, line and column number information for a position in
-/// an input translation unit.
+/// \brief Encodes a location in the source. The SourceManager can decode this
+/// to get at the full include stack, line and column information.
+///
+/// Technically, a source location is simply an offset into the manager's view
+/// of the input source, which is all input buffers (including macro
+/// instantiations) concatenated in an effectively arbitrary order. The manager
+/// actually maintains two blocks of input buffers. One, starting at offset 0
+/// and growing upwards, contains all buffers from this module. The other,
+/// starting at the highest possible offset and growing downwards, contains
+/// buffers of loaded modules.
+///
+/// In addition, one bit of SourceLocation is used for quick access to the
+/// information whether the location is in a file or a macro instantiation.
+///
+/// It is important that this type remains small. It is currently 32 bits wide.
 class SourceLocation {
   unsigned ID;
   friend class SourceManager;
@@ -77,21 +90,21 @@ class SourceLocation {
   };
 public:
 
-  SourceLocation() : ID(0) {}  // 0 is an invalid FileID.
+  SourceLocation() : ID(0) {}
 
   bool isFileID() const  { return (ID & MacroIDBit) == 0; }
   bool isMacroID() const { return (ID & MacroIDBit) != 0; }
 
-  /// isValid - Return true if this is a valid SourceLocation object.  Invalid
-  /// SourceLocations are often used when events have no corresponding location
-  /// in the source (e.g. a diagnostic is required for a command line option).
+  /// \brief Return true if this is a valid SourceLocation object.
   ///
+  /// Invalid SourceLocations are often used when events have no corresponding
+  /// location in the source (e.g. a diagnostic is required for a command line
+  /// option).
   bool isValid() const { return ID != 0; }
   bool isInvalid() const { return ID == 0; }
 
 private:
-  /// getOffset - Return the index for SourceManager's SLocEntryTable table,
-  /// note that this is not an index *into* it though.
+  /// \brief Return the offset into the manager's global input view.
   unsigned getOffset() const {
     return ID & ~MacroIDBit;
   }
@@ -114,7 +127,8 @@ public:
   /// getFileLocWithOffset - Return a source location with the specified offset
   /// from this file SourceLocation.
   SourceLocation getFileLocWithOffset(int Offset) const {
-    assert(((getOffset()+Offset) & MacroIDBit) == 0 && "invalid location");
+    assert(((getOffset()+Offset) & MacroIDBit) == 0 &&
+           "offset overflow or macro loc");
     SourceLocation L;
     L.ID = ID+Offset;
     return L;

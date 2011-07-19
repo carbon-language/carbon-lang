@@ -45,8 +45,10 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include <algorithm>
 #include <cstdio>
 #include <string.h>
+#include <utility>
 using namespace clang;
 using namespace clang::serialization;
 
@@ -790,7 +792,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(SM_SLOC_BUFFER_ENTRY);
   RECORD(SM_SLOC_BUFFER_BLOB);
   RECORD(SM_SLOC_EXPANSION_ENTRY);
-  RECORD(SM_LINE_TABLE);
 
   // Preprocessor Block.
   BLOCK(PREPROCESSOR_BLOCK);
@@ -1416,43 +1417,6 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   unsigned SLocBufferBlobAbbrv = CreateSLocBufferBlobAbbrev(Stream);
   unsigned SLocExpansionAbbrv = CreateSLocExpansionAbbrev(Stream);
 
-  // Write the line table.
-  if (SourceMgr.hasLineTable()) {
-    LineTableInfo &LineTable = SourceMgr.getLineTable();
-
-    // Emit the file names
-    Record.push_back(LineTable.getNumFilenames());
-    for (unsigned I = 0, N = LineTable.getNumFilenames(); I != N; ++I) {
-      // Emit the file name
-      const char *Filename = LineTable.getFilename(I);
-      Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
-      unsigned FilenameLen = Filename? strlen(Filename) : 0;
-      Record.push_back(FilenameLen);
-      if (FilenameLen)
-        Record.insert(Record.end(), Filename, Filename + FilenameLen);
-    }
-
-    // Emit the line entries
-    for (LineTableInfo::iterator L = LineTable.begin(), LEnd = LineTable.end();
-         L != LEnd; ++L) {
-      // Emit the file ID
-      Record.push_back(L->first);
-
-      // Emit the line entries
-      Record.push_back(L->second.size());
-      for (std::vector<LineEntry>::iterator LE = L->second.begin(),
-                                         LEEnd = L->second.end();
-           LE != LEEnd; ++LE) {
-        Record.push_back(LE->FileOffset);
-        Record.push_back(LE->LineNo);
-        Record.push_back(LE->FilenameID);
-        Record.push_back((unsigned)LE->FileKind);
-        Record.push_back(LE->IncludeOffset);
-      }
-    }
-    Stream.EmitRecord(SM_LINE_TABLE, Record);
-  }
-
   // Write out the source location entry table. We skip the first
   // entry, which is always the same dummy entry.
   std::vector<uint32_t> SLocEntryOffsets;
@@ -1460,12 +1424,11 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   // We will go through them in ASTReader::validateFileEntries().
   std::vector<uint32_t> SLocFileEntryOffsets;
   RecordData PreloadSLocs;
-  unsigned BaseSLocID = Chain ? Chain->getTotalNumSLocs() : 0;
-  SLocEntryOffsets.reserve(SourceMgr.sloc_entry_size() - 1 - BaseSLocID);
-  for (unsigned I = BaseSLocID + 1, N = SourceMgr.sloc_entry_size();
+  SLocEntryOffsets.reserve(SourceMgr.local_sloc_entry_size() - 1);
+  for (unsigned I = 1, N = SourceMgr.local_sloc_entry_size();
        I != N; ++I) {
     // Get this source location entry.
-    const SrcMgr::SLocEntry *SLoc = &SourceMgr.getSLocEntry(I);
+    const SrcMgr::SLocEntry *SLoc = &SourceMgr.getLocalSLocEntry(I);
 
     // Record the offset of this source-location entry.
     SLocEntryOffsets.push_back(Stream.GetCurrentBitNo());
@@ -1483,7 +1446,8 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     Record.clear();
     Record.push_back(Code);
 
-    Record.push_back(SLoc->getOffset());
+    // Starting offset of this entry within this module, so skip the dummy.
+    Record.push_back(SLoc->getOffset() - 2);
     if (SLoc->isFile()) {
       const SrcMgr::FileInfo &File = SLoc->getFile();
       Record.push_back(File.getIncludeLoc().getRawEncoding());
@@ -1535,8 +1499,9 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
                                   llvm::StringRef(Buffer->getBufferStart(),
                                                   Buffer->getBufferSize() + 1));
 
-        if (strcmp(Name, "<built-in>") == 0)
-          PreloadSLocs.push_back(BaseSLocID + SLocEntryOffsets.size());
+        if (strcmp(Name, "<built-in>") == 0) {
+          PreloadSLocs.push_back(SLocEntryOffsets.size());
+        }
       }
     } else {
       // The source location entry is a macro expansion.
@@ -1546,9 +1511,9 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
       Record.push_back(Inst.getInstantiationLocEnd().getRawEncoding());
 
       // Compute the token length for this macro expansion.
-      unsigned NextOffset = SourceMgr.getNextOffset();
+      unsigned NextOffset = SourceMgr.getNextLocalOffset();
       if (I + 1 != N)
-        NextOffset = SourceMgr.getSLocEntry(I + 1).getOffset();
+        NextOffset = SourceMgr.getLocalSLocEntry(I + 1).getOffset();
       Record.push_back(NextOffset - SLoc->getOffset() - 1);
       Stream.EmitRecordWithAbbrev(SLocExpansionAbbrv, Record);
     }
@@ -1565,16 +1530,53 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(SOURCE_LOCATION_OFFSETS));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 16)); // # of slocs
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 16)); // next offset
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 16)); // total size
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // offsets
   unsigned SLocOffsetsAbbrev = Stream.EmitAbbrev(Abbrev);
 
   Record.clear();
   Record.push_back(SOURCE_LOCATION_OFFSETS);
   Record.push_back(SLocEntryOffsets.size());
-  unsigned BaseOffset = Chain ? Chain->getNextSLocOffset() : 0;
-  Record.push_back(SourceMgr.getNextOffset() - BaseOffset);
+  Record.push_back(SourceMgr.getNextLocalOffset() - 1); // skip dummy
   Stream.EmitRecordWithBlob(SLocOffsetsAbbrev, Record, data(SLocEntryOffsets));
+
+  // If we have module dependencies, write the mapping from source locations to
+  // their containing modules, so that the reader can build the remapping.
+  if (Chain) {
+    // The map consists solely of a blob with the following format:
+    // *(offset:i32 len:i16 name:len*i8)
+    // Sorted by offset.
+    typedef std::pair<uint32_t, llvm::StringRef> ModuleOffset;
+    llvm::SmallVector<ModuleOffset, 16> Modules;
+    Modules.reserve(Chain->Modules.size());
+    for (llvm::StringMap<ASTReader::PerFileData*>::const_iterator
+             I = Chain->Modules.begin(), E = Chain->Modules.end();
+         I != E; ++I) {
+      Modules.push_back(ModuleOffset(I->getValue()->SLocEntryBaseOffset,
+                                     I->getKey()));
+    }
+    std::sort(Modules.begin(), Modules.end());
+
+    Abbrev = new BitCodeAbbrev();
+    Abbrev->Add(BitCodeAbbrevOp(SOURCE_LOCATION_MAP));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+    unsigned SLocMapAbbrev = Stream.EmitAbbrev(Abbrev);
+    llvm::SmallString<2048> Buffer;
+    {
+      llvm::raw_svector_ostream Out(Buffer);
+      for (llvm::SmallVector<ModuleOffset, 16>::iterator I = Modules.begin(),
+                                                         E = Modules.end();
+           I != E; ++I) {
+        io::Emit32(Out, I->first);
+        io::Emit16(Out, I->second.size());
+        Out.write(I->second.data(), I->second.size());
+      }
+    }
+    Record.clear();
+    Record.push_back(SOURCE_LOCATION_MAP);
+    Stream.EmitRecordWithBlob(SLocMapAbbrev, Record,
+                              Buffer.data(), Buffer.size());
+  }
 
   Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(FILE_SOURCE_LOCATION_OFFSETS));
@@ -1591,6 +1593,49 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   // Write the source location entry preloads array, telling the AST
   // reader which source locations entries it should load eagerly.
   Stream.EmitRecord(SOURCE_LOCATION_PRELOADS, PreloadSLocs);
+
+  // Write the line table. It depends on remapping working, so it must come
+  // after the source location offsets.
+  if (SourceMgr.hasLineTable()) {
+    LineTableInfo &LineTable = SourceMgr.getLineTable();
+
+    Record.clear();
+    // Emit the file names
+    Record.push_back(LineTable.getNumFilenames());
+    for (unsigned I = 0, N = LineTable.getNumFilenames(); I != N; ++I) {
+      // Emit the file name
+      const char *Filename = LineTable.getFilename(I);
+      Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
+      unsigned FilenameLen = Filename? strlen(Filename) : 0;
+      Record.push_back(FilenameLen);
+      if (FilenameLen)
+        Record.insert(Record.end(), Filename, Filename + FilenameLen);
+    }
+
+    // Emit the line entries
+    for (LineTableInfo::iterator L = LineTable.begin(), LEnd = LineTable.end();
+         L != LEnd; ++L) {
+      // Only emit entries for local files.
+      if (L->first < 0)
+        continue;
+
+      // Emit the file ID
+      Record.push_back(L->first);
+
+      // Emit the line entries
+      Record.push_back(L->second.size());
+      for (std::vector<LineEntry>::iterator LE = L->second.begin(),
+                                         LEEnd = L->second.end();
+           LE != LEEnd; ++LE) {
+        Record.push_back(LE->FileOffset);
+        Record.push_back(LE->LineNo);
+        Record.push_back(LE->FilenameID);
+        Record.push_back((unsigned)LE->FileKind);
+        Record.push_back(LE->IncludeOffset);
+      }
+    }
+    Stream.EmitRecord(SOURCE_MANAGER_LINE_TABLE, Record);
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -3926,6 +3971,7 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
          FirstMacroID == NextMacroID &&
          FirstCXXBaseSpecifiersID == NextCXXBaseSpecifiersID &&
          "Setting chain after writing has started.");
+
   Chain = Reader;
 
   FirstDeclID += Chain->getTotalNumDecls();

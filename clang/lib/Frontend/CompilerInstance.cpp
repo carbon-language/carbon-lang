@@ -42,7 +42,7 @@
 using namespace clang;
 
 CompilerInstance::CompilerInstance()
-  : Invocation(new CompilerInvocation()) {
+  : Invocation(new CompilerInvocation()), ModuleManager(0) {
 }
 
 CompilerInstance::~CompilerInstance() {
@@ -275,6 +275,7 @@ void CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
                                           getPreprocessor(), getASTContext(),
                                           DeserializationListener,
                                           Preamble));
+  ModuleManager = static_cast<ASTReader*>(Source.get());
   getASTContext().setExternalSource(Source);
 }
 

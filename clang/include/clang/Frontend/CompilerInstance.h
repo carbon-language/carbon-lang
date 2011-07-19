@@ -27,13 +27,13 @@ class Timer;
 namespace clang {
 class ASTContext;
 class ASTConsumer;
+class ASTReader;
 class CodeCompleteConsumer;
 class Diagnostic;
 class DiagnosticClient;
 class ExternalASTSource;
 class FileManager;
 class FrontendAction;
-class ASTReader;
 class Preprocessor;
 class Sema;
 class SourceManager;
@@ -88,8 +88,11 @@ class CompilerInstance {
   /// \brief The semantic analysis object.
   llvm::OwningPtr<Sema> TheSema;
   
-  /// The frontend timer
+  /// \brief The frontend timer
   llvm::OwningPtr<llvm::Timer> FrontendTimer;
+
+  /// \brief Non-owning reference to the ASTReader, if one exists.
+  ASTReader *ModuleManager;
 
   /// \brief Holds information about the output file.
   ///
@@ -387,6 +390,12 @@ public:
   
   Sema *takeSema() { return TheSema.take(); }
   
+  /// }
+  /// @name Module Management
+  /// {
+
+  ASTReader *getModuleManager() const { return ModuleManager; }
+
   /// }
   /// @name Code Completion
   /// {

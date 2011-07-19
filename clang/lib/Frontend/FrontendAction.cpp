@@ -224,9 +224,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     } else if (!CI.getPreprocessorOpts().ImplicitPCHInclude.empty()) {
       // Use PCH.
       assert(hasPCHSupport() && "This action does not have PCH support!");
-      ASTDeserializationListener *DeserialListener
-          = CI.getInvocation().getFrontendOpts().ChainedPCH ?
-                  Consumer->GetASTDeserializationListener() : 0;
+      ASTDeserializationListener *DeserialListener =
+          Consumer->GetASTDeserializationListener();
       if (CI.getPreprocessorOpts().DumpDeserializedPCHDecls)
         DeserialListener = new DeserializedDeclsDumper(DeserialListener);
       if (!CI.getPreprocessorOpts().DeserializedPCHDeclsToErrorOn.empty())

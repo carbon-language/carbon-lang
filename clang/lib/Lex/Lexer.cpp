@@ -702,8 +702,8 @@ SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
 /// \brief Returns true if the given MacroID location points at the first
 /// token of the macro expansion.
 bool Lexer::isAtStartOfMacroExpansion(SourceLocation loc,
-                                          const SourceManager &SM,
-                                          const LangOptions &LangOpts) {
+                                      const SourceManager &SM,
+                                      const LangOptions &LangOpts) {
   assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
 
   std::pair<FileID, unsigned> infoLoc = SM.getDecomposedLoc(loc);
@@ -735,7 +735,7 @@ bool Lexer::isAtEndOfMacroExpansion(SourceLocation loc,
 
   FileID FID = SM.getFileID(loc);
   SourceLocation afterLoc = loc.getFileLocWithOffset(tokLen+1);
-  if (!SM.isBeforeInSourceLocationOffset(afterLoc, SM.getNextOffset()))
+  if (!SM.isBeforeInSourceLocationOffset(afterLoc, SM.getNextLocalOffset()))
     return true; // We got past the last FileID, this points to the last token.
 
   // FIXME: If the token comes from the macro token paste operator ('##')

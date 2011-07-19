@@ -41,6 +41,7 @@ namespace llvm {
 
 namespace clang {
 class ASTContext;
+class ASTReader;
 class CodeCompleteConsumer;
 class CompilerInvocation;
 class Decl;
@@ -143,6 +144,9 @@ private:
   // Critical optimization when using clang_getCursor().
   ASTLocation LastLoc;
 
+  /// \brief The set of diagnostics produced when creating the preamble.
+  llvm::SmallVector<StoredDiagnostic, 4> PreambleDiagnostics;
+
   /// \brief The set of diagnostics produced when creating this
   /// translation unit.
   llvm::SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
@@ -230,14 +234,6 @@ private:
   /// when any errors are present.
   unsigned NumWarningsInPreamble;
 
-  /// \brief The number of diagnostics that were stored when parsing
-  /// the precompiled preamble.
-  ///
-  /// This value is used to determine how many of the stored
-  /// diagnostics should be retained when reparsing in the presence of
-  /// a precompiled preamble.
-  unsigned NumStoredDiagnosticsInPreamble;
-
   /// \brief A list of the serialization ID numbers for each of the top-level
   /// declarations parsed within the precompiled preamble.
   std::vector<serialization::DeclID> TopLevelDeclsInPreamble;
@@ -256,6 +252,11 @@ private:
   static void ConfigureDiags(llvm::IntrusiveRefCntPtr<Diagnostic> &Diags,
                              const char **ArgBegin, const char **ArgEnd,
                              ASTUnit &AST, bool CaptureDiagnostics);
+
+  void TranslateStoredDiagnostics(ASTReader *MMan, llvm::StringRef ModName,
+                                  SourceManager &SrcMan,
+                      const llvm::SmallVectorImpl<StoredDiagnostic> &Diags,
+                            llvm::SmallVectorImpl<StoredDiagnostic> &Out);
 
 public:
   /// \brief A cached code-completion result, which may be introduced in one of

@@ -15,6 +15,7 @@
 #define LLVM_CLANG_FRONTEND_AST_READER_H
 
 #include "clang/Serialization/ASTBitCodes.h"
+#include "clang/Serialization/ContinuousRangeMap.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/DeclObjC.h"
@@ -49,6 +50,7 @@ class AddrLabelExpr;
 class ASTConsumer;
 class ASTContext;
 class ASTIdentifierIterator;
+class ASTUnit; // FIXME: Layering violation and egregious hack.
 class Attr;
 class Decl;
 class DeclContext;
@@ -64,6 +66,7 @@ class Preprocessor;
 class Sema;
 class SwitchCase;
 class ASTDeserializationListener;
+class ASTWriter;
 class ASTReader;
 class ASTDeclReader;
 class ASTStmtReader;
@@ -191,6 +194,8 @@ public:
   friend class ASTIdentifierIterator;
   friend class ASTIdentifierLookupTrait;
   friend class TypeLocReader;
+  friend class ASTWriter;
+  friend class ASTUnit; // ASTUnit needs to remap source locations.
 private:
   /// \brief The receiver of some callbacks invoked by ASTReader.
   llvm::OwningPtr<ASTReaderListener> Listener;
@@ -245,6 +250,12 @@ private:
     /// \brief The main bitstream cursor for the main block.
     llvm::BitstreamCursor Stream;
 
+    /// \brief The source location where this module was first imported.
+    SourceLocation ImportLoc;
+
+    /// \brief The first source location in this module.
+    SourceLocation FirstLoc;
+
     // === Source Locations ===
 
     /// \brief Cursor used to read source location entries.
@@ -253,9 +264,15 @@ private:
     /// \brief The number of source location entries in this AST file.
     unsigned LocalNumSLocEntries;
 
+    /// \brief The base ID in the source manager's view of this module.
+    int SLocEntryBaseID;
+
+    /// \brief The base offset in the source manager's view of this module.
+    unsigned SLocEntryBaseOffset;
+
     /// \brief Offsets for all of the source location entries in the
     /// AST file.
-    const uint32_t *SLocOffsets;
+    const uint32_t *SLocEntryOffsets;
 
     /// \brief The number of source location file entries in this AST file.
     unsigned LocalNumSLocFileEntries;
@@ -264,8 +281,8 @@ private:
     /// AST file.
     const uint32_t *SLocFileOffsets;
 
-    /// \brief The entire size of this module's source location offset range.
-    unsigned LocalSLocSize;
+    /// \brief Remapping table for source locations in this module.
+    ContinuousRangeMap<uint32_t, int, 2> SLocRemap;
 
     // === Identifiers ===
 
@@ -397,6 +414,9 @@ private:
 
     // === Miscellaneous ===
 
+    /// \brief Diagnostic IDs and their mappings that the user changed.
+    llvm::SmallVector<uint64_t, 8> PragmaDiagMappings;
+
     /// \brief The AST stat cache installed for this file, if any.
     ///
     /// The dynamic type of this stat cache is always ASTStatCache
@@ -426,7 +446,10 @@ private:
   llvm::SmallVector<PerFileData*, 2> Chain;
 
   /// \brief SLocEntries that we're going to preload.
-  llvm::SmallVector<uint64_t, 64> PreloadSLocEntries;
+  llvm::SmallVector<int, 64> PreloadSLocEntries;
+
+  /// \brief A map of negated SLocEntryIDs to the modules containing them.
+  ContinuousRangeMap<unsigned, PerFileData*, 64> GlobalSLocEntryMap;
 
   /// \brief Types that have already been loaded from the chain.
   ///
@@ -630,9 +653,6 @@ private:
 
   //@}
 
-  /// \brief Diagnostic IDs and their mappings that the user changed.
-  llvm::SmallVector<uint64_t, 8> PragmaDiagMappings;
-
   /// \brief The original file name that was used to build the primary AST file,
   /// which may have been modified for relocatable-pch support.
   std::string OriginalFileName;
@@ -685,9 +705,6 @@ private:
 
   /// \brief The number of source location entries in the chain.
   unsigned TotalNumSLocEntries;
-
-  /// \brief The next offset for a SLocEntry after everything in this reader.
-  unsigned NextSLocOffset;
 
   /// \brief The number of statements (and expressions) de-serialized
   /// from the chain.
@@ -810,8 +827,8 @@ private:
   bool CheckPredefinesBuffers();
   bool ParseLineTable(PerFileData &F, llvm::SmallVectorImpl<uint64_t> &Record);
   ASTReadResult ReadSourceManagerBlock(PerFileData &F);
-  ASTReadResult ReadSLocEntryRecord(unsigned ID);
-  PerFileData *SLocCursorForID(unsigned ID);
+  ASTReadResult ReadSLocEntryRecord(int ID);
+  llvm::BitstreamCursor &SLocCursorForID(int ID);
   SourceLocation getImportLocation(PerFileData *F);
   bool ParseLanguageOptions(const llvm::SmallVectorImpl<uint64_t> &Record);
 
@@ -958,11 +975,6 @@ public:
   /// \brief Returns the number of source locations found in the chain.
   unsigned getTotalNumSLocs() const {
     return TotalNumSLocEntries;
-  }
-
-  /// \brief Returns the next SLocEntry offset after the chain.
-  unsigned getNextSLocOffset() const {
-    return NextSLocOffset;
   }
 
   /// \brief Returns the number of identifiers found in the chain.
@@ -1158,7 +1170,7 @@ public:
   }
 
   /// \brief Read the source location entry with index ID.
-  virtual bool ReadSLocEntry(unsigned ID);
+  virtual bool ReadSLocEntry(int ID);
 
   Selector DecodeSelector(unsigned Idx);
 
@@ -1221,8 +1233,15 @@ public:
 
   /// \brief Read a source location from raw form.
   SourceLocation ReadSourceLocation(PerFileData &Module, unsigned Raw) {
-    (void)Module; // No remapping yet
-    return SourceLocation::getFromRawEncoding(Raw);
+    unsigned Flag = Raw & (1U << 31);
+    unsigned Offset = Raw & ~(1U << 31);
+    assert(Module.SLocRemap.find(Offset) != Module.SLocRemap.end() &&
+           "Cannot find offset to remap.");
+    int Remap = Module.SLocRemap.find(Offset)->second;
+    Offset += Remap;
+    assert((Offset & (1U << 31)) == 0 &&
+           "Bad offset in reading source location");
+    return SourceLocation::getFromRawEncoding(Offset | Flag);
   }
 
   /// \brief Read a source location.

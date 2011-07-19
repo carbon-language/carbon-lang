@@ -16,6 +16,7 @@
 
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -984,6 +985,10 @@ public:
   StoredDiagnostic(Diagnostic::Level Level, const DiagnosticInfo &Info);
   StoredDiagnostic(Diagnostic::Level Level, unsigned ID, 
                    llvm::StringRef Message);
+  StoredDiagnostic(Diagnostic::Level Level, unsigned ID, 
+                   llvm::StringRef Message, FullSourceLoc Loc,
+                   llvm::ArrayRef<CharSourceRange> Ranges,
+                   llvm::ArrayRef<FixItHint> Fixits);
   ~StoredDiagnostic();
 
   /// \brief Evaluates true when this object stores a diagnostic.
