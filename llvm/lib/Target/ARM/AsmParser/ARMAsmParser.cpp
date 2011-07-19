@@ -2188,7 +2188,8 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   // to check the type of the parsed immediate operand.
   if (Mnemonic == "mov" && Operands.size() > 4 &&
       !static_cast<ARMOperand*>(Operands[4])->isARMSOImm() &&
-      static_cast<ARMOperand*>(Operands[4])->isImm0_65535Expr()) {
+      static_cast<ARMOperand*>(Operands[4])->isImm0_65535Expr() &&
+      static_cast<ARMOperand*>(Operands[1])->getReg() == 0) {
     ARMOperand *Op = static_cast<ARMOperand*>(Operands[1]);
     Operands.erase(Operands.begin() + 1);
     delete Op;
