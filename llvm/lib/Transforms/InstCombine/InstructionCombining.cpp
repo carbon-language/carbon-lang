@@ -742,7 +742,7 @@ Type *InstCombiner::FindElementAtOffset(Type *Ty, int64_t Offset,
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   SmallVector<Value*, 8> Ops(GEP.op_begin(), GEP.op_end());
 
-  if (Value *V = SimplifyGEPInst(&Ops[0], Ops.size(), TD))
+  if (Value *V = SimplifyGEPInst(Ops, TD))
     return ReplaceInstUsesWith(GEP, V);
 
   Value *PtrOp = GEP.getOperand(0);

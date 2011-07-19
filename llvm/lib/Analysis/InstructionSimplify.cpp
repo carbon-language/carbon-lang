@@ -2219,24 +2219,24 @@ Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
 
 /// SimplifyGEPInst - Given operands for an GetElementPtrInst, see if we can
 /// fold the result.  If not, this returns null.
-Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
+Value *llvm::SimplifyGEPInst(ArrayRef<Value *> Ops,
                              const TargetData *TD, const DominatorTree *) {
   // The type of the GEP pointer operand.
   PointerType *PtrTy = cast<PointerType>(Ops[0]->getType());
 
   // getelementptr P -> P.
-  if (NumOps == 1)
+  if (Ops.size() == 1)
     return Ops[0];
 
   if (isa<UndefValue>(Ops[0])) {
     // Compute the (pointer) type returned by the GEP instruction.
-    Type *LastType = GetElementPtrInst::getIndexedType(PtrTy, &Ops[1],
-                                                             NumOps-1);
+    Type *LastType = GetElementPtrInst::getIndexedType(PtrTy, Ops.data() + 1,
+                                                       Ops.size() - 1);
     Type *GEPTy = PointerType::get(LastType, PtrTy->getAddressSpace());
     return UndefValue::get(GEPTy);
   }
 
-  if (NumOps == 2) {
+  if (Ops.size() == 2) {
     // getelementptr P, 0 -> P.
     if (ConstantInt *C = dyn_cast<ConstantInt>(Ops[1]))
       if (C->isZero())
@@ -2250,12 +2250,13 @@ Value *llvm::SimplifyGEPInst(Value *const *Ops, unsigned NumOps,
   }
 
   // Check to see if this is constant foldable.
-  for (unsigned i = 0; i != NumOps; ++i)
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     if (!isa<Constant>(Ops[i]))
       return 0;
 
   return ConstantExpr::getGetElementPtr(cast<Constant>(Ops[0]),
-                                        (Constant *const*)Ops+1, NumOps-1);
+                                        (Constant *const*)Ops.data() + 1,
+                                        Ops.size() - 1);
 }
 
 /// SimplifyPHINode - See if we can fold the given phi.  If not, returns null.
@@ -2456,7 +2457,7 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
     break;
   case Instruction::GetElementPtr: {
     SmallVector<Value*, 8> Ops(I->op_begin(), I->op_end());
-    Result = SimplifyGEPInst(&Ops[0], Ops.size(), TD, DT);
+    Result = SimplifyGEPInst(Ops, TD, DT);
     break;
   }
   case Instruction::PHI:
