@@ -146,6 +146,14 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     }
   }
 
+  // If -ccc-host-triple arch-pc-win32-macho option specified, we're
+  // generating code for Win32 ABI. No need to emit 
+  // __ENVIRONMENT_XX_OS_VERSION_MIN_REQUIRED__.
+  if (PlatformName == "win32") {
+    PlatformMinVersion = VersionTuple(Maj, Min, Rev);
+    return;
+  }
+
   // Set the appropriate OS version define.
   if (PlatformName == "ios") {
     assert(Maj < 10 && Min < 100 && Rev < 100 && "Invalid version!");
@@ -157,10 +165,6 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     Str[4] = '0' + (Rev % 10);
     Str[5] = '\0';
     Builder.defineMacro("__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", Str);
-  } else if (PlatformName == "win32") {
-    // Due to option -ccc-host-triple arch-pc-win32-macho.
-    // Don't emit __ENVIRONMENT_XX_OS_VERSION_MIN_REQUIRED__ as we're generating
-    // code for Win32 ABI.
   } else {
     // Note that the Driver allows versions which aren't representable in the
     // define (because we only get a single digit for the minor and micro
