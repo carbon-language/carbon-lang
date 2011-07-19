@@ -336,21 +336,29 @@ public:
   const VarDecl *getDecl() const { return vd; }
 };
   
-class TransferFunctions : public CFGRecStmtVisitor<TransferFunctions> {
+class TransferFunctions : public StmtVisitor<TransferFunctions> {
   CFGBlockValues &vals;
   const CFG &cfg;
   AnalysisContext &ac;
   UninitVariablesHandler *handler;
-  const DeclRefExpr *currentDR;
-  const Expr *currentVoidCast;
   const bool flagBlockUses;
+  
+  /// The last DeclRefExpr seen when analyzing a block.  Used to
+  /// cheat when detecting cases when the address of a variable is taken.
+  DeclRefExpr *lastDR;
+  
+  /// The last lvalue-to-rvalue conversion of a variable whose value
+  /// was uninitialized.  Normally this results in a warning, but it is
+  /// possible to either silence the warning in some cases, or we
+  /// propagate the uninitialized value.
+  CastExpr *lastLoad;
 public:
   TransferFunctions(CFGBlockValues &vals, const CFG &cfg,
                     AnalysisContext &ac,
                     UninitVariablesHandler *handler,
                     bool flagBlockUses)
-    : vals(vals), cfg(cfg), ac(ac), handler(handler), currentDR(0),
-      currentVoidCast(0), flagBlockUses(flagBlockUses) {}
+    : vals(vals), cfg(cfg), ac(ac), handler(handler),
+      flagBlockUses(flagBlockUses), lastDR(0), lastLoad(0) {}
   
   const CFG &getCFG() { return cfg; }
   void reportUninit(const DeclRefExpr *ex, const VarDecl *vd,
@@ -362,15 +370,16 @@ public:
   void VisitUnaryOperator(UnaryOperator *uo);
   void VisitBinaryOperator(BinaryOperator *bo);
   void VisitCastExpr(CastExpr *ce);
-  void VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *se);
-  void VisitCXXTypeidExpr(CXXTypeidExpr *E);
-  void BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs);
+  void VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs);
+  void Visit(Stmt *s);
   
   bool isTrackedVar(const VarDecl *vd) {
     return ::isTrackedVar(vd, cast<DeclContext>(ac.getDecl()));
   }
   
   FindVarResult findBlockVarDecl(Expr *ex);
+  
+  void ProcessUses(Stmt *s = 0);
 };
 }
 
@@ -387,11 +396,7 @@ FindVarResult TransferFunctions::findBlockVarDecl(Expr* ex) {
   return FindVarResult(0, 0);
 }
 
-void TransferFunctions::BlockStmt_VisitObjCForCollectionStmt(
-    ObjCForCollectionStmt *fs) {
-  
-  Visit(fs->getCollection());
-  
+void TransferFunctions::VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs) {
   // This represents an initialization of the 'element' value.
   Stmt *element = fs->getElement();
   const VarDecl* vd = 0;
@@ -405,10 +410,6 @@ void TransferFunctions::BlockStmt_VisitObjCForCollectionStmt(
     // Initialize the value of the reference variable.
     const FindVarResult &res = findBlockVarDecl(cast<Expr>(element));
     vd = res.getDecl();
-    if (!vd) {
-      Visit(element);
-      return;
-    }
   }
   
   if (vd)
@@ -436,14 +437,20 @@ void TransferFunctions::VisitBlockExpr(BlockExpr *be) {
   }
 }
 
+void TransferFunctions::VisitDeclRefExpr(DeclRefExpr *dr) {
+  // Record the last DeclRefExpr seen.  This is an lvalue computation.
+  // We use this value to later detect if a variable "escapes" the analysis.
+  if (const VarDecl *vd = dyn_cast<VarDecl>(dr->getDecl()))
+    if (isTrackedVar(vd))
+      lastDR = dr;
+}
+
 void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
   for (DeclStmt::decl_iterator DI = ds->decl_begin(), DE = ds->decl_end();
        DI != DE; ++DI) {
     if (VarDecl *vd = dyn_cast<VarDecl>(*DI)) {
       if (isTrackedVar(vd)) {
         if (Expr *init = vd->getInit()) {
-          Visit(init);
-
           // If the initializer consists solely of a reference to itself, we
           // explicitly mark the variable as uninitialized. This allows code
           // like the following:
@@ -454,56 +461,34 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
           // clients can detect this pattern and adjust their reporting
           // appropriately, but we need to continue to analyze subsequent uses
           // of the variable.
-          DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(init->IgnoreParenImpCasts());
-          vals[vd] = (DRE && DRE->getDecl() == vd) ? Uninitialized
-                                                   : Initialized;
+          if (init == lastLoad) {
+            DeclRefExpr *DR = cast<DeclRefExpr>(lastLoad->getSubExpr());
+            vals[vd] = (DR->getDecl() == vd) ? Uninitialized : Initialized;
+            lastLoad = 0;
+            if (lastDR == DR)
+              lastDR = 0;
+          }
+          else {
+            vals[vd] = Initialized;
+          }
         }
-      } else if (Stmt *init = vd->getInit()) {
-        Visit(init);
       }
     }
   }
-}
-
-void TransferFunctions::VisitDeclRefExpr(DeclRefExpr *dr) {
-  // We assume that DeclRefExprs wrapped in an lvalue-to-rvalue cast
-  // cannot be block-level expressions.  Therefore, we determine if
-  // a DeclRefExpr is involved in a "load" by comparing it to the current
-  // DeclRefExpr found when analyzing the last lvalue-to-rvalue CastExpr.
-  // If a DeclRefExpr is not involved in a load, we are essentially computing
-  // its address, either for assignment to a reference or via the '&' operator.
-  // In such cases, treat the variable as being initialized, since this
-  // analysis isn't powerful enough to do alias tracking.
-  if (dr != currentDR)
-    if (const VarDecl *vd = dyn_cast<VarDecl>(dr->getDecl()))
-      if (isTrackedVar(vd))
-        vals[vd] = Initialized;
 }
 
 void TransferFunctions::VisitBinaryOperator(clang::BinaryOperator *bo) {
   if (bo->isAssignmentOp()) {
     const FindVarResult &res = findBlockVarDecl(bo->getLHS());
     if (const VarDecl* vd = res.getDecl()) {
-      // We assume that DeclRefExprs wrapped in a BinaryOperator "assignment"
-      // cannot be block-level expressions.  Therefore, we determine if
-      // a DeclRefExpr is involved in a "load" by comparing it to the current
-      // DeclRefExpr found when analyzing the last lvalue-to-rvalue CastExpr.
-      SaveAndRestore<const DeclRefExpr*> lastDR(currentDR, 
-                                                res.getDeclRefExpr());
-      Visit(bo->getRHS());
-      Visit(bo->getLHS());
-
       ValueVector::reference val = vals[vd];
       if (isUninitialized(val)) {
         if (bo->getOpcode() != BO_Assign)
           reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
         val = Initialized;
       }
-      return;
     }
   }
-  Visit(bo->getRHS());
-  Visit(bo->getLHS());
 }
 
 void TransferFunctions::VisitUnaryOperator(clang::UnaryOperator *uo) {
@@ -514,13 +499,10 @@ void TransferFunctions::VisitUnaryOperator(clang::UnaryOperator *uo) {
     case clang::UO_PreInc: {
       const FindVarResult &res = findBlockVarDecl(uo->getSubExpr());
       if (const VarDecl *vd = res.getDecl()) {
-        // We assume that DeclRefExprs wrapped in a unary operator ++/--
-        // cannot be block-level expressions.  Therefore, we determine if
-        // a DeclRefExpr is involved in a "load" by comparing it to the current
-        // DeclRefExpr found when analyzing the last lvalue-to-rvalue CastExpr.
-        SaveAndRestore<const DeclRefExpr*> lastDR(currentDR, 
-                                                  res.getDeclRefExpr());
-        Visit(uo->getSubExpr());
+        assert(res.getDeclRefExpr() == lastDR);
+        // We null out lastDR to indicate we have fully processed it
+        // and we don't want the auto-value setting in Visit().
+        lastDR = 0;
 
         ValueVector::reference val = vals[vd];
         if (isUninitialized(val)) {
@@ -528,72 +510,76 @@ void TransferFunctions::VisitUnaryOperator(clang::UnaryOperator *uo) {
           // Don't cascade warnings.
           val = Initialized;
         }
-        return;
       }
       break;
     }
     default:
       break;
   }
-  Visit(uo->getSubExpr());
 }
 
 void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
   if (ce->getCastKind() == CK_LValueToRValue) {
     const FindVarResult &res = findBlockVarDecl(ce->getSubExpr());
     if (const VarDecl *vd = res.getDecl()) {
-      // We assume that DeclRefExprs wrapped in an lvalue-to-rvalue cast
-      // cannot be block-level expressions.  Therefore, we determine if
-      // a DeclRefExpr is involved in a "load" by comparing it to the current
-      // DeclRefExpr found when analyzing the last lvalue-to-rvalue CastExpr.
-      // Here we update 'currentDR' to be the one associated with this
-      // lvalue-to-rvalue cast.  Then, when we analyze the DeclRefExpr, we
-      // will know that we are not computing its lvalue for other purposes
-      // than to perform a load.
-      SaveAndRestore<const DeclRefExpr*> lastDR(currentDR, 
-                                                res.getDeclRefExpr());
-      Visit(ce->getSubExpr());
-      if (currentVoidCast != ce) {
-        Value val = vals[vd];
-        if (isUninitialized(val)) {
-          reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
-          // Don't cascade warnings.
-          vals[vd] = Initialized;
-        }
+      assert(res.getDeclRefExpr() == lastDR);
+      if (isUninitialized(vals[vd])) {
+        // Record this load of an uninitialized value.  Normally this
+        // results in a warning, but we delay reporting the issue
+        // in case it is wrapped in a void cast, etc.
+        lastLoad = ce;
       }
-      return;
     }
   }
   else if (CStyleCastExpr *cse = dyn_cast<CStyleCastExpr>(ce)) {
     if (cse->getType()->isVoidType()) {
       // e.g. (void) x;
-      SaveAndRestore<const Expr *>
-        lastVoidCast(currentVoidCast, cse->getSubExpr()->IgnoreParens());
-      Visit(cse->getSubExpr());
+      if (lastLoad == cse->getSubExpr()) {
+        // Squelch any detected load of an uninitialized value if
+        // we cast it to void.
+        lastLoad = 0;
+        lastDR = 0;
+      }
+    }
+  }
+}
+
+void TransferFunctions::Visit(clang::Stmt *s) {
+  StmtVisitor<TransferFunctions>::Visit(s);
+  ProcessUses(s);
+}
+
+void TransferFunctions::ProcessUses(Stmt *s) {
+  // This method is typically called after visiting a CFGElement statement
+  // in the CFG.  We delay processing of reporting many loads of uninitialized
+  // values until here.
+  if (lastLoad) {
+    // If we just visited the lvalue-to-rvalue cast, there is nothing
+    // left to do.
+    if (lastLoad == s)
+      return;
+
+    // If we reach here, we have seen a load of an uninitialized value
+    // and it hasn't been casted to void or otherwise handled.  In this
+    // situation, report the incident.
+    DeclRefExpr *DR = cast<DeclRefExpr>(lastLoad->getSubExpr());
+    VarDecl *VD = cast<VarDecl>(DR->getDecl());
+    reportUninit(DR, VD, isAlwaysUninit(vals[VD]));
+    lastLoad = 0;
+    
+    // Prevent cascade of warnings.
+    vals[VD] = Initialized;
+    if (DR == lastDR) {
+      lastDR = 0;
       return;
     }
   }
-  Visit(ce->getSubExpr());
-}
 
-void TransferFunctions::VisitUnaryExprOrTypeTraitExpr(
-                                          UnaryExprOrTypeTraitExpr *se) {
-  if (se->getKind() == UETT_SizeOf) {
-    if (se->getType()->isConstantSizeType())
-      return;
-    // Handle VLAs.
-    Visit(se->getArgumentExpr());
-  }
-}
-
-void TransferFunctions::VisitCXXTypeidExpr(CXXTypeidExpr *E) {
-  // typeid(expression) is potentially evaluated when the argument is
-  // a glvalue of polymorphic type. (C++ 5.2.8p2-3)
-  if (!E->isTypeOperand() && E->Classify(ac.getASTContext()).isGLValue()) {
-    QualType SubExprTy = E->getExprOperand()->getType();
-    if (const RecordType *Record = SubExprTy->getAs<RecordType>())
-      if (cast<CXXRecordDecl>(Record->getDecl())->isPolymorphic())
-        Visit(E->getExprOperand());
+  // Any other uses of 'lastDR' involve taking an lvalue of variable.
+  // In this case, it "escapes" the analysis.
+  if (lastDR && lastDR != s) {
+    vals[cast<VarDecl>(lastDR->getDecl())] = Initialized;
+    lastDR = 0;
   }
 }
 
@@ -648,9 +634,10 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
   for (CFGBlock::const_iterator I = block->begin(), E = block->end(); 
        I != E; ++I) {
     if (const CFGStmt *cs = dyn_cast<CFGStmt>(&*I)) {
-      tf.BlockStmt_Visit(cs->getStmt());
+      tf.Visit(cs->getStmt());
     }
   }
+  tf.ProcessUses();
   return vals.updateValueVectorWithScratch(block);
 }
 

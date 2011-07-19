@@ -660,6 +660,20 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   // explosion for destrutors that can result and the compile time hit.
   AnalysisContext AC(D, 0, /*useUnoptimizedCFG=*/false, /*addehedges=*/false,
                      /*addImplicitDtors=*/true, /*addInitializers=*/true);
+  
+  // Force that certain expressions appear as CFGElements in the CFG.  This
+  // is used to speed up various analyses.
+  // FIXME: This isn't the right factoring.  This is here for initial
+  // prototyping, but we need a way for analyses to say what expressions they
+  // expect to always be CFGElements and then fill in the BuildOptions
+  // appropriately.  This is essentially a layering violation.
+  CFG::BuildOptions &buildOptions = AC.getCFGBuildOptions();
+  buildOptions.setAlwaysAdd(Stmt::BinaryOperatorClass);
+  buildOptions.setAlwaysAdd(Stmt::BlockExprClass);
+  buildOptions.setAlwaysAdd(Stmt::CStyleCastExprClass);
+  buildOptions.setAlwaysAdd(Stmt::DeclRefExprClass);
+  buildOptions.setAlwaysAdd(Stmt::ImplicitCastExprClass);
+  buildOptions.setAlwaysAdd(Stmt::UnaryOperatorClass);
 
   // Emit delayed diagnostics.
   if (!fscope->PossiblyUnreachableDiags.empty()) {

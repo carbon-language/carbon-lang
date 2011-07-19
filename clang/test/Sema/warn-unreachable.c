@@ -80,8 +80,8 @@ void test2() {
     -           // expected-warning {{will never be executed}}
       halt();
   case 8:
-    i
-      +=        // expected-warning {{will never be executed}}
+    i           // expected-warning {{will never be executed}}
+      +=
       halt();
   case 9:
     halt()
@@ -93,8 +93,8 @@ void test2() {
   case 11: {
     int a[5];
     live(),
-      a[halt()
-        ];      // expected-warning {{will never be executed}}
+      a[halt()  // expected-warning {{will never be executed}}
+        ];
   }
   }
 }

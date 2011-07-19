@@ -45,8 +45,8 @@ void test3() {
     ? 
     dead() : dead();
   live(),
-    float       // expected-warning {{will never be executed}}
-      (halt());
+    float       
+      (halt()); // expected-warning {{will never be executed}}
 }
 
 void test4() {
@@ -73,6 +73,6 @@ void test6() {
     S(int i) { }
   };
   live(),
-    S            // expected-warning {{will never be executed}}
-      (halt());
+    S
+      (halt());  // expected-warning {{will never be executed}}
 }
