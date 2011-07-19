@@ -149,10 +149,10 @@
 # CHECK: cpsie if, #10
 0xca 0x00 0x0a 0xf1
 
-# CHECK: msr cpsr_fc, r0
+# CHECK: msr CPSR_fc, r0
 0x00 0xf0 0x29 0xe1
 
-# CHECK:	msrmi	cpsr_c, #4043309056
+# CHECK:	msrmi	CPSR_c, #4043309056
 0xf1 0xf4 0x21 0x43
 
 # CHECK: rsbs r6, r7, r8

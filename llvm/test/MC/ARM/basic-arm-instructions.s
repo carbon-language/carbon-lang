@@ -748,6 +748,70 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ MSR
+@------------------------------------------------------------------------------
+
+        msr  apsr, #5
+        msr  apsr_g, #5
+        msr  apsr_nzcvq, #5
+        msr  APSR_nzcvq, #5
+        msr  apsr_nzcvqg, #5
+        msr  cpsr_fc, #5
+        msr  cpsr_c, #5
+        msr  cpsr_x, #5
+        msr  cpsr_fc, #5
+        msr  cpsr_all, #5
+        msr  cpsr_fsx, #5
+        msr  spsr_fc, #5
+        msr  SPSR_fsxc, #5
+        msr  cpsr_fsxc, #5
+
+@ CHECK: msr	CPSR_fc, #5             @ encoding: [0x05,0xf0,0x29,0xe3]
+@ CHECK: msr	APSR_g, #5              @ encoding: [0x05,0xf0,0x24,0xe3]
+@ CHECK: msr	APSR_nzcvq, #5          @ encoding: [0x05,0xf0,0x28,0xe3]
+@ CHECK: msr	APSR_nzcvq, #5          @ encoding: [0x05,0xf0,0x28,0xe3]
+@ CHECK: msr	APSR_nzcvqg, #5         @ encoding: [0x05,0xf0,0x2c,0xe3]
+@ CHECK: msr	CPSR_fc, #5             @ encoding: [0x05,0xf0,0x29,0xe3]
+@ CHECK: msr	CPSR_c, #5              @ encoding: [0x05,0xf0,0x21,0xe3]
+@ CHECK: msr	CPSR_x, #5              @ encoding: [0x05,0xf0,0x22,0xe3]
+@ CHECK: msr	CPSR_fc, #5             @ encoding: [0x05,0xf0,0x29,0xe3]
+@ CHECK: msr	CPSR_fc, #5             @ encoding: [0x05,0xf0,0x29,0xe3]
+@ CHECK: msr	CPSR_fsx, #5            @ encoding: [0x05,0xf0,0x2e,0xe3]
+@ CHECK: msr	SPSR_fc, #5             @ encoding: [0x05,0xf0,0x69,0xe3]
+@ CHECK: msr	SPSR_fsxc, #5           @ encoding: [0x05,0xf0,0x6f,0xe3]
+@ CHECK: msr	CPSR_fsxc, #5           @ encoding: [0x05,0xf0,0x2f,0xe3]
+
+        msr  apsr, r0
+        msr  apsr_g, r0
+        msr  apsr_nzcvq, r0
+        msr  APSR_nzcvq, r0
+        msr  apsr_nzcvqg, r0
+        msr  cpsr_fc, r0
+        msr  cpsr_c, r0
+        msr  cpsr_x, r0
+        msr  cpsr_fc, r0
+        msr  cpsr_all, r0
+        msr  cpsr_fsx, r0
+        msr  spsr_fc, r0
+        msr  SPSR_fsxc, r0
+        msr  cpsr_fsxc, r0
+
+@ CHECK: msr  CPSR_fc, r0 @ encoding: [0x00,0xf0,0x29,0xe1]
+@ CHECK: msr  APSR_g, r0 @ encoding: [0x00,0xf0,0x24,0xe1]
+@ CHECK: msr  APSR_nzcvq, r0 @ encoding: [0x00,0xf0,0x28,0xe1]
+@ CHECK: msr  APSR_nzcvq, r0 @ encoding: [0x00,0xf0,0x28,0xe1]
+@ CHECK: msr  APSR_nzcvqg, r0 @ encoding: [0x00,0xf0,0x2c,0xe1]
+@ CHECK: msr  CPSR_fc, r0 @ encoding: [0x00,0xf0,0x29,0xe1]
+@ CHECK: msr  CPSR_c, r0 @ encoding: [0x00,0xf0,0x21,0xe1]
+@ CHECK: msr  CPSR_x, r0 @ encoding: [0x00,0xf0,0x22,0xe1]
+@ CHECK: msr  CPSR_fc, r0 @ encoding: [0x00,0xf0,0x29,0xe1]
+@ CHECK: msr  CPSR_fc, r0 @ encoding: [0x00,0xf0,0x29,0xe1]
+@ CHECK: msr  CPSR_fsx, r0 @ encoding: [0x00,0xf0,0x2e,0xe1]
+@ CHECK: msr  SPSR_fc, r0 @ encoding: [0x00,0xf0,0x69,0xe1]
+@ CHECK: msr  SPSR_fsxc, r0 @ encoding: [0x00,0xf0,0x6f,0xe1]
+@ CHECK: msr  CPSR_fsxc, r0 @ encoding: [0x00,0xf0,0x2f,0xe1]
+
+@------------------------------------------------------------------------------
 @ STM*
 @------------------------------------------------------------------------------
         stm       r2, {r1,r3-r6,sp}

@@ -3798,8 +3798,7 @@ def MRSsys : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary,
 // operand contains the special register (R Bit) in bit 4 and bits 3-0 contains
 // the mask with the fields to be accessed in the special register.
 def MSR : ABI<0b0001, (outs), (ins msr_mask:$mask, GPR:$Rn), NoItinerary,
-              "msr", "\t$mask, $Rn",
-              [/* For disassembly only; pattern left blank */]> {
+              "msr", "\t$mask, $Rn", []> {
   bits<5> mask;
   bits<4> Rn;
 
@@ -3813,8 +3812,7 @@ def MSR : ABI<0b0001, (outs), (ins msr_mask:$mask, GPR:$Rn), NoItinerary,
 }
 
 def MSRi : ABI<0b0011, (outs), (ins msr_mask:$mask,  so_imm:$a), NoItinerary,
-               "msr", "\t$mask, $a",
-               [/* For disassembly only; pattern left blank */]> {
+               "msr", "\t$mask, $a", []> {
   bits<5> mask;
   bits<12> a;
 

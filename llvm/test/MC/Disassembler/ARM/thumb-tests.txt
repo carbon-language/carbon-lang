@@ -131,7 +131,7 @@
 # CHECK: cpsie aif
 0x67 0xb6
 
-# CHECK: msr cpsr_fc, r0
+# CHECK: msr CPSR_fc, r0
 0x80 0xf3 0x00 0x89
 
 # CHECK: blx	#-4

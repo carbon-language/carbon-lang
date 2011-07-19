@@ -1430,7 +1430,7 @@ tryParseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Split spec_reg from flag, example: CPSR_sxf => "CPSR" and "sxf"
   size_t Start = 0, Next = Mask.find('_');
   StringRef Flags = "";
-  StringRef SpecReg = Mask.slice(Start, Next);
+  std::string SpecReg = LowercaseString(Mask.slice(Start, Next));
   if (Next != StringRef::npos)
     Flags = Mask.slice(Next+1, Mask.size());
 
@@ -1441,7 +1441,7 @@ tryParseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   if (SpecReg == "apsr") {
     FlagsVal = StringSwitch<unsigned>(Flags)
-    .Case("nzcvq",  0x8) // same as CPSR_c
+    .Case("nzcvq",  0x8) // same as CPSR_f
     .Case("g",      0x4) // same as CPSR_s
     .Case("nzcvqg", 0xc) // same as CPSR_fs
     .Default(~0U);

@@ -481,10 +481,23 @@ void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
   unsigned SpecRegRBit = Op.getImm() >> 4;
   unsigned Mask = Op.getImm() & 0xf;
 
+  // As special cases, CPSR_f, CPSR_s and CPSR_fs prefer printing as
+  // APSR_nzcvq, APSR_g and APSRnzcvqg, respectively.
+  if (!SpecRegRBit && (Mask == 8 || Mask == 4 || Mask == 12)) {
+    O << "APSR_";
+    switch (Mask) {
+    default: assert(0);
+    case 4:  O << "g"; return;
+    case 8:  O << "nzcvq"; return;
+    case 12: O << "nzcvqg"; return;
+    }
+    llvm_unreachable("Unexpected mask value!");
+  }
+
   if (SpecRegRBit)
-    O << "spsr";
+    O << "SPSR";
   else
-    O << "cpsr";
+    O << "CPSR";
 
   if (Mask) {
     O << '_';
