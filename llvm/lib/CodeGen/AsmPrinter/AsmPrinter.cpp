@@ -620,6 +620,9 @@ void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
   if (needsCFIMoves() == CFI_M_None)
     return;
 
+  if (MMI->getCompactUnwindEncoding() != 0)
+    OutStreamer.EmitCompactUnwindEncoding(MMI->getCompactUnwindEncoding());
+
   MachineModuleInfo &MMI = MF->getMMI();
   std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   bool FoundOne = false;
