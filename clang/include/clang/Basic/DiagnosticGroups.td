@@ -56,7 +56,7 @@ def FormatZeroLength : DiagGroup<"format-zero-length">;
 
 def CXXHexFloats : DiagGroup<"c++-hex-floats">;
 
-def : DiagGroup<"c++0x-compat", [CXXHexFloats]>;
+def CXX0xCompat : DiagGroup<"c++0x-compat", [CXXHexFloats]>;
 def : DiagGroup<"effc++">;
 def ExitTimeDestructors : DiagGroup<"exit-time-destructors">;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
