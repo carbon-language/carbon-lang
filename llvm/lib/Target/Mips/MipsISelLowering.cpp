@@ -766,8 +766,8 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   //  loopMBB:
   //    ll oldval, 0(ptr)
   //    <binop> tmp1, oldval, incr
-  //    sc tmp1, 0(ptr)
-  //    beq tmp1, $0, loopMBB
+  //    sc tmp3, tmp1, 0(ptr)
+  //    beq tmp3, $0, loopMBB
   BB = loopMBB;
   BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addReg(Ptr).addImm(0);
   if (Nand) {
@@ -877,8 +877,8 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   //   and     newval,tmp7,mask
   //   and     tmp8,oldval,mask2
   //   or      tmp9,tmp8,newval
-  //   sc      tmp9,0(addr)
-  //   beq     tmp9,$0,loopMBB
+  //   sc      tmp13,tmp9,0(addr)
+  //   beq     tmp13,$0,loopMBB
   
   // atomic.swap
   // loopMBB:
@@ -886,8 +886,8 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   //   and     newval,incr2,mask
   //   and     tmp8,oldval,mask2
   //   or      tmp9,tmp8,newval
-  //   sc      tmp9,0(addr)
-  //   beq     tmp9,$0,loopMBB
+  //   sc      tmp13,tmp9,0(addr)
+  //   beq     tmp13,$0,loopMBB
 
   BB = loopMBB;
   BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addReg(Addr).addImm(0);
@@ -988,8 +988,8 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
     .addReg(Dest).addReg(Oldval).addMBB(exitMBB);
 
   // loop2MBB:
-  //   sc tmp1, 0(ptr)
-  //   beq tmp1, $0, loop1MBB
+  //   sc tmp3, tmp1, 0(ptr)
+  //   beq tmp3, $0, loop1MBB
   BB = loop2MBB;
   BuildMI(BB, dl, TII->get(Mips::SC), Tmp3).addReg(Newval).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
@@ -1102,8 +1102,8 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   //  loop2MBB:
   //    and     tmp6,oldval3,mask2
   //    or      tmp7,tmp6,newval2
-  //    sc      tmp7,0(addr)
-  //    beq     tmp7,$0,loop1MBB
+  //    sc      tmp10,tmp7,0(addr)
+  //    beq     tmp10,$0,loop1MBB
   BB = loop2MBB;
   BuildMI(BB, dl, TII->get(Mips::AND), Tmp6).addReg(Oldval3).addReg(Mask2);
   BuildMI(BB, dl, TII->get(Mips::OR), Tmp7).addReg(Tmp6).addReg(Newval2);
