@@ -9,6 +9,8 @@ declare void @llvm.xcore.out.p1i8(i8 addrspace(1)* %r, i32 %value)
 declare void @llvm.xcore.outt.p1i8(i8 addrspace(1)* %r, i32 %value)
 declare void @llvm.xcore.outct.p1i8(i8 addrspace(1)* %r, i32 %value)
 declare void @llvm.xcore.chkct.p1i8(i8 addrspace(1)* %r, i32 %value)
+declare i32 @llvm.xcore.testct.p1i8(i8 addrspace(1)* %r)
+declare i32 @llvm.xcore.testwct.p1i8(i8 addrspace(1)* %r)
 declare void @llvm.xcore.setd.p1i8(i8 addrspace(1)* %r, i32 %value)
 declare void @llvm.xcore.setc.p1i8(i8 addrspace(1)* %r, i32 %value)
 declare i32 @llvm.xcore.inshr.p1i8(i8 addrspace(1)* %r, i32 %value)
@@ -212,5 +214,19 @@ define i32 @endin(i8 addrspace(1)* %r) {
 ; CHECK: endin:
 ; CHECK: endin r0, res[r0]
 	%result = call i32 @llvm.xcore.endin.p1i8(i8 addrspace(1)* %r)
+	ret i32 %result
+}
+
+define i32 @testct(i8 addrspace(1)* %r) {
+; CHECK: testct:
+; CHECK: testct r0, res[r0]
+	%result = call i32 @llvm.xcore.testct.p1i8(i8 addrspace(1)* %r)
+	ret i32 %result
+}
+
+define i32 @testwct(i8 addrspace(1)* %r) {
+; CHECK: testwct:
+; CHECK: testwct r0, res[r0]
+	%result = call i32 @llvm.xcore.testwct.p1i8(i8 addrspace(1)* %r)
 	ret i32 %result
 }

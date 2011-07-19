@@ -754,7 +754,7 @@ def BL_lu10 : _FLU10<
 }
 
 // Two operand short
-// TODO eet, eef, testwct, tsetmr, sext (reg), zext (reg)
+// TODO eet, eef, tsetmr, sext (reg), zext (reg)
 def NOT : _F2R<(outs GRRegs:$dst), (ins GRRegs:$b),
                  "not $dst, $b",
                  [(set GRRegs:$dst, (not GRRegs:$b))]>;
@@ -845,6 +845,14 @@ def CHKCT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
 def CHKCT_rus : _F2R<(outs), (ins GRRegs:$r, i32imm:$val),
                  "chkct res[$r], $val",
                  [(int_xcore_chkct GRRegs:$r, immUs:$val)]>;
+
+def TESTCT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$src),
+                     "testct $dst, res[$src]",
+                     [(set GRRegs:$dst, (int_xcore_testct GRRegs:$src))]>;
+
+def TESTWCT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$src),
+                      "testwct $dst, res[$src]",
+                      [(set GRRegs:$dst, (int_xcore_testwct GRRegs:$src))]>;
 
 def SETD_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
                  "setd res[$r], $val",
