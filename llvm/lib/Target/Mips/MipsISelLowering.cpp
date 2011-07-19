@@ -870,9 +870,10 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::SLL), ShiftAmt).addReg(PtrLSB2).addImm(3);
   BuildMI(BB, dl, TII->get(Mips::ORi), MaskUpper)
     .addReg(Mips::ZERO).addImm(MaskImm);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Mask).addReg(MaskUpper).addReg(ShiftAmt);
+  BuildMI(BB, dl, TII->get(Mips::SLLV), Mask)
+    .addReg(ShiftAmt).addReg(MaskUpper);
   BuildMI(BB, dl, TII->get(Mips::NOR), Mask2).addReg(Mips::ZERO).addReg(Mask);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Incr).addReg(ShiftAmt);
+  BuildMI(BB, dl, TII->get(Mips::SLLV), Incr2).addReg(ShiftAmt).addReg(Incr);
 
 
   // atomic.load.binop
@@ -911,7 +912,7 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
     BuildMI(BB, dl, TII->get(Mips::AND), NewVal).addReg(BinOpRes).addReg(Mask);
   } else {// atomic.swap
     //  and newval, incr2, mask
-    BuildMI(BB, dl, TII->get(Mips::ANDi), NewVal).addReg(Incr2).addReg(Mask);
+    BuildMI(BB, dl, TII->get(Mips::AND), NewVal).addReg(Incr2).addReg(Mask);
   }
     
   BuildMI(BB, dl, TII->get(Mips::AND), MaskOldVal0)
@@ -933,8 +934,8 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
 
   BuildMI(BB, dl, TII->get(Mips::AND), MaskedOldVal1)
     .addReg(OldVal).addReg(Mask);
-  BuildMI(BB, dl, TII->get(Mips::SRL), SrlRes)
-      .addReg(MaskedOldVal1).addReg(ShiftAmt);
+  BuildMI(BB, dl, TII->get(Mips::SRLV), SrlRes)
+      .addReg(ShiftAmt).addReg(MaskedOldVal1);
   BuildMI(BB, dl, TII->get(Mips::SLL), SllRes)
       .addReg(SrlRes).addImm(ShiftImm);
   BuildMI(BB, dl, TII->get(Mips::SRA), Dest)
@@ -1097,17 +1098,17 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::SLL), ShiftAmt).addReg(PtrLSB2).addImm(3);
   BuildMI(BB, dl, TII->get(Mips::ORi), MaskUpper)
     .addReg(Mips::ZERO).addImm(MaskImm);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Mask)
-    .addReg(MaskUpper).addReg(ShiftAmt);
+  BuildMI(BB, dl, TII->get(Mips::SLLV), Mask)
+    .addReg(ShiftAmt).addReg(MaskUpper);
   BuildMI(BB, dl, TII->get(Mips::NOR), Mask2).addReg(Mips::ZERO).addReg(Mask);
   BuildMI(BB, dl, TII->get(Mips::ANDi), MaskedCmpVal)
     .addReg(CmpVal).addImm(MaskImm);
-  BuildMI(BB, dl, TII->get(Mips::SLL), ShiftedCmpVal)
-    .addReg(MaskedCmpVal).addReg(ShiftAmt);
+  BuildMI(BB, dl, TII->get(Mips::SLLV), ShiftedCmpVal)
+    .addReg(ShiftAmt).addReg(MaskedCmpVal);
   BuildMI(BB, dl, TII->get(Mips::ANDi), MaskedNewVal)
     .addReg(NewVal).addImm(MaskImm);
-  BuildMI(BB, dl, TII->get(Mips::SLL), ShiftedNewVal)
-    .addReg(MaskedNewVal).addReg(ShiftAmt);
+  BuildMI(BB, dl, TII->get(Mips::SLLV), ShiftedNewVal)
+    .addReg(ShiftAmt).addReg(MaskedNewVal);
 
   //  loop1MBB:
   //    ll      oldval,0(alginedaddr)
@@ -1142,8 +1143,8 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   BB = sinkMBB;
   int64_t ShiftImm = (Size == 1) ? 24 : 16;
 
-  BuildMI(BB, dl, TII->get(Mips::SRL), SrlRes)
-      .addReg(MaskedOldVal0).addReg(ShiftAmt);
+  BuildMI(BB, dl, TII->get(Mips::SRLV), SrlRes)
+      .addReg(ShiftAmt).addReg(MaskedOldVal0);
   BuildMI(BB, dl, TII->get(Mips::SLL), SllRes)
       .addReg(SrlRes).addImm(ShiftImm);
   BuildMI(BB, dl, TII->get(Mips::SRA), Dest)
