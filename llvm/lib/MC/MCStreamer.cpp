@@ -177,6 +177,12 @@ void MCStreamer::EmitLabel(MCSymbol *Symbol) {
     LastNonPrivate = Symbol;
 }
 
+void MCStreamer::EmitCompactUnwindEncoding(uint32_t CompactUnwindEncoding) {
+  EnsureValidFrame();
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
+  CurFrame->CompactUnwindEncoding = CompactUnwindEncoding;
+}
+
 void MCStreamer::EmitCFISections(bool EH, bool Debug) {
   assert(EH || Debug);
   EmitEHFrame = EH;
