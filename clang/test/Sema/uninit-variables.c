@@ -354,8 +354,8 @@ int test52(int a, int b) {
 }
 
 void test53() {
-  int x;
-  int y = (x);
+  int x; // expected-note {{variable 'x' is declared here}} expected-note {{add initialization to silence this warning}}
+  int y = (x);  // expected-warning {{variable 'x' is uninitialized when used here}}
 }
 
 // This CFG caused the uninitialized values warning to inf-loop.

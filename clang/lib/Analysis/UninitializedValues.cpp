@@ -464,14 +464,19 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
           if (init == lastLoad) {
             DeclRefExpr *DR =
               cast<DeclRefExpr>(lastLoad->getSubExpr()->IgnoreParens());
-            vals[vd] = (DR->getDecl() == vd) ? Uninitialized : Initialized;
-            lastLoad = 0;
-            if (lastDR == DR)
+            if (DR->getDecl() == vd) {
+              // int x = x;
+              // Propagate uninitialized value, but don't immediately report
+              // a problem.
+              vals[vd] = Uninitialized;
+              lastLoad = 0;
               lastDR = 0;
+              return;
+            }
           }
-          else {
-            vals[vd] = Initialized;
-          }
+
+          // All other cases: treat the new variable as initialized.
+          vals[vd] = Initialized;
         }
       }
     }
