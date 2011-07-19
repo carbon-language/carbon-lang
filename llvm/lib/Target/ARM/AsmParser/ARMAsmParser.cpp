@@ -407,6 +407,16 @@ public:
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 65536;
   }
+  bool isImm0_65535Expr() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    // If it's not a constant expression, it'll generate a fixup and be
+    // handled later.
+    if (!CE) return true;
+    int64_t Value = CE->getValue();
+    return Value >= 0 && Value < 65536;
+  }
   bool isARMSOImm() const {
     if (Kind != Immediate)
       return false;
@@ -617,6 +627,11 @@ public:
   }
 
   void addImm0_65535Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    addExpr(Inst, getImm());
+  }
+
+  void addImm0_65535ExprOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
   }
@@ -2063,16 +2078,19 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Create the leading tokens for the mnemonic, split by '.' characters.
   size_t Start = 0, Next = Name.find('.');
-  StringRef Head = Name.slice(Start, Next);
+  StringRef Mnemonic = Name.slice(Start, Next);
 
   // Split out the predication code and carry setting flag from the mnemonic.
   unsigned PredicationCode;
   unsigned ProcessorIMod;
   bool CarrySetting;
-  Head = SplitMnemonic(Head, PredicationCode, CarrySetting,
+  Mnemonic = SplitMnemonic(Mnemonic, PredicationCode, CarrySetting,
                        ProcessorIMod);
 
-  Operands.push_back(ARMOperand::CreateToken(Head, NameLoc));
+  Operands.push_back(ARMOperand::CreateToken(Mnemonic, NameLoc));
+
+  // FIXME: This is all a pretty gross hack. We should automatically handle
+  // optional operands like this via tblgen.
 
   // Next, add the CCOut and ConditionCode operands, if needed.
   //
@@ -2082,13 +2100,13 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   // the matcher deal with finding the right instruction or generating an
   // appropriate error.
   bool CanAcceptCarrySet, CanAcceptPredicationCode;
-  GetMnemonicAcceptInfo(Head, CanAcceptCarrySet, CanAcceptPredicationCode);
+  GetMnemonicAcceptInfo(Mnemonic, CanAcceptCarrySet, CanAcceptPredicationCode);
 
   // If we had a carry-set on an instruction that can't do that, issue an
   // error.
   if (!CanAcceptCarrySet && CarrySetting) {
     Parser.EatToEndOfStatement();
-    return Error(NameLoc, "instruction '" + Head +
+    return Error(NameLoc, "instruction '" + Mnemonic +
                  "' can not set flags, but 's' suffix specified");
   }
 
@@ -2136,7 +2154,7 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   // Read the remaining operands.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
-    if (ParseOperand(Operands, Head)) {
+    if (ParseOperand(Operands, Mnemonic)) {
       Parser.EatToEndOfStatement();
       return true;
     }
@@ -2145,7 +2163,7 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
       Parser.Lex();  // Eat the comma.
 
       // Parse and remember the operand.
-      if (ParseOperand(Operands, Head)) {
+      if (ParseOperand(Operands, Mnemonic)) {
         Parser.EatToEndOfStatement();
         return true;
       }
@@ -2158,6 +2176,26 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   }
 
   Parser.Lex(); // Consume the EndOfStatement
+
+
+  // The 'mov' mnemonic is special. One variant has a cc_out operand, while
+  // another does not. Specifically, the MOVW instruction does not. So we
+  // special case it here and remove the defaulted (non-setting) cc_out
+  // operand if that's the instruction we're trying to match.
+  //
+  // We do this post-processing of the explicit operands rather than just
+  // conditionally adding the cc_out in the first place because we need
+  // to check the type of the parsed immediate operand.
+  if (Mnemonic == "mov" && Operands.size() > 4 &&
+      !static_cast<ARMOperand*>(Operands[4])->isARMSOImm() &&
+      static_cast<ARMOperand*>(Operands[4])->isImm0_65535Expr()) {
+    ARMOperand *Op = static_cast<ARMOperand*>(Operands[1]);
+    Operands.erase(Operands.begin() + 1);
+    delete Op;
+  }
+
+
+
   return false;
 }
 

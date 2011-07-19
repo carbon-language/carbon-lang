@@ -88,3 +88,8 @@
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS: error: invalid operand for instruction
+
+
+        @ Out of range immediate for MOV
+        movw r9, 0x10000
+@ CHECK-ERRORS: error: invalid operand for instruction

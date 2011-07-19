@@ -494,11 +494,16 @@ def imm0_31_m1 : Operand<i32>, ImmLeaf<i32, [{
   let EncoderMethod = "getImmMinusOneOpValue";
 }
 
-// i32imm_hilo16 - For movt/movw - sets the MC Encoder method.
-// The imm is split into imm{15-12}, imm{11-0}
+// imm0_65535_expr - For movt/movw - 16-bit immediate that can also reference
+// a relocatable expression.
 //
-def i32imm_hilo16 : Operand<i32> {
+// FIXME: This really needs a Thumb version separate from the ARM version.
+// While the range is the same, and can thus use the same match class,
+// the encoding is different so it should have a different encoder method.
+def Imm0_65535ExprAsmOperand: AsmOperandClass { let Name = "Imm0_65535Expr"; }
+def imm0_65535_expr : Operand<i32> {
   let EncoderMethod = "getHiLo16ImmOpValue";
+  let ParserMatchClass = Imm0_65535ExprAsmOperand;
 }
 
 /// bf_inv_mask_imm predicate - An AND mask to clear an arbitrary width bitfield
@@ -2123,7 +2128,7 @@ def MOVi : AsI1<0b1101, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm, IIC_iMOVi,
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
-def MOVi16 : AI1<0b1000, (outs GPR:$Rd), (ins i32imm_hilo16:$imm),
+def MOVi16 : AI1<0b1000, (outs GPR:$Rd), (ins imm0_65535_expr:$imm),
                  DPFrm, IIC_iMOVi,
                  "movw", "\t$Rd, $imm",
                  [(set GPR:$Rd, imm0_65535:$imm)]>,
@@ -2137,11 +2142,15 @@ def MOVi16 : AI1<0b1000, (outs GPR:$Rd), (ins i32imm_hilo16:$imm),
   let Inst{25} = 1;
 }
 
+def : InstAlias<"mov${p} $Rd, $imm",
+                (MOVi16 GPR:$Rd, imm0_65535_expr:$imm, pred:$p)>,
+        Requires<[IsARM]>;
+
 def MOVi16_ga_pcrel : PseudoInst<(outs GPR:$Rd),
                                 (ins i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
 
 let Constraints = "$src = $Rd" in {
-def MOVTi16 : AI1<0b1010, (outs GPR:$Rd), (ins GPR:$src, i32imm_hilo16:$imm),
+def MOVTi16 : AI1<0b1010, (outs GPR:$Rd), (ins GPR:$src, imm0_65535_expr:$imm),
                   DPFrm, IIC_iMOVi,
                   "movt", "\t$Rd, $imm",
                   [(set GPR:$Rd,
@@ -3260,7 +3269,7 @@ def MOVCCs : ARMPseudoInst<(outs GPR:$Rd),
 
 let isMoveImm = 1 in
 def MOVCCi16 : ARMPseudoInst<(outs GPR:$Rd),
-                             (ins GPR:$false, i32imm_hilo16:$imm, pred:$p),
+                             (ins GPR:$false, imm0_65535_expr:$imm, pred:$p),
                              4, IIC_iMOVi,
                              []>,
       RegConstraint<"$false = $Rd">, Requires<[IsARM, HasV6T2]>;
