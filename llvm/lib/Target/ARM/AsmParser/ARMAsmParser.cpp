@@ -1959,12 +1959,12 @@ static StringRef SplitMnemonic(StringRef Mnemonic,
       Mnemonic == "vcle" ||
       (Mnemonic == "smlal" || Mnemonic == "umaal" || Mnemonic == "umlal" ||
        Mnemonic == "vabal" || Mnemonic == "vmlal" || Mnemonic == "vpadal" ||
-       Mnemonic == "vqdmlal" || Mnemonic == "bics"))
+       Mnemonic == "vqdmlal"))
     return Mnemonic;
 
   // First, split out any predication code. Ignore mnemonics we know aren't
   // predicated but do have a carry-set and so weren't caught above.
-  if (Mnemonic != "adcs") {
+  if (Mnemonic != "adcs" && Mnemonic != "bics") {
     unsigned CC = StringSwitch<unsigned>(Mnemonic.substr(Mnemonic.size()-2))
       .Case("eq", ARMCC::EQ)
       .Case("ne", ARMCC::NE)
@@ -2167,59 +2167,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                         MCStreamer &Out) {
   MCInst Inst;
   unsigned ErrorInfo;
-  MatchResultTy MatchResult, MatchResult2;
+  MatchResultTy MatchResult;
   MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo);
-  if (MatchResult != Match_Success) {
-    // If we get a Match_InvalidOperand it might be some arithmetic instruction
-    // that does not update the condition codes.  So try adding a CCOut operand
-    // with a value of reg0.
-    if (MatchResult == Match_InvalidOperand) {
-      Operands.insert(Operands.begin() + 1,
-                      ARMOperand::CreateCCOut(0,
-                                  ((ARMOperand*)Operands[0])->getStartLoc()));
-      MatchResult2 = MatchInstructionImpl(Operands, Inst, ErrorInfo);
-      if (MatchResult2 == Match_Success)
-        MatchResult = Match_Success;
-      else {
-        ARMOperand *CCOut = ((ARMOperand*)Operands[1]);
-        Operands.erase(Operands.begin() + 1);
-        delete CCOut;
-      }
-    }
-    // If we get a Match_MnemonicFail it might be some arithmetic instruction
-    // that updates the condition codes if it ends in 's'.  So see if the
-    // mnemonic ends in 's' and if so try removing the 's' and adding a CCOut
-    // operand with a value of CPSR.
-    else if (MatchResult == Match_MnemonicFail) {
-      // Get the instruction mnemonic, which is the first token.
-      StringRef Mnemonic = ((ARMOperand*)Operands[0])->getToken();
-      if (Mnemonic.substr(Mnemonic.size()-1) == "s") {
-        // removed the 's' from the mnemonic for matching.
-        StringRef MnemonicNoS = Mnemonic.slice(0, Mnemonic.size() - 1);
-        SMLoc NameLoc = ((ARMOperand*)Operands[0])->getStartLoc();
-        ARMOperand *OldMnemonic = ((ARMOperand*)Operands[0]);
-        Operands.erase(Operands.begin());
-        delete OldMnemonic;
-        Operands.insert(Operands.begin(),
-                        ARMOperand::CreateToken(MnemonicNoS, NameLoc));
-        Operands.insert(Operands.begin() + 1,
-                        ARMOperand::CreateCCOut(ARM::CPSR, NameLoc));
-        MatchResult2 = MatchInstructionImpl(Operands, Inst, ErrorInfo);
-        if (MatchResult2 == Match_Success)
-          MatchResult = Match_Success;
-        else {
-          ARMOperand *OldMnemonic = ((ARMOperand*)Operands[0]);
-          Operands.erase(Operands.begin());
-          delete OldMnemonic;
-          Operands.insert(Operands.begin(),
-                          ARMOperand::CreateToken(Mnemonic, NameLoc));
-          ARMOperand *CCOut = ((ARMOperand*)Operands[1]);
-          Operands.erase(Operands.begin() + 1);
-          delete CCOut;
-        }
-      }
-    }
-  }
   switch (MatchResult) {
   case Match_Success:
     Out.EmitInstruction(Inst);
