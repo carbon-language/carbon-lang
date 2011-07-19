@@ -21,6 +21,7 @@ int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     char temp[L_tmpnam];
+    tmpnam(temp);
     {
         std::fstream fso(temp, std::ios_base::in | std::ios_base::out
                                                  | std::ios_base::trunc);
