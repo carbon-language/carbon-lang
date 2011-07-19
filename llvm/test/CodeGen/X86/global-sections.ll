@@ -43,7 +43,7 @@
 ; _Complex long long const G4 = 34;
 @G4 = unnamed_addr constant {i64,i64} { i64 34, i64 0 }
 
-; DARWIN: .section        __TEXT,__const
+; DARWIN: .section        __TEXT,__literal16,16byte_literals
 ; DARWIN: _G4:
 ; DARWIN:     .long 34
 

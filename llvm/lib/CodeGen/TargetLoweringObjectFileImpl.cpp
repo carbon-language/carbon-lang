@@ -574,7 +574,7 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   // to using it in -static mode.
   SixteenByteConstantSection = 0;
   if (TM.getRelocationModel() != Reloc::Static &&
-      TM.getTargetData()->getPointerSize() == 32)
+      TM.getTargetData()->getPointerSizeInBits() == 32)
     SixteenByteConstantSection =   // .literal16
       getContext().getMachOSection("__TEXT", "__literal16",
                                    MCSectionMachO::S_16BYTE_LITERALS,
