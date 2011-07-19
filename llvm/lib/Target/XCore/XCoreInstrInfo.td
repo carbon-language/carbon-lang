@@ -754,7 +754,7 @@ def BL_lu10 : _FLU10<
 }
 
 // Two operand short
-// TODO eet, eef, tsetmr, sext (reg), zext (reg)
+// TODO eet, eef, tsetmr
 def NOT : _F2R<(outs GRRegs:$dst), (ins GRRegs:$b),
                  "not $dst, $b",
                  [(set GRRegs:$dst, (not GRRegs:$b))]>;
@@ -764,15 +764,21 @@ def NEG : _F2R<(outs GRRegs:$dst), (ins GRRegs:$b),
                  [(set GRRegs:$dst, (ineg GRRegs:$b))]>;
 
 let Constraints = "$src1 = $dst" in {
-let neverHasSideEffects = 1 in
 def SEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
-                 "sext $dst, $src2",
-                 []>;
+                      "sext $dst, $src2",
+                      [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1, immBitp:$src2))]>;
 
-let neverHasSideEffects = 1 in
+def SEXT_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
+                     "sext $dst, $src2",
+                     [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1, GRRegs:$src2))]>;
+
 def ZEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
-                 "zext $dst, $src2",
-                 []>;
+                      "zext $dst, $src2",
+                      [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1, immBitp:$src2))]>;
+
+def ZEXT_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
+                     "zext $dst, $src2",
+                     [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1, GRRegs:$src2))]>;
 
 def ANDNOT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
                  "andnot $dst, $src2",
