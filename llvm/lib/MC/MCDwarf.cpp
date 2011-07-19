@@ -687,9 +687,6 @@ void FrameEmitterImpl::EmitCFIInstructions(MCStreamer &streamer,
 /// normal CIE and FDE.
 bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
                                          const MCDwarfFrameInfo &Frame) {
-#if 1
-  return false;
-#else
   MCContext &Context = Streamer.getContext();
   const TargetAsmInfo &TAI = Context.getTargetAsmInfo();
   bool VerboseAsm = Streamer.isVerboseAsm();
@@ -716,9 +713,7 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   //   .quad __gxx_personality
   //   .quad except_tab1
 
-  uint32_t Encoding =
-    TAI.getCompactUnwindEncoding(Frame.Instructions,
-                                 getDataAlignmentFactor(Streamer), IsEH);
+  uint32_t Encoding = Frame.CompactUnwindEncoding;
   if (!Encoding) return false;
 
   // The encoding needs to know we have an LSDA.
@@ -745,6 +740,7 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
                                       Twine(llvm::utohexstr(Encoding)));
   Streamer.EmitIntValue(Encoding, Size);
 
+
   // Personality Function
   Size = getSizeForEncoding(Streamer, dwarf::DW_EH_PE_absptr);
   if (VerboseAsm) Streamer.AddComment("Personality Function");
@@ -762,7 +758,6 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
     Streamer.EmitIntValue(0, Size); // No LSDA
 
   return true;
-#endif
 }
 
 const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
