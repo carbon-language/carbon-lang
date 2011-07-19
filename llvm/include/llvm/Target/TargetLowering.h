@@ -383,9 +383,7 @@ public:
   /// isLoadExtLegal - Return true if the specified load with extension is legal
   /// on this target.
   bool isLoadExtLegal(unsigned ExtType, EVT VT) const {
-    return VT.isSimple() &&
-      (getLoadExtAction(ExtType, VT) == Legal ||
-       getLoadExtAction(ExtType, VT) == Custom);
+    return VT.isSimple() && getLoadExtAction(ExtType, VT) == Legal;
   }
 
   /// getTruncStoreAction - Return how this store with truncation should be
@@ -404,8 +402,7 @@ public:
   /// legal on this target.
   bool isTruncStoreLegal(EVT ValVT, EVT MemVT) const {
     return isTypeLegal(ValVT) && MemVT.isSimple() &&
-      (getTruncStoreAction(ValVT, MemVT) == Legal ||
-       getTruncStoreAction(ValVT, MemVT) == Custom);
+           getTruncStoreAction(ValVT, MemVT) == Legal;
   }
 
   /// getIndexedLoadAction - Return how the indexed load should be treated:
