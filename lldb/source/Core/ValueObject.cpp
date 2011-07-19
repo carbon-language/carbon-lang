@@ -2356,7 +2356,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                     }
                     else
                     {
-                        for (int index = index_lower;
+                        for (unsigned long index = index_lower;
                              index <= index_higher; index++)
                         {
                             ValueObjectSP child = 

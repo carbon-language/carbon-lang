@@ -168,7 +168,7 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
     if (num_bytes > num_data_bytes)
         num_bytes = num_data_bytes;
     
-    for (off_t byte_idx = 0;
+    for (size_t byte_idx = 0;
          byte_idx < num_bytes;
          ++byte_idx)
     {
@@ -915,7 +915,7 @@ ClangExpressionDeclMap::DoMaterialize
         if (log)
             log->PutCString("Not bothering to allocate a struct because no arguments are needed");
         
-        m_material_vars->m_allocated_area = NULL;
+        m_material_vars->m_allocated_area = 0;
         
         return true;
     }

@@ -883,7 +883,7 @@ public:
     {
         if (idx < m_infos.size())
             return m_infos[idx].GetProcessID();
-        return NULL;        
+        return 0;
     }
 
     bool

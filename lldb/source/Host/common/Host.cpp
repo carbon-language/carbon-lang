@@ -183,7 +183,7 @@ MonitorChildProcessThreadFunction (void *arg)
             }
             else
             {
-                status_cstr = "(???)";
+                status_cstr = "(\?\?\?)";
             }
 
             // Scope for pthread_cancel_disabler

@@ -24,7 +24,7 @@ public:
         IRForTarget::StaticDataAllocator(),
         m_process(process),
         m_stream_string(StreamString::eBinary, process.GetAddressByteSize(), process.GetByteOrder()),
-        m_allocation(NULL)
+        m_allocation(0)
     {
     }
     
@@ -46,18 +46,18 @@ public:
         if (m_allocation)
             m_process.DeallocateMemory(m_allocation);
         
-        m_allocation = NULL;
+        m_allocation = 0;
         
         m_allocation = m_process.AllocateMemory(m_stream_string.GetSize(), lldb::ePermissionsReadable | lldb::ePermissionsWritable, err);
         
         if (!err.Success())
-            return NULL;
+            return 0;
         
         if (m_allocation)
             m_process.WriteMemory(m_allocation, m_stream_string.GetData(), m_stream_string.GetSize(), err);
         
         if (!err.Success())
-            return NULL;
+            return 0;
         
         return m_allocation;
     }

@@ -192,7 +192,7 @@ public:
 
         // now I have a valid format, let's add it to every type
         
-        for (int i = 0; i < argc; i++) {
+        for (size_t i = 0; i < argc; i++) {
             const char* typeA = command.GetArgumentAtIndex(i);
             ConstString typeCS(typeA);
             if (typeCS)
@@ -542,7 +542,7 @@ public:
         
         Error error;
         
-        for (int i = 0; i < options->m_target_types.GetSize(); i++)
+        for (size_t i = 0; i < options->m_target_types.GetSize(); i++)
         {
             const char *type_name = options->m_target_types.GetStringAtIndex(i);
             CommandObjectTypeSummaryAdd::AddSummary(ConstString(type_name),
@@ -785,7 +785,7 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
                                                          m_options.m_name,
                                                          m_options.m_category);
         
-        for (int i = 0; i < argc; i++) {
+        for (size_t i = 0; i < argc; i++) {
             const char* typeA = command.GetArgumentAtIndex(i);
             if (typeA && *typeA)
                 options->m_target_types << typeA;
@@ -806,7 +806,7 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
     
     Error error;
     
-    for (int i = 0; i < command.GetArgumentCount(); i++)
+    for (size_t i = 0; i < command.GetArgumentCount(); i++)
     {
         const char *type_name = command.GetArgumentAtIndex(i);
         CommandObjectTypeSummaryAdd::AddSummary(ConstString(type_name),
@@ -886,7 +886,7 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
     
     // now I have a valid format, let's add it to every type
     
-    for (int i = 0; i < argc; i++) {
+    for (size_t i = 0; i < argc; i++) {
         const char* typeA = command.GetArgumentAtIndex(i);
         if (!typeA || typeA[0] == '\0')
         {

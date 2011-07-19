@@ -913,7 +913,7 @@ FileSpec::EnumerateDirectory
                 {
                     char child_path[PATH_MAX];
                     const int child_path_len = ::snprintf (child_path, sizeof(child_path), "%s/%s", dir_path, dp->d_name);
-                    if (child_path_len < sizeof(child_path) - 1)
+                    if (child_path_len < (int)(sizeof(child_path) - 1))
                     {
                         // Don't resolve the file type or path
                         FileSpec child_path_spec (child_path, false);

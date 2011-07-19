@@ -257,7 +257,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
         std::string triple = target->GetArchitecture().GetTriple().str();
         
         int dash_count = 0;
-        for (int i = 0; i < triple.size(); ++i)
+        for (size_t i = 0; i < triple.size(); ++i)
         {
             if (triple[i] == '-')
                 dash_count++;

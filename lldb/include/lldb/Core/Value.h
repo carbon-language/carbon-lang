@@ -47,7 +47,7 @@ public:
         eContextTypeClangType,          // void * (an opaque clang::QualType * that can be fed to "static QualType QualType::getFromOpaquePtr(void *)")
         eContextTypeRegisterInfo,       // RegisterInfo *
         eContextTypeLLDBType,           // lldb_private::Type *
-        eContextTypeVariable,           // lldb_private::Variable *
+        eContextTypeVariable            // lldb_private::Variable *
     };
 
     Value();

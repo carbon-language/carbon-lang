@@ -26,11 +26,11 @@ class InputReaderEZ : public InputReader
 
 private:
     
-    static size_t Callback_Impl(void *baton, 
-                         InputReader &reader, 
-                         lldb::InputReaderAction notification,
-                         const char *bytes, 
-                         size_t bytes_len);    
+    static size_t Callback_Impl(void *baton,
+                                InputReader &reader,
+                                lldb::InputReaderAction notification,
+                                const char *bytes,
+                                size_t bytes_len);
 public:
     
     InputReaderEZ (Debugger &debugger) :
@@ -40,6 +40,7 @@ public:
     virtual
     ~InputReaderEZ ();
 
+    using InputReader::Initialize;
     virtual Error
     Initialize(void* baton,
                lldb::InputReaderGranularity token_size = lldb::eInputReaderGranularityLine,

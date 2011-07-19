@@ -463,14 +463,14 @@ CommandObjectExpression::ExecuteRawCommandString
 OptionDefinition
 CommandObjectExpression::CommandOptions::g_option_table[] =
 {
-  //{ LLDB_OPT_SET_ALL, false, "language",   'l', required_argument, NULL, 0, "[c|c++|objc|objc++]",          "Sets the language to use when parsing the expression."},
+//{ LLDB_OPT_SET_ALL, false, "language",   'l', required_argument, NULL, 0, "[c|c++|objc|objc++]",          "Sets the language to use when parsing the expression."},
 //{ LLDB_OPT_SET_1, false, "format",     'f', required_argument, NULL, 0, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]",  "Specify the format that the expression output should use."},
-{ LLDB_OPT_SET_1, false, "format",             'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format that the expression output should use."},
-{ LLDB_OPT_SET_2, false, "object-description", 'o', no_argument,       NULL, 0, eArgTypeNone, "Print the object description of the value resulting from the expression."},
-{ LLDB_OPT_SET_2, false, "dynamic-value", 'd', required_argument,       NULL, 0, eArgTypeBoolean, "Upcast the value resulting from the expression to its dynamic type if available."},
-{ LLDB_OPT_SET_ALL, false, "unwind-on-error",  'u', required_argument, NULL, 0, eArgTypeBoolean, "Clean up program state if the expression causes a crash, breakpoint hit or signal."},
-{ LLDB_OPT_SET_ALL, false, "debug",            'g', no_argument,       NULL, 0, eArgTypeNone, "Enable verbose debug logging of the expression parsing and evaluation."},
-{ LLDB_OPT_SET_ALL, false, "use-ir",           'i', no_argument,       NULL, 0, eArgTypeNone, "[Temporary] Instructs the expression evaluator to use IR instead of ASTs."},
-{ 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
+{ LLDB_OPT_SET_1,   false, "format",             'f', required_argument, NULL, 0, eArgTypeExprFormat, "Specify the format that the expression output should use."},
+{ LLDB_OPT_SET_2,   false, "object-description", 'o', no_argument,       NULL, 0, eArgTypeNone,       "Print the object description of the value resulting from the expression."},
+{ LLDB_OPT_SET_2,   false, "dynamic-value",      'd', required_argument, NULL, 0, eArgTypeBoolean,    "Upcast the value resulting from the expression to its dynamic type if available."},
+{ LLDB_OPT_SET_ALL, false, "unwind-on-error",    'u', required_argument, NULL, 0, eArgTypeBoolean,    "Clean up program state if the expression causes a crash, breakpoint hit or signal."},
+{ LLDB_OPT_SET_ALL, false, "debug",              'g', no_argument,       NULL, 0, eArgTypeNone,       "Enable verbose debug logging of the expression parsing and evaluation."},
+{ LLDB_OPT_SET_ALL, false, "use-ir",             'i', no_argument,       NULL, 0, eArgTypeNone,       "[Temporary] Instructs the expression evaluator to use IR instead of ASTs."},
+{ 0,                false, NULL,                 0,   0,                 NULL, 0, eArgTypeNone,       NULL }
 };
 

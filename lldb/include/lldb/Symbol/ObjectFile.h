@@ -66,7 +66,7 @@ public:
         eTypeObjectFile,    /// An intermediate object file
         eTypeSharedLibrary, /// A shared library that can be used during execution
         eTypeStubLibrary,   /// A library that can be linked against but not used for execution
-        eTypeUnknown,
+        eTypeUnknown
     } Type;
 
     typedef enum 

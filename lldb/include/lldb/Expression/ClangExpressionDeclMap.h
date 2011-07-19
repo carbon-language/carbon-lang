@@ -644,8 +644,8 @@ private:
     //----------------------------------------------------------------------
     struct MaterialVars {
         MaterialVars() :
-            m_allocated_area(NULL),
-            m_materialized_location(NULL)
+            m_allocated_area(0),
+            m_materialized_location(0)
         {
         }
         

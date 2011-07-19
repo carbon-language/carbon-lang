@@ -413,8 +413,8 @@ ClangUserExpression::GetThreadPlanToExecuteJITExpression (Stream &error_stream,
 {
     lldb::addr_t struct_address;
             
-    lldb::addr_t object_ptr = NULL;
-    lldb::addr_t cmd_ptr = NULL;
+    lldb::addr_t object_ptr = 0;
+    lldb::addr_t cmd_ptr = 0;
     
     PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr, cmd_ptr);
     
@@ -494,8 +494,8 @@ ClangUserExpression::Execute (Stream &error_stream,
     {
         lldb::addr_t struct_address;
                 
-        lldb::addr_t object_ptr = NULL;
-        lldb::addr_t cmd_ptr = NULL;
+        lldb::addr_t object_ptr = 0;
+        lldb::addr_t cmd_ptr = 0;
         
         if (!PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr, cmd_ptr))
             return eExecutionSetupError;

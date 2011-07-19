@@ -24,8 +24,8 @@ class ClangASTImporter
 {
 public:
     ClangASTImporter (clang::ASTContext *target_ctx) :
-        m_target_ctx(target_ctx),
-        m_file_manager(clang::FileSystemOptions())
+        m_file_manager(clang::FileSystemOptions()),
+        m_target_ctx(target_ctx)
     {
     }
     

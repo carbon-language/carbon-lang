@@ -69,7 +69,7 @@ public:
     enum GetExpressionPathFormat
     {
         eDereferencePointers = 1,
-        eHonorPointers,
+        eHonorPointers
     };
     
     enum ValueObjectRepresentationStyle
