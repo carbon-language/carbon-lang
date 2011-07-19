@@ -41,6 +41,7 @@ def SDT_MipsThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 
 def SDT_MipsDynAlloc    : SDTypeProfile<1, 1, [SDTCisVT<0, i32>,
                                                SDTCisVT<1, iPTR>]>;
+def SDT_Sync             : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 
 // Call
 def MipsJmpLink : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink,
@@ -105,6 +106,8 @@ def MipsWrapperPIC    : SDNode<"MipsISD::WrapperPIC",  SDTIntUnaryOp>;
 // Pointer to dynamically allocated stack area.
 def MipsDynAlloc  : SDNode<"MipsISD::DynAlloc", SDT_MipsDynAlloc,
                            [SDNPHasChain, SDNPInGlue]>;
+
+def MipsSync : SDNode<"MipsISD::Sync", SDT_Sync, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
@@ -588,6 +591,15 @@ def LW      : LoadM<0x23, "lw",  load>;
 def SB      : StoreM<0x28, "sb", truncstorei8>;
 def SH      : StoreM<0x29, "sh", truncstorei16>;
 def SW      : StoreM<0x2b, "sw", store>;
+
+let hasSideEffects = 1 in
+def SYNC : MipsInst<(outs), (ins i32imm:$stype), "sync $stype",
+                    [(MipsSync imm:$stype)], NoItinerary>
+{
+  let opcode = 0;
+  let Inst{25-11} = 0;
+  let Inst{5-0} = 15;
+}
 
 /// Load-linked, Store-conditional
 let mayLoad = 1, hasDelaySlot = 1 in

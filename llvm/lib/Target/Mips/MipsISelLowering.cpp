@@ -61,6 +61,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::ExtractElementF64: return "MipsISD::ExtractElementF64";
   case MipsISD::WrapperPIC:        return "MipsISD::WrapperPIC";
   case MipsISD::DynAlloc:          return "MipsISD::DynAlloc";
+  case MipsISD::Sync:              return "MipsISD::Sync";
   default:                         return NULL;
   }
 }
@@ -159,7 +160,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
   // Use the default for now
   setOperationAction(ISD::STACKSAVE,         MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,      MVT::Other, Expand);
-  setOperationAction(ISD::MEMBARRIER,        MVT::Other, Expand);
+  setOperationAction(ISD::MEMBARRIER,        MVT::Other, Custom);
 
   if (Subtarget->isSingleFloat())
     setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
@@ -527,6 +528,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::VASTART:            return LowerVASTART(Op, DAG);
     case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
     case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
+    case ISD::MEMBARRIER:         return LowerMEMBARRIER(Op, DAG);
   }
   return SDValue();
 }
@@ -1523,6 +1525,15 @@ LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, Mips::FP, VT);
   return FrameAddr;
+}
+
+// TODO: set SType according to the desired memory barrier behavior.
+SDValue MipsTargetLowering::LowerMEMBARRIER(SDValue Op,
+                                            SelectionDAG& DAG) const {
+  unsigned SType = 0;
+  DebugLoc dl = Op.getDebugLoc();
+  return DAG.getNode(MipsISD::Sync, dl, MVT::Other, Op.getOperand(0),
+                     DAG.getConstant(SType, MVT::i32));
 }
 
 //===----------------------------------------------------------------------===//

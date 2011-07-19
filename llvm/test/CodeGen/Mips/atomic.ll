@@ -12,6 +12,7 @@ declare i8 @llvm.atomic.load.nand.i8.p0i8(i8* nocapture, i8) nounwind
 declare i8 @llvm.atomic.swap.i8.p0i8(i8* nocapture, i8) nounwind
 declare i8 @llvm.atomic.cmp.swap.i8.p0i8(i8* nocapture, i8, i8) nounwind
 
+declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
 
 @x = common global i32 0, align 4
 
@@ -239,3 +240,21 @@ entry:
 ; CHECK:   sll     $[[R17:[0-9]+]], $[[R16]], 24
 ; CHECK:   sra     $2, $[[R17]], 24
 }
+
+@countsint = common global i32 0, align 4
+
+define i32 @CheckSync(i32 %v) nounwind noinline {
+entry:
+  tail call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  %0 = tail call i32 @llvm.atomic.load.add.i32.p0i32(i32* @countsint, i32 %v)
+  tail call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  ret i32 %0 
+
+; CHECK:   CheckSync:
+; CHECK:   sync 0
+; CHECK:   ll
+; CHECK:   sc
+; CHECK:   beq
+; CHECK:   sync 0
+}
+
