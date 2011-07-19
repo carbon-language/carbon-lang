@@ -3671,8 +3671,8 @@ def MCR : MovRCopro<"mcr", 0 /* from ARM core register to coprocessor */,
                                   imm:$CRm, imm:$opc2)]>;
 def MRC : MovRCopro<"mrc", 1 /* from coprocessor to ARM core register */,
                     (outs GPR:$Rt),
-                    (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn, c_imm:$CRm,
-                         i32imm:$opc2), []>;
+                    (ins p_imm:$cop, imm0_7:$opc1, c_imm:$CRn, c_imm:$CRm,
+                         imm0_7:$opc2), []>;
 
 def : ARMPat<(int_arm_mrc imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2),
              (MRC imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2)>;
@@ -3708,8 +3708,8 @@ def MCR2 : MovRCopro2<"mcr2", 0 /* from ARM core register to coprocessor */,
                                      imm:$CRm, imm:$opc2)]>;
 def MRC2 : MovRCopro2<"mrc2", 1 /* from coprocessor to ARM core register */,
                       (outs GPR:$Rt),
-                      (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn, c_imm:$CRm,
-                           i32imm:$opc2), []>;
+                      (ins p_imm:$cop, imm0_7:$opc1, c_imm:$CRn, c_imm:$CRm,
+                           imm0_7:$opc2), []>;
 
 def : ARMV5TPat<(int_arm_mrc2 imm:$cop, imm:$opc1, imm:$CRn,
                               imm:$CRm, imm:$opc2),

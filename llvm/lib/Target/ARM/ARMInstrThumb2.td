@@ -3389,13 +3389,12 @@ def t2MCR2 : t2MovRCopro<0b1111, "mcr2", 0,
 
 /* from coprocessor to ARM core register */
 def t2MRC : t2MovRCopro<0b1110, "mrc", 1,
-           (outs GPR:$Rt),
-           (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
-           []>;
+             (outs GPR:$Rt), (ins p_imm:$cop, imm0_7:$opc1, c_imm:$CRn,
+                                  c_imm:$CRm, imm0_7:$opc2), []>;
 
 def t2MRC2 : t2MovRCopro<0b1111, "mrc2", 1,
-             (outs GPR:$Rt), (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn,
-                                  c_imm:$CRm, i32imm:$opc2), []>;
+             (outs GPR:$Rt), (ins p_imm:$cop, imm0_7:$opc1, c_imm:$CRn,
+                                  c_imm:$CRm, imm0_7:$opc2), []>;
 
 def : T2v6Pat<(int_arm_mrc  imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2),
               (t2MRC imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2)>;
