@@ -628,7 +628,9 @@ namespace llvm {
     uint64_t getAddrElement(unsigned Idx) const {
       if (getVersion() <= llvm::LLVMDebugVersion8)
         return getUInt64Field(Idx+6);
-      return getUInt64Field(Idx+7);
+      if (getVersion() == llvm::LLVMDebugVersion9)
+        return getUInt64Field(Idx+7);
+      return getUInt64Field(Idx+8);
     }
 
     /// isBlockByrefVariable - Return true if the variable was declared as
@@ -715,6 +717,13 @@ namespace llvm {
   /// getFnSpecificMDNode - Return a NameMDNode, if available, that is 
   /// suitable to hold function specific information.
   NamedMDNode *getFnSpecificMDNode(const Module &M, StringRef Name);
+
+  /// createInlinedVariable - Create a new inlined variable based on current
+  /// variable.
+  /// @param DV            Current Variable.
+  /// @param InlinedScope  Location at current variable is inlined.
+  DIVariable createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
+                                   LLVMContext &VMContext);
 
   class DebugInfoFinder {
   public:
