@@ -111,9 +111,7 @@ Function *DIDescriptor::getFunctionField(unsigned Elt) const {
 unsigned DIVariable::getNumAddrElements() const {
   if (getVersion() <= llvm::LLVMDebugVersion8)
     return DbgNode->getNumOperands()-6;
-  if (getVersion() == llvm::LLVMDebugVersion9)
-    return DbgNode->getNumOperands()-7;
-  return DbgNode->getNumOperands()-8;
+  return DbgNode->getNumOperands()-7;
 }
 
 
@@ -762,19 +760,6 @@ NamedMDNode *llvm::getOrInsertFnSpecificMDNode(Module &M, StringRef FuncName) {
   return M.getOrInsertNamedMetadata(Name.str());
 }
 
-/// createInlinedVariable - Create a new inlined variable based on current
-/// variable.
-/// @param DV            Current Variable.
-/// @param InlinedScope  Location at current variable is inlined.
-DIVariable llvm::createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
-                                       LLVMContext &VMContext) {
-  SmallVector<Value *, 16> Elts;
-  // Insert inlined scope as 7th element.
-  for (unsigned i = 0, e = DV->getNumOperands(); i != e; ++i)
-    i == 7 ? Elts.push_back(InlinedScope) :
-             Elts.push_back(DV->getOperand(i));
-  return DIVariable(MDNode::get(VMContext, Elts));
-}
 
 //===----------------------------------------------------------------------===//
 // DebugInfoFinder implementations.
