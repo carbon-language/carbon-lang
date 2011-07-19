@@ -83,9 +83,6 @@
 @ CHECK: bkpt  #10 @ encoding: [0x7a,0x00,0x20,0xe1]
         bkpt  #10
 
-@ CHECK: mrs  r8, cpsr @ encoding: [0x00,0x80,0x0f,0xe1]
-        mrs  r8, cpsr
-
 @ CHECK: cdp  p7, #1, c1, c1, c1, #4 @ encoding: [0x81,0x17,0x11,0xee]
         cdp  p7, #1, c1, c1, c1, #4
 @ CHECK: cdp2  p7, #1, c1, c1, c1, #4 @ encoding: [0x81,0x17,0x11,0xfe]

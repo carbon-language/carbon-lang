@@ -182,8 +182,10 @@ def QQQQ3 : ARMReg<3, "qqqq3", [QQ6, QQ7]>;
 
 // Current Program Status Register.
 def CPSR    : ARMReg<0, "cpsr">;
-def FPSCR   : ARMReg<1, "fpscr">;
-def ITSTATE : ARMReg<2, "itstate">;
+def APSR    : ARMReg<1, "apsr">;
+def SPSR    : ARMReg<2, "spsr">;
+def FPSCR   : ARMReg<3, "fpscr">;
+def ITSTATE : ARMReg<4, "itstate">;
 
 // Special Registers - only available in privileged mode.
 def FPSID   : ARMReg<0, "fpsid">;

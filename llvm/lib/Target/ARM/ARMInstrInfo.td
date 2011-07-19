@@ -3769,20 +3769,22 @@ def MCRR2 : MovRRCopro2<"mcrr2", 0 /* from ARM core register to coprocessor */,
 def MRRC2 : MovRRCopro2<"mrrc2", 1 /* from coprocessor to ARM core register */>;
 
 //===----------------------------------------------------------------------===//
-// Move between special register and ARM core register -- for disassembly only
+// Move between special register and ARM core register
 //
 
 // Move to ARM core register from Special Register
-def MRS : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, cpsr",
-              [/* For disassembly only; pattern left blank */]> {
+def MRS : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary,
+              "mrs", "\t$Rd, apsr", []> {
   bits<4> Rd;
   let Inst{23-16} = 0b00001111;
   let Inst{15-12} = Rd;
   let Inst{7-4} = 0b0000;
 }
 
-def MRSsys : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary,"mrs","\t$Rd, spsr",
-              [/* For disassembly only; pattern left blank */]> {
+def : InstAlias<"mrs${p} $Rd, cpsr", (MRS GPR:$Rd, pred:$p)>, Requires<[IsARM]>;
+
+def MRSsys : ABI<0b0001, (outs GPR:$Rd), (ins), NoItinerary,
+                 "mrs", "\t$Rd, spsr", []> {
   bits<4> Rd;
   let Inst{23-16} = 0b01001111;
   let Inst{15-12} = Rd;
