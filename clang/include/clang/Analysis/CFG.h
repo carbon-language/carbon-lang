@@ -21,6 +21,8 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/BitVector.h"
+#include "clang/AST/Stmt.h"
 #include "clang/Analysis/Support/BumpVector.h"
 #include "clang/Basic/SourceLocation.h"
 #include <cassert>
@@ -533,6 +535,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   class BuildOptions {
+    llvm::BitVector alwaysAddMask;
   public:
     typedef llvm::DenseMap<const Stmt *, const CFGBlock*> ForcedBlkExprs;
     ForcedBlkExprs **forcedBlkExprs;    
@@ -541,12 +544,21 @@ public:
     bool AddEHEdges:1;
     bool AddInitializers:1;
     bool AddImplicitDtors:1;
+    
+    bool alwaysAdd(const Stmt *stmt) const {
+      return alwaysAddMask[stmt->getStmtClass()];
+    }
+    
+    void setAlwaysAdd(Stmt::StmtClass stmtClass) {
+      alwaysAddMask[stmtClass] = true;
+    }
 
     BuildOptions()
-        : forcedBlkExprs(0), PruneTriviallyFalseEdges(true)
-        , AddEHEdges(false)
-        , AddInitializers(false)
-        , AddImplicitDtors(false) {}
+    : alwaysAddMask(Stmt::lastStmtConstant, false)
+      ,forcedBlkExprs(0), PruneTriviallyFalseEdges(true)
+      ,AddEHEdges(false)
+      ,AddInitializers(false)
+      ,AddImplicitDtors(false) {}
   };
 
   /// buildCFG - Builds a CFG from an AST.  The responsibility to free the

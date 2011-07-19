@@ -394,7 +394,7 @@ private:
 
   // Interface to CFGBlock - adding CFGElements.
   void appendStmt(CFGBlock *B, const Stmt *S) {
-    if (alwaysAdd(S))
+    if (alwaysAdd(S) && cachedEntry)
       cachedEntry->second = B;
 
     // All block-level expressions should have already been IgnoreParens()ed.
@@ -461,15 +461,17 @@ inline bool AddStmtChoice::alwaysAdd(CFGBuilder &builder,
 }
 
 bool CFGBuilder::alwaysAdd(const Stmt *stmt) {
+  bool shouldAdd = BuildOpts.alwaysAdd(stmt);
+  
   if (!BuildOpts.forcedBlkExprs)
-    return false;
+    return shouldAdd;
 
   if (lastLookup == stmt) {  
     if (cachedEntry) {
       assert(cachedEntry->first == stmt);
       return true;
     }
-    return false;
+    return shouldAdd;
   }
   
   lastLookup = stmt;
@@ -480,13 +482,13 @@ bool CFGBuilder::alwaysAdd(const Stmt *stmt) {
   if (!fb) {
     // No need to update 'cachedEntry', since it will always be null.
     assert(cachedEntry == 0);
-    return false;
+    return shouldAdd;
   }
 
   CFG::BuildOptions::ForcedBlkExprs::iterator itr = fb->find(stmt);
   if (itr == fb->end()) {
     cachedEntry = 0;
-    return false;
+    return shouldAdd;
   }
 
   cachedEntry = &*itr;
