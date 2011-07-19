@@ -803,7 +803,62 @@ instructions</a> to successfully get and build the LLVM GCC front-end.</p>
   read-only GIT clone of LLVM via:</p>
 
 <pre>
-% git clone http://llvm.org/git/llvm.git
+git clone http://llvm.org/git/llvm.git
+</pre>
+
+<p>If you want to check out clang too, run:</p>
+
+<pre>
+git clone http://llvm.org/git/llvm.git
+cd llvm/tools
+git clone http://llvm.org/git/clang.git
+</pre>
+
+<p>To set up clone from which you can submit code using
+   <tt>git-svn</tt>, run:</p>
+
+<pre>
+git clone http://llvm.org/git/llvm
+cd llvm
+git svn init https://llvm.org/svn/llvm-project/llvm/trunk --username=&lt;username>
+git config svn-remote.svn.fetch :refs/remotes/origin/master
+git svn rebase -l  # -l avoids fetching ahead of the git mirror.
+
+# If you have clang too:
+cd tools
+git clone http://llvm.org/git/clang.git clang
+cd clang
+git svn init https://llvm.org/svn/llvm-project/cfe/trunk --username=&lt;username>
+git config svn-remote.svn.fetch :refs/remotes/origin/master
+git svn rebase -l
+</pre>
+
+<p>To update this clone without generating git-svn tags that conflict
+with the upstream git repo, run:</p>
+
+<pre>
+git fetch && (cd tools/clang && git fetch)  # Get matching revisions of both trees.
+git checkout master
+git svn rebase -l
+(cd tools/clang &&
+ git checkout master &&
+ git svn rebase -l)
+</pre>
+
+<p>This leaves your working directories on their master branches, so
+you'll need to <tt>checkout</tt> each working branch individually and
+<tt>rebase</tt> it on top of its parent branch.  (Note: This script is
+intended for relative newbies to git.  If you have more experience,
+you can likely improve on it.)</p>
+
+<p>The git-svn metadata can get out of sync after you mess around with
+branches and <code>dcommit</code>. When that happens, <code>git svn
+dcommit</code> stops working, complaining about files with uncommitted
+changes. The fix is to rebuild the metadata:</p>
+
+<pre>
+rm -rf .git/svn
+git svn rebase -l
 </pre>
 
 </div>
