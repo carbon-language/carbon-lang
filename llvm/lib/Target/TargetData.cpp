@@ -528,7 +528,7 @@ uint64_t TargetData::getIndexedOffset(Type *ptrTy,
   uint64_t Result = 0;
 
   generic_gep_type_iterator<Value* const*>
-    TI = gep_type_begin(ptrTy, Indices.begin(), Indices.end());
+    TI = gep_type_begin(ptrTy, Indices);
   for (unsigned CurIDX = 0, EndIDX = Indices.size(); CurIDX != EndIDX;
        ++CurIDX, ++TI) {
     if (StructType *STy = dyn_cast<StructType>(*TI)) {

@@ -97,16 +97,16 @@ namespace llvm {
     return gep_type_iterator::end(GEP.op_end());
   }
 
-  template<typename ItTy>
-  inline generic_gep_type_iterator<ItTy>
-  gep_type_begin(Type *Op0, ItTy I, ItTy E) {
-    return generic_gep_type_iterator<ItTy>::begin(Op0, I);
+  template<typename T>
+  inline generic_gep_type_iterator<const T *>
+  gep_type_begin(Type *Op0, ArrayRef<T> A) {
+    return generic_gep_type_iterator<const T *>::begin(Op0, A.begin());
   }
 
-  template<typename ItTy>
-  inline generic_gep_type_iterator<ItTy>
-  gep_type_end(Type *Op0, ItTy I, ItTy E) {
-    return generic_gep_type_iterator<ItTy>::end(E);
+  template<typename T>
+  inline generic_gep_type_iterator<const T *>
+  gep_type_end(Type *Op0, ArrayRef<T> A) {
+    return generic_gep_type_iterator<const T *>::end(A.end());
   }
 } // end namespace llvm
 
