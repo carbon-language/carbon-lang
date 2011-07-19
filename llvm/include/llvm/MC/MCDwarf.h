@@ -263,7 +263,7 @@ namespace llvm {
   struct MCDwarfFrameInfo {
     MCDwarfFrameInfo() : Begin(0), End(0), Personality(0), Lsda(0),
                          Function(0), Instructions(), PersonalityEncoding(),
-                         LsdaEncoding(0) {}
+                         LsdaEncoding(0), CompactUnwindEncoding(0) {}
     MCSymbol *Begin;
     MCSymbol *End;
     const MCSymbol *Personality;
@@ -272,6 +272,7 @@ namespace llvm {
     std::vector<MCCFIInstruction> Instructions;
     unsigned PersonalityEncoding;
     unsigned LsdaEncoding;
+    uint32_t CompactUnwindEncoding;
   };
 
   class MCDwarfFrameEmitter {
