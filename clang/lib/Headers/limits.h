@@ -52,6 +52,8 @@
 #undef  LONG_MIN
 #undef  LONG_MAX
 #undef  ULONG_MAX
+#undef  WCHAR_MIN
+#undef  WCHAR_MAX
 
 #undef  CHAR_BIT
 #undef  CHAR_MIN
@@ -62,6 +64,7 @@
 #define SHRT_MAX  __SHRT_MAX__
 #define INT_MAX   __INT_MAX__
 #define LONG_MAX  __LONG_MAX__
+#define WCHAR_MAX __WCHAR_MAX__
 
 #define SCHAR_MIN (-__SCHAR_MAX__-1)
 #define SHRT_MIN  (-__SHRT_MAX__ -1)
@@ -85,6 +88,17 @@
 #else
 #define CHAR_MIN SCHAR_MIN
 #define CHAR_MAX __SCHAR_MAX__
+#endif
+
+/* C++ or C99: Added wchar_t */
+#if defined(__cplusplus) || __STDC_VERSION__ >= 199901
+
+#ifdef __WCHAR_UNSIGNED__
+#define WCHAR_MIN 0
+#else
+#define WCHAR_MIN (-__WCHAR_MAX__-1)
+#endif
+
 #endif
 
 /* C99 5.2.4.2.1: Added long long. */
