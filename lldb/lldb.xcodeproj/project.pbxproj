@@ -419,7 +419,6 @@
 		94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94611EB113CCA4A4003A22AF /* RefCounter.cpp */; };
 		9463D4CD13B1798800C230D4 /* CommandObjectType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9463D4CC13B1798800C230D4 /* CommandObjectType.cpp */; };
 		9467E65213C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */; };
-		94A9112E13D5DF210046D8A6 /* FormatClasses.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
 		9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A22A15D135E30370024DDC3 /* EmulateInstructionARM.cpp */; };
@@ -439,6 +438,7 @@
 		9AC70390117675270086C050 /* SBInstructionList.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AC7038F117675270086C050 /* SBInstructionList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9AC703AF117675410086C050 /* SBInstruction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AC703AE117675410086C050 /* SBInstruction.cpp */; };
 		9AC703B1117675490086C050 /* SBInstructionList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AC703B0117675490086C050 /* SBInstructionList.cpp */; };
+		B271B11413D6139300C3FEDB /* FormatClasses.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */; };
 		B28058A1139988B0002D96D0 /* InferiorCallPOSIX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */; };
 /* End PBXBuildFile section */
 
@@ -3360,6 +3360,7 @@
 				2628A4D513D4977900F5487A /* ThreadKDP.cpp in Sources */,
 				2676045A13D49D2300AB1B6A /* ProcessControl-mig.defs in Sources */,
 				26D7E45D13D5E30A007FD12B /* SocketAddress.cpp in Sources */,
+				B271B11413D6139300C3FEDB /* FormatClasses.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
