@@ -257,7 +257,7 @@ MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI,
                                      const MCRegisterInfo &MRI,
                                      const TargetAsmInfo *TAI)
   : ImmutablePass(ID), Context(MAI, MRI, TAI),
-    ObjFileMMI(0), CompactEncoding(0), CurCallSite(0), CallsEHReturn(0),
+    ObjFileMMI(0), CompactUnwindEncoding(0), CurCallSite(0), CallsEHReturn(0),
     CallsUnwindInit(0), DbgInfoAvailable(false),
     CallsExternalVAFunctionWithFloatingPointArguments(false) {
   initializeMachineModuleInfoPass(*PassRegistry::getPassRegistry());
@@ -312,7 +312,7 @@ void MachineModuleInfo::EndFunction() {
   FilterEnds.clear();
   CallsEHReturn = 0;
   CallsUnwindInit = 0;
-  CompactEncoding = 0;
+  CompactUnwindEncoding = 0;
   VariableDbgInfo.clear();
 }
 
