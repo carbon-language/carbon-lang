@@ -1594,7 +1594,8 @@ Constant *ConstantExpr::getSelect(Constant *C, Constant *V1, Constant *V2) {
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
                                          unsigned NumIdx, bool InBounds) {
-  if (Constant *FC = ConstantFoldGetElementPtr(C, InBounds, Idxs, NumIdx))
+  if (Constant *FC = ConstantFoldGetElementPtr(C, InBounds,
+                                               makeArrayRef(Idxs, NumIdx)))
     return FC;          // Fold a few common cases.
 
   // Get the result type of the getelementptr!

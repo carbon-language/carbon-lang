@@ -48,9 +48,9 @@ namespace llvm {
   Constant *ConstantFoldCompareInstruction(unsigned short predicate, 
                                            Constant *C1, Constant *C2);
   Constant *ConstantFoldGetElementPtr(Constant *C, bool inBounds,
-                                      Constant* const *Idxs, unsigned NumIdx);
+                                      ArrayRef<Constant *> Idxs);
   Constant *ConstantFoldGetElementPtr(Constant *C, bool inBounds,
-                                      Value* const *Idxs, unsigned NumIdx);
+                                      ArrayRef<Value *> Idxs);
 } // End llvm namespace
 
 #endif

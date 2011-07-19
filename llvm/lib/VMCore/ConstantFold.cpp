@@ -2166,31 +2166,30 @@ static bool isInBoundsIndices(IndexTy const *Idxs, size_t NumIdx) {
 template<typename IndexTy>
 static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
                                                bool inBounds,
-                                               IndexTy const *Idxs,
-                                               unsigned NumIdx) {
-  if (NumIdx == 0) return C;
+                                               ArrayRef<IndexTy> Idxs) {
+  if (Idxs.empty()) return C;
   Constant *Idx0 = cast<Constant>(Idxs[0]);
-  if ((NumIdx == 1 && Idx0->isNullValue()))
+  if ((Idxs.size() == 1 && Idx0->isNullValue()))
     return C;
 
   if (isa<UndefValue>(C)) {
     PointerType *Ptr = cast<PointerType>(C->getType());
-    Type *Ty = GetElementPtrInst::getIndexedType(Ptr, Idxs, Idxs+NumIdx);
+    Type *Ty = GetElementPtrInst::getIndexedType(Ptr, Idxs.begin(), Idxs.end());
     assert(Ty != 0 && "Invalid indices for GEP!");
     return UndefValue::get(PointerType::get(Ty, Ptr->getAddressSpace()));
   }
 
   if (C->isNullValue()) {
     bool isNull = true;
-    for (unsigned i = 0, e = NumIdx; i != e; ++i)
+    for (unsigned i = 0, e = Idxs.size(); i != e; ++i)
       if (!cast<Constant>(Idxs[i])->isNullValue()) {
         isNull = false;
         break;
       }
     if (isNull) {
       PointerType *Ptr = cast<PointerType>(C->getType());
-      Type *Ty = GetElementPtrInst::getIndexedType(Ptr, Idxs,
-                                                         Idxs+NumIdx);
+      Type *Ty = GetElementPtrInst::getIndexedType(Ptr, Idxs.begin(),
+                                                   Idxs.end());
       assert(Ty != 0 && "Invalid indices for GEP!");
       return ConstantPointerNull::get(PointerType::get(Ty,
                                                        Ptr->getAddressSpace()));
@@ -2210,7 +2209,7 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
 
       if ((LastTy && LastTy->isArrayTy()) || Idx0->isNullValue()) {
         SmallVector<Value*, 16> NewIndices;
-        NewIndices.reserve(NumIdx + CE->getNumOperands());
+        NewIndices.reserve(Idxs.size() + CE->getNumOperands());
         for (unsigned i = 1, e = CE->getNumOperands()-1; i != e; ++i)
           NewIndices.push_back(CE->getOperand(i));
 
@@ -2232,7 +2231,7 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
         }
 
         NewIndices.push_back(Combined);
-        NewIndices.append(Idxs+1, Idxs+NumIdx);
+        NewIndices.append(Idxs.begin() + 1, Idxs.end());
         return (inBounds && cast<GEPOperator>(CE)->isInBounds()) ?
           ConstantExpr::getInBoundsGetElementPtr(CE->getOperand(0),
                                                  &NewIndices[0],
@@ -2248,7 +2247,7 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
     //                        i64 0, i64 0)
     // To: i32* getelementptr ([3 x i32]* %X, i64 0, i64 0)
     //
-    if (CE->isCast() && NumIdx > 1 && Idx0->isNullValue()) {
+    if (CE->isCast() && Idxs.size() > 1 && Idx0->isNullValue()) {
       if (PointerType *SPT =
           dyn_cast<PointerType>(CE->getOperand(0)->getType()))
         if (ArrayType *SAT = dyn_cast<ArrayType>(SPT->getElementType()))
@@ -2257,9 +2256,9 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
             if (CAT->getElementType() == SAT->getElementType())
               return inBounds ?
                 ConstantExpr::getInBoundsGetElementPtr(
-                      (Constant*)CE->getOperand(0), Idxs, NumIdx) :
+                      (Constant*)CE->getOperand(0), Idxs.data(), Idxs.size()) :
                 ConstantExpr::getGetElementPtr(
-                      (Constant*)CE->getOperand(0), Idxs, NumIdx);
+                      (Constant*)CE->getOperand(0), Idxs.data(), Idxs.size());
     }
   }
 
@@ -2270,7 +2269,7 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
   SmallVector<Constant *, 8> NewIdxs;
   Type *Ty = C->getType();
   Type *Prev = 0;
-  for (unsigned i = 0; i != NumIdx;
+  for (unsigned i = 0, e = Idxs.size(); i != e;
        Prev = Ty, Ty = cast<CompositeType>(Ty)->getTypeAtIndex(Idxs[i]), ++i) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Idxs[i])) {
       if (ArrayType *ATy = dyn_cast<ArrayType>(Ty))
@@ -2280,7 +2279,7 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
           if (isa<SequentialType>(Prev)) {
             // It's out of range, but we can factor it into the prior
             // dimension.
-            NewIdxs.resize(NumIdx);
+            NewIdxs.resize(Idxs.size());
             ConstantInt *Factor = ConstantInt::get(CI->getType(),
                                                    ATy->getNumElements());
             NewIdxs[i] = ConstantExpr::getSRem(CI, Factor);
@@ -2312,7 +2311,7 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
 
   // If we did any factoring, start over with the adjusted indices.
   if (!NewIdxs.empty()) {
-    for (unsigned i = 0; i != NumIdx; ++i)
+    for (unsigned i = 0, e = Idxs.size(); i != e; ++i)
       if (!NewIdxs[i]) NewIdxs[i] = cast<Constant>(Idxs[i]);
     return inBounds ?
       ConstantExpr::getInBoundsGetElementPtr(C, NewIdxs.data(),
@@ -2323,22 +2322,20 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
   // If all indices are known integers and normalized, we can do a simple
   // check for the "inbounds" property.
   if (!Unknown && !inBounds &&
-      isa<GlobalVariable>(C) && isInBoundsIndices(Idxs, NumIdx))
-    return ConstantExpr::getInBoundsGetElementPtr(C, Idxs, NumIdx);
+      isa<GlobalVariable>(C) && isInBoundsIndices(Idxs.data(), Idxs.size()))
+    return ConstantExpr::getInBoundsGetElementPtr(C, Idxs.data(), Idxs.size());
 
   return 0;
 }
 
 Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
                                           bool inBounds,
-                                          Constant* const *Idxs,
-                                          unsigned NumIdx) {
-  return ConstantFoldGetElementPtrImpl(C, inBounds, Idxs, NumIdx);
+                                          ArrayRef<Constant *> Idxs) {
+  return ConstantFoldGetElementPtrImpl(C, inBounds, Idxs);
 }
 
 Constant *llvm::ConstantFoldGetElementPtr(Constant *C,
                                           bool inBounds,
-                                          Value* const *Idxs,
-                                          unsigned NumIdx) {
-  return ConstantFoldGetElementPtrImpl(C, inBounds, Idxs, NumIdx);
+                                          ArrayRef<Value *> Idxs) {
+  return ConstantFoldGetElementPtrImpl(C, inBounds, Idxs);
 }
