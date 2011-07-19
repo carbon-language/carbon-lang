@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This defines PthreadLockChecker, a simple lock -> unlock checker.  Eventually
-// this shouldn't be registered with ExprEngineInternalChecks.
+// This defines PthreadLockChecker, a simple lock -> unlock checker.
+// Also handles XNU locks, which behave similarly enough to share code.
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,7 +16,6 @@
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
-#include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
 #include "llvm/ADT/ImmutableList.h"
@@ -59,19 +58,20 @@ void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
                                        CheckerContext &C) const {
   const GRState *state = C.getState();
   const Expr *Callee = CE->getCallee();
-  const FunctionTextRegion *R =
-    dyn_cast_or_null<FunctionTextRegion>(state->getSVal(Callee).getAsRegion());
-  
-  if (!R)
+  const FunctionDecl *FD = state->getSVal(Callee).getAsFunctionDecl();
+
+  if (!FD)
     return;
-  
-  IdentifierInfo *II = R->getDecl()->getIdentifier();
+
+  // Get the name of the callee.
+  IdentifierInfo *II = FD->getIdentifier();
   if (!II)   // if no identifier, not a simple C function
     return;
   llvm::StringRef FName = II->getName();
 
   if (CE->getNumArgs() != 1)
     return;
+
   if (FName == "pthread_mutex_lock" ||
       FName == "pthread_rwlock_rdlock" ||
       FName == "pthread_rwlock_wrlock")
