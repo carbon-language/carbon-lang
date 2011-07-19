@@ -29,6 +29,7 @@ namespace std
 #include <hash_map>
 #endif
 
+#include <list>
 #include <map>
 #include <stack>
 
@@ -152,20 +153,24 @@ struct SummaryFormat
     bool m_show_members_oneliner;
     bool m_is_system;
     
+    uint32_t m_priority;
+    
     SummaryFormat(bool casc = false,
                   bool skipptr = false,
                   bool skipref = false,
                   bool nochildren = true,
                   bool novalue = true,
                   bool oneliner = false,
-                  bool system = false) :
+                  bool system = false,
+                  uint32_t priority = 2) :
     m_cascades(casc),
     m_skip_pointers(skipptr),
     m_skip_references(skipref),
     m_dont_show_children(nochildren),
     m_dont_show_value(novalue),
     m_show_members_oneliner(oneliner),
-    m_is_system(system)
+    m_is_system(system),
+    m_priority(priority)
     {
     }
     
@@ -209,6 +214,18 @@ struct SummaryFormat
         return m_is_system;
     }
     
+    uint32_t
+    GetPriority() const
+    {
+        return m_priority;
+    }
+    
+    void
+    SetPriority(uint32_t newprio)
+    {
+        m_priority = newprio;
+    }
+    
     virtual
     ~SummaryFormat()
     {
@@ -238,8 +255,9 @@ struct StringSummaryFormat : public SummaryFormat
                         bool novalue = true,
                         bool oneliner = false,
                         bool system = false,
-                        std::string f = "") :
-    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner,system),
+                        std::string f = "",
+                        uint32_t priority = 2) :
+    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner,system, priority),
     m_format(f)
     {
     }
@@ -289,8 +307,9 @@ struct ScriptSummaryFormat : public SummaryFormat
                         bool oneliner = false,
                         bool system = false,
                         std::string fname = "",
-                        std::string pscri = "") :
-    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner,system),
+                        std::string pscri = "",
+                        uint32_t priority = 2) :
+    SummaryFormat(casc,skipptr,skipref,nochildren,novalue,oneliner,system,priority),
     m_function_name(fname),
     m_python_script(pscri)
     {
@@ -422,6 +441,8 @@ struct ScriptFormat
 template<typename KeyType, typename ValueType>
 class FormatNavigator;
     
+class FormatManager;
+    
 template<typename KeyType, typename ValueType>
 class FormatMap
 {
@@ -431,6 +452,7 @@ private:
     IFormatChangeListener* listener;
     
     friend class FormatNavigator<KeyType, ValueType>;
+    friend class FormatManager;
     
 public:
     typedef std::map<KeyType, ValueSP> MapType;
@@ -528,6 +550,8 @@ public:
     
 };
 
+class FormatCategory;
+    
 template<typename KeyType, typename ValueType>
 class FormatNavigator
 {
@@ -542,6 +566,10 @@ public:
     typedef typename MapType::key_type MapKeyType;
     typedef typename MapType::mapped_type MapValueType;
     typedef typename BackEndType::CallbackType CallbackType;
+    
+    typedef typename lldb::SharedPtr<FormatNavigator<KeyType, ValueType> >::Type SharedPointer;
+    
+    friend class FormatCategory;
 
     FormatNavigator(IFormatChangeListener* lst = NULL) :
     m_format_map(lst)
@@ -561,16 +589,21 @@ public:
     {
         return m_format_map.Delete(type);
     }
-    
+        
     bool
-    Get(ValueObject& vobj, MapValueType& entry)
+    Get(ValueObject& vobj,
+        MapValueType& entry,
+        uint32_t* why = NULL)
     {
+        uint32_t value = lldb::eFormatterDirectChoice;
         clang::QualType type = clang::QualType::getFromOpaquePtr(vobj.GetClangType());
-        bool ret = Get(vobj, type, entry);
-        if(ret)
+        bool ret = Get(vobj, type, entry, value);
+        if (ret)
             entry = MapValueType(entry);
         else
-            entry = MapValueType();
+            entry = MapValueType();        
+        if (why)
+            *why = value;
         return ret;
     }
     
@@ -591,7 +624,7 @@ public:
     {
         return m_format_map.GetCount();
     }
-
+        
 private:
     
     DISALLOW_COPY_AND_ASSIGN(FormatNavigator);
@@ -606,7 +639,8 @@ private:
     
     bool Get(ValueObject& vobj,
              clang::QualType type,
-             MapValueType& entry)
+             MapValueType& entry,
+             uint32_t& reason)
     {
         if (type.isNull())
             return false;
@@ -629,13 +663,19 @@ private:
         // look for a "base type", whatever that means
         if (typePtr->isReferenceType())
         {
-            if (Get(vobj,type.getNonReferenceType(),entry) && !entry->m_skip_references)
+            if (Get(vobj,type.getNonReferenceType(),entry, reason) && !entry->m_skip_references)
+            {
+                reason |= lldb::eFormatterStrippedPointerReference;
                 return true;
+            }
         }
         if (typePtr->isPointerType())
         {
-            if (Get(vobj, typePtr->getPointeeType(), entry) && !entry->m_skip_pointers)
+            if (Get(vobj, typePtr->getPointeeType(), entry, reason) && !entry->m_skip_pointers)
+            {
+                reason |= lldb::eFormatterStrippedPointerReference;
                 return true;
+            }
         }
         if (typePtr->isObjCObjectPointerType())
         {
@@ -649,8 +689,11 @@ private:
             ValueObject* target = vobj.Dereference(error).get();
             if(error.Fail() || !target)
                 return false;
-            if (Get(*target, typePtr->getPointeeType(), entry) && !entry->m_skip_pointers)
+            if (Get(*target, typePtr->getPointeeType(), entry, reason) && !entry->m_skip_pointers)
+            {
+                reason |= lldb::eFormatterStrippedPointerReference;
                 return true;
+            }
         }
         const clang::ObjCObjectType *objc_class_type = typePtr->getAs<clang::ObjCObjectType>();
         if (objc_class_type)
@@ -669,8 +712,11 @@ private:
                     {
                         //printf("the end is here\n");
                         clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
-                        if (Get(vobj, ivar_qual_type, entry) && entry->m_cascades)
+                        if (Get(vobj, ivar_qual_type, entry, reason) && entry->m_cascades)
+                        {
+                            reason |= lldb::eFormatterNavigatedBaseClasses;
                             return true;
+                        }
                     }
                 }
             }
@@ -691,8 +737,11 @@ private:
                         end = record->bases_end();
                         for (pos = record->bases_begin(); pos != end; pos++)
                         {
-                            if((Get(vobj, pos->getType(), entry)) && entry->m_cascades)
-                                return true; // if it does not cascade, just move on to other base classes which might
+                            if((Get(vobj, pos->getType(), entry, reason)) && entry->m_cascades)
+                            {
+                                reason |= lldb::eFormatterNavigatedBaseClasses;
+                                return true;
+                            }
                         }
                     }
                     if (record->getNumVBases() > 0)
@@ -700,8 +749,11 @@ private:
                         end = record->vbases_end();
                         for (pos = record->vbases_begin(); pos != end; pos++)
                         {
-                            if((Get(vobj, pos->getType(), entry)) && entry->m_cascades)
+                            if((Get(vobj, pos->getType(), entry, reason)) && entry->m_cascades)
+                            {
+                                reason |= lldb::eFormatterNavigatedBaseClasses;
                                 return true;
+                            }
                         }
                     }
                 }
@@ -711,8 +763,11 @@ private:
         const clang::TypedefType* type_tdef = type->getAs<clang::TypedefType>();
         if (type_tdef)
         {
-            if ((Get(vobj, type_tdef->getDecl()->getUnderlyingType(), entry)) && entry->m_cascades)
+            if ((Get(vobj, type_tdef->getDecl()->getUnderlyingType(), entry, reason)) && entry->m_cascades)
+            {
+                reason |= lldb::eFormatterNavigatedTypedefs;
                 return true;
+            }
         }
         return false;
     }
@@ -726,42 +781,194 @@ template<>
 bool
 FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Delete(const char* type);
 
+class FormatCategory
+{
+private:
+    typedef FormatNavigator<const char*, SummaryFormat> SummaryNavigator;
+    typedef FormatNavigator<lldb::RegularExpressionSP, SummaryFormat> RegexSummaryNavigator;
+    
+    typedef SummaryNavigator::MapType SummaryMap;
+    typedef RegexSummaryNavigator::MapType RegexSummaryMap;
+        
+    SummaryNavigator::SharedPointer m_summary_nav;
+    RegexSummaryNavigator::SharedPointer m_regex_summary_nav;
+    
+    bool m_enabled;
+    
+    IFormatChangeListener* m_change_listener;
+    
+    Mutex m_mutex;
+    
+public:
+    
+    typedef SummaryNavigator::SharedPointer SummaryNavigatorSP;
+    typedef RegexSummaryNavigator::SharedPointer RegexSummaryNavigatorSP;
+    
+    FormatCategory(IFormatChangeListener* clist) :
+    m_summary_nav(new SummaryNavigator(clist)),
+    m_regex_summary_nav(new RegexSummaryNavigator(clist)),
+    m_enabled(false),
+    m_change_listener(clist),
+    m_mutex(Mutex::eMutexTypeRecursive)
+    {}
+    
+    SummaryNavigatorSP
+    Summary()
+    {
+        return SummaryNavigatorSP(m_summary_nav);
+    }
+    
+    RegexSummaryNavigatorSP
+    RegexSummary()
+    {
+        return RegexSummaryNavigatorSP(m_regex_summary_nav);
+    }
+    
+    bool
+    IsEnabled() const
+    {
+        return m_enabled;
+    }
+    
+    void
+    Enable(bool value = true)
+    {
+        Mutex::Locker(m_mutex);
+        m_enabled = value;        
+        if(m_change_listener)
+            m_change_listener->Changed();
+    }
+    
+    void
+    Disable()
+    {
+        Enable(false);
+    }
+    
+    bool
+    Get(ValueObject& vobj,
+        lldb::SummaryFormatSP& entry,
+        uint32_t* reason = NULL)
+    {
+        if (!IsEnabled())
+            return false;
+        if (Summary()->Get(vobj, entry, reason))
+            return true;
+        bool regex = RegexSummary()->Get(vobj, entry, reason);
+        if (regex && reason)
+            *reason |= lldb::eFormatterRegularExpressionSummary; // penalize regex summaries over normal ones
+        return regex;
+    }
+    
+    void
+    Clear()
+    {
+        m_summary_nav->Clear();
+        m_regex_summary_nav->Clear();
+    }
+    
+    bool
+    Delete(const char* name)
+    {
+        bool del_sum = m_summary_nav->Delete(name);
+        bool del_rex = m_regex_summary_nav->Delete(name);
+        
+        return (del_sum || del_rex);
+    }
+    
+    void
+    ChooseAsPreferential(const char* name);
+    
+    typedef lldb::SharedPtr<FormatCategory>::Type SharedPointer;
+};
+
 class FormatManager : public IFormatChangeListener
 {
 private:
     
     typedef FormatNavigator<const char*, ValueFormat> ValueNavigator;
-    typedef FormatNavigator<const char*, SummaryFormat> SummaryNavigator;
-    typedef FormatNavigator<lldb::RegularExpressionSP, SummaryFormat> RegexSummaryNavigator;
-    typedef FormatNavigator<const char*, SummaryFormat> ScriptNavigator;
-    
+
+    typedef FormatMap<const char*, FormatCategory> CategoryMap;
+
     typedef ValueNavigator::MapType ValueMap;
-    typedef SummaryNavigator::MapType SummaryMap;
-    typedef RegexSummaryNavigator::MapType RegexSummaryMap;
     typedef FormatMap<const char*, SummaryFormat> NamedSummariesMap;
-    typedef ScriptNavigator::MapType ScriptMap;
+    
+    typedef std::list<FormatCategory::SharedPointer> ActiveCategoriesList;
+    
+    typedef ActiveCategoriesList::iterator ActiveCategoriesIterator;
     
     ValueNavigator m_value_nav;
-    SummaryNavigator m_summary_nav;
-    SummaryNavigator m_system_summary_nav;
-    RegexSummaryNavigator m_regex_summary_nav;
-    RegexSummaryNavigator m_system_regex_summary_nav;
-
     NamedSummariesMap m_named_summaries_map;
-        
     uint32_t m_last_revision;
+    CategoryMap m_categories_map;
+    ActiveCategoriesList m_active_categories;
+
+    const char* m_default_category_name;
+    const char* m_system_category_name;
+        
+    typedef CategoryMap::MapType::iterator CategoryMapIterator;
+    
+    bool
+    Get_ExactMatch(ValueObject& vobj,
+                   lldb::SummaryFormatSP& entry)
+    {
+        ActiveCategoriesIterator begin, end = m_active_categories.end();
+        
+        SummaryFormat::SharedPointer current_category_pick;
+        uint32_t reason_to_pick_current;
+        
+        for (begin = m_active_categories.begin(); begin != end; begin++)
+        {
+            FormatCategory::SharedPointer category = *begin;
+            if ( category->Get(vobj, current_category_pick, &reason_to_pick_current) && reason_to_pick_current == lldb::eFormatterDirectChoice )
+            {
+                entry = SummaryFormat::SharedPointer(current_category_pick);
+                return true;
+            }
+        }
+        return false;
+    }
+        
+    bool
+    Get_AnyMatch(ValueObject& vobj,
+                 lldb::SummaryFormatSP& entry)
+    {
+        ActiveCategoriesIterator begin, end = m_active_categories.end();
+        
+        SummaryFormat::SharedPointer current_category_pick;
+        
+        for (begin = m_active_categories.begin(); begin != end; begin++)
+        {
+            FormatCategory::SharedPointer category = *begin;
+            if ( category->Get(vobj, current_category_pick, NULL) )
+            {
+                entry = SummaryFormat::SharedPointer(current_category_pick);
+                return true;
+            }
+        }
+        return false;
+    }
     
 public:
-        
+    
+    typedef bool (*CategoryCallback)(void*, const char*, const FormatCategory::SharedPointer&);
+    
     FormatManager() : 
     m_value_nav(this),
-    m_summary_nav(this),
-    m_system_summary_nav(this),
-    m_regex_summary_nav(this),
-    m_system_regex_summary_nav(this),
     m_named_summaries_map(this),
-    m_last_revision(0)
+    m_last_revision(0),
+    m_categories_map(this),
+    m_active_categories()
     {
+        
+        // build default categories
+        
+        m_default_category_name = ConstString("default").GetCString();
+        m_system_category_name = ConstString("system").GetCString();
+                
+        Category(m_default_category_name)->Enable();
+        Category(m_system_category_name)->Enable();
+        
         // add some default stuff
         // most formats, summaries, ... actually belong to the users' lldbinit file rather than here
         SummaryFormat::SharedPointer string_format(new StringSummaryFormat(false,
@@ -771,34 +978,119 @@ public:
                                                                            false,
                                                                            false,
                                                                            true,
-                                                                           "${var%s}"));
+                                                                           "${var%s}",
+                                                                           1));
         
         
         SummaryFormat::SharedPointer string_array_format(new StringSummaryFormat(false,
-                                                                           true,
-                                                                           false,
-                                                                           false,
-                                                                           false,
-                                                                           false,
-                                                                           true,
-                                                                           "${var%s}"));
+                                                                                 true,
+                                                                                 false,
+                                                                                 false,
+                                                                                 false,
+                                                                                 false,
+                                                                                 true,
+                                                                                 "${var%s}",
+                                                                                 1));
         
         lldb::RegularExpressionSP any_size_char_arr(new RegularExpression("char \\[[0-9]+\\]"));
-                                              
         
-        SystemSummary().Add(ConstString("char *").GetCString(), string_format);
-        SystemSummary().Add(ConstString("const char *").GetCString(), string_format);
-        SystemRegexSummary().Add(any_size_char_arr, string_array_format);
+        
+        Summary(m_system_category_name)->Add(ConstString("char *").GetCString(), string_format);
+        Summary(m_system_category_name)->Add(ConstString("const char *").GetCString(), string_format);
+        RegexSummary(m_system_category_name)->Add(any_size_char_arr, string_array_format);
+        
+        m_active_categories.push_front(Category(m_system_category_name));
+        m_active_categories.push_front(Category(m_default_category_name));
+        
     }
 
-
-    ValueNavigator& Value() { return m_value_nav; }
-    SummaryNavigator& Summary() { return m_summary_nav; }
-    SummaryNavigator& SystemSummary() { return m_system_summary_nav; }
-    RegexSummaryNavigator& RegexSummary() { return m_regex_summary_nav; }
-    RegexSummaryNavigator& SystemRegexSummary() { return m_system_regex_summary_nav; }
-    NamedSummariesMap& NamedSummary() { return m_named_summaries_map; }
     
+    CategoryMap& Categories() { return m_categories_map; }
+    ValueNavigator& Value() { return m_value_nav; }
+    NamedSummariesMap& NamedSummary() { return m_named_summaries_map; }
+
+    void
+    EnableCategory(const char* category_name)
+    {
+        Category(category_name)->Enable();
+        m_active_categories.push_front(Category(category_name));
+    }
+    
+    class delete_matching_categories
+    {
+        FormatCategory::SharedPointer ptr;
+    public:
+        delete_matching_categories(FormatCategory::SharedPointer p) : ptr(p)
+        {}
+        
+        bool operator()(const FormatCategory::SharedPointer& other)
+        {
+            return ptr.get() == other.get();
+        }
+    };
+    
+    void
+    DisableCategory(const char* category_name)
+    {
+        Category(category_name)->Disable();
+        m_active_categories.remove_if(delete_matching_categories(Category(category_name)));
+    }
+    
+    void
+    LoopThroughCategories(CategoryCallback callback, void* param)
+    {
+        CategoryMapIterator begin, end = m_categories_map.m_map.end();
+        
+        for (begin = m_categories_map.m_map.begin(); begin != end; begin++)
+        {
+            if (!callback(param, begin->first, begin->second))
+                return;
+        }
+    }
+    
+    FormatCategory::SummaryNavigatorSP
+    Summary(const char* category_name = NULL)
+    {
+        if (!category_name)
+            return Summary(m_default_category_name);
+        lldb::FormatCategorySP category;
+        if (m_categories_map.Get(category_name, category))
+            return category->Summary();
+        return FormatCategory::SummaryNavigatorSP();
+    }
+    
+    FormatCategory::RegexSummaryNavigatorSP
+    RegexSummary(const char* category_name = NULL)
+    {
+        if (!category_name)
+            return RegexSummary(m_default_category_name);
+        lldb::FormatCategorySP category;
+        if (m_categories_map.Get(category_name, category))
+            return category->RegexSummary();
+        return FormatCategory::RegexSummaryNavigatorSP();
+    }
+    
+    lldb::FormatCategorySP
+    Category(const char* category_name = NULL)
+    {
+        if (!category_name)
+            return Category(m_default_category_name);
+        lldb::FormatCategorySP category;
+        if (m_categories_map.Get(category_name, category))
+            return category;
+        Categories().Add(category_name,lldb::FormatCategorySP(new FormatCategory(this)));
+        return Category(category_name);
+    }
+    
+    bool
+    Get(ValueObject& vobj,
+        lldb::SummaryFormatSP& entry)
+    {
+        if ( Get_ExactMatch(vobj,entry) )
+            return true;
+        return Get_AnyMatch(vobj,entry);
+    }
+
     static bool
     GetFormatFromCString (const char *format_cstr,
                           bool partial_match_ok,

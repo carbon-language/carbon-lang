@@ -130,7 +130,7 @@ class DataFormatterTestCase(TestBase):
                                '}'])
 
         # Expand same expression, skipping 3 layers of summaries
-        self.expect('frame variable data1.m_child1->m_child2 -Y3',
+        self.expect('frame variable data1.m_child1->m_child2 -T -Y3',
                     substrs = ['(DeepData_3) data1.m_child1->m_child2 = {',
                                'm_some_text = "Just a test"',
                                'm_child2 = {',

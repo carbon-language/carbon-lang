@@ -38,6 +38,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::Disassembler>::Type DisassemblerSP;
     typedef SharedPtr<lldb_private::DynamicLoader>::Type DynamicLoaderSP;
     typedef SharedPtr<lldb_private::Event>::Type EventSP;
+    typedef SharedPtr<lldb_private::FormatCategory>::Type FormatCategorySP;
     typedef SharedPtr<lldb_private::Function>::Type FunctionSP;
     typedef SharedPtr<lldb_private::InlineFunctionInfo>::Type InlineFunctionInfoSP;
     typedef SharedPtr<lldb_private::InputReader>::Type InputReaderSP;

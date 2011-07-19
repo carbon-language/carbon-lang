@@ -1,0 +1,37 @@
+//===-- main.cpp ------------------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+struct Rectangle {
+    int w;
+    int h;
+    Rectangle(int W = 3, int H = 5) : w(W), h(H) {}
+};
+
+struct Circle {
+    int r;
+    Circle(int R = 6) : r(R) {}
+};
+
+int main (int argc, const char * argv[])
+{
+    Rectangle r1(5,6);
+    Rectangle r2(9,16);
+    Rectangle r3(4,4);
+    
+    Circle c1(5);
+    Circle c2(6);
+    Circle c3(7);
+    
+    return 0; // Set break point at this line.
+}
+

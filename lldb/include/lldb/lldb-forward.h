@@ -76,6 +76,7 @@ class   ExecutionContextScope;
 class   FileSpec;
 class   FileSpecList;
 class   Flags;
+class   FormatCategory;
 class   FormatManager;
 class   FuncUnwinders;
 class   Function;

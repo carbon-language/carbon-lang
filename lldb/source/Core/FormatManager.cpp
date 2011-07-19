@@ -184,6 +184,8 @@ FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Delete(const char* ty
         if ( ::strcmp(type,regex->GetText()) == 0)
         {
             m_format_map.map().erase(pos);
+            if(m_format_map.listener)
+                m_format_map.listener->Changed();
             return true;
         }
     }
@@ -270,3 +272,23 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
     }
 }
 
+void
+FormatCategory::ChooseAsPreferential(const char* name)
+{
+    Mutex::Locker(m_mutex);
+    lldb::SummaryFormatSP format;
+    
+    uint32_t revision = Debugger::Formatting::ValueFormats::GetCurrentRevision();
+    
+    if ( Summary()->Get(name, format) )
+        format->SetPriority(revision);
+    
+    format.reset();
+    
+    if ( RegexSummary()->Get(name, format) )
+        format->SetPriority(revision);
+    
+    if(m_change_listener)
+        m_change_listener->Changed();
+    
+}

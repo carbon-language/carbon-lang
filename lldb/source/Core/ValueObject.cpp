@@ -202,22 +202,21 @@ ValueObject::UpdateFormatsIfNeeded()
         ClearCustomSummaryFormat();
         m_summary_str.clear();
     }
-    if (m_last_format_mgr_revision != Debugger::ValueFormats::GetCurrentRevision())
+    if (m_last_format_mgr_revision != Debugger::Formatting::ValueFormats::GetCurrentRevision())
     {
         if (m_last_summary_format.get())
             m_last_summary_format.reset((StringSummaryFormat*)NULL);
         if (m_last_value_format.get())
             m_last_value_format.reset((ValueFormat*)NULL);
-        Debugger::ValueFormats::Get(*this, m_last_value_format);
+        Debugger::Formatting::ValueFormats::Get(*this, m_last_value_format);
         // to find a summary we look for a direct summary, then if there is none
         // we look for a regex summary. if there is none we look for a system
         // summary (direct), and if also that fails, we look for a system
         // regex summary
-        if (!Debugger::SummaryFormats::Get(*this, m_last_summary_format))
-            if (!Debugger::RegexSummaryFormats::Get(*this, m_last_summary_format))
-                if (!Debugger::SystemSummaryFormats::Get(*this, m_last_summary_format))
-                    Debugger::SystemRegexSummaryFormats::Get(*this, m_last_summary_format);
-        m_last_format_mgr_revision = Debugger::ValueFormats::GetCurrentRevision();
+        
+        Debugger::Formatting::GetSummaryFormat(*this, m_last_summary_format);
+
+        m_last_format_mgr_revision = Debugger::Formatting::ValueFormats::GetCurrentRevision();
 
         ClearUserVisibleData();
     }

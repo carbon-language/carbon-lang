@@ -1714,253 +1714,175 @@ GetFormatManager() {
 }
 
 bool
-Debugger::ValueFormats::Get(ValueObject& vobj, ValueFormat::SharedPointer &entry)
+Debugger::Formatting::ValueFormats::Get(ValueObject& vobj, ValueFormat::SharedPointer &entry)
 {
     return GetFormatManager().Value().Get(vobj,entry);
 }
 
 void
-Debugger::ValueFormats::Add(const ConstString &type, const ValueFormat::SharedPointer &entry)
+Debugger::Formatting::ValueFormats::Add(const ConstString &type, const ValueFormat::SharedPointer &entry)
 {
     GetFormatManager().Value().Add(type.AsCString(),entry);
 }
 
 bool
-Debugger::ValueFormats::Delete(const ConstString &type)
+Debugger::Formatting::ValueFormats::Delete(const ConstString &type)
 {
     return GetFormatManager().Value().Delete(type.AsCString());
 }
 
 void
-Debugger::ValueFormats::Clear()
+Debugger::Formatting::ValueFormats::Clear()
 {
     GetFormatManager().Value().Clear();
 }
 
 void
-Debugger::ValueFormats::LoopThrough(ValueFormat::ValueCallback callback, void* callback_baton)
+Debugger::Formatting::ValueFormats::LoopThrough(ValueFormat::ValueCallback callback, void* callback_baton)
 {
     GetFormatManager().Value().LoopThrough(callback, callback_baton);
 }
 
 uint32_t
-Debugger::ValueFormats::GetCurrentRevision()
+Debugger::Formatting::ValueFormats::GetCurrentRevision()
 {
     return GetFormatManager().GetCurrentRevision();
 }
 
 uint32_t
-Debugger::ValueFormats::GetCount()
+Debugger::Formatting::ValueFormats::GetCount()
 {
     return GetFormatManager().Value().GetCount();
 }
 
-bool
-Debugger::SummaryFormats::Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry)
+lldb::FormatCategorySP
+Debugger::Formatting::SummaryFormats(const char* category_name)
 {
-    return GetFormatManager().Summary().Get(vobj,entry);
-}
-
-void
-Debugger::SummaryFormats::Add(const ConstString &type, const SummaryFormat::SharedPointer &entry)
-{
-    GetFormatManager().Summary().Add(type.AsCString(),entry);
+    return GetFormatManager().Category(category_name);
 }
 
 bool
-Debugger::SummaryFormats::Delete(const ConstString &type)
+Debugger::Formatting::GetSummaryFormat(ValueObject& vobj,
+                                       lldb::SummaryFormatSP& entry)
 {
-    return GetFormatManager().Summary().Delete(type.AsCString());
+    return GetFormatManager().Get(vobj, entry);
+}
+
+bool
+Debugger::Formatting::Categories::Get(const ConstString &category, lldb::FormatCategorySP &entry)
+{
+    entry = GetFormatManager().Category(category.GetCString());
+    return true;
 }
 
 void
-Debugger::SummaryFormats::Clear()
+Debugger::Formatting::Categories::Add(const ConstString &category)
 {
-    GetFormatManager().Summary().Clear();
+    GetFormatManager().Category(category.GetCString());
+}
+
+bool
+Debugger::Formatting::Categories::Delete(const ConstString &category)
+{
+    GetFormatManager().DisableCategory(category.GetCString());
+    return GetFormatManager().Categories().Delete(category.GetCString());
 }
 
 void
-Debugger::SummaryFormats::LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton)
+Debugger::Formatting::Categories::Clear()
 {
-    GetFormatManager().Summary().LoopThrough(callback, callback_baton);
+    GetFormatManager().Categories().Clear();
+}
+
+void
+Debugger::Formatting::Categories::Clear(ConstString &category)
+{
+    GetFormatManager().Category(category.GetCString())->Clear();
+}
+
+void
+Debugger::Formatting::Categories::Enable(ConstString& category)
+{
+    if (GetFormatManager().Category(category.GetCString())->IsEnabled() == false)
+    {
+        //GetFormatManager().Category(category.GetCString())->Enable();
+        GetFormatManager().EnableCategory(category.GetCString());
+    }
+    else
+    {
+        //GetFormatManager().Category(category.GetCString())->Disable();
+        GetFormatManager().DisableCategory(category.GetCString());
+        //GetFormatManager().Category(category.GetCString())->Enable();
+        GetFormatManager().EnableCategory(category.GetCString());
+    }
+}
+
+void
+Debugger::Formatting::Categories::Disable(ConstString& category)
+{
+    if (GetFormatManager().Category(category.GetCString())->IsEnabled() == true)
+    {
+        //GetFormatManager().Category(category.GetCString())->Disable();
+        GetFormatManager().DisableCategory(category.GetCString());
+    }
+}
+
+void
+Debugger::Formatting::Categories::LoopThrough(FormatManager::CategoryCallback callback, void* callback_baton)
+{
+    GetFormatManager().LoopThroughCategories(callback, callback_baton);
 }
 
 uint32_t
-Debugger::SummaryFormats::GetCurrentRevision()
+Debugger::Formatting::Categories::GetCurrentRevision()
 {
     return GetFormatManager().GetCurrentRevision();
 }
 
 uint32_t
-Debugger::SummaryFormats::GetCount()
+Debugger::Formatting::Categories::GetCount()
 {
-    return GetFormatManager().Summary().GetCount();
+    return GetFormatManager().Categories().GetCount();
 }
 
 bool
-Debugger::SystemSummaryFormats::Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry)
-{
-    return GetFormatManager().SystemSummary().Get(vobj,entry);
-}
-
-void
-Debugger::SystemSummaryFormats::Add(const ConstString &type, const SummaryFormat::SharedPointer &entry)
-{
-    GetFormatManager().SystemSummary().Add(type.AsCString(),entry);
-}
-
-bool
-Debugger::SystemSummaryFormats::Delete(const ConstString &type)
-{
-    return GetFormatManager().SystemSummary().Delete(type.AsCString());
-}
-
-void
-Debugger::SystemSummaryFormats::Clear()
-{
-    GetFormatManager().SystemSummary().Clear();
-}
-
-void
-Debugger::SystemSummaryFormats::LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton)
-{
-    GetFormatManager().SystemSummary().LoopThrough(callback, callback_baton);
-}
-
-uint32_t
-Debugger::SystemSummaryFormats::GetCurrentRevision()
-{
-    return GetFormatManager().GetCurrentRevision();
-}
-
-uint32_t
-Debugger::SystemSummaryFormats::GetCount()
-{
-    return GetFormatManager().SystemSummary().GetCount();
-}
-
-bool
-Debugger::RegexSummaryFormats::Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry)
-{
-    return GetFormatManager().RegexSummary().Get(vobj,entry);
-}
-
-void
-Debugger::RegexSummaryFormats::Add(const lldb::RegularExpressionSP &type, const SummaryFormat::SharedPointer &entry)
-{
-    GetFormatManager().RegexSummary().Add(type,entry);
-}
-
-bool
-Debugger::RegexSummaryFormats::Delete(const ConstString &type)
-{
-    return GetFormatManager().RegexSummary().Delete(type.AsCString());
-}
-
-void
-Debugger::RegexSummaryFormats::Clear()
-{
-    GetFormatManager().RegexSummary().Clear();
-}
-
-void
-Debugger::RegexSummaryFormats::LoopThrough(SummaryFormat::RegexSummaryCallback callback, void* callback_baton)
-{
-    GetFormatManager().RegexSummary().LoopThrough(callback, callback_baton);
-}
-
-uint32_t
-Debugger::RegexSummaryFormats::GetCurrentRevision()
-{
-    return GetFormatManager().GetCurrentRevision();
-}
-
-uint32_t
-Debugger::RegexSummaryFormats::GetCount()
-{
-    return GetFormatManager().RegexSummary().GetCount();
-}
-
-bool
-Debugger::SystemRegexSummaryFormats::Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry)
-{
-    return GetFormatManager().SystemRegexSummary().Get(vobj,entry);
-}
-
-void
-Debugger::SystemRegexSummaryFormats::Add(const lldb::RegularExpressionSP &type, const SummaryFormat::SharedPointer &entry)
-{
-    GetFormatManager().SystemRegexSummary().Add(type,entry);
-}
-
-bool
-Debugger::SystemRegexSummaryFormats::Delete(const ConstString &type)
-{
-    return GetFormatManager().SystemRegexSummary().Delete(type.AsCString());
-}
-
-void
-Debugger::SystemRegexSummaryFormats::Clear()
-{
-    GetFormatManager().SystemRegexSummary().Clear();
-}
-
-void
-Debugger::SystemRegexSummaryFormats::LoopThrough(SummaryFormat::RegexSummaryCallback callback, void* callback_baton)
-{
-    GetFormatManager().SystemRegexSummary().LoopThrough(callback, callback_baton);
-}
-
-uint32_t
-Debugger::SystemRegexSummaryFormats::GetCurrentRevision()
-{
-    return GetFormatManager().GetCurrentRevision();
-}
-
-uint32_t
-Debugger::SystemRegexSummaryFormats::GetCount()
-{
-    return GetFormatManager().SystemRegexSummary().GetCount();
-}
-
-bool
-Debugger::NamedSummaryFormats::Get(const ConstString &type, SummaryFormat::SharedPointer &entry)
+Debugger::Formatting::NamedSummaryFormats::Get(const ConstString &type, SummaryFormat::SharedPointer &entry)
 {
     return GetFormatManager().NamedSummary().Get(type.AsCString(),entry);
 }
 
 void
-Debugger::NamedSummaryFormats::Add(const ConstString &type, const SummaryFormat::SharedPointer &entry)
+Debugger::Formatting::NamedSummaryFormats::Add(const ConstString &type, const SummaryFormat::SharedPointer &entry)
 {
     GetFormatManager().NamedSummary().Add(type.AsCString(),entry);
 }
 
 bool
-Debugger::NamedSummaryFormats::Delete(const ConstString &type)
+Debugger::Formatting::NamedSummaryFormats::Delete(const ConstString &type)
 {
     return GetFormatManager().NamedSummary().Delete(type.AsCString());
 }
 
 void
-Debugger::NamedSummaryFormats::Clear()
+Debugger::Formatting::NamedSummaryFormats::Clear()
 {
     GetFormatManager().NamedSummary().Clear();
 }
 
 void
-Debugger::NamedSummaryFormats::LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton)
+Debugger::Formatting::NamedSummaryFormats::LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton)
 {
     GetFormatManager().NamedSummary().LoopThrough(callback, callback_baton);
 }
 
 uint32_t
-Debugger::NamedSummaryFormats::GetCurrentRevision()
+Debugger::Formatting::NamedSummaryFormats::GetCurrentRevision()
 {
     return GetFormatManager().GetCurrentRevision();
 }
 
 uint32_t
-Debugger::NamedSummaryFormats::GetCount()
+Debugger::Formatting::NamedSummaryFormats::GetCount()
 {
     return GetFormatManager().NamedSummary().GetCount();
 }

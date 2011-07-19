@@ -401,8 +401,10 @@
                 <code> <b>(lldb)</b> fr var one<br>
                   (i_am_cool) one = int = 3, float = 3.14159, char = 69<br>
                 </code> </p>
-              <p>The way to obtain this effect is to bind a <i>summary string</i> to
-                the datatype using the <code>type summary add</code>
+                
+            <p>There are two ways to use type summaries: the first one is to bind a <i>
+            summary string</i> to the datatype; the second is to bind a Python script to the
+            datatype. Both options are enabled by the <code>type summary add</code>
                 command.</p>
               <p>In the example, the command we type was:</p>
                 <table class="stats" width="620" cellspacing="0">
@@ -410,6 +412,10 @@
                             <b>(lldb)</b> type summary add -f "int = ${var.integer}, float = ${var.floating}, char = ${var.character%u}" i_am_cool
                         </td>
                 <table>
+                
+            <p>Initially, we will focus on summary strings, and then describe the Python binding
+            mechanism.</p>
+            
             </div>
           </div>
           <div class="post">
@@ -717,11 +723,128 @@
           </div>
           
         <div class="post">
-            <h1 class="postheader">Regular expression typenames</h1>
+            <h1 class="postheader">Python scripting</h1>
             <div class="postcontent">
+            
+            <p>Most of the times, summary strings prove good enough for the job of summarizing
+            the contents of a variable. However, as soon as you need to do more than picking
+            some values and rearranging them for display, summary strings stop being an
+            effective tool. This is because summary strings lack the power to actually perform
+            some computation on the value of variables.</p>
+            <p>To solve this issue, you can bind some Python scripting code as a summary for
+            your datatype, and that script has the ability to both extract children variables
+            as the summary strings do and to perform active computation on the extracted
+            values. As a small example, let's say we have a Rectangle class:</p>
+            
+            <code>
+class Rectangle<br/>
+{<br/>
+private:<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;int height;<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;int width;<br/>
+public:<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;Rectangle() : height(3), width(5) {}<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;Rectangle(int H) : height(H), width(H*2-1) {}<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;Rectangle(int H, int W) : height(H), width(W) {}<br/>
+    
+    &nbsp;&nbsp;&nbsp;&nbsp;int GetHeight() { return height; }<br/>
+    &nbsp;&nbsp;&nbsp;&nbsp;int GetWidth() { return width; }<br/>
+    
+};<br/>
+</code>
+            
+            <p>Summary strings are effective to reduce the screen real estate used by
+            the default viewing mode, but are not effective if we want to display the
+            area, perimeter and length of diagonal of <code>Rectangle</code> objects</p>
+            
+            <p>To obtain this, we can simply attach a small Python script to the <code>Rectangle</code>
+            class, as shown in this example:</p>
+            
+            	<table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add -P Rectangle<br/>
+                            Enter your Python command(s). Type 'DONE' to end.<br/>
+def function (valobj,dict):<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;height_val = valobj.GetChildMemberWithName('height')<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;width_val = valobj.GetChildMemberWithName('width')<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;height_str = height_val.GetValue()<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;width_str = width_val.GetValue()<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;height = int(height_str)<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;width = int(width_str)<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;area = height*width<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;perimeter = 2*height + 2*width<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;diag = sqrt(height*height+width*width)<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;return 'Area: ' + str(area) + ', Perimeter: ' + str(perimeter) + ', Diagonal: ' + str(diag)<br/>
+     &nbsp;&nbsp;&nbsp;&nbsp;DONE<br/>
+<b>(lldb)</b> script<br/>
+Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br/>
+>>> from math import sqrt<br/>
+>>> quit()<br/>
+<b>(lldb)</b> frame variable<br/>
+(Rectangle) r1 = Area: 20, Perimeter: 18, Diagonal: 6.40312423743<br/>
+(Rectangle) r2 = Area: 72, Perimeter: 36, Diagonal: 13.416407865<br/>
+(Rectangle) r3 = Area: 16, Perimeter: 16, Diagonal: 5.65685424949<br/>
+                        </td>
+                </table>
+            
+            <p>In this scenario, you need to enter the interactive interpreter to import the
+            function sqrt() from the math library. As the example shows, everything you enter
+            into the interactive interpreter is saved for you to use it in scripts. This way
+            you can define your own utility functions and use them in your summary scripts if
+            necessary.</p>
+            
+            <p>In order to write effective summary scripts, you need to know the LLDB public
+            API, which is the way Python code can access the LLDB object model. For further
+            details on the API you should look at <a href="scripting.html">this page</a>, or at
+            the LLDB <a href="docs.html">doxygen documentation</a> when it becomes available.</p>
+            
+            <p>As a brief introduction, your script is encapsulated into a function that is
+            passed two parameters: <code>valobj</code> and <code>dict</code>.</p>
+            
+            <p><code>dict</code> is an internal support parameter used by LLDB and you should
+            not use it.<br/><code>valobj</code> is the object encapsulating the actual
+            variable being displayed, and its type is SBValue. The most important thing you can
+            do with an SBValue is retrieve its children objects, by calling
+            <code>GetChildMemberWithName()</code>, passing it the child's name as a string, or ask
+            it for its value, by calling <code>GetValue()</code>, which returns a Python string.
+            </p>
+            
+            <p>If you need to delve into several levels of hierarchy, as you can do with summary
+            strings, you must use the method <code>GetValueForExpressionPath()</code>, passing it
+            an expression path just like those you could use for summary strings. However, if you need
+            to access array slices, you cannot do that (yet) via this method call, and you must
+            use <code>GetChildMemberWithName()</code> querying it for the array items one by one.
+            
+            <p>Other than interactively typing a Python script there are two other ways for you
+            to input a Python script as a summary:
+            
+            <ul>
+            <li> using the -s option to <code>type summary add </code> and typing the script
+            code as an option argument; as in:            </ul>
+
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type summary add -s "height = 
+                            int(valobj.GetChildMemberWithName('height').GetValue());width = 
+                            int(valobj.GetChildMemberWithName('width').GetValue());
+                            return 'Area: ' + str(height*width)" Rectangle<br/>
+                        </td>
+                </table>
+            <ul>
+            <li> using the -F option to <code>type summary add </code> and giving the name of a 
+            Python function with the correct prototype. Most probably, you will define (or have
+            already defined) the function in the interactive interpreter, or somehow
+            loaded it from a file.
+            </ul>
+            
+            </p>
+            
             </div>
         </div>
 
+        <div class="post">
+            <h1 class="postheader">Regular expression typenames</h1>
+            <div class="postcontent">
               <p>As you noticed, in order to associate the custom
                 summary string to the array types, one must give the
                 array size as part of the typename. This can long become
@@ -845,12 +968,10 @@
                 <li>There's no way to do multiple dereferencing, and you
                   need to be careful what the dereferencing operation is
                   binding to in complicated scenarios</li>
-                <li>There is no way to call functions inside summary
-                  strings, not even <code>const</code> ones</li>
                 <li><code>type format add</code> does not support the <code>-x</code>
                   option</li>
-                <li>Object location cannot be printed in the summary
-                  string</li>
+                <strike><li>Object location cannot be printed in the summary
+                  string</li></strike>
               </ul>
             </div>
           </div>

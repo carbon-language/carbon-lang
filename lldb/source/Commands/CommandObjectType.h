@@ -43,6 +43,8 @@ public:
     
     ConstString* m_name;
     
+    const char* m_category;
+    
     ScriptAddOptions(bool sptr,
                      bool sref,
                      bool casc,
@@ -51,7 +53,8 @@ public:
                      bool onel,
                      bool regx,
                      bool syst,
-                     ConstString* name) :
+                     ConstString* name,
+                     const char* catg) :
     m_skip_pointers(sptr),
     m_skip_references(sref),
     m_cascade(casc),
@@ -62,7 +65,8 @@ public:
     m_one_liner(onel),
     m_regex(regx),
     m_is_system(syst),
-    m_name(name)
+    m_name(name),
+    m_category(catg)
     {
     }
     
@@ -127,6 +131,7 @@ private:
         std::string m_python_function;
         bool m_is_add_script;
         bool m_is_system;
+        const char* m_category;
     };
     
     CommandOptions m_options;
@@ -169,7 +174,7 @@ public:
     AddSummary(const ConstString& type_name,
                lldb::SummaryFormatSP entry,
                SummaryFormatType type,
-               bool is_system,
+               const char* category,
                Error* error = NULL);
 };
 

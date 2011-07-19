@@ -442,7 +442,7 @@ public:
             
             SummaryFormatSP summary_format_sp;
             if (!m_option_variable.summary.empty())
-                Debugger::NamedSummaryFormats::Get(ConstString(m_option_variable.summary.c_str()), summary_format_sp);
+                Debugger::Formatting::NamedSummaryFormats::Get(ConstString(m_option_variable.summary.c_str()), summary_format_sp);
 
             if (variable_list)
             {

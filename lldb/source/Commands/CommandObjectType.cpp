@@ -196,7 +196,7 @@ public:
             const char* typeA = command.GetArgumentAtIndex(i);
             ConstString typeCS(typeA);
             if (typeCS)
-                Debugger::ValueFormats::Add(typeCS, entry);
+                Debugger::Formatting::ValueFormats::Add(typeCS, entry);
             else
             {
                 result.AppendError("empty typenames not allowed");
@@ -273,7 +273,7 @@ public:
         }
         
         
-        if (Debugger::ValueFormats::Delete(typeCS))
+        if (Debugger::Formatting::ValueFormats::Delete(typeCS))
         {
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
@@ -311,7 +311,7 @@ public:
     bool
     Execute (Args& command, CommandReturnObject &result)
     {
-        Debugger::ValueFormats::Clear();
+        Debugger::Formatting::ValueFormats::Clear();
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
@@ -372,7 +372,7 @@ public:
         }
         else
             param = new CommandObjectTypeFormatList_LoopCallbackParam(this,&result);
-        Debugger::ValueFormats::LoopThrough(CommandObjectTypeFormatList_LoopCallback, param);
+        Debugger::Formatting::ValueFormats::LoopThrough(CommandObjectTypeFormatList_LoopCallback, param);
         delete param;
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
@@ -549,7 +549,7 @@ public:
             CommandObjectTypeSummaryAdd::AddSummary(ConstString(type_name),
                                                     script_format,
                                                     (options->m_regex ? CommandObjectTypeSummaryAdd::eRegexSummary : CommandObjectTypeSummaryAdd::eRegularSummary),
-                                                    options->m_is_system,
+                                                    options->m_category,
                                                     &error);
             if (error.Fail())
             {
@@ -566,7 +566,7 @@ public:
                 CommandObjectTypeSummaryAdd::AddSummary(*(options->m_name),
                                                                   script_format,
                                                                   CommandObjectTypeSummaryAdd::eNamedSummary,
-                                                                  options->m_is_system,
+                                                                  options->m_category,
                                                                   &error);
                 if (error.Fail())
                 {
@@ -635,7 +635,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx
             m_is_add_script = true;
             break;
         case 'w':
-            m_is_system = true;
+            m_category = ConstString(option_arg).GetCString();
             break;
         default:
             error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
@@ -660,6 +660,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::OptionParsingStarting ()
     m_python_function = "";
     m_is_add_script = false;
     m_is_system = false;
+    m_category = NULL;
 }
 
 void
@@ -786,7 +787,8 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
                                                          m_options.m_one_liner,
                                                          m_options.m_regex,
                                                          m_options.m_is_system,
-                                                         m_options.m_name);
+                                                         m_options.m_name,
+                                                         m_options.m_category);
         
         for(int i = 0; i < argc; i++) {
             const char* typeA = command.GetArgumentAtIndex(i);
@@ -815,7 +817,7 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
         CommandObjectTypeSummaryAdd::AddSummary(ConstString(type_name),
                                                 script_format,
                                                 (m_options.m_regex ? eRegexSummary : eRegularSummary),
-                                                m_options.m_is_system,
+                                                m_options.m_category,
                                                 &error);
         if (error.Fail())
         {
@@ -829,7 +831,7 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
     {
         if ( (bool)(*(m_options.m_name)) )
         {
-            AddSummary(*(m_options.m_name), script_format, eNamedSummary, m_options.m_is_system, &error);
+            AddSummary(*(m_options.m_name), script_format, eNamedSummary, m_options.m_category, &error);
             if (error.Fail())
             {
                 result.AppendError(error.AsCString());
@@ -903,7 +905,7 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
         AddSummary(typeCS,
                    entry,
                    (m_options.m_regex ? eRegexSummary : eRegularSummary),
-                   m_options.m_is_system,
+                   m_options.m_category,
                    &error);
         
         if (error.Fail())
@@ -918,7 +920,7 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
     {
         if ( (bool)(*(m_options.m_name)) )
         {
-            AddSummary(*(m_options.m_name), entry, eNamedSummary, m_options.m_is_system, &error);
+            AddSummary(*(m_options.m_name), entry, eNamedSummary, m_options.m_category, &error);
             if (error.Fail())
             {
                 result.AppendError(error.AsCString());
@@ -1037,7 +1039,7 @@ bool
 CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
                                         SummaryFormatSP entry,
                                         SummaryFormatType type,
-                                        bool is_system,
+                                        const char* category,
                                         Error* error)
 {
     if (type == eRegexSummary)
@@ -1050,30 +1052,20 @@ CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
             return false;
         }
         
-        if (!is_system)
-        {
-            Debugger::RegexSummaryFormats::Delete(type_name);
-            Debugger::RegexSummaryFormats::Add(typeRX, entry);
-        }
-        else
-        {
-            Debugger::SystemRegexSummaryFormats::Delete(type_name);
-            Debugger::SystemRegexSummaryFormats::Add(typeRX, entry);
-        }
+        Debugger::Formatting::SummaryFormats(category)->RegexSummary()->Delete(type_name.GetCString());
+        Debugger::Formatting::SummaryFormats(category)->RegexSummary()->Add(typeRX, entry);
+        
         return true;
     }
     else if (type == eNamedSummary)
     {
         // system named summaries do not exist (yet?)
-        Debugger::NamedSummaryFormats::Add(type_name,entry);
+        Debugger::Formatting::NamedSummaryFormats::Add(type_name,entry);
         return true;
     }
     else
     {
-        if (!is_system)
-            Debugger::SummaryFormats::Add(type_name,entry);
-        else
-            Debugger::SystemSummaryFormats::Add(type_name,entry);
+        Debugger::Formatting::SummaryFormats(category)->Summary()->Add(type_name.GetCString(), entry);
         return true;
     }
 }    
@@ -1081,7 +1073,7 @@ CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
 OptionDefinition
 CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "system", 'w', no_argument, NULL, 0, eArgTypeBoolean,    "This is a system summary (makes it harder to delete it by accident)."},
+    { LLDB_OPT_SET_ALL, false, "category", 'w', required_argument, NULL, 0, eArgTypeName,    "Add this to the given category instead of the default one."},
     { LLDB_OPT_SET_ALL, false, "cascade", 'C', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
     { LLDB_OPT_SET_ALL, false, "no-value", 'v', no_argument, NULL, 0, eArgTypeBoolean,         "Don't show the value, just show the summary, for this type."},
     { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for pointers-to-type objects."},
@@ -1126,7 +1118,10 @@ private:
             switch (short_option)
             {
                 case 'a':
-                    m_delete_system = true;
+                    m_delete_all = true;
+                    break;
+                case 'w':
+                    m_category = ConstString(option_arg).GetCString();
                     break;
                 default:
                     error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
@@ -1139,7 +1134,8 @@ private:
         void
         OptionParsingStarting ()
         {
-            m_delete_system = false;
+            m_delete_all = false;
+            m_category = NULL;
         }
         
         const OptionDefinition*
@@ -1154,7 +1150,9 @@ private:
         
         // Instance variables to hold the values for command options.
         
-        bool m_delete_system;
+        bool m_delete_all;
+        const char* m_category;
+        
     };
     
     CommandOptions m_options;
@@ -1163,6 +1161,17 @@ private:
     GetOptions ()
     {
         return &m_options;
+    }
+    
+    static bool
+    PerCategoryCallback(void* param,
+                        const char* cate_name,
+                        const FormatCategory::SharedPointer& cate)
+    {
+        const char* name = (const char*)param;
+        cate->Summary()->Delete(name);
+        cate->RegexSummary()->Delete(name);
+        return true;
     }
 
 public:
@@ -1210,13 +1219,17 @@ public:
             return false;
         }
         
-        bool delete_summary = Debugger::SummaryFormats::Delete(typeCS);
-        bool delete_regex = Debugger::RegexSummaryFormats::Delete(typeCS);
-        bool delete_named = Debugger::NamedSummaryFormats::Delete(typeCS);
-        bool delete_sys = m_options.m_delete_system ? Debugger::SystemSummaryFormats::Delete(typeCS) : false;
-        bool delete_sys_regex = m_options.m_delete_system ? Debugger::SystemRegexSummaryFormats::Delete(typeCS) : false;
+        if (m_options.m_delete_all)
+        {
+            Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, (void*)typeCS.GetCString());
+            result.SetStatus(eReturnStatusSuccessFinishNoResult);
+            return result.Succeeded();
+        }
         
-        if (delete_summary || delete_regex || delete_named || delete_sys || delete_sys_regex)
+        bool delete_category = Debugger::Formatting::SummaryFormats(m_options.m_category)->Delete(typeCS.GetCString());
+        bool delete_named = Debugger::Formatting::NamedSummaryFormats::Delete(typeCS);
+        
+        if (delete_category || delete_named)
         {
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
@@ -1234,13 +1247,10 @@ public:
 OptionDefinition
 CommandObjectTypeSummaryDelete::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "all", 'a', no_argument, NULL, 0, eArgTypeBoolean,  "Also delete system summaries (not recommended)."},
+    { LLDB_OPT_SET_1, false, "all", 'a', no_argument, NULL, 0, eArgTypeBoolean,  "Delete from every category."},
+    { LLDB_OPT_SET_2, false, "category", 'w', required_argument, NULL, 0, eArgTypeName,  "Delete from given category."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
-
-//-------------------------------------------------------------------------
-// CommandObjectTypeSummaryClear
-//-------------------------------------------------------------------------
 
 class CommandObjectTypeSummaryClear : public CommandObject
 {
@@ -1267,7 +1277,7 @@ private:
             switch (short_option)
             {
                 case 'a':
-                    m_delete_system = true;
+                    m_delete_all = true;
                     break;
                 default:
                     error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
@@ -1280,7 +1290,7 @@ private:
         void
         OptionParsingStarting ()
         {
-            m_delete_system = false;
+            m_delete_all = false;
         }
         
         const OptionDefinition*
@@ -1295,7 +1305,8 @@ private:
         
         // Instance variables to hold the values for command options.
         
-        bool m_delete_system;
+        bool m_delete_all;
+        bool m_delete_named;
     };
     
     CommandOptions m_options;
@@ -1305,7 +1316,18 @@ private:
     {
         return &m_options;
     }
-
+    
+    static bool
+    PerCategoryCallback(void* param,
+                        const char* cate_name,
+                        const FormatCategory::SharedPointer& cate)
+    {
+        cate->Summary()->Clear();
+        cate->RegexSummary()->Clear();
+        return true;
+        
+    }
+    
 public:
     CommandObjectTypeSummaryClear (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
@@ -1322,15 +1344,19 @@ public:
     bool
     Execute (Args& command, CommandReturnObject &result)
     {
-        Debugger::SummaryFormats::Clear();
-        Debugger::RegexSummaryFormats::Clear();
-        Debugger::NamedSummaryFormats::Clear();
         
-        if (m_options.m_delete_system)
+        if (m_options.m_delete_all)
+            Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, NULL);
+        else if (command.GetArgumentCount() > 0)
         {
-            Debugger::SystemSummaryFormats::Clear();
-            Debugger::SystemRegexSummaryFormats::Clear();
+            const char* cat_name = command.GetArgumentAtIndex(0);
+            ConstString cat_nameCS(cat_name);
+            Debugger::Formatting::SummaryFormats(cat_nameCS.GetCString())->Clear();
         }
+        else
+            Debugger::Formatting::SummaryFormats()->Clear();
+        
+        Debugger::Formatting::NamedSummaryFormats::Clear();
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
@@ -1341,7 +1367,7 @@ public:
 OptionDefinition
 CommandObjectTypeSummaryClear::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "all", 'a', no_argument, NULL, 0, eArgTypeBoolean,  "Also clear system summaries (not recommended)."},
+    { LLDB_OPT_SET_ALL, false, "all", 'a', no_argument, NULL, 0, eArgTypeBoolean,  "Clear every category."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -1360,14 +1386,6 @@ struct CommandObjectTypeSummaryList_LoopCallbackParam {
     RegularExpression* regex;
     CommandObjectTypeSummaryList_LoopCallbackParam(CommandObjectTypeSummaryList* S, CommandReturnObject* R,
                                                   RegularExpression* X = NULL) : self(S), result(R), regex(X) {}
-};
-
-struct CommandObjectTypeRXSummaryList_LoopCallbackParam {
-    CommandObjectTypeSummaryList* self;
-    CommandReturnObject* result;
-    RegularExpression* regex;
-    CommandObjectTypeRXSummaryList_LoopCallbackParam(CommandObjectTypeSummaryList* S, CommandReturnObject* R,
-                                                   RegularExpression* X = NULL) : self(S), result(R), regex(X) {}
 };
 
 class CommandObjectTypeSummaryList : public CommandObject
@@ -1400,7 +1418,6 @@ public:
         const size_t argc = command.GetArgumentCount();
         
         CommandObjectTypeSummaryList_LoopCallbackParam *param;
-        CommandObjectTypeRXSummaryList_LoopCallbackParam *rxparam;
         
         if (argc == 1) {
             RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
@@ -1409,26 +1426,10 @@ public:
         }
         else
             param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result);
-        Debugger::SummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
-        Debugger::SystemSummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
-        delete param;
         
-        if (Debugger::RegexSummaryFormats::GetCount() > 0 || Debugger::SystemRegexSummaryFormats::GetCount() > 0 )
-        {
-            result.GetOutputStream().Printf("Regex-based summaries (slower):\n");
-            if (argc == 1) {
-                RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
-                regex->Compile(command.GetArgumentAtIndex(0));
-                rxparam = new CommandObjectTypeRXSummaryList_LoopCallbackParam(this,&result,regex);
-            }
-            else
-                rxparam = new CommandObjectTypeRXSummaryList_LoopCallbackParam(this,&result);
-            Debugger::RegexSummaryFormats::LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, rxparam);
-            Debugger::SystemRegexSummaryFormats::LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, rxparam);
-            delete rxparam;
-        }
-        
-        if (Debugger::NamedSummaryFormats::GetCount() > 0)
+        Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback,param);
+                
+        if (Debugger::Formatting::NamedSummaryFormats::GetCount() > 0)
         {
             result.GetOutputStream().Printf("Named summaries:\n");
             if (argc == 1) {
@@ -1438,7 +1439,7 @@ public:
             }
             else
                 param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result);
-            Debugger::NamedSummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
+            Debugger::Formatting::NamedSummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
             delete param;
         }
         
@@ -1447,6 +1448,28 @@ public:
     }
     
 private:
+    
+    static bool
+    PerCategoryCallback(void* param,
+                        const char* cate_name,
+                        const FormatCategory::SharedPointer& cate)
+    {
+        
+        CommandReturnObject* result = ((CommandObjectTypeSummaryList_LoopCallbackParam*)param)->result;
+
+        result->GetOutputStream().Printf("-----------------------\nCategory: %s (%s)\n-----------------------\n",
+                                         cate_name,
+                                         (cate->IsEnabled() ? "enabled" : "disabled"));
+        
+        cate->Summary()->LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
+        
+        if (cate->RegexSummary()->GetCount() > 0)
+        {
+            result->GetOutputStream().Printf("Regex-based summaries (slower):\n");
+            cate->RegexSummary()->LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, param);
+        }
+        return true;
+    }
     
     bool
     LoopCallback (const char* type,
@@ -1479,9 +1502,232 @@ CommandObjectTypeRXSummaryList_LoopCallback (
                                            lldb::RegularExpressionSP regex,
                                            const SummaryFormat::SharedPointer& entry)
 {
-    CommandObjectTypeRXSummaryList_LoopCallbackParam* param = (CommandObjectTypeRXSummaryList_LoopCallbackParam*)pt2self;
+    CommandObjectTypeSummaryList_LoopCallbackParam* param = (CommandObjectTypeSummaryList_LoopCallbackParam*)pt2self;
     return param->self->LoopCallback(regex->GetText(), entry, param->regex, param->result);
 }
+
+//-------------------------------------------------------------------------
+// CommandObjectTypeCategoryEnable
+//-------------------------------------------------------------------------
+
+class CommandObjectTypeCategoryEnable : public CommandObject
+{
+public:
+    CommandObjectTypeCategoryEnable (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "type category enable",
+                   "Enable a category as a source of summaries.",
+                   NULL)
+    {
+        CommandArgumentEntry type_arg;
+        CommandArgumentData type_style_arg;
+        
+        type_style_arg.arg_type = eArgTypeName;
+        type_style_arg.arg_repetition = eArgRepeatPlain;
+        
+        type_arg.push_back (type_style_arg);
+        
+        m_arguments.push_back (type_arg);
+        
+    }
+    
+    ~CommandObjectTypeCategoryEnable ()
+    {
+    }
+    
+    bool
+    Execute (Args& command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        
+        if (argc != 1)
+        {
+            result.AppendErrorWithFormat ("%s takes 1 arg.\n", m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        
+        const char* typeA = command.GetArgumentAtIndex(0);
+        ConstString typeCS(typeA);
+        
+        if (!typeCS)
+        {
+            result.AppendError("empty category name not allowed");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        
+        Debugger::Formatting::Categories::Enable(typeCS);
+        result.SetStatus(eReturnStatusSuccessFinishResult);
+        return result.Succeeded();
+    }
+    
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectTypeCategoryDelete
+//-------------------------------------------------------------------------
+
+class CommandObjectTypeCategoryDelete : public CommandObject
+{
+public:
+    CommandObjectTypeCategoryDelete (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "type category delete",
+                   "Delete a category and all associated summaries.",
+                   NULL)
+    {
+        CommandArgumentEntry type_arg;
+        CommandArgumentData type_style_arg;
+        
+        type_style_arg.arg_type = eArgTypeName;
+        type_style_arg.arg_repetition = eArgRepeatPlain;
+        
+        type_arg.push_back (type_style_arg);
+        
+        m_arguments.push_back (type_arg);
+        
+    }
+    
+    ~CommandObjectTypeCategoryDelete ()
+    {
+    }
+    
+    bool
+    Execute (Args& command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        
+        if (argc != 1)
+        {
+            result.AppendErrorWithFormat ("%s takes 1 arg.\n", m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        
+        const char* typeA = command.GetArgumentAtIndex(0);
+        ConstString typeCS(typeA);
+        
+        if (!typeCS)
+        {
+            result.AppendError("empty category name not allowed");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        
+        if (Debugger::Formatting::Categories::Delete(typeCS))
+        {
+            result.SetStatus(eReturnStatusSuccessFinishResult);
+            return result.Succeeded();
+        }
+        else
+        {
+            result.AppendErrorWithFormat ("cannot delete category %s.\n", typeA);
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }        
+    }
+    
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectTypeCategoryDisable
+//-------------------------------------------------------------------------
+
+class CommandObjectTypeCategoryDisable : public CommandObject
+{
+public:
+    CommandObjectTypeCategoryDisable (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "type category disable",
+                   "Disable a category as a source of summaries.",
+                   NULL)
+    {
+        CommandArgumentEntry type_arg;
+        CommandArgumentData type_style_arg;
+        
+        type_style_arg.arg_type = eArgTypeName;
+        type_style_arg.arg_repetition = eArgRepeatPlain;
+        
+        type_arg.push_back (type_style_arg);
+        
+        m_arguments.push_back (type_arg);
+        
+    }
+    
+    ~CommandObjectTypeCategoryDisable ()
+    {
+    }
+    
+    bool
+    Execute (Args& command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        
+        if (argc != 1)
+        {
+            result.AppendErrorWithFormat ("%s takes 1 arg.\n", m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        
+        const char* typeA = command.GetArgumentAtIndex(0);
+        ConstString typeCS(typeA);
+        
+        if (!typeCS)
+        {
+            result.AppendError("empty category name not allowed");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        
+        Debugger::Formatting::Categories::Disable(typeCS);
+        result.SetStatus(eReturnStatusSuccessFinishResult);
+        return result.Succeeded();
+    }
+    
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectTypeCategoryList
+//-------------------------------------------------------------------------
+
+class CommandObjectTypeCategoryList : public CommandObject
+{
+private:
+    static bool
+    PerCategoryCallback(void* param,
+                        const char* cate_name,
+                        const FormatCategory::SharedPointer& cate)
+    {
+        CommandReturnObject* result = (CommandReturnObject*)param;
+        result->GetOutputStream().Printf("Category %s is%s enabled\n",
+                                       cate_name,
+                                       (cate->IsEnabled() ? "" : " not"));
+        return true;
+    }
+public:
+    CommandObjectTypeCategoryList (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "type category list",
+                   "Provide a list of all existing categories.",
+                   NULL)
+    {
+    }
+    
+    ~CommandObjectTypeCategoryList ()
+    {
+    }
+    
+    bool
+    Execute (Args& command, CommandReturnObject &result)
+    {
+        Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, (void*)&result);
+        result.SetStatus(eReturnStatusSuccessFinishResult);
+        return result.Succeeded();
+    }
+    
+};
 
 class CommandObjectTypeFormat : public CommandObjectMultiword
 {
@@ -1500,6 +1746,27 @@ public:
 
 
     ~CommandObjectTypeFormat ()
+    {
+    }
+};
+
+class CommandObjectTypeCategory : public CommandObjectMultiword
+{
+public:
+    CommandObjectTypeCategory (CommandInterpreter &interpreter) :
+    CommandObjectMultiword (interpreter,
+                            "type category",
+                            "A set of commands for operating on categories",
+                            "type category [<sub-command-options>] ")
+    {
+        LoadSubCommand ("enable",        CommandObjectSP (new CommandObjectTypeCategoryEnable (interpreter)));
+        LoadSubCommand ("disable",       CommandObjectSP (new CommandObjectTypeCategoryDisable (interpreter)));
+        LoadSubCommand ("delete",        CommandObjectSP (new CommandObjectTypeCategoryDelete (interpreter)));
+        LoadSubCommand ("list",          CommandObjectSP (new CommandObjectTypeCategoryList (interpreter)));
+    }
+    
+    
+    ~CommandObjectTypeCategory ()
     {
     }
 };
@@ -1535,6 +1802,7 @@ CommandObjectType::CommandObjectType (CommandInterpreter &interpreter) :
                             "A set of commands for operating on the type system",
                             "type [<sub-command-options>]")
 {
+    LoadSubCommand ("category",  CommandObjectSP (new CommandObjectTypeCategory (interpreter)));
     LoadSubCommand ("format",    CommandObjectSP (new CommandObjectTypeFormat (interpreter)));
     LoadSubCommand ("summary",   CommandObjectSP (new CommandObjectTypeSummary (interpreter)));
 }
