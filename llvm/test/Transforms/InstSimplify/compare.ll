@@ -283,17 +283,6 @@ define i1 @srem3(i16 %X, i32 %Y) {
   ret i1 %E
 }
 
-; CHECK: @srem4
-; CHECK-NEXT: ret i1 false
-define i1 @srem4(i16 %X, i32 %Y) {
-  %A = zext i16 %X to i32
-  %B = or i32 2147483648, %A
-  %C = sub nsw i32 %A, %B
-  %D = srem i32 %C, %Y
-  %E = icmp slt i32 %D, 0
-  ret i1 %E
-}
-
 define i1 @udiv1(i32 %X) {
 ; CHECK: @udiv1
   %A = udiv i32 %X, 1000000
