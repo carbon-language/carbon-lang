@@ -439,6 +439,12 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-arcmt-migrate-directory");
     Res.push_back(Opts.ARCMTMigrateDir);
   }
+  if (!Opts.ARCMTMigrateReportOut.empty()) {
+    Res.push_back("-arcmt-migrate-report-output");
+    Res.push_back(Opts.ARCMTMigrateReportOut);
+  }
+  if (Opts.ARCMTMigrateEmitARCErrors)
+    Res.push_back("-arcmt-migrate-emit-errors");
 
   bool NeedLang = false;
   for (unsigned i = 0, e = Opts.Inputs.size(); i != e; ++i)
@@ -1278,6 +1284,10 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     }
   }
   Opts.ARCMTMigrateDir = Args.getLastArgValue(OPT_arcmt_migrate_directory);
+  Opts.ARCMTMigrateReportOut
+    = Args.getLastArgValue(OPT_arcmt_migrate_report_output);
+  Opts.ARCMTMigrateEmitARCErrors
+    = Args.hasArg(OPT_arcmt_migrate_emit_arc_errors);
 
   InputKind DashX = IK_None;
   if (const Arg *A = Args.getLastArg(OPT_x)) {

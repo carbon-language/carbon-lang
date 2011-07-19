@@ -1444,6 +1444,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back("-arcmt-migrate");
         CmdArgs.push_back("-arcmt-migrate-directory");
         CmdArgs.push_back(A->getValue(Args));
+
+        Args.AddLastArg(CmdArgs, options::OPT_arcmt_migrate_report_output);
+        Args.AddLastArg(CmdArgs, options::OPT_arcmt_migrate_emit_arc_errors);
         break;
       }
     }

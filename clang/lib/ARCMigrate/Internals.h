@@ -32,7 +32,15 @@ public:
   void reportDiagnostics(Diagnostic &diags) const;
 
   bool hasErrors() const;
+
+  typedef ListTy::const_iterator iterator;
+  iterator begin() const { return List.begin(); }
+  iterator end()   const { return List.end();   }
 };
+
+void writeARCDiagsToPlist(const std::string &outPath,
+                          llvm::ArrayRef<StoredDiagnostic> diags,
+                          SourceManager &SM, const LangOptions &LangOpts);
 
 class TransformActions {
   Diagnostic &Diags;

@@ -394,6 +394,10 @@ def arcmt_migrate : Flag<"-arcmt-migrate">,
   HelpText<"Apply modifications and produces temporary files that conform to ARC">;
 def arcmt_migrate_directory : Separate<"-arcmt-migrate-directory">,
   HelpText<"Directory for temporary files produced during ARC migration">;
+def arcmt_migrate_report_output : Separate<"-arcmt-migrate-report-output">,
+  HelpText<"Output path for the plist report">;
+def arcmt_migrate_emit_arc_errors : Flag<"-arcmt-migrate-emit-errors">,
+  HelpText<"Emit ARC errors even if the migrator can fix them">;
 
 def import_module : Separate<"-import-module">,
   HelpText<"Import a module definition file">;

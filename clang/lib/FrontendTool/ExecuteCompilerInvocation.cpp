@@ -100,7 +100,10 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
     Act = new arcmt::ModifyAction(Act);
     break;
   case FrontendOptions::ARCMT_Migrate:
-    Act = new arcmt::MigrateAction(Act, CI.getFrontendOpts().ARCMTMigrateDir);
+    Act = new arcmt::MigrateAction(Act,
+                                   CI.getFrontendOpts().ARCMTMigrateDir,
+                                   CI.getFrontendOpts().ARCMTMigrateReportOut,
+                                CI.getFrontendOpts().ARCMTMigrateEmitARCErrors);
     break;
   }
 

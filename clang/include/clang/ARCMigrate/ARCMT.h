@@ -28,10 +28,19 @@ namespace arcmt {
 /// It then checks the AST and produces errors/warning for ARC migration issues
 /// that the user needs to handle manually.
 ///
+/// \param emitPremigrationARCErrors if true all ARC errors will get emitted
+/// even if the migrator can fix them, but the function will still return false
+/// if all ARC errors can be fixed.
+///
+/// \param plistOut if non-empty, it is the file path to store the plist with
+/// the pre-migration ARC diagnostics.
+///
 /// \returns false if no error is produced, true otherwise.
 bool checkForManualIssues(CompilerInvocation &CI,
                           llvm::StringRef Filename, InputKind Kind,
-                          DiagnosticClient *DiagClient);
+                          DiagnosticClient *DiagClient,
+                          bool emitPremigrationARCErrors = false,
+                          llvm::StringRef plistOut = llvm::StringRef());
 
 /// \brief Works similar to checkForManualIssues but instead of checking, it
 /// applies automatic modifications to source files to conform to ARC.
@@ -44,11 +53,20 @@ bool applyTransformations(CompilerInvocation &origCI,
 /// \brief Applies automatic modifications and produces temporary files
 /// and metadata into the \arg outputDir path.
 ///
+/// \param emitPremigrationARCErrors if true all ARC errors will get emitted
+/// even if the migrator can fix them, but the function will still return false
+/// if all ARC errors can be fixed.
+///
+/// \param plistOut if non-empty, it is the file path to store the plist with
+/// the pre-migration ARC diagnostics.
+///
 /// \returns false if no error is produced, true otherwise.
 bool migrateWithTemporaryFiles(CompilerInvocation &origCI,
                                llvm::StringRef Filename, InputKind Kind,
                                DiagnosticClient *DiagClient,
-                               llvm::StringRef outputDir);
+                               llvm::StringRef outputDir,
+                               bool emitPremigrationARCErrors,
+                               llvm::StringRef plistOut);
 
 /// \brief Get the set of file remappings from the \arg outputDir path that
 /// migrateWithTemporaryFiles produced.

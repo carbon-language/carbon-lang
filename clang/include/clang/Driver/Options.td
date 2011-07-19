@@ -122,6 +122,10 @@ def ccc_arcmt_migrate : Separate<"-ccc-arcmt-migrate">, CCCDriverOpt,
   HelpText<"Apply modifications and produces temporary files that conform to ARC">;
 def ccc_arcmt_migrate_EQ : Joined<"-ccc-arcmt-migrate=">, CCCDriverOpt,
   Alias<ccc_arcmt_migrate>;
+def arcmt_migrate_report_output : Separate<"-arcmt-migrate-report-output">,
+  HelpText<"Output path for the plist report">;
+def arcmt_migrate_emit_arc_errors : Flag<"-arcmt-migrate-emit-errors">,
+  HelpText<"Emit ARC errors even if the migrator can fix them">;
 
 // Make sure all other -ccc- options are rejected.
 def ccc_ : Joined<"-ccc-">, Group<ccc_Group>, Flags<[Unsupported]>;

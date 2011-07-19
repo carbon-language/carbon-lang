@@ -10,6 +10,7 @@
 #include "Internals.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Rewrite/Rewriter.h"
@@ -194,13 +195,29 @@ CompilerInvocation *createInvocationForMigration(CompilerInvocation &origCI) {
   return CInvok.take();
 }
 
+void emitPremigrationErrors(const CapturedDiagList &arcDiags,
+                            const DiagnosticOptions &diagOpts,
+                            Preprocessor &PP) {
+  TextDiagnosticPrinter printer(llvm::errs(), diagOpts);
+  llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+  llvm::IntrusiveRefCntPtr<Diagnostic> Diags(
+                   new Diagnostic(DiagID, &printer, /*ShouldOwnClient=*/false));
+  Diags->setSourceManager(&PP.getSourceManager());
+  
+  printer.BeginSourceFile(PP.getLangOptions(), &PP);
+  arcDiags.reportDiagnostics(*Diags);
+  printer.EndSourceFile();
+}
+
 //===----------------------------------------------------------------------===//
 // checkForManualIssues.
 //===----------------------------------------------------------------------===//
 
 bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
                                  llvm::StringRef Filename, InputKind Kind,
-                                 DiagnosticClient *DiagClient) {
+                                 DiagnosticClient *DiagClient,
+                                 bool emitPremigrationARCErrors,
+                                 llvm::StringRef plistOut) {
   if (!origCI.getLangOpts().ObjC1)
     return false;
 
@@ -241,6 +258,18 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
     return true;
   }
 
+  if (emitPremigrationARCErrors)
+    emitPremigrationErrors(capturedDiags, origCI.getDiagnosticOpts(),
+                           Unit->getPreprocessor());
+  if (!plistOut.empty()) {
+    llvm::SmallVector<StoredDiagnostic, 8> arcDiags;
+    for (CapturedDiagList::iterator
+           I = capturedDiags.begin(), E = capturedDiags.end(); I != E; ++I)
+      arcDiags.push_back(*I);
+    writeARCDiagsToPlist(plistOut, arcDiags,
+                         Ctx.getSourceManager(), Ctx.getLangOptions());
+  }
+
   // After parsing of source files ended, we want to reuse the
   // diagnostics objects to emit further diagnostics.
   // We call BeginSourceFile because DiagnosticClient requires that 
@@ -276,13 +305,16 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
 static bool applyTransforms(CompilerInvocation &origCI,
                             llvm::StringRef Filename, InputKind Kind,
                             DiagnosticClient *DiagClient,
-                            llvm::StringRef outputDir) {
+                            llvm::StringRef outputDir,
+                            bool emitPremigrationARCErrors,
+                            llvm::StringRef plistOut) {
   if (!origCI.getLangOpts().ObjC1)
     return false;
 
   // Make sure checking is successful first.
   CompilerInvocation CInvokForCheck(origCI);
-  if (arcmt::checkForManualIssues(CInvokForCheck, Filename, Kind, DiagClient))
+  if (arcmt::checkForManualIssues(CInvokForCheck, Filename, Kind, DiagClient,
+                                  emitPremigrationARCErrors, plistOut))
     return true;
 
   CompilerInvocation CInvok(origCI);
@@ -317,15 +349,19 @@ static bool applyTransforms(CompilerInvocation &origCI,
 bool arcmt::applyTransformations(CompilerInvocation &origCI,
                                  llvm::StringRef Filename, InputKind Kind,
                                  DiagnosticClient *DiagClient) {
-  return applyTransforms(origCI, Filename, Kind, DiagClient, llvm::StringRef());
+  return applyTransforms(origCI, Filename, Kind, DiagClient,
+                         llvm::StringRef(), false, llvm::StringRef());
 }
 
 bool arcmt::migrateWithTemporaryFiles(CompilerInvocation &origCI,
                                       llvm::StringRef Filename, InputKind Kind,
                                       DiagnosticClient *DiagClient,
-                                      llvm::StringRef outputDir) {
+                                      llvm::StringRef outputDir,
+                                      bool emitPremigrationARCErrors,
+                                      llvm::StringRef plistOut) {
   assert(!outputDir.empty() && "Expected output directory path");
-  return applyTransforms(origCI, Filename, Kind, DiagClient, outputDir);
+  return applyTransforms(origCI, Filename, Kind, DiagClient,
+                         outputDir, emitPremigrationARCErrors, plistOut);
 }
 
 bool arcmt::getFileRemappings(std::vector<std::pair<std::string,std::string> > &
