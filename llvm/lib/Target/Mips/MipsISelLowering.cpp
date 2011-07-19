@@ -733,13 +733,13 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
 
-  unsigned Oldval = MI->getOperand(0).getReg();
+  unsigned OldVal = MI->getOperand(0).getReg();
   unsigned Ptr = MI->getOperand(1).getReg();
   unsigned Incr = MI->getOperand(2).getReg();
 
-  unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
+  unsigned StoreVal = RegInfo.createVirtualRegister(RC);
+  unsigned AndRes = RegInfo.createVirtualRegister(RC);
+  unsigned Success = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -765,25 +765,27 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
 
   //  loopMBB:
   //    ll oldval, 0(ptr)
-  //    <binop> tmp1, oldval, incr
-  //    sc tmp3, tmp1, 0(ptr)
-  //    beq tmp3, $0, loopMBB
+  //    <binop> storeval, oldval, incr
+  //    sc success, storeval, 0(ptr)
+  //    beq success, $0, loopMBB
   BB = loopMBB;
-  BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addReg(Ptr).addImm(0);
+  BuildMI(BB, dl, TII->get(Mips::LL), OldVal).addReg(Ptr).addImm(0);
   if (Nand) {
-    //  and tmp2, oldval, incr
-    //  nor tmp1, $0, tmp2
-    BuildMI(BB, dl, TII->get(Mips::AND), Tmp2).addReg(Oldval).addReg(Incr);
-    BuildMI(BB, dl, TII->get(Mips::NOR), Tmp1).addReg(Mips::ZERO).addReg(Tmp2);
+    //  and andres, oldval, incr
+    //  nor storeval, $0, andres
+    BuildMI(BB, dl, TII->get(Mips::AND), AndRes).addReg(OldVal).addReg(Incr);
+    BuildMI(BB, dl, TII->get(Mips::NOR), StoreVal)
+      .addReg(Mips::ZERO).addReg(AndRes);
   } else if (BinOpcode) {
-    //  <binop> tmp1, oldval, incr
-    BuildMI(BB, dl, TII->get(BinOpcode), Tmp1).addReg(Oldval).addReg(Incr);
+    //  <binop> storeval, oldval, incr
+    BuildMI(BB, dl, TII->get(BinOpcode), StoreVal).addReg(OldVal).addReg(Incr);
   } else {
-    Tmp1 = Incr;
+    StoreVal = Incr;
   }
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp3).addReg(Tmp1).addReg(Ptr).addImm(0);
+  BuildMI(BB, dl, TII->get(Mips::SC), Success)
+    .addReg(StoreVal).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
-    .addReg(Tmp3).addReg(Mips::ZERO).addMBB(loopMBB);
+    .addReg(Success).addReg(Mips::ZERO).addMBB(loopMBB);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
@@ -808,24 +810,24 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   unsigned Ptr = MI->getOperand(1).getReg();
   unsigned Incr = MI->getOperand(2).getReg();
 
-  unsigned Addr = RegInfo.createVirtualRegister(RC);
-  unsigned Shift = RegInfo.createVirtualRegister(RC);
+  unsigned AlignedAddr = RegInfo.createVirtualRegister(RC);
+  unsigned ShiftAmt = RegInfo.createVirtualRegister(RC);
   unsigned Mask = RegInfo.createVirtualRegister(RC);
   unsigned Mask2 = RegInfo.createVirtualRegister(RC);
-  unsigned Newval = RegInfo.createVirtualRegister(RC);
-  unsigned Oldval = RegInfo.createVirtualRegister(RC);
+  unsigned NewVal = RegInfo.createVirtualRegister(RC);
+  unsigned OldVal = RegInfo.createVirtualRegister(RC);
   unsigned Incr2 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp6 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp7 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp8 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp9 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp10 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp11 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp12 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp13 = RegInfo.createVirtualRegister(RC);
+  unsigned MaskLSB2 = RegInfo.createVirtualRegister(RC);
+  unsigned PtrLSB2 = RegInfo.createVirtualRegister(RC);
+  unsigned MaskUpper = RegInfo.createVirtualRegister(RC);
+  unsigned AndRes = RegInfo.createVirtualRegister(RC);
+  unsigned BinOpRes = RegInfo.createVirtualRegister(RC);
+  unsigned MaskOldVal0 = RegInfo.createVirtualRegister(RC);
+  unsigned StoreVal = RegInfo.createVirtualRegister(RC);
+  unsigned MaskedOldVal1 = RegInfo.createVirtualRegister(RC);
+  unsigned SrlRes = RegInfo.createVirtualRegister(RC);
+  unsigned SllRes = RegInfo.createVirtualRegister(RC);
+  unsigned Success = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -850,84 +852,93 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   sinkMBB->addSuccessor(exitMBB);
 
   //  thisMBB:
-  //    addiu   tmp1,$0,-4                # 0xfffffffc
-  //    and     addr,ptr,tmp1
-  //    andi    tmp2,ptr,3
-  //    sll     shift,tmp2,3
-  //    ori     tmp3,$0,255               # 0xff
-  //    sll     mask,tmp3,shift
+  //    addiu   masklsb2,$0,-4                # 0xfffffffc
+  //    and     alignedaddr,ptr,masklsb2
+  //    andi    ptrlsb2,ptr,3
+  //    sll     shiftamt,ptrlsb2,3
+  //    ori     maskupper,$0,255               # 0xff
+  //    sll     mask,maskupper,shiftamt
   //    nor     mask2,$0,mask
-  //    sll     incr2,incr,shift
+  //    sll     incr2,incr,shiftamt
 
   int64_t MaskImm = (Size == 1) ? 255 : 65535;
-  BuildMI(BB, dl, TII->get(Mips::ADDiu), Tmp1).addReg(Mips::ZERO).addImm(-4);
-  BuildMI(BB, dl, TII->get(Mips::AND), Addr).addReg(Ptr).addReg(Tmp1);
-  BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp2).addReg(Ptr).addImm(3);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Shift).addReg(Tmp2).addImm(3);
-  BuildMI(BB, dl, TII->get(Mips::ORi), Tmp3).addReg(Mips::ZERO).addImm(MaskImm);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Mask).addReg(Tmp3).addReg(Shift);
+  BuildMI(BB, dl, TII->get(Mips::ADDiu), MaskLSB2)
+    .addReg(Mips::ZERO).addImm(-4);
+  BuildMI(BB, dl, TII->get(Mips::AND), AlignedAddr)
+    .addReg(Ptr).addReg(MaskLSB2);
+  BuildMI(BB, dl, TII->get(Mips::ANDi), PtrLSB2).addReg(Ptr).addImm(3);
+  BuildMI(BB, dl, TII->get(Mips::SLL), ShiftAmt).addReg(PtrLSB2).addImm(3);
+  BuildMI(BB, dl, TII->get(Mips::ORi), MaskUpper)
+    .addReg(Mips::ZERO).addImm(MaskImm);
+  BuildMI(BB, dl, TII->get(Mips::SLL), Mask).addReg(MaskUpper).addReg(ShiftAmt);
   BuildMI(BB, dl, TII->get(Mips::NOR), Mask2).addReg(Mips::ZERO).addReg(Mask);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Incr).addReg(Shift);
+  BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Incr).addReg(ShiftAmt);
 
 
   // atomic.load.binop
   // loopMBB:
-  //   ll      oldval,0(addr)
-  //   binop   tmp7,oldval,incr2
-  //   and     newval,tmp7,mask
-  //   and     tmp8,oldval,mask2
-  //   or      tmp9,tmp8,newval
-  //   sc      tmp13,tmp9,0(addr)
-  //   beq     tmp13,$0,loopMBB
-  
+  //   ll      oldval,0(alignedaddr)
+  //   binop   binopres,oldval,incr2
+  //   and     newval,binopres,mask
+  //   and     maskedoldval0,oldval,mask2
+  //   or      storeval,maskedoldval0,newval
+  //   sc      success,storeval,0(alignedaddr)
+  //   beq     success,$0,loopMBB
+
   // atomic.swap
   // loopMBB:
-  //   ll      oldval,0(addr)
+  //   ll      oldval,0(alignedaddr)
   //   and     newval,incr2,mask
-  //   and     tmp8,oldval,mask2
-  //   or      tmp9,tmp8,newval
-  //   sc      tmp13,tmp9,0(addr)
-  //   beq     tmp13,$0,loopMBB
+  //   and     maskedoldval0,oldval,mask2
+  //   or      storeval,maskedoldval0,newval
+  //   sc      success,storeval,0(alignedaddr)
+  //   beq     success,$0,loopMBB
 
   BB = loopMBB;
-  BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addReg(Addr).addImm(0);
+  BuildMI(BB, dl, TII->get(Mips::LL), OldVal).addReg(AlignedAddr).addImm(0);
   if (Nand) {
-    //  and tmp6, oldval, incr2
-    //  nor tmp7, $0, tmp6
-    BuildMI(BB, dl, TII->get(Mips::AND), Tmp6).addReg(Oldval).addReg(Incr2);
-    BuildMI(BB, dl, TII->get(Mips::NOR), Tmp7).addReg(Mips::ZERO).addReg(Tmp6);
-    BuildMI(BB, dl, TII->get(Mips::AND), Newval).addReg(Tmp7).addReg(Mask);
+    //  and andres, oldval, incr2
+    //  nor binopres, $0, andres
+    //  and newval, binopres, mask
+    BuildMI(BB, dl, TII->get(Mips::AND), AndRes).addReg(OldVal).addReg(Incr2);
+    BuildMI(BB, dl, TII->get(Mips::NOR), BinOpRes)
+      .addReg(Mips::ZERO).addReg(AndRes);
+    BuildMI(BB, dl, TII->get(Mips::AND), NewVal).addReg(BinOpRes).addReg(Mask);
   } else if (BinOpcode) {
-    //  <binop> tmp7, oldval, incr2
-    BuildMI(BB, dl, TII->get(BinOpcode), Tmp7).addReg(Oldval).addReg(Incr2);
-    BuildMI(BB, dl, TII->get(Mips::AND), Newval).addReg(Tmp7).addReg(Mask);
+    //  <binop> binopres, oldval, incr2
+    //  and newval, binopres, mask
+    BuildMI(BB, dl, TII->get(BinOpcode), BinOpRes).addReg(OldVal).addReg(Incr2);
+    BuildMI(BB, dl, TII->get(Mips::AND), NewVal).addReg(BinOpRes).addReg(Mask);
   } else {// atomic.swap
-    BuildMI(BB, dl, TII->get(Mips::ANDi), Newval).addReg(Incr2).addReg(Mask);    
+    //  and newval, incr2, mask
+    BuildMI(BB, dl, TII->get(Mips::ANDi), NewVal).addReg(Incr2).addReg(Mask);
   }
     
-  BuildMI(BB, dl, TII->get(Mips::AND), Tmp8).addReg(Oldval).addReg(Mask2);
-  BuildMI(BB, dl, TII->get(Mips::OR), Tmp9).addReg(Tmp8).addReg(Newval);
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp13)
-    .addReg(Tmp9).addReg(Addr).addImm(0);
+  BuildMI(BB, dl, TII->get(Mips::AND), MaskOldVal0)
+    .addReg(OldVal).addReg(Mask2);
+  BuildMI(BB, dl, TII->get(Mips::OR), StoreVal)
+    .addReg(MaskOldVal0).addReg(NewVal);
+  BuildMI(BB, dl, TII->get(Mips::SC), Success)
+    .addReg(StoreVal).addReg(AlignedAddr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
-    .addReg(Tmp13).addReg(Mips::ZERO).addMBB(loopMBB);
+    .addReg(Success).addReg(Mips::ZERO).addMBB(loopMBB);
 
   //  sinkMBB:
-  //    and     tmp10,oldval,mask
-  //    srl     tmp11,tmp10,shift
-  //    sll     tmp12,tmp11,24
-  //    sra     dest,tmp12,24
+  //    and     maskedoldval1,oldval,mask
+  //    srl     srlres,maskedoldval1,shiftamt
+  //    sll     sllres,srlres,24
+  //    sra     dest,sllres,24
   BB = sinkMBB;
   int64_t ShiftImm = (Size == 1) ? 24 : 16;
 
-  BuildMI(BB, dl, TII->get(Mips::AND), Tmp10)
-    .addReg(Oldval).addReg(Mask);
-  BuildMI(BB, dl, TII->get(Mips::SRL), Tmp11)
-      .addReg(Tmp10).addReg(Shift);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Tmp12)
-      .addReg(Tmp11).addImm(ShiftImm);
+  BuildMI(BB, dl, TII->get(Mips::AND), MaskedOldVal1)
+    .addReg(OldVal).addReg(Mask);
+  BuildMI(BB, dl, TII->get(Mips::SRL), SrlRes)
+      .addReg(MaskedOldVal1).addReg(ShiftAmt);
+  BuildMI(BB, dl, TII->get(Mips::SLL), SllRes)
+      .addReg(SrlRes).addImm(ShiftImm);
   BuildMI(BB, dl, TII->get(Mips::SRA), Dest)
-      .addReg(Tmp12).addImm(ShiftImm);
+      .addReg(SllRes).addImm(ShiftImm);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
@@ -948,10 +959,10 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
 
   unsigned Dest    = MI->getOperand(0).getReg();
   unsigned Ptr     = MI->getOperand(1).getReg();
-  unsigned Oldval  = MI->getOperand(2).getReg();
-  unsigned Newval  = MI->getOperand(3).getReg();
+  unsigned OldVal  = MI->getOperand(2).getReg();
+  unsigned NewVal  = MI->getOperand(3).getReg();
 
-  unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
+  unsigned Success = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -985,15 +996,16 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   BB = loop1MBB;
   BuildMI(BB, dl, TII->get(Mips::LL), Dest).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BNE))
-    .addReg(Dest).addReg(Oldval).addMBB(exitMBB);
+    .addReg(Dest).addReg(OldVal).addMBB(exitMBB);
 
   // loop2MBB:
-  //   sc tmp3, tmp1, 0(ptr)
-  //   beq tmp3, $0, loop1MBB
+  //   sc success, newval, 0(ptr)
+  //   beq success, $0, loop1MBB
   BB = loop2MBB;
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp3).addReg(Newval).addReg(Ptr).addImm(0);
+  BuildMI(BB, dl, TII->get(Mips::SC), Success)
+    .addReg(NewVal).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
-    .addReg(Tmp3).addReg(Mips::ZERO).addMBB(loop1MBB);
+    .addReg(Success).addReg(Mips::ZERO).addMBB(loop1MBB);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
@@ -1015,27 +1027,27 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
 
   unsigned Dest    = MI->getOperand(0).getReg();
   unsigned Ptr     = MI->getOperand(1).getReg();
-  unsigned Oldval  = MI->getOperand(2).getReg();
-  unsigned Newval  = MI->getOperand(3).getReg();
+  unsigned CmpVal  = MI->getOperand(2).getReg();
+  unsigned NewVal  = MI->getOperand(3).getReg();
 
-  unsigned Addr = RegInfo.createVirtualRegister(RC);
-  unsigned Shift = RegInfo.createVirtualRegister(RC);
+  unsigned AlignedAddr = RegInfo.createVirtualRegister(RC);
+  unsigned ShiftAmt = RegInfo.createVirtualRegister(RC);
   unsigned Mask = RegInfo.createVirtualRegister(RC);
   unsigned Mask2 = RegInfo.createVirtualRegister(RC);
-  unsigned Oldval2 = RegInfo.createVirtualRegister(RC);
-  unsigned Oldval3 = RegInfo.createVirtualRegister(RC);
-  unsigned Oldval4 = RegInfo.createVirtualRegister(RC);
-  unsigned Newval2 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp4 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp5 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp6 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp7 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp8 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp9 = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp10 = RegInfo.createVirtualRegister(RC);
+  unsigned ShiftedCmpVal = RegInfo.createVirtualRegister(RC);
+  unsigned OldVal = RegInfo.createVirtualRegister(RC);
+  unsigned MaskedOldVal0 = RegInfo.createVirtualRegister(RC);
+  unsigned ShiftedNewVal = RegInfo.createVirtualRegister(RC);
+  unsigned MaskLSB2 = RegInfo.createVirtualRegister(RC);
+  unsigned PtrLSB2 = RegInfo.createVirtualRegister(RC);
+  unsigned MaskUpper = RegInfo.createVirtualRegister(RC);
+  unsigned MaskedCmpVal = RegInfo.createVirtualRegister(RC);
+  unsigned MaskedNewVal = RegInfo.createVirtualRegister(RC);
+  unsigned MaskedOldVal1 = RegInfo.createVirtualRegister(RC);
+  unsigned StoreVal = RegInfo.createVirtualRegister(RC);
+  unsigned SrlRes = RegInfo.createVirtualRegister(RC);
+  unsigned SllRes = RegInfo.createVirtualRegister(RC);
+  unsigned Success = RegInfo.createVirtualRegister(RC);
 
   // insert new blocks after the current block
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
@@ -1065,66 +1077,77 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
 
   // FIXME: computation of newval2 can be moved to loop2MBB.
   //  thisMBB:
-  //    addiu   tmp1,$0,-4                # 0xfffffffc
-  //    and     addr,ptr,tmp1
-  //    andi    tmp2,ptr,3
-  //    sll     shift,tmp2,3
-  //    ori     tmp3,$0,255               # 0xff
-  //    sll     mask,tmp3,shift
+  //    addiu   masklsb2,$0,-4                # 0xfffffffc
+  //    and     alignedaddr,ptr,masklsb2
+  //    andi    ptrlsb2,ptr,3
+  //    sll     shiftamt,ptrlsb2,3
+  //    ori     maskupper,$0,255               # 0xff
+  //    sll     mask,maskupper,shiftamt
   //    nor     mask2,$0,mask
-  //    andi    tmp4,oldval,255
-  //    sll     oldval2,tmp4,shift
-  //    andi    tmp5,newval,255
-  //    sll     newval2,tmp5,shift
+  //    andi    maskedcmpval,cmpval,255
+  //    sll     shiftedcmpval,maskedcmpval,shiftamt
+  //    andi    maskednewval,newval,255
+  //    sll     shiftednewval,maskednewval,shiftamt
   int64_t MaskImm = (Size == 1) ? 255 : 65535;
-  BuildMI(BB, dl, TII->get(Mips::ADDiu), Tmp1).addReg(Mips::ZERO).addImm(-4);
-  BuildMI(BB, dl, TII->get(Mips::AND), Addr).addReg(Ptr).addReg(Tmp1);
-  BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp2).addReg(Ptr).addImm(3);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Shift).addReg(Tmp2).addImm(3);
-  BuildMI(BB, dl, TII->get(Mips::ORi), Tmp3).addReg(Mips::ZERO).addImm(MaskImm);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Mask).addReg(Tmp3).addReg(Shift);
+  BuildMI(BB, dl, TII->get(Mips::ADDiu), MaskLSB2)
+    .addReg(Mips::ZERO).addImm(-4);
+  BuildMI(BB, dl, TII->get(Mips::AND), AlignedAddr)
+    .addReg(Ptr).addReg(MaskLSB2);
+  BuildMI(BB, dl, TII->get(Mips::ANDi), PtrLSB2).addReg(Ptr).addImm(3);
+  BuildMI(BB, dl, TII->get(Mips::SLL), ShiftAmt).addReg(PtrLSB2).addImm(3);
+  BuildMI(BB, dl, TII->get(Mips::ORi), MaskUpper)
+    .addReg(Mips::ZERO).addImm(MaskImm);
+  BuildMI(BB, dl, TII->get(Mips::SLL), Mask)
+    .addReg(MaskUpper).addReg(ShiftAmt);
   BuildMI(BB, dl, TII->get(Mips::NOR), Mask2).addReg(Mips::ZERO).addReg(Mask);
-  BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp4).addReg(Oldval).addImm(MaskImm);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Oldval2).addReg(Tmp4).addReg(Shift);
-  BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp5).addReg(Newval).addImm(MaskImm);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Newval2).addReg(Tmp5).addReg(Shift);
+  BuildMI(BB, dl, TII->get(Mips::ANDi), MaskedCmpVal)
+    .addReg(CmpVal).addImm(MaskImm);
+  BuildMI(BB, dl, TII->get(Mips::SLL), ShiftedCmpVal)
+    .addReg(MaskedCmpVal).addReg(ShiftAmt);
+  BuildMI(BB, dl, TII->get(Mips::ANDi), MaskedNewVal)
+    .addReg(NewVal).addImm(MaskImm);
+  BuildMI(BB, dl, TII->get(Mips::SLL), ShiftedNewVal)
+    .addReg(MaskedNewVal).addReg(ShiftAmt);
 
   //  loop1MBB:
-  //    ll      oldval3,0(addr)
-  //    and     oldval4,oldval3,mask
-  //    bne     oldval4,oldval2,sinkMBB
+  //    ll      oldval,0(alginedaddr)
+  //    and     maskedoldval0,oldval,mask
+  //    bne     maskedoldval0,shiftedcmpval,sinkMBB
   BB = loop1MBB;
-  BuildMI(BB, dl, TII->get(Mips::LL), Oldval3).addReg(Addr).addImm(0);
-  BuildMI(BB, dl, TII->get(Mips::AND), Oldval4).addReg(Oldval3).addReg(Mask);
+  BuildMI(BB, dl, TII->get(Mips::LL), OldVal).addReg(AlignedAddr).addImm(0);
+  BuildMI(BB, dl, TII->get(Mips::AND), MaskedOldVal0)
+    .addReg(OldVal).addReg(Mask);
   BuildMI(BB, dl, TII->get(Mips::BNE))
-      .addReg(Oldval4).addReg(Oldval2).addMBB(sinkMBB);
+    .addReg(MaskedOldVal0).addReg(ShiftedCmpVal).addMBB(sinkMBB);
 
   //  loop2MBB:
-  //    and     tmp6,oldval3,mask2
-  //    or      tmp7,tmp6,newval2
-  //    sc      tmp10,tmp7,0(addr)
-  //    beq     tmp10,$0,loop1MBB
+  //    and     maskedoldval1,oldval,mask2
+  //    or      storeval,maskedoldval1,shiftednewval
+  //    sc      success,storeval,0(alignedaddr)
+  //    beq     success,$0,loop1MBB
   BB = loop2MBB;
-  BuildMI(BB, dl, TII->get(Mips::AND), Tmp6).addReg(Oldval3).addReg(Mask2);
-  BuildMI(BB, dl, TII->get(Mips::OR), Tmp7).addReg(Tmp6).addReg(Newval2);
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp10)
-      .addReg(Tmp7).addReg(Addr).addImm(0);
+  BuildMI(BB, dl, TII->get(Mips::AND), MaskedOldVal1)
+    .addReg(OldVal).addReg(Mask2);
+  BuildMI(BB, dl, TII->get(Mips::OR), StoreVal)
+    .addReg(MaskedOldVal1).addReg(ShiftedNewVal);
+  BuildMI(BB, dl, TII->get(Mips::SC), Success)
+      .addReg(StoreVal).addReg(AlignedAddr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
-      .addReg(Tmp10).addReg(Mips::ZERO).addMBB(loop1MBB);
+      .addReg(Success).addReg(Mips::ZERO).addMBB(loop1MBB);
 
   //  sinkMBB:
-  //    srl     tmp8,oldval4,shift
-  //    sll     tmp9,tmp8,24
-  //    sra     dest,tmp9,24
+  //    srl     srlres,maskedoldval0,shiftamt
+  //    sll     sllres,srlres,24
+  //    sra     dest,sllres,24
   BB = sinkMBB;
   int64_t ShiftImm = (Size == 1) ? 24 : 16;
 
-  BuildMI(BB, dl, TII->get(Mips::SRL), Tmp8)
-      .addReg(Oldval4).addReg(Shift);
-  BuildMI(BB, dl, TII->get(Mips::SLL), Tmp9)
-      .addReg(Tmp8).addImm(ShiftImm);
+  BuildMI(BB, dl, TII->get(Mips::SRL), SrlRes)
+      .addReg(MaskedOldVal0).addReg(ShiftAmt);
+  BuildMI(BB, dl, TII->get(Mips::SLL), SllRes)
+      .addReg(SrlRes).addImm(ShiftImm);
   BuildMI(BB, dl, TII->get(Mips::SRA), Dest)
-      .addReg(Tmp9).addImm(ShiftImm);
+      .addReg(SllRes).addImm(ShiftImm);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
