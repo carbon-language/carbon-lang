@@ -110,6 +110,7 @@ void EDDisassembler::initialize() {
   InitializeAllTargets();
   InitializeAllMCAsmInfos();
   InitializeAllMCRegisterInfos();
+  InitializeAllMCSubtargetInfos();
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
   InitializeAllDisassemblers();
