@@ -19,6 +19,10 @@ SHARED_LIBRARY = 1
 EXTRA_DIST = libprofile.exports
 EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/libprofile.exports
 
+# Build and install this archive.                                                                                                                  
+BUILD_ARCHIVE = 1
+override NO_INSTALL_ARCHIVES =
+
 include $(LEVEL)/Makefile.common
 
 ifeq ($(HOST_OS),Darwin)
