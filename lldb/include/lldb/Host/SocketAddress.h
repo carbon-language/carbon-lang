@@ -28,9 +28,13 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    SocketAddress();
-    SocketAddress(const SocketAddress& rhs);
-    ~SocketAddress();
+    SocketAddress ();
+    SocketAddress (const struct sockaddr &s);
+    SocketAddress (const struct sockaddr_in &s);
+    SocketAddress (const struct sockaddr_in6 &s);
+    SocketAddress (const struct sockaddr_storage &s);
+    SocketAddress (const SocketAddress& rhs);
+    ~SocketAddress ();
 
     //------------------------------------------------------------------
     // Operators
@@ -41,30 +45,99 @@ public:
     const SocketAddress&
     operator=(const struct addrinfo *addr_info);
 
+    const SocketAddress&
+    operator=(const struct sockaddr &s);
+
+    const SocketAddress&
+    operator=(const struct sockaddr_in &s);
+
+    const SocketAddress&
+    operator=(const struct sockaddr_in6 &s);
+
+    const SocketAddress&
+    operator=(const struct sockaddr_storage &s);
+    
+    //------------------------------------------------------------------
+    // Clear the contents of this socket address
+    //------------------------------------------------------------------
     void
     Clear ();
 
+    //------------------------------------------------------------------
+    // Get the length for the current socket address family
+    //------------------------------------------------------------------
     socklen_t
     GetLength () const;
 
+    //------------------------------------------------------------------
+    // Get the mex length for the the largest socket address supported.
+    //------------------------------------------------------------------
     static socklen_t
     GetMaxLength ();
 
+    //------------------------------------------------------------------
+    // Set the length manually if supported in the socket address 
+    // structures
+    //------------------------------------------------------------------
     void
     SetLength (socklen_t len);
     
+    //------------------------------------------------------------------
+    // Get the socket address family 
+    //------------------------------------------------------------------
     sa_family_t
     GetFamily () const;
 
+    //------------------------------------------------------------------
+    // Set the socket address family 
+    //------------------------------------------------------------------
     void
     SetFamily (sa_family_t family);
 
+    //------------------------------------------------------------------
+    // Get the port if the socket address for the family has a port
+    //------------------------------------------------------------------
     in_port_t
     GetPort () const;
 
+    //------------------------------------------------------------------
+    // Set the port if the socket address for the family has a port. 
+    // The family must be set correctly prior to calling this function.
+    //------------------------------------------------------------------
+    bool
+    SetPort (in_port_t port);
+
+    //------------------------------------------------------------------
+    // Set the socket address according to the first match from a call
+    // to getaddrinfo() (or equivalent functions for systems that don't
+    // have getaddrinfo(). If "addr_info_ptr" is not NULL, it will get
+    // filled in with the match that was used to populate this socket
+    // address.
+    //------------------------------------------------------------------
+    bool
+    SetAddress (const struct addrinfo *hints_ptr,   // Optional hints where the family, protocol and other things can be specified.
+                const char *host,                   // Hostname ("foo.bar.com" or "foo" or IP address string ("123.234.12.1" or "2001:0db8:85a3:0000:0000:8a2e:0370:7334")
+                const char *service,                // Protocol name ("tcp", "http", etc) or a raw port number string ("81")
+                struct addrinfo *addr_info_ptr);    // If non-NULL, this will get filled in with the match
+
+    //------------------------------------------------------------------
+    // Quick way to set the SocketAddress to localhost given the family.
+    // Returns true if successful, false if "family" doesn't support 
+    // localhost or if "family" is not supported by this class.
+    //------------------------------------------------------------------
+    bool
+    SetToLocalhost (sa_family_t family, 
+                    in_port_t port);
+
+    //------------------------------------------------------------------
+    // Returns true if there is a valid socket address in this object.
+    //------------------------------------------------------------------
     bool
     IsValid () const;
 
+    //------------------------------------------------------------------
+    // Direct access to all of the sockaddr structures
+    //------------------------------------------------------------------
     struct sockaddr &
     sockaddr ()
     {
@@ -113,9 +186,14 @@ public:
     {
         return m_socket_addr.sa_storage;
     }
+    
+    
     //------------------------------------------------------------------
     // Conversion operators to allow getting the contents of this class
-    // as a subclass
+    // as a pointer to the appropriate structure. This allows an instance
+    // of this class to be used in calls that take one of the sockaddr
+    // structure variants without having to manally use the correct
+    // accessor function.
     //------------------------------------------------------------------
     
     operator struct sockaddr * ()
@@ -158,6 +236,7 @@ public:
         return &m_socket_addr.sa_storage;
     }
 
+    
 protected:
     typedef union sockaddr_tag
     {

@@ -22,9 +22,32 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // SocketAddress constructor
 //----------------------------------------------------------------------
-SocketAddress::SocketAddress()
+SocketAddress::SocketAddress ()
 {
     Clear ();
+}
+
+SocketAddress::SocketAddress (const struct sockaddr &s)
+{
+    m_socket_addr.sa = s;
+}
+
+
+SocketAddress::SocketAddress (const struct sockaddr_in &s)
+{
+    m_socket_addr.sa_ipv4 = s;
+}
+
+
+SocketAddress::SocketAddress (const struct sockaddr_in6 &s)
+{
+    m_socket_addr.sa_ipv6 = s;
+}
+
+
+SocketAddress::SocketAddress (const struct sockaddr_storage &s)
+{
+    m_socket_addr.sa_storage = s;
 }
 
 //----------------------------------------------------------------------
@@ -95,6 +118,22 @@ SocketAddress::GetPort () const
     return 0;
 }
 
+bool
+SocketAddress::SetPort (in_port_t port)
+{
+    switch (GetFamily())
+    {
+        case AF_INET:   
+            m_socket_addr.sa_ipv4.sin_port = htons(port);
+            return true;
+
+        case AF_INET6:  
+            m_socket_addr.sa_ipv6.sin6_port = htons(port);
+            return true;
+    }
+    return false;
+}
+
 //----------------------------------------------------------------------
 // SocketAddress assignment operator
 //----------------------------------------------------------------------
@@ -122,5 +161,89 @@ SocketAddress::operator=(const struct addrinfo *addr_info)
     return *this;
 }
 
+const SocketAddress&
+SocketAddress::operator=(const struct sockaddr &s)
+{
+    m_socket_addr.sa = s;
+    return *this;
+}
+
+const SocketAddress&
+SocketAddress::operator=(const struct sockaddr_in &s)
+{
+    m_socket_addr.sa_ipv4 = s;
+    return *this;
+}
+
+const SocketAddress&
+SocketAddress::operator=(const struct sockaddr_in6 &s)
+{
+    m_socket_addr.sa_ipv6 = s;
+    return *this;
+}
+
+const SocketAddress&
+SocketAddress::operator=(const struct sockaddr_storage &s)
+{
+    m_socket_addr.sa_storage = s;
+    return *this;
+}
+
+bool
+SocketAddress::SetAddress (const struct addrinfo *hints_ptr,
+                           const char *host, 
+                           const char *service,
+                           struct addrinfo *addr_info_ptr)
+{
+    struct addrinfo *service_info_list = NULL;
+    int err = ::getaddrinfo (host, service, hints_ptr, &service_info_list);
+    if (err == 0 && service_info_list)
+    {
+        if (addr_info_ptr)
+            *addr_info_ptr = *service_info_list;
+        *this = service_info_list;
+    }
+    else
+        Clear();
+    
+    :: freeaddrinfo (service_info_list);
+    
+    const bool is_valid = IsValid();
+    if (!is_valid)
+    {
+        if (addr_info_ptr)
+            ::memset (addr_info_ptr, 0, sizeof(struct addrinfo));
+    }
+    return IsValid();
+}
 
 
+bool
+SocketAddress::SetToLocalhost (sa_family_t family, in_port_t port)
+{
+    switch (family)
+    {
+        case AF_INET:   
+            SetFamily (AF_INET);
+            if (SetPort (port))
+            {
+                m_socket_addr.sa_ipv4.sin_addr.s_addr = htonl (INADDR_ANY);
+                SetLength (sizeof(m_socket_addr.sa_ipv4));
+                return true;
+            }
+            break;
+
+        case AF_INET6:  
+            SetFamily (AF_INET6);
+            if (SetPort (port))
+            {
+                m_socket_addr.sa_ipv6.sin6_addr = in6addr_any;
+                SetLength (sizeof(m_socket_addr.sa_ipv6));
+                return true;
+            }            
+            break;
+
+    }
+    Clear();
+    return false;
+}

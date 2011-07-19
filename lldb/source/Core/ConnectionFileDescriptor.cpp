@@ -697,37 +697,35 @@ ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_p
     // enable local address reuse
     SetSocketOption (listen_port, SOL_SOCKET, SO_REUSEADDR, 1);
 
-    struct sockaddr_in sa;
-    ::memset (&sa, 0, sizeof sa);
-    sa.sin_family = AF_INET;
-    sa.sin_port = htons (listen_port_num);
-    sa.sin_addr.s_addr = htonl (INADDR_ANY);
-
-    int err = ::bind (listen_port, (struct sockaddr *) &sa, sizeof(sa));
-    if (err == -1)
+    SocketAddress localhost;
+    if (localhost.SetToLocalhost (AF_INET, listen_port_num))
     {
-        if (error_ptr)
-            error_ptr->SetErrorToErrno();
-        Close (listen_port, NULL);
-        return eConnectionStatusError;
-    }
+        int err = ::bind (listen_port, localhost, localhost.GetLength());
+        if (err == -1)
+        {
+            if (error_ptr)
+                error_ptr->SetErrorToErrno();
+            Close (listen_port, NULL);
+            return eConnectionStatusError;
+        }
 
-    err = ::listen (listen_port, 1);
-    if (err == -1)
-    {
-        if (error_ptr)
-            error_ptr->SetErrorToErrno();
-        Close (listen_port, NULL);
-        return eConnectionStatusError;
-    }
+        err = ::listen (listen_port, 1);
+        if (err == -1)
+        {
+            if (error_ptr)
+                error_ptr->SetErrorToErrno();
+            Close (listen_port, NULL);
+            return eConnectionStatusError;
+        }
 
-    m_fd_send = m_fd_recv = ::accept (listen_port, NULL, 0);
-    if (m_fd_send == -1)
-    {
-        if (error_ptr)
-            error_ptr->SetErrorToErrno();
-        Close (listen_port, NULL);
-        return eConnectionStatusError;
+        m_fd_send = m_fd_recv = ::accept (listen_port, NULL, 0);
+        if (m_fd_send == -1)
+        {
+            if (error_ptr)
+                error_ptr->SetErrorToErrno();
+            Close (listen_port, NULL);
+            return eConnectionStatusError;
+        }
     }
 
     // We are done with the listen port
