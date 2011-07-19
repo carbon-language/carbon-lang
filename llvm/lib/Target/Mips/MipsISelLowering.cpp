@@ -917,15 +917,16 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   //    sra     dest,tmp12,24
   BB = exitMBB;
   int64_t ShiftImm = (Size == 1) ? 24 : 16;
-  // reverse order
-  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SRA), Dest)
-      .addReg(Tmp12).addImm(ShiftImm);
-  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SLL), Tmp12)
-      .addReg(Tmp11).addImm(ShiftImm);
-  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SRL), Tmp11)
-      .addReg(Tmp10).addReg(Shift);
-  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::AND), Tmp10)
+
+  MachineBasicBlock::iterator II = BB->begin();
+  BuildMI(*BB, II, dl, TII->get(Mips::AND), Tmp10)
     .addReg(Oldval).addReg(Mask);
+  BuildMI(*BB, II, dl, TII->get(Mips::SRL), Tmp11)
+      .addReg(Tmp10).addReg(Shift);
+  BuildMI(*BB, II, dl, TII->get(Mips::SLL), Tmp12)
+      .addReg(Tmp11).addImm(ShiftImm);
+  BuildMI(*BB, II, dl, TII->get(Mips::SRA), Dest)
+      .addReg(Tmp12).addImm(ShiftImm);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
@@ -1114,13 +1115,14 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   //    sra     dest,tmp9,24
   BB = exitMBB;
   int64_t ShiftImm = (Size == 1) ? 24 : 16;
-  // reverse order
-  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SRA), Dest)
-      .addReg(Tmp9).addImm(ShiftImm);
-  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SLL), Tmp9)
-      .addReg(Tmp8).addImm(ShiftImm);
-  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SRL), Tmp8)
+
+  MachineBasicBlock::iterator II = BB->begin();
+  BuildMI(*BB, II, dl, TII->get(Mips::SRL), Tmp8)
       .addReg(Oldval4).addReg(Shift);
+  BuildMI(*BB, II, dl, TII->get(Mips::SLL), Tmp9)
+      .addReg(Tmp8).addImm(ShiftImm);
+  BuildMI(*BB, II, dl, TII->get(Mips::SRA), Dest)
+      .addReg(Tmp9).addImm(ShiftImm);
 
   MI->eraseFromParent();   // The instruction is gone now.
 
