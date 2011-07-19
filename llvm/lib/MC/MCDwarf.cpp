@@ -1022,7 +1022,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   const MCSymbol *DummyDebugKey = NULL;
   for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
     const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
-    if (IsEH && TAI.getCompactUnwindSection() &&
+    if (IsEH && TAI.getCompactUnwindSection() && Frame.CompactUnwindEncoding &&
         Emitter.EmitCompactUnwind(Streamer, Frame)) {
       FDEEnd = NULL;
       continue;
