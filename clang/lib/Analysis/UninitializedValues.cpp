@@ -441,8 +441,10 @@ void TransferFunctions::VisitDeclRefExpr(DeclRefExpr *dr) {
   // Record the last DeclRefExpr seen.  This is an lvalue computation.
   // We use this value to later detect if a variable "escapes" the analysis.
   if (const VarDecl *vd = dyn_cast<VarDecl>(dr->getDecl()))
-    if (isTrackedVar(vd))
+    if (isTrackedVar(vd)) {
+      ProcessUses();
       lastDR = dr;
+    }
 }
 
 void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {

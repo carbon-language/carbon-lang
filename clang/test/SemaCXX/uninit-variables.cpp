@@ -66,6 +66,16 @@ test4_A test4() {
  return a; // expected-warning{{variable 'a' is uninitialized when used here}}
 }
 
+// Test variables getting invalidated by function calls with reference arguments
+// *AND* there are multiple invalidated arguments.
+void test5_aux(int &, int &);
+
+int test5() {
+  int x, y;
+  test5_aux(x, y);
+  return x + y; // no-warning
+}
+
 // This test previously crashed Sema.
 class Rdar9188004A {
 public: 
