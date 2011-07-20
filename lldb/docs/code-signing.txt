@@ -18,7 +18,7 @@ If you don't have one yet you will need to:
 	Identity Type = Self Signed Root
 	Certificate Type = Code Signing
 
-- Click Continue
+- Click Create
 - Click Continue
 - Click Done
 - Click on the "My Certificates"
