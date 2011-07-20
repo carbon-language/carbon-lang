@@ -441,6 +441,25 @@ void ARMInstPrinter::printShiftImmOperand(const MCInst *MI, unsigned OpNum,
   O << ARM_AM::getSORegOffset(ShiftOp);
 }
 
+void ARMInstPrinter::printPKHLSLShiftImm(const MCInst *MI, unsigned OpNum,
+                                         raw_ostream &O) {
+  unsigned Imm = MI->getOperand(OpNum).getImm();
+  if (Imm == 0)
+    return;
+  assert(Imm > 0 && Imm < 32 && "Invalid PKH shift immediate value!");
+  O << ", lsl #" << Imm;
+}
+
+void ARMInstPrinter::printPKHASRShiftImm(const MCInst *MI, unsigned OpNum,
+                                         raw_ostream &O) {
+  unsigned Imm = MI->getOperand(OpNum).getImm();
+  // A shift amount of 32 is encoded as 0.
+  if (Imm == 0)
+    Imm = 32;
+  assert(Imm > 0 && Imm <= 32 && "Invalid PKH shift immediate value!");
+  O << ", asr #" << Imm;
+}
+
 void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum,
                                        raw_ostream &O) {
   O << "{";

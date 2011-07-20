@@ -3112,8 +3112,8 @@ def : ARMV6Pat<(or (sra (shl GPR:$Rm, (i32 24)), (i32 16)),
                (REVSH GPR:$Rm)>;
 
 def PKHBT : APKHI<0b01101000, 0, (outs GPR:$Rd),
-                              (ins GPR:$Rn, GPR:$Rm, i32imm:$sh),
-               IIC_iALUsi, "pkhbt", "\t$Rd, $Rn, $Rm, lsl $sh",
+                              (ins GPR:$Rn, GPR:$Rm, pkh_lsl_amt:$sh),
+               IIC_iALUsi, "pkhbt", "\t$Rd, $Rn, $Rm$sh",
                [(set GPR:$Rd, (or (and GPR:$Rn, 0xFFFF),
                                   (and (shl GPR:$Rm, pkh_lsl_amt:$sh),
                                        0xFFFF0000)))]>,
@@ -3128,8 +3128,8 @@ def : ARMV6Pat<(or (and GPR:$Rn, 0xFFFF), (shl GPR:$Rm, imm16_31:$sh)),
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
 // will match the pattern below.
 def PKHTB : APKHI<0b01101000, 1, (outs GPR:$Rd),
-                              (ins GPR:$Rn, GPR:$Rm, i32imm:$sh),
-               IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm, asr $sh",
+                              (ins GPR:$Rn, GPR:$Rm, pkh_asr_amt:$sh),
+               IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm$sh",
                [(set GPR:$Rd, (or (and GPR:$Rn, 0xFFFF0000),
                                   (and (sra GPR:$Rm, pkh_asr_amt:$sh),
                                        0xFFFF)))]>,
