@@ -150,13 +150,6 @@ namespace driver {
     }
 
     /// @}
-    /// @name Arg Removal
-    /// @{
-
-    /// eraseArg - Remove any option matching \arg Id.
-    void eraseArg(OptSpecifier Id);
-
-    /// @}
     /// @name Arg Access
     /// @{
 
@@ -248,10 +241,6 @@ namespace driver {
     /// ClaimAllArgs - Claim all arguments which match the given
     /// option id.
     void ClaimAllArgs(OptSpecifier Id0) const;
-
-    /// ClaimAllArgs - Claim all arguments.
-    ///
-    void ClaimAllArgs() const;
 
     /// @}
     /// @name Arg Synthesis

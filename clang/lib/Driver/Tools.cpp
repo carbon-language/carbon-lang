@@ -1376,7 +1376,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_v);
   Args.AddLastArg(CmdArgs, options::OPT_H);
-  if (D.CCPrintHeaders && !D.CCGenDiagnostics) {
+  if (D.CCPrintHeaders) {
     CmdArgs.push_back("-header-include-file");
     CmdArgs.push_back(D.CCPrintHeadersFilename ?
                       D.CCPrintHeadersFilename : "-");
@@ -1384,7 +1384,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_P);
   Args.AddLastArg(CmdArgs, options::OPT_print_ivar_layout);
 
-  if (D.CCLogDiagnostics && !D.CCGenDiagnostics) {
+  if (D.CCLogDiagnostics) {
     CmdArgs.push_back("-diagnostic-log-file");
     CmdArgs.push_back(D.CCLogDiagnosticsFilename ?
                       D.CCLogDiagnosticsFilename : "-");

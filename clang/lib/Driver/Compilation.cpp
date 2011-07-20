@@ -25,7 +25,7 @@ using namespace clang::driver;
 Compilation::Compilation(const Driver &D, const ToolChain &_DefaultToolChain,
                          InputArgList *_Args, DerivedArgList *_TranslatedArgs)
   : TheDriver(D), DefaultToolChain(_DefaultToolChain), Args(_Args),
-    TranslatedArgs(_TranslatedArgs), Redirects(0) {
+    TranslatedArgs(_TranslatedArgs) {
 }
 
 Compilation::~Compilation() {
@@ -43,13 +43,6 @@ Compilation::~Compilation() {
   for (ActionList::iterator it = Actions.begin(), ie = Actions.end();
        it != ie; ++it)
     delete *it;
-
-  // Free redirections of stdout/stderr.
-  if (Redirects) {
-    delete Redirects[1];
-    delete Redirects[2];
-    delete Redirects;
-  }
 }
 
 const DerivedArgList &Compilation::getArgsForToolChain(const ToolChain *TC,
@@ -142,8 +135,8 @@ int Compilation::ExecuteCommand(const Command &C,
   std::copy(C.getArguments().begin(), C.getArguments().end(), Argv+1);
   Argv[C.getArguments().size() + 1] = 0;
 
-  if ((getDriver().CCCEcho || getDriver().CCPrintOptions ||
-       getArgs().hasArg(options::OPT_v)) && !getDriver().CCGenDiagnostics) {
+  if (getDriver().CCCEcho || getDriver().CCPrintOptions ||
+      getArgs().hasArg(options::OPT_v)) {
     llvm::raw_ostream *OS = &llvm::errs();
 
     // Follow gcc implementation of CC_PRINT_OPTIONS; we could also cache the
@@ -174,7 +167,7 @@ int Compilation::ExecuteCommand(const Command &C,
   std::string Error;
   int Res =
     llvm::sys::Program::ExecuteAndWait(Prog, Argv,
-                                       /*env*/0, Redirects,
+                                       /*env*/0, /*redirects*/0,
                                        /*secondsToWait*/0, /*memoryLimit*/0,
                                        &Error);
   if (!Error.empty()) {
@@ -201,28 +194,4 @@ int Compilation::ExecuteJob(const Job &J,
         return Res;
     return 0;
   }
-}
-
-void Compilation::initCompilationForDiagnostics(void) {
-  // Free actions and jobs, if built.
-  for (ActionList::iterator it = Actions.begin(), ie = Actions.end();
-       it != ie; ++it)
-    delete *it;
-  Actions.clear();
-  Jobs.clear();
-
-  // Clear temporary and results file lists.
-  TempFiles.clear();
-  ResultFiles.clear();
-
-  // Remove any user specified output.  Claim any unclaimed arguments, so as
-  // to avoid emitting warnings about unused args.
-  if (TranslatedArgs->hasArg(options::OPT_o))
-    TranslatedArgs->eraseArg(options::OPT_o);
-  TranslatedArgs->ClaimAllArgs();
-
-  // Redirect stdout/stderr to /dev/null.
-  Redirects = new const llvm::sys::Path*[3]();
-  Redirects[1] = new const llvm::sys::Path();
-  Redirects[2] = new const llvm::sys::Path();
 }

@@ -28,12 +28,6 @@ JobList::~JobList() {
     delete *it;
 }
 
-void JobList::clear() {
-  for (iterator it = begin(), ie = end(); it != ie; ++it)
-    delete *it;
-  Jobs.clear();
-}
-
 void Job::addCommand(Command *C) {
   cast<JobList>(this)->addJob(C);
 }

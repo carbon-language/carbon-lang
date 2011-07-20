@@ -30,7 +30,6 @@ namespace clang {
 namespace driver {
   class Action;
   class ArgList;
-  class Command;
   class Compilation;
   class DerivedArgList;
   class HostInfo;
@@ -133,9 +132,6 @@ public:
   /// to CCLogDiagnosticsFilename or to stderr, in a stable machine readable
   /// format.
   unsigned CCLogDiagnostics : 1;
-
-  /// Whether the driver is generating diagnostics for debugging purposes.
-  unsigned CCGenDiagnostics : 1;
 
 private:
   /// Name to use when invoking gcc/g++.
@@ -266,14 +262,7 @@ public:
   /// This routine handles additional processing that must be done in addition
   /// to just running the subprocesses, for example reporting errors, removing
   /// temporary files, etc.
-  int ExecuteCompilation(const Compilation &C,
-                         const Command *&FailingCommand) const;
-  
-  /// generateCompilationDiagnostics - Generate diagnostics information 
-  /// including preprocessed source file(s).
-  /// 
-  void generateCompilationDiagnostics(Compilation &C,
-                                      const Command *FailingCommand);
+  int ExecuteCompilation(const Compilation &C) const;
 
   /// @}
   /// @name Helper Methods
