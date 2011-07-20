@@ -617,7 +617,7 @@ class PCHGenerator : public SemaConsumer {
   const Preprocessor &PP;
   std::string OutputFile;
   const char *isysroot;
-  llvm::raw_ostream *Out;
+  raw_ostream *Out;
   Sema *SemaPtr;
   MemorizeStatCalls *StatCalls; // owned by the FileManager
   std::vector<unsigned char> Buffer;
@@ -631,7 +631,7 @@ protected:
 
 public:
   PCHGenerator(const Preprocessor &PP, const std::string &OutputFile, bool Chaining,
-               const char *isysroot, llvm::raw_ostream *Out);
+               const char *isysroot, raw_ostream *Out);
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
   virtual void HandleTranslationUnit(ASTContext &Ctx);
   virtual ASTMutationListener *GetASTMutationListener();

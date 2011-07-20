@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_APVALUE_H
 #define LLVM_CLANG_AST_APVALUE_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
 
@@ -104,7 +105,7 @@ public:
   bool isLValue() const { return Kind == LValue; }
   bool isVector() const { return Kind == Vector; }
 
-  void print(llvm::raw_ostream &OS) const;
+  void print(raw_ostream &OS) const;
   void dump() const;
 
   APSInt &getInt() {
@@ -234,7 +235,7 @@ private:
   void MakeLValue();
 };
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const APValue &V) {
+inline raw_ostream &operator<<(raw_ostream &OS, const APValue &V) {
   V.print(OS);
   return OS;
 }

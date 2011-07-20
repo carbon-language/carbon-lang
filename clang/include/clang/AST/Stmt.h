@@ -269,7 +269,7 @@ public:
   /// This is useful in a debugger.
   void dump() const;
   void dump(SourceManager &SM) const;
-  void dump(llvm::raw_ostream &OS, SourceManager &SM) const;
+  void dump(raw_ostream &OS, SourceManager &SM) const;
 
   /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
   void dumpAll() const;
@@ -278,12 +278,12 @@ public:
   /// dumpPretty/printPretty - These two methods do a "pretty print" of the AST
   /// back to its original source language syntax.
   void dumpPretty(ASTContext& Context) const;
-  void printPretty(llvm::raw_ostream &OS, PrinterHelper *Helper,
+  void printPretty(raw_ostream &OS, PrinterHelper *Helper,
                    const PrintingPolicy &Policy,
                    unsigned Indentation = 0) const {
     printPretty(OS, *(ASTContext*)0, Helper, Policy, Indentation);
   }
-  void printPretty(llvm::raw_ostream &OS, ASTContext &Context,
+  void printPretty(raw_ostream &OS, ASTContext &Context,
                    PrinterHelper *Helper,
                    const PrintingPolicy &Policy,
                    unsigned Indentation = 0) const;

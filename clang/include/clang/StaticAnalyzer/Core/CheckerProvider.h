@@ -48,7 +48,7 @@ public:
   virtual ~CheckerProvider();
   virtual void registerCheckers(CheckerManager &checkerMgr,
                           CheckerOptInfo *checkOpts, unsigned numCheckOpts) = 0;
-  virtual void printHelp(llvm::raw_ostream &OS) = 0;
+  virtual void printHelp(raw_ostream &OS) = 0;
 };
 
 } // end ento namespace

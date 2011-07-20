@@ -102,10 +102,10 @@ class CompilerInstance {
   struct OutputFile {
     std::string Filename;
     std::string TempFilename;
-    llvm::raw_ostream *OS;
+    raw_ostream *OS;
 
     OutputFile(const std::string &filename, const std::string &tempFilename,
-               llvm::raw_ostream *os)
+               raw_ostream *os)
       : Filename(filename), TempFilename(tempFilename), OS(os) { }
   };
 
@@ -546,7 +546,7 @@ public:
                                unsigned Line, unsigned Column,
                                bool ShowMacros,
                                bool ShowCodePatterns, bool ShowGlobals,
-                               llvm::raw_ostream &OS);
+                               raw_ostream &OS);
 
   /// \brief Create the Sema object to be used for parsing.
   void createSema(bool CompleteTranslationUnit,

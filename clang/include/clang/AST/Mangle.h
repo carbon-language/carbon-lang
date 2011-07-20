@@ -95,46 +95,46 @@ public:
   /// @{
 
   virtual bool shouldMangleDeclName(const NamedDecl *D) = 0;
-  virtual void mangleName(const NamedDecl *D, llvm::raw_ostream &)=0;
+  virtual void mangleName(const NamedDecl *D, raw_ostream &)=0;
   virtual void mangleThunk(const CXXMethodDecl *MD,
                           const ThunkInfo &Thunk,
-                          llvm::raw_ostream &) = 0;
+                          raw_ostream &) = 0;
   virtual void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
                                   const ThisAdjustment &ThisAdjustment,
-                                  llvm::raw_ostream &) = 0;
+                                  raw_ostream &) = 0;
   virtual void mangleReferenceTemporary(const VarDecl *D,
-                                        llvm::raw_ostream &) = 0;
+                                        raw_ostream &) = 0;
   virtual void mangleCXXVTable(const CXXRecordDecl *RD,
-                               llvm::raw_ostream &) = 0;
+                               raw_ostream &) = 0;
   virtual void mangleCXXVTT(const CXXRecordDecl *RD,
-                            llvm::raw_ostream &) = 0;
+                            raw_ostream &) = 0;
   virtual void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
                                    const CXXRecordDecl *Type,
-                                   llvm::raw_ostream &) = 0;
-  virtual void mangleCXXRTTI(QualType T, llvm::raw_ostream &) = 0;
-  virtual void mangleCXXRTTIName(QualType T, llvm::raw_ostream &) = 0;
+                                   raw_ostream &) = 0;
+  virtual void mangleCXXRTTI(QualType T, raw_ostream &) = 0;
+  virtual void mangleCXXRTTIName(QualType T, raw_ostream &) = 0;
   virtual void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
-                             llvm::raw_ostream &) = 0;
+                             raw_ostream &) = 0;
   virtual void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
-                             llvm::raw_ostream &) = 0;
+                             raw_ostream &) = 0;
 
   void mangleGlobalBlock(const BlockDecl *BD,
-                         llvm::raw_ostream &Out);
+                         raw_ostream &Out);
   void mangleCtorBlock(const CXXConstructorDecl *CD, CXXCtorType CT,
-                       const BlockDecl *BD, llvm::raw_ostream &Out);
+                       const BlockDecl *BD, raw_ostream &Out);
   void mangleDtorBlock(const CXXDestructorDecl *CD, CXXDtorType DT,
-                       const BlockDecl *BD, llvm::raw_ostream &Out);
+                       const BlockDecl *BD, raw_ostream &Out);
   void mangleBlock(const DeclContext *DC, const BlockDecl *BD,
-                   llvm::raw_ostream &Out);
+                   raw_ostream &Out);
   // Do the right thing.
-  void mangleBlock(const BlockDecl *BD, llvm::raw_ostream &Out);
+  void mangleBlock(const BlockDecl *BD, raw_ostream &Out);
 
   void mangleObjCMethodName(const ObjCMethodDecl *MD,
-                            llvm::raw_ostream &);
+                            raw_ostream &);
 
   // This is pretty lame.
   virtual void mangleItaniumGuardVariable(const VarDecl *D,
-                                          llvm::raw_ostream &) {
+                                          raw_ostream &) {
     assert(0 && "Target does not support mangling guard variables");
   }
   /// @}

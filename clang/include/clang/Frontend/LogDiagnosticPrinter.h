@@ -40,7 +40,7 @@ class LogDiagnosticPrinter : public DiagnosticClient {
     Diagnostic::Level DiagnosticLevel;
   };
   
-  llvm::raw_ostream &OS;
+  raw_ostream &OS;
   const LangOptions *LangOpts;
   const DiagnosticOptions *DiagOpts;
 
@@ -54,7 +54,7 @@ class LogDiagnosticPrinter : public DiagnosticClient {
   std::string DwarfDebugFlags;
 
 public:
-  LogDiagnosticPrinter(llvm::raw_ostream &OS, const DiagnosticOptions &Diags,
+  LogDiagnosticPrinter(raw_ostream &OS, const DiagnosticOptions &Diags,
                        bool OwnsOutputStream = false);
   virtual ~LogDiagnosticPrinter();
 

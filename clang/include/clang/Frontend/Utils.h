@@ -69,7 +69,7 @@ void InitializePreprocessor(Preprocessor &PP,
 void ProcessWarningOptions(Diagnostic &Diags, const DiagnosticOptions &Opts);
 
 /// DoPrintPreprocessedInput - Implement -E mode.
-void DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream* OS,
+void DoPrintPreprocessedInput(Preprocessor &PP, raw_ostream* OS,
                               const PreprocessorOutputOptions &Opts);
 
 /// AttachDependencyFileGen - Create a dependency file generator, and attach

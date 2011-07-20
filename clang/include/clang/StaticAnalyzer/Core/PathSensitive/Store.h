@@ -197,7 +197,7 @@ public:
   virtual StoreRef enterStackFrame(const GRState *state,
                                    const StackFrameContext *frame);
 
-  virtual void print(Store store, llvm::raw_ostream& Out,
+  virtual void print(Store store, raw_ostream& Out,
                      const char* nl, const char *sep) = 0;
 
   class BindingsHandler {

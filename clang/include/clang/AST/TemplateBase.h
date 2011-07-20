@@ -354,7 +354,7 @@ public:
   TemplateArgument getPackExpansionPattern() const;
 
   /// \brief Print this template argument to the given output stream.
-  void print(const PrintingPolicy &Policy, llvm::raw_ostream &Out) const;
+  void print(const PrintingPolicy &Policy, raw_ostream &Out) const;
              
   /// \brief Used to insert TemplateArguments into FoldingSets.
   void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context) const;

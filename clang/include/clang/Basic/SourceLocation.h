@@ -164,7 +164,7 @@ public:
     return getFromRawEncoding((unsigned)(uintptr_t)Encoding);
   }
 
-  void print(llvm::raw_ostream &OS, const SourceManager &SM) const;
+  void print(raw_ostream &OS, const SourceManager &SM) const;
   void dump(const SourceManager &SM) const;
 };
 

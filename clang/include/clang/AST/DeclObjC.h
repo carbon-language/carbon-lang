@@ -1228,7 +1228,7 @@ public:
   static bool classofKind(Kind K) { return K == ObjCCategoryImpl;}
 };
 
-llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+raw_ostream &operator<<(raw_ostream &OS,
                               const ObjCCategoryImplDecl *CID);
 
 /// ObjCImplementationDecl - Represents a class definition - this is where
@@ -1368,7 +1368,7 @@ public:
   friend class ASTDeclWriter;
 };
 
-llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+raw_ostream &operator<<(raw_ostream &OS,
                               const ObjCImplementationDecl *ID);
 
 /// ObjCCompatibleAliasDecl - Represents alias of a class. This alias is

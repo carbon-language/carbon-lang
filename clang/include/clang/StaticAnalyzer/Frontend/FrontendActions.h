@@ -26,7 +26,7 @@ protected:
                                          StringRef InFile);
 };
 
-void printCheckerHelp(llvm::raw_ostream &OS);
+void printCheckerHelp(raw_ostream &OS);
 
 } // end GR namespace
 

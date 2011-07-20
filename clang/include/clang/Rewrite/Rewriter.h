@@ -54,7 +54,7 @@ public:
   iterator end() const { return Buffer.end(); }
   unsigned size() const { return Buffer.size(); }
 
-  llvm::raw_ostream &write(llvm::raw_ostream &) const;
+  raw_ostream &write(raw_ostream &) const;
 
   /// RemoveText - Remove the specified text.
   void RemoveText(unsigned OrigOffset, unsigned Size,

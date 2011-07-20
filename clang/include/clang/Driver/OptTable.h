@@ -10,12 +10,8 @@
 #ifndef CLANG_DRIVER_OPTTABLE_H
 #define CLANG_DRIVER_OPTTABLE_H
 
+#include "clang/Basic/LLVM.h"
 #include "clang/Driver/OptSpecifier.h"
-#include <cassert>
-
-namespace llvm {
-  class raw_ostream;
-}
 
 namespace clang {
 namespace driver {
@@ -181,7 +177,7 @@ namespace options {
     /// \param Name - The name to use in the usage line.
     /// \param Title - The title to use in the usage line.
     /// \param ShowHidden - Whether help-hidden arguments should be shown.
-    void PrintHelp(llvm::raw_ostream &OS, const char *Name,
+    void PrintHelp(raw_ostream &OS, const char *Name,
                    const char *Title, bool ShowHidden = false) const;
   };
 }

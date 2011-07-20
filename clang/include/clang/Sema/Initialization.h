@@ -857,7 +857,7 @@ public:
 
   /// \brief Dump a representation of this initialization sequence to 
   /// the given stream, for debugging purposes.
-  void dump(llvm::raw_ostream &OS) const;
+  void dump(raw_ostream &OS) const;
   
   /// \brief Dump a representation of this initialization sequence to 
   /// standard error, for debugging purposes.

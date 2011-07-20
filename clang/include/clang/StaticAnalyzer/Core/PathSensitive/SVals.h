@@ -142,7 +142,7 @@ public:
 
   const MemRegion *getAsRegion() const;
 
-  void dumpToStream(llvm::raw_ostream& OS) const;
+  void dumpToStream(raw_ostream& OS) const;
   void dump() const;
 
   // Iterators.
@@ -240,7 +240,7 @@ protected:
     : DefinedSVal(d, false, SubKind) {}
 
 public:
-  void dumpToStream(llvm::raw_ostream& Out) const;
+  void dumpToStream(raw_ostream& Out) const;
 
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
@@ -254,7 +254,7 @@ protected:
   : DefinedSVal(const_cast<void*>(D), true, SubKind) {}
 
 public:
-  void dumpToStream(llvm::raw_ostream& Out) const;
+  void dumpToStream(raw_ostream& Out) const;
 
   Loc(const Loc& X) : DefinedSVal(X.Data, true, X.getSubKind()) {}
 
@@ -533,7 +533,7 @@ public:
 } // end clang namespace
 
 namespace llvm {
-static inline llvm::raw_ostream& operator<<(llvm::raw_ostream& os,
+static inline raw_ostream& operator<<(raw_ostream& os,
                                             clang::ento::SVal V) {
   V.dumpToStream(os);
   return os;

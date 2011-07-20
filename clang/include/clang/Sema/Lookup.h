@@ -468,7 +468,7 @@ public:
     configure();
   }
 
-  void print(llvm::raw_ostream &);
+  void print(raw_ostream &);
 
   /// Suppress the diagnostics that would normally fire because of this
   /// lookup.  This happens during (e.g.) redeclaration lookups.

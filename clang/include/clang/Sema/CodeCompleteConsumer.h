@@ -466,7 +466,7 @@ public:
   const char *CopyString(StringRef String);
 
   /// \brief Copy the given string into this allocator.
-  const char *CopyString(llvm::Twine String);
+  const char *CopyString(Twine String);
   
   // \brief Copy the given string into this allocator.
   const char *CopyString(const char *String) {
@@ -709,7 +709,7 @@ inline bool operator>=(const CodeCompletionResult &X,
 }
 
   
-llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, 
+raw_ostream &operator<<(raw_ostream &OS, 
                               const CodeCompletionString &CCS);
 
 /// \brief Abstract interface for a consumer of code-completion 
@@ -850,7 +850,7 @@ public:
 /// receives in a simple format.
 class PrintingCodeCompleteConsumer : public CodeCompleteConsumer {
   /// \brief The raw output stream.
-  llvm::raw_ostream &OS;
+  raw_ostream &OS;
     
   CodeCompletionAllocator Allocator;
   
@@ -859,7 +859,7 @@ public:
   /// results to the given raw output stream.
   PrintingCodeCompleteConsumer(bool IncludeMacros, bool IncludeCodePatterns,
                                bool IncludeGlobals,
-                               llvm::raw_ostream &OS)
+                               raw_ostream &OS)
     : CodeCompleteConsumer(IncludeMacros, IncludeCodePatterns, IncludeGlobals,
                            false), OS(OS) {}
   

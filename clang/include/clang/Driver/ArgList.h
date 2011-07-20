@@ -259,7 +259,7 @@ namespace driver {
     const char *MakeArgString(std::string Str) const {
       return MakeArgString(StringRef(Str));
     }
-    const char *MakeArgString(const llvm::Twine &Str) const;
+    const char *MakeArgString(const Twine &Str) const;
 
     /// \brief Create an arg string for (\arg LHS + \arg RHS), reusing the
     /// string at \arg Index if possible.

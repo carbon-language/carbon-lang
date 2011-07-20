@@ -84,7 +84,7 @@ public:
                                           StringRef InFile,
                                           std::string &Sysroot,
                                           std::string &OutputFile,
-                                          llvm::raw_ostream *&OS,
+                                          raw_ostream *&OS,
                                           bool &Chaining);
 };
 

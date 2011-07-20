@@ -29,7 +29,7 @@ class LangOptions;
 class PrinterHelper {
 public:
   virtual ~PrinterHelper();
-  virtual bool handledStmt(Stmt* E, llvm::raw_ostream& OS) = 0;
+  virtual bool handledStmt(Stmt* E, raw_ostream& OS) = 0;
 };
 
 /// \brief Describes how types, statements, expressions, and

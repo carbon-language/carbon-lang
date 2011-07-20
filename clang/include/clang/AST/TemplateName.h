@@ -14,13 +14,10 @@
 #ifndef LLVM_CLANG_AST_TEMPLATENAME_H
 #define LLVM_CLANG_AST_TEMPLATENAME_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "clang/Basic/OperatorKinds.h"
-
-namespace llvm {
-  class raw_ostream;
-}
 
 namespace clang {
   
@@ -308,7 +305,7 @@ public:
   /// \param SuppressNNS if true, don't print the
   /// nested-name-specifier that precedes the template name (if it has
   /// one).
-  void print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
+  void print(raw_ostream &OS, const PrintingPolicy &Policy,
              bool SuppressNNS = false) const;
 
   /// \brief Debugging aid that dumps the template name to standard

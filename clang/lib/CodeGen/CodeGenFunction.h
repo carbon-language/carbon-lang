@@ -1487,7 +1487,7 @@ public:
   /// block. The caller is responsible for setting an appropriate alignment on
   /// the alloca.
   llvm::AllocaInst *CreateTempAlloca(llvm::Type *Ty,
-                                     const llvm::Twine &Name = "tmp");
+                                     const Twine &Name = "tmp");
 
   /// InitTempAlloca - Provide an initial value for the given alloca.
   void InitTempAlloca(llvm::AllocaInst *Alloca, llvm::Value *Value);
@@ -1497,15 +1497,15 @@ public:
   /// value needs to be stored into an alloca (for example, to avoid explicit
   /// PHI construction), but the type is the IR type, not the type appropriate
   /// for storing in memory.
-  llvm::AllocaInst *CreateIRTemp(QualType T, const llvm::Twine &Name = "tmp");
+  llvm::AllocaInst *CreateIRTemp(QualType T, const Twine &Name = "tmp");
 
   /// CreateMemTemp - Create a temporary memory object of the given type, with
   /// appropriate alignment.
-  llvm::AllocaInst *CreateMemTemp(QualType T, const llvm::Twine &Name = "tmp");
+  llvm::AllocaInst *CreateMemTemp(QualType T, const Twine &Name = "tmp");
 
   /// CreateAggTemp - Create a temporary memory object for the given
   /// aggregate type.
-  AggValueSlot CreateAggTemp(QualType T, const llvm::Twine &Name = "tmp") {
+  AggValueSlot CreateAggTemp(QualType T, const Twine &Name = "tmp") {
     return AggValueSlot::forAddr(CreateMemTemp(T, Name), T.getQualifiers(),
                                  false);
   }
@@ -2075,9 +2075,9 @@ public:
 
   llvm::CallSite EmitCallOrInvoke(llvm::Value *Callee,
                                   llvm::ArrayRef<llvm::Value *> Args,
-                                  const llvm::Twine &Name = "");
+                                  const Twine &Name = "");
   llvm::CallSite EmitCallOrInvoke(llvm::Value *Callee,
-                                  const llvm::Twine &Name = "");
+                                  const Twine &Name = "");
 
   llvm::Value *BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *This,
                                 llvm::Type *Ty);

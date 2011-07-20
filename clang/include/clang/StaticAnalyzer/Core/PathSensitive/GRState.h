@@ -347,17 +347,17 @@ public:
   class Printer {
   public:
     virtual ~Printer() {}
-    virtual void Print(llvm::raw_ostream& Out, const GRState* state,
+    virtual void Print(raw_ostream& Out, const GRState* state,
                        const char* nl, const char* sep) = 0;
   };
 
   // Pretty-printing.
-  void print(llvm::raw_ostream& Out, CFG &C, const char *nl = "\n",
+  void print(raw_ostream& Out, CFG &C, const char *nl = "\n",
              const char *sep = "") const;
 
   void printStdErr(CFG &C) const;
 
-  void printDOT(llvm::raw_ostream& Out, CFG &C) const;
+  void printDOT(raw_ostream& Out, CFG &C) const;
 
 private:
   /// Increments the number of times this state is referenced by ExplodeNodes.

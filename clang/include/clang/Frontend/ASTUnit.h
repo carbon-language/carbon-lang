@@ -687,7 +687,7 @@ public:
   /// \brief Serialize this translation unit with the given output stream.
   ///
   /// \returns True if an error occurred, false otherwise.
-  bool serialize(llvm::raw_ostream &OS);
+  bool serialize(raw_ostream &OS);
 };
 
 } // namespace clang

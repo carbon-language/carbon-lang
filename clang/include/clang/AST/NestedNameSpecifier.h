@@ -196,7 +196,7 @@ public:
 
   /// \brief Print this nested name specifier to the given output
   /// stream.
-  void print(llvm::raw_ostream &OS, const PrintingPolicy &Policy) const;
+  void print(raw_ostream &OS, const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddPointer(Prefix.getOpaqueValue());

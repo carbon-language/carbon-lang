@@ -734,15 +734,15 @@ public:
   static DeclContext *castToDeclContext(const Decl *);
   static Decl *castFromDeclContext(const DeclContext *);
 
-  void print(llvm::raw_ostream &Out, unsigned Indentation = 0) const;
-  void print(llvm::raw_ostream &Out, const PrintingPolicy &Policy,
+  void print(raw_ostream &Out, unsigned Indentation = 0) const;
+  void print(raw_ostream &Out, const PrintingPolicy &Policy,
              unsigned Indentation = 0) const;
   static void printGroup(Decl** Begin, unsigned NumDecls,
-                         llvm::raw_ostream &Out, const PrintingPolicy &Policy,
+                         raw_ostream &Out, const PrintingPolicy &Policy,
                          unsigned Indentation = 0);
   void dump() const;
   void dumpXML() const;
-  void dumpXML(llvm::raw_ostream &OS) const;
+  void dumpXML(raw_ostream &OS) const;
 
 private:
   const Attr *getAttrsImpl() const;
@@ -763,7 +763,7 @@ public:
                        SourceManager &sm, const char *Msg)
   : TheDecl(theDecl), Loc(L), SM(sm), Message(Msg) {}
 
-  virtual void print(llvm::raw_ostream &OS) const;
+  virtual void print(raw_ostream &OS) const;
 };
 
 class DeclContextLookupResult

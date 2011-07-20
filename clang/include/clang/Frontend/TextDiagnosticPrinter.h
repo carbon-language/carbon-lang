@@ -23,7 +23,7 @@ class DiagnosticOptions;
 class LangOptions;
 
 class TextDiagnosticPrinter : public DiagnosticClient {
-  llvm::raw_ostream &OS;
+  raw_ostream &OS;
   const LangOptions *LangOpts;
   const DiagnosticOptions *DiagOpts;
 
@@ -36,7 +36,7 @@ class TextDiagnosticPrinter : public DiagnosticClient {
   std::string Prefix;
 
 public:
-  TextDiagnosticPrinter(llvm::raw_ostream &os, const DiagnosticOptions &diags,
+  TextDiagnosticPrinter(raw_ostream &os, const DiagnosticOptions &diags,
                         bool OwnsOutputStream = false);
   virtual ~TextDiagnosticPrinter();
 

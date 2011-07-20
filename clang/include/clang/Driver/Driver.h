@@ -281,7 +281,7 @@ public:
   void PrintOptions(const ArgList &Args) const;
 
   /// PrintVersion - Print the driver version.
-  void PrintVersion(const Compilation &C, llvm::raw_ostream &OS) const;
+  void PrintVersion(const Compilation &C, raw_ostream &OS) const;
 
   /// GetFilePath - Lookup \arg Name in the list of file search paths.
   ///

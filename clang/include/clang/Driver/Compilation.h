@@ -120,7 +120,7 @@ public:
   /// \param J - The job to print.
   /// \param Terminator - A string to print at the end of the line.
   /// \param Quote - Should separate arguments be quoted.
-  void PrintJob(llvm::raw_ostream &OS, const Job &J,
+  void PrintJob(raw_ostream &OS, const Job &J,
                 const char *Terminator, bool Quote) const;
 
   /// ExecuteCommand - Execute an actual command.

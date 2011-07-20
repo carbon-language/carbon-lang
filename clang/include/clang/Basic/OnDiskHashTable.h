@@ -28,31 +28,31 @@ namespace io {
 
 typedef uint32_t Offset;
 
-inline void Emit8(llvm::raw_ostream& Out, uint32_t V) {
+inline void Emit8(raw_ostream& Out, uint32_t V) {
   Out << (unsigned char)(V);
 }
 
-inline void Emit16(llvm::raw_ostream& Out, uint32_t V) {
+inline void Emit16(raw_ostream& Out, uint32_t V) {
   Out << (unsigned char)(V);
   Out << (unsigned char)(V >>  8);
   assert((V >> 16) == 0);
 }
 
-inline void Emit24(llvm::raw_ostream& Out, uint32_t V) {
+inline void Emit24(raw_ostream& Out, uint32_t V) {
   Out << (unsigned char)(V);
   Out << (unsigned char)(V >>  8);
   Out << (unsigned char)(V >> 16);
   assert((V >> 24) == 0);
 }
 
-inline void Emit32(llvm::raw_ostream& Out, uint32_t V) {
+inline void Emit32(raw_ostream& Out, uint32_t V) {
   Out << (unsigned char)(V);
   Out << (unsigned char)(V >>  8);
   Out << (unsigned char)(V >> 16);
   Out << (unsigned char)(V >> 24);
 }
 
-inline void Emit64(llvm::raw_ostream& Out, uint64_t V) {
+inline void Emit64(raw_ostream& Out, uint64_t V) {
   Out << (unsigned char)(V);
   Out << (unsigned char)(V >>  8);
   Out << (unsigned char)(V >> 16);
@@ -63,7 +63,7 @@ inline void Emit64(llvm::raw_ostream& Out, uint64_t V) {
   Out << (unsigned char)(V >> 56);
 }
 
-inline void Pad(llvm::raw_ostream& Out, unsigned A) {
+inline void Pad(raw_ostream& Out, unsigned A) {
   Offset off = (Offset) Out.tell();
   uint32_t n = ((uintptr_t)(off+A-1) & ~(uintptr_t)(A-1)) - off;
   for (; n ; --n)
@@ -182,12 +182,12 @@ public:
                                                                InfoObj));
   }
 
-  io::Offset Emit(llvm::raw_ostream &out) {
+  io::Offset Emit(raw_ostream &out) {
     Info InfoObj;
     return Emit(out, InfoObj);
   }
 
-  io::Offset Emit(llvm::raw_ostream &out, Info &InfoObj) {
+  io::Offset Emit(raw_ostream &out, Info &InfoObj) {
     using namespace clang::io;
 
     // Emit the payload of the table.

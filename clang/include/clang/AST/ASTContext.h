@@ -1145,7 +1145,7 @@ public:
   const ASTRecordLayout &getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D)
     const;
 
-  void DumpRecordLayout(const RecordDecl *RD, llvm::raw_ostream &OS) const;
+  void DumpRecordLayout(const RecordDecl *RD, raw_ostream &OS) const;
 
   /// getASTObjCImplementationLayout - Get or compute information about
   /// the layout of the specified Objective-C implementation. This may

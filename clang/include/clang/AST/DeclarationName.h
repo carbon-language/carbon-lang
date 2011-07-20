@@ -203,7 +203,7 @@ public:
   std::string getAsString() const;
 
   /// printName - Print the human-readable name to a stream.
-  void printName(llvm::raw_ostream &OS) const;
+  void printName(raw_ostream &OS) const;
 
   /// getAsIdentifierInfo - Retrieve the IdentifierInfo * stored in
   /// this declaration name, or NULL if this declaration name isn't a
@@ -503,7 +503,7 @@ public:
   std::string getAsString() const;
 
   /// printName - Print the human-readable name to a stream.
-  void printName(llvm::raw_ostream &OS) const;
+  void printName(raw_ostream &OS) const;
 
   /// getBeginLoc - Retrieve the location of the first token.
   SourceLocation getBeginLoc() const { return NameLoc; }
@@ -533,7 +533,7 @@ inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
   return PD;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+inline raw_ostream &operator<<(raw_ostream &OS,
                                      DeclarationNameInfo DNInfo) {
   DNInfo.printName(OS);
   return OS;

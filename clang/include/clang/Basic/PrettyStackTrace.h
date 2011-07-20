@@ -30,7 +30,7 @@ namespace clang {
   public:
     PrettyStackTraceLoc(SourceManager &sm, SourceLocation L, const char *Msg)
       : SM(sm), Loc(L), Message(Msg) {}
-    virtual void print(llvm::raw_ostream &OS) const;
+    virtual void print(raw_ostream &OS) const;
   };
 }
 

@@ -144,7 +144,7 @@ public:
 
   /// @}
 
-  void print(llvm::raw_ostream &OS) const;
+  void print(raw_ostream &OS) const;
   void dump() const;
 
   /// \brief Given a bit-field decl, build an appropriate helper object for
@@ -270,7 +270,7 @@ public:
     return it->second;
   }
 
-  void print(llvm::raw_ostream &OS) const;
+  void print(raw_ostream &OS) const;
   void dump() const;
 };
 

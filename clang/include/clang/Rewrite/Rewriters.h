@@ -14,17 +14,16 @@
 #ifndef LLVM_CLANG_REWRITE_REWRITERS_H
 #define LLVM_CLANG_REWRITE_REWRITERS_H
 
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Support/raw_ostream.h"
+#include "clang/Basic/LLVM.h"
 
 namespace clang {
 class Preprocessor;
 
 /// RewriteMacrosInInput - Implement -rewrite-macros mode.
-void RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream* OS);
+void RewriteMacrosInInput(Preprocessor &PP, raw_ostream *OS);
 
 /// DoRewriteTest - A simple test for the TokenRewriter class.
-void DoRewriteTest(Preprocessor &PP, llvm::raw_ostream* OS);
+void DoRewriteTest(Preprocessor &PP, raw_ostream *OS);
 
 }  // end namespace clang
 

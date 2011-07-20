@@ -42,7 +42,7 @@ class PrettyStackTraceParserEntry : public llvm::PrettyStackTraceEntry {
   const Parser &P;
 public:
   PrettyStackTraceParserEntry(const Parser &p) : P(p) {}
-  virtual void print(llvm::raw_ostream &OS) const;
+  virtual void print(raw_ostream &OS) const;
 };
 
 /// PrecedenceLevels - These are precedences for the binary/ternary
