@@ -13,6 +13,7 @@
 
 #include "InstCombine.h"
 #include "llvm/Support/PatternMatch.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 using namespace llvm;
 using namespace PatternMatch;

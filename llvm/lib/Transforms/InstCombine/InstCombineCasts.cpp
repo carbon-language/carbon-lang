@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstCombine.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/PatternMatch.h"
 using namespace llvm;

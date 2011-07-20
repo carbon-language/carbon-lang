@@ -13,6 +13,7 @@
 
 #include "InstCombine.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Target/TargetData.h"

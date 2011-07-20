@@ -27,7 +27,6 @@
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/DIBuilder.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
