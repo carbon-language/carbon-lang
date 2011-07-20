@@ -665,7 +665,7 @@ static bool isAliasToDeclaration(const GlobalAlias &V) {
 bool LTOModule::ParseSymbols() {
   // Use mangler to add GlobalPrefix to names to match linker names.
   MCContext Context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(),
-                    NULL);
+                    NULL, NULL);
   Mangler mangler(Context, *_target->getTargetData());
 
   // add functions

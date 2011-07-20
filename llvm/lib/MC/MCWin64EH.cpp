@@ -10,10 +10,11 @@
 #include "llvm/MC/MCWin64EH.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/ADT/Twine.h"
 
 namespace llvm {
 
@@ -220,14 +221,36 @@ StringRef MCWin64EHUnwindEmitter::GetSectionSuffix(const MCSymbol *func) {
   return "";
 }
 
+static const MCSection *getWin64EHTableSection(StringRef suffix,
+                                               MCContext &context) {
+  if (suffix == "")
+    return context.getObjectFileInfo()->getXDataSection();
+
+  return context.getCOFFSection((".xdata"+suffix).str(),
+                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_MEM_READ |
+                                COFF::IMAGE_SCN_MEM_WRITE,
+                                SectionKind::getDataRel());
+}
+
+static const MCSection *getWin64EHFuncTableSection(StringRef suffix,
+                                                   MCContext &context) {
+  if (suffix == "")
+    return context.getObjectFileInfo()->getPDataSection();
+  return context.getCOFFSection((".pdata"+suffix).str(),
+                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_MEM_READ |
+                                COFF::IMAGE_SCN_MEM_WRITE,
+                                SectionKind::getDataRel());
+}
+
 void MCWin64EHUnwindEmitter::EmitUnwindInfo(MCStreamer &streamer,
                                             MCWin64EHUnwindInfo *info) {
   // Switch sections (the static function above is meant to be called from
   // here and from Emit().
   MCContext &context = streamer.getContext();
-  const TargetAsmInfo &TAI = context.getTargetAsmInfo();
   const MCSection *xdataSect =
-    TAI.getWin64EHTableSection(GetSectionSuffix(info->Function));
+    getWin64EHTableSection(GetSectionSuffix(info->Function), context);
   streamer.SwitchSection(xdataSect);
 
   llvm::EmitUnwindInfo(streamer, info);
@@ -236,11 +259,10 @@ void MCWin64EHUnwindEmitter::EmitUnwindInfo(MCStreamer &streamer,
 void MCWin64EHUnwindEmitter::Emit(MCStreamer &streamer) {
   MCContext &context = streamer.getContext();
   // Emit the unwind info structs first.
-  const TargetAsmInfo &TAI = context.getTargetAsmInfo();
   for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i) {
     MCWin64EHUnwindInfo &info = streamer.getW64UnwindInfo(i);
     const MCSection *xdataSect =
-      TAI.getWin64EHTableSection(GetSectionSuffix(info.Function));
+      getWin64EHTableSection(GetSectionSuffix(info.Function), context);
     streamer.SwitchSection(xdataSect);
     llvm::EmitUnwindInfo(streamer, &info);
   }
@@ -248,7 +270,7 @@ void MCWin64EHUnwindEmitter::Emit(MCStreamer &streamer) {
   for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i) {
     MCWin64EHUnwindInfo &info = streamer.getW64UnwindInfo(i);
     const MCSection *pdataSect =
-      TAI.getWin64EHFuncTableSection(GetSectionSuffix(info.Function));
+      getWin64EHFuncTableSection(GetSectionSuffix(info.Function), context);
     streamer.SwitchSection(pdataSect);
     EmitRuntimeFunction(streamer, &info);
   }

@@ -77,7 +77,8 @@ void DwarfCFIException::EndModule() {
     // This is a temporary hack to keep sections in the same order they
     // were before. This lets us produce bit identical outputs while
     // transitioning to CFI.
-    Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
+    Asm->OutStreamer.SwitchSection(
+               const_cast<TargetLoweringObjectFile&>(TLOF).getEHFrameSection());
   }
 }
 

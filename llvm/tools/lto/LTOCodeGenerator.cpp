@@ -314,7 +314,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
 
   // mark which symbols can not be internalized 
   MCContext Context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(),
-                    NULL);
+                    NULL, NULL);
   Mangler mangler(Context, *_target->getTargetData());
   std::vector<const char*> mustPreserveList;
   SmallPtrSet<GlobalValue*, 8> asmUsed;

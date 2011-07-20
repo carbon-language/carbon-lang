@@ -17,9 +17,8 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/Support/Dwarf.h"
@@ -255,8 +254,9 @@ void MMIAddrLabelMapCallbackPtr::allUsesReplacedWith(Value *V2) {
 
 MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI,
                                      const MCRegisterInfo &MRI,
+                                     const MCObjectFileInfo *MOFI,
                                      const TargetAsmInfo *TAI)
-  : ImmutablePass(ID), Context(MAI, MRI, TAI),
+  : ImmutablePass(ID), Context(MAI, MRI, MOFI, TAI),
     ObjFileMMI(0), CompactUnwindEncoding(0), CurCallSite(0), CallsEHReturn(0),
     CallsUnwindInit(0), DbgInfoAvailable(false),
     CallsExternalVAFunctionWithFloatingPointArguments(false) {
@@ -268,7 +268,8 @@ MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI,
 }
 
 MachineModuleInfo::MachineModuleInfo()
-  : ImmutablePass(ID), Context(*(MCAsmInfo*)0, *(MCRegisterInfo*)0, NULL) {
+  : ImmutablePass(ID),
+    Context(*(MCAsmInfo*)0, *(MCRegisterInfo*)0, (MCObjectFileInfo*)0, NULL) {
   assert(0 && "This MachineModuleInfo constructor should never be called, MMI "
          "should always be explicitly constructed by LLVMTargetMachine");
   abort();

@@ -35,34 +35,15 @@ using namespace llvm;
 //                              Generic Code
 //===----------------------------------------------------------------------===//
 
-TargetLoweringObjectFile::TargetLoweringObjectFile() :
-  Ctx(0),
-  TextSection(0),
-  DataSection(0),
-  BSSSection(0),
-  ReadOnlySection(0),
-  StaticCtorSection(0),
-  StaticDtorSection(0),
-  LSDASection(0),
-  CompactUnwindSection(0),
-  DwarfAbbrevSection(0),
-  DwarfInfoSection(0),
-  DwarfLineSection(0),
-  DwarfFrameSection(0),
-  DwarfPubNamesSection(0),
-  DwarfPubTypesSection(0),
-  DwarfDebugInlineSection(0),
-  DwarfStrSection(0),
-  DwarfLocSection(0),
-  DwarfARangesSection(0),
-  DwarfRangesSection(0),
-  DwarfMacroInfoSection(0),
-  TLSExtraDataSection(0),
-  CommDirectiveSupportsAlignment(true),
-  SupportsWeakOmittedEHFrame(true), 
-  IsFunctionEHFrameSymbolPrivate(true) {
+/// Initialize - this method must be called before any actual lowering is
+/// done.  This specifies the current context for codegen, and gives the
+/// lowering implementations a chance to set up their default sections.
+void TargetLoweringObjectFile::Initialize(MCContext &ctx,
+                                          const TargetMachine &TM) {
+  Ctx = &ctx;
+  InitMCObjectFileInfo(TM.getTargetTriple(), TM.getRelocationModel(), *Ctx);
 }
-
+  
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {
 }
 

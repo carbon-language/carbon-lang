@@ -75,7 +75,7 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
   assert(tai && "Unable to create target assembler!");
 
   // Set up the MCContext for creating symbols and MCExpr's.
-  MCContext *Ctx = new MCContext(*MAI, *MRI, tai);
+  MCContext *Ctx = new MCContext(*MAI, *MRI, 0, tai);
   assert(Ctx && "Unable to create MCContext!");
 
   // Set up disassembler.

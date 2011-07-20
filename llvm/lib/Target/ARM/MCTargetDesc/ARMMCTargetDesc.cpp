@@ -155,4 +155,3 @@ extern "C" void LLVMInitializeARMMCCodeGenInfo() {
   TargetRegistry::RegisterMCCodeGenInfo(TheARMTarget, createARMMCCodeGenInfo);
   TargetRegistry::RegisterMCCodeGenInfo(TheThumbTarget, createARMMCCodeGenInfo);
 }
-

@@ -18,6 +18,8 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -346,7 +348,12 @@ static int AssembleInput(const char *ProgName) {
   }
 
   const TargetAsmInfo *tai = new TargetAsmInfo(*TM);
-  MCContext Ctx(*MAI, *MRI, tai);
+  // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
+  // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
+  OwningPtr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
+  MCContext Ctx(*MAI, *MRI, MOFI.get(), tai);
+  MOFI->InitMCObjectFileInfo(TripleName, RelocModel, Ctx);
+
   if (SaveTempLabels)
     Ctx.setAllowTemporaryLabels(false);
 

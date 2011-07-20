@@ -9,6 +9,7 @@
 
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -28,8 +29,8 @@ typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
 
 
 MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
-                     const TargetAsmInfo *tai) :
-  MAI(mai), MRI(mri), TAI(tai),
+                     const MCObjectFileInfo *mofi, const TargetAsmInfo *tai) :
+  MAI(mai), MRI(mri), MOFI(mofi), TAI(tai),
   Allocator(), Symbols(Allocator), UsedNames(Allocator),
   NextUniqueID(0),
   CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0),

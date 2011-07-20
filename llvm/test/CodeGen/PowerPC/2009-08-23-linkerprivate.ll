@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ppc32 -mtriple=ppc-apple-darwin | FileCheck %s
+; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin | FileCheck %s
 
 ; ModuleID = '/Volumes/MacOS9/tests/WebKit/JavaScriptCore/profiler/ProfilerServer.mm'
 

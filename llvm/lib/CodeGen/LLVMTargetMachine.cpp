@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Scalar.h"
@@ -373,7 +374,9 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // all the per-module stuff we're generating, including MCContext.
   TargetAsmInfo *TAI = new TargetAsmInfo(*this);
   MachineModuleInfo *MMI = new MachineModuleInfo(*getMCAsmInfo(),
-                                                 *getRegisterInfo(), TAI);
+                                                 *getRegisterInfo(),
+                                     &getTargetLowering()->getObjFileLowering(),
+                                                 TAI);
   PM.add(MMI);
   OutContext = &MMI->getContext(); // Return the MCContext specifically by-ref.
 

@@ -7,13 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCDwarf.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -196,7 +198,7 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
   MCOS->EmitLabel(SectionEnd);
 
   // Switch back the the dwarf line section.
-  MCOS->SwitchSection(context.getTargetAsmInfo().getDwarfLineSection());
+  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
 
   const MCAsmInfo &asmInfo = MCOS->getContext().getAsmInfo();
   MCOS->EmitDwarfAdvanceLineAddr(INT64_MAX, LastLabel, SectionEnd,
@@ -209,7 +211,7 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
 void MCDwarfFileTable::Emit(MCStreamer *MCOS) {
   MCContext &context = MCOS->getContext();
   // Switch to the section where the table will be emitted into.
-  MCOS->SwitchSection(context.getTargetAsmInfo().getDwarfLineSection());
+  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
 
   // Create a symbol at the beginning of this section.
   MCSymbol *LineStartSym = context.CreateTempSymbol();
@@ -688,6 +690,7 @@ void FrameEmitterImpl::EmitCFIInstructions(MCStreamer &streamer,
 bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
                                          const MCDwarfFrameInfo &Frame) {
   MCContext &Context = Streamer.getContext();
+  const MCObjectFileInfo *MOFI = Context.getObjectFileInfo();
   const TargetAsmInfo &TAI = Context.getTargetAsmInfo();
   bool VerboseAsm = Streamer.isVerboseAsm();
 
@@ -720,7 +723,7 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   if (Frame.Lsda)
     Encoding |= 0x40000000;
 
-  Streamer.SwitchSection(TAI.getCompactUnwindSection());
+  Streamer.SwitchSection(MOFI->getCompactUnwindSection());
 
   // Range Start
   unsigned FDEEncoding = TAI.getFDEEncoding(UsingCFI);
@@ -767,11 +770,12 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
                                           unsigned lsdaEncoding) {
   MCContext &context = streamer.getContext();
   const MCRegisterInfo &MRI = context.getRegisterInfo();
+  const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
   const TargetAsmInfo &TAI = context.getTargetAsmInfo();
   bool verboseAsm = streamer.isVerboseAsm();
 
   MCSymbol *sectionStart;
-  if (TAI.isFunctionEHFrameSymbolPrivate() || !IsEH)
+  if (MOFI->isFunctionEHFrameSymbolPrivate() || !IsEH)
     sectionStart = context.CreateTempSymbol();
   else
     sectionStart = context.GetOrCreateSymbol(Twine("EH_frame") + Twine(CIENum));
@@ -890,10 +894,11 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   MCContext &context = streamer.getContext();
   MCSymbol *fdeStart = context.CreateTempSymbol();
   MCSymbol *fdeEnd = context.CreateTempSymbol();
+  const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
   const TargetAsmInfo &TAI = context.getTargetAsmInfo();
   bool verboseAsm = streamer.isVerboseAsm();
 
-  if (!TAI.isFunctionEHFrameSymbolPrivate() && IsEH) {
+  if (!MOFI->isFunctionEHFrameSymbolPrivate() && IsEH) {
     MCSymbol *EHSym =
       context.GetOrCreateSymbol(frame.Function->getName() + Twine(".eh"));
     streamer.EmitEHSymAttributes(frame.Function, EHSym);
@@ -1008,9 +1013,10 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
                                bool UsingCFI,
                                bool IsEH) {
   MCContext &Context = Streamer.getContext();
-  const TargetAsmInfo &TAI = Context.getTargetAsmInfo();
-  const MCSection &Section = IsEH ? *TAI.getEHFrameSection() :
-                                    *TAI.getDwarfFrameSection();
+  MCObjectFileInfo *MOFI =
+    const_cast<MCObjectFileInfo*>(Context.getObjectFileInfo());
+  const MCSection &Section = IsEH ? *MOFI->getEHFrameSection() :
+                                    *MOFI->getDwarfFrameSection();
   Streamer.SwitchSection(&Section);
   MCSymbol *SectionStart = Context.CreateTempSymbol();
   Streamer.EmitLabel(SectionStart);
@@ -1022,7 +1028,8 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   const MCSymbol *DummyDebugKey = NULL;
   for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
     const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
-    if (IsEH && TAI.getCompactUnwindSection() && Frame.CompactUnwindEncoding &&
+    if (IsEH && MOFI->getCompactUnwindSection() &&
+        Frame.CompactUnwindEncoding &&
         Emitter.EmitCompactUnwind(Streamer, Frame)) {
       FDEEnd = NULL;
       continue;

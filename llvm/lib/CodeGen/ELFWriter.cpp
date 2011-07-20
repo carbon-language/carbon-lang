@@ -67,6 +67,7 @@ char ELFWriter::ID = 0;
 ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
   : MachineFunctionPass(ID), O(o), TM(tm),
     OutContext(*new MCContext(*TM.getMCAsmInfo(), *TM.getRegisterInfo(),
+                              &TM.getTargetLowering()->getObjFileLowering(),
                               new TargetAsmInfo(tm))),
     TLOF(TM.getTargetLowering()->getObjFileLowering()),
     is64Bit(TM.getTargetData()->getPointerSizeInBits() == 64),

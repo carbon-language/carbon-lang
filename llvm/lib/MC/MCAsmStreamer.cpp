@@ -16,6 +16,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -995,6 +996,19 @@ void MCAsmStreamer::EmitWin64EHHandler(const MCSymbol *Sym, bool Unwind,
   EmitEOL();
 }
 
+static const MCSection *getWin64EHTableSection(StringRef suffix,
+                                               MCContext &context) {
+  // FIXME: This doesn't belong in MCObjectFileInfo. However,
+  /// this duplicate code in MCWin64EH.cpp.
+  if (suffix == "")
+    return context.getObjectFileInfo()->getXDataSection();
+  return context.getCOFFSection((".xdata"+suffix).str(),
+                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_MEM_READ |
+                                COFF::IMAGE_SCN_MEM_WRITE,
+                                SectionKind::getDataRel());
+}
+
 void MCAsmStreamer::EmitWin64EHHandlerData() {
   MCStreamer::EmitWin64EHHandlerData();
 
@@ -1004,8 +1018,7 @@ void MCAsmStreamer::EmitWin64EHHandlerData() {
   // data block is visible.
   MCWin64EHUnwindInfo *CurFrame = getCurrentW64UnwindInfo();
   StringRef suffix=MCWin64EHUnwindEmitter::GetSectionSuffix(CurFrame->Function);
-  const MCSection *xdataSect =
-    getContext().getTargetAsmInfo().getWin64EHTableSection(suffix);
+  const MCSection *xdataSect = getWin64EHTableSection(suffix, getContext());
   if (xdataSect)
     SwitchSectionNoChange(xdataSect);
 

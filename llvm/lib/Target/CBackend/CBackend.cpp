@@ -37,6 +37,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
@@ -92,6 +93,7 @@ namespace {
     const Module *TheModule;
     const MCAsmInfo* TAsm;
     const MCRegisterInfo *MRI;
+    const MCObjectFileInfo *MOFI;
     MCContext *TCtx;
     const TargetData* TD;
     
@@ -111,8 +113,8 @@ namespace {
     static char ID;
     explicit CWriter(formatted_raw_ostream &o)
       : FunctionPass(ID), Out(o), IL(0), Mang(0), LI(0),
-        TheModule(0), TAsm(0), MRI(0), TCtx(0), TD(0), OpaqueCounter(0),
-        NextAnonValueNumber(0) {
+        TheModule(0), TAsm(0), MRI(0), MOFI(0), TCtx(0), TD(0),
+        OpaqueCounter(0), NextAnonValueNumber(0) {
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
       FPCounter = 0;
     }
@@ -152,6 +154,7 @@ namespace {
       delete TCtx;
       delete TAsm;
       delete MRI;
+      delete MOFI;
       FPConstantMap.clear();
       ByValParams.clear();
       intrinsicPrototypesAlreadyGenerated.clear();
@@ -1673,7 +1676,7 @@ bool CWriter::doInitialization(Module &M) {
 #endif
   TAsm = new CBEMCAsmInfo();
   MRI  = new MCRegisterInfo();
-  TCtx = new MCContext(*TAsm, *MRI, NULL);
+  TCtx = new MCContext(*TAsm, *MRI, NULL, NULL);
   Mang = new Mangler(*TCtx, *TD);
 
   // Keep track of which functions are static ctors/dtors so they can have
