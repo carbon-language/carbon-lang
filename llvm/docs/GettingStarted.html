@@ -818,7 +818,7 @@ git clone http://llvm.org/git/clang.git
    <tt>git-svn</tt>, run:</p>
 
 <pre>
-git clone http://llvm.org/git/llvm
+git clone http://llvm.org/git/llvm.git
 cd llvm
 git svn init https://llvm.org/svn/llvm-project/llvm/trunk --username=&lt;username>
 git config svn-remote.svn.fetch :refs/remotes/origin/master
@@ -826,7 +826,7 @@ git svn rebase -l  # -l avoids fetching ahead of the git mirror.
 
 # If you have clang too:
 cd tools
-git clone http://llvm.org/git/clang.git clang
+git clone http://llvm.org/git/clang.git
 cd clang
 git svn init https://llvm.org/svn/llvm-project/cfe/trunk --username=&lt;username>
 git config svn-remote.svn.fetch :refs/remotes/origin/master
