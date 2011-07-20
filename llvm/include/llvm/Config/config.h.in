@@ -3,6 +3,9 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+/* Bug report URL. */
+#undef BUG_REPORT_URL
+
 /* Relative directory for resource files */
 #undef CLANG_RESOURCE_DIR
 
@@ -576,7 +579,7 @@
 /* LLVM name for the native MCAsmInfo init function, if available */
 #undef LLVM_NATIVE_MCASMINFO
 
-/* LLVM name for the native MCCODEGENInfo init function, if available */
+/* LLVM name for the native MCCodeGenInfo init function, if available */
 #undef LLVM_NATIVE_MCCODEGENINFO
 
 /* LLVM name for the native Target init function, if available */

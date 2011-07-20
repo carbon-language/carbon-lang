@@ -1471,6 +1471,8 @@ Optional Packages:
                           64 bit multilib directory.
   --with-binutils-include Specify path to binutils/include/ containing
                           plugin-api.h file for gold plugin.
+  --with-bug-report-url   Specify the URL where bug reports should be
+                          submitted (default=http://llvm.org)
   --with-tclinclude       directory where tcl headers are
   --with-llvmcc=<name>    Choose the LLVM capable compiler to use (llvm-gcc,
                           clang, or none; default=check)
@@ -5525,6 +5527,20 @@ echo "$as_me: error: Invalid path to directory containing plugin-api.h." >&2;}
    { (exit 1); exit 1; }; };
   fi
 fi
+
+
+# Check whether --with-bug-report-url was given.
+if test "${with_bug_report_url+set}" = set; then
+  withval=$with_bug_report_url;
+else
+  withval="http://llvm.org"
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define BUG_REPORT_URL "$withval"
+_ACEOF
+
 
 # Check whether --enable-libffi was given.
 if test "${enable_libffi+set}" = set; then
@@ -11602,7 +11618,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11591 "configure"
+#line 11621 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
