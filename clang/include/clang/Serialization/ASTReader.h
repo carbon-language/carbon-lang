@@ -477,6 +477,7 @@ private:
   typedef ContinuousRangeMap<serialization::DeclID, 
                              std::pair<PerFileData *, int32_t>, 4> 
     GlobalDeclMapType;
+  
   /// \brief Mapping from global declaration IDs to the module in which the
   /// declaration resides along with the offset that should be added to the
   /// global declaration ID to produce a local ID.
@@ -552,6 +553,15 @@ private:
   /// IdentifierInfo for the identifier with ID=I+1 that has already
   /// been loaded.
   std::vector<IdentifierInfo *> IdentifiersLoaded;
+
+  typedef ContinuousRangeMap<serialization::IdentID, 
+                             std::pair<PerFileData *, int32_t>, 4> 
+    GlobalIdentifierMapType;
+  
+  /// \brief Mapping from global identifer IDs to the module in which the
+  /// identifier resides along with the offset that should be added to the
+  /// global identifier ID to produce a local ID.
+  GlobalIdentifierMapType GlobalIdentifierMap;
 
   /// \brief A vector containing selectors that have already been loaded.
   ///
