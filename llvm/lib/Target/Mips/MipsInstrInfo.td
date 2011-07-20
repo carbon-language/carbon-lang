@@ -397,7 +397,7 @@ class ReadHardware: FR<0x1f, 0x3b, (outs CPURegs:$dst), (ins HWRegs:$src),
 }
 
 // Atomic instructions with 2 source operands (ATOMIC_SWAP & ATOMIC_LOAD_*).
-class Atomic2<PatFrag Op, string Opstr> :
+class Atomic2Ops<PatFrag Op, string Opstr> :
   MipsPseudo<(outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
              !strconcat("atomic_", Opstr, "\t$dst, $ptr, $incr"),
              [(set CPURegs:$dst,
@@ -446,28 +446,28 @@ def CPLOAD : MipsPseudo<(outs), (ins CPURegs:$picreg), ".cpload\t$picreg", []>;
 def CPRESTORE : MipsPseudo<(outs), (ins i32imm:$loc), ".cprestore\t$loc", []>;
 
 let usesCustomInserter = 1 in {
-  def ATOMIC_LOAD_ADD_I8   : Atomic2<atomic_load_add_8, "load_add_8">;
-  def ATOMIC_LOAD_ADD_I16  : Atomic2<atomic_load_add_16, "load_add_16">;
-  def ATOMIC_LOAD_ADD_I32  : Atomic2<atomic_load_add_32, "load_add_32">;
-  def ATOMIC_LOAD_SUB_I8   : Atomic2<atomic_load_sub_8, "load_sub_8">;
-  def ATOMIC_LOAD_SUB_I16  : Atomic2<atomic_load_sub_16, "load_sub_16">;
-  def ATOMIC_LOAD_SUB_I32  : Atomic2<atomic_load_sub_32, "load_sub_32">;
-  def ATOMIC_LOAD_AND_I8   : Atomic2<atomic_load_and_8, "load_and_8">;
-  def ATOMIC_LOAD_AND_I16  : Atomic2<atomic_load_and_16, "load_and_16">;
-  def ATOMIC_LOAD_AND_I32  : Atomic2<atomic_load_and_32, "load_and_32">;
-  def ATOMIC_LOAD_OR_I8    : Atomic2<atomic_load_or_8, "load_or_8">;
-  def ATOMIC_LOAD_OR_I16   : Atomic2<atomic_load_or_16, "load_or_16">;
-  def ATOMIC_LOAD_OR_I32   : Atomic2<atomic_load_or_32, "load_or_32">;
-  def ATOMIC_LOAD_XOR_I8   : Atomic2<atomic_load_xor_8, "load_xor_8">;
-  def ATOMIC_LOAD_XOR_I16  : Atomic2<atomic_load_xor_16, "load_xor_16">;
-  def ATOMIC_LOAD_XOR_I32  : Atomic2<atomic_load_xor_32, "load_xor_32">;
-  def ATOMIC_LOAD_NAND_I8  : Atomic2<atomic_load_nand_8, "load_nand_8">;
-  def ATOMIC_LOAD_NAND_I16 : Atomic2<atomic_load_nand_16, "load_nand_16">;
-  def ATOMIC_LOAD_NAND_I32 : Atomic2<atomic_load_nand_32, "load_nand_32">;
+  def ATOMIC_LOAD_ADD_I8   : Atomic2Ops<atomic_load_add_8, "load_add_8">;
+  def ATOMIC_LOAD_ADD_I16  : Atomic2Ops<atomic_load_add_16, "load_add_16">;
+  def ATOMIC_LOAD_ADD_I32  : Atomic2Ops<atomic_load_add_32, "load_add_32">;
+  def ATOMIC_LOAD_SUB_I8   : Atomic2Ops<atomic_load_sub_8, "load_sub_8">;
+  def ATOMIC_LOAD_SUB_I16  : Atomic2Ops<atomic_load_sub_16, "load_sub_16">;
+  def ATOMIC_LOAD_SUB_I32  : Atomic2Ops<atomic_load_sub_32, "load_sub_32">;
+  def ATOMIC_LOAD_AND_I8   : Atomic2Ops<atomic_load_and_8, "load_and_8">;
+  def ATOMIC_LOAD_AND_I16  : Atomic2Ops<atomic_load_and_16, "load_and_16">;
+  def ATOMIC_LOAD_AND_I32  : Atomic2Ops<atomic_load_and_32, "load_and_32">;
+  def ATOMIC_LOAD_OR_I8    : Atomic2Ops<atomic_load_or_8, "load_or_8">;
+  def ATOMIC_LOAD_OR_I16   : Atomic2Ops<atomic_load_or_16, "load_or_16">;
+  def ATOMIC_LOAD_OR_I32   : Atomic2Ops<atomic_load_or_32, "load_or_32">;
+  def ATOMIC_LOAD_XOR_I8   : Atomic2Ops<atomic_load_xor_8, "load_xor_8">;
+  def ATOMIC_LOAD_XOR_I16  : Atomic2Ops<atomic_load_xor_16, "load_xor_16">;
+  def ATOMIC_LOAD_XOR_I32  : Atomic2Ops<atomic_load_xor_32, "load_xor_32">;
+  def ATOMIC_LOAD_NAND_I8  : Atomic2Ops<atomic_load_nand_8, "load_nand_8">;
+  def ATOMIC_LOAD_NAND_I16 : Atomic2Ops<atomic_load_nand_16, "load_nand_16">;
+  def ATOMIC_LOAD_NAND_I32 : Atomic2Ops<atomic_load_nand_32, "load_nand_32">;
 
-  def ATOMIC_SWAP_I8       : Atomic2<atomic_swap_8, "swap_8">;
-  def ATOMIC_SWAP_I16      : Atomic2<atomic_swap_16, "swap_16">;
-  def ATOMIC_SWAP_I32      : Atomic2<atomic_swap_32, "swap_32">;
+  def ATOMIC_SWAP_I8       : Atomic2Ops<atomic_swap_8, "swap_8">;
+  def ATOMIC_SWAP_I16      : Atomic2Ops<atomic_swap_16, "swap_16">;
+  def ATOMIC_SWAP_I32      : Atomic2Ops<atomic_swap_32, "swap_32">;
 
   def ATOMIC_CMP_SWAP_I8   : AtomicCmpSwap<atomic_cmp_swap_8, "8">;
   def ATOMIC_CMP_SWAP_I16  : AtomicCmpSwap<atomic_cmp_swap_16, "16">;
