@@ -199,7 +199,8 @@ public:
   }
 
   bool isTargetWin64() const {
-    return In64BitMode && (isTargetMingw() || isTargetWindows());
+    // FIXME: x86_64-cygwin has not been released yet.
+    return In64BitMode && (isTargetCygMing() || isTargetWindows());
   }
 
   bool isTargetEnvMacho() const {
