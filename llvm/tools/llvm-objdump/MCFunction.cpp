@@ -95,7 +95,7 @@ MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
           BB.addSucc(&f.getBlockAtAddress(Inst.Address+Inst.Size+Imm));
         // Conditional branches can also fall through to the next block.
         if (Desc.isConditionalBranch() && llvm::next(i) != e)
-          BB.addSucc(&next(i)->second);
+          BB.addSucc(&llvm::next(i)->second);
       } else {
         // Indirect branch. Bail and add all blocks of the function as a
         // successor.
@@ -104,8 +104,8 @@ MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
       }
     } else {
       // No branch. Fall through to the next block.
-      if (!Desc.isReturn() && next(i) != e)
-        BB.addSucc(&next(i)->second);
+      if (!Desc.isReturn() && llvm::next(i) != e)
+        BB.addSucc(&llvm::next(i)->second);
     }
   }
 
