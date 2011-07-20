@@ -1,6 +1,7 @@
 add_llvm_library(LLVMARMDesc
   ARMMCTargetDesc.cpp
   ARMMCAsmInfo.cpp
+  ARMMCExpr.cpp
   )
 
 # Hack: we need to include 'main' target directory to grab private headers

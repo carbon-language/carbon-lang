@@ -14,7 +14,6 @@
 #ifndef LLVM_TARGET_ARM_ARMADDRESSINGMODES_H
 #define LLVM_TARGET_ARM_ARMADDRESSINGMODES_H
 
-#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 
@@ -57,20 +56,6 @@ namespace ARM_AM {
     case ARM_AM::lsl: return 0;
     case ARM_AM::lsr: return 1;
     case ARM_AM::ror: return 3;
-    }
-  }
-
-  static inline ShiftOpc getShiftOpcForNode(SDValue N) {
-    switch (N.getOpcode()) {
-    default:          return ARM_AM::no_shift;
-    case ISD::SHL:    return ARM_AM::lsl;
-    case ISD::SRL:    return ARM_AM::lsr;
-    case ISD::SRA:    return ARM_AM::asr;
-    case ISD::ROTR:   return ARM_AM::ror;
-    //case ISD::ROTL:  // Only if imm -> turn into ROTR.
-    // Can't handle RRX here, because it would require folding a flag into
-    // the addressing mode.  :(  This causes us to miss certain things.
-    //case ARMISD::RRX: return ARM_AM::rrx;
     }
   }
 

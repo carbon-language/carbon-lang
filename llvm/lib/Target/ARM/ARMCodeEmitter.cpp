@@ -14,12 +14,12 @@
 
 #define DEBUG_TYPE "jit"
 #include "ARM.h"
-#include "ARMAddressingModes.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMInstrInfo.h"
 #include "ARMRelocations.h"
 #include "ARMSubtarget.h"
 #include "ARMTargetMachine.h"
+#include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"

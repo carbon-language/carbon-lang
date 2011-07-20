@@ -9,11 +9,11 @@
 
 #define DEBUG_TYPE "t2-reduce-size"
 #include "ARM.h"
-#include "ARMAddressingModes.h"
 #include "ARMBaseRegisterInfo.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMSubtarget.h"
 #include "Thumb2InstrInfo.h"
+#include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"

@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
-#include "ARMAddressingModes.h"
 #include "ARMFixupKinds.h"
+#include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCDirectives.h"

@@ -13,8 +13,8 @@
 
 #include "ARMInstrInfo.h"
 #include "ARM.h"
-#include "ARMAddressingModes.h"
 #include "ARMMachineFunctionInfo.h"
+#include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"

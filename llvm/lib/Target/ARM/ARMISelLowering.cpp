@@ -14,7 +14,6 @@
 
 #define DEBUG_TYPE "arm-isel"
 #include "ARM.h"
-#include "ARMAddressingModes.h"
 #include "ARMCallingConv.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMISelLowering.h"
@@ -24,6 +23,7 @@
 #include "ARMSubtarget.h"
 #include "ARMTargetMachine.h"
 #include "ARMTargetObjectFile.h"
+#include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -7351,7 +7351,8 @@ static bool getARMIndexedAddressParts(SDNode *Ptr, EVT VT,
 
     if (Ptr->getOpcode() == ISD::ADD) {
       isInc = true;
-      ARM_AM::ShiftOpc ShOpcVal= ARM_AM::getShiftOpcForNode(Ptr->getOperand(0));
+      ARM_AM::ShiftOpc ShOpcVal=
+        ARM_AM::getShiftOpcForNode(Ptr->getOperand(0).getOpcode());
       if (ShOpcVal != ARM_AM::no_shift) {
         Base = Ptr->getOperand(1);
         Offset = Ptr->getOperand(0);

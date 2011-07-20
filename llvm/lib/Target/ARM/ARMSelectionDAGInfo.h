@@ -14,9 +14,26 @@
 #ifndef ARMSELECTIONDAGINFO_H
 #define ARMSELECTIONDAGINFO_H
 
+#include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/Target/TargetSelectionDAGInfo.h"
 
 namespace llvm {
+
+namespace ARM_AM {
+  static inline ShiftOpc getShiftOpcForNode(unsigned Opcode) {
+    switch (Opcode) {
+    default:          return ARM_AM::no_shift;
+    case ISD::SHL:    return ARM_AM::lsl;
+    case ISD::SRL:    return ARM_AM::lsr;
+    case ISD::SRA:    return ARM_AM::asr;
+    case ISD::ROTR:   return ARM_AM::ror;
+    //case ISD::ROTL:  // Only if imm -> turn into ROTR.
+    // Can't handle RRX here, because it would require folding a flag into
+    // the addressing mode.  :(  This causes us to miss certain things.
+    //case ARMISD::RRX: return ARM_AM::rrx;
+    }
+  }
+}  // end namespace ARM_AM
 
 class ARMSelectionDAGInfo : public TargetSelectionDAGInfo {
   /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can

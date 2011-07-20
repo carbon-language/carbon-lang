@@ -14,8 +14,8 @@
 #define DEBUG_TYPE "arm-isel"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
-#include "ARMAddressingModes.h"
 #include "ARMTargetMachine.h"
+#include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -373,7 +373,7 @@ bool ARMDAGToDAGISel::SelectShifterOperandReg(SDValue N,
   if (DisableShifterOp)
     return false;
 
-  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N);
+  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOpcode());
 
   // Don't match base register only case. That is matched to a separate
   // lower complexity pattern with explicit register operand.
@@ -489,7 +489,8 @@ bool ARMDAGToDAGISel::SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset,
 
   // Otherwise this is R +/- [possibly shifted] R.
   ARM_AM::AddrOpc AddSub = N.getOpcode() == ISD::SUB ? ARM_AM::sub:ARM_AM::add;
-  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(1));
+  ARM_AM::ShiftOpc ShOpcVal =
+    ARM_AM::getShiftOpcForNode(N.getOperand(1).getOpcode());
   unsigned ShAmt = 0;
 
   Base   = N.getOperand(0);
@@ -515,7 +516,7 @@ bool ARMDAGToDAGISel::SelectLdStSOReg(SDValue N, SDValue &Base, SDValue &Offset,
   // Try matching (R shl C) + (R).
   if (N.getOpcode() != ISD::SUB && ShOpcVal == ARM_AM::no_shift &&
       !(Subtarget->isCortexA9() || N.getOperand(0).hasOneUse())) {
-    ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(0));
+    ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(0).getOpcode());
     if (ShOpcVal != ARM_AM::no_shift) {
       // Check to see if the RHS of the shift is a constant, if not, we can't
       // fold it.
@@ -630,7 +631,8 @@ AddrMode2Type ARMDAGToDAGISel::SelectAddrMode2Worker(SDValue N,
 
   // Otherwise this is R +/- [possibly shifted] R.
   ARM_AM::AddrOpc AddSub = N.getOpcode() != ISD::SUB ? ARM_AM::add:ARM_AM::sub;
-  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(1));
+  ARM_AM::ShiftOpc ShOpcVal =
+    ARM_AM::getShiftOpcForNode(N.getOperand(1).getOpcode());
   unsigned ShAmt = 0;
 
   Base   = N.getOperand(0);
@@ -656,7 +658,7 @@ AddrMode2Type ARMDAGToDAGISel::SelectAddrMode2Worker(SDValue N,
   // Try matching (R shl C) + (R).
   if (N.getOpcode() != ISD::SUB && ShOpcVal == ARM_AM::no_shift &&
       !(Subtarget->isCortexA9() || N.getOperand(0).hasOneUse())) {
-    ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(0));
+    ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(0).getOpcode());
     if (ShOpcVal != ARM_AM::no_shift) {
       // Check to see if the RHS of the shift is a constant, if not, we can't
       // fold it.
@@ -701,7 +703,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2Offset(SDNode *Op, SDValue N,
   }
 
   Offset = N;
-  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N);
+  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOpcode());
   unsigned ShAmt = 0;
   if (ShOpcVal != ARM_AM::no_shift) {
     // Check to see if the RHS of the shift is a constant, if not, we can't fold
@@ -1079,7 +1081,7 @@ bool ARMDAGToDAGISel::SelectT2ShifterOperandReg(SDValue N, SDValue &BaseReg,
   if (DisableShifterOp)
     return false;
 
-  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N);
+  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOpcode());
 
   // Don't match base register only case. That is matched to a separate
   // lower complexity pattern with explicit register operand.
@@ -1220,9 +1222,9 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue N,
   OffReg = N.getOperand(1);
 
   // Swap if it is ((R << c) + R).
-  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(OffReg);
+  ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(OffReg.getOpcode());
   if (ShOpcVal != ARM_AM::lsl) {
-    ShOpcVal = ARM_AM::getShiftOpcForNode(Base);
+    ShOpcVal = ARM_AM::getShiftOpcForNode(Base.getOpcode());
     if (ShOpcVal == ARM_AM::lsl)
       std::swap(Base, OffReg);
   }

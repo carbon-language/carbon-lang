@@ -14,7 +14,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "ARMBaseInfo.h"
 #include "ARMInstPrinter.h"
-#include "ARMAddressingModes.h"
+#include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"

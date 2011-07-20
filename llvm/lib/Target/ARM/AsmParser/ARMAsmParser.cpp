@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
-#include "ARMAddressingModes.h"
-#include "ARMMCExpr.h"
 #include "ARMBaseRegisterInfo.h"
 #include "ARMSubtarget.h"
+#include "MCTargetDesc/ARMAddressingModes.h"
+#include "MCTargetDesc/ARMMCExpr.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"

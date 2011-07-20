@@ -16,8 +16,10 @@
 #define DEBUG_TYPE "arm-disassembler"
 
 #include "ARMDisassemblerCore.h"
-#include "ARMAddressingModes.h"
-#include "ARMMCExpr.h"
+#include "MCTargetDesc/ARMAddressingModes.h"
+#include "MCTargetDesc/ARMMCExpr.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/APFloat.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 

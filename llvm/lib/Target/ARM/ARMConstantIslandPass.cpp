@@ -15,10 +15,10 @@
 
 #define DEBUG_TYPE "arm-cp-islands"
 #include "ARM.h"
-#include "ARMAddressingModes.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMInstrInfo.h"
 #include "Thumb2InstrInfo.h"
+#include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
