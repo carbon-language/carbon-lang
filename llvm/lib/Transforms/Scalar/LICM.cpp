@@ -151,6 +151,11 @@ namespace {
     ///
     bool isSafeToExecuteUnconditionally(Instruction &I);
 
+    /// isGuaranteedToExecute - Check that the instruction is guaranteed to
+    /// execute.
+    ///
+    bool isGuaranteedToExecute(Instruction &I);
+
     /// pointerInvalidatedByLoop - Return true if the body of this loop may
     /// store into the memory location pointed to by V.
     ///
@@ -577,6 +582,10 @@ bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
   if (Inst.isSafeToSpeculativelyExecute())
     return true;
 
+  return isGuaranteedToExecute(Inst);
+}
+
+bool LICM::isGuaranteedToExecute(Instruction &Inst) {
   // Otherwise we have to check to make sure that the instruction dominates all
   // of the exit blocks.  If it doesn't, then there is a path out of the loop
   // which does not execute this instruction, so we can't hoist it.
@@ -713,33 +722,36 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
 
       // If there is an non-load/store instruction in the loop, we can't promote
       // it.
-      unsigned InstAlignment;
-      if (LoadInst *load = dyn_cast<LoadInst>(Use)) {
+      if (isa<LoadInst>(Use)) {
         assert(!cast<LoadInst>(Use)->isVolatile() && "AST broken");
-        InstAlignment = load->getAlignment();
       } else if (StoreInst *store = dyn_cast<StoreInst>(Use)) {
         // Stores *of* the pointer are not interesting, only stores *to* the
         // pointer.
         if (Use->getOperand(1) != ASIV)
           continue;
-        InstAlignment = store->getAlignment();
+        unsigned InstAlignment = store->getAlignment();
         assert(!cast<StoreInst>(Use)->isVolatile() && "AST broken");
+
+        // Note that we only check GuaranteedToExecute inside the store case
+        // so that we do not introduce stores where they did not exist before
+        // (which would break the LLVM concurrency model).
+
+        // If the alignment of this instruction allows us to specify a more
+        // restrictive (and performant) alignment and if we are sure this
+        // instruction will be executed, update the alignment.
+        // Larger is better, with the exception of 0 being the best alignment.
+        if ((InstAlignment > Alignment || InstAlignment == 0)
+            && (Alignment != 0))
+          if (isGuaranteedToExecute(*Use)) {
+            GuaranteedToExecute = true;
+            Alignment = InstAlignment;
+          }
+
+        if (!GuaranteedToExecute)
+          GuaranteedToExecute = isGuaranteedToExecute(*Use);
+
       } else
         return; // Not a load or store.
-
-      // If the alignment of this instruction allows us to specify a more
-      // restrictive (and performant) alignment and if we are sure this
-      // instruction will be executed, update the alignment.
-      // Larger is better, with the exception of 0 being the best alignment.
-      if ((InstAlignment > Alignment || InstAlignment == 0)
-          && (Alignment != 0))
-        if (isSafeToExecuteUnconditionally(*Use)) {
-          GuaranteedToExecute = true;
-          Alignment = InstAlignment;
-        }
-
-      if (!GuaranteedToExecute)
-        GuaranteedToExecute = isSafeToExecuteUnconditionally(*Use);
 
       LoopUses.push_back(Use);
     }
