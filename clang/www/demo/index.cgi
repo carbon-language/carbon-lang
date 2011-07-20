@@ -269,7 +269,7 @@ sub try_run {
         alarm 0;
     };
     if ( $@ and $@ =~ /timeout/ ) { 
-      barf("Program $program took too long, compile time limited for the web script, sorry!.\n"); 
+      barf("Program $program took too long, compile time limited for the web script, sorry!\n"); 
     }
     if ( -s $outputFile ) {
         print scalar dumpFile( "Output from $program", $outputFile );
