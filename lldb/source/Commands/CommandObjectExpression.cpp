@@ -198,9 +198,12 @@ CommandObjectExpression::MultiLineExpressionCallback
     case eInputReaderActivate:
         if (!batch_mode)
         {
-            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-            out_stream->Printf("%s\n", "Enter expressions, then terminate with an empty line to evaluate:");
-            out_stream->Flush();
+            StreamSP async_strm_sp(reader.GetDebugger().GetAsyncOutputStream());
+            if (async_strm_sp)
+            {
+                async_strm_sp->PutCString("Enter expressions, then terminate with an empty line to evaluate:\n");
+                async_strm_sp->Flush();
+            }
         }
         // Fall through
     case eInputReaderReactivate:
@@ -228,9 +231,12 @@ CommandObjectExpression::MultiLineExpressionCallback
         reader.SetIsDone (true);
         if (!batch_mode)
         {
-            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-            out_stream->Printf("%s\n", "Expression evaluation cancelled.");
-            out_stream->Flush();
+            StreamSP async_strm_sp (reader.GetDebugger().GetAsyncOutputStream());
+            if (async_strm_sp)
+            {
+                async_strm_sp->PutCString("Expression evaluation cancelled.\n");
+                async_strm_sp->Flush();
+            }
         }
         break;
         

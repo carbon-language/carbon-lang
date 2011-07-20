@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Core/ConnectionFileDescriptor.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
@@ -183,10 +184,19 @@ ProcessKDP::DoConnectRemote (const char *remote_url)
                     ArchSpec kernel_arch;
                     kernel_arch.SetArchitecture(eArchTypeMachO, cpu, sub);
                     m_target.SetArchitecture(kernel_arch);
-                    
                     SetID (1);
                     UpdateThreadListIfNeeded ();
                     SetPrivateState (eStateStopped);
+                    StreamSP async_strm_sp(m_target.GetDebugger().GetAsyncOutputStream());
+                    if (async_strm_sp)
+                    {
+                        const char *kernel_version = m_comm.GetKernelVersion ();
+                        if (kernel_version)
+                        {
+                            async_strm_sp->Printf ("KDP connected to %s\n", kernel_version);
+                            async_strm_sp->Flush();
+                        }
+                    }
                 }
             }
             else
@@ -237,24 +247,6 @@ ProcessKDP::DoAttachToProcessWithID (lldb::pid_t attach_pid)
     return error;
 }
 
-size_t
-ProcessKDP::AttachInputReaderCallback (void *baton, 
-                                       InputReader *reader, 
-                                       lldb::InputReaderAction notification,
-                                       const char *bytes, 
-                                       size_t bytes_len)
-{
-    if (notification == eInputReaderGotToken)
-    {
-//        ProcessKDP *process = (ProcessKDP *)baton;
-//        if (process->m_waiting_for_attach)
-//            process->m_waiting_for_attach = false;
-        reader->SetIsDone(true);
-        return 1;
-    }
-    return 0;
-}
-
 Error
 ProcessKDP::DoAttachToProcessWithName (const char *process_name, bool wait_for_launch)
 {
@@ -286,7 +278,8 @@ Error
 ProcessKDP::DoResume ()
 {
     Error error;
-    error.SetErrorString ("ProcessKDP::DoResume () is not implemented yet");
+    if (!m_comm.SendRequestResume ())
+        error.SetErrorString ("KDP resume failed");
     return error;
 }
 
@@ -354,15 +347,8 @@ ProcessKDP::DoHalt (bool &caused_stop)
     }
     else
     {
-        // TODO: add the ability to halt a running kernel
-        error.SetErrorString ("halt not supported in kdp-remote plug-in");
-//        if (!m_comm.SendInterrupt (locker, 2, caused_stop, timed_out))
-//        {
-//            if (timed_out)
-//                error.SetErrorString("timed out sending interrupt packet");
-//            else
-//                error.SetErrorString("unknown error sending interrupt packet");
-//        }
+        if (!m_comm.SendRequestSuspend ())
+            error.SetErrorString ("KDP halt failed");
     }
     return error;
 }
@@ -574,12 +560,26 @@ ProcessKDP::DoDeallocateMemory (lldb::addr_t addr)
 Error
 ProcessKDP::EnableBreakpoint (BreakpointSite *bp_site)
 {
+    if (m_comm.LocalBreakpointsAreSupported ())
+    {
+        Error error;
+        if (!m_comm.SendRequestBreakpoint(true, bp_site->GetLoadAddress()))
+            error.SetErrorString ("KDP set breakpoint failed");
+        return error;
+    }
     return EnableSoftwareBreakpoint (bp_site);
 }
 
 Error
 ProcessKDP::DisableBreakpoint (BreakpointSite *bp_site)
 {
+    if (m_comm.LocalBreakpointsAreSupported ())
+    {
+        Error error;
+        if (!m_comm.SendRequestBreakpoint(false, bp_site->GetLoadAddress()))
+            error.SetErrorString ("KDP remove breakpoint failed");
+        return error;
+    }
     return DisableSoftwareBreakpoint (bp_site);
 }
 

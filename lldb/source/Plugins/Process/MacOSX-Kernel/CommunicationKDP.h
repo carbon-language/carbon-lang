@@ -65,6 +65,11 @@ public:
         eCommandTypeKernelVersion
     } CommandType;
 
+    enum 
+    {
+        eFeatureLocalBreakpointsSupported = (1u << 0),
+    };
+
     typedef enum
     {
         KDP_PROTERR_SUCCESS = 0,
@@ -173,11 +178,20 @@ public:
                               uint32_t dst_size,
                               lldb_private::Error &error);
     
+    const char *
+    GetKernelVersion ();
+    
     uint32_t
     GetVersion ();
 
     uint32_t
     GetFeatureFlags ();
+
+    bool
+    LocalBreakpointsAreSupported ()
+    {
+        return (GetFeatureFlags() & eFeatureLocalBreakpointsSupported) != 0;
+    }
 
     uint32_t
     GetCPUMask ();
@@ -187,6 +201,16 @@ public:
     
     uint32_t
     GetCPUSubtype ();
+
+    // If cpu_mask is zero, then we will resume all CPUs
+    bool
+    SendRequestResume (uint32_t cpu_mask = 0);
+
+    bool
+    SendRequestSuspend ();
+
+    bool
+    SendRequestBreakpoint (bool set, lldb::addr_t addr);
 
 protected:
     typedef std::list<std::string> packet_collection;
@@ -216,6 +240,8 @@ protected:
     bool
     SendRequestHostInfo ();
 
+    bool
+    SendRequestKernelVersion ();
     
     void
     DumpPacket (lldb_private::Stream &s, 
@@ -280,6 +306,8 @@ protected:
     uint32_t m_kdp_hostinfo_cpu_mask;
     uint32_t m_kdp_hostinfo_cpu_type;
     uint32_t m_kdp_hostinfo_cpu_subtype;
+    std::string m_kernel_version;
+    lldb::addr_t m_last_read_memory_addr; // Last memory read address for logging
 private:
     //------------------------------------------------------------------
     // For CommunicationKDP only

@@ -10,6 +10,7 @@
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
@@ -499,8 +500,25 @@ DynamicLoaderMacOSXKernel::ParseKextSummaries (const Address &kext_summary_addr,
     if (!ReadKextSummaries (kext_summary_addr, count, kext_summaries))
         return false;
 
+    Stream *s = &m_process->GetTarget().GetDebugger().GetOutputStream();
     for (uint32_t i = 0; i < count; i++)
     {
+        if (s)
+        {
+            const uint8_t *u = (const uint8_t *)kext_summaries[i].uuid.GetBytes();
+            if (u)
+            {
+                s->Printf("Loading kext: %2.2X%2.2X%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X-%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X 0x%16.16llx \"%s\"...\n",
+                          u[ 0], u[ 1], u[ 2], u[ 3], u[ 4], u[ 5], u[ 6], u[ 7],
+                          u[ 8], u[ 9], u[10], u[11], u[12], u[13], u[14], u[15],
+                          kext_summaries[i].address, kext_summaries[i].name);
+            }   
+            else
+            {
+                s->Printf("0x%16.16llx \"%s\"...\n", kext_summaries[i].address, kext_summaries[i].name);
+            }
+        }
+        
         DataExtractor data; // Load command data
         if (ReadMachHeader (kext_summaries[i], &data))
         {
@@ -868,7 +886,7 @@ DynamicLoaderMacOSXKernel::OSKextLoadedKextSummary::PutToLog (Log *log) const
 {
     if (log == NULL)
         return;
-    uint8_t *u = (uint8_t *)uuid.GetBytes();
+    const uint8_t *u = (uint8_t *)uuid.GetBytes();
 
     if (address == LLDB_INVALID_ADDRESS)
     {

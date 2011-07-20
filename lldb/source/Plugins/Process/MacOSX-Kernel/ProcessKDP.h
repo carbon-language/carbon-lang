@@ -265,13 +265,6 @@ protected:
     lldb::StateType
     SetThreadStopInfo (StringExtractor& stop_packet);
     
-    static size_t
-    AttachInputReaderCallback (void *baton, 
-                               lldb_private::InputReader *reader, 
-                               lldb::InputReaderAction notification,
-                               const char *bytes, 
-                               size_t bytes_len);
-    
 private:
     //------------------------------------------------------------------
     // For ProcessKDP only
