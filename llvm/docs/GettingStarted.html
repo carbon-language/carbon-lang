@@ -802,13 +802,13 @@ instructions</a> to successfully get and build the LLVM GCC front-end.</p>
   now mirrors reflect only <tt>trunk</tt> for each project. You can do the
   read-only GIT clone of LLVM via:</p>
 
-<pre>
+<pre class="doc_code">
 git clone http://llvm.org/git/llvm.git
 </pre>
 
 <p>If you want to check out clang too, run:</p>
 
-<pre>
+<pre class="doc_code">
 git clone http://llvm.org/git/llvm.git
 cd llvm/tools
 git clone http://llvm.org/git/clang.git
@@ -817,7 +817,7 @@ git clone http://llvm.org/git/clang.git
 <p>To set up clone from which you can submit code using
    <tt>git-svn</tt>, run:</p>
 
-<pre>
+<pre class="doc_code">
 git clone http://llvm.org/git/llvm.git
 cd llvm
 git svn init https://llvm.org/svn/llvm-project/llvm/trunk --username=&lt;username>
@@ -836,7 +836,7 @@ git svn rebase -l
 <p>To update this clone without generating git-svn tags that conflict
 with the upstream git repo, run:</p>
 
-<pre>
+<pre class="doc_code">
 git fetch && (cd tools/clang && git fetch)  # Get matching revisions of both trees.
 git checkout master
 git svn rebase -l
@@ -856,7 +856,7 @@ branches and <code>dcommit</code>. When that happens, <code>git svn
 dcommit</code> stops working, complaining about files with uncommitted
 changes. The fix is to rebuild the metadata:</p>
 
-<pre>
+<pre class="doc_code">
 rm -rf .git/svn
 git svn rebase -l
 </pre>
