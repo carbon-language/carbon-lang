@@ -1502,7 +1502,12 @@ static bool DisassembleThumb2DPSoReg(MCInst &MI, unsigned Opcode, uint32_t insn,
       unsigned imm5 = getShiftAmtBits(insn);
       ARM_AM::ShiftOpc ShOp = ARM_AM::no_shift;
       unsigned ShAmt = decodeImmShift(bits2, imm5, ShOp);
-      MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(ShOp, ShAmt)));
+      // The PKHBT/PKHTB instructions have an implied shift type and so just
+      // use a plain immediate for the amount.
+      if (Opcode == ARM::t2PKHBT || Opcode == ARM::t2PKHTB)
+        MI.addOperand(MCOperand::CreateImm(ShAmt));
+      else
+        MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(ShOp, ShAmt)));
     }
     ++OpIdx;
   }

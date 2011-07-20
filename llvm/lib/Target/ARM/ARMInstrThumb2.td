@@ -2613,8 +2613,8 @@ def : T2Pat<(or (sra (shl rGPR:$Rm, (i32 24)), (i32 16)),
             (t2REVSH rGPR:$Rm)>;
 
 def t2PKHBT : T2ThreeReg<
-            (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, shift_imm:$sh),
-                  IIC_iBITsi, "pkhbt", "\t$Rd, $Rn, $Rm$sh",
+            (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, i32imm:$sh),
+                  IIC_iBITsi, "pkhbt", "\t$Rd, $Rn, $Rm, lsl $sh",
                   [(set rGPR:$Rd, (or (and rGPR:$Rn, 0xFFFF),
                                       (and (shl rGPR:$Rm, lsl_amt:$sh),
                                            0xFFFF0000)))]>,
@@ -2625,9 +2625,9 @@ def t2PKHBT : T2ThreeReg<
   let Inst{5} = 0; // BT form
   let Inst{4} = 0;
 
-  bits<8> sh;
-  let Inst{14-12} = sh{7-5};
-  let Inst{7-6}   = sh{4-3};
+  bits<5> sh;
+  let Inst{14-12} = sh{4-2};
+  let Inst{7-6}   = sh{1-0};
 }
 
 // Alternate cases for PKHBT where identities eliminate some nodes.
@@ -2635,14 +2635,14 @@ def : T2Pat<(or (and rGPR:$src1, 0xFFFF), (and rGPR:$src2, 0xFFFF0000)),
             (t2PKHBT rGPR:$src1, rGPR:$src2, 0)>,
             Requires<[HasT2ExtractPack, IsThumb2]>;
 def : T2Pat<(or (and rGPR:$src1, 0xFFFF), (shl rGPR:$src2, imm16_31:$sh)),
-            (t2PKHBT rGPR:$src1, rGPR:$src2, (lsl_shift_imm imm16_31:$sh))>,
+            (t2PKHBT rGPR:$src1, rGPR:$src2, imm16_31:$sh)>,
             Requires<[HasT2ExtractPack, IsThumb2]>;
 
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
 // will match the pattern below.
 def t2PKHTB : T2ThreeReg<
-                  (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, shift_imm:$sh),
-                  IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm$sh",
+                  (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, i32imm:$sh),
+                  IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm, asr $sh",
                   [(set rGPR:$Rd, (or (and rGPR:$Rn, 0xFFFF0000),
                                        (and (sra rGPR:$Rm, asr_amt:$sh),
                                             0xFFFF)))]>,
@@ -2653,19 +2653,19 @@ def t2PKHTB : T2ThreeReg<
   let Inst{5} = 1; // TB form
   let Inst{4} = 0;
 
-  bits<8> sh;
-  let Inst{14-12} = sh{7-5};
-  let Inst{7-6}   = sh{4-3};
+  bits<5> sh;
+  let Inst{14-12} = sh{4-2};
+  let Inst{7-6}   = sh{1-0};
 }
 
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.
 def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000), (srl rGPR:$src2, imm16_31:$sh)),
-            (t2PKHTB rGPR:$src1, rGPR:$src2, (asr_shift_imm imm16_31:$sh))>,
+            (t2PKHTB rGPR:$src1, rGPR:$src2, imm16_31:$sh)>,
             Requires<[HasT2ExtractPack, IsThumb2]>;
 def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000),
                 (and (srl rGPR:$src2, imm1_15:$sh), 0xFFFF)),
-            (t2PKHTB rGPR:$src1, rGPR:$src2, (asr_shift_imm imm1_15:$sh))>,
+            (t2PKHTB rGPR:$src1, rGPR:$src2, imm1_15:$sh)>,
             Requires<[HasT2ExtractPack, IsThumb2]>;
 
 //===----------------------------------------------------------------------===//

@@ -1638,7 +1638,10 @@ static bool DisassembleArithMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     else if (Opcode == ARM::PKHTB)
       Opc = ARM_AM::asr;
     getImmShiftSE(Opc, ShiftAmt);
-    MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(Opc, ShiftAmt)));
+    if (Opcode == ARM::PKHBT || Opcode == ARM::PKHTB)
+      MI.addOperand(MCOperand::CreateImm(ShiftAmt));
+     else
+      MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(Opc, ShiftAmt)));
     ++OpIdx;
   }
 

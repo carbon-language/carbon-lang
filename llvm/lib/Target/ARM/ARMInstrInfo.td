@@ -3111,18 +3111,13 @@ def : ARMV6Pat<(or (sra (shl GPR:$Rm, (i32 24)), (i32 16)),
                    (and (srl GPR:$Rm, (i32 8)), 0xFF)),
                (REVSH GPR:$Rm)>;
 
-def lsl_shift_imm : SDNodeXForm<imm, [{
-  unsigned Sh = ARM_AM::getSORegOpc(ARM_AM::lsl, N->getZExtValue());
-  return CurDAG->getTargetConstant(Sh, MVT::i32);
+def lsl_amt : ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 32;
 }]>;
 
-def lsl_amt : ImmLeaf<i32, [{
-  return Imm > 0 && Imm < 32;
-}], lsl_shift_imm>;
-
 def PKHBT : APKHI<0b01101000, 0, (outs GPR:$Rd),
-                              (ins GPR:$Rn, GPR:$Rm, shift_imm:$sh),
-               IIC_iALUsi, "pkhbt", "\t$Rd, $Rn, $Rm$sh",
+                              (ins GPR:$Rn, GPR:$Rm, i32imm:$sh),
+               IIC_iALUsi, "pkhbt", "\t$Rd, $Rn, $Rm, lsl $sh",
                [(set GPR:$Rd, (or (and GPR:$Rn, 0xFFFF),
                                   (and (shl GPR:$Rm, lsl_amt:$sh),
                                        0xFFFF0000)))]>,
@@ -3132,22 +3127,17 @@ def PKHBT : APKHI<0b01101000, 0, (outs GPR:$Rd),
 def : ARMV6Pat<(or (and GPR:$Rn, 0xFFFF), (and GPR:$Rm, 0xFFFF0000)),
                (PKHBT GPR:$Rn, GPR:$Rm, 0)>;
 def : ARMV6Pat<(or (and GPR:$Rn, 0xFFFF), (shl GPR:$Rm, imm16_31:$sh)),
-               (PKHBT GPR:$Rn, GPR:$Rm, (lsl_shift_imm imm16_31:$sh))>;
-
-def asr_shift_imm : SDNodeXForm<imm, [{
-  unsigned Sh = ARM_AM::getSORegOpc(ARM_AM::asr, N->getZExtValue());
-  return CurDAG->getTargetConstant(Sh, MVT::i32);
-}]>;
+               (PKHBT GPR:$Rn, GPR:$Rm, imm16_31:$sh)>;
 
 def asr_amt : ImmLeaf<i32, [{
   return Imm > 0 && Imm <= 32;
-}], asr_shift_imm>;
+}]>;
 
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
 // will match the pattern below.
 def PKHTB : APKHI<0b01101000, 1, (outs GPR:$Rd),
-                              (ins GPR:$Rn, GPR:$Rm, shift_imm:$sh),
-               IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm$sh",
+                              (ins GPR:$Rn, GPR:$Rm, i32imm:$sh),
+               IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm, asr $sh",
                [(set GPR:$Rd, (or (and GPR:$Rn, 0xFFFF0000),
                                   (and (sra GPR:$Rm, asr_amt:$sh),
                                        0xFFFF)))]>,
@@ -3156,10 +3146,10 @@ def PKHTB : APKHI<0b01101000, 1, (outs GPR:$Rd),
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.
 def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000), (srl GPR:$src2, imm16_31:$sh)),
-               (PKHTB GPR:$src1, GPR:$src2, (asr_shift_imm imm16_31:$sh))>;
+               (PKHTB GPR:$src1, GPR:$src2, imm16_31:$sh)>;
 def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
                    (and (srl GPR:$src2, imm1_15:$sh), 0xFFFF)),
-               (PKHTB GPR:$src1, GPR:$src2, (asr_shift_imm imm1_15:$sh))>;
+               (PKHTB GPR:$src1, GPR:$src2, imm1_15:$sh)>;
 
 //===----------------------------------------------------------------------===//
 //  Comparison Instructions...

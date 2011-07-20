@@ -854,11 +854,11 @@ class APKHI<bits<8> opcod, bit tb, dag oops, dag iops, InstrItinClass itin,
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rm;
-  bits<8> sh;
+  bits<5> sh;
   let Inst{27-20} = opcod;
   let Inst{19-16} = Rn;
   let Inst{15-12} = Rd;
-  let Inst{11-7}  = sh{7-3};
+  let Inst{11-7}  = sh;
   let Inst{6}     = tb;
   let Inst{5-4}   = 0b01;
   let Inst{3-0}   = Rm;
