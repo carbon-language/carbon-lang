@@ -1806,34 +1806,16 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
     FieldDecl *OldField = FieldsWithMemberInitializers[I].first;
     FieldDecl *NewField = FieldsWithMemberInitializers[I].second;
     Expr *OldInit = OldField->getInClassInitializer();
-    ExprResult NewInit = SubstExpr(OldInit, TemplateArgs);
 
-    // If the initialization is no longer dependent, check it now.
-    if ((OldField->getType()->isDependentType() || OldInit->isTypeDependent() ||
-         OldInit->isValueDependent()) &&
-        !NewField->getType()->isDependentType() &&
-        !NewInit.get()->isTypeDependent() &&
-        !NewInit.get()->isValueDependent()) {
-      // FIXME: handle list-initialization
-      SourceLocation EqualLoc = NewField->getLocation();
-      NewInit = PerformCopyInitialization(
-        InitializedEntity::InitializeMember(NewField), EqualLoc,
-        NewInit.release());
-
-      if (!NewInit.isInvalid()) {
-        CheckImplicitConversions(NewInit.get(), EqualLoc);
-
-        // C++0x [class.base.init]p7:
-        //   The initialization of each base and member constitutes a
-        //   full-expression.
-        NewInit = MaybeCreateExprWithCleanups(NewInit);
-      }
-    }
-
-    if (NewInit.isInvalid())
+    SourceLocation LParenLoc, RParenLoc;
+    ASTOwningVector<Expr*> NewArgs(*this);
+    if (InstantiateInitializer(OldInit, TemplateArgs, LParenLoc, NewArgs,
+                               RParenLoc))
       NewField->setInvalidDecl();
-    else
-      NewField->setInClassInitializer(NewInit.release());
+    else {
+      assert(NewArgs.size() == 1 && "wrong number of in-class initializers");
+      ActOnCXXInClassMemberInitializer(NewField, LParenLoc, NewArgs[0]);
+    }
   }
 
   if (!FieldsWithMemberInitializers.empty())

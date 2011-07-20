@@ -239,8 +239,6 @@ TemplateDeclInstantiator::VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
 /// \brief Instantiate an initializer, breaking it into separate
 /// initialization arguments.
 ///
-/// \param S The semantic analysis object.
-///
 /// \param Init The initializer to instantiate.
 ///
 /// \param TemplateArgs Template arguments to be substituted into the
@@ -249,11 +247,11 @@ TemplateDeclInstantiator::VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
 /// \param NewArgs Will be filled in with the instantiation arguments.
 ///
 /// \returns true if an error occurred, false otherwise
-static bool InstantiateInitializer(Sema &S, Expr *Init,
+bool Sema::InstantiateInitializer(Expr *Init,
                             const MultiLevelTemplateArgumentList &TemplateArgs,
-                                   SourceLocation &LParenLoc,
-                                   ASTOwningVector<Expr*> &NewArgs,
-                                   SourceLocation &RParenLoc) {
+                                  SourceLocation &LParenLoc,
+                                  ASTOwningVector<Expr*> &NewArgs,
+                                  SourceLocation &RParenLoc) {
   NewArgs.clear();
   LParenLoc = SourceLocation();
   RParenLoc = SourceLocation();
@@ -273,24 +271,24 @@ static bool InstantiateInitializer(Sema &S, Expr *Init,
   if (ParenListExpr *ParenList = dyn_cast<ParenListExpr>(Init)) {
     LParenLoc = ParenList->getLParenLoc();
     RParenLoc = ParenList->getRParenLoc();
-    return S.SubstExprs(ParenList->getExprs(), ParenList->getNumExprs(),
-                        true, TemplateArgs, NewArgs);
+    return SubstExprs(ParenList->getExprs(), ParenList->getNumExprs(),
+                      true, TemplateArgs, NewArgs);
   }
 
   if (CXXConstructExpr *Construct = dyn_cast<CXXConstructExpr>(Init)) {
     if (!isa<CXXTemporaryObjectExpr>(Construct)) {
-      if (S.SubstExprs(Construct->getArgs(), Construct->getNumArgs(), true,
-                       TemplateArgs, NewArgs))
+      if (SubstExprs(Construct->getArgs(), Construct->getNumArgs(), true,
+                     TemplateArgs, NewArgs))
         return true;
 
       // FIXME: Fake locations!
-      LParenLoc = S.PP.getLocForEndOfToken(Init->getLocStart());
+      LParenLoc = PP.getLocForEndOfToken(Init->getLocStart());
       RParenLoc = LParenLoc;
       return false;
     }
   }
  
-  ExprResult Result = S.SubstExpr(Init, TemplateArgs);
+  ExprResult Result = SubstExpr(Init, TemplateArgs);
   if (Result.isInvalid())
     return true;
 
@@ -386,8 +384,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     // Instantiate the initializer.
     SourceLocation LParenLoc, RParenLoc;
     ASTOwningVector<Expr*> InitArgs(SemaRef);
-    if (!InstantiateInitializer(SemaRef, D->getInit(), TemplateArgs, LParenLoc,
-                                InitArgs, RParenLoc)) {
+    if (!SemaRef.InstantiateInitializer(D->getInit(), TemplateArgs, LParenLoc,
+                                        InitArgs, RParenLoc)) {
       bool TypeMayContainAuto = true;
       // Attach the initializer to the declaration, if we have one.
       if (InitArgs.size() == 0)
@@ -2689,7 +2687,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
         Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(*this, I);
 
         // Instantiate the initializer.
-        if (InstantiateInitializer(*this, Init->getInit(), TemplateArgs, 
+        if (InstantiateInitializer(Init->getInit(), TemplateArgs, 
                                    LParenLoc, NewArgs, RParenLoc)) {
           AnyErrors = true;
           break;
@@ -2727,7 +2725,7 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
     }
 
     // Instantiate the initializer.
-    if (InstantiateInitializer(*this, Init->getInit(), TemplateArgs, 
+    if (InstantiateInitializer(Init->getInit(), TemplateArgs, 
                                LParenLoc, NewArgs, RParenLoc)) {
       AnyErrors = true;
       continue;

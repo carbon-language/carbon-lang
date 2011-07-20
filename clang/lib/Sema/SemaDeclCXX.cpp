@@ -1234,8 +1234,9 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 }
 
 /// ActOnCXXInClassMemberInitializer - This is invoked after parsing an
-/// in-class initializer for a non-static C++ class member. Such parsing
-/// is deferred until the class is complete.
+/// in-class initializer for a non-static C++ class member, and after
+/// instantiating an in-class initializer in a class template. Such actions
+/// are deferred until the class is complete.
 void
 Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation EqualLoc,
                                        Expr *InitExpr) {

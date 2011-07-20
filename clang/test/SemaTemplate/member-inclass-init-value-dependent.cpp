@@ -9,3 +9,10 @@ void test() {
   foo<4> bar;
 }
 
+struct S {
+  S(int n);
+};
+template<typename> struct T {
+  S s = 0;
+};
+T<int> t;

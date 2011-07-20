@@ -4894,6 +4894,11 @@ public:
   void InstantiateMemInitializers(CXXConstructorDecl *New,
                                   const CXXConstructorDecl *Tmpl,
                             const MultiLevelTemplateArgumentList &TemplateArgs);
+  bool InstantiateInitializer(Expr *Init,
+                            const MultiLevelTemplateArgumentList &TemplateArgs,
+                              SourceLocation &LParenLoc,
+                              ASTOwningVector<Expr*> &NewArgs,
+                              SourceLocation &RParenLoc);
 
   NamedDecl *FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
                           const MultiLevelTemplateArgumentList &TemplateArgs);
