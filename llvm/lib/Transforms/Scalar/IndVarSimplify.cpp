@@ -1419,6 +1419,11 @@ void IndVarSimplify::SimplifyCongruentIVs(Loop *L) {
     if (Inserted)
       continue;
     PHINode *OrigPhi = Pos->second;
+
+    // If one phi derives from the other via GEPs, types may differ.
+    if (OrigPhi->getType() != Phi->getType())
+      continue;
+
     // Replacing the congruent phi is sufficient because acyclic redundancy
     // elimination, CSE/GVN, should handle the rest. However, once SCEV proves
     // that a phi is congruent, it's almost certain to be the head of an IV
@@ -1430,6 +1435,7 @@ void IndVarSimplify::SimplifyCongruentIVs(Loop *L) {
       Instruction *IsomorphicInc =
         cast<Instruction>(Phi->getIncomingValueForBlock(LatchBlock));
       if (OrigInc != IsomorphicInc &&
+          OrigInc->getType() == IsomorphicInc->getType() &&
           SE->getSCEV(OrigInc) == SE->getSCEV(IsomorphicInc) &&
           HoistStep(OrigInc, IsomorphicInc, DT)) {
         DEBUG(dbgs() << "INDVARS: Eliminated congruent iv.inc: "

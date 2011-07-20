@@ -125,9 +125,9 @@ return:
   ret void
 }
 
-%struct = type { i32 }
+%structI = type { i32 }
 
-define void @bitcastiv(i32 %start, i32 %limit, i32 %step, %struct* %base)
+define void @bitcastiv(i32 %start, i32 %limit, i32 %step, %structI* %base)
 nounwind
 {
 entry:
@@ -142,12 +142,12 @@ entry:
 ; CHECK: exit:
 loop:
   %iv = phi i32 [%start, %entry], [%next, %loop]
-  %p = phi %struct* [%base, %entry], [%pinc, %loop]
-  %adr = getelementptr %struct* %p, i32 0, i32 0
+  %p = phi %structI* [%base, %entry], [%pinc, %loop]
+  %adr = getelementptr %structI* %p, i32 0, i32 0
   store i32 3, i32* %adr
-  %pp = bitcast %struct* %p to i32*
+  %pp = bitcast %structI* %p to i32*
   store i32 4, i32* %pp
-  %pinc = getelementptr %struct* %p, i32 1
+  %pinc = getelementptr %structI* %p, i32 1
   %next = add i32 %iv, 1
   %cond = icmp ne i32 %next, %limit
   br i1 %cond, label %loop, label %exit
@@ -319,4 +319,27 @@ return:
   %sum3 = add i32 %sum1, %l.step
   %sum4 = add i32 %sum1, %l.next
   ret i32 %sum4
+}
+
+; Test a GEP IV that is derived from another GEP IV by a nop gep that
+; lowers the type without changing the expression.
+%structIF = type { i32, float }
+
+define void @congruentgepiv(%structIF* %base) nounwind uwtable ssp {
+entry:
+  %first = getelementptr inbounds %structIF* %base, i64 0, i32 0
+  br label %loop
+
+loop:
+  %ptr.iv = phi %structIF* [ %ptr.inc, %latch ], [ %base, %entry ]
+  %next = phi i32* [ %next.inc, %latch ], [ %first, %entry ]
+  br i1 undef, label %latch, label %exit
+
+latch:                         ; preds = %for.inc50.i
+  %ptr.inc = getelementptr inbounds %structIF* %ptr.iv, i64 1
+  %next.inc = getelementptr inbounds %structIF* %ptr.inc, i64 0, i32 0
+  br label %loop
+
+exit:
+  ret void
 }
