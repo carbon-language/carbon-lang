@@ -1410,8 +1410,16 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
     if (DV.getTag() == dwarf::DW_TAG_arg_variable &&
         DISubprogram(DV.getContext()).describes(MF->getFunction()))
       Scope = CurrentFnDbgScope;
-    else
-      Scope = findDbgScope(MInsn->getDebugLoc());
+    else {
+      if (DV.getVersion() <= LLVMDebugVersion9)
+        Scope = findDbgScope(MInsn->getDebugLoc());
+      else {
+        if (MDNode *IA = DV.getInlinedAt())
+          Scope = InlinedDbgScopeMap.lookup(DebugLoc::getFromDILocation(IA));
+        else
+          Scope = DbgScopeMap.lookup(cast<MDNode>(DV->getOperand(1)));
+      }
+    }
     // If variable scope is not found then skip this variable.
     if (!Scope)
       continue;

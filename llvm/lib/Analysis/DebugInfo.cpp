@@ -116,6 +116,12 @@ unsigned DIVariable::getNumAddrElements() const {
   return DbgNode->getNumOperands()-8;
 }
 
+/// getInlinedAt - If this variable is inlined then return inline location.
+MDNode *DIVariable::getInlinedAt() {
+  if (getVersion() <= llvm::LLVMDebugVersion9)
+    return NULL;
+  return dyn_cast_or_null<MDNode>(DbgNode->getOperand(7));
+}
 
 //===----------------------------------------------------------------------===//
 // Predicates

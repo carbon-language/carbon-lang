@@ -614,6 +614,8 @@ namespace llvm {
       return (getUnsignedField(6) & FlagArtificial) != 0;
     }
 
+    /// getInlinedAt - If this variable is inlined then return inline location.
+    MDNode *getInlinedAt();
 
     /// Verify - Verify that a variable descriptor is well formed.
     bool Verify() const;
