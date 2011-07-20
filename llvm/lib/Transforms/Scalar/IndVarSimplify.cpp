@@ -240,8 +240,8 @@ static Instruction *getInsertPointForUses(Instruction *User, Value *Def,
     InsertPt = InsertBB->getTerminator();
   }
   assert(InsertPt && "Missing phi operand");
-  assert(!isa<Instruction>(Def) ||
-         DT->dominates(cast<Instruction>(Def), InsertPt) &&
+  assert((!isa<Instruction>(Def) ||
+          DT->dominates(cast<Instruction>(Def), InsertPt)) &&
          "def does not dominate all uses");
   return InsertPt;
 }
