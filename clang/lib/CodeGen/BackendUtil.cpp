@@ -237,17 +237,18 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   TargetMachine::setDataSections    (CodeGenOpts.DataSections);
 
   // FIXME: Parse this earlier.
+  llvm::CodeModel::Model CM;
   if (CodeGenOpts.CodeModel == "small") {
-    TargetMachine::setCodeModel(llvm::CodeModel::Small);
+    CM = llvm::CodeModel::Small;
   } else if (CodeGenOpts.CodeModel == "kernel") {
-    TargetMachine::setCodeModel(llvm::CodeModel::Kernel);
+    CM = llvm::CodeModel::Kernel;
   } else if (CodeGenOpts.CodeModel == "medium") {
-    TargetMachine::setCodeModel(llvm::CodeModel::Medium);
+    CM = llvm::CodeModel::Medium;
   } else if (CodeGenOpts.CodeModel == "large") {
-    TargetMachine::setCodeModel(llvm::CodeModel::Large);
+    CM = llvm::CodeModel::Large;
   } else {
     assert(CodeGenOpts.CodeModel.empty() && "Invalid code model!");
-    TargetMachine::setCodeModel(llvm::CodeModel::Default);
+    CM = llvm::CodeModel::Default;
   }
 
   std::vector<const char *> BackendArgs;
@@ -290,7 +291,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   }
 
   TargetMachine *TM = TheTarget->createTargetMachine(Triple, TargetOpts.CPU,
-                                                     FeaturesStr, RM);
+                                                     FeaturesStr, RM, CM);
 
   if (CodeGenOpts.RelaxAll)
     TM->setMCRelaxAll(true);
