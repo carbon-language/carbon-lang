@@ -330,9 +330,16 @@ entry:
   %first = getelementptr inbounds %structIF* %base, i64 0, i32 0
   br label %loop
 
+; CHECK: loop:
+; CHECK: phi %structIF*
+; CHECK: phi i32*
+; CHECK: getelementptr inbounds
+; CHECK: getelementptr inbounds
+; CHECK: exit:
 loop:
   %ptr.iv = phi %structIF* [ %ptr.inc, %latch ], [ %base, %entry ]
   %next = phi i32* [ %next.inc, %latch ], [ %first, %entry ]
+  store i32 4, i32* %next
   br i1 undef, label %latch, label %exit
 
 latch:                         ; preds = %for.inc50.i
