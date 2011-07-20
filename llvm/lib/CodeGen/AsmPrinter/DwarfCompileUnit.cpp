@@ -439,27 +439,36 @@ void CompileUnit::addBlockByrefAddress(DbgVariable *&DV, DIE *Die,
   addBlock(Die, Attribute, 0, Block);
 }
 
+/// isTypeSigned - Return true if the type is signed.
+static bool isTypeSigned(DIType Ty, int *SizeInBits) {
+  if (Ty.isDerivedType())
+    return isTypeSigned(DIDerivedType(Ty).getTypeDerivedFrom(), SizeInBits);
+  if (Ty.isBasicType())
+    if (DIBasicType(Ty).getEncoding() == dwarf::DW_ATE_signed
+        || DIBasicType(Ty).getEncoding() == dwarf::DW_ATE_signed_char) {
+      *SizeInBits = Ty.getSizeInBits();
+      return true;
+    }
+  return false;
+}
+
 /// addConstantValue - Add constant value entry in variable DIE.
 bool CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
                                    DIType Ty) {
   assert (MO.isImm() && "Invalid machine operand!");
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-  unsigned form = dwarf::DW_FORM_udata;
-  switch (Ty.getSizeInBits()) {
-    case 8: form = dwarf::DW_FORM_data1; break;
-    case 16: form = dwarf::DW_FORM_data2; break;
-    case 32: form = dwarf::DW_FORM_data4; break;
-    case 64: form = dwarf::DW_FORM_data8; break;
+  int SizeInBits = -1;
+  bool SignedConstant = isTypeSigned(Ty, &SizeInBits);
+  unsigned Form = SignedConstant ? dwarf::DW_FORM_sdata : dwarf::DW_FORM_udata;
+  switch (SizeInBits) {
+    case 8:  Form = dwarf::DW_FORM_data1; break;
+    case 16: Form = dwarf::DW_FORM_data2; break;
+    case 32: Form = dwarf::DW_FORM_data4; break;
+    case 64: Form = dwarf::DW_FORM_data8; break;
     default: break;
   }
-
-  DIBasicType BTy(Ty);
-  if (BTy.Verify() &&
-      (BTy.getEncoding()  == dwarf::DW_ATE_signed 
-       || BTy.getEncoding() == dwarf::DW_ATE_signed_char))
-    addSInt(Block, 0, form, MO.getImm());
-  else
-    addUInt(Block, 0, form, MO.getImm());
+  SignedConstant ? addSInt(Block, 0, Form, MO.getImm()) 
+    : addUInt(Block, 0, Form, MO.getImm());
 
   addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
   return true;
