@@ -539,7 +539,7 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer, unsigned MaxLines) {
       Token HashTok = TheTok;
       InPreprocessorDirective = true;
       
-      // Figure out which direective this is. Since we're lexing raw tokens,
+      // Figure out which directive this is. Since we're lexing raw tokens,
       // we don't have an identifier table available. Instead, just look at
       // the raw identifier to recognize and categorize preprocessor directives.
       TheLexer.LexFromRawLexer(TheTok);
