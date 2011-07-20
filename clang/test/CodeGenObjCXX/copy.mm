@@ -24,3 +24,18 @@ namespace test0 {
   }
 }
 
+
+// rdar://9780211
+@protocol bork
+@end
+
+namespace test1 {
+template<typename T> struct RetainPtr {
+  RetainPtr() {}
+};
+
+
+RetainPtr<id<bork> > x;
+RetainPtr<id> y;
+
+}

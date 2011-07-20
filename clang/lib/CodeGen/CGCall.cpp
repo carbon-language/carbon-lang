@@ -954,9 +954,13 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         if (Arg->getType().isRestrictQualified())
           AI->addAttr(llvm::Attribute::NoAlias);
 
+        // Ensure the argument is the correct type.
+        if (V->getType() != ArgI.getCoerceToType())
+          V = Builder.CreateBitCast(V, ArgI.getCoerceToType());
+
         if (isPromoted)
           V = emitArgumentDemotion(*this, Arg, V);
-
+        
         EmitParmDecl(*Arg, V, ArgNo);
         break;
       }
