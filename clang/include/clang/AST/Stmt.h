@@ -14,16 +14,15 @@
 #ifndef LLVM_CLANG_AST_STMT_H
 #define LLVM_CLANG_AST_STMT_H
 
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/raw_ostream.h"
+#include "clang/Basic/LLVM.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/StmtIterator.h"
 #include "clang/AST/DeclGroup.h"
-#include "llvm/ADT/SmallVector.h"
 #include "clang/AST/ASTContext.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SmallVector.h"
 #include <string>
-using llvm::dyn_cast_or_null;
 
 namespace llvm {
   class FoldingSetNodeID;

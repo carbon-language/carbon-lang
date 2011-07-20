@@ -12,12 +12,7 @@
 
 #include "clang/Driver/OptSpecifier.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Casting.h"
-using llvm::isa;
-using llvm::cast;
-using llvm::cast_or_null;
-using llvm::dyn_cast;
-using llvm::dyn_cast_or_null;
+#include "clang/Basic/LLVM.h"
 
 namespace clang {
 namespace driver {

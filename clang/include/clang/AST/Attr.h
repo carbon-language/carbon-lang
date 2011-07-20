@@ -14,18 +14,17 @@
 #ifndef LLVM_CLANG_AST_ATTR_H
 #define LLVM_CLANG_AST_ATTR_H
 
-#include "llvm/Support/Casting.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSwitch.h"
+#include "clang/Basic/LLVM.h"
 #include "clang/Basic/AttrKinds.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/VersionTuple.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSwitch.h"
 #include <cassert>
 #include <cstring>
 #include <algorithm>
-using llvm::dyn_cast;
 
 namespace clang {
   class ASTContext;
@@ -159,12 +158,12 @@ class specific_attr_iterator {
   mutable AttrVec::const_iterator Current;
 
   void AdvanceToNext() const {
-    while (!llvm::isa<SpecificAttr>(*Current))
+    while (!isa<SpecificAttr>(*Current))
       ++Current;
   }
 
   void AdvanceToNext(AttrVec::const_iterator I) const {
-    while (Current != I && !llvm::isa<SpecificAttr>(*Current))
+    while (Current != I && !isa<SpecificAttr>(*Current))
       ++Current;
   }
 
@@ -180,11 +179,11 @@ public:
 
   reference operator*() const {
     AdvanceToNext();
-    return llvm::cast<SpecificAttr>(*Current);
+    return cast<SpecificAttr>(*Current);
   }
   pointer operator->() const {
     AdvanceToNext();
-    return llvm::cast<SpecificAttr>(*Current);
+    return cast<SpecificAttr>(*Current);
   }
 
   specific_attr_iterator& operator++() {
