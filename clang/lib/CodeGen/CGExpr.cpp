@@ -174,7 +174,7 @@ namespace {
 }
 
 static llvm::Value *
-CreateReferenceTemporary(CodeGenFunction& CGF, QualType Type,
+CreateReferenceTemporary(CodeGenFunction &CGF, QualType Type,
                          const NamedDecl *InitializedDecl) {
   if (const VarDecl *VD = dyn_cast_or_null<VarDecl>(InitializedDecl)) {
     if (VD->hasGlobalStorage()) {
