@@ -40,7 +40,6 @@ namespace llvm {
   bool JITExceptionHandling;
   bool JITEmitDebugInfo;
   bool JITEmitDebugInfoToDisk;
-  CodeModel::Model CMModel;
   bool GuaranteedTailCallOpt;
   unsigned StackAlignmentOverride;
   bool RealignStack;
@@ -142,23 +141,6 @@ EmitJitDebugInfoToDisk("jit-emit-debug-to-disk",
   cl::location(JITEmitDebugInfoToDisk),
   cl::init(false));
 
-static cl::opt<llvm::CodeModel::Model, true>
-DefCodeModel("code-model",
-  cl::desc("Choose code model"),
-  cl::location(CMModel),
-  cl::init(CodeModel::Default),
-  cl::values(
-    clEnumValN(CodeModel::Default, "default",
-               "Target default code model"),
-    clEnumValN(CodeModel::Small, "small",
-               "Small code model"),
-    clEnumValN(CodeModel::Kernel, "kernel",
-               "Kernel code model"),
-    clEnumValN(CodeModel::Medium, "medium",
-               "Medium code model"),
-    clEnumValN(CodeModel::Large, "large",
-               "Large code model"),
-    clEnumValEnd));
 static cl::opt<bool, true>
 EnableGuaranteedTailCallOpt("tailcallopt",
   cl::desc("Turn fastcc calls into tail calls by (potentially) changing ABI."),
@@ -230,13 +212,10 @@ Reloc::Model TargetMachine::getRelocationModel() const {
 
 /// getCodeModel - Returns the code model. The choices are small, kernel,
 /// medium, large, and target default.
-CodeModel::Model TargetMachine::getCodeModel() {
-  return CMModel;
-}
-
-/// setCodeModel - Sets the code model.
-void TargetMachine::setCodeModel(CodeModel::Model Model) {
-  CMModel = Model;
+CodeModel::Model TargetMachine::getCodeModel() const {
+  if (!CodeGenInfo)
+    return CodeModel::Default;
+  return CodeGenInfo->getCodeModel();
 }
 
 bool TargetMachine::getAsmVerbosityDefault() {

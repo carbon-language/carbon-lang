@@ -68,16 +68,15 @@ extern "C" void LLVMInitializeMBlazeTarget() {
 // an easier handling.
 MBlazeTargetMachine::
 MBlazeTargetMachine(const Target &T, StringRef TT,
-                    StringRef CPU, StringRef FS, Reloc::Model RM):
-  LLVMTargetMachine(T, TT, CPU, FS, RM),
+                    StringRef CPU, StringRef FS,
+                    Reloc::Model RM, CodeModel::Model CM):
+  LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
   Subtarget(TT, CPU, FS),
   DataLayout("E-p:32:32:32-i8:8:8-i16:16:16"),
   InstrInfo(*this),
   FrameLowering(Subtarget),
   TLInfo(*this), TSInfo(*this), ELFWriterInfo(*this),
   InstrItins(Subtarget.getInstrItineraryData()) {
-  if (getCodeModel() == CodeModel::Default)
-    setCodeModel(CodeModel::Small);
 }
 
 // Install an instruction selector pass using

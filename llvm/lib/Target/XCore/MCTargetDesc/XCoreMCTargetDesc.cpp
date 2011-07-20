@@ -76,9 +76,10 @@ extern "C" void LLVMInitializeXCoreMCAsmInfo() {
   RegisterMCAsmInfoFn X(TheXCoreTarget, createXCoreMCAsmInfo);
 }
 
-MCCodeGenInfo *createXCoreMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+MCCodeGenInfo *createXCoreMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                        CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
-  X->InitMCCodeGenInfo(RM);
+  X->InitMCCodeGenInfo(RM, CM);
   return X;
 }
 

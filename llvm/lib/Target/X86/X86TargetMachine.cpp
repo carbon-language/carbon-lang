@@ -67,8 +67,8 @@ extern "C" void LLVMInitializeX86Target() {
 
 X86_32TargetMachine::X86_32TargetMachine(const Target &T, StringRef TT,
                                          StringRef CPU, StringRef FS,
-                                         Reloc::Model RM)
-  : X86TargetMachine(T, TT, CPU, FS, RM, false),
+                                         Reloc::Model RM, CodeModel::Model CM)
+  : X86TargetMachine(T, TT, CPU, FS, RM, CM, false),
     DataLayout(getSubtargetImpl()->isTargetDarwin() ?
                "e-p:32:32-f64:32:64-i64:32:64-f80:128:128-f128:128:128-n8:16:32" :
                (getSubtargetImpl()->isTargetCygMing() ||
@@ -84,8 +84,8 @@ X86_32TargetMachine::X86_32TargetMachine(const Target &T, StringRef TT,
 
 X86_64TargetMachine::X86_64TargetMachine(const Target &T, StringRef TT,
                                          StringRef CPU, StringRef FS,
-                                         Reloc::Model RM)
-  : X86TargetMachine(T, TT, CPU, FS, RM, true),
+                                         Reloc::Model RM, CodeModel::Model CM)
+  : X86TargetMachine(T, TT, CPU, FS, RM, CM, true),
     DataLayout("e-p:64:64-s:64-f64:64:64-i64:64:64-f80:128:128-f128:128:128-n8:16:32:64"),
     InstrInfo(*this),
     TSInfo(*this),
@@ -97,8 +97,9 @@ X86_64TargetMachine::X86_64TargetMachine(const Target &T, StringRef TT,
 ///
 X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
                                    StringRef CPU, StringRef FS,
-                                   Reloc::Model RM, bool is64Bit)
-  : LLVMTargetMachine(T, TT, CPU, FS, RM),
+                                   Reloc::Model RM, CodeModel::Model CM,
+                                   bool is64Bit)
+  : LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
     Subtarget(TT, CPU, FS, StackAlignmentOverride, is64Bit),
     FrameLowering(*this, Subtarget),
     ELFWriterInfo(is64Bit, true) {
@@ -170,24 +171,4 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   PM.add(createX86JITCodeEmitterPass(*this, JCE));
 
   return false;
-}
-
-void X86TargetMachine::setCodeModelForStatic() {
-
-    if (getCodeModel() != CodeModel::Default) return;
-
-    // For static codegen, if we're not already set, use Small codegen.
-    setCodeModel(CodeModel::Small);
-}
-
-
-void X86TargetMachine::setCodeModelForJIT() {
-
-  if (getCodeModel() != CodeModel::Default) return;
-
-  // 64-bit JIT places everything in the same buffer except external functions.
-  if (Subtarget.is64Bit())
-    setCodeModel(CodeModel::Large);
-  else
-    setCodeModel(CodeModel::Small);
 }

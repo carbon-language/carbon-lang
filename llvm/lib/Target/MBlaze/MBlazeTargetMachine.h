@@ -42,7 +42,8 @@ namespace llvm {
 
   public:
     MBlazeTargetMachine(const Target &T, StringRef TT,
-                        StringRef CPU, StringRef FS, Reloc::Model RM);
+                        StringRef CPU, StringRef FS,
+                        Reloc::Model RM, CodeModel::Model CM);
 
     virtual const MBlazeInstrInfo *getInstrInfo() const
     { return &InstrInfo; }

@@ -40,7 +40,8 @@ private:
 
 public:
   ARMBaseTargetMachine(const Target &T, StringRef TT,
-                       StringRef CPU, StringRef FS, Reloc::Model RM);
+                       StringRef CPU, StringRef FS,
+                       Reloc::Model RM, CodeModel::Model CM);
 
   virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
   virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }
@@ -69,7 +70,8 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   ARMFrameLowering    FrameLowering;
  public:
   ARMTargetMachine(const Target &T, StringRef TT,
-                   StringRef CPU, StringRef FS, Reloc::Model RM);
+                   StringRef CPU, StringRef FS,
+                   Reloc::Model RM, CodeModel::Model CM);
 
   virtual const ARMRegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
@@ -108,7 +110,8 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
   OwningPtr<ARMFrameLowering> FrameLowering;
 public:
   ThumbTargetMachine(const Target &T, StringRef TT,
-                     StringRef CPU, StringRef FS, Reloc::Model RM);
+                     StringRef CPU, StringRef FS,
+                     Reloc::Model RM, CodeModel::Model CM);
 
   /// returns either Thumb1RegisterInfo or Thumb2RegisterInfo
   virtual const ARMBaseRegisterInfo *getRegisterInfo() const {

@@ -47,11 +47,10 @@ namespace {
 
 // DataLayout and FrameLowering are filled with dummy data
 PTXTargetMachine::PTXTargetMachine(const Target &T,
-                                   StringRef TT,
-                                   StringRef CPU,
-                                   StringRef FS,
-                                   Reloc::Model RM, bool is64Bit)
-  : LLVMTargetMachine(T, TT, CPU, FS, RM),
+                                   StringRef TT, StringRef CPU, StringRef FS,
+                                   Reloc::Model RM, CodeModel::Model CM,
+                                   bool is64Bit)
+  : LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
     DataLayout(is64Bit ? DataLayout64 : DataLayout32),
     Subtarget(TT, CPU, FS, is64Bit),
     FrameLowering(Subtarget),
@@ -61,14 +60,14 @@ PTXTargetMachine::PTXTargetMachine(const Target &T,
 
 PTX32TargetMachine::PTX32TargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
-                                       Reloc::Model RM)
-  : PTXTargetMachine(T, TT, CPU, FS, RM, false) {
+                                       Reloc::Model RM, CodeModel::Model CM)
+  : PTXTargetMachine(T, TT, CPU, FS, RM, CM, false) {
 }
 
 PTX64TargetMachine::PTX64TargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
-                                       Reloc::Model RM)
-  : PTXTargetMachine(T, TT, CPU, FS, RM, true) {
+                                       Reloc::Model RM, CodeModel::Model CM)
+  : PTXTargetMachine(T, TT, CPU, FS, RM, CM, true) {
 }
 
 bool PTXTargetMachine::addInstSelector(PassManagerBase &PM,

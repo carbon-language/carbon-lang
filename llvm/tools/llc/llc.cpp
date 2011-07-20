@@ -91,6 +91,22 @@ RelocModel("relocation-model",
                        "Relocatable external references, non-relocatable code"),
             clEnumValEnd));
 
+static cl::opt<llvm::CodeModel::Model>
+CMModel("code-model",
+        cl::desc("Choose code model"),
+        cl::init(CodeModel::Default),
+        cl::values(clEnumValN(CodeModel::Default, "default",
+                              "Target default code model"),
+                   clEnumValN(CodeModel::Small, "small",
+                              "Small code model"),
+                   clEnumValN(CodeModel::Kernel, "kernel",
+                              "Kernel code model"),
+                   clEnumValN(CodeModel::Medium, "medium",
+                              "Medium code model"),
+                   clEnumValN(CodeModel::Large, "large",
+                              "Large code model"),
+                   clEnumValEnd));
+
 static cl::opt<bool>
 RelaxAll("mc-relax-all",
   cl::desc("When used with filetype=obj, "
@@ -287,8 +303,9 @@ int main(int argc, char **argv) {
   }
 
   std::auto_ptr<TargetMachine>
-    target(TheTarget->createTargetMachine(TheTriple.getTriple(), MCPU,
-                                          FeaturesStr, RelocModel));
+    target(TheTarget->createTargetMachine(TheTriple.getTriple(),
+                                          MCPU, FeaturesStr,
+                                          RelocModel, CMModel));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
 

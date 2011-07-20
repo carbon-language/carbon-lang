@@ -32,9 +32,10 @@ extern "C" void LLVMInitializeMipsTarget() {
 // Using CodeModel::Large enables different CALL behavior.
 MipsTargetMachine::
 MipsTargetMachine(const Target &T, StringRef TT,
-                  StringRef CPU, StringRef FS, Reloc::Model RM,
+                  StringRef CPU, StringRef FS,
+                  Reloc::Model RM, CodeModel::Model CM,
                   bool isLittle=false):
-  LLVMTargetMachine(T, TT, CPU, FS, RM),
+  LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
   Subtarget(TT, CPU, FS, isLittle),
   DataLayout(isLittle ? 
              std::string("e-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32") :
@@ -46,8 +47,9 @@ MipsTargetMachine(const Target &T, StringRef TT,
 
 MipselTargetMachine::
 MipselTargetMachine(const Target &T, StringRef TT,
-                    StringRef CPU, StringRef FS, Reloc::Model RM) :
-  MipsTargetMachine(T, TT, CPU, FS, RM, true) {}
+                    StringRef CPU, StringRef FS,
+                    Reloc::Model RM, CodeModel::Model CM) :
+  MipsTargetMachine(T, TT, CPU, FS, RM, CM, true) {}
 
 // Install an instruction selector pass using
 // the ISelDag to gen Mips code.

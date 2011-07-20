@@ -480,7 +480,7 @@ private:
     JMM = NULL;
     AllocateGVsWithCode = false;
     RelocModel = Reloc::Default;
-    CMModel = CodeModel::Default;
+    CMModel = CodeModel::JITDefault;
     UseMCJIT = false;
   }
 
@@ -529,7 +529,8 @@ public:
   }
 
   /// setCodeModel - Set the CodeModel that the ExecutionEngine target
-  /// data is using. Defaults to target specific default "CodeModel::Default".
+  /// data is using. Defaults to target specific default
+  /// "CodeModel::JITDefault".
   EngineBuilder &setCodeModel(CodeModel::Model M) {
     CMModel = M;
     return *this;
@@ -581,6 +582,7 @@ public:
                                      StringRef MCPU,
                                      const SmallVectorImpl<std::string>& MAttrs,
                                      Reloc::Model RM,
+                                     CodeModel::Model CM,
                                      std::string *Err);
 
   ExecutionEngine *create();

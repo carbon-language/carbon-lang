@@ -66,9 +66,10 @@ extern "C" void LLVMInitializeAlphaMCAsmInfo() {
   RegisterMCAsmInfo<AlphaMCAsmInfo> X(TheAlphaTarget);
 }
 
-MCCodeGenInfo *createAlphaMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+MCCodeGenInfo *createAlphaMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                        CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
-  X->InitMCCodeGenInfo(Reloc::PIC_);
+  X->InitMCCodeGenInfo(Reloc::PIC_, CM);
   return X;
 }
 

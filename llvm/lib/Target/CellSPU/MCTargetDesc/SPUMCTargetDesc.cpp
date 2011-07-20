@@ -78,11 +78,12 @@ extern "C" void LLVMInitializeCellSPUMCAsmInfo() {
   RegisterMCAsmInfoFn X(TheCellSPUTarget, createSPUMCAsmInfo);
 }
 
-MCCodeGenInfo *createSPUMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+MCCodeGenInfo *createSPUMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                      CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   // For the time being, use static relocations, since there's really no
   // support for PIC yet.
-  X->InitMCCodeGenInfo(Reloc::Static);
+  X->InitMCCodeGenInfo(Reloc::Static, CM);
   return X;
 }
 

@@ -68,11 +68,12 @@ extern "C" void LLVMInitializeSystemZMCAsmInfo() {
   RegisterMCAsmInfo<SystemZMCAsmInfo> X(TheSystemZTarget);
 }
 
-MCCodeGenInfo *createSystemZMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+MCCodeGenInfo *createSystemZMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                          CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   if (RM == Reloc::Default)
     RM = Reloc::Static;
-  X->InitMCCodeGenInfo(RM);
+  X->InitMCCodeGenInfo(RM, CM);
   return X;
 }
 

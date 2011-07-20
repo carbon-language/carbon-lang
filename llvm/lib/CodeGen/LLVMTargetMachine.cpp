@@ -105,21 +105,10 @@ EnableFastISelOption("fast-isel", cl::Hidden,
 
 LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
                                      StringRef CPU, StringRef FS,
-                                     Reloc::Model RM)
+                                     Reloc::Model RM, CodeModel::Model CM)
   : TargetMachine(T, Triple, CPU, FS) {
-  CodeGenInfo = T.createMCCodeGenInfo(Triple, RM);
+  CodeGenInfo = T.createMCCodeGenInfo(Triple, RM, CM);
   AsmInfo = T.createMCAsmInfo(Triple);
-}
-
-// Set the default code model for the JIT for a generic target.
-// FIXME: Is small right here? or .is64Bit() ? Large : Small?
-void LLVMTargetMachine::setCodeModelForJIT() {
-  setCodeModel(CodeModel::Small);
-}
-
-// Set the default code model for static compilation for a generic target.
-void LLVMTargetMachine::setCodeModelForStatic() {
-  setCodeModel(CodeModel::Small);
 }
 
 bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
@@ -201,8 +190,6 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 
   PM.add(Printer);
 
-  // Make sure the code model is set.
-  setCodeModelForStatic();
   PM.add(createGCInfoDeleter());
   return false;
 }
@@ -217,9 +204,6 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
                                                    JITCodeEmitter &JCE,
                                                    CodeGenOpt::Level OptLevel,
                                                    bool DisableVerify) {
-  // Make sure the code model is set.
-  setCodeModelForJIT();
-
   // Add common CodeGen passes.
   MCContext *Ctx = 0;
   if (addCommonCodeGenPasses(PM, OptLevel, DisableVerify, Ctx))
@@ -272,9 +256,6 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
   AsmStreamer.take();
 
   PM.add(Printer);
-
-  // Make sure the code model is set.
-  setCodeModelForJIT();
 
   return false; // success!
 }

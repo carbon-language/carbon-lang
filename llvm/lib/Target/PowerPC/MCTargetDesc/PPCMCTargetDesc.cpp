@@ -94,7 +94,8 @@ extern "C" void LLVMInitializePowerPCMCAsmInfo() {
   RegisterMCAsmInfoFn D(ThePPC64Target, createPPCMCAsmInfo);  
 }
 
-MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                      CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
 
   if (RM == Reloc::Default) {
@@ -104,7 +105,7 @@ MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
     else
       RM = Reloc::Static;
   }
-  X->InitMCCodeGenInfo(RM);
+  X->InitMCCodeGenInfo(RM, CM);
   return X;
 }
 

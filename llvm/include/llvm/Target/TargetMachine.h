@@ -43,17 +43,6 @@ class TargetSubtargetInfo;
 class formatted_raw_ostream;
 class raw_ostream;
 
-// Code model types.
-namespace CodeModel {
-  enum Model {
-    Default,
-    Small,
-    Kernel,
-    Medium,
-    Large
-  };
-}
-
 // Code generation optimization level.
 namespace CodeGenOpt {
   enum Level {
@@ -101,7 +90,6 @@ protected: // Can only create subclasses.
   std::string TargetFS;
 
   /// CodeGenInfo - Low level target information such as relocation model.
-  ///
   const MCCodeGenInfo *CodeGenInfo;
 
   /// AsmInfo - Contains target specific asm information.
@@ -214,11 +202,7 @@ public:
 
   /// getCodeModel - Returns the code model. The choices are small, kernel,
   /// medium, large, and target default.
-  static CodeModel::Model getCodeModel();
-
-  /// setCodeModel - Sets the code model.
-  ///
-  static void setCodeModel(CodeModel::Model Model);
+  CodeModel::Model getCodeModel() const;
 
   /// getAsmVerbosityDefault - Returns the default value of asm verbosity.
   ///
@@ -301,7 +285,8 @@ public:
 class LLVMTargetMachine : public TargetMachine {
 protected: // Can only create subclasses.
   LLVMTargetMachine(const Target &T, StringRef TargetTriple,
-                    StringRef CPU, StringRef FS, Reloc::Model RM);
+                    StringRef CPU, StringRef FS,
+                    Reloc::Model RM, CodeModel::Model CM);
 
 private:
   /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for
@@ -309,9 +294,6 @@ private:
   ///
   bool addCommonCodeGenPasses(PassManagerBase &, CodeGenOpt::Level,
                               bool DisableVerify, MCContext *&OutCtx);
-
-  virtual void setCodeModelForJIT();
-  virtual void setCodeModelForStatic();
 
 public:
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the

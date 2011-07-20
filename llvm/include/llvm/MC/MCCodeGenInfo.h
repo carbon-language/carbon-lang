@@ -16,9 +16,15 @@
 #define LLVM_MC_MCCODEGENINFO_H
 
 namespace llvm {
+
   // Relocation model types.
   namespace Reloc {
     enum Model { Default, Static, PIC_, DynamicNoPIC };
+  }
+
+  // Code model types.
+  namespace CodeModel {
+    enum Model { Default, JITDefault, Small, Kernel, Medium, Large };
   }
 
   class MCCodeGenInfo {
@@ -26,10 +32,17 @@ namespace llvm {
     ///
     Reloc::Model RelocationModel;
 
+    /// CMModel - Code model.
+    ///
+    CodeModel::Model CMModel;
+
   public:
-    void InitMCCodeGenInfo(Reloc::Model RM = Reloc::Default);
+    void InitMCCodeGenInfo(Reloc::Model RM = Reloc::Default,
+                           CodeModel::Model CM = CodeModel::Default);
 
     Reloc::Model getRelocationModel() const { return RelocationModel; }
+
+    CodeModel::Model getCodeModel() const { return CMModel; }
   };
 } // namespace llvm
 

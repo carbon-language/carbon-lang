@@ -339,7 +339,8 @@ extern "C" void LLVMInitializeX86MCAsmInfo() {
   RegisterMCAsmInfoFn B(TheX86_64Target, createX86MCAsmInfo);
 }
 
-MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                      CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
 
   Triple T(TT);
@@ -376,7 +377,14 @@ MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM) {
   if (RM == Reloc::Static && T.isOSDarwin() && is64Bit)
     RM = Reloc::PIC_;
 
-  X->InitMCCodeGenInfo(RM);
+  // For static codegen, if we're not already set, use Small codegen.
+  if (CM == CodeModel::Default)
+    CM = CodeModel::Small;
+  else if (CM == CodeModel::JITDefault)
+    // 64-bit JIT places everything in the same buffer except external funcs.
+    CM = is64Bit ? CodeModel::Large : CodeModel::Small;
+
+  X->InitMCCodeGenInfo(RM, CM);
   return X;
 }
 

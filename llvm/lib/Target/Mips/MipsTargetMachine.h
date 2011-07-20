@@ -36,7 +36,8 @@ namespace llvm {
   public:
     MipsTargetMachine(const Target &T, StringRef TT,
                       StringRef CPU, StringRef FS,
-                      Reloc::Model RM, bool isLittle);
+                      Reloc::Model RM, CodeModel::Model CM,
+                      bool isLittle);
 
     virtual const MipsInstrInfo   *getInstrInfo()     const
     { return &InstrInfo; }
@@ -74,7 +75,8 @@ namespace llvm {
 class MipselTargetMachine : public MipsTargetMachine {
 public:
   MipselTargetMachine(const Target &T, StringRef TT,
-                      StringRef CPU, StringRef FS, Reloc::Model RM);
+                      StringRef CPU, StringRef FS,
+                      Reloc::Model RM, CodeModel::Model CM);
 };
 
 } // End llvm namespace

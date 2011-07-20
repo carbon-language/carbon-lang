@@ -24,8 +24,10 @@ extern "C" void LLVMInitializeBlackfinTarget() {
 BlackfinTargetMachine::BlackfinTargetMachine(const Target &T,
                                              StringRef TT,
                                              StringRef CPU,
-                                             StringRef FS, Reloc::Model RM)
-  : LLVMTargetMachine(T, TT, CPU, FS, RM),
+                                             StringRef FS,
+                                             Reloc::Model RM,
+                                             CodeModel::Model CM)
+  : LLVMTargetMachine(T, TT, CPU, FS, RM, CM),
     DataLayout("e-p:32:32-i64:32-f64:32-n32"),
     Subtarget(TT, CPU, FS),
     TLInfo(*this),

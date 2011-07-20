@@ -66,9 +66,10 @@ extern "C" void LLVMInitializeSparcMCAsmInfo() {
   RegisterMCAsmInfo<SparcELFMCAsmInfo> Y(TheSparcV9Target);
 }
 
-MCCodeGenInfo *createSparcMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+MCCodeGenInfo *createSparcMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                        CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
-  X->InitMCCodeGenInfo(RM);
+  X->InitMCCodeGenInfo(RM, CM);
   return X;
 }
 

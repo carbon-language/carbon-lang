@@ -128,6 +128,22 @@ RelocModel("relocation-model",
                        "Relocatable external references, non-relocatable code"),
             clEnumValEnd));
 
+static cl::opt<llvm::CodeModel::Model>
+CMModel("code-model",
+        cl::desc("Choose code model"),
+        cl::init(CodeModel::Default),
+        cl::values(clEnumValN(CodeModel::Default, "default",
+                              "Target default code model"),
+                   clEnumValN(CodeModel::Small, "small",
+                              "Small code model"),
+                   clEnumValN(CodeModel::Kernel, "kernel",
+                              "Kernel code model"),
+                   clEnumValN(CodeModel::Medium, "medium",
+                              "Medium code model"),
+                   clEnumValN(CodeModel::Large, "large",
+                              "Large code model"),
+                   clEnumValEnd));
+
 static cl::opt<bool>
 NoInitialTextSection("n", cl::desc("Don't assume assembly file starts "
                                    "in the text section"));
@@ -339,7 +355,8 @@ static int AssembleInput(const char *ProgName) {
   OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName,
                                                              MCPU,
                                                              FeaturesStr,
-                                                             RelocModel));
+                                                             RelocModel,
+                                                             CMModel));
 
   if (!TM) {
     errs() << ProgName << ": error: could not create target for triple '"

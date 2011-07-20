@@ -69,9 +69,10 @@ extern "C" void LLVMInitializeBlackfinMCAsmInfo() {
   RegisterMCAsmInfo<BlackfinMCAsmInfo> X(TheBlackfinTarget);
 }
 
-MCCodeGenInfo *createBlackfinMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+MCCodeGenInfo *createBlackfinMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                           CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
-  X->InitMCCodeGenInfo(RM);
+  X->InitMCCodeGenInfo(RM, CM);
   return X;
 }
 

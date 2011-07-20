@@ -42,7 +42,7 @@ class PPCTargetMachine : public LLVMTargetMachine {
 public:
   PPCTargetMachine(const Target &T, StringRef TT,
                    StringRef CPU, StringRef FS,
-                   Reloc::Model RM, bool is64Bit);
+                   Reloc::Model RM, CodeModel::Model CM, bool is64Bit);
 
   virtual const PPCInstrInfo      *getInstrInfo() const { return &InstrInfo; }
   virtual const PPCFrameLowering  *getFrameLowering() const {
@@ -78,7 +78,8 @@ public:
 class PPC32TargetMachine : public PPCTargetMachine {
 public:
   PPC32TargetMachine(const Target &T, StringRef TT,
-                     StringRef CPU, StringRef FS, Reloc::Model RM);
+                     StringRef CPU, StringRef FS,
+                     Reloc::Model RM, CodeModel::Model CM);
 };
 
 /// PPC64TargetMachine - PowerPC 64-bit target machine.
@@ -86,7 +87,8 @@ public:
 class PPC64TargetMachine : public PPCTargetMachine {
 public:
   PPC64TargetMachine(const Target &T, StringRef TT,
-                     StringRef CPU, StringRef FS, Reloc::Model RM);
+                     StringRef CPU, StringRef FS,
+                     Reloc::Model RM, CodeModel::Model CM);
 };
 
 } // end namespace llvm

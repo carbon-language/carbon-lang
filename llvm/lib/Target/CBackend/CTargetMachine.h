@@ -21,7 +21,8 @@ namespace llvm {
 
 struct CTargetMachine : public TargetMachine {
   CTargetMachine(const Target &T, StringRef TT,
-                 StringRef CPU, StringRef FS, Reloc::Model RM)
+                 StringRef CPU, StringRef FS,
+                 Reloc::Model RM, CodeModel::Model CM)
     : TargetMachine(T, TT, CPU, FS) {}
 
   virtual bool addPassesToEmitFile(PassManagerBase &PM,

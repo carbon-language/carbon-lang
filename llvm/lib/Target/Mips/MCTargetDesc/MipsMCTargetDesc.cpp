@@ -78,7 +78,8 @@ extern "C" void LLVMInitializeMipsMCAsmInfo() {
   RegisterMCAsmInfoFn Y(TheMipselTarget, createMipsMCAsmInfo);
 }
 
-MCCodeGenInfo *createMipsMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+MCCodeGenInfo *createMipsMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                       CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   if (RM == Reloc::Default) {
     // Abicall enables PIC by default
@@ -88,7 +89,7 @@ MCCodeGenInfo *createMipsMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
     else
       RM = Reloc::PIC_;
   }
-  X->InitMCCodeGenInfo(RM);
+  X->InitMCCodeGenInfo(RM, CM);
   return X;
 }
 

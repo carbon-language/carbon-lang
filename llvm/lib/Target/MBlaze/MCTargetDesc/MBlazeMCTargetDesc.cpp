@@ -75,11 +75,14 @@ extern "C" void LLVMInitializeMBlazeMCAsmInfo() {
   RegisterMCAsmInfoFn X(TheMBlazeTarget, createMCAsmInfo);
 }
 
-MCCodeGenInfo *createMBlazeMCCodeGenInfo(StringRef TT, Reloc::Model RM) {
+MCCodeGenInfo *createMBlazeMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                         CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   if (RM == Reloc::Default)
-      RM = Reloc::Static;
-  X->InitMCCodeGenInfo(RM);
+    RM = Reloc::Static;
+  if (CM == CodeModel::Default)
+    CM = CodeModel::Small;
+  X->InitMCCodeGenInfo(RM, CM);
   return X;
 }
 

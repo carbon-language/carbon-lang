@@ -39,7 +39,8 @@ class SPUTargetMachine : public LLVMTargetMachine {
   InstrItineraryData  InstrItins;
 public:
   SPUTargetMachine(const Target &T, StringRef TT,
-                   StringRef CPU, StringRef FS, Reloc::Model RM);
+                   StringRef CPU, StringRef FS,
+                   Reloc::Model RM, CodeModel::Model CM);
 
   /// Return the subtarget implementation object
   virtual const SPUSubtarget     *getSubtargetImpl() const {

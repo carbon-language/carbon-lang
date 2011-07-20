@@ -437,9 +437,8 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M,
   SmallVector<std::string, 1> MAttrs;
 
   TargetMachine *TM =
-    EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs, RM, ErrorStr);
+    EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs, RM, CMM, ErrorStr);
   if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
-  TM->setCodeModel(CMM);
 
   return ExecutionEngine::JITCtor(M, ErrorStr, JMM, OptLevel, GVsWithCode, TM);
 }
@@ -467,9 +466,8 @@ ExecutionEngine *EngineBuilder::create() {
   // try making a JIT.
   if (WhichEngine & EngineKind::JIT) {
     if (TargetMachine *TM = EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs,
-                                                        RelocModel, ErrorStr)) {
-      TM->setCodeModel(CMModel);
-
+                                                        RelocModel, CMModel,
+                                                        ErrorStr)) {
       if (UseMCJIT && ExecutionEngine::MCJITCtor) {
         ExecutionEngine *EE =
           ExecutionEngine::MCJITCtor(M, ErrorStr, JMM, OptLevel,

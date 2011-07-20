@@ -35,7 +35,7 @@ class SparcTargetMachine : public LLVMTargetMachine {
 public:
   SparcTargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS,
-                     Reloc::Model RM, bool is64bit);
+                     Reloc::Model RM, CodeModel::Model CM, bool is64bit);
 
   virtual const SparcInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameLowering  *getFrameLowering() const {
@@ -63,7 +63,8 @@ public:
 class SparcV8TargetMachine : public SparcTargetMachine {
 public:
   SparcV8TargetMachine(const Target &T, StringRef TT,
-                       StringRef CPU, StringRef FS, Reloc::Model RM);
+                       StringRef CPU, StringRef FS,
+                       Reloc::Model RM, CodeModel::Model CM);
 };
 
 /// SparcV9TargetMachine - Sparc 64-bit target machine
@@ -71,7 +72,8 @@ public:
 class SparcV9TargetMachine : public SparcTargetMachine {
 public:
   SparcV9TargetMachine(const Target &T, StringRef TT,
-                       StringRef CPU, StringRef FS, Reloc::Model RM);
+                       StringRef CPU, StringRef FS,
+                       Reloc::Model RM, CodeModel::Model CM);
 };
 
 } // end namespace llvm

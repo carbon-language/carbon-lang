@@ -39,7 +39,8 @@ class MSP430TargetMachine : public LLVMTargetMachine {
 
 public:
   MSP430TargetMachine(const Target &T, StringRef TT,
-                      StringRef CPU, StringRef FS, Reloc::Model RM);
+                      StringRef CPU, StringRef FS,
+                      Reloc::Model RM, CodeModel::Model CM);
 
   virtual const TargetFrameLowering *getFrameLowering() const {
     return &FrameLowering;

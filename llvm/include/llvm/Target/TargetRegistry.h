@@ -70,7 +70,9 @@ namespace llvm {
 
     typedef MCAsmInfo *(*MCAsmInfoCtorFnTy)(const Target &T,
                                             StringRef TT);
-    typedef MCCodeGenInfo *(*MCCodeGenInfoCtorFnTy)(StringRef TT, Reloc::Model M);
+    typedef MCCodeGenInfo *(*MCCodeGenInfoCtorFnTy)(StringRef TT,
+                                                    Reloc::Model RM,
+                                                    CodeModel::Model CM);
     typedef MCInstrInfo *(*MCInstrInfoCtorFnTy)(void);
     typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(StringRef TT);
     typedef MCSubtargetInfo *(*MCSubtargetInfoCtorFnTy)(StringRef TT,
@@ -80,7 +82,8 @@ namespace llvm {
                                                   StringRef TT,
                                                   StringRef CPU,
                                                   StringRef Features,
-                                                  Reloc::Model RM);
+                                                  Reloc::Model RM,
+                                                  CodeModel::Model CM);
     typedef AsmPrinter *(*AsmPrinterCtorTy)(TargetMachine &TM,
                                             MCStreamer &Streamer);
     typedef TargetAsmBackend *(*AsmBackendCtorTy)(const Target &T,
@@ -263,10 +266,11 @@ namespace llvm {
 
     /// createMCCodeGenInfo - Create a MCCodeGenInfo implementation.
     ///
-    MCCodeGenInfo *createMCCodeGenInfo(StringRef Triple, Reloc::Model M) const {
+    MCCodeGenInfo *createMCCodeGenInfo(StringRef Triple, Reloc::Model RM,
+                                       CodeModel::Model CM) const {
       if (!MCCodeGenInfoCtorFn)
         return 0;
-      return MCCodeGenInfoCtorFn(Triple, M);
+      return MCCodeGenInfoCtorFn(Triple, RM, CM);
     }
 
     /// createMCInstrInfo - Create a MCInstrInfo implementation.
@@ -309,11 +313,12 @@ namespace llvm {
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
     TargetMachine *createTargetMachine(StringRef Triple, StringRef CPU,
-                                       StringRef Features,
-                                       Reloc::Model RM = Reloc::Default) const {
+                               StringRef Features,
+                               Reloc::Model RM = Reloc::Default,
+                               CodeModel::Model CM = CodeModel::Default) const {
       if (!TargetMachineCtorFn)
         return 0;
-      return TargetMachineCtorFn(*this, Triple, CPU, Features, RM);
+      return TargetMachineCtorFn(*this, Triple, CPU, Features, RM, CM);
     }
 
     /// createAsmBackend - Create a target specific assembly parser.
@@ -802,7 +807,8 @@ namespace llvm {
       TargetRegistry::RegisterMCCodeGenInfo(T, &Allocator);
     }
   private:
-    static MCCodeGenInfo *Allocator(StringRef TT, Reloc::Model M) {
+    static MCCodeGenInfo *Allocator(StringRef TT,
+                                    Reloc::Model RM, CodeModel::Model CM) {
       return new MCCodeGenInfoImpl();
     }
   };
@@ -938,8 +944,9 @@ namespace llvm {
   private:
     static TargetMachine *Allocator(const Target &T, StringRef TT,
                                     StringRef CPU, StringRef FS,
-                                    Reloc::Model RM) {
-      return new TargetMachineImpl(T, TT, CPU, FS, RM);
+                                    Reloc::Model RM,
+                                    CodeModel::Model CM) {
+      return new TargetMachineImpl(T, TT, CPU, FS, RM, CM);
     }
   };
 
