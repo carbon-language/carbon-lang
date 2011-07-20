@@ -38,7 +38,7 @@ void PragmaGCCVisibilityHandler::HandlePragma(Preprocessor &PP,
   SourceLocation VisLoc = VisTok.getLocation();
 
   Token Tok;
-  PP.Lex(Tok);
+  PP.LexUnexpandedToken(Tok);
 
   const IdentifierInfo *PushPop = Tok.getIdentifierInfo();
 
@@ -49,20 +49,20 @@ void PragmaGCCVisibilityHandler::HandlePragma(Preprocessor &PP,
     VisType = 0;
   } else if (PushPop && PushPop->isStr("push")) {
     IsPush = true;
-    PP.Lex(Tok);
+    PP.LexUnexpandedToken(Tok);
     if (Tok.isNot(tok::l_paren)) {
       PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_lparen)
         << "visibility";
       return;
     }
-    PP.Lex(Tok);
+    PP.LexUnexpandedToken(Tok);
     VisType = Tok.getIdentifierInfo();
     if (!VisType) {
       PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier)
         << "visibility";
       return;
     }
-    PP.Lex(Tok);
+    PP.LexUnexpandedToken(Tok);
     if (Tok.isNot(tok::r_paren)) {
       PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_rparen)
         << "visibility";
@@ -73,7 +73,7 @@ void PragmaGCCVisibilityHandler::HandlePragma(Preprocessor &PP,
       << "visibility";
     return;
   }
-  PP.Lex(Tok);
+  PP.LexUnexpandedToken(Tok);
   if (Tok.isNot(tok::eod)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
       << "visibility";
