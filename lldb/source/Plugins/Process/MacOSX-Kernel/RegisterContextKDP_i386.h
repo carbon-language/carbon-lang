@@ -16,10 +16,12 @@
 // Project includes
 #include "Plugins/Process/Utility/RegisterContextDarwin_i386.h"
 
+class ThreadKDP;
+
 class RegisterContextKDP_i386 : public RegisterContextDarwin_i386
 {
 public:
-    RegisterContextKDP_i386 (lldb_private::Thread &thread, 
+    RegisterContextKDP_i386 (ThreadKDP &thread, 
                              uint32_t concrete_frame_idx);
     
     virtual
@@ -44,6 +46,8 @@ protected:
     
     int
     DoWriteEXC (lldb::tid_t tid, int flavor, const EXC &exc);
+    
+    ThreadKDP &m_kdp_thread;
 };
 
 #endif  // liblldb_RegisterContextKDP_i386_h_

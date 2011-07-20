@@ -156,9 +156,15 @@ public:
     
     uint32_t
     SendRequestReadMemory (lldb::addr_t addr, 
-                           void *buf, 
-                           uint32_t size,
+                           void *dst, 
+                           uint32_t dst_size,
                            lldb_private::Error &error);
+
+    uint32_t
+    SendRequestWriteMemory (lldb::addr_t addr, 
+                            const void *src, 
+                            uint32_t src_len,
+                            lldb_private::Error &error);
 
     uint32_t
     SendRequestReadRegisters (uint32_t cpu,
@@ -166,11 +172,6 @@ public:
                               void *dst, 
                               uint32_t dst_size,
                               lldb_private::Error &error);
-//    size_t
-//    SendRequestWriteMemory (lldb::addr_t addr, 
-//                            const void *buf, 
-//                            size_t size,
-//                            lldb_private::Error &error);
     
     uint32_t
     GetVersion ();

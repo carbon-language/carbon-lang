@@ -9,19 +9,20 @@
 
 
 // C Includes
-#include <mach/thread_act.h>
-
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
 #include "RegisterContextKDP_i386.h"
+#include "ProcessKDP.h"
+#include "ThreadKDP.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
 
-RegisterContextKDP_i386::RegisterContextKDP_i386(Thread &thread, uint32_t concrete_frame_idx) :
-    RegisterContextDarwin_i386 (thread, concrete_frame_idx)
+RegisterContextKDP_i386::RegisterContextKDP_i386 (ThreadKDP &thread, uint32_t concrete_frame_idx) :
+    RegisterContextDarwin_i386 (thread, concrete_frame_idx),
+    m_kdp_thread (thread)
 {
 }
 
@@ -32,22 +33,37 @@ RegisterContextKDP_i386::~RegisterContextKDP_i386()
 int
 RegisterContextKDP_i386::DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr)
 {
-    mach_msg_type_number_t count = GPRWordCount;
-    return ::thread_get_state(tid, flavor, (thread_state_t)&gpr, &count);
+    Error error;
+    if (m_kdp_thread.GetKDPProcess().GetCommunication().SendRequestReadRegisters (tid, GPRRegSet, &gpr, sizeof(gpr), error))
+    {
+        if (error.Success())
+            return 0;
+    }
+    return -1;
 }
 
 int
 RegisterContextKDP_i386::DoReadFPU (lldb::tid_t tid, int flavor, FPU &fpu)
 {
-    mach_msg_type_number_t count = FPUWordCount;
-    return ::thread_get_state(tid, flavor, (thread_state_t)&fpu, &count);
+    Error error;
+    if (m_kdp_thread.GetKDPProcess().GetCommunication().SendRequestReadRegisters (tid, FPURegSet, &fpu, sizeof(fpu), error))
+    {
+        if (error.Success())
+            return 0;
+    }
+    return -1;
 }
 
 int
 RegisterContextKDP_i386::DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc)
 {
-    mach_msg_type_number_t count = EXCWordCount;
-    return ::thread_get_state(tid, flavor, (thread_state_t)&exc, &count);
+    Error error;
+    if (m_kdp_thread.GetKDPProcess().GetCommunication().SendRequestReadRegisters (tid, EXCRegSet, &exc, sizeof(exc), error))
+    {
+        if (error.Success())
+            return 0;
+    }
+    return -1;
 }
 
 int

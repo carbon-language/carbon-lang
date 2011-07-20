@@ -9,19 +9,20 @@
 
 
 // C Includes
-#include <mach/thread_act.h>
-
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
 #include "RegisterContextKDP_x86_64.h"
+#include "ProcessKDP.h"
+#include "ThreadKDP.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
 
-RegisterContextKDP_x86_64::RegisterContextKDP_x86_64(Thread &thread, uint32_t concrete_frame_idx) :
-    RegisterContextDarwin_x86_64 (thread, concrete_frame_idx)
+RegisterContextKDP_x86_64::RegisterContextKDP_x86_64 (ThreadKDP &thread, uint32_t concrete_frame_idx) :
+    RegisterContextDarwin_x86_64 (thread, concrete_frame_idx),
+    m_kdp_thread (thread)
 {
 }
 
