@@ -1,13 +1,5 @@
 @ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding %s | FileCheck %s
 
-@ CHECK: nop
-@ CHECK: encoding: [0x00,0xf0,0x20,0xe3]
-        nop
-
-@ CHECK: nopeq
-@ CHECK: encoding: [0x00,0xf0,0x20,0x03]
-        nopeq
-
 @ CHECK: trap
 @ CHECK: encoding: [0xfe,0xde,0xff,0xe7]
         trap
@@ -108,9 +100,6 @@
 
 @ CHECK: yield @ encoding: [0x01,0xf0,0x20,0xe3]
         yield
-
-@ CHECK: nop @ encoding: [0x00,0xf0,0x20,0xe3]
-        nop
 
 @ CHECK: cpsie  aif @ encoding: [0xc0,0x01,0x08,0xf1]
         cpsie  aif
