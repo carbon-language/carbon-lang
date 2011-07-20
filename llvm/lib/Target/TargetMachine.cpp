@@ -202,7 +202,8 @@ FunctionSections("ffunction-sections",
 
 TargetMachine::TargetMachine(const Target &T,
                              StringRef TT, StringRef CPU, StringRef FS)
-  : TheTarget(T), TargetTriple(TT), TargetCPU(CPU), TargetFS(FS), AsmInfo(0),
+  : TheTarget(T), TargetTriple(TT), TargetCPU(CPU), TargetFS(FS),
+    CodeGenInfo(0), AsmInfo(0),
     MCRelaxAll(false),
     MCNoExecStack(false),
     MCSaveTempLabels(false),
@@ -215,6 +216,7 @@ TargetMachine::TargetMachine(const Target &T,
 }
 
 TargetMachine::~TargetMachine() {
+  delete CodeGenInfo;
   delete AsmInfo;
 }
 
