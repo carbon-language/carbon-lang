@@ -784,6 +784,21 @@ static void CollectExtend(CastInst *Cast, bool IsSigned, WideIVInfo &WI,
 }
 
 namespace {
+
+/// NarrowIVDefUse - Record a link in the Narrow IV def-use chain along with the
+/// WideIV that computes the same value as the Narrow IV def.  This avoids
+/// caching Use* pointers.
+struct NarrowIVDefUse {
+  Instruction *NarrowDef;
+  Instruction *NarrowUse;
+  Instruction *WideDef;
+
+  NarrowIVDefUse(): NarrowDef(0), NarrowUse(0), WideDef(0) {}
+
+  NarrowIVDefUse(Instruction *ND, Instruction *NU, Instruction *WD):
+    NarrowDef(ND), NarrowUse(NU), WideDef(WD) {}
+};
+
 /// WidenIV - The goal of this transform is to remove sign and zero extends
 /// without creating any new induction variables. To do this, it creates a new
 /// phi of the wider type and redirects all users, either removing extends or
@@ -808,7 +823,7 @@ class WidenIV {
   SmallVectorImpl<WeakVH> &DeadInsts;
 
   SmallPtrSet<Instruction*,16> Widened;
-  SmallVector<std::pair<Use *, Instruction *>, 8> NarrowIVUsers;
+  SmallVector<NarrowIVDefUse, 8> NarrowIVUsers;
 
 public:
   WidenIV(PHINode *PN, const WideIVInfo &WI, LoopInfo *LInfo,
@@ -831,14 +846,11 @@ public:
   PHINode *CreateWideIV(SCEVExpander &Rewriter);
 
 protected:
-  Instruction *CloneIVUser(Instruction *NarrowUse,
-                           Instruction *NarrowDef,
-                           Instruction *WideDef);
+  Instruction *CloneIVUser(NarrowIVDefUse DU);
 
   const SCEVAddRecExpr *GetWideRecurrence(Instruction *NarrowUse);
 
-  Instruction *WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
-                          Instruction *WideDef);
+  Instruction *WidenIVUse(NarrowIVDefUse DU);
 
   void pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef);
 };
@@ -853,10 +865,8 @@ static Value *getExtend( Value *NarrowOper, Type *WideType,
 /// CloneIVUser - Instantiate a wide operation to replace a narrow
 /// operation. This only needs to handle operations that can evaluation to
 /// SCEVAddRec. It can safely return 0 for any operation we decide not to clone.
-Instruction *WidenIV::CloneIVUser(Instruction *NarrowUse,
-                                  Instruction *NarrowDef,
-                                  Instruction *WideDef) {
-  unsigned Opcode = NarrowUse->getOpcode();
+Instruction *WidenIV::CloneIVUser(NarrowIVDefUse DU) {
+  unsigned Opcode = DU.NarrowUse->getOpcode();
   switch (Opcode) {
   default:
     return 0;
@@ -870,21 +880,21 @@ Instruction *WidenIV::CloneIVUser(Instruction *NarrowUse,
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    DEBUG(dbgs() << "Cloning IVUser: " << *NarrowUse << "\n");
+    DEBUG(dbgs() << "Cloning IVUser: " << *DU.NarrowUse << "\n");
 
-    IRBuilder<> Builder(NarrowUse);
+    IRBuilder<> Builder(DU.NarrowUse);
 
     // Replace NarrowDef operands with WideDef. Otherwise, we don't know
     // anything about the narrow operand yet so must insert a [sz]ext. It is
     // probably loop invariant and will be folded or hoisted. If it actually
     // comes from a widened IV, it should be removed during a future call to
     // WidenIVUse.
-    Value *LHS = (NarrowUse->getOperand(0) == NarrowDef) ? WideDef :
-      getExtend(NarrowUse->getOperand(0), WideType, IsSigned, Builder);
-    Value *RHS = (NarrowUse->getOperand(1) == NarrowDef) ? WideDef :
-      getExtend(NarrowUse->getOperand(1), WideType, IsSigned, Builder);
+    Value *LHS = (DU.NarrowUse->getOperand(0) == DU.NarrowDef) ? DU.WideDef :
+      getExtend(DU.NarrowUse->getOperand(0), WideType, IsSigned, Builder);
+    Value *RHS = (DU.NarrowUse->getOperand(1) == DU.NarrowDef) ? DU.WideDef :
+      getExtend(DU.NarrowUse->getOperand(1), WideType, IsSigned, Builder);
 
-    BinaryOperator *NarrowBO = cast<BinaryOperator>(NarrowUse);
+    BinaryOperator *NarrowBO = cast<BinaryOperator>(DU.NarrowUse);
     BinaryOperator *WideBO = BinaryOperator::Create(NarrowBO->getOpcode(),
                                                     LHS, RHS,
                                                     NarrowBO->getName());
@@ -962,41 +972,40 @@ const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
 
 /// WidenIVUse - Determine whether an individual user of the narrow IV can be
 /// widened. If so, return the wide clone of the user.
-Instruction *WidenIV::WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
-                                 Instruction *WideDef) {
-  Instruction *NarrowUse = cast<Instruction>(NarrowDefUse.getUser());
+Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU) {
 
   // Stop traversing the def-use chain at inner-loop phis or post-loop phis.
-  if (isa<PHINode>(NarrowUse) && LI->getLoopFor(NarrowUse->getParent()) != L)
+  if (isa<PHINode>(DU.NarrowUse) &&
+      LI->getLoopFor(DU.NarrowUse->getParent()) != L)
     return 0;
 
   // Our raison d'etre! Eliminate sign and zero extension.
-  if (IsSigned ? isa<SExtInst>(NarrowUse) : isa<ZExtInst>(NarrowUse)) {
-    Value *NewDef = WideDef;
-    if (NarrowUse->getType() != WideType) {
-      unsigned CastWidth = SE->getTypeSizeInBits(NarrowUse->getType());
+  if (IsSigned ? isa<SExtInst>(DU.NarrowUse) : isa<ZExtInst>(DU.NarrowUse)) {
+    Value *NewDef = DU.WideDef;
+    if (DU.NarrowUse->getType() != WideType) {
+      unsigned CastWidth = SE->getTypeSizeInBits(DU.NarrowUse->getType());
       unsigned IVWidth = SE->getTypeSizeInBits(WideType);
       if (CastWidth < IVWidth) {
         // The cast isn't as wide as the IV, so insert a Trunc.
-        IRBuilder<> Builder(NarrowDefUse);
-        NewDef = Builder.CreateTrunc(WideDef, NarrowUse->getType());
+        IRBuilder<> Builder(DU.NarrowUse);
+        NewDef = Builder.CreateTrunc(DU.WideDef, DU.NarrowUse->getType());
       }
       else {
         // A wider extend was hidden behind a narrower one. This may induce
         // another round of IV widening in which the intermediate IV becomes
         // dead. It should be very rare.
         DEBUG(dbgs() << "INDVARS: New IV " << *WidePhi
-              << " not wide enough to subsume " << *NarrowUse << "\n");
-        NarrowUse->replaceUsesOfWith(NarrowDef, WideDef);
-        NewDef = NarrowUse;
+              << " not wide enough to subsume " << *DU.NarrowUse << "\n");
+        DU.NarrowUse->replaceUsesOfWith(DU.NarrowDef, DU.WideDef);
+        NewDef = DU.NarrowUse;
       }
     }
-    if (NewDef != NarrowUse) {
-      DEBUG(dbgs() << "INDVARS: eliminating " << *NarrowUse
-            << " replaced by " << *WideDef << "\n");
+    if (NewDef != DU.NarrowUse) {
+      DEBUG(dbgs() << "INDVARS: eliminating " << *DU.NarrowUse
+            << " replaced by " << *DU.WideDef << "\n");
       ++NumElimExt;
-      NarrowUse->replaceAllUsesWith(NewDef);
-      DeadInsts.push_back(NarrowUse);
+      DU.NarrowUse->replaceAllUsesWith(NewDef);
+      DeadInsts.push_back(DU.NarrowUse);
     }
     // Now that the extend is gone, we want to expose it's uses for potential
     // further simplification. We don't need to directly inform SimplifyIVUsers
@@ -1009,29 +1018,31 @@ Instruction *WidenIV::WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
   }
 
   // Does this user itself evaluate to a recurrence after widening?
-  const SCEVAddRecExpr *WideAddRec = GetWideRecurrence(NarrowUse);
+  const SCEVAddRecExpr *WideAddRec = GetWideRecurrence(DU.NarrowUse);
   if (!WideAddRec) {
     // This user does not evaluate to a recurence after widening, so don't
     // follow it. Instead insert a Trunc to kill off the original use,
     // eventually isolating the original narrow IV so it can be removed.
-    IRBuilder<> Builder(NarrowDefUse);
-    Value *Trunc = Builder.CreateTrunc(WideDef, NarrowDef->getType());
-    NarrowUse->replaceUsesOfWith(NarrowDef, Trunc);
+    Use *U = std::find(DU.NarrowUse->op_begin(), DU.NarrowUse->op_end(),
+                       DU.NarrowDef);
+    IRBuilder<> Builder(*U);
+    Value *Trunc = Builder.CreateTrunc(DU.WideDef, DU.NarrowDef->getType());
+    DU.NarrowUse->replaceUsesOfWith(DU.NarrowDef, Trunc);
     return 0;
   }
   // Assume block terminators cannot evaluate to a recurrence. We can't to
   // insert a Trunc after a terminator if there happens to be a critical edge.
-  assert(NarrowUse != NarrowUse->getParent()->getTerminator() &&
+  assert(DU.NarrowUse != DU.NarrowUse->getParent()->getTerminator() &&
          "SCEV is not expected to evaluate a block terminator");
 
   // Reuse the IV increment that SCEVExpander created as long as it dominates
   // NarrowUse.
   Instruction *WideUse = 0;
-  if (WideAddRec == WideIncExpr && HoistStep(WideInc, NarrowUse, DT)) {
+  if (WideAddRec == WideIncExpr && HoistStep(WideInc, DU.NarrowUse, DT)) {
     WideUse = WideInc;
   }
   else {
-    WideUse = CloneIVUser(NarrowUse, NarrowDef, WideDef);
+    WideUse = CloneIVUser(DU);
     if (!WideUse)
       return 0;
   }
@@ -1056,13 +1067,13 @@ Instruction *WidenIV::WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
 void WidenIV::pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef) {
   for (Value::use_iterator UI = NarrowDef->use_begin(),
          UE = NarrowDef->use_end(); UI != UE; ++UI) {
-    Use &U = UI.getUse();
+    Instruction *NarrowUse = cast<Instruction>(*UI);
 
     // Handle data flow merges and bizarre phi cycles.
-    if (!Widened.insert(cast<Instruction>(U.getUser())))
+    if (!Widened.insert(NarrowUse))
       continue;
 
-    NarrowIVUsers.push_back(std::make_pair(&UI.getUse(), WideDef));
+    NarrowIVUsers.push_back(NarrowIVDefUse(NarrowDef, NarrowUse, WideDef));
   }
 }
 
@@ -1129,23 +1140,19 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
   pushNarrowIVUsers(OrigPhi, WidePhi);
 
   while (!NarrowIVUsers.empty()) {
-    Use *UsePtr;
-    Instruction *WideDef;
-    tie(UsePtr, WideDef) = NarrowIVUsers.pop_back_val();
-    Use &NarrowDefUse = *UsePtr;
+    NarrowIVDefUse DU = NarrowIVUsers.pop_back_val();
 
     // Process a def-use edge. This may replace the use, so don't hold a
     // use_iterator across it.
-    Instruction *NarrowDef = cast<Instruction>(NarrowDefUse.get());
-    Instruction *WideUse = WidenIVUse(NarrowDefUse, NarrowDef, WideDef);
+    Instruction *WideUse = WidenIVUse(DU);
 
     // Follow all def-use edges from the previous narrow use.
     if (WideUse)
-      pushNarrowIVUsers(cast<Instruction>(NarrowDefUse.getUser()), WideUse);
+      pushNarrowIVUsers(DU.NarrowUse, WideUse);
 
     // WidenIVUse may have removed the def-use edge.
-    if (NarrowDef->use_empty())
-      DeadInsts.push_back(NarrowDef);
+    if (DU.NarrowDef->use_empty())
+      DeadInsts.push_back(DU.NarrowDef);
   }
   return WidePhi;
 }
