@@ -173,3 +173,22 @@ void test_f9() {
   const __autoreleasing id& ar3 = unsafe_unretained_a;
   const __autoreleasing id& ar4 = weak_a;
 }
+
+// rdar://9790531
+void f9790531(void *inClientData); // expected-note {{candidate function not viable: cannot implicitly convert argument of type 'MixerEQGraphTestDelegate *const __strong' to 'void *' for 1st argument under ARC}}
+void f9790531_1(struct S*inClientData); // expected-note {{candidate function not viable}}
+void f9790531_2(char * inClientData); // expected-note {{candidate function not viable}}
+
+@class UIApplication;
+
+@interface MixerEQGraphTestDelegate
+- (void)applicationDidFinishLaunching;
+@end
+
+@implementation MixerEQGraphTestDelegate
+- (void)applicationDidFinishLaunching {
+    f9790531(self); // expected-error {{no matching function for call to 'f9790531'}}
+    f9790531_1(self); // expected-error {{no matching function for call to 'f9790531_1'}}
+    f9790531_2(self); // expected-error {{no matching function for call to 'f9790531_2'}}
+}
+@end

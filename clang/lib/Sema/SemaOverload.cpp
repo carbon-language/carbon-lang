@@ -6981,8 +6981,21 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
     return;
   }
 
+  if (isa<ObjCObjectPointerType>(CFromTy) &&
+      isa<PointerType>(CToTy)) {
+      Qualifiers FromQs = CFromTy.getQualifiers();
+      Qualifiers ToQs = CToTy.getQualifiers();
+      if (FromQs.getObjCLifetime() != ToQs.getObjCLifetime()) {
+        S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_arc_conv)
+        << (unsigned) FnKind << FnDesc
+        << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+        << FromTy << ToTy << (unsigned) isObjectArgument << I+1;
+        MaybeEmitInheritedConstructorNote(S, Fn);
+        return;
+      }
+  }
+  
   // TODO: specialize more based on the kind of mismatch
-
   // Emit the generic diagnostic and, optionally, add the hints to it.
   PartialDiagnostic FDiag = S.PDiag(diag::note_ovl_candidate_bad_conv);
   FDiag << (unsigned) FnKind << FnDesc
