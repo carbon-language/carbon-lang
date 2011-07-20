@@ -892,6 +892,85 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ ORR
+@------------------------------------------------------------------------------
+        orr r4, r5, #0xf000
+        orr r4, r5, r6
+        orr r4, r5, r6, lsl #5
+        orr r4, r5, r6, lsr #5
+        orr r4, r5, r6, lsr #5
+        orr r4, r5, r6, asr #5
+        orr r4, r5, r6, ror #5
+        orr r6, r7, r8, lsl r9
+        orr r6, r7, r8, lsr r9
+        orr r6, r7, r8, asr r9
+        orr r6, r7, r8, ror r9
+        orr r4, r5, r6, rrx
+
+        @ destination register is optional
+        orr r5, #0xf000
+        orr r4, r5
+        orr r4, r5, lsl #5
+        orr r4, r5, lsr #5
+        orr r4, r5, lsr #5
+        orr r4, r5, asr #5
+        orr r4, r5, ror #5
+        orr r6, r7, lsl r9
+        orr r6, r7, lsr r9
+        orr r6, r7, asr r9
+        orr r6, r7, ror r9
+        orr r4, r5, rrx
+
+@ CHECK: orr	r4, r5, #61440          @ encoding: [0x0f,0x4a,0x85,0xe3]
+@ CHECK: orr	r4, r5, r6              @ encoding: [0x06,0x40,0x85,0xe1]
+@ CHECK: orr	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0x85,0xe1]
+@ CHECK: orr	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x85,0xe1]
+@ CHECK: orr	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x85,0xe1]
+@ CHECK: orr	r4, r5, r6, asr #5      @ encoding: [0xc6,0x42,0x85,0xe1]
+@ CHECK: orr	r4, r5, r6, ror #5      @ encoding: [0xe6,0x42,0x85,0xe1]
+@ CHECK: orr	r6, r7, r8, lsl r9      @ encoding: [0x18,0x69,0x87,0xe1]
+@ CHECK: orr	r6, r7, r8, lsr r9      @ encoding: [0x38,0x69,0x87,0xe1]
+@ CHECK: orr	r6, r7, r8, asr r9      @ encoding: [0x58,0x69,0x87,0xe1]
+@ CHECK: orr	r6, r7, r8, ror r9      @ encoding: [0x78,0x69,0x87,0xe1]
+@ CHECK: orr	r4, r5, r6, rrx         @ encoding: [0x66,0x40,0x85,0xe1]
+
+@ CHECK: orr	r5, r5, #61440          @ encoding: [0x0f,0x5a,0x85,0xe3]
+@ CHECK: orr	r4, r4, r5              @ encoding: [0x05,0x40,0x84,0xe1]
+@ CHECK: orr	r4, r4, r5, lsl #5      @ encoding: [0x85,0x42,0x84,0xe1]
+@ CHECK: orr	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0x84,0xe1]
+@ CHECK: orr	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0x84,0xe1]
+@ CHECK: orr	r4, r4, r5, asr #5      @ encoding: [0xc5,0x42,0x84,0xe1]
+@ CHECK: orr	r4, r4, r5, ror #5      @ encoding: [0xe5,0x42,0x84,0xe1]
+@ CHECK: orr	r6, r6, r7, lsl r9      @ encoding: [0x17,0x69,0x86,0xe1]
+@ CHECK: orr	r6, r6, r7, lsr r9      @ encoding: [0x37,0x69,0x86,0xe1]
+@ CHECK: orr	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0x86,0xe1]
+@ CHECK: orr	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x86,0xe1]
+@ CHECK: orr	r4, r4, r5, rrx         @ encoding: [0x65,0x40,0x84,0xe1]
+
+        orrseq r4, r5, #0xf000
+        orrne r4, r5, r6
+        orrseq r4, r5, r6, lsl #5
+        orrlo r6, r7, r8, ror r9
+        orrshi r4, r5, r6, rrx
+        orrcs r5, #0xf000
+        orrseq r4, r5
+        orrne r6, r7, asr r9
+        orrslt r6, r7, ror r9
+        orrsgt r4, r5, rrx
+
+@ CHECK: orrseq	r4, r5, #61440          @ encoding: [0x0f,0x4a,0x95,0x03]
+@ CHECK: orrne	r4, r5, r6              @ encoding: [0x06,0x40,0x85,0x11]
+@ CHECK: orrseq	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0x95,0x01]
+@ CHECK: orrlo	r6, r7, r8, ror r9      @ encoding: [0x78,0x69,0x87,0x31]
+@ CHECK: orrshi	r4, r5, r6, rrx         @ encoding: [0x66,0x40,0x95,0x81]
+@ CHECK: orrhs	r5, r5, #61440          @ encoding: [0x0f,0x5a,0x85,0x23]
+@ CHECK: orrseq	r4, r4, r5              @ encoding: [0x05,0x40,0x94,0x01]
+@ CHECK: orrne	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0x86,0x11]
+@ CHECK: orrslt	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x96,0xb1]
+@ CHECK: orrsgt	r4, r4, r5, rrx         @ encoding: [0x65,0x40,0x94,0xc1]
+
+
+@------------------------------------------------------------------------------
 @ STM*
 @------------------------------------------------------------------------------
         stm       r2, {r1,r3-r6,sp}

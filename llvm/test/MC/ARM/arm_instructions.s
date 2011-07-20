@@ -42,12 +42,6 @@
 @ CHECK: sbc	r1, r2, r3 @ encoding: [0x03,0x10,0xc2,0xe0]
         sbc r1,r2,r3
 
-@ CHECK: orr	r1, r2, r3 @ encoding: [0x03,0x10,0x82,0xe1]
-        orr r1,r2,r3
-
-@ CHECK: orrs	r1, r2, r3 @ encoding: [0x03,0x10,0x92,0xe1]
-        orrs r1,r2,r3
-
 @ CHECK: bic	r1, r2, r3 @ encoding: [0x03,0x10,0xc2,0xe1]
         bic r1,r2,r3
 
