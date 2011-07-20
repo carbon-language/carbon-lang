@@ -582,6 +582,15 @@ private:
   /// \brief The macro definitions we have already loaded.
   llvm::SmallVector<MacroDefinition *, 16> MacroDefinitionsLoaded;
 
+  typedef ContinuousRangeMap<serialization::MacroID, 
+                             std::pair<PerFileData *, int32_t>, 4> 
+    GlobalMacroDefinitionMapType;
+  
+  /// \brief Mapping from global macro definition IDs to the module in which the
+  /// selector resides along with the offset that should be added to the
+  /// global selector ID to produce a local ID.
+  GlobalMacroDefinitionMapType GlobalMacroDefinitionMap;
+
   /// \brief Mapping from identifiers that represent macros whose definitions
   /// have not yet been deserialized to the global offset where the macro
   /// record resides.

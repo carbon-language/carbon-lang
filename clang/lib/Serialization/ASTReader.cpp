@@ -1833,18 +1833,14 @@ MacroDefinition *ASTReader::getMacroDefinition(MacroID ID) {
     return 0;
 
   if (!MacroDefinitionsLoaded[ID - 1]) {
-    unsigned Index = ID - 1;
-    for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-      PerFileData &F = *Chain[N - I - 1];
-      if (Index < F.LocalNumMacroDefinitions) {
-        SavedStreamPosition SavedPosition(F.PreprocessorDetailCursor);  
-        F.PreprocessorDetailCursor.JumpToBit(F.MacroDefinitionOffsets[Index]);
-        LoadPreprocessedEntity(F);
-        break;
-      }
-      Index -= F.LocalNumMacroDefinitions;
-    }
-    assert(MacroDefinitionsLoaded[ID - 1] && "Broken chain");
+    GlobalMacroDefinitionMapType::iterator I =GlobalMacroDefinitionMap.find(ID);
+    assert(I != GlobalMacroDefinitionMap.end() && 
+           "Corrupted global macro definition map");
+    PerFileData &F = *I->second.first;
+    unsigned Index = ID - 1 + I->second.second;
+    SavedStreamPosition SavedPosition(F.PreprocessorDetailCursor);  
+    F.PreprocessorDetailCursor.JumpToBit(F.MacroDefinitionOffsets[Index]);
+    LoadPreprocessedEntity(F);
   }
 
   return MacroDefinitionsLoaded[ID - 1];
@@ -2357,6 +2353,16 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       F.MacroDefinitionOffsets = (const uint32_t *)BlobStart;
       F.NumPreallocatedPreprocessingEntities = Record[0];
       F.LocalNumMacroDefinitions = Record[1];
+        
+      // Introduce the global -> local mapping for identifiers within this AST
+      // file
+      GlobalMacroDefinitionMap.insert(
+               std::make_pair(getTotalNumMacroDefinitions() + 1, 
+                              std::make_pair(&F, 
+                                             -getTotalNumMacroDefinitions())));
+      MacroDefinitionsLoaded.resize(
+                    MacroDefinitionsLoaded.size() + F.LocalNumMacroDefinitions);
+
       break;
 
     case DECL_UPDATE_OFFSETS: {
@@ -2545,17 +2551,14 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   }
 
   // Allocate space for loaded slocentries, identifiers, decls and types.
-  unsigned TotalNumTypes = 0, 
-           TotalNumPreallocatedPreprocessingEntities = 0, TotalNumMacroDefs = 0;
+  unsigned TotalNumTypes = 0, TotalNumPreallocatedPreprocessingEntities = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     TotalNumSLocEntries += Chain[I]->LocalNumSLocEntries;
     TotalNumTypes += Chain[I]->LocalNumTypes;
     TotalNumPreallocatedPreprocessingEntities +=
         Chain[I]->NumPreallocatedPreprocessingEntities;
-    TotalNumMacroDefs += Chain[I]->LocalNumMacroDefinitions;
   }
   TypesLoaded.resize(TotalNumTypes);
-  MacroDefinitionsLoaded.resize(TotalNumMacroDefs);
   if (PP) {
     PP->getHeaderSearchInfo().SetExternalLookup(this);
     if (TotalNumPreallocatedPreprocessingEntities > 0) {
