@@ -2154,6 +2154,7 @@ Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, Stmt *Try,
 StmtResult Sema::BuildObjCAtThrowStmt(SourceLocation AtLoc,
                                                   Expr *Throw) {
   if (Throw) {
+    Throw = MaybeCreateExprWithCleanups(Throw);
     ExprResult Result = DefaultLvalueConversion(Throw);
     if (Result.isInvalid())
       return StmtError();
@@ -2188,7 +2189,7 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw,
     if (!AtCatchParent)
       return StmtError(Diag(AtLoc, diag::error_rethrow_used_outside_catch));
   }
-
+  
   return BuildObjCAtThrowStmt(AtLoc, Throw);
 }
 
