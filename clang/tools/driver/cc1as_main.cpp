@@ -48,7 +48,6 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Target/TargetAsmBackend.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -277,13 +276,13 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
     return false;
   }
 
-  const TargetAsmInfo *tai = new TargetAsmInfo(*TM);
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
   OwningPtr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
-  MCContext Ctx(*MAI, *MRI, MOFI.get(), tai);
+  MCContext Ctx(*MAI, *MRI, MOFI.get());
   // FIXME: Assembler behavior can change with -static.
-  MOFI->InitMCObjectFileInfo(Opts.Triple, Reloc::Default, Ctx);
+  MOFI->InitMCObjectFileInfo(Opts.Triple,
+                             Reloc::Default, CodeModel::Default, Ctx);
   if (Opts.SaveTemporaryLabels)
     Ctx.setAllowTemporaryLabels(false);
 
