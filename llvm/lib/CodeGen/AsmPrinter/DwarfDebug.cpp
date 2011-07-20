@@ -1573,44 +1573,54 @@ void DwarfDebug::endInstruction(const MachineInstr *MI) {
   I->second = PrevLabel;
 }
 
+/// getOrCreateRegularScope - Create regular DbgScope.
+DbgScope *DwarfDebug::getOrCreateRegularScope(MDNode *Scope) {
+  DbgScope *WScope = DbgScopeMap.lookup(Scope);
+  if (WScope)
+    return WScope;
+  WScope = new DbgScope(NULL, DIDescriptor(Scope), NULL);
+  DbgScopeMap.insert(std::make_pair(Scope, WScope));
+  if (DIDescriptor(Scope).isLexicalBlock()) {
+    DbgScope *Parent =
+      getOrCreateDbgScope(DebugLoc::getFromDILexicalBlock(Scope));
+    WScope->setParent(Parent);
+    Parent->addScope(WScope);
+  } else if (DIDescriptor(Scope).isSubprogram()
+             && DISubprogram(Scope).describes(Asm->MF->getFunction()))
+    CurrentFnDbgScope = WScope;
+  
+  return WScope;
+}
+
+/// getOrCreateInlinedScope - Create inlined scope. 
+DbgScope *DwarfDebug::getOrCreateInlinedScope(MDNode *Scope, MDNode *InlinedAt){
+  DbgScope *InlinedScope = DbgScopeMap.lookup(InlinedAt);
+  if (InlinedScope)
+    return InlinedScope;
+
+  InlinedScope = new DbgScope(NULL, DIDescriptor(Scope), InlinedAt);
+  DebugLoc InlinedLoc = DebugLoc::getFromDILocation(InlinedAt);
+  InlinedDbgScopeMap[InlinedLoc] = InlinedScope;
+  DbgScopeMap[InlinedAt] = InlinedScope;
+  DbgScope *Parent = getOrCreateDbgScope(InlinedLoc);
+  InlinedScope->setParent(Parent);
+  Parent->addScope(InlinedScope);
+  return InlinedScope;
+}
+
 /// getOrCreateDbgScope - Create DbgScope for the scope.
 DbgScope *DwarfDebug::getOrCreateDbgScope(DebugLoc DL) {
   LLVMContext &Ctx = Asm->MF->getFunction()->getContext();
   MDNode *Scope = NULL;
   MDNode *InlinedAt = NULL;
   DL.getScopeAndInlinedAt(Scope, InlinedAt, Ctx);
+  if (!InlinedAt) 
+    return getOrCreateRegularScope(Scope);
 
-  if (!InlinedAt) {
-    DbgScope *WScope = DbgScopeMap.lookup(Scope);
-    if (WScope)
-      return WScope;
-    WScope = new DbgScope(NULL, DIDescriptor(Scope), NULL);
-    DbgScopeMap.insert(std::make_pair(Scope, WScope));
-    if (DIDescriptor(Scope).isLexicalBlock()) {
-      DbgScope *Parent =
-        getOrCreateDbgScope(DebugLoc::getFromDILexicalBlock(Scope));
-      WScope->setParent(Parent);
-      Parent->addScope(WScope);
-    } else if (DIDescriptor(Scope).isSubprogram()
-               && DISubprogram(Scope).describes(Asm->MF->getFunction()))
-      CurrentFnDbgScope = WScope;
-
-    return WScope;
-  }
-
+  // Create an abstract scope for inlined function.
   getOrCreateAbstractScope(Scope);
-  DbgScope *WScope = DbgScopeMap.lookup(InlinedAt);
-  if (WScope)
-    return WScope;
-
-  WScope = new DbgScope(NULL, DIDescriptor(Scope), InlinedAt);
-  DbgScopeMap.insert(std::make_pair(InlinedAt, WScope));
-  InlinedDbgScopeMap[DebugLoc::getFromDILocation(InlinedAt)] = WScope;
-  DbgScope *Parent =
-    getOrCreateDbgScope(DebugLoc::getFromDILocation(InlinedAt));
-  WScope->setParent(Parent);
-  Parent->addScope(WScope);
-  return WScope;
+  // Create an inlined scope for inlined function.
+  return getOrCreateInlinedScope(Scope, InlinedAt);
 }
 
 /// calculateDominanceGraph - Calculate dominance graph for DbgScope

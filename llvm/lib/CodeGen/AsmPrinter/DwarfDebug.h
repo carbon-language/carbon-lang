@@ -318,7 +318,8 @@ private:
 
   /// getOrCreateDbgScope - Create DbgScope for the scope.
   DbgScope *getOrCreateDbgScope(DebugLoc DL);
-
+  DbgScope *getOrCreateRegularScope(MDNode *Scope);
+  DbgScope *getOrCreateInlinedScope(MDNode *Scope, MDNode *InlinedAt);
   DbgScope *getOrCreateAbstractScope(const MDNode *N);
 
   /// findAbstractVariable - Find abstract variable associated with Var.
