@@ -1408,7 +1408,7 @@ static bool isConsumerInterestedIn(Decl *D) {
   return isa<ObjCProtocolDecl>(D) || isa<ObjCImplementationDecl>(D);
 }
 
-/// \brief Get the correct cursor and offset for loading a type.
+/// \brief Get the correct cursor and offset for loading a declaration.
 ASTReader::RecordLocation
 ASTReader::DeclCursorForIndex(unsigned Index, DeclID ID) {
   // See if there's an override.
@@ -1416,15 +1416,10 @@ ASTReader::DeclCursorForIndex(unsigned Index, DeclID ID) {
   if (It != ReplacedDecls.end())
     return RecordLocation(It->second.first, It->second.second);
 
-  PerFileData *F = 0;
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    F = Chain[N - I - 1];
-    if (Index < F->LocalNumDecls)
-      break;
-    Index -= F->LocalNumDecls;
-  }
-  assert(F && F->LocalNumDecls > Index && "Broken chain");
-  return RecordLocation(F, F->DeclOffsets[Index]);
+  GlobalDeclMapType::iterator I = GlobalDeclMap.find(ID);
+  assert(I != GlobalDeclMap.end() && "Corrupted global declaration map");
+  return RecordLocation(I->second.first, 
+                        I->second.first->DeclOffsets[Index + I->second.second]);
 }
 
 void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {

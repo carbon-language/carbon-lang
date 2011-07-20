@@ -474,10 +474,19 @@ private:
   /// = I + 1 has already been loaded.
   std::vector<Decl *> DeclsLoaded;
 
+  typedef ContinuousRangeMap<serialization::DeclID, 
+                             std::pair<PerFileData *, int32_t>, 4> 
+    GlobalDeclMapType;
+  /// \brief Mapping from global declaration IDs to the module in which the
+  /// declaration resides along with the offset that should be added to the
+  /// global declaration ID to produce a local ID.
+  GlobalDeclMapType GlobalDeclMap;
+  
   typedef std::pair<PerFileData *, uint64_t> FileOffset;
   typedef llvm::SmallVector<FileOffset, 2> FileOffsetsTy;
   typedef llvm::DenseMap<serialization::DeclID, FileOffsetsTy>
       DeclUpdateOffsetsMap;
+  
   /// \brief Declarations that have modifications residing in a later file
   /// in the chain.
   DeclUpdateOffsetsMap DeclUpdateOffsets;
