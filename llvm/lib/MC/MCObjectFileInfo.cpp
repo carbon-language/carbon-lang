@@ -454,6 +454,7 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
   CommDirectiveSupportsAlignment = true;
   SupportsWeakOmittedEHFrame = true;
   IsFunctionEHFrameSymbolPrivate = true;
+  EHFrameSection = 0;
 
   Triple T(TT);
   Triple::ArchType Arch = T.getArch();
