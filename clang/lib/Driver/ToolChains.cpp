@@ -1752,6 +1752,10 @@ Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA,
   else
     Key = JA.getKind();
 
+  bool UseIntegratedAs = C.getArgs().hasFlag(options::OPT_integrated_as,
+                                             options::OPT_no_integrated_as,
+                                             IsIntegratedAssemblerDefault());
+
   Tool *&T = Tools[Key];
   if (!T) {
     switch (Key) {
@@ -1766,7 +1770,11 @@ Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA,
     case Action::CompileJobClass:
       T = new tools::Clang(*this); break;
     case Action::AssembleJobClass:
-      T = new tools::ClangAs(*this); break;
+      if (!UseIntegratedAs && getTriple().getEnvironment() == llvm::Triple::MachO)
+        T = new tools::darwin::Assemble(*this);
+      else
+        T = new tools::ClangAs(*this);
+      break;
     case Action::LinkJobClass:
       T = new tools::visualstudio::Link(*this); break;
     }
