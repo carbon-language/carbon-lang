@@ -33,28 +33,6 @@ namespace llvm {
                             MachineModuleInfo *MMI) const;
   };
 
-  class X8632_ELFTargetObjectFile : public TargetLoweringObjectFileELF {
-    const X86TargetMachine &TM;
-  public:
-    X8632_ELFTargetObjectFile(const X86TargetMachine &tm)
-      :TM(tm) { }
-    virtual unsigned getPersonalityEncoding() const;
-    virtual unsigned getLSDAEncoding() const;
-    virtual unsigned getFDEEncoding(bool CFI) const;
-    virtual unsigned getTTypeEncoding() const;
-  };
-
-  class X8664_ELFTargetObjectFile : public TargetLoweringObjectFileELF {
-    const X86TargetMachine &TM;
-  public:
-    X8664_ELFTargetObjectFile(const X86TargetMachine &tm)
-      :TM(tm) { }
-    virtual unsigned getPersonalityEncoding() const;
-    virtual unsigned getLSDAEncoding() const;
-    virtual unsigned getFDEEncoding(bool CFI) const;
-    virtual unsigned getTTypeEncoding() const;
-  };
-
 } // end namespace llvm
 
 #endif

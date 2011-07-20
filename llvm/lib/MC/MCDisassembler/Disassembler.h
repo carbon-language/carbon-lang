@@ -22,14 +22,12 @@
 #include "llvm/ADT/OwningPtr.h"
 
 namespace llvm {
-class TargetAsmInfo;
 class MCContext;
 class MCAsmInfo;
 class MCDisassembler;
 class MCInstPrinter; 
 class MCRegisterInfo;
 class Target;
-class TargetMachine;
 
 //
 // This is the disassembler context returned by LLVMCreateDisasm().
@@ -61,12 +59,6 @@ private:
   llvm::OwningPtr<const llvm::MCAsmInfo> MAI;
   // The register information for the target architecture.
   llvm::OwningPtr<const llvm::MCRegisterInfo> MRI;
-  // The target machine instance.
-  llvm::OwningPtr<llvm::TargetMachine> TM;
-  // The disassembler for the target architecture.
-  // FIXME: using llvm::OwningPtr<const llvm::TargetAsmInfo> causes a malloc
-  //        error when this LLVMDisasmContext is deleted.
-  const TargetAsmInfo *Tai;
   // The assembly context for creating symbols and MCExprs.
   llvm::OwningPtr<const llvm::MCContext> Ctx;
   // The disassembler for the target architecture.
@@ -80,12 +72,10 @@ public:
                     LLVMSymbolLookupCallback symbolLookUp,
                     const Target *theTarget, const MCAsmInfo *mAI,
                     const MCRegisterInfo *mRI,
-                    llvm::TargetMachine *tM, const TargetAsmInfo *tai,
                     llvm::MCContext *ctx, const MCDisassembler *disAsm,
                     MCInstPrinter *iP) : TripleName(tripleName),
                     DisInfo(disInfo), TagType(tagType), GetOpInfo(getOpInfo),
-                    SymbolLookUp(symbolLookUp), TheTarget(theTarget), Tai(tai) {
-    TM.reset(tM);
+                    SymbolLookUp(symbolLookUp), TheTarget(theTarget) {
     MAI.reset(mAI);
     MRI.reset(mRI);
     Ctx.reset(ctx);

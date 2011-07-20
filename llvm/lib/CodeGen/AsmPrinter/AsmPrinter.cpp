@@ -33,7 +33,6 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"

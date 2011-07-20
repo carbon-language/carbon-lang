@@ -40,6 +40,13 @@ protected:
   /// non-.globl label.  This defaults to true.
   bool IsFunctionEHFrameSymbolPrivate;
 
+  /// PersonalityEncoding, LSDAEncoding, FDEEncoding, TTypeEncoding - Some
+  /// encoding values for EH.
+  unsigned PersonalityEncoding;
+  unsigned LSDAEncoding;
+  unsigned FDEEncoding;
+  unsigned FDECFIEncoding;
+  unsigned TTypeEncoding;
 
   /// TextSection - Section directive for standard text.
   ///
@@ -151,7 +158,8 @@ protected:
   const MCSection *XDataSection;
   
 public:
-  void InitMCObjectFileInfo(StringRef TT, Reloc::Model RM, MCContext &ctx);
+  void InitMCObjectFileInfo(StringRef TT, Reloc::Model RM, CodeModel::Model CM,
+                            MCContext &ctx);
   
   bool isFunctionEHFrameSymbolPrivate() const {
     return IsFunctionEHFrameSymbolPrivate;
@@ -162,6 +170,13 @@ public:
   bool getCommDirectiveSupportsAlignment() const {
     return CommDirectiveSupportsAlignment;
   }
+
+  unsigned getPersonalityEncoding() const { return PersonalityEncoding; }
+  unsigned getLSDAEncoding() const { return LSDAEncoding; }
+  unsigned getFDEEncoding(bool CFI) const {
+    return CFI ? FDECFIEncoding : FDEEncoding;
+  }
+  unsigned getTTypeEncoding() const { return TTypeEncoding; }
 
   const MCSection *getTextSection() const { return TextSection; }
   const MCSection *getDataSection() const { return DataSection; }
@@ -262,6 +277,7 @@ private:
   enum Environment { IsMachO, IsELF, IsCOFF };
   Environment Env;
   Reloc::Model RelocM;
+  CodeModel::Model CMModel;
   MCContext *Ctx;
 
   void InitMachOMCObjectFileInfo(Triple T);

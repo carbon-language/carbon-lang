@@ -17,7 +17,6 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCLabel.h"
 #include "llvm/MC/MCDwarf.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ELF.h"
@@ -29,8 +28,8 @@ typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
 
 
 MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
-                     const MCObjectFileInfo *mofi, const TargetAsmInfo *tai) :
-  MAI(mai), MRI(mri), MOFI(mofi), TAI(tai),
+                     const MCObjectFileInfo *mofi) :
+  MAI(mai), MRI(mri), MOFI(mofi),
   Allocator(), Symbols(Allocator), UsedNames(Allocator),
   NextUniqueID(0),
   CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0),
@@ -57,8 +56,6 @@ MCContext::~MCContext() {
 
   // If the stream for the .secure_log_unique directive was created free it.
   delete (raw_ostream*)SecureLog;
-
-  delete TAI;
 }
 
 //===----------------------------------------------------------------------===//

@@ -377,7 +377,7 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
   SourceMgr sourceMgr;
   sourceMgr.setDiagHandler(diag_handler, static_cast<void*>(this));
   sourceMgr.AddNewSourceBuffer(buf, SMLoc()); // ownership of buf handed over
-  MCContext context(*AsmInfo, *MRI, NULL, NULL);
+  MCContext context(*AsmInfo, *MRI, NULL);
   OwningPtr<MCStreamer> streamer(createNullStreamer(context));
   OwningPtr<MCAsmParser> genericParser(createMCAsmParser(*Tgt, sourceMgr,
                                                          context, *streamer,

@@ -543,22 +543,6 @@ getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
   return SSym;
 }
 
-unsigned TargetLoweringObjectFileMachO::getPersonalityEncoding() const {
-  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
-}
-
-unsigned TargetLoweringObjectFileMachO::getLSDAEncoding() const {
-  return DW_EH_PE_pcrel;
-}
-
-unsigned TargetLoweringObjectFileMachO::getFDEEncoding(bool CFI) const {
-  return DW_EH_PE_pcrel;
-}
-
-unsigned TargetLoweringObjectFileMachO::getTTypeEncoding() const {
-  return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;
-}
-
 //===----------------------------------------------------------------------===//
 //                                  COFF
 //===----------------------------------------------------------------------===//

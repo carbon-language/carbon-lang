@@ -19,7 +19,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -691,7 +690,6 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
                                          const MCDwarfFrameInfo &Frame) {
   MCContext &Context = Streamer.getContext();
   const MCObjectFileInfo *MOFI = Context.getObjectFileInfo();
-  const TargetAsmInfo &TAI = Context.getTargetAsmInfo();
   bool VerboseAsm = Streamer.isVerboseAsm();
 
   // range-start range-length  compact-unwind-enc personality-func   lsda
@@ -726,7 +724,7 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   Streamer.SwitchSection(MOFI->getCompactUnwindSection());
 
   // Range Start
-  unsigned FDEEncoding = TAI.getFDEEncoding(UsingCFI);
+  unsigned FDEEncoding = MOFI->getFDEEncoding(UsingCFI);
   unsigned Size = getSizeForEncoding(Streamer, FDEEncoding);
   if (VerboseAsm) Streamer.AddComment("Range Start");
   Streamer.EmitSymbolValue(Frame.Function, Size);
@@ -771,7 +769,6 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   MCContext &context = streamer.getContext();
   const MCRegisterInfo &MRI = context.getRegisterInfo();
   const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
-  const TargetAsmInfo &TAI = context.getTargetAsmInfo();
   bool verboseAsm = streamer.isVerboseAsm();
 
   MCSymbol *sectionStart;
@@ -858,7 +855,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
       EmitEncodingByte(streamer, lsdaEncoding, "LSDA Encoding");
 
     // Encoding of the FDE pointers
-    EmitEncodingByte(streamer, TAI.getFDEEncoding(UsingCFI),
+    EmitEncodingByte(streamer, MOFI->getFDEEncoding(UsingCFI),
                      "FDE Encoding");
   }
 
@@ -895,7 +892,6 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   MCSymbol *fdeStart = context.CreateTempSymbol();
   MCSymbol *fdeEnd = context.CreateTempSymbol();
   const MCObjectFileInfo *MOFI = context.getObjectFileInfo();
-  const TargetAsmInfo &TAI = context.getTargetAsmInfo();
   bool verboseAsm = streamer.isVerboseAsm();
 
   if (!MOFI->isFunctionEHFrameSymbolPrivate() && IsEH) {
@@ -927,7 +923,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
     streamer.EmitSymbolValue(&cieStart, 4);
   }
 
-  unsigned fdeEncoding = TAI.getFDEEncoding(UsingCFI);
+  unsigned fdeEncoding = MOFI->getFDEEncoding(UsingCFI);
   unsigned size = getSizeForEncoding(streamer, fdeEncoding);
 
   // PC Begin

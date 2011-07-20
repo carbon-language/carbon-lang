@@ -17,8 +17,6 @@
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetAsmInfo.h"  // FIXME.
-#include "llvm/Target/TargetMachine.h"  // FIXME.
 #include "llvm/Target/TargetSelect.h"
 #include "llvm/Support/MemoryObject.h"
 
@@ -39,8 +37,6 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
                                       LLVMSymbolLookupCallback SymbolLookUp) {
   // Initialize targets and assembly printers/parsers.
   llvm::InitializeAllTargetInfos();
-  // FIXME: We shouldn't need to initialize the Target(Machine)s.
-  llvm::InitializeAllTargets();
   llvm::InitializeAllMCAsmInfos();
   llvm::InitializeAllMCCodeGenInfos();
   llvm::InitializeAllMCRegisterInfos();
@@ -64,19 +60,8 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
   std::string FeaturesStr;
   std::string CPU;
 
-  // FIXME: We shouldn't need to do this (and link in codegen).
-  //        When we split this out, we should do it in a way that makes
-  //        it straightforward to switch subtargets on the fly.
-  TargetMachine *TM = TheTarget->createTargetMachine(TripleName, CPU,
-                                                     FeaturesStr);
-  assert(TM && "Unable to create target machine!");
-
-  // Get the target assembler info needed to setup the context.
-  const TargetAsmInfo *tai = new TargetAsmInfo(*TM);
-  assert(tai && "Unable to create target assembler!");
-
   // Set up the MCContext for creating symbols and MCExpr's.
-  MCContext *Ctx = new MCContext(*MAI, *MRI, 0, tai);
+  MCContext *Ctx = new MCContext(*MAI, *MRI, 0);
   assert(Ctx && "Unable to create MCContext!");
 
   // Set up disassembler.
@@ -92,7 +77,7 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
 
   LLVMDisasmContext *DC = new LLVMDisasmContext(TripleName, DisInfo, TagType,
                                                 GetOpInfo, SymbolLookUp,
-                                                TheTarget, MAI, MRI, TM, tai,
+                                                TheTarget, MAI, MRI,
                                                 Ctx, DisAsm, IP);
   assert(DC && "Allocation failure!");
   return DC;

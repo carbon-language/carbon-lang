@@ -197,11 +197,8 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
     return new TargetLoweringObjectFileMachO();
   }
 
-  if (Subtarget->isTargetELF()) {
-    if (is64Bit)
-      return new X8664_ELFTargetObjectFile(TM);
-    return new X8632_ELFTargetObjectFile(TM);
-  }
+  if (Subtarget->isTargetELF())
+    return new TargetLoweringObjectFileELF();
   if (Subtarget->isTargetCOFF() && !Subtarget->isTargetEnvMacho())
     return new TargetLoweringObjectFileCOFF();
   llvm_unreachable("unknown subtarget type");

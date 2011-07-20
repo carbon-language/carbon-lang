@@ -41,7 +41,8 @@ using namespace llvm;
 void TargetLoweringObjectFile::Initialize(MCContext &ctx,
                                           const TargetMachine &TM) {
   Ctx = &ctx;
-  InitMCObjectFileInfo(TM.getTargetTriple(), TM.getRelocationModel(), *Ctx);
+  InitMCObjectFileInfo(TM.getTargetTriple(),
+                       TM.getRelocationModel(), TM.getCodeModel(), *Ctx);
 }
   
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {
@@ -322,20 +323,3 @@ getExprForDwarfReference(const MCSymbol *Sym, unsigned Encoding,
   }
   }
 }
-
-unsigned TargetLoweringObjectFile::getPersonalityEncoding() const {
-  return dwarf::DW_EH_PE_absptr;
-}
-
-unsigned TargetLoweringObjectFile::getLSDAEncoding() const {
-  return dwarf::DW_EH_PE_absptr;
-}
-
-unsigned TargetLoweringObjectFile::getFDEEncoding(bool CFI) const {
-  return dwarf::DW_EH_PE_absptr;
-}
-
-unsigned TargetLoweringObjectFile::getTTypeEncoding() const {
-  return dwarf::DW_EH_PE_absptr;
-}
-

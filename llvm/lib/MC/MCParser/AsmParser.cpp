@@ -33,7 +33,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetAsmParser.h"
 #include <cctype>
 #include <vector>

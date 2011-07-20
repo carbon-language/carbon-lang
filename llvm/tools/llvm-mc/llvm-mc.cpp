@@ -28,10 +28,6 @@
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetAsmInfo.h"  // FIXME.
-#include "llvm/Target/TargetLowering.h"  // FIXME.
-#include "llvm/Target/TargetLoweringObjectFile.h"  // FIXME.
-#include "llvm/Target/TargetMachine.h"  // FIXME.
 #include "llvm/Target/TargetSelect.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
@@ -348,28 +344,11 @@ static int AssembleInput(const char *ProgName) {
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
 
-  // FIXME: We shouldn't need to do this (and link in codegen).
-  //        When we split this out, we should do it in a way that makes
-  //        it straightforward to switch subtargets on the fly (.e.g,
-  //        the .cpu and .code16 directives).
-  OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName,
-                                                             MCPU,
-                                                             FeaturesStr,
-                                                             RelocModel,
-                                                             CMModel));
-
-  if (!TM) {
-    errs() << ProgName << ": error: could not create target for triple '"
-           << TripleName << "'.\n";
-    return 1;
-  }
-
-  const TargetAsmInfo *tai = new TargetAsmInfo(*TM);
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
   OwningPtr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
-  MCContext Ctx(*MAI, *MRI, MOFI.get(), tai);
-  MOFI->InitMCObjectFileInfo(TripleName, RelocModel, Ctx);
+  MCContext Ctx(*MAI, *MRI, MOFI.get());
+  MOFI->InitMCObjectFileInfo(TripleName, RelocModel, CMModel, Ctx);
 
   if (SaveTempLabels)
     Ctx.setAllowTemporaryLabels(false);
@@ -380,10 +359,6 @@ static int AssembleInput(const char *ProgName) {
 
   formatted_raw_ostream FOS(Out->os());
   OwningPtr<MCStreamer> Str;
-
-  const TargetLoweringObjectFile &TLOF =
-    TM->getTargetLowering()->getObjFileLowering();
-  const_cast<TargetLoweringObjectFile&>(TLOF).Initialize(Ctx, *TM);
 
   OwningPtr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
   OwningPtr<MCSubtargetInfo>

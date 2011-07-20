@@ -1676,7 +1676,7 @@ bool CWriter::doInitialization(Module &M) {
 #endif
   TAsm = new CBEMCAsmInfo();
   MRI  = new MCRegisterInfo();
-  TCtx = new MCContext(*TAsm, *MRI, NULL, NULL);
+  TCtx = new MCContext(*TAsm, *MRI, NULL);
   Mang = new Mangler(*TCtx, *TD);
 
   // Keep track of which functions are static ctors/dtors so they can have

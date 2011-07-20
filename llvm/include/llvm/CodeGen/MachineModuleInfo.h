@@ -175,8 +175,7 @@ public:
   MachineModuleInfo();  // DUMMY CONSTRUCTOR, DO NOT CALL.
   // Real constructor.
   MachineModuleInfo(const MCAsmInfo &MAI, const MCRegisterInfo &MRI,
-                    const MCObjectFileInfo *MOFI,
-                    const TargetAsmInfo *TAI);
+                    const MCObjectFileInfo *MOFI);
   ~MachineModuleInfo();
 
   bool doInitialization();

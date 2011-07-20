@@ -122,11 +122,6 @@ public:
   getExprForDwarfReference(const MCSymbol *Sym, unsigned Encoding,
                            MCStreamer &Streamer) const;
   
-  virtual unsigned getPersonalityEncoding() const;
-  virtual unsigned getLSDAEncoding() const;
-  virtual unsigned getFDEEncoding(bool CFI) const;
-  virtual unsigned getTTypeEncoding() const;
-
 protected:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
