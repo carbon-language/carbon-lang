@@ -370,7 +370,6 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned SlotSize = RegInfo->getSlotSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
   unsigned StackPtr = RegInfo->getStackRegister();
-
   DebugLoc DL;
 
   // If we're forcing a stack realignment we can't rely on just the frame
@@ -1012,67 +1011,4 @@ X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
            "Slot for EBP register must be last in order to be found!");
     FrameIdx = 0;
   }
-}
-
-/// permuteEncode - Create the permutation encoding used with frameless
-/// stacks. It is passed the number of registers to be saved and an array of the
-/// registers saved.
-static uint32_t permuteEncode(unsigned SavedCount, unsigned Registers[6]) {
-  // The saved registers are numbered from 1 to 6. In order to encode the order
-  // in which they were saved, we re-number them according to their place in the
-  // register order. The re-numbering is relative to the last re-numbered
-  // register. E.g., if we have registers {6, 2, 4, 5} saved in that order:
-  //
-  //    Orig  Re-Num
-  //    ----  ------
-  //     6       6
-  //     2       2
-  //     4       3
-  //     5       3
-  //
-  bool Used[7] = { false, false, false, false, false, false, false };
-  uint32_t RenumRegs[6];
-  for (unsigned I = 0; I < SavedCount; ++I) {
-    uint32_t Renum = 0;
-    for (unsigned U = 1; U < 7; ++U) {
-      if (U == Registers[I])
-        break;
-      if (!Used[U])
-        ++Renum;
-    }
-
-    Used[Registers[I]] = true;
-    RenumRegs[I] = Renum;
-  }
-
-  // Take the renumbered values and encode them into a 10-bit number.
-  uint32_t permutationEncoding = 0;
-  switch (SavedCount) {
-  case 6:
-    permutationEncoding |= 120 * RenumRegs[0] + 24 * RenumRegs[1]
-                           + 6 * RenumRegs[2] +  2 * RenumRegs[3]
-                           +     RenumRegs[4];
-    break;
-  case 5:
-    permutationEncoding |= 120 * RenumRegs[0] + 24 * RenumRegs[1]
-                           + 6 * RenumRegs[2] +  2 * RenumRegs[3]
-                           +     RenumRegs[4];
-    break;
-  case 4:
-    permutationEncoding |= 60 * RenumRegs[0] + 12 * RenumRegs[1]
-                          + 3 * RenumRegs[2] +      RenumRegs[3];
-    break;
-  case 3:
-    permutationEncoding |= 20 * RenumRegs[0] + 4 * RenumRegs[1]
-                              + RenumRegs[2];
-    break;
-  case 2:
-    permutationEncoding |=  5 * RenumRegs[0] +     RenumRegs[1];
-    break;
-  case 1:
-    permutationEncoding |=      RenumRegs[0];
-    break;
-  }
-
-  return permutationEncoding;
 }
