@@ -88,7 +88,7 @@ if(PYTHONINTERP_FOUND)
   set_target_properties(clang-test PROPERTIES FOLDER "Clang tests")
 
   if( NOT CLANG_BUILT_STANDALONE )
-     add_custom_target(check-all
+    add_custom_target(check-all
       COMMAND ${PYTHON_EXECUTABLE}
                 ${LIT}
                 --param build_config=${CMAKE_CFG_INTDIR}
@@ -102,11 +102,11 @@ if(PYTHONINTERP_FOUND)
       add_dependencies(clang-test.deps check.deps ClangUnitTests)
     endif ( LLVM_INCLUDE_TESTS )
     add_dependencies(clang-test.deps
-                    llvm-dis llc opt
+                     llvm-dis llc opt
                      FileCheck count not
                      )
-   set_target_properties(check-all PROPERTIES FOLDER "Clang tests")
- endif()
+    set_target_properties(check-all PROPERTIES FOLDER "Clang tests")
+  endif()
 
   add_dependencies(clang-test clang-test.deps)
   add_dependencies(clang-test.deps
