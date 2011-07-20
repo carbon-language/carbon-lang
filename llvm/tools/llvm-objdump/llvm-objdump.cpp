@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCFunction.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
@@ -21,6 +22,8 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCInstrDesc.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
@@ -51,6 +54,10 @@ namespace {
   cl::alias
   Disassembled("d", cl::desc("Alias for --disassemble"),
                cl::aliasopt(Disassemble));
+
+  cl::opt<bool>
+  CFG("cfg", cl::desc("Create a CFG for every symbol in the object file and"
+                      "write it to a graphviz file"));
 
   cl::opt<std::string>
   TripleName("triple", cl::desc("Target triple to disassemble for, "
@@ -156,6 +163,7 @@ static void DisassembleInput(const StringRef &Filename) {
     // GetTarget prints out stuff.
     return;
   }
+  const MCInstrInfo *InstrInfo = TheTarget->createMCInstrInfo();
 
   outs() << '\n';
   outs() << Filename
@@ -233,15 +241,14 @@ static void DisassembleInput(const StringRef &Filename) {
       uint64_t End = si == se-1 ? SectSize : Symbols[si + 1].first - 1;
       outs() << '\n' << Symbols[si].second << ":\n";
 
-      for (Index = Start; Index < End; Index += Size) {
-        MCInst Inst;
-
 #ifndef NDEBUG
         raw_ostream &DebugOut = DebugFlag ? dbgs() : nulls();
 #else
         raw_ostream &DebugOut = nulls();
 #endif
 
+      for (Index = Start; Index < End; Index += Size) {
+        MCInst Inst;
         if (DisAsm->getInstruction(Inst, Size, memoryObject, Index, DebugOut)) {
           uint64_t addr;
           if (error(i->getAddress(addr))) break;
@@ -254,6 +261,36 @@ static void DisassembleInput(const StringRef &Filename) {
           if (Size == 0)
             Size = 1; // skip illegible bytes
         }
+      }
+
+      if (CFG) {
+        MCFunction f =
+          MCFunction::createFunctionFromMC(Symbols[si].second, DisAsm.get(),
+                                           memoryObject, Start, End, InstrInfo,
+                                           DebugOut);
+
+        // Start a new dot file.
+        std::string Error;
+        raw_fd_ostream Out((f.getName().str() + ".dot").c_str(), Error);
+
+        Out << "digraph " << f.getName() << " {\n";
+        Out << "graph [ rankdir = \"LR\" ];\n";
+        for (MCFunction::iterator i = f.begin(), e = f.end(); i != e; ++i) {
+          Out << '"' << (uintptr_t)&i->second << "\" [ label=\"<a>";
+          // Print instructions.
+          for (unsigned ii = 0, ie = i->second.getInsts().size(); ii != ie;
+               ++ii) {
+            IP->printInst(&i->second.getInsts()[ii].Inst, Out);
+            Out << '|';
+          }
+          Out << "<o>\" shape=\"record\" ];\n";
+
+          // Add edges.
+          for (MCBasicBlock::succ_iterator si = i->second.succ_begin(),
+              se = i->second.succ_end(); si != se; ++si)
+            Out << (uintptr_t)&i->second << ":o -> " << (uintptr_t)*si <<":a\n";
+        }
+        Out << "}\n";
       }
     }
   }
@@ -271,6 +308,7 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargets();
   llvm::InitializeAllMCAsmInfos();
   llvm::InitializeAllMCCodeGenInfos();
+  llvm::InitializeAllMCInstrInfos();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllDisassemblers();
