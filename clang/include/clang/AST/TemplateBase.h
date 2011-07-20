@@ -23,7 +23,6 @@
 
 namespace llvm {
   class FoldingSetNodeID;
-  class raw_ostream;
 }
 
 namespace clang {

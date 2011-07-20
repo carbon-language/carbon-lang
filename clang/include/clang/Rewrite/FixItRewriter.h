@@ -19,8 +19,6 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Rewrite/Rewriter.h"
 
-namespace llvm { class raw_ostream; }
-
 namespace clang {
 
 class SourceManager;

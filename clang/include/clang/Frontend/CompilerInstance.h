@@ -19,7 +19,6 @@
 #include <string>
 
 namespace llvm {
-class raw_ostream;
 class raw_fd_ostream;
 class Timer;
 }

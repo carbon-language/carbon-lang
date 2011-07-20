@@ -22,10 +22,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include <cassert>
 
-namespace llvm {
-  class raw_ostream;
-}
-
 namespace clang {
   
 class CXXBaseSpecifier;

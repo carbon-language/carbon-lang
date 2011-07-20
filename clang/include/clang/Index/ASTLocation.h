@@ -17,10 +17,6 @@
 #include "clang/AST/TypeLoc.h"
 #include "llvm/ADT/PointerIntPair.h"
 
-namespace llvm {
-  class raw_ostream;
-}
-
 namespace clang {
   class Decl;
   class Stmt;

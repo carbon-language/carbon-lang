@@ -24,7 +24,6 @@
 #include <string>
 
 namespace llvm {
-  class raw_ostream;
   template<typename T> class ArrayRef;
 }
 namespace clang {

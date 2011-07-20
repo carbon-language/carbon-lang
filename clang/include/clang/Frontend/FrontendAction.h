@@ -16,10 +16,6 @@
 #include <string>
 #include <vector>
 
-namespace llvm {
-  class raw_ostream;
-}
-
 namespace clang {
 class ASTConsumer;
 class ASTMergeAction;

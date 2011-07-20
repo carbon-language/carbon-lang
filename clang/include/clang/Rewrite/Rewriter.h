@@ -23,8 +23,6 @@
 #include <map>
 #include <string>
 
-namespace llvm { class raw_ostream; }
-
 namespace clang {
   class LangOptions;
   class Rewriter;

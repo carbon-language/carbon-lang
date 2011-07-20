@@ -28,10 +28,6 @@
 #include <string>
 #include <vector>
 
-namespace llvm {
-  template<typename T> class SmallVectorImpl;
-}
-
 namespace clang {
 
 class Diagnostic;

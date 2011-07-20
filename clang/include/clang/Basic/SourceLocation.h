@@ -22,7 +22,6 @@
 
 namespace llvm {
   class MemoryBuffer;
-  class raw_ostream;
   template <typename T> struct DenseMapInfo;
   template <typename T> struct isPodLike;
 }

@@ -18,10 +18,6 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerIntPair.h"
 
-namespace llvm {
-  class raw_ostream;
-}
-
 namespace clang {
 
 class ASTContext;

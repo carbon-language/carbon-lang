@@ -12,12 +12,7 @@
 
 #include "clang/Driver/Job.h"
 #include "clang/Driver/Util.h"
-
 #include "llvm/ADT/DenseMap.h"
-
-namespace llvm {
-  class raw_ostream;
-}
 
 namespace clang {
 namespace driver {

@@ -21,11 +21,6 @@
 #include "clang-c/Index.h"
 #include <string>
 
-namespace llvm {
-  class raw_ostream;
-  class Twine;
-}
-
 namespace clang {
 
 class Decl;

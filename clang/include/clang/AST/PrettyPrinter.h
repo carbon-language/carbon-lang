@@ -16,10 +16,6 @@
 
 #include "clang/Basic/LangOptions.h"
 
-namespace llvm {
-  class raw_ostream;
-}
-
 namespace clang {
 
 class Stmt;

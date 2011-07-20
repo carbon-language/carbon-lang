@@ -15,11 +15,6 @@
 #define LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
 
 #include "clang/AST/DeclBase.h"
-#include <cassert>
-
-namespace llvm {
-template <class T> class SmallVectorImpl;
-}
 
 namespace clang {
 

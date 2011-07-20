@@ -37,7 +37,6 @@
 
 namespace llvm {
   struct fltSemantics;
-  class raw_ostream;
 }
 
 namespace clang {

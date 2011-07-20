@@ -28,10 +28,6 @@
 #include <cassert>
 #include <iterator>
 
-namespace llvm {
-  class raw_ostream;
-}
-
 namespace clang {
   class CXXDestructorDecl;
   class Decl;
