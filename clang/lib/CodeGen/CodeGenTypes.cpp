@@ -512,7 +512,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     // pointer to the underlying interface type. We don't need to worry about
     // recursive conversion.
     llvm::Type *T =
-      ConvertType(cast<ObjCObjectPointerType>(Ty)->getPointeeType());
+      ConvertTypeForMem(cast<ObjCObjectPointerType>(Ty)->getPointeeType());
     ResultType = T->getPointerTo();
     break;
   }
