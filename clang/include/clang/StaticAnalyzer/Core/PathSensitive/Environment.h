@@ -97,7 +97,7 @@ public:
 
   Environment removeDeadBindings(Environment Env,
                                  SymbolReaper &SymReaper, const GRState *ST,
-                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
+                          SmallVectorImpl<const MemRegion*>& RegionRoots);
 };
 
 } // end GR namespace

@@ -1307,7 +1307,7 @@ public:
   /// true, otherwise return false.  This handles canonicalization and
   /// translation of strings from GCC syntax to LLVM IR syntax, and handles
   //// flattening of named references like %[foo] to Operand AsmStringPiece's.
-  unsigned AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece> &Pieces,
+  unsigned AnalyzeAsmString(SmallVectorImpl<AsmStringPiece> &Pieces,
                             ASTContext &C, unsigned &DiagOffs) const;
 
 
@@ -1319,17 +1319,17 @@ public:
     return Names[i];
   }
 
-  llvm::StringRef getOutputName(unsigned i) const {
+  StringRef getOutputName(unsigned i) const {
     if (IdentifierInfo *II = getOutputIdentifier(i))
       return II->getName();
     
-    return llvm::StringRef();
+    return StringRef();
   }
 
   /// getOutputConstraint - Return the constraint string for the specified
   /// output operand.  All output constraints are known to be non-empty (either
   /// '=' or '+').
-  llvm::StringRef getOutputConstraint(unsigned i) const;
+  StringRef getOutputConstraint(unsigned i) const;
 
   const StringLiteral *getOutputConstraintLiteral(unsigned i) const {
     return Constraints[i];
@@ -1363,16 +1363,16 @@ public:
     return Names[i + NumOutputs];
   }
 
-  llvm::StringRef getInputName(unsigned i) const {
+  StringRef getInputName(unsigned i) const {
     if (IdentifierInfo *II = getInputIdentifier(i))
       return II->getName();
 
-    return llvm::StringRef();
+    return StringRef();
   }
 
   /// getInputConstraint - Return the specified input constraint.  Unlike output
   /// constraints, these can be empty.
-  llvm::StringRef getInputConstraint(unsigned i) const;
+  StringRef getInputConstraint(unsigned i) const;
 
   const StringLiteral *getInputConstraintLiteral(unsigned i) const {
     return Constraints[i + NumOutputs];
@@ -1402,7 +1402,7 @@ public:
   /// getNamedOperand - Given a symbolic operand reference like %[foo],
   /// translate this into a numeric value needed to reference the same operand.
   /// This returns -1 if the operand name is invalid.
-  int getNamedOperand(llvm::StringRef SymbolicName) const;
+  int getNamedOperand(StringRef SymbolicName) const;
 
   unsigned getNumClobbers() const { return NumClobbers; }
   StringLiteral *getClobber(unsigned i) { return Clobbers[i]; }

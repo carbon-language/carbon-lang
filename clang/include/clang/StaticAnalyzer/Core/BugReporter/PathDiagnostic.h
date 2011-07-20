@@ -42,13 +42,13 @@ public:
   virtual ~PathDiagnosticClient() {}
   
   virtual void
-  FlushDiagnostics(llvm::SmallVectorImpl<std::string> *FilesMade = 0) = 0;
+  FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade = 0) = 0;
   
-  void FlushDiagnostics(llvm::SmallVectorImpl<std::string> &FilesMade) {
+  void FlushDiagnostics(SmallVectorImpl<std::string> &FilesMade) {
     FlushDiagnostics(&FilesMade);
   }
   
-  virtual llvm::StringRef getName() const = 0;
+  virtual StringRef getName() const = 0;
   
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
@@ -181,7 +181,7 @@ private:
   PathDiagnosticPiece& operator=(const PathDiagnosticPiece &P);
 
 protected:
-  PathDiagnosticPiece(llvm::StringRef s, Kind k, DisplayHint hint = Below);
+  PathDiagnosticPiece(StringRef s, Kind k, DisplayHint hint = Below);
 
   PathDiagnosticPiece(Kind k, DisplayHint hint = Below);
 
@@ -242,7 +242,7 @@ private:
   PathDiagnosticLocation Pos;
 public:
   PathDiagnosticSpotPiece(const PathDiagnosticLocation &pos,
-                          llvm::StringRef s,
+                          StringRef s,
                           PathDiagnosticPiece::Kind k,
                           bool addPosRange = true)
   : PathDiagnosticPiece(s, k), Pos(pos) {
@@ -261,7 +261,7 @@ class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
 
 public:
   PathDiagnosticEventPiece(const PathDiagnosticLocation &pos,
-                           llvm::StringRef s, bool addPosRange = true)
+                           StringRef s, bool addPosRange = true)
     : PathDiagnosticSpotPiece(pos, s, Event, addPosRange) {}
 
   ~PathDiagnosticEventPiece();
@@ -276,7 +276,7 @@ class PathDiagnosticControlFlowPiece : public PathDiagnosticPiece {
 public:
   PathDiagnosticControlFlowPiece(const PathDiagnosticLocation &startPos,
                                  const PathDiagnosticLocation &endPos,
-                                 llvm::StringRef s)
+                                 StringRef s)
     : PathDiagnosticPiece(s, ControlFlow) {
       LPairs.push_back(PathDiagnosticLocationPair(startPos, endPos));
     }
@@ -373,19 +373,19 @@ class PathDiagnostic : public llvm::FoldingSetNode {
 public:
   PathDiagnostic();
 
-  PathDiagnostic(llvm::StringRef bugtype, llvm::StringRef desc,
-                 llvm::StringRef category);
+  PathDiagnostic(StringRef bugtype, StringRef desc,
+                 StringRef category);
 
   ~PathDiagnostic();
 
-  llvm::StringRef getDescription() const { return Desc; }
-  llvm::StringRef getBugType() const { return BugType; }
-  llvm::StringRef getCategory() const { return Category; }
+  StringRef getDescription() const { return Desc; }
+  StringRef getBugType() const { return BugType; }
+  StringRef getCategory() const { return Category; }
 
   typedef std::deque<std::string>::const_iterator meta_iterator;
   meta_iterator meta_begin() const { return OtherDesc.begin(); }
   meta_iterator meta_end() const { return OtherDesc.end(); }
-  void addMeta(llvm::StringRef s) { OtherDesc.push_back(s); }
+  void addMeta(StringRef s) { OtherDesc.push_back(s); }
 
   PathDiagnosticLocation getLocation() const {
     assert(Size > 0 && "getLocation() requires a non-empty PathDiagnostic.");

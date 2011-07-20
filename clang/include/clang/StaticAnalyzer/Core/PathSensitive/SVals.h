@@ -74,7 +74,7 @@ public:
   ~SVal() {}
 
   /// BufferTy - A temporary buffer to hold a set of SVals.
-  typedef llvm::SmallVector<SVal,5> BufferTy;
+  typedef SmallVector<SVal,5> BufferTy;
 
   inline unsigned getRawKind() const { return Kind; }
   inline BaseKind getBaseKind() const { return (BaseKind) (Kind & BaseMask); }
@@ -147,7 +147,7 @@ public:
 
   // Iterators.
   class symbol_iterator {
-    llvm::SmallVector<const SymExpr*, 5> itr;
+    SmallVector<const SymExpr*, 5> itr;
     void expand();
   public:
     symbol_iterator() {}

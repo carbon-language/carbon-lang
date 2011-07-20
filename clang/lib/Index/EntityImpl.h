@@ -47,7 +47,7 @@ public:
   /// \brief Get an Entity associated with the given Decl.
   /// \returns Null if an Entity cannot refer to this Decl.
   static Entity get(Decl *D, Program &Prog, ProgramImpl &ProgImpl);
-  static Entity get(llvm::StringRef Name, Program &Prog, ProgramImpl &ProgImpl);
+  static Entity get(StringRef Name, Program &Prog, ProgramImpl &ProgImpl);
 
   std::string getPrintableName();
 

@@ -54,7 +54,7 @@ namespace clang {
   class BlockDecl;
   class CXXBasePath;
   class CXXBasePaths;
-  typedef llvm::SmallVector<CXXBaseSpecifier*, 4> CXXCastPath;
+  typedef SmallVector<CXXBaseSpecifier*, 4> CXXCastPath;
   class CXXConstructorDecl;
   class CXXConversionDecl;
   class CXXDestructorDecl;
@@ -228,16 +228,16 @@ public:
   /// This array is never empty.  Clients should ignore the first
   /// element, which is used to cache a single FunctionScopeInfo
   /// that's used to parse every top-level function.
-  llvm::SmallVector<sema::FunctionScopeInfo *, 4> FunctionScopes;
+  SmallVector<sema::FunctionScopeInfo *, 4> FunctionScopes;
 
   /// ExprTemporaries - This is the stack of temporaries that are created by
   /// the current full expression.
-  llvm::SmallVector<CXXTemporary*, 8> ExprTemporaries;
+  SmallVector<CXXTemporary*, 8> ExprTemporaries;
 
   /// ExtVectorDecls - This is a list all the extended vector types. This allows
   /// us to associate a raw vector type with one of the ext_vector type names.
   /// This is only necessary for issuing pretty diagnostics.
-  llvm::SmallVector<TypedefNameDecl*, 24> ExtVectorDecls;
+  SmallVector<TypedefNameDecl*, 24> ExtVectorDecls;
 
   /// FieldCollector - Collects CXXFieldDecls during parsing of C++ classes.
   llvm::OwningPtr<CXXFieldCollector> FieldCollector;
@@ -281,20 +281,20 @@ public:
   llvm::DenseMap<DeclarationName, NamedDecl *> LocallyScopedExternalDecls;
 
   /// \brief All the tentative definitions encountered in the TU.
-  llvm::SmallVector<VarDecl *, 2> TentativeDefinitions;
+  SmallVector<VarDecl *, 2> TentativeDefinitions;
 
   /// \brief The set of file scoped decls seen so far that have not been used
   /// and must warn if not used. Only contains the first declaration.
-  llvm::SmallVector<const DeclaratorDecl*, 4> UnusedFileScopedDecls;
+  SmallVector<const DeclaratorDecl*, 4> UnusedFileScopedDecls;
 
   /// \brief All the delegating constructors seen so far in the file, used for
   /// cycle detection at the end of the TU.
-  llvm::SmallVector<CXXConstructorDecl*, 4> DelegatingCtorDecls;
+  SmallVector<CXXConstructorDecl*, 4> DelegatingCtorDecls;
 
   /// \brief All the overriding destructors seen during a class definition
   /// (there could be multiple due to nested classes) that had their exception
   /// spec checks delayed, plus the overridden destructor.
-  llvm::SmallVector<std::pair<const CXXDestructorDecl*,
+  SmallVector<std::pair<const CXXDestructorDecl*,
                               const CXXDestructorDecl*>, 2>
       DelayedDestructorExceptionSpecChecks;
 
@@ -456,7 +456,7 @@ public:
   /// I couldn't figure out a clean way to generate these in-line, so
   /// we store them here and handle separately -- which is a hack.
   /// It would be best to refactor this.
-  llvm::SmallVector<Decl*,2> WeakTopLevelDecl;
+  SmallVector<Decl*,2> WeakTopLevelDecl;
 
   IdentifierResolver IdResolver;
 
@@ -484,11 +484,11 @@ public:
 
   /// \brief The set of declarations that have been referenced within
   /// a potentially evaluated expression.
-  typedef llvm::SmallVector<std::pair<SourceLocation, Decl *>, 10>
+  typedef SmallVector<std::pair<SourceLocation, Decl *>, 10>
     PotentiallyReferencedDecls;
 
   /// \brief A set of diagnostics that may be emitted.
-  typedef llvm::SmallVector<std::pair<SourceLocation, PartialDiagnostic>, 10>
+  typedef SmallVector<std::pair<SourceLocation, PartialDiagnostic>, 10>
     PotentiallyEmittedDiagnostics;
 
   /// \brief Describes how the expressions currently being parsed are
@@ -578,7 +578,7 @@ public:
   };
 
   /// A stack of expression evaluation contexts.
-  llvm::SmallVector<ExpressionEvaluationContextRecord, 8> ExprEvalContexts;
+  SmallVector<ExpressionEvaluationContextRecord, 8> ExprEvalContexts;
 
   /// SpecialMemberOverloadResult - The overloading result for a special member
   /// function.
@@ -634,7 +634,7 @@ public:
   /// \brief The number of SFINAE diagnostics that have been trapped.
   unsigned NumSFINAEErrors;
 
-  typedef llvm::DenseMap<ParmVarDecl *, llvm::SmallVector<ParmVarDecl *, 1> >
+  typedef llvm::DenseMap<ParmVarDecl *, SmallVector<ParmVarDecl *, 1> >
     UnparsedDefaultArgInstantiationsMap;
   
   /// \brief A mapping from parameters with unparsed default arguments to the
@@ -727,7 +727,7 @@ public:
   /// \brief Build a partial diagnostic.
   PartialDiagnostic PDiag(unsigned DiagID = 0); // in SemaInternal.h
 
-  bool findMacroSpelling(SourceLocation &loc, llvm::StringRef name);
+  bool findMacroSpelling(SourceLocation &loc, StringRef name);
 
   ExprResult Owned(Expr* E) { return E; }
   ExprResult Owned(ExprResult R) { return R; }
@@ -754,7 +754,7 @@ public:
   sema::BlockScopeInfo *getCurBlock();
 
   /// WeakTopLevelDeclDecls - access to #pragma weak-generated Decls
-  llvm::SmallVector<Decl*,2> &WeakTopLevelDecls() { return WeakTopLevelDecl; }
+  SmallVector<Decl*,2> &WeakTopLevelDecls() { return WeakTopLevelDecl; }
 
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
@@ -1118,7 +1118,7 @@ public:
 
   void ActOnDefs(Scope *S, Decl *TagD, SourceLocation DeclStart,
                  IdentifierInfo *ClassName,
-                 llvm::SmallVectorImpl<Decl *> &Decls);
+                 SmallVectorImpl<Decl *> &Decls);
   Decl *ActOnField(Scope *S, Decl *TagD, SourceLocation DeclStart,
                    Declarator &D, Expr *BitfieldWidth);
 
@@ -1147,7 +1147,7 @@ public:
   void DiagnoseNontrivial(const RecordType* Record, CXXSpecialMember mem);
   CXXSpecialMember getSpecialMember(const CXXMethodDecl *MD);
   void ActOnLastBitfield(SourceLocation DeclStart, Decl *IntfDecl, 
-                         llvm::SmallVectorImpl<Decl *> &AllIvarDecls);
+                         SmallVectorImpl<Decl *> &AllIvarDecls);
   Decl *ActOnIvar(Scope *S, SourceLocation DeclStart, Decl *IntfDecl,
                   Declarator &D, Expr *BitfieldWidth,
                   tok::ObjCKeywordKind visibility);
@@ -1937,7 +1937,7 @@ public:
   /// CollectIvarsToConstructOrDestruct - Collect those ivars which require
   /// initialization.
   void CollectIvarsToConstructOrDestruct(ObjCInterfaceDecl *OI,
-                                  llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars);
+                                  SmallVectorImpl<ObjCIvarDecl*> &Ivars);
 
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
@@ -2141,14 +2141,14 @@ public:
     DelayedDiagnostics.popContext(state);
   }
 
-  void EmitDeprecationWarning(NamedDecl *D, llvm::StringRef Message,
+  void EmitDeprecationWarning(NamedDecl *D, StringRef Message,
                               SourceLocation Loc, 
                               const ObjCInterfaceDecl *UnknownObjCClass=0);
 
   void HandleDelayedDeprecationCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
 
   bool makeUnavailableInSystemHeader(SourceLocation loc,
-                                     llvm::StringRef message);
+                                     StringRef message);
 
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
@@ -2645,7 +2645,7 @@ public:
     // any other specification (even 'none', to keep this rule simple).
     ExceptionSpecificationType ComputedEST;
     llvm::SmallPtrSet<CanQualType, 4> ExceptionsSeen;
-    llvm::SmallVector<QualType, 4> Exceptions;
+    SmallVector<QualType, 4> Exceptions;
 
     void ClearExceptions() {
       ExceptionsSeen.clear();
@@ -3259,7 +3259,7 @@ public:
   Decl *ActOnStartLinkageSpecification(Scope *S,
                                        SourceLocation ExternLoc,
                                        SourceLocation LangLoc,
-                                       llvm::StringRef Lang,
+                                       StringRef Lang,
                                        SourceLocation LBraceLoc);
   Decl *ActOnFinishLinkageSpecification(Scope *S,
                                         Decl *LinkageSpec,
@@ -3339,7 +3339,7 @@ public:
 
   /// \brief The list of vtables that are required but have not yet been
   /// materialized.
-  llvm::SmallVector<VTableUse, 16> VTableUses;
+  SmallVector<VTableUse, 16> VTableUses;
 
   /// \brief The set of classes whose vtables have been used within
   /// this translation unit, and a bit that will be true if the vtable is
@@ -3349,7 +3349,7 @@ public:
 
   /// \brief A list of all of the dynamic classes in this translation
   /// unit.
-  llvm::SmallVector<CXXRecordDecl *, 16> DynamicClasses;
+  SmallVector<CXXRecordDecl *, 16> DynamicClasses;
 
   /// \brief Note that the vtable for the given class was used at the
   /// given location.
@@ -3795,7 +3795,7 @@ public:
                                           SourceLocation TemplateLoc,
                                           SourceLocation RAngleLoc,
                                           Decl *Param,
-                          llvm::SmallVectorImpl<TemplateArgument> &Converted);
+                          SmallVectorImpl<TemplateArgument> &Converted);
 
   /// \brief Specifies the context in which a particular template
   /// argument is being checked.
@@ -3819,7 +3819,7 @@ public:
                              SourceLocation TemplateLoc,
                              SourceLocation RAngleLoc,
                              unsigned ArgumentPackIndex,
-                           llvm::SmallVectorImpl<TemplateArgument> &Converted,
+                           SmallVectorImpl<TemplateArgument> &Converted,
                              CheckTemplateArgumentKind CTAK = CTAK_Specified);
 
   /// \brief Check that the given template arguments can be be provided to
@@ -3847,11 +3847,11 @@ public:
                                  SourceLocation TemplateLoc,
                                  TemplateArgumentListInfo &TemplateArgs,
                                  bool PartialTemplateArgs,
-                           llvm::SmallVectorImpl<TemplateArgument> &Converted);
+                           SmallVectorImpl<TemplateArgument> &Converted);
 
   bool CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
                                  const TemplateArgumentLoc &Arg,
-                           llvm::SmallVectorImpl<TemplateArgument> &Converted);
+                           SmallVectorImpl<TemplateArgument> &Converted);
 
   bool CheckTemplateArgument(TemplateTypeParmDecl *Param,
                              TypeSourceInfo *Arg);
@@ -4103,7 +4103,7 @@ public:
   /// \param Arg The template argument that will be traversed to find
   /// unexpanded parameter packs.
   void collectUnexpandedParameterPacks(TemplateArgument Arg,
-                   llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
+                   SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
 
   /// \brief Collect the set of unexpanded parameter packs within the given
   /// template argument.  
@@ -4111,7 +4111,7 @@ public:
   /// \param Arg The template argument that will be traversed to find
   /// unexpanded parameter packs.
   void collectUnexpandedParameterPacks(TemplateArgumentLoc Arg,
-                    llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
+                    SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
 
   /// \brief Collect the set of unexpanded parameter packs within the given
   /// type.  
@@ -4119,7 +4119,7 @@ public:
   /// \param T The type that will be traversed to find
   /// unexpanded parameter packs.
   void collectUnexpandedParameterPacks(QualType T,
-                   llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
+                   SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
 
   /// \brief Collect the set of unexpanded parameter packs within the given
   /// type.  
@@ -4127,7 +4127,7 @@ public:
   /// \param TL The type that will be traversed to find
   /// unexpanded parameter packs.
   void collectUnexpandedParameterPacks(TypeLoc TL,
-                   llvm::SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
+                   SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
 
   /// \brief Invoked when parsing a template argument followed by an
   /// ellipsis, which creates a pack expansion.
@@ -4312,8 +4312,8 @@ public:
   TemplateDeductionResult
   SubstituteExplicitTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                               TemplateArgumentListInfo &ExplicitTemplateArgs,
-                      llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                                 llvm::SmallVectorImpl<QualType> &ParamTypes,
+                      SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+                                 SmallVectorImpl<QualType> &ParamTypes,
                                       QualType *FunctionType,
                                       sema::TemplateDeductionInfo &Info);
 
@@ -4333,11 +4333,11 @@ public:
   
   TemplateDeductionResult
   FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
-                      llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+                      SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                                   unsigned NumExplicitlySpecified,
                                   FunctionDecl *&Specialization,
                                   sema::TemplateDeductionInfo &Info,
-           llvm::SmallVectorImpl<OriginalCallArg> const *OriginalCallArgs = 0);
+           SmallVectorImpl<OriginalCallArg> const *OriginalCallArgs = 0);
 
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
@@ -4392,9 +4392,9 @@ public:
   void MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
                                   bool OnlyDeduced,
                                   unsigned Depth,
-                                  llvm::SmallVectorImpl<bool> &Used);
+                                  SmallVectorImpl<bool> &Used);
   void MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
-                                     llvm::SmallVectorImpl<bool> &Deduced);
+                                     SmallVectorImpl<bool> &Deduced);
 
   //===--------------------------------------------------------------------===//
   // C++ Template Instantiation
@@ -4523,7 +4523,7 @@ public:
   /// requires another template instantiation, additional
   /// instantiations are pushed onto the stack up to a
   /// user-configurable limit LangOptions::InstantiationDepth.
-  llvm::SmallVector<ActiveTemplateInstantiation, 16>
+  SmallVector<ActiveTemplateInstantiation, 16>
     ActiveTemplateInstantiations;
 
   /// \brief Whether we are in a SFINAE context that is not associated with
@@ -4580,14 +4580,14 @@ public:
   ///
   /// The top of this stack is used by a fixit instantiating unresolved
   /// function calls to fix the AST to match the textual change it prints.
-  llvm::SmallVector<CallExpr *, 8> CallsUndergoingInstantiation;
+  SmallVector<CallExpr *, 8> CallsUndergoingInstantiation;
   
   /// \brief For each declaration that involved template argument deduction, the
   /// set of diagnostics that were suppressed during that template argument
   /// deduction.
   ///
   /// FIXME: Serialize this structure to the AST file.
-  llvm::DenseMap<Decl *, llvm::SmallVector<PartialDiagnosticAt, 1> >
+  llvm::DenseMap<Decl *, SmallVector<PartialDiagnosticAt, 1> >
     SuppressedDiagnostics;
   
   /// \brief A stack object to be created when performing template
@@ -4805,8 +4805,8 @@ public:
   bool SubstParmTypes(SourceLocation Loc, 
                       ParmVarDecl **Params, unsigned NumParams,
                       const MultiLevelTemplateArgumentList &TemplateArgs,
-                      llvm::SmallVectorImpl<QualType> &ParamTypes,
-                      llvm::SmallVectorImpl<ParmVarDecl *> *OutParams = 0);
+                      SmallVectorImpl<QualType> &ParamTypes,
+                      SmallVectorImpl<ParmVarDecl *> *OutParams = 0);
   ExprResult SubstExpr(Expr *E,
                        const MultiLevelTemplateArgumentList &TemplateArgs);
   
@@ -4827,7 +4827,7 @@ public:
   /// \returns true if an error occurred, false otherwise.
   bool SubstExprs(Expr **Exprs, unsigned NumExprs, bool IsCall,
                   const MultiLevelTemplateArgumentList &TemplateArgs,
-                  llvm::SmallVectorImpl<Expr *> &Outputs);
+                  SmallVectorImpl<Expr *> &Outputs);
 
   StmtResult SubstStmt(Stmt *S,
                        const MultiLevelTemplateArgumentList &TemplateArgs);
@@ -4970,7 +4970,7 @@ public:
   void FindProtocolDeclaration(bool WarnOnDeclarations,
                                const IdentifierLocPair *ProtocolId,
                                unsigned NumProtocols,
-                               llvm::SmallVectorImpl<Decl *> &Protocols);
+                               SmallVectorImpl<Decl *> &Protocols);
 
   /// Ensure attributes are consistent with type.
   /// \param [in, out] Attributes The attributes to check; they will
@@ -5353,7 +5353,7 @@ public:
                               const FunctionProtoType *Proto,
                               unsigned FirstProtoArg,
                               Expr **Args, unsigned NumArgs,
-                              llvm::SmallVector<Expr *, 8> &AllArgs,
+                              SmallVector<Expr *, 8> &AllArgs,
                               VariadicCallType CallType = VariadicDoesNotApply);
 
   // DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
@@ -5868,7 +5868,7 @@ public:
                                              unsigned Argument);
   void CodeCompleteNaturalLanguage();
   void GatherGlobalCodeCompletions(CodeCompletionAllocator &Allocator,
-                  llvm::SmallVectorImpl<CodeCompletionResult> &Results);
+                  SmallVectorImpl<CodeCompletionResult> &Results);
   //@}
 
   //===--------------------------------------------------------------------===//

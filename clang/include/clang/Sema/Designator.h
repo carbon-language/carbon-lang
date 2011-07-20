@@ -185,7 +185,7 @@ class Designation {
   unsigned InitIndex;
 
   /// Designators - The actual designators for this initializer.
-  llvm::SmallVector<Designator, 2> Designators;
+  SmallVector<Designator, 2> Designators;
 
   Designation(unsigned Idx) : InitIndex(Idx) {}
 public:

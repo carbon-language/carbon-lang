@@ -61,7 +61,7 @@ protected:
 
   /// ConditionalStack - Information about the set of #if/#ifdef/#ifndef blocks
   /// we are currently in.
-  llvm::SmallVector<PPConditionalInfo, 4> ConditionalStack;
+  SmallVector<PPConditionalInfo, 4> ConditionalStack;
 
   PreprocessorLexer(const PreprocessorLexer&);          // DO NOT IMPLEMENT
   void operator=(const PreprocessorLexer&); // DO NOT IMPLEMENT
@@ -157,7 +157,7 @@ public:
 
   /// \brief Iterator that traverses the current stack of preprocessor
   /// conditional directives (#if/#ifdef/#ifndef).
-  typedef llvm::SmallVectorImpl<PPConditionalInfo>::const_iterator 
+  typedef SmallVectorImpl<PPConditionalInfo>::const_iterator 
     conditional_iterator;
 
   conditional_iterator conditional_begin() const { 

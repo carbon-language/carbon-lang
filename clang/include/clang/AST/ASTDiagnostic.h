@@ -42,9 +42,9 @@ namespace clang {
       unsigned ArgLen,
       const Diagnostic::ArgumentValue *PrevArgs,
       unsigned NumPrevArgs,
-      llvm::SmallVectorImpl<char> &Output,
+      SmallVectorImpl<char> &Output,
       void *Cookie,
-      llvm::SmallVectorImpl<intptr_t> &QualTypeVals);
+      SmallVectorImpl<intptr_t> &QualTypeVals);
 }  // end namespace clang
 
 #endif

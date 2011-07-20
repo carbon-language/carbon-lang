@@ -82,7 +82,7 @@ public:
   /// JobList - A sequence of jobs to perform.
 class JobList : public Job {
 public:
-  typedef llvm::SmallVector<Job*, 4> list_type;
+  typedef SmallVector<Job*, 4> list_type;
   typedef list_type::size_type size_type;
   typedef list_type::iterator iterator;
   typedef list_type::const_iterator const_iterator;

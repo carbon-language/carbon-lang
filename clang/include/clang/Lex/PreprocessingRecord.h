@@ -199,7 +199,7 @@ namespace clang {
   private:
     /// \brief The name of the file that was included, as written in
     /// the source.
-    llvm::StringRef FileName;
+    StringRef FileName;
 
     /// \brief Whether the file name was in quotation marks; otherwise, it was
     /// in angle brackets.
@@ -215,14 +215,14 @@ namespace clang {
 
   public:
     InclusionDirective(PreprocessingRecord &PPRec,
-                       InclusionKind Kind, llvm::StringRef FileName, 
+                       InclusionKind Kind, StringRef FileName, 
                        bool InQuotes, const FileEntry *File, SourceRange Range);
     
     /// \brief Determine what kind of inclusion directive this is.
     InclusionKind getKind() const { return static_cast<InclusionKind>(Kind); }
     
     /// \brief Retrieve the included file name as it was written in the source.
-    llvm::StringRef getFileName() const { return FileName; }
+    StringRef getFileName() const { return FileName; }
     
     /// \brief Determine whether the included file name was written in quotes;
     /// otherwise, it was written in angle brackets.
@@ -347,12 +347,12 @@ namespace clang {
     virtual void MacroUndefined(const Token &Id, const MacroInfo *MI);
     virtual void InclusionDirective(SourceLocation HashLoc,
                                     const Token &IncludeTok,
-                                    llvm::StringRef FileName,
+                                    StringRef FileName,
                                     bool IsAngled,
                                     const FileEntry *File,
                                     SourceLocation EndLoc,
-                                    llvm::StringRef SearchPath,
-                                    llvm::StringRef RelativePath);
+                                    StringRef SearchPath,
+                                    StringRef RelativePath);
   };
 } // end namespace clang
 

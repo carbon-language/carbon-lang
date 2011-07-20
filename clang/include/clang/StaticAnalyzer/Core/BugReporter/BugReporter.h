@@ -85,10 +85,10 @@ public:
             getOriginalNode(const ExplodedNode* N) = 0;
   };
 
-  BugReport(BugType& bt, llvm::StringRef desc, const ExplodedNode *errornode)
+  BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode)
     : BT(bt), Description(desc), ErrorNode(errornode) {}
 
-  BugReport(BugType& bt, llvm::StringRef shortDesc, llvm::StringRef desc,
+  BugReport(BugType& bt, StringRef shortDesc, StringRef desc,
             const ExplodedNode *errornode)
   : BT(bt), ShortDescription(shortDesc), Description(desc),
     ErrorNode(errornode) {}
@@ -109,9 +109,9 @@ public:
   // BugReporter.
   const Stmt* getStmt() const;
 
-  const llvm::StringRef getDescription() const { return Description; }
+  const StringRef getDescription() const { return Description; }
 
-  const llvm::StringRef getShortDescription() const {
+  const StringRef getShortDescription() const {
     return ShortDescription.empty() ? Description : ShortDescription;
   }
 
@@ -198,14 +198,14 @@ public:
 
 // FIXME: Collapse this with the default BugReport class.
 class RangedBugReport : public BugReport {
-  llvm::SmallVector<SourceRange, 4> Ranges;
+  SmallVector<SourceRange, 4> Ranges;
 public:
-  RangedBugReport(BugType& D, llvm::StringRef description,
+  RangedBugReport(BugType& D, StringRef description,
                   ExplodedNode *errornode)
     : BugReport(D, description, errornode) {}
 
-  RangedBugReport(BugType& D, llvm::StringRef shortDescription,
-                  llvm::StringRef description, ExplodedNode *errornode)
+  RangedBugReport(BugType& D, StringRef shortDescription,
+                  StringRef description, ExplodedNode *errornode)
   : BugReport(D, shortDescription, description, errornode) {}
 
   ~RangedBugReport();
@@ -222,7 +222,7 @@ public:
   
   virtual void Profile(llvm::FoldingSetNodeID& hash) const {
     BugReport::Profile(hash);
-    for (llvm::SmallVectorImpl<SourceRange>::const_iterator I =
+    for (SmallVectorImpl<SourceRange>::const_iterator I =
           Ranges.begin(), E = Ranges.end(); I != E; ++I) {
       const SourceRange range = *I;
       if (!range.isValid())
@@ -243,12 +243,12 @@ private:
   Creators creators;
 
 public:
-  EnhancedBugReport(BugType& D, llvm::StringRef description,
+  EnhancedBugReport(BugType& D, StringRef description,
                     ExplodedNode *errornode)
    : RangedBugReport(D, description, errornode) {}
 
-  EnhancedBugReport(BugType& D, llvm::StringRef shortDescription,
-                   llvm::StringRef description, ExplodedNode *errornode)
+  EnhancedBugReport(BugType& D, StringRef shortDescription,
+                   StringRef description, ExplodedNode *errornode)
     : RangedBugReport(D, shortDescription, description, errornode) {}
 
   ~EnhancedBugReport() {}
@@ -326,38 +326,38 @@ public:
   SourceManager& getSourceManager() { return D.getSourceManager(); }
 
   virtual void GeneratePathDiagnostic(PathDiagnostic& pathDiagnostic,
-        llvm::SmallVectorImpl<BugReport *> &bugReports) {}
+        SmallVectorImpl<BugReport *> &bugReports) {}
 
   void Register(BugType *BT);
 
   void EmitReport(BugReport *R);
 
-  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef BugStr,
+  void EmitBasicReport(StringRef BugName, StringRef BugStr,
                        SourceLocation Loc,
                        SourceRange* RangeBeg, unsigned NumRanges);
 
-  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef BugCategory,
-                       llvm::StringRef BugStr, SourceLocation Loc,
+  void EmitBasicReport(StringRef BugName, StringRef BugCategory,
+                       StringRef BugStr, SourceLocation Loc,
                        SourceRange* RangeBeg, unsigned NumRanges);
 
 
-  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef BugStr,
+  void EmitBasicReport(StringRef BugName, StringRef BugStr,
                        SourceLocation Loc) {
     EmitBasicReport(BugName, BugStr, Loc, 0, 0);
   }
 
-  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef BugCategory,
-                       llvm::StringRef BugStr, SourceLocation Loc) {
+  void EmitBasicReport(StringRef BugName, StringRef BugCategory,
+                       StringRef BugStr, SourceLocation Loc) {
     EmitBasicReport(BugName, BugCategory, BugStr, Loc, 0, 0);
   }
 
-  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef BugStr,
+  void EmitBasicReport(StringRef BugName, StringRef BugStr,
                        SourceLocation Loc, SourceRange R) {
     EmitBasicReport(BugName, BugStr, Loc, &R, 1);
   }
 
-  void EmitBasicReport(llvm::StringRef BugName, llvm::StringRef Category,
-                       llvm::StringRef BugStr, SourceLocation Loc,
+  void EmitBasicReport(StringRef BugName, StringRef Category,
+                       StringRef BugStr, SourceLocation Loc,
                        SourceRange R) {
     EmitBasicReport(BugName, Category, BugStr, Loc, &R, 1);
   }
@@ -369,7 +369,7 @@ private:
 
   /// \brief Returns a BugType that is associated with the given name and
   /// category.
-  BugType *getBugTypeForName(llvm::StringRef name, llvm::StringRef category);
+  BugType *getBugTypeForName(StringRef name, StringRef category);
 };
 
 // FIXME: Get rid of GRBugReporter.  It's the wrong abstraction.
@@ -395,7 +395,7 @@ public:
   GRStateManager &getStateManager();
 
   virtual void GeneratePathDiagnostic(PathDiagnostic &pathDiagnostic,
-                     llvm::SmallVectorImpl<BugReport*> &bugReports);
+                     SmallVectorImpl<BugReport*> &bugReports);
 
   void addNotableSymbol(SymbolRef Sym) {
     NotableSymbols.insert(Sym);
@@ -465,7 +465,7 @@ class DiagBugReport : public RangedBugReport {
   std::list<std::string> Strs;
   FullSourceLoc L;
 public:
-  DiagBugReport(BugType& D, llvm::StringRef desc, FullSourceLoc l) :
+  DiagBugReport(BugType& D, StringRef desc, FullSourceLoc l) :
   RangedBugReport(D, desc, 0), L(l) {}
 
   virtual ~DiagBugReport() {}
@@ -473,7 +473,7 @@ public:
   // FIXME: Move out-of-line (virtual function).
   SourceLocation getLocation() const { return L; }
 
-  void addString(llvm::StringRef s) { Strs.push_back(s); }
+  void addString(StringRef s) { Strs.push_back(s); }
 
   typedef std::list<std::string>::const_iterator str_iterator;
   str_iterator str_begin() const { return Strs.begin(); }

@@ -15,7 +15,7 @@
 #ifndef CLANG_CODEGEN_CODEGENTBAA_H
 #define CLANG_CODEGEN_CODEGENTBAA_H
 
-#include "llvm/LLVMContext.h"
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
@@ -55,7 +55,7 @@ class CodeGenTBAA {
   /// considered to be equivalent to it.
   llvm::MDNode *getChar();
 
-  llvm::MDNode *getTBAAInfoForNamedType(llvm::StringRef NameStr,
+  llvm::MDNode *getTBAAInfoForNamedType(StringRef NameStr,
                                         llvm::MDNode *Parent,
                                         bool Readonly = false);
 

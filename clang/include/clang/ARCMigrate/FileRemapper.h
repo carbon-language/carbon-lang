@@ -10,6 +10,7 @@
 #ifndef LLVM_CLANG_ARCMIGRATE_FILEREMAPPER_H
 #define LLVM_CLANG_ARCMIGRATE_FILEREMAPPER_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseMap.h"
@@ -41,32 +42,32 @@ public:
   FileRemapper();
   ~FileRemapper();
   
-  bool initFromDisk(llvm::StringRef outputDir, Diagnostic &Diag,
+  bool initFromDisk(StringRef outputDir, Diagnostic &Diag,
                     bool ignoreIfFilesChanged);
-  bool flushToDisk(llvm::StringRef outputDir, Diagnostic &Diag);
+  bool flushToDisk(StringRef outputDir, Diagnostic &Diag);
 
   bool overwriteOriginal(Diagnostic &Diag,
-                         llvm::StringRef outputDir = llvm::StringRef());
+                         StringRef outputDir = StringRef());
 
-  void remap(llvm::StringRef filePath, llvm::MemoryBuffer *memBuf);
-  void remap(llvm::StringRef filePath, llvm::StringRef newPath);
+  void remap(StringRef filePath, llvm::MemoryBuffer *memBuf);
+  void remap(StringRef filePath, StringRef newPath);
 
   void applyMappings(CompilerInvocation &CI) const;
 
   void transferMappingsAndClear(CompilerInvocation &CI);
 
-  void clear(llvm::StringRef outputDir = llvm::StringRef());
+  void clear(StringRef outputDir = StringRef());
 
 private:
   void remap(const FileEntry *file, llvm::MemoryBuffer *memBuf);
   void remap(const FileEntry *file, const FileEntry *newfile);
 
-  const FileEntry *getOriginalFile(llvm::StringRef filePath);
+  const FileEntry *getOriginalFile(StringRef filePath);
   void resetTarget(Target &targ);
 
   bool report(const std::string &err, Diagnostic &Diag);
 
-  std::string getRemapInfoFile(llvm::StringRef outputDir);
+  std::string getRemapInfoFile(StringRef outputDir);
 };
 
 } // end namespace arcmt

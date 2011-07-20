@@ -208,7 +208,7 @@ public:
 
   /// Stringify - Convert the specified string into a C string by escaping '\'
   /// and " characters.  This does not add surrounding ""'s to the string.
-  static void Stringify(llvm::SmallVectorImpl<char> &Str);
+  static void Stringify(SmallVectorImpl<char> &Str);
 
   
   /// getSpelling - This method is used to get the spelling of a token into a
@@ -244,8 +244,8 @@ public:
   /// This method lexes at the expansion depth of the given
   /// location and does not jump to the expansion or spelling
   /// location.
-  static llvm::StringRef getSpelling(SourceLocation loc,
-                                     llvm::SmallVectorImpl<char> &buffer,
+  static StringRef getSpelling(SourceLocation loc,
+                                     SmallVectorImpl<char> &buffer,
                                      const SourceManager &SourceMgr,
                                      const LangOptions &Features,
                                      bool *invalid = 0);

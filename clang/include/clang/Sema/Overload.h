@@ -262,7 +262,7 @@ namespace clang {
 
   /// Represents an ambiguous user-defined conversion sequence.
   struct AmbiguousConversionSequence {
-    typedef llvm::SmallVector<FunctionDecl*, 4> ConversionSet;
+    typedef SmallVector<FunctionDecl*, 4> ConversionSet;
 
     void *FromTypePtr;
     void *ToTypePtr;
@@ -560,12 +560,12 @@ namespace clang {
 
     /// Conversions - The conversion sequences used to convert the
     /// function arguments to the function parameters.
-    llvm::SmallVector<ImplicitConversionSequence, 4> Conversions;
+    SmallVector<ImplicitConversionSequence, 4> Conversions;
 
     /// The FixIt hints which can be used to fix the Bad candidate.
     struct FixInfo {
       /// The list of Hints (all have to be applied).
-      llvm::SmallVector<FixItHint, 4> Hints;
+      SmallVector<FixItHint, 4> Hints;
 
       /// The number of Conversions fixed. This can be different from the size
       /// of the Hints vector since we allow multiple FixIts per conversion.
@@ -645,7 +645,7 @@ namespace clang {
     /// hasAmbiguousConversion - Returns whether this overload
     /// candidate requires an ambiguous conversion or not.
     bool hasAmbiguousConversion() const {
-      for (llvm::SmallVectorImpl<ImplicitConversionSequence>::const_iterator
+      for (SmallVectorImpl<ImplicitConversionSequence>::const_iterator
              I = Conversions.begin(), E = Conversions.end(); I != E; ++I) {
         if (!I->isInitialized()) return false;
         if (I->isAmbiguous()) return true;
@@ -656,8 +656,8 @@ namespace clang {
 
   /// OverloadCandidateSet - A set of overload candidates, used in C++
   /// overload resolution (C++ 13.3).
-  class OverloadCandidateSet : public llvm::SmallVector<OverloadCandidate, 16> {
-    typedef llvm::SmallVector<OverloadCandidate, 16> inherited;
+  class OverloadCandidateSet : public SmallVector<OverloadCandidate, 16> {
+    typedef SmallVector<OverloadCandidate, 16> inherited;
     llvm::SmallPtrSet<Decl *, 16> Functions;
 
     SourceLocation Loc;    

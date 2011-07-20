@@ -839,7 +839,7 @@ protected:
   ///
   /// \returns the first/last pair of declarations.
   static std::pair<Decl *, Decl *>
-  BuildDeclChain(const llvm::SmallVectorImpl<Decl*> &Decls);
+  BuildDeclChain(const SmallVectorImpl<Decl*> &Decls);
 
    DeclContext(Decl::Kind K)
      : DeclKind(K), ExternalLexicalStorage(false),

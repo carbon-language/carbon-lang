@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_SOURCELOCATION_H
 #define LLVM_CLANG_SOURCELOCATION_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include <utility>
 #include <functional>
@@ -22,7 +23,6 @@
 namespace llvm {
   class MemoryBuffer;
   class raw_ostream;
-  class StringRef;
   template <typename T> struct DenseMapInfo;
   template <typename T> struct isPodLike;
 }
@@ -290,7 +290,7 @@ public:
 
   /// getBufferData - Return a StringRef to the source buffer data for the
   /// specified FileID.
-  llvm::StringRef getBufferData(bool *Invalid = 0) const;
+  StringRef getBufferData(bool *Invalid = 0) const;
 
   /// getDecomposedLoc - Decompose the specified location into a raw FileID +
   /// Offset pair.  The first element is the FileID, the second is the

@@ -48,7 +48,7 @@ class FrontendOptions;
 
 /// Normalize \arg File for use in a user defined #include directive (in the
 /// predefines buffer).
-std::string NormalizeDashIncludePath(llvm::StringRef File,
+std::string NormalizeDashIncludePath(StringRef File,
                                      FileManager &FileMgr);
 
 /// Apply the header search options to get given HeaderSearch object.
@@ -87,7 +87,7 @@ void AttachDependencyFileGen(Preprocessor &PP,
 /// \param OutputPath - If non-empty, a path to write the header include
 /// information to, instead of writing to stderr.
 void AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders = false,
-                            llvm::StringRef OutputPath = "",
+                            StringRef OutputPath = "",
                             bool ShowDepth = true);
 
 /// CacheTokens - Cache tokens for use with PCH. Note that this requires

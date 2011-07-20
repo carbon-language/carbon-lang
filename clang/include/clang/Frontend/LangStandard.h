@@ -10,6 +10,7 @@
 #ifndef LLVM_CLANG_FRONTEND_LANGSTANDARD_H
 #define LLVM_CLANG_FRONTEND_LANGSTANDARD_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace clang {
@@ -83,7 +84,7 @@ public:
   bool hasImplicitInt() const { return Flags & frontend::ImplicitInt; }
 
   static const LangStandard &getLangStandardForKind(Kind K);
-  static const LangStandard *getLangStandardForName(llvm::StringRef Name);
+  static const LangStandard *getLangStandardForName(StringRef Name);
 };
 
 }  // end namespace clang

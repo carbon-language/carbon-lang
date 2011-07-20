@@ -136,7 +136,7 @@ QualType getDeclUsageType(ASTContext &C, NamedDecl *ND);
 ///
 /// \param PreferredTypeIsPointer Whether the preferred type for the context
 /// of this macro is a pointer type.
-unsigned getMacroUsagePriority(llvm::StringRef MacroName, 
+unsigned getMacroUsagePriority(StringRef MacroName, 
                                const LangOptions &LangOpts,
                                bool PreferredTypeIsPointer = false);
 
@@ -463,19 +463,19 @@ public:
 class CodeCompletionAllocator : public llvm::BumpPtrAllocator { 
 public:
   /// \brief Copy the given string into this allocator.
-  const char *CopyString(llvm::StringRef String);
+  const char *CopyString(StringRef String);
 
   /// \brief Copy the given string into this allocator.
   const char *CopyString(llvm::Twine String);
   
   // \brief Copy the given string into this allocator.
   const char *CopyString(const char *String) {
-    return CopyString(llvm::StringRef(String));
+    return CopyString(StringRef(String));
   }
   
   /// \brief Copy the given string into this allocator.
   const char *CopyString(const std::string &String) {
-    return CopyString(llvm::StringRef(String));
+    return CopyString(StringRef(String));
   }
 };
   
@@ -490,7 +490,7 @@ private:
   CXAvailabilityKind Availability;
   
   /// \brief The chunks stored in this string.
-  llvm::SmallVector<Chunk, 4> Chunks;
+  SmallVector<Chunk, 4> Chunks;
   
 public:
   CodeCompletionBuilder(CodeCompletionAllocator &Allocator) 

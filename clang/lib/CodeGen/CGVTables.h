@@ -116,7 +116,7 @@ class CodeGenVTables {
   /// pointers in the vtable for a given record decl.
   llvm::DenseMap<const CXXRecordDecl *, uint64_t> NumVirtualFunctionPointers;
 
-  typedef llvm::SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
+  typedef SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
   typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
   
   /// Thunks - Contains all thunks that a given method decl will need.
@@ -143,7 +143,7 @@ class CodeGenVTables {
   /// VTableAddressPointsMapTy - Address points for a single vtable.
   typedef llvm::DenseMap<BaseSubobject, uint64_t> VTableAddressPointsMapTy;
 
-  typedef llvm::SmallVector<std::pair<uint64_t, ThunkInfo>, 1> 
+  typedef SmallVector<std::pair<uint64_t, ThunkInfo>, 1> 
     VTableThunksTy;
   
   typedef llvm::DenseMap<const CXXRecordDecl *, VTableThunksTy>

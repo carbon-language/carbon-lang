@@ -692,7 +692,7 @@ public:
   ///
   /// \param FID The file ID whose contents will be returned.
   /// \param Invalid If non-NULL, will be set true if an error occurred.
-  llvm::StringRef getBufferData(FileID FID, bool *Invalid = 0) const;
+  StringRef getBufferData(FileID FID, bool *Invalid = 0) const;
 
 
   //===--------------------------------------------------------------------===//
@@ -939,7 +939,7 @@ public:
 
   /// getLineTableFilenameID - Return the uniqued ID for the specified filename.
   ///
-  unsigned getLineTableFilenameID(llvm::StringRef Str);
+  unsigned getLineTableFilenameID(StringRef Str);
 
   /// AddLineNote - Add a line note to the line table for the FileID and offset
   /// specified by Loc.  If FilenameID is -1, it is considered to be

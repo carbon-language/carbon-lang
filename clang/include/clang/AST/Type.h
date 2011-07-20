@@ -2630,7 +2630,7 @@ public:
     return getResultType().getNonLValueExprType(Context);
   }
 
-  static llvm::StringRef getNameForCallConv(CallingConv CC);
+  static StringRef getNameForCallConv(CallingConv CC);
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionNoProto ||

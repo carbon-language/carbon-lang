@@ -65,7 +65,7 @@ public:
   /// \brief Create a code modification hint that inserts the given
   /// code string at a specific location.
   static FixItHint CreateInsertion(SourceLocation InsertionLoc,
-                                   llvm::StringRef Code) {
+                                   StringRef Code) {
     FixItHint Hint;
     Hint.RemoveRange =
       CharSourceRange(SourceRange(InsertionLoc, InsertionLoc), false);
@@ -87,7 +87,7 @@ public:
   /// \brief Create a code modification hint that replaces the given
   /// source range with the given code string.
   static FixItHint CreateReplacement(CharSourceRange RemoveRange,
-                                     llvm::StringRef Code) {
+                                     StringRef Code) {
     FixItHint Hint;
     Hint.RemoveRange = RemoveRange;
     Hint.CodeToInsert = Code;
@@ -95,7 +95,7 @@ public:
   }
   
   static FixItHint CreateReplacement(SourceRange RemoveRange,
-                                     llvm::StringRef Code) {
+                                     StringRef Code) {
     return CreateReplacement(CharSourceRange::getTokenRange(RemoveRange), Code);
   }
 };
@@ -284,9 +284,9 @@ private:
       const char *Argument, unsigned ArgumentLen,
       const ArgumentValue *PrevArgs,
       unsigned NumPrevArgs,
-      llvm::SmallVectorImpl<char> &Output,
+      SmallVectorImpl<char> &Output,
       void *Cookie,
-      llvm::SmallVectorImpl<intptr_t> &QualTypeVals);
+      SmallVectorImpl<intptr_t> &QualTypeVals);
   void *ArgToStringCookie;
   ArgToStringFnTy ArgToStringFn;
 
@@ -436,7 +436,7 @@ public:
   ///
   /// 'Loc' is the source location that this change of diagnostic state should
   /// take affect. It can be null if we are setting the state from command-line.
-  bool setDiagnosticGroupMapping(llvm::StringRef Group, diag::Mapping Map,
+  bool setDiagnosticGroupMapping(StringRef Group, diag::Mapping Map,
                                  SourceLocation Loc = SourceLocation()) {
     return Diags->setDiagnosticGroupMapping(Group, Map, Loc, *this);
   }
@@ -458,7 +458,7 @@ public:
   /// getCustomDiagID - Return an ID for a diagnostic with the specified message
   /// and level.  If this is the first request for this diagnosic, it is
   /// registered and created, otherwise the existing ID is returned.
-  unsigned getCustomDiagID(Level L, llvm::StringRef Message) {
+  unsigned getCustomDiagID(Level L, StringRef Message) {
     return Diags->getCustomDiagID((DiagnosticIDs::Level)L, Message);
   }
 
@@ -468,8 +468,8 @@ public:
                           const char *Modifier, unsigned ModLen,
                           const char *Argument, unsigned ArgLen,
                           const ArgumentValue *PrevArgs, unsigned NumPrevArgs,
-                          llvm::SmallVectorImpl<char> &Output,
-                          llvm::SmallVectorImpl<intptr_t> &QualTypeVals) const {
+                          SmallVectorImpl<char> &Output,
+                          SmallVectorImpl<intptr_t> &QualTypeVals) const {
     ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen,
                   PrevArgs, NumPrevArgs, Output, ArgToStringCookie,
                   QualTypeVals);
@@ -533,8 +533,8 @@ public:
   /// \param Arg2 A string argument that will be provided to the
   /// diagnostic. A copy of this string will be stored in the
   /// Diagnostic object itself.
-  void SetDelayedDiagnostic(unsigned DiagID, llvm::StringRef Arg1 = "",
-                            llvm::StringRef Arg2 = "");
+  void SetDelayedDiagnostic(unsigned DiagID, StringRef Arg1 = "",
+                            StringRef Arg2 = "");
   
   /// \brief Clear out the current diagnostic.
   void Clear() { CurDiagID = ~0U; }
@@ -744,7 +744,7 @@ public:
   /// return Diag(...);
   operator bool() const { return true; }
 
-  void AddString(llvm::StringRef S) const {
+  void AddString(StringRef S) const {
     assert(NumArgs < Diagnostic::MaxArguments &&
            "Too many arguments to diagnostic!");
     if (DiagObj) {
@@ -779,7 +779,7 @@ public:
 };
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           llvm::StringRef S) {
+                                           StringRef S) {
   DB.AddString(S);
   return DB;
 }
@@ -869,10 +869,10 @@ inline DiagnosticBuilder Diagnostic::Report(unsigned DiagID) {
 /// about the currently in-flight diagnostic.
 class DiagnosticInfo {
   const Diagnostic *DiagObj;
-  llvm::StringRef StoredDiagMessage;
+  StringRef StoredDiagMessage;
 public:
   explicit DiagnosticInfo(const Diagnostic *DO) : DiagObj(DO) {}
-  DiagnosticInfo(const Diagnostic *DO, llvm::StringRef storedDiagMessage)
+  DiagnosticInfo(const Diagnostic *DO, StringRef storedDiagMessage)
     : DiagObj(DO), StoredDiagMessage(storedDiagMessage) {}
 
   const Diagnostic *getDiags() const { return DiagObj; }
@@ -960,12 +960,12 @@ public:
   /// FormatDiagnostic - Format this diagnostic into a string, substituting the
   /// formal arguments into the %0 slots.  The result is appended onto the Str
   /// array.
-  void FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const;
+  void FormatDiagnostic(SmallVectorImpl<char> &OutStr) const;
 
   /// FormatDiagnostic - Format the given format-string into the
   /// output buffer using the arguments stored in this diagnostic.
   void FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
-                        llvm::SmallVectorImpl<char> &OutStr) const;
+                        SmallVectorImpl<char> &OutStr) const;
 };
 
 /**
@@ -984,9 +984,9 @@ public:
   StoredDiagnostic();
   StoredDiagnostic(Diagnostic::Level Level, const DiagnosticInfo &Info);
   StoredDiagnostic(Diagnostic::Level Level, unsigned ID, 
-                   llvm::StringRef Message);
+                   StringRef Message);
   StoredDiagnostic(Diagnostic::Level Level, unsigned ID, 
-                   llvm::StringRef Message, FullSourceLoc Loc,
+                   StringRef Message, FullSourceLoc Loc,
                    llvm::ArrayRef<CharSourceRange> Ranges,
                    llvm::ArrayRef<FixItHint> Fixits);
   ~StoredDiagnostic();
@@ -997,7 +997,7 @@ public:
   unsigned getID() const { return ID; }
   Diagnostic::Level getLevel() const { return Level; }
   const FullSourceLoc &getLocation() const { return Loc; }
-  llvm::StringRef getMessage() const { return Message; }
+  StringRef getMessage() const { return Message; }
 
   void setLocation(FullSourceLoc Loc) { this->Loc = Loc; }
 

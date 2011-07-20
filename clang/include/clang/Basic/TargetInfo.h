@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_BASIC_TARGETINFO_H
 #define LLVM_CLANG_BASIC_TARGETINFO_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -82,7 +83,7 @@ protected:
   TargetCXXABI CXXABI;
   const LangAS::Map *AddrSpaceMap;
 
-  mutable llvm::StringRef PlatformName;
+  mutable StringRef PlatformName;
   mutable VersionTuple PlatformMinVersion;
 
   unsigned HasAlignMac68kSupport : 1;
@@ -306,16 +307,16 @@ public:
   /// isValidClobber - Returns whether the passed in string is
   /// a valid clobber in an inline asm statement. This is used by
   /// Sema.
-  bool isValidClobber(llvm::StringRef Name) const;
+  bool isValidClobber(StringRef Name) const;
 
   /// isValidGCCRegisterName - Returns whether the passed in string
   /// is a valid register name according to GCC. This is used by Sema for
   /// inline asm statements.
-  bool isValidGCCRegisterName(llvm::StringRef Name) const;
+  bool isValidGCCRegisterName(StringRef Name) const;
 
   // getNormalizedGCCRegisterName - Returns the "normalized" GCC register name.
   // For example, on x86 it will return "ax" when "eax" is passed in.
-  llvm::StringRef getNormalizedGCCRegisterName(llvm::StringRef Name) const;
+  StringRef getNormalizedGCCRegisterName(StringRef Name) const;
 
   struct ConstraintInfo {
     enum {
@@ -331,7 +332,7 @@ public:
     std::string ConstraintStr;  // constraint: "=rm"
     std::string Name;           // Operand name: [foo] with no []'s.
   public:
-    ConstraintInfo(llvm::StringRef ConstraintStr, llvm::StringRef Name)
+    ConstraintInfo(StringRef ConstraintStr, StringRef Name)
       : Flags(0), TiedOperand(-1), ConstraintStr(ConstraintStr.str()),
       Name(Name.str()) {}
 
@@ -444,7 +445,7 @@ public:
   /// and give good diagnostics in cases when the assembler or code generator
   /// would otherwise reject the section specifier.
   ///
-  virtual std::string isValidSectionSpecifier(llvm::StringRef SR) const {
+  virtual std::string isValidSectionSpecifier(StringRef SR) const {
     return "";
   }
 
@@ -565,7 +566,7 @@ public:
 
   /// \brief Retrieve the name of the platform as it is used in the
   /// availability attribute.
-  llvm::StringRef getPlatformName() const { return PlatformName; }
+  StringRef getPlatformName() const { return PlatformName; }
 
   /// \brief Retrieve the minimum desired version of the platform, to
   /// which the program should be compiled.

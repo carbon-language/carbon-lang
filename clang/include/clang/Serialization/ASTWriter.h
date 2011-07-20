@@ -67,8 +67,8 @@ class VersionTuple;
 class ASTWriter : public ASTDeserializationListener,
                   public ASTMutationListener {
 public:
-  typedef llvm::SmallVector<uint64_t, 64> RecordData;
-  typedef llvm::SmallVectorImpl<uint64_t> RecordDataImpl;
+  typedef SmallVector<uint64_t, 64> RecordData;
+  typedef SmallVectorImpl<uint64_t> RecordDataImpl;
 
   friend class ASTDeclWriter;
 private:
@@ -205,7 +205,7 @@ private:
   /// to the corresponding offsets within the preprocessor block.
   std::vector<uint32_t> MacroDefinitionOffsets;
 
-  typedef llvm::SmallVector<uint64_t, 2> UpdateRecord;
+  typedef SmallVector<uint64_t, 2> UpdateRecord;
   typedef llvm::DenseMap<const Decl *, UpdateRecord> DeclUpdateMap;
   /// \brief Mapping from declarations that came from a chained PCH to the
   /// record containing modifications to them.
@@ -228,7 +228,7 @@ private:
   /// headers. The declarations themselves are stored as declaration
   /// IDs, since they will be written out to an EXTERNAL_DEFINITIONS
   /// record.
-  llvm::SmallVector<uint64_t, 16> ExternalDefinitions;
+  SmallVector<uint64_t, 16> ExternalDefinitions;
 
   /// \brief DeclContexts that have received extensions since their serialized
   /// form.
@@ -248,16 +248,16 @@ private:
   /// happen, but the ObjC AST nodes are designed this way), it will be
   /// serialized again. In this case, it is registered here, so that the reader
   /// knows to read the updated version.
-  llvm::SmallVector<std::pair<serialization::DeclID, uint64_t>, 16>
+  SmallVector<std::pair<serialization::DeclID, uint64_t>, 16>
       ReplacedDecls;
 
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
-  llvm::SmallVector<Stmt *, 16> StmtsToEmit;
+  SmallVector<Stmt *, 16> StmtsToEmit;
 
   /// \brief Statements collection to use for ASTWriter::AddStmt().
   /// It will point to StmtsToEmit unless it is overriden. 
-  llvm::SmallVector<Stmt *, 16> *CollectedStmts;
+  SmallVector<Stmt *, 16> *CollectedStmts;
 
   /// \brief Mapping from SwitchCase statements to IDs.
   std::map<SwitchCase *, unsigned> SwitchCaseIDs;
@@ -280,7 +280,7 @@ private:
   unsigned NumVisibleDeclContexts;
 
   /// \brief The offset of each CXXBaseSpecifier set within the AST.
-  llvm::SmallVector<uint32_t, 4> CXXBaseSpecifiersOffsets;
+  SmallVector<uint32_t, 4> CXXBaseSpecifiersOffsets;
                     
   /// \brief The first ID number we can use for our own base specifiers.
   serialization::CXXBaseSpecifiersID FirstCXXBaseSpecifiersID;
@@ -306,7 +306,7 @@ private:
                     
   /// \brief Queue of C++ base specifiers to be written to the AST file,
   /// in the order they should be written.
-  llvm::SmallVector<QueuedCXXBaseSpecifiers, 2> CXXBaseSpecifiersToWrite;
+  SmallVector<QueuedCXXBaseSpecifiers, 2> CXXBaseSpecifiersToWrite;
                     
   /// \brief Write the given subexpression to the bitstream.
   void WriteSubStmt(Stmt *S);
@@ -523,7 +523,7 @@ public:
   void AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Record);
 
   /// \brief Add a string to the given record.
-  void AddString(llvm::StringRef Str, RecordDataImpl &Record);
+  void AddString(StringRef Str, RecordDataImpl &Record);
 
   /// \brief Add a version tuple to the given record
   void AddVersionTuple(const VersionTuple &Version, RecordDataImpl &Record);

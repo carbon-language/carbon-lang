@@ -1203,7 +1203,7 @@ public:
   //
   // FIXME: This is a bad API, we are overriding the NamedDecl::getName, to mean
   // something different.
-  llvm::StringRef getName() const {
+  StringRef getName() const {
     return Id ? Id->getNameStart() : "";
   }
 
@@ -1320,7 +1320,7 @@ public:
   //
   // FIXME: This is a bad API, we are overriding the NamedDecl::getName, to mean
   // something different.
-  llvm::StringRef getName() const {
+  StringRef getName() const {
     assert(getIdentifier() && "Name is not a simple identifier");
     return getIdentifier()->getName();
   }

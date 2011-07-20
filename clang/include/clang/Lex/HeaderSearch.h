@@ -211,12 +211,12 @@ public:
   /// \param RelativePath If non-null, will be set to the path relative to
   /// SearchPath at which the file was found. This only differs from the
   /// Filename for framework includes.
-  const FileEntry *LookupFile(llvm::StringRef Filename, bool isAngled,
+  const FileEntry *LookupFile(StringRef Filename, bool isAngled,
                               const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
                               const FileEntry *CurFileEnt,
-                              llvm::SmallVectorImpl<char> *SearchPath,
-                              llvm::SmallVectorImpl<char> *RelativePath);
+                              SmallVectorImpl<char> *SearchPath,
+                              SmallVectorImpl<char> *RelativePath);
 
   /// LookupSubframeworkHeader - Look up a subframework for the specified
   /// #include file.  For example, if #include'ing <HIToolbox/HIToolbox.h> from
@@ -224,15 +224,15 @@ public:
   /// is a subframework within Carbon.framework.  If so, return the FileEntry
   /// for the designated file, otherwise return null.
   const FileEntry *LookupSubframeworkHeader(
-      llvm::StringRef Filename,
+      StringRef Filename,
       const FileEntry *RelativeFileEnt,
-      llvm::SmallVectorImpl<char> *SearchPath,
-      llvm::SmallVectorImpl<char> *RelativePath);
+      SmallVectorImpl<char> *SearchPath,
+      SmallVectorImpl<char> *RelativePath);
 
   /// LookupFrameworkCache - Look up the specified framework name in our
   /// framework cache, returning the DirectoryEntry it is in if we know,
   /// otherwise, return null.
-  const DirectoryEntry *&LookupFrameworkCache(llvm::StringRef FWName) {
+  const DirectoryEntry *&LookupFrameworkCache(StringRef FWName) {
     return FrameworkMap.GetOrCreateValue(FWName).getValue();
   }
 

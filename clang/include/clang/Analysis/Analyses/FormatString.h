@@ -164,8 +164,8 @@ public:
     return Position;
   }
   
-  llvm::StringRef getCharacters() const {
-    return llvm::StringRef(getStart(), getLength());
+  StringRef getCharacters() const {
+    return StringRef(getStart(), getLength());
   }
   
   bool consumesDataArgument() const {

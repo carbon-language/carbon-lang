@@ -45,7 +45,7 @@ namespace clang {
   private:
     /// \brief The template argument lists, stored from the innermost template
     /// argument list (first) to the outermost template argument list (last).
-    llvm::SmallVector<ArgList, 4> TemplateArgumentLists;
+    SmallVector<ArgList, 4> TemplateArgumentLists;
     
   public:
     /// \brief Construct an empty set of template argument lists.
@@ -178,7 +178,7 @@ namespace clang {
   class LocalInstantiationScope {
   public:
     /// \brief A set of declarations.
-    typedef llvm::SmallVector<Decl *, 4> DeclArgumentPack;
+    typedef SmallVector<Decl *, 4> DeclArgumentPack;
     
   private:
     /// \brief Reference to the semantic analysis that is performing
@@ -210,7 +210,7 @@ namespace clang {
     LocalDeclsMap LocalDecls;
 
     /// \brief The set of argument packs we've allocated.
-    llvm::SmallVector<DeclArgumentPack *, 1> ArgumentPacks;
+    SmallVector<DeclArgumentPack *, 1> ArgumentPacks;
     
     /// \brief The outer scope, which contains local variable
     /// definitions from some other instantiation (that may not be
@@ -318,7 +318,7 @@ namespace clang {
     /// \brief A list of out-of-line class template partial
     /// specializations that will need to be instantiated after the
     /// enclosing class's instantiation is complete.
-    llvm::SmallVector<std::pair<ClassTemplateDecl *,
+    SmallVector<std::pair<ClassTemplateDecl *,
                                 ClassTemplatePartialSpecializationDecl *>, 4>
       OutOfLinePartialSpecs;
 
@@ -380,7 +380,7 @@ namespace clang {
     }
     
     typedef 
-      llvm::SmallVectorImpl<std::pair<ClassTemplateDecl *,
+      SmallVectorImpl<std::pair<ClassTemplateDecl *,
                                      ClassTemplatePartialSpecializationDecl *> >
         ::iterator
       delayed_partial_spec_iterator;
@@ -403,7 +403,7 @@ namespace clang {
 
     // Helper functions for instantiating methods.
     TypeSourceInfo *SubstFunctionType(FunctionDecl *D,
-                             llvm::SmallVectorImpl<ParmVarDecl *> &Params);
+                             SmallVectorImpl<ParmVarDecl *> &Params);
     bool InitFunctionInstantiation(FunctionDecl *New, FunctionDecl *Tmpl);
     bool InitMethodInstantiation(CXXMethodDecl *New, CXXMethodDecl *Tmpl);
 

@@ -97,7 +97,7 @@ public:
 
   ~LineTableInfo() {}
 
-  unsigned getLineTableFilenameID(llvm::StringRef Str);
+  unsigned getLineTableFilenameID(StringRef Str);
   const char *getFilename(unsigned ID) const {
     assert(ID < FilenamesByID.size() && "Invalid FilenameID");
     return FilenamesByID[ID]->getKeyData();

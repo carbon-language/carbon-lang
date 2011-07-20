@@ -41,7 +41,7 @@ class TemplateDeductionInfo {
 
   /// \brief Warnings (and follow-on notes) that were suppressed due to 
   /// SFINAE while performing template argument deduction.
-  llvm::SmallVector<PartialDiagnosticAt, 4> SuppressedDiagnostics;
+  SmallVector<PartialDiagnosticAt, 4> SuppressedDiagnostics;
   
   // do not implement these
   TemplateDeductionInfo(const TemplateDeductionInfo&);
@@ -81,7 +81,7 @@ public:
   }
   
   /// \brief Iterator over the set of suppressed diagnostics.
-  typedef llvm::SmallVectorImpl<PartialDiagnosticAt>::const_iterator 
+  typedef SmallVectorImpl<PartialDiagnosticAt>::const_iterator 
     diag_iterator;
   
   /// \brief Returns an iterator at the beginning of the sequence of suppressed

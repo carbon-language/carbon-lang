@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_PRAGMA_H
 #define LLVM_CLANG_PRAGMA_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
@@ -58,11 +59,11 @@ namespace clang {
 class PragmaHandler {
   std::string Name;
 public:
-  explicit PragmaHandler(llvm::StringRef name) : Name(name) {}
+  explicit PragmaHandler(StringRef name) : Name(name) {}
   PragmaHandler() {}
   virtual ~PragmaHandler();
 
-  llvm::StringRef getName() const { return Name; }
+  StringRef getName() const { return Name; }
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
                             Token &FirstToken) = 0;
 
@@ -91,14 +92,14 @@ class PragmaNamespace : public PragmaHandler {
   ///
   llvm::StringMap<PragmaHandler*> Handlers;
 public:
-  explicit PragmaNamespace(llvm::StringRef Name) : PragmaHandler(Name) {}
+  explicit PragmaNamespace(StringRef Name) : PragmaHandler(Name) {}
   virtual ~PragmaNamespace();
 
   /// FindHandler - Check to see if there is already a handler for the
   /// specified name.  If not, return the handler for the null name if it
   /// exists, otherwise return null.  If IgnoreNull is true (the default) then
   /// the null handler isn't returned on failure to match.
-  PragmaHandler *FindHandler(llvm::StringRef Name,
+  PragmaHandler *FindHandler(StringRef Name,
                              bool IgnoreNull = true) const;
 
   /// AddPragma - Add a pragma to this namespace.

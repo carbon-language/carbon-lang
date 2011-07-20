@@ -41,7 +41,7 @@ class MacroInfo {
 
   /// ReplacementTokens - This is the list of tokens that the macro is defined
   /// to.
-  llvm::SmallVector<Token, 8> ReplacementTokens;
+  SmallVector<Token, 8> ReplacementTokens;
 
   /// \brief Length in characters of the macro definition.
   mutable unsigned DefinitionLength;
@@ -235,7 +235,7 @@ public:
     return ReplacementTokens[Tok];
   }
 
-  typedef llvm::SmallVector<Token, 8>::const_iterator tokens_iterator;
+  typedef SmallVector<Token, 8>::const_iterator tokens_iterator;
   tokens_iterator tokens_begin() const { return ReplacementTokens.begin(); }
   tokens_iterator tokens_end() const { return ReplacementTokens.end(); }
   bool tokens_empty() const { return ReplacementTokens.empty(); }

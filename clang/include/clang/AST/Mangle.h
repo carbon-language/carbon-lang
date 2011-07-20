@@ -39,25 +39,25 @@ namespace clang {
 /// external memory ownership.
 class MangleBuffer {
 public:
-  void setString(llvm::StringRef Ref) {
+  void setString(StringRef Ref) {
     String = Ref;
   }
 
-  llvm::SmallVectorImpl<char> &getBuffer() {
+  SmallVectorImpl<char> &getBuffer() {
     return Buffer;
   }
 
-  llvm::StringRef getString() const {
+  StringRef getString() const {
     if (!String.empty()) return String;
     return Buffer.str();
   }
 
-  operator llvm::StringRef() const {
+  operator StringRef() const {
     return getString();
   }
 
 private:
-  llvm::StringRef String;
+  StringRef String;
   llvm::SmallString<256> Buffer;
 };
 

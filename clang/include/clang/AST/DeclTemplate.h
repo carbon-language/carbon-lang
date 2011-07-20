@@ -1864,7 +1864,7 @@ public:
 
   /// \brief Retrieve the partial specializations as an ordered list.
   void getPartialSpecializations(
-          llvm::SmallVectorImpl<ClassTemplatePartialSpecializationDecl *> &PS);
+          SmallVectorImpl<ClassTemplatePartialSpecializationDecl *> &PS);
   
   /// \brief Find a class template partial specialization with the given
   /// type T.

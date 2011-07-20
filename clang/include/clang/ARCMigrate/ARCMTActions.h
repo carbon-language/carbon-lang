@@ -40,8 +40,8 @@ protected:
   virtual bool BeginInvocation(CompilerInstance &CI);
 
 public:
-  MigrateAction(FrontendAction *WrappedAction, llvm::StringRef migrateDir,
-                llvm::StringRef plistOut,
+  MigrateAction(FrontendAction *WrappedAction, StringRef migrateDir,
+                StringRef plistOut,
                 bool emitPremigrationARCErrors);
 };
 

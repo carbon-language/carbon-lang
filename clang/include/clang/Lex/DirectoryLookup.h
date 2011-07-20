@@ -133,15 +133,15 @@ public:
   /// \param RelativePath If not NULL, will be set to the path relative to
   /// SearchPath at which the file was found. This only differs from the
   /// Filename for framework includes.
-  const FileEntry *LookupFile(llvm::StringRef Filename, HeaderSearch &HS,
-                              llvm::SmallVectorImpl<char> *SearchPath,
-                              llvm::SmallVectorImpl<char> *RelativePath) const;
+  const FileEntry *LookupFile(StringRef Filename, HeaderSearch &HS,
+                              SmallVectorImpl<char> *SearchPath,
+                              SmallVectorImpl<char> *RelativePath) const;
 
 private:
   const FileEntry *DoFrameworkLookup(
-      llvm::StringRef Filename, HeaderSearch &HS,
-      llvm::SmallVectorImpl<char> *SearchPath,
-      llvm::SmallVectorImpl<char> *RelativePath) const;
+      StringRef Filename, HeaderSearch &HS,
+      SmallVectorImpl<char> *SearchPath,
+      SmallVectorImpl<char> *RelativePath) const;
 
 };
 

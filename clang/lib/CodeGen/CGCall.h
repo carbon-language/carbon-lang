@@ -42,7 +42,7 @@ namespace clang {
   class VarDecl;
 
 namespace CodeGen {
-  typedef llvm::SmallVector<llvm::AttributeWithIndex, 8> AttributeListType;
+  typedef SmallVector<llvm::AttributeWithIndex, 8> AttributeListType;
 
   struct CallArg {
     RValue RV;
@@ -56,7 +56,7 @@ namespace CodeGen {
   /// CallArgList - Type for representing both the value and type of
   /// arguments in a call.
   class CallArgList :
-    public llvm::SmallVector<CallArg, 16> {
+    public SmallVector<CallArg, 16> {
   public:
     struct Writeback {
       /// The original argument.
@@ -90,18 +90,18 @@ namespace CodeGen {
 
     bool hasWritebacks() const { return !Writebacks.empty(); }
 
-    typedef llvm::SmallVectorImpl<Writeback>::const_iterator writeback_iterator;
+    typedef SmallVectorImpl<Writeback>::const_iterator writeback_iterator;
     writeback_iterator writeback_begin() const { return Writebacks.begin(); }
     writeback_iterator writeback_end() const { return Writebacks.end(); }
 
   private:
-    llvm::SmallVector<Writeback, 1> Writebacks;
+    SmallVector<Writeback, 1> Writebacks;
   };
 
   /// FunctionArgList - Type for representing both the decl and type
   /// of parameters to a function. The decl must be either a
   /// ParmVarDecl or ImplicitParamDecl.
-  class FunctionArgList : public llvm::SmallVector<const VarDecl*, 16> {
+  class FunctionArgList : public SmallVector<const VarDecl*, 16> {
   };
 
   /// CGFunctionInfo - Class to encapsulate the information about a

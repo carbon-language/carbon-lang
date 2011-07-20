@@ -515,7 +515,7 @@ public:
 /// A convenient class for passing around template argument
 /// information.  Designed to be passed by reference.
 class TemplateArgumentListInfo {
-  llvm::SmallVector<TemplateArgumentLoc, 8> Arguments;
+  SmallVector<TemplateArgumentLoc, 8> Arguments;
   SourceLocation LAngleLoc;
   SourceLocation RAngleLoc;
 

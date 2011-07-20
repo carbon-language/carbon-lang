@@ -162,13 +162,13 @@ public:
                           RetainRemappedFileBuffers(false),
                           ObjCXXARCStandardLibrary(ARCXX_nolib) { }
 
-  void addMacroDef(llvm::StringRef Name) {
+  void addMacroDef(StringRef Name) {
     Macros.push_back(std::make_pair(Name, false));
   }
-  void addMacroUndef(llvm::StringRef Name) {
+  void addMacroUndef(StringRef Name) {
     Macros.push_back(std::make_pair(Name, true));
   }
-  void addRemappedFile(llvm::StringRef From, llvm::StringRef To) {
+  void addRemappedFile(StringRef From, StringRef To) {
     RemappedFiles.push_back(std::make_pair(From, To));
   }
   
@@ -176,7 +176,7 @@ public:
     return RemappedFiles.erase(Remapped);
   }
   
-  void addRemappedFile(llvm::StringRef From, const llvm::MemoryBuffer * To) {
+  void addRemappedFile(StringRef From, const llvm::MemoryBuffer * To) {
     RemappedFileBuffers.push_back(std::make_pair(From, To));
   }
   

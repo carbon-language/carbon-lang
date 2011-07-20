@@ -257,7 +257,7 @@ class CodeGenModule : public CodeGenTypeCache {
   CtorList GlobalDtors;
 
   /// MangledDeclNames - A map of canonical GlobalDecls to their mangled names.
-  llvm::DenseMap<GlobalDecl, llvm::StringRef> MangledDeclNames;
+  llvm::DenseMap<GlobalDecl, StringRef> MangledDeclNames;
   llvm::BumpPtrAllocator MangledNamesAllocator;
   
   std::vector<llvm::Constant*> Annotations;
@@ -279,7 +279,7 @@ class CodeGenModule : public CodeGenTypeCache {
   /// - Global variables with initializers whose order of initialization
   /// is set by init_priority attribute.
   
-  llvm::SmallVector<std::pair<OrderGlobalInits, llvm::Function*>, 8> 
+  SmallVector<std::pair<OrderGlobalInits, llvm::Function*>, 8> 
     PrioritizedCXXGlobalInits;
 
   /// CXXGlobalDtors - Global destructor functions and arguments that need to
@@ -433,7 +433,7 @@ public:
   /// variable with the right type will be created and all uses of the old
   /// variable will be replaced with a bitcast to the new variable.
   llvm::GlobalVariable *
-  CreateOrReplaceCXXRuntimeVariable(llvm::StringRef Name, llvm::Type *Ty,
+  CreateOrReplaceCXXRuntimeVariable(StringRef Name, llvm::Type *Ty,
                                     llvm::GlobalValue::LinkageTypes Linkage);
 
   /// GetAddrOfGlobalVar - Return the llvm::Constant for the address of the
@@ -544,7 +544,7 @@ public:
   ///
   /// \param GlobalName If provided, the name to use for the global
   /// (if one is created).
-  llvm::Constant *GetAddrOfConstantString(llvm::StringRef Str,
+  llvm::Constant *GetAddrOfConstantString(StringRef Str,
                                           const char *GlobalName=0);
 
   /// GetAddrOfConstantCString - Returns a pointer to a character array
@@ -595,13 +595,13 @@ public:
   /// CreateRuntimeFunction - Create a new runtime function with the specified
   /// type and name.
   llvm::Constant *CreateRuntimeFunction(llvm::FunctionType *Ty,
-                                        llvm::StringRef Name,
+                                        StringRef Name,
                                         llvm::Attributes ExtraAttrs =
                                           llvm::Attribute::None);
   /// CreateRuntimeVariable - Create a new runtime global variable with the
   /// specified type and name.
   llvm::Constant *CreateRuntimeVariable(llvm::Type *Ty,
-                                        llvm::StringRef Name);
+                                        StringRef Name);
 
   ///@name Custom Blocks Runtime Interfaces
   ///@{
@@ -633,7 +633,7 @@ public:
                                    const AnnotateAttr *AA, unsigned LineNo);
 
   /// Error - Emit a general error that something can't be done.
-  void Error(SourceLocation loc, llvm::StringRef error);
+  void Error(SourceLocation loc, StringRef error);
 
   /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified stmt yet.
@@ -688,7 +688,7 @@ public:
                               AttributeListType &PAL,
                               unsigned &CallingConv);
 
-  llvm::StringRef getMangledName(GlobalDecl GD);
+  StringRef getMangledName(GlobalDecl GD);
   void getBlockMangledName(GlobalDecl GD, MangleBuffer &Buffer,
                            const BlockDecl *BD);
 
@@ -720,15 +720,15 @@ public:
   std::vector<const CXXRecordDecl*> DeferredVTables;
 
 private:
-  llvm::GlobalValue *GetGlobalValue(llvm::StringRef Ref);
+  llvm::GlobalValue *GetGlobalValue(StringRef Ref);
 
-  llvm::Constant *GetOrCreateLLVMFunction(llvm::StringRef MangledName,
+  llvm::Constant *GetOrCreateLLVMFunction(StringRef MangledName,
                                           llvm::Type *Ty,
                                           GlobalDecl D,
                                           bool ForVTable,
                                           llvm::Attributes ExtraAttrs =
                                             llvm::Attribute::None);
-  llvm::Constant *GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
+  llvm::Constant *GetOrCreateLLVMGlobal(StringRef MangledName,
                                         llvm::PointerType *PTy,
                                         const VarDecl *D,
                                         bool UnnamedAddr = false);

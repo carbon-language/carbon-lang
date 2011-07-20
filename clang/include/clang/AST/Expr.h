@@ -46,7 +46,7 @@ namespace clang {
   class OpaqueValueExpr;
 
 /// \brief A simple array of base specifiers.
-typedef llvm::SmallVector<CXXBaseSpecifier*, 4> CXXCastPath;
+typedef SmallVector<CXXBaseSpecifier*, 4> CXXCastPath;
 
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -1259,12 +1259,12 @@ class StringLiteral : public Expr {
 public:
   /// This is the "fully general" constructor that allows representation of
   /// strings formed from multiple concatenated tokens.
-  static StringLiteral *Create(ASTContext &C, llvm::StringRef Str, bool Wide,
+  static StringLiteral *Create(ASTContext &C, StringRef Str, bool Wide,
                                bool Pascal, QualType Ty,
                                const SourceLocation *Loc, unsigned NumStrs);
 
   /// Simple constructor for string literals made from one token.
-  static StringLiteral *Create(ASTContext &C, llvm::StringRef Str, bool Wide, 
+  static StringLiteral *Create(ASTContext &C, StringRef Str, bool Wide, 
                                bool Pascal, QualType Ty, SourceLocation Loc) {
     return Create(C, Str, Wide, Pascal, Ty, &Loc, 1);
   }
@@ -1272,20 +1272,20 @@ public:
   /// \brief Construct an empty string literal.
   static StringLiteral *CreateEmpty(ASTContext &C, unsigned NumStrs);
 
-  llvm::StringRef getString() const {
-    return llvm::StringRef(StrData, ByteLength);
+  StringRef getString() const {
+    return StringRef(StrData, ByteLength);
   }
 
   unsigned getByteLength() const { return ByteLength; }
 
   /// \brief Sets the string data to the given string data.
-  void setString(ASTContext &C, llvm::StringRef Str);
+  void setString(ASTContext &C, StringRef Str);
 
   bool isWide() const { return IsWide; }
   bool isPascal() const { return IsPascal; }
   
   bool containsNonAsciiOrNull() const {
-    llvm::StringRef Str = getString();
+    StringRef Str = getString();
     for (unsigned i = 0, e = Str.size(); i != e; ++i)
       if (!isascii(Str[i]) || !Str[i])
         return true;
@@ -4045,7 +4045,7 @@ public:
 
   /// getEncodedElementAccess - Encode the elements accessed into an llvm
   /// aggregate Constant of ConstantInt(s).
-  void getEncodedElementAccess(llvm::SmallVectorImpl<unsigned> &Elts) const;
+  void getEncodedElementAccess(SmallVectorImpl<unsigned> &Elts) const;
 
   SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), AccessorLoc);

@@ -15,6 +15,7 @@
 #ifndef CLANG_LITERALSUPPORT_H
 #define CLANG_LITERALSUPPORT_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/DataTypes.h"
@@ -167,8 +168,8 @@ public:
   bool AnyWide;
   bool Pascal;
 
-  llvm::StringRef GetString() const {
-    return llvm::StringRef(ResultBuf.data(), GetStringLength());
+  StringRef GetString() const {
+    return StringRef(ResultBuf.data(), GetStringLength());
   }
   unsigned GetStringLength() const { return ResultPtr-ResultBuf.data(); }
 

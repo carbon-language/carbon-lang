@@ -237,8 +237,8 @@ protected:
   friend class CoreEngine;
 
   // Type definitions.
-  typedef llvm::SmallVector<ExplodedNode*,2>    RootsTy;
-  typedef llvm::SmallVector<ExplodedNode*,10>   EndNodesTy;
+  typedef SmallVector<ExplodedNode*,2>    RootsTy;
+  typedef SmallVector<ExplodedNode*,10>   EndNodesTy;
 
   /// Roots - The roots of the simulation graph. Usually there will be only
   /// one, but clients are free to establish multiple subgraphs within a single

@@ -60,7 +60,7 @@ namespace driver {
     OptSpecifier ID;
 
     /// The option name.
-    llvm::StringRef Name;
+    StringRef Name;
 
     /// Group this option is a member of, if any.
     const OptionGroup *Group;
@@ -99,7 +99,7 @@ namespace driver {
 
     unsigned getID() const { return ID.getID(); }
     OptionClass getKind() const { return Kind; }
-    llvm::StringRef getName() const { return Name; }
+    StringRef getName() const { return Name; }
     const OptionGroup *getGroup() const { return Group; }
     const Option *getAlias() const { return Alias; }
 
@@ -139,7 +139,7 @@ namespace driver {
 
     /// getRenderName - Return the name to use when rendering this
     /// option.
-    llvm::StringRef getRenderName() const {
+    StringRef getRenderName() const {
       return getUnaliasedOption()->getName();
     }
 

@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_INDEX_ENTITY_H
 #define LLVM_CLANG_INDEX_ENTITY_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -73,7 +74,7 @@ public:
   static Entity get(Decl *D, Program &Prog);
 
   /// \brief Get an Entity associated with a name in the global namespace.
-  static Entity get(llvm::StringRef Name, Program &Prog);
+  static Entity get(StringRef Name, Program &Prog);
 
   /// \brief true if the Entity is not visible outside the trasnlation unit.
   bool isInternalToTU() const {

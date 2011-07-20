@@ -139,7 +139,7 @@ public:
   /// getDarwinArchName - Get the "Darwin" arch name for a particular compiler
   /// invocation. For example, Darwin treats different ARM variations as
   /// distinct architectures.
-  llvm::StringRef getDarwinArchName(const ArgList &Args) const;
+  StringRef getDarwinArchName(const ArgList &Args) const;
 
   static bool isVersionLT(unsigned (&A)[3], unsigned (&B)[3]) {
     for (unsigned i=0; i < 3; ++i) {

@@ -1007,7 +1007,7 @@ public:
   }
   
   /// \brief Retrieve the kind of bridge being performed as a string.
-  llvm::StringRef getBridgeKindName() const;
+  StringRef getBridgeKindName() const;
   
   /// \brief The location of the bridge keyword.
   SourceLocation getBridgeKeywordLoc() const { return BridgeKeywordLoc; }

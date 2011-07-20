@@ -149,7 +149,7 @@ private:
   /// maintained by the Action implementation.
   void *Entity;
 
-  typedef llvm::SmallVector<UsingDirectiveDecl *, 2> UsingDirectivesTy;
+  typedef SmallVector<UsingDirectiveDecl *, 2> UsingDirectivesTy;
   UsingDirectivesTy UsingDirectives;
 
   /// \brief Used to determine if errors occurred in this scope.

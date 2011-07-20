@@ -32,7 +32,7 @@ namespace driver {
 /// ToolChain - Access to tools for a single platform.
 class ToolChain {
 public:
-  typedef llvm::SmallVector<std::string, 4> path_list;
+  typedef SmallVector<std::string, 4> path_list;
 
   enum CXXStdlibType {
     CST_Libcxx,
@@ -63,9 +63,9 @@ public:
   const llvm::Triple &getTriple() const { return Triple; }
 
   llvm::Triple::ArchType getArch() const { return Triple.getArch(); }
-  llvm::StringRef getArchName() const { return Triple.getArchName(); }
-  llvm::StringRef getPlatform() const { return Triple.getVendorName(); }
-  llvm::StringRef getOS() const { return Triple.getOSName(); }
+  StringRef getArchName() const { return Triple.getArchName(); }
+  StringRef getPlatform() const { return Triple.getVendorName(); }
+  StringRef getOS() const { return Triple.getOSName(); }
 
   std::string getTripleString() const {
     return Triple.getTriple();

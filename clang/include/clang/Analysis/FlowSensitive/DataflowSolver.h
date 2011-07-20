@@ -30,7 +30,7 @@ namespace clang {
 
 class DataflowWorkListTy {
   llvm::DenseMap<const CFGBlock*, unsigned char> BlockSet;
-  llvm::SmallVector<const CFGBlock *, 10> BlockQueue;
+  SmallVector<const CFGBlock *, 10> BlockQueue;
 public:
   /// enqueue - Add a block to the worklist.  Blocks already on the
   ///  worklist are not added a second time.

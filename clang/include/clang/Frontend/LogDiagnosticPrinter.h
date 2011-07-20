@@ -48,7 +48,7 @@ class LogDiagnosticPrinter : public DiagnosticClient {
   FullSourceLoc LastLoc;
   unsigned OwnsOutputStream : 1;
 
-  llvm::SmallVector<DiagEntry, 8> Entries;
+  SmallVector<DiagEntry, 8> Entries;
 
   std::string MainFilename;
   std::string DwarfDebugFlags;
@@ -58,7 +58,7 @@ public:
                        bool OwnsOutputStream = false);
   virtual ~LogDiagnosticPrinter();
 
-  void setDwarfDebugFlags(llvm::StringRef Value) {
+  void setDwarfDebugFlags(StringRef Value) {
     DwarfDebugFlags = Value;
   }
 

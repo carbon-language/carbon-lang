@@ -178,7 +178,7 @@ class EHCleanupScope : public EHScope {
     llvm::SmallPtrSet<llvm::BasicBlock*, 4> Branches;
 
     /// Normal branch-afters.
-    llvm::SmallVector<std::pair<llvm::BasicBlock*,llvm::ConstantInt*>, 4>
+    SmallVector<std::pair<llvm::BasicBlock*,llvm::ConstantInt*>, 4>
       BranchAfters;
 
     /// The destinations of EH branch-afters and branch-throughs.
@@ -187,7 +187,7 @@ class EHCleanupScope : public EHScope {
     llvm::SmallPtrSet<llvm::BasicBlock*, 4> EHBranches;
 
     /// EH branch-afters.
-    llvm::SmallVector<std::pair<llvm::BasicBlock*,llvm::ConstantInt*>, 4>
+    SmallVector<std::pair<llvm::BasicBlock*,llvm::ConstantInt*>, 4>
     EHBranchAfters;
   };
   mutable struct ExtInfo *ExtInfo;

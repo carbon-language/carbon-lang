@@ -405,7 +405,7 @@ private:
 
   std::vector<CheckDeclFunc> BodyCheckers;
 
-  typedef llvm::SmallVector<CheckDeclFunc, 4> CachedDeclCheckers;
+  typedef SmallVector<CheckDeclFunc, 4> CachedDeclCheckers;
   typedef llvm::DenseMap<unsigned, CachedDeclCheckers> CachedDeclCheckersMapTy;
   CachedDeclCheckersMapTy CachedDeclCheckersMap;
 
@@ -439,7 +439,7 @@ private:
   };
   friend struct llvm::DenseMapInfo<CachedStmtCheckersKey>;
 
-  typedef llvm::SmallVector<CheckStmtFunc, 4> CachedStmtCheckers;
+  typedef SmallVector<CheckStmtFunc, 4> CachedStmtCheckers;
   typedef llvm::DenseMap<CachedStmtCheckersKey, CachedStmtCheckers>
       CachedStmtCheckersMapTy;
   CachedStmtCheckersMapTy CachedStmtCheckersMap;
@@ -476,7 +476,7 @@ private:
   std::vector<CheckEndOfTranslationUnit> EndOfTranslationUnitCheckers;
 
   struct EventInfo {
-    llvm::SmallVector<CheckEventFunc, 4> Checkers;
+    SmallVector<CheckEventFunc, 4> Checkers;
     bool HasDispatcher;
     EventInfo() : HasDispatcher(false) { }
   };

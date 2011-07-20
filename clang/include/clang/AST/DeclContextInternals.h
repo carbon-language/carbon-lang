@@ -31,7 +31,7 @@ class DependentDiagnostic;
 struct StoredDeclsList {
 
   /// DeclsTy - When in vector form, this is what the Data pointer points to.
-  typedef llvm::SmallVector<NamedDecl *, 4> DeclsTy;
+  typedef SmallVector<NamedDecl *, 4> DeclsTy;
 
   /// \brief The stored data, which will be either a pointer to a NamedDecl,
   /// or a pointer to a vector.

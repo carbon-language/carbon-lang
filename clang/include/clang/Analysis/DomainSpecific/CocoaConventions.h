@@ -33,8 +33,8 @@ namespace cocoa {
     return deriveNamingConvention(S, MD) == CreateRule;
   }
   
-  bool isRefType(QualType RetTy, llvm::StringRef Prefix,
-                 llvm::StringRef Name = llvm::StringRef());
+  bool isRefType(QualType RetTy, StringRef Prefix,
+                 StringRef Name = StringRef());
     
   bool isCocoaObjectRef(QualType T);
 
@@ -43,7 +43,7 @@ namespace cocoa {
 namespace coreFoundation {
   bool isCFObjectRef(QualType T);
   
-  bool followsCreateRule(llvm::StringRef functionName);
+  bool followsCreateRule(StringRef functionName);
 }
 
 }} // end: "clang:ento"

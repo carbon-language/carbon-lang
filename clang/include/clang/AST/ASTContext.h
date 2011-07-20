@@ -599,7 +599,7 @@ public:
   }
 
   /// This builds the struct used for __block variables.
-  QualType BuildByRefType(llvm::StringRef DeclName, QualType Ty) const;
+  QualType BuildByRefType(StringRef DeclName, QualType Ty) const;
 
   /// Returns true iff we need copy/dispose helpers for the given type.
   bool BlockRequiresCopying(QualType Ty) const;
@@ -1166,11 +1166,11 @@ public:
   MangleContext *createMangleContext();
 
   void ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
-                               llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars)
+                               SmallVectorImpl<ObjCIvarDecl*> &Ivars)
     const;
   
   void DeepCollectObjCIvars(const ObjCInterfaceDecl *OI, bool leafClass,
-                            llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) const;
+                            SmallVectorImpl<ObjCIvarDecl*> &Ivars) const;
   
   unsigned CountNonClassIvars(const ObjCInterfaceDecl *OI) const;
   void CollectInheritedProtocols(const Decl *CDecl,
@@ -1644,7 +1644,7 @@ private:
 private:
   /// \brief A set of deallocations that should be performed when the 
   /// ASTContext is destroyed.
-  llvm::SmallVector<std::pair<void (*)(void*), void *>, 16> Deallocations;
+  SmallVector<std::pair<void (*)(void*), void *>, 16> Deallocations;
                                        
   // FIXME: This currently contains the set of StoredDeclMaps used
   // by DeclContext objects.  This probably should not be in ASTContext,
@@ -1660,13 +1660,13 @@ private:
 };
   
 /// @brief Utility function for constructing a nullary selector.
-static inline Selector GetNullarySelector(llvm::StringRef name, ASTContext& Ctx) {
+static inline Selector GetNullarySelector(StringRef name, ASTContext& Ctx) {
   IdentifierInfo* II = &Ctx.Idents.get(name);
   return Ctx.Selectors.getSelector(0, &II);
 }
 
 /// @brief Utility function for constructing an unary selector.
-static inline Selector GetUnarySelector(llvm::StringRef name, ASTContext& Ctx) {
+static inline Selector GetUnarySelector(StringRef name, ASTContext& Ctx) {
   IdentifierInfo* II = &Ctx.Idents.get(name);
   return Ctx.Selectors.getSelector(1, &II);
 }

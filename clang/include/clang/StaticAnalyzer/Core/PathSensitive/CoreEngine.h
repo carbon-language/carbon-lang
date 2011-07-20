@@ -284,7 +284,7 @@ class BranchNodeBuilder {
   const CFGBlock* DstF;
   ExplodedNode* Pred;
 
-  typedef llvm::SmallVector<ExplodedNode*,3> DeferredTy;
+  typedef SmallVector<ExplodedNode*,3> DeferredTy;
   DeferredTy Deferred;
 
   bool GeneratedTrue;
@@ -426,7 +426,7 @@ protected:
   CoreEngine &engine;
   ExplodedNode *pred;
   ProgramPoint pp;
-  llvm::SmallVector<ExplodedNode*, 2> sinksGenerated;  
+  SmallVector<ExplodedNode*, 2> sinksGenerated;  
 
   ExplodedNode *generateNodeImpl(const GRState *state, ExplodedNode *pred,
                                  ProgramPoint programPoint, bool asSink);
@@ -445,7 +445,7 @@ public:
     return engine.WList->getBlockCounter();
   }
   
-  const llvm::SmallVectorImpl<ExplodedNode*> &sinks() const {
+  const SmallVectorImpl<ExplodedNode*> &sinks() const {
     return sinksGenerated;
   }
 };

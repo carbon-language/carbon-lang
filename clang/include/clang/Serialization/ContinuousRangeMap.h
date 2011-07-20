@@ -41,7 +41,7 @@ public:
   typedef const value_type *const_pointer;
 
 private:
-  typedef llvm::SmallVector<value_type, InitialCapacity> Representation;
+  typedef SmallVector<value_type, InitialCapacity> Representation;
   Representation Rep;
 
   struct Compare {

@@ -151,7 +151,7 @@ public:
   ///
   /// \return The input kind for the extension, or IK_None if the extension is
   /// not recognized.
-  static InputKind getInputKindForExtension(llvm::StringRef Extension);
+  static InputKind getInputKindForExtension(StringRef Extension);
 };
 
 }  // end namespace clang

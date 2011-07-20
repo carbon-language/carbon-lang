@@ -90,12 +90,12 @@ public:
   /// file was found. This is equal to FileName except for framework includes.
   virtual void InclusionDirective(SourceLocation HashLoc,
                                   const Token &IncludeTok,
-                                  llvm::StringRef FileName,
+                                  StringRef FileName,
                                   bool IsAngled,
                                   const FileEntry *File,
                                   SourceLocation EndLoc,
-                                  llvm::StringRef SearchPath,
-                                  llvm::StringRef RelativePath) {
+                                  StringRef SearchPath,
+                                  StringRef RelativePath) {
   }
 
   /// EndOfMainFile - This callback is invoked when the end of the main file is
@@ -122,25 +122,25 @@ public:
   /// \param Loc The location of the message directive.
   /// \param str The text of the message directive.
   ///
-  virtual void PragmaMessage(SourceLocation Loc, llvm::StringRef Str) {
+  virtual void PragmaMessage(SourceLocation Loc, StringRef Str) {
   }
 
   /// PragmaDiagnosticPush - This callback is invoked when a
   /// #pragma gcc dianostic push directive is read.
   virtual void PragmaDiagnosticPush(SourceLocation Loc,
-                                    llvm::StringRef Namespace) {
+                                    StringRef Namespace) {
   }
 
   /// PragmaDiagnosticPop - This callback is invoked when a
   /// #pragma gcc dianostic pop directive is read.
   virtual void PragmaDiagnosticPop(SourceLocation Loc,
-                                   llvm::StringRef Namespace) {
+                                   StringRef Namespace) {
   }
 
   /// PragmaDiagnostic - This callback is invoked when a
   /// #pragma gcc dianostic directive is read.
-  virtual void PragmaDiagnostic(SourceLocation Loc, llvm::StringRef Namespace,
-                                diag::Mapping mapping, llvm::StringRef Str) {
+  virtual void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
+                                diag::Mapping mapping, StringRef Str) {
   }
 
   /// MacroExpands - This is called by
@@ -218,12 +218,12 @@ public:
 
   virtual void InclusionDirective(SourceLocation HashLoc,
                                   const Token &IncludeTok,
-                                  llvm::StringRef FileName,
+                                  StringRef FileName,
                                   bool IsAngled,
                                   const FileEntry *File,
                                   SourceLocation EndLoc,
-                                  llvm::StringRef SearchPath,
-                                  llvm::StringRef RelativePath) {
+                                  StringRef SearchPath,
+                                  StringRef RelativePath) {
     First->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File,
                               EndLoc, SearchPath, RelativePath);
     Second->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File,
@@ -246,25 +246,25 @@ public:
     Second->PragmaComment(Loc, Kind, Str);
   }
 
-  virtual void PragmaMessage(SourceLocation Loc, llvm::StringRef Str) {
+  virtual void PragmaMessage(SourceLocation Loc, StringRef Str) {
     First->PragmaMessage(Loc, Str);
     Second->PragmaMessage(Loc, Str);
   }
 
   virtual void PragmaDiagnosticPush(SourceLocation Loc,
-                                    llvm::StringRef Namespace) {
+                                    StringRef Namespace) {
     First->PragmaDiagnosticPush(Loc, Namespace);
     Second->PragmaDiagnosticPush(Loc, Namespace);
   }
 
   virtual void PragmaDiagnosticPop(SourceLocation Loc,
-                                    llvm::StringRef Namespace) {
+                                    StringRef Namespace) {
     First->PragmaDiagnosticPop(Loc, Namespace);
     Second->PragmaDiagnosticPop(Loc, Namespace);
   }
 
-  virtual void PragmaDiagnostic(SourceLocation Loc, llvm::StringRef Namespace,
-                                diag::Mapping mapping, llvm::StringRef Str) {
+  virtual void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
+                                diag::Mapping mapping, StringRef Str) {
     First->PragmaDiagnostic(Loc, Namespace, mapping, Str);
     Second->PragmaDiagnostic(Loc, Namespace, mapping, Str);
   }

@@ -240,7 +240,7 @@ public:
     DiagStorage->DiagArgumentsVal[DiagStorage->NumDiagArgs++] = V;
   }
 
-  void AddString(llvm::StringRef V) const {
+  void AddString(StringRef V) const {
     if (!DiagStorage)
       DiagStorage = getStorage();
     
@@ -302,7 +302,7 @@ public:
   }
 
   friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
-                                                    llvm::StringRef S) {
+                                                    StringRef S) {
     
     PD.AddString(S);
     return PD;

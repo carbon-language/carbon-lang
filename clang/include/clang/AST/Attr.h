@@ -137,8 +137,8 @@ public:
 #include "clang/AST/Attrs.inc"
 
 /// AttrVec - A vector of Attr, which is how they are stored on the AST.
-typedef llvm::SmallVector<Attr*, 2> AttrVec;
-typedef llvm::SmallVector<const Attr*, 2> ConstAttrVec;
+typedef SmallVector<Attr*, 2> AttrVec;
+typedef SmallVector<const Attr*, 2> ConstAttrVec;
 
 /// DestroyAttrs - Destroy the contents of an AttrVec.
 inline void DestroyAttrs (AttrVec& V, ASTContext &C) {

@@ -147,7 +147,7 @@ public:
 
   virtual StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
                                       SymbolReaper& SymReaper,
-                      llvm::SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
+                      SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
 
   virtual StoreRef BindDecl(Store store, const VarRegion *VR, SVal initVal) = 0;
 
@@ -163,7 +163,7 @@ public:
   virtual void decrementReferenceCount(Store store) {}
 
   typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
-  typedef llvm::SmallVector<const MemRegion *, 8> InvalidatedRegions;
+  typedef SmallVector<const MemRegion *, 8> InvalidatedRegions;
 
   /// invalidateRegions - Clears out the specified regions from the store,
   ///  marking their values as unknown. Depending on the store, this may also

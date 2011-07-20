@@ -151,20 +151,20 @@ public:
   /// The default implementation of this method is a no-op.
   virtual ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
                                         bool (*isKindWeWant)(Decl::Kind),
-                                        llvm::SmallVectorImpl<Decl*> &Result);
+                                        SmallVectorImpl<Decl*> &Result);
 
   /// \brief Finds all declarations lexically contained within the given
   /// DeclContext.
   ///
   /// \return true if an error occurred
   ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
-                                llvm::SmallVectorImpl<Decl*> &Result) {
+                                SmallVectorImpl<Decl*> &Result) {
     return FindExternalLexicalDecls(DC, 0, Result);
   }
 
   template <typename DeclTy>
   ExternalLoadResult FindExternalLexicalDeclsBy(const DeclContext *DC,
-                                  llvm::SmallVectorImpl<Decl*> &Result) {
+                                  SmallVectorImpl<Decl*> &Result) {
     return FindExternalLexicalDecls(DC, DeclTy::classofKind, Result);
   }
 
@@ -231,7 +231,7 @@ protected:
   static DeclContextLookupResult
   SetExternalVisibleDeclsForName(const DeclContext *DC,
                                  DeclarationName Name,
-                                 llvm::SmallVectorImpl<NamedDecl*> &Decls);
+                                 SmallVectorImpl<NamedDecl*> &Decls);
 
   static DeclContextLookupResult
   SetNoExternalVisibleDeclsForName(const DeclContext *DC,
@@ -239,7 +239,7 @@ protected:
 
   void MaterializeVisibleDeclsForName(const DeclContext *DC,
                                       DeclarationName Name,
-                                 llvm::SmallVectorImpl<NamedDecl*> &Decls);
+                                 SmallVectorImpl<NamedDecl*> &Decls);
 };
 
 /// \brief A lazy pointer to an AST node (of base type T) that resides

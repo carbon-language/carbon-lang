@@ -25,7 +25,7 @@ namespace clang {
 /// non-const iterator.
 class UnresolvedSetIterator {
 private:
-  typedef llvm::SmallVectorImpl<DeclAccessPair> DeclsTy;
+  typedef SmallVectorImpl<DeclAccessPair> DeclsTy;
   typedef DeclsTy::iterator IteratorTy;
 
   IteratorTy ir;
@@ -177,7 +177,7 @@ private:
 /// A set of unresolved declarations 
 template <unsigned InlineCapacity> class UnresolvedSet :
     public UnresolvedSetImpl {
-  llvm::SmallVector<DeclAccessPair, InlineCapacity> Decls;
+  SmallVector<DeclAccessPair, InlineCapacity> Decls;
 };
 
   

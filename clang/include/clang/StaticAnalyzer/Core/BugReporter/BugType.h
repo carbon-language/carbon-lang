@@ -31,13 +31,13 @@ private:
   const std::string Category;
   bool SuppressonSink;
 public:
-  BugType(llvm::StringRef name, llvm::StringRef cat)
+  BugType(StringRef name, StringRef cat)
     : Name(name), Category(cat), SuppressonSink(false) {}
   virtual ~BugType();
 
   // FIXME: Should these be made strings as well?
-  llvm::StringRef getName() const { return Name; }
-  llvm::StringRef getCategory() const { return Category; }
+  StringRef getName() const { return Name; }
+  StringRef getCategory() const { return Category; }
   
   /// isSuppressOnSink - Returns true if bug reports associated with this bug
   ///  type should be suppressed if the end node of the report is post-dominated
@@ -57,7 +57,7 @@ public:
   BuiltinBug(const char *name)
     : BugType(name, "Logic error"), desc(name) {}
   
-  llvm::StringRef getDescription() const { return desc; }
+  StringRef getDescription() const { return desc; }
 };
 
 } // end GR namespace

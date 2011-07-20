@@ -37,7 +37,7 @@ class IdentifierResolver {
   /// decl with that declaration name is shadowed in some scope.
   class IdDeclInfo {
   public:
-    typedef llvm::SmallVector<NamedDecl*, 2> DeclsTy;
+    typedef SmallVector<NamedDecl*, 2> DeclsTy;
 
     inline DeclsTy::iterator decls_begin() { return Decls.begin(); }
     inline DeclsTy::iterator decls_end() { return Decls.end(); }

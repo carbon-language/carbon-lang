@@ -246,7 +246,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// Works like a stack; a TokenLexer adds the macro expanded tokens that is
   /// going to lex in the cache and when it finishes the tokens are removed
   /// from the end of the cache.
-  llvm::SmallVector<Token, 16> MacroExpandedTokens;
+  SmallVector<Token, 16> MacroExpandedTokens;
   std::vector<std::pair<TokenLexer *, size_t> > MacroExpandingLexersStack;
 
   /// \brief A record of the macro definitions and expansions that
@@ -257,7 +257,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   PreprocessingRecord *Record;
   
 private:  // Cached tokens state.
-  typedef llvm::SmallVector<Token, 1> CachedTokensTy;
+  typedef SmallVector<Token, 1> CachedTokensTy;
 
   /// CachedTokens - Cached tokens are stored here when we do backtracking or
   /// lookahead. They are "lexed" by the CachingLex() method.
@@ -397,25 +397,25 @@ public:
   /// pointers is preferred unless the identifier is already available as a
   /// string (this avoids allocation and copying of memory to construct an
   /// std::string).
-  IdentifierInfo *getIdentifierInfo(llvm::StringRef Name) const {
+  IdentifierInfo *getIdentifierInfo(StringRef Name) const {
     return &Identifiers.get(Name);
   }
 
   /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
   /// If 'Namespace' is non-null, then it is a token required to exist on the
   /// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
-  void AddPragmaHandler(llvm::StringRef Namespace, PragmaHandler *Handler);
+  void AddPragmaHandler(StringRef Namespace, PragmaHandler *Handler);
   void AddPragmaHandler(PragmaHandler *Handler) {
-    AddPragmaHandler(llvm::StringRef(), Handler);
+    AddPragmaHandler(StringRef(), Handler);
   }
 
   /// RemovePragmaHandler - Remove the specific pragma handler from
   /// the preprocessor. If \arg Namespace is non-null, then it should
   /// be the namespace that \arg Handler was added to. It is an error
   /// to remove a handler that has not been registered.
-  void RemovePragmaHandler(llvm::StringRef Namespace, PragmaHandler *Handler);
+  void RemovePragmaHandler(StringRef Namespace, PragmaHandler *Handler);
   void RemovePragmaHandler(PragmaHandler *Handler) {
-    RemovePragmaHandler(llvm::StringRef(), Handler);
+    RemovePragmaHandler(StringRef(), Handler);
   }
 
   /// \brief Add the specified comment handler to the preprocessor.
@@ -672,8 +672,8 @@ public:
   /// \param buffer A buffer which will be used only if the token requires
   ///   "cleaning", e.g. if it contains trigraphs or escaped newlines
   /// \param invalid If non-null, will be set \c true if an error occurs.
-  llvm::StringRef getSpelling(SourceLocation loc,
-                              llvm::SmallVectorImpl<char> &buffer,
+  StringRef getSpelling(SourceLocation loc,
+                              SmallVectorImpl<char> &buffer,
                               bool *invalid = 0) const {
     return Lexer::getSpelling(loc, buffer, SourceMgr, Features, invalid);
   }
@@ -707,8 +707,8 @@ public:
   /// getSpelling - This method is used to get the spelling of a token into a
   /// SmallVector. Note that the returned StringRef may not point to the
   /// supplied buffer if a copy can be avoided.
-  llvm::StringRef getSpelling(const Token &Tok,
-                              llvm::SmallVectorImpl<char> &Buffer, 
+  StringRef getSpelling(const Token &Tok,
+                              SmallVectorImpl<char> &Buffer, 
                               bool *Invalid = 0) const;
 
   /// getSpellingOfSingleCharacterNumericConstant - Tok is a numeric constant
@@ -892,16 +892,16 @@ public:
   /// caller is expected to provide a buffer that is large enough to hold the
   /// spelling of the filename, but is also expected to handle the case when
   /// this method decides to use a different buffer.
-  bool GetIncludeFilenameSpelling(SourceLocation Loc,llvm::StringRef &Filename);
+  bool GetIncludeFilenameSpelling(SourceLocation Loc,StringRef &Filename);
 
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
   /// return null on failure.  isAngled indicates whether the file reference is
   /// for system #include's or not (i.e. using <> instead of "").
-  const FileEntry *LookupFile(llvm::StringRef Filename,
+  const FileEntry *LookupFile(StringRef Filename,
                               bool isAngled, const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
-                              llvm::SmallVectorImpl<char> *SearchPath,
-                              llvm::SmallVectorImpl<char> *RelativePath);
+                              SmallVectorImpl<char> *SearchPath,
+                              SmallVectorImpl<char> *RelativePath);
 
   /// GetCurLookup - The DirectoryLookup structure used to find the current
   /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to

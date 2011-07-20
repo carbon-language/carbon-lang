@@ -145,11 +145,11 @@ private:
   ASTLocation LastLoc;
 
   /// \brief The set of diagnostics produced when creating the preamble.
-  llvm::SmallVector<StoredDiagnostic, 4> PreambleDiagnostics;
+  SmallVector<StoredDiagnostic, 4> PreambleDiagnostics;
 
   /// \brief The set of diagnostics produced when creating this
   /// translation unit.
-  llvm::SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
+  SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
 
   /// \brief The number of stored diagnostics that come from the driver
   /// itself.
@@ -160,7 +160,7 @@ private:
   
   /// \brief Temporary files that should be removed when the ASTUnit is 
   /// destroyed.
-  llvm::SmallVector<llvm::sys::Path, 4> TemporaryFiles;
+  SmallVector<llvm::sys::Path, 4> TemporaryFiles;
 
   /// \brief A mapping from file IDs to the set of preprocessed entities
   /// stored in that file. 
@@ -253,10 +253,10 @@ private:
                              const char **ArgBegin, const char **ArgEnd,
                              ASTUnit &AST, bool CaptureDiagnostics);
 
-  void TranslateStoredDiagnostics(ASTReader *MMan, llvm::StringRef ModName,
+  void TranslateStoredDiagnostics(ASTReader *MMan, StringRef ModName,
                                   SourceManager &SrcMan,
-                      const llvm::SmallVectorImpl<StoredDiagnostic> &Diags,
-                            llvm::SmallVectorImpl<StoredDiagnostic> &Out);
+                      const SmallVectorImpl<StoredDiagnostic> &Diags,
+                            SmallVectorImpl<StoredDiagnostic> &Out);
 
 public:
   /// \brief A cached code-completion result, which may be introduced in one of
@@ -442,7 +442,7 @@ public:
   ASTLocation getLastASTLocation() const { return LastLoc; }
 
 
-  llvm::StringRef getMainFileName() const;
+  StringRef getMainFileName() const;
 
   typedef std::vector<Decl *>::iterator top_level_iterator;
 
@@ -513,7 +513,7 @@ public:
   }
   unsigned stored_diag_size() const { return StoredDiagnostics.size(); }
   
-  llvm::SmallVector<StoredDiagnostic, 4> &getStoredDiagnostics() { 
+  SmallVector<StoredDiagnostic, 4> &getStoredDiagnostics() { 
     return StoredDiagnostics; 
   }
 
@@ -532,7 +532,7 @@ public:
     return CachedCompletionResults.size(); 
   }
 
-  llvm::MemoryBuffer *getBufferForFile(llvm::StringRef Filename,
+  llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
                                        std::string *ErrorStr = 0);
 
   /// \brief Whether this AST represents a complete translation unit.
@@ -632,7 +632,7 @@ public:
   static ASTUnit *LoadFromCommandLine(const char **ArgBegin,
                                       const char **ArgEnd,
                                     llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
-                                      llvm::StringRef ResourceFilesPath,
+                                      StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls = false,
                                       bool CaptureDiagnostics = false,
                                       RemappedFile *RemappedFiles = 0,
@@ -670,19 +670,19 @@ public:
   ///
   /// FIXME: The Diag, LangOpts, SourceMgr, FileMgr, StoredDiagnostics, and
   /// OwnedBuffers parameters are all disgusting hacks. They will go away.
-  void CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
+  void CodeComplete(StringRef File, unsigned Line, unsigned Column,
                     RemappedFile *RemappedFiles, unsigned NumRemappedFiles,
                     bool IncludeMacros, bool IncludeCodePatterns,
                     CodeCompleteConsumer &Consumer,
                     Diagnostic &Diag, LangOptions &LangOpts,
                     SourceManager &SourceMgr, FileManager &FileMgr,
-                    llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics,
-              llvm::SmallVectorImpl<const llvm::MemoryBuffer *> &OwnedBuffers);
+                    SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics,
+              SmallVectorImpl<const llvm::MemoryBuffer *> &OwnedBuffers);
 
   /// \brief Save this translation unit to a file with the given name.
   ///
   /// \returns An indication of whether the save was successful or not.
-  CXSaveError Save(llvm::StringRef File);
+  CXSaveError Save(StringRef File);
 
   /// \brief Serialize this translation unit with the given output stream.
   ///

@@ -66,7 +66,7 @@ struct CXXBasePathElement {
 /// structure, which captures both the link from a derived class to one of its
 /// direct bases and identification describing which base class
 /// subobject is being used.
-class CXXBasePath : public llvm::SmallVector<CXXBasePathElement, 4> {
+class CXXBasePath : public SmallVector<CXXBasePathElement, 4> {
 public:
   CXXBasePath() : Access(AS_public) {}
 
@@ -80,7 +80,7 @@ public:
   DeclContext::lookup_result Decls;
 
   void clear() {
-    llvm::SmallVectorImpl<CXXBasePathElement>::clear();
+    SmallVectorImpl<CXXBasePathElement>::clear();
     Access = AS_public;
   }
 };
@@ -272,14 +272,14 @@ struct UniqueVirtualMethod {
 /// pair is the virtual method that overrides it (including the
 /// subobject in which that virtual function occurs).
 class OverridingMethods {
-  llvm::DenseMap<unsigned, llvm::SmallVector<UniqueVirtualMethod, 4> > 
+  llvm::DenseMap<unsigned, SmallVector<UniqueVirtualMethod, 4> > 
     Overrides;
 
 public:
   // Iterate over the set of subobjects that have overriding methods.
-  typedef llvm::DenseMap<unsigned, llvm::SmallVector<UniqueVirtualMethod, 4> >
+  typedef llvm::DenseMap<unsigned, SmallVector<UniqueVirtualMethod, 4> >
             ::iterator iterator;
-  typedef llvm::DenseMap<unsigned, llvm::SmallVector<UniqueVirtualMethod, 4> >
+  typedef llvm::DenseMap<unsigned, SmallVector<UniqueVirtualMethod, 4> >
             ::const_iterator const_iterator;
   iterator begin() { return Overrides.begin(); }
   const_iterator begin() const { return Overrides.begin(); }
@@ -289,9 +289,9 @@ public:
 
   // Iterate over the set of overriding virtual methods in a given
   // subobject.
-  typedef llvm::SmallVector<UniqueVirtualMethod, 4>::iterator 
+  typedef SmallVector<UniqueVirtualMethod, 4>::iterator 
     overriding_iterator;
-  typedef llvm::SmallVector<UniqueVirtualMethod, 4>::const_iterator
+  typedef SmallVector<UniqueVirtualMethod, 4>::const_iterator
     overriding_const_iterator;
 
   // Add a new overriding method for a particular subobject.

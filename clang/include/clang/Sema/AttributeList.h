@@ -373,7 +373,7 @@ private:
 
   /// Free lists.  The index is determined by the following formula:
   ///   (size - sizeof(AttributeList)) / sizeof(void*)
-  llvm::SmallVector<AttributeList*, InlineFreeListsCapacity> FreeLists;
+  SmallVector<AttributeList*, InlineFreeListsCapacity> FreeLists;
 
   // The following are the private interface used by AttributePool.
   friend class AttributePool;

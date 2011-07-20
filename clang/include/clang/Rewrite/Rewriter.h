@@ -64,7 +64,7 @@ public:
   /// the buffer is specified relative to the original SourceBuffer.  The
   /// text is inserted after the specified location.
   ///
-  void InsertText(unsigned OrigOffset, llvm::StringRef Str,
+  void InsertText(unsigned OrigOffset, StringRef Str,
                   bool InsertAfter = true);
 
 
@@ -72,14 +72,14 @@ public:
   /// offset in the buffer is specified relative to the original
   /// SourceBuffer. The text is inserted before the specified location.  This is
   /// method is the same as InsertText with "InsertAfter == false".
-  void InsertTextBefore(unsigned OrigOffset, llvm::StringRef Str) {
+  void InsertTextBefore(unsigned OrigOffset, StringRef Str) {
     InsertText(OrigOffset, Str, false);
   }
 
   /// InsertTextAfter - Insert some text at the specified point, where the
   /// offset in the buffer is specified relative to the original SourceBuffer.
   /// The text is inserted after the specified location.
-  void InsertTextAfter(unsigned OrigOffset, llvm::StringRef Str) {
+  void InsertTextAfter(unsigned OrigOffset, StringRef Str) {
     InsertText(OrigOffset, Str);
   }
 
@@ -87,7 +87,7 @@ public:
   /// buffer with a new string.  This is effectively a combined "remove/insert"
   /// operation.
   void ReplaceText(unsigned OrigOffset, unsigned OrigLength,
-                   llvm::StringRef NewStr);
+                   StringRef NewStr);
 
 private:  // Methods only usable by Rewriter.
 
@@ -186,7 +186,7 @@ public:
   ///
   /// \param indentNewLines if true new lines in the string are indented
   /// using the indentation of the source line in position \arg Loc.
-  bool InsertText(SourceLocation Loc, llvm::StringRef Str,
+  bool InsertText(SourceLocation Loc, StringRef Str,
                   bool InsertAfter = true, bool indentNewLines = false);
 
   /// InsertTextAfter - Insert the specified string at the specified location in
@@ -194,20 +194,20 @@ public:
   ///  the input location was not rewritable, false otherwise.  Text is
   ///  inserted after any other text that has been previously inserted
   ///  at the some point (the default behavior for InsertText).
-  bool InsertTextAfter(SourceLocation Loc, llvm::StringRef Str) {
+  bool InsertTextAfter(SourceLocation Loc, StringRef Str) {
     return InsertText(Loc, Str);
   }
 
   /// \brief Insert the specified string after the token in the
   /// specified location.
-  bool InsertTextAfterToken(SourceLocation Loc, llvm::StringRef Str);
+  bool InsertTextAfterToken(SourceLocation Loc, StringRef Str);
 
   /// InsertText - Insert the specified string at the specified location in the
   /// original buffer.  This method returns true (and does nothing) if the input
   /// location was not rewritable, false otherwise.  Text is
   /// inserted before any other text that has been previously inserted
   /// at the some point.
-  bool InsertTextBefore(SourceLocation Loc, llvm::StringRef Str) {
+  bool InsertTextBefore(SourceLocation Loc, StringRef Str) {
     return InsertText(Loc, Str, false);
   }
 
@@ -230,12 +230,12 @@ public:
   /// buffer with a new string.  This is effectively a combined "remove/insert"
   /// operation.
   bool ReplaceText(SourceLocation Start, unsigned OrigLength,
-                   llvm::StringRef NewStr);
+                   StringRef NewStr);
 
   /// ReplaceText - This method replaces a range of characters in the input
   /// buffer with a new string.  This is effectively a combined "remove/insert"
   /// operation.
-  bool ReplaceText(SourceRange range, llvm::StringRef NewStr) {
+  bool ReplaceText(SourceRange range, StringRef NewStr) {
     return ReplaceText(range.getBegin(), getRangeSize(range), NewStr);
   }
 

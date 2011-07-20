@@ -198,7 +198,7 @@ public:
   typedef TemplateParameterList TemplateParamsTy;
   typedef OpaquePtr<TemplateName> TemplateTy;
 
-  typedef llvm::SmallVector<TemplateParameterList *, 4> TemplateParameterLists;
+  typedef SmallVector<TemplateParameterList *, 4> TemplateParameterLists;
 
   typedef clang::ExprResult        ExprResult;
   typedef clang::StmtResult        StmtResult;
@@ -711,7 +711,7 @@ private:
     /// have a default argument, but all of the parameters of the
     /// method will be stored so that they can be reintroduced into
     /// scope at the appropriate times.
-    llvm::SmallVector<LateParsedDefaultArgument, 8> DefaultArgs;
+    SmallVector<LateParsedDefaultArgument, 8> DefaultArgs;
   };
 
   /// LateParsedMemberInitializer - An initializer for a non-static class data
@@ -738,7 +738,7 @@ private:
   /// parsed until after the definition is completed (C++ [class.mem]p2),
   /// the method declarations and possibly attached inline definitions
   /// will be stored here with the tokens that will be parsed to create those entities.
-  typedef llvm::SmallVector<LateParsedDeclaration*, 2> LateParsedDeclarationsContainer;
+  typedef SmallVector<LateParsedDeclaration*, 2> LateParsedDeclarationsContainer;
 
   /// \brief Representation of a class that has been parsed, including
   /// any member function declarations or definitions that need to be
@@ -1045,8 +1045,8 @@ private:
   void ParseObjCClassInstanceVariables(Decl *interfaceDecl,
                                        tok::ObjCKeywordKind visibility,
                                        SourceLocation atLoc);
-  bool ParseObjCProtocolReferences(llvm::SmallVectorImpl<Decl *> &P,
-                                   llvm::SmallVectorImpl<SourceLocation> &PLocs,
+  bool ParseObjCProtocolReferences(SmallVectorImpl<Decl *> &P,
+                                   SmallVectorImpl<SourceLocation> &PLocs,
                                    bool WarnOnDeclarations,
                                    SourceLocation &LAngleLoc,
                                    SourceLocation &EndProtoLoc);
@@ -1057,7 +1057,7 @@ private:
                                        ParsedAttributes &prefixAttrs);
 
   Decl *ObjCImpDecl;
-  llvm::SmallVector<Decl *, 4> PendingObjCImpDecl;
+  SmallVector<Decl *, 4> PendingObjCImpDecl;
 
   Decl *ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
   Decl *ParseObjCAtEndDeclaration(SourceRange atEnd);
@@ -1134,12 +1134,12 @@ private:
                                                      ParsedType &CastTy,
                                                      SourceRange &CastRange);
 
-  typedef llvm::SmallVector<Expr*, 20> ExprListTy;
-  typedef llvm::SmallVector<SourceLocation, 20> CommaLocsTy;
+  typedef SmallVector<Expr*, 20> ExprListTy;
+  typedef SmallVector<SourceLocation, 20> CommaLocsTy;
 
   /// ParseExpressionList - Used for C/C++ (argument-)expression-list.
-  bool ParseExpressionList(llvm::SmallVectorImpl<Expr*> &Exprs,
-                           llvm::SmallVectorImpl<SourceLocation> &CommaLocs,
+  bool ParseExpressionList(SmallVectorImpl<Expr*> &Exprs,
+                           SmallVectorImpl<SourceLocation> &CommaLocs,
                            void (Sema::*Completer)(Scope *S,
                                                    Expr *Data,
                                                    Expr **Args,
@@ -1211,15 +1211,15 @@ private:
 
   ExceptionSpecificationType MaybeParseExceptionSpecification(
                     SourceRange &SpecificationRange,
-                    llvm::SmallVectorImpl<ParsedType> &DynamicExceptions,
-                    llvm::SmallVectorImpl<SourceRange> &DynamicExceptionRanges,
+                    SmallVectorImpl<ParsedType> &DynamicExceptions,
+                    SmallVectorImpl<SourceRange> &DynamicExceptionRanges,
                     ExprResult &NoexceptExpr);
 
   // EndLoc is filled with the location of the last token of the specification.
   ExceptionSpecificationType ParseDynamicExceptionSpecification(
                                   SourceRange &SpecificationRange,
-                                  llvm::SmallVectorImpl<ParsedType> &Exceptions,
-                                  llvm::SmallVectorImpl<SourceRange> &Ranges);
+                                  SmallVectorImpl<ParsedType> &Exceptions,
+                                  SmallVectorImpl<SourceRange> &Ranges);
 
   //===--------------------------------------------------------------------===//
   // C++0x 8: Function declaration trailing-return-type
@@ -1244,7 +1244,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++ 5.3.4 and 5.3.5: C++ new and delete
-  bool ParseExpressionListOrTypeId(llvm::SmallVectorImpl<Expr*> &Exprs,
+  bool ParseExpressionListOrTypeId(SmallVectorImpl<Expr*> &Exprs,
                                    Declarator &D);
   void ParseDirectNewDeclarator(Declarator &D);
   ExprResult ParseCXXNewExpression(bool UseGlobal, SourceLocation Start);
@@ -1338,9 +1338,9 @@ private:
   void ParseMicrosoftIfExistsExternalDeclaration();
   void ParseMicrosoftIfExistsClassDeclaration(DeclSpec::TST TagType,
                                               AccessSpecifier& CurAS);
-bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
-                           llvm::SmallVectorImpl<ExprTy *> &Constraints,
-                           llvm::SmallVectorImpl<ExprTy *> &Exprs);
+bool ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
+                           SmallVectorImpl<ExprTy *> &Constraints,
+                           SmallVectorImpl<ExprTy *> &Exprs);
 
   //===--------------------------------------------------------------------===//
   // C++ 6: Statements and Blocks
@@ -1738,11 +1738,11 @@ bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
   bool isFunctionDeclaratorIdentifierList();
   void ParseFunctionDeclaratorIdentifierList(
          Declarator &D,
-         llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo);
+         SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo);
   void ParseParameterDeclarationClause(
          Declarator &D,
          ParsedAttributes &attrs,
-         llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo,
+         SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo,
          SourceLocation &EllipsisLoc);
   void ParseBracketDeclarator(Declarator &D);
 
@@ -1841,18 +1841,18 @@ bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
                                        SourceLocation &DeclEnd,
                                        AccessSpecifier AS=AS_none);
   bool ParseTemplateParameters(unsigned Depth,
-                               llvm::SmallVectorImpl<Decl*> &TemplateParams,
+                               SmallVectorImpl<Decl*> &TemplateParams,
                                SourceLocation &LAngleLoc,
                                SourceLocation &RAngleLoc);
   bool ParseTemplateParameterList(unsigned Depth,
-                                  llvm::SmallVectorImpl<Decl*> &TemplateParams);
+                                  SmallVectorImpl<Decl*> &TemplateParams);
   bool isStartOfTemplateTypeParameter();
   Decl *ParseTemplateParameter(unsigned Depth, unsigned Position);
   Decl *ParseTypeParameter(unsigned Depth, unsigned Position);
   Decl *ParseTemplateTemplateParameter(unsigned Depth, unsigned Position);
   Decl *ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position);
   // C++ 14.3: Template arguments [temp.arg]
-  typedef llvm::SmallVector<ParsedTemplateArgument, 16> TemplateArgList;
+  typedef SmallVector<ParsedTemplateArgument, 16> TemplateArgList;
 
   bool ParseTemplateIdAfterTemplateName(TemplateTy Template,
                                         SourceLocation TemplateNameLoc,

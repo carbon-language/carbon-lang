@@ -17,6 +17,7 @@
 
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/TokenKinds.h"
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallString.h"
@@ -113,8 +114,8 @@ public:
   }
 
   /// getName - Return the actual identifier string.
-  llvm::StringRef getName() const {
-    return llvm::StringRef(getNameStart(), getLength());
+  StringRef getName() const {
+    return StringRef(getNameStart(), getLength());
   }
 
   /// hasMacroDefinition - Return true if this identifier is #defined to some
@@ -299,8 +300,8 @@ public:
   /// advances the iterator for the following string.
   ///
   /// \returns The next string in the identifier table. If there is
-  /// no such string, returns an empty \c llvm::StringRef.
-  virtual llvm::StringRef Next() = 0;
+  /// no such string, returns an empty \c StringRef.
+  virtual StringRef Next() = 0;
 };
 
 /// IdentifierInfoLookup - An abstract class used by IdentifierTable that
@@ -314,7 +315,7 @@ public:
   ///  Unlike the version in IdentifierTable, this returns a pointer instead
   ///  of a reference.  If the pointer is NULL then the IdentifierInfo cannot
   ///  be found.
-  virtual IdentifierInfo* get(llvm::StringRef Name) = 0;
+  virtual IdentifierInfo* get(StringRef Name) = 0;
 
   /// \brief Retrieve an iterator into the set of all identifiers
   /// known to this identifier lookup source.
@@ -376,7 +377,7 @@ public:
 
   /// get - Return the identifier token info for the specified named identifier.
   ///
-  IdentifierInfo &get(llvm::StringRef Name) {
+  IdentifierInfo &get(StringRef Name) {
     llvm::StringMapEntry<IdentifierInfo*> &Entry =
       HashTable.GetOrCreateValue(Name);
 
@@ -405,7 +406,7 @@ public:
     return *II;
   }
 
-  IdentifierInfo &get(llvm::StringRef Name, tok::TokenKind TokenCode) {
+  IdentifierInfo &get(StringRef Name, tok::TokenKind TokenCode) {
     IdentifierInfo &II = get(Name);
     II.TokenID = TokenCode;
     return II;
@@ -417,7 +418,7 @@ public:
   /// This is a version of get() meant for external sources that want to
   /// introduce or modify an identifier. If they called get(), they would
   /// likely end up in a recursion.
-  IdentifierInfo &getOwn(llvm::StringRef Name) {
+  IdentifierInfo &getOwn(StringRef Name) {
     llvm::StringMapEntry<IdentifierInfo*> &Entry =
       HashTable.GetOrCreateValue(Name);
 
@@ -595,7 +596,7 @@ public:
   ///
   /// \returns the name for this slot, which may be the empty string if no
   /// name was supplied.
-  llvm::StringRef getNameForSlot(unsigned argIndex) const;
+  StringRef getNameForSlot(unsigned argIndex) const;
   
   /// getAsString - Derive the full selector name (e.g. "foo:bar:") and return
   /// it as an std::string.
