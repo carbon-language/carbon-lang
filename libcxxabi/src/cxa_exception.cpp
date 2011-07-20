@@ -52,7 +52,6 @@ static void do_free ( void *ptr ) throw () {
     return is_fallback_ptr ( ptr ) ? fallback_free ( ptr ) : std::free ( ptr );
     }
 
-static thread_local_storage<__cxa_eh_globals> __globals;
 // pthread_once_t __globals::flag_ = PTHREAD_ONCE_INIT;
 
 extern "C" {
@@ -98,9 +97,6 @@ void __cxa_free_dependent_exception (void * dependent_exception) throw() {
 //  I'm pretty sure there's no bookkeeping here
     do_free ( dependent_exception );
     }
-
-__cxa_eh_globals * __cxa_get_globals      () throw() { return __globals.get_tls (); }
-__cxa_eh_globals * __cxa_get_globals_fast () throw() { return __globals.get_tls_fast (); }
 
 }  // extern "C"
 
