@@ -29,3 +29,9 @@ namespace incomplete_type_refs {
   }
 
 }
+
+namespace PR10395 {
+  struct T;
+  extern T x[];
+  T* f() { return x; }
+}

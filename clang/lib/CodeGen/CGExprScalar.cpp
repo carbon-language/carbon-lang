@@ -1075,7 +1075,10 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
       V = Builder.CreateStructGEP(V, 0, "arraydecay");
     }
 
-    return V;
+    // Make sure the array decay ends up being the right type.  This matters if
+    // the array type was of an incomplete type.
+    return CGF.Builder.CreateBitCast(V, 
+                              CGF.getTypes().ConvertTypeForMem(CE->getType()));
   }
   case CK_FunctionToPointerDecay:
     return EmitLValue(E).getAddress();
