@@ -396,6 +396,22 @@ class ReadHardware: FR<0x1f, 0x3b, (outs CPURegs:$dst), (ins HWRegs:$src),
   let shamt = 0;
 }
 
+// Atomic instructions with 2 source operands (ATOMIC_SWAP & ATOMIC_LOAD_*).
+class Atomic2<PatFrag Op, string Opstr> :
+  MipsPseudo<(outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+             !strconcat("atomic_", Opstr, "\t$dst, $ptr, $incr"),
+             [(set CPURegs:$dst,
+              (Op CPURegs:$ptr, CPURegs:$incr))]>;
+
+// Atomic Compare & Swap.
+class AtomicCmpSwap<PatFrag Op, string Width> :
+  MipsPseudo<(outs CPURegs:$dst), 
+             (ins CPURegs:$ptr, CPURegs:$cmp, CPURegs:$swap),
+             !strconcat("atomic_cmp_swap_", Width, 
+                        "\t$dst, $ptr, $cmp, $swap"),
+             [(set CPURegs:$dst,
+              (Op CPURegs:$ptr, CPURegs:$cmp, CPURegs:$swap))]>;
+
 //===----------------------------------------------------------------------===//
 // Pseudo instructions
 //===----------------------------------------------------------------------===//
@@ -430,112 +446,32 @@ def CPLOAD : MipsPseudo<(outs), (ins CPURegs:$picreg), ".cpload\t$picreg", []>;
 def CPRESTORE : MipsPseudo<(outs), (ins i32imm:$loc), ".cprestore\t$loc", []>;
 
 let usesCustomInserter = 1 in {
-  def ATOMIC_LOAD_ADD_I8 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_add_8\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_add_8 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_ADD_I16 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_add_16\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_add_16 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_ADD_I32 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_add_32\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_add_32 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_ADD_I8   : Atomic2<atomic_load_add_8, "load_add_8">;
+  def ATOMIC_LOAD_ADD_I16  : Atomic2<atomic_load_add_16, "load_add_16">;
+  def ATOMIC_LOAD_ADD_I32  : Atomic2<atomic_load_add_32, "load_add_32">;
+  def ATOMIC_LOAD_SUB_I8   : Atomic2<atomic_load_sub_8, "load_sub_8">;
+  def ATOMIC_LOAD_SUB_I16  : Atomic2<atomic_load_sub_16, "load_sub_16">;
+  def ATOMIC_LOAD_SUB_I32  : Atomic2<atomic_load_sub_32, "load_sub_32">;
+  def ATOMIC_LOAD_AND_I8   : Atomic2<atomic_load_and_8, "load_and_8">;
+  def ATOMIC_LOAD_AND_I16  : Atomic2<atomic_load_and_16, "load_and_16">;
+  def ATOMIC_LOAD_AND_I32  : Atomic2<atomic_load_and_32, "load_and_32">;
+  def ATOMIC_LOAD_OR_I8    : Atomic2<atomic_load_or_8, "load_or_8">;
+  def ATOMIC_LOAD_OR_I16   : Atomic2<atomic_load_or_16, "load_or_16">;
+  def ATOMIC_LOAD_OR_I32   : Atomic2<atomic_load_or_32, "load_or_32">;
+  def ATOMIC_LOAD_XOR_I8   : Atomic2<atomic_load_xor_8, "load_xor_8">;
+  def ATOMIC_LOAD_XOR_I16  : Atomic2<atomic_load_xor_16, "load_xor_16">;
+  def ATOMIC_LOAD_XOR_I32  : Atomic2<atomic_load_xor_32, "load_xor_32">;
+  def ATOMIC_LOAD_NAND_I8  : Atomic2<atomic_load_nand_8, "load_nand_8">;
+  def ATOMIC_LOAD_NAND_I16 : Atomic2<atomic_load_nand_16, "load_nand_16">;
+  def ATOMIC_LOAD_NAND_I32 : Atomic2<atomic_load_nand_32, "load_nand_32">;
 
-  def ATOMIC_LOAD_SUB_I8 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_sub_8\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_sub_8 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_SUB_I16 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_sub_16\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_sub_16 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_SUB_I32 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_sub_32\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_sub_32 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_SWAP_I8       : Atomic2<atomic_swap_8, "swap_8">;
+  def ATOMIC_SWAP_I16      : Atomic2<atomic_swap_16, "swap_16">;
+  def ATOMIC_SWAP_I32      : Atomic2<atomic_swap_32, "swap_32">;
 
-  def ATOMIC_LOAD_AND_I8 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_and_8\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_and_8 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_AND_I16 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_and_16\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_and_16 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_AND_I32 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_and_32\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_and_32 CPURegs:$ptr, CPURegs:$incr))]>;
-
-  def ATOMIC_LOAD_OR_I8 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_or_8\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_or_8 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_OR_I16 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_or_16\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_or_16 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_OR_I32 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_or_32\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_or_32 CPURegs:$ptr, CPURegs:$incr))]>;
-
-  def ATOMIC_LOAD_XOR_I8 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_xor_8\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_xor_8 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_XOR_I16 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_xor_16\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_xor_16 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_XOR_I32 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_xor_32\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_xor_32 CPURegs:$ptr, CPURegs:$incr))]>;
-
-  def ATOMIC_LOAD_NAND_I8 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_nand_8\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_nand_8 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_NAND_I16 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_nand_16\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_nand_16 CPURegs:$ptr, CPURegs:$incr))]>;
-  def ATOMIC_LOAD_NAND_I32 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
-    "atomic_load_nand_32\t$dst, $ptr, $incr",
-    [(set CPURegs:$dst, (atomic_load_nand_32 CPURegs:$ptr, CPURegs:$incr))]>;
-
-  def ATOMIC_SWAP_I8 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$val),
-    "atomic_swap_8\t$dst, $ptr, $val",
-    [(set CPURegs:$dst, (atomic_swap_8 CPURegs:$ptr, CPURegs:$val))]>;
-  def ATOMIC_SWAP_I16 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$val),
-    "atomic_swap_16\t$dst, $ptr, $val",
-    [(set CPURegs:$dst, (atomic_swap_16 CPURegs:$ptr, CPURegs:$val))]>;
-  def ATOMIC_SWAP_I32 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$val),
-    "atomic_swap_32\t$dst, $ptr, $val",
-    [(set CPURegs:$dst, (atomic_swap_32 CPURegs:$ptr, CPURegs:$val))]>;
-
-  def ATOMIC_CMP_SWAP_I8 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval),
-    "atomic_cmp_swap_8\t$dst, $ptr, $oldval, $newval",
-    [(set CPURegs:$dst,
-         (atomic_cmp_swap_8 CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval))]>;
-  def ATOMIC_CMP_SWAP_I16 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval),
-    "atomic_cmp_swap_16\t$dst, $ptr, $oldval, $newval",
-    [(set CPURegs:$dst,
-         (atomic_cmp_swap_16 CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval))]>;
-  def ATOMIC_CMP_SWAP_I32 : MipsPseudo<
-    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval),
-    "atomic_cmp_swap_32\t$dst, $ptr, $oldval, $newval",
-    [(set CPURegs:$dst,
-         (atomic_cmp_swap_32 CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval))]>;
+  def ATOMIC_CMP_SWAP_I8   : AtomicCmpSwap<atomic_cmp_swap_8, "8">;
+  def ATOMIC_CMP_SWAP_I16  : AtomicCmpSwap<atomic_cmp_swap_16, "16">;
+  def ATOMIC_CMP_SWAP_I32  : AtomicCmpSwap<atomic_cmp_swap_32, "32">;
 }
 
 //===----------------------------------------------------------------------===//
