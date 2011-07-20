@@ -123,4 +123,7 @@ def warn_drv_objc_gc_unsupported : Warning<
 def warn_drv_pch_not_first_include : Warning<
   "precompiled header '%0' was ignored because '%1' is not first '-include'">;
 
+def note_drv_command_failed_diag_msg : Note<
+  "diagnostic msg: %0">;
+
 }

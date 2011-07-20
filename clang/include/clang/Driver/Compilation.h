@@ -13,6 +13,7 @@
 #include "clang/Driver/Job.h"
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Path.h"
 
 namespace clang {
 namespace driver {
@@ -54,6 +55,9 @@ class Compilation {
 
   /// Result files which should be removed on failure.
   ArgStringList ResultFiles;
+
+  /// Redirection for stdout, stderr, etc.
+  const llvm::sys::Path **Redirects;
 
 public:
   Compilation(const Driver &D, const ToolChain &DefaultToolChain,
@@ -131,6 +135,11 @@ public:
   /// Command which failed.
   /// \return The accumulated result code of the job.
   int ExecuteJob(const Job &J, const Command *&FailingCommand) const;
+
+  /// initCompilationForDiagnostics - Remove stale state and suppress output
+  /// so compilation can be reexecuted to generate additional diagnostic
+  /// information (e.g., preprocessed source(s)).
+  void initCompilationForDiagnostics();
 };
 
 } // end namespace driver
