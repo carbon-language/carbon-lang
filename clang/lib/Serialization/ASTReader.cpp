@@ -2033,6 +2033,13 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       }
       F.TypeOffsets = (const uint32_t *)BlobStart;
       F.LocalNumTypes = Record[0];
+
+      // Introduce the global -> local mapping for types within this
+      // AST file.
+      GlobalTypeMap.insert(std::make_pair(getTotalNumTypes() + 1,
+                                          std::make_pair(&F,
+                                                         -getTotalNumTypes())));
+      TypesLoaded.resize(TypesLoaded.size() + F.LocalNumTypes);
       break;
 
     case DECL_OFFSET:
@@ -2551,14 +2558,12 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   }
 
   // Allocate space for loaded slocentries, identifiers, decls and types.
-  unsigned TotalNumTypes = 0, TotalNumPreallocatedPreprocessingEntities = 0;
+  unsigned TotalNumPreallocatedPreprocessingEntities = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     TotalNumSLocEntries += Chain[I]->LocalNumSLocEntries;
-    TotalNumTypes += Chain[I]->LocalNumTypes;
     TotalNumPreallocatedPreprocessingEntities +=
         Chain[I]->NumPreallocatedPreprocessingEntities;
   }
-  TypesLoaded.resize(TotalNumTypes);
   if (PP) {
     PP->getHeaderSearchInfo().SetExternalLookup(this);
     if (TotalNumPreallocatedPreprocessingEntities > 0) {
@@ -3157,15 +3162,10 @@ void ASTReader::ReadPragmaDiagnosticMappings(Diagnostic &Diag) {
 
 /// \brief Get the correct cursor and offset for loading a type.
 ASTReader::RecordLocation ASTReader::TypeCursorForIndex(unsigned Index) {
-  PerFileData *F = 0;
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    F = Chain[N - I - 1];
-    if (Index < F->LocalNumTypes)
-      break;
-    Index -= F->LocalNumTypes;
-  }
-  assert(F && F->LocalNumTypes > Index && "Broken chain");
-  return RecordLocation(F, F->TypeOffsets[Index]);
+  GlobalTypeMapType::iterator I = GlobalTypeMap.find(Index+1);
+  assert(I != GlobalTypeMap.end() && "Corrupted global type map");
+  return RecordLocation(I->second.first,
+      I->second.first->TypeOffsets[Index + I->second.second]);
 }
 
 /// \brief Read and return the type with the given index..

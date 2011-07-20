@@ -457,6 +457,15 @@ private:
   /// ID = (I + 1) << FastQual::Width has already been loaded
   std::vector<QualType> TypesLoaded;
 
+  typedef ContinuousRangeMap<serialization::TypeID,
+      std::pair<PerFileData *, int32_t>, 4>
+    GlobalTypeMapType;
+
+  /// \brief Mapping from global type IDs to the module in which the
+  /// type resides along with the offset that should be added to the
+  /// global type ID to produce a local ID.
+  GlobalTypeMapType GlobalTypeMap;
+
   /// \brief Map that provides the ID numbers of each type within the
   /// output stream, plus those deserialized from a chained PCH.
   ///
