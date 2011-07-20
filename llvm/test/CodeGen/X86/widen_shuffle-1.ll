@@ -30,6 +30,7 @@ entry:
 ; opA with opB, the DAG will produce new operations with opA.
 define void @shuf3(<4 x float> %tmp10, <4 x float> %vecinit15, <4 x float>* %dst) nounwind {
 entry:
+; CHECK: shuf3:
 ; CHECK: pshufd
   %shuffle.i.i.i12 = shufflevector <4 x float> %tmp10, <4 x float> %vecinit15, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
   %tmp25.i.i = shufflevector <4 x float> %shuffle.i.i.i12, <4 x float> undef, <3 x i32> <i32 0, i32 1, i32 2> 
@@ -46,3 +47,10 @@ entry:
   ret void
 }
 
+; PR10421: make sure we correctly handle extreme widening with CONCAT_VECTORS
+define <8 x i8> @shuf4(<4 x i8> %a, <4 x i8> %b) nounwind readnone {
+; CHECK: shuf4:
+; CHECK: punpckldq
+  %vshuf = shufflevector <4 x i8> %a, <4 x i8> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  ret <8 x i8> %vshuf
+}

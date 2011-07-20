@@ -1661,6 +1661,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONCAT_VECTORS(SDNode *N) {
   EVT WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
   DebugLoc dl = N->getDebugLoc();
   unsigned WidenNumElts = WidenVT.getVectorNumElements();
+  unsigned NumInElts = InVT.getVectorNumElements();
   unsigned NumOperands = N->getNumOperands();
 
   bool InputWidened = false; // Indicates we need to widen the input.
@@ -1686,17 +1687,17 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONCAT_VECTORS(SDNode *N) {
         if (N->getOperand(i).getOpcode() != ISD::UNDEF)
           break;
 
-      if (i > NumOperands)
+      if (i == NumOperands)
         // Everything but the first operand is an UNDEF so just return the
         // widened first operand.
         return GetWidenedVector(N->getOperand(0));
 
       if (NumOperands == 2) {
         // Replace concat of two operands with a shuffle.
-        SmallVector<int, 16> MaskOps(WidenNumElts);
-        for (unsigned i=0; i < WidenNumElts/2; ++i) {
+        SmallVector<int, 16> MaskOps(WidenNumElts, -1);
+        for (unsigned i = 0; i < NumInElts; ++i) {
           MaskOps[i] = i;
-          MaskOps[i+WidenNumElts/2] = i+WidenNumElts;
+          MaskOps[i + NumInElts] = i + WidenNumElts;
         }
         return DAG.getVectorShuffle(WidenVT, dl,
                                     GetWidenedVector(N->getOperand(0)),
@@ -1708,7 +1709,6 @@ SDValue DAGTypeLegalizer::WidenVecRes_CONCAT_VECTORS(SDNode *N) {
 
   // Fall back to use extracts and build vector.
   EVT EltVT = WidenVT.getVectorElementType();
-  unsigned NumInElts = InVT.getVectorNumElements();
   SmallVector<SDValue, 16> Ops(WidenNumElts);
   unsigned Idx = 0;
   for (unsigned i=0; i < NumOperands; ++i) {
