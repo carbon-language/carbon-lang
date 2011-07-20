@@ -1,3 +1,17 @@
+//===------------------------ fallback_malloc.cpp -------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//  
+//  This file implements the a small heap for allocation of exception 
+//  in the situation where malloc fails.
+//  http://www.codesourcery.com/public/cxx-abi/abi-eh.html (section 2.4.2)
+//  
+//===----------------------------------------------------------------------===//
+
 //  A small, simple heap manager based (loosely) on the startup heap
 //  based on the startup heap manager from FreeBSD.
 //
