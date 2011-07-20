@@ -1977,7 +1977,8 @@ StringRef ARMAsmParser::SplitMnemonic(StringRef Mnemonic,
 
   // First, split out any predication code. Ignore mnemonics we know aren't
   // predicated but do have a carry-set and so weren't caught above.
-  if (Mnemonic != "adcs" && Mnemonic != "bics" && Mnemonic != "movs") {
+  if (Mnemonic != "adcs" && Mnemonic != "bics" && Mnemonic != "movs" &&
+      Mnemonic != "muls") {
     unsigned CC = StringSwitch<unsigned>(Mnemonic.substr(Mnemonic.size()-2))
       .Case("eq", ARMCC::EQ)
       .Case("ne", ARMCC::NE)
