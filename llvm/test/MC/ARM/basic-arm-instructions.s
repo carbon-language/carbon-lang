@@ -825,6 +825,63 @@ _func:
 @ CHECK: mulgt	r5, r6, r7              @ encoding: [0x96,0x07,0x05,0xc0]
 @ CHECK: mulsle	r5, r6, r7              @ encoding: [0x96,0x07,0x15,0xd0]
 
+
+@------------------------------------------------------------------------------
+@ MVN (immediate)
+@------------------------------------------------------------------------------
+    mvn r3, #7
+    mvn r4, #0xff0
+    mvn r5, #0xff0000
+    mvns r3, #7
+    mvneq r4, #0xff0
+    mvnseq r5, #0xff0000
+
+@ CHECK: mvn	r3, #7                  @ encoding: [0x07,0x30,0xe0,0xe3]
+@ CHECK: mvn	r4, #4080               @ encoding: [0xff,0x4e,0xe0,0xe3]
+@ CHECK: mvn	r5, #16711680           @ encoding: [0xff,0x58,0xe0,0xe3]
+@ CHECK: mvns	r3, #7                  @ encoding: [0x07,0x30,0xf0,0xe3]
+@ CHECK: mvneq	r4, #4080               @ encoding: [0xff,0x4e,0xe0,0x03]
+@ CHECK: mvnseq	r5, #16711680           @ encoding: [0xff,0x58,0xf0,0x03]
+
+
+@------------------------------------------------------------------------------
+@ MVN (register)
+@------------------------------------------------------------------------------
+        mvn r2, r3
+        mvns r2, r3
+        mvn r5, r6, lsl #19
+        mvn r5, r6, lsr #9
+        mvn r5, r6, asr #4
+        mvn r5, r6, ror #6
+        mvn r5, r6, rrx
+        mvneq r2, r3
+        mvnseq r2, r3, lsl #10
+
+@ CHECK: mvn	r2, r3                  @ encoding: [0x03,0x20,0xe0,0xe1]
+@ CHECK: mvns	r2, r3                  @ encoding: [0x03,0x20,0xf0,0xe1]
+@ CHECK: mvn	r5, r6, lsl #19         @ encoding: [0x86,0x59,0xe0,0xe1]
+@ CHECK: mvn	r5, r6, lsr #9          @ encoding: [0xa6,0x54,0xe0,0xe1]
+@ CHECK: mvn	r5, r6, asr #4          @ encoding: [0x46,0x52,0xe0,0xe1]
+@ CHECK: mvn	r5, r6, ror #6          @ encoding: [0x66,0x53,0xe0,0xe1]
+@ CHECK: mvn	r5, r6, rrx             @ encoding: [0x66,0x50,0xe0,0xe1]
+@ CHECK: mvneq	r2, r3                  @ encoding: [0x03,0x20,0xe0,0x01]
+@ CHECK: mvnseq	r2, r3, lsl #10         @ encoding: [0x03,0x25,0xf0,0x01]
+
+
+@------------------------------------------------------------------------------
+@ MVN (shifted register)
+@------------------------------------------------------------------------------
+        mvn r5, r6, lsl r7
+        mvns r5, r6, lsr r7
+        mvngt r5, r6, asr r7
+        mvnslt r5, r6, ror r7
+
+@ CHECK: mvn	r5, r6, lsl r7          @ encoding: [0x16,0x57,0xe0,0xe1]
+@ CHECK: mvns	r5, r6, lsr r7          @ encoding: [0x36,0x57,0xf0,0xe1]
+@ CHECK: mvngt	r5, r6, asr r7          @ encoding: [0x56,0x57,0xe0,0xc1]
+@ CHECK: mvnslt	r5, r6, ror r7          @ encoding: [0x76,0x57,0xf0,0xb1]
+
+
 @------------------------------------------------------------------------------
 @ STM*
 @------------------------------------------------------------------------------
