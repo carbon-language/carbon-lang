@@ -216,6 +216,36 @@ bool IndVarSimplify::isValidRewrite(Value *FromVal, Value *ToVal) {
   return true;
 }
 
+/// Determine the insertion point for this user. By default, insert immediately
+/// before the user. SCEVExpander or LICM will hoist loop invariants out of the
+/// loop. For PHI nodes, there may be multiple uses, so compute the nearest
+/// common dominator for the incoming blocks.
+static Instruction *getInsertPointForUses(Instruction *User, Value *Def,
+                                          DominatorTree *DT) {
+  PHINode *PHI = dyn_cast<PHINode>(User);
+  if (!PHI)
+    return User;
+
+  Instruction *InsertPt = 0;
+  for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i) {
+    if (PHI->getIncomingValue(i) != Def)
+      continue;
+
+    BasicBlock *InsertBB = PHI->getIncomingBlock(i);
+    if (!InsertPt) {
+      InsertPt = InsertBB->getTerminator();
+      continue;
+    }
+    InsertBB = DT->findNearestCommonDominator(InsertPt->getParent(), InsertBB);
+    InsertPt = InsertBB->getTerminator();
+  }
+  assert(InsertPt && "Missing phi operand");
+  assert(!isa<Instruction>(Def) ||
+         DT->dominates(cast<Instruction>(Def), InsertPt) &&
+         "def does not dominate all uses");
+  return InsertPt;
+}
+
 //===----------------------------------------------------------------------===//
 // RewriteNonIntegerIVs and helpers. Prefer integer IVs.
 //===----------------------------------------------------------------------===//
@@ -697,18 +727,7 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
     // hoist loop invariants out of the loop. For PHI nodes, there may be
     // multiple uses, so compute the nearest common dominator for the
     // incoming blocks.
-    Instruction *InsertPt = User;
-    if (PHINode *PHI = dyn_cast<PHINode>(InsertPt))
-      for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i)
-        if (PHI->getIncomingValue(i) == Op) {
-          if (InsertPt == User)
-            InsertPt = PHI->getIncomingBlock(i)->getTerminator();
-          else
-            InsertPt =
-              DT->findNearestCommonDominator(InsertPt->getParent(),
-                                             PHI->getIncomingBlock(i))
-                    ->getTerminator();
-        }
+    Instruction *InsertPt = getInsertPointForUses(User, Op, DT);
 
     // Now expand it into actual Instructions and patch it into place.
     Value *NewVal = Rewriter.expandCodeFor(AR, UseTy, InsertPt);
@@ -1023,9 +1042,7 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU) {
     // This user does not evaluate to a recurence after widening, so don't
     // follow it. Instead insert a Trunc to kill off the original use,
     // eventually isolating the original narrow IV so it can be removed.
-    Use *U = std::find(DU.NarrowUse->op_begin(), DU.NarrowUse->op_end(),
-                       DU.NarrowDef);
-    IRBuilder<> Builder(*U);
+    IRBuilder<> Builder(getInsertPointForUses(DU.NarrowUse, DU.NarrowDef, DT));
     Value *Trunc = Builder.CreateTrunc(DU.WideDef, DU.NarrowDef->getType());
     DU.NarrowUse->replaceUsesOfWith(DU.NarrowDef, Trunc);
     return 0;

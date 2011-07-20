@@ -350,3 +350,42 @@ latch:                         ; preds = %for.inc50.i
 exit:
   ret void
 }
+
+; Test a widened IV that is used by a phi on different paths within the loop.
+;
+; CHECK: for.body:
+; CHECK: phi i64
+; CHECK: trunc i64
+; CHECK: if.then:
+; CHECK: for.inc:
+; CHECK: phi i32
+; CHECK: for.end:
+define void @phiUsesTrunc() nounwind {
+entry:
+  br i1 undef, label %for.body, label %for.end
+
+for.body:
+  %iv = phi i32 [ %inc, %for.inc ], [ 1, %entry ]
+  br i1 undef, label %if.then, label %if.else
+
+if.then:
+  br i1 undef, label %if.then33, label %for.inc
+
+if.then33:
+  br label %for.inc
+
+if.else:
+  br i1 undef, label %if.then97, label %for.inc
+
+if.then97:
+  %idxprom100 = sext i32 %iv to i64
+  br label %for.inc
+
+for.inc:
+  %kmin.1 = phi i32 [ %iv, %if.then33 ], [ 0, %if.then ], [ %iv, %if.then97 ], [ 0, %if.else ]
+  %inc = add nsw i32 %iv, 1
+  br i1 undef, label %for.body, label %for.end
+
+for.end:
+  ret void
+}
