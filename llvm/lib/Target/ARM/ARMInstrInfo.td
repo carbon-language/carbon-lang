@@ -3111,15 +3111,11 @@ def : ARMV6Pat<(or (sra (shl GPR:$Rm, (i32 24)), (i32 16)),
                    (and (srl GPR:$Rm, (i32 8)), 0xFF)),
                (REVSH GPR:$Rm)>;
 
-def lsl_amt : ImmLeaf<i32, [{
-  return Imm >= 0 && Imm < 32;
-}]>;
-
 def PKHBT : APKHI<0b01101000, 0, (outs GPR:$Rd),
                               (ins GPR:$Rn, GPR:$Rm, i32imm:$sh),
                IIC_iALUsi, "pkhbt", "\t$Rd, $Rn, $Rm, lsl $sh",
                [(set GPR:$Rd, (or (and GPR:$Rn, 0xFFFF),
-                                  (and (shl GPR:$Rm, lsl_amt:$sh),
+                                  (and (shl GPR:$Rm, pkh_lsl_amt:$sh),
                                        0xFFFF0000)))]>,
                Requires<[IsARM, HasV6]>;
 
@@ -3129,17 +3125,13 @@ def : ARMV6Pat<(or (and GPR:$Rn, 0xFFFF), (and GPR:$Rm, 0xFFFF0000)),
 def : ARMV6Pat<(or (and GPR:$Rn, 0xFFFF), (shl GPR:$Rm, imm16_31:$sh)),
                (PKHBT GPR:$Rn, GPR:$Rm, imm16_31:$sh)>;
 
-def asr_amt : ImmLeaf<i32, [{
-  return Imm > 0 && Imm <= 32;
-}]>;
-
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and
 // will match the pattern below.
 def PKHTB : APKHI<0b01101000, 1, (outs GPR:$Rd),
                               (ins GPR:$Rn, GPR:$Rm, i32imm:$sh),
                IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm, asr $sh",
                [(set GPR:$Rd, (or (and GPR:$Rn, 0xFFFF0000),
-                                  (and (sra GPR:$Rm, asr_amt:$sh),
+                                  (and (sra GPR:$Rm, pkh_asr_amt:$sh),
                                        0xFFFF)))]>,
                Requires<[IsARM, HasV6]>;
 

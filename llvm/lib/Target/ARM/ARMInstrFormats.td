@@ -847,6 +847,9 @@ class AMiscA1I<bits<8> opcod, bits<4> opc7_4, dag oops, dag iops,
 }
 
 // PKH instructions
+def pkh_lsl_amt : ImmLeaf<i32, [{ return Imm >= 0 && Imm < 32; }]>;
+def pkh_asr_amt : ImmLeaf<i32, [{ return Imm > 0 && Imm <= 32; }]>;
+
 class APKHI<bits<8> opcod, bit tb, dag oops, dag iops, InstrItinClass itin,
             string opc, string asm, list<dag> pattern>
   : I<oops, iops, AddrModeNone, 4, IndexModeNone, ArithMiscFrm, itin,

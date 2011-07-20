@@ -2616,7 +2616,7 @@ def t2PKHBT : T2ThreeReg<
             (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, i32imm:$sh),
                   IIC_iBITsi, "pkhbt", "\t$Rd, $Rn, $Rm, lsl $sh",
                   [(set rGPR:$Rd, (or (and rGPR:$Rn, 0xFFFF),
-                                      (and (shl rGPR:$Rm, lsl_amt:$sh),
+                                      (and (shl rGPR:$Rm, pkh_lsl_amt:$sh),
                                            0xFFFF0000)))]>,
                   Requires<[HasT2ExtractPack, IsThumb2]> {
   let Inst{31-27} = 0b11101;
@@ -2644,7 +2644,7 @@ def t2PKHTB : T2ThreeReg<
                   (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, i32imm:$sh),
                   IIC_iBITsi, "pkhtb", "\t$Rd, $Rn, $Rm, asr $sh",
                   [(set rGPR:$Rd, (or (and rGPR:$Rn, 0xFFFF0000),
-                                       (and (sra rGPR:$Rm, asr_amt:$sh),
+                                       (and (sra rGPR:$Rm, pkh_asr_amt:$sh),
                                             0xFFFF)))]>,
                   Requires<[HasT2ExtractPack, IsThumb2]> {
   let Inst{31-27} = 0b11101;
