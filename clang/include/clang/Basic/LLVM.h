@@ -27,7 +27,7 @@ namespace llvm {
   template<typename T> class SmallVectorImpl;
 
   class raw_ostream;
-  // TODO: DenseMap, ...
+  // TODO: ArrayRef, DenseMap, ...
 }
 
 
