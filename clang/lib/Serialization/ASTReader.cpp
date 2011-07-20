@@ -2188,6 +2188,14 @@ ASTReader::ReadASTBlock(PerFileData &F) {
     case SELECTOR_OFFSETS:
       F.SelectorOffsets = (const uint32_t *)BlobStart;
       F.LocalNumSelectors = Record[0];
+        
+      // Introduce the global -> local mapping for identifiers within this AST
+      // file
+      GlobalSelectorMap.insert(
+                     std::make_pair(getTotalNumSelectors() + 1, 
+                                    std::make_pair(&F, 
+                                                   -getTotalNumSelectors())));
+      SelectorsLoaded.resize(SelectorsLoaded.size() + F.LocalNumSelectors);        
       break;
 
     case METHOD_POOL:
@@ -2538,15 +2546,13 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
 
   // Allocate space for loaded slocentries, identifiers, decls and types.
   unsigned TotalNumTypes = 0, 
-           TotalNumPreallocatedPreprocessingEntities = 0, TotalNumMacroDefs = 0,
-           TotalNumSelectors = 0;
+           TotalNumPreallocatedPreprocessingEntities = 0, TotalNumMacroDefs = 0;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     TotalNumSLocEntries += Chain[I]->LocalNumSLocEntries;
     TotalNumTypes += Chain[I]->LocalNumTypes;
     TotalNumPreallocatedPreprocessingEntities +=
         Chain[I]->NumPreallocatedPreprocessingEntities;
     TotalNumMacroDefs += Chain[I]->LocalNumMacroDefinitions;
-    TotalNumSelectors += Chain[I]->LocalNumSelectors;
   }
   TypesLoaded.resize(TotalNumTypes);
   MacroDefinitionsLoaded.resize(TotalNumMacroDefs);
@@ -2559,7 +2565,6 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                      TotalNumPreallocatedPreprocessingEntities);
     }
   }
-  SelectorsLoaded.resize(TotalNumSelectors);
   // Preload SLocEntries.
   for (unsigned I = 0, N = PreloadSLocEntries.size(); I != N; ++I) {
     ASTReadResult Result = ReadSLocEntryRecord(PreloadSLocEntries[I]);
@@ -4645,19 +4650,15 @@ Selector ASTReader::DecodeSelector(unsigned ID) {
 
   if (SelectorsLoaded[ID - 1].getAsOpaquePtr() == 0) {
     // Load this selector from the selector table.
-    unsigned Idx = ID - 1;
-    for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-      PerFileData &F = *Chain[N - I - 1];
-      if (Idx < F.LocalNumSelectors) {
-        ASTSelectorLookupTrait Trait(*this);
-        SelectorsLoaded[ID - 1] =
-           Trait.ReadKey(F.SelectorLookupTableData + F.SelectorOffsets[Idx], 0);
-        if (DeserializationListener)
-          DeserializationListener->SelectorRead(ID, SelectorsLoaded[ID - 1]);
-        break;
-      }
-      Idx -= F.LocalNumSelectors;
-    }
+    GlobalSelectorMapType::iterator I = GlobalSelectorMap.find(ID);
+    assert(I != GlobalSelectorMap.end() && "Corrupted global selector map");
+    ASTSelectorLookupTrait Trait(*this);
+    PerFileData &F = *I->second.first;
+    unsigned Idx = ID - 1 + I->second.second;
+    SelectorsLoaded[ID - 1] =
+      Trait.ReadKey(F.SelectorLookupTableData + F.SelectorOffsets[Idx], 0);
+    if (DeserializationListener)
+      DeserializationListener->SelectorRead(ID, SelectorsLoaded[ID - 1]);
   }
 
   return SelectorsLoaded[ID - 1];

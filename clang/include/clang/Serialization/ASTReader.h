@@ -570,6 +570,15 @@ private:
   /// been loaded.
   llvm::SmallVector<Selector, 16> SelectorsLoaded;
 
+  typedef ContinuousRangeMap<serialization::SelectorID, 
+                             std::pair<PerFileData *, int32_t>, 4> 
+    GlobalSelectorMapType;
+  
+  /// \brief Mapping from global selector IDs to the module in which the
+  /// selector resides along with the offset that should be added to the
+  /// global selector ID to produce a local ID.
+  GlobalSelectorMapType GlobalSelectorMap;
+
   /// \brief The macro definitions we have already loaded.
   llvm::SmallVector<MacroDefinition *, 16> MacroDefinitionsLoaded;
 
