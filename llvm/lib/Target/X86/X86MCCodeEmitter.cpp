@@ -205,7 +205,9 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
   }
 
   // If we have an immoffset, add it to the expression.
-  if (FixupKind == FK_Data_4 && StartsWithGlobalOffsetTable(Expr)) {
+  if ((FixupKind == FK_Data_4 ||
+       FixupKind == MCFixupKind(X86::reloc_signed_4byte)) &&
+      StartsWithGlobalOffsetTable(Expr)) {
     assert(ImmOffset == 0);
 
     FixupKind = MCFixupKind(X86::reloc_global_offset_table);

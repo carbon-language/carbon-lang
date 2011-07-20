@@ -1,9 +1,10 @@
 // RUN: llvm-mc -filetype=obj -triple i386-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck  %s
 
 // We test that _GLOBAL_OFFSET_TABLE_ will account for the two bytes at the
-// start of the addl.
+// start of the addl/leal.
 
         addl    $_GLOBAL_OFFSET_TABLE_, %ebx
+        leal    _GLOBAL_OFFSET_TABLE_(%ebx), %ebx
 
 // CHECK:      ('sh_name', 0x00000005) # '.text'
 // CHECK-NEXT: ('sh_type',
@@ -15,4 +16,4 @@
 // CHECK-NEXT: ('sh_info',
 // CHECK-NEXT: ('sh_addralign',
 // CHECK-NEXT: ('sh_entsize',
-// CHECK-NEXT: ('_section_data', '81c30200 0000')
+// CHECK-NEXT: ('_section_data', '81c30200 00008d9b 02000000')
