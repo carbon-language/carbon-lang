@@ -143,7 +143,7 @@ public:
 
   bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const {
     return isKnownFormat(InputBuffer);
-  };
+  }
 };
 
 } // end namespace llvm
