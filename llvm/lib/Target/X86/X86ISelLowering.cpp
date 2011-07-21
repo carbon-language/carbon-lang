@@ -3889,7 +3889,7 @@ static SDValue getUnpackl(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
   return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
 }
 
-/// getUnpackhMask - Returns a vector_shuffle node for an unpackh operation.
+/// getUnpackh - Returns a vector_shuffle node for an unpackh operation.
 static SDValue getUnpackh(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
                           SDValue V2) {
   unsigned NumElems = VT.getVectorNumElements();
@@ -3902,31 +3902,89 @@ static SDValue getUnpackh(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
   return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
 }
 
-/// PromoteSplat - Promote a splat of v4i32, v8i16 or v16i8 to v4f32.
-static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
-  EVT PVT = MVT::v4f32;
-  EVT VT = SV->getValueType(0);
-  DebugLoc dl = SV->getDebugLoc();
-  SDValue V1 = SV->getOperand(0);
+// PromoteSplatv8v16 - All i16 and i8 vector types can't be used directly by
+// a generic shuffle instruction because the target has no such instructions.
+// Generate shuffles which repeat i16 and i8 several times until they can be
+// represented by v4f32 and then be manipulated by target suported shuffles.
+static SDValue PromoteSplatv8v16(SDValue V, SelectionDAG &DAG, int &EltNo) {
+  EVT VT = V.getValueType();
   int NumElems = VT.getVectorNumElements();
-  int EltNo = SV->getSplatIndex();
+  DebugLoc dl = V.getDebugLoc();
 
-  // unpack elements to the correct location
   while (NumElems > 4) {
     if (EltNo < NumElems/2) {
-      V1 = getUnpackl(DAG, dl, VT, V1, V1);
+      V = getUnpackl(DAG, dl, VT, V, V);
     } else {
-      V1 = getUnpackh(DAG, dl, VT, V1, V1);
+      V = getUnpackh(DAG, dl, VT, V, V);
       EltNo -= NumElems/2;
     }
     NumElems >>= 1;
   }
+  return V;
+}
 
-  // Perform the splat.
-  int SplatMask[4] = { EltNo, EltNo, EltNo, EltNo };
-  V1 = DAG.getNode(ISD::BITCAST, dl, PVT, V1);
-  V1 = DAG.getVectorShuffle(PVT, dl, V1, DAG.getUNDEF(PVT), &SplatMask[0]);
-  return DAG.getNode(ISD::BITCAST, dl, VT, V1);
+/// getLegalSplat - Generate a legal splat with supported x86 shuffles
+static SDValue getLegalSplat(SelectionDAG &DAG, SDValue V, int EltNo) {
+  EVT VT = V.getValueType();
+  DebugLoc dl = V.getDebugLoc();
+  assert((VT.getSizeInBits() == 128 || VT.getSizeInBits() == 256)
+         && "Vector size not supported");
+
+  bool Is128 = VT.getSizeInBits() == 128;
+  EVT NVT = Is128 ? MVT::v4f32 : MVT::v8f32;
+  V = DAG.getNode(ISD::BITCAST, dl, NVT, V);
+
+  if (Is128) {
+    int SplatMask[4] = { EltNo, EltNo, EltNo, EltNo };
+    V = DAG.getVectorShuffle(NVT, dl, V, DAG.getUNDEF(NVT), &SplatMask[0]);
+  } else {
+    // The second half of indicies refer to the higher part, which is a
+    // duplication of the lower one. This makes this shuffle a perfect match
+    // for the VPERM instruction.
+    int SplatMask[8] = { EltNo, EltNo, EltNo, EltNo,
+                         EltNo+4, EltNo+4, EltNo+4, EltNo+4 };
+    V = DAG.getVectorShuffle(NVT, dl, V, DAG.getUNDEF(NVT), &SplatMask[0]);
+  }
+
+  return DAG.getNode(ISD::BITCAST, dl, VT, V);
+}
+
+/// PromoteSplat - Promote a splat of v4i32, v8i16 or v16i8 to v4f32 and
+/// v8i32, v16i16 or v32i8 to v8f32.
+static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
+  EVT SrcVT = SV->getValueType(0);
+  SDValue V1 = SV->getOperand(0);
+  DebugLoc dl = SV->getDebugLoc();
+
+  int EltNo = SV->getSplatIndex();
+  int NumElems = SrcVT.getVectorNumElements();
+  unsigned Size = SrcVT.getSizeInBits();
+
+  // Extract the 128-bit part containing the splat element and update
+  // the splat element index when it refers to the higher register.
+  if (Size == 256) {
+    unsigned Idx = (EltNo > NumElems/2) ? NumElems/2 : 0;
+    V1 = Extract128BitVector(V1, DAG.getConstant(Idx, MVT::i32), DAG, dl);
+    if (Idx > 0)
+      EltNo -= NumElems/2;
+  }
+
+  // Make this 128-bit vector duplicate i8 and i16 elements
+  if (NumElems > 4)
+    V1 = PromoteSplatv8v16(V1, DAG, EltNo);
+
+  // Recreate the 256-bit vector and place the same 128-bit vector
+  // into the low and high part. This is necessary because we want
+  // to use VPERM to shuffle the v8f32 vector, and VPERM only shuffles
+  // inside each separate v4f32 lane.
+  if (Size == 256) {
+    SDValue InsV = Insert128BitVector(DAG.getUNDEF(SrcVT), V1,
+                         DAG.getConstant(0, MVT::i32), DAG, dl);
+    V1 = Insert128BitVector(InsV, V1,
+               DAG.getConstant(NumElems/2, MVT::i32), DAG, dl);
+  }
+
+  return getLegalSplat(DAG, V1, EltNo);
 }
 
 /// getShuffleVectorZeroOrUndef - Return a vector_shuffle of the specified
@@ -5663,19 +5721,24 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
 
   // Handle splat operations
   if (SVOp->isSplat()) {
-    // Special case, this is the only place now where it's
-    // allowed to return a vector_shuffle operation without
-    // using a target specific node, because *hopefully* it
-    // will be optimized away by the dag combiner.
-    if (VT.getVectorNumElements() <= 4 &&
-        CanXFormVExtractWithShuffleIntoLoad(Op, DAG, TLI))
+    unsigned NumElem = VT.getVectorNumElements();
+    // Special case, this is the only place now where it's allowed to return
+    // a vector_shuffle operation without using a target specific node, because
+    // *hopefully* it will be optimized away by the dag combiner. FIXME: should
+    // this be moved to DAGCombine instead?
+    if (NumElem <= 4 && CanXFormVExtractWithShuffleIntoLoad(Op, DAG, TLI))
       return Op;
 
     // Handle splats by matching through known masks
-    if (VT.getVectorNumElements() <= 4)
+    if ((VT.is128BitVector() && NumElem <= 4) ||
+        (VT.is256BitVector() && NumElem <= 8))
       return SDValue();
 
-    // Canonicalize all of the remaining to v4f32.
+    // All i16 and i8 vector types can't be used directly by a generic shuffle
+    // instruction because the target has no such instruction. Generate shuffles
+    // which repeat i16 and i8 several times until they fit in i32, and then can
+    // be manipulated by target suported shuffles. After the insertion of the
+    // necessary shuffles, the result is bitcasted back to v4f32 or v8f32.
     return PromoteSplat(SVOp, DAG);
   }
 
