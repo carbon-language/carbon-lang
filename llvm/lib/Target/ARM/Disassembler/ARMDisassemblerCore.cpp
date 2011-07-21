@@ -1090,7 +1090,7 @@ static bool DisassembleDPFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   return true;
 }
 
-static bool DisassembleDPSoRegFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
+static bool DisassembleDPSoRegRegFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
   const MCInstrDesc &MCID = ARMInsts[Opcode];
@@ -1179,6 +1179,69 @@ static bool DisassembleDPSoRegFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   return true;
 }
+
+static bool DisassembleDPSoRegImmFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
+    unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
+
+  const MCInstrDesc &MCID = ARMInsts[Opcode];
+  unsigned short NumDefs = MCID.getNumDefs();
+  bool isUnary = isUnaryDP(MCID.TSFlags);
+  const MCOperandInfo *OpInfo = MCID.OpInfo;
+  unsigned &OpIdx = NumOpsAdded;
+
+  OpIdx = 0;
+
+  // Disassemble register def if there is one.
+  if (NumDefs && (OpInfo[OpIdx].RegClass == ARM::GPRRegClassID)) {
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+                                                       decodeRd(insn))));
+    ++OpIdx;
+  }
+
+  // Disassemble the src operands.
+  if (OpIdx >= NumOps)
+    return false;
+
+  // BinaryDP has an Rn operand.
+  if (!isUnary) {
+    assert(OpInfo[OpIdx].RegClass == ARM::GPRRegClassID &&
+           "Reg operand expected");
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+                                                       decodeRn(insn))));
+    ++OpIdx;
+  }
+
+  // If this is a two-address operand, skip it, e.g., MOVCCs operand 1.
+  if (isUnary && (MCID.getOperandConstraint(OpIdx, MCOI::TIED_TO) != -1)) {
+    MI.addOperand(MCOperand::CreateReg(0));
+    ++OpIdx;
+  }
+
+  // Disassemble operand 2, which consists of two components.
+  if (OpIdx + 1 >= NumOps)
+    return false;
+
+  assert((OpInfo[OpIdx].RegClass == ARM::GPRRegClassID) &&
+         (OpInfo[OpIdx+1].RegClass < 0) &&
+         "Expect 2 reg operands");
+
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+                                                     decodeRm(insn))));
+
+  // Inst{6-5} encodes the shift opcode.
+  ARM_AM::ShiftOpc ShOp = getShiftOpcForBits(slice(insn, 6, 5));
+  // Inst{11-7} encodes the imm5 shift amount.
+  unsigned ShImm = slice(insn, 11, 7);
+
+  // A8.4.1.  Possible rrx or shift amount of 32...
+  getImmShiftSE(ShOp, ShImm);
+  MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(ShOp, ShImm)));
+
+  OpIdx += 2;
+
+  return true;
+}
+
 
 static bool BadRegsLdStFrm(unsigned Opcode, uint32_t insn, bool Store, bool WBack,
                            bool Imm) {
@@ -3484,7 +3547,7 @@ static const DisassembleFP FuncPtrs[] = {
   &DisassembleBrFrm,
   &DisassembleBrMiscFrm,
   &DisassembleDPFrm,
-  &DisassembleDPSoRegFrm,
+  &DisassembleDPSoRegRegFrm,
   &DisassembleLdFrm,
   &DisassembleStFrm,
   &DisassembleLdMiscFrm,
@@ -3551,6 +3614,9 @@ static const DisassembleFP FuncPtrs[] = {
   // Vector Table Lookup uses byte indexes in a control vector to look up byte
   // values in a table and generate a new vector.
   &DisassembleNVTBLFrm,
+
+  &DisassembleDPSoRegImmFrm,
+
 
   NULL
 };

@@ -94,16 +94,16 @@ public:
                                SDValue &B, SDValue &C,
                                bool CheckProfitability = true);
   bool SelectImmShifterOperand(SDValue N, SDValue &A,
-                               SDValue &B, SDValue &C,
-                               bool CheckProfitability = true);
-  bool SelectShiftShifterOperandReg(SDValue N, SDValue &A,
+                               SDValue &B, bool CheckProfitability = true);
+  bool SelectShiftRegShifterOperand(SDValue N, SDValue &A,
                                     SDValue &B, SDValue &C) {
     // Don't apply the profitability check
-    if (SelectImmShifterOperand(N, A, B, C, false))
-      return true;
-    else if (SelectRegShifterOperand(N, A, B, C, false))
-      return true;
-    return false;
+    return SelectRegShifterOperand(N, A, B, C, false);
+  }
+  bool SelectShiftImmShifterOperand(SDValue N, SDValue &A,
+                                    SDValue &B) {
+    // Don't apply the profitability check
+    return SelectImmShifterOperand(N, A, B, false);
   }
 
   bool SelectAddrModeImm12(SDValue N, SDValue &Base, SDValue &OffImm);
@@ -374,7 +374,6 @@ bool ARMDAGToDAGISel::isShifterOpProfitable(const SDValue &Shift,
 
 bool ARMDAGToDAGISel::SelectImmShifterOperand(SDValue N,
                                               SDValue &BaseReg,
-                                              SDValue &ShReg,
                                               SDValue &Opc,
                                               bool CheckProfitability) {
   if (DisableShifterOp)
@@ -390,7 +389,6 @@ bool ARMDAGToDAGISel::SelectImmShifterOperand(SDValue N,
   unsigned ShImmVal = 0;
   ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1));
   if (!RHS) return false;
-  ShReg = CurDAG->getRegister(0, MVT::i32);
   ShImmVal = RHS->getZExtValue() & 31;
   Opc = CurDAG->getTargetConstant(ARM_AM::getSORegOpc(ShOpcVal, ShImmVal),
                                   MVT::i32);
@@ -2067,7 +2065,7 @@ SelectARMCMOVShiftOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
   SDValue CPTmp0;
   SDValue CPTmp1;
   SDValue CPTmp2;
-  if (SelectImmShifterOperand(TrueVal, CPTmp0, CPTmp1, CPTmp2)) {
+  if (SelectImmShifterOperand(TrueVal, CPTmp0, CPTmp2)) {
     SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
     SDValue Ops[] = { FalseVal, CPTmp0, CPTmp1, CPTmp2, CC, CCR, InFlag };
     return CurDAG->SelectNodeTo(N, ARM::MOVCCsi, MVT::i32, Ops, 7);

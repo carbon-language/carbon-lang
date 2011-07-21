@@ -623,9 +623,10 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
 
   MISC("t_bltarget", "kOperandTypeARMBranchTarget");              // ?
   MISC("t_blxtarget", "kOperandTypeARMBranchTarget");             // ?
-  MISC("so_reg_imm", "kOperandTypeARMSoReg");                         // R, R, I
-  MISC("so_reg_reg", "kOperandTypeARMSoReg");                         // R, R, I
-  MISC("shift_so_reg", "kOperandTypeARMSoReg");                   // R, R, I
+  MISC("so_reg_imm", "kOperandTypeARMSoRegReg");                         // R, R, I
+  MISC("so_reg_reg", "kOperandTypeARMSoRegImm");                         // R, R, I
+  MISC("shift_so_reg_reg", "kOperandTypeARMSoRegReg");                   // R, R, I
+  MISC("shift_so_reg_imm", "kOperandTypeARMSoRegImm");                   // R, R, I
   MISC("t2_so_reg", "kOperandTypeThumb2SoReg");                   // R, I
   MISC("so_imm", "kOperandTypeARMSoImm");                         // I
   MISC("rot_imm", "kOperandTypeARMRotImm");                       // I
@@ -854,7 +855,8 @@ static void emitCommonEnums(raw_ostream &o, unsigned int &i) {
   operandTypes.addEntry("kOperandTypeX86EffectiveAddress");
   operandTypes.addEntry("kOperandTypeX86PCRelative");
   operandTypes.addEntry("kOperandTypeARMBranchTarget");
-  operandTypes.addEntry("kOperandTypeARMSoReg");
+  operandTypes.addEntry("kOperandTypeARMSoRegReg");
+  operandTypes.addEntry("kOperandTypeARMSoRegImm");
   operandTypes.addEntry("kOperandTypeARMSoImm");
   operandTypes.addEntry("kOperandTypeARMRotImm");
   operandTypes.addEntry("kOperandTypeARMSoImm2Part");

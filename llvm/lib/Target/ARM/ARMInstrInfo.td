@@ -431,29 +431,39 @@ def ShiftedImmAsmOperand : AsmOperandClass {
 def so_reg_reg : Operand<i32>,  // reg reg imm
                  ComplexPattern<i32, 3, "SelectRegShifterOperand",
                                 [shl, srl, sra, rotr]> {
-  let EncoderMethod = "getSORegOpValue";
-  let PrintMethod = "printSORegOperand";
+  let EncoderMethod = "getSORegRegOpValue";
+  let PrintMethod = "printSORegRegOperand";
   let ParserMatchClass = ShiftedRegAsmOperand;
   let MIOperandInfo = (ops GPR, GPR, shift_imm);
 }
 
 def so_reg_imm : Operand<i32>, // reg imm
-                 ComplexPattern<i32, 3, "SelectImmShifterOperand",
+                 ComplexPattern<i32, 2, "SelectImmShifterOperand",
                                 [shl, srl, sra, rotr]> {
-  let EncoderMethod = "getSORegOpValue";
-  let PrintMethod = "printSORegOperand";
+  let EncoderMethod = "getSORegImmOpValue";
+  let PrintMethod = "printSORegImmOperand";
   let ParserMatchClass = ShiftedImmAsmOperand;
+  let MIOperandInfo = (ops GPR, shift_imm);
+}
+
+// FIXME: Does this need to be distinct from so_reg?
+def shift_so_reg_reg : Operand<i32>,    // reg reg imm
+                   ComplexPattern<i32, 3, "SelectShiftRegShifterOperand",
+                                  [shl,srl,sra,rotr]> {
+  let EncoderMethod = "getSORegRegOpValue";
+  let PrintMethod = "printSORegRegOperand";
   let MIOperandInfo = (ops GPR, GPR, shift_imm);
 }
 
 // FIXME: Does this need to be distinct from so_reg?
-def shift_so_reg : Operand<i32>,    // reg reg imm
-                   ComplexPattern<i32, 3, "SelectShiftShifterOperandReg",
+def shift_so_reg_imm : Operand<i32>,    // reg reg imm
+                   ComplexPattern<i32, 2, "SelectShiftImmShifterOperand",
                                   [shl,srl,sra,rotr]> {
-  let EncoderMethod = "getSORegOpValue";
-  let PrintMethod = "printSORegOperand";
-  let MIOperandInfo = (ops GPR, GPR, shift_imm);
+  let EncoderMethod = "getSORegImmOpValue";
+  let PrintMethod = "printSORegImmOperand";
+  let MIOperandInfo = (ops GPR, shift_imm);
 }
+
 
 // so_imm - Match a 32-bit shifter_operand immediate operand, which is an
 // 8-bit immediate rotated by an arbitrary number of bits.
@@ -772,7 +782,7 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
   }
 
   def rsi : AsI1<opcod, (outs GPR:$Rd),
-               (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegFrm,
+               (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegImmFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
                [(set GPR:$Rd, (opnode GPR:$Rn, so_reg_imm:$shift))]> {
     bits<4> Rd;
@@ -787,7 +797,7 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc,
   }
 
   def rsr : AsI1<opcod, (outs GPR:$Rd),
-               (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegFrm,
+               (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegRegFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
                [(set GPR:$Rd, (opnode GPR:$Rn, so_reg_reg:$shift))]> {
     bits<4> Rd;
@@ -861,7 +871,7 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
     let Inst{3-0} = Rm;
   }
   def rsi : AI1<opcod, (outs GPR:$Rd),
-               (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegFrm,
+               (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegImmFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
                [(set GPR:$Rd, (opnode GPR:$Rn, so_reg_imm:$shift))]> {
     bits<4> Rd;
@@ -877,7 +887,7 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc,
   }
 
     def rsr : AI1<opcod, (outs GPR:$Rd),
-               (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegFrm,
+               (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegRegFrm,
                iis, opc, "\t$Rd, $Rn, $shift",
                [(set GPR:$Rd, (opnode GPR:$Rn, so_reg_reg:$shift))]> {
     bits<4> Rd;
@@ -928,7 +938,7 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
     let Inst{3-0} = Rm;
   }
   def rsi : AI1<opcod, (outs),
-               (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegFrm, iis,
+               (ins GPR:$Rn, so_reg_imm:$shift), DPSoRegImmFrm, iis,
                opc, "\t$Rn, $shift",
                [(opnode GPR:$Rn, so_reg_imm:$shift)]> {
     bits<4> Rn;
@@ -942,7 +952,7 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
     let Inst{3-0} = shift{3-0};
   }
   def rsr : AI1<opcod, (outs),
-               (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegFrm, iis,
+               (ins GPR:$Rn, so_reg_reg:$shift), DPSoRegRegFrm, iis,
                opc, "\t$Rn, $shift",
                [(opnode GPR:$Rn, so_reg_reg:$shift)]> {
     bits<4> Rn;
@@ -1094,7 +1104,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
   }
   def rsi : AsI1<opcod, (outs GPR:$Rd),
                 (ins GPR:$Rn, so_reg_imm:$shift),
-                DPSoRegFrm, IIC_iALUsr, opc, "\t$Rd, $Rn, $shift",
+                DPSoRegImmFrm, IIC_iALUsr, opc, "\t$Rd, $Rn, $shift",
                [(set GPR:$Rd, (opnode GPR:$Rn, so_reg_imm:$shift))]>,
                Requires<[IsARM]> {
     bits<4> Rd;
@@ -1109,7 +1119,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
   }
   def rsr : AsI1<opcod, (outs GPR:$Rd),
                 (ins GPR:$Rn, so_reg_reg:$shift),
-                DPSoRegFrm, IIC_iALUsr, opc, "\t$Rd, $Rn, $shift",
+                DPSoRegRegFrm, IIC_iALUsr, opc, "\t$Rd, $Rn, $shift",
                [(set GPR:$Rd, (opnode GPR:$Rn, so_reg_reg:$shift))]>,
                Requires<[IsARM]> {
     bits<4> Rd;
@@ -2215,17 +2225,37 @@ def MOVr_TC : AsI1<0b1101, (outs tcGPR:$Rd), (ins tcGPR:$Rm), DPFrm,
   let Inst{15-12} = Rd;
 }
 
-def MOVs : AsI1<0b1101, (outs GPR:$Rd), (ins shift_so_reg:$src),
-                DPSoRegFrm, IIC_iMOVsr,
-                "mov", "\t$Rd, $src", [(set GPR:$Rd, shift_so_reg:$src)]>,
+def MOVsr : AsI1<0b1101, (outs GPR:$Rd), (ins shift_so_reg_reg:$src),
+                DPSoRegRegFrm, IIC_iMOVsr,
+                "mov", "\t$Rd, $src", [(set GPR:$Rd, shift_so_reg_reg:$src)]>,
                 UnaryDP {
   bits<4> Rd;
   bits<12> src;
   let Inst{15-12} = Rd;
   let Inst{19-16} = 0b0000;
-  let Inst{11-0} = src;
+  let Inst{11-8} = src{11-8};
+  let Inst{7} = 0;
+  let Inst{6-5} = src{6-5};
+  let Inst{4} = 1;
+  let Inst{3-0} = src{3-0};
   let Inst{25} = 0;
 }
+
+def MOVsi : AsI1<0b1101, (outs GPR:$Rd), (ins shift_so_reg_imm:$src),
+                DPSoRegImmFrm, IIC_iMOVsr,
+                "mov", "\t$Rd, $src", [(set GPR:$Rd, shift_so_reg_imm:$src)]>,
+                UnaryDP {
+  bits<4> Rd;
+  bits<12> src;
+  let Inst{15-12} = Rd;
+  let Inst{19-16} = 0b0000;
+  let Inst{11-5} = src{11-5};
+  let Inst{4} = 0;
+  let Inst{3-0} = src{3-0};
+  let Inst{25} = 0;
+}
+
+
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
 def MOVi : AsI1<0b1101, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm, IIC_iMOVi,
@@ -2450,7 +2480,7 @@ def RSBrr : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
 }
 
 def RSBrsi : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_reg_imm:$shift),
-                 DPSoRegFrm, IIC_iALUsr, "rsb", "\t$Rd, $Rn, $shift",
+                 DPSoRegImmFrm, IIC_iALUsr, "rsb", "\t$Rd, $Rn, $shift",
                  [(set GPR:$Rd, (sub so_reg_imm:$shift, GPR:$Rn))]> {
   bits<4> Rd;
   bits<4> Rn;
@@ -2464,7 +2494,7 @@ def RSBrsi : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_reg_imm:$shift),
 }
 
 def RSBrsr : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_reg_reg:$shift),
-                 DPSoRegFrm, IIC_iALUsr, "rsb", "\t$Rd, $Rn, $shift",
+                 DPSoRegRegFrm, IIC_iALUsr, "rsb", "\t$Rd, $Rn, $shift",
                  [(set GPR:$Rd, (sub so_reg_reg:$shift, GPR:$Rn))]> {
   bits<4> Rd;
   bits<4> Rn;
@@ -2524,7 +2554,7 @@ def RSCrr : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
   let Inst{19-16} = Rn;
 }
 def RSCrsi : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_reg_imm:$shift),
-                 DPSoRegFrm, IIC_iALUsr, "rsc", "\t$Rd, $Rn, $shift",
+                 DPSoRegImmFrm, IIC_iALUsr, "rsc", "\t$Rd, $Rn, $shift",
                  [(set GPR:$Rd, (sube_dead_carry so_reg_imm:$shift, GPR:$Rn))]>,
                  Requires<[IsARM]> {
   bits<4> Rd;
@@ -2538,7 +2568,7 @@ def RSCrsi : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_reg_imm:$shift),
   let Inst{3-0} = shift{3-0};
 }
 def RSCrsr : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_reg_reg:$shift),
-                 DPSoRegFrm, IIC_iALUsr, "rsc", "\t$Rd, $Rn, $shift",
+                 DPSoRegRegFrm, IIC_iALUsr, "rsc", "\t$Rd, $Rn, $shift",
                  [(set GPR:$Rd, (sube_dead_carry so_reg_reg:$shift, GPR:$Rn))]>,
                  Requires<[IsARM]> {
   bits<4> Rd;
@@ -2838,7 +2868,7 @@ def  MVNr  : AsI1<0b1111, (outs GPR:$Rd), (ins GPR:$Rm), DPFrm, IIC_iMVNr,
   let Inst{15-12} = Rd;
   let Inst{3-0} = Rm;
 }
-def  MVNsi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_imm:$shift), DPSoRegFrm,
+def  MVNsi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_imm:$shift), DPSoRegImmFrm,
                   IIC_iMVNsr, "mvn", "\t$Rd, $shift",
                   [(set GPR:$Rd, (not so_reg_imm:$shift))]>, UnaryDP {
   bits<4> Rd;
@@ -2850,7 +2880,7 @@ def  MVNsi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_imm:$shift), DPSoRegFrm,
   let Inst{4} = 0;
   let Inst{3-0} = shift{3-0};
 }
-def  MVNsr  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_reg:$shift), DPSoRegFrm,
+def  MVNsr  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_reg:$shift), DPSoRegRegFrm,
                   IIC_iMVNsr, "mvn", "\t$Rd, $shift",
                   [(set GPR:$Rd, (not so_reg_reg:$shift))]>, UnaryDP {
   bits<4> Rd;

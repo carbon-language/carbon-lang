@@ -251,7 +251,9 @@ public:
     SmallVectorImpl<MCFixup> &Fixups) const;
 
   /// getSORegOpValue - Return an encoded so_reg shifted register value.
-  unsigned getSORegOpValue(const MCInst &MI, unsigned Op,
+  unsigned getSORegRegOpValue(const MCInst &MI, unsigned Op,
+                           SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getSORegImmOpValue(const MCInst &MI, unsigned Op,
                            SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getT2SORegOpValue(const MCInst &MI, unsigned Op,
                              SmallVectorImpl<MCFixup> &Fixups) const;
@@ -934,7 +936,7 @@ getAddrMode5OpValue(const MCInst &MI, unsigned OpIdx,
 }
 
 unsigned ARMMCCodeEmitter::
-getSORegOpValue(const MCInst &MI, unsigned OpIdx,
+getSORegRegOpValue(const MCInst &MI, unsigned OpIdx,
                 SmallVectorImpl<MCFixup> &Fixups) const {
   // Sub-operands are [reg, reg, imm]. The first register is Rm, the reg to be
   // shifted. The second is either Rs, the amount to shift by, or reg0 in which
@@ -966,44 +968,71 @@ getSORegOpValue(const MCInst &MI, unsigned OpIdx,
     // LSR - 0011
     // ASR - 0101
     // ROR - 0111
-    // RRX - 0110 and bit[11:8] clear.
     switch (SOpc) {
     default: llvm_unreachable("Unknown shift opc!");
     case ARM_AM::lsl: SBits = 0x1; break;
     case ARM_AM::lsr: SBits = 0x3; break;
     case ARM_AM::asr: SBits = 0x5; break;
     case ARM_AM::ror: SBits = 0x7; break;
-    case ARM_AM::rrx: SBits = 0x6; break;
-    }
-  } else {
-    // Set shift operand (bit[6:4]).
-    // LSL - 000
-    // LSR - 010
-    // ASR - 100
-    // ROR - 110
-    switch (SOpc) {
-    default: llvm_unreachable("Unknown shift opc!");
-    case ARM_AM::lsl: SBits = 0x0; break;
-    case ARM_AM::lsr: SBits = 0x2; break;
-    case ARM_AM::asr: SBits = 0x4; break;
-    case ARM_AM::ror: SBits = 0x6; break;
     }
   }
 
   Binary |= SBits << 4;
-  if (SOpc == ARM_AM::rrx)
-    return Binary;
 
   // Encode the shift operation Rs or shift_imm (except rrx).
-  if (Rs) {
-    // Encode Rs bit[11:8].
-    assert(ARM_AM::getSORegOffset(MO2.getImm()) == 0);
-    return Binary | (getARMRegisterNumbering(Rs) << ARMII::RegRsShift);
+  // Encode Rs bit[11:8].
+  assert(ARM_AM::getSORegOffset(MO2.getImm()) == 0);
+  return Binary | (getARMRegisterNumbering(Rs) << ARMII::RegRsShift);
+}
+
+unsigned ARMMCCodeEmitter::
+getSORegImmOpValue(const MCInst &MI, unsigned OpIdx,
+                SmallVectorImpl<MCFixup> &Fixups) const {
+  // Sub-operands are [reg, reg, imm]. The first register is Rm, the reg to be
+  // shifted. The second is either Rs, the amount to shift by, or reg0 in which
+  // case the imm contains the amount to shift by.
+  //
+  // {3-0} = Rm.
+  // {4}   = 1 if reg shift, 0 if imm shift
+  // {6-5} = type
+  //    If reg shift:
+  //      {11-8} = Rs
+  //      {7}    = 0
+  //    else (imm shift)
+  //      {11-7} = imm
+
+  const MCOperand &MO  = MI.getOperand(OpIdx);
+  const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
+  ARM_AM::ShiftOpc SOpc = ARM_AM::getSORegShOp(MO1.getImm());
+
+  // Encode Rm.
+  unsigned Binary = getARMRegisterNumbering(MO.getReg());
+
+  // Encode the shift opcode.
+  unsigned SBits = 0;
+
+  // Set shift operand (bit[6:4]).
+  // LSL - 000
+  // LSR - 010
+  // ASR - 100
+  // ROR - 110
+  // RRX - 110 and bit[11:8] clear.
+  switch (SOpc) {
+  default: llvm_unreachable("Unknown shift opc!");
+  case ARM_AM::lsl: SBits = 0x0; break;
+  case ARM_AM::lsr: SBits = 0x2; break;
+  case ARM_AM::asr: SBits = 0x4; break;
+  case ARM_AM::ror: SBits = 0x6; break;
+  case ARM_AM::rrx:
+    Binary |= 0x60;
+    return Binary;
   }
 
   // Encode shift_imm bit[11:7].
-  return Binary | ARM_AM::getSORegOffset(MO2.getImm()) << 7;
+  Binary |= SBits << 4;
+  return Binary | ARM_AM::getSORegOffset(MO1.getImm()) << 7;
 }
+
 
 unsigned ARMMCCodeEmitter::
 getT2AddrModeSORegOpValue(const MCInst &MI, unsigned OpNum,

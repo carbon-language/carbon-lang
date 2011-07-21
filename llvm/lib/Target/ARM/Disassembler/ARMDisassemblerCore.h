@@ -51,7 +51,7 @@ public:
   ENTRY(ARM_FORMAT_BRFRM,          2) \
   ENTRY(ARM_FORMAT_BRMISCFRM,      3) \
   ENTRY(ARM_FORMAT_DPFRM,          4) \
-  ENTRY(ARM_FORMAT_DPSOREGFRM,     5) \
+  ENTRY(ARM_FORMAT_DPSOREGREGFRM,     5) \
   ENTRY(ARM_FORMAT_LDFRM,          6) \
   ENTRY(ARM_FORMAT_STFRM,          7) \
   ENTRY(ARM_FORMAT_LDMISCFRM,      8) \
@@ -87,7 +87,8 @@ public:
   ENTRY(ARM_FORMAT_N3RegVecSh,    38) \
   ENTRY(ARM_FORMAT_NVecExtract,   39) \
   ENTRY(ARM_FORMAT_NVecMulScalar, 40) \
-  ENTRY(ARM_FORMAT_NVTBL,         41)
+  ENTRY(ARM_FORMAT_NVTBL,         41) \
+  ENTRY(ARM_FORMAT_DPSOREGIMMFRM, 42)
 
 // ARM instruction format specifies the encoding used by the instruction.
 #define ENTRY(n, v) n = v,

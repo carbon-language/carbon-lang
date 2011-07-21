@@ -195,7 +195,9 @@ namespace {
       const { return 0; }
     unsigned getT2SOImmOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
-    unsigned getSORegOpValue(const MachineInstr &MI, unsigned Op)
+    unsigned getSORegRegOpValue(const MachineInstr &MI, unsigned Op)
+      const { return 0; }
+    unsigned getSORegImmOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getThumbAddrModeRegRegOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }

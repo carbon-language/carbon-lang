@@ -37,7 +37,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
   unsigned Opcode = MI->getOpcode();
 
   // Check for MOVs and print canonical forms, instead.
-  if (Opcode == ARM::MOVs) {
+  if (Opcode == ARM::MOVsr) {
     // FIXME: Thumb variants?
     const MCOperand &Dst = MI->getOperand(0);
     const MCOperand &MO1 = MI->getOperand(1);
@@ -51,19 +51,31 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     O << '\t' << getRegisterName(Dst.getReg())
       << ", " << getRegisterName(MO1.getReg());
 
-    if (ARM_AM::getSORegShOp(MO3.getImm()) == ARM_AM::rrx)
-      return;
-
-    O << ", ";
-
-    if (MO2.getReg()) {
-      O << getRegisterName(MO2.getReg());
-      assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);
-    } else {
-      O << "#" << ARM_AM::getSORegOffset(MO3.getImm());
-    }
+    O << ", " << getRegisterName(MO2.getReg());
+    assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);
     return;
   }
+
+  if (Opcode == ARM::MOVsi) {
+    // FIXME: Thumb variants?
+    const MCOperand &Dst = MI->getOperand(0);
+    const MCOperand &MO1 = MI->getOperand(1);
+    const MCOperand &MO2 = MI->getOperand(2);
+
+    O << '\t' << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(MO2.getImm()));
+    printSBitModifierOperand(MI, 5, O);
+    printPredicateOperand(MI, 3, O);
+
+    O << '\t' << getRegisterName(Dst.getReg())
+      << ", " << getRegisterName(MO1.getReg());
+
+    if (ARM_AM::getSORegShOp(MO2.getImm()) == ARM_AM::rrx)
+      return;
+
+    O << ", #" << ARM_AM::getSORegOffset(MO2.getImm());
+    return;
+  }
+
 
   // A8.6.123 PUSH
   if ((Opcode == ARM::STMDB_UPD || Opcode == ARM::t2STMDB_UPD) &&
@@ -154,7 +166,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 //    REG 0   0           - e.g. R5
 //    REG REG 0,SH_OPC    - e.g. R5, ROR R3
 //    REG 0   IMM,SH_OPC  - e.g. R5, LSL #3
-void ARMInstPrinter::printSORegOperand(const MCInst *MI, unsigned OpNum,
+void ARMInstPrinter::printSORegRegOperand(const MCInst *MI, unsigned OpNum,
                                        raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
@@ -167,13 +179,26 @@ void ARMInstPrinter::printSORegOperand(const MCInst *MI, unsigned OpNum,
   O << ", " << ARM_AM::getShiftOpcStr(ShOpc);
   if (ShOpc == ARM_AM::rrx)
     return;
-  if (MO2.getReg()) {
-    O << ' ' << getRegisterName(MO2.getReg());
-    assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);
-  } else if (ShOpc != ARM_AM::rrx) {
-    O << " #" << ARM_AM::getSORegOffset(MO3.getImm());
-  }
+  
+  O << ' ' << getRegisterName(MO2.getReg());
+  assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);
 }
+
+void ARMInstPrinter::printSORegImmOperand(const MCInst *MI, unsigned OpNum,
+                                       raw_ostream &O) {
+  const MCOperand &MO1 = MI->getOperand(OpNum);
+  const MCOperand &MO2 = MI->getOperand(OpNum+1);
+
+  O << getRegisterName(MO1.getReg());
+
+  // Print the shift opc.
+  ARM_AM::ShiftOpc ShOpc = ARM_AM::getSORegShOp(MO2.getImm());
+  O << ", " << ARM_AM::getShiftOpcStr(ShOpc);
+  if (ShOpc == ARM_AM::rrx)
+    return;
+  O << " #" << ARM_AM::getSORegOffset(MO2.getImm());
+}
+
 
 //===--------------------------------------------------------------------===//
 // Addressing Mode #2

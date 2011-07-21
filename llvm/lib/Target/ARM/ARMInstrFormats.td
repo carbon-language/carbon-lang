@@ -25,7 +25,7 @@ def BrFrm         : Format<2>;
 def BrMiscFrm     : Format<3>;
 
 def DPFrm         : Format<4>;
-def DPSoRegFrm    : Format<5>;
+def DPSoRegRegFrm    : Format<5>;
 
 def LdFrm         : Format<6>;
 def StFrm         : Format<7>;
@@ -68,6 +68,7 @@ def N3RegVShFrm   : Format<38>;
 def NVExtFrm      : Format<39>;
 def NVMulSLFrm    : Format<40>;
 def NVTBLFrm      : Format<41>;
+def DPSoRegImmFrm  : Format<42>;
 
 // Misc flags.
 

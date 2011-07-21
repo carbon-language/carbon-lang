@@ -626,13 +626,9 @@ public:
   }
 
   void addShiftedImmOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 3 && "Invalid number of operands!");
+    assert(N == 2 && "Invalid number of operands!");
     assert(isShiftedImm() && "addShiftedImmOperands() on non ShiftedImm!");
     Inst.addOperand(MCOperand::CreateReg(ShiftedImm.SrcReg));
-    if (ShiftedImm.ShiftTy == ARM_AM::rrx)
-      Inst.addOperand(MCOperand::CreateReg(ShiftedImm.SrcReg));
-    else
-      Inst.addOperand(MCOperand::CreateReg(0));
     Inst.addOperand(MCOperand::CreateImm(
       ARM_AM::getSORegOpc(ShiftedImm.ShiftTy, ShiftedImm.ShiftImm)));
   }

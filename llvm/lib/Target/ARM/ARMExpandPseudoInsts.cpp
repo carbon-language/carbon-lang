@@ -741,9 +741,22 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MI.eraseFromParent();
       return true;
     }
-    case ARM::MOVCCsi:
+    case ARM::MOVCCsi: {
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
+              (MI.getOperand(1).getReg()))
+        .addReg(MI.getOperand(2).getReg(),
+                getKillRegState(MI.getOperand(2).isKill()))
+        .addImm(MI.getOperand(3).getImm())
+        .addImm(MI.getOperand(4).getImm()) // 'pred'
+        .addReg(MI.getOperand(5).getReg())
+        .addReg(0); // 's' bit
+
+      MI.eraseFromParent();
+      return true;
+    }
+
     case ARM::MOVCCsr: {
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVs),
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsr),
               (MI.getOperand(1).getReg()))
         .addReg(MI.getOperand(2).getReg(),
                 getKillRegState(MI.getOperand(2).isKill()))
@@ -838,10 +851,9 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::MOVsrl_flag:
     case ARM::MOVsra_flag: {
       // These are just fancy MOVs insructions.
-      AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVs),
+      AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
                              MI.getOperand(0).getReg())
                      .addOperand(MI.getOperand(1))
-                     .addReg(0)
                      .addImm(ARM_AM::getSORegOpc((Opcode == ARM::MOVsrl_flag ?
                                                   ARM_AM::lsr : ARM_AM::asr),
                                                  1)))
@@ -852,9 +864,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::RRX: {
       // This encodes as "MOVs Rd, Rm, rrx
       MachineInstrBuilder MIB =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVs),
+        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
                                MI.getOperand(0).getReg())
-                       .addOperand(MI.getOperand(1))
                        .addOperand(MI.getOperand(1))
                        .addImm(ARM_AM::getSORegOpc(ARM_AM::rrx, 0)))
         .addReg(0);
