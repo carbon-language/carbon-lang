@@ -138,8 +138,8 @@ def warn_pch_nonfragile_abi2 : Error<
     "Objective-C ABI but the %select{32-bit|enhanced non-fragile}1 "
     "Objective-C ABI is selected">;
 def warn_pch_auto_ref_count : Error<
-    "PCH file was compiled %select{without|with} automated reference counting,"
-    "which is currently %select{disabled|enabled}">;
+    "PCH file was compiled %select{without|with}0 automated reference counting,"
+    " which is currently %select{disabled|enabled}1">;
 def warn_pch_apple_kext : Error<
     "PCH file was compiled %select{with|without}0 support for Apple's kernel "
     "extensions ABI but it is currently %select{disabled|enabled}1">;
