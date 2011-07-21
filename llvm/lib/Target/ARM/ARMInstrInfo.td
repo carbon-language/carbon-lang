@@ -4067,3 +4067,9 @@ def : MnemonicAlias<"stmfd", "stmdb">;
 def : MnemonicAlias<"stmia", "stm">;
 def : MnemonicAlias<"stmea", "stm">;
 
+// PKHBT/PKHTB with default shift amount. PKHTB is equivalent to PKHBT when the
+// shift amount is zero (i.e., unspecified).
+def : InstAlias<"pkhbt${p} $Rd, $Rn, $Rm",
+                (PKHBT GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"pkhtb${p} $Rd, $Rn, $Rm",
+                (PKHBT GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;

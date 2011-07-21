@@ -118,6 +118,14 @@ class ARMAsmParser : public TargetAsmParser {
     SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy tryParseMemMode3Operand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
+  OperandMatchResultTy parsePKHImm(SmallVectorImpl<MCParsedAsmOperand*> &O,
+                                   StringRef Op, int Low, int High);
+  OperandMatchResultTy parsePKHLSLImm(SmallVectorImpl<MCParsedAsmOperand*> &O) {
+    return parsePKHImm(O, "lsl", 0, 31);
+  }
+  OperandMatchResultTy parsePKHASRImm(SmallVectorImpl<MCParsedAsmOperand*> &O) {
+    return parsePKHImm(O, "asr", 1, 32);
+  }
 
   // Asm Match Converter Methods
   bool CvtLdWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
@@ -419,6 +427,22 @@ public:
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 65536;
   }
+  bool isPKHLSLImm() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value >= 0 && Value < 32;
+  }
+  bool isPKHASRImm() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value > 0 && Value <= 32;
+  }
   bool isARMSOImm() const {
     if (Kind != Immediate)
       return false;
@@ -636,6 +660,20 @@ public:
   void addImm0_65535ExprOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
+  }
+
+  void addPKHLSLImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    addExpr(Inst, getImm());
+  }
+
+  void addPKHASRImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // An ASR value of 32 encodes as 0, so that's how we want to add it to
+    // the instruction as well.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    int Val = CE->getValue();
+    Inst.addOperand(MCOperand::CreateImm(Val == 32 ? 0 : Val));
   }
 
   void addARMSOImmOperands(MCInst &Inst, unsigned N) const {
@@ -1503,6 +1541,52 @@ tryParseMemMode3Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   if (ParseMemory(Operands, ARMII::AddrMode3))
     return MatchOperand_NoMatch;
+
+  return MatchOperand_Success;
+}
+
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+parsePKHImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands, StringRef Op,
+            int Low, int High) {
+  const AsmToken &Tok = Parser.getTok();
+  if (Tok.isNot(AsmToken::Identifier)) {
+    Error(Parser.getTok().getLoc(), Op + " operand expected.");
+    return MatchOperand_ParseFail;
+  }
+  StringRef ShiftName = Tok.getString();
+  std::string LowerOp = LowercaseString(Op);
+  std::string UpperOp = UppercaseString(Op);
+  if (ShiftName != LowerOp && ShiftName != UpperOp) {
+    Error(Parser.getTok().getLoc(), Op + " operand expected.");
+    return MatchOperand_ParseFail;
+  }
+  Parser.Lex(); // Eat shift type token.
+
+  // There must be a '#' and a shift amount.
+  if (Parser.getTok().isNot(AsmToken::Hash)) {
+    Error(Parser.getTok().getLoc(), "'#' expected");
+    return MatchOperand_ParseFail;
+  }
+  Parser.Lex(); // Eat hash token.
+
+  const MCExpr *ShiftAmount;
+  SMLoc Loc = Parser.getTok().getLoc();
+  if (getParser().ParseExpression(ShiftAmount)) {
+    Error(Loc, "illegal expression");
+    return MatchOperand_ParseFail;
+  }
+  const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(ShiftAmount);
+  if (!CE) {
+    Error(Loc, "constant expression expected");
+    return MatchOperand_ParseFail;
+  }
+  int Val = CE->getValue();
+  if (Val < Low || Val > High) {
+    Error(Loc, "immediate value out of range");
+    return MatchOperand_ParseFail;
+  }
+
+  Operands.push_back(ARMOperand::CreateImm(CE, Loc, Parser.getTok().getLoc()));
 
   return MatchOperand_Success;
 }

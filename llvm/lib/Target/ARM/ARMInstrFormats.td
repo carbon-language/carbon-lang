@@ -847,11 +847,21 @@ class AMiscA1I<bits<8> opcod, bits<4> opc7_4, dag oops, dag iops,
 }
 
 // PKH instructions
+def PKHLSLAsmOperand : AsmOperandClass {
+  let Name = "PKHLSLImm";
+  let ParserMethod = "parsePKHLSLImm";
+}
 def pkh_lsl_amt: Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 32; }]>{
   let PrintMethod = "printPKHLSLShiftImm";
+  let ParserMatchClass = PKHLSLAsmOperand;
+}
+def PKHASRAsmOperand : AsmOperandClass {
+  let Name = "PKHASRImm";
+  let ParserMethod = "parsePKHASRImm";
 }
 def pkh_asr_amt: Operand<i32>, ImmLeaf<i32, [{ return Imm > 0 && Imm <= 32; }]>{
   let PrintMethod = "printPKHASRShiftImm";
+  let ParserMatchClass = PKHASRAsmOperand;
 }
 
 class APKHI<bits<8> opcod, bit tb, dag oops, dag iops, InstrItinClass itin,
