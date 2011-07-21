@@ -57,9 +57,6 @@
 @ CHECK: mvns	r1, r2 @ encoding: [0x02,0x10,0xf0,0xe1]
         mvns r1,r2
 
-@ CHECK: rsc	r1, r2, r3 @ encoding: [0x03,0x10,0xe2,0xe0]
-        rsc r1,r2,r3
-
 @ CHECK: bfi  r0, r0, #5, #7 @ encoding: [0x90,0x02,0xcb,0xe7]
         bfi  r0, r0, #5, #7
 

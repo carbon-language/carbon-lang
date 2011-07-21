@@ -4270,3 +4270,16 @@ def : InstAlias<"rsb${s}${p} $Rdn, $shift",
 def : InstAlias<"rsb${s}${p} $Rdn, $shift",
                 (RSBrsr GPR:$Rdn, GPR:$Rdn, so_reg_reg:$shift, pred:$p,
                         cc_out:$s)>, Requires<[IsARM]>;
+// RSC two-operand forms (optional explicit destination operand)
+def : InstAlias<"rsc${s}${p} $Rdn, $imm",
+                (RSCri GPR:$Rdn, GPR:$Rdn, so_imm:$imm, pred:$p, cc_out:$s)>,
+         Requires<[IsARM]>;
+def : InstAlias<"rsc${s}${p} $Rdn, $Rm",
+                (RSCrr GPR:$Rdn, GPR:$Rdn, GPR:$Rm, pred:$p, cc_out:$s)>,
+         Requires<[IsARM]>;
+def : InstAlias<"rsc${s}${p} $Rdn, $shift",
+                (RSCrsi GPR:$Rdn, GPR:$Rdn, so_reg_imm:$shift, pred:$p,
+                        cc_out:$s)>, Requires<[IsARM]>;
+def : InstAlias<"rsc${s}${p} $Rdn, $shift",
+                (RSCrsr GPR:$Rdn, GPR:$Rdn, so_reg_reg:$shift, pred:$p,
+                        cc_out:$s)>, Requires<[IsARM]>;
