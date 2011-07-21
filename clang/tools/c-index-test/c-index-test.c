@@ -1171,8 +1171,9 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
   }
 
   if (results) {
-    unsigned i, n = results->NumResults;
+    unsigned i, n = results->NumResults, containerIsIncomplete = 0;
     unsigned long long contexts;
+    enum CXCursorKind containerKind;
     if (!timing_only) {      
       /* Sort the code-completion results based on the typed text. */
       clang_sortCodeCompletionResults(results->Results, results->NumResults);
@@ -1189,6 +1190,27 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
     
     contexts = clang_codeCompleteGetContexts(results);
     print_completion_contexts(contexts, stdout);
+    
+    containerKind = clang_codeCompleteGetContainerKind(results, &containerIsIncomplete);
+    
+    if (containerKind != CXCursor_InvalidCode) {
+      /* We have found a container */
+      CXString containerUSR, containerKindSpelling;
+      containerKindSpelling = clang_getCursorKindSpelling(containerKind);
+      printf("Container Kind: %s\n", clang_getCString(containerKindSpelling));
+      clang_disposeString(containerKindSpelling);
+      
+      if (containerIsIncomplete) {
+        printf("Container is incomplete\n");
+      }
+      else {
+        printf("Container is complete\n");
+      }
+      
+      containerUSR = clang_codeCompleteGetContainerUSR(results);
+      printf("Container USR: %s\n", clang_getCString(containerUSR));
+      clang_disposeString(containerUSR);
+    }
     
     clang_disposeCodeCompleteResults(results);
   }

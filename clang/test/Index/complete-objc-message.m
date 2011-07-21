@@ -187,10 +187,20 @@ void test_block_invoke(A *(^block1)(int),
 // CHECK-CC1: {TypedText classMethod2}
 // CHECK-CC1: {TypedText new}
 // CHECK-CC1: {TypedText protocolClassMethod}
+// CHECK-CC1: Completion contexts:
+// CHECK-CC1-NEXT: Objective-C class method
+// CHECK-CC1-NEXT: Container Kind: ObjCInterfaceDecl
+// CHECK-CC1-NEXT: Container is complete
+// CHECK-CC1-NEXT: Container USR: c:objc(cs)Foo
 // RUN: c-index-test -code-completion-at=%s:24:8 %s | FileCheck -check-prefix=CHECK-CC2 %s
 // CHECK-CC2: {TypedText categoryInstanceMethod}
 // CHECK-CC2: {TypedText instanceMethod1}
 // CHECK-CC2: {TypedText protocolInstanceMethod:}{Placeholder (int)}
+// CHECK-CC2: Completion contexts:
+// CHECK-CC2-NEXT: Objective-C instance method
+// CHECK-CC2-NEXT: Container Kind: ObjCInterfaceDecl
+// CHECK-CC2-NEXT: Container is complete
+// CHECK-CC2-NEXT: Container USR: c:objc(cs)Foo
 // RUN: c-index-test -code-completion-at=%s:61:16 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: ObjCClassMethodDecl:{ResultType int}{TypedText MyClassMethod:}{Placeholder (id)}
 // CHECK-CC3: ObjCClassMethodDecl:{ResultType int}{TypedText MyPrivateMethod}

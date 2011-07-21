@@ -4955,8 +4955,13 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                         unsigned NumSelIdents,
                                         bool AtArgumentExpression,
                                         bool IsSuper) {
+  
+  QualType T = this->GetTypeFromParser(Receiver);
+  
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
-                        CodeCompletionContext::CCC_ObjCClassMessage);
+              CodeCompletionContext(CodeCompletionContext::CCC_ObjCClassMessage,
+                                    T));
+    
   AddClassMessageCompletions(*this, S, Receiver, SelIdents, NumSelIdents, 
                              AtArgumentExpression, IsSuper, Results);
   
@@ -4967,7 +4972,7 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
   // our preferred type, improving completion results.
   if (AtArgumentExpression) {
     QualType PreferredType = getPreferredArgumentTypeForMessageSend(Results, 
-                                                                    NumSelIdents);
+                                                                  NumSelIdents);
     if (PreferredType.isNull())
       CodeCompleteOrdinaryName(S, PCC_Expression);
     else
@@ -4976,7 +4981,7 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
   }
 
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_ObjCClassMessage,
+                            Results.getCompletionContext(),
                             Results.data(), Results.size());
 }
 
@@ -5019,7 +5024,9 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
 
   // Build the set of methods we can see.
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
-                        CodeCompletionContext::CCC_ObjCInstanceMessage);
+           CodeCompletionContext(CodeCompletionContext::CCC_ObjCInstanceMessage,
+                                 ReceiverType));
+  
   Results.EnterNewScope();
 
   // If this is a send-to-super, try to add the special "super" send 
@@ -5132,7 +5139,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   }
   
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_ObjCInstanceMessage,
+                            Results.getCompletionContext(),
                             Results.data(),Results.size());
 }
 

@@ -15,7 +15,11 @@
 #include "CIndexer.h"
 #include "CXTranslationUnit.h"
 #include "CXString.h"
+#include "CXCursor.h"
 #include "CIndexDiagnostic.h"
+#include "clang/AST/Type.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Frontend/ASTUnit.h"
@@ -242,6 +246,11 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   /// \brief A bitfield representing the acceptable completions for the
   /// current context.
   unsigned long long Contexts;
+  
+  enum CXCursorKind ContainerKind;
+  CXString ContainerUSR;
+  
+  unsigned ContainerIsIncomplete;
 };
 
 /// \brief Tracks the number of code-completion result objects that are 
@@ -266,6 +275,8 @@ AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults(
   
 AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
   delete [] Results;
+  
+  clang_disposeString(ContainerUSR);
   
   for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
     TemporaryFiles[I].eraseFromDisk();
@@ -455,10 +466,12 @@ namespace {
   class CaptureCompletionResults : public CodeCompleteConsumer {
     AllocatedCXCodeCompleteResults &AllocatedResults;
     llvm::SmallVector<CXCompletionResult, 16> StoredResults;
+    CXTranslationUnit *TU;
   public:
-    CaptureCompletionResults(AllocatedCXCodeCompleteResults &Results)
+    CaptureCompletionResults(AllocatedCXCodeCompleteResults &Results,
+                             CXTranslationUnit *TranslationUnit)
       : CodeCompleteConsumer(true, false, true, false), 
-        AllocatedResults(Results) { }
+        AllocatedResults(Results), TU(TranslationUnit) { }
     ~CaptureCompletionResults() { Finish(); }
     
     virtual void ProcessCodeCompleteResults(Sema &S, 
@@ -477,10 +490,53 @@ namespace {
         StoredResults.push_back(R);
       }
       
-      enum CodeCompletionContext::Kind kind = Context.getKind();
+      enum CodeCompletionContext::Kind contextKind = Context.getKind();
       
-      AllocatedResults.ContextKind = kind;
-      AllocatedResults.Contexts = getContextsForContextKind(kind, S);
+      AllocatedResults.ContextKind = contextKind;
+      AllocatedResults.Contexts = getContextsForContextKind(contextKind, S);
+      
+      QualType baseType = Context.getBaseType();
+      NamedDecl *D = NULL;
+      
+      if (!baseType.isNull()) {
+        // Get the declaration for a class/struct/union/enum type
+        if (const TagType *Tag = baseType->getAs<TagType>())
+          D = Tag->getDecl();
+        // Get the @interface declaration for a (possibly-qualified) Objective-C
+        // object pointer type, e.g., NSString*
+        else if (const ObjCObjectPointerType *ObjPtr = 
+                 baseType->getAs<ObjCObjectPointerType>())
+          D = ObjPtr->getInterfaceDecl();
+        // Get the @interface declaration for an Objective-C object type
+        else if (const ObjCObjectType *Obj = baseType->getAs<ObjCObjectType>())
+          D = Obj->getInterface();
+        // Get the class for a C++ injected-class-name
+        else if (const InjectedClassNameType *Injected =
+                 baseType->getAs<InjectedClassNameType>())
+          D = Injected->getDecl();
+      }
+      
+      if (D != NULL) {
+        CXCursor cursor = cxcursor::MakeCXCursor(D, *TU);
+        
+        CXCursorKind cursorKind = clang_getCursorKind(cursor);
+        CXString cursorUSR = clang_getCursorUSR(cursor);
+        
+        AllocatedResults.ContainerKind = cursorKind;
+        AllocatedResults.ContainerUSR = cursorUSR;
+        const Type *type = baseType.getTypePtrOrNull();
+        if (type != NULL) {
+          AllocatedResults.ContainerIsIncomplete = type->isIncompleteType();
+        }
+        else {
+          AllocatedResults.ContainerIsIncomplete = 1;
+        }
+      }
+      else {
+        AllocatedResults.ContainerKind = CXCursor_InvalidCode;
+        AllocatedResults.ContainerUSR = createCXString("");
+        AllocatedResults.ContainerIsIncomplete = 1;
+      }
     }
     
     virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
@@ -571,7 +627,7 @@ void clang_codeCompleteAt_Impl(void *UserData) {
   Results->NumResults = 0;
   
   // Create a code-completion consumer to capture the results.
-  CaptureCompletionResults Capture(*Results);
+  CaptureCompletionResults Capture(*Results, &TU);
 
   // Perform completion.
   AST->CodeComplete(complete_filename, complete_line, complete_column,
@@ -731,6 +787,30 @@ clang_codeCompleteGetContexts(CXCodeCompleteResults *ResultsIn) {
   return Results->Contexts;
 }
 
+enum CXCursorKind clang_codeCompleteGetContainerKind(
+                                               CXCodeCompleteResults *ResultsIn,
+                                                     unsigned *IsIncomplete) {
+  AllocatedCXCodeCompleteResults *Results =
+    static_cast<AllocatedCXCodeCompleteResults *>(ResultsIn);
+  if (!Results)
+    return CXCursor_InvalidCode;
+  
+  if (IsIncomplete != NULL) {
+    *IsIncomplete = Results->ContainerIsIncomplete;
+  }
+  
+  return Results->ContainerKind;
+}
+  
+CXString clang_codeCompleteGetContainerUSR(CXCodeCompleteResults *ResultsIn) {
+  AllocatedCXCodeCompleteResults *Results =
+    static_cast<AllocatedCXCodeCompleteResults *>(ResultsIn);
+  if (!Results)
+    return createCXString("");
+  
+  return createCXString(clang_getCString(Results->ContainerUSR));
+}
+  
 } // end extern "C"
 
 /// \brief Simple utility function that appends a \p New string to the given

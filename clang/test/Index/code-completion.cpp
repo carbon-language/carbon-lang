@@ -54,6 +54,9 @@ Z::operator int() const {
 // CHECK-MEMBER: CXXDestructor:{ResultType void}{TypedText ~Z}{LeftParen (}{RightParen )}
 // CHECK-MEMBER: Completion contexts:
 // CHECK-MEMBER-NEXT: Dot member access
+// CHECK-MEMBER-NEXT: Container Kind: StructDecl
+// CHECK-MEMBER-NEXT: Container is complete
+// CHECK-MEMBER-NEXT: Container USR: c:@S@Z
 
 // CHECK-OVERLOAD: NotImplemented:{ResultType int &}{Text overloaded}{LeftParen (}{Text Z z}{Comma , }{CurrentParameter int second}{RightParen )}
 // CHECK-OVERLOAD: NotImplemented:{ResultType float &}{Text overloaded}{LeftParen (}{Text int i}{Comma , }{CurrentParameter long second}{RightParen )}

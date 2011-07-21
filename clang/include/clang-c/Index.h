@@ -3144,6 +3144,39 @@ CXDiagnostic clang_codeCompleteGetDiagnostic(CXCodeCompleteResults *Results,
 CINDEX_LINKAGE
 unsigned long long clang_codeCompleteGetContexts(
                                                 CXCodeCompleteResults *Results);
+
+/**
+ * \brief Returns the cursor kind for the container for the current code
+ * completion context. The container is only guaranteed to be set for
+ * contexts where a container exists (i.e. member accesses or Objective-C
+ * message sends); if there is not a container, this function will return
+ * CXCursor_InvalidCode.
+ *
+ * \param Results the code completion results to query
+ *
+ * \param IsIncomplete on return, this value will be false if Clang has complete
+ * information about the container. If Clang does not have complete
+ * information, this value will be true.
+ *
+ * \returns the container kind, or CXCursor_InvalidCode if there is not a
+ * container
+ */
+CINDEX_LINKAGE
+enum CXCursorKind clang_codeCompleteGetContainerKind(
+                                                 CXCodeCompleteResults *Results,
+                                                     unsigned *IsIncomplete);
+
+/**
+ * \brief Returns the USR for the container for the current code completion
+ * context. If there is not a container for the current context, this
+ * function will return the empty string.
+ *
+ * \param Results the code completion results to query
+ *
+ * \returns the USR for the container
+ */
+CINDEX_LINKAGE
+CXString clang_codeCompleteGetContainerUSR(CXCodeCompleteResults *Results);
   
 /**
  * @}

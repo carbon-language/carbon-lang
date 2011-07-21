@@ -275,7 +275,8 @@ public:
   /// \brief Construct a new code-completion context of the given kind.
   CodeCompletionContext(enum Kind Kind, QualType T) : Kind(Kind) { 
     if (Kind == CCC_DotMemberAccess || Kind == CCC_ArrowMemberAccess ||
-        Kind == CCC_ObjCPropertyAccess)
+        Kind == CCC_ObjCPropertyAccess || Kind == CCC_ObjCClassMessage ||
+        Kind == CCC_ObjCInstanceMessage)
       BaseType = T;
     else
       PreferredType = T;
