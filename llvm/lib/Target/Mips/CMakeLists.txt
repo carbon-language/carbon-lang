@@ -9,6 +9,7 @@ tablegen(MipsGenSubtargetInfo.inc -gen-subtarget)
 
 add_llvm_target(MipsCodeGen
   MipsAsmPrinter.cpp
+  MipsCodeEmitter.cpp
   MipsDelaySlotFiller.cpp
   MipsEmitGPRestore.cpp
   MipsExpandPseudo.cpp

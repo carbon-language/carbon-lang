@@ -4865,7 +4865,7 @@ else
  ;;
     ARM)         TARGET_HAS_JIT=1
  ;;
-    Mips)        TARGET_HAS_JIT=0
+    Mips)        TARGET_HAS_JIT=1
  ;;
     XCore)       TARGET_HAS_JIT=0
  ;;

@@ -82,7 +82,7 @@ set(LLVM_ALL_TARGETS
   )
 
 # List of targets with JIT support:
-set(LLVM_TARGETS_WITH_JIT X86 PowerPC ARM)
+set(LLVM_TARGETS_WITH_JIT X86 PowerPC ARM Mips)
 
 if( MSVC )
   set(LLVM_TARGETS_TO_BUILD X86

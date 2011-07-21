@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameLowering.h"
+#include "MipsJITInfo.h"
 
 namespace llvm {
   class formatted_raw_ostream;
@@ -33,6 +34,9 @@ namespace llvm {
     MipsFrameLowering   FrameLowering;
     MipsTargetLowering  TLInfo;
     MipsSelectionDAGInfo TSInfo;
+    MipsJITInfo JITInfo;
+    Reloc::Model DefRelocModel; // Reloc model before it's overridden.
+
   public:
     MipsTargetMachine(const Target &T, StringRef TT,
                       StringRef CPU, StringRef FS,
@@ -47,6 +51,9 @@ namespace llvm {
     { return &Subtarget; }
     virtual const TargetData      *getTargetData()    const
     { return &DataLayout;}
+    virtual MipsJITInfo *getJITInfo()
+    { return &JITInfo; }
+
 
     virtual const MipsRegisterInfo *getRegisterInfo()  const {
       return &InstrInfo.getRegisterInfo();
@@ -68,6 +75,10 @@ namespace llvm {
     virtual bool addPreRegAlloc(PassManagerBase &PM,
                                 CodeGenOpt::Level OptLevel);
     virtual bool addPostRegAlloc(PassManagerBase &, CodeGenOpt::Level);
+    virtual bool addCodeEmitter(PassManagerBase &PM,
+				 CodeGenOpt::Level OptLevel,
+				 JITCodeEmitter &JCE);
+
   };
 
 /// MipselTargetMachine - Mipsel target machine.

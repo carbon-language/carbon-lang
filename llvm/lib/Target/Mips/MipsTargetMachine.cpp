@@ -42,7 +42,7 @@ MipsTargetMachine(const Target &T, StringRef TT,
              std::string("E-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32")),
   InstrInfo(*this),
   FrameLowering(Subtarget),
-  TLInfo(*this), TSInfo(*this) {
+  TLInfo(*this), TSInfo(*this), JITInfo() {
 }
 
 MipselTargetMachine::
@@ -81,3 +81,12 @@ addPostRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
   PM.add(createMipsExpandPseudoPass(*this));
   return true;
 }
+
+bool MipsTargetMachine::addCodeEmitter(PassManagerBase &PM,
+                                          CodeGenOpt::Level OptLevel,
+                                          JITCodeEmitter &JCE) {
+  // Machine code emitter pass for Mips.
+  PM.add(createMipsJITCodeEmitterPass(*this, JCE));
+  return false;
+}
+

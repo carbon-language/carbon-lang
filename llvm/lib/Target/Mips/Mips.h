@@ -29,6 +29,9 @@ namespace llvm {
   FunctionPass *createMipsExpandPseudoPass(MipsTargetMachine &TM);
   FunctionPass *createMipsEmitGPRestorePass(MipsTargetMachine &TM);
 
+  FunctionPass *createMipsJITCodeEmitterPass(MipsTargetMachine &TM,
+                                             JITCodeEmitter &JCE);
+
 } // end namespace llvm;
 
 #endif

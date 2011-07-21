@@ -15,7 +15,9 @@ using namespace llvm;
 Target llvm::TheMipsTarget, llvm::TheMipselTarget;
 
 extern "C" void LLVMInitializeMipsTargetInfo() {
-  RegisterTarget<Triple::mips> X(TheMipsTarget, "mips", "Mips");
+  RegisterTarget<Triple::mips,
+        /*HasJIT=*/true> X(TheMipsTarget, "mips", "Mips");
 
-  RegisterTarget<Triple::mipsel> Y(TheMipselTarget, "mipsel", "Mipsel");
+  RegisterTarget<Triple::mipsel,
+        /*HasJIT=*/true> Y(TheMipselTarget, "mipsel", "Mipsel");
 }
