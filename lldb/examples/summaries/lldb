@@ -1,0 +1,12 @@
+type summary add -f "Type: ${var.m_type%E}, Code: ${var.m_code}, Message: ${var.m_string}" lldb_private::Error -w lldb
+type summary add -f "${var.m_string}" lldb_private::ConstString -w lldb
+type summary add -f "${var.m_language%E}" lldb_private::Language -w lldb
+type summary add -f "${var.m_re}" lldb_private::RegularExpression -w lldb
+type summary add -f "UserID(${var.m_uid})" lldb_private::UserID -w lldb
+type summary add -f "${var.m_name}" lldb_private::ValueObject -w lldb
+type summary add -f "${var.ptr_.m_name}" lldb_private::ValueObjectSP -w lldb
+type summary add -f "${var.m_reg_info.name}" lldb_private::ValueObjectRegister -w lldb
+type summary add -f "{${var.m_expr_text}}" lldb_private::ClangExpression -w lldb
+type summary add -f "Command name: ${var.m_cmd_name}" lldb_private::CommandObject -w lldb
+type summary add -f "${var.m_type.m_name} ${var.m_name}" lldb_private::Variable -w lldb
+type summary add -f "ID: ${var.m_stop_id}, ${var.m_description}" lldb_private::StopInfo -w lldb

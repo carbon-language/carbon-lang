@@ -1,0 +1,2 @@
+type summary add -f "${var._M_dataplus._M_p}" std::string
+type summary add -f "\"${var%@}\"" "NSString *"
