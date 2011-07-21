@@ -5289,8 +5289,10 @@ defm : pclmul_alias<"lqlq", 0x00>;
 // AVX Instructions
 //===----------------------------------------------------------------------===//
 
-
-// Load from memory and broadcast to all elements of the destination operand
+//===----------------------------------------------------------------------===//
+// VBROADCAST - Load from memory and broadcast to all elements of the
+//              destination operand
+//
 class avx_broadcast<bits<8> opc, string OpcodeStr, RegisterClass RC,
                     X86MemOperand x86memop, Intrinsic Int> :
   AVX8I<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
@@ -5306,7 +5308,12 @@ def VBROADCASTSD   : avx_broadcast<0x19, "vbroadcastsd", VR256, f64mem,
 def VBROADCASTF128 : avx_broadcast<0x1A, "vbroadcastf128", VR256, f128mem,
                                    int_x86_avx_vbroadcastf128_pd_256>;
 
-// Insert packed floating-point values
+def : Pat<(int_x86_avx_vbroadcastf128_ps_256 addr:$src),
+          (VBROADCASTF128 addr:$src)>;
+
+//===----------------------------------------------------------------------===//
+// VINSERTF128 - Insert packed floating-point values
+//
 def VINSERTF128rr : AVXAIi8<0x18, MRMSrcReg, (outs VR256:$dst),
           (ins VR256:$src1, VR128:$src2, i8imm:$src3),
           "vinsertf128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
@@ -5316,7 +5323,33 @@ def VINSERTF128rm : AVXAIi8<0x18, MRMSrcMem, (outs VR256:$dst),
           "vinsertf128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           []>, VEX_4V;
 
-// Extract packed floating-point values
+def : Pat<(int_x86_avx_vinsertf128_pd_256 VR256:$src1, VR128:$src2, imm:$src3),
+          (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
+def : Pat<(int_x86_avx_vinsertf128_ps_256 VR256:$src1, VR128:$src2, imm:$src3),
+          (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
+def : Pat<(int_x86_avx_vinsertf128_si_256 VR256:$src1, VR128:$src2, imm:$src3),
+          (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
+
+def : Pat<(vinsertf128_insert:$ins (v8f32 VR256:$src1), (v4f32 VR128:$src2),
+                                   (i32 imm)),
+          (VINSERTF128rr VR256:$src1, VR128:$src2,
+                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
+def : Pat<(vinsertf128_insert:$ins (v4f64 VR256:$src1), (v2f64 VR128:$src2),
+                                   (i32 imm)),
+          (VINSERTF128rr VR256:$src1, VR128:$src2,
+                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
+def : Pat<(vinsertf128_insert:$ins (v8i32 VR256:$src1), (v4i32 VR128:$src2),
+                                   (i32 imm)),
+          (VINSERTF128rr VR256:$src1, VR128:$src2,
+                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
+def : Pat<(vinsertf128_insert:$ins (v4i64 VR256:$src1), (v2i64 VR128:$src2),
+                                   (i32 imm)),
+          (VINSERTF128rr VR256:$src1, VR128:$src2,
+                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
+
+//===----------------------------------------------------------------------===//
+// VEXTRACTF128 - Extract packed floating-point values
+//
 def VEXTRACTF128rr : AVXAIi8<0x19, MRMDestReg, (outs VR128:$dst),
           (ins VR256:$src1, i8imm:$src2),
           "vextractf128\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -5326,7 +5359,33 @@ def VEXTRACTF128mr : AVXAIi8<0x19, MRMDestMem, (outs),
           "vextractf128\t{$src2, $src1, $dst|$dst, $src1, $src2}",
           []>, VEX;
 
-// Conditional SIMD Packed Loads and Stores
+def : Pat<(int_x86_avx_vextractf128_pd_256 VR256:$src1, imm:$src2),
+          (VEXTRACTF128rr VR256:$src1, imm:$src2)>;
+def : Pat<(int_x86_avx_vextractf128_ps_256 VR256:$src1, imm:$src2),
+          (VEXTRACTF128rr VR256:$src1, imm:$src2)>;
+def : Pat<(int_x86_avx_vextractf128_si_256 VR256:$src1, imm:$src2),
+          (VEXTRACTF128rr VR256:$src1, imm:$src2)>;
+
+def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
+          (v4f32 (VEXTRACTF128rr
+                    (v8f32 VR256:$src1),
+                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
+def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
+          (v2f64 (VEXTRACTF128rr
+                    (v4f64 VR256:$src1),
+                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
+def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
+          (v4i32 (VEXTRACTF128rr
+                    (v8i32 VR256:$src1),
+                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
+def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
+          (v2i64 (VEXTRACTF128rr
+                    (v4i64 VR256:$src1),
+                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
+
+//===----------------------------------------------------------------------===//
+// VMASKMOV - Conditional SIMD Packed Loads and Stores
+//
 multiclass avx_movmask_rm<bits<8> opc_rm, bits<8> opc_mr, string OpcodeStr,
                           Intrinsic IntLd, Intrinsic IntLd256,
                           Intrinsic IntSt, Intrinsic IntSt256,
@@ -5364,7 +5423,9 @@ defm VMASKMOVPD : avx_movmask_rm<0x2D, 0x2F, "vmaskmovpd",
                                  int_x86_avx_maskstore_pd_256,
                                  memopv2f64, memopv4f64>;
 
-// Permute Floating-Point Values
+//===----------------------------------------------------------------------===//
+// VPERM - Permute Floating-Point Values
+//
 multiclass avx_permil<bits<8> opc_rm, bits<8> opc_rmi, string OpcodeStr,
                       RegisterClass RC, X86MemOperand x86memop_f,
                       X86MemOperand x86memop_i, PatFrag f_frag, PatFrag i_frag,
@@ -5414,65 +5475,6 @@ def VPERM2F128rm : AVXAIi8<0x06, MRMSrcMem, (outs VR256:$dst),
           "vperm2f128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           []>, VEX_4V;
 
-// Zero All YMM registers
-def VZEROALL : I<0x77, RawFrm, (outs), (ins), "vzeroall",
-                 [(int_x86_avx_vzeroall)]>, VEX, VEX_L, Requires<[HasAVX]>;
-
-// Zero Upper bits of YMM registers
-def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
-                   [(int_x86_avx_vzeroupper)]>, VEX, Requires<[HasAVX]>;
-
-def : Pat<(int_x86_avx_vinsertf128_pd_256 VR256:$src1, VR128:$src2, imm:$src3),
-          (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
-def : Pat<(int_x86_avx_vinsertf128_ps_256 VR256:$src1, VR128:$src2, imm:$src3),
-          (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
-def : Pat<(int_x86_avx_vinsertf128_si_256 VR256:$src1, VR128:$src2, imm:$src3),
-          (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
-
-def : Pat<(vinsertf128_insert:$ins (v8f32 VR256:$src1), (v4f32 VR128:$src2),
-                                   (i32 imm)),
-          (VINSERTF128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
-def : Pat<(vinsertf128_insert:$ins (v4f64 VR256:$src1), (v2f64 VR128:$src2),
-                                   (i32 imm)),
-          (VINSERTF128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
-def : Pat<(vinsertf128_insert:$ins (v8i32 VR256:$src1), (v4i32 VR128:$src2),
-                                   (i32 imm)),
-          (VINSERTF128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
-def : Pat<(vinsertf128_insert:$ins (v4i64 VR256:$src1), (v2i64 VR128:$src2),
-                                   (i32 imm)),
-          (VINSERTF128rr VR256:$src1, VR128:$src2,
-                         (INSERT_get_vinsertf128_imm VR256:$ins))>;
-
-def : Pat<(int_x86_avx_vextractf128_pd_256 VR256:$src1, imm:$src2),
-          (VEXTRACTF128rr VR256:$src1, imm:$src2)>;
-def : Pat<(int_x86_avx_vextractf128_ps_256 VR256:$src1, imm:$src2),
-          (VEXTRACTF128rr VR256:$src1, imm:$src2)>;
-def : Pat<(int_x86_avx_vextractf128_si_256 VR256:$src1, imm:$src2),
-          (VEXTRACTF128rr VR256:$src1, imm:$src2)>;
-
-def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
-          (v4f32 (VEXTRACTF128rr
-                    (v8f32 VR256:$src1),
-                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
-def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
-          (v2f64 (VEXTRACTF128rr
-                    (v4f64 VR256:$src1),
-                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
-def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
-          (v4i32 (VEXTRACTF128rr
-                    (v8i32 VR256:$src1),
-                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
-def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
-          (v2i64 (VEXTRACTF128rr
-                    (v4i64 VR256:$src1),
-                    (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
-
-def : Pat<(int_x86_avx_vbroadcastf128_ps_256 addr:$src),
-          (VBROADCASTF128 addr:$src)>;
-
 def : Pat<(int_x86_avx_vperm2f128_ps_256 VR256:$src1, VR256:$src2, imm:$src3),
           (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$src3)>;
 def : Pat<(int_x86_avx_vperm2f128_pd_256 VR256:$src1, VR256:$src2, imm:$src3),
@@ -5489,6 +5491,17 @@ def : Pat<(int_x86_avx_vperm2f128_pd_256
 def : Pat<(int_x86_avx_vperm2f128_si_256
                   VR256:$src1, (memopv8i32 addr:$src2), imm:$src3),
           (VPERM2F128rm VR256:$src1, addr:$src2, imm:$src3)>;
+
+//===----------------------------------------------------------------------===//
+// VZERO - Zero YMM registers
+//
+// Zero All YMM registers
+def VZEROALL : I<0x77, RawFrm, (outs), (ins), "vzeroall",
+                 [(int_x86_avx_vzeroall)]>, VEX, VEX_L, Requires<[HasAVX]>;
+
+// Zero Upper bits of YMM registers
+def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
+                   [(int_x86_avx_vzeroupper)]>, VEX, Requires<[HasAVX]>;
 
 //===----------------------------------------------------------------------===//
 // SSE Shuffle pattern fragments
