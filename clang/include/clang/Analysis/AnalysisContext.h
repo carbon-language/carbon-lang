@@ -19,6 +19,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Analysis/CFG.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/DenseMap.h"
@@ -54,7 +55,6 @@ class AnalysisContext {
   CFG::BuildOptions::ForcedBlkExprs *forcedBlkExprs;
   
   bool builtCFG, builtCompleteCFG;
-  const bool useUnoptimizedCFG;
 
   llvm::OwningPtr<LiveVariables> liveness;
   llvm::OwningPtr<LiveVariables> relaxedLiveness;
@@ -68,11 +68,10 @@ class AnalysisContext {
   llvm::DenseMap<const BlockDecl*,void*> *ReferencedBlockVars;
 
 public:
+  AnalysisContext(const Decl *d, idx::TranslationUnit *tu);
+
   AnalysisContext(const Decl *d, idx::TranslationUnit *tu,
-                  bool useUnoptimizedCFG = false,
-                  bool addehedges = false,
-                  bool addImplicitDtors = false,
-                  bool addInitializers = false);
+                  const CFG::BuildOptions &buildOptions);
 
   ~AnalysisContext();
 
@@ -96,7 +95,7 @@ public:
   /// cope with that.
   bool getAddEHEdges() const { return cfgBuildOptions.AddEHEdges; }  
   bool getUseUnoptimizedCFG() const {
-      return cfgBuildOptions.PruneTriviallyFalseEdges;
+      return !cfgBuildOptions.PruneTriviallyFalseEdges;
   }
   bool getAddImplicitDtors() const { return cfgBuildOptions.AddImplicitDtors; }
   bool getAddInitializers() const { return cfgBuildOptions.AddInitializers; }
@@ -139,24 +138,25 @@ public:
 class AnalysisContextManager {
   typedef llvm::DenseMap<const Decl*, AnalysisContext*> ContextMap;
   ContextMap Contexts;
-  bool UseUnoptimizedCFG;
-  bool AddImplicitDtors;
-  bool AddInitializers;
+  CFG::BuildOptions cfgBuildOptions;
 public:
   AnalysisContextManager(bool useUnoptimizedCFG = false,
-      bool addImplicitDtors = false, bool addInitializers = false)
-    : UseUnoptimizedCFG(useUnoptimizedCFG), AddImplicitDtors(addImplicitDtors),
-      AddInitializers(addInitializers) {}
+                         bool addImplicitDtors = false,
+                         bool addInitializers = false);
   
   ~AnalysisContextManager();
 
   AnalysisContext *getContext(const Decl *D, idx::TranslationUnit *TU = 0);
 
-  bool getUseUnoptimizedCFG() const { return UseUnoptimizedCFG; }
-  bool getAddImplicitDtors() const { return AddImplicitDtors; }
-  bool getAddInitializers() const { return AddInitializers; }
+  bool getUseUnoptimizedCFG() const {
+    return !cfgBuildOptions.PruneTriviallyFalseEdges;
+  }
+  
+  CFG::BuildOptions &getCFGBuildOptions() {
+    return cfgBuildOptions;
+  }
 
-  // Discard all previously created AnalysisContexts.
+  /// Discard all previously created AnalysisContexts.
   void clear();
 };
 

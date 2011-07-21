@@ -86,7 +86,6 @@ public:
                   bool inlinecall, bool useUnoptimizedCFG,
                   bool addImplicitDtors, bool addInitializers,
                   bool eagerlyTrimEGraph)
-
     : AnaCtxMgr(useUnoptimizedCFG, addImplicitDtors, addInitializers),
       Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
       CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),

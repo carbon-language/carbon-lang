@@ -24,6 +24,7 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Analysis/Support/BumpVector.h"
+#include "clang/Analysis/Support/SaveAndRestore.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -31,18 +32,32 @@ using namespace clang;
 
 AnalysisContext::AnalysisContext(const Decl *d,
                                  idx::TranslationUnit *tu,
-                                 bool useUnoptimizedCFG,
-                                 bool addehedges,
-                                 bool addImplicitDtors,
-                                 bool addInitializers)
+                                 const CFG::BuildOptions &buildOptions)
   : D(d), TU(tu),
+    cfgBuildOptions(buildOptions),
     forcedBlkExprs(0),
-    builtCFG(false), builtCompleteCFG(false),
-    useUnoptimizedCFG(useUnoptimizedCFG),
+    builtCFG(false),
+    builtCompleteCFG(false),
     ReferencedBlockVars(0)
-{
+{  
   cfgBuildOptions.forcedBlkExprs = &forcedBlkExprs;
-  cfgBuildOptions.AddEHEdges = addehedges;
+}
+
+AnalysisContext::AnalysisContext(const Decl *d,
+                                 idx::TranslationUnit *tu)
+: D(d), TU(tu),
+  forcedBlkExprs(0),
+  builtCFG(false),
+  builtCompleteCFG(false),
+  ReferencedBlockVars(0)
+{  
+  cfgBuildOptions.forcedBlkExprs = &forcedBlkExprs;
+}
+
+AnalysisContextManager::AnalysisContextManager(bool useUnoptimizedCFG,
+                                               bool addImplicitDtors,
+                                               bool addInitializers) {
+  cfgBuildOptions.PruneTriviallyFalseEdges = !useUnoptimizedCFG;
   cfgBuildOptions.AddImplicitDtors = addImplicitDtors;
   cfgBuildOptions.AddInitializers = addInitializers;
 }
@@ -95,7 +110,7 @@ AnalysisContext::getBlockForRegisteredExpression(const Stmt *stmt) {
 }
 
 CFG *AnalysisContext::getCFG() {
-  if (useUnoptimizedCFG)
+  if (!cfgBuildOptions.PruneTriviallyFalseEdges)
     return getUnoptimizedCFG();
 
   if (!builtCFG) {
@@ -110,9 +125,10 @@ CFG *AnalysisContext::getCFG() {
 
 CFG *AnalysisContext::getUnoptimizedCFG() {
   if (!builtCompleteCFG) {
-    CFG::BuildOptions B = cfgBuildOptions;
-    B.PruneTriviallyFalseEdges = false;
-    completeCFG.reset(CFG::buildCFG(D, getBody(), &D->getASTContext(), B));
+    SaveAndRestore<bool> NotPrune(cfgBuildOptions.PruneTriviallyFalseEdges,
+                                  false);
+    completeCFG.reset(CFG::buildCFG(D, getBody(), &D->getASTContext(),
+                                    cfgBuildOptions));
     // Even when the cfg is not successfully built, we don't
     // want to try building it again.
     builtCompleteCFG = true;
@@ -187,9 +203,7 @@ AnalysisContext *AnalysisContextManager::getContext(const Decl *D,
                                                     idx::TranslationUnit *TU) {
   AnalysisContext *&AC = Contexts[D];
   if (!AC)
-    AC = new AnalysisContext(D, TU, UseUnoptimizedCFG, false,
-        AddImplicitDtors, AddInitializers);
-
+    AC = new AnalysisContext(D, TU, cfgBuildOptions);
   return AC;
 }
 

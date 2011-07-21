@@ -536,17 +536,18 @@ public:
     typedef llvm::DenseMap<const Stmt *, const CFGBlock*> ForcedBlkExprs;
     ForcedBlkExprs **forcedBlkExprs;    
 
-    bool PruneTriviallyFalseEdges:1;
-    bool AddEHEdges:1;
-    bool AddInitializers:1;
-    bool AddImplicitDtors:1;
+    bool PruneTriviallyFalseEdges;
+    bool AddEHEdges;
+    bool AddInitializers;
+    bool AddImplicitDtors;
     
     bool alwaysAdd(const Stmt *stmt) const {
       return alwaysAddMask[stmt->getStmtClass()];
     }
     
-    void setAlwaysAdd(Stmt::StmtClass stmtClass) {
+    BuildOptions &setAlwaysAdd(Stmt::StmtClass stmtClass) {
       alwaysAddMask[stmtClass] = true;
+      return *this;
     }
 
     BuildOptions()

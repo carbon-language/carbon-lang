@@ -787,7 +787,7 @@ void CallEnterNodeBuilder::generateNode(const GRState *state) {
 
     // Create a new AnalysisManager with components of the callee's
     // TranslationUnit.
-    // The Diagnostic is actually shared when we create ASTUnits from AST files.
+    // The Diagnostic is  actually shared when we create ASTUnits from AST files.
     AnalysisManager AMgr(TU->getASTContext(), TU->getDiagnostic(), 
                          OldMgr.getLangOptions(), 
                          OldMgr.getPathDiagnosticClient(),
@@ -803,8 +803,10 @@ void CallEnterNodeBuilder::generateNode(const GRState *state) {
                          OldMgr.shouldTrimGraph(),
                          OldMgr.shouldInlineCall(),
                      OldMgr.getAnalysisContextManager().getUseUnoptimizedCFG(),
-                     OldMgr.getAnalysisContextManager().getAddImplicitDtors(),
-                     OldMgr.getAnalysisContextManager().getAddInitializers(),
+                     OldMgr.getAnalysisContextManager().
+                         getCFGBuildOptions().AddImplicitDtors,
+                     OldMgr.getAnalysisContextManager().
+                         getCFGBuildOptions().AddInitializers,
                      OldMgr.shouldEagerlyTrimExplodedGraph());
     llvm::OwningPtr<TransferFuncs> TF(MakeCFRefCountTF(AMgr.getASTContext(),
                                                          /* GCEnabled */ false,
