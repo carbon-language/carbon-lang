@@ -458,7 +458,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     if (needsFrameMoves) {
       // Mark the place where EBP/RBP was saved.
       MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL)).addSym(FrameLabel);
+      BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL))
+        .addSym(FrameLabel);
 
       // Define the current CFA rule to use the provided offset.
       if (StackSize) {
@@ -486,7 +487,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
       MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL)).addSym(FrameLabel);
+      BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL))
+        .addSym(FrameLabel);
 
       // Define the current CFA to use the EBP/RBP register.
       MachineLocation FPDst(FramePtr);
@@ -503,8 +505,10 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     if (RegInfo->needsStackRealignment(MF)) {
       MachineInstr *MI =
         BuildMI(MBB, MBBI, DL,
-                TII.get(Is64Bit ? X86::AND64ri32 : X86::AND32ri),
-                StackPtr).addReg(StackPtr).addImm(-MaxAlign);
+                TII.get(Is64Bit ? X86::AND64ri32 : X86::AND32ri), StackPtr)
+        .addReg(StackPtr)
+        .addImm(-MaxAlign)
+        .setMIFlag(MachineInstr::FrameSetup);
 
       // The EFLAGS implicit def is dead.
       MI->getOperand(3).setIsDead();
@@ -521,6 +525,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
          (MBBI->getOpcode() == X86::PUSH32r ||
           MBBI->getOpcode() == X86::PUSH64r)) {
     PushedRegs = true;
+    MBBI->setFlag(MachineInstr::FrameSetup);
     ++MBBI;
 
     if (!HasFP && needsFrameMoves) {
@@ -585,26 +590,30 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
       // Save EAX
       BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH32r))
-        .addReg(X86::EAX, RegState::Kill);
+        .addReg(X86::EAX, RegState::Kill)
+        .setMIFlag(MachineInstr::FrameSetup);
     }
 
     if (Is64Bit) {
       // Handle the 64-bit Windows ABI case where we need to call __chkstk.
       // Function prologue is responsible for adjusting the stack pointer.
       BuildMI(MBB, MBBI, DL, TII.get(X86::MOV64ri), X86::RAX)
-        .addImm(NumBytes);
+        .addImm(NumBytes)
+        .setMIFlag(MachineInstr::FrameSetup);
     } else {
       // Allocate NumBytes-4 bytes on stack in case of isEAXAlive.
       // We'll also use 4 already allocated bytes for EAX.
       BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
-        .addImm(isEAXAlive ? NumBytes - 4 : NumBytes);
+        .addImm(isEAXAlive ? NumBytes - 4 : NumBytes)
+        .setMIFlag(MachineInstr::FrameSetup);
     }
 
     BuildMI(MBB, MBBI, DL,
             TII.get(Is64Bit ? X86::W64ALLOCA : X86::CALLpcrel32))
       .addExternalSymbol(StackProbeSymbol)
       .addReg(StackPtr,    RegState::Define | RegState::Implicit)
-      .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
+      .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit)
+      .setMIFlag(MachineInstr::FrameSetup);
 
     // MSVC x64's __chkstk needs to adjust %rsp.
     // FIXME: %rax preserves the offset and should be available.
@@ -617,6 +626,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
         MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(X86::MOV32rm),
                                                 X86::EAX),
                                         StackPtr, false, NumBytes - 4);
+        MI->setFlag(MachineInstr::FrameSetup);
         MBB.insert(MBBI, MI);
     }
   } else if (NumBytes)
@@ -626,7 +636,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   if (( (!HasFP && NumBytes) || PushedRegs) && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
     MCSymbol *Label = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL)).addSym(Label);
+    BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL))
+      .addSym(Label);
 
     if (!HasFP && NumBytes) {
       // Define the current CFA rule to use the provided offset.
