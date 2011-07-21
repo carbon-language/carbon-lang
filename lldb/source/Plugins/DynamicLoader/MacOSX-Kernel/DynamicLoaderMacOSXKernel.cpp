@@ -525,6 +525,14 @@ DynamicLoaderMacOSXKernel::ParseKextSummaries (const Address &kext_summary_addr,
             ParseLoadCommands (data, kext_summaries[i]);
         }
         
+        if (s)
+        {
+            if (kext_summaries[i].module_sp)
+                s->Printf("  found kext: %s/%s\n", 
+                          kext_summaries[i].module_sp->GetFileSpec().GetDirectory().AsCString(),
+                          kext_summaries[i].module_sp->GetFileSpec().GetFilename().AsCString());
+        }
+            
         if (log)
             kext_summaries[i].PutToLog (log.get());
     }
@@ -599,6 +607,11 @@ DynamicLoaderMacOSXKernel::ReadKextSummaries (const Address &kext_summary_addr,
     const size_t count = image_infos.size() * m_kext_summary_header.entry_size;
     DataBufferHeap data(count, 0);
     Error error;
+    
+    Stream *s = &m_process->GetTarget().GetDebugger().GetOutputStream();
+
+    if (s)
+        s->Printf ("Reading %u kext summaries...\n", image_infos_count);
     const bool prefer_file_cache = false;
     const size_t bytes_read = m_process->GetTarget().ReadMemory (kext_summary_addr, 
                                                                  prefer_file_cache,

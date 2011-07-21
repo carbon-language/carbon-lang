@@ -44,7 +44,6 @@ CommunicationKDP::CommunicationKDP (const char *comm_name) :
     m_byte_order (eByteOrderLittle),
     m_packet_timeout (1),
     m_sequence_mutex (Mutex::eMutexTypeRecursive),
-    m_public_is_running (false),
     m_private_is_running (false),
     m_session_key (0u),
     m_request_sequence_id (0u),
@@ -259,31 +258,31 @@ CommunicationKDP::CheckForPacket (const uint8_t *src, size_t src_len, DataExtrac
         uint8_t reply_command = packet.GetU8(&offset);
         switch (reply_command)
         {
-        case ePacketTypeReply | eCommandTypeConnect:
-        case ePacketTypeReply | eCommandTypeDisconnect:
-        case ePacketTypeReply | eCommandTypeHostInfo:
-        case ePacketTypeReply | eCommandTypeVersion:
-        case ePacketTypeReply | eCommandTypeMaxBytes:
-        case ePacketTypeReply | eCommandTypeReadMemory:
-        case ePacketTypeReply | eCommandTypeWriteMemory:
-        case ePacketTypeReply | eCommandTypeReadRegisters:
-        case ePacketTypeReply | eCommandTypeWriteRegisters:
-        case ePacketTypeReply | eCommandTypeLoad:
-        case ePacketTypeReply | eCommandTypeImagePath:
-        case ePacketTypeReply | eCommandTypeSuspend:
-        case ePacketTypeReply | eCommandTypeResume:
-        case ePacketTypeReply | eCommandTypeException:
-        case ePacketTypeReply | eCommandTypeTermination:
-        case ePacketTypeReply | eCommandTypeBreakpointSet:
-        case ePacketTypeReply | eCommandTypeBreakpointRemove:
-        case ePacketTypeReply | eCommandTypeRegions:
-        case ePacketTypeReply | eCommandTypeReattach:
-        case ePacketTypeReply | eCommandTypeHostReboot:
-        case ePacketTypeReply | eCommandTypeReadMemory64:
-        case ePacketTypeReply | eCommandTypeWriteMemory64:
-        case ePacketTypeReply | eCommandTypeBreakpointSet64:
-        case ePacketTypeReply | eCommandTypeBreakpointRemove64:
-        case ePacketTypeReply | eCommandTypeKernelVersion:
+        case ePacketTypeReply | KDP_CONNECT:
+        case ePacketTypeReply | KDP_DISCONNECT:
+        case ePacketTypeReply | KDP_HOSTINFO:
+        case ePacketTypeReply | KDP_VERSION:
+        case ePacketTypeReply | KDP_MAXBYTES:
+        case ePacketTypeReply | KDP_READMEM:
+        case ePacketTypeReply | KDP_WRITEMEM:
+        case ePacketTypeReply | KDP_READREGS:
+        case ePacketTypeReply | KDP_WRITEREGS:
+        case ePacketTypeReply | KDP_LOAD:
+        case ePacketTypeReply | KDP_IMAGEPATH:
+        case ePacketTypeReply | KDP_SUSPEND:
+        case ePacketTypeReply | KDP_RESUMECPUS:
+        case ePacketTypeReply | KDP_EXCEPTION:
+        case ePacketTypeReply | KDP_TERMINATION:
+        case ePacketTypeReply | KDP_BREAKPOINT_SET:
+        case ePacketTypeReply | KDP_BREAKPOINT_REMOVE:
+        case ePacketTypeReply | KDP_REGIONS:
+        case ePacketTypeReply | KDP_REATTACH:
+        case ePacketTypeReply | KDP_HOSTREBOOT:
+        case ePacketTypeReply | KDP_READMEM64:
+        case ePacketTypeReply | KDP_WRITEMEM64:
+        case ePacketTypeReply | KDP_BREAKPOINT_SET64:
+        case ePacketTypeReply | KDP_BREAKPOINT_REMOVE64:
+        case ePacketTypeReply | KDP_KERNELVERSION:
             {
                 offset = 2;
                 const uint16_t length = packet.GetU16 (&offset);
@@ -331,7 +330,7 @@ CommunicationKDP::SendRequestConnect (uint16_t reply_port,
     if (greeting == NULL)
         greeting = "";
 
-    const CommandType command = eCommandTypeConnect;
+    const CommandType command = KDP_CONNECT;
     // Length is 82 uint16_t and the length of the greeting C string with the terminating NULL
     const uint32_t command_length = 8 + 2 + 2 + ::strlen(greeting) + 1;
     const uint32_t request_sequence_id = m_request_sequence_id;
@@ -361,7 +360,7 @@ bool
 CommunicationKDP::SendRequestReattach (uint16_t reply_port)
 {
     PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
-    const CommandType command = eCommandTypeReattach;
+    const CommandType command = KDP_REATTACH;
     // Length is 8 bytes for the header plus 2 bytes for the reply UDP port
     const uint32_t command_length = 8 + 2;
     const uint32_t request_sequence_id = m_request_sequence_id;
@@ -402,7 +401,7 @@ bool
 CommunicationKDP::SendRequestVersion ()
 {
     PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
-    const CommandType command = eCommandTypeVersion;
+    const CommandType command = KDP_VERSION;
     const uint32_t command_length = 8;
     const uint32_t request_sequence_id = m_request_sequence_id;
     MakeRequestPacketHeader (command, request_packet, command_length);
@@ -416,6 +415,35 @@ CommunicationKDP::SendRequestVersion ()
     }
     return false;
 }
+
+#if 0 // Disable KDP_IMAGEPATH for now, it seems to hang the KDP connection...
+const char *
+CommunicationKDP::GetImagePath ()
+{
+    if (m_image_path.empty())
+        SendRequestImagePath();
+    return m_image_path.c_str();
+}
+
+bool
+CommunicationKDP::SendRequestImagePath ()
+{
+    PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
+    const CommandType command = KDP_IMAGEPATH;
+    const uint32_t command_length = 8;
+    const uint32_t request_sequence_id = m_request_sequence_id;
+    MakeRequestPacketHeader (command, request_packet, command_length);
+    DataExtractor reply_packet;
+    if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
+    {
+        const char *path = reply_packet.PeekCStr(8);
+        if (path && path[0])
+            m_kernel_version.assign (path);
+        return true;
+    }
+    return false;
+}
+#endif
 
 uint32_t
 CommunicationKDP::GetCPUMask ()
@@ -445,7 +473,7 @@ bool
 CommunicationKDP::SendRequestHostInfo ()
 {
     PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
-    const CommandType command = eCommandTypeHostInfo;
+    const CommandType command = KDP_HOSTINFO;
     const uint32_t command_length = 8;
     const uint32_t request_sequence_id = m_request_sequence_id;
     MakeRequestPacketHeader (command, request_packet, command_length);
@@ -481,7 +509,7 @@ bool
 CommunicationKDP::SendRequestKernelVersion ()
 {
     PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
-    const CommandType command = eCommandTypeKernelVersion;
+    const CommandType command = KDP_KERNELVERSION;
     const uint32_t command_length = 8;
     const uint32_t request_sequence_id = m_request_sequence_id;
     MakeRequestPacketHeader (command, request_packet, command_length);
@@ -500,7 +528,7 @@ bool
 CommunicationKDP::SendRequestDisconnect ()
 {
     PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
-    const CommandType command = eCommandTypeDisconnect;
+    const CommandType command = KDP_DISCONNECT;
     const uint32_t command_length = 8;
     const uint32_t request_sequence_id = m_request_sequence_id;
     MakeRequestPacketHeader (command, request_packet, command_length);
@@ -522,7 +550,7 @@ CommunicationKDP::SendRequestReadMemory (lldb::addr_t addr,
     PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
     bool use_64 = (GetVersion() >= 11);
     uint32_t command_addr_byte_size = use_64 ? 8 : 4;
-    const CommandType command = use_64 ? eCommandTypeReadMemory64 : eCommandTypeReadMemory;
+    const CommandType command = use_64 ? KDP_READMEM64 : KDP_READMEM;
     // Size is header + address size + uint32_t length
     const uint32_t command_length = 8 + command_addr_byte_size + 4;
     const uint32_t request_sequence_id = m_request_sequence_id;
@@ -564,7 +592,7 @@ CommunicationKDP::SendRequestWriteMemory (lldb::addr_t addr,
     PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
     bool use_64 = (GetVersion() >= 11);
     uint32_t command_addr_byte_size = use_64 ? 8 : 4;
-    const CommandType command = use_64 ? eCommandTypeWriteMemory64 : eCommandTypeWriteMemory;
+    const CommandType command = use_64 ? KDP_WRITEMEM64 : KDP_WRITEMEM;
     // Size is header + address size + uint32_t length
     const uint32_t command_length = 8 + command_addr_byte_size + 4;
     const uint32_t request_sequence_id = m_request_sequence_id;
@@ -594,31 +622,31 @@ CommunicationKDP::GetCommandAsCString (uint8_t command)
 {
     switch (command)
     {
-    case eCommandTypeConnect:               return "KDP_CONNECT";
-    case eCommandTypeDisconnect:            return "KDP_DISCONNECT";
-    case eCommandTypeHostInfo:              return "KDP_HOSTINFO";
-    case eCommandTypeVersion:               return "KDP_VERSION";
-    case eCommandTypeMaxBytes:              return "KDP_MAXBYTES";
-    case eCommandTypeReadMemory:            return "KDP_READMEM";
-    case eCommandTypeWriteMemory:           return "KDP_WRITEMEM";
-    case eCommandTypeReadRegisters:         return "KDP_READREGS";
-    case eCommandTypeWriteRegisters:        return "KDP_WRITEREGS";
-    case eCommandTypeLoad:                  return "KDP_LOAD";
-    case eCommandTypeImagePath:             return "KDP_IMAGEPATH";
-    case eCommandTypeSuspend:               return "KDP_SUSPEND";
-    case eCommandTypeResume:                return "KDP_RESUMECPUS";
-    case eCommandTypeException:             return "KDP_EXCEPTION";
-    case eCommandTypeTermination:           return "KDP_TERMINATION";
-    case eCommandTypeBreakpointSet:         return "KDP_BREAKPOINT_SET";
-    case eCommandTypeBreakpointRemove:      return "KDP_BREAKPOINT_REMOVE";
-    case eCommandTypeRegions:               return "KDP_REGIONS";
-    case eCommandTypeReattach:              return "KDP_REATTACH";
-    case eCommandTypeHostReboot:            return "KDP_HOSTREBOOT";
-    case eCommandTypeReadMemory64:          return "KDP_READMEM64";
-    case eCommandTypeWriteMemory64:         return "KDP_WRITEMEM64";
-    case eCommandTypeBreakpointSet64:       return "KDP_BREAKPOINT64_SET";
-    case eCommandTypeBreakpointRemove64:    return "KDP_BREAKPOINT64_REMOVE";
-    case eCommandTypeKernelVersion:         return "KDP_KERNELVERSION";
+    case KDP_CONNECT:               return "KDP_CONNECT";
+    case KDP_DISCONNECT:            return "KDP_DISCONNECT";
+    case KDP_HOSTINFO:              return "KDP_HOSTINFO";
+    case KDP_VERSION:               return "KDP_VERSION";
+    case KDP_MAXBYTES:              return "KDP_MAXBYTES";
+    case KDP_READMEM:               return "KDP_READMEM";
+    case KDP_WRITEMEM:              return "KDP_WRITEMEM";
+    case KDP_READREGS:              return "KDP_READREGS";
+    case KDP_WRITEREGS:             return "KDP_WRITEREGS";
+    case KDP_LOAD:                  return "KDP_LOAD";
+    case KDP_IMAGEPATH:             return "KDP_IMAGEPATH";
+    case KDP_SUSPEND:               return "KDP_SUSPEND";
+    case KDP_RESUMECPUS:            return "KDP_RESUMECPUS";
+    case KDP_EXCEPTION:             return "KDP_EXCEPTION";
+    case KDP_TERMINATION:           return "KDP_TERMINATION";
+    case KDP_BREAKPOINT_SET:        return "KDP_BREAKPOINT_SET";
+    case KDP_BREAKPOINT_REMOVE:     return "KDP_BREAKPOINT_REMOVE";
+    case KDP_REGIONS:               return "KDP_REGIONS";
+    case KDP_REATTACH:              return "KDP_REATTACH";
+    case KDP_HOSTREBOOT:            return "KDP_HOSTREBOOT";
+    case KDP_READMEM64:             return "KDP_READMEM64";
+    case KDP_WRITEMEM64:            return "KDP_WRITEMEM64";
+    case KDP_BREAKPOINT_SET64:      return "KDP_BREAKPOINT64_SET";
+    case KDP_BREAKPOINT_REMOVE64:   return "KDP_BREAKPOINT64_REMOVE";
+    case KDP_KERNELVERSION:         return "KDP_KERNELVERSION";
     }
     return NULL;
 }
@@ -663,33 +691,33 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                 switch (command)
                 {
                     // Commands that return a single 32 bit error
-                    case eCommandTypeConnect:
-                    case eCommandTypeWriteMemory:
-                    case eCommandTypeWriteMemory64:
-                    case eCommandTypeBreakpointSet:
-                    case eCommandTypeBreakpointRemove:
-                    case eCommandTypeBreakpointSet64:
-                    case eCommandTypeBreakpointRemove64:
-                    case eCommandTypeWriteRegisters:
-                    case eCommandTypeLoad:
+                    case KDP_CONNECT:
+                    case KDP_WRITEMEM:
+                    case KDP_WRITEMEM64:
+                    case KDP_BREAKPOINT_SET:
+                    case KDP_BREAKPOINT_REMOVE:
+                    case KDP_BREAKPOINT_SET64:
+                    case KDP_BREAKPOINT_REMOVE64:
+                    case KDP_WRITEREGS:
+                    case KDP_LOAD:
                         {
                             const uint32_t error = packet.GetU32 (&offset);
                             s.Printf(" (error=0x%8.8x)", error);
                         }
                         break;
                     
-                    case eCommandTypeDisconnect:
-                    case eCommandTypeReattach:
-                    case eCommandTypeHostReboot:
-                    case eCommandTypeSuspend:
-                    case eCommandTypeResume:
-                    case eCommandTypeException:
-                    case eCommandTypeTermination:
+                    case KDP_DISCONNECT:
+                    case KDP_REATTACH:
+                    case KDP_HOSTREBOOT:
+                    case KDP_SUSPEND:
+                    case KDP_RESUMECPUS:
+                    case KDP_EXCEPTION:
+                    case KDP_TERMINATION:
                         // No return value for the reply, just the header to ack
                         s.PutCString(" ()");
                         break;
 
-                    case eCommandTypeHostInfo:
+                    case KDP_HOSTINFO:
                         {
                             const uint32_t cpu_mask = packet.GetU32 (&offset);
                             const uint32_t cpu_type = packet.GetU32 (&offset);
@@ -698,7 +726,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
                         
-                    case eCommandTypeVersion:
+                    case KDP_VERSION:
                         {
                             const uint32_t version = packet.GetU32 (&offset);
                             const uint32_t feature = packet.GetU32 (&offset);
@@ -706,7 +734,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
                         
-                    case eCommandTypeRegions:
+                    case KDP_REGIONS:
                         {
                             const uint32_t region_count = packet.GetU32 (&offset);
                             s.Printf(" (count = %u", region_count); 
@@ -720,8 +748,8 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
 
-                    case eCommandTypeReadMemory:
-                    case eCommandTypeReadMemory64:
+                    case KDP_READMEM:
+                    case KDP_READMEM64:
                         {
                             const uint32_t error = packet.GetU32 (&offset);
                             const uint32_t count = packet.GetByteSize() - offset;
@@ -738,7 +766,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
 
-                    case eCommandTypeReadRegisters:
+                    case KDP_READREGS:
                         {
                             const uint32_t error = packet.GetU32 (&offset);
                             const uint32_t count = packet.GetByteSize() - offset;
@@ -755,20 +783,20 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
 
-                    case eCommandTypeKernelVersion:
+                    case KDP_KERNELVERSION:
                         {
                             const char *kernel_version = packet.PeekCStr(8);
                             s.Printf(" (version = \"%s\")", kernel_version);
                         }
                         break;
                         
-                    case eCommandTypeMaxBytes:
+                    case KDP_MAXBYTES:
                         {
                             const uint32_t max_bytes = packet.GetU32 (&offset);
                             s.Printf(" (max_bytes = 0x%8.8x (%u))", max_bytes, max_bytes);
                         }
                         break;
-                    case eCommandTypeImagePath:
+                    case KDP_IMAGEPATH:
                         {
                             const char *path = packet.GetCStr(&offset);
                             s.Printf(" (path = \"%s\")", path);
@@ -785,7 +813,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                 // Dump request packets
                 switch (command)
                 {
-                    case eCommandTypeConnect:               
+                    case KDP_CONNECT:               
                         {
                             const uint16_t reply_port = packet.GetU16 (&offset);
                             const uint16_t exc_port = packet.GetU16 (&offset);
@@ -793,27 +821,27 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
                                  
-                    case eCommandTypeDisconnect:
-                    case eCommandTypeHostReboot:
-                    case eCommandTypeHostInfo:
-                    case eCommandTypeVersion:
-                    case eCommandTypeRegions:
-                    case eCommandTypeKernelVersion:
-                    case eCommandTypeMaxBytes:
-                    case eCommandTypeImagePath:
-                    case eCommandTypeSuspend:
+                    case KDP_DISCONNECT:
+                    case KDP_HOSTREBOOT:
+                    case KDP_HOSTINFO:
+                    case KDP_VERSION:
+                    case KDP_REGIONS:
+                    case KDP_KERNELVERSION:
+                    case KDP_MAXBYTES:
+                    case KDP_IMAGEPATH:
+                    case KDP_SUSPEND:
                         // No args, just the header in the request...
                         s.PutCString(" ()");
                         break;
 
-                    case eCommandTypeResume:
+                    case KDP_RESUMECPUS:
                         {
                             const uint32_t cpu_mask = packet.GetU32 (&offset);
                             s.Printf(" (cpu_mask = 0x%8.8x)", cpu_mask);
                         }
                         break;
 
-                    case eCommandTypeReadMemory:
+                    case KDP_READMEM:
                         {
                             const uint32_t addr = packet.GetU32 (&offset);
                             const uint32_t size = packet.GetU32 (&offset);
@@ -822,7 +850,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
 
-                    case eCommandTypeWriteMemory:
+                    case KDP_WRITEMEM:
                         {
                             const uint32_t addr = packet.GetU32 (&offset);
                             const uint32_t size = packet.GetU32 (&offset);
@@ -832,7 +860,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
 
-                    case eCommandTypeReadMemory64:
+                    case KDP_READMEM64:
                         {
                             const uint64_t addr = packet.GetU64 (&offset);
                             const uint32_t size = packet.GetU32 (&offset);
@@ -841,7 +869,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
 
-                    case eCommandTypeWriteMemory64:
+                    case KDP_WRITEMEM64:
                         {
                             const uint64_t addr = packet.GetU64 (&offset);
                             const uint32_t size = packet.GetU32 (&offset);
@@ -851,7 +879,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
 
-                    case eCommandTypeReadRegisters:
+                    case KDP_READREGS:
                         {
                             const uint32_t cpu = packet.GetU32 (&offset);
                             const uint32_t flavor = packet.GetU32 (&offset);
@@ -859,7 +887,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
 
-                    case eCommandTypeWriteRegisters:
+                    case KDP_WRITEREGS:
                         {
                             const uint32_t cpu = packet.GetU32 (&offset);
                             const uint32_t flavor = packet.GetU32 (&offset);
@@ -878,16 +906,16 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         break;
 
 
-                    case eCommandTypeBreakpointSet:
-                    case eCommandTypeBreakpointRemove:
+                    case KDP_BREAKPOINT_SET:
+                    case KDP_BREAKPOINT_REMOVE:
                         {
                             const uint32_t addr = packet.GetU32 (&offset);
                             s.Printf(" (addr = 0x%8.8x)", addr);
                         }
                         break;
 
-                    case eCommandTypeBreakpointSet64:
-                    case eCommandTypeBreakpointRemove64:
+                    case KDP_BREAKPOINT_SET64:
+                    case KDP_BREAKPOINT_REMOVE64:
                         {
                             const uint64_t addr = packet.GetU64 (&offset);
                             s.Printf(" (addr = 0x%16.16llx)", addr);
@@ -895,14 +923,14 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         break;
 
 
-                    case eCommandTypeLoad:
+                    case KDP_LOAD:
                         {
                             const char *path = packet.GetCStr(&offset);
                             s.Printf(" (path = \"%s\")", path);
                         }
                         break;
 
-                    case eCommandTypeException:
+                    case KDP_EXCEPTION:
                         {
                             const uint32_t count = packet.GetU32 (&offset);
                             
@@ -936,7 +964,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
 
-                    case eCommandTypeTermination:
+                    case KDP_TERMINATION:
                         {
                             const uint32_t term_code = packet.GetU32 (&offset);
                             const uint32_t exit_code = packet.GetU32 (&offset);
@@ -944,7 +972,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         }
                         break;
 
-                    case eCommandTypeReattach:
+                    case KDP_REATTACH:
                         {
                             const uint16_t reply_port = packet.GetU16 (&offset);
                             s.Printf(" (reply_port=%u)", reply_port);
@@ -982,7 +1010,7 @@ CommunicationKDP::SendRequestReadRegisters (uint32_t cpu,
                                             Error &error)
 {
     PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
-    const CommandType command = eCommandTypeReadRegisters;
+    const CommandType command = KDP_READREGS;
     // Size is header + 4 byte cpu and 4 byte flavor
     const uint32_t command_length = 8 + 4 + 4;
     const uint32_t request_sequence_id = m_request_sequence_id;
@@ -1024,7 +1052,7 @@ CommunicationKDP::SendRequestResume (uint32_t cpu_mask)
     if (cpu_mask == 0)
         cpu_mask = GetCPUMask();
     PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
-    const CommandType command = eCommandTypeResume;
+    const CommandType command = KDP_RESUMECPUS;
     const uint32_t command_length = 12;
     const uint32_t request_sequence_id = m_request_sequence_id;
     MakeRequestPacketHeader (command, request_packet, command_length);
@@ -1042,8 +1070,8 @@ CommunicationKDP::SendRequestBreakpoint (bool set, addr_t addr)
     PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
     bool use_64 = (GetVersion() >= 11);
     uint32_t command_addr_byte_size = use_64 ? 8 : 4;
-    const CommandType command = set ? (use_64 ? eCommandTypeBreakpointSet64    : eCommandTypeBreakpointSet   ):
-                                      (use_64 ? eCommandTypeBreakpointRemove64 : eCommandTypeBreakpointRemove);
+    const CommandType command = set ? (use_64 ? KDP_BREAKPOINT_SET64    : KDP_BREAKPOINT_SET   ):
+                                      (use_64 ? KDP_BREAKPOINT_REMOVE64 : KDP_BREAKPOINT_REMOVE);
 
     const uint32_t command_length = 8 + command_addr_byte_size;
     const uint32_t request_sequence_id = m_request_sequence_id;
@@ -1060,7 +1088,7 @@ bool
 CommunicationKDP::SendRequestSuspend ()
 {
     PacketStreamType request_packet (Stream::eBinary, m_addr_byte_size, m_byte_order);
-    const CommandType command = eCommandTypeSuspend;
+    const CommandType command = KDP_SUSPEND;
     const uint32_t command_length = 8;
     const uint32_t request_sequence_id = m_request_sequence_id;
     MakeRequestPacketHeader (command, request_packet, command_length);

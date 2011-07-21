@@ -38,36 +38,36 @@ public:
     typedef lldb_private::StreamBuffer<1024> PacketStreamType;
     typedef enum 
     {
-        eCommandTypeConnect = 0u,
-        eCommandTypeDisconnect,
-        eCommandTypeHostInfo,
-        eCommandTypeVersion,
-        eCommandTypeMaxBytes,
-        eCommandTypeReadMemory,
-        eCommandTypeWriteMemory,
-        eCommandTypeReadRegisters,
-        eCommandTypeWriteRegisters,
-        eCommandTypeLoad,
-        eCommandTypeImagePath,
-        eCommandTypeSuspend,
-        eCommandTypeResume,
-        eCommandTypeException,
-        eCommandTypeTermination,
-        eCommandTypeBreakpointSet,
-        eCommandTypeBreakpointRemove,
-        eCommandTypeRegions,
-        eCommandTypeReattach,
-        eCommandTypeHostReboot,
-        eCommandTypeReadMemory64,
-        eCommandTypeWriteMemory64,
-        eCommandTypeBreakpointSet64,
-        eCommandTypeBreakpointRemove64,
-        eCommandTypeKernelVersion
+        KDP_CONNECT = 0u,               
+        KDP_DISCONNECT,
+        KDP_HOSTINFO,
+        KDP_VERSION,
+        KDP_MAXBYTES,
+        KDP_READMEM,
+        KDP_WRITEMEM,
+        KDP_READREGS,
+        KDP_WRITEREGS,
+        KDP_LOAD,
+        KDP_IMAGEPATH,
+        KDP_SUSPEND,
+        KDP_RESUMECPUS,
+        KDP_EXCEPTION,
+        KDP_TERMINATION,
+        KDP_BREAKPOINT_SET,
+        KDP_BREAKPOINT_REMOVE,
+        KDP_REGIONS,
+        KDP_REATTACH,
+        KDP_HOSTREBOOT,
+        KDP_READMEM64,
+        KDP_WRITEMEM64,
+        KDP_BREAKPOINT_SET64,
+        KDP_BREAKPOINT_REMOVE64,
+        KDP_KERNELVERSION,
     } CommandType;
 
     enum 
     {
-        eFeatureLocalBreakpointsSupported = (1u << 0),
+        KDP_FEATURE_BP = (1u << 0),
     };
 
     typedef enum
@@ -181,6 +181,10 @@ public:
     const char *
     GetKernelVersion ();
     
+    // Disable KDP_IMAGEPATH for now, it seems to hang the KDP connection...
+    // const char *
+    // GetImagePath ();
+
     uint32_t
     GetVersion ();
 
@@ -190,7 +194,7 @@ public:
     bool
     LocalBreakpointsAreSupported ()
     {
-        return (GetFeatureFlags() & eFeatureLocalBreakpointsSupported) != 0;
+        return (GetFeatureFlags() & KDP_FEATURE_BP) != 0;
     }
 
     uint32_t
@@ -213,7 +217,6 @@ public:
     SendRequestBreakpoint (bool set, lldb::addr_t addr);
 
 protected:
-    typedef std::list<std::string> packet_collection;
 
     bool
     SendRequestPacketNoLock (const PacketStreamType &request_packet);
@@ -243,6 +246,10 @@ protected:
     bool
     SendRequestKernelVersion ();
     
+    // Disable KDP_IMAGEPATH for now, it seems to hang the KDP connection...
+    //bool
+    //SendRequestImagePath ();
+
     void
     DumpPacket (lldb_private::Stream &s, 
                 const void *data, 
@@ -307,6 +314,7 @@ protected:
     uint32_t m_kdp_hostinfo_cpu_type;
     uint32_t m_kdp_hostinfo_cpu_subtype;
     std::string m_kernel_version;
+    //std::string m_image_path; // Disable KDP_IMAGEPATH for now, it seems to hang the KDP connection...
     lldb::addr_t m_last_read_memory_addr; // Last memory read address for logging
 private:
     //------------------------------------------------------------------

@@ -190,12 +190,17 @@ ProcessKDP::DoConnectRemote (const char *remote_url)
                     StreamSP async_strm_sp(m_target.GetDebugger().GetAsyncOutputStream());
                     if (async_strm_sp)
                     {
-                        const char *kernel_version = m_comm.GetKernelVersion ();
-                        if (kernel_version)
+                        const char *cstr;
+                        if ((cstr = m_comm.GetKernelVersion ()) != NULL)
                         {
-                            async_strm_sp->Printf ("KDP connected to %s\n", kernel_version);
+                            async_strm_sp->Printf ("Version: %s\n", cstr);
                             async_strm_sp->Flush();
                         }
+//                      if ((cstr = m_comm.GetImagePath ()) != NULL)
+//                      {
+//                          async_strm_sp->Printf ("Image Path: %s\n", cstr);
+//                          async_strm_sp->Flush();
+//                      }            
                     }
                 }
             }
@@ -491,8 +496,6 @@ ProcessKDP::DoDestroy ()
     // Interrupt if our inferior is running...
     if (m_comm.IsConnected())
     {
-        m_comm.SendRequestDisconnect();
-
         if (m_public_state.GetValue() == eStateAttaching)
         {
             // We are being asked to halt during an attach. We need to just close
@@ -501,6 +504,9 @@ ProcessKDP::DoDestroy ()
         }
         else
         {
+            DisableAllBreakpointSites ();
+            
+            m_comm.SendRequestDisconnect();
             
             StringExtractor response;
             // TODO: Send kill packet?
@@ -563,8 +569,18 @@ ProcessKDP::EnableBreakpoint (BreakpointSite *bp_site)
     if (m_comm.LocalBreakpointsAreSupported ())
     {
         Error error;
-        if (!m_comm.SendRequestBreakpoint(true, bp_site->GetLoadAddress()))
-            error.SetErrorString ("KDP set breakpoint failed");
+        if (!bp_site->IsEnabled())
+        {
+            if (m_comm.SendRequestBreakpoint(true, bp_site->GetLoadAddress()))
+            {
+                bp_site->SetEnabled(true);
+                bp_site->SetType (BreakpointSite::eExternal);
+            }
+            else
+            {
+                error.SetErrorString ("KDP set breakpoint failed");
+            }
+        }
         return error;
     }
     return EnableSoftwareBreakpoint (bp_site);
@@ -576,8 +592,21 @@ ProcessKDP::DisableBreakpoint (BreakpointSite *bp_site)
     if (m_comm.LocalBreakpointsAreSupported ())
     {
         Error error;
-        if (!m_comm.SendRequestBreakpoint(false, bp_site->GetLoadAddress()))
-            error.SetErrorString ("KDP remove breakpoint failed");
+        if (bp_site->IsEnabled())
+        {
+            BreakpointSite::Type bp_type = bp_site->GetType();
+            if (bp_type == BreakpointSite::eExternal)
+            {
+                if (m_comm.SendRequestBreakpoint(false, bp_site->GetLoadAddress()))
+                    bp_site->SetEnabled(false);
+                else
+                    error.SetErrorString ("KDP remove breakpoint failed");
+            }
+            else
+            {
+                error = DisableSoftwareBreakpoint (bp_site);
+            }
+        }
         return error;
     }
     return DisableSoftwareBreakpoint (bp_site);
