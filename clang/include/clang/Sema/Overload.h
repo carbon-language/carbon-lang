@@ -531,7 +531,9 @@ namespace clang {
   enum OverloadFixItKind {
     OFIK_Undefined = 0,
     OFIK_Dereference,
-    OFIK_TakeAddress
+    OFIK_TakeAddress,
+    OFIK_RemoveDereference,
+    OFIK_RemoveTakeAddress
   };
 
   /// OverloadCandidate - A single candidate in an overload set (C++ 13.3).
@@ -565,7 +567,7 @@ namespace clang {
     /// The FixIt hints which can be used to fix the Bad candidate.
     struct FixInfo {
       /// The list of Hints (all have to be applied).
-      SmallVector<FixItHint, 4> Hints;
+      SmallVector<FixItHint, 1> Hints;
 
       /// The number of Conversions fixed. This can be different from the size
       /// of the Hints vector since we allow multiple FixIts per conversion.

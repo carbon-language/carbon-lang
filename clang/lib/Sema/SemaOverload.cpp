@@ -6752,8 +6752,15 @@ static bool TryToFixBadConversion(Sema &S,
   const SourceLocation End = S.PP.getLocForEndOfToken(Arg->getSourceRange()
                                                       .getEnd());
   bool NeedParen = true;
-  if (isa<ParenExpr>(Arg) || isa<DeclRefExpr>(Arg))
+  if (isa<ParenExpr>(Arg) ||
+      isa<DeclRefExpr>(Arg) ||
+      isa<ArraySubscriptExpr>(Arg) ||
+      isa<CallExpr>(Arg) ||
+      isa<MemberExpr>(Arg))
     NeedParen = false;
+  if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(Arg))
+    if (UO->isPostfix())
+      NeedParen = false;
 
   // Check if the argument needs to be dereferenced
   // (type * -> type) or (type * -> type &).
@@ -6765,13 +6772,20 @@ static bool TryToFixBadConversion(Sema &S,
     ImplicitConversionSequence ICS =
       TryCopyInitialization(S, &TmpExpr, ToQTy, true, true, false);
 
+    OverloadFixItKind FixKind = OFIK_Dereference;
     if (!ICS.isBad()) {
       // Do not suggest dereferencing a Null pointer.
       if (Arg->IgnoreParenCasts()->
           isNullPointerConstant(S.Context, Expr::NPC_ValueDependentIsNotNull))
         return false;
 
-      if (NeedParen) {
+      if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(Arg)) {
+        if (UO->getOpcode() == UO_AddrOf) {
+          ConvFix.Hints.push_back(
+                               FixItHint::CreateRemoval(Arg->getSourceRange()));
+          FixKind = OFIK_RemoveTakeAddress;
+        }
+      } else if (NeedParen) {
         ConvFix.Hints.push_back(FixItHint::CreateInsertion(Begin, "*("));
         ConvFix.Hints.push_back(FixItHint::CreateInsertion(End, ")"));
       } else {
@@ -6779,7 +6793,7 @@ static bool TryToFixBadConversion(Sema &S,
       }
       ConvFix.NumConversionsFixed++;
       if (ConvFix.NumConversionsFixed == 1)
-        ConvFix.Kind = OFIK_Dereference;
+        ConvFix.Kind = FixKind;
       return true;
     }
   }
@@ -6788,15 +6802,24 @@ static bool TryToFixBadConversion(Sema &S,
   // (type -> type *) or (type & -> type *).
   if (isa<PointerType>(ToQTy)) {
     // Only suggest taking address of L-values.
-    if (!Arg->isLValue())
+    if (!Arg->isLValue() || Arg->getObjectKind() != OK_Ordinary)
       return false;
 
     OpaqueValueExpr TmpExpr(Arg->getExprLoc(),
                             S.Context.getPointerType(FromQTy), VK_RValue);
     ImplicitConversionSequence ICS =
       TryCopyInitialization(S, &TmpExpr, ToQTy, true, true, false);
+
+    OverloadFixItKind FixKind = OFIK_TakeAddress;
     if (!ICS.isBad()) {
-      if (NeedParen) {
+
+      if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(Arg)) {
+        if (UO->getOpcode() == UO_Deref) {
+          ConvFix.Hints.push_back(
+                               FixItHint::CreateRemoval(Arg->getSourceRange()));
+          FixKind = OFIK_RemoveDereference;
+        }
+      } else if (NeedParen) {
         ConvFix.Hints.push_back(FixItHint::CreateInsertion(Begin, "&("));
         ConvFix.Hints.push_back(FixItHint::CreateInsertion(End, ")"));
       } else {
@@ -6804,7 +6827,7 @@ static bool TryToFixBadConversion(Sema &S,
       }
       ConvFix.NumConversionsFixed++;
       if (ConvFix.NumConversionsFixed == 1)
-        ConvFix.Kind = OFIK_TakeAddress;
+        ConvFix.Kind = FixKind;
       return true;
     }
   }
@@ -7004,7 +7027,7 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
     << (unsigned) (Cand->Fix.Kind);
 
   // If we can fix the conversion, suggest the FixIts.
-  for (llvm::SmallVector<FixItHint, 4>::iterator
+  for (llvm::SmallVector<FixItHint, 1>::iterator
       HI = Cand->Fix.Hints.begin(), HE = Cand->Fix.Hints.end();
       HI != HE; ++HI)
     FDiag << *HI;
@@ -7365,11 +7388,12 @@ struct CompareOverloadCandidatesForDisplay {
         unsigned numRFixes = R->Fix.NumConversionsFixed;
         numLFixes = (numLFixes == 0) ? UINT_MAX : numLFixes;
         numRFixes = (numRFixes == 0) ? UINT_MAX : numRFixes;
-        if (numLFixes != numRFixes)
+        if (numLFixes != numRFixes) {
           if (numLFixes < numRFixes)
             return true;
           else
             return false;
+        }
 
         // If there's any ordering between the defined conversions...
         // FIXME: this might not be transitive.

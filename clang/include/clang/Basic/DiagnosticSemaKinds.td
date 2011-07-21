@@ -1594,7 +1594,9 @@ def note_ovl_candidate_bad_conv : Note<"candidate "
     " not viable: no known conversion from %2 to %3 for "
     "%select{%ordinal5 argument|object argument}4; "
     "%select{|dereference the argument with *|"
-    "take the address of the argument with &}6">;
+    "take the address of the argument with &|"
+    "remove *|"
+    "remove &}6">;
 def note_ovl_candidate_bad_arc_conv : Note<"candidate "
     "%select{function|function|constructor|"
     "function |function |constructor |"
