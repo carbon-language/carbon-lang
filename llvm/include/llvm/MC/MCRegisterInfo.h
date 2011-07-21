@@ -17,9 +17,86 @@
 #define LLVM_MC_MCREGISTERINFO_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include <cassert>
 
 namespace llvm {
+
+/// MCRegisterClass - Base class of TargetRegisterClass.
+class MCRegisterClass {
+public:
+  typedef const unsigned* iterator;
+  typedef const unsigned* const_iterator;
+private:
+  unsigned ID;
+  const char *Name;
+  const unsigned RegSize, Alignment; // Size & Alignment of register in bytes
+  const int CopyCost;
+  const bool Allocatable;
+  const iterator RegsBegin, RegsEnd;
+  DenseSet<unsigned> RegSet;
+public:
+  MCRegisterClass(unsigned id, const char *name,
+                  unsigned RS, unsigned Al, int CC, bool Allocable,
+                  iterator RB, iterator RE)
+    : ID(id), Name(name), RegSize(RS), Alignment(Al), CopyCost(CC),
+      Allocatable(Allocable), RegsBegin(RB), RegsEnd(RE) {
+      for (iterator I = RegsBegin, E = RegsEnd; I != E; ++I)
+        RegSet.insert(*I);
+    }
+
+  /// getID() - Return the register class ID number.
+  ///
+  unsigned getID() const { return ID; }
+
+  /// getName() - Return the register class name for debugging.
+  ///
+  const char *getName() const { return Name; }
+
+  /// begin/end - Return all of the registers in this class.
+  ///
+  iterator       begin() const { return RegsBegin; }
+  iterator         end() const { return RegsEnd; }
+
+  /// getNumRegs - Return the number of registers in this class.
+  ///
+  unsigned getNumRegs() const { return (unsigned)(RegsEnd-RegsBegin); }
+
+  /// getRegister - Return the specified register in the class.
+  ///
+  unsigned getRegister(unsigned i) const {
+    assert(i < getNumRegs() && "Register number out of range!");
+    return RegsBegin[i];
+  }
+
+  /// contains - Return true if the specified register is included in this
+  /// register class.  This does not include virtual registers.
+  bool contains(unsigned Reg) const {
+    return RegSet.count(Reg);
+  }
+
+  /// contains - Return true if both registers are in this class.
+  bool contains(unsigned Reg1, unsigned Reg2) const {
+    return contains(Reg1) && contains(Reg2);
+  }
+
+  /// getSize - Return the size of the register in bytes, which is also the size
+  /// of a stack slot allocated to hold a spilled copy of this register.
+  unsigned getSize() const { return RegSize; }
+
+  /// getAlignment - Return the minimum required alignment for a register of
+  /// this class.
+  unsigned getAlignment() const { return Alignment; }
+
+  /// getCopyCost - Return the cost of copying a value between two registers in
+  /// this class. A negative number means the register class is very expensive
+  /// to copy e.g. status flag register classes.
+  int getCopyCost() const { return CopyCost; }
+
+  /// isAllocatable - Return true if this register class may be used to create
+  /// virtual registers.
+  bool isAllocatable() const { return Allocatable; }
+};
 
 /// MCRegisterDesc - This record contains all of the information known about
 /// a particular register.  The Overlaps field contains a pointer to a zero

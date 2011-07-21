@@ -32,79 +32,29 @@ class RegScavenger;
 template<class T> class SmallVectorImpl;
 class raw_ostream;
 
-class TargetRegisterClass {
+class TargetRegisterClass : public MCRegisterClass {
 public:
-  typedef const unsigned* iterator;
-  typedef const unsigned* const_iterator;
-
   typedef const EVT* vt_iterator;
   typedef const TargetRegisterClass* const * sc_iterator;
 private:
-  unsigned ID;
-  const char *Name;
   const vt_iterator VTs;
   const sc_iterator SubClasses;
   const sc_iterator SuperClasses;
   const sc_iterator SubRegClasses;
   const sc_iterator SuperRegClasses;
-  const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
-  const int CopyCost;
-  const bool Allocatable;
-  const iterator RegsBegin, RegsEnd;
-  DenseSet<unsigned> RegSet;
 public:
-  TargetRegisterClass(unsigned id,
-                      const char *name,
-                      const EVT *vts,
+  TargetRegisterClass(unsigned id, const char *name, const EVT *vts,
                       const TargetRegisterClass * const *subcs,
                       const TargetRegisterClass * const *supcs,
                       const TargetRegisterClass * const *subregcs,
                       const TargetRegisterClass * const *superregcs,
                       unsigned RS, unsigned Al, int CC, bool Allocable,
                       iterator RB, iterator RE)
-    : ID(id), Name(name), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
-    SubRegClasses(subregcs), SuperRegClasses(superregcs),
-    RegSize(RS), Alignment(Al), CopyCost(CC), Allocatable(Allocable),
-    RegsBegin(RB), RegsEnd(RE) {
-      for (iterator I = RegsBegin, E = RegsEnd; I != E; ++I)
-        RegSet.insert(*I);
-    }
+    : MCRegisterClass(id, name, RS, Al, CC, Allocable, RB, RE),
+      VTs(vts), SubClasses(subcs), SuperClasses(supcs), SubRegClasses(subregcs),
+      SuperRegClasses(superregcs) {}
+
   virtual ~TargetRegisterClass() {}     // Allow subclasses
-
-  /// getID() - Return the register class ID number.
-  ///
-  unsigned getID() const { return ID; }
-
-  /// getName() - Return the register class name for debugging.
-  ///
-  const char *getName() const { return Name; }
-
-  /// begin/end - Return all of the registers in this class.
-  ///
-  iterator       begin() const { return RegsBegin; }
-  iterator         end() const { return RegsEnd; }
-
-  /// getNumRegs - Return the number of registers in this class.
-  ///
-  unsigned getNumRegs() const { return (unsigned)(RegsEnd-RegsBegin); }
-
-  /// getRegister - Return the specified register in the class.
-  ///
-  unsigned getRegister(unsigned i) const {
-    assert(i < getNumRegs() && "Register number out of range!");
-    return RegsBegin[i];
-  }
-
-  /// contains - Return true if the specified register is included in this
-  /// register class.  This does not include virtual registers.
-  bool contains(unsigned Reg) const {
-    return RegSet.count(Reg);
-  }
-
-  /// contains - Return true if both registers are in this class.
-  bool contains(unsigned Reg1, unsigned Reg2) const {
-    return contains(Reg1) && contains(Reg2);
-  }
 
   /// hasType - return true if this TargetRegisterClass has the ValueType vt.
   ///
@@ -236,23 +186,6 @@ public:
   ArrayRef<unsigned> getRawAllocationOrder(const MachineFunction &MF) const {
     return makeArrayRef(begin(), getNumRegs());
   }
-
-  /// getSize - Return the size of the register in bytes, which is also the size
-  /// of a stack slot allocated to hold a spilled copy of this register.
-  unsigned getSize() const { return RegSize; }
-
-  /// getAlignment - Return the minimum required alignment for a register of
-  /// this class.
-  unsigned getAlignment() const { return Alignment; }
-
-  /// getCopyCost - Return the cost of copying a value between two registers in
-  /// this class. A negative number means the register class is very expensive
-  /// to copy e.g. status flag register classes.
-  int getCopyCost() const { return CopyCost; }
-
-  /// isAllocatable - Return true if this register class may be used to create
-  /// virtual registers.
-  bool isAllocatable() const { return Allocatable; }
 };
 
 /// TargetRegisterInfoDesc - Extra information, not in MCRegisterDesc, about
