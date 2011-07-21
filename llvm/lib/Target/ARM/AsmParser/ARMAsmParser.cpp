@@ -2322,8 +2322,6 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     delete Op;
   }
 
-
-
   return false;
 }
 
