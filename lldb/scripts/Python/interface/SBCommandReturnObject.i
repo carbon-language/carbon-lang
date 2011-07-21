@@ -9,6 +9,13 @@
 
 namespace lldb {
 
+%feature("docstring",
+"Represents a container which holds the result from command execution.
+It works with SBCommandInterpreter.HandleCommand() to encapsulate the result
+of command execution.
+
+See SBCommandInterpreter for example usage of SBCommandReturnObject."
+) SBCommandReturnObject;
 class SBCommandReturnObject
 {
 public:
