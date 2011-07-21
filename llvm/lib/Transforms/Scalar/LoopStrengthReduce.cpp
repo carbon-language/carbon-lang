@@ -3740,6 +3740,9 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   OptimizeShadowIV();
   OptimizeLoopTermCond();
 
+  // If loop preparation eliminates all interesting IV users, bail.
+  if (IU.empty()) return;
+
   // Start collecting data and preparing for the solver.
   CollectInterestingTypesAndFactors();
   CollectFixupsAndInitialFormulae();
