@@ -489,7 +489,7 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
         (OutPath.isRegularFile() && OutPath.canWrite())) {
       // Create a temporary file.
       llvm::sys::Path TempPath(OutFile);
-      if (!TempPath.createTemporaryFileOnDisk())
+      if (!TempPath.makeUnique(/*reuse_current=*/false, /*ErrMsg*/0))
         TempFile = TempPath.str();
     }
   }

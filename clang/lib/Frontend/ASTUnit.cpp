@@ -1048,7 +1048,7 @@ static std::string GetPreamblePCHPath() {
   P.createDirectoryOnDisk(true);
   P.appendComponent("preamble");
   P.appendSuffix("pch");
-  if (P.createTemporaryFileOnDisk())
+  if (P.makeUnique(/*reuse_current=*/false, /*ErrMsg*/0))
     return std::string();
   
   return P.str();
