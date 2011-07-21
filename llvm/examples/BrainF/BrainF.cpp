@@ -162,8 +162,7 @@ void BrainF::header(LLVMContext& C) {
       };
 
       Constant *msgptr = ConstantExpr::
-        getGetElementPtr(aberrormsg, gep_params,
-                         array_lengthof(gep_params));
+        getGetElementPtr(aberrormsg, gep_params);
 
       Value *puts_params[] = {
         msgptr

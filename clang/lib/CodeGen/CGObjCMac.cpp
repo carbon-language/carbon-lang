@@ -1375,7 +1375,7 @@ static llvm::Constant *getConstantGEP(llvm::LLVMContext &VMContext,
     llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), idx0),
     llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), idx1)
   };
-  return llvm::ConstantExpr::getGetElementPtr(C, Idxs, 2);
+  return llvm::ConstantExpr::getGetElementPtr(C, Idxs);
 }
 
 /// hasObjCExceptionAttribute - Return true if this class or any super
@@ -6096,7 +6096,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
     llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 2);
 
   std::vector<llvm::Constant*> Values(3);
-  Values[0] = llvm::ConstantExpr::getGetElementPtr(VTableGV, &VTableIdx, 1);
+  Values[0] = llvm::ConstantExpr::getGetElementPtr(VTableGV, VTableIdx);
   Values[1] = GetClassName(ID->getIdentifier());
   Values[2] = GetClassGlobal(ClassName);
   llvm::Constant *Init =

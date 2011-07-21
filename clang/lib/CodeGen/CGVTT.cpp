@@ -208,7 +208,7 @@ void VTTBuilder::AddVTablePointer(BaseSubobject Base, llvm::Constant *VTable,
   };
   
   llvm::Constant *Init = 
-    llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Idxs, 2);
+    llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Idxs);
   
   llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   Init = llvm::ConstantExpr::getBitCast(Init, Int8PtrTy);

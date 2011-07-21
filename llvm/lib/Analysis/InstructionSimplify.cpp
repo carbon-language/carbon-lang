@@ -2254,9 +2254,7 @@ Value *llvm::SimplifyGEPInst(ArrayRef<Value *> Ops,
     if (!isa<Constant>(Ops[i]))
       return 0;
 
-  return ConstantExpr::getGetElementPtr(cast<Constant>(Ops[0]),
-                                        (Constant *const*)Ops.data() + 1,
-                                        Ops.size() - 1);
+  return ConstantExpr::getGetElementPtr(cast<Constant>(Ops[0]), Ops.slice(1));
 }
 
 /// SimplifyPHINode - See if we can fold the given phi.  If not, returns null.

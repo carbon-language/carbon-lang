@@ -596,8 +596,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
         Idxs.push_back(NullInt);
         for (unsigned i = 3, e = CE->getNumOperands(); i != e; ++i)
           Idxs.push_back(CE->getOperand(i));
-        NewPtr = ConstantExpr::getGetElementPtr(cast<Constant>(NewPtr),
-                                                &Idxs[0], Idxs.size());
+        NewPtr = ConstantExpr::getGetElementPtr(cast<Constant>(NewPtr), Idxs);
       } else {
         GetElementPtrInst *GEPI = cast<GetElementPtrInst>(GEP);
         SmallVector<Value*, 8> Idxs;
@@ -753,8 +752,7 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV) {
           break;
       if (Idxs.size() == GEPI->getNumOperands()-1)
         Changed |= OptimizeAwayTrappingUsesOfValue(GEPI,
-                          ConstantExpr::getGetElementPtr(NewV, &Idxs[0],
-                                                        Idxs.size()));
+                          ConstantExpr::getGetElementPtr(NewV, Idxs));
       if (GEPI->use_empty()) {
         Changed = true;
         GEPI->eraseFromParent();
@@ -2410,8 +2408,8 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
            i != e; ++i)
         GEPOps.push_back(getVal(Values, *i));
       InstResult = cast<GEPOperator>(GEP)->isInBounds() ?
-          ConstantExpr::getInBoundsGetElementPtr(P, &GEPOps[0], GEPOps.size()) :
-          ConstantExpr::getGetElementPtr(P, &GEPOps[0], GEPOps.size());
+          ConstantExpr::getInBoundsGetElementPtr(P, GEPOps) :
+          ConstantExpr::getGetElementPtr(P, GEPOps);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(CurInst)) {
       if (LI->isVolatile()) return false;  // no volatile accesses.
       InstResult = ComputeLoadResult(getVal(Values, LI->getOperand(0)),

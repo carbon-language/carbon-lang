@@ -2273,16 +2273,14 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
       if (Elts.size() == 0 || !Elts[0]->getType()->isPointerTy())
         return Error(ID.Loc, "getelementptr requires pointer operand");
 
+      ArrayRef<Constant *> Indices(Elts.begin() + 1, Elts.end());
       if (!GetElementPtrInst::getIndexedType(Elts[0]->getType(),
                                              (Value**)(Elts.data() + 1),
                                              Elts.size() - 1))
         return Error(ID.Loc, "invalid indices for getelementptr");
       ID.ConstantVal = InBounds ?
-        ConstantExpr::getInBoundsGetElementPtr(Elts[0],
-                                               Elts.data() + 1,
-                                               Elts.size() - 1) :
-        ConstantExpr::getGetElementPtr(Elts[0],
-                                       Elts.data() + 1, Elts.size() - 1);
+        ConstantExpr::getInBoundsGetElementPtr(Elts[0], Indices) :
+        ConstantExpr::getGetElementPtr(Elts[0], Indices);
     } else if (Opc == Instruction::Select) {
       if (Elts.size() != 3)
         return Error(ID.Loc, "expected three operands to select");

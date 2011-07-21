@@ -171,7 +171,7 @@ protected:
   llvm::Constant *MakeConstantString(const std::string &Str,
                                      const std::string &Name="") {
     llvm::Constant *ConstStr = CGM.GetAddrOfConstantCString(Str, Name.c_str());
-    return llvm::ConstantExpr::getGetElementPtr(ConstStr, Zeros, 2);
+    return llvm::ConstantExpr::getGetElementPtr(ConstStr, Zeros);
   }
   /// Emits a linkonce_odr string, whose name is the prefix followed by the
   /// string value.  This allows the linker to combine the strings between
@@ -186,7 +186,7 @@ protected:
       ConstStr = new llvm::GlobalVariable(TheModule, value->getType(), true,
               llvm::GlobalValue::LinkOnceODRLinkage, value, prefix + Str);
     }
-    return llvm::ConstantExpr::getGetElementPtr(ConstStr, Zeros, 2);
+    return llvm::ConstantExpr::getGetElementPtr(ConstStr, Zeros);
   }
   /// Generates a global structure, initialized by the elements in the vector.
   /// The element types must match the types of the structure elements in the
@@ -918,7 +918,7 @@ llvm::Constant *CGObjCGNU::GetEHType(QualType T) {
             llvm::GlobalValue::ExternalLinkage, 0, vtableName);
   }
   llvm::Constant *Two = llvm::ConstantInt::get(IntTy, 2);
-  Vtable = llvm::ConstantExpr::getGetElementPtr(Vtable, &Two, 1);
+  Vtable = llvm::ConstantExpr::getGetElementPtr(Vtable, Two);
   Vtable = llvm::ConstantExpr::getBitCast(Vtable, PtrToInt8Ty);
 
   llvm::Constant *typeName =
@@ -1976,7 +1976,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       offsetPointerIndexes[2] = llvm::ConstantInt::get(IndexTy, i);
       // Get the correct ivar field
       llvm::Constant *offsetValue = llvm::ConstantExpr::getGetElementPtr(
-              IvarList, offsetPointerIndexes, 4);
+              IvarList, offsetPointerIndexes);
       // Get the existing variable, if one exists.
       llvm::GlobalVariable *offset = TheModule.getNamedGlobal(Name);
       if (offset) {
@@ -2129,7 +2129,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), i), Zeros[0]};
     // FIXME: We're generating redundant loads and stores here!
     llvm::Constant *SelPtr = llvm::ConstantExpr::getGetElementPtr(SelectorList,
-        Idxs, 2);
+        makeArrayRef(Idxs, 2));
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
     SelPtr = llvm::ConstantExpr::getBitCast(SelPtr, SelectorTy);

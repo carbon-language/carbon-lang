@@ -788,25 +788,40 @@ public:
   /// all elements must be Constant's.
   ///
   static Constant *getGetElementPtr(Constant *C,
-                                    Constant *const *IdxList, unsigned NumIdx,
+                                    ArrayRef<Constant *> IdxList,
                                     bool InBounds = false) {
-    return getGetElementPtr(C, (Value**)IdxList, NumIdx, InBounds);
+    return getGetElementPtr(C, makeArrayRef((Value * const *)IdxList.data(),
+                                            IdxList.size()),
+                            InBounds);
   }
   static Constant *getGetElementPtr(Constant *C,
-                                    Value *const *IdxList, unsigned NumIdx,
+                                    Constant *Idx,
+                                    bool InBounds = false) {
+    // This form of the function only exists to avoid ambiguous overload
+    // warnings about whether to convert Idx to ArrayRef<Constant *> or
+    // ArrayRef<Value *>.
+    return getGetElementPtr(C, cast<Value>(Idx), InBounds);
+  }
+  static Constant *getGetElementPtr(Constant *C,
+                                    ArrayRef<Value *> IdxList,
                                     bool InBounds = false);
 
   /// Create an "inbounds" getelementptr. See the documentation for the
   /// "inbounds" flag in LangRef.html for details.
   static Constant *getInBoundsGetElementPtr(Constant *C,
-                                            Constant *const *IdxList,
-                                            unsigned NumIdx) {
-    return getGetElementPtr(C, IdxList, NumIdx, true);
+                                            ArrayRef<Constant *> IdxList) {
+    return getGetElementPtr(C, IdxList, true);
   }
   static Constant *getInBoundsGetElementPtr(Constant *C,
-                                            Value* const *IdxList,
-                                            unsigned NumIdx) {
-    return getGetElementPtr(C, IdxList, NumIdx, true);
+                                            Constant *Idx) {
+    // This form of the function only exists to avoid ambiguous overload
+    // warnings about whether to convert Idx to ArrayRef<Constant *> or
+    // ArrayRef<Value *>.
+    return getGetElementPtr(C, Idx, true);
+  }
+  static Constant *getInBoundsGetElementPtr(Constant *C,
+                                            ArrayRef<Value *> IdxList) {
+    return getGetElementPtr(C, IdxList, true);
   }
 
   static Constant *getExtractElement(Constant *Vec, Constant *Idx);

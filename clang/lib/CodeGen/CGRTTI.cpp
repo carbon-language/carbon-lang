@@ -484,7 +484,7 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
 
   // The vtable address point is 2.
   llvm::Constant *Two = llvm::ConstantInt::get(PtrDiffTy, 2);
-  VTable = llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, &Two, 1);
+  VTable = llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Two);
   VTable = llvm::ConstantExpr::getBitCast(VTable, Int8PtrTy);
 
   Fields.push_back(VTable);

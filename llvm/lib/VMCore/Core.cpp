@@ -792,18 +792,19 @@ LLVMValueRef LLVMConstAShr(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
 
 LLVMValueRef LLVMConstGEP(LLVMValueRef ConstantVal,
                           LLVMValueRef *ConstantIndices, unsigned NumIndices) {
+  ArrayRef<Constant *> IdxList(unwrap<Constant>(ConstantIndices, NumIndices),
+                               NumIndices);
   return wrap(ConstantExpr::getGetElementPtr(unwrap<Constant>(ConstantVal),
-                                             unwrap<Constant>(ConstantIndices, 
-                                                              NumIndices),
-                                             NumIndices));
+                                             IdxList));
 }
 
 LLVMValueRef LLVMConstInBoundsGEP(LLVMValueRef ConstantVal,
                                   LLVMValueRef *ConstantIndices,
                                   unsigned NumIndices) {
   Constant* Val = unwrap<Constant>(ConstantVal);
-  Constant** Idxs = unwrap<Constant>(ConstantIndices, NumIndices);
-  return wrap(ConstantExpr::getInBoundsGetElementPtr(Val, Idxs, NumIndices));
+  ArrayRef<Constant *> IdxList(unwrap<Constant>(ConstantIndices, NumIndices),
+                               NumIndices);
+  return wrap(ConstantExpr::getInBoundsGetElementPtr(Val, IdxList));
 }
 
 LLVMValueRef LLVMConstTrunc(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {

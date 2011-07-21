@@ -964,7 +964,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
         if (!Offset->isNullValue()) {
           llvm::Type *Type = llvm::Type::getInt8PtrTy(VMContext);
           llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, Type);
-          Casted = llvm::ConstantExpr::getGetElementPtr(Casted, &Offset, 1);
+          Casted = llvm::ConstantExpr::getGetElementPtr(Casted, Offset);
           C = llvm::ConstantExpr::getBitCast(Casted, C->getType());
         }
 

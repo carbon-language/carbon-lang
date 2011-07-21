@@ -179,7 +179,7 @@ public:
 
   Constant *CreateGetElementPtr(Constant *C,
                                 ArrayRef<Constant *> IdxList) const {
-    return ConstantExpr::getGetElementPtr(C, IdxList.data(), IdxList.size());
+    return ConstantExpr::getGetElementPtr(C, IdxList);
   }
   Instruction *CreateGetElementPtr(Constant *C,
                                    ArrayRef<Value *> IdxList) const {
@@ -188,8 +188,7 @@ public:
 
   Constant *CreateInBoundsGetElementPtr(Constant *C,
                                         ArrayRef<Constant *> IdxList) const {
-    return ConstantExpr::getInBoundsGetElementPtr(C, IdxList.data(),
-                                                  IdxList.size());
+    return ConstantExpr::getInBoundsGetElementPtr(C, IdxList);
   }
   Instruction *CreateInBoundsGetElementPtr(Constant *C,
                                            ArrayRef<Value *> IdxList) const {

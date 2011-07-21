@@ -127,8 +127,7 @@ static Constant *FoldBitCast(Constant *V, Type *DestTy) {
 
         if (ElTy == DPTy->getElementType())
           // This GEP is inbounds because all indices are zero.
-          return ConstantExpr::getInBoundsGetElementPtr(V, &IdxList[0],
-                                                        IdxList.size());
+          return ConstantExpr::getInBoundsGetElementPtr(V, IdxList);
       }
 
   // Handle casts from one vector constant to another.  We know that the src 
@@ -2146,9 +2145,9 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
 /// isInBoundsIndices - Test whether the given sequence of *normalized* indices
 /// is "inbounds".
 template<typename IndexTy>
-static bool isInBoundsIndices(IndexTy const *Idxs, size_t NumIdx) {
+static bool isInBoundsIndices(ArrayRef<IndexTy> Idxs) {
   // No indices means nothing that could be out of bounds.
-  if (NumIdx == 0) return true;
+  if (Idxs.empty()) return true;
 
   // If the first index is zero, it's in bounds.
   if (cast<Constant>(Idxs[0])->isNullValue()) return true;
@@ -2157,7 +2156,7 @@ static bool isInBoundsIndices(IndexTy const *Idxs, size_t NumIdx) {
   // by the one-past-the-end rule.
   if (!cast<ConstantInt>(Idxs[0])->isOne())
     return false;
-  for (unsigned i = 1, e = NumIdx; i != e; ++i)
+  for (unsigned i = 1, e = Idxs.size(); i != e; ++i)
     if (!cast<Constant>(Idxs[i])->isNullValue())
       return false;
   return true;
@@ -2234,11 +2233,8 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
         NewIndices.append(Idxs.begin() + 1, Idxs.end());
         return (inBounds && cast<GEPOperator>(CE)->isInBounds()) ?
           ConstantExpr::getInBoundsGetElementPtr(CE->getOperand(0),
-                                                 &NewIndices[0],
-                                                 NewIndices.size()) :
-          ConstantExpr::getGetElementPtr(CE->getOperand(0),
-                                         &NewIndices[0],
-                                         NewIndices.size());
+                                                 NewIndices) :
+          ConstantExpr::getGetElementPtr(CE->getOperand(0), NewIndices);
       }
     }
 
@@ -2256,9 +2252,9 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
             if (CAT->getElementType() == SAT->getElementType())
               return inBounds ?
                 ConstantExpr::getInBoundsGetElementPtr(
-                      (Constant*)CE->getOperand(0), Idxs.data(), Idxs.size()) :
+                      (Constant*)CE->getOperand(0), Idxs) :
                 ConstantExpr::getGetElementPtr(
-                      (Constant*)CE->getOperand(0), Idxs.data(), Idxs.size());
+                      (Constant*)CE->getOperand(0), Idxs);
     }
   }
 
@@ -2314,16 +2310,15 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
     for (unsigned i = 0, e = Idxs.size(); i != e; ++i)
       if (!NewIdxs[i]) NewIdxs[i] = cast<Constant>(Idxs[i]);
     return inBounds ?
-      ConstantExpr::getInBoundsGetElementPtr(C, NewIdxs.data(),
-                                             NewIdxs.size()) :
-      ConstantExpr::getGetElementPtr(C, NewIdxs.data(), NewIdxs.size());
+      ConstantExpr::getInBoundsGetElementPtr(C, NewIdxs) :
+      ConstantExpr::getGetElementPtr(C, NewIdxs);
   }
 
   // If all indices are known integers and normalized, we can do a simple
   // check for the "inbounds" property.
   if (!Unknown && !inBounds &&
-      isa<GlobalVariable>(C) && isInBoundsIndices(Idxs.data(), Idxs.size()))
-    return ConstantExpr::getInBoundsGetElementPtr(C, Idxs.data(), Idxs.size());
+      isa<GlobalVariable>(C) && isInBoundsIndices(Idxs))
+    return ConstantExpr::getInBoundsGetElementPtr(C, Idxs);
 
   return 0;
 }

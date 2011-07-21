@@ -1180,8 +1180,8 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
   }
 
   Constant *Ptr = Operands[0];
-  markConstant(&I, ConstantExpr::getGetElementPtr(Ptr, &Operands[0]+1,
-                                                  Operands.size()-1));
+  ArrayRef<Constant *> Indices(Operands.begin() + 1, Operands.end());
+  markConstant(&I, ConstantExpr::getGetElementPtr(Ptr, Indices));
 }
 
 void SCCPSolver::visitStoreInst(StoreInst &SI) {

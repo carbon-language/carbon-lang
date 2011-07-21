@@ -1351,12 +1351,11 @@ bool BitcodeReader::ParseConstants() {
         if (!ElTy) return Error("Invalid CE_GEP record");
         Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
       }
+      ArrayRef<Constant *> Indices(Elts.begin() + 1, Elts.end());
       if (BitCode == bitc::CST_CODE_CE_INBOUNDS_GEP)
-        V = ConstantExpr::getInBoundsGetElementPtr(Elts[0], &Elts[1],
-                                                   Elts.size()-1);
+        V = ConstantExpr::getInBoundsGetElementPtr(Elts[0], Indices);
       else
-        V = ConstantExpr::getGetElementPtr(Elts[0], &Elts[1],
-                                           Elts.size()-1);
+        V = ConstantExpr::getGetElementPtr(Elts[0], Indices);
       break;
     }
     case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]

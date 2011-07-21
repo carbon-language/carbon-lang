@@ -562,7 +562,7 @@ static Constant *CastGEPIndices(ArrayRef<Constant *> Ops,
   if (!Any) return 0;
 
   Constant *C =
-    ConstantExpr::getGetElementPtr(Ops[0], &NewIdxs[0], NewIdxs.size());
+    ConstantExpr::getGetElementPtr(Ops[0], NewIdxs);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
       C = Folded;
@@ -702,7 +702,7 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
 
   // Create a GEP.
   Constant *C =
-    ConstantExpr::getGetElementPtr(Ptr, &NewIdxs[0], NewIdxs.size());
+    ConstantExpr::getGetElementPtr(Ptr, NewIdxs);
   assert(cast<PointerType>(C->getType())->getElementType() == Ty &&
          "Computed GetElementPtr has unexpected type!");
 
@@ -889,8 +889,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
     if (Constant *C = SymbolicallyEvaluateGEP(Ops, DestTy, TD))
       return C;
     
-    return ConstantExpr::getGetElementPtr(Ops[0], Ops.data() + 1,
-                                          Ops.size() - 1);
+    return ConstantExpr::getGetElementPtr(Ops[0], Ops.slice(1));
   }
 }
 

@@ -920,7 +920,7 @@ static int AnalyzeLoadFromClobberingMemInst(Type *LoadTy, Value *LoadPtr,
                                  llvm::Type::getInt8PtrTy(Src->getContext()));
   Constant *OffsetCst = 
     ConstantInt::get(Type::getInt64Ty(Src->getContext()), (unsigned)Offset);
-  Src = ConstantExpr::getGetElementPtr(Src, &OffsetCst, 1);
+  Src = ConstantExpr::getGetElementPtr(Src, OffsetCst);
   Src = ConstantExpr::getBitCast(Src, PointerType::getUnqual(LoadTy));
   if (ConstantFoldLoadFromConstPtr(Src, &TD))
     return Offset;
@@ -1081,7 +1081,7 @@ static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
                                  llvm::Type::getInt8PtrTy(Src->getContext()));
   Constant *OffsetCst = 
   ConstantInt::get(Type::getInt64Ty(Src->getContext()), (unsigned)Offset);
-  Src = ConstantExpr::getGetElementPtr(Src, &OffsetCst, 1);
+  Src = ConstantExpr::getGetElementPtr(Src, OffsetCst);
   Src = ConstantExpr::getBitCast(Src, PointerType::getUnqual(LoadTy));
   return ConstantFoldLoadFromConstPtr(Src, &TD);
 }
