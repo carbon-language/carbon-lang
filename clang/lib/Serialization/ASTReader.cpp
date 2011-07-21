@@ -1239,7 +1239,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
   if (ID == 0)
     return Success;
 
-  if (unsigned(-ID) - 2 >= TotalNumSLocEntries || ID > 0) {
+  if (unsigned(-ID) - 2 >= getTotalNumSLocs() || ID > 0) {
     Error("source location entry ID out-of-range for AST file");
     return Failure;
   }
@@ -2110,8 +2110,10 @@ ASTReader::ReadASTBlock(PerFileData &F) {
                        (const unsigned char *)F.IdentifierTableData + Record[0],
                        (const unsigned char *)F.IdentifierTableData,
                        ASTIdentifierLookupTrait(*this, F));
-        if (PP)
+        if (PP) {
           PP->getIdentifierTable().setExternalIdentifierLookup(this);
+          PP->getHeaderSearchInfo().SetExternalLookup(this);
+        }
       }
       break;
 
@@ -2240,6 +2242,8 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       // This module. Base was 2 when being compiled.
       F.SLocRemap.insert(std::make_pair(2U,
                                   static_cast<int>(F.SLocEntryBaseOffset - 2)));
+      
+      TotalNumSLocEntries += F.LocalNumSLocEntries;
       break;
     }
 
@@ -2578,20 +2582,14 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     }
   }
 
-  // Allocate space for loaded slocentries, identifiers, decls and types.
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    TotalNumSLocEntries += Chain[I]->LocalNumSLocEntries;
-  }
-  if (PP)
-    PP->getHeaderSearchInfo().SetExternalLookup(this);
-
   // Preload SLocEntries.
   for (unsigned I = 0, N = PreloadSLocEntries.size(); I != N; ++I) {
     ASTReadResult Result = ReadSLocEntryRecord(PreloadSLocEntries[I]);
     if (Result != Success)
       return Failure;
   }
-
+  PreloadSLocEntries.clear();
+  
   // Check the predefines buffers.
   if (!DisableValidation && CheckPredefinesBuffers())
     return IgnorePCH;
@@ -2789,6 +2787,7 @@ void ASTReader::setPreprocessor(Preprocessor &pp) {
   }
   
   PP->getHeaderSearchInfo().SetExternalLookup(this);
+  PP->getHeaderSearchInfo().SetExternalSource(this);
 }
 
 void ASTReader::InitializeContext(ASTContext &Ctx) {
@@ -2797,9 +2796,7 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
 
   assert(PP && "Forgot to set Preprocessor ?");
   PP->getIdentifierTable().setExternalIdentifierLookup(this);
-  PP->getHeaderSearchInfo().SetExternalLookup(this);
   PP->setExternalSource(this);
-  PP->getHeaderSearchInfo().SetExternalSource(this);
   
   // If we have an update block for the TU waiting, we have to add it before
   // deserializing the decl.
@@ -4234,7 +4231,7 @@ void ASTReader::PrintStats() {
 
   std::fprintf(stderr, "  %u stat cache hits\n", NumStatHits);
   std::fprintf(stderr, "  %u stat cache misses\n", NumStatMisses);
-  if (TotalNumSLocEntries)
+  if (unsigned TotalNumSLocEntries = getTotalNumSLocs())
     std::fprintf(stderr, "  %u/%u source location entries read (%f%%)\n",
                  NumSLocEntriesRead, TotalNumSLocEntries,
                  ((float)NumSLocEntriesRead/TotalNumSLocEntries * 100));
