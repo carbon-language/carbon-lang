@@ -11,6 +11,20 @@
 
 namespace lldb {
 
+%feature("docstring",
+"Represents a list of machine instructions.  SBFunction and SBSymbol have
+GetInstructions() methods which return SBInstructionList instances.
+
+SBInstructionList supports instruction (SBInstruction instance) iteration.
+For example (see also SBDebugger for a more complete example),
+
+def disassemble_instructions (insts):
+    for i in insts:
+        print i
+
+defines a method which takes an SBInstructionList instance and prints out
+the machine instructions in assembly format."
+) SBInstructionList;
 class SBInstructionList
 {
 public:
