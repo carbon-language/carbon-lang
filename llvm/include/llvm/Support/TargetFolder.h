@@ -130,22 +130,32 @@ public:
   // Memory Instructions
   //===--------------------------------------------------------------------===//
 
-  Constant *CreateGetElementPtr(Constant *C, Constant* const *IdxList,
-                                unsigned NumIdx) const {
-    return Fold(ConstantExpr::getGetElementPtr(C, IdxList, NumIdx));
+  Constant *CreateGetElementPtr(Constant *C,
+                                ArrayRef<Constant *> IdxList) const {
+    return Fold(ConstantExpr::getGetElementPtr(C, IdxList.data(),
+                                               IdxList.size()));
   }
-  Constant *CreateGetElementPtr(Constant *C, Value* const *IdxList,
-                                unsigned NumIdx) const {
-    return Fold(ConstantExpr::getGetElementPtr(C, IdxList, NumIdx));
+  Constant *CreateGetElementPtr(Constant *C, Constant *Idx) const {
+    // This form of the function only exists to avoid ambiguous overload
+    // warnings about whether to convert Idx to ArrayRef<Constant *> or
+    // ArrayRef<Value *>.
+    return Fold(ConstantExpr::getGetElementPtr(C, &Idx, 1));
+  }
+  Constant *CreateGetElementPtr(Constant *C,
+                                ArrayRef<Value *> IdxList) const {
+    return Fold(ConstantExpr::getGetElementPtr(C, IdxList.data(),
+                                               IdxList.size()));
   }
 
-  Constant *CreateInBoundsGetElementPtr(Constant *C, Constant* const *IdxList,
-                                        unsigned NumIdx) const {
-    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList, NumIdx));
+  Constant *CreateInBoundsGetElementPtr(Constant *C,
+                                        ArrayRef<Constant *> IdxList) const {
+    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList.data(),
+                                                       IdxList.size()));
   }
-  Constant *CreateInBoundsGetElementPtr(Constant *C, Value* const *IdxList,
-                                        unsigned NumIdx) const {
-    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList, NumIdx));
+  Constant *CreateInBoundsGetElementPtr(Constant *C,
+                                        ArrayRef<Value *> IdxList) const {
+    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList.data(),
+                                                       IdxList.size()));
   }
 
   //===--------------------------------------------------------------------===//
