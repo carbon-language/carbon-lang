@@ -152,6 +152,12 @@ public:
     return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList.data(),
                                                        IdxList.size()));
   }
+  Constant *CreateInBoundsGetElementPtr(Constant *C, Constant *Idx) const {
+    // This form of the function only exists to avoid ambiguous overload
+    // warnings about whether to convert Idx to ArrayRef<Constant *> or
+    // ArrayRef<Value *>.
+    return Fold(ConstantExpr::getInBoundsGetElementPtr(C, &Idx, 1));
+  }
   Constant *CreateInBoundsGetElementPtr(Constant *C,
                                         ArrayRef<Value *> IdxList) const {
     return Fold(ConstantExpr::getInBoundsGetElementPtr(C, IdxList.data(),
