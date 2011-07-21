@@ -59,6 +59,13 @@ class ValueAPITestCase(TestBase):
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
         frame0 = thread.GetFrameAtIndex(0)
 
+        # Get global variable 'days_of_week'.
+        list = target.FindGlobalVariables('days_of_week', 1)
+        days_of_week = list.GetValueAtIndex(0)
+        self.assertTrue(days_of_week, VALID_VARIABLE)
+        self.assertTrue(days_of_week.GetNumChildren() == 7, VALID_VARIABLE)
+        self.DebugSBValue(days_of_week)
+
         # Get variable 'str_ptr'.
         value = frame0.FindVariable('str_ptr')
         self.assertTrue(value, VALID_VARIABLE)
