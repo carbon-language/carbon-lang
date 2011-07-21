@@ -1169,6 +1169,9 @@ public:
   /// \brief Print some statistics about AST usage.
   virtual void PrintStats();
 
+  /// \brief Dump information about the AST reader to standard error.
+  void dump();
+  
   /// Return the amount of memory used by memory buffers, breaking down
   /// by heap-backed versus mmap'ed memory.
   virtual void getMemoryBufferSizes(MemoryBufferSizes &sizes) const;

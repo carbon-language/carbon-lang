@@ -4277,6 +4277,60 @@ void ASTReader::PrintStats() {
     std::fprintf(stderr, "  %u method pool misses\n", NumMethodPoolMisses);
   }
   std::fprintf(stderr, "\n");
+  dump();
+  std::fprintf(stderr, "\n");
+}
+
+template<typename Key, typename PerFileData, unsigned InitialCapacity>
+static void 
+dumpModuleIDMap(llvm::StringRef Name,
+                const ContinuousRangeMap<Key, PerFileData *, 
+                                         InitialCapacity> &Map) {
+  if (Map.begin() == Map.end())
+    return;
+  
+  typedef ContinuousRangeMap<Key, PerFileData *, InitialCapacity> MapType;
+  llvm::errs() << Name << ":\n";
+  for (typename MapType::const_iterator I = Map.begin(), IEnd = Map.end(); 
+       I != IEnd; ++I) {
+    llvm::errs() << "  " << I->first << " -> " << I->second->FileName
+      << "\n";
+  }
+}
+
+template<typename Key, typename PerFileData, typename Adjustment, 
+         unsigned InitialCapacity>
+static void 
+dumpModuleIDOffsetMap(llvm::StringRef Name,
+                      const ContinuousRangeMap<Key, 
+                                               std::pair<PerFileData *, 
+                                                         Adjustment>, 
+                                               InitialCapacity> &Map) {
+  if (Map.begin() == Map.end())
+    return;
+  
+  typedef ContinuousRangeMap<Key, std::pair<PerFileData *, Adjustment>, 
+                             InitialCapacity> MapType;
+  llvm::errs() << Name << ":\n";
+  for (typename MapType::const_iterator I = Map.begin(), IEnd = Map.end(); 
+       I != IEnd; ++I) {
+    llvm::errs() << "  " << I->first << " -> (" << I->second.first->FileName
+                 << ", " << I->second.second << ")\n";
+  }
+}
+                            
+void ASTReader::dump() {
+  llvm::errs() << "*** AST File Remapping:\n";
+  dumpModuleIDMap("Global source location entry map", GlobalSLocEntryMap);
+  dumpModuleIDOffsetMap("Global type map", GlobalTypeMap);
+  dumpModuleIDOffsetMap("Global declaration map", GlobalDeclMap);
+  dumpModuleIDOffsetMap("Global identifier map", GlobalIdentifierMap);
+  dumpModuleIDOffsetMap("Global selector map", GlobalSelectorMap);
+  dumpModuleIDOffsetMap("Global macro definition map", 
+                        GlobalMacroDefinitionMap);
+  dumpModuleIDOffsetMap("Global preprocessed entity map", 
+                        GlobalPreprocessedEntityMap);
+  
 }
 
 /// Return the amount of memory used by memory buffers, breaking down
