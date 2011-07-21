@@ -1459,6 +1459,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (types::getPreprocessedType(InputType) != types::TY_INVALID)
     AddPreprocessingOptions(D, Args, CmdArgs, Output, Inputs);
 
+  // Don't warn about "clang -c -DPIC -fPIC test.i" because libtool.m4 assumes
+  // that "The compiler can only warn and ignore the option if not recognized".
+  // When building with ccache, it will pass -D options to clang even on
+  // preprocessed inputs and configure concludes that -fPIC is not supported.
+  Args.ClaimAllArgs(options::OPT_D);
+
   // Manually translate -O to -O2 and -O4 to -O3; let clang reject
   // others.
   if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
