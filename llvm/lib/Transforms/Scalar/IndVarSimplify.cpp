@@ -1389,23 +1389,24 @@ void IndVarSimplify::SimplifyIVUsersNoRewrite(Loop *L, SCEVExpander &Rewriter) {
       pushIVUsers(CurrIV, Simplified, SimpleIVUsers);
 
       while (!SimpleIVUsers.empty()) {
-        std::pair<Instruction*, Instruction*> Use =SimpleIVUsers.pop_back_val();
+        std::pair<Instruction*, Instruction*> UseOper =
+          SimpleIVUsers.pop_back_val();
         // Bypass back edges to avoid extra work.
-        if (Use.first == CurrIV) continue;
+        if (UseOper.first == CurrIV) continue;
 
-        if (EliminateIVUser(Use.first, Use.second)) {
-          pushIVUsers(Use.second, Simplified, SimpleIVUsers);
+        if (EliminateIVUser(UseOper.first, UseOper.second)) {
+          pushIVUsers(UseOper.second, Simplified, SimpleIVUsers);
           continue;
         }
-        if (CastInst *Cast = dyn_cast<CastInst>(Use.first)) {
+        if (CastInst *Cast = dyn_cast<CastInst>(UseOper.first)) {
           bool IsSigned = Cast->getOpcode() == Instruction::SExt;
           if (IsSigned || Cast->getOpcode() == Instruction::ZExt) {
             CollectExtend(Cast, IsSigned, WI, SE, TD);
           }
           continue;
         }
-        if (isSimpleIVUser(Use.first, L, SE)) {
-          pushIVUsers(Use.first, Simplified, SimpleIVUsers);
+        if (isSimpleIVUser(UseOper.first, L, SE)) {
+          pushIVUsers(UseOper.first, Simplified, SimpleIVUsers);
         }
       }
       if (WI.WidestNativeType) {
