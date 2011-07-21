@@ -49,10 +49,10 @@ public:
 
     uint32_t        SequenceID() const { return m_seq_id; }
     static bool     ThreadIDIsValid(thread_t thread);
-    uint32_t        Resume();
-    uint32_t        Suspend();
-    uint32_t        SuspendCount() const { return m_suspendCount; }
-    bool            RestoreSuspendCount();
+    void            Resume(bool others_stopped);
+    void            Suspend();
+    bool            SetSuspendCountBeforeResume(bool others_stopped);
+    bool            RestoreSuspendCountAfterStop();
 
     bool            GetRegisterState(int flavor, bool force);
     bool            SetRegisterState(int flavor);
@@ -69,7 +69,7 @@ public:
     nub_state_t     GetState();
     void            SetState(nub_state_t state);
 
-    void            ThreadWillResume (const DNBThreadResumeAction *thread_action);
+    void            ThreadWillResume (const DNBThreadResumeAction *thread_action, bool others_stopped = false);
     bool            ShouldStop(bool &step_more);
     bool            IsStepping();
     bool            ThreadDidStop();
@@ -119,7 +119,8 @@ protected:
     PThreadMutex                    m_state_mutex;  // Multithreaded protection for m_state
     nub_break_t                     m_breakID;      // Breakpoint that this thread is (stopped)/was(running) at (NULL for none)
     struct thread_basic_info        m_basicInfo;    // Basic information for a thread used to see if a thread is valid
-    uint32_t                        m_suspendCount; // The current suspend count
+    int32_t                         m_suspendCount; // The current suspend count > 0 means we have suspended m_suspendCount times,
+                                                    //                           < 0 means we have resumed it m_suspendCount times.
     MachException::Data             m_stop_exception; // The best exception that describes why this thread is stopped
     std::auto_ptr<DNBArchProtocol>  m_arch_ap;      // Arch specific information for register state and more
     const DNBRegisterSetInfo *const m_reg_sets;      // Register set information for this thread

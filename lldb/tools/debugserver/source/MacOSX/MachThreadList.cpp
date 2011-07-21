@@ -321,10 +321,34 @@ MachThreadList::ProcessWillResume(MachProcess *process, const DNBThreadResumeAct
     // Update our thread list, because sometimes libdispatch or the kernel
     // will spawn threads while a task is suspended.
     MachThreadList::collection new_threads;
+    
+    // First figure out if we were planning on running only one thread, and if so force that thread to resume.
+    bool run_one_thread;
+    nub_thread_t solo_thread = INVALID_NUB_THREAD;
+    if (thread_actions.GetSize() > 0 
+        && thread_actions.NumActionsWithState(eStateStepping) + thread_actions.NumActionsWithState (eStateRunning) == 1)
+    {
+        run_one_thread = true;
+        const DNBThreadResumeAction *action_ptr = thread_actions.GetFirst();
+        size_t num_actions = thread_actions.GetSize();
+        for (size_t i = 0; i < num_actions; i++, action_ptr++)
+        {
+            if (action_ptr->state == eStateStepping || action_ptr->state == eStateRunning)
+            {
+                solo_thread = action_ptr->tid;
+                break;
+            }
+        }
+    }
+    else
+        run_one_thread = false;
 
     UpdateThreadList(process, true, &new_threads);
 
     DNBThreadResumeAction resume_new_threads = { -1, eStateRunning, 0, INVALID_NUB_ADDRESS };
+    // If we are planning to run only one thread, any new threads should be suspended.
+    if (run_one_thread)
+        resume_new_threads.state = eStateSuspended;
 
     const uint32_t num_new_threads = new_threads.size();
     const uint32_t num_threads = m_threads.size();
@@ -347,7 +371,10 @@ MachThreadList::ProcessWillResume(MachProcess *process, const DNBThreadResumeAct
             const DNBThreadResumeAction *thread_action = thread_actions.GetActionForThread (thread->ThreadID(), true);
             // There must always be a thread action for every thread.
             assert (thread_action);
-            thread->ThreadWillResume (thread_action);
+            bool others_stopped = false;
+            if (solo_thread == thread->ThreadID())
+                others_stopped = true;
+            thread->ThreadWillResume (thread_action, others_stopped);
         }
     }
     
