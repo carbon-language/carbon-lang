@@ -2298,8 +2298,10 @@ Decl *Sema::ActOnMethodDeclaration(
         << 0 << resultDeclType;
       return 0;
     }    
-  } else // get the type for "id".
+  } else { // get the type for "id".
     resultDeclType = Context.getObjCIdType();
+    Diag(MethodLoc, diag::warn_missing_method_return_type);
+  }
 
   ObjCMethodDecl* ObjCMethod =
     ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel, resultDeclType,
