@@ -425,6 +425,12 @@ bool ConvertToScalarInfo::MergeInVectorType(VectorType *VInTy,
   Type *ElementTy = VectorTy->getElementType();
   Type *InElementTy = VInTy->getElementType();
 
+  // If they're the same alloc size, we'll be attempting to convert between
+  // them with a vector shuffle, which requires the element types to match.
+  if (TD.getTypeAllocSize(VectorTy) == TD.getTypeAllocSize(VInTy) &&
+      ElementTy != InElementTy)
+    return false;
+
   // Do not allow mixed integer and floating-point accesses from vectors of
   // different sizes.
   if (ElementTy->isFloatingPointTy() != InElementTy->isFloatingPointTy())
