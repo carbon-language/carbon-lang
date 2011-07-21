@@ -719,7 +719,7 @@ public:
     if (DataLen > 0) {
       llvm::SmallVector<uint32_t, 4> DeclIDs;
       for (; DataLen > 0; DataLen -= 4)
-        DeclIDs.push_back(ReadUnalignedLE32(d));
+        DeclIDs.push_back(Reader.getGlobalDeclID(F, ReadUnalignedLE32(d)));
       Reader.SetGloballyVisibleDecls(II, DeclIDs);
     }
 
@@ -2062,6 +2062,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
 
     case TU_UPDATE_LEXICAL: {
       DeclContextInfo Info = {
+        &F,
         /* No visible information */ 0,
         reinterpret_cast<const KindDeclIDPair *>(BlobStart),
         BlobLen / sizeof(KindDeclIDPair)
@@ -2079,7 +2080,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
                         ASTDeclContextNameLookupTrait(*this));
       if (ID == 1 && Context) { // Is it the TU?
         DeclContextInfo Info = {
-          Table, /* No lexical inforamtion */ 0, 0
+          &F, Table, /* No lexical inforamtion */ 0, 0
         };
         DeclContextOffsets[Context->getTranslationUnitDecl()].push_back(Info);
       } else
@@ -4121,9 +4122,7 @@ ExternalLoadResult ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
       if (isKindWeWant && !isKindWeWant((Decl::Kind)ID->first))
         continue;
       
-      // FIXME: Modules need to know whether this is already mapped to a 
-      // global ID or not.
-      Decl *D = GetDecl(ID->second);
+      Decl *D = GetLocalDecl(*I->F, ID->second);
       assert(D && "Null decl in lexical decls");
       Decls.push_back(D);
     }
@@ -4158,11 +4157,9 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
     if (Pos == LookupTable->end())
       continue;
 
-    // FIXME: Modules need to know whether this is already mapped to a 
-    // global ID or not.
     ASTDeclContextNameLookupTrait::data_type Data = *Pos;
     for (; Data.first != Data.second; ++Data.first)
-      Decls.push_back(cast<NamedDecl>(GetDecl(*Data.first)));
+      Decls.push_back(GetLocalDeclAs<NamedDecl>(*I->F, *Data.first));
     break;
   }
 
@@ -4194,10 +4191,8 @@ void ASTReader::MaterializeVisibleDecls(const DeclContext *DC) {
           = *ItemI;
       ASTDeclContextNameLookupTrait::data_type Data = Val.second;
       Decls.clear();
-      // FIXME: Modules need to know whether this is already mapped to a 
-      // global ID or not.
       for (; Data.first != Data.second; ++Data.first)
-        Decls.push_back(cast<NamedDecl>(GetDecl(*Data.first)));
+        Decls.push_back(GetLocalDeclAs<NamedDecl>(*I->F, *Data.first));
       MaterializeVisibleDeclsForName(DC, Val.first, Decls);
     }
   }
@@ -4664,7 +4659,6 @@ ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
   }
 
   for (unsigned I = 0, N = DeclIDs.size(); I != N; ++I) {
-    // FIXME: Are these IDs local or global? It's not clear!
     NamedDecl *D = cast<NamedDecl>(GetDecl(DeclIDs[I]));
     if (SemaObj) {
       if (SemaObj->TUScope) {

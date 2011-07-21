@@ -514,6 +514,7 @@ private:
 
   /// \brief Information about the contents of a DeclContext.
   struct DeclContextInfo {
+    PerFileData *F;
     void *NameLookupTableData; // a ASTDeclContextNameLookupTable.
     const serialization::KindDeclIDPair *LexicalDecls;
     unsigned NumLexicalDecls;

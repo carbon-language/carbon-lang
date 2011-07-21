@@ -1688,6 +1688,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
       DC->setHasExternalLexicalStorage(Offsets.first != 0);
       DC->setHasExternalVisibleStorage(Offsets.second != 0);
       DeclContextInfo Info;
+      Info.F = Loc.F;
       if (ReadDeclContextStorage(DeclsCursor, Offsets, Info))
         return 0;
       DeclContextInfos &Infos = DeclContextOffsets[DC];
@@ -1707,6 +1708,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
       DeclContextVisibleUpdates &U = I->second;
       DeclContextInfos &Infos = DeclContextOffsets[DC];
       DeclContextInfo Info;
+      Info.F = Loc.F;
       Info.LexicalDecls = 0;
       Info.NumLexicalDecls = 0;
       for (DeclContextVisibleUpdates::iterator UI = U.begin(), UE = U.end();
