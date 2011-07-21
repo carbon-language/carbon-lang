@@ -2278,9 +2278,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
                                              (Value**)(Elts.data() + 1),
                                              Elts.size() - 1))
         return Error(ID.Loc, "invalid indices for getelementptr");
-      ID.ConstantVal = InBounds ?
-        ConstantExpr::getInBoundsGetElementPtr(Elts[0], Indices) :
-        ConstantExpr::getGetElementPtr(Elts[0], Indices);
+      ID.ConstantVal = ConstantExpr::getGetElementPtr(Elts[0], Indices,
+                                                      InBounds);
     } else if (Opc == Instruction::Select) {
       if (Elts.size() != 3)
         return Error(ID.Loc, "expected three operands to select");

@@ -1352,10 +1352,9 @@ bool BitcodeReader::ParseConstants() {
         Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
       }
       ArrayRef<Constant *> Indices(Elts.begin() + 1, Elts.end());
-      if (BitCode == bitc::CST_CODE_CE_INBOUNDS_GEP)
-        V = ConstantExpr::getInBoundsGetElementPtr(Elts[0], Indices);
-      else
-        V = ConstantExpr::getGetElementPtr(Elts[0], Indices);
+      V = ConstantExpr::getGetElementPtr(Elts[0], Indices,
+                                         BitCode ==
+                                           bitc::CST_CODE_CE_INBOUNDS_GEP);
       break;
     }
     case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]

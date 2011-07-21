@@ -2231,10 +2231,10 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
 
         NewIndices.push_back(Combined);
         NewIndices.append(Idxs.begin() + 1, Idxs.end());
-        return (inBounds && cast<GEPOperator>(CE)->isInBounds()) ?
-          ConstantExpr::getInBoundsGetElementPtr(CE->getOperand(0),
-                                                 NewIndices) :
-          ConstantExpr::getGetElementPtr(CE->getOperand(0), NewIndices);
+        return
+          ConstantExpr::getGetElementPtr(CE->getOperand(0), NewIndices,
+                                         inBounds &&
+                                           cast<GEPOperator>(CE)->isInBounds());
       }
     }
 
@@ -2250,11 +2250,9 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
           if (ArrayType *CAT =
         dyn_cast<ArrayType>(cast<PointerType>(C->getType())->getElementType()))
             if (CAT->getElementType() == SAT->getElementType())
-              return inBounds ?
-                ConstantExpr::getInBoundsGetElementPtr(
-                      (Constant*)CE->getOperand(0), Idxs) :
-                ConstantExpr::getGetElementPtr(
-                      (Constant*)CE->getOperand(0), Idxs);
+              return
+                ConstantExpr::getGetElementPtr((Constant*)CE->getOperand(0),
+                                               Idxs, inBounds);
     }
   }
 
@@ -2309,9 +2307,7 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
   if (!NewIdxs.empty()) {
     for (unsigned i = 0, e = Idxs.size(); i != e; ++i)
       if (!NewIdxs[i]) NewIdxs[i] = cast<Constant>(Idxs[i]);
-    return inBounds ?
-      ConstantExpr::getInBoundsGetElementPtr(C, NewIdxs) :
-      ConstantExpr::getGetElementPtr(C, NewIdxs);
+    return ConstantExpr::getGetElementPtr(C, NewIdxs, inBounds);
   }
 
   // If all indices are known integers and normalized, we can do a simple

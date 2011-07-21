@@ -839,13 +839,13 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
     for (unsigned i = 1, e = getNumOperands(); i != e; ++i)
       Ops[i-1] = getOperand(i);
     if (OpNo == 0)
-      return cast<GEPOperator>(this)->isInBounds() ?
-        ConstantExpr::getInBoundsGetElementPtr(Op, Ops) :
-        ConstantExpr::getGetElementPtr(Op, Ops);
+      return
+        ConstantExpr::getGetElementPtr(Op, Ops,
+                                       cast<GEPOperator>(this)->isInBounds());
     Ops[OpNo-1] = Op;
-    return cast<GEPOperator>(this)->isInBounds() ?
-      ConstantExpr::getInBoundsGetElementPtr(getOperand(0), Ops) :
-      ConstantExpr::getGetElementPtr(getOperand(0), Ops);
+    return
+      ConstantExpr::getGetElementPtr(getOperand(0), Ops,
+                                     cast<GEPOperator>(this)->isInBounds());
   }
   default:
     assert(getNumOperands() == 2 && "Must be binary operator?");
@@ -891,9 +891,9 @@ getWithOperands(ArrayRef<Constant*> Ops, Type *Ty) const {
   case Instruction::ShuffleVector:
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
   case Instruction::GetElementPtr:
-    return cast<GEPOperator>(this)->isInBounds() ?
-      ConstantExpr::getInBoundsGetElementPtr(Ops[0], Ops.slice(1)) :
-      ConstantExpr::getGetElementPtr(Ops[0], Ops.slice(1));
+    return
+      ConstantExpr::getGetElementPtr(Ops[0], Ops.slice(1),
+                                     cast<GEPOperator>(this)->isInBounds());
   case Instruction::ICmp:
   case Instruction::FCmp:
     return ConstantExpr::getCompare(getPredicate(), Ops[0], Ops[1]);
