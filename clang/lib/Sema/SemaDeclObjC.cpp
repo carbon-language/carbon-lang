@@ -2300,7 +2300,8 @@ Decl *Sema::ActOnMethodDeclaration(
     }    
   } else { // get the type for "id".
     resultDeclType = Context.getObjCIdType();
-    Diag(MethodLoc, diag::warn_missing_method_return_type);
+    Diag(MethodLoc, diag::warn_missing_method_return_type)
+      << FixItHint::CreateInsertion(SelectorStartLoc, "(id)");
   }
 
   ObjCMethodDecl* ObjCMethod =
