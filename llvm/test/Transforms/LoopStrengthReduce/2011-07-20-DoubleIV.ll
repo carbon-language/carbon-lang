@@ -25,7 +25,7 @@ for.end:
 
 ; Now check that the computed double constant is correct.
 ; CHECK: @doubleIV
-; CHECK: phi double [ 0x43F0000000000000, %entry ]
+; CHECK: phi double [ -3.900000e+01, %entry ]
 ; CHECK: br
 define void @doubleIV() nounwind {
 entry:

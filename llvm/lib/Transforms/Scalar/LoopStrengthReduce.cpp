@@ -1480,8 +1480,8 @@ void LSRInstance::OptimizeShadowIV() {
     ConstantInt *Init = dyn_cast<ConstantInt>(PH->getIncomingValue(Entry));
     if (!Init) continue;
     Constant *NewInit = ConstantFP::get(DestTy, IsSigned ?
-                                        Init->getSExtValue() :
-                                        Init->getZExtValue());
+                                        (double)Init->getSExtValue() :
+                                        (double)Init->getZExtValue());
 
     BinaryOperator *Incr =
       dyn_cast<BinaryOperator>(PH->getIncomingValue(Latch));
