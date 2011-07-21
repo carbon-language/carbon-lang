@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -pedantic -Wsign-compare %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic -Wsign-conversion %s
 void foo() {
   *(0 ? (double *)0 : (void *)0) = 0;
   // FIXME: GCC doesn't consider the the following two statements to be errors.
@@ -36,12 +36,12 @@ void foo() {
   *(0 ? (asdf) 0 : &x) = 10;
 
   unsigned long test0 = 5;
-  test0 = test0 ? (long) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
-  test0 = test0 ? (int) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
-  test0 = test0 ? (short) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
-  test0 = test0 ? test0 : (long) test0; // expected-warning {{operands of ? are integers of different signs}}
-  test0 = test0 ? test0 : (int) test0; // expected-warning {{operands of ? are integers of different signs}}
-  test0 = test0 ? test0 : (short) test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? (long) test0 : test0; // expected-warning {{operand of ? changes signedness: 'long' to 'unsigned long'}}
+  test0 = test0 ? (int) test0 : test0; // expected-warning {{operand of ? changes signedness: 'int' to 'unsigned long'}}
+  test0 = test0 ? (short) test0 : test0; // expected-warning {{operand of ? changes signedness: 'short' to 'unsigned long'}}
+  test0 = test0 ? test0 : (long) test0; // expected-warning {{operand of ? changes signedness: 'long' to 'unsigned long'}}
+  test0 = test0 ? test0 : (int) test0; // expected-warning {{operand of ? changes signedness: 'int' to 'unsigned long'}}
+  test0 = test0 ? test0 : (short) test0; // expected-warning {{operand of ? changes signedness: 'short' to 'unsigned long'}}
   test0 = test0 ? test0 : (long) 10;
   test0 = test0 ? test0 : (int) 10;
   test0 = test0 ? test0 : (short) 10;
@@ -49,12 +49,17 @@ void foo() {
   test0 = test0 ? (int) 10 : test0;
   test0 = test0 ? (short) 10 : test0;
 
+  int test1;
   enum Enum { EVal };
   test0 = test0 ? EVal : test0;
-  test0 = test0 ? EVal : (int) test0; // okay: EVal is an int
-  test0 = test0 ? // expected-warning {{operands of ? are integers of different signs}}
+  test1 = test0 ? EVal : (int) test0;
+  test0 = test0 ?
                   (unsigned) EVal
-                : (int) test0;
+                : (int) test0;  // expected-warning {{operand of ? changes signedness: 'int' to 'unsigned long'}}
+
+  test0 = test0 ? EVal : test1; // expected-warning {{operand of ? changes signedness: 'int' to 'unsigned long'}}
+  test0 = test0 ? test1 : EVal; // expected-warning {{operand of ? changes signedness: 'int' to 'unsigned long'}}
+
 }
 
 int Postgresql() {

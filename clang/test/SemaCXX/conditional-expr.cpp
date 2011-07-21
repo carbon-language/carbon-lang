@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fsyntax-only -verify -std=c++0x -Wsign-compare %s
+// RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fsyntax-only -verify -std=c++0x -Wsign-conversion %s
 
 // C++ rules for ?: are a lot stricter than C rules, and have to take into
 // account more conversion options.
@@ -180,12 +180,12 @@ void test()
   
 
   unsigned long test0 = 5;
-  test0 = test0 ? (long) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
-  test0 = test0 ? (int) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
-  test0 = test0 ? (short) test0 : test0; // expected-warning {{operands of ? are integers of different signs}}
-  test0 = test0 ? test0 : (long) test0; // expected-warning {{operands of ? are integers of different signs}}
-  test0 = test0 ? test0 : (int) test0; // expected-warning {{operands of ? are integers of different signs}}
-  test0 = test0 ? test0 : (short) test0; // expected-warning {{operands of ? are integers of different signs}}
+  test0 = test0 ? (long) test0 : test0; // expected-warning {{operand of ? changes signedness: 'long' to 'unsigned long'}}
+  test0 = test0 ? (int) test0 : test0; // expected-warning {{operand of ? changes signedness: 'int' to 'unsigned long'}}
+  test0 = test0 ? (short) test0 : test0; // expected-warning {{operand of ? changes signedness: 'short' to 'unsigned long'}}
+  test0 = test0 ? test0 : (long) test0; // expected-warning {{operand of ? changes signedness: 'long' to 'unsigned long'}}
+  test0 = test0 ? test0 : (int) test0; // expected-warning {{operand of ? changes signedness: 'int' to 'unsigned long'}}
+  test0 = test0 ? test0 : (short) test0; // expected-warning {{operand of ? changes signedness: 'short' to 'unsigned long'}}
   test0 = test0 ? test0 : (long) 10;
   test0 = test0 ? test0 : (int) 10;
   test0 = test0 ? test0 : (short) 10;
@@ -193,8 +193,15 @@ void test()
   test0 = test0 ? (int) 10 : test0;
   test0 = test0 ? (short) 10 : test0;
 
+  int test1;
   test0 = test0 ? EVal : test0;
-  test0 = test0 ? EVal : (int) test0;
+  test1 = test0 ? EVal : (int) test0;
+
+  test0 = test0 ? EVal : test1; // expected-warning {{operand of ? changes signedness: 'int' to 'unsigned long'}}
+  test0 = test0 ? test1 : EVal; // expected-warning {{operand of ? changes signedness: 'int' to 'unsigned long'}}
+
+  test1 = test0 ? EVal : (int) test0;
+  test1 = test0 ? (int) test0 : EVal;
 
   // Note the thing that this does not test: since DR446, various situations
   // *must* create a separate temporary copy of class objects. This can only

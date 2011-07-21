@@ -3279,29 +3279,16 @@ void CheckConditionalOperator(Sema &S, ConditionalOperator *E, QualType T) {
                                  CC))
     return;
 
-  // ...and -Wsign-compare isn't...
-  if (!S.Diags.getDiagnosticLevel(diag::warn_mixed_sign_conditional, CC))
-    return;
-
   // ...then check whether it would have warned about either of the
   // candidates for a signedness conversion to the condition type.
-  if (E->getType() != T) {
-    Suspicious = false;
-    CheckImplicitConversion(S, E->getTrueExpr()->IgnoreParenImpCasts(),
+  if (E->getType() == T) return;
+ 
+  Suspicious = false;
+  CheckImplicitConversion(S, E->getTrueExpr()->IgnoreParenImpCasts(),
+                          E->getType(), CC, &Suspicious);
+  if (!Suspicious)
+    CheckImplicitConversion(S, E->getFalseExpr()->IgnoreParenImpCasts(),
                             E->getType(), CC, &Suspicious);
-    if (!Suspicious)
-      CheckImplicitConversion(S, E->getFalseExpr()->IgnoreParenImpCasts(),
-                              E->getType(), CC, &Suspicious);
-    if (!Suspicious)
-      return;
-  }
-
-  // If so, emit a diagnostic under -Wsign-compare.
-  Expr *lex = E->getTrueExpr()->IgnoreParenImpCasts();
-  Expr *rex = E->getFalseExpr()->IgnoreParenImpCasts();
-  S.Diag(E->getQuestionLoc(), diag::warn_mixed_sign_conditional)
-    << lex->getType() << rex->getType()
-    << lex->getSourceRange() << rex->getSourceRange();
 }
 
 /// AnalyzeImplicitConversions - Find and report any interesting

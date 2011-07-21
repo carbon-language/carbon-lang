@@ -212,3 +212,14 @@ static const unsigned int kMax = 0;
 int pr7536() {
   return (kMax > 0);
 }
+
+// -Wsign-compare should not warn when ?: operands have different signedness.
+// This will be caught by -Wsign-conversion
+void test3() {
+  unsigned long a;
+  signed long b;
+  (void) (true ? a : b);
+  (void) (true ? (unsigned int)a : (signed int)b);
+  (void) (true ? b : a);
+  (void) (true ? (unsigned char)b : (signed char)a);
+}
