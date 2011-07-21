@@ -28,7 +28,7 @@ namespace test1 {
     int d1a = 1 ? i : Foo<bool>::D; // expected-warning {{test1::Foo<bool>::<anonymous enum at }}
     int d1b = 1 ? i : Foo<bool>::D; // expected-warning {{warn-sign-conversion.cpp:13:5>' to 'int'}}
     int d2a = 1 ? Foo<bool>::D : i; // expected-warning {{operand of ? changes signedness: 'test1::Foo<bool>::<anonymous enum at }}
-    int d2b = 1 ? Foo<bool>::D : i; // expected-warning {{SemaCXX/warn-sign-conversion.cpp:13:5>' to 'int'}}
+    int d2b = 1 ? Foo<bool>::D : i; // expected-warning {{warn-sign-conversion.cpp:13:5>' to 'int'}}
     int d3a = 1 ? B : Foo<bool>::D; // expected-warning {{operand of ? changes signedness: 'test1::Foo<bool>::<anonymous enum at }}
     int d3b = 1 ? B : Foo<bool>::D; // expected-warning {{warn-sign-conversion.cpp:13:5>' to 'int'}}
     int d4a = 1 ? Foo<bool>::D : B; // expected-warning {{operand of ? changes signedness: 'test1::Foo<bool>::<anonymous enum at }}
