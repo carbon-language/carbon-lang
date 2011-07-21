@@ -47,42 +47,24 @@ void PreprocessingRecord::MaybeLoadPreallocatedEntities() const {
 
 PreprocessingRecord::PreprocessingRecord(bool IncludeNestedMacroExpansions)
   : IncludeNestedMacroExpansions(IncludeNestedMacroExpansions),
-    ExternalSource(0), NumPreallocatedEntities(0), 
-    LoadedPreallocatedEntities(false)
+    ExternalSource(0), LoadedPreallocatedEntities(false)
 {
 }
 
 PreprocessingRecord::iterator 
 PreprocessingRecord::begin(bool OnlyLocalEntities) {
   if (OnlyLocalEntities)
-    return PreprocessedEntities.begin() + NumPreallocatedEntities;
+    return iterator(this, 0);
   
   MaybeLoadPreallocatedEntities();
-  return PreprocessedEntities.begin();
+  return iterator(this, -(int)LoadedPreprocessedEntities.size());
 }
 
 PreprocessingRecord::iterator PreprocessingRecord::end(bool OnlyLocalEntities) {
   if (!OnlyLocalEntities)
     MaybeLoadPreallocatedEntities();
   
-  return PreprocessedEntities.end();
-}
-
-PreprocessingRecord::const_iterator 
-PreprocessingRecord::begin(bool OnlyLocalEntities) const {
-  if (OnlyLocalEntities)
-    return PreprocessedEntities.begin() + NumPreallocatedEntities;
-  
-  MaybeLoadPreallocatedEntities();
-  return PreprocessedEntities.begin();
-}
-
-PreprocessingRecord::const_iterator 
-PreprocessingRecord::end(bool OnlyLocalEntities) const {
-  if (!OnlyLocalEntities)
-    MaybeLoadPreallocatedEntities();
-  
-  return PreprocessedEntities.end();
+  return iterator(this, PreprocessedEntities.size());
 }
 
 void PreprocessingRecord::addPreprocessedEntity(PreprocessedEntity *Entity) {
@@ -90,20 +72,25 @@ void PreprocessingRecord::addPreprocessedEntity(PreprocessedEntity *Entity) {
 }
 
 void PreprocessingRecord::SetExternalSource(
-                                    ExternalPreprocessingRecordSource &Source,
-                                            unsigned NumPreallocatedEntities) {
+                                    ExternalPreprocessingRecordSource &Source) {
   assert(!ExternalSource &&
          "Preprocessing record already has an external source");
   ExternalSource = &Source;
-  this->NumPreallocatedEntities = NumPreallocatedEntities;
-  PreprocessedEntities.insert(PreprocessedEntities.begin(), 
-                              NumPreallocatedEntities, 0);
 }
 
-void PreprocessingRecord::SetPreallocatedEntity(unsigned Index, 
-                                                PreprocessedEntity *Entity) {
-  assert(Index < NumPreallocatedEntities &&"Out-of-bounds preallocated entity");
-  PreprocessedEntities[Index] = Entity;
+unsigned PreprocessingRecord::allocateLoadedEntities(unsigned NumEntities) {
+  unsigned Result = LoadedPreprocessedEntities.size();
+  LoadedPreprocessedEntities.resize(LoadedPreprocessedEntities.size() 
+                                    + NumEntities);
+  return Result;
+}
+
+void 
+PreprocessingRecord::setLoadedPreallocatedEntity(unsigned Index, 
+                                                 PreprocessedEntity *Entity) {
+  assert(Index < LoadedPreprocessedEntities.size() &&
+         "Out-of-bounds preallocated entity");
+  LoadedPreprocessedEntities[Index] = Entity;
 }
 
 void PreprocessingRecord::RegisterMacroDefinition(MacroInfo *Macro, 

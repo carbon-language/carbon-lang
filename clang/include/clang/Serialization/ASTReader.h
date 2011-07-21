@@ -604,7 +604,15 @@ private:
   /// have not yet been deserialized to the global offset where the macro
   /// record resides.
   llvm::DenseMap<IdentifierInfo *, uint64_t> UnreadMacroRecordOffsets;
-      
+
+  typedef ContinuousRangeMap<unsigned, std::pair<PerFileData *, int>, 4> 
+    GlobalPreprocessedEntityMapType;
+  
+  /// \brief Mapping from global preprocessing entity IDs to the module in
+  /// which the preprocessed entity resides along with the offset that should be
+  /// added to the global preprocessing entitiy ID to produce a local ID.
+  GlobalPreprocessedEntityMapType GlobalPreprocessedEntityMap;
+  
   /// \name CodeGen-relevant special data
   /// \brief Fields containing data that is relevant to CodeGen.
   //@{
@@ -1043,6 +1051,16 @@ public:
     return static_cast<unsigned>(SelectorsLoaded.size());
   }
 
+  /// \brief Returns the number of preprocessed entities known to the AST
+  /// reader.
+  unsigned getTotalNumPreprocessedEntities() const {
+    unsigned Result = 0;
+    for (unsigned I = 0, N = Chain.size(); I != N; ++I)
+      Result += Chain[I]->NumPreallocatedPreprocessingEntities;
+    
+    return Result;
+  }
+  
   /// \brief Returns the number of macro definitions found in the chain.
   unsigned getTotalNumMacroDefinitions() const {
     return static_cast<unsigned>(MacroDefinitionsLoaded.size());

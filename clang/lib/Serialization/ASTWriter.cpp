@@ -1801,7 +1801,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
     InclusionAbbrev = Stream.EmitAbbrev(Abbrev);
   }
   
-  unsigned IndexBase = Chain ? PPRec.getNumPreallocatedEntities() : 0;
+  unsigned IndexBase = Chain ? PPRec.getNumLoadedPreprocessedEntities() : 0;
   RecordData Record;
   for (PreprocessingRecord::iterator E = PPRec.begin(Chain),
                                   EEnd = PPRec.end(Chain);

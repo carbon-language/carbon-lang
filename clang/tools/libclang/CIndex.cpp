@@ -267,8 +267,14 @@ public:
 
   bool Visit(CXCursor Cursor, bool CheckedRegionOfInterest = false);
   
-  std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
-    getPreprocessedEntities();
+  bool visitPreprocessedEntitiesInRegion();
+
+  template<typename InputIterator>
+  bool visitPreprocessedEntitiesInRegion(InputIterator First, 
+                                         InputIterator Last);
+
+  template<typename InputIterator>
+  bool visitPreprocessedEntities(InputIterator First, InputIterator Last);
 
   bool VisitChildren(CXCursor Parent);
 
@@ -419,8 +425,7 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
   return false;
 }
 
-std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
-CursorVisitor::getPreprocessedEntities() {
+bool CursorVisitor::visitPreprocessedEntitiesInRegion() {
   PreprocessingRecord &PPRec
     = *AU->getPreprocessor().getPreprocessingRecord();
   
@@ -441,18 +446,20 @@ CursorVisitor::getPreprocessedEntities() {
   }
   
   PreprocessingRecord::iterator StartEntity, EndEntity;
-  if (OnlyLocalDecls) {
-    StartEntity = AU->pp_entity_begin();
-    EndEntity = AU->pp_entity_end();
-  } else {
-    StartEntity = PPRec.begin();
-    EndEntity = PPRec.end();
-  }
-  
+  if (OnlyLocalDecls && AU->pp_entity_begin() != AU->pp_entity_end())
+    return visitPreprocessedEntitiesInRegion(AU->pp_entity_begin(), 
+                                      AU->pp_entity_end());
+  else
+    return visitPreprocessedEntitiesInRegion(PPRec.begin(), PPRec.end());  
+}
+
+template<typename InputIterator>
+bool CursorVisitor::visitPreprocessedEntitiesInRegion(InputIterator First,
+                                                      InputIterator Last) {
   // There is no region of interest; we have to walk everything.
   if (RegionOfInterest.isInvalid())
-    return std::make_pair(StartEntity, EndEntity);
-
+    return visitPreprocessedEntities(First, Last);
+  
   // Find the file in which the region of interest lands.
   SourceManager &SM = AU->getSourceManager();
   std::pair<FileID, unsigned> Begin
@@ -462,22 +469,52 @@ CursorVisitor::getPreprocessedEntities() {
   
   // The region of interest spans files; we have to walk everything.
   if (Begin.first != End.first)
-    return std::make_pair(StartEntity, EndEntity);
-    
+    return visitPreprocessedEntities(First, Last);
+  
   ASTUnit::PreprocessedEntitiesByFileMap &ByFileMap
-    = AU->getPreprocessedEntitiesByFile();
+  = AU->getPreprocessedEntitiesByFile();
   if (ByFileMap.empty()) {
     // Build the mapping from files to sets of preprocessed entities.
-    for (PreprocessingRecord::iterator E = StartEntity; E != EndEntity; ++E) {
+    for (; First != Last; ++First) {
       std::pair<FileID, unsigned> P
-        = SM.getDecomposedInstantiationLoc((*E)->getSourceRange().getBegin());
+        = SM.getDecomposedInstantiationLoc(
+                                        (*First)->getSourceRange().getBegin());
       
-      ByFileMap[P.first].push_back(*E);
+      ByFileMap[P.first].push_back(*First);
+    }
+  }
+  
+  return visitPreprocessedEntities(ByFileMap[Begin.first].begin(), 
+                                   ByFileMap[Begin.first].end());
+}
+
+template<typename InputIterator>
+bool CursorVisitor::visitPreprocessedEntities(InputIterator First,
+                                              InputIterator Last) {
+  for (; First != Last; ++First) {
+    if (MacroExpansion *ME = dyn_cast<MacroExpansion>(*First)) {
+      if (Visit(MakeMacroExpansionCursor(ME, TU)))
+        return true;
+      
+      continue;
+    }
+    
+    if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*First)) {
+      if (Visit(MakeMacroDefinitionCursor(MD, TU)))
+        return true;
+      
+      continue;
+    }
+    
+    if (InclusionDirective *ID = dyn_cast<InclusionDirective>(*First)) {
+      if (Visit(MakeInclusionDirectiveCursor(ID, TU)))
+        return true;
+      
+      continue;
     }
   }
 
-  return std::make_pair(ByFileMap[Begin.first].begin(), 
-                        ByFileMap[Begin.first].end());
+  return false;
 }
 
 /// \brief Visit the children of the given cursor.
@@ -539,33 +576,8 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
       }
 
       // Walk the preprocessing record.
-      if (CXXUnit->getPreprocessor().getPreprocessingRecord()) {
-        // FIXME: Once we have the ability to deserialize a preprocessing record,
-        // do so.
-        PreprocessingRecord::iterator E, EEnd;
-        for (llvm::tie(E, EEnd) = getPreprocessedEntities(); E != EEnd; ++E) {
-          if (MacroExpansion *ME = dyn_cast<MacroExpansion>(*E)) {
-            if (Visit(MakeMacroExpansionCursor(ME, tu)))
-              return true;
-            
-            continue;
-          }
-          
-          if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
-            if (Visit(MakeMacroDefinitionCursor(MD, tu)))
-              return true;
-            
-            continue;
-          }
-          
-          if (InclusionDirective *ID = dyn_cast<InclusionDirective>(*E)) {
-            if (Visit(MakeInclusionDirectiveCursor(ID, tu)))
-              return true;
-            
-            continue;
-          }
-        }
-      }
+      if (CXXUnit->getPreprocessor().getPreprocessingRecord())
+        visitPreprocessedEntitiesInRegion();
     }
     
     return false;

@@ -1545,10 +1545,6 @@ ASTUnit::pp_entity_iterator ASTUnit::pp_entity_begin() {
       PreprocessedEntities.empty())
     RealizePreprocessedEntitiesFromPreamble();
   
-  if (PreprocessedEntities.empty())
-    if (PreprocessingRecord *PPRec = PP->getPreprocessingRecord())
-      return PPRec->begin(true);
-  
   return PreprocessedEntities.begin();
 }
 
@@ -1556,11 +1552,7 @@ ASTUnit::pp_entity_iterator ASTUnit::pp_entity_end() {
   if (!PreprocessedEntitiesInPreamble.empty() &&
       PreprocessedEntities.empty())
     RealizePreprocessedEntitiesFromPreamble();
-  
-  if (PreprocessedEntities.empty())
-    if (PreprocessingRecord *PPRec = PP->getPreprocessingRecord())
-      return PPRec->end(true);
-  
+    
   return PreprocessedEntities.end();
 }
 

@@ -269,15 +269,18 @@ namespace clang {
     /// were seen.
     std::vector<PreprocessedEntity *> PreprocessedEntities;
     
+    /// \brief The set of preprocessed entities in this record that have been
+    /// loaded from external sources.
+    ///
+    /// The entries in this vector are loaded lazily from the external source,
+    /// and are referenced by the iterator using negative indices.
+    std::vector<PreprocessedEntity *> LoadedPreprocessedEntities;
+    
     /// \brief Mapping from MacroInfo structures to their definitions.
     llvm::DenseMap<const MacroInfo *, MacroDefinition *> MacroDefinitions;
 
     /// \brief External source of preprocessed entities.
     ExternalPreprocessingRecordSource *ExternalSource;
-    
-    /// \brief The number of preallocated entities (that are known to the
-    /// external source).
-    unsigned NumPreallocatedEntities;
     
     /// \brief Whether we have already loaded all of the preallocated entities.
     mutable bool LoadedPreallocatedEntities;
@@ -285,7 +288,7 @@ namespace clang {
     void MaybeLoadPreallocatedEntities() const ;
     
   public:
-    /// \brief Construct 
+    /// \brief Construct a new preprocessing record.
     explicit PreprocessingRecord(bool IncludeNestedMacroExpansions);
     
     /// \brief Allocate memory in the preprocessing record.
@@ -301,47 +304,153 @@ namespace clang {
     }
     
     // Iteration over the preprocessed entities.
-    typedef std::vector<PreprocessedEntity *>::iterator iterator;
-    typedef std::vector<PreprocessedEntity *>::const_iterator const_iterator;
+    class iterator {
+      PreprocessingRecord *Self;
+      
+      /// \brief Position within the preprocessed entity sequence.
+      ///
+      /// In a complete iteration, the Position field walks the range [-M, N),
+      /// where negative values are used to indicate preprocessed entities
+      /// loaded from the external source while non-negative values are used to
+      /// indicate preprocessed entities introduced by the current preprocessor.
+      /// However, to provide iteration in source order (for, e.g., chained
+      /// precompiled headers), dereferencing the iterator flips the negative
+      /// values (corresponding to loaded entities), so that position -M 
+      /// corresponds to element 0 in the loaded entities vector, position -M+1
+      /// corresponds to element 1 in the loaded entities vector, etc. This
+      /// gives us a reasonably efficient, source-order walk.
+      int Position;
+      
+    public:
+      typedef PreprocessedEntity *value_type;
+      typedef value_type&         reference;
+      typedef value_type*         pointer;
+      typedef std::random_access_iterator_tag iterator_category;
+      typedef int                 difference_type;
+      
+      iterator() : Self(0), Position(0) { }
+      
+      iterator(PreprocessingRecord *Self, int Position) 
+        : Self(Self), Position(Position) { }
+      
+      reference operator*() const {
+        if (Position < 0)
+          return Self->LoadedPreprocessedEntities.end()[Position];
+        return Self->PreprocessedEntities[Position];
+      }
+    
+      pointer operator->() const {
+        if (Position < 0)
+          return &Self->LoadedPreprocessedEntities.end()[Position];
+        
+        return &Self->PreprocessedEntities[Position];        
+      }
+      
+      reference operator[](difference_type D) {
+        return *(*this + D);
+      }
+      
+      iterator &operator++() {
+        ++Position;
+        return *this;
+      }
+      
+      iterator operator++(int) {
+        iterator Prev(*this);
+        ++Position;
+        return Prev;
+      }
+
+      iterator &operator--() {
+        --Position;
+        return *this;
+      }
+      
+      iterator operator--(int) {
+        iterator Prev(*this);
+        --Position;
+        return Prev;
+      }
+
+      friend bool operator==(const iterator &X, const iterator &Y) {
+        return X.Position == Y.Position;
+      }
+
+      friend bool operator!=(const iterator &X, const iterator &Y) {
+        return X.Position != Y.Position;
+      }
+      
+      friend iterator& operator+=(iterator &X, difference_type D) {
+        X.Position += D;
+        return X;
+      }
+
+      friend iterator& operator-=(iterator &X, difference_type D) {
+        X.Position -= D;
+        return X;
+      }
+
+      friend iterator operator+(iterator X, difference_type D) {
+        X.Position += D;
+        return X;
+      }
+
+      friend iterator operator+(difference_type D, iterator X) {
+        X.Position += D;
+        return X;
+      }
+
+      friend difference_type operator-(const iterator &X, const iterator &Y) {
+        return X.Position - Y.Position;
+      }
+    };
+    friend class iterator;
+    
     iterator begin(bool OnlyLocalEntities = false);
     iterator end(bool OnlyLocalEntities = false);
-    const_iterator begin(bool OnlyLocalEntities = false) const;
-    const_iterator end(bool OnlyLocalEntities = false) const;
 
     /// \brief Add a new preprocessed entity to this record.
     void addPreprocessedEntity(PreprocessedEntity *Entity);
     
     /// \brief Set the external source for preprocessed entities.
-    void SetExternalSource(ExternalPreprocessingRecordSource &Source,
-                           unsigned NumPreallocatedEntities);
+    void SetExternalSource(ExternalPreprocessingRecordSource &Source);
 
     /// \brief Retrieve the external source for preprocessed entities.
     ExternalPreprocessingRecordSource *getExternalSource() const {
       return ExternalSource;
     }
     
-    unsigned getNumPreallocatedEntities() const {
-      return NumPreallocatedEntities;
-    }
-    
+    /// \brief Allocate space for a new set of loaded preprocessed entities.
+    ///
+    /// \returns The index into the set of loaded preprocessed entities, which
+    /// corresponds to the first newly-allocated entity.
+    unsigned allocateLoadedEntities(unsigned NumEntities);
+
     /// \brief Set the preallocated entry at the given index to the given
-    /// preprocessed entity.
-    void SetPreallocatedEntity(unsigned Index, PreprocessedEntity *Entity);
+    /// preprocessed entity, which was loaded from the external source.
+    void setLoadedPreallocatedEntity(unsigned Index, 
+                                     PreprocessedEntity *Entity);
 
     /// \brief Register a new macro definition.
     void RegisterMacroDefinition(MacroInfo *Macro, MacroDefinition *MD);
                            
-    /// \brief Retrieve the preprocessed entity at the given index.
-    PreprocessedEntity *getPreprocessedEntity(unsigned Index) {
-      assert(Index < PreprocessedEntities.size() &&
-             "Out-of-bounds preprocessed entity");
-      return PreprocessedEntities[Index];
+    /// \brief Retrieve the loaded preprocessed entity at the given index.
+    PreprocessedEntity *getLoadedPreprocessedEntity(unsigned Index) {
+      assert(Index < LoadedPreprocessedEntities.size() && 
+             "Out-of bounds loaded preprocessed entity");
+      return LoadedPreprocessedEntities[Index];
+    }
+    
+    /// \brief Determine the number of preprocessed entities that were
+    /// loaded (or can be loaded) from an external source.
+    unsigned getNumLoadedPreprocessedEntities() const {
+      return LoadedPreprocessedEntities.size();
     }
     
     /// \brief Retrieve the macro definition that corresponds to the given
     /// \c MacroInfo.
     MacroDefinition *findMacroDefinition(const MacroInfo *MI);
-    
+        
     virtual void MacroExpands(const Token &Id, const MacroInfo* MI);
     virtual void MacroDefined(const Token &Id, const MacroInfo *MI);
     virtual void MacroUndefined(const Token &Id, const MacroInfo *MI);
