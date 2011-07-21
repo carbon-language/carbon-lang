@@ -1241,6 +1241,59 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SBC
+@------------------------------------------------------------------------------
+        sbc r4, r5, #0xf000
+        sbc r4, r5, r6
+        sbc r4, r5, r6, lsl #5
+        sbc r4, r5, r6, lsr #5
+        sbc r4, r5, r6, lsr #5
+        sbc r4, r5, r6, asr #5
+        sbc r4, r5, r6, ror #5
+        sbc r6, r7, r8, lsl r9
+        sbc r6, r7, r8, lsr r9
+        sbc r6, r7, r8, asr r9
+        sbc r6, r7, r8, ror r9
+
+        @ destination register is optional
+        sbc r5, #0xf000
+        sbc r4, r5
+        sbc r4, r5, lsl #5
+        sbc r4, r5, lsr #5
+        sbc r4, r5, lsr #5
+        sbc r4, r5, asr #5
+        sbc r4, r5, ror #5
+        sbc r6, r7, lsl r9
+        sbc r6, r7, lsr r9
+        sbc r6, r7, asr r9
+        sbc r6, r7, ror r9
+
+@ CHECK: sbc	r4, r5, #61440          @ encoding: [0x0f,0x4a,0xc5,0xe2]
+@ CHECK: sbc	r4, r5, r6              @ encoding: [0x06,0x40,0xc5,0xe0]
+@ CHECK: sbc	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0xc5,0xe0]
+@ CHECK: sbc	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0xc5,0xe0]
+@ CHECK: sbc	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0xc5,0xe0]
+@ CHECK: sbc	r4, r5, r6, asr #5      @ encoding: [0xc6,0x42,0xc5,0xe0]
+@ CHECK: sbc	r4, r5, r6, ror #5      @ encoding: [0xe6,0x42,0xc5,0xe0]
+@ CHECK: sbc	r6, r7, r8, lsl r9      @ encoding: [0x18,0x69,0xc7,0xe0]
+@ CHECK: sbc	r6, r7, r8, lsr r9      @ encoding: [0x38,0x69,0xc7,0xe0]
+@ CHECK: sbc	r6, r7, r8, asr r9      @ encoding: [0x58,0x69,0xc7,0xe0]
+@ CHECK: sbc	r6, r7, r8, ror r9      @ encoding: [0x78,0x69,0xc7,0xe0]
+
+@ CHECK: sbc	r5, r5, #61440          @ encoding: [0x0f,0x5a,0xc5,0xe2]
+@ CHECK: sbc	r4, r4, r5              @ encoding: [0x05,0x40,0xc4,0xe0]
+@ CHECK: sbc	r4, r4, r5, lsl #5      @ encoding: [0x85,0x42,0xc4,0xe0]
+@ CHECK: sbc	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0xc4,0xe0]
+@ CHECK: sbc	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0xc4,0xe0]
+@ CHECK: sbc	r4, r4, r5, asr #5      @ encoding: [0xc5,0x42,0xc4,0xe0]
+@ CHECK: sbc	r4, r4, r5, ror #5      @ encoding: [0xe5,0x42,0xc4,0xe0]
+@ CHECK: sbc	r6, r6, r7, lsl r9      @ encoding: [0x17,0x69,0xc6,0xe0]
+@ CHECK: sbc	r6, r6, r7, lsr r9      @ encoding: [0x37,0x69,0xc6,0xe0]
+@ CHECK: sbc	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0xc6,0xe0]
+@ CHECK: sbc	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0xc6,0xe0]
+
+
+@------------------------------------------------------------------------------
 @ STM*
 @------------------------------------------------------------------------------
         stm       r2, {r1,r3-r6,sp}

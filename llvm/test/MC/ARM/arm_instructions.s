@@ -39,9 +39,6 @@
 @ CHECK: adc	r1, r2, r3 @ encoding: [0x03,0x10,0xa2,0xe0]
         adc r1,r2,r3
 
-@ CHECK: sbc	r1, r2, r3 @ encoding: [0x03,0x10,0xc2,0xe0]
-        sbc r1,r2,r3
-
 @ CHECK: bic	r1, r2, r3 @ encoding: [0x03,0x10,0xc2,0xe1]
         bic r1,r2,r3
 
