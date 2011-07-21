@@ -969,6 +969,27 @@ _func:
 @ CHECK: orrslt	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x96,0xb1]
 @ CHECK: orrsgt	r4, r4, r5, rrx         @ encoding: [0x65,0x40,0x94,0xc1]
 
+@------------------------------------------------------------------------------
+@ PKH
+@------------------------------------------------------------------------------
+        pkhbt r2, r2, r3
+        pkhbt r2, r2, r3, lsl #31
+        pkhbt r2, r2, r3, lsl #0
+        pkhbt r2, r2, r3, lsl #15
+
+        pkhtb r2, r2, r3
+        pkhtb r2, r2, r3, asr #31
+        pkhtb r2, r2, r3, asr #15
+
+@ CHECK: pkhbt	r2, r2, r3              @ encoding: [0x13,0x20,0x82,0xe6]
+@ CHECK: pkhbt	r2, r2, r3, lsl #31     @ encoding: [0x93,0x2f,0x82,0xe6]
+@ CHECK: pkhbt	r2, r2, r3              @ encoding: [0x13,0x20,0x82,0xe6]
+@ CHECK: pkhbt	r2, r2, r3, lsl #15     @ encoding: [0x93,0x27,0x82,0xe6]
+
+@ CHECK: pkhbt	r2, r2, r3              @ encoding: [0x13,0x20,0x82,0xe6]
+@ CHECK: pkhtb	r2, r2, r3, asr #31     @ encoding: [0xd3,0x2f,0x82,0xe6]
+@ CHECK: pkhtb	r2, r2, r3, asr #15     @ encoding: [0xd3,0x27,0x82,0xe6]
+
 
 @------------------------------------------------------------------------------
 @ STM*

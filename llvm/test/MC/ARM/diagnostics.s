@@ -117,3 +117,30 @@
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS: error: invalid operand for instruction
+
+        @ Shifter operand validation for PKH instructions.
+        pkhbt r2, r2, r3, lsl #-1
+        pkhbt r2, r2, r3, lsl #32
+        pkhtb r2, r2, r3, asr #0
+        pkhtb r2, r2, r3, asr #33
+        pkhbt r2, r2, r3, asr #3
+        pkhtb r2, r2, r3, lsl #3
+
+@ CHECK: error: immediate value out of range
+@ CHECK:         pkhbt r2, r2, r3, lsl #-1
+@ CHECK:                                ^
+@ CHECK: error: immediate value out of range
+@ CHECK:         pkhbt r2, r2, r3, lsl #32
+@ CHECK:                                ^
+@ CHECK: error: immediate value out of range
+@ CHECK:         pkhtb r2, r2, r3, asr #0
+@ CHECK:                                ^
+@ CHECK: error: immediate value out of range
+@ CHECK:         pkhtb r2, r2, r3, asr #33
+@ CHECK:                                ^
+@ CHECK: error: lsl operand expected.
+@ CHECK:         pkhbt r2, r2, r3, asr #3
+@ CHECK:                           ^
+@ CHECK: error: asr operand expected.
+@ CHECK:         pkhtb r2, r2, r3, lsl #3
+@ CHECK:                           ^
