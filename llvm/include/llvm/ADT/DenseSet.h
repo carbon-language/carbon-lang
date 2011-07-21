@@ -28,7 +28,7 @@ class DenseSet {
   MapTy TheMap;
 public:
   DenseSet(const DenseSet &Other) : TheMap(Other.TheMap) {}
-  explicit DenseSet(unsigned NumInitBuckets = 64) : TheMap(NumInitBuckets) {}
+  explicit DenseSet(unsigned NumInitBuckets = 0) : TheMap(NumInitBuckets) {}
 
   bool empty() const { return TheMap.empty(); }
   unsigned size() const { return TheMap.size(); }
