@@ -4256,3 +4256,17 @@ def : InstAlias<"push${p} $regs",
                 (STMDB_UPD SP, pred:$p, reglist:$regs)>;
 def : InstAlias<"pop${p} $regs",
                 (LDMIA_UPD SP, pred:$p, reglist:$regs)>;
+
+// RSB two-operand forms (optional explicit destination operand)
+def : InstAlias<"rsb${s}${p} $Rdn, $imm",
+                (RSBri GPR:$Rdn, GPR:$Rdn, so_imm:$imm, pred:$p, cc_out:$s)>,
+         Requires<[IsARM]>;
+def : InstAlias<"rsb${s}${p} $Rdn, $Rm",
+                (RSBrr GPR:$Rdn, GPR:$Rdn, GPR:$Rm, pred:$p, cc_out:$s)>,
+         Requires<[IsARM]>;
+def : InstAlias<"rsb${s}${p} $Rdn, $shift",
+                (RSBrsi GPR:$Rdn, GPR:$Rdn, so_reg_imm:$shift, pred:$p,
+                        cc_out:$s)>, Requires<[IsARM]>;
+def : InstAlias<"rsb${s}${p} $Rdn, $shift",
+                (RSBrsr GPR:$Rdn, GPR:$Rdn, so_reg_reg:$shift, pred:$p,
+                        cc_out:$s)>, Requires<[IsARM]>;

@@ -57,9 +57,6 @@
 @ CHECK: mvns	r1, r2 @ encoding: [0x02,0x10,0xf0,0xe1]
         mvns r1,r2
 
-@ CHECK: rsb	r1, r2, r3 @ encoding: [0x03,0x10,0x62,0xe0]
-        rsb r1,r2,r3
-
 @ CHECK: rsc	r1, r2, r3 @ encoding: [0x03,0x10,0xe2,0xe0]
         rsc r1,r2,r3
 

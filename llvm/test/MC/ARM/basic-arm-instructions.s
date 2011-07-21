@@ -1109,6 +1109,63 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ RSB
+@------------------------------------------------------------------------------
+        rsb r4, r5, #0xf000
+        rsb r4, r5, r6
+        rsb r4, r5, r6, lsl #5
+        rsblo r4, r5, r6, lsr #5
+        rsb r4, r5, r6, lsr #5
+        rsb r4, r5, r6, asr #5
+        rsb r4, r5, r6, ror #5
+        rsb r6, r7, r8, lsl r9
+        rsb r6, r7, r8, lsr r9
+        rsb r6, r7, r8, asr r9
+        rsble r6, r7, r8, ror r9
+        rsb r4, r5, r6, rrx
+
+        @ destination register is optional
+        rsb r5, #0xf000
+        rsb r4, r5
+        rsb r4, r5, lsl #5
+        rsb r4, r5, lsr #5
+        rsbne r4, r5, lsr #5
+        rsb r4, r5, asr #5
+        rsb r4, r5, ror #5
+        rsbgt r6, r7, lsl r9
+        rsb r6, r7, lsr r9
+        rsb r6, r7, asr r9
+        rsb r6, r7, ror r9
+        rsb r4, r5, rrx
+
+@ CHECK: rsb	r4, r5, #61440          @ encoding: [0x0f,0x4a,0x65,0xe2]
+@ CHECK: rsb	r4, r5, r6              @ encoding: [0x06,0x40,0x65,0xe0]
+@ CHECK: rsb	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0x65,0xe0]
+@ CHECK: rsblo	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x65,0x30]
+@ CHECK: rsb	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x65,0xe0]
+@ CHECK: rsb	r4, r5, r6, asr #5      @ encoding: [0xc6,0x42,0x65,0xe0]
+@ CHECK: rsb	r4, r5, r6, ror #5      @ encoding: [0xe6,0x42,0x65,0xe0]
+@ CHECK: rsb	r6, r7, r8, lsl r9      @ encoding: [0x18,0x69,0x67,0xe0]
+@ CHECK: rsb	r6, r7, r8, lsr r9      @ encoding: [0x38,0x69,0x67,0xe0]
+@ CHECK: rsb	r6, r7, r8, asr r9      @ encoding: [0x58,0x69,0x67,0xe0]
+@ CHECK: rsble	r6, r7, r8, ror r9      @ encoding: [0x78,0x69,0x67,0xd0]
+@ CHECK: rsb	r4, r5, r6, rrx         @ encoding: [0x66,0x40,0x65,0xe0]
+
+@ CHECK: rsb	r5, r5, #61440          @ encoding: [0x0f,0x5a,0x65,0xe2]
+@ CHECK: rsb	r4, r4, r5              @ encoding: [0x05,0x40,0x64,0xe0]
+@ CHECK: rsb	r4, r4, r5, lsl #5      @ encoding: [0x85,0x42,0x64,0xe0]
+@ CHECK: rsb	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0x64,0xe0]
+@ CHECK: rsbne	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0x64,0x10]
+@ CHECK: rsb	r4, r4, r5, asr #5      @ encoding: [0xc5,0x42,0x64,0xe0]
+@ CHECK: rsb	r4, r4, r5, ror #5      @ encoding: [0xe5,0x42,0x64,0xe0]
+@ CHECK: rsbgt	r6, r6, r7, lsl r9      @ encoding: [0x17,0x69,0x66,0xc0]
+@ CHECK: rsb	r6, r6, r7, lsr r9      @ encoding: [0x37,0x69,0x66,0xe0]
+@ CHECK: rsb	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0x66,0xe0]
+@ CHECK: rsb	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x66,0xe0]
+@ CHECK: rsb	r4, r4, r5, rrx         @ encoding: [0x65,0x40,0x64,0xe0]
+
+
+@------------------------------------------------------------------------------
 @ STM*
 @------------------------------------------------------------------------------
         stm       r2, {r1,r3-r6,sp}
