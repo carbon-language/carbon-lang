@@ -2685,8 +2685,26 @@ public:
   }
   virtual void getArchDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const {
-    if (ABI == "o32")
+    if (ABI == "o32") {
       Builder.defineMacro("__mips_o32");
+      Builder.defineMacro("_ABIO32", "1");
+      Builder.defineMacro("_MIPS_SIM", "_ABIO32");
+    }
+    else if (ABI == "n32") {
+      Builder.defineMacro("__mips_n32");
+      Builder.defineMacro("_ABIN32", "2");
+      Builder.defineMacro("_MIPS_SIM", "_ABIN32");
+    }
+    else if (ABI == "n64") {
+      Builder.defineMacro("__mips_n64");
+      Builder.defineMacro("_ABI64", "3");
+      Builder.defineMacro("_MIPS_SIM", "_ABI64");
+    }
+    else if (ABI == "o64") {
+      Builder.defineMacro("__mips_o64");
+      Builder.defineMacro("_ABIO64", "4");
+      Builder.defineMacro("_MIPS_SIM", "_ABIO64");
+    }
     else if (ABI == "eabi")
       Builder.defineMacro("__mips_eabi");
   }
