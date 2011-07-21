@@ -4250,3 +4250,9 @@ def : InstAlias<"pkhbt${p} $Rd, $Rn, $Rm",
                 (PKHBT GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;
 def : InstAlias<"pkhtb${p} $Rd, $Rn, $Rm",
                 (PKHBT GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;
+
+// PUSH/POP aliases for STM/LDM
+def : InstAlias<"push${p} $regs",
+                (STMDB_UPD SP, pred:$p, reglist:$regs)>;
+def : InstAlias<"pop${p} $regs",
+                (LDMIA_UPD SP, pred:$p, reglist:$regs)>;
