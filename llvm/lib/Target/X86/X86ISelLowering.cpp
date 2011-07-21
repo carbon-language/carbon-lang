@@ -85,14 +85,10 @@ static SDValue Extract128BitVector(SDValue Vec,
                                    DebugLoc dl) {
   EVT VT = Vec.getValueType();
   assert(VT.getSizeInBits() == 256 && "Unexpected vector size!");
-
   EVT ElVT = VT.getVectorElementType();
-
-  int Factor = VT.getSizeInBits() / 128;
-
-  EVT ResultVT = EVT::getVectorVT(*DAG.getContext(),
-                                  ElVT,
-                                  VT.getVectorNumElements() / Factor);
+  int Factor = VT.getSizeInBits()/128;
+  EVT ResultVT = EVT::getVectorVT(*DAG.getContext(), ElVT,
+                                  VT.getVectorNumElements()/Factor);
 
   // Extract from UNDEF is UNDEF.
   if (Vec.getOpcode() == ISD::UNDEF)
@@ -111,7 +107,6 @@ static SDValue Extract128BitVector(SDValue Vec,
                                  * ElemsPerChunk);
 
     SDValue VecIdx = DAG.getConstant(NormalizedIdxVal, MVT::i32);
-
     SDValue Result = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ResultVT, Vec,
                                  VecIdx);
 
@@ -136,21 +131,18 @@ static SDValue Insert128BitVector(SDValue Result,
     assert(VT.getSizeInBits() == 128 && "Unexpected vector size!");
 
     EVT ElVT = VT.getVectorElementType();
-
     unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
-
     EVT ResultVT = Result.getValueType();
 
     // Insert the relevant 128 bits.
-    unsigned ElemsPerChunk = 128 / ElVT.getSizeInBits();
+    unsigned ElemsPerChunk = 128/ElVT.getSizeInBits();
 
     // This is the index of the first element of the 128-bit chunk
     // we want.
-    unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits()) / 128)
+    unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits())/128)
                                  * ElemsPerChunk);
 
     SDValue VecIdx = DAG.getConstant(NormalizedIdxVal, MVT::i32);
-
     Result = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Result, Vec,
                          VecIdx);
     return Result;
@@ -3641,7 +3633,6 @@ unsigned X86::getExtractVEXTRACTF128Immediate(SDNode *N) {
   EVT ElVT = VecVT.getVectorElementType();
 
   unsigned NumElemsPerChunk = 128 / ElVT.getSizeInBits();
-
   return Index / NumElemsPerChunk;
 }
 
@@ -3659,7 +3650,6 @@ unsigned X86::getInsertVINSERTF128Immediate(SDNode *N) {
   EVT ElVT = VecVT.getVectorElementType();
 
   unsigned NumElemsPerChunk = 128 / ElVT.getSizeInBits();
-
   return Index / NumElemsPerChunk;
 }
 
