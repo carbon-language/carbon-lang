@@ -85,16 +85,8 @@ public:
                   bool vizdot, bool vizubi, bool purge, bool eager, bool trim,
                   bool inlinecall, bool useUnoptimizedCFG,
                   bool addImplicitDtors, bool addInitializers,
-                  bool eagerlyTrimEGraph)
-    : AnaCtxMgr(useUnoptimizedCFG, addImplicitDtors, addInitializers),
-      Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
-      CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
-      CheckerMgr(checkerMgr), Idxer(idxer),
-      AScope(ScopeDecl), MaxNodes(maxnodes), MaxVisit(maxvisit),
-      VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
-      EagerlyAssume(eager), TrimGraph(trim), InlineCall(inlinecall),
-      EagerlyTrimEGraph(eagerlyTrimEGraph) {}
-  
+                  bool eagerlyTrimEGraph);
+
   ~AnalysisManager() { FlushDiagnostics(); }
   
   void ClearContexts() {
