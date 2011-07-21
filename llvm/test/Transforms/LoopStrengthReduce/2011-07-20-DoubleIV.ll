@@ -15,7 +15,26 @@ entry:
 
 loop:
   %i.01 = phi i32 [ -39, %entry ], [ %inc, %loop ]
-  %conv7 = sitofp i32 %i.01 to double
+  %conv = sitofp i32 %i.01 to double
+  %inc = add nsw i32 %i.01, 1
+  br i1 undef, label %loop, label %for.end
+
+for.end:
+  unreachable
+}
+
+; Now check that the computed double constant is correct.
+; CHECK: @doubleIV
+; CHECK: phi double [ 0x43F0000000000000, %entry ]
+; CHECK: br
+define void @doubleIV() nounwind {
+entry:
+  br label %loop
+
+loop:
+  %i.01 = phi i32 [ -39, %entry ], [ %inc, %loop ]
+  %conv = sitofp i32 %i.01 to double
+  %div = fdiv double %conv, 4.000000e+01
   %inc = add nsw i32 %i.01, 1
   br i1 undef, label %loop, label %for.end
 

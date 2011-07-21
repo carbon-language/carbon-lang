@@ -1427,6 +1427,7 @@ void LSRInstance::OptimizeShadowIV() {
     ++UI;
     Instruction *ShadowUse = CandidateUI->getUser();
     Type *DestTy = NULL;
+    bool IsSigned = false;
 
     /* If shadow use is a int->float cast then insert a second IV
        to eliminate this cast.
@@ -1440,10 +1441,14 @@ void LSRInstance::OptimizeShadowIV() {
          for (unsigned i = 0; i < n; ++i, ++d)
            foo(d);
     */
-    if (UIToFPInst *UCast = dyn_cast<UIToFPInst>(CandidateUI->getUser()))
+    if (UIToFPInst *UCast = dyn_cast<UIToFPInst>(CandidateUI->getUser())) {
+      IsSigned = false;
       DestTy = UCast->getDestTy();
-    else if (SIToFPInst *SCast = dyn_cast<SIToFPInst>(CandidateUI->getUser()))
+    }
+    else if (SIToFPInst *SCast = dyn_cast<SIToFPInst>(CandidateUI->getUser())) {
+      IsSigned = true;
       DestTy = SCast->getDestTy();
+    }
     if (!DestTy) continue;
 
     if (TLI) {
@@ -1474,7 +1479,9 @@ void LSRInstance::OptimizeShadowIV() {
 
     ConstantInt *Init = dyn_cast<ConstantInt>(PH->getIncomingValue(Entry));
     if (!Init) continue;
-    Constant *NewInit = ConstantFP::get(DestTy, Init->getZExtValue());
+    Constant *NewInit = ConstantFP::get(DestTy, IsSigned ?
+                                        Init->getSExtValue() :
+                                        Init->getZExtValue());
 
     BinaryOperator *Incr =
       dyn_cast<BinaryOperator>(PH->getIncomingValue(Latch));
