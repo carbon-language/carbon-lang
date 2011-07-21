@@ -41,6 +41,7 @@ MachineBlockFrequency::~MachineBlockFrequency() {
 void MachineBlockFrequency::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineBranchProbabilityInfo>();
   AU.setPreservesAll();
+  MachineFunctionPass::getAnalysisUsage(AU);
 }
 
 bool MachineBlockFrequency::runOnMachineFunction(MachineFunction &F) {
