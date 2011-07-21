@@ -64,6 +64,16 @@ class ValueAPITestCase(TestBase):
         self.assertTrue(value, VALID_VARIABLE)
         self.DebugSBValue(value)
 
+        # SBValue::TypeIsPointerType() should return true.
+        self.assertTrue(value.TypeIsPointerType())
+
+        # Verify the SBValue::GetByteSize() API is working correctly.
+        arch = self.getArchitecture()
+        if arch == 'i386':
+            self.assertTrue(value.GetByteSize() == 4)
+        elif arch == 'x86_64':
+            self.assertTrue(value.GetByteSize() == 8)
+
         # Get child at index 5 => 'Friday'.
         child = value.GetChildAtIndex(5, lldb.eNoDynamicValues, True)
         self.assertTrue(child, VALID_VARIABLE)
