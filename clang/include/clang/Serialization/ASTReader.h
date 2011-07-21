@@ -244,6 +244,9 @@ private:
     /// \brief The size of this file, in bits.
     uint64_t SizeInBits;
 
+    /// \brief The global bit offset (or base) of this module
+    uint64_t GlobalBitOffset;
+
     /// \brief The bitstream reader from which we'll read the AST file.
     llvm::BitstreamReader StreamFile;
 
@@ -613,6 +616,15 @@ private:
   /// added to the global preprocessing entitiy ID to produce a local ID.
   GlobalPreprocessedEntityMapType GlobalPreprocessedEntityMap;
   
+  typedef ContinuousRangeMap<serialization::CXXBaseSpecifiersID,
+                             std::pair<PerFileData *, int32_t>, 4>
+    GlobalCXXBaseSpecifiersMapType;
+
+  /// \brief Mapping from global CXX base specifier IDs to the module in which the
+  /// CXX base specifier resides along with the offset that should be added to the
+  /// global CXX base specifer ID to produce a local ID.
+  GlobalCXXBaseSpecifiersMapType GlobalCXXBaseSpecifiersMap;
+
   /// \name CodeGen-relevant special data
   /// \brief Fields containing data that is relevant to CodeGen.
   //@{
@@ -793,8 +805,14 @@ private:
   /// Number of visible decl contexts read/total.
   unsigned NumVisibleDeclContextsRead, TotalVisibleDeclContexts;
   
+  /// Total size of modules, in bits, currently loaded
+  uint64_t TotalModulesSizeInBits;
+
   /// \brief Number of Decl/types that are currently deserializing.
   unsigned NumCurrentElementsDeserializing;
+
+  /// Number of CXX base specifiers currently loaded
+  unsigned NumCXXBaseSpecifiersLoaded;
 
   /// \brief An IdentifierInfo that has been loaded but whose top-level
   /// declarations of the same name have not (yet) been loaded.
@@ -1067,7 +1085,9 @@ public:
   }
       
   /// \brief Returns the number of C++ base specifiers found in the chain.
-  unsigned getTotalNumCXXBaseSpecifiers() const;
+  unsigned getTotalNumCXXBaseSpecifiers() const {
+    return NumCXXBaseSpecifiersLoaded;
+  }
       
   /// \brief Reads a TemplateArgumentLocInfo appropriate for the
   /// given TemplateArgument kind.

@@ -2427,6 +2427,17 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       
       F.LocalNumCXXBaseSpecifiers = Record[0];
       F.CXXBaseSpecifiersOffsets = (const uint32_t *)BlobStart;
+
+      GlobalCXXBaseSpecifiersMap.insert(std::make_pair(
+                                        getTotalNumCXXBaseSpecifiers() + 1,
+                                        std::make_pair(&F,
+                                            -getTotalNumCXXBaseSpecifiers())));
+
+      NumCXXBaseSpecifiersLoaded += F.LocalNumCXXBaseSpecifiers;
+
+      F.GlobalBitOffset = TotalModulesSizeInBits;
+      TotalModulesSizeInBits += F.SizeInBits;
+
       break;
     }
 
@@ -3920,14 +3931,6 @@ TypeIdx ASTReader::GetTypeIdx(QualType T) const {
   return I->second;
 }
 
-unsigned ASTReader::getTotalNumCXXBaseSpecifiers() const {
-  unsigned Result = 0;
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I)
-    Result += Chain[I]->LocalNumCXXBaseSpecifiers;
-  
-  return Result;
-}
-
 TemplateArgumentLocInfo
 ASTReader::GetTemplateArgumentLocInfo(PerFileData &F,
                                       TemplateArgument::ArgKind Kind,
@@ -3984,21 +3987,17 @@ uint64_t
 ASTReader::GetCXXBaseSpecifiersOffset(serialization::CXXBaseSpecifiersID ID) {
   if (ID == 0)
     return 0;
-  
-  --ID;
-  uint64_t Offset = 0;
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    PerFileData &F = *Chain[N - I - 1];
 
-    if (ID < F.LocalNumCXXBaseSpecifiers)
-      return Offset + F.CXXBaseSpecifiersOffsets[ID];
-    
-    ID -= F.LocalNumCXXBaseSpecifiers;
-    Offset += F.SizeInBits;
-  }
+  GlobalCXXBaseSpecifiersMapType::iterator I =
+      GlobalCXXBaseSpecifiersMap.find(ID);
+
+  assert (I != GlobalCXXBaseSpecifiersMap.end() &&
+                                    "Corrupted global CXX base specifiers map");
   
-  assert(false && "CXXBaseSpecifiers not found");
-  return 0;
+  return I->second.first->CXXBaseSpecifiersOffsets[ID - 1 +
+                                               I->second.second] +
+                                               I->second.first->GlobalBitOffset;
+
 }
 
 CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
@@ -5309,8 +5308,9 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
     TotalNumMacros(0), NumSelectorsRead(0), NumMethodPoolEntriesRead(0), 
     NumMethodPoolMisses(0), TotalNumMethodPoolEntries(0), 
     NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0), 
-    NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0), 
-    NumCurrentElementsDeserializing(0) 
+    NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
+    TotalModulesSizeInBits(0), NumCurrentElementsDeserializing(0),
+    NumCXXBaseSpecifiersLoaded(0)
 {
   SourceMgr.setExternalSLocEntrySource(this);
 }
@@ -5328,7 +5328,8 @@ ASTReader::ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
     NumSelectorsRead(0), NumMethodPoolEntriesRead(0), NumMethodPoolMisses(0),
     TotalNumMethodPoolEntries(0), NumLexicalDeclContextsRead(0),
     TotalLexicalDeclContexts(0), NumVisibleDeclContextsRead(0),
-    TotalVisibleDeclContexts(0), NumCurrentElementsDeserializing(0) 
+    TotalVisibleDeclContexts(0), TotalModulesSizeInBits(0),
+    NumCurrentElementsDeserializing(0), NumCXXBaseSpecifiersLoaded(0)
 {
   SourceMgr.setExternalSLocEntrySource(this);
 }
