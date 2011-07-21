@@ -187,7 +187,7 @@ CommunicationKDP::WaitForPacketWithTimeoutMicroSecondsNoLock (DataExtractor &pac
     bool timed_out = false;
     while (IsConnected() && !timed_out)
     {
-        lldb::ConnectionStatus status;
+        lldb::ConnectionStatus status = eConnectionStatusNoConnection;
         size_t bytes_read = Read (buffer, sizeof(buffer), timeout_usec, status, &error);
         
         if (log)
