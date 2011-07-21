@@ -5529,6 +5529,10 @@ def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
 // The AVX version of some but not all of them are described here, and more
 // should come in a near future.
 
+// Shuffle with VPERMIL instructions
+def : Pat<(v8f32 (X86VPermil VR256:$src1, (i8 imm:$imm))),
+          (VPERMILPSYri VR256:$src1, imm:$imm)>;
+
 // Shuffle with PSHUFD instruction folding loads. The first two patterns match
 // SSE2 loads, which are always promoted to v2i64. The last one should match
 // the SSE1 case, where the only legal load is v4f32, but there is no PSHUFD

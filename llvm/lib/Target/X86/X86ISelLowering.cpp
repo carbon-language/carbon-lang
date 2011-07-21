@@ -2747,6 +2747,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
   case X86ISD::PUNPCKHQDQ:
+  case X86ISD::VPERMIL:
     return true;
   }
   return false;
@@ -2772,6 +2773,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::PSHUFD:
   case X86ISD::PSHUFHW:
   case X86ISD::PSHUFLW:
+  case X86ISD::VPERMIL:
     return DAG.getNode(Opc, dl, VT, V1, DAG.getConstant(TargetMask, MVT::i8));
   }
 
@@ -3420,6 +3422,54 @@ bool X86::isMOVLMask(ShuffleVectorSDNode *N) {
   SmallVector<int, 8> M;
   N->getMask(M);
   return ::isMOVLMask(M, N->getValueType(0));
+}
+
+/// isVPERMILMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to VPERMIL*.
+static bool isVPERMILMask(const SmallVectorImpl<int> &Mask, EVT VT) {
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned NumLanes = VT.getSizeInBits()/128;
+
+  // Match any permutation of 128-bit vector with 32/64-bit types
+  if (NumLanes == 1) {
+    if (NumElts == 4 || NumElts == 2)
+      return true;
+    return false;
+  }
+
+  // Only match 256-bit with 32/64-bit types
+  if (NumElts != 8 && NumElts != 4)
+    return false;
+
+  // The mask on the high lane should be the same as the low. Actually,
+  // they can differ if any of the corresponding index in a lane is undef.
+  int LaneSize = NumElts/NumLanes;
+  for (int i = 0; i < LaneSize; ++i) {
+    int HighElt = i+LaneSize;
+    if (Mask[i] < 0 || Mask[HighElt] < 0)
+      continue;
+
+    if (Mask[HighElt]-Mask[i] != LaneSize)
+      return false;
+  }
+
+  return true;
+}
+
+/// getShuffleVPERMILImmediateediate - Return the appropriate immediate to shuffle
+/// the specified VECTOR_MASK mask with VPERMIL* instructions.
+static unsigned getShuffleVPERMILImmediate(SDNode *N) {
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
+  EVT VT = SVOp->getValueType(0);
+
+  int NumElts = VT.getVectorNumElements();
+  int NumLanes = VT.getSizeInBits()/128;
+
+  unsigned Mask = 0;
+  for (int i = 0; i < NumElts/NumLanes /* lane size */; ++i)
+    Mask |= SVOp->getMaskElt(i) << (i*2);
+
+  return Mask;
 }
 
 /// isCommutedMOVL - Returns true if the shuffle mask is except the reverse
@@ -4097,6 +4147,10 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
       return getShuffleScalarElt(V.getOperand(OpNum).getNode(), Index, DAG,
                                  Depth+1);
     }
+    case X86ISD::VPERMIL:
+      ImmN = N->getOperand(N->getNumOperands()-1);
+      DecodeVPERMILMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
+                        ShuffleMask);
     default:
       assert("not implemented for target shuffle node");
       return SDValue();
@@ -6042,6 +6096,13 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // Handle all 4 wide cases with a number of shuffles.
   if (NumElems == 4)
     return LowerVECTOR_SHUFFLE_4wide(SVOp, DAG);
+
+  // Handle VPERMIL permutations
+  if (isVPERMILMask(M, VT)) {
+    unsigned TargetMask = getShuffleVPERMILImmediate(SVOp);
+    if (VT == MVT::v8f32)
+      return getTargetShuffleNode(X86ISD::VPERMIL, dl, VT, V1, TargetMask, DAG);
+  }
 
   return SDValue();
 }
@@ -9660,6 +9721,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PUNPCKHWD:          return "X86ISD::PUNPCKHWD";
   case X86ISD::PUNPCKHDQ:          return "X86ISD::PUNPCKHDQ";
   case X86ISD::PUNPCKHQDQ:         return "X86ISD::PUNPCKHQDQ";
+  case X86ISD::VPERMIL:            return "X86ISD::VPERMIL";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
   case X86ISD::VAARG_64:           return "X86ISD::VAARG_64";
   case X86ISD::WIN_ALLOCA:         return "X86ISD::WIN_ALLOCA";
@@ -12465,6 +12527,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PSHUFLW:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
+  case X86ISD::VPERMIL:
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI);
   }
 

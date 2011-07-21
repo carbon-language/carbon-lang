@@ -82,6 +82,20 @@ void DecodeUNPCKLPDMask(unsigned NElts,
 void DecodeUNPCKLPMask(EVT VT,
                        SmallVectorImpl<unsigned> &ShuffleMask);
 
+
+void DecodeVPERMILPSMask(unsigned NElts, unsigned Imm,
+                        SmallVectorImpl<unsigned> &ShuffleMask);
+
+void DecodeVPERMILPDMask(unsigned NElts, unsigned Imm,
+                        SmallVectorImpl<unsigned> &ShuffleMask);
+
+// DecodeVPERMILMask - Decodes VPERMIL permutes for any 128-bit
+// with 32/64-bit elements. For 256-bit vectors, it's considered
+// as two 128 lanes and the mask of the first lane should be
+// identical of the second one.
+void DecodeVPERMILMask(EVT VT, unsigned Imm,
+                       SmallVectorImpl<unsigned> &ShuffleMask);
+
 } // llvm namespace
 
 #endif

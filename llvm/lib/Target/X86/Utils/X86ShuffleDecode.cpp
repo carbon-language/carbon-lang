@@ -187,4 +187,31 @@ void DecodeUNPCKLPMask(EVT VT,
   }
 }
 
+void DecodeVPERMILPSMask(unsigned NElts, unsigned Imm,
+                        SmallVectorImpl<unsigned> &ShuffleMask) {
+  DecodeVPERMILMask(MVT::getVectorVT(MVT::i32, NElts), Imm, ShuffleMask);
+}
+
+void DecodeVPERMILPDMask(unsigned NElts, unsigned Imm,
+                        SmallVectorImpl<unsigned> &ShuffleMask) {
+  DecodeVPERMILMask(MVT::getVectorVT(MVT::i64, NElts), Imm, ShuffleMask);
+}
+
+// DecodeVPERMILMask - Decodes VPERMIL permutes for any 128-bit
+// with 32/64-bit elements. For 256-bit vectors, it's considered
+// as two 128 lanes and the mask of the first lane should be
+// identical of the second one.
+void DecodeVPERMILMask(EVT VT, unsigned Imm,
+                       SmallVectorImpl<unsigned> &ShuffleMask) {
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned NumLanes = VT.getSizeInBits()/128;
+
+  for (unsigned l = 0; l != NumLanes; ++l) {
+    for (unsigned i = 0; i != NumElts/NumLanes; ++i) {
+      unsigned Idx = (Imm >> (i*2)) & 0x3 ;
+      ShuffleMask.push_back(Idx+(l*NumElts/NumLanes));
+    }
+  }
+}
+
 } // llvm namespace
