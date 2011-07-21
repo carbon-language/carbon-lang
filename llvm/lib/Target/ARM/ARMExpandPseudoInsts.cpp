@@ -741,7 +741,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MI.eraseFromParent();
       return true;
     }
-    case ARM::MOVCCs: {
+    case ARM::MOVCCsi:
+    case ARM::MOVCCsr: {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVs),
               (MI.getOperand(1).getReg()))
         .addReg(MI.getOperand(2).getReg(),
