@@ -27,71 +27,22 @@
 <!--*************************************************************************-->
 <p>Last updated: $Date$</p>
 
-  <ul>
-    <li><a href="#projects">Projects Building with Clang</a></li>
-    <li><a href="#specification">Implementation Status by Section</a></li>
-    <li><a href="#cxx0x">C++0x Status</a></li>
-  </ul>
-  
-<p>Clang currently implements all of the ISO C++ 1998 standard (including
-  the defects addressed in the ISO C++ 2003 standard) except for 'export'
-  (which has been removed from the C++'0x draft).
-  The <a href="http://llvm.org/bugs/">LLVM bug tracker</a>
-  contains a Clang C++ component that tracks known Clang C++ bugs.</p>
+<p>Clang currently implements all of the ISO C++ 1998 standard
+  (including the defects addressed in the ISO C++ 2003 standard)
+  except for 'export' (which has been removed from the C++'0x draft)
+  and is considered a production-quality C++ compiler.  The <a
+   href="http://llvm.org/bugs/">LLVM bug tracker</a> contains a Clang
+  C++ component that tracks known Clang C++ bugs.</p>
 
- <h2 id="projects">Projects Building with Clang</h2>
-
-  <p>Clang is now capable of compiling large C++ projects, and the following
-   table describes various projects that we have attempted to compile with
-   Clang++.</p>
-
-<table width="689" border="1" cellspacing="0">
-  <tr>
-    <th>Project</th>
-    <th>Status</th>
-    <th>Last Tested</th>
-    <th>Tracking Bug</th>
-  </tr>
-  <tr>
-    <td><a href="http://clang.llvm.org">Clang</a> and <a href="http://llvm.org">LLVM</a></td>
-    <td>Successful self-hosting achieved</td>
-    <td>Continually</td>
-    <td></td>
-  </tr>
-  <tr>
-    <td><a href="http://www.cmake.org">CMake</a></td>
-    <td>Compiles, passes regression tests (debug build)</td>
-    <td>February 9, 2010</td>
-    <td></td>
-  </tr>
-  <tr>
-    <td><a href="http://www.boost.org">Boost</a></td>
-    <td><a href="http://blog.llvm.org/2010/05/clang-builds-boost.html">Compiles
-        and passes regression tests</a> on Darwin/X86-64.</td>
-    <td>May 20, 2010</td>
-    <td><a href="http://llvm.org/bugs/show_bug.cgi?id=6023"><del>PR6023</del></a></td>
-  </tr>
-  <tr>
-    <td><a href="http://qt.nokia.com">Qt</a></td>
-    <td>Partially compiles; miscompilation of uic prevents complete compilation, qmake works, some small examples also.</td>
-    <td>February 9, 2010</td>
-    <td><a href="http://llvm.org/bugs/show_bug.cgi?id=5881">PR5881</a></td>
-  </tr>
-</table>
-  
 <h2 id="cxx0x">C++0x Implementation status</h2>
 
-<p>Clang's development effort is focused primarily on fixing bugs in the current
-ISO C++ standard (1998/2003). This section tracks the status of various C++0x
-features.</p>
+  <p>Clang provides support for a number of features included in the upcoming ISO C++ Standard, C++0x. This section tracks the status of various C++0x
+features, and a number of other C++0x features are under active development.</p>
 
-<p>You can use clang in C++0x mode either
+<p>You can use Clang in C++0x mode either
 with <a href="http://libcxx.llvm.org/">libc++</a> or with gcc's libstdc++.
 libstdc++-4.4 requires <a href="libstdc++4.4-clang0x.patch">a patch</a> to work
 with clang; other versions have not been tested.</p>
-
-
-<h2 id="specification">Implementation Status by Feature</h2>
 
 
 <!-- Within this table: The colors we're using to color-code our level
