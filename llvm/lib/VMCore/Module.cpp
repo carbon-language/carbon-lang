@@ -82,8 +82,10 @@ Module::Endianness Module::getEndianness() const {
   Module::Endianness ret = AnyEndianness;
   
   while (!temp.empty()) {
-    StringRef token = DataLayout;
-    tie(token, temp) = getToken(temp, "-");
+    std::pair<StringRef, StringRef> P = getToken(temp, "-");
+    
+    StringRef token = P.first;
+    temp = P.second;
     
     if (token[0] == 'e') {
       ret = LittleEndian;
@@ -95,15 +97,16 @@ Module::Endianness Module::getEndianness() const {
   return ret;
 }
 
-/// Target Pointer Size information...
+/// Target Pointer Size information.
 Module::PointerSize Module::getPointerSize() const {
   StringRef temp = DataLayout;
   Module::PointerSize ret = AnyPointerSize;
   
   while (!temp.empty()) {
-    StringRef token, signalToken;
-    tie(token, temp) = getToken(temp, "-");
-    tie(signalToken, token) = getToken(token, ":");
+    std::pair<StringRef, StringRef> TmpP = getToken(temp, "-");
+    temp = TmpP.second;
+    TmpP = getToken(TmpP.first, ":");
+    StringRef token = TmpP.second, signalToken = TmpP.first;
     
     if (signalToken[0] == 'p') {
       int size = 0;

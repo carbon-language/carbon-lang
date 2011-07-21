@@ -1260,11 +1260,9 @@ static void RewriteHeapSROALoadUser(Instruction *LoadUser,
   // already been seen first by another load, so its uses have already been
   // processed.
   PHINode *PN = cast<PHINode>(LoadUser);
-  bool Inserted;
-  DenseMap<Value*, std::vector<Value*> >::iterator InsertPos;
-  tie(InsertPos, Inserted) =
-    InsertedScalarizedValues.insert(std::make_pair(PN, std::vector<Value*>()));
-  if (!Inserted) return;
+  if (!InsertedScalarizedValues.insert(std::make_pair(PN,
+                                              std::vector<Value*>())).second)
+    return;
 
   // If this is the first time we've seen this PHI, recursively process all
   // users.

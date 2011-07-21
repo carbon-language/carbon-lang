@@ -51,11 +51,10 @@ std::pair<StringRef, StringRef> llvm::getToken(StringRef Source,
 void llvm::SplitString(StringRef Source,
                        SmallVectorImpl<StringRef> &OutFragments,
                        StringRef Delimiters) {
-  StringRef S2, S;
-  tie(S2, S) = getToken(Source, Delimiters);
-  while (!S2.empty()) {
-    OutFragments.push_back(S2);
-    tie(S2, S) = getToken(S, Delimiters);
+  std::pair<StringRef, StringRef> S = getToken(Source, Delimiters);
+  while (!S.first.empty()) {
+    OutFragments.push_back(S.first);
+    S = getToken(S.second, Delimiters);
   }
 }
 

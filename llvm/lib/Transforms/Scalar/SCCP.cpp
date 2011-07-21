@@ -471,9 +471,9 @@ private:
   /// UsersOfOverdefinedPHIs map for PN, remove them now.
   void RemoveFromOverdefinedPHIs(Instruction *I, PHINode *PN) {
     if (UsersOfOverdefinedPHIs.empty()) return;
-    std::multimap<PHINode*, Instruction*>::iterator It, E;
-    tie(It, E) = UsersOfOverdefinedPHIs.equal_range(PN);
-    while (It != E) {
+    typedef std::multimap<PHINode*, Instruction*>::iterator ItTy;
+    std::pair<ItTy, ItTy> Range = UsersOfOverdefinedPHIs.equal_range(PN);
+    for (ItTy It = Range.first, E = Range.second; It != E;) {
       if (It->second == I)
         UsersOfOverdefinedPHIs.erase(It++);
       else
@@ -486,9 +486,9 @@ private:
   /// (Duplicate entries do not break anything directly, but can lead to
   /// exponential growth of the table in rare cases.)
   void InsertInOverdefinedPHIs(Instruction *I, PHINode *PN) {
-    std::multimap<PHINode*, Instruction*>::iterator J, E;
-    tie(J, E) = UsersOfOverdefinedPHIs.equal_range(PN);
-    for (; J != E; ++J)
+    typedef std::multimap<PHINode*, Instruction*>::iterator ItTy;
+    std::pair<ItTy, ItTy> Range = UsersOfOverdefinedPHIs.equal_range(PN);
+    for (ItTy J = Range.first, E = Range.second; J != E; ++J)
       if (J->second == I)
         return;
     UsersOfOverdefinedPHIs.insert(std::make_pair(PN, I));
@@ -692,13 +692,14 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
     // There may be instructions using this PHI node that are not overdefined
     // themselves.  If so, make sure that they know that the PHI node operand
     // changed.
-    std::multimap<PHINode*, Instruction*>::iterator I, E;
-    tie(I, E) = UsersOfOverdefinedPHIs.equal_range(&PN);
-    if (I == E)
+    typedef std::multimap<PHINode*, Instruction*>::iterator ItTy;
+    std::pair<ItTy, ItTy> Range = UsersOfOverdefinedPHIs.equal_range(&PN);
+    
+    if (Range.first == Range.second)
       return;
     
     SmallVector<Instruction*, 16> Users;
-    for (; I != E; ++I)
+    for (ItTy I = Range.first, E = Range.second; I != E; ++I)
       Users.push_back(I->second);
     while (!Users.empty())
       visit(Users.pop_back_val());

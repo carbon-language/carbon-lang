@@ -1389,24 +1389,23 @@ void IndVarSimplify::SimplifyIVUsersNoRewrite(Loop *L, SCEVExpander &Rewriter) {
       pushIVUsers(CurrIV, Simplified, SimpleIVUsers);
 
       while (!SimpleIVUsers.empty()) {
-        Instruction *UseInst, *Operand;
-        tie(UseInst, Operand) = SimpleIVUsers.pop_back_val();
+        std::pair<Instruction*, Instruction*> Use =SimpleIVUsers.pop_back_val();
         // Bypass back edges to avoid extra work.
-        if (UseInst == CurrIV) continue;
+        if (Use.first == CurrIV) continue;
 
-        if (EliminateIVUser(UseInst, Operand)) {
-          pushIVUsers(Operand, Simplified, SimpleIVUsers);
+        if (EliminateIVUser(Use.first, Use.second)) {
+          pushIVUsers(Use.second, Simplified, SimpleIVUsers);
           continue;
         }
-        if (CastInst *Cast = dyn_cast<CastInst>(UseInst)) {
+        if (CastInst *Cast = dyn_cast<CastInst>(Use.first)) {
           bool IsSigned = Cast->getOpcode() == Instruction::SExt;
           if (IsSigned || Cast->getOpcode() == Instruction::ZExt) {
             CollectExtend(Cast, IsSigned, WI, SE, TD);
           }
           continue;
         }
-        if (isSimpleIVUser(UseInst, L, SE)) {
-          pushIVUsers(UseInst, Simplified, SimpleIVUsers);
+        if (isSimpleIVUser(Use.first, L, SE)) {
+          pushIVUsers(Use.first, Simplified, SimpleIVUsers);
         }
       }
       if (WI.WidestNativeType) {
@@ -1437,12 +1436,11 @@ void IndVarSimplify::SimplifyCongruentIVs(Loop *L) {
       continue;
 
     const SCEV *S = SE->getSCEV(Phi);
-    DenseMap<const SCEV *, PHINode *>::const_iterator Pos;
-    bool Inserted;
-    tie(Pos, Inserted) = ExprToIVMap.insert(std::make_pair(S, Phi));
-    if (Inserted)
+    std::pair<DenseMap<const SCEV *, PHINode *>::const_iterator, bool> Tmp =
+      ExprToIVMap.insert(std::make_pair(S, Phi));
+    if (Tmp.second)
       continue;
-    PHINode *OrigPhi = Pos->second;
+    PHINode *OrigPhi = Tmp.first->second;
 
     // If one phi derives from the other via GEPs, types may differ.
     if (OrigPhi->getType() != Phi->getType())

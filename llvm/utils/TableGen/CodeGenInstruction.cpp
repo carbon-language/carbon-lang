@@ -267,8 +267,9 @@ static void ParseConstraints(const std::string &CStr, CGIOperandList &Ops) {
 
 void CGIOperandList::ProcessDisableEncoding(std::string DisableEncoding) {
   while (1) {
-    std::string OpName;
-    tie(OpName, DisableEncoding) = getToken(DisableEncoding, " ,\t");
+    std::pair<StringRef, StringRef> P = getToken(DisableEncoding, " ,\t");
+    std::string OpName = P.first;
+    DisableEncoding = P.second;
     if (OpName.empty()) break;
 
     // Figure out which operand this is.

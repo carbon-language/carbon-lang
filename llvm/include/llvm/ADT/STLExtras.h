@@ -186,25 +186,21 @@ inline ItTy prior(ItTy it)
 //   // do stuff
 // else
 //   // do other stuff
+template <typename T1, typename T2>
+struct tier {
+  typedef T1 &first_type;
+  typedef T2 &second_type;
 
-namespace
-{
-  template <typename T1, typename T2>
-  struct tier {
-    typedef T1 &first_type;
-    typedef T2 &second_type;
+  first_type first;
+  second_type second;
 
-    first_type first;
-    second_type second;
-
-    tier(first_type f, second_type s) : first(f), second(s) { }
-    tier& operator=(const std::pair<T1, T2>& p) {
-      first = p.first;
-      second = p.second;
-      return *this;
-    }
-  };
-}
+  tier(first_type f, second_type s) : first(f), second(s) { }
+  tier& operator=(const std::pair<T1, T2>& p) {
+    first = p.first;
+    second = p.second;
+    return *this;
+  }
+};
 
 template <typename T1, typename T2>
 inline tier<T1, T2> tie(T1& f, T2& s) {
