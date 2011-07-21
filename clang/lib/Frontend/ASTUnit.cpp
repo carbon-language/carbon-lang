@@ -45,6 +45,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include <cstdlib>
 #include <cstdio>
@@ -2304,18 +2305,39 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
 CXSaveError ASTUnit::Save(llvm::StringRef File) {
   if (getDiagnostics().hasUnrecoverableErrorOccurred())
     return CXSaveError_TranslationErrors;
-  
+
+  // Write to a temporary file and later rename it to the actual file, to avoid
+  // possible race conditions.
+  llvm::sys::Path TempPath(File);
+  if (TempPath.makeUnique(/*reuse_current=*/false, /*ErrMsg*/0))
+    return CXSaveError_Unknown;
+  // makeUnique may or may not have created the file. Try deleting before
+  // opening so that we can use F_Excl for exclusive access.
+  TempPath.eraseFromDisk();
+
   // FIXME: Can we somehow regenerate the stat cache here, or do we need to 
   // unconditionally create a stat cache when we parse the file?
   std::string ErrorInfo;
-  llvm::raw_fd_ostream Out(File.str().c_str(), ErrorInfo,
-                           llvm::raw_fd_ostream::F_Binary);
+  llvm::raw_fd_ostream Out(TempPath.c_str(), ErrorInfo,
+                           llvm::raw_fd_ostream::F_Binary |
+                           // if TempPath already exists, we should not try to
+                           // overwrite it, we want to avoid race conditions.
+                           llvm::raw_fd_ostream::F_Excl);
   if (!ErrorInfo.empty() || Out.has_error())
     return CXSaveError_Unknown;
 
   serialize(Out);
   Out.close();
-  return Out.has_error()? CXSaveError_Unknown : CXSaveError_None;
+  if (Out.has_error())
+    return CXSaveError_Unknown;
+
+  if (llvm::error_code ec = llvm::sys::fs::rename(TempPath.str(), File)) {
+    bool exists;
+    llvm::sys::fs::remove(TempPath.str(), exists);
+    return CXSaveError_Unknown;
+  }
+
+  return CXSaveError_None;
 }
 
 bool ASTUnit::serialize(llvm::raw_ostream &OS) {
