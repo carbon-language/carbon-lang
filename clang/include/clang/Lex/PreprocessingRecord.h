@@ -376,14 +376,26 @@ namespace clang {
         return X.Position == Y.Position;
       }
 
-      friend bool operator<(const iterator &X, const iterator &Y) {
-        return X.Position < Y.Position;
-      }
-
       friend bool operator!=(const iterator &X, const iterator &Y) {
         return X.Position != Y.Position;
       }
       
+      friend bool operator<(const iterator &X, const iterator &Y) {
+        return X.Position < Y.Position;
+      }
+
+      friend bool operator>(const iterator &X, const iterator &Y) {
+        return X.Position > Y.Position;
+      }
+
+      friend bool operator<=(const iterator &X, const iterator &Y) {
+        return X.Position < Y.Position;
+      }
+      
+      friend bool operator>=(const iterator &X, const iterator &Y) {
+        return X.Position > Y.Position;
+      }
+
       friend iterator& operator+=(iterator &X, difference_type D) {
         X.Position += D;
         return X;
