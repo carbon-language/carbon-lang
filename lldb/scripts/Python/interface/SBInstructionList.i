@@ -22,7 +22,7 @@ def disassemble_instructions (insts):
     for i in insts:
         print i
 
-defines a method which takes an SBInstructionList instance and prints out
+defines a function which takes an SBInstructionList instance and prints out
 the machine instructions in assembly format."
 ) SBInstructionList;
 class SBInstructionList
