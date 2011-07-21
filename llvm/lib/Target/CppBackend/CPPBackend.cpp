@@ -766,9 +766,7 @@ void CppWriter::printConstant(const Constant *CV) {
       Out << "Constant* " << constName
           << " = ConstantExpr::getGetElementPtr("
           << getCppName(CE->getOperand(0)) << ", "
-          << "&" << constName << "_indices[0], "
-          << constName << "_indices.size()"
-          << ");";
+          << constName << "_indices);";
     } else if (CE->isCast()) {
       printConstant(CE->getOperand(0));
       Out << "Constant* " << constName << " = ConstantExpr::getCast(";
@@ -1331,8 +1329,7 @@ void CppWriter::printInstruction(const Instruction *I,
       }
       Out << "CallInst* " << iName << " = CallInst::Create("
           << opNames[call->getNumArgOperands()] << ", "
-          << iName << "_params.begin(), "
-          << iName << "_params.end(), \"";
+          << iName << "_params, \"";
     } else if (call->getNumArgOperands() == 1) {
       Out << "CallInst* " << iName << " = CallInst::Create("
           << opNames[call->getNumArgOperands()] << ", " << opNames[0] << ", \"";
