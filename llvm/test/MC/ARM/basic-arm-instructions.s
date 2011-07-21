@@ -1021,6 +1021,66 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ QADD/QADD16/QADD8
+@------------------------------------------------------------------------------
+        qadd r1, r2, r3
+        qaddne r1, r2, r3
+        qadd16 r1, r2, r3
+        qadd16gt r1, r2, r3
+        qadd8 r1, r2, r3
+        qadd8le r1, r2, r3
+
+@ CHECK: qadd	r1, r2, r3              @ encoding: [0x52,0x10,0x03,0xe1]
+@ CHECK: qaddne	r1, r2, r3              @ encoding: [0x52,0x10,0x03,0x11]
+@ CHECK: qadd16	r1, r2, r3              @ encoding: [0x13,0x1f,0x22,0xe6]
+@ CHECK: qadd16gt	r1, r2, r3      @ encoding: [0x13,0x1f,0x22,0xc6]
+@ CHECK: qadd8	r1, r2, r3              @ encoding: [0x93,0x1f,0x22,0xe6]
+@ CHECK: qadd8le r1, r2, r3             @ encoding: [0x93,0x1f,0x22,0xd6]
+
+
+@------------------------------------------------------------------------------
+@ QDADD/QDSUB
+@------------------------------------------------------------------------------
+        qdadd r6, r7, r8
+        qdaddhi r6, r7, r8
+        qdsub r6, r7, r8
+        qdsubhi r6, r7, r8
+
+@ CHECK: qdadd	r6, r7, r8              @ encoding: [0x57,0x60,0x48,0xe1]
+@ CHECK: qdaddhi r6, r7, r8             @ encoding: [0x57,0x60,0x48,0x81]
+@ CHECK: qdsub	r6, r7, r8              @ encoding: [0x57,0x60,0x68,0xe1]
+@ CHECK: qdsubhi r6, r7, r8             @ encoding: [0x57,0x60,0x68,0x81]
+
+
+@------------------------------------------------------------------------------
+@ QSAX
+@------------------------------------------------------------------------------
+        qsax r9, r12, r0
+        qsaxeq r9, r12, r0
+
+@ CHECK: qsax	r9, r12, r0             @ encoding: [0x50,0x9f,0x2c,0xe6]
+@ CHECK: qsaxeq	r9, r12, r0             @ encoding: [0x50,0x9f,0x2c,0x06]
+
+
+@------------------------------------------------------------------------------
+@ QADD/QADD16/QADD8
+@------------------------------------------------------------------------------
+        qsub r1, r2, r3
+        qsubne r1, r2, r3
+        qsub16 r1, r2, r3
+        qsub16gt r1, r2, r3
+        qsub8 r1, r2, r3
+        qsub8le r1, r2, r3
+
+@ CHECK: qsub	r1, r2, r3              @ encoding: [0x52,0x10,0x23,0xe1]
+@ CHECK: qsubne	r1, r2, r3              @ encoding: [0x52,0x10,0x23,0x11]
+@ CHECK: qsub16	r1, r2, r3              @ encoding: [0x73,0x1f,0x22,0xe6]
+@ CHECK: qsub16gt	r1, r2, r3      @ encoding: [0x73,0x1f,0x22,0xc6]
+@ CHECK: qsub8	r1, r2, r3              @ encoding: [0xf3,0x1f,0x22,0xe6]
+@ CHECK: qsub8le r1, r2, r3             @ encoding: [0xf3,0x1f,0x22,0xd6]
+
+
+@------------------------------------------------------------------------------
 @ STM*
 @------------------------------------------------------------------------------
         stm       r2, {r1,r3-r6,sp}

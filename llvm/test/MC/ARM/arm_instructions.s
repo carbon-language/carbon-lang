@@ -74,18 +74,6 @@
 @ CHECK: cdp2  p7, #1, c1, c1, c1, #4 @ encoding: [0x81,0x17,0x11,0xfe]
         cdp2  p7, #1, c1, c1, c1, #4
 
-@ CHECK: qadd  r1, r2, r3 @ encoding: [0x52,0x10,0x03,0xe1]
-        qadd  r1, r2, r3
-
-@ CHECK: qsub  r1, r2, r3 @ encoding: [0x52,0x10,0x23,0xe1]
-        qsub  r1, r2, r3
-
-@ CHECK: qdadd  r1, r2, r3 @ encoding: [0x52,0x10,0x43,0xe1]
-        qdadd  r1, r2, r3
-
-@ CHECK: qdsub  r1, r2, r3 @ encoding: [0x52,0x10,0x63,0xe1]
-        qdsub  r1, r2, r3
-
 @ CHECK: wfe @ encoding: [0x02,0xf0,0x20,0xe3]
         wfe
 
