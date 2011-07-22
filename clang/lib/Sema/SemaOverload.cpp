@@ -1392,11 +1392,8 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
       ToType->isIntegerType()) {
     // Determine whether the type we're converting from is signed or
     // unsigned.
-    bool FromIsSigned;
+    bool FromIsSigned = FromType->isSignedIntegerType();
     uint64_t FromSize = Context.getTypeSize(FromType);
-
-    // FIXME: Is wchar_t signed or unsigned? We assume it's signed for now.
-    FromIsSigned = true;
 
     // The types we'll try to promote to, in the appropriate
     // order. Try each of these types.
