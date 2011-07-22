@@ -2660,19 +2660,6 @@ void Sema::CollectIvarsToConstructOrDestruct(ObjCInterfaceDecl *OI,
   }
 }
 
-void ObjCImplementationDecl::setIvarInitializers(ASTContext &C,
-                                             CXXCtorInitializer ** initializers,
-                                                 unsigned numInitializers) {
-  if (numInitializers > 0) {
-    NumIvarInitializers = numInitializers;
-    CXXCtorInitializer **ivarInitializers =
-    new (C) CXXCtorInitializer*[NumIvarInitializers];
-    memcpy(ivarInitializers, initializers,
-           numInitializers * sizeof(CXXCtorInitializer*));
-    IvarInitializers = ivarInitializers;
-  }
-}
-
 void Sema::DiagnoseUseOfUnimplementedSelectors() {
   // Warning will be issued only when selector table is
   // generated (which means there is at lease one implementation

@@ -1015,6 +1015,19 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ObjCImplementationDecl(DC, L, ClassInterface, SuperDecl);
 }
 
+void ObjCImplementationDecl::setIvarInitializers(ASTContext &C,
+                                             CXXCtorInitializer ** initializers,
+                                                 unsigned numInitializers) {
+  if (numInitializers > 0) {
+    NumIvarInitializers = numInitializers;
+    CXXCtorInitializer **ivarInitializers =
+    new (C) CXXCtorInitializer*[NumIvarInitializers];
+    memcpy(ivarInitializers, initializers,
+           numInitializers * sizeof(CXXCtorInitializer*));
+    IvarInitializers = ivarInitializers;
+  }
+}
+
 llvm::raw_ostream &clang::operator<<(llvm::raw_ostream &OS,
                                      const ObjCImplementationDecl *ID) {
   OS << ID->getName();
