@@ -328,8 +328,10 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = RegisterClasses[rc];
-    OS << "  MCRegisterClass("
-       << rc << ", "
+    OS << "  MCRegisterClass(";
+    if (!RC.Namespace.empty())
+      OS << RC.Namespace << "::";
+    OS << RC.getName() + "RegClassID" << ", "
        << '\"' << RC.getName() << "\", "
        << RC.SpillSize/8 << ", "
        << RC.SpillAlignment/8 << ", "
