@@ -5376,14 +5376,16 @@ static SDValue getVZextMovL(EVT VT, EVT OpVT,
                                              OpVT, SrcOp)));
 }
 
-/// LowerVECTOR_SHUFFLE_4wide - Handle all 4 wide cases with a number of
-/// shuffles.
+/// LowerVECTOR_SHUFFLE_128v4 - Handle all 128-bit wide vectors with
+/// 4 elements, and match them with several different shuffle types.
 static SDValue
-LowerVECTOR_SHUFFLE_4wide(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
+LowerVECTOR_SHUFFLE_128v4(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
   DebugLoc dl = SVOp->getDebugLoc();
   EVT VT = SVOp->getValueType(0);
+
+  assert(VT.getSizeInBits() == 128 && "Unsupported vector size");
 
   SmallVector<std::pair<int, int>, 8> Locs;
   Locs.resize(4);
@@ -6094,9 +6096,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
       return NewOp;
   }
 
-  // Handle all 4 wide cases with a number of shuffles.
-  if (NumElems == 4)
-    return LowerVECTOR_SHUFFLE_4wide(SVOp, DAG);
+  // Handle all 128-bit wide vectors with 4 elements, and match them with
+  // several different shuffle types.
+  if (NumElems == 4 && VT.getSizeInBits() == 128)
+    return LowerVECTOR_SHUFFLE_128v4(SVOp, DAG);
 
   // Handle VPERMIL permutations
   if (isVPERMILMask(M, VT)) {
