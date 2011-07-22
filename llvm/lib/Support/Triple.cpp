@@ -148,6 +148,8 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     return msp430;
   if (Name == "ppc64")
     return ppc64;
+  if (Name == "ppc32")
+    return ppc;
   if (Name == "ppc")
     return ppc;
   if (Name == "mblaze")
