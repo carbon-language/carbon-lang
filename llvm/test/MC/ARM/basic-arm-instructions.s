@@ -1404,7 +1404,7 @@ _func:
 
 
 @------------------------------------------------------------------------------
-@ SMLAD/SMLADX
+@ SMLAL
 @------------------------------------------------------------------------------
         smlal r2, r3, r5, r8
         smlals r2, r3, r5, r8
@@ -1415,6 +1415,42 @@ _func:
 @ CHECK: smlals	r2, r3, r5, r8          @ encoding: [0x95,0x28,0xf3,0xe0]
 @ CHECK: smlaleq	r2, r3, r5, r8  @ encoding: [0x95,0x28,0xe3,0x00]
 @ CHECK: smlalshi	r2, r3, r5, r8  @ encoding: [0x95,0x28,0xf3,0x80]
+
+
+@------------------------------------------------------------------------------
+@ SMLALBB/SMLALBT/SMLALTB/SMLALTT
+@------------------------------------------------------------------------------
+        smlalbb r3, r1, r9, r0
+        smlalbt r5, r6, r4, r1
+        smlaltb r4, r2, r3, r2
+        smlaltt r8, r3, r8, r4
+        smlalbbge r3, r1, r9, r0
+        smlalbtle r5, r6, r4, r1
+        smlaltbne r4, r2, r3, r2
+        smlaltteq r8, r3, r8, r4
+
+@ CHECK: smlalbb	r3, r1, r9, r0  @ encoding: [0x89,0x30,0x41,0xe1]
+@ CHECK: smlalbt	r5, r6, r4, r1  @ encoding: [0xc4,0x51,0x46,0xe1]
+@ CHECK: smlaltb	r4, r2, r3, r2  @ encoding: [0xa3,0x42,0x42,0xe1]
+@ CHECK: smlaltt	r8, r3, r8, r4  @ encoding: [0xe8,0x84,0x43,0xe1]
+@ CHECK: smlalbbge	r3, r1, r9, r0  @ encoding: [0x89,0x30,0x41,0xa1]
+@ CHECK: smlalbtle	r5, r6, r4, r1  @ encoding: [0xc4,0x51,0x46,0xd1]
+@ CHECK: smlaltbne	r4, r2, r3, r2  @ encoding: [0xa3,0x42,0x42,0x11]
+@ CHECK: smlaltteq	r8, r3, r8, r4  @ encoding: [0xe8,0x84,0x43,0x01]
+
+
+@------------------------------------------------------------------------------
+@ SMLALD/SMLALDX
+@------------------------------------------------------------------------------
+        smlald r2, r3, r5, r8
+        smlaldx r2, r3, r5, r8
+        smlaldeq r2, r3, r5, r8
+        smlaldxhi r2, r3, r5, r8
+
+@ CHECK: smlald	r2, r3, r5, r8          @ encoding: [0x15,0x28,0x43,0xe7]
+@ CHECK: smlaldx	r2, r3, r5, r8  @ encoding: [0x35,0x28,0x43,0xe7]
+@ CHECK: smlaldeq	r2, r3, r5, r8  @ encoding: [0x15,0x28,0x43,0x07]
+@ CHECK: smlaldxhi	r2, r3, r5, r8  @ encoding: [0x35,0x28,0x43,0x87]
 
 
 @------------------------------------------------------------------------------
