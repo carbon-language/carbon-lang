@@ -2617,10 +2617,10 @@ def : ARMPat<(adde_live_carry   GPR:$src, so_imm_not:$imm),
 // (mul X, 2^n+1) -> (add (X << n), X)
 // (mul X, 2^n-1) -> (rsb X, (X << n))
 
-// ARM Arithmetic Instruction -- for disassembly only
+// ARM Arithmetic Instruction
 // GPR:$dst = GPR:$a op GPR:$b
 class AAI<bits<8> op27_20, bits<8> op11_4, string opc,
-          list<dag> pattern = [/* For disassembly only; pattern left blank */],
+          list<dag> pattern = [],
           dag iops = (ins GPR:$Rn, GPR:$Rm), string asm = "\t$Rd, $Rn, $Rm">
   : AI<(outs GPR:$Rd), iops, DPFrm, IIC_iALUr, opc, asm, pattern> {
   bits<4> Rn;
@@ -2633,7 +2633,7 @@ class AAI<bits<8> op27_20, bits<8> op11_4, string opc,
   let Inst{3-0}   = Rm;
 }
 
-// Saturating add/subtract -- for disassembly only
+// Saturating add/subtract
 
 def QADD    : AAI<0b00010000, 0b00000101, "qadd",
                   [(set GPR:$Rd, (int_arm_qadd GPR:$Rm, GPR:$Rn))],
@@ -2659,7 +2659,7 @@ def UQSAX   : AAI<0b01100110, 0b11110101, "uqsax">;
 def UQSUB16 : AAI<0b01100110, 0b11110111, "uqsub16">;
 def UQSUB8  : AAI<0b01100110, 0b11111111, "uqsub8">;
 
-// Signed/Unsigned add/subtract -- for disassembly only
+// Signed/Unsigned add/subtract
 
 def SASX   : AAI<0b01100001, 0b11110011, "sasx">;
 def SADD16 : AAI<0b01100001, 0b11110001, "sadd16">;
@@ -2674,7 +2674,7 @@ def USAX   : AAI<0b01100101, 0b11110101, "usax">;
 def USUB16 : AAI<0b01100101, 0b11110111, "usub16">;
 def USUB8  : AAI<0b01100101, 0b11111111, "usub8">;
 
-// Signed/Unsigned halving add/subtract -- for disassembly only
+// Signed/Unsigned halving add/subtract
 
 def SHASX   : AAI<0b01100011, 0b11110011, "shasx">;
 def SHADD16 : AAI<0b01100011, 0b11110001, "shadd16">;
