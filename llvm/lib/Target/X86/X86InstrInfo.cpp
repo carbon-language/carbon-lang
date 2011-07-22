@@ -407,6 +407,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::Int_CVTTSS2SIrr, X86::Int_CVTTSS2SIrm, 0 },
     { X86::Int_UCOMISDrr,   X86::Int_UCOMISDrm, 0 },
     { X86::Int_UCOMISSrr,   X86::Int_UCOMISSrm, 0 },
+    { X86::Int_VUCOMISDrr,  X86::Int_VUCOMISDrm, 0 },
+    { X86::Int_VUCOMISSrr,  X86::Int_VUCOMISSrm, 0 },
     { X86::MOV16rr,         X86::MOV16rm, 0 },
     { X86::MOV32rr,         X86::MOV32rm, 0 },
     { X86::MOV64rr,         X86::MOV64rm, 0 },
@@ -467,7 +469,9 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::TEST8rr,         X86::TEST8rm, 0 },
     // FIXME: TEST*rr EAX,EAX ---> CMP [mem], 0
     { X86::UCOMISDrr,       X86::UCOMISDrm, 0 },
-    { X86::UCOMISSrr,       X86::UCOMISSrm, 0 }
+    { X86::UCOMISSrr,       X86::UCOMISSrm, 0 },
+    { X86::VUCOMISDrr,      X86::VUCOMISDrm, 0 },
+    { X86::VUCOMISSrr,      X86::VUCOMISSrm, 0 }
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl1); i != e; ++i) {
@@ -2491,7 +2495,9 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   case X86::AVX_SET0PSY:
   case X86::AVX_SET0PDY:
   case X86::FsFLD0SD:
-  case X86::FsFLD0SS: {
+  case X86::FsFLD0SS:
+  case X86::VFsFLD0SD:
+  case X86::VFsFLD0SS: {
     // Folding a V_SET0P? or V_SETALLONES as a load, to ease register pressure.
     // Create a constant-pool entry and operands to load from it.
 
