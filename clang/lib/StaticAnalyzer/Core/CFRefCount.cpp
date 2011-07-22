@@ -85,15 +85,6 @@ public:
 };
 }
 
-static const ObjCMethodDecl*
-ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD) {
-  const ObjCInterfaceDecl *ID = MD->getClassInterface();
-
-  return MD->isInstanceMethod()
-         ? ID->lookupInstanceMethod(MD->getSelector())
-         : ID->lookupClassMethod(MD->getSelector());
-}
-
 namespace {
 class GenericNodeBuilderRefCount {
   StmtNodeBuilder *SNB;
@@ -862,10 +853,6 @@ public:
     Selector S = MD->getSelector();
     IdentifierInfo *ClsName = ID->getIdentifier();
     QualType ResultTy = MD->getResultType();
-
-    // Resolve the method decl last.
-    if (const ObjCMethodDecl *InterfaceMD = ResolveToInterfaceMethodDecl(MD))
-      MD = InterfaceMD;
 
     if (MD->isInstanceMethod())
       return getInstanceMethodSummary(S, ClsName, ID, MD, ResultTy);

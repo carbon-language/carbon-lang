@@ -1552,3 +1552,29 @@ void test54(int first, ...) {
 // CHECK:   define internal void @"\01-[Test55(Category) dealloc]"(
 // CHECK-NOT: ret
 // CHECK:     call void bitcast (i8* ({{%.*}}*, i8*, ...)* @objc_msgSendSuper2 to void ({{%.*}}*, i8*)*)(
+
+// rdar://problem/8024350
+@protocol Test56Protocol
++ (id) make __attribute__((ns_returns_retained));
+@end
+@interface Test56<Test56Protocol> @end
+@implementation Test56
+// CHECK: define internal i8* @"\01+[Test56 make]"(
++ (id) make {
+  extern id test56_helper(void);
+  // CHECK:      [[T0:%.*]] = call i8* @test56_helper()
+  // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
+  // CHECK-NEXT: ret i8* [[T1]]
+  return test56_helper();
+}
+@end
+void test56_test(void) {
+  id x = [Test56 make];
+  // CHECK: define void @test56_test()
+  // CHECK:      [[X:%.*]] = alloca i8*, align 8
+  // CHECK:      [[T0:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(
+  // CHECK-NEXT: store i8* [[T0]], i8** [[X]]
+  // CHECK-NEXT: [[T0:%.*]] = load i8** [[X]]
+  // CHECK-NEXT: call void @objc_release(i8* [[T0]])
+  // CHECK-NEXT: ret void
+}

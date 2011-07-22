@@ -155,100 +155,6 @@ bool Sema::CheckObjCMethodOverride(ObjCMethodDecl *NewMethod,
   return false;
 }
 
-/// \brief Check for consistency between a given method declaration and the
-/// methods it overrides within the class hierarchy.
-///
-/// This method walks the inheritance hierarchy starting at the given 
-/// declaration context (\p DC), invoking Sema::CheckObjCMethodOverride() with
-/// the given new method (\p NewMethod) and any method it directly overrides
-/// in the hierarchy. Sema::CheckObjCMethodOverride() is responsible for
-/// checking consistency, e.g., among return types for methods that return a 
-/// related result type.
-static bool CheckObjCMethodOverrides(Sema &S, ObjCMethodDecl *NewMethod,
-                                     DeclContext *DC, 
-                                     bool SkipCurrent = true) {
-  if (!DC)
-    return false;
-  
-  if (!SkipCurrent) {
-    // Look for this method. If we find it, we're done.
-    Selector Sel = NewMethod->getSelector();
-    bool IsInstance = NewMethod->isInstanceMethod();
-    DeclContext::lookup_const_iterator Meth, MethEnd;
-    for (llvm::tie(Meth, MethEnd) = DC->lookup(Sel); Meth != MethEnd; ++Meth) {
-      ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*Meth);
-      if (MD && MD->isInstanceMethod() == IsInstance)
-        return S.CheckObjCMethodOverride(NewMethod, MD, false);
-    }
-  }
-  
-  if (ObjCInterfaceDecl *Class = llvm::dyn_cast<ObjCInterfaceDecl>(DC)) {
-    // Look through categories.
-    for (ObjCCategoryDecl *Category = Class->getCategoryList();
-         Category; Category = Category->getNextClassCategory()) {
-      if (CheckObjCMethodOverrides(S, NewMethod, Category, false))
-        return true;
-    }
-
-    // Look through protocols.
-    for (ObjCList<ObjCProtocolDecl>::iterator I = Class->protocol_begin(),
-                                           IEnd = Class->protocol_end();
-         I != IEnd; ++I)
-      if (CheckObjCMethodOverrides(S, NewMethod, *I, false))
-        return true;
-    
-    // Look in our superclass.
-    return CheckObjCMethodOverrides(S, NewMethod, Class->getSuperClass(), 
-                                    false);
-  }
-  
-  if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(DC)) {
-    // Look through protocols.
-    for (ObjCList<ObjCProtocolDecl>::iterator I = Category->protocol_begin(),
-                                           IEnd = Category->protocol_end();
-         I != IEnd; ++I)
-      if (CheckObjCMethodOverrides(S, NewMethod, *I, false))
-        return true;
-    
-    return false;
-  }
-  
-  if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(DC)) {
-    // Look through protocols.
-    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocol->protocol_begin(),
-                                           IEnd = Protocol->protocol_end();
-         I != IEnd; ++I)
-      if (CheckObjCMethodOverrides(S, NewMethod, *I, false))
-        return true;
-    
-    return false;
-  }
-  
-  return false;
-}
-
-bool Sema::CheckObjCMethodOverrides(ObjCMethodDecl *NewMethod, 
-                                    DeclContext *DC) {
-  if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(DC))
-    return ::CheckObjCMethodOverrides(*this, NewMethod, Class);
-
-  if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(DC))
-    return ::CheckObjCMethodOverrides(*this, NewMethod, Category);
-
-  if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(DC))
-    return ::CheckObjCMethodOverrides(*this, NewMethod, Protocol);
-
-  if (ObjCImplementationDecl *Impl = dyn_cast<ObjCImplementationDecl>(DC))
-    return ::CheckObjCMethodOverrides(*this, NewMethod, 
-                                      Impl->getClassInterface());
-  
-  if (ObjCCategoryImplDecl *CatImpl = dyn_cast<ObjCCategoryImplDecl>(DC))
-    return ::CheckObjCMethodOverrides(*this, NewMethod, 
-                                      CatImpl->getClassInterface());
-  
-  return ::CheckObjCMethodOverrides(*this, NewMethod, CurContext);
-}
-
 /// \brief Check a method declaration for compatibility with the Objective-C
 /// ARC conventions.
 static bool CheckARCMethodDecl(Sema &S, ObjCMethodDecl *method) {
@@ -261,6 +167,7 @@ static bool CheckARCMethodDecl(Sema &S, ObjCMethodDecl *method) {
   case OMF_autorelease:
   case OMF_retainCount:
   case OMF_self:
+  case OMF_performSelector:
     return false;
 
   case OMF_init:
@@ -286,11 +193,6 @@ static bool CheckARCMethodDecl(Sema &S, ObjCMethodDecl *method) {
         method->hasAttr<NSReturnsAutoreleasedAttr>())
       return false;
     break;
-    
-  case OMF_performSelector:
-    // we don't annotate performSelector's
-    return true;
-      
   }
 
   method->addAttr(new (S.Context) NSReturnsRetainedAttr(SourceLocation(),
@@ -855,8 +757,10 @@ Decl *Sema::ActOnStartCategoryImplementation(
     ObjCCategoryImplDecl::Create(Context, CurContext, AtCatImplLoc, CatName,
                                  IDecl);
   /// Check that class of this category is already completely declared.
-  if (!IDecl || IDecl->isForwardDecl())
+  if (!IDecl || IDecl->isForwardDecl()) {
     Diag(ClassLoc, diag::err_undef_interface) << ClassName;
+    CDecl->setInvalidDecl();
+  }
 
   // FIXME: PushOnScopeChains?
   CurContext->addDecl(CDecl);
@@ -2246,25 +2150,140 @@ CheckRelatedResultTypeCompatibility(Sema &S, ObjCMethodDecl *Method,
   return true;
 }
 
-/// \brief Determine if any method in the global method pool has an inferred 
-/// result type.
-static bool 
-anyMethodInfersRelatedResultType(Sema &S, Selector Sel, bool IsInstance) {
-  Sema::GlobalMethodPool::iterator Pos = S.MethodPool.find(Sel);
-  if (Pos == S.MethodPool.end()) {
-    if (S.ExternalSource)
-      Pos = S.ReadMethodPool(Sel);
-    else
-      return 0;
+namespace {
+/// A helper class for searching for methods which a particular method
+/// overrides.
+class OverrideSearch {
+  Sema &S;
+  ObjCMethodDecl *Method;
+  llvm::SmallPtrSet<ObjCContainerDecl*, 8> Searched;
+  llvm::SmallPtrSet<ObjCMethodDecl*, 8> Overridden;
+  bool Recursive;
+
+public:
+  OverrideSearch(Sema &S, ObjCMethodDecl *method) : S(S), Method(method) {
+    Selector selector = method->getSelector();
+
+    // Bypass this search if we've never seen an instance/class method
+    // with this selector before.
+    Sema::GlobalMethodPool::iterator it = S.MethodPool.find(selector);
+    if (it == S.MethodPool.end()) {
+      if (!S.ExternalSource) return;
+      it = S.ReadMethodPool(selector);
+    }
+    ObjCMethodList &list =
+      method->isInstanceMethod() ? it->second.first : it->second.second;
+    if (!list.Method) return;
+
+    ObjCContainerDecl *container
+      = cast<ObjCContainerDecl>(method->getDeclContext());
+
+    // Prevent the search from reaching this container again.  This is
+    // important with categories, which override methods from the
+    // interface and each other.
+    Searched.insert(container);
+    searchFromContainer(container);
   }
-  
-  ObjCMethodList &List = IsInstance ? Pos->second.first : Pos->second.second;
-  for (ObjCMethodList *M = &List; M; M = M->Next) {
-    if (M->Method && M->Method->hasRelatedResultType())
-      return true;
-  }  
-  
-  return false;
+
+  typedef llvm::SmallPtrSet<ObjCMethodDecl*,8>::iterator iterator;
+  iterator begin() const { return Overridden.begin(); }
+  iterator end() const { return Overridden.end(); }
+
+private:
+  void searchFromContainer(ObjCContainerDecl *container) {
+    if (container->isInvalidDecl()) return;
+
+    switch (container->getDeclKind()) {
+#define OBJCCONTAINER(type, base) \
+    case Decl::type: \
+      searchFrom(cast<type##Decl>(container)); \
+      break;
+#define ABSTRACT_DECL(expansion)
+#define DECL(type, base) \
+    case Decl::type:
+#include "clang/AST/DeclNodes.inc"
+      llvm_unreachable("not an ObjC container!");
+    }
+  }
+
+  void searchFrom(ObjCProtocolDecl *protocol) {
+    // A method in a protocol declaration overrides declarations from
+    // referenced ("parent") protocols.
+    search(protocol->getReferencedProtocols());
+  }
+
+  void searchFrom(ObjCCategoryDecl *category) {
+    // A method in a category declaration overrides declarations from
+    // the main class and from protocols the category references.
+    search(category->getClassInterface());
+    search(category->getReferencedProtocols());
+  }
+
+  void searchFrom(ObjCCategoryImplDecl *impl) {
+    // A method in a category definition that has a category
+    // declaration overrides declarations from the category
+    // declaration.
+    if (ObjCCategoryDecl *category = impl->getCategoryDecl()) {
+      search(category);
+
+    // Otherwise it overrides declarations from the class.
+    } else {
+      search(impl->getClassInterface());
+    }
+  }
+
+  void searchFrom(ObjCInterfaceDecl *iface) {
+    // A method in a class declaration overrides declarations from
+
+    //   - categories,
+    for (ObjCCategoryDecl *category = iface->getCategoryList();
+           category; category = category->getNextClassCategory())
+      search(category);
+
+    //   - the super class, and
+    if (ObjCInterfaceDecl *super = iface->getSuperClass())
+      search(super);
+
+    //   - any referenced protocols.
+    search(iface->getReferencedProtocols());
+  }
+
+  void searchFrom(ObjCImplementationDecl *impl) {
+    // A method in a class implementation overrides declarations from
+    // the class interface.
+    search(impl->getClassInterface());
+  }
+
+
+  void search(const ObjCProtocolList &protocols) {
+    for (ObjCProtocolList::iterator i = protocols.begin(), e = protocols.end();
+         i != e; ++i)
+      search(*i);
+  }
+
+  void search(ObjCContainerDecl *container) {
+    // Abort if we've already searched this container.
+    if (!Searched.insert(container)) return;
+
+    // Check for a method in this container which matches this selector.
+    ObjCMethodDecl *meth = container->getMethod(Method->getSelector(),
+                                                Method->isInstanceMethod());
+
+    // If we find one, record it and bail out.
+    if (meth) {
+      Overridden.insert(meth);
+      return;
+    }
+
+    // Otherwise, search for methods that a hypothetical method here
+    // would have overridden.
+
+    // Note that we're now in a recursive case.
+    Recursive = true;
+
+    searchFromContainer(container);
+  }
+};
 }
 
 Decl *Sema::ActOnMethodDeclaration(
@@ -2390,16 +2409,13 @@ Decl *Sema::ActOnMethodDeclaration(
                               Sel.getNumArgs());
   ObjCMethod->setObjCDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjCDeclQualifier()));
-  const ObjCMethodDecl *PrevMethod = 0;
 
   if (AttrList)
     ProcessDeclAttributeList(TUScope, ObjCMethod, AttrList);
 
-  const ObjCMethodDecl *InterfaceMD = 0;
-
   // Add the method now.
-  if (ObjCImplementationDecl *ImpDecl =
-        dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
+  const ObjCMethodDecl *PrevMethod = 0;
+  if (ObjCImplDecl *ImpDecl = dyn_cast<ObjCImplDecl>(ClassDecl)) {
     if (MethodType == tok::minus) {
       PrevMethod = ImpDecl->getInstanceMethod(Sel);
       ImpDecl->addInstanceMethod(ObjCMethod);
@@ -2407,24 +2423,6 @@ Decl *Sema::ActOnMethodDeclaration(
       PrevMethod = ImpDecl->getClassMethod(Sel);
       ImpDecl->addClassMethod(ObjCMethod);
     }
-    InterfaceMD = ImpDecl->getClassInterface()->getMethod(Sel,
-                                                   MethodType == tok::minus);
-    
-    if (ObjCMethod->hasAttrs() &&
-        containsInvalidMethodImplAttribute(ObjCMethod->getAttrs()))
-      Diag(EndLoc, diag::warn_attribute_method_def);
-  } else if (ObjCCategoryImplDecl *CatImpDecl =
-             dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
-    if (MethodType == tok::minus) {
-      PrevMethod = CatImpDecl->getInstanceMethod(Sel);
-      CatImpDecl->addInstanceMethod(ObjCMethod);
-    } else {
-      PrevMethod = CatImpDecl->getClassMethod(Sel);
-      CatImpDecl->addClassMethod(ObjCMethod);
-    }
-
-    if (ObjCCategoryDecl *Cat = CatImpDecl->getCategoryDecl())
-      InterfaceMD = Cat->getMethod(Sel, MethodType == tok::minus);
 
     if (ObjCMethod->hasAttrs() &&
         containsInvalidMethodImplAttribute(ObjCMethod->getAttrs()))
@@ -2432,6 +2430,7 @@ Decl *Sema::ActOnMethodDeclaration(
   } else {
     cast<DeclContext>(ClassDecl)->addDecl(ObjCMethod);
   }
+
   if (PrevMethod) {
     // You can never have two method definitions with the same name.
     Diag(ObjCMethod->getLocation(), diag::err_duplicate_method_decl)
@@ -2452,23 +2451,31 @@ Decl *Sema::ActOnMethodDeclaration(
                                    = dyn_cast<ObjCCategoryImplDecl>(ClassDecl))
       CurrentClass = CatImpl->getClassInterface();
   }
-  
-  // Merge information down from the interface declaration if we have one.
-  if (InterfaceMD) {
-    // Inherit the related result type, if we can.
-    if (InterfaceMD->hasRelatedResultType() &&
-        !CheckRelatedResultTypeCompatibility(*this, ObjCMethod, CurrentClass))
+
+  bool isRelatedResultTypeCompatible =
+    (getLangOptions().ObjCInferRelatedResultType &&
+     !CheckRelatedResultTypeCompatibility(*this, ObjCMethod, CurrentClass));
+
+  // Search for overridden methods and merge information down from them.
+  OverrideSearch overrides(*this, ObjCMethod);
+  for (OverrideSearch::iterator
+         i = overrides.begin(), e = overrides.end(); i != e; ++i) {
+    ObjCMethodDecl *overridden = *i;
+
+    // Propagate down the 'related result type' bit from overridden methods.
+    if (isRelatedResultTypeCompatible && overridden->hasRelatedResultType())
       ObjCMethod->SetRelatedResultType();
-      
-    mergeObjCMethodDecls(ObjCMethod, InterfaceMD);
+
+    // Then merge the declarations.
+    mergeObjCMethodDecls(ObjCMethod, overridden);
   }
   
   bool ARCError = false;
   if (getLangOptions().ObjCAutoRefCount)
     ARCError = CheckARCMethodDecl(*this, ObjCMethod);
 
-  if (!ObjCMethod->hasRelatedResultType() && !ARCError &&
-      getLangOptions().ObjCInferRelatedResultType) {
+  if (!ARCError && isRelatedResultTypeCompatible &&
+      !ObjCMethod->hasRelatedResultType()) {
     bool InferRelatedResultType = false;
     switch (ObjCMethod->getMethodFamily()) {
     case OMF_None:
@@ -2493,14 +2500,8 @@ Decl *Sema::ActOnMethodDeclaration(
       break;
     }
     
-    if (InferRelatedResultType &&
-        !CheckRelatedResultTypeCompatibility(*this, ObjCMethod, CurrentClass))
+    if (InferRelatedResultType)
       ObjCMethod->SetRelatedResultType();
-    
-    if (!InterfaceMD && 
-        anyMethodInfersRelatedResultType(*this, ObjCMethod->getSelector(),
-                                         ObjCMethod->isInstanceMethod()))
-      CheckObjCMethodOverrides(ObjCMethod, cast<DeclContext>(ClassDecl));
   }
     
   return ObjCMethod;

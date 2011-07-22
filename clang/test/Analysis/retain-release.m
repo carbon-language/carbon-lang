@@ -1540,3 +1540,17 @@ CFArrayRef camel_copymachine() {
   return CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning {{leak}}
 }
 
+// rdar://problem/8024350
+@protocol F18P
+- (id) clone;
+@end
+@interface F18 : NSObject<F18P> @end
+@interface F18(Cat)
+- (id) clone NS_RETURNS_RETAINED;
+@end
+
+@implementation F18
+- (id) clone {
+  return [F18 alloc];
+}
+@end

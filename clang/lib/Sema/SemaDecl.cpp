@@ -1456,7 +1456,7 @@ DeclHasAttr(const Decl *D, const Attr *A) {
 
 /// mergeDeclAttributes - Copy attributes from the Old decl to the New one.
 static void mergeDeclAttributes(Decl *newDecl, const Decl *oldDecl,
-                                ASTContext &C) {
+                                ASTContext &C, bool mergeDeprecation = true) {
   if (!oldDecl->hasAttrs())
     return;
 
@@ -1469,6 +1469,11 @@ static void mergeDeclAttributes(Decl *newDecl, const Decl *oldDecl,
   for (specific_attr_iterator<InheritableAttr>
        i = oldDecl->specific_attr_begin<InheritableAttr>(),
        e = oldDecl->specific_attr_end<InheritableAttr>(); i != e; ++i) {
+    // Ignore deprecated and unavailable attributes if requested.
+    if (!mergeDeprecation &&
+        (isa<DeprecatedAttr>(*i) || isa<UnavailableAttr>(*i)))
+      continue;
+
     if (!DeclHasAttr(newDecl, *i)) {
       InheritableAttr *newAttr = cast<InheritableAttr>((*i)->clone(C));
       newAttr->setInherited(true);
@@ -1949,15 +1954,19 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
 
 void Sema::mergeObjCMethodDecls(ObjCMethodDecl *newMethod,
                                 const ObjCMethodDecl *oldMethod) {
+  // We don't want to merge unavailable and deprecated attributes
+  // except from interface to implementation.
+  bool mergeDeprecation = isa<ObjCImplDecl>(newMethod->getDeclContext());
+
   // Merge the attributes.
-  mergeDeclAttributes(newMethod, oldMethod, Context);
+  mergeDeclAttributes(newMethod, oldMethod, Context, mergeDeprecation);
 
   // Merge attributes from the parameters.
   for (ObjCMethodDecl::param_iterator oi = oldMethod->param_begin(),
          ni = newMethod->param_begin(), ne = newMethod->param_end();
        ni != ne; ++ni, ++oi)
     mergeParamDeclAttributes(*ni, *oi, Context);
-  
+
   CheckObjCMethodOverride(newMethod, oldMethod, true);
 }
 
