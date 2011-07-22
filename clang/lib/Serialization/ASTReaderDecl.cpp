@@ -31,7 +31,7 @@ using namespace clang::serialization;
 namespace clang {
   class ASTDeclReader : public DeclVisitor<ASTDeclReader, void> {
     ASTReader &Reader;
-    ASTReader::PerFileData &F;
+    Module &F;
     llvm::BitstreamCursor &Cursor;
     const DeclID ThisDeclID;
     typedef ASTReader::RecordData RecordData;
@@ -91,7 +91,7 @@ namespace clang {
                                      CXXRecordDecl *DefinitionDecl,
                                      const RecordData &Record, unsigned &Idx);
   public:
-    ASTDeclReader(ASTReader &Reader, ASTReader::PerFileData &F,
+    ASTDeclReader(ASTReader &Reader, Module &F,
                   llvm::BitstreamCursor &Cursor, DeclID thisDeclID,
                   const RecordData &Record, unsigned &Idx)
       : Reader(Reader), F(F), Cursor(Cursor), ThisDeclID(thisDeclID),
@@ -101,7 +101,7 @@ namespace clang {
 
     void Visit(Decl *D);
 
-    void UpdateDecl(Decl *D, ASTReader::PerFileData &Module,
+    void UpdateDecl(Decl *D, Module &Module,
                     const RecordData &Record);
 
     void VisitDecl(Decl *D);
@@ -239,7 +239,7 @@ void ASTDeclReader::VisitDecl(Decl *D) {
   D->setUsed(Record[Idx++]);
   D->setReferenced(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
-  D->setPCHLevel(Record[Idx++] + (F.Type <= ASTReader::PCH));
+  D->setPCHLevel(Record[Idx++] + (F.Kind <= MK_PCH));
 }
 
 void ASTDeclReader::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
@@ -1349,7 +1349,7 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
 //===----------------------------------------------------------------------===//
 
 /// \brief Reads attributes from the current stream position.
-void ASTReader::ReadAttributes(PerFileData &F, AttrVec &Attrs,
+void ASTReader::ReadAttributes(Module &F, AttrVec &Attrs,
                                const RecordData &Record, unsigned &Idx) {
   for (unsigned i = 0, e = Record[Idx++]; i != e; ++i) {
     Attr *New = 0;
@@ -1411,7 +1411,7 @@ ASTReader::DeclCursorForIndex(unsigned Index, DeclID ID) {
 }
 
 ASTReader::RecordLocation ASTReader::getLocalBitOffset(uint64_t GlobalOffset) {
-  ContinuousRangeMap<uint64_t, PerFileData*, 4>::iterator I
+  ContinuousRangeMap<uint64_t, Module*, 4>::iterator I
     = GlobalBitOffsetsMap.find(GlobalOffset);
 
   assert(I != GlobalBitOffsetsMap.end() && "Corrupted global bit offsets map");
@@ -1728,7 +1728,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     FileOffsetsTy &UpdateOffsets = UpdI->second;
     for (FileOffsetsTy::iterator
            I = UpdateOffsets.begin(), E = UpdateOffsets.end(); I != E; ++I) {
-      PerFileData *F = I->first;
+      Module *F = I->first;
       uint64_t Offset = I->second;
       llvm::BitstreamCursor &Cursor = F->DeclsCursor;
       SavedStreamPosition SavedPosition(Cursor);
@@ -1752,7 +1752,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
   return D;
 }
 
-void ASTDeclReader::UpdateDecl(Decl *D, ASTReader::PerFileData &Module,
+void ASTDeclReader::UpdateDecl(Decl *D, Module &Module,
                                const RecordData &Record) {
   unsigned Idx = 0;
   while (Idx < Record.size()) {

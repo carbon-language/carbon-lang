@@ -36,7 +36,7 @@ static ASTReader *createASTReader(CompilerInstance &CI,
                              /*DisableValidation=*/true));
   Reader->setASTMemoryBuffers(memBufs, numBufs);
   Reader->setDeserializationListener(deserialListener);
-  switch (Reader->ReadAST(pchFile, ASTReader::PCH)) {
+  switch (Reader->ReadAST(pchFile, serialization::MK_PCH)) {
   case ASTReader::Success:
     // Set the predefines buffer as suggested by the PCH reader.
     PP.setPredefines(Reader->getSuggestedPredefines());

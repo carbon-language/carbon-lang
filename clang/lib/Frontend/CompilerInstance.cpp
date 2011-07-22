@@ -295,8 +295,9 @@ CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
 
   Reader->setDeserializationListener(
             static_cast<ASTDeserializationListener *>(DeserializationListener));
-  switch (Reader->ReadAST(Path,
-                          Preamble ? ASTReader::Preamble : ASTReader::PCH)) {
+  switch (Reader->ReadAST(Path, 
+                          Preamble ? serialization::MK_Preamble 
+                                   : serialization::MK_PCH)) {
   case ASTReader::Success:
     // Set the predefines buffer as suggested by the PCH reader. Typically, the
     // predefines buffer will be empty.

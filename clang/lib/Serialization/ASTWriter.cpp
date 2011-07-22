@@ -1549,7 +1549,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     typedef std::pair<uint32_t, llvm::StringRef> ModuleOffset;
     llvm::SmallVector<ModuleOffset, 16> Modules;
     Modules.reserve(Chain->Modules.size());
-    for (llvm::StringMap<ASTReader::PerFileData*>::const_iterator
+    for (llvm::StringMap<Module*>::const_iterator
              I = Chain->Modules.begin(), E = Chain->Modules.end();
          I != E; ++I) {
       Modules.push_back(ModuleOffset(I->getValue()->SLocEntryBaseOffset,

@@ -595,7 +595,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   Reader->setListener(new ASTInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 
-  switch (Reader->ReadAST(Filename, ASTReader::MainFile)) {
+  switch (Reader->ReadAST(Filename, serialization::MK_MainFile)) {
   case ASTReader::Success:
     break;
 
@@ -2380,7 +2380,7 @@ void ASTUnit::TranslateStoredDiagnostics(
   llvm::SmallVector<StoredDiagnostic, 4> Result;
   Result.reserve(Diags.size());
   assert(MMan && "Don't have a module manager");
-  ASTReader::PerFileData *Mod = MMan->Modules.lookup(ModName);
+  serialization::Module *Mod = MMan->Modules.lookup(ModName);
   assert(Mod && "Don't have preamble module");
   SLocRemap &Remap = Mod->SLocRemap;
   for (unsigned I = 0, N = Diags.size(); I != N; ++I) {
