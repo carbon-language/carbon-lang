@@ -334,6 +334,7 @@ CommandObjectExpression::EvaluateExpression
                                               false,                    // Show locations of variables, no since this is a host address which we don't care to see
                                               m_options.print_object,   // Print the objective C object?
                                               use_dynamic,
+                                              true,                     // Use synthetic children if available
                                               true,                     // Scope is already checked. Const results are always in scope.
                                               false,                    // Don't flatten output
                                               0);                       // Always use summaries (you might want an option --no-summary like there is for frame variable)

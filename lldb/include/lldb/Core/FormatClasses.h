@@ -17,6 +17,7 @@
 
 // C++ Includes
 #include <string>
+#include <vector>
 
 // Other libraries and framework includes
 
@@ -55,23 +56,23 @@ struct ValueFormat
     }
     
     bool
-    Cascades()
+    Cascades() const
     {
         return m_cascades;
     }
     bool
-    SkipsPointers()
+    SkipsPointers() const
     {
         return m_skip_pointers;
     }
     bool
-    SkipsReferences()
+    SkipsReferences() const
     {
         return m_skip_references;
     }
     
     lldb::Format
-    GetFormat()
+    GetFormat() const
     {
         return m_format;
     }
@@ -79,6 +80,57 @@ struct ValueFormat
     std::string
     FormatObject(lldb::ValueObjectSP object);
     
+};
+    
+struct SyntheticFilter
+{
+    bool m_cascades;
+    bool m_skip_pointers;
+    bool m_skip_references;
+    std::vector<std::string> m_expression_paths;
+    
+    SyntheticFilter(bool casc = false,
+                    bool skipptr = false,
+                    bool skipref = false) :
+    m_cascades(casc),
+    m_skip_pointers(skipptr),
+    m_skip_references(skipref),
+    m_expression_paths()
+    {
+    }
+    
+    void
+    AddExpressionPath(std::string path)
+    {
+        bool need_add_dot = true;
+        if (path[0] == '.' ||
+            (path[0] == '-' && path[1] == '>') ||
+            path[0] == '[')
+            need_add_dot = false;
+        // add a '.' symbol to help forgetful users
+        if(!need_add_dot)
+            m_expression_paths.push_back(path);
+        else
+            m_expression_paths.push_back(std::string(".") + path);
+    }
+        
+    int
+    GetCount() const
+    {
+        return m_expression_paths.size();
+    }
+    
+    const std::string&
+    GetExpressionPathAtIndex(int i) const
+    {
+        return m_expression_paths[i];
+    }
+    
+    std::string
+    GetDescription();
+    
+    typedef lldb::SharedPtr<SyntheticFilter>::Type SharedPointer;
+    typedef bool(*SyntheticFilterCallback)(void*, const char*, const SyntheticFilter::SharedPointer&);
 };
 
 struct SummaryFormat
@@ -106,17 +158,17 @@ struct SummaryFormat
     }
     
     bool
-    Cascades()
+    Cascades() const
     {
         return m_cascades;
     }
     bool
-    SkipsPointers()
+    SkipsPointers() const
     {
         return m_skip_pointers;
     }
     bool
-    SkipsReferences()
+    SkipsReferences() const
     {
         return m_skip_references;
     }
@@ -174,7 +226,7 @@ struct StringSummaryFormat : public SummaryFormat
     }
     
     std::string
-    GetFormat()
+    GetFormat() const
     {
         return m_format;
     }
@@ -213,13 +265,13 @@ struct ScriptSummaryFormat : public SummaryFormat
     }
     
     std::string
-    GetFunctionName()
+    GetFunctionName() const
     {
         return m_function_name;
     }
     
     std::string
-    GetPythonScript()
+    GetPythonScript() const
     {
         return m_python_script;
     }

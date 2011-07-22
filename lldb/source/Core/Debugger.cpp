@@ -733,8 +733,12 @@ ScanFormatDescriptor(const char* var_name_begin,
             // if this is a V, print the value using the default format
             if (*format_name == 'V')
                 *val_obj_display = ValueObject::eDisplayValue;
+            // if this is an L, print the location of the value
             if (*format_name == 'L')
                 *val_obj_display = ValueObject::eDisplayLocation;
+            // if this is an S, print the summary after all
+            if (*format_name == 'S')
+                *val_obj_display = ValueObject::eDisplaySummary;
         }
         // a good custom format tells us to print the value using it
         else
@@ -1761,6 +1765,12 @@ Debugger::Formatting::GetSummaryFormat(ValueObject& vobj,
 {
     return GetFormatManager().Get(vobj, entry);
 }
+bool
+Debugger::Formatting::GetSyntheticFilter(ValueObject& vobj,
+                                         lldb::SyntheticFilterSP& entry)
+{
+    return GetFormatManager().Get(vobj, entry);
+}
 
 bool
 Debugger::Formatting::Categories::Get(const ConstString &category, lldb::FormatCategorySP &entry)
@@ -1791,7 +1801,7 @@ Debugger::Formatting::Categories::Clear()
 void
 Debugger::Formatting::Categories::Clear(ConstString &category)
 {
-    GetFormatManager().Category(category.GetCString())->Clear();
+    GetFormatManager().Category(category.GetCString())->ClearSummaries();
 }
 
 void

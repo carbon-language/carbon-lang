@@ -182,7 +182,25 @@ class DataFormatterTestCase(TestBase):
         self.expect("frame variable cool_pointer",
             substrs = ['3,0,0'])
 
+        # test special symbols for formatting variables into summaries
+        self.runCmd("type summary add -f \"cool object @ ${var%L}\" i_am_cool")
+        self.runCmd("type summary delete \"i_am_cool [5]\"")
         
+        # this test might fail if the compiler tries to store
+        # these values into registers.. hopefully this is not
+        # going to be the case
+        self.expect("frame variable cool_array",
+            substrs = ['[0] = cool object @ 0x',
+                       '[1] = cool object @ 0x',
+                       '[2] = cool object @ 0x',
+                       '[3] = cool object @ 0x',
+                       '[4] = cool object @ 0x'])
+            
+        self.runCmd("type summary add -f \"goofy\" i_am_cool")
+        self.runCmd("type summary add -f \"${var.second_cool%S}\" i_am_cooler")
+
+        self.expect("frame variable the_coolest_guy",
+            substrs = ['(i_am_cooler) the_coolest_guy = goofy'])
 
 if __name__ == '__main__':
     import atexit

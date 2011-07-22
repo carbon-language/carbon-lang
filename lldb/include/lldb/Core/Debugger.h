@@ -505,6 +505,9 @@ public:
         static bool
         GetSummaryFormat(ValueObject& vobj,
                          lldb::SummaryFormatSP& entry);
+        static bool
+        GetSyntheticFilter(ValueObject& vobj,
+                           lldb::SyntheticFilterSP& entry);
         
         class NamedSummaryFormats
         {

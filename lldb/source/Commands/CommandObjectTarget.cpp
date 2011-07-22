@@ -488,6 +488,7 @@ public:
                                       m_varobj_options.show_location,
                                       m_varobj_options.use_objc,
                                       m_varobj_options.use_dynamic,
+                                      m_varobj_options.use_synth,
                                       false,
                                       m_varobj_options.flat_output,
                                       m_varobj_options.no_summary_depth);                                        

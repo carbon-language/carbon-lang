@@ -66,14 +66,15 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
     
     if (m_show_members_oneliner)
     {
-        const uint32_t num_children = object->GetNumChildren();
+        ValueObjectSP synth_vobj = object->GetSyntheticValue(lldb::eUseSyntheticFilter);
+        const uint32_t num_children = synth_vobj->GetNumChildren();
         if (num_children)
         {
             s.PutChar('(');
             
             for (uint32_t idx=0; idx<num_children; ++idx)
             {
-                lldb::ValueObjectSP child_sp(object->GetChildAtIndex(idx, true));
+                lldb::ValueObjectSP child_sp(synth_vobj->GetChildAtIndex(idx, true));
                 if (child_sp.get())
                 {
                     if (idx)
@@ -137,4 +138,21 @@ ScriptSummaryFormat::GetDescription()
     
 }
 
-
+std::string
+SyntheticFilter::GetDescription()
+{
+    StreamString sstr;
+    sstr.Printf("%s%s%s {\n",
+                m_cascades ? "" : " (not cascading)",
+                m_skip_pointers ? " (skip pointers)" : "",
+                m_skip_references ? " (skip references)" : "");
+    
+    for (int i = 0; i < GetCount(); i++)
+    {
+        sstr.Printf("    %s\n",
+                    GetExpressionPathAtIndex(i).c_str());
+    }
+                    
+    sstr.Printf("}");
+    return sstr.GetString();
+}

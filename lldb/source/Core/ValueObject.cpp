@@ -26,6 +26,7 @@
 #include "lldb/Core/ValueObjectDynamicValue.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Core/ValueObjectMemory.h"
+#include "lldb/Core/ValueObjectSyntheticFilter.h"
 
 #include "lldb/Host/Endian.h"
 
@@ -70,12 +71,14 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_children (),
     m_synthetic_children (),
     m_dynamic_value (NULL),
+    m_synthetic_value(NULL),
     m_deref_valobj(NULL),
     m_format (eFormatDefault),
     m_last_format_mgr_revision(0),
     m_last_summary_format(),
     m_forced_summary_format(),
     m_last_value_format(),
+    m_last_synthetic_filter(),
     m_user_id_of_forced_summary(0),
     m_value_is_valid (false),
     m_value_did_change (false),
@@ -85,6 +88,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_is_deref_of_parent (false),
     m_is_array_item_for_pointer(false),
     m_is_bitfield_for_scalar(false),
+    m_is_expression_path_child(false),
     m_dump_printable_counter(0)
 {
     m_manager->ManageObject(this);
@@ -110,12 +114,14 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_children (),
     m_synthetic_children (),
     m_dynamic_value (NULL),
+    m_synthetic_value(NULL),
     m_deref_valobj(NULL),
     m_format (eFormatDefault),
     m_last_format_mgr_revision(0),
     m_last_summary_format(),
     m_forced_summary_format(),
     m_last_value_format(),
+    m_last_synthetic_filter(),
     m_user_id_of_forced_summary(0),
     m_value_is_valid (false),
     m_value_did_change (false),
@@ -125,6 +131,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_is_deref_of_parent (false),
     m_is_array_item_for_pointer(false),
     m_is_bitfield_for_scalar(false),
+    m_is_expression_path_child(false),
     m_dump_printable_counter(0)
 {
     m_manager = new ValueObjectManager();
@@ -209,14 +216,13 @@ ValueObject::UpdateFormatsIfNeeded()
         if (m_last_summary_format.get())
             m_last_summary_format.reset((StringSummaryFormat*)NULL);
         if (m_last_value_format.get())
-            m_last_value_format.reset((ValueFormat*)NULL);
-        Debugger::Formatting::ValueFormats::Get(*this, m_last_value_format);
-        // to find a summary we look for a direct summary, then if there is none
-        // we look for a regex summary. if there is none we look for a system
-        // summary (direct), and if also that fails, we look for a system
-        // regex summary
+            m_last_value_format.reset(/*(ValueFormat*)NULL*/);
+        if (m_last_synthetic_filter.get())
+            m_last_synthetic_filter.reset(/*(SyntheticFilter*)NULL*/);
         
+        Debugger::Formatting::ValueFormats::Get(*this, m_last_value_format);
         Debugger::Formatting::GetSummaryFormat(*this, m_last_summary_format);
+        Debugger::Formatting::GetSyntheticFilter(*this, m_last_synthetic_filter);
 
         m_last_format_mgr_revision = Debugger::Formatting::ValueFormats::GetCurrentRevision();
 
@@ -1423,6 +1429,63 @@ ValueObject::GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_cre
     return synthetic_child_sp;
 }
 
+// your expression path needs to have a leading . or ->
+// (unless it somehow "looks like" an array, in which case it has
+// a leading [ symbol). while the [ is meaningful and should be shown
+// to the user, . and -> are just parser design, but by no means
+// added information for the user.. strip them off
+static const char*
+SkipLeadingExpressionPathSeparators(const char* expression)
+{
+    if (!expression || !expression[0])
+        return expression;
+    if (expression[0] == '.')
+        return expression+1;
+    if (expression[0] == '-' && expression[1] == '>')
+        return expression+2;
+    return expression;
+}
+
+lldb::ValueObjectSP
+ValueObject::GetSyntheticExpressionPathChild(const char* expression, bool can_create)
+{
+    ValueObjectSP synthetic_child_sp;
+    ConstString name_const_string(expression);
+    // Check if we have already created a synthetic array member in this
+    // valid object. If we have we will re-use it.
+    synthetic_child_sp = GetSyntheticChild (name_const_string);
+    if (!synthetic_child_sp)
+    {
+        // We haven't made a synthetic array member for expression yet, so
+        // lets make one and cache it for any future reference.
+        synthetic_child_sp = GetValueForExpressionPath(expression);
+        
+        // Cache the value if we got one back...
+        if (synthetic_child_sp.get())
+        {
+            AddSyntheticChild(name_const_string, synthetic_child_sp.get());
+            synthetic_child_sp->SetName(SkipLeadingExpressionPathSeparators(expression));
+            synthetic_child_sp->m_is_expression_path_child = true;
+        }
+    }
+    return synthetic_child_sp;
+}
+
+void
+ValueObject::CalculateSyntheticValue (lldb::SyntheticValueType use_synthetic)
+{
+    if (use_synthetic == lldb::eNoSyntheticFilter)
+        return;
+    
+    UpdateFormatsIfNeeded();
+    
+    if (m_last_synthetic_filter.get() == NULL)
+        return;
+    
+    m_synthetic_value = new ValueObjectSyntheticFilter(*this, m_last_synthetic_filter);
+    
+}
+
 void
 ValueObject::CalculateDynamicValue (lldb::DynamicValueType use_dynamic)
 {
@@ -1481,6 +1544,29 @@ ValueObject::GetDynamicValue (DynamicValueType use_dynamic)
         return m_dynamic_value->GetSP();
     else
         return ValueObjectSP();
+}
+
+// GetDynamicValue() returns a NULL SharedPointer if the object is not dynamic
+// or we do not really want a dynamic VO. this method instead returns this object
+// itself when making it synthetic has no meaning. this makes it much simpler
+// to replace the SyntheticValue for the ValueObject
+ValueObjectSP
+ValueObject::GetSyntheticValue (SyntheticValueType use_synthetic)
+{
+    if (use_synthetic == lldb::eNoSyntheticFilter)
+        return GetSP();
+    
+    UpdateFormatsIfNeeded();
+    
+    if (m_last_synthetic_filter.get() == NULL)
+        return GetSP();
+    
+    CalculateSyntheticValue(use_synthetic);
+    
+    if (m_synthetic_value)
+        return m_synthetic_value->GetSP();
+    else
+        return GetSP();
 }
 
 bool
@@ -2398,6 +2484,7 @@ ValueObject::DumpValueObject
     bool show_location,
     bool use_objc,
     lldb::DynamicValueType use_dynamic,
+    bool use_synth,
     bool scope_already_checked,
     bool flat_output,
     uint32_t omit_summary_depth
@@ -2545,7 +2632,10 @@ ValueObject::DumpValueObject
                 
                 if (print_children && (!entry || entry->DoesPrintChildren() || !sum_cstr))
                 {
-                    const uint32_t num_children = valobj->GetNumChildren();
+                    ValueObjectSP synth_vobj = valobj->GetSyntheticValue(use_synth ?
+                                                                         lldb::eUseSyntheticFilter : 
+                                                                         lldb::eNoSyntheticFilter);
+                    const uint32_t num_children = synth_vobj->GetNumChildren();
                     if (num_children)
                     {
                         if (flat_output)
@@ -2562,7 +2652,7 @@ ValueObject::DumpValueObject
 
                         for (uint32_t idx=0; idx<num_children; ++idx)
                         {
-                            ValueObjectSP child_sp(valobj->GetChildAtIndex(idx, true));
+                            ValueObjectSP child_sp(synth_vobj->GetChildAtIndex(idx, true));
                             if (child_sp.get())
                             {
                                 DumpValueObject (s,
@@ -2575,6 +2665,7 @@ ValueObject::DumpValueObject
                                                  show_location,
                                                  false,
                                                  use_dynamic,
+                                                 use_synth,
                                                  true,
                                                  flat_output,
                                                  omit_summary_depth > 1 ? omit_summary_depth - 1 : 0);

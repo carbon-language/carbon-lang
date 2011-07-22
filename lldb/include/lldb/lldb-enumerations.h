@@ -324,6 +324,12 @@ namespace lldb {
         eDynamicDontRunTarget   = 2
     } DynamicValueType;
     
+    typedef enum SyntheticValueType
+    {
+        eNoSyntheticFilter = 0,
+        eUseSyntheticFilter = 1
+    } SyntheticValueType;
+    
     typedef enum AccessType
     {
         eAccessNone,

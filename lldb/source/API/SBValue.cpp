@@ -648,6 +648,8 @@ SBValue::GetDescription (SBStream &description)
         lldb::DynamicValueType use_dynamic = eNoDynamicValues;
         bool scope_already_checked = false;
         bool flat_output = false;
+        bool use_synthetic = true;
+        uint32_t no_summary_depth = 0;
         ValueObject::DumpValueObject (description.ref(), 
                                       m_opaque_sp.get(), 
                                       m_opaque_sp->GetName().GetCString(), 
@@ -656,10 +658,11 @@ SBValue::GetDescription (SBStream &description)
                                       max_depth, 
                                       show_types, show_location, 
                                       use_objc, 
-                                      use_dynamic, 
+                                      use_dynamic,
+                                      use_synthetic,
                                       scope_already_checked, 
                                       flat_output,
-                                      0);
+                                      no_summary_depth);
     }
     else
         description.Printf ("No value");

@@ -144,6 +144,7 @@ class   SymbolContextSpecifier;
 class   SymbolFile;
 class   SymbolVendor;
 class   Symtab;
+class   SyntheticFilter;
 class   Target;
 class   TargetList;
 class   Thread;

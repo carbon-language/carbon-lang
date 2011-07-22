@@ -54,6 +54,7 @@ public:
     uint32_t max_depth;
     uint32_t ptr_depth;
     lldb::DynamicValueType use_dynamic;
+    bool use_synth;
 };
 
 } // namespace lldb_private

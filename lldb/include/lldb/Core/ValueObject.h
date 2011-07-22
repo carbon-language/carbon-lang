@@ -466,7 +466,7 @@ public:
     const ConstString &
     GetName() const;
 
-    lldb::ValueObjectSP
+    virtual lldb::ValueObjectSP
     GetChildAtIndex (uint32_t idx, bool can_create);
 
     virtual lldb::ValueObjectSP
@@ -546,7 +546,13 @@ public:
     GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_create);
     
     lldb::ValueObjectSP
+    GetSyntheticExpressionPathChild(const char* expression, bool can_create);
+    
+    lldb::ValueObjectSP
     GetDynamicValue (lldb::DynamicValueType valueType);
+    
+    lldb::ValueObjectSP
+    GetSyntheticValue (lldb::SyntheticValueType use_synthetic);
     
     virtual lldb::ValueObjectSP
     CreateConstantValue (const ConstString &name);
@@ -592,6 +598,7 @@ public:
                      bool show_location,
                      bool use_objc,
                      lldb::DynamicValueType use_dynamic,
+                     bool use_synthetic,
                      bool scope_already_checked,
                      bool flat_output,
                      uint32_t omit_summary_depth);
@@ -727,6 +734,7 @@ protected:
     std::vector<ValueObject *> m_children;
     std::map<ConstString, ValueObject *> m_synthetic_children;
     ValueObject *m_dynamic_value;
+    ValueObject *m_synthetic_value;
     lldb::ValueObjectSP m_addr_of_valobj_sp; // We have to hold onto a shared pointer to this one because it is created
                                              // as an independent ValueObjectConstResult, which isn't managed by us.
     ValueObject *m_deref_valobj;
@@ -736,6 +744,7 @@ protected:
     lldb::SummaryFormatSP   m_last_summary_format;
     lldb::SummaryFormatSP   m_forced_summary_format;
     lldb::ValueFormatSP     m_last_value_format;
+    lldb::SyntheticFilterSP m_last_synthetic_filter;
     lldb::user_id_t         m_user_id_of_forced_summary;
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
@@ -744,7 +753,8 @@ protected:
                         m_pointers_point_to_load_addrs:1,
                         m_is_deref_of_parent:1,
                         m_is_array_item_for_pointer:1,
-                        m_is_bitfield_for_scalar:1;
+                        m_is_bitfield_for_scalar:1,
+                        m_is_expression_path_child:1;
     
     // used to prevent endless looping into GetpPrintableRepresentation()
     uint32_t            m_dump_printable_counter;
@@ -781,6 +791,9 @@ protected:
 
     virtual void
     CalculateDynamicValue (lldb::DynamicValueType use_dynamic);
+    
+    virtual void
+    CalculateSyntheticValue (lldb::SyntheticValueType use_synthetic);
     
     // Should only be called by ValueObject::GetChildAtIndex()
     // Returns a ValueObject managed by this ValueObject's manager.

@@ -31,7 +31,8 @@ static OptionDefinition
 g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "dynamic-type",    'd', required_argument, TargetInstanceSettings::g_dynamic_value_types, 
-                                                                              0, eArgTypeNone,   "Show the object as its full dynamic type, not its static type, if available."},
+                                                                              0, eArgTypeNone,      "Show the object as its full dynamic type, not its static type, if available."},
+    { LLDB_OPT_SET_1, false, "synthetic-type",  'S', required_argument, NULL, 0, eArgTypeBoolean,   "Show the object obeying its synthetic provider, if available."},
     { LLDB_OPT_SET_1, false, "depth",           'D', required_argument, NULL, 0, eArgTypeCount,     "Set the max recurse depth when dumping aggregate types (default is infinity)."},
     { LLDB_OPT_SET_1, false, "flat",            'F', no_argument,       NULL, 0, eArgTypeNone,      "Display results in a flat format that uses expression paths for each variable or member."},
     { LLDB_OPT_SET_1, false, "location",        'L', no_argument,       NULL, 0, eArgTypeNone,      "Show variable location information."},
@@ -105,7 +106,12 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
             else
                 no_summary_depth = 1;
             break;
-
+            
+        case 'S':
+            use_synth = Args::StringToBoolean(option_arg, true, &success);
+            if (!success)
+                error.SetErrorStringWithFormat("Invalid synthetic-type '%s'.\n", option_arg);
+            break;
         default:
             error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
             break;
@@ -124,6 +130,7 @@ OptionGroupValueObjectDisplay::OptionParsingStarting (CommandInterpreter &interp
     use_objc          = false;
     max_depth         = UINT32_MAX;
     ptr_depth         = 0;
+    use_synth         = true;
     
     Target *target = interpreter.GetExecutionContext().target;
     if (target != NULL)

@@ -495,20 +495,38 @@
                 in fact it has a similar effect. If you add a % sign
                 followed by any one format name or abbreviation from the
                 above table after an expression path, the resulting
-                object will be displyed using the chosen format (this is
-                applicable to non-aggregate types only, with a few
-                special exceptions discussed below). </p>
-              <p>There are two more special format symbols that you can
-                use only as part of a summary string: <code>%V</code>
-                and <code>%@</code>. The first one tells LLDB to ignore
-                summary strings for the type of the object referred by
-                the expression path and instead print the object's
-                value. The second is only applicable to Objective-C
-                classes, and tells LLDB to get the object's description
-                from the Objective-C runtime. By default, if no format
-                is provided, LLDB will try to get the object's summary,
-                and if empty the object's value. If neither can be
-                obtained, nothing will be displayed.</p>
+                object will be displyed using the chosen format.</p>
+                
+            <p>You can also use some other special format markers, not available
+            for type formatters, but which carry a special meaning when used in this
+            context:</p>
+            
+            <table border="1">
+                <tbody>
+                  <tr valign="top">
+                    <td width="23%"><b>Symbol</b></td>
+                    <td><b>Description</b></td>
+                  </tr>
+                  <tr valign="top">
+                    <td><b>%S</b></td>
+                    <td>Use this object's summary (the default for aggregate types)</td>
+                  </tr>
+                  <tr valign="top">
+                    <td><b>%V</b></td>
+                    <td>Use this object's value (the default for non-aggregate types)</td>
+                  </tr>
+                  <tr valign="top">
+                    <td><b>%@</b></td>
+                    <td>Use a language-runtime specific description (for C++ this does nothing,
+                    for Objective-C it calls the NSPrintForDebugger API)</td>
+                  </tr>
+                  <tr valign="top">
+                    <td><b>%L</b></td>
+                    <td>Use this object's location (memory address, register name, ...)</td>
+                  </tr>
+				</tbody>
+			</table>
+                
               <p>As previously said, pointers and values are treated the
                 same way when getting to their members in an expression
                 path. However, if your expression path leads to a
