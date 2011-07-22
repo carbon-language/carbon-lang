@@ -58,7 +58,7 @@ public:
     // Process protocol.
     //------------------------------------------------------------------
     virtual bool
-    CanDebug(lldb_private::Target &target);
+    CanDebug(lldb_private::Target &target, bool plugin_specified_by_name);
 
     virtual lldb_private::Error
     WillLaunch(lldb_private::Module *module);
