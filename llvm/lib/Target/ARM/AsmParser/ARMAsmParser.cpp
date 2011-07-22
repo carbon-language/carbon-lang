@@ -126,6 +126,7 @@ class ARMAsmParser : public TargetAsmParser {
   OperandMatchResultTy parsePKHASRImm(SmallVectorImpl<MCParsedAsmOperand*> &O) {
     return parsePKHImm(O, "asr", 1, 32);
   }
+  OperandMatchResultTy parseSetEndImm(SmallVectorImpl<MCParsedAsmOperand*>&);
 
   // Asm Match Converter Methods
   bool CvtLdWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
@@ -476,6 +477,14 @@ public:
     int64_t Value = CE->getValue();
     return ARM_AM::getT2SOImmVal(Value) != -1;
   }
+  bool isSetEndImm() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value == 1 || Value == 0;
+  }
   bool isReg() const { return Kind == Register; }
   bool isRegList() const { return Kind == RegisterList; }
   bool isDPRRegList() const { return Kind == DPRRegisterList; }
@@ -711,6 +720,11 @@ public:
   }
 
   void addT2SOImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    addExpr(Inst, getImm());
+  }
+
+  void addSetEndImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
   }
@@ -1644,6 +1658,30 @@ parsePKHImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands, StringRef Op,
   return MatchOperand_Success;
 }
 
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+parseSetEndImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  const AsmToken &Tok = Parser.getTok();
+  SMLoc S = Tok.getLoc();
+  if (Tok.isNot(AsmToken::Identifier)) {
+    Error(Tok.getLoc(), "'be' or 'le' operand expected");
+    return MatchOperand_ParseFail;
+  }
+  int Val = StringSwitch<int>(Tok.getString())
+    .Case("be", 1)
+    .Case("le", 0)
+    .Default(-1);
+  Parser.Lex(); // Eat the token.
+
+  if (Val == -1) {
+    Error(Tok.getLoc(), "'be' or 'le' operand expected");
+    return MatchOperand_ParseFail;
+  }
+  Operands.push_back(ARMOperand::CreateImm(MCConstantExpr::Create(Val,
+                                                                  getContext()),
+                                           S, Parser.getTok().getLoc()));
+  return MatchOperand_Success;
+}
+
 /// CvtLdWriteBackRegAddrMode2 - Convert parsed operands to MCInst.
 /// Needed here because the Asm Gen Matcher can't handle properly tied operands
 /// when they refer multiple MIOperands inside a single one.
@@ -2197,6 +2235,7 @@ GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "mcrr2" || Mnemonic == "cbz" || Mnemonic == "cdp2" ||
       Mnemonic == "trap" || Mnemonic == "mrc2" || Mnemonic == "mrrc2" ||
       Mnemonic == "dsb" || Mnemonic == "isb" || Mnemonic == "clrex" ||
+      Mnemonic == "setend" ||
       Mnemonic.startswith("cps") || (Mnemonic == "movs" && isThumb())) {
     CanAcceptPredicationCode = false;
   } else {
@@ -2221,7 +2260,7 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   unsigned ProcessorIMod;
   bool CarrySetting;
   Mnemonic = SplitMnemonic(Mnemonic, PredicationCode, CarrySetting,
-                       ProcessorIMod);
+                           ProcessorIMod);
 
   Operands.push_back(ARMOperand::CreateToken(Mnemonic, NameLoc));
 
@@ -2245,6 +2284,13 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     return Error(NameLoc, "instruction '" + Mnemonic +
                  "' can not set flags, but 's' suffix specified");
   }
+  // If we had a predication code on an instruction that can't do that, issue an
+  // error.
+  if (!CanAcceptPredicationCode && PredicationCode != ARMCC::AL) {
+    Parser.EatToEndOfStatement();
+    return Error(NameLoc, "instruction '" + Mnemonic +
+                 "' is not predicable, but condition code specified");
+  }
 
   // Add the carry setting operand, if necessary.
   //
@@ -2259,11 +2305,6 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   if (CanAcceptPredicationCode) {
     Operands.push_back(ARMOperand::CreateCondCode(
                          ARMCC::CondCodes(PredicationCode), NameLoc));
-  } else {
-    // This mnemonic can't ever accept a predication code, but the user wrote
-    // one (or misspelled another mnemonic).
-
-    // FIXME: Issue a nice error.
   }
 
   // Add the processor imod operand, if necessary.

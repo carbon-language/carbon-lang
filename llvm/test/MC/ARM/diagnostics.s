@@ -144,3 +144,19 @@
 @ CHECK: error: asr operand expected.
 @ CHECK:         pkhtb r2, r2, r3, lsl #3
 @ CHECK:                           ^
+
+
+        @ bad values for SETEND
+        setendne be
+        setend me
+        setend 1
+
+@ CHECK: error: instruction 'setend' is not predicable, but condition code specified
+@ CHECK:         setendne be
+@ CHECK:         ^
+@ CHECK: error: 'be' or 'le' operand expected
+@ CHECK:         setend me
+@ CHECK:                  ^
+@ CHECK: error: 'be' or 'le' operand expected
+@ CHECK:         setend 1
+@ CHECK:                ^

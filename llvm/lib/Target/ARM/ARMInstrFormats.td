@@ -193,8 +193,13 @@ def s_cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 CPSR))> {
 
 // ARM special operands for disassembly only.
 //
+def SetEndAsmOperand : AsmOperandClass {
+  let Name = "SetEndImm";
+  let ParserMethod = "parseSetEndImm";
+}
 def setend_op : Operand<i32> {
   let PrintMethod = "printSetendOperand";
+  let ParserMatchClass = SetEndAsmOperand;
 }
 
 def msr_mask : Operand<i32> {
