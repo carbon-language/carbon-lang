@@ -35,20 +35,10 @@ static MCInstrInfo *createMSP430MCInstrInfo() {
   return X;
 }
 
-extern "C" void LLVMInitializeMSP430MCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheMSP430Target, createMSP430MCInstrInfo);
-}
-
-
 static MCRegisterInfo *createMSP430MCRegisterInfo(StringRef TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitMSP430MCRegisterInfo(X, MSP430::PCW);
   return X;
-}
-
-extern "C" void LLVMInitializeMSP430MCRegisterInfo() {
-  TargetRegistry::RegisterMCRegInfo(TheMSP430Target,
-                                    createMSP430MCRegisterInfo);
 }
 
 static MCSubtargetInfo *createMSP430MCSubtargetInfo(StringRef TT, StringRef CPU,
@@ -58,15 +48,6 @@ static MCSubtargetInfo *createMSP430MCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-extern "C" void LLVMInitializeMSP430MCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheMSP430Target,
-                                          createMSP430MCSubtargetInfo);
-}
-
-extern "C" void LLVMInitializeMSP430MCAsmInfo() {
-  RegisterMCAsmInfo<MSP430MCAsmInfo> X(TheMSP430Target);
-}
-
 MCCodeGenInfo *createMSP430MCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                          CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -74,7 +55,22 @@ MCCodeGenInfo *createMSP430MCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-extern "C" void LLVMInitializeMSP430MCCodeGenInfo() {
+extern "C" void LLVMInitializeMSP430TargetMC() {
+  // Register the MC asm info.
+  RegisterMCAsmInfo<MSP430MCAsmInfo> X(TheMSP430Target);
+
+  // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheMSP430Target,
                                         createMSP430MCCodeGenInfo);
+
+  // Register the MC instruction info.
+  TargetRegistry::RegisterMCInstrInfo(TheMSP430Target, createMSP430MCInstrInfo);
+
+  // Register the MC register info.
+  TargetRegistry::RegisterMCRegInfo(TheMSP430Target,
+                                    createMSP430MCRegisterInfo);
+
+  // Register the MC subtarget info.
+  TargetRegistry::RegisterMCSubtargetInfo(TheMSP430Target,
+                                          createMSP430MCSubtargetInfo);
 }

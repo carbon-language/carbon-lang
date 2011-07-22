@@ -26,26 +26,10 @@ extern "C" {
 #define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##Target();
 #include "llvm/Config/Targets.def"
   
-#define LLVM_TARGET(TargetName) \
-  void LLVMInitialize##TargetName##MCAsmInfo();
+  // Declare all of the target-MC-initialization functions that are available.
+#define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##TargetMC();
 #include "llvm/Config/Targets.def"
-
-#define LLVM_TARGET(TargetName) \
-  void LLVMInitialize##TargetName##MCCodeGenInfo();
-#include "llvm/Config/Targets.def"
-
-#define LLVM_TARGET(TargetName) \
-  void LLVMInitialize##TargetName##MCInstrInfo();
-#include "llvm/Config/Targets.def"
-
-#define LLVM_TARGET(TargetName) \
-  void LLVMInitialize##TargetName##MCRegisterInfo();
-#include "llvm/Config/Targets.def"
-
-#define LLVM_TARGET(TargetName) \
-  void LLVMInitialize##TargetName##MCSubtargetInfo();
-#include "llvm/Config/Targets.def"
-
+  
   // Declare all of the available assembly printer initialization functions.
 #define LLVM_ASM_PRINTER(TargetName) void LLVMInitialize##TargetName##AsmPrinter();
 #include "llvm/Config/AsmPrinters.def"
@@ -84,56 +68,13 @@ namespace llvm {
 #include "llvm/Config/Targets.def"
   }
   
-  /// InitializeAllMCAsmInfos - The main program should call this function
-  /// if it wants access to all available assembly infos for targets that
-  /// LLVM is configured to support, to make them available via the
-  /// TargetRegistry.
-  ///
-  /// It is legal for a client to make multiple calls to this function.
-  inline void InitializeAllMCAsmInfos() {
-#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##MCAsmInfo();
-#include "llvm/Config/Targets.def"
-  }
-  
-  /// InitializeAllMCCodeGenInfos - The main program should call this function
-  /// if it wants access to all targets machines that LLVM is configured to
+  /// InitializeAllTargetMCs - The main program should call this function if it
+  /// wants access to all available target MC that LLVM is configured to
   /// support, to make them available via the TargetRegistry.
   ///
   /// It is legal for a client to make multiple calls to this function.
-  inline void InitializeAllMCCodeGenInfos() {
-#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##MCCodeGenInfo();
-#include "llvm/Config/Targets.def"
-  }
-  
-  /// InitializeAllMCInstrInfos - The main program should call this function
-  /// if it wants access to all available instruction infos for targets that
-  /// LLVM is configured to support, to make them available via the
-  /// TargetRegistry.
-  ///
-  /// It is legal for a client to make multiple calls to this function.
-  inline void InitializeAllMCInstrInfos() {
-#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##MCInstrInfo();
-#include "llvm/Config/Targets.def"
-  }
-  
-  /// InitializeAllMCRegisterInfos - The main program should call this function
-  /// if it wants access to all available register infos for targets that
-  /// LLVM is configured to support, to make them available via the
-  /// TargetRegistry.
-  ///
-  /// It is legal for a client to make multiple calls to this function.
-  inline void InitializeAllMCRegisterInfos() {
-#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##MCRegisterInfo();
-#include "llvm/Config/Targets.def"
-  }
-  
-  /// InitializeAllMCSubtargetInfos - The main program should call this function
-  /// if it wants access to all available subtarget infos for targets that LLVM
-  /// is configured to support, to make them available via the TargetRegistry.
-  ///
-  /// It is legal for a client to make multiple calls to this function.
-  inline void InitializeAllMCSubtargetInfos() {
-#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##MCSubtargetInfo();
+  inline void InitializeAllTargetMCs() {
+#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetMC();
 #include "llvm/Config/Targets.def"
   }
   
@@ -177,8 +118,7 @@ namespace llvm {
 #ifdef LLVM_NATIVE_TARGET
     LLVM_NATIVE_TARGETINFO();
     LLVM_NATIVE_TARGET();
-    LLVM_NATIVE_MCASMINFO();
-    LLVM_NATIVE_MCCODEGENINFO();
+    LLVM_NATIVE_TARGETMC();
     return false;
 #else
     return true;

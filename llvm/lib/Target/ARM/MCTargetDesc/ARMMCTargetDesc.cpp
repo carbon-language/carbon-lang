@@ -98,34 +98,16 @@ MCSubtargetInfo *ARM_MC::createARMMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-// Force static initialization.
-extern "C" void LLVMInitializeARMMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheARMTarget,
-                                          ARM_MC::createARMMCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheThumbTarget,
-                                          ARM_MC::createARMMCSubtargetInfo);
-}
-
 static MCInstrInfo *createARMMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitARMMCInstrInfo(X);
   return X;
 }
 
-extern "C" void LLVMInitializeARMMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheARMTarget, createARMMCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(TheThumbTarget, createARMMCInstrInfo);
-}
-
 static MCRegisterInfo *createARMMCRegisterInfo(StringRef Triple) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitARMMCRegisterInfo(X, ARM::LR);
   return X;
-}
-
-extern "C" void LLVMInitializeARMMCRegisterInfo() {
-  TargetRegistry::RegisterMCRegInfo(TheARMTarget, createARMMCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(TheThumbTarget, createARMMCRegisterInfo);
 }
 
 static MCAsmInfo *createARMMCAsmInfo(const Target &T, StringRef TT) {
@@ -137,12 +119,6 @@ static MCAsmInfo *createARMMCAsmInfo(const Target &T, StringRef TT) {
   return new ARMELFMCAsmInfo();
 }
 
-extern "C" void LLVMInitializeARMMCAsmInfo() {
-  // Register the target asm info.
-  RegisterMCAsmInfoFn A(TheARMTarget, createARMMCAsmInfo);
-  RegisterMCAsmInfoFn B(TheThumbTarget, createARMMCAsmInfo);
-}
-
 MCCodeGenInfo *createARMMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                       CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -152,7 +128,27 @@ MCCodeGenInfo *createARMMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-extern "C" void LLVMInitializeARMMCCodeGenInfo() {
+// Force static initialization.
+extern "C" void LLVMInitializeARMTargetMC() {
+  // Register the MC asm info.
+  RegisterMCAsmInfoFn A(TheARMTarget, createARMMCAsmInfo);
+  RegisterMCAsmInfoFn B(TheThumbTarget, createARMMCAsmInfo);
+
+  // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheARMTarget, createARMMCCodeGenInfo);
   TargetRegistry::RegisterMCCodeGenInfo(TheThumbTarget, createARMMCCodeGenInfo);
+
+  // Register the MC instruction info.
+  TargetRegistry::RegisterMCInstrInfo(TheARMTarget, createARMMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheThumbTarget, createARMMCInstrInfo);
+
+  // Register the MC register info.
+  TargetRegistry::RegisterMCRegInfo(TheARMTarget, createARMMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheThumbTarget, createARMMCRegisterInfo);
+
+  // Register the MC subtarget info.
+  TargetRegistry::RegisterMCSubtargetInfo(TheARMTarget,
+                                          ARM_MC::createARMMCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheThumbTarget,
+                                          ARM_MC::createARMMCSubtargetInfo);
 }

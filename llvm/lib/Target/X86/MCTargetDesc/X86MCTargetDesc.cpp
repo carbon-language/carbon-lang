@@ -261,23 +261,10 @@ MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-// Force static initialization.
-extern "C" void LLVMInitializeX86MCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheX86_32Target,
-                                          X86_MC::createX86MCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheX86_64Target,
-                                          X86_MC::createX86MCSubtargetInfo);
-}
-
 static MCInstrInfo *createX86MCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitX86MCInstrInfo(X);
   return X;
-}
-
-extern "C" void LLVMInitializeX86MCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheX86_32Target, createX86MCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(TheX86_64Target, createX86MCInstrInfo);
 }
 
 static MCRegisterInfo *createX86MCRegisterInfo(StringRef TT) {
@@ -293,12 +280,6 @@ static MCRegisterInfo *createX86MCRegisterInfo(StringRef TT) {
   X86_MC::InitLLVM2SEHRegisterMapping(X);
   return X;
 }
-
-extern "C" void LLVMInitializeX86MCRegisterInfo() {
-  TargetRegistry::RegisterMCRegInfo(TheX86_32Target, createX86MCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(TheX86_64Target, createX86MCRegisterInfo);
-}
-
 
 static MCAsmInfo *createX86MCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
@@ -331,12 +312,6 @@ static MCAsmInfo *createX86MCAsmInfo(const Target &T, StringRef TT) {
   MAI->addInitialFrameState(0, CSDst, CSSrc);
 
   return MAI;
-}
-
-extern "C" void LLVMInitializeX86MCAsmInfo() {
-  // Register the target asm info.
-  RegisterMCAsmInfoFn A(TheX86_32Target, createX86MCAsmInfo);
-  RegisterMCAsmInfoFn B(TheX86_64Target, createX86MCAsmInfo);
 }
 
 MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
@@ -388,8 +363,27 @@ MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-extern "C" void LLVMInitializeX86MCCodeGenInfo() {
-  // Register the target asm info.
-  RegisterMCCodeGenInfoFn A(TheX86_32Target, createX86MCCodeGenInfo);
-  RegisterMCCodeGenInfoFn B(TheX86_64Target, createX86MCCodeGenInfo);
+// Force static initialization.
+extern "C" void LLVMInitializeX86TargetMC() {
+  // Register the MC asm info.
+  RegisterMCAsmInfoFn A(TheX86_32Target, createX86MCAsmInfo);
+  RegisterMCAsmInfoFn B(TheX86_64Target, createX86MCAsmInfo);
+
+  // Register the MC codegen info.
+  RegisterMCCodeGenInfoFn C(TheX86_32Target, createX86MCCodeGenInfo);
+  RegisterMCCodeGenInfoFn D(TheX86_64Target, createX86MCCodeGenInfo);
+
+  // Register the MC instruction info.
+  TargetRegistry::RegisterMCInstrInfo(TheX86_32Target, createX86MCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheX86_64Target, createX86MCInstrInfo);
+
+  // Register the MC register info.
+  TargetRegistry::RegisterMCRegInfo(TheX86_32Target, createX86MCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheX86_64Target, createX86MCRegisterInfo);
+
+  // Register the MC subtarget info.
+  TargetRegistry::RegisterMCSubtargetInfo(TheX86_32Target,
+                                          X86_MC::createX86MCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheX86_64Target,
+                                          X86_MC::createX86MCSubtargetInfo);
 }

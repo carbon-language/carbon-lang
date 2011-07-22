@@ -35,18 +35,10 @@ static MCInstrInfo *createSparcMCInstrInfo() {
   return X;
 }
 
-extern "C" void LLVMInitializeSparcMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheSparcTarget, createSparcMCInstrInfo);
-}
-
 static MCRegisterInfo *createSparcMCRegisterInfo(StringRef TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitSparcMCRegisterInfo(X, SP::I7);
   return X;
-}
-
-extern "C" void LLVMInitializeSparcMCRegisterInfo() {
-  TargetRegistry::RegisterMCRegInfo(TheSparcTarget, createSparcMCRegisterInfo);
 }
 
 static MCSubtargetInfo *createSparcMCSubtargetInfo(StringRef TT, StringRef CPU,
@@ -56,16 +48,6 @@ static MCSubtargetInfo *createSparcMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-extern "C" void LLVMInitializeSparcMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheSparcTarget,
-                                          createSparcMCSubtargetInfo);
-}
-
-extern "C" void LLVMInitializeSparcMCAsmInfo() {
-  RegisterMCAsmInfo<SparcELFMCAsmInfo> X(TheSparcTarget);
-  RegisterMCAsmInfo<SparcELFMCAsmInfo> Y(TheSparcV9Target);
-}
-
 MCCodeGenInfo *createSparcMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                         CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -73,10 +55,24 @@ MCCodeGenInfo *createSparcMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-extern "C" void LLVMInitializeSparcMCCodeGenInfo() {
+extern "C" void LLVMInitializeSparcTargetMC() {
+  // Register the MC asm info.
+  RegisterMCAsmInfo<SparcELFMCAsmInfo> X(TheSparcTarget);
+  RegisterMCAsmInfo<SparcELFMCAsmInfo> Y(TheSparcV9Target);
+
+  // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheSparcTarget,
                                        createSparcMCCodeGenInfo);
   TargetRegistry::RegisterMCCodeGenInfo(TheSparcV9Target,
                                        createSparcMCCodeGenInfo);
-}
 
+  // Register the MC instruction info.
+  TargetRegistry::RegisterMCInstrInfo(TheSparcTarget, createSparcMCInstrInfo);
+
+  // Register the MC register info.
+  TargetRegistry::RegisterMCRegInfo(TheSparcTarget, createSparcMCRegisterInfo);
+
+  // Register the MC subtarget info.
+  TargetRegistry::RegisterMCSubtargetInfo(TheSparcTarget,
+                                          createSparcMCSubtargetInfo);
+}

@@ -108,10 +108,7 @@ void EDDisassembler::initialize() {
   
   InitializeAllTargetInfos();
   InitializeAllTargets();
-  InitializeAllMCCodeGenInfos();
-  InitializeAllMCAsmInfos();
-  InitializeAllMCRegisterInfos();
-  InitializeAllMCSubtargetInfos();
+  InitializeAllTargetMCs();
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
   InitializeAllDisassemblers();
@@ -178,6 +175,7 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   TargetMachine.reset(Tgt->createTargetMachine(tripleString, CPU,
                                                featureString));
 
+  // FIXME: It shouldn't be using TargetRegisterInfo!
   const TargetRegisterInfo *registerInfo = TargetMachine->getRegisterInfo();
   
   if (!registerInfo)

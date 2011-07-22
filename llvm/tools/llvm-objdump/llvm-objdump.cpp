@@ -310,9 +310,7 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargetInfos();
   // FIXME: We shouldn't need to initialize the Target(Machine)s.
   llvm::InitializeAllTargets();
-  llvm::InitializeAllMCAsmInfos();
-  llvm::InitializeAllMCCodeGenInfos();
-  llvm::InitializeAllMCInstrInfos();
+  llvm::InitializeAllTargetMCs();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllDisassemblers();

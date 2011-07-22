@@ -42,12 +42,7 @@ typedef struct LLVMStructLayout *LLVMStructLayoutRef;
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
 
 #define LLVM_TARGET(TargetName) \
-  void LLVMInitialize##TargetName##MCAsmInfo(void);
-#include "llvm/Config/Targets.def"
-#undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
-  
-#define LLVM_TARGET(TargetName) \
-  void LLVMInitialize##TargetName##MCCodeGenInfo(void);
+  void LLVMInitialize##TargetName##TargetMC(void);
 #include "llvm/Config/Targets.def"
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
   
@@ -77,8 +72,7 @@ static inline LLVMBool LLVMInitializeNativeTarget(void) {
 #ifdef LLVM_NATIVE_TARGET
   LLVM_NATIVE_TARGETINFO();
   LLVM_NATIVE_TARGET();
-  LLVM_NATIVE_MCASMINFO();
-  LLVM_NATIVE_MCCODEGENINFO();
+  LLVM_NATIVE_TARGETMC();
   return 0;
 #else
   return 1;

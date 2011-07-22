@@ -36,19 +36,10 @@ static MCInstrInfo *createSPUMCInstrInfo() {
   return X;
 }
 
-extern "C" void LLVMInitializeCellSPUMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheCellSPUTarget, createSPUMCInstrInfo);
-}
-
 static MCRegisterInfo *createCellSPUMCRegisterInfo(StringRef TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitSPUMCRegisterInfo(X, SPU::R0);
   return X;
-}
-
-extern "C" void LLVMInitializeCellSPUMCRegisterInfo() {
-  TargetRegistry::RegisterMCRegInfo(TheCellSPUTarget,
-                                    createCellSPUMCRegisterInfo);
 }
 
 static MCSubtargetInfo *createSPUMCSubtargetInfo(StringRef TT, StringRef CPU,
@@ -56,11 +47,6 @@ static MCSubtargetInfo *createSPUMCSubtargetInfo(StringRef TT, StringRef CPU,
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitSPUMCSubtargetInfo(X, TT, CPU, FS);
   return X;
-}
-
-extern "C" void LLVMInitializeCellSPUMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheCellSPUTarget,
-                                          createSPUMCSubtargetInfo);
 }
 
 static MCAsmInfo *createSPUMCAsmInfo(const Target &T, StringRef TT) {
@@ -74,10 +60,6 @@ static MCAsmInfo *createSPUMCAsmInfo(const Target &T, StringRef TT) {
   return MAI;
 }
 
-extern "C" void LLVMInitializeCellSPUMCAsmInfo() {
-  RegisterMCAsmInfoFn X(TheCellSPUTarget, createSPUMCAsmInfo);
-}
-
 MCCodeGenInfo *createSPUMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                       CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -87,7 +69,23 @@ MCCodeGenInfo *createSPUMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-extern "C" void LLVMInitializeCellSPUMCCodeGenInfo() {
+// Force static initialization.
+extern "C" void LLVMInitializeCellSPUTargetMC() {
+  // Register the MC asm info.
+  RegisterMCAsmInfoFn X(TheCellSPUTarget, createSPUMCAsmInfo);
+
+  // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheCellSPUTarget,
                                         createSPUMCCodeGenInfo);
+
+  // Register the MC instruction info.
+  TargetRegistry::RegisterMCInstrInfo(TheCellSPUTarget, createSPUMCInstrInfo);
+
+  // Register the MC register info.
+  TargetRegistry::RegisterMCRegInfo(TheCellSPUTarget,
+                                    createCellSPUMCRegisterInfo);
+
+  // Register the MC subtarget info.
+  TargetRegistry::RegisterMCSubtargetInfo(TheCellSPUTarget,
+                                          createSPUMCSubtargetInfo);
 }

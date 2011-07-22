@@ -36,11 +36,6 @@ static MCInstrInfo *createPPCMCInstrInfo() {
   return X;
 }
 
-extern "C" void LLVMInitializePowerPCMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(ThePPC32Target, createPPCMCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(ThePPC64Target, createPPCMCInstrInfo);
-}
-
 static MCRegisterInfo *createPPCMCRegisterInfo(StringRef TT) {
   Triple TheTriple(TT);
   bool isPPC64 = (TheTriple.getArch() == Triple::ppc64);
@@ -52,23 +47,11 @@ static MCRegisterInfo *createPPCMCRegisterInfo(StringRef TT) {
   return X;
 }
 
-extern "C" void LLVMInitializePowerPCMCRegisterInfo() {
-  TargetRegistry::RegisterMCRegInfo(ThePPC32Target, createPPCMCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(ThePPC64Target, createPPCMCRegisterInfo);
-}
-
 static MCSubtargetInfo *createPPCMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                  StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitPPCMCSubtargetInfo(X, TT, CPU, FS);
   return X;
-}
-
-extern "C" void LLVMInitializePowerPCMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(ThePPC32Target,
-                                          createPPCMCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(ThePPC64Target,
-                                          createPPCMCSubtargetInfo);
 }
 
 static MCAsmInfo *createPPCMCAsmInfo(const Target &T, StringRef TT) {
@@ -89,11 +72,6 @@ static MCAsmInfo *createPPCMCAsmInfo(const Target &T, StringRef TT) {
   return MAI;
 }
 
-extern "C" void LLVMInitializePowerPCMCAsmInfo() {
-  RegisterMCAsmInfoFn C(ThePPC32Target, createPPCMCAsmInfo);
-  RegisterMCAsmInfoFn D(ThePPC64Target, createPPCMCAsmInfo);  
-}
-
 MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                       CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -109,7 +87,26 @@ MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-extern "C" void LLVMInitializePowerPCMCCodeGenInfo() {
+extern "C" void LLVMInitializePowerPCTargetMC() {
+  // Register the MC asm info.
+  RegisterMCAsmInfoFn C(ThePPC32Target, createPPCMCAsmInfo);
+  RegisterMCAsmInfoFn D(ThePPC64Target, createPPCMCAsmInfo);  
+
+  // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(ThePPC32Target, createPPCMCCodeGenInfo);
   TargetRegistry::RegisterMCCodeGenInfo(ThePPC64Target, createPPCMCCodeGenInfo);
+
+  // Register the MC instruction info.
+  TargetRegistry::RegisterMCInstrInfo(ThePPC32Target, createPPCMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(ThePPC64Target, createPPCMCInstrInfo);
+
+  // Register the MC register info.
+  TargetRegistry::RegisterMCRegInfo(ThePPC32Target, createPPCMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(ThePPC64Target, createPPCMCRegisterInfo);
+
+  // Register the MC subtarget info.
+  TargetRegistry::RegisterMCSubtargetInfo(ThePPC32Target,
+                                          createPPCMCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(ThePPC64Target,
+                                          createPPCMCSubtargetInfo);
 }

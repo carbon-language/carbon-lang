@@ -232,9 +232,7 @@ int main(int argc, char **argv) {
 
   // Initialize targets first, so that --version shows registered targets.
   InitializeAllTargets();
-  InitializeAllMCAsmInfos();
-  InitializeAllMCCodeGenInfos();
-  InitializeAllMCSubtargetInfos();
+  InitializeAllTargetMCs();
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
 

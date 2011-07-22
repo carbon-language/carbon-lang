@@ -77,15 +77,7 @@ extern "C" void LLVMInitializeCppBackendTarget() {
   RegisterTargetMachine<CPPTargetMachine> X(TheCppBackendTarget);
 }
 
-extern "C" void LLVMInitializeCppBackendMCAsmInfo() {}
-
-extern "C" void LLVMInitializeCppBackendMCRegisterInfo() {}
-
-extern "C" void LLVMInitializeCppBackendMCInstrInfo() {}
-
-extern "C" void LLVMInitializeCppBackendMCSubtargetInfo() {}
-
-extern "C" void LLVMInitializeCppBackendMCCodeGenInfo() {}
+extern "C" void LLVMInitializeCppBackendTargetMC() {}
 
 namespace {
   typedef std::vector<Type*> TypeList;

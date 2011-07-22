@@ -37,9 +37,7 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
                                       LLVMSymbolLookupCallback SymbolLookUp) {
   // Initialize targets and assembly printers/parsers.
   llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllMCAsmInfos();
-  llvm::InitializeAllMCCodeGenInfos();
-  llvm::InitializeAllMCRegisterInfos();
+  llvm::InitializeAllTargetMCs();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllDisassemblers();

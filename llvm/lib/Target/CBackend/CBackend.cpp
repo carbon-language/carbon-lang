@@ -64,15 +64,7 @@ extern "C" void LLVMInitializeCBackendTarget() {
   RegisterTargetMachine<CTargetMachine> X(TheCBackendTarget);
 }
 
-extern "C" void LLVMInitializeCBackendMCAsmInfo() {}
-
-extern "C" void LLVMInitializeCBackendMCRegisterInfo() {}
-
-extern "C" void LLVMInitializeCBackendMCInstrInfo() {}
-
-extern "C" void LLVMInitializeCBackendMCSubtargetInfo() {}
-
-extern "C" void LLVMInitializeCBackendMCCodeGenInfo() {}
+extern "C" void LLVMInitializeCBackendTargetMC() {}
 
 namespace {
   class CBEMCAsmInfo : public MCAsmInfo {

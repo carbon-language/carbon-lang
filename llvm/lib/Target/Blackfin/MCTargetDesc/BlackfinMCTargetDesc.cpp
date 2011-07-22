@@ -36,20 +36,10 @@ static MCInstrInfo *createBlackfinMCInstrInfo() {
   return X;
 }
 
-extern "C" void LLVMInitializeBlackfinMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheBlackfinTarget,
-                                      createBlackfinMCInstrInfo);
-}
-
 static MCRegisterInfo *createBlackfinMCRegisterInfo(StringRef TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitBlackfinMCRegisterInfo(X, BF::RETS);
   return X;
-}
-
-extern "C" void LLVMInitializeBlackfinMCRegisterInfo() {
-  TargetRegistry::RegisterMCRegInfo(TheBlackfinTarget,
-                                    createBlackfinMCRegisterInfo);
 }
 
 static MCSubtargetInfo *createBlackfinMCSubtargetInfo(StringRef TT,
@@ -60,15 +50,6 @@ static MCSubtargetInfo *createBlackfinMCSubtargetInfo(StringRef TT,
   return X;
 }
 
-extern "C" void LLVMInitializeBlackfinMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheBlackfinTarget,
-                                          createBlackfinMCSubtargetInfo);
-}
-
-extern "C" void LLVMInitializeBlackfinMCAsmInfo() {
-  RegisterMCAsmInfo<BlackfinMCAsmInfo> X(TheBlackfinTarget);
-}
-
 MCCodeGenInfo *createBlackfinMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                            CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -76,7 +57,24 @@ MCCodeGenInfo *createBlackfinMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-extern "C" void LLVMInitializeBlackfinMCCodeGenInfo() {
+// Force static initialization.
+extern "C" void LLVMInitializeBlackfinTargetMC() {
+  // Register the MC asm info.
+  RegisterMCAsmInfo<BlackfinMCAsmInfo> X(TheBlackfinTarget);
+
+  // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheBlackfinTarget,
                                         createBlackfinMCCodeGenInfo);
+
+  // Register the MC instruction info.
+  TargetRegistry::RegisterMCInstrInfo(TheBlackfinTarget,
+                                      createBlackfinMCInstrInfo);
+
+  // Register the MC register info.
+  TargetRegistry::RegisterMCRegInfo(TheBlackfinTarget,
+                                    createBlackfinMCRegisterInfo);
+
+  // Register the MC subtarget info.
+  TargetRegistry::RegisterMCSubtargetInfo(TheBlackfinTarget,
+                                          createBlackfinMCSubtargetInfo);
 }

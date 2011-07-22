@@ -36,18 +36,10 @@ static MCInstrInfo *createAlphaMCInstrInfo() {
   return X;
 }
 
-extern "C" void LLVMInitializeAlphaMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheAlphaTarget, createAlphaMCInstrInfo);
-}
-
 static MCRegisterInfo *createAlphaMCRegisterInfo(StringRef TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitAlphaMCRegisterInfo(X, Alpha::R26);
   return X;
-}
-
-extern "C" void LLVMInitializeAlphaMCRegisterInfo() {
-  TargetRegistry::RegisterMCRegInfo(TheAlphaTarget, createAlphaMCRegisterInfo);
 }
 
 static MCSubtargetInfo *createAlphaMCSubtargetInfo(StringRef TT, StringRef CPU,
@@ -57,15 +49,6 @@ static MCSubtargetInfo *createAlphaMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-extern "C" void LLVMInitializeAlphaMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheAlphaTarget,
-                                          createAlphaMCSubtargetInfo);
-}
-
-extern "C" void LLVMInitializeAlphaMCAsmInfo() {
-  RegisterMCAsmInfo<AlphaMCAsmInfo> X(TheAlphaTarget);
-}
-
 MCCodeGenInfo *createAlphaMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                         CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
@@ -73,8 +56,22 @@ MCCodeGenInfo *createAlphaMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-extern "C" void LLVMInitializeAlphaMCCodeGenInfo() {
+// Force static initialization.
+extern "C" void LLVMInitializeAlphaTargetMC() {
+  // Register the MC asm info.
+  RegisterMCAsmInfo<AlphaMCAsmInfo> X(TheAlphaTarget);
+
+  // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheAlphaTarget,
                                         createAlphaMCCodeGenInfo);
-}
 
+  // Register the MC instruction info.
+  TargetRegistry::RegisterMCInstrInfo(TheAlphaTarget, createAlphaMCInstrInfo);
+
+  // Register the MC register info.
+  TargetRegistry::RegisterMCRegInfo(TheAlphaTarget, createAlphaMCRegisterInfo);
+
+  // Register the MC subtarget info.
+  TargetRegistry::RegisterMCSubtargetInfo(TheAlphaTarget,
+                                          createAlphaMCSubtargetInfo);
+}

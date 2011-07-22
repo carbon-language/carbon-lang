@@ -35,20 +35,10 @@ static MCInstrInfo *createSystemZMCInstrInfo() {
   return X;
 }
 
-extern "C" void LLVMInitializeSystemZMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheSystemZTarget,
-                                      createSystemZMCInstrInfo);
-}
-
 static MCRegisterInfo *createSystemZMCRegisterInfo(StringRef TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitSystemZMCRegisterInfo(X, 0);
   return X;
-}
-
-extern "C" void LLVMInitializeSystemZMCRegisterInfo() {
-  TargetRegistry::RegisterMCRegInfo(TheSystemZTarget,
-                                    createSystemZMCRegisterInfo);
 }
 
 static MCSubtargetInfo *createSystemZMCSubtargetInfo(StringRef TT,
@@ -57,15 +47,6 @@ static MCSubtargetInfo *createSystemZMCSubtargetInfo(StringRef TT,
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitSystemZMCSubtargetInfo(X, TT, CPU, FS);
   return X;
-}
-
-extern "C" void LLVMInitializeSystemZMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheSystemZTarget,
-                                          createSystemZMCSubtargetInfo);
-}
-
-extern "C" void LLVMInitializeSystemZMCAsmInfo() {
-  RegisterMCAsmInfo<SystemZMCAsmInfo> X(TheSystemZTarget);
 }
 
 MCCodeGenInfo *createSystemZMCCodeGenInfo(StringRef TT, Reloc::Model RM,
@@ -77,7 +58,23 @@ MCCodeGenInfo *createSystemZMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-extern "C" void LLVMInitializeSystemZMCCodeGenInfo() {
+extern "C" void LLVMInitializeSystemZTargetMC() {
+  // Register the MC asm info.
+  RegisterMCAsmInfo<SystemZMCAsmInfo> X(TheSystemZTarget);
+
+  // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheSystemZTarget,
                                         createSystemZMCCodeGenInfo);
+
+  // Register the MC instruction info.
+  TargetRegistry::RegisterMCInstrInfo(TheSystemZTarget,
+                                      createSystemZMCInstrInfo);
+
+  // Register the MC register info.
+  TargetRegistry::RegisterMCRegInfo(TheSystemZTarget,
+                                    createSystemZMCRegisterInfo);
+
+  // Register the MC subtarget info.
+  TargetRegistry::RegisterMCSubtargetInfo(TheSystemZTarget,
+                                          createSystemZMCSubtargetInfo);
 }

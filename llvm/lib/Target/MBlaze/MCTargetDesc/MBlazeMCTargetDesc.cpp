@@ -36,19 +36,10 @@ static MCInstrInfo *createMBlazeMCInstrInfo() {
   return X;
 }
 
-extern "C" void LLVMInitializeMBlazeMCInstrInfo() {
-  TargetRegistry::RegisterMCInstrInfo(TheMBlazeTarget, createMBlazeMCInstrInfo);
-}
-
 static MCRegisterInfo *createMBlazeMCRegisterInfo(StringRef TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitMBlazeMCRegisterInfo(X, MBlaze::R15);
   return X;
-}
-
-extern "C" void LLVMInitializeMBlazeMCRegisterInfo() {
-  TargetRegistry::RegisterMCRegInfo(TheMBlazeTarget,
-                                    createMBlazeMCRegisterInfo);
 }
 
 static MCSubtargetInfo *createMBlazeMCSubtargetInfo(StringRef TT, StringRef CPU,
@@ -58,21 +49,12 @@ static MCSubtargetInfo *createMBlazeMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-extern "C" void LLVMInitializeMBlazeMCSubtargetInfo() {
-  TargetRegistry::RegisterMCSubtargetInfo(TheMBlazeTarget,
-                                          createMBlazeMCSubtargetInfo);
-}
-
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
   switch (TheTriple.getOS()) {
   default:
     return new MBlazeMCAsmInfo();
   }
-}
-
-extern "C" void LLVMInitializeMBlazeMCAsmInfo() {
-  RegisterMCAsmInfoFn X(TheMBlazeTarget, createMCAsmInfo);
 }
 
 MCCodeGenInfo *createMBlazeMCCodeGenInfo(StringRef TT, Reloc::Model RM,
@@ -86,7 +68,23 @@ MCCodeGenInfo *createMBlazeMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-extern "C" void LLVMInitializeMBlazeMCCodeGenInfo() {
+// Force static initialization.
+extern "C" void LLVMInitializeMBlazeTargetMC() {
+  // Register the MC asm info.
+  RegisterMCAsmInfoFn X(TheMBlazeTarget, createMCAsmInfo);
+
+  // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheMBlazeTarget,
                                         createMBlazeMCCodeGenInfo);
+
+  // Register the MC instruction info.
+  TargetRegistry::RegisterMCInstrInfo(TheMBlazeTarget, createMBlazeMCInstrInfo);
+
+  // Register the MC register info.
+  TargetRegistry::RegisterMCRegInfo(TheMBlazeTarget,
+                                    createMBlazeMCRegisterInfo);
+
+  // Register the MC subtarget info.
+  TargetRegistry::RegisterMCSubtargetInfo(TheMBlazeTarget,
+                                          createMBlazeMCSubtargetInfo);
 }
