@@ -215,6 +215,7 @@ public:
     AT_objc_method_family,
     AT_objc_ownership,          // Clang-specific.
     AT_objc_precise_lifetime,   // Clang-specific.
+    AT_objc_returns_inner_pointer, // Clang-specific.
     AT_opencl_image_access,     // OpenCL-specific.
     AT_opencl_kernel_function,  // OpenCL-specific.
     AT_overloadable,       // Clang-specific.

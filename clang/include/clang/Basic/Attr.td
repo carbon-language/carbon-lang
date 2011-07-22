@@ -405,6 +405,11 @@ def ObjCPreciseLifetime : Attr {
   let Subjects = [Var];
 }
 
+def ObjCReturnsInnerPointer : Attr {
+  let Spellings = ["objc_returns_inner_pointer"];
+  let Subjects = [ObjCMethod];
+}
+
 def Overloadable : Attr {
   let Spellings = ["overloadable"];
 }

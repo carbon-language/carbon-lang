@@ -2767,6 +2767,33 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
   };
 }
 
+static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
+                                              const AttributeList &attr) {
+  SourceLocation loc = attr.getLoc();
+
+  ObjCMethodDecl *method = dyn_cast<ObjCMethodDecl>(D);
+
+  if (!isa<ObjCMethodDecl>(method)) {
+    S.Diag(method->getLocStart(), diag::err_attribute_wrong_decl_type)
+      << SourceRange(loc, loc) << attr.getName() << 13 /* methods */;
+    return;
+  }
+
+  // Check that the method returns a normal pointer.
+  QualType resultType = method->getResultType();
+  if (!resultType->isPointerType() || resultType->isObjCRetainableType()) {
+    S.Diag(method->getLocStart(), diag::warn_ns_attribute_wrong_return_type)
+      << SourceRange(loc)
+      << attr.getName() << /*method*/ 1 << /*non-retainable pointer*/ 2;
+
+    // Drop the attribute.
+    return;
+  }
+
+  method->addAttr(
+    ::new (S.Context) ObjCReturnsInnerPointerAttr(loc, S.Context));
+}
+
 static void handleObjCOwnershipAttr(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
   if (hasDeclarator(D)) return;
@@ -2968,6 +2995,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     handleObjCOwnershipAttr(S, D, Attr); break;
   case AttributeList::AT_objc_precise_lifetime:
     handleObjCPreciseLifetimeAttr(S, D, Attr); break;
+
+  case AttributeList::AT_objc_returns_inner_pointer:
+    handleObjCReturnsInnerPointerAttr(S, D, Attr); break;
 
   // Checker-specific.
   case AttributeList::AT_cf_consumed:

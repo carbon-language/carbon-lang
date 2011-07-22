@@ -80,6 +80,53 @@ static RValue AdjustRelatedResultType(CodeGenFunction &CGF,
                                                CGF.ConvertType(E->getType())));
 }
 
+/// Decide whether to extend the lifetime of the receiver of a
+/// returns-inner-pointer message.
+static bool
+shouldExtendReceiverForInnerPointerMessage(const ObjCMessageExpr *message) {
+  switch (message->getReceiverKind()) {
+
+  // For a normal instance message, we should extend unless the
+  // receiver is loaded from a variable with precise lifetime.
+  case ObjCMessageExpr::Instance: {
+    const Expr *receiver = message->getInstanceReceiver();
+    const ImplicitCastExpr *ice = dyn_cast<ImplicitCastExpr>(receiver);
+    if (!ice || ice->getCastKind() != CK_LValueToRValue) return true;
+    receiver = ice->getSubExpr()->IgnoreParens();
+
+    // Only __strong variables.
+    if (receiver->getType().getObjCLifetime() != Qualifiers::OCL_Strong)
+      return true;
+
+    // All ivars and fields have precise lifetime.
+    if (isa<MemberExpr>(receiver) || isa<ObjCIvarRefExpr>(receiver))
+      return false;
+
+    // Otherwise, check for variables.
+    const DeclRefExpr *declRef = dyn_cast<DeclRefExpr>(ice->getSubExpr());
+    if (!declRef) return true;
+    const VarDecl *var = dyn_cast<VarDecl>(declRef->getDecl());
+    if (!var) return true;
+
+    // All variables have precise lifetime except local variables with
+    // automatic storage duration that aren't specially marked.
+    return (var->hasLocalStorage() &&
+            !var->hasAttr<ObjCPreciseLifetimeAttr>());
+  }
+
+  case ObjCMessageExpr::Class:
+  case ObjCMessageExpr::SuperClass:
+    // It's never necessary for class objects.
+    return false;
+
+  case ObjCMessageExpr::SuperInstance:
+    // We generally assume that 'self' lives throughout a method call.
+    return false;
+  }
+
+  llvm_unreachable("invalid receiver kind");
+}
+
 RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
                                             ReturnValueSlot Return) {
   // Only the lookup mechanism and first two arguments of the method
@@ -88,6 +135,8 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
 
   bool isDelegateInit = E->isDelegateInitCall();
 
+  const ObjCMethodDecl *method = E->getMethodDecl();
+
   // We don't retain the receiver in delegate init calls, and this is
   // safe because the receiver value is always loaded from 'self',
   // which we zero out.  We don't want to Block_copy block receivers,
@@ -95,8 +144,8 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
   bool retainSelf =
     (!isDelegateInit &&
      CGM.getLangOptions().ObjCAutoRefCount &&
-     E->getMethodDecl() &&
-     E->getMethodDecl()->hasAttr<NSConsumesSelfAttr>());
+     method &&
+     method->hasAttr<NSConsumesSelfAttr>());
 
   CGObjCRuntime &Runtime = CGM.getObjCRuntime();
   bool isSuperMessage = false;
@@ -112,8 +161,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
       TryEmitResult ter = tryEmitARCRetainScalarExpr(*this,
                                                    E->getInstanceReceiver());
       Receiver = ter.getPointer();
-      if (!ter.getInt())
-        Receiver = EmitARCRetainNonBlock(Receiver);
+      if (ter.getInt()) retainSelf = false;
     } else
       Receiver = EmitScalarExpr(E->getInstanceReceiver());
     break;
@@ -126,9 +174,6 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
     assert(OID && "Invalid Objective-C class message send");
     Receiver = Runtime.GetClass(Builder, OID);
     isClassMessage = true;
-
-    if (retainSelf)
-      Receiver = EmitARCRetainNonBlock(Receiver);
     break;
   }
 
@@ -136,9 +181,6 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
     ReceiverType = E->getSuperType();
     Receiver = LoadObjCSelf();
     isSuperMessage = true;
-
-    if (retainSelf)
-      Receiver = EmitARCRetainNonBlock(Receiver);
     break;
 
   case ObjCMessageExpr::SuperClass:
@@ -146,17 +188,25 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
     Receiver = LoadObjCSelf();
     isSuperMessage = true;
     isClassMessage = true;
-
-    if (retainSelf)
-      Receiver = EmitARCRetainNonBlock(Receiver);
     break;
   }
 
+  if (retainSelf)
+    Receiver = EmitARCRetainNonBlock(Receiver);
+
+  // In ARC, we sometimes want to "extend the lifetime"
+  // (i.e. retain+autorelease) of receivers of returns-inner-pointer
+  // messages.
+  if (getLangOptions().ObjCAutoRefCount && method &&
+      method->hasAttr<ObjCReturnsInnerPointerAttr>() &&
+      shouldExtendReceiverForInnerPointerMessage(E))
+    Receiver = EmitARCRetainAutorelease(ReceiverType, Receiver);
+
   QualType ResultType =
-    E->getMethodDecl() ? E->getMethodDecl()->getResultType() : E->getType();
+    method ? method->getResultType() : E->getType();
 
   CallArgList Args;
-  EmitCallArgs(Args, E->getMethodDecl(), E->arg_begin(), E->arg_end());
+  EmitCallArgs(Args, method, E->arg_begin(), E->arg_end());
 
   // For delegate init calls in ARC, do an unsafe store of null into
   // self.  This represents the call taking direct ownership of that
@@ -189,12 +239,12 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
                                               Receiver,
                                               isClassMessage,
                                               Args,
-                                              E->getMethodDecl());
+                                              method);
   } else {
     result = Runtime.GenerateMessageSend(*this, Return, ResultType,
                                          E->getSelector(),
                                          Receiver, Args, OID,
-                                         E->getMethodDecl());
+                                         method);
   }
 
   // For delegate init calls in ARC, implicitly store the result of
@@ -213,7 +263,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
     Builder.CreateStore(newSelf, selfAddr);
   }
 
-  return AdjustRelatedResultType(*this, E, E->getMethodDecl(), result);
+  return AdjustRelatedResultType(*this, E, method, result);
 }
 
 namespace {

@@ -1315,6 +1315,39 @@ and only if the value is not demonstrably already retained.</p>
 <p>The complete optimization rules are quite complicated, but it would
 still be useful to document them here.</p>
 
+<div id="optimization.precise">
+<h1>Precise lifetime semantics</h1>
+
+<p>In general, ARC maintains an invariant that a retainable object
+pointer held in a <tt>__strong</tt> object will be retained for the
+full formal lifetime of the object.  Objects subject to this invariant
+have <span class="term">precise lifetime semantics</span>.</p>
+
+<p>By default, local variables of automatic storage duration do not
+have precise lifetime semantics.  Such objects are simply strong
+references which hold values of retainable object pointer type, and
+these values are still fully subject to the optimizations on values
+under local control.</p>
+
+<div class="rationale"><p>Rationale: applying these precise-lifetime
+semantics strictly would be prohibitive.  Many useful optimizations
+that might theoretically decrease the lifetime of an object would be
+rendered impossible.  Essentially, it promises too much.</p></div>
+
+<p>A local variable of retainable object owner type and automatic
+storage duration may be annotated with the <tt>objc_precise_lifetime</tt>
+attribute to indicate that it should be considered to be an object
+with precise lifetime semantics.</p>
+
+<div class="rationale"><p>Rationale: nonetheless, it is sometimes
+useful to be able to force an object to be released at a precise time,
+even if that object does not appear to be used.  This is likely to be
+uncommon enough that the syntactic weight of explicitly requesting
+these semantics will not be burdensome, and may even make the code
+clearer.</p></div>
+
+</div> <!-- optimization.precise -->
+
 </div>
 
 <div id="misc">
@@ -1561,6 +1594,56 @@ the process as this corruption is if the program does try to recover
 from exceptions.</p></div>
 
 </div> <!-- misc.exceptions -->
+
+<div id="misc.interior">
+<h1>Interior pointers</h1>
+
+<p>An Objective-C method returning a non-retainable pointer may be
+annotated with the <tt>objc_returns_inner_pointer</tt> attribute to
+indicate that it returns a handle to the internal data of an object,
+and that this reference will be invalidated if the object is
+destroyed.  When such a message is sent to an object, the object's
+lifetime will be extended until at least the earliest of:</p>
+
+<ul>
+<li>the last use of the returned pointer, or any pointer derived from
+it, in the calling function or</li>
+<li>the autorelease pool is restored to a previous state.</li>
+</ul>
+
+<div class="rationale"><p>Rationale: not all memory and resources are
+managed with reference counts; it is common for objects to manage
+private resources in their own, private way.  Typically these
+resources are completely encapsulated within the object, but some
+classes offer their users direct access for efficiency.  If ARC is not
+aware of methods that return such <q>interior</q> pointers, its
+optimizations can cause the owning object to be reclaimed too soon.
+This attribute informs ARC that it must tread lightly.</p>
+
+<p>The extension rules are somewhat intentionally vague.  The
+autorelease pool limit is there to permit a simple implementation to
+simply retain and autorelease the receiver.  The other limit permits
+some amount of optimization.  The phrase <q>derived from</q> is
+intended to encompass the results both of pointer transformations,
+such as casts and arithmetic, and of loading from such derived
+pointers; furthermore, it applies whether or not such derivations are
+applied directly in the calling code or by other utility code (for
+example, the C library routine <tt>strchr</tt>).  However, the
+implementation never need account for uses after a return from the
+code which calls the method returning an interior pointer.</p></div>
+
+<p>As an exception, no extension is required if the receiver is loaded
+directly from a <tt>__strong</tt> object
+with <a href="#optimization.precise">precise lifetime semantics</a>.</p>
+
+<div class="rationale"><p>Rationale: implicit autoreleases carry the
+risk of significantly inflating memory use, so it's important to
+provide users a way of avoiding these autoreleases.  Tying this to
+precise lifetime semantics is ideal, as for local variables this
+requires a very explicit annotation, which allows ARC to trust the
+user with good cheer.</p></div>
+
+</div> <!-- misc.interior -->
 
 </div> <!-- misc -->
 
