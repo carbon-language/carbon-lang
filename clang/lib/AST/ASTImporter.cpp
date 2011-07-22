@@ -1767,10 +1767,7 @@ ASTNodeImporter::ImportDeclarationNameLoc(const DeclarationNameInfo &From,
 
 void ASTNodeImporter::ImportDeclContext(DeclContext *FromDC, bool ForceImport) {
   if (Importer.isMinimalImport() && !ForceImport) {
-    if (DeclContext *ToDC = Importer.ImportContext(FromDC)) {
-      ToDC->setHasExternalLexicalStorage();
-      ToDC->setHasExternalVisibleStorage();
-    }
+    Importer.ImportContext(FromDC);
     return;
   }
   
