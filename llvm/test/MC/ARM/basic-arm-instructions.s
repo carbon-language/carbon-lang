@@ -1468,6 +1468,89 @@ _func:
 
 
 @------------------------------------------------------------------------------
+@ SMLSD/SMLSDX
+@------------------------------------------------------------------------------
+        smlsd r2, r3, r5, r8
+        smlsdx r2, r3, r5, r8
+        smlsdeq r2, r3, r5, r8
+        smlsdxhi r2, r3, r5, r8
+
+@ CHECK: smlsd	r2, r3, r5, r8          @ encoding: [0x53,0x85,0x02,0xe7]
+@ CHECK: smlsdx	r2, r3, r5, r8          @ encoding: [0x73,0x85,0x02,0xe7]
+@ CHECK: smlsdeq	r2, r3, r5, r8  @ encoding: [0x53,0x85,0x02,0x07]
+@ CHECK: smlsdxhi	r2, r3, r5, r8  @ encoding: [0x73,0x85,0x02,0x87]
+
+
+@------------------------------------------------------------------------------
+@ SMLSLD/SMLSLDX
+@------------------------------------------------------------------------------
+        smlsld r2, r9, r5, r1
+        smlsldx r4, r11, r2, r8
+        smlsldeq r8, r2, r5, r6
+        smlsldxhi r1, r0, r3, r8
+
+@ CHECK: smlsld	r2, r9, r5, r1          @ encoding: [0x55,0x21,0x49,0xe7]
+@ CHECK: smlsldx	r4, r11, r2, r8 @ encoding: [0x72,0x48,0x4b,0xe7]
+@ CHECK: smlsldeq	r8, r2, r5, r6  @ encoding: [0x55,0x86,0x42,0x07]
+@ CHECK: smlsldxhi	r1, r0, r3, r8  @ encoding: [0x73,0x18,0x40,0x87]
+
+
+@------------------------------------------------------------------------------
+@ SMMLA/SMMLAR
+@------------------------------------------------------------------------------
+        smmla r1, r2, r3, r4
+        smmlar r4, r3, r2, r1
+        smmlalo r1, r2, r3, r4
+        smmlarcs r4, r3, r2, r1
+
+@ CHECK: smmla	r1, r2, r3, r4          @ encoding: [0x12,0x43,0x51,0xe7]
+@ CHECK: smmlar	r4, r3, r2, r1          @ encoding: [0x33,0x12,0x54,0xe7]
+@ CHECK: smmlalo	r1, r2, r3, r4  @ encoding: [0x12,0x43,0x51,0x37]
+@ CHECK: smmlarhs	r4, r3, r2, r1  @ encoding: [0x33,0x12,0x54,0x27]
+
+
+@------------------------------------------------------------------------------
+@ SMMLS/SMMLSR
+@------------------------------------------------------------------------------
+        smmls r1, r2, r3, r4
+        smmlsr r4, r3, r2, r1
+        smmlslo r1, r2, r3, r4
+        smmlsrcs r4, r3, r2, r1
+
+@ CHECK: smmls	r1, r2, r3, r4          @ encoding: [0xd2,0x43,0x51,0xe7]
+@ CHECK: smmlsr	r4, r3, r2, r1          @ encoding: [0xf3,0x12,0x54,0xe7]
+@ CHECK: smmlslo	r1, r2, r3, r4  @ encoding: [0xd2,0x43,0x51,0x37]
+@ CHECK: smmlsrhs	r4, r3, r2, r1  @ encoding: [0xf3,0x12,0x54,0x27]
+
+
+@------------------------------------------------------------------------------
+@ SMMUL/SMMULR
+@------------------------------------------------------------------------------
+        smmul r2, r3, r4
+        smmulr r3, r2, r1
+        smmulcc r2, r3, r4
+        smmulrhs r3, r2, r1
+
+@ CHECK: smmul	r2, r3, r4              @ encoding: [0x13,0xf4,0x52,0xe7]
+@ CHECK: smmulr	r3, r2, r1              @ encoding: [0x32,0xf1,0x53,0xe7]
+@ CHECK: smmullo	r2, r3, r4      @ encoding: [0x13,0xf4,0x52,0x37]
+@ CHECK: smmulrhs	r3, r2, r1      @ encoding: [0x32,0xf1,0x53,0x27]
+
+
+@------------------------------------------------------------------------------
+@ SMUAD/SMUADX
+@------------------------------------------------------------------------------
+        smuad r2, r3, r4
+        smuadx r3, r2, r1
+        smuadlt r2, r3, r4
+        smuadxge r3, r2, r1
+
+@ CHECK: smuad	r2, r3, r4              @ encoding: [0x13,0xf4,0x02,0xe7]
+@ CHECK: smuadx	r3, r2, r1              @ encoding: [0x32,0xf1,0x03,0xe7]
+@ CHECK: smuadlt	r2, r3, r4      @ encoding: [0x13,0xf4,0x02,0xb7]
+@ CHECK: smuadxge	r3, r2, r1      @ encoding: [0x32,0xf1,0x03,0xa7]
+
+@------------------------------------------------------------------------------
 @ STM*
 @------------------------------------------------------------------------------
         stm       r2, {r1,r3-r6,sp}
