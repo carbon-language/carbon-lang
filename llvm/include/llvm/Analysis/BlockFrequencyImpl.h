@@ -314,13 +314,12 @@ class BlockFrequencyImpl {
   }
 
 public:
-  /// getBlockFreq - Return block frequency. Never return 0, value must be
-  /// positive.
+  /// getBlockFreq - Return block frequency. Return 0 if we don't have it.
   uint32_t getBlockFreq(BlockT *BB) const {
     typename DenseMap<BlockT *, uint32_t>::const_iterator I = Freqs.find(BB);
     if (I != Freqs.end())
-      return I->second ? I->second : 1;
-    return 1;
+      return I->second;
+    return 0;
   }
 
   void print(raw_ostream &OS) const {
