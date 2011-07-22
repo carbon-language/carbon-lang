@@ -465,27 +465,30 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
           EmitAggregateCopy(ReturnValue, LV.getAddress(), IVART);
         }
       }
-    } 
-    else {
-        LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
-                                      Ivar, 0);
-        QualType propType = PD->getType();
+    } else {
+      LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
+                                    Ivar, 0);
+      QualType propType = PD->getType();
 
-        llvm::Value *value;
-        if (propType->isReferenceType()) {
-          value = LV.getAddress();
+      llvm::Value *value;
+      if (propType->isReferenceType()) {
+        value = LV.getAddress();
+      } else {
+        // We want to load and autoreleaseReturnValue ARC __weak ivars.
+        if (LV.getQuals().getObjCLifetime() == Qualifiers::OCL_Weak) {
+          value = emitARCRetainLoadOfScalar(*this, LV, IVART);
+
+        // Otherwise we want to do a simple load, suppressing the
+        // final autorelease.
         } else {
-          // In ARC, we want to emit this retained.
-          if (getLangOptions().ObjCAutoRefCount &&
-              PD->getType()->isObjCRetainableType())
-            value = emitARCRetainLoadOfScalar(*this, LV, IVART);
-          else
-            value = EmitLoadOfLValue(LV).getScalarVal();
-
-          value = Builder.CreateBitCast(value, ConvertType(propType));
+          value = EmitLoadOfLValue(LV).getScalarVal();
+          AutoreleaseResult = false;
         }
 
-        EmitReturnOfRValue(RValue::get(value), propType);
+        value = Builder.CreateBitCast(value, ConvertType(propType));
+      }
+      
+      EmitReturnOfRValue(RValue::get(value), propType);
     }
   }
 
