@@ -1572,6 +1572,7 @@ _func:
 @ CHECK: smultbne	r2, r3, r2      @ encoding: [0xa3,0x02,0x62,0x11]
 @ CHECK: smultteq	r8, r3, r4      @ encoding: [0xe3,0x04,0x68,0x01]
 
+
 @------------------------------------------------------------------------------
 @ SMULL
 @------------------------------------------------------------------------------
@@ -1579,6 +1580,36 @@ _func:
         smulls r3, r9, r0, r2
         smulleq r8, r3, r4, r5
         smullseq r8, r3, r4, r3
+
+@ CHECK: smull	r3, r9, r0, r1          @ encoding: [0x90,0x31,0xc9,0xe0]
+@ CHECK: smulls	r3, r9, r0, r2          @ encoding: [0x90,0x32,0xd9,0xe0]
+@ CHECK: smulleq	r8, r3, r4, r5  @ encoding: [0x94,0x85,0xc3,0x00]
+@ CHECK: smullseq	r8, r3, r4, r3  @ encoding: [0x94,0x83,0xd3,0x00]
+
+
+@------------------------------------------------------------------------------
+@ SMULWB/SMULWT
+@------------------------------------------------------------------------------
+        smulwb r3, r9, r0
+        smulwt r3, r9, r2
+
+@ CHECK: smulwb	r3, r9, r0              @ encoding: [0xa9,0x00,0x23,0xe1]
+@ CHECK: smulwt	r3, r9, r2              @ encoding: [0xe9,0x02,0x23,0xe1]
+
+
+@------------------------------------------------------------------------------
+@ SMUSD/SMUSDX
+@------------------------------------------------------------------------------
+        smusd r3, r0, r1
+        smusdx r3, r9, r2
+        smusdeq r8, r3, r2
+        smusdxne r7, r4, r3
+
+@ CHECK: smusd	r3, r0, r1              @ encoding: [0x50,0xf1,0x03,0xe7]
+@ CHECK: smusdx	r3, r9, r2              @ encoding: [0x79,0xf2,0x03,0xe7]
+@ CHECK: smusdeq	r8, r3, r2      @ encoding: [0x53,0xf2,0x08,0x07]
+@ CHECK: smusdxne	r7, r4, r3      @ encoding: [0x74,0xf3,0x07,0x17]
+
 
 @------------------------------------------------------------------------------
 @ STM*
