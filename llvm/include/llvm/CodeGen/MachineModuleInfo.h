@@ -239,6 +239,10 @@ public:
   /// function's CIE and FDE.
   uint32_t getCompactUnwindEncoding() const { return CompactUnwindEncoding; }
 
+  /// setCompactUnwindEncoding - Set the compact unwind encoding for a function
+  /// if the target supports the encoding.
+  void setCompactUnwindEncoding(uint32_t Enc) { CompactUnwindEncoding = Enc; }
+
   /// getAddrLabelSymbol - Return the symbol to be used for the specified basic
   /// block when its address is taken.  This cannot be its normal LBB label
   /// because the block may be accessed outside its containing function.
