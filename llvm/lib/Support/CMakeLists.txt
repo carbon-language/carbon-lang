@@ -42,7 +42,6 @@ add_llvm_library(LLVMSupport
   StringPool.cpp
   StringRef.cpp
   SystemUtils.cpp
-  TargetRegistry.cpp
   Timer.cpp
   ToolOutputFile.cpp
   Triple.cpp
