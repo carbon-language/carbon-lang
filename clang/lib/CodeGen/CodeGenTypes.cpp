@@ -419,6 +419,14 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   case Type::ConstantArray: {
     const ConstantArrayType *A = cast<ConstantArrayType>(Ty);
     llvm::Type *EltTy = ConvertTypeForMem(A->getElementType());
+    
+    // Lower arrays of undefined struct type to arrays of i8 just to have a 
+    // concrete type.
+    if (!EltTy->isSized()) {
+      SkippedLayout = true;
+      EltTy = llvm::Type::getInt8Ty(getLLVMContext());
+    }
+
     ResultType = llvm::ArrayType::get(EltTy, A->getSize().getZExtValue());
     break;
   }

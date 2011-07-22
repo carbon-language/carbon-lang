@@ -35,3 +35,9 @@ namespace PR10395 {
   extern T x[];
   T* f() { return x; }
 }
+
+namespace PR10384 {
+  struct X;
+  extern X x[1];
+  X* f() { return x; }
+}
