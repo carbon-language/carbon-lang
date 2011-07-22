@@ -1735,15 +1735,8 @@ void ASTReader::SetIdentifierIsMacro(IdentifierInfo *II, PerFileData &F,
   // Note that this identifier has a macro definition.
   II->setHasMacroDefinition(true);
   
-  // Adjust the offset based on our position in the chain.
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    if (Chain[I] == &F)
-      break;
-    
-    Offset += Chain[I]->SizeInBits;
-  }
-    
-  UnreadMacroRecordOffsets[II] = Offset;
+  // Adjust the offset to a global offset.
+  UnreadMacroRecordOffsets[II] = F.GlobalBitOffset + Offset;
 }
 
 void ASTReader::ReadDefinedMacros() {
@@ -1807,24 +1800,11 @@ void ASTReader::ReadDefinedMacros() {
 void ASTReader::LoadMacroDefinition(
                      llvm::DenseMap<IdentifierInfo *, uint64_t>::iterator Pos) {
   assert(Pos != UnreadMacroRecordOffsets.end() && "Unknown macro definition");
-  PerFileData *F = 0;
   uint64_t Offset = Pos->second;
   UnreadMacroRecordOffsets.erase(Pos);
   
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    if (Offset < Chain[I]->SizeInBits) {
-      F = Chain[I];
-      break;
-    }
-    
-    Offset -= Chain[I]->SizeInBits;
-  }    
-  if (!F) {
-    Error("Malformed macro record offset");
-    return;
-  }
-  
-  ReadMacroRecord(*F, Offset);
+  RecordLocation Loc = getLocalBitOffset(Offset);
+  ReadMacroRecord(*Loc.F, Loc.Offset);
 }
 
 void ASTReader::LoadMacroDefinition(IdentifierInfo *II) {
@@ -2027,7 +2007,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         // If we have to ignore the dependency, we'll have to ignore this too.
       case IgnorePCH: return IgnorePCH;
       case Success: break;
-      }
+      }     
       break;
     }
 
@@ -2420,10 +2400,6 @@ ASTReader::ReadASTBlock(PerFileData &F) {
                                             -getTotalNumCXXBaseSpecifiers())));
 
       NumCXXBaseSpecifiersLoaded += F.LocalNumCXXBaseSpecifiers;
-
-      F.GlobalBitOffset = TotalModulesSizeInBits;
-      TotalModulesSizeInBits += F.SizeInBits;
-
       break;
     }
 
@@ -2705,7 +2681,7 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
   llvm::BitstreamCursor &Stream = F.Stream;
   Stream.init(F.StreamFile);
   F.SizeInBits = F.Buffer->getBufferSize() * 8;
-
+  
   // Sniff for the signature.
   if (Stream.Read(8) != 'C' ||
       Stream.Read(8) != 'P' ||
@@ -2764,7 +2740,12 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
       break;
     }
   }
-
+  
+  // Once read, set the PerFileData bit base offset and update the size in 
+  // bits of all files we've seen.
+  F.GlobalBitOffset = TotalModulesSizeInBits;
+  TotalModulesSizeInBits += F.SizeInBits;
+  GlobalBitOffsetsMap.insert(std::make_pair(F.GlobalBitOffset, &F));
   return Success;
 }
 
@@ -3090,26 +3071,13 @@ void ASTReader::ReadPreprocessedEntities() {
 }
 
 PreprocessedEntity *ASTReader::ReadPreprocessedEntityAtOffset(uint64_t Offset) {
-  PerFileData *F = 0;  
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    if (Offset < Chain[I]->SizeInBits) {
-      F = Chain[I];
-      break;
-    }
-    
-    Offset -= Chain[I]->SizeInBits;
-  }
-  
-  if (!F) {
-    Error("Malformed preprocessed entity offset");
-    return 0;
-  }
+  RecordLocation Loc = getLocalBitOffset(Offset);
 
   // Keep track of where we are in the stream, then jump back there
   // after reading this entity.
-  SavedStreamPosition SavedPosition(F->PreprocessorDetailCursor);  
-  F->PreprocessorDetailCursor.JumpToBit(Offset);
-  return LoadPreprocessedEntity(*F);
+  SavedStreamPosition SavedPosition(Loc.F->PreprocessorDetailCursor);  
+  Loc.F->PreprocessorDetailCursor.JumpToBit(Loc.Offset);
+  return LoadPreprocessedEntity(*Loc.F);
 }
 
 HeaderFileInfo ASTReader::GetHeaderFileInfo(const FileEntry *FE) {
@@ -4006,25 +3974,10 @@ ASTReader::GetCXXBaseSpecifiersOffset(serialization::CXXBaseSpecifiersID ID) {
 }
 
 CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
-  // Figure out which AST file contains this offset.
-  PerFileData *F = 0;
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    if (Offset < Chain[N - I - 1]->SizeInBits) {
-      F = Chain[N - I - 1];
-      break;
-    }
-    
-    Offset -= Chain[N - I - 1]->SizeInBits;
-  }
-
-  if (!F) {
-    Error("Malformed AST file: C++ base specifiers at impossible offset");
-    return 0;
-  }
-  
-  llvm::BitstreamCursor &Cursor = F->DeclsCursor;
+  RecordLocation Loc = getLocalBitOffset(Offset);
+  llvm::BitstreamCursor &Cursor = Loc.F->DeclsCursor;
   SavedStreamPosition SavedPosition(Cursor);
-  Cursor.JumpToBit(Offset);
+  Cursor.JumpToBit(Loc.Offset);
   ReadingKindTracker ReadingKind(Read_Decl, *this);
   RecordData Record;
   unsigned Code = Cursor.ReadCode();
@@ -4039,7 +3992,7 @@ CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
   void *Mem = Context->Allocate(sizeof(CXXBaseSpecifier) * NumBases);
   CXXBaseSpecifier *Bases = new (Mem) CXXBaseSpecifier [NumBases];
   for (unsigned I = 0; I != NumBases; ++I)
-    Bases[I] = ReadCXXBaseSpecifier(*F, Record, Idx);
+    Bases[I] = ReadCXXBaseSpecifier(*Loc.F, Record, Idx);
   return Bases;
 }
 
@@ -4099,17 +4052,9 @@ Stmt *ASTReader::GetExternalDeclStmt(uint64_t Offset) {
   ClearSwitchCaseIDs();
 
   // Offset here is a global offset across the entire chain.
-  for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    PerFileData &F = *Chain[N - I - 1];
-    if (Offset < F.SizeInBits) {
-      // Since we know that this statement is part of a decl, make sure to use
-      // the decl cursor to read it.
-      F.DeclsCursor.JumpToBit(Offset);
-      return ReadStmtFromStream(F);
-    }
-    Offset -= F.SizeInBits;
-  }
-  llvm_unreachable("Broken chain");
+  RecordLocation Loc = getLocalBitOffset(Offset);
+  Loc.F->DeclsCursor.JumpToBit(Loc.Offset);
+  return ReadStmtFromStream(*Loc.F);
 }
 
 ExternalLoadResult ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
@@ -4342,6 +4287,7 @@ dumpModuleIDOffsetMap(llvm::StringRef Name,
                             
 void ASTReader::dump() {
   llvm::errs() << "*** AST File Remapping:\n";
+  dumpModuleIDMap("Global bit offset map", GlobalBitOffsetsMap);
   dumpModuleIDMap("Global source location entry map", GlobalSLocEntryMap);
   dumpModuleIDOffsetMap("Global type map", GlobalTypeMap);
   dumpModuleIDOffsetMap("Global declaration map", GlobalDeclMap);

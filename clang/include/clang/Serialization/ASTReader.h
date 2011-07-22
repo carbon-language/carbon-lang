@@ -450,6 +450,10 @@ private:
   /// That is, the entry I was created with -include-pch I+1.
   SmallVector<PerFileData*, 2> Chain;
 
+  /// \brief A map of global bit offsets to the module that stores entities
+  /// at those bit offsets.
+  ContinuousRangeMap<uint64_t, PerFileData*, 4> GlobalBitOffsetsMap;
+
   /// \brief SLocEntries that we're going to preload.
   SmallVector<int, 64> PreloadSLocEntries;
 
@@ -919,7 +923,8 @@ private:
   void LoadedDecl(unsigned Index, Decl *D);
   Decl *ReadDeclRecord(unsigned Index, serialization::DeclID ID);
   RecordLocation DeclCursorForIndex(unsigned Index, serialization::DeclID ID);
-
+  RecordLocation getLocalBitOffset(uint64_t GlobalOffset);
+  
   void PassInterestingDeclsToConsumer();
 
   /// \brief Produce an error diagnostic and return true.

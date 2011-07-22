@@ -178,16 +178,7 @@ namespace clang {
 }
 
 uint64_t ASTDeclReader::GetCurrentCursorOffset() {
-  uint64_t Off = 0;
-  for (unsigned I = 0, N = Reader.Chain.size(); I != N; ++I) {
-    ASTReader::PerFileData &F = *Reader.Chain[N - I - 1];
-    if (&Cursor == &F.DeclsCursor) {
-      Off += F.DeclsCursor.GetCurrentBitNo();
-      break;
-    }
-    Off += F.SizeInBits;
-  }
-  return Off;
+  return F.DeclsCursor.GetCurrentBitNo() + F.GlobalBitOffset;
 }
 
 void ASTDeclReader::Visit(Decl *D) {
@@ -1417,6 +1408,14 @@ ASTReader::DeclCursorForIndex(unsigned Index, DeclID ID) {
   assert(I != GlobalDeclMap.end() && "Corrupted global declaration map");
   return RecordLocation(I->second.first, 
                         I->second.first->DeclOffsets[Index + I->second.second]);
+}
+
+ASTReader::RecordLocation ASTReader::getLocalBitOffset(uint64_t GlobalOffset) {
+  ContinuousRangeMap<uint64_t, PerFileData*, 4>::iterator I
+    = GlobalBitOffsetsMap.find(GlobalOffset);
+
+  assert(I != GlobalBitOffsetsMap.end() && "Corrupted global bit offsets map");
+  return RecordLocation(I->second, GlobalOffset - I->second->GlobalBitOffset);
 }
 
 void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {

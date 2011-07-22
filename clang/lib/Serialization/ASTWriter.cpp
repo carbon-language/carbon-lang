@@ -1803,6 +1803,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
   
   unsigned IndexBase = Chain ? PPRec.getNumLoadedPreprocessedEntities() : 0;
   RecordData Record;
+  uint64_t BitsInChain = Chain? Chain->TotalModulesSizeInBits : 0;
   for (PreprocessingRecord::iterator E = PPRec.begin(Chain),
                                   EEnd = PPRec.end(Chain);
        E != EEnd; ++E) {
@@ -1819,7 +1820,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
       // Notify the serialization listener that we're serializing this entity.
       if (SerializationListener)
         SerializationListener->SerializedPreprocessedEntity(*E, 
-                                                    Stream.GetCurrentBitNo());
+          BitsInChain + Stream.GetCurrentBitNo());
 
       unsigned Position = ID - FirstMacroID;
       if (Position != MacroDefinitionOffsets.size()) {
@@ -1843,7 +1844,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
     // Notify the serialization listener that we're serializing this entity.
     if (SerializationListener)
       SerializationListener->SerializedPreprocessedEntity(*E, 
-                                                    Stream.GetCurrentBitNo());
+        BitsInChain + Stream.GetCurrentBitNo());
 
     if (MacroExpansion *ME = dyn_cast<MacroExpansion>(*E)) {
       Record.push_back(IndexBase + NumPreprocessingRecords++);
