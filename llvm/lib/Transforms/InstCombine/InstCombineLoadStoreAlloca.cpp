@@ -113,7 +113,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
             Value *Idxs[2];
             Idxs[0] = Constant::getNullValue(Type::getInt32Ty(LI.getContext()));
             Idxs[1] = Idxs[0];
-            CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs, 2);
+            CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs);
             SrcTy = cast<PointerType>(CastOp->getType());
             SrcPTy = SrcTy->getElementType();
           }
