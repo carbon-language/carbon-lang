@@ -504,10 +504,11 @@ namespace {
     bool IsEH;
     const MCSymbol *SectionStart;
   public:
-    FrameEmitterImpl(bool usingCFI, bool isEH, const MCSymbol *sectionStart) :
-      CFAOffset(0), CIENum(0), UsingCFI(usingCFI), IsEH(isEH),
-      SectionStart(sectionStart) {
-    }
+    FrameEmitterImpl(bool usingCFI, bool isEH)
+      : CFAOffset(0), CIENum(0), UsingCFI(usingCFI), IsEH(isEH),
+        SectionStart(0) {}
+
+    void setSectionStart(const MCSymbol *Label) { SectionStart = Label; }
 
     /// EmitCompactUnwind - Emit the unwind information in a compact way. If
     /// we're successful, return 'true'. Otherwise, return 'false' and it will
@@ -1011,26 +1012,38 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   MCContext &Context = Streamer.getContext();
   MCObjectFileInfo *MOFI =
     const_cast<MCObjectFileInfo*>(Context.getObjectFileInfo());
+  FrameEmitterImpl Emitter(UsingCFI, IsEH);
+  SmallVector<MCDwarfFrameInfo, 8> RequiresFDE;
+  ArrayRef<MCDwarfFrameInfo> FrameArray;
+
+  if (IsEH && MOFI->getCompactUnwindSection()) {
+    for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
+      const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
+      if (!Frame.CompactUnwindEncoding ||
+          !Emitter.EmitCompactUnwind(Streamer, Frame))
+        RequiresFDE.push_back(Streamer.getFrameInfo(i));
+    }
+
+    // Early exit if we don't need to emit FDEs.
+    if (RequiresFDE.empty()) return;
+    FrameArray = RequiresFDE;
+  } else {
+    FrameArray = Streamer.getFrameInfos();
+  }
+
   const MCSection &Section = IsEH ? *MOFI->getEHFrameSection() :
                                     *MOFI->getDwarfFrameSection();
   Streamer.SwitchSection(&Section);
   MCSymbol *SectionStart = Context.CreateTempSymbol();
   Streamer.EmitLabel(SectionStart);
+  Emitter.setSectionStart(SectionStart);
 
   MCSymbol *FDEEnd = NULL;
   DenseMap<CIEKey, const MCSymbol*> CIEStarts;
-  FrameEmitterImpl Emitter(UsingCFI, IsEH, SectionStart);
 
   const MCSymbol *DummyDebugKey = NULL;
-  for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
-    const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
-    if (IsEH && MOFI->getCompactUnwindSection() &&
-        Frame.CompactUnwindEncoding &&
-        Emitter.EmitCompactUnwind(Streamer, Frame)) {
-      FDEEnd = NULL;
-      continue;
-    }
-
+  for (unsigned i = 0, n = FrameArray.size(); i < n; ++i) {
+    const MCDwarfFrameInfo &Frame = FrameArray[i];
     CIEKey Key(Frame.Personality, Frame.PersonalityEncoding,
                Frame.LsdaEncoding);
     const MCSymbol *&CIEStart = IsEH ? CIEStarts[Key] : DummyDebugKey;
