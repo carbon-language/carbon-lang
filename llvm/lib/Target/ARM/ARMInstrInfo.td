@@ -3209,14 +3209,14 @@ class AMulDualIbase<bit long, bit sub, bit swap, dag oops, dag iops,
   : AI<oops, iops, MulFrm, itin, opc, asm, []>, Requires<[IsARM, HasV6]> {
   bits<4> Rn;
   bits<4> Rm;
-  let Inst{4}     = 1;
-  let Inst{5}     = swap;
-  let Inst{6}     = sub;
-  let Inst{7}     = 0;
-  let Inst{21-20} = 0b00;
-  let Inst{22}    = long;
   let Inst{27-23} = 0b01110;
+  let Inst{22}    = long;
+  let Inst{21-20} = 0b00;
   let Inst{11-8}  = Rm;
+  let Inst{7}     = 0;
+  let Inst{6}     = sub;
+  let Inst{5}     = swap;
+  let Inst{4}     = 1;
   let Inst{3-0}   = Rn;
 }
 class AMulDualI<bit long, bit sub, bit swap, dag oops, dag iops,
@@ -3230,6 +3230,8 @@ class AMulDualIa<bit long, bit sub, bit swap, dag oops, dag iops,
                 InstrItinClass itin, string opc, string asm>
   : AMulDualIbase<long, sub, swap, oops, iops, itin, opc, asm> {
   bits<4> Ra;
+  bits<4> Rd;
+  let Inst{19-16} = Rd;
   let Inst{15-12} = Ra;
 }
 class AMulDualI64<bit long, bit sub, bit swap, dag oops, dag iops,

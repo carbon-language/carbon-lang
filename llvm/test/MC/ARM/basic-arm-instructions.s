@@ -1389,6 +1389,19 @@ _func:
 @ CHECK: smlatbne	r4, r2, r3, r2  @ encoding: [0xa2,0x23,0x04,0x11]
 @ CHECK: smlatteq	r8, r3, r8, r4  @ encoding: [0xe3,0x48,0x08,0x01]
 
+@------------------------------------------------------------------------------
+@ SMLAD/SMLADX
+@------------------------------------------------------------------------------
+        smlad r2, r3, r5, r8
+        smladx r2, r3, r5, r8
+        smladeq r2, r3, r5, r8
+        smladxhi r2, r3, r5, r8
+
+@ CHECK: smlad	r2, r3, r5, r8          @ encoding: [0x13,0x85,0x02,0xe7]
+@ CHECK: smladx	r2, r3, r5, r8          @ encoding: [0x33,0x85,0x02,0xe7]
+@ CHECK: smladeq	r2, r3, r5, r8  @ encoding: [0x13,0x85,0x02,0x07]
+@ CHECK: smladxhi	r2, r3, r5, r8  @ encoding: [0x33,0x85,0x02,0x87]
+
 
 @------------------------------------------------------------------------------
 @ STM*
