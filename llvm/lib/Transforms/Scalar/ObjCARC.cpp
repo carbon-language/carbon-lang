@@ -1406,15 +1406,11 @@ namespace {
     /// Run - A flag indicating whether this optimization pass should run.
     bool Run;
 
-    /// RetainFunc, RelaseFunc - Declarations for objc_retain,
-    /// objc_retainBlock, and objc_release.
-    Function *RetainFunc, *RetainBlockFunc, *RetainRVFunc, *ReleaseFunc;
-
     /// RetainRVCallee, etc. - Declarations for ObjC runtime
     /// functions, for use in creating calls to them. These are initialized
     /// lazily to avoid cluttering up the Module with unused declarations.
     Constant *RetainRVCallee, *AutoreleaseRVCallee, *ReleaseCallee,
-             *RetainCallee, *AutoreleaseCallee;
+             *RetainCallee, *RetainBlockCallee, *AutoreleaseCallee;
 
     /// UsedInThisFunciton - Flags which determine whether each of the
     /// interesting runtine functions is in fact used in the current function.
@@ -1428,6 +1424,7 @@ namespace {
     Constant *getAutoreleaseRVCallee(Module *M);
     Constant *getReleaseCallee(Module *M);
     Constant *getRetainCallee(Module *M);
+    Constant *getRetainBlockCallee(Module *M);
     Constant *getAutoreleaseCallee(Module *M);
 
     void OptimizeRetainCall(Function &F, Instruction *Retain);
@@ -1452,11 +1449,13 @@ namespace {
     void MoveCalls(Value *Arg, RRInfo &RetainsToMove, RRInfo &ReleasesToMove,
                    MapVector<Value *, RRInfo> &Retains,
                    DenseMap<Value *, RRInfo> &Releases,
-                   SmallVectorImpl<Instruction *> &DeadInsts);
+                   SmallVectorImpl<Instruction *> &DeadInsts,
+                   Module *M);
 
     bool PerformCodePlacement(DenseMap<const BasicBlock *, BBState> &BBStates,
                               MapVector<Value *, RRInfo> &Retains,
-                              DenseMap<Value *, RRInfo> &Releases);
+                              DenseMap<Value *, RRInfo> &Releases,
+                              Module *M);
 
     void OptimizeWeakCalls(Function &F);
 
@@ -1559,6 +1558,22 @@ Constant *ObjCARCOpt::getRetainCallee(Module *M) {
         Attributes);
   }
   return RetainCallee;
+}
+
+Constant *ObjCARCOpt::getRetainBlockCallee(Module *M) {
+  if (!RetainBlockCallee) {
+    LLVMContext &C = M->getContext();
+    std::vector<Type *> Params;
+    Params.push_back(PointerType::getUnqual(Type::getInt8Ty(C)));
+    AttrListPtr Attributes;
+    Attributes.addAttr(~0u, Attribute::NoUnwind);
+    RetainBlockCallee =
+      M->getOrInsertFunction(
+        "objc_retainBlock",
+        FunctionType::get(Params[0], Params, /*isVarArg=*/false),
+        Attributes);
+  }
+  return RetainBlockCallee;
 }
 
 Constant *ObjCARCOpt::getAutoreleaseCallee(Module *M) {
@@ -2565,12 +2580,10 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
                            RRInfo &ReleasesToMove,
                            MapVector<Value *, RRInfo> &Retains,
                            DenseMap<Value *, RRInfo> &Releases,
-                           SmallVectorImpl<Instruction *> &DeadInsts) {
+                           SmallVectorImpl<Instruction *> &DeadInsts,
+                           Module *M) {
   Type *ArgTy = Arg->getType();
-  Type *ParamTy =
-    (RetainRVFunc ? RetainRVFunc :
-     RetainFunc ? RetainFunc :
-     RetainBlockFunc)->arg_begin()->getType();
+  Type *ParamTy = PointerType::getUnqual(Type::getInt8Ty(ArgTy->getContext()));
 
   // Insert the new retain and release calls.
   for (SmallPtrSet<Instruction *, 2>::const_iterator
@@ -2581,7 +2594,7 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
                    new BitCastInst(Arg, ParamTy, "", InsertPt);
     CallInst *Call =
       CallInst::Create(RetainsToMove.IsRetainBlock ?
-                         RetainBlockFunc : RetainFunc,
+                         getRetainBlockCallee(M) : getRetainCallee(M),
                        MyArg, "", InsertPt);
     Call->setDoesNotThrow();
     if (!RetainsToMove.IsRetainBlock)
@@ -2609,7 +2622,8 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
       Instruction *InsertPt = *I;
       Value *MyArg = ArgTy == ParamTy ? Arg :
                      new BitCastInst(Arg, ParamTy, "", InsertPt);
-      CallInst *Call = CallInst::Create(ReleaseFunc, MyArg, "", InsertPt);
+      CallInst *Call = CallInst::Create(getReleaseCallee(M), MyArg,
+                                        "", InsertPt);
       // Attach a clang.imprecise_release metadata tag, if appropriate.
       if (MDNode *M = ReleasesToMove.ReleaseMetadata)
         Call->setMetadata(ImpreciseReleaseMDKind, M);
@@ -2640,7 +2654,8 @@ bool
 ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
                                    &BBStates,
                                  MapVector<Value *, RRInfo> &Retains,
-                                 DenseMap<Value *, RRInfo> &Releases) {
+                                 DenseMap<Value *, RRInfo> &Releases,
+                                 Module *M) {
   bool AnyPairsCompletelyEliminated = false;
   RRInfo RetainsToMove;
   RRInfo ReleasesToMove;
@@ -2814,7 +2829,8 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
     Changed = true;
     AnyPairsCompletelyEliminated = NewCount == 0;
     NumRRs += OldCount - NewCount;
-    MoveCalls(Arg, RetainsToMove, ReleasesToMove, Retains, Releases, DeadInsts);
+    MoveCalls(Arg, RetainsToMove, ReleasesToMove,
+              Retains, Releases, DeadInsts, M);
 
   next_retain:
     NewReleases.clear();
@@ -2993,7 +3009,8 @@ bool ObjCARCOpt::OptimizeSequences(Function &F) {
   bool NestingDetected = Visit(F, BBStates, Retains, Releases);
 
   // Transform.
-  return PerformCodePlacement(BBStates, Retains, Releases) && NestingDetected;
+  return PerformCodePlacement(BBStates, Retains, Releases, F.getParent()) &&
+         NestingDetected;
 }
 
 /// OptimizeReturns - Look for this pattern:
@@ -3117,12 +3134,6 @@ bool ObjCARCOpt::doInitialization(Module &M) {
   ImpreciseReleaseMDKind =
     M.getContext().getMDKindID("clang.imprecise_release");
 
-  // Identify the declarations for objc_retain and friends.
-  RetainFunc = M.getFunction("objc_retain");
-  RetainBlockFunc = M.getFunction("objc_retainBlock");
-  RetainRVFunc = M.getFunction("objc_retainAutoreleasedReturnValue");
-  ReleaseFunc = M.getFunction("objc_release");
-
   // Intuitively, objc_retain and others are nocapture, however in practice
   // they are not, because they return their argument value. And objc_release
   // calls finalizers.
@@ -3132,6 +3143,7 @@ bool ObjCARCOpt::doInitialization(Module &M) {
   AutoreleaseRVCallee = 0;
   ReleaseCallee = 0;
   RetainCallee = 0;
+  RetainBlockCallee = 0;
   AutoreleaseCallee = 0;
 
   return false;
