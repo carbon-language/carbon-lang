@@ -2,7 +2,7 @@
 
 declare void @scale() nounwind uwtable
 
-; CHECK: vucomisd .LCPI
+; CHECK: vucomisd
 define void @render() nounwind uwtable {
 entry:
   br i1 undef, label %for.cond5, label %for.end52
