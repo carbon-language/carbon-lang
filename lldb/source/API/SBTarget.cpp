@@ -503,19 +503,23 @@ SBTarget::reset (const lldb::TargetSP& target_sp)
     m_opaque_sp = target_sp;
 }
 
-bool
-SBTarget::ResolveLoadAddress (lldb::addr_t vm_addr, 
-                              lldb::SBAddress& addr)
+lldb::SBAddress
+SBTarget::ResolveLoadAddress (lldb::addr_t vm_addr)
 {
-    if (m_opaque_sp && addr.IsValid())
+    lldb::SBAddress sb_addr;
+    Address &addr = sb_addr.ref();
+    if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
-        return m_opaque_sp->GetSectionLoadList().ResolveLoadAddress (vm_addr, *addr);
+        if (m_opaque_sp->GetSectionLoadList().ResolveLoadAddress (vm_addr, addr))
+            return sb_addr;
     }
 
-    if (addr.IsValid())
-        addr->Clear();
-    return false;    
+    // We have a load address that isn't in a section, just return an address
+    // with the offset filled in (the address) and the section set to NULL
+    addr.SetSection(NULL);
+    addr.SetOffset(vm_addr);
+    return sb_addr;
 }
 
 SBSymbolContext
@@ -523,7 +527,7 @@ SBTarget::ResolveSymbolContextForAddress (const SBAddress& addr, uint32_t resolv
 {
     SBSymbolContext sc;
     if (m_opaque_sp && addr.IsValid())
-        m_opaque_sp->GetImages().ResolveSymbolContextForAddress (*addr, resolve_scope, sc.ref());
+        m_opaque_sp->GetImages().ResolveSymbolContextForAddress (addr.ref(), resolve_scope, sc.ref());
     return sc;
 }
 

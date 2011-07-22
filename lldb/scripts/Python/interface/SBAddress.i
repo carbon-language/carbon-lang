@@ -50,6 +50,9 @@ public:
 
     SBAddress (const lldb::SBAddress &rhs);
 
+    // Create an address by resolving a load address using the supplied target
+    SBAddress (lldb::addr_t load_addr, lldb::SBTarget &target);
+
     ~SBAddress ();
 
     bool
@@ -63,6 +66,10 @@ public:
 
     addr_t
     GetLoadAddress (const lldb::SBTarget &target) const;
+
+	void
+	SetLoadAddress (lldb::addr_t load_addr, 
+                	lldb::SBTarget &target);
 
     bool
     OffsetAddress (addr_t offset);

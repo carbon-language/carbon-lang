@@ -23,6 +23,9 @@ public:
 
     SBAddress (const lldb::SBAddress &rhs);
 
+    // Create an address by resolving a load address using the supplied target
+    SBAddress (lldb::addr_t load_addr, lldb::SBTarget &target);
+
     ~SBAddress ();
 
 #ifndef SWIG
@@ -42,6 +45,9 @@ public:
     addr_t
     GetLoadAddress (const lldb::SBTarget &target) const;
 
+    void
+    SetLoadAddress (lldb::addr_t load_addr, 
+                    lldb::SBTarget &target);
     bool
     OffsetAddress (addr_t offset);
 
@@ -74,15 +80,15 @@ protected:
     const lldb_private::Address *
     operator->() const;
 
-    const lldb_private::Address &
-    operator*() const;
-
-    lldb_private::Address &
-    operator*();
-
     lldb_private::Address *
     get ();
-    
+
+    lldb_private::Address &
+    ref();
+
+    const lldb_private::Address &
+    ref() const;
+
 #endif
 
 

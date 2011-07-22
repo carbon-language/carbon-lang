@@ -11,6 +11,7 @@
 #define LLDB_SBTarget_h_
 
 #include "lldb/API/SBDefines.h"
+#include "lldb/API/SBAddress.h"
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBFileSpec.h"
 
@@ -296,9 +297,8 @@ public:
     void
     Clear ();
 
-    bool
-    ResolveLoadAddress (lldb::addr_t vm_addr, 
-                        lldb::SBAddress& addr);
+    lldb::SBAddress
+    ResolveLoadAddress (lldb::addr_t vm_addr);
 
     SBSymbolContext
     ResolveSymbolContextForAddress (const SBAddress& addr, 

@@ -343,9 +343,8 @@ public:
     void
     Clear ();
 
-    bool
-    ResolveLoadAddress (lldb::addr_t vm_addr, 
-                        lldb::SBAddress& addr);
+    lldb::SBAddress
+    ResolveLoadAddress (lldb::addr_t vm_addr);
 
     SBSymbolContext
     ResolveSymbolContextForAddress (const SBAddress& addr, 

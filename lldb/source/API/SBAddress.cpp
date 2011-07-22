@@ -39,6 +39,15 @@ SBAddress::SBAddress (const SBAddress &rhs) :
         m_opaque_ap.reset (new lldb_private::Address(*rhs.m_opaque_ap.get()));
 }
 
+// Create an address by resolving a load address using the supplied target
+SBAddress::SBAddress (lldb::addr_t load_addr, lldb::SBTarget &target) :
+    m_opaque_ap()
+{    
+    SetLoadAddress (load_addr, target);
+}
+
+
+
 SBAddress::~SBAddress ()
 {
 }
@@ -110,6 +119,24 @@ SBAddress::GetLoadAddress (const SBTarget &target) const
     return addr;
 }
 
+void
+SBAddress::SetLoadAddress (lldb::addr_t load_addr, lldb::SBTarget &target)
+{
+    // Create the address object if we don't already have one
+    ref();
+    if (target.IsValid())
+        *this = target.ResolveLoadAddress(load_addr);
+    else
+        m_opaque_ap->Clear();
+
+    // Check if we weren't were able to resolve a section offset address.
+    // If we weren't it is ok, the load address might be a location on the
+    // stack or heap, so we should just have an address with no section and
+    // a valid offset
+    if (!m_opaque_ap->IsValid())
+        m_opaque_ap->SetOffset(load_addr);
+}
+
 bool
 SBAddress::OffsetAddress (addr_t offset)
 {
@@ -138,7 +165,7 @@ SBAddress::operator->() const
 }
 
 lldb_private::Address &
-SBAddress::operator*()
+SBAddress::ref ()
 {
     if (m_opaque_ap.get() == NULL)
         m_opaque_ap.reset (new lldb_private::Address);
@@ -146,8 +173,11 @@ SBAddress::operator*()
 }
 
 const lldb_private::Address &
-SBAddress::operator*() const
+SBAddress::ref () const
 {
+    // "const SBAddress &addr" should already have checked "addr.IsValid()" 
+    // prior to calling this function. In case you didn't we will assert
+    // and die to let you know.
     assert (m_opaque_ap.get());
     return *m_opaque_ap;
 }

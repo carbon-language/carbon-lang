@@ -228,7 +228,7 @@ bool
 SBModule::ResolveFileAddress (lldb::addr_t vm_addr, SBAddress& addr)
 {
     if (m_opaque_sp && addr.IsValid())
-        return m_opaque_sp->ResolveFileAddress (vm_addr, *addr);
+        return m_opaque_sp->ResolveFileAddress (vm_addr, addr.ref());
     
     if (addr.IsValid())
         addr->Clear();
@@ -240,7 +240,7 @@ SBModule::ResolveSymbolContextForAddress (const SBAddress& addr, uint32_t resolv
 {
     SBSymbolContext sb_sc;
     if (m_opaque_sp && addr.IsValid())
-        m_opaque_sp->ResolveSymbolContextForAddress (*addr, resolve_scope, *sb_sc);
+        m_opaque_sp->ResolveSymbolContextForAddress (addr.ref(), resolve_scope, *sb_sc);
     return sb_sc;
 }
 
