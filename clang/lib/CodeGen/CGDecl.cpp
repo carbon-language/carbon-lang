@@ -1268,10 +1268,8 @@ static void emitPartialArrayDestroy(CodeGenFunction &CGF,
     llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, arrayDepth+1);
 
     llvm::SmallVector<llvm::Value*,4> gepIndices(arrayDepth, zero);
-    begin = CGF.Builder.CreateInBoundsGEP(begin, gepIndices.begin(),
-                                          gepIndices.end(), "pad.arraybegin");
-    end = CGF.Builder.CreateInBoundsGEP(end, gepIndices.begin(),
-                                        gepIndices.end(), "pad.arrayend");
+    begin = CGF.Builder.CreateInBoundsGEP(begin, gepIndices, "pad.arraybegin");
+    end = CGF.Builder.CreateInBoundsGEP(end, gepIndices, "pad.arrayend");
   }
 
   // Destroy the array.  We don't ever need an EH cleanup because we

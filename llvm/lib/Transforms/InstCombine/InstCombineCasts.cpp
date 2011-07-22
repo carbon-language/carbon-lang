@@ -1360,9 +1360,8 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
         // and bitcast the result.  This eliminates one bitcast, potentially
         // two.
         Value *NGEP = cast<GEPOperator>(GEP)->isInBounds() ?
-        Builder->CreateInBoundsGEP(OrigBase,
-                                   NewIndices.begin(), NewIndices.end()) :
-        Builder->CreateGEP(OrigBase, NewIndices.begin(), NewIndices.end());
+        Builder->CreateInBoundsGEP(OrigBase, NewIndices) :
+        Builder->CreateGEP(OrigBase, NewIndices);
         NGEP->takeName(GEP);
         
         if (isa<BitCastInst>(CI))

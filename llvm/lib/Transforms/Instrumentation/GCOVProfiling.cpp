@@ -478,8 +478,7 @@ bool GCOVProfiler::emitProfileArcs(DebugInfoFinder &DIF) {
           SmallVector<Value *, 2> Idx;
           Idx.push_back(Constant::getNullValue(Type::getInt64Ty(*Ctx)));
           Idx.push_back(Sel);
-          Value *Counter = Builder.CreateInBoundsGEP(Counters,
-                                                     Idx.begin(), Idx.end());
+          Value *Counter = Builder.CreateInBoundsGEP(Counters, Idx);
           Value *Count = Builder.CreateLoad(Counter);
           Count = Builder.CreateAdd(Count,
                                     ConstantInt::get(Type::getInt64Ty(*Ctx),1));

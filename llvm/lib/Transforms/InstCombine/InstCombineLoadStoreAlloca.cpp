@@ -327,8 +327,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   // SIOp0 is a pointer to aggregate and this is a store to the first field,
   // emit a GEP to index into its first field.
   if (!NewGEPIndices.empty())
-    CastOp = IC.Builder->CreateInBoundsGEP(CastOp, NewGEPIndices.begin(),
-                                           NewGEPIndices.end());
+    CastOp = IC.Builder->CreateInBoundsGEP(CastOp, NewGEPIndices);
   
   NewCast = IC.Builder->CreateCast(opcode, SIOp0, CastDstTy,
                                    SIOp0->getName()+".c");

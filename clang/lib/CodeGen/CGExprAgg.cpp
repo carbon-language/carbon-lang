@@ -676,7 +676,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, 0);
     llvm::Value *indices[] = { zero, zero };
     llvm::Value *begin =
-      Builder.CreateInBoundsGEP(DestPtr, indices, indices+2, "arrayinit.begin");
+      Builder.CreateInBoundsGEP(DestPtr, indices, "arrayinit.begin");
 
     // Exception safety requires us to destroy all the
     // already-constructed members if an initializer throws.

@@ -572,8 +572,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
   if (V->getType() != PTy)
     Casted = InsertNoopCastOfTo(Casted, PTy);
   Value *GEP = Builder.CreateGEP(Casted,
-                                 GepIndices.begin(),
-                                 GepIndices.end(),
+                                 GepIndices,
                                  "scevgep");
   Ops.push_back(SE.getUnknown(GEP));
   rememberInstruction(GEP);

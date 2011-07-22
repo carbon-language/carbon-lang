@@ -850,8 +850,7 @@ llvm::Value *CodeGenFunction::emitArrayLength(const ArrayType *origArrayType,
   baseType = arrayType->getElementType();
 
   // Create the actual GEP.
-  addr = Builder.CreateInBoundsGEP(addr, gepIndices.begin(),
-                                   gepIndices.end(), "array.begin");
+  addr = Builder.CreateInBoundsGEP(addr, gepIndices, "array.begin");
 
   llvm::Value *numElements
     = llvm::ConstantInt::get(SizeTy, countFromCLAs);

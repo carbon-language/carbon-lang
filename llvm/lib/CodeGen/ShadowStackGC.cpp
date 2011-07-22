@@ -340,7 +340,7 @@ ShadowStackGC::CreateGEP(LLVMContext &Context, IRBuilder<> &B, Value *BasePtr,
   Value *Indices[] = { ConstantInt::get(Type::getInt32Ty(Context), 0),
                        ConstantInt::get(Type::getInt32Ty(Context), Idx),
                        ConstantInt::get(Type::getInt32Ty(Context), Idx2) };
-  Value* Val = B.CreateGEP(BasePtr, Indices, Indices + 3, Name);
+  Value* Val = B.CreateGEP(BasePtr, Indices, Name);
 
   assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");
 
@@ -352,7 +352,7 @@ ShadowStackGC::CreateGEP(LLVMContext &Context, IRBuilder<> &B, Value *BasePtr,
                          int Idx, const char *Name) {
   Value *Indices[] = { ConstantInt::get(Type::getInt32Ty(Context), 0),
                        ConstantInt::get(Type::getInt32Ty(Context), Idx) };
-  Value *Val = B.CreateGEP(BasePtr, Indices, Indices + 2, Name);
+  Value *Val = B.CreateGEP(BasePtr, Indices, Name);
 
   assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");
 

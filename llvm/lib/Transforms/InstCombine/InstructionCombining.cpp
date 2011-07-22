@@ -916,8 +916,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         Idx[0] = Constant::getNullValue(Type::getInt32Ty(GEP.getContext()));
         Idx[1] = GEP.getOperand(1);
         Value *NewGEP = GEP.isInBounds() ?
-          Builder->CreateInBoundsGEP(StrippedPtr, Idx, Idx + 2, GEP.getName()) :
-          Builder->CreateGEP(StrippedPtr, Idx, Idx + 2, GEP.getName());
+          Builder->CreateInBoundsGEP(StrippedPtr, Idx, GEP.getName()) :
+          Builder->CreateGEP(StrippedPtr, Idx, GEP.getName());
         // V and GEP are both pointer types --> BitCast
         return new BitCastInst(NewGEP, GEP.getType());
       }
@@ -975,8 +975,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           Idx[0] = Constant::getNullValue(Type::getInt32Ty(GEP.getContext()));
           Idx[1] = NewIdx;
           Value *NewGEP = GEP.isInBounds() ?
-            Builder->CreateInBoundsGEP(StrippedPtr, Idx, Idx + 2,GEP.getName()):
-            Builder->CreateGEP(StrippedPtr, Idx, Idx + 2, GEP.getName());
+            Builder->CreateInBoundsGEP(StrippedPtr, Idx, GEP.getName()):
+            Builder->CreateGEP(StrippedPtr, Idx, GEP.getName());
           // The NewGEP must be pointer typed, so must the old one -> BitCast
           return new BitCastInst(NewGEP, GEP.getType());
         }
@@ -1027,10 +1027,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         cast<PointerType>(BCI->getOperand(0)->getType())->getElementType();
       if (FindElementAtOffset(InTy, Offset, NewIndices)) {
         Value *NGEP = GEP.isInBounds() ?
-          Builder->CreateInBoundsGEP(BCI->getOperand(0), NewIndices.begin(),
-                                     NewIndices.end()) :
-          Builder->CreateGEP(BCI->getOperand(0), NewIndices.begin(),
-                             NewIndices.end());
+          Builder->CreateInBoundsGEP(BCI->getOperand(0), NewIndices) :
+          Builder->CreateGEP(BCI->getOperand(0), NewIndices);
         
         if (NGEP->getType() == GEP.getType())
           return ReplaceInstUsesWith(GEP, NGEP);
@@ -1322,8 +1320,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       // We need to insert these at the location of the old load, not at that of
       // the extractvalue.
       Builder->SetInsertPoint(L->getParent(), L);
-      Value *GEP = Builder->CreateInBoundsGEP(L->getPointerOperand(),
-                                              Indices.begin(), Indices.end());
+      Value *GEP = Builder->CreateInBoundsGEP(L->getPointerOperand(), Indices);
       // Returning the load directly will cause the main loop to insert it in
       // the wrong spot, so use ReplaceInstUsesWith().
       return ReplaceInstUsesWith(EV, Builder->CreateLoad(GEP));

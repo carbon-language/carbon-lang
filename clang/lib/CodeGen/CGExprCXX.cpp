@@ -1420,7 +1420,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
       GEP.push_back(Zero);
     }
 
-    Ptr = Builder.CreateInBoundsGEP(Ptr, GEP.begin(), GEP.end(), "del.first");
+    Ptr = Builder.CreateInBoundsGEP(Ptr, GEP, "del.first");
   }
 
   assert(ConvertTypeForMem(DeleteTy) ==

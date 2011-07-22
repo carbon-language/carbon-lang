@@ -1646,9 +1646,9 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     ArrayAlignment = ArrayLV.getAlignment();
 
     if (getContext().getLangOptions().isSignedOverflowDefined())
-      Address = Builder.CreateGEP(ArrayPtr, Args, Args+2, "arrayidx");
+      Address = Builder.CreateGEP(ArrayPtr, Args, "arrayidx");
     else
-      Address = Builder.CreateInBoundsGEP(ArrayPtr, Args, Args+2, "arrayidx");
+      Address = Builder.CreateInBoundsGEP(ArrayPtr, Args, "arrayidx");
   } else {
     // The base must be a pointer, which is not an aggregate.  Emit it.
     llvm::Value *Base = EmitScalarExpr(E->getBase());
