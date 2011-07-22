@@ -258,14 +258,14 @@ void ASTDeclReader::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
 
 void ASTDeclReader::VisitNamedDecl(NamedDecl *ND) {
   VisitDecl(ND);
-  ND->setDeclName(Reader.ReadDeclarationName(Record, Idx));
+  ND->setDeclName(Reader.ReadDeclarationName(F, Record, Idx));
 }
 
 void ASTDeclReader::VisitTypeDecl(TypeDecl *TD) {
   VisitNamedDecl(TD);
   TD->setLocStart(ReadSourceLocation(Record, Idx));
   // Delay type reading until after we have fully initialized the decl.
-  TypeIDForTypeDecl = Record[Idx++];
+  TypeIDForTypeDecl = Reader.getGlobalTypeID(F, Record[Idx++]);
 }
 
 void ASTDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
@@ -299,8 +299,8 @@ void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
   if (TypeSourceInfo *TI = Reader.GetTypeSourceInfo(F, Record, Idx))
     ED->setIntegerTypeSourceInfo(TI);
   else
-    ED->setIntegerType(Reader.GetType(Record[Idx++]));
-  ED->setPromotionType(Reader.GetType(Record[Idx++]));
+    ED->setIntegerType(Reader.readType(F, Record, Idx));
+  ED->setPromotionType(Reader.readType(F, Record, Idx));
   ED->setNumPositiveBits(Record[Idx++]);
   ED->setNumNegativeBits(Record[Idx++]);
   ED->IsScoped = Record[Idx++];
@@ -318,7 +318,7 @@ void ASTDeclReader::VisitRecordDecl(RecordDecl *RD) {
 
 void ASTDeclReader::VisitValueDecl(ValueDecl *VD) {
   VisitNamedDecl(VD);
-  VD->setType(Reader.GetType(Record[Idx++]));
+  VD->setType(Reader.readType(F, Record, Idx));
 }
 
 void ASTDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
@@ -485,7 +485,7 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
   MD->SetRelatedResultType(Record[Idx++]);
   MD->setNumSelectorArgs(unsigned(Record[Idx++]));
-  MD->setResultType(Reader.GetType(Record[Idx++]));
+  MD->setResultType(Reader.readType(F, Record, Idx));
   MD->setResultTypeSourceInfo(GetTypeSourceInfo(Record, Idx));
   MD->setEndLoc(ReadSourceLocation(Record, Idx));
   unsigned NumParams = Record[Idx++];
@@ -506,7 +506,7 @@ void ASTDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
 
 void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   VisitObjCContainerDecl(ID);
-  ID->setTypeForDecl(Reader.GetType(Record[Idx++]).getTypePtrOrNull());
+  ID->setTypeForDecl(Reader.readType(F, Record, Idx).getTypePtrOrNull());
   ID->setSuperClass(ReadDeclAs<ObjCInterfaceDecl>(Record, Idx));
   
   // Read the directly referenced protocols and their SourceLocations.
@@ -645,8 +645,8 @@ void ASTDeclReader::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   // FIXME: stable encoding
   D->setPropertyImplementation(
                             (ObjCPropertyDecl::PropertyControl)Record[Idx++]);
-  D->setGetterName(Reader.ReadDeclarationName(Record, Idx).getObjCSelector());
-  D->setSetterName(Reader.ReadDeclarationName(Record, Idx).getObjCSelector());
+  D->setGetterName(Reader.ReadDeclarationName(F,Record, Idx).getObjCSelector());
+  D->setSetterName(Reader.ReadDeclarationName(F,Record, Idx).getObjCSelector());
   D->setGetterMethodDecl(ReadDeclAs<ObjCMethodDecl>(Record, Idx));
   D->setSetterMethodDecl(ReadDeclAs<ObjCMethodDecl>(Record, Idx));
   D->setPropertyIvarDecl(ReadDeclAs<ObjCIvarDecl>(Record, Idx));
@@ -1257,7 +1257,7 @@ void ASTDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   if (D->isExpandedParameterPack()) {
     void **Data = reinterpret_cast<void **>(D + 1);
     for (unsigned I = 0, N = D->getNumExpansionTypes(); I != N; ++I) {
-      Data[2*I] = Reader.GetType(Record[Idx++]).getAsOpaquePtr();
+      Data[2*I] = Reader.readType(F, Record, Idx).getAsOpaquePtr();
       Data[2*I + 1] = GetTypeSourceInfo(Record, Idx);
     }
   } else {

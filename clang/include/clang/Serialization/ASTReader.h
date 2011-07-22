@@ -914,7 +914,7 @@ private:
     uint64_t Offset;
   };
 
-  QualType ReadTypeRecord(unsigned Index);
+  QualType readTypeRecord(unsigned Index);
   RecordLocation TypeCursorForIndex(unsigned Index);
   void LoadedDecl(unsigned Index, Decl *D);
   Decl *ReadDeclRecord(unsigned Index, serialization::DeclID ID);
@@ -1114,6 +1114,21 @@ public:
   /// type.
   QualType GetType(serialization::TypeID ID);
 
+  /// \brief Resolve a local type ID within a given AST file into a type.
+  QualType getLocalType(PerFileData &F, unsigned LocalID);
+  
+  /// \brief Map a local type ID within a given AST file into a global type ID.
+  serialization::TypeID getGlobalTypeID(PerFileData &F, unsigned LocalID) const;
+  
+  /// \brief Read a type from the current position in the given record, which 
+  /// was read from the given AST file.
+  QualType readType(PerFileData &F, const RecordData &Record, unsigned &Idx) {
+    if (Idx >= Record.size())
+      return QualType();
+    
+    return getLocalType(F, Record[Idx++]);
+  }
+  
   /// \brief Returns the type ID associated with the given type.
   /// If the type didn't come from the AST file the ID that is returned is
   /// marked as "doesn't exist in AST".
@@ -1312,7 +1327,8 @@ public:
   }
 
   /// \brief Read a declaration name.
-  DeclarationName ReadDeclarationName(const RecordData &Record, unsigned &Idx);
+  DeclarationName ReadDeclarationName(PerFileData &F, 
+                                      const RecordData &Record, unsigned &Idx);
   void ReadDeclarationNameLoc(PerFileData &F,
                               DeclarationNameLoc &DNLoc, DeclarationName Name,
                               const RecordData &Record, unsigned &Idx);

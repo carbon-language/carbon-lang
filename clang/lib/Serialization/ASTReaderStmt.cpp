@@ -305,7 +305,7 @@ void ASTStmtReader::VisitAsmStmt(AsmStmt *S) {
 
 void ASTStmtReader::VisitExpr(Expr *E) {
   VisitStmt(E);
-  E->setType(Reader.GetType(Record[Idx++]));
+  E->setType(Reader.readType(F, Record, Idx));
   E->setTypeDependent(Record[Idx++]);
   E->setValueDependent(Record[Idx++]);
   E->setInstantiationDependent(Record[Idx++]);
@@ -540,8 +540,8 @@ void ASTStmtReader::VisitBinaryOperator(BinaryOperator *E) {
 
 void ASTStmtReader::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
   VisitBinaryOperator(E);
-  E->setComputationLHSType(Reader.GetType(Record[Idx++]));
-  E->setComputationResultType(Reader.GetType(Record[Idx++]));
+  E->setComputationLHSType(Reader.readType(F, Record, Idx));
+  E->setComputationResultType(Reader.readType(F, Record, Idx));
 }
 
 void ASTStmtReader::VisitConditionalOperator(ConditionalOperator *E) {
@@ -826,7 +826,7 @@ void ASTStmtReader::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
     E->setBase(Reader.ReadSubExpr());
     break;
   case 1:
-    E->setSuperReceiver(Reader.GetType(Record[Idx++]));
+    E->setSuperReceiver(Reader.readType(F, Record, Idx));
     break;
   case 2:
     E->setClassReceiver(ReadDeclAs<ObjCInterfaceDecl>(Record, Idx));
@@ -852,7 +852,7 @@ void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
 
   case ObjCMessageExpr::SuperClass:
   case ObjCMessageExpr::SuperInstance: {
-    QualType T = Reader.GetType(Record[Idx++]);
+    QualType T = Reader.readType(F, Record, Idx);
     SourceLocation SuperLoc = ReadSourceLocation(Record, Idx);
     E->setSuper(SuperLoc, T, Kind == ObjCMessageExpr::SuperInstance);
     break;
@@ -1155,7 +1155,7 @@ ASTStmtReader::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
                                      Record[Idx++]);
 
   E->Base = Reader.ReadSubExpr();
-  E->BaseType = Reader.GetType(Record[Idx++]);
+  E->BaseType = Reader.readType(F, Record, Idx);
   E->IsArrow = Record[Idx++];
   E->OperatorLoc = ReadSourceLocation(Record, Idx);
   E->QualifierLoc = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
@@ -1213,7 +1213,7 @@ void ASTStmtReader::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
   E->IsArrow = Record[Idx++];
   E->HasUnresolvedUsing = Record[Idx++];
   E->Base = Reader.ReadSubExpr();
-  E->BaseType = Reader.GetType(Record[Idx++]);
+  E->BaseType = Reader.readType(F, Record, Idx);
   E->OperatorLoc = ReadSourceLocation(Record, Idx);
 }
 
@@ -1620,7 +1620,7 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       AccessSpecifier AS = (AccessSpecifier)Record[Idx++];
       DeclAccessPair FoundDecl = DeclAccessPair::make(FoundD, AS);
 
-      QualType T = GetType(Record[Idx++]);
+      QualType T = readType(F, Record, Idx);
       ExprValueKind VK = static_cast<ExprValueKind>(Record[Idx++]);
       ExprObjectKind OK = static_cast<ExprObjectKind>(Record[Idx++]);
       Expr *Base = ReadSubExpr();

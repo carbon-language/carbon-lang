@@ -738,7 +738,8 @@ typedef OnDiskChainedHashTable<ASTIdentifierLookupTrait>
 namespace {
 class ASTDeclContextNameLookupTrait {
   ASTReader &Reader;
-
+  ASTReader::PerFileData &F;
+  
 public:
   /// \brief Pair of begin/end iterators for DeclIDs.
   typedef std::pair<DeclID *, DeclID *> data_type;
@@ -755,7 +756,9 @@ public:
   typedef DeclarationName external_key_type;
   typedef DeclNameKey internal_key_type;
 
-  explicit ASTDeclContextNameLookupTrait(ASTReader &Reader) : Reader(Reader) { }
+  explicit ASTDeclContextNameLookupTrait(ASTReader &Reader, 
+                                         ASTReader::PerFileData &F) 
+    : Reader(Reader), F(F) { }
 
   static bool EqualKey(const internal_key_type& a,
                        const internal_key_type& b) {
@@ -834,15 +837,15 @@ public:
 
     case DeclarationName::CXXConstructorName:
       return Context->DeclarationNames.getCXXConstructorName(
-                           Context->getCanonicalType(Reader.GetType(Key.Data)));
+               Context->getCanonicalType(Reader.getLocalType(F, Key.Data)));
 
     case DeclarationName::CXXDestructorName:
       return Context->DeclarationNames.getCXXDestructorName(
-                           Context->getCanonicalType(Reader.GetType(Key.Data)));
+               Context->getCanonicalType(Reader.getLocalType(F, Key.Data)));
 
     case DeclarationName::CXXConversionFunctionName:
       return Context->DeclarationNames.getCXXConversionFunctionName(
-                           Context->getCanonicalType(Reader.GetType(Key.Data)));
+               Context->getCanonicalType(Reader.getLocalType(F, Key.Data)));
 
     case DeclarationName::CXXOperatorName:
       return Context->DeclarationNames.getCXXOperatorName(
@@ -957,7 +960,7 @@ bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
       = ASTDeclContextNameLookupTable::Create(
                     (const unsigned char *)Blob + Record[0],
                     (const unsigned char *)Blob,
-                    ASTDeclContextNameLookupTrait(*this));
+                    ASTDeclContextNameLookupTrait(*this, *Info.F));
   } else {
     Info.NameLookupTableData = 0;
   }
@@ -2077,7 +2080,7 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       void *Table = ASTDeclContextNameLookupTable::Create(
                         (const unsigned char *)BlobStart + Record[1],
                         (const unsigned char *)BlobStart,
-                        ASTDeclContextNameLookupTrait(*this));
+                        ASTDeclContextNameLookupTrait(*this, F));
       if (ID == 1 && Context) { // Is it the TU?
         DeclContextInfo Info = {
           &F, Table, /* No lexical inforamtion */ 0, 0
@@ -2143,11 +2146,8 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       break;
 
     case SPECIAL_TYPES:
-      // Optimization for the first block
-      if (SpecialTypes.empty())
-        SpecialTypes.swap(Record);
-      else
-        SpecialTypes.insert(SpecialTypes.end(), Record.begin(), Record.end());
+      for (unsigned I = 0, N = Record.size(); I != N; ++I)
+        SpecialTypes.push_back(getGlobalTypeID(F, Record[I]));
       break;
 
     case STATISTICS:
@@ -3175,7 +3175,7 @@ ASTReader::RecordLocation ASTReader::TypeCursorForIndex(unsigned Index) {
 /// routine actually reads the record corresponding to the type at the given
 /// location. It is a helper routine for GetType, which deals with reading type
 /// IDs.
-QualType ASTReader::ReadTypeRecord(unsigned Index) {
+QualType ASTReader::readTypeRecord(unsigned Index) {
   RecordLocation Loc = TypeCursorForIndex(Index);
   llvm::BitstreamCursor &DeclsCursor = Loc.F->DeclsCursor;
 
@@ -3188,6 +3188,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
   // Note that we are loading a type record.
   Deserializing AType(this);
 
+  unsigned Idx = 0;
   DeclsCursor.JumpToBit(Loc.Offset);
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
@@ -3197,8 +3198,8 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("Incorrect encoding of extended qualifier type");
       return QualType();
     }
-    QualType Base = GetType(Record[0]);
-    Qualifiers Quals = Qualifiers::fromOpaqueValue(Record[1]);
+    QualType Base = readType(*Loc.F, Record, Idx);
+    Qualifiers Quals = Qualifiers::fromOpaqueValue(Record[Idx++]);
     return Context->getQualifiedType(Base, Quals);
   }
 
@@ -3207,7 +3208,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("Incorrect encoding of complex type");
       return QualType();
     }
-    QualType ElemType = GetType(Record[0]);
+    QualType ElemType = readType(*Loc.F, Record, Idx);
     return Context->getComplexType(ElemType);
   }
 
@@ -3216,7 +3217,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("Incorrect encoding of pointer type");
       return QualType();
     }
-    QualType PointeeType = GetType(Record[0]);
+    QualType PointeeType = readType(*Loc.F, Record, Idx);
     return Context->getPointerType(PointeeType);
   }
 
@@ -3225,7 +3226,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("Incorrect encoding of block pointer type");
       return QualType();
     }
-    QualType PointeeType = GetType(Record[0]);
+    QualType PointeeType = readType(*Loc.F, Record, Idx);
     return Context->getBlockPointerType(PointeeType);
   }
 
@@ -3234,7 +3235,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("Incorrect encoding of lvalue reference type");
       return QualType();
     }
-    QualType PointeeType = GetType(Record[0]);
+    QualType PointeeType = readType(*Loc.F, Record, Idx);
     return Context->getLValueReferenceType(PointeeType, Record[1]);
   }
 
@@ -3243,7 +3244,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("Incorrect encoding of rvalue reference type");
       return QualType();
     }
-    QualType PointeeType = GetType(Record[0]);
+    QualType PointeeType = readType(*Loc.F, Record, Idx);
     return Context->getRValueReferenceType(PointeeType);
   }
 
@@ -3252,8 +3253,8 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("Incorrect encoding of member pointer type");
       return QualType();
     }
-    QualType PointeeType = GetType(Record[0]);
-    QualType ClassType = GetType(Record[1]);
+    QualType PointeeType = readType(*Loc.F, Record, Idx);
+    QualType ClassType = readType(*Loc.F, Record, Idx);
     if (PointeeType.isNull() || ClassType.isNull())
       return QualType();
     
@@ -3261,7 +3262,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
   }
 
   case TYPE_CONSTANT_ARRAY: {
-    QualType ElementType = GetType(Record[0]);
+    QualType ElementType = readType(*Loc.F, Record, Idx);
     ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
     unsigned IndexTypeQuals = Record[2];
     unsigned Idx = 3;
@@ -3271,14 +3272,14 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
   }
 
   case TYPE_INCOMPLETE_ARRAY: {
-    QualType ElementType = GetType(Record[0]);
+    QualType ElementType = readType(*Loc.F, Record, Idx);
     ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
     unsigned IndexTypeQuals = Record[2];
     return Context->getIncompleteArrayType(ElementType, ASM, IndexTypeQuals);
   }
 
   case TYPE_VARIABLE_ARRAY: {
-    QualType ElementType = GetType(Record[0]);
+    QualType ElementType = readType(*Loc.F, Record, Idx);
     ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
     unsigned IndexTypeQuals = Record[2];
     SourceLocation LBLoc = ReadSourceLocation(*Loc.F, Record[3]);
@@ -3294,7 +3295,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       return QualType();
     }
 
-    QualType ElementType = GetType(Record[0]);
+    QualType ElementType = readType(*Loc.F, Record, Idx);
     unsigned NumElements = Record[1];
     unsigned VecKind = Record[2];
     return Context->getVectorType(ElementType, NumElements,
@@ -3307,7 +3308,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       return QualType();
     }
 
-    QualType ElementType = GetType(Record[0]);
+    QualType ElementType = readType(*Loc.F, Record, Idx);
     unsigned NumElements = Record[1];
     return Context->getExtVectorType(ElementType, NumElements);
   }
@@ -3317,14 +3318,14 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("incorrect encoding of no-proto function type");
       return QualType();
     }
-    QualType ResultType = GetType(Record[0]);
+    QualType ResultType = readType(*Loc.F, Record, Idx);
     FunctionType::ExtInfo Info(Record[1], Record[2], Record[3],
                                (CallingConv)Record[4], Record[5]);
     return Context->getFunctionNoProtoType(ResultType, Info);
   }
 
   case TYPE_FUNCTION_PROTO: {
-    QualType ResultType = GetType(Record[0]);
+    QualType ResultType = readType(*Loc.F, Record, Idx);
 
     FunctionProtoType::ExtProtoInfo EPI;
     EPI.ExtInfo = FunctionType::ExtInfo(/*noreturn*/ Record[1],
@@ -3337,7 +3338,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     unsigned NumParams = Record[Idx++];
     llvm::SmallVector<QualType, 16> ParamTypes;
     for (unsigned I = 0; I != NumParams; ++I)
-      ParamTypes.push_back(GetType(Record[Idx++]));
+      ParamTypes.push_back(readType(*Loc.F, Record, Idx));
 
     EPI.Variadic = Record[Idx++];
     EPI.TypeQuals = Record[Idx++];
@@ -3349,7 +3350,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       EPI.NumExceptions = Record[Idx++];
       llvm::SmallVector<QualType, 2> Exceptions;
       for (unsigned I = 0; I != EPI.NumExceptions; ++I)
-        Exceptions.push_back(GetType(Record[Idx++]));
+        Exceptions.push_back(readType(*Loc.F, Record, Idx));
       EPI.Exceptions = Exceptions.data();
     } else if (EST == EST_ComputedNoexcept) {
       EPI.NoexceptExpr = ReadExpr(*Loc.F);
@@ -3371,7 +3372,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     }
     unsigned Idx = 0;
     TypedefNameDecl *Decl = ReadDeclAs<TypedefNameDecl>(*Loc.F, Record, Idx);
-    QualType Canonical = GetType(Record[1]);
+    QualType Canonical = readType(*Loc.F, Record, Idx);
     if (!Canonical.isNull())
       Canonical = Context->getCanonicalType(Canonical);
     return Context->getTypedefType(Decl, Canonical);
@@ -3385,7 +3386,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("incorrect encoding of typeof(type) in AST file");
       return QualType();
     }
-    QualType UnderlyingType = GetType(Record[0]);
+    QualType UnderlyingType = readType(*Loc.F, Record, Idx);
     return Context->getTypeOfType(UnderlyingType);
   }
 
@@ -3393,14 +3394,14 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     return Context->getDecltypeType(ReadExpr(*Loc.F));
 
   case TYPE_UNARY_TRANSFORM: {
-    QualType BaseType = GetType(Record[0]);
-    QualType UnderlyingType = GetType(Record[1]);
+    QualType BaseType = readType(*Loc.F, Record, Idx);
+    QualType UnderlyingType = readType(*Loc.F, Record, Idx);
     UnaryTransformType::UTTKind UKind = (UnaryTransformType::UTTKind)Record[2];
     return Context->getUnaryTransformType(BaseType, UnderlyingType, UKind);
   }
 
   case TYPE_AUTO:
-    return Context->getAutoType(GetType(Record[0]));
+    return Context->getAutoType(readType(*Loc.F, Record, Idx));
 
   case TYPE_RECORD: {
     if (Record.size() != 2) {
@@ -3433,8 +3434,8 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("incorrect encoding of attributed type");
       return QualType();
     }
-    QualType modifiedType = GetType(Record[0]);
-    QualType equivalentType = GetType(Record[1]);
+    QualType modifiedType = readType(*Loc.F, Record, Idx);
+    QualType equivalentType = readType(*Loc.F, Record, Idx);
     AttributedType::Kind kind = static_cast<AttributedType::Kind>(Record[2]);
     return Context->getAttributedType(kind, modifiedType, equivalentType);
   }
@@ -3444,7 +3445,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("incorrect encoding of paren type");
       return QualType();
     }
-    QualType InnerType = GetType(Record[0]);
+    QualType InnerType = readType(*Loc.F, Record, Idx);
     return Context->getParenType(InnerType);
   }
 
@@ -3453,7 +3454,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("incorrect encoding of pack expansion type");
       return QualType();
     }
-    QualType Pattern = GetType(Record[0]);
+    QualType Pattern = readType(*Loc.F, Record, Idx);
     if (Pattern.isNull())
       return QualType();
     llvm::Optional<unsigned> NumExpansions;
@@ -3466,7 +3467,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(*Loc.F, Record, Idx);
-    QualType NamedType = GetType(Record[Idx++]);
+    QualType NamedType = readType(*Loc.F, Record, Idx);
     return Context->getElaboratedType(Keyword, NNS, NamedType);
   }
 
@@ -3479,7 +3480,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
 
   case TYPE_OBJC_OBJECT: {
     unsigned Idx = 0;
-    QualType Base = GetType(Record[Idx++]);
+    QualType Base = readType(*Loc.F, Record, Idx);
     unsigned NumProtos = Record[Idx++];
     llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
@@ -3489,14 +3490,14 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
 
   case TYPE_OBJC_OBJECT_POINTER: {
     unsigned Idx = 0;
-    QualType Pointee = GetType(Record[Idx++]);
+    QualType Pointee = readType(*Loc.F, Record, Idx);
     return Context->getObjCObjectPointerType(Pointee);
   }
 
   case TYPE_SUBST_TEMPLATE_TYPE_PARM: {
     unsigned Idx = 0;
-    QualType Parm = GetType(Record[Idx++]);
-    QualType Replacement = GetType(Record[Idx++]);
+    QualType Parm = readType(*Loc.F, Record, Idx);
+    QualType Replacement = readType(*Loc.F, Record, Idx);
     return
       Context->getSubstTemplateTypeParmType(cast<TemplateTypeParmType>(Parm),
                                             Replacement);
@@ -3504,7 +3505,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
 
   case TYPE_SUBST_TEMPLATE_TYPE_PARM_PACK: {
     unsigned Idx = 0;
-    QualType Parm = GetType(Record[Idx++]);
+    QualType Parm = readType(*Loc.F, Record, Idx);
     TemplateArgument ArgPack = ReadTemplateArgument(*Loc.F, Record, Idx);
     return Context->getSubstTemplateTypeParmPackType(
                                                cast<TemplateTypeParmType>(Parm),
@@ -3512,9 +3513,8 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
   }
 
   case TYPE_INJECTED_CLASS_NAME: {
-    unsigned Idx = 0;
     CXXRecordDecl *D = ReadDeclAs<CXXRecordDecl>(*Loc.F, Record, Idx);
-    QualType TST = GetType(Record[1]); // probably derivable
+    QualType TST = readType(*Loc.F, Record, Idx); // probably derivable
     // FIXME: ASTContext::getInjectedClassNameType is not currently suitable
     // for AST reading, too much interdependencies.
     return
@@ -3536,7 +3536,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(*Loc.F, Record, Idx);
     const IdentifierInfo *Name = this->GetIdentifierInfo(Record, Idx);
-    QualType Canon = GetType(Record[Idx++]);
+    QualType Canon = readType(*Loc.F, Record, Idx);
     if (!Canon.isNull())
       Canon = Context->getCanonicalType(Canon);
     return Context->getDependentNameType(Keyword, NNS, Name, Canon);
@@ -3560,7 +3560,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     unsigned Idx = 0;
 
     // ArrayType
-    QualType ElementType = GetType(Record[Idx++]);
+    QualType ElementType = readType(*Loc.F, Record, Idx);
     ArrayType::ArraySizeModifier ASM
       = (ArrayType::ArraySizeModifier)Record[Idx++];
     unsigned IndexTypeQuals = Record[Idx++];
@@ -3579,7 +3579,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     TemplateName Name = ReadTemplateName(*Loc.F, Record, Idx);
     llvm::SmallVector<TemplateArgument, 8> Args;
     ReadTemplateArgumentList(Args, *Loc.F, Record, Idx);
-    QualType Underlying = GetType(Record[Idx++]);
+    QualType Underlying = readType(*Loc.F, Record, Idx);
     QualType T;
     if (Underlying.isNull())
       T = Context->getCanonicalTemplateSpecializationType(Name, Args.data(),
@@ -3828,7 +3828,7 @@ void TypeLocReader::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
 TypeSourceInfo *ASTReader::GetTypeSourceInfo(PerFileData &F,
                                              const RecordData &Record,
                                              unsigned &Idx) {
-  QualType InfoTy = GetType(Record[Idx++]);
+  QualType InfoTy = readType(F, Record, Idx);
   if (InfoTy.isNull())
     return 0;
 
@@ -3891,7 +3891,7 @@ QualType ASTReader::GetType(TypeID ID) {
   Index -= NUM_PREDEF_TYPE_IDS;
   assert(Index < TypesLoaded.size() && "Type index out-of-range");
   if (TypesLoaded[Index].isNull()) {
-    TypesLoaded[Index] = ReadTypeRecord(Index);
+    TypesLoaded[Index] = readTypeRecord(Index);
     if (TypesLoaded[Index].isNull())
       return QualType();
 
@@ -3903,6 +3903,16 @@ QualType ASTReader::GetType(TypeID ID) {
   }
 
   return TypesLoaded[Index].withFastQualifiers(FastQuals);
+}
+
+QualType ASTReader::getLocalType(PerFileData &F, unsigned LocalID) {
+  return GetType(getGlobalTypeID(F, LocalID));
+}
+
+serialization::TypeID 
+ASTReader::getGlobalTypeID(PerFileData &F, unsigned LocalID) const {
+  // FIXME: Map from local type ID to global type ID.
+  return LocalID;
 }
 
 TypeID ASTReader::GetTypeID(QualType T) const {
@@ -4751,7 +4761,8 @@ uint32_t ASTReader::GetNumExternalSelectors() {
 }
 
 DeclarationName
-ASTReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
+ASTReader::ReadDeclarationName(PerFileData &F, 
+                               const RecordData &Record, unsigned &Idx) {
   DeclarationName::NameKind Kind = (DeclarationName::NameKind)Record[Idx++];
   switch (Kind) {
   case DeclarationName::Identifier:
@@ -4764,15 +4775,15 @@ ASTReader::ReadDeclarationName(const RecordData &Record, unsigned &Idx) {
 
   case DeclarationName::CXXConstructorName:
     return Context->DeclarationNames.getCXXConstructorName(
-                          Context->getCanonicalType(GetType(Record[Idx++])));
+                          Context->getCanonicalType(readType(F, Record, Idx)));
 
   case DeclarationName::CXXDestructorName:
     return Context->DeclarationNames.getCXXDestructorName(
-                          Context->getCanonicalType(GetType(Record[Idx++])));
+                          Context->getCanonicalType(readType(F, Record, Idx)));
 
   case DeclarationName::CXXConversionFunctionName:
     return Context->DeclarationNames.getCXXConversionFunctionName(
-                          Context->getCanonicalType(GetType(Record[Idx++])));
+                          Context->getCanonicalType(readType(F, Record, Idx)));
 
   case DeclarationName::CXXOperatorName:
     return Context->DeclarationNames.getCXXOperatorName(
@@ -4825,7 +4836,7 @@ void ASTReader::ReadDeclarationNameLoc(PerFileData &F,
 void ASTReader::ReadDeclarationNameInfo(PerFileData &F,
                                         DeclarationNameInfo &NameInfo,
                                       const RecordData &Record, unsigned &Idx) {
-  NameInfo.setName(ReadDeclarationName(Record, Idx));
+  NameInfo.setName(ReadDeclarationName(F, Record, Idx));
   NameInfo.setLoc(ReadSourceLocation(F, Record, Idx));
   DeclarationNameLoc DNLoc;
   ReadDeclarationNameLoc(F, DNLoc, NameInfo.getName(), Record, Idx);
@@ -4911,12 +4922,12 @@ ASTReader::ReadTemplateArgument(PerFileData &F,
   case TemplateArgument::Null:
     return TemplateArgument();
   case TemplateArgument::Type:
-    return TemplateArgument(GetType(Record[Idx++]));
+    return TemplateArgument(readType(F, Record, Idx));
   case TemplateArgument::Declaration:
     return TemplateArgument(ReadDecl(F, Record, Idx));
   case TemplateArgument::Integral: {
     llvm::APSInt Value = ReadAPSInt(Record, Idx);
-    QualType T = GetType(Record[Idx++]);
+    QualType T = readType(F, Record, Idx);
     return TemplateArgument(Value, T);
   }
   case TemplateArgument::Template: 
@@ -5113,7 +5124,7 @@ ASTReader::ReadNestedNameSpecifier(PerFileData &F,
 
     case NestedNameSpecifier::TypeSpec:
     case NestedNameSpecifier::TypeSpecWithTemplate: {
-      const Type *T = GetType(Record[Idx++]).getTypePtrOrNull();
+      const Type *T = readType(F, Record, Idx).getTypePtrOrNull();
       if (!T)
         return 0;
       
