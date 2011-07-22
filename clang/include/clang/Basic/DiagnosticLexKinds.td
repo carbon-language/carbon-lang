@@ -38,7 +38,8 @@ def ext_multi_line_bcpl_comment : Extension<"multi-line // comment">,
 def ext_bcpl_comment : Extension<
   "// comments are not allowed in this language">,
   InGroup<Comment>;
-def ext_no_newline_eof : Extension<"no newline at end of file">;
+def ext_no_newline_eof : Extension<"no newline at end of file">, 
+  InGroup<DiagGroup<"newline-eof">>;
 def ext_backslash_newline_eof : Extension<"backslash-newline at end of file">;
 def ext_dollar_in_identifier : Extension<"'$' in identifier">;
 def charize_microsoft_ext : Extension<"@# is a microsoft extension">;
