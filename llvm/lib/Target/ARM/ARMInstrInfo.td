@@ -1301,9 +1301,7 @@ def WFI : AI<(outs), (ins), MiscFrm, NoItinerary, "wfi", "",
 }
 
 def SEL : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm, NoItinerary, "sel",
-             "\t$dst, $a, $b",
-             [/* For disassembly only; pattern left blank */]>,
-          Requires<[IsARM, HasV6]> {
+             "\t$dst, $a, $b", []>, Requires<[IsARM, HasV6]> {
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rm;
@@ -1407,9 +1405,7 @@ defm PLDW : APreLoad<0, 1, "pldw">, Requires<[IsARM,HasV7,HasMP]>;
 defm PLI  : APreLoad<1, 0, "pli">,  Requires<[IsARM,HasV7]>;
 
 def SETEND : AXI<(outs),(ins setend_op:$end), MiscFrm, NoItinerary,
-                 "setend\t$end",
-                 [/* For disassembly only; pattern left blank */]>,
-               Requires<[IsARM]> {
+                 "setend\t$end", []>, Requires<[IsARM]> {
   bits<1> end;
   let Inst{31-10} = 0b1111000100000001000000;
   let Inst{9} = end;
