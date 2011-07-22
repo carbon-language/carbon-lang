@@ -1,5 +1,5 @@
-// RUN: %clang -fsyntax-only -verify %s
-// RUN: %clang -fsyntax-only -verify -fshort-wchar %s
+// RUN: %clang_cc1 -ffreestanding -fsyntax-only -verify %s
+// RUN: %clang_cc1 -ffreestanding -fsyntax-only -verify -fshort-wchar %s
 
 #include <limits.h>
 
