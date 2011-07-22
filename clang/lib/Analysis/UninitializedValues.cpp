@@ -493,7 +493,8 @@ void TransferFunctions::VisitBinaryOperator(clang::BinaryOperator *bo) {
       if (isUninitialized(val)) {
         if (bo->getOpcode() != BO_Assign)
           reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
-        val = Initialized;
+        else
+          val = Initialized;
       }
     }
   }
@@ -513,11 +514,8 @@ void TransferFunctions::VisitUnaryOperator(clang::UnaryOperator *uo) {
         lastDR = 0;
 
         ValueVector::reference val = vals[vd];
-        if (isUninitialized(val)) {
+        if (isUninitialized(val))
           reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
-          // Don't cascade warnings.
-          val = Initialized;
-        }
       }
       break;
     }
@@ -575,8 +573,6 @@ void TransferFunctions::ProcessUses(Stmt *s) {
     reportUninit(DR, VD, isAlwaysUninit(vals[VD]));
     lastLoad = 0;
     
-    // Prevent cascade of warnings.
-    vals[VD] = Initialized;
     if (DR == lastDR) {
       lastDR = 0;
       return;

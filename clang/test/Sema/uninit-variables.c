@@ -77,7 +77,7 @@ int test11(unsigned n) {
 }
 
 void test12(unsigned n) {
-  for (unsigned i ; n ; ++i) ; // expected-warning{{variable 'i' may be uninitialized when used here}} expected-note{{variable 'i' is declared here}} expected-note{{add initialization to silence this warning}}
+  for (unsigned i ; n ; ++i) ; // expected-warning{{variable 'i' is uninitialized when used here}} expected-note{{variable 'i' is declared here}} expected-note{{add initialization to silence this warning}}
 }
 
 int test13() {
@@ -237,7 +237,7 @@ void test36()
   void **pc; // expected-note{{variable 'pc' is declared here}} expected-note{{add initialization to silence this warning}}
   void *dummy[] = { &&L1, &&L2 };
  L1:
-    goto *pc; // expected-warning{{variable 'pc' may be uninitialized when used here}}
+    goto *pc; // expected-warning{{variable 'pc' is uninitialized when used here}}
  L2:
     goto *pc;
 }
@@ -289,7 +289,7 @@ void test43_aux(int x);
 void test43(int i) {
   int x; // expected-note {{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
   for (i = 0 ; i < 10; i++)
-    test43_aux(x++); // expected-warning {{variable 'x' may be uninitialized when used here}}
+    test43_aux(x++); // expected-warning {{variable 'x' is uninitialized when used here}}
 }
 
 void test44(int i) {
@@ -297,7 +297,7 @@ void test44(int i) {
   int y; // expected-note {{variable 'y' is declared here}} expected-note{{add initialization to silence this warning}}
   for (i = 0; i < 10; i++ ) {
     test43_aux(x++); // no-warning
-    x += y; // expected-warning {{variable 'y' may be uninitialized when used here}}
+    x += y; // expected-warning {{variable 'y' is uninitialized when used here}}
   }
 }
 

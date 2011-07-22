@@ -560,8 +560,6 @@ public:
       const VarDecl *vd = i->first;
       UsesVec *vec = i->second;
 
-      bool fixitIssued = false;
-            
       // Sort the uses by their SourceLocations.  While not strictly
       // guaranteed to produce them in line/column order, this will provide
       // a stable ordering.
@@ -573,11 +571,11 @@ public:
                                       /*isAlwaysUninit=*/vi->second))
           continue;
 
-        // Suggest a fixit hint the first time we diagnose a use of a variable.
-        if (!fixitIssued) {
-          SuggestInitializationFixit(S, vd);
-          fixitIssued = true;
-        }
+        SuggestInitializationFixit(S, vd);
+
+        // Skip further diagnostics for this variable. We try to warn only on
+        // the first point at which a variable is used uninitialized.
+        break;
       }
 
       delete vec;
