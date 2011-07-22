@@ -2533,11 +2533,11 @@ void Sema::ActOnDefs(Scope *S, Decl *TagD, SourceLocation DeclStart,
   }
 
   // Collect the instance variables
-  llvm::SmallVector<ObjCIvarDecl*, 32> Ivars;
+  SmallVector<const ObjCIvarDecl*, 32> Ivars;
   Context.DeepCollectObjCIvars(Class, true, Ivars);
   // For each ivar, create a fresh ObjCAtDefsFieldDecl.
   for (unsigned i = 0; i < Ivars.size(); i++) {
-    FieldDecl* ID = cast<FieldDecl>(Ivars[i]);
+    const FieldDecl* ID = cast<FieldDecl>(Ivars[i]);
     RecordDecl *Record = dyn_cast<RecordDecl>(TagD);
     Decl *FD = ObjCAtDefsFieldDecl::Create(Context, Record,
                                            /*FIXME: StartL=*/ID->getLocation(),

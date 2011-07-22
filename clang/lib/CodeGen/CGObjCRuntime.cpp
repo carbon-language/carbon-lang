@@ -52,9 +52,8 @@ static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
   // implemented. This should be fixed to get the information from the layout
   // directly.
   unsigned Index = 0;
-  ObjCInterfaceDecl *IDecl = const_cast<ObjCInterfaceDecl*>(Container);
 
-  for (ObjCIvarDecl *IVD = IDecl->all_declared_ivar_begin(); 
+  for (const ObjCIvarDecl *IVD = Container->all_declared_ivar_begin(); 
        IVD; IVD = IVD->getNextIvar()) {
     if (Ivar == IVD)
       break;

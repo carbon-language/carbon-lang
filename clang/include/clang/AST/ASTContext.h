@@ -1163,13 +1163,9 @@ public:
   bool isNearlyEmpty(const CXXRecordDecl *RD) const;
 
   MangleContext *createMangleContext();
-
-  void ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
-                               SmallVectorImpl<ObjCIvarDecl*> &Ivars)
-    const;
   
   void DeepCollectObjCIvars(const ObjCInterfaceDecl *OI, bool leafClass,
-                            SmallVectorImpl<ObjCIvarDecl*> &Ivars) const;
+                            SmallVectorImpl<const ObjCIvarDecl*> &Ivars) const;
   
   unsigned CountNonClassIvars(const ObjCInterfaceDecl *OI) const;
   void CollectInheritedProtocols(const Decl *CDecl,

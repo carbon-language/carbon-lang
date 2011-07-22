@@ -1859,12 +1859,8 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     instanceSize = 0 - (instanceSize - superInstanceSize);
   }
 
-  // Collect declared and synthesized ivars.
-  llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
-  CGM.getContext().ShallowCollectObjCIvars(ClassDecl, OIvars);
-
-  for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
-      ObjCIvarDecl *IVD = OIvars[i];
+  for (const ObjCIvarDecl *IVD = ClassDecl->all_declared_ivar_begin(); IVD;
+       IVD = IVD->getNextIvar()) {
       // Store the name
       IvarNames.push_back(MakeConstantString(IVD->getNameAsString()));
       // Get the type encoding for this ivar
@@ -1968,12 +1964,12 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       llvm::ConstantInt::get(IndexTy, 1), 0,
       llvm::ConstantInt::get(IndexTy, 2) };
 
-
-  for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
-      ObjCIvarDecl *IVD = OIvars[i];
+  unsigned ivarIndex = 0;
+  for (const ObjCIvarDecl *IVD = ClassDecl->all_declared_ivar_begin(); IVD;
+       IVD = IVD->getNextIvar()) {
       const std::string Name = "__objc_ivar_offset_" + ClassName + '.'
           + IVD->getNameAsString();
-      offsetPointerIndexes[2] = llvm::ConstantInt::get(IndexTy, i);
+      offsetPointerIndexes[2] = llvm::ConstantInt::get(IndexTy, ivarIndex);
       // Get the correct ivar field
       llvm::Constant *offsetValue = llvm::ConstantExpr::getGetElementPtr(
               IvarList, offsetPointerIndexes);
@@ -1990,6 +1986,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
           offset = new llvm::GlobalVariable(TheModule, offsetValue->getType(),
                   false, llvm::GlobalValue::ExternalLinkage, offsetValue, Name);
       }
+      ++ivarIndex;
   }
   //Generate metaclass for class methods
   llvm::Constant *MetaClassStruct = GenerateClassStructure(NULLPtr,
@@ -2432,10 +2429,9 @@ LValue CGObjCGNU::EmitObjCValueForIvar(CodeGenFunction &CGF,
 static const ObjCInterfaceDecl *FindIvarInterface(ASTContext &Context,
                                                   const ObjCInterfaceDecl *OID,
                                                   const ObjCIvarDecl *OIVD) {
-  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  Context.ShallowCollectObjCIvars(OID, Ivars);
-  for (unsigned k = 0, e = Ivars.size(); k != e; ++k) {
-    if (OIVD == Ivars[k])
+  for (const ObjCIvarDecl *next = OID->all_declared_ivar_begin(); next;
+       next = next->getNextIvar()) {
+    if (OIVD == next)
       return OID;
   }
 

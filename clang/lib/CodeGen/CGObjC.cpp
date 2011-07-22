@@ -716,9 +716,8 @@ static void emitCXXDestructMethod(CodeGenFunction &CGF,
 
   llvm::Value *self = CGF.LoadObjCSelf();
 
-  ObjCInterfaceDecl *iface
-    = const_cast<ObjCInterfaceDecl*>(impl->getClassInterface());
-  for (ObjCIvarDecl *ivar = iface->all_declared_ivar_begin();
+  const ObjCInterfaceDecl *iface = impl->getClassInterface();
+  for (const ObjCIvarDecl *ivar = iface->all_declared_ivar_begin();
        ivar; ivar = ivar->getNextIvar()) {
     QualType type = ivar->getType();
 

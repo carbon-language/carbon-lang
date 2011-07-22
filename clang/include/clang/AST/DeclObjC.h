@@ -576,7 +576,7 @@ public:
 
   typedef specific_decl_iterator<ObjCIvarDecl> ivar_iterator;
 
-  ivar_iterator ivar_begin() const { return  ivar_iterator(decls_begin()); }
+  ivar_iterator ivar_begin() const { return ivar_iterator(decls_begin()); }
   ivar_iterator ivar_end() const { return ivar_iterator(decls_end()); }
 
   unsigned ivar_size() const {
@@ -585,7 +585,12 @@ public:
   
   bool ivar_empty() const { return ivar_begin() == ivar_end(); }
   
-  ObjCIvarDecl  *all_declared_ivar_begin();
+  ObjCIvarDecl *all_declared_ivar_begin();
+  const ObjCIvarDecl *all_declared_ivar_begin() const {
+    // Even though this modifies IvarList, it's conceptually const:
+    // the ivar chain is essentially a cached property of ObjCInterfaceDecl.
+    return const_cast<ObjCInterfaceDecl *>(this)->all_declared_ivar_begin();
+  }
   void setIvarList(ObjCIvarDecl *ivar) { IvarList = ivar; }
   
   /// setProtocolList - Set the list of protocols that this interface
@@ -754,6 +759,7 @@ public:
   const ObjCInterfaceDecl *getContainingInterface() const;
   
   ObjCIvarDecl *getNextIvar() { return NextIvar; }
+  const ObjCIvarDecl *getNextIvar() const { return NextIvar; }
   void setNextIvar(ObjCIvarDecl *ivar) { NextIvar = ivar; }
 
   void setAccessControl(AccessControl ac) { DeclAccess = ac; }

@@ -1063,19 +1063,6 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) const {
   return ABIAlign;
 }
 
-/// ShallowCollectObjCIvars -
-/// Collect all ivars, including those synthesized, in the current class.
-///
-void ASTContext::ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
-                            llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) const {
-  // FIXME. This need be removed but there are two many places which
-  // assume const-ness of ObjCInterfaceDecl
-  ObjCInterfaceDecl *IDecl = const_cast<ObjCInterfaceDecl *>(OI);
-  for (ObjCIvarDecl *Iv = IDecl->all_declared_ivar_begin(); Iv; 
-        Iv= Iv->getNextIvar())
-    Ivars.push_back(Iv);
-}
-
 /// DeepCollectObjCIvars -
 /// This routine first collects all declared, but not synthesized, ivars in
 /// super class and then collects all ivars, including those synthesized for
@@ -1084,7 +1071,7 @@ void ASTContext::ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
 ///
 void ASTContext::DeepCollectObjCIvars(const ObjCInterfaceDecl *OI,
                                       bool leafClass,
-                            llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) const {
+                            SmallVectorImpl<const ObjCIvarDecl*> &Ivars) const {
   if (const ObjCInterfaceDecl *SuperClass = OI->getSuperClass())
     DeepCollectObjCIvars(SuperClass, false, Ivars);
   if (!leafClass) {
@@ -1094,7 +1081,7 @@ void ASTContext::DeepCollectObjCIvars(const ObjCInterfaceDecl *OI,
   }
   else {
     ObjCInterfaceDecl *IDecl = const_cast<ObjCInterfaceDecl *>(OI);
-    for (ObjCIvarDecl *Iv = IDecl->all_declared_ivar_begin(); Iv; 
+    for (const ObjCIvarDecl *Iv = IDecl->all_declared_ivar_begin(); Iv; 
          Iv= Iv->getNextIvar())
       Ivars.push_back(Iv);
   }
@@ -4487,10 +4474,10 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     const IdentifierInfo *II = OI->getIdentifier();
     S += II->getName();
     S += '=';
-    llvm::SmallVector<ObjCIvarDecl*, 32> Ivars;
+    SmallVector<const ObjCIvarDecl*, 32> Ivars;
     DeepCollectObjCIvars(OI, true, Ivars);
     for (unsigned i = 0, e = Ivars.size(); i != e; ++i) {
-      FieldDecl *Field = cast<FieldDecl>(Ivars[i]);
+      const FieldDecl *Field = cast<FieldDecl>(Ivars[i]);
       if (Field->isBitField())
         getObjCEncodingForTypeImpl(Field->getType(), S, false, true, Field);
       else

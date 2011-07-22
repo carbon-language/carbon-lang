@@ -775,7 +775,7 @@ protected:
   void BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
                            const llvm::StructLayout *Layout,
                            const RecordDecl *RD,
-                           const llvm::SmallVectorImpl<FieldDecl*> &RecFields,
+                           const SmallVectorImpl<const FieldDecl*> &RecFields,
                            unsigned int BytePos, bool ForStrongLayout,
                            bool &HasUnion);
 
@@ -2407,10 +2407,9 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   if (ForClass)
     return llvm::Constant::getNullValue(ObjCTypes.IvarListPtrTy);
 
-  ObjCInterfaceDecl *OID =
-    const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
+  const ObjCInterfaceDecl *OID = ID->getClassInterface();
 
-  for (ObjCIvarDecl *IVD = OID->all_declared_ivar_begin(); 
+  for (const ObjCIvarDecl *IVD = OID->all_declared_ivar_begin(); 
        IVD; IVD = IVD->getNextIvar()) {
     // Ignore unnamed bit-fields.
     if (!IVD->getDeclName())
@@ -3574,7 +3573,7 @@ void CGObjCCommonMac::BuildAggrIvarRecordLayout(const RecordType *RT,
                                                 bool &HasUnion) {
   const RecordDecl *RD = RT->getDecl();
   // FIXME - Use iterator.
-  llvm::SmallVector<FieldDecl*, 16> Fields(RD->field_begin(), RD->field_end());
+  SmallVector<const FieldDecl*, 16> Fields(RD->field_begin(), RD->field_end());
   llvm::Type *Ty = CGM.getTypes().ConvertType(QualType(RT, 0));
   const llvm::StructLayout *RecLayout =
     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(Ty));
@@ -3586,15 +3585,15 @@ void CGObjCCommonMac::BuildAggrIvarRecordLayout(const RecordType *RT,
 void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
                              const llvm::StructLayout *Layout,
                              const RecordDecl *RD,
-                             const llvm::SmallVectorImpl<FieldDecl*> &RecFields,
+                             const SmallVectorImpl<const FieldDecl*> &RecFields,
                              unsigned int BytePos, bool ForStrongLayout,
                              bool &HasUnion) {
   bool IsUnion = (RD && RD->isUnion());
   uint64_t MaxUnionIvarSize = 0;
   uint64_t MaxSkippedUnionIvarSize = 0;
-  FieldDecl *MaxField = 0;
-  FieldDecl *MaxSkippedField = 0;
-  FieldDecl *LastFieldBitfieldOrUnnamed = 0;
+  const FieldDecl *MaxField = 0;
+  const FieldDecl *MaxSkippedField = 0;
+  const FieldDecl *LastFieldBitfieldOrUnnamed = 0;
   uint64_t MaxFieldOffset = 0;
   uint64_t MaxSkippedFieldOffset = 0;
   uint64_t LastBitfieldOrUnnamedOffset = 0;
@@ -3605,13 +3604,13 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
   unsigned WordSizeInBits = CGM.getContext().Target.getPointerWidth(0);
   unsigned ByteSizeInBits = CGM.getContext().Target.getCharWidth();
   if (!RD && CGM.getLangOptions().ObjCAutoRefCount) {
-    FieldDecl *FirstField = RecFields[0];
+    const FieldDecl *FirstField = RecFields[0];
     FirstFieldDelta = 
       ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(FirstField));
   }
   
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
-    FieldDecl *Field = RecFields[i];
+    const FieldDecl *Field = RecFields[i];
     uint64_t FieldOffset;
     if (RD) {
       // Note that 'i' here is actually the field index inside RD of Field,
@@ -3903,20 +3902,19 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
       !CGM.getLangOptions().ObjCAutoRefCount)
     return llvm::Constant::getNullValue(PtrTy);
 
-  ObjCInterfaceDecl *OI = 
-    const_cast<ObjCInterfaceDecl*>(OMD->getClassInterface());
-  llvm::SmallVector<FieldDecl*, 32> RecFields;
+  const ObjCInterfaceDecl *OI = OMD->getClassInterface();
+  SmallVector<const FieldDecl*, 32> RecFields;
   if (CGM.getLangOptions().ObjCAutoRefCount) {
-    for (ObjCIvarDecl *IVD = OI->all_declared_ivar_begin(); 
+    for (const ObjCIvarDecl *IVD = OI->all_declared_ivar_begin(); 
          IVD; IVD = IVD->getNextIvar())
       RecFields.push_back(cast<FieldDecl>(IVD));
   }
   else {
-    llvm::SmallVector<ObjCIvarDecl*, 32> Ivars;
+    SmallVector<const ObjCIvarDecl*, 32> Ivars;
     CGM.getContext().DeepCollectObjCIvars(OI, true, Ivars);
 
-    for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
-      RecFields.push_back(cast<FieldDecl>(Ivars[k]));
+    // FIXME: This is not ideal; we shouldn't have to do this copy.
+    RecFields.append(Ivars.begin(), Ivars.end());
   }
 
   if (RecFields.empty())
@@ -5258,13 +5256,12 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
 
   std::vector<llvm::Constant*> Ivars, Ivar(5);
 
-  ObjCInterfaceDecl *OID = 
-    const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
+  const ObjCInterfaceDecl *OID = ID->getClassInterface();
   assert(OID && "CGObjCNonFragileABIMac::EmitIvarList - null interface");
 
   // FIXME. Consolidate this with similar code in GenerateClass.
 
-  for (ObjCIvarDecl *IVD = OID->all_declared_ivar_begin(); 
+  for (const ObjCIvarDecl *IVD = OID->all_declared_ivar_begin(); 
        IVD; IVD = IVD->getNextIvar()) {
     // Ignore unnamed bit-fields.
     if (!IVD->getDeclName())
