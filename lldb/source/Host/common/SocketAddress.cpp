@@ -11,6 +11,7 @@
 #include <stddef.h>
 
 // C Includes
+#include <assert.h>
 #include <string.h>
 
 // C++ Includes
@@ -77,22 +78,31 @@ SocketAddress::IsValid () const
     return GetLength () != 0;
 }
 
+static socklen_t 
+GetFamilyLength (sa_family_t family)
+{
+    switch (family)
+    {
+        case AF_INET:  return sizeof(struct sockaddr_in);
+        case AF_INET6: return sizeof(struct sockaddr_in6);
+    }
+    assert(0 && "Unsupported address family");
+}
+
 socklen_t
 SocketAddress::GetLength () const
 {
+#if defined(__APPLE__)
     return m_socket_addr.sa.sa_len;
+#else
+    return GetFamilyLength (GetFamily());
+#endif
 }
 
 socklen_t
 SocketAddress::GetMaxLength ()
 {
     return sizeof (sockaddr_t);
-}
-
-void
-SocketAddress::SetLength (socklen_t len)
-{
-    m_socket_addr.sa.sa_len = len;
 }
 
 sa_family_t
@@ -105,6 +115,9 @@ void
 SocketAddress::SetFamily (sa_family_t family)
 {
     m_socket_addr.sa.sa_family = family;
+#if defined(__APPLE__)
+    m_socket_addr.sa.sa_len = GetFamilyLength (family);
+#endif
 }
 
 in_port_t
@@ -228,7 +241,6 @@ SocketAddress::SetToLocalhost (sa_family_t family, in_port_t port)
             if (SetPort (port))
             {
                 m_socket_addr.sa_ipv4.sin_addr.s_addr = htonl (INADDR_ANY);
-                SetLength (sizeof(m_socket_addr.sa_ipv4));
                 return true;
             }
             break;
@@ -238,7 +250,6 @@ SocketAddress::SetToLocalhost (sa_family_t family, in_port_t port)
             if (SetPort (port))
             {
                 m_socket_addr.sa_ipv6.sin6_addr = in6addr_any;
-                SetLength (sizeof(m_socket_addr.sa_ipv6));
                 return true;
             }            
             break;

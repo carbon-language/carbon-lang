@@ -842,14 +842,10 @@ ConnectionFileDescriptor::ConnectUDP (const char *host_and_port, Error *error_pt
     else
     {
         // Socket was created, now lets bind to the requested port
-        struct sockaddr_in sin;
-        ::memset (&sin, 0, sizeof(sin));
-        sin.sin_len = sizeof(sin);
-        sin.sin_family = AF_INET;
-        sin.sin_port = 0;
-        sin.sin_addr.s_addr = htonl (INADDR_ANY);
+        SocketAddress addr;
+        addr.SetToLocalhost (AF_INET, 0);
 
-        if (::bind (m_fd_recv, (struct sockaddr *)&sin, sizeof(sin)) == -1)
+        if (::bind (m_fd_recv, addr, addr.GetLength()) == -1)
         {
             // Bind failed...
             if (error_ptr)

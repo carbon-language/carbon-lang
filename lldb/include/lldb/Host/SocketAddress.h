@@ -76,13 +76,6 @@ public:
     GetMaxLength ();
 
     //------------------------------------------------------------------
-    // Set the length manually if supported in the socket address 
-    // structures
-    //------------------------------------------------------------------
-    void
-    SetLength (socklen_t len);
-    
-    //------------------------------------------------------------------
     // Get the socket address family 
     //------------------------------------------------------------------
     sa_family_t
