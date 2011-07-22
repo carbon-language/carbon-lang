@@ -34,11 +34,11 @@
 @end
 
 @implementation Bar
+@synthesize a;
 - (void) dealloc {
   [self setA:0];  // This is user-defined setter overriding synthesize, don't touch it.
   self.a.x = 0;  // every dealloc must zero out its own ivar. This patter is not recognized.
 }
-@synthesize a;
 - (void) setA:(Foo*) val { }
 - (id) a {return 0;}
 @end

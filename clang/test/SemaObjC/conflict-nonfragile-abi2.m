@@ -15,8 +15,13 @@ int glob;
 // rdar://9027673
 // Warning on future name lookup rule is removed.
 @implementation I
-- (int) Meth { return glob; } // no warning
 @synthesize glob;
+@dynamic p;
+@dynamic le;
+@dynamic l;
+@dynamic ls;
+@dynamic r;
+- (int) Meth { return glob; } // no warning
 // rdar://8248681
 - (int) Meth1: (int) p {
   extern int le;
@@ -26,11 +31,6 @@ int glob;
   p = le + ls + r;
   return l;
 }
-@dynamic p;
-@dynamic le;
-@dynamic l;
-@dynamic ls;
-@dynamic r;
 @end
 
 

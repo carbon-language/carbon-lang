@@ -555,6 +555,14 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
         return 0;
       }
     }
+    if ((IC->meth_begin() != IC->meth_end()) && AtLoc.isValid()) {
+      if (getLangOptions().ObjCAutoRefCount)
+        Diag(AtLoc, diag::error_property_after_method_impl);
+      else
+        Diag(AtLoc, diag::warn_property_after_method_impl);
+      ObjCMethodDecl *method = *(IC->meth_begin());
+      Diag(method->getLocation(), diag::note_method_declared_at);
+    }
   } else if ((CatImplClass = dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl))) {
     if (Synthesize) {
       Diag(AtLoc, diag::error_synthesize_category_decl);
