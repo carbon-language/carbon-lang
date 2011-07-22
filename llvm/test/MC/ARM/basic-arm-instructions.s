@@ -1368,6 +1368,27 @@ _func:
 @ CHECK: smc	#15                     @ encoding: [0x7f,0x00,0x60,0xe1]
 @ CHECK: smceq	#0                      @ encoding: [0x70,0x00,0x60,0x01]
 
+@------------------------------------------------------------------------------
+@ SMLABB/SMLABT/SMLATB/SMLATT
+@------------------------------------------------------------------------------
+        smlabb r3, r1, r9, r0
+        smlabt r5, r6, r4, r1
+        smlatb r4, r2, r3, r2
+        smlatt r8, r3, r8, r4
+        smlabbge r3, r1, r9, r0
+        smlabtle r5, r6, r4, r1
+        smlatbne r4, r2, r3, r2
+        smlatteq r8, r3, r8, r4
+
+@ CHECK: smlabb	r3, r1, r9, r0          @ encoding: [0x81,0x09,0x03,0xe1]
+@ CHECK: smlabt	r5, r6, r4, r1          @ encoding: [0xc6,0x14,0x05,0xe1]
+@ CHECK: smlatb	r4, r2, r3, r2          @ encoding: [0xa2,0x23,0x04,0xe1]
+@ CHECK: smlatt	r8, r3, r8, r4          @ encoding: [0xe3,0x48,0x08,0xe1]
+@ CHECK: smlabbge	r3, r1, r9, r0  @ encoding: [0x81,0x09,0x03,0xa1]
+@ CHECK: smlabtle	r5, r6, r4, r1  @ encoding: [0xc6,0x14,0x05,0xd1]
+@ CHECK: smlatbne	r4, r2, r3, r2  @ encoding: [0xa2,0x23,0x04,0x11]
+@ CHECK: smlatteq	r8, r3, r8, r4  @ encoding: [0xe3,0x48,0x08,0x01]
+
 
 @------------------------------------------------------------------------------
 @ STM*
