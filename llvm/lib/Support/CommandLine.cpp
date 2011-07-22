@@ -23,7 +23,6 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -1358,12 +1357,7 @@ public:
        << "  Built " << __DATE__ << " (" << __TIME__ << ").\n"
 #endif
        << "  Host: " << sys::getHostTriple() << '\n'
-       << "  Host CPU: " << CPU << '\n'
-       << '\n';
-
-    // FIXME: This needs to be moved into each commandline tool to remove the
-    // layer violation.
-    TargetRegistry::printRegisteredTargetsForVersion();
+       << "  Host CPU: " << CPU << '\n';
   }
   void operator=(bool OptionWasSpecified) {
     if (!OptionWasSpecified) return;
@@ -1377,6 +1371,7 @@ public:
     // Iterate over any registered extra printers and call them to add further
     // information.
     if (ExtraVersionPrinters != 0) {
+      outs() << '\n';
       for (std::vector<void (*)()>::iterator I = ExtraVersionPrinters->begin(),
                                              E = ExtraVersionPrinters->end();
            I != E; ++I)
