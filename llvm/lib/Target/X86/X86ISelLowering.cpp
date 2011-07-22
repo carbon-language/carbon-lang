@@ -5376,6 +5376,13 @@ static SDValue getVZextMovL(EVT VT, EVT OpVT,
                                              OpVT, SrcOp)));
 }
 
+/// LowerVECTOR_SHUFFLE_256 - Handle all 256-bit wide vectors shuffles
+/// which could not be matched by any known target speficic shuffle
+static SDValue
+LowerVECTOR_SHUFFLE_256(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
+  return SDValue();
+}
+
 /// LowerVECTOR_SHUFFLE_128v4 - Handle all 128-bit wide vectors with
 /// 4 elements, and match them with several different shuffle types.
 static SDValue
@@ -6101,12 +6108,19 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (NumElems == 4 && VT.getSizeInBits() == 128)
     return LowerVECTOR_SHUFFLE_128v4(SVOp, DAG);
 
+  //===--------------------------------------------------------------------===//
+  //  Custom lower or generate target specific nodes for 256-bit shuffles.
+
   // Handle VPERMIL permutations
   if (isVPERMILMask(M, VT)) {
     unsigned TargetMask = getShuffleVPERMILImmediate(SVOp);
     if (VT == MVT::v8f32)
       return getTargetShuffleNode(X86ISD::VPERMIL, dl, VT, V1, TargetMask, DAG);
   }
+
+  // Handle general 256-bit shuffles
+  if (VT.is256BitVector())
+    return LowerVECTOR_SHUFFLE_256(SVOp, DAG);
 
   return SDValue();
 }
