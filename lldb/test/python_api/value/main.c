@@ -10,6 +10,8 @@
 
 // This simple program is to test the lldb Python API SBValue.GetChildAtIndex().
 
+int g_my_int = 100;
+
 const char *days_of_week[7] = { "Sunday",
                                 "Monday",
                                 "Tuesday",

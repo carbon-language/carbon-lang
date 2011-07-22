@@ -527,3 +527,39 @@ def get_ESRs(frame):
         ...
     """
     return get_registers(frame, "exception state")
+
+# ===============================
+# Utility functions for SBValue's
+# ===============================
+
+class BasicFormatter(object):
+    def format(self, value, buffer=None, indent=0):
+        if not buffer:
+            output = StringIO.StringIO()
+        else:
+            output = buffer
+        sum = value.GetSummary()
+        if value.GetNumChildren() > 0 and sum == None:
+            sum = "%s (location)" % value.GetLocation()
+        print >> output, "{indentation}({type}) {name} = {summary}".format(
+            indentation = ' ' * indent,
+            type = value.GetTypeName(),
+            name = value.GetName(),
+            summary = sum)
+        return output.getvalue()
+
+class ChildVisitingFormatter(BasicFormatter):
+    def __init__(self, indent=2):
+        """Default indentation of 2 SPC's."""
+        self.indentation = indent
+    def format(self, value, buffer=None):
+        if not buffer:
+            output = StringIO.StringIO()
+        else:
+            output = buffer
+
+        BasicFormatter.format(self, value, buffer=output)
+        for child in value:
+            BasicFormatter.format(self, child, buffer=output, indent=self.indentation)
+
+        return output.getvalue()

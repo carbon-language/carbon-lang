@@ -66,6 +66,12 @@ class ValueAPITestCase(TestBase):
         self.assertTrue(days_of_week.GetNumChildren() == 7, VALID_VARIABLE)
         self.DebugSBValue(days_of_week)
 
+        fmt = lldbutil.BasicFormatter()
+        cvf = lldbutil.ChildVisitingFormatter(indent=2)
+        if self.TraceOn():
+            print fmt.format(days_of_week)
+            print cvf.format(days_of_week)
+
         # Get variable 'str_ptr'.
         value = frame0.FindVariable('str_ptr')
         self.assertTrue(value, VALID_VARIABLE)
