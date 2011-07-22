@@ -13,7 +13,7 @@ enmtry:
 	%r3 = load <8 x float>* %r, align 8
 	%r4 = load <8 x float>* %rb, align 8
 	%r8 = shufflevector <8 x float> %r3, <8 x float> %r4, <8 x i32> < i32 0, i32 8, i32 1, i32 9, i32 2, i32 10, i32 3, i32 11 >		; <<8 x float>> [#uses=1]
-; CHECK-NOT: vunpcklps
+; CHECK-NOT: vunpcklps %ymm
 	%r9 = getelementptr [2 x <8 x float>]* %carray, i32 0, i32 0
 	store <8 x float> %r8, <8 x float>* %r9, align 4
 	ret void

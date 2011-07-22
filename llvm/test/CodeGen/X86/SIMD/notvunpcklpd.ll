@@ -13,7 +13,7 @@ entry:
 	%r3 = load <4 x double>* %r, align 8
 	%r4 = load <4 x double>* %rb, align 8
 	%r11 = shufflevector <4 x double> %r3, <4 x double> %r4, <4 x i32> < i32 0, i32 4, i32 1, i32 5 >		; <<4 x double>> [#uses=1]
-; CHECK-NOT: vunpcklpd
+; CHECK-NOT: vunpcklpd %ymm
 	%r12 = getelementptr [2 x <4 x double>]* %carray, i32 0, i32 1
 	store <4 x double> %r11, <4 x double>* %r12, align 4
 	ret void

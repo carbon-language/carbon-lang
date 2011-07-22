@@ -71,9 +71,6 @@ static SDValue Extract128BitVector(SDValue Vec,
                                    SelectionDAG &DAG,
                                    DebugLoc dl);
 
-static SDValue ConcatVectors(SDValue Lower, SDValue Upper, SelectionDAG &DAG);
-
-
 /// Generate a DAG to grab 128-bits from a vector > 128 bits.  This
 /// sets things up to match to an AVX VEXTRACTF128 instruction or a
 /// simple subregister reference.  Idx is an index in the 128 bits we
@@ -149,34 +146,6 @@ static SDValue Insert128BitVector(SDValue Result,
   }
 
   return SDValue();
-}
-
-/// Given two vectors, concat them.
-static SDValue ConcatVectors(SDValue Lower, SDValue Upper, SelectionDAG &DAG) {
-  DebugLoc dl = Lower.getDebugLoc();
-
-  assert(Lower.getValueType() == Upper.getValueType() && "Mismatched vectors!");
-
-  EVT VT = EVT::getVectorVT(*DAG.getContext(),
-                            Lower.getValueType().getVectorElementType(),
-                            Lower.getValueType().getVectorNumElements() * 2);
-
-  // TODO: Generalize to arbitrary vector length (this assumes 256-bit vectors).
-  assert(VT.getSizeInBits() == 256 && "Unsupported vector concat!");
-
-  // Insert the upper subvector.
-  SDValue Vec = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT), Upper,
-                                   DAG.getConstant(
-                                     // This is half the length of the result
-                                     // vector.  Start inserting the upper 128
-                                     // bits here.
-                                     Lower.getValueType().getVectorNumElements(),
-                                     MVT::i32),
-                                   DAG, dl);
-
-  // Insert the lower subvector.
-  Vec = Insert128BitVector(Vec, Lower, DAG.getConstant(0, MVT::i32), DAG, dl);
-  return Vec;
 }
 
 static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
@@ -2734,8 +2703,6 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::MOVSD:
   case X86ISD::UNPCKLPS:
   case X86ISD::UNPCKLPD:
-  case X86ISD::VUNPCKLPS:
-  case X86ISD::VUNPCKLPD:
   case X86ISD::VUNPCKLPSY:
   case X86ISD::VUNPCKLPDY:
   case X86ISD::PUNPCKLWD:
@@ -2807,8 +2774,6 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::MOVSD:
   case X86ISD::UNPCKLPS:
   case X86ISD::UNPCKLPD:
-  case X86ISD::VUNPCKLPS:
-  case X86ISD::VUNPCKLPD:
   case X86ISD::VUNPCKLPSY:
   case X86ISD::VUNPCKLPDY:
   case X86ISD::PUNPCKLWD:
@@ -4111,8 +4076,6 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
       break;
     case X86ISD::UNPCKLPS:
     case X86ISD::UNPCKLPD:
-    case X86ISD::VUNPCKLPS:
-    case X86ISD::VUNPCKLPD:
     case X86ISD::VUNPCKLPSY:
     case X86ISD::VUNPCKLPDY:
       DecodeUNPCKLPMask(VT, ShuffleMask);
@@ -4545,30 +4508,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
   EVT VT = Op.getValueType();
   EVT ExtVT = VT.getVectorElementType();
-
   unsigned NumElems = Op.getNumOperands();
-
-  // For AVX-length vectors, build the individual 128-bit pieces and
-  // use shuffles to put them in place.
-  if (VT.getSizeInBits() > 256 &&
-      Subtarget->hasAVX() &&
-      !ISD::isBuildVectorAllZeros(Op.getNode())) {
-    SmallVector<SDValue, 8> V;
-    V.resize(NumElems);
-    for (unsigned i = 0; i < NumElems; ++i) {
-      V[i] = Op.getOperand(i);
-    }
-
-    EVT HVT = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems/2);
-
-    // Build the lower subvector.
-    SDValue Lower = DAG.getNode(ISD::BUILD_VECTOR, dl, HVT, &V[0], NumElems/2);
-    // Build the upper subvector.
-    SDValue Upper = DAG.getNode(ISD::BUILD_VECTOR, dl, HVT, &V[NumElems / 2],
-                                NumElems/2);
-
-    return ConcatVectors(Lower, Upper, DAG);
-  }
 
   // All zero's:
   //  - pxor (SSE2), xorps (SSE1), vpxor (128 AVX), xorp[s|d] (256 AVX)
@@ -4730,6 +4670,27 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   // handled, so this is best done with a single constant-pool load.
   if (IsAllConstants)
     return SDValue();
+
+  // For AVX-length vectors, build the individual 128-bit pieces and use
+  // shuffles to put them in place.
+  if (VT.getSizeInBits() == 256 && !ISD::isBuildVectorAllZeros(Op.getNode())) {
+    SmallVector<SDValue, 32> V;
+    for (unsigned i = 0; i < NumElems; ++i)
+      V.push_back(Op.getOperand(i));
+
+    EVT HVT = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems/2);
+
+    // Build both the lower and upper subvector.
+    SDValue Lower = DAG.getNode(ISD::BUILD_VECTOR, dl, HVT, &V[0], NumElems/2);
+    SDValue Upper = DAG.getNode(ISD::BUILD_VECTOR, dl, HVT, &V[NumElems / 2],
+                                NumElems/2);
+
+    // Recreate the wider vector with the lower and upper part.
+    SDValue Vec = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT), Upper,
+                                DAG.getConstant(NumElems/2, MVT::i32), DAG, dl);
+    return Insert128BitVector(Vec, Lower, DAG.getConstant(0, MVT::i32),
+                              DAG, dl);
+  }
 
   // Let legalizer expand 2-wide build_vectors.
   if (EVTBits == 64) {
@@ -5742,10 +5703,8 @@ static inline unsigned getUNPCKLOpcode(EVT VT, const X86Subtarget *Subtarget) {
   switch(VT.getSimpleVT().SimpleTy) {
   case MVT::v4i32: return X86ISD::PUNPCKLDQ;
   case MVT::v2i64: return X86ISD::PUNPCKLQDQ;
-  case MVT::v4f32:
-    return Subtarget->hasAVX() ? X86ISD::VUNPCKLPS : X86ISD::UNPCKLPS;
-  case MVT::v2f64:
-    return Subtarget->hasAVX() ? X86ISD::VUNPCKLPD : X86ISD::UNPCKLPD;
+  case MVT::v4f32: return X86ISD::UNPCKLPS;
+  case MVT::v2f64: return X86ISD::UNPCKLPD;
   case MVT::v8f32: return X86ISD::VUNPCKLPSY;
   case MVT::v4f64: return X86ISD::VUNPCKLPDY;
   case MVT::v16i8: return X86ISD::PUNPCKLBW;
@@ -6053,11 +6012,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   if (ShuffleVectorSDNode::isSplatMask(&M[0], VT) &&
       SVOp->getSplatIndex() == 0 && V2IsUndef) {
-    if (VT == MVT::v2f64) {
-      X86ISD::NodeType Opcode =
-        getSubtarget()->hasAVX() ? X86ISD::VUNPCKLPD : X86ISD::UNPCKLPD;
-      return getTargetShuffleNode(Opcode, dl, VT, V1, V1, DAG);
-    }
+    if (VT == MVT::v2f64)
+      return getTargetShuffleNode(X86ISD::UNPCKLPD, dl, VT, V1, V1, DAG);
     if (VT == MVT::v2i64)
       return getTargetShuffleNode(X86ISD::PUNPCKLQDQ, dl, VT, V1, V1, DAG);
   }
@@ -9725,9 +9681,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::MOVSS:              return "X86ISD::MOVSS";
   case X86ISD::UNPCKLPS:           return "X86ISD::UNPCKLPS";
   case X86ISD::UNPCKLPD:           return "X86ISD::UNPCKLPD";
-  case X86ISD::VUNPCKLPS:          return "X86ISD::VUNPCKLPS";
-  case X86ISD::VUNPCKLPD:          return "X86ISD::VUNPCKLPD";
-  case X86ISD::VUNPCKLPSY:         return "X86ISD::VUNPCKLPSY";
   case X86ISD::VUNPCKLPDY:         return "X86ISD::VUNPCKLPDY";
   case X86ISD::UNPCKHPS:           return "X86ISD::UNPCKHPS";
   case X86ISD::UNPCKHPD:           return "X86ISD::UNPCKHPD";
@@ -12588,8 +12541,6 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKLPS:
   case X86ISD::UNPCKLPD:
-  case X86ISD::VUNPCKLPS:
-  case X86ISD::VUNPCKLPD:
   case X86ISD::VUNPCKLPSY:
   case X86ISD::VUNPCKLPDY:
   case X86ISD::MOVHLPS:

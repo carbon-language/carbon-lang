@@ -257,8 +257,6 @@ namespace llvm {
       MOVSS,
       UNPCKLPS,
       UNPCKLPD,
-      VUNPCKLPS,
-      VUNPCKLPD,
       VUNPCKLPSY,
       VUNPCKLPDY,
       UNPCKHPS,
