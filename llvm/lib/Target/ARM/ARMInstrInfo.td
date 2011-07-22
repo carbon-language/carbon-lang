@@ -1742,8 +1742,8 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 
 
 // Secure Monitor Call is a system instruction -- for disassembly only
-def SMC : ABI<0b0001, (outs), (ins i32imm:$opt), NoItinerary, "smc", "\t$opt",
-              [/* For disassembly only; pattern left blank */]> {
+def SMC : ABI<0b0001, (outs), (ins imm0_15:$opt), NoItinerary, "smc", "\t$opt",
+              []> {
   bits<4> opt;
   let Inst{23-4} = 0b01100000000000000111;
   let Inst{3-0} = opt;
