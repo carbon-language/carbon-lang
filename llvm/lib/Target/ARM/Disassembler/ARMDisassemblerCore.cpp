@@ -1726,8 +1726,6 @@ static bool DisassembleSatFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRd(insn))));
 
   unsigned Pos = slice(insn, 20, 16);
-  if (Opcode == ARM::SSAT || Opcode == ARM::SSAT16)
-    Pos += 1;
   MI.addOperand(MCOperand::CreateImm(Pos));
 
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,

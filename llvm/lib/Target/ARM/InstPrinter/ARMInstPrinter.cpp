@@ -837,3 +837,9 @@ void ARMInstPrinter::printNEONModImmOperand(const MCInst *MI, unsigned OpNum,
   uint64_t Val = ARM_AM::decodeNEONModImm(EncodedImm, EltBits);
   O << "#0x" << utohexstr(Val);
 }
+
+void ARMInstPrinter::printImm1_32Operand(const MCInst *MI, unsigned OpNum,
+                                         raw_ostream &O) {
+  unsigned Imm = MI->getOperand(OpNum).getImm();
+  O << "#" << Imm + 1;
+}

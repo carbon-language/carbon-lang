@@ -1171,13 +1171,6 @@ getMsbOpValue(const MCInst &MI, unsigned Op,
 }
 
 unsigned ARMMCCodeEmitter::
-getSsatBitPosValue(const MCInst &MI, unsigned Op,
-                   SmallVectorImpl<MCFixup> &Fixups) const {
-  // For ssat instructions, the bit position should be encoded decremented by 1
-  return MI.getOperand(Op).getImm()-1;
-}
-
-unsigned ARMMCCodeEmitter::
 getRegisterListOpValue(const MCInst &MI, unsigned Op,
                        SmallVectorImpl<MCFixup> &Fixups) const {
   // VLDM/VSTM:

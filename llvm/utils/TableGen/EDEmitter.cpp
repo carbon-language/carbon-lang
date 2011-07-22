@@ -587,6 +587,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("neg_zero");
   IMM("imm0_31");
   IMM("imm0_31_m1");
+  IMM("imm1_32");
   IMM("nModImm");
   IMM("imm0_7");
   IMM("imm0_15");
@@ -603,7 +604,6 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("t_adrlabel");
   IMM("t2adrlabel");
   IMM("shift_imm");
-  IMM("ssat_imm");
   IMM("neon_vcvt_imm32");
   IMM("shr_imm8");
   IMM("shr_imm16");

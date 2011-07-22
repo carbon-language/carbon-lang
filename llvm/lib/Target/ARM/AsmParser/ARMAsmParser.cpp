@@ -427,6 +427,14 @@ public:
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 32;
   }
+  bool isImm1_32() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value > 0 && Value < 33;
+  }
   bool isImm0_65535() const {
     if (Kind != Immediate)
       return false;
@@ -688,6 +696,14 @@ public:
   void addImm0_31Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
+  }
+
+  void addImm1_32Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // The constant encodes as the immediate-1, and we store in the instruction
+    // the bits as encoded, so subtract off one here.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    Inst.addOperand(MCOperand::CreateImm(CE->getValue() - 1));
   }
 
   void addImm0_65535Operands(MCInst &Inst, unsigned N) const {

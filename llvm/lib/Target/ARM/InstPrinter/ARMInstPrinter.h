@@ -114,6 +114,7 @@ public:
   void printVFPf32ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVFPf64ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printNEONModImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printImm1_32Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 
   void printPCLabel(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 };

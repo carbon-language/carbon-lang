@@ -553,10 +553,14 @@ def width_imm : Operand<i32>, ImmLeaf<i32, [{
   let EncoderMethod = "getMsbOpValue";
 }
 
-def ssat_imm : Operand<i32>, ImmLeaf<i32, [{
-  return Imm > 0 && Imm <= 32;
-}]> {
-  let EncoderMethod = "getSsatBitPosValue";
+def imm1_32_XFORM: SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant((int)N->getZExtValue() - 1, MVT::i32);
+}]>;
+def Imm1_32AsmOperand: AsmOperandClass { let Name = "Imm1_32"; }
+def imm1_32 : Operand<i32>, PatLeaf<(imm), [{ return Imm > 0 && Imm <= 32; }],
+    imm1_32_XFORM> {
+  let PrintMethod = "printImm1_32Operand";
+  let ParserMatchClass = Imm1_32AsmOperand;
 }
 
 // Define ARM specific addressing modes.
@@ -2723,9 +2727,8 @@ def USADA8 : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
 
 // Signed/Unsigned saturate -- for disassembly only
 
-def SSAT : AI<(outs GPR:$Rd), (ins ssat_imm:$sat_imm, GPR:$a, shift_imm:$sh),
-              SatFrm, NoItinerary, "ssat", "\t$Rd, $sat_imm, $a$sh",
-              [/* For disassembly only; pattern left blank */]> {
+def SSAT : AI<(outs GPR:$Rd), (ins imm1_32:$sat_imm, GPR:$a, shift_imm:$sh),
+              SatFrm, NoItinerary, "ssat", "\t$Rd, $sat_imm, $a$sh", []> {
   bits<4> Rd;
   bits<5> sat_imm;
   bits<4> Rn;
@@ -2739,9 +2742,8 @@ def SSAT : AI<(outs GPR:$Rd), (ins ssat_imm:$sat_imm, GPR:$a, shift_imm:$sh),
   let Inst{3-0} = Rn;
 }
 
-def SSAT16 : AI<(outs GPR:$Rd), (ins ssat_imm:$sat_imm, GPR:$Rn), SatFrm,
-                NoItinerary, "ssat16", "\t$Rd, $sat_imm, $Rn",
-                [/* For disassembly only; pattern left blank */]> {
+def SSAT16 : AI<(outs GPR:$Rd), (ins imm1_32:$sat_imm, GPR:$Rn), SatFrm,
+                NoItinerary, "ssat16", "\t$Rd, $sat_imm, $Rn", []> {
   bits<4> Rd;
   bits<4> sat_imm;
   bits<4> Rn;

@@ -1609,8 +1609,6 @@ static bool DisassembleThumb2Sat(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRs(insn))));
 
   unsigned Pos = slice(insn, 4, 0);
-  if (Opcode == ARM::t2SSAT || Opcode == ARM::t2SSAT16)
-    Pos += 1;
   MI.addOperand(MCOperand::CreateImm(Pos));
 
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
