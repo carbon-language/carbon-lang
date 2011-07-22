@@ -1404,7 +1404,7 @@ defm PLD  : APreLoad<1, 1, "pld">,  Requires<[IsARM]>;
 defm PLDW : APreLoad<0, 1, "pldw">, Requires<[IsARM,HasV7,HasMP]>;
 defm PLI  : APreLoad<1, 0, "pli">,  Requires<[IsARM,HasV7]>;
 
-def SETEND : AXI<(outs),(ins setend_op:$end), MiscFrm, NoItinerary,
+def SETEND : AXI<(outs), (ins setend_op:$end), MiscFrm, NoItinerary,
                  "setend\t$end", []>, Requires<[IsARM]> {
   bits<1> end;
   let Inst{31-10} = 0b1111000100000001000000;
