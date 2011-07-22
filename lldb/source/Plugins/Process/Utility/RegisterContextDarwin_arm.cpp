@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined(__APPLE__)
+
 #include "RegisterContextDarwin_arm.h"
 
 // C Includes
@@ -1213,4 +1215,4 @@ RegisterContextDarwin_arm::ClearHardwareWatchpoint (uint32_t hw_index)
     return false;
 }
 
-
+#endif

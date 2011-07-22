@@ -9,6 +9,8 @@
 
 
 // C Includes
+#include <stdarg.h>
+
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Core/DataBufferHeap.h"
