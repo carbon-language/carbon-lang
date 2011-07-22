@@ -876,6 +876,9 @@ elements (but could contain many), for example, it's much better to use
 .  Doing so avoids (relatively) expensive malloc/free calls, which dwarf the
 cost of adding the elements to the container. </p>
 
+</div>
+  
+  
 <!-- ======================================================================= -->
 <h3>
   <a name="ds_sequential">Sequential Containers (std::vector, std::list, etc)</a>
@@ -884,7 +887,7 @@ cost of adding the elements to the container. </p>
 <div>
 There are a variety of sequential containers available for you, based on your
 needs.  Pick the first in this section that will do what you want.
-
+  
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="dss_arrayref">llvm/ADT/ArrayRef.h</a>
@@ -943,8 +946,6 @@ type, and 2) it cannot hold a null pointer.</p>
   
 </div>
     
-<div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="dss_smallvector">"llvm/ADT/SmallVector.h"</a>
@@ -1209,7 +1210,6 @@ std::priority_queue, std::stack, etc.  These provide simplified access to an
 underlying container but don't affect the cost of the container itself.</p>
 
 </div>
-
 </div>
 
 <!-- ======================================================================= -->
@@ -1220,12 +1220,176 @@ underlying container but don't affect the cost of the container itself.</p>
 <div>
 
 <p>
-TODO: const char* vs stringref vs smallstring vs std::string.  Describe twine,
-xref to #string_apis.
+There are a variety of ways to pass around and use strings in C and C++, and
+LLVM adds a few new options to choose from.  Pick the first option on this list
+that will do what you need, they are ordered according to their relative cost.
+</p>
+<p>
+Note that is is generally preferred to <em>not</em> pass strings around as 
+"<tt>const char*</tt>"'s.  These have a number of problems, including the fact
+that they cannot represent embedded nul ("\0") characters, and do not have a
+length available efficiently.  The general replacement for '<tt>const 
+char*</tt>' is StringRef.
+</p>
+  
+<p>For more information on choosing string containers for APIs, please see
+<a href="#string_apis">Passing strings</a>.</p>
+  
+  
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_stringref">llvm/ADT/StringRef.h</a>
+</h4>
+
+<div>
+<p>
+The StringRef class is a simple value class that contains a pointer to a
+character and a length, and is quite related to the <a 
+href="#dss_arrayref">ArrayRef</a> class (but specialized for arrays of
+characters).  Because StringRef carries a length with it, it safely handles
+strings with embedded nul characters in it, getting the length does not require
+a strlen call, and it even has very convenient APIs for slicing and dicing the
+character range that it represents.
+</p>
+  
+<p>
+StringRef is ideal for passing simple strings around that are known to be live,
+either because they are C string literals, std::string, a C array, or a
+SmallVector.  Each of these cases has an efficient implicit conversion to
+StringRef, which doesn't result in a dynamic strlen being executed.
+</p>
+  
+<p>StringRef has a few major limitations which make more powerful string
+containers useful:</p>
+  
+<ol>
+<li>You cannot directly convert a StringRef to a 'const char*' because there is
+no way to add a trailing nul (unlike the .c_str() method on various stronger
+classes).</li>
+
+  
+<li>StringRef doesn't own or keep alive the underlying string bytes.
+As such it can easily lead to dangling pointers, and is not suitable for
+embedding in datastructures in most cases (instead, use an std::string or
+something like that).</li>
+  
+<li>For the same reason, StringRef cannot be used as the return value of a
+method if the method "computes" the result string.  Instead, use
+std::string.</li>
+    
+<li>StringRef's allow you to mutate the pointed-to string bytes, but because it
+doesn't own the string, it doesn't allow you to insert or remove bytes from
+the range.  For editing operations like this, it interoperates with the
+<a href="#dss_twine">Twine</a> class.</li>
+</ol>
+  
+<p>Because of its strengths and limitations, it is very common for a function to
+take a StringRef and for a method on an object to return a StringRef that
+points into some string that it owns.</p>
+  
+</div>
+  
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_twine">llvm/ADT/Twine.h</a>
+</h4>
+
+<div>
+  <p>
+  The Twine class is used as an intermediary datatype for APIs that want to take
+  a string that can be constructed inline with a series of concatenations.
+  Twine works by forming recursive instances of the Twine datatype (a simple
+  value object) on the stack as temporary objects, linking them together into a
+  tree which is then linearized when the Twine is consumed.  Twine is only safe
+  to use as the argument to a function, and should always be a const reference,
+  e.g.:
+  </p>
+  
+  <pre>
+    void foo(const Twine &amp;T);
+    ...
+    StringRef X = ...
+    unsigned i = ...
+    foo(X + "." + Twine(i));
+  </pre>
+  
+  <p>This example forms a string like "blarg.42" by concatenating the values
+  together, and does not form intermediate strings containing "blarg" or
+  "blarg.".
+  </p>
+  
+  <p>Because Twine is constructed with temporary objects on the stack, and
+  because these instances are destroyed at the end of the current statement,
+  it is an inherently dangerous API.  For example, this simple variant contains
+  undefined behavior and will probably crash:</p>
+  
+  <pre>
+    void foo(const Twine &amp;T);
+    ...
+    StringRef X = ...
+    unsigned i = ...
+    const Twine &amp;Tmp = X + "." + Twine(i);
+    foo(Tmp);
+  </pre>
+
+  <p>... because the temporaries are destroyed before the call.  That said,
+  Twine's are much more efficient than intermediate std::string temporaries, and
+  they work really well with StringRef.  Just be aware of their limitations.</p>
+  
+</div>
+
+  
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_smallstring">llvm/ADT/SmallString.h</a>
+</h4>
+
+<div>
+  
+<p>SmallString is a subclass of <a href="#dss_smallvector">SmallVector</a> that
+adds some convenience APIs like += that takes StringRef's.  SmallString avoids
+allocating memory in the case when the preallocated space is enough to hold its
+data, and it calls back to general heap allocation when required.  Since it owns
+its data, it is very safe to use and supports full mutation of the string.</p>
+  
+<p>Like SmallVector's, the big downside to SmallString is their sizeof.  While
+they are optimized for small strings, they themselves are not particularly
+small.  This means that they work great for temporary scratch buffers on the
+stack, but should not generally be put into the heap: it is very rare to 
+see a SmallString as the member of a frequently-allocated heap data structure
+or returned by-value.
 </p>
 
 </div>
- 
+  
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_stdstring">std::string</a>
+</h4>
+
+<div>
+  
+  <p>The standard C++ std::string class is a very general class that (like
+  SmallString) owns its underlying data.  sizeof(std::string) is very reasonable
+  so it can be embedded into heap data structures and returned by-value.
+  On the other hand, std::string is highly inefficient for inline editing (e.g.
+  concatenating a bunch of stuff together) and because it is provided by the
+  standard library, its performance characteristics depend a lot of the host
+  standard library (e.g. libc++ and MSVC provide a highly optimized string
+  class, GCC contains a really slow implementation).
+  </p>
+
+  <p>The major disadvantage of std::string is that almost every operation that
+  makes them larger can allocate memory, which is slow.  As such, it is better
+  to use SmallVector or Twine as a scratch buffer, but then use std::string to
+  persist the result.</p>
+
+  
+</div>
+  
+<!-- end of strings -->
+</div>
+
   
 <!-- ======================================================================= -->
 <h3>
