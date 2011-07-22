@@ -46,7 +46,10 @@ MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
           int64_t Imm = Inst.getOperand(0).getImm();
           // FIXME: Distinguish relocations from nop jumps.
           if (Imm != 0) {
-            assert(Index+Imm+Size < End && "Branch out of function.");
+            if (Index+Imm+Size >= End) {
+              Instructions.push_back(MCDecodedInst(Index, Size, Inst));
+              continue; // Skip branches that leave the function.
+            }
             Splits.insert(Index+Imm+Size);
           }
         }
