@@ -2370,7 +2370,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
               Constant *IdxZero = ConstantInt::get(IdxTy, 0, false);
               Constant * const IdxList[] = {IdxZero, IdxZero};
 
-              Ptr = ConstantExpr::getGetElementPtr(Ptr, IdxList, 2);
+              Ptr = ConstantExpr::getGetElementPtr(Ptr, IdxList);
             
             // If we can't improve the situation by introspecting NewTy,
             // we have to give up.
