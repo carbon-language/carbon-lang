@@ -528,9 +528,9 @@ def get_ESRs(frame):
     """
     return get_registers(frame, "exception state")
 
-# ===============================
-# Utility functions for SBValue's
-# ===============================
+# ======================================
+# Utility classes/functions for SBValues
+# ======================================
 
 class BasicFormatter(object):
     def format(self, value, buffer=None, indent=0):
