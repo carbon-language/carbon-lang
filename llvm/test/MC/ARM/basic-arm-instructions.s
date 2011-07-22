@@ -1550,6 +1550,36 @@ _func:
 @ CHECK: smuadlt	r2, r3, r4      @ encoding: [0x13,0xf4,0x02,0xb7]
 @ CHECK: smuadxge	r3, r2, r1      @ encoding: [0x32,0xf1,0x03,0xa7]
 
+
+@------------------------------------------------------------------------------
+@ SMULBB/SMLALBT/SMLALTB/SMLALTT
+@------------------------------------------------------------------------------
+        smulbb r3, r9, r0
+        smulbt r5, r4, r1
+        smultb r4, r2, r2
+        smultt r8, r3, r4
+        smulbbge r1, r9, r0
+        smulbtle r5, r6, r4
+        smultbne r2, r3, r2
+        smultteq r8, r3, r4
+
+@ CHECK: smulbb	r3, r9, r0              @ encoding: [0x89,0x00,0x63,0xe1]
+@ CHECK: smulbt	r5, r4, r1              @ encoding: [0xc4,0x01,0x65,0xe1]
+@ CHECK: smultb	r4, r2, r2              @ encoding: [0xa2,0x02,0x64,0xe1]
+@ CHECK: smultt	r8, r3, r4              @ encoding: [0xe3,0x04,0x68,0xe1]
+@ CHECK: smulbbge	r1, r9, r0      @ encoding: [0x89,0x00,0x61,0xa1]
+@ CHECK: smulbtle	r5, r6, r4      @ encoding: [0xc6,0x04,0x65,0xd1]
+@ CHECK: smultbne	r2, r3, r2      @ encoding: [0xa3,0x02,0x62,0x11]
+@ CHECK: smultteq	r8, r3, r4      @ encoding: [0xe3,0x04,0x68,0x01]
+
+@------------------------------------------------------------------------------
+@ SMULL
+@------------------------------------------------------------------------------
+        smull r3, r9, r0, r1
+        smulls r3, r9, r0, r2
+        smulleq r8, r3, r4, r5
+        smullseq r8, r3, r4, r3
+
 @------------------------------------------------------------------------------
 @ STM*
 @------------------------------------------------------------------------------
