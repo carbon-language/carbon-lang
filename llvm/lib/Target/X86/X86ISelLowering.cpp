@@ -11232,23 +11232,77 @@ bool X86TargetLowering::isGAPlusOffset(SDNode *N,
   return TargetLowering::isGAPlusOffset(N, GA, Offset);
 }
 
-/// PerformShuffleCombine - Combine a vector_shuffle that is equal to
-/// build_vector load1, load2, load3, load4, <0, 1, 2, 3> into a 128-bit load
-/// if the load addresses are consecutive, non-overlapping, and in the right
-/// order.
+/// PerformShuffleCombine256 - Performs shuffle combines for 256-bit vectors.
+static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
+                                        TargetLowering::DAGCombinerInfo &DCI) {
+  DebugLoc dl = N->getDebugLoc();
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
+  SDValue V1 = SVOp->getOperand(0);
+  SDValue V2 = SVOp->getOperand(1);
+  EVT VT = SVOp->getValueType(0);
+
+  if (V1.getOpcode() == ISD::CONCAT_VECTORS &&
+      V2.getOpcode() == ISD::CONCAT_VECTORS) {
+    //
+    //                   0,0,0,...
+    //                      \
+    //    V      UNDEF    BUILD_VECTOR    UNDEF
+    //     \      /           \           /
+    //  CONCAT_VECTOR         CONCAT_VECTOR
+    //         \                  /
+    //          \                /
+    //          RESULT: V + zero extended
+    //
+    if (V2.getOperand(0).getOpcode() != ISD::BUILD_VECTOR ||
+        V2.getOperand(1).getOpcode() != ISD::UNDEF ||
+        V1.getOperand(1).getOpcode() != ISD::UNDEF)
+      return SDValue();
+
+    if (!ISD::isBuildVectorAllZeros(V2.getOperand(0).getNode()))
+      return SDValue();
+
+    // To match the shuffle mask, the first half of the mask should
+    // be exactly the first vector, and all the rest a splat with the
+    // first element of the second one.
+    int NumElems = VT.getVectorNumElements();
+    for (int i = 0; i < NumElems/2; ++i)
+      if (!isUndefOrEqual(SVOp->getMaskElt(i), i) ||
+          !isUndefOrEqual(SVOp->getMaskElt(i+NumElems/2), NumElems))
+        return SDValue();
+
+    // Emit a zeroed vector and insert the desired subvector on its
+    // first half.
+    SDValue Zeros = getZeroVector(VT, true /* HasSSE2 */, DAG, dl);
+    SDValue InsV = Insert128BitVector(Zeros, V1.getOperand(0),
+                         DAG.getConstant(0, MVT::i32), DAG, dl);
+    return DCI.CombineTo(N, InsV);
+  }
+
+  return SDValue();
+}
+
+/// PerformShuffleCombine - Performs several different shuffle combines.
 static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                                      TargetLowering::DAGCombinerInfo &DCI) {
   DebugLoc dl = N->getDebugLoc();
   EVT VT = N->getValueType(0);
-
-  if (VT.getSizeInBits() != 128)
-    return SDValue();
 
   // Don't create instructions with illegal types after legalize types has run.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (!DCI.isBeforeLegalize() && !TLI.isTypeLegal(VT.getVectorElementType()))
     return SDValue();
 
+  // Only handle pure VECTOR_SHUFFLE nodes.
+  if (VT.getSizeInBits() == 256 && N->getOpcode() == ISD::VECTOR_SHUFFLE)
+    return PerformShuffleCombine256(N, DAG, DCI);
+
+  // Only handle 128 wide vector from here on.
+  if (VT.getSizeInBits() != 128)
+    return SDValue();
+
+  // Combine a vector_shuffle that is equal to build_vector load1, load2, load3,
+  // load4, <0, 1, 2, 3> into a 128-bit load if the load addresses are
+  // consecutive, non-overlapping, and in the right order.
   SmallVector<SDValue, 16> Elts;
   for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i)
     Elts.push_back(getShuffleScalarElt(N, i, DAG, 0));
