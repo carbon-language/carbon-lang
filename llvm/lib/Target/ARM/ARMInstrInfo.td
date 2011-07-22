@@ -1314,8 +1314,7 @@ def SEL : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm, NoItinerary, "sel",
 }
 
 def SEV : AI<(outs), (ins), MiscFrm, NoItinerary, "sev", "",
-             [/* For disassembly only; pattern left blank */]>,
-          Requires<[IsARM, HasV6T2]> {
+             []>, Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
   let Inst{15-8} = 0b11110000;
   let Inst{7-0} = 0b00000100;
