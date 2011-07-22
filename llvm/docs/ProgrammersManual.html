@@ -68,6 +68,10 @@ option</a></li>
       <li><a href="#dss_packedvector">llvm/ADT/PackedVector.h</a></li>
       <li><a href="#dss_other">Other Sequential Container Options</a></li>
     </ul></li>
+    <li><a href="#ds_string">String-like containers</a>
+      <!--<ul>
+       todo
+       </ul>--></li>
     <li><a href="#ds_set">Set-Like Containers (std::set, SmallSet, SetVector, etc)</a>
     <ul>
       <li><a href="#dss_sortedvectorset">A sorted 'vector'</a></li>
@@ -92,10 +96,6 @@ option</a></li>
       <li><a href="#dss_inteqclasses">"llvm/ADT/IntEqClasses.h"</a></li>
       <li><a href="#dss_othermap">Other Map-Like Container Options</a></li>
     </ul></li>
-    <li><a href="#ds_string">String-like containers</a>
-    <!--<ul>
-       todo
-    </ul>--></li>
     <li><a href="#ds_bit">BitVector-like containers</a>
     <ul>
       <li><a href="#dss_bitvector">A dense bitvector</a></li>
@@ -1214,6 +1214,21 @@ underlying container but don't affect the cost of the container itself.</p>
 
 <!-- ======================================================================= -->
 <h3>
+  <a name="ds_string">String-like containers</a>
+</h3>
+
+<div>
+
+<p>
+TODO: const char* vs stringref vs smallstring vs std::string.  Describe twine,
+xref to #string_apis.
+</p>
+
+</div>
+ 
+  
+<!-- ======================================================================= -->
+<h3>
   <a name="ds_set">Set-Like Containers (std::set, SmallSet, SetVector, etc)</a>
 </h3>
 
@@ -1650,20 +1665,6 @@ all the drawbacks of std::map.  A sorted vector or some other approach is almost
 always better.</p>
 
 </div>
-
-</div>
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="ds_string">String-like containers</a>
-</h3>
-
-<div>
-
-<p>
-TODO: const char* vs stringref vs smallstring vs std::string.  Describe twine,
-xref to #string_apis.
-</p>
 
 </div>
 
