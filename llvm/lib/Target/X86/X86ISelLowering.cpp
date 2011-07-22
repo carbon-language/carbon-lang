@@ -11180,7 +11180,7 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
       V2.getOpcode() == ISD::CONCAT_VECTORS) {
     //
     //                   0,0,0,...
-    //                      \
+    //                      |
     //    V      UNDEF    BUILD_VECTOR    UNDEF
     //     \      /           \           /
     //  CONCAT_VECTOR         CONCAT_VECTOR
