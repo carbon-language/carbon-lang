@@ -1332,11 +1332,6 @@ static void (*OverrideVersionPrinter)() = 0;
 
 static std::vector<void (*)()>* ExtraVersionPrinters = 0;
 
-static int TargetArraySortFn(const void *LHS, const void *RHS) {
-  typedef std::pair<const char *, const Target*> pair_ty;
-  return strcmp(((const pair_ty*)LHS)->first, ((const pair_ty*)RHS)->first);
-}
-
 namespace {
 class VersionPrinter {
 public:
@@ -1364,27 +1359,11 @@ public:
 #endif
        << "  Host: " << sys::getHostTriple() << '\n'
        << "  Host CPU: " << CPU << '\n'
-       << '\n'
-       << "  Registered Targets:\n";
+       << '\n';
 
-    std::vector<std::pair<const char *, const Target*> > Targets;
-    size_t Width = 0;
-    for (TargetRegistry::iterator it = TargetRegistry::begin(),
-           ie = TargetRegistry::end(); it != ie; ++it) {
-      Targets.push_back(std::make_pair(it->getName(), &*it));
-      Width = std::max(Width, strlen(Targets.back().first));
-    }
-    if (!Targets.empty())
-      qsort(&Targets[0], Targets.size(), sizeof(Targets[0]),
-            TargetArraySortFn);
-
-    for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
-      OS << "    " << Targets[i].first;
-      OS.indent(Width - strlen(Targets[i].first)) << " - "
-             << Targets[i].second->getShortDescription() << '\n';
-    }
-    if (Targets.empty())
-      OS << "    (none)\n";
+    // FIXME: This needs to be moved into each commandline tool to remove the
+    // layer violation.
+    TargetRegistry::printRegisteredTargetsForVersion();
   }
   void operator=(bool OptionWasSpecified) {
     if (!OptionWasSpecified) return;

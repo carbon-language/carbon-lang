@@ -459,6 +459,10 @@ namespace llvm {
       }
     };
 
+    /// printRegisteredTargetsForVersion - Print the registered targets
+    /// appropriately for inclusion in a tool's version output.
+    static void printRegisteredTargetsForVersion();
+
     /// @name Registry Access
     /// @{
 

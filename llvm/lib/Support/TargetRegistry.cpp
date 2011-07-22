@@ -7,9 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cassert>
+#include <vector>
 using namespace llvm;
 
 // Clients are responsible for avoid race conditions in registration.
@@ -90,3 +94,29 @@ const Target *TargetRegistry::getClosestTargetForJIT(std::string &Error) {
   return TheTarget;
 }
 
+static int TargetArraySortFn(const void *LHS, const void *RHS) {
+  typedef std::pair<StringRef, const Target*> pair_ty;
+  return ((const pair_ty*)LHS)->first.compare(((const pair_ty*)RHS)->first);
+}
+
+void TargetRegistry::printRegisteredTargetsForVersion() {
+  std::vector<std::pair<StringRef, const Target*> > Targets;
+  size_t Width = 0;
+  for (TargetRegistry::iterator I = TargetRegistry::begin(),
+       E = TargetRegistry::end();
+       I != E; ++I) {
+    Targets.push_back(std::make_pair(I->getName(), &*I));
+    Width = std::max(Width, Targets.back().first.size());
+  }
+  array_pod_sort(Targets.begin(), Targets.end(), TargetArraySortFn);
+
+  raw_ostream &OS = outs();
+  OS << "  Registered Targets:\n";
+  for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
+    OS << "    " << Targets[i].first;
+    OS.indent(Width - Targets[i].first.size()) << " - "
+      << Targets[i].second->getShortDescription() << '\n';
+  }
+  if (Targets.empty())
+    OS << "    (none)\n";
+}
