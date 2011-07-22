@@ -2067,8 +2067,8 @@ SelectARMCMOVShiftOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
   SDValue CPTmp2;
   if (SelectImmShifterOperand(TrueVal, CPTmp0, CPTmp2)) {
     SDValue CC = CurDAG->getTargetConstant(CCVal, MVT::i32);
-    SDValue Ops[] = { FalseVal, CPTmp0, CPTmp1, CPTmp2, CC, CCR, InFlag };
-    return CurDAG->SelectNodeTo(N, ARM::MOVCCsi, MVT::i32, Ops, 7);
+    SDValue Ops[] = { FalseVal, CPTmp0, CPTmp2, CC, CCR, InFlag };
+    return CurDAG->SelectNodeTo(N, ARM::MOVCCsi, MVT::i32, Ops, 6);
   }
 
   if (SelectRegShifterOperand(TrueVal, CPTmp0, CPTmp1, CPTmp2)) {
