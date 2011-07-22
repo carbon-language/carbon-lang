@@ -798,8 +798,7 @@ static bool DisassembleThumb1PushPop(MCInst &MI, unsigned Opcode, uint32_t insn,
 // tBKPT:            imm8
 // tNOP, tSEV, tYIELD, tWFE, tWFI:
 //   no operand (except predicate pair)
-// tSETENDBE, tSETENDLE, :
-//   no operand
+// tSETEND: i1
 // Others:           tRd tRn
 static bool DisassembleThumb1Misc(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
@@ -857,6 +856,12 @@ static bool DisassembleThumb1Misc(MCInst &MI, unsigned Opcode, uint32_t insn,
     MI.addOperand(MCOperand::CreateImm(2 + slice(insn, 4, 4)));
     MI.addOperand(MCOperand::CreateImm(slice(insn, 2, 0)));
     NumOpsAdded = 2;
+    return true;
+  }
+
+  if (Opcode == ARM::tSETEND) {
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 3, 1)));
+    NumOpsAdded = 1;
     return true;
   }
 

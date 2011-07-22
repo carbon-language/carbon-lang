@@ -245,23 +245,13 @@ def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
   let Inst{7-0} = val;
 }
 
-def tSETENDBE : T1I<(outs), (ins), NoItinerary, "setend\tbe",
-                    [/* For disassembly only; pattern left blank */]>,
-                T1Encoding<0b101101> {
+def tSETEND : T1I<(outs), (ins setend_op:$end), NoItinerary, "setend\t$end",
+                  []>, T1Encoding<0b101101> {
+  bits<1> end;
   // A8.6.156
   let Inst{9-5} = 0b10010;
   let Inst{4}   = 1;
-  let Inst{3}   = 1;            // Big-Endian
-  let Inst{2-0} = 0b000;
-}
-
-def tSETENDLE : T1I<(outs), (ins), NoItinerary, "setend\tle",
-                    [/* For disassembly only; pattern left blank */]>,
-                T1Encoding<0b101101> {
-  // A8.6.156
-  let Inst{9-5} = 0b10010;
-  let Inst{4}   = 1;
-  let Inst{3}   = 0;            // Little-Endian
+  let Inst{3}   = end;
   let Inst{2-0} = 0b000;
 }
 
