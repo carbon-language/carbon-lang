@@ -983,7 +983,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::VECTOR_SHUFFLE,     SVT, Custom);
       setOperationAction(ISD::INSERT_VECTOR_ELT,  SVT, Custom);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, SVT, Custom);
-      setOperationAction(ISD::SCALAR_TO_VECTOR,   SVT, Custom);
       setOperationAction(ISD::INSERT_SUBVECTOR,   SVT, Custom);
     }
 
@@ -6339,25 +6338,8 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue
 X86TargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) const {
-  LLVMContext *Context = DAG.getContext();
   DebugLoc dl = Op.getDebugLoc();
   EVT OpVT = Op.getValueType();
-
-  // If this is a 256-bit vector result, first insert into a 128-bit
-  // vector and then insert into the 256-bit vector.
-  if (OpVT.getSizeInBits() > 128) {
-    // Insert into a 128-bit vector.
-    EVT VT128 = EVT::getVectorVT(*Context,
-                                 OpVT.getVectorElementType(),
-                                 OpVT.getVectorNumElements() / 2);
-
-    Op = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT128, Op.getOperand(0));
-
-    // Insert the 128-bit vector.
-    return Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, OpVT), Op,
-                              DAG.getConstant(0, MVT::i32),
-                              DAG, dl);
-  }
 
   if (Op.getValueType() == MVT::v1i64 &&
       Op.getOperand(0).getValueType() == MVT::i64)
