@@ -885,6 +885,9 @@ ValueObject::GetValueAsCString ()
     return m_value_str.c_str();
 }
 
+// this call should only return pointers to data that needs no special memory management
+// (either because they are hardcoded strings, or because they are backed by some other
+// object); returning any new()-ed or malloc()-ed data here, will lead to leaks!
 const char *
 ValueObject::GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display,
                                         lldb::Format custom_format)
@@ -921,10 +924,18 @@ ValueObject::GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_d
         if (val_obj_display == eDisplayValue)
             return_value = GetSummaryAsCString();
         else if (val_obj_display == eDisplaySummary)
-            return_value = GetValueAsCString();
+        {
+            if (ClangASTContext::IsAggregateType (GetClangType()) == true)
+            {
+                // this thing has no value
+                return_value = "<no summary defined for this datatype>";
+            }
+            else
+                return_value = GetValueAsCString();
+        }
     }
     
-    return (return_value ? return_value : "<error>");
+    return (return_value ? return_value : "<no printable representation>");
 
 }
 
@@ -980,7 +991,7 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                     ValueObjectSP child = GetChildAtIndex(low,true);
                     if (!child.get())
                     {
-                        s << "<error>";
+                        s << "<invalid child>";
                         continue;
                     }
                     child->DumpPrintableRepresentation(s, ValueObject::eDisplayValue, custom_format);
@@ -1018,7 +1029,7 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                     ValueObjectSP child = GetChildAtIndex(low,true);
                     if (!child.get())
                     {
-                        s << "<error>";
+                        s << "<invalid child>";
                         continue;
                     }
                     child->DumpPrintableRepresentation(s, ValueObject::eDisplayValue, format);

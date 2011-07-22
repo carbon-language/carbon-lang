@@ -57,7 +57,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("type summary add -f \"${var%V}\" SomeData")
 
         self.expect("frame variable data",
-            substrs = ['error'])
+            substrs = ['no printable representation'])
 # ${var%s}
         self.runCmd("type summary add -f \"ptr = ${var%s}\" \"char *\"")
 
@@ -198,12 +198,13 @@ class DataFormatterTestCase(TestBase):
                                '{0x00000009},{0x00000008},{0x00000007},{0x00000006},{0x00000005}'])
 
 # printing full array as an array
+        self.runCmd("log enable lldb types -f dummy.log")
         self.runCmd("type summary add -f \"arr = ${var%uint32_t[]}\" \"int [5]\"")
         
         self.expect("frame variable intarr",
                     substrs = ['intarr = arr =',
                                '0x00000001,0x00000001,0x00000002,0x00000003,0x00000005'])
-        
+        self.runCmd("log disable lldb types")
         self.expect("frame variable other.intarr",
                     substrs = ['intarr = arr =',
                                '0x00000009,0x00000008,0x00000007,0x00000006,0x00000005'])

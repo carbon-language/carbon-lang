@@ -46,6 +46,7 @@ namespace std
 #include "lldb/Core/FormatClasses.h"
 #include "lldb/Core/InputReaderStack.h"
 #include "lldb/Core/Listener.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/SourceManager.h"
@@ -57,6 +58,8 @@ namespace std
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/TargetList.h"
+
+using lldb::LogSP;
 
 namespace lldb_private {
     
@@ -269,13 +272,22 @@ private:
              MapValueType& entry,
              uint32_t& reason)
     {
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
         if (type.isNull())
+        {
+            if (log)
+                log->Printf("type is NULL, returning");
             return false;
+        }
         // clang::QualType type = q_type.getUnqualifiedType();
         type.removeLocalConst(); type.removeLocalVolatile(); type.removeLocalRestrict();
         const clang::Type* typePtr = type.getTypePtrOrNull();
         if (!typePtr)
+        {
+            if (log)
+                log->Printf("type is NULL, returning");
             return false;
+        }
         ConstString name(ClangASTType::GetTypeNameForQualType(type).c_str());
         if (vobj.GetBitfieldBitSize() > 0)
         {
@@ -283,13 +295,24 @@ private:
             StreamString sstring;
             sstring.Printf("%s:%d",name.AsCString(),vobj.GetBitfieldBitSize());
             name = ConstString(sstring.GetData());
+            if (log)
+                log->Printf("appended bitfield info, final result is %s", name.GetCString());
         }
-        //printf("trying to get format for VO name %s of type %s\n",vobj.GetName().AsCString(),name.AsCString());
+        if (log)
+            log->Printf("trying to get format for VO name %s of type %s",vobj.GetName().AsCString(),name.AsCString());
         if (Get(name.GetCString(), entry))
+        {
+            if (log)
+                log->Printf("direct match found, returning");
             return true;
+        }
+        if (log)
+            log->Printf("no direct match");
         // look for a "base type", whatever that means
         if (typePtr->isReferenceType())
         {
+            if (log)
+                log->Printf("stripping reference");
             if (Get(vobj,type.getNonReferenceType(),entry, reason) && !entry->m_skip_references)
             {
                 reason |= lldb::eFormatterStrippedPointerReference;
@@ -298,6 +321,8 @@ private:
         }
         if (typePtr->isPointerType())
         {
+            if (log)
+                log->Printf("stripping pointer");
             if (Get(vobj, typePtr->getPointeeType(), entry, reason) && !entry->m_skip_pointers)
             {
                 reason |= lldb::eFormatterStrippedPointerReference;
@@ -306,6 +331,8 @@ private:
         }
         if (typePtr->isObjCObjectPointerType())
         {
+            if (log)
+                log->Printf("stripping ObjC pointer");
             /*
              for some reason, C++ can quite easily obtain the type hierarchy for a ValueObject
              even if the VO represent a pointer-to-class, as long as the typePtr is right
@@ -325,19 +352,21 @@ private:
         const clang::ObjCObjectType *objc_class_type = typePtr->getAs<clang::ObjCObjectType>();
         if (objc_class_type)
         {
-            //printf("working with ObjC\n");
+            if (log)
+                log->Printf("working with ObjC");
             clang::ASTContext *ast = vobj.GetClangAST();
             if (ClangASTContext::GetCompleteType(ast, vobj.GetClangType()) && !objc_class_type->isObjCId())
             {
                 clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
                 if (class_interface_decl)
                 {
-                    //printf("down here\n");
+                    if (log)
+                        log->Printf("got an ObjCInterfaceDecl");
                     clang::ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
-                    //printf("one further step and we're there...\n");
                     if (superclass_interface_decl)
                     {
-                        //printf("the end is here\n");
+                        if (log)
+                            log->Printf("got a parent class for this ObjC class");
                         clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
                         if (Get(vobj, ivar_qual_type, entry, reason) && entry->m_cascades)
                         {
@@ -351,6 +380,8 @@ private:
         // for C++ classes, navigate up the hierarchy
         if (typePtr->isRecordType())
         {
+            if (log)
+                log->Printf("working with C++");
             clang::CXXRecordDecl* record = typePtr->getAsCXXRecordDecl();
             if (record)
             {
@@ -361,6 +392,8 @@ private:
                     clang::CXXRecordDecl::base_class_iterator pos,end;
                     if (record->getNumBases() > 0)
                     {
+                        if (log)
+                            log->Printf("look into bases");
                         end = record->bases_end();
                         for (pos = record->bases_begin(); pos != end; pos++)
                         {
@@ -373,6 +406,8 @@ private:
                     }
                     if (record->getNumVBases() > 0)
                     {
+                        if (log)
+                            log->Printf("look into VBases");
                         end = record->vbases_end();
                         for (pos = record->vbases_begin(); pos != end; pos++)
                         {
@@ -390,6 +425,8 @@ private:
         const clang::TypedefType* type_tdef = type->getAs<clang::TypedefType>();
         if (type_tdef)
         {
+            if (log)
+                log->Printf("stripping typedef");
             if ((Get(vobj, type_tdef->getDecl()->getUnderlyingType(), entry, reason)) && entry->m_cascades)
             {
                 reason |= lldb::eFormatterNavigatedTypedefs;

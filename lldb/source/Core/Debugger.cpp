@@ -694,18 +694,12 @@ TestPromptFormats (StackFrame *frame)
     }
 }
 
-// FIXME this should eventually be replaced by proper use of LLDB logging facilities
-//#define VERBOSE_FORMATPROMPT_OUTPUT
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT
 #define IFERROR_PRINT_IT if (error.Fail()) \
 { \
-    printf("ERROR: %s\n",error.AsCString("unknown")); \
+    if (log) \
+        log->Printf("ERROR: %s\n", error.AsCString("unknown")); \
     break; \
 }
-#else // IFERROR_PRINT_IT
-#define IFERROR_PRINT_IT if (error.Fail()) \
-break;
-#endif // IFERROR_PRINT_IT
 
 static bool
 ScanFormatDescriptor(const char* var_name_begin,
@@ -715,36 +709,55 @@ ScanFormatDescriptor(const char* var_name_begin,
                      lldb::Format* custom_format,
                      ValueObject::ValueObjectRepresentationStyle* val_obj_display)
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     *percent_position = ::strchr(var_name_begin,'%');
     if (!*percent_position || *percent_position > var_name_end)
+    {
+        if (log)
+            log->Printf("no format descriptor in string, skipping");
         *var_name_final = var_name_end;
+    }
     else
     {
         *var_name_final = *percent_position;
         char* format_name = new char[var_name_end-*var_name_final]; format_name[var_name_end-*var_name_final-1] = '\0';
         memcpy(format_name, *var_name_final+1, var_name_end-*var_name_final-1);
+        if (log)
+            log->Printf("parsing %s as a format descriptor", format_name);
         if ( !FormatManager::GetFormatFromCString(format_name,
                                                   true,
                                                   *custom_format) )
         {
+            if (log)
+                log->Printf("%s is an unknown format", format_name);
             // if this is an @ sign, print ObjC description
             if (*format_name == '@')
                 *val_obj_display = ValueObject::eDisplayLanguageSpecific;
             // if this is a V, print the value using the default format
-            if (*format_name == 'V')
+            else if (*format_name == 'V')
                 *val_obj_display = ValueObject::eDisplayValue;
             // if this is an L, print the location of the value
-            if (*format_name == 'L')
+            else if (*format_name == 'L')
                 *val_obj_display = ValueObject::eDisplayLocation;
             // if this is an S, print the summary after all
-            if (*format_name == 'S')
+            else if (*format_name == 'S')
                 *val_obj_display = ValueObject::eDisplaySummary;
+            else if (log)
+                log->Printf("%s is an error, leaving the previous value alone", format_name);
         }
         // a good custom format tells us to print the value using it
         else
+        {
+            if (log)
+                log->Printf("will display value for this VO");
             *val_obj_display = ValueObject::eDisplayValue;
+        }
         delete format_name;
     }
+    if (log)
+        log->Printf("final format description outcome: custom_format = %d, val_obj_display = %d",
+                    *custom_format,
+                    *val_obj_display);
     return true;
 }
 
@@ -759,6 +772,7 @@ ScanBracketedRange(const char* var_name_begin,
                    int64_t* index_lower,
                    int64_t* index_higher)
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     *open_bracket_position = ::strchr(var_name_begin,'[');
     if (*open_bracket_position && *open_bracket_position < var_name_final)
     {
@@ -769,6 +783,8 @@ ScanBracketedRange(const char* var_name_begin,
         *var_name_final_if_array_range = *open_bracket_position;
         if (*close_bracket_position - *open_bracket_position == 1)
         {
+            if (log)
+                log->Printf("[] detected.. going from 0 to end of data");
             *index_lower = 0;
         }
         else if (*separator_position == NULL || *separator_position > var_name_end)
@@ -776,24 +792,34 @@ ScanBracketedRange(const char* var_name_begin,
             char *end = NULL;
             *index_lower = ::strtoul (*open_bracket_position+1, &end, 0);
             *index_higher = *index_lower;
-            //printf("got to read low=%d high same\n",bitfield_lower);
+            if (log)
+                log->Printf("[%d] detected, high index is same",index_lower);
         }
         else if (*close_bracket_position && *close_bracket_position < var_name_end)
         {
             char *end = NULL;
             *index_lower = ::strtoul (*open_bracket_position+1, &end, 0);
             *index_higher = ::strtoul (*separator_position+1, &end, 0);
-            //printf("got to read low=%d high=%d\n",bitfield_lower,bitfield_higher);
+            if (log)
+                log->Printf("[%d-%d] detected",index_lower,index_higher);
         }
         else
+        {
+            if (log)
+                log->Printf("expression is erroneous, cannot extract indices out of it");
             return false;
+        }
         if (*index_lower > *index_higher && *index_higher > 0)
         {
+            if (log)
+                log->Printf("swapping indices");
             int temp = *index_lower;
             *index_lower = *index_higher;
             *index_higher = temp;
         }
     }
+    else if (log)
+            log->Printf("no bracketed range, skipping entirely");
     return true;
 }
 
@@ -806,26 +832,30 @@ ExpandExpressionPath(ValueObject* vobj,
                      const char* var_name_final,
                      Error& error)
 {
-
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     StreamString sstring;
     VariableSP var_sp;
     
     if (*do_deref_pointer)
+    {
+        if (log)
+            log->Printf("been told to deref_pointer by caller");
         sstring.PutChar('*');
+    }
     else if (vobj->IsDereferenceOfParent() && ClangASTContext::IsPointerType(vobj->GetParent()->GetClangType()) && !vobj->IsArrayItemForPointer())
     {
+        if (log)
+            log->Printf("decided to deref_pointer myself");
         sstring.PutChar('*');
         *do_deref_pointer = true;
     }
 
     vobj->GetExpressionPath(sstring, true, ValueObject::eHonorPointers);
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
-    printf("name to expand in phase 0: %s\n",sstring.GetData());
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
+    if (log)
+        log->Printf("expression path to expand in phase 0: %s",sstring.GetData());
     sstring.PutRawBytes(var_name_begin+3, var_name_final-var_name_begin-3);
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT
-    printf("name to expand in phase 1: %s\n",sstring.GetData());
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
+    if (log)
+        log->Printf("expression path to expand in phase 1: %s",sstring.GetData());
     std::string name = std::string(sstring.GetData());
     ValueObjectSP target = frame->GetValueForVariableExpressionPath (name.c_str(),
                                                                      eNoDynamicValues, 
@@ -841,12 +871,12 @@ ExpandIndexedExpression(ValueObject* vobj,
                         StackFrame* frame,
                         bool deref_pointer)
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     const char* ptr_deref_format = "[%d]";
     std::auto_ptr<char> ptr_deref_buffer(new char[10]);
     ::sprintf(ptr_deref_buffer.get(), ptr_deref_format, index);
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT
-    printf("name to deref: %s\n",ptr_deref_buffer.get());
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
+    if (log)
+        log->Printf("name to deref: %s",ptr_deref_buffer.get());
     const char* first_unparsed;
     ValueObject::GetValueForExpressionPathOptions options;
     ValueObject::ExpressionPathEndResultType final_value_type;
@@ -860,20 +890,18 @@ ExpandIndexedExpression(ValueObject* vobj,
                                                           &what_next);
     if (!item)
     {
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
-        printf("ERROR: unparsed portion = %s, why stopping = %d,"
-               " final_value_type %d\n",
+        if (log)
+            log->Printf("ERROR: unparsed portion = %s, why stopping = %d,"
+               " final_value_type %d",
                first_unparsed, reason_to_stop, final_value_type);
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
     }
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
     else
     {
-        printf("ALL RIGHT: unparsed portion = %s, why stopping = %d,"
-               " final_value_type %d\n",
+        if (log)
+            log->Printf("ALL RIGHT: unparsed portion = %s, why stopping = %d,"
+               " final_value_type %d",
                first_unparsed, reason_to_stop, final_value_type);
     }
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
     return item;
 }
 
@@ -892,6 +920,7 @@ Debugger::FormatPrompt
     ValueObject* realvobj = NULL; // makes it super-easy to parse pointers
     bool success = true;
     const char *p;
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     for (p = format; *p != '\0'; ++p)
     {
         if (realvobj)
@@ -967,8 +996,8 @@ Debugger::FormatPrompt
                         const RegisterInfo *reg_info = NULL;
                         RegisterContext *reg_ctx = NULL;
                         bool do_deref_pointer = false;
-                        ValueObject::ExpressionPathScanEndReason reason_to_stop;
-                        ValueObject::ExpressionPathEndResultType final_value_type;
+                        ValueObject::ExpressionPathScanEndReason reason_to_stop = ValueObject::eEndOfString;
+                        ValueObject::ExpressionPathEndResultType final_value_type = ValueObject::ePlain;
                         
                         // Each variable must set success to true below...
                         bool var_success = false;
@@ -1050,9 +1079,8 @@ Debugger::FormatPrompt
                                     ::memset(expr_path.get(), 0, var_name_final-var_name_begin-1);
                                     memcpy(expr_path.get(), var_name_begin+3,var_name_final-var_name_begin-3);
                                                                         
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
-                                    printf("symbol to expand: %s\n",expr_path.get());
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                    if (log)
+                                        log->Printf("symbol to expand: %s",expr_path.get());
                                     
                                     target = vobj->GetValueForExpressionPath(expr_path.get(),
                                                                              &first_unparsed,
@@ -1063,21 +1091,19 @@ Debugger::FormatPrompt
                                     
                                     if (!target)
                                     {
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
-                                        printf("ERROR: unparsed portion = %s, why stopping = %d,"
-                                               " final_value_type %d\n",
+                                        if (log)
+                                            log->Printf("ERROR: unparsed portion = %s, why stopping = %d,"
+                                               " final_value_type %d",
                                                first_unparsed, reason_to_stop, final_value_type);
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
                                         break;
                                     }
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
                                     else
                                     {
-                                        printf("ALL RIGHT: unparsed portion = %s, why stopping = %d,"
-                                               " final_value_type %d\n",
+                                        if (log)
+                                            log->Printf("ALL RIGHT: unparsed portion = %s, why stopping = %d,"
+                                               " final_value_type %d",
                                                first_unparsed, reason_to_stop, final_value_type);
                                     }
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
                                 }
                                 else
                                     break;
@@ -1103,26 +1129,31 @@ Debugger::FormatPrompt
                                 
                                 if ((is_array || is_pointer) && (!is_array_range) && val_obj_display == ValueObject::eDisplayValue) // this should be wrong, but there are some exceptions
                                 {
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
-                                    printf("I am into array || pointer && !range\n");
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                    if (log)
+                                        log->Printf("I am into array || pointer && !range");
                                     // try to use the special cases
                                     var_success = target->DumpPrintableRepresentation(s,val_obj_display, custom_format);
                                     if (!var_success)
                                         s << "<invalid, please use [] operator>";
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
-                                    printf("outcome was : %s\n", var_success ? "good" : "bad");
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                    if (log)
+                                        log->Printf("special cases did%s match", var_success ? "" : "n't");
                                     break;
                                 }
                                                                 
                                 if (!is_array_range)
+                                {
+                                    if (log)
+                                        log->Printf("dumping ordinary printable output");
                                     var_success = target->DumpPrintableRepresentation(s,val_obj_display, custom_format);
+                                }
                                 else
-                                {                                    
+                                {   
+                                    if (log)
+                                        log->Printf("checking if I can handle as array");
                                     if (!is_array && !is_pointer)
                                         break;
-                                    
+                                    if (log)
+                                        log->Printf("handle as array");
                                     const char* special_directions = NULL;
                                     StreamString special_directions_writer;
                                     if (close_bracket_position && (var_name_end-close_bracket_position > 1))
@@ -1151,16 +1182,14 @@ Debugger::FormatPrompt
                                         
                                         if (!item)
                                         {
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
-                                            printf("ERROR\n");
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                            if (log)
+                                                log->Printf("ERROR in getting child item at index %d", index_lower);
                                         }
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
                                         else
                                         {
-                                            printf("special_directions: %s\n",special_directions);
+                                            if (log)
+                                                log->Printf("special_directions for child item: %s",special_directions);
                                         }
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
 
                                         if (!special_directions)
                                             var_success &= item->DumpPrintableRepresentation(s,val_obj_display, custom_format);
