@@ -1330,6 +1330,8 @@ void cl::PrintOptionValues() {
 
 static void (*OverrideVersionPrinter)() = 0;
 
+static std::vector<void (*)()>* ExtraVersionPrinters = 0;
+
 static int TargetArraySortFn(const void *LHS, const void *RHS) {
   typedef std::pair<const char *, const Target*> pair_ty;
   return strcmp(((const pair_ty*)LHS)->first, ((const pair_ty*)RHS)->first);
@@ -1387,11 +1389,21 @@ public:
   void operator=(bool OptionWasSpecified) {
     if (!OptionWasSpecified) return;
 
-    if (OverrideVersionPrinter == 0) {
-      print();
+    if (OverrideVersionPrinter != 0) {
+      (*OverrideVersionPrinter)();
       exit(1);
     }
-    (*OverrideVersionPrinter)();
+    print();
+
+    // Iterate over any registered extra printers and call them to add further
+    // information.
+    if (ExtraVersionPrinters != 0) {
+      for (std::vector<void (*)()>::iterator I = ExtraVersionPrinters->begin(),
+                                             E = ExtraVersionPrinters->end();
+           I != E; ++I)
+        (*I)();
+    }
+
     exit(1);
   }
 };
@@ -1423,4 +1435,11 @@ void cl::PrintVersionMessage() {
 
 void cl::SetVersionPrinter(void (*func)()) {
   OverrideVersionPrinter = func;
+}
+
+void cl::AddExtraVersionPrinter(void (*func)()) {
+  if (ExtraVersionPrinters == 0)
+    ExtraVersionPrinters = new std::vector<void (*)()>;
+
+  ExtraVersionPrinters->push_back(func);
 }

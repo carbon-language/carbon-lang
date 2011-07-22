@@ -59,6 +59,15 @@ void ParseEnvironmentOptions(const char *progName, const char *envvar,
 ///                     CommandLine utilities to print their own version string.
 void SetVersionPrinter(void (*func)());
 
+///===---------------------------------------------------------------------===//
+/// AddExtraVersionPrinter - Add an extra printer to use in addition to the
+///                          default one. This can be called multiple times,
+///                          and each time it adds a new function to the list
+///                          which will be called after the basic LLVM version
+///                          printing is complete. Each can then add additional
+///                          information specific to the tool.
+void AddExtraVersionPrinter(void (*func)());
+
 
 // PrintOptionValues - Print option values.
 // With -print-options print the difference between option values and defaults.
