@@ -40,10 +40,15 @@ public:
                   unsigned RS, unsigned Al, int CC, bool Allocable,
                   iterator RB, iterator RE)
     : ID(id), Name(name), RegSize(RS), Alignment(Al), CopyCost(CC),
-      Allocatable(Allocable), RegsBegin(RB), RegsEnd(RE) {
-      for (iterator I = RegsBegin, E = RegsEnd; I != E; ++I)
-        RegSet.insert(*I);
-    }
+      Allocatable(Allocable), RegsBegin(RB), RegsEnd(RE) {}
+
+  /// initMCRegisterClass - Initialize initMCRegisterClass. *DO NOT USE*.
+  // FIXME: This could go away if RegSet would use a constant bit field.
+  void initMCRegisterClass() {
+    RegSet.resize(getNumRegs());
+    for (iterator I = RegsBegin, E = RegsEnd; I != E; ++I)
+      RegSet.insert(*I);
+  }
 
   /// getID() - Return the register class ID number.
   ///
@@ -128,10 +133,14 @@ struct MCRegisterDesc {
 /// virtual methods.
 ///
 class MCRegisterInfo {
+public:
+  typedef const MCRegisterClass *regclass_iterator;
 private:
   const MCRegisterDesc *Desc;                 // Pointer to the descriptor array
   unsigned NumRegs;                           // Number of entries in the array
   unsigned RAReg;                             // Return address register
+  const MCRegisterClass *Classes;             // Pointer to the regclass array
+  unsigned NumClasses;                        // Number of entries in the array
   DenseMap<unsigned, int> L2DwarfRegs;        // LLVM to Dwarf regs mapping
   DenseMap<unsigned, int> EHL2DwarfRegs;      // LLVM to Dwarf regs mapping EH
   DenseMap<unsigned, unsigned> Dwarf2LRegs;   // Dwarf to LLVM regs mapping
@@ -141,10 +150,16 @@ private:
 public:
   /// InitMCRegisterInfo - Initialize MCRegisterInfo, called by TableGen
   /// auto-generated routines. *DO NOT USE*.
-  void InitMCRegisterInfo(const MCRegisterDesc *D, unsigned NR, unsigned RA) {
+  void InitMCRegisterInfo(const MCRegisterDesc *D, unsigned NR, unsigned RA,
+                          MCRegisterClass *C, unsigned NC) {
     Desc = D;
     NumRegs = NR;
     RAReg = RA;
+    Classes = C;
+    NumClasses = NC;
+    // FIXME: This should go away.
+    for (unsigned i = 0; i != NC; ++i)
+      C[i].initMCRegisterClass();
   }
 
   /// mapLLVMRegToDwarfReg - Used to initialize LLVM register to Dwarf
@@ -272,6 +287,20 @@ public:
     const DenseMap<unsigned, int>::const_iterator I = L2SEHRegs.find(RegNum);
     if (I == L2SEHRegs.end()) return (int)RegNum;
     return I->second;
+  }
+
+  regclass_iterator regclass_begin() const { return Classes; }
+  regclass_iterator regclass_end() const { return Classes+NumClasses; }
+
+  unsigned getNumRegClasses() const {
+    return (unsigned)(regclass_end()-regclass_begin());
+  }
+
+  /// getRegClass - Returns the register class associated with the enumeration
+  /// value.  See class MCOperandInfo.
+  const MCRegisterClass getRegClass(unsigned i) const {
+    assert(i < getNumRegClasses() && "Register Class ID out of range");
+    return Classes[i];
   }
 };
  

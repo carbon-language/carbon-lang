@@ -52,7 +52,9 @@ public:
                       iterator RB, iterator RE)
     : MCRegisterClass(id, name, RS, Al, CC, Allocable, RB, RE),
       VTs(vts), SubClasses(subcs), SuperClasses(supcs), SubRegClasses(subregcs),
-      SuperRegClasses(superregcs) {}
+      SuperRegClasses(superregcs) {
+    initMCRegisterClass();
+  }
 
   virtual ~TargetRegisterClass() {}     // Allow subclasses
 

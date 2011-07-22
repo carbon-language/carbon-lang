@@ -297,12 +297,62 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "};\n\n";      // End of register descriptors...
 
+  // FIXME: This code is duplicated in the TargetRegisterClass emitter.
+  const std::vector<CodeGenRegisterClass> &RegisterClasses =
+    Target.getRegisterClasses();
+
+  // Loop over all of the register classes... emitting each one.
+  OS << "namespace {     // Register classes...\n";
+
+  // Emit the register enum value arrays for each RegisterClass
+  for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
+    const CodeGenRegisterClass &RC = RegisterClasses[rc];
+    ArrayRef<Record*> Order = RC.getOrder();
+
+    // Give the register class a legal C name if it's anonymous.
+    std::string Name = RC.getName();
+
+    // Emit the register list now.
+    OS << "  // " << Name << " Register Class...\n"
+       << "  static const unsigned " << Name
+       << "[] = {\n    ";
+    for (unsigned i = 0, e = Order.size(); i != e; ++i) {
+      Record *Reg = Order[i];
+      OS << getQualifiedName(Reg) << ", ";
+    }
+    OS << "\n  };\n\n";
+  }
+  OS << "}\n\n";
+
+  OS << "MCRegisterClass " << TargetName << "MCRegisterClasses[] = {\n";
+
+  for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
+    const CodeGenRegisterClass &RC = RegisterClasses[rc];
+    ArrayRef<Record*> Order = RC.getOrder();
+
+    std::string Name = RC.getName();
+
+    OS << "  MCRegisterClass("
+       << rc << ", "
+       << '\"' << RC.getName() << "\", "
+       << RC.SpillSize/8 << ", "
+       << RC.SpillAlignment/8 << ", "
+       << RC.CopyCost << ", "
+       << RC.Allocatable << ", "
+       << RC.getName() << ", " << RC.getName() << " + "
+       << RC.getOrder().size()
+       << "),\n";
+  }
+
+  OS << "};\n\n";
+
   // MCRegisterInfo initialization routine.
   OS << "static inline void Init" << TargetName
      << "MCRegisterInfo(MCRegisterInfo *RI, unsigned RA, "
      << "unsigned DwarfFlavour = 0, unsigned EHFlavour = 0) {\n";
   OS << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
-     << Regs.size()+1 << ", RA);\n\n";
+     << Regs.size()+1 << ", RA, " << TargetName << "MCRegisterClasses, "
+     << RegisterClasses.size() << ");\n\n";
 
   EmitRegMapping(OS, Regs, false);
 
@@ -773,6 +823,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit the constructor of the class...
   OS << "extern MCRegisterDesc " << TargetName << "RegDesc[];\n";
+  OS << "extern MCRegisterClass " << TargetName << "MCRegisterClasses[];\n";
 
   OS << ClassName << "::" << ClassName
      << "(unsigned RA, unsigned DwarfFlavour, unsigned EHFlavour)\n"
@@ -780,7 +831,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n"
      << "                 " << TargetName << "SubRegIndexTable) {\n"
      << "  InitMCRegisterInfo(" << TargetName << "RegDesc, "
-     << Regs.size()+1 << ", RA);\n\n";
+     << Regs.size()+1 << ", RA, " << TargetName << "MCRegisterClasses, "
+     << RegisterClasses.size() << ");\n\n";
 
   EmitRegMapping(OS, Regs, true);
 
