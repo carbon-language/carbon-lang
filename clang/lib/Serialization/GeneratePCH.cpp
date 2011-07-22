@@ -23,6 +23,8 @@
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include <string>
+#include <string.h>
+#include <stdlib.h>
 
 using namespace clang;
 
@@ -31,7 +33,7 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP,
                            bool Chaining,
                            const char *isysroot,
                            llvm::raw_ostream *OS)
-  : PP(PP), OutputFile(OutputFile), isysroot(isysroot), Out(OS), SemaPtr(0),
+  : PP(PP), OutputFile(OutputFile), isysroot(0), Out(OS), SemaPtr(0),
     StatCalls(0), Stream(Buffer), Writer(Stream), Chaining(Chaining) {
   // Install a stat() listener to keep track of all of the stat()
   // calls.
@@ -40,6 +42,13 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP,
   // *after* the already installed ASTReader's stat cache.
   PP.getFileManager().addStatCache(StatCalls,
     /*AtBeginning=*/!Chaining);
+      
+  if (isysroot)
+    this->isysroot = strdup(isysroot);
+}
+
+PCHGenerator::~PCHGenerator() {
+  free((void*)isysroot);
 }
 
 void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {

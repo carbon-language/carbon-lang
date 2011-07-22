@@ -632,6 +632,7 @@ protected:
 public:
   PCHGenerator(const Preprocessor &PP, const std::string &OutputFile, bool Chaining,
                const char *isysroot, raw_ostream *Out);
+  ~PCHGenerator();
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
   virtual void HandleTranslationUnit(ASTContext &Ctx);
   virtual ASTMutationListener *GetASTMutationListener();
