@@ -16,13 +16,14 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -153,8 +154,7 @@ namespace {
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     const InstrItineraryData *InstrItins;
-    const MachineBranchProbabilityInfo *MBPI;
-
+    const MachineLoopInfo *MLI;
     bool MadeChange;
     int FnNum;
   public:
@@ -162,9 +162,9 @@ namespace {
     IfConverter() : MachineFunctionPass(ID), FnNum(-1) {
       initializeIfConverterPass(*PassRegistry::getPassRegistry());
     }
-
+    
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<MachineBranchProbabilityInfo>();
+      AU.addRequired<MachineLoopInfo>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
@@ -252,7 +252,7 @@ namespace {
 }
 
 INITIALIZE_PASS_BEGIN(IfConverter, "if-converter", "If Converter", false, false)
-INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_END(IfConverter, "if-converter", "If Converter", false, false)
 
 FunctionPass *llvm::createIfConverterPass() { return new IfConverter(); }
@@ -261,7 +261,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TLI = MF.getTarget().getTargetLowering();
   TII = MF.getTarget().getInstrInfo();
   TRI = MF.getTarget().getRegisterInfo();
-  MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
+  MLI = &getAnalysis<MachineLoopInfo>();
   InstrItins = MF.getTarget().getInstrItineraryData();
   if (!TII) return false;
 
@@ -790,9 +790,28 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
   bool TNeedSub = TrueBBI.Predicate.size() > 0;
   bool FNeedSub = FalseBBI.Predicate.size() > 0;
   bool Enqueued = false;
+  
+  // Try to predict the branch, using loop info to guide us.
+  // General heuristics are:
+  //   - backedge -> 90% taken
+  //   - early exit -> 20% taken
+  //   - branch predictor confidence -> 90%
+  BranchProbability Prediction(5, 10);
+  MachineLoop *Loop = MLI->getLoopFor(BB);
+  if (Loop) {
+    if (TrueBBI.BB == Loop->getHeader())
+      Prediction = BranchProbability(9, 10);
+    else if (FalseBBI.BB == Loop->getHeader())
+      Prediction = BranchProbability(1, 10);
 
-  BranchProbability Prediction = MBPI->getEdgeProbability(BB, TrueBBI.BB);
-
+    MachineLoop *TrueLoop = MLI->getLoopFor(TrueBBI.BB);
+    MachineLoop *FalseLoop = MLI->getLoopFor(FalseBBI.BB);
+    if (!TrueLoop || TrueLoop->getParentLoop() == Loop)
+      Prediction = BranchProbability(2, 10);
+    else if (!FalseLoop || FalseLoop->getParentLoop() == Loop)
+      Prediction = BranchProbability(8, 10);
+  }
+  
   if (CanRevCond && ValidDiamond(TrueBBI, FalseBBI, Dups, Dups2) &&
       MeetIfcvtSizeLimit(*TrueBBI.BB, (TrueBBI.NonPredSize - (Dups + Dups2) +
                                        TrueBBI.ExtraCost), TrueBBI.ExtraCost2,
