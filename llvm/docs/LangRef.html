@@ -1500,18 +1500,19 @@ between a thread and signals executing inside that thread.</p>
 <p>Every (defined) read operation (load instructions, memcpy, atomic
 loads/read-modify-writes, etc.) <var>R</var> reads a series of bytes written by
 (defined) write operations (store instructions, atomic
-stores/read-modify-writes, memcpy, etc.). For each byte, <var>R</var> reads the
-value written by some write that it <i>may see</i>, given any relevant
-<i>happens-before</i> constraints.  <var>R<sub>byte</sub></var> may
-see any write to the same byte, except:</p>
+stores/read-modify-writes, memcpy, etc.). For the purposes of this section,
+initialized globals are considered to have a write of the initializer which is
+atomic and happens before any other read or write of the memory in question.
+For each byte of a read <var>R</var>, <var>R<sub>byte</sub></var> may see
+any write to the same byte, except:</p>
 
 <ul>
   <li>If <var>write<sub>1</sub></var> happens before
       <var>write<sub>2</sub></var>, and <var>write<sub>2</sub></var> happens
       before <var>R<sub>byte</sub></var>, then <var>R<sub>byte</sub></var>
-      must not see <var>write<sub>1</sub></var>.
+      does not see <var>write<sub>1</sub></var>.
   <li>If <var>R<sub>byte</sub></var> happens before <var>write<sub>3</var>,
-      then <var>R<sub>byte</sub></var> must not see
+      then <var>R<sub>byte</sub></var> does not see
       <var>write<sub>3</sub></var>.
 </ul>
 
@@ -1520,14 +1521,13 @@ see any write to the same byte, except:</p>
   <li>If there is no write to the same byte that happens before
     <var>R<sub>byte</sub></var>, <var>R<sub>byte</sub></var> returns 
     <tt>undef</tt> for that byte.
-  <li>If <var>R<sub>byte</sub></var> may see exactly one write,
+  <li>Otherwise, if <var>R<sub>byte</sub></var> may see exactly one write,
       <var>R<sub>byte</sub></var> returns the value written by that
       write.</li>
-  <li>If <var>R<sub>byte</sub></var> and all the writes it may see are
-      atomic, it chooses one of those writes and returns it value.
-      Given any two bytes in a given read <var>R</var>, if the set of
-      writes <var>R<sub>byte</sub></var> may see is the same as the set
-      of writes another byte may see, they will both choose the same write.
+  <li>Otherwise, if <var>R</var> is atomic, and all the writes
+      <var>R<sub>byte</sub></var> may see are atomic, it chooses one of the
+      values written.  See the <a href="#int_atomics">Atomic intrinsics</a>
+      section for additional guarantees on how the choice is made.
   <li>Otherwise <var>R<sub>byte</sub></var> returns <tt>undef</tt>.</li>
 </ul>
 
@@ -1540,7 +1540,10 @@ emit more than one instruction to read the series of bytes.</p>
 <p>Note that in cases where none of the atomic intrinsics are used, this model
 places only one restriction on IR transformations on top of what is required
 for single-threaded execution: introducing a store to a byte which might not
-otherwise be stored to can introduce undefined behavior.</p>
+otherwise be stored to can introduce undefined behavior.  (Specifically, in
+the case where another thread might write to and read from an address,
+introducing a store can change a load that may see exactly one write into
+a load that may see multiple writes.)</p>
 
 <!-- FIXME: This model assumes all targets where concurrency is relevant have
 a byte-size store which doesn't affect adjacent bytes.  As far as I can tell,
