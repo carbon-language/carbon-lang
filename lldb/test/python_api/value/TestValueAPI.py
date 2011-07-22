@@ -66,11 +66,28 @@ class ValueAPITestCase(TestBase):
         self.assertTrue(days_of_week.GetNumChildren() == 7, VALID_VARIABLE)
         self.DebugSBValue(days_of_week)
 
+        # Get global variable 'weekdays'.
+        list = target.FindGlobalVariables('weekdays', 1)
+        weekdays = list.GetValueAtIndex(0)
+        self.assertTrue(weekdays, VALID_VARIABLE)
+        self.assertTrue(weekdays.GetNumChildren() == 5, VALID_VARIABLE)
+        self.DebugSBValue(weekdays)
+
+        # Get global variable 'g_table'.
+        list = target.FindGlobalVariables('g_table', 1)
+        g_table = list.GetValueAtIndex(0)
+        self.assertTrue(g_table, VALID_VARIABLE)
+        self.assertTrue(g_table.GetNumChildren() == 2, VALID_VARIABLE)
+        self.DebugSBValue(g_table)
+
         fmt = lldbutil.BasicFormatter()
-        cvf = lldbutil.ChildVisitingFormatter(indent=2)
+        cvf = lldbutil.ChildVisitingFormatter(indent_child=2)
+        rdf = lldbutil.RecursiveDecentFormatter(indent_child=2)
         if self.TraceOn():
             print fmt.format(days_of_week)
             print cvf.format(days_of_week)
+            print cvf.format(weekdays)
+            print rdf.format(g_table)
 
         # Get variable 'str_ptr'.
         value = frame0.FindVariable('str_ptr')

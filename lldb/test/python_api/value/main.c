@@ -20,6 +20,14 @@ const char *days_of_week[7] = { "Sunday",
                                 "Friday",
                                 "Saturday" };
 
+const char *weekdays[5] = { "Monday",
+                            "Tuesday",
+                            "Wednesday",
+                            "Thursday",
+                            "Friday" };
+
+const char **g_table[2] = { days_of_week, weekdays };
+
 int main (int argc, char const *argv[])
 {
     int i;

@@ -533,25 +533,34 @@ def get_ESRs(frame):
 # ======================================
 
 class BasicFormatter(object):
+    """The basic formatter inspects the value object and prints the value."""
     def format(self, value, buffer=None, indent=0):
         if not buffer:
             output = StringIO.StringIO()
         else:
             output = buffer
-        sum = value.GetSummary()
-        if value.GetNumChildren() > 0 and sum == None:
-            sum = "%s (location)" % value.GetLocation()
-        print >> output, "{indentation}({type}) {name} = {summary}".format(
+        # If there is a summary, it suffices.
+        val = value.GetSummary()
+        # Otherwise, get the value.
+        if val == None:
+            val = value.GetValue()
+        if val == None and value.GetNumChildren() > 0:
+            val = "%s (location)" % value.GetLocation()
+        print >> output, "{indentation}({type}) {name} = {value}".format(
             indentation = ' ' * indent,
             type = value.GetTypeName(),
             name = value.GetName(),
-            summary = sum)
+            value = val)
         return output.getvalue()
 
 class ChildVisitingFormatter(BasicFormatter):
-    def __init__(self, indent=2):
-        """Default indentation of 2 SPC's."""
-        self.indentation = indent
+    """The child visiting formatter prints the value and its immediate children.
+
+    The constructor takes a keyword arg: indent_child, which defaults to 2.
+    """
+    def __init__(self, indent_child=2):
+        """Default indentation of 2 SPC's for the children."""
+        self.cindent = indent_child
     def format(self, value, buffer=None):
         if not buffer:
             output = StringIO.StringIO()
@@ -560,6 +569,37 @@ class ChildVisitingFormatter(BasicFormatter):
 
         BasicFormatter.format(self, value, buffer=output)
         for child in value:
-            BasicFormatter.format(self, child, buffer=output, indent=self.indentation)
+            BasicFormatter.format(self, child, buffer=output, indent=self.cindent)
+
+        return output.getvalue()
+
+class RecursiveDecentFormatter(BasicFormatter):
+    """The recursive decent formatter prints the value and the decendents.
+
+    The constructor takes two keyword args: indent_level, which defaults to 0,
+    and indent_child, which defaults to 2.  The current indentation level is
+    determined by indent_level, while the immediate children has an additional
+    indentation by inden_child. 
+    """
+    def __init__(self, indent_level=0, indent_child=2):
+        self.lindent = indent_level
+        self.cindent = indent_child
+    def format(self, value, buffer=None):
+        if not buffer:
+            output = StringIO.StringIO()
+        else:
+            output = buffer
+
+        BasicFormatter.format(self, value, buffer=output, indent=self.lindent)
+        new_indent = self.lindent + self.cindent
+        for child in value:
+            if child.GetSummary() != None:
+                BasicFormatter.format(self, child, buffer=output, indent=new_indent)
+            else:
+                if child.GetNumChildren() > 0:
+                    rdf = RecursiveDecentFormatter(indent_level=new_indent)
+                    rdf.format(child, buffer=output)
+                else:
+                    BasicFormatter.format(self, child, buffer=output, indent=new_indent)
 
         return output.getvalue()
