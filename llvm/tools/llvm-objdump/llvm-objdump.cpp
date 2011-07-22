@@ -272,6 +272,10 @@ static void DisassembleInput(const StringRef &Filename) {
         // Start a new dot file.
         std::string Error;
         raw_fd_ostream Out((f.getName().str() + ".dot").c_str(), Error);
+        if (!Error.empty()) {
+          errs() << ToolName << ": warning: " << Error << '\n';
+          continue;
+        }
 
         Out << "digraph " << f.getName() << " {\n";
         Out << "graph [ rankdir = \"LR\" ];\n";
