@@ -9124,8 +9124,7 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
                   DAG.getConstant(X86::COND_O, MVT::i32),
                   SDValue(Sum.getNode(), 2));
 
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), SetCC);
-    return Sum;
+    return DAG.getNode(ISD::MERGE_VALUES, DL, N->getVTList(), Sum, SetCC);
   }
   }
 
@@ -9138,8 +9137,7 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
                 DAG.getConstant(Cond, MVT::i32),
                 SDValue(Sum.getNode(), 1));
 
-  DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), SetCC);
-  return Sum;
+  return DAG.getNode(ISD::MERGE_VALUES, DL, N->getVTList(), Sum, SetCC);
 }
 
 SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const{
