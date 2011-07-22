@@ -2643,8 +2643,8 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
   else
     FirstInSource = &F;
   F.Loaders.push_back(Prev);
-  // A non-module AST file's module name is $filename.
-  Modules["$" + FileName.str()] = &F;
+
+  Modules[FileName.str()] = &F;
 
   // Set the AST file name.
   F.FileName = FileName;

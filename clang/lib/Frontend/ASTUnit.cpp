@@ -980,7 +980,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     goto error;
 
   if (OverrideMainBuffer) {
-    std::string ModName = "$" + PreambleFile;
+    std::string ModName = PreambleFile;
     TranslateStoredDiagnostics(Clang->getModuleManager(), ModName,
                                getSourceManager(), PreambleDiagnostics,
                                StoredDiagnostics);
@@ -2293,7 +2293,7 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   if (Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0].second,
                            Clang->getFrontendOpts().Inputs[0].first)) {
     if (OverrideMainBuffer) {
-      std::string ModName = "$" + PreambleFile;
+      std::string ModName = PreambleFile;
       TranslateStoredDiagnostics(Clang->getModuleManager(), ModName,
                                  getSourceManager(), PreambleDiagnostics,
                                  StoredDiagnostics);
