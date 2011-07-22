@@ -1858,17 +1858,17 @@ void ASTReader::MaybeAddSystemRootToFilename(std::string &Filename) {
   if (Filename.empty() || llvm::sys::path::is_absolute(Filename))
     return;
 
-  if (isysroot == 0) {
+  if (isysroot.empty()) {
     // If no system root was given, default to '/'
     Filename.insert(Filename.begin(), '/');
     return;
   }
 
-  unsigned Length = strlen(isysroot);
+  unsigned Length = isysroot.size();
   if (isysroot[Length - 1] != '/')
     Filename.insert(Filename.begin(), '/');
 
-  Filename.insert(Filename.begin(), isysroot, isysroot + Length);
+  Filename.insert(Filename.begin(), isysroot.begin(), isysroot.end());
 }
 
 ASTReader::ASTReadResult
@@ -5265,7 +5265,7 @@ void ASTReader::FinishedDeserializing() {
 }
 
 ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
-                     const char *isysroot, bool DisableValidation,
+                     StringRef isysroot, bool DisableValidation,
                      bool DisableStatCache)
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
@@ -5286,7 +5286,7 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
 }
 
 ASTReader::ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
-                     Diagnostic &Diags, const char *isysroot,
+                     Diagnostic &Diags, StringRef isysroot,
                      bool DisableValidation, bool DisableStatCache)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
     Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0), FirstInSource(0),

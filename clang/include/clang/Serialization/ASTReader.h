@@ -765,7 +765,7 @@ private:
 
   /// \brief The system include root to be used when loading the
   /// precompiled header.
-  const char *isysroot;
+  std::string isysroot;
 
   /// \brief Whether to disable the normal validation performed on precompiled
   /// headers when they are loaded.
@@ -977,7 +977,7 @@ public:
   /// help when an AST file is being used in cases where the
   /// underlying files in the file system may have changed, but
   /// parsing should still continue.
-  ASTReader(Preprocessor &PP, ASTContext *Context, const char *isysroot = 0,
+  ASTReader(Preprocessor &PP, ASTContext *Context, StringRef isysroot = "",
             bool DisableValidation = false, bool DisableStatCache = false);
 
   /// \brief Load the AST file without using any pre-initialized Preprocessor.
@@ -1006,7 +1006,7 @@ public:
   /// underlying files in the file system may have changed, but
   /// parsing should still continue.
   ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
-            Diagnostic &Diags, const char *isysroot = 0,
+            Diagnostic &Diags, StringRef isysroot = "",
             bool DisableValidation = false, bool DisableStatCache = false);
   ~ASTReader();
 

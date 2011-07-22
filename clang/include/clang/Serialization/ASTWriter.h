@@ -312,15 +312,15 @@ private:
   void WriteSubStmt(Stmt *S);
 
   void WriteBlockInfoBlock();
-  void WriteMetadata(ASTContext &Context, const char *isysroot,
+  void WriteMetadata(ASTContext &Context, StringRef isysroot,
                      const std::string &OutputFile);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteStatCache(MemorizeStatCalls &StatCalls);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
                                const Preprocessor &PP,
-                               const char* isysroot);
+                               StringRef isysroot);
   void WritePreprocessor(const Preprocessor &PP);
-  void WriteHeaderSearch(HeaderSearch &HS, const char* isysroot);
+  void WriteHeaderSearch(HeaderSearch &HS, StringRef isysroot);
   void WritePreprocessorDetail(PreprocessingRecord &PPRec);
   void WritePragmaDiagnosticMappings(const Diagnostic &Diag);
   void WriteCXXBaseSpecifiersOffsets();
@@ -356,9 +356,9 @@ private:
   void WriteDecl(ASTContext &Context, Decl *D);
 
   void WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                    const char* isysroot, const std::string &OutputFile);
+                    StringRef isysroot, const std::string &OutputFile);
   void WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                     const char* isysroot);
+                     StringRef isysroot);
   
 public:
   /// \brief Create a new precompiled header writer that outputs to
@@ -379,14 +379,11 @@ public:
   /// \param StatCalls the object that cached all of the stat() calls made while
   /// searching for source files and headers.
   ///
-  /// \param isysroot if non-NULL, write a relocatable PCH file whose headers
+  /// \param isysroot if non-empty, write a relocatable PCH file whose headers
   /// are relative to the given system root.
-  ///
-  /// \param PPRec Record of the preprocessing actions that occurred while
-  /// preprocessing this file, e.g., macro expansions
   void WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                 const std::string &OutputFile,
-                const char* isysroot);
+                StringRef isysroot);
 
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordDataImpl &Record);
@@ -616,7 +613,7 @@ public:
 class PCHGenerator : public SemaConsumer {
   const Preprocessor &PP;
   std::string OutputFile;
-  const char *isysroot;
+  std::string isysroot;
   raw_ostream *Out;
   Sema *SemaPtr;
   MemorizeStatCalls *StatCalls; // owned by the FileManager
@@ -630,8 +627,8 @@ protected:
   const ASTWriter &getWriter() const { return Writer; }
 
 public:
-  PCHGenerator(const Preprocessor &PP, const std::string &OutputFile, bool Chaining,
-               const char *isysroot, raw_ostream *Out);
+  PCHGenerator(const Preprocessor &PP, const std::string &OutputFile, 
+               bool Chaining, StringRef isysroot, raw_ostream *Out);
   ~PCHGenerator();
   virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
   virtual void HandleTranslationUnit(ASTContext &Ctx);

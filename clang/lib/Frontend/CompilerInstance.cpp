@@ -290,7 +290,7 @@ CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
                                              bool Preamble) {
   llvm::OwningPtr<ASTReader> Reader;
   Reader.reset(new ASTReader(PP, &Context,
-                             Sysroot.empty() ? 0 : Sysroot.c_str(),
+                             Sysroot.empty() ? "" : Sysroot.c_str(),
                              DisablePCHValidation, DisableStatCache));
 
   Reader->setDeserializationListener(

@@ -82,9 +82,10 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
   if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS, Chaining))
     return 0;
 
-  const char *isysroot = CI.getFrontendOpts().RelocatablePCH ?
-                             Sysroot.c_str() : 0;  
-  return new PCHGenerator(CI.getPreprocessor(), OutputFile, Chaining, isysroot, OS);
+  if (!CI.getFrontendOpts().RelocatablePCH)
+    Sysroot.clear();
+  return new PCHGenerator(CI.getPreprocessor(), OutputFile, Chaining, Sysroot,
+                          OS);
 }
 
 bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,

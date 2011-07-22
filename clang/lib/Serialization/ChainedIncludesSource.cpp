@@ -32,7 +32,7 @@ static ASTReader *createASTReader(CompilerInstance &CI,
                              ASTDeserializationListener *deserialListener = 0) {
   Preprocessor &PP = CI.getPreprocessor();
   llvm::OwningPtr<ASTReader> Reader;
-  Reader.reset(new ASTReader(PP, &CI.getASTContext(), /*isysroot=*/0,
+  Reader.reset(new ASTReader(PP, &CI.getASTContext(), /*isysroot=*/"",
                              /*DisableValidation=*/true));
   Reader->setASTMemoryBuffers(memBufs, numBufs);
   Reader->setDeserializationListener(deserialListener);
@@ -103,7 +103,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     llvm::OwningPtr<ASTConsumer> consumer;
     consumer.reset(new PCHGenerator(Clang->getPreprocessor(), "-",
                                     /*Chaining=*/!firstInclude,
-                                    /*isysroot=*/0, &OS));
+                                    /*isysroot=*/"", &OS));
     Clang->getASTContext().setASTMutationListener(
                                             consumer->GetASTMutationListener());
     Clang->setASTConsumer(consumer.take());

@@ -917,15 +917,15 @@ void ASTWriter::WriteBlockInfoBlock() {
 /// \returns either the original filename (if it needs no adjustment) or the
 /// adjusted filename (which points into the @p Filename parameter).
 static const char *
-adjustFilenameForRelocatablePCH(const char *Filename, const char *isysroot) {
+adjustFilenameForRelocatablePCH(const char *Filename, StringRef isysroot) {
   assert(Filename && "No file name to adjust?");
 
-  if (!isysroot)
+  if (isysroot.empty())
     return Filename;
 
   // Verify that the filename and the system root have the same prefix.
   unsigned Pos = 0;
-  for (; Filename[Pos] && isysroot[Pos]; ++Pos)
+  for (; Filename[Pos] && Pos < isysroot.size(); ++Pos)
     if (Filename[Pos] != isysroot[Pos])
       return Filename; // Prefixes don't match.
 
@@ -943,7 +943,7 @@ adjustFilenameForRelocatablePCH(const char *Filename, const char *isysroot) {
 }
 
 /// \brief Write the AST metadata (e.g., i686-apple-darwin9).
-void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot,
+void ASTWriter::WriteMetadata(ASTContext &Context, StringRef isysroot,
                               const std::string &OutputFile) {
   using namespace llvm;
 
@@ -967,7 +967,7 @@ void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot,
   Record.push_back(VERSION_MINOR);
   Record.push_back(CLANG_VERSION_MAJOR);
   Record.push_back(CLANG_VERSION_MINOR);
-  Record.push_back(isysroot != 0);
+  Record.push_back(!isysroot.empty());
   // FIXME: This writes the absolute path for chained headers.
   const std::string &BlobStr = Chain ? Chain->getFileName() : Target.getTriple().getTriple();
   Stream.EmitRecordWithBlob(MetaAbbrevCode, Record, BlobStr);
@@ -1329,7 +1329,7 @@ namespace {
 /// \param HS The header search structure to save.
 ///
 /// \param Chain Whether we're creating a chained AST file.
-void ASTWriter::WriteHeaderSearch(HeaderSearch &HS, const char* isysroot) {
+void ASTWriter::WriteHeaderSearch(HeaderSearch &HS, StringRef isysroot) {
   llvm::SmallVector<const FileEntry *, 16> FilesByUID;
   HS.getFileMgr().GetUniqueIDMapping(FilesByUID);
   
@@ -1405,7 +1405,7 @@ void ASTWriter::WriteHeaderSearch(HeaderSearch &HS, const char* isysroot) {
 /// the files in the AST.
 void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
                                         const Preprocessor &PP,
-                                        const char *isysroot) {
+                                        StringRef isysroot) {
   RecordData Record;
 
   // Enter the source manager block.
@@ -2767,7 +2767,7 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
 
 void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                          const std::string &OutputFile,
-                         const char *isysroot) {
+                         StringRef isysroot) {
   // Emit the file header.
   Stream.Emit((unsigned)'C', 8);
   Stream.Emit((unsigned)'P', 8);
@@ -2783,7 +2783,7 @@ void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 }
 
 void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                             const char *isysroot,
+                             StringRef isysroot,
                              const std::string &OutputFile) {
   using namespace llvm;
 
@@ -2908,7 +2908,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Stream.EnterSubblock(AST_BLOCK_ID, 5);
   WriteMetadata(Context, isysroot, OutputFile);
   WriteLanguageOptions(Context.getLangOptions());
-  if (StatCalls && !isysroot)
+  if (StatCalls && isysroot.empty())
     WriteStatCache(*StatCalls);
   WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
   // Write the record of special types.
@@ -3027,7 +3027,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 }
 
 void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                              const char *isysroot) {
+                              StringRef isysroot) {
   using namespace llvm;
 
   ASTContext &Context = SemaRef.Context;
@@ -3036,7 +3036,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   RecordData Record;
   Stream.EnterSubblock(AST_BLOCK_ID, 5);
   WriteMetadata(Context, isysroot, "");
-  if (StatCalls && !isysroot)
+  if (StatCalls && isysroot.empty())
     WriteStatCache(*StatCalls);
   // FIXME: Source manager block should only write new stuff, which could be
   // done by tracking the largest ID in the chain
