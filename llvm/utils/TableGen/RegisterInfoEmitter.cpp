@@ -297,7 +297,6 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "};\n\n";      // End of register descriptors...
 
-  // FIXME: This code is duplicated in the TargetRegisterClass emitter.
   const std::vector<CodeGenRegisterClass> &RegisterClasses =
     Target.getRegisterClasses();
 
@@ -446,6 +445,10 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "namespace llvm {\n\n";
 
+  // Get access to MCRegisterClass data.
+  OS << "extern MCRegisterClass " << Target.getName()
+    << "MCRegisterClasses[];\n";
+
   // Start out by emitting each of the register classes.
   const std::vector<CodeGenRegisterClass> &RegisterClasses =
     Target.getRegisterClasses();
@@ -453,31 +456,16 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   // Collect all registers belonging to any allocatable class.
   std::set<Record*> AllocatableRegs;
 
-  // Loop over all of the register classes... emitting each one.
-  OS << "namespace {     // Register classes...\n";
-
-  // Emit the register enum value arrays for each RegisterClass
+  // Collect allocatable registers.
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = RegisterClasses[rc];
     ArrayRef<Record*> Order = RC.getOrder();
 
-    // Collect allocatable registers.
     if (RC.Allocatable)
       AllocatableRegs.insert(Order.begin(), Order.end());
-
-    // Give the register class a legal C name if it's anonymous.
-    std::string Name = RC.getName();
-
-    // Emit the register list now.
-    OS << "  // " << Name << " Register Class...\n"
-       << "  static const unsigned " << Name
-       << "[] = {\n    ";
-    for (unsigned i = 0, e = Order.size(); i != e; ++i) {
-      Record *Reg = Order[i];
-      OS << getQualifiedName(Reg) << ", ";
-    }
-    OS << "\n  };\n\n";
   }
+
+  OS << "namespace {     // Register classes...\n";
 
   // Emit the ValueType arrays for each RegisterClass
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
@@ -656,22 +644,16 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       const CodeGenRegisterClass &RC = RegisterClasses[i];
       OS << RC.getName() << "Class::" << RC.getName()
-         << "Class()  : TargetRegisterClass("
-         << RC.getName() + "RegClassID" << ", "
-         << '\"' << RC.getName() << "\", "
+         << "Class()  : TargetRegisterClass(&"
+         << Target.getName() << "MCRegisterClasses["
+         << RC.getName() + "RegClassID" << "], "
          << RC.getName() + "VTs" << ", "
          << RC.getName() + "Subclasses" << ", "
          << RC.getName() + "Superclasses" << ", "
          << (NumSubRegIndices ? RC.getName() + "Sub" : std::string("Null"))
          << "RegClasses, "
          << (NumSubRegIndices ? RC.getName() + "Super" : std::string("Null"))
-         << "RegClasses, "
-         << RC.SpillSize/8 << ", "
-         << RC.SpillAlignment/8 << ", "
-         << RC.CopyCost << ", "
-         << RC.Allocatable << ", "
-         << RC.getName() << ", " << RC.getName() << " + "
-         << RC.getOrder().size()
+         << "RegClasses"
          << ") {}\n";
       if (!RC.AltOrderSelect.empty()) {
         OS << "\nstatic inline unsigned " << RC.getName()
@@ -686,8 +668,13 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
             OS << (elem ? ", " : " ") << getQualifiedName(Elems[elem]);
           OS << " };\n";
         }
-        OS << "  static const ArrayRef<unsigned> Order[] = {\n"
-           << "    makeArrayRef(" << RC.getName();
+        OS << "  const MCRegisterClass &MCR = " << Target.getName()
+           << "MCRegisterClasses[";
+        if (!RC.Namespace.empty())
+          OS << RC.Namespace << "::";
+        OS << RC.getName() + "RegClassID];"
+           << "  static const ArrayRef<unsigned> Order[] = {\n"
+           << "    makeArrayRef(MCR.begin(), MCR.getNumRegs()";
         for (unsigned oi = 1, oe = RC.getNumOrders(); oi != oe; ++oi)
           OS << "),\n    makeArrayRef(AltOrder" << oi;
         OS << ")\n  };\n  const unsigned Select = " << RC.getName()
@@ -821,7 +808,6 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit the constructor of the class...
   OS << "extern MCRegisterDesc " << TargetName << "RegDesc[];\n";
-  OS << "extern MCRegisterClass " << TargetName << "MCRegisterClasses[];\n";
 
   OS << ClassName << "::" << ClassName
      << "(unsigned RA, unsigned DwarfFlavour, unsigned EHFlavour)\n"

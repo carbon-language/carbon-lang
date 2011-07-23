@@ -32,31 +32,80 @@ class RegScavenger;
 template<class T> class SmallVectorImpl;
 class raw_ostream;
 
-class TargetRegisterClass : public MCRegisterClass {
+class TargetRegisterClass {
 public:
+  typedef const unsigned* iterator;
+  typedef const unsigned* const_iterator;
   typedef const EVT* vt_iterator;
   typedef const TargetRegisterClass* const * sc_iterator;
 private:
+  const MCRegisterClass *MC;
   const vt_iterator VTs;
   const sc_iterator SubClasses;
   const sc_iterator SuperClasses;
   const sc_iterator SubRegClasses;
   const sc_iterator SuperRegClasses;
 public:
-  TargetRegisterClass(unsigned id, const char *name, const EVT *vts,
+  TargetRegisterClass(MCRegisterClass *MC, const EVT *vts,
                       const TargetRegisterClass * const *subcs,
                       const TargetRegisterClass * const *supcs,
                       const TargetRegisterClass * const *subregcs,
-                      const TargetRegisterClass * const *superregcs,
-                      unsigned RS, unsigned Al, int CC, bool Allocable,
-                      iterator RB, iterator RE)
-    : MCRegisterClass(id, name, RS, Al, CC, Allocable, RB, RE),
-      VTs(vts), SubClasses(subcs), SuperClasses(supcs), SubRegClasses(subregcs),
-      SuperRegClasses(superregcs) {
-    initMCRegisterClass();
-  }
+                      const TargetRegisterClass * const *superregcs)
+    : MC(MC), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
+      SubRegClasses(subregcs), SuperRegClasses(superregcs) {}
 
   virtual ~TargetRegisterClass() {}     // Allow subclasses
+
+  /// getID() - Return the register class ID number.
+  ///
+  unsigned getID() const { return MC->getID(); }
+
+  /// getName() - Return the register class name for debugging.
+  ///
+  const char *getName() const { return MC->getName(); }
+
+  /// begin/end - Return all of the registers in this class.
+  ///
+  iterator       begin() const { return MC->begin(); }
+  iterator         end() const { return MC->end(); }
+
+  /// getNumRegs - Return the number of registers in this class.
+  ///
+  unsigned getNumRegs() const { return MC->getNumRegs(); }
+
+  /// getRegister - Return the specified register in the class.
+  ///
+  unsigned getRegister(unsigned i) const {
+    return MC->getRegister(i);
+  }
+
+  /// contains - Return true if the specified register is included in this
+  /// register class.  This does not include virtual registers.
+  bool contains(unsigned Reg) const {
+    return MC->contains(Reg);
+  }
+
+  /// contains - Return true if both registers are in this class.
+  bool contains(unsigned Reg1, unsigned Reg2) const {
+    return MC->contains(Reg1, Reg2);
+  }
+
+  /// getSize - Return the size of the register in bytes, which is also the size
+  /// of a stack slot allocated to hold a spilled copy of this register.
+  unsigned getSize() const { return MC->getSize(); }
+
+  /// getAlignment - Return the minimum required alignment for a register of
+  /// this class.
+  unsigned getAlignment() const { return MC->getAlignment(); }
+
+  /// getCopyCost - Return the cost of copying a value between two registers in
+  /// this class. A negative number means the register class is very expensive
+  /// to copy e.g. status flag register classes.
+  int getCopyCost() const { return MC->getCopyCost(); }
+
+  /// isAllocatable - Return true if this register class may be used to create
+  /// virtual registers.
+  bool isAllocatable() const { return MC->isAllocatable(); }
 
   /// hasType - return true if this TargetRegisterClass has the ValueType vt.
   ///
