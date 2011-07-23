@@ -76,7 +76,7 @@ public:
   bool contains(unsigned Reg) const {
     unsigned InByte = Reg % 8;
     unsigned Byte = Reg / 8;
-    if (Byte > RegSetSize)
+    if (Byte >= RegSetSize)
       return false;
     return (RegSet[Byte] & (1 << InByte)) != 0;
   }
