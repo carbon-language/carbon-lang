@@ -239,6 +239,20 @@ void SpillPlacement::addConstraints(ArrayRef<BlockConstraint> LiveBlocks) {
   }
 }
 
+/// addPrefSpill - Same as addConstraints(PrefSpill)
+void SpillPlacement::addPrefSpill(ArrayRef<unsigned> Blocks) {
+  for (ArrayRef<unsigned>::iterator I = Blocks.begin(), E = Blocks.end();
+       I != E; ++I) {
+    float Freq = getBlockFrequency(*I);
+    unsigned ib = bundles->getBundle(*I, 0);
+    unsigned ob = bundles->getBundle(*I, 1);
+    activate(ib);
+    activate(ob);
+    nodes[ib].addBias(-Freq, 1);
+    nodes[ob].addBias(-Freq, 0);
+  }
+}
+
 void SpillPlacement::addLinks(ArrayRef<unsigned> Links) {
   for (ArrayRef<unsigned>::iterator I = Links.begin(), E = Links.end(); I != E;
        ++I) {

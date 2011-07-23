@@ -96,6 +96,10 @@ public:
   ///                   live out.
   void addConstraints(ArrayRef<BlockConstraint> LiveBlocks);
 
+  /// addPrefSpill - Add PrefSpill constraints to all blocks listed.
+  /// @param Blocks Array of block numbers that prefer to spill in and out.
+  void addPrefSpill(ArrayRef<unsigned> Blocks);
+
   /// addLinks - Add transparent blocks with the given numbers.
   void addLinks(ArrayRef<unsigned> Links);
 
