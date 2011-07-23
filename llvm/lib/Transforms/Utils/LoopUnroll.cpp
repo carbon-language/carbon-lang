@@ -11,9 +11,6 @@
 // actual pass or policy, but provides a single function to perform loop
 // unrolling.
 //
-// It works best when loops have been canonicalized by the -indvars pass,
-// allowing it to determine the trip counts of loops easily.
-//
 // The process of unrolling can produce extraneous basic blocks linked with
 // unconditional branches.  This will be corrected in the future.
 //
@@ -113,8 +110,8 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI) {
 ///
 /// If a LoopPassManager is passed in, and the loop is fully removed, it will be
 /// removed from the LoopPassManager as well. LPM can also be NULL.
-bool llvm::UnrollLoop(Loop *L, unsigned Count,
-                      LoopInfo *LI, LPPassManager *LPM) {
+bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
+                      unsigned TripMultiple, LoopInfo *LI, LPPassManager *LPM) {
   BasicBlock *Preheader = L->getLoopPreheader();
   if (!Preheader) {
     DEBUG(dbgs() << "  Can't unroll; loop preheader-insertion failed.\n");
@@ -148,13 +145,6 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
   // if not outright eliminated.
   if (ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>())
     SE->forgetLoop(L);
-
-  // Find trip count
-  unsigned TripCount = L->getSmallConstantTripCount();
-  // Find trip multiple if count is not available
-  unsigned TripMultiple = 1;
-  if (TripCount == 0)
-    TripMultiple = L->getSmallConstantTripMultiple();
 
   if (TripCount != 0)
     DEBUG(dbgs() << "  Trip Count = " << TripCount << "\n");

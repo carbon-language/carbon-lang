@@ -137,9 +137,14 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Find trip count
   unsigned TripCount = L->getSmallConstantTripCount();
-  unsigned Count = CurrentCount;
+
+  // Find trip multiple if count is not available
+  unsigned TripMultiple = 1;
+  if (TripCount == 0)
+    TripMultiple = L->getSmallConstantTripMultiple();
 
   // Automatically select an unroll count.
+  unsigned Count = CurrentCount;
   if (Count == 0) {
     // Conservative heuristic: if we know the trip count, see if we can
     // completely unroll (subject to the threshold, checked below); otherwise
@@ -183,7 +188,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Unroll the loop.
   Function *F = L->getHeader()->getParent();
-  if (!UnrollLoop(L, Count, LI, &LPM))
+  if (!UnrollLoop(L, Count, TripCount, TripMultiple, LI, &LPM))
     return false;
 
   // FIXME: Reconstruct dom info, because it is not preserved properly.
