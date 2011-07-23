@@ -46,7 +46,7 @@ private:
   const sc_iterator SubRegClasses;
   const sc_iterator SuperRegClasses;
 public:
-  TargetRegisterClass(MCRegisterClass *MC, const EVT *vts,
+  TargetRegisterClass(const MCRegisterClass *MC, const EVT *vts,
                       const TargetRegisterClass * const *subcs,
                       const TargetRegisterClass * const *supcs,
                       const TargetRegisterClass * const *subregcs,

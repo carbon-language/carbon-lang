@@ -17,6 +17,7 @@
 #include "CodeGenTarget.h"
 #include "CodeGenRegisters.h"
 #include "Record.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Format.h"
@@ -202,6 +203,30 @@ RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
   }
 }
 
+// Helper to emit a set of bits into a constant byte array.
+class BitVectorEmitter {
+  BitVector Values;
+  unsigned Len;
+public:
+  BitVectorEmitter(unsigned L) : Len(L%8 ? ((L/8)+1)*8 : L) {
+    Values.resize(Len);
+  }
+
+  void add(unsigned v) { Values[v] = true; }
+
+  void print(raw_ostream &OS) {
+    for (unsigned i = 0, e = Len / 8; i != e; ++i) {
+      unsigned char out = 0;
+      for (unsigned ii = 0, ie = 8; ii != ie; ++ii)
+        if (Values[i * 8 + ii])
+          out |= 1 << ii;
+      OS << "0x";
+      OS.write_hex(out);
+      OS << ", ";
+    }
+  }
+};
+
 //
 // runMCDesc - Print out MC register descriptions.
 //
@@ -320,6 +345,18 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
       OS << getQualifiedName(Reg) << ", ";
     }
     OS << "\n  };\n\n";
+
+    OS << "  // " << Name << " Bit set.\n"
+       << "  static const unsigned char " << Name
+       << "Bits[] = {\n    ";
+    BitVectorEmitter BVE(Target.getRegBank().getRegisters().size()+1);
+    for (unsigned i = 0, e = Order.size(); i != e; ++i) {
+      Record *Reg = Order[i];
+      BVE.add(Target.getRegBank().getReg(Reg)->EnumValue);
+    }
+    BVE.print(OS);
+    OS << "\n  };\n\n";
+
   }
   OS << "}\n\n";
 
@@ -337,7 +374,8 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
        << RC.CopyCost << ", "
        << RC.Allocatable << ", "
        << RC.getName() << ", " << RC.getName() << " + "
-       << RC.getOrder().size()
+       << RC.getOrder().size() << ", "
+       << RC.getName() << "Bits, sizeof(" << RC.getName() << "Bits)"
        << "),\n";
   }
 

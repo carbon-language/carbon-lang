@@ -17,7 +17,6 @@
 #define LLVM_MC_MCREGISTERINFO_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DenseSet.h"
 #include <cassert>
 
 namespace llvm {
@@ -34,20 +33,18 @@ private:
   const int CopyCost;
   const bool Allocatable;
   const iterator RegsBegin, RegsEnd;
-  DenseSet<unsigned> RegSet;
+  const unsigned char *RegSet;
+  const unsigned RegSetSize;
 public:
   MCRegisterClass(unsigned id, const char *name,
                   unsigned RS, unsigned Al, int CC, bool Allocable,
-                  iterator RB, iterator RE)
+                  iterator RB, iterator RE, const unsigned char *Bits,
+                  unsigned NumBytes)
     : ID(id), Name(name), RegSize(RS), Alignment(Al), CopyCost(CC),
-      Allocatable(Allocable), RegsBegin(RB), RegsEnd(RE) {}
-
-  /// initMCRegisterClass - Initialize initMCRegisterClass. *DO NOT USE*.
-  // FIXME: This could go away if RegSet would use a constant bit field.
-  void initMCRegisterClass() {
-    RegSet.resize(getNumRegs());
-    for (iterator I = RegsBegin, E = RegsEnd; I != E; ++I)
-      RegSet.insert(*I);
+      Allocatable(Allocable), RegsBegin(RB), RegsEnd(RE), RegSet(Bits),
+      RegSetSize(NumBytes) {
+    for (iterator i = RegsBegin; i != RegsEnd; ++i)
+       assert (contains(*i) && "Bit field corrupted.");
   }
 
   /// getID() - Return the register class ID number.
@@ -77,7 +74,11 @@ public:
   /// contains - Return true if the specified register is included in this
   /// register class.  This does not include virtual registers.
   bool contains(unsigned Reg) const {
-    return RegSet.count(Reg);
+    unsigned InByte = Reg % 8;
+    unsigned Byte = Reg / 8;
+    if (Byte > RegSetSize)
+      return false;
+    return (RegSet[Byte] & (1 << InByte)) != 0;
   }
 
   /// contains - Return true if both registers are in this class.
@@ -151,15 +152,12 @@ public:
   /// InitMCRegisterInfo - Initialize MCRegisterInfo, called by TableGen
   /// auto-generated routines. *DO NOT USE*.
   void InitMCRegisterInfo(const MCRegisterDesc *D, unsigned NR, unsigned RA,
-                          MCRegisterClass *C, unsigned NC) {
+                          const MCRegisterClass *C, unsigned NC) {
     Desc = D;
     NumRegs = NR;
     RAReg = RA;
     Classes = C;
     NumClasses = NC;
-    // FIXME: This should go away.
-    for (unsigned i = 0; i != NC; ++i)
-      C[i].initMCRegisterClass();
   }
 
   /// mapLLVMRegToDwarfReg - Used to initialize LLVM register to Dwarf
