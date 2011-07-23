@@ -9384,8 +9384,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   }
 
   // C++ [over.call.object]p2:
-  //   In addition, for each conversion function declared in T of the
-  //   form
+  //   In addition, for each (non-explicit in C++0x) conversion function 
+  //   declared in T of the form
   //
   //        operator conversion-type-id () cv-qualifier;
   //
@@ -9415,16 +9415,19 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
       continue;
 
     CXXConversionDecl *Conv = cast<CXXConversionDecl>(D);
+    if (!Conv->isExplicit()) {
+      // Strip the reference type (if any) and then the pointer type (if
+      // any) to get down to what might be a function type.
+      QualType ConvType = Conv->getConversionType().getNonReferenceType();
+      if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
+        ConvType = ConvPtrType->getPointeeType();
 
-    // Strip the reference type (if any) and then the pointer type (if
-    // any) to get down to what might be a function type.
-    QualType ConvType = Conv->getConversionType().getNonReferenceType();
-    if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
-      ConvType = ConvPtrType->getPointeeType();
-
-    if (const FunctionProtoType *Proto = ConvType->getAs<FunctionProtoType>())
-      AddSurrogateCandidate(Conv, I.getPair(), ActingContext, Proto,
-                            Object.get(), Args, NumArgs, CandidateSet);
+      if (const FunctionProtoType *Proto = ConvType->getAs<FunctionProtoType>())
+      {
+        AddSurrogateCandidate(Conv, I.getPair(), ActingContext, Proto,
+                              Object.get(), Args, NumArgs, CandidateSet);
+      }
+    }
   }
 
   // Perform overload resolution.
