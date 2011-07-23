@@ -14,6 +14,7 @@
 #ifndef ARMMCTARGETDESC_H
 #define ARMMCTARGETDESC_H
 
+#include "llvm/Support/DataTypes.h"
 #include <string>
 
 namespace llvm {
