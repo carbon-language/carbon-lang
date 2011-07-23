@@ -22,7 +22,7 @@
 using namespace clang;
 using namespace arcmt;
 
-bool CapturedDiagList::clearDiagnostic(llvm::ArrayRef<unsigned> IDs,
+bool CapturedDiagList::clearDiagnostic(ArrayRef<unsigned> IDs,
                                        SourceRange range) {
   if (range.isInvalid())
     return false;
@@ -51,7 +51,7 @@ bool CapturedDiagList::clearDiagnostic(llvm::ArrayRef<unsigned> IDs,
   return cleared;
 }
 
-bool CapturedDiagList::hasDiagnostic(llvm::ArrayRef<unsigned> IDs,
+bool CapturedDiagList::hasDiagnostic(ArrayRef<unsigned> IDs,
                                      SourceRange range) const {
   if (range.isInvalid())
     return false;

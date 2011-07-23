@@ -497,7 +497,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
 /// going to lex in the cache and when it finishes the tokens are removed
 /// from the end of the cache.
 Token *Preprocessor::cacheMacroExpandedTokens(TokenLexer *tokLexer,
-                                              llvm::ArrayRef<Token> tokens) {
+                                              ArrayRef<Token> tokens) {
   assert(tokLexer);
   if (tokens.empty())
     return 0;

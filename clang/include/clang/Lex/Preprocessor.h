@@ -1006,7 +1006,7 @@ private:
   /// going to lex in the cache and when it finishes the tokens are removed
   /// from the end of the cache.
   Token *cacheMacroExpandedTokens(TokenLexer *tokLexer,
-                                  llvm::ArrayRef<Token> tokens);
+                                  ArrayRef<Token> tokens);
   void removeCachedMacroExpandedTokensOfLastLexer();
   friend void TokenLexer::ExpandFunctionArguments();
 

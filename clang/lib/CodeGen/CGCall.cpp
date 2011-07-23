@@ -1431,7 +1431,7 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
 /// on the current state of the EH stack.
 llvm::CallSite
 CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
-                                  llvm::ArrayRef<llvm::Value *> Args,
+                                  ArrayRef<llvm::Value *> Args,
                                   const Twine &Name) {
   llvm::BasicBlock *InvokeDest = getInvokeDest();
   if (!InvokeDest)
@@ -1447,7 +1447,7 @@ CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
 llvm::CallSite
 CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
                                   const Twine &Name) {
-  return EmitCallOrInvoke(Callee, llvm::ArrayRef<llvm::Value *>(), Name);
+  return EmitCallOrInvoke(Callee, ArrayRef<llvm::Value *>(), Name);
 }
 
 static void checkArgMatches(llvm::Value *Elt, unsigned &ArgNo,

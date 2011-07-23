@@ -23,11 +23,12 @@ namespace llvm {
   // ADT's.
   class StringRef;
   class Twine;
+  template<typename T> class ArrayRef;
   template<typename T, unsigned N> class SmallVector;
   template<typename T> class SmallVectorImpl;
 
   class raw_ostream;
-  // TODO: ArrayRef, DenseMap, ...
+  // TODO: DenseMap, ...
 }
 
 
@@ -42,6 +43,7 @@ namespace clang {
   // ADT's.
   using llvm::StringRef;
   using llvm::Twine;
+  using llvm::ArrayRef;
   using llvm::SmallVector;
   using llvm::SmallVectorImpl;
   

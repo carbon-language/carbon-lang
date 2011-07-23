@@ -104,7 +104,7 @@ public:
 } // anonymous namespace
 
 static bool checkForMigration(StringRef resourcesPath,
-                              llvm::ArrayRef<const char *> Args) {
+                              ArrayRef<const char *> Args) {
   DiagnosticClient *DiagClient =
     new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
@@ -146,7 +146,7 @@ static void printResult(FileRemapper &remapper, raw_ostream &OS) {
 }
 
 static bool performTransformations(StringRef resourcesPath,
-                                   llvm::ArrayRef<const char *> Args) {
+                                   ArrayRef<const char *> Args) {
   // Check first.
   if (checkForMigration(resourcesPath, Args))
     return true;
@@ -215,7 +215,7 @@ static bool filesCompareEqual(StringRef fname1, StringRef fname2) {
   return file1->getBuffer() == file2->getBuffer();
 }
 
-static bool verifyTransformedFiles(llvm::ArrayRef<std::string> resultFiles) {
+static bool verifyTransformedFiles(ArrayRef<std::string> resultFiles) {
   using namespace llvm;
 
   assert(!resultFiles.empty());
@@ -364,7 +364,7 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  llvm::ArrayRef<const char*> Args(argv+optargc+1, argc-optargc-1);
+  ArrayRef<const char*> Args(argv+optargc+1, argc-optargc-1);
 
   if (CheckOnly)
     return checkForMigration(resourcesPath, Args);

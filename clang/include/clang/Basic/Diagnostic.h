@@ -987,8 +987,8 @@ public:
                    StringRef Message);
   StoredDiagnostic(Diagnostic::Level Level, unsigned ID, 
                    StringRef Message, FullSourceLoc Loc,
-                   llvm::ArrayRef<CharSourceRange> Ranges,
-                   llvm::ArrayRef<FixItHint> Fixits);
+                   ArrayRef<CharSourceRange> Ranges,
+                   ArrayRef<FixItHint> Fixits);
   ~StoredDiagnostic();
 
   /// \brief Evaluates true when this object stores a diagnostic.

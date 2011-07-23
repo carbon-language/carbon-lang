@@ -140,7 +140,7 @@ public:
   void increaseIndentation(SourceRange range,
                            SourceLocation parentIndent);
 
-  bool clearDiagnostic(llvm::ArrayRef<unsigned> IDs, SourceRange range);
+  bool clearDiagnostic(ArrayRef<unsigned> IDs, SourceRange range);
 
   void applyRewrites(TransformActions::RewriteReceiver &receiver);
 
@@ -159,7 +159,7 @@ private:
   void commitReplaceText(SourceLocation loc, StringRef text,
                          StringRef replacementText);
   void commitIncreaseIndentation(SourceRange range,SourceLocation parentIndent);
-  void commitClearDiagnostic(llvm::ArrayRef<unsigned> IDs, SourceRange range);
+  void commitClearDiagnostic(ArrayRef<unsigned> IDs, SourceRange range);
 
   void addRemoval(CharSourceRange range);
   void addInsertion(SourceLocation loc, StringRef text);
@@ -362,7 +362,7 @@ void TransformActionsImpl::increaseIndentation(SourceRange range,
   CachedActions.push_back(data);
 }
 
-bool TransformActionsImpl::clearDiagnostic(llvm::ArrayRef<unsigned> IDs,
+bool TransformActionsImpl::clearDiagnostic(ArrayRef<unsigned> IDs,
                                            SourceRange range) {
   assert(IsInTransaction && "Actions only allowed during a transaction");
   if (!CapturedDiags.hasDiagnostic(IDs, range))
@@ -494,7 +494,7 @@ void TransformActionsImpl::commitIncreaseIndentation(SourceRange range,
                                 SM.getInstantiationLoc(parentIndent)));
 }
 
-void TransformActionsImpl::commitClearDiagnostic(llvm::ArrayRef<unsigned> IDs,
+void TransformActionsImpl::commitClearDiagnostic(ArrayRef<unsigned> IDs,
                                                  SourceRange range) {
   CapturedDiags.clearDiagnostic(IDs, range);
 }
@@ -661,7 +661,7 @@ void TransformActions::increaseIndentation(SourceRange range,
                                                                 parentIndent);
 }
 
-bool TransformActions::clearDiagnostic(llvm::ArrayRef<unsigned> IDs,
+bool TransformActions::clearDiagnostic(ArrayRef<unsigned> IDs,
                                        SourceRange range) {
   return static_cast<TransformActionsImpl*>(Impl)->clearDiagnostic(IDs, range);
 }

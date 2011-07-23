@@ -26,8 +26,8 @@ class CapturedDiagList {
 public:
   void push_back(const StoredDiagnostic &diag) { List.push_back(diag); }
 
-  bool clearDiagnostic(llvm::ArrayRef<unsigned> IDs, SourceRange range);
-  bool hasDiagnostic(llvm::ArrayRef<unsigned> IDs, SourceRange range) const;
+  bool clearDiagnostic(ArrayRef<unsigned> IDs, SourceRange range);
+  bool hasDiagnostic(ArrayRef<unsigned> IDs, SourceRange range) const;
 
   void reportDiagnostics(Diagnostic &diags) const;
 
@@ -39,7 +39,7 @@ public:
 };
 
 void writeARCDiagsToPlist(const std::string &outPath,
-                          llvm::ArrayRef<StoredDiagnostic> diags,
+                          ArrayRef<StoredDiagnostic> diags,
                           SourceManager &SM, const LangOptions &LangOpts);
 
 class TransformActions {
@@ -69,9 +69,9 @@ public:
   void increaseIndentation(SourceRange range,
                            SourceLocation parentIndent);
 
-  bool clearDiagnostic(llvm::ArrayRef<unsigned> IDs, SourceRange range);
+  bool clearDiagnostic(ArrayRef<unsigned> IDs, SourceRange range);
   bool clearAllDiagnostics(SourceRange range) {
-    return clearDiagnostic(llvm::ArrayRef<unsigned>(), range);
+    return clearDiagnostic(ArrayRef<unsigned>(), range);
   }
   bool clearDiagnostic(unsigned ID1, unsigned ID2, SourceRange range) {
     unsigned IDs[] = { ID1, ID2 };

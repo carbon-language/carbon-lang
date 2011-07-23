@@ -29,7 +29,7 @@ using namespace clang;
 /// \return A CompilerInvocation, or 0 if none was built for the given
 /// argument vector.
 CompilerInvocation *
-clang::createInvocationFromCommandLine(llvm::ArrayRef<const char *> ArgList,
+clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
                                    llvm::IntrusiveRefCntPtr<Diagnostic> Diags) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object

@@ -100,7 +100,7 @@ void CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS);
 /// \return A CompilerInvocation, or 0 if none was built for the given
 /// argument vector.
 CompilerInvocation *
-createInvocationFromCommandLine(llvm::ArrayRef<const char *> Args,
+createInvocationFromCommandLine(ArrayRef<const char *> Args,
                                 llvm::IntrusiveRefCntPtr<Diagnostic> Diags =
                                     llvm::IntrusiveRefCntPtr<Diagnostic>());
 

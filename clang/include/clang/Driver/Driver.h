@@ -223,14 +223,14 @@ public:
   /// argument vector. A null return value does not necessarily
   /// indicate an error condition, the diagnostics should be queried
   /// to determine if an error occurred.
-  Compilation *BuildCompilation(llvm::ArrayRef<const char *> Args);
+  Compilation *BuildCompilation(ArrayRef<const char *> Args);
 
   /// @name Driver Steps
   /// @{
 
   /// ParseArgStrings - Parse the given list of strings into an
   /// ArgList.
-  InputArgList *ParseArgStrings(llvm::ArrayRef<const char *> Args);
+  InputArgList *ParseArgStrings(ArrayRef<const char *> Args);
 
   /// BuildActions - Construct the list of actions to perform for the
   /// given arguments, which are only done for a single architecture.

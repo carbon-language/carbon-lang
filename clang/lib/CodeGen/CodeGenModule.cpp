@@ -1625,7 +1625,7 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
 }
 
 llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,
-                                            llvm::ArrayRef<llvm::Type*> Tys) {
+                                            ArrayRef<llvm::Type*> Tys) {
   return llvm::Intrinsic::getDeclaration(&getModule(), (llvm::Intrinsic::ID)IID,
                                          Tys);
 }

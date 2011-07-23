@@ -728,8 +728,8 @@ StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level,
 
 StoredDiagnostic::StoredDiagnostic(Diagnostic::Level Level, unsigned ID, 
                                    StringRef Message, FullSourceLoc Loc,
-                                   llvm::ArrayRef<CharSourceRange> Ranges,
-                                   llvm::ArrayRef<FixItHint> Fixits)
+                                   ArrayRef<CharSourceRange> Ranges,
+                                   ArrayRef<FixItHint> Fixits)
   : ID(ID), Level(Level), Loc(Loc), Message(Message) 
 {
   this->Ranges.assign(Ranges.begin(), Ranges.end());
