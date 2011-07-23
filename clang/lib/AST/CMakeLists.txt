@@ -1,6 +1,6 @@
 set(LLVM_LINK_COMPONENTS support)
 
-set(LLVM_USED_LIBS clangBasic)
+set(LLVM_USED_LIBS clangBasic clangLex)
 
 add_clang_library(clangAST
   APValue.cpp
