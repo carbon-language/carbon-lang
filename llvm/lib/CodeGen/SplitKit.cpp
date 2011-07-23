@@ -1149,6 +1149,12 @@ void SplitEditor::splitLiveThroughBlock(unsigned MBBNum,
 
   assert((IntvIn || IntvOut) && "Use splitSingleBlock for isolated blocks");
 
+  assert((!LeaveBefore || LeaveBefore < Stop) && "Interference after block");
+  assert((!IntvIn || !LeaveBefore || LeaveBefore > Start) && "Impossible intf");
+  assert((!EnterAfter || EnterAfter >= Start) && "Interference before block");
+
+  MachineBasicBlock *MBB = VRM.getMachineFunction().getBlockNumbered(MBBNum);
+
   if (!IntvOut) {
     DEBUG(dbgs() << ", spill on entry.\n");
     //
@@ -1157,7 +1163,6 @@ void SplitEditor::splitLiveThroughBlock(unsigned MBBNum,
     //    -____________    Spill on entry.
     //
     selectIntv(IntvIn);
-    MachineBasicBlock *MBB = VRM.getMachineFunction().getBlockNumbered(MBBNum);
     SlotIndex Idx = leaveIntvAtTop(*MBB);
     assert((!LeaveBefore || Idx <= LeaveBefore) && "Interference");
     (void)Idx;
@@ -1172,7 +1177,6 @@ void SplitEditor::splitLiveThroughBlock(unsigned MBBNum,
     //    ___________--    Reload on exit.
     //
     selectIntv(IntvOut);
-    MachineBasicBlock *MBB = VRM.getMachineFunction().getBlockNumbered(MBBNum);
     SlotIndex Idx = enterIntvAtEnd(*MBB);
     assert((!EnterAfter || Idx >= EnterAfter) && "Interference");
     (void)Idx;
@@ -1192,6 +1196,7 @@ void SplitEditor::splitLiveThroughBlock(unsigned MBBNum,
 
   // We cannot legally insert splits after LSP.
   SlotIndex LSP = SA.getLastSplitPoint(MBBNum);
+  assert((!IntvOut || !EnterAfter || EnterAfter < LSP) && "Impossible intf");
 
   if (IntvIn != IntvOut && (!LeaveBefore || !EnterAfter ||
                   LeaveBefore.getBaseIndex() > EnterAfter.getBoundaryIndex())) {
@@ -1201,10 +1206,14 @@ void SplitEditor::splitLiveThroughBlock(unsigned MBBNum,
     //    |-----------|    Live through.
     //    ------=======    Switch intervals between interference.
     //
-    SlotIndex Cut = (LeaveBefore && LeaveBefore < LSP) ? LeaveBefore : LSP;
     selectIntv(IntvOut);
-    SlotIndex Idx = enterIntvBefore(Cut);
-    useIntv(Idx, Stop);
+    SlotIndex Idx;
+    if (LeaveBefore && LeaveBefore < LSP) {
+      Idx = enterIntvBefore(LeaveBefore);
+      useIntv(Idx, Stop);
+    } else {
+      Idx = enterIntvAtEnd(*MBB);
+    }
     selectIntv(IntvIn);
     useIntv(Start, Idx);
     assert((!LeaveBefore || Idx <= LeaveBefore) && "Interference");
