@@ -208,6 +208,7 @@ private:
   void addThroughConstraints(InterferenceCache::Cursor, ArrayRef<unsigned>);
   void growRegion(GlobalSplitCandidate &Cand);
   float calcGlobalSplitCost(GlobalSplitCandidate&);
+  bool calcCompactRegion(GlobalSplitCandidate&);
   void splitAroundRegion(LiveInterval&, GlobalSplitCandidate&,
                          SmallVectorImpl<LiveInterval*>&);
   void calcGapWeights(unsigned, SmallVectorImpl<float>&);
@@ -763,6 +764,51 @@ void RAGreedy::growRegion(GlobalSplitCandidate &Cand) {
     SpillPlacer->iterate();
   }
   DEBUG(dbgs() << ", v=" << Visited);
+}
+
+/// calcCompactRegion - Compute the set of edge bundles that should be live
+/// when splitting the current live range into compact regions.  Compact
+/// regions can be computed without looking at interference.  They are the
+/// regions formed by removing all the live-through blocks from the live range.
+///
+/// Returns false if the current live range is already compact, or if the
+/// compact regions would form single block regions anyway.
+bool RAGreedy::calcCompactRegion(GlobalSplitCandidate &Cand) {
+  // Without any through blocks, the live range is already compact.
+  if (!SA->getNumThroughBlocks())
+    return false;
+
+  // Compact regions don't correspond to any physreg.
+  Cand.reset(IntfCache, 0);
+
+  DEBUG(dbgs() << "Compact region bundles");
+
+  // Use the spill placer to determine the live bundles. GrowRegion pretends
+  // that all the through blocks have interference when PhysReg is unset.
+  SpillPlacer->prepare(Cand.LiveBundles);
+
+  // The static split cost will be zero since Cand.Intf reports no interference.
+  float Cost;
+  if (!addSplitConstraints(Cand.Intf, Cost)) {
+    DEBUG(dbgs() << ", none.\n");
+    return false;
+  }
+
+  growRegion(Cand);
+  SpillPlacer->finish();
+
+  if (!Cand.LiveBundles.any()) {
+    DEBUG(dbgs() << ", none.\n");
+    return false;
+  }
+
+  DEBUG({
+    for (int i = Cand.LiveBundles.find_first(); i>=0;
+         i = Cand.LiveBundles.find_next(i))
+    dbgs() << " EB#" << i;
+    dbgs() << ".\n";
+  });
+  return true;
 }
 
 /// calcSpillCost - Compute how expensive it would be to split the live range in
