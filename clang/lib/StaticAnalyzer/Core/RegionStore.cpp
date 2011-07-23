@@ -94,7 +94,7 @@ BindingKey BindingKey::Make(const MemRegion *R, Kind k) {
 
 namespace llvm {
   static inline
-  llvm::raw_ostream& operator<<(llvm::raw_ostream& os, BindingKey K) {
+  raw_ostream& operator<<(raw_ostream& os, BindingKey K) {
     os << '(' << K.getRegion() << ',' << K.getOffset()
        << ',' << (K.isDirect() ? "direct" : "default")
        << ')';
@@ -157,7 +157,7 @@ public:
     return false;
   }
 
-  void process(llvm::SmallVectorImpl<const SubRegion*> &WL, const SubRegion *R);
+  void process(SmallVectorImpl<const SubRegion*> &WL, const SubRegion *R);
 
   ~RegionStoreSubRegionMap() {}
 
@@ -183,7 +183,7 @@ public:
 };
 
 void
-RegionStoreSubRegionMap::process(llvm::SmallVectorImpl<const SubRegion*> &WL,
+RegionStoreSubRegionMap::process(SmallVectorImpl<const SubRegion*> &WL,
                                  const SubRegion *R) {
   const MemRegion *superR = R->getSuperRegion();
   if (add(superR, R))
@@ -372,7 +372,7 @@ public: // Part of public interface to class.
   ///  It returns a new Store with these values removed.
   StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
                            SymbolReaper& SymReaper,
-                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
+                          SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   StoreRef enterStackFrame(const GRState *state, const StackFrameContext *frame);
 
@@ -392,7 +392,7 @@ public: // Part of public interface to class.
     return RegionBindings(static_cast<const RegionBindings::TreeTy*>(store));
   }
 
-  void print(Store store, llvm::raw_ostream& Out, const char* nl,
+  void print(Store store, raw_ostream& Out, const char* nl,
              const char *sep);
 
   void iterBindings(Store store, BindingsHandler& f) {
@@ -433,7 +433,7 @@ RegionStoreManager::getRegionStoreSubRegionMap(Store store) {
   RegionBindings B = GetRegionBindings(store);
   RegionStoreSubRegionMap *M = new RegionStoreSubRegionMap();
 
-  llvm::SmallVector<const SubRegion*, 10> WL;
+  SmallVector<const SubRegion*, 10> WL;
 
   for (RegionBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I)
     if (const SubRegion *R = dyn_cast<SubRegion>(I.getKey().getRegion()))
@@ -461,7 +461,7 @@ protected:
   typedef BumpVector<BindingKey> RegionCluster;
   typedef llvm::DenseMap<const MemRegion *, RegionCluster *> ClusterMap;
   llvm::DenseMap<const RegionCluster*, unsigned> Visited;
-  typedef llvm::SmallVector<std::pair<const MemRegion *, RegionCluster*>, 10>
+  typedef SmallVector<std::pair<const MemRegion *, RegionCluster*>, 10>
     WorkList;
 
   BumpVectorContext BVC;
@@ -1611,7 +1611,7 @@ RegionBindings RegionStoreManager::removeBinding(RegionBindings B,
 namespace {
 class removeDeadBindingsWorker :
   public ClusterAnalysis<removeDeadBindingsWorker> {
-  llvm::SmallVector<const SymbolicRegion*, 12> Postponed;
+  SmallVector<const SymbolicRegion*, 12> Postponed;
   SymbolReaper &SymReaper;
   const StackFrameContext *CurrentLCtx;
 
@@ -1736,7 +1736,7 @@ bool removeDeadBindingsWorker::UpdatePostponed() {
   // having done a scan.
   bool changed = false;
 
-  for (llvm::SmallVectorImpl<const SymbolicRegion*>::iterator
+  for (SmallVectorImpl<const SymbolicRegion*>::iterator
         I = Postponed.begin(), E = Postponed.end() ; I != E ; ++I) {
     if (const SymbolicRegion *SR = cast_or_null<SymbolicRegion>(*I)) {
       if (SymReaper.isLive(SR->getSymbol())) {
@@ -1752,14 +1752,14 @@ bool removeDeadBindingsWorker::UpdatePostponed() {
 StoreRef RegionStoreManager::removeDeadBindings(Store store,
                                                 const StackFrameContext *LCtx,
                                                 SymbolReaper& SymReaper,
-                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
+                           SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
   RegionBindings B = GetRegionBindings(store);
   removeDeadBindingsWorker W(*this, StateMgr, B, SymReaper, LCtx);
   W.GenerateClusters();
 
   // Enqueue the region roots onto the worklist.
-  for (llvm::SmallVectorImpl<const MemRegion*>::iterator I=RegionRoots.begin(),
+  for (SmallVectorImpl<const MemRegion*>::iterator I=RegionRoots.begin(),
        E=RegionRoots.end(); I!=E; ++I)
     W.AddToWorkList(*I);
 
@@ -1831,7 +1831,7 @@ StoreRef RegionStoreManager::enterStackFrame(const GRState *state,
 // Utility methods.
 //===----------------------------------------------------------------------===//
 
-void RegionStoreManager::print(Store store, llvm::raw_ostream& OS,
+void RegionStoreManager::print(Store store, raw_ostream& OS,
                                const char* nl, const char *sep) {
   RegionBindings B = GetRegionBindings(store);
   OS << "Store (direct and default bindings):" << nl;

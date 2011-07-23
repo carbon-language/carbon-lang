@@ -36,16 +36,15 @@
 using namespace clang;
 using namespace arcmt;
 using namespace trans;
-using llvm::StringRef;
 
 namespace {
 
 class ReleaseCollector : public RecursiveASTVisitor<ReleaseCollector> {
   Decl *Dcl;
-  llvm::SmallVectorImpl<ObjCMessageExpr *> &Releases;
+  SmallVectorImpl<ObjCMessageExpr *> &Releases;
 
 public:
-  ReleaseCollector(Decl *D, llvm::SmallVectorImpl<ObjCMessageExpr *> &releases)
+  ReleaseCollector(Decl *D, SmallVectorImpl<ObjCMessageExpr *> &releases)
     : Dcl(D), Releases(releases) { }
 
   bool VisitObjCMessageExpr(ObjCMessageExpr *E) {
@@ -82,7 +81,7 @@ public:
   }
   
   ~AutoreleasePoolRewriter() {
-    llvm::SmallVector<VarDecl *, 8> VarsToHandle;
+    SmallVector<VarDecl *, 8> VarsToHandle;
 
     for (std::map<VarDecl *, PoolVarInfo>::iterator
            I = PoolVars.begin(), E = PoolVars.end(); I != E; ++I) {
@@ -92,7 +91,7 @@ public:
       // Check that we can handle/rewrite all references of the pool.
 
       clearRefsIn(info.Dcl, info.Refs);
-      for (llvm::SmallVectorImpl<PoolScope>::iterator
+      for (SmallVectorImpl<PoolScope>::iterator
              scpI = info.Scopes.begin(),
              scpE = info.Scopes.end(); scpI != scpE; ++scpI) {
         PoolScope &scope = *scpI;
@@ -116,7 +115,7 @@ public:
       Pass.TA.removeStmt(info.Dcl);
 
       // Add "@autoreleasepool { }"
-      for (llvm::SmallVectorImpl<PoolScope>::iterator
+      for (SmallVectorImpl<PoolScope>::iterator
              scpI = info.Scopes.begin(),
              scpE = info.Scopes.end(); scpI != scpE; ++scpI) {
         PoolScope &scope = *scpI;
@@ -147,11 +146,11 @@ public:
       }
 
       // Remove rest of pool var references.
-      for (llvm::SmallVectorImpl<PoolScope>::iterator
+      for (SmallVectorImpl<PoolScope>::iterator
              scpI = info.Scopes.begin(),
              scpE = info.Scopes.end(); scpI != scpE; ++scpI) {
         PoolScope &scope = *scpI;
-        for (llvm::SmallVectorImpl<ObjCMessageExpr *>::iterator
+        for (SmallVectorImpl<ObjCMessageExpr *>::iterator
                relI = scope.Releases.begin(),
                relE = scope.Releases.end(); relI != relE; ++relI) {
           clearUnavailableDiags(*relI);
@@ -162,7 +161,7 @@ public:
   }
 
   bool VisitCompoundStmt(CompoundStmt *S) {
-    llvm::SmallVector<PoolScope, 4> Scopes;
+    SmallVector<PoolScope, 4> Scopes;
 
     for (Stmt::child_iterator
            I = S->body_begin(), E = S->body_end(); I != E; ++I) {
@@ -228,7 +227,7 @@ private:
     Stmt::child_iterator Begin;
     Stmt::child_iterator End;
     bool IsFollowedBySimpleReturnStmt;
-    llvm::SmallVector<ObjCMessageExpr *, 4> Releases;
+    SmallVector<ObjCMessageExpr *, 4> Releases;
 
     PoolScope() : PoolVar(0), CompoundParent(0), Begin(), End(),
                   IsFollowedBySimpleReturnStmt(false) { }
@@ -420,7 +419,7 @@ private:
   struct PoolVarInfo {
     DeclStmt *Dcl;
     ExprSet Refs;
-    llvm::SmallVector<PoolScope, 2> Scopes;
+    SmallVector<PoolScope, 2> Scopes;
 
     PoolVarInfo() : Dcl(0) { }
   };

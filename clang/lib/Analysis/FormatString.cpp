@@ -379,7 +379,7 @@ analyze_format_string::LengthModifier::toString() const {
 // Methods on OptionalAmount.
 //===----------------------------------------------------------------------===//
 
-void OptionalAmount::toString(llvm::raw_ostream &os) const {
+void OptionalAmount::toString(raw_ostream &os) const {
   switch (hs) {
   case Invalid:
   case NotSpecified:

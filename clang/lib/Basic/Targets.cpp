@@ -37,7 +37,7 @@ using namespace clang;
 /// DefineStd - Define a macro name and standard variants.  For example if
 /// MacroName is "unix", then this will define "__unix", "__unix__", and "unix"
 /// when in GNU mode.
-static void DefineStd(MacroBuilder &Builder, llvm::StringRef MacroName,
+static void DefineStd(MacroBuilder &Builder, StringRef MacroName,
                       const LangOptions &Opts) {
   assert(MacroName[0] != '_' && "Identifier should be in the user's namespace");
 
@@ -77,7 +77,7 @@ public:
 
 static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
                              const llvm::Triple &Triple,
-                             llvm::StringRef &PlatformName,
+                             StringRef &PlatformName,
                              VersionTuple &PlatformMinVersion) {
   Builder.defineMacro("__APPLE_CC__", "5621");
   Builder.defineMacro("__APPLE__");
@@ -202,9 +202,9 @@ public:
       this->MCountName = "\01mcount";
     }
 
-  virtual std::string isValidSectionSpecifier(llvm::StringRef SR) const {
+  virtual std::string isValidSectionSpecifier(StringRef SR) const {
     // Let MCSectionMachO validate this.
-    llvm::StringRef Segment, Section;
+    StringRef Segment, Section;
     unsigned TAA, StubSize;
     bool HasTAA;
     return llvm::MCSectionMachO::ParseSectionSpecifier(SR, Segment, Section,
@@ -247,7 +247,7 @@ protected:
     // FreeBSD defines; list based off of gcc output
 
     // FIXME: Move version number handling to llvm::Triple.
-    llvm::StringRef Release = Triple.getOSName().substr(strlen("freebsd"), 1);
+    StringRef Release = Triple.getOSName().substr(strlen("freebsd"), 1);
 
     Builder.defineMacro("__FreeBSD__", Release);
     Builder.defineMacro("__FreeBSD_cc_version", Release + "00001");
@@ -503,7 +503,7 @@ protected:
       Builder.defineMacro("_MT");
 
     if (Opts.MSCVersion != 0)
-      Builder.defineMacro("_MSC_VER", llvm::Twine(Opts.MSCVersion));
+      Builder.defineMacro("_MSC_VER", Twine(Opts.MSCVersion));
 
     if (Opts.Microsoft) {
       Builder.defineMacro("_MSC_EXTENSIONS");
@@ -1429,13 +1429,13 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     case SSSE3:
     case SSE3:
     case SSE2:
-      Builder.defineMacro("_M_IX86_FP", llvm::Twine(2));
+      Builder.defineMacro("_M_IX86_FP", Twine(2));
       break;
     case SSE1:
-      Builder.defineMacro("_M_IX86_FP", llvm::Twine(1));
+      Builder.defineMacro("_M_IX86_FP", Twine(1));
       break;
     default:
-      Builder.defineMacro("_M_IX86_FP", llvm::Twine(0));
+      Builder.defineMacro("_M_IX86_FP", Twine(0));
     }
   }
 
@@ -1706,7 +1706,7 @@ protected:
     // RTEMS defines; list based off of gcc output
 
     // FIXME: Move version number handling to llvm::Triple.
-    llvm::StringRef Release = Triple.getOSName().substr(strlen("rtems"), 1);
+    StringRef Release = Triple.getOSName().substr(strlen("rtems"), 1);
 
     Builder.defineMacro("__rtems__");
     Builder.defineMacro("__ELF__");
@@ -2035,7 +2035,7 @@ public:
       Features.erase(it);
   }
 
-  static const char *getCPUDefineSuffix(llvm::StringRef Name) {
+  static const char *getCPUDefineSuffix(StringRef Name) {
     return llvm::StringSwitch<const char*>(Name)
       .Cases("arm8", "arm810", "4")
       .Cases("strongarm", "strongarm110", "strongarm1100", "strongarm1110", "4")
@@ -2074,7 +2074,7 @@ public:
     Builder.defineMacro("__LITTLE_ENDIAN__");
     Builder.defineMacro("__REGISTER_PREFIX__", "");
 
-    llvm::StringRef CPUArch = getCPUDefineSuffix(CPU);
+    StringRef CPUArch = getCPUDefineSuffix(CPU);
     Builder.defineMacro("__ARM_ARCH_" + CPUArch + "__");
 
     // Subtarget options.

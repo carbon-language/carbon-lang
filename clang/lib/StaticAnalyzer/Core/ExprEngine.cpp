@@ -35,9 +35,6 @@
 
 using namespace clang;
 using namespace ento;
-using llvm::dyn_cast;
-using llvm::dyn_cast_or_null;
-using llvm::cast;
 using llvm::APSInt;
 
 namespace {
@@ -162,11 +159,11 @@ ExprEngine::doesInvalidateGlobals(const CallOrObjCMessage &callOrMessage) const
   if (callOrMessage.isFunctionCall() && !callOrMessage.isCXXCall()) {
     SVal calleeV = callOrMessage.getFunctionCallee();
     if (const FunctionTextRegion *codeR =
-          llvm::dyn_cast_or_null<FunctionTextRegion>(calleeV.getAsRegion())) {
+          dyn_cast_or_null<FunctionTextRegion>(calleeV.getAsRegion())) {
       
       const FunctionDecl *fd = codeR->getDecl();
       if (const IdentifierInfo *ii = fd->getIdentifier()) {
-        llvm::StringRef fname = ii->getName();
+        StringRef fname = ii->getName();
         if (fname == "strlen")
           return false;
       }
@@ -1627,7 +1624,7 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
     case Stmt::CXXOperatorCallExprClass: {
       const CXXOperatorCallExpr *opCall = cast<CXXOperatorCallExpr>(CE);
       methodDecl = 
-        llvm::dyn_cast_or_null<CXXMethodDecl>(opCall->getCalleeDecl());
+        dyn_cast_or_null<CXXMethodDecl>(opCall->getCalleeDecl());
       break;
     }
     case Stmt::CXXMemberCallExprClass: {
@@ -2000,7 +1997,7 @@ void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME,
                                         ExplodedNodeSet& Dst){
 
   // Create a worklist to process both the arguments.
-  llvm::SmallVector<ObjCMsgWLItem, 20> WL;
+  SmallVector<ObjCMsgWLItem, 20> WL;
 
   // But first evaluate the receiver (if any).
   ObjCMessageExpr::const_arg_iterator AI = ME->arg_begin(), AE = ME->arg_end();
@@ -2112,7 +2109,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
           ASTContext& Ctx = getContext();
           NSExceptionInstanceRaiseSelectors =
             new Selector[NUM_RAISE_SELECTORS];
-          llvm::SmallVector<IdentifierInfo*, NUM_RAISE_SELECTORS> II;
+          SmallVector<IdentifierInfo*, NUM_RAISE_SELECTORS> II;
           unsigned idx = 0;
 
           // raise:format:
@@ -2401,7 +2398,7 @@ void ExprEngine::VisitInitListExpr(const InitListExpr* E, ExplodedNode* Pred,
     }
 
     // Create a worklist to process the initializers.
-    llvm::SmallVector<InitListWLItem, 10> WorkList;
+    SmallVector<InitListWLItem, 10> WorkList;
     WorkList.reserve(NumInitElements);
     WorkList.push_back(InitListWLItem(Pred, StartVals, E->rbegin()));
     InitListExpr::const_reverse_iterator ItrEnd = E->rend();

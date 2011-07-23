@@ -45,6 +45,7 @@
 
 using namespace clang::driver;
 using namespace clang::driver::tools;
+using namespace clang;
 
 /// FindTargetProgramPath - Return path of the target specific version of
 /// ProgName.  If it doesn't exist, return path of ProgName itself.
@@ -63,7 +64,7 @@ static std::string FindTargetProgramPath(const ToolChain &TheToolChain,
 static void CheckPreprocessingOptions(const Driver &D, const ArgList &Args) {
   if (Arg *A = Args.getLastArg(options::OPT_C, options::OPT_CC))
     if (!Args.hasArg(options::OPT_E) && !D.CCCIsCPP)
-      D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+      D.Diag(diag::err_drv_argument_only_allowed_with)
         << A->getAsString(Args) << "-E";
 }
 
@@ -74,14 +75,14 @@ static void CheckCodeGenerationOptions(const Driver &D, const ArgList &Args) {
   if (Args.hasArg(options::OPT_static))
     if (const Arg *A = Args.getLastArg(options::OPT_dynamic,
                                        options::OPT_mdynamic_no_pic))
-      D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+      D.Diag(diag::err_drv_argument_not_allowed_with)
         << A->getAsString(Args) << "-static";
 }
 
 // Quote target names for inclusion in GNU Make dependency files.
 // Only the characters '$', '#', ' ', '\t' are quoted.
-static void QuoteTarget(llvm::StringRef Target,
-                        llvm::SmallVectorImpl<char> &Res) {
+static void QuoteTarget(StringRef Target,
+                        SmallVectorImpl<char> &Res) {
   for (unsigned i = 0, e = Target.size(); i != e; ++i) {
     switch (Target[i]) {
     case ' ':
@@ -126,7 +127,7 @@ static void AddLinkerInputs(const ToolChain &TC,
           II.getType() == types::TY_LTO_IR ||
           II.getType() == types::TY_LLVM_BC ||
           II.getType() == types::TY_LTO_BC)
-        D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+        D.Diag(diag::err_drv_no_linker_llvm_support)
           << TC.getTripleString();
     }
 
@@ -168,15 +169,15 @@ static void addProfileRT(const ToolChain &TC, const ArgList &Args,
   // the link line. We cannot do the same thing because unlike gcov there is a
   // libprofile_rt.so. We used to use the -l:libprofile_rt.a syntax, but that is
   // not supported by old linkers.
-  llvm::Twine ProfileRT =
-    llvm::Twine(TC.getDriver().Dir) + "/../lib/" + "libprofile_rt.a";
+  Twine ProfileRT =
+    Twine(TC.getDriver().Dir) + "/../lib/" + "libprofile_rt.a";
 
   if (Triple.getOS() == llvm::Triple::Darwin) {
     // On Darwin, if the static library doesn't exist try the dylib.
     bool Exists;
     if (llvm::sys::fs::exists(ProfileRT.str(), Exists) || !Exists)
       ProfileRT =
-        llvm::Twine(TC.getDriver().Dir) + "/../lib/" + "libprofile_rt.dylib";
+        Twine(TC.getDriver().Dir) + "/../lib/" + "libprofile_rt.dylib";
   }
 
   CmdArgs.push_back(Args.MakeArgString(ProfileRT));
@@ -245,7 +246,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   if (Args.hasArg(options::OPT_MG)) {
     if (!A || A->getOption().matches(options::OPT_MD) ||
               A->getOption().matches(options::OPT_MMD))
-      D.Diag(clang::diag::err_drv_mg_requires_m_or_mm);
+      D.Diag(diag::err_drv_mg_requires_m_or_mm);
     CmdArgs.push_back("-MG");
   }
 
@@ -328,7 +329,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
           continue;
         } else {
           // Ignore the PCH if not first on command line and emit warning.
-          D.Diag(clang::diag::warn_drv_pch_not_first_include)
+          D.Diag(diag::warn_drv_pch_not_first_include)
               << P.str() << A->getAsString(Args);
         }
       }
@@ -363,7 +364,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
 
   // -I- is a deprecated GCC feature, reject it.
   if (Arg *A = Args.getLastArg(options::OPT_I_))
-    D.Diag(clang::diag::err_drv_I_dash_not_supported) << A->getAsString(Args);
+    D.Diag(diag::err_drv_I_dash_not_supported) << A->getAsString(Args);
 
   // If we have a --sysroot, and don't have an explicit -isysroot flag, add an
   // -isysroot to the CC1 invocation.
@@ -386,7 +387,7 @@ static const char *getARMTargetCPU(const ArgList &Args,
   if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
     return A->getValue(Args);
 
-  llvm::StringRef MArch;
+  StringRef MArch;
   if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
     // Otherwise, if we have -march= choose the base CPU for that arch.
     MArch = A->getValue(Args);
@@ -441,7 +442,7 @@ static const char *getARMTargetCPU(const ArgList &Args,
 //
 // FIXME: This is redundant with -mcpu, why does LLVM use this.
 // FIXME: tblgen this, or kill it!
-static const char *getLLVMArchSuffixForARM(llvm::StringRef CPU) {
+static const char *getLLVMArchSuffixForARM(StringRef CPU) {
   if (CPU == "arm7tdmi" || CPU == "arm7tdmi-s" || CPU == "arm710t" ||
       CPU == "arm720t" || CPU == "arm9" || CPU == "arm9tdmi" ||
       CPU == "arm920" || CPU == "arm920t" || CPU == "arm922t" ||
@@ -528,7 +529,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // Select the float ABI as determined by -msoft-float, -mhard-float, and
   // -mfloat-abi=.
-  llvm::StringRef FloatABI;
+  StringRef FloatABI;
   if (Arg *A = Args.getLastArg(options::OPT_msoft_float,
                                options::OPT_mhard_float,
                                options::OPT_mfloat_abi_EQ)) {
@@ -539,7 +540,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     else {
       FloatABI = A->getValue(Args);
       if (FloatABI != "soft" && FloatABI != "softfp" && FloatABI != "hard") {
-        D.Diag(clang::diag::err_drv_invalid_mfloat_abi)
+        D.Diag(diag::err_drv_invalid_mfloat_abi)
           << A->getAsString(Args);
         FloatABI = "soft";
       }
@@ -554,7 +555,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
       // Darwin defaults to "softfp" for v6 and v7.
       //
       // FIXME: Factor out an ARM class so we can cache the arch somewhere.
-      llvm::StringRef ArchName =
+      StringRef ArchName =
         getLLVMArchSuffixForARM(getARMTargetCPU(Args, Triple));
       if (ArchName.startswith("v6") || ArchName.startswith("v7"))
         FloatABI = "softfp";
@@ -583,7 +584,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
       default:
         // Assume "soft", but warn the user we are guessing.
         FloatABI = "soft";
-        D.Diag(clang::diag::warn_drv_assuming_mfloat_abi_is) << "soft";
+        D.Diag(diag::warn_drv_assuming_mfloat_abi_is) << "soft";
         break;
       }
     }
@@ -630,7 +631,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   // FIXME: Centralize feature selection, defaulting shouldn't be also in the
   // frontend target.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ)) {
-    llvm::StringRef FPU = A->getValue(Args);
+    StringRef FPU = A->getValue(Args);
 
     // Set the target features based on the FPU.
     if (FPU == "fpa" || FPU == "fpe2" || FPU == "fpe3" || FPU == "maverick") {
@@ -651,7 +652,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
       CmdArgs.push_back("-target-feature");
       CmdArgs.push_back("+neon");
     } else
-      D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
+      D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
 
   // Setting -msoft-float effectively disables NEON because of the GCC
@@ -693,7 +694,7 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   CmdArgs.push_back(ABIName);
 
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    llvm::StringRef MArch = A->getValue(Args);
+    StringRef MArch = A->getValue(Args);
     CmdArgs.push_back("-target-cpu");
 
     if ((MArch == "r2000") || (MArch == "r3000"))
@@ -705,7 +706,7 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   }
 
   // Select the float ABI as determined by -msoft-float, -mhard-float, and
-  llvm::StringRef FloatABI;
+  StringRef FloatABI;
   if (Arg *A = Args.getLastArg(options::OPT_msoft_float,
                                options::OPT_mhard_float)) {
     if (A->getOption().matches(options::OPT_msoft_float))
@@ -718,7 +719,7 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   if (FloatABI.empty()) {
     // Assume "soft", but warn the user we are guessing.
     FloatABI = "soft";
-    D.Diag(clang::diag::warn_drv_assuming_mfloat_abi_is) << "soft";
+    D.Diag(diag::warn_drv_assuming_mfloat_abi_is) << "soft";
   }
 
   if (FloatABI == "soft") {
@@ -737,13 +738,13 @@ void Clang::AddSparcTargetArgs(const ArgList &Args,
   const Driver &D = getToolChain().getDriver();
 
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    llvm::StringRef MArch = A->getValue(Args);
+    StringRef MArch = A->getValue(Args);
     CmdArgs.push_back("-target-cpu");
     CmdArgs.push_back(MArch.str().c_str());
   }
 
   // Select the float ABI as determined by -msoft-float, -mhard-float, and
-  llvm::StringRef FloatABI;
+  StringRef FloatABI;
   if (Arg *A = Args.getLastArg(options::OPT_msoft_float,
                                options::OPT_mhard_float)) {
     if (A->getOption().matches(options::OPT_msoft_float))
@@ -758,7 +759,7 @@ void Clang::AddSparcTargetArgs(const ArgList &Args,
     default:
       // Assume "soft", but warn the user we are guessing.
       FloatABI = "soft";
-      D.Diag(clang::diag::warn_drv_assuming_mfloat_abi_is) << "soft";
+      D.Diag(diag::warn_drv_assuming_mfloat_abi_is) << "soft";
       break;
     }
   }
@@ -792,7 +793,7 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
 
   const char *CPUName = 0;
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    if (llvm::StringRef(A->getValue(Args)) == "native") {
+    if (StringRef(A->getValue(Args)) == "native") {
       // FIXME: Reject attempts to use -march=native unless the target matches
       // the host.
       //
@@ -856,7 +857,7 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   std::vector<const char*> Features;
   for (arg_iterator it = Args.filtered_begin(options::OPT_m_x86_Features_Group),
          ie = Args.filtered_end(); it != ie; ++it) {
-    llvm::StringRef Name = (*it)->getOption().getName();
+    StringRef Name = (*it)->getOption().getName();
     (*it)->claim();
 
     // Skip over "-m".
@@ -999,7 +1000,7 @@ static bool ShouldDisableCFI(const ArgList &Args,
 
 /// \brief Check whether the given input tree contains any compilation actions.
 static bool ContainsCompileAction(const Action *A) {
-  if (llvm::isa<CompileJobAction>(A))
+  if (isa<CompileJobAction>(A))
     return true;
 
   for (Action::const_iterator it = A->begin(), ie = A->end(); it != ie; ++it)
@@ -1079,7 +1080,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       A->claim();
 
       for (unsigned i = 0, e = A->getNumValues(); i != e; ++i) {
-        llvm::StringRef Value = A->getValue(Args, i);
+        StringRef Value = A->getValue(Args, i);
 
         if (Value == "-force_cpusubtype_ALL") {
           // Do nothing, this is the default and we don't support anything else.
@@ -1091,7 +1092,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         } else if (Value == "--noexecstack") {
           CmdArgs.push_back("-mnoexecstack");
         } else {
-          D.Diag(clang::diag::err_drv_unsupported_option_argument)
+          D.Diag(diag::err_drv_unsupported_option_argument)
             << A->getOption().getName() << Value;
         }
       }
@@ -1217,7 +1218,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else
       Model = getToolChain().GetDefaultRelocationModel();
   }
-  if (llvm::StringRef(Model) != "pic") {
+  if (StringRef(Model) != "pic") {
     CmdArgs.push_back("-mrelocation-model");
     CmdArgs.push_back(Model);
   }
@@ -1362,14 +1363,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_fallow_unsupported)) {
     Arg *Unsupported;
     if ((Unsupported = Args.getLastArg(options::OPT_iframework)))
-      D.Diag(clang::diag::err_drv_clang_unsupported)
+      D.Diag(diag::err_drv_clang_unsupported)
         << Unsupported->getOption().getName();
 
     if (types::isCXX(InputType) &&
         getToolChain().getTriple().getOS() == llvm::Triple::Darwin &&
         getToolChain().getTriple().getArch() == llvm::Triple::x86) {
       if ((Unsupported = Args.getLastArg(options::OPT_fapple_kext)))
-        D.Diag(clang::diag::err_drv_clang_unsupported_opt_cxx_darwin_i386)
+        D.Diag(diag::err_drv_clang_unsupported_opt_cxx_darwin_i386)
           << Unsupported->getOption().getName();
     }
   }
@@ -1593,7 +1594,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // If -fmessage-length=N was not specified, determine whether this is a
     // terminal and, if so, implicitly define -fmessage-length appropriately.
     unsigned N = llvm::sys::Process::StandardErrColumns();
-    CmdArgs.push_back(Args.MakeArgString(llvm::Twine(N)));
+    CmdArgs.push_back(Args.MakeArgString(Twine(N)));
   }
 
   if (const Arg *A = Args.getLastArg(options::OPT_fvisibility_EQ)) {
@@ -1638,7 +1639,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Forward -ftrap_function= options to the backend.
   if (Arg *A = Args.getLastArg(options::OPT_ftrap_function_EQ)) {
-    llvm::StringRef FuncName = A->getValue(Args);
+    StringRef FuncName = A->getValue(Args);
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back(Args.MakeArgString("-trap-func=" + FuncName));
   }
@@ -1672,7 +1673,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     StackProtectorLevel = getToolChain().GetDefaultStackProtectorLevel();
   if (StackProtectorLevel) {
     CmdArgs.push_back("-stack-protector");
-    CmdArgs.push_back(Args.MakeArgString(llvm::Twine(StackProtectorLevel)));
+    CmdArgs.push_back(Args.MakeArgString(Twine(StackProtectorLevel)));
   }
 
   // Translate -mstackrealign
@@ -1756,7 +1757,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
                    getToolChain().getTriple().getOS() == llvm::Triple::Win32) ||
       Args.hasArg(options::OPT_fmsc_version)) {
-    llvm::StringRef msc_ver = Args.getLastArgValue(options::OPT_fmsc_version);
+    StringRef msc_ver = Args.getLastArgValue(options::OPT_fmsc_version);
     if (msc_ver.empty())
       CmdArgs.push_back("-fmsc-version=1300");
     else
@@ -1815,14 +1816,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     objcABIVersion = 1;
     // If -fobjc-abi-version= is present, use that to set the version.
     if (Arg *A = Args.getLastArg(options::OPT_fobjc_abi_version_EQ)) {
-      if (llvm::StringRef(A->getValue(Args)) == "1")
+      if (StringRef(A->getValue(Args)) == "1")
         objcABIVersion = 1;
-      else if (llvm::StringRef(A->getValue(Args)) == "2")
+      else if (StringRef(A->getValue(Args)) == "2")
         objcABIVersion = 2;
-      else if (llvm::StringRef(A->getValue(Args)) == "3")
+      else if (StringRef(A->getValue(Args)) == "3")
         objcABIVersion = 3;
       else
-        D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
+        D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
     } else {
       // Otherwise, determine if we are using the non-fragile ABI.
       if (Args.hasFlag(options::OPT_fobjc_nonfragile_abi,
@@ -1837,12 +1838,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
         if (Arg *A = Args.getLastArg(
               options::OPT_fobjc_nonfragile_abi_version_EQ)) {
-          if (llvm::StringRef(A->getValue(Args)) == "1")
+          if (StringRef(A->getValue(Args)) == "1")
             NonFragileABIVersion = 1;
-          else if (llvm::StringRef(A->getValue(Args)) == "2")
+          else if (StringRef(A->getValue(Args)) == "2")
             NonFragileABIVersion = 2;
           else
-            D.Diag(clang::diag::err_drv_clang_unsupported)
+            D.Diag(diag::err_drv_clang_unsupported)
               << A->getAsString(Args);
         }
 
@@ -1907,13 +1908,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     GCArg = Args.getLastArg(options::OPT_fobjc_gc);
   if (GCArg) {
     if (ARC) {
-      D.Diag(clang::diag::err_drv_objc_gc_arr)
+      D.Diag(diag::err_drv_objc_gc_arr)
         << GCArg->getAsString(Args);
     } else if (getToolChain().SupportsObjCGC()) {
       GCArg->render(Args, CmdArgs);
     } else {
       // FIXME: We should move this to a hard error.
-      D.Diag(clang::diag::warn_drv_objc_gc_unsupported)
+      D.Diag(diag::warn_drv_objc_gc_unsupported)
         << GCArg->getAsString(Args);
     }
   }
@@ -1969,13 +1970,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -funsigned-bitfields.
   if (!Args.hasFlag(options::OPT_fsigned_bitfields,
                     options::OPT_funsigned_bitfields))
-    D.Diag(clang::diag::warn_drv_clang_unsupported)
+    D.Diag(diag::warn_drv_clang_unsupported)
       << Args.getLastArg(options::OPT_funsigned_bitfields)->getAsString(Args);
 
   // -fsigned-bitfields is default, and clang doesn't support -fno-for-scope.
   if (!Args.hasFlag(options::OPT_ffor_scope,
                     options::OPT_fno_for_scope))
-    D.Diag(clang::diag::err_drv_clang_unsupported)
+    D.Diag(diag::err_drv_clang_unsupported)
       << Args.getLastArg(options::OPT_fno_for_scope)->getAsString(Args);
 
   // -fcaret-diagnostics is default.
@@ -2063,7 +2064,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Arg *A = Args.getLastArg(options::OPT_funit_at_a_time,
                                options::OPT_fno_unit_at_a_time)) {
     if (A->getOption().matches(options::OPT_fno_unit_at_a_time))
-      D.Diag(clang::diag::warn_drv_clang_unsupported) << A->getAsString(Args);
+      D.Diag(diag::warn_drv_clang_unsupported) << A->getAsString(Args);
   }
 
   // Default to -fno-builtin-str{cat,cpy} on Darwin for ARM.
@@ -2086,7 +2087,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (isa<PreprocessJobAction>(JA))
       CmdArgs.push_back("-traditional-cpp");
     else 
-      D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
+      D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
 
   Args.AddLastArg(CmdArgs, options::OPT_dM);
@@ -2101,7 +2102,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
     // We translate this by hand to the -cc1 argument, since nightly test uses
     // it and developers have been trained to spell it with -mllvm.
-    if (llvm::StringRef((*it)->getValue(Args, 0)) == "-disable-llvm-optzns")
+    if (StringRef((*it)->getValue(Args, 0)) == "-disable-llvm-optzns")
       CmdArgs.push_back("-disable-llvm-optzns");
     else
       (*it)->render(Args, CmdArgs);
@@ -2153,7 +2154,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (Arg *A = Args.getLastArg(options::OPT_pg))
     if (Args.hasArg(options::OPT_fomit_frame_pointer))
-      D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+      D.Diag(diag::err_drv_argument_not_allowed_with)
         << "-fomit-frame-pointer" << A->getAsString(Args);
 
   // Claim some arguments which clang supports automatically.
@@ -2306,10 +2307,10 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
     // Don't try to pass LLVM or AST inputs to a generic gcc.
     if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
         II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
-      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+      D.Diag(diag::err_drv_no_linker_llvm_support)
         << getToolChain().getTripleString();
     else if (II.getType() == types::TY_AST)
-      D.Diag(clang::diag::err_drv_no_ast_support)
+      D.Diag(diag::err_drv_no_ast_support)
         << getToolChain().getTripleString();
 
     if (types::canTypeBeUserSpecified(II.getType())) {
@@ -2372,7 +2373,7 @@ void gcc::Compile::RenderExtraToolArgs(const JobAction &JA,
     CmdArgs.push_back("-c");
   else {
     if (JA.getType() != types::TY_PP_Asm)
-      D.Diag(clang::diag::err_drv_invalid_gcc_output_type)
+      D.Diag(diag::err_drv_invalid_gcc_output_type)
         << getTypeName(JA.getType());
 
     CmdArgs.push_back("-S");
@@ -2478,7 +2479,7 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
 
   if (Arg *A = Args.getLastArg(options::OPT_pg))
     if (Args.hasArg(options::OPT_fomit_frame_pointer))
-      D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+      D.Diag(diag::err_drv_argument_not_allowed_with)
         << A->getAsString(Args) << "-fomit-frame-pointer";
 
   AddCC1Args(Args, CmdArgs);
@@ -2769,7 +2770,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
   types::ID InputType = Inputs[0].getType();
   const Arg *A;
   if ((A = Args.getLastArg(options::OPT_traditional)))
-    D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+    D.Diag(diag::err_drv_argument_only_allowed_with)
       << A->getAsString(Args) << "-E";
 
   if (JA.getType() == types::TY_LLVM_IR ||
@@ -2779,11 +2780,11 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
            JA.getType() == types::TY_LTO_BC)
     CmdArgs.push_back("-emit-llvm-bc");
   else if (Output.getType() == types::TY_AST)
-    D.Diag(clang::diag::err_drv_no_ast_support)
+    D.Diag(diag::err_drv_no_ast_support)
       << getToolChain().getTripleString();
   else if (JA.getType() != types::TY_PP_Asm &&
            JA.getType() != types::TY_PCH)
-    D.Diag(clang::diag::err_drv_invalid_gcc_output_type)
+    D.Diag(diag::err_drv_invalid_gcc_output_type)
       << getTypeName(JA.getType());
 
   ArgStringList OutputArgs;
@@ -2817,7 +2818,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
 
       // Reject AST inputs.
       if (II.getType() == types::TY_AST) {
-        D.Diag(clang::diag::err_drv_no_ast_support)
+        D.Diag(diag::err_drv_no_ast_support)
           << getToolChain().getTripleString();
         return;
       }
@@ -2911,7 +2912,7 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
 void darwin::DarwinTool::AddDarwinArch(const ArgList &Args,
                                        ArgStringList &CmdArgs) const {
-  llvm::StringRef ArchName = getDarwinToolChain().getDarwinArchName(Args);
+  StringRef ArchName = getDarwinToolChain().getDarwinArchName(Args);
 
   // Derived from darwin_arch spec.
   CmdArgs.push_back("-arch");
@@ -2934,7 +2935,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
     if (!Driver::GetReleaseVersion(A->getValue(Args), Version[0],
                                    Version[1], Version[2], HadExtra) ||
         HadExtra)
-      D.Diag(clang::diag::err_drv_invalid_version_number)
+      D.Diag(diag::err_drv_invalid_version_number)
         << A->getAsString(Args);
   }
 
@@ -2958,7 +2959,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
              ie = Args.filtered_end(); it != ie; ++it) {
         const Arg *A = *it;
         for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
-          if (llvm::StringRef(A->getValue(Args, i)) == "-kext")
+          if (StringRef(A->getValue(Args, i)) == "-kext")
             UsesLdClassic = true;
       }
     }
@@ -2999,7 +3000,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
     if ((A = Args.getLastArg(options::OPT_compatibility__version)) ||
         (A = Args.getLastArg(options::OPT_current__version)) ||
         (A = Args.getLastArg(options::OPT_install__name)))
-      D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+      D.Diag(diag::err_drv_argument_only_allowed_with)
         << A->getAsString(Args) << "-dynamiclib";
 
     Args.AddLastArg(CmdArgs, options::OPT_force__flat__namespace);
@@ -3015,7 +3016,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
         (A = Args.getLastArg(options::OPT_force__flat__namespace)) ||
         (A = Args.getLastArg(options::OPT_keep__private__externs)) ||
         (A = Args.getLastArg(options::OPT_private__bundle)))
-      D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+      D.Diag(diag::err_drv_argument_not_allowed_with)
         << A->getAsString(Args) << "-dynamiclib";
 
     Args.AddAllArgsTranslated(CmdArgs, options::OPT_compatibility__version,
@@ -3062,9 +3063,9 @@ void darwin::Link::AddLinkArgs(Compilation &C,
     CmdArgs.push_back("-iphoneos_version_min");
   else
     CmdArgs.push_back("-macosx_version_min");
-  CmdArgs.push_back(Args.MakeArgString(llvm::Twine(TargetVersion[0]) + "." +
-                                       llvm::Twine(TargetVersion[1]) + "." +
-                                       llvm::Twine(TargetVersion[2])));
+  CmdArgs.push_back(Args.MakeArgString(Twine(TargetVersion[0]) + "." +
+                                       Twine(TargetVersion[1]) + "." +
+                                       Twine(TargetVersion[2])));
 
   Args.AddLastArg(CmdArgs, options::OPT_nomultidefs);
   Args.AddLastArg(CmdArgs, options::OPT_multi__module);
@@ -3691,7 +3692,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const ToolChain::path_list Paths = getToolChain().getFilePaths();
   for (ToolChain::path_list::const_iterator i = Paths.begin(), e = Paths.end();
        i != e; ++i)
-    CmdArgs.push_back(Args.MakeArgString(llvm::StringRef("-L") + *i));
+    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + *i));
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_e);
   Args.AddAllArgs(CmdArgs, options::OPT_s);
@@ -3944,7 +3945,7 @@ void linuxtools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   } else if (getToolChain().getArch() == llvm::Triple::x86_64) {
     CmdArgs.push_back("--64");
   } else if (getToolChain().getArch() == llvm::Triple::arm) {
-    llvm::StringRef MArch = getToolChain().getArchName();
+    StringRef MArch = getToolChain().getArchName();
     if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
       CmdArgs.push_back("-mfpu=neon");
   }
@@ -4079,7 +4080,7 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   for (ToolChain::path_list::const_iterator i = Paths.begin(), e = Paths.end();
        i != e; ++i)
-    CmdArgs.push_back(Args.MakeArgString(llvm::StringRef("-L") + *i));
+    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + *i));
 
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
 

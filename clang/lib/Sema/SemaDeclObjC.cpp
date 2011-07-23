@@ -559,7 +559,7 @@ void
 Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
                               const IdentifierLocPair *ProtocolId,
                               unsigned NumProtocols,
-                              llvm::SmallVectorImpl<Decl *> &Protocols) {
+                              SmallVectorImpl<Decl *> &Protocols) {
   for (unsigned i = 0; i != NumProtocols; ++i) {
     ObjCProtocolDecl *PDecl = LookupProtocol(ProtocolId[i].first,
                                              ProtocolId[i].second);
@@ -627,8 +627,8 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                       const IdentifierLocPair *IdentList,
                                       unsigned NumElts,
                                       AttributeList *attrList) {
-  llvm::SmallVector<ObjCProtocolDecl*, 32> Protocols;
-  llvm::SmallVector<SourceLocation, 8> ProtoLocs;
+  SmallVector<ObjCProtocolDecl*, 32> Protocols;
+  SmallVector<SourceLocation, 8> ProtoLocs;
 
   for (unsigned i = 0; i != NumElts; ++i) {
     IdentifierInfo *Ident = IdentList[i].first;
@@ -1511,7 +1511,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                    IdentifierInfo **IdentList,
                                    SourceLocation *IdentLocs,
                                    unsigned NumElts) {
-  llvm::SmallVector<ObjCInterfaceDecl*, 32> Interfaces;
+  SmallVector<ObjCInterfaceDecl*, 32> Interfaces;
 
   for (unsigned i = 0; i != NumElts; ++i) {
     // Check for another declaration kind with the same name.
@@ -2334,7 +2334,7 @@ Decl *Sema::ActOnMethodDeclaration(
                              : ObjCMethodDecl::Required,
                            false);
 
-  llvm::SmallVector<ParmVarDecl*, 16> Params;
+  SmallVector<ParmVarDecl*, 16> Params;
 
   for (unsigned i = 0, e = Sel.getNumArgs(); i != e; ++i) {
     QualType ArgType;
@@ -2521,7 +2521,7 @@ bool Sema::CheckObjCDeclScope(Decl *D) {
 /// instance variables of ClassName into Decls.
 void Sema::ActOnDefs(Scope *S, Decl *TagD, SourceLocation DeclStart,
                      IdentifierInfo *ClassName,
-                     llvm::SmallVectorImpl<Decl*> &Decls) {
+                     SmallVectorImpl<Decl*> &Decls) {
   // Check that ClassName is a valid class
   ObjCInterfaceDecl *Class = getObjCInterfaceDecl(ClassName, DeclStart);
   if (!Class) {
@@ -2549,7 +2549,7 @@ void Sema::ActOnDefs(Scope *S, Decl *TagD, SourceLocation DeclStart,
   }
 
   // Introduce all of these fields into the appropriate scope.
-  for (llvm::SmallVectorImpl<Decl*>::iterator D = Decls.begin();
+  for (SmallVectorImpl<Decl*>::iterator D = Decls.begin();
        D != Decls.end(); ++D) {
     FieldDecl *FD = cast<FieldDecl>(*D);
     if (getLangOptions().CPlusPlus)
@@ -2651,7 +2651,7 @@ Decl *Sema::ActOnObjCExceptionDecl(Scope *S, Declarator &D) {
 /// CollectIvarsToConstructOrDestruct - Collect those ivars which require
 /// initialization.
 void Sema::CollectIvarsToConstructOrDestruct(ObjCInterfaceDecl *OI,
-                                llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
+                                SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
   for (ObjCIvarDecl *Iv = OI->all_declared_ivar_begin(); Iv; 
        Iv= Iv->getNextIvar()) {
     QualType QT = Context.getBaseElementType(Iv->getType());

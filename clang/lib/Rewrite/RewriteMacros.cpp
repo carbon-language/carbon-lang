@@ -87,7 +87,7 @@ static void LexRawTokensFromMainFile(Preprocessor &PP,
 
 
 /// RewriteMacrosInInput - Implement -rewrite-macros mode.
-void clang::RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream *OS) {
+void clang::RewriteMacrosInInput(Preprocessor &PP, raw_ostream *OS) {
   SourceManager &SM = PP.getSourceManager();
 
   Rewriter Rewrite;

@@ -46,9 +46,9 @@
 using namespace clang::driver;
 using namespace clang;
 
-Driver::Driver(llvm::StringRef ClangExecutable,
-               llvm::StringRef DefaultHostTriple,
-               llvm::StringRef DefaultImageName,
+Driver::Driver(StringRef ClangExecutable,
+               StringRef DefaultHostTriple,
+               StringRef DefaultImageName,
                bool IsProduction, bool CXXIsProduction,
                Diagnostic &Diags)
   : Opts(createDriverOptTable()), Diags(Diags),
@@ -82,7 +82,7 @@ Driver::Driver(llvm::StringRef ClangExecutable,
   Dir  = llvm::sys::path::parent_path(ClangExecutable);
 
   // Compute the path to the resource directory.
-  llvm::StringRef ClangResourceDir(CLANG_RESOURCE_DIR);
+  StringRef ClangResourceDir(CLANG_RESOURCE_DIR);
   llvm::SmallString<128> P(Dir);
   if (ClangResourceDir != "")
     llvm::sys::path::append(P, ClangResourceDir);
@@ -142,7 +142,7 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
 
       // Add the remaining values as Xlinker arguments.
       for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
-        if (llvm::StringRef(A->getValue(Args, i)) != "--no-demangle")
+        if (StringRef(A->getValue(Args, i)) != "--no-demangle")
           DAL->AddSeparateArg(A, Opts->getOption(options::OPT_Xlinker),
                               A->getValue(Args, i));
 
@@ -154,10 +154,10 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
     // care to encourage this usage model.
     if (A->getOption().matches(options::OPT_Wp_COMMA) &&
         A->getNumValues() == 2 &&
-        (A->getValue(Args, 0) == llvm::StringRef("-MD") ||
-         A->getValue(Args, 0) == llvm::StringRef("-MMD"))) {
+        (A->getValue(Args, 0) == StringRef("-MD") ||
+         A->getValue(Args, 0) == StringRef("-MMD"))) {
       // Rewrite to -MD/-MMD along with -MF.
-      if (A->getValue(Args, 0) == llvm::StringRef("-MD"))
+      if (A->getValue(Args, 0) == StringRef("-MD"))
         DAL->AddFlagArg(A, Opts->getOption(options::OPT_MD));
       else
         DAL->AddFlagArg(A, Opts->getOption(options::OPT_MMD));
@@ -168,7 +168,7 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
 
     // Rewrite reserved library names.
     if (A->getOption().matches(options::OPT_l)) {
-      llvm::StringRef Value = A->getValue(Args);
+      StringRef Value = A->getValue(Args);
 
       // Rewrite unless -nostdlib is present.
       if (!HasNostdlib && Value == "stdc++") {
@@ -242,11 +242,11 @@ Compilation *Driver::BuildCompilation(llvm::ArrayRef<const char *> ArgList) {
   CCCUseClang = !Args->hasArg(options::OPT_ccc_no_clang);
   CCCUseClangCPP = !Args->hasArg(options::OPT_ccc_no_clang_cpp);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_clang_archs)) {
-    llvm::StringRef Cur = A->getValue(*Args);
+    StringRef Cur = A->getValue(*Args);
 
     CCCClangArchs.clear();
     while (!Cur.empty()) {
-      std::pair<llvm::StringRef, llvm::StringRef> Split = Cur.split(',');
+      std::pair<StringRef, StringRef> Split = Cur.split(',');
 
       if (!Split.first.empty()) {
         llvm::Triple::ArchType Arch =
@@ -382,7 +382,7 @@ void Driver::PrintHelp(bool ShowHidden) const {
                       ShowHidden);
 }
 
-void Driver::PrintVersion(const Compilation &C, llvm::raw_ostream &OS) const {
+void Driver::PrintVersion(const Compilation &C, raw_ostream &OS) const {
   // FIXME: The following handlers should use a callback mechanism, we don't
   // know what the client would like to do.
   OS << getClangFullVersion() << '\n';
@@ -397,7 +397,7 @@ void Driver::PrintVersion(const Compilation &C, llvm::raw_ostream &OS) const {
 
 /// PrintDiagnosticCategories - Implement the --print-diagnostic-categories
 /// option.
-static void PrintDiagnosticCategories(llvm::raw_ostream &OS) {
+static void PrintDiagnosticCategories(raw_ostream &OS) {
   // Skip the empty category.
   for (unsigned i = 1, max = DiagnosticIDs::getNumberOfCategories();
        i != max; ++i)
@@ -599,7 +599,7 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
   // Collect the list of architectures. Duplicates are allowed, but should only
   // be handled once (in the order seen).
   llvm::StringSet<> ArchNames;
-  llvm::SmallVector<const char *, 4> Archs;
+  SmallVector<const char *, 4> Archs;
   for (ArgList::const_iterator it = Args.begin(), ie = Args.end();
        it != ie; ++it) {
     Arg *A = *it;
@@ -699,7 +699,7 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
   types::ID InputType = types::TY_Nothing;
   Arg *InputTypeArg = 0;
 
-  llvm::SmallVector<std::pair<types::ID, const Arg*>, 16> Inputs;
+  SmallVector<std::pair<types::ID, const Arg*>, 16> Inputs;
   for (ArgList::const_iterator it = Args.begin(), ie = Args.end();
        it != ie; ++it) {
     Arg *A = *it;
@@ -1236,7 +1236,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   }
 
   llvm::SmallString<128> BasePath(BaseInput);
-  llvm::StringRef BaseName;
+  StringRef BaseName;
 
   // Dsymutil actions should use the full path.
   if (isa<DsymutilJobAction>(JA))

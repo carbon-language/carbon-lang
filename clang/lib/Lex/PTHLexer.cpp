@@ -380,7 +380,7 @@ public:
   }
 
   static unsigned ComputeHash(const internal_key_type& a) {
-    return llvm::HashString(llvm::StringRef(a.first, a.second));
+    return llvm::HashString(StringRef(a.first, a.second));
   }
 
   // This hopefully will just get inlined and removed by the optimizer.
@@ -572,7 +572,7 @@ IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
   return II;
 }
 
-IdentifierInfo* PTHManager::get(llvm::StringRef Name) {
+IdentifierInfo* PTHManager::get(StringRef Name) {
   PTHStringIdLookup& SL = *((PTHStringIdLookup*)StringIdLookup);
   // Double check our assumption that the last character isn't '\0'.
   assert(Name.empty() || Name.data()[Name.size()-1] != '\0');

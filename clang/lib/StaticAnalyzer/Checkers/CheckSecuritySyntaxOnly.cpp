@@ -103,7 +103,7 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
   IdentifierInfo *II = FD->getIdentifier();
   if (!II)   // if no identifier, not a simple C function
     return;
-  llvm::StringRef Name = II->getName();
+  StringRef Name = II->getName();
   if (Name.startswith("__builtin_"))
     Name = Name.substr(10);
 
@@ -247,7 +247,7 @@ void WalkAST::checkLoopConditionForFloat(const ForStmt *FS) {
   // referenced the compared variable.
   const DeclRefExpr *drCond = vdLHS == drInc->getDecl() ? drLHS : drRHS;
 
-  llvm::SmallVector<SourceRange, 2> ranges;
+  SmallVector<SourceRange, 2> ranges;
   llvm::SmallString<256> sbuf;
   llvm::raw_svector_ostream os(sbuf);
 

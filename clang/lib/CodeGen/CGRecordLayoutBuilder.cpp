@@ -35,7 +35,7 @@ class CGRecordLayoutBuilder {
 public:
   /// FieldTypes - Holds the LLVM types that the struct is created from.
   /// 
-  llvm::SmallVector<llvm::Type *, 16> FieldTypes;
+  SmallVector<llvm::Type *, 16> FieldTypes;
 
   /// BaseSubobjectType - Holds the LLVM type for the non-virtual part
   /// of the struct. For example, consider:
@@ -1037,7 +1037,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
   return RL;
 }
 
-void CGRecordLayout::print(llvm::raw_ostream &OS) const {
+void CGRecordLayout::print(raw_ostream &OS) const {
   OS << "<CGRecordLayout\n";
   OS << "  LLVMType:" << *CompleteObjectType << "\n";
   if (BaseSubobjectType)
@@ -1071,7 +1071,7 @@ void CGRecordLayout::dump() const {
   print(llvm::errs());
 }
 
-void CGBitFieldInfo::print(llvm::raw_ostream &OS) const {
+void CGBitFieldInfo::print(raw_ostream &OS) const {
   OS << "<CGBitFieldInfo";
   OS << " Size:" << Size;
   OS << " IsSigned:" << IsSigned << "\n";

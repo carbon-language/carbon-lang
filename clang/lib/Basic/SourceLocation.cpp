@@ -23,7 +23,7 @@ using namespace clang;
 // PrettyStackTraceLoc
 //===----------------------------------------------------------------------===//
 
-void PrettyStackTraceLoc::print(llvm::raw_ostream &OS) const {
+void PrettyStackTraceLoc::print(raw_ostream &OS) const {
   if (Loc.isValid()) {
     Loc.print(OS, SM);
     OS << ": ";
@@ -35,7 +35,7 @@ void PrettyStackTraceLoc::print(llvm::raw_ostream &OS) const {
 // SourceLocation
 //===----------------------------------------------------------------------===//
 
-void SourceLocation::print(llvm::raw_ostream &OS, const SourceManager &SM)const{
+void SourceLocation::print(raw_ostream &OS, const SourceManager &SM)const{
   if (!isValid()) {
     OS << "<invalid loc>";
     return;
@@ -125,7 +125,7 @@ const llvm::MemoryBuffer* FullSourceLoc::getBuffer(bool *Invalid) const {
   return SrcMgr->getBuffer(SrcMgr->getFileID(*this), Invalid);
 }
 
-llvm::StringRef FullSourceLoc::getBufferData(bool *Invalid) const {
+StringRef FullSourceLoc::getBufferData(bool *Invalid) const {
   return getBuffer(Invalid)->getBuffer();
 }
 

@@ -122,7 +122,7 @@ static void expandGraphWithCheckers(CHECK_CTX checkCtx,
 
 namespace {
   struct CheckStmtContext {
-    typedef llvm::SmallVectorImpl<CheckerManager::CheckStmtFunc> CheckersTy;
+    typedef SmallVectorImpl<CheckerManager::CheckStmtFunc> CheckersTy;
     bool IsPreVisit;
     const CheckersTy &Checkers;
     const Stmt *S;

@@ -205,7 +205,7 @@ public:
     CodeGen::CodeGenTypes &Types = CGM.getTypes();
     ASTContext &Ctx = CGM.getContext();
     // id objc_getProperty (id, SEL, ptrdiff_t, bool)
-    llvm::SmallVector<CanQualType,4> Params;
+    SmallVector<CanQualType,4> Params;
     CanQualType IdType = Ctx.getCanonicalParamType(Ctx.getObjCIdType());
     CanQualType SelType = Ctx.getCanonicalParamType(Ctx.getObjCSelType());
     Params.push_back(IdType);
@@ -223,7 +223,7 @@ public:
     CodeGen::CodeGenTypes &Types = CGM.getTypes();
     ASTContext &Ctx = CGM.getContext();
     // void objc_setProperty (id, SEL, ptrdiff_t, id, bool, bool)
-    llvm::SmallVector<CanQualType,6> Params;
+    SmallVector<CanQualType,6> Params;
     CanQualType IdType = Ctx.getCanonicalParamType(Ctx.getObjCIdType());
     CanQualType SelType = Ctx.getCanonicalParamType(Ctx.getObjCSelType());
     Params.push_back(IdType);
@@ -244,7 +244,7 @@ public:
     CodeGen::CodeGenTypes &Types = CGM.getTypes();
     ASTContext &Ctx = CGM.getContext();
     // void objc_copyStruct (void *, const void *, size_t, bool, bool)
-    llvm::SmallVector<CanQualType,5> Params;
+    SmallVector<CanQualType,5> Params;
     Params.push_back(Ctx.VoidPtrTy);
     Params.push_back(Ctx.VoidPtrTy);
     Params.push_back(Ctx.LongTy);
@@ -261,7 +261,7 @@ public:
     CodeGen::CodeGenTypes &Types = CGM.getTypes();
     ASTContext &Ctx = CGM.getContext();
     // void objc_enumerationMutation (id)
-    llvm::SmallVector<CanQualType,1> Params;
+    SmallVector<CanQualType,1> Params;
     Params.push_back(Ctx.getCanonicalParamType(Ctx.getObjCIdType()));
     llvm::FunctionType *FTy =
       Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params,
@@ -669,8 +669,8 @@ protected:
   unsigned ObjCABI;
 
   // gc ivar layout bitmap calculation helper caches.
-  llvm::SmallVector<GC_IVAR, 16> SkipIvars;
-  llvm::SmallVector<GC_IVAR, 16> IvarsInfo;
+  SmallVector<GC_IVAR, 16> SkipIvars;
+  SmallVector<GC_IVAR, 16> IvarsInfo;
 
   /// LazySymbols - Symbols to generate a lazy reference for. See
   /// DefinedSymbols and FinishModule().
@@ -733,7 +733,7 @@ protected:
   /// \param[out] NameOut - The return value.
   void GetNameForMethod(const ObjCMethodDecl *OMD,
                         const ObjCContainerDecl *CD,
-                        llvm::SmallVectorImpl<char> &NameOut);
+                        SmallVectorImpl<char> &NameOut);
 
   /// GetMethodVarName - Return a unique constant for the given
   /// selector's name. The return value has type char *.
@@ -786,7 +786,7 @@ protected:
 
   /// EmitPropertyList - Emit the given property list. The return
   /// value has type PropertyListPtrTy.
-  llvm::Constant *EmitPropertyList(llvm::Twine Name,
+  llvm::Constant *EmitPropertyList(Twine Name,
                                    const Decl *Container,
                                    const ObjCContainerDecl *OCD,
                                    const ObjCCommonTypesHelper &ObjCTypes);
@@ -817,7 +817,7 @@ protected:
   /// \param Align - The alignment for the variable, or 0.
   /// \param AddToUsed - Whether the variable should be added to
   /// "llvm.used".
-  llvm::GlobalVariable *CreateMetadataVar(llvm::Twine Name,
+  llvm::GlobalVariable *CreateMetadataVar(Twine Name,
                                           llvm::Constant *Init,
                                           const char *Section,
                                           unsigned Align,
@@ -923,7 +923,7 @@ private:
 
   /// EmitMethodList - Emit the method list for the given
   /// implementation. The return value has type MethodListPtrTy.
-  llvm::Constant *EmitMethodList(llvm::Twine Name,
+  llvm::Constant *EmitMethodList(Twine Name,
                                  const char *Section,
                                  const ConstantVector &Methods);
 
@@ -938,7 +938,7 @@ private:
   ///  - begin, end: The method list to output.
   ///
   /// The return value has type MethodDescriptionListPtrTy.
-  llvm::Constant *EmitMethodDescList(llvm::Twine Name,
+  llvm::Constant *EmitMethodDescList(Twine Name,
                                      const char *Section,
                                      const ConstantVector &Methods);
 
@@ -964,7 +964,7 @@ private:
 
   /// EmitProtocolList - Generate the list of referenced
   /// protocols. The return value has type ProtocolListPtrTy.
-  llvm::Constant *EmitProtocolList(llvm::Twine Name,
+  llvm::Constant *EmitProtocolList(Twine Name,
                                    ObjCProtocolDecl::protocol_iterator begin,
                                    ObjCProtocolDecl::protocol_iterator end);
 
@@ -1117,7 +1117,7 @@ private:
 
   /// EmitMethodList - Emit the method list for the given
   /// implementation. The return value has type MethodListnfABITy.
-  llvm::Constant *EmitMethodList(llvm::Twine Name,
+  llvm::Constant *EmitMethodList(Twine Name,
                                  const char *Section,
                                  const ConstantVector &Methods);
   /// EmitIvarList - Emit the ivar list for the given
@@ -1144,7 +1144,7 @@ private:
 
   /// EmitProtocolList - Generate the list of referenced
   /// protocols. The return value has type ProtocolListPtrTy.
-  llvm::Constant *EmitProtocolList(llvm::Twine Name,
+  llvm::Constant *EmitProtocolList(Twine Name,
                                    ObjCProtocolDecl::protocol_iterator begin,
                                    ObjCProtocolDecl::protocol_iterator end);
 
@@ -1878,7 +1878,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
   };
 */
 llvm::Constant *
-CGObjCMac::EmitProtocolList(llvm::Twine Name,
+CGObjCMac::EmitProtocolList(Twine Name,
                             ObjCProtocolDecl::protocol_iterator begin,
                             ObjCProtocolDecl::protocol_iterator end) {
   std::vector<llvm::Constant*> ProtocolRefs;
@@ -1942,7 +1942,7 @@ void CGObjCCommonMac::PushProtocolProperties(llvm::SmallPtrSet<const IdentifierI
   struct _objc_property[prop_count];
   };
 */
-llvm::Constant *CGObjCCommonMac::EmitPropertyList(llvm::Twine Name,
+llvm::Constant *CGObjCCommonMac::EmitPropertyList(Twine Name,
                                        const Decl *Container,
                                        const ObjCContainerDecl *OCD,
                                        const ObjCCommonTypesHelper &ObjCTypes) {
@@ -2014,7 +2014,7 @@ CGObjCMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
                                    Desc);
 }
 
-llvm::Constant *CGObjCMac::EmitMethodDescList(llvm::Twine Name,
+llvm::Constant *CGObjCMac::EmitMethodDescList(Twine Name,
                                               const char *Section,
                                               const ConstantVector &Methods) {
   // Return null for empty list.
@@ -2475,7 +2475,7 @@ llvm::Constant *CGObjCMac::GetMethodConstant(const ObjCMethodDecl *MD) {
   return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Method);
 }
 
-llvm::Constant *CGObjCMac::EmitMethodList(llvm::Twine Name,
+llvm::Constant *CGObjCMac::EmitMethodList(Twine Name,
                                           const char *Section,
                                           const ConstantVector &Methods) {
   // Return null for empty list.
@@ -2513,7 +2513,7 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
 }
 
 llvm::GlobalVariable *
-CGObjCCommonMac::CreateMetadataVar(llvm::Twine Name,
+CGObjCCommonMac::CreateMetadataVar(Twine Name,
                                    llvm::Constant *Init,
                                    const char *Section,
                                    unsigned Align,
@@ -2626,7 +2626,7 @@ namespace {
 
   class FragileHazards {
     CodeGenFunction &CGF;
-    llvm::SmallVector<llvm::Value*, 20> Locals;
+    SmallVector<llvm::Value*, 20> Locals;
     llvm::DenseSet<llvm::BasicBlock*> BlocksBeforeTry;
 
     llvm::InlineAsm *ReadHazard;
@@ -2765,7 +2765,7 @@ void FragileHazards::collectLocals() {
 }
 
 llvm::FunctionType *FragileHazards::GetAsmFnType() {
-  llvm::SmallVector<llvm::Type *, 16> tys(Locals.size());
+  SmallVector<llvm::Type *, 16> tys(Locals.size());
   for (unsigned i = 0, e = Locals.size(); i != e; ++i)
     tys[i] = Locals[i]->getType();
   return llvm::FunctionType::get(CGF.VoidTy, tys, false);
@@ -3756,7 +3756,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayoutBitmap(std::string& BitMap) {
   llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
   
   // Build the string of skip/scan nibbles
-  llvm::SmallVector<SKIP_SCAN, 32> SkipScanIvars;
+  SmallVector<SKIP_SCAN, 32> SkipScanIvars;
   unsigned int WordSize =
   CGM.getTypes().getTargetData().getTypeAllocSize(PtrTy);
   if (IvarsInfo[0].ivar_bytepos == 0) {
@@ -4034,7 +4034,7 @@ CGObjCCommonMac::GetPropertyTypeString(const ObjCPropertyDecl *PD,
 
 void CGObjCCommonMac::GetNameForMethod(const ObjCMethodDecl *D,
                                        const ObjCContainerDecl *CD,
-                                       llvm::SmallVectorImpl<char> &Name) {
+                                       SmallVectorImpl<char> &Name) {
   llvm::raw_svector_ostream OS(Name);
   assert (CD && "Missing container decl in GetNameForMethod");
   OS << '\01' << (D->isInstanceMethod() ? '-' : '+')
@@ -5165,7 +5165,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetMethodConstant(
 ///   struct _objc_method method_list[method_count];
 /// }
 ///
-llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(llvm::Twine Name,
+llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(Twine Name,
                                                        const char *Section,
                                                 const ConstantVector &Methods) {
   // Return null for empty list.
@@ -5458,7 +5458,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
 /// @endcode
 ///
 llvm::Constant *
-CGObjCNonFragileABIMac::EmitProtocolList(llvm::Twine Name,
+CGObjCNonFragileABIMac::EmitProtocolList(Twine Name,
                                       ObjCProtocolDecl::protocol_iterator begin,
                                       ObjCProtocolDecl::protocol_iterator end) {
   std::vector<llvm::Constant*> ProtocolRefs;

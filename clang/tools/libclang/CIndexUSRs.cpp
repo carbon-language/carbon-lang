@@ -31,7 +31,7 @@ using namespace clang::cxstring;
 namespace {
 class USRGenerator : public DeclVisitor<USRGenerator> {
   llvm::OwningPtr<llvm::SmallString<128> > OwnedBuf;
-  llvm::SmallVectorImpl<char> &Buf;
+  SmallVectorImpl<char> &Buf;
   llvm::raw_svector_ostream Out;
   bool IgnoreResults;
   ASTUnit *AU;
@@ -40,7 +40,7 @@ class USRGenerator : public DeclVisitor<USRGenerator> {
   llvm::DenseMap<const Type *, unsigned> TypeSubstitutions;
   
 public:
-  USRGenerator(const CXCursor *C = 0, llvm::SmallVectorImpl<char> *extBuf = 0)
+  USRGenerator(const CXCursor *C = 0, SmallVectorImpl<char> *extBuf = 0)
   : OwnedBuf(extBuf ? 0 : new llvm::SmallString<128>()),
     Buf(extBuf ? *extBuf : *OwnedBuf.get()),
     Out(Buf),
@@ -52,7 +52,7 @@ public:
     Out << "c:";
   }
 
-  llvm::StringRef str() {
+  StringRef str() {
     return Out.str();
   }
 
@@ -114,19 +114,19 @@ public:
   /// itself.
 
   /// Generate a USR for an Objective-C class.
-  void GenObjCClass(llvm::StringRef cls);
+  void GenObjCClass(StringRef cls);
   /// Generate a USR for an Objective-C class category.
-  void GenObjCCategory(llvm::StringRef cls, llvm::StringRef cat);
+  void GenObjCCategory(StringRef cls, StringRef cat);
   /// Generate a USR fragment for an Objective-C instance variable.  The
   /// complete USR can be created by concatenating the USR for the
   /// encompassing class with this USR fragment.
-  void GenObjCIvar(llvm::StringRef ivar);
+  void GenObjCIvar(StringRef ivar);
   /// Generate a USR fragment for an Objective-C method.
-  void GenObjCMethod(llvm::StringRef sel, bool isInstanceMethod);
+  void GenObjCMethod(StringRef sel, bool isInstanceMethod);
   /// Generate a USR fragment for an Objective-C property.
-  void GenObjCProperty(llvm::StringRef prop);
+  void GenObjCProperty(StringRef prop);
   /// Generate a USR for an Objective-C protocol.
-  void GenObjCProtocol(llvm::StringRef prot);
+  void GenObjCProtocol(StringRef prot);
 
   void VisitType(QualType T);
   void VisitTemplateParameterList(const TemplateParameterList *Params);
@@ -235,7 +235,7 @@ void USRGenerator::VisitVarDecl(VarDecl *D) {
   VisitDeclContext(D->getDeclContext());
 
   // Variables always have simple names.
-  llvm::StringRef s = D->getName();
+  StringRef s = D->getName();
 
   // The string can be empty if the declaration has no name; e.g., it is
   // the ParmDecl with no name for declaration of a function pointer type, e.g.:
@@ -755,27 +755,27 @@ void USRGenerator::VisitTemplateArgument(const TemplateArgument &Arg) {
 // General purpose USR generation methods.
 //===----------------------------------------------------------------------===//
 
-void USRGenerator::GenObjCClass(llvm::StringRef cls) {
+void USRGenerator::GenObjCClass(StringRef cls) {
   Out << "objc(cs)" << cls;
 }
 
-void USRGenerator::GenObjCCategory(llvm::StringRef cls, llvm::StringRef cat) {
+void USRGenerator::GenObjCCategory(StringRef cls, StringRef cat) {
   Out << "objc(cy)" << cls << '@' << cat;
 }
 
-void USRGenerator::GenObjCIvar(llvm::StringRef ivar) {
+void USRGenerator::GenObjCIvar(StringRef ivar) {
   Out << '@' << ivar;
 }
 
-void USRGenerator::GenObjCMethod(llvm::StringRef meth, bool isInstanceMethod) {
+void USRGenerator::GenObjCMethod(StringRef meth, bool isInstanceMethod) {
   Out << (isInstanceMethod ? "(im)" : "(cm)") << meth;
 }
 
-void USRGenerator::GenObjCProperty(llvm::StringRef prop) {
+void USRGenerator::GenObjCProperty(StringRef prop) {
   Out << "(py)" << prop;
 }
 
-void USRGenerator::GenObjCProtocol(llvm::StringRef prot) {
+void USRGenerator::GenObjCProtocol(StringRef prot) {
   Out << "objc(pl)" << prot;
 }
 
@@ -783,7 +783,7 @@ void USRGenerator::GenObjCProtocol(llvm::StringRef prot) {
 // API hooks.
 //===----------------------------------------------------------------------===//
 
-static inline llvm::StringRef extractUSRSuffix(llvm::StringRef s) {
+static inline StringRef extractUSRSuffix(StringRef s) {
   return s.startswith("c:") ? s.substr(2) : "";
 }
 

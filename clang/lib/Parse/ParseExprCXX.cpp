@@ -1885,7 +1885,7 @@ void Parser::ParseDirectNewDeclarator(Declarator &D) {
 ///                   '(' expression-list ')'
 ///
 bool Parser::ParseExpressionListOrTypeId(
-                                   llvm::SmallVectorImpl<Expr*> &PlacementArgs,
+                                   SmallVectorImpl<Expr*> &PlacementArgs,
                                          Declarator &D) {
   // The '(' was already consumed.
   if (isTypeIdInParens()) {

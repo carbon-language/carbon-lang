@@ -50,7 +50,7 @@ void ReachableCode::computeReachableBlocks() {
   if (!cfg.getNumBlockIDs())
     return;
   
-  llvm::SmallVector<const CFGBlock*, 10> worklist;
+  SmallVector<const CFGBlock*, 10> worklist;
   worklist.push_back(&cfg.getEntry());
   
   while (!worklist.empty()) {

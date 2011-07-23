@@ -47,7 +47,7 @@ CodeGenTypes::~CodeGenTypes() {
 
 void CodeGenTypes::addRecordTypeName(const RecordDecl *RD,
                                      llvm::StructType *Ty,
-                                     llvm::StringRef suffix) {
+                                     StringRef suffix) {
   llvm::SmallString<256> TypeName;
   llvm::raw_svector_ostream OS(TypeName);
   OS << RD->getKindName() << '.';

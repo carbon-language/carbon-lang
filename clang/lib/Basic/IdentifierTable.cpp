@@ -55,7 +55,7 @@ namespace {
   class EmptyLookupIterator : public IdentifierIterator
   {
   public:
-    virtual llvm::StringRef Next() { return llvm::StringRef(); }
+    virtual StringRef Next() { return StringRef(); }
   };
 }
 
@@ -106,7 +106,7 @@ namespace {
 /// enabled in the specified langauge, set to 1 if it is an extension
 /// in the specified language, and set to 0 if disabled in the
 /// specified language.
-static void AddKeyword(llvm::StringRef Keyword,
+static void AddKeyword(StringRef Keyword,
                        tok::TokenKind TokenCode, unsigned Flags,
                        const LangOptions &LangOpts, IdentifierTable &Table) {
   unsigned AddResult = 0;
@@ -133,7 +133,7 @@ static void AddKeyword(llvm::StringRef Keyword,
 
 /// AddCXXOperatorKeyword - Register a C++ operator keyword alternative
 /// representations.
-static void AddCXXOperatorKeyword(llvm::StringRef Keyword,
+static void AddCXXOperatorKeyword(StringRef Keyword,
                                   tok::TokenKind TokenCode,
                                   IdentifierTable &Table) {
   IdentifierInfo &Info = Table.get(Keyword, TokenCode);
@@ -142,7 +142,7 @@ static void AddCXXOperatorKeyword(llvm::StringRef Keyword,
 
 /// AddObjCKeyword - Register an Objective-C @keyword like "class" "selector" or
 /// "property".
-static void AddObjCKeyword(llvm::StringRef Name,
+static void AddObjCKeyword(StringRef Name,
                            tok::ObjCKeywordKind ObjCID,
                            IdentifierTable &Table) {
   Table.get(Name).setObjCKeywordID(ObjCID);
@@ -153,20 +153,20 @@ static void AddObjCKeyword(llvm::StringRef Name,
 void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
   // Add keywords and tokens for the current language.
 #define KEYWORD(NAME, FLAGS) \
-  AddKeyword(llvm::StringRef(#NAME), tok::kw_ ## NAME,  \
+  AddKeyword(StringRef(#NAME), tok::kw_ ## NAME,  \
              FLAGS, LangOpts, *this);
 #define ALIAS(NAME, TOK, FLAGS) \
-  AddKeyword(llvm::StringRef(NAME), tok::kw_ ## TOK,  \
+  AddKeyword(StringRef(NAME), tok::kw_ ## TOK,  \
              FLAGS, LangOpts, *this);
 #define CXX_KEYWORD_OPERATOR(NAME, ALIAS) \
   if (LangOpts.CXXOperatorNames)          \
-    AddCXXOperatorKeyword(llvm::StringRef(#NAME), tok::ALIAS, *this);
+    AddCXXOperatorKeyword(StringRef(#NAME), tok::ALIAS, *this);
 #define OBJC1_AT_KEYWORD(NAME) \
   if (LangOpts.ObjC1)          \
-    AddObjCKeyword(llvm::StringRef(#NAME), tok::objc_##NAME, *this);
+    AddObjCKeyword(StringRef(#NAME), tok::objc_##NAME, *this);
 #define OBJC2_AT_KEYWORD(NAME) \
   if (LangOpts.ObjC2)          \
-    AddObjCKeyword(llvm::StringRef(#NAME), tok::objc_##NAME, *this);
+    AddObjCKeyword(StringRef(#NAME), tok::objc_##NAME, *this);
 #define TESTING_KEYWORD(NAME, FLAGS)
 #include "clang/Basic/TokenKinds.def"
 
@@ -336,9 +336,9 @@ IdentifierInfo *Selector::getIdentifierInfoForSlot(unsigned argIndex) const {
   return SI->getIdentifierInfoForSlot(argIndex);
 }
 
-llvm::StringRef Selector::getNameForSlot(unsigned int argIndex) const {
+StringRef Selector::getNameForSlot(unsigned int argIndex) const {
   IdentifierInfo *II = getIdentifierInfoForSlot(argIndex);
-  return II? II->getName() : llvm::StringRef();
+  return II? II->getName() : StringRef();
 }
 
 std::string MultiKeywordSelector::getName() const {
@@ -377,7 +377,7 @@ std::string Selector::getAsString() const {
 /// Interpreting the given string using the normal CamelCase
 /// conventions, determine whether the given string starts with the
 /// given "word", which is assumed to end in a lowercase letter.
-static bool startsWithWord(llvm::StringRef name, llvm::StringRef word) {
+static bool startsWithWord(StringRef name, StringRef word) {
   if (name.size() < word.size()) return false;
   return ((name.size() == word.size() ||
            !islower(name[word.size()]))
@@ -388,7 +388,7 @@ ObjCMethodFamily Selector::getMethodFamilyImpl(Selector sel) {
   IdentifierInfo *first = sel.getIdentifierInfoForSlot(0);
   if (!first) return OMF_None;
 
-  llvm::StringRef name = first->getName();
+  StringRef name = first->getName();
   if (sel.isUnarySelector()) {
     if (name == "autorelease") return OMF_autorelease;
     if (name == "dealloc") return OMF_dealloc;

@@ -61,10 +61,10 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
   if (getLangOptions().CPlusPlus && isa<FunctionDecl>(D)) {
     // If there were any diagnostics suppressed by template argument deduction,
     // emit them now.
-    llvm::DenseMap<Decl *, llvm::SmallVector<PartialDiagnosticAt, 1> >::iterator
+    llvm::DenseMap<Decl *, SmallVector<PartialDiagnosticAt, 1> >::iterator
       Pos = SuppressedDiagnostics.find(D->getCanonicalDecl());
     if (Pos != SuppressedDiagnostics.end()) {
-      llvm::SmallVectorImpl<PartialDiagnosticAt> &Suppressed = Pos->second;
+      SmallVectorImpl<PartialDiagnosticAt> &Suppressed = Pos->second;
       for (unsigned I = 0, N = Suppressed.size(); I != N; ++I)
         Diag(Suppressed[I].first, Suppressed[I].second);
       
@@ -922,7 +922,7 @@ Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
                    Types, Exprs, NumAssocs, DefaultLoc,
                    RParenLoc, ContainsUnexpandedParameterPack));
 
-  llvm::SmallVector<unsigned, 1> CompatIndices;
+  SmallVector<unsigned, 1> CompatIndices;
   unsigned DefaultIndex = -1U;
   for (unsigned i = 0; i < NumAssocs; ++i) {
     if (!Types[i])
@@ -942,7 +942,7 @@ Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
     Diag(ControllingExpr->getLocStart(), diag::err_generic_sel_multi_match)
       << ControllingExpr->getSourceRange() << ControllingExpr->getType()
       << (unsigned) CompatIndices.size();
-    for (llvm::SmallVector<unsigned, 1>::iterator I = CompatIndices.begin(),
+    for (SmallVector<unsigned, 1>::iterator I = CompatIndices.begin(),
          E = CompatIndices.end(); I != E; ++I) {
       Diag(Types[*I]->getTypeLoc().getBeginLoc(),
            diag::note_compat_assoc)
@@ -993,7 +993,7 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   if (Literal.hadError)
     return ExprError();
 
-  llvm::SmallVector<SourceLocation, 4> StringTokLocs;
+  SmallVector<SourceLocation, 4> StringTokLocs;
   for (unsigned i = 0; i != NumStringToks; ++i)
     StringTokLocs.push_back(StringToks[i].getLocation());
 
@@ -2408,7 +2408,7 @@ ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind) {
 ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
   llvm::SmallString<16> CharBuffer;
   bool Invalid = false;
-  llvm::StringRef ThisTok = PP.getSpelling(Tok, CharBuffer, &Invalid);
+  StringRef ThisTok = PP.getSpelling(Tok, CharBuffer, &Invalid);
   if (Invalid)
     return ExprError();
 
@@ -2492,7 +2492,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
       Diag(Tok.getLocation(), diagnostic)
         << Ty
-        << llvm::StringRef(buffer.data(), buffer.size());
+        << StringRef(buffer.data(), buffer.size());
     }
 
     bool isExact = (result == APFloat::opOK);
@@ -3235,7 +3235,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
       return true;
     }
   }
-  llvm::SmallVector<Expr *, 8> AllArgs;
+  SmallVector<Expr *, 8> AllArgs;
   VariadicCallType CallType =
     Proto->isVariadic() ? VariadicFunction : VariadicDoesNotApply;
   if (Fn->getType()->isBlockPointerType())
@@ -3258,7 +3258,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
                                   const FunctionProtoType *Proto,
                                   unsigned FirstProtoArg,
                                   Expr **Args, unsigned NumArgs,
-                                  llvm::SmallVector<Expr *, 8> &AllArgs,
+                                  SmallVector<Expr *, 8> &AllArgs,
                                   VariadicCallType CallType) {
   unsigned NumArgsInProto = Proto->getNumArgs();
   unsigned NumArgsToCheck = NumArgs;
@@ -4221,7 +4221,7 @@ ExprResult Sema::BuildVectorLiteral(SourceLocation LParenLoc,
   QualType Ty = TInfo->getType();
   assert(Ty->isVectorType() && "Expected vector type");
 
-  llvm::SmallVector<Expr *, 8> initExprs;
+  SmallVector<Expr *, 8> initExprs;
   const VectorType *VTy = Ty->getAs<VectorType>();
   unsigned numElems = Ty->getAs<VectorType>()->getNumElements();
   
@@ -8091,8 +8091,8 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
   bool DidWarnAboutNonPOD = false;
   QualType CurrentType = ArgTy;
   typedef OffsetOfExpr::OffsetOfNode OffsetOfNode;
-  llvm::SmallVector<OffsetOfNode, 4> Comps;
-  llvm::SmallVector<Expr*, 4> Exprs;
+  SmallVector<OffsetOfNode, 4> Comps;
+  SmallVector<Expr*, 4> Exprs;
   for (unsigned i = 0; i != NumComponents; ++i) {
     const OffsetOfComponent &OC = CompPtr[i];
     if (OC.isBrackets) {
@@ -8351,7 +8351,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
     CurBlock->ReturnType = RetTy;
 
   // Push block parameters from the declarator if we had them.
-  llvm::SmallVector<ParmVarDecl*, 8> Params;
+  SmallVector<ParmVarDecl*, 8> Params;
   if (ExplicitSignature) {
     for (unsigned I = 0, E = ExplicitSignature.getNumArgs(); I != E; ++I) {
       ParmVarDecl *Param = ExplicitSignature.getArg(I);

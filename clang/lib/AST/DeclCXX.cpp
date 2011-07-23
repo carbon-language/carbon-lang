@@ -89,7 +89,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
   llvm::SmallPtrSet<CanQualType, 8> SeenVBaseTypes;
   
   // The virtual bases of this class.
-  llvm::SmallVector<const CXXBaseSpecifier *, 8> VBases;
+  SmallVector<const CXXBaseSpecifier *, 8> VBases;
 
   data().Bases = new(C) CXXBaseSpecifier [NumBases];
   data().NumBases = NumBases;
@@ -287,7 +287,7 @@ bool CXXRecordDecl::isTriviallyCopyable() const {
 /// (if there is one).
 static CXXMethodDecl *
 GetBestOverloadCandidateSimple(
-  const llvm::SmallVectorImpl<std::pair<CXXMethodDecl *, Qualifiers> > &Cands) {
+  const SmallVectorImpl<std::pair<CXXMethodDecl *, Qualifiers> > &Cands) {
   if (Cands.empty())
     return 0;
   if (Cands.size() == 1)
@@ -313,7 +313,7 @@ CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(unsigned TypeQuals) const{
     = Context.DeclarationNames.getCXXConstructorName(
                                           Context.getCanonicalType(ClassType));
   unsigned FoundTQs;
-  llvm::SmallVector<std::pair<CXXMethodDecl *, Qualifiers>, 4> Found;
+  SmallVector<std::pair<CXXMethodDecl *, Qualifiers>, 4> Found;
   DeclContext::lookup_const_iterator Con, ConEnd;
   for (llvm::tie(Con, ConEnd) = this->lookup(ConstructorName);
        Con != ConEnd; ++Con) {
@@ -349,7 +349,7 @@ CXXMethodDecl *CXXRecordDecl::getCopyAssignmentOperator(bool ArgIsConst) const {
   QualType Class = Context.getTypeDeclType(const_cast<CXXRecordDecl *>(this));
   DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
   
-  llvm::SmallVector<std::pair<CXXMethodDecl *, Qualifiers>, 4> Found;
+  SmallVector<std::pair<CXXMethodDecl *, Qualifiers>, 4> Found;
   DeclContext::lookup_const_iterator Op, OpEnd;
   for (llvm::tie(Op, OpEnd) = this->lookup(Name); Op != OpEnd; ++Op) {
     // C++ [class.copy]p9:

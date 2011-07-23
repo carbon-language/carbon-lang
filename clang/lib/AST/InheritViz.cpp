@@ -33,12 +33,12 @@ namespace clang {
 /// vs. non-virtual bases.
 class InheritanceHierarchyWriter {
   ASTContext& Context;
-  llvm::raw_ostream &Out;
+  raw_ostream &Out;
   std::map<QualType, int, QualTypeOrdering> DirectBaseCount;
   std::set<QualType, QualTypeOrdering> KnownVirtualBases;
 
 public:
-  InheritanceHierarchyWriter(ASTContext& Context, llvm::raw_ostream& Out)
+  InheritanceHierarchyWriter(ASTContext& Context, raw_ostream& Out)
     : Context(Context), Out(Out) { }
 
   void WriteGraph(QualType Type) {
@@ -55,7 +55,7 @@ protected:
   /// WriteNodeReference - Write out a reference to the given node,
   /// using a unique identifier for each direct base and for the
   /// (only) virtual base.
-  llvm::raw_ostream& WriteNodeReference(QualType Type, bool FromVirtual);
+  raw_ostream& WriteNodeReference(QualType Type, bool FromVirtual);
 };
 
 void InheritanceHierarchyWriter::WriteNode(QualType Type, bool FromVirtual) {
@@ -120,7 +120,7 @@ void InheritanceHierarchyWriter::WriteNode(QualType Type, bool FromVirtual) {
 /// WriteNodeReference - Write out a reference to the given node,
 /// using a unique identifier for each direct base and for the
 /// (only) virtual base.
-llvm::raw_ostream&
+raw_ostream&
 InheritanceHierarchyWriter::WriteNodeReference(QualType Type,
                                                bool FromVirtual) {
   QualType CanonType = Context.getCanonicalType(Type);

@@ -32,7 +32,6 @@
 using namespace clang;
 using namespace arcmt;
 using namespace trans;
-using llvm::StringRef;
 
 namespace {
 
@@ -75,7 +74,7 @@ public:
   RootBlockObjCVarRewriter(MigrationPass &pass) : Pass(pass) { }
 
   bool VisitBlockDecl(BlockDecl *block) {
-    llvm::SmallVector<VarDecl *, 4> BlockVars;
+    SmallVector<VarDecl *, 4> BlockVars;
     
     for (BlockDecl::capture_iterator
            I = block->capture_begin(), E = block->capture_end(); I != E; ++I) {

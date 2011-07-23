@@ -89,7 +89,7 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
                               unsigned argc, const char* const *argv,
                               Diagnostic &Diags) {
   std::string ErrorInfo;
-  llvm::OwningPtr<llvm::raw_ostream> OS(
+  llvm::OwningPtr<raw_ostream> OS(
     new llvm::raw_fd_ostream(DiagOpts.DumpBuildInformation.c_str(), ErrorInfo));
   if (!ErrorInfo.empty()) {
     Diags.Report(diag::err_fe_unable_to_open_logfile)
@@ -113,7 +113,7 @@ static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
                                Diagnostic &Diags) {
   std::string ErrorInfo;
   bool OwnsStream = false;
-  llvm::raw_ostream *OS = &llvm::errs();
+  raw_ostream *OS = &llvm::errs();
   if (DiagOpts.DiagnosticLogFile != "-") {
     // Create the output stream.
     llvm::raw_fd_ostream *FileOS(
@@ -241,7 +241,7 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
   if (DepOpts.ShowHeaderIncludes)
     AttachHeaderIncludeGen(*PP);
   if (!DepOpts.HeaderIncludeOutputFile.empty()) {
-    llvm::StringRef OutputPath = DepOpts.HeaderIncludeOutputFile;
+    StringRef OutputPath = DepOpts.HeaderIncludeOutputFile;
     if (OutputPath == "-")
       OutputPath = "";
     AttachHeaderIncludeGen(*PP, /*ShowAllHeaders=*/true, OutputPath,
@@ -263,7 +263,7 @@ void CompilerInstance::createASTContext() {
 
 // ExternalASTSource
 
-void CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
+void CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                                   bool DisablePCHValidation,
                                                   bool DisableStatCache,
                                                  void *DeserializationListener){
@@ -280,7 +280,7 @@ void CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
 }
 
 ExternalASTSource *
-CompilerInstance::createPCHExternalASTSource(llvm::StringRef Path,
+CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                              const std::string &Sysroot,
                                              bool DisablePCHValidation,
                                              bool DisableStatCache,
@@ -373,7 +373,7 @@ CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
                                                bool ShowMacros,
                                                bool ShowCodePatterns,
                                                bool ShowGlobals,
-                                               llvm::raw_ostream &OS) {
+                                               raw_ostream &OS) {
   if (EnableCodeCompletion(PP, Filename, Line, Column))
     return 0;
 
@@ -427,17 +427,17 @@ void CompilerInstance::clearOutputFiles(bool EraseFiles) {
 
 llvm::raw_fd_ostream *
 CompilerInstance::createDefaultOutputFile(bool Binary,
-                                          llvm::StringRef InFile,
-                                          llvm::StringRef Extension) {
+                                          StringRef InFile,
+                                          StringRef Extension) {
   return createOutputFile(getFrontendOpts().OutputFile, Binary,
                           /*RemoveFileOnSignal=*/true, InFile, Extension);
 }
 
 llvm::raw_fd_ostream *
-CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
+CompilerInstance::createOutputFile(StringRef OutputPath,
                                    bool Binary, bool RemoveFileOnSignal,
-                                   llvm::StringRef InFile,
-                                   llvm::StringRef Extension) {
+                                   StringRef InFile,
+                                   StringRef Extension) {
   std::string Error, OutputPathName, TempPathName;
   llvm::raw_fd_ostream *OS = createOutputFile(OutputPath, Error, Binary,
                                               RemoveFileOnSignal,
@@ -459,12 +459,12 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
 }
 
 llvm::raw_fd_ostream *
-CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
+CompilerInstance::createOutputFile(StringRef OutputPath,
                                    std::string &Error,
                                    bool Binary,
                                    bool RemoveFileOnSignal,
-                                   llvm::StringRef InFile,
-                                   llvm::StringRef Extension,
+                                   StringRef InFile,
+                                   StringRef Extension,
                                    std::string *ResultPathName,
                                    std::string *TempPathName) {
   std::string OutFile, TempFile;
@@ -519,12 +519,12 @@ CompilerInstance::createOutputFile(llvm::StringRef OutputPath,
 
 // Initialization Utilities
 
-bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile) {
+bool CompilerInstance::InitializeSourceManager(StringRef InputFile) {
   return InitializeSourceManager(InputFile, getDiagnostics(), getFileManager(),
                                  getSourceManager(), getFrontendOpts());
 }
 
-bool CompilerInstance::InitializeSourceManager(llvm::StringRef InputFile,
+bool CompilerInstance::InitializeSourceManager(StringRef InputFile,
                                                Diagnostic &Diags,
                                                FileManager &FileMgr,
                                                SourceManager &SourceMgr,
@@ -567,7 +567,7 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
 
   // FIXME: Take this as an argument, once all the APIs we used have moved to
   // taking it as an input instead of hard-coding llvm::errs.
-  llvm::raw_ostream &OS = llvm::errs();
+  raw_ostream &OS = llvm::errs();
 
   // Create the target instance.
   setTarget(TargetInfo::CreateTargetInfo(getDiagnostics(), getTargetOpts()));

@@ -810,7 +810,7 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
     // Suppress the final autorelease in ARC.
     AutoreleaseResult = false;
 
-    llvm::SmallVector<CXXCtorInitializer *, 8> IvarInitializers;
+    SmallVector<CXXCtorInitializer *, 8> IvarInitializers;
     for (ObjCImplementationDecl::init_const_iterator B = IMP->init_begin(),
            E = IMP->init_end(); B != E; ++B) {
       CXXCtorInitializer *IvarInit = (*B);
@@ -1329,7 +1329,7 @@ llvm::Value *CodeGenFunction::EmitObjCExtendObjectLifetime(QualType type,
 
 static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
                                                 llvm::FunctionType *type,
-                                                llvm::StringRef fnName) {
+                                                StringRef fnName) {
   llvm::Constant *fn = CGM.CreateRuntimeFunction(type, fnName);
 
   // In -fobjc-no-arc-runtime, emit weak references to the runtime
@@ -1347,7 +1347,7 @@ static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
 static llvm::Value *emitARCValueOperation(CodeGenFunction &CGF,
                                           llvm::Value *value,
                                           llvm::Constant *&fn,
-                                          llvm::StringRef fnName) {
+                                          StringRef fnName) {
   if (isa<llvm::ConstantPointerNull>(value)) return value;
 
   if (!fn) {
@@ -1374,7 +1374,7 @@ static llvm::Value *emitARCValueOperation(CodeGenFunction &CGF,
 static llvm::Value *emitARCLoadOperation(CodeGenFunction &CGF,
                                          llvm::Value *addr,
                                          llvm::Constant *&fn,
-                                         llvm::StringRef fnName) {
+                                         StringRef fnName) {
   if (!fn) {
     std::vector<llvm::Type*> args(1, CGF.Int8PtrPtrTy);
     llvm::FunctionType *fnType =
@@ -1405,7 +1405,7 @@ static llvm::Value *emitARCStoreOperation(CodeGenFunction &CGF,
                                           llvm::Value *addr,
                                           llvm::Value *value,
                                           llvm::Constant *&fn,
-                                          llvm::StringRef fnName,
+                                          StringRef fnName,
                                           bool ignored) {
   assert(cast<llvm::PointerType>(addr->getType())->getElementType()
            == value->getType());
@@ -1439,7 +1439,7 @@ static void emitARCCopyOperation(CodeGenFunction &CGF,
                                  llvm::Value *dst,
                                  llvm::Value *src,
                                  llvm::Constant *&fn,
-                                 llvm::StringRef fnName) {
+                                 StringRef fnName) {
   assert(dst->getType() == src->getType());
 
   if (!fn) {
@@ -1494,7 +1494,7 @@ CodeGenFunction::EmitARCRetainAutoreleasedReturnValue(llvm::Value *value) {
   llvm::InlineAsm *&marker
     = CGM.getARCEntrypoints().retainAutoreleasedReturnValueMarker;
   if (!marker) {
-    llvm::StringRef assembly
+    StringRef assembly
       = CGM.getTargetCodeGenInfo()
            .getARCRetainAutoreleasedReturnValueMarker();
 
@@ -1555,7 +1555,7 @@ void CodeGenFunction::EmitARCRelease(llvm::Value *value, bool precise) {
   call->setDoesNotThrow();
 
   if (!precise) {
-    llvm::SmallVector<llvm::Value*,1> args;
+    SmallVector<llvm::Value*,1> args;
     call->setMetadata("clang.imprecise_release",
                       llvm::MDNode::get(Builder.getContext(), args));
   }

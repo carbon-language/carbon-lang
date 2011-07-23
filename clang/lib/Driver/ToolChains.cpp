@@ -41,6 +41,7 @@
 
 using namespace clang::driver;
 using namespace clang::driver::toolchains;
+using namespace clang;
 
 /// Darwin - Darwin tool chain for i386 and x86_64.
 
@@ -54,7 +55,7 @@ Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple)
   if (!Driver::GetReleaseVersion(&OSName.c_str()[6],
                                  DarwinVersion[0], DarwinVersion[1],
                                  DarwinVersion[2], HadExtra))
-    getDriver().Diag(clang::diag::err_drv_invalid_darwin_version) << OSName;
+    getDriver().Diag(diag::err_drv_invalid_darwin_version) << OSName;
 
   llvm::raw_string_ostream(MacosxVersionMin)
     << "10." << std::max(0, (int)DarwinVersion[0] - 4) << '.'
@@ -109,7 +110,7 @@ void Darwin::configureObjCRuntime(ObjCRuntime &runtime) const {
 }
 
 // FIXME: Can we tablegen this?
-static const char *GetArmArchForMArch(llvm::StringRef Value) {
+static const char *GetArmArchForMArch(StringRef Value) {
   if (Value == "armv6k")
     return "armv6";
 
@@ -131,7 +132,7 @@ static const char *GetArmArchForMArch(llvm::StringRef Value) {
 }
 
 // FIXME: Can we tablegen this?
-static const char *GetArmArchForMCpu(llvm::StringRef Value) {
+static const char *GetArmArchForMCpu(StringRef Value) {
   if (Value == "arm10tdmi" || Value == "arm1020t" || Value == "arm9e" ||
       Value == "arm946e-s" || Value == "arm966e-s" ||
       Value == "arm968e-s" || Value == "arm10e" ||
@@ -153,7 +154,7 @@ static const char *GetArmArchForMCpu(llvm::StringRef Value) {
   return 0;
 }
 
-llvm::StringRef Darwin::getDarwinArchName(const ArgList &Args) const {
+StringRef Darwin::getDarwinArchName(const ArgList &Args) const {
   switch (getTriple().getArch()) {
   default:
     return getArchName();
@@ -328,7 +329,7 @@ void DarwinClang::AddLinkSearchPathArgs(const ArgList &Args,
   case llvm::Triple::arm:
   case llvm::Triple::thumb: {
     std::string Triple = ComputeLLVMTriple(Args);
-    llvm::StringRef TripleStr = Triple;
+    StringRef TripleStr = Triple;
     if (TripleStr.startswith("armv5") || TripleStr.startswith("thumbv5"))
       ArchSpecificDir = "v5";
     else if (TripleStr.startswith("armv6") || TripleStr.startswith("thumbv6"))
@@ -408,7 +409,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   // cares. This is useful in situations where someone wants to statically link
   // something like libstdc++, and needs its runtime support routines.
   if (const Arg *A = Args.getLastArg(options::OPT_static_libgcc)) {
-    getDriver().Diag(clang::diag::err_drv_unsupported_opt)
+    getDriver().Diag(diag::err_drv_unsupported_opt)
       << A->getAsString(Args);
     return;
   }
@@ -452,7 +453,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   }
 }
 
-static inline llvm::StringRef SimulatorVersionDefineName() {
+static inline StringRef SimulatorVersionDefineName() {
   return "__IPHONE_OS_VERSION_MIN_REQUIRED";
 }
 
@@ -461,11 +462,11 @@ static inline llvm::StringRef SimulatorVersionDefineName() {
 // and return the grouped values as integers, e.g:
 //   __IPHONE_OS_VERSION_MIN_REQUIRED=40201
 // will return Major=4, Minor=2, Micro=1.
-static bool GetVersionFromSimulatorDefine(llvm::StringRef define,
+static bool GetVersionFromSimulatorDefine(StringRef define,
                                           unsigned &Major, unsigned &Minor,
                                           unsigned &Micro) {
   assert(define.startswith(SimulatorVersionDefineName()));
-  llvm::StringRef name, version;
+  StringRef name, version;
   llvm::tie(name, version) = define.split('=');
   if (version.empty())
     return false;
@@ -496,7 +497,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   if (!iOSVersion) {
     for (arg_iterator it = Args.filtered_begin(options::OPT_D),
            ie = Args.filtered_end(); it != ie; ++it) {
-      llvm::StringRef define = (*it)->getValue(Args);
+      StringRef define = (*it)->getValue(Args);
       if (define.startswith(SimulatorVersionDefineName())) {
         unsigned Major, Minor, Micro;
         if (GetVersionFromSimulatorDefine(define, Major, Minor, Micro) &&
@@ -510,12 +511,12 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   }
 
   if (OSXVersion && (iOSVersion || iOSSimVersion)) {
-    getDriver().Diag(clang::diag::err_drv_argument_not_allowed_with)
+    getDriver().Diag(diag::err_drv_argument_not_allowed_with)
           << OSXVersion->getAsString(Args)
           << (iOSVersion ? iOSVersion : iOSSimVersion)->getAsString(Args);
     iOSVersion = iOSSimVersion = 0;
   } else if (iOSVersion && iOSSimVersion) {
-    getDriver().Diag(clang::diag::err_drv_argument_not_allowed_with)
+    getDriver().Diag(diag::err_drv_argument_not_allowed_with)
           << iOSVersion->getAsString(Args)
           << iOSSimVersion->getAsString(Args);
     iOSSimVersion = 0;
@@ -540,7 +541,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
 
     // Do not allow conflicts with the iOS simulator target.
     if (iOSSimTarget && (OSXTarget || iOSTarget)) {
-      getDriver().Diag(clang::diag::err_drv_conflicting_deployment_targets)
+      getDriver().Diag(diag::err_drv_conflicting_deployment_targets)
         << "IOS_SIMULATOR_DEPLOYMENT_TARGET"
         << (OSXTarget ? "MACOSX_DEPLOYMENT_TARGET" :
             "IPHONEOS_DEPLOYMENT_TARGET");
@@ -580,7 +581,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   // Reject invalid architecture combinations.
   if (iOSSimVersion && (getTriple().getArch() != llvm::Triple::x86 &&
                         getTriple().getArch() != llvm::Triple::x86_64)) {
-    getDriver().Diag(clang::diag::err_drv_invalid_arch_for_deployment_target)
+    getDriver().Diag(diag::err_drv_invalid_arch_for_deployment_target)
       << getTriple().getArchName() << iOSSimVersion->getAsString(Args);
   }
 
@@ -592,7 +593,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     if (!Driver::GetReleaseVersion(OSXVersion->getValue(Args), Major, Minor,
                                    Micro, HadExtra) || HadExtra ||
         Major != 10 || Minor >= 100 || Micro >= 100)
-      getDriver().Diag(clang::diag::err_drv_invalid_version_number)
+      getDriver().Diag(diag::err_drv_invalid_version_number)
         << OSXVersion->getAsString(Args);
   } else {
     const Arg *Version = iOSVersion ? iOSVersion : iOSSimVersion;
@@ -600,7 +601,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     if (!Driver::GetReleaseVersion(Version->getValue(Args), Major, Minor,
                                    Micro, HadExtra) || HadExtra ||
         Major >= 10 || Minor >= 100 || Micro >= 100)
-      getDriver().Diag(clang::diag::err_drv_invalid_version_number)
+      getDriver().Diag(diag::err_drv_invalid_version_number)
         << Version->getAsString(Args);
   }
 
@@ -704,7 +705,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       // triple arch, or the arch being bound.
       //
       // FIXME: Canonicalize name.
-      llvm::StringRef XarchArch = A->getValue(Args, 0);
+      StringRef XarchArch = A->getValue(Args, 0);
       if (!(XarchArch == getArchName()  ||
             (BoundArch && XarchArch == BoundArch)))
         continue;
@@ -723,11 +724,11 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       // use isDriverOption() as an approximation, although things
       // like -O4 are going to slip through.
       if (!XarchArg || Index > Prev + 1) {
-        getDriver().Diag(clang::diag::err_drv_invalid_Xarch_argument_with_args)
+        getDriver().Diag(diag::err_drv_invalid_Xarch_argument_with_args)
           << A->getAsString(Args);
         continue;
       } else if (XarchArg->getOption().isDriverOption()) {
-        getDriver().Diag(clang::diag::err_drv_invalid_Xarch_argument_isdriver)
+        getDriver().Diag(diag::err_drv_invalid_Xarch_argument_isdriver)
           << A->getAsString(Args);
         continue;
       }
@@ -830,7 +831,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
   // Add the arch options based on the particular spelling of -arch, to match
   // how the driver driver works.
   if (BoundArch) {
-    llvm::StringRef Name = BoundArch;
+    StringRef Name = BoundArch;
     const Option *MCpu = Opts.getOption(options::OPT_mcpu_EQ);
     const Option *MArch = Opts.getOption(options::OPT_march_EQ);
 
@@ -1370,8 +1371,8 @@ static bool HasMultilib(llvm::Triple::ArchType Arch, enum LinuxDistro Distro) {
 static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   llvm::OwningPtr<llvm::MemoryBuffer> File;
   if (!llvm::MemoryBuffer::getFile("/etc/lsb-release", File)) {
-    llvm::StringRef Data = File.get()->getBuffer();
-    llvm::SmallVector<llvm::StringRef, 8> Lines;
+    StringRef Data = File.get()->getBuffer();
+    SmallVector<StringRef, 8> Lines;
     Data.split(Lines, "\n");
     for (unsigned int i = 0, s = Lines.size(); i < s; ++ i) {
       if (Lines[i] == "DISTRIB_CODENAME=hardy")
@@ -1395,7 +1396,7 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   }
 
   if (!llvm::MemoryBuffer::getFile("/etc/redhat-release", File)) {
-    llvm::StringRef Data = File.get()->getBuffer();
+    StringRef Data = File.get()->getBuffer();
     if (Data.startswith("Fedora release 15"))
       return Fedora15;
     else if (Data.startswith("Fedora release 14"))
@@ -1403,24 +1404,24 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
     else if (Data.startswith("Fedora release 13"))
       return Fedora13;
     else if (Data.startswith("Fedora release") &&
-             Data.find("Rawhide") != llvm::StringRef::npos)
+             Data.find("Rawhide") != StringRef::npos)
       return FedoraRawhide;
     else if (Data.startswith("Red Hat Enterprise Linux") &&
-             Data.find("release 6") != llvm::StringRef::npos)
+             Data.find("release 6") != StringRef::npos)
       return RHEL6;
     else if ((Data.startswith("Red Hat Enterprise Linux") ||
 	      Data.startswith("CentOS")) &&
-             Data.find("release 5") != llvm::StringRef::npos)
+             Data.find("release 5") != StringRef::npos)
       return RHEL5;
     else if ((Data.startswith("Red Hat Enterprise Linux") ||
 	      Data.startswith("CentOS")) &&
-             Data.find("release 4") != llvm::StringRef::npos)
+             Data.find("release 4") != StringRef::npos)
       return RHEL4;
     return UnknownDistro;
   }
 
   if (!llvm::MemoryBuffer::getFile("/etc/debian_version", File)) {
-    llvm::StringRef Data = File.get()->getBuffer();
+    StringRef Data = File.get()->getBuffer();
     if (Data[0] == '5')
       return DebianLenny;
     else if (Data.startswith("squeeze/sid"))
@@ -1431,7 +1432,7 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   }
 
   if (!llvm::MemoryBuffer::getFile("/etc/SuSE-release", File)) {
-    llvm::StringRef Data = File.get()->getBuffer();
+    StringRef Data = File.get()->getBuffer();
     if (Data.startswith("openSUSE 11.3"))
       return OpenSuse11_3;
     else if (Data.startswith("openSUSE 11.4"))
@@ -1466,7 +1467,7 @@ static std::string findGCCBaseLibDir(const std::string &GccTriple) {
     // This is of the form /foo/bar/include/c++/4.5.2/
     if (CxxIncludeRoot.back() == '/')
       llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the /
-    llvm::StringRef Version = llvm::sys::path::filename(CxxIncludeRoot);
+    StringRef Version = llvm::sys::path::filename(CxxIncludeRoot);
     llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the version
     llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the c++
     llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the include

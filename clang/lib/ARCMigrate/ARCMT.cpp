@@ -19,10 +19,8 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/Triple.h"
-
 using namespace clang;
 using namespace arcmt;
-using llvm::StringRef;
 
 bool CapturedDiagList::clearDiagnostic(llvm::ArrayRef<unsigned> IDs,
                                        SourceRange range) {
@@ -113,7 +111,7 @@ public:
 
 } // end anonymous namespace
 
-static inline llvm::StringRef SimulatorVersionDefineName() {
+static inline StringRef SimulatorVersionDefineName() {
   return "__IPHONE_OS_VERSION_MIN_REQUIRED=";
 }
 
@@ -122,11 +120,11 @@ static inline llvm::StringRef SimulatorVersionDefineName() {
 // and return the grouped values as integers, e.g:
 //   __IPHONE_OS_VERSION_MIN_REQUIRED=40201
 // will return Major=4, Minor=2, Micro=1.
-static bool GetVersionFromSimulatorDefine(llvm::StringRef define,
+static bool GetVersionFromSimulatorDefine(StringRef define,
                                           unsigned &Major, unsigned &Minor,
                                           unsigned &Micro) {
   assert(define.startswith(SimulatorVersionDefineName()));
-  llvm::StringRef name, version;
+  StringRef name, version;
   llvm::tie(name, version) = define.split('=');
   if (version.empty())
     return false;
@@ -214,10 +212,10 @@ void emitPremigrationErrors(const CapturedDiagList &arcDiags,
 //===----------------------------------------------------------------------===//
 
 bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
-                                 llvm::StringRef Filename, InputKind Kind,
+                                 StringRef Filename, InputKind Kind,
                                  DiagnosticClient *DiagClient,
                                  bool emitPremigrationARCErrors,
-                                 llvm::StringRef plistOut) {
+                                 StringRef plistOut) {
   if (!origCI.getLangOpts().ObjC1)
     return false;
 
@@ -262,7 +260,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
     emitPremigrationErrors(capturedDiags, origCI.getDiagnosticOpts(),
                            Unit->getPreprocessor());
   if (!plistOut.empty()) {
-    llvm::SmallVector<StoredDiagnostic, 8> arcDiags;
+    SmallVector<StoredDiagnostic, 8> arcDiags;
     for (CapturedDiagList::iterator
            I = capturedDiags.begin(), E = capturedDiags.end(); I != E; ++I)
       arcDiags.push_back(*I);
@@ -303,11 +301,11 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
 //===----------------------------------------------------------------------===//
 
 static bool applyTransforms(CompilerInvocation &origCI,
-                            llvm::StringRef Filename, InputKind Kind,
+                            StringRef Filename, InputKind Kind,
                             DiagnosticClient *DiagClient,
-                            llvm::StringRef outputDir,
+                            StringRef outputDir,
                             bool emitPremigrationARCErrors,
-                            llvm::StringRef plistOut) {
+                            StringRef plistOut) {
   if (!origCI.getLangOpts().ObjC1)
     return false;
 
@@ -347,18 +345,18 @@ static bool applyTransforms(CompilerInvocation &origCI,
 }
 
 bool arcmt::applyTransformations(CompilerInvocation &origCI,
-                                 llvm::StringRef Filename, InputKind Kind,
+                                 StringRef Filename, InputKind Kind,
                                  DiagnosticClient *DiagClient) {
   return applyTransforms(origCI, Filename, Kind, DiagClient,
-                         llvm::StringRef(), false, llvm::StringRef());
+                         StringRef(), false, StringRef());
 }
 
 bool arcmt::migrateWithTemporaryFiles(CompilerInvocation &origCI,
-                                      llvm::StringRef Filename, InputKind Kind,
+                                      StringRef Filename, InputKind Kind,
                                       DiagnosticClient *DiagClient,
-                                      llvm::StringRef outputDir,
+                                      StringRef outputDir,
                                       bool emitPremigrationARCErrors,
-                                      llvm::StringRef plistOut) {
+                                      StringRef plistOut) {
   assert(!outputDir.empty() && "Expected output directory path");
   return applyTransforms(origCI, Filename, Kind, DiagClient,
                          outputDir, emitPremigrationARCErrors, plistOut);
@@ -366,7 +364,7 @@ bool arcmt::migrateWithTemporaryFiles(CompilerInvocation &origCI,
 
 bool arcmt::getFileRemappings(std::vector<std::pair<std::string,std::string> > &
                                   remap,
-                              llvm::StringRef outputDir,
+                              StringRef outputDir,
                               DiagnosticClient *DiagClient) {
   assert(!outputDir.empty());
 
@@ -414,7 +412,7 @@ public:
     : ARCMTMacroLocs(ARCMTMacroLocs) { }
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         llvm::StringRef InFile) {
+                                         StringRef InFile) {
     CI.getPreprocessor().addPPCallbacks(
                               new ARCMTMacroTrackerPPCallbacks(ARCMTMacroLocs));
     return new ASTConsumer();
@@ -438,7 +436,7 @@ public:
       Listener->finish();
   }
 
-  virtual void insert(SourceLocation loc, llvm::StringRef text) {
+  virtual void insert(SourceLocation loc, StringRef text) {
     bool err = rewriter.InsertText(loc, text, /*InsertAfter=*/true,
                                    /*indentNewLines=*/true);
     if (!err && Listener)
@@ -469,7 +467,7 @@ MigrationProcess::RewriteListener::~RewriteListener() { }
 
 MigrationProcess::MigrationProcess(const CompilerInvocation &CI,
                                    DiagnosticClient *diagClient,
-                                   llvm::StringRef outputDir)
+                                   StringRef outputDir)
   : OrigCI(CI), DiagClient(diagClient) {
   if (!outputDir.empty()) {
     llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
@@ -558,7 +556,7 @@ bool MigrationProcess::applyTransform(TransformFn trans,
     buf.write(vecOS);
     vecOS.flush();
     llvm::MemoryBuffer *memBuf = llvm::MemoryBuffer::getMemBufferCopy(
-                   llvm::StringRef(newText.data(), newText.size()), newFname);
+                   StringRef(newText.data(), newText.size()), newFname);
     llvm::SmallString<64> filePath(file->getName());
     Unit->getFileManager().FixupRelativePath(filePath);
     Remapper.remap(filePath.str(), memBuf);

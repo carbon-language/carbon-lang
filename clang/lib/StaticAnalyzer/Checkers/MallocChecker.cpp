@@ -107,8 +107,8 @@ private:
   void ReallocMem(CheckerContext &C, const CallExpr *CE) const;
   static void CallocMem(CheckerContext &C, const CallExpr *CE);
   
-  static bool SummarizeValue(llvm::raw_ostream& os, SVal V);
-  static bool SummarizeRegion(llvm::raw_ostream& os, const MemRegion *MR);
+  static bool SummarizeValue(raw_ostream& os, SVal V);
+  static bool SummarizeRegion(raw_ostream& os, const MemRegion *MR);
   void ReportBadFree(CheckerContext &C, SVal ArgVal, SourceRange range) const;
 };
 } // end anonymous namespace
@@ -364,7 +364,7 @@ const GRState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
   return notNullState->set<RegionState>(Sym, RefState::getReleased(CE));
 }
 
-bool MallocChecker::SummarizeValue(llvm::raw_ostream& os, SVal V) {
+bool MallocChecker::SummarizeValue(raw_ostream& os, SVal V) {
   if (nonloc::ConcreteInt *IntVal = dyn_cast<nonloc::ConcreteInt>(&V))
     os << "an integer (" << IntVal->getValue() << ")";
   else if (loc::ConcreteInt *ConstAddr = dyn_cast<loc::ConcreteInt>(&V))
@@ -377,7 +377,7 @@ bool MallocChecker::SummarizeValue(llvm::raw_ostream& os, SVal V) {
   return true;
 }
 
-bool MallocChecker::SummarizeRegion(llvm::raw_ostream& os,
+bool MallocChecker::SummarizeRegion(raw_ostream& os,
                                     const MemRegion *MR) {
   switch (MR->getKind()) {
   case MemRegion::FunctionTextRegionKind: {

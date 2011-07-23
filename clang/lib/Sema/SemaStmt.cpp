@@ -533,7 +533,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
   // Accumulate all of the case values in a vector so that we can sort them
   // and detect duplicates.  This vector contains the APInt for the case after
   // it has been converted to the condition type.
-  typedef llvm::SmallVector<std::pair<llvm::APSInt, CaseStmt*>, 64> CaseValsTy;
+  typedef SmallVector<std::pair<llvm::APSInt, CaseStmt*>, 64> CaseValsTy;
   CaseValsTy CaseVals;
 
   // Keep track of any GNU case ranges we see.  The APSInt is the low value.
@@ -750,7 +750,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     // If switch has default case, then ignore it.
     if (!CaseListIsErroneous  && !HasConstantCond && ET) {
       const EnumDecl *ED = ET->getDecl();
-      typedef llvm::SmallVector<std::pair<llvm::APSInt, EnumConstantDecl*>, 64>
+      typedef SmallVector<std::pair<llvm::APSInt, EnumConstantDecl*>, 64>
         EnumValsTy;
       EnumValsTy EnumVals;
 
@@ -806,7 +806,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
       CaseRangesTy::const_iterator RI = CaseRanges.begin();
       bool hasCasesNotInSwitch = false;
 
-      llvm::SmallVector<DeclarationName,8> UnhandledNames;
+      SmallVector<DeclarationName,8> UnhandledNames;
 
       for (EnumValsTy::const_iterator EI = EnumVals.begin(); EI != EIend; EI++){
         // Drop unneeded case values
@@ -1011,7 +1011,7 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
         << SecondType << Second->getSourceRange();
     else if (const ObjCObjectPointerType *OPT =
              SecondType->getAsObjCInterfacePointerType()) {
-      llvm::SmallVector<IdentifierInfo *, 4> KeyIdents;
+      SmallVector<IdentifierInfo *, 4> KeyIdents;
       IdentifierInfo* selIdent =
         &Context.Idents.get("countByEnumeratingWithState");
       KeyIdents.push_back(selIdent);
@@ -1910,7 +1910,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
   StringLiteral *AsmString = cast<StringLiteral>(asmString);
   StringLiteral **Clobbers = reinterpret_cast<StringLiteral**>(clobbers.get());
 
-  llvm::SmallVector<TargetInfo::ConstraintInfo, 4> OutputConstraintInfos;
+  SmallVector<TargetInfo::ConstraintInfo, 4> OutputConstraintInfos;
 
   // The parser verifies that there is a string literal here.
   if (AsmString->isWide())
@@ -1923,7 +1923,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    llvm::StringRef OutputName;
+    StringRef OutputName;
     if (Names[i])
       OutputName = Names[i]->getName();
 
@@ -1944,7 +1944,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     OutputConstraintInfos.push_back(Info);
   }
 
-  llvm::SmallVector<TargetInfo::ConstraintInfo, 4> InputConstraintInfos;
+  SmallVector<TargetInfo::ConstraintInfo, 4> InputConstraintInfos;
 
   for (unsigned i = NumOutputs, e = NumOutputs + NumInputs; i != e; i++) {
     StringLiteral *Literal = Constraints[i];
@@ -1952,7 +1952,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    llvm::StringRef InputName;
+    StringRef InputName;
     if (Names[i])
       InputName = Names[i]->getName();
 
@@ -1999,7 +1999,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    llvm::StringRef Clobber = Literal->getString();
+    StringRef Clobber = Literal->getString();
 
     if (!Context.Target.isValidClobber(Clobber))
       return StmtError(Diag(Literal->getLocStart(),
@@ -2012,7 +2012,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
                           AsmString, NumClobbers, Clobbers, RParenLoc);
   // Validate the asm string, ensuring it makes sense given the operands we
   // have.
-  llvm::SmallVector<AsmStmt::AsmStringPiece, 8> Pieces;
+  SmallVector<AsmStmt::AsmStringPiece, 8> Pieces;
   unsigned DiagOffs;
   if (unsigned DiagID = NS->AnalyzeAsmString(Pieces, Context, DiagOffs)) {
     Diag(getLocationOfStringLiteralByte(AsmString, DiagOffs), DiagID)
@@ -2279,10 +2279,10 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
          "The parser shouldn't call this if there are no handlers.");
   Stmt **Handlers = RawHandlers.get();
 
-  llvm::SmallVector<TypeWithHandler, 8> TypesWithHandlers;
+  SmallVector<TypeWithHandler, 8> TypesWithHandlers;
 
   for (unsigned i = 0; i < NumHandlers; ++i) {
-    CXXCatchStmt *Handler = llvm::cast<CXXCatchStmt>(Handlers[i]);
+    CXXCatchStmt *Handler = cast<CXXCatchStmt>(Handlers[i]);
     if (!Handler->getExceptionDecl()) {
       if (i < NumHandlers - 1)
         return StmtError(Diag(Handler->getLocStart(),

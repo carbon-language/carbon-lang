@@ -583,7 +583,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
   // Copy the cleanup emission data out.  Note that SmallVector
   // guarantees maximal alignment for its buffer regardless of its
   // type parameter.
-  llvm::SmallVector<char, 8*sizeof(void*)> CleanupBuffer;
+  SmallVector<char, 8*sizeof(void*)> CleanupBuffer;
   CleanupBuffer.reserve(Scope.getCleanupSize());
   memcpy(CleanupBuffer.data(),
          Scope.getCleanupBuffer(), Scope.getCleanupSize());
@@ -595,7 +595,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
   // ahead and do the setup for the EH cleanup while the scope is still
   // alive.
   llvm::BasicBlock *EHEntry = 0;
-  llvm::SmallVector<llvm::Instruction*, 2> EHInstsToAppend;
+  SmallVector<llvm::Instruction*, 2> EHInstsToAppend;
   if (RequiresEHCleanup) {
     EHEntry = CreateEHEntry(*this, Scope);
 
@@ -716,7 +716,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
       }
 
       llvm::BasicBlock *FallthroughDest = 0;
-      llvm::SmallVector<llvm::Instruction*, 2> InstsToAppend;
+      SmallVector<llvm::Instruction*, 2> InstsToAppend;
 
       // If there's exactly one branch-after and no other threads,
       // we can route it without a switch.

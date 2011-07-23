@@ -11,17 +11,15 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
-
 using namespace clang;
 using namespace arcmt;
-using llvm::StringRef;
 
 // FIXME: This duplicates significant functionality from PlistDiagnostics.cpp,
 // it would be jolly good if there was a reusable PlistWriter or something.
 
 typedef llvm::DenseMap<FileID, unsigned> FIDMap;
 
-static void AddFID(FIDMap &FIDs, llvm::SmallVectorImpl<FileID> &V,
+static void AddFID(FIDMap &FIDs, SmallVectorImpl<FileID> &V,
                    const SourceManager &SM, SourceLocation L) {
 
   FileID FID = SM.getFileID(SM.getInstantiationLoc(L));
@@ -39,12 +37,12 @@ static unsigned GetFID(const FIDMap& FIDs, const SourceManager &SM,
   return I->second;
 }
 
-static llvm::raw_ostream& Indent(llvm::raw_ostream& o, const unsigned indent) {
+static raw_ostream& Indent(raw_ostream& o, const unsigned indent) {
   for (unsigned i = 0; i < indent; ++i) o << ' ';
   return o;
 }
 
-static void EmitLocation(llvm::raw_ostream& o, const SourceManager &SM,
+static void EmitLocation(raw_ostream& o, const SourceManager &SM,
                          const LangOptions &LangOpts,
                          SourceLocation L, const FIDMap &FM,
                          unsigned indent, bool extend = false) {
@@ -65,7 +63,7 @@ static void EmitLocation(llvm::raw_ostream& o, const SourceManager &SM,
   Indent(o, indent) << "</dict>\n";
 }
 
-static void EmitRange(llvm::raw_ostream& o, const SourceManager &SM,
+static void EmitRange(raw_ostream& o, const SourceManager &SM,
                       const LangOptions &LangOpts,
                       CharSourceRange R, const FIDMap &FM,
                       unsigned indent) {
@@ -75,7 +73,7 @@ static void EmitRange(llvm::raw_ostream& o, const SourceManager &SM,
   Indent(o, indent) << "</array>\n";
 }
 
-static llvm::raw_ostream& EmitString(llvm::raw_ostream& o,
+static raw_ostream& EmitString(raw_ostream& o,
                                      StringRef s) {
   o << "<string>";
   for (StringRef::const_iterator I=s.begin(), E=s.end(); I!=E; ++I) {
@@ -102,7 +100,7 @@ void arcmt::writeARCDiagsToPlist(const std::string &outPath,
   // Build up a set of FIDs that we use by scanning the locations and
   // ranges of the diagnostics.
   FIDMap FM;
-  llvm::SmallVector<FileID, 10> Fids;
+  SmallVector<FileID, 10> Fids;
 
   for (llvm::ArrayRef<StoredDiagnostic>::iterator
          I = diags.begin(), E = diags.end(); I != E; ++I) {
@@ -137,7 +135,7 @@ void arcmt::writeARCDiagsToPlist(const std::string &outPath,
        " <key>files</key>\n"
        " <array>\n";
 
-  for (llvm::SmallVectorImpl<FileID>::iterator I=Fids.begin(), E=Fids.end();
+  for (SmallVectorImpl<FileID>::iterator I=Fids.begin(), E=Fids.end();
        I!=E; ++I) {
     o << "  ";
     EmitString(o, SM.getFileEntryForID(*I)->getName()) << '\n';

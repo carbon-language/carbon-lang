@@ -177,7 +177,7 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
     FinallyInfo.enter(CGF, Finally->getFinallyBody(),
                       beginCatchFn, endCatchFn, exceptionRethrowFn);
 
-  llvm::SmallVector<CatchHandler, 8> Handlers;
+  SmallVector<CatchHandler, 8> Handlers;
 
   // Enter the catch, if there is one.
   if (S.getNumCatchStmts()) {

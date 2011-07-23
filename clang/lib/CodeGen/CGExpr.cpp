@@ -45,7 +45,7 @@ llvm::Value *CodeGenFunction::EmitCastToVoidPtr(llvm::Value *value) {
 /// CreateTempAlloca - This creates a alloca and inserts it into the entry
 /// block.
 llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(llvm::Type *Ty,
-                                                    const llvm::Twine &Name) {
+                                                    const Twine &Name) {
   if (!Builder.isNamePreserving())
     return new llvm::AllocaInst(Ty, 0, "", AllocaInsertPt);
   return new llvm::AllocaInst(Ty, 0, Name, AllocaInsertPt);
@@ -59,7 +59,7 @@ void CodeGenFunction::InitTempAlloca(llvm::AllocaInst *Var,
 }
 
 llvm::AllocaInst *CodeGenFunction::CreateIRTemp(QualType Ty,
-                                                const llvm::Twine &Name) {
+                                                const Twine &Name) {
   llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertType(Ty), Name);
   // FIXME: Should we prefer the preferred type alignment here?
   CharUnits Align = getContext().getTypeAlignInChars(Ty);
@@ -68,7 +68,7 @@ llvm::AllocaInst *CodeGenFunction::CreateIRTemp(QualType Ty,
 }
 
 llvm::AllocaInst *CodeGenFunction::CreateMemTemp(QualType Ty,
-                                                 const llvm::Twine &Name) {
+                                                 const Twine &Name) {
   llvm::AllocaInst *Alloc = CreateTempAlloca(ConvertTypeForMem(Ty), Name);
   // FIXME: Should we prefer the preferred type alignment here?
   CharUnits Align = getContext().getTypeAlignInChars(Ty);
@@ -310,7 +310,7 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
       return ReferenceTemporary;
     }
     
-    llvm::SmallVector<SubobjectAdjustment, 2> Adjustments;
+    SmallVector<SubobjectAdjustment, 2> Adjustments;
     while (true) {
       E = E->IgnoreParens();
 
@@ -921,7 +921,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV) {
   // Always use shuffle vector to try to retain the original program structure
   unsigned NumResultElts = ExprVT->getNumElements();
 
-  llvm::SmallVector<llvm::Constant*, 4> Mask;
+  SmallVector<llvm::Constant*, 4> Mask;
   for (unsigned i = 0; i != NumResultElts; ++i) {
     unsigned InIdx = getAccessedFieldNo(i, Elts);
     Mask.push_back(llvm::ConstantInt::get(Int32Ty, InIdx));
@@ -1147,7 +1147,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       // Use shuffle vector is the src and destination are the same number of
       // elements and restore the vector mask since it is on the side it will be
       // stored.
-      llvm::SmallVector<llvm::Constant*, 4> Mask(NumDstElts);
+      SmallVector<llvm::Constant*, 4> Mask(NumDstElts);
       for (unsigned i = 0; i != NumSrcElts; ++i) {
         unsigned InIdx = getAccessedFieldNo(i, Elts);
         Mask[InIdx] = llvm::ConstantInt::get(Int32Ty, i);
@@ -1162,7 +1162,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       // into the destination.
       // FIXME: since we're shuffling with undef, can we just use the indices
       //        into that?  This could be simpler.
-      llvm::SmallVector<llvm::Constant*, 4> ExtMask;
+      SmallVector<llvm::Constant*, 4> ExtMask;
       unsigned i;
       for (i = 0; i != NumSrcElts; ++i)
         ExtMask.push_back(llvm::ConstantInt::get(Int32Ty, i));
@@ -1174,7 +1174,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
                                     llvm::UndefValue::get(SrcVal->getType()),
                                     ExtMaskV, "tmp");
       // build identity
-      llvm::SmallVector<llvm::Constant*, 4> Mask;
+      SmallVector<llvm::Constant*, 4> Mask;
       for (unsigned i = 0; i != NumDstElts; ++i)
         Mask.push_back(llvm::ConstantInt::get(Int32Ty, i));
 
@@ -1290,7 +1290,7 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
 static llvm::Value *
 EmitBitCastOfLValueToProperType(CodeGenFunction &CGF,
                                 llvm::Value *V, llvm::Type *IRType,
-                                llvm::StringRef Name = llvm::StringRef()) {
+                                StringRef Name = StringRef()) {
   unsigned AS = cast<llvm::PointerType>(V->getType())->getAddressSpace();
   return CGF.Builder.CreateBitCast(V, IRType->getPointerTo(AS), Name);
 }
@@ -1486,7 +1486,7 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
       break;
     }
 
-    llvm::StringRef FnName = CurFn->getName();
+    StringRef FnName = CurFn->getName();
     if (FnName.startswith("\01"))
       FnName = FnName.substr(1);
     GlobalVarName += FnName;
@@ -1681,8 +1681,8 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 
 static
 llvm::Constant *GenerateConstantVector(llvm::LLVMContext &VMContext,
-                                       llvm::SmallVector<unsigned, 4> &Elts) {
-  llvm::SmallVector<llvm::Constant*, 4> CElts;
+                                       SmallVector<unsigned, 4> &Elts) {
+  SmallVector<llvm::Constant*, 4> CElts;
 
   llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
   for (unsigned i = 0, e = Elts.size(); i != e; ++i)
@@ -1725,7 +1725,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     E->getType().withCVRQualifiers(Base.getQuals().getCVRQualifiers());
   
   // Encode the element access list into a vector of unsigned indices.
-  llvm::SmallVector<unsigned, 4> Indices;
+  SmallVector<unsigned, 4> Indices;
   E->getEncodedElementAccess(Indices);
 
   if (Base.isSimple()) {
@@ -1735,7 +1735,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   assert(Base.isExtVectorElt() && "Can only subscript lvalue vec elts here!");
 
   llvm::Constant *BaseElts = Base.getExtVectorElts();
-  llvm::SmallVector<llvm::Constant *, 4> CElts;
+  SmallVector<llvm::Constant *, 4> CElts;
 
   for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
     if (isa<llvm::ConstantAggregateZero>(BaseElts))

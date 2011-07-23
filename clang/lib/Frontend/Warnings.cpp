@@ -55,7 +55,7 @@ void clang::ProcessWarningOptions(Diagnostic &Diags,
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Ignore);
 
   for (unsigned i = 0, e = Opts.Warnings.size(); i != e; ++i) {
-    llvm::StringRef Opt = Opts.Warnings[i];
+    StringRef Opt = Opts.Warnings[i];
 
     // Check to see if this warning starts with "no-", if so, this is a negative
     // form of the option.
@@ -79,7 +79,7 @@ void clang::ProcessWarningOptions(Diagnostic &Diags,
     // -Werror/-Wno-error is a special case, not controlled by the option table.
     // It also has the "specifier" form of -Werror=foo and -Werror-foo.
     if (Opt.startswith("error")) {
-      llvm::StringRef Specifier;
+      StringRef Specifier;
       if (Opt.size() > 5) {  // Specifier must be present.
         if ((Opt[5] != '=' && Opt[5] != '-') || Opt.size() == 6) {
           Diags.Report(diag::warn_unknown_warning_specifier)
@@ -101,7 +101,7 @@ void clang::ProcessWarningOptions(Diagnostic &Diags,
 
     // -Wfatal-errors is yet another special case.
     if (Opt.startswith("fatal-errors")) {
-      llvm::StringRef Specifier;
+      StringRef Specifier;
       if (Opt.size() != 12) {
         if ((Opt[12] != '=' && Opt[12] != '-') || Opt.size() == 13) {
           Diags.Report(diag::warn_unknown_warning_specifier)

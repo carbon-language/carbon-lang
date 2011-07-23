@@ -17,7 +17,7 @@ using namespace clang;
 namespace {
 class HeaderIncludesCallback : public PPCallbacks {
   SourceManager &SM;
-  llvm::raw_ostream *OutputFile;
+  raw_ostream *OutputFile;
   unsigned CurrentIncludeDepth;
   bool HasProcessedPredefines;
   bool OwnsOutputFile;
@@ -26,7 +26,7 @@ class HeaderIncludesCallback : public PPCallbacks {
 
 public:
   HeaderIncludesCallback(const Preprocessor *PP, bool ShowAllHeaders_,
-                         llvm::raw_ostream *OutputFile_, bool OwnsOutputFile_,
+                         raw_ostream *OutputFile_, bool OwnsOutputFile_,
                          bool ShowDepth_)
     : SM(PP->getSourceManager()), OutputFile(OutputFile_),
       CurrentIncludeDepth(0), HasProcessedPredefines(false),
@@ -44,8 +44,8 @@ public:
 }
 
 void clang::AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders,
-                                   llvm::StringRef OutputPath, bool ShowDepth) {
-  llvm::raw_ostream *OutputFile = &llvm::errs();
+                                   StringRef OutputPath, bool ShowDepth) {
+  raw_ostream *OutputFile = &llvm::errs();
   bool OwnsOutputFile = false;
 
   // Open the output file, if used.

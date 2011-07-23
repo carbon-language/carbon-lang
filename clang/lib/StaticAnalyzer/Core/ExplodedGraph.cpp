@@ -285,7 +285,7 @@ ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
   typedef llvm::DenseMap<const ExplodedNode*, ExplodedNode*> Pass2Ty;
   Pass2Ty& Pass2 = M->M;
 
-  llvm::SmallVector<const ExplodedNode*, 10> WL1, WL2;
+  SmallVector<const ExplodedNode*, 10> WL1, WL2;
 
   // ===- Pass 1 (reverse DFS) -===
   for (const ExplodedNode* const* I = BeginSources; I != EndSources; ++I) {

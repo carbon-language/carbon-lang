@@ -36,7 +36,7 @@ void ExprEngine::evalArguments(ConstExprIterator AI, ConstExprIterator AE,
                                  bool FstArgAsLValue) {
 
 
-  llvm::SmallVector<CallExprWLItem, 20> WorkList;
+  SmallVector<CallExprWLItem, 20> WorkList;
   WorkList.reserve(AE - AI);
   WorkList.push_back(CallExprWLItem(AI, Pred));
 
@@ -197,7 +197,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
 #endif
   
   // Default semantics: invalidate all regions passed as arguments.
-  llvm::SmallVector<const MemRegion*, 10> regionsToInvalidate;
+  SmallVector<const MemRegion*, 10> regionsToInvalidate;
 
   // FIXME: We can have collisions on the conjured symbol if the
   //  expression *I also creates conjured symbols.  We probably want
@@ -303,7 +303,7 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
     // Accumulate list of regions that are invalidated.
     // FIXME: Eventually we should unify the logic for constructor
     // processing in one place.
-    llvm::SmallVector<const MemRegion*, 10> regionsToInvalidate;
+    SmallVector<const MemRegion*, 10> regionsToInvalidate;
     for (CXXNewExpr::const_arg_iterator
           ai = CNE->constructor_arg_begin(), ae = CNE->constructor_arg_end();
           ai != ae; ++ai)

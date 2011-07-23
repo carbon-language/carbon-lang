@@ -832,7 +832,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     return Actions.FinalizeDeclaratorGroup(getCurScope(), DS, &ThisDecl, 1);
   }
 
-  llvm::SmallVector<Decl *, 8> DeclsInGroup;
+  SmallVector<Decl *, 8> DeclsInGroup;
   Decl *FirstDecl = ParseDeclarationAfterDeclaratorAndAttributes(D);
   D.complete(FirstDecl);
   if (FirstDecl)
@@ -2325,7 +2325,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     Diag(Tok, diag::ext_empty_struct_union)
       << (TagType == TST_union);
 
-  llvm::SmallVector<Decl *, 32> FieldDecls;
+  SmallVector<Decl *, 32> FieldDecls;
 
   // While we still have something to read, read the declarations in the struct.
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
@@ -2347,10 +2347,10 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       struct CFieldCallback : FieldCallback {
         Parser &P;
         Decl *TagDecl;
-        llvm::SmallVectorImpl<Decl *> &FieldDecls;
+        SmallVectorImpl<Decl *> &FieldDecls;
 
         CFieldCallback(Parser &P, Decl *TagDecl,
-                       llvm::SmallVectorImpl<Decl *> &FieldDecls) :
+                       SmallVectorImpl<Decl *> &FieldDecls) :
           P(P), TagDecl(TagDecl), FieldDecls(FieldDecls) {}
 
         virtual Decl *invoke(FieldDeclarator &FD) {
@@ -2378,7 +2378,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
         SkipUntil(tok::semi, true);
         continue;
       }
-      llvm::SmallVector<Decl *, 16> Fields;
+      SmallVector<Decl *, 16> Fields;
       Actions.ActOnDefs(getCurScope(), TagDecl, Tok.getLocation(),
                         Tok.getIdentifierInfo(), Fields);
       FieldDecls.insert(FieldDecls.end(), Fields.begin(), Fields.end());
@@ -2687,7 +2687,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
   if (Tok.is(tok::r_brace) && !getLang().CPlusPlus)
     Diag(Tok, diag::error_empty_enum);
 
-  llvm::SmallVector<Decl *, 32> EnumConstantDecls;
+  SmallVector<Decl *, 32> EnumConstantDecls;
 
   Decl *LastEnumConstDecl = 0;
 
@@ -3678,7 +3678,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   // Otherwise, it is treated as a K&R-style function.
   bool HasProto = false;
   // Build up an array of information about the parsed arguments.
-  llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
+  SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
   // Remember where we see an ellipsis, if any.
   SourceLocation EllipsisLoc;
 
@@ -3687,8 +3687,8 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   SourceLocation RefQualifierLoc;
   ExceptionSpecificationType ESpecType = EST_None;
   SourceRange ESpecRange;
-  llvm::SmallVector<ParsedType, 2> DynamicExceptions;
-  llvm::SmallVector<SourceRange, 2> DynamicExceptionRanges;
+  SmallVector<ParsedType, 2> DynamicExceptions;
+  SmallVector<SourceRange, 2> DynamicExceptionRanges;
   ExprResult NoexceptExpr;
   ParsedType TrailingReturnType;
   
@@ -3811,7 +3811,7 @@ bool Parser::isFunctionDeclaratorIdentifierList() {
 ///
 void Parser::ParseFunctionDeclaratorIdentifierList(
        Declarator &D,
-       llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo) {
+       SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo) {
   // If there was no identifier specified for the declarator, either we are in
   // an abstract-declarator, or we are in a parameter declarator which was found
   // to be abstract.  In abstract-declarators, identifier lists are not valid:
@@ -3890,7 +3890,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(
 void Parser::ParseParameterDeclarationClause(
        Declarator &D,
        ParsedAttributes &attrs,
-       llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo,
+       SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo,
        SourceLocation &EllipsisLoc) {
 
   while (1) {

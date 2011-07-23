@@ -58,7 +58,7 @@ llvm::MDNode *CodeGenTBAA::getChar() {
 
 /// getTBAAInfoForNamedType - Create a TBAA tree node with the given string
 /// as its identifier, and the given Parent node as its tree parent.
-llvm::MDNode *CodeGenTBAA::getTBAAInfoForNamedType(llvm::StringRef NameStr,
+llvm::MDNode *CodeGenTBAA::getTBAAInfoForNamedType(StringRef NameStr,
                                                    llvm::MDNode *Parent,
                                                    bool Readonly) {
   // Currently there is only one flag defined - the readonly flag.

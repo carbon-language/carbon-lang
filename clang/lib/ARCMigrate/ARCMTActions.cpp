@@ -53,8 +53,8 @@ bool MigrateAction::BeginInvocation(CompilerInstance &CI) {
 }
 
 MigrateAction::MigrateAction(FrontendAction *WrappedAction,
-                             llvm::StringRef migrateDir,
-                             llvm::StringRef plistOut,
+                             StringRef migrateDir,
+                             StringRef plistOut,
                              bool emitPremigrationARCErrors)
   : WrapperFrontendAction(WrappedAction), MigrateDir(migrateDir),
     PlistOut(plistOut), EmitPremigrationARCErros(emitPremigrationARCErrors) {

@@ -66,7 +66,7 @@ namespace {
         Start = TimeRecord::getCurrentTime();
     }
 
-    void setOutput(const llvm::Twine &Output) {
+    void setOutput(const Twine &Output) {
       if (WantTiming)
         this->Output = Output.str();
     }
@@ -237,7 +237,7 @@ void ASTUnit::CacheCodeCompletionResults() {
   
   // Gather the set of global code completions.
   typedef CodeCompletionResult Result;
-  llvm::SmallVector<Result, 8> Results;
+  SmallVector<Result, 8> Results;
   CachedCompletionAllocator = new GlobalCodeCompletionAllocator;
   TheSema->GatherGlobalCodeCompletions(*CachedCompletionAllocator, Results);
   
@@ -396,13 +396,13 @@ public:
     return false;
   }
 
-  virtual bool ReadTargetTriple(llvm::StringRef Triple) {
+  virtual bool ReadTargetTriple(StringRef Triple) {
     TargetTriple = Triple;
     return false;
   }
 
   virtual bool ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
-                                    llvm::StringRef OriginalFileName,
+                                    StringRef OriginalFileName,
                                     std::string &SuggestedPredefines,
                                     FileManager &FileMgr) {
     Predefines = Buffers[0].Data;
@@ -422,11 +422,11 @@ public:
 };
 
 class StoredDiagnosticClient : public DiagnosticClient {
-  llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiags;
+  SmallVectorImpl<StoredDiagnostic> &StoredDiags;
   
 public:
   explicit StoredDiagnosticClient(
-                          llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiags)
+                          SmallVectorImpl<StoredDiagnostic> &StoredDiags)
     : StoredDiags(StoredDiags) { }
   
   virtual void HandleDiagnostic(Diagnostic::Level Level,
@@ -442,7 +442,7 @@ class CaptureDroppedDiagnostics {
 
 public:
   CaptureDroppedDiagnostics(bool RequestCapture, Diagnostic &Diags, 
-                          llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiags)
+                          SmallVectorImpl<StoredDiagnostic> &StoredDiags)
     : Diags(Diags), Client(StoredDiags), PreviousClient(0)
   {
     if (RequestCapture || Diags.getClient() == 0) {
@@ -478,7 +478,7 @@ const std::string &ASTUnit::getASTFileName() {
   return static_cast<ASTReader *>(Ctx->getExternalSource())->getFileName();
 }
 
-llvm::MemoryBuffer *ASTUnit::getBufferForFile(llvm::StringRef Filename,
+llvm::MemoryBuffer *ASTUnit::getBufferForFile(StringRef Filename,
                                               std::string *ErrorStr) {
   assert(FileMgr);
   return FileMgr->getBufferForFile(Filename, ErrorStr);
@@ -711,7 +711,7 @@ void AddTopLevelDeclarationToHash(Decl *D, unsigned &Hash) {
     return;
   }
   
-  if (ObjCClassDecl *Class = llvm::dyn_cast<ObjCClassDecl>(D)) {
+  if (ObjCClassDecl *Class = dyn_cast<ObjCClassDecl>(D)) {
     for (ObjCClassDecl::iterator I = Class->begin(), IEnd = Class->end();
          I != IEnd; ++I)
       AddTopLevelDeclarationToHash(I->getInterface(), Hash);
@@ -753,7 +753,7 @@ public:
   ASTUnit &Unit;
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         llvm::StringRef InFile) {
+                                         StringRef InFile) {
     CI.getPreprocessor().addPPCallbacks(
      new MacroDefinitionTrackerPPCallbacks(Unit.getCurrentTopLevelHashValue()));
     return new TopLevelDeclTrackerConsumer(Unit, 
@@ -778,7 +778,7 @@ class PrecompilePreambleConsumer : public PCHGenerator,
 public:
   PrecompilePreambleConsumer(ASTUnit &Unit,
                              const Preprocessor &PP, bool Chaining,
-                             StringRef isysroot, llvm::raw_ostream *Out)
+                             StringRef isysroot, raw_ostream *Out)
     : PCHGenerator(PP, "", Chaining, isysroot, Out), Unit(Unit),
       Hash(Unit.getCurrentTopLevelHashValue()) {
     Hash = 0;
@@ -828,10 +828,10 @@ public:
   explicit PrecompilePreambleAction(ASTUnit &Unit) : Unit(Unit) {}
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         llvm::StringRef InFile) {
+                                         StringRef InFile) {
     std::string Sysroot;
     std::string OutputFile;
-    llvm::raw_ostream *OS = 0;
+    raw_ostream *OS = 0;
     bool Chaining;
     if (GeneratePCHAction::ComputeASTConsumerArguments(CI, InFile, Sysroot,
                                                        OutputFile,
@@ -1132,7 +1132,7 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
 
 static llvm::MemoryBuffer *CreatePaddedMainFileBuffer(llvm::MemoryBuffer *Old,
                                                       unsigned NewSize,
-                                                      llvm::StringRef NewName) {
+                                                      StringRef NewName) {
   llvm::MemoryBuffer *Result
     = llvm::MemoryBuffer::getNewUninitMemBuffer(NewSize, NewName);
   memcpy(const_cast<char*>(Result->getBufferStart()), 
@@ -1565,7 +1565,7 @@ unsigned ASTUnit::getMaxPCHLevel() const {
   return 0;
 }
 
-llvm::StringRef ASTUnit::getMainFileName() const {
+StringRef ASTUnit::getMainFileName() const {
   return Invocation->getFrontendOpts().Inputs[0].second;
 }
 
@@ -1758,7 +1758,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
 ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       const char **ArgEnd,
                                     llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
-                                      llvm::StringRef ResourceFilesPath,
+                                      StringRef ResourceFilesPath,
                                       bool OnlyLocalDecls,
                                       bool CaptureDiagnostics,
                                       RemappedFile *RemappedFiles,
@@ -1778,7 +1778,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                                 ArgBegin);
   }
 
-  llvm::SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
+  SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
   
   llvm::IntrusiveRefCntPtr<CompilerInvocation> CI;
 
@@ -2064,7 +2064,7 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
   // Contains the set of names that are hidden by "local" completion results.
   llvm::StringSet<llvm::BumpPtrAllocator> HiddenNames;
   typedef CodeCompletionResult Result;
-  llvm::SmallVector<Result, 8> AllResults;
+  SmallVector<Result, 8> AllResults;
   for (ASTUnit::cached_completion_iterator 
             C = AST.cached_completion_begin(),
          CEnd = AST.cached_completion_end();
@@ -2146,7 +2146,7 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
 
 
 
-void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
+void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
                            RemappedFile *RemappedFiles, 
                            unsigned NumRemappedFiles,
                            bool IncludeMacros, 
@@ -2154,14 +2154,14 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
                            CodeCompleteConsumer &Consumer,
                            Diagnostic &Diag, LangOptions &LangOpts,
                            SourceManager &SourceMgr, FileManager &FileMgr,
-                   llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics,
-             llvm::SmallVectorImpl<const llvm::MemoryBuffer *> &OwnedBuffers) {
+                   SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics,
+             SmallVectorImpl<const llvm::MemoryBuffer *> &OwnedBuffers) {
   if (!Invocation)
     return;
 
   SimpleTimer CompletionTimer(WantTiming);
   CompletionTimer.setOutput("Code completion @ " + File + ":" +
-                            llvm::Twine(Line) + ":" + llvm::Twine(Column));
+                            Twine(Line) + ":" + Twine(Column));
 
   llvm::IntrusiveRefCntPtr<CompilerInvocation>
     CCInvocation(new CompilerInvocation(*Invocation));
@@ -2303,7 +2303,7 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   }
 }
 
-CXSaveError ASTUnit::Save(llvm::StringRef File) {
+CXSaveError ASTUnit::Save(StringRef File) {
   if (getDiagnostics().hasUnrecoverableErrorOccurred())
     return CXSaveError_TranslationErrors;
 
@@ -2341,7 +2341,7 @@ CXSaveError ASTUnit::Save(llvm::StringRef File) {
   return CXSaveError_None;
 }
 
-bool ASTUnit::serialize(llvm::raw_ostream &OS) {
+bool ASTUnit::serialize(raw_ostream &OS) {
   if (getDiagnostics().hasErrorOccurred())
     return true;
 
@@ -2368,17 +2368,17 @@ static void TranslateSLoc(SourceLocation &L, SLocRemap &Remap) {
 
 void ASTUnit::TranslateStoredDiagnostics(
                           ASTReader *MMan,
-                          llvm::StringRef ModName,
+                          StringRef ModName,
                           SourceManager &SrcMgr,
-                          const llvm::SmallVectorImpl<StoredDiagnostic> &Diags,
-                          llvm::SmallVectorImpl<StoredDiagnostic> &Out) {
+                          const SmallVectorImpl<StoredDiagnostic> &Diags,
+                          SmallVectorImpl<StoredDiagnostic> &Out) {
   // The stored diagnostic has the old source manager in it; update
   // the locations to refer into the new source manager. We also need to remap
   // all the locations to the new view. This includes the diag location, any
   // associated source ranges, and the source ranges of associated fix-its.
   // FIXME: There should be a cleaner way to do this.
 
-  llvm::SmallVector<StoredDiagnostic, 4> Result;
+  SmallVector<StoredDiagnostic, 4> Result;
   Result.reserve(Diags.size());
   assert(MMan && "Don't have a module manager");
   serialization::Module *Mod = MMan->Modules.lookup(ModName);
@@ -2391,7 +2391,7 @@ void ASTUnit::TranslateStoredDiagnostics(
     TranslateSLoc(L, Remap);
     FullSourceLoc Loc(L, SrcMgr);
 
-    llvm::SmallVector<CharSourceRange, 4> Ranges;
+    SmallVector<CharSourceRange, 4> Ranges;
     Ranges.reserve(SD.range_size());
     for (StoredDiagnostic::range_iterator I = SD.range_begin(),
                                           E = SD.range_end();
@@ -2403,7 +2403,7 @@ void ASTUnit::TranslateStoredDiagnostics(
       Ranges.push_back(CharSourceRange(SourceRange(BL, EL), I->isTokenRange()));
     }
 
-    llvm::SmallVector<FixItHint, 2> FixIts;
+    SmallVector<FixItHint, 2> FixIts;
     FixIts.reserve(SD.fixit_size());
     for (StoredDiagnostic::fixit_iterator I = SD.fixit_begin(),
                                           E = SD.fixit_end();

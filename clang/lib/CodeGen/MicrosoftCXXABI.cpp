@@ -31,7 +31,7 @@ public:
   void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                  CXXCtorType Type,
                                  CanQualType &ResTy,
-                                 llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+                                 SmallVectorImpl<CanQualType> &ArgTys) {
     // 'this' is already in place
     // TODO: 'for base' flag
   }  
@@ -39,7 +39,7 @@ public:
   void BuildDestructorSignature(const CXXDestructorDecl *Ctor,
                                 CXXDtorType Type,
                                 CanQualType &ResTy,
-                                llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+                                SmallVectorImpl<CanQualType> &ArgTys) {
     // 'this' is already in place
     // TODO: 'for base' flag
   }

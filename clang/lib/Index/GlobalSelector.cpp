@@ -25,7 +25,7 @@ Selector GlobalSelector::getSelector(ASTContext &AST) const {
 
   Selector GlobSel = Selector(reinterpret_cast<uintptr_t>(Val));
 
-  llvm::SmallVector<IdentifierInfo *, 8> Ids;
+  SmallVector<IdentifierInfo *, 8> Ids;
   for (unsigned i = 0, e = GlobSel.isUnarySelector() ? 1 : GlobSel.getNumArgs();
          i != e; ++i) {
     IdentifierInfo *GlobII = GlobSel.getIdentifierInfoForSlot(i);
@@ -52,7 +52,7 @@ GlobalSelector GlobalSelector::get(Selector Sel, Program &Prog) {
 
   ProgramImpl &ProgImpl = *static_cast<ProgramImpl*>(Prog.Impl);
 
-  llvm::SmallVector<IdentifierInfo *, 8> Ids;
+  SmallVector<IdentifierInfo *, 8> Ids;
   for (unsigned i = 0, e = Sel.isUnarySelector() ? 1 : Sel.getNumArgs();
          i != e; ++i) {
     IdentifierInfo *II = Sel.getIdentifierInfoForSlot(i);

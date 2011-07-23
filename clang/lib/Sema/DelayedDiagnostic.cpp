@@ -21,7 +21,7 @@ using namespace sema;
 
 DelayedDiagnostic DelayedDiagnostic::makeDeprecation(SourceLocation Loc,
                                                      const NamedDecl *D,
-                                                     llvm::StringRef Msg) {
+                                                     StringRef Msg) {
   DelayedDiagnostic DD;
   DD.Kind = Deprecation;
   DD.Triggered = false;

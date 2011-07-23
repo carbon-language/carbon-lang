@@ -105,7 +105,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
   // that we are in an inconsistent situation and error out as quickly as
   // possible.
   if (!Buffer.getPointer()) {
-    const llvm::StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
+    const StringRef FillStr("<<<MISSING SOURCE FILE>>>\n");
     Buffer.setPointer(MemoryBuffer::getNewMemBuffer(ContentsEntry->getSize(), 
                                                     "<invalid>"));
     char *Ptr = const_cast<char*>(Buffer.getPointer()->getBufferStart());
@@ -143,7 +143,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
   // If the buffer is valid, check to see if it has a UTF Byte Order Mark
   // (BOM).  We only support UTF-8 with and without a BOM right now.  See
   // http://en.wikipedia.org/wiki/Byte_order_mark for more information.
-  llvm::StringRef BufStr = Buffer.getPointer()->getBuffer();
+  StringRef BufStr = Buffer.getPointer()->getBuffer();
   const char *InvalidBOM = llvm::StringSwitch<const char *>(BufStr)
     .StartsWith("\xFE\xFF", "UTF-16 (BE)")
     .StartsWith("\xFF\xFE", "UTF-16 (LE)")
@@ -169,7 +169,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
   return Buffer.getPointer();
 }
 
-unsigned LineTableInfo::getLineTableFilenameID(llvm::StringRef Name) {
+unsigned LineTableInfo::getLineTableFilenameID(StringRef Name) {
   // Look up the filename in the string table, returning the pre-existing value
   // if it exists.
   llvm::StringMapEntry<unsigned> &Entry =
@@ -277,7 +277,7 @@ void LineTableInfo::AddEntry(int FID,
 
 /// getLineTableFilenameID - Return the uniqued ID for the specified filename.
 ///
-unsigned SourceManager::getLineTableFilenameID(llvm::StringRef Name) {
+unsigned SourceManager::getLineTableFilenameID(StringRef Name) {
   if (LineTable == 0)
     LineTable = new LineTableInfo();
   return LineTable->getLineTableFilenameID(Name);
@@ -588,7 +588,7 @@ void SourceManager::overrideFileContents(const FileEntry *SourceFile,
   OverriddenFiles[SourceFile] = NewFile;
 }
 
-llvm::StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
+StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
   bool MyInvalid = false;
   const SLocEntry &SLoc = getSLocEntry(FID, &MyInvalid);
   if (!SLoc.isFile() || MyInvalid) {
@@ -986,7 +986,7 @@ static void ComputeLineNumbers(Diagnostic &Diag, ContentCache *FI,
 
   // Find the file offsets of all of the *physical* source lines.  This does
   // not look at trigraphs, escaped newlines, or anything else tricky.
-  llvm::SmallVector<unsigned, 256> LineOffsets;
+  SmallVector<unsigned, 256> LineOffsets;
 
   // Line #1 starts at char 0.
   LineOffsets.push_back(0);
@@ -1316,7 +1316,7 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
   // First, check the main file ID, since it is common to look for a
   // location in the main file.
   llvm::Optional<ino_t> SourceFileInode;
-  llvm::Optional<llvm::StringRef> SourceFileName;
+  llvm::Optional<StringRef> SourceFileName;
   if (!MainFileID.isInvalid()) {
     bool Invalid = false;
     const SLocEntry &MainSLoc = getSLocEntry(MainFileID, &Invalid);

@@ -32,12 +32,12 @@ using namespace clang;
 namespace {
   class HTMLPrinter : public ASTConsumer {
     Rewriter R;
-    llvm::raw_ostream *Out;
+    raw_ostream *Out;
     Preprocessor &PP;
     bool SyntaxHighlight, HighlightMacros;
 
   public:
-    HTMLPrinter(llvm::raw_ostream *OS, Preprocessor &pp,
+    HTMLPrinter(raw_ostream *OS, Preprocessor &pp,
                 bool _SyntaxHighlight, bool _HighlightMacros)
       : Out(OS), PP(pp), SyntaxHighlight(_SyntaxHighlight),
         HighlightMacros(_HighlightMacros) {}
@@ -47,7 +47,7 @@ namespace {
   };
 }
 
-ASTConsumer* clang::CreateHTMLPrinter(llvm::raw_ostream *OS,
+ASTConsumer* clang::CreateHTMLPrinter(raw_ostream *OS,
                                       Preprocessor &PP,
                                       bool SyntaxHighlight,
                                       bool HighlightMacros) {

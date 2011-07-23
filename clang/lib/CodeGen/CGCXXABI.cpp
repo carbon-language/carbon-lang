@@ -20,7 +20,7 @@ using namespace CodeGen;
 CGCXXABI::~CGCXXABI() { }
 
 static void ErrorUnsupportedABI(CodeGenFunction &CGF,
-                                llvm::StringRef S) {
+                                StringRef S) {
   Diagnostic &Diags = CGF.CGM.getDiags();
   unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
                                           "cannot yet compile %1 in this ABI");

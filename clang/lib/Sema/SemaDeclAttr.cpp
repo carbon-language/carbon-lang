@@ -394,7 +394,7 @@ static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   unsigned NumArgs  = getFunctionOrMethodNumArgs(D) + HasImplicitThisParam;
 
   // The nonnull attribute only applies to pointers.
-  llvm::SmallVector<unsigned, 10> NonNullArgs;
+  SmallVector<unsigned, 10> NonNullArgs;
 
   for (AttributeList::arg_iterator I=Attr.arg_begin(),
                                    E=Attr.arg_end(); I!=E; ++I) {
@@ -526,13 +526,13 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
   bool HasImplicitThisParam = isInstanceMethod(D);
   unsigned NumArgs  = getFunctionOrMethodNumArgs(D) + HasImplicitThisParam;
 
-  llvm::StringRef Module = AL.getParameterName()->getName();
+  StringRef Module = AL.getParameterName()->getName();
 
   // Normalize the argument, __foo__ becomes foo.
   if (Module.startswith("__") && Module.endswith("__"))
     Module = Module.substr(2, Module.size() - 4);
 
-  llvm::SmallVector<unsigned, 10> OwnershipArgs;
+  SmallVector<unsigned, 10> OwnershipArgs;
 
   for (AttributeList::arg_iterator I = AL.arg_begin(), E = AL.arg_end(); I != E;
        ++I) {
@@ -1053,7 +1053,7 @@ static void handleDeprecatedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
   
   // Handle the case where deprecated attribute has a text message.
-  llvm::StringRef Str;
+  StringRef Str;
   if (NumArgs == 1) {
     StringLiteral *SE = dyn_cast<StringLiteral>(Attr.getArg(0));
     if (!SE) {
@@ -1075,7 +1075,7 @@ static void handleUnavailableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
   
   // Handle the case where unavailable attribute has a text message.
-  llvm::StringRef Str;
+  StringRef Str;
   if (NumArgs == 1) {
     StringLiteral *SE = dyn_cast<StringLiteral>(Attr.getArg(0));
     if (!SE) {
@@ -1105,7 +1105,7 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
   IdentifierInfo *Platform = Attr.getParameterName();
   SourceLocation PlatformLoc = Attr.getParameterLoc();
 
-  llvm::StringRef PlatformName
+  StringRef PlatformName
     = AvailabilityAttr::getPrettyPlatformName(Platform->getName());
   if (PlatformName.empty()) {
     S.Diag(PlatformLoc, diag::warn_availability_unknown_platform)
@@ -1168,7 +1168,7 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  llvm::StringRef TypeStr = Str->getString();
+  StringRef TypeStr = Str->getString();
   VisibilityAttr::VisibilityType type;
 
   if (TypeStr == "default")
@@ -1207,7 +1207,7 @@ static void handleObjCMethodFamilyAttr(Sema &S, Decl *decl,
     return;
   }
 
-  llvm::StringRef param = Attr.getParameterName()->getName();
+  StringRef param = Attr.getParameterName()->getName();
   ObjCMethodFamilyAttr::FamilyKind family;
   if (param == "none")
     family = ObjCMethodFamilyAttr::OMF_None;
@@ -1719,7 +1719,7 @@ enum FormatAttrKind {
 
 /// getFormatAttrKind - Map from format attribute names to supported format
 /// types.
-static FormatAttrKind getFormatAttrKind(llvm::StringRef Format) {
+static FormatAttrKind getFormatAttrKind(StringRef Format) {
   // Check for formats that get handled specially.
   if (Format == "NSString")
     return NSStringFormat;
@@ -1819,7 +1819,7 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   unsigned NumArgs  = getFunctionOrMethodNumArgs(D) + HasImplicitThisParam;
   unsigned FirstIdx = 1;
 
-  llvm::StringRef Format = Attr.getParameterName()->getName();
+  StringRef Format = Attr.getParameterName()->getName();
 
   // Normalize the argument, __foo__ becomes foo.
   if (Format.startswith("__") && Format.endswith("__"))
@@ -2104,7 +2104,7 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  llvm::StringRef Str = Attr.getParameterName()->getName();
+  StringRef Str = Attr.getParameterName()->getName();
 
   // Normalize the attribute name, __foo__ becomes foo.
   if (Str.startswith("__") && Str.endswith("__"))
@@ -2471,7 +2471,7 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
       return;
     }
 
-    llvm::StringRef StrRef = Str->getString();
+    StringRef StrRef = Str->getString();
     PcsAttr::PCSType PCS;
     if (StrRef == "aapcs")
       PCS = PcsAttr::AAPCS;
@@ -2526,7 +2526,7 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
       return true;
     }
 
-    llvm::StringRef StrRef = Str->getString();
+    StringRef StrRef = Str->getString();
     if (StrRef == "aapcs") {
       CC = CC_AAPCS;
       break;
@@ -2874,7 +2874,7 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
       return;
     }
 
-    llvm::StringRef StrRef = Str->getString();
+    StringRef StrRef = Str->getString();
 
     bool IsCurly = StrRef.size() > 1 && StrRef.front() == '{' &&
                    StrRef.back() == '}';
@@ -2891,7 +2891,7 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
     // GUID format is "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" or 
     // "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}"
-    llvm::StringRef::iterator I = StrRef.begin();
+    StringRef::iterator I = StrRef.begin();
     if (IsCurly) // Skip the optional '{'
        ++I;
 
@@ -3336,7 +3336,7 @@ void Sema::HandleDelayedDeprecationCheck(DelayedDiagnostic &DD,
       << DD.getDeprecationDecl()->getDeclName();
 }
 
-void Sema::EmitDeprecationWarning(NamedDecl *D, llvm::StringRef Message,
+void Sema::EmitDeprecationWarning(NamedDecl *D, StringRef Message,
                                   SourceLocation Loc,
                                   const ObjCInterfaceDecl *UnknownObjCClass) {
   // Delay if we're currently parsing a declaration.

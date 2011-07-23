@@ -24,7 +24,7 @@ ExternalPreprocessingRecordSource::~ExternalPreprocessingRecordSource() { }
 
 InclusionDirective::InclusionDirective(PreprocessingRecord &PPRec,
                                        InclusionKind Kind, 
-                                       llvm::StringRef FileName, 
+                                       StringRef FileName, 
                                        bool InQuotes, const FileEntry *File, 
                                        SourceRange Range)
   : PreprocessingDirective(InclusionDirectiveKind, Range), 
@@ -34,7 +34,7 @@ InclusionDirective::InclusionDirective(PreprocessingRecord &PPRec,
     = (char*)PPRec.Allocate(FileName.size() + 1, llvm::alignOf<char>());
   memcpy(Memory, FileName.data(), FileName.size());
   Memory[FileName.size()] = 0;
-  this->FileName = llvm::StringRef(Memory, FileName.size());
+  this->FileName = StringRef(Memory, FileName.size());
 }
 
 void PreprocessingRecord::MaybeLoadPreallocatedEntities() const {
@@ -139,12 +139,12 @@ void PreprocessingRecord::MacroUndefined(const Token &Id,
 void PreprocessingRecord::InclusionDirective(
     SourceLocation HashLoc,
     const clang::Token &IncludeTok,
-    llvm::StringRef FileName,
+    StringRef FileName,
     bool IsAngled,
     const FileEntry *File,
     clang::SourceLocation EndLoc,
-    llvm::StringRef SearchPath,
-    llvm::StringRef RelativePath) {
+    StringRef SearchPath,
+    StringRef RelativePath) {
   InclusionDirective::InclusionKind Kind = InclusionDirective::Include;
   
   switch (IncludeTok.getIdentifierInfo()->getPPKeywordID()) {

@@ -210,7 +210,7 @@ Sema::~Sema() {
 /// make the relevant declaration unavailable instead of erroring, do
 /// so and return true.
 bool Sema::makeUnavailableInSystemHeader(SourceLocation loc,
-                                         llvm::StringRef msg) {
+                                         StringRef msg) {
   // If we're not in a function, it's an error.
   FunctionDecl *fn = dyn_cast<FunctionDecl>(CurContext);
   if (!fn) return false;
@@ -358,7 +358,7 @@ static void checkUndefinedInternals(Sema &S) {
   if (S.UndefinedInternals.empty()) return;
 
   // Collect all the still-undefined entities with internal linkage.
-  llvm::SmallVector<UndefinedInternal, 16> undefined;
+  SmallVector<UndefinedInternal, 16> undefined;
   for (llvm::DenseMap<NamedDecl*,SourceLocation>::iterator
          i = S.UndefinedInternals.begin(), e = S.UndefinedInternals.end();
        i != e; ++i) {
@@ -389,7 +389,7 @@ static void checkUndefinedInternals(Sema &S) {
   // the iteration order through an llvm::DenseMap.
   llvm::array_pod_sort(undefined.begin(), undefined.end());
 
-  for (llvm::SmallVectorImpl<UndefinedInternal>::iterator
+  for (SmallVectorImpl<UndefinedInternal>::iterator
          i = undefined.begin(), e = undefined.end(); i != e; ++i) {
     NamedDecl *decl = i->decl;
     S.Diag(decl->getLocation(), diag::warn_undefined_internal)
@@ -517,7 +517,7 @@ void Sema::ActOnEndOfTranslationUnit() {
   // noise.
   if (!Diags.hasErrorOccurred()) {
     // Output warning for unused file scoped decls.
-    for (llvm::SmallVectorImpl<const DeclaratorDecl*>::iterator
+    for (SmallVectorImpl<const DeclaratorDecl*>::iterator
            I = UnusedFileScopedDecls.begin(),
            E = UnusedFileScopedDecls.end(); I != E; ++I) {
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
@@ -681,7 +681,7 @@ Sema::Diag(SourceLocation Loc, const PartialDiagnostic& PD) {
 /// location, looking for a macro instantiation with the given name.
 /// If one is found, returns true and sets the location to that
 /// instantiation loc.
-bool Sema::findMacroSpelling(SourceLocation &locref, llvm::StringRef name) {
+bool Sema::findMacroSpelling(SourceLocation &locref, StringRef name) {
   SourceLocation loc = locref;
   if (!loc.isMacroID()) return false;
 
@@ -690,7 +690,7 @@ bool Sema::findMacroSpelling(SourceLocation &locref, llvm::StringRef name) {
   loc = getSourceManager().getInstantiationLoc(loc);
 
   // If that's written with the name, stop here.
-  llvm::SmallVector<char, 16> buffer;
+  SmallVector<char, 16> buffer;
   if (getPreprocessor().getSpelling(loc, buffer) == name) {
     locref = loc;
     return true;
@@ -754,7 +754,7 @@ void Sema::PopFunctionOrBlockScope(const AnalysisBasedWarnings::Policy *WP,
   if (WP && D)
     AnalysisWarnings.IssueWarnings(*WP, Scope, D, blkExpr);
   else {
-    for (llvm::SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
+    for (SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
          i = Scope->PossiblyUnreachableDiags.begin(),
          e = Scope->PossiblyUnreachableDiags.end();
          i != e; ++i) {
@@ -790,10 +790,10 @@ ExternalSemaSource::ReadMethodPool(Selector Sel) {
 }
 
 void ExternalSemaSource::ReadKnownNamespaces(
-                           llvm::SmallVectorImpl<NamespaceDecl *> &Namespaces) {  
+                           SmallVectorImpl<NamespaceDecl *> &Namespaces) {  
 }
 
-void PrettyDeclStackTraceEntry::print(llvm::raw_ostream &OS) const {
+void PrettyDeclStackTraceEntry::print(raw_ostream &OS) const {
   SourceLocation Loc = this->Loc;
   if (!Loc.isValid() && TheDecl) Loc = TheDecl->getLocation();
   if (Loc.isValid()) {

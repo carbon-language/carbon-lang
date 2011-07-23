@@ -47,7 +47,7 @@ public:
   SVal ArrayToPointer(Loc Array);
   StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
                               SymbolReaper& SymReaper,
-                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots){
+                          SmallVectorImpl<const MemRegion*>& RegionRoots){
     return StoreRef(store, *this);
   }
 
@@ -63,7 +63,7 @@ public:
                              bool invalidateGlobals,
                              InvalidatedRegions *Regions);
 
-  void print(Store store, llvm::raw_ostream& Out, const char* nl, 
+  void print(Store store, raw_ostream& Out, const char* nl, 
              const char *sep);
   void iterBindings(Store store, BindingsHandler& f);
 
@@ -182,7 +182,7 @@ StoreRef FlatStoreManager::invalidateRegions(Store store,
   return StoreRef(store, *this);
 }
 
-void FlatStoreManager::print(Store store, llvm::raw_ostream& Out, 
+void FlatStoreManager::print(Store store, raw_ostream& Out, 
                              const char* nl, const char *sep) {
 }
 

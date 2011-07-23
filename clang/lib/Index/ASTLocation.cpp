@@ -75,7 +75,7 @@ SourceRange ASTLocation::getSourceRange() const {
   return SourceRange();
 }
 
-void ASTLocation::print(llvm::raw_ostream &OS) const {
+void ASTLocation::print(raw_ostream &OS) const {
   if (isInvalid()) {
     OS << "<< Invalid ASTLocation >>\n";
     return;

@@ -67,7 +67,7 @@ void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
   IdentifierInfo *II = FD->getIdentifier();
   if (!II)   // if no identifier, not a simple C function
     return;
-  llvm::StringRef FName = II->getName();
+  StringRef FName = II->getName();
 
   if (CE->getNumArgs() != 1)
     return;

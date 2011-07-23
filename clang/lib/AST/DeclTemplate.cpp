@@ -348,7 +348,7 @@ void ClassTemplateDecl::AddPartialSpecialization(
 }
 
 void ClassTemplateDecl::getPartialSpecializations(
-          llvm::SmallVectorImpl<ClassTemplatePartialSpecializationDecl *> &PS) {
+          SmallVectorImpl<ClassTemplatePartialSpecializationDecl *> &PS) {
   llvm::FoldingSet<ClassTemplatePartialSpecializationDecl> &PartialSpecs
     = getPartialSpecializations();
   PS.clear();
@@ -406,7 +406,7 @@ ClassTemplateDecl::getInjectedClassNameSpecialization() {
   //  pack.
   ASTContext &Context = getASTContext();
   TemplateParameterList *Params = getTemplateParameters();
-  llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
+  SmallVector<TemplateArgument, 16> TemplateArgs;
   TemplateArgs.resize(Params->size());
   GenerateInjectedTemplateArgs(getASTContext(), Params, TemplateArgs.data());
   CommonPtr->InjectedClassNameType

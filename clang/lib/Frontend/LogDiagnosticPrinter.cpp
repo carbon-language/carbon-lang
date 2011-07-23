@@ -14,7 +14,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
-LogDiagnosticPrinter::LogDiagnosticPrinter(llvm::raw_ostream &os,
+LogDiagnosticPrinter::LogDiagnosticPrinter(raw_ostream &os,
                                            const DiagnosticOptions &diags,
                                            bool _OwnsOutputStream)
   : OS(os), LangOpts(0), DiagOpts(&diags),
@@ -26,7 +26,7 @@ LogDiagnosticPrinter::~LogDiagnosticPrinter() {
     delete &OS;
 }
 
-static llvm::StringRef getLevelName(Diagnostic::Level Level) {
+static StringRef getLevelName(Diagnostic::Level Level) {
   switch (Level) {
   default:
     return "<unknown>";

@@ -159,7 +159,7 @@ Environment
 EnvironmentManager::removeDeadBindings(Environment Env,
                                        SymbolReaper &SymReaper,
                                        const GRState *ST,
-                              llvm::SmallVectorImpl<const MemRegion*> &DRoots) {
+                              SmallVectorImpl<const MemRegion*> &DRoots) {
 
   CFG &C = *SymReaper.getLocationContext()->getCFG();
 
@@ -168,7 +168,7 @@ EnvironmentManager::removeDeadBindings(Environment Env,
   // outnumber block-level expression bindings).
   Environment NewEnv = getInitialEnvironment();
   
-  llvm::SmallVector<std::pair<const Stmt*, SVal>, 10> deferredLocations;
+  SmallVector<std::pair<const Stmt*, SVal>, 10> deferredLocations;
 
   // Iterate over the block-expr bindings.
   for (Environment::iterator I = Env.begin(), E = Env.end();
@@ -233,7 +233,7 @@ EnvironmentManager::removeDeadBindings(Environment Env,
   
   // Go through he deferred locations and add them to the new environment if
   // the correspond Stmt* is in the map as well.
-  for (llvm::SmallVectorImpl<std::pair<const Stmt*, SVal> >::iterator
+  for (SmallVectorImpl<std::pair<const Stmt*, SVal> >::iterator
       I = deferredLocations.begin(), E = deferredLocations.end(); I != E; ++I) {
     const Stmt *S = (Stmt*) (((uintptr_t) I->first) & (uintptr_t) ~0x1);
     if (NewEnv.ExprBindings.lookup(S))

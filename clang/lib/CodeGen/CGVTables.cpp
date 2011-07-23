@@ -122,7 +122,7 @@ private:
   
   /// dump - dump the final overriders for a base subobject, and all its direct
   /// and indirect base subobjects.
-  void dump(llvm::raw_ostream &Out, BaseSubobject Base,
+  void dump(raw_ostream &Out, BaseSubobject Base,
             VisitedVirtualBasesSetTy& VisitedVirtualBases);
   
 public:
@@ -380,7 +380,7 @@ FinalOverriders::ComputeBaseOffsets(BaseSubobject Base, bool IsVirtual,
   }
 }
 
-void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base,
+void FinalOverriders::dump(raw_ostream &Out, BaseSubobject Base,
                            VisitedVirtualBasesSetTy &VisitedVirtualBases) {
   const CXXRecordDecl *RD = Base.getBase();
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
@@ -616,7 +616,7 @@ struct VCallOffsetMap {
   
   /// Offsets - Keeps track of methods and their offsets.
   // FIXME: This should be a real map and not a vector.
-  llvm::SmallVector<MethodAndOffsetPairTy, 16> Offsets;
+  SmallVector<MethodAndOffsetPairTy, 16> Offsets;
 
   /// MethodsCanShareVCallOffset - Returns whether two virtual member functions
   /// can share the same vcall offset.
@@ -724,7 +724,7 @@ private:
   ASTContext &Context;
 
   /// Components - vcall and vbase offset components
-  typedef llvm::SmallVector<VTableComponent, 64> VTableComponentVectorTy;
+  typedef SmallVector<VTableComponent, 64> VTableComponentVectorTy;
   VTableComponentVectorTy Components;
   
   /// VisitedVirtualBases - Visited virtual bases.
@@ -999,7 +999,7 @@ private:
   VBaseOffsetOffsetsMapTy VBaseOffsetOffsets;
   
   /// Components - The components of the vtable being built.
-  llvm::SmallVector<VTableComponent, 64> Components;
+  SmallVector<VTableComponent, 64> Components;
 
   /// AddressPoints - Address points for the vtable being built.
   AddressPointsMapTy AddressPoints;
@@ -1042,7 +1042,7 @@ private:
   /// built.
   VTableThunksMapTy VTableThunks;
 
-  typedef llvm::SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
+  typedef SmallVector<ThunkInfo, 1> ThunkInfoVectorTy;
   typedef llvm::DenseMap<const CXXMethodDecl *, ThunkInfoVectorTy> ThunksMapTy;
   
   /// Thunks - A map that contains all the thunks needed for all methods in the
@@ -1214,14 +1214,14 @@ public:
   }
 
   /// dumpLayout - Dump the vtable layout.
-  void dumpLayout(llvm::raw_ostream&);
+  void dumpLayout(raw_ostream&);
 };
 
 void VTableBuilder::AddThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk) {
   assert(!isBuildingConstructorVTable() && 
          "Can't add thunks for construction vtable");
 
-  llvm::SmallVector<ThunkInfo, 1> &ThunksVector = Thunks[MD];
+  SmallVector<ThunkInfo, 1> &ThunksVector = Thunks[MD];
   
   // Check if we have this thunk already.
   if (std::find(ThunksVector.begin(), ThunksVector.end(), Thunk) != 
@@ -1981,7 +1981,7 @@ VTableBuilder::LayoutVTablesForVirtualBases(const CXXRecordDecl *RD,
 }
 
 /// dumpLayout - Dump the vtable layout.
-void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
+void VTableBuilder::dumpLayout(raw_ostream& Out) {
 
   if (isBuildingConstructorVTable()) {
     Out << "Construction vtable for ('";
@@ -2881,7 +2881,7 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk,
            "Shouldn't replace non-declaration");
 
     // Remove the name from the old thunk function and get a new thunk.
-    OldThunkFn->setName(llvm::StringRef());
+    OldThunkFn->setName(StringRef());
     Entry = CGM.GetAddrOfThunk(GD, Thunk);
     
     // If needed, replace the old thunk with a bitcast.
@@ -3064,7 +3064,7 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
                                         const uint64_t *Components, 
                                         unsigned NumComponents,
                                         const VTableThunksTy &VTableThunks) {
-  llvm::SmallVector<llvm::Constant *, 64> Inits;
+  SmallVector<llvm::Constant *, 64> Inits;
 
   llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   
@@ -3174,7 +3174,7 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   llvm::raw_svector_ostream Out(OutName);
   CGM.getCXXABI().getMangleContext().mangleCXXVTable(RD, Out);
   Out.flush();
-  llvm::StringRef Name = OutName.str();
+  StringRef Name = OutName.str();
 
   ComputeVTableRelatedInformation(RD, /*VTableRequired=*/true);
   
@@ -3244,7 +3244,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
     mangleCXXCtorVTable(RD, Base.getBaseOffset().getQuantity(), Base.getBase(), 
                         Out);
   Out.flush();
-  llvm::StringRef Name = OutName.str();
+  StringRef Name = OutName.str();
 
   llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 

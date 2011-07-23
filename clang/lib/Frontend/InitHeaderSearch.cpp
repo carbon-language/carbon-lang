@@ -52,38 +52,38 @@ class InitHeaderSearch {
 
 public:
 
-  InitHeaderSearch(HeaderSearch &HS, bool verbose, llvm::StringRef sysroot)
+  InitHeaderSearch(HeaderSearch &HS, bool verbose, StringRef sysroot)
     : Headers(HS), Verbose(verbose), IncludeSysroot(sysroot),
       IsNotEmptyOrRoot(!(sysroot.empty() || sysroot == "/")) {
   }
 
   /// AddPath - Add the specified path to the specified group list.
-  void AddPath(const llvm::Twine &Path, IncludeDirGroup Group,
+  void AddPath(const Twine &Path, IncludeDirGroup Group,
                bool isCXXAware, bool isUserSupplied,
                bool isFramework, bool IgnoreSysRoot = false);
 
   /// AddGnuCPlusPlusIncludePaths - Add the necessary paths to support a gnu
   ///  libstdc++.
-  void AddGnuCPlusPlusIncludePaths(llvm::StringRef Base,
-                                   llvm::StringRef ArchDir,
-                                   llvm::StringRef Dir32,
-                                   llvm::StringRef Dir64,
+  void AddGnuCPlusPlusIncludePaths(StringRef Base,
+                                   StringRef ArchDir,
+                                   StringRef Dir32,
+                                   StringRef Dir64,
                                    const llvm::Triple &triple);
 
   /// AddMinGWCPlusPlusIncludePaths - Add the necessary paths to support a MinGW
   ///  libstdc++.
-  void AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
-                                     llvm::StringRef Arch,
-                                     llvm::StringRef Version);
+  void AddMinGWCPlusPlusIncludePaths(StringRef Base,
+                                     StringRef Arch,
+                                     StringRef Version);
 
   /// AddMinGW64CXXPaths - Add the necessary paths to support
   /// libstdc++ of x86_64-w64-mingw32 aka mingw-w64.
-  void AddMinGW64CXXPaths(llvm::StringRef Base,
-                          llvm::StringRef Version);
+  void AddMinGW64CXXPaths(StringRef Base,
+                          StringRef Version);
 
   /// AddDelimitedPaths - Add a list of paths delimited by the system PATH
   /// separator. The processing follows that of the CPATH variable for gcc.
-  void AddDelimitedPaths(llvm::StringRef String);
+  void AddDelimitedPaths(StringRef String);
 
   // AddDefaultCIncludePaths - Add paths that should always be searched.
   void AddDefaultCIncludePaths(const llvm::Triple &triple,
@@ -107,7 +107,7 @@ public:
 
 }  // end anonymous namespace.
 
-void InitHeaderSearch::AddPath(const llvm::Twine &Path,
+void InitHeaderSearch::AddPath(const Twine &Path,
                                IncludeDirGroup Group, bool isCXXAware,
                                bool isUserSupplied, bool isFramework,
                                bool IgnoreSysRoot) {
@@ -116,7 +116,7 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
 
   // Compute the actual path, taking into consideration -isysroot.
   llvm::SmallString<256> MappedPathStorage;
-  llvm::StringRef MappedPathStr = Path.toStringRef(MappedPathStorage);
+  StringRef MappedPathStr = Path.toStringRef(MappedPathStorage);
 
   // Handle isysroot.
   if ((Group == System || Group == CXXSystem) && !IgnoreSysRoot &&
@@ -168,12 +168,12 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
 }
 
 
-void InitHeaderSearch::AddDelimitedPaths(llvm::StringRef at) {
+void InitHeaderSearch::AddDelimitedPaths(StringRef at) {
   if (at.empty()) // Empty string should not add '.' path.
     return;
 
-  llvm::StringRef::size_type delim;
-  while ((delim = at.find(llvm::sys::PathSeparator)) != llvm::StringRef::npos) {
+  StringRef::size_type delim;
+  while ((delim = at.find(llvm::sys::PathSeparator)) != StringRef::npos) {
     if (delim == 0)
       AddPath(".", Angled, false, true, false);
     else
@@ -187,10 +187,10 @@ void InitHeaderSearch::AddDelimitedPaths(llvm::StringRef at) {
     AddPath(at, Angled, false, true, false);
 }
 
-void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(llvm::StringRef Base,
-                                                   llvm::StringRef ArchDir,
-                                                   llvm::StringRef Dir32,
-                                                   llvm::StringRef Dir64,
+void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(StringRef Base,
+                                                   StringRef ArchDir,
+                                                   StringRef Dir32,
+                                                   StringRef Dir64,
                                                    const llvm::Triple &triple) {
   // Add the base dir
   AddPath(Base, CXXSystem, true, false, false);
@@ -207,9 +207,9 @@ void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(llvm::StringRef Base,
   AddPath(Base + "/backward", CXXSystem, true, false, false);
 }
 
-void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
-                                                     llvm::StringRef Arch,
-                                                     llvm::StringRef Version) {
+void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(StringRef Base,
+                                                     StringRef Arch,
+                                                     StringRef Version) {
   AddPath(Base + "/" + Arch + "/" + Version + "/include/c++",
           CXXSystem, true, false, false);
   AddPath(Base + "/" + Arch + "/" + Version + "/include/c++/" + Arch,
@@ -218,8 +218,8 @@ void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
           CXXSystem, true, false, false);
 }
 
-void InitHeaderSearch::AddMinGW64CXXPaths(llvm::StringRef Base,
-                                          llvm::StringRef Version) {
+void InitHeaderSearch::AddMinGW64CXXPaths(StringRef Base,
+                                          StringRef Version) {
   // Assumes Base is HeaderSearchOpts' ResourceDir
   AddPath(Base + "/../../../include/c++/" + Version,
           CXXSystem, true, false, false);
@@ -469,11 +469,11 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
   }
 
   // Add dirs specified via 'configure --with-c-include-dirs'.
-  llvm::StringRef CIncludeDirs(C_INCLUDE_DIRS);
+  StringRef CIncludeDirs(C_INCLUDE_DIRS);
   if (CIncludeDirs != "") {
-    llvm::SmallVector<llvm::StringRef, 5> dirs;
+    SmallVector<StringRef, 5> dirs;
     CIncludeDirs.split(dirs, ":");
-    for (llvm::SmallVectorImpl<llvm::StringRef>::iterator i = dirs.begin();
+    for (SmallVectorImpl<StringRef>::iterator i = dirs.begin();
          i != dirs.end();
          ++i)
       AddPath(*i, System, false, false, false);
@@ -597,9 +597,9 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
 void InitHeaderSearch::
 AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOptions &HSOpts) {
   llvm::Triple::OSType os = triple.getOS();
-  llvm::StringRef CxxIncludeRoot(CXX_INCLUDE_ROOT);
+  StringRef CxxIncludeRoot(CXX_INCLUDE_ROOT);
   if (CxxIncludeRoot != "") {
-    llvm::StringRef CxxIncludeArch(CXX_INCLUDE_ARCH);
+    StringRef CxxIncludeArch(CXX_INCLUDE_ARCH);
     if (CxxIncludeArch == "")
       AddGnuCPlusPlusIncludePaths(CxxIncludeRoot, triple.str().c_str(),
                                   CXX_INCLUDE_32BIT_DIR, CXX_INCLUDE_64BIT_DIR,

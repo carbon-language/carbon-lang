@@ -41,7 +41,7 @@ FixItRewriter::~FixItRewriter() {
   Diags.setClient(Client);
 }
 
-bool FixItRewriter::WriteFixedFile(FileID ID, llvm::raw_ostream &OS) {
+bool FixItRewriter::WriteFixedFile(FileID ID, raw_ostream &OS) {
   const RewriteBuffer *RewriteBuf = Rewrite.getRewriteBufferFor(ID);
   if (!RewriteBuf) return true;
   RewriteBuf->write(OS);

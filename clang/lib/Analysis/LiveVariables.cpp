@@ -43,7 +43,7 @@ class RegisterDecls
 
   LiveVariables::AnalysisDataTy& AD;
 
-  typedef llvm::SmallVector<VarDecl*, 20> AlwaysLiveTy;
+  typedef SmallVector<VarDecl*, 20> AlwaysLiveTy;
   AlwaysLiveTy AlwaysLive;
 
 

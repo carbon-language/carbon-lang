@@ -30,7 +30,7 @@ class VTTBuilder {
   /// vtable.
   const CXXRecordDecl *MostDerivedClass;
 
-  typedef llvm::SmallVector<llvm::Constant *, 64> VTTComponentsVectorTy;
+  typedef SmallVector<llvm::Constant *, 64> VTTComponentsVectorTy;
   
   /// VTTComponents - The VTT components.
   VTTComponentsVectorTy VTTComponents;
@@ -408,7 +408,7 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTT(const CXXRecordDecl *RD) {
   llvm::raw_svector_ostream Out(OutName);
   CGM.getCXXABI().getMangleContext().mangleCXXVTT(RD, Out);
   Out.flush();
-  llvm::StringRef Name = OutName.str();
+  StringRef Name = OutName.str();
 
   ComputeVTableRelatedInformation(RD, /*VTableRequired=*/true);
 

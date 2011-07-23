@@ -839,7 +839,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
   // We'll need to enter cleanup scopes in case any of the member
   // initializers throw an exception.
-  llvm::SmallVector<EHScopeStack::stable_iterator, 16> cleanups;
+  SmallVector<EHScopeStack::stable_iterator, 16> cleanups;
 
   // Here we iterate over the fields; this makes it simpler to both
   // default-initialize fields and skip over unnamed fields.

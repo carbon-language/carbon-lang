@@ -595,7 +595,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     UnV = Builder.CreateInsertElement(UnV, Elt, Idx, "tmp");
 
     // Splat the element across to all elements
-    llvm::SmallVector<llvm::Constant*, 16> Args;
+    SmallVector<llvm::Constant*, 16> Args;
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
     for (unsigned i = 0; i != NumElements; ++i)
       Args.push_back(Builder.getInt32(0));
@@ -693,7 +693,7 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
       Mask = CGF.EmitScalarExpr(E->getExpr(2));
       
       // Shuffle LHS & RHS into one input vector.
-      llvm::SmallVector<llvm::Constant*, 32> concat;
+      SmallVector<llvm::Constant*, 32> concat;
       for (unsigned i = 0; i != LHSElts; ++i) {
         concat.push_back(Builder.getInt32(2*i));
         concat.push_back(Builder.getInt32(2*i+1));
@@ -721,7 +721,7 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
                                        (1 << llvm::Log2_32(LHSElts))-1);
              
     // Mask off the high bits of each shuffle index.
-    llvm::SmallVector<llvm::Constant *, 32> MaskV;
+    SmallVector<llvm::Constant *, 32> MaskV;
     for (unsigned i = 0, e = MTy->getNumElements(); i != e; ++i)
       MaskV.push_back(EltMask);
     
@@ -761,7 +761,7 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   
   // Handle vec3 special since the index will be off by one for the RHS.
   llvm::VectorType *VTy = cast<llvm::VectorType>(V1->getType());
-  llvm::SmallVector<llvm::Constant*, 32> indices;
+  SmallVector<llvm::Constant*, 32> indices;
   for (unsigned i = 2; i < E->getNumSubExprs(); i++) {
     unsigned Idx = E->getShuffleMaskIdx(CGF.getContext(), i-2);
     if (VTy->getNumElements() == 3 && Idx > 3)
@@ -851,7 +851,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
   for (unsigned i = 0; i != NumInitElements; ++i) {
     Expr *IE = E->getInit(i);
     Value *Init = Visit(IE);
-    llvm::SmallVector<llvm::Constant*, 16> Args;
+    SmallVector<llvm::Constant*, 16> Args;
     
     llvm::VectorType *VVT = dyn_cast<llvm::VectorType>(Init->getType());
     
@@ -1174,7 +1174,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
     UnV = Builder.CreateInsertElement(UnV, Elt, Idx, "tmp");
 
     // Splat the element across to all elements
-    llvm::SmallVector<llvm::Constant*, 16> Args;
+    SmallVector<llvm::Constant*, 16> Args;
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
     llvm::Constant *Zero = Builder.getInt32(0);
     for (unsigned i = 0; i < NumElements; i++)
@@ -2610,7 +2610,7 @@ Value *ScalarExprEmitter::VisitAsTypeExpr(AsTypeExpr *E) {
       
       llvm::Value *UnV = llvm::UndefValue::get(Src->getType());
       
-      llvm::SmallVector<llvm::Constant*, 3> Args;
+      SmallVector<llvm::Constant*, 3> Args;
       Args.push_back(Builder.getInt32(0));
       Args.push_back(Builder.getInt32(1));
       Args.push_back(Builder.getInt32(2));

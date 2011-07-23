@@ -12,12 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Rewrite/DeltaTree.h"
-#include "llvm/Support/Casting.h"
+#include "clang/Basic/LLVM.h"
 #include <cstring>
 #include <cstdio>
 using namespace clang;
-using llvm::cast;
-using llvm::dyn_cast;
 
 /// The DeltaTree class is a multiway search tree (BTree) structure with some
 /// fancy features.  B-Trees are generally more memory and cache efficient

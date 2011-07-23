@@ -35,7 +35,7 @@ namespace clang {
     const CodeGenOptions &CodeGenOpts;
     const TargetOptions &TargetOpts;
     const LangOptions &LangOpts;
-    llvm::raw_ostream *AsmOutStream;
+    raw_ostream *AsmOutStream;
     ASTContext *Context;
 
     Timer LLVMIRGeneration;
@@ -50,7 +50,7 @@ namespace clang {
                     const TargetOptions &targetopts,
                     const LangOptions &langopts,
                     bool TimePasses,
-                    const std::string &infile, llvm::raw_ostream *OS,
+                    const std::string &infile, raw_ostream *OS,
                     LLVMContext &C) :
       Diags(_Diags),
       Action(action),
@@ -199,7 +199,7 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
   // we re-format the SMDiagnostic in terms of a clang diagnostic.
 
   // Strip "error: " off the start of the message string.
-  llvm::StringRef Message = D.getMessage();
+  StringRef Message = D.getMessage();
   if (Message.startswith("error: "))
     Message = Message.substr(7);
 
@@ -259,7 +259,7 @@ llvm::LLVMContext *CodeGenAction::takeLLVMContext() {
 }
 
 static raw_ostream *GetOutputStream(CompilerInstance &CI,
-                                    llvm::StringRef InFile,
+                                    StringRef InFile,
                                     BackendAction Action) {
   switch (Action) {
   case Backend_EmitAssembly:
@@ -280,9 +280,9 @@ static raw_ostream *GetOutputStream(CompilerInstance &CI,
 }
 
 ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
-                                              llvm::StringRef InFile) {
+                                              StringRef InFile) {
   BackendAction BA = static_cast<BackendAction>(Act);
-  llvm::OwningPtr<llvm::raw_ostream> OS(GetOutputStream(CI, InFile, BA));
+  llvm::OwningPtr<raw_ostream> OS(GetOutputStream(CI, InFile, BA));
   if (BA != Backend_EmitNothing && !OS)
     return 0;
 
@@ -326,7 +326,7 @@ void CodeGenAction::ExecuteAction() {
 
       // Get a custom diagnostic for the error. We strip off a leading
       // diagnostic code if there is one.
-      llvm::StringRef Msg = Err.getMessage();
+      StringRef Msg = Err.getMessage();
       if (Msg.startswith("error: "))
         Msg = Msg.substr(7);
       unsigned DiagID = CI.getDiagnostics().getCustomDiagID(Diagnostic::Error,

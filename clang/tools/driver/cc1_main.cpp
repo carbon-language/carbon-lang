@@ -83,7 +83,7 @@ static int cc1_test(Diagnostic &Diags,
   Invocation.toArgs(InvocationArgs);
 
   // Dump the converted arguments.
-  llvm::SmallVector<const char*, 32> Invocation2Args;
+  SmallVector<const char*, 32> Invocation2Args;
   llvm::errs() << "invocation argv :";
   for (unsigned i = 0, e = InvocationArgs.size(); i != e; ++i) {
     Invocation2Args.push_back(InvocationArgs[i].c_str());
@@ -118,7 +118,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
 
   // Run clang -cc1 test.
-  if (ArgBegin != ArgEnd && llvm::StringRef(ArgBegin[0]) == "-cc1test") {
+  if (ArgBegin != ArgEnd && StringRef(ArgBegin[0]) == "-cc1test") {
     Diagnostic Diags(DiagID, new TextDiagnosticPrinter(llvm::errs(), 
                                                        DiagnosticOptions()));
     return cc1_test(Diags, ArgBegin + 1, ArgEnd);

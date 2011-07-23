@@ -39,7 +39,7 @@ clang::createInvocationFromCommandLine(llvm::ArrayRef<const char *> ArgList,
                                                 ArgList.begin());
   }
 
-  llvm::SmallVector<const char *, 16> Args;
+  SmallVector<const char *, 16> Args;
   Args.push_back("<clang>"); // FIXME: Remove dummy argument.
   Args.insert(Args.end(), ArgList.begin(), ArgList.end());
 
@@ -74,7 +74,7 @@ clang::createInvocationFromCommandLine(llvm::ArrayRef<const char *> ArgList,
   }
 
   const driver::Command *Cmd = cast<driver::Command>(*Jobs.begin());
-  if (llvm::StringRef(Cmd->getCreator().getName()) != "clang") {
+  if (StringRef(Cmd->getCreator().getName()) != "clang") {
     Diags->Report(diag::err_fe_expected_clang_command);
     return 0;
   }

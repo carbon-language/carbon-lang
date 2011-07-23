@@ -812,7 +812,7 @@ APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
     }
 
     // Splat and create vector APValue.
-    llvm::SmallVector<APValue, 4> Elts(NElts, Result);
+    SmallVector<APValue, 4> Elts(NElts, Result);
     return APValue(&Elts[0], Elts.size());
   }
   case CK_BitCast: {
@@ -829,7 +829,7 @@ APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
     assert((EltTy->isIntegerType() || EltTy->isRealFloatingType()) &&
            "Vectors must be composed of ints or floats");
 
-    llvm::SmallVector<APValue, 4> Elts;
+    SmallVector<APValue, 4> Elts;
     for (unsigned i = 0; i != NElts; ++i) {
       APSInt Tmp = Init.extOrTrunc(EltWidth);
 
@@ -862,7 +862,7 @@ VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
   unsigned NumElements = VT->getNumElements();
 
   QualType EltTy = VT->getElementType();
-  llvm::SmallVector<APValue, 4> Elements;
+  SmallVector<APValue, 4> Elements;
 
   // If a vector is initialized with a single element, that value
   // becomes every element of the vector, not just the first.
@@ -926,7 +926,7 @@ VectorExprEvaluator::GetZeroVector(QualType T) {
     ZeroElement =
         APValue(APFloat::getZero(Info.Ctx.getFloatTypeSemantics(EltTy)));
 
-  llvm::SmallVector<APValue, 4> Elements(VT->getNumElements(), ZeroElement);
+  SmallVector<APValue, 4> Elements(VT->getNumElements(), ZeroElement);
   return APValue(&Elements[0], Elements.size());
 }
 
@@ -1300,9 +1300,9 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
                = dyn_cast<StringLiteral>(E->getArg(0)->IgnoreParenImpCasts())) {
       // The string literal may have embedded null characters. Find the first
       // one and truncate there.
-      llvm::StringRef Str = S->getString();
-      llvm::StringRef::size_type Pos = Str.find(0);
-      if (Pos != llvm::StringRef::npos)
+      StringRef Str = S->getString();
+      StringRef::size_type Pos = Str.find(0);
+      if (Pos != StringRef::npos)
         Str = Str.substr(0, Pos);
       
       return Success(Str.size(), E);

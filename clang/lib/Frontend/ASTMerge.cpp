@@ -17,12 +17,12 @@
 using namespace clang;
 
 ASTConsumer *ASTMergeAction::CreateASTConsumer(CompilerInstance &CI,
-                                               llvm::StringRef InFile) {
+                                               StringRef InFile) {
   return AdaptedAction->CreateASTConsumer(CI, InFile);
 }
 
 bool ASTMergeAction::BeginSourceFileAction(CompilerInstance &CI,
-                                           llvm::StringRef Filename) {
+                                           StringRef Filename) {
   // FIXME: This is a hack. We need a better way to communicate the
   // AST file, compiler instance, and file name than member variables
   // of FrontendAction.

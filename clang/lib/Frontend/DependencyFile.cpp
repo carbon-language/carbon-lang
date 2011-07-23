@@ -32,19 +32,19 @@ class DependencyFileCallback : public PPCallbacks {
   llvm::StringSet<> FilesSet;
   const Preprocessor *PP;
   std::vector<std::string> Targets;
-  llvm::raw_ostream *OS;
+  raw_ostream *OS;
   bool IncludeSystemHeaders;
   bool PhonyTarget;
   bool AddMissingHeaderDeps;
 private:
   bool FileMatchesDepCriteria(const char *Filename,
                               SrcMgr::CharacteristicKind FileType);
-  void AddFilename(llvm::StringRef Filename);
+  void AddFilename(StringRef Filename);
   void OutputDependencyFile();
 
 public:
   DependencyFileCallback(const Preprocessor *_PP,
-                         llvm::raw_ostream *_OS,
+                         raw_ostream *_OS,
                          const DependencyOutputOptions &Opts)
     : PP(_PP), Targets(Opts.Targets), OS(_OS),
       IncludeSystemHeaders(Opts.IncludeSystemHeaders),
@@ -55,12 +55,12 @@ public:
                            SrcMgr::CharacteristicKind FileType);
   virtual void InclusionDirective(SourceLocation HashLoc,
                                   const Token &IncludeTok,
-                                  llvm::StringRef FileName,
+                                  StringRef FileName,
                                   bool IsAngled,
                                   const FileEntry *File,
                                   SourceLocation EndLoc,
-                                  llvm::StringRef SearchPath,
-                                  llvm::StringRef RelativePath);
+                                  StringRef SearchPath,
+                                  StringRef RelativePath);
 
   virtual void EndOfMainFile() {
     OutputDependencyFile();
@@ -78,7 +78,7 @@ void clang::AttachDependencyFileGen(Preprocessor &PP,
   }
 
   std::string Err;
-  llvm::raw_ostream *OS(new llvm::raw_fd_ostream(Opts.OutputFile.c_str(), Err));
+  raw_ostream *OS(new llvm::raw_fd_ostream(Opts.OutputFile.c_str(), Err));
   if (!Err.empty()) {
     PP.getDiagnostics().Report(diag::err_fe_error_opening)
       << Opts.OutputFile << Err;
@@ -126,7 +126,7 @@ void DependencyFileCallback::FileChanged(SourceLocation Loc,
     SM.getFileEntryForID(SM.getFileID(SM.getInstantiationLoc(Loc)));
   if (FE == 0) return;
 
-  llvm::StringRef Filename = FE->getName();
+  StringRef Filename = FE->getName();
   if (!FileMatchesDepCriteria(Filename.data(), FileType))
     return;
 
@@ -143,24 +143,24 @@ void DependencyFileCallback::FileChanged(SourceLocation Loc,
 
 void DependencyFileCallback::InclusionDirective(SourceLocation HashLoc,
                                                 const Token &IncludeTok,
-                                                llvm::StringRef FileName,
+                                                StringRef FileName,
                                                 bool IsAngled,
                                                 const FileEntry *File,
                                                 SourceLocation EndLoc,
-                                                llvm::StringRef SearchPath,
-                                                llvm::StringRef RelativePath) {
+                                                StringRef SearchPath,
+                                                StringRef RelativePath) {
   if (AddMissingHeaderDeps && !File)
     AddFilename(FileName);
 }
 
-void DependencyFileCallback::AddFilename(llvm::StringRef Filename) {
+void DependencyFileCallback::AddFilename(StringRef Filename) {
   if (FilesSet.insert(Filename))
     Files.push_back(Filename);
 }
 
 /// PrintFilename - GCC escapes spaces, but apparently not ' or " or other
 /// scary characters.
-static void PrintFilename(llvm::raw_ostream &OS, llvm::StringRef Filename) {
+static void PrintFilename(raw_ostream &OS, StringRef Filename) {
   for (unsigned i = 0, e = Filename.size(); i != e; ++i) {
     if (Filename[i] == ' ')
       OS << '\\';

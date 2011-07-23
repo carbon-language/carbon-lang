@@ -297,7 +297,7 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP,
   }
 
   // Lex the declaration reference(s).
-  llvm::SmallVector<Token, 5> Identifiers;
+  SmallVector<Token, 5> Identifiers;
   SourceLocation RParenLoc;
   bool LexID = true;
 

@@ -258,7 +258,7 @@ isPointerConversionToVoidPointer(ASTContext& Context) const {
 /// DebugPrint - Print this standard conversion sequence to standard
 /// error. Useful for debugging overloading issues.
 void StandardConversionSequence::DebugPrint() const {
-  llvm::raw_ostream &OS = llvm::errs();
+  raw_ostream &OS = llvm::errs();
   bool PrintedSomething = false;
   if (First != ICK_Identity) {
     OS << GetImplicitConversionName(First);
@@ -297,7 +297,7 @@ void StandardConversionSequence::DebugPrint() const {
 /// DebugPrint - Print this user-defined conversion sequence to standard
 /// error. Useful for debugging overloading issues.
 void UserDefinedConversionSequence::DebugPrint() const {
-  llvm::raw_ostream &OS = llvm::errs();
+  raw_ostream &OS = llvm::errs();
   if (Before.First || Before.Second || Before.Third) {
     Before.DebugPrint();
     OS << " -> ";
@@ -312,7 +312,7 @@ void UserDefinedConversionSequence::DebugPrint() const {
 /// DebugPrint - Print this implicit conversion sequence to standard
 /// error. Useful for debugging overloading issues.
 void ImplicitConversionSequence::DebugPrint() const {
-  llvm::raw_ostream &OS = llvm::errs();
+  raw_ostream &OS = llvm::errs();
   switch (ConversionKind) {
   case StandardConversion:
     OS << "Standard conversion: ";
@@ -5227,7 +5227,7 @@ class BuiltinOperatorOverloadBuilder {
   unsigned NumArgs;
   Qualifiers VisibleTypeConversionsQuals;
   bool HasArithmeticOrEnumeralCandidateType;
-  llvm::SmallVectorImpl<BuiltinCandidateTypeSet> &CandidateTypes;
+  SmallVectorImpl<BuiltinCandidateTypeSet> &CandidateTypes;
   OverloadCandidateSet &CandidateSet;
 
   // Define some constants used to index and iterate over the arithemetic types
@@ -5363,7 +5363,7 @@ public:
     Sema &S, Expr **Args, unsigned NumArgs,
     Qualifiers VisibleTypeConversionsQuals,
     bool HasArithmeticOrEnumeralCandidateType,
-    llvm::SmallVectorImpl<BuiltinCandidateTypeSet> &CandidateTypes,
+    SmallVectorImpl<BuiltinCandidateTypeSet> &CandidateTypes,
     OverloadCandidateSet &CandidateSet)
     : S(S), Args(Args), NumArgs(NumArgs),
       VisibleTypeConversionsQuals(VisibleTypeConversionsQuals),
@@ -6232,7 +6232,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
   bool HasNonRecordCandidateType = false;
   bool HasArithmeticOrEnumeralCandidateType = false;
-  llvm::SmallVector<BuiltinCandidateTypeSet, 2> CandidateTypes;
+  SmallVector<BuiltinCandidateTypeSet, 2> CandidateTypes;
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
     CandidateTypes.push_back(BuiltinCandidateTypeSet(*this));
     CandidateTypes[ArgIdx].AddTypesConvertedFrom(Args[ArgIdx]->getType(),
@@ -7024,7 +7024,7 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
     << (unsigned) (Cand->Fix.Kind);
 
   // If we can fix the conversion, suggest the FixIts.
-  for (llvm::SmallVector<FixItHint, 1>::iterator
+  for (SmallVector<FixItHint, 1>::iterator
       HI = Cand->Fix.Hints.begin(), HE = Cand->Fix.Hints.end();
       HI != HE; ++HI)
     FDiag << *HI;
@@ -7537,7 +7537,7 @@ void OverloadCandidateSet::NoteCandidates(Sema &S,
                                           SourceLocation OpLoc) {
   // Sort the candidates by viability and position.  Sorting directly would
   // be prohibitive, so we make a set of pointers and sort those.
-  llvm::SmallVector<OverloadCandidate*, 32> Cands;
+  SmallVector<OverloadCandidate*, 32> Cands;
   if (OCD == OCD_AllCandidates) Cands.reserve(size());
   for (iterator Cand = begin(), LastCand = end(); Cand != LastCand; ++Cand) {
     if (Cand->Viable)
@@ -7556,7 +7556,7 @@ void OverloadCandidateSet::NoteCandidates(Sema &S,
 
   bool ReportedAmbiguousConversions = false;
 
-  llvm::SmallVectorImpl<OverloadCandidate*>::iterator I, E;
+  SmallVectorImpl<OverloadCandidate*>::iterator I, E;
   const Diagnostic::OverloadsShown ShowOverloads = S.Diags.getShowOverloads();
   unsigned CandsShown = 0;
   for (I = Cands.begin(), E = Cands.end(); I != E; ++I) {
@@ -7638,7 +7638,7 @@ class AddressOfFunctionResolver
   OverloadExpr::FindResult OvlExprInfo; 
   OverloadExpr *OvlExpr;
   TemplateArgumentListInfo OvlExplicitTemplateArgs;
-  llvm::SmallVector<std::pair<DeclAccessPair, FunctionDecl*>, 4> Matches;
+  SmallVector<std::pair<DeclAccessPair, FunctionDecl*>, 4> Matches;
 
 public:
   AddressOfFunctionResolver(Sema &S, Expr* SourceExpr, 

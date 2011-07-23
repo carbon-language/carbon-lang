@@ -30,7 +30,7 @@ class ClangSACheckerProvider : public CheckerProvider {
 public:
   virtual void registerCheckers(CheckerManager &checkerMgr,
                               CheckerOptInfo *checkOpts, unsigned numCheckOpts);
-  virtual void printHelp(llvm::raw_ostream &OS);
+  virtual void printHelp(raw_ostream &OS);
 };
 
 }
@@ -186,7 +186,7 @@ void ClangSACheckerProvider::registerCheckers(CheckerManager &checkerMgr,
 // Printing Help.
 //===----------------------------------------------------------------------===//
 
-static void printPackageOption(llvm::raw_ostream &OS) {
+static void printPackageOption(raw_ostream &OS) {
   // Find the maximum option length.
   unsigned OptionFieldWidth = 0;
   for (unsigned i = 0; i != NumPackages; ++i) {
@@ -226,7 +226,7 @@ static void printPackageOption(llvm::raw_ostream &OS) {
 
 typedef std::map<std::string, const StaticCheckerInfoRec *> SortedCheckers;
 
-static void printCheckerOption(llvm::raw_ostream &OS,SortedCheckers &checkers) {
+static void printCheckerOption(raw_ostream &OS,SortedCheckers &checkers) {
   // Find the maximum option length.
   unsigned OptionFieldWidth = 0;
   for (SortedCheckers::iterator
@@ -268,7 +268,7 @@ static void printCheckerOption(llvm::raw_ostream &OS,SortedCheckers &checkers) {
   }
 }
 
-void ClangSACheckerProvider::printHelp(llvm::raw_ostream &OS) {
+void ClangSACheckerProvider::printHelp(raw_ostream &OS) {
   OS << "USAGE: -analyzer-checker <CHECKER or PACKAGE or GROUP,...>\n";
 
   OS << "\nGROUPS:\n";

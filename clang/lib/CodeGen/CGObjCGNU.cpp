@@ -36,12 +36,11 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetData.h"
 
-#include <stdarg.h>
+#include <cstdarg>
 
 
 using namespace clang;
 using namespace CodeGen;
-using llvm::dyn_cast;
 
 
 namespace {
@@ -193,7 +192,7 @@ protected:
   /// first argument.
   llvm::GlobalVariable *MakeGlobal(llvm::StructType *Ty,
                                    std::vector<llvm::Constant*> &V,
-                                   llvm::StringRef Name="",
+                                   StringRef Name="",
                                    llvm::GlobalValue::LinkageTypes linkage
                                          =llvm::GlobalValue::InternalLinkage) {
     llvm::Constant *C = llvm::ConstantStruct::get(Ty, V);
@@ -205,7 +204,7 @@ protected:
   /// element type.
   llvm::GlobalVariable *MakeGlobal(llvm::ArrayType *Ty,
                                    std::vector<llvm::Constant*> &V,
-                                   llvm::StringRef Name="",
+                                   StringRef Name="",
                                    llvm::GlobalValue::LinkageTypes linkage
                                          =llvm::GlobalValue::InternalLinkage) {
     llvm::Constant *C = llvm::ConstantArray::get(Ty, V);
@@ -216,7 +215,7 @@ protected:
   /// element type and the size of the initialiser.  
   llvm::GlobalVariable *MakeGlobalArray(llvm::Type *Ty,
                                         std::vector<llvm::Constant*> &V,
-                                        llvm::StringRef Name="",
+                                        StringRef Name="",
                                         llvm::GlobalValue::LinkageTypes linkage
                                          =llvm::GlobalValue::InternalLinkage) {
     llvm::ArrayType *ArrayTy = llvm::ArrayType::get(Ty, V.size());
@@ -268,7 +267,7 @@ private:
   /// Type of the selector map.  This is roughly equivalent to the structure
   /// used in the GNUstep runtime, which maintains a list of all of the valid
   /// types for a selector in a table.
-  typedef llvm::DenseMap<Selector, llvm::SmallVector<TypedSelector, 2> >
+  typedef llvm::DenseMap<Selector, SmallVector<TypedSelector, 2> >
     SelectorMap;
   /// A map from selectors to selector types.  This allows us to emit all
   /// selectors of the same name and type together.
@@ -332,18 +331,18 @@ private:
   /// metadata.  This is used purely for introspection in the fragile ABI.  In
   /// the non-fragile ABI, it's used for instance variable fixup.
   llvm::Constant *GenerateIvarList(
-      const llvm::SmallVectorImpl<llvm::Constant *>  &IvarNames,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &IvarTypes,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &IvarOffsets);
+      const SmallVectorImpl<llvm::Constant *>  &IvarNames,
+      const SmallVectorImpl<llvm::Constant *>  &IvarTypes,
+      const SmallVectorImpl<llvm::Constant *>  &IvarOffsets);
   /// Generates a method list structure.  This is a structure containing a size
   /// and an array of structures containing method metadata.
   ///
   /// This structure is used by both classes and categories, and contains a next
   /// pointer allowing them to be chained together in a linked list.
-  llvm::Constant *GenerateMethodList(const llvm::StringRef &ClassName,
-      const llvm::StringRef &CategoryName,
-      const llvm::SmallVectorImpl<Selector>  &MethodSels,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &MethodTypes,
+  llvm::Constant *GenerateMethodList(const StringRef &ClassName,
+      const StringRef &CategoryName,
+      const SmallVectorImpl<Selector>  &MethodSels,
+      const SmallVectorImpl<llvm::Constant *>  &MethodTypes,
       bool isClassMethodList);
   /// Emits an empty protocol.  This is used for @protocol() where no protocol
   /// is found.  The runtime will (hopefully) fix up the pointer to refer to the
@@ -352,12 +351,12 @@ private:
   /// Generates a list of property metadata structures.  This follows the same
   /// pattern as method and instance variable metadata lists.
   llvm::Constant *GeneratePropertyList(const ObjCImplementationDecl *OID,
-        llvm::SmallVectorImpl<Selector> &InstanceMethodSels,
-        llvm::SmallVectorImpl<llvm::Constant*> &InstanceMethodTypes);
+        SmallVectorImpl<Selector> &InstanceMethodSels,
+        SmallVectorImpl<llvm::Constant*> &InstanceMethodTypes);
   /// Generates a list of referenced protocols.  Classes, categories, and
   /// protocols all use this structure.
   llvm::Constant *GenerateProtocolList(
-      const llvm::SmallVectorImpl<std::string> &Protocols);
+      const SmallVectorImpl<std::string> &Protocols);
   /// To ensure that all protocols are seen by the runtime, we add a category on
   /// a class defined in the runtime, declaring no methods, but adopting the
   /// protocols.  This is a horribly ugly hack, but it allows us to collect all
@@ -380,8 +379,8 @@ private:
   /// Generates a method list.  This is used by protocols to define the required
   /// and optional methods.
   llvm::Constant *GenerateProtocolMethodList(
-      const llvm::SmallVectorImpl<llvm::Constant *>  &MethodNames,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &MethodTypes);
+      const SmallVectorImpl<llvm::Constant *>  &MethodNames,
+      const SmallVectorImpl<llvm::Constant *>  &MethodTypes);
   /// Returns a selector with the specified type encoding.  An empty string is
   /// used to return an untyped selector (with the types field set to NULL).
   llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel,
@@ -650,13 +649,13 @@ void CGObjCGNU::EmitClassRef(const std::string &className) {
     llvm::GlobalValue::WeakAnyLinkage, ClassSymbol, symbolRef);
 }
 
-static std::string SymbolNameForMethod(const llvm::StringRef &ClassName,
-    const llvm::StringRef &CategoryName, const Selector MethodName,
+static std::string SymbolNameForMethod(const StringRef &ClassName,
+    const StringRef &CategoryName, const Selector MethodName,
     bool isClassMethod) {
   std::string MethodNameColonStripped = MethodName.getAsString();
   std::replace(MethodNameColonStripped.begin(), MethodNameColonStripped.end(),
       ':', '_');
-  return (llvm::Twine(isClassMethod ? "_c_" : "_i_") + ClassName + "_" +
+  return (Twine(isClassMethod ? "_c_" : "_i_") + ClassName + "_" +
     CategoryName + "_" + MethodNameColonStripped).str();
 }
 
@@ -813,11 +812,11 @@ llvm::Value *CGObjCGNU::EmitNSAutoreleasePoolClassRef(CGBuilderTy &Builder) {
 llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel,
     const std::string &TypeEncoding, bool lval) {
 
-  llvm::SmallVector<TypedSelector, 2> &Types = SelectorTable[Sel];
+  SmallVector<TypedSelector, 2> &Types = SelectorTable[Sel];
   llvm::GlobalAlias *SelValue = 0;
 
 
-  for (llvm::SmallVectorImpl<TypedSelector>::iterator i = Types.begin(),
+  for (SmallVectorImpl<TypedSelector>::iterator i = Types.begin(),
       e = Types.end() ; i!=e ; i++) {
     if (i->first == TypeEncoding) {
       SelValue = i->second;
@@ -1201,10 +1200,10 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
 
 /// Generates a MethodList.  Used in construction of a objc_class and
 /// objc_category structures.
-llvm::Constant *CGObjCGNU::GenerateMethodList(const llvm::StringRef &ClassName,
-                                              const llvm::StringRef &CategoryName,
-    const llvm::SmallVectorImpl<Selector> &MethodSels,
-    const llvm::SmallVectorImpl<llvm::Constant *> &MethodTypes,
+llvm::Constant *CGObjCGNU::GenerateMethodList(const StringRef &ClassName,
+                                              const StringRef &CategoryName,
+    const SmallVectorImpl<Selector> &MethodSels,
+    const SmallVectorImpl<llvm::Constant *> &MethodTypes,
     bool isClassMethodList) {
   if (MethodSels.empty())
     return NULLPtr;
@@ -1261,9 +1260,9 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const llvm::StringRef &ClassName,
 
 /// Generates an IvarList.  Used in construction of a objc_class.
 llvm::Constant *CGObjCGNU::GenerateIvarList(
-    const llvm::SmallVectorImpl<llvm::Constant *>  &IvarNames,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &IvarTypes,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &IvarOffsets) {
+    const SmallVectorImpl<llvm::Constant *>  &IvarNames,
+    const SmallVectorImpl<llvm::Constant *>  &IvarTypes,
+    const SmallVectorImpl<llvm::Constant *>  &IvarOffsets) {
   if (IvarNames.size() == 0)
     return NULLPtr;
   // Get the method structure type.
@@ -1374,8 +1373,8 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
 }
 
 llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
-    const llvm::SmallVectorImpl<llvm::Constant *>  &MethodNames,
-    const llvm::SmallVectorImpl<llvm::Constant *>  &MethodTypes) {
+    const SmallVectorImpl<llvm::Constant *>  &MethodNames,
+    const SmallVectorImpl<llvm::Constant *>  &MethodTypes) {
   // Get the method structure type.
   llvm::StructType *ObjCMethodDescTy = llvm::StructType::get(
     PtrToInt8Ty, // Really a selector, but the runtime does the casting for us.
@@ -1403,7 +1402,7 @@ llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
 
 // Create the protocol list structure used in classes, categories and so on
 llvm::Constant *CGObjCGNU::GenerateProtocolList(
-    const llvm::SmallVectorImpl<std::string> &Protocols) {
+    const SmallVectorImpl<std::string> &Protocols) {
   llvm::ArrayType *ProtocolArrayTy = llvm::ArrayType::get(PtrToInt8Ty,
       Protocols.size());
   llvm::StructType *ProtocolListTy = llvm::StructType::get(
@@ -1445,8 +1444,8 @@ llvm::Value *CGObjCGNU::GenerateProtocolRef(CGBuilderTy &Builder,
 
 llvm::Constant *CGObjCGNU::GenerateEmptyProtocol(
   const std::string &ProtocolName) {
-  llvm::SmallVector<std::string, 0> EmptyStringVector;
-  llvm::SmallVector<llvm::Constant*, 0> EmptyConstantVector;
+  SmallVector<std::string, 0> EmptyStringVector;
+  SmallVector<llvm::Constant*, 0> EmptyConstantVector;
 
   llvm::Constant *ProtocolList = GenerateProtocolList(EmptyStringVector);
   llvm::Constant *MethodList =
@@ -1479,14 +1478,14 @@ llvm::Constant *CGObjCGNU::GenerateEmptyProtocol(
 void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   ASTContext &Context = CGM.getContext();
   std::string ProtocolName = PD->getNameAsString();
-  llvm::SmallVector<std::string, 16> Protocols;
+  SmallVector<std::string, 16> Protocols;
   for (ObjCProtocolDecl::protocol_iterator PI = PD->protocol_begin(),
        E = PD->protocol_end(); PI != E; ++PI)
     Protocols.push_back((*PI)->getNameAsString());
-  llvm::SmallVector<llvm::Constant*, 16> InstanceMethodNames;
-  llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
-  llvm::SmallVector<llvm::Constant*, 16> OptionalInstanceMethodNames;
-  llvm::SmallVector<llvm::Constant*, 16> OptionalInstanceMethodTypes;
+  SmallVector<llvm::Constant*, 16> InstanceMethodNames;
+  SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
+  SmallVector<llvm::Constant*, 16> OptionalInstanceMethodNames;
+  SmallVector<llvm::Constant*, 16> OptionalInstanceMethodTypes;
   for (ObjCProtocolDecl::instmeth_iterator iter = PD->instmeth_begin(),
        E = PD->instmeth_end(); iter != E; iter++) {
     std::string TypeStr;
@@ -1502,10 +1501,10 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     }
   }
   // Collect information about class methods:
-  llvm::SmallVector<llvm::Constant*, 16> ClassMethodNames;
-  llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
-  llvm::SmallVector<llvm::Constant*, 16> OptionalClassMethodNames;
-  llvm::SmallVector<llvm::Constant*, 16> OptionalClassMethodTypes;
+  SmallVector<llvm::Constant*, 16> ClassMethodNames;
+  SmallVector<llvm::Constant*, 16> ClassMethodTypes;
+  SmallVector<llvm::Constant*, 16> OptionalClassMethodNames;
+  SmallVector<llvm::Constant*, 16> OptionalClassMethodTypes;
   for (ObjCProtocolDecl::classmeth_iterator
          iter = PD->classmeth_begin(), endIter = PD->classmeth_end();
        iter != endIter ; iter++) {
@@ -1642,8 +1641,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
 }
 void CGObjCGNU::GenerateProtocolHolderCategory(void) {
   // Collect information about instance methods
-  llvm::SmallVector<Selector, 1> MethodSels;
-  llvm::SmallVector<llvm::Constant*, 1> MethodTypes;
+  SmallVector<Selector, 1> MethodSels;
+  SmallVector<llvm::Constant*, 1> MethodTypes;
 
   std::vector<llvm::Constant*> Elements;
   const std::string ClassName = "__ObjC_Protocol_Holder_Ugly_Hack";
@@ -1690,8 +1689,8 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   std::string ClassName = OCD->getClassInterface()->getNameAsString();
   std::string CategoryName = OCD->getNameAsString();
   // Collect information about instance methods
-  llvm::SmallVector<Selector, 16> InstanceMethodSels;
-  llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
+  SmallVector<Selector, 16> InstanceMethodSels;
+  SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
   for (ObjCCategoryImplDecl::instmeth_iterator
          iter = OCD->instmeth_begin(), endIter = OCD->instmeth_end();
        iter != endIter ; iter++) {
@@ -1702,8 +1701,8 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   }
 
   // Collect information about class methods
-  llvm::SmallVector<Selector, 16> ClassMethodSels;
-  llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
+  SmallVector<Selector, 16> ClassMethodSels;
+  SmallVector<llvm::Constant*, 16> ClassMethodTypes;
   for (ObjCCategoryImplDecl::classmeth_iterator
          iter = OCD->classmeth_begin(), endIter = OCD->classmeth_end();
        iter != endIter ; iter++) {
@@ -1714,7 +1713,7 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   }
 
   // Collect the names of referenced protocols
-  llvm::SmallVector<std::string, 16> Protocols;
+  SmallVector<std::string, 16> Protocols;
   const ObjCCategoryDecl *CatDecl = OCD->getCategoryDecl();
   const ObjCList<ObjCProtocolDecl> &Protos = CatDecl->getReferencedProtocols();
   for (ObjCList<ObjCProtocolDecl>::iterator I = Protos.begin(),
@@ -1741,8 +1740,8 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
 }
 
 llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OID,
-        llvm::SmallVectorImpl<Selector> &InstanceMethodSels,
-        llvm::SmallVectorImpl<llvm::Constant*> &InstanceMethodTypes) {
+        SmallVectorImpl<Selector> &InstanceMethodSels,
+        SmallVectorImpl<llvm::Constant*> &InstanceMethodTypes) {
   ASTContext &Context = CGM.getContext();
   //
   // Property metadata: name, attributes, isSynthesized, setter name, setter
@@ -1845,9 +1844,9 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     Context.getASTObjCImplementationLayout(OID).getSize().getQuantity();
 
   // Collect information about instance variables.
-  llvm::SmallVector<llvm::Constant*, 16> IvarNames;
-  llvm::SmallVector<llvm::Constant*, 16> IvarTypes;
-  llvm::SmallVector<llvm::Constant*, 16> IvarOffsets;
+  SmallVector<llvm::Constant*, 16> IvarNames;
+  SmallVector<llvm::Constant*, 16> IvarTypes;
+  SmallVector<llvm::Constant*, 16> IvarOffsets;
 
   std::vector<llvm::Constant*> IvarOffsetValues;
 
@@ -1898,8 +1897,8 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
 
 
   // Collect information about instance methods
-  llvm::SmallVector<Selector, 16> InstanceMethodSels;
-  llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
+  SmallVector<Selector, 16> InstanceMethodSels;
+  SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
   for (ObjCImplementationDecl::instmeth_iterator
          iter = OID->instmeth_begin(), endIter = OID->instmeth_end();
        iter != endIter ; iter++) {
@@ -1914,8 +1913,8 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
 
 
   // Collect information about class methods
-  llvm::SmallVector<Selector, 16> ClassMethodSels;
-  llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
+  SmallVector<Selector, 16> ClassMethodSels;
+  SmallVector<llvm::Constant*, 16> ClassMethodTypes;
   for (ObjCImplementationDecl::classmeth_iterator
          iter = OID->classmeth_begin(), endIter = OID->classmeth_end();
        iter != endIter ; iter++) {
@@ -1925,7 +1924,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     ClassMethodTypes.push_back(MakeConstantString(TypeStr));
   }
   // Collect the names of referenced protocols
-  llvm::SmallVector<std::string, 16> Protocols;
+  SmallVector<std::string, 16> Protocols;
   const ObjCList<ObjCProtocolDecl> &Protos =ClassDecl->getReferencedProtocols();
   for (ObjCList<ObjCProtocolDecl>::iterator I = Protos.begin(),
        E = Protos.end(); I != E; ++I)
@@ -1941,7 +1940,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     SuperClass = llvm::ConstantPointerNull::get(PtrToInt8Ty);
   }
   // Empty vector used to construct empty method lists
-  llvm::SmallVector<llvm::Constant*, 1>  empty;
+  SmallVector<llvm::Constant*, 1>  empty;
   // Generate the method and instance variable lists
   llvm::Constant *MethodList = GenerateMethodList(ClassName, "",
       InstanceMethodSels, InstanceMethodTypes, false);
@@ -2046,7 +2045,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
         ConstantStrings.size() + 1);
     ConstantStrings.push_back(NULLPtr);
 
-    llvm::StringRef StringClass = CGM.getLangOptions().ObjCConstantStringClass;
+    StringRef StringClass = CGM.getLangOptions().ObjCConstantStringClass;
 
     if (StringClass.empty()) StringClass = "NXConstantString";
 
@@ -2085,8 +2084,8 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     std::string SelNameStr = iter->first.getAsString();
     llvm::Constant *SelName = ExportUniqueString(SelNameStr, ".objc_sel_name");
 
-    llvm::SmallVectorImpl<TypedSelector> &Types = iter->second;
-    for (llvm::SmallVectorImpl<TypedSelector>::iterator i = Types.begin(),
+    SmallVectorImpl<TypedSelector> &Types = iter->second;
+    for (SmallVectorImpl<TypedSelector>::iterator i = Types.begin(),
         e = Types.end() ; i!=e ; i++) {
 
       llvm::Constant *SelectorTypeEncoding = NULLPtr;
@@ -2216,8 +2215,8 @@ llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD,
                                           const ObjCContainerDecl *CD) {
   const ObjCCategoryImplDecl *OCD =
     dyn_cast<ObjCCategoryImplDecl>(OMD->getDeclContext());
-  llvm::StringRef CategoryName = OCD ? OCD->getName() : "";
-  llvm::StringRef ClassName = CD->getName();
+  StringRef CategoryName = OCD ? OCD->getName() : "";
+  StringRef ClassName = CD->getName();
   Selector MethodName = OMD->getSelector();
   bool isClassMethod = !OMD->isInstanceMethod();
 

@@ -612,9 +612,9 @@ bool Sema::CheckObjCString(Expr *Arg) {
   }
 
   if (Literal->containsNonAsciiOrNull()) {
-    llvm::StringRef String = Literal->getString();
+    StringRef String = Literal->getString();
     unsigned NumBytes = String.size();
-    llvm::SmallVector<UTF16, 128> ToBuf(NumBytes);
+    SmallVector<UTF16, 128> ToBuf(NumBytes);
     const UTF8 *FromPtr = (UTF8 *)String.data();
     UTF16 *ToPtr = &ToBuf[0];
     
@@ -844,7 +844,7 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
                << TheCall->getArg(i)->getSourceRange());
   }
 
-  llvm::SmallVector<Expr*, 32> exprs;
+  SmallVector<Expr*, 32> exprs;
 
   for (unsigned i = 0, e = TheCall->getNumArgs(); i != e; i++) {
     exprs.push_back(TheCall->getArg(i));
@@ -1322,7 +1322,7 @@ CheckFormatHandler::HandleInvalidConversionSpecifier(unsigned argIndex,
   }
   
   S.Diag(Loc, diag::warn_format_invalid_conversion)
-    << llvm::StringRef(csStart, csLen)
+    << StringRef(csStart, csLen)
     << getSpecifierRange(startSpec, specifierLen);
   
   return keepGoing;
@@ -1813,7 +1813,7 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
   }
   
   // Str - The format string.  NOTE: this is NOT null-terminated!
-  llvm::StringRef StrRef = FExpr->getString();
+  StringRef StrRef = FExpr->getString();
   const char *Str = StrRef.data();
   unsigned StrLen = StrRef.size();
   
@@ -1985,8 +1985,8 @@ void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
 
 //===--- CHECK: Return Address of Stack Variable --------------------------===//
 
-static Expr *EvalVal(Expr *E, llvm::SmallVectorImpl<DeclRefExpr *> &refVars);
-static Expr *EvalAddr(Expr* E, llvm::SmallVectorImpl<DeclRefExpr *> &refVars);
+static Expr *EvalVal(Expr *E, SmallVectorImpl<DeclRefExpr *> &refVars);
+static Expr *EvalAddr(Expr* E, SmallVectorImpl<DeclRefExpr *> &refVars);
 
 /// CheckReturnStackAddr - Check if a return statement returns the address
 ///   of a stack variable.
@@ -1995,7 +1995,7 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                            SourceLocation ReturnLoc) {
 
   Expr *stackE = 0;
-  llvm::SmallVector<DeclRefExpr *, 8> refVars;
+  SmallVector<DeclRefExpr *, 8> refVars;
 
   // Perform checking for returned stack addresses, local blocks,
   // label addresses or references to temporaries.
@@ -2077,7 +2077,7 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
 ///   * arbitrary interplay between "&" and "*" operators
 ///   * pointer arithmetic from an address of a stack variable
 ///   * taking the address of an array element where the array is on the stack
-static Expr *EvalAddr(Expr *E, llvm::SmallVectorImpl<DeclRefExpr *> &refVars) {
+static Expr *EvalAddr(Expr *E, SmallVectorImpl<DeclRefExpr *> &refVars) {
   if (E->isTypeDependent())
       return NULL;
 
@@ -2222,7 +2222,7 @@ static Expr *EvalAddr(Expr *E, llvm::SmallVectorImpl<DeclRefExpr *> &refVars) {
 
 ///  EvalVal - This function is complements EvalAddr in the mutual recursion.
 ///   See the comments for EvalAddr for more details.
-static Expr *EvalVal(Expr *E, llvm::SmallVectorImpl<DeclRefExpr *> &refVars) {
+static Expr *EvalVal(Expr *E, SmallVectorImpl<DeclRefExpr *> &refVars) {
 do {
   // We should only be called for evaluating non-pointer expressions, or
   // expressions with a pointer type that are not used as references but instead
@@ -3710,7 +3710,7 @@ static void diagnoseRetainCycle(Sema &S, Expr *capturer,
 static bool isSetterLikeSelector(Selector sel) {
   if (sel.isUnarySelector()) return false;
 
-  llvm::StringRef str = sel.getNameForSlot(0);
+  StringRef str = sel.getNameForSlot(0);
   while (!str.empty() && str.front() == '_') str = str.substr(1);
   if (str.startswith("set") || str.startswith("add"))
     str = str.substr(3);

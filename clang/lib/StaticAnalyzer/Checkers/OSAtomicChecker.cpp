@@ -45,7 +45,7 @@ bool OSAtomicChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   if (!II)
     return false;
   
-  llvm::StringRef FName(II->getName());
+  StringRef FName(II->getName());
 
   // Check for compare and swap.
   if (FName.startswith("OSAtomicCompareAndSwap") ||

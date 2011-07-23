@@ -740,7 +740,7 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
       new llvm::GlobalVariable(CGM.getModule(), NullConstant->getType(),
                                /*isConstant=*/true, 
                                llvm::GlobalVariable::PrivateLinkage,
-                               NullConstant, llvm::Twine());
+                               NullConstant, Twine());
     llvm::Value *SrcPtr =
       Builder.CreateBitCast(NullVariable, Builder.getInt8PtrTy());
 
@@ -818,7 +818,7 @@ llvm::Value *CodeGenFunction::emitArrayLength(const ArrayType *origArrayType,
   // We have some number of constant-length arrays, so addr should
   // have LLVM type [M x [N x [...]]]*.  Build a GEP that walks
   // down to the first element of addr.
-  llvm::SmallVector<llvm::Value*, 8> gepIndices;
+  SmallVector<llvm::Value*, 8> gepIndices;
 
   // GEP down to the array type.
   llvm::ConstantInt *zero = Builder.getInt32(0);

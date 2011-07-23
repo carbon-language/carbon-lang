@@ -49,7 +49,7 @@ static const char* GetReceiverNameType(const ObjCMessage &msg) {
 }
 
 static bool isReceiverClassOrSuperclass(const ObjCInterfaceDecl *ID,
-                                        llvm::StringRef ClassName) {
+                                        StringRef ClassName) {
   if (ID->getIdentifier()->getName() == ClassName)
     return true;
 
@@ -114,7 +114,7 @@ void NilArgChecker::checkPreObjCMessage(ObjCMessage msg,
     //  lexical comparisons.
     
     std::string NameStr = S.getAsString();
-    llvm::StringRef Name(NameStr);
+    StringRef Name(NameStr);
     assert(!Name.empty());
     
     // FIXME: Checking for initWithFormat: will not work in most cases

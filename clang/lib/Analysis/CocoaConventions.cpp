@@ -17,11 +17,8 @@
 #include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
-
 using namespace clang;
 using namespace ento;
-
-using llvm::StringRef;
 
 // The "fundamental rule" for naming conventions of methods:
 //  (url broken into two lines)
@@ -63,11 +60,11 @@ cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S,
   return NoConvention;
 }
 
-bool cocoa::isRefType(QualType RetTy, llvm::StringRef Prefix,
-                      llvm::StringRef Name) {
+bool cocoa::isRefType(QualType RetTy, StringRef Prefix,
+                      StringRef Name) {
   // Recursively walk the typedef stack, allowing typedefs of reference types.
   while (const TypedefType *TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
-    llvm::StringRef TDName = TD->getDecl()->getIdentifier()->getName();
+    StringRef TDName = TD->getDecl()->getIdentifier()->getName();
     if (TDName.startswith(Prefix) && TDName.endswith("Ref"))
       return true;
     
@@ -127,10 +124,10 @@ bool cocoa::isCocoaObjectRef(QualType Ty) {
   return false;
 }
 
-bool coreFoundation::followsCreateRule(llvm::StringRef functionName) {
-  llvm::StringRef::iterator it = functionName.begin();
-  llvm::StringRef::iterator start = it;
-  llvm::StringRef::iterator endI = functionName.end();
+bool coreFoundation::followsCreateRule(StringRef functionName) {
+  StringRef::iterator it = functionName.begin();
+  StringRef::iterator start = it;
+  StringRef::iterator endI = functionName.end();
     
   while (true) {
     // Scan for the start of 'create' or 'copy'.
@@ -149,7 +146,7 @@ bool coreFoundation::followsCreateRule(llvm::StringRef functionName) {
     
     // Scan for *lowercase* 'reate' or 'opy', followed by no lowercase
     // character.
-    llvm::StringRef suffix = functionName.substr(it - start);
+    StringRef suffix = functionName.substr(it - start);
     if (suffix.startswith("reate")) {
       it += 5;
     }

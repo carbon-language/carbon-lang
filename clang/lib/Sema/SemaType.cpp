@@ -73,7 +73,7 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
   }
 
   SourceLocation loc = attr.getLoc();
-  llvm::StringRef name = attr.getName()->getName();
+  StringRef name = attr.getName()->getName();
 
   // The GC attributes are usually written with macros;  special-case them.
   if (useInstantiationLoc && loc.isMacroID() && attr.getParameterName()) {
@@ -125,11 +125,11 @@ namespace {
     bool hasSavedAttrs;
 
     /// The original set of attributes on the DeclSpec.
-    llvm::SmallVector<AttributeList*, 2> savedAttrs;
+    SmallVector<AttributeList*, 2> savedAttrs;
 
     /// A list of attributes to diagnose the uselessness of when the
     /// processing is complete.
-    llvm::SmallVector<AttributeList*, 2> ignoredTypeAttrs;
+    SmallVector<AttributeList*, 2> ignoredTypeAttrs;
 
   public:
     TypeProcessingState(Sema &sema, Declarator &declarator)
@@ -183,7 +183,7 @@ namespace {
     /// Diagnose all the ignored type attributes, given that the
     /// declarator worked out to the given type.
     void diagnoseIgnoredTypeAttrs(QualType type) const {
-      for (llvm::SmallVectorImpl<AttributeList*>::const_iterator
+      for (SmallVectorImpl<AttributeList*>::const_iterator
              i = ignoredTypeAttrs.begin(), e = ignoredTypeAttrs.end();
            i != e; ++i)
         diagnoseBadTypeAttribute(getSema(), **i, type);
@@ -2127,10 +2127,10 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         
         // Otherwise, we have a function with an argument list that is
         // potentially variadic.
-        llvm::SmallVector<QualType, 16> ArgTys;
+        SmallVector<QualType, 16> ArgTys;
         ArgTys.reserve(FTI.NumArgs);
 
-        llvm::SmallVector<bool, 16> ConsumedArguments;
+        SmallVector<bool, 16> ConsumedArguments;
         ConsumedArguments.reserve(FTI.NumArgs);
         bool HasAnyConsumedArguments = false;
 
@@ -2192,7 +2192,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         if (HasAnyConsumedArguments)
           EPI.ConsumedArguments = ConsumedArguments.data();
 
-        llvm::SmallVector<QualType, 4> Exceptions;
+        SmallVector<QualType, 4> Exceptions;
         EPI.ExceptionSpecType = FTI.getExceptionSpecType();
         if (FTI.getExceptionSpecType() == EST_Dynamic) {
           Exceptions.reserve(FTI.NumExceptions);
@@ -3283,7 +3283,7 @@ namespace {
 
     QualType Original;
     const FunctionType *Fn;
-    llvm::SmallVector<unsigned char /*WrapKind*/, 8> Stack;
+    SmallVector<unsigned char /*WrapKind*/, 8> Stack;
 
     FunctionTypeUnwrapper(Sema &S, QualType T) : Original(T) {
       while (true) {

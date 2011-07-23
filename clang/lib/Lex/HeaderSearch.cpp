@@ -116,17 +116,17 @@ const char *DirectoryLookup::getName() const {
 /// LookupFile - Lookup the specified file in this search path, returning it
 /// if it exists or returning null if not.
 const FileEntry *DirectoryLookup::LookupFile(
-    llvm::StringRef Filename,
+    StringRef Filename,
     HeaderSearch &HS,
-    llvm::SmallVectorImpl<char> *SearchPath,
-    llvm::SmallVectorImpl<char> *RelativePath) const {
+    SmallVectorImpl<char> *SearchPath,
+    SmallVectorImpl<char> *RelativePath) const {
   llvm::SmallString<1024> TmpDir;
   if (isNormalDir()) {
     // Concatenate the requested file onto the directory.
     TmpDir = getDir()->getName();
     llvm::sys::path::append(TmpDir, Filename);
     if (SearchPath != NULL) {
-      llvm::StringRef SearchPathRef(getDir()->getName());
+      StringRef SearchPathRef(getDir()->getName());
       SearchPath->clear();
       SearchPath->append(SearchPathRef.begin(), SearchPathRef.end());
     }
@@ -145,7 +145,7 @@ const FileEntry *DirectoryLookup::LookupFile(
       Filename, HS.getFileMgr());
   if (Result) {
     if (SearchPath != NULL) {
-      llvm::StringRef SearchPathRef(getName());
+      StringRef SearchPathRef(getName());
       SearchPath->clear();
       SearchPath->append(SearchPathRef.begin(), SearchPathRef.end());
     }
@@ -161,15 +161,15 @@ const FileEntry *DirectoryLookup::LookupFile(
 /// DoFrameworkLookup - Do a lookup of the specified file in the current
 /// DirectoryLookup, which is a framework directory.
 const FileEntry *DirectoryLookup::DoFrameworkLookup(
-    llvm::StringRef Filename,
+    StringRef Filename,
     HeaderSearch &HS,
-    llvm::SmallVectorImpl<char> *SearchPath,
-    llvm::SmallVectorImpl<char> *RelativePath) const {
+    SmallVectorImpl<char> *SearchPath,
+    SmallVectorImpl<char> *RelativePath) const {
   FileManager &FileMgr = HS.getFileMgr();
 
   // Framework names must have a '/' in the filename.
   size_t SlashPos = Filename.find('/');
-  if (SlashPos == llvm::StringRef::npos) return 0;
+  if (SlashPos == StringRef::npos) return 0;
 
   // Find out if this is the home for the specified framework, by checking
   // HeaderSearch.  Possible answer are yes/no and unknown.
@@ -255,13 +255,13 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
 /// non-null, indicates where the #including file is, in case a relative search
 /// is needed.
 const FileEntry *HeaderSearch::LookupFile(
-    llvm::StringRef Filename,
+    StringRef Filename,
     bool isAngled,
     const DirectoryLookup *FromDir,
     const DirectoryLookup *&CurDir,
     const FileEntry *CurFileEnt,
-    llvm::SmallVectorImpl<char> *SearchPath,
-    llvm::SmallVectorImpl<char> *RelativePath) {
+    SmallVectorImpl<char> *SearchPath,
+    SmallVectorImpl<char> *RelativePath) {
   // If 'Filename' is absolute, check to see if it exists and no searching.
   if (llvm::sys::path::is_absolute(Filename)) {
     CurDir = 0;
@@ -301,7 +301,7 @@ const FileEntry *HeaderSearch::LookupFile(
       unsigned DirInfo = getFileInfo(CurFileEnt).DirInfo;
       getFileInfo(FE).DirInfo = DirInfo;
       if (SearchPath != NULL) {
-        llvm::StringRef SearchPathRef(CurFileEnt->getDir()->getName());
+        StringRef SearchPathRef(CurFileEnt->getDir()->getName());
         SearchPath->clear();
         SearchPath->append(SearchPathRef.begin(), SearchPathRef.end());
       }
@@ -370,15 +370,15 @@ const FileEntry *HeaderSearch::LookupFile(
 /// is a subframework within Carbon.framework.  If so, return the FileEntry
 /// for the designated file, otherwise return null.
 const FileEntry *HeaderSearch::
-LookupSubframeworkHeader(llvm::StringRef Filename,
+LookupSubframeworkHeader(StringRef Filename,
                          const FileEntry *ContextFileEnt,
-                         llvm::SmallVectorImpl<char> *SearchPath,
-                         llvm::SmallVectorImpl<char> *RelativePath) {
+                         SmallVectorImpl<char> *SearchPath,
+                         SmallVectorImpl<char> *RelativePath) {
   assert(ContextFileEnt && "No context file?");
 
   // Framework names must have a '/' in the filename.  Find it.
   size_t SlashPos = Filename.find('/');
-  if (SlashPos == llvm::StringRef::npos) return 0;
+  if (SlashPos == StringRef::npos) return 0;
 
   // Look up the base framework name of the ContextFileEnt.
   const char *ContextName = ContextFileEnt->getName();

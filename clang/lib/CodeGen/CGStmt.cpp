@@ -961,7 +961,7 @@ enum CSFC_Result { CSFC_Failure, CSFC_FallThrough, CSFC_Success };
 static CSFC_Result CollectStatementsForCase(const Stmt *S,
                                             const SwitchCase *Case,
                                             bool &FoundCase,
-                              llvm::SmallVectorImpl<const Stmt*> &ResultStmts) {
+                              SmallVectorImpl<const Stmt*> &ResultStmts) {
   // If this is a null statement, just succeed.
   if (S == 0)
     return Case ? CSFC_Success : CSFC_FallThrough;
@@ -1086,7 +1086,7 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
 /// for more details.
 static bool FindCaseStatementsForValue(const SwitchStmt &S,
                                        const llvm::APInt &ConstantCondValue,
-                                llvm::SmallVectorImpl<const Stmt*> &ResultStmts,
+                                SmallVectorImpl<const Stmt*> &ResultStmts,
                                        ASTContext &C) {
   // First step, find the switch case that is being branched to.  We can do this
   // efficiently by scanning the SwitchCase list.
@@ -1147,7 +1147,7 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   // emit the live case statement (if any) of the switch.
   llvm::APInt ConstantCondValue;
   if (ConstantFoldsToSimpleInteger(S.getCond(), ConstantCondValue)) {
-    llvm::SmallVector<const Stmt*, 4> CaseStmts;
+    SmallVector<const Stmt*, 4> CaseStmts;
     if (FindCaseStatementsForValue(S, ConstantCondValue, CaseStmts,
                                    getContext())) {
       RunCleanupsScope ExecutedScope(*this);
@@ -1219,7 +1219,7 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
 
 static std::string
 SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
-                 llvm::SmallVectorImpl<TargetInfo::ConstraintInfo> *OutCons=0) {
+                 SmallVectorImpl<TargetInfo::ConstraintInfo> *OutCons=0) {
   std::string Result;
 
   while (*Constraint) {
@@ -1276,7 +1276,7 @@ AddVariableConstraints(const std::string &Constraint, const Expr &AsmExpr,
   AsmLabelAttr *Attr = Variable->getAttr<AsmLabelAttr>();
   if (!Attr)
     return Constraint;
-  llvm::StringRef Register = Attr->getLabel();
+  StringRef Register = Attr->getLabel();
   assert(Target.isValidGCCRegisterName(Register));
   // We're using validateOutputConstraint here because we only care if
   // this is a register constraint.
@@ -1341,11 +1341,11 @@ llvm::Value* CodeGenFunction::EmitAsmInput(const AsmStmt &S,
 /// asm.
 static llvm::MDNode *getAsmSrcLocInfo(const StringLiteral *Str,
                                       CodeGenFunction &CGF) {
-  llvm::SmallVector<llvm::Value *, 8> Locs;
+  SmallVector<llvm::Value *, 8> Locs;
   // Add the location of the first line to the MDNode.
   Locs.push_back(llvm::ConstantInt::get(CGF.Int32Ty,
                                         Str->getLocStart().getRawEncoding()));
-  llvm::StringRef StrVal = Str->getString();
+  StringRef StrVal = Str->getString();
   if (!StrVal.empty()) {
     const SourceManager &SM = CGF.CGM.getContext().getSourceManager();
     const LangOptions &LangOpts = CGF.CGM.getLangOptions();
@@ -1367,7 +1367,7 @@ static llvm::MDNode *getAsmSrcLocInfo(const StringLiteral *Str,
 void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   // Analyze the asm string to decompose it into its pieces.  We know that Sema
   // has already done this, so it is guaranteed to be successful.
-  llvm::SmallVector<AsmStmt::AsmStringPiece, 4> Pieces;
+  SmallVector<AsmStmt::AsmStringPiece, 4> Pieces;
   unsigned DiagOffs;
   S.AnalyzeAsmString(Pieces, getContext(), DiagOffs);
 
@@ -1384,8 +1384,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   }
 
   // Get all the output and input constraints together.
-  llvm::SmallVector<TargetInfo::ConstraintInfo, 4> OutputConstraintInfos;
-  llvm::SmallVector<TargetInfo::ConstraintInfo, 4> InputConstraintInfos;
+  SmallVector<TargetInfo::ConstraintInfo, 4> OutputConstraintInfos;
+  SmallVector<TargetInfo::ConstraintInfo, 4> InputConstraintInfos;
 
   for (unsigned i = 0, e = S.getNumOutputs(); i != e; i++) {
     TargetInfo::ConstraintInfo Info(S.getOutputConstraint(i),
@@ -1556,7 +1556,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
   // Clobbers
   for (unsigned i = 0, e = S.getNumClobbers(); i != e; i++) {
-    llvm::StringRef Clobber = S.getClobber(i)->getString();
+    StringRef Clobber = S.getClobber(i)->getString();
 
     if (Clobber != "memory" && Clobber != "cc")
     Clobber = Target.getNormalizedGCCRegisterName(Clobber);

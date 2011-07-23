@@ -174,7 +174,7 @@ void TargetInfo::setForcedLangOptions(LangOptions &Opts) {
 //===----------------------------------------------------------------------===//
 
 
-static llvm::StringRef removeGCCRegisterPrefix(llvm::StringRef Name) {
+static StringRef removeGCCRegisterPrefix(StringRef Name) {
   if (Name[0] == '%' || Name[0] == '#')
     Name = Name.substr(1);
 
@@ -184,7 +184,7 @@ static llvm::StringRef removeGCCRegisterPrefix(llvm::StringRef Name) {
 /// isValidClobber - Returns whether the passed in string is
 /// a valid clobber in an inline asm statement. This is used by
 /// Sema.
-bool TargetInfo::isValidClobber(llvm::StringRef Name) const {
+bool TargetInfo::isValidClobber(StringRef Name) const {
   return (isValidGCCRegisterName(Name) ||
 	  Name == "memory" || Name == "cc");
 }
@@ -192,7 +192,7 @@ bool TargetInfo::isValidClobber(llvm::StringRef Name) const {
 /// isValidGCCRegisterName - Returns whether the passed in string
 /// is a valid register name according to GCC. This is used by Sema for
 /// inline asm statements.
-bool TargetInfo::isValidGCCRegisterName(llvm::StringRef Name) const {
+bool TargetInfo::isValidGCCRegisterName(StringRef Name) const {
   if (Name.empty())
     return false;
 
@@ -248,8 +248,8 @@ bool TargetInfo::isValidGCCRegisterName(llvm::StringRef Name) const {
   return false;
 }
 
-llvm::StringRef
-TargetInfo::getNormalizedGCCRegisterName(llvm::StringRef Name) const {
+StringRef
+TargetInfo::getNormalizedGCCRegisterName(StringRef Name) const {
   assert(isValidGCCRegisterName(Name) && "Invalid register passed in");
 
   // Get rid of any register prefix.

@@ -166,7 +166,7 @@ bool CodeGenModule::isTargetDarwin() const {
   return getContext().Target.getTriple().isOSDarwin();
 }
 
-void CodeGenModule::Error(SourceLocation loc, llvm::StringRef error) {
+void CodeGenModule::Error(SourceLocation loc, StringRef error) {
   unsigned diagID = getDiags().getCustomDiagID(Diagnostic::Error, error);
   getDiags().Report(Context.getFullLoc(loc), diagID);
 }
@@ -281,10 +281,10 @@ void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
   GV->setUnnamedAddr(true);
 }
 
-llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
+StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   const NamedDecl *ND = cast<NamedDecl>(GD.getDecl());
 
-  llvm::StringRef &Str = MangledDeclNames[GD.getCanonicalDecl()];
+  StringRef &Str = MangledDeclNames[GD.getCanonicalDecl()];
   if (!Str.empty())
     return Str;
 
@@ -313,7 +313,7 @@ llvm::StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
   char *Name = MangledNamesAllocator.Allocate<char>(Length);
   std::copy(Buffer.begin(), Buffer.end(), Name);
   
-  Str = llvm::StringRef(Name, Length);
+  Str = StringRef(Name, Length);
   
   return Str;
 }
@@ -333,7 +333,7 @@ void CodeGenModule::getBlockMangledName(GlobalDecl GD, MangleBuffer &Buffer,
     MangleCtx.mangleBlock(cast<DeclContext>(D), BD, Out);
 }
 
-llvm::GlobalValue *CodeGenModule::GetGlobalValue(llvm::StringRef Name) {
+llvm::GlobalValue *CodeGenModule::GetGlobalValue(StringRef Name) {
   return getModule().getNamedValue(Name);
 }
 
@@ -618,7 +618,7 @@ void CodeGenModule::EmitDeferred() {
     // ignore these cases.
     //
     // TODO: That said, looking this up multiple times is very wasteful.
-    llvm::StringRef Name = getMangledName(D);
+    StringRef Name = getMangledName(D);
     llvm::GlobalValue *CGRef = GetGlobalValue(Name);
     assert(CGRef && "Deferred decl wasn't referenced?");
 
@@ -731,7 +731,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   // Ignore declarations, they will be emitted on their first use.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Global)) {
     if (FD->getIdentifier()) {
-      llvm::StringRef Name = FD->getName();
+      StringRef Name = FD->getName();
       if (Name == "_Block_object_assign") {
         BlockObjectAssignDecl = FD;
       } else if (Name == "_Block_object_dispose") {
@@ -747,7 +747,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       const FunctionDecl *InlineDefinition = 0;
       FD->getBody(InlineDefinition);
 
-      llvm::StringRef MangledName = getMangledName(GD);
+      StringRef MangledName = getMangledName(GD);
       llvm::StringMap<GlobalDecl>::iterator DDI =
           DeferredDecls.find(MangledName);
       if (DDI != DeferredDecls.end())
@@ -760,7 +760,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
 
     if (VD->getIdentifier()) {
-      llvm::StringRef Name = VD->getName();
+      StringRef Name = VD->getName();
       if (Name == "_NSConcreteGlobalBlock") {
         NSConcreteGlobalBlockDecl = VD;
       } else if (Name == "_NSConcreteStackBlock") {
@@ -791,7 +791,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
   
   // If the value has already been used, add it directly to the
   // DeferredDeclsToEmit list.
-  llvm::StringRef MangledName = getMangledName(GD);
+  StringRef MangledName = getMangledName(GD);
   if (GetGlobalValue(MangledName))
     DeferredDeclsToEmit.push_back(GD);
   else {
@@ -851,7 +851,7 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
 /// If D is non-null, it specifies a decl that correspond to this.  This is used
 /// to set the attributes on the function when it is first created.
 llvm::Constant *
-CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
+CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
                                        llvm::Type *Ty,
                                        GlobalDecl D, bool ForVTable,
                                        llvm::Attributes ExtraAttrs) {
@@ -954,7 +954,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
   if (!Ty)
     Ty = getTypes().ConvertType(cast<ValueDecl>(GD.getDecl())->getType());
   
-  llvm::StringRef MangledName = getMangledName(GD);
+  StringRef MangledName = getMangledName(GD);
   return GetOrCreateLLVMFunction(MangledName, Ty, GD, ForVTable);
 }
 
@@ -962,7 +962,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
 /// type and name.
 llvm::Constant *
 CodeGenModule::CreateRuntimeFunction(llvm::FunctionType *FTy,
-                                     llvm::StringRef Name,
+                                     StringRef Name,
                                      llvm::Attributes ExtraAttrs) {
   return GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(), /*ForVTable=*/false,
                                  ExtraAttrs);
@@ -992,7 +992,7 @@ static bool DeclIsConstantGlobal(ASTContext &Context, const VarDecl *D,
 /// If D is non-null, it specifies a decl that correspond to this.  This is used
 /// to set the attributes on the global when it is first created.
 llvm::Constant *
-CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
+CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
                                      llvm::PointerType *Ty,
                                      const VarDecl *D,
                                      bool UnnamedAddr) {
@@ -1062,7 +1062,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
 
 
 llvm::GlobalVariable *
-CodeGenModule::CreateOrReplaceCXXRuntimeVariable(llvm::StringRef Name, 
+CodeGenModule::CreateOrReplaceCXXRuntimeVariable(StringRef Name, 
                                       llvm::Type *Ty,
                                       llvm::GlobalValue::LinkageTypes Linkage) {
   llvm::GlobalVariable *GV = getModule().getNamedGlobal(Name);
@@ -1114,7 +1114,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
   llvm::PointerType *PTy =
     llvm::PointerType::get(Ty, getContext().getTargetAddressSpace(ASTTy));
 
-  llvm::StringRef MangledName = getMangledName(D);
+  StringRef MangledName = getMangledName(D);
   return GetOrCreateLLVMGlobal(MangledName, PTy, D);
 }
 
@@ -1122,7 +1122,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
 /// specified type and name.
 llvm::Constant *
 CodeGenModule::CreateRuntimeVariable(llvm::Type *Ty,
-                                     llvm::StringRef Name) {
+                                     StringRef Name) {
   return GetOrCreateLLVMGlobal(Name, llvm::PointerType::getUnqual(Ty), 0,
                                true);
 }
@@ -1134,7 +1134,7 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
     // If we have not seen a reference to this variable yet, place it
     // into the deferred declarations table to be emitted if needed
     // later.
-    llvm::StringRef MangledName = getMangledName(D);
+    StringRef MangledName = getMangledName(D);
     if (!GetGlobalValue(MangledName)) {
       DeferredDecls[MangledName] = D;
       return;
@@ -1295,7 +1295,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
         getContext().getTargetAddressSpace(ASTTy)) {
 
     // Move the old entry aside so that we'll create a new one.
-    Entry->setName(llvm::StringRef());
+    Entry->setName(StringRef());
 
     // Make a new global with the correct type, this is now guaranteed to work.
     GV = cast<llvm::GlobalVariable>(GetAddrOfGlobalVar(D, InitType));
@@ -1391,7 +1391,7 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
   if (OldFn == 0) return;
 
   llvm::Type *NewRetTy = NewFn->getReturnType();
-  llvm::SmallVector<llvm::Value*, 4> ArgList;
+  SmallVector<llvm::Value*, 4> ArgList;
 
   for (llvm::Value::use_iterator UI = OldFn->use_begin(), E = OldFn->use_end();
        UI != E; ) {
@@ -1480,7 +1480,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
     // (e.g. "int f()") and then a definition of a different type
     // (e.g. "int f(int x)").  Move the old function aside so that it
     // doesn't interfere with GetAddrOfFunction.
-    OldFn->setName(llvm::StringRef());
+    OldFn->setName(StringRef());
     llvm::Function *NewFn = cast<llvm::Function>(GetAddrOfFunction(GD, Ty));
 
     // If this is an implementation of a function without a prototype, try to
@@ -1530,7 +1530,7 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
   const AliasAttr *AA = D->getAttr<AliasAttr>();
   assert(AA && "Not an alias?");
 
-  llvm::StringRef MangledName = getMangledName(GD);
+  StringRef MangledName = getMangledName(GD);
 
   // If there is a definition in the module, then it wins over the alias.
   // This is dubious, but allow it to be safe.  Just ignore the alias.
@@ -1604,7 +1604,7 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
          "isn't a lib fn");
 
   // Get the name, skip over the __builtin_ prefix (if necessary).
-  llvm::StringRef Name;
+  StringRef Name;
   GlobalDecl D(FD);
 
   // If the builtin has been declared explicitly with an assembler label,
@@ -1636,7 +1636,7 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
                          bool TargetIsLSB,
                          bool &IsUTF16,
                          unsigned &StringLength) {
-  llvm::StringRef String = Literal->getString();
+  StringRef String = Literal->getString();
   unsigned NumBytes = String.size();
 
   // Check for simple case.
@@ -1646,7 +1646,7 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
   }
 
   // Otherwise, convert the UTF8 literals into a byte string.
-  llvm::SmallVector<UTF16, 128> ToBuf(NumBytes);
+  SmallVector<UTF16, 128> ToBuf(NumBytes);
   const UTF8 *FromPtr = (UTF8 *)String.data();
   UTF16 *ToPtr = &ToBuf[0];
 
@@ -1678,7 +1678,7 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
   AsBytes.push_back(0);
 
   IsUTF16 = true;
-  return Map.GetOrCreateValue(llvm::StringRef(AsBytes.data(), AsBytes.size()));
+  return Map.GetOrCreateValue(StringRef(AsBytes.data(), AsBytes.size()));
 }
 
 static llvm::StringMapEntry<llvm::Constant*> &
@@ -1686,7 +1686,7 @@ GetConstantStringEntry(llvm::StringMap<llvm::Constant*> &Map,
 		       const StringLiteral *Literal,
 		       unsigned &StringLength)
 {
-	llvm::StringRef String = Literal->getString();
+	StringRef String = Literal->getString();
 	StringLength = String.size();
 	return Map.GetOrCreateValue(String);
 }
@@ -1913,7 +1913,7 @@ CodeGenModule::GetAddrOfConstantStringFromObjCEncode(const ObjCEncodeExpr *E) {
 
 
 /// GenerateWritableString -- Creates storage for a string literal.
-static llvm::Constant *GenerateStringLiteral(llvm::StringRef str,
+static llvm::Constant *GenerateStringLiteral(StringRef str,
                                              bool constant,
                                              CodeGenModule &CGM,
                                              const char *GlobalName) {
@@ -1939,7 +1939,7 @@ static llvm::Constant *GenerateStringLiteral(llvm::StringRef str,
 /// Feature.WriteableStrings.
 ///
 /// The result has pointer to array type.
-llvm::Constant *CodeGenModule::GetAddrOfConstantString(llvm::StringRef Str,
+llvm::Constant *CodeGenModule::GetAddrOfConstantString(StringRef Str,
                                                        const char *GlobalName) {
   bool IsConstant = !Features.WritableStrings;
 
@@ -1968,7 +1968,7 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(llvm::StringRef Str,
 /// character. The result has pointer to array type.
 llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &Str,
                                                         const char *GlobalName){
-  llvm::StringRef StrWithNull(Str.c_str(), Str.size() + 1);
+  StringRef StrWithNull(Str.c_str(), Str.size() + 1);
   return GetAddrOfConstantString(StrWithNull, GlobalName);
 }
 
@@ -2181,7 +2181,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
 
   case Decl::FileScopeAsm: {
     FileScopeAsmDecl *AD = cast<FileScopeAsmDecl>(D);
-    llvm::StringRef AsmString = AD->getAsmString()->getString();
+    StringRef AsmString = AD->getAsmString()->getString();
 
     const std::string &S = getModule().getModuleInlineAsm();
     if (S.empty())
@@ -2234,7 +2234,7 @@ void CodeGenModule::EmitDeclMetadata() {
   llvm::NamedMDNode *GlobalMetadata = 0;
 
   // StaticLocalDeclMap
-  for (llvm::DenseMap<GlobalDecl,llvm::StringRef>::iterator
+  for (llvm::DenseMap<GlobalDecl,StringRef>::iterator
          I = MangledDeclNames.begin(), E = MangledDeclNames.end();
        I != E; ++I) {
     llvm::GlobalValue *Addr = getModule().getNamedValue(I->second);

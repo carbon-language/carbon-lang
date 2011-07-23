@@ -77,7 +77,7 @@ public:
   ///  It updatees the GRState object in place with the values removed.
   StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
                               SymbolReaper& SymReaper,
-                          llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
+                          SmallVectorImpl<const MemRegion*>& RegionRoots);
 
   void iterBindings(Store store, BindingsHandler& f);
 
@@ -95,7 +95,7 @@ public:
     return BindingsTy(static_cast<const BindingsTy::TreeTy*>(store));
   }
 
-  void print(Store store, llvm::raw_ostream& Out, const char* nl,
+  void print(Store store, raw_ostream& Out, const char* nl,
              const char *sep);
 
 private:
@@ -283,7 +283,7 @@ StoreRef BasicStoreManager::Remove(Store store, Loc loc) {
 StoreRef BasicStoreManager::removeDeadBindings(Store store,
                                                const StackFrameContext *LCtx,
                                                SymbolReaper& SymReaper,
-                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
+                           SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
   BindingsTy B = GetBindings(store);
   typedef SVal::symbol_iterator symbol_iterator;
@@ -499,7 +499,7 @@ StoreRef BasicStoreManager::BindDeclInternal(Store store, const VarRegion* VR,
   return newStore;
 }
 
-void BasicStoreManager::print(Store store, llvm::raw_ostream& Out,
+void BasicStoreManager::print(Store store, raw_ostream& Out,
                               const char* nl, const char *sep) {
 
   BindingsTy B = GetBindings(store);

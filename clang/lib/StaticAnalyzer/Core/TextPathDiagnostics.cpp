@@ -33,9 +33,9 @@ public:
 
   void HandlePathDiagnostic(const PathDiagnostic* D);
 
-  void FlushDiagnostics(llvm::SmallVectorImpl<std::string> *FilesMade) { }
+  void FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade) { }
   
-  virtual llvm::StringRef getName() const {
+  virtual StringRef getName() const {
     return "TextPathDiagnostics";
   }
 

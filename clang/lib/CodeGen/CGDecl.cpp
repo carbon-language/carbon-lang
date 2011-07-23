@@ -139,7 +139,7 @@ static std::string GetStaticDeclName(CodeGenFunction &CGF, const VarDecl &D,
                                      const char *Separator) {
   CodeGenModule &CGM = CGF.CGM;
   if (CGF.getContext().getLangOptions().CPlusPlus) {
-    llvm::StringRef Name = CGM.getMangledName(&D);
+    StringRef Name = CGM.getMangledName(&D);
     return Name.str();
   }
   
@@ -156,7 +156,7 @@ static std::string GetStaticDeclName(CodeGenFunction &CGF, const VarDecl &D,
     else
       assert(0 && "Unknown context for block static var decl");
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CGF.CurFuncDecl)) {
-    llvm::StringRef Name = CGM.getMangledName(FD);
+    StringRef Name = CGM.getMangledName(FD);
     ContextName = Name.str();
   } else if (isa<ObjCMethodDecl>(CGF.CurFuncDecl))
     ContextName = CGF.CurFn->getName();
@@ -1267,7 +1267,7 @@ static void emitPartialArrayDestroy(CodeGenFunction &CGF,
   if (arrayDepth) {
     llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, arrayDepth+1);
 
-    llvm::SmallVector<llvm::Value*,4> gepIndices(arrayDepth, zero);
+    SmallVector<llvm::Value*,4> gepIndices(arrayDepth, zero);
     begin = CGF.Builder.CreateInBoundsGEP(begin, gepIndices, "pad.arraybegin");
     end = CGF.Builder.CreateInBoundsGEP(end, gepIndices, "pad.arrayend");
   }

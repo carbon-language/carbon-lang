@@ -40,7 +40,6 @@
 using namespace clang;
 using namespace arcmt;
 using namespace trans;
-using llvm::StringRef;
 
 namespace {
 
@@ -55,7 +54,7 @@ class PropertiesRewriter {
     PropData(ObjCPropertyDecl *propD) : PropD(propD), IvarD(0), ImplD(0) { }
   };
 
-  typedef llvm::SmallVector<PropData, 2> PropsTy;
+  typedef SmallVector<PropData, 2> PropsTy;
   typedef std::map<unsigned, PropsTy> AtPropDeclsTy;
   AtPropDeclsTy AtProps;
 
@@ -187,7 +186,7 @@ private:
     }
   }
 
-  bool rewriteAttribute(llvm::StringRef fromAttr, llvm::StringRef toAttr,
+  bool rewriteAttribute(StringRef fromAttr, StringRef toAttr,
                         SourceLocation atLoc) const {
     if (atLoc.isMacroID())
       return false;
@@ -199,7 +198,7 @@ private:
 
     // Try to load the file buffer.
     bool invalidTemp = false;
-    llvm::StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
+    StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
     if (invalidTemp)
       return false;
 
@@ -214,7 +213,7 @@ private:
     if (tok.isNot(tok::at)) return false;
     lexer.LexFromRawLexer(tok);
     if (tok.isNot(tok::raw_identifier)) return false;
-    if (llvm::StringRef(tok.getRawIdentifierData(), tok.getLength())
+    if (StringRef(tok.getRawIdentifierData(), tok.getLength())
           != "property")
       return false;
     lexer.LexFromRawLexer(tok);
@@ -226,7 +225,7 @@ private:
 
     while (1) {
       if (tok.isNot(tok::raw_identifier)) return false;
-      llvm::StringRef ident(tok.getRawIdentifierData(), tok.getLength());
+      StringRef ident(tok.getRawIdentifierData(), tok.getLength());
       if (ident == fromAttr) {
         Pass.TA.replaceText(tok.getLocation(), fromAttr, toAttr);
         return true;
@@ -243,7 +242,7 @@ private:
     return false;
   }
 
-  bool addAttribute(llvm::StringRef attr, SourceLocation atLoc) const {
+  bool addAttribute(StringRef attr, SourceLocation atLoc) const {
     if (atLoc.isMacroID())
       return false;
 
@@ -254,7 +253,7 @@ private:
 
     // Try to load the file buffer.
     bool invalidTemp = false;
-    llvm::StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
+    StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
     if (invalidTemp)
       return false;
 
@@ -269,7 +268,7 @@ private:
     if (tok.isNot(tok::at)) return false;
     lexer.LexFromRawLexer(tok);
     if (tok.isNot(tok::raw_identifier)) return false;
-    if (llvm::StringRef(tok.getRawIdentifierData(), tok.getLength())
+    if (StringRef(tok.getRawIdentifierData(), tok.getLength())
           != "property")
       return false;
     lexer.LexFromRawLexer(tok);

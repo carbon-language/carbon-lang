@@ -109,7 +109,7 @@ public:
                                          const GRState *state,
                                          const Expr *Ex, SVal V);
 
-  static bool SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
+  static bool SummarizeRegion(raw_ostream& os, ASTContext& Ctx,
                               const MemRegion *MR);
 
   // Re-usable checks
@@ -767,7 +767,7 @@ const GRState *CStringChecker::InvalidateBuffer(CheckerContext &C,
   return state->unbindLoc(*L);
 }
 
-bool CStringChecker::SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
+bool CStringChecker::SummarizeRegion(raw_ostream& os, ASTContext& Ctx,
                                      const MemRegion *MR) {
   const TypedRegion *TR = dyn_cast<TypedRegion>(MR);
   if (!TR)
@@ -1575,8 +1575,8 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
   bool canComputeResult = false;
 
   if (s1StrLiteral && s2StrLiteral) {
-    llvm::StringRef s1StrRef = s1StrLiteral->getString();
-    llvm::StringRef s2StrRef = s2StrLiteral->getString();
+    StringRef s1StrRef = s1StrLiteral->getString();
+    StringRef s2StrRef = s2StrLiteral->getString();
 
     if (isBounded) {
       // Get the max number of characters to compare.
@@ -1598,11 +1598,11 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
     if (canComputeResult) {
       // Real strcmp stops at null characters.
       size_t s1Term = s1StrRef.find('\0');
-      if (s1Term != llvm::StringRef::npos)
+      if (s1Term != StringRef::npos)
         s1StrRef = s1StrRef.substr(0, s1Term);
 
       size_t s2Term = s2StrRef.find('\0');
-      if (s2Term != llvm::StringRef::npos)
+      if (s2Term != StringRef::npos)
         s2StrRef = s2StrRef.substr(0, s2Term);
 
       // Use StringRef's comparison methods to compute the actual result.
@@ -1651,7 +1651,7 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   IdentifierInfo *II = FD->getIdentifier();
   if (!II)   // if no identifier, not a simple C function
     return false;
-  llvm::StringRef Name = II->getName();
+  StringRef Name = II->getName();
   if (Name.startswith("__builtin_"))
     Name = Name.substr(10);
 

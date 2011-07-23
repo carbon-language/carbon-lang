@@ -28,14 +28,14 @@ using namespace clang;
 
 namespace  {
   class StmtPrinter : public StmtVisitor<StmtPrinter> {
-    llvm::raw_ostream &OS;
+    raw_ostream &OS;
     ASTContext &Context;
     unsigned IndentLevel;
     clang::PrinterHelper* Helper;
     PrintingPolicy Policy;
 
   public:
-    StmtPrinter(llvm::raw_ostream &os, ASTContext &C, PrinterHelper* helper,
+    StmtPrinter(raw_ostream &os, ASTContext &C, PrinterHelper* helper,
                 const PrintingPolicy &Policy,
                 unsigned Indentation = 0)
       : OS(os), Context(C), IndentLevel(Indentation), Helper(helper),
@@ -76,7 +76,7 @@ namespace  {
         OS << "<null expr>";
     }
 
-    llvm::raw_ostream &Indent(int Delta = 0) {
+    raw_ostream &Indent(int Delta = 0) {
       for (int i = 0, e = IndentLevel+Delta; i < e; ++i)
         OS << "  ";
       return OS;
@@ -124,7 +124,7 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
 
 void StmtPrinter::PrintRawDeclStmt(DeclStmt *S) {
   DeclStmt::decl_iterator Begin = S->decl_begin(), End = S->decl_end();
-  llvm::SmallVector<Decl*, 2> Decls;
+  SmallVector<Decl*, 2> Decls;
   for ( ; Begin != End; ++Begin)
     Decls.push_back(*Begin);
 
@@ -676,8 +676,8 @@ void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
   OS << '"';
 
   // FIXME: this doesn't print wstrings right.
-  llvm::StringRef StrData = Str->getString();
-  for (llvm::StringRef::iterator I = StrData.begin(), E = StrData.end(); 
+  StringRef StrData = Str->getString();
+  for (StringRef::iterator I = StrData.begin(), E = StrData.end(); 
                                                              I != E; ++I) {
     unsigned char Char = *I;
 
@@ -1541,7 +1541,7 @@ void Stmt::dumpPretty(ASTContext& Context) const {
               PrintingPolicy(Context.getLangOptions()));
 }
 
-void Stmt::printPretty(llvm::raw_ostream &OS, ASTContext& Context,
+void Stmt::printPretty(raw_ostream &OS, ASTContext& Context,
                        PrinterHelper* Helper,
                        const PrintingPolicy &Policy,
                        unsigned Indentation) const {

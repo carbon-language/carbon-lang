@@ -35,12 +35,12 @@ public:
 private:
   void EmitStackError(CheckerContext &C, const MemRegion *R,
                       const Expr *RetE) const;
-  static SourceRange GenName(llvm::raw_ostream &os, const MemRegion *R,
+  static SourceRange GenName(raw_ostream &os, const MemRegion *R,
                              SourceManager &SM);
 };
 }
 
-SourceRange StackAddrEscapeChecker::GenName(llvm::raw_ostream &os,
+SourceRange StackAddrEscapeChecker::GenName(raw_ostream &os,
                                           const MemRegion *R,
                                           SourceManager &SM) {
     // Get the base region, stripping away fields and elements.
@@ -143,7 +143,7 @@ void StackAddrEscapeChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
     ExprEngine &Eng;
     const StackFrameContext *CurSFC;
   public:
-    llvm::SmallVector<std::pair<const MemRegion*, const MemRegion*>, 10> V;
+    SmallVector<std::pair<const MemRegion*, const MemRegion*>, 10> V;
 
     CallBack(ExprEngine &Eng, const LocationContext *LCtx)
       : Eng(Eng), CurSFC(LCtx->getCurrentStackFrame()) {}

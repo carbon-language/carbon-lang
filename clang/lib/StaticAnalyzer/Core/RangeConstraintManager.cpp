@@ -170,7 +170,7 @@ public:
     return newRanges;
   }
 
-  void print(llvm::raw_ostream &os) const {
+  void print(raw_ostream &os) const {
     bool isFirst = true;
     os << "{ ";
     for (iterator i = begin(), e = end(); i != e; ++i) {
@@ -244,7 +244,7 @@ public:
 
   const GRState* removeDeadBindings(const GRState* St, SymbolReaper& SymReaper);
 
-  void print(const GRState* St, llvm::raw_ostream& Out,
+  void print(const GRState* St, raw_ostream& Out,
              const char* nl, const char *sep);
 
 private:
@@ -424,7 +424,7 @@ RangeConstraintManager::assumeSymLE(const GRState* state, SymbolRef sym,
 // Pretty-printing.
 //===------------------------------------------------------------------------===/
 
-void RangeConstraintManager::print(const GRState* St, llvm::raw_ostream& Out,
+void RangeConstraintManager::print(const GRState* St, raw_ostream& Out,
                                    const char* nl, const char *sep) {
 
   ConstraintRangeTy Ranges = St->get<ConstraintRange>();

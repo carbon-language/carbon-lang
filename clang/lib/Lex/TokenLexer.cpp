@@ -123,7 +123,7 @@ void TokenLexer::destroy() {
 void TokenLexer::ExpandFunctionArguments() {
   SourceManager &SM = PP.getSourceManager();
 
-  llvm::SmallVector<Token, 128> ResultToks;
+  SmallVector<Token, 128> ResultToks;
 
   // Loop through 'Tokens', expanding them into ResultToks.  Keep
   // track of whether we change anything.  If not, no need to keep them.  If so,

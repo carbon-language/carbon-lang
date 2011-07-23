@@ -33,7 +33,7 @@ using namespace clang;
 ///
 /// \param Out the raw_ostream instance to use for printing.
 static void printIntegral(const TemplateArgument &TemplArg,
-                          llvm::raw_ostream &Out) {
+                          raw_ostream &Out) {
   const ::clang::Type *T = TemplArg.getIntegralType().getTypePtr();
   const llvm::APSInt *Val = TemplArg.getAsIntegral();
 
@@ -309,7 +309,7 @@ TemplateArgument TemplateArgument::getPackExpansionPattern() const {
 }
 
 void TemplateArgument::print(const PrintingPolicy &Policy, 
-                             llvm::raw_ostream &Out) const {
+                             raw_ostream &Out) const {
   switch (getKind()) {
   case Null:
     Out << "<no value>";

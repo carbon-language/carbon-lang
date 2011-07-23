@@ -1263,7 +1263,7 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   // Create Decl objects for each parameter, adding them to the
   // FunctionDecl.
   if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(R)) {
-    llvm::SmallVector<ParmVarDecl*, 16> Params;
+    SmallVector<ParmVarDecl*, 16> Params;
     for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
       ParmVarDecl *parm =
         ParmVarDecl::Create(Context, New, SourceLocation(),
@@ -1795,7 +1795,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       // The old declaration provided a function prototype, but the
       // new declaration does not. Merge in the prototype.
       assert(!OldProto->hasExceptionSpec() && "Exception spec in C");
-      llvm::SmallVector<QualType, 16> ParamTypes(OldProto->arg_type_begin(),
+      SmallVector<QualType, 16> ParamTypes(OldProto->arg_type_begin(),
                                                  OldProto->arg_type_end());
       NewQType = Context.getFunctionType(NewFuncType->getResultType(),
                                          ParamTypes.data(), ParamTypes.size(),
@@ -1804,7 +1804,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       New->setHasInheritedPrototype();
 
       // Synthesize a parameter for each argument type.
-      llvm::SmallVector<ParmVarDecl*, 16> Params;
+      SmallVector<ParmVarDecl*, 16> Params;
       for (FunctionProtoType::arg_type_iterator
              ParamType = OldProto->arg_type_begin(),
              ParamEnd = OldProto->arg_type_end();
@@ -1841,8 +1841,8 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       Old->hasPrototype() && !New->hasPrototype() &&
       New->getType()->getAs<FunctionProtoType>() &&
       Old->getNumParams() == New->getNumParams()) {
-    llvm::SmallVector<QualType, 16> ArgTypes;
-    llvm::SmallVector<GNUCompatibleParamWarning, 16> Warnings;
+    SmallVector<QualType, 16> ArgTypes;
+    SmallVector<GNUCompatibleParamWarning, 16> Warnings;
     const FunctionProtoType *OldProto
       = Old->getType()->getAs<FunctionProtoType>();
     const FunctionProtoType *NewProto
@@ -2388,7 +2388,7 @@ static bool InjectAnonymousStructOrUnionMembers(Sema &SemaRef, Scope *S,
                                                 DeclContext *Owner,
                                                 RecordDecl *AnonRecord,
                                                 AccessSpecifier AS,
-                              llvm::SmallVector<NamedDecl*, 2> &Chaining,
+                              SmallVector<NamedDecl*, 2> &Chaining,
                                                       bool MSAnonStruct) {
   unsigned diagKind
     = AnonRecord->isUnion() ? diag::err_anonymous_union_member_redecl
@@ -2685,7 +2685,7 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   // Inject the members of the anonymous struct/union into the owning
   // context and into the identifier resolver chain for name lookup
   // purposes.
-  llvm::SmallVector<NamedDecl*, 2> Chain;
+  SmallVector<NamedDecl*, 2> Chain;
   Chain.push_back(Anon);
 
   if (InjectAnonymousStructOrUnionMembers(*this, S, Owner, Record, AS,
@@ -2749,7 +2749,7 @@ Decl *Sema::BuildMicrosoftCAnonymousStruct(Scope *S, DeclSpec &DS,
   // Inject the members of the anonymous struct into the current
   // context and into the identifier resolver chain for name lookup
   // purposes.
-  llvm::SmallVector<NamedDecl*, 2> Chain;
+  SmallVector<NamedDecl*, 2> Chain;
   Chain.push_back(Anon);
 
   if (InjectAnonymousStructOrUnionMembers(*this, S, CurContext,
@@ -3731,7 +3731,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   if (Expr *E = (Expr*)D.getAsmLabel()) {
     // The parser guarantees this is a string.
     StringLiteral *SE = cast<StringLiteral>(E);
-    llvm::StringRef Label = SE->getString();
+    StringRef Label = SE->getString();
     if (S->getFnParent() != 0) {
       switch (SC) {
       case SC_None:
@@ -4550,7 +4550,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
   // Copy the parameter declarations from the declarator D to the function
   // declaration NewFD, if they are available.  First scavenge them into Params.
-  llvm::SmallVector<ParmVarDecl*, 16> Params;
+  SmallVector<ParmVarDecl*, 16> Params;
   if (D.isFunctionDeclarator()) {
     DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
 
@@ -5925,7 +5925,7 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
 Sema::DeclGroupPtrTy
 Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
                               Decl **Group, unsigned NumDecls) {
-  llvm::SmallVector<Decl*, 8> Decls;
+  SmallVector<Decl*, 8> Decls;
 
   if (DS.isTypeSpecOwned())
     Decls.push_back(DS.getRepAsDecl());
@@ -8237,7 +8237,7 @@ Decl *Sema::ActOnIvar(Scope *S,
 /// extension @interface, if the last ivar is a bitfield of any type, 
 /// then add an implicit `char :0` ivar to the end of that interface.
 void Sema::ActOnLastBitfield(SourceLocation DeclLoc, Decl *EnclosingDecl,
-                             llvm::SmallVectorImpl<Decl *> &AllIvarDecls) {
+                             SmallVectorImpl<Decl *> &AllIvarDecls) {
   if (!LangOpts.ObjCNonFragileABI2 || AllIvarDecls.empty())
     return;
   
@@ -8290,7 +8290,7 @@ void Sema::ActOnFields(Scope* S,
 
   // Verify that all the fields are okay.
   unsigned NumNamedMembers = 0;
-  llvm::SmallVector<FieldDecl*, 32> RecFields;
+  SmallVector<FieldDecl*, 32> RecFields;
 
   RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
   bool ARCErrReported = false;

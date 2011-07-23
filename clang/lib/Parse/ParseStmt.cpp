@@ -715,7 +715,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
     SourceLocation LabelLoc = ConsumeToken();
     Diag(LabelLoc, diag::ext_gnu_local_label);
     
-    llvm::SmallVector<Decl *, 8> DeclsInGroup;
+    SmallVector<Decl *, 8> DeclsInGroup;
     while (1) {
       if (Tok.isNot(tok::identifier)) {
         Diag(Tok, diag::err_expected_ident);
@@ -1649,7 +1649,7 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   if (AsmString.isInvalid())
     return StmtError();
 
-  llvm::SmallVector<IdentifierInfo *, 4> Names;
+  SmallVector<IdentifierInfo *, 4> Names;
   ExprVector Constraints(Actions);
   ExprVector Exprs(Actions);
   ExprVector Clobbers(Actions);
@@ -1742,9 +1742,9 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
 ///
 //
 // FIXME: Avoid unnecessary std::string trashing.
-bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
-                                 llvm::SmallVectorImpl<ExprTy *> &Constraints,
-                                 llvm::SmallVectorImpl<ExprTy *> &Exprs) {
+bool Parser::ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
+                                 SmallVectorImpl<ExprTy *> &Constraints,
+                                 SmallVectorImpl<ExprTy *> &Exprs) {
   // 'asm-operands' isn't present?
   if (!isTokenStringLiteral() && Tok.isNot(tok::l_square))
     return false;

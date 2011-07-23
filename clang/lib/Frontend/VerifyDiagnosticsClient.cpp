@@ -163,7 +163,7 @@ public:
     : Begin(Begin), End(End), C(Begin), P(Begin), PEnd(NULL) { }
 
   // Return true if string literal is next.
-  bool Next(llvm::StringRef S) {
+  bool Next(StringRef S) {
     P = C;
     PEnd = C + S.size();
     if (PEnd > End)
@@ -189,7 +189,7 @@ public:
 
   // Return true if string literal is found.
   // When true, P marks begin-position of S in content.
-  bool Search(llvm::StringRef S) {
+  bool Search(StringRef S) {
     P = std::search(C, End, S.begin(), S.end());
     PEnd = P + S.size();
     return P != End;
@@ -296,11 +296,11 @@ static void ParseDirective(const char *CommentStart, unsigned CommentLen,
 
     // build directive text; convert \n to newlines
     std::string Text;
-    llvm::StringRef NewlineStr = "\\n";
-    llvm::StringRef Content(ContentBegin, ContentEnd-ContentBegin);
+    StringRef NewlineStr = "\\n";
+    StringRef Content(ContentBegin, ContentEnd-ContentBegin);
     size_t CPos = 0;
     size_t FPos;
-    while ((FPos = Content.find(NewlineStr, CPos)) != llvm::StringRef::npos) {
+    while ((FPos = Content.find(NewlineStr, CPos)) != StringRef::npos) {
       Text += Content.substr(CPos, FPos-CPos);
       Text += '\n';
       CPos = FPos + NewlineStr.size();

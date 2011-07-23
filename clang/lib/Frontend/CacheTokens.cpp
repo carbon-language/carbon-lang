@@ -71,13 +71,13 @@ public:
 
   bool isFile() const { return Kind == IsFE; }
 
-  llvm::StringRef getString() const {
+  StringRef getString() const {
     return Kind == IsFE ? FE->getName() : Path;
   }
 
   unsigned getKind() const { return (unsigned) Kind; }
 
-  void EmitData(llvm::raw_ostream& Out) {
+  void EmitData(raw_ostream& Out) {
     switch (Kind) {
     case IsFE:
       // Emit stat information.
@@ -119,7 +119,7 @@ public:
   }
 
   static std::pair<unsigned,unsigned>
-  EmitKeyDataLength(llvm::raw_ostream& Out, PTHEntryKeyVariant V,
+  EmitKeyDataLength(raw_ostream& Out, PTHEntryKeyVariant V,
                     const PTHEntry& E) {
 
     unsigned n = V.getString().size() + 1 + 1;
@@ -131,14 +131,14 @@ public:
     return std::make_pair(n, m);
   }
 
-  static void EmitKey(llvm::raw_ostream& Out, PTHEntryKeyVariant V, unsigned n){
+  static void EmitKey(raw_ostream& Out, PTHEntryKeyVariant V, unsigned n){
     // Emit the entry kind.
     ::Emit8(Out, (unsigned) V.getKind());
     // Emit the string.
     Out.write(V.getString().data(), n - 1);
   }
 
-  static void EmitData(llvm::raw_ostream& Out, PTHEntryKeyVariant V,
+  static void EmitData(raw_ostream& Out, PTHEntryKeyVariant V,
                        const PTHEntry& E, unsigned) {
 
 
@@ -197,7 +197,7 @@ class PTHWriter {
     Out.write(Ptr, NumBytes);
   }
 
-  void EmitString(llvm::StringRef V) {
+  void EmitString(StringRef V) {
     ::Emit16(Out, V.size());
     EmitBuf(V.data(), V.size());
   }
@@ -247,7 +247,7 @@ void PTHWriter::EmitToken(const Token& T) {
   } else {
     // We cache *un-cleaned* spellings. This gives us 100% fidelity with the
     // source code.
-    llvm::StringRef s(T.getLiteralData(), T.getLength());
+    StringRef s(T.getLiteralData(), T.getLength());
 
     // Get the string entry.
     llvm::StringMapEntry<OffsetOpt> *E = &CachedStrs.GetOrCreateValue(s);
@@ -584,20 +584,20 @@ public:
   }
 
   static std::pair<unsigned,unsigned>
-  EmitKeyDataLength(llvm::raw_ostream& Out, const PTHIdKey* key, uint32_t) {
+  EmitKeyDataLength(raw_ostream& Out, const PTHIdKey* key, uint32_t) {
     unsigned n = key->II->getLength() + 1;
     ::Emit16(Out, n);
     return std::make_pair(n, sizeof(uint32_t));
   }
 
-  static void EmitKey(llvm::raw_ostream& Out, PTHIdKey* key, unsigned n) {
+  static void EmitKey(raw_ostream& Out, PTHIdKey* key, unsigned n) {
     // Record the location of the key data.  This is used when generating
     // the mapping from persistent IDs to strings.
     key->FileOffset = Out.tell();
     Out.write(key->II->getNameStart(), n);
   }
 
-  static void EmitData(llvm::raw_ostream& Out, PTHIdKey*, uint32_t pID,
+  static void EmitData(raw_ostream& Out, PTHIdKey*, uint32_t pID,
                        unsigned) {
     ::Emit32(Out, pID);
   }

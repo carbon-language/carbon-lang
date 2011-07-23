@@ -220,11 +220,11 @@ CXString clang_getDiagnosticOption(CXDiagnostic Diag, CXString *Disable) {
     return createCXString("");
   
   unsigned ID = StoredDiag->Diag.getID();
-  llvm::StringRef Option = DiagnosticIDs::getWarningOptionForDiag(ID);
+  StringRef Option = DiagnosticIDs::getWarningOptionForDiag(ID);
   if (!Option.empty()) {
     if (Disable)
-      *Disable = createCXString((llvm::Twine("-Wno-") + Option).str());
-    return createCXString((llvm::Twine("-W") + Option).str());
+      *Disable = createCXString((Twine("-Wno-") + Option).str());
+    return createCXString((Twine("-W") + Option).str());
   }
   
   if (ID == diag::fatal_too_many_errors) {

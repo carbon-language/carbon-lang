@@ -92,7 +92,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   SetPoisonReason(Ident__VA_ARGS__,diag::ext_pp_bad_vaargs_use);
 
   // Initialize the pragma handlers.
-  PragmaHandlers = new PragmaNamespace(llvm::StringRef());
+  PragmaHandlers = new PragmaNamespace(StringRef());
   RegisterBuiltinPragmas();
 
   // Initialize builtin macros like __LINE__ and friends.
@@ -172,7 +172,7 @@ void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
     llvm::errs() << " [ExpandDisabled]";
   if (Tok.needsCleaning()) {
     const char *Start = SourceMgr.getCharacterData(Tok.getLocation());
-    llvm::errs() << " [UnClean='" << llvm::StringRef(Start, Tok.getLength())
+    llvm::errs() << " [UnClean='" << StringRef(Start, Tok.getLength())
                  << "']";
   }
 
@@ -279,7 +279,7 @@ bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
 
   // Truncate the buffer.
   if (Position < Buffer->getBufferEnd()) {
-    llvm::StringRef Data(Buffer->getBufferStart(),
+    StringRef Data(Buffer->getBufferStart(),
                          Position-Buffer->getBufferStart());
     MemoryBuffer *TruncatedBuffer
       = MemoryBuffer::getMemBufferCopy(Data, Buffer->getBufferIdentifier());
@@ -305,8 +305,8 @@ void Preprocessor::CodeCompleteNaturalLanguage() {
 /// getSpelling - This method is used to get the spelling of a token into a
 /// SmallVector. Note that the returned StringRef may not point to the
 /// supplied buffer if a copy can be avoided.
-llvm::StringRef Preprocessor::getSpelling(const Token &Tok,
-                                          llvm::SmallVectorImpl<char> &Buffer,
+StringRef Preprocessor::getSpelling(const Token &Tok,
+                                          SmallVectorImpl<char> &Buffer,
                                           bool *Invalid) const {
   // NOTE: this has to be checked *before* testing for an IdentifierInfo.
   if (Tok.isNot(tok::raw_identifier)) {
@@ -321,7 +321,7 @@ llvm::StringRef Preprocessor::getSpelling(const Token &Tok,
 
   const char *Ptr = Buffer.data();
   unsigned Len = getSpelling(Tok, Ptr, Invalid);
-  return llvm::StringRef(Ptr, Len);
+  return StringRef(Ptr, Len);
 }
 
 /// CreateString - Plop the specified string into a scratch buffer and return a
@@ -407,12 +407,12 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier) const {
   IdentifierInfo *II;
   if (!Identifier.needsCleaning()) {
     // No cleaning needed, just use the characters from the lexed buffer.
-    II = getIdentifierInfo(llvm::StringRef(Identifier.getRawIdentifierData(),
+    II = getIdentifierInfo(StringRef(Identifier.getRawIdentifierData(),
                                            Identifier.getLength()));
   } else {
     // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
     llvm::SmallString<64> IdentifierBuffer;
-    llvm::StringRef CleanedStr = getSpelling(Identifier, IdentifierBuffer);
+    StringRef CleanedStr = getSpelling(Identifier, IdentifierBuffer);
     II = getIdentifierInfo(CleanedStr);
   }
 

@@ -57,7 +57,7 @@ struct HMapHeader {
 /// HashHMapKey - This is the 'well known' hash function required by the file
 /// format, used to look up keys in the hash table.  The hash table uses simple
 /// linear probing based on this function.
-static inline unsigned HashHMapKey(llvm::StringRef Str) {
+static inline unsigned HashHMapKey(StringRef Str) {
   unsigned Result = 0;
   const char *S = Str.begin(), *End = Str.end();
 
@@ -200,7 +200,7 @@ void HeaderMap::dump() const {
 /// LookupFile - Check to see if the specified relative filename is located in
 /// this HeaderMap.  If so, open it and return its FileEntry.
 const FileEntry *HeaderMap::LookupFile(
-    llvm::StringRef Filename, FileManager &FM) const {
+    StringRef Filename, FileManager &FM) const {
   const HMapHeader &Hdr = getHeader();
   unsigned NumBuckets = getEndianAdjustedWord(Hdr.NumBuckets);
 

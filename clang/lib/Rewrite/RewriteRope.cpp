@@ -12,11 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Rewrite/RewriteRope.h"
-#include "llvm/Support/Casting.h"
+#include "clang/Basic/LLVM.h"
 #include <algorithm>
 using namespace clang;
-using llvm::dyn_cast;
-using llvm::cast;
 
 /// RewriteRope is a "strong" string class, designed to make insertions and
 /// deletions in the middle of the string nearly constant time (really, they are

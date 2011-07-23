@@ -114,7 +114,7 @@ void ASTStmtReader::VisitNullStmt(NullStmt *S) {
 
 void ASTStmtReader::VisitCompoundStmt(CompoundStmt *S) {
   VisitStmt(S);
-  llvm::SmallVector<Stmt *, 16> Stmts;
+  SmallVector<Stmt *, 16> Stmts;
   unsigned NumStmts = Record[Idx++];
   while (NumStmts--)
     Stmts.push_back(Reader.ReadSubStmt());
@@ -259,7 +259,7 @@ void ASTStmtReader::VisitDeclStmt(DeclStmt *S) {
     // Single declaration
     S->setDeclGroup(DeclGroupRef(ReadDecl(Record, Idx)));
   } else {
-    llvm::SmallVector<Decl *, 16> Decls;
+    SmallVector<Decl *, 16> Decls;
     Decls.reserve(Record.size() - Idx);    
     for (unsigned N = Record.size(); Idx != N; )
       Decls.push_back(ReadDecl(Record, Idx));
@@ -283,9 +283,9 @@ void ASTStmtReader::VisitAsmStmt(AsmStmt *S) {
   S->setAsmString(cast_or_null<StringLiteral>(Reader.ReadSubStmt()));
 
   // Outputs and inputs
-  llvm::SmallVector<IdentifierInfo *, 16> Names;
-  llvm::SmallVector<StringLiteral*, 16> Constraints;
-  llvm::SmallVector<Stmt*, 16> Exprs;
+  SmallVector<IdentifierInfo *, 16> Names;
+  SmallVector<StringLiteral*, 16> Constraints;
+  SmallVector<Stmt*, 16> Exprs;
   for (unsigned I = 0, N = NumOutputs + NumInputs; I != N; ++I) {
     Names.push_back(Reader.GetIdentifierInfo(Record, Idx));
     Constraints.push_back(cast_or_null<StringLiteral>(Reader.ReadSubStmt()));
@@ -293,7 +293,7 @@ void ASTStmtReader::VisitAsmStmt(AsmStmt *S) {
   }
 
   // Constraints
-  llvm::SmallVector<StringLiteral*, 16> Clobbers;
+  SmallVector<StringLiteral*, 16> Clobbers;
   for (unsigned I = 0; I != NumClobbers; ++I)
     Clobbers.push_back(cast_or_null<StringLiteral>(Reader.ReadSubStmt()));
 
@@ -634,7 +634,7 @@ void ASTStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
   E->setEqualOrColonLoc(ReadSourceLocation(Record, Idx));
   E->setGNUSyntax(Record[Idx++]);
 
-  llvm::SmallVector<Designator, 4> Designators;
+  SmallVector<Designator, 4> Designators;
   while (Idx < Record.size()) {
     switch ((DesignatorTypes)Record[Idx++]) {
     case DESIG_FIELD_DECL: {
@@ -729,7 +729,7 @@ void ASTStmtReader::VisitGNUNullExpr(GNUNullExpr *E) {
 
 void ASTStmtReader::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   VisitExpr(E);
-  llvm::SmallVector<Expr *, 16> Exprs;
+  SmallVector<Expr *, 16> Exprs;
   unsigned NumExprs = Record[Idx++];
   while (NumExprs--)
     Exprs.push_back(Reader.ReadSubExpr());

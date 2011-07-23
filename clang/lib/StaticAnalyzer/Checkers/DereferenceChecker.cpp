@@ -31,14 +31,14 @@ class DereferenceChecker
 public:
   void checkLocation(SVal location, bool isLoad, CheckerContext &C) const;
 
-  static void AddDerefSource(llvm::raw_ostream &os,
-                             llvm::SmallVectorImpl<SourceRange> &Ranges,
+  static void AddDerefSource(raw_ostream &os,
+                             SmallVectorImpl<SourceRange> &Ranges,
                              const Expr *Ex, bool loadedFrom = false);
 };
 } // end anonymous namespace
 
-void DereferenceChecker::AddDerefSource(llvm::raw_ostream &os,
-                                     llvm::SmallVectorImpl<SourceRange> &Ranges,
+void DereferenceChecker::AddDerefSource(raw_ostream &os,
+                                     SmallVectorImpl<SourceRange> &Ranges,
                                         const Expr *Ex,
                                         bool loadedFrom) {
   Ex = Ex->IgnoreParenLValueCasts();
@@ -107,7 +107,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad,
         BT_null.reset(new BuiltinBug("Dereference of null pointer"));
 
       llvm::SmallString<100> buf;
-      llvm::SmallVector<SourceRange, 2> Ranges;
+      SmallVector<SourceRange, 2> Ranges;
       
       // Walk through lvalue casts to get the original expression
       // that syntactically caused the load.
@@ -165,7 +165,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad,
       report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                                 bugreporter::GetDerefExpr(N));
 
-      for (llvm::SmallVectorImpl<SourceRange>::iterator
+      for (SmallVectorImpl<SourceRange>::iterator
             I = Ranges.begin(), E = Ranges.end(); I!=E; ++I)
         report->addRange(*I);
 

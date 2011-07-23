@@ -61,21 +61,21 @@ struct StaticDiagInfoRec {
   const char *BriefExplanationStr;
   const char *FullExplanationStr;
 
-  llvm::StringRef getName() const {
-    return llvm::StringRef(NameStr, NameLen);
+  StringRef getName() const {
+    return StringRef(NameStr, NameLen);
   }
-  llvm::StringRef getOptionGroup() const {
-    return llvm::StringRef(OptionGroupStr, OptionGroupLen);
+  StringRef getOptionGroup() const {
+    return StringRef(OptionGroupStr, OptionGroupLen);
   }
 
-  llvm::StringRef getDescription() const {
-    return llvm::StringRef(DescriptionStr, DescriptionLen);
+  StringRef getDescription() const {
+    return StringRef(DescriptionStr, DescriptionLen);
   }
-  llvm::StringRef getBriefExplanation() const {
-    return llvm::StringRef(BriefExplanationStr, BriefExplanationLen);
+  StringRef getBriefExplanation() const {
+    return StringRef(BriefExplanationStr, BriefExplanationLen);
   }
-  llvm::StringRef getFullExplanation() const {
-    return llvm::StringRef(FullExplanationStr, FullExplanationLen);
+  StringRef getFullExplanation() const {
+    return StringRef(FullExplanationStr, FullExplanationLen);
   }
 
   bool operator<(const StaticDiagInfoRec &RHS) const {
@@ -88,8 +88,8 @@ struct StaticDiagNameIndexRec {
   unsigned short DiagID;
   uint8_t NameLen;
 
-  llvm::StringRef getName() const {
-    return llvm::StringRef(NameStr, NameLen);
+  StringRef getName() const {
+    return StringRef(NameStr, NameLen);
   }
 
   bool operator<(const StaticDiagNameIndexRec &RHS) const {
@@ -186,10 +186,10 @@ static unsigned GetDefaultDiagMapping(unsigned DiagID) {
 /// getWarningOptionForDiag - Return the lowest-level warning option that
 /// enables the specified diagnostic.  If there is no -Wfoo flag that controls
 /// the diagnostic, this returns null.
-llvm::StringRef DiagnosticIDs::getWarningOptionForDiag(unsigned DiagID) {
+StringRef DiagnosticIDs::getWarningOptionForDiag(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
     return Info->getOptionGroup();
-  return llvm::StringRef();
+  return StringRef();
 }
 
 /// getCategoryNumberForDiag - Return the category number that a specified
@@ -206,8 +206,8 @@ namespace {
     const char *NameStr;
     uint8_t NameLen;
 
-    llvm::StringRef getName() const {
-      return llvm::StringRef(NameStr, NameLen);
+    StringRef getName() const {
+      return StringRef(NameStr, NameLen);
     }
   };
 }
@@ -228,9 +228,9 @@ unsigned DiagnosticIDs::getNumberOfCategories() {
 /// getCategoryNameFromID - Given a category ID, return the name of the
 /// category, an empty string if CategoryID is zero, or null if CategoryID is
 /// invalid.
-llvm::StringRef DiagnosticIDs::getCategoryNameFromID(unsigned CategoryID) {
+StringRef DiagnosticIDs::getCategoryNameFromID(unsigned CategoryID) {
   if (CategoryID >= getNumberOfCategories())
-   return llvm::StringRef();
+   return StringRef();
   return CategoryNameTable[CategoryID].getName();
 }
 
@@ -256,14 +256,14 @@ DiagnosticIDs::getDiagnosticSFINAEResponse(unsigned DiagID) {
 }
 
 /// getName - Given a diagnostic ID, return its name
-llvm::StringRef DiagnosticIDs::getName(unsigned DiagID) {
+StringRef DiagnosticIDs::getName(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
     return Info->getName();
-  return llvm::StringRef();
+  return StringRef();
 }
 
 /// getIdFromName - Given a diagnostic name, return its ID, or 0
-unsigned DiagnosticIDs::getIdFromName(llvm::StringRef Name) {
+unsigned DiagnosticIDs::getIdFromName(StringRef Name) {
   const StaticDiagNameIndexRec *StaticDiagNameIndexEnd =
     StaticDiagNameIndex + StaticDiagNameIndexSize;
   
@@ -282,18 +282,18 @@ unsigned DiagnosticIDs::getIdFromName(llvm::StringRef Name) {
 
 /// getBriefExplanation - Given a diagnostic ID, return a brief explanation
 /// of the issue
-llvm::StringRef DiagnosticIDs::getBriefExplanation(unsigned DiagID) {
+StringRef DiagnosticIDs::getBriefExplanation(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
     return Info->getBriefExplanation();
-  return llvm::StringRef();
+  return StringRef();
 }
 
 /// getFullExplanation - Given a diagnostic ID, return a full explanation
 /// of the issue
-llvm::StringRef DiagnosticIDs::getFullExplanation(unsigned DiagID) {
+StringRef DiagnosticIDs::getFullExplanation(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
     return Info->getFullExplanation();
-  return llvm::StringRef();
+  return StringRef();
 }
 
 /// getBuiltinDiagClass - Return the class field of the diagnostic.
@@ -318,7 +318,7 @@ namespace clang {
 
       /// getDescription - Return the description of the specified custom
       /// diagnostic.
-      llvm::StringRef getDescription(unsigned DiagID) const {
+      StringRef getDescription(unsigned DiagID) const {
         assert(this && DiagID-DIAG_UPPER_LIMIT < DiagInfo.size() &&
                "Invalid diagnosic ID");
         return DiagInfo[DiagID-DIAG_UPPER_LIMIT].second;
@@ -331,7 +331,7 @@ namespace clang {
         return DiagInfo[DiagID-DIAG_UPPER_LIMIT].first;
       }
 
-      unsigned getOrCreateDiagID(DiagnosticIDs::Level L, llvm::StringRef Message,
+      unsigned getOrCreateDiagID(DiagnosticIDs::Level L, StringRef Message,
                                  DiagnosticIDs &Diags) {
         DiagDesc D(L, Message);
         // Check to see if it already exists.
@@ -366,7 +366,7 @@ DiagnosticIDs::~DiagnosticIDs() {
 /// getCustomDiagID - Return an ID for a diagnostic with the specified message
 /// and level.  If this is the first request for this diagnosic, it is
 /// registered and created, otherwise the existing ID is returned.
-unsigned DiagnosticIDs::getCustomDiagID(Level L, llvm::StringRef Message) {
+unsigned DiagnosticIDs::getCustomDiagID(Level L, StringRef Message) {
   if (CustomDiagInfo == 0)
     CustomDiagInfo = new diag::CustomDiagInfo();
   return CustomDiagInfo->getOrCreateDiagID(L, Message, *this);
@@ -406,7 +406,7 @@ bool DiagnosticIDs::isBuiltinExtensionDiag(unsigned DiagID,
 
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.
-llvm::StringRef DiagnosticIDs::getDescription(unsigned DiagID) const {
+StringRef DiagnosticIDs::getDescription(unsigned DiagID) const {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
     return Info->getDescription();
   return CustomDiagInfo->getDescription(DiagID);
@@ -556,8 +556,8 @@ namespace {
     const short *Members;
     const short *SubGroups;
 
-    llvm::StringRef getName() const {
-      return llvm::StringRef(NameStr, NameLen);
+    StringRef getName() const {
+      return StringRef(NameStr, NameLen);
     }
   };
 }
@@ -598,7 +598,7 @@ static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
 /// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
 /// "unknown-pragmas" to have the specified mapping.  This returns true and
 /// ignores the request if "Group" was unknown, false otherwise.
-bool DiagnosticIDs::setDiagnosticGroupMapping(llvm::StringRef Group,
+bool DiagnosticIDs::setDiagnosticGroupMapping(StringRef Group,
                                               diag::Mapping Map,
                                               SourceLocation Loc,
                                               Diagnostic &Diag) const {

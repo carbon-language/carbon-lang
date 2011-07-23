@@ -59,7 +59,7 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
 }
 
 void
-Builtin::Context::GetBuiltinNames(llvm::SmallVectorImpl<const char *> &Names,
+Builtin::Context::GetBuiltinNames(SmallVectorImpl<const char *> &Names,
                                   bool NoBuiltins) {
   // Final all target-independent names
   for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)

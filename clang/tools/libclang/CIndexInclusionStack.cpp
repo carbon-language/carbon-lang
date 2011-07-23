@@ -29,7 +29,7 @@ void clang_getInclusions(CXTranslationUnit TU, CXInclusionVisitor CB,
   SourceManager &SM = CXXUnit->getSourceManager();
   ASTContext &Ctx = CXXUnit->getASTContext();
 
-  llvm::SmallVector<CXSourceLocation, 10> InclusionStack;
+  SmallVector<CXSourceLocation, 10> InclusionStack;
   unsigned n =  SM.local_sloc_entry_size();
 
   // In the case where all the SLocEntries are in an external source, traverse

@@ -29,7 +29,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 ASTConsumer *InitOnlyAction::CreateASTConsumer(CompilerInstance &CI,
-                                               llvm::StringRef InFile) {
+                                               StringRef InFile) {
   return new ASTConsumer();
 }
 
@@ -41,20 +41,20 @@ void InitOnlyAction::ExecuteAction() {
 //===----------------------------------------------------------------------===//
 
 ASTConsumer *ASTPrintAction::CreateASTConsumer(CompilerInstance &CI,
-                                               llvm::StringRef InFile) {
-  if (llvm::raw_ostream *OS = CI.createDefaultOutputFile(false, InFile))
+                                               StringRef InFile) {
+  if (raw_ostream *OS = CI.createDefaultOutputFile(false, InFile))
     return CreateASTPrinter(OS);
   return 0;
 }
 
 ASTConsumer *ASTDumpAction::CreateASTConsumer(CompilerInstance &CI,
-                                              llvm::StringRef InFile) {
+                                              StringRef InFile) {
   return CreateASTDumper();
 }
 
 ASTConsumer *ASTDumpXMLAction::CreateASTConsumer(CompilerInstance &CI,
-                                                 llvm::StringRef InFile) {
-  llvm::raw_ostream *OS;
+                                                 StringRef InFile) {
+  raw_ostream *OS;
   if (CI.getFrontendOpts().OutputFile.empty())
     OS = &llvm::outs();
   else
@@ -64,20 +64,20 @@ ASTConsumer *ASTDumpXMLAction::CreateASTConsumer(CompilerInstance &CI,
 }
 
 ASTConsumer *ASTViewAction::CreateASTConsumer(CompilerInstance &CI,
-                                              llvm::StringRef InFile) {
+                                              StringRef InFile) {
   return CreateASTViewer();
 }
 
 ASTConsumer *DeclContextPrintAction::CreateASTConsumer(CompilerInstance &CI,
-                                                       llvm::StringRef InFile) {
+                                                       StringRef InFile) {
   return CreateDeclContextPrinter();
 }
 
 ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
-                                                  llvm::StringRef InFile) {
+                                                  StringRef InFile) {
   std::string Sysroot;
   std::string OutputFile;
-  llvm::raw_ostream *OS = 0;
+  raw_ostream *OS = 0;
   bool Chaining;
   if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS, Chaining))
     return 0;
@@ -89,10 +89,10 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
 }
 
 bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
-                                                    llvm::StringRef InFile,
+                                                    StringRef InFile,
                                                     std::string &Sysroot,
                                                     std::string &OutputFile,
-                                                    llvm::raw_ostream *&OS,
+                                                    raw_ostream *&OS,
                                                     bool &Chaining) {
   Sysroot = CI.getHeaderSearchOpts().Sysroot;
   if (CI.getFrontendOpts().RelocatablePCH && Sysroot.empty()) {
@@ -114,7 +114,7 @@ bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
 }
 
 ASTConsumer *SyntaxOnlyAction::CreateASTConsumer(CompilerInstance &CI,
-                                                 llvm::StringRef InFile) {
+                                                 StringRef InFile) {
   return new ASTConsumer();
 }
 
@@ -185,7 +185,7 @@ void PrintPreprocessedAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
   // Output file needs to be set to 'Binary', to avoid converting Unix style
   // line feeds (<LF>) to Microsoft style line feeds (<CR><LF>).
-  llvm::raw_ostream *OS = CI.createDefaultOutputFile(true, getCurrentFile());
+  raw_ostream *OS = CI.createDefaultOutputFile(true, getCurrentFile());
   if (!OS) return;
 
   DoPrintPreprocessedInput(CI.getPreprocessor(), OS,

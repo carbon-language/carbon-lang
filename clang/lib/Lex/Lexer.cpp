@@ -76,7 +76,7 @@ void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
   // skip the UTF-8 BOM if it's present.
   if (BufferStart == BufferPtr) {
     // Determine the size of the BOM.
-    llvm::StringRef Buf(BufferStart, BufferEnd - BufferStart);
+    StringRef Buf(BufferStart, BufferEnd - BufferStart);
     size_t BOMLength = llvm::StringSwitch<size_t>(Buf)
       .StartsWith("\xEF\xBB\xBF", 3) // UTF-8 BOM
       .Default(0);
@@ -217,7 +217,7 @@ std::string Lexer::Stringify(const std::string &Str, bool Charify) {
 
 /// Stringify - Convert the specified string into a C string by escaping '\'
 /// and " characters.  This does not add surrounding ""'s to the string.
-void Lexer::Stringify(llvm::SmallVectorImpl<char> &Str) {
+void Lexer::Stringify(SmallVectorImpl<char> &Str) {
   for (unsigned i = 0, e = Str.size(); i != e; ++i) {
     if (Str[i] == '\\' || Str[i] == '"') {
       Str.insert(Str.begin()+i, '\\');
@@ -235,8 +235,8 @@ void Lexer::Stringify(llvm::SmallVectorImpl<char> &Str) {
 /// after trigraph expansion and escaped-newline folding.  In particular, this
 /// wants to get the true, uncanonicalized, spelling of things like digraphs
 /// UCNs, etc.
-llvm::StringRef Lexer::getSpelling(SourceLocation loc,
-                                   llvm::SmallVectorImpl<char> &buffer,
+StringRef Lexer::getSpelling(SourceLocation loc,
+                                   SmallVectorImpl<char> &buffer,
                                    const SourceManager &SM,
                                    const LangOptions &options,
                                    bool *invalid) {
@@ -245,10 +245,10 @@ llvm::StringRef Lexer::getSpelling(SourceLocation loc,
 
   // Try to the load the file buffer.
   bool invalidTemp = false;
-  llvm::StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
+  StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
   if (invalidTemp) {
     if (invalid) *invalid = true;
-    return llvm::StringRef();
+    return StringRef();
   }
 
   const char *tokenBegin = file.data() + locInfo.second;
@@ -263,7 +263,7 @@ llvm::StringRef Lexer::getSpelling(SourceLocation loc,
 
   // Common case:  no need for cleaning.
   if (!token.needsCleaning())
-    return llvm::StringRef(tokenBegin, length);
+    return StringRef(tokenBegin, length);
   
   // Hard case, we need to relex the characters into the string.
   buffer.clear();
@@ -275,7 +275,7 @@ llvm::StringRef Lexer::getSpelling(SourceLocation loc,
     ti += charSize;
   }
 
-  return llvm::StringRef(buffer.data(), buffer.size());
+  return StringRef(buffer.data(), buffer.size());
 }
 
 /// getSpelling() - Return the 'spelling' of this token.  The spelling of a
@@ -397,7 +397,7 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   Loc = SM.getInstantiationLoc(Loc);
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   bool Invalid = false;
-  llvm::StringRef Buffer = SM.getBufferData(LocInfo.first, &Invalid);
+  StringRef Buffer = SM.getBufferData(LocInfo.first, &Invalid);
   if (Invalid)
     return 0;
 
@@ -423,7 +423,7 @@ SourceLocation Lexer::GetBeginningOfToken(SourceLocation Loc,
     return Loc;
   
   bool Invalid = false;
-  llvm::StringRef Buffer = SM.getBufferData(LocInfo.first, &Invalid);
+  StringRef Buffer = SM.getBufferData(LocInfo.first, &Invalid);
   if (Invalid)
     return Loc;
 
@@ -544,7 +544,7 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer, unsigned MaxLines) {
       // the raw identifier to recognize and categorize preprocessor directives.
       TheLexer.LexFromRawLexer(TheTok);
       if (TheTok.getKind() == tok::raw_identifier && !TheTok.needsCleaning()) {
-        llvm::StringRef Keyword(TheTok.getRawIdentifierData(),
+        StringRef Keyword(TheTok.getRawIdentifierData(),
                                 TheTok.getLength());
         PreambleDirectiveKind PDK
           = llvm::StringSwitch<PreambleDirectiveKind>(Keyword)
@@ -978,7 +978,7 @@ static char DecodeTrigraphChar(const char *CP, Lexer *L) {
   }
 
   if (!L->isLexingRawMode())
-    L->Diag(CP-2, diag::trigraph_converted) << llvm::StringRef(&Res, 1);
+    L->Diag(CP-2, diag::trigraph_converted) << StringRef(&Res, 1);
   return Res;
 }
 
@@ -1952,9 +1952,9 @@ unsigned Lexer::isNextPPTokenLParen() {
 
 /// FindConflictEnd - Find the end of a version control conflict marker.
 static const char *FindConflictEnd(const char *CurPtr, const char *BufferEnd) {
-  llvm::StringRef RestOfBuffer(CurPtr+7, BufferEnd-CurPtr-7);
+  StringRef RestOfBuffer(CurPtr+7, BufferEnd-CurPtr-7);
   size_t Pos = RestOfBuffer.find(">>>>>>>");
-  while (Pos != llvm::StringRef::npos) {
+  while (Pos != StringRef::npos) {
     // Must occur at start of line.
     if (RestOfBuffer[Pos-1] != '\r' &&
         RestOfBuffer[Pos-1] != '\n') {
@@ -1979,7 +1979,7 @@ bool Lexer::IsStartOfConflictMarker(const char *CurPtr) {
   
   // Check to see if we have <<<<<<<.
   if (BufferEnd-CurPtr < 8 ||
-      llvm::StringRef(CurPtr, 7) != "<<<<<<<")
+      StringRef(CurPtr, 7) != "<<<<<<<")
     return false;
 
   // If we have a situation where we don't care about conflict markers, ignore

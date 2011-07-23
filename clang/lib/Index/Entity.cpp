@@ -47,7 +47,7 @@ public:
                    unsigned IdNS, bool isObjCInstanceMethod);
 
   // Get an Entity associated with the name in the global namespace.
-  Entity getGlobalEntity(llvm::StringRef Name);
+  Entity getGlobalEntity(StringRef Name);
 
   Entity VisitNamedDecl(NamedDecl *D);
   Entity VisitVarDecl(VarDecl *D);
@@ -77,7 +77,7 @@ Entity EntityGetter::getEntity(Entity Parent, DeclarationName Name,
   return Entity(New);
 }
 
-Entity EntityGetter::getGlobalEntity(llvm::StringRef Name) {
+Entity EntityGetter::getGlobalEntity(StringRef Name) {
   IdentifierInfo *II = &ProgImpl.getIdents().get(Name);
   DeclarationName GlobName(II);
   unsigned IdNS = Decl::IDNS_Ordinary;
@@ -209,7 +209,7 @@ Entity EntityImpl::get(Decl *D, Program &Prog, ProgramImpl &ProgImpl) {
 }
 
 /// \brief Get an Entity associated with a global name.
-Entity EntityImpl::get(llvm::StringRef Name, Program &Prog, 
+Entity EntityImpl::get(StringRef Name, Program &Prog, 
                        ProgramImpl &ProgImpl) {
   return EntityGetter(Prog, ProgImpl).getGlobalEntity(Name);
 }
@@ -259,7 +259,7 @@ Entity Entity::get(Decl *D, Program &Prog) {
   return EntityImpl::get(D, Prog, ProgImpl);
 }
 
-Entity Entity::get(llvm::StringRef Name, Program &Prog) {
+Entity Entity::get(StringRef Name, Program &Prog) {
   ProgramImpl &ProgImpl = *static_cast<ProgramImpl*>(Prog.Impl);
   return EntityImpl::get(Name, Prog, ProgImpl);
 }

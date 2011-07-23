@@ -162,7 +162,7 @@ static RefKind getTemplateKind(const NamedDecl *td) {
       || nameSpace->getName() != "std")
     return NoKind;
   
-  llvm::StringRef name = td->getName();
+  StringRef name = td->getName();
   return llvm::StringSwitch<RefKind>(name)
     .Cases("vector", "deque", VectorKind)
     .Default(NoKind);
@@ -287,7 +287,7 @@ const GRState *IteratorsChecker::handleAssign(const GRState *state,
         return state;
       // Finally, see if it is one of the calls that will create
       // a valid iterator and mark it if so, else mark as Unknown.
-      llvm::StringRef mName = ME->getMemberDecl()->getName();
+      StringRef mName = ME->getMemberDecl()->getName();
       
       if (llvm::StringSwitch<bool>(mName)        
           .Cases("begin", "insert", "erase", true).Default(false)) {
@@ -572,7 +572,7 @@ void IteratorsChecker::checkPreStmt(const CXXMemberCallExpr *MCE,
   // If we are calling a function that invalidates iterators, mark them
   // appropriately by finding matching instances.
   const GRState *state = C.getState();
-  llvm::StringRef mName = ME->getMemberDecl()->getName();
+  StringRef mName = ME->getMemberDecl()->getName();
   if (llvm::StringSwitch<bool>(mName)
       .Cases("insert", "reserve", "push_back", true)
       .Cases("erase", "pop_back", "clear", "resize", true)

@@ -44,7 +44,7 @@ struct BaseSubobjectInfo {
   bool IsVirtual;
 
   /// Bases - Information about the base subobjects.
-  llvm::SmallVector<BaseSubobjectInfo*, 4> Bases;
+  SmallVector<BaseSubobjectInfo*, 4> Bases;
 
   /// PrimaryVirtualBaseInfo - Holds the base info for the primary virtual base
   /// of this base info (if one exists).
@@ -64,7 +64,7 @@ class EmptySubobjectMap {
   const CXXRecordDecl *Class;
 
   /// EmptyClassOffsets - A map from offsets to empty record decls.
-  typedef llvm::SmallVector<const CXXRecordDecl *, 1> ClassVectorTy;
+  typedef SmallVector<const CXXRecordDecl *, 1> ClassVectorTy;
   typedef llvm::DenseMap<CharUnits, ClassVectorTy> EmptyClassOffsetsMapTy;
   EmptyClassOffsetsMapTy EmptyClassOffsets;
   
@@ -556,7 +556,7 @@ protected:
   /// \brief The alignment if attribute packed is not used.
   CharUnits UnpackedAlignment;
 
-  llvm::SmallVector<uint64_t, 16> FieldOffsets;
+  SmallVector<uint64_t, 16> FieldOffsets;
 
   /// Packed - Whether the record is packed or not.
   unsigned Packed : 1;
@@ -1956,13 +1956,13 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
   return *NewEntry;
 }
 
-static void PrintOffset(llvm::raw_ostream &OS,
+static void PrintOffset(raw_ostream &OS,
                         CharUnits Offset, unsigned IndentLevel) {
   OS << llvm::format("%4d | ", Offset.getQuantity());
   OS.indent(IndentLevel * 2);
 }
 
-static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
+static void DumpCXXRecordLayout(raw_ostream &OS,
                                 const CXXRecordDecl *RD, const ASTContext &C,
                                 CharUnits Offset,
                                 unsigned IndentLevel,
@@ -2052,7 +2052,7 @@ static void DumpCXXRecordLayout(llvm::raw_ostream &OS,
 }
 
 void ASTContext::DumpRecordLayout(const RecordDecl *RD,
-                                  llvm::raw_ostream &OS) const {
+                                  raw_ostream &OS) const {
   const ASTRecordLayout &Info = getASTRecordLayout(RD);
 
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))

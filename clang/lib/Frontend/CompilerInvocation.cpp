@@ -878,7 +878,7 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   using namespace cc1options;
 
   if (Arg *A = Args.getLastArg(OPT_analyzer_store)) {
-    llvm::StringRef Name = A->getValue(Args);
+    StringRef Name = A->getValue(Args);
     AnalysisStores Value = llvm::StringSwitch<AnalysisStores>(Name)
 #define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATFN) \
       .Case(CMDFLAG, NAME##Model)
@@ -893,7 +893,7 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   }
 
   if (Arg *A = Args.getLastArg(OPT_analyzer_constraints)) {
-    llvm::StringRef Name = A->getValue(Args);
+    StringRef Name = A->getValue(Args);
     AnalysisConstraints Value = llvm::StringSwitch<AnalysisConstraints>(Name)
 #define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATFN) \
       .Case(CMDFLAG, NAME##Model)
@@ -908,7 +908,7 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   }
 
   if (Arg *A = Args.getLastArg(OPT_analyzer_output)) {
-    llvm::StringRef Name = A->getValue(Args);
+    StringRef Name = A->getValue(Args);
     AnalysisDiagClients Value = llvm::StringSwitch<AnalysisDiagClients>(Name)
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN, AUTOCREAT) \
       .Case(CMDFLAG, PD_##NAME)
@@ -950,8 +950,8 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     bool enable = (A->getOption().getID() == OPT_analyzer_checker);
     // We can have a list of comma separated checker names, e.g:
     // '-analyzer-checker=cocoa,unix'
-    llvm::StringRef checkerList = A->getValue(Args);
-    llvm::SmallVector<llvm::StringRef, 4> checkers;
+    StringRef checkerList = A->getValue(Args);
+    SmallVector<StringRef, 4> checkers;
     checkerList.split(checkers, ",");
     for (unsigned i = 0, e = checkers.size(); i != e; ++i)
       Opts.CheckersControlList.push_back(std::make_pair(checkers[i], enable));
@@ -1034,7 +1034,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.CoverageFile = Args.getLastArgValue(OPT_coverage_file);
 
   if (Arg *A = Args.getLastArg(OPT_fobjc_dispatch_method_EQ)) {
-    llvm::StringRef Name = A->getValue(Args);
+    StringRef Name = A->getValue(Args);
     unsigned Method = llvm::StringSwitch<unsigned>(Name)
       .Case("legacy", CodeGenOptions::Legacy)
       .Case("non-legacy", CodeGenOptions::NonLegacy)
@@ -1084,7 +1084,7 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
     if (A->getOption().matches(OPT_fdiagnostics_show_note_include_stack))
       Opts.ShowNoteIncludeStack = true;
 
-  llvm::StringRef ShowOverloads =
+  StringRef ShowOverloads =
     Args.getLastArgValue(OPT_fshow_overloads_EQ, "all");
   if (ShowOverloads == "best")
     Opts.ShowOverloads = Diagnostic::Ovl_Best;
@@ -1095,7 +1095,7 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
       << Args.getLastArg(OPT_fshow_overloads_EQ)->getAsString(Args)
       << ShowOverloads;
 
-  llvm::StringRef ShowCategory =
+  StringRef ShowCategory =
     Args.getLastArgValue(OPT_fdiagnostics_show_category, "none");
   if (ShowCategory == "none")
     Opts.ShowCategories = 0;
@@ -1108,7 +1108,7 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
       << Args.getLastArg(OPT_fdiagnostics_show_category)->getAsString(Args)
       << ShowCategory;
 
-  llvm::StringRef Format =
+  StringRef Format =
     Args.getLastArgValue(OPT_fdiagnostics_format, "clang");
   if (Format == "clang")
     Opts.Format = DiagnosticOptions::Clang;
@@ -1325,7 +1325,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     InputKind IK = DashX;
     if (IK == IK_None) {
       IK = FrontendOptions::getInputKindForExtension(
-        llvm::StringRef(Inputs[i]).rsplit('.').second);
+        StringRef(Inputs[i]).rsplit('.').second);
       // FIXME: Remove this hack.
       if (i == 0)
         DashX = IK;
@@ -1371,7 +1371,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
                  /*IsFramework=*/ (*it)->getOption().matches(OPT_F), false);
 
   // Add -iprefix/-iwith-prefix/-iwithprefixbefore options.
-  llvm::StringRef Prefix = ""; // FIXME: This isn't the correct default prefix.
+  StringRef Prefix = ""; // FIXME: This isn't the correct default prefix.
   for (arg_iterator it = Args.filtered_begin(OPT_iprefix, OPT_iwithprefix,
                                              OPT_iwithprefixbefore),
          ie = Args.filtered_end(); it != ie; ++it) {
@@ -1593,7 +1593,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   if (Args.hasArg(OPT_fdelayed_template_parsing))
     Opts.DelayedTemplateParsing = 1;
 
-  llvm::StringRef Vis = Args.getLastArgValue(OPT_fvisibility, "default");
+  StringRef Vis = Args.getLastArgValue(OPT_fvisibility, "default");
   if (Vis == "default")
     Opts.setVisibilityMode(DefaultVisibility);
   else if (Vis == "hidden")
@@ -1731,12 +1731,12 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   }
 
   if (const Arg *A = Args.getLastArg(OPT_preamble_bytes_EQ)) {
-    llvm::StringRef Value(A->getValue(Args));
+    StringRef Value(A->getValue(Args));
     size_t Comma = Value.find(',');
     unsigned Bytes = 0;
     unsigned EndOfLine = 0;
 
-    if (Comma == llvm::StringRef::npos ||
+    if (Comma == StringRef::npos ||
         Value.substr(0, Comma).getAsInteger(10, Bytes) ||
         Value.substr(Comma + 1).getAsInteger(10, EndOfLine))
       Diags.Report(diag::err_drv_preamble_format);
@@ -1787,8 +1787,8 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   for (arg_iterator it = Args.filtered_begin(OPT_remap_file),
          ie = Args.filtered_end(); it != ie; ++it) {
     const Arg *A = *it;
-    std::pair<llvm::StringRef,llvm::StringRef> Split =
-      llvm::StringRef(A->getValue(Args)).split(';');
+    std::pair<StringRef,StringRef> Split =
+      StringRef(A->getValue(Args)).split(';');
 
     if (Split.second.empty()) {
       Diags.Report(diag::err_drv_invalid_remap_file) << A->getAsString(Args);
@@ -1799,7 +1799,7 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   }
   
   if (Arg *A = Args.getLastArg(OPT_fobjc_arc_cxxlib_EQ)) {
-    llvm::StringRef Name = A->getValue(Args);
+    StringRef Name = A->getValue(Args);
     unsigned Library = llvm::StringSwitch<unsigned>(Name)
       .Case("libc++", ARCXX_libcxx)
       .Case("libstdc++", ARCXX_libstdcxx)

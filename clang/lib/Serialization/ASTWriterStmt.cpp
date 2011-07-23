@@ -1428,7 +1428,7 @@ void ASTWriter::WriteSubStmt(Stmt *S) {
   }
 
   // Redirect ASTWriter::AddStmt to collect sub stmts.
-  llvm::SmallVector<Stmt *, 16> SubStmts;
+  SmallVector<Stmt *, 16> SubStmts;
   CollectedStmts = &SubStmts;
 
   Writer.Code = serialization::STMT_NULL_PTR;

@@ -24,7 +24,7 @@ void SymExpr::dump() const {
   dumpToStream(llvm::errs());
 }
 
-static void print(llvm::raw_ostream& os, BinaryOperator::Opcode Op) {
+static void print(raw_ostream& os, BinaryOperator::Opcode Op) {
   switch (Op) {
     default:
       assert(false && "operator printing not implemented");
@@ -48,7 +48,7 @@ static void print(llvm::raw_ostream& os, BinaryOperator::Opcode Op) {
   }
 }
 
-void SymIntExpr::dumpToStream(llvm::raw_ostream& os) const {
+void SymIntExpr::dumpToStream(raw_ostream& os) const {
   os << '(';
   getLHS()->dumpToStream(os);
   os << ") ";
@@ -57,7 +57,7 @@ void SymIntExpr::dumpToStream(llvm::raw_ostream& os) const {
   if (getRHS().isUnsigned()) os << 'U';
 }
 
-void SymSymExpr::dumpToStream(llvm::raw_ostream& os) const {
+void SymSymExpr::dumpToStream(raw_ostream& os) const {
   os << '(';
   getLHS()->dumpToStream(os);
   os << ") ";
@@ -66,25 +66,25 @@ void SymSymExpr::dumpToStream(llvm::raw_ostream& os) const {
   os << ')';
 }
 
-void SymbolConjured::dumpToStream(llvm::raw_ostream& os) const {
+void SymbolConjured::dumpToStream(raw_ostream& os) const {
   os << "conj_$" << getSymbolID() << '{' << T.getAsString() << '}';
 }
 
-void SymbolDerived::dumpToStream(llvm::raw_ostream& os) const {
+void SymbolDerived::dumpToStream(raw_ostream& os) const {
   os << "derived_$" << getSymbolID() << '{'
      << getParentSymbol() << ',' << getRegion() << '}';
 }
 
-void SymbolExtent::dumpToStream(llvm::raw_ostream& os) const {
+void SymbolExtent::dumpToStream(raw_ostream& os) const {
   os << "extent_$" << getSymbolID() << '{' << getRegion() << '}';
 }
 
-void SymbolMetadata::dumpToStream(llvm::raw_ostream& os) const {
+void SymbolMetadata::dumpToStream(raw_ostream& os) const {
   os << "meta_$" << getSymbolID() << '{'
      << getRegion() << ',' << T.getAsString() << '}';
 }
 
-void SymbolRegionValue::dumpToStream(llvm::raw_ostream& os) const {
+void SymbolRegionValue::dumpToStream(raw_ostream& os) const {
   os << "reg_$" << getSymbolID() << "<" << R << ">";
 }
 

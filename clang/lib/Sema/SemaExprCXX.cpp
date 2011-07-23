@@ -1058,7 +1058,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     UsualArrayDeleteWantsSize
       = doesUsualArrayDeleteWantSize(*this, StartLoc, AllocType);
 
-  llvm::SmallVector<Expr *, 8> AllPlaceArgs;
+  SmallVector<Expr *, 8> AllPlaceArgs;
   if (OperatorNew) {
     // Add default arguments, if any.
     const FunctionProtoType *Proto =
@@ -1246,7 +1246,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
   // 3) The first argument is always size_t. Append the arguments from the
   //   placement form.
 
-  llvm::SmallVector<Expr*, 8> AllocArgs(1 + NumPlaceArgs);
+  SmallVector<Expr*, 8> AllocArgs(1 + NumPlaceArgs);
   // We don't care about the actual value of this argument.
   // FIXME: Should the Sema create the expression and embed it in the syntax
   // tree? Or should the consumer just recalculate the value?
@@ -1325,7 +1325,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
 
   FoundDelete.suppressDiagnostics();
 
-  llvm::SmallVector<std::pair<DeclAccessPair,FunctionDecl*>, 2> Matches;
+  SmallVector<std::pair<DeclAccessPair,FunctionDecl*>, 2> Matches;
 
   // Whether we're looking for a placement operator delete is dictated
   // by whether we selected a placement operator new, not by whether
@@ -1352,7 +1352,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
       const FunctionProtoType *Proto
         = OperatorNew->getType()->getAs<FunctionProtoType>();
 
-      llvm::SmallVector<QualType, 4> ArgTypes;
+      SmallVector<QualType, 4> ArgTypes;
       ArgTypes.push_back(Context.VoidPtrTy);
       for (unsigned I = 1, N = Proto->getNumArgs(); I < N; ++I)
         ArgTypes.push_back(Proto->getArgType(I));
@@ -1691,7 +1691,7 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
 
   Found.suppressDiagnostics();
 
-  llvm::SmallVector<DeclAccessPair,4> Matches;
+  SmallVector<DeclAccessPair,4> Matches;
   for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
        F != FEnd; ++F) {
     NamedDecl *ND = (*F)->getUnderlyingDecl();
@@ -1727,7 +1727,7 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
       Diag(StartLoc, diag::err_ambiguous_suitable_delete_member_function_found)
         << Name << RD;
 
-      for (llvm::SmallVectorImpl<DeclAccessPair>::iterator
+      for (SmallVectorImpl<DeclAccessPair>::iterator
              F = Matches.begin(), FEnd = Matches.end(); F != FEnd; ++F)
         Diag((*F)->getUnderlyingDecl()->getLocation(),
              diag::note_member_declared_here) << Name;
@@ -1792,7 +1792,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                               PDiag(diag::err_delete_incomplete_class_type)))
         return ExprError();
 
-      llvm::SmallVector<CXXConversionDecl*, 4> ObjectPtrConversions;
+      SmallVector<CXXConversionDecl*, 4> ObjectPtrConversions;
 
       CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
       const UnresolvedSetImpl *Conversions = RD->getVisibleConversionFunctions();
@@ -3838,9 +3838,9 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
   // conversions in both directions. If only one works, or if the two composite
   // types are the same, we have succeeded.
   // FIXME: extended qualifiers?
-  typedef llvm::SmallVector<unsigned, 4> QualifierVector;
+  typedef SmallVector<unsigned, 4> QualifierVector;
   QualifierVector QualifierUnion;
-  typedef llvm::SmallVector<std::pair<const Type *, const Type *>, 4>
+  typedef SmallVector<std::pair<const Type *, const Type *>, 4>
       ContainingClassVector;
   ContainingClassVector MemberOfClass;
   QualType Composite1 = Context.getCanonicalType(T1),
@@ -4172,7 +4172,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
   if (OpKind == tok::arrow) {
     // The set of types we've considered so far.
     llvm::SmallPtrSet<CanQualType,8> CTypes;
-    llvm::SmallVector<SourceLocation, 8> Locations;
+    SmallVector<SourceLocation, 8> Locations;
     CTypes.insert(Context.getCanonicalType(BaseType));
 
     while (BaseType->isRecordType()) {

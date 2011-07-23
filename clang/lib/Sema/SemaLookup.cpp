@@ -87,7 +87,7 @@ namespace {
   /// A collection of using directives, as used by C++ unqualified
   /// lookup.
   class UnqualUsingDirectiveSet {
-    typedef llvm::SmallVector<UnqualUsingEntry, 8> ListTy;
+    typedef SmallVector<UnqualUsingEntry, 8> ListTy;
 
     ListTy list;
     llvm::SmallPtrSet<DeclContext*, 8> visited;
@@ -148,7 +148,7 @@ namespace {
     // by its using directives, transitively) as if they appeared in
     // the given effective context.
     void addUsingDirectives(DeclContext *DC, DeclContext *EffectiveDC) {
-      llvm::SmallVector<DeclContext*,4> queue;
+      SmallVector<DeclContext*,4> queue;
       while (true) {
         DeclContext::udir_iterator I, End;
         for (llvm::tie(I, End) = DC->getUsingDirectives(); I != End; ++I) {
@@ -461,7 +461,7 @@ void LookupResult::setAmbiguousBaseSubobjectTypes(CXXBasePaths &P) {
   setAmbiguous(AmbiguousBaseSubobjectTypes);
 }
 
-void LookupResult::print(llvm::raw_ostream &Out) {
+void LookupResult::print(raw_ostream &Out) {
   Out << Decls.size() << " result(s)";
   if (isAmbiguous()) Out << ", ambiguous";
   if (Paths) Out << ", base paths present";
@@ -1188,7 +1188,7 @@ static bool LookupQualifiedNameInUsingDirectives(Sema &S, LookupResult &R,
 
   // We have not yet looked into these namespaces, much less added
   // their "using-children" to the queue.
-  llvm::SmallVector<NamespaceDecl*, 8> Queue;
+  SmallVector<NamespaceDecl*, 8> Queue;
 
   // We have already looked into the initial namespace; seed the queue
   // with its using-children.
@@ -1803,7 +1803,7 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
 
   // Add direct and indirect base classes along with their associated
   // namespaces.
-  llvm::SmallVector<CXXRecordDecl *, 32> Bases;
+  SmallVector<CXXRecordDecl *, 32> Bases;
   Bases.push_back(Class);
   while (!Bases.empty()) {
     // Pop this class off the stack.
@@ -1853,7 +1853,7 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
   //   the types do not contribute to this set. The sets of namespaces
   //   and classes are determined in the following way:
 
-  llvm::SmallVector<const Type *, 16> Queue;
+  SmallVector<const Type *, 16> Queue;
   const Type *T = Ty->getCanonicalTypeInternal().getTypePtr();
 
   while (true) {
@@ -2988,7 +2988,7 @@ static const unsigned MaxTypoDistanceResultSets = 5;
 
 class TypoCorrectionConsumer : public VisibleDeclConsumer {
   /// \brief The name written that is a typo in the source.
-  llvm::StringRef Typo;
+  StringRef Typo;
 
   /// \brief The results found that have the smallest edit distance
   /// found (so far) with the typo name.
@@ -3017,9 +3017,9 @@ public:
   }
   
   virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, bool InBaseClass);
-  void FoundName(llvm::StringRef Name);
-  void addKeywordResult(llvm::StringRef Keyword);
-  void addName(llvm::StringRef Name, NamedDecl *ND, unsigned Distance,
+  void FoundName(StringRef Name);
+  void addKeywordResult(StringRef Keyword);
+  void addName(StringRef Name, NamedDecl *ND, unsigned Distance,
                NestedNameSpecifier *NNS=NULL);
   void addCorrection(TypoCorrection Correction);
 
@@ -3031,7 +3031,7 @@ public:
   unsigned size() const { return BestResults.size(); }
   bool empty() const { return BestResults.empty(); }
 
-  TypoCorrection &operator[](llvm::StringRef Name) {
+  TypoCorrection &operator[](StringRef Name) {
     return (*BestResults.begin()->second)[Name];
   }
 
@@ -3062,7 +3062,7 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding,
   FoundName(Name->getName());
 }
 
-void TypoCorrectionConsumer::FoundName(llvm::StringRef Name) {
+void TypoCorrectionConsumer::FoundName(StringRef Name) {
   // Use a simple length-based heuristic to determine the minimum possible
   // edit distance. If the minimum isn't good enough, bail out early.
   unsigned MinED = abs((int)Name.size() - (int)Typo.size());
@@ -3088,7 +3088,7 @@ void TypoCorrectionConsumer::FoundName(llvm::StringRef Name) {
   addName(Name, NULL, ED);
 }
 
-void TypoCorrectionConsumer::addKeywordResult(llvm::StringRef Keyword) {
+void TypoCorrectionConsumer::addKeywordResult(StringRef Keyword) {
   // Compute the edit distance between the typo and this keyword.
   // If this edit distance is not worse than the best edit
   // distance we've seen so far, add it to the list of results.
@@ -3102,7 +3102,7 @@ void TypoCorrectionConsumer::addKeywordResult(llvm::StringRef Keyword) {
   addName(Keyword, TypoCorrection::KeywordDecl(), ED);
 }
 
-void TypoCorrectionConsumer::addName(llvm::StringRef Name,
+void TypoCorrectionConsumer::addName(StringRef Name,
                                      NamedDecl *ND,
                                      unsigned Distance,
                                      NestedNameSpecifier *NNS) {
@@ -3111,7 +3111,7 @@ void TypoCorrectionConsumer::addName(llvm::StringRef Name,
 }
 
 void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
-  llvm::StringRef Name = Correction.getCorrectionAsIdentifierInfo()->getName();
+  StringRef Name = Correction.getCorrectionAsIdentifierInfo()->getName();
   TypoResultsMap *& Map = BestResults[Correction.getEditDistance()];
   if (!Map)
     Map = new TypoResultsMap;
@@ -3145,8 +3145,8 @@ class SpecifierInfo {
       : DeclCtx(Ctx), NameSpecifier(NNS), EditDistance(ED) {}
 };
 
-typedef llvm::SmallVector<DeclContext*, 4> DeclContextList;
-typedef llvm::SmallVector<SpecifierInfo, 16> SpecifierInfoList;
+typedef SmallVector<DeclContext*, 4> DeclContextList;
+typedef SmallVector<SpecifierInfo, 16> SpecifierInfoList;
 
 class NamespaceSpecifierSet {
   ASTContext &Context;
@@ -3196,14 +3196,14 @@ DeclContextList NamespaceSpecifierSet::BuildContextChain(DeclContext *Start) {
 }
 
 void NamespaceSpecifierSet::SortNamespaces() {
-  llvm::SmallVector<unsigned, 4> sortedDistances;
+  SmallVector<unsigned, 4> sortedDistances;
   sortedDistances.append(Distances.begin(), Distances.end());
 
   if (sortedDistances.size() > 1)
     std::sort(sortedDistances.begin(), sortedDistances.end());
 
   Specifiers.clear();
-  for (llvm::SmallVector<unsigned, 4>::iterator DI = sortedDistances.begin(),
+  for (SmallVector<unsigned, 4>::iterator DI = sortedDistances.begin(),
                                              DIEnd = sortedDistances.end();
        DI != DIEnd; ++DI) {
     SpecifierInfoList &SpecList = DistanceMap[*DI];
@@ -3580,7 +3580,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
                               = Context.Idents.getExternalIdentifierLookup()) {
         llvm::OwningPtr<IdentifierIterator> Iter(External->getIdentifiers());
         do {
-          llvm::StringRef Name = Iter->Next();
+          StringRef Name = Iter->Next();
           if (Name.empty())
             break;
 
@@ -3624,7 +3624,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   if (getLangOptions().CPlusPlus) {
     // Load any externally-known namespaces.
     if (ExternalSource && !LoadedExternalKnownNamespaces) {
-      llvm::SmallVector<NamespaceDecl *, 4> ExternalKnownNamespaces;
+      SmallVector<NamespaceDecl *, 4> ExternalKnownNamespaces;
       LoadedExternalKnownNamespaces = true;
       ExternalSource->ReadKnownNamespaces(ExternalKnownNamespaces);
       for (unsigned I = 0, N = ExternalKnownNamespaces.size(); I != N; ++I)

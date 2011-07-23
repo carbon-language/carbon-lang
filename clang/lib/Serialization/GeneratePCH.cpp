@@ -30,7 +30,7 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP,
                            const std::string &OutputFile,
                            bool Chaining,
                            StringRef isysroot,
-                           llvm::raw_ostream *OS)
+                           raw_ostream *OS)
   : PP(PP), OutputFile(OutputFile), isysroot(isysroot.str()), Out(OS), 
     SemaPtr(0), StatCalls(0), Stream(Buffer), Writer(Stream), Chaining(Chaining) {
   // Install a stat() listener to keep track of all of the stat()

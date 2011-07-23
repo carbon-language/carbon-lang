@@ -53,15 +53,15 @@ using namespace clang;
 using namespace clang::serialization;
 
 template <typename T, typename Allocator>
-static llvm::StringRef data(const std::vector<T, Allocator> &v) {
-  if (v.empty()) return llvm::StringRef();
-  return llvm::StringRef(reinterpret_cast<const char*>(&v[0]),
+static StringRef data(const std::vector<T, Allocator> &v) {
+  if (v.empty()) return StringRef();
+  return StringRef(reinterpret_cast<const char*>(&v[0]),
                          sizeof(T) * v.size());
 }
 
 template <typename T>
-static llvm::StringRef data(const llvm::SmallVectorImpl<T> &v) {
-  return llvm::StringRef(reinterpret_cast<const char*>(v.data()),
+static StringRef data(const SmallVectorImpl<T> &v) {
+  return StringRef(reinterpret_cast<const char*>(v.data()),
                          sizeof(T) * v.size());
 }
 
@@ -1137,7 +1137,7 @@ public:
   }
 
   std::pair<unsigned,unsigned>
-    EmitKeyDataLength(llvm::raw_ostream& Out, const char *path,
+    EmitKeyDataLength(raw_ostream& Out, const char *path,
                       data_type_ref Data) {
     unsigned StrLen = strlen(path);
     clang::io::Emit16(Out, StrLen);
@@ -1146,11 +1146,11 @@ public:
     return std::make_pair(StrLen + 1, DataLen);
   }
 
-  void EmitKey(llvm::raw_ostream& Out, const char *path, unsigned KeyLen) {
+  void EmitKey(raw_ostream& Out, const char *path, unsigned KeyLen) {
     Out.write(path, KeyLen);
   }
 
-  void EmitData(llvm::raw_ostream &Out, key_type_ref,
+  void EmitData(raw_ostream &Out, key_type_ref,
                 data_type_ref Data, unsigned DataLen) {
     using namespace clang::io;
     uint64_t Start = Out.tell(); (void)Start;
@@ -1175,7 +1175,7 @@ void ASTWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
   for (MemorizeStatCalls::iterator Stat = StatCalls.begin(),
                                 StatEnd = StatCalls.end();
        Stat != StatEnd; ++Stat, ++NumStatEntries) {
-    llvm::StringRef Filename = Stat->first();
+    StringRef Filename = Stat->first();
     Generator.insert(Filename.data(), Stat->second);
   }
 
@@ -1290,7 +1290,7 @@ namespace {
     }
     
     std::pair<unsigned,unsigned>
-    EmitKeyDataLength(llvm::raw_ostream& Out, const char *path,
+    EmitKeyDataLength(raw_ostream& Out, const char *path,
                       data_type_ref Data) {
       unsigned StrLen = strlen(path);
       clang::io::Emit16(Out, StrLen);
@@ -1299,11 +1299,11 @@ namespace {
       return std::make_pair(StrLen + 1, DataLen);
     }
     
-    void EmitKey(llvm::raw_ostream& Out, const char *path, unsigned KeyLen) {
+    void EmitKey(raw_ostream& Out, const char *path, unsigned KeyLen) {
       Out.write(path, KeyLen);
     }
     
-    void EmitData(llvm::raw_ostream &Out, key_type_ref,
+    void EmitData(raw_ostream &Out, key_type_ref,
                   data_type_ref Data, unsigned DataLen) {
       using namespace clang::io;
       uint64_t Start = Out.tell(); (void)Start;
@@ -1330,7 +1330,7 @@ namespace {
 ///
 /// \param Chain Whether we're creating a chained AST file.
 void ASTWriter::WriteHeaderSearch(HeaderSearch &HS, StringRef isysroot) {
-  llvm::SmallVector<const FileEntry *, 16> FilesByUID;
+  SmallVector<const FileEntry *, 16> FilesByUID;
   HS.getFileMgr().GetUniqueIDMapping(FilesByUID);
   
   if (FilesByUID.size() > HS.header_file_size())
@@ -1338,7 +1338,7 @@ void ASTWriter::WriteHeaderSearch(HeaderSearch &HS, StringRef isysroot) {
   
   HeaderFileInfoTrait GeneratorTrait(*this, HS);
   OnDiskChainedHashTableGenerator<HeaderFileInfoTrait> Generator;  
-  llvm::SmallVector<const char *, 4> SavedStrings;
+  SmallVector<const char *, 4> SavedStrings;
   unsigned NumHeaderSearchEntries = 0;
   for (unsigned UID = 0, LastUID = FilesByUID.size(); UID != LastUID; ++UID) {
     const FileEntry *File = FilesByUID[UID];
@@ -1492,11 +1492,11 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
           = Content->getBuffer(PP.getDiagnostics(), PP.getSourceManager());
         const char *Name = Buffer->getBufferIdentifier();
         Stream.EmitRecordWithBlob(SLocBufferAbbrv, Record,
-                                  llvm::StringRef(Name, strlen(Name) + 1));
+                                  StringRef(Name, strlen(Name) + 1));
         Record.clear();
         Record.push_back(SM_SLOC_BUFFER_BLOB);
         Stream.EmitRecordWithBlob(SLocBufferBlobAbbrv, Record,
-                                  llvm::StringRef(Buffer->getBufferStart(),
+                                  StringRef(Buffer->getBufferStart(),
                                                   Buffer->getBufferSize() + 1));
 
         if (strcmp(Name, "<built-in>") == 0) {
@@ -1546,8 +1546,8 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     // The map consists solely of a blob with the following format:
     // *(offset:i32 len:i16 name:len*i8)
     // Sorted by offset.
-    typedef std::pair<uint32_t, llvm::StringRef> ModuleOffset;
-    llvm::SmallVector<ModuleOffset, 16> Modules;
+    typedef std::pair<uint32_t, StringRef> ModuleOffset;
+    SmallVector<ModuleOffset, 16> Modules;
     Modules.reserve(Chain->Modules.size());
     for (llvm::StringMap<Module*>::const_iterator
              I = Chain->Modules.begin(), E = Chain->Modules.end();
@@ -1564,7 +1564,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     llvm::SmallString<2048> Buffer;
     {
       llvm::raw_svector_ostream Out(Buffer);
-      for (llvm::SmallVector<ModuleOffset, 16>::iterator I = Modules.begin(),
+      for (SmallVector<ModuleOffset, 16>::iterator I = Modules.begin(),
                                                          E = Modules.end();
            I != E; ++I) {
         io::Emit32(Out, I->first);
@@ -1677,7 +1677,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP) {
   PreprocessingRecord *PPRec = PP.getPreprocessingRecord();
 
   // Construct the list of macro definitions that need to be serialized.
-  llvm::SmallVector<std::pair<const IdentifierInfo *, MacroInfo *>, 2> 
+  SmallVector<std::pair<const IdentifierInfo *, MacroInfo *>, 2> 
     MacrosToEmit;
   llvm::SmallPtrSet<const IdentifierInfo*, 4> MacroDefinitionsSeen;
   for (Preprocessor::macro_iterator I = PP.macro_begin(Chain == 0), 
@@ -2010,7 +2010,7 @@ uint64_t ASTWriter::WriteDeclContextLexicalBlock(ASTContext &Context,
   uint64_t Offset = Stream.GetCurrentBitNo();
   RecordData Record;
   Record.push_back(DECL_CONTEXT_LEXICAL);
-  llvm::SmallVector<KindDeclIDPair, 64> Decls;
+  SmallVector<KindDeclIDPair, 64> Decls;
   for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
          D != DEnd; ++D)
     Decls.push_back(std::make_pair((*D)->getKind(), GetDeclRef(*D)));
@@ -2073,7 +2073,7 @@ public:
   }
 
   std::pair<unsigned,unsigned>
-    EmitKeyDataLength(llvm::raw_ostream& Out, Selector Sel,
+    EmitKeyDataLength(raw_ostream& Out, Selector Sel,
                       data_type_ref Methods) {
     unsigned KeyLen = 2 + (Sel.getNumArgs()? Sel.getNumArgs() * 4 : 4);
     clang::io::Emit16(Out, KeyLen);
@@ -2090,7 +2090,7 @@ public:
     return std::make_pair(KeyLen, DataLen);
   }
 
-  void EmitKey(llvm::raw_ostream& Out, Selector Sel, unsigned) {
+  void EmitKey(raw_ostream& Out, Selector Sel, unsigned) {
     uint64_t Start = Out.tell();
     assert((Start >> 32) == 0 && "Selector key offset too large");
     Writer.SetSelectorOffset(Sel, Start);
@@ -2103,7 +2103,7 @@ public:
                     Writer.getIdentifierRef(Sel.getIdentifierInfoForSlot(I)));
   }
 
-  void EmitData(llvm::raw_ostream& Out, key_type_ref,
+  void EmitData(raw_ostream& Out, key_type_ref,
                 data_type_ref Methods, unsigned DataLen) {
     uint64_t Start = Out.tell(); (void)Start;
     clang::io::Emit32(Out, Methods.ID);
@@ -2292,7 +2292,7 @@ public:
   }
 
   std::pair<unsigned,unsigned>
-    EmitKeyDataLength(llvm::raw_ostream& Out, const IdentifierInfo* II,
+    EmitKeyDataLength(raw_ostream& Out, const IdentifierInfo* II,
                       IdentID ID) {
     unsigned KeyLen = II->getLength() + 1;
     unsigned DataLen = 4; // 4 bytes for the persistent ID << 1
@@ -2314,7 +2314,7 @@ public:
     return std::make_pair(KeyLen, DataLen);
   }
 
-  void EmitKey(llvm::raw_ostream& Out, const IdentifierInfo* II,
+  void EmitKey(raw_ostream& Out, const IdentifierInfo* II,
                unsigned KeyLen) {
     // Record the location of the key data.  This is used when generating
     // the mapping from persistent IDs to strings.
@@ -2322,7 +2322,7 @@ public:
     Out.write(II->getNameStart(), KeyLen);
   }
 
-  void EmitData(llvm::raw_ostream& Out, const IdentifierInfo* II,
+  void EmitData(raw_ostream& Out, const IdentifierInfo* II,
                 IdentID ID, unsigned) {
     if (!isInterestingIdentifier(II)) {
       clang::io::Emit32(Out, ID << 1);
@@ -2352,9 +2352,9 @@ public:
     // adds declarations to the end of the list (so we need to see the
     // struct "status" before the function "status").
     // Only emit declarations that aren't from a chained PCH, though.
-    llvm::SmallVector<Decl *, 16> Decls(IdentifierResolver::begin(II),
+    SmallVector<Decl *, 16> Decls(IdentifierResolver::begin(II),
                                         IdentifierResolver::end());
-    for (llvm::SmallVector<Decl *, 16>::reverse_iterator D = Decls.rbegin(),
+    for (SmallVector<Decl *, 16>::reverse_iterator D = Decls.rbegin(),
                                                       DEnd = Decls.rend();
          D != DEnd; ++D)
       clang::io::Emit32(Out, Writer.getDeclID(*D));
@@ -2485,7 +2485,7 @@ public:
   }
 
   std::pair<unsigned,unsigned>
-    EmitKeyDataLength(llvm::raw_ostream& Out, DeclarationName Name,
+    EmitKeyDataLength(raw_ostream& Out, DeclarationName Name,
                       data_type_ref Lookup) {
     unsigned KeyLen = 1;
     switch (Name.getNameKind()) {
@@ -2514,7 +2514,7 @@ public:
     return std::make_pair(KeyLen, DataLen);
   }
 
-  void EmitKey(llvm::raw_ostream& Out, DeclarationName Name, unsigned) {
+  void EmitKey(raw_ostream& Out, DeclarationName Name, unsigned) {
     using namespace clang::io;
 
     assert(Name.getNameKind() < 0x100 && "Invalid name kind ?");
@@ -2545,7 +2545,7 @@ public:
     }
   }
 
-  void EmitData(llvm::raw_ostream& Out, key_type_ref,
+  void EmitData(raw_ostream& Out, key_type_ref,
                 data_type Lookup, unsigned DataLen) {
     uint64_t Start = Out.tell(); (void)Start;
     clang::io::Emit16(Out, Lookup.second - Lookup.first);
@@ -2705,7 +2705,7 @@ void ASTWriter::WriteAttributes(const AttrVec &Attrs, RecordDataImpl &Record) {
   }
 }
 
-void ASTWriter::AddString(llvm::StringRef Str, RecordDataImpl &Record) {
+void ASTWriter::AddString(StringRef Str, RecordDataImpl &Record) {
   Record.push_back(Str.size());
   Record.insert(Record.end(), Str.begin(), Str.end());
 }
@@ -2799,7 +2799,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // declarations) for builtins.
   {
     IdentifierTable &Table = PP.getIdentifierTable();
-    llvm::SmallVector<const char *, 32> BuiltinNames;
+    SmallVector<const char *, 32> BuiltinNames;
     Context.BuiltinInfo.GetBuiltinNames(BuiltinNames,
                                         Context.getLangOptions().NoBuiltin);
     for (unsigned I = 0, N = BuiltinNames.size(); I != N; ++I)
@@ -3047,7 +3047,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // We don't start with the translation unit, but with its decls that
   // don't come from the chained PCH.
   const TranslationUnitDecl *TU = Context.getTranslationUnitDecl();
-  llvm::SmallVector<KindDeclIDPair, 64> NewGlobalDecls;
+  SmallVector<KindDeclIDPair, 64> NewGlobalDecls;
   for (DeclContext::decl_iterator I = TU->noload_decls_begin(),
                                   E = TU->noload_decls_end();
        I != E; ++I) {
@@ -3307,7 +3307,7 @@ void ASTWriter::WriteDeclReplacementsBlock() {
     return;
 
   RecordData Record;
-  for (llvm::SmallVector<std::pair<DeclID, uint64_t>, 16>::iterator
+  for (SmallVector<std::pair<DeclID, uint64_t>, 16>::iterator
            I = ReplacedDecls.begin(), E = ReplacedDecls.end(); I != E; ++I) {
     Record.push_back(I->first);
     Record.push_back(I->second);
@@ -3617,7 +3617,7 @@ void ASTWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
                                        RecordDataImpl &Record) {
   // Nested name specifiers usually aren't too long. I think that 8 would
   // typically accommodate the vast majority.
-  llvm::SmallVector<NestedNameSpecifier *, 8> NestedNames;
+  SmallVector<NestedNameSpecifier *, 8> NestedNames;
 
   // Push each of the NNS's onto a stack for serialization in reverse order.
   while (NNS) {
@@ -3660,7 +3660,7 @@ void ASTWriter::AddNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS,
                                           RecordDataImpl &Record) {
   // Nested name specifiers usually aren't too long. I think that 8 would
   // typically accommodate the vast majority.
-  llvm::SmallVector<NestedNameSpecifierLoc , 8> NestedNames;
+  SmallVector<NestedNameSpecifierLoc , 8> NestedNames;
 
   // Push each of the nested-name-specifiers's onto a stack for
   // serialization in reverse order.

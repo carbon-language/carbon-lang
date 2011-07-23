@@ -32,13 +32,13 @@ static bool IsLLVMStringRef(QualType T) {
   if (!RT)
     return false;
 
-  return llvm::StringRef(QualType(RT, 0).getAsString()) ==
-          "class llvm::StringRef";
+  return StringRef(QualType(RT, 0).getAsString()) ==
+          "class StringRef";
 }
 
 /// Check whether the declaration is semantically inside the top-level
 /// namespace named by ns.
-static bool InNamespace(const Decl *D, llvm::StringRef NS) {
+static bool InNamespace(const Decl *D, StringRef NS) {
   const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D->getDeclContext());
   if (!ND)
     return false;
@@ -109,7 +109,7 @@ static bool IsSmallVector(QualType T) {
 }
 
 //===----------------------------------------------------------------------===//
-// CHECK: a llvm::StringRef should not be bound to a temporary std::string whose
+// CHECK: a StringRef should not be bound to a temporary std::string whose
 // lifetime is shorter than the StringRef's.
 //===----------------------------------------------------------------------===//
 
@@ -150,7 +150,7 @@ void StringRefCheckerVisitor::VisitVarDecl(VarDecl *VD) {
     return;
 
   // Pattern match for:
-  // llvm::StringRef x = call() (where call returns std::string)
+  // StringRef x = call() (where call returns std::string)
   if (!IsLLVMStringRef(VD->getType()))
     return;
   ExprWithCleanups *Ex1 = dyn_cast<ExprWithCleanups>(Init);
@@ -210,7 +210,7 @@ static bool IsPartOfAST(const CXXRecordDecl *R) {
 
 namespace {
 class ASTFieldVisitor {
-  llvm::SmallVector<FieldDecl*, 10> FieldChain;
+  SmallVector<FieldDecl*, 10> FieldChain;
   const CXXRecordDecl *Root;
   BugReporter &BR;
 public:
@@ -260,7 +260,7 @@ void ASTFieldVisitor::ReportError(QualType T) {
   if (FieldChain.size() > 1) {
     os << " via the following chain: ";
     bool isFirst = true;
-    for (llvm::SmallVectorImpl<FieldDecl*>::iterator I=FieldChain.begin(),
+    for (SmallVectorImpl<FieldDecl*>::iterator I=FieldChain.begin(),
          E=FieldChain.end(); I!=E; ++I) {
       if (!isFirst)
         os << '.';

@@ -154,7 +154,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     new llvm::GlobalAlias(AliasType, Linkage, "", Aliasee, &getModule());
 
   // Switch any previous uses to the alias.
-  llvm::StringRef MangledName = getMangledName(AliasDecl);
+  StringRef MangledName = getMangledName(AliasDecl);
   llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
     assert(Entry->isDeclaration() && "definition already exists for alias");
@@ -214,7 +214,7 @@ CodeGenModule::GetAddrOfCXXConstructor(const CXXConstructorDecl *ctor,
                                        const CGFunctionInfo *fnInfo) {
   GlobalDecl GD(ctor, ctorType);
   
-  llvm::StringRef name = getMangledName(GD);
+  StringRef name = getMangledName(GD);
   if (llvm::GlobalValue *existing = GetGlobalValue(name))
     return existing;
 
@@ -282,7 +282,7 @@ CodeGenModule::GetAddrOfCXXDestructor(const CXXDestructorDecl *dtor,
                                       const CGFunctionInfo *fnInfo) {
   GlobalDecl GD(dtor, dtorType);
 
-  llvm::StringRef name = getMangledName(GD);
+  StringRef name = getMangledName(GD);
   if (llvm::GlobalValue *existing = GetGlobalValue(name))
     return existing;
 

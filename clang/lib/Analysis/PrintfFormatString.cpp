@@ -469,7 +469,7 @@ bool PrintfSpecifier::fixType(QualType QT) {
   return true;
 }
 
-void PrintfSpecifier::toString(llvm::raw_ostream &os) const {
+void PrintfSpecifier::toString(raw_ostream &os) const {
   // Whilst some features have no defined order, we are using the order
   // appearing in the C99 standard (ISO/IEC 9899:1999 (E) 7.19.6.1)
   os << "%";

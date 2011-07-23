@@ -29,7 +29,7 @@ const LangStandard &LangStandard::getLangStandardForKind(Kind K) {
   }
 }
 
-const LangStandard *LangStandard::getLangStandardForName(llvm::StringRef Name) {
+const LangStandard *LangStandard::getLangStandardForName(StringRef Name) {
   Kind K = llvm::StringSwitch<Kind>(Name)
 #define LANGSTANDARD(id, name, desc, features) \
     .Case(name, lang_##id)

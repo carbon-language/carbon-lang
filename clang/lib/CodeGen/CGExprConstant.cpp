@@ -1030,7 +1030,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       return llvm::ConstantStruct::get(STy, Complex);
     }
     case APValue::Vector: {
-      llvm::SmallVector<llvm::Constant *, 4> Inits;
+      SmallVector<llvm::Constant *, 4> Inits;
       unsigned NumElts = Result.Val.getVectorLength();
 
       if (Context.getLangOptions().AltiVec &&

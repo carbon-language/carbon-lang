@@ -62,7 +62,7 @@ static llvm::Constant *buildBlockDescriptor(CodeGenModule &CGM,
   llvm::Type *ulong = CGM.getTypes().ConvertType(C.UnsignedLongTy);
   llvm::Type *i8p = CGM.getTypes().ConvertType(C.VoidPtrTy);
 
-  llvm::SmallVector<llvm::Constant*, 6> elements;
+  SmallVector<llvm::Constant*, 6> elements;
 
   // reserved
   elements.push_back(llvm::ConstantInt::get(ulong, 0));
@@ -243,7 +243,7 @@ static CharUnits getLowBit(CharUnits v) {
 }
 
 static void initializeForBlockHeader(CodeGenModule &CGM, CGBlockInfo &info,
-                             llvm::SmallVectorImpl<llvm::Type*> &elementTypes) {
+                             SmallVectorImpl<llvm::Type*> &elementTypes) {
   ASTContext &C = CGM.getContext();
 
   // The header is basically a 'struct { void *; int; int; void *; void *; }'.
@@ -280,7 +280,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
   ASTContext &C = CGM.getContext();
   const BlockDecl *block = info.getBlockDecl();
 
-  llvm::SmallVector<llvm::Type*, 8> elementTypes;
+  SmallVector<llvm::Type*, 8> elementTypes;
   initializeForBlockHeader(CGM, info, elementTypes);
 
   if (!block->hasCaptures()) {
@@ -291,7 +291,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
   }
 
   // Collect the layout chunks.
-  llvm::SmallVector<BlockLayoutChunk, 16> layout;
+  SmallVector<BlockLayoutChunk, 16> layout;
   layout.reserve(block->capturesCXXThis() +
                  (block->capture_end() - block->capture_begin()));
 
@@ -422,7 +422,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
   // which has 7 bytes of padding, as opposed to the naive solution
   // which might have less (?).
   if (endAlign < maxFieldAlign) {
-    llvm::SmallVectorImpl<BlockLayoutChunk>::iterator
+    SmallVectorImpl<BlockLayoutChunk>::iterator
       li = layout.begin() + 1, le = layout.end();
 
     // Look for something that the header end is already
@@ -433,7 +433,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
     // If we found something that's naturally aligned for the end of
     // the header, keep adding things...
     if (li != le) {
-      llvm::SmallVectorImpl<BlockLayoutChunk>::iterator first = li;
+      SmallVectorImpl<BlockLayoutChunk>::iterator first = li;
       for (; li != le; ++li) {
         assert(endAlign >= li->Alignment);
 
@@ -468,7 +468,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
   // Slam everything else on now.  This works because they have
   // strictly decreasing alignment and we expect that size is always a
   // multiple of alignment.
-  for (llvm::SmallVectorImpl<BlockLayoutChunk>::iterator
+  for (SmallVectorImpl<BlockLayoutChunk>::iterator
          li = layout.begin(), le = layout.end(); li != le; ++li) {
     assert(endAlign >= li->Alignment);
     li->setIndex(info, elementTypes.size());
@@ -1665,7 +1665,7 @@ llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
   
   QualType Ty = D->getType();
 
-  llvm::SmallVector<llvm::Type *, 8> types;
+  SmallVector<llvm::Type *, 8> types;
   
   llvm::StructType *ByRefType =
     llvm::StructType::createNamed(getLLVMContext(),

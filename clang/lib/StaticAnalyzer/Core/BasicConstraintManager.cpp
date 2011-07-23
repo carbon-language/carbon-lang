@@ -92,7 +92,7 @@ public:
 
   const GRState* removeDeadBindings(const GRState* state, SymbolReaper& SymReaper);
 
-  void print(const GRState* state, llvm::raw_ostream& Out,
+  void print(const GRState* state, raw_ostream& Out,
              const char* nl, const char *sep);
 };
 
@@ -301,7 +301,7 @@ BasicConstraintManager::removeDeadBindings(const GRState* state,
   return state->set<ConstNotEq>(CNE);
 }
 
-void BasicConstraintManager::print(const GRState* state, llvm::raw_ostream& Out,
+void BasicConstraintManager::print(const GRState* state, raw_ostream& Out,
                                    const char* nl, const char *sep) {
   // Print equality constraints.
 

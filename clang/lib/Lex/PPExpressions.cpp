@@ -188,7 +188,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   case tok::numeric_constant: {
     llvm::SmallString<64> IntegerBuffer;
     bool NumberInvalid = false;
-    llvm::StringRef Spelling = PP.getSpelling(PeekTok, IntegerBuffer, 
+    StringRef Spelling = PP.getSpelling(PeekTok, IntegerBuffer, 
                                               &NumberInvalid);
     if (NumberInvalid)
       return true; // a diagnostic was already reported
@@ -239,7 +239,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   case tok::char_constant: {   // 'x'
     llvm::SmallString<32> CharBuffer;
     bool CharInvalid = false;
-    llvm::StringRef ThisTok = PP.getSpelling(PeekTok, CharBuffer, &CharInvalid);
+    StringRef ThisTok = PP.getSpelling(PeekTok, CharBuffer, &CharInvalid);
     if (CharInvalid)
       return true;
 

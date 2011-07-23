@@ -96,12 +96,12 @@ public:
   void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                  CXXCtorType T,
                                  CanQualType &ResTy,
-                                 llvm::SmallVectorImpl<CanQualType> &ArgTys);
+                                 SmallVectorImpl<CanQualType> &ArgTys);
 
   void BuildDestructorSignature(const CXXDestructorDecl *Dtor,
                                 CXXDtorType T,
                                 CanQualType &ResTy,
-                                llvm::SmallVectorImpl<CanQualType> &ArgTys);
+                                SmallVectorImpl<CanQualType> &ArgTys);
 
   void BuildInstanceFunctionParams(CodeGenFunction &CGF,
                                    QualType &ResTy,
@@ -131,12 +131,12 @@ public:
   void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                  CXXCtorType T,
                                  CanQualType &ResTy,
-                                 llvm::SmallVectorImpl<CanQualType> &ArgTys);
+                                 SmallVectorImpl<CanQualType> &ArgTys);
 
   void BuildDestructorSignature(const CXXDestructorDecl *Dtor,
                                 CXXDtorType T,
                                 CanQualType &ResTy,
-                                llvm::SmallVectorImpl<CanQualType> &ArgTys);
+                                SmallVectorImpl<CanQualType> &ArgTys);
 
   void BuildInstanceFunctionParams(CodeGenFunction &CGF,
                                    QualType &ResTy,
@@ -678,7 +678,7 @@ bool ItaniumCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
 void ItaniumCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                               CXXCtorType Type,
                                               CanQualType &ResTy,
-                                llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+                                SmallVectorImpl<CanQualType> &ArgTys) {
   ASTContext &Context = getContext();
 
   // 'this' is already there.
@@ -692,7 +692,7 @@ void ItaniumCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
 void ARMCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
                                           CXXCtorType Type,
                                           CanQualType &ResTy,
-                                llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+                                SmallVectorImpl<CanQualType> &ArgTys) {
   ItaniumCXXABI::BuildConstructorSignature(Ctor, Type, ResTy, ArgTys);
   ResTy = ArgTys[0];
 }
@@ -702,7 +702,7 @@ void ARMCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
 void ItaniumCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
                                              CXXDtorType Type,
                                              CanQualType &ResTy,
-                                llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+                                SmallVectorImpl<CanQualType> &ArgTys) {
   ASTContext &Context = getContext();
 
   // 'this' is already there.
@@ -717,7 +717,7 @@ void ItaniumCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
 void ARMCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
                                          CXXDtorType Type,
                                          CanQualType &ResTy,
-                                llvm::SmallVectorImpl<CanQualType> &ArgTys) {
+                                SmallVectorImpl<CanQualType> &ArgTys) {
   ItaniumCXXABI::BuildDestructorSignature(Dtor, Type, ResTy, ArgTys);
 
   if (Type != Dtor_Deleting)

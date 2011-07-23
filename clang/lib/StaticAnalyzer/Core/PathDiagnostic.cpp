@@ -17,12 +17,9 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/StmtCXX.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Casting.h"
 
 using namespace clang;
 using namespace ento;
-using llvm::dyn_cast;
-using llvm::isa;
 
 bool PathDiagnosticMacroPiece::containsEvent() const {
   for (const_iterator I = begin(), E = end(); I!=E; ++I) {
@@ -37,14 +34,14 @@ bool PathDiagnosticMacroPiece::containsEvent() const {
   return false;
 }
 
-static llvm::StringRef StripTrailingDots(llvm::StringRef s) {
-  for (llvm::StringRef::size_type i = s.size(); i != 0; --i)
+static StringRef StripTrailingDots(StringRef s) {
+  for (StringRef::size_type i = s.size(); i != 0; --i)
     if (s[i - 1] != '.')
       return s.substr(0, i);
   return "";
 }
 
-PathDiagnosticPiece::PathDiagnosticPiece(llvm::StringRef s,
+PathDiagnosticPiece::PathDiagnosticPiece(StringRef s,
                                          Kind k, DisplayHint hint)
   : str(StripTrailingDots(s)), kind(k), Hint(hint) {}
 
@@ -76,8 +73,8 @@ void PathDiagnostic::resetPath(bool deletePieces) {
 }
 
 
-PathDiagnostic::PathDiagnostic(llvm::StringRef bugtype, llvm::StringRef desc,
-                               llvm::StringRef category)
+PathDiagnostic::PathDiagnostic(StringRef bugtype, StringRef desc,
+                               StringRef category)
   : Size(0),
     BugType(StripTrailingDots(bugtype)),
     Desc(StripTrailingDots(desc)),

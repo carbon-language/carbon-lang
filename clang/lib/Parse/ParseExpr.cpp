@@ -1607,7 +1607,7 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
     }
 
     // Keep track of the various subcomponents we see.
-    llvm::SmallVector<Sema::OffsetOfComponent, 4> Comps;
+    SmallVector<Sema::OffsetOfComponent, 4> Comps;
 
     Comps.push_back(Sema::OffsetOfComponent());
     Comps.back().isBrackets = false;
@@ -1978,7 +1978,7 @@ ExprResult Parser::ParseStringLiteralExpression() {
 
   // String concat.  Note that keywords like __func__ and __FUNCTION__ are not
   // considered to be strings for concatenation purposes.
-  llvm::SmallVector<Token, 4> StringToks;
+  SmallVector<Token, 4> StringToks;
 
   do {
     StringToks.push_back(Tok);
@@ -2104,8 +2104,8 @@ ExprResult Parser::ParseGenericSelectionExpression() {
 /// [C++0x]   assignment-expression
 /// [C++0x]   braced-init-list
 ///
-bool Parser::ParseExpressionList(llvm::SmallVectorImpl<Expr*> &Exprs,
-                            llvm::SmallVectorImpl<SourceLocation> &CommaLocs,
+bool Parser::ParseExpressionList(SmallVectorImpl<Expr*> &Exprs,
+                            SmallVectorImpl<SourceLocation> &CommaLocs,
                                  void (Sema::*Completer)(Scope *S, 
                                                            Expr *Data,
                                                            Expr **Args,

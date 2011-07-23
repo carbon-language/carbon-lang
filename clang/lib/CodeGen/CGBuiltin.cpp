@@ -1193,12 +1193,12 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     const FunctionDecl *FD = E->getDirectCallee();
     // Oddly people write this call without args on occasion and gcc accepts
     // it - it's also marked as varargs in the description file.
-    llvm::SmallVector<Value*, 2> Ops;
+    SmallVector<Value*, 2> Ops;
     for (unsigned i = 0; i < E->getNumArgs(); i++)
       Ops.push_back(EmitScalarExpr(E->getArg(i)));
     llvm::Type *Ty = CGM.getTypes().ConvertType(FD->getType());
     llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
-    llvm::StringRef Name = FD->getName();
+    StringRef Name = FD->getName();
     return Builder.CreateCall(CGM.CreateRuntimeFunction(FTy, Name), Ops);
   }
 
@@ -1236,7 +1236,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall3(F, Arg0, Arg1, StPtr, "strexd");
   }
 
-  llvm::SmallVector<Value*, 4> Ops;
+  SmallVector<Value*, 4> Ops;
   for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++)
     Ops.push_back(EmitScalarExpr(E->getArg(i)));
 
@@ -1918,7 +1918,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
 }
 
 llvm::Value *CodeGenFunction::
-BuildVector(const llvm::SmallVectorImpl<llvm::Value*> &Ops) {
+BuildVector(const SmallVectorImpl<llvm::Value*> &Ops) {
   assert((Ops.size() & (Ops.size() - 1)) == 0 &&
          "Not a power-of-two sized vector!");
   bool AllConstants = true;
@@ -1946,7 +1946,7 @@ BuildVector(const llvm::SmallVectorImpl<llvm::Value*> &Ops) {
 
 Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
-  llvm::SmallVector<Value*, 4> Ops;
+  SmallVector<Value*, 4> Ops;
 
   // Find out if any arguments are required to be integer constant expressions.
   unsigned ICEArguments = 0;
@@ -2141,7 +2141,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     // If palignr is shifting the pair of input vectors less than 9 bytes,
     // emit a shuffle instruction.
     if (shiftVal <= 8) {
-      llvm::SmallVector<llvm::Constant*, 8> Indices;
+      SmallVector<llvm::Constant*, 8> Indices;
       for (unsigned i = 0; i != 8; ++i)
         Indices.push_back(llvm::ConstantInt::get(Int32Ty, shiftVal + i));
       
@@ -2172,7 +2172,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     // If palignr is shifting the pair of input vectors less than 17 bytes,
     // emit a shuffle instruction.
     if (shiftVal <= 16) {
-      llvm::SmallVector<llvm::Constant*, 16> Indices;
+      SmallVector<llvm::Constant*, 16> Indices;
       for (unsigned i = 0; i != 16; ++i)
         Indices.push_back(llvm::ConstantInt::get(Int32Ty, shiftVal + i));
       
@@ -2349,7 +2349,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
 
 Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
-  llvm::SmallVector<Value*, 4> Ops;
+  SmallVector<Value*, 4> Ops;
 
   for (unsigned i = 0, e = E->getNumArgs(); i != e; i++)
     Ops.push_back(EmitScalarExpr(E->getArg(i)));

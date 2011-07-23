@@ -57,7 +57,7 @@ const llvm::TargetData &ABIInfo::getTargetData() const {
 
 
 void ABIArgInfo::dump() const {
-  llvm::raw_ostream &OS = llvm::errs();
+  raw_ostream &OS = llvm::errs();
   OS << "(ABIArgInfo Kind=";
   switch (TheKind) {
   case Direct:
@@ -357,7 +357,7 @@ bool UseX86_MMXType(llvm::Type *IRType) {
 }
 
 static llvm::Type* X86AdjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                          llvm::StringRef Constraint,
+                                          StringRef Constraint,
                                           llvm::Type* Ty) {
   if ((Constraint == "y" || Constraint == "&y") && Ty->isVectorTy())
     return llvm::Type::getX86_MMXTy(CGF.getLLVMContext());
@@ -428,7 +428,7 @@ public:
                                llvm::Value *Address) const;
 
   llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                  llvm::StringRef Constraint,
+                                  StringRef Constraint,
                                   llvm::Type* Ty) const {
     return X86AdjustInlineAsmType(CGF, Constraint, Ty);
   }
@@ -943,7 +943,7 @@ public:
   }
 
   llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                  llvm::StringRef Constraint,
+                                  StringRef Constraint,
                                   llvm::Type* Ty) const {
     return X86AdjustInlineAsmType(CGF, Constraint, Ty);
   }
@@ -2321,7 +2321,7 @@ public:
     return 13;
   }
 
-  llvm::StringRef getARCRetainAutoreleasedReturnValueMarker() const {
+  StringRef getARCRetainAutoreleasedReturnValueMarker() const {
     return "mov\tr7, r7\t\t@ marker for objc_retainAutoreleaseReturnValue";
   }
 
@@ -2354,7 +2354,7 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
   // Calling convention as default by an ABI.
   llvm::CallingConv::ID DefaultCC;
-  llvm::StringRef Env = getContext().Target.getTriple().getEnvironmentName();
+  StringRef Env = getContext().Target.getTriple().getEnvironmentName();
   if (Env == "gnueabi" || Env == "eabi")
     DefaultCC = llvm::CallingConv::ARM_AAPCS;
   else
@@ -2652,7 +2652,7 @@ void PTXABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
   // Calling convention as default by an ABI.
   llvm::CallingConv::ID DefaultCC;
-  llvm::StringRef Env = getContext().Target.getTriple().getEnvironmentName();
+  StringRef Env = getContext().Target.getTriple().getEnvironmentName();
   if (Env == "device")
     DefaultCC = llvm::CallingConv::PTX_Device;
   else
@@ -2891,7 +2891,7 @@ void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
       // Step 3: Emit ISR vector alias.
       unsigned Num = attr->getNumber() + 0xffe0;
       new llvm::GlobalAlias(GV->getType(), llvm::Function::ExternalLinkage,
-                            "vector_" + llvm::Twine::utohexstr(Num),
+                            "vector_" + Twine::utohexstr(Num),
                             GV, &M.getModule());
     }
   }

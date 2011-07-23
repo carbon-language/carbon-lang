@@ -275,9 +275,9 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     // that we can't use Tok.getIdentifierInfo() because its lookup is disabled
     // when skipping.
     char DirectiveBuf[20];
-    llvm::StringRef Directive;
+    StringRef Directive;
     if (!Tok.needsCleaning() && Tok.getLength() < 20) {
-      Directive = llvm::StringRef(RawCharData, Tok.getLength());
+      Directive = StringRef(RawCharData, Tok.getLength());
     } else {
       std::string DirectiveStr = getSpelling(Tok);
       unsigned IdLen = DirectiveStr.size();
@@ -288,11 +288,11 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         continue;
       }
       memcpy(DirectiveBuf, &DirectiveStr[0], IdLen);
-      Directive = llvm::StringRef(DirectiveBuf, IdLen);
+      Directive = StringRef(DirectiveBuf, IdLen);
     }
 
     if (Directive.startswith("if")) {
-      llvm::StringRef Sub = Directive.substr(2);
+      StringRef Sub = Directive.substr(2);
       if (Sub.empty() ||   // "if"
           Sub == "def" ||   // "ifdef"
           Sub == "ndef") {  // "ifndef"
@@ -307,7 +307,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
           Callbacks->Endif();
       }
     } else if (Directive[0] == 'e') {
-      llvm::StringRef Sub = Directive.substr(1);
+      StringRef Sub = Directive.substr(1);
       if (Sub == "ndif") {  // "endif"
         CheckEndOfDirective("endif");
         PPConditionalInfo CondInfo;
@@ -472,12 +472,12 @@ void Preprocessor::PTHSkipExcludedConditionalBlock() {
 /// return null on failure.  isAngled indicates whether the file reference is
 /// for system #include's or not (i.e. using <> instead of "").
 const FileEntry *Preprocessor::LookupFile(
-    llvm::StringRef Filename,
+    StringRef Filename,
     bool isAngled,
     const DirectoryLookup *FromDir,
     const DirectoryLookup *&CurDir,
-    llvm::SmallVectorImpl<char> *SearchPath,
-    llvm::SmallVectorImpl<char> *RelativePath) {
+    SmallVectorImpl<char> *SearchPath,
+    SmallVectorImpl<char> *RelativePath) {
   // If the header lookup mechanism may be relative to the current file, pass in
   // info about where the current file is.
   const FileEntry *CurFileEnt = 0;
@@ -1011,7 +1011,7 @@ void Preprocessor::HandleIdentSCCSDirective(Token &Tok) {
 /// spelling of the filename, but is also expected to handle the case when
 /// this method decides to use a different buffer.
 bool Preprocessor::GetIncludeFilenameSpelling(SourceLocation Loc,
-                                              llvm::StringRef &Buffer) {
+                                              StringRef &Buffer) {
   // Get the text form of the filename.
   assert(!Buffer.empty() && "Can't have tokens with empty spellings!");
 
@@ -1020,27 +1020,27 @@ bool Preprocessor::GetIncludeFilenameSpelling(SourceLocation Loc,
   if (Buffer[0] == '<') {
     if (Buffer.back() != '>') {
       Diag(Loc, diag::err_pp_expects_filename);
-      Buffer = llvm::StringRef();
+      Buffer = StringRef();
       return true;
     }
     isAngled = true;
   } else if (Buffer[0] == '"') {
     if (Buffer.back() != '"') {
       Diag(Loc, diag::err_pp_expects_filename);
-      Buffer = llvm::StringRef();
+      Buffer = StringRef();
       return true;
     }
     isAngled = false;
   } else {
     Diag(Loc, diag::err_pp_expects_filename);
-    Buffer = llvm::StringRef();
+    Buffer = StringRef();
     return true;
   }
 
   // Diagnose #include "" as invalid.
   if (Buffer.size() <= 2) {
     Diag(Loc, diag::err_pp_empty_filename);
-    Buffer = llvm::StringRef();
+    Buffer = StringRef();
     return true;
   }
 
@@ -1122,7 +1122,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
 
   // Reserve a buffer to get the spelling.
   llvm::SmallString<128> FilenameBuffer;
-  llvm::StringRef Filename;
+  StringRef Filename;
   SourceLocation End;
   
   switch (FilenameTok.getKind()) {
@@ -1284,7 +1284,7 @@ void Preprocessor::HandleIncludeMacrosDirective(SourceLocation HashLoc,
 /// closing ), updating MI with what we learn.  Return true if an error occurs
 /// parsing the arg list.
 bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
-  llvm::SmallVector<IdentifierInfo*, 32> Arguments;
+  SmallVector<IdentifierInfo*, 32> Arguments;
 
   Token Tok;
   while (1) {

@@ -530,7 +530,7 @@ struct SLocSort {
 
 class UninitValsDiagReporter : public UninitVariablesHandler {
   Sema &S;
-  typedef llvm::SmallVector<UninitUse, 2> UsesVec;
+  typedef SmallVector<UninitUse, 2> UsesVec;
   typedef llvm::DenseMap<const VarDecl *, UsesVec*> UsesMap;
   UsesMap *uses;
   
@@ -613,7 +613,7 @@ clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s)
 }
 
 static void flushDiagnostics(Sema &S, sema::FunctionScopeInfo *fscope) {
-  for (llvm::SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
+  for (SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
        i = fscope->PossiblyUnreachableDiags.begin(),
        e = fscope->PossiblyUnreachableDiags.end();
        i != e; ++i) {
@@ -684,7 +684,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     bool analyzed = false;
 
     // Register the expressions with the CFGBuilder.
-    for (llvm::SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
+    for (SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
          i = fscope->PossiblyUnreachableDiags.begin(),
          e = fscope->PossiblyUnreachableDiags.end();
          i != e; ++i) {
@@ -694,7 +694,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
 
     if (AC.getCFG()) {
       analyzed = true;
-      for (llvm::SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
+      for (SmallVectorImpl<sema::PossiblyUnreachableDiag>::iterator
             i = fscope->PossiblyUnreachableDiags.begin(),
             e = fscope->PossiblyUnreachableDiags.end();
             i != e; ++i)

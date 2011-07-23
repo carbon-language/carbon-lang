@@ -23,24 +23,24 @@
 #include <algorithm>
 using namespace clang;
 
-static const enum llvm::raw_ostream::Colors noteColor =
-  llvm::raw_ostream::BLACK;
-static const enum llvm::raw_ostream::Colors fixitColor =
-  llvm::raw_ostream::GREEN;
-static const enum llvm::raw_ostream::Colors caretColor =
-  llvm::raw_ostream::GREEN;
-static const enum llvm::raw_ostream::Colors warningColor =
-  llvm::raw_ostream::MAGENTA;
-static const enum llvm::raw_ostream::Colors errorColor = llvm::raw_ostream::RED;
-static const enum llvm::raw_ostream::Colors fatalColor = llvm::raw_ostream::RED;
+static const enum raw_ostream::Colors noteColor =
+  raw_ostream::BLACK;
+static const enum raw_ostream::Colors fixitColor =
+  raw_ostream::GREEN;
+static const enum raw_ostream::Colors caretColor =
+  raw_ostream::GREEN;
+static const enum raw_ostream::Colors warningColor =
+  raw_ostream::MAGENTA;
+static const enum raw_ostream::Colors errorColor = raw_ostream::RED;
+static const enum raw_ostream::Colors fatalColor = raw_ostream::RED;
 // Used for changing only the bold attribute.
-static const enum llvm::raw_ostream::Colors savedColor =
-  llvm::raw_ostream::SAVEDCOLOR;
+static const enum raw_ostream::Colors savedColor =
+  raw_ostream::SAVEDCOLOR;
 
 /// \brief Number of spaces to indent when word-wrapping.
 const unsigned WordWrapIndentation = 6;
 
-TextDiagnosticPrinter::TextDiagnosticPrinter(llvm::raw_ostream &os,
+TextDiagnosticPrinter::TextDiagnosticPrinter(raw_ostream &os,
                                              const DiagnosticOptions &diags,
                                              bool _OwnsOutputStream)
   : OS(os), LangOpts(0), DiagOpts(&diags),
@@ -660,7 +660,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 /// greater than or equal to Idx or, if no such character exists,
 /// returns the end of the string.
 static unsigned skipWhitespace(unsigned Idx,
-                               const llvm::SmallVectorImpl<char> &Str,
+                               const SmallVectorImpl<char> &Str,
                                unsigned Length) {
   while (Idx < Length && isspace(Str[Idx]))
     ++Idx;
@@ -693,7 +693,7 @@ static inline char findMatchingPunctuation(char c) {
 /// \returns the index pointing one character past the end of the
 /// word.
 static unsigned findEndOfWord(unsigned Start,
-                              const llvm::SmallVectorImpl<char> &Str,
+                              const SmallVectorImpl<char> &Str,
                               unsigned Length, unsigned Column,
                               unsigned Columns) {
   assert(Start < Str.size() && "Invalid start position!");
@@ -764,8 +764,8 @@ static unsigned findEndOfWord(unsigned Start,
 ///
 /// \returns true if word-wrapping was required, or false if the
 /// string fit on the first line.
-static bool PrintWordWrapped(llvm::raw_ostream &OS,
-                             const llvm::SmallVectorImpl<char> &Str,
+static bool PrintWordWrapped(raw_ostream &OS,
+                             const SmallVectorImpl<char> &Str,
                              unsigned Columns,
                              unsigned Column = 0,
                              unsigned Indentation = WordWrapIndentation) {
@@ -1010,7 +1010,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
         OptionName += "-Werror";
     }
 
-    llvm::StringRef Opt = DiagnosticIDs::getWarningOptionForDiag(Info.getID());
+    StringRef Opt = DiagnosticIDs::getWarningOptionForDiag(Info.getID());
     if (!Opt.empty()) {
       if (!OptionName.empty())
         OptionName += ',';

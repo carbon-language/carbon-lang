@@ -69,14 +69,14 @@ static CanQualType GetReturnType(QualType RetTy) {
 const CGFunctionInfo &
 CodeGenTypes::getFunctionInfo(CanQual<FunctionNoProtoType> FTNP) {
   return getFunctionInfo(FTNP->getResultType().getUnqualifiedType(),
-                         llvm::SmallVector<CanQualType, 16>(),
+                         SmallVector<CanQualType, 16>(),
                          FTNP->getExtInfo());
 }
 
 /// \param Args - contains any initial parameters besides those
 ///   in the formal type
 static const CGFunctionInfo &getFunctionInfo(CodeGenTypes &CGT,
-                                  llvm::SmallVectorImpl<CanQualType> &ArgTys,
+                                  SmallVectorImpl<CanQualType> &ArgTys,
                                              CanQual<FunctionProtoType> FTP) {
   // FIXME: Kill copy.
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
@@ -87,7 +87,7 @@ static const CGFunctionInfo &getFunctionInfo(CodeGenTypes &CGT,
 
 const CGFunctionInfo &
 CodeGenTypes::getFunctionInfo(CanQual<FunctionProtoType> FTP) {
-  llvm::SmallVector<CanQualType, 16> ArgTys;
+  SmallVector<CanQualType, 16> ArgTys;
   return ::getFunctionInfo(*this, ArgTys, FTP);
 }
 
@@ -113,7 +113,7 @@ static CallingConv getCallingConventionForDecl(const Decl *D) {
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXRecordDecl *RD,
                                                  const FunctionProtoType *FTP) {
-  llvm::SmallVector<CanQualType, 16> ArgTys;
+  SmallVector<CanQualType, 16> ArgTys;
 
   // Add the 'this' pointer.
   ArgTys.push_back(GetThisType(Context, RD));
@@ -123,7 +123,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXRecordDecl *RD,
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
-  llvm::SmallVector<CanQualType, 16> ArgTys;
+  SmallVector<CanQualType, 16> ArgTys;
 
   assert(!isa<CXXConstructorDecl>(MD) && "wrong method for contructors!");
   assert(!isa<CXXDestructorDecl>(MD) && "wrong method for destructors!");
@@ -137,7 +137,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXConstructorDecl *D,
                                                     CXXCtorType Type) {
-  llvm::SmallVector<CanQualType, 16> ArgTys;
+  SmallVector<CanQualType, 16> ArgTys;
   ArgTys.push_back(GetThisType(Context, D->getParent()));
   CanQualType ResTy = Context.VoidTy;
 
@@ -154,7 +154,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXConstructorDecl *D,
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXDestructorDecl *D,
                                                     CXXDtorType Type) {
-  llvm::SmallVector<CanQualType, 2> ArgTys;
+  SmallVector<CanQualType, 2> ArgTys;
   ArgTys.push_back(GetThisType(Context, D->getParent()));
   CanQualType ResTy = Context.VoidTy;
 
@@ -180,7 +180,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {
-  llvm::SmallVector<CanQualType, 16> ArgTys;
+  SmallVector<CanQualType, 16> ArgTys;
   ArgTys.push_back(Context.getCanonicalParamType(MD->getSelfDecl()->getType()));
   ArgTys.push_back(Context.getCanonicalParamType(Context.getObjCSelType()));
   // FIXME: Kill copy?
@@ -216,7 +216,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
                                                     const CallArgList &Args,
                                             const FunctionType::ExtInfo &Info) {
   // FIXME: Kill copy.
-  llvm::SmallVector<CanQualType, 16> ArgTys;
+  SmallVector<CanQualType, 16> ArgTys;
   for (CallArgList::const_iterator i = Args.begin(), e = Args.end();
        i != e; ++i)
     ArgTys.push_back(Context.getCanonicalParamType(i->Ty));
@@ -227,7 +227,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
                                                     const FunctionArgList &Args,
                                             const FunctionType::ExtInfo &Info) {
   // FIXME: Kill copy.
-  llvm::SmallVector<CanQualType, 16> ArgTys;
+  SmallVector<CanQualType, 16> ArgTys;
   for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
        i != e; ++i)
     ArgTys.push_back(Context.getCanonicalParamType((*i)->getType()));
@@ -235,15 +235,15 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
 }
 
 const CGFunctionInfo &CodeGenTypes::getNullaryFunctionInfo() {
-  llvm::SmallVector<CanQualType, 1> args;
+  SmallVector<CanQualType, 1> args;
   return getFunctionInfo(getContext().VoidTy, args, FunctionType::ExtInfo());
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
-                           const llvm::SmallVectorImpl<CanQualType> &ArgTys,
+                           const SmallVectorImpl<CanQualType> &ArgTys,
                                             const FunctionType::ExtInfo &Info) {
 #ifndef NDEBUG
-  for (llvm::SmallVectorImpl<CanQualType>::const_iterator
+  for (SmallVectorImpl<CanQualType>::const_iterator
          I = ArgTys.begin(), E = ArgTys.end(); I != E; ++I)
     assert(I->isCanonicalAsParam());
 #endif
@@ -312,7 +312,7 @@ CGFunctionInfo::CGFunctionInfo(unsigned _CallingConvention,
 /***/
 
 void CodeGenTypes::GetExpandedTypes(QualType type,
-                     llvm::SmallVectorImpl<llvm::Type*> &expandedTypes) {
+                     SmallVectorImpl<llvm::Type*> &expandedTypes) {
   const RecordType *RT = type->getAsStructureType();
   assert(RT && "Can only expand structure types.");
   const RecordDecl *RD = RT->getDecl();
@@ -614,7 +614,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool isVariadic) {
   bool Inserted = FunctionsBeingProcessed.insert(&FI); (void)Inserted;
   assert(Inserted && "Recursively being processed?");
   
-  llvm::SmallVector<llvm::Type*, 8> argTypes;
+  SmallVector<llvm::Type*, 8> argTypes;
   llvm::Type *resultType = 0;
 
   const ABIArgInfo &retAI = FI.getReturnInfo();
@@ -824,7 +824,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       continue;
 
     case ABIArgInfo::Expand: {
-      llvm::SmallVector<llvm::Type*, 8> types;
+      SmallVector<llvm::Type*, 8> types;
       // FIXME: This is rather inefficient. Do we ever actually need to do
       // anything here? The result should be just reconstructed on the other
       // side, so extension should be a non-issue.
@@ -995,7 +995,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
           assert(AI != Fn->arg_end() && "Argument mismatch!");
-          AI->setName(Arg->getName() + ".coerce" + llvm::Twine(i));
+          AI->setName(Arg->getName() + ".coerce" + Twine(i));
           llvm::Value *EltPtr = Builder.CreateConstGEP2_32(Ptr, 0, i);
           Builder.CreateStore(AI++, EltPtr);
         }
@@ -1029,7 +1029,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // Name the arguments used in expansion and increment AI.
       unsigned Index = 0;
       for (; AI != End; ++AI, ++Index)
-        AI->setName(Arg->getName() + "." + llvm::Twine(Index));
+        AI->setName(Arg->getName() + "." + Twine(Index));
       continue;
     }
 
@@ -1063,7 +1063,7 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
   // result is in a BasicBlock and is therefore an Instruction.
   llvm::Instruction *generator = cast<llvm::Instruction>(result);
 
-  llvm::SmallVector<llvm::Instruction*,4> insnsToKill;
+  SmallVector<llvm::Instruction*,4> insnsToKill;
 
   // Look for:
   //  %generator = bitcast %type1* %generator2 to %type2*
@@ -1116,7 +1116,7 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
   }
 
   // Delete all the unnecessary instructions, from latest to earliest.
-  for (llvm::SmallVectorImpl<llvm::Instruction*>::iterator
+  for (SmallVectorImpl<llvm::Instruction*>::iterator
          i = insnsToKill.begin(), e = insnsToKill.end(); i != e; ++i)
     (*i)->eraseFromParent();
 
@@ -1432,7 +1432,7 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
 llvm::CallSite
 CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
                                   llvm::ArrayRef<llvm::Value *> Args,
-                                  const llvm::Twine &Name) {
+                                  const Twine &Name) {
   llvm::BasicBlock *InvokeDest = getInvokeDest();
   if (!InvokeDest)
     return Builder.CreateCall(Callee, Args, Name);
@@ -1446,7 +1446,7 @@ CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
 
 llvm::CallSite
 CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
-                                  const llvm::Twine &Name) {
+                                  const Twine &Name) {
   return EmitCallOrInvoke(Callee, llvm::ArrayRef<llvm::Value *>(), Name);
 }
 
@@ -1460,7 +1460,7 @@ static void checkArgMatches(llvm::Value *Elt, unsigned &ArgNo,
 }
 
 void CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
-                                       llvm::SmallVector<llvm::Value*,16> &Args,
+                                       SmallVector<llvm::Value*,16> &Args,
                                        llvm::FunctionType *IRFuncTy) {
   const RecordType *RT = Ty->getAsStructureType();
   assert(RT && "Can only expand structure types.");
@@ -1503,7 +1503,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                  const Decl *TargetDecl,
                                  llvm::Instruction **callOrInvoke) {
   // FIXME: We no longer need the types from CallArgs; lift up and simplify.
-  llvm::SmallVector<llvm::Value*, 16> Args;
+  SmallVector<llvm::Value*, 16> Args;
 
   // Handle struct-return functions by passing a pointer to the
   // location that we would like to return into.

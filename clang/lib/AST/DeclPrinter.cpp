@@ -24,19 +24,19 @@ using namespace clang;
 
 namespace {
   class DeclPrinter : public DeclVisitor<DeclPrinter> {
-    llvm::raw_ostream &Out;
+    raw_ostream &Out;
     ASTContext &Context;
     PrintingPolicy Policy;
     unsigned Indentation;
 
-    llvm::raw_ostream& Indent() { return Indent(Indentation); }
-    llvm::raw_ostream& Indent(unsigned Indentation);
-    void ProcessDeclGroup(llvm::SmallVectorImpl<Decl*>& Decls);
+    raw_ostream& Indent() { return Indent(Indentation); }
+    raw_ostream& Indent(unsigned Indentation);
+    void ProcessDeclGroup(SmallVectorImpl<Decl*>& Decls);
 
     void Print(AccessSpecifier AS);
 
   public:
-    DeclPrinter(llvm::raw_ostream &Out, ASTContext &Context,
+    DeclPrinter(raw_ostream &Out, ASTContext &Context,
                 const PrintingPolicy &Policy,
                 unsigned Indentation = 0)
       : Out(Out), Context(Context), Policy(Policy), Indentation(Indentation) { }
@@ -80,11 +80,11 @@ namespace {
   };
 }
 
-void Decl::print(llvm::raw_ostream &Out, unsigned Indentation) const {
+void Decl::print(raw_ostream &Out, unsigned Indentation) const {
   print(Out, getASTContext().PrintingPolicy, Indentation);
 }
 
-void Decl::print(llvm::raw_ostream &Out, const PrintingPolicy &Policy,
+void Decl::print(raw_ostream &Out, const PrintingPolicy &Policy,
                  unsigned Indentation) const {
   DeclPrinter Printer(Out, getASTContext(), Policy, Indentation);
   Printer.Visit(const_cast<Decl*>(this));
@@ -119,7 +119,7 @@ static QualType getDeclType(Decl* D) {
 }
 
 void Decl::printGroup(Decl** Begin, unsigned NumDecls,
-                      llvm::raw_ostream &Out, const PrintingPolicy &Policy,
+                      raw_ostream &Out, const PrintingPolicy &Policy,
                       unsigned Indentation) {
   if (NumDecls == 1) {
     (*Begin)->print(Out, Policy, Indentation);
@@ -167,13 +167,13 @@ void Decl::dump() const {
   print(llvm::errs());
 }
 
-llvm::raw_ostream& DeclPrinter::Indent(unsigned Indentation) {
+raw_ostream& DeclPrinter::Indent(unsigned Indentation) {
   for (unsigned i = 0; i != Indentation; ++i)
     Out << "  ";
   return Out;
 }
 
-void DeclPrinter::ProcessDeclGroup(llvm::SmallVectorImpl<Decl*>& Decls) {
+void DeclPrinter::ProcessDeclGroup(SmallVectorImpl<Decl*>& Decls) {
   this->Indent();
   Decl::printGroup(Decls.data(), Decls.size(), Out, Policy, Indentation);
   Out << ";\n";
@@ -198,7 +198,7 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
   if (Indent)
     Indentation += Policy.Indentation;
 
-  llvm::SmallVector<Decl*, 2> Decls;
+  SmallVector<Decl*, 2> Decls;
   for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
        D != DEnd; ++D) {
 

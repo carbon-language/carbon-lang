@@ -1269,7 +1269,7 @@ static void ExpandAnonymousFieldDesignator(Sema &SemaRef,
   typedef DesignatedInitExpr::Designator Designator;
 
   // Build the replacement designators.
-  llvm::SmallVector<Designator, 4> Replacements;
+  SmallVector<Designator, 4> Replacements;
   for (IndirectFieldDecl::chain_iterator PI = IndirectField->chain_begin(),
        PE = IndirectField->chain_end(); PI != PE; ++PI) {
     if (PI + 1 == PE)
@@ -1915,8 +1915,8 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
   typedef DesignatedInitExpr::Designator ASTDesignator;
 
   bool Invalid = false;
-  llvm::SmallVector<ASTDesignator, 32> Designators;
-  llvm::SmallVector<Expr *, 32> InitExpressions;
+  SmallVector<ASTDesignator, 32> Designators;
+  SmallVector<Expr *, 32> InitExpressions;
 
   // Build designators and check array designator expressions.
   for (unsigned Idx = 0; Idx < Desig.getNumDesignators(); ++Idx) {
@@ -3577,7 +3577,7 @@ InitializationSequence::InitializationSequence(Sema &S,
 }
 
 InitializationSequence::~InitializationSequence() {
-  for (llvm::SmallVectorImpl<Step>::iterator Step = Steps.begin(),
+  for (SmallVectorImpl<Step>::iterator Step = Steps.begin(),
                                           StepEnd = Steps.end();
        Step != StepEnd; ++Step)
     Step->Destroy();
@@ -4769,7 +4769,7 @@ bool InitializationSequence::Diagnose(Sema &S,
   return true;
 }
 
-void InitializationSequence::dump(llvm::raw_ostream &OS) const {
+void InitializationSequence::dump(raw_ostream &OS) const {
   switch (SequenceKind) {
   case FailedSequence: {
     OS << "Failed sequence: ";

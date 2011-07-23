@@ -53,7 +53,7 @@ llvm::sys::Path GetExecutablePath(const char *Argv0, bool CanonicalPrefixes) {
 }
 
 static const char *SaveStringInSet(std::set<std::string> &SavedStrings,
-                                   llvm::StringRef S) {
+                                   StringRef S) {
   return SavedStrings.insert(S).first->c_str();
 }
 
@@ -84,9 +84,9 @@ static const char *SaveStringInSet(std::set<std::string> &SavedStrings,
 /// \param Args - The vector of command line arguments.
 /// \param Edit - The override command to perform.
 /// \param SavedStrings - Set to use for storing string representations.
-static void ApplyOneQAOverride(llvm::raw_ostream &OS,
-                               llvm::SmallVectorImpl<const char*> &Args,
-                               llvm::StringRef Edit,
+static void ApplyOneQAOverride(raw_ostream &OS,
+                               SmallVectorImpl<const char*> &Args,
+                               StringRef Edit,
                                std::set<std::string> &SavedStrings) {
   // This does not need to be efficient.
 
@@ -101,9 +101,9 @@ static void ApplyOneQAOverride(llvm::raw_ostream &OS,
     OS << "### Adding argument " << Str << " at end\n";
     Args.push_back(Str);
   } else if (Edit[0] == 's' && Edit[1] == '/' && Edit.endswith("/") &&
-             Edit.slice(2, Edit.size()-1).find('/') != llvm::StringRef::npos) {
-    llvm::StringRef MatchPattern = Edit.substr(2).split('/').first;
-    llvm::StringRef ReplPattern = Edit.substr(2).split('/').second;
+             Edit.slice(2, Edit.size()-1).find('/') != StringRef::npos) {
+    StringRef MatchPattern = Edit.substr(2).split('/').first;
+    StringRef ReplPattern = Edit.substr(2).split('/').second;
     ReplPattern = ReplPattern.slice(0, ReplPattern.size()-1);
 
     for (unsigned i = 1, e = Args.size(); i != e; ++i) {
@@ -151,10 +151,10 @@ static void ApplyOneQAOverride(llvm::raw_ostream &OS,
 
 /// ApplyQAOverride - Apply a comma separate list of edits to the
 /// input argument lists. See ApplyOneQAOverride.
-static void ApplyQAOverride(llvm::SmallVectorImpl<const char*> &Args,
+static void ApplyQAOverride(SmallVectorImpl<const char*> &Args,
                             const char *OverrideStr,
                             std::set<std::string> &SavedStrings) {
-  llvm::raw_ostream *OS = &llvm::errs();
+  raw_ostream *OS = &llvm::errs();
 
   if (OverrideStr[0] == '#') {
     ++OverrideStr;
@@ -184,7 +184,7 @@ extern int cc1as_main(const char **ArgBegin, const char **ArgEnd,
                       const char *Argv0, void *MainAddr);
 
 static void ExpandArgsFromBuf(const char *Arg,
-                              llvm::SmallVectorImpl<const char*> &ArgVector,
+                              SmallVectorImpl<const char*> &ArgVector,
                               std::set<std::string> &SavedStrings) {
   const char *FName = Arg + 1;
   llvm::OwningPtr<llvm::MemoryBuffer> MemBuf;
@@ -242,7 +242,7 @@ static void ExpandArgsFromBuf(const char *Arg,
 }
 
 static void ExpandArgv(int argc, const char **argv,
-                       llvm::SmallVectorImpl<const char*> &ArgVector,
+                       SmallVectorImpl<const char*> &ArgVector,
                        std::set<std::string> &SavedStrings) {
   for (int i = 0; i < argc; ++i) {
     const char *Arg = argv[i];
@@ -255,7 +255,7 @@ static void ExpandArgv(int argc, const char **argv,
   }
 }
 
-static void ParseProgName(llvm::SmallVectorImpl<const char *> &ArgVector,
+static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
                           std::set<std::string> &SavedStrings,
                           Driver &TheDriver)
 {
@@ -290,8 +290,8 @@ static void ParseProgName(llvm::SmallVectorImpl<const char *> &ArgVector,
     { "++", true, false },
   };
   std::string ProgName(llvm::sys::path::stem(ArgVector[0]));
-  llvm::StringRef ProgNameRef(ProgName);
-  llvm::StringRef Prefix;
+  StringRef ProgNameRef(ProgName);
+  StringRef Prefix;
 
   for (int Components = 2; Components; --Components) {
     bool FoundMatch = false;
@@ -309,15 +309,15 @@ static void ParseProgName(llvm::SmallVectorImpl<const char *> &ArgVector,
     }
 
     if (FoundMatch) {
-      llvm::StringRef::size_type LastComponent = ProgNameRef.rfind('-',
+      StringRef::size_type LastComponent = ProgNameRef.rfind('-',
         ProgNameRef.size() - strlen(suffixes[i].Suffix));
-      if (LastComponent != llvm::StringRef::npos)
+      if (LastComponent != StringRef::npos)
         Prefix = ProgNameRef.slice(0, LastComponent);
       break;
     }
 
-    llvm::StringRef::size_type LastComponent = ProgNameRef.rfind('-');
-    if (LastComponent == llvm::StringRef::npos)
+    StringRef::size_type LastComponent = ProgNameRef.rfind('-');
+    if (LastComponent == StringRef::npos)
       break;
     ProgNameRef = ProgNameRef.slice(0, LastComponent);
   }
@@ -327,7 +327,7 @@ static void ParseProgName(llvm::SmallVectorImpl<const char *> &ArgVector,
 
   std::string IgnoredError;
   if (llvm::TargetRegistry::lookupTarget(Prefix, IgnoredError)) {
-    llvm::SmallVectorImpl<const char *>::iterator it = ArgVector.begin();
+    SmallVectorImpl<const char *>::iterator it = ArgVector.begin();
     if (it != ArgVector.end())
       ++it;
     ArgVector.insert(it, SaveStringInSet(SavedStrings, Prefix));
@@ -341,13 +341,13 @@ int main(int argc_, const char **argv_) {
   llvm::PrettyStackTraceProgram X(argc_, argv_);
 
   std::set<std::string> SavedStrings;
-  llvm::SmallVector<const char*, 256> argv;
+  SmallVector<const char*, 256> argv;
 
   ExpandArgv(argc_, argv_, argv, SavedStrings);
 
   // Handle -cc1 integrated tools.
-  if (argv.size() > 1 && llvm::StringRef(argv[1]).startswith("-cc1")) {
-    llvm::StringRef Tool = argv[1] + 4;
+  if (argv.size() > 1 && StringRef(argv[1]).startswith("-cc1")) {
+    StringRef Tool = argv[1] + 4;
 
     if (Tool == "")
       return cc1_main(argv.data()+2, argv.data()+argv.size(), argv[0],
@@ -363,7 +363,7 @@ int main(int argc_, const char **argv_) {
 
   bool CanonicalPrefixes = true;
   for (int i = 1, size = argv.size(); i < size; ++i) {
-    if (llvm::StringRef(argv[i]) == "-no-canonical-prefixes") {
+    if (StringRef(argv[i]) == "-no-canonical-prefixes") {
       CanonicalPrefixes = false;
       break;
     }

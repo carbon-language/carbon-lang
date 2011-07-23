@@ -359,11 +359,11 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
     
     // Template arguments.
-    llvm::SmallVector<TemplateArgument, 8> TemplArgs;
+    SmallVector<TemplateArgument, 8> TemplArgs;
     Reader.ReadTemplateArgumentList(TemplArgs, F, Record, Idx);
     
     // Template args as written.
-    llvm::SmallVector<TemplateArgumentLoc, 8> TemplArgLocs;
+    SmallVector<TemplateArgumentLoc, 8> TemplArgLocs;
     SourceLocation LAngleLoc, RAngleLoc;
     if (Record[Idx++]) {  // TemplateArgumentsAsWritten != 0
       unsigned NumTemplateArgLocs = Record[Idx++];
@@ -452,7 +452,7 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
 
   // Read in the parameters.
   unsigned NumParams = Record[Idx++];
-  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  SmallVector<ParmVarDecl *, 16> Params;
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(ReadDeclAs<ParmVarDecl>(Record, Idx));
@@ -480,7 +480,7 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setResultTypeSourceInfo(GetTypeSourceInfo(Record, Idx));
   MD->setEndLoc(ReadSourceLocation(Record, Idx));
   unsigned NumParams = Record[Idx++];
-  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  SmallVector<ParmVarDecl *, 16> Params;
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(ReadDeclAs<ParmVarDecl>(Record, Idx));
@@ -502,11 +502,11 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   
   // Read the directly referenced protocols and their SourceLocations.
   unsigned NumProtocols = Record[Idx++];
-  llvm::SmallVector<ObjCProtocolDecl *, 16> Protocols;
+  SmallVector<ObjCProtocolDecl *, 16> Protocols;
   Protocols.reserve(NumProtocols);
   for (unsigned I = 0; I != NumProtocols; ++I)
     Protocols.push_back(ReadDeclAs<ObjCProtocolDecl>(Record, Idx));
-  llvm::SmallVector<SourceLocation, 16> ProtoLocs;
+  SmallVector<SourceLocation, 16> ProtoLocs;
   ProtoLocs.reserve(NumProtocols);
   for (unsigned I = 0; I != NumProtocols; ++I)
     ProtoLocs.push_back(ReadSourceLocation(Record, Idx));
@@ -524,7 +524,7 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   
   // Read the ivars.
   unsigned NumIvars = Record[Idx++];
-  llvm::SmallVector<ObjCIvarDecl *, 16> IVars;
+  SmallVector<ObjCIvarDecl *, 16> IVars;
   IVars.reserve(NumIvars);
   for (unsigned I = 0; I != NumIvars; ++I)
     IVars.push_back(ReadDeclAs<ObjCIvarDecl>(Record, Idx));
@@ -553,11 +553,11 @@ void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
   PD->setForwardDecl(Record[Idx++]);
   PD->setLocEnd(ReadSourceLocation(Record, Idx));
   unsigned NumProtoRefs = Record[Idx++];
-  llvm::SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
+  SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
   ProtoRefs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(ReadDeclAs<ObjCProtocolDecl>(Record, Idx));
-  llvm::SmallVector<SourceLocation, 16> ProtoLocs;
+  SmallVector<SourceLocation, 16> ProtoLocs;
   ProtoLocs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoLocs.push_back(ReadSourceLocation(Record, Idx));
@@ -572,11 +572,11 @@ void ASTDeclReader::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *FD) {
 void ASTDeclReader::VisitObjCClassDecl(ObjCClassDecl *CD) {
   VisitDecl(CD);
   unsigned NumClassRefs = Record[Idx++];
-  llvm::SmallVector<ObjCInterfaceDecl *, 16> ClassRefs;
+  SmallVector<ObjCInterfaceDecl *, 16> ClassRefs;
   ClassRefs.reserve(NumClassRefs);
   for (unsigned I = 0; I != NumClassRefs; ++I)
     ClassRefs.push_back(ReadDeclAs<ObjCInterfaceDecl>(Record, Idx));
-  llvm::SmallVector<SourceLocation, 16> SLocs;
+  SmallVector<SourceLocation, 16> SLocs;
   SLocs.reserve(NumClassRefs);
   for (unsigned I = 0; I != NumClassRefs; ++I)
     SLocs.push_back(ReadSourceLocation(Record, Idx));
@@ -587,11 +587,11 @@ void ASTDeclReader::VisitObjCClassDecl(ObjCClassDecl *CD) {
 void ASTDeclReader::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *FPD) {
   VisitDecl(FPD);
   unsigned NumProtoRefs = Record[Idx++];
-  llvm::SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
+  SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
   ProtoRefs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(ReadDeclAs<ObjCProtocolDecl>(Record, Idx));
-  llvm::SmallVector<SourceLocation, 16> ProtoLocs;
+  SmallVector<SourceLocation, 16> ProtoLocs;
   ProtoLocs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoLocs.push_back(ReadSourceLocation(Record, Idx));
@@ -603,11 +603,11 @@ void ASTDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
   VisitObjCContainerDecl(CD);
   CD->setClassInterface(ReadDeclAs<ObjCInterfaceDecl>(Record, Idx));
   unsigned NumProtoRefs = Record[Idx++];
-  llvm::SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
+  SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
   ProtoRefs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoRefs.push_back(ReadDeclAs<ObjCProtocolDecl>(Record, Idx));
-  llvm::SmallVector<SourceLocation, 16> ProtoLocs;
+  SmallVector<SourceLocation, 16> ProtoLocs;
   ProtoLocs.reserve(NumProtoRefs);
   for (unsigned I = 0; I != NumProtoRefs; ++I)
     ProtoLocs.push_back(ReadSourceLocation(Record, Idx));
@@ -753,7 +753,7 @@ void ASTDeclReader::VisitBlockDecl(BlockDecl *BD) {
   BD->setBody(cast_or_null<CompoundStmt>(Reader.ReadStmt(F)));
   BD->setSignatureAsWritten(GetTypeSourceInfo(Record, Idx));
   unsigned NumParams = Record[Idx++];
-  llvm::SmallVector<ParmVarDecl *, 16> Params;
+  SmallVector<ParmVarDecl *, 16> Params;
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(ReadDeclAs<ParmVarDecl>(Record, Idx));
@@ -761,7 +761,7 @@ void ASTDeclReader::VisitBlockDecl(BlockDecl *BD) {
 
   bool capturesCXXThis = Record[Idx++];
   unsigned numCaptures = Record[Idx++];
-  llvm::SmallVector<BlockDecl::Capture, 16> captures;
+  SmallVector<BlockDecl::Capture, 16> captures;
   captures.reserve(numCaptures);
   for (unsigned i = 0; i != numCaptures; ++i) {
     VarDecl *decl = ReadDeclAs<VarDecl>(Record, Idx);
@@ -1109,7 +1109,7 @@ void ASTDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   if (D->getPreviousDeclaration() == 0) {
     // This ClassTemplateDecl owns a CommonPtr; read it to keep track of all of
     // the specializations.
-    llvm::SmallVector<serialization::DeclID, 2> SpecIDs;
+    SmallVector<serialization::DeclID, 2> SpecIDs;
     SpecIDs.push_back(0);
     
     // Specializations.
@@ -1147,7 +1147,7 @@ void ASTDeclReader::VisitClassTemplateSpecializationDecl(
     if (ClassTemplateDecl *CTD = dyn_cast<ClassTemplateDecl>(InstD)) {
       D->SpecializedTemplate = CTD;
     } else {
-      llvm::SmallVector<TemplateArgument, 8> TemplArgs;
+      SmallVector<TemplateArgument, 8> TemplArgs;
       Reader.ReadTemplateArgumentList(TemplArgs, F, Record, Idx);
       TemplateArgumentList *ArgList
         = TemplateArgumentList::CreateCopy(C, TemplArgs.data(), 
@@ -1172,7 +1172,7 @@ void ASTDeclReader::VisitClassTemplateSpecializationDecl(
     D->ExplicitInfo = ExplicitInfo;
   }
 
-  llvm::SmallVector<TemplateArgument, 8> TemplArgs;
+  SmallVector<TemplateArgument, 8> TemplArgs;
   Reader.ReadTemplateArgumentList(TemplArgs, F, Record, Idx);
   D->TemplateArgs = TemplateArgumentList::CreateCopy(C, TemplArgs.data(), 
                                                      TemplArgs.size());

@@ -13,10 +13,8 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/DenseSet.h"
 #include <map>
-
 using namespace clang;
 using namespace arcmt;
-using llvm::StringRef;
 
 namespace {
 
@@ -46,9 +44,9 @@ class TransformActionsImpl {
     ActionKind Kind;
     SourceLocation Loc;
     SourceRange R1, R2;
-    llvm::StringRef Text1, Text2;
+    StringRef Text1, Text2;
     Stmt *S;
-    llvm::SmallVector<unsigned, 2> DiagIDs;
+    SmallVector<unsigned, 2> DiagIDs;
   };
 
   std::vector<ActionData> CachedActions;
@@ -104,7 +102,7 @@ class TransformActionsImpl {
     }
   };
 
-  typedef llvm::SmallVector<StringRef, 2> TextsVec;
+  typedef SmallVector<StringRef, 2> TextsVec;
   typedef std::map<FullSourceLoc, TextsVec, FullSourceLoc::BeforeThanCompare>
       InsertsMap;
   InsertsMap Inserts;
@@ -130,15 +128,15 @@ public:
 
   bool isInTransaction() const { return IsInTransaction; }
 
-  void insert(SourceLocation loc, llvm::StringRef text);
-  void insertAfterToken(SourceLocation loc, llvm::StringRef text);
+  void insert(SourceLocation loc, StringRef text);
+  void insertAfterToken(SourceLocation loc, StringRef text);
   void remove(SourceRange range);
   void removeStmt(Stmt *S);
-  void replace(SourceRange range, llvm::StringRef text);
+  void replace(SourceRange range, StringRef text);
   void replace(SourceRange range, SourceRange replacementRange);
-  void replaceStmt(Stmt *S, llvm::StringRef text);
-  void replaceText(SourceLocation loc, llvm::StringRef text,
-                   llvm::StringRef replacementText);
+  void replaceStmt(Stmt *S, StringRef text);
+  void replaceText(SourceLocation loc, StringRef text,
+                   StringRef replacementText);
   void increaseIndentation(SourceRange range,
                            SourceLocation parentIndent);
 
@@ -151,15 +149,15 @@ private:
   bool canInsertAfterToken(SourceLocation loc);
   bool canRemoveRange(SourceRange range);
   bool canReplaceRange(SourceRange range, SourceRange replacementRange);
-  bool canReplaceText(SourceLocation loc, llvm::StringRef text);
+  bool canReplaceText(SourceLocation loc, StringRef text);
 
   void commitInsert(SourceLocation loc, StringRef text);
   void commitInsertAfterToken(SourceLocation loc, StringRef text);
   void commitRemove(SourceRange range);
   void commitRemoveStmt(Stmt *S);
   void commitReplace(SourceRange range, SourceRange replacementRange);
-  void commitReplaceText(SourceLocation loc, llvm::StringRef text,
-                         llvm::StringRef replacementText);
+  void commitReplaceText(SourceLocation loc, StringRef text,
+                         StringRef replacementText);
   void commitIncreaseIndentation(SourceRange range,SourceLocation parentIndent);
   void commitClearDiagnostic(llvm::ArrayRef<unsigned> IDs, SourceRange range);
 
@@ -425,7 +423,7 @@ bool TransformActionsImpl::canReplaceText(SourceLocation loc, StringRef text) {
 
   // Try to load the file buffer.
   bool invalidTemp = false;
-  llvm::StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
+  StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
   if (invalidTemp)
     return false;
 
@@ -621,12 +619,12 @@ void TransformActions::abortTransaction() {
 }
 
 
-void TransformActions::insert(SourceLocation loc, llvm::StringRef text) {
+void TransformActions::insert(SourceLocation loc, StringRef text) {
   static_cast<TransformActionsImpl*>(Impl)->insert(loc, text);
 }
 
 void TransformActions::insertAfterToken(SourceLocation loc,
-                                        llvm::StringRef text) {
+                                        StringRef text) {
   static_cast<TransformActionsImpl*>(Impl)->insertAfterToken(loc, text);
 }
 
@@ -638,7 +636,7 @@ void TransformActions::removeStmt(Stmt *S) {
   static_cast<TransformActionsImpl*>(Impl)->removeStmt(S);
 }
 
-void TransformActions::replace(SourceRange range, llvm::StringRef text) {
+void TransformActions::replace(SourceRange range, StringRef text) {
   static_cast<TransformActionsImpl*>(Impl)->replace(range, text);
 }
 
@@ -647,12 +645,12 @@ void TransformActions::replace(SourceRange range,
   static_cast<TransformActionsImpl*>(Impl)->replace(range, replacementRange);
 }
 
-void TransformActions::replaceStmt(Stmt *S, llvm::StringRef text) {
+void TransformActions::replaceStmt(Stmt *S, StringRef text) {
   static_cast<TransformActionsImpl*>(Impl)->replaceStmt(S, text);
 }
 
-void TransformActions::replaceText(SourceLocation loc, llvm::StringRef text,
-                                   llvm::StringRef replacementText) {
+void TransformActions::replaceText(SourceLocation loc, StringRef text,
+                                   StringRef replacementText) {
   static_cast<TransformActionsImpl*>(Impl)->replaceText(loc, text,
                                                         replacementText);
 }
@@ -672,7 +670,7 @@ void TransformActions::applyRewrites(RewriteReceiver &receiver) {
   static_cast<TransformActionsImpl*>(Impl)->applyRewrites(receiver);
 }
 
-void TransformActions::reportError(llvm::StringRef error, SourceLocation loc,
+void TransformActions::reportError(StringRef error, SourceLocation loc,
                                    SourceRange range) {
   assert(!static_cast<TransformActionsImpl*>(Impl)->isInTransaction() &&
          "Errors should be emitted out of a transaction");
@@ -686,7 +684,7 @@ void TransformActions::reportError(llvm::StringRef error, SourceLocation loc,
   ReportedErrors = true;
 }
 
-void TransformActions::reportNote(llvm::StringRef note, SourceLocation loc,
+void TransformActions::reportNote(StringRef note, SourceLocation loc,
                                   SourceRange range) {
   assert(!static_cast<TransformActionsImpl*>(Impl)->isInTransaction() &&
          "Errors should be emitted out of a transaction");

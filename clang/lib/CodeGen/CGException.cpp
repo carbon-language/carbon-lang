@@ -131,7 +131,7 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
   llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.VoidTy, /*IsVarArgs=*/false);
 
-  llvm::StringRef name;
+  StringRef name;
 
   // In C++, use std::terminate().
   if (CGF.getLangOptions().CPlusPlus)
@@ -145,7 +145,7 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
 }
 
 static llvm::Constant *getCatchallRethrowFn(CodeGenFunction &CGF,
-                                            llvm::StringRef Name) {
+                                            StringRef Name) {
   llvm::Type *ArgTys[] = { CGF.Int8PtrTy };
   llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGF.VoidTy, ArgTys, /*IsVarArgs=*/false);
@@ -665,7 +665,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   Builder.CreateStore(Exn, getExceptionSlot());
   
   // Build the selector arguments.
-  llvm::SmallVector<llvm::Value*, 8> EHSelector;
+  SmallVector<llvm::Value*, 8> EHSelector;
   EHSelector.push_back(Exn);
   EHSelector.push_back(getOpaquePersonalityFn(CGM, Personality));
 
@@ -674,7 +674,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   UnwindDest CatchAll;
   bool HasEHCleanup = false;
   bool HasEHFilter = false;
-  llvm::SmallVector<llvm::Value*, 8> EHFilters;
+  SmallVector<llvm::Value*, 8> EHFilters;
   for (EHScopeStack::iterator I = EHStack.begin(), E = EHStack.end();
          I != E; ++I) {
 
@@ -1153,7 +1153,7 @@ void CodeGenFunction::ExitCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
 
   // Copy the handler blocks off before we pop the EH stack.  Emitting
   // the handlers might scribble on this memory.
-  llvm::SmallVector<EHCatchScope::Handler, 8> Handlers(NumHandlers);
+  SmallVector<EHCatchScope::Handler, 8> Handlers(NumHandlers);
   memcpy(Handlers.data(), CatchScope.begin(),
          NumHandlers * sizeof(EHCatchScope::Handler));
   EHStack.popCatch();
@@ -1464,7 +1464,7 @@ CodeGenFunction::UnwindDest CodeGenFunction::getRethrowDest() {
 
   // This can always be a call because we necessarily didn't find
   // anything on the EH stack which needs our help.
-  llvm::StringRef RethrowName = Personality.getCatchallRethrowFnName();
+  StringRef RethrowName = Personality.getCatchallRethrowFnName();
   if (!RethrowName.empty()) {
     Builder.CreateCall(getCatchallRethrowFn(*this, RethrowName),
                        Builder.CreateLoad(getExceptionSlot()))

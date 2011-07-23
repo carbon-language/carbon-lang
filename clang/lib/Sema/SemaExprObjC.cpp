@@ -42,7 +42,7 @@ ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
   if (NumStrings != 1) {
     // Concatenate objc strings.
     llvm::SmallString<128> StrBuf;
-    llvm::SmallVector<SourceLocation, 8> StrLocs;
+    SmallVector<SourceLocation, 8> StrLocs;
 
     for (unsigned i = 0; i != NumStrings; ++i) {
       S = Strings[i];

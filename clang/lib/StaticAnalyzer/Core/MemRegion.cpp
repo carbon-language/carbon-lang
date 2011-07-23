@@ -398,69 +398,69 @@ std::string MemRegion::getString() const {
   return os.str();
 }
 
-void MemRegion::dumpToStream(llvm::raw_ostream& os) const {
+void MemRegion::dumpToStream(raw_ostream& os) const {
   os << "<Unknown Region>";
 }
 
-void AllocaRegion::dumpToStream(llvm::raw_ostream& os) const {
+void AllocaRegion::dumpToStream(raw_ostream& os) const {
   os << "alloca{" << (void*) Ex << ',' << Cnt << '}';
 }
 
-void FunctionTextRegion::dumpToStream(llvm::raw_ostream& os) const {
+void FunctionTextRegion::dumpToStream(raw_ostream& os) const {
   os << "code{" << getDecl()->getDeclName().getAsString() << '}';
 }
 
-void BlockTextRegion::dumpToStream(llvm::raw_ostream& os) const {
+void BlockTextRegion::dumpToStream(raw_ostream& os) const {
   os << "block_code{" << (void*) this << '}';
 }
 
-void BlockDataRegion::dumpToStream(llvm::raw_ostream& os) const {
+void BlockDataRegion::dumpToStream(raw_ostream& os) const {
   os << "block_data{" << BC << '}';
 }
 
-void CompoundLiteralRegion::dumpToStream(llvm::raw_ostream& os) const {
+void CompoundLiteralRegion::dumpToStream(raw_ostream& os) const {
   // FIXME: More elaborate pretty-printing.
   os << "{ " << (void*) CL <<  " }";
 }
 
-void CXXTempObjectRegion::dumpToStream(llvm::raw_ostream &os) const {
+void CXXTempObjectRegion::dumpToStream(raw_ostream &os) const {
   os << "temp_object";
 }
 
-void CXXBaseObjectRegion::dumpToStream(llvm::raw_ostream &os) const {
+void CXXBaseObjectRegion::dumpToStream(raw_ostream &os) const {
   os << "base " << decl->getName();
 }
 
-void CXXThisRegion::dumpToStream(llvm::raw_ostream &os) const {
+void CXXThisRegion::dumpToStream(raw_ostream &os) const {
   os << "this";
 }
 
-void ElementRegion::dumpToStream(llvm::raw_ostream& os) const {
+void ElementRegion::dumpToStream(raw_ostream& os) const {
   os << "element{" << superRegion << ','
      << Index << ',' << getElementType().getAsString() << '}';
 }
 
-void FieldRegion::dumpToStream(llvm::raw_ostream& os) const {
+void FieldRegion::dumpToStream(raw_ostream& os) const {
   os << superRegion << "->" << getDecl();
 }
 
-void NonStaticGlobalSpaceRegion::dumpToStream(llvm::raw_ostream &os) const {
+void NonStaticGlobalSpaceRegion::dumpToStream(raw_ostream &os) const {
   os << "NonStaticGlobalSpaceRegion";
 }
 
-void ObjCIvarRegion::dumpToStream(llvm::raw_ostream& os) const {
+void ObjCIvarRegion::dumpToStream(raw_ostream& os) const {
   os << "ivar{" << superRegion << ',' << getDecl() << '}';
 }
 
-void StringRegion::dumpToStream(llvm::raw_ostream& os) const {
+void StringRegion::dumpToStream(raw_ostream& os) const {
   Str->printPretty(os, 0, PrintingPolicy(getContext().getLangOptions()));
 }
 
-void SymbolicRegion::dumpToStream(llvm::raw_ostream& os) const {
+void SymbolicRegion::dumpToStream(raw_ostream& os) const {
   os << "SymRegion{" << sym << '}';
 }
 
-void VarRegion::dumpToStream(llvm::raw_ostream& os) const {
+void VarRegion::dumpToStream(raw_ostream& os) const {
   os << cast<VarDecl>(D);
 }
 
@@ -468,11 +468,11 @@ void RegionRawOffset::dump() const {
   dumpToStream(llvm::errs());
 }
 
-void RegionRawOffset::dumpToStream(llvm::raw_ostream& os) const {
+void RegionRawOffset::dumpToStream(raw_ostream& os) const {
   os << "raw_offset{" << getRegion() << ',' << getOffset().getQuantity() << '}';
 }
 
-void StaticGlobalSpaceRegion::dumpToStream(llvm::raw_ostream &os) const {
+void StaticGlobalSpaceRegion::dumpToStream(raw_ostream &os) const {
   os << "StaticGlobalsMemSpace{" << CR << '}';
 }
 

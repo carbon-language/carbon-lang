@@ -159,7 +159,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   return false;
 }
 
-bool PCHValidator::ReadTargetTriple(llvm::StringRef Triple) {
+bool PCHValidator::ReadTargetTriple(StringRef Triple) {
   if (Triple == PP.getTargetInfo().getTriple().str())
     return false;
 
@@ -170,14 +170,14 @@ bool PCHValidator::ReadTargetTriple(llvm::StringRef Triple) {
 
 namespace {
   struct EmptyStringRef {
-    bool operator ()(llvm::StringRef r) const { return r.empty(); }
+    bool operator ()(StringRef r) const { return r.empty(); }
   };
   struct EmptyBlock {
     bool operator ()(const PCHPredefinesBlock &r) const {return r.Data.empty();}
   };
 }
 
-static bool EqualConcatenations(llvm::SmallVector<llvm::StringRef, 2> L,
+static bool EqualConcatenations(SmallVector<StringRef, 2> L,
                                 PCHPredefinesBlocks R) {
   // First, sum up the lengths.
   unsigned LL = 0, RL = 0;
@@ -197,7 +197,7 @@ static bool EqualConcatenations(llvm::SmallVector<llvm::StringRef, 2> L,
   R.erase(std::remove_if(R.begin(), R.end(), EmptyBlock()), R.end());
 
   // Do it the hard way. At this point, both vectors must be non-empty.
-  llvm::StringRef LR = L[0], RR = R[0].Data;
+  StringRef LR = L[0], RR = R[0].Data;
   unsigned LI = 0, RI = 0, LN = L.size(), RN = R.size();
   (void) RN;
   for (;;) {
@@ -237,12 +237,12 @@ static bool EqualConcatenations(llvm::SmallVector<llvm::StringRef, 2> L,
   }
 }
 
-static std::pair<FileID, llvm::StringRef::size_type>
-FindMacro(const PCHPredefinesBlocks &Buffers, llvm::StringRef MacroDef) {
-  std::pair<FileID, llvm::StringRef::size_type> Res;
+static std::pair<FileID, StringRef::size_type>
+FindMacro(const PCHPredefinesBlocks &Buffers, StringRef MacroDef) {
+  std::pair<FileID, StringRef::size_type> Res;
   for (unsigned I = 0, N = Buffers.size(); I != N; ++I) {
     Res.second = Buffers[I].Data.find(MacroDef);
-    if (Res.second != llvm::StringRef::npos) {
+    if (Res.second != StringRef::npos) {
       Res.first = Buffers[I].BufferID;
       break;
     }
@@ -251,7 +251,7 @@ FindMacro(const PCHPredefinesBlocks &Buffers, llvm::StringRef MacroDef) {
 }
 
 bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
-                                        llvm::StringRef OriginalFileName,
+                                        StringRef OriginalFileName,
                                         std::string &SuggestedPredefines,
                                         FileManager &FileMgr) {
   // We are in the context of an implicit include, so the predefines buffer will
@@ -262,9 +262,9 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
   PCHInclude += "#include \"";
   PCHInclude += NormalizeDashIncludePath(OriginalFileName, FileMgr);
   PCHInclude += "\"\n";
-  std::pair<llvm::StringRef,llvm::StringRef> Split =
-    llvm::StringRef(PP.getPredefines()).split(PCHInclude.str());
-  llvm::StringRef Left =  Split.first, Right = Split.second;
+  std::pair<StringRef,StringRef> Split =
+    StringRef(PP.getPredefines()).split(PCHInclude.str());
+  StringRef Left =  Split.first, Right = Split.second;
   if (Left == PP.getPredefines()) {
     Error("Missing PCH include entry!");
     return true;
@@ -272,7 +272,7 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
 
   // If the concatenation of all the PCH buffers is equal to the adjusted
   // command line, we're done.
-  llvm::SmallVector<llvm::StringRef, 2> CommandLine;
+  SmallVector<StringRef, 2> CommandLine;
   CommandLine.push_back(Left);
   CommandLine.push_back(Right);
   if (EqualConcatenations(CommandLine, Buffers))
@@ -282,18 +282,18 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
 
   // The predefines buffers are different. Determine what the differences are,
   // and whether they require us to reject the PCH file.
-  llvm::SmallVector<llvm::StringRef, 8> PCHLines;
+  SmallVector<StringRef, 8> PCHLines;
   for (unsigned I = 0, N = Buffers.size(); I != N; ++I)
     Buffers[I].Data.split(PCHLines, "\n", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
 
-  llvm::SmallVector<llvm::StringRef, 8> CmdLineLines;
+  SmallVector<StringRef, 8> CmdLineLines;
   Left.split(CmdLineLines, "\n", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
 
   // Pick out implicit #includes after the PCH and don't consider them for
   // validation; we will insert them into SuggestedPredefines so that the
   // preprocessor includes them.
   std::string IncludesAfterPCH;
-  llvm::SmallVector<llvm::StringRef, 8> AfterPCHLines;
+  SmallVector<StringRef, 8> AfterPCHLines;
   Right.split(AfterPCHLines, "\n", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
   for (unsigned i = 0, e = AfterPCHLines.size(); i != e; ++i) {
     if (AfterPCHLines[i].startswith("#include ")) {
@@ -326,7 +326,7 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
 
   // Determine which predefines that were used to build the PCH file are missing
   // from the command line.
-  std::vector<llvm::StringRef> MissingPredefines;
+  std::vector<StringRef> MissingPredefines;
   std::set_difference(PCHLines.begin(), PCHLines.end(),
                       CmdLineLines.begin(), CmdLineLines.end(),
                       std::back_inserter(MissingPredefines));
@@ -334,7 +334,7 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
   bool MissingDefines = false;
   bool ConflictingDefines = false;
   for (unsigned I = 0, N = MissingPredefines.size(); I != N; ++I) {
-    llvm::StringRef Missing = MissingPredefines[I];
+    StringRef Missing = MissingPredefines[I];
     if (Missing.startswith("#include ")) {
       // An -include was specified when generating the PCH; it is included in
       // the PCH, just ignore it.
@@ -352,13 +352,13 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
       = Missing.find_first_of("( \n\r", StartOfMacroName);
     assert(EndOfMacroName != std::string::npos &&
            "Couldn't find the end of the macro name");
-    llvm::StringRef MacroName = Missing.slice(StartOfMacroName, EndOfMacroName);
+    StringRef MacroName = Missing.slice(StartOfMacroName, EndOfMacroName);
 
     // Determine whether this macro was given a different definition on the
     // command line.
     std::string MacroDefStart = "#define " + MacroName.str();
     std::string::size_type MacroDefLen = MacroDefStart.size();
-    llvm::SmallVector<llvm::StringRef, 8>::iterator ConflictPos
+    SmallVector<StringRef, 8>::iterator ConflictPos
       = std::lower_bound(CmdLineLines.begin(), CmdLineLines.end(),
                          MacroDefStart);
     for (; ConflictPos != CmdLineLines.end(); ++ConflictPos) {
@@ -383,9 +383,9 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
           << MacroName;
 
       // Show the definition of this macro within the PCH file.
-      std::pair<FileID, llvm::StringRef::size_type> MacroLoc =
+      std::pair<FileID, StringRef::size_type> MacroLoc =
           FindMacro(Buffers, Missing);
-      assert(MacroLoc.second!=llvm::StringRef::npos && "Unable to find macro!");
+      assert(MacroLoc.second!=StringRef::npos && "Unable to find macro!");
       SourceLocation PCHMissingLoc =
           SourceMgr.getLocForStartOfFile(MacroLoc.first)
             .getFileLocWithOffset(MacroLoc.second);
@@ -406,9 +406,9 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
     }
 
     // Show the definition of this macro within the PCH file.
-    std::pair<FileID, llvm::StringRef::size_type> MacroLoc =
+    std::pair<FileID, StringRef::size_type> MacroLoc =
         FindMacro(Buffers, Missing);
-    assert(MacroLoc.second!=llvm::StringRef::npos && "Unable to find macro!");
+    assert(MacroLoc.second!=StringRef::npos && "Unable to find macro!");
     SourceLocation PCHMissingLoc =
         SourceMgr.getLocForStartOfFile(MacroLoc.first)
           .getFileLocWithOffset(MacroLoc.second);
@@ -422,12 +422,12 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
   // parameters that were not present when building the PCH
   // file. Extra #defines are okay, so long as the identifiers being
   // defined were not used within the precompiled header.
-  std::vector<llvm::StringRef> ExtraPredefines;
+  std::vector<StringRef> ExtraPredefines;
   std::set_difference(CmdLineLines.begin(), CmdLineLines.end(),
                       PCHLines.begin(), PCHLines.end(),
                       std::back_inserter(ExtraPredefines));
   for (unsigned I = 0, N = ExtraPredefines.size(); I != N; ++I) {
-    llvm::StringRef &Extra = ExtraPredefines[I];
+    StringRef &Extra = ExtraPredefines[I];
     if (!Extra.startswith("#define ")) {
       Reader.Diag(diag::warn_pch_compiler_options_mismatch);
       return true;
@@ -440,7 +440,7 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
       = Extra.find_first_of("( \n\r", StartOfMacroName);
     assert(EndOfMacroName != std::string::npos &&
            "Couldn't find the end of the macro name");
-    llvm::StringRef MacroName = Extra.slice(StartOfMacroName, EndOfMacroName);
+    StringRef MacroName = Extra.slice(StartOfMacroName, EndOfMacroName);
 
     // Check whether this name was used somewhere in the PCH file. If
     // so, defining it as a macro could change behavior, so we reject
@@ -529,7 +529,7 @@ public:
     else if (N == 1)
       return SelTable.getUnarySelector(FirstII);
 
-    llvm::SmallVector<IdentifierInfo *, 16> Args;
+    SmallVector<IdentifierInfo *, 16> Args;
     Args.push_back(FirstII);
     for (unsigned I = 1; I != N; ++I)
       Args.push_back(Reader.DecodeIdentifierInfo(ReadUnalignedLE32(d)));
@@ -620,7 +620,7 @@ public:
   }
 
   static unsigned ComputeHash(const internal_key_type& a) {
-    return llvm::HashString(llvm::StringRef(a.first, a.second));
+    return llvm::HashString(StringRef(a.first, a.second));
   }
 
   // This hopefully will just get inlined and removed by the optimizer.
@@ -660,7 +660,7 @@ public:
       // and associate it with the persistent ID.
       IdentifierInfo *II = KnownII;
       if (!II)
-        II = &Reader.getIdentifierTable().getOwn(llvm::StringRef(k.first,
+        II = &Reader.getIdentifierTable().getOwn(StringRef(k.first,
                                                                  k.second));
       Reader.SetIdentifierInfo(ID, II);
       II->setIsFromAST();
@@ -688,7 +688,7 @@ public:
     // the new IdentifierInfo.
     IdentifierInfo *II = KnownII;
     if (!II)
-      II = &Reader.getIdentifierTable().getOwn(llvm::StringRef(k.first,
+      II = &Reader.getIdentifierTable().getOwn(StringRef(k.first,
                                                                k.second));
     Reader.SetIdentifierInfo(ID, II);
 
@@ -717,7 +717,7 @@ public:
     // name.
     if (Reader.getContext() == 0) return II;
     if (DataLen > 0) {
-      llvm::SmallVector<uint32_t, 4> DeclIDs;
+      SmallVector<uint32_t, 4> DeclIDs;
       for (; DataLen > 0; DataLen -= 4)
         DeclIDs.push_back(Reader.getGlobalDeclID(F, ReadUnalignedLE32(d)));
       Reader.SetGloballyVisibleDecls(II, DeclIDs);
@@ -968,12 +968,12 @@ bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
   return false;
 }
 
-void ASTReader::Error(llvm::StringRef Msg) {
+void ASTReader::Error(StringRef Msg) {
   Error(diag::err_fe_pch_malformed, Msg);
 }
 
 void ASTReader::Error(unsigned DiagID,
-                      llvm::StringRef Arg1, llvm::StringRef Arg2) {
+                      StringRef Arg1, StringRef Arg2) {
   if (Diags.isDiagnosticInFlight())
     Diags.SetDelayedDiagnostic(DiagID, Arg1, Arg2);
   else
@@ -997,7 +997,7 @@ bool ASTReader::CheckPredefinesBuffers() {
 /// \brief Read the line table in the source manager block.
 /// \returns true if there was an error.
 bool ASTReader::ParseLineTable(Module &F,
-                               llvm::SmallVectorImpl<uint64_t> &Record) {
+                               SmallVectorImpl<uint64_t> &Record) {
   unsigned Idx = 0;
   LineTableInfo &LineTable = SourceMgr.getLineTable();
 
@@ -1341,7 +1341,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
     }
 
     llvm::MemoryBuffer *Buffer
-    = llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(BlobStart, BlobLen - 1),
+    = llvm::MemoryBuffer::getMemBuffer(StringRef(BlobStart, BlobLen - 1),
                                        Name);
     FileID BufferID = SourceMgr.createFileIDForMemBuffer(Buffer, ID,
                                                          BaseOffset + Offset);
@@ -1349,7 +1349,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
     if (strcmp(Name, "<built-in>") == 0) {
       PCHPredefinesBlock Block = {
         BufferID,
-        llvm::StringRef(BlobStart, BlobLen - 1)
+        StringRef(BlobStart, BlobLen - 1)
       };
       PCHPredefinesBuffers.push_back(Block);
     }
@@ -1422,7 +1422,7 @@ PreprocessedEntity *ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
 
   Stream.JumpToBit(Offset);
   RecordData Record;
-  llvm::SmallVector<IdentifierInfo*, 16> MacroArgs;
+  SmallVector<IdentifierInfo*, 16> MacroArgs;
   MacroInfo *Macro = 0;
 
   while (true) {
@@ -1614,7 +1614,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
     
     const char *FullFileNameStart = BlobStart + Record[3];
     const FileEntry *File
-      = PP->getFileManager().getFile(llvm::StringRef(FullFileNameStart,
+      = PP->getFileManager().getFile(StringRef(FullFileNameStart,
                                                      BlobLen - Record[3]));
     
     // FIXME: Stable encoding
@@ -1622,7 +1622,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
       = static_cast<InclusionDirective::InclusionKind>(Record[5]);
     InclusionDirective *ID
       = new (PPRec) InclusionDirective(PPRec, Kind,
-                                       llvm::StringRef(BlobStart, Record[3]),
+                                       StringRef(BlobStart, Record[3]),
                                        Record[4],
                                        File,
                                  SourceRange(ReadSourceLocation(F, Record[1]),
@@ -1831,7 +1831,7 @@ MacroDefinition *ASTReader::getMacroDefinition(MacroID ID) {
   return MacroDefinitionsLoaded[ID - 1];
 }
 
-const FileEntry *ASTReader::getFileEntry(llvm::StringRef filenameStrRef) {
+const FileEntry *ASTReader::getFileEntry(StringRef filenameStrRef) {
   std::string Filename = filenameStrRef;
   MaybeAddSystemRootToFilename(Filename);
   const FileEntry *File = FileMgr.getFile(Filename);
@@ -2003,7 +2003,7 @@ ASTReader::ReadASTBlock(Module &F) {
 
       // Load the chained file, which is always a PCH file.
       // FIXME: This could end up being a module.
-      switch(ReadASTCore(llvm::StringRef(BlobStart, BlobLen), MK_PCH)) {
+      switch(ReadASTCore(StringRef(BlobStart, BlobLen), MK_PCH)) {
       case Failure: return Failure;
         // If we have to ignore the dependency, we'll have to ignore this too.
       case IgnorePCH: return IgnorePCH;
@@ -2222,7 +2222,7 @@ ASTReader::ReadASTBlock(Module &F) {
       while(Data < DataEnd) {
         uint32_t Offset = io::ReadUnalignedLE32(Data);
         uint16_t Len = io::ReadUnalignedLE16(Data);
-        llvm::StringRef Name = llvm::StringRef((const char*)Data, Len);
+        StringRef Name = StringRef((const char*)Data, Len);
         Module *OM = Modules.lookup(Name);
         if (!OM) {
           Error("SourceLocation remap refers to unknown module");
@@ -2319,8 +2319,8 @@ ASTReader::ReadASTBlock(Module &F) {
 
     case VERSION_CONTROL_BRANCH_REVISION: {
       const std::string &CurBranch = getClangFullRepositoryVersion();
-      llvm::StringRef ASTBranch(BlobStart, BlobLen);
-      if (llvm::StringRef(CurBranch) != ASTBranch && !DisableValidation) {
+      StringRef ASTBranch(BlobStart, BlobLen);
+      if (StringRef(CurBranch) != ASTBranch && !DisableValidation) {
         Diag(diag::warn_pch_different_branch) << ASTBranch << CurBranch;
         return IgnorePCH;
       }
@@ -2488,7 +2488,7 @@ ASTReader::ASTReadResult ASTReader::validateFileEntries() {
         return Failure;
   
       case SM_SLOC_FILE_ENTRY: {
-        llvm::StringRef Filename(BlobStart, BlobLen);
+        StringRef Filename(BlobStart, BlobLen);
         const FileEntry *File = getFileEntry(Filename);
 
         if (File == 0) {
@@ -2576,7 +2576,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     // since de-serializing declarations or macro definitions can add
     // new entries into the identifier table, invalidating the
     // iterators.
-    llvm::SmallVector<IdentifierInfo *, 128> Identifiers;
+    SmallVector<IdentifierInfo *, 128> Identifiers;
     for (IdentifierTable::iterator Id = PP->getIdentifierTable().begin(),
                                 IdEnd = PP->getIdentifierTable().end();
          Id != IdEnd; ++Id)
@@ -2633,7 +2633,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   return Success;
 }
 
-ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
+ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
                                                 ModuleKind Type) {
   Module *Prev = Chain.empty() ? 0 : Chain.back();
   Chain.push_back(new Module(Type));
@@ -2975,7 +2975,7 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
 ///
 /// \returns true if the listener deems the file unacceptable, false otherwise.
 bool ASTReader::ParseLanguageOptions(
-                             const llvm::SmallVectorImpl<uint64_t> &Record) {
+                             const SmallVectorImpl<uint64_t> &Record) {
   if (Listener) {
     LangOptions LangOpts;
 
@@ -3305,7 +3305,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
 
     unsigned Idx = 6;
     unsigned NumParams = Record[Idx++];
-    llvm::SmallVector<QualType, 16> ParamTypes;
+    SmallVector<QualType, 16> ParamTypes;
     for (unsigned I = 0; I != NumParams; ++I)
       ParamTypes.push_back(readType(*Loc.F, Record, Idx));
 
@@ -3317,7 +3317,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     EPI.ExceptionSpecType = EST;
     if (EST == EST_Dynamic) {
       EPI.NumExceptions = Record[Idx++];
-      llvm::SmallVector<QualType, 2> Exceptions;
+      SmallVector<QualType, 2> Exceptions;
       for (unsigned I = 0; I != EPI.NumExceptions; ++I)
         Exceptions.push_back(readType(*Loc.F, Record, Idx));
       EPI.Exceptions = Exceptions.data();
@@ -3451,7 +3451,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     unsigned Idx = 0;
     QualType Base = readType(*Loc.F, Record, Idx);
     unsigned NumProtos = Record[Idx++];
-    llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
+    SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(ReadDeclAs<ObjCProtocolDecl>(*Loc.F, Record, Idx));
     return Context->getObjCObjectType(Base, Protos.data(), NumProtos);
@@ -3517,7 +3517,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(*Loc.F, Record, Idx);
     const IdentifierInfo *Name = this->GetIdentifierInfo(Record, Idx);
     unsigned NumArgs = Record[Idx++];
-    llvm::SmallVector<TemplateArgument, 8> Args;
+    SmallVector<TemplateArgument, 8> Args;
     Args.reserve(NumArgs);
     while (NumArgs--)
       Args.push_back(ReadTemplateArgument(*Loc.F, Record, Idx));
@@ -3546,7 +3546,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     unsigned Idx = 0;
     bool IsDependent = Record[Idx++];
     TemplateName Name = ReadTemplateName(*Loc.F, Record, Idx);
-    llvm::SmallVector<TemplateArgument, 8> Args;
+    SmallVector<TemplateArgument, 8> Args;
     ReadTemplateArgumentList(Args, *Loc.F, Record, Idx);
     QualType Underlying = readType(*Loc.F, Record, Idx);
     QualType T;
@@ -4060,7 +4060,7 @@ Stmt *ASTReader::GetExternalDeclStmt(uint64_t Offset) {
 
 ExternalLoadResult ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
                                          bool (*isKindWeWant)(Decl::Kind),
-                                         llvm::SmallVectorImpl<Decl*> &Decls) {
+                                         SmallVectorImpl<Decl*> &Decls) {
   // There might be lexical decls in multiple parts of the chain, for the TU
   // at least.
   // DeclContextOffsets might reallocate as we load additional decls below,
@@ -4097,7 +4097,7 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
     return DeclContext::lookup_result(DeclContext::lookup_iterator(0),
                                       DeclContext::lookup_iterator(0));
 
-  llvm::SmallVector<NamedDecl *, 64> Decls;
+  SmallVector<NamedDecl *, 64> Decls;
   // There might be visible decls in multiple parts of the chain, for the TU
   // and namespaces. For any given name, the last available results replace
   // all earlier ones. For this reason, we walk in reverse.
@@ -4129,7 +4129,7 @@ void ASTReader::MaterializeVisibleDecls(const DeclContext *DC) {
   assert(DC->hasExternalVisibleStorage() &&
          "DeclContext has no visible decls in storage");
 
-  llvm::SmallVector<NamedDecl *, 64> Decls;
+  SmallVector<NamedDecl *, 64> Decls;
   // There might be visible decls in multiple parts of the chain, for the TU
   // and namespaces.
   DeclContextInfos &Infos = DeclContextOffsets[DC];
@@ -4250,7 +4250,7 @@ void ASTReader::PrintStats() {
 
 template<typename Key, typename Module, unsigned InitialCapacity>
 static void 
-dumpModuleIDMap(llvm::StringRef Name,
+dumpModuleIDMap(StringRef Name,
                 const ContinuousRangeMap<Key, Module *, 
                                          InitialCapacity> &Map) {
   if (Map.begin() == Map.end())
@@ -4268,7 +4268,7 @@ dumpModuleIDMap(llvm::StringRef Name,
 template<typename Key, typename Module, typename Adjustment, 
          unsigned InitialCapacity>
 static void 
-dumpModuleIDOffsetMap(llvm::StringRef Name,
+dumpModuleIDOffsetMap(StringRef Name,
                       const ContinuousRangeMap<Key, 
                                                std::pair<Module *, 
                                                          Adjustment>, 
@@ -4499,7 +4499,7 @@ namespace clang {
   public:
     explicit ASTIdentifierIterator(const ASTReader &Reader);
 
-    virtual llvm::StringRef Next();
+    virtual StringRef Next();
   };
 }
 
@@ -4511,11 +4511,11 @@ ASTIdentifierIterator::ASTIdentifierIterator(const ASTReader &Reader)
   End = IdTable->key_end();
 }
 
-llvm::StringRef ASTIdentifierIterator::Next() {
+StringRef ASTIdentifierIterator::Next() {
   while (Current == End) {
     // If we have exhausted all of our AST files, we're done.
     if (Index == 0)
-      return llvm::StringRef();
+      return StringRef();
 
     --Index;
     ASTIdentifierLookupTable *IdTable
@@ -4528,7 +4528,7 @@ llvm::StringRef ASTIdentifierIterator::Next() {
   // the next one.
   std::pair<const char*, unsigned> Key = *Current;
   ++Current;
-  return llvm::StringRef(Key.first, Key.second);
+  return StringRef(Key.first, Key.second);
 }
 
 IdentifierIterator *ASTReader::getIdentifiers() const {
@@ -4564,7 +4564,7 @@ ASTReader::ReadMethodPool(Selector Sel) {
 }
 
 void ASTReader::ReadKnownNamespaces(
-                          llvm::SmallVectorImpl<NamespaceDecl *> &Namespaces) {
+                          SmallVectorImpl<NamespaceDecl *> &Namespaces) {
   Namespaces.clear();
   
   for (unsigned I = 0, N = KnownNamespaces.size(); I != N; ++I) {
@@ -4605,7 +4605,7 @@ void ASTReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {
 /// will not be placed onto the pending queue.
 void
 ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
-                              const llvm::SmallVectorImpl<uint32_t> &DeclIDs,
+                              const SmallVectorImpl<uint32_t> &DeclIDs,
                                    bool Nonrecursive) {
   if (NumCurrentElementsDeserializing && !Nonrecursive) {
     PendingIdentifierInfos.push_back(PendingIdentifierInfo());
@@ -4661,7 +4661,7 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(unsigned ID) {
     unsigned StrLen = (((unsigned) StrLenPtr[0])
                        | (((unsigned) StrLenPtr[1]) << 8)) - 1;
     IdentifiersLoaded[ID]
-      = &PP->getIdentifierTable().get(llvm::StringRef(Str, StrLen));
+      = &PP->getIdentifierTable().get(StringRef(Str, StrLen));
     if (DeserializationListener)
       DeserializationListener->IdentifierRead(ID + 1, IdentifiersLoaded[ID]);
   }
@@ -4909,7 +4909,7 @@ ASTReader::ReadTemplateParameterList(Module &F,
   SourceLocation RAngleLoc = ReadSourceLocation(F, Record, Idx);
 
   unsigned NumParams = Record[Idx++];
-  llvm::SmallVector<NamedDecl *, 16> Params;
+  SmallVector<NamedDecl *, 16> Params;
   Params.reserve(NumParams);
   while (NumParams--)
     Params.push_back(ReadDeclAs<NamedDecl>(F, Record, Idx));
@@ -4922,7 +4922,7 @@ ASTReader::ReadTemplateParameterList(Module &F,
 
 void
 ASTReader::
-ReadTemplateArgumentList(llvm::SmallVector<TemplateArgument, 8> &TemplArgs,
+ReadTemplateArgumentList(SmallVector<TemplateArgument, 8> &TemplArgs,
                          Module &F, const RecordData &Record,
                          unsigned &Idx) {
   unsigned NumTemplateArgs = Record[Idx++];
@@ -5001,7 +5001,7 @@ ASTReader::ReadCXXCtorInitializers(Module &F, const RecordData &Record,
       SourceLocation RParenLoc = ReadSourceLocation(F, Record, Idx);
       bool IsWritten = Record[Idx++];
       unsigned SourceOrderOrNumArrayIndices;
-      llvm::SmallVector<VarDecl *, 8> Indices;
+      SmallVector<VarDecl *, 8> Indices;
       if (IsWritten) {
         SourceOrderOrNumArrayIndices = Record[Idx++];
       } else {

@@ -410,7 +410,7 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType,
 
   QualType UnwrappedSrcType = Self.Context.getCanonicalType(SrcType), 
            UnwrappedDestType = Self.Context.getCanonicalType(DestType);
-  llvm::SmallVector<Qualifiers, 8> cv1, cv2;
+  SmallVector<Qualifiers, 8> cv1, cv2;
 
   // Find the qualifiers. We only care about cvr-qualifiers for the 
   // purpose of this check, because other qualifiers (address spaces, 
@@ -442,7 +442,7 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType,
   QualType SrcConstruct = Self.Context.VoidTy;
   QualType DestConstruct = Self.Context.VoidTy;
   ASTContext &Context = Self.Context;
-  for (llvm::SmallVector<Qualifiers, 8>::reverse_iterator i1 = cv1.rbegin(),
+  for (SmallVector<Qualifiers, 8>::reverse_iterator i1 = cv1.rbegin(),
                                                           i2 = cv2.rbegin();
        i1 != cv1.rend(); ++i1, ++i2) {
     SrcConstruct

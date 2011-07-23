@@ -818,7 +818,7 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
   if (Ctx->isFunctionOrMethod())
     return getNameAsString();
 
-  typedef llvm::SmallVector<const DeclContext *, 8> ContextsTy;
+  typedef SmallVector<const DeclContext *, 8> ContextsTy;
   ContextsTy Contexts;
 
   // Collect contexts.
@@ -2387,7 +2387,7 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
   // Notify that we have a RecordDecl doing some initialization.
   ExternalASTSource::Deserializing TheFields(Source);
 
-  llvm::SmallVector<Decl*, 64> Decls;
+  SmallVector<Decl*, 64> Decls;
   LoadedFieldsFromExternalStorage = true;  
   switch (Source->FindExternalLexicalDeclsBy<FieldDecl>(this, Decls)) {
   case ELR_Success:

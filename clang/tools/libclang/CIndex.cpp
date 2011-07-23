@@ -161,7 +161,7 @@ public:
   static bool classof(VisitorJob *VJ) { return true; }
 };
   
-typedef llvm::SmallVector<VisitorJob, 10> VisitorWorkList;
+typedef SmallVector<VisitorJob, 10> VisitorWorkList;
 
 // Cursor visitor.
 class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
@@ -203,8 +203,8 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   DeclContext::decl_iterator DE_current;
 
   // Cache of pre-allocated worklists for data-recursion walk of Stmts.
-  llvm::SmallVector<VisitorWorkList*, 5> WorkListFreeList;
-  llvm::SmallVector<VisitorWorkList*, 5> WorkListCache;
+  SmallVector<VisitorWorkList*, 5> WorkListFreeList;
+  SmallVector<VisitorWorkList*, 5> WorkListCache;
 
   using DeclVisitor<CursorVisitor, bool>::Visit;
   using TypeLocVisitor<CursorVisitor, bool>::Visit;
@@ -256,7 +256,7 @@ public:
 
   ~CursorVisitor() {
     // Free the pre-allocated worklists for data-recursion.
-    for (llvm::SmallVectorImpl<VisitorWorkList*>::iterator
+    for (SmallVectorImpl<VisitorWorkList*>::iterator
           I = WorkListCache.begin(), E = WorkListCache.end(); I != E; ++I) {
       delete *I;
     }
@@ -806,7 +806,7 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
   if (ND->doesThisDeclarationHaveABody() && !ND->isLateTemplateParsed()) {
     if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(ND)) {
       // Find the initializers that were written in the source.
-      llvm::SmallVector<CXXCtorInitializer *, 4> WrittenInits;
+      SmallVector<CXXCtorInitializer *, 4> WrittenInits;
       for (CXXConstructorDecl::init_iterator I = Constructor->init_begin(),
                                           IEnd = Constructor->init_end();
            I != IEnd; ++I) {
@@ -950,7 +950,7 @@ bool CursorVisitor::VisitObjCContainerDecl(ObjCContainerDecl *D) {
   // in the current DeclContext.  If any fall within the
   // container's lexical region, stash them into a vector
   // for later processing.
-  llvm::SmallVector<Decl *, 24> DeclsInContainer;
+  SmallVector<Decl *, 24> DeclsInContainer;
   SourceLocation EndLoc = D->getSourceRange().getEnd();
   SourceManager &SM = AU->getSourceManager();
   if (EndLoc.isValid()) {
@@ -991,7 +991,7 @@ bool CursorVisitor::VisitObjCContainerDecl(ObjCContainerDecl *D) {
             ContainerDeclsSort(SM));
 
   // Now visit the decls.
-  for (llvm::SmallVectorImpl<Decl*>::iterator I = DeclsInContainer.begin(),
+  for (SmallVectorImpl<Decl*>::iterator I = DeclsInContainer.begin(),
          E = DeclsInContainer.end(); I != E; ++I) {
     CXCursor Cursor = MakeCXCursor(*I, TU);
     const llvm::Optional<bool> &V = shouldVisitCursor(Cursor);
@@ -1266,7 +1266,7 @@ bool CursorVisitor::VisitNestedNameSpecifier(NestedNameSpecifier *NNS,
 
 bool 
 CursorVisitor::VisitNestedNameSpecifierLoc(NestedNameSpecifierLoc Qualifier) {
-  llvm::SmallVector<NestedNameSpecifierLoc, 4> Qualifiers;
+  SmallVector<NestedNameSpecifierLoc, 4> Qualifiers;
   for (; Qualifier; Qualifier = Qualifier.getPrefix())
     Qualifiers.push_back(Qualifier);
   
@@ -2466,7 +2466,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     std::vector<ASTUnit::RemappedFile> > RemappedCleanup(RemappedFiles.get());
 
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
-    llvm::StringRef Data(unsaved_files[I].Contents, unsaved_files[I].Length);
+    StringRef Data(unsaved_files[I].Contents, unsaved_files[I].Length);
     const llvm::MemoryBuffer *Buffer
       = llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
     RemappedFiles->push_back(std::make_pair(unsaved_files[I].Filename,
@@ -2663,7 +2663,7 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
     std::vector<ASTUnit::RemappedFile> > RemappedCleanup(RemappedFiles.get());
   
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
-    llvm::StringRef Data(unsaved_files[I].Contents, unsaved_files[I].Length);
+    StringRef Data(unsaved_files[I].Contents, unsaved_files[I].Length);
     const llvm::MemoryBuffer *Buffer
       = llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
     RemappedFiles->push_back(std::make_pair(unsaved_files[I].Filename,
@@ -2955,7 +2955,7 @@ static Decl *getDeclFromExpr(Stmt *E) {
       
   if (CallExpr *CE = dyn_cast<CallExpr>(E))
     return getDeclFromExpr(CE->getCallee());
-  if (CXXConstructExpr *CE = llvm::dyn_cast<CXXConstructExpr>(E))
+  if (CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(E))
     if (!CE->isElidable())
     return CE->getConstructor();
   if (ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(E))
@@ -3042,7 +3042,7 @@ unsigned clang_visitChildrenWithBlock(CXCursor parent,
 static CXString getDeclSpelling(Decl *D) {
   NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D);
   if (!ND) {
-    if (ObjCPropertyImplDecl *PropImpl =llvm::dyn_cast<ObjCPropertyImplDecl>(D))
+    if (ObjCPropertyImplDecl *PropImpl =dyn_cast<ObjCPropertyImplDecl>(D))
       if (ObjCPropertyDecl *Property = PropImpl->getPropertyDecl())
         return createCXString(Property->getIdentifier()->getName());
     
@@ -3859,7 +3859,7 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
     if (ObjCForwardProtocolDecl *Protocols
                                         = dyn_cast<ObjCForwardProtocolDecl>(D))
       return MakeCursorOverloadedDeclRef(Protocols, D->getLocation(), tu);
-    if (ObjCPropertyImplDecl *PropImpl =llvm::dyn_cast<ObjCPropertyImplDecl>(D))
+    if (ObjCPropertyImplDecl *PropImpl =dyn_cast<ObjCPropertyImplDecl>(D))
       if (ObjCPropertyDecl *Property = PropImpl->getPropertyDecl())
         return MakeCXCursor(Property, tu);
     
@@ -4285,7 +4285,7 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
   case CXToken_Literal: {
     // We have stashed the starting pointer in the ptr_data field. Use it.
     const char *Text = static_cast<const char *>(CXTok.ptr_data);
-    return createCXString(llvm::StringRef(Text, CXTok.int_data[2]));
+    return createCXString(StringRef(Text, CXTok.int_data[2]));
   }
 
   case CXToken_Punctuation:
@@ -4303,7 +4303,7 @@ CXString clang_getTokenSpelling(CXTranslationUnit TU, CXToken CXTok) {
   std::pair<FileID, unsigned> LocInfo
     = CXXUnit->getSourceManager().getDecomposedLoc(Loc);
   bool Invalid = false;
-  llvm::StringRef Buffer
+  StringRef Buffer
     = CXXUnit->getSourceManager().getBufferData(LocInfo.first, &Invalid);
   if (Invalid)
     return createCXString("");
@@ -4358,7 +4358,7 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
 
   // Create a lexer
   bool Invalid = false;
-  llvm::StringRef Buffer
+  StringRef Buffer
     = SourceMgr.getBufferData(BeginLocInfo.first, &Invalid);
   if (Invalid)
     return;
@@ -4370,7 +4370,7 @@ void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
 
   // Lex tokens until we hit the end of the range.
   const char *EffectiveBufferEnd = Buffer.data() + EndLocInfo.second;
-  llvm::SmallVector<CXToken, 32> CXTokens;
+  SmallVector<CXToken, 32> CXTokens;
   Token Tok;
   bool previousWasAt = false;
   do {
@@ -4791,7 +4791,7 @@ static void clang_annotateTokensImpl(void *UserData) {
   std::pair<FileID, unsigned> EndLocInfo
     = SourceMgr.getDecomposedLoc(RegionOfInterest.getEnd());
   
-  llvm::StringRef Buffer;
+  StringRef Buffer;
   bool Invalid = false;
   if (BeginLocInfo.first == EndLocInfo.first &&
       ((Buffer = SourceMgr.getBufferData(BeginLocInfo.first, &Invalid)),true) &&
@@ -4817,7 +4817,7 @@ static void clang_annotateTokensImpl(void *UserData) {
         //
         // FIXME: Some simple tests here could identify macro definitions and
         // #undefs, to provide specific cursor kinds for those.
-        llvm::SmallVector<SourceLocation, 32> Locations;
+        SmallVector<SourceLocation, 32> Locations;
         do {
           Locations.push_back(Tok.getLocation());
           Lex.LexFromRawLexer(Tok);
@@ -5136,7 +5136,7 @@ CXCursor clang_getCursorLexicalParent(CXCursor cursor) {
 
 static void CollectOverriddenMethods(DeclContext *Ctx, 
                                      ObjCMethodDecl *Method,
-                            llvm::SmallVectorImpl<ObjCMethodDecl *> &Methods) {
+                            SmallVectorImpl<ObjCMethodDecl *> &Methods) {
   if (!Ctx)
     return;
 
@@ -5229,7 +5229,7 @@ void clang_getOverriddenCursors(CXCursor cursor,
     return;
 
   // Handle Objective-C methods.
-  llvm::SmallVector<ObjCMethodDecl *, 4> Methods;
+  SmallVector<ObjCMethodDecl *, 4> Methods;
   CollectOverriddenMethods(Method->getDeclContext(), Method, Methods);
 
   if (Methods.empty())

@@ -1406,7 +1406,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   QualType DeleteTy = Arg->getType()->getAs<PointerType>()->getPointeeType();
   if (DeleteTy->isConstantArrayType()) {
     llvm::Value *Zero = Builder.getInt32(0);
-    llvm::SmallVector<llvm::Value*,8> GEP;
+    SmallVector<llvm::Value*,8> GEP;
 
     GEP.push_back(Zero); // point at the outermost array
 

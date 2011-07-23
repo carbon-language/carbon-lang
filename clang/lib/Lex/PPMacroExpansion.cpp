@@ -333,7 +333,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
   // ArgTokens - Build up a list of tokens that make up each argument.  Each
   // argument is separated by an EOF token.  Use a SmallVector so we can avoid
   // heap allocations in the common case.
-  llvm::SmallVector<Token, 64> ArgTokens;
+  SmallVector<Token, 64> ArgTokens;
 
   unsigned NumActuals = 0;
   while (Tok.isNot(tok::r_paren)) {
@@ -715,7 +715,7 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
 
   // Reserve a buffer to get the spelling.
   llvm::SmallString<128> FilenameBuffer;
-  llvm::StringRef Filename;
+  StringRef Filename;
   SourceLocation EndLoc;
   
   switch (Tok.getKind()) {
@@ -924,7 +924,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Result = "??? ??? ?? ??:??:?? ????\n";
     }
     // Surround the string with " and strip the trailing newline.
-    OS << '"' << llvm::StringRef(Result, strlen(Result)-1) << '"';
+    OS << '"' << StringRef(Result, strlen(Result)-1) << '"';
     Tok.setKind(tok::string_literal);
   } else if (II == Ident__COUNTER__) {
     // __COUNTER__ expands to a simple numeric value.

@@ -58,12 +58,12 @@ class JumpScopeChecker {
       : ParentScope(parentScope), InDiag(InDiag), OutDiag(OutDiag), Loc(L) {}
   };
 
-  llvm::SmallVector<GotoScope, 48> Scopes;
+  SmallVector<GotoScope, 48> Scopes;
   llvm::DenseMap<Stmt*, unsigned> LabelAndGotoScopes;
-  llvm::SmallVector<Stmt*, 16> Jumps;
+  SmallVector<Stmt*, 16> Jumps;
 
-  llvm::SmallVector<IndirectGotoStmt*, 4> IndirectJumps;
-  llvm::SmallVector<LabelDecl*, 4> IndirectJumpTargets;
+  SmallVector<IndirectGotoStmt*, 4> IndirectJumps;
+  SmallVector<LabelDecl*, 4> IndirectJumpTargets;
 public:
   JumpScopeChecker(Stmt *Body, Sema &S);
 private:
@@ -532,10 +532,10 @@ void JumpScopeChecker::VerifyIndirectJumps() {
   // indirect goto.  For most code bases, this substantially cuts
   // down on the number of jump sites we'll have to consider later.
   typedef std::pair<unsigned, IndirectGotoStmt*> JumpScope;
-  llvm::SmallVector<JumpScope, 32> JumpScopes;
+  SmallVector<JumpScope, 32> JumpScopes;
   {
     llvm::DenseMap<unsigned, IndirectGotoStmt*> JumpScopesMap;
-    for (llvm::SmallVectorImpl<IndirectGotoStmt*>::iterator
+    for (SmallVectorImpl<IndirectGotoStmt*>::iterator
            I = IndirectJumps.begin(), E = IndirectJumps.end(); I != E; ++I) {
       IndirectGotoStmt *IG = *I;
       assert(LabelAndGotoScopes.count(IG) &&
@@ -554,7 +554,7 @@ void JumpScopeChecker::VerifyIndirectJumps() {
   // label whose address was taken somewhere in the function.
   // For most code bases, there will be only one such scope.
   llvm::DenseMap<unsigned, LabelDecl*> TargetScopes;
-  for (llvm::SmallVectorImpl<LabelDecl*>::iterator
+  for (SmallVectorImpl<LabelDecl*>::iterator
          I = IndirectJumpTargets.begin(), E = IndirectJumpTargets.end();
        I != E; ++I) {
     LabelDecl *TheLabel = *I;
@@ -599,7 +599,7 @@ void JumpScopeChecker::VerifyIndirectJumps() {
 
     // Walk through all the jump sites, checking that they can trivially
     // reach this label scope.
-    for (llvm::SmallVectorImpl<JumpScope>::iterator
+    for (SmallVectorImpl<JumpScope>::iterator
            I = JumpScopes.begin(), E = JumpScopes.end(); I != E; ++I) {
       unsigned Scope = I->first;
 
@@ -679,7 +679,7 @@ void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To,
   if (CommonScope == ToScope) return;
 
   // Pull out (and reverse) any scopes we might need to diagnose skipping.
-  llvm::SmallVector<unsigned, 10> ToScopes;
+  SmallVector<unsigned, 10> ToScopes;
   for (unsigned I = ToScope; I != CommonScope; I = Scopes[I].ParentScope)
     if (Scopes[I].InDiag)
       ToScopes.push_back(I);

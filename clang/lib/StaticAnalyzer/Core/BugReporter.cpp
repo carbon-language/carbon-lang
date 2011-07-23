@@ -1312,10 +1312,10 @@ void BugReporter::FlushReports() {
   // warnings and new BugTypes.
   // FIXME: Only NSErrorChecker needs BugType's FlushReports.
   // Turn NSErrorChecker into a proper checker and remove this.
-  llvm::SmallVector<const BugType*, 16> bugTypes;
+  SmallVector<const BugType*, 16> bugTypes;
   for (BugTypesTy::iterator I=BugTypes.begin(), E=BugTypes.end(); I!=E; ++I)
     bugTypes.push_back(*I);
-  for (llvm::SmallVector<const BugType*, 16>::iterator
+  for (SmallVector<const BugType*, 16>::iterator
          I = bugTypes.begin(), E = bugTypes.end(); I != E; ++I)
     const_cast<BugType*>(*I)->FlushReports(*this);
 
@@ -1344,7 +1344,7 @@ void BugReporter::FlushReports() {
 static std::pair<std::pair<ExplodedGraph*, NodeBackMap*>,
                  std::pair<ExplodedNode*, unsigned> >
 MakeReportGraph(const ExplodedGraph* G,
-                llvm::SmallVectorImpl<const ExplodedNode*> &nodes) {
+                SmallVectorImpl<const ExplodedNode*> &nodes) {
 
   // Create the trimmed graph.  It will contain the shortest paths from the
   // error nodes to the root.  In the new graph we should only have one
@@ -1569,11 +1569,11 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
 }
 
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
-                        llvm::SmallVectorImpl<BugReport *> &bugReports) {
+                        SmallVectorImpl<BugReport *> &bugReports) {
 
   assert(!bugReports.empty());
-  llvm::SmallVector<const ExplodedNode *, 10> errorNodes;
-  for (llvm::SmallVectorImpl<BugReport*>::iterator I = bugReports.begin(),
+  SmallVector<const ExplodedNode *, 10> errorNodes;
+  for (SmallVectorImpl<BugReport*>::iterator I = bugReports.begin(),
     E = bugReports.end(); I != E; ++I) {
       errorNodes.push_back((*I)->getErrorNode());
   }
@@ -1655,7 +1655,7 @@ struct FRIEC_WLItem {
 
 static BugReport *
 FindReportInEquivalenceClass(BugReportEquivClass& EQ,
-                             llvm::SmallVectorImpl<BugReport*> &bugReports) {
+                             SmallVectorImpl<BugReport*> &bugReports) {
 
   BugReportEquivClass::iterator I = EQ.begin(), E = EQ.end();
   assert(I != E);
@@ -1706,7 +1706,7 @@ FindReportInEquivalenceClass(BugReportEquivClass& EQ,
     // At this point we know that 'N' is not a sink and it has at least one
     // successor.  Use a DFS worklist to find a non-sink end-of-path node.    
     typedef FRIEC_WLItem WLItem;
-    typedef llvm::SmallVector<WLItem, 10> DFSWorkList;
+    typedef SmallVector<WLItem, 10> DFSWorkList;
     llvm::DenseMap<const ExplodedNode *, unsigned> Visited;
     
     DFSWorkList WL;
@@ -1798,7 +1798,7 @@ static bool IsCachedDiagnostic(BugReport *R, PathDiagnostic *PD) {
 }
 
 void BugReporter::FlushReport(BugReportEquivClass& EQ) {
-  llvm::SmallVector<BugReport*, 10> bugReports;
+  SmallVector<BugReport*, 10> bugReports;
   BugReport *exampleReport = FindReportInEquivalenceClass(EQ, bugReports);
   if (!exampleReport)
     return;
@@ -1836,12 +1836,12 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   
   // Search the description for '%', as that will be interpretted as a
   // format character by FormatDiagnostics.
-  llvm::StringRef desc = exampleReport->getShortDescription();
+  StringRef desc = exampleReport->getShortDescription();
   unsigned ErrorDiag;
   {
     llvm::SmallString<512> TmpStr;
     llvm::raw_svector_ostream Out(TmpStr);
-    for (llvm::StringRef::iterator I=desc.begin(), E=desc.end(); I!=E; ++I)
+    for (StringRef::iterator I=desc.begin(), E=desc.end(); I!=E; ++I)
       if (*I == '%')
         Out << "%%";
       else
@@ -1872,15 +1872,15 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   PD->HandlePathDiagnostic(D.take());
 }
 
-void BugReporter::EmitBasicReport(llvm::StringRef name, llvm::StringRef str,
+void BugReporter::EmitBasicReport(StringRef name, StringRef str,
                                   SourceLocation Loc,
                                   SourceRange* RBeg, unsigned NumRanges) {
   EmitBasicReport(name, "", str, Loc, RBeg, NumRanges);
 }
 
-void BugReporter::EmitBasicReport(llvm::StringRef name,
-                                  llvm::StringRef category,
-                                  llvm::StringRef str, SourceLocation Loc,
+void BugReporter::EmitBasicReport(StringRef name,
+                                  StringRef category,
+                                  StringRef str, SourceLocation Loc,
                                   SourceRange* RBeg, unsigned NumRanges) {
 
   // 'BT' is owned by BugReporter.
@@ -1891,8 +1891,8 @@ void BugReporter::EmitBasicReport(llvm::StringRef name,
   EmitReport(R);
 }
 
-BugType *BugReporter::getBugTypeForName(llvm::StringRef name,
-                                        llvm::StringRef category) {
+BugType *BugReporter::getBugTypeForName(StringRef name,
+                                        StringRef category) {
   llvm::SmallString<136> fullDesc;
   llvm::raw_svector_ostream(fullDesc) << name << ":" << category;
   llvm::StringMapEntry<BugType *> &

@@ -298,7 +298,7 @@ CheckExtVectorComponent(Sema &S, QualType baseType, ExprValueKind &VK,
     // We didn't get to the end of the string. This means the component names
     // didn't come from the same set *or* we encountered an illegal name.
     S.Diag(OpLoc, diag::err_ext_vector_component_name_illegal)
-      << llvm::StringRef(compStr, 1) << SourceRange(CompLoc);
+      << StringRef(compStr, 1) << SourceRange(CompLoc);
     return QualType();
   }
 

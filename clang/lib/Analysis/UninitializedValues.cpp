@@ -178,7 +178,7 @@ static BinaryOperator *getLogicalOperatorInChain(const CFGBlock *block) {
   if (!cstmt)
     return 0;
 
-  BinaryOperator *b = llvm::dyn_cast_or_null<BinaryOperator>(cstmt->getStmt());
+  BinaryOperator *b = dyn_cast_or_null<BinaryOperator>(cstmt->getStmt());
   
   if (!b || !b->isLogicalOp())
     return 0;
@@ -283,7 +283,7 @@ ValueVector::reference CFGBlockValues::operator[](const VarDecl *vd) {
 
 namespace {
 class DataflowWorklist {
-  llvm::SmallVector<const CFGBlock *, 20> worklist;
+  SmallVector<const CFGBlock *, 20> worklist;
   llvm::BitVector enqueuedBlocks;
 public:
   DataflowWorklist(const CFG &cfg) : enqueuedBlocks(cfg.getNumBlockIDs()) {}

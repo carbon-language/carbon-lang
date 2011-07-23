@@ -244,7 +244,7 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
   Mgr.reset(NULL);
 }
 
-static void FindBlocks(DeclContext *D, llvm::SmallVectorImpl<Decl*> &WL) {
+static void FindBlocks(DeclContext *D, SmallVectorImpl<Decl*> &WL) {
   if (BlockDecl *BD = dyn_cast<BlockDecl>(D))
     WL.push_back(BD);
 
@@ -275,14 +275,14 @@ void AnalysisConsumer::HandleCode(Decl *D) {
   Mgr->ClearContexts();
 
   // Dispatch on the actions.
-  llvm::SmallVector<Decl*, 10> WL;
+  SmallVector<Decl*, 10> WL;
   WL.push_back(D);
 
   if (D->hasBody() && Opts.AnalyzeNestedBlocks)
     FindBlocks(cast<DeclContext>(D), WL);
 
   BugReporter BR(*Mgr);
-  for (llvm::SmallVectorImpl<Decl*>::iterator WI=WL.begin(), WE=WL.end();
+  for (SmallVectorImpl<Decl*>::iterator WI=WL.begin(), WE=WL.end();
        WI != WE; ++WI)
     if ((*WI)->hasBody()) {
       checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
@@ -383,7 +383,7 @@ ASTConsumer* ento::CreateAnalysisConsumer(const Preprocessor& pp,
 namespace {
 
 class UbigraphViz : public ExplodedNode::Auditor {
-  llvm::OwningPtr<llvm::raw_ostream> Out;
+  llvm::OwningPtr<raw_ostream> Out;
   llvm::sys::Path Dir, Filename;
   unsigned Cntr;
 
@@ -391,7 +391,7 @@ class UbigraphViz : public ExplodedNode::Auditor {
   VMap M;
 
 public:
-  UbigraphViz(llvm::raw_ostream* out, llvm::sys::Path& dir,
+  UbigraphViz(raw_ostream* out, llvm::sys::Path& dir,
               llvm::sys::Path& filename);
 
   ~UbigraphViz();
@@ -460,7 +460,7 @@ void UbigraphViz::AddEdge(ExplodedNode* Src, ExplodedNode* Dst) {
        << ", ('arrow','true'), ('oriented', 'true'))\n";
 }
 
-UbigraphViz::UbigraphViz(llvm::raw_ostream* out, llvm::sys::Path& dir,
+UbigraphViz::UbigraphViz(raw_ostream* out, llvm::sys::Path& dir,
                          llvm::sys::Path& filename)
   : Out(out), Dir(dir), Filename(filename), Cntr(0) {
 

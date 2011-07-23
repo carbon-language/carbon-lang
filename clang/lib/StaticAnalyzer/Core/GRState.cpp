@@ -71,7 +71,7 @@ GRStateManager::removeDeadBindings(const GRState* state,
   // those around.  This code more than likely can be made faster, and the
   // frequency of which this method is called should be experimented with
   // for optimum performance.
-  llvm::SmallVector<const MemRegion*, 10> RegionRoots;
+  SmallVector<const MemRegion*, 10> RegionRoots;
   GRState NewState = *state;
 
   NewState.Env = EnvMgr.removeDeadBindings(NewState.Env, SymReaper,
@@ -384,7 +384,7 @@ static bool IsEnvLoc(const Stmt *S) {
   return (bool) (((uintptr_t) S) & 0x1);
 }
 
-void GRState::print(llvm::raw_ostream& Out, CFG &C, const char* nl,
+void GRState::print(raw_ostream& Out, CFG &C, const char* nl,
                     const char* sep) const {
   // Print the store.
   GRStateManager &Mgr = getStateManager();
@@ -459,7 +459,7 @@ void GRState::print(llvm::raw_ostream& Out, CFG &C, const char* nl,
   }
 }
 
-void GRState::printDOT(llvm::raw_ostream& Out, CFG &C) const {
+void GRState::printDOT(raw_ostream& Out, CFG &C) const {
   print(Out, C, "\\l", "\\|");
 }
 

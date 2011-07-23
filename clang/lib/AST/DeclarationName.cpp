@@ -209,7 +209,7 @@ std::string DeclarationName::getAsString() const {
   return OS.str();
 }
 
-void DeclarationName::printName(llvm::raw_ostream &OS) const {
+void DeclarationName::printName(raw_ostream &OS) const {
   switch (getNameKind()) {
   case Identifier:
     if (const IdentifierInfo *II = getAsIdentifierInfo())
@@ -562,7 +562,7 @@ std::string DeclarationNameInfo::getAsString() const {
   return OS.str();
 }
 
-void DeclarationNameInfo::printName(llvm::raw_ostream &OS) const {
+void DeclarationNameInfo::printName(raw_ostream &OS) const {
   switch (Name.getNameKind()) {
   case DeclarationName::Identifier:
   case DeclarationName::ObjCZeroArgSelector:

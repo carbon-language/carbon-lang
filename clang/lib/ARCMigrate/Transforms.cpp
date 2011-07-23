@@ -23,7 +23,6 @@
 using namespace clang;
 using namespace arcmt;
 using namespace trans;
-using llvm::StringRef;
 
 //===----------------------------------------------------------------------===//
 // Helpers.
@@ -105,7 +104,7 @@ SourceLocation trans::findLocationAfterSemi(SourceLocation loc,
 
   // Try to load the file buffer.
   bool invalidTemp = false;
-  llvm::StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
+  StringRef file = SM.getBufferData(locInfo.first, &invalidTemp);
   if (invalidTemp)
     return SourceLocation();
 

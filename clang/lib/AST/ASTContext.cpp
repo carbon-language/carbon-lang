@@ -104,7 +104,7 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
   
   // Build a canonical template parameter list.
   TemplateParameterList *Params = TTP->getTemplateParameters();
-  llvm::SmallVector<NamedDecl *, 4> CanonParams;
+  SmallVector<NamedDecl *, 4> CanonParams;
   CanonParams.reserve(Params->size());
   for (TemplateParameterList::const_iterator P = Params->begin(), 
                                           PEnd = Params->end();
@@ -123,8 +123,8 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
       TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(T);
       NonTypeTemplateParmDecl *Param;
       if (NTTP->isExpandedParameterPack()) {
-        llvm::SmallVector<QualType, 2> ExpandedTypes;
-        llvm::SmallVector<TypeSourceInfo *, 2> ExpandedTInfos;
+        SmallVector<QualType, 2> ExpandedTypes;
+        SmallVector<TypeSourceInfo *, 2> ExpandedTInfos;
         for (unsigned I = 0, N = NTTP->getNumExpansionTypes(); I != N; ++I) {
           ExpandedTypes.push_back(getCanonicalType(NTTP->getExpansionType(I)));
           ExpandedTInfos.push_back(
@@ -2013,7 +2013,7 @@ ASTContext::getFunctionType(QualType ResultTy,
   // The exception spec is not part of the canonical type.
   QualType Canonical;
   if (!isCanonical || getCanonicalCallConv(CallConv) != CallConv) {
-    llvm::SmallVector<QualType, 16> CanonicalArgs;
+    SmallVector<QualType, 16> CanonicalArgs;
     CanonicalArgs.reserve(NumArgs);
     for (unsigned i = 0; i != NumArgs; ++i)
       CanonicalArgs.push_back(getCanonicalParamType(ArgArray[i]));
@@ -2309,7 +2309,7 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
   
   unsigned NumArgs = Args.size();
 
-  llvm::SmallVector<TemplateArgument, 4> ArgVec;
+  SmallVector<TemplateArgument, 4> ArgVec;
   ArgVec.reserve(NumArgs);
   for (unsigned i = 0; i != NumArgs; ++i)
     ArgVec.push_back(Args[i].getArgument());
@@ -2376,7 +2376,7 @@ ASTContext::getCanonicalTemplateSpecializationType(TemplateName Template,
   
   // Build the canonical template specialization type.
   TemplateName CanonTemplate = getCanonicalTemplateName(Template);
-  llvm::SmallVector<TemplateArgument, 4> CanonArgs;
+  SmallVector<TemplateArgument, 4> CanonArgs;
   CanonArgs.reserve(NumArgs);
   for (unsigned I = 0; I != NumArgs; ++I)
     CanonArgs.push_back(getCanonicalTemplateArgument(Args[I]));
@@ -2496,7 +2496,7 @@ ASTContext::getDependentTemplateSpecializationType(
                                  const IdentifierInfo *Name,
                                  const TemplateArgumentListInfo &Args) const {
   // TODO: avoid this copy
-  llvm::SmallVector<TemplateArgument, 16> ArgCopy;
+  SmallVector<TemplateArgument, 16> ArgCopy;
   for (unsigned I = 0, E = Args.size(); I != E; ++I)
     ArgCopy.push_back(Args[I].getArgument());
   return getDependentTemplateSpecializationType(Keyword, NNS, Name,
@@ -2530,7 +2530,7 @@ ASTContext::getDependentTemplateSpecializationType(
   if (Keyword == ETK_None) CanonKeyword = ETK_Typename;
 
   bool AnyNonCanonArgs = false;
-  llvm::SmallVector<TemplateArgument, 16> CanonArgs(NumArgs);
+  SmallVector<TemplateArgument, 16> CanonArgs(NumArgs);
   for (unsigned I = 0; I != NumArgs; ++I) {
     CanonArgs[I] = getCanonicalTemplateArgument(Args[I]);
     if (!CanonArgs[I].structurallyEquals(Args[I]))
@@ -2634,7 +2634,7 @@ QualType ASTContext::getObjCObjectType(QualType BaseType,
   bool ProtocolsSorted = areSortedAndUniqued(Protocols, NumProtocols);
   if (!ProtocolsSorted || !BaseType.isCanonical()) {
     if (!ProtocolsSorted) {
-      llvm::SmallVector<ObjCProtocolDecl*, 8> Sorted(Protocols,
+      SmallVector<ObjCProtocolDecl*, 8> Sorted(Protocols,
                                                      Protocols + NumProtocols);
       unsigned UniqueCount = NumProtocols;
 
@@ -3824,7 +3824,7 @@ bool ASTContext::BlockRequiresCopying(QualType Ty) const {
 }
 
 QualType
-ASTContext::BuildByRefType(llvm::StringRef DeclName, QualType Ty) const {
+ASTContext::BuildByRefType(StringRef DeclName, QualType Ty) const {
   //  type = struct __Block_byref_1_X {
   //    void *__isa;
   //    struct __Block_byref_1_X *__forwarding;
@@ -3856,7 +3856,7 @@ ASTContext::BuildByRefType(llvm::StringRef DeclName, QualType Ty) const {
     Ty
   };
 
-  llvm::StringRef FieldNames[] = {
+  StringRef FieldNames[] = {
     "__isa",
     "__forwarding",
     "__flags",
@@ -4329,7 +4329,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       // Another legacy compatibility encoding. Some ObjC qualifier and type
       // combinations need to be rearranged.
       // Rewrite "in const" from "nr" to "rn"
-      if (llvm::StringRef(S).endswith("nr"))
+      if (StringRef(S).endswith("nr"))
         S.replace(S.end()-2, S.end(), "rn");
     }
 
@@ -5248,7 +5248,7 @@ static
 void getIntersectionOfProtocols(ASTContext &Context,
                                 const ObjCObjectPointerType *LHSOPT,
                                 const ObjCObjectPointerType *RHSOPT,
-      llvm::SmallVectorImpl<ObjCProtocolDecl *> &IntersectionOfProtocols) {
+      SmallVectorImpl<ObjCProtocolDecl *> &IntersectionOfProtocols) {
   
   const ObjCObjectType* LHS = LHSOPT->getObjectType();
   const ObjCObjectType* RHS = RHSOPT->getObjectType();
@@ -5304,7 +5304,7 @@ QualType ASTContext::areCommonBaseCompatible(
   do {
     LHS = cast<ObjCInterfaceType>(getObjCInterfaceType(LDecl));
     if (canAssignObjCInterfaces(LHS, RHS)) {
-      llvm::SmallVector<ObjCProtocolDecl *, 8> Protocols;
+      SmallVector<ObjCProtocolDecl *, 8> Protocols;
       getIntersectionOfProtocols(*this, Lptr, Rptr, Protocols);
 
       QualType Result = QualType(LHS, 0);
@@ -5567,7 +5567,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
       return QualType();
 
     // Check argument compatibility
-    llvm::SmallVector<QualType, 10> types;
+    SmallVector<QualType, 10> types;
     for (unsigned i = 0; i < lproto_nargs; i++) {
       QualType largtype = lproto->getArgType(i).getUnqualifiedType();
       QualType rargtype = rproto->getArgType(i).getUnqualifiedType();
@@ -6234,7 +6234,7 @@ QualType ASTContext::GetBuiltinType(unsigned Id,
                                     unsigned *IntegerConstantArgs) const {
   const char *TypeStr = BuiltinInfo.GetTypeString(Id);
 
-  llvm::SmallVector<QualType, 8> ArgTypes;
+  SmallVector<QualType, 8> ArgTypes;
 
   bool RequiresICE = false;
   Error = GE_None;

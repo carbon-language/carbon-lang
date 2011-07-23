@@ -26,7 +26,6 @@
 #include <functional>
 
 using namespace clang;
-using llvm::StringRef;
 
 //===----------------------------------------------------------------------===//
 // Code completion context implementation
@@ -228,14 +227,14 @@ const char *CodeCompletionString::getTypedText() const {
   return 0;
 }
 
-const char *CodeCompletionAllocator::CopyString(llvm::StringRef String) {
+const char *CodeCompletionAllocator::CopyString(StringRef String) {
   char *Mem = (char *)Allocate(String.size() + 1, 1);
   std::copy(String.begin(), String.end(), Mem);
   Mem[String.size()] = 0;
   return Mem;
 }
 
-const char *CodeCompletionAllocator::CopyString(llvm::Twine String) {
+const char *CodeCompletionAllocator::CopyString(Twine String) {
   // FIXME: It would be more efficient to teach Twine to tell us its size and
   // then add a routine there to fill in an allocated char* with the contents
   // of the string.
@@ -425,7 +424,7 @@ void CodeCompletionResult::computeCursorKindAndAvailability() {
 ///
 /// If the name needs to be constructed as a string, that string will be
 /// saved into Saved and the returned StringRef will refer to it.
-static llvm::StringRef getOrderedName(const CodeCompletionResult &R,
+static StringRef getOrderedName(const CodeCompletionResult &R,
                                     std::string &Saved) {
   switch (R.Kind) {
     case CodeCompletionResult::RK_Keyword:
@@ -460,8 +459,8 @@ static llvm::StringRef getOrderedName(const CodeCompletionResult &R,
 bool clang::operator<(const CodeCompletionResult &X, 
                       const CodeCompletionResult &Y) {
   std::string XSaved, YSaved;
-  llvm::StringRef XStr = getOrderedName(X, XSaved);
-  llvm::StringRef YStr = getOrderedName(Y, YSaved);
+  StringRef XStr = getOrderedName(X, XSaved);
+  StringRef YStr = getOrderedName(Y, YSaved);
   int cmp = XStr.compare_lower(YStr);
   if (cmp)
     return cmp < 0;

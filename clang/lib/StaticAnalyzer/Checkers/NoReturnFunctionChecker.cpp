@@ -50,7 +50,7 @@ void NoReturnFunctionChecker::checkPostStmt(const CallExpr *CE,
       //  Here are a few hardwired ones.  If this takes too long, we can
       //  potentially cache these results.
       BuildSinks
-        = llvm::StringSwitch<bool>(llvm::StringRef(II->getName()))
+        = llvm::StringSwitch<bool>(StringRef(II->getName()))
             .Case("exit", true)
             .Case("panic", true)
             .Case("error", true)

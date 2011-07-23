@@ -125,7 +125,7 @@ bool TemplateName::containsUnexpandedParameterPack() const {
 }
 
 void
-TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
+TemplateName::print(raw_ostream &OS, const PrintingPolicy &Policy,
                     bool SuppressNNS) const {
   if (TemplateDecl *Template = Storage.dyn_cast<TemplateDecl *>())
     OS << Template;

@@ -45,15 +45,15 @@ public:
 
   virtual ~HTMLDiagnostics() { FlushDiagnostics(NULL); }
 
-  virtual void FlushDiagnostics(llvm::SmallVectorImpl<std::string> *FilesMade);
+  virtual void FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade);
 
   virtual void HandlePathDiagnostic(const PathDiagnostic* D);
 
-  virtual llvm::StringRef getName() const {
+  virtual StringRef getName() const {
     return "HTMLDiagnostics";
   }
 
-  unsigned ProcessMacroPiece(llvm::raw_ostream& os,
+  unsigned ProcessMacroPiece(raw_ostream& os,
                              const PathDiagnosticMacroPiece& P,
                              unsigned num);
 
@@ -65,7 +65,7 @@ public:
                       const char *HighlightEnd = "</span>");
 
   void ReportDiag(const PathDiagnostic& D,
-                  llvm::SmallVectorImpl<std::string> *FilesMade);
+                  SmallVectorImpl<std::string> *FilesMade);
 };
 
 } // end anonymous namespace
@@ -102,7 +102,7 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
 }
 
 void
-HTMLDiagnostics::FlushDiagnostics(llvm::SmallVectorImpl<std::string> *FilesMade)
+HTMLDiagnostics::FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade)
 {
   while (!BatchedDiags.empty()) {
     const PathDiagnostic* D = BatchedDiags.back();
@@ -115,7 +115,7 @@ HTMLDiagnostics::FlushDiagnostics(llvm::SmallVectorImpl<std::string> *FilesMade)
 }
 
 void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
-                                 llvm::SmallVectorImpl<std::string> *FilesMade){
+                                 SmallVectorImpl<std::string> *FilesMade){
   // Create the HTML directory if it is missing.
   if (!createdDir) {
     createdDir = true;
@@ -443,7 +443,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
     {
       FullSourceLoc L = MP->getLocation().asLocation().getInstantiationLoc();
       assert(L.isFileID());
-      llvm::StringRef BufferInfo = L.getBufferData();
+      StringRef BufferInfo = L.getBufferData();
       const char* MacroName = L.getDecomposedLoc().second + BufferInfo.data();
       Lexer rawLexer(L, PP.getLangOptions(), BufferInfo.begin(),
                      MacroName, BufferInfo.end());
@@ -504,7 +504,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
 #endif
 }
 
-static void EmitAlphaCounter(llvm::raw_ostream& os, unsigned n) {
+static void EmitAlphaCounter(raw_ostream& os, unsigned n) {
   unsigned x = n % ('z' - 'a');
   n /= 'z' - 'a';
 
@@ -514,7 +514,7 @@ static void EmitAlphaCounter(llvm::raw_ostream& os, unsigned n) {
   os << char('a' + x);
 }
 
-unsigned HTMLDiagnostics::ProcessMacroPiece(llvm::raw_ostream& os,
+unsigned HTMLDiagnostics::ProcessMacroPiece(raw_ostream& os,
                                             const PathDiagnosticMacroPiece& P,
                                             unsigned num) {
 

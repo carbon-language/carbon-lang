@@ -26,7 +26,7 @@
 using namespace clang;
 
 static ASTReader *createASTReader(CompilerInstance &CI,
-                                  llvm::StringRef pchFile,
+                                  StringRef pchFile,
                                   llvm::MemoryBuffer **memBufs,
                                   unsigned numBufs,
                              ASTDeserializationListener *deserialListener = 0) {
@@ -62,7 +62,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
   llvm::OwningPtr<ChainedIncludesSource> source(new ChainedIncludesSource());
   InputKind IK = CI.getFrontendOpts().Inputs[0].first;
 
-  llvm::SmallVector<llvm::MemoryBuffer *, 4> serialBufs;
+  SmallVector<llvm::MemoryBuffer *, 4> serialBufs;
 
   for (unsigned i = 0, e = includes.size(); i != e; ++i) {
     bool firstInclude = (i == 0);
@@ -98,7 +98,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
                                                  &Clang->getPreprocessor());
     Clang->createASTContext();
 
-    llvm::SmallVector<char, 256> serialAST;
+    SmallVector<char, 256> serialAST;
     llvm::raw_svector_ostream OS(serialAST);
     llvm::OwningPtr<ASTConsumer> consumer;
     consumer.reset(new PCHGenerator(Clang->getPreprocessor(), "-",
@@ -115,10 +115,10 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
                                              PP.getLangOptions());
     } else {
       assert(!serialBufs.empty());
-      llvm::SmallVector<llvm::MemoryBuffer *, 4> bufs;
+      SmallVector<llvm::MemoryBuffer *, 4> bufs;
       for (unsigned si = 0, se = serialBufs.size(); si != se; ++si) {
         bufs.push_back(llvm::MemoryBuffer::getMemBufferCopy(
-                             llvm::StringRef(serialBufs[si]->getBufferStart(),
+                             StringRef(serialBufs[si]->getBufferStart(),
                                              serialBufs[si]->getBufferSize())));
       }
       std::string pchName = includes[i-1];
@@ -140,7 +140,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     OS.flush();
     Clang->getDiagnosticClient().EndSourceFile();
     serialBufs.push_back(
-      llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(serialAST.data(),
+      llvm::MemoryBuffer::getMemBufferCopy(StringRef(serialAST.data(),
                                                            serialAST.size())));
     source->CIs.push_back(Clang.take());
   }
@@ -188,7 +188,7 @@ void ChainedIncludesSource::MaterializeVisibleDecls(const DeclContext *DC) {
 ExternalLoadResult 
 ChainedIncludesSource::FindExternalLexicalDecls(const DeclContext *DC,
                                       bool (*isKindWeWant)(Decl::Kind),
-                                      llvm::SmallVectorImpl<Decl*> &Result) {
+                                      SmallVectorImpl<Decl*> &Result) {
   return getFinalReader().FindExternalLexicalDecls(DC, isKindWeWant, Result);
 }
 void ChainedIncludesSource::CompleteType(TagDecl *Tag) {

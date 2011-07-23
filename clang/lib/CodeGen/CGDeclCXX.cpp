@@ -168,7 +168,7 @@ void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
 static llvm::Function *
 CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
                                    llvm::FunctionType *FTy,
-                                   llvm::StringRef Name) {
+                                   StringRef Name) {
   llvm::Function *Fn =
     llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
                            Name, &CGM.getModule());
@@ -234,7 +234,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
     CreateGlobalInitOrDestructFunction(*this, FTy, "_GLOBAL__I_a");
 
   if (!PrioritizedCXXGlobalInits.empty()) {
-    llvm::SmallVector<llvm::Constant*, 8> LocalCXXGlobalInits;
+    SmallVector<llvm::Constant*, 8> LocalCXXGlobalInits;
     llvm::array_pod_sort(PrioritizedCXXGlobalInits.begin(), 
                          PrioritizedCXXGlobalInits.end()); 
     for (unsigned i = 0; i < PrioritizedCXXGlobalInits.size(); i++) {

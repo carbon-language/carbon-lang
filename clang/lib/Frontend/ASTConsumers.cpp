@@ -31,11 +31,11 @@ using namespace clang;
 
 namespace {
   class ASTPrinter : public ASTConsumer {
-    llvm::raw_ostream &Out;
+    raw_ostream &Out;
     bool Dump;
 
   public:
-    ASTPrinter(llvm::raw_ostream* o = NULL, bool Dump = false)
+    ASTPrinter(raw_ostream* o = NULL, bool Dump = false)
       : Out(o? *o : llvm::outs()), Dump(Dump) { }
 
     virtual void HandleTranslationUnit(ASTContext &Context) {
@@ -46,7 +46,7 @@ namespace {
   };
 } // end anonymous namespace
 
-ASTConsumer *clang::CreateASTPrinter(llvm::raw_ostream* out) {
+ASTConsumer *clang::CreateASTPrinter(raw_ostream* out) {
   return new ASTPrinter(out);
 }
 
@@ -95,7 +95,7 @@ ASTConsumer *clang::CreateASTViewer() { return new ASTViewer(); }
 namespace {
 
 class DeclContextPrinter : public ASTConsumer {
-  llvm::raw_ostream& Out;
+  raw_ostream& Out;
 public:
   DeclContextPrinter() : Out(llvm::errs()) {}
 
@@ -404,10 +404,10 @@ ASTConsumer *clang::CreateDeclContextPrinter() {
 
 namespace {
 class ASTDumpXML : public ASTConsumer {
-  llvm::raw_ostream &OS;
+  raw_ostream &OS;
 
 public:
-  ASTDumpXML(llvm::raw_ostream &OS) : OS(OS) {}
+  ASTDumpXML(raw_ostream &OS) : OS(OS) {}
 
   void HandleTranslationUnit(ASTContext &C) {
     C.getTranslationUnitDecl()->dumpXML(OS);
@@ -415,6 +415,6 @@ public:
 };
 }
 
-ASTConsumer *clang::CreateASTDumperXML(llvm::raw_ostream &OS) {
+ASTConsumer *clang::CreateASTDumperXML(raw_ostream &OS) {
   return new ASTDumpXML(OS);
 }

@@ -140,10 +140,10 @@ void html::EscapeText(Rewriter &R, FileID FID,
       unsigned NumSpaces = 8-(ColNo&7);
       if (EscapeSpaces)
         RB.ReplaceText(FilePos, 1,
-                       llvm::StringRef("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+                       StringRef("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
                                        "&nbsp;&nbsp;&nbsp;", 6*NumSpaces));
       else
-        RB.ReplaceText(FilePos, 1, llvm::StringRef("        ", NumSpaces));
+        RB.ReplaceText(FilePos, 1, StringRef("        ", NumSpaces));
       ColNo += NumSpaces;
       break;
     }
