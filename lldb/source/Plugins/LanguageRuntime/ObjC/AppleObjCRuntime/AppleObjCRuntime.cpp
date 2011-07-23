@@ -284,8 +284,7 @@ AppleObjCRuntime::ClearExceptionBreakpoints ()
     
     if (m_objc_exception_bp_sp.get())
     {
-        m_process->GetTarget().RemoveBreakpointByID(m_objc_exception_bp_sp->GetID());
-        m_objc_exception_bp_sp.reset();
+        m_objc_exception_bp_sp->SetEnabled (false);
     }
 }
 

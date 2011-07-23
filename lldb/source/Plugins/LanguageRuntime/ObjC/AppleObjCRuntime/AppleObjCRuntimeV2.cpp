@@ -480,6 +480,8 @@ AppleObjCRuntimeV2::SetExceptionBreakpoints ()
                                                                           eFunctionNameTypeBase, 
                                                                           true);
     }
+    else
+        m_objc_exception_bp_sp->SetEnabled (true);
 }
 
 ClangUtilityFunction *
