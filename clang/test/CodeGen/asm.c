@@ -1,4 +1,13 @@
 // RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm %s -o - | FileCheck %s
+
+// PR10415
+__asm__ ("foo1");
+__asm__ ("foo2");
+__asm__ ("foo3");
+// CHECK: module asm "foo1"
+// CHECK-NEXT: module asm "foo2"
+// CHECK-NEXT: module asm "foo3"
+
 void t1(int len) {
   __asm__ volatile("" : "=&r"(len), "+&r"(len));
 }

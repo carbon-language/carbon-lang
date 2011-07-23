@@ -2186,6 +2186,8 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     const std::string &S = getModule().getModuleInlineAsm();
     if (S.empty())
       getModule().setModuleInlineAsm(AsmString);
+    else if (*--S.end() == '\n')
+      getModule().setModuleInlineAsm(S + AsmString.str());
     else
       getModule().setModuleInlineAsm(S + '\n' + AsmString.str());
     break;
