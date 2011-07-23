@@ -749,7 +749,14 @@ void RAGreedy::growRegion(GlobalSplitCandidate &Cand) {
     // Any new blocks to add?
     if (ActiveBlocks.size() == AddedTo)
       break;
-    addThroughConstraints(Cand.Intf, makeArrayRef(ActiveBlocks).slice(AddedTo));
+
+    // Compute through constraints from the interference, or assume that all
+    // through blocks prefer spilling when forming compact regions.
+    ArrayRef<unsigned> NewBlocks = makeArrayRef(ActiveBlocks).slice(AddedTo);
+    if (Cand.PhysReg)
+      addThroughConstraints(Cand.Intf, NewBlocks);
+    else
+      SpillPlacer->addPrefSpill(NewBlocks);
     AddedTo = ActiveBlocks.size();
 
     // Perhaps iterating can enable more bundles?
