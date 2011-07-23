@@ -17,8 +17,8 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/MC/TargetAsmLexer.h"
 
-#include "llvm/Target/TargetAsmLexer.h"
 #include "llvm/Target/TargetMachine.h" // FIXME
 #include "llvm/Target/TargetRegistry.h"
 

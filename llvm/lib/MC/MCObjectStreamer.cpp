@@ -17,7 +17,7 @@
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Target/TargetAsmBackend.h"
+#include "llvm/MC/TargetAsmBackend.h"
 using namespace llvm;
 
 MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,

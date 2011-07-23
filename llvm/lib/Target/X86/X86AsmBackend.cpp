@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetAsmBackend.h"
+#include "llvm/MC/TargetAsmBackend.h"
 #include "X86.h"
 #include "X86FixupKinds.h"
 #include "llvm/ADT/Twine.h"
@@ -26,7 +26,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetAsmBackend.h"
 using namespace llvm;
 
 // Option to allow disabling arithmetic relaxation to workaround PR9807, which

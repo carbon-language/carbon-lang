@@ -1,4 +1,4 @@
-//===-- llvm/Target/TargetAsmBackend.h - Target Asm Backend -----*- C++ -*-===//
+//===-- llvm/MC/TargetAsmBackend.h - Target Asm Backend ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

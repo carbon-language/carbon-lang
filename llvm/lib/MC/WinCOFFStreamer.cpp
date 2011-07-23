@@ -24,8 +24,8 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCWin64EH.h"
+#include "llvm/MC/TargetAsmBackend.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/ADT/StringMap.h"
 
 #include "llvm/Support/COFF.h"

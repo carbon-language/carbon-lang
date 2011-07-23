@@ -17,9 +17,9 @@
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/MC/TargetAsmBackend.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetAsmBackend.h"
 using namespace llvm;
 using namespace llvm::object;
 

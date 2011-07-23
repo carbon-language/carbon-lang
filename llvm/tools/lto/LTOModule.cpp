@@ -38,7 +38,7 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/SubtargetFeature.h"
-#include "llvm/Target/TargetAsmParser.h"
+#include "llvm/MC/TargetAsmParser.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetRegistry.h"

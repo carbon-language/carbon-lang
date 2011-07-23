@@ -19,6 +19,7 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/TargetAsmBackend.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -27,7 +28,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include <cctype>
 using namespace llvm;

@@ -20,10 +20,10 @@
 #include "llvm/MC/MCMachOSymbolFlags.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCDwarf.h"
+#include "llvm/MC/TargetAsmBackend.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetAsmBackend.h"
 
 using namespace llvm;
 

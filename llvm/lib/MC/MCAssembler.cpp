@@ -18,6 +18,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/MC/MCDwarf.h"
+#include "llvm/MC/TargetAsmBackend.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -26,7 +27,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetAsmBackend.h"
 
 using namespace llvm;
 

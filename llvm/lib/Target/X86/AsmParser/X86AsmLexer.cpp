@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Target/TargetAsmLexer.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/MC/TargetAsmLexer.h"
+#include "llvm/Target/TargetRegistry.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "X86.h"
 
 using namespace llvm;

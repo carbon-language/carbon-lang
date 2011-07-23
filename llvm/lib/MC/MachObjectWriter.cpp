@@ -19,9 +19,9 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCMachOSymbolFlags.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/MC/TargetAsmBackend.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetAsmBackend.h"
 
 #include <vector>
 using namespace llvm;

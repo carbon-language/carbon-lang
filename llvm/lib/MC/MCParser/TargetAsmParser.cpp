@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetAsmParser.h"
+#include "llvm/MC/TargetAsmParser.h"
 using namespace llvm;
 
 TargetAsmParser::TargetAsmParser()

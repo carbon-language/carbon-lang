@@ -23,7 +23,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Target/TargetAsmParser.h"
+#include "llvm/MC/TargetAsmParser.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/OwningPtr.h"

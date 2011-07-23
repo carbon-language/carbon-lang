@@ -1,7 +1,6 @@
 add_llvm_library(LLVMTarget
   Mangler.cpp
   Target.cpp
-  TargetAsmLexer.cpp
   TargetData.cpp
   TargetELFWriterInfo.cpp
   TargetFrameLowering.cpp

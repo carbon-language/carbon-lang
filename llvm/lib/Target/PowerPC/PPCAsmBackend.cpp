@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetAsmBackend.h"
+#include "llvm/MC/TargetAsmBackend.h"
 #include "PPC.h"
 #include "PPCFixupKinds.h"
 #include "llvm/MC/MCMachObjectWriter.h"

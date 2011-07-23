@@ -16,7 +16,7 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/Target/TargetAsmParser.h"
+#include "llvm/MC/TargetAsmParser.h"
 #include "llvm/Support/COFF.h"
 using namespace llvm;
 

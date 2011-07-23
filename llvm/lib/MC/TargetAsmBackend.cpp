@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetAsmBackend.h"
+#include "llvm/MC/TargetAsmBackend.h"
 using namespace llvm;
 
 TargetAsmBackend::TargetAsmBackend()

@@ -7,11 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetAsmParser.h"
+#include "llvm/MC/TargetAsmParser.h"
 #include "X86.h"
 #include "X86Subtarget.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"

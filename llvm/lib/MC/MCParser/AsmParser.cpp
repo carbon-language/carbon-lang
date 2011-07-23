@@ -28,12 +28,12 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCDwarf.h"
+#include "llvm/MC/TargetAsmParser.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetAsmParser.h"
 #include <cctype>
 #include <vector>
 using namespace llvm;

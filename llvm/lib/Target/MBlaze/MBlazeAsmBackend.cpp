@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetAsmBackend.h"
+#include "llvm/MC/TargetAsmBackend.h"
 #include "MBlaze.h"
 #include "MBlazeELFWriterInfo.h"
 #include "llvm/ADT/Twine.h"
@@ -24,7 +24,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetAsmBackend.h"
 using namespace llvm;
 
 static unsigned getFixupKindSize(unsigned Kind) {
