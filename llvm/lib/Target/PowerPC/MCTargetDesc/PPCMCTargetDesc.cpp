@@ -72,8 +72,8 @@ static MCAsmInfo *createPPCMCAsmInfo(const Target &T, StringRef TT) {
   return MAI;
 }
 
-MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                      CodeModel::Model CM) {
+static MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                             CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
 
   if (RM == Reloc::Default) {

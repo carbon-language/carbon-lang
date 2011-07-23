@@ -59,8 +59,8 @@ static MCAsmInfo *createXCoreMCAsmInfo(const Target &T, StringRef TT) {
   return MAI;
 }
 
-MCCodeGenInfo *createXCoreMCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                        CodeModel::Model CM) {
+static MCCodeGenInfo *createXCoreMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                               CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   X->InitMCCodeGenInfo(RM, CM);
   return X;

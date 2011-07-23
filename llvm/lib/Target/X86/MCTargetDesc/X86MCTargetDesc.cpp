@@ -314,8 +314,8 @@ static MCAsmInfo *createX86MCAsmInfo(const Target &T, StringRef TT) {
   return MAI;
 }
 
-MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                      CodeModel::Model CM) {
+static MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                             CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
 
   Triple T(TT);

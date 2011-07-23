@@ -57,8 +57,8 @@ static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   }
 }
 
-MCCodeGenInfo *createMBlazeMCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                         CodeModel::Model CM) {
+static MCCodeGenInfo *createMBlazeMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                                CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   if (RM == Reloc::Default)
     RM = Reloc::Static;

@@ -50,8 +50,8 @@ static MCSubtargetInfo *createBlackfinMCSubtargetInfo(StringRef TT,
   return X;
 }
 
-MCCodeGenInfo *createBlackfinMCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                           CodeModel::Model CM) {
+static MCCodeGenInfo *createBlackfinMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                                  CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   X->InitMCCodeGenInfo(RM, CM);
   return X;

@@ -60,7 +60,7 @@ static MCAsmInfo *createSPUMCAsmInfo(const Target &T, StringRef TT) {
   return MAI;
 }
 
-MCCodeGenInfo *createSPUMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+static MCCodeGenInfo *createSPUMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                       CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   // For the time being, use static relocations, since there's really no

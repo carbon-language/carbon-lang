@@ -49,8 +49,8 @@ static MCSubtargetInfo *createAlphaMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-MCCodeGenInfo *createAlphaMCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                        CodeModel::Model CM) {
+static MCCodeGenInfo *createAlphaMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                               CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   X->InitMCCodeGenInfo(Reloc::PIC_, CM);
   return X;

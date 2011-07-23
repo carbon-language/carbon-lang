@@ -59,8 +59,8 @@ static MCAsmInfo *createMipsMCAsmInfo(const Target &T, StringRef TT) {
   return MAI;
 }
 
-MCCodeGenInfo *createMipsMCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                       CodeModel::Model CM) {
+static MCCodeGenInfo *createMipsMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                              CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   if (RM == Reloc::Default) {
     // Abicall enables PIC by default

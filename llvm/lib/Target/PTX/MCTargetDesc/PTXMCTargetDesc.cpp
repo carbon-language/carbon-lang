@@ -49,8 +49,8 @@ static MCSubtargetInfo *createPTXMCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-MCCodeGenInfo *createPTXMCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                      CodeModel::Model CM) {
+static MCCodeGenInfo *createPTXMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                             CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   X->InitMCCodeGenInfo(RM, CM);
   return X;

@@ -48,8 +48,8 @@ static MCSubtargetInfo *createMSP430MCSubtargetInfo(StringRef TT, StringRef CPU,
   return X;
 }
 
-MCCodeGenInfo *createMSP430MCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                         CodeModel::Model CM) {
+static MCCodeGenInfo *createMSP430MCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                                CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   X->InitMCCodeGenInfo(RM, CM);
   return X;
