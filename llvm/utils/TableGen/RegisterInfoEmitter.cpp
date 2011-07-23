@@ -206,23 +206,20 @@ RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
 // Helper to emit a set of bits into a constant byte array.
 class BitVectorEmitter {
   BitVector Values;
-  unsigned Len;
 public:
-  BitVectorEmitter(unsigned L) : Len(L%8 ? ((L/8)+1)*8 : L) {
-    Values.resize(Len);
+  void add(unsigned v) {
+    if (v >= Values.size())
+      Values.resize(((v/8)+1)*8); // Round up to the next byte.
+    Values[v] = true;
   }
 
-  void add(unsigned v) { Values[v] = true; }
-
   void print(raw_ostream &OS) {
-    for (unsigned i = 0, e = Len / 8; i != e; ++i) {
+    for (unsigned i = 0, e = Values.size() / 8; i != e; ++i) {
       unsigned char out = 0;
-      for (unsigned ii = 0, ie = 8; ii != ie; ++ii)
-        if (Values[i * 8 + ii])
-          out |= 1 << ii;
-      OS << "0x";
-      OS.write_hex(out);
-      OS << ", ";
+      for (unsigned j = 0; j != 8; ++j)
+        if (Values[i * 8 + j])
+          out |= 1 << j;
+      OS << format("0x%02x, ", out);
     }
   }
 };
@@ -349,7 +346,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     OS << "  // " << Name << " Bit set.\n"
        << "  static const unsigned char " << Name
        << "Bits[] = {\n    ";
-    BitVectorEmitter BVE(Target.getRegBank().getRegisters().size()+1);
+    BitVectorEmitter BVE;
     for (unsigned i = 0, e = Order.size(); i != e; ++i) {
       Record *Reg = Order[i];
       BVE.add(Target.getRegBank().getReg(Reg)->EnumValue);
