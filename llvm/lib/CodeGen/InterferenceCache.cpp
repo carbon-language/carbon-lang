@@ -18,10 +18,13 @@
 
 using namespace llvm;
 
+// Static member used for null interference cursors.
+InterferenceCache::BlockInterference InterferenceCache::Cursor::NoInterference;
+
 void InterferenceCache::init(MachineFunction *mf,
                              LiveIntervalUnion *liuarray,
                              SlotIndexes *indexes,
-                            const TargetRegisterInfo *tri) {
+                             const TargetRegisterInfo *tri) {
   MF = mf;
   LIUArray = liuarray;
   TRI = tri;

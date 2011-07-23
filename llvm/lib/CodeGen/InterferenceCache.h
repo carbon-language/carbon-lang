@@ -138,6 +138,7 @@ public:
   class Cursor {
     Entry *CacheEntry;
     BlockInterference *Current;
+    static BlockInterference NoInterference;
 
     void setEntry(Entry *E) {
       Current = 0;
@@ -175,7 +176,7 @@ public:
 
     /// moveTo - Move cursor to basic block MBBNum.
     void moveToBlock(unsigned MBBNum) {
-      Current = CacheEntry->get(MBBNum);
+      Current = CacheEntry ? CacheEntry->get(MBBNum) : &NoInterference;
     }
 
     /// hasInterference - Return true if the current block has any interference.
