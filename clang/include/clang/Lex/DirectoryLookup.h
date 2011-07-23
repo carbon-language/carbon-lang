@@ -14,12 +14,9 @@
 #ifndef LLVM_CLANG_LEX_DIRECTORYLOOKUP_H
 #define LLVM_CLANG_LEX_DIRECTORYLOOKUP_H
 
+#include "clang/Basic/LLVM.h"
 #include "clang/Basic/SourceManager.h"
 
-namespace llvm {
-  class StringRef;
-  template <typename T> class SmallVectorImpl;
-}
 namespace clang {
 class HeaderMap;
 class DirectoryEntry;

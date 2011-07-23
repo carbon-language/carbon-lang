@@ -14,11 +14,8 @@
 #ifndef LLVM_CLANG_SA_CORE_CHECKERPROVIDER_H
 #define LLVM_CLANG_SA_CORE_CHECKERPROVIDER_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringRef.h"
-
-namespace llvm {
-  class raw_ostream;
-}
 
 namespace clang {
 

@@ -15,13 +15,9 @@
 #ifndef LLVM_CLANG_GR_RVALUE_H
 #define LLVM_CLANG_GR_RVALUE_H
 
+#include "clang/Basic/LLVM.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/ADT/ImmutableList.h"
-
-namespace llvm {
-  class raw_ostream;
-}
 
 //==------------------------------------------------------------------------==//
 //  Base SVal types.

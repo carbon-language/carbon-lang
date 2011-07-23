@@ -18,13 +18,13 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/Analysis/AnalysisContext.h"
+#include "clang/Basic/LLVM.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseSet.h"
 
 namespace llvm {
 class BumpPtrAllocator;
-class raw_ostream;
 }
 
 namespace clang {

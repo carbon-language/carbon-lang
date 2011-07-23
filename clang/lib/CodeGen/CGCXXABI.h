@@ -15,14 +15,14 @@
 #ifndef CLANG_CODEGEN_CXXABI_H
 #define CLANG_CODEGEN_CXXABI_H
 
+#include "clang/Basic/LLVM.h"
+
 #include "CodeGenFunction.h"
 
 namespace llvm {
   class Constant;
   class Type;
   class Value;
-
-  template <class T> class SmallVectorImpl;
 }
 
 namespace clang {

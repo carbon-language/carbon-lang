@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_GR_VALUESTATE_H
 #define LLVM_CLANG_GR_VALUESTATE_H
 
+#include "clang/Basic/LLVM.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ConstraintManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/Environment.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
@@ -21,12 +22,10 @@
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
-#include "llvm/Support/Casting.h"
 
 namespace llvm {
 class APSInt;
 class BumpPtrAllocator;
-class raw_ostream;
 }
 
 namespace clang {

@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_SOURCEMANAGER_H
 #define LLVM_CLANG_SOURCEMANAGER_H
 
+#include "clang/Basic/LLVM.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
@@ -24,10 +25,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include <vector>
 #include <cassert>
-
-namespace llvm {
-class StringRef;
-}
 
 namespace clang {
 
