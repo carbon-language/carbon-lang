@@ -1280,10 +1280,10 @@ something like that).</li>
 method if the method "computes" the result string.  Instead, use
 std::string.</li>
     
-<li>StringRef's allow you to mutate the pointed-to string bytes, but because it
-doesn't own the string, it doesn't allow you to insert or remove bytes from
-the range.  For editing operations like this, it interoperates with the
-<a href="#dss_twine">Twine</a> class.</li>
+<li>StringRef's do not allow you to mutate the pointed-to string bytes and it
+doesn't allow you to insert or remove bytes from the range.  For editing 
+operations like this, it interoperates with the <a 
+href="#dss_twine">Twine</a> class.</li>
 </ol>
   
 <p>Because of its strengths and limitations, it is very common for a function to
