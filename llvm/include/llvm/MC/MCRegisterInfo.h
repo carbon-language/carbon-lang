@@ -33,7 +33,7 @@ private:
   const int CopyCost;
   const bool Allocatable;
   const iterator RegsBegin, RegsEnd;
-  const unsigned char *RegSet;
+  const unsigned char *const RegSet;
   const unsigned RegSetSize;
 public:
   MCRegisterClass(unsigned id, const char *name,
@@ -44,7 +44,7 @@ public:
       Allocatable(Allocable), RegsBegin(RB), RegsEnd(RE), RegSet(Bits),
       RegSetSize(NumBytes) {
     for (iterator i = RegsBegin; i != RegsEnd; ++i)
-       assert (contains(*i) && "Bit field corrupted.");
+       assert(contains(*i) && "Bit field corrupted.");
   }
 
   /// getID() - Return the register class ID number.
