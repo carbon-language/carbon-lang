@@ -2786,6 +2786,14 @@ CXSourceRange clang_getRange(CXSourceLocation begin, CXSourceLocation end) {
                            begin.int_data, end.int_data };
   return Result;
 }
+
+unsigned clang_equalRanges(CXSourceRange range1, CXSourceRange range2)
+{
+  return range1.ptr_data[0] == range2.ptr_data[0]
+      && range1.ptr_data[1] == range2.ptr_data[1]
+      && range1.begin_int_data == range2.begin_int_data
+      && range1.end_int_data == range2.end_int_data;
+}
 } // end: extern "C"
 
 static void createNullLocation(CXFile *file, unsigned *line,

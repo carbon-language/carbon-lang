@@ -36,6 +36,7 @@ _clang_disposeTranslationUnit
 _clang_enableStackTraces
 _clang_equalCursors
 _clang_equalLocations
+_clang_equalRanges
 _clang_equalTypes
 _clang_executeOnThread
 _clang_formatDiagnostic

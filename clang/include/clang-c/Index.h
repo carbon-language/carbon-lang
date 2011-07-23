@@ -328,6 +328,14 @@ CINDEX_LINKAGE CXSourceRange clang_getRange(CXSourceLocation begin,
                                             CXSourceLocation end);
 
 /**
+ * \brief Determine whether two ranges are equivalent.
+ *
+ * \returns non-zero if the ranges are the same, zero if they differ.
+ */
+CINDEX_LINKAGE unsigned clang_equalRanges(CXSourceRange range1,
+                                          CXSourceRange range2);
+
+/**
  * \brief Retrieve the file, line, column, and offset represented by
  * the given source location.
  *
