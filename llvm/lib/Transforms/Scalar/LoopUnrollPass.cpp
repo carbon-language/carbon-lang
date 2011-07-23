@@ -49,7 +49,7 @@ namespace {
       CurrentAllowPartial = (P == -1) ? UnrollAllowPartial : (bool)P;
 
       UserThreshold = (T != -1) || (UnrollThreshold.getNumOccurrences() > 0);
-     
+
       initializeLoopUnrollPass(*PassRegistry::getPassRegistry());
     }
 
@@ -57,11 +57,11 @@ namespace {
     /// that the loop unroll should be performed regardless of how much
     /// code expansion would result.
     static const unsigned NoThreshold = UINT_MAX;
-    
+
     // Threshold to use when optsize is specified (and there is no
     // explicit -unroll-threshold).
     static const unsigned OptSizeUnrollThreshold = 50;
-    
+
     unsigned CurrentCount;
     unsigned CurrentThreshold;
     bool     CurrentAllowPartial;
@@ -107,14 +107,14 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls) {
        I != E; ++I)
     Metrics.analyzeBasicBlock(*I);
   NumCalls = Metrics.NumInlineCandidates;
-  
+
   unsigned LoopSize = Metrics.NumInsts;
-  
+
   // Don't allow an estimate of size zero.  This would allows unrolling of loops
   // with huge iteration counts, which is a compile time problem even if it's
   // not a problem for code quality.
   if (LoopSize == 0) LoopSize = 1;
-  
+
   return LoopSize;
 }
 
@@ -125,13 +125,13 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   DEBUG(dbgs() << "Loop Unroll: F[" << Header->getParent()->getName()
         << "] Loop %" << Header->getName() << "\n");
   (void)Header;
-  
+
   // Determine the current unrolling threshold.  While this is normally set
   // from UnrollThreshold, it is overridden to a smaller value if the current
   // function is marked as optimize-for-size, and the unroll threshold was
   // not user specified.
   unsigned Threshold = CurrentThreshold;
-  if (!UserThreshold && 
+  if (!UserThreshold &&
       Header->getParent()->hasFnAttr(Attribute::OptimizeForSize))
     Threshold = OptSizeUnrollThreshold;
 

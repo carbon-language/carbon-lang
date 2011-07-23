@@ -129,14 +129,14 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
 
   BasicBlock *Header = L->getHeader();
   BranchInst *BI = dyn_cast<BranchInst>(LatchBlock->getTerminator());
-  
+
   if (!BI || BI->isUnconditional()) {
     // The loop-rotate pass can be helpful to avoid this in many cases.
     DEBUG(dbgs() <<
              "  Can't unroll; loop not terminated by a conditional branch.\n");
     return false;
   }
-  
+
   if (Header->hasAddressTaken()) {
     // The loop-rotate pass can be helpful to avoid this in many cases.
     DEBUG(dbgs() <<
@@ -210,7 +210,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
     OrigPHINode.push_back(PN);
-    if (Instruction *I = 
+    if (Instruction *I =
                 dyn_cast<Instruction>(PN->getIncomingValueForBlock(LatchBlock)))
       if (L->contains(I))
         LastValueMap[I] = I;
@@ -223,7 +223,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
 
   for (unsigned It = 1; It != Count; ++It) {
     std::vector<BasicBlock*> NewBlocks;
-    
+
     for (std::vector<BasicBlock*>::iterator BB = LoopBlocks.begin(),
          E = LoopBlocks.end(); BB != E; ++BB) {
       ValueToValueMapTy VMap;
@@ -282,14 +282,14 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
 
       NewBlocks.push_back(New);
     }
-    
+
     // Remap all instructions in the most recent iteration
     for (unsigned i = 0; i < NewBlocks.size(); ++i)
       for (BasicBlock::iterator I = NewBlocks[i]->begin(),
            E = NewBlocks[i]->end(); I != E; ++I)
         ::RemapInstruction(I, LastValueMap);
   }
-  
+
   // The latch block exits the loop.  If there are any PHI nodes in the
   // successor blocks, update them to use the appropriate values computed as the
   // last iteration of the loop.
@@ -366,7 +366,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
         std::replace(Latches.begin(), Latches.end(), Dest, Fold);
     }
   }
-  
+
   // At this point, the code is well formed.  We now do a quick sweep over the
   // inserted code, doing constant propagation and dead code elimination as we
   // go.
