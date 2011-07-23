@@ -17,7 +17,7 @@
 #ifndef ARMBASEINFO_H
 #define ARMBASEINFO_H
 
-#include "MCTargetDesc/ARMMCTargetDesc.h"
+#include "ARMMCTargetDesc.h"
 #include "llvm/Support/ErrorHandling.h"
 
 // Note that the following auto-generated files only defined enum types, and

@@ -15,8 +15,10 @@
 #include "ARMMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #define GET_REGINFO_MC_DESC
 #include "ARMGenRegisterInfo.inc"
@@ -119,14 +121,35 @@ static MCAsmInfo *createARMMCAsmInfo(const Target &T, StringRef TT) {
   return new ARMELFMCAsmInfo();
 }
 
-MCCodeGenInfo *createARMMCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                      CodeModel::Model CM) {
+static MCCodeGenInfo *createARMMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                             CodeModel::Model CM) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   if (RM == Reloc::Default)
     RM = Reloc::DynamicNoPIC;
   X->InitMCCodeGenInfo(RM, CM);
   return X;
 }
+
+// This is duplicated code. Refactor this.
+static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
+                                    MCContext &Ctx, TargetAsmBackend &TAB,
+                                    raw_ostream &OS,
+                                    MCCodeEmitter *Emitter,
+                                    bool RelaxAll,
+                                    bool NoExecStack) {
+  Triple TheTriple(TT);
+
+  if (TheTriple.isOSDarwin())
+    return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
+
+  if (TheTriple.isOSWindows()) {
+    llvm_unreachable("ARM does not support Windows COFF format");
+    return NULL;
+  }
+
+  return createELFStreamer(Ctx, TAB, OS, Emitter, RelaxAll, NoExecStack);
+}
+
 
 // Force static initialization.
 extern "C" void LLVMInitializeARMTargetMC() {
@@ -151,4 +174,16 @@ extern "C" void LLVMInitializeARMTargetMC() {
                                           ARM_MC::createARMMCSubtargetInfo);
   TargetRegistry::RegisterMCSubtargetInfo(TheThumbTarget,
                                           ARM_MC::createARMMCSubtargetInfo);
+
+  // Register the MC Code Emitter
+  TargetRegistry::RegisterCodeEmitter(TheARMTarget, createARMMCCodeEmitter);
+  TargetRegistry::RegisterCodeEmitter(TheThumbTarget, createARMMCCodeEmitter);
+
+  // Register the asm backend.
+  TargetRegistry::RegisterAsmBackend(TheARMTarget, createARMAsmBackend);
+  TargetRegistry::RegisterAsmBackend(TheThumbTarget, createARMAsmBackend);
+
+  // Register the object streamer.
+  TargetRegistry::RegisterObjectStreamer(TheARMTarget, createMCStreamer);
+  TargetRegistry::RegisterObjectStreamer(TheThumbTarget, createMCStreamer);
 }

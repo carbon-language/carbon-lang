@@ -21,43 +21,10 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-// This is duplicated code. Refactor this.
-static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
-                                    MCContext &Ctx, TargetAsmBackend &TAB,
-                                    raw_ostream &OS,
-                                    MCCodeEmitter *Emitter,
-                                    bool RelaxAll,
-                                    bool NoExecStack) {
-  Triple TheTriple(TT);
-
-  if (TheTriple.isOSDarwin())
-    return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
-
-  if (TheTriple.isOSWindows()) {
-    llvm_unreachable("ARM does not support Windows COFF format");
-    return NULL;
-  }
-
-  return createELFStreamer(Ctx, TAB, OS, Emitter, RelaxAll, NoExecStack);
-}
-
 extern "C" void LLVMInitializeARMTarget() {
   // Register the target.
   RegisterTargetMachine<ARMTargetMachine> X(TheARMTarget);
   RegisterTargetMachine<ThumbTargetMachine> Y(TheThumbTarget);
-
-  // Register the MC Code Emitter
-  TargetRegistry::RegisterCodeEmitter(TheARMTarget, createARMMCCodeEmitter);
-  TargetRegistry::RegisterCodeEmitter(TheThumbTarget, createARMMCCodeEmitter);
-
-  // Register the asm backend.
-  TargetRegistry::RegisterAsmBackend(TheARMTarget, createARMAsmBackend);
-  TargetRegistry::RegisterAsmBackend(TheThumbTarget, createARMAsmBackend);
-
-  // Register the object streamer.
-  TargetRegistry::RegisterObjectStreamer(TheARMTarget, createMCStreamer);
-  TargetRegistry::RegisterObjectStreamer(TheThumbTarget, createMCStreamer);
-
 }
 
 /// TargetMachine ctor - Create an ARM architecture model.

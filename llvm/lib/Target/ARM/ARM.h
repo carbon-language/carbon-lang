@@ -15,7 +15,7 @@
 #ifndef TARGET_ARM_H
 #define TARGET_ARM_H
 
-#include "ARMBaseInfo.h"
+#include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -37,12 +37,6 @@ class MCSubtargetInfo;
 class TargetAsmBackend;
 class formatted_raw_ostream;
 
-MCCodeEmitter *createARMMCCodeEmitter(const MCInstrInfo &MCII,
-                                      const MCSubtargetInfo &STI,
-                                      MCContext &Ctx);
-
-TargetAsmBackend *createARMAsmBackend(const Target &, const std::string &);
-
 FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM,
                                CodeGenOpt::Level OptLevel);
 
@@ -60,12 +54,6 @@ FunctionPass *createThumb2SizeReductionPass();
 
 void LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                   ARMAsmPrinter &AP);
-
-/// createARMMachObjectWriter - Construct an ARM Mach-O object writer.
-MCObjectWriter *createARMMachObjectWriter(raw_ostream &OS,
-                                          bool Is64Bit,
-                                          uint32_t CPUType,
-                                          uint32_t CPUSubtype);
 
 } // end namespace llvm;
 

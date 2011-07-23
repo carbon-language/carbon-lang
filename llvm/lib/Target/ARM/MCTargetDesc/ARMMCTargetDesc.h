@@ -17,9 +17,15 @@
 #include <string>
 
 namespace llvm {
+class MCCodeEmitter;
+class MCContext;
+class MCInstrInfo;
+class MCObjectWriter;
 class MCSubtargetInfo;
-class Target;
 class StringRef;
+class Target;
+class TargetAsmBackend;
+class raw_ostream;
 
 extern Target TheARMTarget, TheThumbTarget;
 
@@ -32,6 +38,18 @@ namespace ARM_MC {
   MCSubtargetInfo *createARMMCSubtargetInfo(StringRef TT, StringRef CPU,
                                             StringRef FS);
 }
+
+MCCodeEmitter *createARMMCCodeEmitter(const MCInstrInfo &MCII,
+                                      const MCSubtargetInfo &STI,
+                                      MCContext &Ctx);
+
+TargetAsmBackend *createARMAsmBackend(const Target&, const std::string &);
+
+/// createARMMachObjectWriter - Construct an ARM Mach-O object writer.
+MCObjectWriter *createARMMachObjectWriter(raw_ostream &OS,
+                                          bool Is64Bit,
+                                          uint32_t CPUType,
+                                          uint32_t CPUSubtype);
 
 } // End llvm namespace
 

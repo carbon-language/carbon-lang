@@ -12,15 +12,16 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mccodeemitter"
-#include "ARM.h"
-#include "ARMFixupKinds.h"
-#include "ARMInstrInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
+#include "MCTargetDesc/ARMBaseInfo.h"
+#include "MCTargetDesc/ARMFixupKinds.h"
 #include "MCTargetDesc/ARMMCExpr.h"
+#include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/Statistic.h"
@@ -284,9 +285,6 @@ public:
 
   unsigned getMsbOpValue(const MCInst &MI, unsigned Op,
                          SmallVectorImpl<MCFixup> &Fixups) const;
-
-  unsigned getSsatBitPosValue(const MCInst &MI, unsigned Op,
-                              SmallVectorImpl<MCFixup> &Fixups) const;
 
   unsigned getRegisterListOpValue(const MCInst &MI, unsigned Op,
                                   SmallVectorImpl<MCFixup> &Fixups) const;
@@ -1170,6 +1168,11 @@ getMsbOpValue(const MCInst &MI, unsigned Op,
   return msb;
 }
 
+namespace llvm {
+  // FIXME: TableGen this?
+  extern MCRegisterClass ARMMCRegisterClasses[]; // In ARMGenRegisterInfo.inc.
+}
+
 unsigned ARMMCCodeEmitter::
 getRegisterListOpValue(const MCInst &MI, unsigned Op,
                        SmallVectorImpl<MCFixup> &Fixups) const {
@@ -1180,8 +1183,8 @@ getRegisterListOpValue(const MCInst &MI, unsigned Op,
   // LDM/STM:
   //   {15-0}  = Bitfield of GPRs.
   unsigned Reg = MI.getOperand(Op).getReg();
-  bool SPRRegs = ARM::SPRRegClass.contains(Reg);
-  bool DPRRegs = ARM::DPRRegClass.contains(Reg);
+  bool SPRRegs = llvm::ARMMCRegisterClasses[ARM::SPRRegClassID].contains(Reg);
+  bool DPRRegs = llvm::ARMMCRegisterClasses[ARM::DPRRegClassID].contains(Reg);
 
   unsigned Binary = 0;
 

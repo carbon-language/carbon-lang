@@ -29,7 +29,7 @@
 #include "llvm/ADT/Statistic.h"
 
 #include "../Target/X86/X86FixupKinds.h"
-#include "../Target/ARM/ARMFixupKinds.h"
+#include "../Target/ARM/MCTargetDesc/ARMFixupKinds.h"
 
 #include <vector>
 using namespace llvm;
