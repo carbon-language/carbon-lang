@@ -204,7 +204,9 @@ template <class Key, class T, class Hash, class Pred, class Alloc>
 #include <functional>
 #include <stdexcept>
 
+#if __DEPRECATED
 #warning Use of the header <ext/hash_map> is deprecated.  Migrate to <unordered_map>
+#endif
 
 #pragma GCC system_header
 
