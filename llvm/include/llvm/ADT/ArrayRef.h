@@ -190,7 +190,7 @@ namespace llvm {
   /// Construct an ArrayRef from a C array.
   template<typename T, size_t N>
   ArrayRef<T> makeArrayRef(const T (&Arr)[N]) {
-    return ArrayRef<T>(Arr, N);
+    return ArrayRef<T>(Arr);
   }
 
   /// @}
