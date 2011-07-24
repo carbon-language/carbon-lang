@@ -316,3 +316,28 @@ declare void @_ZNSt6vectorIN4llvm11MachineMoveESaIS1_EE13_M_insert_auxEN9__gnu_c
 declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
 
 declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
+
+; PR10463
+; Spilling a virtual register with <undef> uses.
+define void @autogen_239_1000() {
+BB:
+    %Shuff = shufflevector <8 x double> undef, <8 x double> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 undef, i32 undef>
+    br label %CF
+
+CF:
+    %B16 = frem <8 x double> zeroinitializer, %Shuff
+    %E19 = extractelement <8 x double> %Shuff, i32 5
+    br i1 undef, label %CF, label %CF75
+
+CF75:
+    br i1 undef, label %CF75, label %CF76
+
+CF76:
+    store double %E19, double* undef
+    br i1 undef, label %CF76, label %CF77
+
+CF77:
+    %B55 = fmul <8 x double> %B16, undef
+    br label %CF77
+}
+

@@ -938,15 +938,11 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
       continue;
     }
 
-    // <undef> operands don't really read the register, so just assign them to
-    // the complement.
-    if (MO.isUse() && MO.isUndef()) {
-      MO.setReg(Edit->get(0)->reg);
-      continue;
-    }
-
+    // <undef> operands don't really read the register, so it doesn't matter
+    // which register we choose.  When the use operand is tied to a def, we must
+    // use the same register as the def, so just do that always.
     SlotIndex Idx = LIS.getInstructionIndex(MI);
-    if (MO.isDef())
+    if (MO.isDef() || MO.isUndef())
       Idx = MO.isEarlyClobber() ? Idx.getUseIndex() : Idx.getDefIndex();
 
     // Rewrite to the mapped register at Idx.
