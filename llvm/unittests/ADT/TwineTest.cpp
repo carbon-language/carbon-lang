@@ -37,10 +37,14 @@ TEST(TwineTest, Numbers) {
   EXPECT_EQ("-123", Twine(-123).str());
   EXPECT_EQ("123", Twine(123).str());
   EXPECT_EQ("-123", Twine(-123).str());
-  EXPECT_EQ("123", Twine((char) 123).str());
-  EXPECT_EQ("-123", Twine((signed char) -123).str());
 
   EXPECT_EQ("7b", Twine::utohexstr(123).str());
+}
+
+TEST(TwineTest, Characters) {
+  EXPECT_EQ("x", Twine('x').str());
+  EXPECT_EQ("x", Twine(static_cast<unsigned char>('x')).str());
+  EXPECT_EQ("x", Twine(static_cast<signed char>('x')).str());
 }
 
 TEST(TwineTest, Concat) {
