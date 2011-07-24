@@ -952,7 +952,7 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
                  << Idx << ':' << RegIdx << '\t' << *MI);
 
     // Extend liveness to Idx if the instruction reads reg.
-    if (!ExtendRanges)
+    if (!ExtendRanges || MO.isUndef())
       continue;
 
     // Skip instructions that don't read Reg.
