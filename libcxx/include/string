@@ -3507,24 +3507,6 @@ operator==(const _CharT* __lhs,
     return __rhs.compare(__lhs) == 0;
 }
 
-template<class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-bool
-operator==(const char* __lhs,
-           const basic_string<char, char_traits<char>, _Allocator>& __rhs) _NOEXCEPT
-{
-    return strcmp(__lhs, __rhs.data()) == 0;
-}
-
-template<class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-bool
-operator==(const wchar_t* __lhs,
-           const basic_string<wchar_t, char_traits<wchar_t>, _Allocator>& __rhs) _NOEXCEPT
-{
-    return wcscmp(__lhs, __rhs.data()) == 0;
-}
-
 template<class _CharT, class _Traits, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 bool
@@ -3532,24 +3514,6 @@ operator==(const basic_string<_CharT,_Traits,_Allocator>& __lhs,
            const _CharT* __rhs) _NOEXCEPT
 {
     return __lhs.compare(__rhs) == 0;
-}
-
-template<class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-bool
-operator==(const basic_string<char, char_traits<char>, _Allocator>& __lhs,
-           const char* __rhs) _NOEXCEPT
-{
-    return strcmp(__lhs.data(), __rhs) == 0;
-}
-
-template<class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-bool
-operator==(const basic_string<wchar_t, char_traits<wchar_t>, _Allocator>& __lhs,
-           const wchar_t* __rhs) _NOEXCEPT
-{
-    return wcscmp(__lhs.data(), __rhs) == 0;
 }
 
 // operator!=
@@ -3589,25 +3553,7 @@ bool
 operator< (const basic_string<_CharT, _Traits, _Allocator>& __lhs,
            const basic_string<_CharT, _Traits, _Allocator>& __rhs) _NOEXCEPT
 {
-    return __lhs.cmpare(__rhs) < 0;
-}
-
-template<class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-bool
-operator< (const basic_string<char, char_traits<char>, _Allocator>& __lhs,
-           const basic_string<char, char_traits<char>, _Allocator>& __rhs) _NOEXCEPT
-{
-    return strcmp(__lhs.data(), __rhs.data()) < 0;
-}
-
-template<class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-bool
-operator< (const basic_string<wchar_t, char_traits<wchar_t>, _Allocator>& __lhs,
-           const basic_string<wchar_t, char_traits<wchar_t>, _Allocator>& __rhs) _NOEXCEPT
-{
-    return wcscmp(__lhs.data(), __rhs.data()) < 0;
+    return __lhs.compare(__rhs) < 0;
 }
 
 template<class _CharT, class _Traits, class _Allocator>
@@ -3616,25 +3562,7 @@ bool
 operator< (const basic_string<_CharT, _Traits, _Allocator>& __lhs,
            const _CharT* __rhs) _NOEXCEPT
 {
-    return __lhs.compare(__rhs);
-}
-
-template<class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-bool
-operator< (const basic_string<char, char_traits<char>, _Allocator>& __lhs,
-           const char* __rhs) _NOEXCEPT
-{
-    return strcmp(__lhs.data(), __rhs) < 0;
-}
-
-template<class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-bool
-operator< (const basic_string<wchar_t, char_traits<wchar_t>, _Allocator>& __lhs,
-           const wchar_t* __rhs) _NOEXCEPT
-{
-    return wcscmp(__lhs.data(), __rhs) < 0;
+    return __lhs.compare(__rhs) < 0;
 }
 
 template<class _CharT, class _Traits, class _Allocator>
@@ -3644,24 +3572,6 @@ operator< (const _CharT* __lhs,
            const basic_string<_CharT, _Traits, _Allocator>& __rhs) _NOEXCEPT
 {
     return __rhs.compare(__lhs) > 0;
-}
-
-template<class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-bool
-operator< (const char* __lhs,
-           const basic_string<char, char_traits<char>, _Allocator>& __rhs) _NOEXCEPT
-{
-    return strcmp(__lhs, __rhs.data()) < 0;
-}
-
-template<class _Allocator>
-_LIBCPP_INLINE_VISIBILITY inline
-bool
-operator< (const wchar_t* __lhs,
-           const basic_string<wchar_t, char_traits<wchar_t>, _Allocator>& __rhs) _NOEXCEPT
-{
-    return wcscmp(__lhs, __rhs.data()) < 0;
 }
 
 // operator>
