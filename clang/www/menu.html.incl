@@ -53,8 +53,9 @@
   </div>
   
   <div class="submenu">
-    <label>Events</label>
-    <a href="http://llvm.org/devmtg/2009-10/">October 2, 2009 - LLVM/Clang Developer Meeting</a>
+    <label>Clang Events</label>
+    <a href="http://llvm.org/devmtg/2009-10/">October 2009</a>
+    <a href="http://llvm.org/devmtg/2010-11/">November 2010</a> 
   </div>
 
 </div>
