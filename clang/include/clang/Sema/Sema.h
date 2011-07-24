@@ -1762,9 +1762,10 @@ public:
 
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl, unsigned DiagID);
-  void WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethod,
+  void WarnConflictingTypedMethods(ObjCMethodDecl *Method,
                                    ObjCMethodDecl *MethodDecl,
-                                   bool IsProtocolMethodDecl);
+                                   bool IsProtocolMethodDecl,
+                                   bool IsDeclaration = false);
 
   bool isPropertyReadonly(ObjCPropertyDecl *PropertyDecl,
                           ObjCInterfaceDecl *IDecl);
@@ -1886,6 +1887,11 @@ public:
                                   ObjCContainerDecl* IDecl,
                                   bool &IncompleteImpl,
                                   bool ImmediateClass);
+
+  /// MatchMethodsInClassAndItsProtocol - Check that any redeclaration of
+  /// method in protocol in its qualified class match in their type and
+  /// issue warnings otherwise.
+  void MatchMethodsInClassAndItsProtocol(const ObjCInterfaceDecl *CDecl);
 
 private:
   /// AddMethodToGlobalPool - Add an instance or factory method to the global

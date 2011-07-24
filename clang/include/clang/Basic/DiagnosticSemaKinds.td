@@ -384,26 +384,31 @@ def note_required_for_protocol_at :
   Note<"required for direct or indirect protocol %0">;
 
 def warn_conflicting_ret_types : Warning<
-  "conflicting return type in implementation of %0: %1 vs %2">;
+  "conflicting return type in "
+  "%select{implementation|declaration}3 of %0: %1 vs %2">;
 def warn_conflicting_ret_type_modifiers : Warning<
   "conflicting distributed object modifiers on return type "
-  "in implementation of %0">,
+  "in %select{implementation|declaration}1 of %0">,
   InGroup<DiagGroup<"distributed-object-modifiers">>;
 def warn_non_covariant_ret_types : Warning<
-  "conflicting return type in implementation of %0: %1 vs %2">,
+  "conflicting return type in "
+  "%select{implementation|declaration}3 of %0: %1 vs %2">,
   InGroup<DiagGroup<"method-signatures">>, DefaultIgnore;
 
 def warn_conflicting_param_types : Warning<
-  "conflicting parameter types in implementation of %0: %1 vs %2">;
+  "conflicting parameter types in "
+  "%select{implementation|declaration}3 of %0: %1 vs %2">;
 def warn_conflicting_param_modifiers : Warning<
   "conflicting distributed object modifiers on parameter type "
-  "in implementation of %0">,
+  "in %select{implementation|declaration}1 of %0">,
   InGroup<DiagGroup<"distributed-object-modifiers">>;
 def warn_non_contravariant_param_types : Warning<
-  "conflicting parameter types in implementation of %0: %1 vs %2">,
+  "conflicting parameter types in "
+  "%select{implementation|declaration}3 of %0: %1 vs %2">,
   InGroup<DiagGroup<"method-signatures">>, DefaultIgnore;
 def warn_conflicting_variadic :Warning<
-  "conflicting variadic declaration of method and its implementation">;
+  "conflicting variadic declaration of method and its "
+  "%select{implementation|declaration}0">;
 
 def warn_implements_nscopying : Warning<
 "default assign attribute on property %0 which implements "

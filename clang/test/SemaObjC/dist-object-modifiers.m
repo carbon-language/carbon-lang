@@ -4,12 +4,12 @@
 @protocol P
 - (bycopy id)serverPID; // expected-note {{previous declaration is here}}
 - (void)doStuff:(bycopy id)clientId; // expected-note {{previous declaration is here}}
-- (bycopy id)Ok;
+- (bycopy id)Ok; // expected-note {{previous declaration is here}}
 + (oneway id) stillMore : (byref id)Arg : (bycopy oneway id)Arg1;  // expected-note 3 {{previous declaration is here}}
 @end
 
 @interface I <P>
-- (id)Ok;
+- (id)Ok; // expected-warning {{conflicting distributed object modifiers on return type in declaration of 'Ok'}}
 @end
 
 @implementation I

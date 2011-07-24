@@ -92,7 +92,7 @@ typedef struct _NSZone NSZone;
 + (id)allocWithZone:(NSZone *)zone;
 + (id)alloc;
 - (void)dealloc;
-- (void)release;
+- (oneway void)release;
 - (id)copy;
 @end
 @interface NSObject (NSCoderMethods)
