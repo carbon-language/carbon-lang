@@ -12,6 +12,7 @@
 
 // C Includes
 // C++ Includes
+#include <map>
 #include <ostream>
 #include <vector>
 // Other libraries and framework includes
@@ -21,14 +22,17 @@
 namespace lldb_private {
 
 //----------------------------------------------------------------------
-// A ValueObject that represents memory at a given address, viewed as some 
-// set lldb type.
+// A ValueObject that obtains its children from some source other than
+// real information
+// This is currently used to implement children filtering, where only
+// a subset of the real children are shown, but it can be used for any
+// source of made-up children information
 //----------------------------------------------------------------------
-class ValueObjectSyntheticFilter : public ValueObject
+class ValueObjectSynthetic : public ValueObject
 {
 public:
     virtual
-    ~ValueObjectSyntheticFilter();
+    ~ValueObjectSynthetic();
 
     virtual size_t
     GetByteSize();
@@ -105,16 +109,25 @@ protected:
     lldb::TypeSP m_type_sp;
     lldb::ValueObjectSP m_owning_valobj_sp;
     lldb::SyntheticValueType m_use_synthetic;
-    lldb::SyntheticFilterSP m_synth_filter;
+    lldb::SyntheticChildrenFrontEndSP m_synth_filter;
+    
+    typedef std::map<uint32_t, lldb::ValueObjectSP> ByIndexMap;
+    typedef std::map<const char*, uint32_t> NameToIndexMap;
+    
+    typedef ByIndexMap::iterator ByIndexIterator;
+    typedef NameToIndexMap::iterator NameToIndexIterator;
+    
+    ByIndexMap m_children_byindex;
+    NameToIndexMap m_name_toindex;
 
 private:
     friend class ValueObject;
-    ValueObjectSyntheticFilter (ValueObject &parent, lldb::SyntheticFilterSP filter);
+    ValueObjectSynthetic (ValueObject &parent, lldb::SyntheticChildrenSP filter);
     
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------
-    DISALLOW_COPY_AND_ASSIGN (ValueObjectSyntheticFilter);
+    DISALLOW_COPY_AND_ASSIGN (ValueObjectSynthetic);
 };
 
 } // namespace lldb_private

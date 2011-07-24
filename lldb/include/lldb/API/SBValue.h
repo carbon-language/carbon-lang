@@ -14,6 +14,10 @@
 
 #include <stdio.h>
 
+#ifndef SWIG
+class lldb_private::SyntheticScriptProvider;
+#endif
+
 namespace lldb {
 
 class SBValue
@@ -205,7 +209,9 @@ protected:
     friend class SBFrame;
 
 #ifndef SWIG
-
+    // need this to decapsulate the SP from here
+    friend class lldb_private::SyntheticScriptProvider;
+    
     // Mimic shared pointer...
     lldb_private::ValueObject *
     get() const;

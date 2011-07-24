@@ -35,7 +35,11 @@ using namespace lldb_private;
 static ScriptInterpreter::SWIGInitCallback g_swig_init_callback = NULL;
 static ScriptInterpreter::SWIGBreakpointCallbackFunction g_swig_breakpoint_callback = NULL;
 static ScriptInterpreter::SWIGPythonTypeScriptCallbackFunction g_swig_typescript_callback = NULL;
-
+static ScriptInterpreter::SWIGPythonCreateSyntheticProvider g_swig_synthetic_script = NULL;
+static ScriptInterpreter::SWIGPythonCalculateNumChildren g_swig_calc_children = NULL;
+static ScriptInterpreter::SWIGPythonGetChildAtIndex g_swig_get_child_index = NULL;
+static ScriptInterpreter::SWIGPythonGetIndexOfChildWithName g_swig_get_index_child = NULL;
+static ScriptInterpreter::SWIGPythonCastPyObjectToSBValue g_swig_cast_to_sbvalue  = NULL;
 
 static int
 _check_and_flush (FILE *stream)
@@ -1245,6 +1249,55 @@ ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, Str
     return true;
 }
 
+void*
+ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name,
+                                                          lldb::ValueObjectSP valobj)
+{
+    if (class_name.empty())
+        return NULL;
+    
+    if (!valobj.get())
+        return NULL;
+    
+    Target *target = valobj->GetUpdatePoint().GetTarget();
+    
+    if (!target)
+        return NULL;
+    
+    Debugger &debugger = target->GetDebugger();
+    ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
+    ScriptInterpreterPython *python_interpreter = (ScriptInterpreterPython *) script_interpreter;
+    
+    if (!script_interpreter)
+        return NULL;
+    
+    void* ret_val;
+    
+    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
+    if (CurrentThreadHasPythonLock())
+    {
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_synthetic_script    (class_name, 
+                                              python_interpreter->m_dictionary_name.c_str(),
+                                              valobj);
+        python_interpreter->LeaveSession ();
+    }
+    else
+    {
+        while (!GetPythonLock (1))
+            fprintf (tmp_fh, 
+                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_synthetic_script (class_name, 
+                                           python_interpreter->m_dictionary_name.c_str(), 
+                                           valobj);
+        python_interpreter->LeaveSession ();
+        ReleasePythonLock ();
+    }
+    
+    return ret_val;
+}
+
 bool
 ScriptInterpreterPython::GenerateTypeScriptFunction (const char* oneliner, StringList &output)
 {
@@ -1565,15 +1618,161 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
     return NULL;
 }
 
+uint32_t
+ScriptInterpreterPython::CalculateNumChildren (void *implementor)
+{
+    if (!implementor)
+        return 0;
+    
+    if (!g_swig_calc_children)
+        return 0;
+    
+    ScriptInterpreterPython *python_interpreter = this;
+    
+    uint32_t ret_val = 0;
+    
+    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
+    if (CurrentThreadHasPythonLock())
+    {
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_calc_children       (implementor);
+        python_interpreter->LeaveSession ();
+    }
+    else
+    {
+        while (!GetPythonLock (1))
+            fprintf (tmp_fh, 
+                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_calc_children       (implementor);
+        python_interpreter->LeaveSession ();
+        ReleasePythonLock ();
+    }
+    
+    return ret_val;
+}
+
+void*
+ScriptInterpreterPython::GetChildAtIndex (void *implementor, uint32_t idx)
+{
+    if (!implementor)
+        return 0;
+    
+    if (!g_swig_get_child_index)
+        return 0;
+    
+    ScriptInterpreterPython *python_interpreter = this;
+    
+    void* ret_val = NULL;
+    
+    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
+    if (CurrentThreadHasPythonLock())
+    {
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_get_child_index       (implementor,idx);
+        python_interpreter->LeaveSession ();
+    }
+    else
+    {
+        while (!GetPythonLock (1))
+            fprintf (tmp_fh, 
+                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_get_child_index       (implementor,idx);
+        python_interpreter->LeaveSession ();
+        ReleasePythonLock ();
+    }
+    
+    return ret_val;
+}
+
+int
+ScriptInterpreterPython::GetIndexOfChildWithName (void *implementor, const char* child_name)
+{
+    if (!implementor)
+        return UINT32_MAX;
+    
+    if (!g_swig_get_index_child)
+        return UINT32_MAX;
+    
+    ScriptInterpreterPython *python_interpreter = this;
+    
+    int ret_val = UINT32_MAX;
+    
+    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
+    if (CurrentThreadHasPythonLock())
+    {
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_get_index_child       (implementor, child_name);
+        python_interpreter->LeaveSession ();
+    }
+    else
+    {
+        while (!GetPythonLock (1))
+            fprintf (tmp_fh, 
+                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_get_index_child       (implementor, child_name);
+        python_interpreter->LeaveSession ();
+        ReleasePythonLock ();
+    }
+    
+    return ret_val;
+}
+
+lldb::SBValue*
+ScriptInterpreterPython::CastPyObjectToSBValue (void* data)
+{
+    if (!data)
+        return NULL;
+    
+    if (!g_swig_cast_to_sbvalue)
+        return NULL;
+    
+    ScriptInterpreterPython *python_interpreter = this;
+    
+    lldb::SBValue* ret_val = NULL;
+    
+    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
+    if (CurrentThreadHasPythonLock())
+    {
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_cast_to_sbvalue       (data);
+        python_interpreter->LeaveSession ();
+    }
+    else
+    {
+        while (!GetPythonLock (1))
+            fprintf (tmp_fh, 
+                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_cast_to_sbvalue       (data);
+        python_interpreter->LeaveSession ();
+        ReleasePythonLock ();
+    }
+    
+    return ret_val;
+}
+
 
 void
 ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
                                                 SWIGBreakpointCallbackFunction python_swig_breakpoint_callback,
-                                                SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback)
+                                                SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback,
+                                                SWIGPythonCreateSyntheticProvider python_swig_synthetic_script,
+                                                SWIGPythonCalculateNumChildren python_swig_calc_children,
+                                                SWIGPythonGetChildAtIndex python_swig_get_child_index,
+                                                SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
+                                                SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue)
 {
     g_swig_init_callback = python_swig_init_callback;
     g_swig_breakpoint_callback = python_swig_breakpoint_callback;
     g_swig_typescript_callback = python_swig_typescript_callback;
+    g_swig_synthetic_script = python_swig_synthetic_script;
+    g_swig_calc_children = python_swig_calc_children;
+    g_swig_get_child_index = python_swig_get_child_index;
+    g_swig_get_index_child = python_swig_get_index_child;
+    g_swig_cast_to_sbvalue = python_swig_cast_to_sbvalue;
 }
 
 void

@@ -56,6 +56,22 @@ public:
     bool
     GenerateTypeScriptFunction (const char* oneliner, StringList &output);
     
+    void*
+    CreateSyntheticScriptedProvider (std::string class_name,
+                                     lldb::ValueObjectSP valobj);
+    
+    virtual uint32_t
+    CalculateNumChildren (void *implementor);
+    
+    virtual void*
+    GetChildAtIndex (void *implementor, uint32_t idx);
+    
+    virtual int
+    GetIndexOfChildWithName (void *implementor, const char* child_name);
+    
+    virtual lldb::SBValue*
+    CastPyObjectToSBValue (void* data);
+    
     bool
     GenerateFunction(std::string& signature, StringList &input, StringList &output);
     
@@ -103,7 +119,12 @@ public:
     static void
     InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
                            SWIGBreakpointCallbackFunction python_swig_breakpoint_callback,
-                           SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback);
+                           SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback,
+                           SWIGPythonCreateSyntheticProvider python_swig_synthetic_script,
+                           SWIGPythonCalculateNumChildren python_swig_calc_children,
+                           SWIGPythonGetChildAtIndex python_swig_get_child_index,
+                           SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
+                           SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalu);
 
 protected:
 

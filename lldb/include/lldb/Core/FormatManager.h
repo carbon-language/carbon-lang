@@ -545,7 +545,7 @@ public:
     
     bool
     Get(ValueObject& vobj,
-        lldb::SyntheticFilterSP& entry,
+        lldb::SyntheticChildrenSP& entry,
         uint32_t* reason = NULL)
     {
         if (!IsEnabled())
@@ -791,7 +791,7 @@ public:
     
     bool
     Get(ValueObject& vobj,
-        lldb::SyntheticFilterSP& entry)
+        lldb::SyntheticChildrenSP& entry)
     {
         Mutex::Locker(m_map_mutex);
         
@@ -803,7 +803,7 @@ public:
         for (begin = m_active_categories.begin(); begin != end; begin++)
         {
             FormatCategory::SharedPointer category = *begin;
-            lldb::SyntheticFilterSP current_format;
+            lldb::SyntheticChildrenSP current_format;
             if (!category->Get(vobj, current_format, &reason_why))
                 continue;
             if (reason_why == lldb::eFormatterDirectChoice)
@@ -947,7 +947,7 @@ public:
     }
     bool
     Get(ValueObject& vobj,
-        lldb::SyntheticFilterSP& entry)
+        lldb::SyntheticChildrenSP& entry)
     {
         return m_categories_map.Get(vobj, entry);
     }

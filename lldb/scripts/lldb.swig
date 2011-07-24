@@ -281,7 +281,6 @@ LLDBSwigPythonBreakpointCallbackFunction
             // Find the current session's dictionary in the main module's dictionary.
 
             if (PyDict_Check (main_dict))
-             
             {
                 session_dict = NULL;   
                 while (PyDict_Next (main_dict, &pos, &key, &value))
@@ -401,7 +400,6 @@ LLDBSwigPythonCallTypeScript
             // Find the current session's dictionary in the main module's dictionary.
 
             if (PyDict_Check (main_dict))
-             
             {
                 session_dict = NULL;   
                 while (PyDict_Next (main_dict, &pos, &key, &value))
@@ -493,5 +491,278 @@ LLDBSwigPythonCallTypeScript
     return retval;
 }
 
+SWIGEXPORT void*
+LLDBSwigPythonCreateSyntheticProvider 
+(
+    const std::string python_class_name,
+    const char *session_dictionary_name,
+    const lldb::ValueObjectSP& valobj_sp
+)
+{
+    PyObject* retval = NULL;
+
+    if (python_class_name.empty() || !session_dictionary_name)
+        Py_RETURN_NONE;
+
+    lldb::ValueObjectSP* valobj_sp_ptr = new lldb::ValueObjectSP(valobj_sp);
+
+    PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *) valobj_sp_ptr, SWIGTYPE_p_lldb__SBValue, SWIG_POINTER_OWN);
+
+    if (ValObj_PyObj == NULL)
+        Py_RETURN_NONE;
+
+    const char* python_function_name = python_class_name.c_str();
+
+    PyObject *pmodule, *main_dict, *session_dict, *pfunc;
+    PyObject *pvalue;
+
+    pmodule = PyImport_AddModule ("__main__");
+    if (pmodule != NULL)
+    {
+        main_dict = PyModule_GetDict (pmodule);
+        if (main_dict != NULL)
+        {
+            PyObject *key, *value;
+            Py_ssize_t pos = 0;
+
+            // Find the current session's dictionary in the main module's dictionary.
+
+            if (PyDict_Check (main_dict))
+            {
+                session_dict = NULL;   
+                while (PyDict_Next (main_dict, &pos, &key, &value))
+                {
+                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
+                    // them now so that Python's garbage collector doesn't collect them out from under us.
+                    Py_INCREF (key);
+                    Py_INCREF (value);
+                    if (strcmp (PyString_AsString (key), session_dictionary_name) == 0)
+                    {
+                        session_dict = value;
+                        break;
+                    }
+                }
+            }
+
+            if (!session_dict || !PyDict_Check (session_dict))
+                return retval;
+
+            // Find the function we need to call in the current session's dictionary.
+
+            pos = 0;
+            pfunc = NULL;
+            while (PyDict_Next (session_dict, &pos, &key, &value))
+            {
+                if (PyString_Check (key))
+                {
+                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
+                    // them now so that Python's garbage collector doesn't collect them out from under us.
+                    Py_INCREF (key);
+                    Py_INCREF (value);
+                    if (strcmp (PyString_AsString (key), python_function_name) == 0)
+                    {
+                        pfunc = value;
+                        break;
+                    }
+                }
+            }
+
+            // Set up the arguments and call the function.
+
+            if (pfunc && PyCallable_Check (pfunc))
+            {
+                PyObject *argList = Py_BuildValue("SS", ValObj_PyObj, session_dict);
+
+                if (PyErr_Occurred ())
+                {
+                    PyErr_Print();
+                    PyErr_Clear();
+                    return retval;
+                }
+
+                if (argList == NULL)
+                {
+                    return retval;
+                }
+
+                Py_INCREF(ValObj_PyObj);
+
+                pvalue = PyObject_CallObject(pfunc, argList);
+
+                Py_DECREF(argList);
+
+                if (pvalue != NULL)
+                {
+                    if (pvalue != Py_None)
+                        retval = pvalue;
+                    else
+                    {
+                        retval = Py_None;
+                        Py_INCREF(retval);
+                    }
+                }
+                else if (PyErr_Occurred ())
+                {
+                    PyErr_Print();
+                    PyErr_Clear();
+                }
+                Py_INCREF (session_dict);
+            }
+            else if (PyErr_Occurred())
+            {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+        }
+        else if (PyErr_Occurred())
+        {
+            PyErr_Print();
+            PyErr_Clear();
+        }
+    }
+    else if (PyErr_Occurred ())
+    {
+        PyErr_Print();
+        PyErr_Clear ();
+    }
+    if (retval)
+        return retval;
+    else
+        Py_RETURN_NONE;
+}
+
+/*
+these four calls below are meant to support
+Python-based synthetic children providers
+they essentially mimic the four pure virtual
+method calls provided by the frontend class
+*/
+
+SWIGEXPORT uint32_t
+LLDBSwigPython_CalculateNumChildren
+(
+    PyObject *implementor
+)
+{
+
+    static char callee_name[] = "num_children";
+
+    if (implementor == NULL || implementor == Py_None)
+        return 0;
+    PyObject* py_return = PyObject_CallMethod(implementor, callee_name, NULL);
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+
+    if (py_return == NULL || py_return == Py_None)
+    {
+        Py_XDECREF(py_return);
+        return UINT32_MAX;
+    }
+    long retval = PyInt_AsLong(py_return);
+    Py_DECREF(py_return);
+    if (retval >= 0)
+        return (uint32_t)retval;
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+    return 0;
+}
+
+SWIGEXPORT PyObject*
+LLDBSwigPython_GetChildAtIndex
+(
+    PyObject *implementor,
+    uint32_t idx
+)
+{
+
+    static char callee_name[] = "get_child_at_index";
+    static char param_format[] = "i";
+
+    if (implementor == NULL || implementor == Py_None)
+        return NULL;
+    PyObject* py_return = PyObject_CallMethod(implementor, callee_name, param_format, idx);
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+    
+    if (py_return == NULL || py_return == Py_None)
+    {
+        Py_XDECREF(py_return);
+        return NULL;
+    }
+    
+    lldb::SBValue* sbvalue_ptr = NULL;
+
+    if (SWIG_ConvertPtr(py_return, (void**)&sbvalue_ptr, SWIGTYPE_p_lldb__SBValue, 0) == -1)
+    {
+        Py_DECREF(py_return);
+        return NULL;
+    }
+    
+    if (sbvalue_ptr == NULL)
+        return NULL;
+
+    return py_return;
+}
+
+SWIGEXPORT int
+LLDBSwigPython_GetIndexOfChildWithName
+(
+    PyObject *implementor,
+    const char* child_name
+)
+{
+    static char callee_name[] = "get_child_index";
+    static char param_format[] = "s";
+
+    if (implementor == NULL || implementor == Py_None)
+        return 0;
+    PyObject* py_return = PyObject_CallMethod(implementor, callee_name, param_format, child_name);
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+    
+    if (py_return == NULL || py_return == Py_None)
+    {
+        Py_XDECREF(py_return);
+        return UINT32_MAX;
+    }
+    long retval = PyInt_AsLong(py_return);
+    Py_DECREF(py_return);
+    if (retval >= 0)
+        return (uint32_t)retval;
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+    return 0;
+}
+
+SWIGEXPORT lldb::SBValue*
+LLDBSWIGPython_CastPyObjectToSBValue
+(
+    PyObject* data
+)
+{
+    lldb::SBValue* sb_ptr = NULL;
+    
+    int valid_cast = SWIG_ConvertPtr(data, (void**)&sb_ptr, SWIGTYPE_p_lldb__SBValue, 0);
+
+    if (valid_cast == -1)
+        return NULL;
+
+    return sb_ptr;
+}
 
 %}

@@ -35,23 +35,25 @@
 
 using namespace lldb_private;
 
-ValueObjectSyntheticFilter::ValueObjectSyntheticFilter (ValueObject &parent, lldb::SyntheticFilterSP filter) :
+ValueObjectSynthetic::ValueObjectSynthetic (ValueObject &parent, lldb::SyntheticChildrenSP filter) :
     ValueObject(parent),
     m_address (),
     m_type_sp(),
-m_use_synthetic (lldb::eUseSyntheticFilter),
-    m_synth_filter(filter)
+    m_use_synthetic (lldb::eUseSyntheticFilter),
+    m_synth_filter(filter->GetFrontEnd(parent.GetSP())),
+    m_children_byindex(),
+    m_name_toindex()
 {
     SetName (parent.GetName().AsCString());
 }
 
-ValueObjectSyntheticFilter::~ValueObjectSyntheticFilter()
+ValueObjectSynthetic::~ValueObjectSynthetic()
 {
     m_owning_valobj_sp.reset();
 }
 
 lldb::clang_type_t
-ValueObjectSyntheticFilter::GetClangType ()
+ValueObjectSynthetic::GetClangType ()
 {
     if (m_type_sp)
         return m_value.GetClangType();
@@ -60,7 +62,7 @@ ValueObjectSyntheticFilter::GetClangType ()
 }
 
 ConstString
-ValueObjectSyntheticFilter::GetTypeName()
+ValueObjectSynthetic::GetTypeName()
 {
     const bool success = UpdateValueIfNeeded();
     if (success && m_type_sp)
@@ -70,22 +72,13 @@ ValueObjectSyntheticFilter::GetTypeName()
 }
 
 uint32_t
-ValueObjectSyntheticFilter::CalculateNumChildren()
+ValueObjectSynthetic::CalculateNumChildren()
 {
-    const bool success = UpdateValueIfNeeded();
-    if (!success)
-        return 0;
-    if (m_synth_filter.get())
-        return m_synth_filter->GetCount();
-    return 0;
-    if (success && m_type_sp)
-        return ClangASTContext::GetNumChildren (GetClangAST (), GetClangType(), true);
-    else
-        return m_parent->GetNumChildren();
+    return m_synth_filter->CalculateNumChildren();
 }
 
 clang::ASTContext *
-ValueObjectSyntheticFilter::GetClangAST ()
+ValueObjectSynthetic::GetClangAST ()
 {
     const bool success = UpdateValueIfNeeded(false);
     if (success && m_type_sp)
@@ -95,7 +88,7 @@ ValueObjectSyntheticFilter::GetClangAST ()
 }
 
 size_t
-ValueObjectSyntheticFilter::GetByteSize()
+ValueObjectSynthetic::GetByteSize()
 {
     const bool success = UpdateValueIfNeeded();
     if (success && m_type_sp)
@@ -105,13 +98,13 @@ ValueObjectSyntheticFilter::GetByteSize()
 }
 
 lldb::ValueType
-ValueObjectSyntheticFilter::GetValueType() const
+ValueObjectSynthetic::GetValueType() const
 {
     return m_parent->GetValueType();
 }
 
 bool
-ValueObjectSyntheticFilter::UpdateValue ()
+ValueObjectSynthetic::UpdateValue ()
 {
     SetValueIsValid (false);
     m_error.Clear();
@@ -124,46 +117,61 @@ ValueObjectSyntheticFilter::UpdateValue ()
         return false;
     }
 
+    m_children_byindex.clear();
+    m_name_toindex.clear();
+    
     SetValueIsValid(true);
     return true;
 }
 
 lldb::ValueObjectSP
-ValueObjectSyntheticFilter::GetChildAtIndex (uint32_t idx, bool can_create)
+ValueObjectSynthetic::GetChildAtIndex (uint32_t idx, bool can_create)
 {
-    if (!m_synth_filter.get())
-        return lldb::ValueObjectSP();
-    if (idx >= m_synth_filter->GetCount())
-        return lldb::ValueObjectSP();
-    return m_parent->GetSyntheticExpressionPathChild(m_synth_filter->GetExpressionPathAtIndex(idx).c_str(), can_create);
+    ByIndexIterator iter = m_children_byindex.find(idx);
+    
+    if (iter == m_children_byindex.end())
+    {
+        if (can_create)
+        {
+            lldb::ValueObjectSP synth_guy = m_synth_filter->GetChildAtIndex (idx, can_create);
+            m_children_byindex[idx]= synth_guy;
+            return synth_guy;
+        }
+        else
+            return lldb::ValueObjectSP();
+    }
+    else
+        return iter->second;
 }
 
 lldb::ValueObjectSP
-ValueObjectSyntheticFilter::GetChildMemberWithName (const ConstString &name, bool can_create)
+ValueObjectSynthetic::GetChildMemberWithName (const ConstString &name, bool can_create)
 {
-    if (!m_synth_filter.get())
+    
+    uint32_t index = GetIndexOfChildWithName(name);
+    
+    if (index == UINT32_MAX)
         return lldb::ValueObjectSP();
-    uint32_t idx = GetIndexOfChildWithName(name);
-    if (idx >= m_synth_filter->GetCount())
-        return lldb::ValueObjectSP();
-    return m_parent->GetSyntheticExpressionPathChild(name.GetCString(), can_create);
+    
+    return GetChildAtIndex(index, can_create);
 }
 
 uint32_t
-ValueObjectSyntheticFilter::GetIndexOfChildWithName (const ConstString &name)
+ValueObjectSynthetic::GetIndexOfChildWithName (const ConstString &name)
 {
-    const char* name_cstr = name.GetCString();
-    for (int i = 0; i < m_synth_filter->GetCount(); i++)
+    NameToIndexIterator iter = m_name_toindex.find(name.GetCString());
+    
+    if (iter == m_name_toindex.end())
     {
-        const char* expr_cstr = m_synth_filter->GetExpressionPathAtIndex(i).c_str();
-        if (::strcmp(name_cstr, expr_cstr))
-            return i;
+        uint32_t index = m_synth_filter->GetIndexOfChildWithName (name);
+        m_name_toindex[name.GetCString()] = index;
+        return index;
     }
-    return UINT32_MAX;
+    return iter->second;
 }
 
 bool
-ValueObjectSyntheticFilter::IsInScope ()
+ValueObjectSynthetic::IsInScope ()
 {
     return m_parent->IsInScope();
 }

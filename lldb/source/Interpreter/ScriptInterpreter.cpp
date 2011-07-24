@@ -93,11 +93,21 @@ ScriptInterpreter::LanguageToString (lldb::ScriptLanguage language)
 void
 ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
                                           SWIGBreakpointCallbackFunction python_swig_breakpoint_callback,
-                                          SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback)
+                                          SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback,
+                                          SWIGPythonCreateSyntheticProvider python_swig_synthetic_script,
+                                          SWIGPythonCalculateNumChildren python_swig_calc_children,
+                                          SWIGPythonGetChildAtIndex python_swig_get_child_index,
+                                          SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
+                                          SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue)
 {
     ScriptInterpreterPython::InitializeInterpreter (python_swig_init_callback, 
                                                     python_swig_breakpoint_callback,
-                                                    python_swig_typescript_callback);
+                                                    python_swig_typescript_callback,
+                                                    python_swig_synthetic_script,
+                                                    python_swig_calc_children,
+                                                    python_swig_get_child_index,
+                                                    python_swig_get_index_child,
+                                                    python_swig_cast_to_sbvalue);
 }
 
 void

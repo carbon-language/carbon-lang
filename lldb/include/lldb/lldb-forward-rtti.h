@@ -67,7 +67,8 @@ namespace lldb {
     typedef SharedPtr<lldb_private::SummaryFormat>::Type SummaryFormatSP;
     typedef SharedPtr<lldb_private::SymbolFile>::Type SymbolFileSP;
     typedef SharedPtr<lldb_private::SymbolContextSpecifier>::Type SymbolContextSpecifierSP;
-    typedef SharedPtr<lldb_private::SyntheticFilter>::Type SyntheticFilterSP;
+    typedef SharedPtr<lldb_private::SyntheticChildren>::Type SyntheticChildrenSP;
+    typedef SharedPtr<lldb_private::SyntheticChildrenFrontEnd>::Type SyntheticChildrenFrontEndSP;
     typedef SharedPtr<lldb_private::Target>::Type TargetSP;
     typedef SharedPtr<lldb_private::Thread>::Type ThreadSP;
     typedef SharedPtr<lldb_private::ThreadPlan>::Type ThreadPlanSP;

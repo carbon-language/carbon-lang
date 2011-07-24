@@ -10,9 +10,12 @@
 #ifndef liblldb_ScriptInterpreter_h_
 #define liblldb_ScriptInterpreter_h_
 
+#include "lldb/API/SBValue.h"
+
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Utility/PseudoTerminal.h"
+
 
 namespace lldb_private {
 
@@ -30,6 +33,15 @@ public:
     typedef std::string (*SWIGPythonTypeScriptCallbackFunction) (const char *python_function_name,
                                                                  const char *session_dictionary_name,
                                                                  const lldb::ValueObjectSP& valobj_sp);
+    
+    typedef void* (*SWIGPythonCreateSyntheticProvider) (const std::string python_class_name,
+                                                        const char *session_dictionary_name,
+                                                        const lldb::ValueObjectSP& valobj_sp);
+    
+    typedef uint32_t       (*SWIGPythonCalculateNumChildren)    (void *implementor);
+    typedef void*          (*SWIGPythonGetChildAtIndex)         (void *implementor, uint32_t idx);
+    typedef int            (*SWIGPythonGetIndexOfChildWithName) (void *implementor, const char* child_name);
+    typedef lldb::SBValue* (*SWIGPythonCastPyObjectToSBValue)   (void* data);
 
     typedef enum
     {
@@ -89,6 +101,13 @@ public:
         return false;
     }
     
+    virtual void*
+    CreateSyntheticScriptedProvider (std::string class_name,
+                                     lldb::ValueObjectSP valobj)
+    {
+        return NULL;
+    }
+    
     // use this if the function code is just a one-liner script
     virtual bool
     GenerateTypeScriptFunction (const char* oneliner, StringList &output)
@@ -113,6 +132,30 @@ public:
     {
         return;
     }
+    
+    virtual uint32_t
+    CalculateNumChildren (void *implementor)
+    {
+        return 0;
+    }
+    
+    virtual void*
+    GetChildAtIndex (void *implementor, uint32_t idx)
+    {
+        return NULL;
+    }
+    
+    virtual int
+    GetIndexOfChildWithName (void *implementor, const char* child_name)
+    {
+        return UINT32_MAX;
+    }
+    
+    virtual lldb::SBValue*
+    CastPyObjectToSBValue (void* data)
+    {
+        return NULL;
+    }
 
     const char *
     GetScriptInterpreterPtyName ();
@@ -129,7 +172,12 @@ public:
     static void
     InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
                            SWIGBreakpointCallbackFunction python_swig_breakpoint_callback,
-                           SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback);
+                           SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback,
+                           SWIGPythonCreateSyntheticProvider python_swig_synthetic_script,
+                           SWIGPythonCalculateNumChildren python_swig_calc_children,
+                           SWIGPythonGetChildAtIndex python_swig_get_child_index,
+                           SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
+                           SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue);
 
     static void
     TerminateInterpreter ();

@@ -10,6 +10,9 @@
 #include "CommandObjectType.h"
 
 // C Includes
+
+#include <ctype.h>
+
 // C++ Includes
 
 #include "lldb/Core/ConstString.h"
@@ -418,8 +421,8 @@ CommandObjectTypeFormatList_LoopCallback (
 // CommandObjectTypeSummaryAdd
 //-------------------------------------------------------------------------
 
-static const char *g_reader_instructions = "Enter your Python command(s). Type 'DONE' to end.\n"
-                                           "def function (valobj,dict):";
+static const char *g_summary_addreader_instructions = "Enter your Python command(s). Type 'DONE' to end.\n"
+                                                       "def function (valobj,dict):";
 
 class TypeScriptAddInputReader : public InputReaderEZ
 {
@@ -441,7 +444,7 @@ public:
         bool batch_mode = data.reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
         if (!batch_mode)
         {
-            out_stream->Printf ("%s\n", g_reader_instructions);
+            out_stream->Printf ("%s\n", g_summary_addreader_instructions);
             if (data.reader.GetPrompt())
                 out_stream->Printf ("%s", data.reader.GetPrompt());
             out_stream->Flush();
@@ -1016,7 +1019,7 @@ CommandObject (interpreter,
                 "     value = valobj.GetChildMemberWithName('value');\n"
                 "     return 'My value is ' + value.GetValue();\n"
                 "DONE\n"
-                "(lldb)"
+                "(lldb) <-- type further LLDB commands here\n"
                 );
 }
 
@@ -2404,6 +2407,10 @@ private:
                 case 'c':
                     m_expr_paths.push_back(option_arg);
                     break;
+                case 'l':
+                    m_class_name = std::string(option_arg);
+                    is_class_based = true;
+                    break;
                 case 'p':
                     m_skip_pointers = true;
                     break;
@@ -2425,10 +2432,12 @@ private:
         OptionParsingStarting ()
         {
             m_cascade = true;
-            m_expr_paths.clear();
+            m_class_name = "";
             m_skip_pointers = false;
             m_skip_references = false;
             m_category = NULL;
+            m_expr_paths.clear();
+            is_class_based = false;
         }
         
         const OptionDefinition*
@@ -2446,8 +2455,12 @@ private:
         bool m_cascade;
         bool m_skip_references;
         bool m_skip_pointers;
+        std::string m_class_name;
+        bool m_input_python;
         option_vector m_expr_paths;
         const char* m_category;
+        
+        bool is_class_based;
         
         typedef option_vector::iterator ExpressionPathsIterator;
     };
@@ -2460,7 +2473,114 @@ private:
         return &m_options;
     }
     
+    bool
+    Execute_ChildrenList (Args& command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        
+        if (argc < 1)
+        {
+            result.AppendErrorWithFormat ("%s takes one or more args.\n", m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        
+        if (m_options.m_expr_paths.size() == 0)
+        {
+            result.AppendErrorWithFormat ("%s needs one or more children.\n", m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        
+        SyntheticChildrenSP entry;
+        
+        SyntheticFilter* impl = new SyntheticFilter(m_options.m_cascade,
+                                                    m_options.m_skip_pointers,
+                                                    m_options.m_skip_references);
+        
+        entry.reset(impl);
+        
+        // go through the expression paths
+        CommandOptions::ExpressionPathsIterator begin, end = m_options.m_expr_paths.end();
+        
+        for (begin = m_options.m_expr_paths.begin(); begin != end; begin++)
+            impl->AddExpressionPath(*begin);
+        
+        
+        // now I have a valid provider, let's add it to every type
+        
+        lldb::FormatCategorySP category;
+        Debugger::Formatting::Categories::Get(ConstString(m_options.m_category), category);
+        
+        for (size_t i = 0; i < argc; i++) {
+            const char* typeA = command.GetArgumentAtIndex(i);
+            ConstString typeCS(typeA);
+            if (typeCS)
+                category->Filter()->Add(typeCS.GetCString(), entry);
+            else
+            {
+                result.AppendError("empty typenames not allowed");
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
+        
+        result.SetStatus(eReturnStatusSuccessFinishNoResult);
+        return result.Succeeded();
+    }
+    
+    bool
+    Execute_PythonClass (Args& command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        
+        if (argc < 1)
+        {
+            result.AppendErrorWithFormat ("%s takes one or more args.\n", m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        
+        if (m_options.m_class_name.empty() && !m_options.m_input_python)
+        {
+            result.AppendErrorWithFormat ("%s needs either a Python class name or -P to directly input Python code.\n", m_cmd_name.c_str());
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
+        
+        SyntheticChildrenSP entry;
+        
+        SyntheticScriptProvider* impl = new SyntheticScriptProvider(m_options.m_cascade,
+                                                                    m_options.m_skip_pointers,
+                                                                    m_options.m_skip_references,
+                                                                    m_options.m_class_name);
+        
+        entry.reset(impl);
+        
+        // now I have a valid provider, let's add it to every type
+        
+        lldb::FormatCategorySP category;
+        Debugger::Formatting::Categories::Get(ConstString(m_options.m_category), category);
+        
+        for (size_t i = 0; i < argc; i++) {
+            const char* typeA = command.GetArgumentAtIndex(i);
+            ConstString typeCS(typeA);
+            if (typeCS)
+                category->Filter()->Add(typeCS.GetCString(), entry);
+            else
+            {
+                result.AppendError("empty typenames not allowed");
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
+        
+        result.SetStatus(eReturnStatusSuccessFinishNoResult);
+        return result.Succeeded();
+    }
+    
 public:
+        
     CommandObjectTypeSynthAdd (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "type synth add",
@@ -2486,55 +2606,10 @@ public:
     bool
     Execute (Args& command, CommandReturnObject &result)
     {
-        const size_t argc = command.GetArgumentCount();
-        
-        if (argc < 1)
-        {
-            result.AppendErrorWithFormat ("%s takes one or more args.\n", m_cmd_name.c_str());
-            result.SetStatus(eReturnStatusFailed);
-            return false;
-        }
-        
-        if (m_options.m_expr_paths.size() == 0)
-        {
-            result.AppendErrorWithFormat ("%s needs one or more children.\n", m_cmd_name.c_str());
-            result.SetStatus(eReturnStatusFailed);
-            return false;
-        }
-        
-        SyntheticFilterSP entry;
-        
-        entry.reset(new SyntheticFilter(m_options.m_cascade,
-                                        m_options.m_skip_pointers,
-                                        m_options.m_skip_references));
-        
-        // go through the expression paths
-        CommandOptions::ExpressionPathsIterator begin, end = m_options.m_expr_paths.end();
-        
-        for (begin = m_options.m_expr_paths.begin(); begin != end; begin++)
-            entry->AddExpressionPath(*begin);
-        
-        
-        // now I have a valid provider, let's add it to every type
-        
-        lldb::FormatCategorySP category;
-        Debugger::Formatting::Categories::Get(ConstString(m_options.m_category), category);
-        
-        for (size_t i = 0; i < argc; i++) {
-            const char* typeA = command.GetArgumentAtIndex(i);
-            ConstString typeCS(typeA);
-            if (typeCS)
-                category->Filter()->Add(typeCS.GetCString(), entry);
-            else
-            {
-                result.AppendError("empty typenames not allowed");
-                result.SetStatus(eReturnStatusFailed);
-                return false;
-            }
-        }
-        
-        result.SetStatus(eReturnStatusSuccessFinishNoResult);
-        return result.Succeeded();
+        if (m_options.is_class_based)
+            return Execute_PythonClass(command, result);
+        else
+            return Execute_ChildrenList(command, result);
     }
 };
 
@@ -2542,10 +2617,11 @@ OptionDefinition
 CommandObjectTypeSynthAdd::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "cascade", 'C', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
-    { LLDB_OPT_SET_ALL, false, "child", 'c', required_argument, NULL, 0, eArgTypeName,    "Include this expression path in the synthetic view."},
     { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for pointers-to-type objects."},
     { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for references-to-type objects."},
     { LLDB_OPT_SET_ALL, false, "category", 'w', required_argument, NULL, 0, eArgTypeName,         "Add this to the given category instead of the default one."},
+    { LLDB_OPT_SET_1, false, "child", 'c', required_argument, NULL, 0, eArgTypeName,    "Include this expression path in the synthetic view."},
+    { LLDB_OPT_SET_2, false, "python-class", 'l', required_argument, NULL, 0, eArgTypeName,    "Use this Python class to produce synthetic children."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 

@@ -21,8 +21,10 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/FormatClasses.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -154,5 +156,27 @@ SyntheticFilter::GetDescription()
     }
                     
     sstr.Printf("}");
+    return sstr.GetString();
+}
+
+SyntheticScriptProvider::FrontEnd::FrontEnd(std::string pclass,
+                                            lldb::ValueObjectSP be) :
+SyntheticChildrenFrontEnd(be),
+m_python_class(pclass)
+{
+    m_interpreter = be->GetUpdatePoint().GetTarget()->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+    m_wrapper = (PyObject*)m_interpreter->CreateSyntheticScriptedProvider(m_python_class, m_backend);
+}
+
+std::string
+SyntheticScriptProvider::GetDescription()
+{
+    StreamString sstr;
+    sstr.Printf("%s%s%s Python class: %s",
+                m_cascades ? "" : " (not cascading)",
+                m_skip_pointers ? " (skip pointers)" : "",
+                m_skip_references ? " (skip references)" : "",
+                m_python_class.c_str());
+    
     return sstr.GetString();
 }

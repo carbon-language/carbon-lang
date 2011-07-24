@@ -322,6 +322,19 @@ LLDBSwigPythonCallTypeScript
     const lldb::ValueObjectSP& valobj_sp
 );
 
+extern "C" void*
+LLDBSwigPythonCreateSyntheticProvider 
+(
+    const std::string python_class_name,
+    const char *session_dictionary_name,
+    const lldb::ValueObjectSP& valobj_sp
+);
+
+
+extern "C" uint32_t       LLDBSwigPython_CalculateNumChildren    (void *implementor);
+extern "C" void*          LLDBSwigPython_GetChildAtIndex         (void *implementor, uint32_t idx);
+extern "C" int            LLDBSwigPython_GetIndexOfChildWithName (void *implementor, const char* child_name);
+extern "C" lldb::SBValue* LLDBSWIGPython_CastPyObjectToSBValue   (void* data);
 
 extern "C" void init_lldb(void);
 
@@ -334,6 +347,11 @@ SBCommandInterpreter::InitializeSWIG ()
         g_initialized = true;
         ScriptInterpreter::InitializeInterpreter (init_lldb, 
                                                   LLDBSwigPythonBreakpointCallbackFunction,
-                                                  LLDBSwigPythonCallTypeScript);
+                                                  LLDBSwigPythonCallTypeScript,
+                                                  LLDBSwigPythonCreateSyntheticProvider,
+                                                  LLDBSwigPython_CalculateNumChildren,
+                                                  LLDBSwigPython_GetChildAtIndex,
+                                                  LLDBSwigPython_GetIndexOfChildWithName,
+                                                  LLDBSWIGPython_CastPyObjectToSBValue);
     }
 }

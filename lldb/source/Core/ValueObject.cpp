@@ -219,6 +219,8 @@ ValueObject::UpdateFormatsIfNeeded()
             m_last_value_format.reset(/*(ValueFormat*)NULL*/);
         if (m_last_synthetic_filter.get())
             m_last_synthetic_filter.reset(/*(SyntheticFilter*)NULL*/);
+
+        m_synthetic_value = NULL;
         
         Debugger::Formatting::ValueFormats::Get(*this, m_last_value_format);
         Debugger::Formatting::GetSummaryFormat(*this, m_last_summary_format);
@@ -1493,7 +1495,8 @@ ValueObject::CalculateSyntheticValue (lldb::SyntheticValueType use_synthetic)
     if (m_last_synthetic_filter.get() == NULL)
         return;
     
-    m_synthetic_value = new ValueObjectSyntheticFilter(*this, m_last_synthetic_filter);
+    if (m_synthetic_value == NULL)
+        m_synthetic_value = new ValueObjectSynthetic(*this, m_last_synthetic_filter);
     
 }
 

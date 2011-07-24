@@ -12,6 +12,12 @@
 
 // C Includes
 
+#if defined (__APPLE__)
+#include <Python/Python.h>
+#else
+#include <Python.h>
+#endif
+
 #include <stdint.h>
 #include <unistd.h>
 
@@ -25,6 +31,7 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 
+#include "lldb/API/SBValue.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -82,19 +89,90 @@ struct ValueFormat
     
 };
     
-struct SyntheticFilter
+class SyntheticChildrenFrontEnd
 {
+protected:
+    lldb::ValueObjectSP m_backend;
+public:
+    
+    SyntheticChildrenFrontEnd(lldb::ValueObjectSP be) :
+    m_backend(be)
+    {}
+    
+    virtual
+    ~SyntheticChildrenFrontEnd()
+    {
+    }
+    
+    virtual uint32_t
+    CalculateNumChildren() = 0;
+    
+    virtual lldb::ValueObjectSP
+    GetChildAtIndex (uint32_t idx, bool can_create) = 0;
+    
+    virtual uint32_t
+    GetIndexOfChildWithName (const ConstString &name) = 0;
+    
+    typedef lldb::SharedPtr<SyntheticChildrenFrontEnd>::Type SharedPointer;
+
+};
+    
+class SyntheticChildren
+{
+public:
     bool m_cascades;
     bool m_skip_pointers;
     bool m_skip_references;
-    std::vector<std::string> m_expression_paths;
+public:
+    SyntheticChildren(bool casc = false,
+                      bool skipptr = false,
+                      bool skipref = false) :
+    m_cascades(casc),
+    m_skip_pointers(skipptr),
+    m_skip_references(skipref)
+    {
+    }
     
+    virtual
+    ~SyntheticChildren()
+    {
+    }
+    
+    bool
+    Cascades() const
+    {
+        return m_cascades;
+    }
+    bool
+    SkipsPointers() const
+    {
+        return m_skip_pointers;
+    }
+    bool
+    SkipsReferences() const
+    {
+        return m_skip_references;
+    }
+    
+    virtual std::string
+    GetDescription() = 0;
+    
+    virtual SyntheticChildrenFrontEnd::SharedPointer
+    GetFrontEnd(lldb::ValueObjectSP backend) = 0;
+    
+    typedef lldb::SharedPtr<SyntheticChildren>::Type SharedPointer;
+    typedef bool(*SyntheticChildrenCallback)(void*, const char*, const SyntheticChildren::SharedPointer&);
+    
+};
+
+class SyntheticFilter : public SyntheticChildren
+{
+    std::vector<std::string> m_expression_paths;
+public:
     SyntheticFilter(bool casc = false,
                     bool skipptr = false,
                     bool skipref = false) :
-    m_cascades(casc),
-    m_skip_pointers(skipptr),
-    m_skip_references(skipref),
+    SyntheticChildren(casc, skipptr, skipref),
     m_expression_paths()
     {
     }
@@ -129,9 +207,148 @@ struct SyntheticFilter
     std::string
     GetDescription();
     
-    typedef lldb::SharedPtr<SyntheticFilter>::Type SharedPointer;
-    typedef bool(*SyntheticFilterCallback)(void*, const char*, const SyntheticFilter::SharedPointer&);
+    class FrontEnd : public SyntheticChildrenFrontEnd
+    {
+    private:
+        SyntheticFilter* filter;
+    public:
+        
+        FrontEnd(SyntheticFilter* flt,
+                 lldb::ValueObjectSP be) :
+        SyntheticChildrenFrontEnd(be),
+        filter(flt)
+        {}
+        
+        virtual
+        ~FrontEnd()
+        {
+        }
+        
+        virtual uint32_t
+        CalculateNumChildren()
+        {
+            return filter->GetCount();
+        }
+        
+        virtual lldb::ValueObjectSP
+        GetChildAtIndex (uint32_t idx, bool can_create)
+        {
+            if (idx >= filter->GetCount())
+                return lldb::ValueObjectSP();
+            return m_backend->GetSyntheticExpressionPathChild(filter->GetExpressionPathAtIndex(idx).c_str(), can_create);
+        }
+        
+        virtual uint32_t
+        GetIndexOfChildWithName (const ConstString &name)
+        {
+            const char* name_cstr = name.GetCString();
+            for (int i = 0; i < filter->GetCount(); i++)
+            {
+                const char* expr_cstr = filter->GetExpressionPathAtIndex(i).c_str();
+                if (::strcmp(name_cstr, expr_cstr))
+                    return i;
+            }
+            return UINT32_MAX;
+        }
+        
+        typedef lldb::SharedPtr<SyntheticChildrenFrontEnd>::Type SharedPointer;
+        
+    };
+    
+    virtual SyntheticChildrenFrontEnd::SharedPointer
+    GetFrontEnd(lldb::ValueObjectSP backend)
+    {
+        return SyntheticChildrenFrontEnd::SharedPointer(new FrontEnd(this, backend));
+    }
+    
 };
+
+class SyntheticScriptProvider : public SyntheticChildren
+{
+    std::string m_python_class;
+public:
+    SyntheticScriptProvider(bool casc = false,
+                            bool skipptr = false,
+                            bool skipref = false,
+                            std::string pclass = "") :
+    SyntheticChildren(casc, skipptr, skipref),
+    m_python_class(pclass)
+    {
+    }
+    
+    
+    std::string
+    GetPythonClassName() { return m_python_class; }
+    
+    std::string
+    GetDescription();
+    
+    class FrontEnd : public SyntheticChildrenFrontEnd
+    {
+    private:
+        std::string m_python_class;
+        PyObject* m_wrapper;
+        ScriptInterpreter *m_interpreter;
+    public:
+        
+        FrontEnd(std::string pclass,
+                 lldb::ValueObjectSP be);
+        
+        virtual
+        ~FrontEnd()
+        {
+            Py_XDECREF(m_wrapper);
+        }
+        
+        virtual uint32_t
+        CalculateNumChildren()
+        {
+            if (m_wrapper == NULL)
+                return 0;
+            return m_interpreter->CalculateNumChildren(m_wrapper);
+        }
+        
+        virtual lldb::ValueObjectSP
+        GetChildAtIndex (uint32_t idx, bool can_create)
+        {
+            if (m_wrapper == NULL)
+                return lldb::ValueObjectSP();
+            
+            PyObject* py_return = (PyObject*)m_interpreter->GetChildAtIndex(m_wrapper, idx);
+            if (py_return == NULL || py_return == Py_None)
+            {
+                Py_XDECREF(py_return);
+                return lldb::ValueObjectSP();
+            }
+            
+            lldb::SBValue *sb_ptr = m_interpreter->CastPyObjectToSBValue(py_return);
+            
+            if (py_return == NULL)
+                return lldb::ValueObjectSP();
+            
+            return sb_ptr->m_opaque_sp;
+        }
+                
+        virtual uint32_t
+        GetIndexOfChildWithName (const ConstString &name)
+        {
+            if (m_wrapper == NULL)
+                return UINT32_MAX;
+            return m_interpreter->GetIndexOfChildWithName(m_wrapper, name.GetCString());
+        }
+        
+        typedef lldb::SharedPtr<SyntheticChildrenFrontEnd>::Type SharedPointer;
+        
+    };
+    
+    virtual SyntheticChildrenFrontEnd::SharedPointer
+    GetFrontEnd(lldb::ValueObjectSP backend)
+    {
+        return SyntheticChildrenFrontEnd::SharedPointer(new FrontEnd(m_python_class, backend));
+    }
+    
+};
+
 
 struct SummaryFormat
 {

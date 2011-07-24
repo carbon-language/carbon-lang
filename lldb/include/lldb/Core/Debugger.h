@@ -477,6 +477,11 @@ public:
     class Formatting
     {
     public:
+        
+        // use this call to force the FM to consider itself updated even when there is no apparent reason for that
+        static void
+        ForceUpdate();
+        
         class ValueFormats
         {
         public:
@@ -507,7 +512,7 @@ public:
                          lldb::SummaryFormatSP& entry);
         static bool
         GetSyntheticFilter(ValueObject& vobj,
-                           lldb::SyntheticFilterSP& entry);
+                           lldb::SyntheticChildrenSP& entry);
         
         class NamedSummaryFormats
         {

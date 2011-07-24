@@ -1221,6 +1221,7 @@
 		94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FormatClasses.cpp; path = source/Core/FormatClasses.cpp; sourceTree = "<group>"; };
 		94B6E76013D8833C005F417F /* ValueObjectSyntheticFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectSyntheticFilter.h; path = include/lldb/Core/ValueObjectSyntheticFilter.h; sourceTree = "<group>"; };
 		94B6E76113D88362005F417F /* ValueObjectSyntheticFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectSyntheticFilter.cpp; path = source/Core/ValueObjectSyntheticFilter.cpp; sourceTree = "<group>"; };
+		94EBAC8313D9EE26009BA64E /* PythonPointer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PythonPointer.h; path = include/lldb/Utility/PythonPointer.h; sourceTree = "<group>"; };
 		961FABB81235DE1600F93A47 /* FuncUnwinders.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FuncUnwinders.cpp; path = source/Symbol/FuncUnwinders.cpp; sourceTree = "<group>"; };
 		961FABB91235DE1600F93A47 /* UnwindPlan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindPlan.cpp; path = source/Symbol/UnwindPlan.cpp; sourceTree = "<group>"; };
 		961FABBA1235DE1600F93A47 /* UnwindTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindTable.cpp; path = source/Symbol/UnwindTable.cpp; sourceTree = "<group>"; };
@@ -1864,6 +1865,7 @@
 				2682F16B115EDA0D00CCFF99 /* PseudoTerminal.h */,
 				2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */,
 				94031A9F13CF5B3D00DCFF3C /* PriorityPointerPair.h */,
+				94EBAC8313D9EE26009BA64E /* PythonPointer.h */,
 			);
 			name = Utility;
 			sourceTree = "<group>";

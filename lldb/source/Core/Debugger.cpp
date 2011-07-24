@@ -1746,6 +1746,12 @@ GetFormatManager() {
     return g_format_manager;
 }
 
+void
+Debugger::Formatting::ForceUpdate()
+{
+    GetFormatManager().Changed();
+}
+
 bool
 Debugger::Formatting::ValueFormats::Get(ValueObject& vobj, ValueFormat::SharedPointer &entry)
 {
@@ -1796,7 +1802,7 @@ Debugger::Formatting::GetSummaryFormat(ValueObject& vobj,
 }
 bool
 Debugger::Formatting::GetSyntheticFilter(ValueObject& vobj,
-                                         lldb::SyntheticFilterSP& entry)
+                                         lldb::SyntheticChildrenSP& entry)
 {
     return GetFormatManager().Get(vobj, entry);
 }

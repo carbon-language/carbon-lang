@@ -739,13 +739,14 @@ protected:
                                              // as an independent ValueObjectConstResult, which isn't managed by us.
     ValueObject *m_deref_valobj;
 
-    lldb::Format            m_format;
-    uint32_t                m_last_format_mgr_revision;
-    lldb::SummaryFormatSP   m_last_summary_format;
-    lldb::SummaryFormatSP   m_forced_summary_format;
-    lldb::ValueFormatSP     m_last_value_format;
-    lldb::SyntheticFilterSP m_last_synthetic_filter;
-    lldb::user_id_t         m_user_id_of_forced_summary;
+    lldb::Format                m_format;
+    uint32_t                    m_last_format_mgr_revision;
+    lldb::SummaryFormatSP       m_last_summary_format;
+    lldb::SummaryFormatSP       m_forced_summary_format;
+    lldb::ValueFormatSP         m_last_value_format;
+    lldb::SyntheticChildrenSP   m_last_synthetic_filter;
+    lldb::user_id_t             m_user_id_of_forced_summary;
+    
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
                         m_children_count_valid:1,
