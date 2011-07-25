@@ -145,6 +145,9 @@ namespace {
                         SmallVector<AllocaInst*, 32> &NewElts);
     void RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
                     SmallVector<AllocaInst*, 32> &NewElts);
+    void RewriteLifetimeIntrinsic(IntrinsicInst *II, AllocaInst *AI,
+                                  uint64_t Offset,
+                                  SmallVector<AllocaInst*, 32> &NewElts);
     void RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
                                       AllocaInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts);
@@ -508,7 +511,8 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
     }
 
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(User)) {
-      IsNotTrivial = true;  // Can't be mem2reg'd.
+      if (!onlyUsedByLifetimeMarkers(BCI))
+        IsNotTrivial = true;  // Can't be mem2reg'd.
       if (!CanConvertToScalar(BCI, Offset))
         return false;
       continue;
@@ -564,6 +568,14 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
 
       IsNotTrivial = true;  // Can't be mem2reg'd.
       continue;
+    }
+
+    // If this is a lifetime intrinsic, we can handle it.
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(User)) {
+      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+          II->getIntrinsicID() == Intrinsic::lifetime_end) {
+        continue;
+      }
     }
 
     // Otherwise, we cannot handle this!
@@ -707,6 +719,16 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
 
       MTI->eraseFromParent();
       continue;
+    }
+
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(User)) {
+      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+          II->getIntrinsicID() == Intrinsic::lifetime_end) {
+        // There's no need to preserve these, as the resulting alloca will be
+        // converted to a register anyways.
+        II->eraseFromParent();
+        continue;
+      }
     }
 
     llvm_unreachable("Unsupported operation!");
@@ -1349,6 +1371,13 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const TargetData *TD) {
       continue;
     }
     
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
+      if (onlyUsedByLifetimeMarkers(BCI)) {
+        InstsToRewrite.insert(BCI);
+        continue;
+      }
+    }
+    
     return false;
   }
 
@@ -1360,6 +1389,18 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const TargetData *TD) {
   // If we have instructions that need to be rewritten for this to be promotable
   // take care of it now.
   for (unsigned i = 0, e = InstsToRewrite.size(); i != e; ++i) {
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(InstsToRewrite[i])) {
+      // This could only be a bitcast used by nothing but lifetime intrinsics.
+      for (BitCastInst::use_iterator I = BCI->use_begin(), E = BCI->use_end();
+           I != E;) {
+        Use &U = I.getUse();
+        ++I;
+        cast<Instruction>(U.getUser())->eraseFromParent();
+      }
+      BCI->eraseFromParent();
+      continue;
+    }
+
     if (SelectInst *SI = dyn_cast<SelectInst>(InstsToRewrite[i])) {
       // Selects in InstsToRewrite only have load uses.  Rewrite each as two
       // loads with a new select.
@@ -1692,6 +1733,10 @@ void SROA::isSafeForScalarRepl(Instruction *I, uint64_t Offset,
       isSafeMemAccess(Offset, TD->getTypeAllocSize(SIType),
                       SIType, true, Info, SI, true /*AllowWholeAccess*/);
       Info.hasALoadOrStore = true;
+    } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(User)) {
+      if (II->getIntrinsicID() != Intrinsic::lifetime_start &&
+          II->getIntrinsicID() != Intrinsic::lifetime_end)
+        return MarkUnsafe(Info, User);
     } else if (isa<PHINode>(User) || isa<SelectInst>(User)) {
       isSafePHISelectUseForScalarRepl(User, Offset, Info);
     } else {
@@ -1929,6 +1974,14 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
       // address operand will be updated, so nothing else needs to be done.
       continue;
     }
+
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(User)) {
+      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+          II->getIntrinsicID() == Intrinsic::lifetime_end) {
+        RewriteLifetimeIntrinsic(II, AI, Offset, NewElts);
+      }
+      continue;
+    }
     
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       Type *LIType = LI->getType();
@@ -2093,6 +2146,62 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
     Val = new BitCastInst(Val, GEPI->getType(), Val->getName(), GEPI);
   GEPI->replaceAllUsesWith(Val);
   DeadInsts.push_back(GEPI);
+}
+
+/// RewriteLifetimeIntrinsic - II is a lifetime.start/lifetime.end. Rewrite it
+/// to mark the lifetime of the scalarized memory.
+void SROA::RewriteLifetimeIntrinsic(IntrinsicInst *II, AllocaInst *AI,
+                                    uint64_t Offset,
+                                    SmallVector<AllocaInst*, 32> &NewElts) {
+  ConstantInt *OldSize = cast<ConstantInt>(II->getArgOperand(0));
+  // Put matching lifetime markers on everything from Offset up to
+  // Offset+OldSize.
+  Type *AIType = AI->getAllocatedType();
+  uint64_t NewOffset = Offset;
+  Type *IdxTy;
+  uint64_t Idx = FindElementAndOffset(AIType, NewOffset, IdxTy);
+
+  IRBuilder<> Builder(II);
+  uint64_t Size = OldSize->getLimitedValue();
+
+  if (NewOffset) {
+    // Splice the first element and index 'NewOffset' bytes in.  SROA will
+    // split the alloca again later.
+    Value *V = Builder.CreateBitCast(NewElts[Idx], Builder.getInt8PtrTy());
+    V = Builder.CreateGEP(V, Builder.getInt64(NewOffset));
+
+    IdxTy = NewElts[Idx]->getAllocatedType();
+    uint64_t EltSize = TD->getTypeAllocSize(IdxTy) - NewOffset;
+    if (EltSize > Size) {
+      EltSize = Size;
+      Size = 0;
+    } else {
+      Size -= EltSize;
+    }
+    if (II->getIntrinsicID() == Intrinsic::lifetime_start)
+      Builder.CreateLifetimeStart(V, Builder.getInt64(EltSize));
+    else
+      Builder.CreateLifetimeEnd(V, Builder.getInt64(EltSize));
+    ++Idx;
+  }
+
+  for (; Idx != NewElts.size() && Size; ++Idx) {
+    IdxTy = NewElts[Idx]->getAllocatedType();
+    uint64_t EltSize = TD->getTypeAllocSize(IdxTy);
+    if (EltSize > Size) {
+      EltSize = Size;
+      Size = 0;
+    } else {
+      Size -= EltSize;
+    }
+    if (II->getIntrinsicID() == Intrinsic::lifetime_start)
+      Builder.CreateLifetimeStart(NewElts[Idx],
+                                  Builder.getInt64(EltSize));
+    else
+      Builder.CreateLifetimeEnd(NewElts[Idx],
+                                Builder.getInt64(EltSize));
+  }
+  DeadInsts.push_back(II);
 }
 
 /// RewriteMemIntrinUserOfAlloca - MI is a memcpy/memset/memmove from or to AI.
