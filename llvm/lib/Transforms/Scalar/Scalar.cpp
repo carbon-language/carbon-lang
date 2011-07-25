@@ -187,3 +187,7 @@ void LLVMAddTypeBasedAliasAnalysisPass(LLVMPassManagerRef PM) {
 void LLVMAddBasicAliasAnalysisPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createBasicAliasAnalysisPass());
 }
+
+void LLVMAddLowerExpectIntrinsicPass(LLVMPassManagerRef PM) {
+  unwrap(PM)->add(createLowerExpectIntrinsicPass());
+}
