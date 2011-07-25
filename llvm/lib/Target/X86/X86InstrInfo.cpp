@@ -2450,6 +2450,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     case X86::AVX_SET0PS:
     case X86::AVX_SET0PD:
     case X86::AVX_SET0PI:
+    case X86::AVX_SETALLONES:
       Alignment = 16;
       break;
     case X86::FsFLD0SD:
@@ -2494,6 +2495,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   case X86::AVX_SET0PI:
   case X86::AVX_SET0PSY:
   case X86::AVX_SET0PDY:
+  case X86::AVX_SETALLONES:
   case X86::FsFLD0SD:
   case X86::FsFLD0SS:
   case X86::VFsFLD0SD:
@@ -2531,9 +2533,10 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       Ty = VectorType::get(Type::getFloatTy(MF.getFunction()->getContext()), 8);
     else
       Ty = VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 4);
-    const Constant *C = LoadMI->getOpcode() == X86::V_SETALLONES ?
-                    Constant::getAllOnesValue(Ty) :
-                    Constant::getNullValue(Ty);
+
+    bool IsAllOnes = (Opc == X86::V_SETALLONES || Opc == X86::AVX_SETALLONES);
+    const Constant *C = IsAllOnes ? Constant::getAllOnesValue(Ty) :
+                                    Constant::getNullValue(Ty);
     unsigned CPI = MCP.getConstantPoolIndex(C, Alignment);
 
     // Create operands to load from the constant pool entry.

@@ -3831,21 +3831,25 @@ static SDValue getZeroVector(EVT VT, bool HasSSE2, SelectionDAG &DAG,
 }
 
 /// getOnesVector - Returns a vector of specified type with all bits set.
-/// Always build ones vectors as <4 x i32> or <8 x i32> bitcasted to
-/// their original type, ensuring they get CSE'd.
+/// Always build ones vectors as <4 x i32>. For 256-bit types, use two
+/// <4 x i32> inserted in a <8 x i32> appropriately. Then bitcast to their
+/// original type, ensuring they get CSE'd.
 static SDValue getOnesVector(EVT VT, SelectionDAG &DAG, DebugLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
   assert((VT.is128BitVector() || VT.is256BitVector())
          && "Expected a 128-bit or 256-bit vector type");
 
   SDValue Cst = DAG.getTargetConstant(~0U, MVT::i32);
+  SDValue Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
+                            Cst, Cst, Cst, Cst);
 
-  SDValue Vec;
   if (VT.is256BitVector()) {
-    SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
-    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32, Ops, 8);
-  } else
-    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
+    SDValue InsV = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, MVT::v8i32),
+                              Vec, DAG.getConstant(0, MVT::i32), DAG, dl);
+    Vec = Insert128BitVector(InsV, Vec,
+                  DAG.getConstant(4 /* NumElems/2 */, MVT::i32), DAG, dl);
+  }
+
   return DAG.getNode(ISD::BITCAST, dl, VT, Vec);
 }
 
@@ -12023,6 +12027,35 @@ static SDValue CMPEQCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// CanFoldXORWithAllOnes - Test whether the XOR operand is a AllOnes vector
+/// so it can be folded inside ANDNP.
+static bool CanFoldXORWithAllOnes(const SDNode *N) {
+  EVT VT = N->getValueType(0);
+
+  // Match direct AllOnes for 128 and 256-bit vectors
+  if (ISD::isBuildVectorAllOnes(N))
+    return true;
+
+  // Look through a bit convert.
+  if (N->getOpcode() == ISD::BITCAST)
+    N = N->getOperand(0).getNode();
+
+  // Sometimes the operand may come from a insert_subvector building a 256-bit
+  // allones vector
+  SDValue V1 = N->getOperand(0);
+  SDValue V2 = N->getOperand(1);
+
+  if (VT.getSizeInBits() == 256 &&
+      N->getOpcode() == ISD::INSERT_SUBVECTOR &&
+      V1.getOpcode() == ISD::INSERT_SUBVECTOR &&
+      V1.getOperand(0).getOpcode() == ISD::UNDEF &&
+      ISD::isBuildVectorAllOnes(V1.getOperand(1).getNode()) &&
+      ISD::isBuildVectorAllOnes(V2.getNode()))
+    return true;
+
+  return false;
+}
+
 static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
                                  TargetLowering::DAGCombinerInfo &DCI,
                                  const X86Subtarget *Subtarget) {
@@ -12047,12 +12080,14 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
 
   // Check LHS for vnot
   if (N0.getOpcode() == ISD::XOR &&
-      ISD::isBuildVectorAllOnes(N0.getOperand(1).getNode()))
+      //ISD::isBuildVectorAllOnes(N0.getOperand(1).getNode()))
+      CanFoldXORWithAllOnes(N0.getOperand(1).getNode()))
     return DAG.getNode(X86ISD::ANDNP, DL, VT, N0.getOperand(0), N1);
 
   // Check RHS for vnot
   if (N1.getOpcode() == ISD::XOR &&
-      ISD::isBuildVectorAllOnes(N1.getOperand(1).getNode()))
+      //ISD::isBuildVectorAllOnes(N1.getOperand(1).getNode()))
+      CanFoldXORWithAllOnes(N1.getOperand(1).getNode()))
     return DAG.getNode(X86ISD::ANDNP, DL, VT, N1.getOperand(0), N0);
 
   return SDValue();

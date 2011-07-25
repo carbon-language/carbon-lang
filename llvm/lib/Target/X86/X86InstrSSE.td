@@ -3143,11 +3143,17 @@ def PAUSE : I<0x90, RawFrm, (outs), (ins), "pause", []>, REP;
 // Alias instructions that map zero vector to pxor / xorp* for sse.
 // We set canFoldAsLoad because this can be converted to a constant-pool
 // load of an all-ones value if folding it would be beneficial.
+// FIXME: Change encoding to pseudo! This is blocked right now by the x86
+// JIT implementation, it does not expand the instructions below like
+// X86MCInstLower does.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
     isCodeGenOnly = 1, ExeDomain = SSEPackedInt in
-  // FIXME: Change encoding to pseudo.
   def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
                          [(set VR128:$dst, (v4i32 immAllOnesV))]>;
+let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
+    isCodeGenOnly = 1, ExeDomain = SSEPackedInt, Predicates = [HasAVX] in
+  def AVX_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins), "",
+                         [(set VR128:$dst, (v4i32 immAllOnesV))]>, VEX_4V;
 
 //===---------------------------------------------------------------------===//
 // SSE3 - Conversion Instructions

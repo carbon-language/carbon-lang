@@ -12,3 +12,15 @@ entry:
   store <4 x double> zeroinitializer, <4 x double>* @y, align 32
   ret void
 }
+
+; CHECK: vpcmpeqd
+; CHECK: vinsertf128 $1
+define void @ones([0 x float]* nocapture %RET, [0 x float]* nocapture %aFOO) nounwind {
+allocas:
+  %ptr2vec615 = bitcast [0 x float]* %RET to <8 x float>*
+  store <8 x float> <float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float
+0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float
+0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000>, <8 x
+float>* %ptr2vec615, align 32
+  ret void
+}
