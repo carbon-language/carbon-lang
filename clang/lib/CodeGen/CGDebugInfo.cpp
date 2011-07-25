@@ -51,7 +51,7 @@ CGDebugInfo::~CGDebugInfo() {
 
 void CGDebugInfo::setLocation(SourceLocation Loc) {
   if (Loc.isValid())
-    CurLoc = CGM.getContext().getSourceManager().getInstantiationLoc(Loc);
+    CurLoc = CGM.getContext().getSourceManager().getExpansionLoc(Loc);
 }
 
 /// getContextDescriptor - Get context info for the decl.
@@ -1740,7 +1740,7 @@ void CGDebugInfo::EmitStopPoint(CGBuilderTy &Builder) {
   // Don't bother if things are the same as last time.
   SourceManager &SM = CGM.getContext().getSourceManager();
   if (CurLoc == PrevLoc || 
-      SM.getInstantiationLoc(CurLoc) == SM.getInstantiationLoc(PrevLoc))
+      SM.getExpansionLoc(CurLoc) == SM.getExpansionLoc(PrevLoc))
     // New Builder may not be in sync with CGDebugInfo.
     if (!Builder.getCurrentDebugLocation().isUnknown())
       return;

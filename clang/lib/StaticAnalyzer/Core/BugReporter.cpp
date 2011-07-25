@@ -974,10 +974,10 @@ bool EdgeBuilder::containsLocation(const PathDiagnosticLocation &Container,
   SourceRange ContaineeR = Containee.asRange();
 
   SourceManager &SM = PDB.getSourceManager();
-  SourceLocation ContainerRBeg = SM.getInstantiationLoc(ContainerR.getBegin());
-  SourceLocation ContainerREnd = SM.getInstantiationLoc(ContainerR.getEnd());
-  SourceLocation ContaineeRBeg = SM.getInstantiationLoc(ContaineeR.getBegin());
-  SourceLocation ContaineeREnd = SM.getInstantiationLoc(ContaineeR.getEnd());
+  SourceLocation ContainerRBeg = SM.getExpansionLoc(ContainerR.getBegin());
+  SourceLocation ContainerREnd = SM.getExpansionLoc(ContainerR.getEnd());
+  SourceLocation ContaineeRBeg = SM.getExpansionLoc(ContaineeR.getBegin());
+  SourceLocation ContaineeREnd = SM.getExpansionLoc(ContaineeR.getEnd());
 
   unsigned ContainerBegLine = SM.getInstantiationLineNumber(ContainerRBeg);
   unsigned ContainerEndLine = SM.getInstantiationLineNumber(ContainerREnd);
@@ -1010,8 +1010,8 @@ void EdgeBuilder::rawAddEdge(PathDiagnosticLocation NewLoc) {
     return;
 
   // FIXME: Ignore intra-macro edges for now.
-  if (NewLocClean.asLocation().getInstantiationLoc() ==
-      PrevLocClean.asLocation().getInstantiationLoc())
+  if (NewLocClean.asLocation().getExpansionLoc() ==
+      PrevLocClean.asLocation().getExpansionLoc())
     return;
 
   PD.push_front(new PathDiagnosticControlFlowPiece(NewLocClean, PrevLocClean));
@@ -1495,7 +1495,7 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
     // Determine the instantiation location, which is the location we group
     // related PathDiagnosticPieces.
     SourceLocation InstantiationLoc = Loc.isMacroID() ?
-                                      SM.getInstantiationLoc(Loc) :
+                                      SM.getExpansionLoc(Loc) :
                                       SourceLocation();
 
     if (Loc.isFileID()) {
@@ -1517,7 +1517,7 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
     PathDiagnosticMacroPiece *MacroGroup = 0;
 
     SourceLocation ParentInstantiationLoc = InstantiationLoc.isMacroID() ?
-                                          SM.getInstantiationLoc(Loc) :
+                                          SM.getExpansionLoc(Loc) :
                                           SourceLocation();
 
     // Walk the entire macro stack.

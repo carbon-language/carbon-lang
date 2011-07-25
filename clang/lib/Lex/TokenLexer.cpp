@@ -55,7 +55,7 @@ void TokenLexer::Init(Token &Tok, SourceLocation ELEnd, MacroArgs *Actuals) {
     // definition. Tokens that get lexed directly from the definition will
     // have their locations pointing inside this chunk. This is to avoid
     // creating separate source location entries for each token.
-    SourceLocation macroStart = SM.getInstantiationLoc(Tokens[0].getLocation());
+    SourceLocation macroStart = SM.getExpansionLoc(Tokens[0].getLocation());
     MacroDefStartInfo = SM.getDecomposedLoc(macroStart);
     MacroExpansionStart = SM.createInstantiationLoc(macroStart,
                                               ExpandLocStart,

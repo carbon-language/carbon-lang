@@ -100,7 +100,7 @@ public:
         bool useWeak = canApplyWeak(Pass.Ctx, var->getType());
         SourceManager &SM = Pass.Ctx.getSourceManager();
         Transaction Trans(Pass.TA);
-        Pass.TA.replaceText(SM.getInstantiationLoc(attr->getLocation()),
+        Pass.TA.replaceText(SM.getExpansionLoc(attr->getLocation()),
                             "__block",
                             useWeak ? "__weak" : "__unsafe_unretained");
       }

@@ -54,7 +54,7 @@ void SourceLocation::print(raw_ostream &OS, const SourceManager &SM)const{
     return;
   }
 
-  SM.getInstantiationLoc(*this).print(OS, SM);
+  SM.getExpansionLoc(*this).print(OS, SM);
 
   OS << " <Spelling=";
   SM.getSpellingLoc(*this).print(OS, SM);
@@ -75,9 +75,9 @@ FileID FullSourceLoc::getFileID() const {
 }
 
 
-FullSourceLoc FullSourceLoc::getInstantiationLoc() const {
+FullSourceLoc FullSourceLoc::getExpansionLoc() const {
   assert(isValid());
-  return FullSourceLoc(SrcMgr->getInstantiationLoc(*this), *SrcMgr);
+  return FullSourceLoc(SrcMgr->getExpansionLoc(*this), *SrcMgr);
 }
 
 FullSourceLoc FullSourceLoc::getSpellingLoc() const {

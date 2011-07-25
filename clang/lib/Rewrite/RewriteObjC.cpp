@@ -690,7 +690,7 @@ void RewriteObjC::HandleTopLevelSingleDecl(Decl *D) {
   // #included file.  If the former, rewrite it now.  If the later, check to see
   // if we rewrote the #include/#import.
   SourceLocation Loc = D->getLocation();
-  Loc = SM->getInstantiationLoc(Loc);
+  Loc = SM->getExpansionLoc(Loc);
 
   // If this is for a builtin, ignore it.
   if (Loc.isInvalid()) return;
@@ -2342,13 +2342,13 @@ void RewriteObjC::RewriteTypeOfDecl(VarDecl *ND) {
       startLoc = ECE->getLParenLoc();
     else
       startLoc = E->getLocStart();
-    startLoc = SM->getInstantiationLoc(startLoc);
+    startLoc = SM->getExpansionLoc(startLoc);
     const char *endBuf = SM->getCharacterData(startLoc);
     ReplaceText(DeclLoc, endBuf-startBuf-1, TypeAsString);
   }
   else {
     SourceLocation X = ND->getLocEnd();
-    X = SM->getInstantiationLoc(X);
+    X = SM->getExpansionLoc(X);
     const char *endBuf = SM->getCharacterData(X);
     ReplaceText(DeclLoc, endBuf-startBuf-1, TypeAsString);
   }
@@ -5108,7 +5108,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     DeclLoc = ND->getLocation();
   const char *startBuf = SM->getCharacterData(DeclLoc);
   SourceLocation X = ND->getLocEnd();
-  X = SM->getInstantiationLoc(X);
+  X = SM->getExpansionLoc(X);
   const char *endBuf = SM->getCharacterData(X);
   std::string Name(ND->getNameAsString());
   std::string ByrefType;
@@ -5203,7 +5203,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
       startLoc = ECE->getLParenLoc();
     else
       startLoc = E->getLocStart();
-    startLoc = SM->getInstantiationLoc(startLoc);
+    startLoc = SM->getExpansionLoc(startLoc);
     endBuf = SM->getCharacterData(startLoc);
     ByrefType += " " + Name;
     ByrefType += " = {(void*)";

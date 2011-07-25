@@ -68,11 +68,11 @@ class TransformActionsImpl {
       SourceLocation beginLoc = range.getBegin(), endLoc = range.getEnd();
       assert(beginLoc.isValid() && endLoc.isValid());
       if (range.isTokenRange()) {
-        Begin = FullSourceLoc(srcMgr.getInstantiationLoc(beginLoc), srcMgr);
+        Begin = FullSourceLoc(srcMgr.getExpansionLoc(beginLoc), srcMgr);
         End = FullSourceLoc(getLocForEndOfToken(endLoc, srcMgr, PP), srcMgr);
       } else {
-        Begin = FullSourceLoc(srcMgr.getInstantiationLoc(beginLoc), srcMgr);
-        End = FullSourceLoc(srcMgr.getInstantiationLoc(endLoc), srcMgr);
+        Begin = FullSourceLoc(srcMgr.getExpansionLoc(beginLoc), srcMgr);
+        End = FullSourceLoc(srcMgr.getExpansionLoc(endLoc), srcMgr);
       }
       assert(Begin.isValid() && End.isValid());
     } 
@@ -381,7 +381,7 @@ bool TransformActionsImpl::canInsert(SourceLocation loc) {
     return false;
 
   SourceManager &SM = Ctx.getSourceManager();
-  if (SM.isInSystemHeader(SM.getInstantiationLoc(loc)))
+  if (SM.isInSystemHeader(SM.getExpansionLoc(loc)))
     return false;
 
   if (loc.isFileID())
@@ -394,7 +394,7 @@ bool TransformActionsImpl::canInsertAfterToken(SourceLocation loc) {
     return false;
 
   SourceManager &SM = Ctx.getSourceManager();
-  if (SM.isInSystemHeader(SM.getInstantiationLoc(loc)))
+  if (SM.isInSystemHeader(SM.getExpansionLoc(loc)))
     return false;
 
   if (loc.isFileID())
@@ -416,7 +416,7 @@ bool TransformActionsImpl::canReplaceText(SourceLocation loc, StringRef text) {
     return false;
 
   SourceManager &SM = Ctx.getSourceManager();
-  loc = SM.getInstantiationLoc(loc);
+  loc = SM.getExpansionLoc(loc);
 
   // Break down the source location.
   std::pair<FileID, unsigned> locInfo = SM.getDecomposedLoc(loc);
@@ -477,7 +477,7 @@ void TransformActionsImpl::commitReplaceText(SourceLocation loc,
                                              StringRef text,
                                              StringRef replacementText) {
   SourceManager &SM = Ctx.getSourceManager();
-  loc = SM.getInstantiationLoc(loc);
+  loc = SM.getExpansionLoc(loc);
   // canReplaceText already checked if loc points at text.
   SourceLocation afterText = loc.getFileLocWithOffset(text.size());
 
@@ -491,7 +491,7 @@ void TransformActionsImpl::commitIncreaseIndentation(SourceRange range,
   IndentationRanges.push_back(
                  std::make_pair(CharRange(CharSourceRange::getTokenRange(range),
                                           SM, PP),
-                                SM.getInstantiationLoc(parentIndent)));
+                                SM.getExpansionLoc(parentIndent)));
 }
 
 void TransformActionsImpl::commitClearDiagnostic(ArrayRef<unsigned> IDs,
@@ -501,7 +501,7 @@ void TransformActionsImpl::commitClearDiagnostic(ArrayRef<unsigned> IDs,
 
 void TransformActionsImpl::addInsertion(SourceLocation loc, StringRef text) {
   SourceManager &SM = Ctx.getSourceManager();
-  loc = SM.getInstantiationLoc(loc);
+  loc = SM.getExpansionLoc(loc);
   for (std::list<CharRange>::reverse_iterator
          I = Removals.rbegin(), E = Removals.rend(); I != E; ++I) {
     if (!SM.isBeforeInTranslationUnit(loc, I->End))

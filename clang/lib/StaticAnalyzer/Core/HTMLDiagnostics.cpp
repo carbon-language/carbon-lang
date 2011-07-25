@@ -143,7 +143,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
 
   // Verify that the entire path is from the same FileID.
   for (PathDiagnostic::const_iterator I = D.begin(), E = D.end(); I != E; ++I) {
-    FullSourceLoc L = I->getLocation().asLocation().getInstantiationLoc();
+    FullSourceLoc L = I->getLocation().asLocation().getExpansionLoc();
 
     if (FID.isInvalid()) {
       FID = SMgr.getFileID(L);
@@ -154,12 +154,12 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
     for (PathDiagnosticPiece::range_iterator RI=I->ranges_begin(),
                                              RE=I->ranges_end(); RI!=RE; ++RI) {
 
-      SourceLocation L = SMgr.getInstantiationLoc(RI->getBegin());
+      SourceLocation L = SMgr.getExpansionLoc(RI->getBegin());
 
       if (!L.isFileID() || SMgr.getFileID(L) != FID)
         return; // FIXME: Emit a warning?
 
-      L = SMgr.getInstantiationLoc(RI->getEnd());
+      L = SMgr.getExpansionLoc(RI->getEnd());
 
       if (!L.isFileID() || SMgr.getFileID(L) != FID)
         return; // FIXME: Emit a warning?
@@ -335,7 +335,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
   // Compute the column number.  Rewind from the current position to the start
   // of the line.
   unsigned ColNo = SM.getColumnNumber(LPosInfo.first, LPosInfo.second);
-  const char *TokInstantiationPtr =Pos.getInstantiationLoc().getCharacterData();
+  const char *TokInstantiationPtr =Pos.getExpansionLoc().getCharacterData();
   const char *LineStart = TokInstantiationPtr-ColNo;
 
   // Compute LineEnd.
@@ -441,7 +441,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
 
     // Get the name of the macro by relexing it.
     {
-      FullSourceLoc L = MP->getLocation().asLocation().getInstantiationLoc();
+      FullSourceLoc L = MP->getLocation().asLocation().getExpansionLoc();
       assert(L.isFileID());
       StringRef BufferInfo = L.getBufferData();
       const char* MacroName = L.getDecomposedLoc().second + BufferInfo.data();
@@ -549,10 +549,10 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,
   SourceManager &SM = R.getSourceMgr();
   const LangOptions &LangOpts = R.getLangOpts();
 
-  SourceLocation InstantiationStart = SM.getInstantiationLoc(Range.getBegin());
+  SourceLocation InstantiationStart = SM.getExpansionLoc(Range.getBegin());
   unsigned StartLineNo = SM.getInstantiationLineNumber(InstantiationStart);
 
-  SourceLocation InstantiationEnd = SM.getInstantiationLoc(Range.getEnd());
+  SourceLocation InstantiationEnd = SM.getExpansionLoc(Range.getEnd());
   unsigned EndLineNo = SM.getInstantiationLineNumber(InstantiationEnd);
 
   if (EndLineNo < StartLineNo)

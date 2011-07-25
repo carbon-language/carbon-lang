@@ -123,7 +123,7 @@ void DependencyFileCallback::FileChanged(SourceLocation Loc,
   SourceManager &SM = PP->getSourceManager();
 
   const FileEntry *FE =
-    SM.getFileEntryForID(SM.getFileID(SM.getInstantiationLoc(Loc)));
+    SM.getFileEntryForID(SM.getFileID(SM.getExpansionLoc(Loc)));
   if (FE == 0) return;
 
   StringRef Filename = FE->getName();

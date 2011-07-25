@@ -2824,7 +2824,7 @@ void clang_getInstantiationLocation(CXSourceLocation location,
 
   const SourceManager &SM =
     *static_cast<const SourceManager*>(location.ptr_data[0]);
-  SourceLocation InstLoc = SM.getInstantiationLoc(Loc);
+  SourceLocation InstLoc = SM.getExpansionLoc(Loc);
 
   // Check that the FileID is invalid on the expansion location.
   // This can manifest in invalid code.
@@ -2865,7 +2865,7 @@ void clang_getSpellingLocation(CXSourceLocation location,
         SM.getFileEntryForID(SM.getDecomposedLoc(SimpleSpellingLoc).first))
       SpellLoc = SimpleSpellingLoc;
     else
-      SpellLoc = SM.getInstantiationLoc(SpellLoc);
+      SpellLoc = SM.getExpansionLoc(SpellLoc);
   }
 
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(SpellLoc);

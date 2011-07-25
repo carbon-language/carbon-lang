@@ -267,7 +267,7 @@ void AnalysisConsumer::HandleCode(Decl *D) {
   // Don't run the actions on declarations in header files unless
   // otherwise specified.
   SourceManager &SM = Ctx->getSourceManager();
-  SourceLocation SL = SM.getInstantiationLoc(D->getLocation());
+  SourceLocation SL = SM.getExpansionLoc(D->getLocation());
   if (!Opts.AnalyzeAll && !SM.isFromMainFile(SL))
     return;
 

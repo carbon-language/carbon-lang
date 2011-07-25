@@ -687,7 +687,7 @@ bool Sema::findMacroSpelling(SourceLocation &locref, StringRef name) {
 
   // There's no good way right now to look at the intermediate
   // instantiations, so just jump to the instantiation location.
-  loc = getSourceManager().getInstantiationLoc(loc);
+  loc = getSourceManager().getExpansionLoc(loc);
 
   // If that's written with the name, stop here.
   SmallVector<char, 16> buffer;

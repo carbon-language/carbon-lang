@@ -723,11 +723,11 @@ public:
     return SourceLocation::getFileLoc(FileOffset);
   }
 
-  /// getInstantiationLoc - Given a SourceLocation object, return the
-  /// instantiation location referenced by the ID.
-  SourceLocation getInstantiationLoc(SourceLocation Loc) const {
+  /// getExpansionLoc - Given a SourceLocation object, return the expansion
+  /// location referenced by the ID.
+  SourceLocation getExpansionLoc(SourceLocation Loc) const {
     // Handle the non-mapped case inline, defer to out of line code to handle
-    // instantiations.
+    // expansions.
     if (Loc.isFileID()) return Loc;
     return getInstantiationLocSlowCase(Loc);
   }

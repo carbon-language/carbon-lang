@@ -33,8 +33,8 @@ using namespace clang;
 void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
                           const char *StartTag, const char *EndTag) {
   SourceManager &SM = R.getSourceMgr();
-  B = SM.getInstantiationLoc(B);
-  E = SM.getInstantiationLoc(E);
+  B = SM.getExpansionLoc(B);
+  E = SM.getExpansionLoc(E);
   FileID FID = SM.getFileID(B);
   assert(SM.getFileID(E) == FID && "B/E not in the same file!");
 
@@ -542,7 +542,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
     // instantiation.  It would be really nice to pop up a window with all the
     // spelling of the tokens or something.
     while (!Tok.is(tok::eof) &&
-           SM.getInstantiationLoc(Tok.getLocation()) == LLoc.first) {
+           SM.getExpansionLoc(Tok.getLocation()) == LLoc.first) {
       // Insert a newline if the macro expansion is getting large.
       if (LineLen > 60) {
         Expansion += "<br>";

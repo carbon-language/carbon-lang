@@ -540,7 +540,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
       Diag.SuppressSystemWarnings &&
       Loc.isValid() &&
       Diag.getSourceManager().isInSystemHeader(
-          Diag.getSourceManager().getInstantiationLoc(Loc)))
+          Diag.getSourceManager().getExpansionLoc(Loc)))
     return DiagnosticIDs::Ignored;
 
   return Result;

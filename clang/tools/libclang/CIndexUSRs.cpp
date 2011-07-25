@@ -486,7 +486,7 @@ bool USRGenerator::GenLoc(const Decl *D) {
     IgnoreResults = true;
     return true;
   }
-  L = SM.getInstantiationLoc(L);
+  L = SM.getExpansionLoc(L);
   const std::pair<FileID, unsigned> &Decomposed = SM.getDecomposedLoc(L);
   const FileEntry *FE = SM.getFileEntryForID(Decomposed.first);
   if (FE) {

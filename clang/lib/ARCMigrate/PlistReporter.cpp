@@ -22,7 +22,7 @@ typedef llvm::DenseMap<FileID, unsigned> FIDMap;
 static void AddFID(FIDMap &FIDs, SmallVectorImpl<FileID> &V,
                    const SourceManager &SM, SourceLocation L) {
 
-  FileID FID = SM.getFileID(SM.getInstantiationLoc(L));
+  FileID FID = SM.getFileID(SM.getExpansionLoc(L));
   FIDMap::iterator I = FIDs.find(FID);
   if (I != FIDs.end()) return;
   FIDs[FID] = V.size();
@@ -31,7 +31,7 @@ static void AddFID(FIDMap &FIDs, SmallVectorImpl<FileID> &V,
 
 static unsigned GetFID(const FIDMap& FIDs, const SourceManager &SM,
                        SourceLocation L) {
-  FileID FID = SM.getFileID(SM.getInstantiationLoc(L));
+  FileID FID = SM.getFileID(SM.getExpansionLoc(L));
   FIDMap::const_iterator I = FIDs.find(FID);
   assert(I != FIDs.end());
   return I->second;
@@ -47,7 +47,7 @@ static void EmitLocation(raw_ostream& o, const SourceManager &SM,
                          SourceLocation L, const FIDMap &FM,
                          unsigned indent, bool extend = false) {
 
-  FullSourceLoc Loc(SM.getInstantiationLoc(L), const_cast<SourceManager&>(SM));
+  FullSourceLoc Loc(SM.getExpansionLoc(L), const_cast<SourceManager&>(SM));
 
   // Add in the length of the token, so that we cover multi-char tokens.
   unsigned offset =

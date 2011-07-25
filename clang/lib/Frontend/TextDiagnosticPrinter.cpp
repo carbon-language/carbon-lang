@@ -85,8 +85,8 @@ void TextDiagnosticPrinter::HighlightRange(const CharSourceRange &R,
          "Expect a correspondence between source and caret line!");
   if (!R.isValid()) return;
 
-  SourceLocation Begin = SM.getInstantiationLoc(R.getBegin());
-  SourceLocation End = SM.getInstantiationLoc(R.getEnd());
+  SourceLocation Begin = SM.getExpansionLoc(R.getBegin());
+  SourceLocation End = SM.getExpansionLoc(R.getEnd());
 
   // If the End location and the start location are the same and are a macro
   // location, then the range was something that came from a macro expansion
@@ -914,7 +914,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
                 
         if (DiagOpts->ShowSourceRanges && Info.getNumRanges()) {
           FileID CaretFileID =
-            SM.getFileID(SM.getInstantiationLoc(Info.getLocation()));
+            SM.getFileID(SM.getExpansionLoc(Info.getLocation()));
           bool PrintedRange = false;
 
           for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i) {
@@ -923,8 +923,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
 
             SourceLocation B = Info.getRange(i).getBegin();
             SourceLocation E = Info.getRange(i).getEnd();
-            B = SM.getInstantiationLoc(B);
-            E = SM.getInstantiationLoc(E);
+            B = SM.getExpansionLoc(B);
+            E = SM.getExpansionLoc(E);
 
             // If the End location and the start location are the same and are a
             // macro location, then the range was something that came from a

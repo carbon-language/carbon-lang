@@ -311,7 +311,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
         const char *FIText = ": ";
         const SourceManager &SM = PP.getSourceManager();
         if (FILoc.isFileID() || PP.isAtStartOfMacroExpansion(FILoc)) {
-          FILoc = SM.getInstantiationLoc(FILoc);
+          FILoc = SM.getExpansionLoc(FILoc);
           bool IsInvalid = false;
           const char *SourcePtr =
             SM.getCharacterData(FILoc.getFileLocWithOffset(-1), &IsInvalid);

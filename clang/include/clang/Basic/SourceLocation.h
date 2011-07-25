@@ -274,7 +274,7 @@ public:
 
   FileID getFileID() const;
 
-  FullSourceLoc getInstantiationLoc() const;
+  FullSourceLoc getExpansionLoc() const;
   FullSourceLoc getSpellingLoc() const;
 
   unsigned getInstantiationLineNumber(bool *Invalid = 0) const;
