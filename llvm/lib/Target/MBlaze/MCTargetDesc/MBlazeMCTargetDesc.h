@@ -14,12 +14,25 @@
 #ifndef MBLAZEMCTARGETDESC_H
 #define MBLAZEMCTARGETDESC_H
 
+#include <string>
+
 namespace llvm {
+class MCContext;
+class MCCodeEmitter;
+class MCInstrInfo;
 class MCSubtargetInfo;
 class Target;
+class TargetAsmBackend;
 class StringRef;
+class formatted_raw_ostream;
 
 extern Target TheMBlazeTarget;
+
+MCCodeEmitter *createMBlazeMCCodeEmitter(const MCInstrInfo &MCII,
+                                         const MCSubtargetInfo &STI,
+                                         MCContext &Ctx);
+  
+TargetAsmBackend *createMBlazeAsmBackend(const Target &, const std::string &);
 
 } // End llvm namespace
 

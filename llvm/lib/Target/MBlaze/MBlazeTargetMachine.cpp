@@ -20,44 +20,9 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
-                                    MCContext &Ctx, TargetAsmBackend &TAB,
-                                    raw_ostream &_OS,
-                                    MCCodeEmitter *_Emitter,
-                                    bool RelaxAll,
-                                    bool NoExecStack) {
-  Triple TheTriple(TT);
-
-  if (TheTriple.isOSDarwin()) {
-    llvm_unreachable("MBlaze does not support Darwin MACH-O format");
-    return NULL;
-  }
-
-  if (TheTriple.isOSWindows()) {
-    llvm_unreachable("MBlaze does not support Windows COFF format");
-    return NULL;
-  }
-
-  return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll, NoExecStack);
-}
-
-
 extern "C" void LLVMInitializeMBlazeTarget() {
   // Register the target.
   RegisterTargetMachine<MBlazeTargetMachine> X(TheMBlazeTarget);
-
-  // Register the MC code emitter
-  TargetRegistry::RegisterCodeEmitter(TheMBlazeTarget,
-                                      llvm::createMBlazeMCCodeEmitter);
-
-  // Register the asm backend
-  TargetRegistry::RegisterAsmBackend(TheMBlazeTarget,
-                                     createMBlazeAsmBackend);
-
-  // Register the object streamer
-  TargetRegistry::RegisterObjectStreamer(TheMBlazeTarget,
-                                         createMCStreamer);
-
 }
 
 // DataLayout --> Big-endian, 32-bit pointer/ABI/alignment

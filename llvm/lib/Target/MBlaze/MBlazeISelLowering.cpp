@@ -964,9 +964,9 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
     // The last register argument that must be saved is MBlaze::R10
     TargetRegisterClass *RC = MBlaze::GPRRegisterClass;
 
-    unsigned Begin = MBlazeRegisterInfo::getRegisterNumbering(MBlaze::R5);
-    unsigned Start = MBlazeRegisterInfo::getRegisterNumbering(ArgRegEnd+1);
-    unsigned End   = MBlazeRegisterInfo::getRegisterNumbering(MBlaze::R10);
+    unsigned Begin = getMBlazeRegisterNumbering(MBlaze::R5);
+    unsigned Start = getMBlazeRegisterNumbering(ArgRegEnd+1);
+    unsigned End   = getMBlazeRegisterNumbering(MBlaze::R10);
     unsigned StackLoc = Start - Begin + 1;
 
     for (; Start <= End; ++Start, ++StackLoc) {

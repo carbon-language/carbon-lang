@@ -286,19 +286,19 @@ void MBlazeOperand::print(raw_ostream &OS) const {
     break;
   case Register:
     OS << "<register R";
-    OS << MBlazeRegisterInfo::getRegisterNumbering(getReg()) << ">";
+    OS << getMBlazeRegisterNumbering(getReg()) << ">";
     break;
   case Token:
     OS << "'" << getToken() << "'";
     break;
   case Memory: {
     OS << "<memory R";
-    OS << MBlazeRegisterInfo::getRegisterNumbering(getMemBase());
+    OS << getMBlazeRegisterNumbering(getMemBase());
     OS << ", ";
 
     unsigned RegOff = getMemOffReg();
     if (RegOff)
-      OS << "R" << MBlazeRegisterInfo::getRegisterNumbering(RegOff);
+      OS << "R" << getMBlazeRegisterNumbering(RegOff);
     else
       OS << getMemOff();
     OS << ">";

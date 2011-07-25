@@ -42,9 +42,6 @@ struct MBlazeRegisterInfo : public MBlazeGenRegisterInfo {
   MBlazeRegisterInfo(const MBlazeSubtarget &Subtarget,
                      const TargetInstrInfo &tii);
 
-  /// getRegisterNumbering - Given the enum value for some register, e.g.
-  /// MBlaze::RA, return the number that it corresponds to (e.g. 31).
-  static unsigned getRegisterNumbering(unsigned RegEnum);
   static unsigned getRegisterFromNumbering(unsigned RegEnum);
   static unsigned getSpecialRegisterFromNumbering(unsigned RegEnum);
   static bool isRegister(unsigned RegEnum);

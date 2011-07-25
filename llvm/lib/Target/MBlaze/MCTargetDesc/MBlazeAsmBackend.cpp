@@ -7,10 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCTargetDesc/MBlazeMCTargetDesc.h"
 #include "llvm/MC/TargetAsmBackend.h"
-#include "MBlaze.h"
-#include "MBlazeELFWriterInfo.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCELFObjectWriter.h"
@@ -20,6 +18,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"

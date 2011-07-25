@@ -12,11 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mccodeemitter"
-#include "MBlaze.h"
-#include "MBlazeInstrInfo.h"
+#include "MCTargetDesc/MBlazeBaseInfo.h"
+#include "MCTargetDesc/MBlazeMCTargetDesc.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/ADT/Statistic.h"
@@ -106,7 +108,7 @@ MCCodeEmitter *llvm::createMBlazeMCCodeEmitter(const MCInstrInfo &MCII,
 unsigned MBlazeMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                              const MCOperand &MO) const {
   if (MO.isReg())
-    return MBlazeRegisterInfo::getRegisterNumbering(MO.getReg());
+    return getMBlazeRegisterNumbering(MO.getReg());
   else if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
   else if (MO.isExpr())

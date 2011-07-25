@@ -24,10 +24,8 @@ add_llvm_target(MBlazeCodeGen
   MBlazeIntrinsicInfo.cpp
   MBlazeSelectionDAGInfo.cpp
   MBlazeAsmPrinter.cpp
-  MBlazeAsmBackend.cpp
   MBlazeMCInstLower.cpp
   MBlazeELFWriterInfo.cpp
-  MBlazeMCCodeEmitter.cpp
   )
 
 add_subdirectory(AsmParser)

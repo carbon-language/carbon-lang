@@ -15,8 +15,10 @@
 #include "MBlazeMCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #define GET_INSTRINFO_MC_DESC
 #include "MBlazeGenInstrInfo.inc"
@@ -68,6 +70,27 @@ static MCCodeGenInfo *createMBlazeMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
+static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
+                                    MCContext &Ctx, TargetAsmBackend &TAB,
+                                    raw_ostream &_OS,
+                                    MCCodeEmitter *_Emitter,
+                                    bool RelaxAll,
+                                    bool NoExecStack) {
+  Triple TheTriple(TT);
+
+  if (TheTriple.isOSDarwin()) {
+    llvm_unreachable("MBlaze does not support Darwin MACH-O format");
+    return NULL;
+  }
+
+  if (TheTriple.isOSWindows()) {
+    llvm_unreachable("MBlaze does not support Windows COFF format");
+    return NULL;
+  }
+
+  return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll, NoExecStack);
+}
+
 // Force static initialization.
 extern "C" void LLVMInitializeMBlazeTargetMC() {
   // Register the MC asm info.
@@ -87,4 +110,16 @@ extern "C" void LLVMInitializeMBlazeTargetMC() {
   // Register the MC subtarget info.
   TargetRegistry::RegisterMCSubtargetInfo(TheMBlazeTarget,
                                           createMBlazeMCSubtargetInfo);
+
+  // Register the MC code emitter
+  TargetRegistry::RegisterCodeEmitter(TheMBlazeTarget,
+                                      llvm::createMBlazeMCCodeEmitter);
+
+  // Register the asm backend
+  TargetRegistry::RegisterAsmBackend(TheMBlazeTarget,
+                                     createMBlazeAsmBackend);
+
+  // Register the object streamer
+  TargetRegistry::RegisterObjectStreamer(TheMBlazeTarget,
+                                         createMCStreamer);
 }
