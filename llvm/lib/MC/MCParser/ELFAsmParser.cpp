@@ -47,12 +47,17 @@ public:
     AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveRoData>(".rodata");
     AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveTData>(".tdata");
     AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveTBSS>(".tbss");
-    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveDataRel>(".data.rel");
-    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveDataRelRo>(".data.rel.ro");
-    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveDataRelRoLocal>(".data.rel.ro.local");
-    AddDirectiveHandler<&ELFAsmParser::ParseSectionDirectiveEhFrame>(".eh_frame");
+    AddDirectiveHandler<
+      &ELFAsmParser::ParseSectionDirectiveDataRel>(".data.rel");
+    AddDirectiveHandler<
+      &ELFAsmParser::ParseSectionDirectiveDataRelRo>(".data.rel.ro");
+    AddDirectiveHandler<
+      &ELFAsmParser::ParseSectionDirectiveDataRelRoLocal>(".data.rel.ro.local");
+    AddDirectiveHandler<
+      &ELFAsmParser::ParseSectionDirectiveEhFrame>(".eh_frame");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSection>(".section");
-    AddDirectiveHandler<&ELFAsmParser::ParseDirectivePushSection>(".pushsection");
+    AddDirectiveHandler<
+      &ELFAsmParser::ParseDirectivePushSection>(".pushsection");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectivePopSection>(".popsection");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSize>(".size");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectivePrevious>(".previous");
