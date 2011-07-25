@@ -759,7 +759,6 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // Skip the callee-saved push instructions.
   bool PushedRegs = false;
   int StackOffset = 2 * stackGrowth;
-  SmallVector<int, 8> SavedRegs;
 
   while (MBBI != MBB.end() &&
          (MBBI->getOpcode() == X86::PUSH32r ||
