@@ -48,6 +48,8 @@ public:
   succ_iterator succ_begin() const { return Succs.begin(); }
   succ_iterator succ_end() const { return Succs.end(); }
 
+  bool contains(MCBasicBlock *BB) const { return Succs.count(BB); }
+
   void addInst(const MCDecodedInst &Inst) { Insts.push_back(Inst); }
   void addSucc(MCBasicBlock *BB) { Succs.insert(BB); }
 };

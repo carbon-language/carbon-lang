@@ -286,7 +286,7 @@ static void DisassembleInput(const StringRef &Filename) {
           // FIXME: Slow.
           for (MCFunction::iterator pi = f.begin(), pe = f.end(); pi != pe;
                ++pi)
-            for (pi->second->contains(&i->second)) {
+            if (pi->second.contains(&i->second)) {
               hasPreds = true;
               break;
             }
