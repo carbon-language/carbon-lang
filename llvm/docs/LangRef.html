@@ -1247,6 +1247,14 @@ define void @f() optsize { ... }
       function that doesn't have an <tt>sspreq</tt> attribute or which has
       an <tt>ssp</tt> attribute, then the resulting function will have
       an <tt>sspreq</tt> attribute.</dd>
+
+  <dt><tt><b><a name="uwtable">uwtable</a></b></tt></dt>
+  <dd>This attribute indicates that the ABI being targeted requires that
+      an unwind table entry be produce for this function even if we can
+      show that no exceptions passes by it. This is normally the case for
+      the ELF x86-64 abi, but it can be disabled for some compilation
+      units.</dd>
+
 </dl>
 
 </div>
