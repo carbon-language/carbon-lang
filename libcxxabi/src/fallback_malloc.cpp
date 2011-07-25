@@ -12,8 +12,8 @@
 //  
 //===----------------------------------------------------------------------===//
 
-//  A small, simple heap manager based (loosely) on the startup heap
-//  based on the startup heap manager from FreeBSD.
+//  A small, simple heap manager based (loosely) on 
+//  the startup heap manager from FreeBSD, optimized for space.
 //
 //  Manages a fixed-size memory pool, supports malloc and free only.
 //  No support for realloc.
