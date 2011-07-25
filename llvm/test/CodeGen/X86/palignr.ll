@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=core2 | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=core2 -mattr=+ssse3 | FileCheck %s
 ; RUN: llc < %s -march=x86 -mcpu=yonah | FileCheck --check-prefix=YONAH %s
 
 define <4 x i32> @test1(<4 x i32> %A, <4 x i32> %B) nounwind {
