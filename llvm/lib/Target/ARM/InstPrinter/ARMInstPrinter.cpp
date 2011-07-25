@@ -450,20 +450,12 @@ void ARMInstPrinter::printMemBOption(const MCInst *MI, unsigned OpNum,
 void ARMInstPrinter::printShiftImmOperand(const MCInst *MI, unsigned OpNum,
                                           raw_ostream &O) {
   unsigned ShiftOp = MI->getOperand(OpNum).getImm();
-  ARM_AM::ShiftOpc Opc = ARM_AM::getSORegShOp(ShiftOp);
-  switch (Opc) {
-  case ARM_AM::no_shift:
-    return;
-  case ARM_AM::lsl:
-    O << ", lsl #";
-    break;
-  case ARM_AM::asr:
-    O << ", asr #";
-    break;
-  default:
-    assert(0 && "unexpected shift opcode for shift immediate operand");
-  }
-  O << ARM_AM::getSORegOffset(ShiftOp);
+  bool isASR = (ShiftOp & (1 << 5)) != 0;
+  unsigned Amt = ShiftOp & 0x1f;
+  if (isASR)
+    O << ", asr #" << (Amt == 0 ? 32 : Amt);
+  else if (Amt)
+    O << ", lsl #" << Amt;
 }
 
 void ARMInstPrinter::printPKHLSLShiftImm(const MCInst *MI, unsigned OpNum,

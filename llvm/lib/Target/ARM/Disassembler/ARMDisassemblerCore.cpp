@@ -1732,17 +1732,11 @@ static bool DisassembleSatFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRm(insn))));
 
   if (NumOpsAdded == 4) {
-    ARM_AM::ShiftOpc Opc = (slice(insn, 6, 6) != 0 ? ARM_AM::asr : ARM_AM::lsl);
+    // Inst{6} encodes the shift type.
+    bool isASR = slice(insn, 6, 6);
     // Inst{11-7} encodes the imm5 shift amount.
     unsigned ShAmt = slice(insn, 11, 7);
-    if (ShAmt == 0) {
-      // A8.6.183.  Possible ASR shift amount of 32...
-      if (Opc == ARM_AM::asr)
-        ShAmt = 32;
-      else
-        Opc = ARM_AM::no_shift;
-    }
-    MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(Opc, ShAmt)));
+    MI.addOperand(MCOperand::CreateImm(isASR << 5 | ShAmt));
   }
   return true;
 }

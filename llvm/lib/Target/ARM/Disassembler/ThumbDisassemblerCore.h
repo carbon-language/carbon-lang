@@ -1615,17 +1615,11 @@ static bool DisassembleThumb2Sat(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRn(insn))));
 
   if (NumOpsAdded == 4) {
-    ARM_AM::ShiftOpc Opc = (slice(insn, 21, 21) != 0 ?
-                            ARM_AM::asr : ARM_AM::lsl);
-    // Inst{14-12:7-6} encodes the imm5 shift amount.
-    unsigned ShAmt = slice(insn, 14, 12) << 2 | slice(insn, 7, 6);
-    if (ShAmt == 0) {
-      if (Opc == ARM_AM::asr)
-        ShAmt = 32;
-      else
-        Opc = ARM_AM::no_shift;
-    }
-    MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(Opc, ShAmt)));
+    // Inst{6} encodes the shift type.
+    bool isASR = slice(insn, 6, 6);
+    // Inst{11-7} encodes the imm5 shift amount.
+    unsigned ShAmt = slice(insn, 11, 7);
+    MI.addOperand(MCOperand::CreateImm(isASR << 5 | ShAmt));
   }
   return true;
 }

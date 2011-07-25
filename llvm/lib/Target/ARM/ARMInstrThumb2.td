@@ -1918,8 +1918,8 @@ class T2SatI<dag oops, dag iops, InstrItinClass itin,
 
   let Inst{11-8}  = Rd;
   let Inst{19-16} = Rn;
-  let Inst{4-0}   = sat_imm{4-0};
-  let Inst{21}    = sh{6};
+  let Inst{4-0}   = sat_imm;
+  let Inst{21}    = sh{5};
   let Inst{14-12} = sh{4-2};
   let Inst{7-6}   = sh{1-0};
 }

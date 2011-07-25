@@ -160,3 +160,43 @@
 @ CHECK: error: 'be' or 'le' operand expected
 @ CHECK:         setend 1
 @ CHECK:                ^
+
+
+        @ Out of range immediates and bad shift types for SSAT
+	ssat	r8, #0, r10, lsl #8
+	ssat	r8, #33, r10, lsl #8
+	ssat	r8, #1, r10, lsl #-1
+	ssat	r8, #1, r10, lsl #32
+	ssat	r8, #1, r10, asr #0
+	ssat	r8, #1, r10, asr #33
+        ssat    r8, #1, r10, lsr #5
+        ssat    r8, #1, r10, lsl fred
+        ssat    r8, #1, r10, lsl #fred
+
+@ CHECK: error: invalid operand for instruction
+@ CHECK: 	ssat	r8, #0, r10, lsl #8
+@ CHECK: 	    	    ^
+@ CHECK: error: invalid operand for instruction
+@ CHECK: 	ssat	r8, #33, r10, lsl #8
+@ CHECK: 	    	    ^
+@ CHECK: error: 'lsr' shift amount must be in range [0,31]
+@ CHECK: 	ssat	r8, #1, r10, lsl #-1
+@ CHECK: 	    	                  ^
+@ CHECK: error: 'lsr' shift amount must be in range [0,31]
+@ CHECK: 	ssat	r8, #1, r10, lsl #32
+@ CHECK: 	    	                  ^
+@ CHECK: error: 'asr' shift amount must be in range [1,32]
+@ CHECK: 	ssat	r8, #1, r10, asr #0
+@ CHECK: 	    	                  ^
+@ CHECK: error: 'asr' shift amount must be in range [1,32]
+@ CHECK: 	ssat	r8, #1, r10, asr #33
+@ CHECK: 	    	                  ^
+@ CHECK: error: shift operator 'asr' or 'lsl' expected
+@ CHECK:         ssat    r8, #1, r10, lsr #5
+@ CHECK:                              ^
+@ CHECK: error: '#' expected
+@ CHECK:         ssat    r8, #1, r10, lsl fred
+@ CHECK:                                  ^
+@ CHECK: error: shift amount must be an immediate
+@ CHECK:         ssat    r8, #1, r10, lsl #fred
+@ CHECK:                                   ^

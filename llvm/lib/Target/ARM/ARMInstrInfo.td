@@ -395,12 +395,18 @@ def rot_imm : Operand<i32>, ImmLeaf<i32, [{
 }
 
 // shift_imm: An integer that encodes a shift amount and the type of shift
-// (currently either asr or lsl) using the same encoding used for the
-// immediates in so_reg operands.
-def ShifterAsmOperand : AsmOperandClass { let Name = "Shifter"; }
+// (asr or lsl). The 6-bit immediate encodes as:
+//    {5}     0 ==> lsl
+//            1     asr
+//    {4-0}   imm5 shift amount.
+//            asr #32 encoded as imm5 == 0.
+def ShifterImmAsmOperand : AsmOperandClass {
+  let Name = "ShifterImm";
+  let ParserMethod = "parseShifterImm";
+}
 def shift_imm : Operand<i32> {
   let PrintMethod = "printShiftImmOperand";
-  let ParserMatchClass = ShifterAsmOperand;
+  let ParserMatchClass = ShifterImmAsmOperand;
 }
 
 // shifter_operand operands: so_reg_reg, so_reg_imm, and so_imm.
@@ -2688,8 +2694,8 @@ def USADA8 : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
 
 // Signed/Unsigned saturate -- for disassembly only
 
-def SSAT : AI<(outs GPR:$Rd), (ins imm1_32:$sat_imm, GPR:$a, shift_imm:$sh),
-              SatFrm, NoItinerary, "ssat", "\t$Rd, $sat_imm, $a$sh", []> {
+def SSAT : AI<(outs GPR:$Rd), (ins imm1_32:$sat_imm, GPR:$Rn, shift_imm:$sh),
+              SatFrm, NoItinerary, "ssat", "\t$Rd, $sat_imm, $Rn$sh", []> {
   bits<4> Rd;
   bits<5> sat_imm;
   bits<4> Rn;
@@ -2698,8 +2704,8 @@ def SSAT : AI<(outs GPR:$Rd), (ins imm1_32:$sat_imm, GPR:$a, shift_imm:$sh),
   let Inst{5-4} = 0b01;
   let Inst{20-16} = sat_imm;
   let Inst{15-12} = Rd;
-  let Inst{11-7} = sh{7-3};
-  let Inst{6} = sh{0};
+  let Inst{11-7} = sh{4-0};
+  let Inst{6} = sh{5};
   let Inst{3-0} = Rn;
 }
 
@@ -2715,9 +2721,8 @@ def SSAT16 : AI<(outs GPR:$Rd), (ins imm1_32:$sat_imm, GPR:$Rn), SatFrm,
   let Inst{3-0} = Rn;
 }
 
-def USAT : AI<(outs GPR:$Rd), (ins i32imm:$sat_imm, GPR:$a, shift_imm:$sh),
-              SatFrm, NoItinerary, "usat", "\t$Rd, $sat_imm, $a$sh",
-              [/* For disassembly only; pattern left blank */]> {
+def USAT : AI<(outs GPR:$Rd), (ins i32imm:$sat_imm, GPR:$Rn, shift_imm:$sh),
+              SatFrm, NoItinerary, "usat", "\t$Rd, $sat_imm, $Rn$sh", []> {
   bits<4> Rd;
   bits<5> sat_imm;
   bits<4> Rn;
@@ -2725,8 +2730,8 @@ def USAT : AI<(outs GPR:$Rd), (ins i32imm:$sat_imm, GPR:$a, shift_imm:$sh),
   let Inst{27-21} = 0b0110111;
   let Inst{5-4} = 0b01;
   let Inst{15-12} = Rd;
-  let Inst{11-7} = sh{7-3};
-  let Inst{6} = sh{0};
+  let Inst{11-7} = sh{4-0};
+  let Inst{6} = sh{5};
   let Inst{20-16} = sat_imm;
   let Inst{3-0} = Rn;
 }
@@ -4278,3 +4283,7 @@ def : InstAlias<"rsc${s}${p} $Rdn, $shift",
 def : InstAlias<"rsc${s}${p} $Rdn, $shift",
                 (RSCrsr GPR:$Rdn, GPR:$Rdn, so_reg_reg:$shift, pred:$p,
                         cc_out:$s)>, Requires<[IsARM]>;
+
+// SSAT optional shift operand.
+def : InstAlias<"ssat${p} $Rd, $sat_imm, $Rn",
+                (SSAT GPR:$Rd, imm1_32:$sat_imm, GPR:$Rn, 0, pred:$p)>;
