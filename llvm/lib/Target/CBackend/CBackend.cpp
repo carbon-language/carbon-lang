@@ -64,8 +64,6 @@ extern "C" void LLVMInitializeCBackendTarget() {
   RegisterTargetMachine<CTargetMachine> X(TheCBackendTarget);
 }
 
-extern "C" void LLVMInitializeCBackendTargetMC() {}
-
 namespace {
   class CBEMCAsmInfo : public MCAsmInfo {
   public:

@@ -17,3 +17,5 @@ Target llvm::TheCBackendTarget;
 extern "C" void LLVMInitializeCBackendTargetInfo() { 
   RegisterTarget<> X(TheCBackendTarget, "c", "C backend");
 }
+
+extern "C" void LLVMInitializeCBackendTargetMC() {}

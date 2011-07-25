@@ -24,3 +24,5 @@ extern "C" void LLVMInitializeCppBackendTargetInfo() {
                                   "C++ backend",
                                   &CppBackend_TripleMatchQuality);
 }
+
+extern "C" void LLVMInitializeCppBackendTargetMC() {}
