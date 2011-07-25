@@ -131,39 +131,15 @@ def VFPNeonA8Domain : Domain<5>; // Instructions in VFP & Neon under A8
 // ARM special operands.
 //
 
-def CondCodeOperand : AsmOperandClass {
-  let Name = "CondCode";
-  let SuperClasses = [];
-}
-
-def CCOutOperand : AsmOperandClass {
-  let Name = "CCOut";
-  let SuperClasses = [];
-}
-
-def MemBarrierOptOperand : AsmOperandClass {
-  let Name = "MemBarrierOpt";
-  let SuperClasses = [];
-  let ParserMethod = "parseMemBarrierOptOperand";
-}
-
-def ProcIFlagsOperand : AsmOperandClass {
-  let Name = "ProcIFlags";
-  let SuperClasses = [];
-  let ParserMethod = "parseProcIFlagsOperand";
-}
-
-def MSRMaskOperand : AsmOperandClass {
-  let Name = "MSRMask";
-  let SuperClasses = [];
-  let ParserMethod = "parseMSRMaskOperand";
-}
-
 // ARM imod and iflag operands, used only by the CPS instruction.
 def imod_op : Operand<i32> {
   let PrintMethod = "printCPSIMod";
 }
 
+def ProcIFlagsOperand : AsmOperandClass {
+  let Name = "ProcIFlags";
+  let ParserMethod = "parseProcIFlagsOperand";
+}
 def iflags_op : Operand<i32> {
   let PrintMethod = "printCPSIFlag";
   let ParserMatchClass = ProcIFlagsOperand;
@@ -171,6 +147,7 @@ def iflags_op : Operand<i32> {
 
 // ARM Predicate operand. Default to 14 = always (AL). Second part is CC
 // register whose default is 0 (no register).
+def CondCodeOperand : AsmOperandClass { let Name = "CondCode"; }
 def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
                                      (ops (i32 14), (i32 zero_reg))> {
   let PrintMethod = "printPredicateOperand";
@@ -178,6 +155,7 @@ def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
 }
 
 // Conditional code result for instructions whose 's' bit is set, e.g. subs.
+def CCOutOperand : AsmOperandClass { let Name = "CCOut"; }
 def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
   let EncoderMethod = "getCCOutOpValue";
   let PrintMethod = "printSBitModifierOperand";
@@ -202,6 +180,10 @@ def setend_op : Operand<i32> {
   let ParserMatchClass = SetEndAsmOperand;
 }
 
+def MSRMaskOperand : AsmOperandClass {
+  let Name = "MSRMask";
+  let ParserMethod = "parseMSRMaskOperand";
+}
 def msr_mask : Operand<i32> {
   let PrintMethod = "printMSRMaskOperand";
   let ParserMatchClass = MSRMaskOperand;

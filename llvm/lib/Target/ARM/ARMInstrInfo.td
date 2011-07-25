@@ -394,7 +394,6 @@ def rot_imm : Operand<i32>, ImmLeaf<i32, [{
   let EncoderMethod = "getRotImmOpValue";
 }
 
-
 // shift_imm: An integer that encodes a shift amount and the type of shift
 // (currently either asr or lsl) using the same encoding used for the
 // immediates in so_reg operands.
@@ -3450,6 +3449,10 @@ def MVNCCi : ARMPseudoInst<(outs GPR:$Rd),
 // Atomic operations intrinsics
 //
 
+def MemBarrierOptOperand : AsmOperandClass {
+  let Name = "MemBarrierOpt";
+  let ParserMethod = "parseMemBarrierOptOperand";
+}
 def memb_opt : Operand<i32> {
   let PrintMethod = "printMemBOption";
   let ParserMatchClass = MemBarrierOptOperand;
