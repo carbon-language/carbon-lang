@@ -58,6 +58,7 @@ public:
   bool hasReservedCallFrame(const MachineFunction &MF) const;
 
   int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
+  uint32_t getCompactUnwindEncoding(MachineFunction &MF) const;
 };
 
 } // End llvm namespace
