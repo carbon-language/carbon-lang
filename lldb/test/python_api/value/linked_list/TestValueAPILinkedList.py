@@ -83,11 +83,20 @@ class ValueAsLinkedListTestCase(TestBase):
         self.assertTrue(task_head, VALID_VARIABLE)
         self.DebugSBValue(task_head)
 
+        # By design (see main.cpp), the visited id's are: [1, 2, 4, 5].
+        visitedIDs = [1, 2, 4, 5]
+        list = []
+
         cvf = lldbutil.ChildVisitingFormatter(indent_child=2)
         for t in task_head.linked_list_iter('next', eol):
             self.assertTrue(t, VALID_VARIABLE)
+            list.append(int(t.GetChildMemberWithName("id").GetValue()))
             if self.TraceOn():
                 print cvf.format(t)
+
+        # Sanity checks that the we visited all the items (no more, no less).
+        #print "list:", list
+        self.assertTrue(visitedIDs == list)
         
 if __name__ == '__main__':
     import atexit
