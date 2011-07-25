@@ -1049,19 +1049,18 @@ static long double
 
 static float
     _TG_ATTRS
-    __tg_nexttoward(float __x, float __y) {return nexttowardf(__x, __y);}
+    __tg_nexttoward(float __x, long double __y) {return nexttowardf(__x, __y);}
 
 static double
     _TG_ATTRS
-    __tg_nexttoward(double __x, double __y) {return nexttoward(__x, __y);}
+    __tg_nexttoward(double __x, long double __y) {return nexttoward(__x, __y);}
 
 static long double
     _TG_ATTRS
     __tg_nexttoward(long double __x, long double __y) {return nexttowardl(__x, __y);}
 
 #undef nexttoward
-#define nexttoward(__x, __y) __tg_nexttoward(__tg_promote2((__x), (__y))(__x), \
-                                             __tg_promote2((__x), (__y))(__y))
+#define nexttoward(__x, __y) __tg_nexttoward(__tg_promote1((__x))(__x), (__y))
 
 // remainder
 
