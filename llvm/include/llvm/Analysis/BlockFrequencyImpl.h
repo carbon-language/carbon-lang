@@ -29,8 +29,8 @@
 namespace llvm {
 
 
-class BlockFrequency;
-class MachineBlockFrequency;
+class BlockFrequencyInfo;
+class MachineBlockFrequencyInfo;
 
 /// BlockFrequencyImpl implements block frequency algorithm for IR and
 /// Machine Instructions. Algorithm starts with value 1024 (START_FREQ)
@@ -263,8 +263,8 @@ class BlockFrequencyImpl {
     }
   }
 
-  friend class BlockFrequency;
-  friend class MachineBlockFrequency;
+  friend class BlockFrequencyInfo;
+  friend class MachineBlockFrequencyInfo;
 
   void doFunction(FunctionT *fn, BlockProbInfoT *bpi) {
     Fn = fn;

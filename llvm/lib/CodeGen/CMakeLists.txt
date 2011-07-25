@@ -33,7 +33,7 @@ add_llvm_library(LLVMCodeGen
   LocalStackSlotAllocation.cpp
   LowerSubregs.cpp
   MachineBasicBlock.cpp
-  MachineBlockFrequency.cpp
+  MachineBlockFrequencyInfo.cpp
   MachineBranchProbabilityInfo.cpp
   MachineCSE.cpp
   MachineDominators.cpp

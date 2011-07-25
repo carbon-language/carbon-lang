@@ -1,4 +1,4 @@
-//========-------- BlockFrequency.h - Block Frequency Analysis -------========//
+//========-------- BlockFrequencyInfo.h - Block Frequency Analysis -------========//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_BLOCKFREQUENCY_H
-#define LLVM_ANALYSIS_BLOCKFREQUENCY_H
+#ifndef LLVM_ANALYSIS_BLOCKFREQUENCYINFO_H
+#define LLVM_ANALYSIS_BLOCKFREQUENCYINFO_H
 
 #include "llvm/Pass.h"
 #include <climits>
@@ -23,18 +23,18 @@ class BranchProbabilityInfo;
 template<class BlockT, class FunctionT, class BranchProbInfoT>
 class BlockFrequencyImpl;
 
-/// BlockFrequency pass uses BlockFrequencyImpl implementation to estimate
+/// BlockFrequencyInfo pass uses BlockFrequencyImpl implementation to estimate
 /// IR basic block frequencies.
-class BlockFrequency : public FunctionPass {
+class BlockFrequencyInfo : public FunctionPass {
 
   BlockFrequencyImpl<BasicBlock, Function, BranchProbabilityInfo> *BFI;
 
 public:
   static char ID;
 
-  BlockFrequency();
+  BlockFrequencyInfo();
 
-  ~BlockFrequency();
+  ~BlockFrequencyInfo();
 
   void getAnalysisUsage(AnalysisUsage &AU) const;
 

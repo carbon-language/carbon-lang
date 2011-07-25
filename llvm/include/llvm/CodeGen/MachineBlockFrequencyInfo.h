@@ -1,4 +1,4 @@
-//====----- MachineBlockFrequency.h - MachineBlock Frequency Analysis ----====//
+//====----- MachineBlockFrequencyInfo.h - MachineBlock Frequency Analysis ----====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -23,18 +23,18 @@ class MachineBranchProbabilityInfo;
 template<class BlockT, class FunctionT, class BranchProbInfoT>
 class BlockFrequencyImpl;
 
-/// MachineBlockFrequency pass uses BlockFrequencyImpl implementation to estimate
+/// MachineBlockFrequencyInfo pass uses BlockFrequencyImpl implementation to estimate
 /// machine basic block frequencies.
-class MachineBlockFrequency : public MachineFunctionPass {
+class MachineBlockFrequencyInfo : public MachineFunctionPass {
 
   BlockFrequencyImpl<MachineBasicBlock, MachineFunction, MachineBranchProbabilityInfo> *MBFI;
 
 public:
   static char ID;
 
-  MachineBlockFrequency();
+  MachineBlockFrequencyInfo();
 
-  ~MachineBlockFrequency();
+  ~MachineBlockFrequencyInfo();
 
   void getAnalysisUsage(AnalysisUsage &AU) const;
 

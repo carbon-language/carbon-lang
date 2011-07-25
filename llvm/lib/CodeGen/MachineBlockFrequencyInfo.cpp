@@ -1,4 +1,4 @@
-//====----- MachineBlockFrequency.cpp - Machine Block Frequency Analysis ----====//
+//====----- MachineBlockFrequencyInfo.cpp - Machine Block Frequency Analysis ----====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,38 +13,38 @@
 
 #include "llvm/InitializePasses.h"
 #include "llvm/Analysis/BlockFrequencyImpl.h"
-#include "llvm/CodeGen/MachineBlockFrequency.h"
+#include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 
 using namespace llvm;
 
-INITIALIZE_PASS_BEGIN(MachineBlockFrequency, "machine-block-freq",
+INITIALIZE_PASS_BEGIN(MachineBlockFrequencyInfo, "machine-block-freq",
                       "Machine Block Frequency Analysis", true, true)
 INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
-INITIALIZE_PASS_END(MachineBlockFrequency, "machine-block-freq",
+INITIALIZE_PASS_END(MachineBlockFrequencyInfo, "machine-block-freq",
                     "Machine Block Frequency Analysis", true, true)
 
-char MachineBlockFrequency::ID = 0;
+char MachineBlockFrequencyInfo::ID = 0;
 
 
-MachineBlockFrequency::MachineBlockFrequency() : MachineFunctionPass(ID) {
-  initializeMachineBlockFrequencyPass(*PassRegistry::getPassRegistry());
+MachineBlockFrequencyInfo::MachineBlockFrequencyInfo() : MachineFunctionPass(ID) {
+  initializeMachineBlockFrequencyInfoPass(*PassRegistry::getPassRegistry());
   MBFI = new BlockFrequencyImpl<MachineBasicBlock, MachineFunction,
                                 MachineBranchProbabilityInfo>();
 }
 
-MachineBlockFrequency::~MachineBlockFrequency() {
+MachineBlockFrequencyInfo::~MachineBlockFrequencyInfo() {
   delete MBFI;
 }
 
-void MachineBlockFrequency::getAnalysisUsage(AnalysisUsage &AU) const {
+void MachineBlockFrequencyInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineBranchProbabilityInfo>();
   AU.setPreservesAll();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-bool MachineBlockFrequency::runOnMachineFunction(MachineFunction &F) {
+bool MachineBlockFrequencyInfo::runOnMachineFunction(MachineFunction &F) {
   MachineBranchProbabilityInfo &MBPI = getAnalysis<MachineBranchProbabilityInfo>();
   MBFI->doFunction(&F, &MBPI);
   return false;
@@ -55,6 +55,6 @@ bool MachineBlockFrequency::runOnMachineFunction(MachineFunction &F) {
 /// that we should not rely on the value itself, but only on the comparison to
 /// the other block frequencies. We do this to avoid using of floating points.
 ///
-uint32_t MachineBlockFrequency::getBlockFreq(MachineBasicBlock *MBB) {
+uint32_t MachineBlockFrequencyInfo::getBlockFreq(MachineBasicBlock *MBB) {
   return MBFI->getBlockFreq(MBB);
 }
