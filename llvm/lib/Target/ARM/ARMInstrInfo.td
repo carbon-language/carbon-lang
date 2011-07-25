@@ -347,33 +347,21 @@ def bl_target : Operand<i32> {
 
 
 // A list of registers separated by comma. Used by load/store multiple.
-def RegListAsmOperand : AsmOperandClass {
-  let Name = "RegList";
-  let SuperClasses = [];
-}
-
-def DPRRegListAsmOperand : AsmOperandClass {
-  let Name = "DPRRegList";
-  let SuperClasses = [];
-}
-
-def SPRRegListAsmOperand : AsmOperandClass {
-  let Name = "SPRRegList";
-  let SuperClasses = [];
-}
-
+def RegListAsmOperand : AsmOperandClass { let Name = "RegList"; }
 def reglist : Operand<i32> {
   let EncoderMethod = "getRegisterListOpValue";
   let ParserMatchClass = RegListAsmOperand;
   let PrintMethod = "printRegisterList";
 }
 
+def DPRRegListAsmOperand : AsmOperandClass { let Name = "DPRRegList"; }
 def dpr_reglist : Operand<i32> {
   let EncoderMethod = "getRegisterListOpValue";
   let ParserMatchClass = DPRRegListAsmOperand;
   let PrintMethod = "printRegisterList";
 }
 
+def SPRRegListAsmOperand : AsmOperandClass { let Name = "SPRRegList"; }
 def spr_reglist : Operand<i32> {
   let EncoderMethod = "getRegisterListOpValue";
   let ParserMatchClass = SPRRegListAsmOperand;
@@ -406,14 +394,11 @@ def rot_imm : Operand<i32>, ImmLeaf<i32, [{
   let EncoderMethod = "getRotImmOpValue";
 }
 
-def ShifterAsmOperand : AsmOperandClass {
-  let Name = "Shifter";
-  let SuperClasses = [];
-}
 
 // shift_imm: An integer that encodes a shift amount and the type of shift
 // (currently either asr or lsl) using the same encoding used for the
 // immediates in so_reg operands.
+def ShifterAsmOperand : AsmOperandClass { let Name = "Shifter"; }
 def shift_imm : Operand<i32> {
   let PrintMethod = "printShiftImmOperand";
   let ParserMatchClass = ShifterAsmOperand;
@@ -558,19 +543,6 @@ def imm1_32 : Operand<i32>, PatLeaf<(imm), [{ return Imm > 0 && Imm <= 32; }],
 }
 
 // Define ARM specific addressing modes.
-
-def MemMode2AsmOperand : AsmOperandClass {
-  let Name = "MemMode2";
-  let SuperClasses = [];
-  let ParserMethod = "tryParseMemMode2Operand";
-}
-
-def MemMode3AsmOperand : AsmOperandClass {
-  let Name = "MemMode3";
-  let SuperClasses = [];
-  let ParserMethod = "tryParseMemMode3Operand";
-}
-
 // addrmode_imm12 := reg +/- imm12
 //
 def addrmode_imm12 : Operand<i32>,
@@ -596,6 +568,10 @@ def ldst_so_reg : Operand<i32>,
 // addrmode2 := reg +/- imm12
 //           := reg +/- reg shop imm
 //
+def MemMode2AsmOperand : AsmOperandClass {
+  let Name = "MemMode2";
+  let ParserMethod = "tryParseMemMode2Operand";
+}
 def addrmode2 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode2", []> {
   let EncoderMethod = "getAddrMode2OpValue";
@@ -615,6 +591,10 @@ def am2offset : Operand<i32>,
 // addrmode3 := reg +/- reg
 // addrmode3 := reg +/- imm8
 //
+def MemMode3AsmOperand : AsmOperandClass {
+  let Name = "MemMode3";
+  let ParserMethod = "tryParseMemMode3Operand";
+}
 def addrmode3 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode3", []> {
   let EncoderMethod = "getAddrMode3OpValue";
@@ -638,13 +618,9 @@ def ldstm_mode : OptionalDefOperand<OtherVT, (ops i32), (ops (i32 1))> {
   let PrintMethod = "printLdStmModeOperand";
 }
 
-def MemMode5AsmOperand : AsmOperandClass {
-  let Name = "MemMode5";
-  let SuperClasses = [];
-}
-
 // addrmode5 := reg +/- imm8*4
 //
+def MemMode5AsmOperand : AsmOperandClass { let Name = "MemMode5"; }
 def addrmode5 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode5", []> {
   let PrintMethod = "printAddrMode5Operand";
@@ -696,15 +672,11 @@ def addrmodepc : Operand<i32>,
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
-def MemMode7AsmOperand : AsmOperandClass {
-  let Name = "MemMode7";
-  let SuperClasses = [];
-}
-
 // addrmode7 := reg
 // Used by load/store exclusive instructions. Useful to enable right assembly
 // parsing and printing. Not used for any codegen matching.
 //
+def MemMode7AsmOperand : AsmOperandClass { let Name = "MemMode7"; }
 def addrmode7 : Operand<i32> {
   let PrintMethod = "printAddrMode7Operand";
   let MIOperandInfo = (ops GPR);
@@ -717,21 +689,17 @@ def nohash_imm : Operand<i32> {
 
 def CoprocNumAsmOperand : AsmOperandClass {
   let Name = "CoprocNum";
-  let SuperClasses = [];
   let ParserMethod = "tryParseCoprocNumOperand";
 }
-
-def CoprocRegAsmOperand : AsmOperandClass {
-  let Name = "CoprocReg";
-  let SuperClasses = [];
-  let ParserMethod = "tryParseCoprocRegOperand";
-}
-
 def p_imm : Operand<i32> {
   let PrintMethod = "printPImmediate";
   let ParserMatchClass = CoprocNumAsmOperand;
 }
 
+def CoprocRegAsmOperand : AsmOperandClass {
+  let Name = "CoprocReg";
+  let ParserMethod = "tryParseCoprocRegOperand";
+}
 def c_imm : Operand<i32> {
   let PrintMethod = "printCImmediate";
   let ParserMatchClass = CoprocRegAsmOperand;
