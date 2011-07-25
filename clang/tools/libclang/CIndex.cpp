@@ -2840,7 +2840,7 @@ void clang_getInstantiationLocation(CXSourceLocation location,
   if (line)
     *line = SM.getInstantiationLineNumber(InstLoc);
   if (column)
-    *column = SM.getInstantiationColumnNumber(InstLoc);
+    *column = SM.getExpansionColumnNumber(InstLoc);
   if (offset)
     *offset = SM.getDecomposedLoc(InstLoc).second;
 }

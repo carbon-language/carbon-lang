@@ -107,14 +107,14 @@ void TextDiagnosticPrinter::HighlightRange(const CharSourceRange &R,
   // Compute the column number of the start.
   unsigned StartColNo = 0;
   if (StartLineNo == LineNo) {
-    StartColNo = SM.getInstantiationColumnNumber(Begin);
+    StartColNo = SM.getExpansionColumnNumber(Begin);
     if (StartColNo) --StartColNo;  // Zero base the col #.
   }
 
   // Compute the column number of the end.
   unsigned EndColNo = CaretLine.size();
   if (EndLineNo == LineNo) {
-    EndColNo = SM.getInstantiationColumnNumber(End);
+    EndColNo = SM.getExpansionColumnNumber(End);
     if (EndColNo) {
       --EndColNo;  // Zero base the col #.
 

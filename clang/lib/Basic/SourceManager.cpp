@@ -958,8 +958,8 @@ unsigned SourceManager::getSpellingColumnNumber(SourceLocation Loc,
   return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
 }
 
-unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc,
-                                                     bool *Invalid) const {
+unsigned SourceManager::getExpansionColumnNumber(SourceLocation Loc,
+                                                 bool *Invalid) const {
   if (isInvalid(Loc, Invalid)) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedExpansionLoc(Loc);
   return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);

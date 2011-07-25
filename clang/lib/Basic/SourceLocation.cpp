@@ -90,9 +90,9 @@ unsigned FullSourceLoc::getInstantiationLineNumber(bool *Invalid) const {
   return SrcMgr->getInstantiationLineNumber(*this, Invalid);
 }
 
-unsigned FullSourceLoc::getInstantiationColumnNumber(bool *Invalid) const {
+unsigned FullSourceLoc::getExpansionColumnNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getInstantiationColumnNumber(*this, Invalid);
+  return SrcMgr->getExpansionColumnNumber(*this, Invalid);
 }
 
 unsigned FullSourceLoc::getSpellingLineNumber(bool *Invalid) const {

@@ -419,7 +419,7 @@ bool PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
 
   // Print out space characters so that the first token on a line is
   // indented for easy reading.
-  unsigned ColNo = SM.getInstantiationColumnNumber(Tok.getLocation());
+  unsigned ColNo = SM.getExpansionColumnNumber(Tok.getLocation());
 
   // This hack prevents stuff like:
   // #define HASH #

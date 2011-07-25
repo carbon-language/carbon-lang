@@ -990,11 +990,11 @@ bool EdgeBuilder::containsLocation(const PathDiagnosticLocation &Container,
   return (ContainerBegLine <= ContaineeBegLine &&
           ContainerEndLine >= ContaineeEndLine &&
           (ContainerBegLine != ContaineeBegLine ||
-           SM.getInstantiationColumnNumber(ContainerRBeg) <=
-           SM.getInstantiationColumnNumber(ContaineeRBeg)) &&
+           SM.getExpansionColumnNumber(ContainerRBeg) <=
+           SM.getExpansionColumnNumber(ContaineeRBeg)) &&
           (ContainerEndLine != ContaineeEndLine ||
-           SM.getInstantiationColumnNumber(ContainerREnd) >=
-           SM.getInstantiationColumnNumber(ContainerREnd)));
+           SM.getExpansionColumnNumber(ContainerREnd) >=
+           SM.getExpansionColumnNumber(ContainerREnd)));
 }
 
 void EdgeBuilder::rawAddEdge(PathDiagnosticLocation NewLoc) {

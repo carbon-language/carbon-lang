@@ -828,7 +828,7 @@ public:
   unsigned getColumnNumber(FileID FID, unsigned FilePos, 
                            bool *Invalid = 0) const;
   unsigned getSpellingColumnNumber(SourceLocation Loc, bool *Invalid = 0) const;
-  unsigned getInstantiationColumnNumber(SourceLocation Loc,
+  unsigned getExpansionColumnNumber(SourceLocation Loc,
                                         bool *Invalid = 0) const;
   unsigned getPresumedColumnNumber(SourceLocation Loc, bool *Invalid = 0) const;
 

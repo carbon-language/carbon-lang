@@ -223,7 +223,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
          "<a href=\"#EndPath\">line "
       << (*D.rbegin()).getLocation().asLocation().getInstantiationLineNumber()
       << ", column "
-      << (*D.rbegin()).getLocation().asLocation().getInstantiationColumnNumber()
+      << (*D.rbegin()).getLocation().asLocation().getExpansionColumnNumber()
       << "</a></td></tr>\n"
          "<tr><td class=\"rowname\">Description:</td><td>"
       << D.getDescription() << "</td></tr>\n";
@@ -563,7 +563,7 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, FileID BugFileID,
     return;
 
   // Compute the column number of the end.
-  unsigned EndColNo = SM.getInstantiationColumnNumber(InstantiationEnd);
+  unsigned EndColNo = SM.getExpansionColumnNumber(InstantiationEnd);
   unsigned OldEndColNo = EndColNo;
 
   if (EndColNo) {

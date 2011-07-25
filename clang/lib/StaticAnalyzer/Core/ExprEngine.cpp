@@ -3101,7 +3101,7 @@ struct DOTGraphTraits<ExplodedNode*> :
             Out << "\\lline="
               << GraphPrintSourceManager->getInstantiationLineNumber(SLoc)
               << " col="
-              << GraphPrintSourceManager->getInstantiationColumnNumber(SLoc)
+              << GraphPrintSourceManager->getExpansionColumnNumber(SLoc)
               << "\\l";
           }
 
@@ -3154,7 +3154,7 @@ struct DOTGraphTraits<ExplodedNode*> :
             Out << "\\lline="
               << GraphPrintSourceManager->getInstantiationLineNumber(SLoc)
               << " col="
-              << GraphPrintSourceManager->getInstantiationColumnNumber(SLoc);
+              << GraphPrintSourceManager->getExpansionColumnNumber(SLoc);
           }
 
           if (isa<SwitchStmt>(T)) {
