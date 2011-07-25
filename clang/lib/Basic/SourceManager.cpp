@@ -783,11 +783,11 @@ FileID SourceManager::getFileIDLoaded(unsigned SLocOffset) const {
 }
 
 SourceLocation SourceManager::
-getInstantiationLocSlowCase(SourceLocation Loc) const {
+getExpansionLocSlowCase(SourceLocation Loc) const {
   do {
     // Note: If Loc indicates an offset into a token that came from a macro
     // expansion (e.g. the 5th character of the token) we do not want to add
-    // this offset when going to the instantiation location.  The instatiation
+    // this offset when going to the instantiation location.  The expansion
     // location is the macro invocation, which the offset has nothing to do
     // with.  This is unlike when we get the spelling loc, because the offset
     // directly correspond to the token whose spelling we're inspecting.

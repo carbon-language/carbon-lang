@@ -729,7 +729,7 @@ public:
     // Handle the non-mapped case inline, defer to out of line code to handle
     // expansions.
     if (Loc.isFileID()) return Loc;
-    return getInstantiationLocSlowCase(Loc);
+    return getExpansionLocSlowCase(Loc);
   }
 
   /// getImmediateExpansionRange - Loc is required to be an expansion location.
@@ -1130,7 +1130,7 @@ private:
   FileID getFileIDLocal(unsigned SLocOffset) const;
   FileID getFileIDLoaded(unsigned SLocOffset) const;
 
-  SourceLocation getInstantiationLocSlowCase(SourceLocation Loc) const;
+  SourceLocation getExpansionLocSlowCase(SourceLocation Loc) const;
   SourceLocation getSpellingLocSlowCase(SourceLocation Loc) const;
 
   std::pair<FileID, unsigned>
