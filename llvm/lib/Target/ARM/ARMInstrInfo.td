@@ -419,15 +419,8 @@ def shift_imm : Operand<i32> {
   let ParserMatchClass = ShifterAsmOperand;
 }
 
-def ShiftedRegAsmOperand : AsmOperandClass {
-  let Name = "ShiftedReg";
-}
-
-def ShiftedImmAsmOperand : AsmOperandClass {
-  let Name = "ShiftedImm";
-}
-
 // shifter_operand operands: so_reg_reg, so_reg_imm, and so_imm.
+def ShiftedRegAsmOperand : AsmOperandClass { let Name = "ShiftedReg"; }
 def so_reg_reg : Operand<i32>,  // reg reg imm
                  ComplexPattern<i32, 3, "SelectRegShifterOperand",
                                 [shl, srl, sra, rotr]> {
@@ -437,6 +430,7 @@ def so_reg_reg : Operand<i32>,  // reg reg imm
   let MIOperandInfo = (ops GPR, GPR, shift_imm);
 }
 
+def ShiftedImmAsmOperand : AsmOperandClass { let Name = "ShiftedImm"; }
 def so_reg_imm : Operand<i32>, // reg imm
                  ComplexPattern<i32, 2, "SelectImmShifterOperand",
                                 [shl, srl, sra, rotr]> {
