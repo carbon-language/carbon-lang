@@ -322,7 +322,7 @@ static SourceLocation getImmediateMacroCallerLoc(const SourceManager &SM,
 
   // Otherwise, the caller of the macro is located where this macro is
   // expanded (while the spelling is part of the macro definition).
-  return SM.getImmediateInstantiationRange(Loc).first;
+  return SM.getImmediateExpansionRange(Loc).first;
 }
 
 /// Gets the location of the immediate macro callee, one level down the stack
@@ -335,7 +335,7 @@ static SourceLocation getImmediateMacroCalleeLoc(const SourceManager &SM,
   // expansion location points to the unexpanded paramater reference within
   // the macro definition (or callee).
   if (SM.isMacroArgInstantiation(Loc))
-    return SM.getImmediateInstantiationRange(Loc).first;
+    return SM.getImmediateExpansionRange(Loc).first;
 
   // Otherwise, the callee of the macro is located where this location was
   // spelled inside the macro definition.

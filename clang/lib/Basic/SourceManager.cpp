@@ -857,10 +857,10 @@ SourceLocation SourceManager::getImmediateSpellingLoc(SourceLocation Loc) const{
 }
 
 
-/// getImmediateInstantiationRange - Loc is required to be an instantiation
+/// getImmediateExpansionRange - Loc is required to be an instantiation
 /// location.  Return the start/end of the instantiation information.
 std::pair<SourceLocation,SourceLocation>
-SourceManager::getImmediateInstantiationRange(SourceLocation Loc) const {
+SourceManager::getImmediateExpansionRange(SourceLocation Loc) const {
   assert(Loc.isMacroID() && "Not an instantiation loc!");
   const InstantiationInfo &II = getSLocEntry(getFileID(Loc)).getInstantiation();
   return II.getInstantiationLocRange();
@@ -873,14 +873,14 @@ SourceManager::getExpansionRange(SourceLocation Loc) const {
   if (Loc.isFileID()) return std::make_pair(Loc, Loc);
 
   std::pair<SourceLocation,SourceLocation> Res =
-    getImmediateInstantiationRange(Loc);
+    getImmediateExpansionRange(Loc);
 
   // Fully resolve the start and end locations to their ultimate instantiation
   // points.
   while (!Res.first.isFileID())
-    Res.first = getImmediateInstantiationRange(Res.first).first;
+    Res.first = getImmediateExpansionRange(Res.first).first;
   while (!Res.second.isFileID())
-    Res.second = getImmediateInstantiationRange(Res.second).second;
+    Res.second = getImmediateExpansionRange(Res.second).second;
   return Res;
 }
 

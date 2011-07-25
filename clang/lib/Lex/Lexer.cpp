@@ -912,7 +912,7 @@ static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
   // Figure out the expansion loc range, which is the range covered by the
   // original _Pragma(...) sequence.
   std::pair<SourceLocation,SourceLocation> II =
-    SM.getImmediateInstantiationRange(FileLoc);
+    SM.getImmediateExpansionRange(FileLoc);
 
   return SM.createInstantiationLoc(SpellingLoc, II.first, II.second, TokLen);
 }

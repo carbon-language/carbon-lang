@@ -732,10 +732,10 @@ public:
     return getInstantiationLocSlowCase(Loc);
   }
 
-  /// getImmediateInstantiationRange - Loc is required to be an instantiation
-  /// location.  Return the start/end of the instantiation information.
+  /// getImmediateExpansionRange - Loc is required to be an expansion location.
+  /// Return the start/end of the expansion information.
   std::pair<SourceLocation,SourceLocation>
-  getImmediateInstantiationRange(SourceLocation Loc) const;
+  getImmediateExpansionRange(SourceLocation Loc) const;
 
   /// getExpansionRange - Given a SourceLocation object, return the range of
   /// tokens covered by the expansion the ultimate file.
