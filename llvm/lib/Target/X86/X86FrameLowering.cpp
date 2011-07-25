@@ -34,6 +34,12 @@ using namespace llvm;
 // FIXME: completely move here.
 extern cl::opt<bool> ForceStackAlign;
 
+// FIXME: Remove once linker support is available.
+static cl::opt<bool>
+GenerateCompactUnwind("gen-compact-unwind",
+                      cl::desc("Generate compact unwind encoding"),
+                      cl::Hidden);
+
 bool X86FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
@@ -897,7 +903,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   }
 
   // Darwin 10.7 and greater has support for compact unwind encoding.
-  if (false && // FIXME: Enable once linker support is available.
+  if (GenerateCompactUnwind &&
       STI.isTargetDarwin() && !STI.getTargetTriple().isMacOSXVersionLT(10, 6))
     MMI.setCompactUnwindEncoding(getCompactUnwindEncoding(MF));
 }
