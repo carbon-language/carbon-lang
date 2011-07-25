@@ -263,7 +263,7 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
             break;
         }
 
-        // construct LTModule, hand over ownership of module and target
+        // construct LTOModule, hand over ownership of module and target
         SubtargetFeatures Features;
         Features.getDefaultSubtargetFeatures(llvm::Triple(Triple));
         std::string FeatureStr = Features.getString();
