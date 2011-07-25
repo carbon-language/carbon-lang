@@ -3937,7 +3937,8 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
   QualType T = NewVD->getType();
 
   if (T->isObjCObjectType()) {
-    Diag(NewVD->getLocation(), diag::err_statically_allocated_object);
+    Diag(NewVD->getLocation(), diag::err_statically_allocated_object)
+      << FixItHint::CreateInsertion(NewVD->getLocation(), "*");
     return NewVD->setInvalidDecl();
   }
 
