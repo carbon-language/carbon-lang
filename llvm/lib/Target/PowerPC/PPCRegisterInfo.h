@@ -33,10 +33,6 @@ class PPCRegisterInfo : public PPCGenRegisterInfo {
 public:
   PPCRegisterInfo(const PPCSubtarget &SubTarget, const TargetInstrInfo &tii);
   
-  /// getRegisterNumbering - Given the enum value for some register, e.g.
-  /// PPC::F14, return the number that it corresponds to (e.g. 14).
-  static unsigned getRegisterNumbering(unsigned RegEnum);
-
   /// getPointerRegClass - Return the register class to use to hold pointers.
   /// This is used for addressing modes.
   virtual const TargetRegisterClass *getPointerRegClass(unsigned Kind=0) const;  

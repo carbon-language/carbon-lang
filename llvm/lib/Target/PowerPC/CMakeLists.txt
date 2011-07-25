@@ -10,7 +10,6 @@ tablegen(PPCGenCallingConv.inc -gen-callingconv)
 tablegen(PPCGenSubtargetInfo.inc -gen-subtarget)
 
 add_llvm_target(PowerPCCodeGen
-  PPCAsmBackend.cpp
   PPCAsmPrinter.cpp
   PPCBranchSelector.cpp
   PPCCodeEmitter.cpp
@@ -20,7 +19,6 @@ add_llvm_target(PowerPCCodeGen
   PPCISelLowering.cpp
   PPCFrameLowering.cpp
   PPCJITInfo.cpp
-  PPCMCCodeEmitter.cpp
   PPCMCInstLower.cpp
   PPCPredicates.cpp
   PPCRegisterInfo.cpp

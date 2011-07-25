@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/TargetAsmBackend.h"
-#include "PPC.h"
-#include "PPCFixupKinds.h"
+#include "MCTargetDesc/PPCMCTargetDesc.h"
+#include "MCTargetDesc/PPCFixupKinds.h"
 #include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCObjectWriter.h"

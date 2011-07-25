@@ -16,6 +16,7 @@
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Target/TargetRegistry.h"
 
@@ -87,6 +88,19 @@ static MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
+// This is duplicated code. Refactor this.
+static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
+                                    MCContext &Ctx, TargetAsmBackend &TAB,
+                                    raw_ostream &OS,
+                                    MCCodeEmitter *Emitter,
+                                    bool RelaxAll,
+                                    bool NoExecStack) {
+  if (Triple(TT).isOSDarwin())
+    return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
+
+  return NULL;
+}
+
 extern "C" void LLVMInitializePowerPCTargetMC() {
   // Register the MC asm info.
   RegisterMCAsmInfoFn C(ThePPC32Target, createPPCMCAsmInfo);
@@ -109,4 +123,16 @@ extern "C" void LLVMInitializePowerPCTargetMC() {
                                           createPPCMCSubtargetInfo);
   TargetRegistry::RegisterMCSubtargetInfo(ThePPC64Target,
                                           createPPCMCSubtargetInfo);
+
+  // Register the MC Code Emitter
+  TargetRegistry::RegisterCodeEmitter(ThePPC32Target, createPPCMCCodeEmitter);
+  TargetRegistry::RegisterCodeEmitter(ThePPC64Target, createPPCMCCodeEmitter);
+  
+    // Register the asm backend.
+  TargetRegistry::RegisterAsmBackend(ThePPC32Target, createPPCAsmBackend);
+  TargetRegistry::RegisterAsmBackend(ThePPC64Target, createPPCAsmBackend);
+  
+  // Register the object streamer.
+  TargetRegistry::RegisterObjectStreamer(ThePPC32Target, createMCStreamer);
+  TargetRegistry::RegisterObjectStreamer(ThePPC64Target, createMCStreamer);
 }

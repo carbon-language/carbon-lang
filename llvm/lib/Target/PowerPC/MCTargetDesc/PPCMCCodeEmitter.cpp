@@ -12,9 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mccodeemitter"
-#include "PPC.h"
-#include "PPCRegisterInfo.h"
-#include "PPCFixupKinds.h"
+#include "MCTargetDesc/PPCBaseInfo.h"
+#include "MCTargetDesc/PPCFixupKinds.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/ADT/Statistic.h"
@@ -170,7 +169,7 @@ get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
   const MCOperand &MO = MI.getOperand(OpNo);
   assert((MI.getOpcode() == PPC::MTCRF || MI.getOpcode() == PPC::MFOCRF) &&
          (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7));
-  return 0x80 >> PPCRegisterInfo::getRegisterNumbering(MO.getReg());
+  return 0x80 >> getPPCRegisterNumbering(MO.getReg());
 }
 
 
@@ -182,7 +181,7 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
     // The GPR operand should come through here though.
     assert((MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MFOCRF) ||
            MO.getReg() < PPC::CR0 || MO.getReg() > PPC::CR7);
-    return PPCRegisterInfo::getRegisterNumbering(MO.getReg());
+    return getPPCRegisterNumbering(MO.getReg());
   }
   
   assert(MO.isImm() &&

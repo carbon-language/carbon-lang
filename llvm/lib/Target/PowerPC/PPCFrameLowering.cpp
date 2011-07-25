@@ -109,14 +109,14 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
   for (MachineRegisterInfo::livein_iterator
        I = MF->getRegInfo().livein_begin(),
        E = MF->getRegInfo().livein_end(); I != E; ++I) {
-    unsigned RegNo = PPCRegisterInfo::getRegisterNumbering(I->first);
+    unsigned RegNo = getPPCRegisterNumbering(I->first);
     if (VRRegNo[RegNo] == I->first)        // If this really is a vector reg.
       UsedRegMask &= ~(1 << (31-RegNo));   // Doesn't need to be marked.
   }
   for (MachineRegisterInfo::liveout_iterator
        I = MF->getRegInfo().liveout_begin(),
        E = MF->getRegInfo().liveout_end(); I != E; ++I) {
-    unsigned RegNo = PPCRegisterInfo::getRegisterNumbering(*I);
+    unsigned RegNo = getPPCRegisterNumbering(*I);
     if (VRRegNo[RegNo] == *I)              // If this really is a vector reg.
       UsedRegMask &= ~(1 << (31-RegNo));   // Doesn't need to be marked.
   }
@@ -878,7 +878,7 @@ void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF)
       FFI->setObjectOffset(FI, LowerBound + FFI->getObjectOffset(FI));
     }
 
-    LowerBound -= (31 - PPCRegisterInfo::getRegisterNumbering(MinFPR) + 1) * 8;
+    LowerBound -= (31 - getPPCRegisterNumbering(MinFPR) + 1) * 8;
   }
 
   // Check whether the frame pointer register is allocated. If so, make sure it
@@ -912,8 +912,8 @@ void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF)
     }
 
     unsigned MinReg =
-      std::min<unsigned>(PPCRegisterInfo::getRegisterNumbering(MinGPR),
-                         PPCRegisterInfo::getRegisterNumbering(MinG8R));
+      std::min<unsigned>(getPPCRegisterNumbering(MinGPR),
+                         getPPCRegisterNumbering(MinG8R));
 
     if (Subtarget.isPPC64()) {
       LowerBound -= (31 - MinReg + 1) * 8;

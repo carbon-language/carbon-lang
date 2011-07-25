@@ -15,6 +15,7 @@
 #ifndef LLVM_TARGET_POWERPC_H
 #define LLVM_TARGET_POWERPC_H
 
+#include "MCTargetDesc/PPCBaseInfo.h"
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include <string>
 
@@ -41,11 +42,6 @@ namespace llvm {
   FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
   FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
                                             JITCodeEmitter &MCE);
-  MCCodeEmitter *createPPCMCCodeEmitter(const MCInstrInfo &MCII,
-                                        const MCSubtargetInfo &STI,
-                                        MCContext &Ctx);
-  TargetAsmBackend *createPPCAsmBackend(const Target &, const std::string &);
-  
   void LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                     AsmPrinter &AP, bool isDarwin);
   
