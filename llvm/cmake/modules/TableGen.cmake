@@ -44,3 +44,24 @@ macro(tablegen ofn)
   set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${ofn} 
     PROPERTIES GENERATED 1)
 endmacro(tablegen)
+
+
+function(create_tablegenning_custom_target target)
+  # Creates the global target that runs the file-level dependencies
+  # for tablegenning.
+  if( TABLEGEN_OUTPUT )
+    add_custom_target(${target}Table_gen
+      DEPENDS ${TABLEGEN_OUTPUT})
+    add_dependencies(${target}Table_gen ${LLVM_COMMON_DEPENDS})
+  endif( TABLEGEN_OUTPUT )
+endfunction()
+
+function(add_tablegenning_dependency target)
+  # Makes the tablegenning step created with
+  # create_tablegenning_custom_target dependent on `target'.
+  if ( TABLEGEN_OUTPUT )
+    add_dependencies(${target} ${target}Table_gen)
+    set_target_properties(${target}Table_gen PROPERTIES FOLDER "Tablegenning")
+  endif (TABLEGEN_OUTPUT)
+endfunction()
+

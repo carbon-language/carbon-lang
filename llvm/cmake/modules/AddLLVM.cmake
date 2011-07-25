@@ -2,6 +2,7 @@ include(LLVMProcessSources)
 include(LLVM-Config)
 
 macro(add_llvm_library name)
+  create_tablegenning_custom_target( ${name} )
   llvm_process_sources( ALL_FILES ${ARGN} )
   add_library( ${name} ${ALL_FILES} )
   set_property( GLOBAL APPEND PROPERTY LLVM_LIBS ${name} )
@@ -32,6 +33,7 @@ macro(add_llvm_library name)
     add_dependencies(${name} ${CURRENT_LLVM_TARGET})
   endif()
   set_target_properties(${name} PROPERTIES FOLDER "Libraries")
+  add_tablegenning_dependency( ${name} )
 endmacro(add_llvm_library name)
 
 
@@ -75,6 +77,7 @@ endmacro(add_llvm_loadable_module name)
 
 
 macro(add_llvm_executable name)
+  create_tablegenning_custom_target( ${name} )
   llvm_process_sources( ALL_FILES ${ARGN} )
   if( EXCLUDE_FROM_ALL )
     add_executable(${name} EXCLUDE_FROM_ALL ${ALL_FILES})
@@ -88,6 +91,7 @@ macro(add_llvm_executable name)
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
   link_system_libs( ${name} )
+  add_tablegenning_dependency( ${name} )
 endmacro(add_llvm_executable name)
 
 
@@ -124,16 +128,7 @@ endmacro(add_llvm_utility name)
 
 
 macro(add_llvm_target target_name)
-  if( TABLEGEN_OUTPUT )
-    add_custom_target(${target_name}Table_gen
-      DEPENDS ${TABLEGEN_OUTPUT})
-    add_dependencies(${target_name}Table_gen ${LLVM_COMMON_DEPENDS})
-  endif( TABLEGEN_OUTPUT )
   include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
   add_llvm_library(LLVM${target_name} ${ARGN} ${TABLEGEN_OUTPUT})
-  if ( TABLEGEN_OUTPUT )
-    add_dependencies(LLVM${target_name} ${target_name}Table_gen)
-    set_target_properties(${target_name}Table_gen PROPERTIES FOLDER "Tablegenning")
-  endif (TABLEGEN_OUTPUT)
   set( CURRENT_LLVM_TARGET LLVM${target_name} )
 endmacro(add_llvm_target)
