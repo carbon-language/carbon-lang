@@ -317,8 +317,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
       Idx[1] = ConstantInt::get(Type::getInt32Ty(header->getContext()), i);
       TerminatorInst *TI = newFunction->begin()->getTerminator();
       GetElementPtrInst *GEP = 
-        GetElementPtrInst::Create(AI, Idx, Idx+2, 
-                                  "gep_" + inputs[i]->getName(), TI);
+        GetElementPtrInst::Create(AI, Idx, "gep_" + inputs[i]->getName(), TI);
       RewriteVal = new LoadInst(GEP, "loadgep_" + inputs[i]->getName(), TI);
     } else
       RewriteVal = AI++;
@@ -420,7 +419,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       Idx[0] = Constant::getNullValue(Type::getInt32Ty(Context));
       Idx[1] = ConstantInt::get(Type::getInt32Ty(Context), i);
       GetElementPtrInst *GEP =
-        GetElementPtrInst::Create(Struct, Idx, Idx + 2,
+        GetElementPtrInst::Create(Struct, Idx,
                                   "gep_" + StructValues[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
       StoreInst *SI = new StoreInst(StructValues[i], GEP);
@@ -446,7 +445,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       Idx[0] = Constant::getNullValue(Type::getInt32Ty(Context));
       Idx[1] = ConstantInt::get(Type::getInt32Ty(Context), FirstOut + i);
       GetElementPtrInst *GEP
-        = GetElementPtrInst::Create(Struct, Idx, Idx + 2,
+        = GetElementPtrInst::Create(Struct, Idx,
                                     "gep_reload_" + outputs[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
       Output = GEP;
@@ -561,7 +560,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                 Idx[1] = ConstantInt::get(Type::getInt32Ty(Context),
                                           FirstOut+out);
                 GetElementPtrInst *GEP =
-                  GetElementPtrInst::Create(OAI, Idx, Idx + 2,
+                  GetElementPtrInst::Create(OAI, Idx,
                                             "gep_" + outputs[out]->getName(),
                                             NTRet);
                 new StoreInst(outputs[out], GEP, NTRet);

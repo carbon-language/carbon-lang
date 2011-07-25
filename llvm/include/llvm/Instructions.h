@@ -285,149 +285,51 @@ static inline Type *checkGEPType(Type *Ty) {
 ///
 class GetElementPtrInst : public Instruction {
   GetElementPtrInst(const GetElementPtrInst &GEPI);
-  void init(Value *Ptr, Value* const *Idx, unsigned NumIdx,
-            const Twine &NameStr);
-  void init(Value *Ptr, Value *Idx, const Twine &NameStr);
-
-  template<typename RandomAccessIterator>
-  void init(Value *Ptr,
-            RandomAccessIterator IdxBegin,
-            RandomAccessIterator IdxEnd,
-            const Twine &NameStr,
-            // This argument ensures that we have an iterator we can
-            // do arithmetic on in constant time
-            std::random_access_iterator_tag) {
-    unsigned NumIdx = static_cast<unsigned>(std::distance(IdxBegin, IdxEnd));
-
-    if (NumIdx > 0) {
-      // This requires that the iterator points to contiguous memory.
-      init(Ptr, &*IdxBegin, NumIdx, NameStr); // FIXME: for the general case
-                                     // we have to build an array here
-    }
-    else {
-      init(Ptr, 0, NumIdx, NameStr);
-    }
-  }
-
-  /// getIndexedType - Returns the type of the element that would be loaded with
-  /// a load instruction with the specified parameters.
-  ///
-  /// Null is returned if the indices are invalid for the specified
-  /// pointer type.
-  ///
-  template<typename RandomAccessIterator>
-  static Type *getIndexedType(Type *Ptr,
-                              RandomAccessIterator IdxBegin,
-                              RandomAccessIterator IdxEnd,
-                              // This argument ensures that we
-                              // have an iterator we can do
-                              // arithmetic on in constant time
-                              std::random_access_iterator_tag) {
-    unsigned NumIdx = static_cast<unsigned>(std::distance(IdxBegin, IdxEnd));
-
-    if (NumIdx > 0)
-      // This requires that the iterator points to contiguous memory.
-      return getIndexedType(Ptr, &*IdxBegin, NumIdx);
-    else
-      return getIndexedType(Ptr, (Value *const*)0, NumIdx);
-  }
+  void init(Value *Ptr, ArrayRef<Value *> IdxList, const Twine &NameStr);
 
   /// Constructors - Create a getelementptr instruction with a base pointer an
   /// list of indices. The first ctor can optionally insert before an existing
   /// instruction, the second appends the new instruction to the specified
   /// BasicBlock.
-  template<typename RandomAccessIterator>
-  inline GetElementPtrInst(Value *Ptr, RandomAccessIterator IdxBegin,
-                           RandomAccessIterator IdxEnd,
-                           unsigned Values,
-                           const Twine &NameStr,
+  inline GetElementPtrInst(Value *Ptr, ArrayRef<Value *> IdxList,
+                           unsigned Values, const Twine &NameStr,
                            Instruction *InsertBefore);
-  template<typename RandomAccessIterator>
-  inline GetElementPtrInst(Value *Ptr,
-                           RandomAccessIterator IdxBegin,
-                           RandomAccessIterator IdxEnd,
-                           unsigned Values,
-                           const Twine &NameStr, BasicBlock *InsertAtEnd);
-
-  /// Constructors - These two constructors are convenience methods because one
-  /// and two index getelementptr instructions are so common.
-  GetElementPtrInst(Value *Ptr, Value *Idx, const Twine &NameStr = "",
-                    Instruction *InsertBefore = 0);
-  GetElementPtrInst(Value *Ptr, Value *Idx,
-                    const Twine &NameStr, BasicBlock *InsertAtEnd);
+  inline GetElementPtrInst(Value *Ptr, ArrayRef<Value *> IdxList,
+                           unsigned Values, const Twine &NameStr,
+                           BasicBlock *InsertAtEnd);
 protected:
   virtual GetElementPtrInst *clone_impl() const;
 public:
-  template<typename RandomAccessIterator>
-  static GetElementPtrInst *Create(Value *Ptr, RandomAccessIterator IdxBegin,
-                                   RandomAccessIterator IdxEnd,
+  static GetElementPtrInst *Create(Value *Ptr, ArrayRef<Value *> IdxList,
                                    const Twine &NameStr = "",
                                    Instruction *InsertBefore = 0) {
-    typename std::iterator_traits<RandomAccessIterator>::difference_type
-      Values = 1 + std::distance(IdxBegin, IdxEnd);
+    unsigned Values = 1 + unsigned(IdxList.size());
     return new(Values)
-      GetElementPtrInst(Ptr, IdxBegin, IdxEnd, Values, NameStr, InsertBefore);
+      GetElementPtrInst(Ptr, IdxList, Values, NameStr, InsertBefore);
   }
-  template<typename RandomAccessIterator>
-  static GetElementPtrInst *Create(Value *Ptr,
-                                   RandomAccessIterator IdxBegin,
-                                   RandomAccessIterator IdxEnd,
+  static GetElementPtrInst *Create(Value *Ptr, ArrayRef<Value *> IdxList,
                                    const Twine &NameStr,
                                    BasicBlock *InsertAtEnd) {
-    typename std::iterator_traits<RandomAccessIterator>::difference_type
-      Values = 1 + std::distance(IdxBegin, IdxEnd);
+    unsigned Values = 1 + unsigned(IdxList.size());
     return new(Values)
-      GetElementPtrInst(Ptr, IdxBegin, IdxEnd, Values, NameStr, InsertAtEnd);
-  }
-
-  /// Constructors - These two creators are convenience methods because one
-  /// index getelementptr instructions are so common.
-  static GetElementPtrInst *Create(Value *Ptr, Value *Idx,
-                                   const Twine &NameStr = "",
-                                   Instruction *InsertBefore = 0) {
-    return new(2) GetElementPtrInst(Ptr, Idx, NameStr, InsertBefore);
-  }
-  static GetElementPtrInst *Create(Value *Ptr, Value *Idx,
-                                   const Twine &NameStr,
-                                   BasicBlock *InsertAtEnd) {
-    return new(2) GetElementPtrInst(Ptr, Idx, NameStr, InsertAtEnd);
+      GetElementPtrInst(Ptr, IdxList, Values, NameStr, InsertAtEnd);
   }
 
   /// Create an "inbounds" getelementptr. See the documentation for the
   /// "inbounds" flag in LangRef.html for details.
-  template<typename RandomAccessIterator>
   static GetElementPtrInst *CreateInBounds(Value *Ptr,
-                                           RandomAccessIterator IdxBegin,
-                                           RandomAccessIterator IdxEnd,
+                                           ArrayRef<Value *> IdxList,
                                            const Twine &NameStr = "",
                                            Instruction *InsertBefore = 0) {
-    GetElementPtrInst *GEP = Create(Ptr, IdxBegin, IdxEnd,
-                                    NameStr, InsertBefore);
+    GetElementPtrInst *GEP = Create(Ptr, IdxList, NameStr, InsertBefore);
     GEP->setIsInBounds(true);
     return GEP;
   }
-  template<typename RandomAccessIterator>
   static GetElementPtrInst *CreateInBounds(Value *Ptr,
-                                           RandomAccessIterator IdxBegin,
-                                           RandomAccessIterator IdxEnd,
+                                           ArrayRef<Value *> IdxList,
                                            const Twine &NameStr,
                                            BasicBlock *InsertAtEnd) {
-    GetElementPtrInst *GEP = Create(Ptr, IdxBegin, IdxEnd,
-                                    NameStr, InsertAtEnd);
-    GEP->setIsInBounds(true);
-    return GEP;
-  }
-  static GetElementPtrInst *CreateInBounds(Value *Ptr, Value *Idx,
-                                           const Twine &NameStr = "",
-                                           Instruction *InsertBefore = 0) {
-    GetElementPtrInst *GEP = Create(Ptr, Idx, NameStr, InsertBefore);
-    GEP->setIsInBounds(true);
-    return GEP;
-  }
-  static GetElementPtrInst *CreateInBounds(Value *Ptr, Value *Idx,
-                                           const Twine &NameStr,
-                                           BasicBlock *InsertAtEnd) {
-    GetElementPtrInst *GEP = Create(Ptr, Idx, NameStr, InsertAtEnd);
+    GetElementPtrInst *GEP = Create(Ptr, IdxList, NameStr, InsertAtEnd);
     GEP->setIsInBounds(true);
     return GEP;
   }
@@ -446,23 +348,9 @@ public:
   /// Null is returned if the indices are invalid for the specified
   /// pointer type.
   ///
-  template<typename RandomAccessIterator>
-  static Type *getIndexedType(Type *Ptr, RandomAccessIterator IdxBegin,
-                              RandomAccessIterator IdxEnd) {
-    return getIndexedType(Ptr, IdxBegin, IdxEnd,
-                          typename std::iterator_traits<RandomAccessIterator>::
-                          iterator_category());
-  }
-
-  // FIXME: Use ArrayRef
-  static Type *getIndexedType(Type *Ptr,
-                              Value* const *Idx, unsigned NumIdx);
-  static Type *getIndexedType(Type *Ptr,
-                              Constant* const *Idx, unsigned NumIdx);
-
-  static Type *getIndexedType(Type *Ptr,
-                              uint64_t const *Idx, unsigned NumIdx);
-  static Type *getIndexedType(Type *Ptr, Value *Idx);
+  static Type *getIndexedType(Type *Ptr, ArrayRef<Value *> IdxList);
+  static Type *getIndexedType(Type *Ptr, ArrayRef<Constant *> IdxList);
+  static Type *getIndexedType(Type *Ptr, ArrayRef<uint64_t> IdxList);
 
   inline op_iterator       idx_begin()       { return op_begin()+1; }
   inline const_op_iterator idx_begin() const { return op_begin()+1; }
@@ -530,43 +418,33 @@ struct OperandTraits<GetElementPtrInst> :
   public VariadicOperandTraits<GetElementPtrInst, 1> {
 };
 
-template<typename RandomAccessIterator>
 GetElementPtrInst::GetElementPtrInst(Value *Ptr,
-                                     RandomAccessIterator IdxBegin,
-                                     RandomAccessIterator IdxEnd,
+                                     ArrayRef<Value *> IdxList,
                                      unsigned Values,
                                      const Twine &NameStr,
                                      Instruction *InsertBefore)
   : Instruction(PointerType::get(checkGEPType(
-                                   getIndexedType(Ptr->getType(),
-                                                  IdxBegin, IdxEnd)),
+                                   getIndexedType(Ptr->getType(), IdxList)),
                                  cast<PointerType>(Ptr->getType())
                                    ->getAddressSpace()),
                 GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this) - Values,
                 Values, InsertBefore) {
-  init(Ptr, IdxBegin, IdxEnd, NameStr,
-       typename std::iterator_traits<RandomAccessIterator>
-       ::iterator_category());
+  init(Ptr, IdxList, NameStr);
 }
-template<typename RandomAccessIterator>
 GetElementPtrInst::GetElementPtrInst(Value *Ptr,
-                                     RandomAccessIterator IdxBegin,
-                                     RandomAccessIterator IdxEnd,
+                                     ArrayRef<Value *> IdxList,
                                      unsigned Values,
                                      const Twine &NameStr,
                                      BasicBlock *InsertAtEnd)
   : Instruction(PointerType::get(checkGEPType(
-                                   getIndexedType(Ptr->getType(),
-                                                  IdxBegin, IdxEnd)),
+                                   getIndexedType(Ptr->getType(), IdxList)),
                                  cast<PointerType>(Ptr->getType())
                                    ->getAddressSpace()),
                 GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this) - Values,
                 Values, InsertAtEnd) {
-  init(Ptr, IdxBegin, IdxEnd, NameStr,
-       typename std::iterator_traits<RandomAccessIterator>
-       ::iterator_category());
+  init(Ptr, IdxList, NameStr);
 }
 
 

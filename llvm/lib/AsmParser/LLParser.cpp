@@ -2274,9 +2274,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
         return Error(ID.Loc, "getelementptr requires pointer operand");
 
       ArrayRef<Constant *> Indices(Elts.begin() + 1, Elts.end());
-      if (!GetElementPtrInst::getIndexedType(Elts[0]->getType(),
-                                             (Value**)(Elts.data() + 1),
-                                             Elts.size() - 1))
+      if (!GetElementPtrInst::getIndexedType(Elts[0]->getType(), Indices))
         return Error(ID.Loc, "invalid indices for getelementptr");
       ID.ConstantVal = ConstantExpr::getGetElementPtr(Elts[0], Indices,
                                                       InBounds);
@@ -3660,10 +3658,9 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
     Indices.push_back(Val);
   }
 
-  if (!GetElementPtrInst::getIndexedType(Ptr->getType(),
-                                         Indices.begin(), Indices.end()))
+  if (!GetElementPtrInst::getIndexedType(Ptr->getType(), Indices))
     return Error(Loc, "invalid getelementptr indices");
-  Inst = GetElementPtrInst::Create(Ptr, Indices.begin(), Indices.end());
+  Inst = GetElementPtrInst::Create(Ptr, Indices);
   if (InBounds)
     cast<GetElementPtrInst>(Inst)->setIsInBounds(true);
   return AteExtraComma ? InstExtraComma : InstNormal;

@@ -1029,8 +1029,7 @@ void PathProfiler::insertCounterIncrement(Value* incValue,
     gepIndices[1] = incValue;
 
     GetElementPtrInst* pcPointer =
-      GetElementPtrInst::Create(dag->getCounterArray(),
-                                gepIndices.begin(), gepIndices.end(),
+      GetElementPtrInst::Create(dag->getCounterArray(), gepIndices,
                                 "counterInc", insertPoint);
 
     // Load from the array - call it oldPC

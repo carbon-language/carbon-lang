@@ -2086,8 +2086,7 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
   }
   Instruction *Val = NewElts[Idx];
   if (NewArgs.size() > 1) {
-    Val = GetElementPtrInst::CreateInBounds(Val, NewArgs.begin(),
-                                            NewArgs.end(), "", GEPI);
+    Val = GetElementPtrInst::CreateInBounds(Val, NewArgs, "", GEPI);
     Val->takeName(GEPI);
   }
   if (Val->getType() != GEPI->getType())
@@ -2163,7 +2162,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
     if (OtherPtr) {
       Value *Idx[2] = { Zero,
                       ConstantInt::get(Type::getInt32Ty(MI->getContext()), i) };
-      OtherElt = GetElementPtrInst::CreateInBounds(OtherPtr, Idx, Idx + 2,
+      OtherElt = GetElementPtrInst::CreateInBounds(OtherPtr, Idx,
                                               OtherPtr->getName()+"."+Twine(i),
                                                    MI);
       uint64_t EltOffset;

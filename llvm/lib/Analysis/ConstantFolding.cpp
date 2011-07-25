@@ -547,8 +547,7 @@ static Constant *CastGEPIndices(ArrayRef<Constant *> Ops,
   for (unsigned i = 1, e = Ops.size(); i != e; ++i) {
     if ((i == 1 ||
          !isa<StructType>(GetElementPtrInst::getIndexedType(Ops[0]->getType(),
-                                                            Ops.data() + 1,
-                                                            i-1))) &&
+                                                        Ops.slice(1, i-1)))) &&
         Ops[i]->getType() != IntPtrTy) {
       Any = true;
       NewIdxs.push_back(ConstantExpr::getCast(CastInst::getCastOpcode(Ops[i],

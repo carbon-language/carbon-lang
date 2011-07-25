@@ -183,7 +183,7 @@ public:
   }
   Instruction *CreateGetElementPtr(Constant *C,
                                    ArrayRef<Value *> IdxList) const {
-    return GetElementPtrInst::Create(C, IdxList.begin(), IdxList.end());
+    return GetElementPtrInst::Create(C, IdxList);
   }
 
   Constant *CreateInBoundsGetElementPtr(Constant *C,
@@ -192,7 +192,7 @@ public:
   }
   Instruction *CreateInBoundsGetElementPtr(Constant *C,
                                            ArrayRef<Value *> IdxList) const {
-    return GetElementPtrInst::CreateInBounds(C, IdxList.begin(), IdxList.end());
+    return GetElementPtrInst::CreateInBounds(C, IdxList);
   }
 
   //===--------------------------------------------------------------------===//

@@ -58,8 +58,7 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
       Idx[0] = NullIdx;
       Idx[1] = NullIdx;
       Instruction *GEP =
-           GetElementPtrInst::CreateInBounds(New, Idx, Idx + 2,
-                                             New->getName()+".sub");
+           GetElementPtrInst::CreateInBounds(New, Idx, New->getName()+".sub");
       InsertNewInstBefore(GEP, *It);
 
       // Now make everything use the getelementptr instead of the original

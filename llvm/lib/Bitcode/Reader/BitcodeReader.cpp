@@ -2181,7 +2181,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         GEPIdx.push_back(Op);
       }
 
-      I = GetElementPtrInst::Create(BasePtr, GEPIdx.begin(), GEPIdx.end());
+      I = GetElementPtrInst::Create(BasePtr, GEPIdx);
       InstructionList.push_back(I);
       if (BitCode == bitc::FUNC_CODE_INST_INBOUNDS_GEP)
         cast<GetElementPtrInst>(I)->setIsInBounds(true);

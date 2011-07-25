@@ -2230,8 +2230,7 @@ Value *llvm::SimplifyGEPInst(ArrayRef<Value *> Ops,
 
   if (isa<UndefValue>(Ops[0])) {
     // Compute the (pointer) type returned by the GEP instruction.
-    Type *LastType = GetElementPtrInst::getIndexedType(PtrTy, Ops.data() + 1,
-                                                       Ops.size() - 1);
+    Type *LastType = GetElementPtrInst::getIndexedType(PtrTy, Ops.slice(1));
     Type *GEPTy = PointerType::get(LastType, PtrTy->getAddressSpace());
     return UndefValue::get(GEPTy);
   }

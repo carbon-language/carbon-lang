@@ -455,8 +455,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
     Value *Idx[] = { Constant::getNullValue(Type::getInt32Ty(F.getContext())),
                      ConstantInt::get(Type::getInt32Ty(F.getContext()), 1) };
-    OldJmpBufPtr = GetElementPtrInst::Create(JmpBuf, &Idx[0], &Idx[2],
-                                             "OldBuf",
+    OldJmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx, "OldBuf",
                                              EntryBB->getTerminator());
 
     // Copy the JBListHead to the alloca.
@@ -502,8 +501,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
                                                      "setjmp.cont");
 
     Idx[1] = ConstantInt::get(Type::getInt32Ty(F.getContext()), 0);
-    Value *JmpBufPtr = GetElementPtrInst::Create(JmpBuf, &Idx[0], &Idx[2],
-                                                 "TheJmpBuf",
+    Value *JmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx, "TheJmpBuf",
                                                  EntryBB->getTerminator());
     JmpBufPtr = new BitCastInst(JmpBufPtr,
                         Type::getInt8PtrTy(F.getContext()),
@@ -557,8 +555,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   // Get a pointer to the jmpbuf and longjmp.
   Value *Idx[] = { Constant::getNullValue(Type::getInt32Ty(F.getContext())),
                    ConstantInt::get(Type::getInt32Ty(F.getContext()), 0) };
-  Idx[0] = GetElementPtrInst::Create(BufPtr, &Idx[0], &Idx[2], "JmpBuf",
-                                     UnwindBlock);
+  Idx[0] = GetElementPtrInst::Create(BufPtr, Idx, "JmpBuf", UnwindBlock);
   Idx[0] = new BitCastInst(Idx[0],
              Type::getInt8PtrTy(F.getContext()),
                            "tmp", UnwindBlock);

@@ -851,10 +851,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
     if (!Indices.empty())
       return (GEP.isInBounds() && Src->isInBounds()) ?
-        GetElementPtrInst::CreateInBounds(Src->getOperand(0), Indices.begin(),
-                                          Indices.end(), GEP.getName()) :
-        GetElementPtrInst::Create(Src->getOperand(0), Indices.begin(),
-                                  Indices.end(), GEP.getName());
+        GetElementPtrInst::CreateInBounds(Src->getOperand(0), Indices,
+                                          GEP.getName()) :
+        GetElementPtrInst::Create(Src->getOperand(0), Indices, GEP.getName());
   }
 
   // Handle gep(bitcast x) and gep(gep x, 0, 0, 0).
@@ -883,8 +882,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           // -> GEP i8* X, ...
           SmallVector<Value*, 8> Idx(GEP.idx_begin()+1, GEP.idx_end());
           GetElementPtrInst *Res =
-            GetElementPtrInst::Create(StrippedPtr, Idx.begin(),
-                                      Idx.end(), GEP.getName());
+            GetElementPtrInst::Create(StrippedPtr, Idx, GEP.getName());
           Res->setIsInBounds(GEP.isInBounds());
           return Res;
         }
