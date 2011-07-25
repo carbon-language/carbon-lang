@@ -106,6 +106,18 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI) {
 /// branch instruction. However, if the trip count (and multiple) are not known,
 /// loop unrolling will mostly produce more code that is no faster.
 ///
+/// TripCount is generally defined as the number of times the loop header
+/// executes. UnrollLoop relaxes the definition to permit early exits: here
+/// TripCount is the iteration on which control exits LatchBlock if no early
+/// exits were taken. Note that UnrollLoop assumes that the loop counter test
+/// terminates LatchBlock in order to remove unnecesssary instances of the
+/// test. In other words, control may exit the loop prior to TripCount
+/// iterations via an early branch, but control may not exit the loop from the
+/// LatchBlock's terminator prior to TripCount iterations.
+///
+/// Similarly, TripMultiple divides the number of times that the LatchBlock may
+/// execute without exiting the loop.
+///
 /// The LoopInfo Analysis that is passed will be kept consistent.
 ///
 /// If a LoopPassManager is passed in, and the loop is fully removed, it will be
