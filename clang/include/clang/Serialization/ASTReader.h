@@ -387,7 +387,46 @@ public:
   /// directly loaded modules.
   SmallVector<Module *, 1> Loaders;
 };
-  
+
+/// \brief The manager for modules loaded by the ASTReader.
+class ModuleManager {
+  /// \brief The chain of AST files. The first entry is the one named by the
+  /// user, the last one is the one that doesn't depend on anything further.
+  SmallVector<Module*, 2> Chain;
+public:
+  typedef SmallVector<Module*, 2>::iterator ModuleIterator;
+  typedef SmallVector<Module*, 2>::const_iterator ModuleConstIterator;
+  typedef SmallVector<Module*, 2>::reverse_iterator ModuleReverseIterator;
+
+  ModuleIterator begin() { return Chain.begin(); }
+  ModuleIterator end() { return Chain.end(); }
+
+  ModuleConstIterator begin() const { return Chain.begin(); }
+  ModuleConstIterator end() const { return Chain.end(); }
+
+  ModuleReverseIterator rbegin() { return Chain.rbegin(); }
+  ModuleReverseIterator rend() { return Chain.rend(); }
+
+  const std::string &getPrimaryFileName() const { return Chain[0]->FileName; }
+
+  Module &getPrimaryModule() { return *Chain[0]; }
+  Module &getLastModule() { return *Chain.back(); }
+  Module &operator[](unsigned Index) const { return *Chain[Index]; }
+
+  unsigned size() const { return Chain.size(); }
+
+  Module &addModule(ModuleKind Type) {
+    Module *newModule = new Module(Type);
+    Chain.push_back(newModule);
+    return *newModule;
+  }
+
+  ~ModuleManager() {
+    for (unsigned i = 0, e = Chain.size(); i != e; ++i)
+      delete Chain[e - i - 1];
+  }
+};
+
 } // end namespace serialization
   
 /// \brief Reads an AST files chain containing the contents of a translation
@@ -425,7 +464,12 @@ public:
   
   typedef serialization::Module Module;
   typedef serialization::ModuleKind ModuleKind;
+  typedef serialization::ModuleManager ModuleManager;
   
+  typedef ModuleManager::ModuleIterator ModuleIterator;
+  typedef ModuleManager::ModuleConstIterator ModuleConstIterator;
+  typedef ModuleManager::ModuleReverseIterator ModuleReverseIterator;
+
 private:
   /// \brief The receiver of some callbacks invoked by ASTReader.
   llvm::OwningPtr<ASTReaderListener> Listener;
@@ -460,10 +504,8 @@ private:
   /// \brief The first module in source order.
   Module *FirstInSource;
 
-  /// \brief The chain of AST files. The first entry is the one named by the
-  /// user, the last one is the one that doesn't depend on anything further.
-  /// That is, the entry I was created with -include-pch I+1.
-  SmallVector<Module*, 2> Chain;
+  /// \brief The module manager which manages modules and their dependencies
+  ModuleManager ModuleMgr;
 
   /// \brief A map of global bit offsets to the module that stores entities
   /// at those bit offsets.
@@ -1040,7 +1082,9 @@ public:
   }
 
   /// \brief Retrieve the name of the named (primary) AST file
-  const std::string &getFileName() const { return Chain[0]->FileName; }
+  const std::string &getFileName() const {
+    return ModuleMgr.getPrimaryFileName();
+  }
 
   /// \brief Retrieve the name of the original source file name
   const std::string &getOriginalSourceFile() { return OriginalFileName; }
@@ -1096,8 +1140,10 @@ public:
   /// reader.
   unsigned getTotalNumPreprocessedEntities() const {
     unsigned Result = 0;
-    for (unsigned I = 0, N = Chain.size(); I != N; ++I)
-      Result += Chain[I]->NumPreallocatedPreprocessingEntities;
+    for (ModuleConstIterator I = ModuleMgr.begin(),
+        E = ModuleMgr.end(); I != E; ++I) {
+      Result += (*I)->NumPreallocatedPreprocessingEntities;
+    }
     
     return Result;
   }
