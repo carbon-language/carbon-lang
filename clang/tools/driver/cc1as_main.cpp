@@ -34,7 +34,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/TargetAsmBackend.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/TargetAsmParser.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
@@ -299,14 +299,14 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
     MCInstPrinter *IP =
       TheTarget->createMCInstPrinter(Opts.OutputAsmVariant, *MAI);
     MCCodeEmitter *CE = 0;
-    TargetAsmBackend *TAB = 0;
+    MCAsmBackend *MAB = 0;
     if (Opts.ShowEncoding) {
       CE = TheTarget->createCodeEmitter(*TM->getInstrInfo(), STI, Ctx);
-      TAB = TheTarget->createAsmBackend(Opts.Triple);
+      MAB = TheTarget->createMCAsmBackend(Opts.Triple);
     }
     Str.reset(TheTarget->createAsmStreamer(Ctx, *Out, /*asmverbose*/true,
                                            /*useLoc*/ true,
-                                           /*useCFI*/ true, IP, CE, TAB,
+                                           /*useCFI*/ true, IP, CE, MAB,
                                            Opts.ShowInst));
   } else if (Opts.OutputType == AssemblerInvocation::FT_Null) {
     Str.reset(createNullStreamer(Ctx));
@@ -315,8 +315,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
            "Invalid file type!");
     MCCodeEmitter *CE = TheTarget->createCodeEmitter(*TM->getInstrInfo(),
                                                      STI, Ctx);
-    TargetAsmBackend *TAB = TheTarget->createAsmBackend(Opts.Triple);
-    Str.reset(TheTarget->createObjectStreamer(Opts.Triple, Ctx, *TAB, *Out,
+    MCAsmBackend *MAB = TheTarget->createMCAsmBackend(Opts.Triple);
+    Str.reset(TheTarget->createObjectStreamer(Opts.Triple, Ctx, *MAB, *Out,
                                               CE, Opts.RelaxAll,
                                               Opts.NoExecStack));
     Str.get()->InitSections();
@@ -364,7 +364,6 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
   // Initialize targets and assembly printers/parsers.
   InitializeAllTargetInfos();
   InitializeAllTargetMCs();
-  InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
 
   // Construct our diagnostic client.
