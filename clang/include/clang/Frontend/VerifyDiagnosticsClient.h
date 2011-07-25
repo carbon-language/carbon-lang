@@ -70,6 +70,7 @@ public:
   Preprocessor *CurrentPreprocessor;
 
 private:
+  FileID FirstErrorFID; // FileID of first diagnostic
   void CheckDiagnostics();
 
 public:
