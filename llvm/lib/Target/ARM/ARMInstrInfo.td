@@ -543,8 +543,18 @@ def imm1_32_XFORM: SDNodeXForm<imm, [{
 def Imm1_32AsmOperand: AsmOperandClass { let Name = "Imm1_32"; }
 def imm1_32 : Operand<i32>, PatLeaf<(imm), [{ return Imm > 0 && Imm <= 32; }],
     imm1_32_XFORM> {
-  let PrintMethod = "printImm1_32Operand";
+  let PrintMethod = "printImmPlusOneOperand";
   let ParserMatchClass = Imm1_32AsmOperand;
+}
+
+def imm1_16_XFORM: SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant((int)N->getZExtValue() - 1, MVT::i32);
+}]>;
+def Imm1_16AsmOperand: AsmOperandClass { let Name = "Imm1_16"; }
+def imm1_16 : Operand<i32>, PatLeaf<(imm), [{ return Imm > 0 && Imm <= 16; }],
+    imm1_16_XFORM> {
+  let PrintMethod = "printImmPlusOneOperand";
+  let ParserMatchClass = Imm1_16AsmOperand;
 }
 
 // Define ARM specific addressing modes.
@@ -2709,7 +2719,7 @@ def SSAT : AI<(outs GPR:$Rd), (ins imm1_32:$sat_imm, GPR:$Rn, shift_imm:$sh),
   let Inst{3-0} = Rn;
 }
 
-def SSAT16 : AI<(outs GPR:$Rd), (ins imm1_32:$sat_imm, GPR:$Rn), SatFrm,
+def SSAT16 : AI<(outs GPR:$Rd), (ins imm1_16:$sat_imm, GPR:$Rn), SatFrm,
                 NoItinerary, "ssat16", "\t$Rd, $sat_imm, $Rn", []> {
   bits<4> Rd;
   bits<4> sat_imm;

@@ -200,3 +200,14 @@
 @ CHECK: error: shift amount must be an immediate
 @ CHECK:         ssat    r8, #1, r10, lsl #fred
 @ CHECK:                                   ^
+
+        @ Out of range immediates for SSAT16
+	ssat16	r2, #0, r7
+	ssat16	r3, #17, r5
+
+@ CHECK: error: invalid operand for instruction
+@ CHECK: 	ssat16	r2, #0, r7
+@ CHECK: 	      	    ^
+@ CHECK: error: invalid operand for instruction
+@ CHECK: 	ssat16	r3, #17, r5
+@ CHECK: 	      	    ^

@@ -1935,7 +1935,7 @@ def t2SSAT: T2SatI<
 }
 
 def t2SSAT16: T2SatI<
-                (outs rGPR:$Rd), (ins imm1_32:$sat_imm, rGPR:$Rn), NoItinerary,
+                (outs rGPR:$Rd), (ins imm1_16:$sat_imm, rGPR:$Rn), NoItinerary,
                 "ssat16", "\t$Rd, $sat_imm, $Rn",
                 [/* For disassembly only; pattern left blank */]>,
           Requires<[IsThumb2, HasThumb2DSP]> {
