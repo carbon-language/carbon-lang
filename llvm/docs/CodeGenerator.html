@@ -1889,7 +1889,8 @@ $ llc -regalloc=pbqp file.bc -o pbqp.s;
 
 </dd>
 
-  <dt><i>Frameless with a Small Constant Stack Size (EBP or RBP is not used as a frame pointer)</i></dt>
+  <dt><i>Frameless with a Small Constant Stack Size (<code>EBP</code>
+         or <code>RBP</code> is not used as a frame pointer)</i></dt>
   <dd><p>To return, a constant (encoded in the compact unwind encoding) is added
       to the <code>ESP/RSP</code>.  Then the return is done by popping the stack
       into the PC. All non-volatile registers that need to be restored must have
@@ -1903,12 +1904,13 @@ $ llc -regalloc=pbqp file.bc -o pbqp.s;
       function in <code>lib/Target/X86FrameLowering.cpp</code> for the encoding
       algorithm.)</p></dd>
 
-  <dt><i>Frameless with a Large Constant Stack Size (EBP or RBP is not used as a frame pointer)</i></dt>
+  <dt><i>Frameless with a Large Constant Stack Size (<code>EBP</code>
+         or <code>RBP</code> is not used as a frame pointer)</i></dt>
   <dd><p>This case is like the "Frameless with a Small Constant Stack Size"
-      case, but the stack size is too larget to encode in the compact unwind
+      case, but the stack size is too large to encode in the compact unwind
       encoding. Instead it requires that the function contains "<code>subl
       $nnnnnn, %esp</code>" in its prolog. The compact encoding contains the
-      offset to the <code>$nnnnnn</code> value in the funciton in bits 9-12
+      offset to the <code>$nnnnnn</code> value in the function in bits 9-12
       (mask: <code>0x00001C00</code>).</p></dd>
 </ul>
 
