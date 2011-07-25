@@ -16,52 +16,15 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/MC/MCCodeEmitter.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
-                                    MCContext &Ctx, TargetAsmBackend &TAB,
-                                    raw_ostream &_OS,
-                                    MCCodeEmitter *_Emitter,
-                                    bool RelaxAll,
-                                    bool NoExecStack) {
-  Triple TheTriple(TT);
-
-  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
-    return createMachOStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);
-
-  if (TheTriple.isOSWindows())
-    return createWinCOFFStreamer(Ctx, TAB, *_Emitter, _OS, RelaxAll);
-
-  return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll, NoExecStack);
-}
-
 extern "C" void LLVMInitializeX86Target() {
   // Register the target.
   RegisterTargetMachine<X86_32TargetMachine> X(TheX86_32Target);
   RegisterTargetMachine<X86_64TargetMachine> Y(TheX86_64Target);
-
-  // Register the code emitter.
-  TargetRegistry::RegisterCodeEmitter(TheX86_32Target,
-                                      createX86MCCodeEmitter);
-  TargetRegistry::RegisterCodeEmitter(TheX86_64Target,
-                                      createX86MCCodeEmitter);
-
-  // Register the asm backend.
-  TargetRegistry::RegisterAsmBackend(TheX86_32Target,
-                                     createX86_32AsmBackend);
-  TargetRegistry::RegisterAsmBackend(TheX86_64Target,
-                                     createX86_64AsmBackend);
-
-  // Register the object streamer.
-  TargetRegistry::RegisterObjectStreamer(TheX86_32Target,
-                                         createMCStreamer);
-  TargetRegistry::RegisterObjectStreamer(TheX86_64Target,
-                                         createMCStreamer);
 }
 
 

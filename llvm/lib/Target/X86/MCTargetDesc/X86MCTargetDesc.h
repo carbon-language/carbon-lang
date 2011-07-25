@@ -20,10 +20,13 @@ namespace llvm {
 class MCCodeEmitter;
 class MCContext;
 class MCInstrInfo;
+class MCObjectWriter;
 class MCRegisterInfo;
 class MCSubtargetInfo;
 class Target;
+class TargetAsmBackend;
 class StringRef;
+class raw_ostream;
 
 extern Target TheX86_32Target, TheX86_64Target;
 
@@ -70,6 +73,14 @@ MCCodeEmitter *createX86MCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCSubtargetInfo &STI,
                                       MCContext &Ctx);
 
+TargetAsmBackend *createX86_32AsmBackend(const Target &, const std::string &);
+TargetAsmBackend *createX86_64AsmBackend(const Target &, const std::string &);
+
+/// createX86MachObjectWriter - Construct an X86 Mach-O object writer.
+MCObjectWriter *createX86MachObjectWriter(raw_ostream &OS,
+                                          bool Is64Bit,
+                                          uint32_t CPUType,
+                                          uint32_t CPUSubtype);
 
 } // End llvm namespace
 

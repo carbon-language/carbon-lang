@@ -61,9 +61,6 @@ FunctionPass *createSSEDomainFixPass();
 FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
                                           JITCodeEmitter &JCE);
 
-TargetAsmBackend *createX86_32AsmBackend(const Target &, const std::string &);
-TargetAsmBackend *createX86_64AsmBackend(const Target &, const std::string &);
-
 /// createX86EmitCodeToMemory - Returns a pass that converts a register
 /// allocated function into raw machine code in a dynamically
 /// allocated chunk of memory.
@@ -75,13 +72,6 @@ FunctionPass *createEmitX86CodeToMemory();
 /// reserved in case dynamic stack alignment is later required.
 ///
 FunctionPass *createX86MaxStackAlignmentHeuristicPass();
-
-
-/// createX86MachObjectWriter - Construct an X86 Mach-O object writer.
-MCObjectWriter *createX86MachObjectWriter(raw_ostream &OS,
-                                          bool Is64Bit,
-                                          uint32_t CPUType,
-                                          uint32_t CPUSubtype);
 
 } // End llvm namespace
 

@@ -14,7 +14,6 @@ tablegen(X86GenEDInfo.inc -gen-enhanced-disassembly-info)
 
 set(sources
   SSEDomainFix.cpp
-  X86AsmBackend.cpp
   X86AsmPrinter.cpp
   X86COFFMachineModuleInfo.cpp
   X86CodeEmitter.cpp
@@ -26,8 +25,6 @@ set(sources
   X86ISelLowering.cpp
   X86InstrInfo.cpp
   X86JITInfo.cpp
-  X86MachObjectWriter.cpp
-  X86MCCodeEmitter.cpp 
   X86MCInstLower.cpp
   X86RegisterInfo.cpp
   X86SelectionDAGInfo.cpp
