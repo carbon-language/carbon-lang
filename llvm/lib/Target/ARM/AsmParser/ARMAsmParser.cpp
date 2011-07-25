@@ -153,6 +153,11 @@ public:
 };
 } // end anonymous namespace
 
+namespace llvm {
+  // FIXME: TableGen this?
+  extern MCRegisterClass ARMMCRegisterClasses[]; // In ARMGenRegisterInfo.inc.
+}
+
 namespace {
 
 /// ARMOperand - Instances of this class represent a parsed ARM machine
@@ -971,9 +976,11 @@ public:
                 SMLoc StartLoc, SMLoc EndLoc) {
     KindTy Kind = RegisterList;
 
-    if (ARM::DPRRegClass.contains(Regs.front().first))
+    if (llvm::ARMMCRegisterClasses[ARM::DPRRegClassID].
+        contains(Regs.front().first))
       Kind = DPRRegisterList;
-    else if (ARM::SPRRegClass.contains(Regs.front().first))
+    else if (llvm::ARMMCRegisterClasses[ARM::SPRRegClassID].
+             contains(Regs.front().first))
       Kind = SPRRegisterList;
 
     ARMOperand *Op = new ARMOperand(Kind);
