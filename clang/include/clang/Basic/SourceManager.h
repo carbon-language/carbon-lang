@@ -829,7 +829,7 @@ public:
                            bool *Invalid = 0) const;
   unsigned getSpellingColumnNumber(SourceLocation Loc, bool *Invalid = 0) const;
   unsigned getExpansionColumnNumber(SourceLocation Loc,
-                                        bool *Invalid = 0) const;
+                                    bool *Invalid = 0) const;
   unsigned getPresumedColumnNumber(SourceLocation Loc, bool *Invalid = 0) const;
 
 
