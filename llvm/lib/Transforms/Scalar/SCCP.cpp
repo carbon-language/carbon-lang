@@ -156,7 +156,7 @@ namespace {
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
   const TargetData *TD;
-  SmallPtrSet<BasicBlock*, 8> BBExecutable;// The BBs that are executable.
+  SmallPtrSet<BasicBlock*, 8> BBExecutable; // The BBs that are executable.
   DenseMap<Value*, LatticeVal> ValueState;  // The state each value is in.
 
   /// StructValueState - This maintains ValueState for values that have
