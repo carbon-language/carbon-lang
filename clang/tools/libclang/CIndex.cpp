@@ -4253,6 +4253,94 @@ void clang_getDefinitionSpellingAndExtent(CXCursor C,
   *endColumn = SM.getSpellingColumnNumber(Body->getRBracLoc());
 }
 
+namespace {
+typedef llvm::SmallVector<SourceRange, 4> RefNamePieces;
+RefNamePieces buildPieces(unsigned NameFlags, bool IsMemberRefExpr, 
+                          const DeclarationNameInfo &NI, 
+                          const SourceRange &QLoc, 
+                          const ExplicitTemplateArgumentList *TemplateArgs = 0){
+  const bool WantQualifier = NameFlags & CXNameRange_WantQualifier;
+  const bool WantTemplateArgs = NameFlags & CXNameRange_WantTemplateArgs;
+  const bool WantSinglePiece = NameFlags & CXNameRange_WantSinglePiece;
+  
+  const DeclarationName::NameKind Kind = NI.getName().getNameKind();
+  
+  RefNamePieces Pieces;
+
+  if (WantQualifier && QLoc.isValid())
+    Pieces.push_back(QLoc);
+  
+  if (Kind != DeclarationName::CXXOperatorName || IsMemberRefExpr)
+    Pieces.push_back(NI.getLoc());
+  
+  if (WantTemplateArgs && TemplateArgs)
+    Pieces.push_back(SourceRange(TemplateArgs->LAngleLoc,
+                                 TemplateArgs->RAngleLoc));
+  
+  if (Kind == DeclarationName::CXXOperatorName) {
+    Pieces.push_back(SourceLocation::getFromRawEncoding(
+                       NI.getInfo().CXXOperatorName.BeginOpNameLoc));
+    Pieces.push_back(SourceLocation::getFromRawEncoding(
+                       NI.getInfo().CXXOperatorName.EndOpNameLoc));
+  }
+  
+  if (WantSinglePiece) {
+    SourceRange R(Pieces.front().getBegin(), Pieces.back().getEnd());
+    Pieces.clear();
+    Pieces.push_back(R);
+  }  
+
+  return Pieces;  
+}
+}
+
+CXSourceRange clang_getCursorReferenceNameRange(CXCursor C, unsigned NameFlags,
+                                                unsigned PieceIndex) {
+  RefNamePieces Pieces;
+  
+  switch (C.kind) {
+  case CXCursor_MemberRefExpr:
+    if (MemberExpr *E = dyn_cast<MemberExpr>(getCursorExpr(C)))
+      Pieces = buildPieces(NameFlags, true, E->getMemberNameInfo(),
+                           E->getQualifierLoc().getSourceRange());
+    break;
+  
+  case CXCursor_DeclRefExpr:
+    if (DeclRefExpr *E = dyn_cast<DeclRefExpr>(getCursorExpr(C)))
+      Pieces = buildPieces(NameFlags, false, E->getNameInfo(), 
+                           E->getQualifierLoc().getSourceRange(),
+                           E->getExplicitTemplateArgsOpt());
+    break;
+    
+  case CXCursor_CallExpr:
+    if (CXXOperatorCallExpr *OCE = 
+        dyn_cast<CXXOperatorCallExpr>(getCursorExpr(C))) {
+      Expr *Callee = OCE->getCallee();
+      if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Callee))
+        Callee = ICE->getSubExpr();
+
+      if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Callee))
+        Pieces = buildPieces(NameFlags, false, DRE->getNameInfo(),
+                             DRE->getQualifierLoc().getSourceRange());
+    }
+    break;
+    
+  default:
+    break;
+  }
+
+  if (Pieces.empty()) {
+    if (PieceIndex == 0)
+      return clang_getCursorExtent(C);
+  } else if (PieceIndex < Pieces.size()) {
+      SourceRange R = Pieces[PieceIndex];
+      if (R.isValid())
+        return cxloc::translateSourceRange(getCursorContext(C), R);
+  }
+  
+  return clang_getNullRange();
+}
+
 void clang_enableStackTraces(void) {
   llvm::sys::PrintStackTraceOnErrorSignal();
 }

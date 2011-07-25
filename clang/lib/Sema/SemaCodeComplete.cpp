@@ -3706,7 +3706,7 @@ void Sema::CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
   LookupVisibleDecls(Ctx, LookupOrdinaryName, Consumer);
 
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_Name,
+                            Results.getCompletionContext(),
                             Results.data(),Results.size());
 }
 

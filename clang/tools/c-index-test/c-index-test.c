@@ -158,6 +158,21 @@ int parse_remapped_files(int argc, const char **argv, int start_arg,
 /* Pretty-printing.                                                           */
 /******************************************************************************/
 
+static void PrintRange(CXSourceRange R, const char *str) {
+  CXFile begin_file, end_file;
+  unsigned begin_line, begin_column, end_line, end_column;
+
+  clang_getSpellingLocation(clang_getRangeStart(R),
+                            &begin_file, &begin_line, &begin_column, 0);
+  clang_getSpellingLocation(clang_getRangeEnd(R),
+                            &end_file, &end_line, &end_column, 0);
+  if (!begin_file || !end_file)
+    return;
+
+  printf(" %s=", str);
+  PrintExtent(stdout, begin_line, begin_column, end_line, end_column);
+}
+
 int want_display_name = 0;
 
 static void PrintCursor(CXTranslationUnit TU, CXCursor Cursor) {
@@ -173,6 +188,9 @@ static void PrintCursor(CXTranslationUnit TU, CXCursor Cursor) {
     CXCursor SpecializationOf;
     CXCursor *overridden;
     unsigned num_overridden;
+    unsigned RefNameRangeNr;
+    CXSourceRange CursorExtent;
+    CXSourceRange RefNameRange;
 
     ks = clang_getCursorKindSpelling(Cursor.kind);
     string = want_display_name? clang_getCursorDisplayName(Cursor) 
@@ -287,6 +305,26 @@ static void PrintCursor(CXTranslationUnit TU, CXCursor Cursor) {
       
       if (clang_isFileMultipleIncludeGuarded(TU, File))
         printf("  [multi-include guarded]");
+    }
+    
+    CursorExtent = clang_getCursorExtent(Cursor);
+    RefNameRange = clang_getCursorReferenceNameRange(Cursor, 
+                                                   CXNameRange_WantQualifier
+                                                 | CXNameRange_WantSinglePiece
+                                                 | CXNameRange_WantTemplateArgs,
+                                                     0);
+    if (!clang_equalRanges(CursorExtent, RefNameRange))
+      PrintRange(RefNameRange, "SingleRefName");
+    
+    for (RefNameRangeNr = 0; 1; RefNameRangeNr++) {
+      RefNameRange = clang_getCursorReferenceNameRange(Cursor, 
+                                                   CXNameRange_WantQualifier
+                                                 | CXNameRange_WantTemplateArgs,
+                                                       RefNameRangeNr);
+      if (clang_equalRanges(clang_getNullRange(), RefNameRange))
+        break;
+      if (!clang_equalRanges(CursorExtent, RefNameRange))
+        PrintRange(RefNameRange, "RefName");
     }
   }
 }
@@ -405,18 +443,7 @@ static const char *FileCheckPrefix = "CHECK";
 
 static void PrintCursorExtent(CXCursor C) {
   CXSourceRange extent = clang_getCursorExtent(C);
-  CXFile begin_file, end_file;
-  unsigned begin_line, begin_column, end_line, end_column;
-
-  clang_getSpellingLocation(clang_getRangeStart(extent),
-                            &begin_file, &begin_line, &begin_column, 0);
-  clang_getSpellingLocation(clang_getRangeEnd(extent),
-                            &end_file, &end_line, &end_column, 0);
-  if (!begin_file || !end_file)
-    return;
-
-  printf(" Extent=");
-  PrintExtent(stdout, begin_line, begin_column, end_line, end_column);
+  PrintRange(extent, "Extent");
 }
 
 /* Data used by all of the visitors. */

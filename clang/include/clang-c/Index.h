@@ -2385,6 +2385,53 @@ CINDEX_LINKAGE enum CXCursorKind clang_getTemplateCursorKind(CXCursor C);
  * from which it was instantiated. Otherwise, returns a NULL cursor.
  */
 CINDEX_LINKAGE CXCursor clang_getSpecializedCursorTemplate(CXCursor C);
+
+/**
+ * \brief Given a cursor that references something else, return the source range
+ * covering that reference.
+ *
+ * \param C A cursor pointing to a member reference, a declaration reference, or
+ * an operator call.
+ * \param NameFlags A bitset with three independent flags: 
+ * CXNameRange_WantQualifier, CXNameRange_WantTemplateArgs, and
+ * CXNameRange_WantSinglePiece.
+ * \param PieceIndex For contiguous names or when passing the flag 
+ * CXNameRange_WantSinglePiece, only one piece with index 0 is 
+ * available. When the CXNameRange_WantSinglePiece flag is not passed for a
+ * non-contiguous names, this index can be used to retreive the individual
+ * pieces of the name. See also CXNameRange_WantSinglePiece.
+ *
+ * \returns The piece of the name pointed to by the given cursor. If there is no
+ * name, or if the PieceIndex is out-of-range, a null-cursor will be returned.
+ */
+CXSourceRange clang_getCursorReferenceNameRange(CXCursor C, unsigned NameFlags, 
+                                                unsigned PieceIndex);
+
+enum CXNameRefFlags {
+  /**
+   * \brief Include the nested-name-specifier, e.g. Foo:: in x.Foo::y, in the
+   * range.
+   */
+  CXNameRange_WantQualifier = 0x1,
+  
+  /**
+   * \brief Include the explicit template arguments, e.g. <int> in x.f<int>, in 
+   * the range.
+   */
+  CXNameRange_WantTemplateArgs = 0x2,
+
+  /**
+   * \brief If the name is non-contiguous, return the full spanning range.
+   *
+   * Non-contiguous names occur in Objective-C when a selector with two or more
+   * parameters is used, or in C++ when using an operator:
+   * \code
+   * [object doSomething:here withValue:there]; // ObjC
+   * return some_vector[1]; // C++
+   * \endcode
+   */
+  CXNameRange_WantSinglePiece = 0x4
+};
   
 /**
  * @}

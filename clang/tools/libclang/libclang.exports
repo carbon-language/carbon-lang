@@ -2,6 +2,7 @@ clang_CXCursorSet_contains
 clang_CXCursorSet_insert
 clang_CXXMethod_isStatic
 clang_CXXMethod_isVirtual
+clang_getCursorReferenceNameRange
 clang_annotateTokens
 clang_codeCompleteAt
 clang_codeCompleteGetDiagnostic
