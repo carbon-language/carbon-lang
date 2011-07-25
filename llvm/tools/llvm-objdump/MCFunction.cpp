@@ -54,6 +54,8 @@ MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
           }
         }
         Splits.insert(Index+Size);
+      } else if (Desc.isReturn()) {
+        Splits.insert(Index+Size);
       }
 
       Instructions.push_back(MCDecodedInst(Index, Size, Inst));
