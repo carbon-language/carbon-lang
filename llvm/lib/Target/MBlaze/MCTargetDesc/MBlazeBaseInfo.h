@@ -163,6 +163,47 @@ static inline unsigned getMBlazeRegisterNumbering(unsigned RegEnum) {
   return 0; // Not reached
 }
 
+/// getRegisterFromNumbering - Given the enum value for some register, e.g.
+/// MBlaze::R0, return the number that it corresponds to (e.g. 0).
+static inline unsigned getMBlazeRegisterFromNumbering(unsigned Reg) {
+  switch (Reg) {
+    case 0  : return MBlaze::R0;
+    case 1  : return MBlaze::R1;
+    case 2  : return MBlaze::R2;
+    case 3  : return MBlaze::R3;
+    case 4  : return MBlaze::R4;
+    case 5  : return MBlaze::R5;
+    case 6  : return MBlaze::R6;
+    case 7  : return MBlaze::R7;
+    case 8  : return MBlaze::R8;
+    case 9  : return MBlaze::R9;
+    case 10 : return MBlaze::R10;
+    case 11 : return MBlaze::R11;
+    case 12 : return MBlaze::R12;
+    case 13 : return MBlaze::R13;
+    case 14 : return MBlaze::R14;
+    case 15 : return MBlaze::R15;
+    case 16 : return MBlaze::R16;
+    case 17 : return MBlaze::R17;
+    case 18 : return MBlaze::R18;
+    case 19 : return MBlaze::R19;
+    case 20 : return MBlaze::R20;
+    case 21 : return MBlaze::R21;
+    case 22 : return MBlaze::R22;
+    case 23 : return MBlaze::R23;
+    case 24 : return MBlaze::R24;
+    case 25 : return MBlaze::R25;
+    case 26 : return MBlaze::R26;
+    case 27 : return MBlaze::R27;
+    case 28 : return MBlaze::R28;
+    case 29 : return MBlaze::R29;
+    case 30 : return MBlaze::R30;
+    case 31 : return MBlaze::R31;
+    default: llvm_unreachable("Unknown register number!");
+  }
+  return 0; // Not reached
+}
+
 static inline unsigned getSpecialMBlazeRegisterFromNumbering(unsigned Reg) {
   switch (Reg) {
     case 0x0000 : return MBlaze::RPC;

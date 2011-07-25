@@ -42,8 +42,6 @@ struct MBlazeRegisterInfo : public MBlazeGenRegisterInfo {
   MBlazeRegisterInfo(const MBlazeSubtarget &Subtarget,
                      const TargetInstrInfo &tii);
 
-  static unsigned getRegisterFromNumbering(unsigned RegEnum);
-
   /// Get PIC indirect call register
   static unsigned getPICCallReg();
 

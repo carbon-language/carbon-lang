@@ -970,7 +970,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
     unsigned StackLoc = Start - Begin + 1;
 
     for (; Start <= End; ++Start, ++StackLoc) {
-      unsigned Reg = MBlazeRegisterInfo::getRegisterFromNumbering(Start);
+      unsigned Reg = getMBlazeRegisterFromNumbering(Start);
       unsigned LiveReg = MF.addLiveIn(Reg, RC);
       SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, LiveReg, MVT::i32);
 

@@ -62,19 +62,19 @@ static unsigned mblazeBinary2Opcode[] = {
 static unsigned getRD(uint32_t insn) {
   if (!isMBlazeRegister((insn>>21)&0x1F))
     return UNSUPPORTED;
-  return getMBlazeRegisterNumbering((insn>>21)&0x1F);
+  return getMBlazeRegisterFromNumbering((insn>>21)&0x1F);
 }
 
 static unsigned getRA(uint32_t insn) {
-  if (!getMBlazeRegisterNumbering((insn>>16)&0x1F))
+  if (!getMBlazeRegisterFromNumbering((insn>>16)&0x1F))
     return UNSUPPORTED;
-  return getMBlazeRegisterNumbering((insn>>16)&0x1F);
+  return getMBlazeRegisterFromNumbering((insn>>16)&0x1F);
 }
 
 static unsigned getRB(uint32_t insn) {
-  if (!getMBlazeRegisterNumbering((insn>>11)&0x1F))
+  if (!getMBlazeRegisterFromNumbering((insn>>11)&0x1F))
     return UNSUPPORTED;
-  return getMBlazeRegisterNumbering((insn>>11)&0x1F);
+  return getMBlazeRegisterFromNumbering((insn>>11)&0x1F);
 }
 
 static int64_t getRS(uint32_t insn) {
