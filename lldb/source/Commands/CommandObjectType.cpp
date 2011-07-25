@@ -2372,10 +2372,11 @@ CommandObjectTypeSynthClear::CommandOptions::g_option_table[] =
 //-------------------------------------------------------------------------
 
 static const char *g_synth_addreader_instructions =   "Enter your Python command(s). Type 'DONE' to end.\n"
-                                                      "You must define a Python class with three methods:\n"
-                                                      "def __init__(self, valobj, dict):\n"
-                                                      "def get_child_at_index(self, index):\n"
-                                                      "def get_child_index(self, name):\n"
+                                                      "You must define a Python class with these methods:\n"
+                                                      "     def __init__(self, valobj, dict):\n"
+                                                      "     def num_children(self):\n"
+                                                      "     def get_child_at_index(self, index):\n"
+                                                      "     def get_child_index(self, name):\n"
                                                       "class synthProvider:";
 
 class TypeSynthAddInputReader : public InputReaderEZ
