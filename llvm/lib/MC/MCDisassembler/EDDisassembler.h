@@ -46,8 +46,6 @@ class SourceMgr;
 class Target;
 class TargetAsmLexer;
 class TargetAsmParser;
-class TargetMachine;
-class TargetRegisterInfo;
 
 struct EDInstInfo;
 struct EDInst;
@@ -137,8 +135,6 @@ struct EDDisassembler {
   CPUKey Key;
   /// The LLVM target corresponding to the disassembler
   const llvm::Target *Tgt;
-  /// The target machine instance.
-  llvm::OwningPtr<llvm::TargetMachine> TargetMachine;
   /// The assembly information for the target architecture
   llvm::OwningPtr<const llvm::MCAsmInfo> AsmInfo;
   // The register information for the target architecture.
@@ -219,7 +215,7 @@ struct EDDisassembler {
   ///   info
   ///
   /// @arg registerInfo - the register information to use as a source
-  void initMaps(const llvm::TargetRegisterInfo &registerInfo);
+  void initMaps(const llvm::MCRegisterInfo &registerInfo);
   /// nameWithRegisterID - Returns the name (owned by the EDDisassembler) of a 
   ///   register for a given register ID, or NULL on failure
   ///

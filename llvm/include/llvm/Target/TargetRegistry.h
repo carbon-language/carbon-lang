@@ -89,6 +89,7 @@ namespace llvm {
     typedef TargetAsmBackend *(*AsmBackendCtorTy)(const Target &T,
                                                   const std::string &TT);
     typedef TargetAsmLexer *(*AsmLexerCtorTy)(const Target &T,
+                                              const MCRegisterInfo &MRI,
                                               const MCAsmInfo &MAI);
     typedef TargetAsmParser *(*AsmParserCtorTy)(MCSubtargetInfo &STI,
                                                 MCAsmParser &P);
@@ -333,10 +334,11 @@ namespace llvm {
 
     /// createAsmLexer - Create a target specific assembly lexer.
     ///
-    TargetAsmLexer *createAsmLexer(const MCAsmInfo &MAI) const {
+    TargetAsmLexer *createAsmLexer(const MCRegisterInfo &MRI,
+                                   const MCAsmInfo &MAI) const {
       if (!AsmLexerCtorFn)
         return 0;
-      return AsmLexerCtorFn(*this, MAI);
+      return AsmLexerCtorFn(*this, MRI, MAI);
     }
 
     /// createAsmParser - Create a target specific assembly parser.
@@ -989,8 +991,9 @@ namespace llvm {
     }
 
   private:
-    static TargetAsmLexer *Allocator(const Target &T, const MCAsmInfo &MAI) {
-      return new AsmLexerImpl(T, MAI);
+    static TargetAsmLexer *Allocator(const Target &T, const MCRegisterInfo &MRI,
+                                     const MCAsmInfo &MAI) {
+      return new AsmLexerImpl(T, MRI, MAI);
     }
   };
 

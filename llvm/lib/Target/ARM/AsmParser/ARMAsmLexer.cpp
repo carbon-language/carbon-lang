@@ -8,14 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
-#include "ARMTargetMachine.h"
 
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/TargetAsmLexer.h"
 
-#include "llvm/Target/TargetMachine.h"  // FIXME
 #include "llvm/Target/TargetRegistry.h"
 
 #include "llvm/ADT/OwningPtr.h"
@@ -43,7 +42,7 @@ protected:
 
   rmap_ty RegisterMap;
 
-  void InitRegisterMap(const TargetRegisterInfo *info) {
+  void InitRegisterMap(const MCRegisterInfo *info) {
     unsigned numRegs = info->getNumRegs();
 
     for (unsigned i = 0; i < numRegs; ++i) {
@@ -83,27 +82,17 @@ public:
 
 class ARMAsmLexer : public ARMBaseAsmLexer {
 public:
-  ARMAsmLexer(const Target &T, const MCAsmInfo &MAI)
+  ARMAsmLexer(const Target &T, const MCRegisterInfo &MRI, const MCAsmInfo &MAI)
     : ARMBaseAsmLexer(T, MAI) {
-    std::string tripleString("arm-unknown-unknown");
-    std::string featureString;
-    std::string CPU;
-    OwningPtr<const TargetMachine>
-      targetMachine(T.createTargetMachine(tripleString, CPU, featureString));
-    InitRegisterMap(targetMachine->getRegisterInfo());
+    InitRegisterMap(&MRI);
   }
 };
 
 class ThumbAsmLexer : public ARMBaseAsmLexer {
 public:
-  ThumbAsmLexer(const Target &T, const MCAsmInfo &MAI)
+  ThumbAsmLexer(const Target &T, const MCRegisterInfo &MRI,const MCAsmInfo &MAI)
     : ARMBaseAsmLexer(T, MAI) {
-    std::string tripleString("thumb-unknown-unknown");
-    std::string featureString;
-    std::string CPU;
-    OwningPtr<const TargetMachine>
-      targetMachine(T.createTargetMachine(tripleString, CPU, featureString));
-    InitRegisterMap(targetMachine->getRegisterInfo());
+    InitRegisterMap(&MRI);
   }
 };
 

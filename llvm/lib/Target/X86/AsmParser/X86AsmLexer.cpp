@@ -60,7 +60,7 @@ protected:
     }
   }
 public:
-  X86AsmLexer(const Target &T, const MCAsmInfo &MAI)
+  X86AsmLexer(const Target &T, const MCRegisterInfo &MRI, const MCAsmInfo &MAI)
     : TargetAsmLexer(T), AsmInfo(MAI), tentativeIsValid(false) {
   }
 };

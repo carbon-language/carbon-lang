@@ -34,8 +34,6 @@
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSelect.h"
 using namespace llvm;
 
@@ -107,7 +105,6 @@ void EDDisassembler::initialize() {
   sInitialized = true;
   
   InitializeAllTargetInfos();
-  InitializeAllTargets();
   InitializeAllTargetMCs();
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
@@ -170,27 +167,16 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   if (!Tgt)
     return;
   
-  std::string CPU;
-  std::string featureString;
-  TargetMachine.reset(Tgt->createTargetMachine(tripleString, CPU,
-                                               featureString));
+  MRI.reset(Tgt->createMCRegInfo(tripleString));
 
-  // FIXME: It shouldn't be using TargetRegisterInfo!
-  const TargetRegisterInfo *registerInfo = TargetMachine->getRegisterInfo();
-  
-  if (!registerInfo)
+  if (!MRI)
     return;
-    
-  initMaps(*registerInfo);
+
+  initMaps(*MRI);
   
   AsmInfo.reset(Tgt->createMCAsmInfo(tripleString));
   
   if (!AsmInfo)
-    return;
-
-  MRI.reset(Tgt->createMCRegInfo(tripleString));
-
-  if (!MRI)
     return;
 
   Disassembler.reset(Tgt->createMCDisassembler());
@@ -208,10 +194,10 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
     return;
     
   GenericAsmLexer.reset(new AsmLexer(*AsmInfo));
-  SpecificAsmLexer.reset(Tgt->createAsmLexer(*AsmInfo));
+  SpecificAsmLexer.reset(Tgt->createAsmLexer(*MRI, *AsmInfo));
   SpecificAsmLexer->InstallLexer(*GenericAsmLexer);
   
-  initMaps(*TargetMachine->getRegisterInfo());
+  initMaps(*MRI);
     
   Valid = true;
 }
@@ -273,7 +259,7 @@ EDInst *EDDisassembler::createInst(EDByteReaderCallback byteReader,
   }
 }
 
-void EDDisassembler::initMaps(const TargetRegisterInfo &registerInfo) {
+void EDDisassembler::initMaps(const MCRegisterInfo &registerInfo) {
   unsigned numRegisters = registerInfo.getNumRegs();
   unsigned registerIndex;
   
