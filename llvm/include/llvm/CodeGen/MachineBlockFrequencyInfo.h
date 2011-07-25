@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MACHINEBLOCKFREQUENCY_H
-#define LLVM_CODEGEN_MACHINEBLOCKFREQUENCY_H
+#ifndef LLVM_CODEGEN_MACHINEBLOCKFREQUENCYINFO_H
+#define LLVM_CODEGEN_MACHINEBLOCKFREQUENCYINFO_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include <climits>
