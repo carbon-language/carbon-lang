@@ -25,7 +25,7 @@ namespace llvm {
                                    bool useCFI,
                                    MCInstPrinter *InstPrint,
                                    MCCodeEmitter *CE,
-                                   TargetAsmBackend *TAB,
+                                   MCAsmBackend *MAB,
                                    bool ShowInst);
 }
 

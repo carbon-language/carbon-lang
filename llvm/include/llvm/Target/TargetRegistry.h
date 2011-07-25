@@ -39,7 +39,7 @@ namespace llvm {
   class MCStreamer;
   class MCSubtargetInfo;
   class MCCodeGenInfo;
-  class TargetAsmBackend;
+  class MCAsmBackend;
   class TargetAsmLexer;
   class TargetAsmParser;
   class TargetMachine;
@@ -51,7 +51,7 @@ namespace llvm {
                                 bool useLoc, bool useCFI,
                                 MCInstPrinter *InstPrint,
                                 MCCodeEmitter *CE,
-                                TargetAsmBackend *TAB,
+                                MCAsmBackend *TAB,
                                 bool ShowInst);
 
   /// Target - Wrapper for Target specific information.
@@ -86,8 +86,7 @@ namespace llvm {
                                                   CodeModel::Model CM);
     typedef AsmPrinter *(*AsmPrinterCtorTy)(TargetMachine &TM,
                                             MCStreamer &Streamer);
-    typedef TargetAsmBackend *(*AsmBackendCtorTy)(const Target &T,
-                                                  const std::string &TT);
+    typedef MCAsmBackend *(*MCAsmBackendCtorTy)(const Target &T, StringRef TT);
     typedef TargetAsmLexer *(*AsmLexerCtorTy)(const Target &T,
                                               const MCRegisterInfo &MRI,
                                               const MCAsmInfo &MAI);
@@ -103,7 +102,7 @@ namespace llvm {
     typedef MCStreamer *(*ObjectStreamerCtorTy)(const Target &T,
                                                 const std::string &TT,
                                                 MCContext &Ctx,
-                                                TargetAsmBackend &TAB,
+                                                MCAsmBackend &TAB,
                                                 raw_ostream &_OS,
                                                 MCCodeEmitter *_Emitter,
                                                 bool RelaxAll,
@@ -115,7 +114,7 @@ namespace llvm {
                                              bool useCFI,
                                              MCInstPrinter *InstPrint,
                                              MCCodeEmitter *CE,
-                                             TargetAsmBackend *TAB,
+                                             MCAsmBackend *TAB,
                                              bool ShowInst);
 
   private:
@@ -160,9 +159,9 @@ namespace llvm {
     /// TargetMachine, if registered.
     TargetMachineCtorTy TargetMachineCtorFn;
 
-    /// AsmBackendCtorFn - Construction function for this target's
-    /// TargetAsmBackend, if registered.
-    AsmBackendCtorTy AsmBackendCtorFn;
+    /// MCAsmBackendCtorFn - Construction function for this target's
+    /// MCAsmBackend, if registered.
+    MCAsmBackendCtorTy MCAsmBackendCtorFn;
 
     /// AsmLexerCtorFn - Construction function for this target's TargetAsmLexer,
     /// if registered.
@@ -221,8 +220,8 @@ namespace llvm {
     /// hasTargetMachine - Check if this target supports code generation.
     bool hasTargetMachine() const { return TargetMachineCtorFn != 0; }
 
-    /// hasAsmBackend - Check if this target supports .o generation.
-    bool hasAsmBackend() const { return AsmBackendCtorFn != 0; }
+    /// hasMCAsmBackend - Check if this target supports .o generation.
+    bool hasMCAsmBackend() const { return MCAsmBackendCtorFn != 0; }
 
     /// hasAsmLexer - Check if this target supports .s lexing.
     bool hasAsmLexer() const { return AsmLexerCtorFn != 0; }
@@ -322,14 +321,14 @@ namespace llvm {
       return TargetMachineCtorFn(*this, Triple, CPU, Features, RM, CM);
     }
 
-    /// createAsmBackend - Create a target specific assembly parser.
+    /// createMCAsmBackend - Create a target specific assembly parser.
     ///
     /// \arg Triple - The target triple string.
     /// \arg Backend - The target independent assembler object.
-    TargetAsmBackend *createAsmBackend(const std::string &Triple) const {
-      if (!AsmBackendCtorFn)
+    MCAsmBackend *createMCAsmBackend(StringRef Triple) const {
+      if (!MCAsmBackendCtorFn)
         return 0;
-      return AsmBackendCtorFn(*this, Triple);
+      return MCAsmBackendCtorFn(*this, Triple);
     }
 
     /// createAsmLexer - Create a target specific assembly lexer.
@@ -393,7 +392,7 @@ namespace llvm {
     /// \arg RelaxAll - Relax all fixups?
     /// \arg NoExecStack - Mark file as not needing a executable stack.
     MCStreamer *createObjectStreamer(const std::string &TT, MCContext &Ctx,
-                                     TargetAsmBackend &TAB,
+                                     MCAsmBackend &TAB,
                                      raw_ostream &_OS,
                                      MCCodeEmitter *_Emitter,
                                      bool RelaxAll,
@@ -412,7 +411,7 @@ namespace llvm {
                                   bool useCFI,
                                   MCInstPrinter *InstPrint,
                                   MCCodeEmitter *CE,
-                                  TargetAsmBackend *TAB,
+                                  MCAsmBackend *TAB,
                                   bool ShowInst) const {
       // AsmStreamerCtorFn is default to llvm::createAsmStreamer
       return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useLoc, useCFI,
@@ -605,7 +604,7 @@ namespace llvm {
         T.TargetMachineCtorFn = Fn;
     }
 
-    /// RegisterAsmBackend - Register a TargetAsmBackend implementation for the
+    /// RegisterMCAsmBackend - Register a MCAsmBackend implementation for the
     /// given target.
     ///
     /// Clients are responsible for ensuring that registration doesn't occur
@@ -614,9 +613,9 @@ namespace llvm {
     ///
     /// @param T - The target being registered.
     /// @param Fn - A function to construct an AsmBackend for the target.
-    static void RegisterAsmBackend(Target &T, Target::AsmBackendCtorTy Fn) {
-      if (!T.AsmBackendCtorFn)
-        T.AsmBackendCtorFn = Fn;
+    static void RegisterMCAsmBackend(Target &T, Target::MCAsmBackendCtorTy Fn) {
+      if (!T.MCAsmBackendCtorFn)
+        T.MCAsmBackendCtorFn = Fn;
     }
 
     /// RegisterAsmLexer - Register a TargetAsmLexer implementation for the
@@ -956,23 +955,22 @@ namespace llvm {
     }
   };
 
-  /// RegisterAsmBackend - Helper template for registering a target specific
+  /// RegisterMCAsmBackend - Helper template for registering a target specific
   /// assembler backend. Usage:
   ///
-  /// extern "C" void LLVMInitializeFooAsmBackend() {
+  /// extern "C" void LLVMInitializeFooMCAsmBackend() {
   ///   extern Target TheFooTarget;
-  ///   RegisterAsmBackend<FooAsmLexer> X(TheFooTarget);
+  ///   RegisterMCAsmBackend<FooAsmLexer> X(TheFooTarget);
   /// }
-  template<class AsmBackendImpl>
-  struct RegisterAsmBackend {
-    RegisterAsmBackend(Target &T) {
-      TargetRegistry::RegisterAsmBackend(T, &Allocator);
+  template<class MCAsmBackendImpl>
+  struct RegisterMCAsmBackend {
+    RegisterMCAsmBackend(Target &T) {
+      TargetRegistry::RegisterMCAsmBackend(T, &Allocator);
     }
 
   private:
-    static TargetAsmBackend *Allocator(const Target &T,
-                                       const std::string &Triple) {
-      return new AsmBackendImpl(T, Triple);
+    static MCAsmBackend *Allocator(const Target &T, StringRef Triple) {
+      return new MCAsmBackendImpl(T, Triple);
     }
   };
 

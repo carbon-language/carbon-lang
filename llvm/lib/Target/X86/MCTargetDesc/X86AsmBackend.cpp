@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/TargetAsmBackend.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "MCTargetDesc/X86FixupKinds.h"
 #include "llvm/ADT/Twine.h"
@@ -62,10 +62,10 @@ public:
     : MCELFObjectTargetWriter(is64Bit, OSType, EMachine, HasRelocationAddend) {}
 };
 
-class X86AsmBackend : public TargetAsmBackend {
+class X86AsmBackend : public MCAsmBackend {
 public:
   X86AsmBackend(const Target &T)
-    : TargetAsmBackend() {}
+    : MCAsmBackend() {}
 
   unsigned getNumFixupKinds() const {
     return X86::NumTargetFixupKinds;
@@ -80,7 +80,7 @@ public:
     };
 
     if (Kind < FirstTargetFixupKind)
-      return TargetAsmBackend::getFixupKindInfo(Kind);
+      return MCAsmBackend::getFixupKindInfo(Kind);
 
     assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
            "Invalid kind!");
@@ -425,8 +425,7 @@ public:
 
 } // end anonymous namespace
 
-TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
-                                               const std::string &TT) {
+MCAsmBackend *llvm::createX86_32AsmBackend(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
@@ -438,8 +437,7 @@ TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
   return new ELFX86_32AsmBackend(T, TheTriple.getOS());
 }
 
-TargetAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
-                                               const std::string &TT) {
+MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)

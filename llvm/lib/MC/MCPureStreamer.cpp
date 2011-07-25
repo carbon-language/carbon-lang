@@ -28,7 +28,7 @@ private:
   virtual void EmitInstToData(const MCInst &Inst);
 
 public:
-  MCPureStreamer(MCContext &Context, TargetAsmBackend &TAB,
+  MCPureStreamer(MCContext &Context, MCAsmBackend &TAB,
                  raw_ostream &OS, MCCodeEmitter *Emitter)
     : MCObjectStreamer(Context, TAB, OS, Emitter) {}
 
@@ -228,7 +228,7 @@ void MCPureStreamer::Finish() {
   this->MCObjectStreamer::Finish();
 }
 
-MCStreamer *llvm::createPureStreamer(MCContext &Context, TargetAsmBackend &TAB,
+MCStreamer *llvm::createPureStreamer(MCContext &Context, MCAsmBackend &MAB,
                                      raw_ostream &OS, MCCodeEmitter *CE) {
-  return new MCPureStreamer(Context, TAB, OS, CE);
+  return new MCPureStreamer(Context, MAB, OS, CE);
 }

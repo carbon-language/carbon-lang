@@ -72,7 +72,7 @@ static MCCodeGenInfo *createMBlazeMCCodeGenInfo(StringRef TT, Reloc::Model RM,
 }
 
 static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
-                                    MCContext &Ctx, TargetAsmBackend &TAB,
+                                    MCContext &Ctx, MCAsmBackend &MAB,
                                     raw_ostream &_OS,
                                     MCCodeEmitter *_Emitter,
                                     bool RelaxAll,
@@ -89,7 +89,7 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
     return NULL;
   }
 
-  return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll, NoExecStack);
+  return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
 }
 
 static MCInstPrinter *createMBlazeMCInstPrinter(const Target &T,
@@ -125,8 +125,8 @@ extern "C" void LLVMInitializeMBlazeTargetMC() {
                                       llvm::createMBlazeMCCodeEmitter);
 
   // Register the asm backend
-  TargetRegistry::RegisterAsmBackend(TheMBlazeTarget,
-                                     createMBlazeAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheMBlazeTarget,
+                                       createMBlazeAsmBackend);
 
   // Register the object streamer
   TargetRegistry::RegisterObjectStreamer(TheMBlazeTarget,

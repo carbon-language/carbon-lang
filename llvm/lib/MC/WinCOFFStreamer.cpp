@@ -24,7 +24,7 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCWin64EH.h"
-#include "llvm/MC/TargetAsmBackend.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/StringMap.h"
 
@@ -40,7 +40,7 @@ public:
   MCSymbol const *CurSymbol;
 
   WinCOFFStreamer(MCContext &Context,
-                  TargetAsmBackend &TAB,
+                  MCAsmBackend &MAB,
                   MCCodeEmitter &CE,
                   raw_ostream &OS);
 
@@ -123,10 +123,10 @@ private:
 } // end anonymous namespace.
 
 WinCOFFStreamer::WinCOFFStreamer(MCContext &Context,
-                                 TargetAsmBackend &TAB,
+                                 MCAsmBackend &MAB,
                                  MCCodeEmitter &CE,
                                  raw_ostream &OS)
-    : MCObjectStreamer(Context, TAB, OS, &CE)
+    : MCObjectStreamer(Context, MAB, OS, &CE)
     , CurSymbol(NULL) {
 }
 
@@ -395,11 +395,11 @@ void WinCOFFStreamer::Finish() {
 namespace llvm
 {
   MCStreamer *createWinCOFFStreamer(MCContext &Context,
-                                    TargetAsmBackend &TAB,
+                                    MCAsmBackend &MAB,
                                     MCCodeEmitter &CE,
                                     raw_ostream &OS,
                                     bool RelaxAll) {
-    WinCOFFStreamer *S = new WinCOFFStreamer(Context, TAB, CE, OS);
+    WinCOFFStreamer *S = new WinCOFFStreamer(Context, MAB, CE, OS);
     S->getAssembler().setRelaxAll(RelaxAll);
     return S;
   }

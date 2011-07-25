@@ -1,4 +1,4 @@
-//===-- llvm/MC/TargetAsmBackend.h - Target Asm Backend ---------*- C++ -*-===//
+//===-- llvm/MC/MCAsmBack.h - MC Asm Backend --------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_TARGETASMBACKEND_H
-#define LLVM_MC_TARGETASMBACKEND_H
+#ifndef LLVM_MC_MCASMBACKEND_H
+#define LLVM_MC_MCASMBACKEND_H
 
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCFixup.h"
@@ -25,17 +25,17 @@ template<typename T>
 class SmallVectorImpl;
 class raw_ostream;
 
-/// TargetAsmBackend - Generic interface to target specific assembler backends.
-class TargetAsmBackend {
-  TargetAsmBackend(const TargetAsmBackend &);   // DO NOT IMPLEMENT
-  void operator=(const TargetAsmBackend &);  // DO NOT IMPLEMENT
+/// MCAsmBackend - Generic interface to target specific assembler backends.
+class MCAsmBackend {
+  MCAsmBackend(const MCAsmBackend &);   // DO NOT IMPLEMENT
+  void operator=(const MCAsmBackend &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
-  TargetAsmBackend();
+  MCAsmBackend();
 
   unsigned HasReliableSymbolDifference : 1;
 
 public:
-  virtual ~TargetAsmBackend();
+  virtual ~MCAsmBackend();
 
   /// createObjectWriter - Create a new MCObjectWriter instance for use by the
   /// assembler backend to emit the final object file.

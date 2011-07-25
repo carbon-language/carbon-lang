@@ -10,14 +10,14 @@
 #ifndef LLVM_MC_MCASSEMBLER_H
 #define LLVM_MC_MCASSEMBLER_H
 
+#include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/MC/MCFixup.h"
-#include "llvm/MC/MCInst.h"
 #include "llvm/Support/DataTypes.h"
 #include <vector> // FIXME: Shouldn't be needed.
 
@@ -36,7 +36,7 @@ class MCSectionData;
 class MCSymbol;
 class MCSymbolData;
 class MCValue;
-class TargetAsmBackend;
+class MCAsmBackend;
 
 class MCFragment : public ilist_node<MCFragment> {
   friend class MCAsmLayout;
@@ -660,7 +660,7 @@ private:
 
   MCContext &Context;
 
-  TargetAsmBackend &Backend;
+  MCAsmBackend &Backend;
 
   MCCodeEmitter &Emitter;
 
@@ -780,14 +780,14 @@ public:
   // concrete and require clients to pass in a target like object. The other
   // option is to make this abstract, and have targets provide concrete
   // implementations as we do with AsmParser.
-  MCAssembler(MCContext &Context_, TargetAsmBackend &Backend_,
+  MCAssembler(MCContext &Context_, MCAsmBackend &Backend_,
               MCCodeEmitter &Emitter_, MCObjectWriter &Writer_,
               raw_ostream &OS);
   ~MCAssembler();
 
   MCContext &getContext() const { return Context; }
 
-  TargetAsmBackend &getBackend() const { return Backend; }
+  MCAsmBackend &getBackend() const { return Backend; }
 
   MCCodeEmitter &getEmitter() const { return Emitter; }
 

@@ -91,13 +91,13 @@ static MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM,
 
 // This is duplicated code. Refactor this.
 static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
-                                    MCContext &Ctx, TargetAsmBackend &TAB,
+                                    MCContext &Ctx, MCAsmBackend &MAB,
                                     raw_ostream &OS,
                                     MCCodeEmitter *Emitter,
                                     bool RelaxAll,
                                     bool NoExecStack) {
   if (Triple(TT).isOSDarwin())
-    return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
+    return createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
 
   return NULL;
 }
@@ -136,8 +136,8 @@ extern "C" void LLVMInitializePowerPCTargetMC() {
   TargetRegistry::RegisterCodeEmitter(ThePPC64Target, createPPCMCCodeEmitter);
   
     // Register the asm backend.
-  TargetRegistry::RegisterAsmBackend(ThePPC32Target, createPPCAsmBackend);
-  TargetRegistry::RegisterAsmBackend(ThePPC64Target, createPPCAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(ThePPC32Target, createPPCAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(ThePPC64Target, createPPCAsmBackend);
   
   // Register the object streamer.
   TargetRegistry::RegisterObjectStreamer(ThePPC32Target, createMCStreamer);

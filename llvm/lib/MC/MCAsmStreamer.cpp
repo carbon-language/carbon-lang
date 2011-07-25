@@ -19,7 +19,7 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/TargetAsmBackend.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -41,7 +41,7 @@ protected:
 private:
   OwningPtr<MCInstPrinter> InstPrinter;
   OwningPtr<MCCodeEmitter> Emitter;
-  OwningPtr<TargetAsmBackend> AsmBackend;
+  OwningPtr<MCAsmBackend> AsmBackend;
 
   SmallString<128> CommentToEmit;
   raw_svector_ostream CommentStream;
@@ -64,7 +64,7 @@ public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
                 bool isVerboseAsm, bool useLoc, bool useCFI,
                 MCInstPrinter *printer, MCCodeEmitter *emitter,
-                TargetAsmBackend *asmbackend,
+                MCAsmBackend *asmbackend,
                 bool showInst)
     : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
       InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
@@ -1262,8 +1262,8 @@ MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     formatted_raw_ostream &OS,
                                     bool isVerboseAsm, bool useLoc,
                                     bool useCFI, MCInstPrinter *IP,
-                                    MCCodeEmitter *CE, TargetAsmBackend *TAB,
+                                    MCCodeEmitter *CE, MCAsmBackend *MAB,
                                     bool ShowInst) {
   return new MCAsmStreamer(Context, OS, isVerboseAsm, useLoc, useCFI,
-                           IP, CE, TAB, ShowInst);
+                           IP, CE, MAB, ShowInst);
 }

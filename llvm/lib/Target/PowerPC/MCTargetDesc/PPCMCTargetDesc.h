@@ -14,15 +14,13 @@
 #ifndef PPCMCTARGETDESC_H
 #define PPCMCTARGETDESC_H
 
-#include <string>
-
 namespace llvm {
+class MCAsmBackend;
 class MCCodeEmitter;
 class MCContext;
 class MCInstrInfo;
 class MCSubtargetInfo;
 class Target;
-class TargetAsmBackend;
 class StringRef;
 
 extern Target ThePPC32Target;
@@ -32,7 +30,7 @@ MCCodeEmitter *createPPCMCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCSubtargetInfo &STI,
                                       MCContext &Ctx);
 
-TargetAsmBackend *createPPCAsmBackend(const Target &, const std::string &);
+MCAsmBackend *createPPCAsmBackend(const Target &T, StringRef TT);
   
 } // End llvm namespace
 

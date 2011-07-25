@@ -17,10 +17,10 @@
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/TargetAsmBackend.h"
+#include "llvm/MC/MCAsmBackend.h"
 using namespace llvm;
 
-MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
+MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
                                    raw_ostream &OS, MCCodeEmitter *Emitter_)
   : MCStreamer(Context),
     Assembler(new MCAssembler(Context, TAB,
@@ -30,7 +30,7 @@ MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
 {
 }
 
-MCObjectStreamer::MCObjectStreamer(MCContext &Context, TargetAsmBackend &TAB,
+MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
                                    raw_ostream &OS, MCCodeEmitter *Emitter_,
                                    MCAssembler *_Assembler)
   : MCStreamer(Context), Assembler(_Assembler), CurSectionData(0)

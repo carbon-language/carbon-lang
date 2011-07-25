@@ -14,6 +14,7 @@
 
 #include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCInstPrinter.h"
@@ -24,7 +25,6 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/SubtargetFeature.h"
-#include "llvm/MC/TargetAsmBackend.h"
 #include "llvm/MC/TargetAsmParser.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
@@ -368,22 +368,22 @@ static int AssembleInput(const char *ProgName) {
     MCInstPrinter *IP =
       TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI);
     MCCodeEmitter *CE = 0;
-    TargetAsmBackend *TAB = 0;
+    MCAsmBackend *MAB = 0;
     if (ShowEncoding) {
       CE = TheTarget->createCodeEmitter(*MCII, *STI, Ctx);
-      TAB = TheTarget->createAsmBackend(TripleName);
+      MAB = TheTarget->createMCAsmBackend(TripleName);
     }
     Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/true,
                                            /*useLoc*/ true,
-                                           /*useCFI*/ true, IP, CE, TAB,
+                                           /*useCFI*/ true, IP, CE, MAB,
                                            ShowInst));
   } else if (FileType == OFT_Null) {
     Str.reset(createNullStreamer(Ctx));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     MCCodeEmitter *CE = TheTarget->createCodeEmitter(*MCII, *STI, Ctx);
-    TargetAsmBackend *TAB = TheTarget->createAsmBackend(TripleName);
-    Str.reset(TheTarget->createObjectStreamer(TripleName, Ctx, *TAB,
+    MCAsmBackend *MAB = TheTarget->createMCAsmBackend(TripleName);
+    Str.reset(TheTarget->createObjectStreamer(TripleName, Ctx, *MAB,
                                               FOS, CE, RelaxAll,
                                               NoExecStack));
   }

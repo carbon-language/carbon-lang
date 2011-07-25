@@ -21,7 +21,7 @@
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
-#include "llvm/MC/TargetAsmBackend.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -374,10 +374,10 @@ void MCELFStreamer::Finish() {
   this->MCObjectStreamer::Finish();
 }
 
-MCStreamer *llvm::createELFStreamer(MCContext &Context, TargetAsmBackend &TAB,
+MCStreamer *llvm::createELFStreamer(MCContext &Context, MCAsmBackend &MAB,
                                     raw_ostream &OS, MCCodeEmitter *CE,
                                     bool RelaxAll, bool NoExecStack) {
-  MCELFStreamer *S = new MCELFStreamer(Context, TAB, OS, CE);
+  MCELFStreamer *S = new MCELFStreamer(Context, MAB, OS, CE);
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
   if (NoExecStack)

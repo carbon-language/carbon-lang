@@ -19,7 +19,7 @@
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
-#include "llvm/MC/TargetAsmBackend.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -34,10 +34,10 @@ public:
                               /*HasRelocationAddend*/ false) {}
 };
 
-class ARMAsmBackend : public TargetAsmBackend {
+class ARMAsmBackend : public MCAsmBackend {
   bool isThumbMode;  // Currently emitting Thumb code.
 public:
-  ARMAsmBackend(const Target &T) : TargetAsmBackend(), isThumbMode(false) {}
+  ARMAsmBackend(const Target &T) : MCAsmBackend(), isThumbMode(false) {}
 
   unsigned getNumFixupKinds() const { return ARM::NumTargetFixupKinds; }
 
@@ -80,7 +80,7 @@ public:
     };
 
     if (Kind < FirstTargetFixupKind)
-      return TargetAsmBackend::getFixupKindInfo(Kind);
+      return MCAsmBackend::getFixupKindInfo(Kind);
 
     assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
            "Invalid kind!");
@@ -491,8 +491,7 @@ void DarwinARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
 
 } // end anonymous namespace
 
-TargetAsmBackend *llvm::createARMAsmBackend(const Target &T,
-                                            const std::string &TT) {
+MCAsmBackend *llvm::createARMAsmBackend(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin()) {

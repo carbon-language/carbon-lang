@@ -137,11 +137,11 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 
     // Create a code emitter if asked to show the encoding.
     MCCodeEmitter *MCE = 0;
-    TargetAsmBackend *TAB = 0;
+    MCAsmBackend *MAB = 0;
     if (ShowMCEncoding) {
       const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
       MCE = getTarget().createCodeEmitter(*getInstrInfo(), STI, *Context);
-      TAB = getTarget().createAsmBackend(getTargetTriple());
+      MAB = getTarget().createMCAsmBackend(getTargetTriple());
     }
 
     MCStreamer *S = getTarget().createAsmStreamer(*Context, Out,
@@ -149,7 +149,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                                   hasMCUseLoc(),
                                                   hasMCUseCFI(),
                                                   InstPrinter,
-                                                  MCE, TAB,
+                                                  MCE, MAB,
                                                   ShowMCInst);
     AsmStreamer.reset(S);
     break;
@@ -160,12 +160,12 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
     MCCodeEmitter *MCE = getTarget().createCodeEmitter(*getInstrInfo(), STI,
                                                        *Context);
-    TargetAsmBackend *TAB = getTarget().createAsmBackend(getTargetTriple());
-    if (MCE == 0 || TAB == 0)
+    MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple());
+    if (MCE == 0 || MAB == 0)
       return true;
 
     AsmStreamer.reset(getTarget().createObjectStreamer(getTargetTriple(),
-                                                       *Context, *TAB, Out, MCE,
+                                                       *Context, *MAB, Out, MCE,
                                                        hasMCRelaxAll(),
                                                        hasMCNoExecStack()));
     AsmStreamer.get()->InitSections();
@@ -237,13 +237,13 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
   // emission fails.
   const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
   MCCodeEmitter *MCE = getTarget().createCodeEmitter(*getInstrInfo(),STI, *Ctx);
-  TargetAsmBackend *TAB = getTarget().createAsmBackend(getTargetTriple());
-  if (MCE == 0 || TAB == 0)
+  MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple());
+  if (MCE == 0 || MAB == 0)
     return true;
 
   OwningPtr<MCStreamer> AsmStreamer;
   AsmStreamer.reset(getTarget().createObjectStreamer(getTargetTriple(), *Ctx,
-                                                     *TAB, Out, MCE,
+                                                     *MAB, Out, MCE,
                                                      hasMCRelaxAll(),
                                                      hasMCNoExecStack()));
   AsmStreamer.get()->InitSections();

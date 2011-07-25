@@ -133,7 +133,7 @@ static MCCodeGenInfo *createARMMCCodeGenInfo(StringRef TT, Reloc::Model RM,
 
 // This is duplicated code. Refactor this.
 static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
-                                    MCContext &Ctx, TargetAsmBackend &TAB,
+                                    MCContext &Ctx, MCAsmBackend &MAB,
                                     raw_ostream &OS,
                                     MCCodeEmitter *Emitter,
                                     bool RelaxAll,
@@ -141,14 +141,14 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin())
-    return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
+    return createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
 
   if (TheTriple.isOSWindows()) {
     llvm_unreachable("ARM does not support Windows COFF format");
     return NULL;
   }
 
-  return createELFStreamer(Ctx, TAB, OS, Emitter, RelaxAll, NoExecStack);
+  return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll, NoExecStack);
 }
 
 static MCInstPrinter *createARMMCInstPrinter(const Target &T,
@@ -189,8 +189,8 @@ extern "C" void LLVMInitializeARMTargetMC() {
   TargetRegistry::RegisterCodeEmitter(TheThumbTarget, createARMMCCodeEmitter);
 
   // Register the asm backend.
-  TargetRegistry::RegisterAsmBackend(TheARMTarget, createARMAsmBackend);
-  TargetRegistry::RegisterAsmBackend(TheThumbTarget, createARMAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheARMTarget, createARMAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheThumbTarget, createARMAsmBackend);
 
   // Register the object streamer.
   TargetRegistry::RegisterObjectStreamer(TheARMTarget, createMCStreamer);

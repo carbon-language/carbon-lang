@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/MBlazeMCTargetDesc.h"
-#include "llvm/MC/TargetAsmBackend.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCELFObjectWriter.h"
@@ -46,10 +46,10 @@ public:
                               /*HasRelocationAddend*/ true) {}
 };
 
-class MBlazeAsmBackend : public TargetAsmBackend {
+class MBlazeAsmBackend : public MCAsmBackend {
 public:
   MBlazeAsmBackend(const Target &T)
-    : TargetAsmBackend() {
+    : MCAsmBackend() {
   }
 
   unsigned getNumFixupKinds() const {
@@ -146,8 +146,7 @@ void ELFMBlazeAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
 }
 } // end anonymous namespace
 
-TargetAsmBackend *llvm::createMBlazeAsmBackend(const Target &T,
-                                            const std::string &TT) {
+MCAsmBackend *llvm::createMBlazeAsmBackend(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin())

@@ -1,4 +1,4 @@
-//===-- TargetAsmBackend.cpp - Target Assembly Backend ---------------------==//
+//===-- MCAsmBackend.cpp - Target MC Assembly Backend ----------------------==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,19 +7,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/TargetAsmBackend.h"
+#include "llvm/MC/MCAsmBackend.h"
 using namespace llvm;
 
-TargetAsmBackend::TargetAsmBackend()
+MCAsmBackend::MCAsmBackend()
   : HasReliableSymbolDifference(false)
 {
 }
 
-TargetAsmBackend::~TargetAsmBackend() {
+MCAsmBackend::~MCAsmBackend() {
 }
 
 const MCFixupKindInfo &
-TargetAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
+MCAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
   static const MCFixupKindInfo Builtins[] = {
     { "FK_Data_1", 0, 8, 0 },
     { "FK_Data_2", 0, 16, 0 },

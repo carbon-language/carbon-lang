@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/TargetAsmBackend.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCFixupKinds.h"
 #include "llvm/MC/MCMachObjectWriter.h"
@@ -31,10 +31,10 @@ public:
                         MCValue Target, uint64_t &FixedValue) {}
 };
 
-class PPCAsmBackend : public TargetAsmBackend {
+class PPCAsmBackend : public MCAsmBackend {
 const Target &TheTarget;
 public:
-  PPCAsmBackend(const Target &T) : TargetAsmBackend(), TheTarget(T) {}
+  PPCAsmBackend(const Target &T) : MCAsmBackend(), TheTarget(T) {}
 
   unsigned getNumFixupKinds() const { return PPC::NumTargetFixupKinds; }
 
@@ -49,7 +49,7 @@ public:
     };
   
     if (Kind < FirstTargetFixupKind)
-      return TargetAsmBackend::getFixupKindInfo(Kind);
+      return MCAsmBackend::getFixupKindInfo(Kind);
   
     assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
            "Invalid kind!");
@@ -114,8 +114,7 @@ namespace {
 
 
 
-TargetAsmBackend *llvm::createPPCAsmBackend(const Target &T,
-                                            const std::string &TT) {
+MCAsmBackend *llvm::createPPCAsmBackend(const Target &T, StringRef TT) {
   if (Triple(TT).isOSDarwin())
     return new DarwinPPCAsmBackend(T);
 

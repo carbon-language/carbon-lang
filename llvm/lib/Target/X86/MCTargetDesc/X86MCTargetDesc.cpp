@@ -367,7 +367,7 @@ static MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
 }
 
 static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
-                                    MCContext &Ctx, TargetAsmBackend &TAB,
+                                    MCContext &Ctx, MCAsmBackend &MAB,
                                     raw_ostream &_OS,
                                     MCCodeEmitter *_Emitter,
                                     bool RelaxAll,
@@ -375,12 +375,12 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
-    return createMachOStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);
+    return createMachOStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll);
 
   if (TheTriple.isOSWindows())
-    return createWinCOFFStreamer(Ctx, TAB, *_Emitter, _OS, RelaxAll);
+    return createWinCOFFStreamer(Ctx, MAB, *_Emitter, _OS, RelaxAll);
 
-  return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll, NoExecStack);
+  return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
 }
 
 static MCInstPrinter *createX86MCInstPrinter(const Target &T,
@@ -424,10 +424,10 @@ extern "C" void LLVMInitializeX86TargetMC() {
                                       createX86MCCodeEmitter);
 
   // Register the asm backend.
-  TargetRegistry::RegisterAsmBackend(TheX86_32Target,
-                                     createX86_32AsmBackend);
-  TargetRegistry::RegisterAsmBackend(TheX86_64Target,
-                                     createX86_64AsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheX86_32Target,
+                                       createX86_32AsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheX86_64Target,
+                                       createX86_64AsmBackend);
 
   // Register the object streamer.
   TargetRegistry::RegisterObjectStreamer(TheX86_32Target,

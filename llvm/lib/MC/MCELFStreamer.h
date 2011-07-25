@@ -25,11 +25,11 @@ namespace llvm {
 
 class MCELFStreamer : public MCObjectStreamer {
 public:
-  MCELFStreamer(MCContext &Context, TargetAsmBackend &TAB,
+  MCELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                   raw_ostream &OS, MCCodeEmitter *Emitter)
     : MCObjectStreamer(Context, TAB, OS, Emitter) {}
 
-  MCELFStreamer(MCContext &Context, TargetAsmBackend &TAB,
+  MCELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                 raw_ostream &OS, MCCodeEmitter *Emitter,
                 MCAssembler *Assembler)
     : MCObjectStreamer(Context, TAB, OS, Emitter, Assembler) {}

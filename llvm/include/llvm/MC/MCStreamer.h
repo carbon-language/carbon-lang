@@ -22,6 +22,7 @@
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
+  class MCAsmBackend;
   class MCAsmInfo;
   class MCCodeEmitter;
   class MCContext;
@@ -31,7 +32,6 @@ namespace llvm {
   class MCSection;
   class MCSymbol;
   class StringRef;
-  class TargetAsmBackend;
   class TargetLoweringObjectFile;
   class Twine;
   class raw_ostream;
@@ -563,14 +563,14 @@ namespace llvm {
                                 bool useCFI,
                                 MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0,
-                                TargetAsmBackend *TAB = 0,
+                                MCAsmBackend *TAB = 0,
                                 bool ShowInst = false);
 
   /// createMachOStreamer - Create a machine code streamer which will generate
   /// Mach-O format object files.
   ///
   /// Takes ownership of \arg TAB and \arg CE.
-  MCStreamer *createMachOStreamer(MCContext &Ctx, TargetAsmBackend &TAB,
+  MCStreamer *createMachOStreamer(MCContext &Ctx, MCAsmBackend &TAB,
                                   raw_ostream &OS, MCCodeEmitter *CE,
                                   bool RelaxAll = false);
 
@@ -579,13 +579,13 @@ namespace llvm {
   ///
   /// Takes ownership of \arg TAB and \arg CE.
   MCStreamer *createWinCOFFStreamer(MCContext &Ctx,
-                                    TargetAsmBackend &TAB,
+                                    MCAsmBackend &TAB,
                                     MCCodeEmitter &CE, raw_ostream &OS,
                                     bool RelaxAll = false);
 
   /// createELFStreamer - Create a machine code streamer which will generate
   /// ELF format object files.
-  MCStreamer *createELFStreamer(MCContext &Ctx, TargetAsmBackend &TAB,
+  MCStreamer *createELFStreamer(MCContext &Ctx, MCAsmBackend &TAB,
 				raw_ostream &OS, MCCodeEmitter *CE,
 				bool RelaxAll, bool NoExecStack);
 
@@ -599,7 +599,7 @@ namespace llvm {
   /// "pure" MC object files, for use with MC-JIT and testing tools.
   ///
   /// Takes ownership of \arg TAB and \arg CE.
-  MCStreamer *createPureStreamer(MCContext &Ctx, TargetAsmBackend &TAB,
+  MCStreamer *createPureStreamer(MCContext &Ctx, MCAsmBackend &TAB,
                                  raw_ostream &OS, MCCodeEmitter *CE);
 
 } // end namespace llvm
