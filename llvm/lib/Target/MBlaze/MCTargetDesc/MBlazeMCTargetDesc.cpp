@@ -13,6 +13,7 @@
 
 #include "MBlazeMCTargetDesc.h"
 #include "MBlazeMCAsmInfo.h"
+#include "InstPrinter/MBlazeInstPrinter.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
@@ -91,6 +92,14 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll, NoExecStack);
 }
 
+static MCInstPrinter *createMBlazeMCInstPrinter(const Target &T,
+                                                unsigned SyntaxVariant,
+                                                const MCAsmInfo &MAI) {
+  if (SyntaxVariant == 0)
+    return new MBlazeInstPrinter(MAI);
+  return 0;
+}
+
 // Force static initialization.
 extern "C" void LLVMInitializeMBlazeTargetMC() {
   // Register the MC asm info.
@@ -122,4 +131,8 @@ extern "C" void LLVMInitializeMBlazeTargetMC() {
   // Register the object streamer
   TargetRegistry::RegisterObjectStreamer(TheMBlazeTarget,
                                          createMCStreamer);
+
+  // Register the MCInstPrinter.
+  TargetRegistry::RegisterMCInstPrinter(TheMBlazeTarget,
+                                        createMBlazeMCInstPrinter);
 }

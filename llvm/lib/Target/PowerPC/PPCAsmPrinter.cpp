@@ -679,18 +679,8 @@ static AsmPrinter *createPPCAsmPrinterPass(TargetMachine &tm,
   return new PPCLinuxAsmPrinter(tm, Streamer);
 }
 
-static MCInstPrinter *createPPCMCInstPrinter(const Target &T,
-                                             unsigned SyntaxVariant,
-                                             const MCAsmInfo &MAI) {
-  return new PPCInstPrinter(MAI, SyntaxVariant);
-}
-
-
 // Force static initialization.
 extern "C" void LLVMInitializePowerPCAsmPrinter() { 
   TargetRegistry::RegisterAsmPrinter(ThePPC32Target, createPPCAsmPrinterPass);
   TargetRegistry::RegisterAsmPrinter(ThePPC64Target, createPPCAsmPrinterPass);
-  
-  TargetRegistry::RegisterMCInstPrinter(ThePPC32Target, createPPCMCInstPrinter);
-  TargetRegistry::RegisterMCInstPrinter(ThePPC64Target, createPPCMCInstPrinter);
 }

@@ -13,6 +13,7 @@
 
 #include "ARMMCTargetDesc.h"
 #include "ARMMCAsmInfo.h"
+#include "InstPrinter/ARMInstPrinter.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
@@ -150,6 +151,14 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   return createELFStreamer(Ctx, TAB, OS, Emitter, RelaxAll, NoExecStack);
 }
 
+static MCInstPrinter *createARMMCInstPrinter(const Target &T,
+                                             unsigned SyntaxVariant,
+                                             const MCAsmInfo &MAI) {
+  if (SyntaxVariant == 0)
+    return new ARMInstPrinter(MAI);
+  return 0;
+}
+
 
 // Force static initialization.
 extern "C" void LLVMInitializeARMTargetMC() {
@@ -186,4 +195,8 @@ extern "C" void LLVMInitializeARMTargetMC() {
   // Register the object streamer.
   TargetRegistry::RegisterObjectStreamer(TheARMTarget, createMCStreamer);
   TargetRegistry::RegisterObjectStreamer(TheThumbTarget, createMCStreamer);
+
+  // Register the MCInstPrinter.
+  TargetRegistry::RegisterMCInstPrinter(TheARMTarget, createARMMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheThumbTarget, createARMMCInstPrinter);
 }

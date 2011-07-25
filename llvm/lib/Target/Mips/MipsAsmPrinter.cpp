@@ -424,17 +424,7 @@ void MipsAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
 }
 
 // Force static initialization.
-static MCInstPrinter *createMipsMCInstPrinter(const Target &T,
-                                              unsigned SyntaxVariant,
-                                              const MCAsmInfo &MAI) {
-  return new MipsInstPrinter(MAI);
-}
-
 extern "C" void LLVMInitializeMipsAsmPrinter() {
   RegisterAsmPrinter<MipsAsmPrinter> X(TheMipsTarget);
   RegisterAsmPrinter<MipsAsmPrinter> Y(TheMipselTarget);
-
-  TargetRegistry::RegisterMCInstPrinter(TheMipsTarget, createMipsMCInstPrinter);
-  TargetRegistry::RegisterMCInstPrinter(TheMipselTarget,
-                                        createMipsMCInstPrinter);
 }

@@ -13,6 +13,8 @@
 
 #include "X86MCTargetDesc.h"
 #include "X86MCAsmInfo.h"
+#include "InstPrinter/X86ATTInstPrinter.h"
+#include "InstPrinter/X86IntelInstPrinter.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -381,6 +383,16 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll, NoExecStack);
 }
 
+static MCInstPrinter *createX86MCInstPrinter(const Target &T,
+                                             unsigned SyntaxVariant,
+                                             const MCAsmInfo &MAI) {
+  if (SyntaxVariant == 0)
+    return new X86ATTInstPrinter(MAI);
+  if (SyntaxVariant == 1)
+    return new X86IntelInstPrinter(MAI);
+  return 0;
+}
+
 // Force static initialization.
 extern "C" void LLVMInitializeX86TargetMC() {
   // Register the MC asm info.
@@ -422,4 +434,10 @@ extern "C" void LLVMInitializeX86TargetMC() {
                                          createMCStreamer);
   TargetRegistry::RegisterObjectStreamer(TheX86_64Target,
                                          createMCStreamer);
+
+  // Register the MCInstPrinter.
+  TargetRegistry::RegisterMCInstPrinter(TheX86_32Target,
+                                        createX86MCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheX86_64Target,
+                                        createX86MCInstPrinter);
 }

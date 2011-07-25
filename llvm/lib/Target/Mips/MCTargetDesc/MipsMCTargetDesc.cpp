@@ -13,6 +13,7 @@
 
 #include "MipsMCTargetDesc.h"
 #include "MipsMCAsmInfo.h"
+#include "InstPrinter/MipsInstPrinter.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -74,6 +75,12 @@ static MCCodeGenInfo *createMipsMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
+static MCInstPrinter *createMipsMCInstPrinter(const Target &T,
+                                              unsigned SyntaxVariant,
+                                              const MCAsmInfo &MAI) {
+  return new MipsInstPrinter(MAI);
+}
+
 extern "C" void LLVMInitializeMipsTargetMC() {
   // Register the MC asm info.
   RegisterMCAsmInfoFn X(TheMipsTarget, createMipsMCAsmInfo);
@@ -95,4 +102,10 @@ extern "C" void LLVMInitializeMipsTargetMC() {
   // Register the MC subtarget info.
   TargetRegistry::RegisterMCSubtargetInfo(TheMipsTarget,
                                           createMipsMCSubtargetInfo);
+
+  // Register the MCInstPrinter.
+  TargetRegistry::RegisterMCInstPrinter(TheMipsTarget,
+                                        createMipsMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheMipselTarget,
+                                        createMipsMCInstPrinter);
 }

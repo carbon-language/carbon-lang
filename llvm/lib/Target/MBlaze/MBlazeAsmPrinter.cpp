@@ -316,18 +316,7 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
   return I == Pred->end() || !I->getDesc().isBarrier();
 }
 
-static MCInstPrinter *createMBlazeMCInstPrinter(const Target &T,
-                                                unsigned SyntaxVariant,
-                                                const MCAsmInfo &MAI) {
-  if (SyntaxVariant == 0)
-    return new MBlazeInstPrinter(MAI);
-  return 0;
-}
-
 // Force static initialization.
 extern "C" void LLVMInitializeMBlazeAsmPrinter() {
   RegisterAsmPrinter<MBlazeAsmPrinter> X(TheMBlazeTarget);
-  TargetRegistry::RegisterMCInstPrinter(TheMBlazeTarget,
-                                        createMBlazeMCInstPrinter);
-
 }

@@ -13,6 +13,7 @@
 
 #include "PPCMCTargetDesc.h"
 #include "PPCMCAsmInfo.h"
+#include "InstPrinter/PPCInstPrinter.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -101,6 +102,12 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
   return NULL;
 }
 
+static MCInstPrinter *createPPCMCInstPrinter(const Target &T,
+                                             unsigned SyntaxVariant,
+                                             const MCAsmInfo &MAI) {
+  return new PPCInstPrinter(MAI, SyntaxVariant);
+}
+
 extern "C" void LLVMInitializePowerPCTargetMC() {
   // Register the MC asm info.
   RegisterMCAsmInfoFn C(ThePPC32Target, createPPCMCAsmInfo);
@@ -135,4 +142,8 @@ extern "C" void LLVMInitializePowerPCTargetMC() {
   // Register the object streamer.
   TargetRegistry::RegisterObjectStreamer(ThePPC32Target, createMCStreamer);
   TargetRegistry::RegisterObjectStreamer(ThePPC64Target, createMCStreamer);
+
+  // Register the MCInstPrinter.
+  TargetRegistry::RegisterMCInstPrinter(ThePPC32Target, createPPCMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(ThePPC64Target, createPPCMCInstPrinter);
 }
