@@ -99,6 +99,11 @@ class RAGreedy : public MachineFunctionPass,
     /// Attempt live range splitting if assignment is impossible.
     RS_Split,
 
+    /// Attempt more aggressive live range splitting that is guaranteed to make
+    /// progress.  This is used for split products that may not be making
+    /// progress.
+    RS_Split2,
+
     /// Live range will be spilled.  No more splitting will be attempted.
     RS_Spill,
 
@@ -246,6 +251,7 @@ const char *const RAGreedy::StageName[] = {
     "RS_New",
     "RS_Assign",
     "RS_Split",
+    "RS_Split2",
     "RS_Spill",
     "RS_Done"
 };
@@ -451,7 +457,7 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
 /// @param BreaksHint True when B is already assigned to its preferred register.
 bool RAGreedy::shouldEvict(LiveInterval &A, bool IsHint,
                            LiveInterval &B, bool BreaksHint) {
-  bool CanSplit = getStage(B) <= RS_Split;
+  bool CanSplit = getStage(B) < RS_Spill;
 
   // Be fairly aggressive about following hints as long as the evictee can be
   // split.
@@ -987,13 +993,13 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
     }
 
     // Main interval. Allow repeated splitting as long as the number of live
-    // blocks is strictly decreasing.
+    // blocks is strictly decreasing. Otherwise force per-block splitting.
     if (IntvMap[i] == MainIntv) {
       if (SA->countLiveBlocks(&Reg) >= OrigBlocks) {
         DEBUG(dbgs() << "Main interval covers the same " << OrigBlocks
                      << " blocks as original.\n");
         // Don't allow repeated splitting as a safe guard against looping.
-        setStage(Reg, RS_Spill);
+        setStage(Reg, RS_Split2);
       }
       continue;
     }
@@ -1180,17 +1186,17 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   //
   // Instead we use these rules:
   //
-  // 1. Allow any split for ranges with getStage() < RS_Spill. (Except for the
+  // 1. Allow any split for ranges with getStage() < RS_Split2. (Except for the
   //    noop split, of course).
-  // 2. Require progress be made for ranges with getStage() >= RS_Spill. All
+  // 2. Require progress be made for ranges with getStage() == RS_Split2. All
   //    the new ranges must have fewer instructions than before the split.
-  // 3. New ranges with the same number of instructions are marked RS_Spill,
+  // 3. New ranges with the same number of instructions are marked RS_Split2,
   //    smaller ranges are marked RS_New.
   //
   // These rules allow a 3 -> 2+3 split once, which we need. They also prevent
   // excessive splitting and infinite loops.
   //
-  bool ProgressRequired = getStage(VirtReg) >= RS_Spill;
+  bool ProgressRequired = getStage(VirtReg) >= RS_Split2;
 
   // Best split candidate.
   unsigned BestBefore = NumGaps;
@@ -1309,7 +1315,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   DebugVars->splitRegister(VirtReg.reg, LREdit.regs());
 
   // If the new range has the same number of instructions as before, mark it as
-  // RS_Spill so the next split will be forced to make progress. Otherwise,
+  // RS_Split2 so the next split will be forced to make progress. Otherwise,
   // leave the new intervals as RS_New so they can compete.
   bool LiveBefore = BestBefore != 0 || BI.LiveIn;
   bool LiveAfter = BestAfter != NumGaps || BI.LiveOut;
@@ -1319,7 +1325,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     assert(!ProgressRequired && "Didn't make progress when it was required.");
     for (unsigned i = 0, e = IntvMap.size(); i != e; ++i)
       if (IntvMap[i] == 1) {
-        setStage(*LREdit.get(i), RS_Spill);
+        setStage(*LREdit.get(i), RS_Split2);
         DEBUG(dbgs() << PrintReg(LREdit.get(i)->reg));
       }
     DEBUG(dbgs() << '\n');
@@ -1347,8 +1353,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
   NamedRegionTimer T("Global Splitting", TimerGroupName, TimePassesIsEnabled);
 
-  // Don't iterate global splitting.
-  // Move straight to spilling if this range was produced by a global split.
+  // Ranges must be Split2 or less.
   if (getStage(VirtReg) >= RS_Spill)
     return 0;
 
@@ -1365,10 +1370,14 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
       return PhysReg;
   }
 
-  // First try to split around a region spanning multiple blocks.
-  unsigned PhysReg = tryRegionSplit(VirtReg, Order, NewVRegs);
-  if (PhysReg || !NewVRegs.empty())
-    return PhysReg;
+  // First try to split around a region spanning multiple blocks. RS_Split2
+  // ranges already made dubious progress with region splitting, so they go
+  // straight to single block splitting.
+  if (getStage(VirtReg) < RS_Split2) {
+    unsigned PhysReg = tryRegionSplit(VirtReg, Order, NewVRegs);
+    if (PhysReg || !NewVRegs.empty())
+      return PhysReg;
+  }
 
   // Then isolate blocks with multiple uses.
   SplitAnalysis::BlockPtrSet Blocks;
