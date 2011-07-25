@@ -34,7 +34,8 @@ using namespace llvm;
 // FIXME: completely move here.
 extern cl::opt<bool> ForceStackAlign;
 
-// FIXME: Remove once linker support is available.
+// FIXME: Remove once linker support is available. The feature exists only on
+// Darwin at the moment.
 static cl::opt<bool>
 GenerateCompactUnwind("gen-compact-unwind",
                       cl::desc("Generate compact unwind encoding"),
