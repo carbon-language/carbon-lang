@@ -60,27 +60,27 @@ static unsigned mblazeBinary2Opcode[] = {
 };
 
 static unsigned getRD(uint32_t insn) {
-  if (!MBlazeRegisterInfo::isRegister((insn>>21)&0x1F))
+  if (!isMBlazeRegister((insn>>21)&0x1F))
     return UNSUPPORTED;
-  return MBlazeRegisterInfo::getRegisterFromNumbering((insn>>21)&0x1F);
+  return getMBlazeRegisterNumbering((insn>>21)&0x1F);
 }
 
 static unsigned getRA(uint32_t insn) {
-  if (!MBlazeRegisterInfo::getRegisterFromNumbering((insn>>16)&0x1F))
+  if (!getMBlazeRegisterNumbering((insn>>16)&0x1F))
     return UNSUPPORTED;
-  return MBlazeRegisterInfo::getRegisterFromNumbering((insn>>16)&0x1F);
+  return getMBlazeRegisterNumbering((insn>>16)&0x1F);
 }
 
 static unsigned getRB(uint32_t insn) {
-  if (!MBlazeRegisterInfo::getRegisterFromNumbering((insn>>11)&0x1F))
+  if (!getMBlazeRegisterNumbering((insn>>11)&0x1F))
     return UNSUPPORTED;
-  return MBlazeRegisterInfo::getRegisterFromNumbering((insn>>11)&0x1F);
+  return getMBlazeRegisterNumbering((insn>>11)&0x1F);
 }
 
 static int64_t getRS(uint32_t insn) {
-  if (!MBlazeRegisterInfo::isSpecialRegister(insn&0x3FFF))
+  if (!isSpecialMBlazeRegister(insn&0x3FFF))
     return UNSUPPORTED;
-  return MBlazeRegisterInfo::getSpecialRegisterFromNumbering(insn&0x3FFF);
+  return getSpecialMBlazeRegisterFromNumbering(insn&0x3FFF);
 }
 
 static int64_t getIMM(uint32_t insn) {

@@ -78,6 +78,26 @@ namespace MBlazeII {
   };
 }
 
+static inline bool isMBlazeRegister(unsigned Reg) {
+  return Reg <= 31;
+}
+
+static inline bool isSpecialMBlazeRegister(unsigned Reg) {
+  switch (Reg) {
+    case 0x0000 : case 0x0001 : case 0x0003 : case 0x0005 : 
+    case 0x0007 : case 0x000B : case 0x000D : case 0x1000 : 
+    case 0x1001 : case 0x1002 : case 0x1003 : case 0x1004 : 
+    case 0x2000 : case 0x2001 : case 0x2002 : case 0x2003 : 
+    case 0x2004 : case 0x2005 : case 0x2006 : case 0x2007 : 
+    case 0x2008 : case 0x2009 : case 0x200A : case 0x200B : 
+      return true;
+
+    default:
+      return false;
+  }
+  return false; // Not reached
+}
+
 /// getMBlazeRegisterNumbering - Given the enum value for some register, e.g.
 /// MBlaze::R0, return the number that it corresponds to (e.g. 0).
 static inline unsigned getMBlazeRegisterNumbering(unsigned RegEnum) {
@@ -138,6 +158,37 @@ static inline unsigned getMBlazeRegisterNumbering(unsigned RegEnum) {
     case MBlaze::RPVR9  : return 0x2009;
     case MBlaze::RPVR10 : return 0x200A;
     case MBlaze::RPVR11 : return 0x200B;
+    default: llvm_unreachable("Unknown register number!");
+  }
+  return 0; // Not reached
+}
+
+static inline unsigned getSpecialMBlazeRegisterFromNumbering(unsigned Reg) {
+  switch (Reg) {
+    case 0x0000 : return MBlaze::RPC;
+    case 0x0001 : return MBlaze::RMSR;
+    case 0x0003 : return MBlaze::REAR;
+    case 0x0005 : return MBlaze::RESR;
+    case 0x0007 : return MBlaze::RFSR;
+    case 0x000B : return MBlaze::RBTR;
+    case 0x000D : return MBlaze::REDR;
+    case 0x1000 : return MBlaze::RPID;
+    case 0x1001 : return MBlaze::RZPR;
+    case 0x1002 : return MBlaze::RTLBX;
+    case 0x1003 : return MBlaze::RTLBLO;
+    case 0x1004 : return MBlaze::RTLBHI;
+    case 0x2000 : return MBlaze::RPVR0;
+    case 0x2001 : return MBlaze::RPVR1;
+    case 0x2002 : return MBlaze::RPVR2;
+    case 0x2003 : return MBlaze::RPVR3;
+    case 0x2004 : return MBlaze::RPVR4;
+    case 0x2005 : return MBlaze::RPVR5;
+    case 0x2006 : return MBlaze::RPVR6;
+    case 0x2007 : return MBlaze::RPVR7;
+    case 0x2008 : return MBlaze::RPVR8;
+    case 0x2009 : return MBlaze::RPVR9;
+    case 0x200A : return MBlaze::RPVR10;
+    case 0x200B : return MBlaze::RPVR11;
     default: llvm_unreachable("Unknown register number!");
   }
   return 0; // Not reached
