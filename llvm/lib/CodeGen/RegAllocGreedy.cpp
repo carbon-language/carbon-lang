@@ -90,12 +90,21 @@ class RAGreedy : public MachineFunctionPass,
   // range splitting algorithm terminates, something that is otherwise hard to
   // ensure.
   enum LiveRangeStage {
-    RS_New,      ///< Never seen before.
-    RS_First,    ///< First time in the queue.
-    RS_Second,   ///< Second time in the queue.
-    RS_Global,   ///< Produced by global splitting.
-    RS_Local,    ///< Produced by local splitting.
-    RS_Spill     ///< Produced by spilling.
+    /// Newly created live range that has never been queued.
+    RS_New,
+
+    /// Only attempt assignment and eviction. Then requeue as RS_Split.
+    RS_Assign,
+
+    /// Attempt live range splitting if assignment is impossible.
+    RS_Split,
+
+    /// Live range will be spilled.  No more splitting will be attempted.
+    RS_Spill,
+
+    /// There is nothing more we can do to this live range.  Abort compilation
+    /// if it can't be assigned.
+    RS_Done
   };
 
   static const char *const StageName[];
@@ -234,12 +243,11 @@ char RAGreedy::ID = 0;
 
 #ifndef NDEBUG
 const char *const RAGreedy::StageName[] = {
-  "RS_New",
-  "RS_First",
-  "RS_Second",
-  "RS_Global",
-  "RS_Local",
-  "RS_Spill"
+    "RS_New",
+    "RS_Assign",
+    "RS_Split",
+    "RS_Spill",
+    "RS_Done"
 };
 #endif
 
@@ -351,9 +359,9 @@ void RAGreedy::enqueue(LiveInterval *LI) {
 
   ExtraRegInfo.grow(Reg);
   if (ExtraRegInfo[Reg].Stage == RS_New)
-    ExtraRegInfo[Reg].Stage = RS_First;
+    ExtraRegInfo[Reg].Stage = RS_Assign;
 
-  if (ExtraRegInfo[Reg].Stage == RS_Second)
+  if (ExtraRegInfo[Reg].Stage == RS_Split)
     // Unsplit ranges that couldn't be allocated immediately are deferred until
     // everything else has been allocated. Long ranges are allocated last so
     // they are split against realistic interference.
@@ -443,7 +451,7 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
 /// @param BreaksHint True when B is already assigned to its preferred register.
 bool RAGreedy::shouldEvict(LiveInterval &A, bool IsHint,
                            LiveInterval &B, bool BreaksHint) {
-  bool CanSplit = getStage(B) <= RS_Second;
+  bool CanSplit = getStage(B) <= RS_Split;
 
   // Be fairly aggressive about following hints as long as the evictee can be
   // split.
@@ -488,7 +496,7 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
       if (TargetRegisterInfo::isPhysicalRegister(Intf->reg))
         return false;
       // Never evict spill products. They cannot split or spill.
-      if (getStage(*Intf) == RS_Spill)
+      if (getStage(*Intf) == RS_Done)
         return false;
       // Once a live range becomes small enough, it is urgent that we find a
       // register for it. This is indicated by an infinite spill weight. These
@@ -974,7 +982,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
     // Remainder interval. Don't try splitting again, spill if it doesn't
     // allocate.
     if (IntvMap[i] == 0) {
-      setStage(Reg, RS_Global);
+      setStage(Reg, RS_Spill);
       continue;
     }
 
@@ -985,7 +993,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
         DEBUG(dbgs() << "Main interval covers the same " << OrigBlocks
                      << " blocks as original.\n");
         // Don't allow repeated splitting as a safe guard against looping.
-        setStage(Reg, RS_Global);
+        setStage(Reg, RS_Spill);
       }
       continue;
     }
@@ -1172,17 +1180,17 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   //
   // Instead we use these rules:
   //
-  // 1. Allow any split for ranges with getStage() < RS_Local. (Except for the
+  // 1. Allow any split for ranges with getStage() < RS_Spill. (Except for the
   //    noop split, of course).
-  // 2. Require progress be made for ranges with getStage() >= RS_Local. All
+  // 2. Require progress be made for ranges with getStage() >= RS_Spill. All
   //    the new ranges must have fewer instructions than before the split.
-  // 3. New ranges with the same number of instructions are marked RS_Local,
+  // 3. New ranges with the same number of instructions are marked RS_Spill,
   //    smaller ranges are marked RS_New.
   //
   // These rules allow a 3 -> 2+3 split once, which we need. They also prevent
   // excessive splitting and infinite loops.
   //
-  bool ProgressRequired = getStage(VirtReg) >= RS_Local;
+  bool ProgressRequired = getStage(VirtReg) >= RS_Spill;
 
   // Best split candidate.
   unsigned BestBefore = NumGaps;
@@ -1301,7 +1309,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   DebugVars->splitRegister(VirtReg.reg, LREdit.regs());
 
   // If the new range has the same number of instructions as before, mark it as
-  // RS_Local so the next split will be forced to make progress. Otherwise,
+  // RS_Spill so the next split will be forced to make progress. Otherwise,
   // leave the new intervals as RS_New so they can compete.
   bool LiveBefore = BestBefore != 0 || BI.LiveIn;
   bool LiveAfter = BestAfter != NumGaps || BI.LiveOut;
@@ -1311,7 +1319,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     assert(!ProgressRequired && "Didn't make progress when it was required.");
     for (unsigned i = 0, e = IntvMap.size(); i != e; ++i)
       if (IntvMap[i] == 1) {
-        setStage(*LREdit.get(i), RS_Local);
+        setStage(*LREdit.get(i), RS_Spill);
         DEBUG(dbgs() << PrintReg(LREdit.get(i)->reg));
       }
     DEBUG(dbgs() << '\n');
@@ -1341,7 +1349,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
   // Don't iterate global splitting.
   // Move straight to spilling if this range was produced by a global split.
-  if (getStage(VirtReg) >= RS_Global)
+  if (getStage(VirtReg) >= RS_Spill)
     return 0;
 
   SA->analyze(&VirtReg);
@@ -1368,7 +1376,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
     LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
     SE->reset(LREdit);
     SE->splitSingleBlocks(Blocks);
-    setStage(NewVRegs.begin(), NewVRegs.end(), RS_Global);
+    setStage(NewVRegs.begin(), NewVRegs.end(), RS_Spill);
     if (VerifyEnabled)
       MF->verify(this, "After splitting live range around basic blocks");
   }
@@ -1394,9 +1402,9 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
                << " Cascade " << ExtraRegInfo[VirtReg.reg].Cascade << '\n');
 
   // Try to evict a less worthy live range, but only for ranges from the primary
-  // queue. The RS_Second ranges already failed to do this, and they should not
+  // queue. The RS_Split ranges already failed to do this, and they should not
   // get a second chance until they have been split.
-  if (Stage != RS_Second)
+  if (Stage != RS_Split)
     if (unsigned PhysReg = tryEvict(VirtReg, Order, NewVRegs))
       return PhysReg;
 
@@ -1405,8 +1413,8 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   // The first time we see a live range, don't try to split or spill.
   // Wait until the second time, when all smaller ranges have been allocated.
   // This gives a better picture of the interference to split around.
-  if (Stage == RS_First) {
-    setStage(VirtReg, RS_Second);
+  if (Stage < RS_Split) {
+    setStage(VirtReg, RS_Split);
     DEBUG(dbgs() << "wait for second round\n");
     NewVRegs.push_back(&VirtReg);
     return 0;
@@ -1414,7 +1422,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
 
   // If we couldn't allocate a register from spilling, there is probably some
   // invalid inline assembly. The base class wil report it.
-  if (Stage >= RS_Spill || !VirtReg.isSpillable())
+  if (Stage >= RS_Done || !VirtReg.isSpillable())
     return ~0u;
 
   // Try splitting VirtReg or interferences.
@@ -1426,7 +1434,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   NamedRegionTimer T("Spiller", TimerGroupName, TimePassesIsEnabled);
   LiveRangeEdit LRE(VirtReg, NewVRegs, this);
   spiller().spill(LRE);
-  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Spill);
+  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Done);
 
   if (VerifyEnabled)
     MF->verify(this, "After spilling");
