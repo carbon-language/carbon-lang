@@ -467,3 +467,4 @@ def vinsertf128_insert : PatFrag<(ops node:$bigvec, node:$smallvec,
                                                    node:$index), [{
   return X86::isVINSERTF128Index(N);
 }], INSERT_get_vinsertf128_imm>;
+

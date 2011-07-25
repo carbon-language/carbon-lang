@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -march=x86 -mcpu=corei7 -mattr=avx | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
 
 @x = common global <8 x float> zeroinitializer, align 32
 @y = common global <4 x double> zeroinitializer, align 32
@@ -12,4 +12,3 @@ entry:
   store <4 x double> zeroinitializer, <4 x double>* @y, align 32
   ret void
 }
-

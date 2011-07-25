@@ -2858,6 +2858,14 @@ def VMOVDI2PDIrm : VPDI<0x6E, MRMSrcMem, (outs VR128:$dst), (ins i32mem:$src),
                       [(set VR128:$dst,
                         (v4i32 (scalar_to_vector (loadi32 addr:$src))))]>,
                       VEX;
+def VMOV64toPQIrr : VRPDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
+                        "mov{d|q}\t{$src, $dst|$dst, $src}",
+                        [(set VR128:$dst,
+                          (v2i64 (scalar_to_vector GR64:$src)))]>, VEX;
+def VMOV64toSDrr : VRPDI<0x6E, MRMSrcReg, (outs FR64:$dst), (ins GR64:$src),
+                       "mov{d|q}\t{$src, $dst|$dst, $src}",
+                       [(set FR64:$dst, (bitconvert GR64:$src))]>, VEX;
+
 def MOVDI2PDIrr : PDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR32:$src),
                       "movd\t{$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
@@ -5357,6 +5365,20 @@ def : Pat<(vinsertf128_insert:$ins (v16i16 VR256:$src1), (v8i16 VR128:$src2),
                                    (i32 imm)),
           (VINSERTF128rr VR256:$src1, VR128:$src2,
                          (INSERT_get_vinsertf128_imm VR256:$ins))>;
+
+// Special COPY patterns
+def : Pat<(insert_subvector undef, (v2i64 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v4i64 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
+def : Pat<(insert_subvector undef, (v2f64 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
+def : Pat<(insert_subvector undef, (v4i32 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v8i32 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
+def : Pat<(insert_subvector undef, (v4f32 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v8f32 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
+def : Pat<(insert_subvector undef, (v8i16 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v16i16 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
+def : Pat<(insert_subvector undef, (v16i8 VR128:$src), (i32 0)),
+          (INSERT_SUBREG (v32i8 (IMPLICIT_DEF)), VR128:$src, sub_xmm)>;
 
 //===----------------------------------------------------------------------===//
 // VEXTRACTF128 - Extract packed floating-point values
