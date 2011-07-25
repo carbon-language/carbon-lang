@@ -573,21 +573,16 @@ bool ConstantFP::isExactlyValue(const APFloat &V) const {
 //===----------------------------------------------------------------------===//
 
 
-ConstantArray::ConstantArray(ArrayType *T,
-                             const std::vector<Constant*> &V)
+ConstantArray::ConstantArray(ArrayType *T, ArrayRef<Constant *> V)
   : Constant(T, ConstantArrayVal,
              OperandTraits<ConstantArray>::op_end(this) - V.size(),
              V.size()) {
   assert(V.size() == T->getNumElements() &&
          "Invalid initializer vector for constant array");
-  Use *OL = OperandList;
-  for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
-       I != E; ++I, ++OL) {
-    Constant *C = *I;
-    assert(C->getType() == T->getElementType() &&
+  for (unsigned i = 0, e = V.size(); i != e; ++i)
+    assert(V[i]->getType() == T->getElementType() &&
            "Initializer for array element doesn't match array element type!");
-    *OL = C;
-  }
+  std::copy(V.begin(), V.end(), op_begin());
 }
 
 Constant *ConstantArray::get(ArrayType *Ty, ArrayRef<Constant*> V) {
@@ -653,21 +648,16 @@ StructType *ConstantStruct::getTypeForElements(ArrayRef<Constant*> V,
 }
 
 
-ConstantStruct::ConstantStruct(StructType *T,
-                               const std::vector<Constant*> &V)
+ConstantStruct::ConstantStruct(StructType *T, ArrayRef<Constant *> V)
   : Constant(T, ConstantStructVal,
              OperandTraits<ConstantStruct>::op_end(this) - V.size(),
              V.size()) {
   assert((T->isOpaque() || V.size() == T->getNumElements()) &&
          "Invalid initializer vector for constant structure");
-  Use *OL = OperandList;
-  for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
-       I != E; ++I, ++OL) {
-    Constant *C = *I;
-    assert((T->isOpaque() || C->getType() == T->getElementType(I-V.begin())) &&
+  for (unsigned i = 0, e = V.size(); i != e; ++i)
+    assert((T->isOpaque() || V[i]->getType() == T->getElementType(i)) &&
            "Initializer for struct element doesn't match struct element type!");
-    *OL = C;
-  }
+  std::copy(V.begin(), V.end(), op_begin());
 }
 
 // ConstantStruct accessors.
@@ -692,19 +682,14 @@ Constant* ConstantStruct::get(StructType *T, ...) {
   return get(T, Values);
 }
 
-ConstantVector::ConstantVector(VectorType *T,
-                               const std::vector<Constant*> &V)
+ConstantVector::ConstantVector(VectorType *T, ArrayRef<Constant *> V)
   : Constant(T, ConstantVectorVal,
              OperandTraits<ConstantVector>::op_end(this) - V.size(),
              V.size()) {
-  Use *OL = OperandList;
-  for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
-       I != E; ++I, ++OL) {
-    Constant *C = *I;
-    assert(C->getType() == T->getElementType() &&
+  for (size_t i = 0, e = V.size(); i != e; i++)
+    assert(V[i]->getType() == T->getElementType() &&
            "Initializer for vector element doesn't match vector element type!");
-    *OL = C;
-  }
+  std::copy(V.begin(), V.end(), op_begin());
 }
 
 // ConstantVector accessors.

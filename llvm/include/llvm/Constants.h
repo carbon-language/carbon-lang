@@ -329,7 +329,7 @@ class ConstantArray : public Constant {
                                     std::vector<Constant*> >;
   ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
 protected:
-  ConstantArray(ArrayType *T, const std::vector<Constant*> &Val);
+  ConstantArray(ArrayType *T, ArrayRef<Constant *> Val);
 public:
   // ConstantArray accessors
   static Constant *get(ArrayType *T, ArrayRef<Constant*> V);
@@ -400,7 +400,7 @@ class ConstantStruct : public Constant {
                                     std::vector<Constant*> >;
   ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
 protected:
-  ConstantStruct(StructType *T, const std::vector<Constant*> &Val);
+  ConstantStruct(StructType *T, ArrayRef<Constant *> Val);
 public:
   // ConstantStruct accessors
   static Constant *get(StructType *T, ArrayRef<Constant*> V);
@@ -461,7 +461,7 @@ class ConstantVector : public Constant {
                                     std::vector<Constant*> >;
   ConstantVector(const ConstantVector &);      // DO NOT IMPLEMENT
 protected:
-  ConstantVector(VectorType *T, const std::vector<Constant*> &Val);
+  ConstantVector(VectorType *T, ArrayRef<Constant *> Val);
 public:
   // ConstantVector accessors
   static Constant *get(ArrayRef<Constant*> V);
