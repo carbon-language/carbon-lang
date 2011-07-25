@@ -65,6 +65,9 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   // Default to no types using fpret.
   RealTypeUsesObjCFPRet = 0;
 
+  // Default to using preferred type alignment.
+  UsePreferredTypeAlign = true;
+
   // Default to using the Itanium ABI.
   CXXABI = CXXABI_Itanium;
 

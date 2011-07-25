@@ -1592,10 +1592,15 @@ CharUnits IntExprEvaluator::GetAlignOfType(QualType T) {
   //   result shall be the alignment of the referenced type."
   if (const ReferenceType *Ref = T->getAs<ReferenceType>())
     T = Ref->getPointeeType();
-
-  // __alignof is defined to return the preferred alignment.
-  return Info.Ctx.toCharUnitsFromBits(
-    Info.Ctx.getPreferredTypeAlign(T.getTypePtr()));
+ 
+  // __alignof defaults to returning the preferred alignment, but
+  // can be overridden by the specific target.
+  if (Info.Ctx.Target.usePreferredTypeAlign())
+    return Info.Ctx.toCharUnitsFromBits(
+      Info.Ctx.getPreferredTypeAlign(T.getTypePtr()));
+  else
+    return Info.Ctx.toCharUnitsFromBits(
+      Info.Ctx.getTypeAlign(T.getTypePtr()));
 }
 
 CharUnits IntExprEvaluator::GetAlignOfExpr(const Expr *E) {

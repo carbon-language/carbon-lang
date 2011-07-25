@@ -1978,11 +1978,13 @@ public:
                              "v64:32:64-v128:32:128-a0:0:32-n32");
       }
 
-      // FIXME: Override "preferred align" for double and long long.
+      // Default to using minimum alignment, not preferred.
+      UsePreferredTypeAlign = false;
     } else if (Name == "aapcs") {
       // FIXME: Enumerated types are variable width in straight AAPCS.
+
     } else if (Name == "aapcs-linux") {
-      ;
+
     } else
       return false;
 
