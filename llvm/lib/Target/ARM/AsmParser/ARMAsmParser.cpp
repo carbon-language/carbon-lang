@@ -242,12 +242,12 @@ class ARMOperand : public MCParsedAsmOperand {
       unsigned SrcReg;
       unsigned ShiftReg;
       unsigned ShiftImm;
-    } ShiftedReg;
+    } RegShiftedReg;
     struct {
       ARM_AM::ShiftOpc ShiftTy;
       unsigned SrcReg;
       unsigned ShiftImm;
-    } ShiftedImm;
+    } RegShiftedImm;
   };
 
   ARMOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
@@ -295,10 +295,10 @@ public:
       Shift = o.Shift;
       break;
     case ShiftedRegister:
-      ShiftedReg = o.ShiftedReg;
+      RegShiftedReg = o.RegShiftedReg;
       break;
     case ShiftedImmediate:
-      ShiftedImm = o.ShiftedImm;
+      RegShiftedImm = o.RegShiftedImm;
       break;
     }
   }
@@ -501,8 +501,8 @@ public:
   bool isMemBarrierOpt() const { return Kind == MemBarrierOpt; }
   bool isMemory() const { return Kind == Memory; }
   bool isShifter() const { return Kind == Shifter; }
-  bool isShiftedReg() const { return Kind == ShiftedRegister; }
-  bool isShiftedImm() const { return Kind == ShiftedImmediate; }
+  bool isRegShiftedReg() const { return Kind == ShiftedRegister; }
+  bool isRegShiftedImm() const { return Kind == ShiftedImmediate; }
   bool isMemMode2() const {
     if (getMemAddrMode() != ARMII::AddrMode2)
       return false;
@@ -633,21 +633,21 @@ public:
     Inst.addOperand(MCOperand::CreateReg(getReg()));
   }
 
-  void addShiftedRegOperands(MCInst &Inst, unsigned N) const {
+  void addRegShiftedRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
-    assert(isShiftedReg() && "addShiftedRegOperands() on non ShiftedReg!");
-    Inst.addOperand(MCOperand::CreateReg(ShiftedReg.SrcReg));
-    Inst.addOperand(MCOperand::CreateReg(ShiftedReg.ShiftReg));
+    assert(isRegShiftedReg() && "addRegShiftedRegOperands() on non RegShiftedReg!");
+    Inst.addOperand(MCOperand::CreateReg(RegShiftedReg.SrcReg));
+    Inst.addOperand(MCOperand::CreateReg(RegShiftedReg.ShiftReg));
     Inst.addOperand(MCOperand::CreateImm(
-      ARM_AM::getSORegOpc(ShiftedReg.ShiftTy, ShiftedReg.ShiftImm)));
+      ARM_AM::getSORegOpc(RegShiftedReg.ShiftTy, RegShiftedReg.ShiftImm)));
   }
 
-  void addShiftedImmOperands(MCInst &Inst, unsigned N) const {
+  void addRegShiftedImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
-    assert(isShiftedImm() && "addShiftedImmOperands() on non ShiftedImm!");
-    Inst.addOperand(MCOperand::CreateReg(ShiftedImm.SrcReg));
+    assert(isRegShiftedImm() && "addRegShiftedImmOperands() on non RegShiftedImm!");
+    Inst.addOperand(MCOperand::CreateReg(RegShiftedImm.SrcReg));
     Inst.addOperand(MCOperand::CreateImm(
-      ARM_AM::getSORegOpc(ShiftedImm.ShiftTy, ShiftedImm.ShiftImm)));
+      ARM_AM::getSORegOpc(RegShiftedImm.ShiftTy, RegShiftedImm.ShiftImm)));
   }
 
 
@@ -935,10 +935,10 @@ public:
                                            unsigned ShiftImm,
                                            SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(ShiftedRegister);
-    Op->ShiftedReg.ShiftTy = ShTy;
-    Op->ShiftedReg.SrcReg = SrcReg;
-    Op->ShiftedReg.ShiftReg = ShiftReg;
-    Op->ShiftedReg.ShiftImm = ShiftImm;
+    Op->RegShiftedReg.ShiftTy = ShTy;
+    Op->RegShiftedReg.SrcReg = SrcReg;
+    Op->RegShiftedReg.ShiftReg = ShiftReg;
+    Op->RegShiftedReg.ShiftImm = ShiftImm;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -949,9 +949,9 @@ public:
                                             unsigned ShiftImm,
                                             SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(ShiftedImmediate);
-    Op->ShiftedImm.ShiftTy = ShTy;
-    Op->ShiftedImm.SrcReg = SrcReg;
-    Op->ShiftedImm.ShiftImm = ShiftImm;
+    Op->RegShiftedImm.ShiftTy = ShTy;
+    Op->RegShiftedImm.SrcReg = SrcReg;
+    Op->RegShiftedImm.ShiftImm = ShiftImm;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -1125,17 +1125,17 @@ void ARMOperand::print(raw_ostream &OS) const {
     break;
   case ShiftedRegister:
     OS << "<so_reg_reg "
-       << ShiftedReg.SrcReg
-       << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(ShiftedReg.ShiftImm))
-       << ", " << ShiftedReg.ShiftReg << ", "
-       << ARM_AM::getSORegOffset(ShiftedReg.ShiftImm)
+       << RegShiftedReg.SrcReg
+       << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(RegShiftedReg.ShiftImm))
+       << ", " << RegShiftedReg.ShiftReg << ", "
+       << ARM_AM::getSORegOffset(RegShiftedReg.ShiftImm)
        << ">";
     break;
   case ShiftedImmediate:
     OS << "<so_reg_imm "
-       << ShiftedImm.SrcReg
-       << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(ShiftedImm.ShiftImm))
-       << ", " << ARM_AM::getSORegOffset(ShiftedImm.ShiftImm)
+       << RegShiftedImm.SrcReg
+       << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(RegShiftedImm.ShiftImm))
+       << ", " << ARM_AM::getSORegOffset(RegShiftedImm.ShiftImm)
        << ">";
     break;
   case RegisterList:
@@ -1282,7 +1282,7 @@ int ARMAsmParser::TryParseShiftRegister(
 
   if (ShiftReg && ShiftTy != ARM_AM::rrx)
     Operands.push_back(ARMOperand::CreateShiftedRegister(ShiftTy, SrcReg,
-                                                       ShiftReg, Imm,
+                                                         ShiftReg, Imm,
                                                S, Parser.getTok().getLoc()));
   else
     Operands.push_back(ARMOperand::CreateShiftedImmediate(ShiftTy, SrcReg, Imm,
