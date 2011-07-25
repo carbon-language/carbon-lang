@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_TARGETASMLEXER_H
-#define LLVM_TARGET_TARGETASMLEXER_H
+#ifndef LLVM_MC_TARGETASMLEXER_H
+#define LLVM_MC_TARGETASMLEXER_H
 
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 

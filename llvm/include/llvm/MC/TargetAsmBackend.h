@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_TARGETASMBACKEND_H
-#define LLVM_TARGET_TARGETASMBACKEND_H
+#ifndef LLVM_MC_TARGETASMBACKEND_H
+#define LLVM_MC_TARGETASMBACKEND_H
 
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCFixup.h"
