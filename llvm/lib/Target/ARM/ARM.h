@@ -29,13 +29,7 @@ class ARMBaseTargetMachine;
 class FunctionPass;
 class JITCodeEmitter;
 class MachineInstr;
-class MCCodeEmitter;
 class MCInst;
-class MCInstrInfo;
-class MCObjectWriter;
-class MCSubtargetInfo;
-class TargetAsmBackend;
-class formatted_raw_ostream;
 
 FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM,
                                CodeGenOpt::Level OptLevel);

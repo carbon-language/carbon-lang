@@ -22,7 +22,7 @@
 
 namespace llvm {
 
-/// getRegisterNumbering - Given the enum value for some register, e.g.
+/// getPPCRegisterNumbering - Given the enum value for some register, e.g.
 /// PPC::F14, return the number that it corresponds to (e.g. 14).
 inline static unsigned getPPCRegisterNumbering(unsigned RegEnum) {
   using namespace PPC;

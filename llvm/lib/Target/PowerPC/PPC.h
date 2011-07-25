@@ -31,12 +31,7 @@ namespace llvm {
   class MachineInstr;
   class AsmPrinter;
   class MCInst;
-  class MCCodeEmitter;
-  class MCContext;
-  class MCInstrInfo;
-  class MCSubtargetInfo;
   class TargetMachine;
-  class TargetAsmBackend;
   
   FunctionPass *createPPCBranchSelectionPass();
   FunctionPass *createPPCISelDag(PPCTargetMachine &TM);

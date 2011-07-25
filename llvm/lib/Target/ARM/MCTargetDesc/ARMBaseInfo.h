@@ -20,9 +20,6 @@
 #include "ARMMCTargetDesc.h"
 #include "llvm/Support/ErrorHandling.h"
 
-// Note that the following auto-generated files only defined enum types, and
-// so are safe to include here.
-
 namespace llvm {
 
 // Enums corresponding to ARM condition codes
