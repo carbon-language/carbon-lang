@@ -2404,7 +2404,8 @@ CINDEX_LINKAGE CXCursor clang_getSpecializedCursorTemplate(CXCursor C);
  * \returns The piece of the name pointed to by the given cursor. If there is no
  * name, or if the PieceIndex is out-of-range, a null-cursor will be returned.
  */
-CXSourceRange clang_getCursorReferenceNameRange(CXCursor C, unsigned NameFlags, 
+CINDEX_LINKAGE CXSourceRange clang_getCursorReferenceNameRange(CXCursor C,
+                                                unsigned NameFlags, 
                                                 unsigned PieceIndex);
 
 enum CXNameRefFlags {

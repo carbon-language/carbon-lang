@@ -2324,6 +2324,47 @@ bool CursorVisitor::Visit(Stmt *S) {
   return result;
 }
 
+namespace {
+typedef llvm::SmallVector<SourceRange, 4> RefNamePieces;
+RefNamePieces buildPieces(unsigned NameFlags, bool IsMemberRefExpr, 
+                          const DeclarationNameInfo &NI, 
+                          const SourceRange &QLoc, 
+                          const ExplicitTemplateArgumentList *TemplateArgs = 0){
+  const bool WantQualifier = NameFlags & CXNameRange_WantQualifier;
+  const bool WantTemplateArgs = NameFlags & CXNameRange_WantTemplateArgs;
+  const bool WantSinglePiece = NameFlags & CXNameRange_WantSinglePiece;
+  
+  const DeclarationName::NameKind Kind = NI.getName().getNameKind();
+  
+  RefNamePieces Pieces;
+
+  if (WantQualifier && QLoc.isValid())
+    Pieces.push_back(QLoc);
+  
+  if (Kind != DeclarationName::CXXOperatorName || IsMemberRefExpr)
+    Pieces.push_back(NI.getLoc());
+  
+  if (WantTemplateArgs && TemplateArgs)
+    Pieces.push_back(SourceRange(TemplateArgs->LAngleLoc,
+                                 TemplateArgs->RAngleLoc));
+  
+  if (Kind == DeclarationName::CXXOperatorName) {
+    Pieces.push_back(SourceLocation::getFromRawEncoding(
+                       NI.getInfo().CXXOperatorName.BeginOpNameLoc));
+    Pieces.push_back(SourceLocation::getFromRawEncoding(
+                       NI.getInfo().CXXOperatorName.EndOpNameLoc));
+  }
+  
+  if (WantSinglePiece) {
+    SourceRange R(Pieces.front().getBegin(), Pieces.back().getEnd());
+    Pieces.clear();
+    Pieces.push_back(R);
+  }  
+
+  return Pieces;  
+}
+}
+
 //===----------------------------------------------------------------------===//
 // Misc. API hooks.
 //===----------------------------------------------------------------------===//               
@@ -4252,46 +4293,6 @@ void clang_getDefinitionSpellingAndExtent(CXCursor C,
   *endColumn = SM.getSpellingColumnNumber(Body->getRBracLoc());
 }
 
-namespace {
-typedef llvm::SmallVector<SourceRange, 4> RefNamePieces;
-RefNamePieces buildPieces(unsigned NameFlags, bool IsMemberRefExpr, 
-                          const DeclarationNameInfo &NI, 
-                          const SourceRange &QLoc, 
-                          const ExplicitTemplateArgumentList *TemplateArgs = 0){
-  const bool WantQualifier = NameFlags & CXNameRange_WantQualifier;
-  const bool WantTemplateArgs = NameFlags & CXNameRange_WantTemplateArgs;
-  const bool WantSinglePiece = NameFlags & CXNameRange_WantSinglePiece;
-  
-  const DeclarationName::NameKind Kind = NI.getName().getNameKind();
-  
-  RefNamePieces Pieces;
-
-  if (WantQualifier && QLoc.isValid())
-    Pieces.push_back(QLoc);
-  
-  if (Kind != DeclarationName::CXXOperatorName || IsMemberRefExpr)
-    Pieces.push_back(NI.getLoc());
-  
-  if (WantTemplateArgs && TemplateArgs)
-    Pieces.push_back(SourceRange(TemplateArgs->LAngleLoc,
-                                 TemplateArgs->RAngleLoc));
-  
-  if (Kind == DeclarationName::CXXOperatorName) {
-    Pieces.push_back(SourceLocation::getFromRawEncoding(
-                       NI.getInfo().CXXOperatorName.BeginOpNameLoc));
-    Pieces.push_back(SourceLocation::getFromRawEncoding(
-                       NI.getInfo().CXXOperatorName.EndOpNameLoc));
-  }
-  
-  if (WantSinglePiece) {
-    SourceRange R(Pieces.front().getBegin(), Pieces.back().getEnd());
-    Pieces.clear();
-    Pieces.push_back(R);
-  }  
-
-  return Pieces;  
-}
-}
 
 CXSourceRange clang_getCursorReferenceNameRange(CXCursor C, unsigned NameFlags,
                                                 unsigned PieceIndex) {
