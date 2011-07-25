@@ -25,7 +25,9 @@ InputReader::InputReader (Debugger &debugger) :
     m_done (true),
     m_echo (true),
     m_active (false), 
-    m_reader_done (false)
+    m_reader_done (false),
+    m_user_input(),
+    m_save_user_input(false)
 {
 }
 

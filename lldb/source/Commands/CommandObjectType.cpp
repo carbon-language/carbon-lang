@@ -691,7 +691,6 @@ CommandObjectTypeSummaryAdd::CollectPythonScript (ScriptAddOptions *options,
         result.AppendError("out of memory");
         result.SetStatus (eReturnStatusFailed);
     }
-    
 }
 
 bool
@@ -2372,6 +2371,148 @@ CommandObjectTypeSynthClear::CommandOptions::g_option_table[] =
 // CommandObjectTypeSynthAdd
 //-------------------------------------------------------------------------
 
+static const char *g_synth_addreader_instructions =   "Enter your Python command(s). Type 'DONE' to end.\n"
+                                                      "You must define a Python class with three methods:\n"
+                                                      "def __init__(self, valobj, dict):\n"
+                                                      "def get_child_at_index(self, index):\n"
+                                                      "def get_child_index(self, name):\n"
+                                                      "class synthProvider:";
+
+class TypeSynthAddInputReader : public InputReaderEZ
+{
+private:
+    DISALLOW_COPY_AND_ASSIGN (TypeSynthAddInputReader);
+public:
+    TypeSynthAddInputReader(Debugger& debugger) : 
+    InputReaderEZ(debugger)
+    {}
+    
+    virtual
+    ~TypeSynthAddInputReader()
+    {
+    }
+    
+    virtual void ActivateHandler(HandlerData& data)
+    {
+        StreamSP out_stream = data.GetOutStream();
+        bool batch_mode = data.GetBatchMode();
+        if (!batch_mode)
+        {
+            out_stream->Printf ("%s\n", g_synth_addreader_instructions);
+            if (data.reader.GetPrompt())
+                out_stream->Printf ("%s", data.reader.GetPrompt());
+            out_stream->Flush();
+        }
+    }
+    
+    virtual void ReactivateHandler(HandlerData& data)
+    {
+        StreamSP out_stream = data.GetOutStream();
+        bool batch_mode = data.GetBatchMode();
+        if (data.reader.GetPrompt() && !batch_mode)
+        {
+            out_stream->Printf ("%s", data.reader.GetPrompt());
+            out_stream->Flush();
+        }
+    }
+    virtual void GotTokenHandler(HandlerData& data)
+    {
+        StreamSP out_stream = data.GetOutStream();
+        bool batch_mode = data.GetBatchMode();
+        if (data.bytes && data.bytes_len && data.baton)
+        {
+            ((SynthAddOptions*)data.baton)->m_user_source.AppendString(data.bytes, data.bytes_len);
+        }
+        if (!data.reader.IsDone() && data.reader.GetPrompt() && !batch_mode)
+        {
+            out_stream->Printf ("%s", data.reader.GetPrompt());
+            out_stream->Flush();
+        }
+    }
+    virtual void InterruptHandler(HandlerData& data)
+    {
+        StreamSP out_stream = data.GetOutStream();
+        bool batch_mode = data.GetBatchMode();
+        data.reader.SetIsDone (true);
+        if (!batch_mode)
+        {
+            out_stream->Printf ("Warning: No command attached to breakpoint.\n");
+            out_stream->Flush();
+        }
+    }
+    virtual void EOFHandler(HandlerData& data)
+    {
+        data.reader.SetIsDone (true);
+    }
+    virtual void DoneHandler(HandlerData& data)
+    {
+        StreamSP out_stream = data.GetOutStream();
+        SynthAddOptions *options_ptr = ((SynthAddOptions*)data.baton);
+        if (!options_ptr)
+        {
+            out_stream->Printf ("Internal error #1: no script attached.\n");
+            out_stream->Flush();
+            return;
+        }
+        
+        SynthAddOptions::SharedPointer options(options_ptr); // this will ensure that we get rid of the pointer when going out of scope
+        
+        ScriptInterpreter *interpreter = data.reader.GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+        if (!interpreter)
+        {
+            out_stream->Printf ("Internal error #2: no script attached.\n");
+            out_stream->Flush();
+            return;
+        }
+        StringList class_name_sl;
+        if (!interpreter->GenerateTypeSynthClass (options->m_user_source, 
+                                                  class_name_sl))
+        {
+            out_stream->Printf ("Internal error #3: no script attached.\n");
+            out_stream->Flush();
+            return;
+        }
+        if (class_name_sl.GetSize() == 0)
+        {
+            out_stream->Printf ("Internal error #4: no script attached.\n");
+            out_stream->Flush();
+            return;
+        }
+        const char *class_name = class_name_sl.GetStringAtIndex(0);
+        if (!class_name || !class_name[0])
+        {
+            out_stream->Printf ("Internal error #5: no script attached.\n");
+            out_stream->Flush();
+            return;
+        }
+
+        // everything should be fine now, let's add the synth provider class
+        
+        SyntheticChildrenSP synth_provider;
+        synth_provider.reset(new SyntheticScriptProvider(options->m_cascade,
+                                                         options->m_skip_pointers,
+                                                         options->m_skip_references,
+                                                         std::string(class_name)));
+        
+        
+        lldb::FormatCategorySP category;
+        Debugger::Formatting::Categories::Get(ConstString(options->m_category), category);
+        
+        for (size_t i = 0; i < options->m_target_types.GetSize(); i++) {
+            const char *type_name = options->m_target_types.GetStringAtIndex(i);
+            ConstString typeCS(type_name);
+            if (typeCS)
+                category->Filter()->Add(typeCS.GetCString(), synth_provider);
+            else
+            {
+                out_stream->Printf ("Internal error #6: no script attached.\n");
+                out_stream->Flush();
+                return;
+            }
+        }
+    }
+};
+
 class CommandObjectTypeSynthAdd : public CommandObject
 {
     
@@ -2406,6 +2547,10 @@ private:
                     break;
                 case 'c':
                     m_expr_paths.push_back(option_arg);
+                    has_child_list = true;
+                    break;
+                case 'P':
+                    handwrite_python = true;
                     break;
                 case 'l':
                     m_class_name = std::string(option_arg);
@@ -2438,6 +2583,8 @@ private:
             m_category = NULL;
             m_expr_paths.clear();
             is_class_based = false;
+            handwrite_python = false;
+            has_child_list = false;
         }
         
         const OptionDefinition*
@@ -2462,6 +2609,10 @@ private:
         
         bool is_class_based;
         
+        bool handwrite_python;
+        
+        bool has_child_list;
+        
         typedef option_vector::iterator ExpressionPathsIterator;
     };
     
@@ -2471,6 +2622,61 @@ private:
     GetOptions ()
     {
         return &m_options;
+    }
+    
+    void
+    CollectPythonScript (SynthAddOptions *options,
+                                                      CommandReturnObject &result)
+    {
+        InputReaderSP reader_sp (new TypeSynthAddInputReader(m_interpreter.GetDebugger()));
+        if (reader_sp && options)
+        {
+            
+            InputReaderEZ::InitializationParameters ipr;
+            
+            Error err (reader_sp->Initialize (ipr.SetBaton(options).SetPrompt("     ")));
+            if (err.Success())
+            {
+                m_interpreter.GetDebugger().PushInputReader (reader_sp);
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            }
+            else
+            {
+                result.AppendError (err.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendError("out of memory");
+            result.SetStatus (eReturnStatusFailed);
+        }
+    }
+    
+    bool
+    Execute_HandwritePython (Args& command, CommandReturnObject &result)
+    {
+        SynthAddOptions *options = new SynthAddOptions ( m_options.m_skip_pointers,
+                                                         m_options.m_skip_references,
+                                                         m_options.m_cascade,
+                                                         m_options.m_category);
+        
+        const size_t argc = command.GetArgumentCount();
+        
+        for (size_t i = 0; i < argc; i++) {
+            const char* typeA = command.GetArgumentAtIndex(i);
+            if (typeA && *typeA)
+                options->m_target_types << typeA;
+            else
+            {
+                result.AppendError("empty typenames not allowed");
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
+        
+        CollectPythonScript(options,result);
+        return result.Succeeded();
     }
     
     bool
@@ -2606,10 +2812,18 @@ public:
     bool
     Execute (Args& command, CommandReturnObject &result)
     {
-        if (m_options.is_class_based)
+        if (m_options.handwrite_python)
+            return Execute_HandwritePython(command, result);
+        else if (m_options.is_class_based)
             return Execute_PythonClass(command, result);
-        else
+        else if (m_options.has_child_list)
             return Execute_ChildrenList(command, result);
+        else
+        {
+            result.AppendError("must either provide a children list, a Python class name, or use -P and type a Python class line-by-line");
+            result.SetStatus(eReturnStatusFailed);
+            return false;
+        }
     }
 };
 
@@ -2622,6 +2836,7 @@ CommandObjectTypeSynthAdd::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false, "category", 'w', required_argument, NULL, 0, eArgTypeName,         "Add this to the given category instead of the default one."},
     { LLDB_OPT_SET_1, false, "child", 'c', required_argument, NULL, 0, eArgTypeName,    "Include this expression path in the synthetic view."},
     { LLDB_OPT_SET_2, false, "python-class", 'l', required_argument, NULL, 0, eArgTypeName,    "Use this Python class to produce synthetic children."},
+    { LLDB_OPT_SET_3, false, "input-python", 'P', no_argument, NULL, 0, eArgTypeBoolean,    "Type Python code to generate a class that provides synthetic children."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 

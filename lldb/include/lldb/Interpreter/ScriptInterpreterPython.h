@@ -52,6 +52,9 @@ public:
     bool
     GenerateTypeScriptFunction (StringList &input, StringList &output);
     
+    bool
+    GenerateTypeSynthClass (StringList &input, StringList &output);
+    
     // use this if the function code is just a one-liner script
     bool
     GenerateTypeScriptFunction (const char* oneliner, StringList &output);

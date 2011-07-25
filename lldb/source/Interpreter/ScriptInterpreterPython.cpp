@@ -1249,6 +1249,54 @@ ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, Str
     return true;
 }
 
+bool
+ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, StringList &output)
+{
+    static int num_created_classes = 0;
+    user_input.RemoveBlankLines ();
+    int num_lines = user_input.GetSize ();
+    StreamString sstr;
+    
+    // Check to see if we have any data; if not, just return.
+    if (user_input.GetSize() == 0)
+        return false;
+    
+    // Wrap all user input into a Python class
+    
+    sstr.Printf ("lldb_autogen_python_type_synth_class_%d", num_created_classes);
+    ++num_created_classes;
+    std::string auto_generated_class_name = sstr.GetData();
+    
+    sstr.Clear();
+    StringList auto_generated_class;
+    
+    // Create the function name & definition string.
+    
+    sstr.Printf ("class %s:", auto_generated_class_name.c_str());
+    auto_generated_class.AppendString (sstr.GetData());
+        
+    // Wrap everything up inside the class, increasing the indentation.
+    
+    for (int i = 0; i < num_lines; ++i)
+    {
+        sstr.Clear ();
+        sstr.Printf ("     %s", user_input.GetStringAtIndex (i));
+        auto_generated_class.AppendString (sstr.GetData());
+    }
+    
+    
+    // Verify that the results are valid Python.
+    // (even though the method is ExportFunctionDefinitionToInterpreter, a class will actually be exported)
+    // (TODO: rename that method to ExportDefinitionToInterpreter)
+    if (!ExportFunctionDefinitionToInterpreter (auto_generated_class))
+        return false;
+    
+    // Store the name of the auto-generated class
+    
+    output.AppendString (auto_generated_class_name.c_str());
+    return true;
+}
+
 void*
 ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name,
                                                           lldb::ValueObjectSP valobj)

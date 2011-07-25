@@ -164,15 +164,26 @@ SyntheticScriptProvider::FrontEnd::FrontEnd(std::string pclass,
 SyntheticChildrenFrontEnd(be),
 m_python_class(pclass)
 {
+    if (be.get() == NULL)
+    {
+        m_interpreter = NULL;
+        m_wrapper = NULL;
+        return;
+    }
+    
     m_interpreter = be->GetUpdatePoint().GetTarget()->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
-    m_wrapper = (PyObject*)m_interpreter->CreateSyntheticScriptedProvider(m_python_class, m_backend);
+    
+    if (m_interpreter == NULL)
+        m_wrapper = NULL;
+    else
+        m_wrapper = (PyObject*)m_interpreter->CreateSyntheticScriptedProvider(m_python_class, m_backend);
 }
 
 std::string
 SyntheticScriptProvider::GetDescription()
 {
     StreamString sstr;
-    sstr.Printf("%s%s%s Python class: %s",
+    sstr.Printf("%s%s%s Python class %s",
                 m_cascades ? "" : " (not cascading)",
                 m_skip_pointers ? " (skip pointers)" : "",
                 m_skip_references ? " (skip references)" : "",

@@ -101,6 +101,12 @@ public:
         return false;
     }
     
+    virtual bool
+    GenerateTypeSynthClass (StringList &input, StringList &output)
+    {
+        return false;
+    }
+    
     virtual void*
     CreateSyntheticScriptedProvider (std::string class_name,
                                      lldb::ValueObjectSP valobj)

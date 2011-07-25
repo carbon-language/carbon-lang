@@ -45,7 +45,11 @@ InputReaderEZ::Callback_Impl(void *baton,
             reader.AsynchronousOutputWrittenHandler(hand_data);
             break;
         case eInputReaderGotToken:
+        {
+            if (reader.GetSaveUserInput())
+                reader.GetUserInput().AppendString(bytes, bytes_len);            
             reader.GotTokenHandler(hand_data);
+        }
             break;
         case eInputReaderInterrupt:
             reader.InterruptHandler(hand_data);
@@ -78,11 +82,13 @@ InputReaderEZ::Initialize(void* baton,
 Error
 InputReaderEZ::Initialize(InitializationParameters& params)
 {
-    return Initialize(params.m_baton,
-                      params.m_token_size,
-                      params.m_end_token,
-                      params.m_prompt,
-                      params.m_echo);
+    Error ret =  Initialize(params.m_baton,
+                            params.m_token_size,
+                            params.m_end_token,
+                            params.m_prompt,
+                            params.m_echo);
+    m_save_user_input = params.m_save_user_input;
+    return ret;
 }
 
 InputReaderEZ::~InputReaderEZ ()

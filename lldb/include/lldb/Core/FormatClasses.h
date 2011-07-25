@@ -303,7 +303,7 @@ public:
         virtual uint32_t
         CalculateNumChildren()
         {
-            if (m_wrapper == NULL)
+            if (m_wrapper == NULL || m_interpreter == NULL)
                 return 0;
             return m_interpreter->CalculateNumChildren(m_wrapper);
         }
@@ -311,7 +311,7 @@ public:
         virtual lldb::ValueObjectSP
         GetChildAtIndex (uint32_t idx, bool can_create)
         {
-            if (m_wrapper == NULL)
+            if (m_wrapper == NULL || m_interpreter == NULL)
                 return lldb::ValueObjectSP();
             
             PyObject* py_return = (PyObject*)m_interpreter->GetChildAtIndex(m_wrapper, idx);
@@ -323,7 +323,7 @@ public:
             
             lldb::SBValue *sb_ptr = m_interpreter->CastPyObjectToSBValue(py_return);
             
-            if (py_return == NULL)
+            if (py_return == NULL || sb_ptr == NULL)
                 return lldb::ValueObjectSP();
             
             return sb_ptr->m_opaque_sp;
@@ -332,7 +332,7 @@ public:
         virtual uint32_t
         GetIndexOfChildWithName (const ConstString &name)
         {
-            if (m_wrapper == NULL)
+            if (m_wrapper == NULL || m_interpreter == NULL)
                 return UINT32_MAX;
             return m_interpreter->GetIndexOfChildWithName(m_wrapper, name.GetCString());
         }

@@ -15,6 +15,7 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/StringList.h"
 #include "lldb/Host/Predicate.h"
 
 
@@ -63,11 +64,13 @@ public:
         char* m_end_token;
         char* m_prompt;
         bool m_echo;
+        bool m_save_user_input;
     public:
         InitializationParameters() :
         m_baton(NULL),
         m_token_size(lldb::eInputReaderGranularityLine),
-        m_echo(true)
+        m_echo(true),
+        m_save_user_input(false)
         {
             SetEndToken("DONE");
             SetPrompt("> ");
@@ -77,6 +80,13 @@ public:
         SetEcho(bool e)
         {
             m_echo = e;
+            return *this;
+        }
+        
+        InitializationParameters&
+        SetSaveUserInput(bool s)
+        {
+            m_save_user_input = s;
             return *this;
         }
         
@@ -191,6 +201,18 @@ public:
     {
         return m_echo;
     }
+    
+    StringList&
+    GetUserInput()
+    {
+        return m_user_input;
+    }
+    
+    virtual bool
+    GetSaveUserInput()
+    {
+        return false;
+    }
 
     // Subclasses _can_ override this function to get input as it comes in
     // without any granularity
@@ -239,6 +261,8 @@ protected:
     bool m_echo;
     bool m_active;
     Predicate<bool> m_reader_done;
+    StringList m_user_input;
+    bool m_save_user_input;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (InputReader);

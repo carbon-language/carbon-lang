@@ -75,6 +75,12 @@ public:
     virtual void
     DoneHandler(HandlerData&) {}
     
+    virtual bool
+    GetSaveUserInput()
+    {
+        return m_save_user_input;
+    }
+    
 protected:
     friend class Debugger;
 

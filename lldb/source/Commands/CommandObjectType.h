@@ -70,6 +70,37 @@ public:
     
 };
     
+class SynthAddOptions
+{
+    
+public:
+    
+    bool m_skip_pointers;
+    bool m_skip_references;
+    bool m_cascade;
+    StringList m_user_source;
+    StringList m_target_types;
+
+    const char* m_category;
+    
+    SynthAddOptions(bool sptr,
+                     bool sref,
+                     bool casc,
+                     const char* catg) :
+    m_skip_pointers(sptr),
+    m_skip_references(sref),
+    m_cascade(casc),
+    m_user_source(),
+    m_target_types(),
+    m_category(catg)
+    {
+    }
+    
+    typedef lldb::SharedPtr<SynthAddOptions>::Type SharedPointer;
+    
+};
+
+    
 class CommandObjectType : public CommandObjectMultiword
 {
 public:
