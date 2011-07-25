@@ -3075,27 +3075,16 @@ static bool isPALIGNRMask(const SmallVectorImpl<int> &Mask, EVT VT,
   if (i == e)
     return false;
 
-  // Determine if it's ok to perform a palignr with only the LHS, since we
-  // don't have access to the actual shuffle elements to see if RHS is undef.
-  bool Unary = Mask[i] < (int)e;
-  bool NeedsUnary = false;
+  // Make sure we're shifting in the right direction.
+  if (Mask[i] <= i)
+    return false;
 
   int s = Mask[i] - i;
 
   // Check the rest of the elements to see if they are consecutive.
   for (++i; i != e; ++i) {
     int m = Mask[i];
-    if (m < 0)
-      continue;
-
-    Unary = Unary && (m < (int)e);
-    NeedsUnary = NeedsUnary || (m < s);
-
-    if (NeedsUnary && !Unary)
-      return false;
-    if (Unary && m != ((s+i) & (e-1)))
-      return false;
-    if (!Unary && m != (s+i))
+    if (m >= 0 && m != s+i)
       return false;
   }
   return true;
@@ -3631,6 +3620,7 @@ unsigned X86::getShufflePALIGNRImmediate(SDNode *N) {
     if (Val >= 0)
       break;
   }
+  assert(Val - i > 0 && "PALIGNR imm should be positive");
   return (Val - i) * EltSize;
 }
 
