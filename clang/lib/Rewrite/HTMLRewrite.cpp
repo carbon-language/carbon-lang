@@ -519,7 +519,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
     // expansion by inserting a start tag before the macro expansion and
     // end tag after it.
     std::pair<SourceLocation, SourceLocation> LLoc =
-      SM.getInstantiationRange(Tok.getLocation());
+      SM.getExpansionRange(Tok.getLocation());
 
     // Ignore tokens whose instantiation location was not the main file.
     if (SM.getFileID(LLoc.first) != FID) {

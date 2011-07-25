@@ -866,10 +866,10 @@ SourceManager::getImmediateInstantiationRange(SourceLocation Loc) const {
   return II.getInstantiationLocRange();
 }
 
-/// getInstantiationRange - Given a SourceLocation object, return the
-/// range of tokens covered by the instantiation in the ultimate file.
+/// getExpansionRange - Given a SourceLocation object, return the range of
+/// tokens covered by the expansion in the ultimate file.
 std::pair<SourceLocation,SourceLocation>
-SourceManager::getInstantiationRange(SourceLocation Loc) const {
+SourceManager::getExpansionRange(SourceLocation Loc) const {
   if (Loc.isFileID()) return std::make_pair(Loc, Loc);
 
   std::pair<SourceLocation,SourceLocation> Res =

@@ -687,7 +687,7 @@ SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
       return SourceLocation(); // Points inside the macro expansion.
 
     // Continue and find the location just after the macro expansion.
-    Loc = SM.getInstantiationRange(Loc).second;
+    Loc = SM.getExpansionRange(Loc).second;
   }
 
   unsigned Len = Lexer::MeasureTokenLength(Loc, SM, Features);

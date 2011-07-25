@@ -737,10 +737,10 @@ public:
   std::pair<SourceLocation,SourceLocation>
   getImmediateInstantiationRange(SourceLocation Loc) const;
 
-  /// getInstantiationRange - Given a SourceLocation object, return the
-  /// range of tokens covered by the instantiation in the ultimate file.
+  /// getExpansionRange - Given a SourceLocation object, return the range of
+  /// tokens covered by the expansion the ultimate file.
   std::pair<SourceLocation,SourceLocation>
-  getInstantiationRange(SourceLocation Loc) const;
+  getExpansionRange(SourceLocation Loc) const;
 
 
   /// getSpellingLoc - Given a SourceLocation object, return the spelling

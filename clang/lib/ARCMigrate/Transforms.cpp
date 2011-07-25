@@ -95,7 +95,7 @@ SourceLocation trans::findLocationAfterSemi(SourceLocation loc,
   if (loc.isMacroID()) {
     if (!Lexer::isAtEndOfMacroExpansion(loc, SM, Ctx.getLangOptions()))
       return SourceLocation();
-    loc = SM.getInstantiationRange(loc).second;
+    loc = SM.getExpansionRange(loc).second;
   }
   loc = Lexer::getLocForEndOfToken(loc, /*Offset=*/0, SM, Ctx.getLangOptions());
 

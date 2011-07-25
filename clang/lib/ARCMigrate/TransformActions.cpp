@@ -589,7 +589,7 @@ SourceLocation TransformActionsImpl::getLocForEndOfToken(SourceLocation loc,
                                                          SourceManager &SM,
                                                          Preprocessor &PP) {
   if (loc.isMacroID())
-    loc = SM.getInstantiationRange(loc).second;
+    loc = SM.getExpansionRange(loc).second;
   return PP.getLocForEndOfToken(loc);
 }
 
