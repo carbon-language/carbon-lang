@@ -40,7 +40,7 @@ public:
     return BranchProbability(D - N, D);
   }
 
-  raw_ostream &print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const;
 
   void dump() const;
 };
