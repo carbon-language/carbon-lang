@@ -363,8 +363,6 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
 
   // Initialize targets and assembly printers/parsers.
   InitializeAllTargetInfos();
-  // FIXME: We shouldn't need to initialize the Target(Machine)s.
-  InitializeAllTargets();
   InitializeAllTargetMCs();
   InitializeAllAsmPrinters();
   InitializeAllAsmParsers();
