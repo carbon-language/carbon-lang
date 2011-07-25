@@ -411,7 +411,7 @@ def so_reg_reg : Operand<i32>,  // reg reg imm
   let EncoderMethod = "getSORegRegOpValue";
   let PrintMethod = "printSORegRegOperand";
   let ParserMatchClass = ShiftedRegAsmOperand;
-  let MIOperandInfo = (ops GPR, GPR, shift_imm);
+  let MIOperandInfo = (ops GPR, GPR, i32imm);
 }
 
 def ShiftedImmAsmOperand : AsmOperandClass { let Name = "RegShiftedImm"; }
@@ -421,7 +421,7 @@ def so_reg_imm : Operand<i32>, // reg imm
   let EncoderMethod = "getSORegImmOpValue";
   let PrintMethod = "printSORegImmOperand";
   let ParserMatchClass = ShiftedImmAsmOperand;
-  let MIOperandInfo = (ops GPR, shift_imm);
+  let MIOperandInfo = (ops GPR, i32imm);
 }
 
 // FIXME: Does this need to be distinct from so_reg?
@@ -430,7 +430,7 @@ def shift_so_reg_reg : Operand<i32>,    // reg reg imm
                                   [shl,srl,sra,rotr]> {
   let EncoderMethod = "getSORegRegOpValue";
   let PrintMethod = "printSORegRegOperand";
-  let MIOperandInfo = (ops GPR, GPR, shift_imm);
+  let MIOperandInfo = (ops GPR, GPR, i32imm);
 }
 
 // FIXME: Does this need to be distinct from so_reg?
@@ -439,7 +439,7 @@ def shift_so_reg_imm : Operand<i32>,    // reg reg imm
                                   [shl,srl,sra,rotr]> {
   let EncoderMethod = "getSORegImmOpValue";
   let PrintMethod = "printSORegImmOperand";
-  let MIOperandInfo = (ops GPR, shift_imm);
+  let MIOperandInfo = (ops GPR, i32imm);
 }
 
 
