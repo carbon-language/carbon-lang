@@ -1373,9 +1373,13 @@ ClangASTType::GetTypeByteSize(
                 clang::ASTContext *ast_context,
                 lldb::clang_type_t opaque_clang_qual_type)
 {
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
     
-    return (ast_context->getTypeSize (qual_type) + 7) / 8;
+    if (ClangASTContext::GetCompleteType (ast_context, opaque_clang_qual_type))
+    {
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+        return (ast_context->getTypeSize (qual_type) + 7) / 8;
+    }
+    return UINT32_MAX;
 }
 
 
