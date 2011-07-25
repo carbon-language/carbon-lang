@@ -144,19 +144,19 @@ def CCOutOperand : AsmOperandClass {
 def MemBarrierOptOperand : AsmOperandClass {
   let Name = "MemBarrierOpt";
   let SuperClasses = [];
-  let ParserMethod = "tryParseMemBarrierOptOperand";
+  let ParserMethod = "parseMemBarrierOptOperand";
 }
 
 def ProcIFlagsOperand : AsmOperandClass {
   let Name = "ProcIFlags";
   let SuperClasses = [];
-  let ParserMethod = "tryParseProcIFlagsOperand";
+  let ParserMethod = "parseProcIFlagsOperand";
 }
 
 def MSRMaskOperand : AsmOperandClass {
   let Name = "MSRMask";
   let SuperClasses = [];
-  let ParserMethod = "tryParseMSRMaskOperand";
+  let ParserMethod = "parseMSRMaskOperand";
 }
 
 // ARM imod and iflag operands, used only by the CPS instruction.

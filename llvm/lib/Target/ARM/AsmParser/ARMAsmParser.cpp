@@ -104,19 +104,19 @@ class ARMAsmParser : public TargetAsmParser {
 
   /// }
 
-  OperandMatchResultTy tryParseCoprocNumOperand(
+  OperandMatchResultTy parseCoprocNumOperand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
-  OperandMatchResultTy tryParseCoprocRegOperand(
+  OperandMatchResultTy parseCoprocRegOperand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
-  OperandMatchResultTy tryParseMemBarrierOptOperand(
+  OperandMatchResultTy parseMemBarrierOptOperand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
-  OperandMatchResultTy tryParseProcIFlagsOperand(
+  OperandMatchResultTy parseProcIFlagsOperand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
-  OperandMatchResultTy tryParseMSRMaskOperand(
+  OperandMatchResultTy parseMSRMaskOperand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
-  OperandMatchResultTy tryParseMemMode2Operand(
+  OperandMatchResultTy parseMemMode2Operand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
-  OperandMatchResultTy tryParseMemMode3Operand(
+  OperandMatchResultTy parseMemMode3Operand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parsePKHImm(SmallVectorImpl<MCParsedAsmOperand*> &O,
                                    StringRef Op, int Low, int High);
@@ -1360,11 +1360,11 @@ static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
   return -1;
 }
 
-/// tryParseCoprocNumOperand - Try to parse an coprocessor number operand. The
+/// parseCoprocNumOperand - Try to parse an coprocessor number operand. The
 /// token must be an Identifier when called, and if it is a coprocessor
 /// number, the token is eaten and the operand is added to the operand list.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
-tryParseCoprocNumOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+parseCoprocNumOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
@@ -1378,11 +1378,11 @@ tryParseCoprocNumOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return MatchOperand_Success;
 }
 
-/// tryParseCoprocRegOperand - Try to parse an coprocessor register operand. The
+/// parseCoprocRegOperand - Try to parse an coprocessor register operand. The
 /// token must be an Identifier when called, and if it is a coprocessor
 /// number, the token is eaten and the operand is added to the operand list.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
-tryParseCoprocRegOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+parseCoprocRegOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
@@ -1480,9 +1480,9 @@ ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return false;
 }
 
-/// tryParseMemBarrierOptOperand - Try to parse DSB/DMB data barrier options.
+/// parseMemBarrierOptOperand - Try to parse DSB/DMB data barrier options.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
-tryParseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+parseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
@@ -1511,9 +1511,9 @@ tryParseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return MatchOperand_Success;
 }
 
-/// tryParseProcIFlagsOperand - Try to parse iflags from CPS instruction.
+/// parseProcIFlagsOperand - Try to parse iflags from CPS instruction.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
-tryParseProcIFlagsOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+parseProcIFlagsOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
@@ -1540,9 +1540,9 @@ tryParseProcIFlagsOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return MatchOperand_Success;
 }
 
-/// tryParseMSRMaskOperand - Try to parse mask flags from MSR instruction.
+/// parseMSRMaskOperand - Try to parse mask flags from MSR instruction.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
-tryParseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+parseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
@@ -1606,9 +1606,9 @@ tryParseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return MatchOperand_Success;
 }
 
-/// tryParseMemMode2Operand - Try to parse memory addressing mode 2 operand.
+/// parseMemMode2Operand - Try to parse memory addressing mode 2 operand.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
-tryParseMemMode2Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+parseMemMode2Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   assert(Parser.getTok().is(AsmToken::LBrac) && "Token is not a \"[\"");
 
   if (ParseMemory(Operands, ARMII::AddrMode2))
@@ -1617,9 +1617,9 @@ tryParseMemMode2Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return MatchOperand_Success;
 }
 
-/// tryParseMemMode3Operand - Try to parse memory addressing mode 3 operand.
+/// parseMemMode3Operand - Try to parse memory addressing mode 3 operand.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
-tryParseMemMode3Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+parseMemMode3Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   assert(Parser.getTok().is(AsmToken::LBrac) && "Token is not a \"[\"");
 
   if (ParseMemory(Operands, ARMII::AddrMode3))

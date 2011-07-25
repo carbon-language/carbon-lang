@@ -570,7 +570,7 @@ def ldst_so_reg : Operand<i32>,
 //
 def MemMode2AsmOperand : AsmOperandClass {
   let Name = "MemMode2";
-  let ParserMethod = "tryParseMemMode2Operand";
+  let ParserMethod = "parseMemMode2Operand";
 }
 def addrmode2 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode2", []> {
@@ -593,7 +593,7 @@ def am2offset : Operand<i32>,
 //
 def MemMode3AsmOperand : AsmOperandClass {
   let Name = "MemMode3";
-  let ParserMethod = "tryParseMemMode3Operand";
+  let ParserMethod = "parseMemMode3Operand";
 }
 def addrmode3 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode3", []> {
@@ -689,7 +689,7 @@ def nohash_imm : Operand<i32> {
 
 def CoprocNumAsmOperand : AsmOperandClass {
   let Name = "CoprocNum";
-  let ParserMethod = "tryParseCoprocNumOperand";
+  let ParserMethod = "parseCoprocNumOperand";
 }
 def p_imm : Operand<i32> {
   let PrintMethod = "printPImmediate";
@@ -698,7 +698,7 @@ def p_imm : Operand<i32> {
 
 def CoprocRegAsmOperand : AsmOperandClass {
   let Name = "CoprocReg";
-  let ParserMethod = "tryParseCoprocRegOperand";
+  let ParserMethod = "parseCoprocRegOperand";
 }
 def c_imm : Operand<i32> {
   let PrintMethod = "printCImmediate";
