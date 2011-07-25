@@ -15,6 +15,7 @@
 #ifndef TARGET_X86_H
 #define TARGET_X86_H
 
+#include "MCTargetDesc/X86BaseInfo.h"
 #include "MCTargetDesc/X86MCTargetDesc.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Target/TargetMachine.h"
@@ -59,10 +60,6 @@ FunctionPass *createSSEDomainFixPass();
 /// to the specified MCE object.
 FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
                                           JITCodeEmitter &JCE);
-
-MCCodeEmitter *createX86MCCodeEmitter(const MCInstrInfo &MCII,
-                                      const MCSubtargetInfo &STI,
-                                      MCContext &Ctx);
 
 TargetAsmBackend *createX86_32AsmBackend(const Target &, const std::string &);
 TargetAsmBackend *createX86_64AsmBackend(const Target &, const std::string &);

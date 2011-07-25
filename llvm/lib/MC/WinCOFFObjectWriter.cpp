@@ -33,7 +33,7 @@
 
 #include "llvm/Support/TimeValue.h"
 
-#include "../Target/X86/X86FixupKinds.h"
+#include "../Target/X86/MCTargetDesc/X86FixupKinds.h"
 
 #include <cstdio>
 

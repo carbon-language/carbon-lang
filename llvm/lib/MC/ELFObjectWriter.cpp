@@ -28,7 +28,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringSwitch.h"
 
-#include "../Target/X86/X86FixupKinds.h"
+#include "../Target/X86/MCTargetDesc/X86FixupKinds.h"
 #include "../Target/ARM/MCTargetDesc/ARMFixupKinds.h"
 
 #include <vector>

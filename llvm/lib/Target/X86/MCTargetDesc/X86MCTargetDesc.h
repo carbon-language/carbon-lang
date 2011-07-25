@@ -17,6 +17,9 @@
 #include <string>
 
 namespace llvm {
+class MCCodeEmitter;
+class MCContext;
+class MCInstrInfo;
 class MCRegisterInfo;
 class MCSubtargetInfo;
 class Target;
@@ -62,6 +65,11 @@ namespace X86_MC {
   MCSubtargetInfo *createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
                                             StringRef FS);
 }
+
+MCCodeEmitter *createX86MCCodeEmitter(const MCInstrInfo &MCII,
+                                      const MCSubtargetInfo &STI,
+                                      MCContext &Ctx);
+
 
 } // End llvm namespace
 

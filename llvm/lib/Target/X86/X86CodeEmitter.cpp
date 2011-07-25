@@ -167,7 +167,7 @@ static unsigned determineREX(const MachineInstr &MI) {
       const MachineOperand& MO = MI.getOperand(i);
       if (MO.isReg()) {
         unsigned Reg = MO.getReg();
-        if (X86InstrInfo::isX86_64NonExtLowByteReg(Reg))
+        if (X86II::isX86_64NonExtLowByteReg(Reg))
           REX |= 0x40;
       }
     }
