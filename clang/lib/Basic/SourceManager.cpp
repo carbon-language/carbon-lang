@@ -289,7 +289,7 @@ unsigned SourceManager::getLineTableFilenameID(StringRef Name) {
 /// unspecified.
 void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
                                 int FilenameID) {
-  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = getDecomposedExpansionLoc(Loc);
 
   bool Invalid = false;
   const SLocEntry &Entry = getSLocEntry(LocInfo.first, &Invalid);
@@ -319,7 +319,7 @@ void SourceManager::AddLineNote(SourceLocation Loc, unsigned LineNo,
     return AddLineNote(Loc, LineNo, FilenameID);
   }
 
-  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = getDecomposedExpansionLoc(Loc);
 
   bool Invalid = false;
   const SLocEntry &Entry = getSLocEntry(LocInfo.first, &Invalid);
@@ -809,7 +809,7 @@ SourceLocation SourceManager::getSpellingLocSlowCase(SourceLocation Loc) const {
 
 
 std::pair<FileID, unsigned>
-SourceManager::getDecomposedInstantiationLocSlowCase(
+SourceManager::getDecomposedExpansionLocSlowCase(
                                              const SrcMgr::SLocEntry *E) const {
   // If this is an instantiation record, walk through all the instantiation
   // points.
@@ -961,7 +961,7 @@ unsigned SourceManager::getSpellingColumnNumber(SourceLocation Loc,
 unsigned SourceManager::getInstantiationColumnNumber(SourceLocation Loc,
                                                      bool *Invalid) const {
   if (isInvalid(Loc, Invalid)) return 0;
-  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = getDecomposedExpansionLoc(Loc);
   return getColumnNumber(LocInfo.first, LocInfo.second, Invalid);
 }
 
@@ -1156,7 +1156,7 @@ unsigned SourceManager::getSpellingLineNumber(SourceLocation Loc,
 unsigned SourceManager::getInstantiationLineNumber(SourceLocation Loc, 
                                                    bool *Invalid) const {
   if (isInvalid(Loc, Invalid)) return 0;
-  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = getDecomposedExpansionLoc(Loc);
   return getLineNumber(LocInfo.first, LocInfo.second);
 }
 unsigned SourceManager::getPresumedLineNumber(SourceLocation Loc,
@@ -1176,7 +1176,7 @@ unsigned SourceManager::getPresumedLineNumber(SourceLocation Loc,
 SrcMgr::CharacteristicKind
 SourceManager::getFileCharacteristic(SourceLocation Loc) const {
   assert(!Loc.isInvalid() && "Can't get file characteristic of invalid loc!");
-  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = getDecomposedExpansionLoc(Loc);
   bool Invalid = false;
   const SLocEntry &SEntry = getSLocEntry(LocInfo.first, &Invalid);
   if (Invalid || !SEntry.isFile())
@@ -1223,7 +1223,7 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
   if (Loc.isInvalid()) return PresumedLoc();
 
   // Presumed locations are always for instantiation points.
-  std::pair<FileID, unsigned> LocInfo = getDecomposedInstantiationLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = getDecomposedExpansionLoc(Loc);
 
   bool Invalid = false;
   const SLocEntry &Entry = getSLocEntry(LocInfo.first, &Invalid);

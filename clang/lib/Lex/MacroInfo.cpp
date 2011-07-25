@@ -68,9 +68,9 @@ unsigned MacroInfo::getDefinitionLengthSlow(SourceManager &SM) const {
   assert((macroEnd.isFileID() || lastToken.is(tok::comment)) &&
          "Macro defined in macro?");
   std::pair<FileID, unsigned>
-      startInfo = SM.getDecomposedInstantiationLoc(macroStart);
+      startInfo = SM.getDecomposedExpansionLoc(macroStart);
   std::pair<FileID, unsigned>
-      endInfo = SM.getDecomposedInstantiationLoc(macroEnd);
+      endInfo = SM.getDecomposedExpansionLoc(macroEnd);
   assert(startInfo.first == endInfo.first &&
          "Macro definition spanning multiple FileIDs ?");
   assert(startInfo.second <= endInfo.second);

@@ -439,7 +439,7 @@ bool CursorVisitor::visitPreprocessedEntitiesInRegion() {
     // FIXME: My kingdom for a proper binary search approach to finding
     // cursors!
     std::pair<FileID, unsigned> Location
-      = AU->getSourceManager().getDecomposedInstantiationLoc(
+      = AU->getSourceManager().getDecomposedExpansionLoc(
                                                    RegionOfInterest.getBegin());
     if (Location.first != AU->getSourceManager().getMainFileID())
       OnlyLocalDecls = false;
@@ -463,9 +463,9 @@ bool CursorVisitor::visitPreprocessedEntitiesInRegion(InputIterator First,
   // Find the file in which the region of interest lands.
   SourceManager &SM = AU->getSourceManager();
   std::pair<FileID, unsigned> Begin
-    = SM.getDecomposedInstantiationLoc(RegionOfInterest.getBegin());
+    = SM.getDecomposedExpansionLoc(RegionOfInterest.getBegin());
   std::pair<FileID, unsigned> End
-    = SM.getDecomposedInstantiationLoc(RegionOfInterest.getEnd());
+    = SM.getDecomposedExpansionLoc(RegionOfInterest.getEnd());
   
   // The region of interest spans files; we have to walk everything.
   if (Begin.first != End.first)
@@ -477,8 +477,7 @@ bool CursorVisitor::visitPreprocessedEntitiesInRegion(InputIterator First,
     // Build the mapping from files to sets of preprocessed entities.
     for (; First != Last; ++First) {
       std::pair<FileID, unsigned> P
-        = SM.getDecomposedInstantiationLoc(
-                                        (*First)->getSourceRange().getBegin());
+        = SM.getDecomposedExpansionLoc((*First)->getSourceRange().getBegin());
       
       ByFileMap[P.first].push_back(*First);
     }

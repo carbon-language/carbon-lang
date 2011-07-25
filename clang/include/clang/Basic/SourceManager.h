@@ -767,11 +767,11 @@ public:
     return std::make_pair(FID, Loc.getOffset()-getSLocEntry(FID).getOffset());
   }
 
-  /// getDecomposedInstantiationLoc - Decompose the specified location into a
+  /// getDecomposedExpansionLoc - Decompose the specified location into a
   /// raw FileID + Offset pair.  If the location is an instantiation record,
   /// walk through it until we find the final location instantiated.
   std::pair<FileID, unsigned>
-  getDecomposedInstantiationLoc(SourceLocation Loc) const {
+  getDecomposedExpansionLoc(SourceLocation Loc) const {
     FileID FID = getFileID(Loc);
     const SrcMgr::SLocEntry *E = &getSLocEntry(FID);
 
@@ -779,7 +779,7 @@ public:
     if (Loc.isFileID())
       return std::make_pair(FID, Offset);
 
-    return getDecomposedInstantiationLocSlowCase(E);
+    return getDecomposedExpansionLocSlowCase(E);
   }
 
   /// getDecomposedSpellingLoc - Decompose the specified location into a raw
@@ -1134,7 +1134,7 @@ private:
   SourceLocation getSpellingLocSlowCase(SourceLocation Loc) const;
 
   std::pair<FileID, unsigned>
-  getDecomposedInstantiationLocSlowCase(const SrcMgr::SLocEntry *E) const;
+  getDecomposedExpansionLocSlowCase(const SrcMgr::SLocEntry *E) const;
   std::pair<FileID, unsigned>
   getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
                                    unsigned Offset) const;

@@ -519,7 +519,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
         // We have an insertion hint. Determine whether the inserted
         // code is on the same line as the caret.
         std::pair<FileID, unsigned> HintLocInfo
-          = SM.getDecomposedInstantiationLoc(Hint->RemoveRange.getBegin());
+          = SM.getDecomposedExpansionLoc(Hint->RemoveRange.getBegin());
         if (SM.getLineNumber(HintLocInfo.first, HintLocInfo.second) ==
               SM.getLineNumber(FID, FileOffset)) {
           // Insert the new code into the line just below the code

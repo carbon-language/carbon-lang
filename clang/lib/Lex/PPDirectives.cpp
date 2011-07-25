@@ -825,7 +825,7 @@ static bool ReadLineMarkerFlags(bool &IsFileEntry, bool &IsFileExit,
     // If we are leaving the current presumed file, check to make sure the
     // presumed include stack isn't empty!
     FileID CurFileID =
-      SM.getDecomposedInstantiationLoc(FlagTok.getLocation()).first;
+      SM.getDecomposedExpansionLoc(FlagTok.getLocation()).first;
     PresumedLoc PLoc = SM.getPresumedLoc(FlagTok.getLocation());
     if (PLoc.isInvalid())
       return true;
@@ -834,7 +834,7 @@ static bool ReadLineMarkerFlags(bool &IsFileEntry, bool &IsFileExit,
     // different physical file, then we aren't in a "1" line marker flag region.
     SourceLocation IncLoc = PLoc.getIncludeLoc();
     if (IncLoc.isInvalid() ||
-        SM.getDecomposedInstantiationLoc(IncLoc).first != CurFileID) {
+        SM.getDecomposedExpansionLoc(IncLoc).first != CurFileID) {
       PP.Diag(FlagTok, diag::err_pp_linemarker_invalid_pop);
       PP.DiscardUntilEndOfDirective();
       return true;
