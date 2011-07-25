@@ -14,6 +14,7 @@
 #ifndef X86MCTARGETDESC_H
 #define X86MCTARGETDESC_H
 
+#include "llvm/Support/DataTypes.h"
 #include <string>
 
 namespace llvm {
