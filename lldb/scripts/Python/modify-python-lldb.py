@@ -82,6 +82,63 @@ def lldb_iter(obj, getsize, getelem):
 # ==============================================================================
 '''
 
+#
+# linked_list_iter() is a special purpose iterator to treat the SBValue as a
+# list data structure, where you specify the child member name which points to
+# the next item on the list and you specify the end-of-list function which takes
+# an SBValue and returns True if EOL is reached and False if not.
+#
+linked_list_iter_def = '''
+    # ==================================================
+    # Iterator for lldb.SBValue treated as a linked list
+    # ==================================================
+    def linked_list_iter(self, next_item_name, end_of_list):
+        """A generator adaptor to support iteration for SBValue as a linked list.
+
+        For example,
+
+        # Test function to determine end of list.
+        def eol(val):
+            if not val:
+                return True
+            try:
+                # Test the semantics of the item we got.
+                id = val.GetChildMemberWithName("id")
+                if int(id.GetValue()) > 0:
+                    return False
+            except:
+                pass
+
+            # If we fall through to here.  It could be that exception
+            # occurred or the "id" child member does not qualify as a
+            # valid item. Return True for EOL.
+            return True
+
+        # Get Frame #0.
+        ...
+
+        # Get variable 'task_head'.
+        task_head = frame0.FindVariable('task_head')
+        ...
+
+        for t in task_head.linked_list_iter('next', eol):
+            print t
+        """
+        try:
+            item = self.GetChildMemberWithName(next_item_name)
+            while item:
+                yield item
+                # Prepare for the next iteration.
+                item = item.GetChildMemberWithName(next_item_name)
+                if end_of_list(item):
+                    break
+        except:
+            # Exception occurred.  Stop the generator.
+            pass
+
+        return
+'''
+
 # This supports the iteration protocol.
 iter_def = "    def __iter__(self): return lldb_iter(self, '%s', '%s')"
 module_iter = "    def module_iter(self): return lldb_iter(self, '%s', '%s')"
@@ -265,6 +322,10 @@ for line in content.splitlines():
                 if (state & DEFINING_EQUALITY):
                     new_content.add_line(eq_def % (cls, list_to_frag(e[cls])))
                     new_content.add_line(ne_def)
+
+            # This special purpose iterator is for SBValue only!!!
+            if cls == "SBValue":
+                new_content.add_line(linked_list_iter_def)
 
             # Next state will be NORMAL.
             state = NORMAL
