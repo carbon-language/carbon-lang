@@ -85,9 +85,9 @@ FullSourceLoc FullSourceLoc::getSpellingLoc() const {
   return FullSourceLoc(SrcMgr->getSpellingLoc(*this), *SrcMgr);
 }
 
-unsigned FullSourceLoc::getInstantiationLineNumber(bool *Invalid) const {
+unsigned FullSourceLoc::getExpansionLineNumber(bool *Invalid) const {
   assert(isValid());
-  return SrcMgr->getInstantiationLineNumber(*this, Invalid);
+  return SrcMgr->getExpansionLineNumber(*this, Invalid);
 }
 
 unsigned FullSourceLoc::getExpansionColumnNumber(bool *Invalid) const {

@@ -213,7 +213,7 @@ PathDiagnosticBuilder::ExecutionContinues(llvm::raw_string_ostream& os,
 
   if (Loc.asStmt())
     os << "Execution continues on line "
-       << getSourceManager().getInstantiationLineNumber(Loc.asLocation())
+       << getSourceManager().getExpansionLineNumber(Loc.asLocation())
        << '.';
   else {
     os << "Execution jumps to the end of the ";
@@ -560,7 +560,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
           const PathDiagnosticLocation &End = PDB.getEnclosingStmtLocation(S);
 
           os << "Control jumps to line "
-          << End.asLocation().getInstantiationLineNumber();
+          << End.asLocation().getExpansionLineNumber();
           PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                            os.str()));
           break;
@@ -578,11 +578,11 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
               default:
                 os << "No cases match in the switch statement. "
                 "Control jumps to line "
-                << End.asLocation().getInstantiationLineNumber();
+                << End.asLocation().getExpansionLineNumber();
                 break;
               case Stmt::DefaultStmtClass:
                 os << "Control jumps to the 'default' case at line "
-                << End.asLocation().getInstantiationLineNumber();
+                << End.asLocation().getExpansionLineNumber();
                 break;
 
               case Stmt::CaseStmtClass: {
@@ -609,7 +609,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                   os << LHS->EvaluateAsInt(PDB.getASTContext());
 
                 os << ":'  at line "
-                << End.asLocation().getInstantiationLineNumber();
+                << End.asLocation().getExpansionLineNumber();
                 break;
               }
             }
@@ -979,10 +979,10 @@ bool EdgeBuilder::containsLocation(const PathDiagnosticLocation &Container,
   SourceLocation ContaineeRBeg = SM.getExpansionLoc(ContaineeR.getBegin());
   SourceLocation ContaineeREnd = SM.getExpansionLoc(ContaineeR.getEnd());
 
-  unsigned ContainerBegLine = SM.getInstantiationLineNumber(ContainerRBeg);
-  unsigned ContainerEndLine = SM.getInstantiationLineNumber(ContainerREnd);
-  unsigned ContaineeBegLine = SM.getInstantiationLineNumber(ContaineeRBeg);
-  unsigned ContaineeEndLine = SM.getInstantiationLineNumber(ContaineeREnd);
+  unsigned ContainerBegLine = SM.getExpansionLineNumber(ContainerRBeg);
+  unsigned ContainerEndLine = SM.getExpansionLineNumber(ContainerREnd);
+  unsigned ContaineeBegLine = SM.getExpansionLineNumber(ContaineeRBeg);
+  unsigned ContaineeEndLine = SM.getExpansionLineNumber(ContaineeREnd);
 
   assert(ContainerBegLine <= ContainerEndLine);
   assert(ContaineeBegLine <= ContaineeEndLine);

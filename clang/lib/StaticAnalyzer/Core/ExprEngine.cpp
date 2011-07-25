@@ -3099,7 +3099,7 @@ struct DOTGraphTraits<ExplodedNode*> :
 
           if (SLoc.isFileID()) {
             Out << "\\lline="
-              << GraphPrintSourceManager->getInstantiationLineNumber(SLoc)
+              << GraphPrintSourceManager->getExpansionLineNumber(SLoc)
               << " col="
               << GraphPrintSourceManager->getExpansionColumnNumber(SLoc)
               << "\\l";
@@ -3152,7 +3152,7 @@ struct DOTGraphTraits<ExplodedNode*> :
 
           if (SLoc.isFileID()) {
             Out << "\\lline="
-              << GraphPrintSourceManager->getInstantiationLineNumber(SLoc)
+              << GraphPrintSourceManager->getExpansionLineNumber(SLoc)
               << " col="
               << GraphPrintSourceManager->getExpansionColumnNumber(SLoc);
           }

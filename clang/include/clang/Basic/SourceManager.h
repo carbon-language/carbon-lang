@@ -839,8 +839,7 @@ public:
   /// about to emit a diagnostic.
   unsigned getLineNumber(FileID FID, unsigned FilePos, bool *Invalid = 0) const;
   unsigned getSpellingLineNumber(SourceLocation Loc, bool *Invalid = 0) const;
-  unsigned getInstantiationLineNumber(SourceLocation Loc, 
-                                      bool *Invalid = 0) const;
+  unsigned getExpansionLineNumber(SourceLocation Loc, bool *Invalid = 0) const;
   unsigned getPresumedLineNumber(SourceLocation Loc, bool *Invalid = 0) const;
 
   /// Return the filename or buffer identifier of the buffer the location is in.

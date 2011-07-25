@@ -96,11 +96,11 @@ void TextDiagnosticPrinter::HighlightRange(const CharSourceRange &R,
   if (Begin == End && R.getEnd().isMacroID())
     End = SM.getExpansionRange(R.getEnd()).second;
 
-  unsigned StartLineNo = SM.getInstantiationLineNumber(Begin);
+  unsigned StartLineNo = SM.getExpansionLineNumber(Begin);
   if (StartLineNo > LineNo || SM.getFileID(Begin) != FID)
     return;  // No intersection.
 
-  unsigned EndLineNo = SM.getInstantiationLineNumber(End);
+  unsigned EndLineNo = SM.getExpansionLineNumber(End);
   if (EndLineNo < LineNo || SM.getFileID(End) != FID)
     return;  // No intersection.
 

@@ -274,8 +274,7 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>()) {
     SourceManager &SM = CGM.getContext().getSourceManager();
     llvm::Constant *Ann =
-      CGM.EmitAnnotateAttr(GV, AA,
-                           SM.getInstantiationLineNumber(D.getLocation()));
+      CGM.EmitAnnotateAttr(GV, AA, SM.getExpansionLineNumber(D.getLocation()));
     CGM.AddAnnotation(Ann);
   }
 

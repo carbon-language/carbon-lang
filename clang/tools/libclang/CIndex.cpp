@@ -2838,7 +2838,7 @@ void clang_getInstantiationLocation(CXSourceLocation location,
   if (file)
     *file = (void *)SM.getFileEntryForSLocEntry(sloc);
   if (line)
-    *line = SM.getInstantiationLineNumber(InstLoc);
+    *line = SM.getExpansionLineNumber(InstLoc);
   if (column)
     *column = SM.getExpansionColumnNumber(InstLoc);
   if (offset)

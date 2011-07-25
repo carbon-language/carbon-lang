@@ -55,7 +55,7 @@ static void EmitLocation(raw_ostream& o, const SourceManager &SM,
 
   Indent(o, indent) << "<dict>\n";
   Indent(o, indent) << " <key>line</key><integer>"
-                    << Loc.getInstantiationLineNumber() << "</integer>\n";
+                    << Loc.getExpansionLineNumber() << "</integer>\n";
   Indent(o, indent) << " <key>col</key><integer>"
                     << Loc.getExpansionColumnNumber() + offset << "</integer>\n";
   Indent(o, indent) << " <key>file</key><integer>"

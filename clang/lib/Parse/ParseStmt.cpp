@@ -1567,12 +1567,12 @@ StmtResult Parser::FuzzyParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
     // that the rest of the line is an assembly-language statement.
     SourceManager &SrcMgr = PP.getSourceManager();
     SourceLocation TokLoc = Tok.getLocation();
-    unsigned LineNo = SrcMgr.getInstantiationLineNumber(TokLoc);
+    unsigned LineNo = SrcMgr.getExpansionLineNumber(TokLoc);
     do {
       EndLoc = TokLoc;
       ConsumeAnyToken();
       TokLoc = Tok.getLocation();
-    } while ((SrcMgr.getInstantiationLineNumber(TokLoc) == LineNo) &&
+    } while ((SrcMgr.getExpansionLineNumber(TokLoc) == LineNo) &&
              Tok.isNot(tok::r_brace) && Tok.isNot(tok::semi) &&
              Tok.isNot(tok::eof));
   }

@@ -1153,8 +1153,8 @@ unsigned SourceManager::getSpellingLineNumber(SourceLocation Loc,
   std::pair<FileID, unsigned> LocInfo = getDecomposedSpellingLoc(Loc);
   return getLineNumber(LocInfo.first, LocInfo.second);
 }
-unsigned SourceManager::getInstantiationLineNumber(SourceLocation Loc, 
-                                                   bool *Invalid) const {
+unsigned SourceManager::getExpansionLineNumber(SourceLocation Loc,
+                                               bool *Invalid) const {
   if (isInvalid(Loc, Invalid)) return 0;
   std::pair<FileID, unsigned> LocInfo = getDecomposedExpansionLoc(Loc);
   return getLineNumber(LocInfo.first, LocInfo.second);

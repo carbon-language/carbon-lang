@@ -2480,7 +2480,7 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
   Description.clear();
   llvm::raw_string_ostream os(Description);
   SourceManager& SMgr = Eng.getContext().getSourceManager();
-  unsigned AllocLine = SMgr.getInstantiationLineNumber(AllocSite);
+  unsigned AllocLine = SMgr.getExpansionLineNumber(AllocSite);
   os << "Potential leak ";
   if (tf.isGCEnabled()) {
     os << "(when using garbage collection) ";
