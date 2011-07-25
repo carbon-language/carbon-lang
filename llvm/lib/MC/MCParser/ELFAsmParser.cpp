@@ -65,6 +65,14 @@ public:
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveIdent>(".ident");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSymver>(".symver");
     AddDirectiveHandler<&ELFAsmParser::ParseDirectiveWeakref>(".weakref");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSymbolAttribute>(".weak");
+    AddDirectiveHandler<&ELFAsmParser::ParseDirectiveSymbolAttribute>(".local");
+    AddDirectiveHandler<
+      &ELFAsmParser::ParseDirectiveSymbolAttribute>(".protected");
+    AddDirectiveHandler<
+      &ELFAsmParser::ParseDirectiveSymbolAttribute>(".internal");
+    AddDirectiveHandler<
+      &ELFAsmParser::ParseDirectiveSymbolAttribute>(".hidden");
   }
 
   // FIXME: Part of this logic is duplicated in the MCELFStreamer. What is
@@ -134,11 +142,47 @@ public:
   bool ParseDirectiveIdent(StringRef, SMLoc);
   bool ParseDirectiveSymver(StringRef, SMLoc);
   bool ParseDirectiveWeakref(StringRef, SMLoc);
+  bool ParseDirectiveSymbolAttribute(StringRef, SMLoc);
 
 private:
   bool ParseSectionName(StringRef &SectionName);
 };
 
+}
+
+/// ParseDirectiveSymbolAttribute
+///  ::= { ".local", ".weak", ... } [ identifier ( , identifier )* ]
+bool ELFAsmParser::ParseDirectiveSymbolAttribute(StringRef Directive, SMLoc) {
+  MCSymbolAttr Attr = StringSwitch<MCSymbolAttr>(Directive)
+    .Case(".weak", MCSA_Weak)
+    .Case(".local", MCSA_Local)
+    .Case(".hidden", MCSA_Hidden)
+    .Case(".internal", MCSA_Internal)
+    .Case(".protected", MCSA_Protected)
+    .Default(MCSA_Invalid);
+  assert(Attr != MCSA_Invalid && "unexpected symbol attribute directive!");
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    for (;;) {
+      StringRef Name;
+
+      if (getParser().ParseIdentifier(Name))
+        return TokError("expected identifier in directive");
+
+      MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+
+      getStreamer().EmitSymbolAttribute(Sym, Attr);
+
+      if (getLexer().is(AsmToken::EndOfStatement))
+        break;
+
+      if (getLexer().isNot(AsmToken::Comma))
+        return TokError("unexpected token in directive");
+      Lex();
+    }
+  }
+
+  Lex();
+  return false;
 }
 
 bool ELFAsmParser::ParseSectionSwitch(StringRef Section, unsigned Type,

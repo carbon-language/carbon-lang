@@ -207,7 +207,6 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_ELF_TypeCommon:
   case MCSA_ELF_TypeNoType:
   case MCSA_ELF_TypeGnuUniqueObject:
-  case MCSA_IndirectSymbol:
   case MCSA_Hidden:
   case MCSA_Internal:
   case MCSA_Protected:

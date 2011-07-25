@@ -1117,15 +1117,8 @@ bool AsmParser::ParseStatement() {
 
     if (IDVal == ".globl" || IDVal == ".global")
       return ParseDirectiveSymbolAttribute(MCSA_Global);
-    // ELF only? Should it be here?
-    if (IDVal == ".local")
-      return ParseDirectiveSymbolAttribute(MCSA_Local);
-    if (IDVal == ".hidden")
-      return ParseDirectiveSymbolAttribute(MCSA_Hidden);
     if (IDVal == ".indirect_symbol")
       return ParseDirectiveSymbolAttribute(MCSA_IndirectSymbol);
-    if (IDVal == ".internal")
-      return ParseDirectiveSymbolAttribute(MCSA_Internal);
     if (IDVal == ".lazy_reference")
       return ParseDirectiveSymbolAttribute(MCSA_LazyReference);
     if (IDVal == ".no_dead_strip")
@@ -1134,12 +1127,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveSymbolAttribute(MCSA_SymbolResolver);
     if (IDVal == ".private_extern")
       return ParseDirectiveSymbolAttribute(MCSA_PrivateExtern);
-    if (IDVal == ".protected")
-      return ParseDirectiveSymbolAttribute(MCSA_Protected);
     if (IDVal == ".reference")
       return ParseDirectiveSymbolAttribute(MCSA_Reference);
-    if (IDVal == ".weak")
-      return ParseDirectiveSymbolAttribute(MCSA_Weak);
     if (IDVal == ".weak_definition")
       return ParseDirectiveSymbolAttribute(MCSA_WeakDefinition);
     if (IDVal == ".weak_reference")

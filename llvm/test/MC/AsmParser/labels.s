@@ -35,9 +35,6 @@ foo:
 // CHECK: .globl "a 3"
         .globl "a 3"
 
-// CHECK: .weak "a 4"
-        .weak "a 4"
-
 // CHECK: .desc "a 5",1
         .desc "a 5", 1
 

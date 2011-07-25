@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCParser/MCAsmParserExtension.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -72,6 +73,7 @@ class COFFAsmParser : public MCAsmParserExtension {
                                                               ".seh_pushframe");
     AddDirectiveHandler<&COFFAsmParser::ParseSEHDirectiveEndProlog>(
                                                             ".seh_endprologue");
+    AddDirectiveHandler<&COFFAsmParser::ParseDirectiveSymbolAttribute>(".weak");
   }
 
   bool ParseSectionDirectiveText(StringRef, SMLoc) {
@@ -118,11 +120,43 @@ class COFFAsmParser : public MCAsmParserExtension {
 
   bool ParseAtUnwindOrAtExcept(bool &unwind, bool &except);
   bool ParseSEHRegisterNumber(unsigned &RegNo);
+  bool ParseDirectiveSymbolAttribute(StringRef Directive, SMLoc);
 public:
   COFFAsmParser() {}
 };
 
 } // end annonomous namespace.
+
+/// ParseDirectiveSymbolAttribute
+///  ::= { ".weak", ... } [ identifier ( , identifier )* ]
+bool COFFAsmParser::ParseDirectiveSymbolAttribute(StringRef Directive, SMLoc) {
+  MCSymbolAttr Attr = StringSwitch<MCSymbolAttr>(Directive)
+    .Case(".weak", MCSA_Weak)
+    .Default(MCSA_Invalid);
+  assert(Attr != MCSA_Invalid && "unexpected symbol attribute directive!");
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    for (;;) {
+      StringRef Name;
+
+      if (getParser().ParseIdentifier(Name))
+        return TokError("expected identifier in directive");
+
+      MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+
+      getStreamer().EmitSymbolAttribute(Sym, Attr);
+
+      if (getLexer().is(AsmToken::EndOfStatement))
+        break;
+
+      if (getLexer().isNot(AsmToken::Comma))
+        return TokError("unexpected token in directive");
+      Lex();
+    }
+  }
+
+  Lex();
+  return false;
+}
 
 bool COFFAsmParser::ParseSectionSwitch(StringRef Section,
                                        unsigned Characteristics,
