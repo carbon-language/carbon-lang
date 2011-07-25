@@ -996,6 +996,26 @@ void StoreInst::setAlignment(unsigned Align) {
 }
 
 //===----------------------------------------------------------------------===//
+//                       FenceInst Implementation
+//===----------------------------------------------------------------------===//
+
+FenceInst::FenceInst(LLVMContext &C, AtomicOrdering Ordering, 
+                     SynchronizationScope SynchScope,
+                     Instruction *InsertBefore)
+  : Instruction(Type::getVoidTy(C), Fence, 0, 0, InsertBefore) {
+  setOrdering(Ordering);
+  setSynchScope(SynchScope);
+}
+
+FenceInst::FenceInst(LLVMContext &C, AtomicOrdering Ordering, 
+                     SynchronizationScope SynchScope,
+                     BasicBlock *InsertAtEnd)
+  : Instruction(Type::getVoidTy(C), Fence, 0, 0, InsertAtEnd) {
+  setOrdering(Ordering);
+  setSynchScope(SynchScope);
+}
+
+//===----------------------------------------------------------------------===//
 //                       GetElementPtrInst Implementation
 //===----------------------------------------------------------------------===//
 
@@ -3016,6 +3036,10 @@ LoadInst *LoadInst::clone_impl() const {
 StoreInst *StoreInst::clone_impl() const {
   return new StoreInst(getOperand(0), getOperand(1),
                        isVolatile(), getAlignment());
+}
+
+FenceInst *FenceInst::clone_impl() const {
+  return new FenceInst(getContext(), getOrdering(), getSynchScope());
 }
 
 TruncInst *TruncInst::clone_impl() const {

@@ -53,6 +53,9 @@ namespace lltok {
     kw_deplibs,
     kw_datalayout,
     kw_volatile,
+    kw_atomic,
+    kw_unordered, kw_monotonic, kw_acquire, kw_release, kw_acq_rel, kw_seq_cst,
+    kw_singlethread,
     kw_nuw,
     kw_nsw,
     kw_exact,
@@ -121,7 +124,7 @@ namespace lltok {
     kw_ret, kw_br, kw_switch, kw_indirectbr, kw_invoke, kw_unwind,
     kw_unreachable,
 
-    kw_alloca, kw_load, kw_store, kw_getelementptr,
+    kw_alloca, kw_load, kw_store, kw_fence, kw_getelementptr,
 
     kw_extractelement, kw_insertelement, kw_shufflevector,
     kw_extractvalue, kw_insertvalue, kw_blockaddress,

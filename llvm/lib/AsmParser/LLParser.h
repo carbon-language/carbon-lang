@@ -15,6 +15,7 @@
 #define LLVM_ASMPARSER_LLPARSER_H
 
 #include "LLLexer.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/DenseMap.h"
@@ -178,6 +179,8 @@ namespace llvm {
     bool ParseOptionalVisibility(unsigned &Visibility);
     bool ParseOptionalCallingConv(CallingConv::ID &CC);
     bool ParseOptionalAlignment(unsigned &Alignment);
+    bool ParseScopeAndOrdering(bool isAtomic, SynchronizationScope &Scope,
+                               AtomicOrdering &Ordering);
     bool ParseOptionalStackAlignment(unsigned &Alignment);
     bool ParseOptionalCommaAlign(unsigned &Alignment, bool &AteExtraComma);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices,bool &AteExtraComma);
@@ -360,6 +363,7 @@ namespace llvm {
     int ParseAlloc(Instruction *&I, PerFunctionState &PFS);
     int ParseLoad(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
     int ParseStore(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
+    int ParseFence(Instruction *&I, PerFunctionState &PFS);
     int ParseGetElementPtr(Instruction *&I, PerFunctionState &PFS);
     int ParseExtractValue(Instruction *&I, PerFunctionState &PFS);
     int ParseInsertValue(Instruction *&I, PerFunctionState &PFS);

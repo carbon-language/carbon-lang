@@ -506,6 +506,15 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(deplibs);
   KEYWORD(datalayout);
   KEYWORD(volatile);
+  KEYWORD(atomic);
+  KEYWORD(unordered);
+  KEYWORD(monotonic);
+  KEYWORD(acquire);
+  KEYWORD(release);
+  KEYWORD(acq_rel);
+  KEYWORD(seq_cst);
+  KEYWORD(singlethread);
+
   KEYWORD(nuw);
   KEYWORD(nsw);
   KEYWORD(exact);
@@ -630,6 +639,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   INSTKEYWORD(alloca,      Alloca);
   INSTKEYWORD(load,        Load);
   INSTKEYWORD(store,       Store);
+  INSTKEYWORD(fence,       Fence);
   INSTKEYWORD(getelementptr, GetElementPtr);
 
   INSTKEYWORD(extractelement, ExtractElement);

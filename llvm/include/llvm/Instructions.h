@@ -22,6 +22,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <iterator>
 
 namespace llvm {
@@ -30,6 +31,22 @@ class ConstantInt;
 class ConstantRange;
 class APInt;
 class LLVMContext;
+
+enum AtomicOrdering {
+  NotAtomic = 0,
+  Unordered = 1,
+  Monotonic = 2,
+  // Consume = 3,  // Not specified yet.
+  Acquire = 4,
+  Release = 5,
+  AcquireRelease = 6,
+  SequentiallyConsistent = 7
+};
+
+enum SynchronizationScope {
+  SingleThread = 0,
+  CrossThread = 1
+};
 
 //===----------------------------------------------------------------------===//
 //                                AllocaInst Class
@@ -267,6 +284,82 @@ struct OperandTraits<StoreInst> : public FixedNumOperandTraits<StoreInst, 2> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(StoreInst, Value)
+
+//===----------------------------------------------------------------------===//
+//                                FenceInst Class
+//===----------------------------------------------------------------------===//
+
+/// FenceInst - an instruction for ordering other memory operations
+///
+class FenceInst : public Instruction {
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  void Init(AtomicOrdering Ordering, SynchronizationScope SynchScope);
+protected:
+  virtual FenceInst *clone_impl() const;
+public:
+  // allocate space for exactly zero operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
+
+  // Ordering may only be Acquire, Release, AcquireRelease, or
+  // SequentiallyConsistent.
+  FenceInst(LLVMContext &C, AtomicOrdering Ordering,
+            SynchronizationScope SynchScope = CrossThread,
+            Instruction *InsertBefore = 0);
+  FenceInst(LLVMContext &C, AtomicOrdering Ordering,
+            SynchronizationScope SynchScope,
+            BasicBlock *InsertAtEnd);
+
+  /// Returns the ordering effect of this fence.
+  AtomicOrdering getOrdering() const {
+    return AtomicOrdering(getSubclassDataFromInstruction() >> 1);
+  }
+
+  /// Set the ordering constraint on this fence.  May only be Acquire, Release,
+  /// AcquireRelease, or SequentiallyConsistent.
+  void setOrdering(AtomicOrdering Ordering) {
+    switch (Ordering) {
+    case Acquire:
+    case Release:
+    case AcquireRelease:
+    case SequentiallyConsistent:
+      setInstructionSubclassData((getSubclassDataFromInstruction() & 1) |
+                                 (Ordering << 1));
+      return;
+    default:
+      llvm_unreachable("FenceInst ordering must be Acquire, Release,"
+                       " AcquireRelease, or SequentiallyConsistent");
+    }
+  }
+
+  SynchronizationScope getSynchScope() const {
+    return SynchronizationScope(getSubclassDataFromInstruction() & 1);
+  }
+
+  /// Specify whether this fence orders other operations with respect to all
+  /// concurrently executing threads, or only with respect to signal handlers
+  /// executing in the same thread.
+  void setSynchScope(SynchronizationScope xthread) {
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~1) |
+                               xthread);
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const FenceInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Fence;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+private:
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
+  }
+};
 
 //===----------------------------------------------------------------------===//
 //                             GetElementPtrInst Class

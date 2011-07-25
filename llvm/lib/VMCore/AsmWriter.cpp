@@ -1098,6 +1098,7 @@ public:
 
   void writeOperand(const Value *Op, bool PrintType);
   void writeParamOperand(const Value *Operand, Attributes Attrs);
+  void writeAtomic(AtomicOrdering Ordering, SynchronizationScope SynchScope);
 
   void writeAllMDNodes();
 
@@ -1126,6 +1127,28 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
     Out << ' ';
   }
   WriteAsOperandInternal(Out, Operand, &TypePrinter, &Machine, TheModule);
+}
+
+void AssemblyWriter::writeAtomic(AtomicOrdering Ordering,
+                                 SynchronizationScope SynchScope) {
+  if (Ordering == NotAtomic)
+    return;
+
+  switch (SynchScope) {
+  default: Out << " <bad scope " << int(SynchScope) << ">"; break;
+  case SingleThread: Out << " singlethread"; break;
+  case CrossThread: break;
+  }
+
+  switch (Ordering) {
+  default: Out << " <bad ordering " << int(Ordering) << ">"; break;
+  case Unordered: Out << " unordered"; break;
+  case Monotonic: Out << " monotonic"; break;
+  case Acquire: Out << " acquire"; break;
+  case Release: Out << " release"; break;
+  case AcquireRelease: Out << " acq_rel"; break;
+  case SequentiallyConsistent: Out << " seq_cst"; break;
+  }
 }
 
 void AssemblyWriter::writeParamOperand(const Value *Operand,
@@ -1883,6 +1906,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << ", align " << cast<LoadInst>(I).getAlignment();
   } else if (isa<StoreInst>(I) && cast<StoreInst>(I).getAlignment()) {
     Out << ", align " << cast<StoreInst>(I).getAlignment();
+  } else if (const FenceInst *FI = dyn_cast<FenceInst>(&I)) {
+    writeAtomic(FI->getOrdering(), FI->getSynchScope());
   }
 
   // Print Metadata info.

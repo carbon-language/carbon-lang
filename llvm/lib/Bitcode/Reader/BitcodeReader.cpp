@@ -131,6 +131,27 @@ static int GetDecodedBinaryOpcode(unsigned Val, Type *Ty) {
   }
 }
 
+static AtomicOrdering GetDecodedOrdering(unsigned Val) {
+  switch (Val) {
+  case bitc::ORDERING_NOTATOMIC: return NotAtomic;
+  case bitc::ORDERING_UNORDERED: return Unordered;
+  case bitc::ORDERING_MONOTONIC: return Monotonic;
+  case bitc::ORDERING_ACQUIRE: return Acquire;
+  case bitc::ORDERING_RELEASE: return Release;
+  case bitc::ORDERING_ACQREL: return AcquireRelease;
+  default: // Map unknown orderings to sequentially-consistent.
+  case bitc::ORDERING_SEQCST: return SequentiallyConsistent;
+  }
+}
+
+static SynchronizationScope GetDecodedSynchScope(unsigned Val) {
+  switch (Val) {
+  case bitc::SYNCHSCOPE_SINGLETHREAD: return SingleThread;
+  default: // Map unknown scopes to cross-thread.
+  case bitc::SYNCHSCOPE_CROSSTHREAD: return CrossThread;
+  }
+}
+
 namespace llvm {
 namespace {
   /// @brief A class for maintaining the slot number definition
@@ -2531,6 +2552,18 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         return Error("Invalid STORE record");
 
       I = new StoreInst(Val, Ptr, Record[OpNum+1], (1 << Record[OpNum]) >> 1);
+      InstructionList.push_back(I);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_FENCE: { // FENCE:[ordering, synchscope]
+      if (2 != Record.size())
+        return Error("Invalid FENCE record");
+      AtomicOrdering Ordering = GetDecodedOrdering(Record[0]);
+      if (Ordering == NotAtomic || Ordering == Unordered ||
+          Ordering == Monotonic)
+        return Error("Invalid FENCE record");
+      SynchronizationScope SynchScope = GetDecodedSynchScope(Record[1]);
+      I = new FenceInst(Context, Ordering, SynchScope);
       InstructionList.push_back(I);
       break;
     }

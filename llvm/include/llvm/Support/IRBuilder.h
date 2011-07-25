@@ -762,6 +762,10 @@ public:
   StoreInst *CreateStore(Value *Val, Value *Ptr, bool isVolatile = false) {
     return Insert(new StoreInst(Val, Ptr, isVolatile));
   }
+  FenceInst *CreateFence(AtomicOrdering Ordering,
+                         SynchronizationScope SynchScope = CrossThread) {
+    return Insert(new FenceInst(Context, Ordering, SynchScope));
+  }
   Value *CreateGEP(Value *Ptr, ArrayRef<Value *> IdxList,
                    const Twine &Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr)) {

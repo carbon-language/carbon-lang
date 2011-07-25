@@ -170,6 +170,7 @@
           <li><a href="#i_alloca">'<tt>alloca</tt>'   Instruction</a></li>
          <li><a href="#i_load">'<tt>load</tt>'     Instruction</a></li>
          <li><a href="#i_store">'<tt>store</tt>'    Instruction</a></li>
+         <li><a href="#i_fence">'<tt>fence</tt>'    Instruction</a></li>
          <li><a href="#i_getelementptr">'<tt>getelementptr</tt>' Instruction</a></li>
         </ol>
       </li>
@@ -4547,6 +4548,63 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   %ptr = <a href="#i_alloca">alloca</a> i32                               <i>; yields {i32*}:ptr</i>
   store i32 3, i32* %ptr                          <i>; yields {void}</i>
   %val = <a href="#i_load">load</a> i32* %ptr                           <i>; yields {i32}:val = i32 3</i>
+</pre>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="i_fence">'<tt>fence</tt>'
+Instruction</a> </div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  fence [singlethread] &lt;ordering&gt;                   <i>; yields {void}</i>
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>fence</tt>' instruction is used to introduce happens-before edges
+between operations.</p>
+
+<h5>Arguments:</h5> <p>'<code>fence</code>' instructions take an <a
+href="#ordering">ordering</a> argument which defines what
+<i>synchronizes-with</i> edges they add.  They can only be given
+<code>acquire</code>, <code>release</code>, <code>acq_rel</code>, and
+<code>seq_cst</code> orderings.</p>
+
+<h5>Semantics:</h5>
+<p>A fence <var>A</var> which has (at least) <code>release</code> ordering
+semantics <i>synchronizes with</i> a fence <var>B</var> with (at least)
+<code>acquire</code> ordering semantics if and only if there exist atomic
+operations <var>X</var> and <var>Y</var>, both operating on some atomic object
+<var>M</var>, such that <var>A</var> is sequenced before <var>X</var>,
+<var>X</var> modifies <var>M</var> (either directly or through some side effect
+of a sequence headed by <var>X</var>), <var>Y</var> is sequenced before
+<var>B</var>, and <var>Y</var> observes <var>M</var>. This provides a
+<i>happens-before</i> dependency between <var>A</var> and <var>B</var>. Rather
+than an explicit <code>fence</code>, one (but not both) of the atomic operations
+<var>X</var> or <var>Y</var> might provide a <code>release</code> or
+<code>acquire</code> (resp.) ordering constraint and still
+<i>synchronize-with</i> the explicit <code>fence</code> and establish the
+<i>happens-before</i> edge.</p>
+
+<p>A <code>fence</code> which has <code>seq_cst</code> ordering, in addition to
+having both <code>acquire</code> and <code>release</code> semantics specified
+above, participates in the global program order of other <code>seq_cst</code>
+operations and/or fences.</p>
+
+<p>The optional "<a href="#singlethread"><code>singlethread</code></a>" argument
+specifies that the fence only synchronizes with other fences in the same
+thread.  (This is useful for interacting with signal handlers.)</p>
+
+<p>FIXME: This instruction is a work in progress; until it is finished, use
+   llvm.memory.barrier.
+
+<h5>Example:</h5>
+<pre>
+  fence acquire                          <i>; yields {void}</i>
+  fence singlethread seq_cst             <i>; yields {void}</i>
 </pre>
 
 </div>

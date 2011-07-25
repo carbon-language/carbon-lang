@@ -101,6 +101,27 @@ static unsigned GetEncodedBinaryOpcode(unsigned Opcode) {
   }
 }
 
+static unsigned GetEncodedOrdering(AtomicOrdering Ordering) {
+  switch (Ordering) {
+  default: llvm_unreachable("Unknown atomic ordering");
+  case NotAtomic: return bitc::ORDERING_NOTATOMIC;
+  case Unordered: return bitc::ORDERING_UNORDERED;
+  case Monotonic: return bitc::ORDERING_MONOTONIC;
+  case Acquire: return bitc::ORDERING_ACQUIRE;
+  case Release: return bitc::ORDERING_RELEASE;
+  case AcquireRelease: return bitc::ORDERING_ACQREL;
+  case SequentiallyConsistent: return bitc::ORDERING_SEQCST;
+  }
+}
+
+static unsigned GetEncodedSynchScope(SynchronizationScope SynchScope) {
+  switch (SynchScope) {
+  default: llvm_unreachable("Unknown synchronization scope");
+  case SingleThread: return bitc::SYNCHSCOPE_SINGLETHREAD;
+  case CrossThread: return bitc::SYNCHSCOPE_CROSSTHREAD;
+  }
+}
+
 static void WriteStringRecord(unsigned Code, StringRef Str,
                               unsigned AbbrevToUse, BitstreamWriter &Stream) {
   SmallVector<unsigned, 64> Vals;
@@ -1146,6 +1167,11 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Vals.push_back(VE.getValueID(I.getOperand(0)));       // val.
     Vals.push_back(Log2_32(cast<StoreInst>(I).getAlignment())+1);
     Vals.push_back(cast<StoreInst>(I).isVolatile());
+    break;
+  case Instruction::Fence:
+    Code = bitc::FUNC_CODE_INST_FENCE;
+    Vals.push_back(GetEncodedOrdering(cast<FenceInst>(I).getOrdering()));
+    Vals.push_back(GetEncodedSynchScope(cast<FenceInst>(I).getSynchScope()));
     break;
   case Instruction::Call: {
     const CallInst &CI = cast<CallInst>(I);

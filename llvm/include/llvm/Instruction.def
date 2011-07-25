@@ -133,43 +133,44 @@ HANDLE_MEMORY_INST(26, Alloca, AllocaInst)  // Stack management
 HANDLE_MEMORY_INST(27, Load  , LoadInst  )  // Memory manipulation instrs
 HANDLE_MEMORY_INST(28, Store , StoreInst )
 HANDLE_MEMORY_INST(29, GetElementPtr, GetElementPtrInst)
-  LAST_MEMORY_INST(29)
+HANDLE_MEMORY_INST(30, Fence , FenceInst )
+  LAST_MEMORY_INST(32)
 
 // Cast operators ...
 // NOTE: The order matters here because CastInst::isEliminableCastPair 
 // NOTE: (see Instructions.cpp) encodes a table based on this ordering.
- FIRST_CAST_INST(30)
-HANDLE_CAST_INST(30, Trunc   , TruncInst   )  // Truncate integers
-HANDLE_CAST_INST(31, ZExt    , ZExtInst    )  // Zero extend integers
-HANDLE_CAST_INST(32, SExt    , SExtInst    )  // Sign extend integers
-HANDLE_CAST_INST(33, FPToUI  , FPToUIInst  )  // floating point -> UInt
-HANDLE_CAST_INST(34, FPToSI  , FPToSIInst  )  // floating point -> SInt
-HANDLE_CAST_INST(35, UIToFP  , UIToFPInst  )  // UInt -> floating point
-HANDLE_CAST_INST(36, SIToFP  , SIToFPInst  )  // SInt -> floating point
-HANDLE_CAST_INST(37, FPTrunc , FPTruncInst )  // Truncate floating point
-HANDLE_CAST_INST(38, FPExt   , FPExtInst   )  // Extend floating point
-HANDLE_CAST_INST(39, PtrToInt, PtrToIntInst)  // Pointer -> Integer
-HANDLE_CAST_INST(40, IntToPtr, IntToPtrInst)  // Integer -> Pointer
-HANDLE_CAST_INST(41, BitCast , BitCastInst )  // Type cast
-  LAST_CAST_INST(41)
+ FIRST_CAST_INST(33)
+HANDLE_CAST_INST(33, Trunc   , TruncInst   )  // Truncate integers
+HANDLE_CAST_INST(34, ZExt    , ZExtInst    )  // Zero extend integers
+HANDLE_CAST_INST(35, SExt    , SExtInst    )  // Sign extend integers
+HANDLE_CAST_INST(36, FPToUI  , FPToUIInst  )  // floating point -> UInt
+HANDLE_CAST_INST(37, FPToSI  , FPToSIInst  )  // floating point -> SInt
+HANDLE_CAST_INST(38, UIToFP  , UIToFPInst  )  // UInt -> floating point
+HANDLE_CAST_INST(39, SIToFP  , SIToFPInst  )  // SInt -> floating point
+HANDLE_CAST_INST(40, FPTrunc , FPTruncInst )  // Truncate floating point
+HANDLE_CAST_INST(41, FPExt   , FPExtInst   )  // Extend floating point
+HANDLE_CAST_INST(42, PtrToInt, PtrToIntInst)  // Pointer -> Integer
+HANDLE_CAST_INST(43, IntToPtr, IntToPtrInst)  // Integer -> Pointer
+HANDLE_CAST_INST(44, BitCast , BitCastInst )  // Type cast
+  LAST_CAST_INST(44)
 
 // Other operators...
- FIRST_OTHER_INST(42)
-HANDLE_OTHER_INST(42, ICmp   , ICmpInst   )  // Integer comparison instruction
-HANDLE_OTHER_INST(43, FCmp   , FCmpInst   )  // Floating point comparison instr.
-HANDLE_OTHER_INST(44, PHI    , PHINode    )  // PHI node instruction
-HANDLE_OTHER_INST(45, Call   , CallInst   )  // Call a function
-HANDLE_OTHER_INST(46, Select , SelectInst )  // select instruction
-HANDLE_OTHER_INST(47, UserOp1, Instruction)  // May be used internally in a pass
-HANDLE_OTHER_INST(48, UserOp2, Instruction)  // Internal to passes only
-HANDLE_OTHER_INST(49, VAArg  , VAArgInst  )  // vaarg instruction
-HANDLE_OTHER_INST(50, ExtractElement, ExtractElementInst)// extract from vector
-HANDLE_OTHER_INST(51, InsertElement, InsertElementInst)  // insert into vector
-HANDLE_OTHER_INST(52, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
-HANDLE_OTHER_INST(53, ExtractValue, ExtractValueInst)// extract from aggregate
-HANDLE_OTHER_INST(54, InsertValue, InsertValueInst)  // insert into aggregate
+ FIRST_OTHER_INST(45)
+HANDLE_OTHER_INST(45, ICmp   , ICmpInst   )  // Integer comparison instruction
+HANDLE_OTHER_INST(46, FCmp   , FCmpInst   )  // Floating point comparison instr.
+HANDLE_OTHER_INST(47, PHI    , PHINode    )  // PHI node instruction
+HANDLE_OTHER_INST(48, Call   , CallInst   )  // Call a function
+HANDLE_OTHER_INST(49, Select , SelectInst )  // select instruction
+HANDLE_OTHER_INST(50, UserOp1, Instruction)  // May be used internally in a pass
+HANDLE_OTHER_INST(51, UserOp2, Instruction)  // Internal to passes only
+HANDLE_OTHER_INST(52, VAArg  , VAArgInst  )  // vaarg instruction
+HANDLE_OTHER_INST(53, ExtractElement, ExtractElementInst)// extract from vector
+HANDLE_OTHER_INST(54, InsertElement, InsertElementInst)  // insert into vector
+HANDLE_OTHER_INST(55, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
+HANDLE_OTHER_INST(56, ExtractValue, ExtractValueInst)// extract from aggregate
+HANDLE_OTHER_INST(57, InsertValue, InsertValueInst)  // insert into aggregate
 
-  LAST_OTHER_INST(54)
+  LAST_OTHER_INST(57)
 
 #undef  FIRST_TERM_INST
 #undef HANDLE_TERM_INST

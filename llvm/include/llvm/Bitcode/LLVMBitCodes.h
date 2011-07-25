@@ -218,6 +218,23 @@ namespace bitc {
     PEO_EXACT = 0
   };
 
+  /// Encoded AtomicOrdering values.
+  enum AtomicOrderingCodes {
+    ORDERING_NOTATOMIC = 0,
+    ORDERING_UNORDERED = 1,
+    ORDERING_MONOTONIC = 2,
+    ORDERING_ACQUIRE = 3,
+    ORDERING_RELEASE = 4,
+    ORDERING_ACQREL = 5,
+    ORDERING_SEQCST = 6
+  };
+
+  /// Encoded SynchronizationScope values.
+  enum AtomicSynchScopeCodes {
+    SYNCHSCOPE_SINGLETHREAD = 0,
+    SYNCHSCOPE_CROSSTHREAD = 1
+  };
+
   // The function body block (FUNCTION_BLOCK_ID) describes function bodies.  It
   // can contain a constant block (CONSTANTS_BLOCK_ID).
   enum FunctionCodes {
@@ -266,7 +283,8 @@ namespace bitc {
 
     FUNC_CODE_INST_CALL        = 34, // CALL:       [attr, fnty, fnid, args...]
 
-    FUNC_CODE_DEBUG_LOC        = 35  // DEBUG_LOC:  [Line,Col,ScopeVal, IAVal]
+    FUNC_CODE_DEBUG_LOC        = 35, // DEBUG_LOC:  [Line,Col,ScopeVal, IAVal]
+    FUNC_CODE_INST_FENCE       = 36  // FENCE: [ordering, synchscope]
   };
 } // End bitc namespace
 } // End llvm namespace
