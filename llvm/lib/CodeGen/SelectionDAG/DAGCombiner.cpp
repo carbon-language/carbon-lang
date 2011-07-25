@@ -6896,7 +6896,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
 
     // If Idx was -1 above, Elt is going to be -1, so just return undef.
     if (Elt == -1)
-      return DAG.getUNDEF(LN0->getBasePtr().getValueType());
+      return DAG.getUNDEF(LVT);
 
     unsigned Align = LN0->getAlignment();
     if (NewLoad) {
