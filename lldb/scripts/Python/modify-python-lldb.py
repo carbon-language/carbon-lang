@@ -92,7 +92,7 @@ linked_list_iter_def = '''
     # ==================================================
     # Iterator for lldb.SBValue treated as a linked list
     # ==================================================
-    def linked_list_iter(self, next_item_name, end_of_list):
+    def linked_list_iter(self, next_item_name, end_of_list_test):
         """Generator adaptor to support iteration for SBValue as a linked list.
 
         linked_list_iter() is a special purpose iterator to treat the SBValue as
@@ -136,7 +136,7 @@ linked_list_iter_def = '''
                 yield item
                 # Prepare for the next iteration.
                 item = item.GetChildMemberWithName(next_item_name)
-                if end_of_list(item):
+                if end_of_list_test(item):
                     break
         except:
             # Exception occurred.  Stop the generator.
