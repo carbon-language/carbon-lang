@@ -49,7 +49,11 @@ Name:  rip  Value:  0x0000000100000dae
 Name:  rflags  Value:  0x0000000000000206
 Name:  cs  Value:  0x0000000000000027
 Name:  fs  Value:  0x0000000000000010
-Name:  gs  Value:  0x0000000000000048"
+Name:  gs  Value:  0x0000000000000048
+
+See also linked_list_iter() for another perspective on how to iterate through an
+SBValue instance which interprets the value object as representing the head of a
+linked list."
 ) SBValue;
 class SBValue
 {

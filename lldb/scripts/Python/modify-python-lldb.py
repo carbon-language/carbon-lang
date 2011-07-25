@@ -83,17 +83,23 @@ def lldb_iter(obj, getsize, getelem):
 '''
 
 #
-# linked_list_iter() is a special purpose iterator to treat the SBValue as a
-# list data structure, where you specify the child member name which points to
-# the next item on the list and you specify the end-of-list function which takes
-# an SBValue and returns True if EOL is reached and False if not.
+# linked_list_iter() is a special purpose iterator to treat the SBValue as the
+# head of a list data structure, where you specify the child member name which
+# points to the next item on the list and you specify the end-of-list function
+# which takes an SBValue and returns True if EOL is reached and False if not.
 #
 linked_list_iter_def = '''
     # ==================================================
     # Iterator for lldb.SBValue treated as a linked list
     # ==================================================
     def linked_list_iter(self, next_item_name, end_of_list):
-        """A generator adaptor to support iteration for SBValue as a linked list.
+        """Generator adaptor to support iteration for SBValue as a linked list.
+
+        linked_list_iter() is a special purpose iterator to treat the SBValue as
+        the head of a list data structure, where you specify the child member
+        name which points to the next item on the list and you specify the
+        end-of-list test function which takes an SBValue for an item and returns
+        True if EOL is reached and False if not.
 
         For example,
 
