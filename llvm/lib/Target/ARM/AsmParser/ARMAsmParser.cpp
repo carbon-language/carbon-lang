@@ -135,6 +135,10 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool cvtStWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
 
+
+  bool validateInstruction(MCInst &Inst,
+                           const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
+
 public:
   ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
     : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
@@ -147,7 +151,7 @@ public:
   // Implementation of the MCTargetAsmParser interface:
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
   bool ParseInstruction(StringRef Name, SMLoc NameLoc,
-                                SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+                        SmallVectorImpl<MCParsedAsmOperand*> &Operands);
   bool ParseDirective(AsmToken DirectiveID);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc,
@@ -2499,6 +2503,35 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   return false;
 }
 
+// Validate context-sensitive operand constraints.
+// FIXME: We would really like to be able to tablegen'erate this.
+bool ARMAsmParser::
+validateInstruction(MCInst &Inst,
+                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  switch (Inst.getOpcode()) {
+  case ARM::LDREXD: {
+    // Rt2 must be Rt + 1.
+    unsigned Rt = getARMRegisterNumbering(Inst.getOperand(0).getReg());
+    unsigned Rt2 = getARMRegisterNumbering(Inst.getOperand(1).getReg());
+    if (Rt2 != Rt + 1)
+      return Error(Operands[3]->getStartLoc(),
+                   "destination operands must be sequential");
+    return false;
+  }
+  case ARM::STREXD: {
+    // Rt2 must be Rt + 1.
+    unsigned Rt = getARMRegisterNumbering(Inst.getOperand(1).getReg());
+    unsigned Rt2 = getARMRegisterNumbering(Inst.getOperand(2).getReg());
+    if (Rt2 != Rt + 1)
+      return Error(Operands[4]->getStartLoc(),
+                   "source operands must be sequential");
+    return false;
+  }
+  }
+
+  return false;
+}
+
 bool ARMAsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -2509,6 +2542,11 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo);
   switch (MatchResult) {
   case Match_Success:
+    // Context sensitive operand constraints aren't handled by the matcher,
+    // so check them here.
+    if (validateInstruction(Inst, Operands))
+      return true;
+
     Out.EmitInstruction(Inst);
     return false;
   case Match_MissingFeature:

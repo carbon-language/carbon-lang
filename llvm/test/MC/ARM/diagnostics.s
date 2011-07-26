@@ -226,3 +226,15 @@
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS:   svc #0x1000000
 @ CHECK-ERRORS:       ^
+
+
+        @ Out of order Rt/Rt2 operands for ldrexd/strexd
+        ldrexd  r4, r3, [r8]
+        strexd  r6, r5, r3, [r8]
+
+@ CHECK-ERRORS: error: destination operands must be sequential
+@ CHECK-ERRORS:         ldrexd  r4, r3, [r8]
+@ CHECK-ERRORS:                     ^
+@ CHECK-ERRORS: error: source operands must be sequential
+@ CHECK-ERRORS:         strexd  r6, r5, r3, [r8]
+@ CHECK-ERRORS:                         ^
