@@ -35,7 +35,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCAsmBackend.h"
-#include "llvm/MC/TargetAsmParser.h"
+#include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -324,8 +324,9 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
 
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(*TheTarget, SrcMgr, Ctx,
                                                   *Str.get(), *MAI));
-  OwningPtr<TargetAsmParser>
-    TAP(TheTarget->createAsmParser(const_cast<MCSubtargetInfo&>(STI), *Parser));
+  OwningPtr<MCTargetAsmParser>
+    TAP(TheTarget->createMCAsmParser(const_cast<MCSubtargetInfo&>(STI),
+                                     *Parser));
   if (!TAP) {
     Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
     return false;
