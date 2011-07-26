@@ -3467,87 +3467,43 @@ void Sema::CheckCastAlign(Expr *Op, QualType T, SourceRange TRange) {
     << TRange << Op->getSourceRange();
 }
 
-static const Type* getElementType(const Expr *BaseExpr) {
-  const Type* EltType = BaseExpr->getType().getTypePtr();
-  if (EltType->isAnyPointerType())
-    return EltType->getPointeeType().getTypePtr();
-  else if (EltType->isArrayType())
-    return EltType->getBaseElementTypeUnsafe();
-  return EltType;
-}
-
-void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
-                            bool isSubscript) {
-  const Type* EffectiveType = getElementType(BaseExpr);
-  BaseExpr = BaseExpr->IgnoreParenCasts();
-  IndexExpr = IndexExpr->IgnoreParenCasts();
-
+static void CheckArrayAccess_Check(Sema &S,
+                                   const clang::ArraySubscriptExpr *E) {
+  const Expr *BaseExpr = E->getBase()->IgnoreParenImpCasts();
   const ConstantArrayType *ArrayTy =
-    Context.getAsConstantArrayType(BaseExpr->getType());
+    S.Context.getAsConstantArrayType(BaseExpr->getType());
   if (!ArrayTy)
     return;
 
+  const Expr *IndexExpr = E->getIdx();
   if (IndexExpr->isValueDependent())
     return;
   llvm::APSInt index;
-  if (!IndexExpr->isIntegerConstantExpr(index, Context))
+  if (!IndexExpr->isIntegerConstantExpr(index, S.Context))
     return;
 
   if (index.isUnsigned() || !index.isNegative()) {
     llvm::APInt size = ArrayTy->getSize();
     if (!size.isStrictlyPositive())
       return;
-
-    const Type* BaseType = getElementType(BaseExpr);
-    if (BaseType != EffectiveType) {
-      // Make sure we're comparing apples to apples when comparing index to size
-      uint64_t ptrarith_typesize = Context.getTypeSize(EffectiveType);
-      uint64_t array_typesize = Context.getTypeSize(BaseType);
-      if (ptrarith_typesize != array_typesize) {
-        // There's a cast to a different size type involved
-        uint64_t ratio = array_typesize / ptrarith_typesize;
-        if (ptrarith_typesize * ratio != array_typesize)
-          // If the size of the array's base type is not a multiple of the
-          // casted-to pointee type, the results of the pointer arithmetic
-          // may or may not point to something consistently meaningful or within a
-          // valid reference...
-          return;
-
-        size *= llvm::APInt(size.getBitWidth(), ratio);
-      }
-    }
-
     if (size.getBitWidth() > index.getBitWidth())
       index = index.sext(size.getBitWidth());
     else if (size.getBitWidth() < index.getBitWidth())
       size = size.sext(index.getBitWidth());
 
-    // For array subscripting the index must be less than size, but for pointer
-    // arithmetic also allow the index (offset) to be equal to size since
-    // computing the next address after the end of the array is legal and
-    // commonly done e.g. in C++ iterators and range-based for loops.
-    if (isSubscript ? index.slt(size) : index.sle(size))
+    if (index.slt(size))
       return;
 
-    unsigned DiagID = diag::warn_ptr_arith_exceeds_bounds;
-    if (isSubscript)
-      DiagID = diag::warn_array_index_exceeds_bounds;
-
-    DiagRuntimeBehavior(BaseExpr->getLocStart(), BaseExpr,
-                        PDiag(DiagID) << index.toString(10, true)
-                          << size.toString(10, true)
-                          << (unsigned)size.getLimitedValue(~0U)
-                          << IndexExpr->getSourceRange());
+    S.DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
+                          S.PDiag(diag::warn_array_index_exceeds_bounds)
+                            << index.toString(10, true)
+                            << size.toString(10, true)
+                            << IndexExpr->getSourceRange());
   } else {
-    unsigned DiagID = diag::warn_array_index_precedes_bounds;
-    if (!isSubscript) {
-      DiagID = diag::warn_ptr_arith_precedes_bounds;
-      if (index.isNegative()) index = -index;
-    }
-
-    DiagRuntimeBehavior(BaseExpr->getLocStart(), BaseExpr,
-                        PDiag(DiagID) << index.toString(10, true)
-                          << IndexExpr->getSourceRange());
+    S.DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
+                          S.PDiag(diag::warn_array_index_precedes_bounds)
+                            << index.toString(10, true)
+                            << IndexExpr->getSourceRange());
   }
 
   const NamedDecl *ND = NULL;
@@ -3556,21 +3512,18 @@ void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
   if (const MemberExpr *ME = dyn_cast<MemberExpr>(BaseExpr))
     ND = dyn_cast<NamedDecl>(ME->getMemberDecl());
   if (ND)
-    DiagRuntimeBehavior(ND->getLocStart(), BaseExpr,
-                        PDiag(diag::note_array_index_out_of_bounds)
-                          << ND->getDeclName());
+    S.DiagRuntimeBehavior(ND->getLocStart(), BaseExpr,
+                          S.PDiag(diag::note_array_index_out_of_bounds)
+                            << ND->getDeclName());
 }
 
 void Sema::CheckArrayAccess(const Expr *expr) {
   while (true) {
     expr = expr->IgnoreParens();
     switch (expr->getStmtClass()) {
-      case Stmt::ArraySubscriptExprClass: {
-        const ArraySubscriptExpr *ASE = cast<ArraySubscriptExpr>(expr);
-        CheckArrayAccess(ASE->getBase(),
-                         ASE->getIdx(), true);
+      case Stmt::ArraySubscriptExprClass:
+        CheckArrayAccess_Check(*this, cast<ArraySubscriptExpr>(expr));
         return;
-      }
       case Stmt::ConditionalOperatorClass: {
         const ConditionalOperator *cond = cast<ConditionalOperator>(expr);
         if (const Expr *lhs = cond->getLHS())
