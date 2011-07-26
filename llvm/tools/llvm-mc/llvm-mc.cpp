@@ -170,21 +170,42 @@ static const Target *GetTarget(const char *ProgName) {
   // Figure out the target triple.
   if (TripleName.empty())
     TripleName = sys::getHostTriple();
+  Triple TheTriple(Triple::normalize(TripleName));
+
+  const Target *TheTarget = 0;
   if (!ArchName.empty()) {
-    llvm::Triple TT(TripleName);
-    TT.setArchName(ArchName);
-    TripleName = TT.str();
+    for (TargetRegistry::iterator it = TargetRegistry::begin(),
+           ie = TargetRegistry::end(); it != ie; ++it) {
+      if (ArchName == it->getName()) {
+        TheTarget = &*it;
+        break;
+      }
+    }
+
+    if (!TheTarget) {
+      errs() << ProgName << ": error: invalid target '" << ArchName << "'.\n";
+      return 0;
+    }
+
+    // Adjust the triple to match (if known), otherwise stick with the
+    // module/host triple.
+    Triple::ArchType Type = Triple::getArchTypeForLLVMName(ArchName);
+    if (Type != Triple::UnknownArch)
+      TheTriple.setArch(Type);
+  } else {
+    // Get the target specific parser.
+    std::string Error;
+    TheTarget = TargetRegistry::lookupTarget(TheTriple.getTriple(), Error);
+    if (TheTarget == 0) {
+      errs() << ProgName << ": error: unable to get target for '"
+             << TheTriple.getTriple()
+             << "', see --version and --triple.\n";
+      return 0;
+    }
   }
 
-  // Get the target specific parser.
-  std::string Error;
-  const Target *TheTarget = TargetRegistry::lookupTarget(TripleName, Error);
-  if (TheTarget)
-    return TheTarget;
-
-  errs() << ProgName << ": error: unable to get target for '" << TripleName
-         << "', see --version and --triple.\n";
-  return 0;
+  TripleName = TheTriple.getTriple();
+  return TheTarget;
 }
 
 static tool_output_file *GetOutputStream() {
