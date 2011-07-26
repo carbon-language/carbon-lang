@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s  -o /dev/null
+// RUN: %clang -S -emit-llvm %s  -o /dev/null
 
 
 #include <setjmp.h>
