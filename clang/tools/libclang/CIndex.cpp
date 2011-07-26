@@ -5455,6 +5455,9 @@ const char *clang_getTUResourceUsageName(CXTUResourceUsageKind kind) {
     case CXTUResourceUsage_PreprocessingRecord:
       str = "Preprocessor: PreprocessingRecord";
       break;
+    case CXTUResourceUsage_SourceManager_DataStructures:
+      str = "SourceManager: data structures and tables";
+      break;
   }
   return str;
 }
@@ -5507,9 +5510,13 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
   createCXTUResourceUsageEntry(*entries,
                                CXTUResourceUsage_SourceManager_Membuffer_Malloc,
                                (unsigned long) srcBufs.malloc_bytes);
-    createCXTUResourceUsageEntry(*entries,
+  createCXTUResourceUsageEntry(*entries,
                                CXTUResourceUsage_SourceManager_Membuffer_MMap,
                                (unsigned long) srcBufs.mmap_bytes);
+  createCXTUResourceUsageEntry(*entries,
+                               CXTUResourceUsage_SourceManager_DataStructures,
+                               (unsigned long) astContext.getSourceManager()
+                                .getDataStructureSizes());
   
   // How much memory is being used by the ExternalASTSource?
   if (ExternalASTSource *esrc = astContext.getExternalSource()) {

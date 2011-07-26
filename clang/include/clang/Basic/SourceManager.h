@@ -970,6 +970,10 @@ public:
   /// Return the amount of memory used by memory buffers, breaking down
   /// by heap-backed versus mmap'ed memory.
   MemoryBufferSizes getMemoryBufferSizes() const;
+  
+  // Return the amount of memory used for various side tables and
+  // data structures in the SourceManager.
+  size_t getDataStructureSizes() const;
 
   //===--------------------------------------------------------------------===//
   // Other miscellaneous methods.

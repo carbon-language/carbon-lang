@@ -1598,3 +1598,11 @@ SourceManager::MemoryBufferSizes SourceManager::getMemoryBufferSizes() const {
   return MemoryBufferSizes(malloc_bytes, mmap_bytes);
 }
 
+size_t SourceManager::getDataStructureSizes() const {
+  return MemBufferInfos.capacity()
+    + LocalSLocEntryTable.capacity()
+    + LoadedSLocEntryTable.capacity()
+    + SLocEntryLoaded.capacity()
+    + FileInfos.getMemorySize()
+    + OverriddenFiles.getMemorySize();
+}
