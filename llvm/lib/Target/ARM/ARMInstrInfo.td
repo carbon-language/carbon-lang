@@ -1853,7 +1853,7 @@ multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
     let Inst{23} = addr{12};
     let Inst{19-16} = addr{17-14};
     let Inst{11-0} = addr{11-0};
-    let AsmMatchConverter = "CvtLdWriteBackRegAddrMode2";
+    let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
   }
   def _POST : AI2ldstidx<1, isByte, 0, (outs GPR:$Rt, GPR:$Rn_wb),
                       (ins GPR:$Rn, am2offset:$offset),
@@ -1950,7 +1950,7 @@ def LDRT : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$base_wb),
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr{17-14};
   let Inst{11-0} = addr{11-0};
-  let AsmMatchConverter = "CvtLdWriteBackRegAddrMode2";
+  let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
 }
 def LDRBT : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
                   (ins addrmode2:$addr), IndexModePost, LdFrm, IIC_iLoad_bh_ru,
@@ -1965,7 +1965,7 @@ def LDRBT : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr{17-14};
   let Inst{11-0} = addr{11-0};
-  let AsmMatchConverter = "CvtLdWriteBackRegAddrMode2";
+  let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
 }
 def LDRSBT : AI3ldstidxT<0b1101, 1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
              (ins addrmode3:$addr), IndexModePost, LdMiscFrm, IIC_iLoad_bh_ru,
@@ -2068,7 +2068,7 @@ def STRT : AI2stridxT<0, 0, (outs GPR:$Rn_wb), (ins GPR:$Rt, addrmode2:$addr),
                      "strt", "\t$Rt, $addr", "$addr.base = $Rn_wb",
                      [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
-  let AsmMatchConverter = "CvtStWriteBackRegAddrMode2";
+  let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
 }
 
 def STRBT : AI2stridxT<1, 0, (outs GPR:$Rn_wb), (ins GPR:$Rt, addrmode2:$addr),
@@ -2076,7 +2076,7 @@ def STRBT : AI2stridxT<1, 0, (outs GPR:$Rn_wb), (ins GPR:$Rt, addrmode2:$addr),
                       "strbt", "\t$Rt, $addr", "$addr.base = $Rn_wb",
                       [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
-  let AsmMatchConverter = "CvtStWriteBackRegAddrMode2";
+  let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
 }
 
 def STRHT: AI3sthpo<(outs GPR:$base_wb), (ins GPR:$Rt, addrmode3:$addr),
@@ -2084,7 +2084,7 @@ def STRHT: AI3sthpo<(outs GPR:$base_wb), (ins GPR:$Rt, addrmode3:$addr),
                     "strht", "\t$Rt, $addr", "$addr.base = $base_wb",
                     [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
-  let AsmMatchConverter = "CvtStWriteBackRegAddrMode3";
+  let AsmMatchConverter = "cvtStWriteBackRegAddrMode3";
 }
 
 //===----------------------------------------------------------------------===//

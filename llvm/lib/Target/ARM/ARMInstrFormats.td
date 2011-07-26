@@ -600,7 +600,7 @@ class AI3ldstidxT<bits<4> op, bit op20, bit isLd, bit isPre, dag oops, dag iops,
   let Inst{11-8}  = addr{7-4};    // imm7_4/zero
   let Inst{7-4}   = op;
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
-  let AsmMatchConverter = "CvtLdWriteBackRegAddrMode3";
+  let AsmMatchConverter = "cvtLdWriteBackRegAddrMode3";
 }
 
 class AI3stridx<bits<4> op, bit isByte, bit isPre, dag oops, dag iops,
