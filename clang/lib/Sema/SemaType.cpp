@@ -52,18 +52,18 @@ static bool isOmittedBlockReturnType(const Declarator &D) {
 /// doesn't apply to the given type.
 static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
                                      QualType type) {
-  bool useInstantiationLoc = false;
+  bool useExpansionLoc = false;
 
   unsigned diagID = 0;
   switch (attr.getKind()) {
   case AttributeList::AT_objc_gc:
     diagID = diag::warn_pointer_attribute_wrong_type;
-    useInstantiationLoc = true;
+    useExpansionLoc = true;
     break;
 
   case AttributeList::AT_objc_ownership:
     diagID = diag::warn_objc_object_attribute_wrong_type;
-    useInstantiationLoc = true;
+    useExpansionLoc = true;
     break;
 
   default:
@@ -76,7 +76,7 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
   StringRef name = attr.getName()->getName();
 
   // The GC attributes are usually written with macros;  special-case them.
-  if (useInstantiationLoc && loc.isMacroID() && attr.getParameterName()) {
+  if (useExpansionLoc && loc.isMacroID() && attr.getParameterName()) {
     if (attr.getParameterName()->isStr("strong")) {
       if (S.findMacroSpelling(loc, "__strong")) name = "__strong";
     } else if (attr.getParameterName()->isStr("weak")) {

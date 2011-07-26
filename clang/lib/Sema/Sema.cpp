@@ -677,16 +677,16 @@ Sema::Diag(SourceLocation Loc, const PartialDiagnostic& PD) {
   return Builder;
 }
 
-/// \brief Looks through the macro-instantiation chain for the given
-/// location, looking for a macro instantiation with the given name.
+/// \brief Looks through the macro-expansion chain for the given
+/// location, looking for a macro expansion with the given name.
 /// If one is found, returns true and sets the location to that
-/// instantiation loc.
+/// expansion loc.
 bool Sema::findMacroSpelling(SourceLocation &locref, StringRef name) {
   SourceLocation loc = locref;
   if (!loc.isMacroID()) return false;
 
   // There's no good way right now to look at the intermediate
-  // instantiations, so just jump to the instantiation location.
+  // expansions, so just jump to the expansion location.
   loc = getSourceManager().getExpansionLoc(loc);
 
   // If that's written with the name, stop here.

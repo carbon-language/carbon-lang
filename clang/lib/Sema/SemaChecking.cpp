@@ -3067,11 +3067,11 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   if (Source == Target) return;
   if (Target->isDependentType()) return;
 
-  // If the conversion context location is invalid don't complain.
-  // We also don't want to emit a warning if the issue occurs from the
-  // instantiation of a system macro.  The problem is that 'getSpellingLoc()'
-  // is slow, so we delay this check as long as possible.  Once we detect
-  // we are in that scenario, we just return.
+  // If the conversion context location is invalid don't complain. We also
+  // don't want to emit a warning if the issue occurs from the expansion of
+  // a system macro. The problem is that 'getSpellingLoc()' is slow, so we
+  // delay this check as long as possible. Once we detect we are in that
+  // scenario, we just return.
   if (CC.isInvalid())
     return;
 
