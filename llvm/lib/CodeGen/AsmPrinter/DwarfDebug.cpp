@@ -1702,11 +1702,11 @@ bool DwarfDebug::extractScopeInformation() {
   // Scan each instruction and create scopes. First build working set of scopes.
   SmallVector<DbgRange, 4> MIRanges;
   DenseMap<const MachineInstr *, DbgScope *> MI2ScopeMap;
-  DebugLoc PrevDL;
-  const MachineInstr *RangeBeginMI = NULL;
-  const MachineInstr *PrevMI = NULL;
   for (MachineFunction::const_iterator I = Asm->MF->begin(), E = Asm->MF->end();
        I != E; ++I) {
+    const MachineInstr *RangeBeginMI = NULL;
+    const MachineInstr *PrevMI = NULL;
+    DebugLoc PrevDL;
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
@@ -1749,13 +1749,13 @@ bool DwarfDebug::extractScopeInformation() {
       PrevMI = MInsn;
       PrevDL = MIDL;
     }
-  }
 
-  // Create last instruction range.
-  if (RangeBeginMI && PrevMI && !PrevDL.isUnknown()) {
-    DbgRange R(RangeBeginMI, PrevMI);
-    MIRanges.push_back(R);
-    MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevDL);
+    // Create last instruction range.
+    if (RangeBeginMI && PrevMI && !PrevDL.isUnknown()) {
+      DbgRange R(RangeBeginMI, PrevMI);
+      MIRanges.push_back(R);
+      MI2ScopeMap[RangeBeginMI] = getOrCreateDbgScope(PrevDL);
+    }
   }
 
   if (!CurrentFnDbgScope)
