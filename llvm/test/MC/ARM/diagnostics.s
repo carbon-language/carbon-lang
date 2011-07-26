@@ -126,24 +126,24 @@
         pkhbt r2, r2, r3, asr #3
         pkhtb r2, r2, r3, lsl #3
 
-@ CHECK: error: immediate value out of range
-@ CHECK:         pkhbt r2, r2, r3, lsl #-1
-@ CHECK:                                ^
-@ CHECK: error: immediate value out of range
-@ CHECK:         pkhbt r2, r2, r3, lsl #32
-@ CHECK:                                ^
-@ CHECK: error: immediate value out of range
-@ CHECK:         pkhtb r2, r2, r3, asr #0
-@ CHECK:                                ^
-@ CHECK: error: immediate value out of range
-@ CHECK:         pkhtb r2, r2, r3, asr #33
-@ CHECK:                                ^
-@ CHECK: error: lsl operand expected.
-@ CHECK:         pkhbt r2, r2, r3, asr #3
-@ CHECK:                           ^
-@ CHECK: error: asr operand expected.
-@ CHECK:         pkhtb r2, r2, r3, lsl #3
-@ CHECK:                           ^
+@ CHECK-ERRORS: error: immediate value out of range
+@ CHECK-ERRORS:         pkhbt r2, r2, r3, lsl #-1
+@ CHECK-ERRORS:                                ^
+@ CHECK-ERRORS: error: immediate value out of range
+@ CHECK-ERRORS:         pkhbt r2, r2, r3, lsl #32
+@ CHECK-ERRORS:                                ^
+@ CHECK-ERRORS: error: immediate value out of range
+@ CHECK-ERRORS:         pkhtb r2, r2, r3, asr #0
+@ CHECK-ERRORS:                                ^
+@ CHECK-ERRORS: error: immediate value out of range
+@ CHECK-ERRORS:         pkhtb r2, r2, r3, asr #33
+@ CHECK-ERRORS:                                ^
+@ CHECK-ERRORS: error: lsl operand expected.
+@ CHECK-ERRORS:         pkhbt r2, r2, r3, asr #3
+@ CHECK-ERRORS:                           ^
+@ CHECK-ERRORS: error: asr operand expected.
+@ CHECK-ERRORS:         pkhtb r2, r2, r3, lsl #3
+@ CHECK-ERRORS:                           ^
 
 
         @ bad values for SETEND
@@ -151,15 +151,15 @@
         setend me
         setend 1
 
-@ CHECK: error: instruction 'setend' is not predicable, but condition code specified
-@ CHECK:         setendne be
-@ CHECK:         ^
-@ CHECK: error: 'be' or 'le' operand expected
-@ CHECK:         setend me
-@ CHECK:                  ^
-@ CHECK: error: 'be' or 'le' operand expected
-@ CHECK:         setend 1
-@ CHECK:                ^
+@ CHECK-ERRORS: error: instruction 'setend' is not predicable, but condition code specified
+@ CHECK-ERRORS:         setendne be
+@ CHECK-ERRORS:         ^
+@ CHECK-ERRORS: error: 'be' or 'le' operand expected
+@ CHECK-ERRORS:         setend me
+@ CHECK-ERRORS:                  ^
+@ CHECK-ERRORS: error: 'be' or 'le' operand expected
+@ CHECK-ERRORS:         setend 1
+@ CHECK-ERRORS:                ^
 
 
         @ Out of range immediates and bad shift types for SSAT
@@ -173,41 +173,49 @@
         ssat    r8, #1, r10, lsl fred
         ssat    r8, #1, r10, lsl #fred
 
-@ CHECK: error: invalid operand for instruction
-@ CHECK: 	ssat	r8, #0, r10, lsl #8
-@ CHECK: 	    	    ^
-@ CHECK: error: invalid operand for instruction
-@ CHECK: 	ssat	r8, #33, r10, lsl #8
-@ CHECK: 	    	    ^
-@ CHECK: error: 'lsr' shift amount must be in range [0,31]
-@ CHECK: 	ssat	r8, #1, r10, lsl #-1
-@ CHECK: 	    	                  ^
-@ CHECK: error: 'lsr' shift amount must be in range [0,31]
-@ CHECK: 	ssat	r8, #1, r10, lsl #32
-@ CHECK: 	    	                  ^
-@ CHECK: error: 'asr' shift amount must be in range [1,32]
-@ CHECK: 	ssat	r8, #1, r10, asr #0
-@ CHECK: 	    	                  ^
-@ CHECK: error: 'asr' shift amount must be in range [1,32]
-@ CHECK: 	ssat	r8, #1, r10, asr #33
-@ CHECK: 	    	                  ^
-@ CHECK: error: shift operator 'asr' or 'lsl' expected
-@ CHECK:         ssat    r8, #1, r10, lsr #5
-@ CHECK:                              ^
-@ CHECK: error: '#' expected
-@ CHECK:         ssat    r8, #1, r10, lsl fred
-@ CHECK:                                  ^
-@ CHECK: error: shift amount must be an immediate
-@ CHECK:         ssat    r8, #1, r10, lsl #fred
-@ CHECK:                                   ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: 	ssat	r8, #0, r10, lsl #8
+@ CHECK-ERRORS: 	    	    ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: 	ssat	r8, #33, r10, lsl #8
+@ CHECK-ERRORS: 	    	    ^
+@ CHECK-ERRORS: error: 'lsr' shift amount must be in range [0,31]
+@ CHECK-ERRORS: 	ssat	r8, #1, r10, lsl #-1
+@ CHECK-ERRORS: 	    	                  ^
+@ CHECK-ERRORS: error: 'lsr' shift amount must be in range [0,31]
+@ CHECK-ERRORS: 	ssat	r8, #1, r10, lsl #32
+@ CHECK-ERRORS: 	    	                  ^
+@ CHECK-ERRORS: error: 'asr' shift amount must be in range [1,32]
+@ CHECK-ERRORS: 	ssat	r8, #1, r10, asr #0
+@ CHECK-ERRORS: 	    	                  ^
+@ CHECK-ERRORS: error: 'asr' shift amount must be in range [1,32]
+@ CHECK-ERRORS: 	ssat	r8, #1, r10, asr #33
+@ CHECK-ERRORS: 	    	                  ^
+@ CHECK-ERRORS: error: shift operator 'asr' or 'lsl' expected
+@ CHECK-ERRORS:         ssat    r8, #1, r10, lsr #5
+@ CHECK-ERRORS:                              ^
+@ CHECK-ERRORS: error: '#' expected
+@ CHECK-ERRORS:         ssat    r8, #1, r10, lsl fred
+@ CHECK-ERRORS:                                  ^
+@ CHECK-ERRORS: error: shift amount must be an immediate
+@ CHECK-ERRORS:         ssat    r8, #1, r10, lsl #fred
+@ CHECK-ERRORS:                                   ^
 
         @ Out of range immediates for SSAT16
 	ssat16	r2, #0, r7
 	ssat16	r3, #17, r5
 
-@ CHECK: error: invalid operand for instruction
-@ CHECK: 	ssat16	r2, #0, r7
-@ CHECK: 	      	    ^
-@ CHECK: error: invalid operand for instruction
-@ CHECK: 	ssat16	r3, #17, r5
-@ CHECK: 	      	    ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: 	ssat16	r2, #0, r7
+@ CHECK-ERRORS: 	      	    ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: 	ssat16	r3, #17, r5
+@ CHECK-ERRORS: 	      	    ^
+
+
+        @ Out of order STM registers
+        stmda sp!, {r5, r2}
+
+@ CHECK-ERRORS: warning: register not in ascending order in register list
+@ CHECK-ERRORS:         stmda     sp!, {r5, r2}
+@ CHECK-ERRORS:                            ^

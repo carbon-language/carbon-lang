@@ -1669,25 +1669,26 @@ _func:
 @ STM*
 @------------------------------------------------------------------------------
         stm       r2, {r1,r3-r6,sp}
-        stmia     r2, {r1,r3-r6,sp}
-        stmib     r2, {r1,r3-r6,sp}
-        stmda     r2, {r1,r3-r6,sp}
-        stmdb     r2, {r1,r3-r6,sp}
-        stmfd     r2, {r1,r3-r6,sp}
+        stmia     r3, {r1,r3-r6,lr}
+        stmib     r4, {r1,r3-r6,sp}
+        stmda     r5, {r1,r3-r6,sp}
+        stmdb     r6, {r1,r3-r6,r8}
+        stmfd     sp, {r1,r3-r6,sp}
 
         @ with update
-        stmia     r2!, {r1,r3-r6,sp}
-        stmib     r2!, {r1,r3-r6,sp}
-        stmda     r2!, {r1,r3-r6,sp}
-        stmdb     r2!, {r1,r3-r6,sp}
-@ CHECK: stm   r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x82,0xe8]
-@ CHECK: stm   r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x82,0xe8]
-@ CHECK: stmib r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x82,0xe9]
-@ CHECK: stmda r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x02,0xe8]
-@ CHECK: stmdb r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x02,0xe9]
-@ CHECK: stmdb r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x02,0xe9]
+        stm       r8!, {r1,r3-r6,sp}
+        stmib     r9!, {r1,r3-r6,sp}
+        stmda     sp!, {r1,r3-r6}
+        stmdb     r0!, {r1,r5,r7,sp}
 
-@ CHECK: stm   r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xa2,0xe8]
-@ CHECK: stmib r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xa2,0xe9]
-@ CHECK: stmda r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x22,0xe8]
-@ CHECK: stmdb r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x22,0xe9]
+@ CHECK: stm	r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x82,0xe8]
+@ CHECK: stm	r3, {lr, r1, r3, r4, r5, r6} @ encoding: [0x7a,0x40,0x83,0xe8]
+@ CHECK: stmib	r4, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x84,0xe9]
+@ CHECK: stmda	r5, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x05,0xe8]
+@ CHECK: stmdb	r6, {r1, r3, r4, r5, r6, r8} @ encoding: [0x7a,0x01,0x06,0xe9]
+@ CHECK: stmdb	sp, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x0d,0xe9]
+
+@ CHECK: stm	r8!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xa8,0xe8]
+@ CHECK: stmib	r9!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xa9,0xe9]
+@ CHECK: stmda	sp!, {r1, r3, r4, r5, r6} @ encoding: [0x7a,0x00,0x2d,0xe8]
+@ CHECK: stmdb	r0!, {r1, r5, r7, sp}   @ encoding: [0xa2,0x20,0x20,0xe9]
