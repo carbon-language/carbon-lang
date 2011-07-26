@@ -508,7 +508,7 @@ namespace {
           IdentifierInfo *selIdent = Context.getSelIdents()[i];
           if (selIdent != NULL) {
             StringRef selectorString = Context.getSelIdents()[i]->getName();
-            AllocatedResults.Selector += selectorString.str();
+            AllocatedResults.Selector += selectorString;
           }
           AllocatedResults.Selector += ":";
         }
