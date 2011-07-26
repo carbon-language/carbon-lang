@@ -409,3 +409,10 @@ namespace DeleteIncompleteClassPointerError {
   void f(A *x) { 1+delete x; } // expected-warning {{deleting pointer to incomplete type}} \
                                // expected-error {{invalid operands to binary expression}}
 }
+
+namespace PR10504 {
+  struct A {
+    virtual void foo() = 0;
+  };
+  void f(A *x) { delete x; } // expected-error {{cannot delete 'PR10504::A', which is abstract and does not have a virtual destructor}}
+}

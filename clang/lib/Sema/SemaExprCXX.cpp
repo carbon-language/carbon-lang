@@ -1913,6 +1913,18 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
           DiagnoseUseOfDecl(Dtor, StartLoc);
         }
 
+      // Deleting an abstract class with a non-virtual destructor is always
+      // undefined per [expr.delete]p3, and leads to strange-looking
+      // linker errors.
+      if (PointeeRD->isAbstract()) {
+        CXXDestructorDecl *dtor = PointeeRD->getDestructor();
+        if (dtor && !dtor->isVirtual()) {
+          Diag(StartLoc, diag::err_delete_abstract_non_virtual_dtor)
+              << PointeeElem;
+          return ExprError();
+        }
+      }
+
       // C++ [expr.delete]p3:
       //   In the first alternative (delete object), if the static type of the
       //   object to be deleted is different from its dynamic type, the static
@@ -1924,7 +1936,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       if (!ArrayForm && PointeeRD->isPolymorphic() &&
           !PointeeRD->hasAttr<FinalAttr>()) {
         CXXDestructorDecl *dtor = PointeeRD->getDestructor();
-        if (!dtor || !dtor->isVirtual())
+        if (dtor && !dtor->isVirtual())
           Diag(StartLoc, diag::warn_delete_non_virtual_dtor) << PointeeElem;
       }
 
