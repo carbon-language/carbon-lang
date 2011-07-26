@@ -1018,6 +1018,17 @@ DeduceTemplateArguments(Sema &S,
       DeducedQs.removeObjCLifetime();
     
     // Objective-C ARC:
+    //   If template deduction would produce a lifetime qualifier on a type
+    //   that is not a lifetime type, template argument deduction fails.
+    if (ParamQs.hasObjCLifetime() && !DeducedType->isObjCLifetimeType() &&
+        !DeducedType->isDependentType()) {
+      Info.Param = cast<TemplateTypeParmDecl>(TemplateParams->getParam(Index));
+      Info.FirstArg = TemplateArgument(Param);
+      Info.SecondArg = TemplateArgument(Arg);
+      return Sema::TDK_Underqualified;      
+    }
+    
+    // Objective-C ARC:
     //   If template deduction would produce an argument type with lifetime type
     //   but no lifetime qualifier, the __strong lifetime qualifier is inferred.
     if (S.getLangOptions().ObjCAutoRefCount &&

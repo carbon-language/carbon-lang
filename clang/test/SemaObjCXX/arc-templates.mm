@@ -252,3 +252,17 @@ void test_qual_vs_unqual_a() {
   float &fr3 = qual_vs_unqual_ref(*aap);
   float &fr4 = qual_vs_unqual_ref(*uap);
 }
+
+namespace rdar9828157 {
+  // Template argument deduction involving lifetime qualifiers and
+  // non-lifetime types.
+  class A { };
+
+  template<typename T> float& f(T&);
+  template<typename T> int& f(__strong T&);
+  template<typename T> double& f(__weak T&);
+
+  void test_f(A* ap) {
+    float &fr = (f)(ap);  
+  }
+}
