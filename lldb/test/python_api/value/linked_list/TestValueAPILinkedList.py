@@ -55,22 +55,14 @@ class ValueAsLinkedListTestCase(TestBase):
         self.assertTrue(process, PROCESS_IS_VALID)
 
         def eol(val):
-            """Test to determine end of list."""
-            if not val:
+            """Test function to determine end of list."""
+            # End of list is reached if either the value object is invalid
+            # or it corresponds to a null pointer.
+            if not val or int(val.GetValue(), 16) == 0:
                 return True
-            try:
-                id = val.GetChildMemberWithName("id")
-                if int(id.GetValue()) > 0:
-                    return False
-            except:
-                #exc_type, exc_value, exc_tb = sys.exc_info()
-                #traceback.print_exception(exc_type, exc_value, exc_tb)
-                pass
 
-            # If we fall through to here.  It could be that exception
-            # occurred or the "id" child member does not qualify as a
-            # valid item. Return True for EOL.
-            return True
+            # Otherwise, return False.
+            return False
 
         # Get Frame #0.
         self.assertTrue(process.GetState() == lldb.eStateStopped)
@@ -90,12 +82,15 @@ class ValueAsLinkedListTestCase(TestBase):
         cvf = lldbutil.ChildVisitingFormatter(indent_child=2)
         for t in task_head.linked_list_iter('next', eol):
             self.assertTrue(t, VALID_VARIABLE)
-            list.append(int(t.GetChildMemberWithName("id").GetValue()))
+            # Make sure that 'next' corresponds to an SBValue with pointer type.
+            self.assertTrue(t.TypeIsPointerType())
             if self.TraceOn():
                 print cvf.format(t)
+            list.append(int(t.GetChildMemberWithName("id").GetValue()))
 
         # Sanity checks that the we visited all the items (no more, no less).
-        #print "list:", list
+        if self.TraceOn():
+            print "visited IDs:", list
         self.assertTrue(visitedIDs == list)
         
 if __name__ == '__main__':

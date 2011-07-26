@@ -103,22 +103,15 @@ linked_list_iter_def = '''
 
         For example,
 
-        # Test function to determine end of list.
         def eol(val):
-            if not val:
+            \'\'\'Test function to determine end of list.\'\'\'
+            # End of list is reached if either the value object is invalid
+            # or it corresponds to a null pointer.
+            if not val or int(val.GetValue(), 16) == 0:
                 return True
-            try:
-                # Test the semantics of the item we got.
-                id = val.GetChildMemberWithName("id")
-                if int(id.GetValue()) > 0:
-                    return False
-            except:
-                pass
 
-            # If we fall through to here.  It could be that exception
-            # occurred or the "id" child member does not qualify as a
-            # valid item. Return True for EOL.
-            return True
+            # Otherwise, return False.
+            return False
 
         # Get Frame #0.
         ...
