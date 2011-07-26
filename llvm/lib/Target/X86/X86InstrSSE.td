@@ -3748,12 +3748,8 @@ def : Pat<(v4i32 (X86vzmovl (v4i32 VR128:$src))),
 let AddedComplexity = 10 in {
 def : Pat<(splat_lo (v2f64 VR128:$src), (undef)),
           (UNPCKLPDrr VR128:$src, VR128:$src)>,   Requires<[HasSSE2]>;
-def : Pat<(unpckh (v2f64 VR128:$src), (undef)),
-          (UNPCKHPDrr VR128:$src, VR128:$src)>,   Requires<[HasSSE2]>;
 def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
           (PUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(unpckh (v2i64 VR128:$src), (undef)),
-          (PUNPCKHQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 }
 
 // Special unary SHUFPSrri case.
@@ -3793,46 +3789,6 @@ def : Pat<(v2i64 (shufp:$src3 VR128:$src1, VR128:$src2)),
           (SHUFPDrri VR128:$src1, VR128:$src2,
                      (SHUFFLE_get_shuf_imm VR128:$src3))>,
           Requires<[HasSSE2]>;
-
-// vector_shuffle v1, <undef>, <0, 0, 1, 1, ...>
-let AddedComplexity = 15 in {
-def : Pat<(v4i32 (unpckl_undef:$src2 VR128:$src, (undef))),
-          (PSHUFDri VR128:$src, (SHUFFLE_get_shuf_imm VR128:$src2))>,
-          Requires<[OptForSpeed, HasSSE2]>;
-def : Pat<(v4f32 (unpckl_undef:$src2 VR128:$src, (undef))),
-          (PSHUFDri VR128:$src, (SHUFFLE_get_shuf_imm VR128:$src2))>,
-          Requires<[OptForSpeed, HasSSE2]>;
-}
-let AddedComplexity = 10 in {
-def : Pat<(v4f32 (unpckl_undef VR128:$src, (undef))),
-          (UNPCKLPSrr VR128:$src, VR128:$src)>;
-def : Pat<(v16i8 (unpckl_undef VR128:$src, (undef))),
-          (PUNPCKLBWrr VR128:$src, VR128:$src)>;
-def : Pat<(v8i16 (unpckl_undef VR128:$src, (undef))),
-          (PUNPCKLWDrr VR128:$src, VR128:$src)>;
-def : Pat<(v4i32 (unpckl_undef VR128:$src, (undef))),
-          (PUNPCKLDQrr VR128:$src, VR128:$src)>;
-}
-
-// vector_shuffle v1, <undef>, <2, 2, 3, 3, ...>
-let AddedComplexity = 15 in {
-def : Pat<(v4i32 (unpckh_undef:$src2 VR128:$src, (undef))),
-          (PSHUFDri VR128:$src, (SHUFFLE_get_shuf_imm VR128:$src2))>,
-          Requires<[OptForSpeed, HasSSE2]>;
-def : Pat<(v4f32 (unpckh_undef:$src2 VR128:$src, (undef))),
-          (PSHUFDri VR128:$src, (SHUFFLE_get_shuf_imm VR128:$src2))>,
-          Requires<[OptForSpeed, HasSSE2]>;
-}
-let AddedComplexity = 10 in {
-def : Pat<(v4f32 (unpckh_undef VR128:$src, (undef))),
-          (UNPCKHPSrr VR128:$src, VR128:$src)>;
-def : Pat<(v16i8 (unpckh_undef VR128:$src, (undef))),
-          (PUNPCKHBWrr VR128:$src, VR128:$src)>;
-def : Pat<(v8i16 (unpckh_undef VR128:$src, (undef))),
-          (PUNPCKHWDrr VR128:$src, VR128:$src)>;
-def : Pat<(v4i32 (unpckh_undef VR128:$src, (undef))),
-          (PUNPCKHDQrr VR128:$src, VR128:$src)>;
-}
 
 let AddedComplexity = 20 in {
 // vector_shuffle v1, v2 <0, 1, 4, 5> using MOVLHPS
@@ -5746,60 +5702,6 @@ def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, VR128:$src2)),
           (VUNPCKHPDrr VR128:$src1, VR128:$src2)>, Requires<[HasAVX]>;
 def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, VR128:$src2)),
           (UNPCKHPDrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with PUNPCKLBW
-def : Pat<(v16i8 (X86Punpcklbw VR128:$src1,
-                                   (bc_v16i8 (memopv2i64 addr:$src2)))),
-          (PUNPCKLBWrm VR128:$src1, addr:$src2)>;
-def : Pat<(v16i8 (X86Punpcklbw VR128:$src1, VR128:$src2)),
-          (PUNPCKLBWrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with PUNPCKLWD
-def : Pat<(v8i16 (X86Punpcklwd VR128:$src1,
-                                   (bc_v8i16 (memopv2i64 addr:$src2)))),
-          (PUNPCKLWDrm VR128:$src1, addr:$src2)>;
-def : Pat<(v8i16 (X86Punpcklwd VR128:$src1, VR128:$src2)),
-          (PUNPCKLWDrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with PUNPCKLDQ
-def : Pat<(v4i32 (X86Punpckldq VR128:$src1,
-                                   (bc_v4i32 (memopv2i64 addr:$src2)))),
-          (PUNPCKLDQrm VR128:$src1, addr:$src2)>;
-def : Pat<(v4i32 (X86Punpckldq VR128:$src1, VR128:$src2)),
-          (PUNPCKLDQrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with PUNPCKLQDQ
-def : Pat<(v2i64 (X86Punpcklqdq VR128:$src1, (memopv2i64 addr:$src2))),
-          (PUNPCKLQDQrm VR128:$src1, addr:$src2)>;
-def : Pat<(v2i64 (X86Punpcklqdq VR128:$src1, VR128:$src2)),
-          (PUNPCKLQDQrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with PUNPCKHBW
-def : Pat<(v16i8 (X86Punpckhbw VR128:$src1,
-                                   (bc_v16i8 (memopv2i64 addr:$src2)))),
-          (PUNPCKHBWrm VR128:$src1, addr:$src2)>;
-def : Pat<(v16i8 (X86Punpckhbw VR128:$src1, VR128:$src2)),
-          (PUNPCKHBWrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with PUNPCKHWD
-def : Pat<(v8i16 (X86Punpckhwd VR128:$src1,
-                                   (bc_v8i16 (memopv2i64 addr:$src2)))),
-          (PUNPCKHWDrm VR128:$src1, addr:$src2)>;
-def : Pat<(v8i16 (X86Punpckhwd VR128:$src1, VR128:$src2)),
-          (PUNPCKHWDrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with PUNPCKHDQ
-def : Pat<(v4i32 (X86Punpckhdq VR128:$src1,
-                                   (bc_v4i32 (memopv2i64 addr:$src2)))),
-          (PUNPCKHDQrm VR128:$src1, addr:$src2)>;
-def : Pat<(v4i32 (X86Punpckhdq VR128:$src1, VR128:$src2)),
-          (PUNPCKHDQrr VR128:$src1, VR128:$src2)>;
-
-// Shuffle with PUNPCKHQDQ
-def : Pat<(v2i64 (X86Punpckhqdq VR128:$src1, (memopv2i64 addr:$src2))),
-          (PUNPCKHQDQrm VR128:$src1, addr:$src2)>;
-def : Pat<(v2i64 (X86Punpckhqdq VR128:$src1, VR128:$src2)),
-          (PUNPCKHQDQrr VR128:$src1, VR128:$src2)>;
 
 // Shuffle with MOVLHPS
 def : Pat<(X86Movlhps VR128:$src1,
