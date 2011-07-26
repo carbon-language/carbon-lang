@@ -134,7 +134,7 @@ HANDLE_MEMORY_INST(27, Load  , LoadInst  )  // Memory manipulation instrs
 HANDLE_MEMORY_INST(28, Store , StoreInst )
 HANDLE_MEMORY_INST(29, GetElementPtr, GetElementPtrInst)
 HANDLE_MEMORY_INST(30, Fence , FenceInst )
-  LAST_MEMORY_INST(32)
+  LAST_MEMORY_INST(30)
 
 // Cast operators ...
 // NOTE: The order matters here because CastInst::isEliminableCastPair 
