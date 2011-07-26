@@ -89,10 +89,21 @@ def lldb_iter(obj, getsize, getelem):
 # which takes an SBValue and returns True if EOL is reached and False if not.
 #
 linked_list_iter_def = '''
+    def __eol_test__(val):
+        """Default function for end of list test takes an SBValue object.
+
+        Return True if val is invalid or it corresponds to a null pointer.
+        Otherwise, return False.
+        """
+        if not val or int(val.GetValue(), 0) == 0:
+            return True
+        else:
+            return False
+
     # ==================================================
     # Iterator for lldb.SBValue treated as a linked list
     # ==================================================
-    def linked_list_iter(self, next_item_name, end_of_list_test):
+    def linked_list_iter(self, next_item_name, end_of_list_test=__eol_test__):
         """Generator adaptor to support iteration for SBValue as a linked list.
 
         linked_list_iter() is a special purpose iterator to treat the SBValue as
@@ -101,17 +112,10 @@ linked_list_iter_def = '''
         end-of-list test function which takes an SBValue for an item and returns
         True if EOL is reached and False if not.
 
+        The end_of_list_test arg, if omitted, defaults to the __eol_test__
+        function above.
+
         For example,
-
-        def eol(val):
-            \'\'\'Test function to determine end of list.\'\'\'
-            # End of list is reached if either the value object is invalid
-            # or it corresponds to a null pointer.
-            if not val or int(val.GetValue(), 16) == 0:
-                return True
-
-            # Otherwise, return False.
-            return False
 
         # Get Frame #0.
         ...
@@ -120,7 +124,7 @@ linked_list_iter_def = '''
         task_head = frame0.FindVariable('task_head')
         ...
 
-        for t in task_head.linked_list_iter('next', eol):
+        for t in task_head.linked_list_iter('next'):
             print t
         """
         try:

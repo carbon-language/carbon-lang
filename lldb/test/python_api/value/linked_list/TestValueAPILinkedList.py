@@ -54,16 +54,6 @@ class ValueAsLinkedListTestCase(TestBase):
         process = target.LaunchSimple(None, None, os.getcwd())
         self.assertTrue(process, PROCESS_IS_VALID)
 
-        def eol(val):
-            """Test function to determine end of list."""
-            # End of list is reached if either the value object is invalid
-            # or it corresponds to a null pointer.
-            if not val or int(val.GetValue(), 16) == 0:
-                return True
-
-            # Otherwise, return False.
-            return False
-
         # Get Frame #0.
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
@@ -80,6 +70,32 @@ class ValueAsLinkedListTestCase(TestBase):
         list = []
 
         cvf = lldbutil.ChildVisitingFormatter(indent_child=2)
+        for t in task_head.linked_list_iter('next'):
+            self.assertTrue(t, VALID_VARIABLE)
+            # Make sure that 'next' corresponds to an SBValue with pointer type.
+            self.assertTrue(t.TypeIsPointerType())
+            if self.TraceOn():
+                print cvf.format(t)
+            list.append(int(t.GetChildMemberWithName("id").GetValue()))
+
+        # Sanity checks that the we visited all the items (no more, no less).
+        if self.TraceOn():
+            print "visited IDs:", list
+        self.assertTrue(visitedIDs == list)
+
+        # Let's exercise the linked_list_iter() API again, this time supplying
+        # our end of list test function.
+        def eol(val):
+            """Test function to determine end of list."""
+            # End of list is reached if either the value object is invalid
+            # or it corresponds to a null pointer.
+            if not val or int(val.GetValue(), 16) == 0:
+                return True
+
+            # Otherwise, return False.
+            return False
+
+        list = []
         for t in task_head.linked_list_iter('next', eol):
             self.assertTrue(t, VALID_VARIABLE)
             # Make sure that 'next' corresponds to an SBValue with pointer type.
