@@ -393,38 +393,59 @@ class ModuleManager {
   /// \brief The chain of AST files. The first entry is the one named by the
   /// user, the last one is the one that doesn't depend on anything further.
   SmallVector<Module*, 2> Chain;
+
+  /// \brief All loaded modules, indexed by name.
+  llvm::StringMap<Module*> Modules;
+
 public:
   typedef SmallVector<Module*, 2>::iterator ModuleIterator;
   typedef SmallVector<Module*, 2>::const_iterator ModuleConstIterator;
   typedef SmallVector<Module*, 2>::reverse_iterator ModuleReverseIterator;
+  typedef std::pair<uint32_t, StringRef> ModuleOffset;
 
+  ~ModuleManager();
+
+  /// \brief Forward iterator to traverse all loaded modules
   ModuleIterator begin() { return Chain.begin(); }
+  /// \brief Forward iterator end-point to traverse all loaded modules
   ModuleIterator end() { return Chain.end(); }
 
+  /// \brief Const forward iterator to traverse all loaded modules
   ModuleConstIterator begin() const { return Chain.begin(); }
+  /// \brief Const forward iterator end-point to traverse all loaded modules
   ModuleConstIterator end() const { return Chain.end(); }
 
+  /// \brief Reverse iterator to traverse all loaded modules
   ModuleReverseIterator rbegin() { return Chain.rbegin(); }
+  /// \brief Reverse iterator end-point to traverse all loaded modules
   ModuleReverseIterator rend() { return Chain.rend(); }
 
-  const std::string &getPrimaryFileName() const { return Chain[0]->FileName; }
-
+  /// \brief Returns the primary module associated with the manager, that is,
+  /// the first module loaded
   Module &getPrimaryModule() { return *Chain[0]; }
+
+  /// \brief Returns the primary module associated with the manager, that is,
+  /// the first module loaded.
+  Module &getPrimaryModule() const { return *Chain[0]; }
+
+  /// \brief Returns the latest module associated with the manager, that is,
+  /// the last module loaded
   Module &getLastModule() { return *Chain.back(); }
+
+  /// \brief Returns the module associated with the given index
   Module &operator[](unsigned Index) const { return *Chain[Index]; }
 
+  /// \brief Returns the module associated with the given name
+  Module *lookup(StringRef Name) { return Modules.lookup(Name); }
+
+  /// \brief Number of modules loaded
   unsigned size() const { return Chain.size(); }
 
-  Module &addModule(ModuleKind Type) {
-    Module *newModule = new Module(Type);
-    Chain.push_back(newModule);
-    return *newModule;
-  }
+  /// \brief Creates a new module and adds it to the list of known modules
+  Module &addModule(StringRef FileName, ModuleKind Type);
 
-  ~ModuleManager() {
-    for (unsigned i = 0, e = Chain.size(); i != e; ++i)
-      delete Chain[e - i - 1];
-  }
+  /// \brief Exports the list of loaded modules with their corresponding names
+  void exportLookup(SmallVector<ModuleOffset, 16> &Target);
 };
 
 } // end namespace serialization
@@ -497,12 +518,6 @@ private:
   /// \brief AST buffers for chained PCHs created and stored in memory.
   /// First (not depending on another) PCH in chain is in front.
   std::vector<llvm::MemoryBuffer *> ASTBuffers;
-  
-  /// \brief All loaded modules, indexed by name.
-  llvm::StringMap<Module*> Modules;
-
-  /// \brief The first module in source order.
-  Module *FirstInSource;
 
   /// \brief The module manager which manages modules and their dependencies
   ModuleManager ModuleMgr;
@@ -684,9 +699,9 @@ private:
                              std::pair<Module *, int32_t>, 4>
     GlobalCXXBaseSpecifiersMapType;
 
-  /// \brief Mapping from global CXX base specifier IDs to the module in which the
-  /// CXX base specifier resides along with the offset that should be added to the
-  /// global CXX base specifer ID to produce a local ID.
+  /// \brief Mapping from global CXX base specifier IDs to the module in which
+  /// the CXX base specifier resides along with the offset that should be added
+  /// to the global CXX base specifer ID to produce a local ID.
   GlobalCXXBaseSpecifiersMapType GlobalCXXBaseSpecifiersMap;
 
   /// \name CodeGen-relevant special data
@@ -1083,7 +1098,7 @@ public:
 
   /// \brief Retrieve the name of the named (primary) AST file
   const std::string &getFileName() const {
-    return ModuleMgr.getPrimaryFileName();
+    return ModuleMgr.getPrimaryModule().FileName;
   }
 
   /// \brief Retrieve the name of the original source file name
