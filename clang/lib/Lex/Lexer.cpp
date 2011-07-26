@@ -714,7 +714,7 @@ bool Lexer::isAtStartOfMacroExpansion(SourceLocation loc,
 
   SourceLocation expansionLoc =
     SM.getSLocEntry(infoLoc.first)
-      .getInstantiation().getInstantiationLocStart();
+      .getInstantiation().getExpansionLocStart();
   if (expansionLoc.isFileID())
     return true; // No other macro expansions, this is the first.
 
@@ -744,7 +744,7 @@ bool Lexer::isAtEndOfMacroExpansion(SourceLocation loc,
     return false; // Still in the same FileID, does not point to the last token.
   
   SourceLocation expansionLoc =
-    SM.getSLocEntry(FID).getInstantiation().getInstantiationLocEnd();
+    SM.getSLocEntry(FID).getInstantiation().getExpansionLocEnd();
   if (expansionLoc.isFileID())
     return true; // No other macro expansions.
 

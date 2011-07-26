@@ -521,9 +521,9 @@ SourceLocation
 SourceManager::createMacroArgExpansionLoc(SourceLocation SpellingLoc,
                                           SourceLocation ExpansionLoc,
                                           unsigned TokLength) {
-  InstantiationInfo II =
-    InstantiationInfo::createForMacroArg(SpellingLoc, ExpansionLoc);
-  return createExpansionLocImpl(II, TokLength);
+  ExpansionInfo Info = ExpansionInfo::createForMacroArg(SpellingLoc,
+                                                        ExpansionLoc);
+  return createExpansionLocImpl(Info, TokLength);
 }
 
 SourceLocation
@@ -533,14 +533,13 @@ SourceManager::createExpansionLoc(SourceLocation SpellingLoc,
                                   unsigned TokLength,
                                   int LoadedID,
                                   unsigned LoadedOffset) {
-  InstantiationInfo II =
-    InstantiationInfo::create(SpellingLoc, ExpansionLocStart,
-                              ExpansionLocEnd);
-  return createExpansionLocImpl(II, TokLength, LoadedID, LoadedOffset);
+  ExpansionInfo Info = ExpansionInfo::create(SpellingLoc, ExpansionLocStart,
+                                             ExpansionLocEnd);
+  return createExpansionLocImpl(Info, TokLength, LoadedID, LoadedOffset);
 }
 
 SourceLocation
-SourceManager::createExpansionLocImpl(const InstantiationInfo &II,
+SourceManager::createExpansionLocImpl(const ExpansionInfo &Info,
                                       unsigned TokLength,
                                       int LoadedID,
                                       unsigned LoadedOffset) {
@@ -549,11 +548,11 @@ SourceManager::createExpansionLocImpl(const InstantiationInfo &II,
     unsigned Index = unsigned(-LoadedID) - 2;
     assert(Index < LoadedSLocEntryTable.size() && "FileID out of range");
     assert(!SLocEntryLoaded[Index] && "FileID already loaded");
-    LoadedSLocEntryTable[Index] = SLocEntry::get(LoadedOffset, II);
+    LoadedSLocEntryTable[Index] = SLocEntry::get(LoadedOffset, Info);
     SLocEntryLoaded[Index] = true;
     return SourceLocation::getMacroLoc(LoadedOffset);
   }
-  LocalSLocEntryTable.push_back(SLocEntry::get(NextLocalOffset, II));
+  LocalSLocEntryTable.push_back(SLocEntry::get(NextLocalOffset, Info));
   assert(NextLocalOffset + TokLength + 1 > NextLocalOffset &&
          NextLocalOffset + TokLength + 1 <= CurrentLoadedOffset &&
          "Ran out of source locations!");
@@ -794,7 +793,7 @@ getExpansionLocSlowCase(SourceLocation Loc) const {
     // with.  This is unlike when we get the spelling loc, because the offset
     // directly correspond to the token whose spelling we're inspecting.
     Loc = getSLocEntry(getFileID(Loc)).getInstantiation()
-                   .getInstantiationLocStart();
+                   .getExpansionLocStart();
   } while (!Loc.isFileID());
 
   return Loc;
@@ -819,7 +818,7 @@ SourceManager::getDecomposedExpansionLocSlowCase(
   SourceLocation Loc;
   unsigned Offset;
   do {
-    Loc = E->getInstantiation().getInstantiationLocStart();
+    Loc = E->getInstantiation().getExpansionLocStart();
 
     FID = getFileID(Loc);
     E = &getSLocEntry(FID);
@@ -864,8 +863,9 @@ SourceLocation SourceManager::getImmediateSpellingLoc(SourceLocation Loc) const{
 std::pair<SourceLocation,SourceLocation>
 SourceManager::getImmediateExpansionRange(SourceLocation Loc) const {
   assert(Loc.isMacroID() && "Not an instantiation loc!");
-  const InstantiationInfo &II = getSLocEntry(getFileID(Loc)).getInstantiation();
-  return II.getInstantiationLocRange();
+  const ExpansionInfo &Expansion =
+    getSLocEntry(getFileID(Loc)).getInstantiation();
+  return Expansion.getExpansionLocRange();
 }
 
 /// getExpansionRange - Given a SourceLocation object, return the range of
@@ -891,8 +891,8 @@ bool SourceManager::isMacroArgExpansion(SourceLocation Loc) const {
 
   FileID FID = getFileID(Loc);
   const SrcMgr::SLocEntry *E = &getSLocEntry(FID);
-  const SrcMgr::InstantiationInfo &II = E->getInstantiation();
-  return II.isMacroArgExpansion();
+  const SrcMgr::ExpansionInfo &Expansion = E->getInstantiation();
+  return Expansion.isMacroArgExpansion();
 }
 
 
@@ -1467,7 +1467,7 @@ static bool MoveUpIncludeHierarchy(std::pair<FileID, unsigned> &Loc,
   SourceLocation UpperLoc;
   const SrcMgr::SLocEntry &Entry = SM.getSLocEntry(Loc.first);
   if (Entry.isInstantiation())
-    UpperLoc = Entry.getInstantiation().getInstantiationLocStart();
+    UpperLoc = Entry.getInstantiation().getExpansionLocStart();
   else
     UpperLoc = Entry.getFile().getIncludeLoc();
   

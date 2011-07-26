@@ -224,70 +224,68 @@ namespace SrcMgr {
     }
   };
 
-  /// InstantiationInfo - Each InstantiationInfo encodes the Instantiation
-  /// location - where the token was ultimately instantiated, and the
-  /// SpellingLoc - where the actual character data for the token came from.
-  class InstantiationInfo {
-     // Really these are all SourceLocations.
+  /// ExpansionInfo - Each ExpansionInfo encodes the expansion location - where
+  /// the token was ultimately expanded, and the SpellingLoc - where the actual
+  /// character data for the token came from.
+  class ExpansionInfo {
+    // Really these are all SourceLocations.
 
     /// SpellingLoc - Where the spelling for the token can be found.
     unsigned SpellingLoc;
 
-    /// InstantiationLocStart/InstantiationLocEnd - In a macro expansion, these
-    /// indicate the start and end of the instantiation.  In object-like macros,
-    /// these will be the same.  In a function-like macro instantiation, the
-    /// start will be the identifier and the end will be the ')'.  Finally, in
+    /// ExpansionLocStart/ExpansionLocEnd - In a macro expansion, these
+    /// indicate the start and end of the expansion. In object-like macros,
+    /// these will be the same. In a function-like macro instantiation, the
+    /// start will be the identifier and the end will be the ')'. Finally, in
     /// macro-argument instantitions, the end will be 'SourceLocation()', an
     /// invalid location.
-    unsigned InstantiationLocStart, InstantiationLocEnd;
+    unsigned ExpansionLocStart, ExpansionLocEnd;
 
   public:
     SourceLocation getSpellingLoc() const {
       return SourceLocation::getFromRawEncoding(SpellingLoc);
     }
-    SourceLocation getInstantiationLocStart() const {
-      return SourceLocation::getFromRawEncoding(InstantiationLocStart);
+    SourceLocation getExpansionLocStart() const {
+      return SourceLocation::getFromRawEncoding(ExpansionLocStart);
     }
-    SourceLocation getInstantiationLocEnd() const {
+    SourceLocation getExpansionLocEnd() const {
       SourceLocation EndLoc =
-        SourceLocation::getFromRawEncoding(InstantiationLocEnd);
-      return EndLoc.isInvalid() ? getInstantiationLocStart() : EndLoc;
+        SourceLocation::getFromRawEncoding(ExpansionLocEnd);
+      return EndLoc.isInvalid() ? getExpansionLocStart() : EndLoc;
     }
 
-    std::pair<SourceLocation,SourceLocation> getInstantiationLocRange() const {
-      return std::make_pair(getInstantiationLocStart(),
-                            getInstantiationLocEnd());
+    std::pair<SourceLocation,SourceLocation> getExpansionLocRange() const {
+      return std::make_pair(getExpansionLocStart(), getExpansionLocEnd());
     }
 
     bool isMacroArgExpansion() const {
       // Note that this needs to return false for default constructed objects.
-      return getInstantiationLocStart().isValid() &&
-        SourceLocation::getFromRawEncoding(InstantiationLocEnd).isInvalid();
+      return getExpansionLocStart().isValid() &&
+        SourceLocation::getFromRawEncoding(ExpansionLocEnd).isInvalid();
     }
 
-    /// create - Return a InstantiationInfo for an expansion. ILStart and
-    /// ILEnd specify the instantiation range (where the macro is expanded),
-    /// and SL specifies the spelling location (where the characters from the
-    /// token come from). All three can refer to normal File SLocs or
-    /// instantiation locations.
-    static InstantiationInfo create(SourceLocation SL,
-                                    SourceLocation ILStart,
-                                    SourceLocation ILEnd) {
-      InstantiationInfo X;
-      X.SpellingLoc = SL.getRawEncoding();
-      X.InstantiationLocStart = ILStart.getRawEncoding();
-      X.InstantiationLocEnd = ILEnd.getRawEncoding();
+    /// create - Return a ExpansionInfo for an expansion. Start and End specify
+    /// the expansion range (where the macro is expanded), and SpellingLoc
+    /// specifies the spelling location (where the characters from the token
+    /// come from). All three can refer to normal File SLocs or expansion
+    /// locations.
+    static ExpansionInfo create(SourceLocation SpellingLoc,
+                                SourceLocation Start, SourceLocation End) {
+      ExpansionInfo X;
+      X.SpellingLoc = SpellingLoc.getRawEncoding();
+      X.ExpansionLocStart = Start.getRawEncoding();
+      X.ExpansionLocEnd = End.getRawEncoding();
       return X;
     }
 
-    /// createForMacroArg - Return a special InstantiationInfo for the
-    /// expansion of a macro argument into a function-like macro's body. IL
-    /// specifies the instantiation location (where the macro is expanded).
-    /// This doesn't need to be a range because a macro is always instantiated
-    /// at a macro parameter reference, and macro parameters are always exactly
-    /// one token. SL specifies the spelling location (where the characters
-    /// from the token come from). IL and SL can both refer to normal File
-    /// SLocs or instantiation locations.
+    /// createForMacroArg - Return a special ExpansionInfo for the expansion of
+    /// a macro argument into a function-like macro's body. ExpansionLoc
+    /// specifies the expansion location (where the macro is expanded). This
+    /// doesn't need to be a range because a macro is always expanded at
+    /// a macro parameter reference, and macro parameters are always exactly
+    /// one token. SpellingLoc specifies the spelling location (where the
+    /// characters from the token come from). ExpansionLoc and SpellingLoc can
+    /// both refer to normal File SLocs or expansion locations.
     ///
     /// Given the code:
     /// \code
@@ -295,26 +293,26 @@ namespace SrcMgr {
     ///   F(42);
     /// \endcode
     ///
-    /// When expanding '\c F(42)', the '\c x' would call this with an SL
-    /// pointing at '\c 42' anad an IL pointing at its location in the
-    /// definition of '\c F'.
-    static InstantiationInfo createForMacroArg(SourceLocation SL,
-                                               SourceLocation IL) {
+    /// When expanding '\c F(42)', the '\c x' would call this with an
+    /// SpellingLoc pointing at '\c 42' anad an ExpansionLoc pointing at its
+    /// location in the definition of '\c F'.
+    static ExpansionInfo createForMacroArg(SourceLocation SpellingLoc,
+                                           SourceLocation ExpansionLoc) {
       // We store an intentionally invalid source location for the end of the
-      // instantiation range to mark that this is a macro argument instantation
-      // rather than a normal one.
-      return create(SL, IL, SourceLocation());
+      // expansion range to mark that this is a macro argument ion rather than
+      // a normal one.
+      return create(SpellingLoc, ExpansionLoc, SourceLocation());
     }
   };
 
   /// SLocEntry - This is a discriminated union of FileInfo and
-  /// InstantiationInfo.  SourceManager keeps an array of these objects, and
+  /// ExpansionInfo.  SourceManager keeps an array of these objects, and
   /// they are uniquely identified by the FileID datatype.
   class SLocEntry {
     unsigned Offset;   // low bit is set for instantiation info.
     union {
       FileInfo File;
-      InstantiationInfo Instantiation;
+      ExpansionInfo Instantiation;
     };
   public:
     unsigned getOffset() const { return Offset >> 1; }
@@ -327,7 +325,7 @@ namespace SrcMgr {
       return File;
     }
 
-    const InstantiationInfo &getInstantiation() const {
+    const ExpansionInfo &getInstantiation() const {
       assert(isInstantiation() && "Not an instantiation SLocEntry!");
       return Instantiation;
     }
@@ -339,10 +337,10 @@ namespace SrcMgr {
       return E;
     }
 
-    static SLocEntry get(unsigned Offset, const InstantiationInfo &II) {
+    static SLocEntry get(unsigned Offset, const ExpansionInfo &Expansion) {
       SLocEntry E;
       E.Offset = (Offset << 1) | 1;
-      E.Instantiation = II;
+      E.Instantiation = Expansion;
       return E;
     }
   };
@@ -1083,7 +1081,7 @@ private:
   /// createExpansionLoc - Implements the common elements of storing an
   /// instantiation info struct into the SLocEntry table and producing a source
   /// location that refers to it.
-  SourceLocation createExpansionLocImpl(const SrcMgr::InstantiationInfo &II,
+  SourceLocation createExpansionLocImpl(const SrcMgr::ExpansionInfo &Expansion,
                                         unsigned TokLength,
                                         int LoadedID = 0,
                                         unsigned LoadedOffset = 0);
