@@ -71,14 +71,14 @@ private:
 ///
 /// Technically, a source location is simply an offset into the manager's view
 /// of the input source, which is all input buffers (including macro
-/// instantiations) concatenated in an effectively arbitrary order. The manager
-/// actually maintains two blocks of input buffers. One, starting at offset 0
-/// and growing upwards, contains all buffers from this module. The other,
+/// expansions) concatenated in an effectively arbitrary order. The manager
+/// actually maintains two blocks of input buffers. One, starting at offset
+/// 0 and growing upwards, contains all buffers from this module. The other,
 /// starting at the highest possible offset and growing downwards, contains
 /// buffers of loaded modules.
 ///
 /// In addition, one bit of SourceLocation is used for quick access to the
-/// information whether the location is in a file or a macro instantiation.
+/// information whether the location is in a file or a macro expansion.
 ///
 /// It is important that this type remains small. It is currently 32 bits wide.
 class SourceLocation {
@@ -339,8 +339,8 @@ public:
 
 /// PresumedLoc - This class represents an unpacked "presumed" location which
 /// can be presented to the user.  A 'presumed' location can be modified by
-/// #line and GNU line marker directives and is always the instantiation point
-/// of a normal location.
+/// #line and GNU line marker directives and is always the expansion point of
+/// a normal location.
 ///
 /// You can get a PresumedLoc from a SourceLocation with SourceManager.
 class PresumedLoc {

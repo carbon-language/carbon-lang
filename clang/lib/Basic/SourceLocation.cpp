@@ -48,7 +48,7 @@ void SourceLocation::print(raw_ostream &OS, const SourceManager &SM)const{
       OS << "<invalid>";
       return;
     }
-    // The instantiation and spelling pos is identical for file locs.
+    // The macro expansion and spelling pos is identical for file locs.
     OS << PLoc.getFilename() << ':' << PLoc.getLine()
        << ':' << PLoc.getColumn();
     return;
