@@ -3939,7 +3939,8 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
   if (T->isObjCObjectType()) {
     Diag(NewVD->getLocation(), diag::err_statically_allocated_object)
       << FixItHint::CreateInsertion(NewVD->getLocation(), "*");
-    return NewVD->setInvalidDecl();
+    T = Context.getObjCObjectPointerType(T);
+    NewVD->setType(T);
   }
 
   // Emit an error if an address space was applied to decl with local storage.
@@ -4179,8 +4180,18 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   if (R->getAs<FunctionType>()->getResultType()->isObjCObjectType()) {
     Diag(D.getIdentifierLoc(),
          diag::err_object_cannot_be_passed_returned_by_value) << 0
-    << R->getAs<FunctionType>()->getResultType();
-    D.setInvalidType();
+    << R->getAs<FunctionType>()->getResultType()
+    << FixItHint::CreateInsertion(D.getIdentifierLoc(), "*");
+    
+    QualType T = R->getAs<FunctionType>()->getResultType();
+    T = Context.getObjCObjectPointerType(T);
+    if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(R)) {
+      FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
+      R = Context.getFunctionType(T, FPT->arg_type_begin(),
+                                  FPT->getNumArgs(), EPI);
+    }
+    else if (isa<FunctionNoProtoType>(R))
+      R = Context.getFunctionNoProtoType(T);
   }
   
   FunctionDecl *NewFD;
@@ -6195,8 +6206,10 @@ ParmVarDecl *Sema::CheckParameter(DeclContext *DC, SourceLocation StartLoc,
   // passed by reference.
   if (T->isObjCObjectType()) {
     Diag(NameLoc,
-         diag::err_object_cannot_be_passed_returned_by_value) << 1 << T;
-    New->setInvalidDecl();
+         diag::err_object_cannot_be_passed_returned_by_value) << 1 << T
+      << FixItHint::CreateInsertion(NameLoc, "*");
+    T = Context.getObjCObjectPointerType(T);
+    New->setType(T);
   }
 
   // ISO/IEC TR 18037 S6.7.3: "The type of an object with automatic storage 
@@ -8403,10 +8416,10 @@ void Sema::ActOnFields(Scope* S,
         Record->setHasObjectMember(true);
     } else if (FDTy->isObjCObjectType()) {
       /// A field cannot be an Objective-c object
-      Diag(FD->getLocation(), diag::err_statically_allocated_object);
-      FD->setInvalidDecl();
-      EnclosingDecl->setInvalidDecl();
-      continue;
+      Diag(FD->getLocation(), diag::err_statically_allocated_object)
+        << FixItHint::CreateInsertion(FD->getLocation(), "*");
+      QualType T = Context.getObjCObjectPointerType(FD->getType());
+      FD->setType(T);
     } 
     else if (!getLangOptions().CPlusPlus) {
       if (getLangOptions().ObjCAutoRefCount && Record && !ARCErrReported) {
