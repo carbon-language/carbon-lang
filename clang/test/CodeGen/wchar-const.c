@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple i386-pc-win32 | FileCheck %s --check-prefix=WIN
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple x86_64-apple-darwin | FileCheck %s --check-prefix=DAR
 // This should pass for any endianness combination of host and target.
 
 // This bit is taken from Sema/wchar.c so we can avoid the wchar.h include.
@@ -13,7 +14,8 @@ typedef __WCHAR_TYPE__ wchar_t;
 #endif
 
 
-// CHECK: @.str = private unnamed_addr constant [72 x i8] c"
+// CHECK-DAR: private unnamed_addr constant [72 x i8] c"
+// CHECK-WIN: private unnamed_addr constant [36 x i8] c"
 extern void foo(const wchar_t* p);
 int main (int argc, const char * argv[])
 {
