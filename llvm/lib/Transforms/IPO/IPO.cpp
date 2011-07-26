@@ -98,11 +98,6 @@ void LLVMAddInternalizePass(LLVMPassManagerRef PM, unsigned AllButMain) {
   unwrap(PM)->add(createInternalizePass(AllButMain != 0));
 }
 
-
-void LLVMAddRaiseAllocationsPass(LLVMPassManagerRef PM) {
-  // FIXME: Remove in LLVM 3.0.
-}
-
 void LLVMAddStripDeadPrototypesPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createStripDeadPrototypesPass());
 }
