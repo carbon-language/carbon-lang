@@ -841,7 +841,7 @@ void ARMInstPrinter::printRotImmOperand(const MCInst *MI, unsigned OpNum,
   unsigned Imm = MI->getOperand(OpNum).getImm();
   if (Imm == 0)
     return;
-  O << "ror #";
+  O << ", ror #";
   switch (Imm) {
   default: assert (0 && "illegal ror immediate!");
   case 1: O << "8\n"; break;
