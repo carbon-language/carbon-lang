@@ -766,7 +766,7 @@ static unsigned getPreIndexedLoadStoreOpcode(unsigned Opc,
   case ARM::LDRi12:
     return ARM::LDR_PRE;
   case ARM::STRi12:
-    return ARM::STR_PRE;
+    return ARM::STR_PRE_IMM;
   case ARM::VLDRS:
     return Mode == ARM_AM::add ? ARM::VLDMSIA_UPD : ARM::VLDMSDB_UPD;
   case ARM::VLDRD:
@@ -790,9 +790,9 @@ static unsigned getPostIndexedLoadStoreOpcode(unsigned Opc,
                                               ARM_AM::AddrOpc Mode) {
   switch (Opc) {
   case ARM::LDRi12:
-    return ARM::LDR_POST;
+    return ARM::LDR_POST_IMM;
   case ARM::STRi12:
-    return ARM::STR_POST;
+    return ARM::STR_POST_IMM;
   case ARM::VLDRS:
     return Mode == ARM_AM::add ? ARM::VLDMSIA_UPD : ARM::VLDMSDB_UPD;
   case ARM::VLDRD:

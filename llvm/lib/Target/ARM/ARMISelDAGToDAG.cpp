@@ -129,7 +129,9 @@ public:
     return true;
   }
 
-  bool SelectAddrMode2Offset(SDNode *Op, SDValue N,
+  bool SelectAddrMode2OffsetReg(SDNode *Op, SDValue N,
+                             SDValue &Offset, SDValue &Opc);
+  bool SelectAddrMode2OffsetImm(SDNode *Op, SDValue N,
                              SDValue &Offset, SDValue &Opc);
   bool SelectAddrMode3(SDValue N, SDValue &Base,
                        SDValue &Offset, SDValue &Opc);
@@ -714,7 +716,7 @@ AddrMode2Type ARMDAGToDAGISel::SelectAddrMode2Worker(SDValue N,
   return AM2_SHOP;
 }
 
-bool ARMDAGToDAGISel::SelectAddrMode2Offset(SDNode *Op, SDValue N,
+bool ARMDAGToDAGISel::SelectAddrMode2OffsetReg(SDNode *Op, SDValue N,
                                             SDValue &Offset, SDValue &Opc) {
   unsigned Opcode = Op->getOpcode();
   ISD::MemIndexedMode AM = (Opcode == ISD::LOAD)
@@ -723,13 +725,8 @@ bool ARMDAGToDAGISel::SelectAddrMode2Offset(SDNode *Op, SDValue N,
   ARM_AM::AddrOpc AddSub = (AM == ISD::PRE_INC || AM == ISD::POST_INC)
     ? ARM_AM::add : ARM_AM::sub;
   int Val;
-  if (isScaledConstantInRange(N, /*Scale=*/1, 0, 0x1000, Val)) { // 12 bits.
-    Offset = CurDAG->getRegister(0, MVT::i32);
-    Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, Val,
-                                                      ARM_AM::no_shift),
-                                    MVT::i32);
-    return true;
-  }
+  if (isScaledConstantInRange(N, /*Scale=*/1, 0, 0x1000, Val))
+    return false;
 
   Offset = N;
   ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOpcode());
@@ -754,6 +751,28 @@ bool ARMDAGToDAGISel::SelectAddrMode2Offset(SDNode *Op, SDValue N,
                                   MVT::i32);
   return true;
 }
+
+bool ARMDAGToDAGISel::SelectAddrMode2OffsetImm(SDNode *Op, SDValue N,
+                                            SDValue &Offset, SDValue &Opc) {
+  unsigned Opcode = Op->getOpcode();
+  ISD::MemIndexedMode AM = (Opcode == ISD::LOAD)
+    ? cast<LoadSDNode>(Op)->getAddressingMode()
+    : cast<StoreSDNode>(Op)->getAddressingMode();
+  ARM_AM::AddrOpc AddSub = (AM == ISD::PRE_INC || AM == ISD::POST_INC)
+    ? ARM_AM::add : ARM_AM::sub;
+  int Val;
+  if (isScaledConstantInRange(N, /*Scale=*/1, 0, 0x1000, Val)) { // 12 bits.
+    Offset = CurDAG->getRegister(0, MVT::i32);
+    Opc = CurDAG->getTargetConstant(ARM_AM::getAM2Opc(AddSub, Val,
+                                                      ARM_AM::no_shift),
+                                    MVT::i32);
+    return true;
+  }
+
+  return false;
+}
+
+
 
 
 bool ARMDAGToDAGISel::SelectAddrMode3(SDValue N,
@@ -1298,9 +1317,14 @@ SDNode *ARMDAGToDAGISel::SelectARMIndexedLoad(SDNode *N) {
   unsigned Opcode = 0;
   bool Match = false;
   if (LoadedVT == MVT::i32 &&
-      SelectAddrMode2Offset(N, LD->getOffset(), Offset, AMOpc)) {
-    Opcode = isPre ? ARM::LDR_PRE : ARM::LDR_POST;
+      SelectAddrMode2OffsetImm(N, LD->getOffset(), Offset, AMOpc)) {
+    Opcode = isPre ? ARM::LDR_PRE : ARM::LDR_POST_IMM;
     Match = true;
+  } else if (LoadedVT == MVT::i32 &&
+      SelectAddrMode2OffsetReg(N, LD->getOffset(), Offset, AMOpc)) {
+    Opcode = isPre ? ARM::LDR_PRE : ARM::LDR_POST_REG;
+    Match = true;
+
   } else if (LoadedVT == MVT::i16 &&
              SelectAddrMode3Offset(N, LD->getOffset(), Offset, AMOpc)) {
     Match = true;
@@ -1314,9 +1338,12 @@ SDNode *ARMDAGToDAGISel::SelectARMIndexedLoad(SDNode *N) {
         Opcode = isPre ? ARM::LDRSB_PRE : ARM::LDRSB_POST;
       }
     } else {
-      if (SelectAddrMode2Offset(N, LD->getOffset(), Offset, AMOpc)) {
+      if (SelectAddrMode2OffsetImm(N, LD->getOffset(), Offset, AMOpc)) {
         Match = true;
-        Opcode = isPre ? ARM::LDRB_PRE : ARM::LDRB_POST;
+        Opcode = isPre ? ARM::LDRB_PRE : ARM::LDRB_POST_IMM;
+      } else if (SelectAddrMode2OffsetReg(N, LD->getOffset(), Offset, AMOpc)) {
+        Match = true;
+        Opcode = isPre ? ARM::LDRB_PRE : ARM::LDRB_POST_REG;
       }
     }
   }

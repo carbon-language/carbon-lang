@@ -93,7 +93,8 @@ static bool isCSRestore(MachineInstr *MI,
         return false;
     return true;
   }
-  if ((MI->getOpcode() == ARM::LDR_POST ||
+  if ((MI->getOpcode() == ARM::LDR_POST_IMM ||
+       MI->getOpcode() == ARM::LDR_POST_REG ||
        MI->getOpcode() == ARM::t2LDR_POST) &&
       isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs) &&
       MI->getOperand(1).getReg() == ARM::SP)
@@ -590,7 +591,7 @@ void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
         .addReg(ARM::SP).setMIFlags(MIFlags);
       // ARM mode needs an extra reg0 here due to addrmode2. Will go away once
       // that refactoring is complete (eventually).
-      if (StrOpc == ARM::STR_PRE) {
+      if (StrOpc == ARM::STR_PRE_REG || StrOpc == ARM::STR_PRE_IMM) {
         MIB.addReg(0);
         MIB.addImm(ARM_AM::getAM2Opc(ARM_AM::sub, 4, ARM_AM::no_shift));
       } else
@@ -665,7 +666,7 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
           .addReg(ARM::SP);
       // ARM mode needs an extra reg0 here due to addrmode2. Will go away once
       // that refactoring is complete (eventually).
-      if (LdrOpc == ARM::LDR_POST) {
+      if (LdrOpc == ARM::LDR_POST_REG || LdrOpc == ARM::LDR_POST_IMM) {
         MIB.addReg(0);
         MIB.addImm(ARM_AM::getAM2Opc(ARM_AM::add, 4, ARM_AM::no_shift));
       } else
@@ -687,7 +688,7 @@ bool ARMFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
   unsigned PushOpc = AFI->isThumbFunction() ? ARM::t2STMDB_UPD : ARM::STMDB_UPD;
-  unsigned PushOneOpc = AFI->isThumbFunction() ? ARM::t2STR_PRE : ARM::STR_PRE;
+  unsigned PushOneOpc = AFI->isThumbFunction() ? ARM::t2STR_PRE : ARM::STR_PRE_IMM;
   unsigned FltOpc = ARM::VSTMDDB_UPD;
   emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea1Register,
                MachineInstr::FrameSetup);
@@ -711,7 +712,7 @@ bool ARMFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
 
   unsigned PopOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_UPD : ARM::LDMIA_UPD;
-  unsigned LdrOpc = AFI->isThumbFunction() ? ARM::t2LDR_POST : ARM::LDR_POST;
+  unsigned LdrOpc = AFI->isThumbFunction() ? ARM::t2LDR_POST : ARM::LDR_POST_IMM;
   unsigned FltOpc = ARM::VLDMDIA_UPD;
   emitPopInst(MBB, MI, CSI, FltOpc, 0, isVarArg, true, &isARMArea3Register);
   emitPopInst(MBB, MI, CSI, PopOpc, LdrOpc, isVarArg, false,

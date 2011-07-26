@@ -994,7 +994,8 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
            i != NumOps; ++i)
         RegList.push_back(MI->getOperand(i).getReg());
       break;
-    case ARM::STR_PRE:
+    case ARM::STR_PRE_IMM:
+    case ARM::STR_PRE_REG:
       assert(MI->getOperand(2).getReg() == ARM::SP &&
              "Only stack pointer as a source reg is supported");
       RegList.push_back(SrcReg);

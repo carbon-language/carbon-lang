@@ -507,22 +507,41 @@ class AI2ldstidx<bit isLd, bit isByte, bit isPre, dag oops, dag iops,
   let Inst{20}    = isLd; // L bit
   let Inst{15-12} = Rt;
 }
-class AI2stridx<bit isByte, bit isPre, dag oops, dag iops,
+class AI2stridx_reg<bit isByte, bit isPre, dag oops, dag iops,
                 IndexMode im, Format f, InstrItinClass itin, string opc,
                 string asm, string cstr, list<dag> pattern>
   : AI2ldstidx<0, isByte, isPre, oops, iops, im, f, itin, opc, asm, cstr,
                pattern> {
   // AM2 store w/ two operands: (GPR, am2offset)
-  // {13}     1 == Rm, 0 == imm12
   // {12}     isAdd
   // {11-0}   imm12/Rm
   bits<14> offset;
   bits<4> Rn;
-  let Inst{25} = offset{13};
+  let Inst{25} = 1;
+  let Inst{23} = offset{12};
+  let Inst{19-16} = Rn;
+  let Inst{11-5} = offset{11-5};
+  let Inst{4} = 0;
+  let Inst{3-0} = offset{3-0};
+}
+
+class AI2stridx_imm<bit isByte, bit isPre, dag oops, dag iops,
+                IndexMode im, Format f, InstrItinClass itin, string opc,
+                string asm, string cstr, list<dag> pattern>
+  : AI2ldstidx<0, isByte, isPre, oops, iops, im, f, itin, opc, asm, cstr,
+               pattern> {
+  // AM2 store w/ two operands: (GPR, am2offset)
+  // {12}     isAdd
+  // {11-0}   imm12/Rm
+  bits<14> offset;
+  bits<4> Rn;
+  let Inst{25} = 0;
   let Inst{23} = offset{12};
   let Inst{19-16} = Rn;
   let Inst{11-0} = offset{11-0};
 }
+
+
 // FIXME: Merge with the above class when addrmode2 gets used for STR, STRB
 // but for now use this class for STRT and STRBT.
 class AI2stridxT<bit isByte, bit isPre, dag oops, dag iops,

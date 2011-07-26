@@ -639,7 +639,8 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   MISC("addrmode_imm12", "kOperandTypeAddrModeImm12");            // R, I
   MISC("ldst_so_reg", "kOperandTypeLdStSOReg");                   // R, R, I
   MISC("addrmode2", "kOperandTypeARMAddrMode2");                  // R, R, I
-  MISC("am2offset", "kOperandTypeARMAddrMode2Offset");            // R, I
+  MISC("am2offset_reg", "kOperandTypeARMAddrMode2Offset");            // R, I
+  MISC("am2offset_imm", "kOperandTypeARMAddrMode2Offset");            // R, I
   MISC("addrmode3", "kOperandTypeARMAddrMode3");                  // R, R, I
   MISC("am3offset", "kOperandTypeARMAddrMode3Offset");            // R, I
   MISC("ldstm_mode", "kOperandTypeARMLdStmMode");                 // I
