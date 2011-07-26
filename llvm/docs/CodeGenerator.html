@@ -1813,12 +1813,14 @@ $ llc -regalloc=pbqp file.bc -o pbqp.s;
 
 <div>
 
-<p>Unwinding out of a function is done virually via DWARF encodings. These
-   encodings exist in two forms: a Common Information Entry (CIE) and a Frame
-   Description Entry (FDE). These two tables contain the information necessary
-   for the unwinder to restore the state of the computer to before the function
-   was called. However, the tables themselves are rather large. LLVM can use a
-   "compact unwind" encoding to represent the virtual unwinding.</p>
+<p>Throwing an exception requires <em>unwinding</em> out of a function. The
+   information on how to unwind a given function is traditionally expressed in
+   DWARF unwind (a.k.a. frame) info. But that format was originally developed
+   for debuggers to backtrace, and each Frame Description Entry (FDE) requires
+   ~20-30 bytes per function. There is also the cost of mapping from an address
+   in a function to the corresponding FDE at runtime. An alternative unwind
+   encoding is called <em>compact unwind</em> and requires just 4-bytes per
+   function.</p>
 
 <p>The compact unwind encoding is a 32-bit value, which is encoded in an
    architecture-specific way. It specifies which registers to restore and from
@@ -1834,7 +1836,7 @@ $ llc -regalloc=pbqp file.bc -o pbqp.s;
 
 <p>For X86, there are three modes for the compact unwind encoding:</p>
 
-<ul>
+<dl>
   <dt><i>Function with a Frame Pointer (<code>EBP</code> or <code>RBP</code>)</i></dt>
   <dd><p><code>EBP/RBP</code>-based frame, where <code>EBP/RBP</code> is pushed
       onto the stack immediately after the return address,
@@ -1845,10 +1847,11 @@ $ llc -regalloc=pbqp file.bc -o pbqp.s;
       more into the PC. All non-volatile registers that need to be restored must
       have been saved in a small range on the stack that
       starts <code>EBP-4</code> to <code>EBP-1020</code> (<code>RBP-8</code>
-      to <code>RBP-1020</code>). The offset (divided by 4) is encoded in bits
-      16-23 (mask: <code>0x00FF0000</code>).  The registers saved are encoded in
-      bits 0-14 (mask: <code>0x00007FFF</code>) as five 3-bit entries from the
-      following table:</p>
+      to <code>RBP-1020</code>). The offset (divided by 4 in 32-bit mode and 8
+      in 64-bit mode) is encoded in bits 16-23 (mask: <code>0x00FF0000</code>).
+      The registers saved are encoded in bits 0-14
+      (mask: <code>0x00007FFF</code>) as five 3-bit entries from the following
+      table:</p>
 <table border="1" cellspacing="0">
   <tr>
     <th>Compact Number</th>
@@ -1895,13 +1898,14 @@ $ llc -regalloc=pbqp file.bc -o pbqp.s;
       to the <code>ESP/RSP</code>.  Then the return is done by popping the stack
       into the PC. All non-volatile registers that need to be restored must have
       been saved on the stack immediately after the return address. The stack
-      size (divided by 4) is encoded in bits 16-23
-      (mask: <code>0x00FF0000</code>). There is a maximum stack size of 1024
-      bytes. The number of registers saved is encoded in bits 9-12
-      (mask: <code>0x00001C00</code>). Bits 0-9 (mask:
-      <code>0x000003FF</code>) contain which registers were saved and their
-      order. (See the <code>encodeCompactUnwindRegistersWithoutFrame()</code>
-      function in <code>lib/Target/X86FrameLowering.cpp</code> for the encoding
+      size (divided by 4 in 32-bit mode and 8 in 64-bit mode) is encoded in bits
+      16-23 (mask: <code>0x00FF0000</code>). There is a maximum stack size of
+      1024 bytes in 32-bit mode and 2048 in 64-bit mode. The number of registers
+      saved is encoded in bits 9-12 (mask: <code>0x00001C00</code>). Bits 0-9
+      (mask: <code>0x000003FF</code>) contain which registers were saved and
+      their order. (See
+      the <code>encodeCompactUnwindRegistersWithoutFrame()</code> function
+      in <code>lib/Target/X86FrameLowering.cpp</code> for the encoding
       algorithm.)</p></dd>
 
   <dt><i>Frameless with a Large Constant Stack Size (<code>EBP</code>
@@ -1912,7 +1916,7 @@ $ llc -regalloc=pbqp file.bc -o pbqp.s;
       $nnnnnn, %esp</code>" in its prolog. The compact encoding contains the
       offset to the <code>$nnnnnn</code> value in the function in bits 9-12
       (mask: <code>0x00001C00</code>).</p></dd>
-</ul>
+</dl>
 
 </div>
 
