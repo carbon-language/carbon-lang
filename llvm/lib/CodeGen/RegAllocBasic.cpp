@@ -439,6 +439,7 @@ void RegAllocBase::addMBBLiveIns(MachineFunction *MF) {
     LiveIntervalUnion &LiveUnion = PhysReg2LiveUnion[PhysReg];
     if (LiveUnion.empty())
       continue;
+    DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " live-in:");
     MachineFunction::iterator MBB = llvm::next(MF->begin());
     MachineFunction::iterator MFE = MF->end();
     SlotIndex Start, Stop;
@@ -449,6 +450,8 @@ void RegAllocBase::addMBBLiveIns(MachineFunction *MF) {
       if (SI.start() <= Start) {
         if (!MBB->isLiveIn(PhysReg))
           MBB->addLiveIn(PhysReg);
+        DEBUG(dbgs() << "\tBB#" << MBB->getNumber() << ':'
+                     << PrintReg(SI.value()->reg, TRI));
       } else if (SI.start() > Stop)
         MBB = Indexes->getMBBFromIndex(SI.start().getPrevIndex());
       if (++MBB == MFE)
@@ -456,6 +459,7 @@ void RegAllocBase::addMBBLiveIns(MachineFunction *MF) {
       tie(Start, Stop) = Indexes->getMBBRange(MBB);
       SI.advanceTo(Start);
     }
+    DEBUG(dbgs() << '\n');
   }
 }
 
