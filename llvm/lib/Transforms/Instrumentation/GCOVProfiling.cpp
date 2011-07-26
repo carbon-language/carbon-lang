@@ -377,7 +377,7 @@ void GCOVProfiler::emitGCNO(DebugInfoFinder &DIF) {
     if (!Use402Format)
       out->write("oncg*404MVLL", 12);
     else
-      out->write("oncg*402MVLL", 12);
+      out->write("oncg*204MVLL", 12);
   }
 
   for (DebugInfoFinder::iterator SPI = DIF.subprogram_begin(),
