@@ -2646,71 +2646,69 @@ let Predicates = [HasSSE2] in {
 
 let ExeDomain = SSEPackedInt in {
 multiclass sse2_unpack<bits<8> opc, string OpcodeStr, ValueType vt,
-                       PatFrag unp_frag, PatFrag bc_frag, bit Is2Addr = 1> {
+                       SDNode OpNode, PatFrag bc_frag, bit Is2Addr = 1> {
   def rr : PDI<opc, MRMSrcReg,
       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
       !if(Is2Addr,
           !strconcat(OpcodeStr,"\t{$src2, $dst|$dst, $src2}"),
           !strconcat(OpcodeStr,"\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set VR128:$dst, (vt (unp_frag VR128:$src1, VR128:$src2)))]>;
+      [(set VR128:$dst, (vt (OpNode VR128:$src1, VR128:$src2)))]>;
   def rm : PDI<opc, MRMSrcMem,
       (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
       !if(Is2Addr,
           !strconcat(OpcodeStr,"\t{$src2, $dst|$dst, $src2}"),
           !strconcat(OpcodeStr,"\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-      [(set VR128:$dst, (unp_frag VR128:$src1,
+      [(set VR128:$dst, (OpNode VR128:$src1,
                                   (bc_frag (memopv2i64
                                                addr:$src2))))]>;
 }
 
 let Predicates = [HasAVX] in {
-  defm VPUNPCKLBW  : sse2_unpack<0x60, "vpunpcklbw", v16i8, unpckl, bc_v16i8,
-                                 0>, VEX_4V;
-  defm VPUNPCKLWD  : sse2_unpack<0x61, "vpunpcklwd", v8i16, unpckl, bc_v8i16,
-                                 0>, VEX_4V;
-  defm VPUNPCKLDQ  : sse2_unpack<0x62, "vpunpckldq", v4i32, unpckl, bc_v4i32,
-                                 0>, VEX_4V;
+  defm VPUNPCKLBW  : sse2_unpack<0x60, "vpunpcklbw", v16i8, X86Punpcklbw,
+                                 bc_v16i8, 0>, VEX_4V;
+  defm VPUNPCKLWD  : sse2_unpack<0x61, "vpunpcklwd", v8i16, X86Punpcklwd,
+                                 bc_v8i16, 0>, VEX_4V;
+  defm VPUNPCKLDQ  : sse2_unpack<0x62, "vpunpckldq", v4i32, X86Punpckldq,
+                                 bc_v4i32, 0>, VEX_4V;
 
   /// FIXME: we could eliminate this and use sse2_unpack instead if tblgen
   /// knew to collapse (bitconvert VT to VT) into its operand.
   def VPUNPCKLQDQrr : PDI<0x6C, MRMSrcReg,
-                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                         "vpunpcklqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set VR128:$dst,
-                          (v2i64 (unpckl VR128:$src1, VR128:$src2)))]>, VEX_4V;
+            (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+            "vpunpcklqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+            [(set VR128:$dst, (v2i64 (X86Punpcklqdq VR128:$src1,
+                                                    VR128:$src2)))]>, VEX_4V;
   def VPUNPCKLQDQrm : PDI<0x6C, MRMSrcMem,
-                         (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-                         "vpunpcklqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set VR128:$dst,
-                          (v2i64 (unpckl VR128:$src1,
-                                         (memopv2i64 addr:$src2))))]>, VEX_4V;
+            (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+            "vpunpcklqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+            [(set VR128:$dst, (v2i64 (X86Punpcklqdq VR128:$src1,
+                                        (memopv2i64 addr:$src2))))]>, VEX_4V;
 
-  defm VPUNPCKHBW  : sse2_unpack<0x68, "vpunpckhbw", v16i8, unpckh, bc_v16i8,
-                                 0>, VEX_4V;
-  defm VPUNPCKHWD  : sse2_unpack<0x69, "vpunpckhwd", v8i16, unpckh, bc_v8i16,
-                                 0>, VEX_4V;
-  defm VPUNPCKHDQ  : sse2_unpack<0x6A, "vpunpckhdq", v4i32, unpckh, bc_v4i32,
-                                 0>, VEX_4V;
+  defm VPUNPCKHBW  : sse2_unpack<0x68, "vpunpckhbw", v16i8, X86Punpckhbw,
+                                 bc_v16i8, 0>, VEX_4V;
+  defm VPUNPCKHWD  : sse2_unpack<0x69, "vpunpckhwd", v8i16, X86Punpckhwd,
+                                 bc_v8i16, 0>, VEX_4V;
+  defm VPUNPCKHDQ  : sse2_unpack<0x6A, "vpunpckhdq", v4i32, X86Punpckhdq,
+                                 bc_v4i32, 0>, VEX_4V;
 
   /// FIXME: we could eliminate this and use sse2_unpack instead if tblgen
   /// knew to collapse (bitconvert VT to VT) into its operand.
   def VPUNPCKHQDQrr : PDI<0x6D, MRMSrcReg,
-                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                         "vpunpckhqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set VR128:$dst,
-                          (v2i64 (unpckh VR128:$src1, VR128:$src2)))]>, VEX_4V;
+             (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
+             "vpunpckhqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+             [(set VR128:$dst, (v2i64 (X86Punpckhqdq VR128:$src1,
+                                                     VR128:$src2)))]>, VEX_4V;
   def VPUNPCKHQDQrm : PDI<0x6D, MRMSrcMem,
-                        (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-                        "vpunpckhqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                        [(set VR128:$dst,
-                          (v2i64 (unpckh VR128:$src1,
-                                         (memopv2i64 addr:$src2))))]>, VEX_4V;
+             (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
+             "vpunpckhqdq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+             [(set VR128:$dst, (v2i64 (X86Punpckhqdq VR128:$src1,
+                                        (memopv2i64 addr:$src2))))]>, VEX_4V;
 }
 
 let Constraints = "$src1 = $dst" in {
-  defm PUNPCKLBW  : sse2_unpack<0x60, "punpcklbw", v16i8, unpckl, bc_v16i8>;
-  defm PUNPCKLWD  : sse2_unpack<0x61, "punpcklwd", v8i16, unpckl, bc_v8i16>;
-  defm PUNPCKLDQ  : sse2_unpack<0x62, "punpckldq", v4i32, unpckl, bc_v4i32>;
+  defm PUNPCKLBW  : sse2_unpack<0x60, "punpcklbw", v16i8, X86Punpcklbw, bc_v16i8>;
+  defm PUNPCKLWD  : sse2_unpack<0x61, "punpcklwd", v8i16, X86Punpcklwd, bc_v8i16>;
+  defm PUNPCKLDQ  : sse2_unpack<0x62, "punpckldq", v4i32, X86Punpckldq, bc_v4i32>;
 
   /// FIXME: we could eliminate this and use sse2_unpack instead if tblgen
   /// knew to collapse (bitconvert VT to VT) into its operand.
@@ -2718,17 +2716,17 @@ let Constraints = "$src1 = $dst" in {
                          (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                          "punpcklqdq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v2i64 (unpckl VR128:$src1, VR128:$src2)))]>;
+                          (v2i64 (X86Punpcklqdq VR128:$src1, VR128:$src2)))]>;
   def PUNPCKLQDQrm : PDI<0x6C, MRMSrcMem,
                          (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                          "punpcklqdq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v2i64 (unpckl VR128:$src1,
+                          (v2i64 (X86Punpcklqdq VR128:$src1,
                                          (memopv2i64 addr:$src2))))]>;
 
-  defm PUNPCKHBW  : sse2_unpack<0x68, "punpckhbw", v16i8, unpckh, bc_v16i8>;
-  defm PUNPCKHWD  : sse2_unpack<0x69, "punpckhwd", v8i16, unpckh, bc_v8i16>;
-  defm PUNPCKHDQ  : sse2_unpack<0x6A, "punpckhdq", v4i32, unpckh, bc_v4i32>;
+  defm PUNPCKHBW  : sse2_unpack<0x68, "punpckhbw", v16i8, X86Punpckhbw, bc_v16i8>;
+  defm PUNPCKHWD  : sse2_unpack<0x69, "punpckhwd", v8i16, X86Punpckhwd, bc_v8i16>;
+  defm PUNPCKHDQ  : sse2_unpack<0x6A, "punpckhdq", v4i32, X86Punpckhdq, bc_v4i32>;
 
   /// FIXME: we could eliminate this and use sse2_unpack instead if tblgen
   /// knew to collapse (bitconvert VT to VT) into its operand.
@@ -2736,12 +2734,12 @@ let Constraints = "$src1 = $dst" in {
                          (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                          "punpckhqdq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v2i64 (unpckh VR128:$src1, VR128:$src2)))]>;
+                          (v2i64 (X86Punpckhqdq VR128:$src1, VR128:$src2)))]>;
   def PUNPCKHQDQrm : PDI<0x6D, MRMSrcMem,
                         (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                         "punpckhqdq\t{$src2, $dst|$dst, $src2}",
                         [(set VR128:$dst,
-                          (v2i64 (unpckh VR128:$src1,
+                          (v2i64 (X86Punpckhqdq VR128:$src1,
                                          (memopv2i64 addr:$src2))))]>;
 }
 
