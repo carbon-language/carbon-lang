@@ -1,0 +1,10 @@
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// llvm.sqrt has undefined behavior on negative inputs, so it is
+// inappropriate to translate C/C++ sqrt to this.
+float sqrtf(float x);
+float foo(float X) {
+  // CHECK: foo
+  // CHECK: call float @sqrtf(float %tmp) readnone
+  // Check that this is marked readonly when errno is ignored.
+  return sqrtf(X);
+}
