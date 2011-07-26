@@ -259,17 +259,6 @@ public:
   unsigned getT2SORegOpValue(const MCInst &MI, unsigned Op,
                              SmallVectorImpl<MCFixup> &Fixups) const;
 
-  unsigned getRotImmOpValue(const MCInst &MI, unsigned Op,
-                            SmallVectorImpl<MCFixup> &Fixups) const {
-    switch (MI.getOperand(Op).getImm()) {
-    default: assert (0 && "Not a valid rot_imm value!");
-    case 0:  return 0;
-    case 8:  return 1;
-    case 16: return 2;
-    case 24: return 3;
-    }
-  }
-
   unsigned getImmMinusOneOpValue(const MCInst &MI, unsigned Op,
                                  SmallVectorImpl<MCFixup> &Fixups) const {
     return MI.getOperand(Op).getImm() - 1;

@@ -323,12 +323,6 @@ static inline int decodeImm32_BLX(uint32_t insn) {
   return SignExtend32<25>(Imm25);
 }
 
-// See, for example, A8.6.221 SXTAB16.
-static inline unsigned decodeRotate(uint32_t insn) {
-  unsigned rotate = slice(insn, 5, 4);
-  return rotate << 3;
-}
-
 ///////////////////////////////////////////////
 //                                           //
 // Thumb1 instruction disassembly functions. //
@@ -2195,7 +2189,7 @@ static bool DisassembleThumb2DPReg(MCInst &MI, unsigned Opcode, uint32_t insn,
   if (OpIdx < NumOps && OpInfo[OpIdx].RegClass < 0
       && !OpInfo[OpIdx].isPredicate() && !OpInfo[OpIdx].isOptionalDef()) {
     // Add the rotation amount immediate.
-    MI.addOperand(MCOperand::CreateImm(decodeRotate(insn)));
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 5, 4)));
     ++OpIdx;
   }
 

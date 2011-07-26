@@ -1785,8 +1785,7 @@ static bool DisassembleExtFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
       && !OpInfo[OpIdx].isPredicate() && !OpInfo[OpIdx].isOptionalDef()) {
     // Extract the 2-bit rotate field Inst{11-10}.
     unsigned rot = (insn >> ARMII::ExtRotImmShift) & 3;
-    // Rotation by 8, 16, or 24 bits.
-    MI.addOperand(MCOperand::CreateImm(rot << 3));
+    MI.addOperand(MCOperand::CreateImm(rot));
     ++OpIdx;
   }
 

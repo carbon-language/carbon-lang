@@ -388,10 +388,20 @@ def neon_vcvt_imm32 : Operand<i32> {
 }
 
 // rot_imm: An integer that encodes a rotate amount. Must be 8, 16, or 24.
-def rot_imm : Operand<i32>, ImmLeaf<i32, [{
-    int32_t v = (int32_t)Imm;
-    return v == 8 || v == 16 || v == 24; }]> {
-  let EncoderMethod = "getRotImmOpValue";
+def rot_imm_XFORM: SDNodeXForm<imm, [{
+  switch (N->getZExtValue()){
+  default: assert(0);
+  case 0:  return CurDAG->getTargetConstant(0, MVT::i32);
+  case 8:  return CurDAG->getTargetConstant(1, MVT::i32);
+  case 16: return CurDAG->getTargetConstant(2, MVT::i32);
+  case 24: return CurDAG->getTargetConstant(3, MVT::i32);
+  }
+}]>;
+def rot_imm : Operand<i32>, PatLeaf<(i32 imm), [{
+    int32_t v = N->getZExtValue();
+    return v == 8 || v == 16 || v == 24; }],
+    rot_imm_XFORM> {
+  let PrintMethod = "printRotImmOperand";
 }
 
 // shift_imm: An integer that encodes a shift amount and the type of shift
@@ -989,7 +999,7 @@ multiclass AI_ext_rrot<bits<8> opcod, string opc, PatFrag opnode> {
     let Inst{3-0}   = Rm;
   }
   def r_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm, rot_imm:$rot),
-                 IIC_iEXTr, opc, "\t$Rd, $Rm, ror $rot",
+                 IIC_iEXTr, opc, "\t$Rd, $Rm, $rot",
                  [(set GPR:$Rd, (opnode (rotr GPR:$Rm, rot_imm:$rot)))]>,
               Requires<[IsARM, HasV6]> {
     bits<4> Rd;
@@ -1011,7 +1021,7 @@ multiclass AI_ext_rrot_np<bits<8> opcod, string opc> {
     let Inst{11-10} = 0b00;
   }
   def r_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm, rot_imm:$rot),
-                 IIC_iEXTr, opc, "\t$Rd, $Rm, ror $rot",
+                 IIC_iEXTr, opc, "\t$Rd, $Rm, $rot",
                  [/* For disassembly only; pattern left blank */]>,
               Requires<[IsARM, HasV6]> {
     bits<2> rot;
@@ -1038,7 +1048,7 @@ multiclass AI_exta_rrot<bits<8> opcod, string opc, PatFrag opnode> {
   }
   def rr_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
                                              rot_imm:$rot),
-                  IIC_iEXTAr, opc, "\t$Rd, $Rn, $Rm, ror $rot",
+                  IIC_iEXTAr, opc, "\t$Rd, $Rn, $Rm, $rot",
                   [(set GPR:$Rd, (opnode GPR:$Rn,
                                           (rotr GPR:$Rm, rot_imm:$rot)))]>,
                   Requires<[IsARM, HasV6]> {
@@ -1064,7 +1074,7 @@ multiclass AI_exta_rrot_np<bits<8> opcod, string opc> {
   }
   def rr_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
                                              rot_imm:$rot),
-                  IIC_iEXTAr, opc, "\t$Rd, $Rn, $Rm, ror $rot",
+                  IIC_iEXTAr, opc, "\t$Rd, $Rn, $Rm, $rot",
                   [/* For disassembly only; pattern left blank */]>,
                   Requires<[IsARM, HasV6]> {
     bits<4> Rn;
@@ -2414,9 +2424,9 @@ defm UXTB16 : AI_ext_rrot<0b01101100,
 //        instead so we can include a check for masking back in the upper
 //        eight bits of the source into the lower eight bits of the result.
 //def : ARMV6Pat<(and (shl GPR:$Src, (i32 8)), 0xFF00FF),
-//               (UXTB16r_rot GPR:$Src, 24)>;
+//               (UXTB16r_rot GPR:$Src, 3)>;
 def : ARMV6Pat<(and (srl GPR:$Src, (i32 8)), 0xFF00FF),
-               (UXTB16r_rot GPR:$Src, 8)>;
+               (UXTB16r_rot GPR:$Src, 1)>;
 
 defm UXTAB : AI_exta_rrot<0b01101110, "uxtab",
                         BinOpFrag<(add node:$LHS, (and node:$RHS, 0x00FF))>>;

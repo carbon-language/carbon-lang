@@ -215,8 +215,6 @@ namespace {
       const { return 0; }
     unsigned getT2SORegOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
-    unsigned getRotImmOpValue(const MachineInstr &MI, unsigned Op)
-      const { return 0; }
     unsigned getImmMinusOneOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getT2AdrLabelOpValue(const MachineInstr &MI, unsigned Op)

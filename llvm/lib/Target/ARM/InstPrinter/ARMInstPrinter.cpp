@@ -835,3 +835,17 @@ void ARMInstPrinter::printImmPlusOneOperand(const MCInst *MI, unsigned OpNum,
   unsigned Imm = MI->getOperand(OpNum).getImm();
   O << "#" << Imm + 1;
 }
+
+void ARMInstPrinter::printRotImmOperand(const MCInst *MI, unsigned OpNum,
+                                        raw_ostream &O) {
+  unsigned Imm = MI->getOperand(OpNum).getImm();
+  if (Imm == 0)
+    return;
+  O << "ror #";
+  switch (Imm) {
+  default: assert (0 && "illegal ror immediate!");
+  case 1: O << "8\n"; break;
+  case 2: O << "16\n"; break;
+  case 3: O << "24\n"; break;
+  }
+}
