@@ -1768,22 +1768,28 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
    different register allocators:</p>
 
 <ul>
-  <li><i>Linear Scan</i> &mdash; <i>The default allocator</i>. This is the
-      well-know linear scan register allocator. Whereas the
-      <i>Simple</i> and <i>Local</i> algorithms use a direct mapping
-      implementation technique, the <i>Linear Scan</i> implementation
-      uses a spiller in order to place load and stores.</li>
-
   <li><i>Fast</i> &mdash; This register allocator is the default for debug
       builds. It allocates registers on a basic block level, attempting to keep
       values in registers and reusing registers as appropriate.</li>
+
+  <li><i>Basic</i> &mdash; This is an incremental approach to register
+  allocation. Live ranges are assigned to registers one at a time in
+  an order that is driven by heuristics. Since code can be rewritten
+  on-the-fly during allocation, this framework allows interesting
+  allocators to be developed as extensions. It is not itself a
+  production register allocator but is a potentially useful
+  stand-alone mode for triaging bugs and as a performance baseline.
+
+  <li><i>Greedy</i> &mdash; <i>The default allocator</i>. This is a
+  highly tuned implementation of the <i>Basic</i> allocator that
+  incorporates global live range splitting. This allocator works hard
+  to minimize the cost of spill code.
 
   <li><i>PBQP</i> &mdash; A Partitioned Boolean Quadratic Programming (PBQP)
       based register allocator. This allocator works by constructing a PBQP
       problem representing the register allocation problem under consideration,
       solving this using a PBQP solver, and mapping the solution back to a
       register assignment.</li>
-
 </ul>
 
 <p>The type of register allocator used in <tt>llc</tt> can be chosen with the
