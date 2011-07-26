@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86 -mattr=-sse2,+sse | grep addps
 
+; XFAIL: *
 ; PR10497
 ; (This is primarily checking that this construct doesn't crash.)
 define void @a(<2 x float>* %a, <2 x i32>* %b) {
