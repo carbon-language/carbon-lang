@@ -3260,6 +3260,17 @@ let Predicates = [HasSSE3] in {
             (MOVSLDUPrm addr:$src)>;
 }
 
+let Predicates = [HasAVX] in {
+  def : Pat<(v4i32 (X86Movshdup VR128:$src)),
+            (VMOVSHDUPrr VR128:$src)>;
+  def : Pat<(v4i32 (X86Movshdup (bc_v4i32 (memopv2i64 addr:$src)))),
+            (VMOVSHDUPrm addr:$src)>;
+  def : Pat<(v4i32 (X86Movsldup VR128:$src)),
+            (VMOVSLDUPrr VR128:$src)>;
+  def : Pat<(v4i32 (X86Movsldup (bc_v4i32 (memopv2i64 addr:$src)))),
+            (VMOVSLDUPrm addr:$src)>;
+}
+
 //===---------------------------------------------------------------------===//
 // Replicate Double FP - MOVDDUP
 //
