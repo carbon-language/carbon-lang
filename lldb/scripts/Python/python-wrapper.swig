@@ -508,6 +508,49 @@ LLDBSwigPython_GetIndexOfChildWithName
     return 0;
 }
 
+SWIGEXPORT void
+LLDBSwigPython_UpdateSynthProviderInstance
+(
+    PyObject *implementor
+)
+{
+    static char callee_name[] = "update";
+
+    if (implementor == NULL || implementor == Py_None)
+        return;
+
+    // all this code is here because update is optional, so we don't want to bother trying to call it unless it's been def:ined for us
+    // other synth provider calls are mandatory, so we want to fail in a very obvious way if they are missing!
+    PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
+
+    if (pmeth == NULL || pmeth == Py_None)
+    {
+        Py_XDECREF(pmeth);
+        return;
+    }
+
+    if (PyCallable_Check(pmeth) == 0)
+    {
+        Py_XDECREF(pmeth);
+        return;
+    }
+
+    Py_XDECREF(pmeth);
+
+    // right now we know this function exists and is callable..
+    PyObject* py_return = PyObject_CallMethod(implementor, callee_name, NULL);
+    
+    // if it fails, print the error but otherwise go on
+    if (PyErr_Occurred())
+    {
+        PyErr_Print();
+        PyErr_Clear();
+    }
+
+    Py_XDECREF(py_return);
+
+}
+
 SWIGEXPORT lldb::SBValue*
 LLDBSWIGPython_CastPyObjectToSBValue
 (
