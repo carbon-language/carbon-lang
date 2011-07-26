@@ -7,9 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARM.h"
-#include "ARMBaseRegisterInfo.h"
-#include "ARMSubtarget.h"
+#include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMMCExpr.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
@@ -20,12 +18,14 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/TargetAsmParser.h"
+#include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -37,7 +37,7 @@ namespace {
 
 class ARMOperand;
 
-class ARMAsmParser : public TargetAsmParser {
+class ARMAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
 
@@ -141,7 +141,7 @@ class ARMAsmParser : public TargetAsmParser {
 
 public:
   ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
-    : TargetAsmParser(), STI(_STI), Parser(_Parser) {
+    : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
 
     // Initialize the set of available features.
@@ -2665,8 +2665,8 @@ extern "C" void LLVMInitializeARMAsmLexer();
 
 /// Force static initialization.
 extern "C" void LLVMInitializeARMAsmParser() {
-  RegisterAsmParser<ARMAsmParser> X(TheARMTarget);
-  RegisterAsmParser<ARMAsmParser> Y(TheThumbTarget);
+  RegisterMCAsmParser<ARMAsmParser> X(TheARMTarget);
+  RegisterMCAsmParser<ARMAsmParser> Y(TheThumbTarget);
   LLVMInitializeARMAsmLexer();
 }
 

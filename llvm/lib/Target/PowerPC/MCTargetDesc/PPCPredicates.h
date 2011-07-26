@@ -14,8 +14,6 @@
 #ifndef LLVM_TARGET_POWERPC_PPCPREDICATES_H
 #define LLVM_TARGET_POWERPC_PPCPREDICATES_H
 
-#include "PPC.h"
-
 namespace llvm {
 namespace PPC {
   /// Predicate - These are "(BI << 5) | BO"  for various predicates.

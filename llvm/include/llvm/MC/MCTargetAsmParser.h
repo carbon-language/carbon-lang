@@ -1,4 +1,4 @@
-//===-- llvm/Target/TargetAsmParser.h - Target Assembly Parser --*- C++ -*-===//
+//===-- llvm/MC/MCTargetAsmParser.h - Target Assembly Parser ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -20,18 +20,18 @@ class AsmToken;
 class MCParsedAsmOperand;
 template <typename T> class SmallVectorImpl;
 
-/// TargetAsmParser - Generic interface to target specific assembly parsers.
-class TargetAsmParser : public MCAsmParserExtension {
-  TargetAsmParser(const TargetAsmParser &);   // DO NOT IMPLEMENT
-  void operator=(const TargetAsmParser &);  // DO NOT IMPLEMENT
+/// MCTargetAsmParser - Generic interface to target specific assembly parsers.
+class MCTargetAsmParser : public MCAsmParserExtension {
+  MCTargetAsmParser(const MCTargetAsmParser &);   // DO NOT IMPLEMENT
+  void operator=(const MCTargetAsmParser &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
-  TargetAsmParser();
+  MCTargetAsmParser();
  
   /// AvailableFeatures - The current set of available features.
   unsigned AvailableFeatures;
 
 public:
-  virtual ~TargetAsmParser();
+  virtual ~MCTargetAsmParser();
 
   unsigned getAvailableFeatures() const { return AvailableFeatures; }
   void setAvailableFeatures(unsigned Value) { AvailableFeatures = Value; }

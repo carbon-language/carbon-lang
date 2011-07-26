@@ -1,4 +1,4 @@
-//===-- llvm/Target/TargetAsmLexer.h - Target Assembly Lexer ----*- C++ -*-===//
+//===-- llvm/MC/MCTargetAsmLexer.h - Target Assembly Lexer ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,16 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_TARGETASMLEXER_H
-#define LLVM_MC_TARGETASMLEXER_H
+#ifndef LLVM_MC_MCTARGETASMLEXER_H
+#define LLVM_MC_MCTARGETASMLEXER_H
 
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 
 namespace llvm {
 class Target;
   
-/// TargetAsmLexer - Generic interface to target specific assembly lexers.
-class TargetAsmLexer {
+/// MCTargetAsmLexer - Generic interface to target specific assembly lexers.
+class MCTargetAsmLexer {
   /// The current token
   AsmToken CurTok;
   
@@ -24,10 +24,10 @@ class TargetAsmLexer {
   SMLoc ErrLoc;
   std::string Err;
   
-  TargetAsmLexer(const TargetAsmLexer &);   // DO NOT IMPLEMENT
-  void operator=(const TargetAsmLexer &);  // DO NOT IMPLEMENT
+  MCTargetAsmLexer(const MCTargetAsmLexer &);   // DO NOT IMPLEMENT
+  void operator=(const MCTargetAsmLexer &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
-  TargetAsmLexer(const Target &);
+  MCTargetAsmLexer(const Target &);
   
   virtual AsmToken LexToken() = 0;
   
@@ -41,7 +41,7 @@ protected: // Can only create subclasses.
   MCAsmLexer *Lexer;
   
 public:
-  virtual ~TargetAsmLexer();
+  virtual ~MCTargetAsmLexer();
   
   const Target &getTarget() const { return TheTarget; }
   

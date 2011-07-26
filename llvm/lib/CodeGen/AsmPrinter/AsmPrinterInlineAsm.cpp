@@ -23,7 +23,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/TargetAsmParser.h"
+#include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -121,7 +121,8 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode) const {
     STI(TM.getTarget().createMCSubtargetInfo(TM.getTargetTriple(),
                                              TM.getTargetCPU(),
                                              TM.getTargetFeatureString()));
-  OwningPtr<TargetAsmParser> TAP(TM.getTarget().createAsmParser(*STI, *Parser));
+  OwningPtr<MCTargetAsmParser>
+    TAP(TM.getTarget().createMCAsmParser(*STI, *Parser));
   if (!TAP)
     report_fatal_error("Inline asm not supported by this streamer because"
                        " we don't have an asm parser for this target\n");

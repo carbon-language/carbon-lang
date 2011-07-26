@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARM.h"
+#include "MCTargetDesc/ARMBaseInfo.h"
 
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/TargetAsmLexer.h"
+#include "llvm/MC/MCTargetAsmLexer.h"
 
 #include "llvm/Target/TargetRegistry.h"
 
@@ -29,7 +29,7 @@ using namespace llvm;
 
 namespace {
 
-class ARMBaseAsmLexer : public TargetAsmLexer {
+class ARMBaseAsmLexer : public MCTargetAsmLexer {
   const MCAsmInfo &AsmInfo;
 
   const AsmToken &lexDefinite() {
@@ -76,7 +76,7 @@ protected:
   }
 public:
   ARMBaseAsmLexer(const Target &T, const MCAsmInfo &MAI)
-    : TargetAsmLexer(T), AsmInfo(MAI) {
+    : MCTargetAsmLexer(T), AsmInfo(MAI) {
   }
 };
 
@@ -138,6 +138,6 @@ AsmToken ARMBaseAsmLexer::LexTokenUAL() {
 }
 
 extern "C" void LLVMInitializeARMAsmLexer() {
-  RegisterAsmLexer<ARMAsmLexer> X(TheARMTarget);
-  RegisterAsmLexer<ThumbAsmLexer> Y(TheThumbTarget);
+  RegisterMCAsmLexer<ARMAsmLexer> X(TheARMTarget);
+  RegisterMCAsmLexer<ThumbAsmLexer> Y(TheThumbTarget);
 }

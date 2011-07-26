@@ -1,4 +1,4 @@
-//===-- llvm/MC/TargetAsmLexer.cpp - Target Assembly Lexer ----------------===//
+//===-- llvm/MC/MCTargetAsmLexer.cpp - Target Assembly Lexer --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/TargetAsmLexer.h"
+#include "llvm/MC/MCTargetAsmLexer.h"
 using namespace llvm;
 
-TargetAsmLexer::TargetAsmLexer(const Target &T) : TheTarget(T), Lexer(NULL) {}
-TargetAsmLexer::~TargetAsmLexer() {}
+MCTargetAsmLexer::MCTargetAsmLexer(const Target &T)
+  : TheTarget(T), Lexer(NULL) {
+}
+MCTargetAsmLexer::~MCTargetAsmLexer() {}

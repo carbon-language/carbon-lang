@@ -36,7 +36,7 @@ public:
     // Real values.
     Real,
 
-    // Register values (stored in IntVal).  Only used by TargetAsmLexer.
+    // Register values (stored in IntVal).  Only used by MCTargetAsmLexer.
     Register,
 
     // No-value.

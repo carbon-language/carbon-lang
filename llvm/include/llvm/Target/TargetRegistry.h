@@ -28,9 +28,11 @@ namespace llvm {
   class AsmPrinter;
   class Module;
   class MCAssembler;
+  class MCAsmBackend;
   class MCAsmInfo;
   class MCAsmParser;
   class MCCodeEmitter;
+  class MCCodeGenInfo;
   class MCContext;
   class MCDisassembler;
   class MCInstPrinter;
@@ -38,10 +40,8 @@ namespace llvm {
   class MCRegisterInfo;
   class MCStreamer;
   class MCSubtargetInfo;
-  class MCCodeGenInfo;
-  class MCAsmBackend;
-  class TargetAsmLexer;
-  class TargetAsmParser;
+  class MCTargetAsmLexer;
+  class MCTargetAsmParser;
   class TargetMachine;
   class raw_ostream;
   class formatted_raw_ostream;
@@ -87,11 +87,11 @@ namespace llvm {
     typedef AsmPrinter *(*AsmPrinterCtorTy)(TargetMachine &TM,
                                             MCStreamer &Streamer);
     typedef MCAsmBackend *(*MCAsmBackendCtorTy)(const Target &T, StringRef TT);
-    typedef TargetAsmLexer *(*AsmLexerCtorTy)(const Target &T,
-                                              const MCRegisterInfo &MRI,
-                                              const MCAsmInfo &MAI);
-    typedef TargetAsmParser *(*AsmParserCtorTy)(MCSubtargetInfo &STI,
-                                                MCAsmParser &P);
+    typedef MCTargetAsmLexer *(*MCAsmLexerCtorTy)(const Target &T,
+                                                  const MCRegisterInfo &MRI,
+                                                  const MCAsmInfo &MAI);
+    typedef MCTargetAsmParser *(*MCAsmParserCtorTy)(MCSubtargetInfo &STI,
+                                                    MCAsmParser &P);
     typedef MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T);
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
                                                   unsigned SyntaxVariant,
@@ -163,13 +163,13 @@ namespace llvm {
     /// MCAsmBackend, if registered.
     MCAsmBackendCtorTy MCAsmBackendCtorFn;
 
-    /// AsmLexerCtorFn - Construction function for this target's TargetAsmLexer,
-    /// if registered.
-    AsmLexerCtorTy AsmLexerCtorFn;
+    /// MCAsmLexerCtorFn - Construction function for this target's
+    /// MCTargetAsmLexer, if registered.
+    MCAsmLexerCtorTy MCAsmLexerCtorFn;
 
-    /// AsmParserCtorFn - Construction function for this target's
-    /// TargetAsmParser, if registered.
-    AsmParserCtorTy AsmParserCtorFn;
+    /// MCAsmParserCtorFn - Construction function for this target's
+    /// MCTargetAsmParser, if registered.
+    MCAsmParserCtorTy MCAsmParserCtorFn;
 
     /// AsmPrinterCtorFn - Construction function for this target's AsmPrinter,
     /// if registered.
@@ -223,11 +223,11 @@ namespace llvm {
     /// hasMCAsmBackend - Check if this target supports .o generation.
     bool hasMCAsmBackend() const { return MCAsmBackendCtorFn != 0; }
 
-    /// hasAsmLexer - Check if this target supports .s lexing.
-    bool hasAsmLexer() const { return AsmLexerCtorFn != 0; }
+    /// hasMCAsmLexer - Check if this target supports .s lexing.
+    bool hasMCAsmLexer() const { return MCAsmLexerCtorFn != 0; }
 
     /// hasAsmParser - Check if this target supports .s parsing.
-    bool hasAsmParser() const { return AsmParserCtorFn != 0; }
+    bool hasMCAsmParser() const { return MCAsmParserCtorFn != 0; }
 
     /// hasAsmPrinter - Check if this target supports .s printing.
     bool hasAsmPrinter() const { return AsmPrinterCtorFn != 0; }
@@ -331,24 +331,24 @@ namespace llvm {
       return MCAsmBackendCtorFn(*this, Triple);
     }
 
-    /// createAsmLexer - Create a target specific assembly lexer.
+    /// createMCAsmLexer - Create a target specific assembly lexer.
     ///
-    TargetAsmLexer *createAsmLexer(const MCRegisterInfo &MRI,
-                                   const MCAsmInfo &MAI) const {
-      if (!AsmLexerCtorFn)
+    MCTargetAsmLexer *createMCAsmLexer(const MCRegisterInfo &MRI,
+                                       const MCAsmInfo &MAI) const {
+      if (!MCAsmLexerCtorFn)
         return 0;
-      return AsmLexerCtorFn(*this, MRI, MAI);
+      return MCAsmLexerCtorFn(*this, MRI, MAI);
     }
 
-    /// createAsmParser - Create a target specific assembly parser.
+    /// createMCAsmParser - Create a target specific assembly parser.
     ///
     /// \arg Parser - The target independent parser implementation to use for
     /// parsing and lexing.
-    TargetAsmParser *createAsmParser(MCSubtargetInfo &STI,
-                                     MCAsmParser &Parser) const {
-      if (!AsmParserCtorFn)
+    MCTargetAsmParser *createMCAsmParser(MCSubtargetInfo &STI,
+                                         MCAsmParser &Parser) const {
+      if (!MCAsmParserCtorFn)
         return 0;
-      return AsmParserCtorFn(STI, Parser);
+      return MCAsmParserCtorFn(STI, Parser);
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.  This
@@ -618,7 +618,7 @@ namespace llvm {
         T.MCAsmBackendCtorFn = Fn;
     }
 
-    /// RegisterAsmLexer - Register a TargetAsmLexer implementation for the
+    /// RegisterMCAsmLexer - Register a MCTargetAsmLexer implementation for the
     /// given target.
     ///
     /// Clients are responsible for ensuring that registration doesn't occur
@@ -626,24 +626,24 @@ namespace llvm {
     /// this is done by initializing all targets at program startup.
     ///
     /// @param T - The target being registered.
-    /// @param Fn - A function to construct an AsmLexer for the target.
-    static void RegisterAsmLexer(Target &T, Target::AsmLexerCtorTy Fn) {
-      if (!T.AsmLexerCtorFn)
-        T.AsmLexerCtorFn = Fn;
+    /// @param Fn - A function to construct an MCAsmLexer for the target.
+    static void RegisterMCAsmLexer(Target &T, Target::MCAsmLexerCtorTy Fn) {
+      if (!T.MCAsmLexerCtorFn)
+        T.MCAsmLexerCtorFn = Fn;
     }
 
-    /// RegisterAsmParser - Register a TargetAsmParser implementation for the
-    /// given target.
+    /// RegisterMCAsmParser - Register a MCTargetAsmParser implementation for
+    /// the given target.
     ///
     /// Clients are responsible for ensuring that registration doesn't occur
     /// while another thread is attempting to access the registry. Typically
     /// this is done by initializing all targets at program startup.
     ///
     /// @param T - The target being registered.
-    /// @param Fn - A function to construct an AsmParser for the target.
-    static void RegisterAsmParser(Target &T, Target::AsmParserCtorTy Fn) {
-      if (!T.AsmParserCtorFn)
-        T.AsmParserCtorFn = Fn;
+    /// @param Fn - A function to construct an MCTargetAsmParser for the target.
+    static void RegisterMCAsmParser(Target &T, Target::MCAsmParserCtorTy Fn) {
+      if (!T.MCAsmParserCtorFn)
+        T.MCAsmParserCtorFn = Fn;
     }
 
     /// RegisterAsmPrinter - Register an AsmPrinter implementation for the given
@@ -974,44 +974,45 @@ namespace llvm {
     }
   };
 
-  /// RegisterAsmLexer - Helper template for registering a target specific
+  /// RegisterMCAsmLexer - Helper template for registering a target specific
   /// assembly lexer, for use in the target machine initialization
   /// function. Usage:
   ///
-  /// extern "C" void LLVMInitializeFooAsmLexer() {
+  /// extern "C" void LLVMInitializeFooMCAsmLexer() {
   ///   extern Target TheFooTarget;
-  ///   RegisterAsmLexer<FooAsmLexer> X(TheFooTarget);
+  ///   RegisterMCAsmLexer<FooMCAsmLexer> X(TheFooTarget);
   /// }
-  template<class AsmLexerImpl>
-  struct RegisterAsmLexer {
-    RegisterAsmLexer(Target &T) {
-      TargetRegistry::RegisterAsmLexer(T, &Allocator);
+  template<class MCAsmLexerImpl>
+  struct RegisterMCAsmLexer {
+    RegisterMCAsmLexer(Target &T) {
+      TargetRegistry::RegisterMCAsmLexer(T, &Allocator);
     }
 
   private:
-    static TargetAsmLexer *Allocator(const Target &T, const MCRegisterInfo &MRI,
-                                     const MCAsmInfo &MAI) {
-      return new AsmLexerImpl(T, MRI, MAI);
+    static MCTargetAsmLexer *Allocator(const Target &T,
+                                       const MCRegisterInfo &MRI,
+                                       const MCAsmInfo &MAI) {
+      return new MCAsmLexerImpl(T, MRI, MAI);
     }
   };
 
-  /// RegisterAsmParser - Helper template for registering a target specific
+  /// RegisterMCAsmParser - Helper template for registering a target specific
   /// assembly parser, for use in the target machine initialization
   /// function. Usage:
   ///
-  /// extern "C" void LLVMInitializeFooAsmParser() {
+  /// extern "C" void LLVMInitializeFooMCAsmParser() {
   ///   extern Target TheFooTarget;
-  ///   RegisterAsmParser<FooAsmParser> X(TheFooTarget);
+  ///   RegisterMCAsmParser<FooAsmParser> X(TheFooTarget);
   /// }
-  template<class AsmParserImpl>
-  struct RegisterAsmParser {
-    RegisterAsmParser(Target &T) {
-      TargetRegistry::RegisterAsmParser(T, &Allocator);
+  template<class MCAsmParserImpl>
+  struct RegisterMCAsmParser {
+    RegisterMCAsmParser(Target &T) {
+      TargetRegistry::RegisterMCAsmParser(T, &Allocator);
     }
 
   private:
-    static TargetAsmParser *Allocator(MCSubtargetInfo &STI, MCAsmParser &P) {
-      return new AsmParserImpl(STI, P);
+    static MCTargetAsmParser *Allocator(MCSubtargetInfo &STI, MCAsmParser &P) {
+      return new MCAsmParserImpl(STI, P);
     }
   };
 

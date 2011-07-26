@@ -1,4 +1,4 @@
-//===-- TargetAsmParser.cpp - Target Assembly Parser -----------------------==//
+//===-- MCTargetAsmParser.cpp - Target Assembly Parser ---------------------==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/TargetAsmParser.h"
+#include "llvm/MC/MCTargetAsmParser.h"
 using namespace llvm;
 
-TargetAsmParser::TargetAsmParser()
+MCTargetAsmParser::MCTargetAsmParser()
   : AvailableFeatures(0)
 {
 }
 
-TargetAsmParser::~TargetAsmParser() {
+MCTargetAsmParser::~MCTargetAsmParser() {
 }

@@ -14,9 +14,9 @@
 
 #include "X86InstComments.h"
 #include "MCTargetDesc/X86MCTargetDesc.h"
+#include "Utils/X86ShuffleDecode.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/raw_ostream.h"
-#include "../Utils/X86ShuffleDecode.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

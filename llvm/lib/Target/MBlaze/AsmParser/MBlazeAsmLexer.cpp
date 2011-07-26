@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MBlaze.h"
+#include "MCTargetDesc/MBlazeBaseInfo.h"
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -17,7 +17,7 @@
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/TargetAsmLexer.h"
+#include "llvm/MC/MCTargetAsmLexer.h"
 
 #include "llvm/Target/TargetRegistry.h"
 
@@ -28,7 +28,7 @@ using namespace llvm;
 
 namespace {
   
-  class MBlazeBaseAsmLexer : public TargetAsmLexer {
+  class MBlazeBaseAsmLexer : public MCTargetAsmLexer {
     const MCAsmInfo &AsmInfo;
     
     const AsmToken &lexDefinite() {
@@ -75,7 +75,7 @@ namespace {
     }
   public:
     MBlazeBaseAsmLexer(const Target &T, const MCAsmInfo &MAI)
-      : TargetAsmLexer(T), AsmInfo(MAI) {
+      : MCTargetAsmLexer(T), AsmInfo(MAI) {
     }
   };
   
@@ -118,6 +118,6 @@ AsmToken MBlazeBaseAsmLexer::LexTokenUAL() {
 }
 
 extern "C" void LLVMInitializeMBlazeAsmLexer() {
-  RegisterAsmLexer<MBlazeAsmLexer> X(TheMBlazeTarget);
+  RegisterMCAsmLexer<MBlazeAsmLexer> X(TheMBlazeTarget);
 }
 

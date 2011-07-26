@@ -28,8 +28,8 @@
 #include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
-#include "llvm/MC/TargetAsmLexer.h"
-#include "llvm/MC/TargetAsmParser.h"
+#include "llvm/MC/MCTargetAsmLexer.h"
+#include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/SourceMgr.h"
@@ -193,7 +193,7 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
     return;
     
   GenericAsmLexer.reset(new AsmLexer(*AsmInfo));
-  SpecificAsmLexer.reset(Tgt->createAsmLexer(*MRI, *AsmInfo));
+  SpecificAsmLexer.reset(Tgt->createMCAsmLexer(*MRI, *AsmInfo));
   SpecificAsmLexer->InstallLexer(*GenericAsmLexer);
   
   initMaps(*MRI);
@@ -368,8 +368,8 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
 
   StringRef triple = tripleFromArch(Key.Arch);
   OwningPtr<MCSubtargetInfo> STI(Tgt->createMCSubtargetInfo(triple, "", ""));
-  OwningPtr<TargetAsmParser> TargetParser(Tgt->createAsmParser(*STI,
-                                                               *genericParser));
+  OwningPtr<MCTargetAsmParser>
+    TargetParser(Tgt->createMCAsmParser(*STI, *genericParser));
   
   AsmToken OpcodeToken = genericParser->Lex();
   AsmToken NextToken = genericParser->Lex();  // consume next token, because specificParser expects us to

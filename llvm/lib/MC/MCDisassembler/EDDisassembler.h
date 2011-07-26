@@ -41,11 +41,11 @@ class MCParsedAsmOperand;
 class MCRegisterInfo;
 class MCStreamer;
 class MCSubtargetInfo;
+class MCTargetAsmLexer;
+class MCTargetAsmParser;
 template <typename T> class SmallVectorImpl;
 class SourceMgr;
 class Target;
-class TargetAsmLexer;
-class TargetAsmParser;
 
 struct EDInstInfo;
 struct EDInst;
@@ -159,7 +159,7 @@ struct EDDisassembler {
   /// The target-specific lexer for use in tokenizing strings, in
   ///   target-independent and target-specific portions
   llvm::OwningPtr<llvm::AsmLexer> GenericAsmLexer;
-  llvm::OwningPtr<llvm::TargetAsmLexer> SpecificAsmLexer;
+  llvm::OwningPtr<llvm::MCTargetAsmLexer> SpecificAsmLexer;
   /// The guard for the above
   llvm::sys::Mutex ParserMutex;
   /// The LLVM number used for the target disassembly syntax variant

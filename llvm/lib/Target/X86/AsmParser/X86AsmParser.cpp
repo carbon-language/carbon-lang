@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/TargetAsmParser.h"
-#include "X86.h"
-#include "X86Subtarget.h"
+#include "MCTargetDesc/X86BaseInfo.h"
+#include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
@@ -32,7 +31,7 @@ using namespace llvm;
 namespace {
 struct X86Operand;
 
-class X86ATTAsmParser : public TargetAsmParser {
+class X86ATTAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
 
@@ -75,7 +74,7 @@ private:
 
 public:
   X86ATTAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
-    : TargetAsmParser(), STI(sti), Parser(parser) {
+    : MCTargetAsmParser(), STI(sti), Parser(parser) {
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
@@ -1130,8 +1129,8 @@ extern "C" void LLVMInitializeX86AsmLexer();
 
 // Force static initialization.
 extern "C" void LLVMInitializeX86AsmParser() {
-  RegisterAsmParser<X86ATTAsmParser> X(TheX86_32Target);
-  RegisterAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
+  RegisterMCAsmParser<X86ATTAsmParser> X(TheX86_32Target);
+  RegisterMCAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
   LLVMInitializeX86AsmLexer();
 }
 

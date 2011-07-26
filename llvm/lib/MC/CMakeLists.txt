@@ -39,7 +39,7 @@ add_llvm_library(LLVMMC
   WinCOFFObjectWriter.cpp
   SubtargetFeature.cpp
   MCAsmBackend.cpp
-  TargetAsmLexer.cpp
+  MCTargetAsmLexer.cpp
   )
 
 add_subdirectory(MCParser)
