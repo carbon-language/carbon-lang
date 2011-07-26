@@ -3222,32 +3222,31 @@ def : Pat<(int_x86_avx_cvt_pd2dq_256 (memopv4f64 addr:$src)),
 //===---------------------------------------------------------------------===//
 // Replicate Single FP - MOVSHDUP and MOVSLDUP
 //
-multiclass sse3_replicate_sfp<bits<8> op, SDNode OpNode, string OpcodeStr> {
-def rr : S3SI<op, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+multiclass sse3_replicate_sfp<bits<8> op, SDNode OpNode, string OpcodeStr,
+                              ValueType vt, RegisterClass RC, PatFrag mem_frag,
+                              X86MemOperand x86memop> {
+def rr : S3SI<op, MRMSrcReg, (outs RC:$dst), (ins RC:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                      [(set VR128:$dst, (v4f32 (OpNode VR128:$src)))]>;
-def rm : S3SI<op, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                      [(set RC:$dst, (vt (OpNode RC:$src)))]>;
+def rm : S3SI<op, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                      [(set VR128:$dst, (OpNode (memopv4f32 addr:$src)))]>;
-}
-
-multiclass sse3_replicate_sfp_y<bits<8> op, SDNode OpNode,
-                                string OpcodeStr> {
-def rr : S3SI<op, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
-              !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"), []>;
-def rm : S3SI<op, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
-              !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"), []>;
+                      [(set RC:$dst, (OpNode (mem_frag addr:$src)))]>;
 }
 
 let Predicates = [HasAVX] in {
-  // FIXME: Merge above classes when we have patterns for the ymm version
-  defm VMOVSHDUP  : sse3_replicate_sfp<0x16, X86Movshdup, "vmovshdup">, VEX;
-  defm VMOVSLDUP  : sse3_replicate_sfp<0x12, X86Movsldup, "vmovsldup">, VEX;
-  defm VMOVSHDUPY : sse3_replicate_sfp_y<0x16, X86Movshdup, "vmovshdup">, VEX;
-  defm VMOVSLDUPY : sse3_replicate_sfp_y<0x12, X86Movsldup, "vmovsldup">, VEX;
+  defm VMOVSHDUP  : sse3_replicate_sfp<0x16, X86Movshdup, "vmovshdup",
+                                       v4f32, VR128, memopv4f32, f128mem>, VEX;
+  defm VMOVSLDUP  : sse3_replicate_sfp<0x12, X86Movsldup, "vmovsldup",
+                                       v4f32, VR128, memopv4f32, f128mem>, VEX;
+  defm VMOVSHDUPY : sse3_replicate_sfp<0x16, X86Movshdup, "vmovshdup",
+                                       v8f32, VR256, memopv8f32, f256mem>, VEX;
+  defm VMOVSLDUPY : sse3_replicate_sfp<0x12, X86Movsldup, "vmovsldup",
+                                       v8f32, VR256, memopv8f32, f256mem>, VEX;
 }
-defm MOVSHDUP : sse3_replicate_sfp<0x16, X86Movshdup, "movshdup">;
-defm MOVSLDUP : sse3_replicate_sfp<0x12, X86Movsldup, "movsldup">;
+defm MOVSHDUP : sse3_replicate_sfp<0x16, X86Movshdup, "movshdup", v4f32, VR128,
+                                   memopv4f32, f128mem>;
+defm MOVSLDUP : sse3_replicate_sfp<0x12, X86Movsldup, "movsldup", v4f32, VR128,
+                                   memopv4f32, f128mem>;
 
 let Predicates = [HasSSE3] in {
   def : Pat<(v4i32 (X86Movshdup VR128:$src)),
@@ -3269,6 +3268,14 @@ let Predicates = [HasAVX] in {
             (VMOVSLDUPrr VR128:$src)>;
   def : Pat<(v4i32 (X86Movsldup (bc_v4i32 (memopv2i64 addr:$src)))),
             (VMOVSLDUPrm addr:$src)>;
+  def : Pat<(v8i32 (X86Movshdup VR256:$src)),
+            (VMOVSHDUPYrr VR256:$src)>;
+  def : Pat<(v8i32 (X86Movshdup (bc_v8i32 (memopv4i64 addr:$src)))),
+            (VMOVSHDUPYrm addr:$src)>;
+  def : Pat<(v8i32 (X86Movsldup VR256:$src)),
+            (VMOVSLDUPYrr VR256:$src)>;
+  def : Pat<(v8i32 (X86Movsldup (bc_v8i32 (memopv4i64 addr:$src)))),
+            (VMOVSLDUPYrm addr:$src)>;
 }
 
 //===---------------------------------------------------------------------===//
