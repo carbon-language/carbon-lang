@@ -48,6 +48,26 @@ static Value *SimplifyOrInst(Value *, Value *, const TargetData *,
 static Value *SimplifyXorInst(Value *, Value *, const TargetData *,
                               const DominatorTree *, unsigned);
 
+/// getFalse - For a boolean type, or a vector of boolean type, return false, or
+/// a vector with every element false, as appropriate for the type.
+static Constant *getFalse(Type *Ty) {
+  assert((Ty->isIntegerTy(1) ||
+          (Ty->isVectorTy() &&
+           cast<VectorType>(Ty)->getElementType()->isIntegerTy(1))) &&
+         "Expected i1 type or a vector of i1!");
+  return Constant::getNullValue(Ty);
+}
+
+/// getTrue - For a boolean type, or a vector of boolean type, return true, or
+/// a vector with every element true, as appropriate for the type.
+static Constant *getTrue(Type *Ty) {
+  assert((Ty->isIntegerTy(1) ||
+          (Ty->isVectorTy() &&
+           cast<VectorType>(Ty)->getElementType()->isIntegerTy(1))) &&
+         "Expected i1 type or a vector of i1!");
+  return Constant::getAllOnesValue(Ty);
+}
+
 /// ValueDominatesPHI - Does the given value dominate the specified phi node?
 static bool ValueDominatesPHI(Value *V, PHINode *P, const DominatorTree *DT) {
   Instruction *I = dyn_cast<Instruction>(V);
@@ -1478,48 +1498,46 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     default:
       assert(false && "Unknown ICmp predicate!");
     case ICmpInst::ICMP_ULT:
-      // getNullValue also works for vectors, unlike getFalse.
-      return Constant::getNullValue(ITy);
+      return getFalse(ITy);
     case ICmpInst::ICMP_UGE:
-      // getAllOnesValue also works for vectors, unlike getTrue.
-      return ConstantInt::getAllOnesValue(ITy);
+      return getTrue(ITy);
     case ICmpInst::ICMP_EQ:
     case ICmpInst::ICMP_ULE:
       if (isKnownNonZero(LHS, TD))
-        return Constant::getNullValue(ITy);
+        return getFalse(ITy);
       break;
     case ICmpInst::ICMP_NE:
     case ICmpInst::ICMP_UGT:
       if (isKnownNonZero(LHS, TD))
-        return ConstantInt::getAllOnesValue(ITy);
+        return getTrue(ITy);
       break;
     case ICmpInst::ICMP_SLT:
       ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
       if (LHSKnownNegative)
-        return ConstantInt::getAllOnesValue(ITy);
+        return getTrue(ITy);
       if (LHSKnownNonNegative)
-        return Constant::getNullValue(ITy);
+        return getFalse(ITy);
       break;
     case ICmpInst::ICMP_SLE:
       ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
       if (LHSKnownNegative)
-        return ConstantInt::getAllOnesValue(ITy);
+        return getTrue(ITy);
       if (LHSKnownNonNegative && isKnownNonZero(LHS, TD))
-        return Constant::getNullValue(ITy);
+        return getFalse(ITy);
       break;
     case ICmpInst::ICMP_SGE:
       ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
       if (LHSKnownNegative)
-        return Constant::getNullValue(ITy);
+        return getFalse(ITy);
       if (LHSKnownNonNegative)
-        return ConstantInt::getAllOnesValue(ITy);
+        return getTrue(ITy);
       break;
     case ICmpInst::ICMP_SGT:
       ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
       if (LHSKnownNegative)
-        return Constant::getNullValue(ITy);
+        return getFalse(ITy);
       if (LHSKnownNonNegative && isKnownNonZero(LHS, TD))
-        return ConstantInt::getAllOnesValue(ITy);
+        return getTrue(ITy);
       break;
     }
   }
@@ -1811,8 +1829,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     case ICmpInst::ICMP_EQ:
     case ICmpInst::ICMP_UGT:
     case ICmpInst::ICMP_UGE:
-      // getNullValue also works for vectors, unlike getFalse.
-      return Constant::getNullValue(ITy);
+      return getFalse(ITy);
     case ICmpInst::ICMP_SLT:
     case ICmpInst::ICMP_SLE:
       ComputeSignBit(LHS, KnownNonNegative, KnownNegative, TD);
@@ -1822,8 +1839,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     case ICmpInst::ICMP_NE:
     case ICmpInst::ICMP_ULT:
     case ICmpInst::ICMP_ULE:
-      // getAllOnesValue also works for vectors, unlike getTrue.
-      return Constant::getAllOnesValue(ITy);
+      return getTrue(ITy);
     }
   }
   if (RBO && match(RBO, m_URem(m_Value(), m_Specific(LHS)))) {
@@ -1840,8 +1856,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     case ICmpInst::ICMP_NE:
     case ICmpInst::ICMP_UGT:
     case ICmpInst::ICMP_UGE:
-      // getAllOnesValue also works for vectors, unlike getTrue.
-      return Constant::getAllOnesValue(ITy);
+      return getTrue(ITy);
     case ICmpInst::ICMP_SLT:
     case ICmpInst::ICMP_SLE:
       ComputeSignBit(RHS, KnownNonNegative, KnownNegative, TD);
@@ -1851,8 +1866,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     case ICmpInst::ICMP_EQ:
     case ICmpInst::ICMP_ULT:
     case ICmpInst::ICMP_ULE:
-      // getNullValue also works for vectors, unlike getFalse.
-      return Constant::getNullValue(ITy);
+      return getFalse(ITy);
     }
   }
 
@@ -1955,10 +1969,10 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
     case CmpInst::ICMP_SGE:
       // Always true.
-      return Constant::getAllOnesValue(ITy);
+      return getTrue(ITy);
     case CmpInst::ICMP_SLT:
       // Always false.
-      return Constant::getNullValue(ITy);
+      return getFalse(ITy);
     }
   }
 
@@ -2025,10 +2039,10 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
     case CmpInst::ICMP_UGE:
       // Always true.
-      return Constant::getAllOnesValue(ITy);
+      return getTrue(ITy);
     case CmpInst::ICMP_ULT:
       // Always false.
-      return Constant::getNullValue(ITy);
+      return getFalse(ITy);
     }
   }
 
@@ -2040,40 +2054,40 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     // max(x, ?) pred min(x, ?).
     if (Pred == CmpInst::ICMP_SGE)
       // Always true.
-      return Constant::getAllOnesValue(ITy);
+      return getTrue(ITy);
     if (Pred == CmpInst::ICMP_SLT)
       // Always false.
-      return Constant::getNullValue(ITy);
+      return getFalse(ITy);
   } else if (match(LHS, m_SMin(m_Value(A), m_Value(B))) &&
              match(RHS, m_SMax(m_Value(C), m_Value(D))) &&
              (A == C || A == D || B == C || B == D)) {
     // min(x, ?) pred max(x, ?).
     if (Pred == CmpInst::ICMP_SLE)
       // Always true.
-      return Constant::getAllOnesValue(ITy);
+      return getTrue(ITy);
     if (Pred == CmpInst::ICMP_SGT)
       // Always false.
-      return Constant::getNullValue(ITy);
+      return getFalse(ITy);
   } else if (match(LHS, m_UMax(m_Value(A), m_Value(B))) &&
              match(RHS, m_UMin(m_Value(C), m_Value(D))) &&
              (A == C || A == D || B == C || B == D)) {
     // max(x, ?) pred min(x, ?).
     if (Pred == CmpInst::ICMP_UGE)
       // Always true.
-      return Constant::getAllOnesValue(ITy);
+      return getTrue(ITy);
     if (Pred == CmpInst::ICMP_ULT)
       // Always false.
-      return Constant::getNullValue(ITy);
+      return getFalse(ITy);
   } else if (match(LHS, m_UMin(m_Value(A), m_Value(B))) &&
              match(RHS, m_UMax(m_Value(C), m_Value(D))) &&
              (A == C || A == D || B == C || B == D)) {
     // min(x, ?) pred max(x, ?).
     if (Pred == CmpInst::ICMP_ULE)
       // Always true.
-      return Constant::getAllOnesValue(ITy);
+      return getTrue(ITy);
     if (Pred == CmpInst::ICMP_UGT)
       // Always false.
-      return Constant::getNullValue(ITy);
+      return getFalse(ITy);
   }
 
   // If the comparison is with the result of a select instruction, check whether
