@@ -884,13 +884,13 @@ SourceManager::getExpansionRange(SourceLocation Loc) const {
   return Res;
 }
 
-bool SourceManager::isMacroArgInstantiation(SourceLocation Loc) const {
+bool SourceManager::isMacroArgExpansion(SourceLocation Loc) const {
   if (!Loc.isMacroID()) return false;
 
   FileID FID = getFileID(Loc);
   const SrcMgr::SLocEntry *E = &getSLocEntry(FID);
   const SrcMgr::InstantiationInfo &II = E->getInstantiation();
-  return II.isMacroArgInstantiation();
+  return II.isMacroArgExpansion();
 }
 
 

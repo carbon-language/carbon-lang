@@ -300,7 +300,7 @@ static SourceLocation skipToMacroArgExpansion(const SourceManager &SM,
                                                   SourceLocation StartLoc) {
   for (SourceLocation L = StartLoc; L.isMacroID();
        L = SM.getImmediateSpellingLoc(L)) {
-    if (SM.isMacroArgInstantiation(L))
+    if (SM.isMacroArgExpansion(L))
       return L;
   }
 
@@ -317,7 +317,7 @@ static SourceLocation getImmediateMacroCallerLoc(const SourceManager &SM,
   // When we have the location of (part of) an expanded parameter, its spelling
   // location points to the argument as typed into the macro call, and
   // therefore is used to locate the macro caller.
-  if (SM.isMacroArgInstantiation(Loc))
+  if (SM.isMacroArgExpansion(Loc))
     return SM.getImmediateSpellingLoc(Loc);
 
   // Otherwise, the caller of the macro is located where this macro is
@@ -334,7 +334,7 @@ static SourceLocation getImmediateMacroCalleeLoc(const SourceManager &SM,
   // When we have the location of (part of) an expanded parameter, its
   // expansion location points to the unexpanded paramater reference within
   // the macro definition (or callee).
-  if (SM.isMacroArgInstantiation(Loc))
+  if (SM.isMacroArgExpansion(Loc))
     return SM.getImmediateExpansionRange(Loc).first;
 
   // Otherwise, the callee of the macro is located where this location was

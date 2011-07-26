@@ -259,7 +259,7 @@ namespace SrcMgr {
                             getInstantiationLocEnd());
     }
 
-    bool isMacroArgInstantiation() const {
+    bool isMacroArgExpansion() const {
       // Note that this needs to return false for default constructed objects.
       return getInstantiationLocStart().isValid() &&
         SourceLocation::getFromRawEncoding(InstantiationLocEnd).isInvalid();
@@ -803,12 +803,12 @@ public:
     return getDecomposedLoc(SpellingLoc).second;
   }
 
-  /// isMacroArgInstantiation - This method tests whether the given source
-  /// location represents a macro argument's instantiation into the
-  /// function-like macro definition. Such source locations only appear inside
-  /// of the instantiation locations representing where a particular
-  /// function-like macro was expanded.
-  bool isMacroArgInstantiation(SourceLocation Loc) const;
+  /// isMacroArgExpansion - This method tests whether the given source location
+  /// represents a macro argument's expansion into the function-like macro
+  /// definition. Such source locations only appear inside of the expansion
+  /// locations representing where a particular function-like macro was
+  /// expanded.
+  bool isMacroArgExpansion(SourceLocation Loc) const;
 
   //===--------------------------------------------------------------------===//
   // Queries about the code at a SourceLocation.
