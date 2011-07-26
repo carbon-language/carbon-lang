@@ -88,7 +88,6 @@ protected:
 
   unsigned HasAlignMac68kSupport : 1;
   unsigned RealTypeUsesObjCFPRet : 3;
-  unsigned UsePreferredTypeAlign : 1;
 
   // TargetInfo Constructor.  Default initializes all fields.
   TargetInfo(const std::string &T);
@@ -271,12 +270,6 @@ public:
   /// align=mac68k'.
   bool hasAlignMac68kSupport() const {
     return HasAlignMac68kSupport;
-  }
-
-  /// usePreferredTypeAlign - Check whether this target uses minimum alignment
-  /// defined by ABI or some other preferred alignment.
-  bool usePreferredTypeAlign() const {
-    return UsePreferredTypeAlign;
   }
 
   /// getTypeName - Return the user string for the specified integer type enum.

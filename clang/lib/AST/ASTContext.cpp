@@ -696,10 +696,7 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
         // Walk through any array types while we're at it.
         T = getBaseElementType(arrayType);
       }
-      if (Target.usePreferredTypeAlign())
-        Align = std::max(Align, getPreferredTypeAlign(T.getTypePtr()));
-      else
-        Align = std::max(Align, getTypeAlign(T.getTypePtr()));
+      Align = std::max(Align, getPreferredTypeAlign(T.getTypePtr()));
     }
 
     // Fields can be subject to extra alignment constraints, like if
