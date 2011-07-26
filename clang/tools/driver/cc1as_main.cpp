@@ -301,7 +301,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
     MCCodeEmitter *CE = 0;
     MCAsmBackend *MAB = 0;
     if (Opts.ShowEncoding) {
-      CE = TheTarget->createCodeEmitter(*TM->getInstrInfo(), STI, Ctx);
+      CE = TheTarget->createMCCodeEmitter(*TM->getInstrInfo(), STI, Ctx);
       MAB = TheTarget->createMCAsmBackend(Opts.Triple);
     }
     Str.reset(TheTarget->createAsmStreamer(Ctx, *Out, /*asmverbose*/true,
@@ -313,12 +313,12 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
   } else {
     assert(Opts.OutputType == AssemblerInvocation::FT_Obj &&
            "Invalid file type!");
-    MCCodeEmitter *CE = TheTarget->createCodeEmitter(*TM->getInstrInfo(),
-                                                     STI, Ctx);
+    MCCodeEmitter *CE = TheTarget->createMCCodeEmitter(*TM->getInstrInfo(),
+                                                       STI, Ctx);
     MCAsmBackend *MAB = TheTarget->createMCAsmBackend(Opts.Triple);
-    Str.reset(TheTarget->createObjectStreamer(Opts.Triple, Ctx, *MAB, *Out,
-                                              CE, Opts.RelaxAll,
-                                              Opts.NoExecStack));
+    Str.reset(TheTarget->createMCObjectStreamer(Opts.Triple, Ctx, *MAB, *Out,
+                                                CE, Opts.RelaxAll,
+                                                Opts.NoExecStack));
     Str.get()->InitSections();
   }
 
