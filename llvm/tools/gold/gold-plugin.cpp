@@ -360,6 +360,8 @@ static ld_plugin_status all_symbols_read_hook(void) {
   bool anySymbolsPreserved = false;
   for (std::list<claimed_file>::iterator I = Modules.begin(),
          E = Modules.end(); I != E; ++I) {
+    if (I->syms.empty())
+      continue;
     (*get_symbols)(I->handle, I->syms.size(), &I->syms[0]);
     for (unsigned i = 0, e = I->syms.size(); i != e; i++) {
       if (I->syms[i].resolution == LDPR_PREVAILING_DEF) {
