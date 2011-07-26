@@ -140,7 +140,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     MCAsmBackend *MAB = 0;
     if (ShowMCEncoding) {
       const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
-      MCE = getTarget().createCodeEmitter(*getInstrInfo(), STI, *Context);
+      MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), STI, *Context);
       MAB = getTarget().createMCAsmBackend(getTargetTriple());
     }
 
@@ -158,16 +158,16 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     // Create the code emitter for the target if it exists.  If not, .o file
     // emission fails.
     const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
-    MCCodeEmitter *MCE = getTarget().createCodeEmitter(*getInstrInfo(), STI,
-                                                       *Context);
+    MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), STI,
+                                                         *Context);
     MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple());
     if (MCE == 0 || MAB == 0)
       return true;
 
-    AsmStreamer.reset(getTarget().createObjectStreamer(getTargetTriple(),
-                                                       *Context, *MAB, Out, MCE,
-                                                       hasMCRelaxAll(),
-                                                       hasMCNoExecStack()));
+    AsmStreamer.reset(getTarget().createMCObjectStreamer(getTargetTriple(),
+                                                         *Context, *MAB, Out,
+                                                         MCE, hasMCRelaxAll(),
+                                                         hasMCNoExecStack()));
     AsmStreamer.get()->InitSections();
     break;
   }
@@ -236,16 +236,16 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
   // Create the code emitter for the target if it exists.  If not, .o file
   // emission fails.
   const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
-  MCCodeEmitter *MCE = getTarget().createCodeEmitter(*getInstrInfo(),STI, *Ctx);
+  MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(),STI, *Ctx);
   MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple());
   if (MCE == 0 || MAB == 0)
     return true;
 
   OwningPtr<MCStreamer> AsmStreamer;
-  AsmStreamer.reset(getTarget().createObjectStreamer(getTargetTriple(), *Ctx,
-                                                     *MAB, Out, MCE,
-                                                     hasMCRelaxAll(),
-                                                     hasMCNoExecStack()));
+  AsmStreamer.reset(getTarget().createMCObjectStreamer(getTargetTriple(), *Ctx,
+                                                       *MAB, Out, MCE,
+                                                       hasMCRelaxAll(),
+                                                       hasMCNoExecStack()));
   AsmStreamer.get()->InitSections();
 
   // Create the AsmPrinter, which takes ownership of AsmStreamer if successful.

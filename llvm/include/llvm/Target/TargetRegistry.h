@@ -96,17 +96,17 @@ namespace llvm {
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
                                                   unsigned SyntaxVariant,
                                                   const MCAsmInfo &MAI);
-    typedef MCCodeEmitter *(*CodeEmitterCtorTy)(const MCInstrInfo &II,
-                                                const MCSubtargetInfo &STI,
-                                                MCContext &Ctx);
-    typedef MCStreamer *(*ObjectStreamerCtorTy)(const Target &T,
-                                                const std::string &TT,
-                                                MCContext &Ctx,
-                                                MCAsmBackend &TAB,
-                                                raw_ostream &_OS,
-                                                MCCodeEmitter *_Emitter,
-                                                bool RelaxAll,
-                                                bool NoExecStack);
+    typedef MCCodeEmitter *(*MCCodeEmitterCtorTy)(const MCInstrInfo &II,
+                                                  const MCSubtargetInfo &STI,
+                                                  MCContext &Ctx);
+    typedef MCStreamer *(*MCObjectStreamerCtorTy)(const Target &T,
+                                                  StringRef TT,
+                                                  MCContext &Ctx,
+                                                  MCAsmBackend &TAB,
+                                                  raw_ostream &_OS,
+                                                  MCCodeEmitter *_Emitter,
+                                                  bool RelaxAll,
+                                                  bool NoExecStack);
     typedef MCStreamer *(*AsmStreamerCtorTy)(MCContext &Ctx,
                                              formatted_raw_ostream &OS,
                                              bool isVerboseAsm,
@@ -183,13 +183,13 @@ namespace llvm {
     /// MCInstPrinter, if registered.
     MCInstPrinterCtorTy MCInstPrinterCtorFn;
 
-    /// CodeEmitterCtorFn - Construction function for this target's CodeEmitter,
-    /// if registered.
-    CodeEmitterCtorTy CodeEmitterCtorFn;
+    /// MCCodeEmitterCtorFn - Construction function for this target's
+    /// CodeEmitter, if registered.
+    MCCodeEmitterCtorTy MCCodeEmitterCtorFn;
 
-    /// ObjectStreamerCtorFn - Construction function for this target's
-    /// ObjectStreamer, if registered.
-    ObjectStreamerCtorTy ObjectStreamerCtorFn;
+    /// MCObjectStreamerCtorFn - Construction function for this target's
+    /// MCObjectStreamer, if registered.
+    MCObjectStreamerCtorTy MCObjectStreamerCtorFn;
 
     /// AsmStreamerCtorFn - Construction function for this target's
     /// AsmStreamer, if registered (default = llvm::createAsmStreamer).
@@ -238,11 +238,11 @@ namespace llvm {
     /// hasMCInstPrinter - Check if this target has an instruction printer.
     bool hasMCInstPrinter() const { return MCInstPrinterCtorFn != 0; }
 
-    /// hasCodeEmitter - Check if this target supports instruction encoding.
-    bool hasCodeEmitter() const { return CodeEmitterCtorFn != 0; }
+    /// hasMCCodeEmitter - Check if this target supports instruction encoding.
+    bool hasMCCodeEmitter() const { return MCCodeEmitterCtorFn != 0; }
 
-    /// hasObjectStreamer - Check if this target supports streaming to files.
-    bool hasObjectStreamer() const { return ObjectStreamerCtorFn != 0; }
+    /// hasMCObjectStreamer - Check if this target supports streaming to files.
+    bool hasMCObjectStreamer() const { return MCObjectStreamerCtorFn != 0; }
 
     /// hasAsmStreamer - Check if this target supports streaming to files.
     bool hasAsmStreamer() const { return AsmStreamerCtorFn != 0; }
@@ -373,16 +373,16 @@ namespace llvm {
     }
 
 
-    /// createCodeEmitter - Create a target specific code emitter.
-    MCCodeEmitter *createCodeEmitter(const MCInstrInfo &II,
-                                     const MCSubtargetInfo &STI,
-                                     MCContext &Ctx) const {
-      if (!CodeEmitterCtorFn)
+    /// createMCCodeEmitter - Create a target specific code emitter.
+    MCCodeEmitter *createMCCodeEmitter(const MCInstrInfo &II,
+                                       const MCSubtargetInfo &STI,
+                                       MCContext &Ctx) const {
+      if (!MCCodeEmitterCtorFn)
         return 0;
-      return CodeEmitterCtorFn(II, STI, Ctx);
+      return MCCodeEmitterCtorFn(II, STI, Ctx);
     }
 
-    /// createObjectStreamer - Create a target specific MCStreamer.
+    /// createMCObjectStreamer - Create a target specific MCStreamer.
     ///
     /// \arg TT - The target triple.
     /// \arg Ctx - The target context.
@@ -391,16 +391,16 @@ namespace llvm {
     /// \arg _Emitter - The target independent assembler object.Takes ownership.
     /// \arg RelaxAll - Relax all fixups?
     /// \arg NoExecStack - Mark file as not needing a executable stack.
-    MCStreamer *createObjectStreamer(const std::string &TT, MCContext &Ctx,
-                                     MCAsmBackend &TAB,
-                                     raw_ostream &_OS,
-                                     MCCodeEmitter *_Emitter,
-                                     bool RelaxAll,
-                                     bool NoExecStack) const {
-      if (!ObjectStreamerCtorFn)
+    MCStreamer *createMCObjectStreamer(StringRef TT, MCContext &Ctx,
+                                       MCAsmBackend &TAB,
+                                       raw_ostream &_OS,
+                                       MCCodeEmitter *_Emitter,
+                                       bool RelaxAll,
+                                       bool NoExecStack) const {
+      if (!MCObjectStreamerCtorFn)
         return 0;
-      return ObjectStreamerCtorFn(*this, TT, Ctx, TAB, _OS, _Emitter, RelaxAll,
-                                  NoExecStack);
+      return MCObjectStreamerCtorFn(*this, TT, Ctx, TAB, _OS, _Emitter,
+                                    RelaxAll, NoExecStack);
     }
 
     /// createAsmStreamer - Create a target specific MCStreamer.
@@ -691,7 +691,7 @@ namespace llvm {
         T.MCInstPrinterCtorFn = Fn;
     }
 
-    /// RegisterCodeEmitter - Register a MCCodeEmitter implementation for the
+    /// RegisterMCCodeEmitter - Register a MCCodeEmitter implementation for the
     /// given target.
     ///
     /// Clients are responsible for ensuring that registration doesn't occur
@@ -700,13 +700,14 @@ namespace llvm {
     ///
     /// @param T - The target being registered.
     /// @param Fn - A function to construct an MCCodeEmitter for the target.
-    static void RegisterCodeEmitter(Target &T, Target::CodeEmitterCtorTy Fn) {
-      if (!T.CodeEmitterCtorFn)
-        T.CodeEmitterCtorFn = Fn;
+    static void RegisterMCCodeEmitter(Target &T,
+                                      Target::MCCodeEmitterCtorTy Fn) {
+      if (!T.MCCodeEmitterCtorFn)
+        T.MCCodeEmitterCtorFn = Fn;
     }
 
-    /// RegisterObjectStreamer - Register a object code MCStreamer implementation
-    /// for the given target.
+    /// RegisterMCObjectStreamer - Register a object code MCStreamer
+    /// implementation for the given target.
     ///
     /// Clients are responsible for ensuring that registration doesn't occur
     /// while another thread is attempting to access the registry. Typically
@@ -714,9 +715,10 @@ namespace llvm {
     ///
     /// @param T - The target being registered.
     /// @param Fn - A function to construct an MCStreamer for the target.
-    static void RegisterObjectStreamer(Target &T, Target::ObjectStreamerCtorTy Fn) {
-      if (!T.ObjectStreamerCtorFn)
-        T.ObjectStreamerCtorFn = Fn;
+    static void RegisterMCObjectStreamer(Target &T,
+                                         Target::MCObjectStreamerCtorTy Fn) {
+      if (!T.MCObjectStreamerCtorFn)
+        T.MCObjectStreamerCtorFn = Fn;
     }
 
     /// RegisterAsmStreamer - Register an assembly MCStreamer implementation
@@ -1036,25 +1038,25 @@ namespace llvm {
     }
   };
 
-  /// RegisterCodeEmitter - Helper template for registering a target specific
+  /// RegisterMCCodeEmitter - Helper template for registering a target specific
   /// machine code emitter, for use in the target initialization
   /// function. Usage:
   ///
-  /// extern "C" void LLVMInitializeFooCodeEmitter() {
+  /// extern "C" void LLVMInitializeFooMCCodeEmitter() {
   ///   extern Target TheFooTarget;
-  ///   RegisterCodeEmitter<FooCodeEmitter> X(TheFooTarget);
+  ///   RegisterMCCodeEmitter<FooCodeEmitter> X(TheFooTarget);
   /// }
-  template<class CodeEmitterImpl>
-  struct RegisterCodeEmitter {
-    RegisterCodeEmitter(Target &T) {
-      TargetRegistry::RegisterCodeEmitter(T, &Allocator);
+  template<class MCCodeEmitterImpl>
+  struct RegisterMCCodeEmitter {
+    RegisterMCCodeEmitter(Target &T) {
+      TargetRegistry::RegisterMCCodeEmitter(T, &Allocator);
     }
 
   private:
     static MCCodeEmitter *Allocator(const MCInstrInfo &II,
                                     const MCSubtargetInfo &STI,
                                     MCContext &Ctx) {
-      return new CodeEmitterImpl();
+      return new MCCodeEmitterImpl();
     }
   };
 

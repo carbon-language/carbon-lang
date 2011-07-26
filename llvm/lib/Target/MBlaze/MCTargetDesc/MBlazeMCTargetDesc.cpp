@@ -71,7 +71,7 @@ static MCCodeGenInfo *createMBlazeMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
+static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &MAB,
                                     raw_ostream &_OS,
                                     MCCodeEmitter *_Emitter,
@@ -121,16 +121,16 @@ extern "C" void LLVMInitializeMBlazeTargetMC() {
                                           createMBlazeMCSubtargetInfo);
 
   // Register the MC code emitter
-  TargetRegistry::RegisterCodeEmitter(TheMBlazeTarget,
-                                      llvm::createMBlazeMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheMBlazeTarget,
+                                        llvm::createMBlazeMCCodeEmitter);
 
   // Register the asm backend
   TargetRegistry::RegisterMCAsmBackend(TheMBlazeTarget,
                                        createMBlazeAsmBackend);
 
   // Register the object streamer
-  TargetRegistry::RegisterObjectStreamer(TheMBlazeTarget,
-                                         createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheMBlazeTarget,
+                                           createMCStreamer);
 
   // Register the MCInstPrinter.
   TargetRegistry::RegisterMCInstPrinter(TheMBlazeTarget,

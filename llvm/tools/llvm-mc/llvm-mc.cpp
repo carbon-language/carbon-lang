@@ -370,7 +370,7 @@ static int AssembleInput(const char *ProgName) {
     MCCodeEmitter *CE = 0;
     MCAsmBackend *MAB = 0;
     if (ShowEncoding) {
-      CE = TheTarget->createCodeEmitter(*MCII, *STI, Ctx);
+      CE = TheTarget->createMCCodeEmitter(*MCII, *STI, Ctx);
       MAB = TheTarget->createMCAsmBackend(TripleName);
     }
     Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/true,
@@ -381,11 +381,11 @@ static int AssembleInput(const char *ProgName) {
     Str.reset(createNullStreamer(Ctx));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
-    MCCodeEmitter *CE = TheTarget->createCodeEmitter(*MCII, *STI, Ctx);
+    MCCodeEmitter *CE = TheTarget->createMCCodeEmitter(*MCII, *STI, Ctx);
     MCAsmBackend *MAB = TheTarget->createMCAsmBackend(TripleName);
-    Str.reset(TheTarget->createObjectStreamer(TripleName, Ctx, *MAB,
-                                              FOS, CE, RelaxAll,
-                                              NoExecStack));
+    Str.reset(TheTarget->createMCObjectStreamer(TripleName, Ctx, *MAB,
+                                                FOS, CE, RelaxAll,
+                                                NoExecStack));
   }
 
   if (EnableLogging) {

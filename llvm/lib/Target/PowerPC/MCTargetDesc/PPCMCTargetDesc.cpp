@@ -90,7 +90,7 @@ static MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM,
 }
 
 // This is duplicated code. Refactor this.
-static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
+static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &MAB,
                                     raw_ostream &OS,
                                     MCCodeEmitter *Emitter,
@@ -132,16 +132,16 @@ extern "C" void LLVMInitializePowerPCTargetMC() {
                                           createPPCMCSubtargetInfo);
 
   // Register the MC Code Emitter
-  TargetRegistry::RegisterCodeEmitter(ThePPC32Target, createPPCMCCodeEmitter);
-  TargetRegistry::RegisterCodeEmitter(ThePPC64Target, createPPCMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(ThePPC32Target, createPPCMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(ThePPC64Target, createPPCMCCodeEmitter);
   
     // Register the asm backend.
   TargetRegistry::RegisterMCAsmBackend(ThePPC32Target, createPPCAsmBackend);
   TargetRegistry::RegisterMCAsmBackend(ThePPC64Target, createPPCAsmBackend);
   
   // Register the object streamer.
-  TargetRegistry::RegisterObjectStreamer(ThePPC32Target, createMCStreamer);
-  TargetRegistry::RegisterObjectStreamer(ThePPC64Target, createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(ThePPC32Target, createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(ThePPC64Target, createMCStreamer);
 
   // Register the MCInstPrinter.
   TargetRegistry::RegisterMCInstPrinter(ThePPC32Target, createPPCMCInstPrinter);

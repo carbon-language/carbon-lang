@@ -366,7 +366,7 @@ static MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
   return X;
 }
 
-static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
+static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     MCContext &Ctx, MCAsmBackend &MAB,
                                     raw_ostream &_OS,
                                     MCCodeEmitter *_Emitter,
@@ -418,10 +418,10 @@ extern "C" void LLVMInitializeX86TargetMC() {
                                           X86_MC::createX86MCSubtargetInfo);
 
   // Register the code emitter.
-  TargetRegistry::RegisterCodeEmitter(TheX86_32Target,
-                                      createX86MCCodeEmitter);
-  TargetRegistry::RegisterCodeEmitter(TheX86_64Target,
-                                      createX86MCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheX86_32Target,
+                                        createX86MCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheX86_64Target,
+                                        createX86MCCodeEmitter);
 
   // Register the asm backend.
   TargetRegistry::RegisterMCAsmBackend(TheX86_32Target,
@@ -430,10 +430,10 @@ extern "C" void LLVMInitializeX86TargetMC() {
                                        createX86_64AsmBackend);
 
   // Register the object streamer.
-  TargetRegistry::RegisterObjectStreamer(TheX86_32Target,
-                                         createMCStreamer);
-  TargetRegistry::RegisterObjectStreamer(TheX86_64Target,
-                                         createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheX86_32Target,
+                                           createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheX86_64Target,
+                                           createMCStreamer);
 
   // Register the MCInstPrinter.
   TargetRegistry::RegisterMCInstPrinter(TheX86_32Target,
