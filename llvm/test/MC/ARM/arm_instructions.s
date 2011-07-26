@@ -86,30 +86,6 @@
 @ CHECK: add	r1, r2, r3, lsl r4      @ encoding: [0x13,0x14,0x82,0xe0]
   add r1, r2, r3, lsl r4
 
-@ CHECK: strexb  r0, r1, [r2] @ encoding: [0x91,0x0f,0xc2,0xe1]
-        strexb  r0, r1, [r2]
-
-@ CHECK: strexh  r0, r1, [r2] @ encoding: [0x91,0x0f,0xe2,0xe1]
-        strexh  r0, r1, [r2]
-
-@ CHECK: strex  r0, r1, [r2] @ encoding: [0x91,0x0f,0x82,0xe1]
-        strex  r0, r1, [r2]
-
-@ CHECK: strexd  r0, r2, r3, [r1] @ encoding: [0x92,0x0f,0xa1,0xe1]
-        strexd  r0, r2, r3, [r1]
-
-@ CHECK: ldrexb  r0, [r0] @ encoding: [0x9f,0x0f,0xd0,0xe1]
-        ldrexb  r0, [r0]
-
-@ CHECK: ldrexh  r0, [r0] @ encoding: [0x9f,0x0f,0xf0,0xe1]
-        ldrexh  r0, [r0]
-
-@ CHECK: ldrex  r0, [r0] @ encoding: [0x9f,0x0f,0x90,0xe1]
-        ldrex  r0, [r0]
-
-@ CHECK: ldrexd  r0, r1, [r0] @ encoding: [0x9f,0x0f,0xb0,0xe1]
-        ldrexd  r0, r1, [r0]
-
 @ CHECK: ssat16  r0, #7, r0 @ encoding: [0x30,0x0f,0xa6,0xe6]
         ssat16  r0, #7, r0
 
