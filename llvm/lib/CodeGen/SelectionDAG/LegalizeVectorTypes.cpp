@@ -524,12 +524,11 @@ void DAGTypeLegalizer::SplitVecRes_BITCAST(SDNode *N, SDValue &Lo,
 
   // Handle some special cases efficiently.
   switch (getTypeAction(InVT)) {
-  default:
-    assert(false && "Unknown type action!");
   case TargetLowering::TypeLegal:
   case TargetLowering::TypePromoteInteger:
   case TargetLowering::TypeSoftenFloat:
   case TargetLowering::TypeScalarizeVector:
+  case TargetLowering::TypeWidenVector:
     break;
   case TargetLowering::TypeExpandInteger:
   case TargetLowering::TypeExpandFloat:
