@@ -38,6 +38,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -50,6 +51,8 @@ using namespace llvm;
 STATISTIC(NumGlobalSplits, "Number of split global live ranges");
 STATISTIC(NumLocalSplits,  "Number of split local live ranges");
 STATISTIC(NumEvicted,      "Number of interferences evicted");
+
+cl::opt<bool> CompactRegions("compact-regions");
 
 static RegisterRegAlloc greedyRegAlloc("greedy", "greedy register allocator",
                                        createGreedyRegisterAllocator);
@@ -171,16 +174,37 @@ class RAGreedy : public MachineFunctionPass,
 
   /// Global live range splitting candidate info.
   struct GlobalSplitCandidate {
+    // Register intended for assignment, or 0.
     unsigned PhysReg;
+
+    // SplitKit interval index for this candidate.
+    unsigned IntvIdx;
+
+    // Interference for PhysReg.
     InterferenceCache::Cursor Intf;
+
+    // Bundles where this candidate should be live.
     BitVector LiveBundles;
     SmallVector<unsigned, 8> ActiveBlocks;
 
     void reset(InterferenceCache &Cache, unsigned Reg) {
       PhysReg = Reg;
+      IntvIdx = 0;
       Intf.setPhysReg(Cache, Reg);
       LiveBundles.clear();
       ActiveBlocks.clear();
+    }
+
+    // Set B[i] = C for every live bundle where B[i] was NoCand.
+    unsigned getBundles(SmallVectorImpl<unsigned> &B, unsigned C) {
+      unsigned Count = 0;
+      for (int i = LiveBundles.find_first(); i >= 0;
+           i = LiveBundles.find_next(i))
+        if (B[i] == NoCand) {
+          B[i] = C;
+          Count++;
+        }
+      return Count;
     }
   };
 
@@ -188,6 +212,12 @@ class RAGreedy : public MachineFunctionPass,
   /// This vector never shrinks, but grows to the size of the largest register
   /// class.
   SmallVector<GlobalSplitCandidate, 32> GlobalCand;
+
+  enum { NoCand = ~0u };
+
+  /// Candidate map. Each edge bundle is assigned to a GlobalCand entry, or to
+  /// NoCand which indicates the stack interval.
+  SmallVector<unsigned, 32> BundleCand;
 
 public:
   RAGreedy();
@@ -223,8 +253,7 @@ private:
   void growRegion(GlobalSplitCandidate &Cand);
   float calcGlobalSplitCost(GlobalSplitCandidate&);
   bool calcCompactRegion(GlobalSplitCandidate&);
-  void splitAroundRegion(LiveInterval&, GlobalSplitCandidate&,
-                         SmallVectorImpl<LiveInterval*>&);
+  void splitAroundRegion(LiveRangeEdit&, ArrayRef<unsigned>);
   void calcGapWeights(unsigned, SmallVectorImpl<float>&);
   bool shouldEvict(LiveInterval &A, bool, LiveInterval &B, bool);
   bool canEvictInterference(LiveInterval&, unsigned, bool, EvictionCost&);
@@ -896,81 +925,109 @@ float RAGreedy::calcGlobalSplitCost(GlobalSplitCandidate &Cand) {
   return GlobalCost;
 }
 
-/// splitAroundRegion - Split VirtReg around the region determined by
-/// LiveBundles. Make an effort to avoid interference from PhysReg.
+/// splitAroundRegion - Split the current live range around the regions
+/// determined by BundleCand and GlobalCand.
 ///
-/// The 'register' interval is going to contain as many uses as possible while
-/// avoiding interference. The 'stack' interval is the complement constructed by
-/// SplitEditor. It will contain the rest.
+/// Before calling this function, GlobalCand and BundleCand must be initialized
+/// so each bundle is assigned to a valid candidate, or NoCand for the
+/// stack-bound bundles.  The shared SA/SE SplitAnalysis and SplitEditor
+/// objects must be initialized for the current live range, and intervals
+/// created for the used candidates.
 ///
-void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
-                                 GlobalSplitCandidate &Cand,
-                                 SmallVectorImpl<LiveInterval*> &NewVRegs) {
-  const BitVector &LiveBundles = Cand.LiveBundles;
-
-  DEBUG({
-    dbgs() << "Splitting around region for " << PrintReg(Cand.PhysReg, TRI)
-           << " with bundles";
-    for (int i = LiveBundles.find_first(); i>=0; i = LiveBundles.find_next(i))
-      dbgs() << " EB#" << i;
-    dbgs() << ".\n";
-  });
-
-  InterferenceCache::Cursor &Intf = Cand.Intf;
-  LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
-  SE->reset(LREdit);
-
-  // Create the main cross-block interval.
-  const unsigned MainIntv = SE->openIntv();
+/// @param LREdit    The LiveRangeEdit object handling the current split.
+/// @param UsedCands List of used GlobalCand entries. Every BundleCand value
+///                  must appear in this list.
+void RAGreedy::splitAroundRegion(LiveRangeEdit &LREdit,
+                                 ArrayRef<unsigned> UsedCands) {
+  // These are the intervals created for new global ranges. We may create more
+  // intervals for local ranges.
+  const unsigned NumGlobalIntvs = LREdit.size();
+  DEBUG(dbgs() << "splitAroundRegion with " << NumGlobalIntvs << " globals.\n");
+  assert(NumGlobalIntvs && "No global intervals configured");
 
   // First handle all the blocks with uses.
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
   for (unsigned i = 0; i != UseBlocks.size(); ++i) {
     const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
-    bool RegIn  = BI.LiveIn &&
-                  LiveBundles[Bundles->getBundle(BI.MBB->getNumber(), 0)];
-    bool RegOut = BI.LiveOut &&
-                  LiveBundles[Bundles->getBundle(BI.MBB->getNumber(), 1)];
+    unsigned Number = BI.MBB->getNumber();
+    unsigned IntvIn = 0, IntvOut = 0;
+    SlotIndex IntfIn, IntfOut;
+    if (BI.LiveIn) {
+      unsigned CandIn = BundleCand[Bundles->getBundle(Number, 0)];
+      if (CandIn != NoCand) {
+        GlobalSplitCandidate &Cand = GlobalCand[CandIn];
+        IntvIn = Cand.IntvIdx;
+        Cand.Intf.moveToBlock(Number);
+        IntfIn = Cand.Intf.first();
+      }
+    }
+    if (BI.LiveOut) {
+      unsigned CandOut = BundleCand[Bundles->getBundle(Number, 1)];
+      if (CandOut != NoCand) {
+        GlobalSplitCandidate &Cand = GlobalCand[CandOut];
+        IntvOut = Cand.IntvIdx;
+        Cand.Intf.moveToBlock(Number);
+        IntfOut = Cand.Intf.last();
+      }
+    }
 
     // Create separate intervals for isolated blocks with multiple uses.
-    if (!RegIn && !RegOut) {
+    if (!IntvIn && !IntvOut) {
       DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " isolated.\n");
-      if (!BI.isOneInstr()) {
+      if (!BI.isOneInstr())
         SE->splitSingleBlock(BI);
-        SE->selectIntv(MainIntv);
-      }
       continue;
     }
 
-    Intf.moveToBlock(BI.MBB->getNumber());
-
-    if (RegIn && RegOut)
-      SE->splitLiveThroughBlock(BI.MBB->getNumber(),
-                                MainIntv, Intf.first(),
-                                MainIntv, Intf.last());
-    else if (RegIn)
-      SE->splitRegInBlock(BI, MainIntv, Intf.first());
+    if (IntvIn && IntvOut)
+      SE->splitLiveThroughBlock(Number, IntvIn, IntfIn, IntvOut, IntfOut);
+    else if (IntvIn)
+      SE->splitRegInBlock(BI, IntvIn, IntfIn);
     else
-      SE->splitRegOutBlock(BI, MainIntv, Intf.last());
+      SE->splitRegOutBlock(BI, IntvOut, IntfOut);
   }
 
-  // Handle live-through blocks.
-  for (unsigned i = 0, e = Cand.ActiveBlocks.size(); i != e; ++i) {
-    unsigned Number = Cand.ActiveBlocks[i];
-    bool RegIn  = LiveBundles[Bundles->getBundle(Number, 0)];
-    bool RegOut = LiveBundles[Bundles->getBundle(Number, 1)];
-    if (!RegIn && !RegOut)
-      continue;
-    Intf.moveToBlock(Number);
-    SE->splitLiveThroughBlock(Number, RegIn  ? MainIntv : 0, Intf.first(),
-                                      RegOut ? MainIntv : 0, Intf.last());
+  // Handle live-through blocks. The relevant live-through blocks are stored in
+  // the ActiveBlocks list with each candidate. We need to filter out
+  // duplicates.
+  BitVector Todo = SA->getThroughBlocks();
+  for (unsigned c = 0; c != UsedCands.size(); ++c) {
+    ArrayRef<unsigned> Blocks = GlobalCand[UsedCands[c]].ActiveBlocks;
+    for (unsigned i = 0, e = Blocks.size(); i != e; ++i) {
+      unsigned Number = Blocks[i];
+      if (!Todo.test(Number))
+        continue;
+      Todo.reset(Number);
+
+      unsigned IntvIn = 0, IntvOut = 0;
+      SlotIndex IntfIn, IntfOut;
+
+      unsigned CandIn = BundleCand[Bundles->getBundle(Number, 0)];
+      if (CandIn != NoCand) {
+        GlobalSplitCandidate &Cand = GlobalCand[CandIn];
+        IntvIn = Cand.IntvIdx;
+        Cand.Intf.moveToBlock(Number);
+        IntfIn = Cand.Intf.first();
+      }
+
+      unsigned CandOut = BundleCand[Bundles->getBundle(Number, 1)];
+      if (CandOut != NoCand) {
+        GlobalSplitCandidate &Cand = GlobalCand[CandOut];
+        IntvOut = Cand.IntvIdx;
+        Cand.Intf.moveToBlock(Number);
+        IntfOut = Cand.Intf.last();
+      }
+      if (!IntvIn && !IntvOut)
+        continue;
+      SE->splitLiveThroughBlock(Number, IntvIn, IntfIn, IntvOut, IntfOut);
+    }
   }
 
   ++NumGlobalSplits;
 
   SmallVector<unsigned, 8> IntvMap;
   SE->finish(&IntvMap);
-  DebugVars->splitRegister(VirtReg.reg, LREdit.regs());
+  DebugVars->splitRegister(SA->getParent().reg, LREdit.regs());
 
   ExtraRegInfo.resize(MRI->getNumVirtRegs());
   unsigned OrigBlocks = SA->getNumLiveBlocks();
@@ -994,9 +1051,9 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
       continue;
     }
 
-    // Main interval. Allow repeated splitting as long as the number of live
-    // blocks is strictly decreasing. Otherwise force per-block splitting.
-    if (IntvMap[i] == MainIntv) {
+    // Global intervals. Allow repeated splitting as long as the number of live
+    // blocks is strictly decreasing.
+    if (IntvMap[i] < NumGlobalIntvs) {
       if (SA->countLiveBlocks(&Reg) >= OrigBlocks) {
         DEBUG(dbgs() << "Main interval covers the same " << OrigBlocks
                      << " blocks as original.\n");
@@ -1016,11 +1073,23 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
 
 unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
                                   SmallVectorImpl<LiveInterval*> &NewVRegs) {
-  float BestCost = Hysteresis * calcSpillCost();
-  DEBUG(dbgs() << "Cost of isolating all blocks = " << BestCost << '\n');
-  const unsigned NoCand = ~0u;
-  unsigned BestCand = NoCand;
   unsigned NumCands = 0;
+  unsigned BestCand = NoCand;
+  float BestCost;
+  SmallVector<unsigned, 8> UsedCands;
+
+  // Check if we can split this live range around a compact region.
+  bool HasCompact = CompactRegions && calcCompactRegion(GlobalCand.front());
+  if (HasCompact) {
+    // Yes, keep GlobalCand[0] as the compact region candidate.
+    NumCands = 1;
+    BestCost = HUGE_VALF;
+  } else {
+    // No benefit from the compact region, our fallback will be per-block
+    // splitting. Make sure we find a solution that is cheaper than spilling.
+    BestCost = Hysteresis * calcSpillCost();
+    DEBUG(dbgs() << "Cost of isolating all blocks = " << BestCost << '\n');
+  }
 
   Order.rewind();
   while (unsigned PhysReg = Order.next()) {
@@ -1030,7 +1099,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       unsigned WorstCount = ~0u;
       unsigned Worst = 0;
       for (unsigned i = 0; i != NumCands; ++i) {
-        if (i == BestCand)
+        if (i == BestCand || !GlobalCand[i].PhysReg)
           continue;
         unsigned Count = GlobalCand[i].LiveBundles.count();
         if (Count < WorstCount)
@@ -1087,10 +1156,41 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     ++NumCands;
   }
 
-  if (BestCand == NoCand)
+  // No solutions found, fall back to single block splitting.
+  if (!HasCompact && BestCand == NoCand)
     return 0;
 
-  splitAroundRegion(VirtReg, GlobalCand[BestCand], NewVRegs);
+  // Prepare split editor.
+  LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
+  SE->reset(LREdit);
+
+  // Assign all edge bundles to the preferred candidate, or NoCand.
+  BundleCand.assign(Bundles->getNumBundles(), NoCand);
+
+  // Assign bundles for the best candidate region.
+  if (BestCand != NoCand) {
+    GlobalSplitCandidate &Cand = GlobalCand[BestCand];
+    if (unsigned B = Cand.getBundles(BundleCand, BestCand)) {
+      UsedCands.push_back(BestCand);
+      Cand.IntvIdx = SE->openIntv();
+      DEBUG(dbgs() << "Split for " << PrintReg(Cand.PhysReg, TRI) << " in "
+                   << B << " bundles, intv " << Cand.IntvIdx << ".\n");
+    }
+  }
+
+  // Assign bundles for the compact region.
+  if (HasCompact) {
+    GlobalSplitCandidate &Cand = GlobalCand.front();
+    assert(!Cand.PhysReg && "Compact region has no physreg");
+    if (unsigned B = Cand.getBundles(BundleCand, 0)) {
+      UsedCands.push_back(0);
+      Cand.IntvIdx = SE->openIntv();
+      DEBUG(dbgs() << "Split for compact region in " << B << " bundles, intv "
+                   << Cand.IntvIdx << ".\n");
+    }
+  }
+
+  splitAroundRegion(LREdit, UsedCands);
   return 0;
 }
 
@@ -1479,6 +1579,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   ExtraRegInfo.resize(MRI->getNumVirtRegs());
   NextCascade = 1;
   IntfCache.init(MF, &PhysReg2LiveUnion[0], Indexes, TRI);
+  GlobalCand.resize(32);  // This will grow as needed.
 
   allocatePhysRegs();
   addMBBLiveIns(MF);
