@@ -3364,7 +3364,7 @@ def err_ambiguous_delete_operand : Error<"ambiguous conversion of delete "
                                          "expression of type %0 to a pointer">;
 def warn_delete_incomplete : Warning<
   "deleting pointer to incomplete type %0 may cause undefined behaviour">;
-def err_delete_incomplete_class_type : Warning<
+def err_delete_incomplete_class_type : Error<
   "deleting incomplete class type %0; no conversions to pointer type">;
 def warn_delete_array_type : Warning<
   "'delete' applied to a pointer-to-array type %0 treated as delete[]">;
