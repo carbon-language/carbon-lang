@@ -187,9 +187,9 @@ Lexer *Lexer::Create_PragmaLexer(SourceLocation SpellingLoc,
 
   // Set the SourceLocation with the remapping information.  This ensures that
   // GetMappedTokenLoc will remap the tokens as they are lexed.
-  L->FileLoc = SM.createInstantiationLoc(SM.getLocForStartOfFile(SpellingFID),
-                                         ExpansionLocStart,
-                                         ExpansionLocEnd, TokLen);
+  L->FileLoc = SM.createExpansionLoc(SM.getLocForStartOfFile(SpellingFID),
+                                     ExpansionLocStart,
+                                     ExpansionLocEnd, TokLen);
 
   // Ensure that the lexer thinks it is inside a directive, so that end \n will
   // return an EOD token.
@@ -914,7 +914,7 @@ static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
   std::pair<SourceLocation,SourceLocation> II =
     SM.getImmediateExpansionRange(FileLoc);
 
-  return SM.createInstantiationLoc(SpellingLoc, II.first, II.second, TokLen);
+  return SM.createExpansionLoc(SpellingLoc, II.first, II.second, TokLen);
 }
 
 /// getSourceLocation - Return a source location identifier for the specified

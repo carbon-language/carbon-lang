@@ -335,8 +335,7 @@ void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
   SourceLocation Loc = ScratchBuf->getToken(Buf, Len, DestPtr);
 
   if (ExpansionLoc.isValid())
-    Loc = SourceMgr.createInstantiationLoc(Loc, ExpansionLoc,
-                                           ExpansionLoc, Len);
+    Loc = SourceMgr.createExpansionLoc(Loc, ExpansionLoc, ExpansionLoc, Len);
   Tok.setLocation(Loc);
 
   // If this is a raw identifier or a literal token, set the pointer data.

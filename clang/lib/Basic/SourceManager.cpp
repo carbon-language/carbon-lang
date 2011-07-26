@@ -406,7 +406,7 @@ void SourceManager::clearIDTables() {
   // The highest possible offset is 2^31-1, so CurrentLoadedOffset starts at
   // 2^31.
   CurrentLoadedOffset = 1U << 31U;
-  createInstantiationLoc(SourceLocation(),SourceLocation(),SourceLocation(), 1);
+  createExpansionLoc(SourceLocation(),SourceLocation(),SourceLocation(), 1);
 }
 
 /// getOrCreateContentCache - Create or return a cached ContentCache for the
@@ -518,30 +518,32 @@ FileID SourceManager::createFileID(const ContentCache *File,
 }
 
 SourceLocation
-SourceManager::createMacroArgInstantiationLoc(SourceLocation SpellingLoc,
-                                              SourceLocation ILoc,
-                                              unsigned TokLength) {
+SourceManager::createMacroArgExpansionLoc(SourceLocation SpellingLoc,
+                                          SourceLocation ExpansionLoc,
+                                          unsigned TokLength) {
   InstantiationInfo II =
-    InstantiationInfo::createForMacroArg(SpellingLoc, ILoc);
-  return createInstantiationLocImpl(II, TokLength);
-}
-
-SourceLocation SourceManager::createInstantiationLoc(SourceLocation SpellingLoc,
-                                                     SourceLocation ILocStart,
-                                                     SourceLocation ILocEnd,
-                                                     unsigned TokLength,
-                                                     int LoadedID,
-                                                     unsigned LoadedOffset) {
-  InstantiationInfo II =
-    InstantiationInfo::create(SpellingLoc, ILocStart, ILocEnd);
-  return createInstantiationLocImpl(II, TokLength, LoadedID, LoadedOffset);
+    InstantiationInfo::createForMacroArg(SpellingLoc, ExpansionLoc);
+  return createExpansionLocImpl(II, TokLength);
 }
 
 SourceLocation
-SourceManager::createInstantiationLocImpl(const InstantiationInfo &II,
-                                          unsigned TokLength,
-                                          int LoadedID,
-                                          unsigned LoadedOffset) {
+SourceManager::createExpansionLoc(SourceLocation SpellingLoc,
+                                  SourceLocation ExpansionLocStart,
+                                  SourceLocation ExpansionLocEnd,
+                                  unsigned TokLength,
+                                  int LoadedID,
+                                  unsigned LoadedOffset) {
+  InstantiationInfo II =
+    InstantiationInfo::create(SpellingLoc, ExpansionLocStart,
+                              ExpansionLocEnd);
+  return createExpansionLocImpl(II, TokLength, LoadedID, LoadedOffset);
+}
+
+SourceLocation
+SourceManager::createExpansionLocImpl(const InstantiationInfo &II,
+                                      unsigned TokLength,
+                                      int LoadedID,
+                                      unsigned LoadedOffset) {
   if (LoadedID < 0) {
     assert(LoadedID != -1 && "Loading sentinel FileID");
     unsigned Index = unsigned(-LoadedID) - 2;

@@ -57,10 +57,10 @@ void TokenLexer::Init(Token &Tok, SourceLocation ELEnd, MacroArgs *Actuals) {
     // creating separate source location entries for each token.
     SourceLocation macroStart = SM.getExpansionLoc(Tokens[0].getLocation());
     MacroDefStartInfo = SM.getDecomposedLoc(macroStart);
-    MacroExpansionStart = SM.createInstantiationLoc(macroStart,
-                                              ExpandLocStart,
-                                              ExpandLocEnd,
-                                              Macro->getDefinitionLength(SM));
+    MacroExpansionStart = SM.createExpansionLoc(macroStart,
+                                                ExpandLocStart,
+                                                ExpandLocEnd,
+                                                Macro->getDefinitionLength(SM));
   }
 
   // If this is a function-like macro, expand the arguments and change
@@ -231,9 +231,9 @@ void TokenLexer::ExpandFunctionArguments() {
                  "Expected arg identifier to come from definition");
           for (unsigned i = FirstResult, e = ResultToks.size(); i != e; ++i) {
             Token &Tok = ResultToks[i];
-            Tok.setLocation(SM.createMacroArgInstantiationLoc(Tok.getLocation(),
-                                                              curInst,
-                                                              Tok.getLength()));
+            Tok.setLocation(SM.createMacroArgExpansionLoc(Tok.getLocation(),
+                                                          curInst,
+                                                          Tok.getLength()));
           }
         }
 
@@ -289,9 +289,9 @@ void TokenLexer::ExpandFunctionArguments() {
         for (unsigned i = ResultToks.size() - NumToks, e = ResultToks.size();
                i != e; ++i) {
           Token &Tok = ResultToks[i];
-          Tok.setLocation(SM.createMacroArgInstantiationLoc(Tok.getLocation(),
-                                                            curInst,
-                                                            Tok.getLength()));
+          Tok.setLocation(SM.createMacroArgExpansionLoc(Tok.getLocation(),
+                                                        curInst,
+                                                        Tok.getLength()));
         }
       }
 
@@ -421,10 +421,10 @@ void TokenLexer::Lex(Token &Tok) {
                                         MacroStartSLocOffset)) {
     SourceLocation instLoc;
     if (Tok.is(tok::comment)) {
-      instLoc = SM.createInstantiationLoc(Tok.getLocation(),
-                                          ExpandLocStart,
-                                          ExpandLocEnd,
-                                          Tok.getLength());
+      instLoc = SM.createExpansionLoc(Tok.getLocation(),
+                                      ExpandLocStart,
+                                      ExpandLocEnd,
+                                      Tok.getLength());
     } else {
       instLoc = getMacroExpansionLocation(Tok.getLocation());
       assert(instLoc.isValid() &&
@@ -574,8 +574,7 @@ bool TokenLexer::PasteTokens(Token &Tok) {
           // information so that the user knows where it came from.
           SourceManager &SM = PP.getSourceManager();
           SourceLocation Loc =
-            SM.createInstantiationLoc(PasteOpLoc, ExpandLocStart,
-                                      ExpandLocEnd, 2);
+            SM.createExpansionLoc(PasteOpLoc, ExpandLocStart, ExpandLocEnd, 2);
           // If we're in microsoft extensions mode, downgrade this from a hard
           // error to a warning that defaults to an error.  This allows
           // disabling it.
@@ -616,10 +615,10 @@ bool TokenLexer::PasteTokens(Token &Tok) {
     assert(pasteLocInst.isValid() &&
            "Expected '##' to come from definition");
 
-    Tok.setLocation(SM.createInstantiationLoc(Tok.getLocation(),
-                                              pasteLocInst,
-                                              pasteLocInst,
-                                              Tok.getLength()));
+    Tok.setLocation(SM.createExpansionLoc(Tok.getLocation(),
+                                          pasteLocInst,
+                                          pasteLocInst,
+                                          Tok.getLength()));
   }
 
   // Now that we got the result token, it will be subject to expansion.  Since

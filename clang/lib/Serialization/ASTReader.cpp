@@ -1359,7 +1359,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
 
   case SM_SLOC_EXPANSION_ENTRY: {
     SourceLocation SpellingLoc = ReadSourceLocation(*F, Record[1]);
-    SourceMgr.createInstantiationLoc(SpellingLoc,
+    SourceMgr.createExpansionLoc(SpellingLoc,
                                      ReadSourceLocation(*F, Record[2]),
                                      ReadSourceLocation(*F, Record[3]),
                                      Record[4],
