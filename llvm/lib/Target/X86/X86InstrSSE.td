@@ -5677,6 +5677,12 @@ def : Pat<(v4f32 (X86Unpckhps VR128:$src1, VR128:$src2)),
 def : Pat<(v4f32 (X86Unpckhps VR128:$src1, VR128:$src2)),
           (UNPCKHPSrr VR128:$src1, VR128:$src2)>;
 
+// Shuffle with VUNPCKHPSY
+def : Pat<(v8f32 (X86Unpckhpsy VR256:$src1, (memopv8f32 addr:$src2))),
+          (VUNPCKHPSYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
+def : Pat<(v8f32 (X86Unpckhpsy VR256:$src1, VR256:$src2)),
+          (VUNPCKHPSYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
+
 // Shuffle with UNPCKLPD
 def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, (memopv2f64 addr:$src2))),
           (VUNPCKLPDrm VR128:$src1, addr:$src2)>, Requires<[HasAVX]>;
@@ -5702,6 +5708,12 @@ def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, VR128:$src2)),
           (VUNPCKHPDrr VR128:$src1, VR128:$src2)>, Requires<[HasAVX]>;
 def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, VR128:$src2)),
           (UNPCKHPDrr VR128:$src1, VR128:$src2)>;
+
+// Shuffle with VUNPCKHPDY
+def : Pat<(v4f64 (X86Unpckhpdy VR256:$src1, (memopv4f64 addr:$src2))),
+          (VUNPCKHPDYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
+def : Pat<(v4f64 (X86Unpckhpdy VR256:$src1, VR256:$src2)),
+          (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
 
 // Shuffle with MOVLHPS
 def : Pat<(X86Movlhps VR128:$src1,

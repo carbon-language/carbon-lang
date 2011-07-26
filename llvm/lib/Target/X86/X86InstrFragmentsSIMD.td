@@ -133,12 +133,15 @@ def X86Movhlpd : SDNode<"X86ISD::MOVHLPD", SDTShuff2Op>;
 def X86Movlps : SDNode<"X86ISD::MOVLPS", SDTShuff2Op>;
 def X86Movlpd : SDNode<"X86ISD::MOVLPD", SDTShuff2Op>;
 
-def X86Unpcklps : SDNode<"X86ISD::UNPCKLPS", SDTShuff2Op>;
-def X86Unpcklpd : SDNode<"X86ISD::UNPCKLPD", SDTShuff2Op>;
+def X86Unpcklps  : SDNode<"X86ISD::UNPCKLPS", SDTShuff2Op>;
+def X86Unpcklpd  : SDNode<"X86ISD::UNPCKLPD", SDTShuff2Op>;
 def X86Unpcklpsy : SDNode<"X86ISD::VUNPCKLPSY", SDTShuff2Op>;
 def X86Unpcklpdy : SDNode<"X86ISD::VUNPCKLPDY", SDTShuff2Op>;
-def X86Unpckhps : SDNode<"X86ISD::UNPCKHPS", SDTShuff2Op>;
-def X86Unpckhpd : SDNode<"X86ISD::UNPCKHPD", SDTShuff2Op>;
+
+def X86Unpckhps  : SDNode<"X86ISD::UNPCKHPS", SDTShuff2Op>;
+def X86Unpckhpd  : SDNode<"X86ISD::UNPCKHPD", SDTShuff2Op>;
+def X86Unpckhpsy : SDNode<"X86ISD::VUNPCKHPSY", SDTShuff2Op>;
+def X86Unpckhpdy : SDNode<"X86ISD::VUNPCKHPDY", SDTShuff2Op>;
 
 def X86Punpcklbw  : SDNode<"X86ISD::PUNPCKLBW", SDTShuff2Op>;
 def X86Punpcklwd  : SDNode<"X86ISD::PUNPCKLWD", SDTShuff2Op>;

@@ -167,23 +167,22 @@ void DecodeUNPCKLPMask(EVT VT,
                        SmallVectorImpl<unsigned> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
 
-  // Handle vector lengths > 128 bits.  Define a "section" as a set of
-  // 128 bits.  AVX defines UNPCK* to operate independently on 128-bit
-  // sections.
-  unsigned NumSections = VT.getSizeInBits() / 128;
-  if (NumSections == 0 ) NumSections = 1;  // Handle MMX
-  unsigned NumSectionElts = NumElts / NumSections;
+  // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
+  // independently on 128-bit lanes.
+  unsigned NumLanes = VT.getSizeInBits() / 128;
+  if (NumLanes == 0 ) NumLanes = 1;  // Handle MMX
+  unsigned NumLaneElts = NumElts / NumLanes;
 
   unsigned Start = 0;
-  unsigned End = NumSectionElts / 2;
-  for (unsigned s = 0; s < NumSections; ++s) {
+  unsigned End = NumLaneElts / 2;
+  for (unsigned s = 0; s < NumLanes; ++s) {
     for (unsigned i = Start; i != End; ++i) {
       ShuffleMask.push_back(i);                 // Reads from dest/src1
-      ShuffleMask.push_back(i+NumSectionElts);  // Reads from src/src2
+      ShuffleMask.push_back(i+NumLaneElts);  // Reads from src/src2
     }
     // Process the next 128 bits.
-    Start += NumSectionElts;
-    End += NumSectionElts;
+    Start += NumLaneElts;
+    End += NumLaneElts;
   }
 }
 

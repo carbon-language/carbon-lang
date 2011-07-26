@@ -261,6 +261,8 @@ namespace llvm {
       VUNPCKLPDY,
       UNPCKHPS,
       UNPCKHPD,
+      VUNPCKHPSY,
+      VUNPCKHPDY,
       PUNPCKLBW,
       PUNPCKLWD,
       PUNPCKLDQ,

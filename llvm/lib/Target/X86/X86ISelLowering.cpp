@@ -2711,6 +2711,8 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
+  case X86ISD::VUNPCKHPSY:
+  case X86ISD::VUNPCKHPDY:
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
@@ -2782,6 +2784,8 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::PUNPCKLQDQ:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
+  case X86ISD::VUNPCKHPSY:
+  case X86ISD::VUNPCKHPDY:
   case X86ISD::PUNPCKHWD:
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
@@ -3219,20 +3223,22 @@ bool X86::isMOVLHPSMask(ShuffleVectorSDNode *N) {
 static bool isUNPCKLMask(const SmallVectorImpl<int> &Mask, EVT VT,
                          bool V2IsSplat = false) {
   int NumElts = VT.getVectorNumElements();
-  if (NumElts != 2 && NumElts != 4 && NumElts != 8 && NumElts != 16)
+
+  assert((VT.is128BitVector() || VT.is256BitVector()) &&
+         "Unsupported vector type for unpckh");
+
+  if (VT.getSizeInBits() == 256 && NumElts != 4 && NumElts != 8)
     return false;
 
-  // Handle vector lengths > 128 bits.  Define a "section" as a set of
-  // 128 bits.  AVX defines UNPCK* to operate independently on 128-bit
-  // sections.
-  unsigned NumSections = VT.getSizeInBits() / 128;
-  if (NumSections == 0 ) NumSections = 1;  // Handle MMX
-  unsigned NumSectionElts = NumElts / NumSections;
+  // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
+  // independently on 128-bit lanes.
+  unsigned NumLanes = VT.getSizeInBits()/128;
+  unsigned NumLaneElts = NumElts/NumLanes;
 
   unsigned Start = 0;
-  unsigned End = NumSectionElts;
-  for (unsigned s = 0; s < NumSections; ++s) {
-    for (unsigned i = Start, j = s * NumSectionElts;
+  unsigned End = NumLaneElts;
+  for (unsigned s = 0; s < NumLanes; ++s) {
+    for (unsigned i = Start, j = s * NumLaneElts;
          i != End;
          i += 2, ++j) {
       int BitI  = Mask[i];
@@ -3248,8 +3254,8 @@ static bool isUNPCKLMask(const SmallVectorImpl<int> &Mask, EVT VT,
       }
     }
     // Process the next 128 bits.
-    Start += NumSectionElts;
-    End += NumSectionElts;
+    Start += NumLaneElts;
+    End += NumLaneElts;
   }
 
   return true;
@@ -3266,21 +3272,38 @@ bool X86::isUNPCKLMask(ShuffleVectorSDNode *N, bool V2IsSplat) {
 static bool isUNPCKHMask(const SmallVectorImpl<int> &Mask, EVT VT,
                          bool V2IsSplat = false) {
   int NumElts = VT.getVectorNumElements();
-  if (NumElts != 2 && NumElts != 4 && NumElts != 8 && NumElts != 16)
+
+  assert((VT.is128BitVector() || VT.is256BitVector()) &&
+         "Unsupported vector type for unpckh");
+
+  if (VT.getSizeInBits() == 256 && NumElts != 4 && NumElts != 8)
     return false;
 
-  for (int i = 0, j = 0; i != NumElts; i += 2, ++j) {
-    int BitI  = Mask[i];
-    int BitI1 = Mask[i+1];
-    if (!isUndefOrEqual(BitI, j + NumElts/2))
-      return false;
-    if (V2IsSplat) {
-      if (isUndefOrEqual(BitI1, NumElts))
+  // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
+  // independently on 128-bit lanes.
+  unsigned NumLanes = VT.getSizeInBits()/128;
+  unsigned NumLaneElts = NumElts/NumLanes;
+
+  unsigned Start = 0;
+  unsigned End = NumLaneElts;
+  for (unsigned l = 0; l != NumLanes; ++l) {
+    for (unsigned i = Start, j = (l*NumLaneElts)+NumLaneElts/2;
+                             i != End; i += 2, ++j) {
+      int BitI  = Mask[i];
+      int BitI1 = Mask[i+1];
+      if (!isUndefOrEqual(BitI, j))
         return false;
-    } else {
-      if (!isUndefOrEqual(BitI1, j + NumElts/2 + NumElts))
-        return false;
+      if (V2IsSplat) {
+        if (isUndefOrEqual(BitI1, NumElts))
+          return false;
+      } else {
+        if (!isUndefOrEqual(BitI1, j+NumElts))
+          return false;
+      }
     }
+    // Process the next 128 bits.
+    Start += NumLaneElts;
+    End += NumLaneElts;
   }
   return true;
 }
@@ -3299,16 +3322,14 @@ static bool isUNPCKL_v_undef_Mask(const SmallVectorImpl<int> &Mask, EVT VT) {
   if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
     return false;
 
-  // Handle vector lengths > 128 bits.  Define a "section" as a set of
-  // 128 bits.  AVX defines UNPCK* to operate independently on 128-bit
-  // sections.
-  unsigned NumSections = VT.getSizeInBits() / 128;
-  if (NumSections == 0 ) NumSections = 1;  // Handle MMX
-  unsigned NumSectionElts = NumElems / NumSections;
+  // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
+  // independently on 128-bit lanes.
+  unsigned NumLanes = VT.getSizeInBits() / 128;
+  unsigned NumLaneElts = NumElems / NumLanes;
 
-  for (unsigned s = 0; s < NumSections; ++s) {
-    for (unsigned i = s * NumSectionElts, j = s * NumSectionElts;
-         i != NumSectionElts * (s + 1);
+  for (unsigned s = 0; s < NumLanes; ++s) {
+    for (unsigned i = s * NumLaneElts, j = s * NumLaneElts;
+         i != NumLaneElts * (s + 1);
          i += 2, ++j) {
       int BitI  = Mask[i];
       int BitI1 = Mask[i+1];
@@ -4095,6 +4116,8 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
       break;
     case X86ISD::UNPCKHPS:
     case X86ISD::UNPCKHPD:
+    case X86ISD::VUNPCKHPSY:
+    case X86ISD::VUNPCKHPDY:
       DecodeUNPCKHPMask(NumElems, ShuffleMask);
       break;
     case X86ISD::PUNPCKLBW:
@@ -5751,6 +5774,8 @@ static inline unsigned getUNPCKHOpcode(EVT VT) {
   case MVT::v2i64: return X86ISD::PUNPCKHQDQ;
   case MVT::v4f32: return X86ISD::UNPCKHPS;
   case MVT::v2f64: return X86ISD::UNPCKHPD;
+  case MVT::v8f32: return X86ISD::VUNPCKHPSY;
+  case MVT::v4f64: return X86ISD::VUNPCKHPDY;
   case MVT::v16i8: return X86ISD::PUNPCKHBW;
   case MVT::v8i16: return X86ISD::PUNPCKHWD;
   default:
@@ -12597,6 +12622,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PUNPCKHQDQ:
   case X86ISD::UNPCKHPS:
   case X86ISD::UNPCKHPD:
+  case X86ISD::VUNPCKHPSY:
+  case X86ISD::VUNPCKHPDY:
   case X86ISD::PUNPCKLBW:
   case X86ISD::PUNPCKLWD:
   case X86ISD::PUNPCKLDQ:
