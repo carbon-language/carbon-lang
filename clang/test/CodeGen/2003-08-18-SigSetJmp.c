@@ -1,5 +1,5 @@
 // RUN: %clang -S -emit-llvm %s  -o /dev/null
-
+// XFAIL: win32
 
 #include <setjmp.h>
 
