@@ -295,7 +295,6 @@ bool PeepholeOptimizer::OptimizeBitcastInstr(MachineInstr *MI,
   if (!DefMI || !DefMI->getDesc().isBitcast())
     return false;
 
-  unsigned SrcDef = 0;
   unsigned SrcSrc = 0;
   NumDefs = DefMI->getDesc().getNumDefs();
   NumSrcs = DefMI->getDesc().getNumOperands() - NumDefs;
@@ -308,13 +307,13 @@ bool PeepholeOptimizer::OptimizeBitcastInstr(MachineInstr *MI,
     unsigned Reg = MO.getReg();
     if (!Reg)
       continue;
-    if (MO.isDef())
-      SrcDef = Reg;
-    else if (SrcSrc)
-      // Multiple sources?
-      return false;
-    else
-      SrcSrc = Reg;
+    if (!MO.isDef()) {
+      if (SrcSrc)
+        // Multiple sources?
+        return false;
+      else
+        SrcSrc = Reg;
+    }
   }
 
   if (MRI->getRegClass(SrcSrc) != MRI->getRegClass(Def))
