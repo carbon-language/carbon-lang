@@ -14,7 +14,7 @@ class InlinedFrameAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
-    def test_stop_at_outer_inline_dsym(self):
+    def test_stop_at_outer_inline_with_dsym(self):
         """Exercise SBFrame.IsInlined() and SBFrame.GetFunctionName()."""
         self.buildDsym()
         self.do_stop_at_outer_inline()
@@ -70,6 +70,8 @@ class InlinedFrameAPITestCase(TestBase):
         #
         frame0 = process.GetThreadAtIndex(0).GetFrameAtIndex(0)
         if frame0.IsInlined():
+            if self.getCompiler().endswith('clang'):
+                self.skipTest("clang: insufficient debug info for call site in main()")
             filename = frame0.GetLineEntry().GetFileSpec().GetFilename()
             self.assertTrue(filename == self.source)
             self.expect(stack_traces1, "First stop at %s:%d" % (self.source, self.first_stop), exe=False,
