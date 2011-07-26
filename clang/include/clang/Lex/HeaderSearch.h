@@ -16,6 +16,7 @@
 
 #include "clang/Lex/DirectoryLookup.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Support/Allocator.h"
 #include <vector>
 
 namespace clang {
@@ -125,12 +126,14 @@ class HeaderSearch {
   /// and this value doesn't match the current query, the cache has to be
   /// ignored.  The second value is the entry in SearchDirs that satisfied the
   /// query.
-  llvm::StringMap<std::pair<unsigned, unsigned> > LookupFileCache;
+  llvm::StringMap<std::pair<unsigned, unsigned>, llvm::BumpPtrAllocator>
+    LookupFileCache;
 
 
   /// FrameworkMap - This is a collection mapping a framework or subframework
   /// name like "Carbon" to the Carbon.framework directory.
-  llvm::StringMap<const DirectoryEntry *> FrameworkMap;
+  llvm::StringMap<const DirectoryEntry *, llvm::BumpPtrAllocator>
+    FrameworkMap;
 
   /// HeaderMaps - This is a mapping from FileEntry -> HeaderMap, uniquing
   /// headermaps.  This vector owns the headermap.
@@ -323,6 +326,9 @@ public:
   search_dir_iterator system_dir_end() const { return SearchDirs.end(); }
 
   void PrintStats();
+  
+  size_t getTotalMemory() const;
+
 private:
 
   /// getFileInfo - Return the HeaderFileInfo structure for the specified

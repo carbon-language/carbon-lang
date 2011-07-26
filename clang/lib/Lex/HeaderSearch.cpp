@@ -542,4 +542,10 @@ bool HeaderSearch::ShouldEnterIncludeFile(const FileEntry *File, bool isImport){
   return true;
 }
 
-
+size_t HeaderSearch::getTotalMemory() const {
+  return SearchDirs.capacity()
+    + FileInfo.capacity()
+    + HeaderMaps.capacity()
+    + LookupFileCache.getAllocator().getTotalMemory()
+    + FrameworkMap.getAllocator().getTotalMemory();
+}

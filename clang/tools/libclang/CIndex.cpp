@@ -5458,6 +5458,9 @@ const char *clang_getTUResourceUsageName(CXTUResourceUsageKind kind) {
     case CXTUResourceUsage_SourceManager_DataStructures:
       str = "SourceManager: data structures and tables";
       break;
+    case CXTUResourceUsage_Preprocessor_HeaderSearch:
+      str = "Preprocessor: header search tables";
+      break;
   }
   return str;
 }
@@ -5543,6 +5546,9 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
                                  pRec->getTotalMemory());    
   }
   
+  createCXTUResourceUsageEntry(*entries,
+                               CXTUResourceUsage_Preprocessor_HeaderSearch,
+                               pp.getHeaderSearchInfo().getTotalMemory());
   
   CXTUResourceUsage usage = { (void*) entries.get(),
                             (unsigned) entries->size(),
