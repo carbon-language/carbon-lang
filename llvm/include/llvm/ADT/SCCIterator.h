@@ -87,7 +87,7 @@ class scc_iterator
         DFSVisitOne(childN);
         continue;
       }
-      
+
       unsigned childNum = nodeVisitNumbers[childN];
       if (MinVisitNumStack.back() > childNum)
         MinVisitNumStack.back() = childNum;
@@ -114,7 +114,7 @@ class scc_iterator
 
       if (minVisitNum != nodeVisitNumbers[visitingN])
         continue;
-      
+
       // A full SCC is on the SCCNodeStack!  It includes all nodes below
       // visitingN on the stack.  Copy those nodes to CurrentSCC,
       // reset their minVisit values, and return (this suspends
@@ -183,7 +183,7 @@ public:
         return true;
     return false;
   }
-                           
+
   /// ReplaceNode - This informs the scc_iterator that the specified Old node
   /// has been deleted, and New is to be used in its place.
   void ReplaceNode(NodeType *Old, NodeType *New) {
