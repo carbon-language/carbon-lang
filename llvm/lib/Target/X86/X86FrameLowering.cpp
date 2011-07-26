@@ -490,6 +490,8 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
   unsigned SubtractInstr = getSUBriOpcode(Is64Bit, -TailCallReturnAddrDelta);
   unsigned SubtractInstrIdx = (Is64Bit ? 3 : 2);
 
+  unsigned StackDivide = (Is64Bit ? 8 : 4);
+
   unsigned InstrOffset = 0;
   unsigned CFAOffset = 0;
   unsigned StackAdjust = 0;
@@ -536,7 +538,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
         //   %RSP<def> = SUB64ri8 %RSP, 48
         return 0;
 
-      StackAdjust = MI.getOperand(2).getImm() / 4;
+      StackAdjust = MI.getOperand(2).getImm() / StackDivide;
       SubtractInstrIdx += InstrOffset;
       ExpectEnd = true;
     }
@@ -544,7 +546,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
 
   // Encode that we are using EBP/RBP as the frame pointer.
   uint32_t CompactUnwindEncoding = 0;
-  CFAOffset /= 4;
+  CFAOffset /= StackDivide;
   if (HasFP) {
     if ((CFAOffset & 0xFF) != CFAOffset)
       // Offset was too big for compact encoding.
