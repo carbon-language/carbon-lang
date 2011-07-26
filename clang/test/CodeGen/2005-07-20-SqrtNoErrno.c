@@ -4,7 +4,7 @@
 float sqrtf(float x);
 float foo(float X) {
   // CHECK: foo
-  // CHECK: call float @sqrtf(float %tmp) readnone
+  // CHECK: call float @sqrtf(float %
   // Check that this is marked readonly when errno is ignored.
   return sqrtf(X);
 }
