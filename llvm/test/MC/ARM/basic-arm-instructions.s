@@ -1763,3 +1763,15 @@ _func:
 @ CHECK: svc	#16                     @ encoding: [0x10,0x00,0x00,0xef]
 @ CHECK: svc	#0                      @ encoding: [0x00,0x00,0x00,0xef]
 @ CHECK: svc	#16777215               @ encoding: [0xff,0xff,0xff,0xef]
+
+
+@------------------------------------------------------------------------------
+@ SWP/SWPB
+@------------------------------------------------------------------------------
+        swp r1, r2, [r3]
+        swp r4, r4, [r6]
+        swpb r5, r1, [r9]
+
+@ CHECK: swp	r1, r2, [r3]            @ encoding: [0x92,0x10,0x03,0xe1]
+@ CHECK: swp	r4, r4, [r6]            @ encoding: [0x94,0x40,0x06,0xe1]
+@ CHECK: swpb	r5, r1, [r9]            @ encoding: [0x91,0x50,0x49,0xe1]
