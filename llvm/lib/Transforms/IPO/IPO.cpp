@@ -70,6 +70,10 @@ void LLVMAddFunctionInliningPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createFunctionInliningPass());
 }
 
+void LLVMAddAlwaysInlinerPass(LLVMPassManagerRef PM) {
+  unwrap(PM)->add(llvm::createAlwaysInlinerPass());
+}
+
 void LLVMAddGlobalDCEPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createGlobalDCEPass());
 }

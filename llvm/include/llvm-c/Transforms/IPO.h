@@ -36,6 +36,9 @@ void LLVMAddFunctionAttrsPass(LLVMPassManagerRef PM);
 /** See llvm::createFunctionInliningPass function. */
 void LLVMAddFunctionInliningPass(LLVMPassManagerRef PM);
 
+/** See llvm::createAlwaysInlinerPass function. */
+void LLVMAddAlwaysInlinerPass(LLVMPassManagerRef PM);
+
 /** See llvm::createGlobalDCEPass function. */
 void LLVMAddGlobalDCEPass(LLVMPassManagerRef PM);
 
