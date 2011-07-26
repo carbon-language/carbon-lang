@@ -1692,3 +1692,63 @@ _func:
 @ CHECK: stmib	r9!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xa9,0xe9]
 @ CHECK: stmda	sp!, {r1, r3, r4, r5, r6} @ encoding: [0x7a,0x00,0x2d,0xe8]
 @ CHECK: stmdb	r0!, {r1, r5, r7, sp}   @ encoding: [0xa2,0x20,0x20,0xe9]
+
+
+@------------------------------------------------------------------------------
+@ FIXME:STR*
+@------------------------------------------------------------------------------
+
+
+@------------------------------------------------------------------------------
+@ SUB
+@------------------------------------------------------------------------------
+        sub r4, r5, #0xf000
+        sub r4, r5, r6
+        sub r4, r5, r6, lsl #5
+        sub r4, r5, r6, lsr #5
+        sub r4, r5, r6, lsr #5
+        sub r4, r5, r6, asr #5
+        sub r4, r5, r6, ror #5
+        sub r6, r7, r8, lsl r9
+        sub r6, r7, r8, lsr r9
+        sub r6, r7, r8, asr r9
+        sub r6, r7, r8, ror r9
+
+        @ destination register is optional
+        sub r5, #0xf000
+        sub r4, r5
+        sub r4, r5, lsl #5
+        sub r4, r5, lsr #5
+        sub r4, r5, lsr #5
+        sub r4, r5, asr #5
+        sub r4, r5, ror #5
+        sub r6, r7, lsl r9
+        sub r6, r7, lsr r9
+        sub r6, r7, asr r9
+        sub r6, r7, ror r9
+
+@ CHECK: sub	r4, r5, #61440          @ encoding: [0x0f,0x4a,0x45,0xe2]
+@ CHECK: sub	r4, r5, r6              @ encoding: [0x06,0x40,0x45,0xe0]
+@ CHECK: sub	r4, r5, r6, lsl #5      @ encoding: [0x86,0x42,0x45,0xe0]
+@ CHECK: sub	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x45,0xe0]
+@ CHECK: sub	r4, r5, r6, lsr #5      @ encoding: [0xa6,0x42,0x45,0xe0]
+@ CHECK: sub	r4, r5, r6, asr #5      @ encoding: [0xc6,0x42,0x45,0xe0]
+@ CHECK: sub	r4, r5, r6, ror #5      @ encoding: [0xe6,0x42,0x45,0xe0]
+@ CHECK: sub	r6, r7, r8, lsl r9      @ encoding: [0x18,0x69,0x47,0xe0]
+@ CHECK: sub	r6, r7, r8, lsr r9      @ encoding: [0x38,0x69,0x47,0xe0]
+@ CHECK: sub	r6, r7, r8, asr r9      @ encoding: [0x58,0x69,0x47,0xe0]
+@ CHECK: sub	r6, r7, r8, ror r9      @ encoding: [0x78,0x69,0x47,0xe0]
+
+
+@ CHECK: sub	r5, r5, #61440          @ encoding: [0x0f,0x5a,0x45,0xe2]
+@ CHECK: sub	r4, r4, r5              @ encoding: [0x05,0x40,0x44,0xe0]
+@ CHECK: sub	r4, r4, r5, lsl #5      @ encoding: [0x85,0x42,0x44,0xe0]
+@ CHECK: sub	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0x44,0xe0]
+@ CHECK: sub	r4, r4, r5, lsr #5      @ encoding: [0xa5,0x42,0x44,0xe0]
+@ CHECK: sub	r4, r4, r5, asr #5      @ encoding: [0xc5,0x42,0x44,0xe0]
+@ CHECK: sub	r4, r4, r5, ror #5      @ encoding: [0xe5,0x42,0x44,0xe0]
+@ CHECK: sub	r6, r6, r7, lsl r9      @ encoding: [0x17,0x69,0x46,0xe0]
+@ CHECK: sub	r6, r6, r7, lsr r9      @ encoding: [0x37,0x69,0x46,0xe0]
+@ CHECK: sub	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0x46,0xe0]
+@ CHECK: sub	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x46,0xe0]
+
