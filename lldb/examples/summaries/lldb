@@ -11,4 +11,5 @@ type summary add -w lldb lldb_private::CommandObject       -f "Command name: ${v
 type summary add -w lldb lldb_private::Variable            -f "${var.m_type.m_name} ${var.m_name}"
 type summary add -w lldb lldb_private::StopInfo            -f "ID: ${var.m_stop_id}, ${var.m_description}"
 type summary add -w lldb lldb_private::FileSpec            -f "file: ${var.m_filename} dir: ${var.m_directory}"
-type summary add -w lldb lldb::ConnectionStatus            -f "[enum=${var%E} val=${var%i}]"
+type summary add -w lldb -v lldb::ConnectionStatus         -f "[enum=${var%E} val=${var%i}]"
+# Where '-v' tells type summary not to show the value itself, but just use the summary format.
