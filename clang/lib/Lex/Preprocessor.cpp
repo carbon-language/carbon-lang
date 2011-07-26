@@ -228,7 +228,13 @@ Preprocessor::macro_begin(bool IncludeExternalMacros) const {
 }
 
 size_t Preprocessor::getTotalMemory() const {
-  return BP.getTotalMemory() + MacroExpandedTokens.capacity()*sizeof(Token);
+  return BP.getTotalMemory()
+    + MacroExpandedTokens.capacity()
+    + Predefines.capacity() /* Predefines buffer. */
+    + Macros.getMemorySize()
+    + PragmaPushMacroInfo.getMemorySize()
+    + PoisonReasons.getMemorySize()
+    + CommentHandlers.capacity();
 }
 
 Preprocessor::macro_iterator

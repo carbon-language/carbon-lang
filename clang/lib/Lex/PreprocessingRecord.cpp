@@ -174,3 +174,10 @@ void PreprocessingRecord::InclusionDirective(
                                             File, SourceRange(HashLoc, EndLoc));
   PreprocessedEntities.push_back(ID);
 }
+
+size_t PreprocessingRecord::getTotalMemory() const {
+  return BumpAlloc.getTotalMemory()
+    + MacroDefinitions.getMemorySize()
+    + PreprocessedEntities.capacity()
+    + LoadedPreprocessedEntities.capacity();
+}

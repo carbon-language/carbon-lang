@@ -298,11 +298,9 @@ namespace clang {
     
     /// \brief Deallocate memory in the preprocessing record.
     void Deallocate(void *Ptr) { }
-    
-    size_t getTotalMemory() const {
-      return BumpAlloc.getTotalMemory();
-    }
-    
+
+    size_t getTotalMemory() const;
+
     // Iteration over the preprocessed entities.
     class iterator {
       PreprocessingRecord *Self;
