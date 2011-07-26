@@ -341,8 +341,10 @@ void RAGreedy::LRE_WillShrinkVirtReg(unsigned VirtReg) {
 
 void RAGreedy::LRE_DidCloneVirtReg(unsigned New, unsigned Old) {
   // LRE may clone a virtual register because dead code elimination causes it to
-  // be split into connected components. Ensure that the new register gets the
+  // be split into connected components. The new components are much smaller
+  // than the original, so they should get a new chance at being assigned.
   // same stage as the parent.
+  ExtraRegInfo[Old].Stage = RS_Assign;
   ExtraRegInfo.grow(New);
   ExtraRegInfo[New] = ExtraRegInfo[Old];
 }
