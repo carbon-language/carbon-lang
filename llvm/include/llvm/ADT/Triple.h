@@ -82,6 +82,7 @@ public:
     DragonFly,
     FreeBSD,
     IOS,
+    KFreeBSD,
     Linux,
     Lv2,        // PS3
     MacOSX,

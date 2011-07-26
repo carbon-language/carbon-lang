@@ -97,6 +97,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case DragonFly: return "dragonfly";
   case FreeBSD: return "freebsd";
   case IOS: return "ios";
+  case KFreeBSD: return "kfreebsd";
   case Linux: return "linux";
   case Lv2: return "lv2";
   case MacOSX: return "macosx";
@@ -327,6 +328,8 @@ Triple::OSType Triple::ParseOS(StringRef OSName) {
     return FreeBSD;
   else if (OSName.startswith("ios"))
     return IOS;
+  else if (OSName.startswith("kfreebsd"))
+    return KFreeBSD;
   else if (OSName.startswith("linux"))
     return Linux;
   else if (OSName.startswith("lv2"))
