@@ -3813,6 +3813,13 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 //                   Iteration Count Computation Code
 //
 
+// getExitCount - Get the expression for the number of loop iterations for which
+// this loop is guaranteed not to exit via ExitBlock. Otherwise return
+// SCEVCouldNotCompute.
+const SCEV *ScalarEvolution::getExitCount(Loop *L, BasicBlock *ExitBlock) {
+  return getBackedgeTakenInfo(L).getExact(ExitBlock, this);
+}
+
 /// getBackedgeTakenCount - If the specified loop has a predictable
 /// backedge-taken count, return it, otherwise return a SCEVCouldNotCompute
 /// object. The backedge-taken count is the number of times the loop header
@@ -3825,14 +3832,14 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 /// hasLoopInvariantBackedgeTakenCount).
 ///
 const SCEV *ScalarEvolution::getBackedgeTakenCount(const Loop *L) {
-  return getBackedgeTakenInfo(L).Exact;
+  return getBackedgeTakenInfo(L).getExact(this);
 }
 
 /// getMaxBackedgeTakenCount - Similar to getBackedgeTakenCount, except
 /// return the least SCEV value that is known never to be less than the
 /// actual backedge taken count.
 const SCEV *ScalarEvolution::getMaxBackedgeTakenCount(const Loop *L) {
-  return getBackedgeTakenInfo(L).Max;
+  return getBackedgeTakenInfo(L).getMax(this);
 }
 
 /// PushLoopPHIs - Push PHI nodes in the header of the given loop
@@ -3849,33 +3856,31 @@ PushLoopPHIs(const Loop *L, SmallVectorImpl<Instruction *> &Worklist) {
 
 const ScalarEvolution::BackedgeTakenInfo &
 ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
-  // Initially insert a CouldNotCompute for this loop. If the insertion
+  // Initially insert an invalid entry for this loop. If the insertion
   // succeeds, proceed to actually compute a backedge-taken count and
   // update the value. The temporary CouldNotCompute value tells SCEV
   // code elsewhere that it shouldn't attempt to request a new
   // backedge-taken count, which could result in infinite recursion.
   std::pair<DenseMap<const Loop *, BackedgeTakenInfo>::iterator, bool> Pair =
-    BackedgeTakenCounts.insert(std::make_pair(L, getCouldNotCompute()));
+    BackedgeTakenCounts.insert(std::make_pair(L, BackedgeTakenInfo()));
   if (!Pair.second)
     return Pair.first->second;
 
-  BackedgeTakenInfo Result = getCouldNotCompute();
-  BackedgeTakenInfo Computed = ComputeBackedgeTakenCount(L);
-  if (Computed.Exact != getCouldNotCompute()) {
-    assert(isLoopInvariant(Computed.Exact, L) &&
-           isLoopInvariant(Computed.Max, L) &&
+  // ComputeBackedgeTakenCount may allocate memory for its result. Inserting it
+  // into the BackedgeTakenCounts map transfers ownership. Otherwise, the result
+  // must be cleared in this scope.
+  BackedgeTakenInfo Result = ComputeBackedgeTakenCount(L);
+
+  if (Result.getExact(this) != getCouldNotCompute()) {
+    assert(isLoopInvariant(Result.getExact(this), L) &&
+           isLoopInvariant(Result.getMax(this), L) &&
            "Computed backedge-taken count isn't loop invariant for loop!");
     ++NumTripCountsComputed;
-
-    // Update the value in the map.
-    Result = Computed;
-  } else {
-    if (Computed.Max != getCouldNotCompute())
-      // Update the value in the map.
-      Result = Computed;
-    if (isa<PHINode>(L->getHeader()->begin()))
-      // Only count loops that have phi nodes as not being computable.
-      ++NumTripCountsNotComputed;
+  }
+  else if (Result.getMax(this) == getCouldNotCompute() &&
+           isa<PHINode>(L->getHeader()->begin())) {
+    // Only count loops that have phi nodes as not being computable.
+    ++NumTripCountsNotComputed;
   }
 
   // Now that we know more about the trip count for this loop, forget any
@@ -3883,7 +3888,7 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
   // conservative estimates made without the benefit of trip count
   // information. This is similar to the code in forgetLoop, except that
   // it handles SCEVUnknown PHI nodes specially.
-  if (Computed.hasAnyInfo()) {
+  if (Result.hasAnyInfo()) {
     SmallVector<Instruction *, 16> Worklist;
     PushLoopPHIs(L, Worklist);
 
@@ -3928,7 +3933,12 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
 /// compute a trip count, or if the loop is deleted.
 void ScalarEvolution::forgetLoop(const Loop *L) {
   // Drop any stored trip count value.
-  BackedgeTakenCounts.erase(L);
+  DenseMap<const Loop*, BackedgeTakenInfo>::iterator BTCPos =
+    BackedgeTakenCounts.find(L);
+  if (BTCPos != BackedgeTakenCounts.end()) {
+    BTCPos->second.clear();
+    BackedgeTakenCounts.erase(BTCPos);
+  }
 
   // Drop information about expressions based on loop-header PHIs.
   SmallVector<Instruction *, 16> Worklist;
@@ -3984,6 +3994,84 @@ void ScalarEvolution::forgetValue(Value *V) {
   }
 }
 
+/// getExact - Get the exact loop backedge taken count considering all loop
+/// exits. If all exits are computable, this is the minimum computed count.
+const SCEV *
+ScalarEvolution::BackedgeTakenInfo::getExact(ScalarEvolution *SE) const {
+  // If any exits were not computable, the loop is not computable.
+  if (!ExitNotTaken.isCompleteList()) return SE->getCouldNotCompute();
+
+  // We need at least one computable exit.
+  if (!ExitNotTaken.ExitBlock) return SE->getCouldNotCompute();
+  assert(ExitNotTaken.ExactNotTaken && "uninitialized not-taken info");
+
+  const SCEV *BECount = 0;
+  for (const ExitNotTakenInfo *ENT = &ExitNotTaken;
+       ENT != 0; ENT = ENT->getNextExit()) {
+
+    assert(ENT->ExactNotTaken != SE->getCouldNotCompute() && "bad exit SCEV");
+
+    if (!BECount)
+      BECount = ENT->ExactNotTaken;
+    else
+      BECount = SE->getUMinFromMismatchedTypes(BECount, ENT->ExactNotTaken);
+  }
+  return BECount;
+}
+
+/// getExact - Get the exact not taken count for this loop exit.
+const SCEV *
+ScalarEvolution::BackedgeTakenInfo::getExact(BasicBlock *ExitBlock,
+                                             ScalarEvolution *SE) const {
+  for (const ExitNotTakenInfo *ENT = &ExitNotTaken;
+       ENT != 0; ENT = ENT->getNextExit()) {
+
+    if (ENT->ExitBlock == ExitBlock)
+      return ENT->ExactNotTaken;
+  }
+  return SE->getCouldNotCompute();
+}
+
+/// getMax - Get the max backedge taken count for the loop.
+const SCEV *
+ScalarEvolution::BackedgeTakenInfo::getMax(ScalarEvolution *SE) const {
+  return Max ? Max : SE->getCouldNotCompute();
+}
+
+/// Allocate memory for BackedgeTakenInfo and copy the not-taken count of each
+/// computable exit into a persistent ExitNotTakenInfo array.
+ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
+  SmallVectorImpl< std::pair<BasicBlock *, const SCEV *> > &ExitCounts,
+  bool Complete, const SCEV *MaxCount) : Max(MaxCount) {
+
+  if (!Complete)
+    ExitNotTaken.setIncomplete();
+
+  unsigned NumExits = ExitCounts.size();
+  if (NumExits == 0) return;
+
+  ExitNotTaken.ExitBlock = ExitCounts[0].first;
+  ExitNotTaken.ExactNotTaken = ExitCounts[0].second;
+  if (NumExits == 1) return;
+
+  // Handle the rare case of multiple computable exits.
+  ExitNotTakenInfo *ENT = new ExitNotTakenInfo[NumExits-1];
+
+  ExitNotTakenInfo *PrevENT = &ExitNotTaken;
+  for (unsigned i = 1; i < NumExits; ++i, PrevENT = ENT, ++ENT) {
+    PrevENT->setNextExit(ENT);
+    ENT->ExitBlock = ExitCounts[i].first;
+    ENT->ExactNotTaken = ExitCounts[i].second;
+  }
+}
+
+/// clear - Invalidate this result and free the ExitNotTakenInfo array.
+void ScalarEvolution::BackedgeTakenInfo::clear() {
+  ExitNotTaken.ExitBlock = 0;
+  ExitNotTaken.ExactNotTaken = 0;
+  delete[] ExitNotTaken.getNextExit();
+}
+
 /// ComputeBackedgeTakenCount - Compute the number of times the backedge
 /// of the specified loop will execute.
 ScalarEvolution::BackedgeTakenInfo
@@ -3992,38 +4080,31 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   L->getExitingBlocks(ExitingBlocks);
 
   // Examine all exits and pick the most conservative values.
-  const SCEV *BECount = getCouldNotCompute();
   const SCEV *MaxBECount = getCouldNotCompute();
-  bool CouldNotComputeBECount = false;
+  bool CouldComputeBECount = true;
+  SmallVector<std::pair<BasicBlock *, const SCEV *>, 4> ExitCounts;
   for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i) {
-    BackedgeTakenInfo NewBTI =
-      ComputeBackedgeTakenCountFromExit(L, ExitingBlocks[i]);
-
-    if (NewBTI.Exact == getCouldNotCompute()) {
+    ExitLimit EL = ComputeExitLimit(L, ExitingBlocks[i]);
+    if (EL.Exact == getCouldNotCompute())
       // We couldn't compute an exact value for this exit, so
       // we won't be able to compute an exact value for the loop.
-      CouldNotComputeBECount = true;
-      BECount = getCouldNotCompute();
-    } else if (!CouldNotComputeBECount) {
-      if (BECount == getCouldNotCompute())
-        BECount = NewBTI.Exact;
-      else
-        BECount = getUMinFromMismatchedTypes(BECount, NewBTI.Exact);
-    }
+      CouldComputeBECount = false;
+    else
+      ExitCounts.push_back(std::make_pair(ExitingBlocks[i], EL.Exact));
+
     if (MaxBECount == getCouldNotCompute())
-      MaxBECount = NewBTI.Max;
-    else if (NewBTI.Max != getCouldNotCompute())
-      MaxBECount = getUMinFromMismatchedTypes(MaxBECount, NewBTI.Max);
+      MaxBECount = EL.Max;
+    else if (EL.Max != getCouldNotCompute())
+      MaxBECount = getUMinFromMismatchedTypes(MaxBECount, EL.Max);
   }
 
-  return BackedgeTakenInfo(BECount, MaxBECount);
+  return BackedgeTakenInfo(ExitCounts, CouldComputeBECount, MaxBECount);
 }
 
-/// ComputeBackedgeTakenCountFromExit - Compute the number of times the backedge
-/// of the specified loop will execute if it exits via the specified block.
-ScalarEvolution::BackedgeTakenInfo
-ScalarEvolution::ComputeBackedgeTakenCountFromExit(const Loop *L,
-                                                   BasicBlock *ExitingBlock) {
+/// ComputeExitLimit - Compute the number of times the backedge of the specified
+/// loop will execute if it exits via the specified block.
+ScalarEvolution::ExitLimit
+ScalarEvolution::ComputeExitLimit(const Loop *L, BasicBlock *ExitingBlock) {
 
   // Okay, we've chosen an exiting block.  See what condition causes us to
   // exit at this block.
@@ -4081,95 +4162,91 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExit(const Loop *L,
   }
 
   // Proceed to the next level to examine the exit condition expression.
-  return ComputeBackedgeTakenCountFromExitCond(L, ExitBr->getCondition(),
-                                               ExitBr->getSuccessor(0),
-                                               ExitBr->getSuccessor(1));
+  return ComputeExitLimitFromCond(L, ExitBr->getCondition(),
+                                  ExitBr->getSuccessor(0),
+                                  ExitBr->getSuccessor(1));
 }
 
-/// ComputeBackedgeTakenCountFromExitCond - Compute the number of times the
+/// ComputeExitLimitFromCond - Compute the number of times the
 /// backedge of the specified loop will execute if its exit condition
 /// were a conditional branch of ExitCond, TBB, and FBB.
-ScalarEvolution::BackedgeTakenInfo
-ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
-                                                       Value *ExitCond,
-                                                       BasicBlock *TBB,
-                                                       BasicBlock *FBB) {
+ScalarEvolution::ExitLimit
+ScalarEvolution::ComputeExitLimitFromCond(const Loop *L,
+                                          Value *ExitCond,
+                                          BasicBlock *TBB,
+                                          BasicBlock *FBB) {
   // Check if the controlling expression for this loop is an And or Or.
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(ExitCond)) {
     if (BO->getOpcode() == Instruction::And) {
       // Recurse on the operands of the and.
-      BackedgeTakenInfo BTI0 =
-        ComputeBackedgeTakenCountFromExitCond(L, BO->getOperand(0), TBB, FBB);
-      BackedgeTakenInfo BTI1 =
-        ComputeBackedgeTakenCountFromExitCond(L, BO->getOperand(1), TBB, FBB);
+      ExitLimit EL0 = ComputeExitLimitFromCond(L, BO->getOperand(0), TBB, FBB);
+      ExitLimit EL1 = ComputeExitLimitFromCond(L, BO->getOperand(1), TBB, FBB);
       const SCEV *BECount = getCouldNotCompute();
       const SCEV *MaxBECount = getCouldNotCompute();
       if (L->contains(TBB)) {
         // Both conditions must be true for the loop to continue executing.
         // Choose the less conservative count.
-        if (BTI0.Exact == getCouldNotCompute() ||
-            BTI1.Exact == getCouldNotCompute())
+        if (EL0.Exact == getCouldNotCompute() ||
+            EL1.Exact == getCouldNotCompute())
           BECount = getCouldNotCompute();
         else
-          BECount = getUMinFromMismatchedTypes(BTI0.Exact, BTI1.Exact);
-        if (BTI0.Max == getCouldNotCompute())
-          MaxBECount = BTI1.Max;
-        else if (BTI1.Max == getCouldNotCompute())
-          MaxBECount = BTI0.Max;
+          BECount = getUMinFromMismatchedTypes(EL0.Exact, EL1.Exact);
+        if (EL0.Max == getCouldNotCompute())
+          MaxBECount = EL1.Max;
+        else if (EL1.Max == getCouldNotCompute())
+          MaxBECount = EL0.Max;
         else
-          MaxBECount = getUMinFromMismatchedTypes(BTI0.Max, BTI1.Max);
+          MaxBECount = getUMinFromMismatchedTypes(EL0.Max, EL1.Max);
       } else {
         // Both conditions must be true at the same time for the loop to exit.
         // For now, be conservative.
         assert(L->contains(FBB) && "Loop block has no successor in loop!");
-        if (BTI0.Max == BTI1.Max)
-          MaxBECount = BTI0.Max;
-        if (BTI0.Exact == BTI1.Exact)
-          BECount = BTI0.Exact;
+        if (EL0.Max == EL1.Max)
+          MaxBECount = EL0.Max;
+        if (EL0.Exact == EL1.Exact)
+          BECount = EL0.Exact;
       }
 
-      return BackedgeTakenInfo(BECount, MaxBECount);
+      return ExitLimit(BECount, MaxBECount);
     }
     if (BO->getOpcode() == Instruction::Or) {
       // Recurse on the operands of the or.
-      BackedgeTakenInfo BTI0 =
-        ComputeBackedgeTakenCountFromExitCond(L, BO->getOperand(0), TBB, FBB);
-      BackedgeTakenInfo BTI1 =
-        ComputeBackedgeTakenCountFromExitCond(L, BO->getOperand(1), TBB, FBB);
+      ExitLimit EL0 = ComputeExitLimitFromCond(L, BO->getOperand(0), TBB, FBB);
+      ExitLimit EL1 = ComputeExitLimitFromCond(L, BO->getOperand(1), TBB, FBB);
       const SCEV *BECount = getCouldNotCompute();
       const SCEV *MaxBECount = getCouldNotCompute();
       if (L->contains(FBB)) {
         // Both conditions must be false for the loop to continue executing.
         // Choose the less conservative count.
-        if (BTI0.Exact == getCouldNotCompute() ||
-            BTI1.Exact == getCouldNotCompute())
+        if (EL0.Exact == getCouldNotCompute() ||
+            EL1.Exact == getCouldNotCompute())
           BECount = getCouldNotCompute();
         else
-          BECount = getUMinFromMismatchedTypes(BTI0.Exact, BTI1.Exact);
-        if (BTI0.Max == getCouldNotCompute())
-          MaxBECount = BTI1.Max;
-        else if (BTI1.Max == getCouldNotCompute())
-          MaxBECount = BTI0.Max;
+          BECount = getUMinFromMismatchedTypes(EL0.Exact, EL1.Exact);
+        if (EL0.Max == getCouldNotCompute())
+          MaxBECount = EL1.Max;
+        else if (EL1.Max == getCouldNotCompute())
+          MaxBECount = EL0.Max;
         else
-          MaxBECount = getUMinFromMismatchedTypes(BTI0.Max, BTI1.Max);
+          MaxBECount = getUMinFromMismatchedTypes(EL0.Max, EL1.Max);
       } else {
         // Both conditions must be false at the same time for the loop to exit.
         // For now, be conservative.
         assert(L->contains(TBB) && "Loop block has no successor in loop!");
-        if (BTI0.Max == BTI1.Max)
-          MaxBECount = BTI0.Max;
-        if (BTI0.Exact == BTI1.Exact)
-          BECount = BTI0.Exact;
+        if (EL0.Max == EL1.Max)
+          MaxBECount = EL0.Max;
+        if (EL0.Exact == EL1.Exact)
+          BECount = EL0.Exact;
       }
 
-      return BackedgeTakenInfo(BECount, MaxBECount);
+      return ExitLimit(BECount, MaxBECount);
     }
   }
 
   // With an icmp, it may be feasible to compute an exact backedge-taken count.
   // Proceed to the next level to examine the icmp.
   if (ICmpInst *ExitCondICmp = dyn_cast<ICmpInst>(ExitCond))
-    return ComputeBackedgeTakenCountFromExitCondICmp(L, ExitCondICmp, TBB, FBB);
+    return ComputeExitLimitFromICmp(L, ExitCondICmp, TBB, FBB);
 
   // Check for a constant condition. These are normally stripped out by
   // SimplifyCFG, but ScalarEvolution may be used by a pass which wishes to
@@ -4185,17 +4262,17 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCond(const Loop *L,
   }
 
   // If it's not an integer or pointer comparison then compute it the hard way.
-  return ComputeBackedgeTakenCountExhaustively(L, ExitCond, !L->contains(TBB));
+  return ComputeExitCountExhaustively(L, ExitCond, !L->contains(TBB));
 }
 
-/// ComputeBackedgeTakenCountFromExitCondICmp - Compute the number of times the
+/// ComputeExitLimitFromICmp - Compute the number of times the
 /// backedge of the specified loop will execute if its exit condition
 /// were a conditional branch of the ICmpInst ExitCond, TBB, and FBB.
-ScalarEvolution::BackedgeTakenInfo
-ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
-                                                           ICmpInst *ExitCond,
-                                                           BasicBlock *TBB,
-                                                           BasicBlock *FBB) {
+ScalarEvolution::ExitLimit
+ScalarEvolution::ComputeExitLimitFromICmp(const Loop *L,
+                                          ICmpInst *ExitCond,
+                                          BasicBlock *TBB,
+                                          BasicBlock *FBB) {
 
   // If the condition was exit on true, convert the condition to exit on false
   ICmpInst::Predicate Cond;
@@ -4207,8 +4284,8 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
   // Handle common loops like: for (X = "string"; *X; ++X)
   if (LoadInst *LI = dyn_cast<LoadInst>(ExitCond->getOperand(0)))
     if (Constant *RHS = dyn_cast<Constant>(ExitCond->getOperand(1))) {
-      BackedgeTakenInfo ItCnt =
-        ComputeLoadConstantCompareBackedgeTakenCount(LI, RHS, L, Cond);
+      ExitLimit ItCnt =
+        ComputeLoadConstantCompareExitLimit(LI, RHS, L, Cond);
       if (ItCnt.hasAnyInfo())
         return ItCnt;
     }
@@ -4247,36 +4324,36 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
   switch (Cond) {
   case ICmpInst::ICMP_NE: {                     // while (X != Y)
     // Convert to: while (X-Y != 0)
-    BackedgeTakenInfo BTI = HowFarToZero(getMinusSCEV(LHS, RHS), L);
-    if (BTI.hasAnyInfo()) return BTI;
+    ExitLimit EL = HowFarToZero(getMinusSCEV(LHS, RHS), L);
+    if (EL.hasAnyInfo()) return EL;
     break;
   }
   case ICmpInst::ICMP_EQ: {                     // while (X == Y)
     // Convert to: while (X-Y == 0)
-    BackedgeTakenInfo BTI = HowFarToNonZero(getMinusSCEV(LHS, RHS), L);
-    if (BTI.hasAnyInfo()) return BTI;
+    ExitLimit EL = HowFarToNonZero(getMinusSCEV(LHS, RHS), L);
+    if (EL.hasAnyInfo()) return EL;
     break;
   }
   case ICmpInst::ICMP_SLT: {
-    BackedgeTakenInfo BTI = HowManyLessThans(LHS, RHS, L, true);
-    if (BTI.hasAnyInfo()) return BTI;
+    ExitLimit EL = HowManyLessThans(LHS, RHS, L, true);
+    if (EL.hasAnyInfo()) return EL;
     break;
   }
   case ICmpInst::ICMP_SGT: {
-    BackedgeTakenInfo BTI = HowManyLessThans(getNotSCEV(LHS),
+    ExitLimit EL = HowManyLessThans(getNotSCEV(LHS),
                                              getNotSCEV(RHS), L, true);
-    if (BTI.hasAnyInfo()) return BTI;
+    if (EL.hasAnyInfo()) return EL;
     break;
   }
   case ICmpInst::ICMP_ULT: {
-    BackedgeTakenInfo BTI = HowManyLessThans(LHS, RHS, L, false);
-    if (BTI.hasAnyInfo()) return BTI;
+    ExitLimit EL = HowManyLessThans(LHS, RHS, L, false);
+    if (EL.hasAnyInfo()) return EL;
     break;
   }
   case ICmpInst::ICMP_UGT: {
-    BackedgeTakenInfo BTI = HowManyLessThans(getNotSCEV(LHS),
+    ExitLimit EL = HowManyLessThans(getNotSCEV(LHS),
                                              getNotSCEV(RHS), L, false);
-    if (BTI.hasAnyInfo()) return BTI;
+    if (EL.hasAnyInfo()) return EL;
     break;
   }
   default:
@@ -4290,8 +4367,7 @@ ScalarEvolution::ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
 #endif
     break;
   }
-  return
-    ComputeBackedgeTakenCountExhaustively(L, ExitCond, !L->contains(TBB));
+  return ComputeExitCountExhaustively(L, ExitCond, !L->contains(TBB));
 }
 
 static ConstantInt *
@@ -4338,15 +4414,16 @@ GetAddressedElementFromGlobal(GlobalVariable *GV,
   return Init;
 }
 
-/// ComputeLoadConstantCompareBackedgeTakenCount - Given an exit condition of
+/// ComputeLoadConstantCompareExitLimit - Given an exit condition of
 /// 'icmp op load X, cst', try to see if we can compute the backedge
 /// execution count.
-ScalarEvolution::BackedgeTakenInfo
-ScalarEvolution::ComputeLoadConstantCompareBackedgeTakenCount(
-                                                LoadInst *LI,
-                                                Constant *RHS,
-                                                const Loop *L,
-                                                ICmpInst::Predicate predicate) {
+ScalarEvolution::ExitLimit
+ScalarEvolution::ComputeLoadConstantCompareExitLimit(
+  LoadInst *LI,
+  Constant *RHS,
+  const Loop *L,
+  ICmpInst::Predicate predicate) {
+
   if (LI->isVolatile()) return getCouldNotCompute();
 
   // Check to see if the loaded pointer is a getelementptr of a global.
@@ -4547,15 +4624,14 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
   }
 }
 
-/// ComputeBackedgeTakenCountExhaustively - If the loop is known to execute a
+/// ComputeExitCountExhaustively - If the loop is known to execute a
 /// constant number of times (the condition evolves only from constants),
 /// try to evaluate a few iterations of the loop until we get the exit
 /// condition gets a value of ExitWhen (true or false).  If we cannot
 /// evaluate the trip count of the loop, return getCouldNotCompute().
-const SCEV *
-ScalarEvolution::ComputeBackedgeTakenCountExhaustively(const Loop *L,
-                                                       Value *Cond,
-                                                       bool ExitWhen) {
+const SCEV * ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
+                                                           Value *Cond,
+                                                           bool ExitWhen) {
   PHINode *PN = getConstantEvolvingPHI(Cond, L);
   if (PN == 0) return getCouldNotCompute();
 
@@ -4949,7 +5025,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
 /// now expressed as a single expression, V = x-y. So the exit test is
 /// effectively V != 0.  We know and take advantage of the fact that this
 /// expression only being used in a comparison by zero context.
-ScalarEvolution::BackedgeTakenInfo
+ScalarEvolution::ExitLimit
 ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
   // If the value is a constant
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
@@ -5061,7 +5137,7 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
 /// HowFarToNonZero - Return the number of times a backedge checking the
 /// specified value for nonzero will execute.  If not computable, return
 /// CouldNotCompute
-ScalarEvolution::BackedgeTakenInfo
+ScalarEvolution::ExitLimit
 ScalarEvolution::HowFarToNonZero(const SCEV *V, const Loop *L) {
   // Loops that look like: while (X == 0) are very strange indeed.  We don't
   // handle them yet except for the trivial case.  This could be expanded in the
@@ -5774,7 +5850,7 @@ const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
 /// HowManyLessThans - Return the number of times a backedge containing the
 /// specified less-than comparison will execute.  If not computable, return
 /// CouldNotCompute.
-ScalarEvolution::BackedgeTakenInfo
+ScalarEvolution::ExitLimit
 ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
                                   const Loop *L, bool isSigned) {
   // Only handle:  "ADDREC < LoopInvariant".
@@ -5881,7 +5957,7 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     if (isa<SCEVCouldNotCompute>(MaxBECount))
       MaxBECount = BECount;
 
-    return BackedgeTakenInfo(BECount, MaxBECount);
+    return ExitLimit(BECount, MaxBECount);
   }
 
   return getCouldNotCompute();
@@ -6089,6 +6165,15 @@ void ScalarEvolution::releaseMemory() {
   FirstUnknown = 0;
 
   ValueExprMap.clear();
+
+  // Free any extra memory created for ExitNotTakenInfo in the unlikely event
+  // that a loop had multiple computable exits.
+  for (DenseMap<const Loop*, BackedgeTakenInfo>::iterator I =
+         BackedgeTakenCounts.begin(), E = BackedgeTakenCounts.end();
+       I != E; ++I) {
+    I->second.clear();
+  }
+
   BackedgeTakenCounts.clear();
   ConstantEvolutionLoopExitValue.clear();
   ValuesAtScopes.clear();

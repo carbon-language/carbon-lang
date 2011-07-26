@@ -241,31 +241,93 @@ namespace llvm {
     ///
     ValueExprMapType ValueExprMap;
 
+    /// ExitLimit - Information about the number of loop iterations for
+    /// which a loop exit's branch condition evaluates to the not-taken path.
+    /// This is a temporary pair of exact and max expressions that are
+    /// eventually summarized in ExitNotTakenInfo and BackedgeTakenInfo.
+    struct ExitLimit {
+      const SCEV *Exact;
+      const SCEV *Max;
+
+      /*implicit*/ ExitLimit(const SCEV *E) : Exact(E), Max(E) {}
+
+      ExitLimit(const SCEV *E, const SCEV *M) : Exact(E), Max(M) {}
+
+      /// hasAnyInfo - Test whether this ExitLimit contains any computed
+      /// information, or whether it's all SCEVCouldNotCompute values.
+      bool hasAnyInfo() const {
+        return !isa<SCEVCouldNotCompute>(Exact) ||
+          !isa<SCEVCouldNotCompute>(Max);
+      }
+    };
+
+    /// ExitNotTakenInfo - Information about the number of times a particular
+    /// loop exit may be reached before exiting the loop.
+    struct ExitNotTakenInfo {
+      BasicBlock *ExitBlock;
+      const SCEV *ExactNotTaken;
+      PointerIntPair<ExitNotTakenInfo*, 1> NextExit;
+
+      ExitNotTakenInfo() : ExitBlock(0), ExactNotTaken(0) {}
+
+      /// isCompleteList - Return true if all loop exits are computable.
+      bool isCompleteList() const {
+        return NextExit.getInt() == 0;
+      }
+
+      void setIncomplete() { NextExit.setInt(1); }
+
+      /// getNextExit - Return a pointer to the next exit's not-taken info.
+      ExitNotTakenInfo *getNextExit() const {
+        return NextExit.getPointer();
+      }
+
+      void setNextExit(ExitNotTakenInfo *ENT) { NextExit.setPointer(ENT); }
+    };
+
     /// BackedgeTakenInfo - Information about the backedge-taken count
     /// of a loop. This currently includes an exact count and a maximum count.
     ///
-    struct BackedgeTakenInfo {
-      /// Exact - An expression indicating the exact backedge-taken count of
-      /// the loop if it is known, or a SCEVCouldNotCompute otherwise.
-      const SCEV *Exact;
+    class BackedgeTakenInfo {
+      /// ExitNotTaken - A list of computable exits and their not-taken counts.
+      /// Loops almost never have more than one computable exit.
+      ExitNotTakenInfo ExitNotTaken;
 
       /// Max - An expression indicating the least maximum backedge-taken
       /// count of the loop that is known, or a SCEVCouldNotCompute.
       const SCEV *Max;
 
-      /*implicit*/ BackedgeTakenInfo(const SCEV *exact) :
-        Exact(exact), Max(exact) {}
+    public:
+      BackedgeTakenInfo() : Max(0) {}
 
-      BackedgeTakenInfo(const SCEV *exact, const SCEV *max) :
-        Exact(exact), Max(max) {}
+      /// Initialize BackedgeTakenInfo from a list of exact exit counts.
+      BackedgeTakenInfo(
+        SmallVectorImpl< std::pair<BasicBlock *, const SCEV *> > &ExitCounts,
+        bool Complete, const SCEV *MaxCount);
 
       /// hasAnyInfo - Test whether this BackedgeTakenInfo contains any
       /// computed information, or whether it's all SCEVCouldNotCompute
       /// values.
       bool hasAnyInfo() const {
-        return !isa<SCEVCouldNotCompute>(Exact) ||
-               !isa<SCEVCouldNotCompute>(Max);
+        return ExitNotTaken.ExitBlock || !isa<SCEVCouldNotCompute>(Max);
       }
+
+      /// getExact - Return an expression indicating the exact backedge-taken
+      /// count of the loop if it is known, or SCEVCouldNotCompute
+      /// otherwise. This is the number of times the loop header can be
+      /// guaranteed to execute, minus one.
+      const SCEV *getExact(ScalarEvolution *SE) const;
+
+      /// getExact - Return the number of times this loop exit may fall through
+      /// to the back edge. The loop is guaranteed not to exit via this block
+      /// before this number of iterations, but may exit via another block.
+      const SCEV *getExact(BasicBlock *ExitBlock, ScalarEvolution *SE) const;
+
+      /// getMax - Get the max backedge taken count for the loop.
+      const SCEV *getMax(ScalarEvolution *SE) const;
+
+      /// clear - Invalidate this result and free associated memory.
+      void clear();
     };
 
     /// BackedgeTakenCounts - Cache the backedge-taken count of the loops for
@@ -365,64 +427,59 @@ namespace llvm {
     /// loop will iterate.
     BackedgeTakenInfo ComputeBackedgeTakenCount(const Loop *L);
 
-    /// ComputeBackedgeTakenCountFromExit - Compute the number of times the
-    /// backedge of the specified loop will execute if it exits via the
-    /// specified block.
-    BackedgeTakenInfo ComputeBackedgeTakenCountFromExit(const Loop *L,
-                                                      BasicBlock *ExitingBlock);
+    /// ComputeExitLimit - Compute the number of times the backedge of the
+    /// specified loop will execute if it exits via the specified block.
+    ExitLimit ComputeExitLimit(const Loop *L, BasicBlock *ExitingBlock);
 
-    /// ComputeBackedgeTakenCountFromExitCond - Compute the number of times the
-    /// backedge of the specified loop will execute if its exit condition
-    /// were a conditional branch of ExitCond, TBB, and FBB.
-    BackedgeTakenInfo
-      ComputeBackedgeTakenCountFromExitCond(const Loop *L,
-                                            Value *ExitCond,
-                                            BasicBlock *TBB,
-                                            BasicBlock *FBB);
+    /// ComputeExitLimitFromCond - Compute the number of times the backedge of
+    /// the specified loop will execute if its exit condition were a conditional
+    /// branch of ExitCond, TBB, and FBB.
+    ExitLimit ComputeExitLimitFromCond(const Loop *L,
+                                       Value *ExitCond,
+                                       BasicBlock *TBB,
+                                       BasicBlock *FBB);
 
-    /// ComputeBackedgeTakenCountFromExitCondICmp - Compute the number of
-    /// times the backedge of the specified loop will execute if its exit
-    /// condition were a conditional branch of the ICmpInst ExitCond, TBB,
-    /// and FBB.
-    BackedgeTakenInfo
-      ComputeBackedgeTakenCountFromExitCondICmp(const Loop *L,
-                                                ICmpInst *ExitCond,
-                                                BasicBlock *TBB,
-                                                BasicBlock *FBB);
+    /// ComputeExitLimitFromICmp - Compute the number of times the backedge of
+    /// the specified loop will execute if its exit condition were a conditional
+    /// branch of the ICmpInst ExitCond, TBB, and FBB.
+    ExitLimit ComputeExitLimitFromICmp(const Loop *L,
+                                       ICmpInst *ExitCond,
+                                       BasicBlock *TBB,
+                                       BasicBlock *FBB);
 
-    /// ComputeLoadConstantCompareBackedgeTakenCount - Given an exit condition
+    /// ComputeLoadConstantCompareExitLimit - Given an exit condition
     /// of 'icmp op load X, cst', try to see if we can compute the
     /// backedge-taken count.
-    BackedgeTakenInfo
-      ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI,
-                                                   Constant *RHS,
-                                                   const Loop *L,
-                                                   ICmpInst::Predicate p);
+    ExitLimit ComputeLoadConstantCompareExitLimit(LoadInst *LI,
+                                                  Constant *RHS,
+                                                  const Loop *L,
+                                                  ICmpInst::Predicate p);
 
-    /// ComputeBackedgeTakenCountExhaustively - If the loop is known to execute
-    /// a constant number of times (the condition evolves only from constants),
+    /// ComputeExitCountExhaustively - If the loop is known to execute a
+    /// constant number of times (the condition evolves only from constants),
     /// try to evaluate a few iterations of the loop until we get the exit
     /// condition gets a value of ExitWhen (true or false).  If we cannot
-    /// evaluate the backedge-taken count of the loop, return CouldNotCompute.
-    const SCEV *ComputeBackedgeTakenCountExhaustively(const Loop *L,
-                                                      Value *Cond,
-                                                      bool ExitWhen);
+    /// evaluate the exit count of the loop, return CouldNotCompute.
+    const SCEV *ComputeExitCountExhaustively(const Loop *L,
+                                             Value *Cond,
+                                             bool ExitWhen);
 
-    /// HowFarToZero - Return the number of times a backedge comparing the
-    /// specified value to zero will execute.  If not computable, return
+    /// HowFarToZero - Return the number of times an exit condition comparing
+    /// the specified value to zero will execute.  If not computable, return
     /// CouldNotCompute.
-    BackedgeTakenInfo HowFarToZero(const SCEV *V, const Loop *L);
+    ExitLimit HowFarToZero(const SCEV *V, const Loop *L);
 
-    /// HowFarToNonZero - Return the number of times a backedge checking the
-    /// specified value for nonzero will execute.  If not computable, return
+    /// HowFarToNonZero - Return the number of times an exit condition checking
+    /// the specified value for nonzero will execute.  If not computable, return
     /// CouldNotCompute.
-    BackedgeTakenInfo HowFarToNonZero(const SCEV *V, const Loop *L);
+    ExitLimit HowFarToNonZero(const SCEV *V, const Loop *L);
 
-    /// HowManyLessThans - Return the number of times a backedge containing the
-    /// specified less-than comparison will execute.  If not computable, return
-    /// CouldNotCompute. isSigned specifies whether the less-than is signed.
-    BackedgeTakenInfo HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
-                                       const Loop *L, bool isSigned);
+    /// HowManyLessThans - Return the number of times an exit condition
+    /// containing the specified less-than comparison will execute.  If not
+    /// computable, return CouldNotCompute. isSigned specifies whether the
+    /// less-than is signed.
+    ExitLimit HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
+                               const Loop *L, bool isSigned);
 
     /// getPredecessorWithUniqueSuccessorForBB - Return a predecessor of BB
     /// (which may not be an immediate predecessor) which has exactly one
@@ -652,6 +709,11 @@ namespace llvm {
     /// to eliminate casts.
     bool isLoopBackedgeGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
                                      const SCEV *LHS, const SCEV *RHS);
+
+    // getExitCount - Get the expression for the number of loop iterations for
+    // which this loop is guaranteed not to exit via ExitBlock. Otherwise return
+    // SCEVCouldNotCompute.
+    const SCEV *getExitCount(Loop *L, BasicBlock *ExitBlock);
 
     /// getBackedgeTakenCount - If the specified loop has a predictable
     /// backedge-taken count, return it, otherwise return a SCEVCouldNotCompute
