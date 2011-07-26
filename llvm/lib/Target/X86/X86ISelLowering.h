@@ -406,11 +406,11 @@ namespace llvm {
 
     /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to MOVSHDUP.
-    bool isMOVSHDUPMask(ShuffleVectorSDNode *N);
+    bool isMOVSHDUPMask(ShuffleVectorSDNode *N, const X86Subtarget *Subtarget);
 
     /// isMOVSLDUPMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to MOVSLDUP.
-    bool isMOVSLDUPMask(ShuffleVectorSDNode *N);
+    bool isMOVSLDUPMask(ShuffleVectorSDNode *N, const X86Subtarget *Subtarget);
 
     /// isMOVDDUPMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to MOVDDUP.

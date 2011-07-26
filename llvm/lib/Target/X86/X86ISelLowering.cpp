@@ -3457,51 +3457,58 @@ static bool isCommutedMOVL(ShuffleVectorSDNode *N, bool V2IsSplat = false,
 
 /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVSHDUP.
-bool X86::isMOVSHDUPMask(ShuffleVectorSDNode *N) {
-  if (N->getValueType(0).getVectorNumElements() != 4)
+/// Masks to match: <1, 1, 3, 3> or <1, 1, 3, 3, 5, 5, 7, 7>
+bool X86::isMOVSHDUPMask(ShuffleVectorSDNode *N,
+                         const X86Subtarget *Subtarget) {
+  if (!Subtarget->hasSSE3() && !Subtarget->hasAVX())
     return false;
 
-  // Expect 1, 1, 3, 3
-  for (unsigned i = 0; i < 2; ++i) {
-    int Elt = N->getMaskElt(i);
-    if (Elt >= 0 && Elt != 1)
-      return false;
-  }
+  // The second vector must be undef
+  if (N->getOperand(1).getOpcode() != ISD::UNDEF)
+    return false;
 
-  bool HasHi = false;
-  for (unsigned i = 2; i < 4; ++i) {
-    int Elt = N->getMaskElt(i);
-    if (Elt >= 0 && Elt != 3)
+  EVT VT = N->getValueType(0);
+  unsigned NumElems = VT.getVectorNumElements();
+
+  if ((VT.getSizeInBits() == 128 && NumElems != 4) ||
+      (VT.getSizeInBits() == 256 && NumElems != 8))
+    return false;
+
+  // "i+1" is the value the indexed mask element must have
+  for (unsigned i = 0; i < NumElems; i += 2)
+    if (!isUndefOrEqual(N->getMaskElt(i), i+1) ||
+        !isUndefOrEqual(N->getMaskElt(i+1), i+1))
       return false;
-    if (Elt == 3)
-      HasHi = true;
-  }
-  // Don't use movshdup if it can be done with a shufps.
-  // FIXME: verify that matching u, u, 3, 3 is what we want.
-  return HasHi;
+
+  return true;
 }
 
 /// isMOVSLDUPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVSLDUP.
-bool X86::isMOVSLDUPMask(ShuffleVectorSDNode *N) {
-  if (N->getValueType(0).getVectorNumElements() != 4)
+/// Masks to match: <0, 0, 2, 2> or <0, 0, 2, 2, 4, 4, 6, 6>
+bool X86::isMOVSLDUPMask(ShuffleVectorSDNode *N,
+                         const X86Subtarget *Subtarget) {
+  if (!Subtarget->hasSSE3() && !Subtarget->hasAVX())
     return false;
 
-  // Expect 0, 0, 2, 2
-  for (unsigned i = 0; i < 2; ++i)
-    if (N->getMaskElt(i) > 0)
+  // The second vector must be undef
+  if (N->getOperand(1).getOpcode() != ISD::UNDEF)
+    return false;
+
+  EVT VT = N->getValueType(0);
+  unsigned NumElems = VT.getVectorNumElements();
+
+  if ((VT.getSizeInBits() == 128 && NumElems != 4) ||
+      (VT.getSizeInBits() == 256 && NumElems != 8))
+    return false;
+
+  // "i" is the value the indexed mask element must have
+  for (unsigned i = 0; i < NumElems; i += 2)
+    if (!isUndefOrEqual(N->getMaskElt(i), i) ||
+        !isUndefOrEqual(N->getMaskElt(i+1), i))
       return false;
 
-  bool HasHi = false;
-  for (unsigned i = 2; i < 4; ++i) {
-    int Elt = N->getMaskElt(i);
-    if (Elt >= 0 && Elt != 2)
-      return false;
-    if (Elt == 2)
-      HasHi = true;
-  }
-  // Don't use movsldup if it can be done with a shufps.
-  return HasHi;
+  return true;
 }
 
 /// isMOVDDUPMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -5942,10 +5949,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (X86::isMOVHLPSMask(SVOp))
     return getMOVHighToLow(Op, dl, DAG);
 
-  if (X86::isMOVSHDUPMask(SVOp) && HasSSE3 && V2IsUndef && NumElems == 4)
+  if (X86::isMOVSHDUPMask(SVOp, Subtarget))
     return getTargetShuffleNode(X86ISD::MOVSHDUP, dl, VT, V1, DAG);
 
-  if (X86::isMOVSLDUPMask(SVOp) && HasSSE3 && V2IsUndef && NumElems == 4)
+  if (X86::isMOVSLDUPMask(SVOp, Subtarget))
     return getTargetShuffleNode(X86ISD::MOVSLDUP, dl, VT, V1, DAG);
 
   if (X86::isMOVLPMask(SVOp))
