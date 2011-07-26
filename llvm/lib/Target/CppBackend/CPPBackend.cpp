@@ -1240,8 +1240,7 @@ void CppWriter::printInstruction(const Instruction *I,
         nl(Out);
       }
       Out << "Instruction* " << iName << " = GetElementPtrInst::Create("
-          << opNames[0] << ", " << iName << "_indices.begin(), "
-          << iName << "_indices.end()";
+          << opNames[0] << ", " << iName << "_indices";
     }
     Out << ", \"";
     printEscapedString(gep->getName());
