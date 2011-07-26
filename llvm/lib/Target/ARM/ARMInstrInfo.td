@@ -494,7 +494,9 @@ def imm0_15 : Operand<i32>, ImmLeaf<i32, [{
 def Imm0_31AsmOperand: AsmOperandClass { let Name = "Imm0_31"; }
 def imm0_31 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 32;
-}]>;
+}]> {
+  let ParserMatchClass = Imm0_31AsmOperand;
+}
 
 /// imm0_31_m1 - Matches and prints like imm0_31, but encodes as 'value - 1'.
 def imm0_31_m1 : Operand<i32>, ImmLeaf<i32, [{
