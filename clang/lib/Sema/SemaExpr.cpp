@@ -310,7 +310,6 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   //   A glvalue of a non-function, non-array type T can be
   //   converted to a prvalue.
   if (!E->isGLValue()) return Owned(E);
-
   QualType T = E->getType();
   assert(!T.isNull() && "r-value conversion on typeless expression?");
 
