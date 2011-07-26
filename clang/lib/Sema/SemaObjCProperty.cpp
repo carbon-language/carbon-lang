@@ -594,13 +594,6 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
   ObjCIvarDecl *Ivar = 0;
   // Check that we have a valid, previously declared ivar for @synthesize
   if (Synthesize) {
-    if (getLangOptions().ObjCAutoRefCount &&
-        !property->hasWrittenStorageAttribute() &&
-        property->getType()->isObjCRetainableType()) {
-      Diag(PropertyLoc, diag::err_arc_objc_property_default_assign_on_object);
-      Diag(property->getLocation(), diag::note_property_declare);
-    }
-
     // @synthesize
     if (!PropertyIvar)
       PropertyIvar = PropertyId;
@@ -618,6 +611,13 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       // property attributes.
       if (getLangOptions().ObjCAutoRefCount &&
           !PropertyIvarType.getObjCLifetime()) {
+
+        if (!property->hasWrittenStorageAttribute() &&
+            property->getType()->isObjCRetainableType()) {
+          Diag(PropertyLoc,
+               diag::err_arc_objc_property_default_assign_on_object);
+          Diag(property->getLocation(), diag::note_property_declare);
+        }
 
         // retain/copy have retaining lifetime.
         if (kind & (ObjCPropertyDecl::OBJC_PR_retain |

@@ -483,19 +483,31 @@ void test26(id y) {
 @end
 
 // rdar://9525555
-@interface  Test27
+@interface  Test27 {
+  __weak id _myProp1;
+  id myProp2;
+}
 @property id x; // expected-warning {{no 'assign', 'retain', or 'copy' attribute is specified - 'assign' is assumed}} \
                 // expected-warning {{default property attribute 'assign' not appropriate for non-gc object}} \
                 // expected-note {{declared here}}
 @property (readonly) id ro; // expected-note {{declared here}}
 @property (readonly) id custom_ro;
 @property int y;
+
+@property (readonly) id myProp1;
+@property (readonly) id myProp2;
+@property (readonly) __strong id myProp3;
 @end
 
 @implementation Test27
-@synthesize x; // expected-error {{ARC forbids synthesizing a property of an Objective-C object with unspecified storage attribute}}
-@synthesize ro; // expected-error {{ARC forbids synthesizing a property of an Objective-C object with unspecified storage attribute}}
+@synthesize x; // expected-error {{ARC forbids synthesizing a property of an Objective-C object with unspecified ownership or storage attribute}}
+@synthesize ro; // expected-error {{ARC forbids synthesizing a property of an Objective-C object with unspecified ownership or storage attribute}}
 @synthesize y;
+
+@synthesize myProp1 = _myProp1;
+@synthesize myProp2;
+@synthesize myProp3;
+
 -(id)custom_ro { return 0; }
 @end
 

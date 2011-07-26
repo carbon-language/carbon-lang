@@ -2627,7 +2627,7 @@ def err_arc_objc_object_in_struct : Error<
   "ARC forbids Objective-C objects in structs or unions">;
 def err_arc_objc_property_default_assign_on_object : Error<
   "ARC forbids synthesizing a property of an Objective-C object "
-  "with unspecified storage attribute">;
+  "with unspecified ownership or storage attribute">;
 def err_arc_illegal_selector : Error<
   "ARC forbids use of %0 in a @selector">;
 def err_arc_illegal_method_def : Error<
