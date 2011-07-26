@@ -732,7 +732,18 @@ public:
   /// \brief Determine whether this initialization is direct call to a 
   /// constructor.
   bool isConstructorInitialization() const;
-  
+
+  // \brief Returns whether the last step in this initialization sequence is a
+  // narrowing conversion, defined by C++0x [dcl.init.list]p7.
+  //
+  // If this function returns true, *isInitializerConstant will be set to
+  // describe whether *Initializer was a constant expression.  If
+  // *isInitializerConstant is set to true, *ConstantValue will be set to the
+  // evaluated value of *Initializer.
+  bool endsWithNarrowing(ASTContext &Ctx, const Expr *Initializer,
+                         bool *isInitializerConstant,
+                         APValue *ConstantValue) const;
+
   /// \brief Add a new step in the initialization that resolves the address
   /// of an overloaded function to a specific function declaration.
   ///

@@ -1342,7 +1342,8 @@ public:
                                     ExprResult Init);
   ExprResult PerformCopyInitialization(const InitializedEntity &Entity,
                                        SourceLocation EqualLoc,
-                                       ExprResult Init);
+                                       ExprResult Init,
+                                       bool TopLevelOfInitList = false);
   ExprResult PerformObjectArgumentInitialization(Expr *From,
                                                  NestedNameSpecifier *Qualifier,
                                                  NamedDecl *FoundDecl,

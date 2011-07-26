@@ -2464,6 +2464,21 @@ def err_empty_scalar_initializer : Error<"scalar initializer cannot be empty">;
 def err_illegal_initializer : Error<
   "illegal initializer (only variables can be initialized)">;
 def err_illegal_initializer_type : Error<"illegal initializer type %0">;
+def err_init_list_variable_narrowing : Error<
+  "non-constant-expression cannot be narrowed from type %0 to %1 in "
+  "initializer list">;
+def err_init_list_constant_narrowing : Error<
+  "constant expression evaluates to %0 which cannot be narrowed to type %1">;
+def warn_init_list_variable_narrowing : Warning<
+  "non-constant-expression cannot be narrowed from type %0 to %1 in "
+  "initializer list in C++0x">,
+  InGroup<CXX0xNarrowing>, DefaultIgnore;
+def warn_init_list_constant_narrowing : Warning<
+  "constant expression evaluates to %0 which cannot be narrowed to type %1 in "
+  "C++0x">,
+  InGroup<CXX0xNarrowing>, DefaultIgnore;
+def note_init_list_narrowing_override : Note<
+  "override this message by inserting an explicit cast">;
 def err_init_objc_class : Error<
   "cannot initialize Objective-C class type %0">;
 def err_implicit_empty_initializer : Error<
