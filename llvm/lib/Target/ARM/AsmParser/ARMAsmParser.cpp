@@ -49,7 +49,7 @@ class ARMAsmParser : public MCTargetAsmParser {
 
   int tryParseRegister();
   bool tryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &);
-  int tryparseShiftRegister(SmallVectorImpl<MCParsedAsmOperand*> &);
+  int tryParseShiftRegister(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &,
                    ARMII::AddrMode AddrMode);
@@ -1250,7 +1250,7 @@ int ARMAsmParser::tryParseRegister() {
 // occurs, return -1. An irrecoverable error is one where tokens have been
 // consumed in the process of trying to parse the shifter (i.e., when it is
 // indeed a shifter operand, but malformed).
-int ARMAsmParser::tryparseShiftRegister(
+int ARMAsmParser::tryParseShiftRegister(
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
@@ -2122,7 +2122,7 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   case AsmToken::Identifier: {
     if (!tryParseRegisterWithWriteBack(Operands))
       return false;
-    int Res = tryparseShiftRegister(Operands);
+    int Res = tryParseShiftRegister(Operands);
     if (Res == 0) // success
       return false;
     else if (Res == -1) // irrecoverable error
