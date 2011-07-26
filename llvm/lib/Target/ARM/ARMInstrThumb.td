@@ -547,7 +547,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 // A8.6.16 B: Encoding T1
 // If Inst{11-8} == 0b1111 then SEE SVC
 let isCall = 1, Uses = [SP] in
-def tSVC : T1pI<(outs), (ins i32imm:$imm), IIC_Br,
+def tSVC : T1pI<(outs), (ins imm0_255:$imm), IIC_Br,
                 "svc", "\t$imm", []>, Encoding16 {
   bits<8> imm;
   let Inst{15-12} = 0b1101;

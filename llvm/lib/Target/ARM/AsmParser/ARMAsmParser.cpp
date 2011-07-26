@@ -467,6 +467,14 @@ public:
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 65536;
   }
+  bool isImm24bit() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value >= 0 && Value <= 0xffffff;
+  }
   bool isPKHLSLImm() const {
     if (Kind != Immediate)
       return false;
@@ -734,6 +742,11 @@ public:
   }
 
   void addImm0_65535ExprOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    addExpr(Inst, getImm());
+  }
+
+  void addImm24bitOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
   }

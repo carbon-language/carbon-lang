@@ -515,6 +515,15 @@ def imm0_65535_expr : Operand<i32> {
   let ParserMatchClass = Imm0_65535ExprAsmOperand;
 }
 
+/// imm24b - True if the 32-bit immediate is encodable in 24 bits.
+def Imm24bitAsmOperand: AsmOperandClass { let Name = "Imm24bit"; }
+def imm24b : Operand<i32>, ImmLeaf<i32, [{
+  return Imm >= 0 && Imm <= 0xffffff;
+}]> {
+  let ParserMatchClass = Imm24bitAsmOperand;
+}
+
+
 /// bf_inv_mask_imm predicate - An AND mask to clear an arbitrary width bitfield
 /// e.g., 0xf000ffff
 def bf_inv_mask_imm : Operand<i32>,
@@ -1730,10 +1739,9 @@ def SMC : ABI<0b0001, (outs), (ins imm0_15:$opt), NoItinerary, "smc", "\t$opt",
   let Inst{3-0} = opt;
 }
 
-// Supervisor Call (Software Interrupt) -- for disassembly only
+// Supervisor Call (Software Interrupt)
 let isCall = 1, Uses = [SP] in {
-def SVC : ABI<0b1111, (outs), (ins i32imm:$svc), IIC_Br, "svc", "\t$svc",
-              [/* For disassembly only; pattern left blank */]> {
+def SVC : ABI<0b1111, (outs), (ins imm24b:$svc), IIC_Br, "svc", "\t$svc", []> {
   bits<24> svc;
   let Inst{23-0} = svc;
 }

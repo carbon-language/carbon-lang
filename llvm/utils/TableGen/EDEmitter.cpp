@@ -596,6 +596,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("imm0_4095");
   IMM("imm0_65535");
   IMM("imm0_65535_expr");
+  IMM("imm24b");
   IMM("pkh_lsl_amt");
   IMM("pkh_asr_amt");
   IMM("jt2block_operand");

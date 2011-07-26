@@ -1752,3 +1752,14 @@ _func:
 @ CHECK: sub	r6, r6, r7, asr r9      @ encoding: [0x57,0x69,0x46,0xe0]
 @ CHECK: sub	r6, r6, r7, ror r9      @ encoding: [0x77,0x69,0x46,0xe0]
 
+
+@------------------------------------------------------------------------------
+@ SVC
+@------------------------------------------------------------------------------
+        svc #16
+        svc #0
+        svc #0xffffff
+
+@ CHECK: svc	#16                     @ encoding: [0x10,0x00,0x00,0xef]
+@ CHECK: svc	#0                      @ encoding: [0x00,0x00,0x00,0xef]
+@ CHECK: svc	#16777215               @ encoding: [0xff,0xff,0xff,0xef]

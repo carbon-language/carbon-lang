@@ -219,3 +219,10 @@
 @ CHECK-ERRORS: warning: register not in ascending order in register list
 @ CHECK-ERRORS:         stmda     sp!, {r5, r2}
 @ CHECK-ERRORS:                            ^
+
+
+        @ Out of range immediate on SVC
+        svc #0x1000000
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:   svc #0x1000000
+@ CHECK-ERRORS:       ^
