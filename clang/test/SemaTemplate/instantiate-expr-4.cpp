@@ -135,6 +135,23 @@ namespace PR5755 {
   }
 }
 
+namespace PR10480 {
+  template<typename T>
+  struct X {
+    X();
+    ~X() {
+      T *ptr = 1; // expected-error{{cannot initialize a variable of type 'int *' with an rvalue of type 'int'}}
+    }
+  };
+
+  template<typename T>
+  void f() {
+    new X<int>[1]; // expected-note{{in instantiation of member function 'PR10480::X<int>::~X' requested here}}
+  }
+
+  template void f<int>();
+}
+
 // ---------------------------------------------------------------------
 // throw expressions
 // ---------------------------------------------------------------------

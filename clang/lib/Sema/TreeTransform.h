@@ -6902,6 +6902,19 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
       SemaRef.MarkDeclarationReferenced(E->getLocStart(), OperatorNew);
     if (OperatorDelete)
       SemaRef.MarkDeclarationReferenced(E->getLocStart(), OperatorDelete);
+    
+    if (E->isArray() && Constructor && 
+        !E->getAllocatedType()->isDependentType()) {
+      QualType ElementType
+        = SemaRef.Context.getBaseElementType(E->getAllocatedType());
+      if (const RecordType *RecordT = ElementType->getAs<RecordType>()) {
+        CXXRecordDecl *Record = cast<CXXRecordDecl>(RecordT->getDecl());
+        if (CXXDestructorDecl *Destructor = SemaRef.LookupDestructor(Record)) {
+          SemaRef.MarkDeclarationReferenced(E->getLocStart(), Destructor);
+        }
+      }
+    }
+    
     return SemaRef.Owned(E);
   }
 
