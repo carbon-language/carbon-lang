@@ -236,11 +236,7 @@ void CodeGenModule::EmitCXXDestructors(const CXXDestructorDecl *D) {
 
   // The destructor used for destructing this as a most-derived class;
   // call the base destructor and then destructs any virtual bases.
-  if (!D->getParent()->isAbstract() || D->isVirtual()) {
-    // We don't need to emit the complete ctor if the class is abstract,
-    // unless the destructor is virtual and needs to be in the vtable.
-    EmitGlobal(GlobalDecl(D, Dtor_Complete));
-  }
+  EmitGlobal(GlobalDecl(D, Dtor_Complete));
 
   // The destructor used for destructing this as a base class; ignores
   // virtual bases.
