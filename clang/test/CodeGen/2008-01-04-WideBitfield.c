@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm -o - %s
 // PR1386
-typedef unsigned long uint64_t;
+typedef unsigned long long uint64_t;
 struct X {
   unsigned char pad : 4;
   uint64_t a : 64;
