@@ -25,7 +25,7 @@ void f1(int a[1]) {
 }
 
 void f2(const int (&a)[1]) { // expected-note {{declared here}}
-  int val = a[3];  // expected-warning {{array index of '3' indexes past the end of an array (that contains 1 elements)}}
+  int val = a[3];  // expected-warning {{array index of '3' indexes past the end of an array (that contains 1 element)}}
 }
 
 void test() {
@@ -35,15 +35,17 @@ void test() {
   s2.a[3] = 0; // no warning for 0-sized array
 
   union {
-    short a[2]; // expected-note {{declared here}}
+    short a[2]; // expected-note 2 {{declared here}}
     char c[4];
   } u;
   u.a[3] = 1; // expected-warning {{array index of '3' indexes past the end of an array (that contains 2 elements)}}
   u.c[3] = 1; // no warning
+  *(&u.a[3]) = 1; // expected-warning {{array index of '3' indexes past the end of an array (that contains 2 elements)}}
+  *(&u.c[3]) = 1; // no warning
 
   const int const_subscript = 3;
   int array[1]; // expected-note {{declared here}}
-  array[const_subscript] = 0;  // expected-warning {{array index of '3' indexes past the end of an array (that contains 1 elements)}}
+  array[const_subscript] = 0;  // expected-warning {{array index of '3' indexes past the end of an array (that contains 1 element)}}
 
   int *ptr;
   ptr[3] = 0; // no warning for pointer references
@@ -59,7 +61,7 @@ void test() {
   char c2 = str2[5]; // expected-warning {{array index of '5' indexes past the end of an array (that contains 4 elements)}}
 
   int (*array_ptr)[1];
-  (*array_ptr)[3] = 1; // expected-warning {{array index of '3' indexes past the end of an array (that contains 1 elements)}}
+  (*array_ptr)[3] = 1; // expected-warning {{array index of '3' indexes past the end of an array (that contains 1 element)}}
 }
 
 template <int I> struct S {
@@ -151,8 +153,7 @@ void test_switch() {
 enum enumA { enumA_A, enumA_B, enumA_C, enumA_D, enumA_E };
 enum enumB { enumB_X, enumB_Y, enumB_Z };
 static enum enumB myVal = enumB_X;
-void test_nested_switch()
-{
+void test_nested_switch() {
   switch (enumA_E) { // expected-warning {{no case matching constant}}
     switch (myVal) { // expected-warning {{enumeration values 'enumB_X' and 'enumB_Z' not handled in switch}}
       case enumB_Y: ;
