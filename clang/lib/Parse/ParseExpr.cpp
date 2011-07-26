@@ -303,9 +303,9 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
         // Eat the colon.
         ColonLoc = ConsumeToken();
       } else {
-        // Otherwise, we're missing a ':'.  Assume that this was a typo that the
-        // user forgot.  If we're not in a macro instantiation, we can suggest a
-        // fixit hint.  If there were two spaces before the current token,
+        // Otherwise, we're missing a ':'.  Assume that this was a typo that
+        // the user forgot. If we're not in a macro expansion, we can suggest
+        // a fixit hint. If there were two spaces before the current token,
         // suggest inserting the colon in between them, otherwise insert ": ".
         SourceLocation FILoc = Tok.getLocation();
         const char *FIText = ": ";
