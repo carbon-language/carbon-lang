@@ -312,22 +312,22 @@ namespace SrcMgr {
     unsigned Offset;   // low bit is set for instantiation info.
     union {
       FileInfo File;
-      ExpansionInfo Instantiation;
+      ExpansionInfo Expansion;
     };
   public:
     unsigned getOffset() const { return Offset >> 1; }
 
-    bool isInstantiation() const { return Offset & 1; }
-    bool isFile() const { return !isInstantiation(); }
+    bool isExpansion() const { return Offset & 1; }
+    bool isFile() const { return !isExpansion(); }
 
     const FileInfo &getFile() const {
       assert(isFile() && "Not a file SLocEntry!");
       return File;
     }
 
-    const ExpansionInfo &getInstantiation() const {
-      assert(isInstantiation() && "Not an instantiation SLocEntry!");
-      return Instantiation;
+    const ExpansionInfo &getExpansion() const {
+      assert(isExpansion() && "Not a macro expansion SLocEntry!");
+      return Expansion;
     }
 
     static SLocEntry get(unsigned Offset, const FileInfo &FI) {
@@ -340,7 +340,7 @@ namespace SrcMgr {
     static SLocEntry get(unsigned Offset, const ExpansionInfo &Expansion) {
       SLocEntry E;
       E.Offset = (Offset << 1) | 1;
-      E.Instantiation = Expansion;
+      E.Expansion = Expansion;
       return E;
     }
   };

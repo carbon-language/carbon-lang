@@ -1505,7 +1505,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
       }
     } else {
       // The source location entry is a macro expansion.
-      const SrcMgr::ExpansionInfo &Expansion = SLoc->getInstantiation();
+      const SrcMgr::ExpansionInfo &Expansion = SLoc->getExpansion();
       Record.push_back(Expansion.getSpellingLoc().getRawEncoding());
       Record.push_back(Expansion.getExpansionLocStart().getRawEncoding());
       Record.push_back(Expansion.getExpansionLocEnd().getRawEncoding());

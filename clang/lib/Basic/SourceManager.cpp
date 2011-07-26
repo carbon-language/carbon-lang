@@ -669,7 +669,7 @@ FileID SourceManager::getFileIDLocal(unsigned SLocOffset) const {
 
       // If this isn't an instantiation, remember it.  We have good locality
       // across FileID lookups.
-      if (!I->isInstantiation())
+      if (!I->isExpansion())
         LastFileIDLookup = Res;
       NumLinearScans += NumProbes+1;
       return Res;
@@ -708,9 +708,9 @@ FileID SourceManager::getFileIDLocal(unsigned SLocOffset) const {
     if (isOffsetInFileID(FileID::get(MiddleIndex), SLocOffset)) {
       FileID Res = FileID::get(MiddleIndex);
 
-      // If this isn't an instantiation, remember it.  We have good locality
+      // If this isn't a macro expansion, remember it.  We have good locality
       // across FileID lookups.
-      if (!LocalSLocEntryTable[MiddleIndex].isInstantiation())
+      if (!LocalSLocEntryTable[MiddleIndex].isExpansion())
         LastFileIDLookup = Res;
       NumBinaryProbes += NumProbes;
       return Res;
@@ -746,7 +746,7 @@ FileID SourceManager::getFileIDLoaded(unsigned SLocOffset) const {
     if (E.getOffset() <= SLocOffset) {
       FileID Res = FileID::get(-int(I) - 2);
 
-      if (!E.isInstantiation())
+      if (!E.isExpansion())
         LastFileIDLookup = Res;
       NumLinearScans += NumProbes + 1;
       return Res;
@@ -773,7 +773,7 @@ FileID SourceManager::getFileIDLoaded(unsigned SLocOffset) const {
 
     if (isOffsetInFileID(FileID::get(-int(MiddleIndex) - 2), SLocOffset)) {
       FileID Res = FileID::get(-int(MiddleIndex) - 2);
-      if (!E.isInstantiation())
+      if (!E.isExpansion())
         LastFileIDLookup = Res;
       NumBinaryProbes += NumProbes;
       return Res;
@@ -788,12 +788,11 @@ getExpansionLocSlowCase(SourceLocation Loc) const {
   do {
     // Note: If Loc indicates an offset into a token that came from a macro
     // expansion (e.g. the 5th character of the token) we do not want to add
-    // this offset when going to the instantiation location.  The expansion
+    // this offset when going to the expansion location.  The expansion
     // location is the macro invocation, which the offset has nothing to do
     // with.  This is unlike when we get the spelling loc, because the offset
     // directly correspond to the token whose spelling we're inspecting.
-    Loc = getSLocEntry(getFileID(Loc)).getInstantiation()
-                   .getExpansionLocStart();
+    Loc = getSLocEntry(getFileID(Loc)).getExpansion().getExpansionLocStart();
   } while (!Loc.isFileID());
 
   return Loc;
@@ -802,7 +801,7 @@ getExpansionLocSlowCase(SourceLocation Loc) const {
 SourceLocation SourceManager::getSpellingLocSlowCase(SourceLocation Loc) const {
   do {
     std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
-    Loc = getSLocEntry(LocInfo.first).getInstantiation().getSpellingLoc();
+    Loc = getSLocEntry(LocInfo.first).getExpansion().getSpellingLoc();
     Loc = Loc.getFileLocWithOffset(LocInfo.second);
   } while (!Loc.isFileID());
   return Loc;
@@ -818,7 +817,7 @@ SourceManager::getDecomposedExpansionLocSlowCase(
   SourceLocation Loc;
   unsigned Offset;
   do {
-    Loc = E->getInstantiation().getExpansionLocStart();
+    Loc = E->getExpansion().getExpansionLocStart();
 
     FID = getFileID(Loc);
     E = &getSLocEntry(FID);
@@ -836,7 +835,7 @@ SourceManager::getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
   FileID FID;
   SourceLocation Loc;
   do {
-    Loc = E->getInstantiation().getSpellingLoc();
+    Loc = E->getExpansion().getSpellingLoc();
 
     FID = getFileID(Loc);
     E = &getSLocEntry(FID);
@@ -853,7 +852,7 @@ SourceManager::getDecomposedSpellingLocSlowCase(const SrcMgr::SLocEntry *E,
 SourceLocation SourceManager::getImmediateSpellingLoc(SourceLocation Loc) const{
   if (Loc.isFileID()) return Loc;
   std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(Loc);
-  Loc = getSLocEntry(LocInfo.first).getInstantiation().getSpellingLoc();
+  Loc = getSLocEntry(LocInfo.first).getExpansion().getSpellingLoc();
   return Loc.getFileLocWithOffset(LocInfo.second);
 }
 
@@ -863,8 +862,7 @@ SourceLocation SourceManager::getImmediateSpellingLoc(SourceLocation Loc) const{
 std::pair<SourceLocation,SourceLocation>
 SourceManager::getImmediateExpansionRange(SourceLocation Loc) const {
   assert(Loc.isMacroID() && "Not an instantiation loc!");
-  const ExpansionInfo &Expansion =
-    getSLocEntry(getFileID(Loc)).getInstantiation();
+  const ExpansionInfo &Expansion = getSLocEntry(getFileID(Loc)).getExpansion();
   return Expansion.getExpansionLocRange();
 }
 
@@ -891,7 +889,7 @@ bool SourceManager::isMacroArgExpansion(SourceLocation Loc) const {
 
   FileID FID = getFileID(Loc);
   const SrcMgr::SLocEntry *E = &getSLocEntry(FID);
-  const SrcMgr::ExpansionInfo &Expansion = E->getInstantiation();
+  const SrcMgr::ExpansionInfo &Expansion = E->getExpansion();
   return Expansion.isMacroArgExpansion();
 }
 
@@ -1466,8 +1464,8 @@ static bool MoveUpIncludeHierarchy(std::pair<FileID, unsigned> &Loc,
                                    const SourceManager &SM) {
   SourceLocation UpperLoc;
   const SrcMgr::SLocEntry &Entry = SM.getSLocEntry(Loc.first);
-  if (Entry.isInstantiation())
-    UpperLoc = Entry.getInstantiation().getExpansionLocStart();
+  if (Entry.isExpansion())
+    UpperLoc = Entry.getExpansion().getExpansionLocStart();
   else
     UpperLoc = Entry.getFile().getIncludeLoc();
   
