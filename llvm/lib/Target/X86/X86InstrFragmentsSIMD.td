@@ -400,16 +400,6 @@ def movl : PatFrag<(ops node:$lhs, node:$rhs),
   return X86::isMOVLMask(cast<ShuffleVectorSDNode>(N));
 }]>;
 
-def movshdup : PatFrag<(ops node:$lhs, node:$rhs),
-                       (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isMOVSHDUPMask(cast<ShuffleVectorSDNode>(N));
-}]>;
-
-def movsldup : PatFrag<(ops node:$lhs, node:$rhs),
-                       (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isMOVSLDUPMask(cast<ShuffleVectorSDNode>(N));
-}]>;
-
 def unpckl : PatFrag<(ops node:$lhs, node:$rhs),
                      (vector_shuffle node:$lhs, node:$rhs), [{
   return X86::isUNPCKLMask(cast<ShuffleVectorSDNode>(N));

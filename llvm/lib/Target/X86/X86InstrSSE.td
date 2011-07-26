@@ -3219,19 +3219,19 @@ def : Pat<(int_x86_avx_cvt_pd2dq_256 (memopv4f64 addr:$src)),
 // SSE3 - Move Instructions
 //===---------------------------------------------------------------------===//
 
-// Replicate Single FP
-multiclass sse3_replicate_sfp<bits<8> op, PatFrag rep_frag, string OpcodeStr> {
+//===---------------------------------------------------------------------===//
+// Replicate Single FP - MOVSHDUP and MOVSLDUP
+//
+multiclass sse3_replicate_sfp<bits<8> op, SDNode OpNode, string OpcodeStr> {
 def rr : S3SI<op, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                      [(set VR128:$dst, (v4f32 (rep_frag
-                                                VR128:$src, (undef))))]>;
+                      [(set VR128:$dst, (v4f32 (OpNode VR128:$src)))]>;
 def rm : S3SI<op, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                      [(set VR128:$dst, (rep_frag
-                                         (memopv4f32 addr:$src), (undef)))]>;
+                      [(set VR128:$dst, (OpNode (memopv4f32 addr:$src)))]>;
 }
 
-multiclass sse3_replicate_sfp_y<bits<8> op, PatFrag rep_frag,
+multiclass sse3_replicate_sfp_y<bits<8> op, SDNode OpNode,
                                 string OpcodeStr> {
 def rr : S3SI<op, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
               !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"), []>;
@@ -3241,15 +3241,28 @@ def rm : S3SI<op, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
 
 let Predicates = [HasAVX] in {
   // FIXME: Merge above classes when we have patterns for the ymm version
-  defm VMOVSHDUP  : sse3_replicate_sfp<0x16, movshdup, "vmovshdup">, VEX;
-  defm VMOVSLDUP  : sse3_replicate_sfp<0x12, movsldup, "vmovsldup">, VEX;
-  defm VMOVSHDUPY : sse3_replicate_sfp_y<0x16, movshdup, "vmovshdup">, VEX;
-  defm VMOVSLDUPY : sse3_replicate_sfp_y<0x12, movsldup, "vmovsldup">, VEX;
+  defm VMOVSHDUP  : sse3_replicate_sfp<0x16, X86Movshdup, "vmovshdup">, VEX;
+  defm VMOVSLDUP  : sse3_replicate_sfp<0x12, X86Movsldup, "vmovsldup">, VEX;
+  defm VMOVSHDUPY : sse3_replicate_sfp_y<0x16, X86Movshdup, "vmovshdup">, VEX;
+  defm VMOVSLDUPY : sse3_replicate_sfp_y<0x12, X86Movsldup, "vmovsldup">, VEX;
 }
-defm MOVSHDUP : sse3_replicate_sfp<0x16, movshdup, "movshdup">;
-defm MOVSLDUP : sse3_replicate_sfp<0x12, movsldup, "movsldup">;
+defm MOVSHDUP : sse3_replicate_sfp<0x16, X86Movshdup, "movshdup">;
+defm MOVSLDUP : sse3_replicate_sfp<0x12, X86Movsldup, "movsldup">;
 
-// Replicate Double FP
+let Predicates = [HasSSE3] in {
+  def : Pat<(v4i32 (X86Movshdup VR128:$src)),
+            (MOVSHDUPrr VR128:$src)>;
+  def : Pat<(v4i32 (X86Movshdup (bc_v4i32 (memopv2i64 addr:$src)))),
+            (MOVSHDUPrm addr:$src)>;
+  def : Pat<(v4i32 (X86Movsldup VR128:$src)),
+            (MOVSLDUPrr VR128:$src)>;
+  def : Pat<(v4i32 (X86Movsldup (bc_v4i32 (memopv2i64 addr:$src)))),
+            (MOVSLDUPrm addr:$src)>;
+}
+
+//===---------------------------------------------------------------------===//
+// Replicate Double FP - MOVDDUP
+//
 multiclass sse3_replicate_dfp<string OpcodeStr> {
 def rr  : S3DI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
@@ -3305,22 +3318,6 @@ def : Pat<(movddup (memopv2i64 addr:$src), (undef)),
 def : Pat<(movddup (bc_v4i32 (memopv2i64 addr:$src)), (undef)),
           (MOVDDUPrm addr:$src)>, Requires<[HasSSE3]>;
 }
-
-// vector_shuffle v1, <undef> <1, 1, 3, 3>
-let AddedComplexity = 15 in
-def : Pat<(v4i32 (movshdup VR128:$src, (undef))),
-          (MOVSHDUPrr VR128:$src)>, Requires<[HasSSE3]>;
-let AddedComplexity = 20 in
-def : Pat<(v4i32 (movshdup (bc_v4i32 (memopv2i64 addr:$src)), (undef))),
-          (MOVSHDUPrm addr:$src)>, Requires<[HasSSE3]>;
-
-// vector_shuffle v1, <undef> <0, 0, 2, 2>
-let AddedComplexity = 15 in
-  def : Pat<(v4i32 (movsldup VR128:$src, (undef))),
-            (MOVSLDUPrr VR128:$src)>, Requires<[HasSSE3]>;
-let AddedComplexity = 20 in
-  def : Pat<(v4i32 (movsldup (bc_v4i32 (memopv2i64 addr:$src)), (undef))),
-            (MOVSLDUPrm addr:$src)>, Requires<[HasSSE3]>;
 
 //===---------------------------------------------------------------------===//
 // SSE3 - Arithmetic
@@ -5852,28 +5849,6 @@ def : Pat<(v4f32 (X86Movsd VR128:$src1, VR128:$src2)),
           (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_sd))>;
 def : Pat<(v4i32 (X86Movsd VR128:$src1, VR128:$src2)),
           (MOVSDrr VR128:$src1, (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_sd))>;
-
-// Shuffle with MOVSHDUP
-def : Pat<(v4i32 (X86Movshdup VR128:$src)),
-          (MOVSHDUPrr VR128:$src)>;
-def : Pat<(X86Movshdup (bc_v4i32 (memopv2i64 addr:$src))),
-          (MOVSHDUPrm addr:$src)>;
-
-def : Pat<(v4f32 (X86Movshdup VR128:$src)),
-          (MOVSHDUPrr VR128:$src)>;
-def : Pat<(X86Movshdup (memopv4f32 addr:$src)),
-          (MOVSHDUPrm addr:$src)>;
-
-// Shuffle with MOVSLDUP
-def : Pat<(v4i32 (X86Movsldup VR128:$src)),
-          (MOVSLDUPrr VR128:$src)>;
-def : Pat<(X86Movsldup (bc_v4i32 (memopv2i64 addr:$src))),
-          (MOVSLDUPrm addr:$src)>;
-
-def : Pat<(v4f32 (X86Movsldup VR128:$src)),
-          (MOVSLDUPrr VR128:$src)>;
-def : Pat<(X86Movsldup (memopv4f32 addr:$src)),
-          (MOVSLDUPrm addr:$src)>;
 
 // Shuffle with PSHUFHW
 def : Pat<(v8i16 (X86PShufhw VR128:$src, (i8 imm:$imm))),
