@@ -6,6 +6,7 @@ tablegen(PTXGenDAGISel.inc -gen-dag-isel)
 tablegen(PTXGenInstrInfo.inc -gen-instr-info)
 tablegen(PTXGenRegisterInfo.inc -gen-register-info)
 tablegen(PTXGenSubtargetInfo.inc -gen-subtarget)
+add_public_tablegen_target(PTXCommonTableGen)
 
 add_llvm_target(PTXCodeGen
   PTXAsmPrinter.cpp

@@ -6,6 +6,7 @@ tablegen(MipsGenAsmWriter.inc -gen-asm-writer)
 tablegen(MipsGenDAGISel.inc -gen-dag-isel)
 tablegen(MipsGenCallingConv.inc -gen-callingconv)
 tablegen(MipsGenSubtargetInfo.inc -gen-subtarget)
+add_public_tablegen_target(MipsCommonTableGen)
 
 add_llvm_target(MipsCodeGen
   MipsAsmPrinter.cpp

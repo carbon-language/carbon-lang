@@ -6,6 +6,7 @@ tablegen(XCoreGenAsmWriter.inc -gen-asm-writer)
 tablegen(XCoreGenDAGISel.inc -gen-dag-isel)
 tablegen(XCoreGenCallingConv.inc -gen-callingconv)
 tablegen(XCoreGenSubtargetInfo.inc -gen-subtarget)
+add_public_tablegen_target(XCoreCommonTableGen)
 
 add_llvm_target(XCoreCodeGen
   XCoreAsmPrinter.cpp

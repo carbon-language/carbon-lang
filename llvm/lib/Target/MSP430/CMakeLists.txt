@@ -6,6 +6,7 @@ tablegen(MSP430GenAsmWriter.inc -gen-asm-writer)
 tablegen(MSP430GenDAGISel.inc -gen-dag-isel)
 tablegen(MSP430GenCallingConv.inc -gen-callingconv)
 tablegen(MSP430GenSubtargetInfo.inc -gen-subtarget)
+add_public_tablegen_target(MSP430CommonTableGen)
 
 add_llvm_target(MSP430CodeGen
   MSP430BranchSelector.cpp

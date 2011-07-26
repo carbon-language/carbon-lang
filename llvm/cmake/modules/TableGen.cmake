@@ -45,23 +45,11 @@ macro(tablegen ofn)
     PROPERTIES GENERATED 1)
 endmacro(tablegen)
 
-
-function(create_tablegenning_custom_target target)
-  # Creates the global target that runs the file-level dependencies
-  # for tablegenning.
+function(add_public_tablegen_target target)
+  # Creates a target for publicly exporting tablegen dependencies.
   if( TABLEGEN_OUTPUT )
-    add_custom_target(${target}Table_gen
+    add_custom_target(${target}
       DEPENDS ${TABLEGEN_OUTPUT})
-    add_dependencies(${target}Table_gen ${LLVM_COMMON_DEPENDS})
+    add_dependencies(${target} ${LLVM_COMMON_DEPENDS})
   endif( TABLEGEN_OUTPUT )
 endfunction()
-
-function(add_tablegenning_dependency target)
-  # Makes the tablegenning step created with
-  # create_tablegenning_custom_target dependent on `target'.
-  if ( TABLEGEN_OUTPUT )
-    add_dependencies(${target} ${target}Table_gen)
-    set_target_properties(${target}Table_gen PROPERTIES FOLDER "Tablegenning")
-  endif (TABLEGEN_OUTPUT)
-endfunction()
-

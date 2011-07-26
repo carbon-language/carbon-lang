@@ -6,6 +6,7 @@ tablegen(SparcGenAsmWriter.inc -gen-asm-writer)
 tablegen(SparcGenDAGISel.inc -gen-dag-isel)
 tablegen(SparcGenSubtargetInfo.inc -gen-subtarget)
 tablegen(SparcGenCallingConv.inc -gen-callingconv)
+add_public_tablegen_target(SparcCommonTableGen)
 
 add_llvm_target(SparcCodeGen
   DelaySlotFiller.cpp

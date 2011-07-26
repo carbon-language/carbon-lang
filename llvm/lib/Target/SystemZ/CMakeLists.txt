@@ -6,6 +6,7 @@ tablegen(SystemZGenAsmWriter.inc -gen-asm-writer)
 tablegen(SystemZGenDAGISel.inc -gen-dag-isel)
 tablegen(SystemZGenCallingConv.inc -gen-callingconv)
 tablegen(SystemZGenSubtargetInfo.inc -gen-subtarget)
+add_public_tablegen_target(SystemZCommonTableGen)
 
 add_llvm_target(SystemZCodeGen
   SystemZAsmPrinter.cpp

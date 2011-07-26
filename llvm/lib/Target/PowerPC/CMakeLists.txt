@@ -8,6 +8,7 @@ tablegen(PPCGenInstrInfo.inc -gen-instr-info)
 tablegen(PPCGenDAGISel.inc -gen-dag-isel)
 tablegen(PPCGenCallingConv.inc -gen-callingconv)
 tablegen(PPCGenSubtargetInfo.inc -gen-subtarget)
+add_public_tablegen_target(PowerPCCommonTableGen)
 
 add_llvm_target(PowerPCCodeGen
   PPCAsmPrinter.cpp

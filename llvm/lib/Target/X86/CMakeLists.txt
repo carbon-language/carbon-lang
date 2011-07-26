@@ -11,6 +11,7 @@ tablegen(X86GenFastISel.inc -gen-fast-isel)
 tablegen(X86GenCallingConv.inc -gen-callingconv)
 tablegen(X86GenSubtargetInfo.inc -gen-subtarget)
 tablegen(X86GenEDInfo.inc -gen-enhanced-disassembly-info)
+add_public_tablegen_target(X86CommonTableGen)
 
 set(sources
   SSEDomainFix.cpp

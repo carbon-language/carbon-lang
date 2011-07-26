@@ -7,6 +7,7 @@ tablegen(BlackfinGenDAGISel.inc -gen-dag-isel)
 tablegen(BlackfinGenSubtargetInfo.inc -gen-subtarget)
 tablegen(BlackfinGenCallingConv.inc -gen-callingconv)
 tablegen(BlackfinGenIntrinsics.inc -gen-tgt-intrinsic)
+add_public_tablegen_target(BlackfinCommonTableGen)
 
 add_llvm_target(BlackfinCodeGen
   BlackfinAsmPrinter.cpp

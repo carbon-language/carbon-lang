@@ -5,4 +5,5 @@ add_llvm_library(LLVMMBlazeAsmParser
   MBlazeAsmLexer.cpp
   MBlazeAsmParser.cpp
   )
+add_dependencies(LLVMMBlazeAsmParser MBlazeCommonTableGen)
 

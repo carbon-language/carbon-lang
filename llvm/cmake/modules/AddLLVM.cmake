@@ -2,7 +2,6 @@ include(LLVMProcessSources)
 include(LLVM-Config)
 
 macro(add_llvm_library name)
-  create_tablegenning_custom_target( ${name} )
   llvm_process_sources( ALL_FILES ${ARGN} )
   add_library( ${name} ${ALL_FILES} )
   set_property( GLOBAL APPEND PROPERTY LLVM_LIBS ${name} )
@@ -33,7 +32,6 @@ macro(add_llvm_library name)
     add_dependencies(${name} ${CURRENT_LLVM_TARGET})
   endif()
   set_target_properties(${name} PROPERTIES FOLDER "Libraries")
-  add_tablegenning_dependency( ${name} )
 endmacro(add_llvm_library name)
 
 
@@ -77,7 +75,6 @@ endmacro(add_llvm_loadable_module name)
 
 
 macro(add_llvm_executable name)
-  create_tablegenning_custom_target( ${name} )
   llvm_process_sources( ALL_FILES ${ARGN} )
   if( EXCLUDE_FROM_ALL )
     add_executable(${name} EXCLUDE_FROM_ALL ${ALL_FILES})
@@ -91,7 +88,6 @@ macro(add_llvm_executable name)
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
   link_system_libs( ${name} )
-  add_tablegenning_dependency( ${name} )
 endmacro(add_llvm_executable name)
 
 

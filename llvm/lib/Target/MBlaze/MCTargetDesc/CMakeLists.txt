@@ -4,3 +4,4 @@ add_llvm_library(LLVMMBlazeDesc
   MBlazeMCCodeEmitter.cpp
   MBlazeMCTargetDesc.cpp
   )
+add_dependencies(LLVMMBlazeDesc MBlazeCommonTableGen)

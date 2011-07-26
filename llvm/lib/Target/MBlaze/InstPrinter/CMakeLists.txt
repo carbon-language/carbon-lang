@@ -5,4 +5,4 @@ add_llvm_library(LLVMMBlazeAsmPrinter
     MBlazeInstPrinter.cpp
   )
 
-add_dependencies(LLVMMBlazeAsmPrinter MBlazeCodeGenTable_gen)
+add_dependencies(LLVMMBlazeAsmPrinter MBlazeCommonTableGen)

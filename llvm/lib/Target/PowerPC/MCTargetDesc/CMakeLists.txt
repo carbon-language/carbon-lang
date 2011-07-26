@@ -4,3 +4,4 @@ add_llvm_library(LLVMPowerPCDesc
   PPCMCAsmInfo.cpp
   PPCMCCodeEmitter.cpp
   )
+add_dependencies(LLVMPowerPCDesc PowerPCCommonTableGen)
