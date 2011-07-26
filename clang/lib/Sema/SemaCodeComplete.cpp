@@ -4960,7 +4960,7 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
   
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
               CodeCompletionContext(CodeCompletionContext::CCC_ObjCClassMessage,
-                                    T));
+                                    T, SelIdents, NumSelIdents));
     
   AddClassMessageCompletions(*this, S, Receiver, SelIdents, NumSelIdents, 
                              AtArgumentExpression, IsSuper, Results);
@@ -5025,7 +5025,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   // Build the set of methods we can see.
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
            CodeCompletionContext(CodeCompletionContext::CCC_ObjCInstanceMessage,
-                                 ReceiverType));
+                                 ReceiverType, SelIdents, NumSelIdents));
   
   Results.EnterNewScope();
 

@@ -247,10 +247,17 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   /// current context.
   unsigned long long Contexts;
   
+  /// \brief The kind of the container for the current context for completions.
   enum CXCursorKind ContainerKind;
+  /// \brief The USR of the container for the current context for completions.
   CXString ContainerUSR;
-  
+  /// \brief a boolean value indicating whether there is complete information
+  /// about the container
   unsigned ContainerIsIncomplete;
+  
+  /// \brief A string containing the Objective-C selector entered thus far for a
+  /// message send.
+  std::string Selector;
 };
 
 /// \brief Tracks the number of code-completion result objects that are 
@@ -495,6 +502,18 @@ namespace {
       AllocatedResults.ContextKind = contextKind;
       AllocatedResults.Contexts = getContextsForContextKind(contextKind, S);
       
+      AllocatedResults.Selector = "";
+      if (Context.getNumSelIdents() > 0) {
+        for (unsigned i = 0; i < Context.getNumSelIdents(); i++) {
+          IdentifierInfo *selIdent = Context.getSelIdents()[i];
+          if (selIdent != NULL) {
+            StringRef selectorString = Context.getSelIdents()[i]->getName();
+            AllocatedResults.Selector += selectorString.str();
+          }
+          AllocatedResults.Selector += ":";
+        }
+      }
+      
       QualType baseType = Context.getBaseType();
       NamedDecl *D = NULL;
       
@@ -677,7 +696,7 @@ void clang_codeCompleteAt_Impl(void *UserData) {
         }
         pchName.push_back('\0');
         struct stat stat_results;
-        if (stat(pchName.data(), &stat_results) == 0)
+        if (stat(pchName.str().c_str(), &stat_results) == 0)
           usesPCH = true;
         continue;
       }
@@ -809,6 +828,16 @@ CXString clang_codeCompleteGetContainerUSR(CXCodeCompleteResults *ResultsIn) {
     return createCXString("");
   
   return createCXString(clang_getCString(Results->ContainerUSR));
+}
+
+  
+CXString clang_codeCompleteGetObjCSelector(CXCodeCompleteResults *ResultsIn) {
+  AllocatedCXCodeCompleteResults *Results =
+    static_cast<AllocatedCXCodeCompleteResults *>(ResultsIn);
+  if (!Results)
+    return createCXString("");
+  
+  return createCXString(Results->Selector);
 }
   
 } // end extern "C"

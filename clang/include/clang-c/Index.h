@@ -3234,6 +3234,21 @@ enum CXCursorKind clang_codeCompleteGetContainerKind(
 CINDEX_LINKAGE
 CXString clang_codeCompleteGetContainerUSR(CXCodeCompleteResults *Results);
   
+  
+/**
+ * \brief Returns the currently-entered selector for an Objective-C message
+ * send, formatted like "initWithFoo:bar:". Only guaranteed to return a
+ * non-empty string for CXCompletionContext_ObjCInstanceMessage and
+ * CXCompletionContext_ObjCClassMessage.
+ *
+ * \param Results the code completion results to query
+ *
+ * \returns the selector (or partial selector) that has been entered thus far
+ * for an Objective-C message send.
+ */
+CINDEX_LINKAGE
+CXString clang_codeCompleteGetObjCSelector(CXCodeCompleteResults *Results);
+  
 /**
  * @}
  */

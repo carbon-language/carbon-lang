@@ -1201,6 +1201,8 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
     unsigned i, n = results->NumResults, containerIsIncomplete = 0;
     unsigned long long contexts;
     enum CXCursorKind containerKind;
+    CXString objCSelector;
+    const char *selectorString;
     if (!timing_only) {      
       /* Sort the code-completion results based on the typed text. */
       clang_sortCodeCompletionResults(results->Results, results->NumResults);
@@ -1218,7 +1220,8 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
     contexts = clang_codeCompleteGetContexts(results);
     print_completion_contexts(contexts, stdout);
     
-    containerKind = clang_codeCompleteGetContainerKind(results, &containerIsIncomplete);
+    containerKind = clang_codeCompleteGetContainerKind(results,
+                                                       &containerIsIncomplete);
     
     if (containerKind != CXCursor_InvalidCode) {
       /* We have found a container */
@@ -1238,6 +1241,13 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
       printf("Container USR: %s\n", clang_getCString(containerUSR));
       clang_disposeString(containerUSR);
     }
+    
+    objCSelector = clang_codeCompleteGetObjCSelector(results);
+    selectorString = clang_getCString(objCSelector);
+    if (selectorString && strlen(selectorString) > 0) {
+      printf("Objective-C selector: %s\n", selectorString);
+    }
+    clang_disposeString(objCSelector);
     
     clang_disposeCodeCompleteResults(results);
   }
