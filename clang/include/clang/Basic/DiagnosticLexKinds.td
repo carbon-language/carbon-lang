@@ -40,8 +40,6 @@ def ext_bcpl_comment : Extension<
   InGroup<Comment>;
 def ext_no_newline_eof : Extension<"no newline at end of file">, 
   InGroup<DiagGroup<"newline-eof">>;
-def ext_backslash_newline_eof : Extension<"backslash-newline at end of file">,
-  InGroup<DiagGroup<"newline-eof">>;
 def ext_dollar_in_identifier : Extension<"'$' in identifier">;
 def charize_microsoft_ext : Extension<"@# is a microsoft extension">;
 
