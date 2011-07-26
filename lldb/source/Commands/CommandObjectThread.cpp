@@ -196,6 +196,10 @@ public:
                     result.SetStatus (eReturnStatusFailed);
                     return false;
                 }
+                
+                if (i < num_threads - 1)
+                    result.AppendMessage("");
+                    
             }
         }
         else
