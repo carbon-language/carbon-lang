@@ -3421,8 +3421,9 @@ def warn_non_virtual_dtor : Warning<
 def warn_delete_non_virtual_dtor : Warning<
   "delete called on %0 that has virtual functions but non-virtual destructor">,
   InGroup<DeleteNonVirtualDtor>, DefaultIgnore;
-def err_delete_abstract_non_virtual_dtor : Error<
-  "cannot delete %0, which is abstract and does not have a virtual destructor">;
+def warn_delete_abstract_non_virtual_dtor : Warning<
+  "delete called on %0 that is abstract but has non-virtual destructor">,
+  InGroup<DeleteNonVirtualDtor>;
 def warn_overloaded_virtual : Warning<
   "%q0 hides overloaded virtual %select{function|functions}1">,
   InGroup<OverloadedVirtual>, DefaultIgnore;

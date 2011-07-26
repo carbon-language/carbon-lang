@@ -414,5 +414,5 @@ namespace PR10504 {
   struct A {
     virtual void foo() = 0;
   };
-  void f(A *x) { delete x; } // expected-error {{cannot delete 'PR10504::A', which is abstract and does not have a virtual destructor}}
+  void f(A *x) { delete x; } // expected-warning {{delete called on 'PR10504::A' that is abstract but has non-virtual destructor}}
 }

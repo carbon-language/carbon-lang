@@ -1913,18 +1913,6 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
           DiagnoseUseOfDecl(Dtor, StartLoc);
         }
 
-      // Deleting an abstract class with a non-virtual destructor is always
-      // undefined per [expr.delete]p3, and leads to strange-looking
-      // linker errors.
-      if (PointeeRD->isAbstract()) {
-        CXXDestructorDecl *dtor = PointeeRD->getDestructor();
-        if (dtor && !dtor->isVirtual()) {
-          Diag(StartLoc, diag::err_delete_abstract_non_virtual_dtor)
-              << PointeeElem;
-          return ExprError();
-        }
-      }
-
       // C++ [expr.delete]p3:
       //   In the first alternative (delete object), if the static type of the
       //   object to be deleted is different from its dynamic type, the static
@@ -1933,11 +1921,20 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       //   behavior is undefined.
       //
       // Note: a final class cannot be derived from, no issue there
-      if (!ArrayForm && PointeeRD->isPolymorphic() &&
-          !PointeeRD->hasAttr<FinalAttr>()) {
+      if (PointeeRD->isPolymorphic() && !PointeeRD->hasAttr<FinalAttr>()) {
         CXXDestructorDecl *dtor = PointeeRD->getDestructor();
-        if (dtor && !dtor->isVirtual())
-          Diag(StartLoc, diag::warn_delete_non_virtual_dtor) << PointeeElem;
+        if (dtor && !dtor->isVirtual()) {
+          if (PointeeRD->isAbstract()) {
+            // If the class is abstract, we warn by default, because we're
+            // sure the code has undefined behavior.
+            Diag(StartLoc, diag::warn_delete_abstract_non_virtual_dtor)
+                << PointeeElem;
+          } else if (!ArrayForm) {
+            // Otherwise, if this is not an array delete, it's a bit suspect,
+            // but not necessarily wrong.
+            Diag(StartLoc, diag::warn_delete_non_virtual_dtor) << PointeeElem;
+          }
+        }
       }
 
     } else if (getLangOptions().ObjCAutoRefCount &&
