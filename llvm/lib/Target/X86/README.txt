@@ -2076,12 +2076,11 @@ generates (x86_64):
 	jb	LBB0_2
 ## BB#1:
 	decl	%edi
-	movl	$63, %eax
-	bsrl	%edi, %ecx
-	cmovel	%eax, %ecx
-	xorl	$31, %ecx
-	movl	$32, %eax
-	subl	%ecx, %eax
+	movl	$63, %ecx
+	bsrl	%edi, %eax
+	cmovel	%ecx, %eax
+	xorl	$-32, %eax
+	addl	$33, %eax
 LBB0_2:
 	ret
 
@@ -2091,26 +2090,10 @@ The cmov and the early test are redundant:
 	jb	LBB0_2
 ## BB#1:
 	decl	%edi
-	bsrl	%edi, %ecx
-	xorl	$31, %ecx
-	movl	$32, %eax
-	subl	%ecx, %eax
+	bsrl	%edi, %eax
+	xorl	$-32, %eax
+	addl	$33, %eax
 LBB0_2:
 	ret
-
-If we want to get really fancy we could use some two's complement magic:
-	xorl	%eax, %eax
-	cmpl	$2, %edi
-	jb	LBB0_2
-## BB#1:
-	decl	%edi
-	bsrl	%edi, %ecx
-	xorl	$-32, %ecx
-	leal    33(%ecx), %eax
-LBB0_2:
-	ret
-
-This is only useful on targets that can't encode the first operand of a sub
-directly.  The rule is C1 - (X^C2) -> (C1+1) + (X^~C2).
 
 //===---------------------------------------------------------------------===//

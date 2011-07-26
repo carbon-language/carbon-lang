@@ -12550,7 +12550,7 @@ static SDValue PerformADCCombine(SDNode *N, SelectionDAG &DAG,
 //      (add Y, (setne X, 0)) -> sbb -1, Y
 //      (sub (sete  X, 0), Y) -> sbb  0, Y
 //      (sub (setne X, 0), Y) -> adc -1, Y
-static SDValue OptimizeConditonalInDecrement(SDNode *N, SelectionDAG &DAG) {
+static SDValue OptimizeConditionalInDecrement(SDNode *N, SelectionDAG &DAG) {
   DebugLoc DL = N->getDebugLoc();
 
   // Look through ZExts.
@@ -12586,6 +12586,33 @@ static SDValue OptimizeConditonalInDecrement(SDNode *N, SelectionDAG &DAG) {
                      DAG.getConstant(0, OtherVal.getValueType()), NewCmp);
 }
 
+static SDValue PerformSubCombine(SDNode *N, SelectionDAG &DAG) {
+  SDValue Op0 = N->getOperand(0);
+  SDValue Op1 = N->getOperand(1);
+
+  // X86 can't encode an immediate LHS of a sub. See if we can push the
+  // negation into a preceding instruction.
+  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op0)) {
+    uint64_t Op0C = C->getSExtValue();
+
+    // If the RHS of the sub is a XOR with one use and a constant, invert the
+    // immediate. Then add one to the LHS of the sub so we can turn
+    // X-Y -> X+~Y+1, saving one register.
+    if (Op1->hasOneUse() && Op1.getOpcode() == ISD::XOR &&
+        isa<ConstantSDNode>(Op1.getOperand(1))) {
+      uint64_t XorC = cast<ConstantSDNode>(Op1.getOperand(1))->getSExtValue();
+      EVT VT = Op0.getValueType();
+      SDValue NewXor = DAG.getNode(ISD::XOR, Op1.getDebugLoc(), VT,
+                                   Op1.getOperand(0),
+                                   DAG.getConstant(~XorC, VT));
+      return DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, NewXor,
+                         DAG.getConstant(Op0C+1, VT));
+    }
+  }
+
+  return OptimizeConditionalInDecrement(N, DAG);
+}
+
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -12595,8 +12622,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
     return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
-  case ISD::ADD:
-  case ISD::SUB:            return OptimizeConditonalInDecrement(N, DAG);
+  case ISD::ADD:            return OptimizeConditionalInDecrement(N, DAG);
+  case ISD::SUB:            return PerformSubCombine(N, DAG);
   case X86ISD::ADC:         return PerformADCCombine(N, DAG, DCI);
   case ISD::MUL:            return PerformMulCombine(N, DAG, DCI);
   case ISD::SHL:
