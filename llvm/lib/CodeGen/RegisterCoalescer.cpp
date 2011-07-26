@@ -760,6 +760,49 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   return true;
 }
 
+/// eliminateUndefCopy - ProcessImpicitDefs may leave some copies of <undef>
+/// values, it only removes local variables. When we have a copy like:
+///
+///   %vreg1 = COPY %vreg2<undef>
+///
+/// We delete the copy and remove the corresponding value number from %vreg1.
+/// Any uses of that value number are marked as <undef>.
+bool RegisterCoalescer::eliminateUndefCopy(MachineInstr *CopyMI,
+                                           const CoalescerPair &CP) {
+  SlotIndex Idx = li_->getInstructionIndex(CopyMI);
+  LiveInterval *SrcInt = &li_->getInterval(CP.getSrcReg());
+  if (SrcInt->liveAt(Idx))
+    return false;
+  LiveInterval *DstInt = &li_->getInterval(CP.getDstReg());
+  if (DstInt->liveAt(Idx))
+    return false;
+
+  // No intervals are live-in to CopyMI - it is undef.
+  if (CP.isFlipped())
+    DstInt = SrcInt;
+  SrcInt = 0;
+
+  VNInfo *DeadVNI = DstInt->getVNInfoAt(Idx.getDefIndex());
+  assert(DeadVNI && "No value defined in DstInt");
+  DstInt->removeValNo(DeadVNI);
+
+  // Find new undef uses.
+  for (MachineRegisterInfo::reg_nodbg_iterator
+         I = mri_->reg_nodbg_begin(DstInt->reg), E = mri_->reg_nodbg_end();
+       I != E; ++I) {
+    MachineOperand &MO = I.getOperand();
+    if (MO.isDef() || MO.isUndef())
+      continue;
+    MachineInstr *MI = MO.getParent();
+    SlotIndex Idx = li_->getInstructionIndex(MI);
+    if (DstInt->liveAt(Idx))
+      continue;
+    MO.setIsUndef(true);
+    DEBUG(dbgs() << "\tnew undef: " << Idx << '\t' << *MI);
+  }
+  return true;
+}
+
 /// UpdateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
 /// update the subregister number if it is not zero. If DstReg is a
 /// physical register and the existing subregister number of the def / use
@@ -1015,6 +1058,13 @@ bool RegisterCoalescer::JoinCopy(MachineInstr *CopyMI, bool &Again) {
   if (CP.getSrcReg() == CP.getDstReg()) {
     markAsJoined(CopyMI);
     DEBUG(dbgs() << "\tCopy already coalesced.\n");
+    return false;  // Not coalescable.
+  }
+
+  // Eliminate undefs.
+  if (!CP.isPhys() && eliminateUndefCopy(CopyMI, CP)) {
+    markAsJoined(CopyMI);
+    DEBUG(dbgs() << "\tEliminated copy of <undef> value.\n");
     return false;  // Not coalescable.
   }
 

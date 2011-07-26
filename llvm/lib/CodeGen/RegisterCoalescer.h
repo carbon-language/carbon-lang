@@ -136,6 +136,9 @@ namespace llvm {
     /// markAsJoined - Remember that CopyMI has already been joined.
     void markAsJoined(MachineInstr *CopyMI);
 
+    /// eliminateUndefCopy - Handle copies of undef values.
+    bool eliminateUndefCopy(MachineInstr *CopyMI, const CoalescerPair &CP);
+
   public:
     static char ID; // Class identification, replacement for typeinfo
     RegisterCoalescer() : MachineFunctionPass(ID) {
