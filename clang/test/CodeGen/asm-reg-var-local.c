@@ -2,23 +2,23 @@
 // Exercise various use cases for local asm "register variables".
 
 int foo() {
-// CHECK: %a = alloca i32
+// CHECK: [[A:%[a-zA-Z0-9]+]] = alloca i32
 
   register int a asm("rsi")=5;
-// CHECK: store i32 5, i32* %a
+// CHECK: store i32 5, i32* [[A]]
 
   asm volatile("; %0 This asm defines rsi" : "=r"(a));
-// CHECK: %0 = call i32 asm sideeffect "; $0 This asm defines rsi", "={rsi},~{dirflag},~{fpsr},~{flags}"()
-// CHECK: store i32 %0, i32* %a
+// CHECK: [[Z:%[a-zA-Z0-9]+]] = call i32 asm sideeffect "; $0 This asm defines rsi", "={rsi},~{dirflag},~{fpsr},~{flags}"()
+// CHECK: store i32 [[Z]], i32* [[A]]
 
   a = 42;
-// CHECK:  store i32 42, i32* %a
+// CHECK:  store i32 42, i32* [[A]]
 
   asm volatile("; %0 This asm uses rsi" : : "r"(a));
-// CHECK:  %tmp = load i32* %a
-// CHECK:  call void asm sideeffect "; $0 This asm uses rsi", "{rsi},~{dirflag},~{fpsr},~{flags}"(i32 %tmp)
+// CHECK:  [[TMP:%[a-zA-Z0-9]+]] = load i32* [[A]]
+// CHECK:  call void asm sideeffect "; $0 This asm uses rsi", "{rsi},~{dirflag},~{fpsr},~{flags}"(i32 [[TMP]])
 
   return a;
-// CHECK:  %tmp1 = load i32* %a
-// CHECK:  ret i32 %tmp1
+// CHECK:  [[TMP1:%[a-zA-Z0-9]+]] = load i32* [[A]]
+// CHECK:  ret i32 [[TMP1]]
 }
