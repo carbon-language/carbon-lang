@@ -79,6 +79,7 @@ public:
         remove_access_watch_bp,         // 'z4'
 
         query_current_thread_id,        // 'qC'
+        query_get_pid,                  // 'qGetPid'
         query_memory_crc,               // 'qCRC:'
         query_thread_ids_first,         // 'qfThreadInfo'
         query_thread_ids_subsequent,    // 'qsThreadInfo'
@@ -155,6 +156,7 @@ public:
     rnb_err_t HandlePacket_A (const char *p);
     rnb_err_t HandlePacket_H (const char *p);
     rnb_err_t HandlePacket_qC (const char *p);
+    rnb_err_t HandlePacket_qGetPid (const char *p);
     rnb_err_t HandlePacket_qLaunchSuccess (const char *p);
     rnb_err_t HandlePacket_qRegisterInfo (const char *p);
     rnb_err_t HandlePacket_qShlibInfoAddr (const char *p);

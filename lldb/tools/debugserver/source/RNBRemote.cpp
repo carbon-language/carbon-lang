@@ -154,6 +154,7 @@ RNBRemote::CreatePacketTable  ()
 //  t.push_back (Packet (insert_access_watch_bp,        &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "Z4", "Insert access watchpoint"));
 //  t.push_back (Packet (remove_access_watch_bp,        &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "z4", "Remove access watchpoint"));
     t.push_back (Packet (query_current_thread_id,       &RNBRemote::HandlePacket_qC,            NULL, "qC", "Query current thread ID"));
+    t.push_back (Packet (query_get_pid,                 &RNBRemote::HandlePacket_qGetPid,       NULL, "qGetPid", "Query process id"));
 //  t.push_back (Packet (query_memory_crc,              &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "qCRC:", "Compute CRC of memory region"));
     t.push_back (Packet (query_thread_ids_first,        &RNBRemote::HandlePacket_qThreadInfo,   NULL, "qfThreadInfo", "Get list of active threads (first req)"));
     t.push_back (Packet (query_thread_ids_subsequent,   &RNBRemote::HandlePacket_qThreadInfo,   NULL, "qsThreadInfo", "Get list of active threads (subsequent req)"));
@@ -1390,6 +1391,21 @@ RNBRemote::HandlePacket_qC (const char *p)
     else
         pid = 0;
     rep << "QC" << std::hex << pid;
+    return SendPacket (rep.str());
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_qGetPid (const char *p)
+{
+    nub_process_t pid;
+    std::ostringstream rep;
+    // If we haven't run the process yet, we tell the debugger the
+    // pid is 0.  That way it can know to tell use to run later on.
+    if (m_ctx.HasValidProcessID())
+        pid = m_ctx.ProcessID();
+    else
+        pid = 0;
+    rep << std::hex << pid;
     return SendPacket (rep.str());
 }
 
