@@ -42,6 +42,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Capacity.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -229,12 +230,12 @@ Preprocessor::macro_begin(bool IncludeExternalMacros) const {
 
 size_t Preprocessor::getTotalMemory() const {
   return BP.getTotalMemory()
-    + MacroExpandedTokens.capacity()
+    + llvm::capacity_in_bytes(MacroExpandedTokens)
     + Predefines.capacity() /* Predefines buffer. */
-    + Macros.getMemorySize()
-    + PragmaPushMacroInfo.getMemorySize()
-    + PoisonReasons.getMemorySize()
-    + CommentHandlers.capacity();
+    + llvm::capacity_in_bytes(Macros)
+    + llvm::capacity_in_bytes(PragmaPushMacroInfo)
+    + llvm::capacity_in_bytes(PoisonReasons)
+    + llvm::capacity_in_bytes(CommentHandlers);
 }
 
 Preprocessor::macro_iterator
