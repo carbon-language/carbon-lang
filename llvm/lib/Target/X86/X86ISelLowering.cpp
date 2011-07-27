@@ -2717,7 +2717,10 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::PUNPCKHBW:
   case X86ISD::PUNPCKHDQ:
   case X86ISD::PUNPCKHQDQ:
-  case X86ISD::VPERMIL:
+  case X86ISD::VPERMILPS:
+  case X86ISD::VPERMILPSY:
+  case X86ISD::VPERMILPD:
+  case X86ISD::VPERMILPDY:
     return true;
   }
   return false;
@@ -2743,7 +2746,10 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::PSHUFD:
   case X86ISD::PSHUFHW:
   case X86ISD::PSHUFLW:
-  case X86ISD::VPERMIL:
+  case X86ISD::VPERMILPS:
+  case X86ISD::VPERMILPSY:
+  case X86ISD::VPERMILPD:
+  case X86ISD::VPERMILPDY:
     return DAG.getNode(Opc, dl, VT, V1, DAG.getConstant(TargetMask, MVT::i8));
   }
 
@@ -3400,21 +3406,63 @@ bool X86::isMOVLMask(ShuffleVectorSDNode *N) {
   return ::isMOVLMask(M, N->getValueType(0));
 }
 
-/// isVPERMILMask - Return true if the specified VECTOR_SHUFFLE operand
-/// specifies a shuffle of elements that is suitable for input to VPERMIL*.
-static bool isVPERMILMask(const SmallVectorImpl<int> &Mask, EVT VT) {
+/// isVPERMILPDMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to VPERMILPD*.
+/// Note that VPERMIL mask matching is different depending whether theunderlying
+/// type is 32 or 64. In the VPERMILPS the high half of the mask should point
+/// to the same elements of the low, but to the higher half of the source.
+/// In VPERMILPD the two lanes could be shuffled independently of each other
+/// with the same restriction that lanes can't be crossed.
+static bool isVPERMILPDMask(const SmallVectorImpl<int> &Mask, EVT VT,
+                            const X86Subtarget *Subtarget) {
+  int NumElts = VT.getVectorNumElements();
+  int NumLanes = VT.getSizeInBits()/128;
+
+  if (!Subtarget->hasAVX())
+    return false;
+
+  // Match any permutation of 128-bit vector with 64-bit types
+  if (NumLanes == 1 && NumElts != 2)
+    return false;
+
+  // Only match 256-bit with 32 types
+  if (VT.getSizeInBits() == 256 && NumElts != 4)
+    return false;
+
+  // The mask on the high lane is independent of the low. Both can match
+  // any element in inside its own lane, but can't cross.
+  int LaneSize = NumElts/NumLanes;
+  for (int l = 0; l < NumLanes; ++l)
+    for (int i = l*LaneSize; i < LaneSize*(l+1); ++i) {
+      int LaneStart = l*LaneSize;
+      if (!isUndefOrInRange(Mask[i], LaneStart, LaneStart+LaneSize))
+        return false;
+    }
+
+  return true;
+}
+
+/// isVPERMILPSMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to VPERMILPS*.
+/// Note that VPERMIL mask matching is different depending whether theunderlying
+/// type is 32 or 64. In the VPERMILPS the high half of the mask should point
+/// to the same elements of the low, but to the higher half of the source.
+/// In VPERMILPD the two lanes could be shuffled independently of each other
+/// with the same restriction that lanes can't be crossed.
+static bool isVPERMILPSMask(const SmallVectorImpl<int> &Mask, EVT VT,
+                            const X86Subtarget *Subtarget) {
   unsigned NumElts = VT.getVectorNumElements();
   unsigned NumLanes = VT.getSizeInBits()/128;
 
-  // Match any permutation of 128-bit vector with 32/64-bit types
-  if (NumLanes == 1) {
-    if (NumElts == 4 || NumElts == 2)
-      return true;
+  if (!Subtarget->hasAVX())
     return false;
-  }
 
-  // Only match 256-bit with 32/64-bit types
-  if (NumElts != 8 && NumElts != 4)
+  // Match any permutation of 128-bit vector with 32-bit types
+  if (NumLanes == 1 && NumElts != 4)
+    return false;
+
+  // Only match 256-bit with 32 types
+  if (VT.getSizeInBits() == 256 && NumElts != 8)
     return false;
 
   // The mask on the high lane should be the same as the low. Actually,
@@ -3424,7 +3472,6 @@ static bool isVPERMILMask(const SmallVectorImpl<int> &Mask, EVT VT) {
     int HighElt = i+LaneSize;
     if (Mask[i] < 0 || Mask[HighElt] < 0)
       continue;
-
     if (Mask[HighElt]-Mask[i] != LaneSize)
       return false;
   }
@@ -3432,9 +3479,9 @@ static bool isVPERMILMask(const SmallVectorImpl<int> &Mask, EVT VT) {
   return true;
 }
 
-/// getShuffleVPERMILImmediateediate - Return the appropriate immediate to shuffle
-/// the specified VECTOR_MASK mask with VPERMIL* instructions.
-static unsigned getShuffleVPERMILImmediate(SDNode *N) {
+/// getShuffleVPERMILPSImmediate - Return the appropriate immediate to shuffle
+/// the specified VECTOR_MASK mask with VPERMILPS* instructions.
+static unsigned getShuffleVPERMILPSImmediate(SDNode *N) {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
   EVT VT = SVOp->getValueType(0);
 
@@ -3444,6 +3491,24 @@ static unsigned getShuffleVPERMILImmediate(SDNode *N) {
   unsigned Mask = 0;
   for (int i = 0; i < NumElts/NumLanes /* lane size */; ++i)
     Mask |= SVOp->getMaskElt(i) << (i*2);
+
+  return Mask;
+}
+
+/// getShuffleVPERMILPDImmediate - Return the appropriate immediate to shuffle
+/// the specified VECTOR_MASK mask with VPERMILPD* instructions.
+static unsigned getShuffleVPERMILPDImmediate(SDNode *N) {
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
+  EVT VT = SVOp->getValueType(0);
+
+  int NumElts = VT.getVectorNumElements();
+  int NumLanes = VT.getSizeInBits()/128;
+
+  unsigned Mask = 0;
+  int LaneSize = NumElts/NumLanes;
+  for (int l = 0; l < NumLanes; ++l)
+    for (int i = l*LaneSize; i < LaneSize*(l+1); ++i)
+      Mask |= (SVOp->getMaskElt(i)-l*LaneSize) << i;
 
   return Mask;
 }
@@ -4163,7 +4228,9 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
       return getShuffleScalarElt(V.getOperand(OpNum).getNode(), Index, DAG,
                                  Depth+1);
     }
-    case X86ISD::VPERMIL:
+    case X86ISD::VPERMILPS:
+    case X86ISD::VPERMILPSY:
+      // FIXME: Implement the other types
       ImmN = N->getOperand(N->getNumOperands()-1);
       DecodeVPERMILMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
                         ShuffleMask);
@@ -5784,6 +5851,22 @@ static inline unsigned getUNPCKHOpcode(EVT VT) {
   return 0;
 }
 
+static inline unsigned getVPERMILOpcode(EVT VT) {
+  switch(VT.getSimpleVT().SimpleTy) {
+  case MVT::v4i32:
+  case MVT::v4f32: return X86ISD::VPERMILPS;
+  case MVT::v2i64:
+  case MVT::v2f64: return X86ISD::VPERMILPD;
+  case MVT::v8i32:
+  case MVT::v8f32: return X86ISD::VPERMILPSY;
+  case MVT::v4i64:
+  case MVT::v4f64: return X86ISD::VPERMILPDY;
+  default:
+    llvm_unreachable("Unknown type for vpermil");
+  }
+  return 0;
+}
+
 static
 SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
                                const TargetLowering &TLI,
@@ -6123,14 +6206,25 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return LowerVECTOR_SHUFFLE_128v4(SVOp, DAG);
 
   //===--------------------------------------------------------------------===//
-  //  Custom lower or generate target specific nodes for 256-bit shuffles.
+  // Generate target specific nodes for 128 or 256-bit shuffles only
+  // supported in the AVX instruction set.
+  //
 
-  // Handle VPERMIL permutations
-  if (isVPERMILMask(M, VT)) {
-    unsigned TargetMask = getShuffleVPERMILImmediate(SVOp);
-    if (VT == MVT::v8f32)
-      return getTargetShuffleNode(X86ISD::VPERMIL, dl, VT, V1, TargetMask, DAG);
-  }
+  // Handle VPERMILPS* permutations
+  if (isVPERMILPSMask(M, VT, Subtarget))
+    return getTargetShuffleNode(getVPERMILOpcode(VT), dl, VT, V1,
+                                getShuffleVPERMILPSImmediate(SVOp), DAG);
+
+  // Handle VPERMILPD* permutations
+  if (isVPERMILPDMask(M, VT, Subtarget))
+    return getTargetShuffleNode(getVPERMILOpcode(VT), dl, VT, V1,
+                                getShuffleVPERMILPDImmediate(SVOp), DAG);
+
+  //===--------------------------------------------------------------------===//
+  // Since no target specific shuffle was selected for this generic one,
+  // lower it into other known shuffles. FIXME: this isn't true yet, but
+  // this is the plan.
+  //
 
   // Handle general 256-bit shuffles
   if (VT.is256BitVector())
@@ -9748,7 +9842,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PUNPCKHWD:          return "X86ISD::PUNPCKHWD";
   case X86ISD::PUNPCKHDQ:          return "X86ISD::PUNPCKHDQ";
   case X86ISD::PUNPCKHQDQ:         return "X86ISD::PUNPCKHQDQ";
-  case X86ISD::VPERMIL:            return "X86ISD::VPERMIL";
+  case X86ISD::VPERMILPS:          return "X86ISD::VPERMILPS";
+  case X86ISD::VPERMILPSY:         return "X86ISD::VPERMILPSY";
+  case X86ISD::VPERMILPD:          return "X86ISD::VPERMILPD";
+  case X86ISD::VPERMILPDY:         return "X86ISD::VPERMILPDY";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
   case X86ISD::VAARG_64:           return "X86ISD::VAARG_64";
   case X86ISD::WIN_ALLOCA:         return "X86ISD::WIN_ALLOCA";
@@ -12666,7 +12763,10 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PSHUFLW:
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
-  case X86ISD::VPERMIL:
+  case X86ISD::VPERMILPS:
+  case X86ISD::VPERMILPSY:
+  case X86ISD::VPERMILPD:
+  case X86ISD::VPERMILPDY:
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI);
   }
 

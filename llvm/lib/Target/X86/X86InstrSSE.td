@@ -5522,6 +5522,12 @@ def : Pat<(int_x86_avx_vperm2f128_si_256
                   VR256:$src1, (memopv8i32 addr:$src2), imm:$src3),
           (VPERM2F128rm VR256:$src1, addr:$src2, imm:$src3)>;
 
+// Shuffle with VPERMIL instructions
+def : Pat<(v8f32 (X86VPermilpsy VR256:$src1, (i8 imm:$imm))),
+          (VPERMILPSYri VR256:$src1, imm:$imm)>;
+def : Pat<(v4f64 (X86VPermilpdy VR256:$src1, (i8 imm:$imm))),
+          (VPERMILPDYri VR256:$src1, imm:$imm)>;
+
 //===----------------------------------------------------------------------===//
 // VZERO - Zero YMM registers
 //
@@ -5542,10 +5548,6 @@ def VZEROUPPER : I<0x77, RawFrm, (outs), (ins), "vzeroupper",
 // directly matched by the patterns below (which can be changed along the way)
 // The AVX version of some but not all of them are described here, and more
 // should come in a near future.
-
-// Shuffle with VPERMIL instructions
-def : Pat<(v8f32 (X86VPermil VR256:$src1, (i8 imm:$imm))),
-          (VPERMILPSYri VR256:$src1, imm:$imm)>;
 
 // Shuffle with PSHUFD instruction folding loads. The first two patterns match
 // SSE2 loads, which are always promoted to v2i64. The last one should match

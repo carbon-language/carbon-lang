@@ -153,7 +153,10 @@ def X86Punpckhwd  : SDNode<"X86ISD::PUNPCKHWD", SDTShuff2Op>;
 def X86Punpckhdq  : SDNode<"X86ISD::PUNPCKHDQ", SDTShuff2Op>;
 def X86Punpckhqdq : SDNode<"X86ISD::PUNPCKHQDQ", SDTShuff2Op>;
 
-def X86VPermil : SDNode<"X86ISD::VPERMIL", SDTShuff2OpI>;
+def X86VPermilps  : SDNode<"X86ISD::VPERMILPS", SDTShuff2OpI>;
+def X86VPermilpsy : SDNode<"X86ISD::VPERMILPSY", SDTShuff2OpI>;
+def X86VPermilpd  : SDNode<"X86ISD::VPERMILPD", SDTShuff2OpI>;
+def X86VPermilpdy : SDNode<"X86ISD::VPERMILPDY", SDTShuff2OpI>;
 
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns
