@@ -41,9 +41,10 @@
 // scripts/fuse_gtest.py depends on gtest's own header being #included
 // *unconditionally*.  Therefore these #includes cannot be moved
 // inside #if GTEST_HAS_PARAM_TEST.
-#include <gtest/internal/gtest-internal.h>
-#include <gtest/internal/gtest-linked_ptr.h>
-#include <gtest/internal/gtest-port.h>
+#include "gtest/internal/gtest-internal.h"
+#include "gtest/internal/gtest-linked_ptr.h"
+#include "gtest/internal/gtest-port.h"
+#include "gtest/gtest-printers.h"
 
 #if GTEST_HAS_PARAM_TEST
 
@@ -171,7 +172,7 @@ class ParamGenerator {
   iterator end() const { return iterator(impl_->End()); }
 
  private:
-  ::testing::internal::linked_ptr<const ParamGeneratorInterface<T> > impl_;
+  linked_ptr<const ParamGeneratorInterface<T> > impl_;
 };
 
 // Generates values from a range of two comparable values. Can be used to
@@ -285,7 +286,7 @@ class ValuesInIteratorRangeGenerator : public ParamGeneratorInterface<T> {
    public:
     Iterator(const ParamGeneratorInterface<T>* base,
              typename ContainerType::const_iterator iterator)
-        :  base_(base), iterator_(iterator) {}
+        : base_(base), iterator_(iterator) {}
     virtual ~Iterator() {}
 
     virtual const ParamGeneratorInterface<T>* BaseGenerator() const {
@@ -416,7 +417,7 @@ class ParameterizedTestCaseInfoBase {
   virtual ~ParameterizedTestCaseInfoBase() {}
 
   // Base part of test case name for display purposes.
-  virtual const String& GetTestCaseName() const = 0;
+  virtual const string& GetTestCaseName() const = 0;
   // Test case id to verify identity.
   virtual TypeId GetTestCaseTypeId() const = 0;
   // UnitTest class invokes this method to register tests in this
@@ -453,7 +454,7 @@ class ParameterizedTestCaseInfo : public ParameterizedTestCaseInfoBase {
       : test_case_name_(name) {}
 
   // Test case base name for display purposes.
-  virtual const String& GetTestCaseName() const { return test_case_name_; }
+  virtual const string& GetTestCaseName() const { return test_case_name_; }
   // Test case id to verify identity.
   virtual TypeId GetTestCaseTypeId() const { return GetTypeId<TestCase>(); }
   // TEST_P macro uses AddTestPattern() to record information
@@ -471,7 +472,7 @@ class ParameterizedTestCaseInfo : public ParameterizedTestCaseInfoBase {
   }
   // INSTANTIATE_TEST_CASE_P macro uses AddGenerator() to record information
   // about a generator.
-  int AddTestCaseInstantiation(const char* instantiation_name,
+  int AddTestCaseInstantiation(const string& instantiation_name,
                                GeneratorCreationFunc* func,
                                const char* /* file */,
                                int /* line */) {
@@ -490,26 +491,25 @@ class ParameterizedTestCaseInfo : public ParameterizedTestCaseInfoBase {
       for (typename InstantiationContainer::iterator gen_it =
                instantiations_.begin(); gen_it != instantiations_.end();
                ++gen_it) {
-        const String& instantiation_name = gen_it->first;
+        const string& instantiation_name = gen_it->first;
         ParamGenerator<ParamType> generator((*gen_it->second)());
 
         Message test_case_name_stream;
         if ( !instantiation_name.empty() )
-          test_case_name_stream << instantiation_name.c_str() << "/";
-        test_case_name_stream << test_info->test_case_base_name.c_str();
+          test_case_name_stream << instantiation_name << "/";
+        test_case_name_stream << test_info->test_case_base_name;
 
         int i = 0;
         for (typename ParamGenerator<ParamType>::iterator param_it =
                  generator.begin();
              param_it != generator.end(); ++param_it, ++i) {
           Message test_name_stream;
-          test_name_stream << test_info->test_base_name.c_str() << "/" << i;
-          ::testing::internal::MakeAndRegisterTestInfo(
+          test_name_stream << test_info->test_base_name << "/" << i;
+          MakeAndRegisterTestInfo(
               test_case_name_stream.GetString().c_str(),
               test_name_stream.GetString().c_str(),
-              "",  // test_case_comment
-              "",  // comment; TODO(vladl@google.com): provide parameter value
-                   //                                  representation.
+              NULL,  // No type parameter.
+              PrintToString(*param_it).c_str(),
               GetTestCaseTypeId(),
               TestCase::SetUpTestCase,
               TestCase::TearDownTestCase,
@@ -530,17 +530,17 @@ class ParameterizedTestCaseInfo : public ParameterizedTestCaseInfoBase {
         test_base_name(a_test_base_name),
         test_meta_factory(a_test_meta_factory) {}
 
-    const String test_case_base_name;
-    const String test_base_name;
+    const string test_case_base_name;
+    const string test_base_name;
     const scoped_ptr<TestMetaFactoryBase<ParamType> > test_meta_factory;
   };
   typedef ::std::vector<linked_ptr<TestInfo> > TestInfoContainer;
   // Keeps pairs of <Instantiation name, Sequence generator creation function>
   // received from INSTANTIATE_TEST_CASE_P macros.
-  typedef ::std::vector<std::pair<String, GeneratorCreationFunc*> >
+  typedef ::std::vector<std::pair<string, GeneratorCreationFunc*> >
       InstantiationContainer;
 
-  const String test_case_name_;
+  const string test_case_name_;
   TestInfoContainer tests_;
   InstantiationContainer instantiations_;
 
@@ -579,7 +579,7 @@ class ParameterizedTestCaseRegistry {
           // and terminate the program since we cannot guaranty correct
           // test case setup and tear-down in this case.
           ReportInvalidTestCaseType(test_case_name,  file, line);
-          abort();
+          posix::Abort();
         } else {
           // At this point we are sure that the object we found is of the same
           // type we are looking for, so we downcast it to that type

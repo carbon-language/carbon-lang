@@ -43,11 +43,11 @@
 
 #ifdef __BORLANDC__
 // string.h is not guaranteed to provide strcpy on C++ Builder.
-#include <mem.h>
+# include <mem.h>
 #endif
 
 #include <string.h>
-#include <gtest/internal/gtest-port.h>
+#include "gtest/internal/gtest-port.h"
 
 #include <string>
 
@@ -296,7 +296,7 @@ class GTEST_API_ String {
 
  private:
   // Constructs a non-NULL String from the given content.  This
-  // function can only be called when data_ has not been allocated.
+  // function can only be called when c_str_ has not been allocated.
   // ConstructNonNull(NULL, 0) results in an empty string ("").
   // ConstructNonNull(NULL, non_zero) is undefined behavior.
   void ConstructNonNull(const char* buffer, size_t a_length) {
@@ -329,9 +329,9 @@ inline ::std::ostream& operator<<(::std::ostream& os, const String& str) {
   return os;
 }
 
-// Gets the content of the StrStream's buffer as a String.  Each '\0'
+// Gets the content of the stringstream's buffer as a String.  Each '\0'
 // character in the buffer is replaced with "\\0".
-GTEST_API_ String StrStreamToString(StrStream* stream);
+GTEST_API_ String StringStreamToString(::std::stringstream* stream);
 
 // Converts a streamable value to a String.  A NULL pointer is
 // converted to "(null)".  When the input value is a ::string,

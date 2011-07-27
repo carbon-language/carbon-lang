@@ -44,19 +44,51 @@
 #ifndef GTEST_INCLUDE_GTEST_INTERNAL_GTEST_TYPE_UTIL_H_
 #define GTEST_INCLUDE_GTEST_INTERNAL_GTEST_TYPE_UTIL_H_
 
-#include <gtest/internal/gtest-port.h>
-#include <gtest/internal/gtest-string.h>
-
-#if GTEST_HAS_TYPED_TEST || GTEST_HAS_TYPED_TEST_P
+#include "gtest/internal/gtest-port.h"
+#include "gtest/internal/gtest-string.h"
 
 // #ifdef __GNUC__ is too general here.  It is possible to use gcc without using
 // libstdc++ (which is where cxxabi.h comes from).
-#ifdef __GLIBCXX__
-#include <cxxabi.h>
-#endif  // __GLIBCXX__
+# ifdef __GLIBCXX__
+#  include <cxxabi.h>
+# elif defined(__HP_aCC)
+#  include <acxx_demangle.h>
+# endif  // __GLIBCXX__
 
 namespace testing {
 namespace internal {
+
+// GetTypeName<T>() returns a human-readable name of type T.
+// NB: This function is also used in Google Mock, so don't move it inside of
+// the typed-test-only section below.
+template <typename T>
+String GetTypeName() {
+# if GTEST_HAS_RTTI
+
+  const char* const name = typeid(T).name();
+#  if defined(__GLIBCXX__) || defined(__HP_aCC)
+  int status = 0;
+  // gcc's implementation of typeid(T).name() mangles the type name,
+  // so we have to demangle it.
+#   ifdef __GLIBCXX__
+  using abi::__cxa_demangle;
+#   endif // __GLIBCXX__
+  char* const readable_name = __cxa_demangle(name, 0, 0, &status);
+  const String name_str(status == 0 ? readable_name : name);
+  free(readable_name);
+  return name_str;
+#  else
+  return name;
+#  endif  // __GLIBCXX__ || __HP_aCC
+
+# else
+
+  return "<type>";
+
+# endif  // GTEST_HAS_RTTI
+}
+
+#if GTEST_HAS_TYPED_TEST || GTEST_HAS_TYPED_TEST_P
 
 // AssertyTypeEq<T1, T2>::type is defined iff T1 and T2 are the same
 // type.  This can be used as a compile-time assertion to ensure that
@@ -69,29 +101,6 @@ template <typename T>
 struct AssertTypeEq<T, T> {
   typedef bool type;
 };
-
-// GetTypeName<T>() returns a human-readable name of type T.
-template <typename T>
-String GetTypeName() {
-#if GTEST_HAS_RTTI
-
-  const char* const name = typeid(T).name();
-#ifdef __GLIBCXX__
-  int status = 0;
-  // gcc's implementation of typeid(T).name() mangles the type name,
-  // so we have to demangle it.
-  char* const readable_name = abi::__cxa_demangle(name, 0, 0, &status);
-  const String name_str(status == 0 ? readable_name : name);
-  free(readable_name);
-  return name_str;
-#else
-  return name;
-#endif  // __GLIBCXX__
-
-#else
-  return "<type>";
-#endif  // GTEST_HAS_RTTI
-}
 
 // A unique type used as the default value for the arguments of class
 // template Types.  This allows us to simulate variadic templates
@@ -1611,7 +1620,7 @@ struct Types<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15,
 
 namespace internal {
 
-#define GTEST_TEMPLATE_ template <typename T> class
+# define GTEST_TEMPLATE_ template <typename T> class
 
 // The template "selector" struct TemplateSel<Tmpl> is used to
 // represent Tmpl, which must be a class template with one type
@@ -1629,7 +1638,7 @@ struct TemplateSel {
   };
 };
 
-#define GTEST_BIND_(TmplSel, T) \
+# define GTEST_BIND_(TmplSel, T) \
   TmplSel::template Bind<T>::type
 
 // A unique struct template used as the default value for the
@@ -3313,9 +3322,9 @@ struct TypeList<Types<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13,
       T41, T42, T43, T44, T45, T46, T47, T48, T49, T50>::type type;
 };
 
+#endif  // GTEST_HAS_TYPED_TEST || GTEST_HAS_TYPED_TEST_P
+
 }  // namespace internal
 }  // namespace testing
-
-#endif  // GTEST_HAS_TYPED_TEST || GTEST_HAS_TYPED_TEST_P
 
 #endif  // GTEST_INCLUDE_GTEST_INTERNAL_GTEST_TYPE_UTIL_H_

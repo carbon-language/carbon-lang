@@ -41,12 +41,12 @@
 // part of Google Test's implementation; otherwise it's undefined.
 #if !GTEST_IMPLEMENTATION_
 // A user is trying to include this from his code - just say no.
-#error "gtest-internal-inl.h is part of Google Test's internal implementation."
-#error "It must not be included except by Google Test itself."
+# error "gtest-internal-inl.h is part of Google Test's internal implementation."
+# error "It must not be included except by Google Test itself."
 #endif  // GTEST_IMPLEMENTATION_
 
 #ifndef _WIN32_WCE
-#include <errno.h>
+# include <errno.h>
 #endif  // !_WIN32_WCE
 #include <stddef.h>
 #include <stdlib.h>  // For strtoll/_strtoul64/malloc/free.
@@ -56,14 +56,14 @@
 #include <string>
 #include <vector>
 
-#include <gtest/internal/gtest-port.h>
+#include "gtest/internal/gtest-port.h"
 
 #if GTEST_OS_WINDOWS
-#include <windows.h>  // For DWORD.
+# include <windows.h>  // NOLINT
 #endif  // GTEST_OS_WINDOWS
 
-#include <gtest/gtest.h>  // NOLINT
-#include <gtest/gtest-spi.h>
+#include "gtest/gtest.h"  // NOLINT
+#include "gtest/gtest-spi.h"
 
 namespace testing {
 
@@ -93,6 +93,7 @@ const char kRandomSeedFlag[] = "random_seed";
 const char kRepeatFlag[] = "repeat";
 const char kShuffleFlag[] = "shuffle";
 const char kStackTraceDepthFlag[] = "stack_trace_depth";
+const char kStreamResultToFlag[] = "stream_result_to";
 const char kThrowOnFailureFlag[] = "throw_on_failure";
 
 // A valid random seed must be in [1, kMaxRandomSeed].
@@ -165,6 +166,7 @@ class GTestFlagSaver {
     repeat_ = GTEST_FLAG(repeat);
     shuffle_ = GTEST_FLAG(shuffle);
     stack_trace_depth_ = GTEST_FLAG(stack_trace_depth);
+    stream_result_to_ = GTEST_FLAG(stream_result_to);
     throw_on_failure_ = GTEST_FLAG(throw_on_failure);
   }
 
@@ -185,6 +187,7 @@ class GTestFlagSaver {
     GTEST_FLAG(repeat) = repeat_;
     GTEST_FLAG(shuffle) = shuffle_;
     GTEST_FLAG(stack_trace_depth) = stack_trace_depth_;
+    GTEST_FLAG(stream_result_to) = stream_result_to_;
     GTEST_FLAG(throw_on_failure) = throw_on_failure_;
   }
  private:
@@ -205,6 +208,7 @@ class GTestFlagSaver {
   internal::Int32 repeat_;
   bool shuffle_;
   internal::Int32 stack_trace_depth_;
+  String stream_result_to_;
   bool throw_on_failure_;
 } GTEST_ATTRIBUTE_UNUSED_;
 
@@ -267,7 +271,14 @@ GTEST_API_ bool ShouldRunTestOnShard(
 // the given predicate.
 template <class Container, typename Predicate>
 inline int CountIf(const Container& c, Predicate predicate) {
-  return static_cast<int>(std::count_if(c.begin(), c.end(), predicate));
+  // Implemented as an explicit loop since std::count_if() in libCstd on
+  // Solaris has a non-standard signature.
+  int count = 0;
+  for (typename Container::const_iterator it = c.begin(); it != c.end(); ++it) {
+    if (predicate(*it))
+      ++count;
+  }
+  return count;
 }
 
 // Applies a function/functor to each element in the container.
@@ -338,85 +349,6 @@ class TestPropertyKeyIs {
 
  private:
   String key_;
-};
-
-class TestInfoImpl {
- public:
-  TestInfoImpl(TestInfo* parent, const char* test_case_name,
-               const char* name, const char* test_case_comment,
-               const char* comment, TypeId fixture_class_id,
-               internal::TestFactoryBase* factory);
-  ~TestInfoImpl();
-
-  // Returns true if this test should run.
-  bool should_run() const { return should_run_; }
-
-  // Sets the should_run member.
-  void set_should_run(bool should) { should_run_ = should; }
-
-  // Returns true if this test is disabled. Disabled tests are not run.
-  bool is_disabled() const { return is_disabled_; }
-
-  // Sets the is_disabled member.
-  void set_is_disabled(bool is) { is_disabled_ = is; }
-
-  // Returns true if this test matches the filter specified by the user.
-  bool matches_filter() const { return matches_filter_; }
-
-  // Sets the matches_filter member.
-  void set_matches_filter(bool matches) { matches_filter_ = matches; }
-
-  // Returns the test case name.
-  const char* test_case_name() const { return test_case_name_.c_str(); }
-
-  // Returns the test name.
-  const char* name() const { return name_.c_str(); }
-
-  // Returns the test case comment.
-  const char* test_case_comment() const { return test_case_comment_.c_str(); }
-
-  // Returns the test comment.
-  const char* comment() const { return comment_.c_str(); }
-
-  // Returns the ID of the test fixture class.
-  TypeId fixture_class_id() const { return fixture_class_id_; }
-
-  // Returns the test result.
-  TestResult* result() { return &result_; }
-  const TestResult* result() const { return &result_; }
-
-  // Creates the test object, runs it, records its result, and then
-  // deletes it.
-  void Run();
-
-  // Clears the test result.
-  void ClearResult() { result_.Clear(); }
-
-  // Clears the test result in the given TestInfo object.
-  static void ClearTestResult(TestInfo * test_info) {
-    test_info->impl()->ClearResult();
-  }
-
- private:
-  // These fields are immutable properties of the test.
-  TestInfo* const parent_;          // The owner of this object
-  const String test_case_name_;     // Test case name
-  const String name_;               // Test name
-  const String test_case_comment_;  // Test case comment
-  const String comment_;            // Test comment
-  const TypeId fixture_class_id_;   // ID of the test fixture class
-  bool should_run_;                 // True iff this test should run
-  bool is_disabled_;                // True iff this test is disabled
-  bool matches_filter_;             // True if this test matches the
-                                    // user-specified filter.
-  internal::TestFactoryBase* const factory_;  // The factory that creates
-                                              // the test object
-
-  // This field is mutable and needs to be reset before running the
-  // test for the second time.
-  TestResult result_;
-
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(TestInfoImpl);
 };
 
 // Class UnitTestOptions.
@@ -682,10 +614,12 @@ class GTEST_API_ UnitTestImpl {
   // Arguments:
   //
   //   test_case_name: name of the test case
+  //   type_param:     the name of the test's type parameter, or NULL if
+  //                   this is not a typed or a type-parameterized test.
   //   set_up_tc:      pointer to the function that sets up the test case
   //   tear_down_tc:   pointer to the function that tears down the test case
   TestCase* GetTestCase(const char* test_case_name,
-                        const char* comment,
+                        const char* type_param,
                         Test::SetUpTestCaseFunc set_up_tc,
                         Test::TearDownTestCaseFunc tear_down_tc);
 
@@ -698,7 +632,7 @@ class GTEST_API_ UnitTestImpl {
   //   test_info:    the TestInfo object
   void AddTestInfo(Test::SetUpTestCaseFunc set_up_tc,
                    Test::TearDownTestCaseFunc tear_down_tc,
-                   TestInfo * test_info) {
+                   TestInfo* test_info) {
     // In order to support thread-safe death tests, we need to
     // remember the original working directory when the test program
     // was first invoked.  We cannot do this in RUN_ALL_TESTS(), as
@@ -713,7 +647,7 @@ class GTEST_API_ UnitTestImpl {
     }
 
     GetTestCase(test_info->test_case_name(),
-                test_info->test_case_comment(),
+                test_info->type_param(),
                 set_up_tc,
                 tear_down_tc)->AddTestInfo(test_info);
   }
@@ -739,24 +673,26 @@ class GTEST_API_ UnitTestImpl {
   }
 
   // Registers all parameterized tests defined using TEST_P and
-  // INSTANTIATE_TEST_P, creating regular tests for each test/parameter
-  // combination. This method can be called more then once; it has
-  // guards protecting from registering the tests more then once.
-  // If value-parameterized tests are disabled, RegisterParameterizedTests
-  // is present but does nothing.
+  // INSTANTIATE_TEST_CASE_P, creating regular tests for each test/parameter
+  // combination. This method can be called more then once; it has guards
+  // protecting from registering the tests more then once.  If
+  // value-parameterized tests are disabled, RegisterParameterizedTests is
+  // present but does nothing.
   void RegisterParameterizedTests();
 
   // Runs all tests in this UnitTest object, prints the result, and
-  // returns 0 if all tests are successful, or 1 otherwise.  If any
-  // exception is thrown during a test on Windows, this test is
-  // considered to be failed, but the rest of the tests will still be
-  // run.  (We disable exceptions on Linux and Mac OS X, so the issue
-  // doesn't apply there.)
-  int RunAllTests();
+  // returns true if all tests are successful.  If any exception is
+  // thrown during a test, this test is considered to be failed, but
+  // the rest of the tests will still be run.
+  bool RunAllTests();
 
-  // Clears the results of all tests, including the ad hoc test.
-  void ClearResult() {
+  // Clears the results of all tests, except the ad hoc tests.
+  void ClearNonAdHocTestResult() {
     ForEach(test_cases_, TestCase::ClearTestCaseResult);
+  }
+
+  // Clears the results of ad-hoc test assertions.
+  void ClearAdHocTestResult() {
     ad_hoc_test_result_.Clear();
   }
 
@@ -818,6 +754,12 @@ class GTEST_API_ UnitTestImpl {
   // UnitTestOptions. Must not be called before InitGoogleTest.
   void ConfigureXmlOutput();
 
+#if GTEST_CAN_STREAM_RESULTS_
+  // Initializes the event listener for streaming test results to a socket.
+  // Must not be called before InitGoogleTest.
+  void ConfigureStreamingOutput();
+#endif
+
   // Performs initialization dependent upon flag values obtained in
   // ParseGoogleTestFlagsOnly.  Is called from InitGoogleTest after the call to
   // ParseGoogleTestFlagsOnly.  In case a user neglects to call InitGoogleTest
@@ -838,8 +780,16 @@ class GTEST_API_ UnitTestImpl {
   // Restores the test cases and tests to their order before the first shuffle.
   void UnshuffleTests();
 
+  // Returns the value of GTEST_FLAG(catch_exceptions) at the moment
+  // UnitTest::Run() starts.
+  bool catch_exceptions() const { return catch_exceptions_; }
+
  private:
   friend class ::testing::UnitTest;
+
+  // Used by UnitTest::Run() to capture the state of
+  // GTEST_FLAG(catch_exceptions) at the moment it starts.
+  void set_catch_exceptions(bool value) { catch_exceptions_ = value; }
 
   // The UnitTest object that owns this implementation object.
   UnitTest* const parent_;
@@ -943,6 +893,10 @@ class GTEST_API_ UnitTestImpl {
   // A per-thread stack of traces created by the SCOPED_TRACE() macro.
   internal::ThreadLocal<std::vector<TraceInfo> > gtest_trace_stack_;
 
+  // The value of GTEST_FLAG(catch_exceptions) at the moment RunAllTests()
+  // starts.
+  bool catch_exceptions_;
+
   GTEST_DISALLOW_COPY_AND_ASSIGN_(UnitTestImpl);
 };  // class UnitTestImpl
 
@@ -952,14 +906,16 @@ inline UnitTestImpl* GetUnitTestImpl() {
   return UnitTest::GetInstance()->impl();
 }
 
+#if GTEST_USES_SIMPLE_RE
+
 // Internal helper functions for implementing the simple regular
 // expression matcher.
 GTEST_API_ bool IsInSet(char ch, const char* str);
-GTEST_API_ bool IsDigit(char ch);
-GTEST_API_ bool IsPunct(char ch);
+GTEST_API_ bool IsAsciiDigit(char ch);
+GTEST_API_ bool IsAsciiPunct(char ch);
 GTEST_API_ bool IsRepeat(char ch);
-GTEST_API_ bool IsWhiteSpace(char ch);
-GTEST_API_ bool IsWordChar(char ch);
+GTEST_API_ bool IsAsciiWhiteSpace(char ch);
+GTEST_API_ bool IsAsciiWordChar(char ch);
 GTEST_API_ bool IsValidEscape(char ch);
 GTEST_API_ bool AtomMatchesChar(bool escaped, char pattern, char ch);
 GTEST_API_ bool ValidateRegex(const char* regex);
@@ -967,6 +923,8 @@ GTEST_API_ bool MatchRegexAtHead(const char* regex, const char* str);
 GTEST_API_ bool MatchRepetitionAndRegexAtHead(
     bool escaped, char ch, char repeat, const char* regex, const char* str);
 GTEST_API_ bool MatchRegexAnywhere(const char* regex, const char* str);
+
+#endif  // GTEST_USES_SIMPLE_RE
 
 // Parses the command line for Google Test flags, without initializing
 // other parts of Google Test.
@@ -977,9 +935,9 @@ GTEST_API_ void ParseGoogleTestFlagsOnly(int* argc, wchar_t** argv);
 
 // Returns the message describing the last system error, regardless of the
 // platform.
-String GetLastErrnoDescription();
+GTEST_API_ String GetLastErrnoDescription();
 
-#if GTEST_OS_WINDOWS
+# if GTEST_OS_WINDOWS
 // Provides leak-safe Windows kernel handle ownership.
 class AutoHandle {
  public:
@@ -1003,7 +961,7 @@ class AutoHandle {
 
   GTEST_DISALLOW_COPY_AND_ASSIGN_(AutoHandle);
 };
-#endif  // GTEST_OS_WINDOWS
+# endif  // GTEST_OS_WINDOWS
 
 // Attempts to parse a string into a positive integer pointed to by the
 // number parameter.  Returns true if that is possible.
@@ -1014,7 +972,7 @@ bool ParseNaturalNumber(const ::std::string& str, Integer* number) {
   // Fail fast if the given string does not begin with a digit;
   // this bypasses strtoXXX's "optional leading whitespace and plus
   // or minus sign" semantics, which are undesirable here.
-  if (str.empty() || !isdigit(str[0])) {
+  if (str.empty() || !IsDigit(str[0])) {
     return false;
   }
   errno = 0;
@@ -1022,14 +980,20 @@ bool ParseNaturalNumber(const ::std::string& str, Integer* number) {
   char* end;
   // BiggestConvertible is the largest integer type that system-provided
   // string-to-number conversion routines can return.
-#if GTEST_OS_WINDOWS && !defined(__GNUC__)
+
+# if GTEST_OS_WINDOWS && !defined(__GNUC__)
+
   // MSVC and C++ Builder define __int64 instead of the standard long long.
   typedef unsigned __int64 BiggestConvertible;
   const BiggestConvertible parsed = _strtoui64(str.c_str(), &end, 10);
-#else
+
+# else
+
   typedef unsigned long long BiggestConvertible;  // NOLINT
   const BiggestConvertible parsed = strtoull(str.c_str(), &end, 10);
-#endif  // GTEST_OS_WINDOWS && !defined(__GNUC__)
+
+# endif  // GTEST_OS_WINDOWS && !defined(__GNUC__)
+
   const bool parse_success = *end == '\0' && errno == 0;
 
   // TODO(vladl@google.com): Convert this to compile time assertion when it is

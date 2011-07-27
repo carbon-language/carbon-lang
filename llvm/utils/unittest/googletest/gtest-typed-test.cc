@@ -29,8 +29,8 @@
 //
 // Author: wan@google.com (Zhanyong Wan)
 
-#include <gtest/gtest-typed-test.h>
-#include <gtest/gtest.h>
+#include "gtest/gtest-typed-test.h"
+#include "gtest/gtest.h"
 
 namespace testing {
 namespace internal {
@@ -40,7 +40,7 @@ namespace internal {
 // Skips to the first non-space char in str. Returns an empty string if str
 // contains only whitespace characters.
 static const char* SkipSpaces(const char* str) {
-  while (isspace(*str))
+  while (IsSpace(*str))
     str++;
   return str;
 }
