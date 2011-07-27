@@ -914,6 +914,10 @@ void SelectionDAGBuilder::visitPHI(const PHINode &) {
   llvm_unreachable("SelectionDAGBuilder shouldn't visit PHI nodes!");
 }
 
+void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &) {
+  // FIXME: Handle this
+}
+
 void SelectionDAGBuilder::visit(unsigned Opcode, const User &I) {
   // Note: this doesn't use InstVisitor, because it has to work with
   // ConstantExpr's in addition to instructions.
@@ -1806,6 +1810,10 @@ void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
 }
 
 void SelectionDAGBuilder::visitUnwind(const UnwindInst &I) {
+}
+
+void SelectionDAGBuilder::visitResume(const ResumeInst &RI) {
+  // FIXME: Handle this
 }
 
 /// handleSmallSwitchCaseRange - Emit a series of specific tests (suitable for

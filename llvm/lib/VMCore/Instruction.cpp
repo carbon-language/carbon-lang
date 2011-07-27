@@ -101,6 +101,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Switch: return "switch";
   case IndirectBr: return "indirectbr";
   case Invoke: return "invoke";
+  case Resume: return "resume";
   case Unwind: return "unwind";
   case Unreachable: return "unreachable";
 
@@ -159,6 +160,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case ShuffleVector:  return "shufflevector";
   case ExtractValue:   return "extractvalue";
   case InsertValue:    return "insertvalue";
+  case LandingPad:     return "landingpad";
 
   default: return "<Invalid operator> ";
   }

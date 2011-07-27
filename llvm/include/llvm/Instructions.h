@@ -1775,6 +1775,116 @@ struct OperandTraits<PHINode> : public HungoffOperandTraits<2> {
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(PHINode, Value)
 
+//===----------------------------------------------------------------------===//
+//                           LandingPadInst Class
+//===----------------------------------------------------------------------===//
+
+//===---------------------------------------------------------------------------
+/// LandingPadInst - The landingpad instruction holds all of the information
+/// necessary to generate correct exception handling. The landingpad instruction
+/// cannot be moved from the top of a landing pad block, which itself is
+/// accessible only from the 'unwind' edge of an invoke.
+///
+class LandingPadInst : public Instruction {
+  /// ReservedSpace - The number of operands actually allocated.  NumOperands is
+  /// the number actually in use.
+  unsigned ReservedSpace;
+
+  /// IsCleanup - True if the landingpad instruction is also a cleanup.
+  bool IsCleanup;
+  LandingPadInst(const LandingPadInst &LP);
+public:
+  enum ClauseType { Catch, Filter };
+private:
+  /// ClauseIdxs - This indexes into the OperandList, indicating what the
+  /// values are at a given index.
+  SmallVector<ClauseType, 8> ClauseIdxs;
+
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  // Allocate space for exactly zero operands.
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
+  void growOperands();
+  void init(Value *PersFn, unsigned NumReservedValues, const Twine &NameStr);
+
+  explicit LandingPadInst(Type *RetTy, Value *PersonalityFn,
+                          unsigned NumReservedValues, const Twine &NameStr,
+                          Instruction *InsertBefore)
+    : Instruction(RetTy, Instruction::LandingPad, 0, 0, InsertBefore),
+      IsCleanup(false) {
+    init(PersonalityFn, 1 + NumReservedValues, NameStr);
+  }
+  explicit LandingPadInst(Type *RetTy, Value *PersonalityFn,
+                          unsigned NumReservedValues, const Twine &NameStr,
+                          BasicBlock *InsertAtEnd)
+    : Instruction(RetTy, Instruction::LandingPad, 0, 0, InsertAtEnd),
+      IsCleanup(false) {
+    init(PersonalityFn, 1 + NumReservedValues, NameStr);
+  }
+protected:
+  virtual LandingPadInst *clone_impl() const;
+public:
+  static LandingPadInst *Create(Type *RetTy, Value *PersonalityFn,
+                                unsigned NumReservedValues,
+                                const Twine &NameStr = "",
+                                Instruction *InsertBefore = 0) {
+    return new LandingPadInst(RetTy, PersonalityFn, NumReservedValues, NameStr,
+                              InsertBefore);
+  }
+  static LandingPadInst *Create(Type *RetTy, Value *PersonalityFn,
+                                unsigned NumReservedValues,
+                                const Twine &NameStr, BasicBlock *InsertAtEnd) {
+    return new LandingPadInst(RetTy, PersonalityFn, NumReservedValues, NameStr,
+                              InsertAtEnd);
+  }
+  ~LandingPadInst();
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  /// getPersonalityFn - Get the personality function associated with this
+  /// landing pad.
+  const Value *getPersonalityFn() const { return getOperand(0); }
+
+  // Simple accessors.
+  bool isCleanup() const { return IsCleanup; }
+  void setCleanup(bool Val) { IsCleanup = Val; }
+
+  /// addClause - Add a clause to the landing pad.
+  void addClause(ClauseType CT, Value *ClauseVal);
+
+  /// getClauseType - Return the type of the clause at this index. The two
+  /// supported clauses are Catch and Filter.
+  ClauseType getClauseType(unsigned I) const {
+    assert(I < ClauseIdxs.size() && "Index too large!");
+    return ClauseIdxs[I];
+  }
+
+  /// getClauseValue - Return the value of the clause at this index.
+  Value *getClauseValue(unsigned I) const {
+    assert(I + 1 < getNumOperands() && "Index too large!");
+    return OperandList[I + 1];
+  }
+
+  /// getNumClauses - Get the number of clauses for this landing pad.
+  unsigned getNumClauses() const { return getNumOperands() - 1; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const LandingPadInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::LandingPad;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+template <>
+struct OperandTraits<LandingPadInst> : public HungoffOperandTraits<2> {
+};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(LandingPadInst, Value)
 
 //===----------------------------------------------------------------------===//
 //                               ReturnInst Class
@@ -2461,6 +2571,59 @@ private:
   virtual unsigned getNumSuccessorsV() const;
   virtual void setSuccessorV(unsigned idx, BasicBlock *B);
 };
+
+//===----------------------------------------------------------------------===//
+//                              ResumeInst Class
+//===----------------------------------------------------------------------===//
+
+//===---------------------------------------------------------------------------
+/// ResumeInst - Resume the propagation of an exception.
+///
+class ResumeInst : public TerminatorInst {
+  ResumeInst(const ResumeInst &RI);
+
+  explicit ResumeInst(LLVMContext &C, Value *Exn, Instruction *InsertBefore=0);
+  ResumeInst(LLVMContext &C, Value *Exn, BasicBlock *InsertAtEnd);
+protected:
+  virtual ResumeInst *clone_impl() const;
+public:
+  static ResumeInst *Create(LLVMContext &C, Value *Exn,
+                            Instruction *InsertBefore = 0) {
+    return new(1) ResumeInst(C, Exn, InsertBefore);
+  }
+  static ResumeInst *Create(LLVMContext &C, Value *Exn,
+                            BasicBlock *InsertAtEnd) {
+    return new(1) ResumeInst(C, Exn, InsertAtEnd);
+  }
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  /// Convenience accessor.
+  Value *getResumeValue() const { return Op<0>(); }
+
+  unsigned getNumSuccessors() const { return 0; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ResumeInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Resume;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+private:
+  virtual BasicBlock *getSuccessorV(unsigned idx) const;
+  virtual unsigned getNumSuccessorsV() const;
+  virtual void setSuccessorV(unsigned idx, BasicBlock *B);
+};
+
+template <>
+struct OperandTraits<ResumeInst> :
+    public FixedNumOperandTraits<ResumeInst, 1> {
+};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ResumeInst, Value)
 
 //===----------------------------------------------------------------------===//
 //                           UnreachableInst Class

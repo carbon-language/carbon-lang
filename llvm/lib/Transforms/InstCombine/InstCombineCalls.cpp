@@ -732,9 +732,11 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       }
     }
     
-    // If the stack restore is in a return/unwind block and if there are no
-    // allocas or calls between the restore and the return, nuke the restore.
-    if (!CannotRemove && (isa<ReturnInst>(TI) || isa<UnwindInst>(TI)))
+    // If the stack restore is in a return, resume, or unwind block and if there
+    // are no allocas or calls between the restore and the return, nuke the
+    // restore.
+    if (!CannotRemove && (isa<ReturnInst>(TI) || isa<ResumeInst>(TI) ||
+                          isa<UnwindInst>(TI)))
       return EraseInstFromFunction(CI);
     break;
   }

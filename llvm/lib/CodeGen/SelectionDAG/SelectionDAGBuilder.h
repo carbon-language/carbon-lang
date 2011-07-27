@@ -453,6 +453,7 @@ public:
 private:
   // These all get lowered before this pass.
   void visitInvoke(const InvokeInst &I);
+  void visitResume(const ResumeInst &I);
   void visitUnwind(const UnwindInst &I);
 
   void visitBinary(const User &I, unsigned OpCode);
@@ -497,6 +498,7 @@ private:
 
   void visitExtractValue(const ExtractValueInst &I);
   void visitInsertValue(const InsertValueInst &I);
+  void visitLandingPad(const LandingPadInst &I);
 
   void visitGetElementPtr(const User &I);
   void visitSelect(const User &I);

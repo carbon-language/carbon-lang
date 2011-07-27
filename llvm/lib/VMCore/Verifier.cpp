@@ -35,6 +35,12 @@
 //  * It is illegal to have a ret instruction that returns a value that does not
 //    agree with the function return value type.
 //  * Function call argument types match the function prototype
+//  * A landing pad is defined by a landingpad instruction, and can be jumped to
+//    only by the unwind edge of an invoke instruction.
+//  * A landingpad instruction must be the first non-PHI instruction in the
+//    block.
+//  * All landingpad instructions must use the same personality function with
+//    the same function.
 //  * All other things that are tested by asserts spread about the code...
 //
 //===----------------------------------------------------------------------===//
@@ -131,18 +137,22 @@ namespace {
     /// already.
     SmallPtrSet<MDNode *, 32> MDNodes;
 
+    /// PersonalityFn - The personality function referenced by the
+    /// LandingPadInsts. All LandingPadInsts within the same function must use
+    /// the same personality function.
+    const Value *PersonalityFn;
+
     Verifier()
-      : FunctionPass(ID), 
-      Broken(false), RealPass(true), action(AbortProcessAction),
-      Mod(0), Context(0), DT(0), MessagesStr(Messages) {
-        initializeVerifierPass(*PassRegistry::getPassRegistry());
-      }
+      : FunctionPass(ID), Broken(false), RealPass(true),
+        action(AbortProcessAction), Mod(0), Context(0), DT(0),
+        MessagesStr(Messages), PersonalityFn(0) {
+      initializeVerifierPass(*PassRegistry::getPassRegistry());
+    }
     explicit Verifier(VerifierFailureAction ctn)
-      : FunctionPass(ID), 
-      Broken(false), RealPass(true), action(ctn), Mod(0), Context(0), DT(0),
-      MessagesStr(Messages) {
-        initializeVerifierPass(*PassRegistry::getPassRegistry());
-      }
+      : FunctionPass(ID), Broken(false), RealPass(true), action(ctn), Mod(0),
+        Context(0), DT(0), MessagesStr(Messages), PersonalityFn(0) {
+      initializeVerifierPass(*PassRegistry::getPassRegistry());
+    }
 
     bool doInitialization(Module &M) {
       Mod = &M;
@@ -282,6 +292,7 @@ namespace {
     void visitAllocaInst(AllocaInst &AI);
     void visitExtractValueInst(ExtractValueInst &EVI);
     void visitInsertValueInst(InsertValueInst &IVI);
+    void visitLandingPadInst(LandingPadInst &LPI);
 
     void VerifyCallSite(CallSite CS);
     bool PerformTypeCheck(Intrinsic::ID ID, Function *F, Type *Ty,
@@ -1321,7 +1332,7 @@ void Verifier::visitFenceInst(FenceInst &FI) {
   Assert1(Ordering == Acquire || Ordering == Release ||
           Ordering == AcquireRelease || Ordering == SequentiallyConsistent,
           "fence instructions may only have "
-          " acquire, release, acq_rel, or seq_cst ordering.", &FI);
+          "acquire, release, acq_rel, or seq_cst ordering.", &FI);
   visitInstruction(FI);
 }
 
@@ -1341,6 +1352,42 @@ void Verifier::visitInsertValueInst(InsertValueInst &IVI) {
           "Invalid InsertValueInst operands!", &IVI);
   
   visitInstruction(IVI);
+}
+
+void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
+  BasicBlock *BB = LPI.getParent();
+
+  // The landingpad instruction is ill-formed if it doesn't have any clauses and
+  // isn't a cleanup.
+  Assert1(LPI.getNumClauses() > 0 || LPI.isCleanup(),
+          "LandingPadInst needs at least one clause or to be a cleanup.", &LPI);
+
+  // The landingpad instruction defines its parent as a landing pad block. The
+  // landing pad block may be branched to only by the unwind edge of an invoke.
+  for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I) {
+    const InvokeInst *II = dyn_cast<InvokeInst>((*I)->getTerminator());
+    Assert1(II && II->getUnwindDest() == BB,
+            "Block containing LandingPadInst must be jumped to "
+            "only by the unwind edge of an invoke.", &LPI);
+  }
+
+  // The landingpad instruction must be the first non-PHI instruction in the
+  // block.
+  BasicBlock::iterator I = BB->begin(), E = BB->end();
+  while (I != E && isa<PHINode>(I))
+    ++I;
+  Assert1(I != E && isa<LandingPadInst>(I) && I == LPI,
+          "LandingPadInst not the first non-PHI instruction in the block.",
+          &LPI);
+
+  // The personality functions for all landingpad instructions within the same
+  // function should match.
+  if (PersonalityFn)
+    Assert1(LPI.getPersonalityFn() == PersonalityFn,
+            "Personality function doesn't match others in function", &LPI);
+  PersonalityFn = LPI.getPersonalityFn();
+
+  visitInstruction(LPI);
 }
 
 /// verifyInstruction - Verify that an instruction is well formed.

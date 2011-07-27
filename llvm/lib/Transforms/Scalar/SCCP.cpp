@@ -515,6 +515,7 @@ private:
   void visitShuffleVectorInst(ShuffleVectorInst &I);
   void visitExtractValueInst(ExtractValueInst &EVI);
   void visitInsertValueInst(InsertValueInst &IVI);
+  void visitLandingPadInst(LandingPadInst &I) { markAnythingOverdefined(&I); }
 
   // Instructions that cannot be folded away.
   void visitStoreInst     (StoreInst &I);
@@ -528,6 +529,7 @@ private:
     visitTerminatorInst(II);
   }
   void visitCallSite      (CallSite CS);
+  void visitResumeInst    (TerminatorInst &I) { /*returns void*/ }
   void visitUnwindInst    (TerminatorInst &I) { /*returns void*/ }
   void visitUnreachableInst(TerminatorInst &I) { /*returns void*/ }
   void visitFenceInst     (FenceInst &I) { /*returns void*/ }

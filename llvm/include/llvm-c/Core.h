@@ -126,67 +126,69 @@ typedef enum {
   LLVMIndirectBr     = 4,
   LLVMInvoke         = 5,
   LLVMUnwind         = 6,
-  LLVMUnreachable    = 7,
+  LLVMResume         = 7,
+  LLVMUnreachable    = 8,
 
   /* Standard Binary Operators */
-  LLVMAdd            = 8,
-  LLVMFAdd           = 9,
-  LLVMSub            = 10,
-  LLVMFSub           = 11,
-  LLVMMul            = 12,
-  LLVMFMul           = 13,
-  LLVMUDiv           = 14,
-  LLVMSDiv           = 15,
-  LLVMFDiv           = 16,
-  LLVMURem           = 17,
-  LLVMSRem           = 18,
-  LLVMFRem           = 19,
+  LLVMAdd            = 9,
+  LLVMFAdd           = 10,
+  LLVMSub            = 11,
+  LLVMFSub           = 12,
+  LLVMMul            = 13,
+  LLVMFMul           = 14,
+  LLVMUDiv           = 15,
+  LLVMSDiv           = 16,
+  LLVMFDiv           = 17,
+  LLVMURem           = 18,
+  LLVMSRem           = 19,
+  LLVMFRem           = 20,
 
   /* Logical Operators */
-  LLVMShl            = 20,
-  LLVMLShr           = 21,
-  LLVMAShr           = 22,
-  LLVMAnd            = 23,
-  LLVMOr             = 24,
-  LLVMXor            = 25,
+  LLVMShl            = 21,
+  LLVMLShr           = 22,
+  LLVMAShr           = 23,
+  LLVMAnd            = 24,
+  LLVMOr             = 25,
+  LLVMXor            = 26,
 
   /* Memory Operators */
-  LLVMAlloca         = 26,
-  LLVMLoad           = 27,
-  LLVMStore          = 28,
-  LLVMGetElementPtr  = 29,
+  LLVMAlloca         = 27,
+  LLVMLoad           = 28,
+  LLVMStore          = 29,
+  LLVMGetElementPtr  = 30,
 
   /* Cast Operators */
-  LLVMTrunc          = 30,
-  LLVMZExt           = 31,
-  LLVMSExt           = 32,
-  LLVMFPToUI         = 33,
-  LLVMFPToSI         = 34,
-  LLVMUIToFP         = 35,
-  LLVMSIToFP         = 36,
-  LLVMFPTrunc        = 37,
-  LLVMFPExt          = 38,
-  LLVMPtrToInt       = 39,
-  LLVMIntToPtr       = 40,
-  LLVMBitCast        = 41,
+  LLVMTrunc          = 31,
+  LLVMZExt           = 32,
+  LLVMSExt           = 33,
+  LLVMFPToUI         = 34,
+  LLVMFPToSI         = 35,
+  LLVMUIToFP         = 36,
+  LLVMSIToFP         = 37,
+  LLVMFPTrunc        = 38,
+  LLVMFPExt          = 39,
+  LLVMPtrToInt       = 40,
+  LLVMIntToPtr       = 41,
+  LLVMBitCast        = 42,
 
   /* Other Operators */
-  LLVMICmp           = 42,
-  LLVMFCmp           = 43,
-  LLVMPHI            = 44,
-  LLVMCall           = 45,
-  LLVMSelect         = 46,
+  LLVMICmp           = 43,
+  LLVMFCmp           = 44,
+  LLVMPHI            = 45,
+  LLVMCall           = 46,
+  LLVMSelect         = 47,
   /* UserOp1 */
   /* UserOp2 */
-  LLVMVAArg          = 49,
-  LLVMExtractElement = 50,
-  LLVMInsertElement  = 51,
-  LLVMShuffleVector  = 52,
-  LLVMExtractValue   = 53,
-  LLVMInsertValue    = 54,
+  LLVMVAArg          = 50,
+  LLVMExtractElement = 51,
+  LLVMInsertElement  = 52,
+  LLVMShuffleVector  = 53,
+  LLVMExtractValue   = 54,
+  LLVMInsertValue    = 55,
+  LLVMLandingPad     = 56,
 
   /* Atomic operators */
-  LLVMFence          = 55
+  LLVMFence          = 57
 } LLVMOpcode;
 
 typedef enum {
@@ -276,6 +278,11 @@ typedef enum {
   LLVMRealUNE,            /**< True if unordered or not equal */
   LLVMRealPredicateTrue   /**< Always true (always folded) */
 } LLVMRealPredicate;
+
+typedef enum {
+  LLVMCatch,              /**< A catch clause   */
+  LLVMFilter              /**< A filter clause  */
+} LLVMLandingPadClauseTy;
 
 void LLVMInitializeCore(LLVMPassRegistryRef R);
 
@@ -463,6 +470,7 @@ LLVMTypeRef LLVMX86MMXType(void);
       macro(GetElementPtrInst)              \
       macro(InsertElementInst)              \
       macro(InsertValueInst)                \
+      macro(LandingPadInst)                 \
       macro(PHINode)                        \
       macro(SelectInst)                     \
       macro(ShuffleVectorInst)              \
@@ -474,6 +482,7 @@ LLVMTypeRef LLVMX86MMXType(void);
         macro(SwitchInst)                   \
         macro(UnreachableInst)              \
         macro(UnwindInst)                   \
+        macro(ResumeInst)                   \
     macro(UnaryInstruction)                 \
       macro(AllocaInst)                     \
       macro(CastInst)                       \
@@ -822,6 +831,7 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef, LLVMValueRef Fn,
                              LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch,
                              const char *Name);
 LLVMValueRef LLVMBuildUnwind(LLVMBuilderRef);
+LLVMValueRef LLVMBuildResume(LLVMBuilderRef B, LLVMValueRef Exn);
 LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef);
 
 /* Add a case to the switch instruction */
@@ -830,6 +840,13 @@ void LLVMAddCase(LLVMValueRef Switch, LLVMValueRef OnVal,
 
 /* Add a destination to the indirectbr instruction */
 void LLVMAddDestination(LLVMValueRef IndirectBr, LLVMBasicBlockRef Dest);
+
+/* Add a clause to the landingpad instruction */
+void LLVMAddClause(LLVMValueRef LandingPad, LLVMLandingPadClauseTy ClauseTy,
+                   LLVMValueRef ClauseVal);
+
+/* Set the 'cleanup' flag in the landingpad instruction */
+void LLVMSetCleanup(LLVMValueRef LandingPad, LLVMBool Val);
 
 /* Arithmetic */
 LLVMValueRef LLVMBuildAdd(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS,

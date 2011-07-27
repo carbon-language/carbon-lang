@@ -166,6 +166,63 @@ Value *PHINode::hasConstantValue() const {
   return ConstantValue;
 }
 
+//===----------------------------------------------------------------------===//
+//                       LandingPadInst Implementation
+//===----------------------------------------------------------------------===//
+
+void LandingPadInst::init(Value *PersFn, unsigned NumReservedValues,
+                          const Twine &NameStr) {
+  ReservedSpace = NumReservedValues;
+  NumOperands = 1;
+  OperandList = allocHungoffUses(ReservedSpace);
+  OperandList[0] = PersFn;
+  setName(NameStr);
+}
+
+LandingPadInst::LandingPadInst(const LandingPadInst &LP)
+  : Instruction(LP.getType(), Instruction::LandingPad,
+                allocHungoffUses(LP.getNumOperands()), LP.getNumOperands()),
+    ReservedSpace(LP.getNumOperands()) {
+  Use *OL = OperandList, *InOL = LP.OperandList;
+  for (unsigned I = 0, E = ReservedSpace; I != E; ++I)
+    OL[I] = InOL[I];
+
+  for (SmallVectorImpl<ClauseType>::const_iterator
+         I = LP.ClauseIdxs.begin(), E = LP.ClauseIdxs.end(); I != E; ++I)
+    ClauseIdxs.push_back(*I);
+
+  IsCleanup = LP.IsCleanup;
+  SubclassOptionalData = LP.SubclassOptionalData;
+}
+
+LandingPadInst::~LandingPadInst() {
+  dropHungoffUses();
+}
+
+/// growOperands - grow operands - This grows the operand list in response to a
+/// push_back style of operation. This grows the number of ops by 2 times.
+void LandingPadInst::growOperands() {
+  unsigned e = getNumOperands();
+  ReservedSpace = e * 2;
+
+  Use *NewOps = allocHungoffUses(ReservedSpace);
+  Use *OldOps = OperandList;
+  for (unsigned i = 0; i != e; ++i)
+      NewOps[i] = OldOps[i];
+
+  OperandList = NewOps;
+  Use::zap(OldOps, OldOps + e, true);
+}
+
+void LandingPadInst::addClause(ClauseType CT, Value *ClauseVal) {
+  unsigned OpNo = getNumOperands();
+  if (OpNo + 1 > ReservedSpace)
+    growOperands();
+  assert(OpNo < ReservedSpace && "Growing didn't work!");
+  ClauseIdxs.push_back(CT);
+  ++NumOperands;
+  OperandList[OpNo] = ClauseVal;
+}
 
 //===----------------------------------------------------------------------===//
 //                        CallInst Implementation
@@ -574,6 +631,42 @@ BasicBlock *UnwindInst::getSuccessorV(unsigned idx) const {
 }
 
 //===----------------------------------------------------------------------===//
+//                        ResumeInst Implementation
+//===----------------------------------------------------------------------===//
+
+ResumeInst::ResumeInst(const ResumeInst &RI)
+  : TerminatorInst(Type::getVoidTy(RI.getContext()), Instruction::Resume,
+                   OperandTraits<ResumeInst>::op_begin(this), 1) {
+  Op<0>() = RI.Op<0>();
+  SubclassOptionalData = RI.SubclassOptionalData;
+}
+
+ResumeInst::ResumeInst(LLVMContext &C, Value *Exn, Instruction *InsertBefore)
+  : TerminatorInst(Type::getVoidTy(C), Instruction::Resume,
+                   OperandTraits<ResumeInst>::op_begin(this), 1, InsertBefore) {
+  Op<0>() = Exn;
+}
+
+ResumeInst::ResumeInst(LLVMContext &C, Value *Exn, BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::getVoidTy(C), Instruction::Resume,
+                   OperandTraits<ResumeInst>::op_begin(this), 1, InsertAtEnd) {
+  Op<0>() = Exn;
+}
+
+unsigned ResumeInst::getNumSuccessorsV() const {
+  return getNumSuccessors();
+}
+
+void ResumeInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
+  llvm_unreachable("ResumeInst has no successors!");
+}
+
+BasicBlock *ResumeInst::getSuccessorV(unsigned idx) const {
+  llvm_unreachable("ResumeInst has no successors!");
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
 //                      UnreachableInst Implementation
 //===----------------------------------------------------------------------===//
 
@@ -592,11 +685,11 @@ unsigned UnreachableInst::getNumSuccessorsV() const {
 }
 
 void UnreachableInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
-  llvm_unreachable("UnwindInst has no successors!");
+  llvm_unreachable("UnreachableInst has no successors!");
 }
 
 BasicBlock *UnreachableInst::getSuccessorV(unsigned idx) const {
-  llvm_unreachable("UnwindInst has no successors!");
+  llvm_unreachable("UnreachableInst has no successors!");
   return 0;
 }
 
@@ -3122,6 +3215,10 @@ PHINode *PHINode::clone_impl() const {
   return new PHINode(*this);
 }
 
+LandingPadInst *LandingPadInst::clone_impl() const {
+  return new LandingPadInst(*this);
+}
+
 ReturnInst *ReturnInst::clone_impl() const {
   return new(getNumOperands()) ReturnInst(*this);
 }
@@ -3141,6 +3238,10 @@ IndirectBrInst *IndirectBrInst::clone_impl() const {
 
 InvokeInst *InvokeInst::clone_impl() const {
   return new(getNumOperands()) InvokeInst(*this);
+}
+
+ResumeInst *ResumeInst::clone_impl() const {
+  return new(1) ResumeInst(*this);
 }
 
 UnwindInst *UnwindInst::clone_impl() const {

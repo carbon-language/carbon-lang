@@ -121,7 +121,9 @@ namespace lltok {
     kw_fptoui, kw_fptosi, kw_inttoptr, kw_ptrtoint, kw_bitcast,
     kw_select, kw_va_arg,
 
-    kw_ret, kw_br, kw_switch, kw_indirectbr, kw_invoke, kw_unwind,
+    kw_landingpad, kw_personality, kw_cleanup, kw_catch, kw_filter,
+
+    kw_ret, kw_br, kw_switch, kw_indirectbr, kw_invoke, kw_unwind, kw_resume,
     kw_unreachable,
 
     kw_alloca, kw_load, kw_store, kw_fence, kw_getelementptr,
@@ -143,8 +145,8 @@ namespace lltok {
     // Type valued tokens (TyVal).
     Type,
 
-    APFloat,  // APFloatVal
-    APSInt // APSInt
+    APFloat,           // APFloatVal
+    APSInt             // APSInt
   };
 } // end namespace lltok
 } // end namespace llvm

@@ -479,6 +479,10 @@ public:
     return Insert(new UnwindInst(Context));
   }
 
+  ResumeInst *CreateResume(Value *Exn) {
+    return Insert(ResumeInst::Create(Context, Exn));
+  }
+
   UnreachableInst *CreateUnreachable() {
     return Insert(new UnreachableInst(Context));
   }
@@ -1192,6 +1196,11 @@ public:
       if (Constant *ValC = dyn_cast<Constant>(Val))
         return Insert(Folder.CreateInsertValue(AggC, ValC, Idxs), Name);
     return Insert(InsertValueInst::Create(Agg, Val, Idxs), Name);
+  }
+
+  Value *CreateLandingPad(Type *Ty, Value *PersFn, unsigned NumClauses,
+                          const Twine &Name = "") {
+    return Insert(LandingPadInst::Create(Ty, PersFn, NumClauses, Name));
   }
 
   //===--------------------------------------------------------------------===//
