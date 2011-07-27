@@ -2560,7 +2560,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   PreloadSLocEntries.clear();
   
   // Check the predefines buffers.
-  if (!DisableValidation && CheckPredefinesBuffers())
+  if (!DisableValidation && Type != MK_Module && CheckPredefinesBuffers())
     return IgnorePCH;
 
   if (PP) {
@@ -2576,6 +2576,11 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     // since de-serializing declarations or macro definitions can add
     // new entries into the identifier table, invalidating the
     // iterators.
+    //
+    // FIXME: We need a lazier way to load this information, e.g., by marking
+    // the identifier data as 'dirty', so that it will be looked up in the
+    // AST file(s) if it is uttered in the source. This could save us some
+    // module load time.
     SmallVector<IdentifierInfo *, 128> Identifiers;
     for (IdentifierTable::iterator Id = PP->getIdentifierTable().begin(),
                                 IdEnd = PP->getIdentifierTable().end();
