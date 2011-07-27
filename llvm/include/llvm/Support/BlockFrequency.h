@@ -24,9 +24,6 @@ class BlockFrequency {
 
   uint64_t Frequency;
 
-  static void mult96bit(uint64_t freq, uint32_t N, uint64_t W[2]);
-  static uint64_t div96bit(uint64_t W[2], uint32_t D);
-
 public:
   BlockFrequency(uint64_t Freq = 0) : Frequency(Freq) { }
 

@@ -18,8 +18,10 @@
 
 using namespace llvm;
 
+namespace {
+
 /// mult96bit - Multiply FREQ by N and store result in W array.
-void BlockFrequency::mult96bit(uint64_t freq, uint32_t N, uint64_t W[2]) {
+void mult96bit(uint64_t freq, uint32_t N, uint64_t W[2]) {
   uint64_t u0 = freq & UINT32_MAX;
   uint64_t u1 = freq >> 32;
 
@@ -41,7 +43,7 @@ void BlockFrequency::mult96bit(uint64_t freq, uint32_t N, uint64_t W[2]) {
 
 
 /// div96bit - Divide 96-bit value stored in W array by D. Return 64-bit frequency.
-uint64_t BlockFrequency::div96bit(uint64_t W[2], uint32_t D) {
+uint64_t div96bit(uint64_t W[2], uint32_t D) {
   uint64_t y = W[0];
   uint64_t x = W[1];
 
@@ -57,6 +59,9 @@ uint64_t BlockFrequency::div96bit(uint64_t W[2], uint32_t D) {
 
   return y;
 }
+
+}
+
 
 BlockFrequency &BlockFrequency::operator*=(const BranchProbability &Prob) {
   uint32_t n = Prob.getNumerator();
