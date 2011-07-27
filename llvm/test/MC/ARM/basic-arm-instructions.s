@@ -2057,3 +2057,14 @@ _func:
 @ CHECK: uhsub16gt	r4, r8, r2      @ encoding: [0x72,0x4f,0x78,0xc6]
 @ CHECK: uhsub8	r4, r8, r2              @ encoding: [0xf2,0x4f,0x78,0xe6]
 @ CHECK: uhsub8gt	r4, r8, r2      @ encoding: [0xf2,0x4f,0x78,0xc6]
+
+
+@------------------------------------------------------------------------------
+@ UMAAL
+@------------------------------------------------------------------------------
+        umaal r3, r4, r5, r6
+        umaallt r3, r4, r5, r6
+
+@ CHECK: umaal	r3, r4, r5, r6          @ encoding: [0x95,0x46,0x43,0xe0]
+@ CHECK: umaallt	r3, r4, r5, r6  @ encoding: [0x95,0x46,0x43,0xb0]
+
