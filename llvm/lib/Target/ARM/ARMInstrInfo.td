@@ -2785,7 +2785,7 @@ def SSAT16 : AI<(outs GPR:$Rd), (ins imm1_16:$sat_imm, GPR:$Rn), SatFrm,
   let Inst{3-0} = Rn;
 }
 
-def USAT : AI<(outs GPR:$Rd), (ins i32imm:$sat_imm, GPR:$Rn, shift_imm:$sh),
+def USAT : AI<(outs GPR:$Rd), (ins imm0_31:$sat_imm, GPR:$Rn, shift_imm:$sh),
               SatFrm, NoItinerary, "usat", "\t$Rd, $sat_imm, $Rn$sh", []> {
   bits<4> Rd;
   bits<5> sat_imm;
@@ -2800,7 +2800,7 @@ def USAT : AI<(outs GPR:$Rd), (ins i32imm:$sat_imm, GPR:$Rn, shift_imm:$sh),
   let Inst{3-0} = Rn;
 }
 
-def USAT16 : AI<(outs GPR:$Rd), (ins i32imm:$sat_imm, GPR:$a), SatFrm,
+def USAT16 : AI<(outs GPR:$Rd), (ins imm0_15:$sat_imm, GPR:$a), SatFrm,
                 NoItinerary, "usat16", "\t$Rd, $sat_imm, $a",
                 [/* For disassembly only; pattern left blank */]> {
   bits<4> Rd;
@@ -4364,9 +4364,11 @@ def : InstAlias<"rsc${s}${p} $Rdn, $shift",
                 (RSCrsr GPR:$Rdn, GPR:$Rdn, so_reg_reg:$shift, pred:$p,
                         cc_out:$s)>, Requires<[IsARM]>;
 
-// SSAT optional shift operand.
+// SSAT/USAT optional shift operand.
 def : InstAlias<"ssat${p} $Rd, $sat_imm, $Rn",
                 (SSAT GPR:$Rd, imm1_32:$sat_imm, GPR:$Rn, 0, pred:$p)>;
+def : InstAlias<"usat${p} $Rd, $sat_imm, $Rn",
+                (USAT GPR:$Rd, imm0_31:$sat_imm, GPR:$Rn, 0, pred:$p)>;
 
 
 // Extend instruction optional rotate operand.

@@ -2158,3 +2158,29 @@ _func:
 @ CHECK: usad8le	r4, r6, r9      @ encoding: [0x16,0xf9,0x84,0xd7]
 @ CHECK: usada8	r1, r5, r3, r7          @ encoding: [0x15,0x73,0x81,0xe7]
 @ CHECK: usada8gt	r3, r2, r5, r1  @ encoding: [0x12,0x15,0x83,0xc7]
+
+
+@------------------------------------------------------------------------------
+@ USAT
+@------------------------------------------------------------------------------
+
+	usat	r8, #1, r10
+	usat	r8, #4, r10, lsl #0
+	usat	r8, #5, r10, lsl #31
+	usat	r8, #31, r10, asr #32
+	usat	r8, #16, r10, asr #1
+
+@ CHECK: usat	r8, #1, r10             @ encoding: [0x1a,0x80,0xe1,0xe6]
+@ CHECK: usat	r8, #4, r10             @ encoding: [0x1a,0x80,0xe4,0xe6]
+@ CHECK: usat	r8, #5, r10, lsl #31    @ encoding: [0x9a,0x8f,0xe5,0xe6]
+@ CHECK: usat	r8, #31, r10, asr #32   @ encoding: [0x5a,0x80,0xff,0xe6]
+@ CHECK: usat	r8, #16, r10, asr #1    @ encoding: [0xda,0x80,0xf0,0xe6]
+
+@------------------------------------------------------------------------------
+@ USAT16
+@------------------------------------------------------------------------------
+	usat16	r2, #2, r7
+	usat16	r3, #15, r5
+
+@ CHECK: usat16	r2, #2, r7              @ encoding: [0x32,0x2f,0xe2,0xe6]
+@ CHECK: usat16	r3, #15, r5             @ encoding: [0x33,0x3f,0xef,0xe6]
