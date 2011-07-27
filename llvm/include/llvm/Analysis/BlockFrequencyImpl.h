@@ -160,7 +160,7 @@ class BlockFrequencyImpl {
     unsigned a = RPO[Src];
     unsigned b = RPO[Dst];
 
-    return a > b;
+    return a >= b;
   }
 
   /// getSingleBlockPred - return single BB block predecessor or NULL if
