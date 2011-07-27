@@ -238,3 +238,37 @@
 @ CHECK-ERRORS: error: source operands must be sequential
 @ CHECK-ERRORS:         strexd  r6, r5, r3, [r8]
 @ CHECK-ERRORS:                         ^
+
+        @ Illegal rotate operators for extend instructions
+        sxtb r8, r3, #8
+        sxtb r8, r3, ror 24
+        sxtb r8, r3, ror #8 -
+        sxtab r3, r8, r3, ror #(fred - wilma)
+        sxtab r7, r8, r3, ror #25
+        sxtah r9, r3, r3, ror #-8
+        sxtb16ge r2, r3, lsr #24
+
+@ CHECK-ERRORS: error: rotate operator 'ror' expected
+@ CHECK-ERRORS:         sxtb r8, r3, #8
+@ CHECK-ERRORS:                      ^
+@ CHECK-ERRORS: error: '#' expected
+@ CHECK-ERRORS:         sxtb r8, r3, ror 24
+@ CHECK-ERRORS:                          ^
+@ CHECK-ERRORS: error: unknown token in expression
+@ CHECK-ERRORS:         sxtb r8, r3, ror #8 -
+@ CHECK-ERRORS:                              ^
+@ CHECK-ERRORS: error: malformed rotate expression
+@ CHECK-ERRORS:         sxtb r8, r3, ror #8 -
+@ CHECK-ERRORS:                           ^
+@ CHECK-ERRORS: error: rotate amount must be an immediate
+@ CHECK-ERRORS:         sxtab r3, r8, r3, ror #(fred - wilma)
+@ CHECK-ERRORS:                                ^
+@ CHECK-ERRORS: error: 'ror' rotate amount must be 8, 16, or 24
+@ CHECK-ERRORS:         sxtab r7, r8, r3, ror #25
+@ CHECK-ERRORS:                                ^
+@ CHECK-ERRORS: error: 'ror' rotate amount must be 8, 16, or 24
+@ CHECK-ERRORS:         sxtah r9, r3, r3, ror #-8
+@ CHECK-ERRORS:                                ^
+@ CHECK-ERRORS: error: rotate operator 'ror' expected
+@ CHECK-ERRORS:         sxtb16ge r2, r3, lsr #24
+@ CHECK-ERRORS:                          ^

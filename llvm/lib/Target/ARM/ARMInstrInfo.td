@@ -397,11 +397,16 @@ def rot_imm_XFORM: SDNodeXForm<imm, [{
   case 24: return CurDAG->getTargetConstant(3, MVT::i32);
   }
 }]>;
+def RotImmAsmOperand : AsmOperandClass {
+  let Name = "RotImm";
+  let ParserMethod = "parseRotImm";
+}
 def rot_imm : Operand<i32>, PatLeaf<(i32 imm), [{
     int32_t v = N->getZExtValue();
     return v == 8 || v == 16 || v == 24; }],
     rot_imm_XFORM> {
   let PrintMethod = "printRotImmOperand";
+  let ParserMatchClass = RotImmAsmOperand;
 }
 
 // shift_imm: An integer that encodes a shift amount and the type of shift

@@ -124,6 +124,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   }
   OperandMatchResultTy parseSetEndImm(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseShifterImm(SmallVectorImpl<MCParsedAsmOperand*>&);
+  OperandMatchResultTy parseRotImm(SmallVectorImpl<MCParsedAsmOperand*>&);
 
   // Asm Match Converter Methods
   bool cvtLdWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
@@ -187,6 +188,7 @@ class ARMOperand : public MCParsedAsmOperand {
     ShiftedRegister,
     ShiftedImmediate,
     ShifterImmediate,
+    RotateImmediate,
     Token
   } Kind;
 
@@ -260,6 +262,9 @@ class ARMOperand : public MCParsedAsmOperand {
       unsigned SrcReg;
       unsigned ShiftImm;
     } RegShiftedImm;
+    struct {
+      unsigned Imm;
+    } RotImm;
   };
 
   ARMOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
@@ -311,6 +316,9 @@ public:
       break;
     case ShiftedImmediate:
       RegShiftedImm = o.RegShiftedImm;
+      break;
+    case RotateImmediate:
+      RotImm = o.RotImm;
       break;
     }
   }
@@ -531,6 +539,7 @@ public:
   bool isShifterImm() const { return Kind == ShifterImmediate; }
   bool isRegShiftedReg() const { return Kind == ShiftedRegister; }
   bool isRegShiftedImm() const { return Kind == ShiftedImmediate; }
+  bool isRotImm() const { return Kind == RotateImmediate; }
   bool isMemMode2() const {
     if (getMemAddrMode() != ARMII::AddrMode2)
       return false;
@@ -699,6 +708,12 @@ public:
 
   void addSPRRegListOperands(MCInst &Inst, unsigned N) const {
     addRegListOperands(Inst, N);
+  }
+
+  void addRotImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // Encoded as val>>3. The printer handles display as 8, 16, 24.
+    Inst.addOperand(MCOperand::CreateImm(RotImm.Imm >> 3));
   }
 
   void addImmOperands(MCInst &Inst, unsigned N) const {
@@ -1008,6 +1023,14 @@ public:
     return Op;
   }
 
+  static ARMOperand *CreateRotImm(unsigned Imm, SMLoc S, SMLoc E) {
+    ARMOperand *Op = new ARMOperand(RotateImmediate);
+    Op->RotImm.Imm = Imm;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
   static ARMOperand *
   CreateRegList(const SmallVectorImpl<std::pair<unsigned, SMLoc> > &Regs,
                 SMLoc StartLoc, SMLoc EndLoc) {
@@ -1182,6 +1205,9 @@ void ARMOperand::print(raw_ostream &OS) const {
        << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(RegShiftedImm.ShiftImm))
        << ", " << ARM_AM::getSORegOffset(RegShiftedImm.ShiftImm)
        << ">";
+    break;
+  case RotateImmediate:
+    OS << "<ror " << " #" << (RotImm.Imm * 8) << ">";
     break;
   case RegisterList:
   case DPRRegisterList:
@@ -1806,6 +1832,58 @@ parseShifterImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   E = Parser.getTok().getLoc();
   Operands.push_back(ARMOperand::CreateShifterImm(isASR, Val, S, E));
+
+  return MatchOperand_Success;
+}
+
+/// parseRotImm - Parse the shifter immediate operand for SXTB/UXTB family
+/// of instructions. Legal values are:
+///     ror #n  'n' in {0, 8, 16, 24}
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+parseRotImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  const AsmToken &Tok = Parser.getTok();
+  SMLoc S = Tok.getLoc();
+  if (Tok.isNot(AsmToken::Identifier)) {
+    Error(S, "rotate operator 'ror' expected");
+    return MatchOperand_ParseFail;
+  }
+  StringRef ShiftName = Tok.getString();
+  if (ShiftName != "ror" && ShiftName != "ROR") {
+    Error(S, "rotate operator 'ror' expected");
+    return MatchOperand_ParseFail;
+  }
+  Parser.Lex(); // Eat the operator.
+
+  // A '#' and a rotate amount.
+  if (Parser.getTok().isNot(AsmToken::Hash)) {
+    Error(Parser.getTok().getLoc(), "'#' expected");
+    return MatchOperand_ParseFail;
+  }
+  Parser.Lex(); // Eat hash token.
+
+  const MCExpr *ShiftAmount;
+  SMLoc E = Parser.getTok().getLoc();
+  if (getParser().ParseExpression(ShiftAmount)) {
+    Error(E, "malformed rotate expression");
+    return MatchOperand_ParseFail;
+  }
+  const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(ShiftAmount);
+  if (!CE) {
+    Error(E, "rotate amount must be an immediate");
+    return MatchOperand_ParseFail;
+  }
+
+  int64_t Val = CE->getValue();
+  // Shift amount must be in {0, 8, 16, 24} (0 is undocumented extension)
+  // normally, zero is represented in asm by omitting the rotate operand
+  // entirely.
+  if (Val != 8 && Val != 16 && Val != 24 && Val != 0) {
+    Error(E, "'ror' rotate amount must be 8, 16, or 24");
+    return MatchOperand_ParseFail;
+  }
+
+  E = Parser.getTok().getLoc();
+  Operands.push_back(ARMOperand::CreateRotImm(Val, S, E));
 
   return MatchOperand_Success;
 }
