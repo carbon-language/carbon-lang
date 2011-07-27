@@ -877,6 +877,9 @@ def : Pat<(zextloadi8 xaddr:$addr), (i32 (LBU xaddr:$addr))>;
 // Peepholes
 def : Pat<(store (i32 0), iaddr:$dst), (SWI (i32 R0), iaddr:$dst)>;
 
+// Atomic fence
+def : Pat<(atomic_fence (imm), (imm)), (MEMBARRIER)>;
+
 //===----------------------------------------------------------------------===//
 // Floating Point Support
 //===----------------------------------------------------------------------===//

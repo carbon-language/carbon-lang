@@ -174,6 +174,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   // SPU has no intrinsics for these particular operations:
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
+  setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Expand);
 
   // SPU has no division/remainder instructions
   setOperationAction(ISD::SREM,    MVT::i8,   Expand);

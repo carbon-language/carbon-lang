@@ -131,6 +131,7 @@ namespace llvm {
     SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG& DAG) const;
+    SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG& DAG) const;
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,

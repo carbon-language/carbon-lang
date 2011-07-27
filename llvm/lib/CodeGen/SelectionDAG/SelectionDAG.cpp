@@ -5769,6 +5769,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
 #endif
   case ISD::PREFETCH:      return "Prefetch";
   case ISD::MEMBARRIER:    return "MemBarrier";
+  case ISD::ATOMIC_FENCE:    return "AtomicFence";
   case ISD::ATOMIC_CMP_SWAP:    return "AtomicCmpSwap";
   case ISD::ATOMIC_SWAP:        return "AtomicSwap";
   case ISD::ATOMIC_LOAD_ADD:    return "AtomicLoadAdd";

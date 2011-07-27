@@ -1472,5 +1472,7 @@ def : Pat<(membarrier (i32 imm /*ll*/),
                       (i32 imm /*device*/)),
            (SYNC)>;
 
+def : Pat<(atomic_fence (imm), (imm)), (SYNC)>;
+
 include "PPCInstrAltivec.td"
 include "PPCInstr64Bit.td"

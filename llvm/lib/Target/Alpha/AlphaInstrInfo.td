@@ -607,6 +607,8 @@ def : Pat<(membarrier (i64 imm), (i64 imm), (i64 imm), (i64 1), (i64 imm)),
 def : Pat<(membarrier (i64 imm), (i64 imm), (i64 imm), (i64 imm), (i64 imm)),
           (MB)>;
 
+def : Pat<(atomic_fence (imm), (imm)), (MB)>;
+
 //Basic Floating point ops
 
 //Floats

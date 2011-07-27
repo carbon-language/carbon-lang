@@ -160,7 +160,9 @@ MipsTargetLowering(MipsTargetMachine &TM)
   // Use the default for now
   setOperationAction(ISD::STACKSAVE,         MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,      MVT::Other, Expand);
+
   setOperationAction(ISD::MEMBARRIER,        MVT::Other, Custom);
+  setOperationAction(ISD::ATOMIC_FENCE,      MVT::Other, Custom);  
 
   if (Subtarget->isSingleFloat())
     setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
@@ -529,6 +531,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
     case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
     case ISD::MEMBARRIER:         return LowerMEMBARRIER(Op, DAG);
+    case ISD::ATOMIC_FENCE:       return LowerATOMIC_FENCE(Op, DAG);
   }
   return SDValue();
 }
@@ -1530,6 +1533,16 @@ LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
 // TODO: set SType according to the desired memory barrier behavior.
 SDValue MipsTargetLowering::LowerMEMBARRIER(SDValue Op,
                                             SelectionDAG& DAG) const {
+  unsigned SType = 0;
+  DebugLoc dl = Op.getDebugLoc();
+  return DAG.getNode(MipsISD::Sync, dl, MVT::Other, Op.getOperand(0),
+                     DAG.getConstant(SType, MVT::i32));
+}
+
+SDValue MipsTargetLowering::LowerATOMIC_FENCE(SDValue Op,
+                                              SelectionDAG& DAG) const {
+  // FIXME: Need pseudo-fence for 'singlethread' fences
+  // FIXME: Set SType for weaker fences where supported/appropriate.
   unsigned SType = 0;
   DebugLoc dl = Op.getDebugLoc();
   return DAG.getNode(MipsISD::Sync, dl, MVT::Other, Op.getOperand(0),

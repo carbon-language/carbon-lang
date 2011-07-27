@@ -3221,7 +3221,12 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
 }
 
 void SelectionDAGBuilder::visitFence(const FenceInst &I) {
-  llvm_unreachable("Not implemented yet");
+  DebugLoc dl = getCurDebugLoc();
+  SDValue Ops[3];
+  Ops[0] = getRoot();
+  Ops[1] = DAG.getConstant(I.getOrdering(), TLI.getPointerTy());
+  Ops[2] = DAG.getConstant(I.getSynchScope(), TLI.getPointerTy());
+  DAG.setRoot(DAG.getNode(ISD::ATOMIC_FENCE, dl, MVT::Other, Ops, 3));
 }
 
 /// visitTargetIntrinsic - Lower a call of a target intrinsic to an INTRINSIC

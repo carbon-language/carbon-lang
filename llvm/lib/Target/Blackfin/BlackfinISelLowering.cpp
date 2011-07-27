@@ -99,6 +99,7 @@ BlackfinTargetLowering::BlackfinTargetLowering(TargetMachine &TM)
 
   // Blackfin has no intrinsics for these particular operations.
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
+  setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Expand);
   setOperationAction(ISD::BSWAP, MVT::i32, Expand);
 
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);

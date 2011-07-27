@@ -592,6 +592,11 @@ namespace ISD {
     // and produces an output chain.
     MEMBARRIER,
 
+    // OUTCHAIN = ATOMIC_FENCE(INCHAIN, ordering, scope)
+    // This corresponds to the fence instruction. It takes an input chain, and
+    // two integer constants: an AtomicOrdering and a SynchronizationScope.
+    ATOMIC_FENCE,
+
     // Val, OUTCHAIN = ATOMIC_CMP_SWAP(INCHAIN, ptr, cmp, swap)
     // this corresponds to the atomic.lcs intrinsic.
     // cmp is compared to *ptr, and if equal, swap is stored in *ptr.
