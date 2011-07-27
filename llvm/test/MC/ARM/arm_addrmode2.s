@@ -1,4 +1,5 @@
 @ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding %s | FileCheck %s
+@ XFAIL: *
 
 @ Post-indexed
 @ CHECK: ldrt  r1, [r0], r2 @ encoding: [0x02,0x10,0xb0,0xe6]

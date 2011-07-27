@@ -2090,21 +2090,49 @@ def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
 
 // STRT, STRBT, and STRHT are for disassembly only.
 
-def STRT : AI2stridxT<0, 0, (outs GPR:$Rn_wb), (ins GPR:$Rt, addrmode2:$addr),
+def STRTr : AI2stridxT<0, 0, (outs GPR:$Rn_wb),
+                     (ins GPR:$Rt, ldst_so_reg:$addr),
                      IndexModePost, StFrm, IIC_iStore_ru,
                      "strt", "\t$Rt, $addr", "$addr.base = $Rn_wb",
                      [/* For disassembly only; pattern left blank */]> {
+  let Inst{25} = 1;
+  let Inst{21} = 1; // overwrite
+  let Inst{4} = 0;
+  let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
+}
+
+def STRTi : AI2stridxT<0, 0, (outs GPR:$Rn_wb),
+                     (ins GPR:$Rt, addrmode_imm12:$addr),
+                     IndexModePost, StFrm, IIC_iStore_ru,
+                     "strt", "\t$Rt, $addr", "$addr.base = $Rn_wb",
+                     [/* For disassembly only; pattern left blank */]> {
+  let Inst{25} = 0;
   let Inst{21} = 1; // overwrite
   let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
 }
 
-def STRBT : AI2stridxT<1, 0, (outs GPR:$Rn_wb), (ins GPR:$Rt, addrmode2:$addr),
+
+def STRBTr : AI2stridxT<1, 0, (outs GPR:$Rn_wb),
+                      (ins GPR:$Rt, ldst_so_reg:$addr),
                       IndexModePost, StFrm, IIC_iStore_bh_ru,
                       "strbt", "\t$Rt, $addr", "$addr.base = $Rn_wb",
                       [/* For disassembly only; pattern left blank */]> {
+  let Inst{25} = 1;
+  let Inst{21} = 1; // overwrite
+  let Inst{4} = 0;
+  let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
+}
+
+def STRBTi : AI2stridxT<1, 0, (outs GPR:$Rn_wb),
+                      (ins GPR:$Rt, addrmode_imm12:$addr),
+                      IndexModePost, StFrm, IIC_iStore_bh_ru,
+                      "strbt", "\t$Rt, $addr", "$addr.base = $Rn_wb",
+                      [/* For disassembly only; pattern left blank */]> {
+  let Inst{25} = 0;
   let Inst{21} = 1; // overwrite
   let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
 }
+
 
 def STRHT: AI3sthpo<(outs GPR:$base_wb), (ins GPR:$Rt, addrmode3:$addr),
                     StMiscFrm, IIC_iStore_bh_ru,
