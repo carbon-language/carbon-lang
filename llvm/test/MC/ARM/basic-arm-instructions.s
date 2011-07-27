@@ -1976,3 +1976,28 @@ _func:
 @ CHECK: tst	r6, r7, asr r9          @ encoding: [0x57,0x09,0x16,0xe1]
 @ CHECK: tst	r6, r7, ror r9          @ encoding: [0x77,0x09,0x16,0xe1]
 
+
+@------------------------------------------------------------------------------
+@ UADD16/UADD8
+@------------------------------------------------------------------------------
+        uadd16 r1, r2, r3
+        uadd16gt r1, r2, r3
+        uadd8 r1, r2, r3
+        uadd8le r1, r2, r3
+
+@ CHECK: uadd16	r1, r2, r3              @ encoding: [0x13,0x1f,0x52,0xe6]
+@ CHECK: uadd16gt	r1, r2, r3      @ encoding: [0x13,0x1f,0x52,0xc6]
+@ CHECK: uadd8	r1, r2, r3              @ encoding: [0x93,0x1f,0x52,0xe6]
+@ CHECK: uadd8le r1, r2, r3             @ encoding: [0x93,0x1f,0x52,0xd6]
+
+
+@------------------------------------------------------------------------------
+@ UASX
+@------------------------------------------------------------------------------
+        uasx r9, r12, r0
+        uasxeq r9, r12, r0
+
+@ CHECK: uasx	r9, r12, r0             @ encoding: [0x30,0x9f,0x5c,0xe6]
+@ CHECK: uasxeq	r9, r12, r0             @ encoding: [0x30,0x9f,0x5c,0x06]
+
+
