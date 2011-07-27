@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s  -o /dev/null
+// RUN: %clang_cc1 -emit-llvm %s -triple x86_64-apple-darwin -o /dev/null
 
 
 struct foo { int X; };
