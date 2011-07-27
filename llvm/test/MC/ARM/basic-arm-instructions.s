@@ -2045,3 +2045,15 @@ _func:
 @ CHECK: uhasxgt r4, r8, r2             @ encoding: [0x32,0x4f,0x78,0xc6]
 
 
+@------------------------------------------------------------------------------
+@ UHSUB16/UHSUB8
+@------------------------------------------------------------------------------
+        uhsub16 r4, r8, r2
+        uhsub16gt r4, r8, r2
+        uhsub8 r4, r8, r2
+        uhsub8gt r4, r8, r2
+
+@ CHECK: uhsub16	r4, r8, r2      @ encoding: [0x72,0x4f,0x78,0xe6]
+@ CHECK: uhsub16gt	r4, r8, r2      @ encoding: [0x72,0x4f,0x78,0xc6]
+@ CHECK: uhsub8	r4, r8, r2              @ encoding: [0xf2,0x4f,0x78,0xe6]
+@ CHECK: uhsub8gt	r4, r8, r2      @ encoding: [0xf2,0x4f,0x78,0xc6]
