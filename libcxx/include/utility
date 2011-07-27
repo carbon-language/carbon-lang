@@ -226,9 +226,12 @@ struct _LIBCPP_VISIBLE pair
 
     template<class _U1, class _U2>
         _LIBCPP_INLINE_VISIBILITY
-        pair(const pair<_U1, _U2>& __p,
-                 typename enable_if<is_constructible<_T1, _U1>::value &&
-                                    is_constructible<_T2, _U2>::value>::type* = 0)
+        pair(const pair<_U1, _U2>& __p
+#ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
+                 ,typename enable_if<is_constructible<_T1, _U1>::value &&
+                                    is_constructible<_T2, _U2>::value>::type* = 0
+#endif
+                                      )
             : first(__p.first), second(__p.second) {}
 
     _LIBCPP_INLINE_VISIBILITY
