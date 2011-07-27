@@ -100,7 +100,7 @@ class NamespaceTestCase(TestBase):
 
         # rdar://problem/8668674
         # expression command with fully qualified namespace for a variable does not work
-        self.expect("expression -- '(anonymous namespace)::i'", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expression -- '::i'", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = [" = 3"])
         self.expect("expression -- 'A::B::j'", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = [" = 4"])
