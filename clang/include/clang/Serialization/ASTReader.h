@@ -1377,6 +1377,9 @@ public:
   virtual void ReadUnusedFileScopedDecls(
                  SmallVectorImpl<const DeclaratorDecl *> &Decls);
 
+  virtual void ReadDelegatingConstructors(
+                 SmallVectorImpl<CXXConstructorDecl *> &Decls);
+
   /// \brief Load a selector from disk, registering its ID if it exists.
   void LoadSelector(Selector Sel);
 

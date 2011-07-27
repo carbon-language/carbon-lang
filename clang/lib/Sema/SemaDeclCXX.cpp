@@ -9200,8 +9200,8 @@ void Sema::CheckDelegatingCtorCycles() {
   llvm::SmallSet<CXXConstructorDecl*, 4>::iterator CI = Current.begin(),
                                                    CE = Current.end();
 
-  for (SmallVector<CXXConstructorDecl*, 4>::iterator
-         I = DelegatingCtorDecls.begin(),
+  for (DelegatingCtorDeclsType::iterator
+         I = DelegatingCtorDecls.begin(ExternalSource),
          E = DelegatingCtorDecls.end();
        I != E; ++I) {
    DelegatingCycleHelper(*I, Valid, Invalid, Current, *this);

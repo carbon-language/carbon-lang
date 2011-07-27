@@ -296,9 +296,13 @@ public:
   /// and must warn if not used. Only contains the first declaration.
   UnusedFileScopedDeclsType UnusedFileScopedDecls;
 
+  typedef LazyVector<CXXConstructorDecl *, ExternalSemaSource, 
+                     &ExternalSemaSource::ReadDelegatingConstructors, 2, 2>
+    DelegatingCtorDeclsType;
+
   /// \brief All the delegating constructors seen so far in the file, used for
   /// cycle detection at the end of the TU.
-  SmallVector<CXXConstructorDecl*, 4> DelegatingCtorDecls;
+  DelegatingCtorDeclsType DelegatingCtorDecls;
 
   /// \brief All the overriding destructors seen during a class definition
   /// (there could be multiple due to nested classes) that had their exception

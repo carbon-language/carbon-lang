@@ -18,6 +18,7 @@
 
 namespace clang {
 
+class CXXConstructorDecl;
 class DeclaratorDecl;
 class LookupResult;
 struct ObjCMethodList;
@@ -86,6 +87,15 @@ public:
   virtual void ReadUnusedFileScopedDecls(
                  SmallVectorImpl<const DeclaratorDecl *> &Decls) {}
   
+  /// \brief Read the set of delegating constructors known to the
+  /// external Sema source.
+  ///
+  /// The external source should append its own delegating constructors to the
+  /// given vector of declarations. Note that this routine may be
+  /// invoked multiple times; the external source should take care not to
+  /// introduce the same declarations repeatedly.
+  virtual void ReadDelegatingConstructors(
+                 SmallVectorImpl<CXXConstructorDecl *> &Decls) {}
   
   // isa/cast/dyn_cast support
   static bool classof(const ExternalASTSource *Source) {

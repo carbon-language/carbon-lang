@@ -4328,13 +4328,6 @@ void ASTReader::InitializeSema(Sema &S) {
   }
   PreloadedDecls.clear();
 
-  // If there were any delegating constructors, add them to Sema's list
-  for (unsigned I = 0, N = DelegatingCtorDecls.size(); I != N; ++I) {
-    CXXConstructorDecl *D
-     = cast<CXXConstructorDecl>(GetDecl(DelegatingCtorDecls[I]));
-    SemaObj->DelegatingCtorDecls.push_back(D);
-  }
-
   // If there were any locally-scoped external declarations,
   // deserialize them and add them to Sema's table of locally-scoped
   // external declarations.
@@ -4576,6 +4569,17 @@ void ASTReader::ReadUnusedFileScopedDecls(
       Decls.push_back(D);
   }
   UnusedFileScopedDecls.clear();
+}
+
+void ASTReader::ReadDelegatingConstructors(
+                                 SmallVectorImpl<CXXConstructorDecl *> &Decls) {
+  for (unsigned I = 0, N = DelegatingCtorDecls.size(); I != N; ++I) {
+    CXXConstructorDecl *D
+      = dyn_cast_or_null<CXXConstructorDecl>(GetDecl(DelegatingCtorDecls[I]));
+    if (D)
+      Decls.push_back(D);
+  }
+  DelegatingCtorDecls.clear();
 }
 
 void ASTReader::LoadSelector(Selector Sel) {

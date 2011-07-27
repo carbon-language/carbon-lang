@@ -2822,8 +2822,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                      UnusedFileScopedDecls);
 
   RecordData DelegatingCtorDecls;
-  for (unsigned i=0, e = SemaRef.DelegatingCtorDecls.size(); i != e; ++i)
-    AddDeclRef(SemaRef.DelegatingCtorDecls[i], DelegatingCtorDecls);
+  AddLazyVectorDecls(*this, SemaRef.DelegatingCtorDecls, DelegatingCtorDecls);
 
   RecordData WeakUndeclaredIdentifiers;
   if (!SemaRef.WeakUndeclaredIdentifiers.empty()) {
@@ -3089,10 +3088,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Build a record containing all of the delegating constructor decls in this
   // file.
   RecordData DelegatingCtorDecls;
-  for (unsigned i=0, e = SemaRef.DelegatingCtorDecls.size(); i != e; ++i) {
-    if (SemaRef.DelegatingCtorDecls[i]->getPCHLevel() == 0)
-      AddDeclRef(SemaRef.DelegatingCtorDecls[i], DelegatingCtorDecls);
-  }
+  AddLazyVectorDecls(*this, SemaRef.DelegatingCtorDecls, DelegatingCtorDecls);
 
   // We write the entire table, overwriting the tables from the chain.
   RecordData WeakUndeclaredIdentifiers;
