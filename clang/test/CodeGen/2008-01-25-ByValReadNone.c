@@ -1,6 +1,5 @@
-// RUN: %clang_cc1 -O3 -emit-llvm -o - %s | not grep readonly
-// RUN: %clang_cc1 -O3 -emit-llvm -o - %s | not grep readnone
-
+// RUN: %clang_cc1 -emit-llvm -o - %s | not grep readonly
+// RUN: %clang_cc1 -emit-llvm -o - %s | not grep readnone
 
 // The struct being passed byval means that we cannot mark the
 // function readnone.  Readnone would allow stores to the arg to
