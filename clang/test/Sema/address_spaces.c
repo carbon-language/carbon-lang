@@ -44,3 +44,7 @@ void test3(void) {
   extern void test3_helper(char *p); // expected-note {{passing argument to parameter 'p' here}}
   test3_helper(test3_array); // expected-error {{changes address space of pointer}}
 }
+
+typedef void ft(void);
+_AS1 ft qf; // expected-error {{function type may not be qualified with an address space}}
+typedef _AS1 ft qft; // expected-error {{function type may not be qualified with an address space}}
