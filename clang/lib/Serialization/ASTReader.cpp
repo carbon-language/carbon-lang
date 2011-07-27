@@ -4328,13 +4328,6 @@ void ASTReader::InitializeSema(Sema &S) {
   }
   PreloadedDecls.clear();
 
-  // If there were any unused file scoped decls, deserialize them and add to
-  // Sema's list of unused file scoped decls.
-  for (unsigned I = 0, N = UnusedFileScopedDecls.size(); I != N; ++I) {
-    DeclaratorDecl *D = cast<DeclaratorDecl>(GetDecl(UnusedFileScopedDecls[I]));
-    SemaObj->UnusedFileScopedDecls.push_back(D);
-  }
-
   // If there were any delegating constructors, add them to Sema's list
   for (unsigned I = 0, N = DelegatingCtorDecls.size(); I != N; ++I) {
     CXXConstructorDecl *D
@@ -4572,6 +4565,17 @@ void ASTReader::ReadTentativeDefinitions(
       TentativeDefs.push_back(Var);
   }
   TentativeDefinitions.clear();
+}
+
+void ASTReader::ReadUnusedFileScopedDecls(
+                               SmallVectorImpl<const DeclaratorDecl *> &Decls) {
+  for (unsigned I = 0, N = UnusedFileScopedDecls.size(); I != N; ++I) {
+    DeclaratorDecl *D
+      = dyn_cast_or_null<DeclaratorDecl>(GetDecl(UnusedFileScopedDecls[I]));
+    if (D)
+      Decls.push_back(D);
+  }
+  UnusedFileScopedDecls.clear();
 }
 
 void ASTReader::LoadSelector(Selector Sel) {

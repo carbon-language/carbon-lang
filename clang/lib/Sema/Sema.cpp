@@ -438,7 +438,8 @@ void Sema::ActOnEndOfTranslationUnit() {
   }
   
   // Remove file scoped decls that turned out to be used.
-  UnusedFileScopedDecls.erase(std::remove_if(UnusedFileScopedDecls.begin(),
+  UnusedFileScopedDecls.erase(std::remove_if(UnusedFileScopedDecls.begin(0, 
+                                                                         true),
                                              UnusedFileScopedDecls.end(),
                               std::bind1st(std::ptr_fun(ShouldRemoveFromUnused),
                                            this)),
@@ -521,9 +522,12 @@ void Sema::ActOnEndOfTranslationUnit() {
   // noise.
   if (!Diags.hasErrorOccurred()) {
     // Output warning for unused file scoped decls.
-    for (SmallVectorImpl<const DeclaratorDecl*>::iterator
-           I = UnusedFileScopedDecls.begin(),
+    for (UnusedFileScopedDeclsType::iterator
+           I = UnusedFileScopedDecls.begin(ExternalSource),
            E = UnusedFileScopedDecls.end(); I != E; ++I) {
+      if (ShouldRemoveFromUnused(this, *I))
+        continue;
+      
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
         const FunctionDecl *DiagD;
         if (!FD->hasBody(DiagD))

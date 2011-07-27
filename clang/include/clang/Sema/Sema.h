@@ -288,9 +288,13 @@ public:
   /// \brief All the tentative definitions encountered in the TU.
   TentativeDefinitionsType TentativeDefinitions;
 
+  typedef LazyVector<const DeclaratorDecl *, ExternalSemaSource, 
+                     &ExternalSemaSource::ReadUnusedFileScopedDecls, 2, 2>
+    UnusedFileScopedDeclsType;
+  
   /// \brief The set of file scoped decls seen so far that have not been used
   /// and must warn if not used. Only contains the first declaration.
-  SmallVector<const DeclaratorDecl*, 4> UnusedFileScopedDecls;
+  UnusedFileScopedDeclsType UnusedFileScopedDecls;
 
   /// \brief All the delegating constructors seen so far in the file, used for
   /// cycle detection at the end of the TU.

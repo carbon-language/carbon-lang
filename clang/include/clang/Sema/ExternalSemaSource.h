@@ -18,10 +18,11 @@
 
 namespace clang {
 
-struct ObjCMethodList;
-class Sema;
-class Scope;
+class DeclaratorDecl;
 class LookupResult;
+struct ObjCMethodList;
+class Scope;
+class Sema;
 class VarDecl;
   
 /// \brief An abstract interface that should be implemented by
@@ -65,7 +66,7 @@ public:
   /// \return true to tell Sema to recover using the LookupResult.
   virtual bool LookupUnqualified(LookupResult &R, Scope *S) { return false; }
 
-  /// \brief Read the set of tentative definitions know to the external Sema
+  /// \brief Read the set of tentative definitions known to the external Sema
   /// source.
   ///
   /// The external source should append its own tentative definitions to the
@@ -74,6 +75,17 @@ public:
   /// introduce the same declarations repeatedly.
   virtual void ReadTentativeDefinitions(
                                   SmallVectorImpl<VarDecl *> &TentativeDefs) {}
+  
+  /// \brief Read the set of unused file-scope declarations known to the
+  /// external Sema source.
+  ///
+  /// The external source should append its own unused, filed-scope to the
+  /// given vector of declarations. Note that this routine may be
+  /// invoked multiple times; the external source should take care not to
+  /// introduce the same declarations repeatedly.
+  virtual void ReadUnusedFileScopedDecls(
+                 SmallVectorImpl<const DeclaratorDecl *> &Decls) {}
+  
   
   // isa/cast/dyn_cast support
   static bool classof(const ExternalASTSource *Source) {

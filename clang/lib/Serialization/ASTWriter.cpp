@@ -2777,6 +2777,15 @@ void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     WriteASTCore(SemaRef, StatCalls, isysroot, OutputFile);
 }
 
+template<typename Vector>
+static void AddLazyVectorDecls(ASTWriter &Writer, Vector &Vec,
+                               ASTWriter::RecordData &Record) {
+  for (typename Vector::iterator I = Vec.begin(0, true), E = Vec.end();
+       I != E; ++I)  {
+    Writer.AddDeclRef(*I, Record);
+  }
+}
+
 void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                              StringRef isysroot,
                              const std::string &OutputFile) {
@@ -2805,17 +2814,12 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // TentativeDefinitions order.  Generally, this record will be empty for
   // headers.
   RecordData TentativeDefinitions;
-  for (Sema::TentativeDefinitionsType::iterator 
-            T = SemaRef.TentativeDefinitions.begin(0, true),
-         TEnd = SemaRef.TentativeDefinitions.end();
-       T != TEnd; ++T) {
-    AddDeclRef(*T, TentativeDefinitions);
-  }
+  AddLazyVectorDecls(*this, SemaRef.TentativeDefinitions, TentativeDefinitions);
   
   // Build a record containing all of the file scoped decls in this file.
   RecordData UnusedFileScopedDecls;
-  for (unsigned i=0, e = SemaRef.UnusedFileScopedDecls.size(); i !=e; ++i)
-    AddDeclRef(SemaRef.UnusedFileScopedDecls[i], UnusedFileScopedDecls);
+  AddLazyVectorDecls(*this, SemaRef.UnusedFileScopedDecls, 
+                     UnusedFileScopedDecls);
 
   RecordData DelegatingCtorDecls;
   for (unsigned i=0, e = SemaRef.DelegatingCtorDecls.size(); i != e; ++i)
@@ -3075,19 +3079,12 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Build a record containing all of the new tentative definitions in this
   // file, in TentativeDefinitions order.
   RecordData TentativeDefinitions;
-  for (Sema::TentativeDefinitionsType::iterator 
-       T = SemaRef.TentativeDefinitions.begin(0, true),
-       TEnd = SemaRef.TentativeDefinitions.end();
-       T != TEnd; ++T) {
-    AddDeclRef(*T, TentativeDefinitions);
-  }
+  AddLazyVectorDecls(*this, SemaRef.TentativeDefinitions, TentativeDefinitions);
   
   // Build a record containing all of the file scoped decls in this file.
   RecordData UnusedFileScopedDecls;
-  for (unsigned i=0, e = SemaRef.UnusedFileScopedDecls.size(); i !=e; ++i) {
-    if (SemaRef.UnusedFileScopedDecls[i]->getPCHLevel() == 0)
-      AddDeclRef(SemaRef.UnusedFileScopedDecls[i], UnusedFileScopedDecls);
-  }
+  AddLazyVectorDecls(*this, SemaRef.UnusedFileScopedDecls, 
+                     UnusedFileScopedDecls);
 
   // Build a record containing all of the delegating constructor decls in this
   // file.

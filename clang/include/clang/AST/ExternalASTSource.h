@@ -332,6 +332,8 @@ public:
     /// gives us a reasonably efficient, source-order walk.
     int Position;
     
+    friend class LazyVector;
+    
   public:
     typedef T                   value_type;
     typedef value_type&         reference;
@@ -453,6 +455,20 @@ public:
   
   void push_back(const T& LocalValue) {
     Local.push_back(LocalValue);
+  }
+  
+  void erase(iterator From, iterator To) {
+    if (From.Position < 0 && To.Position < 0) {
+      Loaded.erase(Loaded.end() + From.Position, Loaded.end() + To.Position);
+      return;
+    }
+    
+    if (From.Position < 0) {
+      Loaded.erase(Loaded.end() + From.Position, Loaded.end());
+      From = begin(0, true);
+    }
+    
+    Local.erase(Local.begin() + From.Position, Local.begin() + To.Position);
   }
 };
 

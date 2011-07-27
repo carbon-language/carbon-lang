@@ -1374,6 +1374,9 @@ public:
   virtual void ReadTentativeDefinitions(
                  SmallVectorImpl<VarDecl *> &TentativeDefs);
 
+  virtual void ReadUnusedFileScopedDecls(
+                 SmallVectorImpl<const DeclaratorDecl *> &Decls);
+
   /// \brief Load a selector from disk, registering its ID if it exists.
   void LoadSelector(Selector Sel);
 
