@@ -665,7 +665,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       
       continue;
     }
-    
+
     AliasAnalysis::Location LoadedLoc;
     
     // If we encounter a use of the pointer, it is no longer considered dead
@@ -675,9 +675,12 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       LoadedLoc = AA->getLocation(V);
     } else if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(BBI)) {
       LoadedLoc = AA->getLocationForSource(MTI);
-    } else {
-      // Not a loading instruction.
+    } else if (!BBI->mayReadOrWriteMemory()) {
+      // Instruction doesn't touch memory.
       continue;
+    } else {
+      // Unknown inst; assume it clobbers everything.
+      break;
     }
 
     // Remove any allocas from the DeadPointer set that are loaded, as this

@@ -341,6 +341,7 @@ public:
     case Instruction::VAArg:  return getModRefInfo((const VAArgInst*)I, Loc);
     case Instruction::Load:   return getModRefInfo((const LoadInst*)I,  Loc);
     case Instruction::Store:  return getModRefInfo((const StoreInst*)I, Loc);
+    case Instruction::Fence:  return getModRefInfo((const FenceInst*)I, Loc);
     case Instruction::Call:   return getModRefInfo((const CallInst*)I,  Loc);
     case Instruction::Invoke: return getModRefInfo((const InvokeInst*)I,Loc);
     default:                  return NoModRef;
@@ -403,6 +404,19 @@ public:
 
   /// getModRefInfo (for stores) - A convenience wrapper.
   ModRefResult getModRefInfo(const StoreInst *S, const Value *P, uint64_t Size){
+    return getModRefInfo(S, Location(P, Size));
+  }
+
+  /// getModRefInfo (for fences) - Return whether information about whether
+  /// a particular store modifies or reads the specified memory location.
+  ModRefResult getModRefInfo(const FenceInst *S, const Location &Loc) {
+    // Conservatively correct.  (We could possibly be a bit smarter if
+    // Loc is a alloca that doesn't escape.)
+    return ModRef;
+  }
+
+  /// getModRefInfo (for fences) - A convenience wrapper.
+  ModRefResult getModRefInfo(const FenceInst *S, const Value *P, uint64_t Size){
     return getModRefInfo(S, Location(P, Size));
   }
 

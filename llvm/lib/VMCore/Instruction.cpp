@@ -209,6 +209,9 @@ bool Instruction::isIdenticalToWhenDefined(const Instruction *I) const {
     return IVI->getIndices() == cast<InsertValueInst>(I)->getIndices();
   if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(this))
     return EVI->getIndices() == cast<ExtractValueInst>(I)->getIndices();
+  if (const FenceInst *FI = dyn_cast<FenceInst>(this))
+    return FI->getOrdering() == cast<FenceInst>(FI)->getOrdering() &&
+           FI->getSynchScope() == cast<FenceInst>(FI)->getSynchScope();
 
   return true;
 }
@@ -249,6 +252,9 @@ bool Instruction::isSameOperationAs(const Instruction *I) const {
     return IVI->getIndices() == cast<InsertValueInst>(I)->getIndices();
   if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(this))
     return EVI->getIndices() == cast<ExtractValueInst>(I)->getIndices();
+  if (const FenceInst *FI = dyn_cast<FenceInst>(this))
+    return FI->getOrdering() == cast<FenceInst>(FI)->getOrdering() &&
+           FI->getSynchScope() == cast<FenceInst>(FI)->getSynchScope();
 
   return true;
 }
@@ -281,6 +287,7 @@ bool Instruction::mayReadFromMemory() const {
   default: return false;
   case Instruction::VAArg:
   case Instruction::Load:
+  case Instruction::Fence: // FIXME: refine definition of mayReadFromMemory
     return true;
   case Instruction::Call:
     return !cast<CallInst>(this)->doesNotAccessMemory();
@@ -296,6 +303,7 @@ bool Instruction::mayReadFromMemory() const {
 bool Instruction::mayWriteToMemory() const {
   switch (getOpcode()) {
   default: return false;
+  case Instruction::Fence: // FIXME: refine definition of mayWriteToMemory
   case Instruction::Store:
   case Instruction::VAArg:
     return true;
@@ -393,6 +401,7 @@ bool Instruction::isSafeToSpeculativelyExecute() const {
   case Switch:
   case Unwind:
   case Unreachable:
+  case Fence:
     return false; // Misc instructions which have effects
   }
 }

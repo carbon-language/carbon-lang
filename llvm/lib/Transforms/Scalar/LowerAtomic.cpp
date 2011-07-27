@@ -115,6 +115,11 @@ static bool LowerAtomicIntrinsic(IntrinsicInst *II) {
   return true;
 }
 
+static bool LowerFenceInst(FenceInst *FI) {
+  FI->eraseFromParent();
+  return true;
+}
+
 namespace {
   struct LowerAtomic : public BasicBlockPass {
     static char ID;
@@ -123,9 +128,13 @@ namespace {
     }
     bool runOnBasicBlock(BasicBlock &BB) {
       bool Changed = false;
-      for (BasicBlock::iterator DI = BB.begin(), DE = BB.end(); DI != DE; )
-        if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(DI++))
+      for (BasicBlock::iterator DI = BB.begin(), DE = BB.end(); DI != DE; ) {
+        Instruction *Inst = DI++;
+        if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst))
           Changed |= LowerAtomicIntrinsic(II);
+        if (FenceInst *FI = dyn_cast<FenceInst>(Inst))
+          Changed |= LowerFenceInst(FI);
+      }
       return Changed;
     }
   };
