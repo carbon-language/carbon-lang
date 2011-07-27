@@ -2095,3 +2095,18 @@ _func:
 @ CHECK: umullgt	r6, r1, r2, r6  @ encoding: [0x92,0x66,0x81,0xc0]
 @ CHECK: umulls	r2, r9, r2, r3          @ encoding: [0x92,0x23,0x99,0xe0]
 @ CHECK: umullseq	r3, r5, r1, r2  @ encoding: [0x91,0x32,0x95,0x00]
+
+
+@------------------------------------------------------------------------------
+@ UQADD16/UQADD8
+@------------------------------------------------------------------------------
+        uqadd16 r1, r2, r3
+        uqadd16gt r4, r7, r9
+        uqadd8 r3, r4, r8
+        uqadd8le r8, r1, r2
+
+
+@ CHECK: uqadd16	r1, r2, r3      @ encoding: [0x13,0x1f,0x62,0xe6]
+@ CHECK: uqadd16gt	r4, r7, r9      @ encoding: [0x19,0x4f,0x67,0xc6]
+@ CHECK: uqadd8	r3, r4, r8              @ encoding: [0x98,0x3f,0x64,0xe6]
+@ CHECK: uqadd8le	r8, r1, r2      @ encoding: [0x92,0x8f,0x61,0xd6]
