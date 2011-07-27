@@ -2195,3 +2195,16 @@ _func:
 @ CHECK: usax	r2, r3, r4              @ encoding: [0x54,0x2f,0x53,0xe6]
 @ CHECK: usaxne	r2, r3, r4              @ encoding: [0x54,0x2f,0x53,0x16]
 
+@------------------------------------------------------------------------------
+@ USUB16/USUB8
+@------------------------------------------------------------------------------
+        usub16 r4, r2, r7
+        usub16hi r1, r1, r3
+        usub8 r1, r8, r5
+        usub8le r9, r2, r3
+
+@ CHECK: usub16	r4, r2, r7              @ encoding: [0x77,0x4f,0x52,0xe6]
+@ CHECK: usub16hi	r1, r1, r3      @ encoding: [0x73,0x1f,0x51,0x86]
+@ CHECK: usub8	r1, r8, r5              @ encoding: [0xf5,0x1f,0x58,0xe6]
+@ CHECK: usub8le	r9, r2, r3      @ encoding: [0xf3,0x9f,0x52,0xd6]
+
