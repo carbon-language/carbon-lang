@@ -13,23 +13,6 @@
 #include <cstdarg>
 using namespace llvm;
 
-namespace std {
-
-static std::ostream &operator<<(std::ostream &OS,
-                         const std::set<unsigned> &S) {
-  OS << "{";
-  for (std::set<unsigned>::const_iterator it = S.begin(),
-         ie = S.end(); it != ie; ++it) {
-    if (it != S.begin())
-      OS << ",";
-    OS << *it;
-  }
-  OS << "}";
-  return OS;
-}
-
-}
-
 namespace {
 
 typedef DAGDeltaAlgorithm::edge_ty edge_ty;
