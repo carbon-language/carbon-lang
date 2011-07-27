@@ -91,6 +91,10 @@ class ValueAsLinkedListTestCase(TestBase):
             # or it corresponds to a null pointer.
             if not val or int(val.GetValue(), 16) == 0:
                 return True
+            # Also check the "id" for correct semantics.  If id <= 0, the item
+            # is corrupted, let's return True to signify end of list.
+            if int(val.GetChildMemberWithName("id").GetValue(), 0) <= 0:
+                return True
 
             # Otherwise, return False.
             return False
@@ -109,6 +113,20 @@ class ValueAsLinkedListTestCase(TestBase):
             print "visited IDs:", list
         self.assertTrue(visitedIDs == list)
         
+        # Get variable 'empty_task_head'.
+        empty_task_head = frame0.FindVariable('empty_task_head')
+        self.assertTrue(empty_task_head, VALID_VARIABLE)
+        self.DebugSBValue(empty_task_head)
+
+        list = []
+        # There is no iterable item from empty_task_head.linked_list_iter().
+        for t in empty_task_head.linked_list_iter('next', eol):
+            if self.TraceOn():
+                print cvf.format(t)
+            list.append(int(t.GetChildMemberWithName("id").GetValue()))
+
+        self.assertTrue(len(list) == 0)
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

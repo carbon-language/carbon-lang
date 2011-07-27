@@ -129,12 +129,10 @@ linked_list_iter_def = '''
         """
         try:
             item = self.GetChildMemberWithName(next_item_name)
-            while item:
+            while not end_of_list_test(item):
                 yield item
                 # Prepare for the next iteration.
                 item = item.GetChildMemberWithName(next_item_name)
-                if end_of_list_test(item):
-                    break
         except:
             # Exception occurred.  Stop the generator.
             pass

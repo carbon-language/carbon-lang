@@ -33,7 +33,7 @@ int main (int argc, char const *argv[])
     task2->next = task4;
     task4->next = task5;
 
-    int total = 0; // Break at this line
+    int total = 0;
     Task *t = task_head;
     while (t != NULL) {
         if (t->id >= 0)
@@ -41,5 +41,9 @@ int main (int argc, char const *argv[])
         t = t->next;
     }
     printf("We have a total number of %d tasks\n", total);
-    return 0;
+
+    // This corresponds to an empty task list.
+    Task *empty_task_head = new Task(-1, NULL);
+
+    return 0; // Break at this line
 }
