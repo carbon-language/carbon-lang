@@ -3014,11 +3014,15 @@ struct __invoke_of
 
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
+#ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 typename enable_if
 <
     is_move_constructible<_Tp>::value &&
     is_move_assignable<_Tp>::value
 >::type
+#else
+void
+#endif
 swap(_Tp& __x, _Tp& __y) _NOEXCEPT_(is_nothrow_move_constructible<_Tp>::value &&
                                     is_nothrow_move_assignable<_Tp>::value)
 {
