@@ -2019,3 +2019,29 @@ _func:
 
 @ CHECK: ubfx	r4, r5, #16, #1         @ encoding: [0x55,0x48,0xe0,0xe7]
 @ CHECK: ubfxgt	r4, r5, #16, #16        @ encoding: [0x55,0x48,0xef,0xc7]
+
+
+@------------------------------------------------------------------------------
+@ UHADD16/UHADD8
+@------------------------------------------------------------------------------
+        uhadd16 r4, r8, r2
+        uhadd16gt r4, r8, r2
+        uhadd8 r4, r8, r2
+        uhadd8gt r4, r8, r2
+
+@ CHECK: uhadd16	r4, r8, r2      @ encoding: [0x12,0x4f,0x78,0xe6]
+@ CHECK: uhadd16gt	r4, r8, r2      @ encoding: [0x12,0x4f,0x78,0xc6]
+@ CHECK: uhadd8	r4, r8, r2              @ encoding: [0x92,0x4f,0x78,0xe6]
+@ CHECK: uhadd8gt	r4, r8, r2      @ encoding: [0x92,0x4f,0x78,0xc6]
+
+
+@------------------------------------------------------------------------------
+@ UHASX
+@------------------------------------------------------------------------------
+        uhasx r4, r8, r2
+        uhasxgt r4, r8, r2
+
+@ CHECK: uhasx	r4, r8, r2              @ encoding: [0x32,0x4f,0x78,0xe6]
+@ CHECK: uhasxgt r4, r8, r2             @ encoding: [0x32,0x4f,0x78,0xc6]
+
+
