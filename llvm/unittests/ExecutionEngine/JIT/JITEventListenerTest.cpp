@@ -45,7 +45,7 @@ struct RecordingJITEventListener : public JITEventListener {
   std::vector<FunctionEmittedEvent> EmittedEvents;
   std::vector<FunctionFreedEvent> FreedEvents;
 
-  int NextIndex;
+  unsigned NextIndex;
 
   RecordingJITEventListener() : NextIndex(0) {}
 

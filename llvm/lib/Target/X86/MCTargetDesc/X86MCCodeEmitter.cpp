@@ -357,7 +357,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
   }
 
   // Calculate what the SS field value should be...
-  static const unsigned SSTable[] = { ~0, 0, 1, ~0, 2, ~0, ~0, ~0, 3 };
+  static const unsigned SSTable[] = { ~0U, 0, 1, ~0U, 2, ~0U, ~0U, ~0U, 3 };
   unsigned SS = SSTable[Scale.getImm()];
 
   if (BaseReg == 0) {

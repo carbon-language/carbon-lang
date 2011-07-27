@@ -6357,7 +6357,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
       return Op;
 
     // SHUFPS the element to the lowest double word, then movss.
-    int Mask[4] = { Idx, -1, -1, -1 };
+    int Mask[4] = { static_cast<int>(Idx), -1, -1, -1 };
     EVT VVT = Op.getOperand(0).getValueType();
     SDValue Vec = DAG.getVectorShuffle(VVT, dl, Op.getOperand(0),
                                        DAG.getUNDEF(VVT), Mask);

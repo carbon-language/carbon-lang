@@ -374,7 +374,8 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       }
       
       if (Scale) {
-        VariableGEPIndex Entry = {Index, Extension, Scale};
+        VariableGEPIndex Entry = {Index, Extension,
+                                  static_cast<int64_t>(Scale)};
         VarIndices.push_back(Entry);
       }
     }
