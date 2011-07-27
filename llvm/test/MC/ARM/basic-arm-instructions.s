@@ -2110,3 +2110,24 @@ _func:
 @ CHECK: uqadd16gt	r4, r7, r9      @ encoding: [0x19,0x4f,0x67,0xc6]
 @ CHECK: uqadd8	r3, r4, r8              @ encoding: [0x98,0x3f,0x64,0xe6]
 @ CHECK: uqadd8le	r8, r1, r2      @ encoding: [0x92,0x8f,0x61,0xd6]
+
+
+@------------------------------------------------------------------------------
+@ UQASX
+@------------------------------------------------------------------------------
+        uqasx r2, r4, r1
+        uqasxhi r5, r2, r9
+
+@ CHECK: uqasx	r2, r4, r1              @ encoding: [0x31,0x2f,0x64,0xe6]
+@ CHECK: uqasxhi	r5, r2, r9      @ encoding: [0x39,0x5f,0x62,0x86]
+
+
+@------------------------------------------------------------------------------
+@ UQSAX
+@------------------------------------------------------------------------------
+        uqsax r1, r3, r7
+        uqsaxal r3, r6, r2
+
+@ CHECK: uqsax	r1, r3, r7              @ encoding: [0x57,0x1f,0x63,0xe6]
+@ CHECK: uqsax	r3, r6, r2              @ encoding: [0x52,0x3f,0x66,0xe6]
+
