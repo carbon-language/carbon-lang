@@ -2081,3 +2081,17 @@ _func:
 @ CHECK: umlalgt	r6, r1, r2, r6  @ encoding: [0x92,0x66,0xa1,0xc0]
 @ CHECK: umlals	r2, r9, r2, r3          @ encoding: [0x92,0x23,0xb9,0xe0]
 @ CHECK: umlalseq	r3, r5, r1, r2  @ encoding: [0x91,0x32,0xb5,0x00]
+
+
+@------------------------------------------------------------------------------
+@ UMULL
+@------------------------------------------------------------------------------
+        umull r2, r4, r6, r8
+        umullgt r6, r1, r2, r6
+        umulls r2, r9, r2, r3
+        umullseq r3, r5, r1, r2
+
+@ CHECK: umull	r2, r4, r6, r8          @ encoding: [0x96,0x28,0x84,0xe0]
+@ CHECK: umullgt	r6, r1, r2, r6  @ encoding: [0x92,0x66,0x81,0xc0]
+@ CHECK: umulls	r2, r9, r2, r3          @ encoding: [0x92,0x23,0x99,0xe0]
+@ CHECK: umullseq	r3, r5, r1, r2  @ encoding: [0x91,0x32,0x95,0x00]
