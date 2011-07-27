@@ -2131,3 +2131,16 @@ _func:
 @ CHECK: uqsax	r1, r3, r7              @ encoding: [0x57,0x1f,0x63,0xe6]
 @ CHECK: uqsax	r3, r6, r2              @ encoding: [0x52,0x3f,0x66,0xe6]
 
+
+@------------------------------------------------------------------------------
+@ UQSUB16/UQSUB8
+@------------------------------------------------------------------------------
+        uqsub16 r1, r5, r3
+        uqsub16gt r3, r2, r5
+        uqsub8 r2, r1, r4
+        uqsub8le r4, r6, r9
+
+@ CHECK: uqsub16	r1, r5, r3      @ encoding: [0x73,0x1f,0x65,0xe6]
+@ CHECK: uqsub16gt	r3, r2, r5      @ encoding: [0x75,0x3f,0x62,0xc6]
+@ CHECK: uqsub8	r2, r1, r4              @ encoding: [0xf4,0x2f,0x61,0xe6]
+@ CHECK: uqsub8le	r4, r6, r9      @ encoding: [0xf9,0x4f,0x66,0xd6]
