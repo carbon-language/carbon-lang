@@ -15,6 +15,7 @@
 #define LLVM_ANALYSIS_BLOCKFREQUENCYINFO_H
 
 #include "llvm/Pass.h"
+#include "llvm/Support/BlockFrequency.h"
 #include <climits>
 
 namespace llvm {
@@ -45,7 +46,7 @@ public:
   /// that we should not rely on the value itself, but only on the comparison to
   /// the other block frequencies. We do this to avoid using of floating points.
   ///
-  uint32_t getBlockFreq(BasicBlock *BB);
+  BlockFrequency getBlockFreq(BasicBlock *BB);
 };
 
 }

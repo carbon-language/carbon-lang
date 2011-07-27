@@ -55,6 +55,6 @@ bool MachineBlockFrequencyInfo::runOnMachineFunction(MachineFunction &F) {
 /// that we should not rely on the value itself, but only on the comparison to
 /// the other block frequencies. We do this to avoid using of floating points.
 ///
-uint32_t MachineBlockFrequencyInfo::getBlockFreq(MachineBasicBlock *MBB) {
+BlockFrequency MachineBlockFrequencyInfo::getBlockFreq(MachineBasicBlock *MBB) {
   return MBFI->getBlockFreq(MBB);
 }
