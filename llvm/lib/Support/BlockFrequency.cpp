@@ -46,8 +46,9 @@ void mult96bit(uint64_t freq, uint32_t N, uint64_t W[2]) {
 uint64_t div96bit(uint64_t W[2], uint32_t D) {
   uint64_t y = W[0];
   uint64_t x = W[1];
+  int i;
 
-  for (int i = 1; i <= 64; ++i) {
+  for (i = 1; i <= 64 && x; ++i) {
     uint32_t t = (int)x >> 31;
     x = (x << 1) | (y >> 63);
     y = y << 1;
@@ -57,7 +58,7 @@ uint64_t div96bit(uint64_t W[2], uint32_t D) {
     }
   }
 
-  return y;
+  return y << (64 - i + 1);
 }
 
 }
