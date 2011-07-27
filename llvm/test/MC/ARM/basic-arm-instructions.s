@@ -2144,3 +2144,17 @@ _func:
 @ CHECK: uqsub16gt	r3, r2, r5      @ encoding: [0x75,0x3f,0x62,0xc6]
 @ CHECK: uqsub8	r2, r1, r4              @ encoding: [0xf4,0x2f,0x61,0xe6]
 @ CHECK: uqsub8le	r4, r6, r9      @ encoding: [0xf9,0x4f,0x66,0xd6]
+
+
+@------------------------------------------------------------------------------
+@ USADA8/USAD8
+@------------------------------------------------------------------------------
+        usad8 r2, r1, r4
+        usad8le r4, r6, r9
+        usada8 r1, r5, r3, r7
+        usada8gt r3, r2, r5, r1
+
+@ CHECK: usad8	r2, r1, r4              @ encoding: [0x11,0xf4,0x82,0xe7]
+@ CHECK: usad8le	r4, r6, r9      @ encoding: [0x16,0xf9,0x84,0xd7]
+@ CHECK: usada8	r1, r5, r3, r7          @ encoding: [0x15,0x73,0x81,0xe7]
+@ CHECK: usada8gt	r3, r2, r5, r1  @ encoding: [0x12,0x15,0x83,0xc7]
