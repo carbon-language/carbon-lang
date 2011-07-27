@@ -615,6 +615,31 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     LookupName(Found, S);
   }
 
+  // In Microsoft mode, if we are within a templated function and we can't
+  // resolve Identifier, then extend the SS with Identifier. This will have 
+  // the effect of resolving Identifier during template instantiation. 
+  // The goal is to be able to resolve a function call whose
+  // nested-name-specifier is located inside a dependent base class.
+  // Example: 
+  //
+  // class C {
+  // public:
+  //    static void foo2() {  }
+  // };
+  // template <class T> class A { public: typedef C D; };
+  //
+  // template <class T> class B : public A<T> {
+  // public:
+  //   void foo() { D::foo2(); }
+  // };
+  if (getLangOptions().Microsoft) {
+    DeclContext *DC = LookupCtx ? LookupCtx : CurContext;
+    if (DC->isDependentContext() && DC->isFunctionOrMethod()) {
+      SS.Extend(Context, &Identifier, IdentifierLoc, CCLoc);
+      return false;
+    }
+  }
+
   unsigned DiagID;
   if (!Found.empty())
     DiagID = diag::err_expected_class_or_namespace;
