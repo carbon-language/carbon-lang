@@ -56,12 +56,12 @@ void AliasSet::mergeSetIn(AliasSet &AS, AliasSetTracker &AST) {
       AliasTy = MayAlias;
   }
 
-  if (CallSites.empty()) {            // Merge call sites...
-    if (!AS.CallSites.empty())
-      std::swap(CallSites, AS.CallSites);
-  } else if (!AS.CallSites.empty()) {
-    CallSites.insert(CallSites.end(), AS.CallSites.begin(), AS.CallSites.end());
-    AS.CallSites.clear();
+  if (UnknownInsts.empty()) {            // Merge call sites...
+    if (!AS.UnknownInsts.empty())
+      std::swap(UnknownInsts, AS.UnknownInsts);
+  } else if (!AS.UnknownInsts.empty()) {
+    UnknownInsts.insert(UnknownInsts.end(), AS.UnknownInsts.begin(), AS.UnknownInsts.end());
+    AS.UnknownInsts.clear();
   }
 
   AS.Forward = this;  // Forward across AS now...
@@ -123,13 +123,12 @@ void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
   addRef();               // Entry points to alias set.
 }
 
-void AliasSet::addCallSite(CallSite CS, AliasAnalysis &AA) {
-  CallSites.push_back(CS.getInstruction());
+void AliasSet::addUnknownInst(Instruction *I, AliasAnalysis &AA) {
+  UnknownInsts.push_back(I);
 
-  AliasAnalysis::ModRefBehavior Behavior = AA.getModRefBehavior(CS);
-  if (Behavior == AliasAnalysis::DoesNotAccessMemory)
+  if (!I->mayReadOrWriteMemory())
     return;
-  if (AliasAnalysis::onlyReadsMemory(Behavior)) {
+  if (!I->mayWriteToMemory()) {
     AliasTy = MayAlias;
     AccessTy |= Refs;
     return;
@@ -147,7 +146,7 @@ bool AliasSet::aliasesPointer(const Value *Ptr, uint64_t Size,
                               const MDNode *TBAAInfo,
                               AliasAnalysis &AA) const {
   if (AliasTy == MustAlias) {
-    assert(CallSites.empty() && "Illegal must alias set!");
+    assert(UnknownInsts.empty() && "Illegal must alias set!");
 
     // If this is a set of MustAliases, only check to see if the pointer aliases
     // SOME value in the set.
@@ -167,10 +166,10 @@ bool AliasSet::aliasesPointer(const Value *Ptr, uint64_t Size,
                                          I.getTBAAInfo())))
       return true;
 
-  // Check the call sites list and invoke list...
-  if (!CallSites.empty()) {
-    for (unsigned i = 0, e = CallSites.size(); i != e; ++i)
-      if (AA.getModRefInfo(CallSites[i],
+  // Check the unknown instructions...
+  if (!UnknownInsts.empty()) {
+    for (unsigned i = 0, e = UnknownInsts.size(); i != e; ++i)
+      if (AA.getModRefInfo(UnknownInsts[i],
                            AliasAnalysis::Location(Ptr, Size, TBAAInfo)) !=
             AliasAnalysis::NoModRef)
         return true;
@@ -179,18 +178,20 @@ bool AliasSet::aliasesPointer(const Value *Ptr, uint64_t Size,
   return false;
 }
 
-bool AliasSet::aliasesCallSite(CallSite CS, AliasAnalysis &AA) const {
-  if (AA.doesNotAccessMemory(CS))
+bool AliasSet::aliasesUnknownInst(Instruction *Inst, AliasAnalysis &AA) const {
+  if (!Inst->mayReadOrWriteMemory())
     return false;
 
-  for (unsigned i = 0, e = CallSites.size(); i != e; ++i) {
-    if (AA.getModRefInfo(getCallSite(i), CS) != AliasAnalysis::NoModRef ||
-        AA.getModRefInfo(CS, getCallSite(i)) != AliasAnalysis::NoModRef)
+  for (unsigned i = 0, e = UnknownInsts.size(); i != e; ++i) {
+    CallSite C1 = getUnknownInst(i), C2 = Inst;
+    if (!C1 || !C2 ||
+        AA.getModRefInfo(getUnknownInst(i), Inst) != AliasAnalysis::NoModRef ||
+        AA.getModRefInfo(Inst, getUnknownInst(i)) != AliasAnalysis::NoModRef)
       return true;
   }
 
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (AA.getModRefInfo(CS, I.getPointer(), I.getSize()) !=
+    if (AA.getModRefInfo(Inst, I.getPointer(), I.getSize()) !=
            AliasAnalysis::NoModRef)
       return true;
 
@@ -244,10 +245,10 @@ bool AliasSetTracker::containsPointer(Value *Ptr, uint64_t Size,
 
 
 
-AliasSet *AliasSetTracker::findAliasSetForCallSite(CallSite CS) {
+AliasSet *AliasSetTracker::findAliasSetForUnknownInst(Instruction *Inst) {
   AliasSet *FoundSet = 0;
   for (iterator I = begin(), E = end(); I != E; ++I) {
-    if (I->Forward || !I->aliasesCallSite(CS, AA))
+    if (I->Forward || !I->aliasesUnknownInst(Inst, AA))
       continue;
     
     if (FoundSet == 0)        // If this is the first alias set ptr can go into.
@@ -325,20 +326,20 @@ bool AliasSetTracker::add(VAArgInst *VAAI) {
 }
 
 
-bool AliasSetTracker::add(CallSite CS) {
-  if (isa<DbgInfoIntrinsic>(CS.getInstruction())) 
+bool AliasSetTracker::addUnknown(Instruction *Inst) {
+  if (isa<DbgInfoIntrinsic>(Inst)) 
     return true; // Ignore DbgInfo Intrinsics.
-  if (AA.doesNotAccessMemory(CS))
+  if (!Inst->mayReadOrWriteMemory())
     return true; // doesn't alias anything
 
-  AliasSet *AS = findAliasSetForCallSite(CS);
+  AliasSet *AS = findAliasSetForUnknownInst(Inst);
   if (AS) {
-    AS->addCallSite(CS, AA);
+    AS->addUnknownInst(Inst, AA);
     return false;
   }
   AliasSets.push_back(new AliasSet());
   AS = &AliasSets.back();
-  AS->addCallSite(CS, AA);
+  AS->addUnknownInst(Inst, AA);
   return true;
 }
 
@@ -348,13 +349,9 @@ bool AliasSetTracker::add(Instruction *I) {
     return add(LI);
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return add(SI);
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    return add(CI);
-  if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-    return add(II);
   if (VAArgInst *VAAI = dyn_cast<VAArgInst>(I))
     return add(VAAI);
-  return true;
+  return addUnknown(I);
 }
 
 void AliasSetTracker::add(BasicBlock &BB) {
@@ -375,8 +372,8 @@ void AliasSetTracker::add(const AliasSetTracker &AST) {
     AliasSet &AS = const_cast<AliasSet&>(*I);
 
     // If there are any call sites in the alias set, add them to this AST.
-    for (unsigned i = 0, e = AS.CallSites.size(); i != e; ++i)
-      add(AS.CallSites[i]);
+    for (unsigned i = 0, e = AS.UnknownInsts.size(); i != e; ++i)
+      add(AS.UnknownInsts[i]);
 
     // Loop over all of the pointers in this alias set.
     bool X;
@@ -393,7 +390,7 @@ void AliasSetTracker::add(const AliasSetTracker &AST) {
 /// tracker.
 void AliasSetTracker::remove(AliasSet &AS) {
   // Drop all call sites.
-  AS.CallSites.clear();
+  AS.UnknownInsts.clear();
   
   // Clear the alias set.
   unsigned NumRefs = 0;
@@ -453,11 +450,11 @@ bool AliasSetTracker::remove(VAArgInst *VAAI) {
   return true;
 }
 
-bool AliasSetTracker::remove(CallSite CS) {
-  if (AA.doesNotAccessMemory(CS))
+bool AliasSetTracker::removeUnknown(Instruction *I) {
+  if (!I->mayReadOrWriteMemory())
     return false; // doesn't alias anything
 
-  AliasSet *AS = findAliasSetForCallSite(CS);
+  AliasSet *AS = findAliasSetForUnknownInst(I);
   if (!AS) return false;
   remove(*AS);
   return true;
@@ -469,11 +466,9 @@ bool AliasSetTracker::remove(Instruction *I) {
     return remove(LI);
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return remove(SI);
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    return remove(CI);
   if (VAArgInst *VAAI = dyn_cast<VAArgInst>(I))
     return remove(VAAI);
-  return true;
+  return removeUnknown(I);
 }
 
 
@@ -488,13 +483,13 @@ void AliasSetTracker::deleteValue(Value *PtrVal) {
 
   // If this is a call instruction, remove the callsite from the appropriate
   // AliasSet (if present).
-  if (CallSite CS = PtrVal) {
-    if (!AA.doesNotAccessMemory(CS)) {
+  if (Instruction *Inst = dyn_cast<Instruction>(PtrVal)) {
+    if (Inst->mayReadOrWriteMemory()) {
       // Scan all the alias sets to see if this call site is contained.
       for (iterator I = begin(), E = end(); I != E; ++I) {
         if (I->Forward) continue;
         
-        I->removeCallSite(CS);
+        I->removeUnknownInst(Inst);
       }
     }
   }
@@ -571,11 +566,11 @@ void AliasSet::print(raw_ostream &OS) const {
       OS << ", " << I.getSize() << ")";
     }
   }
-  if (!CallSites.empty()) {
-    OS << "\n    " << CallSites.size() << " Call Sites: ";
-    for (unsigned i = 0, e = CallSites.size(); i != e; ++i) {
+  if (!UnknownInsts.empty()) {
+    OS << "\n    " << UnknownInsts.size() << " Unknown instructions: ";
+    for (unsigned i = 0, e = UnknownInsts.size(); i != e; ++i) {
       if (i) OS << ", ";
-      WriteAsOperand(OS, CallSites[i]);
+      WriteAsOperand(OS, UnknownInsts[i]);
     }
   }
   OS << "\n";
