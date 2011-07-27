@@ -6187,24 +6187,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (X86::isUNPCKH_v_undef_Mask(SVOp))
     return getTargetShuffleNode(getUNPCKHOpcode(VT), dl, VT, V1, V1, DAG);
 
-  // Handle v8i16 specifically since SSE can do byte extraction and insertion.
-  if (VT == MVT::v8i16) {
-    SDValue NewOp = LowerVECTOR_SHUFFLEv8i16(Op, DAG);
-    if (NewOp.getNode())
-      return NewOp;
-  }
-
-  if (VT == MVT::v16i8) {
-    SDValue NewOp = LowerVECTOR_SHUFFLEv16i8(SVOp, DAG, *this);
-    if (NewOp.getNode())
-      return NewOp;
-  }
-
-  // Handle all 128-bit wide vectors with 4 elements, and match them with
-  // several different shuffle types.
-  if (NumElems == 4 && VT.getSizeInBits() == 128)
-    return LowerVECTOR_SHUFFLE_128v4(SVOp, DAG);
-
   //===--------------------------------------------------------------------===//
   // Generate target specific nodes for 128 or 256-bit shuffles only
   // supported in the AVX instruction set.
@@ -6225,6 +6207,24 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // lower it into other known shuffles. FIXME: this isn't true yet, but
   // this is the plan.
   //
+
+  // Handle v8i16 specifically since SSE can do byte extraction and insertion.
+  if (VT == MVT::v8i16) {
+    SDValue NewOp = LowerVECTOR_SHUFFLEv8i16(Op, DAG);
+    if (NewOp.getNode())
+      return NewOp;
+  }
+
+  if (VT == MVT::v16i8) {
+    SDValue NewOp = LowerVECTOR_SHUFFLEv16i8(SVOp, DAG, *this);
+    if (NewOp.getNode())
+      return NewOp;
+  }
+
+  // Handle all 128-bit wide vectors with 4 elements, and match them with
+  // several different shuffle types.
+  if (NumElems == 4 && VT.getSizeInBits() == 128)
+    return LowerVECTOR_SHUFFLE_128v4(SVOp, DAG);
 
   // Handle general 256-bit shuffles
   if (VT.is256BitVector())
