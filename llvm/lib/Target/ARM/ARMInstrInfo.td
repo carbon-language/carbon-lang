@@ -986,48 +986,27 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc,
 /// AI_ext_rrot - A unary operation with two forms: one whose operand is a
 /// register and one whose operand is a register rotated by 8/16/24.
 /// FIXME: Remove the 'r' variant. Its rot_imm is zero.
-multiclass AI_ext_rrot<bits<8> opcod, string opc, PatFrag opnode> {
-  def r     : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm),
-                 IIC_iEXTr, opc, "\t$Rd, $Rm",
-                 [(set GPR:$Rd, (opnode GPR:$Rm))]>,
-              Requires<[IsARM, HasV6]> {
-    bits<4> Rd;
-    bits<4> Rm;
-    let Inst{19-16} = 0b1111;
-    let Inst{15-12} = Rd;
-    let Inst{11-10} = 0b00;
-    let Inst{3-0}   = Rm;
-  }
-  def r_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm, rot_imm:$rot),
-                 IIC_iEXTr, opc, "\t$Rd, $Rm$rot",
-                 [(set GPR:$Rd, (opnode (rotr GPR:$Rm, rot_imm:$rot)))]>,
-              Requires<[IsARM, HasV6]> {
-    bits<4> Rd;
-    bits<4> Rm;
-    bits<2> rot;
-    let Inst{19-16} = 0b1111;
-    let Inst{15-12} = Rd;
-    let Inst{11-10} = rot;
-    let Inst{3-0}   = Rm;
-  }
+class AI_ext_rrot<bits<8> opcod, string opc, PatFrag opnode>
+  : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm, rot_imm:$rot),
+          IIC_iEXTr, opc, "\t$Rd, $Rm$rot",
+          [(set GPR:$Rd, (opnode (rotr GPR:$Rm, rot_imm:$rot)))]>,
+       Requires<[IsARM, HasV6]> {
+  bits<4> Rd;
+  bits<4> Rm;
+  bits<2> rot;
+  let Inst{19-16} = 0b1111;
+  let Inst{15-12} = Rd;
+  let Inst{11-10} = rot;
+  let Inst{3-0}   = Rm;
 }
 
-multiclass AI_ext_rrot_np<bits<8> opcod, string opc> {
-  def r     : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm),
-                 IIC_iEXTr, opc, "\t$Rd, $Rm",
-                 [/* For disassembly only; pattern left blank */]>,
-              Requires<[IsARM, HasV6]> {
-    let Inst{19-16} = 0b1111;
-    let Inst{11-10} = 0b00;
-  }
-  def r_rot : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm, rot_imm:$rot),
-                 IIC_iEXTr, opc, "\t$Rd, $Rm$rot",
-                 [/* For disassembly only; pattern left blank */]>,
-              Requires<[IsARM, HasV6]> {
-    bits<2> rot;
-    let Inst{19-16} = 0b1111;
-    let Inst{11-10} = rot;
-  }
+class AI_ext_rrot_np<bits<8> opcod, string opc>
+  : AExtI<opcod, (outs GPR:$Rd), (ins GPR:$Rm, rot_imm:$rot),
+          IIC_iEXTr, opc, "\t$Rd, $Rm$rot", []>,
+       Requires<[IsARM, HasV6]> {
+  bits<2> rot;
+  let Inst{19-16} = 0b1111;
+  let Inst{11-10} = rot;
 }
 
 /// AI_exta_rrot - A binary operation with two forms: one whose operand is a
@@ -2393,9 +2372,9 @@ def MOVsra_flag : PseudoInst<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVsi,
 
 // Sign extenders
 
-defm SXTB  : AI_ext_rrot<0b01101010,
+def SXTB  : AI_ext_rrot<0b01101010,
                          "sxtb", UnOpFrag<(sext_inreg node:$Src, i8)>>;
-defm SXTH  : AI_ext_rrot<0b01101011,
+def SXTH  : AI_ext_rrot<0b01101011,
                          "sxth", UnOpFrag<(sext_inreg node:$Src, i16)>>;
 
 defm SXTAB : AI_exta_rrot<0b01101010,
@@ -2403,20 +2382,18 @@ defm SXTAB : AI_exta_rrot<0b01101010,
 defm SXTAH : AI_exta_rrot<0b01101011,
                "sxtah", BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS,i16))>>;
 
-// For disassembly only
-defm SXTB16  : AI_ext_rrot_np<0b01101000, "sxtb16">;
+def SXTB16  : AI_ext_rrot_np<0b01101000, "sxtb16">;
 
-// For disassembly only
 defm SXTAB16 : AI_exta_rrot_np<0b01101000, "sxtab16">;
 
 // Zero extenders
 
 let AddedComplexity = 16 in {
-defm UXTB   : AI_ext_rrot<0b01101110,
+def UXTB   : AI_ext_rrot<0b01101110,
                           "uxtb"  , UnOpFrag<(and node:$Src, 0x000000FF)>>;
-defm UXTH   : AI_ext_rrot<0b01101111,
+def UXTH   : AI_ext_rrot<0b01101111,
                           "uxth"  , UnOpFrag<(and node:$Src, 0x0000FFFF)>>;
-defm UXTB16 : AI_ext_rrot<0b01101100,
+def UXTB16 : AI_ext_rrot<0b01101100,
                           "uxtb16", UnOpFrag<(and node:$Src, 0x00FF00FF)>>;
 
 // FIXME: This pattern incorrectly assumes the shl operator is a rotate.
@@ -2426,7 +2403,7 @@ defm UXTB16 : AI_ext_rrot<0b01101100,
 //def : ARMV6Pat<(and (shl GPR:$Src, (i32 8)), 0xFF00FF),
 //               (UXTB16r_rot GPR:$Src, 3)>;
 def : ARMV6Pat<(and (srl GPR:$Src, (i32 8)), 0xFF00FF),
-               (UXTB16r_rot GPR:$Src, 1)>;
+               (UXTB16 GPR:$Src, 1)>;
 
 defm UXTAB : AI_exta_rrot<0b01101110, "uxtab",
                         BinOpFrag<(add node:$LHS, (and node:$RHS, 0x00FF))>>;
@@ -4287,6 +4264,14 @@ def : ARMV5TEPat<(add GPR:$acc,
 def : ARMPat<(ARMMemBarrierMCR GPR:$zero), (MCR 15, 0, GPR:$zero, 7, 10, 5)>,
          Requires<[IsARM, HasV6]>;
 
+// SXT/UXT with no rotate
+def : ARMV6Pat<(and GPR:$Src, 0x000000FF), (UXTB GPR:$Src, 0)>;
+def : ARMV6Pat<(and GPR:$Src, 0x0000FFFF), (UXTH GPR:$Src, 0)>;
+let AddedComplexity = 10 in
+def : ARMV6Pat<(and GPR:$Src, 0x00FF00FF), (UXTB16 GPR:$Src, 0)>;
+
+def : ARMV6Pat<(sext_inreg GPR:$Src, i8),  (SXTB GPR:$Src, 0)>;
+def : ARMV6Pat<(sext_inreg GPR:$Src, i16), (SXTH GPR:$Src, 0)>;
 
 //===----------------------------------------------------------------------===//
 // Thumb Support

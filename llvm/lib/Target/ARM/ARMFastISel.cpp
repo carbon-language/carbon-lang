@@ -2003,15 +2003,15 @@ bool ARMFastISel::SelectIntCast(const Instruction *I) {
   default: return false;
   case MVT::i16:
     if (isZext)
-      Opc = isThumb ? ARM::t2UXTHr : ARM::UXTHr;
+      Opc = isThumb ? ARM::t2UXTH : ARM::UXTH;
     else
-      Opc = isThumb ? ARM::t2SXTHr : ARM::SXTHr;
+      Opc = isThumb ? ARM::t2SXTH : ARM::SXTH;
     break;
   case MVT::i8:
     if (isZext)
-      Opc = isThumb ? ARM::t2UXTBr : ARM::UXTBr;
+      Opc = isThumb ? ARM::t2UXTB : ARM::UXTB;
     else
-      Opc = isThumb ? ARM::t2SXTBr : ARM::SXTBr;
+      Opc = isThumb ? ARM::t2SXTB : ARM::SXTB;
     break;
   case MVT::i1:
     if (isZext) {
@@ -2033,6 +2033,8 @@ bool ARMFastISel::SelectIntCast(const Instruction *I) {
         .addReg(SrcReg);
   if (isBoolZext)
     MIB.addImm(1);
+  else
+    MIB.addImm(0);
   AddOptionalDefs(MIB);
   UpdateValueMap(I, DestReg);
   return true;

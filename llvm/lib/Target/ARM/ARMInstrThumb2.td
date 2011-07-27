@@ -977,31 +977,19 @@ multiclass T2I_st<bits<2> opcod, string opc,
 
 /// T2I_ext_rrot - A unary operation with two forms: one whose operand is a
 /// register and one whose operand is a register rotated by 8/16/24.
-multiclass T2I_ext_rrot<bits<3> opcod, string opc, PatFrag opnode> {
-  def r     : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iEXTr,
-                  opc, ".w\t$Rd, $Rm",
-                 [(set rGPR:$Rd, (opnode rGPR:$Rm))]> {
-     let Inst{31-27} = 0b11111;
-     let Inst{26-23} = 0b0100;
-     let Inst{22-20} = opcod;
-     let Inst{19-16} = 0b1111; // Rn
-     let Inst{15-12} = 0b1111;
-     let Inst{7} = 1;
-     let Inst{5-4} = 0b00; // rotate
-   }
-  def r_rot : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm, rot_imm:$rot), IIC_iEXTr,
-                  opc, ".w\t$Rd, $Rm$rot",
-                 [(set rGPR:$Rd, (opnode (rotr rGPR:$Rm, rot_imm:$rot)))]> {
-     let Inst{31-27} = 0b11111;
-     let Inst{26-23} = 0b0100;
-     let Inst{22-20} = opcod;
-     let Inst{19-16} = 0b1111; // Rn
-     let Inst{15-12} = 0b1111;
-     let Inst{7} = 1;
+class T2I_ext_rrot<bits<3> opcod, string opc, PatFrag opnode>
+  : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm, rot_imm:$rot), IIC_iEXTr,
+             opc, ".w\t$Rd, $Rm$rot",
+             [(set rGPR:$Rd, (opnode (rotr rGPR:$Rm, rot_imm:$rot)))]> {
+   let Inst{31-27} = 0b11111;
+   let Inst{26-23} = 0b0100;
+   let Inst{22-20} = opcod;
+   let Inst{19-16} = 0b1111; // Rn
+   let Inst{15-12} = 0b1111;
+   let Inst{7} = 1;
 
-     bits<2> rot;
-     let Inst{5-4} = rot{1-0}; // rotate
-   }
+   bits<2> rot;
+   let Inst{5-4} = rot{1-0}; // rotate
 }
 
 // UXTB16 - Requres T2ExtractPack, does not need the .w qualifier.
@@ -1669,9 +1657,9 @@ def : T2Pat<(or rGPR:$src, 0xffff0000), (t2MOVTi16 rGPR:$src, 0xffff)>;
 
 // Sign extenders
 
-defm t2SXTB  : T2I_ext_rrot<0b100, "sxtb",
+def t2SXTB  : T2I_ext_rrot<0b100, "sxtb",
                               UnOpFrag<(sext_inreg node:$Src, i8)>>;
-defm t2SXTH  : T2I_ext_rrot<0b000, "sxth",
+def t2SXTH  : T2I_ext_rrot<0b000, "sxth",
                               UnOpFrag<(sext_inreg node:$Src, i16)>>;
 defm t2SXTB16 : T2I_ext_rrot_sxtb16<0b010, "sxtb16">;
 
@@ -1686,9 +1674,9 @@ defm t2SXTAB16 : T2I_exta_rrot_np<0b010, "sxtab16">;
 // Zero extenders
 
 let AddedComplexity = 16 in {
-defm t2UXTB   : T2I_ext_rrot<0b101, "uxtb",
+def t2UXTB   : T2I_ext_rrot<0b101, "uxtb",
                                UnOpFrag<(and node:$Src, 0x000000FF)>>;
-defm t2UXTH   : T2I_ext_rrot<0b001, "uxth",
+def t2UXTH   : T2I_ext_rrot<0b001, "uxth",
                                UnOpFrag<(and node:$Src, 0x0000FFFF)>>;
 defm t2UXTB16 : T2I_ext_rrot_uxtb16<0b011, "uxtb16",
                                UnOpFrag<(and node:$Src, 0x00FF00FF)>>;
@@ -3462,3 +3450,16 @@ def t2CDP2 : T2Cop<0b1111, (outs), (ins p_imm:$cop, imm0_15:$opc1,
   let Inst{19-16} = CRn;
   let Inst{23-20} = opc1;
 }
+
+
+
+//===----------------------------------------------------------------------===//
+// Non-Instruction Patterns
+//
+
+// SXT/UXT with no rotate
+def : T2Pat<(and rGPR:$Src, 0x000000FF), (t2UXTB rGPR:$Src, 0)>;
+def : T2Pat<(and rGPR:$Src, 0x0000FFFF), (t2UXTH rGPR:$Src, 0)>;
+
+def : T2Pat<(sext_inreg rGPR:$Src, i8),  (t2SXTB rGPR:$Src, 0)>;
+def : T2Pat<(sext_inreg rGPR:$Src, i16), (t2SXTH rGPR:$Src, 0)>;

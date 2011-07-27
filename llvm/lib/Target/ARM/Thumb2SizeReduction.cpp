@@ -97,11 +97,11 @@ namespace {
     { ARM::t2SUBrr, ARM::tSUBrr,  0,             0,   0,    1,   0,  0,0, 0,0 },
     { ARM::t2SUBSri,ARM::tSUBi3,  ARM::tSUBi8,   3,   8,    1,   1,  2,2, 0,0 },
     { ARM::t2SUBSrr,ARM::tSUBrr,  0,             0,   0,    1,   0,  2,0, 0,0 },
-    { ARM::t2SXTBr, ARM::tSXTB,   0,             0,   0,    1,   0,  1,0, 0,0 },
-    { ARM::t2SXTHr, ARM::tSXTH,   0,             0,   0,    1,   0,  1,0, 0,0 },
+    { ARM::t2SXTB,  ARM::tSXTB,   0,             0,   0,    1,   0,  1,0, 0,1 },
+    { ARM::t2SXTH,  ARM::tSXTH,   0,             0,   0,    1,   0,  1,0, 0,1 },
     { ARM::t2TSTrr, ARM::tTST,    0,             0,   0,    1,   0,  2,0, 0,0 },
-    { ARM::t2UXTBr, ARM::tUXTB,   0,             0,   0,    1,   0,  1,0, 0,0 },
-    { ARM::t2UXTHr, ARM::tUXTH,   0,             0,   0,    1,   0,  1,0, 0,0 },
+    { ARM::t2UXTB,  ARM::tUXTB,   0,             0,   0,    1,   0,  1,0, 0,1 },
+    { ARM::t2UXTH,  ARM::tUXTH,   0,             0,   0,    1,   0,  1,0, 0,1 },
 
     // FIXME: Clean this up after splitting each Thumb load / store opcode
     // into multiple ones.
@@ -546,6 +546,10 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
   }
   case ARM::t2RSBri:
   case ARM::t2RSBSri:
+  case ARM::t2SXTB:
+  case ARM::t2SXTH:
+  case ARM::t2UXTB:
+  case ARM::t2UXTH:
     if (MI->getOperand(2).getImm() == 0)
       return ReduceToNarrow(MBB, MI, Entry, LiveCPSR, CPSRDef);
     break;
@@ -742,7 +746,11 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
     if (i < NumOps && MCID.OpInfo[i].isOptionalDef())
       continue;
     if ((MCID.getOpcode() == ARM::t2RSBSri ||
-         MCID.getOpcode() == ARM::t2RSBri) && i == 2)
+         MCID.getOpcode() == ARM::t2RSBri ||
+         MCID.getOpcode() == ARM::t2SXTB ||
+         MCID.getOpcode() == ARM::t2SXTH ||
+         MCID.getOpcode() == ARM::t2UXTB ||
+         MCID.getOpcode() == ARM::t2UXTH) && i == 2)
       // Skip the zero immediate operand, it's now implicit.
       continue;
     bool isPred = (i < NumOps && MCID.OpInfo[i].isPredicate());

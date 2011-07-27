@@ -5125,12 +5125,12 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
   case 1:
     ldrOpc = isThumb2 ? ARM::t2LDREXB : ARM::LDREXB;
     strOpc = isThumb2 ? ARM::t2STREXB : ARM::STREXB;
-    extendOpc = isThumb2 ? ARM::t2SXTBr : ARM::SXTBr;
+    extendOpc = isThumb2 ? ARM::t2SXTB : ARM::SXTB;
     break;
   case 2:
     ldrOpc = isThumb2 ? ARM::t2LDREXH : ARM::LDREXH;
     strOpc = isThumb2 ? ARM::t2STREXH : ARM::STREXH;
-    extendOpc = isThumb2 ? ARM::t2SXTHr : ARM::SXTHr;
+    extendOpc = isThumb2 ? ARM::t2SXTH : ARM::SXTH;
     break;
   case 4:
     ldrOpc = isThumb2 ? ARM::t2LDREX : ARM::LDREX;
@@ -5175,7 +5175,9 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
   // Sign extend the value, if necessary.
   if (signExtend && extendOpc) {
     oldval = MRI.createVirtualRegister(ARM::GPRRegisterClass);
-    AddDefaultPred(BuildMI(BB, dl, TII->get(extendOpc), oldval).addReg(dest));
+    AddDefaultPred(BuildMI(BB, dl, TII->get(extendOpc), oldval)
+                     .addReg(dest)
+                     .addImm(0));
   }
 
   // Build compare and cmov instructions.
