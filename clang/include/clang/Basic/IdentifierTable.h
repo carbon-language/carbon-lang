@@ -409,7 +409,7 @@ public:
   IdentifierInfo &get(StringRef Name, tok::TokenKind TokenCode) {
     IdentifierInfo &II = get(Name);
     II.TokenID = TokenCode;
-    assert(II.TokenID == TokenCode && "TokenCode too large");
+    assert(II.TokenID == (unsigned) TokenCode && "TokenCode too large");
     return II;
   }
 
