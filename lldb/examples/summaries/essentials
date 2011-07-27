@@ -1,2 +1,2 @@
-type summary add -f "${var._M_dataplus._M_p}" std::string std::basic_string<char>
+type summary add -f "${var._M_dataplus._M_p}" std::string std::basic_string<char> "std::basic_string<char,std::char_traits<char>,std::allocator<char> >"
 type summary add -f "\"${var%@}\"" "NSString *"
