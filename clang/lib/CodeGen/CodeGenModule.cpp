@@ -64,7 +64,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     ABI(createCXXABI(*this)), 
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo(), ABI, CGO),
     TBAA(0),
-    VTables(*this), Runtime(0), DebugInfo(0), ARCData(0), RRData(0),
+    VTables(*this), ObjCRuntime(0), DebugInfo(0), ARCData(0), RRData(0),
     CFConstantStringClassRef(0), ConstantStringClassRef(0),
     VMContext(M.getContext()),
     NSConcreteGlobalBlockDecl(0), NSConcreteStackBlockDecl(0),
@@ -108,7 +108,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
 }
 
 CodeGenModule::~CodeGenModule() {
-  delete Runtime;
+  delete ObjCRuntime;
   delete &ABI;
   delete TBAA;
   delete DebugInfo;
@@ -118,17 +118,17 @@ CodeGenModule::~CodeGenModule() {
 
 void CodeGenModule::createObjCRuntime() {
   if (!Features.NeXTRuntime)
-    Runtime = CreateGNUObjCRuntime(*this);
+    ObjCRuntime = CreateGNUObjCRuntime(*this);
   else
-    Runtime = CreateMacObjCRuntime(*this);
+    ObjCRuntime = CreateMacObjCRuntime(*this);
 }
 
 void CodeGenModule::Release() {
   EmitDeferred();
   EmitCXXGlobalInitFunc();
   EmitCXXGlobalDtorFunc();
-  if (Runtime)
-    if (llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction())
+  if (ObjCRuntime)
+    if (llvm::Function *ObjCInitFunction = ObjCRuntime->ModuleInitFunction())
       AddGlobalCtor(ObjCInitFunction);
   EmitCtorList(GlobalCtors, "llvm.global_ctors");
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
@@ -2158,13 +2158,13 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   }
 
   case Decl::ObjCProtocol:
-    Runtime->GenerateProtocol(cast<ObjCProtocolDecl>(D));
+    ObjCRuntime->GenerateProtocol(cast<ObjCProtocolDecl>(D));
     break;
 
   case Decl::ObjCCategoryImpl:
     // Categories have properties but don't support synthesize so we
     // can ignore them here.
-    Runtime->GenerateCategory(cast<ObjCCategoryImplDecl>(D));
+    ObjCRuntime->GenerateCategory(cast<ObjCCategoryImplDecl>(D));
     break;
 
   case Decl::ObjCImplementation: {
@@ -2173,7 +2173,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
       Context.ResetObjCLayout(OMD->getClassInterface());
     EmitObjCPropertyImplementations(OMD);
     EmitObjCIvarInitializations(OMD);
-    Runtime->GenerateClass(OMD);
+    ObjCRuntime->GenerateClass(OMD);
     break;
   }
   case Decl::ObjCMethod: {

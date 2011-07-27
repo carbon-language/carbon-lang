@@ -221,7 +221,7 @@ class CodeGenModule : public CodeGenTypeCache {
   CodeGenVTables VTables;
   friend class CodeGenVTables;
 
-  CGObjCRuntime* Runtime;
+  CGObjCRuntime* ObjCRuntime;
   CGDebugInfo* DebugInfo;
   ARCEntrypoints *ARCData;
   RREntrypoints *RRData;
@@ -332,13 +332,13 @@ public:
   /// getObjCRuntime() - Return a reference to the configured
   /// Objective-C runtime.
   CGObjCRuntime &getObjCRuntime() {
-    if (!Runtime) createObjCRuntime();
-    return *Runtime;
+    if (!ObjCRuntime) createObjCRuntime();
+    return *ObjCRuntime;
   }
 
   /// hasObjCRuntime() - Return true iff an Objective-C runtime has
   /// been configured.
-  bool hasObjCRuntime() { return !!Runtime; }
+  bool hasObjCRuntime() { return !!ObjCRuntime; }
 
   /// getCXXABI() - Return a reference to the configured C++ ABI.
   CGCXXABI &getCXXABI() { return ABI; }

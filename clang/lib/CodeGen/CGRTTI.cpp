@@ -982,7 +982,7 @@ llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty,
   }
   
   if (ForEH && Ty->isObjCObjectPointerType() && !Features.NeXTRuntime) {
-    return Runtime->GetEHType(Ty);
+    return ObjCRuntime->GetEHType(Ty);
   }
 
   return RTTIBuilder(*this).BuildTypeInfo(Ty);
