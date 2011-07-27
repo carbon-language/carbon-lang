@@ -397,8 +397,15 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, const Preprocessor &PP) {
       HighlightRange(RB, TokOffs, TokOffs+TokLen, BufferStart,
                      "<span class='comment'>", "</span>");
       break;
+    case tok::utf8_string_literal:
+      // Chop off the u part of u8 prefix
+      ++TokOffs;
+      --TokLen;
+      // FALL THROUGH to chop the 8
     case tok::wide_string_literal:
-      // Chop off the L prefix
+    case tok::utf16_string_literal:
+    case tok::utf32_string_literal:
+      // Chop off the L, u, U or 8 prefix
       ++TokOffs;
       --TokLen;
       // FALL THROUGH.

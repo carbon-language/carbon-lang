@@ -599,8 +599,14 @@ void StmtPrinter::VisitPredefinedExpr(PredefinedExpr *Node) {
 
 void StmtPrinter::VisitCharacterLiteral(CharacterLiteral *Node) {
   unsigned value = Node->getValue();
-  if (Node->isWide())
-    OS << "L";
+
+  switch (Node->getKind()) {
+  case CharacterLiteral::Ascii: break; // no prefix.
+  case CharacterLiteral::Wide:  OS << 'L'; break;
+  case CharacterLiteral::UTF16: OS << 'u'; break;
+  case CharacterLiteral::UTF32: OS << 'U'; break;
+  }
+
   switch (value) {
   case '\\':
     OS << "'\\\\'";
@@ -672,7 +678,13 @@ void StmtPrinter::VisitImaginaryLiteral(ImaginaryLiteral *Node) {
 }
 
 void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
-  if (Str->isWide()) OS << 'L';
+  switch (Str->getKind()) {
+  case StringLiteral::Ascii: break; // no prefix.
+  case StringLiteral::Wide:  OS << 'L'; break;
+  case StringLiteral::UTF8:  OS << "u8"; break;
+  case StringLiteral::UTF16: OS << 'u'; break;
+  case StringLiteral::UTF32: OS << 'U'; break;
+  }
   OS << '"';
 
   // FIXME: this doesn't print wstrings right.

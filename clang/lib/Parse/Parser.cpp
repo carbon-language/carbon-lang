@@ -298,6 +298,9 @@ bool Parser::SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
 
     case tok::string_literal:
     case tok::wide_string_literal:
+    case tok::utf8_string_literal:
+    case tok::utf16_string_literal:
+    case tok::utf32_string_literal:
       ConsumeStringToken();
       break;
         

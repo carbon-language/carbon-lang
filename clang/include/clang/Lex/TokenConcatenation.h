@@ -63,12 +63,9 @@ namespace clang {
                      const Token &Tok) const;
 
   private:
-    /// StartsWithL - Return true if the spelling of this token starts with 'L'.
-    bool StartsWithL(const Token &Tok) const;
-
-    /// IsIdentifierL - Return true if the spelling of this token is literally
-    /// 'L'.
-    bool IsIdentifierL(const Token &Tok) const;
+    /// IsIdentifierStringPrefix - Return true if the spelling of the token
+    /// is literally 'L', 'u', 'U', or 'u8'.
+    bool IsIdentifierStringPrefix(const Token &Tok) const;
   };
   } // end clang namespace
 

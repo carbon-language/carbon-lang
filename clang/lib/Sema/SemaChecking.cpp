@@ -605,7 +605,7 @@ bool Sema::CheckObjCString(Expr *Arg) {
   Arg = Arg->IgnoreParenCasts();
   StringLiteral *Literal = dyn_cast<StringLiteral>(Arg);
 
-  if (!Literal || Literal->isWide()) {
+  if (!Literal || !Literal->isAscii()) {
     Diag(Arg->getLocStart(), diag::err_cfstring_literal_not_string_constant)
       << Arg->getSourceRange();
     return true;
@@ -1805,7 +1805,7 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
                              bool isPrintf) {
   
   // CHECK: is the format string a wide literal?
-  if (FExpr->isWide()) {
+  if (!FExpr->isAscii()) {
     Diag(FExpr->getLocStart(),
          diag::warn_format_string_is_wide_literal)
     << OrigFormatExpr->getSourceRange();

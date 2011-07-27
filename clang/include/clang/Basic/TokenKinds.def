@@ -114,12 +114,22 @@ TOK(raw_identifier)      // Used only in raw lexing mode.
 TOK(numeric_constant)    // 0x123
 
 // C99 6.4.4: Character Constants
-TOK(char_constant)       // 'a'   L'b'
+TOK(char_constant)       // 'a'
+TOK(wide_char_constant)  // L'b'
+
+// C++0x Character Constants
+TOK(utf16_char_constant) // u'a'
+TOK(utf32_char_constant) // U'a'
 
 // C99 6.4.5: String Literals.
 TOK(string_literal)      // "foo"
 TOK(wide_string_literal) // L"foo"
 TOK(angle_string_literal)// <foo>
+
+// C++0x String Literals.
+TOK(utf8_string_literal) // u8"foo"
+TOK(utf16_string_literal)// u"foo"
+TOK(utf32_string_literal)// U"foo"
 
 // C99 6.4.6: Punctuators.
 PUNCTUATOR(l_square,            "[")

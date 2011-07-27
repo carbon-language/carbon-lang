@@ -252,7 +252,7 @@ void StmtProfiler::VisitIntegerLiteral(const IntegerLiteral *S) {
 
 void StmtProfiler::VisitCharacterLiteral(const CharacterLiteral *S) {
   VisitExpr(S);
-  ID.AddBoolean(S->isWide());
+  ID.AddInteger(S->getKind());
   ID.AddInteger(S->getValue());
 }
 
@@ -269,7 +269,7 @@ void StmtProfiler::VisitImaginaryLiteral(const ImaginaryLiteral *S) {
 void StmtProfiler::VisitStringLiteral(const StringLiteral *S) {
   VisitExpr(S);
   ID.AddString(S->getString());
-  ID.AddBoolean(S->isWide());
+  ID.AddInteger(S->getKind());
 }
 
 void StmtProfiler::VisitParenExpr(const ParenExpr *S) {

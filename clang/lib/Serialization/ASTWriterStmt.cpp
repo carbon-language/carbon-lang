@@ -324,7 +324,7 @@ void ASTStmtWriter::VisitStringLiteral(StringLiteral *E) {
   VisitExpr(E);
   Record.push_back(E->getByteLength());
   Record.push_back(E->getNumConcatenated());
-  Record.push_back(E->isWide());
+  Record.push_back(E->getKind());
   Record.push_back(E->isPascal());
   // FIXME: String data should be stored as a blob at the end of the
   // StringLiteral. However, we can't do so now because we have no
@@ -340,7 +340,7 @@ void ASTStmtWriter::VisitCharacterLiteral(CharacterLiteral *E) {
   VisitExpr(E);
   Record.push_back(E->getValue());
   Writer.AddSourceLocation(E->getLocation(), Record);
-  Record.push_back(E->isWide());
+  Record.push_back(E->getKind());
 
   AbbrevToUse = Writer.getCharacterLiteralAbbrev();
 

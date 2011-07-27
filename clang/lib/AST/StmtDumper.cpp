@@ -443,8 +443,13 @@ void StmtDumper::VisitStringLiteral(StringLiteral *Str) {
   DumpExpr(Str);
   // FIXME: this doesn't print wstrings right.
   OS << " ";
-  if (Str->isWide())
-    OS << "L";
+  switch (Str->getKind()) {
+  case StringLiteral::Ascii: break; // No prefix
+  case StringLiteral::Wide:  OS << 'L'; break;
+  case StringLiteral::UTF8:  OS << "u8"; break;
+  case StringLiteral::UTF16: OS << 'u'; break;
+  case StringLiteral::UTF32: OS << 'U'; break;
+  }
   OS << '"';
   OS.write_escaped(Str->getString());
   OS << '"';

@@ -49,20 +49,30 @@ static Expr *IsStringInit(Expr *Init, const ArrayType *AT,
   if (SL == 0) return 0;
 
   QualType ElemTy = Context.getCanonicalType(AT->getElementType());
-  // char array can be initialized with a narrow string.
-  // Only allow char x[] = "foo";  not char x[] = L"foo";
-  if (!SL->isWide())
+
+  switch (SL->getKind()) {
+  case StringLiteral::Ascii:
+  case StringLiteral::UTF8:
+    // char array can be initialized with a narrow string.
+    // Only allow char x[] = "foo";  not char x[] = L"foo";
     return ElemTy->isCharType() ? Init : 0;
+  case StringLiteral::UTF16:
+    return ElemTy->isChar16Type() ? Init : 0;
+  case StringLiteral::UTF32:
+    return ElemTy->isChar32Type() ? Init : 0;
+  case StringLiteral::Wide:
+    // wchar_t array can be initialized with a wide string: C99 6.7.8p15 (with
+    // correction from DR343): "An array with element type compatible with a
+    // qualified or unqualified version of wchar_t may be initialized by a wide
+    // string literal, optionally enclosed in braces."
+    if (Context.typesAreCompatible(Context.getWCharType(),
+                                   ElemTy.getUnqualifiedType()))
+      return Init;
 
-  // wchar_t array can be initialized with a wide string: C99 6.7.8p15 (with
-  // correction from DR343): "An array with element type compatible with a
-  // qualified or unqualified version of wchar_t may be initialized by a wide
-  // string literal, optionally enclosed in braces."
-  if (Context.typesAreCompatible(Context.getWCharType(),
-                                 ElemTy.getUnqualifiedType()))
-    return Init;
+    return 0;
+  }
 
-  return 0;
+  llvm_unreachable("missed a StringLiteral kind?");
 }
 
 static Expr *IsStringInit(Expr *init, QualType declType, ASTContext &Context) {

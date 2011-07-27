@@ -1112,29 +1112,39 @@ public:
 };
 
 class CharacterLiteral : public Expr {
+public:
+  enum CharacterKind {
+    Ascii,
+    Wide,
+    UTF16,
+    UTF32
+  };
+
+private:
   unsigned Value;
   SourceLocation Loc;
-  bool IsWide;
+  unsigned Kind : 2;
 public:
   // type should be IntTy
-  CharacterLiteral(unsigned value, bool iswide, QualType type, SourceLocation l)
+  CharacterLiteral(unsigned value, CharacterKind kind, QualType type,
+                   SourceLocation l)
     : Expr(CharacterLiteralClass, type, VK_RValue, OK_Ordinary, false, false,
            false, false),
-      Value(value), Loc(l), IsWide(iswide) {
+      Value(value), Loc(l), Kind(kind) {
   }
 
   /// \brief Construct an empty character literal.
   CharacterLiteral(EmptyShell Empty) : Expr(CharacterLiteralClass, Empty) { }
 
   SourceLocation getLocation() const { return Loc; }
-  bool isWide() const { return IsWide; }
+  CharacterKind getKind() const { return static_cast<CharacterKind>(Kind); }
 
   SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   unsigned getValue() const { return Value; }
 
   void setLocation(SourceLocation Location) { Loc = Location; }
-  void setWide(bool W) { IsWide = W; }
+  void setKind(CharacterKind kind) { Kind = kind; }
   void setValue(unsigned Val) { Value = Val; }
 
   static bool classof(const Stmt *T) {
@@ -1243,13 +1253,23 @@ public:
 /// In this case, getByteLength() will return 6, but the string literal will
 /// have type "char[2]".
 class StringLiteral : public Expr {
+public:
+  enum StringKind {
+    Ascii,
+    Wide,
+    UTF8,
+    UTF16,
+    UTF32
+  };
+
+private:
   friend class ASTStmtReader;
 
   const char *StrData;
   unsigned ByteLength;
-  bool IsWide;
-  bool IsPascal;
   unsigned NumConcatenated;
+  unsigned Kind : 3;
+  bool IsPascal : 1;
   SourceLocation TokLocs[1];
 
   StringLiteral(QualType Ty) :
@@ -1259,14 +1279,15 @@ class StringLiteral : public Expr {
 public:
   /// This is the "fully general" constructor that allows representation of
   /// strings formed from multiple concatenated tokens.
-  static StringLiteral *Create(ASTContext &C, StringRef Str, bool Wide,
+  static StringLiteral *Create(ASTContext &C, StringRef Str, StringKind Kind,
                                bool Pascal, QualType Ty,
                                const SourceLocation *Loc, unsigned NumStrs);
 
   /// Simple constructor for string literals made from one token.
-  static StringLiteral *Create(ASTContext &C, StringRef Str, bool Wide, 
-                               bool Pascal, QualType Ty, SourceLocation Loc) {
-    return Create(C, Str, Wide, Pascal, Ty, &Loc, 1);
+  static StringLiteral *Create(ASTContext &C, StringRef Str, StringKind Kind,
+                               bool Pascal, QualType Ty,
+                               SourceLocation Loc) {
+    return Create(C, Str, Kind, Pascal, Ty, &Loc, 1);
   }
 
   /// \brief Construct an empty string literal.
@@ -1281,9 +1302,14 @@ public:
   /// \brief Sets the string data to the given string data.
   void setString(ASTContext &C, StringRef Str);
 
-  bool isWide() const { return IsWide; }
+  StringKind getKind() const { return static_cast<StringKind>(Kind); }
+  bool isAscii() const { return Kind == Ascii; }
+  bool isWide() const { return Kind == Wide; }
+  bool isUTF8() const { return Kind == UTF8; }
+  bool isUTF16() const { return Kind == UTF16; }
+  bool isUTF32() const { return Kind == UTF32; }
   bool isPascal() const { return IsPascal; }
-  
+
   bool containsNonAsciiOrNull() const {
     StringRef Str = getString();
     for (unsigned i = 0, e = Str.size(); i != e; ++i)

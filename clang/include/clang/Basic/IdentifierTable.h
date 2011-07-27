@@ -50,8 +50,8 @@ namespace clang {
 /// set, and all tok::identifier tokens have a pointer to one of these.
 class IdentifierInfo {
   // Note: DON'T make TokenID a 'tok::TokenKind'; MSVC will treat it as a
-  //       signed char and TokenKinds > 127 won't be handled correctly.
-  unsigned TokenID            : 8; // Front-end token ID or tok::identifier.
+  //       signed char and TokenKinds > 255 won't be handled correctly.
+  unsigned TokenID            : 9; // Front-end token ID or tok::identifier.
   // Objective-C keyword ('protocol' in '@protocol') or builtin (__builtin_inf).
   // First NUM_OBJC_KEYWORDS values are for Objective-C, the remaining values
   // are for builtins.
@@ -65,7 +65,7 @@ class IdentifierInfo {
                                    // file and wasn't modified since.
   bool RevertedTokenID        : 1; // True if RevertTokenIDToIdentifier was
                                    // called.
-  // 6 bits left in 32-bit word.
+  // 5 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   llvm::StringMapEntry<IdentifierInfo*> *Entry;
 
@@ -409,6 +409,7 @@ public:
   IdentifierInfo &get(StringRef Name, tok::TokenKind TokenCode) {
     IdentifierInfo &II = get(Name);
     II.TokenID = TokenCode;
+    assert(II.TokenID == TokenCode && "TokenCode too large");
     return II;
   }
 

@@ -17,42 +17,39 @@
 using namespace clang;
 
 
-/// StartsWithL - Return true if the spelling of this token starts with 'L'.
-bool TokenConcatenation::StartsWithL(const Token &Tok) const {
+/// IsIdentifierStringPrefix - Return true if the spelling of the token
+/// is literally 'L', 'u', 'U', or 'u8'.
+bool TokenConcatenation::IsIdentifierStringPrefix(const Token &Tok) const {
+  const LangOptions &LangOpts = PP.getLangOptions();
+
   if (!Tok.needsCleaning()) {
+    if (Tok.getLength() != 1 && Tok.getLength() != 2)
+      return false;
     SourceManager &SM = PP.getSourceManager();
-    return *SM.getCharacterData(SM.getSpellingLoc(Tok.getLocation())) == 'L';
+    const char *Ptr = SM.getCharacterData(SM.getSpellingLoc(Tok.getLocation()));
+    if (Tok.getLength() == 1)
+      return Ptr[0] == 'L' ||
+             (LangOpts.CPlusPlus0x && (Ptr[0] == 'u' || Ptr[0] == 'U'));
+    if (Tok.getLength() == 2)
+      return LangOpts.CPlusPlus0x && Ptr[0] == 'u' && Ptr[1] == '8';
   }
 
   if (Tok.getLength() < 256) {
     char Buffer[256];
     const char *TokPtr = Buffer;
-    PP.getSpelling(Tok, TokPtr);
-    return TokPtr[0] == 'L';
+    unsigned length = PP.getSpelling(Tok, TokPtr);
+    if (length == 1)
+      return TokPtr[0] == 'L' ||
+             (LangOpts.CPlusPlus0x && (TokPtr[0] == 'u' || TokPtr[0] == 'U'));
+    if (length == 2)
+      return LangOpts.CPlusPlus0x && TokPtr[0] == 'u' && TokPtr[1] == '8';
+    return false;
   }
 
-  return PP.getSpelling(Tok)[0] == 'L';
-}
-
-/// IsIdentifierL - Return true if the spelling of this token is literally
-/// 'L'.
-bool TokenConcatenation::IsIdentifierL(const Token &Tok) const {
-  if (!Tok.needsCleaning()) {
-    if (Tok.getLength() != 1)
-      return false;
-    SourceManager &SM = PP.getSourceManager();
-    return *SM.getCharacterData(SM.getSpellingLoc(Tok.getLocation())) == 'L';
-  }
-
-  if (Tok.getLength() < 256) {
-    char Buffer[256];
-    const char *TokPtr = Buffer;
-    if (PP.getSpelling(Tok, TokPtr) != 1)
-      return false;
-    return TokPtr[0] == 'L';
-  }
-
-  return PP.getSpelling(Tok) == "L";
+  std::string TokStr = PP.getSpelling(Tok);
+  return TokStr == "L" || (LangOpts.CPlusPlus0x && (TokStr == "u8" ||
+                                                    TokStr == "u" ||
+                                                    TokStr == "U"));
 }
 
 TokenConcatenation::TokenConcatenation(Preprocessor &pp) : PP(pp) {
@@ -179,24 +176,19 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
     if (Tok.is(tok::numeric_constant))
       return GetFirstChar(PP, Tok) != '.';
 
-    if (Tok.getIdentifierInfo() || Tok.is(tok::wide_string_literal) /* ||
-     Tok.is(tok::wide_char_literal)*/)
+    if (Tok.getIdentifierInfo() || Tok.is(tok::wide_string_literal) ||
+        Tok.is(tok::utf8_string_literal) || Tok.is(tok::utf16_string_literal) ||
+        Tok.is(tok::utf32_string_literal) || Tok.is(tok::wide_char_constant) ||
+        Tok.is(tok::utf16_char_constant) || Tok.is(tok::utf32_char_constant))
       return true;
 
     // If this isn't identifier + string, we're done.
     if (Tok.isNot(tok::char_constant) && Tok.isNot(tok::string_literal))
       return false;
 
-    // FIXME: need a wide_char_constant!
-
-    // If the string was a wide string L"foo" or wide char L'f', it would
-    // concat with the previous identifier into fooL"bar".  Avoid this.
-    if (StartsWithL(Tok))
-      return true;
-
     // Otherwise, this is a narrow character or string.  If the *identifier*
-    // is a literal 'L', avoid pasting L "foo" -> L"foo".
-    return IsIdentifierL(PrevTok);
+    // is a literal 'L', 'u8', 'u' or 'U', avoid pasting L "foo" -> L"foo".
+    return IsIdentifierStringPrefix(PrevTok);
   case tok::numeric_constant:
     return isalnum(FirstChar) || Tok.is(tok::numeric_constant) ||
     FirstChar == '+' || FirstChar == '-' || FirstChar == '.';

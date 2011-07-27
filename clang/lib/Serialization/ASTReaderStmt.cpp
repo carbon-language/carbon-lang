@@ -371,7 +371,7 @@ void ASTStmtReader::VisitStringLiteral(StringLiteral *E) {
   assert(Record[Idx] == E->getNumConcatenated() &&
          "Wrong number of concatenated tokens!");
   ++Idx;
-  E->IsWide = Record[Idx++];
+  E->Kind = static_cast<StringLiteral::StringKind>(Record[Idx++]);
   E->IsPascal = Record[Idx++];
 
   // Read string data
@@ -388,7 +388,7 @@ void ASTStmtReader::VisitCharacterLiteral(CharacterLiteral *E) {
   VisitExpr(E);
   E->setValue(Record[Idx++]);
   E->setLocation(ReadSourceLocation(Record, Idx));
-  E->setWide(Record[Idx++]);
+  E->setKind(static_cast<CharacterLiteral::CharacterKind>(Record[Idx++]));
 }
 
 void ASTStmtReader::VisitParenExpr(ParenExpr *E) {

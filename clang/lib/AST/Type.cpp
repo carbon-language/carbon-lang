@@ -635,6 +635,18 @@ bool Type::isWideCharType() const {
   return false;
 }
 
+bool Type::isChar16Type() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() == BuiltinType::Char16;
+  return false;
+}
+
+bool Type::isChar32Type() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() == BuiltinType::Char32;
+  return false;
+}
+
 /// \brief Determine whether this type is any of the built-in character
 /// types.
 bool Type::isAnyCharacterType() const {

@@ -444,7 +444,7 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
 
     // Concatenate and parse the strings.
     StringLiteralParser Literal(&StrToks[0], StrToks.size(), *this);
-    assert(!Literal.AnyWide && "Didn't allow wide strings in");
+    assert(Literal.isAscii() && "Didn't allow wide strings in");
     if (Literal.hadError)
       return;
     if (Literal.Pascal) {
@@ -520,7 +520,7 @@ void Preprocessor::HandlePragmaMessage(Token &Tok) {
 
   // Concatenate and parse the strings.
   StringLiteralParser Literal(&StrToks[0], StrToks.size(), *this);
-  assert(!Literal.AnyWide && "Didn't allow wide strings in");
+  assert(Literal.isAscii() && "Didn't allow wide strings in");
   if (Literal.hadError)
     return;
   if (Literal.Pascal) {
@@ -902,7 +902,7 @@ public:
 
     // Concatenate and parse the strings.
     StringLiteralParser Literal(&StrToks[0], StrToks.size(), PP);
-    assert(!Literal.AnyWide && "Didn't allow wide strings in");
+    assert(Literal.isAscii() && "Didn't allow wide strings in");
     if (Literal.hadError)
       return;
     if (Literal.Pascal) {

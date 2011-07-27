@@ -1877,8 +1877,20 @@ std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
   // Resize the string to the right size.
   uint64_t RealLen = CAT->getSize().getZExtValue();
 
-  if (E->isWide())
+  switch (E->getKind()) {
+  case StringLiteral::Ascii:
+  case StringLiteral::UTF8:
+    break;
+  case StringLiteral::Wide:
     RealLen *= Context.Target.getWCharWidth() / Context.getCharWidth();
+    break;
+  case StringLiteral::UTF16:
+    RealLen *= Context.Target.getChar16Width() / Context.getCharWidth();
+    break;
+  case StringLiteral::UTF32:
+    RealLen *= Context.Target.getChar32Width() / Context.getCharWidth();
+    break;
+  }
 
   std::string Str = E->getString().str();
   Str.resize(RealLen, '\0');
@@ -1893,7 +1905,7 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
   // FIXME: This can be more efficient.
   // FIXME: We shouldn't need to bitcast the constant in the wide string case.
   llvm::Constant *C = GetAddrOfConstantString(GetStringForStringLiteral(S));
-  if (S->isWide()) {
+  if (S->isWide() || S->isUTF16() || S->isUTF32()) {
     llvm::Type *DestTy =
         llvm::PointerType::getUnqual(getTypes().ConvertType(S->getType()));
     C = llvm::ConstantExpr::getBitCast(C, DestTy);

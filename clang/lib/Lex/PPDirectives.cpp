@@ -777,7 +777,7 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
   } else {
     // Parse and validate the string, converting it into a unique ID.
     StringLiteralParser Literal(&StrTok, 1, *this);
-    assert(!Literal.AnyWide && "Didn't allow wide strings in");
+    assert(Literal.isAscii() && "Didn't allow wide strings in");
     if (Literal.hadError)
       return DiscardUntilEndOfDirective();
     if (Literal.Pascal) {
@@ -910,7 +910,7 @@ void Preprocessor::HandleDigitDirective(Token &DigitTok) {
   } else {
     // Parse and validate the string, converting it into a unique ID.
     StringLiteralParser Literal(&StrTok, 1, *this);
-    assert(!Literal.AnyWide && "Didn't allow wide strings in");
+    assert(Literal.isAscii() && "Didn't allow wide strings in");
     if (Literal.hadError)
       return DiscardUntilEndOfDirective();
     if (Literal.Pascal) {

@@ -1368,6 +1368,8 @@ public:
   bool isBooleanType() const;
   bool isCharType() const;
   bool isWideCharType() const;
+  bool isChar16Type() const;
+  bool isChar32Type() const;
   bool isAnyCharacterType() const;
   bool isIntegralType(ASTContext &Ctx) const;
   

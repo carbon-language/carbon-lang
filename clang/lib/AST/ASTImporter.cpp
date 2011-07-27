@@ -3814,8 +3814,8 @@ Expr *ASTNodeImporter::VisitCharacterLiteral(CharacterLiteral *E) {
   if (T.isNull())
     return 0;
   
-  return new (Importer.getToContext()) CharacterLiteral(E->getValue(), 
-                                                        E->isWide(), T,
+  return new (Importer.getToContext()) CharacterLiteral(E->getValue(),
+                                                        E->getKind(), T,
                                           Importer.Import(E->getLocation()));
 }
 

@@ -605,8 +605,14 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   // Obviously starts an expression.
   case tok::numeric_constant:
   case tok::char_constant:
+  case tok::wide_char_constant:
+  case tok::utf16_char_constant:
+  case tok::utf32_char_constant:
   case tok::string_literal:
   case tok::wide_string_literal:
+  case tok::utf8_string_literal:
+  case tok::utf16_string_literal:
+  case tok::utf32_string_literal:
   case tok::l_square:
   case tok::l_paren:
   case tok::amp:

@@ -1952,13 +1952,13 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
   SmallVector<TargetInfo::ConstraintInfo, 4> OutputConstraintInfos;
 
   // The parser verifies that there is a string literal here.
-  if (AsmString->isWide())
+  if (!AsmString->isAscii())
     return StmtError(Diag(AsmString->getLocStart(),diag::err_asm_wide_character)
       << AsmString->getSourceRange());
 
   for (unsigned i = 0; i != NumOutputs; i++) {
     StringLiteral *Literal = Constraints[i];
-    if (Literal->isWide())
+    if (!Literal->isAscii())
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
@@ -1987,7 +1987,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
 
   for (unsigned i = NumOutputs, e = NumOutputs + NumInputs; i != e; i++) {
     StringLiteral *Literal = Constraints[i];
-    if (Literal->isWide())
+    if (!Literal->isAscii())
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
@@ -2034,7 +2034,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
   // Check that the clobbers are valid.
   for (unsigned i = 0; i != NumClobbers; i++) {
     StringLiteral *Literal = Clobbers[i];
-    if (Literal->isWide())
+    if (!Literal->isAscii())
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 

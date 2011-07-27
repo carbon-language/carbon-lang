@@ -533,8 +533,7 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
 }
 
 StringLiteral *StringLiteral::Create(ASTContext &C, StringRef Str,
-                                     bool Wide,
-                                     bool Pascal, QualType Ty,
+                                     StringKind Kind, bool Pascal, QualType Ty,
                                      const SourceLocation *Loc,
                                      unsigned NumStrs) {
   // Allocate enough space for the StringLiteral plus an array of locations for
@@ -549,7 +548,7 @@ StringLiteral *StringLiteral::Create(ASTContext &C, StringRef Str,
   memcpy(AStrData, Str.data(), Str.size());
   SL->StrData = AStrData;
   SL->ByteLength = Str.size();
-  SL->IsWide = Wide;
+  SL->Kind = Kind;
   SL->IsPascal = Pascal;
   SL->TokLocs[0] = Loc[0];
   SL->NumConcatenated = NumStrs;
@@ -587,8 +586,8 @@ void StringLiteral::setString(ASTContext &C, StringRef Str) {
 SourceLocation StringLiteral::
 getLocationOfByte(unsigned ByteNo, const SourceManager &SM,
                   const LangOptions &Features, const TargetInfo &Target) const {
-  assert(!isWide() && "This doesn't work for wide strings yet");
-  
+  assert(Kind == StringLiteral::Ascii && "This only works for ASCII strings");
+
   // Loop over all of the tokens in this string until we find the one that
   // contains the byte we're looking for.
   unsigned TokNo = 0;

@@ -997,10 +997,24 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
     StringTokLocs.push_back(StringToks[i].getLocation());
 
   QualType StrTy = Context.CharTy;
-  if (Literal.AnyWide) 
+  if (Literal.isWide())
     StrTy = Context.getWCharType();
+  else if (Literal.isUTF16())
+    StrTy = Context.Char16Ty;
+  else if (Literal.isUTF32())
+    StrTy = Context.Char32Ty;
   else if (Literal.Pascal)
     StrTy = Context.UnsignedCharTy;
+
+  StringLiteral::StringKind Kind = StringLiteral::Ascii;
+  if (Literal.isWide())
+    Kind = StringLiteral::Wide;
+  else if (Literal.isUTF8())
+    Kind = StringLiteral::UTF8;
+  else if (Literal.isUTF16())
+    Kind = StringLiteral::UTF16;
+  else if (Literal.isUTF32())
+    Kind = StringLiteral::UTF32;
 
   // A C++ string literal has a const-qualified element type (C++ 2.13.4p1).
   if (getLangOptions().CPlusPlus || getLangOptions().ConstStrings)
@@ -1015,7 +1029,7 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
 
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
   return Owned(StringLiteral::Create(Context, Literal.GetString(),
-                                     Literal.AnyWide, Literal.Pascal, StrTy,
+                                     Kind, Literal.Pascal, StrTy,
                                      &StringTokLocs[0],
                                      StringTokLocs.size()));
 }
@@ -2412,7 +2426,7 @@ ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
     return ExprError();
 
   CharLiteralParser Literal(ThisTok.begin(), ThisTok.end(), Tok.getLocation(),
-                            PP);
+                            PP, Tok.getKind());
   if (Literal.hadError())
     return ExprError();
 
@@ -2421,14 +2435,25 @@ ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
     Ty = Context.IntTy;   // 'x' and L'x' -> int in C.
   else if (Literal.isWide())
     Ty = Context.WCharTy; // L'x' -> wchar_t in C++.
+  else if (Literal.isUTF16())
+    Ty = Context.Char16Ty; // u'x' -> char16_t in C++0x.
+  else if (Literal.isUTF32())
+    Ty = Context.Char32Ty; // U'x' -> char32_t in C++0x.
   else if (Literal.isMultiChar())
     Ty = Context.IntTy;   // 'wxyz' -> int in C++.
   else
     Ty = Context.CharTy;  // 'x' -> char in C++
 
-  return Owned(new (Context) CharacterLiteral(Literal.getValue(),
-                                              Literal.isWide(),
-                                              Ty, Tok.getLocation()));
+  CharacterLiteral::CharacterKind Kind = CharacterLiteral::Ascii;
+  if (Literal.isWide())
+    Kind = CharacterLiteral::Wide;
+  else if (Literal.isUTF16())
+    Kind = CharacterLiteral::UTF16;
+  else if (Literal.isUTF32())
+    Kind = CharacterLiteral::UTF32;
+
+  return Owned(new (Context) CharacterLiteral(Literal.getValue(), Kind, Ty,
+                                              Tok.getLocation()));
 }
 
 ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
@@ -8624,7 +8649,7 @@ static void MakeObjCStringLiteralFixItHint(Sema& SemaRef, QualType DstType,
 
   // Strip off any parens and casts.
   StringLiteral *SL = dyn_cast<StringLiteral>(SrcExpr->IgnoreParenCasts());
-  if (!SL || SL->isWide())
+  if (!SL || !SL->isAscii())
     return;
 
   Hint = FixItHint::CreateInsertion(SL->getLocStart(), "@");

@@ -4131,10 +4131,22 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
   assert(Arg.getKind() == TemplateArgument::Integral &&
          "Operation is only valid for integral template arguments");
   QualType T = Arg.getIntegralType();
-  if (T->isCharType() || T->isWideCharType())
+  if (T->isAnyCharacterType()) {
+    CharacterLiteral::CharacterKind Kind;
+    if (T->isWideCharType())
+      Kind = CharacterLiteral::Wide;
+    else if (T->isChar16Type())
+      Kind = CharacterLiteral::UTF16;
+    else if (T->isChar32Type())
+      Kind = CharacterLiteral::UTF32;
+    else
+      Kind = CharacterLiteral::Ascii;
+
     return Owned(new (Context) CharacterLiteral(
-                                             Arg.getAsIntegral()->getZExtValue(),
-                                             T->isWideCharType(), T, Loc));
+                                            Arg.getAsIntegral()->getZExtValue(),
+                                            Kind, T, Loc));
+  }
+
   if (T->isBooleanType())
     return Owned(new (Context) CXXBoolLiteralExpr(
                                             Arg.getAsIntegral()->getBoolValue(),

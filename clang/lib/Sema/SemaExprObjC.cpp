@@ -47,8 +47,8 @@ ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
     for (unsigned i = 0; i != NumStrings; ++i) {
       S = Strings[i];
 
-      // ObjC strings can't be wide.
-      if (S->isWide()) {
+      // ObjC strings can't be wide or UTF.
+      if (!S->isAscii()) {
         Diag(S->getLocStart(), diag::err_cfstring_literal_not_string_constant)
           << S->getSourceRange();
         return true;
@@ -64,7 +64,7 @@ ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
     // Create the aggregate string with the appropriate content and location
     // information.
     S = StringLiteral::Create(Context, StrBuf,
-                              /*Wide=*/false, /*Pascal=*/false,
+                              StringLiteral::Ascii, /*Pascal=*/false,
                               Context.getPointerType(Context.CharTy),
                               &StrLocs[0], StrLocs.size());
   }

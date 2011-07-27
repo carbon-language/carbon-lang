@@ -712,7 +712,7 @@ static void handleWeakRefAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     Arg = Arg->IgnoreParenCasts();
     StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
 
-    if (Str == 0 || Str->isWide()) {
+    if (!Str || !Str->isAscii()) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
           << "weakref" << 1;
       return;
@@ -737,7 +737,7 @@ static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   Arg = Arg->IgnoreParenCasts();
   StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
 
-  if (Str == 0 || Str->isWide()) {
+  if (!Str || !Str->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
       << "alias" << 1;
     return;
@@ -1162,7 +1162,7 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   Arg = Arg->IgnoreParenCasts();
   StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
 
-  if (Str == 0 || Str->isWide()) {
+  if (!Str || !Str->isAscii()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
       << "visibility" << 1;
     return;
@@ -2464,7 +2464,7 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   case AttributeList::AT_pcs: {
     Expr *Arg = Attr.getArg(0);
     StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
-    if (Str == 0 || Str->isWide()) {
+    if (!Str || !Str->isAscii()) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
         << "pcs" << 1;
       Attr.setInvalid();
@@ -2519,7 +2519,7 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
   case AttributeList::AT_pcs: {
     Expr *Arg = attr.getArg(0);
     StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
-    if (Str == 0 || Str->isWide()) {
+    if (!Str || !Str->isAscii()) {
       Diag(attr.getLoc(), diag::err_attribute_argument_n_not_string)
         << "pcs" << 1;
       attr.setInvalid();
@@ -2868,7 +2868,7 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
     Expr *Arg = Attr.getArg(0);
     StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
-    if (Str == 0 || Str->isWide()) {
+    if (!Str || !Str->isAscii()) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string)
         << "uuid" << 1;
       return;

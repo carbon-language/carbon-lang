@@ -1267,8 +1267,9 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
 }
 
 /// LexStringLiteral - Lex the remainder of a string literal, after having lexed
-/// either " or L".
-void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
+/// either " or L" or u8" or u" or U".
+void Lexer::LexStringLiteral(Token &Result, const char *CurPtr,
+                             tok::TokenKind Kind) {
   const char *NulCharacter = 0; // Does this string contain the \0 character?
 
   char C = getAndAdvanceChar(CurPtr, Result);
@@ -1299,8 +1300,7 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide) {
 
   // Update the location of the token as well as the BufferPtr instance var.
   const char *TokStart = BufferPtr;
-  FormTokenWithChars(Result, CurPtr,
-                     Wide ? tok::wide_string_literal : tok::string_literal);
+  FormTokenWithChars(Result, CurPtr, Kind);
   Result.setLiteralData(TokStart);
 }
 
@@ -1339,8 +1339,9 @@ void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
 
 
 /// LexCharConstant - Lex the remainder of a character constant, after having
-/// lexed either ' or L'.
-void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
+/// lexed either ' or L' or u' or U'.
+void Lexer::LexCharConstant(Token &Result, const char *CurPtr,
+                            tok::TokenKind Kind) {
   const char *NulCharacter = 0; // Does this character contain the \0 character?
 
   char C = getAndAdvanceChar(CurPtr, Result);
@@ -1377,7 +1378,7 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
 
   // Update the location of token as well as BufferPtr.
   const char *TokStart = BufferPtr;
-  FormTokenWithChars(Result, CurPtr, tok::char_constant);
+  FormTokenWithChars(Result, CurPtr, Kind);
   Result.setLiteralData(TokStart);
 }
 
@@ -2185,6 +2186,55 @@ LexNextToken:
     MIOpt.ReadToken();
     return LexNumericConstant(Result, CurPtr);
 
+  case 'u':   // Identifier (uber) or C++0x UTF-8 or UTF-16 string literal
+    // Notify MIOpt that we read a non-whitespace/non-comment token.
+    MIOpt.ReadToken();
+
+    if (Features.CPlusPlus0x) {
+      Char = getCharAndSize(CurPtr, SizeTmp);
+
+      // UTF-16 string literal
+      if (Char == '"')
+        return LexStringLiteral(Result, ConsumeChar(CurPtr, SizeTmp, Result),
+                                tok::utf16_string_literal);
+
+      // UTF-16 character constant
+      if (Char == '\'')
+        return LexCharConstant(Result, ConsumeChar(CurPtr, SizeTmp, Result),
+                               tok::utf16_char_constant);
+
+      // UTF-8 string literal
+      if (Char == '8' && getCharAndSize(CurPtr + SizeTmp, SizeTmp2) == '"')
+        return LexStringLiteral(Result,
+                              ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
+                                          SizeTmp2, Result),
+                              tok::utf8_string_literal);
+    }
+
+    // treat u like the start of an identifier.
+    return LexIdentifier(Result, CurPtr);
+
+  case 'U':   // Identifier (Uber) or C++0x UTF-32 string literal
+    // Notify MIOpt that we read a non-whitespace/non-comment token.
+    MIOpt.ReadToken();
+
+    if (Features.CPlusPlus0x) {
+      Char = getCharAndSize(CurPtr, SizeTmp);
+
+      // UTF-32 string literal
+      if (Char == '"')
+        return LexStringLiteral(Result, ConsumeChar(CurPtr, SizeTmp, Result),
+                                tok::utf32_string_literal);
+
+      // UTF-32 character constant
+      if (Char == '\'')
+        return LexCharConstant(Result, ConsumeChar(CurPtr, SizeTmp, Result),
+                               tok::utf32_char_constant);
+    }
+
+    // treat U like the start of an identifier.
+    return LexIdentifier(Result, CurPtr);
+
   case 'L':   // Identifier (Loony) or wide literal (L'x' or L"xyz").
     // Notify MIOpt that we read a non-whitespace/non-comment token.
     MIOpt.ReadToken();
@@ -2193,21 +2243,22 @@ LexNextToken:
     // Wide string literal.
     if (Char == '"')
       return LexStringLiteral(Result, ConsumeChar(CurPtr, SizeTmp, Result),
-                              true);
+                              tok::wide_string_literal);
 
     // Wide character constant.
     if (Char == '\'')
-      return LexCharConstant(Result, ConsumeChar(CurPtr, SizeTmp, Result));
+      return LexCharConstant(Result, ConsumeChar(CurPtr, SizeTmp, Result),
+                             tok::wide_char_constant);
     // FALL THROUGH, treating L like the start of an identifier.
 
   // C99 6.4.2: Identifiers.
   case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
   case 'H': case 'I': case 'J': case 'K':    /*'L'*/case 'M': case 'N':
-  case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U':
+  case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T':    /*'U'*/
   case 'V': case 'W': case 'X': case 'Y': case 'Z':
   case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
   case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
-  case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
+  case 'o': case 'p': case 'q': case 'r': case 's': case 't':    /*'u'*/
   case 'v': case 'w': case 'x': case 'y': case 'z':
   case '_':
     // Notify MIOpt that we read a non-whitespace/non-comment token.
@@ -2230,13 +2281,13 @@ LexNextToken:
   case '\'':
     // Notify MIOpt that we read a non-whitespace/non-comment token.
     MIOpt.ReadToken();
-    return LexCharConstant(Result, CurPtr);
+    return LexCharConstant(Result, CurPtr, tok::char_constant);
 
   // C99 6.4.5: String Literals.
   case '"':
     // Notify MIOpt that we read a non-whitespace/non-comment token.
     MIOpt.ReadToken();
-    return LexStringLiteral(Result, CurPtr, false);
+    return LexStringLiteral(Result, CurPtr, tok::string_literal);
 
   // C99 6.4.6: Punctuators.
   case '?':

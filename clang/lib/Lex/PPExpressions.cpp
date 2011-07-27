@@ -236,7 +236,10 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     PP.LexNonComment(PeekTok);
     return false;
   }
-  case tok::char_constant: {   // 'x'
+  case tok::char_constant:          // 'x'
+  case tok::wide_char_constant: {   // L'x'
+  case tok::utf16_char_constant:    // u'x'
+  case tok::utf32_char_constant:    // U'x'
     llvm::SmallString<32> CharBuffer;
     bool CharInvalid = false;
     StringRef ThisTok = PP.getSpelling(PeekTok, CharBuffer, &CharInvalid);
@@ -244,7 +247,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
       return true;
 
     CharLiteralParser Literal(ThisTok.begin(), ThisTok.end(),
-                              PeekTok.getLocation(), PP);
+                              PeekTok.getLocation(), PP, PeekTok.getKind());
     if (Literal.hadError())
       return true;  // A diagnostic was already emitted.
 
@@ -255,6 +258,10 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
       NumBits = TI.getIntWidth();
     else if (Literal.isWide())
       NumBits = TI.getWCharWidth();
+    else if (Literal.isUTF16())
+      NumBits = TI.getChar16Width();
+    else if (Literal.isUTF32())
+      NumBits = TI.getChar32Width();
     else
       NumBits = TI.getCharWidth();
 
@@ -262,8 +269,9 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     llvm::APSInt Val(NumBits);
     // Set the value.
     Val = Literal.getValue();
-    // Set the signedness.
-    Val.setIsUnsigned(!PP.getLangOptions().CharIsSigned);
+    // Set the signedness. UTF-16 and UTF-32 are always unsigned
+    if (!Literal.isUTF16() && !Literal.isUTF32())
+      Val.setIsUnsigned(!PP.getLangOptions().CharIsSigned);
 
     if (Result.Val.getBitWidth() > Val.getBitWidth()) {
       Result.Val = Val.extend(Result.Val.getBitWidth());

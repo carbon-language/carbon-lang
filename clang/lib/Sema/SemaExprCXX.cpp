@@ -2041,12 +2041,20 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
           = ToPtrType->getPointeeType()->getAs<BuiltinType>()) {
         // This conversion is considered only when there is an
         // explicit appropriate pointer target type (C++ 4.2p2).
-        if (!ToPtrType->getPointeeType().hasQualifiers() &&
-            ((StrLit->isWide() && ToPointeeType->isWideCharType()) ||
-             (!StrLit->isWide() &&
-              (ToPointeeType->getKind() == BuiltinType::Char_U ||
-               ToPointeeType->getKind() == BuiltinType::Char_S))))
-          return true;
+        if (!ToPtrType->getPointeeType().hasQualifiers()) {
+          switch (StrLit->getKind()) {
+            case StringLiteral::UTF8:
+            case StringLiteral::UTF16:
+            case StringLiteral::UTF32:
+              // We don't allow UTF literals to be implicitly converted
+              break;
+            case StringLiteral::Ascii:
+              return (ToPointeeType->getKind() == BuiltinType::Char_U ||
+                      ToPointeeType->getKind() == BuiltinType::Char_S);
+            case StringLiteral::Wide:
+              return ToPointeeType->isWideCharType();
+          }
+        }
       }
 
   return false;
