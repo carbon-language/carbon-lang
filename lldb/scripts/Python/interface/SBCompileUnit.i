@@ -14,6 +14,12 @@ namespace lldb {
 
 SBCompileUnit supports line entry iteration. For example,
 
+    # Now get the SBSymbolContext from this frame.  We want everything. :-)
+    context = frame0.GetSymbolContext(lldb.eSymbolContextEverything)
+    ...
+
+    compileUnit = context.GetCompileUnit()
+
     for lineEntry in compileUnit:
         print 'line entry: %s:%d' % (str(lineEntry.GetFileSpec()),
                                     lineEntry.GetLine())
@@ -35,7 +41,9 @@ line entry: /Volumes/data/lldb/svn/trunk/test/python_api/symbol-context/main.c:2
 start addr: a.out[0x100000db6]
 end   addr: a.out[0x100000dbc]
 ...
-") SBCompileUnit;
+
+See also SBSymbolContext and SBLineEntry"
+) SBCompileUnit;
 class SBCompileUnit
 {
 public:
