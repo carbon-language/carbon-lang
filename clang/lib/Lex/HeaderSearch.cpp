@@ -18,6 +18,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/Capacity.h"
 #include <cstdio>
 using namespace clang;
 
@@ -544,8 +545,8 @@ bool HeaderSearch::ShouldEnterIncludeFile(const FileEntry *File, bool isImport){
 
 size_t HeaderSearch::getTotalMemory() const {
   return SearchDirs.capacity()
-    + FileInfo.capacity()
-    + HeaderMaps.capacity()
+    + llvm::capacity_in_bytes(FileInfo)
+    + llvm::capacity_in_bytes(HeaderMaps)
     + LookupFileCache.getAllocator().getTotalMemory()
     + FrameworkMap.getAllocator().getTotalMemory();
 }
