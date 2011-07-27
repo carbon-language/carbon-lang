@@ -817,6 +817,8 @@ public:
     valarray& operator=(const gslice_array<value_type>& __ga);
     valarray& operator=(const mask_array<value_type>& __ma);
     valarray& operator=(const indirect_array<value_type>& __ia);
+    template <class _ValExpr>
+        valarray& operator=(const __val_expr<_ValExpr>& __v);
 
     // element access:
     _LIBCPP_INLINE_VISIBILITY
@@ -2955,6 +2957,21 @@ valarray<_Tp>::operator=(const indirect_array<value_type>& __ia)
     for (_Ip __i = __ia.__1d_.__begin_, __e = __ia.__1d_.__end_;
                     __i != __e; ++__i, ++__t)
         *__t = __s[*__i];
+    return *this;
+}
+
+template <class _Tp>
+template <class _ValExpr>
+inline _LIBCPP_INLINE_VISIBILITY
+valarray<_Tp>&
+valarray<_Tp>::operator=(const __val_expr<_ValExpr>& __v)
+{
+    size_t __n = __v.size();
+    if (size() != __n)
+        resize(__n);
+    value_type* __t = __begin_;
+    for (size_t __i = 0; __i != __n; ++__t, ++__i)
+        *__t = result_type(__v[__i]);
     return *this;
 }
 
