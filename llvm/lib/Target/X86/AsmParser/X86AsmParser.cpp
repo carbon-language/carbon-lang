@@ -46,6 +46,7 @@ private:
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
+  bool ParseDirectiveCode(StringRef IDVal, SMLoc L);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -62,6 +63,10 @@ private:
   bool is64BitMode() const {
     // FIXME: Can tablegen auto-generate this?
     return (STI.getFeatureBits() & X86::Mode64Bit) != 0;
+  }
+  void SwitchMode() {
+    unsigned FB = ComputeAvailableFeatures(STI.ToggleFeature(X86::Mode64Bit));
+    setAvailableFeatures(FB);
   }
 
   /// @name Auto-generated Matcher Functions
@@ -1094,6 +1099,8 @@ bool X86ATTAsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getIdentifier();
   if (IDVal == ".word")
     return ParseDirectiveWord(2, DirectiveID.getLoc());
+  else if (IDVal.startswith(".code"))
+    return ParseDirectiveCode(IDVal, DirectiveID.getLoc());
   return true;
 }
 
@@ -1122,7 +1129,27 @@ bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
   return false;
 }
 
+/// ParseDirectiveCode
+///  ::= .code32 | .code64
+bool X86ATTAsmParser::ParseDirectiveCode(StringRef IDVal, SMLoc L) {
+  if (IDVal == ".code32") {
+    Parser.Lex();
+    if (is64BitMode()) {
+      SwitchMode();
+      getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);
+    }
+  } else if (IDVal == ".code64") {
+    Parser.Lex();
+    if (!is64BitMode()) {
+      SwitchMode();
+      getParser().getStreamer().EmitAssemblerFlag(MCAF_Code64);
+    }
+  } else {
+    return Error(L, "unexpected directive " + IDVal);
+  }
 
+  return false;
+}
 
 
 extern "C" void LLVMInitializeX86AsmLexer();

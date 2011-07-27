@@ -2702,13 +2702,15 @@ bool ARMAsmParser::parseDirectiveCode(SMLoc L) {
   Parser.Lex();
 
   if (Val == 16) {
-    if (!isThumb())
+    if (!isThumb()) {
       SwitchMode();
-    getParser().getStreamer().EmitAssemblerFlag(MCAF_Code16);
+      getParser().getStreamer().EmitAssemblerFlag(MCAF_Code16);
+    }
   } else {
-    if (isThumb())
+    if (isThumb()) {
       SwitchMode();
-    getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);
+      getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);
+    }
   }
 
   return false;

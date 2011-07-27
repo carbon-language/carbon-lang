@@ -117,6 +117,13 @@ namespace llvm {
     const char *InlineAsmStart;              // Defaults to "#APP\n"
     const char *InlineAsmEnd;                // Defaults to "#NO_APP\n"
 
+    /// Code16Directive, Code32Directive, Code64Directive - These are assembly
+    /// directives that tells the assembler to interpret the following
+    /// instructions differently.
+    const char *Code16Directive;             // Defaults to ".code16"
+    const char *Code32Directive;             // Defaults to ".code32"
+    const char *Code64Directive;             // Defaults to ".code64"
+
     /// AssemblerDialect - Which dialect of an assembler variant to use.
     unsigned AssemblerDialect;               // Defaults to 0
 
@@ -422,6 +429,15 @@ namespace llvm {
     }
     const char *getInlineAsmEnd() const {
       return InlineAsmEnd;
+    }
+    const char *getCode16Directive() const {
+      return Code16Directive;
+    }
+    const char *getCode32Directive() const {
+      return Code32Directive;
+    }
+    const char *getCode64Directive() const {
+      return Code64Directive;
     }
     unsigned getAssemblerDialect() const {
       return AssemblerDialect;

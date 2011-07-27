@@ -1146,7 +1146,7 @@ bool AsmParser::ParseStatement() {
     if (IDVal == ".include")
       return ParseDirectiveInclude();
 
-    if (IDVal == ".code16" || IDVal == ".code32" || IDVal == ".code64")
+    if (IDVal == ".code16")
       return TokError(Twine(IDVal) + " not supported yet");
 
     // Look up the handler in the handler table.

@@ -52,6 +52,9 @@ ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() {
   AsmTransCBE = arm_asm_table;
   Data64bitsDirective = 0;
   CommentString = "@";
+  Code16Directive = ".code\t16";
+  Code32Directive = ".code\t32";
+
   SupportsDebugInformation = true;
 
   // Exceptions handling
@@ -64,12 +67,14 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
 
   Data64bitsDirective = 0;
   CommentString = "@";
-
-  HasLEB128 = true;
   PrivateGlobalPrefix = ".L";
+  Code16Directive = ".code\t16";
+  Code32Directive = ".code\t32";
+
   WeakRefDirective = "\t.weak\t";
   HasLCOMMDirective = true;
 
+  HasLEB128 = true;
   SupportsDebugInformation = true;
 
   // Exceptions handling

@@ -335,8 +335,9 @@ void MCAsmStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   default: assert(0 && "Invalid flag!");
   case MCAF_SyntaxUnified:         OS << "\t.syntax unified"; break;
   case MCAF_SubsectionsViaSymbols: OS << ".subsections_via_symbols"; break;
-  case MCAF_Code16:                OS << "\t.code\t16"; break;
-  case MCAF_Code32:                OS << "\t.code\t32"; break;
+  case MCAF_Code16:                OS << '\t'<< MAI.getCode16Directive(); break;
+  case MCAF_Code32:                OS << '\t'<< MAI.getCode32Directive(); break;
+  case MCAF_Code64:                OS << '\t'<< MAI.getCode64Directive(); break;
   }
   EmitEOL();
 }

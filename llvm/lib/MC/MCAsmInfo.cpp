@@ -42,6 +42,9 @@ MCAsmInfo::MCAsmInfo() {
   LinkerPrivateGlobalPrefix = "";
   InlineAsmStart = "APP";
   InlineAsmEnd = "NO_APP";
+  Code16Directive = ".code16";
+  Code32Directive = ".code32";
+  Code64Directive = ".code64";
   AssemblerDialect = 0;
   AllowQuotesInName = false;
   AllowNameToStartWithDigit = false;
