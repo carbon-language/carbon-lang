@@ -21,6 +21,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Capacity.h"
 #include <algorithm>
 #include <string>
 #include <cstring>
@@ -1555,7 +1556,7 @@ void SourceManager::PrintStats() const {
   llvm::errs() << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
                << " mem buffers mapped.\n";
   llvm::errs() << LocalSLocEntryTable.size() << " local SLocEntry's allocated ("
-               << LocalSLocEntryTable.capacity()*sizeof(SrcMgr::SLocEntry)
+               << llvm::capacity_in_bytes(LocalSLocEntryTable)
                << " bytes of capacity), "
                << NextLocalOffset << "B of Sloc address space used.\n";
   llvm::errs() << LoadedSLocEntryTable.size()
@@ -1599,10 +1600,10 @@ SourceManager::MemoryBufferSizes SourceManager::getMemoryBufferSizes() const {
 }
 
 size_t SourceManager::getDataStructureSizes() const {
-  return MemBufferInfos.capacity()
-    + LocalSLocEntryTable.capacity()
-    + LoadedSLocEntryTable.capacity()
-    + SLocEntryLoaded.capacity()
-    + FileInfos.getMemorySize()
-    + OverriddenFiles.getMemorySize();
+  return llvm::capacity_in_bytes(MemBufferInfos)
+    + llvm::capacity_in_bytes(LocalSLocEntryTable)
+    + llvm::capacity_in_bytes(LoadedSLocEntryTable)
+    + llvm::capacity_in_bytes(SLocEntryLoaded)
+    + llvm::capacity_in_bytes(FileInfos)
+    + llvm::capacity_in_bytes(OverriddenFiles);
 }
