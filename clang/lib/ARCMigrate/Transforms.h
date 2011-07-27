@@ -56,7 +56,8 @@ SourceLocation findLocationAfterSemi(SourceLocation loc, ASTContext &Ctx);
 
 bool hasSideEffects(Expr *E, ASTContext &Ctx);
 bool isGlobalVar(Expr *E);
-
+/// \brief Returns "nil" or "0" if 'nil' macro is not actually defined.
+StringRef getNilString(ASTContext &Ctx);
 
 template <typename BODY_TRANS>
 class BodyTransform : public RecursiveASTVisitor<BodyTransform<BODY_TRANS> > {

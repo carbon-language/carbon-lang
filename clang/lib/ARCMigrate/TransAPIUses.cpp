@@ -9,17 +9,19 @@
 //
 // checkAPIUses:
 //
-// Emits error with some API uses that are not safe in ARC mode:
+// Emits error/fix with some API uses that are obsolete or not safe in ARC mode:
 //
 // - NSInvocation's [get/set]ReturnValue and [get/set]Argument are only safe
 //   with __unsafe_unretained objects.
 // - When a NSData's 'bytes' family of methods are used on a local var,
 //   add __attribute__((objc_precise_lifetime)) to make it safer.
+// - Calling -zone gets replaced with 'nil'.
 //
 //===----------------------------------------------------------------------===//
 
 #include "Transforms.h"
 #include "Internals.h"
+#include "clang/Sema/SemaDiagnostic.h"
 
 using namespace clang;
 using namespace arcmt;
@@ -34,6 +36,8 @@ class APIChecker : public RecursiveASTVisitor<APIChecker> {
   Selector getArgumentSel, setArgumentSel;
 
   Selector bytesSel, getBytesSel, getBytesLengthSel, getBytesRangeSel;
+
+  Selector zoneSel;
 
   llvm::DenseSet<VarDecl *> ChangedNSDataVars;
 public:
@@ -57,9 +61,12 @@ public:
     getBytesLengthSel = sels.getSelector(2, selIds);
     selIds[1] = &ids.get("range");
     getBytesRangeSel = sels.getSelector(2, selIds);
+
+    zoneSel = sels.getNullarySelector(&ids.get("zone"));
   }
 
   bool VisitObjCMessageExpr(ObjCMessageExpr *E) {
+    // NSInvocation.
     if (E->isInstanceMessage() &&
         E->getReceiverInterface() &&
         E->getReceiverInterface()->getName() == "NSInvocation") {
@@ -91,6 +98,7 @@ public:
       return true;
     }
 
+    // NSData.
     if (E->isInstanceMessage() &&
         E->getReceiverInterface() &&
         E->getReceiverInterface()->getName() == "NSData" &&
@@ -111,6 +119,20 @@ public:
           }
     }
 
+    // -zone.
+    if (E->isInstanceMessage() &&
+        E->getInstanceReceiver() &&
+        E->getSelector() == zoneSel &&
+        Pass.TA.hasDiagnostic(diag::err_unavailable,
+                              diag::err_unavailable_message,
+                              E->getInstanceReceiver()->getExprLoc())) {
+      // Calling -zone is meaningless in ARC, change it to nil.
+      Transaction Trans(Pass.TA);
+      Pass.TA.clearDiagnostic(diag::err_unavailable,
+                              diag::err_unavailable_message,
+                              E->getInstanceReceiver()->getExprLoc());
+      Pass.TA.replace(E->getSourceRange(), getNilString(Pass.Ctx));
+    }
     return true;
   }
 };

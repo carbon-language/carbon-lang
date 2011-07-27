@@ -154,12 +154,20 @@ bool trans::hasSideEffects(Expr *E, ASTContext &Ctx) {
 bool trans::isGlobalVar(Expr *E) {
   E = E->IgnoreParenCasts();
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
-    return DRE->getDecl()->getDeclContext()->isFileContext();
+    return DRE->getDecl()->getDeclContext()->isFileContext() &&
+           DRE->getDecl()->getLinkage() == ExternalLinkage;
   if (ConditionalOperator *condOp = dyn_cast<ConditionalOperator>(E))
     return isGlobalVar(condOp->getTrueExpr()) &&
            isGlobalVar(condOp->getFalseExpr());
 
   return false;  
+}
+
+StringRef trans::getNilString(ASTContext &Ctx) {
+  if (Ctx.Idents.get("nil").hasMacroDefinition())
+    return "nil";
+  else
+    return "0";
 }
 
 namespace {

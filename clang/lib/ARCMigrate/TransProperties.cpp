@@ -45,6 +45,7 @@ namespace {
 
 class PropertiesRewriter {
   MigrationPass &Pass;
+  ObjCImplementationDecl *CurImplD;
 
   struct PropData {
     ObjCPropertyDecl *PropD;
@@ -62,6 +63,7 @@ public:
   PropertiesRewriter(MigrationPass &pass) : Pass(pass) { }
 
   void doTransform(ObjCImplementationDecl *D) {
+    CurImplD = D;
     ObjCInterfaceDecl *iface = D->getClassInterface();
     if (!iface)
       return;
@@ -134,8 +136,16 @@ private:
       return;
     }
 
-    if (propAttrs & ObjCPropertyDecl::OBJC_PR_assign)
+    if (propAttrs & ObjCPropertyDecl::OBJC_PR_assign) {
+      if (hasIvarAssignedAPlusOneObject(props)) {
+        rewriteAttribute("assign", "strong", atLoc);
+        return;
+      }
       return rewriteAssign(props, atLoc);
+    }
+
+    if (hasIvarAssignedAPlusOneObject(props))
+      return maybeAddStrongAttr(props, atLoc);
 
     return maybeAddWeakOrUnsafeUnretainedAttr(props, atLoc);
   }
@@ -162,20 +172,39 @@ private:
   void maybeAddWeakOrUnsafeUnretainedAttr(PropsTy &props,
                                           SourceLocation atLoc) const {
     ObjCPropertyDecl::PropertyAttributeKind propAttrs = getPropertyAttrs(props);
-    if ((propAttrs & ObjCPropertyDecl::OBJC_PR_readonly) &&
-        hasNoBackingIvars(props))
-      return;
 
     bool canUseWeak = canApplyWeak(Pass.Ctx, getPropertyType(props));
-    bool addedAttr = addAttribute(canUseWeak ? "weak" : "unsafe_unretained",
-                                  atLoc);
-    if (!addedAttr)
-      canUseWeak = false;
+    if (!(propAttrs & ObjCPropertyDecl::OBJC_PR_readonly) ||
+        !hasAllIvarsBacked(props)) {
+      bool addedAttr = addAttribute(canUseWeak ? "weak" : "unsafe_unretained",
+                                    atLoc);
+      if (!addedAttr)
+        canUseWeak = false;
+    }
 
     for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I) {
       if (isUserDeclared(I->IvarD))
         Pass.TA.insert(I->IvarD->getLocation(),
                        canUseWeak ? "__weak " : "__unsafe_unretained ");
+      if (I->ImplD) {
+        Pass.TA.clearDiagnostic(diag::err_arc_assign_property_ownership,
+                                I->ImplD->getLocation());
+        Pass.TA.clearDiagnostic(
+                           diag::err_arc_objc_property_default_assign_on_object,
+                           I->ImplD->getLocation());
+      }
+    }
+  }
+
+  void maybeAddStrongAttr(PropsTy &props, SourceLocation atLoc) const {
+    ObjCPropertyDecl::PropertyAttributeKind propAttrs = getPropertyAttrs(props);
+
+    if (!(propAttrs & ObjCPropertyDecl::OBJC_PR_readonly) ||
+        !hasAllIvarsBacked(props)) {
+      addAttribute("strong", atLoc);
+    }
+
+    for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I) {
       if (I->ImplD) {
         Pass.TA.clearDiagnostic(diag::err_arc_assign_property_ownership,
                                 I->ImplD->getLocation());
@@ -290,6 +319,40 @@ private:
     return true;
   }
 
+  class PlusOneAssign : public RecursiveASTVisitor<PlusOneAssign> {
+    ObjCIvarDecl *Ivar;
+  public:
+    PlusOneAssign(ObjCIvarDecl *D) : Ivar(D) {}
+
+    bool VisitBinAssign(BinaryOperator *E) {
+      Expr *lhs = E->getLHS()->IgnoreParenImpCasts();
+      if (ObjCIvarRefExpr *RE = dyn_cast<ObjCIvarRefExpr>(lhs)) {
+        if (RE->getDecl() != Ivar)
+          return true;
+
+      ImplicitCastExpr *implCE = dyn_cast<ImplicitCastExpr>(E->getRHS());
+      while (implCE && implCE->getCastKind() ==  CK_BitCast)
+        implCE = dyn_cast<ImplicitCastExpr>(implCE->getSubExpr());
+
+      if (implCE && implCE->getCastKind() == CK_ObjCConsumeObject)
+        return false;
+      }
+
+      return true;
+    }
+  };
+
+  bool hasIvarAssignedAPlusOneObject(PropsTy &props) const {
+    for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I) {
+      PlusOneAssign oneAssign(I->IvarD);
+      bool notFound = oneAssign.TraverseDecl(CurImplD);
+      if (!notFound)
+        return true;
+    }
+
+    return false;
+  }
+
   bool hasIvarWithExplicitOwnership(PropsTy &props) const {
     for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I) {
       if (isUserDeclared(I->IvarD)) {
@@ -304,9 +367,9 @@ private:
     return false;    
   }
 
-  bool hasNoBackingIvars(PropsTy &props) const {
+  bool hasAllIvarsBacked(PropsTy &props) const {
     for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I)
-      if (I->IvarD)
+      if (!isUserDeclared(I->IvarD))
         return false;
 
     return true;

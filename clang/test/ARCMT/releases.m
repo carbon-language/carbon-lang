@@ -85,3 +85,15 @@ void test2(id p) {
   RELEASE_MACRO(p);
   RELEASE_MACRO2(p);
 }
+
+@implementation Foo2
+
+static id internal_var = 0;
+
++ (void)setIt:(id)newone {
+    if (internal_var != newone) {
+        [internal_var release];
+        internal_var = [newone retain];
+    }
+}
+@end

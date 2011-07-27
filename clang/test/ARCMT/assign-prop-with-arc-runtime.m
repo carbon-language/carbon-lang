@@ -20,8 +20,9 @@ typedef _NSCachedAttributedString *BadClassForWeak;
   id not_safe1;
   NSObject *not_safe2;
   Forw *not_safe3;
+  Foo *assign_plus1;
 }
-@property (readonly,assign) Foo *x;
+@property (readonly) Foo *x;
 @property (assign) Foo *w;
 @property Foo *q1, *q2;
 @property (assign) WeakOptOut *oo;
@@ -29,12 +30,22 @@ typedef _NSCachedAttributedString *BadClassForWeak;
 @property (assign) id not_safe1;
 @property () NSObject *not_safe2;
 @property Forw *not_safe3;
+@property (readonly) Foo *assign_plus1;
+@property (readonly) Foo *assign_plus2;
 
 @property (assign) Foo *no_user_ivar1;
 @property (readonly) Foo *no_user_ivar2;
+
+-(void)test;
 @end
 
 @implementation Foo
 @synthesize x,w,q1,q2,oo,bcw,not_safe1,not_safe2,not_safe3;
 @synthesize no_user_ivar1, no_user_ivar2;
+@synthesize assign_plus1, assign_plus2;
+
+-(void)test {
+  assign_plus1 = [[Foo alloc] init];
+  assign_plus2 = [Foo new];
+}
 @end

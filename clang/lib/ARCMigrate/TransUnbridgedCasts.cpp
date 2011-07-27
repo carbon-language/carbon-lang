@@ -36,6 +36,7 @@
 #include "Internals.h"
 #include "clang/Analysis/DomainSpecific/CocoaConventions.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "clang/AST/ParentMap.h"
 #include "clang/Basic/SourceManager.h"
 
 using namespace clang;
@@ -47,9 +48,16 @@ namespace {
 class UnbridgedCastRewriter : public RecursiveASTVisitor<UnbridgedCastRewriter>{
   MigrationPass &Pass;
   IdentifierInfo *SelfII;
+  llvm::OwningPtr<ParentMap> StmtMap;
+
 public:
   UnbridgedCastRewriter(MigrationPass &pass) : Pass(pass) {
     SelfII = &Pass.Ctx.Idents.get("self");
+  }
+
+  void transformBody(Stmt *body) {
+    StmtMap.reset(new ParentMap(body));
+    TraverseStmt(body);
   }
 
   bool VisitCastExpr(CastExpr *E) {
@@ -138,13 +146,21 @@ private:
   }
 
   void rewriteToBridgedCast(CastExpr *E, ObjCBridgeCastKind Kind) {
+    Transaction Trans(Pass.TA);
+    rewriteToBridgedCast(E, Kind, Trans);
+  }
+
+  void rewriteToBridgedCast(CastExpr *E, ObjCBridgeCastKind Kind,
+                            Transaction &Trans) {
     TransformActions &TA = Pass.TA;
 
     // We will remove the compiler diagnostic.
     if (!TA.hasDiagnostic(diag::err_arc_mismatched_cast,
                           diag::err_arc_cast_requires_bridge,
-                          E->getLocStart()))
+                          E->getLocStart())) {
+      Trans.abort();
       return;
+    }
 
     StringRef bridge;
     switch(Kind) {
@@ -156,7 +172,6 @@ private:
       bridge = "__bridge_retained "; break;
     }
 
-    Transaction Trans(TA);
     TA.clearDiagnostic(diag::err_arc_mismatched_cast,
                        diag::err_arc_cast_requires_bridge,
                        E->getLocStart());
@@ -180,16 +195,83 @@ private:
     }
   }
 
+  void rewriteCastForCFRetain(CastExpr *castE, CallExpr *callE) {
+    Transaction Trans(Pass.TA);
+    Pass.TA.replace(callE->getSourceRange(), callE->getArg(0)->getSourceRange());
+    rewriteToBridgedCast(castE, OBC_BridgeRetained, Trans);
+  }
+
   void transformObjCToNonObjCCast(CastExpr *E) {
     if (isSelf(E->getSubExpr()))
       return rewriteToBridgedCast(E, OBC_Bridge);
+
+    CallExpr *callE;
+    if (isPassedToCFRetain(E, callE))
+      return rewriteCastForCFRetain(E, callE);
+
+    ObjCMethodFamily family = getFamilyOfMessage(E->getSubExpr());
+    if (family == OMF_retain)
+      return rewriteToBridgedCast(E, OBC_BridgeRetained);
+
+    if (family == OMF_autorelease || family == OMF_release) {
+      std::string err = "it is not safe to cast to '";
+      err += E->getType().getAsString(Pass.Ctx.PrintingPolicy);
+      err += "' the result of '";
+      err += family == OMF_autorelease ? "autorelease" : "release";
+      err += "' message; a __bridge cast may result in a pointer to a "
+          "destroyed object and a __bridge_retained may leak the object";
+      Pass.TA.reportError(err, E->getLocStart(),
+                          E->getSubExpr()->getSourceRange());
+      Stmt *parent = E;
+      do {
+        parent = StmtMap->getParentIgnoreParenImpCasts(parent);
+      } while (parent && isa<ExprWithCleanups>(parent));
+
+      if (ReturnStmt *retS = dyn_cast_or_null<ReturnStmt>(parent)) {
+        std::string note = "remove the cast and change return type of function "
+            "to '";
+        note += E->getSubExpr()->getType().getAsString(Pass.Ctx.PrintingPolicy);
+        note += "' to have the object automatically autoreleased";
+        Pass.TA.reportNote(note, retS->getLocStart());
+      }
+    }
+
+    if (ImplicitCastExpr *implCE = dyn_cast<ImplicitCastExpr>(E->getSubExpr())){
+      if (implCE->getCastKind() == CK_ObjCConsumeObject)
+        return rewriteToBridgedCast(E, OBC_BridgeRetained);
+      if (implCE->getCastKind() == CK_ObjCReclaimReturnedObject)
+        return rewriteToBridgedCast(E, OBC_Bridge);
+    }
   }
 
-  bool isSelf(Expr *E) {
+  static ObjCMethodFamily getFamilyOfMessage(Expr *E) {
+    E = E->IgnoreParenCasts();
+    if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E))
+      return ME->getMethodFamily();
+
+    return OMF_None;
+  }
+
+  bool isPassedToCFRetain(Expr *E, CallExpr *&callE) const {
+    if ((callE = dyn_cast_or_null<CallExpr>(
+                                     StmtMap->getParentIgnoreParenImpCasts(E))))
+      if (FunctionDecl *
+            FD = dyn_cast_or_null<FunctionDecl>(callE->getCalleeDecl()))
+        if (FD->getName() == "CFRetain" && FD->getNumParams() == 1 &&
+            FD->getParent()->isTranslationUnit() &&
+            FD->getLinkage() == ExternalLinkage)
+          return true;
+
+    return false;
+  }
+
+  bool isSelf(Expr *E) const {
     E = E->IgnoreParenLValueCasts();
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
-      if (DRE->getDecl()->getIdentifier() == SelfII)
-        return true;
+      if (ImplicitParamDecl *IPD = dyn_cast<ImplicitParamDecl>(DRE->getDecl()))
+        if (IPD->getIdentifier() == SelfII)
+          return true;
+
     return false;
   }
 };
@@ -197,6 +279,6 @@ private:
 } // end anonymous namespace
 
 void trans::rewriteUnbridgedCasts(MigrationPass &pass) {
-  UnbridgedCastRewriter trans(pass);
+  BodyTransform<UnbridgedCastRewriter> trans(pass);
   trans.TraverseDecl(pass.Ctx.getTranslationUnitDecl());
 }

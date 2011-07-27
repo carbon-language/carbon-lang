@@ -286,6 +286,9 @@ private:
     }
 
     bool isInScope(SourceLocation loc) {
+      if (loc.isInvalid())
+        return false;
+
       SourceManager &SM = Ctx.getSourceManager();
       if (SM.isBeforeInTranslationUnit(loc, ScopeRange.getBegin()))
         return false;

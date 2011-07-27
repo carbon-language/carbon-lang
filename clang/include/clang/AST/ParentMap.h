@@ -32,6 +32,7 @@ public:
   Stmt *getParent(Stmt*) const;
   Stmt *getParentIgnoreParens(Stmt *) const;
   Stmt *getParentIgnoreParenCasts(Stmt *) const;
+  Stmt *getParentIgnoreParenImpCasts(Stmt *) const;
   Stmt *getOuterParenParent(Stmt *) const;
 
   const Stmt *getParent(const Stmt* S) const {

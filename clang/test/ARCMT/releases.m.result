@@ -77,3 +77,14 @@ void block_test(Foo *p) {
 
 void test2(id p) {
 }
+
+@implementation Foo2
+
+static id internal_var = 0;
+
++ (void)setIt:(id)newone {
+    if (internal_var != newone) {
+        internal_var = newone;
+    }
+}
+@end

@@ -44,3 +44,17 @@ int main2(int argc, char *argv[]) {
         return result;
     }
 }
+
+@interface Foo : NSObject
+@property (unsafe_unretained) id myProp;
+@end
+
+@implementation Foo
+@synthesize myProp;
+
+-(void)test:(id)p {
+  @autoreleasepool {
+  }
+  self.myProp = p;
+}
+@end

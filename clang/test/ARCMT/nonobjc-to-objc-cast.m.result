@@ -5,6 +5,8 @@
 #include "Common.h"
 
 @interface NSString : NSObject
+-(id)string;
+-(id)newString;
 @end
 
 typedef const struct __CFString * CFStringRef;
@@ -27,6 +29,7 @@ void f(BOOL b, id p) {
   CFUUIDRef   _uuid;
   NSString *_uuidString = (__bridge_transfer NSString *)CFUUIDCreateString(kCFAllocatorDefault, _uuid);
   _uuidString = (__bridge_transfer NSString *)CFUUIDCreateString(kCFAllocatorDefault, _uuid);
+  _uuidString = (__bridge_transfer NSString *)(CFRetain(_uuid));
 }
 
 @implementation NSString (StrExt)
@@ -36,3 +39,18 @@ void f(BOOL b, id p) {
   return self;
 }
 @end
+
+void f2(NSString *s) {
+  CFStringRef ref = (__bridge CFStringRef)([s string]);
+  ref = (__bridge CFStringRef)[s string];
+  ref = (__bridge CFStringRef)(s.string);
+  ref = (__bridge_retained CFStringRef)([NSString new]);
+  ref = (__bridge_retained CFStringRef)([s newString]);
+  ref = (__bridge_retained CFStringRef)[NSString new];
+  ref = (__bridge_retained CFStringRef)([[NSString alloc] init]);
+  ref = (__bridge_retained CFStringRef)([s string]);
+  ref = (__bridge_retained CFStringRef)[s string];
+  ref = (__bridge_retained CFTypeRef)([s string]);
+  ref = (__bridge_retained CFTypeRef)(s);
+  ref = (__bridge_retained CFStringRef)(s);
+}

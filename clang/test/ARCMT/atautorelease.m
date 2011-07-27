@@ -45,3 +45,17 @@ int main2(int argc, char *argv[]) {
     [pool release];
     return result;
 }
+
+@interface Foo : NSObject
+@property (assign) id myProp;
+@end
+
+@implementation Foo
+@synthesize myProp;
+
+-(void)test:(id)p {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  [pool drain];
+  self.myProp = p;
+}
+@end

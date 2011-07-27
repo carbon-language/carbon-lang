@@ -4,6 +4,8 @@
 #define NS_AUTOMATED_REFCOUNT_UNAVAILABLE
 #endif
 
+#define nil ((void*) 0)
+
 typedef int BOOL;
 typedef unsigned NSUInteger;
 typedef int int32_t;
@@ -11,8 +13,14 @@ typedef unsigned char uint8_t;
 typedef int32_t UChar32;
 typedef unsigned char UChar;
 
+typedef struct _NSZone NSZone;
+
+typedef const void * CFTypeRef;
+CFTypeRef CFRetain(CFTypeRef cf);
+
 @protocol NSObject
 - (BOOL)isEqual:(id)object;
+- (NSZone *)zone NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 - (id)retain NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 - (NSUInteger)retainCount NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 - (oneway void)release NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
