@@ -30,6 +30,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Capacity.h"
 #include "CXXABI.h"
 #include <map>
 
@@ -6473,16 +6474,17 @@ MangleContext *ASTContext::createMangleContext() {
 CXXABI::~CXXABI() {}
 
 size_t ASTContext::getSideTableAllocatedMemory() const {
-  size_t bytes = 0;
-  bytes += ASTRecordLayouts.getMemorySize();
-  bytes += ObjCLayouts.getMemorySize();
-  bytes += KeyFunctions.getMemorySize();
-  bytes += ObjCImpls.getMemorySize();
-  bytes += BlockVarCopyInits.getMemorySize();
-  bytes += DeclAttrs.getMemorySize();
-  bytes += InstantiatedFromStaticDataMember.getMemorySize();
-  bytes += InstantiatedFromUsingDecl.getMemorySize();
-  bytes += InstantiatedFromUsingShadowDecl.getMemorySize();
-  bytes += InstantiatedFromUnnamedFieldDecl.getMemorySize();
-  return bytes;
+  return ASTRecordLayouts.getMemorySize()
+    + llvm::capacity_in_bytes(ObjCLayouts)
+    + llvm::capacity_in_bytes(KeyFunctions)
+    + llvm::capacity_in_bytes(ObjCImpls)
+    + llvm::capacity_in_bytes(BlockVarCopyInits)
+    + llvm::capacity_in_bytes(DeclAttrs)
+    + llvm::capacity_in_bytes(InstantiatedFromStaticDataMember)
+    + llvm::capacity_in_bytes(InstantiatedFromUsingDecl)
+    + llvm::capacity_in_bytes(InstantiatedFromUsingShadowDecl)
+    + llvm::capacity_in_bytes(InstantiatedFromUnnamedFieldDecl)
+    + llvm::capacity_in_bytes(OverriddenMethods)
+    + llvm::capacity_in_bytes(Types)
+    + llvm::capacity_in_bytes(VariableArrayTypes);
 }
