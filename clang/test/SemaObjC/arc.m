@@ -638,3 +638,10 @@ void test36(int first, ...) {
   id obj = __builtin_va_arg(arglist, id);
   __builtin_va_end(arglist);
 }
+
+@class Test37;
+void test37(Test37 *c) {
+  for (id y in c) { // expected-error {{collection expression type 'Test37' is a forward declaration}}
+    (void) y;
+  }
+}

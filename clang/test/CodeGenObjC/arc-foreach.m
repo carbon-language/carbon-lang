@@ -5,7 +5,13 @@
 
 extern void use(id);
 extern void use_block(void (^)(void));
-@class NSArray;
+
+struct NSFastEnumerationState;
+@interface NSArray
+- (unsigned long) countByEnumeratingWithState: (struct NSFastEnumerationState*) state
+                  objects: (id*) buffer
+                  count: (unsigned long) bufferSize;
+@end;
 
 void test0(NSArray *array) {
   // 'x' should be initialized without a retain.
@@ -17,11 +23,36 @@ void test0(NSArray *array) {
 }
 
 // CHECK-LP64:    define void @test0(
-// CHECK-LP64:      alloca [[ARRAY_T:%.*]]*,
+// CHECK-LP64:      [[ARRAY:%.*]] = alloca [[ARRAY_T:%.*]]*,
 // CHECK-LP64-NEXT: [[X:%.*]] = alloca i8*,
 // CHECK-LP64-NEXT: [[STATE:%.*]] = alloca [[STATE_T:%.*]],
-// CHECK-LP64-NEXT: alloca [16 x i8*], align 8
+// CHECK-LP64-NEXT: [[BUFFER:%.*]] = alloca [16 x i8*], align 8
 // CHECK-LP64-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
+
+// Initialize 'array'.
+// CHECK-LP64-NEXT: [[T0:%.*]] = bitcast [[ARRAY_T:%.*]]* {{%.*}} to i8*
+// CHECK-LP64-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
+// CHECK-LP64-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to [[ARRAY_T]]*
+// CHECK-LP64-NEXT: store [[ARRAY_T]]* [[T2]], [[ARRAY_T]]** [[ARRAY]], align 8
+
+// Initialize the fast enumaration state.
+// CHECK-LP64-NEXT: [[T0:%.*]] = bitcast [[STATE_T]]* [[STATE]] to i8*
+// CHECK-LP64-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 64, i32 8, i1 false)
+
+// Evaluate the collection expression and retain.
+// CHECK-LP64-NEXT: [[T0:%.*]] = load [[ARRAY_T]]** [[ARRAY]], align 8
+// CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[ARRAY_T]]* [[T0]] to i8*
+// CHECK-LP64-NEXT: [[T2:%.*]] = call i8* @objc_retain(i8* [[T1]])
+// CHECK-LP64-NEXT: [[SAVED_ARRAY:%.*]] = bitcast i8* [[T2]] to [[ARRAY_T]]*
+
+// Call the enumeration method.
+// CHECK-LP64-NEXT: [[T0:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+// CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[ARRAY_T]]* [[SAVED_ARRAY]] to i8*
+// CHECK-LP64-NEXT: [[SIZE:%.*]] = call i64 bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i64 (i8*, i8*, [[STATE_T]]*, [16 x i8*]*, i64)*)(i8* [[T1]], i8* [[T0]], [[STATE_T]]* [[STATE]], [16 x i8*]* [[BUFFER]], i64 16)
+
+// Check for a nonzero result.
+// CHECK-LP64-NEXT: [[T0:%.*]] = icmp eq i64 [[SIZE]], 0
+// CHECK-LP64-NEXT: br i1 [[T0]]
 
 // CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[STATE_T]]* [[STATE]], i32 0, i32 1
 // CHECK-LP64-NEXT: [[T1:%.*]] = load i8*** [[T0]]
@@ -37,6 +68,20 @@ void test0(NSArray *array) {
 // CHECK-LP64: call void @use_block(
 // CHECK-LP64-NEXT: [[T1:%.*]] = load i8** [[T0]]
 // CHECK-LP64-NEXT: call void @objc_release(i8* [[T1]])
+
+// CHECK-LP64:      [[T0:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+// CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[ARRAY_T]]* [[SAVED_ARRAY]] to i8*
+// CHECK-LP64-NEXT: [[SIZE:%.*]] = call i64 bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i64 (i8*, i8*, [[STATE_T]]*, [16 x i8*]*, i64)*)(i8* [[T1]], i8* [[T0]], [[STATE_T]]* [[STATE]], [16 x i8*]* [[BUFFER]], i64 16)
+
+// Release the array.
+// CHECK-LP64:      [[T0:%.*]] = bitcast [[ARRAY_T]]* [[SAVED_ARRAY]] to i8*
+// CHECK-LP64-NEXT: call void @objc_release(i8* [[T0]])
+
+// Destroy 'array'.
+// CHECK-LP64:      [[T0:%.*]] = load [[ARRAY_T]]** [[ARRAY]]
+// CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[ARRAY_T]]* [[T0]] to i8*
+// CHECK-LP64-NEXT: call void @objc_release(i8* [[T1]])
+// CHECK-LP64-NEXT: ret void
 
 // CHECK-LP64:    define internal void @__test0_block_invoke
 // CHECK-LP64:      [[BLOCK:%.*]] = bitcast i8* {{%.*}} to [[BLOCK_T]]*
@@ -70,3 +115,36 @@ void test1(NSArray *array) {
 // CHECK-LP64: call void @use_block
 // CHECK-LP64-NEXT: call void @objc_destroyWeak(i8** [[T0]])
 // CHECK-LP64-NEXT: call void @objc_destroyWeak(i8** [[X]])
+
+// rdar://problem/9817306
+@interface Test2
+- (NSArray *) array;
+@end
+void test2(Test2 *a) {
+  for (id x in a.array) {
+    use(x);
+  }
+}
+
+// CHECK-LP64:    define void @test2(
+// CHECK-LP64:      [[T0:%.*]] = call [[ARRAY_T]]* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to [[ARRAY_T]]* (i8*, i8*)*)(
+// CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[ARRAY_T]]* [[T0]] to i8*
+// CHECK-LP64-NEXT: [[T2:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T1]])
+// CHECK-LP64-NEXT: [[COLL:%.*]] = bitcast i8* [[T2]] to [[ARRAY_T]]*
+
+// Make sure it's not immediately released before starting the iteration.
+// CHECK-LP64-NEXT: load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+// CHECK-LP64-NEXT: [[T0:%.*]] = bitcast [[ARRAY_T]]* [[COLL]] to i8*
+// CHECK-LP64-NEXT: @objc_msgSend
+
+// This bitcast is for the mutation check.
+// CHECK-LP64:      [[T0:%.*]] = bitcast [[ARRAY_T]]* [[COLL]] to i8*
+// CHECK-LP64-NEXT: @objc_enumerationMutation
+
+// This bitcast is for the 'next' message send.
+// CHECK-LP64:      [[T0:%.*]] = bitcast [[ARRAY_T]]* [[COLL]] to i8*
+// CHECK-LP64-NEXT: @objc_msgSend
+
+// This bitcast is for the final release.
+// CHECK-LP64:      [[T0:%.*]] = bitcast [[ARRAY_T]]* [[COLL]] to i8*
+// CHECK-LP64-NEXT: call void @objc_release(i8* [[T0]])

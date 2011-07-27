@@ -1405,12 +1405,21 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
   // statememt before parsing the body, in order to be able to deduce the type
   // of an auto-typed loop variable.
   StmtResult ForRangeStmt;
-  if (ForRange)
+  if (ForRange) {
     ForRangeStmt = Actions.ActOnCXXForRangeStmt(ForLoc, LParenLoc,
                                                 FirstPart.take(),
                                                 ForRangeInit.ColonLoc,
                                                 ForRangeInit.RangeExpr.get(),
                                                 RParenLoc);
+
+
+  // Similarly, we need to do the semantic analysis for a for-range
+  // statement immediately in order to close over temporaries correctly.
+  } else if (ForEach) {
+    if (!Collection.isInvalid())
+      Collection =
+        Actions.ActOnObjCForCollectionOperand(ForLoc, Collection.take());
+  }
 
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
@@ -1439,8 +1448,6 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
     return StmtError();
 
   if (ForEach)
-    // FIXME: It isn't clear how to communicate the late destruction of 
-    // C++ temporaries used to create the collection.
     return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
                                               FirstPart.take(),
                                               Collection.take(), RParenLoc, 

@@ -2715,6 +2715,8 @@ def err_arc_may_not_respond : Error<
   "selector %1">;
 def err_arc_receiver_forward_instance : Error<
   "receiver type %0 for instance message is a forward declaration">;
+def err_arc_collection_forward : Error<
+  "collection expression type %0 is a forward declaration">;
 def err_arc_multiple_method_decl : Error< 
   "multiple methods named %0 found with mismatched result, "
   "parameter type or attributes">;

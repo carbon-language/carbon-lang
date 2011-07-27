@@ -965,6 +965,76 @@ StmtResult Sema::ActOnForEachLValueExpr(Expr *E) {
   return Owned(static_cast<Stmt*>(Result.get()));
 }
 
+ExprResult
+Sema::ActOnObjCForCollectionOperand(SourceLocation forLoc, Expr *collection) {
+  assert(collection);
+
+  // Bail out early if we've got a type-dependent expression.
+  if (collection->isTypeDependent()) return Owned(collection);
+
+  // Perform normal l-value conversion.
+  ExprResult result = DefaultFunctionArrayLvalueConversion(collection);
+  if (result.isInvalid())
+    return ExprError();
+  collection = result.take();
+
+  // The operand needs to have object-pointer type.
+  // TODO: should we do a contextual conversion?
+  const ObjCObjectPointerType *pointerType =
+    collection->getType()->getAs<ObjCObjectPointerType>();
+  if (!pointerType)
+    return Diag(forLoc, diag::err_collection_expr_type)
+             << collection->getType() << collection->getSourceRange();
+
+  // Check that the operand provides
+  //   - countByEnumeratingWithState:objects:count:
+  const ObjCObjectType *objectType = pointerType->getObjectType();
+  ObjCInterfaceDecl *iface = objectType->getInterface();
+
+  // If we have a forward-declared type, we can't do this check.
+  if (iface && iface->isForwardDecl()) {
+    // This is ill-formed under ARC.
+    if (getLangOptions().ObjCAutoRefCount) {
+      Diag(forLoc, diag::err_arc_collection_forward)
+        << pointerType->getPointeeType() << collection->getSourceRange();
+    }
+
+    // Otherwise, if we have any useful type information, check that
+    // the type declares the appropriate method.
+  } else if (iface || !objectType->qual_empty()) {
+    IdentifierInfo *selectorIdents[] = {
+      &Context.Idents.get("countByEnumeratingWithState"),
+      &Context.Idents.get("objects"),
+      &Context.Idents.get("count")
+    };
+    Selector selector = Context.Selectors.getSelector(3, &selectorIdents[0]);
+
+    ObjCMethodDecl *method = 0;
+
+    // If there's an interface, look in both the public and private APIs.
+    if (iface) {
+      method = iface->lookupInstanceMethod(selector);
+      if (!method) method = LookupPrivateInstanceMethod(selector, iface);
+    }
+
+    // Also check protocol qualifiers.
+    if (!method)
+      method = LookupMethodInQualifiedType(selector, pointerType,
+                                           /*instance*/ true);
+
+    // If we didn't find it anywhere, give up.
+    if (!method) {
+      Diag(forLoc, diag::warn_collection_expr_type)
+        << collection->getType() << selector << collection->getSourceRange();
+    }
+
+    // TODO: check for an incompatible signature?
+  }
+
+  // Wrap up any cleanups in the expression.
+  return Owned(MaybeCreateExprWithCleanups(collection));
+}
+
 StmtResult
 Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
                                  SourceLocation LParenLoc,
@@ -1000,38 +1070,7 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
         Diag(ForLoc, diag::err_selector_element_type)
           << FirstType << First->getSourceRange();
   }
-  if (Second && !Second->isTypeDependent()) {
-    ExprResult Result = DefaultFunctionArrayLvalueConversion(Second);
-    if (Result.isInvalid())
-      return StmtError();
-    Second = Result.take();
-    QualType SecondType = Second->getType();
-    if (!SecondType->isObjCObjectPointerType())
-      Diag(ForLoc, diag::err_collection_expr_type)
-        << SecondType << Second->getSourceRange();
-    else if (const ObjCObjectPointerType *OPT =
-             SecondType->getAsObjCInterfacePointerType()) {
-      SmallVector<IdentifierInfo *, 4> KeyIdents;
-      IdentifierInfo* selIdent =
-        &Context.Idents.get("countByEnumeratingWithState");
-      KeyIdents.push_back(selIdent);
-      selIdent = &Context.Idents.get("objects");
-      KeyIdents.push_back(selIdent);
-      selIdent = &Context.Idents.get("count");
-      KeyIdents.push_back(selIdent);
-      Selector CSelector = Context.Selectors.getSelector(3, &KeyIdents[0]);
-      if (ObjCInterfaceDecl *IDecl = OPT->getInterfaceDecl()) {
-        if (!IDecl->isForwardDecl() &&
-            !IDecl->lookupInstanceMethod(CSelector) &&
-            !LookupMethodInQualifiedType(CSelector, OPT, true)) {
-          // Must further look into private implementation methods.
-          if (!LookupPrivateInstanceMethod(CSelector, IDecl))
-            Diag(ForLoc, diag::warn_collection_expr_type)
-              << SecondType << CSelector << Second->getSourceRange();
-        }
-      }
-    }
-  }
+
   return Owned(new (Context) ObjCForCollectionStmt(First, Second, Body,
                                                    ForLoc, RParenLoc));
 }

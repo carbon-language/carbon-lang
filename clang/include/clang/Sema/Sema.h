@@ -2029,6 +2029,8 @@ public:
                           FullExprArg Third,
                           SourceLocation RParenLoc,
                           Stmt *Body);
+  ExprResult ActOnObjCForCollectionOperand(SourceLocation forLoc,
+                                           Expr *collection);
   StmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc,
                                         SourceLocation LParenLoc,
                                         Stmt *First, Expr *Second,

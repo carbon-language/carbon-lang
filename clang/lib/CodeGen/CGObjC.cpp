@@ -1020,8 +1020,16 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
                                       ArrayType::Normal, 0);
   llvm::Value *ItemsPtr = CreateMemTemp(ItemsTy, "items.ptr");
 
-  // Emit the collection pointer.
-  llvm::Value *Collection = EmitScalarExpr(S.getCollection());
+  // Emit the collection pointer.  In ARC, we do a retain.
+  llvm::Value *Collection;
+  if (getLangOptions().ObjCAutoRefCount) {
+    Collection = EmitARCRetainScalarExpr(S.getCollection());
+
+    // Enter a cleanup to do the release.
+    EmitObjCConsumeObject(S.getCollection()->getType(), Collection);
+  } else {
+    Collection = EmitScalarExpr(S.getCollection());
+  }
 
   // Send it our message:
   CallArgList Args;
@@ -1235,6 +1243,10 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     DI->setLocation(S.getSourceRange().getEnd());
     DI->EmitRegionEnd(Builder);
   }
+
+  // Leave the cleanup we entered in ARC.
+  if (getLangOptions().ObjCAutoRefCount)
+    PopCleanupBlock();
 
   EmitBlock(LoopEnd.getBlock());
 }
@@ -1967,6 +1979,12 @@ static llvm::Value *emitARCRetainAfterCall(CodeGenFunction &CGF,
 
 static TryEmitResult
 tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
+  // Look through cleanups.
+  if (const ExprWithCleanups *cleanups = dyn_cast<ExprWithCleanups>(e)) {
+    CodeGenFunction::RunCleanupsScope scope(CGF);
+    return tryEmitARCRetainScalarExpr(CGF, cleanups->getSubExpr());
+  }
+
   // The desired result type, if it differs from the type of the
   // ultimate opaque expression.
   llvm::Type *resultType = 0;
