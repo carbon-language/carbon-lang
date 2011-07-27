@@ -78,21 +78,21 @@ protected:
     return BeginX == static_cast<const void*>(&FirstEl);
   }
 
-  /// size_in_bytes - This returns size()*sizeof(T).
-  size_t size_in_bytes() const {
-    return size_t((char*)EndX - (char*)BeginX);
-  }
-
-  /// capacity_in_bytes - This returns capacity()*sizeof(T).
-  size_t capacity_in_bytes() const {
-    return size_t((char*)CapacityX - (char*)BeginX);
-  }
-
   /// grow_pod - This is an implementation of the grow() method which only works
   /// on POD-like data types and is out of line to reduce code duplication.
   void grow_pod(size_t MinSizeInBytes, size_t TSize);
 
 public:
+  /// size_in_bytes - This returns size()*sizeof(T).
+  size_t size_in_bytes() const {
+    return size_t((char*)EndX - (char*)BeginX);
+  }
+  
+  /// capacity_in_bytes - This returns capacity()*sizeof(T).
+  size_t capacity_in_bytes() const {
+    return size_t((char*)CapacityX - (char*)BeginX);
+  }
+
   bool empty() const { return BeginX == EndX; }
 };
 
@@ -737,6 +737,11 @@ public:
   }
 
 };
+
+template<typename T, unsigned N>
+static inline size_t capacity_in_bytes(const SmallVector<T, N> &X) {
+  return X.capacity_in_bytes();
+}
 
 } // End llvm namespace
 

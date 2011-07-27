@@ -540,6 +540,12 @@ private:
       ++Ptr;
   }
 };
+  
+template<typename KeyT, typename ValueT, typename KeyInfoT, typename ValueInfoT>
+static inline size_t
+capacity_in_bytes(const DenseMap<KeyT, ValueT, KeyInfoT, ValueInfoT> &X) {
+  return X.getMemorySize();
+}
 
 } // end namespace llvm
 
