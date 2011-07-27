@@ -82,8 +82,13 @@ public:
     size_t
     GetByteSize ();
 
+    %define DEPRECATED
+    "The method which takes an SBFrame is deprecated - SBValues know their own frames."
+    %enddef
+
+    %feature("docstring", DEPRECATED) IsInScope;
     bool
-    IsInScope (const lldb::SBFrame &frame);  // DEPRECATED - SBValues know their own frames.
+    IsInScope (const lldb::SBFrame &frame);
 
     bool
     IsInScope ();
@@ -94,8 +99,9 @@ public:
     void
     SetFormat (lldb::Format format);
 
+    %feature("docstring", DEPRECATED) GetValue;
     const char *
-    GetValue (const lldb::SBFrame &frame);   // DEPRECATED - SBValues know their own frames.
+    GetValue (const lldb::SBFrame &frame);
 
     const char *
     GetValue ();
@@ -103,32 +109,37 @@ public:
     ValueType
     GetValueType ();
 
+    %feature("docstring", DEPRECATED) GetValueDidChange;
     bool
-    GetValueDidChange (const lldb::SBFrame &frame);  // DEPRECATED - SBValues know their own frames.
+    GetValueDidChange (const lldb::SBFrame &frame);
 
     bool
     GetValueDidChange ();
 
+    %feature("docstring", DEPRECATED) GetSummary;
     const char *
-    GetSummary (const lldb::SBFrame &frame);  // DEPRECATED - SBValues know their own frames.
+    GetSummary (const lldb::SBFrame &frame);
     
     const char *
     GetSummary ();
     
+    %feature("docstring", DEPRECATED) GetObjectDescription;
     const char *
-    GetObjectDescription (const lldb::SBFrame &frame);  // DEPRECATED - SBValues know their own frames.
+    GetObjectDescription (const lldb::SBFrame &frame);
 
     const char *
     GetObjectDescription ();
 
+    %feature("docstring", DEPRECATED) GetLocation;
     const char *
-    GetLocation (const lldb::SBFrame &frame);  // DEPRECATED - SBValues know their own frames.
+    GetLocation (const lldb::SBFrame &frame);
 
     const char *
     GetLocation ();
 
+    %feature("docstring", DEPRECATED) SetValueFromCString;
     bool
-    SetValueFromCString (const lldb::SBFrame &frame, const char *value_str);  // DEPRECATED - SBValues know their own frames.
+    SetValueFromCString (const lldb::SBFrame &frame, const char *value_str);
 
     bool
     SetValueFromCString (const char *value_str);
