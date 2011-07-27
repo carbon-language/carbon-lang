@@ -37,7 +37,13 @@ def print_stacktrace(thread, string_buffer = False):
                 args=get_args_as_string(frame, showFuncName=False) if not frame.IsInlined() else '()')
 
     ...
-"
+
+And,
+
+    for frame in thread:
+        print frame
+
+See also SBThread."
 ) SBFrame;
 class SBFrame
 {
