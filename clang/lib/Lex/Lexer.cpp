@@ -868,6 +868,12 @@ static inline bool isHorizontalWhitespace(unsigned char c) {
   return (CharInfo[c] & CHAR_HORZ_WS) ? true : false;
 }
 
+/// isVerticalWhitespace - Return true if this character is vertical
+/// whitespace: '\n', '\r'.  Note that this returns false for '\0'.
+static inline bool isVerticalWhitespace(unsigned char c) {
+  return (CharInfo[c] & CHAR_VERT_WS) ? true : false;
+}
+
 /// isWhitespace - Return true if this character is horizontal or vertical
 /// whitespace: ' ', '\t', '\f', '\v', '\n', '\r'.  Note that this returns false
 /// for '\0'.
@@ -1027,6 +1033,59 @@ const char *Lexer::SkipEscapedNewLines(const char *P) {
   }
 }
 
+/// \brief Checks that the given token is the first token that occurs after the
+/// given location (this excludes comments and whitespace). Returns the location
+/// immediately after the specified token. If the token is not found or the
+/// location is inside a macro, the returned source location will be invalid.
+SourceLocation Lexer::findLocationAfterToken(SourceLocation Loc,
+                                        tok::TokenKind TKind,
+                                        const SourceManager &SM,
+                                        const LangOptions &LangOpts,
+                                        bool SkipTrailingWhitespaceAndNewLine) {
+  if (Loc.isMacroID()) {
+    if (!Lexer::isAtEndOfMacroExpansion(Loc, SM, LangOpts))
+      return SourceLocation();
+    Loc = SM.getExpansionRange(Loc).second;
+  }
+  Loc = Lexer::getLocForEndOfToken(Loc, 0, SM, LangOpts);
+
+  // Break down the source location.
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
+
+  // Try to load the file buffer.
+  bool InvalidTemp = false;
+  llvm::StringRef File = SM.getBufferData(LocInfo.first, &InvalidTemp);
+  if (InvalidTemp)
+    return SourceLocation();
+
+  const char *TokenBegin = File.data() + LocInfo.second;
+
+  // Lex from the start of the given location.
+  Lexer lexer(SM.getLocForStartOfFile(LocInfo.first), LangOpts, File.begin(),
+                                      TokenBegin, File.end());
+  // Find the token.
+  Token Tok;
+  lexer.LexFromRawLexer(Tok);
+  if (Tok.isNot(TKind))
+    return SourceLocation();
+  SourceLocation TokenLoc = Tok.getLocation();
+
+  // Calculate how much whitespace needs to be skipped if any.
+  unsigned NumWhitespaceChars = 0;
+  if (SkipTrailingWhitespaceAndNewLine) {
+    const char *TokenEnd = SM.getCharacterData(TokenLoc) +
+                           Tok.getLength();
+    unsigned char C = *TokenEnd;
+    while (isHorizontalWhitespace(C)) {
+      C = *(++TokenEnd);
+      NumWhitespaceChars++;
+    }
+    if (isVerticalWhitespace(C))
+      NumWhitespaceChars++;
+  }
+
+  return TokenLoc.getFileLocWithOffset(Tok.getLength() + NumWhitespaceChars);
+}
 
 /// getCharAndSizeSlow - Peek a single 'character' from the specified buffer,
 /// get its size, and return it.  This is tricky in several cases:
