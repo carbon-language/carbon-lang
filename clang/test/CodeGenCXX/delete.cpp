@@ -122,3 +122,12 @@ namespace test4 {
     ::delete xp;
   }
 }
+
+namespace test5 {
+  struct Incomplete;
+  // CHECK: define void @_ZN5test523array_delete_incompleteEPNS_10IncompleteE
+  void array_delete_incomplete(Incomplete *p) {
+    // CHECK: call void @_ZdlPv
+    delete [] p;
+  }
+}

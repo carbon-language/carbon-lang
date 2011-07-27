@@ -2239,7 +2239,7 @@ QualType::DestructionKind QualType::isDestructedTypeImpl(QualType type) {
   /// with non-trivial destructors.
   const CXXRecordDecl *record =
     type->getBaseElementTypeUnsafe()->getAsCXXRecordDecl();
-  if (record && !record->hasTrivialDestructor())
+  if (record && record->hasDefinition() && !record->hasTrivialDestructor())
     return DK_cxx_destructor;
 
   return DK_none;
