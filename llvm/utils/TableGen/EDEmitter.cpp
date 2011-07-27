@@ -279,6 +279,7 @@ static int X86TypeFromOpName(LiteralConstantEmitter *type,
   IMM("i16i8imm");
   IMM("i32imm");
   IMM("i32i8imm");
+  IMM("u32u8imm");
   IMM("i64imm");
   IMM("i64i8imm");
   IMM("i64i32imm");

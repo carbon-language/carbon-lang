@@ -3281,3 +3281,25 @@
 // CHECK: encoding: [0xc4,0xe3,0x51,0x44,0x18,0x11]
           vpclmulqdq  $17, (%eax), %xmm5, %xmm3
 
+// rdar://9795008
+// These instructions take a mask not an 8-bit sign extended value.
+// CHECK: vblendps $129, %ymm2, %ymm5, %ymm1
+          vblendps $0x81, %ymm2, %ymm5, %ymm1
+// CHECK: vblendps $129, (%eax), %ymm5, %ymm1
+          vblendps $0x81, (%eax), %ymm5, %ymm1
+// CHECK: vblendpd $129, %ymm2, %ymm5, %ymm1
+          vblendpd $0x81, %ymm2, %ymm5, %ymm1
+// CHECK: vblendpd $129, (%eax), %ymm5, %ymm1
+          vblendpd $0x81, (%eax), %ymm5, %ymm1
+// CHECK: vpblendw $129, %xmm2, %xmm5, %xmm1
+          vpblendw $0x81, %xmm2, %xmm5, %xmm1
+// CHECK: vmpsadbw $129, %xmm2, %xmm5, %xmm1
+          vmpsadbw $0x81, %xmm2, %xmm5, %xmm1
+// CHECK: vdpps $129, %ymm2, %ymm5, %ymm1
+          vdpps $0x81, %ymm2, %ymm5, %ymm1
+// CHECK: vdpps $129, (%eax), %ymm5, %ymm1
+          vdpps $0x81, (%eax), %ymm5, %ymm1
+// CHECK: vdppd $129, %xmm2, %xmm5, %xmm1
+          vdppd $0x81, %xmm2, %xmm5, %xmm1
+// CHECK: vinsertps $129, %xmm3, %xmm2, %xmm1
+          vinsertps $0x81, %xmm3, %xmm2, %xmm1

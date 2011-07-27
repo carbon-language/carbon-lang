@@ -4298,7 +4298,7 @@ let Constraints = "$src1 = $dst" in
 // in the target vector.
 multiclass SS41I_insertf32<bits<8> opc, string asm, bit Is2Addr = 1> {
   def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
-      (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
+      (ins VR128:$src1, VR128:$src2, u32u8imm:$src3),
       !if(Is2Addr,
         !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
         !strconcat(asm,
@@ -4307,7 +4307,7 @@ multiclass SS41I_insertf32<bits<8> opc, string asm, bit Is2Addr = 1> {
         (X86insrtps VR128:$src1, VR128:$src2, imm:$src3))]>,
       OpSize;
   def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
-      (ins VR128:$src1, f32mem:$src2, i32i8imm:$src3),
+      (ins VR128:$src1, f32mem:$src2, u32u8imm:$src3),
       !if(Is2Addr,
         !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
         !strconcat(asm,
@@ -4721,7 +4721,7 @@ multiclass SS41I_binop_rmi_int<bits<8> opc, string OpcodeStr,
                  X86MemOperand x86memop, bit Is2Addr = 1> {
   let isCommutable = 1 in
   def rri : SS4AIi8<opc, MRMSrcReg, (outs RC:$dst),
-        (ins RC:$src1, RC:$src2, i32i8imm:$src3),
+        (ins RC:$src1, RC:$src2, u32u8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
                 "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
@@ -4730,7 +4730,7 @@ multiclass SS41I_binop_rmi_int<bits<8> opc, string OpcodeStr,
         [(set RC:$dst, (IntId RC:$src1, RC:$src2, imm:$src3))]>,
         OpSize;
   def rmi : SS4AIi8<opc, MRMSrcMem, (outs RC:$dst),
-        (ins RC:$src1, x86memop:$src2, i32i8imm:$src3),
+        (ins RC:$src1, x86memop:$src2, u32u8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
                 "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
