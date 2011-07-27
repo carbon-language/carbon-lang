@@ -32,6 +32,7 @@ add_llvm_library(gtest
   googletest/gtest-death-test.cc
   googletest/gtest-filepath.cc
   googletest/gtest-port.cc
+  googletest/gtest-printers.cc
   googletest/gtest-test-part.cc
   googletest/gtest-typed-test.cc
   )
