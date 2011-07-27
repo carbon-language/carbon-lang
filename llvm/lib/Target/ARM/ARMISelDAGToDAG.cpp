@@ -2024,7 +2024,8 @@ SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDNode *N,
                                 Srl_imm)) {
         assert(Srl_imm > 0 && Srl_imm < 32 && "bad amount in shift node!");
 
-        unsigned Width = CountTrailingOnes_32(And_imm);
+        // Note: The width operand is encoded as width-1.
+        unsigned Width = CountTrailingOnes_32(And_imm) - 1;
         unsigned LSB = Srl_imm;
         SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
         SDValue Ops[] = { N->getOperand(0).getOperand(0),
@@ -2044,7 +2045,8 @@ SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDNode *N,
     unsigned Srl_imm = 0;
     if (isInt32Immediate(N->getOperand(1), Srl_imm)) {
       assert(Srl_imm > 0 && Srl_imm < 32 && "bad amount in shift node!");
-      unsigned Width = 32 - Srl_imm;
+      // Note: The width operand is encoded as width-1.
+      unsigned Width = 32 - Srl_imm - 1;
       int LSB = Srl_imm - Shl_imm;
       if (LSB < 0)
         return NULL;

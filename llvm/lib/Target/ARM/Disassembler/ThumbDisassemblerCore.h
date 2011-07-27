@@ -1698,7 +1698,7 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
     assert((Opcode == ARM::t2SBFX || Opcode == ARM::t2UBFX)
             && "Unexpected opcode");
     MI.addOperand(MCOperand::CreateImm(getLsb(insn)));
-    MI.addOperand(MCOperand::CreateImm(getWidthMinus1(insn) + 1));
+    MI.addOperand(MCOperand::CreateImm(getWidthMinus1(insn)));
 
     ++OpIdx;
   }

@@ -259,11 +259,6 @@ public:
   unsigned getT2SORegOpValue(const MCInst &MI, unsigned Op,
                              SmallVectorImpl<MCFixup> &Fixups) const;
 
-  unsigned getImmMinusOneOpValue(const MCInst &MI, unsigned Op,
-                                 SmallVectorImpl<MCFixup> &Fixups) const {
-    return MI.getOperand(Op).getImm() - 1;
-  }
-
   unsigned getNEONVcvtImm32OpValue(const MCInst &MI, unsigned Op,
                                    SmallVectorImpl<MCFixup> &Fixups) const {
     return 64 - MI.getOperand(Op).getImm();

@@ -272,3 +272,14 @@
 @ CHECK-ERRORS: error: rotate operator 'ror' expected
 @ CHECK-ERRORS:         sxtb16ge r2, r3, lsr #24
 @ CHECK-ERRORS:                          ^
+
+        @ Out of range width for SBFX/UBFX
+        sbfx r4, r5, #31, #2
+        ubfxgt r4, r5, #16, #17
+
+@ CHECK-ERRORS: error: bitfield width must be in range [1,32-lsb]
+@ CHECK-ERRORS:         sbfx r4, r5, #31, #2
+@ CHECK-ERRORS:                           ^
+@ CHECK-ERRORS: error: bitfield width must be in range [1,32-lsb]
+@ CHECK-ERRORS:         ubfxgt r4, r5, #16, #17
+@ CHECK-ERRORS:                             ^

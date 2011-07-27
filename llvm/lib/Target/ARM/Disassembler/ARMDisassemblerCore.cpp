@@ -1026,7 +1026,7 @@ static bool DisassembleDPFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
     MI.addOperand(MCOperand::CreateImm(slice(insn, 11, 7)));
-    MI.addOperand(MCOperand::CreateImm(slice(insn, 20, 16) + 1));
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 20, 16)));
     OpIdx += 3;
     return true;
   }

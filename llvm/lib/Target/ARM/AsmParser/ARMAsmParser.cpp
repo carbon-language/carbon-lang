@@ -2605,6 +2605,15 @@ validateInstruction(MCInst &Inst,
                    "source operands must be sequential");
     return false;
   }
+  case ARM::SBFX:
+  case ARM::UBFX: {
+    // width must be in range [1, 32-lsb]
+    unsigned lsb = Inst.getOperand(2).getImm();
+    unsigned widthm1 = Inst.getOperand(3).getImm();
+    if (widthm1 >= 32 - lsb)
+      return Error(Operands[5]->getStartLoc(),
+                   "bitfield width must be in range [1,32-lsb]");
+  }
   }
 
   return false;

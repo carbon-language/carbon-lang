@@ -2024,7 +2024,7 @@ def t2BFC : T2BitFI<(outs rGPR:$Rd), (ins rGPR:$src, bf_inv_mask_imm:$imm),
 }
 
 def t2SBFX: T2TwoRegBitFI<
-                (outs rGPR:$Rd), (ins rGPR:$Rn, imm0_31:$lsb, imm0_31_m1:$msb),
+                (outs rGPR:$Rd), (ins rGPR:$Rn, imm0_31:$lsb, imm1_32:$msb),
                  IIC_iUNAsi, "sbfx", "\t$Rd, $Rn, $lsb, $msb", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;
@@ -2033,7 +2033,7 @@ def t2SBFX: T2TwoRegBitFI<
 }
 
 def t2UBFX: T2TwoRegBitFI<
-                (outs rGPR:$Rd), (ins rGPR:$Rn, imm0_31:$lsb, imm0_31_m1:$msb),
+                (outs rGPR:$Rd), (ins rGPR:$Rn, imm0_31:$lsb, imm1_32:$msb),
                  IIC_iUNAsi, "ubfx", "\t$Rd, $Rn, $lsb, $msb", []> {
   let Inst{31-27} = 0b11110;
   let Inst{25} = 1;

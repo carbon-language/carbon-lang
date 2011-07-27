@@ -513,14 +513,6 @@ def imm0_31 : Operand<i32>, ImmLeaf<i32, [{
   let ParserMatchClass = Imm0_31AsmOperand;
 }
 
-/// imm0_31_m1 - Matches and prints like imm0_31, but encodes as 'value - 1'.
-def imm0_31_m1 : Operand<i32>, ImmLeaf<i32, [{
-  return Imm >= 0 && Imm < 32;
-}]> {
-  let EncoderMethod = "getImmMinusOneOpValue";
-  let DecoderMethod = "DecodeImmMinusOneOperand";
-}
-
 // imm0_65535_expr - For movt/movw - 16-bit immediate that can also reference
 // a relocatable expression.
 //
@@ -2423,7 +2415,7 @@ def UXTAB16 : AI_exta_rrot_np<0b01101100, "uxtab16">;
 
 
 def SBFX  : I<(outs GPR:$Rd),
-              (ins GPR:$Rn, imm0_31:$lsb, imm0_31_m1:$width),
+              (ins GPR:$Rn, imm0_31:$lsb, imm1_32:$width),
                AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
                "sbfx", "\t$Rd, $Rn, $lsb, $width", "", []>,
                Requires<[IsARM, HasV6T2]> {
@@ -2440,7 +2432,7 @@ def SBFX  : I<(outs GPR:$Rd),
 }
 
 def UBFX  : I<(outs GPR:$Rd),
-              (ins GPR:$Rn, imm0_31:$lsb, imm0_31_m1:$width),
+              (ins GPR:$Rn, imm0_31:$lsb, imm1_32:$width),
                AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
                "ubfx", "\t$Rd, $Rn, $lsb, $width", "", []>,
                Requires<[IsARM, HasV6T2]> {
