@@ -912,7 +912,12 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case ISD::BR_JT:
     case ISD::BR_CC:
     case ISD::BRCOND:
+      assert(LastCALLSEQ.size() == 1 && "branch inside CALLSEQ_BEGIN/END?");
+      // Branches tweak the chain to include LastCALLSEQ
+      Ops[0] = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Ops[0],
+                           getLastCALLSEQ());
       Ops[0] = LegalizeOp(Ops[0]);
+      setLastCALLSEQ(DAG.getEntryNode());
       break;
     case ISD::SHL:
     case ISD::SRL:
@@ -1016,6 +1021,14 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // libcalls), create the new CALLSEQ_START node.
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
 
+    // Merge in the last call to ensure that this call starts after the last
+    // call ended.
+    if (getLastCALLSEQ().getOpcode() != ISD::EntryToken) {
+      Tmp1 = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                         Tmp1, getLastCALLSEQ());
+      Tmp1 = LegalizeOp(Tmp1);
+    }
+
     // Do not try to legalize the target-specific arguments (#1+).
     if (Tmp1 != Node->getOperand(0)) {
       SmallVector<SDValue, 8> Ops(Node->op_begin(), Node->op_end());
@@ -1037,7 +1050,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     setLastCALLSEQ(SDValue(CallEnd, 0));
 
     // Legalize the call, starting from the CALLSEQ_END.
-    LegalizeOp(SDValue(CallEnd, 0));
+    LegalizeOp(getLastCALLSEQ());
     return Result;
   }
   case ISD::CALLSEQ_END:
