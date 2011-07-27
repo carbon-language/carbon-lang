@@ -120,6 +120,43 @@ InputArgList *Driver::ParseArgStrings(ArrayRef<const char *> ArgList) {
   return Args;
 }
 
+// Determine which compilation mode we are in. We look for options which
+// affect the phase, starting with the earliest phases, and record which
+// option we used to determine the final phase.
+phases::ID Driver::getFinalPhase(const DerivedArgList &DAL, Arg **FinalPhaseArg)
+const {
+  Arg *PhaseArg = 0;
+  phases::ID FinalPhase;
+  
+  // -{E,M,MM} only run the preprocessor.
+  if (CCCIsCPP ||
+      (PhaseArg = DAL.getLastArg(options::OPT_E)) ||
+      (PhaseArg = DAL.getLastArg(options::OPT_M, options::OPT_MM))) {
+    FinalPhase = phases::Preprocess;
+    
+    // -{fsyntax-only,-analyze,emit-ast,S} only run up to the compiler.
+  } else if ((PhaseArg = DAL.getLastArg(options::OPT_fsyntax_only)) ||
+             (PhaseArg = DAL.getLastArg(options::OPT_rewrite_objc)) ||
+             (PhaseArg = DAL.getLastArg(options::OPT__analyze,
+                                              options::OPT__analyze_auto)) ||
+             (PhaseArg = DAL.getLastArg(options::OPT_emit_ast)) ||
+             (PhaseArg = DAL.getLastArg(options::OPT_S))) {
+    FinalPhase = phases::Compile;
+
+    // -c only runs up to the assembler.
+  } else if ((PhaseArg = DAL.getLastArg(options::OPT_c))) {
+    FinalPhase = phases::Assemble;
+
+    // Otherwise do everything.
+  } else
+    FinalPhase = phases::Link;
+
+  if (FinalPhaseArg)
+    *FinalPhaseArg = PhaseArg;
+
+  return FinalPhase;
+}
+
 DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
   DerivedArgList *DAL = new DerivedArgList(Args);
 
@@ -197,6 +234,23 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
     DAL->getLastArg(options::OPT_mlinker_version_EQ)->claim();
   }
 #endif
+
+  // If -fapple-kext has been specified, add -kext to linker command if not 
+  // already done so.  Also check to make sure we're actually linking.
+  if (Args.hasArg(options::OPT_fapple_kext) && getFinalPhase(*DAL) ==
+      phases::Link) {
+    bool add_kext = true;
+    std::vector<std::string> LinkerArgs =
+      Args.getAllArgValues(options::OPT_Xlinker);
+    for (std::vector<std::string>::iterator it = LinkerArgs.begin(), 
+           ie = LinkerArgs.end(); it != ie; it++)
+      if (*it == "-kext") {
+        add_kext = false;
+        break;
+      }
+    if (add_kext)
+      DAL->AddSeparateArg(0, Opts->getOption(options::OPT_Xlinker), "-kext");
+  }
 
   return DAL;
 }
@@ -818,34 +872,8 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
     return;
   }
 
-  // Determine which compilation mode we are in. We look for options which
-  // affect the phase, starting with the earliest phases, and record which
-  // option we used to determine the final phase.
-  Arg *FinalPhaseArg = 0;
-  phases::ID FinalPhase;
-
-  // -{E,M,MM} only run the preprocessor.
-  if (CCCIsCPP ||
-      (FinalPhaseArg = Args.getLastArg(options::OPT_E)) ||
-      (FinalPhaseArg = Args.getLastArg(options::OPT_M, options::OPT_MM))) {
-    FinalPhase = phases::Preprocess;
-
-    // -{fsyntax-only,-analyze,emit-ast,S} only run up to the compiler.
-  } else if ((FinalPhaseArg = Args.getLastArg(options::OPT_fsyntax_only)) ||
-             (FinalPhaseArg = Args.getLastArg(options::OPT_rewrite_objc)) ||
-             (FinalPhaseArg = Args.getLastArg(options::OPT__analyze,
-                                              options::OPT__analyze_auto)) ||
-             (FinalPhaseArg = Args.getLastArg(options::OPT_emit_ast)) ||
-             (FinalPhaseArg = Args.getLastArg(options::OPT_S))) {
-    FinalPhase = phases::Compile;
-
-    // -c only runs up to the assembler.
-  } else if ((FinalPhaseArg = Args.getLastArg(options::OPT_c))) {
-    FinalPhase = phases::Assemble;
-
-    // Otherwise do everything.
-  } else
-    FinalPhase = phases::Link;
+  Arg *FinalPhaseArg;
+  phases::ID FinalPhase = getFinalPhase(Args, &FinalPhaseArg);
 
   // Reject -Z* at the top level, these options should never have been exposed
   // by gcc.

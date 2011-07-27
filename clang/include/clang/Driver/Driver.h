@@ -29,6 +29,7 @@ namespace llvm {
 namespace clang {
 namespace driver {
   class Action;
+  class Arg;
   class ArgList;
   class Compilation;
   class DerivedArgList;
@@ -170,6 +171,11 @@ private:
   /// TranslateInputArgs - Create a new derived argument list from the input
   /// arguments, after applying the standard argument translations.
   DerivedArgList *TranslateInputArgs(const InputArgList &Args) const;
+
+  // getFinalPhase - Determine which compilation mode we are in and record 
+  // which option we used to determine the final phase.
+  phases::ID getFinalPhase(const DerivedArgList &DAL, Arg **FinalPhaseArg = 0)
+    const;
 
 public:
   Driver(StringRef _ClangExecutable,
