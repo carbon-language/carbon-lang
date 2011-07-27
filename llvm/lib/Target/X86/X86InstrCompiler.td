@@ -532,7 +532,7 @@ def OR32mrLocked  : I<0x09, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$zero),
 let hasSideEffects = 1 in
 def Int_MemBarrier : I<0, Pseudo, (outs), (ins),
                      "#MEMBARRIER",
-                     [(X86MemBarrier)]>, Requires<[HasSSE2]>;
+                     [(X86MemBarrier)]>;
 
 // TODO: Get this to fold the constant into the instruction.
 let hasSideEffects = 1, Defs = [ESP], isCodeGenOnly = 1 in
