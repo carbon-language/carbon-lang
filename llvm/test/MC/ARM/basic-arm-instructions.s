@@ -2068,3 +2068,16 @@ _func:
 @ CHECK: umaal	r3, r4, r5, r6          @ encoding: [0x95,0x46,0x43,0xe0]
 @ CHECK: umaallt	r3, r4, r5, r6  @ encoding: [0x95,0x46,0x43,0xb0]
 
+
+@------------------------------------------------------------------------------
+@ UMLAL
+@------------------------------------------------------------------------------
+        umlal r2, r4, r6, r8
+        umlalgt r6, r1, r2, r6
+        umlals r2, r9, r2, r3
+        umlalseq r3, r5, r1, r2
+
+@ CHECK: umlal	r2, r4, r6, r8          @ encoding: [0x96,0x28,0xa4,0xe0]
+@ CHECK: umlalgt	r6, r1, r2, r6  @ encoding: [0x92,0x66,0xa1,0xc0]
+@ CHECK: umlals	r2, r9, r2, r3          @ encoding: [0x92,0x23,0xb9,0xe0]
+@ CHECK: umlalseq	r3, r5, r1, r2  @ encoding: [0x91,0x32,0xb5,0x00]
