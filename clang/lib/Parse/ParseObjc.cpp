@@ -1560,31 +1560,46 @@ Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
     Diag(Tok, diag::err_expected_lparen_after) << "@synchronized";
     return StmtError();
   }
+
+  // The operand is surrounded with parentheses.
   ConsumeParen();  // '('
-  ExprResult Res(ParseExpression());
-  if (Res.isInvalid()) {
-    SkipUntil(tok::semi);
-    return StmtError();
+  ExprResult operand(ParseExpression());
+
+  if (Tok.is(tok::r_paren)) {
+    ConsumeParen();  // ')'
+  } else {
+    if (!operand.isInvalid())
+      Diag(Tok, diag::err_expected_rparen);
+
+    // Skip forward until we see a left brace, but don't consume it.
+    SkipUntil(tok::l_brace, true, true);
   }
-  if (Tok.isNot(tok::r_paren)) {
-    Diag(Tok, diag::err_expected_lbrace);
-    return StmtError();
-  }
-  ConsumeParen();  // ')'
+
+  // Require a compound statement.
   if (Tok.isNot(tok::l_brace)) {
-    Diag(Tok, diag::err_expected_lbrace);
+    if (!operand.isInvalid())
+      Diag(Tok, diag::err_expected_lbrace);
     return StmtError();
   }
-  // Enter a scope to hold everything within the compound stmt.  Compound
-  // statements can always hold declarations.
-  ParseScope BodyScope(this, Scope::DeclScope);
 
-  StmtResult SynchBody(ParseCompoundStatementBody());
+  // Check the @synchronized operand now.
+  if (!operand.isInvalid())
+    operand = Actions.ActOnObjCAtSynchronizedOperand(atLoc, operand.take());
 
-  BodyScope.Exit();
-  if (SynchBody.isInvalid())
-    SynchBody = Actions.ActOnNullStmt(Tok.getLocation());
-  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.take(), SynchBody.take());
+  // Parse the compound statement within a new scope.
+  ParseScope bodyScope(this, Scope::DeclScope);
+  StmtResult body(ParseCompoundStatementBody());
+  bodyScope.Exit();
+
+  // If there was a semantic or parse error earlier with the
+  // operand, fail now.
+  if (operand.isInvalid())
+    return StmtError();
+
+  if (body.isInvalid())
+    body = Actions.ActOnNullStmt(Tok.getLocation());
+
+  return Actions.ActOnObjCAtSynchronizedStmt(atLoc, operand.get(), body.get());
 }
 
 ///  objc-try-catch-statement:

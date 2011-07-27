@@ -2101,6 +2101,8 @@ public:
   StmtResult BuildObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw);
   StmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw,
                                   Scope *CurScope);
+  ExprResult ActOnObjCAtSynchronizedOperand(SourceLocation atLoc,
+                                            Expr *operand);
   StmtResult ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc,
                                          Expr *SynchExpr,
                                          Stmt *SynchBody);

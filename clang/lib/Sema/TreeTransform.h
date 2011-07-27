@@ -1181,15 +1181,22 @@ public:
     return getSema().BuildObjCAtThrowStmt(AtLoc, Operand);
   }
   
+  /// \brief Rebuild the operand to an Objective-C @synchronized statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildObjCAtSynchronizedOperand(SourceLocation atLoc,
+                                              Expr *object) {
+    return getSema().ActOnObjCAtSynchronizedOperand(atLoc, object);
+  }
+
   /// \brief Build a new Objective-C @synchronized statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildObjCAtSynchronizedStmt(SourceLocation AtLoc,
-                                                 Expr *Object,
-                                                 Stmt *Body) {
-    return getSema().ActOnObjCAtSynchronizedStmt(AtLoc, Object,
-                                                 Body);
+                                           Expr *Object, Stmt *Body) {
+    return getSema().ActOnObjCAtSynchronizedStmt(AtLoc, Object, Body);
   }
 
   /// \brief Build a new Objective-C @autoreleasepool statement.
@@ -5477,6 +5484,11 @@ TreeTransform<Derived>::TransformObjCAtSynchronizedStmt(
                                                   ObjCAtSynchronizedStmt *S) {
   // Transform the object we are locking.
   ExprResult Object = getDerived().TransformExpr(S->getSynchExpr());
+  if (Object.isInvalid())
+    return StmtError();
+  Object =
+    getDerived().RebuildObjCAtSynchronizedOperand(S->getAtSynchronizedLoc(),
+                                                  Object.get());
   if (Object.isInvalid())
     return StmtError();
   

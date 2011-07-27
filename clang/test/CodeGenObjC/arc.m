@@ -1666,3 +1666,21 @@ void test58b(void) {
   __attribute__((objc_precise_lifetime)) Test58 *ptr = test58_helper();
   char *c = [ptr interior];
 }
+
+// rdar://problem/9842343
+void test59(void) {
+  extern id test59_getlock(void);
+  extern void test59_body(void);
+  @synchronized (test59_getlock()) {
+    test59_body();
+  }
+
+  // CHECK:    define void @test59()
+  // CHECK:      [[T0:%.*]] = call i8* @test59_getlock()
+  // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
+  // CHECK-NEXT: call void @objc_sync_enter(i8* [[T1]])
+  // CHECK-NEXT: call void @test59_body()
+  // CHECK-NEXT: call void @objc_sync_exit(i8* [[T1]])
+  // CHECK-NEXT: call void @objc_release(i8* [[T1]])
+  // CHECK-NEXT: ret void
+}

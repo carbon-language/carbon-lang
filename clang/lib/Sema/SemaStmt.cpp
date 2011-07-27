@@ -2232,25 +2232,32 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw,
   return BuildObjCAtThrowStmt(AtLoc, Throw);
 }
 
+ExprResult
+Sema::ActOnObjCAtSynchronizedOperand(SourceLocation atLoc, Expr *operand) {
+  ExprResult result = DefaultLvalueConversion(operand);
+  if (result.isInvalid())
+    return ExprError();
+  operand = result.take();
+
+  // Make sure the expression type is an ObjC pointer or "void *".
+  QualType type = operand->getType();
+  if (!type->isDependentType() &&
+      !type->isObjCObjectPointerType()) {
+    const PointerType *pointerType = type->getAs<PointerType>();
+    if (!pointerType || !pointerType->getPointeeType()->isVoidType())
+      return Diag(atLoc, diag::error_objc_synchronized_expects_object)
+               << type << operand->getSourceRange();
+  }
+
+  // The operand to @synchronized is a full-expression.
+  return MaybeCreateExprWithCleanups(operand);
+}
+
 StmtResult
 Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, Expr *SyncExpr,
                                   Stmt *SyncBody) {
+  // We can't jump into or indirect-jump out of a @synchronized block.
   getCurFunction()->setHasBranchProtectedScope();
-
-  ExprResult Result = DefaultLvalueConversion(SyncExpr);
-  if (Result.isInvalid())
-    return StmtError();
-
-  SyncExpr = Result.take();
-  // Make sure the expression type is an ObjC pointer or "void *".
-  if (!SyncExpr->getType()->isDependentType() &&
-      !SyncExpr->getType()->isObjCObjectPointerType()) {
-    const PointerType *PT = SyncExpr->getType()->getAs<PointerType>();
-    if (!PT || !PT->getPointeeType()->isVoidType())
-      return StmtError(Diag(AtLoc, diag::error_objc_synchronized_expects_object)
-                       << SyncExpr->getType() << SyncExpr->getSourceRange());
-  }
-
   return Owned(new (Context) ObjCAtSynchronizedStmt(AtLoc, SyncExpr, SyncBody));
 }
 

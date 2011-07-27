@@ -288,21 +288,26 @@ void CGObjCRuntime::EmitAtSynchronizedStmt(CodeGenFunction &CGF,
                                            const ObjCAtSynchronizedStmt &S,
                                            llvm::Function *syncEnterFn,
                                            llvm::Function *syncExitFn) {
-  // Evaluate the lock operand.  This should dominate the cleanup.
-  llvm::Value *SyncArg =
-    CGF.EmitScalarExpr(S.getSynchExpr());
+  CodeGenFunction::RunCleanupsScope cleanups(CGF);
+
+  // Evaluate the lock operand.  This is guaranteed to dominate the
+  // ARC release and lock-release cleanups.
+  const Expr *lockExpr = S.getSynchExpr();
+  llvm::Value *lock;
+  if (CGF.getLangOptions().ObjCAutoRefCount) {
+    lock = CGF.EmitARCRetainScalarExpr(lockExpr);
+    lock = CGF.EmitObjCConsumeObject(lockExpr->getType(), lock);
+  } else {
+    lock = CGF.EmitScalarExpr(lockExpr);
+  }
+  lock = CGF.Builder.CreateBitCast(lock, CGF.VoidPtrTy);
 
   // Acquire the lock.
-  SyncArg = CGF.Builder.CreateBitCast(SyncArg, syncEnterFn->getFunctionType()->getParamType(0));
-  CGF.Builder.CreateCall(syncEnterFn, SyncArg);
+  CGF.Builder.CreateCall(syncEnterFn, lock)->setDoesNotThrow();
 
   // Register an all-paths cleanup to release the lock.
-  CGF.EHStack.pushCleanup<CallSyncExit>(NormalAndEHCleanup, syncExitFn,
-      SyncArg);
+  CGF.EHStack.pushCleanup<CallSyncExit>(NormalAndEHCleanup, syncExitFn, lock);
 
   // Emit the body of the statement.
   CGF.EmitStmt(S.getSynchBody());
-
-  // Pop the lock-release cleanup.
-  CGF.PopCleanupBlock();
 }
