@@ -1948,3 +1948,31 @@ _func:
 @ CHECK: teq	r6, r7, asr r9          @ encoding: [0x57,0x09,0x36,0xe1]
 @ CHECK: teq	r6, r7, ror r9          @ encoding: [0x77,0x09,0x36,0xe1]
 
+
+@------------------------------------------------------------------------------
+@ TST
+@------------------------------------------------------------------------------
+        tst r5, #0xf000
+        tst r4, r5
+        tst r4, r5, lsl #5
+        tst r4, r5, lsr #5
+        tst r4, r5, lsr #5
+        tst r4, r5, asr #5
+        tst r4, r5, ror #5
+        tst r6, r7, lsl r9
+        tst r6, r7, lsr r9
+        tst r6, r7, asr r9
+        tst r6, r7, ror r9
+
+@ CHECK: tst	r5, #61440              @ encoding: [0x0f,0x0a,0x15,0xe3]
+@ CHECK: tst	r4, r5                  @ encoding: [0x05,0x00,0x14,0xe1]
+@ CHECK: tst	r4, r5, lsl #5          @ encoding: [0x85,0x02,0x14,0xe1]
+@ CHECK: tst	r4, r5, lsr #5          @ encoding: [0xa5,0x02,0x14,0xe1]
+@ CHECK: tst	r4, r5, lsr #5          @ encoding: [0xa5,0x02,0x14,0xe1]
+@ CHECK: tst	r4, r5, asr #5          @ encoding: [0xc5,0x02,0x14,0xe1]
+@ CHECK: tst	r4, r5, ror #5          @ encoding: [0xe5,0x02,0x14,0xe1]
+@ CHECK: tst	r6, r7, lsl r9          @ encoding: [0x17,0x09,0x16,0xe1]
+@ CHECK: tst	r6, r7, lsr r9          @ encoding: [0x37,0x09,0x16,0xe1]
+@ CHECK: tst	r6, r7, asr r9          @ encoding: [0x57,0x09,0x16,0xe1]
+@ CHECK: tst	r6, r7, ror r9          @ encoding: [0x77,0x09,0x16,0xe1]
+
