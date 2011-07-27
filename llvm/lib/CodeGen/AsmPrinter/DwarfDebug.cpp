@@ -565,10 +565,17 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   assert (Ranges.empty() == false
           && "DbgScope does not have instruction markers!");
 
-  // FIXME : .debug_inlined section specification does not clearly state how
-  // to emit inlined scope that is split into multiple instruction ranges.
-  // For now, use first instruction range and emit low_pc/high_pc pair and
-  // corresponding .debug_inlined section entry for this pair.
+  if (!Scope->getScopeNode())
+    return NULL;
+  DIScope DS(Scope->getScopeNode());
+  DISubprogram InlinedSP = getDISubprogram(DS);
+  CompileUnit *TheCU = getCompileUnit(InlinedSP);
+  DIE *OriginDIE = TheCU->getDIE(InlinedSP);
+  if (!OriginDIE) {
+    DEBUG(dbgs() << "Unable to find original DIE for inlined subprogram.");
+    return NULL;
+  }
+
   SmallVector<DbgRange, 4>::const_iterator RI = Ranges.begin();
   const MCSymbol *StartLabel = getLabelBeforeInsn(RI->first);
   const MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
@@ -582,26 +589,35 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   assert(EndLabel->isDefined() &&
          "Invalid end label for an inlined scope!");
 
-  if (!Scope->getScopeNode())
-    return NULL;
-  DIScope DS(Scope->getScopeNode());
-  DISubprogram InlinedSP = getDISubprogram(DS);
-  CompileUnit *TheCU = getCompileUnit(InlinedSP);
-  DIE *OriginDIE = TheCU->getDIE(InlinedSP);
-  if (!OriginDIE) {
-    DEBUG(dbgs() << "Unable to find original DIE for inlined subprogram.");
-    return NULL;
-  }
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
   TheCU->addDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin,
                      dwarf::DW_FORM_ref4, OriginDIE);
 
-  TheCU->addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, StartLabel);
-  TheCU->addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr, EndLabel);
+  if (Ranges.size() > 1) {
+    // .debug_range section has not been laid out yet. Emit offset in
+    // .debug_range as a uint, size 4, for now. emitDIE will handle
+    // DW_AT_ranges appropriately.
+    TheCU->addUInt(ScopeDIE, dwarf::DW_AT_ranges, dwarf::DW_FORM_data4,
+                   DebugRangeSymbols.size() * Asm->getTargetData().getPointerSize());
+    for (SmallVector<DbgRange, 4>::const_iterator RI = Ranges.begin(),
+         RE = Ranges.end(); RI != RE; ++RI) {
+      DebugRangeSymbols.push_back(getLabelBeforeInsn(RI->first));
+      DebugRangeSymbols.push_back(getLabelAfterInsn(RI->second));
+    }
+    DebugRangeSymbols.push_back(NULL);
+    DebugRangeSymbols.push_back(NULL);
+  } else {
+    TheCU->addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, StartLabel);
+    TheCU->addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr, EndLabel);
+  }
 
   InlinedSubprogramDIEs.insert(OriginDIE);
 
   // Track the start label for this inlined function.
+  //.debug_inlined section specification does not clearly state how
+  // to emit inlined scope that is split into multiple instruction ranges.
+  // For now, use first instruction range and emit low_pc/high_pc pair and
+  // corresponding .debug_inlined section entry for this pair.
   DenseMap<const MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator
     I = InlineInfo.find(InlinedSP);
 
@@ -1641,12 +1657,21 @@ static void calculateDominanceGraph(DbgScope *Scope) {
         WorkStack.push_back(ChildScope);
         visitedChildren = true;
         ChildScope->setDFSIn(++Counter);
+#ifndef NDEBUG
+        if (PrintDbgScope)
+          dbgs() << "calculate dbgscope dom: In " << Counter << "\n";
+#endif
         break;
       }
     }
     if (!visitedChildren) {
       WorkStack.pop_back();
       WS->setDFSOut(++Counter);
+#ifndef NDEBUG
+      if (PrintDbgScope)
+        dbgs() << "calculate dbgscope dom: In " << WS->getDFSIn() 
+               << " Out " << Counter << "\n";
+#endif
     }
   }
 }
