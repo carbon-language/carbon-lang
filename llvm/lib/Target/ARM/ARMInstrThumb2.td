@@ -993,116 +993,64 @@ class T2I_ext_rrot<bits<3> opcod, string opc, PatFrag opnode>
 }
 
 // UXTB16 - Requres T2ExtractPack, does not need the .w qualifier.
-multiclass T2I_ext_rrot_uxtb16<bits<3> opcod, string opc, PatFrag opnode> {
-  def r     : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iEXTr,
-                  opc, "\t$Rd, $Rm",
-                 [(set rGPR:$Rd, (opnode rGPR:$Rm))]>,
-                 Requires<[HasT2ExtractPack, IsThumb2]> {
-     let Inst{31-27} = 0b11111;
-     let Inst{26-23} = 0b0100;
-     let Inst{22-20} = opcod;
-     let Inst{19-16} = 0b1111; // Rn
-     let Inst{15-12} = 0b1111;
-     let Inst{7} = 1;
-     let Inst{5-4} = 0b00; // rotate
-   }
-  def r_rot : T2TwoReg<(outs rGPR:$dst), (ins rGPR:$Rm, rot_imm:$rot),
-                  IIC_iEXTr, opc, "\t$dst, $Rm$rot",
-                 [(set rGPR:$dst, (opnode (rotr rGPR:$Rm, rot_imm:$rot)))]>,
-                 Requires<[HasT2ExtractPack, IsThumb2]> {
-     let Inst{31-27} = 0b11111;
-     let Inst{26-23} = 0b0100;
-     let Inst{22-20} = opcod;
-     let Inst{19-16} = 0b1111; // Rn
-     let Inst{15-12} = 0b1111;
-     let Inst{7} = 1;
-
-     bits<2> rot;
-     let Inst{5-4} = rot{1-0}; // rotate
-   }
+class T2I_ext_rrot_uxtb16<bits<3> opcod, string opc, PatFrag opnode>
+  : T2TwoReg<(outs rGPR:$dst), (ins rGPR:$Rm, rot_imm:$rot),
+             IIC_iEXTr, opc, "\t$dst, $Rm$rot",
+            [(set rGPR:$dst, (opnode (rotr rGPR:$Rm, rot_imm:$rot)))]>,
+          Requires<[HasT2ExtractPack, IsThumb2]> {
+  bits<2> rot;
+  let Inst{31-27} = 0b11111;
+  let Inst{26-23} = 0b0100;
+  let Inst{22-20} = opcod;
+  let Inst{19-16} = 0b1111; // Rn
+  let Inst{15-12} = 0b1111;
+  let Inst{7} = 1;
+  let Inst{5-4} = rot;
 }
 
 // SXTB16 - Requres T2ExtractPack, does not need the .w qualifier, no pattern
 // supported yet.
-multiclass T2I_ext_rrot_sxtb16<bits<3> opcod, string opc> {
-  def r     : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iEXTr,
-                  opc, "\t$Rd, $Rm", []>,
+class T2I_ext_rrot_sxtb16<bits<3> opcod, string opc>
+  : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm, rot_imm:$rot), IIC_iEXTr,
+             opc, "\t$Rd, $Rm$rot", []>,
           Requires<[IsThumb2, HasT2ExtractPack]> {
-     let Inst{31-27} = 0b11111;
-     let Inst{26-23} = 0b0100;
-     let Inst{22-20} = opcod;
-     let Inst{19-16} = 0b1111; // Rn
-     let Inst{15-12} = 0b1111;
-     let Inst{7} = 1;
-     let Inst{5-4} = 0b00; // rotate
-   }
-  def r_rot : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm, i32imm:$rot), IIC_iEXTr,
-                  opc, "\t$Rd, $Rm, ror $rot", []>,
-          Requires<[IsThumb2, HasT2ExtractPack]> {
-     let Inst{31-27} = 0b11111;
-     let Inst{26-23} = 0b0100;
-     let Inst{22-20} = opcod;
-     let Inst{19-16} = 0b1111; // Rn
-     let Inst{15-12} = 0b1111;
-     let Inst{7} = 1;
-
-      bits<2> rot;
-      let Inst{5-4} = rot{1-0}; // rotate
-   }
+  bits<2> rot;
+  let Inst{31-27} = 0b11111;
+  let Inst{26-23} = 0b0100;
+  let Inst{22-20} = opcod;
+  let Inst{19-16} = 0b1111; // Rn
+  let Inst{15-12} = 0b1111;
+  let Inst{7} = 1;
+  let Inst{5-4} = rot;
 }
 
 /// T2I_exta_rrot - A binary operation with two forms: one whose operand is a
 /// register and one whose operand is a register rotated by 8/16/24.
-multiclass T2I_exta_rrot<bits<3> opcod, string opc, PatFrag opnode> {
-  def rr     : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iEXTAr,
-                  opc, "\t$Rd, $Rn, $Rm",
-                  [(set rGPR:$Rd, (opnode rGPR:$Rn, rGPR:$Rm))]>,
-                  Requires<[HasT2ExtractPack, IsThumb2]> {
-     let Inst{31-27} = 0b11111;
-     let Inst{26-23} = 0b0100;
-     let Inst{22-20} = opcod;
-     let Inst{15-12} = 0b1111;
-     let Inst{7} = 1;
-     let Inst{5-4} = 0b00; // rotate
-   }
-  def rr_rot : T2ThreeReg<(outs rGPR:$Rd),
-                  (ins rGPR:$Rn, rGPR:$Rm, rot_imm:$rot),
-                  IIC_iEXTAsr, opc, "\t$Rd, $Rn, $Rm$rot",
-                  [(set rGPR:$Rd, (opnode rGPR:$Rn,
-                                          (rotr rGPR:$Rm, rot_imm:$rot)))]>,
-                  Requires<[HasT2ExtractPack, IsThumb2]> {
-     let Inst{31-27} = 0b11111;
-     let Inst{26-23} = 0b0100;
-     let Inst{22-20} = opcod;
-     let Inst{15-12} = 0b1111;
-     let Inst{7} = 1;
-
-     bits<2> rot;
-     let Inst{5-4} = rot{1-0}; // rotate
-   }
+class T2I_exta_rrot<bits<3> opcod, string opc, PatFrag opnode>
+  : T2ThreeReg<(outs rGPR:$Rd),
+               (ins rGPR:$Rn, rGPR:$Rm, rot_imm:$rot),
+               IIC_iEXTAsr, opc, "\t$Rd, $Rn, $Rm$rot",
+             [(set rGPR:$Rd, (opnode rGPR:$Rn, (rotr rGPR:$Rm,rot_imm:$rot)))]>,
+           Requires<[HasT2ExtractPack, IsThumb2]> {
+  bits<2> rot;
+  let Inst{31-27} = 0b11111;
+  let Inst{26-23} = 0b0100;
+  let Inst{22-20} = opcod;
+  let Inst{15-12} = 0b1111;
+  let Inst{7} = 1;
+  let Inst{5-4} = rot;
 }
 
-multiclass T2I_exta_rrot_np<bits<3> opcod, string opc> {
-  def rr     : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iEXTAr,
-                  opc, "\t$Rd, $Rn, $Rm", []> {
-     let Inst{31-27} = 0b11111;
-     let Inst{26-23} = 0b0100;
-     let Inst{22-20} = opcod;
-     let Inst{15-12} = 0b1111;
-     let Inst{7} = 1;
-     let Inst{5-4} = 0b00; // rotate
-   }
-  def rr_rot :T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm,rot_imm:$rot),
-                  IIC_iEXTAsr, opc, "\t$Rd, $Rn, $Rm$rot", []> {
-     let Inst{31-27} = 0b11111;
-     let Inst{26-23} = 0b0100;
-     let Inst{22-20} = opcod;
-     let Inst{15-12} = 0b1111;
-     let Inst{7} = 1;
-
-     bits<2> rot;
-     let Inst{5-4} = rot{1-0}; // rotate
-   }
+class T2I_exta_rrot_np<bits<3> opcod, string opc>
+  : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm,rot_imm:$rot),
+               IIC_iEXTAsr, opc, "\t$Rd, $Rn, $Rm$rot", []> {
+  bits<2> rot;
+  let Inst{31-27} = 0b11111;
+  let Inst{26-23} = 0b0100;
+  let Inst{22-20} = opcod;
+  let Inst{15-12} = 0b1111;
+  let Inst{7} = 1;
+  let Inst{5-4} = rot;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1661,15 +1609,15 @@ def t2SXTB  : T2I_ext_rrot<0b100, "sxtb",
                               UnOpFrag<(sext_inreg node:$Src, i8)>>;
 def t2SXTH  : T2I_ext_rrot<0b000, "sxth",
                               UnOpFrag<(sext_inreg node:$Src, i16)>>;
-defm t2SXTB16 : T2I_ext_rrot_sxtb16<0b010, "sxtb16">;
+def t2SXTB16 : T2I_ext_rrot_sxtb16<0b010, "sxtb16">;
 
-defm t2SXTAB : T2I_exta_rrot<0b100, "sxtab",
+def t2SXTAB : T2I_exta_rrot<0b100, "sxtab",
                         BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS, i8))>>;
-defm t2SXTAH : T2I_exta_rrot<0b000, "sxtah",
+def t2SXTAH : T2I_exta_rrot<0b000, "sxtah",
                         BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS,i16))>>;
-defm t2SXTAB16 : T2I_exta_rrot_np<0b010, "sxtab16">;
+def t2SXTAB16 : T2I_exta_rrot_np<0b010, "sxtab16">;
 
-// TODO: SXT(A){B|H}16 - done for disassembly only
+// TODO: SXT(A){B|H}16
 
 // Zero extenders
 
@@ -1678,7 +1626,7 @@ def t2UXTB   : T2I_ext_rrot<0b101, "uxtb",
                                UnOpFrag<(and node:$Src, 0x000000FF)>>;
 def t2UXTH   : T2I_ext_rrot<0b001, "uxth",
                                UnOpFrag<(and node:$Src, 0x0000FFFF)>>;
-defm t2UXTB16 : T2I_ext_rrot_uxtb16<0b011, "uxtb16",
+def t2UXTB16 : T2I_ext_rrot_uxtb16<0b011, "uxtb16",
                                UnOpFrag<(and node:$Src, 0x00FF00FF)>>;
 
 // FIXME: This pattern incorrectly assumes the shl operator is a rotate.
@@ -1686,17 +1634,17 @@ defm t2UXTB16 : T2I_ext_rrot_uxtb16<0b011, "uxtb16",
 //        instead so we can include a check for masking back in the upper
 //        eight bits of the source into the lower eight bits of the result.
 //def : T2Pat<(and (shl rGPR:$Src, (i32 8)), 0xFF00FF),
-//            (t2UXTB16r_rot rGPR:$Src, 3)>,
+//            (t2UXTB16 rGPR:$Src, 3)>,
 //          Requires<[HasT2ExtractPack, IsThumb2]>;
 def : T2Pat<(and (srl rGPR:$Src, (i32 8)), 0xFF00FF),
-            (t2UXTB16r_rot rGPR:$Src, 1)>,
+            (t2UXTB16 rGPR:$Src, 1)>,
         Requires<[HasT2ExtractPack, IsThumb2]>;
 
-defm t2UXTAB : T2I_exta_rrot<0b101, "uxtab",
+def t2UXTAB : T2I_exta_rrot<0b101, "uxtab",
                            BinOpFrag<(add node:$LHS, (and node:$RHS, 0x00FF))>>;
-defm t2UXTAH : T2I_exta_rrot<0b001, "uxtah",
+def t2UXTAH : T2I_exta_rrot<0b001, "uxtah",
                            BinOpFrag<(add node:$LHS, (and node:$RHS, 0xFFFF))>>;
-defm t2UXTAB16 : T2I_exta_rrot_np<0b011, "uxtab16">;
+def t2UXTAB16 : T2I_exta_rrot_np<0b011, "uxtab16">;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3458,8 +3406,28 @@ def t2CDP2 : T2Cop<0b1111, (outs), (ins p_imm:$cop, imm0_15:$opc1,
 //
 
 // SXT/UXT with no rotate
-def : T2Pat<(and rGPR:$Src, 0x000000FF), (t2UXTB rGPR:$Src, 0)>;
-def : T2Pat<(and rGPR:$Src, 0x0000FFFF), (t2UXTH rGPR:$Src, 0)>;
+let AddedComplexity = 16 in {
+def : T2Pat<(and rGPR:$Rm, 0x000000FF), (t2UXTB rGPR:$Rm, 0)>,
+           Requires<[HasT2ExtractPack, IsThumb2]>;
+def : T2Pat<(and rGPR:$Rm, 0x0000FFFF), (t2UXTH rGPR:$Rm, 0)>,
+           Requires<[HasT2ExtractPack, IsThumb2]>;
+def : T2Pat<(and rGPR:$Rm, 0x00FF00FF), (t2UXTB16 rGPR:$Rm, 0)>,
+           Requires<[HasT2ExtractPack, IsThumb2]>;
+def : T2Pat<(add rGPR:$Rn, (and rGPR:$Rm, 0x00FF)),
+            (t2UXTAB rGPR:$Rn, rGPR:$Rm, 0)>,
+           Requires<[HasT2ExtractPack, IsThumb2]>;
+def : T2Pat<(add rGPR:$Rn, (and rGPR:$Rm, 0xFFFF)),
+            (t2UXTAH rGPR:$Rn, rGPR:$Rm, 0)>,
+           Requires<[HasT2ExtractPack, IsThumb2]>;
+}
 
-def : T2Pat<(sext_inreg rGPR:$Src, i8),  (t2SXTB rGPR:$Src, 0)>;
-def : T2Pat<(sext_inreg rGPR:$Src, i16), (t2SXTH rGPR:$Src, 0)>;
+def : T2Pat<(sext_inreg rGPR:$Src, i8),  (t2SXTB rGPR:$Src, 0)>,
+           Requires<[HasT2ExtractPack, IsThumb2]>;
+def : T2Pat<(sext_inreg rGPR:$Src, i16), (t2SXTH rGPR:$Src, 0)>,
+           Requires<[HasT2ExtractPack, IsThumb2]>;
+def : T2Pat<(add rGPR:$Rn, (sext_inreg rGPR:$Rm, i8)),
+            (t2SXTAB rGPR:$Rn, rGPR:$Rm, 0)>,
+           Requires<[HasT2ExtractPack, IsThumb2]>;
+def : T2Pat<(add rGPR:$Rn, (sext_inreg rGPR:$Rm, i16)),
+            (t2SXTAH rGPR:$Rn, rGPR:$Rm, 0)>,
+           Requires<[HasT2ExtractPack, IsThumb2]>;
