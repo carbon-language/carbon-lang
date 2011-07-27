@@ -23,7 +23,9 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -37,10 +39,18 @@ namespace {
       initializeConstantMergePass(*PassRegistry::getPassRegistry());
     }
 
-    // run - For this pass, process all of the globals in the module,
-    // eliminating duplicate constants.
-    //
+    // For this pass, process all of the globals in the module, eliminating
+    // duplicate constants.
     bool runOnModule(Module &M);
+
+    // Return true iff we can determine the alignment of this global variable.
+    bool hasKnownAlignment(GlobalVariable *GV) const;
+
+    // Return the alignment of the global, including converting the default
+    // alignment to a concrete value.
+    unsigned getAlignment(GlobalVariable *GV) const;
+
+    const TargetData *TD;
   };
 }
 
@@ -77,15 +87,28 @@ static bool IsBetterCannonical(const GlobalVariable &A,
   return A.hasUnnamedAddr();
 }
 
+bool ConstantMerge::hasKnownAlignment(GlobalVariable *GV) const {
+  return TD || GV->getAlignment() != 0;
+}
+
+unsigned ConstantMerge::getAlignment(GlobalVariable *GV) const {
+  if (TD)
+    return TD->getPreferredAlignment(GV);
+  return GV->getAlignment();
+}
+
 bool ConstantMerge::runOnModule(Module &M) {
+  TD = getAnalysisIfAvailable<TargetData>();
+
   // Find all the globals that are marked "used".  These cannot be merged.
   SmallPtrSet<const GlobalValue*, 8> UsedGlobals;
   FindUsedValues(M.getGlobalVariable("llvm.used"), UsedGlobals);
   FindUsedValues(M.getGlobalVariable("llvm.compiler.used"), UsedGlobals);
   
-  // Map unique constant/section pairs to globals.  We don't want to merge
-  // globals in different sections.
-  DenseMap<Constant*, GlobalVariable*> CMap;
+  // Map unique <constants, has-unknown-alignment> pairs to globals.  We don't
+  // want to merge globals of unknown alignment with those of explicit
+  // alignment.  If we have TargetData, we always know the alignment.
+  DenseMap<PointerIntPair<Constant*, 1, bool>, GlobalVariable*> CMap;
 
   // Replacements - This vector contains a list of replacements to perform.
   SmallVector<std::pair<GlobalVariable*, GlobalVariable*>, 32> Replacements;
@@ -120,7 +143,8 @@ bool ConstantMerge::runOnModule(Module &M) {
       Constant *Init = GV->getInitializer();
 
       // Check to see if the initializer is already known.
-      GlobalVariable *&Slot = CMap[Init];
+      PointerIntPair<Constant*, 1, bool> Pair(Init, hasKnownAlignment(GV));
+      GlobalVariable *&Slot = CMap[Pair];
 
       // If this is the first constant we find or if the old on is local,
       // replace with the current one. It the current is externally visible
@@ -152,7 +176,8 @@ bool ConstantMerge::runOnModule(Module &M) {
       Constant *Init = GV->getInitializer();
 
       // Check to see if the initializer is already known.
-      GlobalVariable *Slot = CMap[Init];
+      PointerIntPair<Constant*, 1, bool> Pair(Init, hasKnownAlignment(GV));
+      GlobalVariable *Slot = CMap[Pair];
 
       if (!Slot || Slot == GV)
         continue;
@@ -175,6 +200,14 @@ bool ConstantMerge::runOnModule(Module &M) {
     // now.  This avoid invalidating the pointers in CMap, which are unneeded
     // now.
     for (unsigned i = 0, e = Replacements.size(); i != e; ++i) {
+      // Bump the alignment if necessary.
+      if (Replacements[i].first->getAlignment() ||
+          Replacements[i].second->getAlignment()) {
+        Replacements[i].second->setAlignment(std::max(
+            Replacements[i].first->getAlignment(),
+            Replacements[i].second->getAlignment()));
+      }
+
       // Eliminate any uses of the dead global.
       Replacements[i].first->replaceAllUsesWith(Replacements[i].second);
 
