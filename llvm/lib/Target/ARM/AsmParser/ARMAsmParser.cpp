@@ -161,11 +161,6 @@ public:
 };
 } // end anonymous namespace
 
-namespace llvm {
-  // FIXME: TableGen this?
-  extern MCRegisterClass ARMMCRegisterClasses[]; // In ARMGenRegisterInfo.inc.
-}
-
 namespace {
 
 /// ARMOperand - Instances of this class represent a parsed ARM machine

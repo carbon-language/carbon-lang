@@ -1152,11 +1152,6 @@ getMsbOpValue(const MCInst &MI, unsigned Op,
   return msb;
 }
 
-namespace llvm {
-  // FIXME: TableGen this?
-  extern MCRegisterClass ARMMCRegisterClasses[]; // In ARMGenRegisterInfo.inc.
-}
-
 unsigned ARMMCCodeEmitter::
 getRegisterListOpValue(const MCInst &MI, unsigned Op,
                        SmallVectorImpl<MCFixup> &Fixups) const {

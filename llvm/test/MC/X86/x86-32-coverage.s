@@ -19571,8 +19571,8 @@
 // CHECK: 	aeskeygenassist	$125, (%edx,%eax,4), %xmm2
                 aeskeygenassist $125, (%edx,%eax,4), %xmm2
 
-// CHECK:   blendvps	(%rax), %xmm1   # encoding: [0x66,0x0f,0x38,0x14,0x08]
-            blendvps (%rax), %xmm1
+// CHECK:   blendvps	(%eax), %xmm1   # encoding: [0x66,0x0f,0x38,0x14,0x08]
+            blendvps (%eax), %xmm1
 // CHECK:   blendvps	%xmm2, %xmm1    # encoding: [0x66,0x0f,0x38,0x14,0xca]
             blendvps %xmm2, %xmm1
 

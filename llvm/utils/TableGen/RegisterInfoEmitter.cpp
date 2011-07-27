@@ -40,6 +40,9 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
 
   OS << "namespace llvm {\n\n";
 
+  OS << "class MCRegisterClass;\n"
+     << "extern MCRegisterClass " << Namespace << "MCRegisterClasses[];\n\n";
+
   if (!Namespace.empty())
     OS << "namespace " << Namespace << " {\n";
   OS << "enum {\n  NoRegister,\n";

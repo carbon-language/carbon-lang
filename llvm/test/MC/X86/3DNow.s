@@ -1,18 +1,18 @@
-// RUN: llvm-mc -triple i386-unknown-unknown --show-encoding %s | FileCheck %s
+// RUN: llvm-mc -triple x86_64-unknown-unknown --show-encoding %s | FileCheck %s
 
 // PR8283
 
 // CHECK: pavgusb %mm2, %mm1  # encoding: [0x0f,0x0f,0xca,0xbf]
 pavgusb	%mm2, %mm1
 
-// CHECK: pavgusb 9(%esi,%edx), %mm3 # encoding: [0x0f,0x0f,0x5c,0x16,0x09,0xbf]
+// CHECK: pavgusb 9(%esi,%edx), %mm3 # encoding: [0x67,0x0f,0x0f,0x5c,0x16,0x09,0xbf]
 pavgusb	9(%esi,%edx), %mm3
 
         
 // CHECK: pf2id %mm2, %mm1  # encoding: [0x0f,0x0f,0xca,0x1d]
 pf2id	%mm2, %mm1
 
-// CHECK: pf2id 9(%esi,%edx), %mm3 # encoding: [0x0f,0x0f,0x5c,0x16,0x09,0x1d]
+// CHECK: pf2id 9(%esi,%edx), %mm3 # encoding: [0x67,0x0f,0x0f,0x5c,0x16,0x09,0x1d]
 pf2id	9(%esi,%edx), %mm3
 
 // CHECK: pfacc %mm2, %mm1  # encoding: [0x0f,0x0f,0xca,0xae]

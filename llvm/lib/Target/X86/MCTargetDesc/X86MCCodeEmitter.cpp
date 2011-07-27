@@ -155,11 +155,6 @@ static MCFixupKind getImmFixupKind(uint64_t TSFlags) {
   return MCFixup::getKindForSize(Size, isPCRel);
 }
 
-namespace llvm {
-  // FIXME: TableGen this?
-  extern MCRegisterClass X86MCRegisterClasses[]; // In X86GenRegisterInfo.inc.
-}
-
 /// Is32BitMemOperand - Return true if the specified instruction with a memory
 /// operand should emit the 0x67 prefix byte in 64-bit mode due to a 32-bit
 /// memory operand.  Op specifies the operand # of the memoperand.

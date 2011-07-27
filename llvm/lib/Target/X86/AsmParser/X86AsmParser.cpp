@@ -13,6 +13,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
@@ -400,19 +401,25 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
   if (Tok.isNot(AsmToken::Identifier))
     return Error(Tok.getLoc(), "invalid register name");
 
-  // FIXME: Validate register for the current architecture; we have to do
-  // validation later, so maybe there is no need for this here.
   RegNo = MatchRegisterName(Tok.getString());
 
   // If the match failed, try the register name as lowercase.
   if (RegNo == 0)
     RegNo = MatchRegisterName(LowercaseString(Tok.getString()));
 
-  // FIXME: This should be done using Requires<In32BitMode> and
-  // Requires<In64BitMode> so "eiz" usage in 64-bit instructions
-  // can be also checked.
-  if (RegNo == X86::RIZ && !is64BitMode())
-    return Error(Tok.getLoc(), "riz register in 64-bit mode only");
+  if (!is64BitMode()) {
+    // FIXME: This should be done using Requires<In32BitMode> and
+    // Requires<In64BitMode> so "eiz" usage in 64-bit instructions can be also
+    // checked.
+    // FIXME: Check AH, CH, DH, BH cannot be used in an instruction requiring a
+    // REX prefix.
+    if (RegNo == X86::RIZ ||
+        X86MCRegisterClasses[X86::GR64RegClassID].contains(RegNo) ||
+        X86II::isX86_64NonExtLowByteReg(RegNo) ||
+        X86II::isX86_64ExtendedReg(RegNo))
+      return Error(Tok.getLoc(), "register %"
+                   + Tok.getString() + " is only available in 64-bit mode");
+  }
 
   // Parse "%st" as "%st(0)" and "%st(1)", which is multiple tokens.
   if (RegNo == 0 && (Tok.getString() == "st" || Tok.getString() == "ST")) {
@@ -490,7 +497,7 @@ X86Operand *X86ATTAsmParser::ParseOperand() {
     SMLoc Start, End;
     if (ParseRegister(RegNo, Start, End)) return 0;
     if (RegNo == X86::EIZ || RegNo == X86::RIZ) {
-      Error(Start, "eiz and riz can only be used as index registers");
+      Error(Start, "%eiz and %riz can only be used as index registers");
       return 0;
     }
 
