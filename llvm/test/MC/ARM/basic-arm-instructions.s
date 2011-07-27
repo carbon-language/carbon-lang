@@ -1914,3 +1914,37 @@ _func:
                                         @ encoding: [0x72,0x28,0xbf,0xd6]
 @ CHECK: sxth	r9, r3, ror #24
                                         @ encoding: [0x73,0x9c,0xbf,0xe6]
+
+
+@------------------------------------------------------------------------------
+@ FIXME: TBB/TBH
+@------------------------------------------------------------------------------
+
+
+@------------------------------------------------------------------------------
+@ TEQ
+@------------------------------------------------------------------------------
+        teq r5, #0xf000
+        teq r4, r5
+        teq r4, r5, lsl #5
+        teq r4, r5, lsr #5
+        teq r4, r5, lsr #5
+        teq r4, r5, asr #5
+        teq r4, r5, ror #5
+        teq r6, r7, lsl r9
+        teq r6, r7, lsr r9
+        teq r6, r7, asr r9
+        teq r6, r7, ror r9
+
+@ CHECK: teq	r5, #61440              @ encoding: [0x0f,0x0a,0x35,0xe3]
+@ CHECK: teq	r4, r5                  @ encoding: [0x05,0x00,0x34,0xe1]
+@ CHECK: teq	r4, r5, lsl #5          @ encoding: [0x85,0x02,0x34,0xe1]
+@ CHECK: teq	r4, r5, lsr #5          @ encoding: [0xa5,0x02,0x34,0xe1]
+@ CHECK: teq	r4, r5, lsr #5          @ encoding: [0xa5,0x02,0x34,0xe1]
+@ CHECK: teq	r4, r5, asr #5          @ encoding: [0xc5,0x02,0x34,0xe1]
+@ CHECK: teq	r4, r5, ror #5          @ encoding: [0xe5,0x02,0x34,0xe1]
+@ CHECK: teq	r6, r7, lsl r9          @ encoding: [0x17,0x09,0x36,0xe1]
+@ CHECK: teq	r6, r7, lsr r9          @ encoding: [0x37,0x09,0x36,0xe1]
+@ CHECK: teq	r6, r7, asr r9          @ encoding: [0x57,0x09,0x36,0xe1]
+@ CHECK: teq	r6, r7, ror r9          @ encoding: [0x77,0x09,0x36,0xe1]
+
