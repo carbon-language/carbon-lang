@@ -16,6 +16,7 @@
 #include "clang/Lex/Token.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Capacity.h"
 
 using namespace clang;
 
@@ -177,7 +178,7 @@ void PreprocessingRecord::InclusionDirective(
 
 size_t PreprocessingRecord::getTotalMemory() const {
   return BumpAlloc.getTotalMemory()
-    + MacroDefinitions.getMemorySize()
-    + PreprocessedEntities.capacity()
-    + LoadedPreprocessedEntities.capacity();
+    + llvm::capacity_in_bytes(MacroDefinitions)
+    + llvm::capacity_in_bytes(PreprocessedEntities)
+    + llvm::capacity_in_bytes(LoadedPreprocessedEntities);
 }
