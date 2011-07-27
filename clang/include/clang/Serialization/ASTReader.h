@@ -1371,6 +1371,9 @@ public:
   virtual void ReadKnownNamespaces(
                            SmallVectorImpl<NamespaceDecl *> &Namespaces);
 
+  virtual void ReadTentativeDefinitions(
+                 SmallVectorImpl<VarDecl *> &TentativeDefs);
+
   /// \brief Load a selector from disk, registering its ID if it exists.
   void LoadSelector(Selector Sel);
 

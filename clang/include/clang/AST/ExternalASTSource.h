@@ -300,6 +300,162 @@ public:
   }
 };
 
+/// \brief Represents a lazily-loaded vector of data.
+///
+/// The lazily-loaded vector of data contains data that is partially loaded
+/// from an external source and partially added by local translation. The 
+/// items loaded from the external source are loaded lazily, when needed for
+/// iteration over the complete vector.
+template<typename T, typename Source, 
+         void (Source::*Loader)(SmallVectorImpl<T>&),
+         unsigned LoadedStorage = 2, unsigned LocalStorage = 4>
+class LazyVector {
+  SmallVector<T, LoadedStorage> Loaded;
+  SmallVector<T, LocalStorage> Local;
+
+public:
+  // Iteration over the elements in the vector.
+  class iterator {
+    LazyVector *Self;
+    
+    /// \brief Position within the vector..
+    ///
+    /// In a complete iteration, the Position field walks the range [-M, N),
+    /// where negative values are used to indicate elements
+    /// loaded from the external source while non-negative values are used to
+    /// indicate elements added via \c push_back().
+    /// However, to provide iteration in source order (for, e.g., chained
+    /// precompiled headers), dereferencing the iterator flips the negative
+    /// values (corresponding to loaded entities), so that position -M 
+    /// corresponds to element 0 in the loaded entities vector, position -M+1
+    /// corresponds to element 1 in the loaded entities vector, etc. This
+    /// gives us a reasonably efficient, source-order walk.
+    int Position;
+    
+  public:
+    typedef T                   value_type;
+    typedef value_type&         reference;
+    typedef value_type*         pointer;
+    typedef std::random_access_iterator_tag iterator_category;
+    typedef int                 difference_type;
+    
+    iterator() : Self(0), Position(0) { }
+    
+    iterator(LazyVector *Self, int Position) 
+      : Self(Self), Position(Position) { }
+    
+    reference operator*() const {
+      if (Position < 0)
+        return Self->Loaded.end()[Position];
+      return Self->Local[Position];
+    }
+    
+    pointer operator->() const {
+      if (Position < 0)
+        return &Self->Loaded.end()[Position];
+      
+      return &Self->Local[Position];        
+    }
+    
+    reference operator[](difference_type D) {
+      return *(*this + D);
+    }
+    
+    iterator &operator++() {
+      ++Position;
+      return *this;
+    }
+    
+    iterator operator++(int) {
+      iterator Prev(*this);
+      ++Position;
+      return Prev;
+    }
+    
+    iterator &operator--() {
+      --Position;
+      return *this;
+    }
+    
+    iterator operator--(int) {
+      iterator Prev(*this);
+      --Position;
+      return Prev;
+    }
+    
+    friend bool operator==(const iterator &X, const iterator &Y) {
+      return X.Position == Y.Position;
+    }
+    
+    friend bool operator!=(const iterator &X, const iterator &Y) {
+      return X.Position != Y.Position;
+    }
+    
+    friend bool operator<(const iterator &X, const iterator &Y) {
+      return X.Position < Y.Position;
+    }
+    
+    friend bool operator>(const iterator &X, const iterator &Y) {
+      return X.Position > Y.Position;
+    }
+    
+    friend bool operator<=(const iterator &X, const iterator &Y) {
+      return X.Position < Y.Position;
+    }
+    
+    friend bool operator>=(const iterator &X, const iterator &Y) {
+      return X.Position > Y.Position;
+    }
+    
+    friend iterator& operator+=(iterator &X, difference_type D) {
+      X.Position += D;
+      return X;
+    }
+    
+    friend iterator& operator-=(iterator &X, difference_type D) {
+      X.Position -= D;
+      return X;
+    }
+    
+    friend iterator operator+(iterator X, difference_type D) {
+      X.Position += D;
+      return X;
+    }
+    
+    friend iterator operator+(difference_type D, iterator X) {
+      X.Position += D;
+      return X;
+    }
+    
+    friend difference_type operator-(const iterator &X, const iterator &Y) {
+      return X.Position - Y.Position;
+    }
+    
+    friend iterator operator-(iterator X, difference_type D) {
+      X.Position -= D;
+      return X;
+    }
+  };
+  friend class iterator;
+  
+  iterator begin(Source *source, bool LocalOnly = false) {
+    if (LocalOnly)
+      return iterator(this, 0);
+    
+    if (source)
+      (source->*Loader)(Loaded);
+    return iterator(this, -(int)Loaded.size());
+  }
+  
+  iterator end() {
+    return iterator(this, Local.size());
+  }
+  
+  void push_back(const T& LocalValue) {
+    Local.push_back(LocalValue);
+  }
+};
+
 /// \brief A lazy pointer to a statement.
 typedef LazyOffsetPtr<Stmt, uint64_t, &ExternalASTSource::GetExternalDeclStmt>
   LazyDeclStmtPtr;

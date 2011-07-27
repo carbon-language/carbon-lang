@@ -4328,13 +4328,6 @@ void ASTReader::InitializeSema(Sema &S) {
   }
   PreloadedDecls.clear();
 
-  // If there were any tentative definitions, deserialize them and add
-  // them to Sema's list of tentative definitions.
-  for (unsigned I = 0, N = TentativeDefinitions.size(); I != N; ++I) {
-    VarDecl *Var = cast<VarDecl>(GetDecl(TentativeDefinitions[I]));
-    SemaObj->TentativeDefinitions.push_back(Var);
-  }
-
   // If there were any unused file scoped decls, deserialize them and add to
   // Sema's list of unused file scoped decls.
   for (unsigned I = 0, N = UnusedFileScopedDecls.size(); I != N; ++I) {
@@ -4569,6 +4562,16 @@ void ASTReader::ReadKnownNamespaces(
                 = dyn_cast_or_null<NamespaceDecl>(GetDecl(KnownNamespaces[I])))
       Namespaces.push_back(Namespace);
   }
+}
+
+void ASTReader::ReadTentativeDefinitions(
+                  SmallVectorImpl<VarDecl *> &TentativeDefs) {
+  for (unsigned I = 0, N = TentativeDefinitions.size(); I != N; ++I) {
+    VarDecl *Var = dyn_cast_or_null<VarDecl>(GetDecl(TentativeDefinitions[I]));
+    if (Var)
+      TentativeDefs.push_back(Var);
+  }
+  TentativeDefinitions.clear();
 }
 
 void ASTReader::LoadSelector(Selector Sel) {

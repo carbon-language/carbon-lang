@@ -20,6 +20,7 @@
 #include "clang/Sema/IdentifierResolver.h"
 #include "clang/Sema/ObjCMethodList.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/LocInfoType.h"
 #include "clang/Sema/TypoCorrection.h"
 #include "clang/AST/Expr.h"
@@ -280,8 +281,12 @@ public:
   ///     not visible.
   llvm::DenseMap<DeclarationName, NamedDecl *> LocallyScopedExternalDecls;
 
+  typedef LazyVector<VarDecl *, ExternalSemaSource, 
+                     &ExternalSemaSource::ReadTentativeDefinitions, 2, 2>
+    TentativeDefinitionsType;
+
   /// \brief All the tentative definitions encountered in the TU.
-  SmallVector<VarDecl *, 2> TentativeDefinitions;
+  TentativeDefinitionsType TentativeDefinitions;
 
   /// \brief The set of file scoped decls seen so far that have not been used
   /// and must warn if not used. Only contains the first declaration.

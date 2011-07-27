@@ -473,8 +473,12 @@ void Sema::ActOnEndOfTranslationUnit() {
   //   identifier, with the composite type as of the end of the
   //   translation unit, with an initializer equal to 0.
   llvm::SmallSet<VarDecl *, 32> Seen;
-  for (unsigned i = 0, e = TentativeDefinitions.size(); i != e; ++i) {
-    VarDecl *VD = TentativeDefinitions[i]->getActingDefinition();
+  for (TentativeDefinitionsType::iterator 
+            T = TentativeDefinitions.begin(ExternalSource),
+         TEnd = TentativeDefinitions.end();
+       T != TEnd; ++T) 
+  {
+    VarDecl *VD = (*T)->getActingDefinition();
 
     // If the tentative definition was completed, getActingDefinition() returns
     // null. If we've already seen this variable before, insert()'s second

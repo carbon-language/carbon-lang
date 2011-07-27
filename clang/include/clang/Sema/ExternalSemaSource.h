@@ -22,7 +22,8 @@ struct ObjCMethodList;
 class Sema;
 class Scope;
 class LookupResult;
-
+class VarDecl;
+  
 /// \brief An abstract interface that should be implemented by
 /// external AST sources that also provide information for semantic
 /// analysis.
@@ -64,12 +65,22 @@ public:
   /// \return true to tell Sema to recover using the LookupResult.
   virtual bool LookupUnqualified(LookupResult &R, Scope *S) { return false; }
 
+  /// \brief Read the set of tentative definitions know to the external Sema
+  /// source.
+  ///
+  /// The external source should append its own tentative definitions to the
+  /// given vector of tentative definitions. Note that this routine may be
+  /// invoked multiple times; the external source should take care not to
+  /// introduce the same declarations repeatedly.
+  virtual void ReadTentativeDefinitions(
+                                  SmallVectorImpl<VarDecl *> &TentativeDefs) {}
+  
   // isa/cast/dyn_cast support
   static bool classof(const ExternalASTSource *Source) {
     return Source->SemaSource;
   }
   static bool classof(const ExternalSemaSource *) { return true; }
-};
+}; 
 
 } // end namespace clang
 
