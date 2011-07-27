@@ -4342,3 +4342,25 @@ def : InstAlias<"rsc${s}${p} $Rdn, $shift",
 // SSAT optional shift operand.
 def : InstAlias<"ssat${p} $Rd, $sat_imm, $Rn",
                 (SSAT GPR:$Rd, imm1_32:$sat_imm, GPR:$Rn, 0, pred:$p)>;
+
+
+// Extend instruction optional rotate operand.
+def : InstAlias<"sxtab${p} $Rd, $Rn, $Rm",
+                (SXTAB GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"sxtah${p} $Rd, $Rn, $Rm",
+                (SXTAH GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"sxtab16${p} $Rd, $Rn, $Rm",
+                (SXTAB16 GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"sxtb${p} $Rd, $Rm", (SXTB GPR:$Rd, GPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"sxtb16${p} $Rd, $Rm", (SXTB16 GPR:$Rd, GPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"sxth${p} $Rd, $Rm", (SXTH GPR:$Rd, GPR:$Rm, 0, pred:$p)>;
+
+def : InstAlias<"uxtab${p} $Rd, $Rn, $Rm",
+                (UXTAB GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"uxtah${p} $Rd, $Rn, $Rm",
+                (UXTAH GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"uxtab16${p} $Rd, $Rn, $Rm",
+                (UXTAB16 GPR:$Rd, GPR:$Rn, GPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"uxtb${p} $Rd, $Rm", (UXTB GPR:$Rd, GPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"uxtb16${p} $Rd, $Rm", (UXTB16 GPR:$Rd, GPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"uxth${p} $Rd, $Rm", (UXTH GPR:$Rd, GPR:$Rm, 0, pred:$p)>;
