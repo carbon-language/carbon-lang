@@ -722,7 +722,6 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
   if (DVI != DbgVariableToDbgInstMap.end()) {
     const MachineInstr *DVInsn = DVI->second;
     bool updated = false;
-    // FIXME : Handle getNumOperands != 3
     if (DVInsn->getNumOperands() == 3) {
       if (DVInsn->getOperand(0).isReg()) {
         const MachineOperand RegOp = DVInsn->getOperand(0);
