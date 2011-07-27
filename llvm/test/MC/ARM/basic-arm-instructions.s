@@ -2184,3 +2184,14 @@ _func:
 
 @ CHECK: usat16	r2, #2, r7              @ encoding: [0x32,0x2f,0xe2,0xe6]
 @ CHECK: usat16	r3, #15, r5             @ encoding: [0x33,0x3f,0xef,0xe6]
+
+
+@------------------------------------------------------------------------------
+@ USAX
+@------------------------------------------------------------------------------
+        usax r2, r3, r4
+        usaxne r2, r3, r4
+
+@ CHECK: usax	r2, r3, r4              @ encoding: [0x54,0x2f,0x53,0xe6]
+@ CHECK: usaxne	r2, r3, r4              @ encoding: [0x54,0x2f,0x53,0x16]
+
