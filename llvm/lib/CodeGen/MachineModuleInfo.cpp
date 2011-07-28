@@ -427,8 +427,9 @@ void MachineModuleInfo::addPersonality(MachineBasicBlock *LandingPad,
 
 /// addCatchTypeInfo - Provide the catch typeinfo for a landing pad.
 ///
-void MachineModuleInfo::addCatchTypeInfo(MachineBasicBlock *LandingPad,
-                                  std::vector<const GlobalVariable *> &TyInfo) {
+void MachineModuleInfo::
+addCatchTypeInfo(MachineBasicBlock *LandingPad,
+                 ArrayRef<const GlobalVariable *> TyInfo) {
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
   for (unsigned N = TyInfo.size(); N; --N)
     LP.TypeIds.push_back(getTypeIDFor(TyInfo[N - 1]));
@@ -436,8 +437,9 @@ void MachineModuleInfo::addCatchTypeInfo(MachineBasicBlock *LandingPad,
 
 /// addFilterTypeInfo - Provide the filter typeinfo for a landing pad.
 ///
-void MachineModuleInfo::addFilterTypeInfo(MachineBasicBlock *LandingPad,
-                                  std::vector<const GlobalVariable *> &TyInfo) {
+void MachineModuleInfo::
+addFilterTypeInfo(MachineBasicBlock *LandingPad,
+                  ArrayRef<const GlobalVariable *> TyInfo) {
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
   std::vector<unsigned> IdsInFilter(TyInfo.size());
   for (unsigned I = 0, E = TyInfo.size(); I != E; ++I)

@@ -300,12 +300,12 @@ public:
   /// addCatchTypeInfo - Provide the catch typeinfo for a landing pad.
   ///
   void addCatchTypeInfo(MachineBasicBlock *LandingPad,
-                        std::vector<const GlobalVariable *> &TyInfo);
+                        ArrayRef<const GlobalVariable *> TyInfo);
 
   /// addFilterTypeInfo - Provide the filter typeinfo for a landing pad.
   ///
   void addFilterTypeInfo(MachineBasicBlock *LandingPad,
-                         std::vector<const GlobalVariable *> &TyInfo);
+                         ArrayRef<const GlobalVariable *> TyInfo);
 
   /// addCleanup - Add a cleanup action for a landing pad.
   ///
