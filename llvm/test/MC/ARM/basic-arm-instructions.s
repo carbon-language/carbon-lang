@@ -2320,3 +2320,19 @@ _func:
 @ CHECK: uxth	r9, r3, ror #24
                                         @ encoding: [0x73,0x9c,0xff,0xe6]
 
+@------------------------------------------------------------------------------
+@ WFE/WFI/YIELD
+@------------------------------------------------------------------------------
+        wfe
+        wfehi
+        wfi
+        wfilt
+        yield
+        yieldne
+
+@ CHECK: wfe @ encoding: [0x02,0xf0,0x20,0xe3]
+@ CHECK: wfehi @ encoding: [0x02,0xf0,0x20,0x83]
+@ CHECK: wfi @ encoding: [0x03,0xf0,0x20,0xe3]
+@ CHECK: wfilt @ encoding: [0x03,0xf0,0x20,0xb3]
+@ CHECK: yield @ encoding: [0x01,0xf0,0x20,0xe3]
+@ CHECK: yieldne @ encoding: [0x01,0xf0,0x20,0x13]

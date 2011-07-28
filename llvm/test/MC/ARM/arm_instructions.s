@@ -65,15 +65,6 @@
 @ CHECK: cdp2  p7, #1, c1, c1, c1, #4 @ encoding: [0x81,0x17,0x11,0xfe]
         cdp2  p7, #1, c1, c1, c1, #4
 
-@ CHECK: wfe @ encoding: [0x02,0xf0,0x20,0xe3]
-        wfe
-
-@ CHECK: wfi @ encoding: [0x03,0xf0,0x20,0xe3]
-        wfi
-
-@ CHECK: yield @ encoding: [0x01,0xf0,0x20,0xe3]
-        yield
-
 @ CHECK: cpsie  aif @ encoding: [0xc0,0x01,0x08,0xf1]
         cpsie  aif
 
