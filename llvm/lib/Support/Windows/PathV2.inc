@@ -501,7 +501,8 @@ handle_status_error:
 }
 
 error_code unique_file(const Twine &model, int &result_fd,
-                             SmallVectorImpl<char> &result_path) {
+                             SmallVectorImpl<char> &result_path,
+                             bool makeAbsolute) {
   // Use result_path as temp storage.
   result_path.set_size(0);
   StringRef m = model.toStringRef(result_path);
@@ -509,17 +510,19 @@ error_code unique_file(const Twine &model, int &result_fd,
   SmallVector<wchar_t, 128> model_utf16;
   if (error_code ec = UTF8ToUTF16(m, model_utf16)) return ec;
 
-  // Make model absolute by prepending a temp directory if it's not already.
-  bool absolute = path::is_absolute(m);
-
-  if (!absolute) {
-    SmallVector<wchar_t, 64> temp_dir;
-    if (error_code ec = TempDir(temp_dir)) return ec;
-    // Handle c: by removing it.
-    if (model_utf16.size() > 2 && model_utf16[1] == L':') {
-      model_utf16.erase(model_utf16.begin(), model_utf16.begin() + 2);
+  if (makeAbsolute) {
+    // Make model absolute by prepending a temp directory if it's not already.
+    bool absolute = path::is_absolute(m);
+  
+    if (!absolute) {
+      SmallVector<wchar_t, 64> temp_dir;
+      if (error_code ec = TempDir(temp_dir)) return ec;
+      // Handle c: by removing it.
+      if (model_utf16.size() > 2 && model_utf16[1] == L':') {
+        model_utf16.erase(model_utf16.begin(), model_utf16.begin() + 2);
+      }
+      model_utf16.insert(model_utf16.begin(), temp_dir.begin(), temp_dir.end());
     }
-    model_utf16.insert(model_utf16.begin(), temp_dir.begin(), temp_dir.end());
   }
 
   // Replace '%' with random chars. From here on, DO NOT modify model. It may be

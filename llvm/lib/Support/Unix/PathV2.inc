@@ -342,19 +342,22 @@ error_code status(const Twine &path, file_status &result) {
 }
 
 error_code unique_file(const Twine &model, int &result_fd,
-                             SmallVectorImpl<char> &result_path) {
+                             SmallVectorImpl<char> &result_path,
+                             bool makeAbsolute) {
   SmallString<128> Model;
   model.toVector(Model);
   // Null terminate.
   Model.c_str();
 
-  // Make model absolute by prepending a temp directory if it's not already.
-  bool absolute = path::is_absolute(Twine(Model));
-  if (!absolute) {
-    SmallString<128> TDir;
-    if (error_code ec = TempDir(TDir)) return ec;
-    path::append(TDir, Twine(Model));
-    Model.swap(TDir);
+  if (makeAbsolute) {
+    // Make model absolute by prepending a temp directory if it's not already.
+    bool absolute = path::is_absolute(Twine(Model));
+    if (!absolute) {
+      SmallString<128> TDir;
+      if (error_code ec = TempDir(TDir)) return ec;
+      path::append(TDir, Twine(Model));
+      Model.swap(TDir);
+    }
   }
 
   // Replace '%' with random chars. From here on, DO NOT modify model. It may be

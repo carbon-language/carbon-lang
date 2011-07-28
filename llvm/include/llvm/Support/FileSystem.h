@@ -427,10 +427,13 @@ error_code symlink_status(const Twine &path, file_status &result);
 /// @param model Name to base unique path off of.
 /// @param result_fs Set to the opened file's file descriptor.
 /// @param result_path Set to the opened file's absolute path.
+/// @param makeAbsolute If true and @model is not an absolute path, a temp
+///        directory will be prepended.
 /// @results errc::success if result_{fd,path} have been successfully set,
 ///          otherwise a platform specific error_code.
 error_code unique_file(const Twine &model, int &result_fd,
-                             SmallVectorImpl<char> &result_path);
+                             SmallVectorImpl<char> &result_path,
+                             bool makeAbsolute = true);
 
 /// @brief Canonicalize path.
 ///
