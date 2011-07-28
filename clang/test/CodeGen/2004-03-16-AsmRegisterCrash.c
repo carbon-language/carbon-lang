@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm %s  -o /dev/null
 // XFAIL: *
-// XTARGET: arm, x86, x86_64
+// XTARGET: arm, i386, i686, x86_64
 
 int foo() {
 #ifdef __arm__
