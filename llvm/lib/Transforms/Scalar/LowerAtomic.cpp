@@ -132,7 +132,7 @@ namespace {
         Instruction *Inst = DI++;
         if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst))
           Changed |= LowerAtomicIntrinsic(II);
-        if (FenceInst *FI = dyn_cast<FenceInst>(Inst))
+        else if (FenceInst *FI = dyn_cast<FenceInst>(Inst))
           Changed |= LowerFenceInst(FI);
       }
       return Changed;
