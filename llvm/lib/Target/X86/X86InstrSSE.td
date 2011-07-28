@@ -5452,6 +5452,18 @@ def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
                     (v32i8 VR256:$src1),
                     (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
 
+// Special COPY patterns
+def : Pat<(v4i32 (extract_subvector (v8i32 VR256:$src), (i32 0))),
+          (v4i32 (EXTRACT_SUBREG (v8i32 VR256:$src), sub_xmm))>;
+def : Pat<(v4f32 (extract_subvector (v8f32 VR256:$src), (i32 0))),
+          (v4f32 (EXTRACT_SUBREG (v8f32 VR256:$src), sub_xmm))>;
+
+def : Pat<(v2i64 (extract_subvector (v4i64 VR256:$src), (i32 0))),
+          (v2i64 (EXTRACT_SUBREG (v4i64 VR256:$src), sub_xmm))>;
+def : Pat<(v2f64 (extract_subvector (v4f64 VR256:$src), (i32 0))),
+          (v2f64 (EXTRACT_SUBREG (v4f64 VR256:$src), sub_xmm))>;
+
+
 //===----------------------------------------------------------------------===//
 // VMASKMOV - Conditional SIMD Packed Loads and Stores
 //
