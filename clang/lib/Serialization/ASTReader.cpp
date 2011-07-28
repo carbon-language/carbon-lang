@@ -2062,7 +2062,7 @@ ASTReader::ReadASTBlock(Module &F) {
         &F,
         /* No visible information */ 0,
         reinterpret_cast<const KindDeclIDPair *>(BlobStart),
-        BlobLen / sizeof(KindDeclIDPair)
+        static_cast<unsigned int>(BlobLen / sizeof(KindDeclIDPair))
       };
       DeclContextOffsets[Context ? Context->getTranslationUnitDecl() : 0]
         .push_back(Info);
@@ -4349,14 +4349,6 @@ void ASTReader::InitializeSema(Sema &S) {
   }
   PreloadedDecls.clear();
 
-  // If there were any locally-scoped external declarations,
-  // deserialize them and add them to Sema's table of locally-scoped
-  // external declarations.
-  for (unsigned I = 0, N = LocallyScopedExternalDecls.size(); I != N; ++I) {
-    NamedDecl *D = cast<NamedDecl>(GetDecl(LocallyScopedExternalDecls[I]));
-    SemaObj->LocallyScopedExternalDecls[D->getDeclName()] = D;
-  }
-
   // FIXME: Do VTable uses and dynamic classes deserialize too much ?
   // Can we cut them down before writing them ?
 
@@ -4614,6 +4606,17 @@ void ASTReader::ReadDynamicClasses(SmallVectorImpl<CXXRecordDecl *> &Decls) {
       Decls.push_back(D);
   }
   DynamicClasses.clear();
+}
+
+void 
+ASTReader::ReadLocallyScopedExternalDecls(SmallVectorImpl<NamedDecl *> &Decls) {
+  for (unsigned I = 0, N = LocallyScopedExternalDecls.size(); I != N; ++I) {
+    NamedDecl *D 
+      = dyn_cast_or_null<NamedDecl>(GetDecl(LocallyScopedExternalDecls[I]));
+    if (D)
+      Decls.push_back(D);
+  }
+  LocallyScopedExternalDecls.clear();
 }
 
 void ASTReader::LoadSelector(Selector Sel) {

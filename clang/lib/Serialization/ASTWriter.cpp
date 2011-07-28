@@ -2876,9 +2876,11 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (llvm::DenseMap<DeclarationName, NamedDecl *>::iterator
          TD = SemaRef.LocallyScopedExternalDecls.begin(),
          TDEnd = SemaRef.LocallyScopedExternalDecls.end();
-       TD != TDEnd; ++TD)
-    AddDeclRef(TD->second, LocallyScopedExternalDecls);
-
+       TD != TDEnd; ++TD) {
+    if (TD->second->getPCHLevel() == 0)
+      AddDeclRef(TD->second, LocallyScopedExternalDecls);
+  }
+  
   // Build a record containing all of the ext_vector declarations.
   RecordData ExtVectorDecls;
   AddLazyVectorDecls(*this, SemaRef.ExtVectorDecls, ExtVectorDecls);

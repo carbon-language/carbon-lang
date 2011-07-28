@@ -1388,6 +1388,9 @@ public:
 
   virtual void ReadDynamicClasses(SmallVectorImpl<CXXRecordDecl *> &Decls);
 
+  virtual void ReadLocallyScopedExternalDecls(
+                 SmallVectorImpl<NamedDecl *> &Decls);
+  
   /// \brief Load a selector from disk, registering its ID if it exists.
   void LoadSelector(Selector Sel);
 

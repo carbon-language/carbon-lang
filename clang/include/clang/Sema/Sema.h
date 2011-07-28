@@ -284,7 +284,11 @@ public:
   ///     we find this declaration of "foo" and complain that it is
   ///     not visible.
   llvm::DenseMap<DeclarationName, NamedDecl *> LocallyScopedExternalDecls;
-
+  
+  /// \brief Look for a locally scoped external declaration by the given name.
+  llvm::DenseMap<DeclarationName, NamedDecl *>::iterator
+  findLocallyScopedExternalDecl(DeclarationName Name);
+  
   typedef LazyVector<VarDecl *, ExternalSemaSource, 
                      &ExternalSemaSource::ReadTentativeDefinitions, 2, 2>
     TentativeDefinitionsType;
