@@ -22,13 +22,29 @@
 
 namespace llvm {
 
+struct EncodingField {
+  unsigned Base, Width, Offset;
+  EncodingField(unsigned B, unsigned W, unsigned O)
+    : Base(B), Width(W), Offset(O) { }
+};
+
 struct OperandInfo {
-  unsigned FieldBase;
-  unsigned FieldLength;
+  std::vector<EncodingField> Fields;
   std::string Decoder;
 
-  OperandInfo(unsigned FB, unsigned FL, std::string D)
-    : FieldBase(FB), FieldLength(FL), Decoder(D) { }
+  OperandInfo(std::string D)
+    : Decoder(D) { }
+
+  void addField(unsigned Base, unsigned Width, unsigned Offset) {
+    Fields.push_back(EncodingField(Base, Width, Offset));
+  }
+
+  unsigned numFields() { return Fields.size(); }
+
+  typedef std::vector<EncodingField>::iterator iterator;
+
+  iterator begin() { return Fields.begin(); }
+  iterator end()   { return Fields.end();   }
 };
 
 class FixedLenDecoderEmitter : public TableGenBackend {
