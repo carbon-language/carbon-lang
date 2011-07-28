@@ -215,9 +215,9 @@ void LandingPadInst::growOperands() {
 }
 
 void LandingPadInst::reserveClauses(unsigned Size) {
-  unsigned e = getNumOperands() + Size;
-  if (ReservedSpace >= e) return;
-  ReservedSpace = e;
+  unsigned e = getNumOperands();
+  if (ReservedSpace >= e + Size) return;
+  ReservedSpace = e + Size;
 
   Use *NewOps = allocHungoffUses(ReservedSpace);
   Use *OldOps = OperandList;
