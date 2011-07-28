@@ -101,6 +101,23 @@ static unsigned GetEncodedBinaryOpcode(unsigned Opcode) {
   }
 }
 
+static unsigned GetEncodedRMWOperation(AtomicRMWInst::BinOp Op) {
+  switch (Op) {
+  default: llvm_unreachable("Unknown RMW operation!");
+  case AtomicRMWInst::Xchg: return bitc::RMW_XCHG;
+  case AtomicRMWInst::Add: return bitc::RMW_ADD;
+  case AtomicRMWInst::Sub: return bitc::RMW_SUB;
+  case AtomicRMWInst::And: return bitc::RMW_AND;
+  case AtomicRMWInst::Nand: return bitc::RMW_NAND;
+  case AtomicRMWInst::Or: return bitc::RMW_OR;
+  case AtomicRMWInst::Xor: return bitc::RMW_XOR;
+  case AtomicRMWInst::Max: return bitc::RMW_MAX;
+  case AtomicRMWInst::Min: return bitc::RMW_MIN;
+  case AtomicRMWInst::UMax: return bitc::RMW_UMAX;
+  case AtomicRMWInst::UMin: return bitc::RMW_UMIN;
+  }
+}
+
 static unsigned GetEncodedOrdering(AtomicOrdering Ordering) {
   switch (Ordering) {
   default: llvm_unreachable("Unknown atomic ordering");
@@ -1185,6 +1202,28 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Vals.push_back(VE.getValueID(I.getOperand(0)));       // val.
     Vals.push_back(Log2_32(cast<StoreInst>(I).getAlignment())+1);
     Vals.push_back(cast<StoreInst>(I).isVolatile());
+    break;
+  case Instruction::AtomicCmpXchg:
+    Code = bitc::FUNC_CODE_INST_CMPXCHG;
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);  // ptrty + ptr
+    Vals.push_back(VE.getValueID(I.getOperand(1)));       // cmp.
+    Vals.push_back(VE.getValueID(I.getOperand(2)));       // newval.
+    Vals.push_back(cast<AtomicCmpXchgInst>(I).isVolatile());
+    Vals.push_back(GetEncodedOrdering(
+                     cast<AtomicCmpXchgInst>(I).getOrdering()));
+    Vals.push_back(GetEncodedSynchScope(
+                     cast<AtomicCmpXchgInst>(I).getSynchScope()));
+    break;
+  case Instruction::AtomicRMW:
+    Code = bitc::FUNC_CODE_INST_ATOMICRMW;
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);  // ptrty + ptr
+    Vals.push_back(VE.getValueID(I.getOperand(1)));       // val.
+    Vals.push_back(GetEncodedRMWOperation(
+                     cast<AtomicRMWInst>(I).getOperation()));
+    Vals.push_back(cast<AtomicRMWInst>(I).isVolatile());
+    Vals.push_back(GetEncodedOrdering(cast<AtomicRMWInst>(I).getOrdering()));
+    Vals.push_back(GetEncodedSynchScope(
+                     cast<AtomicRMWInst>(I).getSynchScope()));
     break;
   case Instruction::Fence:
     Code = bitc::FUNC_CODE_INST_FENCE;

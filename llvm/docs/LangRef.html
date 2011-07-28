@@ -54,6 +54,7 @@
       <li><a href="#pointeraliasing">Pointer Aliasing Rules</a></li>
       <li><a href="#volatile">Volatile Memory Accesses</a></li>
       <li><a href="#memmodel">Memory Model for Concurrent Operations</a></li>
+      <li><a href="#ordering">Atomic Memory Ordering Constraints</a></li>
     </ol>
   </li>
   <li><a href="#typesystem">Type System</a>
@@ -168,10 +169,12 @@
       </li>
       <li><a href="#memoryops">Memory Access and Addressing Operations</a>
         <ol>
-          <li><a href="#i_alloca">'<tt>alloca</tt>'   Instruction</a></li>
-         <li><a href="#i_load">'<tt>load</tt>'     Instruction</a></li>
-         <li><a href="#i_store">'<tt>store</tt>'    Instruction</a></li>
-         <li><a href="#i_fence">'<tt>fence</tt>'    Instruction</a></li>
+          <li><a href="#i_alloca">'<tt>alloca</tt>' Instruction</a></li>
+         <li><a href="#i_load">'<tt>load</tt>' Instruction</a></li>
+         <li><a href="#i_store">'<tt>store</tt>' Instruction</a></li>
+         <li><a href="#i_fence">'<tt>fence</tt>' Instruction</a></li>
+         <li><a href="#i_cmpxchg">'<tt>cmpxchg</tt>' Instruction</a></li>
+         <li><a href="#i_atomicrmw">'<tt>atomicrmw</tt>' Instruction</a></li>
          <li><a href="#i_getelementptr">'<tt>getelementptr</tt>' Instruction</a></li>
         </ol>
       </li>
@@ -1500,8 +1503,9 @@ that</p>
   <li>When a <i>synchronizes-with</i> <tt>b</tt>, includes an edge from
       <tt>a</tt> to <tt>b</tt>. <i>Synchronizes-with</i> pairs are introduced
       by platform-specific techniques, like pthread locks, thread
-      creation, thread joining, etc., and by the atomic operations described
-      in the <a href="#int_atomics">Atomic intrinsics</a> section.</li>
+      creation, thread joining, etc., and by atomic instructions.
+      (See also <a href="#ordering">Atomic Memory Ordering Constraints</a>).
+      </li>
 </ul>
 
 <p>Note that program order does not introduce <i>happens-before</i> edges
@@ -1536,8 +1540,9 @@ any write to the same byte, except:</p>
       write.</li>
   <li>Otherwise, if <var>R</var> is atomic, and all the writes
       <var>R<sub>byte</sub></var> may see are atomic, it chooses one of the
-      values written.  See the <a href="#int_atomics">Atomic intrinsics</a>
-      section for additional guarantees on how the choice is made.
+      values written.  See the <a href="#ordering">Atomic Memory Ordering
+      Constraints</a> section for additional constraints on how the choice
+      is made.
   <li>Otherwise <var>R<sub>byte</sub></var> returns <tt>undef</tt>.</li>
 </ul>
 
@@ -1566,6 +1571,82 @@ available; on such a target, for the purposes of this model, treat any
 non-atomic write with an alignment or width less than the minimum width
 as if it writes to the relevant surrounding bytes.
 -->
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+      <a name="ordering">Atomic Memory Ordering Constraints</a>
+</div>
+
+<div class="doc_text">
+
+<p>Atomic instructions (<a href="#i_cmpxchg"><code>cmpxchg</code></a>,
+<a href="#i_atomicrmw"><code>atomicrmw</code></a>, and
+<a href="#i_fence"><code>fence</code></a>) take an ordering parameter
+that determines which other atomic instructions on the same address they
+<i>synchronize with</i>.  These semantics are borrowed from Java and C++0x,
+but are somewhat more colloquial. If these descriptions aren't precise enough,
+check those specs.  <a href="#i_fence"><code>fence</code></a> instructions
+treat these orderings somewhat differently since they don't take an address.
+See that instruction's documentation for details.</p>
+
+<!-- FIXME Note atomic load+store here once those get added. -->
+
+<dl>
+<!-- FIXME: unordered is intended to be used for atomic load and store;
+it isn't allowed for any instruction yet. -->
+<dt><code>unordered</code></dt>
+<dd>The set of values that can be read is governed by the happens-before
+partial order. A value cannot be read unless some operation wrote it.
+This is intended to provide a guarantee strong enough to model Java's
+non-volatile shared variables.  This ordering cannot be specified for
+read-modify-write operations; it is not strong enough to make them atomic
+in any interesting way.</dd>
+<dt><code>monotonic</code></dt>
+<dd>In addition to the guarantees of <code>unordered</code>, there is a single
+total order for modifications by <code>monotonic</code> operations on each
+address. All modification orders must be compatible with the happens-before
+order. There is no guarantee that the modification orders can be combined to
+a global total order for the whole program (and this often will not be
+possible). The read in an atomic read-modify-write operation
+(<a href="#i_cmpxchg"><code>cmpxchg</code></a> and
+<a href="#i_atomicrmw"><code>atomicrmw</code></a>)
+reads the value in the modification order immediately before the value it
+writes. If one atomic read happens before another atomic read of the same
+address, the later read must see the same value or a later value in the
+address's modification order. This disallows reordering of
+<code>monotonic</code> (or stronger) operations on the same address. If an
+address is written <code>monotonic</code>ally by one thread, and other threads
+<code>monotonic</code>ally read that address repeatedly, the other threads must
+eventually see the write. This is intended to model C++'s relaxed atomic
+variables.</dd>
+<dt><code>acquire</code></dt>
+<dd>In addition to the guarantees of <code>monotonic</code>, if this operation
+reads a value written by a <code>release</code> atomic operation, it
+<i>synchronizes-with</i> that operation.</dd>
+<dt><code>release</code></dt>
+<dd>In addition to the guarantees of <code>monotonic</code>,
+a <i>synchronizes-with</i> edge may be formed by an <code>acquire</code>
+operation.</dd>
+<dt><code>acq_rel</code> (acquire+release)</dt><dd>Acts as both an
+<code>acquire</code> and <code>release</code> operation on its address.</dd>
+<dt><code>seq_cst</code> (sequentially consistent)</dt><dd>
+<dd>In addition to the guarantees of <code>acq_rel</code>
+(<code>acquire</code> for an operation which only reads, <code>release</code>
+for an operation which only writes), there is a global total order on all
+sequentially-consistent operations on all addresses, which is consistent with
+the <i>happens-before</i> partial order and with the modification orders of
+all the affected addresses. Each sequentially-consistent read sees the last
+preceding write to the same address in this global order. This is intended
+to model C++'s sequentially-consistent atomic variables and Java's volatile
+shared variables.</dd>
+</dl>
+
+<p id="singlethread">If an atomic operation is marked <code>singlethread</code>,
+it only <i>synchronizes with</i> or participates in modification and seq_cst
+total orderings with other operations running in the same thread (for example,
+in signal handlers).</p>
 
 </div>
 
@@ -4637,6 +4718,158 @@ thread.  (This is useful for interacting with signal handlers.)</p>
 <pre>
   fence acquire                          <i>; yields {void}</i>
   fence singlethread seq_cst             <i>; yields {void}</i>
+</pre>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="i_cmpxchg">'<tt>cmpxchg</tt>'
+Instruction</a> </div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  [volatile] cmpxchg &lt;ty&gt;* &lt;pointer&gt;, &lt;ty&gt; &lt;cmp&gt;, &lt;ty&gt; &lt;new&gt; [singlethread] &lt;ordering&gt;                   <i>; yields {ty}</i>
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>cmpxchg</tt>' instruction is used to atomically modify memory.
+It loads a value in memory and compares it to a given value. If they are
+equal, it stores a new value into the memory.</p>
+
+<h5>Arguments:</h5>
+<p>There are three arguments to the '<code>cmpxchg</code>' instruction: an
+address to operate on, a value to compare to the value currently be at that
+address, and a new value to place at that address if the compared values are
+equal.  The type of '<var>&lt;cmp&gt;</var>' must be an integer type whose
+bit width is a power of two greater than or equal to eight and less than
+or equal to a target-specific size limit. '<var>&lt;cmp&gt;</var>' and
+'<var>&lt;new&gt;</var>' must have the same type, and the type of
+'<var>&lt;pointer&gt;</var>' must be a pointer to that type. If the
+<code>cmpxchg</code> is marked as <code>volatile</code>, then the
+optimizer is not allowed to modify the number or order of execution
+of this <code>cmpxchg</code> with other <a href="#volatile">volatile
+operations</a>.</p>
+
+<!-- FIXME: Extend allowed types. -->
+
+<p>The <a href="#ordering"><var>ordering</var></a> argument specifies how this
+<code>cmpxchg</code> synchronizes with other atomic operations.</p>
+
+<p>The optional "<code>singlethread</code>" argument declares that the
+<code>cmpxchg</code> is only atomic with respect to code (usually signal
+handlers) running in the same thread as the <code>cmpxchg</code>.  Otherwise the
+cmpxchg is atomic with respect to all other code in the system.</p>
+
+<p>The pointer passed into cmpxchg must have alignment greater than or equal to
+the size in memory of the operand.
+
+<h5>Semantics:</h5>
+<p>The contents of memory at the location specified by the
+'<tt>&lt;pointer&gt;</tt>' operand is read and compared to
+'<tt>&lt;cmp&gt;</tt>'; if the read value is the equal,
+'<tt>&lt;new&gt;</tt>' is written.  The original value at the location
+is returned.
+
+<p>A successful <code>cmpxchg</code> is a read-modify-write instruction for the
+purpose of identifying <a href="#release_sequence">release sequences</a>.  A
+failed <code>cmpxchg</code> is equivalent to an atomic load with an ordering
+parameter determined by dropping any <code>release</code> part of the
+<code>cmpxchg</code>'s ordering.</p>
+
+<!--
+FIXME: Is compare_exchange_weak() necessary?  (Consider after we've done
+optimization work on ARM.)
+
+FIXME: Is a weaker ordering constraint on failure helpful in practice?
+-->
+
+<h5>Example:</h5>
+<pre>
+entry:
+  %orig = atomic <a href="#i_load">load</a> i32* %ptr unordered                       <i>; yields {i32}</i>
+  <a href="#i_br">br</a> label %loop
+
+loop:
+  %cmp = <a href="#i_phi">phi</a> i32 [ %orig, %entry ], [%old, %loop]
+  %squared = <a href="#i_mul">mul</a> i32 %cmp, %cmp
+  %old = cmpxchg i32* %ptr, i32 %cmp, i32 %squared                       <i>; yields {i32}</i>
+  %success = <a href="#i_icmp">icmp</a> eq i32 %cmp, %old
+  <a href="#i_br">br</a> i1 %success, label %done, label %loop
+
+done:
+  ...
+</pre>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="i_atomicrmw">'<tt>atomicrmw</tt>'
+Instruction</a> </div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  [volatile] atomicrmw &lt;operation&gt; &lt;ty&gt;* &lt;pointer&gt;, &lt;ty&gt; &lt;value&gt; [singlethread] &lt;ordering&gt;                   <i>; yields {ty}</i>
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>atomicrmw</tt>' instruction is used to atomically modify memory.</p>
+
+<h5>Arguments:</h5>
+<p>There are three arguments to the '<code>atomicrmw</code>' instruction: an
+operation to apply, an address whose value to modify, an argument to the
+operation.  The operation must be one of the following keywords:</p>
+<ul>
+  <li>xchg</li>
+  <li>add</li>
+  <li>sub</li>
+  <li>and</li>
+  <li>nand</li>
+  <li>or</li>
+  <li>xor</li>
+  <li>max</li>
+  <li>min</li>
+  <li>umax</li>
+  <li>umin</li>
+</ul>
+
+<p>The type of '<var>&lt;value&gt;</var>' must be an integer type whose
+bit width is a power of two greater than or equal to eight and less than
+or equal to a target-specific size limit.  The type of the
+'<code>&lt;pointer&gt;</code>' operand must be a pointer to that type.
+If the <code>atomicrmw</code> is marked as <code>volatile</code>, then the
+optimizer is not allowed to modify the number or order of execution of this
+<code>atomicrmw</code> with other <a href="#volatile">volatile
+  operations</a>.</p>
+
+<!-- FIXME: Extend allowed types. -->
+
+<h5>Semantics:</h5>
+<p>The contents of memory at the location specified by the
+'<tt>&lt;pointer&gt;</tt>' operand are atomically read, modified, and written
+back.  The original value at the location is returned.  The modification is
+specified by the <var>operation</var> argument:</p>
+
+<ul>
+  <li>xchg: <code>*ptr = val</code></li>
+  <li>add: <code>*ptr = *ptr + val</code></li>
+  <li>sub: <code>*ptr = *ptr - val</code></li>
+  <li>and: <code>*ptr = *ptr &amp; val</code></li>
+  <li>nand: <code>*ptr = ~(*ptr &amp; val)</code></li>
+  <li>or: <code>*ptr = *ptr | val</code></li>
+  <li>xor: <code>*ptr = *ptr ^ val</code></li>
+  <li>max: <code>*ptr = *ptr &gt; val ? *ptr : val</code> (using a signed comparison)</li>
+  <li>min: <code>*ptr = *ptr &lt; val ? *ptr : val</code> (using a signed comparison)</li>
+  <li>umax: <code>*ptr = *ptr &gt; val ? *ptr : val</code> (using an unsigned comparison)</li>
+  <li>umin: <code>*ptr = *ptr &lt; val ? *ptr : val</code> (using an unsigned comparison)</li>
+</ul>
+
+<h5>Example:</h5>
+<pre>
+  %old = atomicrmw add i32* %ptr, i32 1 acquire                        <i>; yields {i32}</i>
 </pre>
 
 </div>

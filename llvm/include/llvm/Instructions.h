@@ -362,6 +362,259 @@ private:
 };
 
 //===----------------------------------------------------------------------===//
+//                                AtomicCmpXchgInst Class
+//===----------------------------------------------------------------------===//
+
+/// AtomicCmpXchgInst - an instruction that atomically checks whether a
+/// specified value is in a memory location, and, if it is, stores a new value
+/// there.  Returns the value that was loaded.
+///
+class AtomicCmpXchgInst : public Instruction {
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  void Init(Value *Ptr, Value *Cmp, Value *NewVal,
+            AtomicOrdering Ordering, SynchronizationScope SynchScope);
+protected:
+  virtual AtomicCmpXchgInst *clone_impl() const;
+public:
+  // allocate space for exactly three operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 3);
+  }
+  AtomicCmpXchgInst(Value *Ptr, Value *Cmp, Value *NewVal,
+                    AtomicOrdering Ordering, SynchronizationScope SynchScope,
+                    Instruction *InsertBefore = 0);
+  AtomicCmpXchgInst(Value *Ptr, Value *Cmp, Value *NewVal,
+                    AtomicOrdering Ordering, SynchronizationScope SynchScope,
+                    BasicBlock *InsertAtEnd);
+
+  /// isVolatile - Return true if this is a cmpxchg from a volatile memory
+  /// location.
+  ///
+  bool isVolatile() const {
+    return getSubclassDataFromInstruction() & 1;
+  }
+
+  /// setVolatile - Specify whether this is a volatile cmpxchg.
+  ///
+  void setVolatile(bool V) {
+     setInstructionSubclassData((getSubclassDataFromInstruction() & ~1) |
+                                (unsigned)V);
+  }
+
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  /// Set the ordering constraint on this cmpxchg.
+  void setOrdering(AtomicOrdering Ordering) {
+    assert(Ordering != NotAtomic &&
+           "CmpXchg instructions can only be atomic.");
+    setInstructionSubclassData((getSubclassDataFromInstruction() & 3) |
+                               (Ordering << 2));
+  }
+
+  /// Specify whether this cmpxchg is atomic and orders other operations with
+  /// respect to all concurrently executing threads, or only with respect to
+  /// signal handlers executing in the same thread.
+  void setSynchScope(SynchronizationScope SynchScope) {
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~2) |
+                               (SynchScope << 1));
+  }
+
+  /// Returns the ordering constraint on this cmpxchg.
+  AtomicOrdering getOrdering() const {
+    return AtomicOrdering(getSubclassDataFromInstruction() >> 2);
+  }
+
+  /// Returns whether this cmpxchg is atomic between threads or only within a
+  /// single thread.
+  SynchronizationScope getSynchScope() const {
+    return SynchronizationScope((getSubclassDataFromInstruction() & 2) >> 1);
+  }
+
+  Value *getPointerOperand() { return getOperand(0); }
+  const Value *getPointerOperand() const { return getOperand(0); }
+  static unsigned getPointerOperandIndex() { return 0U; }
+
+  Value *getCompareOperand() { return getOperand(1); }
+  const Value *getCompareOperand() const { return getOperand(1); }
+  
+  Value *getNewValOperand() { return getOperand(2); }
+  const Value *getNewValOperand() const { return getOperand(2); }
+  
+  unsigned getPointerAddressSpace() const {
+    return cast<PointerType>(getPointerOperand()->getType())->getAddressSpace();
+  }
+  
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const AtomicCmpXchgInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::AtomicCmpXchg;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+private:
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
+  }
+};
+
+template <>
+struct OperandTraits<AtomicCmpXchgInst> :
+    public FixedNumOperandTraits<AtomicCmpXchgInst, 3> {
+};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(AtomicCmpXchgInst, Value)
+
+//===----------------------------------------------------------------------===//
+//                                AtomicRMWInst Class
+//===----------------------------------------------------------------------===//
+
+/// AtomicRMWInst - an instruction that atomically reads a memory location,
+/// combines it with another value, and then stores the result back.  Returns
+/// the old value.
+///
+class AtomicRMWInst : public Instruction {
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+protected:
+  virtual AtomicRMWInst *clone_impl() const;
+public:
+  /// This enumeration lists the possible modifications atomicrmw can make.  In
+  /// the descriptions, 'p' is the pointer to the instruction's memory location,
+  /// 'old' is the initial value of *p, and 'v' is the other value passed to the
+  /// instruction.  These instructions always return 'old'.
+  enum BinOp {
+    /// *p = v
+    Xchg,
+    /// *p = old + v
+    Add,
+    /// *p = old - v
+    Sub,
+    /// *p = old & v
+    And,
+    /// *p = ~old & v
+    Nand,
+    /// *p = old | v
+    Or,
+    /// *p = old ^ v
+    Xor,
+    /// *p = old >signed v ? old : v
+    Max,
+    /// *p = old <signed v ? old : v
+    Min,
+    /// *p = old >unsigned v ? old : v
+    UMax,
+    /// *p = old <unsigned v ? old : v
+    UMin,
+
+    FIRST_BINOP = Xchg,
+    LAST_BINOP = UMin,
+    BAD_BINOP
+  };
+
+  // allocate space for exactly two operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 2);
+  }
+  AtomicRMWInst(BinOp Operation, Value *Ptr, Value *Val,
+                AtomicOrdering Ordering, SynchronizationScope SynchScope,
+                Instruction *InsertBefore = 0);
+  AtomicRMWInst(BinOp Operation, Value *Ptr, Value *Val,
+                AtomicOrdering Ordering, SynchronizationScope SynchScope,
+                BasicBlock *InsertAtEnd);
+
+  BinOp getOperation() const {
+    return static_cast<BinOp>(getSubclassDataFromInstruction() >> 5);
+  }
+
+  void setOperation(BinOp Operation) {
+    unsigned short SubclassData = getSubclassDataFromInstruction();
+    setInstructionSubclassData((SubclassData & 31) |
+                               (Operation << 5));
+  }
+
+  /// isVolatile - Return true if this is a RMW on a volatile memory location.
+  ///
+  bool isVolatile() const {
+    return getSubclassDataFromInstruction() & 1;
+  }
+
+  /// setVolatile - Specify whether this is a volatile RMW or not.
+  ///
+  void setVolatile(bool V) {
+     setInstructionSubclassData((getSubclassDataFromInstruction() & ~1) |
+                                (unsigned)V);
+  }
+
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  /// Set the ordering constraint on this RMW.
+  void setOrdering(AtomicOrdering Ordering) {
+    assert(Ordering != NotAtomic &&
+           "atomicrmw instructions can only be atomic.");
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~28) |
+                               (Ordering << 2));
+  }
+
+  /// Specify whether this RMW orders other operations with respect to all
+  /// concurrently executing threads, or only with respect to signal handlers
+  /// executing in the same thread.
+  void setSynchScope(SynchronizationScope SynchScope) {
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~2) |
+                               (SynchScope << 1));
+  }
+
+  /// Returns the ordering constraint on this RMW.
+  AtomicOrdering getOrdering() const {
+    return AtomicOrdering((getSubclassDataFromInstruction() & 28) >> 2);
+  }
+
+  /// Returns whether this RMW is atomic between threads or only within a
+  /// single thread.
+  SynchronizationScope getSynchScope() const {
+    return SynchronizationScope((getSubclassDataFromInstruction() & 2) >> 1);
+  }
+
+  Value *getPointerOperand() { return getOperand(0); }
+  const Value *getPointerOperand() const { return getOperand(0); }
+  static unsigned getPointerOperandIndex() { return 0U; }
+
+  Value *getValOperand() { return getOperand(1); }
+  const Value *getValOperand() const { return getOperand(1); }
+
+  unsigned getPointerAddressSpace() const {
+    return cast<PointerType>(getPointerOperand()->getType())->getAddressSpace();
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const AtomicRMWInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::AtomicRMW;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+private:
+  void Init(BinOp Operation, Value *Ptr, Value *Val,
+            AtomicOrdering Ordering, SynchronizationScope SynchScope);
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
+  }
+};
+
+template <>
+struct OperandTraits<AtomicRMWInst>
+    : public FixedNumOperandTraits<AtomicRMWInst,2> {
+};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(AtomicRMWInst, Value)
+
+//===----------------------------------------------------------------------===//
 //                             GetElementPtrInst Class
 //===----------------------------------------------------------------------===//
 

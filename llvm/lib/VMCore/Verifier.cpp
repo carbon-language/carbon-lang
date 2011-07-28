@@ -288,6 +288,8 @@ namespace {
     void visitUserOp1(Instruction &I);
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
     void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
+    void visitAtomicCmpXchgInst(AtomicCmpXchgInst &CXI);
+    void visitAtomicRMWInst(AtomicRMWInst &RMWI);
     void visitFenceInst(FenceInst &FI);
     void visitAllocaInst(AllocaInst &AI);
     void visitExtractValueInst(ExtractValueInst &EVI);
@@ -1325,6 +1327,40 @@ void Verifier::visitAllocaInst(AllocaInst &AI) {
   Assert1(AI.getArraySize()->getType()->isIntegerTy(),
           "Alloca array size must have integer type", &AI);
   visitInstruction(AI);
+}
+
+void Verifier::visitAtomicCmpXchgInst(AtomicCmpXchgInst &CXI) {
+  Assert1(CXI.getOrdering() != NotAtomic,
+          "cmpxchg instructions must be atomic.", &CXI);
+  Assert1(CXI.getOrdering() != Unordered,
+          "cmpxchg instructions cannot be unordered.", &CXI);
+  PointerType *PTy = dyn_cast<PointerType>(CXI.getOperand(0)->getType());
+  Assert1(PTy, "First cmpxchg operand must be a pointer.", &CXI);
+  Type *ElTy = PTy->getElementType();
+  Assert2(ElTy == CXI.getOperand(1)->getType(),
+          "Expected value type does not match pointer operand type!",
+          &CXI, ElTy);
+  Assert2(ElTy == CXI.getOperand(2)->getType(),
+          "Stored value type does not match pointer operand type!",
+          &CXI, ElTy);
+  visitInstruction(CXI);
+}
+
+void Verifier::visitAtomicRMWInst(AtomicRMWInst &RMWI) {
+  Assert1(RMWI.getOrdering() != NotAtomic,
+          "atomicrmw instructions must be atomic.", &RMWI);
+  Assert1(RMWI.getOrdering() != Unordered,
+          "atomicrmw instructions cannot be unordered.", &RMWI);
+  PointerType *PTy = dyn_cast<PointerType>(RMWI.getOperand(0)->getType());
+  Assert1(PTy, "First atomicrmw operand must be a pointer.", &RMWI);
+  Type *ElTy = PTy->getElementType();
+  Assert2(ElTy == RMWI.getOperand(1)->getType(),
+          "Argument value type does not match pointer operand type!",
+          &RMWI, ElTy);
+  Assert1(AtomicRMWInst::FIRST_BINOP <= RMWI.getOperation() &&
+          RMWI.getOperation() <= AtomicRMWInst::LAST_BINOP,
+          "Invalid binary operation!", &RMWI);
+  visitInstruction(RMWI);
 }
 
 void Verifier::visitFenceInst(FenceInst &FI) {

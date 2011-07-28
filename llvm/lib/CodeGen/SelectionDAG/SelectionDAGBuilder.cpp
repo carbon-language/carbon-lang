@@ -3222,6 +3222,12 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
   DAG.setRoot(StoreNode);
 }
 
+void SelectionDAGBuilder::visitAtomicCmpXchg(const AtomicCmpXchgInst &I) {
+}
+
+void SelectionDAGBuilder::visitAtomicRMW(const AtomicRMWInst &I) {
+}
+
 void SelectionDAGBuilder::visitFence(const FenceInst &I) {
   DebugLoc dl = getCurDebugLoc();
   SDValue Ops[3];

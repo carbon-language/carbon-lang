@@ -187,10 +187,12 @@ typedef enum {
 
   /* Atomic operators */
   LLVMFence          = 55,
+  LLVMAtomicCmpXchg  = 56,
+  LLVMAtomicRMW      = 57,
 
   /* Exception Handling Operators */
-  LLVMLandingPad     = 56,
-  LLVMResume         = 57
+  LLVMLandingPad     = 58,
+  LLVMResume         = 59
 
 } LLVMOpcode;
 

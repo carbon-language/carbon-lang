@@ -110,6 +110,9 @@ namespace lltok {
     kw_uge, kw_oeq, kw_one, kw_olt, kw_ogt, kw_ole, kw_oge, kw_ord, kw_uno,
     kw_ueq, kw_une,
 
+    // atomicrmw operations that aren't also instruction keywords.
+    kw_xchg, kw_nand, kw_max, kw_min, kw_umax, kw_umin,
+
     // Instruction Opcodes (Opcode in UIntVal).
     kw_add,  kw_fadd, kw_sub,  kw_fsub, kw_mul,  kw_fmul,
     kw_udiv, kw_sdiv, kw_fdiv,
@@ -126,7 +129,8 @@ namespace lltok {
     kw_ret, kw_br, kw_switch, kw_indirectbr, kw_invoke, kw_unwind, kw_resume,
     kw_unreachable,
 
-    kw_alloca, kw_load, kw_store, kw_fence, kw_getelementptr,
+    kw_alloca, kw_load, kw_store, kw_fence, kw_cmpxchg, kw_atomicrmw,
+    kw_getelementptr,
 
     kw_extractelement, kw_insertelement, kw_shufflevector,
     kw_extractvalue, kw_insertvalue, kw_blockaddress,

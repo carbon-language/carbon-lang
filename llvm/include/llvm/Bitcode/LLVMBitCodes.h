@@ -205,6 +205,23 @@ namespace bitc {
     BINOP_XOR  = 12
   };
 
+  /// These are values used in the bitcode files to encode AtomicRMW operations.
+  /// The values of these enums have no fixed relation to the LLVM IR enum
+  /// values.  Changing these will break compatibility with old files.
+  enum RMWOperations {
+    RMW_XCHG = 0,
+    RMW_ADD = 1,
+    RMW_SUB = 2,
+    RMW_AND = 3,
+    RMW_NAND = 4,
+    RMW_OR = 5,
+    RMW_XOR = 6,
+    RMW_MAX = 7,
+    RMW_MIN = 8,
+    RMW_UMAX = 9,
+    RMW_UMIN = 10
+  };
+
   /// OverflowingBinaryOperatorOptionalFlags - Flags for serializing
   /// OverflowingBinaryOperator's SubclassOptionalData contents.
   enum OverflowingBinaryOperatorOptionalFlags {
@@ -285,7 +302,13 @@ namespace bitc {
 
     FUNC_CODE_DEBUG_LOC        = 35, // DEBUG_LOC:  [Line,Col,ScopeVal, IAVal]
     FUNC_CODE_INST_FENCE       = 36, // FENCE: [ordering, synchscope]
-    FUNC_CODE_INST_LANDINGPAD  = 37  // LANDINGPAD: [ty,val,val,num,id0,val0...]
+    FUNC_CODE_INST_LANDINGPAD  = 37, // LANDINGPAD: [ty,val,val,num,id0,val0...]
+    FUNC_CODE_INST_CMPXCHG     = 38, // CMPXCHG: [ptrty,ptr,cmp,new, align, vol,
+                                     //           ordering, synchscope]
+    FUNC_CODE_INST_ATOMICRMW   = 39  // ATOMICRMW: [ptrty,ptr,val, operation,
+                                     //             align, vol,
+                                     //             ordering, synchscope]
+
   };
 } // End bitc namespace
 } // End llvm namespace

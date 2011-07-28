@@ -579,6 +579,9 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(oeq); KEYWORD(one); KEYWORD(olt); KEYWORD(ogt); KEYWORD(ole);
   KEYWORD(oge); KEYWORD(ord); KEYWORD(uno); KEYWORD(ueq); KEYWORD(une);
 
+  KEYWORD(xchg); KEYWORD(nand); KEYWORD(max); KEYWORD(min); KEYWORD(umax);
+  KEYWORD(umin);
+
   KEYWORD(x);
   KEYWORD(blockaddress);
 
@@ -645,6 +648,8 @@ lltok::Kind LLLexer::LexIdentifier() {
   INSTKEYWORD(alloca,      Alloca);
   INSTKEYWORD(load,        Load);
   INSTKEYWORD(store,       Store);
+  INSTKEYWORD(cmpxchg,     AtomicCmpXchg);
+  INSTKEYWORD(atomicrmw,   AtomicRMW);
   INSTKEYWORD(fence,       Fence);
   INSTKEYWORD(getelementptr, GetElementPtr);
 

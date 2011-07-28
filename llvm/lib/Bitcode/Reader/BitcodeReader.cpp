@@ -131,6 +131,23 @@ static int GetDecodedBinaryOpcode(unsigned Val, Type *Ty) {
   }
 }
 
+static AtomicRMWInst::BinOp GetDecodedRMWOperation(unsigned Val) {
+  switch (Val) {
+  default: return AtomicRMWInst::BAD_BINOP;
+  case bitc::RMW_XCHG: return AtomicRMWInst::Xchg;
+  case bitc::RMW_ADD: return AtomicRMWInst::Add;
+  case bitc::RMW_SUB: return AtomicRMWInst::Sub;
+  case bitc::RMW_AND: return AtomicRMWInst::And;
+  case bitc::RMW_NAND: return AtomicRMWInst::Nand;
+  case bitc::RMW_OR: return AtomicRMWInst::Or;
+  case bitc::RMW_XOR: return AtomicRMWInst::Xor;
+  case bitc::RMW_MAX: return AtomicRMWInst::Max;
+  case bitc::RMW_MIN: return AtomicRMWInst::Min;
+  case bitc::RMW_UMAX: return AtomicRMWInst::UMax;
+  case bitc::RMW_UMIN: return AtomicRMWInst::UMin;
+  }
+}
+
 static AtomicOrdering GetDecodedOrdering(unsigned Val) {
   switch (Val) {
   case bitc::ORDERING_NOTATOMIC: return NotAtomic;
@@ -2592,6 +2609,48 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         return Error("Invalid STORE record");
 
       I = new StoreInst(Val, Ptr, Record[OpNum+1], (1 << Record[OpNum]) >> 1);
+      InstructionList.push_back(I);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_CMPXCHG: {
+      // CMPXCHG:[ptrty, ptr, cmp, new, vol, ordering, synchscope]
+      unsigned OpNum = 0;
+      Value *Ptr, *Cmp, *New;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Ptr) ||
+          getValue(Record, OpNum,
+                    cast<PointerType>(Ptr->getType())->getElementType(), Cmp) ||
+          getValue(Record, OpNum,
+                    cast<PointerType>(Ptr->getType())->getElementType(), New) ||
+          OpNum+3 != Record.size())
+        return Error("Invalid CMPXCHG record");
+      AtomicOrdering Ordering = GetDecodedOrdering(Record[OpNum+1]);
+      if (Ordering == NotAtomic)
+        return Error("Invalid CMPXCHG record");
+      SynchronizationScope SynchScope = GetDecodedSynchScope(Record[OpNum+2]);
+      I = new AtomicCmpXchgInst(Ptr, Cmp, New, Ordering, SynchScope);
+      cast<AtomicCmpXchgInst>(I)->setVolatile(Record[OpNum]);
+      InstructionList.push_back(I);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_ATOMICRMW: {
+      // ATOMICRMW:[ptrty, ptr, val, op, vol, ordering, synchscope]
+      unsigned OpNum = 0;
+      Value *Ptr, *Val;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Ptr) ||
+          getValue(Record, OpNum,
+                    cast<PointerType>(Ptr->getType())->getElementType(), Val) ||
+          OpNum+4 != Record.size())
+        return Error("Invalid ATOMICRMW record");
+      AtomicRMWInst::BinOp Operation = GetDecodedRMWOperation(Record[OpNum]);
+      if (Operation < AtomicRMWInst::FIRST_BINOP ||
+          Operation > AtomicRMWInst::LAST_BINOP)
+        return Error("Invalid ATOMICRMW record");
+      AtomicOrdering Ordering = GetDecodedOrdering(Record[OpNum+2]);
+      if (Ordering == NotAtomic)
+        return Error("Invalid ATOMICRMW record");
+      SynchronizationScope SynchScope = GetDecodedSynchScope(Record[OpNum+3]);
+      I = new AtomicRMWInst(Operation, Ptr, Val, Ordering, SynchScope);
+      cast<AtomicRMWInst>(I)->setVolatile(Record[OpNum+1]);
       InstructionList.push_back(I);
       break;
     }

@@ -170,6 +170,8 @@ public:
   RetTy visitAllocaInst(AllocaInst &I)              { DELEGATE(Instruction); }
   RetTy visitLoadInst(LoadInst     &I)              { DELEGATE(Instruction); }
   RetTy visitStoreInst(StoreInst   &I)              { DELEGATE(Instruction); }
+  RetTy visitAtomicCmpXchgInst(AtomicCmpXchgInst &I){ DELEGATE(Instruction); }
+  RetTy visitAtomicRMWInst(AtomicRMWInst &I)        { DELEGATE(Instruction); }
   RetTy visitFenceInst(FenceInst   &I)              { DELEGATE(Instruction); }
   RetTy visitGetElementPtrInst(GetElementPtrInst &I){ DELEGATE(Instruction); }
   RetTy visitPHINode(PHINode       &I)              { DELEGATE(Instruction); }
