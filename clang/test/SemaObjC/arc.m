@@ -41,10 +41,10 @@ __weak __strong id x; // expected-error {{the type '__strong id' already has ret
 // rdar://8843638
 
 @interface I
-- (id)retain;
-- (id)autorelease;
-- (oneway void)release;
-- (NSUInteger)retainCount;
+- (id)retain; // expected-note {{method declared here}}
+- (id)autorelease; // expected-note {{method declared here}}
+- (oneway void)release; // expected-note {{method declared here}}
+- (NSUInteger)retainCount; // expected-note {{method declared here}}
 @end
 
 @implementation I
@@ -55,10 +55,14 @@ __weak __strong id x; // expected-error {{the type '__strong id' already has ret
 @end
 
 @implementation I(CAT)
-- (id)retain{return 0;} // expected-error {{ARC forbids implementation of 'retain'}}
-- (id)autorelease{return 0;} // expected-error {{ARC forbids implementation of 'autorelease'}}
-- (oneway void)release{} // expected-error {{ARC forbids implementation of 'release'}}
-- (NSUInteger)retainCount{ return 0; } // expected-error {{ARC forbids implementation of 'retainCount'}}
+- (id)retain{return 0;} // expected-error {{ARC forbids implementation of 'retain'}} \
+                        // expected-warning {{category is implementing a method which will also be implemented by its primary class}}
+- (id)autorelease{return 0;} // expected-error {{ARC forbids implementation of 'autorelease'}} \
+                         // expected-warning {{category is implementing a method which will also be implemented by its primary class}}
+- (oneway void)release{} // expected-error {{ARC forbids implementation of 'release'}} \
+                          // expected-warning {{category is implementing a method which will also be implemented by its primary class}}
+- (NSUInteger)retainCount{ return 0; } // expected-error {{ARC forbids implementation of 'retainCount'}} \
+                          // expected-warning {{category is implementing a method which will also be implemented by its primary class}}
 @end
 
 // rdar://8861761

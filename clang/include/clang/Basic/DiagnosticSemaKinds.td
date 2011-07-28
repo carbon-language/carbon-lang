@@ -409,6 +409,9 @@ def warn_non_contravariant_param_types : Warning<
 def warn_conflicting_variadic :Warning<
   "conflicting variadic declaration of method and its "
   "%select{implementation|declaration}0">;
+def warn_category_method_impl_match:Warning<
+  "category is implementing a method which will also be implemented"
+  " by its primary class">, InGroup<ObjCProtocolMethodImpl>;
 
 def warn_implements_nscopying : Warning<
 "default assign attribute on property %0 which implements "

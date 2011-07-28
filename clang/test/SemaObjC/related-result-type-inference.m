@@ -149,8 +149,8 @@ void test_inference() {
 @end
 
 // <rdar://problem/9340699>
-@interface G
-- (id)_ABC_init __attribute__((objc_method_family(init)));
+@interface G 
+- (id)_ABC_init __attribute__((objc_method_family(init))); // expected-note {{method declared here}}
 @end
 
 @interface G (Additions)
@@ -158,7 +158,7 @@ void test_inference() {
 @end
 
 @implementation G (Additions)
-- (id)_ABC_init {
+- (id)_ABC_init { // expected-warning {{category is implementing a method which will also be implemented by its primary class}}
   return 0;
 }
 - (id)_ABC_init2 {

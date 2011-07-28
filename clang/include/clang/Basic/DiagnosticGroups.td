@@ -302,3 +302,4 @@ def Microsoft : DiagGroup<"microsoft">;
 
 def ObjCNonUnifiedException : DiagGroup<"objc-nonunified-exceptions">;
 
+def ObjCProtocolMethodImpl : DiagGroup<"objc-protocol-method-implementation">;
