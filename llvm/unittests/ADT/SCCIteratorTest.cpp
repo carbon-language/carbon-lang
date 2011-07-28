@@ -322,6 +322,21 @@ TEST(SCCIteratorTest, AllSmallGraphs) {
       EXPECT_TRUE(NodesInSomeSCC.Meet(NodesInThisSCC).isEmpty());
 
       NodesInSomeSCC = NodesInSomeSCC.Join(NodesInThisSCC);
+
+      // Check a property that is specific to the LLVM SCC iterator and
+      // guaranteed by it: if a node in SCC S1 has an edge to a node in
+      // SCC S2, then S1 is visited *after* S2.  This means that the set
+      // of nodes reachable from this SCC must be contained either in the
+      // union of this SCC and all previously visited SCC's.
+
+      for (unsigned i = 0; i != NUM_NODES; ++i)
+        if (NodesInThisSCC.count(i)) {
+          GT::NodeSubset NodesReachableFromSCC = G.NodesReachableFrom(i);
+          EXPECT_TRUE(NodesReachableFromSCC.isSubsetOf(NodesInSomeSCC));
+          // The result must be the same for all other nodes in this SCC, so
+          // there is no point in checking them.
+          break;
+        }
     }
 
     // Finally, check that the nodes in some SCC are exactly those that are
