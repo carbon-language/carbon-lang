@@ -570,14 +570,16 @@ public:
   createOutputFile(StringRef OutputPath,
                    bool Binary = true, bool RemoveFileOnSignal = true,
                    StringRef BaseInput = "",
-                   StringRef Extension = "");
+                   StringRef Extension = "",
+                   bool UseTemporary = false);
 
   /// Create a new output file, optionally deriving the output path name.
   ///
   /// If \arg OutputPath is empty, then createOutputFile will derive an output
   /// path location as \arg BaseInput, with any suffix removed, and \arg
-  /// Extension appended. If OutputPath is not stdout createOutputFile will
-  /// create a new temporary file that must be renamed to OutputPath in the end.
+  /// Extension appended. If OutputPath is not stdout and \arg UseTemporary
+  /// is true, createOutputFile will create a new temporary file that must be
+  /// renamed to OutputPath in the end.
   ///
   /// \param OutputPath - If given, the path to the output file.
   /// \param Error [out] - On failure, the error message.
@@ -588,6 +590,8 @@ public:
   /// \param RemoveFileOnSignal - Whether the file should be registered with
   /// llvm::sys::RemoveFileOnSignal. Note that this is not safe for
   /// multithreaded use, as the underlying signal mechanism is not reentrant
+  /// \param UseTemporary - Create a new temporary file that must be renamed to
+  ///         OutputPath in the end
   /// \param ResultPathName [out] - If given, the result path name will be
   /// stored here on success.
   /// \param TempPathName [out] - If given, the temporary file path name
@@ -597,6 +601,7 @@ public:
                    bool Binary = true, bool RemoveFileOnSignal = true,
                    StringRef BaseInput = "",
                    StringRef Extension = "",
+                   bool UseTemporary = false,
                    std::string *ResultPathName = 0,
                    std::string *TempPathName = 0);
 

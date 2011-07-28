@@ -2309,23 +2309,17 @@ CXSaveError ASTUnit::Save(StringRef File) {
 
   // Write to a temporary file and later rename it to the actual file, to avoid
   // possible race conditions.
-  llvm::sys::Path TempPath(File);
-  if (TempPath.makeUnique(/*reuse_current=*/false, /*ErrMsg*/0))
+  llvm::SmallString<128> TempPath;
+  TempPath = File;
+  TempPath += "-%%%%%%%%";
+  int fd;
+  if (llvm::sys::fs::unique_file(TempPath.str(), fd, TempPath,
+                                 /*makeAbsolute=*/false))
     return CXSaveError_Unknown;
-  // makeUnique may or may not have created the file. Try deleting before
-  // opening so that we can use F_Excl for exclusive access.
-  TempPath.eraseFromDisk();
 
   // FIXME: Can we somehow regenerate the stat cache here, or do we need to 
   // unconditionally create a stat cache when we parse the file?
-  std::string ErrorInfo;
-  llvm::raw_fd_ostream Out(TempPath.c_str(), ErrorInfo,
-                           llvm::raw_fd_ostream::F_Binary |
-                           // if TempPath already exists, we should not try to
-                           // overwrite it, we want to avoid race conditions.
-                           llvm::raw_fd_ostream::F_Excl);
-  if (!ErrorInfo.empty() || Out.has_error())
-    return CXSaveError_Unknown;
+  llvm::raw_fd_ostream Out(fd, /*shouldClose=*/true);
 
   serialize(Out);
   Out.close();

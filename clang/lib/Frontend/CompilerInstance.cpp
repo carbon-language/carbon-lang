@@ -437,11 +437,13 @@ llvm::raw_fd_ostream *
 CompilerInstance::createOutputFile(StringRef OutputPath,
                                    bool Binary, bool RemoveFileOnSignal,
                                    StringRef InFile,
-                                   StringRef Extension) {
+                                   StringRef Extension,
+                                   bool UseTemporary) {
   std::string Error, OutputPathName, TempPathName;
   llvm::raw_fd_ostream *OS = createOutputFile(OutputPath, Error, Binary,
                                               RemoveFileOnSignal,
                                               InFile, Extension,
+                                              UseTemporary,
                                               &OutputPathName,
                                               &TempPathName);
   if (!OS) {
@@ -465,6 +467,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
                                    bool RemoveFileOnSignal,
                                    StringRef InFile,
                                    StringRef Extension,
+                                   bool UseTemporary,
                                    std::string *ResultPathName,
                                    std::string *TempPathName) {
   std::string OutFile, TempFile;
@@ -480,8 +483,11 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
   } else {
     OutFile = "-";
   }
-  
-  if (OutFile != "-") {
+
+  llvm::OwningPtr<llvm::raw_fd_ostream> OS;
+  std::string OSFile;
+
+  if (UseTemporary && OutFile != "-") {
     llvm::sys::Path OutPath(OutFile);
     // Only create the temporary if we can actually write to OutPath, otherwise
     // we want to fail early.
@@ -489,21 +495,26 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
     if ((llvm::sys::fs::exists(OutPath.str(), Exists) || !Exists) ||
         (OutPath.isRegularFile() && OutPath.canWrite())) {
       // Create a temporary file.
-      llvm::sys::Path TempPath(OutFile);
-      if (!TempPath.makeUnique(/*reuse_current=*/false, /*ErrMsg*/0))
-        TempFile = TempPath.str();
+      llvm::SmallString<128> TempPath;
+      TempPath = OutFile;
+      TempPath += "-%%%%%%%%";
+      int fd;
+      if (llvm::sys::fs::unique_file(TempPath.str(), fd, TempPath,
+                               /*makeAbsolute=*/false) == llvm::errc::success) {
+        OS.reset(new llvm::raw_fd_ostream(fd, /*shouldClose=*/true));
+        OSFile = TempFile = TempPath.str();
+      }
     }
   }
 
-  std::string OSFile = OutFile;
-  if (!TempFile.empty())
-    OSFile = TempFile;
-
-  llvm::OwningPtr<llvm::raw_fd_ostream> OS(
-    new llvm::raw_fd_ostream(OSFile.c_str(), Error,
-                             (Binary ? llvm::raw_fd_ostream::F_Binary : 0)));
-  if (!Error.empty())
-    return 0;
+  if (!OS) {
+    OSFile = OutFile;
+    OS.reset(
+      new llvm::raw_fd_ostream(OSFile.c_str(), Error,
+                               (Binary ? llvm::raw_fd_ostream::F_Binary : 0)));
+    if (!Error.empty())
+      return 0;
+  }
 
   // Make sure the out stream file gets removed if we crash.
   if (RemoveFileOnSignal)
