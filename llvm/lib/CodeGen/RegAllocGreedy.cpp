@@ -398,12 +398,15 @@ void RAGreedy::enqueue(LiveInterval *LI) {
   if (ExtraRegInfo[Reg].Stage == RS_New)
     ExtraRegInfo[Reg].Stage = RS_Assign;
 
-  if (ExtraRegInfo[Reg].Stage == RS_Split)
+  if (ExtraRegInfo[Reg].Stage == RS_Split) {
     // Unsplit ranges that couldn't be allocated immediately are deferred until
     // everything else has been allocated. Long ranges are allocated last so
     // they are split against realistic interference.
-    Prio = (1u << 31) - Size;
-  else {
+    if (CompactRegions)
+      Prio = Size;
+    else
+      Prio = (1u << 31) - Size;
+  } else {
     // Everything else is allocated in long->short order. Long ranges that don't
     // fit should be spilled ASAP so they don't create interference.
     Prio = (1u << 31) + Size;
