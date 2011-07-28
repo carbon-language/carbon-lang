@@ -1406,6 +1406,10 @@ public:
 
   virtual void ReadUsedVTables(SmallVectorImpl<ExternalVTableUse> &VTables);
 
+  virtual void ReadPendingInstantiations(
+                 SmallVectorImpl<std::pair<ValueDecl *, 
+                                           SourceLocation> > &Pending);
+
   /// \brief Load a selector from disk, registering its ID if it exists.
   void LoadSelector(Selector Sel);
 

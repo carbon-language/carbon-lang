@@ -27,6 +27,7 @@ struct ObjCMethodList;
 class Scope;
 class Sema;
 class TypedefNameDecl;
+class ValueDecl;
 class VarDecl;
   
 /// \brief A simple structure that captures a vtable use for the purposes of
@@ -161,6 +162,17 @@ public:
   /// vector. Note that this routine may be invoked multiple times; the external
   /// source should take care not to introduce the same vtables repeatedly.
   virtual void ReadUsedVTables(SmallVectorImpl<ExternalVTableUse> &VTables) {}
+
+  /// \brief Read the set of pending instantiations known to the external
+  /// Sema source.
+  ///
+  /// The external source should append its own pending instantiations to the
+  /// given vector. Note that this routine may be invoked multiple times; the
+  /// external source should take care not to introduce the same instantiations
+  /// repeatedly.
+  virtual void ReadPendingInstantiations(
+                 SmallVectorImpl<std::pair<ValueDecl *, 
+                                           SourceLocation> > &Pending) {}
 
   // isa/cast/dyn_cast support
   static bool classof(const ExternalASTSource *Source) {

@@ -4405,15 +4405,6 @@ void ASTReader::InitializeSema(Sema &S) {
       SemaObj->StdBadAlloc = SemaDeclRefs[1];
   }
 
-  // If there were any pending implicit instantiations, deserialize them
-  // and add them to Sema's queue of such instantiations.
-  for (unsigned Idx = 0, N = PendingInstantiations.size(); Idx < N;) {
-    ValueDecl *D = cast<ValueDecl>(GetDecl(PendingInstantiations[Idx++]));
-    SourceLocation Loc
-      = SourceLocation::getFromRawEncoding(PendingInstantiations[Idx++]);
-    SemaObj->PendingInstantiations.push_back(std::make_pair(D, Loc));
-  }
-
   if (!FPPragmaOptions.empty()) {
     assert(FPPragmaOptions.size() == 1 && "Wrong number of FP_PRAGMA_OPTIONS");
     SemaObj->FPFeatures.fp_contract = FPPragmaOptions[0];
@@ -4658,6 +4649,17 @@ void ASTReader::ReadUsedVTables(SmallVectorImpl<ExternalVTableUse> &VTables) {
   }
   
   VTableUses.clear();
+}
+
+void ASTReader::ReadPendingInstantiations(
+       SmallVectorImpl<std::pair<ValueDecl *, SourceLocation> > &Pending) {
+  for (unsigned Idx = 0, N = PendingInstantiations.size(); Idx < N;) {
+    ValueDecl *D = cast<ValueDecl>(GetDecl(PendingInstantiations[Idx++]));
+    SourceLocation Loc
+      = SourceLocation::getFromRawEncoding(PendingInstantiations[Idx++]);
+    Pending.push_back(std::make_pair(D, Loc));
+  }  
+  PendingInstantiations.clear();
 }
 
 void ASTReader::LoadSelector(Selector Sel) {
