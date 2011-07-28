@@ -343,15 +343,7 @@ public:
   /// \brief Offset of each declaration within the bitstream, indexed
   /// by the declaration ID (-1).
   const uint32_t *DeclOffsets;
-  
-  /// \brief A snapshot of the pending instantiations in the chain.
-  ///
-  /// This record tracks the instantiations that Sema has to perform at the
-  /// end of the TU. It consists of a pair of values for every pending
-  /// instantiation where the first value is the ID of the decl and the second
-  /// is the instantiation location.
-  SmallVector<uint64_t, 64> PendingInstantiations;
-  
+    
   /// \brief The number of C++ base specifier sets in this AST file.
   unsigned LocalNumCXXBaseSpecifiers;
   
@@ -736,6 +728,14 @@ private:
   /// CodeGen has to emit VTables for these records, so they have to be eagerly
   /// deserialized.
   SmallVector<uint64_t, 64> VTableUses;
+
+  /// \brief A snapshot of the pending instantiations in the chain.
+  ///
+  /// This record tracks the instantiations that Sema has to perform at the
+  /// end of the TU. It consists of a pair of values for every pending
+  /// instantiation where the first value is the ID of the decl and the second
+  /// is the instantiation location.
+  SmallVector<uint64_t, 64> PendingInstantiations;
 
   //@}
 

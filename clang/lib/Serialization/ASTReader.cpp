@@ -2334,8 +2334,19 @@ ASTReader::ReadASTBlock(Module &F) {
       break;
 
     case PENDING_IMPLICIT_INSTANTIATIONS:
-      for (unsigned I = 0, N = Record.size(); I != N; ++I)
-        F.PendingInstantiations.push_back(getGlobalDeclID(F, Record[I]));
+      if (PendingInstantiations.size() % 2 != 0) {
+        Error("Invalid PENDING_IMPLICIT_INSTANTIATIONS block");
+        return Failure;
+      }
+        
+      // Later lists of pending instantiations overwrite earlier ones.
+      // FIXME: This is most certainly wrong for modules.
+      PendingInstantiations.clear();
+      for (unsigned I = 0, N = Record.size(); I != N; /* in loop */) {
+        PendingInstantiations.push_back(getGlobalDeclID(F, Record[I++]));
+        PendingInstantiations.push_back(
+          ReadSourceLocation(F, Record, I).getRawEncoding());
+      }
       break;
 
     case SEMA_DECL_REFS:
@@ -4394,17 +4405,12 @@ void ASTReader::InitializeSema(Sema &S) {
       SemaObj->StdBadAlloc = SemaDeclRefs[1];
   }
 
-  // The special data sets below always come from the most recent PCH,
-  // which is at the front of the chain.
-  Module &F = ModuleMgr.getPrimaryModule();
-
   // If there were any pending implicit instantiations, deserialize them
   // and add them to Sema's queue of such instantiations.
-  assert(F.PendingInstantiations.size() % 2 == 0 &&
-         "Expected pairs of entries");
-  for (unsigned Idx = 0, N = F.PendingInstantiations.size(); Idx < N;) {
-    ValueDecl *D=cast<ValueDecl>(GetDecl(F.PendingInstantiations[Idx++]));
-    SourceLocation Loc = ReadSourceLocation(F, F.PendingInstantiations,Idx);
+  for (unsigned Idx = 0, N = PendingInstantiations.size(); Idx < N;) {
+    ValueDecl *D = cast<ValueDecl>(GetDecl(PendingInstantiations[Idx++]));
+    SourceLocation Loc
+      = SourceLocation::getFromRawEncoding(PendingInstantiations[Idx++]);
     SemaObj->PendingInstantiations.push_back(std::make_pair(D, Loc));
   }
 
