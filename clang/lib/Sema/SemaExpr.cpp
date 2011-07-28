@@ -36,6 +36,7 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/ParsedTemplate.h"
+#include "clang/Sema/SemaFixItUtils.h"
 #include "clang/Sema/Template.h"
 using namespace clang;
 using namespace sema;
@@ -8668,21 +8669,31 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   bool isInvalid = false;
   unsigned DiagKind;
   FixItHint Hint;
+  ConversionFixItGenerator ConvHints;
+  bool MayHaveConvFixit = false;
 
   switch (ConvTy) {
   default: assert(0 && "Unknown conversion type");
   case Compatible: return false;
   case PointerToInt:
     DiagKind = diag::ext_typecheck_convert_pointer_int;
+    ConvHints.tryToFixConversion(SrcExpr, SrcType, DstType, *this);
+    MayHaveConvFixit = true;
     break;
   case IntToPointer:
     DiagKind = diag::ext_typecheck_convert_int_pointer;
+    ConvHints.tryToFixConversion(SrcExpr, SrcType, DstType, *this);
+    MayHaveConvFixit = true;
     break;
   case IncompatiblePointer:
     MakeObjCStringLiteralFixItHint(*this, DstType, SrcExpr, Hint);
     DiagKind = diag::ext_typecheck_convert_incompatible_pointer;
     CheckInferredResultType = DstType->isObjCObjectPointerType() &&
       SrcType->isObjCObjectPointerType();
+    if (Hint.isNull() && !CheckInferredResultType) {
+      ConvHints.tryToFixConversion(SrcExpr, SrcType, DstType, *this);
+    }
+    MayHaveConvFixit = true;
     break;
   case IncompatiblePointerSign:
     DiagKind = diag::ext_typecheck_convert_incompatible_pointer_sign;
@@ -8746,6 +8757,8 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   case Incompatible:
     DiagKind = diag::err_typecheck_convert_incompatible;
+    ConvHints.tryToFixConversion(SrcExpr, SrcType, DstType, *this);
+    MayHaveConvFixit = true;
     isInvalid = true;
     break;
   }
@@ -8770,8 +8783,23 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   }
 
-  Diag(Loc, DiagKind) << FirstType << SecondType << Action
-    << SrcExpr->getSourceRange() << Hint;
+  PartialDiagnostic FDiag = PDiag(DiagKind);
+  FDiag << FirstType << SecondType << Action << SrcExpr->getSourceRange();
+
+  // If we can fix the conversion, suggest the FixIts.
+  assert(ConvHints.isNull() || Hint.isNull());
+  if (!ConvHints.isNull()) {
+    for (llvm::SmallVector<FixItHint, 1>::iterator
+        HI = ConvHints.Hints.begin(), HE = ConvHints.Hints.end();
+        HI != HE; ++HI)
+      FDiag << *HI;
+  } else {
+    FDiag << Hint;
+  }
+  if (MayHaveConvFixit) { FDiag << (unsigned) (ConvHints.Kind); }
+
+  Diag(Loc, FDiag);
+
   if (CheckInferredResultType)
     EmitRelatedResultTypeNote(SrcExpr);
   

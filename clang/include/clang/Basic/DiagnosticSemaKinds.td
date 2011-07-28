@@ -3547,7 +3547,11 @@ def err_typecheck_convert_incompatible : Error<
   "%select{from incompatible type|to parameter of incompatible type|"
   "from a function with incompatible result type|to incompatible type|"
   "with an expression of incompatible type|to parameter of incompatible type|"
-  "to incompatible type}2 %1">;
+  "to incompatible type}2 %1; "
+  "%select{|dereference with *|"
+  "take the address with &|"
+  "remove *|"
+  "remove &}3">;
 def warn_incompatible_qualified_id : Warning<
   "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
   " %0 "
@@ -3560,13 +3564,21 @@ def ext_typecheck_convert_pointer_int : ExtWarn<
   "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
   " %0 "
   "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1">;
+  "with an expression of type|to parameter of type|to type}2 %1; "
+  "%select{|dereference with *|"
+  "take the address with &|"
+  "remove *|"
+  "remove &}3">;
 def ext_typecheck_convert_int_pointer : ExtWarn<
   "incompatible integer to pointer conversion "
   "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
   " %0 "
   "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1">;
+  "with an expression of type|to parameter of type|to type}2 %1; "
+  "%select{|dereference with *|"
+  "take the address with &|"
+  "remove *|"
+  "remove &}3">;
 def ext_typecheck_convert_pointer_void_func : Extension<
   "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
   " %0 "
@@ -3585,7 +3597,11 @@ def ext_typecheck_convert_incompatible_pointer : ExtWarn<
   "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
   " %0 "
   "%select{from|to parameter of type|from a function with result type|to type|"
-  "with an expression of type|to parameter of type|to type}2 %1">,
+  "with an expression of type|to parameter of type|to type}2 %1"
+  "%select{|dereference with *|"
+  "take the address with &|"
+  "remove *|"
+  "remove &}3">,
   InGroup<DiagGroup<"incompatible-pointer-types">>;
 def ext_typecheck_convert_discards_qualifiers : ExtWarn<
   "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"

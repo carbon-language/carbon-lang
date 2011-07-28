@@ -2363,12 +2363,12 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
         Diag(From->getSourceRange().getBegin(),
              diag::ext_typecheck_convert_incompatible_pointer)
           << ToType << From->getType() << Action
-          << From->getSourceRange();
+          << From->getSourceRange() << 0;
       else
         Diag(From->getSourceRange().getBegin(),
              diag::ext_typecheck_convert_incompatible_pointer)
           << From->getType() << ToType << Action
-          << From->getSourceRange();
+          << From->getSourceRange() << 0;
 
       if (From->getType()->isObjCObjectPointerType() &&
           ToType->isObjCObjectPointerType())
