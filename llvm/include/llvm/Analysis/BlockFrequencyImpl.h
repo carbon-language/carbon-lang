@@ -248,6 +248,8 @@ class BlockFrequencyImpl {
 
         assert(Res <= UINT32_MAX);
         CycleProb[Head] += (uint32_t) Res;
+        DEBUG(dbgs() << "  CycleProb[" << getBlockName(Head) << "] += " << Res
+                     << " --> " << CycleProb[Head] << "\n");
       }
     }
   }
