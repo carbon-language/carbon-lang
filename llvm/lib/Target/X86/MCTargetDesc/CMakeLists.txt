@@ -9,3 +9,5 @@ add_dependencies(LLVMX86Desc X86CommonTableGen)
 
 # Hack: we need to include 'main' target directory to grab private headers
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/..)
+
+target_link_libraries(LLVMX86Desc LLVMX86AsmPrinter)

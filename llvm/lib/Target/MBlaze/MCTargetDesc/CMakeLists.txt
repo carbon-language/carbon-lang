@@ -5,3 +5,5 @@ add_llvm_library(LLVMMBlazeDesc
   MBlazeMCTargetDesc.cpp
   )
 add_dependencies(LLVMMBlazeDesc MBlazeCommonTableGen)
+
+target_link_libraries(LLVMMBlazeDesc LLVMMBlazeAsmPrinter)

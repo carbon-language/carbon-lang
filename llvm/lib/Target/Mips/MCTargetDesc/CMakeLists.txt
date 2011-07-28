@@ -3,3 +3,5 @@ add_llvm_library(LLVMMipsDesc
   MipsMCAsmInfo.cpp
   )
 add_dependencies(LLVMMipsDesc MipsCommonTableGen)
+
+target_link_libraries(LLVMMipsDesc LLVMMipsAsmPrinter)
