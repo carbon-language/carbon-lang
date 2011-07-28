@@ -132,7 +132,7 @@ __udivmodti4(tu_int a, tu_int b, tu_int* rem)
                     *rem = n.s.low & (d.s.low - 1);
                 if (d.s.low == 1)
                     return n.all;
-                unsigned sr = __builtin_ctzll(d.s.low);
+                sr = __builtin_ctzll(d.s.low);
                 q.s.high = n.s.high >> sr;
                 q.s.low = (n.s.high << (n_udword_bits - sr)) | (n.s.low >> sr);
                 return q.all;
