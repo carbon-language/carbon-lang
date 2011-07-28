@@ -1,14 +1,11 @@
-// RUN: %clang_cc1 %s -emit-llvm -O0 -o - | FileCheck %s
+// RUN: %clang_cc1 %s -emit-llvm -triple arm-apple-darwin -o - | FileCheck %s
 // PR 5406
-
-// XFAIL: *
-// XTARGET: arm
 
 typedef struct { char x[3]; } A0;
 void foo (int i, ...);
 
 
-// CHECK: call void (i32, ...)* @foo(i32 1, i32 {{.*}}) nounwind
+// CHECK: call arm_aapcscc  void (i32, ...)* @foo(i32 1, [1 x i32] {{.*}})
 int main (void)
 {
   A0 a3;
