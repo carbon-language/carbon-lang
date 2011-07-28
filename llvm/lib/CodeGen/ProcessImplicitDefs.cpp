@@ -125,8 +125,14 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
             LiveVariables::VarInfo& vi = LV->getVarInfo(MO.getReg());
             vi.removeKill(MI);
           }
+          unsigned Reg = MI->getOperand(0).getReg();
           MI->eraseFromParent();
           Changed = true;
+
+          // A REG_SEQUENCE may have been expanded into partial definitions.
+          // If this was the last one, mark Reg as implicitly defined.
+          if (TargetRegisterInfo::isVirtualRegister(Reg) && MRI->def_empty(Reg))
+            ImpDefRegs.insert(Reg);
           continue;
         }
       }
