@@ -884,7 +884,6 @@ def CVTTPS2DQrm : SSI<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                       [(set VR128:$dst,
                             (int_x86_sse2_cvttps2dq (memop addr:$src)))]>;
 
-
 def Int_VCVTTPS2DQrr : I<0x5B, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                         "vcvttps2dq\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst,
@@ -895,6 +894,16 @@ def Int_VCVTTPS2DQrm : I<0x5B, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                         [(set VR128:$dst, (int_x86_sse2_cvttps2dq
                                            (memop addr:$src)))]>,
                       XS, VEX, Requires<[HasAVX]>;
+
+def : Pat<(v4f32 (sint_to_fp (v4i32 VR128:$src))),
+          (Int_CVTDQ2PSrr VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(v4i32 (fp_to_sint (v4f32 VR128:$src))),
+          (CVTTPS2DQrr VR128:$src)>, Requires<[HasSSE2]>;
+
+def : Pat<(v8f32 (sint_to_fp (v8i32 VR256:$src))),
+          (VCVTDQ2PSYrr VR256:$src)>, Requires<[HasAVX]>;
+def : Pat<(v8i32 (fp_to_sint (v8f32 VR256:$src))),
+          (VCVTTPS2DQYrr VR256:$src)>, Requires<[HasAVX]>;
 
 def Int_VCVTTPD2DQrr : VPDI<0xE6, MRMSrcReg, (outs VR128:$dst),
                             (ins VR128:$src),
@@ -3856,12 +3865,6 @@ def : Pat<(v4f32 (movlp:$src3 VR128:$src1, (v4f32 VR128:$src2))),
 // Set lowest element and zero upper elements.
 def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
           (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
-
-// vector -> vector casts
-def : Pat<(v4f32 (sint_to_fp (v4i32 VR128:$src))),
-          (Int_CVTDQ2PSrr VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 (fp_to_sint (v4f32 VR128:$src))),
-          (CVTTPS2DQrr VR128:$src)>, Requires<[HasSSE2]>;
 
 // Use movaps / movups for SSE integer load / store (one byte shorter).
 // The instructions selected below are then converted to MOVDQA/MOVDQU
