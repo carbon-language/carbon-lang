@@ -153,6 +153,9 @@ public:
 
   virtual StoreRef BindDeclWithNoInit(Store store, const VarRegion *VR) = 0;
   
+  virtual bool includedInBindings(Store store,
+                                  const MemRegion *region) const = 0;
+  
   /// If the StoreManager supports it, increment the reference count of
   /// the specified Store object.
   virtual void incrementReferenceCount(Store store) {}
@@ -270,10 +273,8 @@ public:
 };
 
 // FIXME: Do we need to pass GRStateManager anymore?
-StoreManager *CreateBasicStoreManager(GRStateManager& StMgr);
 StoreManager *CreateRegionStoreManager(GRStateManager& StMgr);
 StoreManager *CreateFieldsOnlyRegionStoreManager(GRStateManager& StMgr);
-StoreManager *CreateFlatStoreManager(GRStateManager &StMgr);
 
 } // end GR namespace
 
