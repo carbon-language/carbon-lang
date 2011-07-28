@@ -214,6 +214,20 @@ void LandingPadInst::growOperands() {
   Use::zap(OldOps, OldOps + e, true);
 }
 
+void LandingPadInst::reserveClauses(unsigned Size) {
+  unsigned e = getNumOperands() + Size;
+  if (ReservedSpace >= e) return;
+  ReservedSpace = e;
+
+  Use *NewOps = allocHungoffUses(ReservedSpace);
+  Use *OldOps = OperandList;
+  for (unsigned i = 0; i != e; ++i)
+      NewOps[i] = OldOps[i];
+
+  OperandList = NewOps;
+  Use::zap(OldOps, OldOps + e, true);
+}
+
 void LandingPadInst::addClause(ClauseType CT, Value *ClauseVal) {
   unsigned OpNo = getNumOperands();
   if (OpNo + 1 > ReservedSpace)
@@ -551,6 +565,9 @@ void InvokeInst::removeAttribute(unsigned i, Attributes attr) {
   setAttributes(PAL);
 }
 
+LandingPadInst *InvokeInst::getLandingPad() const {
+  return cast<LandingPadInst>(getUnwindDest()->getFirstNonPHI());
+}
 
 //===----------------------------------------------------------------------===//
 //                        ReturnInst Implementation

@@ -1870,6 +1870,10 @@ public:
   /// getNumClauses - Get the number of clauses for this landing pad.
   unsigned getNumClauses() const { return getNumOperands() - 1; }
 
+  /// reserveClauses - Grow the size of the operand list to accomodate the new
+  /// number of clauses.
+  void reserveClauses(unsigned Size);
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const LandingPadInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -2473,6 +2477,10 @@ public:
   void setUnwindDest(BasicBlock *B) {
     Op<-1>() = reinterpret_cast<Value*>(B);
   }
+
+  // getLandingPad - Get the landingpad instruction from the landing pad block
+  // (the unwind destination).
+  LandingPadInst *getLandingPad() const;
 
   BasicBlock *getSuccessor(unsigned i) const {
     assert(i < 2 && "Successor # out of range for invoke!");
