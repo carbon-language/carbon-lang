@@ -244,7 +244,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
 
   // Create the cleaned state.
   const LocationContext *LC = EntryNode->getLocationContext();
-  SymbolReaper SymReaper(LC, currentStmt, SymMgr);
+  SymbolReaper SymReaper(LC, currentStmt, SymMgr, getStoreManager());
 
   if (AMgr.shouldPurgeDead()) {
     const GRState *St = EntryNode->getState();

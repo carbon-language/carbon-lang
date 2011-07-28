@@ -19,9 +19,11 @@
 #include "clang/AST/Expr.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/LLVM.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/StoreRef.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 class BumpPtrAllocator;
@@ -40,10 +42,10 @@ namespace ento {
 
 class SymExpr : public llvm::FoldingSetNode {
 public:
-  enum Kind { BEGIN_SYMBOLS,
-              RegionValueKind, ConjuredKind, DerivedKind, ExtentKind,
+  enum Kind { RegionValueKind, ConjuredKind, DerivedKind, ExtentKind,
               MetadataKind,
-              END_SYMBOLS,
+              BEGIN_SYMBOLS = RegionValueKind,
+              END_SYMBOLS = MetadataKind,
               SymIntKind, SymSymKind };
 private:
   Kind K;
@@ -84,7 +86,7 @@ public:
   // Implement isa<T> support.
   static inline bool classof(const SymExpr* SE) {
     Kind k = SE->getKind();
-    return k > BEGIN_SYMBOLS && k < END_SYMBOLS;
+    return k >= BEGIN_SYMBOLS && k <= END_SYMBOLS;
   }
 };
 
@@ -419,10 +421,13 @@ class SymbolReaper {
   const LocationContext *LCtx;
   const Stmt *Loc;
   SymbolManager& SymMgr;
+  StoreRef reapedStore;
+  llvm::DenseMap<const MemRegion *, unsigned> includedRegionCache;
 
 public:
-  SymbolReaper(const LocationContext *ctx, const Stmt *s, SymbolManager& symmgr)
-   : LCtx(ctx), Loc(s), SymMgr(symmgr) {}
+  SymbolReaper(const LocationContext *ctx, const Stmt *s, SymbolManager& symmgr,
+               StoreManager &storeMgr)
+   : LCtx(ctx), Loc(s), SymMgr(symmgr), reapedStore(0, storeMgr) {}
 
   ~SymbolReaper() {}
 
@@ -431,7 +436,7 @@ public:
 
   bool isLive(SymbolRef sym);
   bool isLive(const Stmt *ExprVal) const;
-  bool isLive(const VarRegion *VR) const;
+  bool isLive(const VarRegion *VR, bool includeStoreBindings = false) const;
 
   // markLive - Unconditionally marks a symbol as live. This should never be
   //  used by checkers, only by the state infrastructure such as the store and
@@ -464,6 +469,10 @@ public:
   bool isDead(SymbolRef sym) const {
     return TheDead.count(sym);
   }
+  
+  /// Set to the value of the symbolic store after
+  /// StoreManager::removeDeadBindings has been called.
+  void setReapedStore(StoreRef st) { reapedStore = st; }
 };
 
 class SymbolVisitor {

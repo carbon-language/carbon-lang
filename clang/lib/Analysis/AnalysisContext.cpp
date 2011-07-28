@@ -177,25 +177,14 @@ PseudoConstantAnalysis *AnalysisContext::getPseudoConstantAnalysis() {
 }
 
 LiveVariables *AnalysisContext::getLiveVariables() {
-  if (!liveness) {
-    if (CFG *c = getCFG()) {
-      liveness.reset(new LiveVariables(*this));
-      liveness->runOnCFG(*c);
-      liveness->runOnAllBlocks(*c, 0, true);
-    }
-  }
-
+  if (!liveness)
+    liveness.reset(LiveVariables::computeLiveness(*this));
   return liveness.get();
 }
 
 LiveVariables *AnalysisContext::getRelaxedLiveVariables() {
   if (!relaxedLiveness)
-    if (CFG *c = getCFG()) {
-      relaxedLiveness.reset(new LiveVariables(*this, false));
-      relaxedLiveness->runOnCFG(*c);
-      relaxedLiveness->runOnAllBlocks(*c, 0, true);
-    }
-
+    relaxedLiveness.reset(LiveVariables::computeLiveness(*this, false));
   return relaxedLiveness.get();
 }
 

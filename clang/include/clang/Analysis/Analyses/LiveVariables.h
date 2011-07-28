@@ -1,4 +1,4 @@
-//===- LiveVariables.h - Live Variable Analysis for Source CFGs -*- C++ --*-===//
+//===- LiveVariables.h - Live Variable Analysis for Source CFGs -*- C++ --*-//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,109 +15,89 @@
 #define LLVM_CLANG_LIVEVARIABLES_H
 
 #include "clang/AST/Decl.h"
-#include "clang/Analysis/Support/BlkExprDeclBitVector.h"
-#include "clang/Analysis/FlowSensitive/DataflowValues.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/ImmutableSet.h"
 
 namespace clang {
 
+class CFG;
+class CFGBlock;
 class Stmt;
 class DeclRefExpr;
 class SourceManager;
 class AnalysisContext;
-
-struct LiveVariables_ValueTypes {
-
-  struct ObserverTy;
-
-  // We keep dataflow state for declarations and block-level expressions;
-  typedef StmtDeclBitVector_Types::ValTy ValTy;
-
-  // We need to keep track of both declarations and CFGBlock-level expressions,
-  // (so that we don't explore such expressions twice).  We also want
-  // to compute liveness information for block-level expressions, since these
-  // act as "temporary" values.
-
-  struct AnalysisDataTy : public StmtDeclBitVector_Types::AnalysisDataTy {
-    ObserverTy* Observer;
-    ValTy AlwaysLive;
-    AnalysisContext *AC;
-    bool killAtAssign;
-
-    AnalysisDataTy() : Observer(NULL), AC(NULL), killAtAssign(true) {}
-  };
-
-  //===-----------------------------------------------------===//
-  // ObserverTy - Observer for uninitialized values queries.
-  //===-----------------------------------------------------===//
-
-  struct ObserverTy {
-    virtual ~ObserverTy() {}
-
-    /// ObserveStmt - A callback invoked right before invoking the
-    ///  liveness transfer function on the given statement.
-    virtual void ObserveStmt(Stmt* S, const CFGBlock *currentBlock,
-                             const AnalysisDataTy& AD,
-                             const ValTy& V) {}
-
-    virtual void ObserverKill(DeclRefExpr* DR) {}
-  };
-};
-
-class LiveVariables : public DataflowValues<LiveVariables_ValueTypes,
-                                            dataflow::backward_analysis_tag> {
-
-
+  
+class LiveVariables {
 public:
-  typedef LiveVariables_ValueTypes::ObserverTy ObserverTy;
+  class LivenessValues {
+  public:
 
-  LiveVariables(AnalysisContext &AC, bool killAtAssign = true);
+    llvm::ImmutableSet<const Stmt *> liveStmts;
+    llvm::ImmutableSet<const VarDecl *> liveDecls;
+    
+    bool equals(const LivenessValues &V) const;
 
-  /// IsLive - Return true if a variable is live at the end of a
+    LivenessValues()
+      : liveStmts(0), liveDecls(0) {}
+
+    LivenessValues(llvm::ImmutableSet<const Stmt *> LiveStmts,
+                   llvm::ImmutableSet<const VarDecl *> LiveDecls)
+      : liveStmts(LiveStmts), liveDecls(LiveDecls) {}
+
+    ~LivenessValues() {}
+    
+    bool isLive(const Stmt *S) const;
+    bool isLive(const VarDecl *D) const;
+    
+    friend class LiveVariables;    
+  };
+  
+  struct Observer {
+    virtual ~Observer() {}
+    
+    /// A callback invoked right before invoking the
+    ///  liveness transfer function on the given statement.
+    virtual void observeStmt(const Stmt* S,
+                             const CFGBlock *currentBlock,
+                             const LivenessValues& V) {}
+    
+    /// Called when the live variables analysis registers
+    /// that a variable is killed.
+    virtual void observerKill(const DeclRefExpr* DR) {}
+  };    
+
+
+  ~LiveVariables();
+  
+  /// Compute the liveness information for a given CFG.
+  static LiveVariables *computeLiveness(AnalysisContext &analysisContext,
+                                          bool killAtAssign = true);
+  
+  /// Return true if a variable is live at the end of a
   /// specified block.
-  bool isLive(const CFGBlock* B, const VarDecl* D) const;
-
-  /// IsLive - Returns true if a variable is live at the beginning of the
+  bool isLive(const CFGBlock* B, const VarDecl* D);
+  
+  /// Returns true if a variable is live at the beginning of the
   ///  the statement.  This query only works if liveness information
   ///  has been recorded at the statement level (see runOnAllBlocks), and
   ///  only returns liveness information for block-level expressions.
-  bool isLive(const Stmt* S, const VarDecl* D) const;
-
-  /// IsLive - Returns true the block-level expression "value" is live
+  bool isLive(const Stmt* S, const VarDecl* D);
+  
+  /// Returns true the block-level expression "value" is live
   ///  before the given block-level expression (see runOnAllBlocks).
-  bool isLive(const Stmt* Loc, const Stmt* StmtVal) const;
+  bool isLive(const Stmt* Loc, const Stmt* StmtVal);
+    
+  /// Print to stderr the liveness information associated with
+  /// each basic block.
+  void dumpBlockLiveness(const SourceManager& M);
 
-  /// IsLive - Return true if a variable is live according to the
-  ///  provided livness bitvector.
-  bool isLive(const ValTy& V, const VarDecl* D) const;
+  void runOnAllBlocks(Observer &obs);
 
-  /// dumpLiveness - Print to stderr the liveness information encoded
-  ///  by a specified bitvector.
-  void dumpLiveness(const ValTy& V, const SourceManager& M) const;
-
-  /// dumpBlockLiveness - Print to stderr the liveness information
-  ///  associated with each basic block.
-  void dumpBlockLiveness(const SourceManager& M) const;
-
-  /// getNumDecls - Return the number of variables (declarations) that
-  ///  whose liveness status is being tracked by the dataflow
-  ///  analysis.
-  unsigned getNumDecls() const { return getAnalysisData().getNumDecls(); }
-
-  /// IntializeValues - This routine can perform extra initialization, but
-  ///  for LiveVariables this does nothing since all that logic is in
-  ///  the constructor.
-  void InitializeValues(const CFG& cfg) {}
-
-  void runOnCFG(CFG& cfg);
-
-  /// runOnAllBlocks - Propagate the dataflow values once for each block,
-  ///  starting from the current dataflow values.  'recordStmtValues' indicates
-  ///  whether the method should store dataflow values per each individual
-  ///  block-level expression.
-  void runOnAllBlocks(const CFG& cfg, ObserverTy* Obs,
-                      bool recordStmtValues=false);
+private:
+  LiveVariables(void *impl);
+  void *impl;
 };
-
+  
 } // end namespace clang
 
 #endif

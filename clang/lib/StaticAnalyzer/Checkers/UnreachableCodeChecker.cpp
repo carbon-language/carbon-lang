@@ -111,13 +111,19 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
     // FIXME: This should be extended to include other unreachable markers,
     // such as llvm_unreachable.
     if (!CB->empty()) {
-      CFGElement First = CB->front();
-      if (const CFGStmt *S = First.getAs<CFGStmt>()) {
-        if (const CallExpr *CE = dyn_cast<CallExpr>(S->getStmt())) {
-          if (CE->isBuiltinCall(Ctx) == Builtin::BI__builtin_unreachable)
-            continue;
-        }
+      bool foundUnreachable = false;
+      for (CFGBlock::const_iterator ci = CB->begin(), ce = CB->end();
+           ci != ce; ++ci) {
+        if (const CFGStmt *S = (*ci).getAs<CFGStmt>())
+          if (const CallExpr *CE = dyn_cast<CallExpr>(S->getStmt())) {
+            if (CE->isBuiltinCall(Ctx) == Builtin::BI__builtin_unreachable) {
+              foundUnreachable = true;
+              break;
+            }
+          }
       }
+      if (foundUnreachable)
+        continue;
     }
 
     // We found a block that wasn't covered - find the statement to report

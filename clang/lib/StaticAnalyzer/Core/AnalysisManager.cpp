@@ -35,6 +35,7 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, Diagnostic &diags,
     EagerlyAssume(eager), TrimGraph(trim), InlineCall(inlinecall),
     EagerlyTrimEGraph(eagerlyTrimEGraph)
 {
+  AnaCtxMgr.getCFGBuildOptions().setAllAlwaysAdd();
 }
 
 AnalysisContext *

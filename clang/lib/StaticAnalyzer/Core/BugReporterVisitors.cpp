@@ -39,8 +39,6 @@ const Stmt *bugreporter::GetDerefExpr(const ExplodedNode *N) {
     return ME->getBase()->IgnoreParenCasts();
   }
   else if (const ArraySubscriptExpr *AE = dyn_cast<ArraySubscriptExpr>(S)) {
-    // Retrieve the base for arrays since BasicStoreManager doesn't know how
-    // to reason about them.
     return AE->getBase();
   }
 
@@ -314,6 +312,21 @@ void bugreporter::registerTrackNullOrUndefValue(BugReporterContext& BRC,
     return;
 
   GRStateManager &StateMgr = BRC.getStateManager();
+  
+  // Walk through nodes until we get one that matches the statement
+  // exactly.
+  while (N) {
+    const ProgramPoint &pp = N->getLocation();
+    if (const PostStmt *ps = dyn_cast<PostStmt>(&pp)) {
+      if (ps->getStmt() == S)
+        break;
+    }
+    N = *N->pred_begin();
+  }
+
+  if (!N)
+    return;
+  
   const GRState *state = N->getState();
 
   // Walk through lvalue-to-rvalue conversions.  

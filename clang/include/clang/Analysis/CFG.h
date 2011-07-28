@@ -545,8 +545,13 @@ public:
       return alwaysAddMask[stmt->getStmtClass()];
     }
     
-    BuildOptions &setAlwaysAdd(Stmt::StmtClass stmtClass) {
-      alwaysAddMask[stmtClass] = true;
+    BuildOptions &setAlwaysAdd(Stmt::StmtClass stmtClass, bool val = true) {
+      alwaysAddMask[stmtClass] = val;
+      return *this;
+    }
+    
+    BuildOptions &setAllAlwaysAdd() {
+      alwaysAddMask.set();
       return *this;
     }
 

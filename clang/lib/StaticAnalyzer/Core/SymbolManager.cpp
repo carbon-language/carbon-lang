@@ -15,6 +15,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -272,7 +273,7 @@ static bool IsLiveRegion(SymbolReaper &Reaper, const MemRegion *MR) {
     return Reaper.isLive(SR->getSymbol());
 
   if (const VarRegion *VR = dyn_cast<VarRegion>(MR))
-    return Reaper.isLive(VR);
+    return Reaper.isLive(VR, true);
 
   // FIXME: This is a gross over-approximation. What we really need is a way to
   // tell if anything still refers to this region. Unlike SymbolicRegions,
@@ -331,13 +332,35 @@ bool SymbolReaper::isLive(const Stmt* ExprVal) const {
       isLive(Loc, ExprVal);
 }
 
-bool SymbolReaper::isLive(const VarRegion *VR) const {
+bool SymbolReaper::isLive(const VarRegion *VR, bool includeStoreBindings) const{
   const StackFrameContext *VarContext = VR->getStackFrame();
   const StackFrameContext *CurrentContext = LCtx->getCurrentStackFrame();
 
-  if (VarContext == CurrentContext)
-    return LCtx->getAnalysisContext()->getRelaxedLiveVariables()->
-        isLive(Loc, VR->getDecl());
+  if (VarContext == CurrentContext) {
+    if (LCtx->getAnalysisContext()->getRelaxedLiveVariables()->
+          isLive(Loc, VR->getDecl()))
+      return true;
+
+    if (!includeStoreBindings)
+      return false;
+    
+    unsigned &cachedQuery =
+      const_cast<SymbolReaper*>(this)->includedRegionCache[VR];
+
+    if (cachedQuery) {
+      return cachedQuery == 1;
+    }
+
+    // Query the store to see if the region occurs in any live bindings.
+    if (Store store = reapedStore.getStore()) {
+      bool hasRegion = 
+        reapedStore.getStoreManager().includedInBindings(store, VR);
+      cachedQuery = hasRegion ? 1 : 2;
+      return hasRegion;
+    }
+    
+    return false;
+  }
 
   return VarContext->isParentOf(CurrentContext);
 }

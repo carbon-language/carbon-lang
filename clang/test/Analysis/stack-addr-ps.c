@@ -59,7 +59,7 @@ int struct_test(struct baz byVal, int flag) {
 typedef int (^ComparatorBlock)(int a, int b);
 ComparatorBlock test_return_block(void) {
   ComparatorBlock b = ^int(int a, int b){ return a > b; };
-  return b; // expected-warning{{Address of stack-allocated block declared on line 61 returned to caller}}
+  return b; // expected-warning{{Address of stack-allocated block declared on line 60 returned to caller}}
 }
 
 ComparatorBlock test_return_block_neg_aux(void);

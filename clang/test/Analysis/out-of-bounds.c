@@ -94,7 +94,6 @@ void test2_ptr(int x) {
   p[-1] = 1; // expected-warning{{Out of bound memory access}}
 }
 
-// ** FIXME ** Doesn't work yet because we don't support pointer arithmetic.
 // Tests doing an out-of-bounds access before the start of an array using:
 // - indirect pointer to buffer, manipulated using simple pointer arithmetic
 // - constant integer index
@@ -103,7 +102,7 @@ void test2_ptr_arith(int x) {
   int buf[100];
   int *p = buf;
   --p;
-  p[0] = 1; // no-warning
+  p[0] = 1; // expected-warning {{Out of bound memory access (accessed memory precedes memory block)}}
 }
 
 // Tests doing an out-of-bounds access before the start of a multi-dimensional
