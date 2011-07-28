@@ -2162,8 +2162,25 @@ ASTReader::ReadASTBlock(Module &F) {
       break;
 
     case WEAK_UNDECLARED_IDENTIFIERS:
-      // Later blocks overwrite earlier ones.
-      WeakUndeclaredIdentifiers.swap(Record);
+      if (Record.size() % 4 != 0) {
+        Error("invalid weak identifiers record");
+        return Failure;
+      }
+        
+      // FIXME: Ignore weak undeclared identifiers from non-original PCH 
+      // files. This isn't the way to do it :)
+      WeakUndeclaredIdentifiers.clear();
+        
+      // Translate the weak, undeclared identifiers into global IDs.
+      for (unsigned I = 0, N = Record.size(); I < N; /* in loop */) {
+        WeakUndeclaredIdentifiers.push_back(
+          getGlobalIdentifierID(F, Record[I++]));
+        WeakUndeclaredIdentifiers.push_back(
+          getGlobalIdentifierID(F, Record[I++]));
+        WeakUndeclaredIdentifiers.push_back(
+          ReadSourceLocation(F, Record, I).getRawEncoding());
+        WeakUndeclaredIdentifiers.push_back(Record[I++]);
+      }
       break;
 
     case LOCALLY_SCOPED_EXTERNAL_DECLS:
@@ -4380,21 +4397,6 @@ void ASTReader::InitializeSema(Sema &S) {
     SemaObj->PendingInstantiations.push_back(std::make_pair(D, Loc));
   }
 
-  // If there were any weak undeclared identifiers, deserialize them and add to
-  // Sema's list of weak undeclared identifiers.
-  if (!WeakUndeclaredIdentifiers.empty()) {
-    unsigned Idx = 0;
-    for (unsigned I = 0, N = WeakUndeclaredIdentifiers[Idx++]; I != N; ++I) {
-      IdentifierInfo *WeakId = GetIdentifierInfo(WeakUndeclaredIdentifiers,Idx);
-      IdentifierInfo *AliasId= GetIdentifierInfo(WeakUndeclaredIdentifiers,Idx);
-      SourceLocation Loc = ReadSourceLocation(F, WeakUndeclaredIdentifiers,Idx);
-      bool Used = WeakUndeclaredIdentifiers[Idx++];
-      Sema::WeakInfo WI(AliasId, Loc);
-      WI.setUsed(Used);
-      SemaObj->WeakUndeclaredIdentifiers.insert(std::make_pair(WeakId, WI));
-    }
-  }
-
   // If there were any VTable uses, deserialize the information and add it
   // to Sema's vector and map of VTable uses.
   if (!VTableUses.empty()) {
@@ -4620,6 +4622,26 @@ void ASTReader::ReadReferencedSelectors(
     Sels.push_back(std::make_pair(Sel, SelLoc));
   }
   ReferencedSelectorsData.clear();
+}
+
+void ASTReader::ReadWeakUndeclaredIdentifiers(
+       SmallVectorImpl<std::pair<IdentifierInfo *, WeakInfo> > &WeakIDs) {
+  if (WeakUndeclaredIdentifiers.empty())
+    return;
+
+  for (unsigned I = 0, N = WeakUndeclaredIdentifiers.size(); I < N; /*none*/) {
+    IdentifierInfo *WeakId 
+      = DecodeIdentifierInfo(WeakUndeclaredIdentifiers[I++]);
+    IdentifierInfo *AliasId 
+      = DecodeIdentifierInfo(WeakUndeclaredIdentifiers[I++]);
+    SourceLocation Loc
+      = SourceLocation::getFromRawEncoding(WeakUndeclaredIdentifiers[I++]);
+    bool Used = WeakUndeclaredIdentifiers[I++];
+    WeakInfo WI(AliasId, Loc);
+    WI.setUsed(Used);
+    WeakIDs.push_back(std::make_pair(WeakId, WI));
+  }
+  WeakUndeclaredIdentifiers.clear();
 }
 
 void ASTReader::LoadSelector(Selector Sel) {

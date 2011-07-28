@@ -14,6 +14,7 @@
 #define LLVM_CLANG_SEMA_EXTERNAL_SEMA_SOURCE_H
 
 #include "clang/AST/ExternalASTSource.h"
+#include "clang/Sema/Weak.h"
 #include <utility>
 
 namespace clang {
@@ -130,11 +131,21 @@ public:
   /// external Sema source.
   ///
   /// The external source should append its own referenced selectors to the 
-  /// given vector of declarations. Note that this routine 
+  /// given vector of selectors. Note that this routine 
   /// may be invoked multiple times; the external source should take care not 
   /// to introduce the same selectors repeatedly.
   virtual void ReadReferencedSelectors(
                  SmallVectorImpl<std::pair<Selector, SourceLocation> > &Sels) {}
+
+  /// \brief Read the set of weak, undeclared identifiers known to the
+  /// external Sema source.
+  ///
+  /// The external source should append its own weak, undeclared identifiers to
+  /// the given vector. Note that this routine may be invoked multiple times; 
+  /// the external source should take care not to introduce the same identifiers
+  /// repeatedly.
+  virtual void ReadWeakUndeclaredIdentifiers(
+                 SmallVectorImpl<std::pair<IdentifierInfo *, WeakInfo> > &WI) {}
 
   // isa/cast/dyn_cast support
   static bool classof(const ExternalASTSource *Source) {

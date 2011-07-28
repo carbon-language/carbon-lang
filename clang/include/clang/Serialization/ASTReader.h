@@ -1401,6 +1401,9 @@ public:
   virtual void ReadReferencedSelectors(
                  SmallVectorImpl<std::pair<Selector, SourceLocation> > &Sels);
 
+  virtual void ReadWeakUndeclaredIdentifiers(
+                 SmallVectorImpl<std::pair<IdentifierInfo *, WeakInfo> > &WI);
+
   /// \brief Load a selector from disk, registering its ID if it exists.
   void LoadSelector(Selector Sel);
 
@@ -1425,6 +1428,11 @@ public:
     return DecodeIdentifierInfo(ID);
   }
 
+  unsigned getGlobalIdentifierID(Module &M, unsigned LocalID) {
+    // FIXME: Remap local -> global identifier IDs
+    return LocalID;
+  }
+                                 
   /// \brief Read the source location entry with index ID.
   virtual bool ReadSLocEntry(int ID);
 

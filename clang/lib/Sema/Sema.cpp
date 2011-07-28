@@ -398,6 +398,22 @@ static void checkUndefinedInternals(Sema &S) {
   }
 }
 
+void Sema::LoadExternalWeakUndeclaredIdentifiers() {
+  if (!ExternalSource)
+    return;
+  
+  SmallVector<std::pair<IdentifierInfo *, WeakInfo>, 4> WeakIDs;
+  ExternalSource->ReadWeakUndeclaredIdentifiers(WeakIDs);
+  for (unsigned I = 0, N = WeakIDs.size(); I != N; ++I) {
+    llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator Pos
+      = WeakUndeclaredIdentifiers.find(WeakIDs[I].first);
+    if (Pos != WeakUndeclaredIdentifiers.end())
+      continue;
+    
+    WeakUndeclaredIdentifiers.insert(WeakIDs[I]);
+  }
+}
+
 /// ActOnEndOfTranslationUnit - This is called at the very end of the
 /// translation unit when EOF is reached and all but the top-level scope is
 /// popped.
@@ -454,6 +470,7 @@ void Sema::ActOnEndOfTranslationUnit() {
   // Check for #pragma weak identifiers that were never declared
   // FIXME: This will cause diagnostics to be emitted in a non-determinstic
   // order!  Iterating over a densemap like this is bad.
+  LoadExternalWeakUndeclaredIdentifiers();
   for (llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator
        I = WeakUndeclaredIdentifiers.begin(),
        E = WeakUndeclaredIdentifiers.end(); I != E; ++I) {

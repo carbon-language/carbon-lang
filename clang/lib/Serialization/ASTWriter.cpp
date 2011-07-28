@@ -2855,9 +2855,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   RecordData WeakUndeclaredIdentifiers;
   if (!SemaRef.WeakUndeclaredIdentifiers.empty()) {
-    WeakUndeclaredIdentifiers.push_back(
-                                      SemaRef.WeakUndeclaredIdentifiers.size());
-    for (llvm::DenseMap<IdentifierInfo*,Sema::WeakInfo>::iterator
+    for (llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator
          I = SemaRef.WeakUndeclaredIdentifiers.begin(),
          E = SemaRef.WeakUndeclaredIdentifiers.end(); I != E; ++I) {
       AddIdentifierRef(I->first, WeakUndeclaredIdentifiers);
@@ -3122,9 +3120,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // We write the entire table, overwriting the tables from the chain.
   RecordData WeakUndeclaredIdentifiers;
   if (!SemaRef.WeakUndeclaredIdentifiers.empty()) {
-    WeakUndeclaredIdentifiers.push_back(
-                                      SemaRef.WeakUndeclaredIdentifiers.size());
-    for (llvm::DenseMap<IdentifierInfo*,Sema::WeakInfo>::iterator
+    for (llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator
          I = SemaRef.WeakUndeclaredIdentifiers.begin(),
          E = SemaRef.WeakUndeclaredIdentifiers.end(); I != E; ++I) {
       AddIdentifierRef(I->first, WeakUndeclaredIdentifiers);

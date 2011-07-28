@@ -3289,15 +3289,18 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD,
                                  bool NonInheritable, bool Inheritable) {
   // It's valid to "forward-declare" #pragma weak, in which case we
   // have to do this.
-  if (Inheritable && !WeakUndeclaredIdentifiers.empty()) {
-    if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
-      if (IdentifierInfo *Id = ND->getIdentifier()) {
-        llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator I
-          = WeakUndeclaredIdentifiers.find(Id);
-        if (I != WeakUndeclaredIdentifiers.end() && ND->hasLinkage()) {
-          WeakInfo W = I->second;
-          DeclApplyPragmaWeak(S, ND, W);
-          WeakUndeclaredIdentifiers[Id] = W;
+  if (Inheritable) {
+    LoadExternalWeakUndeclaredIdentifiers();
+    if (!WeakUndeclaredIdentifiers.empty()) {
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+        if (IdentifierInfo *Id = ND->getIdentifier()) {
+          llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator I
+            = WeakUndeclaredIdentifiers.find(Id);
+          if (I != WeakUndeclaredIdentifiers.end() && ND->hasLinkage()) {
+            WeakInfo W = I->second;
+            DeclApplyPragmaWeak(S, ND, W);
+            WeakUndeclaredIdentifiers[Id] = W;
+          }
         }
       }
     }
