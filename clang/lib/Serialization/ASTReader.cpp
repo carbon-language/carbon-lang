@@ -2196,7 +2196,14 @@ ASTReader::ReadASTBlock(Module &F) {
       break;
 
     case REFERENCED_SELECTOR_POOL:
-      F.ReferencedSelectorsData.swap(Record);
+      if (!Record.empty()) {
+        for (unsigned Idx = 0, N = Record.size() - 1; Idx < N; /* in loop */) {
+          ReferencedSelectorsData.push_back(getGlobalSelectorID(F, 
+                                                                Record[Idx++]));
+          ReferencedSelectorsData.push_back(ReadSourceLocation(F, Record, Idx).
+                                              getRawEncoding());
+        }
+      }
       break;
 
     case PP_COUNTER_VALUE:
@@ -4349,12 +4356,6 @@ void ASTReader::InitializeSema(Sema &S) {
   }
   PreloadedDecls.clear();
 
-  // FIXME: Do VTable uses and dynamic classes deserialize too much ?
-  // Can we cut them down before writing them ?
-
-  // If there were any dynamic classes declarations, deserialize them
-  // and add them to Sema's vector of such declarations.
-
   // Load the offsets of the declarations that Sema references.
   // They will be lazily deserialized when needed.
   if (!SemaDeclRefs.empty()) {
@@ -4365,19 +4366,16 @@ void ASTReader::InitializeSema(Sema &S) {
       SemaObj->StdBadAlloc = SemaDeclRefs[1];
   }
 
-  for (Module *F = &ModuleMgr.getPrimaryModule(); F; F = F->NextInSource) {
-
-    // If there are @selector references added them to its pool. This is for
-    // implementation of -Wselector.
-    if (!F->ReferencedSelectorsData.empty()) {
-      unsigned int DataSize = F->ReferencedSelectorsData.size()-1;
-      unsigned I = 0;
-      while (I < DataSize) {
-        Selector Sel = DecodeSelector(F->ReferencedSelectorsData[I++]);
-        SourceLocation SelLoc = ReadSourceLocation(
-                                    *F, F->ReferencedSelectorsData, I);
-        SemaObj->ReferencedSelectors.insert(std::make_pair(Sel, SelLoc));
-      }
+  // If there are @selector references added them to its pool. This is for
+  // implementation of -Wselector.
+  if (!ReferencedSelectorsData.empty()) {
+    unsigned int DataSize = ReferencedSelectorsData.size()-1;
+    unsigned I = 0;
+    while (I < DataSize) {
+      Selector Sel = DecodeSelector(ReferencedSelectorsData[I++]);
+      SourceLocation SelLoc
+        = SourceLocation::getFromRawEncoding(ReferencedSelectorsData[I++]);
+      SemaObj->ReferencedSelectors.insert(std::make_pair(Sel, SelLoc));
     }
   }
 
@@ -4743,13 +4741,19 @@ Selector ASTReader::DecodeSelector(unsigned ID) {
   return SelectorsLoaded[ID - 1];
 }
 
-Selector ASTReader::GetExternalSelector(uint32_t ID) {
+Selector ASTReader::GetExternalSelector(serialization::SelectorID ID) {
   return DecodeSelector(ID);
 }
 
 uint32_t ASTReader::GetNumExternalSelectors() {
   // ID 0 (the null selector) is considered an external selector.
   return getTotalNumSelectors() + 1;
+}
+
+serialization::SelectorID 
+ASTReader::getGlobalSelectorID(Module &F, unsigned LocalID) const {
+  // FIXME: Perform local -> global remapping
+  return LocalID;
 }
 
 DeclarationName
