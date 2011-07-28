@@ -287,7 +287,7 @@ void ASTStmtReader::VisitAsmStmt(AsmStmt *S) {
   SmallVector<StringLiteral*, 16> Constraints;
   SmallVector<Stmt*, 16> Exprs;
   for (unsigned I = 0, N = NumOutputs + NumInputs; I != N; ++I) {
-    Names.push_back(Reader.GetIdentifierInfo(Record, Idx));
+    Names.push_back(Reader.GetIdentifierInfo(F, Record, Idx));
     Constraints.push_back(cast_or_null<StringLiteral>(Reader.ReadSubStmt()));
     Exprs.push_back(Reader.ReadSubStmt());
   }
@@ -440,7 +440,10 @@ void ASTStmtReader::VisitOffsetOfExpr(OffsetOfExpr *E) {
       break;
 
     case Node::Identifier:
-      E->setComponent(I, Node(Start, Reader.GetIdentifier(Record[Idx++]), End));
+      E->setComponent(I, 
+                      Node(Start, 
+                           Reader.GetIdentifierInfo(F, Record, Idx),
+                           End));
       break;
         
     case Node::Base: {
@@ -593,7 +596,7 @@ void ASTStmtReader::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
 void ASTStmtReader::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
   VisitExpr(E);
   E->setBase(Reader.ReadSubExpr());
-  E->setAccessor(Reader.GetIdentifierInfo(Record, Idx));
+  E->setAccessor(Reader.GetIdentifierInfo(F, Record, Idx));
   E->setAccessorLoc(ReadSourceLocation(Record, Idx));
 }
 
@@ -650,7 +653,7 @@ void ASTStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
     }
 
     case DESIG_FIELD_NAME: {
-      const IdentifierInfo *Name = Reader.GetIdentifierInfo(Record, Idx);
+      const IdentifierInfo *Name = Reader.GetIdentifierInfo(F, Record, Idx);
       SourceLocation DotLoc
         = ReadSourceLocation(Record, Idx);
       SourceLocation FieldLoc
@@ -1128,7 +1131,7 @@ void ASTStmtReader::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
   E->ColonColonLoc = ReadSourceLocation(Record, Idx);
   E->TildeLoc = ReadSourceLocation(Record, Idx);
   
-  IdentifierInfo *II = Reader.GetIdentifierInfo(Record, Idx);
+  IdentifierInfo *II = Reader.GetIdentifierInfo(F, Record, Idx);
   if (II)
     E->setDestroyedType(II, ReadSourceLocation(Record, Idx));
   else

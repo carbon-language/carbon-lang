@@ -523,7 +523,7 @@ public:
     SelectorTable &SelTable = Reader.getContext()->Selectors;
     unsigned N = ReadUnalignedLE16(d);
     IdentifierInfo *FirstII
-      = Reader.DecodeIdentifierInfo(ReadUnalignedLE32(d));
+      = Reader.getLocalIdentifier(F, ReadUnalignedLE32(d));
     if (N == 0)
       return SelTable.getNullarySelector(FirstII);
     else if (N == 1)
@@ -532,7 +532,7 @@ public:
     SmallVector<IdentifierInfo *, 16> Args;
     Args.push_back(FirstII);
     for (unsigned I = 1; I != N; ++I)
-      Args.push_back(Reader.DecodeIdentifierInfo(ReadUnalignedLE32(d)));
+      Args.push_back(Reader.getLocalIdentifier(F, ReadUnalignedLE32(d)));
 
     return SelTable.getSelector(N, Args.data());
   }
@@ -877,7 +877,7 @@ public:
     Key.Kind = (DeclarationName::NameKind)*d++;
     switch (Key.Kind) {
     case DeclarationName::Identifier:
-      Key.Data = (uint64_t)Reader.DecodeIdentifierInfo(ReadUnalignedLE32(d));
+      Key.Data = (uint64_t)Reader.getLocalIdentifier(F, ReadUnalignedLE32(d));
       break;
     case DeclarationName::ObjCZeroArgSelector:
     case DeclarationName::ObjCOneArgSelector:
@@ -894,7 +894,7 @@ public:
       Key.Data = *d++; // OverloadedOperatorKind
       break;
     case DeclarationName::CXXLiteralOperatorName:
-      Key.Data = (uint64_t)Reader.DecodeIdentifierInfo(ReadUnalignedLE32(d));
+      Key.Data = (uint64_t)Reader.getLocalIdentifier(F, ReadUnalignedLE32(d));
       break;
     case DeclarationName::CXXUsingDirective:
       break;
@@ -1462,7 +1462,7 @@ PreprocessedEntity *ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
       if (Macro)
         return 0;
 
-      IdentifierInfo *II = DecodeIdentifierInfo(Record[0]);
+      IdentifierInfo *II = getLocalIdentifier(F, Record[0]);
       if (II == 0) {
         Error("macro must have a name in AST file");
         return 0;
@@ -1483,7 +1483,7 @@ PreprocessedEntity *ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
         unsigned NumArgs = Record[5];
         NextIndex = 6 + NumArgs;
         for (unsigned i = 0; i != NumArgs; ++i)
-          MacroArgs.push_back(DecodeIdentifierInfo(Record[6+i]));
+          MacroArgs.push_back(getLocalIdentifier(F, Record[6+i]));
 
         // Install function-like macro info.
         MI->setIsFunctionLike();
@@ -1519,7 +1519,7 @@ PreprocessedEntity *ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
       Tok.startToken();
       Tok.setLocation(ReadSourceLocation(F, Record[0]));
       Tok.setLength(Record[1]);
-      if (IdentifierInfo *II = DecodeIdentifierInfo(Record[2]))
+      if (IdentifierInfo *II = getLocalIdentifier(F, Record[2]))
         Tok.setIdentifierInfo(II);
       Tok.setKind((tok::TokenKind)Record[3]);
       Tok.setFlag((Token::TokenFlags)Record[4]);
@@ -1570,7 +1570,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
       return PE;
     
     MacroExpansion *ME =
-      new (PPRec) MacroExpansion(DecodeIdentifierInfo(Record[3]),
+      new (PPRec) MacroExpansion(getLocalIdentifier(F, Record[3]),
                                  SourceRange(ReadSourceLocation(F, Record[1]),
                                              ReadSourceLocation(F, Record[2])),
                                  getMacroDefinition(Record[4]));
@@ -1589,7 +1589,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
     
     // Decode the identifier info and then check again; if the macro is
     // still defined and associated with the identifier,
-    IdentifierInfo *II = DecodeIdentifierInfo(Record[4]);
+    IdentifierInfo *II = getLocalIdentifier(F, Record[4]);
     if (!MacroDefinitionsLoaded[Record[1] - 1]) {
       MacroDefinition *MD
         = new (PPRec) MacroDefinition(II,
@@ -1647,6 +1647,8 @@ namespace {
   /// inode numbers, so that the search can cope with non-normalized path names
   /// and symlinks.
   class HeaderFileInfoTrait {
+    ASTReader &Reader;
+    Module &M;
     HeaderSearch *HS;
     const char *FrameworkStrings;
     const char *SearchPath;
@@ -1671,10 +1673,11 @@ namespace {
     
     typedef HeaderFileInfo data_type;
     
-    HeaderFileInfoTrait(HeaderSearch *HS,
+    HeaderFileInfoTrait(ASTReader &Reader, Module &M, HeaderSearch *HS,
                         const char *FrameworkStrings,
                         const char *SearchPath = 0) 
-      : HS(HS), FrameworkStrings(FrameworkStrings), SearchPath(SearchPath) { }
+      : Reader(Reader), M(M), HS(HS), FrameworkStrings(FrameworkStrings), 
+        SearchPath(SearchPath) { }
     
     static unsigned ComputeHash(const char *path) {
       return llvm::HashString(llvm::sys::path::filename(path));
@@ -1721,7 +1724,7 @@ namespace {
       HFI.Resolved = (Flags >> 1) & 0x01;
       HFI.IndexHeaderMapHeader = Flags & 0x01;
       HFI.NumIncludes = ReadUnalignedLE16(d);
-      HFI.ControllingMacroID = ReadUnalignedLE32(d);
+      HFI.ControllingMacroID = Reader.getGlobalDeclID(M, ReadUnalignedLE32(d));
       if (unsigned FrameworkOffset = ReadUnalignedLE32(d)) {
         // The framework offset is 1 greater than the actual offset, 
         // since 0 is used as an indicator for "no framework name".
@@ -1795,7 +1798,7 @@ void ASTReader::ReadDefinedMacros() {
 
       case PP_MACRO_OBJECT_LIKE:
       case PP_MACRO_FUNCTION_LIKE:
-        DecodeIdentifierInfo(Record[0]);
+        getLocalIdentifier(**I, Record[0]);
         break;
 
       case PP_TOKEN:
@@ -2492,7 +2495,8 @@ ASTReader::ReadASTBlock(Module &F) {
           = HeaderFileInfoLookupTable::Create(
                    (const unsigned char *)F.HeaderFileInfoTableData + Record[0],
                    (const unsigned char *)F.HeaderFileInfoTableData,
-                   HeaderFileInfoTrait(PP? &PP->getHeaderSearchInfo() : 0,
+                   HeaderFileInfoTrait(*this, F, 
+                                       PP? &PP->getHeaderSearchInfo() : 0,
                                        BlobStart + Record[2]));
         if (PP)
           PP->getHeaderSearchInfo().SetExternalSource(this);
@@ -3142,7 +3146,7 @@ HeaderFileInfo ASTReader::GetHeaderFileInfo(const FileEntry *FE) {
   for (ModuleIterator I = ModuleMgr.begin(), E = ModuleMgr.end(); I != E; ++I) {
     Module &F = *(*I);
 
-    HeaderFileInfoTrait Trait(&PP->getHeaderSearchInfo(),
+    HeaderFileInfoTrait Trait(*this, F, &PP->getHeaderSearchInfo(),
                               F.HeaderFileFrameworkStrings,
                               FE->getName());
     
@@ -3565,7 +3569,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(*Loc.F, Record, Idx);
-    const IdentifierInfo *Name = this->GetIdentifierInfo(Record, Idx);
+    const IdentifierInfo *Name = this->GetIdentifierInfo(*Loc.F, Record, Idx);
     QualType Canon = readType(*Loc.F, Record, Idx);
     if (!Canon.isNull())
       Canon = Context->getCanonicalType(Canon);
@@ -3576,7 +3580,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(*Loc.F, Record, Idx);
-    const IdentifierInfo *Name = this->GetIdentifierInfo(Record, Idx);
+    const IdentifierInfo *Name = this->GetIdentifierInfo(*Loc.F, Record, Idx);
     unsigned NumArgs = Record[Idx++];
     SmallVector<TemplateArgument, 8> Args;
     Args.reserve(NumArgs);
@@ -4667,7 +4671,7 @@ void ASTReader::LoadSelector(Selector Sel) {
   ReadMethodPool(Sel);
 }
 
-void ASTReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {
+void ASTReader::SetIdentifierInfo(IdentifierID ID, IdentifierInfo *II) {
   assert(ID && "Non-zero identifier ID required");
   assert(ID <= IdentifiersLoaded.size() && "identifier ID out of range");
   IdentifiersLoaded[ID - 1] = II;
@@ -4722,7 +4726,7 @@ ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
   }
 }
 
-IdentifierInfo *ASTReader::DecodeIdentifierInfo(unsigned ID) {
+IdentifierInfo *ASTReader::DecodeIdentifierInfo(IdentifierID ID) {
   if (ID == 0)
     return 0;
 
@@ -4755,6 +4759,15 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(unsigned ID) {
   }
 
   return IdentifiersLoaded[ID];
+}
+
+IdentifierInfo *ASTReader::getLocalIdentifier(Module &M, unsigned LocalID) {
+  return DecodeIdentifierInfo(getGlobalIdentifierID(M, LocalID));
+}
+
+IdentifierID ASTReader::getGlobalIdentifierID(Module &M, unsigned LocalID) {
+  // FIXME: Perform local-to-global remapping
+  return LocalID;
 }
 
 bool ASTReader::ReadSLocEntry(int ID) {
@@ -4807,7 +4820,7 @@ ASTReader::ReadDeclarationName(Module &F,
   DeclarationName::NameKind Kind = (DeclarationName::NameKind)Record[Idx++];
   switch (Kind) {
   case DeclarationName::Identifier:
-    return DeclarationName(GetIdentifierInfo(Record, Idx));
+    return DeclarationName(GetIdentifierInfo(F, Record, Idx));
 
   case DeclarationName::ObjCZeroArgSelector:
   case DeclarationName::ObjCOneArgSelector:
@@ -4832,7 +4845,7 @@ ASTReader::ReadDeclarationName(Module &F,
 
   case DeclarationName::CXXLiteralOperatorName:
     return Context->DeclarationNames.getCXXLiteralOperatorName(
-                                       GetIdentifierInfo(Record, Idx));
+                                       GetIdentifierInfo(F, Record, Idx));
 
   case DeclarationName::CXXUsingDirective:
     return DeclarationName::getUsingDirectiveName();
@@ -4924,7 +4937,8 @@ ASTReader::ReadTemplateName(Module &F, const RecordData &Record,
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(F, Record, Idx);
     if (Record[Idx++])  // isIdentifier
       return Context->getDependentTemplateName(NNS,
-                                               GetIdentifierInfo(Record, Idx));
+                                               GetIdentifierInfo(F, Record, 
+                                                                 Idx));
     return Context->getDependentTemplateName(NNS,
                                          (OverloadedOperatorKind)Record[Idx++]);
   }
@@ -5146,7 +5160,7 @@ ASTReader::ReadNestedNameSpecifier(Module &F,
       = (NestedNameSpecifier::SpecifierKind)Record[Idx++];
     switch (Kind) {
     case NestedNameSpecifier::Identifier: {
-      IdentifierInfo *II = GetIdentifierInfo(Record, Idx);
+      IdentifierInfo *II = GetIdentifierInfo(F, Record, Idx);
       NNS = NestedNameSpecifier::Create(*Context, Prev, II);
       break;
     }
@@ -5195,7 +5209,7 @@ ASTReader::ReadNestedNameSpecifierLoc(Module &F, const RecordData &Record,
       = (NestedNameSpecifier::SpecifierKind)Record[Idx++];
     switch (Kind) {
     case NestedNameSpecifier::Identifier: {
-      IdentifierInfo *II = GetIdentifierInfo(Record, Idx);      
+      IdentifierInfo *II = GetIdentifierInfo(F, Record, Idx);      
       SourceRange Range = ReadSourceRange(F, Record, Idx);
       Builder.Extend(*Context, II, Range.getBegin(), Range.getEnd());
       break;

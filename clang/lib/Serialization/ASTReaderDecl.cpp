@@ -650,7 +650,7 @@ void ASTDeclReader::VisitObjCImplDecl(ObjCImplDecl *D) {
 
 void ASTDeclReader::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
   VisitObjCImplDecl(D);
-  D->setIdentifier(Reader.GetIdentifierInfo(Record, Idx));
+  D->setIdentifier(Reader.GetIdentifierInfo(F, Record, Idx));
 }
 
 void ASTDeclReader::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {

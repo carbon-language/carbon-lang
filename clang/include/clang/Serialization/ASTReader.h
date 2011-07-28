@@ -1424,20 +1424,21 @@ public:
   /// \brief Report a diagnostic.
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
 
-  IdentifierInfo *DecodeIdentifierInfo(unsigned Idx);
+  IdentifierInfo *DecodeIdentifierInfo(serialization::IdentifierID ID);
 
-  IdentifierInfo *GetIdentifierInfo(const RecordData &Record, unsigned &Idx) {
-    return DecodeIdentifierInfo(Record[Idx++]);
+  IdentifierInfo *GetIdentifierInfo(Module &M, const RecordData &Record, 
+                                    unsigned &Idx) {
+    return DecodeIdentifierInfo(getGlobalIdentifierID(M, Record[Idx++]));
   }
 
-  virtual IdentifierInfo *GetIdentifier(unsigned ID) {
+  virtual IdentifierInfo *GetIdentifier(serialization::IdentifierID ID) {
     return DecodeIdentifierInfo(ID);
   }
 
-  unsigned getGlobalIdentifierID(Module &M, unsigned LocalID) {
-    // FIXME: Remap local -> global identifier IDs
-    return LocalID;
-  }
+  IdentifierInfo *getLocalIdentifier(Module &M, unsigned LocalID);
+  
+  serialization::IdentifierID getGlobalIdentifierID(Module &M, 
+                                                    unsigned LocalID);
                                  
   /// \brief Read the source location entry with index ID.
   virtual bool ReadSLocEntry(int ID);
