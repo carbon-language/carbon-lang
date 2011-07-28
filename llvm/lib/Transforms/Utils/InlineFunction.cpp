@@ -250,7 +250,7 @@ namespace {
     PHINode *InnerSelectorPHI;
     SmallVector<Value*, 8> UnwindDestPHIValues;
 
-    SmallVector<LandingPadInst*, 16> CalleeLPads;
+    PHINode *InnerEHValuesPHI;
     LandingPadInst *CallerLPad;
     BasicBlock *SplitLPad;
 
@@ -258,7 +258,7 @@ namespace {
     InvokeInliningInfo(InvokeInst *II)
       : OuterUnwindDest(II->getUnwindDest()), OuterSelector(0),
         InnerUnwindDest(0), InnerExceptionPHI(0), InnerSelectorPHI(0),
-        CallerLPad(0), SplitLPad(0) {
+        InnerEHValuesPHI(0), CallerLPad(0), SplitLPad(0) {
       // If there are PHI nodes in the unwind destination block, we
       // need to keep track of which values came into them from the
       // invoke before removing the edge from this block.
@@ -289,10 +289,6 @@ namespace {
 
     BasicBlock *getInnerUnwindDest();
 
-    void addCalleeLandingPad(LandingPadInst *LPI) {
-      CalleeLPads.push_back(LPI);
-    }
-
     LandingPadInst *getLandingPadInst() const { return CallerLPad; }
     BasicBlock *getSplitLandingPad() {
       if (SplitLPad) return SplitLPad;
@@ -310,11 +306,6 @@ namespace {
     /// split the landing pad block after the landingpad instruction and jump
     /// to there.
     void forwardResume(ResumeInst *RI);
-
-    /// mergeLandingPadClauses - Visit all of the landing pad instructions which
-    /// supply the value for the ResumeInst, and merge the clauses from the new
-    /// destination (the caller's landing pad).
-    void mergeLandingPadClauses(ResumeInst *RI);
 
     /// addIncomingPHIValuesFor - Add incoming-PHI values to the unwind
     /// destination block for the given basic block, using the values for the
@@ -436,16 +427,6 @@ bool InvokeInliningInfo::forwardEHResume(CallInst *call, BasicBlock *src) {
   return true;
 }
 
-/// mergeLandingPadClauses - Visit all of the landing pad instructions merge the
-/// clauses from the new destination (the caller's landing pad).
-void InvokeInliningInfo::mergeLandingPadClauses(ResumeInst *RI) {
-  for (SmallVectorImpl<LandingPadInst*>::iterator
-         I = CalleeLPads.begin(), E = CalleeLPads.end(); I != E; ++I)
-    for (unsigned i = 0, e = CallerLPad->getNumClauses(); i != e; ++i)
-      (*I)->addClause(CallerLPad->getClauseType(i),
-                      CallerLPad->getClauseValue(i));
-}
-
 /// forwardResume - Forward the 'resume' instruction to the caller's landing pad
 /// block. When the landing pad block has only one predecessor, this is a simple
 /// branch. When there is more than one predecessor, we need to split the
@@ -498,15 +479,19 @@ static bool isCleanupOnlySelector(EHSelectorInst *selector) {
 /// Returns true to indicate that the next block should be skipped.
 static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
                                                    InvokeInliningInfo &Invoke) {
+  LandingPadInst *LPI = Invoke.getLandingPadInst();
+
   for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
     Instruction *I = BBI++;
 
-    // Collect the callee's landingpad instructions.
-    if (LandingPadInst *LPI = dyn_cast<LandingPadInst>(I)) {
-      Invoke.addCalleeLandingPad(LPI);
-      continue;
-    }
-    
+    if (LPI) // FIXME: This won't be NULL in the new EH.
+      if (LandingPadInst *L = dyn_cast<LandingPadInst>(I)) {
+        unsigned NumClauses = LPI->getNumClauses();
+        L->reserveClauses(NumClauses);
+        for (unsigned i = 0; i != NumClauses; ++i)
+          L->addClause(LPI->getClauseType(i), LPI->getClauseValue(i));
+      }
+
     // We only need to check for function calls: inlined invoke
     // instructions require no special handling.
     CallInst *CI = dyn_cast<CallInst>(I);
@@ -642,7 +627,6 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
     }
 
     if (ResumeInst *RI = dyn_cast<ResumeInst>(BB->getTerminator())) {
-      Invoke.mergeLandingPadClauses(RI);
       Invoke.forwardResume(RI);
     }
   }
