@@ -82,11 +82,13 @@ class NamespaceTestCase(TestBase):
 
         # 'frame variable' with fully qualified name 'A::B::j' should work.
         self.expect("frame variable A::B::j", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = '(int) A::B::j = 4')
+            startstr = '(int) A::B::j = 4',
+            patterns = [' = 4$'])
 
         # So should the anonymous namespace case.
         self.expect("frame variable '(anonymous namespace)::i'", VARIABLES_DISPLAYED_CORRECTLY,
-            startstr = '(int) (anonymous namespace)::i = 3')
+            startstr = '(int) (anonymous namespace)::i = 3',
+            patterns = [' = 3$'])
 
         # rdar://problem/8660275
         # test/namespace: 'expression -- i+j' not working
@@ -101,9 +103,9 @@ class NamespaceTestCase(TestBase):
         # rdar://problem/8668674
         # expression command with fully qualified namespace for a variable does not work
         self.expect("expression -- '::i'", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = [" = 3"])
+            patterns = [' = 3$'])
         self.expect("expression -- 'A::B::j'", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = [" = 4"])
+            patterns = [' = 4$'])
 
 
 if __name__ == '__main__':
