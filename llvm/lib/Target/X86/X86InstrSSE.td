@@ -2865,7 +2865,9 @@ def MASKMOVDQU64 : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
 // SSE2 - Move Doubleword
 //===---------------------------------------------------------------------===//
 
+//===---------------------------------------------------------------------===//
 // Move Int Doubleword to Packed Double Int
+//
 def VMOVDI2PDIrr : VPDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR32:$src),
                       "movd\t{$src, $dst|$dst, $src}",
                       [(set VR128:$dst,
@@ -2899,8 +2901,9 @@ def MOV64toSDrr : RPDI<0x6E, MRMSrcReg, (outs FR64:$dst), (ins GR64:$src),
                        "mov{d|q}\t{$src, $dst|$dst, $src}",
                        [(set FR64:$dst, (bitconvert GR64:$src))]>;
 
-
+//===---------------------------------------------------------------------===//
 // Move Int Doubleword to Single Scalar
+//
 def VMOVDI2SSrr  : VPDI<0x6E, MRMSrcReg, (outs FR32:$dst), (ins GR32:$src),
                       "movd\t{$src, $dst|$dst, $src}",
                       [(set FR32:$dst, (bitconvert GR32:$src))]>, VEX;
@@ -2917,7 +2920,9 @@ def MOVDI2SSrm  : PDI<0x6E, MRMSrcMem, (outs FR32:$dst), (ins i32mem:$src),
                       "movd\t{$src, $dst|$dst, $src}",
                       [(set FR32:$dst, (bitconvert (loadi32 addr:$src)))]>;
 
+//===---------------------------------------------------------------------===//
 // Move Packed Doubleword Int to Packed Double Int
+//
 def VMOVPDI2DIrr  : VPDI<0x7E, MRMDestReg, (outs GR32:$dst), (ins VR128:$src),
                        "movd\t{$src, $dst|$dst, $src}",
                        [(set GR32:$dst, (vector_extract (v4i32 VR128:$src),
@@ -2951,7 +2956,9 @@ def MOVSDto64mr  : RPDI<0x7E, MRMDestMem, (outs), (ins i64mem:$dst, FR64:$src),
                         "movq\t{$src, $dst|$dst, $src}",
                         [(store (i64 (bitconvert FR64:$src)), addr:$dst)]>;
 
+//===---------------------------------------------------------------------===//
 // Move Scalar Single to Double Int
+//
 def VMOVSS2DIrr  : VPDI<0x7E, MRMDestReg, (outs GR32:$dst), (ins FR32:$src),
                       "movd\t{$src, $dst|$dst, $src}",
                       [(set GR32:$dst, (bitconvert FR32:$src))]>, VEX;
@@ -2965,7 +2972,9 @@ def MOVSS2DImr  : PDI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, FR32:$src),
                       "movd\t{$src, $dst|$dst, $src}",
                       [(store (i32 (bitconvert FR32:$src)), addr:$dst)]>;
 
-// movd / movq to XMM register zero-extends
+//===---------------------------------------------------------------------===//
+// Patterns and instructions to describe movd/movq to XMM register zero-extends
+//
 let AddedComplexity = 15 in {
 def VMOVZDI2PDIrr : VPDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR32:$src),
                        "movd\t{$src, $dst|$dst, $src}",
@@ -3010,6 +3019,15 @@ def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
             (MOVZDI2PDIrm addr:$src)>;
 }
 
+// AVX 128-bit movd/movq instruction write zeros in the high 128-bit part.
+// Use regular 128-bit instructions to match 256-bit scalar_to_vec+zext.
+def : Pat<(v8i32 (X86vzmovl (insert_subvector undef,
+                              (v4i32 (scalar_to_vector GR32:$src)), (i32 0)))),
+          (SUBREG_TO_REG (i32 0), (VMOVZDI2PDIrr GR32:$src), sub_xmm)>;
+def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
+                              (v2i64 (scalar_to_vector GR64:$src)), (i32 0)))),
+          (SUBREG_TO_REG (i64 0), (VMOVZQI2PQIrr GR64:$src), sub_xmm)>;
+
 // These are the correct encodings of the instructions so that we know how to
 // read correct assembly, even though we continue to emit the wrong ones for
 // compatibility with Darwin's buggy assembler.
@@ -3030,7 +3048,9 @@ def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
 // SSE2 - Move Quadword
 //===---------------------------------------------------------------------===//
 
+//===---------------------------------------------------------------------===//
 // Move Quadword Int to Packed Quadword Int
+//
 def VMOVQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                     "vmovq\t{$src, $dst|$dst, $src}",
                     [(set VR128:$dst,
@@ -3042,7 +3062,9 @@ def MOVQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                       (v2i64 (scalar_to_vector (loadi64 addr:$src))))]>, XS,
                     Requires<[HasSSE2]>; // SSE2 instruction with XS Prefix
 
+//===---------------------------------------------------------------------===//
 // Move Packed Quadword Int to Quadword Int
+//
 def VMOVPQI2QImr : VPDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
                       "movq\t{$src, $dst|$dst, $src}",
                       [(store (i64 (vector_extract (v2i64 VR128:$src),
@@ -3055,7 +3077,9 @@ def MOVPQI2QImr : PDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
 def : Pat<(f64 (vector_extract (v2f64 VR128:$src), (iPTR 0))),
           (f64 (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd))>;
 
+//===---------------------------------------------------------------------===//
 // Store / copy lower 64-bits of a XMM register.
+//
 def VMOVLQ128mr : VPDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
                      "movq\t{$src, $dst|$dst, $src}",
                      [(int_x86_sse2_storel_dq addr:$dst, VR128:$src)]>, VEX;
@@ -3086,8 +3110,10 @@ def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4f32 addr:$src)))),
 def : Pat<(v2i64 (X86vzload addr:$src)), (MOVZQI2PQIrm addr:$src)>;
 }
 
+//===---------------------------------------------------------------------===//
 // Moving from XMM to XMM and clear upper 64 bits. Note, there is a bug in
 // IA32 document. movq xmm1, xmm2 does clear the high bits.
+//
 let AddedComplexity = 15 in
 def VMOVZPQILo2PQIrr : I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                         "vmovq\t{$src, $dst|$dst, $src}",
