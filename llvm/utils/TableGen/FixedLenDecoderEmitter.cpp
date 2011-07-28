@@ -1223,6 +1223,17 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
   for (unsigned i = 0; i < In->getNumArgs(); ++i)
     InOutOperands.push_back(std::make_pair(In->getArg(i), In->getArgName(i)));
 
+  // Search for tied operands, so that we can correctly instantiate
+  // operands that are not explicitly represented in the encoding.
+  std::map<Init*, std::string> TiedNames;
+  for (unsigned i = 0; i < CGI.Operands.size(); ++i) {
+    int tiedTo = CGI.Operands[i].getTiedRegister();
+    if (tiedTo != -1) {
+      TiedNames[InOutOperands[i].first] = InOutOperands[tiedTo].second;
+      TiedNames[InOutOperands[tiedTo].first] = InOutOperands[i].second;
+    }
+  }
+
   // For each operand, see if we can figure out where it is encoded.
   for (std::vector<std::pair<Init*, std::string> >::iterator
        NI = InOutOperands.begin(), NE = InOutOperands.end(); NI != NE; ++NI) {
@@ -1269,7 +1280,8 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
 
       VarInit *Var = dynamic_cast<VarInit*>(BI->getVariable());
       assert(Var);
-      if (Var->getName() != NI->second) {
+      if (Var->getName() != NI->second &&
+          Var->getName() != TiedNames[NI->first]) {
         if (Base != ~0U) {
           OpInfo.addField(Base, Width, Offset);
           Base = ~0U;
