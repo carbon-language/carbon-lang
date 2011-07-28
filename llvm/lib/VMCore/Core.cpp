@@ -1715,7 +1715,7 @@ void LLVMAddClause(LLVMValueRef LandingPad, LLVMLandingPadClauseTy ClauseTy,
                    LLVMValueRef ClauseVal) {
   unwrap<LandingPadInst>(LandingPad)->
     addClause(static_cast<LandingPadInst::ClauseType>(ClauseTy),
-              unwrap(ClauseVal));
+              cast<Constant>(unwrap(ClauseVal)));
 }
 
 void LLVMSetCleanup(LLVMValueRef LandingPad, LLVMBool Val) {

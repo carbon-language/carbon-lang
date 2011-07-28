@@ -3528,7 +3528,7 @@ bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
 
   bool IsCleanup = EatIfPresent(lltok::kw_cleanup);
 
-  SmallVector<std::pair<LandingPadInst::ClauseType, Value*>, 16> Clauses;
+  SmallVector<std::pair<LandingPadInst::ClauseType, Constant*>, 16> Clauses;
   while (Lex.getKind() == lltok::kw_catch || Lex.getKind() == lltok::kw_filter){
     LandingPadInst::ClauseType CT;
     if (Lex.getKind() == lltok::kw_catch) {
@@ -3543,14 +3543,15 @@ bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
       Value *V; LocTy VLoc;
       if (ParseTypeAndValue(V, VLoc, PFS))
         return true;
-      Clauses.push_back(std::make_pair(CT, V));
+      Clauses.push_back(std::make_pair(CT, cast<Constant>(V)));
     } while (EatIfPresent(lltok::comma));
   }
 
   LandingPadInst *LP = LandingPadInst::Create(Ty, PersFn, Clauses.size());
   LP->setCleanup(IsCleanup);
 
-  for (SmallVectorImpl<std::pair<LandingPadInst::ClauseType, Value*> >::iterator
+  for (SmallVectorImpl<std::pair<LandingPadInst::ClauseType,
+                                 Constant*> >::iterator
          I = Clauses.begin(), E = Clauses.end(); I != E; ++I)
     LP->addClause(I->first, I->second);
 

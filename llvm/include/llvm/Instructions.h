@@ -1852,7 +1852,7 @@ public:
   void setCleanup(bool Val) { IsCleanup = Val; }
 
   /// addClause - Add a clause to the landing pad.
-  void addClause(ClauseType CT, Value *ClauseVal);
+  void addClause(ClauseType CT, Constant *ClauseVal);
 
   /// getClauseType - Return the type of the clause at this index. The two
   /// supported clauses are Catch and Filter.
@@ -1862,9 +1862,9 @@ public:
   }
 
   /// getClauseValue - Return the value of the clause at this index.
-  Value *getClauseValue(unsigned I) const {
+  Constant *getClauseValue(unsigned I) const {
     assert(I + 1 < getNumOperands() && "Index too large!");
-    return OperandList[I + 1];
+    return cast<Constant>(OperandList[I + 1]);
   }
 
   /// getNumClauses - Get the number of clauses for this landing pad.

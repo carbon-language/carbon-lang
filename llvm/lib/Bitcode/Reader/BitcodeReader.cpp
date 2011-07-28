@@ -2550,7 +2550,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           return Error("Invalid LANDINGPAD record");
         }
 
-        LP->addClause(CT, Val);
+        LP->addClause(CT, cast<Constant>(Val));
       }
 
       I = LP;

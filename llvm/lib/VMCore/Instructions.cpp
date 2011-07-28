@@ -228,14 +228,14 @@ void LandingPadInst::reserveClauses(unsigned Size) {
   Use::zap(OldOps, OldOps + e, true);
 }
 
-void LandingPadInst::addClause(ClauseType CT, Value *ClauseVal) {
+void LandingPadInst::addClause(ClauseType CT, Constant *ClauseVal) {
   unsigned OpNo = getNumOperands();
   if (OpNo + 1 > ReservedSpace)
     growOperands();
   assert(OpNo < ReservedSpace && "Growing didn't work!");
   ClauseIdxs.push_back(CT);
   ++NumOperands;
-  OperandList[OpNo] = ClauseVal;
+  OperandList[OpNo] = (Value*)ClauseVal;
 }
 
 //===----------------------------------------------------------------------===//
