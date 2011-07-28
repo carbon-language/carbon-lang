@@ -705,7 +705,7 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       const MaterializeTemporaryExpr *Materialize
                                             = cast<MaterializeTemporaryExpr>(S);
       if (!Materialize->getType()->isRecordType())
-        CreateCXXTemporaryObject(Materialize->GetTemporaryExpr(), Pred, Dst);
+        CreateCXXTemporaryObject(Materialize, Pred, Dst);
       else
         Visit(Materialize->GetTemporaryExpr(), Pred, Dst);
       break;

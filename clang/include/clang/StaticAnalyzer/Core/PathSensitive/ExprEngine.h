@@ -366,7 +366,8 @@ public:
                     ExplodedNodeSet &Dst);
 
   /// Create a C++ temporary object for an rvalue.
-  void CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred, 
+  void CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
+                                ExplodedNode *Pred, 
                                 ExplodedNodeSet &Dst);
 
   /// Synthesize CXXThisRegion.
