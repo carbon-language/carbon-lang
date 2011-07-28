@@ -1,8 +1,8 @@
-// RUN: %clang -S -emit-llvm %s  -o /dev/null
-// XFAIL: mingw,win32
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm %s  -o /dev/null
 
-#include <setjmp.h>
-
+#define _JBLEN ((9 * 2) + 3 + 16)
+typedef int sigjmp_buf[_JBLEN + 1];
+int sigsetjmp(sigjmp_buf env, int savemask);
 sigjmp_buf B;
 int foo() {
   sigsetjmp(B, 1);
