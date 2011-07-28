@@ -1,4 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -pedantic -analyzer-store=basic -verify %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -pedantic -analyzer-store=region -verify %s
 
 // BEGIN delta-debugging reduced header stuff

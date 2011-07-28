@@ -1,4 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=basic -verify %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -verify %s
 //
 // This test case simply should not crash.  It evaluates the logic of not

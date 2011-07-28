@@ -3,11 +3,6 @@
 // RUN: %clang_cc1 -DTEST_64 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.cocoa.NilArg,osx.AtomicCAS,core.experimental -analyzer-store=region -analyzer-constraints=basic -verify %s
 // RUN: %clang_cc1 -DTEST_64 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.cocoa.NilArg,osx.AtomicCAS,core.experimental -analyzer-store=region -analyzer-constraints=range -verify %s
 
-// ==-- FIXME: -analyzer-store=basic fails on this file (false negatives). --==
-// NOTWORK: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,osx.cocoa.NilArg,osx.AtomicCAS,core.experimental -analyzer-store=basic -analyzer-constraints=range -verify %s &&
-// NOTWORK: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,osx.cocoa.NilArg,osx.AtomicCAS,core.experimental -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
-// NOTWORK: %clang_cc1 -DTEST_64 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.cocoa.NilArg,osx.AtomicCAS,core.experimental -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
-// NOTWORK: %clang_cc1 -DTEST_64 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.cocoa.NilArg,osx.AtomicCAS,core.experimental -analyzer-store=basic -analyzer-constraints=range -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from

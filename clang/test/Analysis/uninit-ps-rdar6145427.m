@@ -1,4 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -verify -analyzer-store=basic %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -verify -analyzer-store=region %s
 
 // Delta-Debugging reduced preamble.

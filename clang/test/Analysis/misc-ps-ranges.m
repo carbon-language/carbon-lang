@@ -1,4 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=basic -analyzer-constraints=range -verify -fblocks %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -analyzer-constraints=range -verify -fblocks %s
 
 // <rdar://problem/6776949>

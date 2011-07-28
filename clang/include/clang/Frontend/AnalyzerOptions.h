@@ -80,7 +80,7 @@ public:
 
 public:
   AnalyzerOptions() {
-    AnalysisStoreOpt = BasicStoreModel;
+    AnalysisStoreOpt = RegionStoreModel;
     AnalysisConstraintsOpt = RangeConstraintsModel;
     AnalysisDiagOpt = PD_HTML;
     ShowCheckerHelp = 0;

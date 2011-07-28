@@ -1,4 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental,unix.experimental,security.experimental.ArrayBound -analyzer-store=basic -verify %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental,unix.experimental,security.experimental.ArrayBound -analyzer-store=region -verify %s
 
 //===----------------------------------------------------------------------===//

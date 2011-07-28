@@ -68,7 +68,7 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
                                std::vector<std::string> &Res) {
   if (Opts.ShowCheckerHelp)
     Res.push_back("-analyzer-checker-help");
-  if (Opts.AnalysisStoreOpt != BasicStoreModel) {
+  if (Opts.AnalysisStoreOpt != RegionStoreModel) {
     Res.push_back("-analyzer-store");
     Res.push_back(getAnalysisStoreName(Opts.AnalysisStoreOpt));
   }

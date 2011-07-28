@@ -336,3 +336,6 @@ SVal StoreManager::getLValueElement(QualType elementType, NonLoc Offset,
   return loc::MemRegionVal(MRMgr.getElementRegion(elementType, NewIdx, ArrayR,
                                                   Ctx));
 }
+
+StoreManager::BindingsHandler::~BindingsHandler() {}
+

@@ -1,4 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=basic -verify %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -verify %s 
 
 // This is a test case for the issue reported in PR 2819:

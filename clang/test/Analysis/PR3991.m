@@ -1,5 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=basic -analyzer-constraints=basic -verify -triple x86_64-apple-darwin9 %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=basic -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -analyzer-constraints=basic -verify -triple x86_64-apple-darwin9 %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -analyzer-constraints=range -verify -triple x86_64-apple-darwin9 %s
 

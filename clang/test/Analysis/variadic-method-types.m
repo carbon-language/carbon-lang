@@ -1,4 +1,3 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.cocoa.VariadicMethodTypes -analyzer-store=basic -fblocks -verify %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.cocoa.VariadicMethodTypes -analyzer-store=region -fblocks -verify %s
 
 //===----------------------------------------------------------------------===//

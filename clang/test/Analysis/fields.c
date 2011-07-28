@@ -1,4 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental %s -analyzer-store=basic -verify
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental %s -analyzer-store=region -verify
 
 unsigned foo();

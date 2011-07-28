@@ -1,5 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=basic -analyzer-constraints=basic %s -verify
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=basic -analyzer-constraints=range %s -verify
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -analyzer-constraints=basic %s -verify
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -analyzer-constraints=range %s -verify
 

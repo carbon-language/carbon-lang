@@ -1,5 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=basic -analyzer-constraints=basic -verify -Wno-unreachable-code -ffreestanding %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=basic -analyzer-constraints=range -verify -Wno-unreachable-code -ffreestanding %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=region -analyzer-constraints=basic -verify -Wno-unreachable-code -ffreestanding %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=region -analyzer-constraints=range -verify -Wno-unreachable-code -ffreestanding %s
 

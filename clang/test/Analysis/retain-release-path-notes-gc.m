@@ -1,4 +1,3 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.coreFoundation.CFRetainRelease,osx.cocoa.ClassRelease -analyzer-store=basic -analyzer-output=text -fobjc-gc-only -verify %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,osx.coreFoundation.CFRetainRelease,osx.cocoa.ClassRelease -analyzer-store=region -analyzer-output=text -fobjc-gc-only -verify %s
 
 /***

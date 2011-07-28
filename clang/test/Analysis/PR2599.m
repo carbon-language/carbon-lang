@@ -1,6 +1,3 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-constraints=basic -analyzer-store=basic -fobjc-gc -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-constraints=range -analyzer-store=basic -fobjc-gc -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-constraints=basic -analyzer-store=basic -fobjc-gc -verify %s
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-constraints=range -analyzer-store=region -fobjc-gc -verify %s
 
 typedef const void * CFTypeRef;

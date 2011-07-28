@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -triple i386-apple-darwin10 -analyzer-store=region %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -triple i386-apple-darwin10 -analyzer-store=basic %s
 
 // Note that the target triple is important for this test case.  It specifies that we use the
 // fragile Objective-C ABI.

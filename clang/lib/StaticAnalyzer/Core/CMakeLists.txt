@@ -6,7 +6,6 @@ add_clang_library(clangStaticAnalyzerCore
   AggExprVisitor.cpp
   AnalysisManager.cpp
   BasicConstraintManager.cpp
-  BasicStore.cpp
   BasicValueFactory.cpp
   BlockCounter.cpp
   BugReporter.cpp
@@ -20,7 +19,6 @@ add_clang_library(clangStaticAnalyzerCore
   Environment.cpp
   ExplodedGraph.cpp
   ExprEngine.cpp
-  FlatStore.cpp
   GRState.cpp
   HTMLDiagnostics.cpp
   MemRegion.cpp
@@ -29,11 +27,11 @@ add_clang_library(clangStaticAnalyzerCore
   PlistDiagnostics.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp
+  SValBuilder.cpp
+  SVals.cpp
   SimpleConstraintManager.cpp
   SimpleSValBuilder.cpp
   Store.cpp
-  SValBuilder.cpp
-  SVals.cpp
   SymbolManager.cpp
   TextPathDiagnostics.cpp
   )
