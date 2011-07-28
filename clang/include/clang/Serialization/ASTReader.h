@@ -374,9 +374,6 @@ public:
   /// preprocessing record.
   unsigned NumPreallocatedPreprocessingEntities;
   
-  /// \brief The next module in source order.
-  Module *NextInSource;
-  
   /// \brief All the modules that loaded this one. Can contain NULL for
   /// directly loaded modules.
   SmallVector<Module *, 1> Loaders;
@@ -404,19 +401,22 @@ public:
   ModuleManager(const FileSystemOptions &FSO);
   ~ModuleManager();
 
-  /// \brief Forward iterator to traverse all loaded modules
+  /// \brief Forward iterator to traverse all loaded modules.  This is reverse
+  /// source-order.
   ModuleIterator begin() { return Chain.begin(); }
   /// \brief Forward iterator end-point to traverse all loaded modules
   ModuleIterator end() { return Chain.end(); }
 
-  /// \brief Const forward iterator to traverse all loaded modules
+  /// \brief Const forward iterator to traverse all loaded modules.  This is 
+  /// in reverse source-order.
   ModuleConstIterator begin() const { return Chain.begin(); }
   /// \brief Const forward iterator end-point to traverse all loaded modules
   ModuleConstIterator end() const { return Chain.end(); }
 
-  /// \brief Reverse iterator to traverse all loaded modules
+  /// \brief Reverse iterator to traverse all loaded modules.  This is in 
+  /// source order.
   ModuleReverseIterator rbegin() { return Chain.rbegin(); }
-  /// \brief Reverse iterator end-point to traverse all loaded modules
+  /// \brief Reverse iterator end-point to traverse all loaded modules.
   ModuleReverseIterator rend() { return Chain.rend(); }
 
   /// \brief Returns the primary module associated with the manager, that is,

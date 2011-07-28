@@ -5473,7 +5473,7 @@ Module::Module(ModuleKind Kind)
     SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
     DeclOffsets(0), LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),
     LocalNumTypes(0), TypeOffsets(0), StatCache(0),
-    NumPreallocatedPreprocessingEntities(0), NextInSource(0)
+    NumPreallocatedPreprocessingEntities(0)
 {}
 
 Module::~Module() {
@@ -5498,8 +5498,6 @@ Module &ModuleManager::addModule(StringRef FileName, ModuleKind Type) {
   const FileEntry *Entry = FileMgr.getFile(FileName);
   Modules[Entry] = Current;
 
-  if (Prev)
-    Prev->NextInSource = Current;
   Current->Loaders.push_back(Prev);
 
   return *Current;
