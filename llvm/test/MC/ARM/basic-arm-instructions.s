@@ -123,8 +123,20 @@ _func:
 
 
 @------------------------------------------------------------------------------
-@ FIXME: ADR
+@ ADR
 @------------------------------------------------------------------------------
+Lback:
+  adr r2, Lback
+  adr r3, Lforward
+Lforward:
+
+@ CHECK: Lback:
+@ CHECK: adr	r2, Lback    @ encoding: [0bAAAAAAA0,0x20'A',0x0f'A',0b1110001A]
+@ CHECK:  @   fixup A - offset: 0, value: Lback, kind: fixup_arm_adr_pcrel_12
+@ CHECK: adr	r3, Lforward @ encoding: [0bAAAAAAA0,0x30'A',0x0f'A',0b1110001A]
+@ CHECK:  @   fixup A - offset: 0, value: Lforward, kind: fixup_arm_adr_pcrel_12
+@ CHECK: Lforward:
+
 
 @------------------------------------------------------------------------------
 @ ADD

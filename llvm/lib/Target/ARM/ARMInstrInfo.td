@@ -1436,7 +1436,7 @@ let neverHasSideEffects = 1, isReMaterializable = 1 in
 // the instruction. The {24-21} opcode bits are set by the fixup, as we don't
 // know until then which form of the instruction will be used.
 def ADR : AI1<{0,?,?,0}, (outs GPR:$Rd), (ins adrlabel:$label),
-                 MiscFrm, IIC_iALUi, "adr", "\t$Rd, #$label", []> {
+                 MiscFrm, IIC_iALUi, "adr", "\t$Rd, $label", []> {
   bits<4> Rd;
   bits<12> label;
   let Inst{27-25} = 0b001;
