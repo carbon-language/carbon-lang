@@ -2098,6 +2098,16 @@ def : Pat<(v16i8 immAllZerosV), (V_SET0PI)>;
 def : Pat<(f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
           (f32 (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
 
+// AVX has no support for 256-bit integer instructions, but since the 128-bit
+// VPXOR instruction writes zero to its upper part, it's safe build zeros.
+def : Pat<(v8i32 immAllZerosV), (SUBREG_TO_REG (i32 0), (AVX_SET0PI), sub_xmm)>;
+def : Pat<(bc_v8i32 (v8f32 immAllZerosV)),
+          (SUBREG_TO_REG (i32 0), (AVX_SET0PI), sub_xmm)>;
+
+def : Pat<(v4i64 immAllZerosV), (SUBREG_TO_REG (i64 0), (AVX_SET0PI), sub_xmm)>;
+def : Pat<(bc_v4i64 (v8f32 immAllZerosV)),
+          (SUBREG_TO_REG (i64 0), (AVX_SET0PI), sub_xmm)>;
+
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Load/Store XCSR register
 //===----------------------------------------------------------------------===//

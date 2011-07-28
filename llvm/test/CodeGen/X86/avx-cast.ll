@@ -16,7 +16,7 @@ entry:
   ret <4 x double> %shuffle.i
 }
 
-; CHECK: vxorps
+; CHECK: vpxor
 ; CHECK-NEXT: vinsertf128 $0
 define <4 x i64> @castC(<2 x i64> %m) nounwind uwtable readnone ssp {
 entry:
