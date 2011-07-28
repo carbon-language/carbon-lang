@@ -4346,8 +4346,10 @@ void ASTReader::InitializeSema(Sema &S) {
   // They will be lazily deserialized when needed.
   if (!SemaDeclRefs.empty()) {
     assert(SemaDeclRefs.size() == 2 && "More decl refs than expected!");
-    SemaObj->StdNamespace = SemaDeclRefs[0];
-    SemaObj->StdBadAlloc = SemaDeclRefs[1];
+    if (!SemaObj->StdNamespace)
+      SemaObj->StdNamespace = SemaDeclRefs[0];
+    if (!SemaObj->StdBadAlloc)
+      SemaObj->StdBadAlloc = SemaDeclRefs[1];
   }
 
   for (Module *F = &ModuleMgr.getPrimaryModule(); F; F = F->NextInSource) {
