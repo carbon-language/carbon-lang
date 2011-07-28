@@ -507,7 +507,7 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
   // actually perform the initialization with an assign.
   bool accessedByInit = false;
   if (lifetime != Qualifiers::OCL_ExplicitNone)
-    accessedByInit = isAccessedBy(D, init);
+    accessedByInit = (capturedByInit || isAccessedBy(D, init));
   if (accessedByInit) {
     LValue tempLV = lvalue;
     // Drill down to the __block object if necessary.

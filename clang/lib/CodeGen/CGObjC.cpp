@@ -2144,10 +2144,20 @@ CodeGenFunction::EmitARCStoreStrong(const BinaryOperator *e,
   TryEmitResult result = tryEmitARCRetainScalarExpr(*this, e->getRHS());
   llvm::Value *value = result.getPointer();
 
+  bool hasImmediateRetain = result.getInt();
+
+  // If we didn't emit a retained object, and the l-value is of block
+  // type, then we need to emit the block-retain immediately in case
+  // it invalidates the l-value.
+  if (!hasImmediateRetain && e->getType()->isBlockPointerType()) {
+    value = EmitARCRetainBlock(value);
+    hasImmediateRetain = true;
+  }
+
   LValue lvalue = EmitLValue(e->getLHS());
 
   // If the RHS was emitted retained, expand this.
-  if (result.getInt()) {
+  if (hasImmediateRetain) {
     llvm::Value *oldValue =
       EmitLoadOfScalar(lvalue.getAddress(), lvalue.isVolatileQualified(),
                        lvalue.getAlignment(), e->getType(),
