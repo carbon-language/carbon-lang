@@ -921,17 +921,14 @@ unsigned ARMMCCodeEmitter::
 getSORegRegOpValue(const MCInst &MI, unsigned OpIdx,
                 SmallVectorImpl<MCFixup> &Fixups) const {
   // Sub-operands are [reg, reg, imm]. The first register is Rm, the reg to be
-  // shifted. The second is either Rs, the amount to shift by, or reg0 in which
-  // case the imm contains the amount to shift by.
+  // shifted. The second is Rs, the amount to shift by, and the third specifies
+  // the type of the shift.
   //
   // {3-0} = Rm.
-  // {4}   = 1 if reg shift, 0 if imm shift
+  // {4}   = 1
   // {6-5} = type
-  //    If reg shift:
-  //      {11-8} = Rs
-  //      {7}    = 0
-  //    else (imm shift)
-  //      {11-7} = imm
+  // {11-8} = Rs
+  // {7}    = 0
 
   const MCOperand &MO  = MI.getOperand(OpIdx);
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
@@ -961,7 +958,7 @@ getSORegRegOpValue(const MCInst &MI, unsigned OpIdx,
 
   Binary |= SBits << 4;
 
-  // Encode the shift operation Rs or shift_imm (except rrx).
+  // Encode the shift operation Rs.
   // Encode Rs bit[11:8].
   assert(ARM_AM::getSORegOffset(MO2.getImm()) == 0);
   return Binary | (getARMRegisterNumbering(Rs) << ARMII::RegRsShift);
@@ -970,18 +967,13 @@ getSORegRegOpValue(const MCInst &MI, unsigned OpIdx,
 unsigned ARMMCCodeEmitter::
 getSORegImmOpValue(const MCInst &MI, unsigned OpIdx,
                 SmallVectorImpl<MCFixup> &Fixups) const {
-  // Sub-operands are [reg, reg, imm]. The first register is Rm, the reg to be
-  // shifted. The second is either Rs, the amount to shift by, or reg0 in which
-  // case the imm contains the amount to shift by.
+  // Sub-operands are [reg, imm]. The first register is Rm, the reg to be
+  // shifted. The second is the amount to shift by.
   //
   // {3-0} = Rm.
-  // {4}   = 1 if reg shift, 0 if imm shift
+  // {4}   = 0
   // {6-5} = type
-  //    If reg shift:
-  //      {11-8} = Rs
-  //      {7}    = 0
-  //    else (imm shift)
-  //      {11-7} = imm
+  // {11-7} = imm
 
   const MCOperand &MO  = MI.getOperand(OpIdx);
   const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
