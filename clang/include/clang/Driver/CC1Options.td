@@ -609,6 +609,8 @@ def I : JoinedOrSeparate<"-I">, MetaVarName<"<directory>">,
   HelpText<"Add directory to include search path">;
 def idirafter : JoinedOrSeparate<"-idirafter">, MetaVarName<"<directory>">,
   HelpText<"Add directory to AFTER include search path">;
+def index_header_map : Flag<"-index-header-map">, 
+  HelpText<"Make the next included directory (-I or -F) an indexer header map">;
 def iquote : JoinedOrSeparate<"-iquote">, MetaVarName<"<directory>">,
   HelpText<"Add directory to QUOTE include search path">;
 def cxx_isystem : JoinedOrSeparate<"-cxx-isystem">, MetaVarName<"<directory>">,

@@ -56,21 +56,27 @@ private:
   /// LookupType - This indicates whether this DirectoryLookup object is a
   /// normal directory, a framework, or a headermap.
   unsigned LookupType : 2;
+  
+  /// \brief Whether this is a header map used when building a framework.
+  unsigned IsIndexHeaderMap : 1;
+  
 public:
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
   /// 'dir'.
   DirectoryLookup(const DirectoryEntry *dir, SrcMgr::CharacteristicKind DT,
                   bool isUser, bool isFramework)
-    : DirCharacteristic(DT), UserSupplied(isUser),
-     LookupType(isFramework ? LT_Framework : LT_NormalDir) {
+    : DirCharacteristic(DT), UserSupplied(isUser), 
+      LookupType(isFramework ? LT_Framework : LT_NormalDir),
+      IsIndexHeaderMap(false) {
     u.Dir = dir;
   }
 
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
   /// 'map'.
   DirectoryLookup(const HeaderMap *map, SrcMgr::CharacteristicKind DT,
-                  bool isUser)
-    : DirCharacteristic(DT), UserSupplied(isUser), LookupType(LT_HeaderMap) {
+                  bool isUser, bool isIndexHeaderMap)
+    : DirCharacteristic(DT), UserSupplied(isUser), LookupType(LT_HeaderMap),
+      IsIndexHeaderMap(isIndexHeaderMap) {
     u.Map = map;
   }
 
@@ -116,7 +122,11 @@ public:
   ///
   bool isUserSupplied() const { return UserSupplied; }
 
-
+  /// \brief Whether this header map is building a framework or not.
+  bool isIndexHeaderMap() const { 
+    return isHeaderMap() && IsIndexHeaderMap; 
+  }
+  
   /// LookupFile - Lookup the specified file in this search path, returning it
   /// if it exists or returning null if not.
   ///

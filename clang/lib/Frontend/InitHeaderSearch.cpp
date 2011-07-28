@@ -134,7 +134,7 @@ void InitHeaderSearch::AddPath(const Twine &Path,
 
   // Compute the DirectoryLookup type.
   SrcMgr::CharacteristicKind Type;
-  if (Group == Quoted || Group == Angled)
+  if (Group == Quoted || Group == Angled || Group == IndexHeaderMap)
     Type = SrcMgr::C_User;
   else if (isCXXAware)
     Type = SrcMgr::C_System;
@@ -156,7 +156,7 @@ void InitHeaderSearch::AddPath(const Twine &Path,
       if (const HeaderMap *HM = Headers.CreateHeaderMap(FE)) {
         // It is a headermap, add it to the search path.
         IncludePath.push_back(std::make_pair(Group, DirectoryLookup(HM, Type,
-                              isUserSupplied)));
+                              isUserSupplied, Group == IndexHeaderMap)));
         return;
       }
     }
@@ -1054,7 +1054,7 @@ void InitHeaderSearch::Realize(const LangOptions &Lang) {
 
   for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
        it != ie; ++it) {
-    if (it->first == Angled)
+    if (it->first == Angled || it->first == IndexHeaderMap)
       SearchList.push_back(it->second);
   }
 

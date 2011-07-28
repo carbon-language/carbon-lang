@@ -23,6 +23,8 @@ namespace frontend {
   enum IncludeDirGroup {
     Quoted = 0,     ///< '#include ""' paths, added by'gcc -iquote'.
     Angled,         ///< Paths for '#include <>' added by '-I'.
+    IndexHeaderMap, ///< Like Angled, but marks header maps used when
+                       ///  building frameworks.
     System,         ///< Like Angled, but marks system directories.
     CXXSystem,      ///< Like System, but only used for C++.
     After           ///< Like System, but searched after the system directories.

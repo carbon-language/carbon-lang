@@ -520,17 +520,31 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
     if (E.IsFramework && (E.Group != frontend::Angled || !E.IsUserSupplied))
       llvm::report_fatal_error("Invalid option set!");
     if (E.IsUserSupplied) {
-      if (E.Group == frontend::After) {
+      switch (E.Group) {
+      case frontend::After:
         Res.push_back("-idirafter");
-      } else if (E.Group == frontend::Quoted) {
+        break;
+        
+      case frontend::Quoted:
         Res.push_back("-iquote");
-      } else if (E.Group == frontend::System) {
+        break;
+        
+      case frontend::System:
         Res.push_back("-isystem");
-      } else if (E.Group == frontend::CXXSystem) {
+        break;
+        
+      case frontend::IndexHeaderMap:
+        Res.push_back("-index-header-map");
+        Res.push_back(E.IsFramework? "-F" : "-I");
+        break;
+        
+      case frontend::CXXSystem:
         Res.push_back("-cxx-isystem");
-      } else {
-        assert(E.Group == frontend::Angled && "Invalid group!");
+        break;
+        
+      case frontend::Angled:
         Res.push_back(E.IsFramework ? "-F" : "-I");
+        break;
       }
     } else {
       if (E.Group != frontend::Angled && E.Group != frontend::System)
@@ -1364,11 +1378,24 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
     Opts.UseLibcxx = (strcmp(A->getValue(Args), "libc++") == 0);
   Opts.ResourceDir = Args.getLastArgValue(OPT_resource_dir);
 
-  // Add -I... and -F... options in order.
-  for (arg_iterator it = Args.filtered_begin(OPT_I, OPT_F),
-         ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(Args), frontend::Angled, true,
+  // Add -I..., -F..., and -index-header-map options in order.
+  bool IsIndexHeaderMap = false;
+  for (arg_iterator it = Args.filtered_begin(OPT_I, OPT_F, 
+                                             OPT_index_header_map),
+       ie = Args.filtered_end(); it != ie; ++it) {
+    if ((*it)->getOption().matches(OPT_index_header_map)) {
+      // -index-header-map applies to the next -I or -F.
+      IsIndexHeaderMap = true;
+      continue;
+    }
+        
+    frontend::IncludeDirGroup Group 
+      = IsIndexHeaderMap? frontend::IndexHeaderMap : frontend::Angled;
+    
+    Opts.AddPath((*it)->getValue(Args), Group, true,
                  /*IsFramework=*/ (*it)->getOption().matches(OPT_F), false);
+    IsIndexHeaderMap = false;
+  }
 
   // Add -iprefix/-iwith-prefix/-iwithprefixbefore options.
   StringRef Prefix = ""; // FIXME: This isn't the correct default prefix.

@@ -341,7 +341,8 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_D, options::OPT_U);
-  Args.AddAllArgs(CmdArgs, options::OPT_I_Group, options::OPT_F);
+  Args.AddAllArgs(CmdArgs, options::OPT_I_Group, options::OPT_F,
+                  options::OPT_index_header_map);
 
   // Add C++ include arguments, if needed.
   types::ID InputType = Inputs[0].getType();
