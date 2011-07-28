@@ -2862,6 +2862,10 @@ defm BIC   : AsI1_bin_irs<0b1110, "bic",
                           IIC_iBITi, IIC_iBITr, IIC_iBITsr,
                           BinOpFrag<(and node:$LHS, (not node:$RHS))>, "BIC">;
 
+// FIXME: bf_inv_mask_imm should be two operands, the lsb and the msb, just
+// like in the actual instruction encoding. The complexity of mapping the mask
+// to the lsb/msb pair should be handled by ISel, not encapsulated in the
+// instruction description.
 def BFC    : I<(outs GPR:$Rd), (ins GPR:$src, bf_inv_mask_imm:$imm),
                AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
                "bfc", "\t$Rd, $imm", "$src = $Rd",
@@ -2873,7 +2877,7 @@ def BFC    : I<(outs GPR:$Rd), (ins GPR:$src, bf_inv_mask_imm:$imm),
   let Inst{6-0}   = 0b0011111;
   let Inst{15-12} = Rd;
   let Inst{11-7}  = imm{4-0}; // lsb
-  let Inst{20-16} = imm{9-5}; // width
+  let Inst{20-16} = imm{9-5}; // msb
 }
 
 // A8.6.18  BFI - Bitfield insert (Encoding A1)
