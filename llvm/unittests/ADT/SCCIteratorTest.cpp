@@ -251,8 +251,8 @@ TEST(SCCIteratorTest, AllSmallGraphs) {
 #define NUM_GRAPHS (NUM_NODES * (NUM_NODES - 1))
 
   /// GraphDescriptor - Enumerate all graphs using NUM_GRAPHS bits.
-  uint16_t GraphDescriptor = 0;
-  assert(NUM_GRAPHS <= sizeof(uint16_t) * CHAR_BIT && "Too many graphs!");
+  unsigned GraphDescriptor = 0;
+  assert(NUM_GRAPHS <= sizeof(unsigned) * CHAR_BIT && "Too many graphs!");
 
   do {
     typedef Graph<NUM_NODES> GT;
@@ -260,7 +260,7 @@ TEST(SCCIteratorTest, AllSmallGraphs) {
     GT G;
 
     // Add edges as specified by the descriptor.
-    uint16_t DescriptorCopy = GraphDescriptor;
+    unsigned DescriptorCopy = GraphDescriptor;
     for (unsigned i = 0; i != NUM_NODES; ++i)
       for (unsigned j = 0; j != NUM_NODES; ++j) {
         // Always add a self-edge.
@@ -344,7 +344,7 @@ TEST(SCCIteratorTest, AllSmallGraphs) {
     EXPECT_EQ(NodesInSomeSCC, G.NodesReachableFrom(0));
 
     ++GraphDescriptor;
-  } while (GraphDescriptor && (unsigned)GraphDescriptor < (1U << NUM_GRAPHS));
+  } while (GraphDescriptor && GraphDescriptor < (1U << NUM_GRAPHS));
 }
 
 }
