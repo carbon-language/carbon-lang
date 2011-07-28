@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang -S -arch armv7 %s -emit-llvm -o - | FileCheck %s
 
 typedef struct _zend_ini_entry zend_ini_entry;
 struct _zend_ini_entry {
@@ -23,17 +23,15 @@ typedef __attribute__(( ext_vector_type(2) )) unsigned int uint2;
 typedef __attribute__(( __vector_size__(8) )) unsigned int __neon_uint32x2_t;
 
 // rdar://8183908
-typedef struct __simd64_uint32_t {
-  __neon_uint32x2_t val;
-} uint32x2_t;
+typedef unsigned int uint32_t;
+typedef __attribute__((neon_vector_type(2)))  uint32_t uint32x2_t;
 void foo() {
     const uint32x2_t signBit = { (uint2) 0x80000000 };
 }
 
-// CHECK: %struct.fp_struct_foo = type { void (i32)* }
+// CHECK: %struct.fp_struct_foo = type { void ([1 x i32])* }
 struct fp_struct_bar { int a; };
 
 struct fp_struct_foo {
   void (*FP)(struct fp_struct_bar);
 } G;
-
