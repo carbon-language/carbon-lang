@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -ast-dump %s | FileCheck %s
+// RxUN: %clang_cc1 -ast-dump %s | FileCheck %s
+// RUN: %clang_cc1 -ast-dump %s > /dev/null
 
 template <int X, typename Y, int Z = 5>
 struct foo {
