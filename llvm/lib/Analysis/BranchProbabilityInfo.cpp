@@ -134,13 +134,13 @@ public:
   }
 
   // Return Heuristics
-  void calcReturnHeuristics(BasicBlock *BB);
+  bool calcReturnHeuristics(BasicBlock *BB);
 
   // Pointer Heuristics
-  void calcPointerHeuristics(BasicBlock *BB);
+  bool calcPointerHeuristics(BasicBlock *BB);
 
   // Loop Branch Heuristics
-  void calcLoopBranchHeuristics(BasicBlock *BB);
+  bool calcLoopBranchHeuristics(BasicBlock *BB);
 
   bool runOnFunction(Function &F);
 };
@@ -148,34 +148,38 @@ public:
 
 // Calculate Edge Weights using "Return Heuristics". Predict a successor which
 // leads directly to Return Instruction will not be taken.
-void BranchProbabilityAnalysis::calcReturnHeuristics(BasicBlock *BB){
+bool BranchProbabilityAnalysis::calcReturnHeuristics(BasicBlock *BB){
   if (BB->getTerminator()->getNumSuccessors() == 1)
-    return;
+    return false;
 
+  bool Any = false;
   for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
     BasicBlock *Succ = *I;
     if (isReturningBlock(Succ)) {
       decEdgeWeight(BB, Succ);
+      Any = true;
     }
   }
+
+  return Any;
 }
 
 // Calculate Edge Weights using "Pointer Heuristics". Predict a comparsion
 // between two pointer or pointer and NULL will fail.
-void BranchProbabilityAnalysis::calcPointerHeuristics(BasicBlock *BB) {
+bool BranchProbabilityAnalysis::calcPointerHeuristics(BasicBlock *BB) {
   BranchInst * BI = dyn_cast<BranchInst>(BB->getTerminator());
   if (!BI || !BI->isConditional())
-    return;
+    return false;
 
   Value *Cond = BI->getCondition();
   ICmpInst *CI = dyn_cast<ICmpInst>(Cond);
   if (!CI || !CI->isEquality())
-    return;
+    return false;
 
   Value *LHS = CI->getOperand(0);
 
   if (!LHS->getType()->isPointerTy())
-    return;
+    return false;
 
   assert(CI->getOperand(1)->getType()->isPointerTy());
 
@@ -192,16 +196,17 @@ void BranchProbabilityAnalysis::calcPointerHeuristics(BasicBlock *BB) {
 
   incEdgeWeight(BB, Taken);
   decEdgeWeight(BB, NonTaken);
+  return true;
 }
 
 // Calculate Edge Weights using "Loop Branch Heuristics". Predict backedges
 // as taken, exiting edges as not-taken.
-void BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
+bool BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
   uint32_t numSuccs = BB->getTerminator()->getNumSuccessors();
 
   Loop *L = LI->getLoopFor(BB);
   if (!L)
-    return;
+    return false;
 
   SmallVector<BasicBlock *, 8> BackEdges;
   SmallVector<BasicBlock *, 8> ExitingEdges;
@@ -256,6 +261,8 @@ void BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
       BP->setEdgeWeight(BB, Exiting, exitWeight);
     }
   }
+
+  return true;
 }
 
 bool BranchProbabilityAnalysis::runOnFunction(Function &F) {
@@ -264,12 +271,15 @@ bool BranchProbabilityAnalysis::runOnFunction(Function &F) {
     BasicBlock *BB = I++;
 
     // Only LBH uses setEdgeWeight method.
-    calcLoopBranchHeuristics(BB);
+    if (calcLoopBranchHeuristics(BB))
+      continue;
 
     // PH and RH use only incEdgeWeight and decEwdgeWeight methods to
     // not efface LBH results.
+    if (calcReturnHeuristics(BB))
+      continue;
+
     calcPointerHeuristics(BB);
-    calcReturnHeuristics(BB);
   }
 
   return false;
