@@ -1,7 +1,7 @@
 // RUN: cp %s %t
-// RUN: %clang_cc1 -pedantic -fixit -x c %t || true
+// RUN: %clang_cc1 -pedantic -Wunused-label -fixit -x c %t || true
 // RUN: grep -v CHECK %t > %t2
-// RUN: %clang_cc1 -pedantic -Werror -x c %t
+// RUN: %clang_cc1 -pedantic -Wunused-label -Werror -x c %t
 // RUN: FileCheck -input-file=%t2 %t
 
 /* This is a test of the various code modification hints that are
@@ -59,3 +59,14 @@ struct test_struct {
   // CHECK: struct test_struct *struct_ptr;
   test_struct *struct_ptr; // expected-error {{must use 'struct' tag to refer to type 'test_struct'}}
 };
+
+void removeUnusedLabels(char c) {
+  L0 /*removed comment*/:        c++;
+  removeUnusedLabels(c);
+  L1:
+  c++;
+  /*preserved comment*/ L2  :        c++;
+  LL
+  : c++;
+  c = c + 3; L4: return;
+}
