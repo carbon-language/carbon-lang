@@ -21,6 +21,7 @@
 #include "clang/AST/TemplateBase.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/UnresolvedSet.h"
+#include "clang/Sema/SemaFixItUtils.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -528,14 +529,6 @@ namespace clang {
     ovl_fail_final_conversion_not_exact
   };
 
-  enum OverloadFixItKind {
-    OFIK_Undefined = 0,
-    OFIK_Dereference,
-    OFIK_TakeAddress,
-    OFIK_RemoveDereference,
-    OFIK_RemoveTakeAddress
-  };
-
   /// OverloadCandidate - A single candidate in an overload set (C++ 13.3).
   struct OverloadCandidate {
     /// Function - The actual function that this candidate
@@ -565,19 +558,7 @@ namespace clang {
     SmallVector<ImplicitConversionSequence, 4> Conversions;
 
     /// The FixIt hints which can be used to fix the Bad candidate.
-    struct FixInfo {
-      /// The list of Hints (all have to be applied).
-      SmallVector<FixItHint, 1> Hints;
-
-      /// The number of Conversions fixed. This can be different from the size
-      /// of the Hints vector since we allow multiple FixIts per conversion.
-      unsigned NumConversionsFixed;
-
-      /// The type of fix applied.
-      OverloadFixItKind Kind;
-
-      FixInfo(): NumConversionsFixed(0), Kind(OFIK_Undefined) {}
-    } Fix;
+    ConversionFixItGenerator Fix;
 
     /// Viable - True to indicate that this overload candidate is viable.
     bool Viable;
@@ -653,6 +634,19 @@ namespace clang {
         if (I->isAmbiguous()) return true;
       }
       return false;
+    }
+
+    bool TryToFixBadConversion(unsigned Idx, Sema &S) {
+      bool CanFix = Fix.tryToFixConversion(
+                      Conversions[Idx].Bad.FromExpr,
+                      Conversions[Idx].Bad.getFromType(),
+                      Conversions[Idx].Bad.getToType(), S);
+
+      // If at least one conversion fails, the candidate cannot be fixed.
+      if (!CanFix)
+        Fix.clear();
+
+      return CanFix;
     }
   };
 

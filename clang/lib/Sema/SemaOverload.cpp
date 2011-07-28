@@ -3644,6 +3644,18 @@ TryCopyInitialization(Sema &S, Expr *From, QualType ToType,
                                AllowObjCWritebackConversion);
 }
 
+static bool TryCopyInitialization(const CanQualType FromQTy,
+                                  const CanQualType ToQTy,
+                                  Sema &S,
+                                  SourceLocation Loc,
+                                  ExprValueKind FromVK) {
+  OpaqueValueExpr TmpExpr(Loc, FromQTy, FromVK);
+  ImplicitConversionSequence ICS =
+    TryCopyInitialization(S, &TmpExpr, ToQTy, true, true, false);
+
+  return !ICS.isBad();
+}
+
 /// TryObjectArgumentInitialization - Try to initialize the object
 /// parameter of the given member function (@c Method) from the
 /// expression @p From.
@@ -6729,108 +6741,6 @@ void ImplicitConversionSequence::DiagnoseAmbiguousConversion(
 
 namespace {
 
-/// Try to find a fix for the bad conversion. Populate the ConvFix structure
-/// on success. Produces the hints for the following cases:
-/// - The user forgot to apply * or & operator to one or more arguments.
-static bool TryToFixBadConversion(Sema &S,
-                                  const ImplicitConversionSequence &Conv,
-                                  OverloadCandidate::FixInfo &ConvFix) {
-  assert(Conv.isBad() && "Only try to fix a bad conversion.");
-
-  const Expr *Arg = Conv.Bad.FromExpr;
-  if (!Arg)
-    return false;
-
-  // The conversion is from argument type to parameter type.
-  const CanQualType FromQTy = S.Context.getCanonicalType(Conv.Bad
-                                                         .getFromType());
-  const CanQualType ToQTy = S.Context.getCanonicalType(Conv.Bad.getToType());
-  const SourceLocation Begin = Arg->getSourceRange().getBegin();
-  const SourceLocation End = S.PP.getLocForEndOfToken(Arg->getSourceRange()
-                                                      .getEnd());
-  bool NeedParen = true;
-  if (isa<ParenExpr>(Arg) ||
-      isa<DeclRefExpr>(Arg) ||
-      isa<ArraySubscriptExpr>(Arg) ||
-      isa<CallExpr>(Arg) ||
-      isa<MemberExpr>(Arg))
-    NeedParen = false;
-  if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(Arg))
-    if (UO->isPostfix())
-      NeedParen = false;
-
-  // Check if the argument needs to be dereferenced
-  // (type * -> type) or (type * -> type &).
-  if (const PointerType *FromPtrTy = dyn_cast<PointerType>(FromQTy)) {
-    // Try to construct an implicit conversion from argument type to the
-    // parameter type.
-    OpaqueValueExpr TmpExpr(Arg->getExprLoc(), FromPtrTy->getPointeeType(),
-                            VK_LValue);
-    ImplicitConversionSequence ICS =
-      TryCopyInitialization(S, &TmpExpr, ToQTy, true, true, false);
-
-    OverloadFixItKind FixKind = OFIK_Dereference;
-    if (!ICS.isBad()) {
-      // Do not suggest dereferencing a Null pointer.
-      if (Arg->IgnoreParenCasts()->
-          isNullPointerConstant(S.Context, Expr::NPC_ValueDependentIsNotNull))
-        return false;
-
-      if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(Arg)) {
-        if (UO->getOpcode() == UO_AddrOf) {
-          ConvFix.Hints.push_back(
-                               FixItHint::CreateRemoval(Arg->getSourceRange()));
-          FixKind = OFIK_RemoveTakeAddress;
-        }
-      } else if (NeedParen) {
-        ConvFix.Hints.push_back(FixItHint::CreateInsertion(Begin, "*("));
-        ConvFix.Hints.push_back(FixItHint::CreateInsertion(End, ")"));
-      } else {
-        ConvFix.Hints.push_back(FixItHint::CreateInsertion(Begin, "*"));
-      }
-      ConvFix.NumConversionsFixed++;
-      if (ConvFix.NumConversionsFixed == 1)
-        ConvFix.Kind = FixKind;
-      return true;
-    }
-  }
-
-  // Check if the pointer to the argument needs to be passed
-  // (type -> type *) or (type & -> type *).
-  if (isa<PointerType>(ToQTy)) {
-    // Only suggest taking address of L-values.
-    if (!Arg->isLValue() || Arg->getObjectKind() != OK_Ordinary)
-      return false;
-
-    OpaqueValueExpr TmpExpr(Arg->getExprLoc(),
-                            S.Context.getPointerType(FromQTy), VK_RValue);
-    ImplicitConversionSequence ICS =
-      TryCopyInitialization(S, &TmpExpr, ToQTy, true, true, false);
-
-    OverloadFixItKind FixKind = OFIK_TakeAddress;
-    if (!ICS.isBad()) {
-
-      if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(Arg)) {
-        if (UO->getOpcode() == UO_Deref) {
-          ConvFix.Hints.push_back(
-                               FixItHint::CreateRemoval(Arg->getSourceRange()));
-          FixKind = OFIK_RemoveDereference;
-        }
-      } else if (NeedParen) {
-        ConvFix.Hints.push_back(FixItHint::CreateInsertion(Begin, "&("));
-        ConvFix.Hints.push_back(FixItHint::CreateInsertion(End, ")"));
-      } else {
-        ConvFix.Hints.push_back(FixItHint::CreateInsertion(Begin, "&"));
-      }
-      ConvFix.NumConversionsFixed++;
-      if (ConvFix.NumConversionsFixed == 1)
-        ConvFix.Kind = FixKind;
-      return true;
-    }
-  }
-  return false;
-}
-
 void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
   const ImplicitConversionSequence &Conv = Cand->Conversions[I];
   assert(Conv.isBad());
@@ -7015,7 +6925,6 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
       }
   }
   
-  // TODO: specialize more based on the kind of mismatch
   // Emit the generic diagnostic and, optionally, add the hints to it.
   PartialDiagnostic FDiag = S.PDiag(diag::note_ovl_candidate_bad_conv);
   FDiag << (unsigned) FnKind << FnDesc
@@ -7446,6 +7355,8 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
 
   // We only want the FixIts if all the arguments can be corrected.
   bool Unfixable = false;
+  // Use a implicit copy initialization to check conversion fixes.
+  Cand->Fix.setConversionChecker(TryCopyInitialization);
 
   // Skip forward to the first bad conversion.
   unsigned ConvIdx = (Cand->IgnoreObjectArgument ? 1 : 0);
@@ -7454,9 +7365,7 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
     assert(ConvIdx != ConvCount && "no bad conversion in candidate");
     ConvIdx++;
     if (Cand->Conversions[ConvIdx - 1].isBad()) {
-      if ((Unfixable = !TryToFixBadConversion(S, Cand->Conversions[ConvIdx - 1],
-                                                 Cand->Fix)))
-        Cand->Fix.Hints.clear();
+      Unfixable = !Cand->TryToFixBadConversion(ConvIdx - 1, S);
       break;
     }
   }
@@ -7512,16 +7421,10 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
                                   S.getLangOptions().ObjCAutoRefCount);
       // Store the FixIt in the candidate if it exists.
       if (!Unfixable && Cand->Conversions[ConvIdx].isBad())
-        Unfixable = !TryToFixBadConversion(S, Cand->Conversions[ConvIdx],
-                                              Cand->Fix);
+        Unfixable = !Cand->TryToFixBadConversion(ConvIdx, S);
     }
     else
       Cand->Conversions[ConvIdx].setEllipsis();
-  }
-
-  if (Unfixable) {
-    Cand->Fix.Hints.clear();
-    Cand->Fix.NumConversionsFixed = 0;
   }
 }
 
