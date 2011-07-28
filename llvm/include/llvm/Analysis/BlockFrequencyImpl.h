@@ -224,11 +224,13 @@ class BlockFrequencyImpl {
 
     SmallPtrSet<BlockT *, 8> BlocksInLoop;
 
-    for (rpot_iterator I = rpot_at(Head), E = rpot_end(); I != E; ++I) {
+    for (rpot_iterator I = rpot_at(Head), E = rpot_at(Tail); ; ++I) {
       BlockT *BB = *I;
       doBlock(BB, Head, BlocksInLoop);
 
       BlocksInLoop.insert(BB);
+      if (I != E)
+        break;
     }
 
     // Compute loop's cyclic probability using backedges probabilities.
