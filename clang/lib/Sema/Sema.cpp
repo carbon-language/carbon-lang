@@ -408,14 +408,15 @@ void Sema::ActOnEndOfTranslationUnit() {
     // If any dynamic classes have their key function defined within
     // this translation unit, then those vtables are considered "used" and must
     // be emitted.
-    for (unsigned I = 0, N = DynamicClasses.size(); I != N; ++I) {
-      assert(!DynamicClasses[I]->isDependentType() &&
+    for (DynamicClassesType::iterator I = DynamicClasses.begin(ExternalSource),
+                                      E = DynamicClasses.end();
+         I != E; ++I) {
+      assert(!(*I)->isDependentType() &&
              "Should not see dependent types here!");
-      if (const CXXMethodDecl *KeyFunction
-          = Context.getKeyFunction(DynamicClasses[I])) {
+      if (const CXXMethodDecl *KeyFunction = Context.getKeyFunction(*I)) {
         const FunctionDecl *Definition = 0;
         if (KeyFunction->hasBody(Definition))
-          MarkVTableUsed(Definition->getLocation(), DynamicClasses[I], true);
+          MarkVTableUsed(Definition->getLocation(), *I, true);
       }
     }
 

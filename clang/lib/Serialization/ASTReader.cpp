@@ -4341,9 +4341,6 @@ void ASTReader::InitializeSema(Sema &S) {
 
   // If there were any dynamic classes declarations, deserialize them
   // and add them to Sema's vector of such declarations.
-  for (unsigned I = 0, N = DynamicClasses.size(); I != N; ++I)
-    SemaObj->DynamicClasses.push_back(
-                               cast<CXXRecordDecl>(GetDecl(DynamicClasses[I])));
 
   // Load the offsets of the declarations that Sema references.
   // They will be lazily deserialized when needed.
@@ -4584,6 +4581,16 @@ void ASTReader::ReadExtVectorDecls(SmallVectorImpl<TypedefNameDecl *> &Decls) {
       Decls.push_back(D);
   }
   ExtVectorDecls.clear();
+}
+
+void ASTReader::ReadDynamicClasses(SmallVectorImpl<CXXRecordDecl *> &Decls) {
+  for (unsigned I = 0, N = DynamicClasses.size(); I != N; ++I) {
+    CXXRecordDecl *D
+      = dyn_cast_or_null<CXXRecordDecl>(GetDecl(DynamicClasses[I]));
+    if (D)
+      Decls.push_back(D);
+  }
+  DynamicClasses.clear();
 }
 
 void ASTReader::LoadSelector(Selector Sel) {

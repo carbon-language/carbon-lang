@@ -2867,8 +2867,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Build a record containing all of dynamic classes declarations.
   RecordData DynamicClasses;
-  for (unsigned I = 0, N = SemaRef.DynamicClasses.size(); I != N; ++I)
-    AddDeclRef(SemaRef.DynamicClasses[I], DynamicClasses);
+  AddLazyVectorDecls(*this, SemaRef.DynamicClasses, DynamicClasses);
 
   // Build a record containing all of pending implicit instantiations.
   RecordData PendingInstantiations;
@@ -3137,9 +3136,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Build a record containing all of dynamic classes declarations.
   RecordData DynamicClasses;
-  for (unsigned I = 0, N = SemaRef.DynamicClasses.size(); I != N; ++I)
-    if (SemaRef.DynamicClasses[I]->getPCHLevel() == 0)
-      AddDeclRef(SemaRef.DynamicClasses[I], DynamicClasses);
+  AddLazyVectorDecls(*this, SemaRef.DynamicClasses, DynamicClasses);
 
   // Build a record containing all of pending implicit instantiations.
   RecordData PendingInstantiations;

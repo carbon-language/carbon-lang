@@ -3375,9 +3375,13 @@ public:
   /// by code generation).
   llvm::DenseMap<CXXRecordDecl *, bool> VTablesUsed;
 
+  typedef LazyVector<CXXRecordDecl *, ExternalSemaSource, 
+                     &ExternalSemaSource::ReadDynamicClasses, 2, 2>
+    DynamicClassesType;
+
   /// \brief A list of all of the dynamic classes in this translation
   /// unit.
-  SmallVector<CXXRecordDecl *, 16> DynamicClasses;
+  DynamicClassesType DynamicClasses;
 
   /// \brief Note that the vtable for the given class was used at the
   /// given location.

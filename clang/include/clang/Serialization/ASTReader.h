@@ -1382,6 +1382,8 @@ public:
 
   virtual void ReadExtVectorDecls(SmallVectorImpl<TypedefNameDecl *> &Decls);
 
+  virtual void ReadDynamicClasses(SmallVectorImpl<CXXRecordDecl *> &Decls);
+
   /// \brief Load a selector from disk, registering its ID if it exists.
   void LoadSelector(Selector Sel);
 
