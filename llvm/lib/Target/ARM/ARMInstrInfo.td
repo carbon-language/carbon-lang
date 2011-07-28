@@ -536,12 +536,17 @@ def imm24b : Operand<i32>, ImmLeaf<i32, [{
 
 /// bf_inv_mask_imm predicate - An AND mask to clear an arbitrary width bitfield
 /// e.g., 0xf000ffff
+def BitfieldAsmOperand : AsmOperandClass {
+  let Name = "Bitfield";
+  let ParserMethod = "parseBitfield";
+}
 def bf_inv_mask_imm : Operand<i32>,
                       PatLeaf<(imm), [{
   return ARM::isBitFieldInvertedMask(N->getZExtValue());
 }] > {
   let EncoderMethod = "getBitfieldInvertedMaskOpValue";
   let PrintMethod = "printBitfieldInvMaskImmOperand";
+  let ParserMatchClass = BitfieldAsmOperand;
 }
 
 /// lsb_pos_imm - position of the lsb bit, used by BFI4p and t2BFI4p

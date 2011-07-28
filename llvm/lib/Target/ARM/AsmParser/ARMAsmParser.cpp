@@ -125,6 +125,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy parseSetEndImm(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseShifterImm(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseRotImm(SmallVectorImpl<MCParsedAsmOperand*>&);
+  OperandMatchResultTy parseBitfield(SmallVectorImpl<MCParsedAsmOperand*>&);
 
   // Asm Match Converter Methods
   bool cvtLdWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
@@ -184,6 +185,7 @@ class ARMOperand : public MCParsedAsmOperand {
     ShiftedImmediate,
     ShifterImmediate,
     RotateImmediate,
+    BitfieldDescriptor,
     Token
   } Kind;
 
@@ -260,6 +262,10 @@ class ARMOperand : public MCParsedAsmOperand {
     struct {
       unsigned Imm;
     } RotImm;
+    struct {
+      unsigned LSB;
+      unsigned Width;
+    } Bitfield;
   };
 
   ARMOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
@@ -314,6 +320,9 @@ public:
       break;
     case RotateImmediate:
       RotImm = o.RotImm;
+      break;
+    case BitfieldDescriptor:
+      Bitfield = o.Bitfield;
       break;
     }
   }
@@ -535,6 +544,7 @@ public:
   bool isRegShiftedReg() const { return Kind == ShiftedRegister; }
   bool isRegShiftedImm() const { return Kind == ShiftedImmediate; }
   bool isRotImm() const { return Kind == RotateImmediate; }
+  bool isBitfield() const { return Kind == BitfieldDescriptor; }
   bool isMemMode2() const {
     if (getMemAddrMode() != ARMII::AddrMode2)
       return false;
@@ -709,6 +719,17 @@ public:
     assert(N == 1 && "Invalid number of operands!");
     // Encoded as val>>3. The printer handles display as 8, 16, 24.
     Inst.addOperand(MCOperand::CreateImm(RotImm.Imm >> 3));
+  }
+
+  void addBitfieldOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // Munge the lsb/width into a bitfield mask.
+    unsigned lsb = Bitfield.LSB;
+    unsigned width = Bitfield.Width;
+    // Make a 32-bit mask w/ the referenced bits clear and all other bits set.
+    uint32_t Mask = ~(((uint32_t)0xffffffff >> lsb) << (32 - width) >>
+                      (32 - (lsb + width)));
+    Inst.addOperand(MCOperand::CreateImm(Mask));
   }
 
   void addImmOperands(MCInst &Inst, unsigned N) const {
@@ -1026,6 +1047,16 @@ public:
     return Op;
   }
 
+  static ARMOperand *CreateBitfield(unsigned LSB, unsigned Width,
+                                    SMLoc S, SMLoc E) {
+    ARMOperand *Op = new ARMOperand(BitfieldDescriptor);
+    Op->Bitfield.LSB = LSB;
+    Op->Bitfield.Width = Width;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
   static ARMOperand *
   CreateRegList(const SmallVectorImpl<std::pair<unsigned, SMLoc> > &Regs,
                 SMLoc StartLoc, SMLoc EndLoc) {
@@ -1203,6 +1234,10 @@ void ARMOperand::print(raw_ostream &OS) const {
     break;
   case RotateImmediate:
     OS << "<ror " << " #" << (RotImm.Imm * 8) << ">";
+    break;
+  case BitfieldDescriptor:
+    OS << "<bitfield " << "lsb: " << Bitfield.LSB
+       << ", width: " << Bitfield.Width << ">";
     break;
   case RegisterList:
   case DPRRegisterList:
@@ -1879,6 +1914,72 @@ parseRotImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   E = Parser.getTok().getLoc();
   Operands.push_back(ARMOperand::CreateRotImm(Val, S, E));
+
+  return MatchOperand_Success;
+}
+
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+parseBitfield(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  SMLoc S = Parser.getTok().getLoc();
+  // The bitfield descriptor is really two operands, the LSB and the width.
+  if (Parser.getTok().isNot(AsmToken::Hash)) {
+    Error(Parser.getTok().getLoc(), "'#' expected");
+    return MatchOperand_ParseFail;
+  }
+  Parser.Lex(); // Eat hash token.
+
+  const MCExpr *LSBExpr;
+  SMLoc E = Parser.getTok().getLoc();
+  if (getParser().ParseExpression(LSBExpr)) {
+    Error(E, "malformed immediate expression");
+    return MatchOperand_ParseFail;
+  }
+  const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(LSBExpr);
+  if (!CE) {
+    Error(E, "'lsb' operand must be an immediate");
+    return MatchOperand_ParseFail;
+  }
+
+  int64_t LSB = CE->getValue();
+  // The LSB must be in the range [0,31]
+  if (LSB < 0 || LSB > 31) {
+    Error(E, "'lsb' operand must be in the range [0,31]");
+    return MatchOperand_ParseFail;
+  }
+  E = Parser.getTok().getLoc();
+
+  // Expect another immediate operand.
+  if (Parser.getTok().isNot(AsmToken::Comma)) {
+    Error(Parser.getTok().getLoc(), "too few operands");
+    return MatchOperand_ParseFail;
+  }
+  Parser.Lex(); // Eat hash token.
+  if (Parser.getTok().isNot(AsmToken::Hash)) {
+    Error(Parser.getTok().getLoc(), "'#' expected");
+    return MatchOperand_ParseFail;
+  }
+  Parser.Lex(); // Eat hash token.
+
+  const MCExpr *WidthExpr;
+  if (getParser().ParseExpression(WidthExpr)) {
+    Error(E, "malformed immediate expression");
+    return MatchOperand_ParseFail;
+  }
+  CE = dyn_cast<MCConstantExpr>(WidthExpr);
+  if (!CE) {
+    Error(E, "'width' operand must be an immediate");
+    return MatchOperand_ParseFail;
+  }
+
+  int64_t Width = CE->getValue();
+  // The LSB must be in the range [1,32-lsb]
+  if (Width < 1 || Width > 32 - LSB) {
+    Error(E, "'width' operand must be in the range [1,32-lsb]");
+    return MatchOperand_ParseFail;
+  }
+  E = Parser.getTok().getLoc();
+
+  Operands.push_back(ARMOperand::CreateBitfield(LSB, Width, S, E));
 
   return MatchOperand_Success;
 }
