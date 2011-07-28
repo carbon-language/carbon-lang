@@ -250,24 +250,29 @@ namespace {
     PHINode *InnerSelectorPHI;
     SmallVector<Value*, 8> UnwindDestPHIValues;
 
-    PHINode *InnerEHValuesPHI;
+    // New EH:
+    BasicBlock *OuterResumeDest;
+    BasicBlock *InnerResumeDest;
     LandingPadInst *CallerLPad;
+    PHINode *InnerEHValuesPHI;
     BasicBlock *SplitLPad;
 
   public:
     InvokeInliningInfo(InvokeInst *II)
       : OuterUnwindDest(II->getUnwindDest()), OuterSelector(0),
         InnerUnwindDest(0), InnerExceptionPHI(0), InnerSelectorPHI(0),
-        InnerEHValuesPHI(0), CallerLPad(0), SplitLPad(0) {
+
+        OuterResumeDest(II->getUnwindDest()), InnerResumeDest(0),
+        CallerLPad(0), InnerEHValuesPHI(0), SplitLPad(0) {
       // If there are PHI nodes in the unwind destination block, we
       // need to keep track of which values came into them from the
       // invoke before removing the edge from this block.
-      llvm::BasicBlock *invokeBB = II->getParent();
+      llvm::BasicBlock *InvokeBB = II->getParent();
       BasicBlock::iterator I = OuterUnwindDest->begin();
       for (; isa<PHINode>(I); ++I) {
         // Save the value to use for this edge.
-        PHINode *phi = cast<PHINode>(I);
-        UnwindDestPHIValues.push_back(phi->getIncomingValueForBlock(invokeBB));
+        PHINode *PHI = cast<PHINode>(I);
+        UnwindDestPHIValues.push_back(PHI->getIncomingValueForBlock(InvokeBB));
       }
 
       // FIXME: With the new EH, this if/dyn_cast should be a 'cast'.
@@ -288,6 +293,7 @@ namespace {
     }
 
     BasicBlock *getInnerUnwindDest();
+    BasicBlock *getInnerUnwindDest_new();
 
     LandingPadInst *getLandingPadInst() const { return CallerLPad; }
     BasicBlock *getSplitLandingPad() {
@@ -316,8 +322,8 @@ namespace {
     void addIncomingPHIValuesForInto(BasicBlock *src, BasicBlock *dest) const {
       BasicBlock::iterator I = dest->begin();
       for (unsigned i = 0, e = UnwindDestPHIValues.size(); i != e; ++i, ++I) {
-        PHINode *phi = cast<PHINode>(I);
-        phi->addIncoming(UnwindDestPHIValues[i], src);
+        PHINode *PHI = cast<PHINode>(I);
+        PHI->addIncoming(UnwindDestPHIValues[i], src);
       }
     }
   };
@@ -427,38 +433,56 @@ bool InvokeInliningInfo::forwardEHResume(CallInst *call, BasicBlock *src) {
   return true;
 }
 
+/// Get or create a target for the branch from ResumeInsts.
+BasicBlock *InvokeInliningInfo::getInnerUnwindDest_new() {
+  if (InnerResumeDest) return InnerResumeDest;
+
+  // Split the landing pad.
+  BasicBlock::iterator SplitPoint = CallerLPad; ++SplitPoint;
+  InnerResumeDest =
+    OuterResumeDest->splitBasicBlock(SplitPoint,
+                                     OuterResumeDest->getName() + ".body");
+
+  // The number of incoming edges we expect to the inner landing pad.
+  const unsigned PHICapacity = 2;
+
+  // Create corresponding new PHIs for all the PHIs in the outer landing pad.
+  BasicBlock::iterator InsertPoint = InnerResumeDest->begin();
+  BasicBlock::iterator I = OuterResumeDest->begin();
+  for (unsigned i = 0, e = UnwindDestPHIValues.size(); i != e; ++i, ++I) {
+    PHINode *OuterPHI = cast<PHINode>(I);
+    PHINode *InnerPHI = PHINode::Create(OuterPHI->getType(), PHICapacity,
+                                        OuterPHI->getName() + ".lpad-body",
+                                        InsertPoint);
+    OuterPHI->replaceAllUsesWith(InnerPHI);
+    InnerPHI->addIncoming(OuterPHI, OuterResumeDest);
+  }
+
+  // Create a PHI for the exception values.
+  InnerEHValuesPHI = PHINode::Create(CallerLPad->getType(), PHICapacity,
+                                     "eh.lpad-body", InsertPoint);
+  CallerLPad->replaceAllUsesWith(InnerEHValuesPHI);
+  InnerEHValuesPHI->addIncoming(CallerLPad, OuterResumeDest);
+
+  // All done.
+  return InnerResumeDest;
+}
+
 /// forwardResume - Forward the 'resume' instruction to the caller's landing pad
 /// block. When the landing pad block has only one predecessor, this is a simple
 /// branch. When there is more than one predecessor, we need to split the
 /// landing pad block after the landingpad instruction and jump to there.
 void InvokeInliningInfo::forwardResume(ResumeInst *RI) {
-  BasicBlock *LPadBB = CallerLPad->getParent();
-  Value *ResumeOp = RI->getOperand(0);
+  BasicBlock *Dest = getInnerUnwindDest_new();
+  BasicBlock *Src = RI->getParent();
 
-  if (!LPadBB->getSinglePredecessor()) {
-    // There are multiple predecessors to this landing pad block. Split this
-    // landing pad block and jump to the new BB.
-    BasicBlock *SplitLPad = getSplitLandingPad();
-    BranchInst::Create(SplitLPad, RI->getParent());
+  BranchInst::Create(Dest, Src);
 
-    if (CallerLPad->hasOneUse() && isa<PHINode>(CallerLPad->use_back())) {
-      PHINode *PN = cast<PHINode>(CallerLPad->use_back());
-      PN->addIncoming(ResumeOp, RI->getParent());
-    } else {
-      PHINode *PN = PHINode::Create(ResumeOp->getType(), 0, "lpad.phi",
-                                    &SplitLPad->front());
-      CallerLPad->replaceAllUsesWith(PN);
-      PN->addIncoming(ResumeOp, RI->getParent());
-      PN->addIncoming(CallerLPad, LPadBB);
-    }
+  // Update the PHIs in the destination. They were inserted in an order which
+  // makes this work.
+  addIncomingPHIValuesForInto(Src, Dest);
 
-    RI->eraseFromParent();
-    return;
-  }
-
-  BranchInst::Create(LPadBB, RI->getParent());
-  CallerLPad->replaceAllUsesWith(ResumeOp);
-  CallerLPad->eraseFromParent();
+  InnerEHValuesPHI->addIncoming(RI->getOperand(0), Src);
   RI->eraseFromParent();
 }
 
