@@ -44,6 +44,7 @@ public:
   ~StoreRef();
   
   Store getStore() const { return store; }
+  const StoreManager &getStoreManager() const { return mgr; }
 };
 
 }}
