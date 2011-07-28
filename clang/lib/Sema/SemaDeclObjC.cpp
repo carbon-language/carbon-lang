@@ -2765,6 +2765,14 @@ void Sema::CollectIvarsToConstructOrDestruct(ObjCInterfaceDecl *OI,
 }
 
 void Sema::DiagnoseUseOfUnimplementedSelectors() {
+  // Load referenced selectors from the external source.
+  if (ExternalSource) {
+    SmallVector<std::pair<Selector, SourceLocation>, 4> Sels;
+    ExternalSource->ReadReferencedSelectors(Sels);
+    for (unsigned I = 0, N = Sels.size(); I != N; ++I)
+      ReferencedSelectors[Sels[I].first] = Sels[I].second;
+  }
+  
   // Warning will be issued only when selector table is
   // generated (which means there is at lease one implementation
   // in the TU). This is to match gcc's behavior.

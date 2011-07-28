@@ -1391,6 +1391,9 @@ public:
   virtual void ReadLocallyScopedExternalDecls(
                  SmallVectorImpl<NamedDecl *> &Decls);
   
+  virtual void ReadReferencedSelectors(
+                 SmallVectorImpl<std::pair<Selector, SourceLocation> > &Sels);
+
   /// \brief Load a selector from disk, registering its ID if it exists.
   void LoadSelector(Selector Sel);
 

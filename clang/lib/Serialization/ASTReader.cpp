@@ -4366,19 +4366,6 @@ void ASTReader::InitializeSema(Sema &S) {
       SemaObj->StdBadAlloc = SemaDeclRefs[1];
   }
 
-  // If there are @selector references added them to its pool. This is for
-  // implementation of -Wselector.
-  if (!ReferencedSelectorsData.empty()) {
-    unsigned int DataSize = ReferencedSelectorsData.size()-1;
-    unsigned I = 0;
-    while (I < DataSize) {
-      Selector Sel = DecodeSelector(ReferencedSelectorsData[I++]);
-      SourceLocation SelLoc
-        = SourceLocation::getFromRawEncoding(ReferencedSelectorsData[I++]);
-      SemaObj->ReferencedSelectors.insert(std::make_pair(Sel, SelLoc));
-    }
-  }
-
   // The special data sets below always come from the most recent PCH,
   // which is at the front of the chain.
   Module &F = ModuleMgr.getPrimaryModule();
@@ -4615,6 +4602,24 @@ ASTReader::ReadLocallyScopedExternalDecls(SmallVectorImpl<NamedDecl *> &Decls) {
       Decls.push_back(D);
   }
   LocallyScopedExternalDecls.clear();
+}
+
+void ASTReader::ReadReferencedSelectors(
+       SmallVectorImpl<std::pair<Selector, SourceLocation> > &Sels) {
+  if (ReferencedSelectorsData.empty())
+    return;
+  
+  // If there are @selector references added them to its pool. This is for
+  // implementation of -Wselector.
+  unsigned int DataSize = ReferencedSelectorsData.size()-1;
+  unsigned I = 0;
+  while (I < DataSize) {
+    Selector Sel = DecodeSelector(ReferencedSelectorsData[I++]);
+    SourceLocation SelLoc
+      = SourceLocation::getFromRawEncoding(ReferencedSelectorsData[I++]);
+    Sels.push_back(std::make_pair(Sel, SelLoc));
+  }
+  ReferencedSelectorsData.clear();
 }
 
 void ASTReader::LoadSelector(Selector Sel) {
