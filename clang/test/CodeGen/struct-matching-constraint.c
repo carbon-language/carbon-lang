@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -S -emit-llvm -triple armv7a-apple-darwin %s
+// RUN: %clang_cc1 -S -emit-llvm -triple armv7a-apple-darwin %s -o /dev/null
 typedef unsigned short uint16_t;
 typedef __attribute__((neon_vector_type(8))) uint16_t uint16x8_t;
 
