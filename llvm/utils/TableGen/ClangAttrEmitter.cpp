@@ -42,11 +42,11 @@ getValueAsListOfStrings(Record &R, StringRef FieldName) {
 
 std::string ReadPCHRecord(StringRef type) {
   return StringSwitch<std::string>(type)
-    .EndsWith("Decl *", "cast_or_null<" + std::string(type, 0, type.size()-1) +
-              ">(GetDecl(Record[Idx++]))")
-    .Case("QualType", "GetType(Record[Idx++])")
+    .EndsWith("Decl *", "GetLocalDeclAs<" 
+              + std::string(type, 0, type.size()-1) + ">(F, Record[Idx++])")
+    .Case("QualType", "getLocalType(F, Record[Idx++])")
     .Case("Expr *", "ReadSubExpr()")
-    .Case("IdentifierInfo *", "GetIdentifierInfo(Record, Idx)")
+    .Case("IdentifierInfo *", "GetIdentifierInfo(F, Record, Idx)")
     .Default("Record[Idx++]");
 }
 
