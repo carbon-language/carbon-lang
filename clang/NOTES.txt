@@ -83,3 +83,21 @@ enum VerifyConstraintResult {
 };
 
 //===---------------------------------------------------------------------===//
+
+Blocks should not capture variables that are only used in dead code.
+
+The rule that we came up with is that blocks are required to capture
+variables if they're referenced in evaluated code, even if that code
+doesn't actually rely on the value of the captured variable.
+
+For example, this requires a capture:
+  (void) var;
+But this does not:
+  if (false) puts(var);
+
+Summary of <rdar://problem/9851835>: if we implement this, we should
+warn about non-POD variables that are referenced but not captured, but
+only if the non-reachability is not due to macro or template
+metaprogramming.
+
+//===---------------------------------------------------------------------===//
