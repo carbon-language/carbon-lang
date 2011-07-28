@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-darwin-apple -Os -S -g  -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -Os -S -g  -o - %s | FileCheck %s
 
 int calculate(int);
 static void test_indvars(int *Array1, int Array2[100][200]) {
@@ -14,13 +14,13 @@ static void test_indvars(int *Array1, int Array2[100][200]) {
   for (i = 13; i < 100; i++)
     for (j = 0; j < 100; j+=3)       /* 2d array access */
       Array2[i][j/3] = Array2[i][i];
-} 
+}
 
 
 int main() {
   int Array[100][200], i, j;
   double sum = 0.0;
-  
+
   for (i=0; i < 100; i+=2)
     for (j=0; j < 200; j++)
       Array[i][j] = 0;
@@ -30,6 +30,6 @@ int main() {
   for (i=0; i < 100; i+=2)
     for (j=0; j < 200; j++)
       sum += Array[i][j];
-  
+
   return calculate(sum);
 }
