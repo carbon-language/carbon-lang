@@ -742,6 +742,9 @@ class ASTDeclContextNameLookupTrait {
   
 public:
   /// \brief Pair of begin/end iterators for DeclIDs.
+  ///
+  /// Note that these declaration IDs are local to the module that contains this
+  /// particular lookup t
   typedef std::pair<DeclID *, DeclID *> data_type;
 
   /// \brief Special internal key for declaration names.
@@ -1504,7 +1507,7 @@ PreprocessedEntity *ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
       if (NextIndex + 1 == Record.size() && PP->getPreprocessingRecord()) {
         // We have a macro definition. Load it now.
         PP->getPreprocessingRecord()->RegisterMacroDefinition(Macro,
-                                        getMacroDefinition(Record[NextIndex]));
+              getLocalMacroDefinition(F, Record[NextIndex]));
       }
 
       ++NumMacrosRead;
@@ -1574,7 +1577,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
       new (PPRec) MacroExpansion(getLocalIdentifier(F, Record[3]),
                                  SourceRange(ReadSourceLocation(F, Record[1]),
                                              ReadSourceLocation(F, Record[2])),
-                                 getMacroDefinition(Record[4]));
+                                 getLocalMacroDefinition(F, Record[4]));
     PPRec.setLoadedPreallocatedEntity(Record[0], ME);
     return ME;
   }
@@ -1862,6 +1865,11 @@ const FileEntry *ASTReader::getFileEntry(StringRef filenameStrRef) {
   }
 
   return File;
+}
+
+MacroID ASTReader::getGlobalMacroDefinitionID(Module &M, unsigned LocalID) {
+  // FIXME: Local-to-global mapping
+  return LocalID;
 }
 
 /// \brief If we are loading a relocatable PCH file, and the filename is

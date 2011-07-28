@@ -1603,6 +1603,17 @@ public:
   /// \brief Retrieve the macro definition with the given ID.
   MacroDefinition *getMacroDefinition(serialization::MacroID ID);
 
+  /// \brief Retrieve the global macro definition ID that corresponds to the
+  /// local macro definition ID within a given module.
+  serialization::MacroID getGlobalMacroDefinitionID(Module &M, 
+                                                    unsigned LocalID);
+
+  /// \brief Deserialize a macro definition that is local to the given
+  /// module.
+  MacroDefinition *getLocalMacroDefinition(Module &M, unsigned LocalID) {
+    return getMacroDefinition(getGlobalMacroDefinitionID(M, LocalID));
+  }
+  
   /// \brief Retrieve the AST context that this AST reader supplements.
   ASTContext *getContext() { return Context; }
 
