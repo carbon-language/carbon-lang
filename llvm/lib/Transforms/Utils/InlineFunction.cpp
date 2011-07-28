@@ -251,11 +251,10 @@ namespace {
     SmallVector<Value*, 8> UnwindDestPHIValues;
 
     // New EH:
-    BasicBlock *OuterResumeDest;
-    BasicBlock *InnerResumeDest;
-    LandingPadInst *CallerLPad;
-    PHINode *InnerEHValuesPHI;
-    BasicBlock *SplitLPad;
+    BasicBlock *OuterResumeDest; //< Destination of the invoke's unwind.
+    BasicBlock *InnerResumeDest; //< Destination for the callee's resume.
+    LandingPadInst *CallerLPad;  //< LandingPadInst associated with the invoke.
+    PHINode *InnerEHValuesPHI;   //< PHI for EH values from landingpad insts.
 
   public:
     InvokeInliningInfo(InvokeInst *II)
@@ -263,10 +262,10 @@ namespace {
         InnerUnwindDest(0), InnerExceptionPHI(0), InnerSelectorPHI(0),
 
         OuterResumeDest(II->getUnwindDest()), InnerResumeDest(0),
-        CallerLPad(0), InnerEHValuesPHI(0), SplitLPad(0) {
-      // If there are PHI nodes in the unwind destination block, we
-      // need to keep track of which values came into them from the
-      // invoke before removing the edge from this block.
+        CallerLPad(0), InnerEHValuesPHI(0) {
+      // If there are PHI nodes in the unwind destination block, we need to keep
+      // track of which values came into them from the invoke before removing
+      // the edge from this block.
       llvm::BasicBlock *InvokeBB = II->getParent();
       BasicBlock::iterator I = OuterUnwindDest->begin();
       for (; isa<PHINode>(I); ++I) {
@@ -276,8 +275,9 @@ namespace {
       }
 
       // FIXME: With the new EH, this if/dyn_cast should be a 'cast'.
-      if (LandingPadInst *LPI = dyn_cast<LandingPadInst>(I))
+      if (LandingPadInst *LPI = dyn_cast<LandingPadInst>(I)) {
         CallerLPad = LPI;
+      }
     }
 
     /// The outer unwind destination is the target of unwind edges
@@ -296,13 +296,6 @@ namespace {
     BasicBlock *getInnerUnwindDest_new();
 
     LandingPadInst *getLandingPadInst() const { return CallerLPad; }
-    BasicBlock *getSplitLandingPad() {
-      if (SplitLPad) return SplitLPad;
-      assert(CallerLPad && "Trying to split a block that isn't a landing pad!");
-      BasicBlock::iterator I = CallerLPad; ++I;
-      SplitLPad = CallerLPad->getParent()->splitBasicBlock(I, "split.lpad");
-      return SplitLPad;
-    }
 
     bool forwardEHResume(CallInst *call, BasicBlock *src);
 
