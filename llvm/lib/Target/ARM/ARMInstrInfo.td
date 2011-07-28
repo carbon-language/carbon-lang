@@ -1904,6 +1904,7 @@ def LDRD_PRE : AI3ldstidx<0b1101, 0, 1, 1, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
   let Inst{19-16} = addr{12-9};   // Rn
   let Inst{11-8}  = addr{7-4};    // imm7_4/zero
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
+  let DecoderMethod = "DecodeAddrMode3Instruction";
 }
 def LDRD_POST: AI3ldstidx<0b1101, 0, 1, 0, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
                           (ins GPR:$Rn, am3offset:$offset), IndexModePost,
@@ -1917,6 +1918,7 @@ def LDRD_POST: AI3ldstidx<0b1101, 0, 1, 0, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
   let Inst{19-16} = Rn;
   let Inst{11-8}  = offset{7-4};    // imm7_4/zero
   let Inst{3-0}   = offset{3-0};    // imm3_0/Rm
+  let DecoderMethod = "DecodeAddrMode3Instruction";
 }
 } // hasExtraDefRegAllocReq = 1
 } // mayLoad = 1, neverHasSideEffects = 1
@@ -1981,7 +1983,10 @@ def STRH : AI3str<0b1011, (outs), (ins GPR:$Rt, addrmode3:$addr), StMiscFrm,
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
 def STRD : AI3str<0b1111, (outs), (ins GPR:$Rt, GPR:$src2, addrmode3:$addr),
                StMiscFrm, IIC_iStore_d_r,
-               "strd", "\t$Rt, $src2, $addr", []>, Requires<[IsARM, HasV5TE]>;
+               "strd", "\t$Rt, $src2, $addr", []>,
+           Requires<[IsARM, HasV5TE]> {
+  let Inst{21} = 0;
+}
 
 // Indexed stores
 def STR_PRE_REG  : AI2stridx_reg<0, 1, (outs GPR:$Rn_wb),
@@ -2070,14 +2075,38 @@ def STRD_PRE : AI3stdpr<(outs GPR:$base_wb),
                      (ins GPR:$src1, GPR:$src2, GPR:$base, am3offset:$offset),
                      StMiscFrm, IIC_iStore_d_ru,
                      "strd", "\t$src1, $src2, [$base, $offset]!",
-                     "$base = $base_wb", []>;
+                     "$base = $base_wb", []> {
+  bits<4> src1;
+  bits<4> base;
+  bits<10> offset;
+  let Inst{23} = offset{8}; // U bit
+  let Inst{22} = offset{9}; // 1 == imm8, 0 == Rm
+  let Inst{19-16} = base;
+  let Inst{15-12} = src1;
+  let Inst{11-8}  = offset{7-4};
+  let Inst{3-0}   = offset{3-0};
+
+  let DecoderMethod = "DecodeAddrMode3Instruction";
+}
 
 // For disassembly only
 def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
                      (ins GPR:$src1, GPR:$src2, GPR:$base, am3offset:$offset),
                      StMiscFrm, IIC_iStore_d_ru,
                      "strd", "\t$src1, $src2, [$base], $offset",
-                     "$base = $base_wb", []>;
+                     "$base = $base_wb", []> {
+  bits<4> src1;
+  bits<4> base;
+  bits<10> offset;
+  let Inst{23} = offset{8}; // U bit
+  let Inst{22} = offset{9}; // 1 == imm8, 0 == Rm
+  let Inst{19-16} = base;
+  let Inst{15-12} = src1;
+  let Inst{11-8}  = offset{7-4};
+  let Inst{3-0}   = offset{3-0};
+
+  let DecoderMethod = "DecodeAddrMode3Instruction";
+}
 } // mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1
 
 // STRT, STRBT, and STRHT are for disassembly only.
