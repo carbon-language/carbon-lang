@@ -734,9 +734,10 @@ public:
   static DeclContext *castToDeclContext(const Decl *);
   static Decl *castFromDeclContext(const DeclContext *);
 
-  void print(raw_ostream &Out, unsigned Indentation = 0) const;
+  void print(raw_ostream &Out, unsigned Indentation = 0,
+             bool PrintInstantiation = false) const;
   void print(raw_ostream &Out, const PrintingPolicy &Policy,
-             unsigned Indentation = 0) const;
+             unsigned Indentation = 0, bool PrintInstantiation = false) const;
   static void printGroup(Decl** Begin, unsigned NumDecls,
                          raw_ostream &Out, const PrintingPolicy &Policy,
                          unsigned Indentation = 0);

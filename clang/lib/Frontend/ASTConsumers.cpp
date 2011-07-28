@@ -41,7 +41,8 @@ namespace {
     virtual void HandleTranslationUnit(ASTContext &Context) {
       PrintingPolicy Policy = Context.PrintingPolicy;
       Policy.Dump = Dump;
-      Context.getTranslationUnitDecl()->print(Out, Policy);
+      Context.getTranslationUnitDecl()->print(Out, Policy, /*Indentation=*/0,
+                                              /*PrintInstantiation=*/true);
     }
   };
 } // end anonymous namespace
