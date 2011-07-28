@@ -791,7 +791,7 @@ void ASTStmtReader::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
 
 void ASTStmtReader::VisitObjCSelectorExpr(ObjCSelectorExpr *E) {
   VisitExpr(E);
-  E->setSelector(Reader.GetSelector(Record, Idx));
+  E->setSelector(Reader.ReadSelector(F, Record, Idx));
   E->setAtLoc(ReadSourceLocation(Record, Idx));
   E->setRParenLoc(ReadSourceLocation(Record, Idx));
 }
@@ -867,7 +867,7 @@ void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   if (Record[Idx++])
     E->setMethodDecl(ReadDeclAs<ObjCMethodDecl>(Record, Idx));
   else
-    E->setSelector(Reader.GetSelector(Record, Idx));
+    E->setSelector(Reader.ReadSelector(F, Record, Idx));
 
   E->LBracLoc = ReadSourceLocation(Record, Idx);
   E->RBracLoc = ReadSourceLocation(Record, Idx);

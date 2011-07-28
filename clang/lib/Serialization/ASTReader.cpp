@@ -542,7 +542,7 @@ public:
 
     data_type Result;
 
-    Result.ID = ReadUnalignedLE32(d);
+    Result.ID = Reader.getGlobalSelectorID(F, ReadUnalignedLE32(d));
     unsigned NumInstanceMethods = ReadUnalignedLE16(d);
     unsigned NumFactoryMethods = ReadUnalignedLE16(d);
 
@@ -649,7 +649,7 @@ public:
                            const unsigned char* d,
                            unsigned DataLen) {
     using namespace clang::io;
-    IdentID ID = ReadUnalignedLE32(d);
+    IdentID ID = Reader.getGlobalSelectorID(F, ReadUnalignedLE32(d));
     bool IsInteresting = ID & 0x01;
 
     // Wipe out the "is interesting" bit.
@@ -883,12 +883,13 @@ public:
     case DeclarationName::ObjCOneArgSelector:
     case DeclarationName::ObjCMultiArgSelector:
       Key.Data =
-         (uint64_t)Reader.DecodeSelector(ReadUnalignedLE32(d)).getAsOpaquePtr();
+         (uint64_t)Reader.getLocalSelector(F, ReadUnalignedLE32(d))
+                     .getAsOpaquePtr();
       break;
     case DeclarationName::CXXConstructorName:
     case DeclarationName::CXXDestructorName:
     case DeclarationName::CXXConversionFunctionName:
-      Key.Data = ReadUnalignedLE32(d); // TypeID
+      Key.Data = Reader.getGlobalTypeID(F, ReadUnalignedLE32(d)); // TypeID
       break;
     case DeclarationName::CXXOperatorName:
       Key.Data = *d++; // OverloadedOperatorKind
@@ -1747,12 +1748,12 @@ typedef OnDiskChainedHashTable<HeaderFileInfoTrait>
   HeaderFileInfoLookupTable;
 
 void ASTReader::SetIdentifierIsMacro(IdentifierInfo *II, Module &F,
-                                     uint64_t Offset) {
+                                     uint64_t LocalOffset) {
   // Note that this identifier has a macro definition.
   II->setHasMacroDefinition(true);
   
   // Adjust the offset to a global offset.
-  UnreadMacroRecordOffsets[II] = F.GlobalBitOffset + Offset;
+  UnreadMacroRecordOffsets[II] = F.GlobalBitOffset + LocalOffset;
 }
 
 void ASTReader::ReadDefinedMacros() {
@@ -4774,7 +4775,11 @@ bool ASTReader::ReadSLocEntry(int ID) {
   return ReadSLocEntryRecord(ID) != Success;
 }
 
-Selector ASTReader::DecodeSelector(unsigned ID) {
+Selector ASTReader::getLocalSelector(Module &M, unsigned LocalID) {
+  return DecodeSelector(getGlobalSelectorID(M, LocalID));
+}
+
+Selector ASTReader::DecodeSelector(serialization::SelectorID ID) {
   if (ID == 0)
     return Selector();
 
@@ -4825,7 +4830,7 @@ ASTReader::ReadDeclarationName(Module &F,
   case DeclarationName::ObjCZeroArgSelector:
   case DeclarationName::ObjCOneArgSelector:
   case DeclarationName::ObjCMultiArgSelector:
-    return DeclarationName(GetSelector(Record, Idx));
+    return DeclarationName(ReadSelector(F, Record, Idx));
 
   case DeclarationName::CXXConstructorName:
     return Context->DeclarationNames.getCXXConstructorName(

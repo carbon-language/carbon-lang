@@ -1443,13 +1443,17 @@ public:
   /// \brief Read the source location entry with index ID.
   virtual bool ReadSLocEntry(int ID);
 
-  Selector DecodeSelector(unsigned Idx);
+  /// \brief Retrieve a selector from the given module with its local ID
+  /// number.
+  Selector getLocalSelector(Module &M, unsigned LocalID);
+
+  Selector DecodeSelector(serialization::SelectorID Idx);
 
   virtual Selector GetExternalSelector(serialization::SelectorID ID);
   uint32_t GetNumExternalSelectors();
 
-  Selector GetSelector(const RecordData &Record, unsigned &Idx) {
-    return DecodeSelector(Record[Idx++]);
+  Selector ReadSelector(Module &M, const RecordData &Record, unsigned &Idx) {
+    return getLocalSelector(M, Record[Idx++]);
   }
   
   /// \brief Retrieve the global selector ID that corresponds to this
