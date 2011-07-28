@@ -235,10 +235,14 @@ public:
   /// the current full expression.
   SmallVector<CXXTemporary*, 8> ExprTemporaries;
 
+  typedef LazyVector<TypedefNameDecl *, ExternalSemaSource, 
+                     &ExternalSemaSource::ReadExtVectorDecls, 2, 2>
+    ExtVectorDeclsType;
+
   /// ExtVectorDecls - This is a list all the extended vector types. This allows
   /// us to associate a raw vector type with one of the ext_vector type names.
   /// This is only necessary for issuing pretty diagnostics.
-  SmallVector<TypedefNameDecl*, 24> ExtVectorDecls;
+  ExtVectorDeclsType ExtVectorDecls;
 
   /// FieldCollector - Collects CXXFieldDecls during parsing of C++ classes.
   llvm::OwningPtr<CXXFieldCollector> FieldCollector;

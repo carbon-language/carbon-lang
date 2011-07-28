@@ -4336,12 +4336,6 @@ void ASTReader::InitializeSema(Sema &S) {
     SemaObj->LocallyScopedExternalDecls[D->getDeclName()] = D;
   }
 
-  // If there were any ext_vector type declarations, deserialize them
-  // and add them to Sema's vector of such declarations.
-  for (unsigned I = 0, N = ExtVectorDecls.size(); I != N; ++I)
-    SemaObj->ExtVectorDecls.push_back(
-                             cast<TypedefNameDecl>(GetDecl(ExtVectorDecls[I])));
-
   // FIXME: Do VTable uses and dynamic classes deserialize too much ?
   // Can we cut them down before writing them ?
 
@@ -4580,6 +4574,16 @@ void ASTReader::ReadDelegatingConstructors(
       Decls.push_back(D);
   }
   DelegatingCtorDecls.clear();
+}
+
+void ASTReader::ReadExtVectorDecls(SmallVectorImpl<TypedefNameDecl *> &Decls) {
+  for (unsigned I = 0, N = ExtVectorDecls.size(); I != N; ++I) {
+    TypedefNameDecl *D
+      = dyn_cast_or_null<TypedefNameDecl>(GetDecl(ExtVectorDecls[I]));
+    if (D)
+      Decls.push_back(D);
+  }
+  ExtVectorDecls.clear();
 }
 
 void ASTReader::LoadSelector(Selector Sel) {

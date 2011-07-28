@@ -1380,6 +1380,8 @@ public:
   virtual void ReadDelegatingConstructors(
                  SmallVectorImpl<CXXConstructorDecl *> &Decls);
 
+  virtual void ReadExtVectorDecls(SmallVectorImpl<TypedefNameDecl *> &Decls);
+
   /// \brief Load a selector from disk, registering its ID if it exists.
   void LoadSelector(Selector Sel);
 

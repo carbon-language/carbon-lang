@@ -24,6 +24,7 @@ class LookupResult;
 struct ObjCMethodList;
 class Scope;
 class Sema;
+class TypedefNameDecl;
 class VarDecl;
   
 /// \brief An abstract interface that should be implemented by
@@ -96,7 +97,16 @@ public:
   /// introduce the same declarations repeatedly.
   virtual void ReadDelegatingConstructors(
                  SmallVectorImpl<CXXConstructorDecl *> &Decls) {}
-  
+
+  /// \brief Read the set of ext_vector type declarations known to the
+  /// external Sema source.
+  ///
+  /// The external source should append its own ext_vector type declarations to
+  /// the given vector of declarations. Note that this routine may be
+  /// invoked multiple times; the external source should take care not to
+  /// introduce the same declarations repeatedly.
+  virtual void ReadExtVectorDecls(SmallVectorImpl<TypedefNameDecl *> &Decls) {}
+
   // isa/cast/dyn_cast support
   static bool classof(const ExternalASTSource *Source) {
     return Source->SemaSource;

@@ -2852,8 +2852,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Build a record containing all of the ext_vector declarations.
   RecordData ExtVectorDecls;
-  for (unsigned I = 0, N = SemaRef.ExtVectorDecls.size(); I != N; ++I)
-    AddDeclRef(SemaRef.ExtVectorDecls[I], ExtVectorDecls);
+  AddLazyVectorDecls(*this, SemaRef.ExtVectorDecls, ExtVectorDecls);
 
   // Build a record containing all of the VTable uses information.
   RecordData VTableUses;
@@ -3121,10 +3120,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Build a record containing all of the ext_vector declarations.
   RecordData ExtVectorDecls;
-  for (unsigned I = 0, N = SemaRef.ExtVectorDecls.size(); I != N; ++I) {
-    if (SemaRef.ExtVectorDecls[I]->getPCHLevel() == 0)
-      AddDeclRef(SemaRef.ExtVectorDecls[I], ExtVectorDecls);
-  }
+  AddLazyVectorDecls(*this, SemaRef.ExtVectorDecls, ExtVectorDecls);
 
   // Build a record containing all of the VTable uses information.
   // We write everything here, because it's too hard to determine whether

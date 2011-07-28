@@ -337,10 +337,14 @@ CheckExtVectorComponent(Sema &S, QualType baseType, ExprValueKind &VK,
   QualType VT = S.Context.getExtVectorType(vecType->getElementType(), CompSize);
   // Now look up the TypeDefDecl from the vector type. Without this,
   // diagostics look bad. We want extended vector types to appear built-in.
-  for (unsigned i = 0, E = S.ExtVectorDecls.size(); i != E; ++i) {
-    if (S.ExtVectorDecls[i]->getUnderlyingType() == VT)
-      return S.Context.getTypedefType(S.ExtVectorDecls[i]);
+  for (Sema::ExtVectorDeclsType::iterator 
+         I = S.ExtVectorDecls.begin(S.ExternalSource),
+         E = S.ExtVectorDecls.end(); 
+       I != E; ++I) {
+    if ((*I)->getUnderlyingType() == VT)
+      return S.Context.getTypedefType(*I);
   }
+  
   return VT; // should never get here (a typedef type should always be found).
 }
 
