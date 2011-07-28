@@ -71,7 +71,11 @@ bool br(A &a);
 bool bp(A *a);
 bool dv(B b);
 
-void dbcaller(A *ptra, B *ptrb, C &c) {
+void u(int x);
+void u(const C *x);
+void u(double x);
+
+void dbcaller(A *ptra, B *ptrb, C &c, B &refb) {
   B b;
 
 // CHECK: error: no matching function for call to 'br
@@ -94,11 +98,21 @@ void dbcaller(A *ptra, B *ptrb, C &c) {
 // CHECK: remove *
   bp(*ptra);
 
+// CHECK: error: no viable overloaded '='
+// CHECK: remove &
+  b = &refb;
+
 // TODO: Test that we do not provide a fixit when inheritance is private.
 // CHECK: error: no matching function for call to 'bp
 // There should not be a fixit here:
 // CHECK: fix-it
   bp(c);
+
+// CHECK: no matching function for call to 'u'
+// CHECK: candidate function not viable: no known conversion from 'C' to 'const C *' for 1st argument; take the address of the argument with &
+// CHECK: candidate function not viable
+// CHECK: candidate function not viable
+  u(c);
 }
 
 // CHECK: errors generated
