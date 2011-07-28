@@ -399,6 +399,8 @@ class ModuleManager {
   /// \brief All loaded modules, indexed by name.
   llvm::DenseMap<const FileEntry *, Module *> Modules;
 
+  /// \brief FileManager that handles translating between filenames and
+  /// FileEntry *.
   FileManager FileMgr;
 
 public:
