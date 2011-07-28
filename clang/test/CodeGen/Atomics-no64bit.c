@@ -9,7 +9,7 @@
 // Currently this is implemented only for Alpha, X86, PowerPC.
 // Add your target here if it doesn't work.
 // This version of the test does not include long long.
-// XFAIL: sparc,arm
+// XFAIL: sparc
 
 signed char sc;
 unsigned char uc;
