@@ -187,6 +187,9 @@ public:
   /// \param openFile if true and the file exists, it will be opened.
   const FileEntry *getFile(StringRef Filename, bool openFile = false);
 
+  /// \brief Returns the current file system options
+  const FileSystemOptions &getFileSystemOptions() { return FileSystemOpts; }
+
   /// \brief Retrieve a file entry for a "virtual" file that acts as
   /// if there were a file with the given name on disk. The file
   /// itself is not accessed.

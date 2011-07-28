@@ -5324,7 +5324,8 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext *Context,
   : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
     SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
     Diags(PP.getDiagnostics()), SemaObj(0), PP(&PP), Context(Context),
-    Consumer(0), RelocatablePCH(false), isysroot(isysroot),
+    Consumer(0), ModuleMgr(FileMgr.getFileSystemOptions()),
+    RelocatablePCH(false), isysroot(isysroot),
     DisableValidation(DisableValidation),
     DisableStatCache(DisableStatCache), NumStatHits(0), NumStatMisses(0), 
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), 
@@ -5343,7 +5344,8 @@ ASTReader::ASTReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      Diagnostic &Diags, StringRef isysroot,
                      bool DisableValidation, bool DisableStatCache)
   : DeserializationListener(0), SourceMgr(SourceMgr), FileMgr(FileMgr),
-    Diags(Diags), SemaObj(0), PP(0), Context(0), Consumer(0),
+    Diags(Diags), SemaObj(0), PP(0), Context(0),
+    Consumer(0), ModuleMgr(FileMgr.getFileSystemOptions()),
     RelocatablePCH(false), isysroot(isysroot), 
     DisableValidation(DisableValidation), DisableStatCache(DisableStatCache), 
     NumStatHits(0), NumStatMisses(0), NumSLocEntriesRead(0), 
@@ -5403,6 +5405,11 @@ Module::~Module() {
   delete static_cast<ASTSelectorLookupTable *>(SelectorLookupTable);
 }
 
+Module *ModuleManager::lookup(StringRef Name) {
+  const FileEntry *Entry = FileMgr.getFile(Name);
+  return Modules[Entry];
+}
+
 /// \brief Creates a new module and adds it to the list of known modules
 Module &ModuleManager::addModule(StringRef FileName, ModuleKind Type) {
   Module *Prev = !size() ? 0 : &getLastModule();
@@ -5411,7 +5418,8 @@ Module &ModuleManager::addModule(StringRef FileName, ModuleKind Type) {
   Current->FileName = FileName.str();
 
   Chain.push_back(Current);
-  Modules[FileName.str()] = Current;
+  const FileEntry *Entry = FileMgr.getFile(FileName);
+  Modules[Entry] = Current;
 
   if (Prev)
     Prev->NextInSource = Current;
@@ -5423,14 +5431,15 @@ Module &ModuleManager::addModule(StringRef FileName, ModuleKind Type) {
 /// \brief Exports the list of loaded modules with their corresponding names
 void ModuleManager::exportLookup(SmallVector<ModuleOffset, 16> &Target) {
   Target.reserve(size());
-  for (llvm::StringMap<Module*>::const_iterator
-           I = Modules.begin(), E = Modules.end();
+  for (ModuleConstIterator I = Chain.begin(), E = Chain.end();
        I != E; ++I) {
-    Target.push_back(ModuleOffset(I->getValue()->SLocEntryBaseOffset,
-                                   I->getKey()));
+    Target.push_back(ModuleOffset((*I)->SLocEntryBaseOffset,
+                                  (*I)->FileName));
   }
   std::sort(Target.begin(), Target.end());
 }
+
+ModuleManager::ModuleManager(const FileSystemOptions &FSO) : FileMgr(FSO) { }
 
 ModuleManager::~ModuleManager() {
   for (unsigned i = 0, e = Chain.size(); i != e; ++i)

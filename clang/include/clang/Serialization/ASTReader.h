@@ -24,6 +24,8 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/APFloat.h"
@@ -395,7 +397,9 @@ class ModuleManager {
   SmallVector<Module*, 2> Chain;
 
   /// \brief All loaded modules, indexed by name.
-  llvm::StringMap<Module*> Modules;
+  llvm::DenseMap<const FileEntry *, Module *> Modules;
+
+  FileManager FileMgr;
 
 public:
   typedef SmallVector<Module*, 2>::iterator ModuleIterator;
@@ -403,6 +407,7 @@ public:
   typedef SmallVector<Module*, 2>::reverse_iterator ModuleReverseIterator;
   typedef std::pair<uint32_t, StringRef> ModuleOffset;
 
+  ModuleManager(const FileSystemOptions &FSO);
   ~ModuleManager();
 
   /// \brief Forward iterator to traverse all loaded modules
@@ -436,7 +441,7 @@ public:
   Module &operator[](unsigned Index) const { return *Chain[Index]; }
 
   /// \brief Returns the module associated with the given name
-  Module *lookup(StringRef Name) { return Modules.lookup(Name); }
+  Module *lookup(StringRef Name);
 
   /// \brief Number of modules loaded
   unsigned size() const { return Chain.size(); }
