@@ -229,7 +229,7 @@ class BlockFrequencyImpl {
       doBlock(BB, Head, BlocksInLoop);
 
       BlocksInLoop.insert(BB);
-      if (I != E)
+      if (I == E)
         break;
     }
 
