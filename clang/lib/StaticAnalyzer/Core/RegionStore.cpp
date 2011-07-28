@@ -1042,6 +1042,10 @@ SVal RegionStoreManager::RetrieveElement(Store store,
     SVal Idx = R->getIndex();
     if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Idx)) {
       int64_t i = CI->getValue().getSExtValue();
+      // Abort on string underrun.  This can be possible by arbitrary
+      // clients of RetrieveElement().
+      if (i < 0)
+        return UndefinedVal();
       int64_t byteLength = Str->getByteLength();
       // Technically, only i == byteLength is guaranteed to be null.
       // However, such overflows should be caught before reaching this point;
