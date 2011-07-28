@@ -464,6 +464,8 @@ public:
   }
   item_iterator item_end() { return item_iterator(); }
 
+  Info &getInfoObj() { return InfoObj; }
+  
   static OnDiskChainedHashTable* Create(const unsigned char* buckets,
                                         const unsigned char* const base,
                                         const Info &InfoObj = Info()) {

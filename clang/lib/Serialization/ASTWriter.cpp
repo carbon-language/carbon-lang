@@ -1272,6 +1272,10 @@ namespace {
     ASTWriter &Writer;
     HeaderSearch &HS;
     
+    // Keep track of the framework names we've used during serialization.
+    SmallVector<char, 128> FrameworkStringData;
+    llvm::StringMap<unsigned> FrameworkNameOffset;
+    
   public:
     HeaderFileInfoTrait(ASTWriter &Writer, HeaderSearch &HS) 
       : Writer(Writer), HS(HS) { }
@@ -1295,7 +1299,7 @@ namespace {
                       data_type_ref Data) {
       unsigned StrLen = strlen(path);
       clang::io::Emit16(Out, StrLen);
-      unsigned DataLen = 1 + 2 + 4;
+      unsigned DataLen = 1 + 2 + 4 + 4;
       clang::io::Emit8(Out, DataLen);
       return std::make_pair(StrLen + 1, DataLen);
     }
@@ -1309,10 +1313,11 @@ namespace {
       using namespace clang::io;
       uint64_t Start = Out.tell(); (void)Start;
       
-      unsigned char Flags = (Data.isImport << 4)
-                          | (Data.isPragmaOnce << 3)
-                          | (Data.DirInfo << 1)
-                          | Data.Resolved;
+      unsigned char Flags = (Data.isImport << 5)
+                          | (Data.isPragmaOnce << 4)
+                          | (Data.DirInfo << 2)
+                          | (Data.Resolved << 1)
+                          | Data.IndexHeaderMapHeader;
       Emit8(Out, (uint8_t)Flags);
       Emit16(Out, (uint16_t) Data.NumIncludes);
       
@@ -1320,8 +1325,29 @@ namespace {
         Emit32(Out, (uint32_t)Data.ControllingMacroID);
       else
         Emit32(Out, (uint32_t)Writer.getIdentifierRef(Data.ControllingMacro));
+      
+      unsigned Offset = 0;
+      if (!Data.Framework.empty()) {
+        // If this header refers into a framework, save the framework name.
+        llvm::StringMap<unsigned>::iterator Pos
+          = FrameworkNameOffset.find(Data.Framework);
+        if (Pos == FrameworkNameOffset.end()) {
+          Offset = FrameworkStringData.size() + 1;
+          FrameworkStringData.append(Data.Framework.begin(), 
+                                     Data.Framework.end());
+          FrameworkStringData.push_back(0);
+          
+          FrameworkNameOffset[Data.Framework] = Offset;
+        } else
+          Offset = Pos->second;
+      }
+      Emit32(Out, Offset);
+      
       assert(Out.tell() - Start == DataLen && "Wrong data length");
     }
+    
+    const char *strings_begin() const { return FrameworkStringData.begin(); }
+    const char *strings_end() const { return FrameworkStringData.end(); }
   };
 } // end anonymous namespace
 
@@ -1381,14 +1407,17 @@ void ASTWriter::WriteHeaderSearch(HeaderSearch &HS, StringRef isysroot) {
   Abbrev->Add(BitCodeAbbrevOp(HEADER_SEARCH_TABLE));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
   unsigned TableAbbrev = Stream.EmitAbbrev(Abbrev);
   
-  // Write the stat cache
+  // Write the header search table
   RecordData Record;
   Record.push_back(HEADER_SEARCH_TABLE);
   Record.push_back(BucketOffset);
   Record.push_back(NumHeaderSearchEntries);
+  Record.push_back(TableData.size());
+  TableData.append(GeneratorTrait.strings_begin(),GeneratorTrait.strings_end());
   Stream.EmitRecordWithBlob(TableAbbrev, Record, TableData.str());
   
   // Free all of the strings we had to duplicate.
