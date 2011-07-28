@@ -1249,7 +1249,7 @@ def warn_attribute_wrong_decl_type : Warning<
   "parameters and methods|functions, methods and blocks|"
   "classes and virtual methods|functions, methods, and parameters|"
   "classes|virtual methods|class members|variables|methods|"
-  "variables, functions and labels}1">;
+  "variables, functions and labels|fields and global variables}1">;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{functions|unions|"
   "variables and functions|functions and methods|parameters|"
@@ -1287,6 +1287,9 @@ def warn_objc_precise_lifetime_meaningless : Error<
 def warn_label_attribute_not_unused : Warning<
   "The only valid attribute for labels is 'unused'">;
 def err_invalid_pcs : Error<"Invalid PCS type">;
+def err_attribute_can_be_applied_only_to_value_decl : Error<
+  "%0 attribute can only be applied to value declarations">;
+
 
 // Availability attribute
 def warn_availability_unknown_platform : Warning<

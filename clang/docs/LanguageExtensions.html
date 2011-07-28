@@ -87,6 +87,14 @@
   </ul>
 </li>
 <li><a href="#analyzerspecific">Static Analysis-Specific Extensions</a></li>
+<li><a href="#threadsafety">Thread Safety Annotation Checking</a></li>
+    <ul>
+    <li><a href="#ts_guardedvar"><tt>guarded_var</tt></a></li>
+    <li><a href="#ts_ptguardedvar"><tt>pt_guarded_var</tt></a></li>
+    <li><a href="#ts_lockable"><tt>lockable</tt></a></li>  
+    <li><a href="#ts_scopedlockable"><tt>scoped_lockable</tt></a></li>   
+    <li><a href="#ts_noanal"><tt>no_thread_safety_analysis</tt></a></li>    
+    </ul>
 </ul>
 
 <!-- ======================================================================= -->
@@ -1087,6 +1095,50 @@ balance in some way.</p>
 
 <p>Query for these features with <tt>__has_attribute(ns_consumed)</tt>,
 <tt>__has_attribute(ns_returns_retained)</tt>, etc.</p>
+
+
+<!-- ======================================================================= -->
+<h2 id="analyzerspecific">Thread-Safety Annotation Checking</h2>
+<!-- ======================================================================= -->
+
+<p>Clang supports additional attributes for checking basic locking policies in 
+multithreaded programs.
+Clang currently parses the following list of attributes, although 
+<b>the implementation for these annotations is currently in development.</b> 
+For more details, see the
+<a href="http://gcc.gnu.org/wiki/ThreadSafetyAnnotation">GCC implementation</a>.
+</p>
+
+<h4 id="ts_guardedvar">guarded_var</h4>
+
+<p>Use <tt>__attribute__((guarded_var))</tt> on a variable declaration to 
+specify that the variable must be accessed while holding some lock.</p>
+
+<h4 id="ts_ptguardedvar">pt_guarded_var</h4>
+
+<p>Use <tt>__attribute__((pt_guarded_var))</tt> on a pointer declaration to 
+specify that the pointer must be dereferenced while holding some lock.</p>
+
+<h4 id="ts_lockable">lockable</h4>
+
+<p>Use <tt>__attribute__((lockable))</tt> on a class definition to specify 
+that it has a lockable type (e.g. a Mutex class). This annotation is primarily 
+used to check consistency.</p> 
+
+<h4 id="ts_scopedlockable">scoped_lockable</h4>
+
+<p>Use <tt>__attribute__((scoped_lockable))</tt> on a class definition to 
+specify that it has a "scoped" lockable type. Objects of this type will acquire 
+the lock upon construction and release it upon going out of scope.
+ This annotation is primarily used to check 
+consistency.</p> 
+
+<h4 id="ts_noanal">no_thread_safety_analysis</h4>
+
+<p>Use <tt>__attribute__((no_thread_safety_analysis))</tt> on a function 
+declaration to specify that the thread safety analysis should not be run on that 
+function. This attribute provides an escape hatch (e.g. for situations when it
+is difficult to annotate the locking policy). </p> 
 
 </div>
 </body>

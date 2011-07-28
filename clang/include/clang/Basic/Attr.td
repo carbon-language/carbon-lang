@@ -538,3 +538,26 @@ def WeakRef : InheritableAttr {
 def X86ForceAlignArgPointer : InheritableAttr {
   let Spellings = [];
 }
+
+
+// C/C++ Thread safety attributes (e.g. for deadlock, data race checking)
+
+def GuardedVar : InheritableAttr {
+  let Spellings = ["guarded_var"];
+}
+
+def PtGuardedVar : InheritableAttr {
+  let Spellings = ["pt_guarded_var"];
+}
+
+def Lockable : InheritableAttr {
+  let Spellings = ["lockable"];
+}
+
+def ScopedLockable : InheritableAttr {
+  let Spellings = ["scoped_lockable"];
+}
+
+def NoThreadSafetyAnalysis : InheritableAttr {
+  let Spellings = ["no_thread_safety_analysis"];
+}

@@ -184,12 +184,14 @@ public:
     AT_format_arg,
     AT_global,
     AT_gnu_inline,
+    AT_guarded_var,
     AT_host,
     AT_IBAction,          // Clang-specific.
     AT_IBOutlet,          // Clang-specific.
     AT_IBOutletCollection, // Clang-specific.
     AT_init_priority,
     AT_launch_bounds,
+    AT_lockable,
     AT_malloc,
     AT_may_alias,
     AT_mode,
@@ -198,6 +200,7 @@ public:
     AT_neon_polyvector_type,    // Clang-specific.
     AT_neon_vector_type,        // Clang-specific.
     AT_no_instrument_function,
+    AT_no_thread_safety_analysis,
     AT_nocommon,
     AT_nodebug,
     AT_noinline,
@@ -225,9 +228,11 @@ public:
     AT_packed,
     AT_pascal,
     AT_pcs,  // ARM specific
+    AT_pt_guarded_var,
     AT_pure,
     AT_regparm,
     AT_reqd_wg_size,
+    AT_scoped_lockable,
     AT_section,
     AT_sentinel,
     AT_shared,

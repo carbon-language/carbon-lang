@@ -210,5 +210,10 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("uuid", AT_uuid)
     .Case("pcs", AT_pcs)
     .Case("ms_struct", AT_MsStruct)
+    .Case("guarded_var", AT_guarded_var)
+    .Case("pt_guarded_var", AT_pt_guarded_var)
+    .Case("scoped_lockable", AT_scoped_lockable)
+    .Case("lockable", AT_lockable)
+    .Case("no_thread_safety_analysis", AT_no_thread_safety_analysis)
     .Default(UnknownAttribute);
 }

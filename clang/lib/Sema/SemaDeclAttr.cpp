@@ -204,6 +204,39 @@ static bool checkAttributeNumArgs(Sema &S, const AttributeList &Attr,
   return true;
 }
 
+///
+/// \brief Check if passed in Decl is a field or potentially shared global var
+/// \return true if the Decl is a field or potentially shared global variable
+///
+static bool mayBeSharedVariable(Decl *D) {
+  if (isa<FieldDecl>(D))
+    return true;
+  if(VarDecl *vd = dyn_cast<VarDecl>(D))
+    return (vd->hasGlobalStorage() && !(vd->isThreadSpecified()));
+
+  return false;
+}
+
+///
+/// \brief Check if passed in Decl is a pointer type.
+/// Note that this function may produce an error message.
+/// \return true if the Decl is a pointer type; false otherwise
+///
+bool checkIsPointer(Sema & S, Decl * D, const AttributeList & Attr) {
+  if(ValueDecl * vd = dyn_cast <ValueDecl>(D)) {
+    QualType QT = vd->getType();
+    if(QT->isAnyPointerType()){
+      return true;
+    }
+    S.Diag(Attr.getLoc(), diag::warn_pointer_attribute_wrong_type)
+      << Attr.getName()->getName() << QT;
+  } else {
+    S.Diag(Attr.getLoc(), diag::err_attribute_can_be_applied_only_to_value_decl)
+      << Attr.getName();
+  }
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Attribute Implementations
 //===----------------------------------------------------------------------===//
@@ -211,6 +244,65 @@ static bool checkAttributeNumArgs(Sema &S, const AttributeList &Attr,
 // FIXME: All this manual attribute parsing code is gross. At the
 // least add some helper functions to check most argument patterns (#
 // and types of args).
+
+static void handleGuardedVarAttr(Sema &S, Decl *D, const AttributeList &Attr,
+                                 bool pointer = false) {
+  assert(!Attr.isInvalid());
+
+  if (!checkAttributeNumArgs(S, Attr, 0))
+    return;
+
+  // D must be either a member field or global (potentially shared) variable.
+  if (!mayBeSharedVariable(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << 15; /*fields and global vars*/;
+    return;
+  }
+
+  if (pointer && !checkIsPointer(S, D, Attr))
+    return;
+
+  if (pointer)
+    D->addAttr(::new (S.Context) PtGuardedVarAttr(Attr.getLoc(), S.Context));
+  else
+    D->addAttr(::new (S.Context) GuardedVarAttr(Attr.getLoc(), S.Context));
+}
+
+static void handleLockableAttr(Sema &S, Decl *D, const AttributeList &Attr,
+                               bool scoped = false) {
+  assert(!Attr.isInvalid());
+
+  if (!checkAttributeNumArgs(S, Attr, 0))
+    return;
+
+  if (!isa<CXXRecordDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedClass;
+    return;
+  }
+
+  if (scoped)
+    D->addAttr(::new (S.Context) ScopedLockableAttr(Attr.getLoc(), S.Context));
+  else
+    D->addAttr(::new (S.Context) LockableAttr(Attr.getLoc(), S.Context));
+}
+
+static void handleNoThreadSafetyAttr(Sema &S, Decl *D,
+                                     const AttributeList &Attr) {
+  assert(!Attr.isInvalid());
+
+  if (!checkAttributeNumArgs(S, Attr, 0))
+    return;
+
+  if (!isFunction(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunctionOrMethod;
+    return;
+  }
+
+  D->addAttr(::new (S.Context) NoThreadSafetyAnalysisAttr(Attr.getLoc(),
+                                                          S.Context));
+}
 
 static void handleExtVectorTypeAttr(Sema &S, Scope *scope, Decl *D,
                                     const AttributeList &Attr) {
@@ -3071,6 +3163,24 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_uuid:
     handleUuidAttr(S, D, Attr);
     break;
+
+  // Thread safety attributes:
+  case AttributeList::AT_guarded_var:
+    handleGuardedVarAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_pt_guarded_var:
+    handleGuardedVarAttr(S, D, Attr, /*pointer = */true);
+    break;
+  case AttributeList::AT_scoped_lockable:
+    handleLockableAttr(S, D, Attr, /*scoped = */true);
+    break;
+  case AttributeList::AT_no_thread_safety_analysis:
+    handleNoThreadSafetyAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_lockable:
+    handleLockableAttr(S, D, Attr);
+    break;
+
   default:
     // Ask target about the attribute.
     const TargetAttributesSema &TargetAttrs = S.getTargetAttributesSema();
