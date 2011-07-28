@@ -51,6 +51,7 @@ namespace A {
     }
 }
 
+#include <stdio.h>
 int Foo::myfunc(int a)
 {
     ::my_uint_t anon_uint = 0;
@@ -59,6 +60,8 @@ int Foo::myfunc(int a)
     Y::uint_t y_uint = 3;
     i = 3;
     j = 4;
+    printf("::i=%d\n", ::i);
+    printf("A::B::j=%d\n", A::B::j);
     return myfunc2(3) + j + i + a + 2 + anon_uint + a_uint + b_uint + y_uint; // Set break point at this line.
 }
 
