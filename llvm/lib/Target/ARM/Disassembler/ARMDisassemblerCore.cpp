@@ -1460,7 +1460,7 @@ static bool DisassembleLdStMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
          && "Invalid arguments");
 
   // Operand 0 of a pre- and post-indexed store is the address base writeback.
-  if (isPrePost) {
+  if (isPrePost && isStore) {
     assert(OpInfo[OpIdx].RegClass == ARM::GPRRegClassID &&
            "Reg operand expected");
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
@@ -1482,6 +1482,15 @@ static bool DisassembleLdStMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   if (HasDualReg(Opcode)) {
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRd(insn) + 1)));
+    ++OpIdx;
+  }
+
+  // After dst of a pre- and post-indexed load is the address base writeback.
+  if (isPrePost && !isStore) {
+    assert(OpInfo[OpIdx].RegClass == ARM::GPRRegClassID &&
+           "Reg operand expected");
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+                                                       decodeRn(insn))));
     ++OpIdx;
   }
 

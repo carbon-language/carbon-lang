@@ -1919,9 +1919,11 @@ cvtStWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
 bool ARMAsmParser::
 cvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
                          const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+
   // Create a writeback register dummy placeholder.
   Inst.addOperand(MCOperand::CreateImm(0));
-  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+
   ((ARMOperand*)Operands[3])->addMemMode3Operands(Inst, 3);
   ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
