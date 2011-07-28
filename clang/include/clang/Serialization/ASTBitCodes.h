@@ -134,6 +134,10 @@ namespace clang {
     /// AST file.
     typedef uint32_t CXXBaseSpecifiersID;
     
+    /// \brief An ID number that refers to an entity in the detailed
+    /// preprocessing record.
+    typedef uint32_t PreprocessedEntityID;
+    
     /// \brief Describes the various kinds of blocks that occur within
     /// an AST file.
     enum BlockIDs {

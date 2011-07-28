@@ -1584,6 +1584,11 @@ public:
   /// position.
   PreprocessedEntity *LoadPreprocessedEntity(Module &F);
       
+  /// \brief Determine the global preprocessed entity ID that corresponds to
+  /// the given local ID within the given module.
+  serialization::PreprocessedEntityID 
+  getGlobalPreprocessedEntityID(Module &M, unsigned LocalID);
+  
   /// \brief Note that the identifier is a macro whose record will be loaded
   /// from the given AST file at the given (file-local) offset.
   void SetIdentifierIsMacro(IdentifierInfo *II, Module &F,

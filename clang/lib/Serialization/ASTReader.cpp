@@ -1570,7 +1570,8 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
                                              Code, Record, BlobStart, BlobLen);
   switch (RecType) {
   case PPD_MACRO_EXPANSION: {
-    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(Record[0]))
+    PreprocessedEntityID GlobalID = getGlobalPreprocessedEntityID(F, Record[0]);
+    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(GlobalID))
       return PE;
     
     MacroExpansion *ME =
@@ -1578,15 +1579,17 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
                                  SourceRange(ReadSourceLocation(F, Record[1]),
                                              ReadSourceLocation(F, Record[2])),
                                  getLocalMacroDefinition(F, Record[4]));
-    PPRec.setLoadedPreallocatedEntity(Record[0], ME);
+    PPRec.setLoadedPreallocatedEntity(GlobalID, ME);
     return ME;
   }
       
   case PPD_MACRO_DEFINITION: {
-    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(Record[0]))
+    PreprocessedEntityID GlobalID = getGlobalPreprocessedEntityID(F, Record[0]);
+    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(GlobalID))
       return PE;
-    
-    if (Record[1] > MacroDefinitionsLoaded.size()) {
+
+    unsigned MacroDefID = getGlobalMacroDefinitionID(F, Record[1]);
+    if (MacroDefID > MacroDefinitionsLoaded.size()) {
       Error("out-of-bounds macro definition record");
       return 0;
     }
@@ -1594,7 +1597,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
     // Decode the identifier info and then check again; if the macro is
     // still defined and associated with the identifier,
     IdentifierInfo *II = getLocalIdentifier(F, Record[4]);
-    if (!MacroDefinitionsLoaded[Record[1] - 1]) {
+    if (!MacroDefinitionsLoaded[MacroDefID - 1]) {
       MacroDefinition *MD
         = new (PPRec) MacroDefinition(II,
                                       ReadSourceLocation(F, Record[5]),
@@ -1602,24 +1605,25 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
                                             ReadSourceLocation(F, Record[2]),
                                             ReadSourceLocation(F, Record[3])));
       
-      PPRec.setLoadedPreallocatedEntity(Record[0], MD);
-      MacroDefinitionsLoaded[Record[1] - 1] = MD;
+      PPRec.setLoadedPreallocatedEntity(GlobalID, MD);
+      MacroDefinitionsLoaded[MacroDefID - 1] = MD;
       
       if (DeserializationListener)
-        DeserializationListener->MacroDefinitionRead(Record[1], MD);
+        DeserializationListener->MacroDefinitionRead(MacroDefID, MD);
     }
     
-    return MacroDefinitionsLoaded[Record[1] - 1];
+    return MacroDefinitionsLoaded[MacroDefID - 1];
   }
       
   case PPD_INCLUSION_DIRECTIVE: {
-    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(Record[0]))
+    PreprocessedEntityID GlobalID = getGlobalPreprocessedEntityID(F, Record[0]);
+    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(GlobalID))
       return PE;
     
     const char *FullFileNameStart = BlobStart + Record[3];
     const FileEntry *File
       = PP->getFileManager().getFile(StringRef(FullFileNameStart,
-                                                     BlobLen - Record[3]));
+                                               BlobLen - Record[3]));
     
     // FIXME: Stable encoding
     InclusionDirective::InclusionKind Kind
@@ -1631,13 +1635,19 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
                                        File,
                                  SourceRange(ReadSourceLocation(F, Record[1]),
                                              ReadSourceLocation(F, Record[2])));
-    PPRec.setLoadedPreallocatedEntity(Record[0], ID);
+    PPRec.setLoadedPreallocatedEntity(GlobalID, ID);
     return ID;
   }
   }
   
   Error("invalid offset in preprocessor detail block");
   return 0;
+}
+
+PreprocessedEntityID 
+ASTReader::getGlobalPreprocessedEntityID(Module &M, unsigned LocalID) {
+  // FIXME: Local-to-global mapping
+  return LocalID;
 }
 
 namespace {
