@@ -4809,9 +4809,9 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
                                 NumElems/2);
 
     // Recreate the wider vector with the lower and upper part.
-    SDValue Vec = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT), Upper,
-                                DAG.getConstant(NumElems/2, MVT::i32), DAG, dl);
-    return Insert128BitVector(Vec, Lower, DAG.getConstant(0, MVT::i32),
+    SDValue Vec = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT), Lower,
+                                DAG.getConstant(0, MVT::i32), DAG, dl);
+    return Insert128BitVector(Vec, Upper, DAG.getConstant(NumElems/2, MVT::i32),
                               DAG, dl);
   }
 
