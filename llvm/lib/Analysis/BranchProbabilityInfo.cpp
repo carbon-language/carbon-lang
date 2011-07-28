@@ -52,7 +52,7 @@ class BranchProbabilityAnalysis {
   //          V
   //         BB1<-+
   //          |   |
-  //          |   | (Weight = 128)
+  //          |   | (Weight = 124)
   //          V   |
   //         BB2--+
   //          |
@@ -60,10 +60,10 @@ class BranchProbabilityAnalysis {
   //          V
   //         BB3
   //
-  // Probability of the edge BB2->BB1 = 128 / (128 + 4) = 0.9696..
-  // Probability of the edge BB2->BB3 = 4 / (128 + 4) = 0.0303..
+  // Probability of the edge BB2->BB1 = 124 / (124 + 4) = 0.96875
+  // Probability of the edge BB2->BB3 = 4 / (124 + 4) = 0.03125
 
-  static const uint32_t LBH_TAKEN_WEIGHT = 128;
+  static const uint32_t LBH_TAKEN_WEIGHT = 124;
   static const uint32_t LBH_NONTAKEN_WEIGHT = 4;
 
   // Standard weight value. Used when none of the heuristics set weight for
