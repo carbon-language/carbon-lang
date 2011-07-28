@@ -3365,6 +3365,9 @@ public:
   /// by code generation).
   llvm::DenseMap<CXXRecordDecl *, bool> VTablesUsed;
 
+  /// \brief Load any externally-stored vtable uses.
+  void LoadExternalVTableUses();
+  
   typedef LazyVector<CXXRecordDecl *, ExternalSemaSource, 
                      &ExternalSemaSource::ReadDynamicClasses, 2, 2>
     DynamicClassesType;

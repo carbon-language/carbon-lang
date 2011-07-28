@@ -1404,6 +1404,8 @@ public:
   virtual void ReadWeakUndeclaredIdentifiers(
                  SmallVectorImpl<std::pair<IdentifierInfo *, WeakInfo> > &WI);
 
+  virtual void ReadUsedVTables(SmallVectorImpl<ExternalVTableUse> &VTables);
+
   /// \brief Load a selector from disk, registering its ID if it exists.
   void LoadSelector(Selector Sel);
 

@@ -2310,11 +2310,22 @@ ASTReader::ReadASTBlock(Module &F) {
       break;
 
     case VTABLE_USES:
+      if (Record.size() % 3 != 0) {
+        Error("Invalid VTABLE_USES record");
+        return Failure;
+      }
+        
       // Later tables overwrite earlier ones.
-      // FIXME: Modules will have some trouble with this.
+      // FIXME: Modules will have some trouble with this. This is clearly not
+      // the right way to do this.
       VTableUses.clear();
-      for (unsigned I = 0, N = Record.size(); I != N; ++I)
-        VTableUses.push_back(getGlobalDeclID(F, Record[I]));
+        
+      for (unsigned Idx = 0, N = Record.size(); Idx != N; /* In loop */) {
+        VTableUses.push_back(getGlobalDeclID(F, Record[Idx++]));
+        VTableUses.push_back(
+          ReadSourceLocation(F, Record, Idx).getRawEncoding());
+        VTableUses.push_back(Record[Idx++]);
+      }
       break;
 
     case DYNAMIC_CLASSES:
@@ -4397,19 +4408,6 @@ void ASTReader::InitializeSema(Sema &S) {
     SemaObj->PendingInstantiations.push_back(std::make_pair(D, Loc));
   }
 
-  // If there were any VTable uses, deserialize the information and add it
-  // to Sema's vector and map of VTable uses.
-  if (!VTableUses.empty()) {
-    unsigned Idx = 0;
-    for (unsigned I = 0, N = VTableUses[Idx++]; I != N; ++I) {
-      CXXRecordDecl *Class = cast<CXXRecordDecl>(GetDecl(VTableUses[Idx++]));
-      SourceLocation Loc = ReadSourceLocation(F, VTableUses, Idx);
-      bool DefinitionRequired = VTableUses[Idx++];
-      SemaObj->VTableUses.push_back(std::make_pair(Class, Loc));
-      SemaObj->VTablesUsed[Class] = DefinitionRequired;
-    }
-  }
-
   if (!FPPragmaOptions.empty()) {
     assert(FPPragmaOptions.size() == 1 && "Wrong number of FP_PRAGMA_OPTIONS");
     SemaObj->FPFeatures.fp_contract = FPPragmaOptions[0];
@@ -4642,6 +4640,18 @@ void ASTReader::ReadWeakUndeclaredIdentifiers(
     WeakIDs.push_back(std::make_pair(WeakId, WI));
   }
   WeakUndeclaredIdentifiers.clear();
+}
+
+void ASTReader::ReadUsedVTables(SmallVectorImpl<ExternalVTableUse> &VTables) {
+  for (unsigned Idx = 0, N = VTableUses.size(); Idx < N; /* In loop */) {
+    ExternalVTableUse VT;
+    VT.Record = dyn_cast_or_null<CXXRecordDecl>(GetDecl(VTableUses[Idx++]));
+    VT.Location = SourceLocation::getFromRawEncoding(VTableUses[Idx++]);
+    VT.DefinitionRequired = VTableUses[Idx++];
+    VTables.push_back(VT);
+  }
+  
+  VTableUses.clear();
 }
 
 void ASTReader::LoadSelector(Selector Sel) {

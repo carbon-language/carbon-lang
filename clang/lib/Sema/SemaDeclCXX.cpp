@@ -8935,6 +8935,30 @@ DeclResult Sema::ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
   return Dcl;
 }
 
+void Sema::LoadExternalVTableUses() {
+  if (!ExternalSource)
+    return;
+  
+  SmallVector<ExternalVTableUse, 4> VTables;
+  ExternalSource->ReadUsedVTables(VTables);
+  SmallVector<VTableUse, 4> NewUses;
+  for (unsigned I = 0, N = VTables.size(); I != N; ++I) {
+    llvm::DenseMap<CXXRecordDecl *, bool>::iterator Pos
+      = VTablesUsed.find(VTables[I].Record);
+    // Even if a definition wasn't required before, it may be required now.
+    if (Pos != VTablesUsed.end()) {
+      if (!Pos->second && VTables[I].DefinitionRequired)
+        Pos->second = true;
+      continue;
+    }
+    
+    VTablesUsed[VTables[I].Record] = VTables[I].DefinitionRequired;
+    NewUses.push_back(VTableUse(VTables[I].Record, VTables[I].Location));
+  }
+  
+  VTableUses.insert(VTableUses.begin(), NewUses.begin(), NewUses.end());
+}
+
 void Sema::MarkVTableUsed(SourceLocation Loc, CXXRecordDecl *Class,
                           bool DefinitionRequired) {
   // Ignore any vtable uses in unevaluated operands or for classes that do
@@ -8945,6 +8969,7 @@ void Sema::MarkVTableUsed(SourceLocation Loc, CXXRecordDecl *Class,
     return;
 
   // Try to insert this class into the map.
+  LoadExternalVTableUses();
   Class = cast<CXXRecordDecl>(Class->getCanonicalDecl());
   std::pair<llvm::DenseMap<CXXRecordDecl *, bool>::iterator, bool>
     Pos = VTablesUsed.insert(std::make_pair(Class, DefinitionRequired));
@@ -8970,6 +8995,7 @@ void Sema::MarkVTableUsed(SourceLocation Loc, CXXRecordDecl *Class,
 }
 
 bool Sema::DefineUsedVTables() {
+  LoadExternalVTableUses();
   if (VTableUses.empty())
     return false;
 

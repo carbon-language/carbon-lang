@@ -2886,7 +2886,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Build a record containing all of the VTable uses information.
   RecordData VTableUses;
   if (!SemaRef.VTableUses.empty()) {
-    VTableUses.push_back(SemaRef.VTableUses.size());
     for (unsigned I = 0, N = SemaRef.VTableUses.size(); I != N; ++I) {
       AddDeclRef(SemaRef.VTableUses[I].first, VTableUses);
       AddSourceLocation(SemaRef.VTableUses[I].second, VTableUses);
@@ -3153,7 +3152,6 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // a use is new to this part.
   RecordData VTableUses;
   if (!SemaRef.VTableUses.empty()) {
-    VTableUses.push_back(SemaRef.VTableUses.size());
     for (unsigned I = 0, N = SemaRef.VTableUses.size(); I != N; ++I) {
       AddDeclRef(SemaRef.VTableUses[I].first, VTableUses);
       AddSourceLocation(SemaRef.VTableUses[I].second, VTableUses);

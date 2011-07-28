@@ -29,6 +29,14 @@ class Sema;
 class TypedefNameDecl;
 class VarDecl;
   
+/// \brief A simple structure that captures a vtable use for the purposes of
+/// the \c ExternalSemaSource.
+struct ExternalVTableUse {
+  CXXRecordDecl *Record;
+  SourceLocation Location;
+  bool DefinitionRequired;
+};
+  
 /// \brief An abstract interface that should be implemented by
 /// external AST sources that also provide information for semantic
 /// analysis.
@@ -146,6 +154,13 @@ public:
   /// repeatedly.
   virtual void ReadWeakUndeclaredIdentifiers(
                  SmallVectorImpl<std::pair<IdentifierInfo *, WeakInfo> > &WI) {}
+
+  /// \brief Read the set of used vtables known to the external Sema source.
+  ///
+  /// The external source should append its own used vtables to the given
+  /// vector. Note that this routine may be invoked multiple times; the external
+  /// source should take care not to introduce the same vtables repeatedly.
+  virtual void ReadUsedVTables(SmallVectorImpl<ExternalVTableUse> &VTables) {}
 
   // isa/cast/dyn_cast support
   static bool classof(const ExternalASTSource *Source) {
