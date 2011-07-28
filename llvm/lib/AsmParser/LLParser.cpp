@@ -3547,7 +3547,8 @@ bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
     } while (EatIfPresent(lltok::comma));
   }
 
-  LandingPadInst *LP = LandingPadInst::Create(Ty, PersFn, Clauses.size());
+  LandingPadInst *LP = LandingPadInst::Create(Ty, cast<Function>(PersFn),
+                                              Clauses.size());
   LP->setCleanup(IsCleanup);
 
   for (SmallVectorImpl<std::pair<LandingPadInst::ClauseType,

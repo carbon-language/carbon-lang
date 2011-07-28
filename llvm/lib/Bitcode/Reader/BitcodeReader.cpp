@@ -2539,7 +2539,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
 
       bool IsCleanup = !!Record[Idx++];
       unsigned NumClauses = Record[Idx++];
-      LandingPadInst *LP = LandingPadInst::Create(Ty, PersFn, NumClauses);
+      LandingPadInst *LP = LandingPadInst::Create(Ty, cast<Function>(PersFn),
+                                                  NumClauses);
       LP->setCleanup(IsCleanup);
       for (unsigned J = 0; J != NumClauses; ++J) {
         LandingPadInst::ClauseType CT =

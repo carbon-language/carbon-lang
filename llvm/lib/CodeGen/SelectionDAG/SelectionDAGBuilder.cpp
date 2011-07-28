@@ -914,10 +914,6 @@ void SelectionDAGBuilder::visitPHI(const PHINode &) {
   llvm_unreachable("SelectionDAGBuilder shouldn't visit PHI nodes!");
 }
 
-void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &) {
-  // FIXME: Handle this
-}
-
 void SelectionDAGBuilder::visit(unsigned Opcode, const User &I) {
   // Note: this doesn't use InstVisitor, because it has to work with
   // ConstantExpr's in addition to instructions.
@@ -1813,7 +1809,13 @@ void SelectionDAGBuilder::visitUnwind(const UnwindInst &I) {
 }
 
 void SelectionDAGBuilder::visitResume(const ResumeInst &RI) {
+  llvm_unreachable("SelectionDAGBuilder shouldn't visit resume instructions!");
+}
+
+void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &) {
   // FIXME: Handle this
+  assert(FuncInfo.MBB->isLandingPad() &&
+         "Call to landingpad not in landing pad!");
 }
 
 /// handleSmallSwitchCaseRange - Emit a series of specific tests (suitable for

@@ -170,12 +170,12 @@ Value *PHINode::hasConstantValue() const {
 //                       LandingPadInst Implementation
 //===----------------------------------------------------------------------===//
 
-void LandingPadInst::init(Value *PersFn, unsigned NumReservedValues,
+void LandingPadInst::init(Function *PersFn, unsigned NumReservedValues,
                           const Twine &NameStr) {
   ReservedSpace = NumReservedValues;
   NumOperands = 1;
   OperandList = allocHungoffUses(ReservedSpace);
-  OperandList[0] = PersFn;
+  OperandList[0] = (Value*)PersFn;
   setName(NameStr);
 }
 

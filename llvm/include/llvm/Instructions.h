@@ -1806,16 +1806,16 @@ private:
     return User::operator new(s, 0);
   }
   void growOperands();
-  void init(Value *PersFn, unsigned NumReservedValues, const Twine &NameStr);
+  void init(Function *PersFn, unsigned NumReservedValues, const Twine &NameStr);
 
-  explicit LandingPadInst(Type *RetTy, Value *PersonalityFn,
+  explicit LandingPadInst(Type *RetTy, Function *PersonalityFn,
                           unsigned NumReservedValues, const Twine &NameStr,
                           Instruction *InsertBefore)
     : Instruction(RetTy, Instruction::LandingPad, 0, 0, InsertBefore),
       IsCleanup(false) {
     init(PersonalityFn, 1 + NumReservedValues, NameStr);
   }
-  explicit LandingPadInst(Type *RetTy, Value *PersonalityFn,
+  explicit LandingPadInst(Type *RetTy, Function *PersonalityFn,
                           unsigned NumReservedValues, const Twine &NameStr,
                           BasicBlock *InsertAtEnd)
     : Instruction(RetTy, Instruction::LandingPad, 0, 0, InsertAtEnd),
@@ -1825,14 +1825,14 @@ private:
 protected:
   virtual LandingPadInst *clone_impl() const;
 public:
-  static LandingPadInst *Create(Type *RetTy, Value *PersonalityFn,
+  static LandingPadInst *Create(Type *RetTy, Function *PersonalityFn,
                                 unsigned NumReservedValues,
                                 const Twine &NameStr = "",
                                 Instruction *InsertBefore = 0) {
     return new LandingPadInst(RetTy, PersonalityFn, NumReservedValues, NameStr,
                               InsertBefore);
   }
-  static LandingPadInst *Create(Type *RetTy, Value *PersonalityFn,
+  static LandingPadInst *Create(Type *RetTy, Function *PersonalityFn,
                                 unsigned NumReservedValues,
                                 const Twine &NameStr, BasicBlock *InsertAtEnd) {
     return new LandingPadInst(RetTy, PersonalityFn, NumReservedValues, NameStr,
@@ -1845,7 +1845,9 @@ public:
 
   /// getPersonalityFn - Get the personality function associated with this
   /// landing pad.
-  const Value *getPersonalityFn() const { return getOperand(0); }
+  const Function *getPersonalityFn() const {
+    return cast<Function>(getOperand(0));
+  }
 
   // Simple accessors.
   bool isCleanup() const { return IsCleanup; }
