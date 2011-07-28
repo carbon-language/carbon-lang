@@ -358,10 +358,12 @@ Lforward:
 @------------------------------------------------------------------------------
 
   bl _bar
-  @ FIXME: blx _bar
+  blx _bar
 
 @ CHECK: bl  _bar @ encoding: [A,A,A,0xeb]
 @ CHECK:   @   fixup A - offset: 0, value: _bar, kind: fixup_arm_uncondbranch
+@ CHECK: blx	_bar @ encoding: [A,A,A,0xfa]
+           @   fixup A - offset: 0, value: _bar, kind: fixup_arm_uncondbranch
 
 @------------------------------------------------------------------------------
 @ BLX (register)

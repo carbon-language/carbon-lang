@@ -2675,6 +2675,17 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     delete Op;
   }
 
+  // ARM mode 'blx' need special handling, as the register operand version
+  // is predicable, but the label operand version is not. So, we can't rely
+  // on the Mnemonic based checking to correctly figure out when to put
+  // a CondCode operand in the list. If we're trying to match the label
+  // version, remove the CondCode operand here.
+  if (!isThumb() && Mnemonic == "blx" && Operands.size() == 3 &&
+      static_cast<ARMOperand*>(Operands[2])->isImm()) {
+    ARMOperand *Op = static_cast<ARMOperand*>(Operands[1]);
+    Operands.erase(Operands.begin() + 1);
+    delete Op;
+  }
   return false;
 }
 

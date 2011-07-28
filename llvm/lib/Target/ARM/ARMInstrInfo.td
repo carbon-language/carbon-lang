@@ -1639,9 +1639,9 @@ let isBranch = 1, isTerminator = 1 in {
 
 }
 
-// BLX (immediate) -- for disassembly only
+// BLX (immediate)
 def BLXi : AXI<(outs), (ins br_target:$target), BrMiscFrm, NoItinerary,
-               "blx\t$target", [/* pattern left blank */]>,
+               "blx\t$target", []>,
            Requires<[IsARM, HasV5T]> {
   let Inst{31-25} = 0b1111101;
   bits<25> target;
