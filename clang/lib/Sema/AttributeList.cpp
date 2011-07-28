@@ -215,5 +215,18 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("scoped_lockable", AT_scoped_lockable)
     .Case("lockable", AT_lockable)
     .Case("no_thread_safety_analysis", AT_no_thread_safety_analysis)
+    .Case("guarded_by", AT_guarded_by)
+    .Case("pt_guarded_by", AT_pt_guarded_by)
+    .Case("acquired_after", AT_acquired_after)
+    .Case("acquired_before", AT_acquired_before)
+    .Case("exclusive_lock_function", AT_exclusive_lock_function)
+    .Case("exclusive_locks_required", AT_exclusive_locks_required)
+    .Case("exclusive_trylock_function", AT_exclusive_trylock_function)
+    .Case("lock_returned", AT_lock_returned)
+    .Case("locks_excluded", AT_locks_excluded)
+    .Case("shared_lock_function", AT_shared_lock_function)
+    .Case("shared_locks_required", AT_shared_locks_required)
+    .Case("shared_trylock_function", AT_shared_trylock_function)
+    .Case("unlock_function", AT_unlock_function)
     .Default(UnknownAttribute);
 }

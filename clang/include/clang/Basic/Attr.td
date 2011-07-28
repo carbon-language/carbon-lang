@@ -561,3 +561,55 @@ def ScopedLockable : InheritableAttr {
 def NoThreadSafetyAnalysis : InheritableAttr {
   let Spellings = ["no_thread_safety_analysis"];
 }
+
+def GuardedBy : InheritableAttr {
+  let Spellings = ["guarded_by"];
+}
+
+def PtGuardedBy : InheritableAttr {
+  let Spellings = ["pt_guarded_by"];
+}
+
+def AcquiredAfter : InheritableAttr {
+  let Spellings = ["acquired_after"];
+}
+
+def AcquiredBefore : InheritableAttr {
+  let Spellings = ["acquired_before"];
+}
+
+def ExclusiveLockFunction : InheritableAttr {
+  let Spellings = ["exclusive_lock_function"];
+}
+
+def SharedLockFunction : InheritableAttr {
+  let Spellings = ["shared_lock_function"];
+}
+
+def ExclusiveTrylockFunction : InheritableAttr {
+  let Spellings = ["exclusive_trylock_function"];
+}
+
+def SharedTrylockFunction : InheritableAttr {
+  let Spellings = ["shared_trylock_function"];
+}
+
+def UnlockFunction : InheritableAttr {
+  let Spellings = ["unlock_function"];
+}
+
+def LockReturned : InheritableAttr {
+  let Spellings = ["lock_returned"];
+}
+
+def LocksExcluded : InheritableAttr {
+  let Spellings = ["locks_excluded"];
+}
+
+def ExclusiveLocksRequired : InheritableAttr {
+  let Spellings = ["exclusive_locks_required"];
+}
+
+def SharedLocksRequired : InheritableAttr {
+  let Spellings = ["shared_locks_required"];
+}
