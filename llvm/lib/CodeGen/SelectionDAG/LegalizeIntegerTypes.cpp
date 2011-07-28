@@ -2838,12 +2838,11 @@ SDValue DAGTypeLegalizer::PromoteIntRes_INSERT_VECTOR_ELT(SDNode *N) {
 
   DebugLoc dl = N->getDebugLoc();
   SDValue V0 = GetPromotedInteger(N->getOperand(0));
-  SDValue ConvertedVector = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT, V0);
 
   SDValue ConvElem = DAG.getNode(ISD::ANY_EXTEND, dl,
     NOutVTElem, N->getOperand(1));
   return DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, NOutVT,
-    ConvertedVector, ConvElem, N->getOperand(2));
+    V0, ConvElem, N->getOperand(2));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_EXTRACT_VECTOR_ELT(SDNode *N) {
