@@ -144,7 +144,7 @@ SVal CallOrObjCMessage::getArgSValAsScalarOrLoc(unsigned i) const {
 SVal CallOrObjCMessage::getFunctionCallee() const {
   assert(isFunctionCall());
   assert(!isCXXCall());
-  const Expr *callee = CallE->getCallee()->IgnoreParenCasts();
+  const Expr *callee = CallE->getCallee()->IgnoreParens();
   return State->getSVal(callee);
 }
 
