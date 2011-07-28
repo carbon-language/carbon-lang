@@ -1,6 +1,7 @@
 // PR1602
 // RUN: %llvmgxx -S %s -o - -O3 | not grep ptrtoint
-// RUN: %llvmgxx -S %s -o - -O3 | grep getelementptr | count 1
+// RUN: %llvmgxx -S %s -o - -O3 | not grep getelementptr
+// RUN: %llvmgxx -S %s -o - -O3 | grep bitcast
 
 
 struct S { virtual void f(); };
