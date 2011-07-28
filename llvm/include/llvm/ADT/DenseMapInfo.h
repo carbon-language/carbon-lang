@@ -142,7 +142,7 @@ struct DenseMapInfo<std::pair<T, U> > {
   }
   static inline Pair getTombstoneKey() {
     return std::make_pair(FirstInfo::getTombstoneKey(),
-                            SecondInfo::getEmptyKey());
+                          SecondInfo::getTombstoneKey());
   }
   static unsigned getHashValue(const Pair& PairVal) {
     uint64_t key = (uint64_t)FirstInfo::getHashValue(PairVal.first) << 32
@@ -158,7 +158,7 @@ struct DenseMapInfo<std::pair<T, U> > {
     return (unsigned)key;
   }
   static bool isEqual(const Pair &LHS, const Pair &RHS) {
-    return FirstInfo::isEqual(LHS.first, RHS.first) && 
+    return FirstInfo::isEqual(LHS.first, RHS.first) &&
            SecondInfo::isEqual(LHS.second, RHS.second);
   }
 };
