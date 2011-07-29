@@ -83,10 +83,14 @@ namespace {
     bool ImportDeclParts(NamedDecl *D, DeclContext *&DC, 
                          DeclContext *&LexicalDC, DeclarationName &Name, 
                          SourceLocation &Loc);
+    void ImportDefinitionIfNeeded(Decl *FromD, Decl *ToD = 0);
     void ImportDeclarationNameLoc(const DeclarationNameInfo &From,
                                   DeclarationNameInfo& To);
     void ImportDeclContext(DeclContext *FromDC, bool ForceImport = false);
-    bool ImportDefinition(RecordDecl *From, RecordDecl *To, bool ForceImport = false);
+    bool ImportDefinition(RecordDecl *From, RecordDecl *To, 
+                          bool ForceImport = false);
+    bool ImportDefinition(EnumDecl *From, EnumDecl *To,
+                          bool ForceImport = false);
     TemplateParameterList *ImportTemplateParameterList(
                                                  TemplateParameterList *Params);
     TemplateArgument ImportTemplateArgument(const TemplateArgument &From);
@@ -1731,6 +1735,35 @@ bool ASTNodeImporter::ImportDeclParts(NamedDecl *D, DeclContext *&DC,
   return false;
 }
 
+void ASTNodeImporter::ImportDefinitionIfNeeded(Decl *FromD, Decl *ToD) {
+  if (!FromD)
+    return;
+  
+  if (!ToD) {
+    ToD = Importer.Import(FromD);
+    if (!ToD)
+      return;
+  }
+  
+  if (RecordDecl *FromRecord = dyn_cast<RecordDecl>(FromD)) {
+    if (RecordDecl *ToRecord = cast_or_null<RecordDecl>(ToD)) {
+      if (FromRecord->getDefinition() && !ToRecord->getDefinition()) {
+        ImportDefinition(FromRecord, ToRecord);
+      }
+    }
+    return;
+  }
+
+  if (EnumDecl *FromEnum = dyn_cast<EnumDecl>(FromD)) {
+    if (EnumDecl *ToEnum = cast_or_null<EnumDecl>(ToD)) {
+      if (FromEnum->getDefinition() && !ToEnum->getDefinition()) {
+        ImportDefinition(FromEnum, ToEnum);
+      }
+    }
+    return;
+  }
+}
+
 void
 ASTNodeImporter::ImportDeclarationNameLoc(const DeclarationNameInfo &From,
                                           DeclarationNameInfo& To) {
@@ -1778,8 +1811,9 @@ void ASTNodeImporter::ImportDeclContext(DeclContext *FromDC, bool ForceImport) {
     Importer.Import(*From);
 }
 
-bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To, bool ForceImport) {
-  if (To->getDefinition())
+bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To, 
+                                       bool ForceImport) {
+  if (To->getDefinition() || To->isBeingDefined())
     return false;
   
   To->startDefinition();
@@ -1801,7 +1835,10 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To, bool Fo
       SourceLocation EllipsisLoc;
       if (Base1->isPackExpansion())
         EllipsisLoc = Importer.Import(Base1->getEllipsisLoc());
-      
+
+      // Ensure that we have a definition for the base.
+      ImportDefinitionIfNeeded(Base1->getType()->getAsCXXRecordDecl());
+        
       Bases.push_back(
                     new (Importer.getToContext()) 
                       CXXBaseSpecifier(Importer.Import(Base1->getSourceRange()),
@@ -1817,6 +1854,31 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To, bool Fo
   
   ImportDeclContext(From, ForceImport);
   To->completeDefinition();
+  return false;
+}
+
+bool ASTNodeImporter::ImportDefinition(EnumDecl *From, EnumDecl *To, 
+                                       bool ForceImport) {
+  if (To->getDefinition() || To->isBeingDefined())
+    return false;
+  
+  To->startDefinition();
+
+  QualType T = Importer.Import(Importer.getFromContext().getTypeDeclType(From));
+  if (T.isNull())
+    return true;
+  
+  QualType ToPromotionType = Importer.Import(From->getPromotionType());
+  if (ToPromotionType.isNull())
+    return true;
+  
+  ImportDeclContext(From, ForceImport);
+  
+  // FIXME: we might need to merge the number of positive or negative bits
+  // if the enumerator lists don't match.
+  To->completeDefinition(T, ToPromotionType,
+                         From->getNumPositiveBits(),
+                         From->getNumNegativeBits());
   return false;
 }
 
@@ -2154,25 +2216,9 @@ Decl *ASTNodeImporter::VisitEnumDecl(EnumDecl *D) {
   D2->setIntegerType(ToIntegerType);
   
   // Import the definition
-  if (D->isDefinition()) {
-    QualType T = Importer.Import(Importer.getFromContext().getTypeDeclType(D));
-    if (T.isNull())
-      return 0;
+  if (D->isDefinition() && ImportDefinition(D, D2))
+    return 0;
 
-    QualType ToPromotionType = Importer.Import(D->getPromotionType());
-    if (ToPromotionType.isNull())
-      return 0;
-    
-    D2->startDefinition();
-    ImportDeclContext(D);
-
-    // FIXME: we might need to merge the number of positive or negative bits
-    // if the enumerator lists don't match.
-    D2->completeDefinition(T, ToPromotionType,
-                           D->getNumPositiveBits(),
-                           D->getNumNegativeBits());
-  }
-  
   return D2;
 }
 
@@ -4021,13 +4067,17 @@ Decl *ASTImporter::Import(Decl *FromD) {
   if (!FromD)
     return 0;
 
+  ASTNodeImporter Importer(*this);
+
   // Check whether we've already imported this declaration.  
   llvm::DenseMap<Decl *, Decl *>::iterator Pos = ImportedDecls.find(FromD);
-  if (Pos != ImportedDecls.end())
-    return Pos->second;
+  if (Pos != ImportedDecls.end()) {
+    Decl *ToD = Pos->second;
+    Importer.ImportDefinitionIfNeeded(FromD, ToD);
+    return ToD;
+  }
   
   // Import the type
-  ASTNodeImporter Importer(*this);
   Decl *ToD = Importer.Visit(FromD);
   if (!ToD)
     return 0;
@@ -4311,7 +4361,15 @@ void ASTImporter::ImportDefinition(Decl *From) {
         return;
       }      
     }
-      
+
+    if (EnumDecl *ToEnum = dyn_cast<EnumDecl>(To)) {
+      if (!ToEnum->getDefinition()) {
+        Importer.ImportDefinition(cast<EnumDecl>(FromDC), ToEnum, 
+                                  /*ForceImport=*/true);
+        return;
+      }      
+    }
+
     Importer.ImportDeclContext(FromDC, true);
   }
 }
