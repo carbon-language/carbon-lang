@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin10
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin10 -verify-arm-pseudo-expand
 
 ; <rdar://problem/8529919>
 %struct.foo = type { i32, i32 }

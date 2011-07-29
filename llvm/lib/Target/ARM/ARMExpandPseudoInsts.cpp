@@ -26,8 +26,13 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h" // FIXME: for debug only. remove!
 using namespace llvm;
+
+cl::opt<bool>
+VerifyARMPseudo("verify-arm-pseudo-expand", cl::Hidden,
+                cl::desc("Verify machine code after expanding ARM pseudos"));
 
 namespace {
   class ARMExpandPseudo : public MachineFunctionPass {
@@ -1328,6 +1333,8 @@ bool ARMExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::iterator MFI = MF.begin(), E = MF.end(); MFI != E;
        ++MFI)
     Modified |= ExpandMBB(*MFI);
+  if (VerifyARMPseudo)
+    MF.verify(this, "After expanding ARM pseudo instructions.");
   return Modified;
 }
 
