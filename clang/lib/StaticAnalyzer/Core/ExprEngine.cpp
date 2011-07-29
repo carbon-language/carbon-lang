@@ -2146,21 +2146,18 @@ void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr* CL,
                                             ExplodedNodeSet& Dst) {
   const InitListExpr* ILE 
     = cast<InitListExpr>(CL->getInitializer()->IgnoreParens());
-  ExplodedNodeSet Tmp;
-  Visit(ILE, Pred, Tmp);
+  
+  const GRState* state = GetState(Pred);
+  SVal ILV = state->getSVal(ILE);
 
-  for (ExplodedNodeSet::iterator I = Tmp.begin(), EI = Tmp.end(); I!=EI; ++I) {
-    const GRState* state = GetState(*I);
-    SVal ILV = state->getSVal(ILE);
-    const LocationContext *LC = (*I)->getLocationContext();
-    state = state->bindCompoundLiteral(CL, LC, ILV);
+  const LocationContext *LC = Pred->getLocationContext();
+  state = state->bindCompoundLiteral(CL, LC, ILV);
 
-    if (CL->isLValue()) {
-      MakeNode(Dst, CL, *I, state->BindExpr(CL, state->getLValue(CL, LC)));
-    }
-    else
-      MakeNode(Dst, CL, *I, state->BindExpr(CL, ILV));
+  if (CL->isLValue()) {
+    MakeNode(Dst, CL, Pred, state->BindExpr(CL, state->getLValue(CL, LC)));
   }
+  else
+    MakeNode(Dst, CL, Pred, state->BindExpr(CL, ILV));
 }
 
 void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
