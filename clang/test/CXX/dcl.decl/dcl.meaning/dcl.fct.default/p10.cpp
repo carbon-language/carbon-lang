@@ -5,7 +5,7 @@ struct A {
 }; 
 
 struct B : public A {
-  void f(int a);
+  void f(int a); // expected-note{{'f' declared here}}
 }; 
 
 void m() {

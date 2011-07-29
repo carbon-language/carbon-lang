@@ -3696,11 +3696,11 @@ def err_typecheck_call_too_few_args_at_least : Error<
 def err_typecheck_call_too_many_args : Error<
   "too many arguments to %select{function|block|method}0 call, "
   "expected %1, have %2">;
-def note_typecheck_call_too_many_args : Note<
-  "%0 declared here">;
 def err_typecheck_call_too_many_args_at_most : Error<
   "too many arguments to %select{function|block|method}0 call, "
   "expected at most %1, have %2">;
+def note_callee_decl : Note<
+  "%0 declared here">;
 def warn_call_wrong_number_of_arguments : Warning<
   "too %select{few|many}0 arguments in call to %1">;
 def err_atomic_builtin_must_be_pointer : Error<

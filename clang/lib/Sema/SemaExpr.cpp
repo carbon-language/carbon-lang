@@ -3231,10 +3231,18 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   // If too few arguments are available (and we don't have default
   // arguments for the remaining parameters), don't make the call.
   if (NumArgs < NumArgsInProto) {
-    if (!FDecl || NumArgs < FDecl->getMinRequiredArguments())
-      return Diag(RParenLoc, diag::err_typecheck_call_too_few_args)
+    if (!FDecl || NumArgs < FDecl->getMinRequiredArguments()) {
+      Diag(RParenLoc, diag::err_typecheck_call_too_few_args)
         << Fn->getType()->isBlockPointerType()
         << NumArgsInProto << NumArgs << Fn->getSourceRange();
+
+      // Emit the location of the prototype.
+      if (FDecl && !FDecl->getBuiltinID())
+        Diag(FDecl->getLocStart(), diag::note_callee_decl)
+          << FDecl;
+
+      return true;
+    }
     Call->setNumArgs(Context, NumArgsInProto);
   }
 
@@ -3251,9 +3259,8 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
 
       // Emit the location of the prototype.
       if (FDecl && !FDecl->getBuiltinID())
-        Diag(FDecl->getLocStart(),
-             diag::note_typecheck_call_too_many_args)
-             << FDecl;
+        Diag(FDecl->getLocStart(), diag::note_callee_decl)
+          << FDecl;
       
       // This deletes the extra arguments.
       Call->setNumArgs(Context, NumArgsInProto);

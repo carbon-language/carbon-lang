@@ -41,7 +41,7 @@ namespace N1 {
   
   void m()
   {
-    void f(int, int);
+    void f(int, int); // expected-note{{'f' declared here}}
     f(4);  // expected-error{{too few arguments to function call}}
     void f(int, int = 5); // expected-note{{previous definition}}
     f(4); // okay

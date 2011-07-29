@@ -163,7 +163,7 @@ void test17(int x) {
 }
 
 // PR6501
-void test18_a(int a); // expected-note {{'test18_a' declared here}}
+void test18_a(int a); // expected-note 2 {{'test18_a' declared here}}
 void test18(int b) {
   test18_a(b, b); // expected-error {{too many arguments to function call, expected 1, have 2}}
   test18_a(); // expected-error {{too few arguments to function call, expected 1, have 0}}
