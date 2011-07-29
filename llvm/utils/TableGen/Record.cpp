@@ -1475,7 +1475,15 @@ std::string DefInit::getAsString() const {
 }
 
 const FieldInit *FieldInit::get(const Init *R, const std::string &FN) {
-  return new FieldInit(R, FN);
+  typedef std::pair<const Init *, TableGenStringKey> Key;
+  typedef DenseMap<Key, FieldInit *> Pool;
+  static Pool ThePool;  
+
+  Key TheKey(std::make_pair(R, FN));
+
+  FieldInit *&I = ThePool[TheKey];
+  if (!I) I = new FieldInit(R, FN);
+  return I;
 }
 
 const Init *FieldInit::resolveBitReference(Record &R, const RecordVal *RV,
