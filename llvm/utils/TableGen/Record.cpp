@@ -1,3 +1,4 @@
+
 //===- Record.cpp - Record implementation ---------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -448,7 +449,10 @@ const UnsetInit *UnsetInit::get() {
 }
 
 const BitInit *BitInit::get(bool V) {
-  return new BitInit(V);
+  static const BitInit True(true);
+  static const BitInit False(false);
+
+  return V ? &True : &False;
 }
 
 const BitsInit *BitsInit::get(ArrayRef<const Init *> Range) {
