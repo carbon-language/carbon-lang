@@ -1731,25 +1731,7 @@ void ExprEngine::VisitCallExpr(const CallExpr* CE, ExplodedNode* Pred,
 void ExprEngine::VisitObjCPropertyRefExpr(const ObjCPropertyRefExpr *Ex,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
-  ExplodedNodeSet dstBase;
-
-  // Visit the receiver (if any).
-  if (Ex->isObjectReceiver())
-    Visit(Ex->getBase(), Pred, dstBase);
-  else
-    dstBase = Pred;
-
-  ExplodedNodeSet dstPropRef;
-
-  // Using the base, compute the lvalue of the instance variable.
-  for (ExplodedNodeSet::iterator I = dstBase.begin(), E = dstBase.end();
-       I!=E; ++I) {
-    ExplodedNode *nodeBase = *I;
-    const GRState *state = GetState(nodeBase);
-    MakeNode(dstPropRef, Ex, *I, state->BindExpr(Ex, loc::ObjCPropRef(Ex)));
-  }
-  
-  Dst.insert(dstPropRef);
+  MakeNode(Dst, Ex, Pred, GetState(Pred)->BindExpr(Ex, loc::ObjCPropRef(Ex)));
 }
 
 //===----------------------------------------------------------------------===//
