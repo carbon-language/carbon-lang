@@ -1414,7 +1414,16 @@ const Init *VarBitInit::resolveReferences(Record &R,
 
 const VarListElementInit *VarListElementInit::get(const TypedInit *T,
                                                   unsigned E) {
-  return new VarListElementInit(T, E);
+  typedef std::pair<const TypedInit *, unsigned> Key;
+  typedef DenseMap<Key, VarListElementInit *> Pool;
+
+  static Pool ThePool;
+
+  Key TheKey(std::make_pair(T, E));
+
+  VarListElementInit *&I = ThePool[TheKey];
+  if (!I) I = new VarListElementInit(T, E);
+  return I;
 }
 
 std::string VarListElementInit::getAsString() const {
