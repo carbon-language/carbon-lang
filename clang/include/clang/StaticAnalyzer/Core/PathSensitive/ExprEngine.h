@@ -315,10 +315,6 @@ public:
   void VisitObjCForCollectionStmt(const ObjCForCollectionStmt* S, 
                                   ExplodedNode* Pred, ExplodedNodeSet& Dst);
 
-  void VisitObjCForCollectionStmtAux(const ObjCForCollectionStmt* S, 
-                                     ExplodedNode* Pred,
-                                     ExplodedNodeSet& Dst, SVal ElementV);
-
   void VisitObjCMessage(const ObjCMessage &msg, ExplodedNode *Pred,
                         ExplodedNodeSet& Dst);
 

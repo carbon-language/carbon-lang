@@ -1842,50 +1842,39 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt* S,
   //    result in state splitting.
 
   const Stmt* elem = S->getElement();
-  SVal ElementV;
+  const GRState *state = GetState(Pred);
+  SVal elementV;
 
   if (const DeclStmt* DS = dyn_cast<DeclStmt>(elem)) {
-    const VarDecl* ElemD = cast<VarDecl>(DS->getSingleDecl());
-    assert (ElemD->getInit() == 0);
-    ElementV = GetState(Pred)->getLValue(ElemD, Pred->getLocationContext());
-    VisitObjCForCollectionStmtAux(S, Pred, Dst, ElementV);
-    return;
+    const VarDecl* elemD = cast<VarDecl>(DS->getSingleDecl());
+    assert(elemD->getInit() == 0);
+    elementV = state->getLValue(elemD, Pred->getLocationContext());
   }
-
-  ExplodedNodeSet Tmp;
-  Visit(cast<Expr>(elem), Pred, Tmp);
-  for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I!=E; ++I) {
-    const GRState* state = GetState(*I);
-    VisitObjCForCollectionStmtAux(S, *I, Dst, state->getSVal(elem));
+  else {
+    elementV = state->getSVal(elem);
   }
-}
+  
+  ExplodedNodeSet dstLocation;
+  evalLocation(dstLocation, elem, Pred, state, elementV, NULL, false);
 
-void ExprEngine::VisitObjCForCollectionStmtAux(const ObjCForCollectionStmt* S,
-                                       ExplodedNode* Pred, ExplodedNodeSet& Dst,
-                                                 SVal ElementV) {
-
-  // Check if the location we are writing back to is a null pointer.
-  const Stmt* elem = S->getElement();
-  ExplodedNodeSet Tmp;
-  evalLocation(Tmp, elem, Pred, GetState(Pred), ElementV, NULL, false);
-
-  if (Tmp.empty())
+  if (dstLocation.empty())
     return;
-
-  for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI) {
+  
+  for (ExplodedNodeSet::iterator NI = dstLocation.begin(),
+                                 NE = dstLocation.end(); NI!=NE; ++NI) {
     Pred = *NI;
     const GRState *state = GetState(Pred);
-
+    
     // Handle the case where the container still has elements.
     SVal TrueV = svalBuilder.makeTruthVal(1);
     const GRState *hasElems = state->BindExpr(S, TrueV);
-
+    
     // Handle the case where the container has no elements.
     SVal FalseV = svalBuilder.makeTruthVal(0);
     const GRState *noElems = state->BindExpr(S, FalseV);
-
-    if (loc::MemRegionVal* MV = dyn_cast<loc::MemRegionVal>(&ElementV))
-      if (const TypedRegion* R = dyn_cast<TypedRegion>(MV->getRegion())) {
+    
+    if (loc::MemRegionVal *MV = dyn_cast<loc::MemRegionVal>(&elementV))
+      if (const TypedRegion *R = dyn_cast<TypedRegion>(MV->getRegion())) {
         // FIXME: The proper thing to do is to really iterate over the
         //  container.  We will do this with dispatch logic to the store.
         //  For now, just 'conjure' up a symbolic value.
@@ -1894,13 +1883,13 @@ void ExprEngine::VisitObjCForCollectionStmtAux(const ObjCForCollectionStmt* S,
         unsigned Count = Builder->getCurrentBlockCount();
         SymbolRef Sym = SymMgr.getConjuredSymbol(elem, T, Count);
         SVal V = svalBuilder.makeLoc(Sym);
-        hasElems = hasElems->bindLoc(ElementV, V);
-
+        hasElems = hasElems->bindLoc(elementV, V);
+        
         // Bind the location to 'nil' on the false branch.
         SVal nilV = svalBuilder.makeIntVal(0, T);
-        noElems = noElems->bindLoc(ElementV, nilV);
+        noElems = noElems->bindLoc(elementV, nilV);
       }
-
+    
     // Create the new nodes.
     MakeNode(Dst, S, Pred, hasElems);
     MakeNode(Dst, S, Pred, noElems);
