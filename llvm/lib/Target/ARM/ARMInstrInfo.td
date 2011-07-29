@@ -1298,11 +1298,8 @@ def BKPT : AI<(outs), (ins imm0_65535:$val), MiscFrm, NoItinerary,
   let Inst{7-4} = 0b0111;
 }
 
-// Change Processor State is a system instruction -- for disassembly and
-// parsing only.
-// FIXME: Since the asm parser has currently no clean way to handle optional
-// operands, create 3 versions of the same instruction. Once there's a clean
-// framework to represent optional operands, change this behavior.
+// Change Processor State
+// FIXME: We should use InstAlias to handle the optional operands.
 class CPS<dag iops, string asm_ops>
   : AXI<(outs), iops, MiscFrm, NoItinerary, !strconcat("cps", asm_ops),
         []>, Requires<[IsARM]> {
