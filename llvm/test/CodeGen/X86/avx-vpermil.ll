@@ -27,3 +27,13 @@ entry:
   %shuffle = shufflevector <4 x i64> %a, <4 x i64> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 3>
   ret <4 x i64> %shuffle
 }
+
+; vpermil should match masks like this: <u,3,1,2,4,u,5,6>. Check that the
+; target specific mask was correctly generated.
+; CHECK: vpermilps $-100
+define <8 x float> @funcA(<8 x float> %a) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <8 x float> %a, <8 x float> undef, <8 x i32> <i32 8, i32 3, i32 1, i32 2, i32 4, i32 8, i32 5, i32 6>
+  ret <8 x float> %shuffle
+}
+

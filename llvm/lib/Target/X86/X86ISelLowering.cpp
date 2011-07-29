@@ -3465,11 +3465,14 @@ static bool isVPERMILPSMask(const SmallVectorImpl<int> &Mask, EVT VT,
     return false;
 
   // The mask on the high lane should be the same as the low. Actually,
-  // they can differ if any of the corresponding index in a lane is undef.
+  // they can differ if any of the corresponding index in a lane is undef
+  // and the other stays in range.
   int LaneSize = NumElts/NumLanes;
   for (int i = 0; i < LaneSize; ++i) {
     int HighElt = i+LaneSize;
-    if (Mask[i] < 0 || Mask[HighElt] < 0)
+    if (Mask[i] < 0 && (isUndefOrInRange(Mask[HighElt], LaneSize, NumElts)))
+      continue;
+    if (Mask[HighElt] < 0 && (isUndefOrInRange(Mask[i], 0, LaneSize)))
       continue;
     if (Mask[HighElt]-Mask[i] != LaneSize)
       return false;
@@ -3486,13 +3489,20 @@ static unsigned getShuffleVPERMILPSImmediate(SDNode *N) {
 
   int NumElts = VT.getVectorNumElements();
   int NumLanes = VT.getSizeInBits()/128;
+  int LaneSize = NumElts/NumLanes;
 
+  // Although the mask is equal for both lanes do it twice to get the cases
+  // where a mask will match because the same mask element is undef on the
+  // first half but valid on the second. This would get pathological cases
+  // such as: shuffle <u, 0, 1, 2, 4, 4, 5, 6>, which is completely valid.
   unsigned Mask = 0;
-  for (int i = 0; i < NumElts/NumLanes /* lane size */; ++i) {
-    int MaskElt = SVOp->getMaskElt(i);
-    if (MaskElt < 0)
-      continue;
-    Mask |= MaskElt << (i*2);
+  for (int l = 0; l < NumLanes; ++l) {
+    for (int i = 0; i < LaneSize; ++i) {
+      int MaskElt = SVOp->getMaskElt(i+(l*LaneSize));
+      if (MaskElt < 0)
+        continue;
+      Mask |= MaskElt << (i*2);
+    }
   }
 
   return Mask;
