@@ -65,15 +65,6 @@
 @ CHECK: cdp2  p7, #1, c1, c1, c1, #4 @ encoding: [0x81,0x17,0x11,0xfe]
         cdp2  p7, #1, c1, c1, c1, #4
 
-@ CHECK: cpsie  aif @ encoding: [0xc0,0x01,0x08,0xf1]
-        cpsie  aif
-
-@ CHECK: cps  #15 @ encoding: [0x0f,0x00,0x02,0xf1]
-        cps  #15
-
-@ CHECK: cpsie  if, #10 @ encoding: [0xca,0x00,0x0a,0xf1]
-        cpsie  if, #10
-
 @ CHECK: add	r1, r2, r3, lsl r4      @ encoding: [0x13,0x14,0x82,0xe0]
   add r1, r2, r3, lsl r4
 
