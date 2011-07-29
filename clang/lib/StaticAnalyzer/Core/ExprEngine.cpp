@@ -1350,42 +1350,36 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr* A,
 }
 
 /// VisitMemberExpr - Transfer function for member expressions.
-void ExprEngine::VisitMemberExpr(const MemberExpr* M, ExplodedNode* Pred,
+void ExprEngine::VisitMemberExpr(const MemberExpr* M, ExplodedNode *Pred,
                                  ExplodedNodeSet& Dst) {
-
-  Expr *baseExpr = M->getBase()->IgnoreParens();
-  ExplodedNodeSet dstBase;
-  Visit(baseExpr, Pred, dstBase);
 
   FieldDecl *field = dyn_cast<FieldDecl>(M->getMemberDecl());
   if (!field) // FIXME: skipping member expressions for non-fields
     return;
 
-  for (ExplodedNodeSet::iterator I = dstBase.begin(), E = dstBase.end();
-    I != E; ++I) {
-    const GRState* state = GetState(*I);
-    SVal baseExprVal = state->getSVal(baseExpr);
-    if (isa<nonloc::LazyCompoundVal>(baseExprVal) ||
-        isa<nonloc::CompoundVal>(baseExprVal) ||
-        // FIXME: This can originate by conjuring a symbol for an unknown
-        // temporary struct object, see test/Analysis/fields.c:
-        // (p = getit()).x
-        isa<nonloc::SymbolVal>(baseExprVal)) {
-      MakeNode(Dst, M, *I, state->BindExpr(M, UnknownVal()));
-      continue;
-    }
-
-    // FIXME: Should we insert some assumption logic in here to determine
-    // if "Base" is a valid piece of memory?  Before we put this assumption
-    // later when using FieldOffset lvals (which we no longer have).
-
-    // For all other cases, compute an lvalue.    
-    SVal L = state->getLValue(field, baseExprVal);
-    if (M->isLValue())
-      MakeNode(Dst, M, *I, state->BindExpr(M, L), ProgramPoint::PostLValueKind);
-    else
-      evalLoad(Dst, M, *I, state, L);
+  Expr *baseExpr = M->getBase()->IgnoreParens();
+  const GRState* state = GetState(Pred);
+  SVal baseExprVal = state->getSVal(baseExpr);
+  if (isa<nonloc::LazyCompoundVal>(baseExprVal) ||
+      isa<nonloc::CompoundVal>(baseExprVal) ||
+      // FIXME: This can originate by conjuring a symbol for an unknown
+      // temporary struct object, see test/Analysis/fields.c:
+      // (p = getit()).x
+      isa<nonloc::SymbolVal>(baseExprVal)) {
+    MakeNode(Dst, M, Pred, state->BindExpr(M, UnknownVal()));
+    return;
   }
+
+  // FIXME: Should we insert some assumption logic in here to determine
+  // if "Base" is a valid piece of memory?  Before we put this assumption
+  // later when using FieldOffset lvals (which we no longer have).
+
+  // For all other cases, compute an lvalue.    
+  SVal L = state->getLValue(field, baseExprVal);
+  if (M->isLValue())
+    MakeNode(Dst, M, Pred, state->BindExpr(M, L), ProgramPoint::PostLValueKind);
+  else
+    evalLoad(Dst, M, Pred, state, L);
 }
 
 /// evalBind - Handle the semantics of binding a value to a specific location.
