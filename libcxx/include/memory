@@ -1294,7 +1294,7 @@ struct __has_allocate_hint
 
 #endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
-#ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
+#if !defined(_LIBCPP_HAS_NO_ADVANCED_SFINAE) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 
 template <class _Alloc, class _Tp, class ..._Args>
 decltype(_VSTD::declval<_Alloc>().construct(_VSTD::declval<_Tp*>(),

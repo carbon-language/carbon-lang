@@ -56,6 +56,7 @@ std::get_terminate() _NOEXCEPT
     return __sync_fetch_and_add(&__terminate_handler, (std::terminate_handler)0);
 }
 
+_ATTRIBUTE(noreturn)
 void
 std::terminate() _NOEXCEPT
 {
