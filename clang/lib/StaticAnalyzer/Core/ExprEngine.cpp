@@ -1670,29 +1670,9 @@ void ExprEngine::VisitCallExpr(const CallExpr* CE, ExplodedNode* Pred,
   if (const PointerType *FnTypePtr = FnType->getAs<PointerType>())
     Proto = FnTypePtr->getPointeeType()->getAs<FunctionProtoType>();
 
-  // Should the first argument be evaluated as an lvalue?
-  bool firstArgumentAsLvalue = false;
-  switch (CE->getStmtClass()) {
-    case Stmt::CXXOperatorCallExprClass:
-      firstArgumentAsLvalue = true;
-      break;
-    default:
-      break;
-  }
-  
-  // Evaluate the arguments.
-  ExplodedNodeSet dstArgsEvaluated;
-  evalArguments(CE->arg_begin(), CE->arg_end(), Proto, Pred, dstArgsEvaluated,
-                firstArgumentAsLvalue);
-
-  // Evaluate the callee.
-  ExplodedNodeSet dstCalleeEvaluated;
-  evalCallee(CE, dstArgsEvaluated, dstCalleeEvaluated);
-
   // Perform the previsit of the CallExpr.
   ExplodedNodeSet dstPreVisit;
-  getCheckerManager().runCheckersForPreStmt(dstPreVisit, dstCalleeEvaluated,
-                                            CE, *this);
+  getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, CE, *this);
     
   // Now evaluate the call itself.
   class DefaultEval : public GraphExpander {
