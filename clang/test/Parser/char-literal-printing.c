@@ -1,5 +1,8 @@
+// RUN: %clang_cc1 -ast-print %s
+// RUN: %clang_cc1 -x c++ -ast-print %s
 // RUN: %clang_cc1 -x c++ -std=c++0x -ast-print %s
-// Runs in c++0x mode so that wchar_t, char16_t, and char32_t are available.
+
+#include <stddef.h>
 
 char    test1(void) { return '\\'; }
 wchar_t test2(void) { return L'\\'; }
@@ -29,6 +32,7 @@ wchar_t test24(void) { return L'\x3'; }
 
 wchar_t test25(void) { return L'\x333'; }
 
+#if __cplusplus >= 201103L
 char16_t test26(void) { return u'\\'; }
 char16_t test27(void) { return u'\''; }
 char16_t test28(void) { return u'\a'; }
@@ -60,3 +64,4 @@ char32_t test49(void) { return U'c'; }
 char32_t test50(void) { return U'\x3'; }
 
 char32_t test51(void) { return U'\x333'; }
+#endif
