@@ -468,6 +468,7 @@ public:
     // types
     typedef _Key                                           key_type;
     typedef _Tp                                            mapped_type;
+    typedef _Tp                                            data_type;
     typedef _Hash                                          hasher;
     typedef _Pred                                          key_equal;
     typedef _Alloc                                         allocator_type;
@@ -551,6 +552,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     pair<iterator, bool> insert(const value_type& __x)
         {return __table_.__insert_unique(__x);}
+    _LIBCPP_INLINE_VISIBILITY
+    iterator insert(const_iterator, const value_type& __x) {return insert(__x).first;}
     template <class _InputIterator>
         void insert(_InputIterator __first, _InputIterator __last);
 
@@ -744,6 +747,7 @@ public:
     // types
     typedef _Key                                           key_type;
     typedef _Tp                                            mapped_type;
+    typedef _Tp                                            data_type;
     typedef _Hash                                          hasher;
     typedef _Pred                                          key_equal;
     typedef _Alloc                                         allocator_type;
@@ -825,6 +829,8 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     iterator insert(const value_type& __x) {return __table_.__insert_multi(__x);}
+    _LIBCPP_INLINE_VISIBILITY
+    iterator insert(const_iterator, const value_type& __x) {return insert(__x);}
     template <class _InputIterator>
         void insert(_InputIterator __first, _InputIterator __last);
 
