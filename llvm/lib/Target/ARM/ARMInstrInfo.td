@@ -1305,7 +1305,7 @@ def BKPT : AI<(outs), (ins imm0_65535:$val), MiscFrm, NoItinerary,
 // framework to represent optional operands, change this behavior.
 class CPS<dag iops, string asm_ops>
   : AXI<(outs), iops, MiscFrm, NoItinerary, !strconcat("cps", asm_ops),
-        [/* For disassembly only; pattern left blank */]>, Requires<[IsARM]> {
+        []>, Requires<[IsARM]> {
   bits<2> imod;
   bits<3> iflags;
   bits<5> mode;
