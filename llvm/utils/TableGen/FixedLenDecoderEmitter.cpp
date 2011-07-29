@@ -1228,10 +1228,8 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
   std::map<Init*, std::string> TiedNames;
   for (unsigned i = 0; i < CGI.Operands.size(); ++i) {
     int tiedTo = CGI.Operands[i].getTiedRegister();
-    if (tiedTo != -1) {
+    if (tiedTo != -1)
       TiedNames[InOutOperands[i].first] = InOutOperands[tiedTo].second;
-      TiedNames[InOutOperands[tiedTo].first] = InOutOperands[i].second;
-    }
   }
 
   // For each operand, see if we can figure out where it is encoded.
@@ -1267,6 +1265,8 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
     unsigned Offset = 0;
 
     for (unsigned bi = 0; bi < Bits.getNumBits(); ++bi) {
+      std::string name = NI->second;
+      std::string altname = TiedNames[NI->first];
       VarBitInit *BI = dynamic_cast<VarBitInit*>(Bits.getBit(bi));
       if (!BI) {
         if (Base != ~0U) {
