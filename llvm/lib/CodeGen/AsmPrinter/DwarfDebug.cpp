@@ -69,7 +69,7 @@ static const unsigned InitAbbreviationsSetSize = 9; // log2(512)
 
 namespace llvm {
 
-DIType DbgVariable::getType()               const {
+DIType DbgVariable::getType() const {
   DIType Ty = Var.getType();
   // FIXME: isBlockByrefVariable should be reformulated in terms of complex
   // addresses instead.
@@ -197,7 +197,7 @@ public:
   void setAbstractScope() { AbstractScope = true; }
   bool isAbstractScope() const { return AbstractScope; }
 
-  // Depth First Search support to walk and mainpluate DbgScope hierarchy.
+  // Depth First Search support to walk and manipulate DbgScope hierarchy.
   unsigned getDFSOut() const { return DFSOut; }
   void setDFSOut(unsigned O) { DFSOut = O; }
   unsigned getDFSIn() const  { return DFSIn; }
@@ -581,7 +581,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   const MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
 
   if (StartLabel == 0 || EndLabel == 0) {
-    assert (0 && "Unexpected Start and End  labels for a inlined scope!");
+    assert (0 && "Unexpected Start and End labels for a inlined scope!");
     return 0;
   }
   assert(StartLabel->isDefined() &&
@@ -920,7 +920,7 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
   CUMap.insert(std::make_pair(N, NewCU));
 }
 
-/// getCompielUnit - Get CompileUnit DIE.
+/// getCompileUnit - Get CompileUnit DIE.
 CompileUnit *DwarfDebug::getCompileUnit(const MDNode *N) const {
   assert (N && "Invalid DwarfDebug::getCompileUnit argument!");
   DIDescriptor D(N);
@@ -949,7 +949,7 @@ CompileUnit *DwarfDebug::getCompileUnit(const MDNode *N) const {
   return I->second;
 }
 
-// Return const exprssion if value is a GEP to access merged global
+// Return const expression if value is a GEP to access merged global
 // constant. e.g.
 // i8* getelementptr ({ i8, i8, i8, i8 }* @_MergedGlobals, i32 0, i32 0)
 static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
@@ -963,8 +963,7 @@ static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
     return NULL;
 
   // Second operand is zero.
-  const ConstantInt *CI = 
-    dyn_cast_or_null<ConstantInt>(CE->getOperand(1));
+  const ConstantInt *CI = dyn_cast_or_null<ConstantInt>(CE->getOperand(1));
   if (!CI || !CI->isZero())
     return NULL;
 
@@ -1086,13 +1085,13 @@ void DwarfDebug::constructSubprogramDIE(const MDNode *N) {
 
 /// beginModule - Emit all Dwarf sections that should come prior to the
 /// content. Create global DIEs and emit initial debug info sections.
-/// This is inovked by the target AsmPrinter.
+/// This is invoked by the target AsmPrinter.
 void DwarfDebug::beginModule(Module *M) {
   if (DisableDebugInfoPrinting)
     return;
 
-  // If module has named metadata anchors then use them, otherwise scan the module
-  // using debug info finder to collect debug info.
+  // If module has named metadata anchors then use them, otherwise scan the
+  // module using debug info finder to collect debug info.
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (CU_Nodes) {
 
@@ -1120,8 +1119,8 @@ void DwarfDebug::beginModule(Module *M) {
     DbgFinder.processModule(*M);
     
     bool HasDebugInfo = false;
-    // Scan all the compile-units to see if there are any marked as the main unit.
-    // if not, we do not generate debug info.
+    // Scan all the compile-units to see if there are any marked as the main
+    // unit. If not, we do not generate debug info.
     for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
            E = DbgFinder.compile_unit_end(); I != E; ++I) {
       if (DICompileUnit(*I).isMain()) {
@@ -1305,8 +1304,8 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
   return AbsDbgVariable;
 }
 
-/// addCurrentFnArgument - If Var is an current function argument that add
-/// it in CurrentFnArguments list.
+/// addCurrentFnArgument - If Var is a current function argument then add
+/// it to CurrentFnArguments list.
 bool DwarfDebug::addCurrentFnArgument(const MachineFunction *MF,
                                       DbgVariable *Var, DbgScope *Scope) {
   if (Scope != CurrentFnDbgScope) 
@@ -1332,7 +1331,7 @@ bool DwarfDebug::addCurrentFnArgument(const MachineFunction *MF,
 /// collectVariableInfoFromMMITable - Collect variable information from
 /// side table maintained by MMI.
 void
-DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction * MF,
+DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction *MF,
                                    SmallPtrSet<const MDNode *, 16> &Processed) {
   MachineModuleInfo::VariableDbgInfoMapTy &VMap = MMI->getVariableDbgInfo();
   for (MachineModuleInfo::VariableDbgInfoMapTy::iterator VI = VMap.begin(),
@@ -1370,7 +1369,7 @@ static bool isDbgValueInDefinedReg(const MachineInstr *MI) {
          MI->getOperand(1).isImm() && MI->getOperand(1).getImm() == 0;
 }
 
-/// getDebugLocEntry - Get .debug_loc entry for the instraction range starting
+/// getDebugLocEntry - Get .debug_loc entry for the instruction range starting
 /// at MI.
 static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm, 
                                          const MCSymbol *FLabel, 
@@ -1748,12 +1747,12 @@ bool DwarfDebug::extractScopeInformation() {
         continue;
       }
 
-      // Ignore DBG_VALUE. It does not contribute any instruction in output.
+      // Ignore DBG_VALUE. It does not contribute to any instruction in output.
       if (MInsn->isDebugValue())
         continue;
 
       if (RangeBeginMI) {
-        // If we have alread seen a beginning of a instruction range and
+        // If we have already seen a beginning of an instruction range and
         // current instruction scope does not match scope of first instruction
         // in this range then create a new instruction range.
         DEBUG(dbgs() << "Creating new instruction range :\n");
@@ -2167,8 +2166,7 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
 
     Src = GetOrCreateSourceID(Fn, Dir);
   }
-  Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, Flags,
-                                         0, 0, Fn);
+  Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, Flags, 0, 0, Fn);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2281,7 +2279,7 @@ void DwarfDebug::EmitSectionLabels() {
   EmitSectionSym(Asm, TLOF.getDataSection());
 }
 
-/// emitDIE - Recusively Emits a debug information entry.
+/// emitDIE - Recursively emits a debug information entry.
 ///
 void DwarfDebug::emitDIE(DIE *Die) {
   // Get the abbreviation for this DIE.
@@ -2510,7 +2508,7 @@ void DwarfDebug::emitDebugPubNames() {
     Asm->OutStreamer.AddComment("End Mark");
     Asm->EmitInt32(0);
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_end",
-                                                TheCU->getID()));
+                                                  TheCU->getID()));
   }
 }
 
@@ -2545,7 +2543,7 @@ void DwarfDebug::emitDebugPubTypes() {
     for (StringMap<DIE*>::const_iterator
            GI = Globals.begin(), GE = Globals.end(); GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      DIE * Entity = GI->second;
+      DIE *Entity = GI->second;
 
       if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DIE offset");
       Asm->EmitInt32(Entity->getOffset());

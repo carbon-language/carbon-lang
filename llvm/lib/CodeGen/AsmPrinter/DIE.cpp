@@ -69,7 +69,7 @@ void DIEAbbrev::Emit(AsmPrinter *AP) const {
     // Emit attribute type.
     // FIXME: Doing work even in non-asm-verbose runs.
     AP->EmitULEB128(AttrData.getAttribute(),
-                              dwarf::AttributeString(AttrData.getAttribute()));
+                    dwarf::AttributeString(AttrData.getAttribute()));
 
     // Emit form type.
     // FIXME: Doing work even in non-asm-verbose runs.
