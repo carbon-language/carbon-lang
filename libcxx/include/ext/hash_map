@@ -203,6 +203,7 @@ template <class Key, class T, class Hash, class Pred, class Alloc>
 #include <__hash_table>
 #include <functional>
 #include <stdexcept>
+#include <ext/__hash>
 
 #if __DEPRECATED
 #warning Use of the header <ext/hash_map> is deprecated.  Migrate to <unordered_map>

@@ -3857,6 +3857,21 @@ template<class _CharT, class _Traits, class _Allocator>
     const typename basic_string<_CharT, _Traits, _Allocator>::size_type
                    basic_string<_CharT, _Traits, _Allocator>::npos;
 
+template<class _Ptr>
+size_t _LIBCPP_INLINE_VISIBILITY __do_string_hash(_Ptr __p, _Ptr __e)
+{
+    size_t __r = 0;
+    const size_t __sr = __CHAR_BIT__ * sizeof(size_t) - 8;
+    const size_t __m = size_t(0xF) << (__sr + 4);
+    for (; __p != __e; ++__p)
+    {
+        __r = (__r << 4) + *__p;
+        size_t __g = __r & __m;
+        __r ^= __g | (__g >> __sr);
+    }
+    return __r;
+}
+
 template<class _CharT, class _Traits, class _Allocator>
 struct _LIBCPP_VISIBLE hash<basic_string<_CharT, _Traits, _Allocator> >
     : public unary_function<basic_string<_CharT, _Traits, _Allocator>, size_t>
@@ -3870,20 +3885,7 @@ size_t
 hash<basic_string<_CharT, _Traits, _Allocator> >::operator()(
         const basic_string<_CharT, _Traits, _Allocator>& __val) const _NOEXCEPT
 {
-    typedef basic_string<_CharT, _Traits, _Allocator> S;
-    typedef typename S::const_pointer const_pointer;
-    size_t __r = 0;
-    const size_t __sr = __CHAR_BIT__ * sizeof(size_t) - 8;
-    const size_t __m = size_t(0xF) << (__sr + 4);
-    const_pointer __p = __val.data();
-    const_pointer __e = __p + __val.size();
-    for (; __p != __e; ++__p)
-    {
-        __r = (__r << 4) + *__p;
-        size_t __g = __r & __m;
-        __r ^= __g | (__g >> __sr);
-    }
-    return __r;
+    return __do_string_hash(__val.data(), __val.data() + __val.size());
 }
 
 template<class _CharT, class _Traits, class _Allocator>

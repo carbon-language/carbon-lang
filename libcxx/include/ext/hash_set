@@ -196,6 +196,7 @@ template <class Value, class Hash, class Pred, class Alloc>
 #include <__config>
 #include <__hash_table>
 #include <functional>
+#include <ext/__hash>
 
 #if __DEPRECATED
 #warning Use of the header <ext/hash_set> is deprecated.  Migrate to <unordered_set>
@@ -205,7 +206,7 @@ namespace __gnu_cxx {
 
 using namespace std;
 
-template <class _Value, class _Hash = std::hash<_Value>, class _Pred = equal_to<_Value>,
+template <class _Value, class _Hash = hash<_Value>, class _Pred = equal_to<_Value>,
           class _Alloc = allocator<_Value> >
 class _LIBCPP_VISIBLE hash_set
 {
