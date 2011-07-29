@@ -3159,7 +3159,13 @@ static bool isCommutedSHUFP(ShuffleVectorSDNode *N) {
 /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVHLPS.
 bool X86::isMOVHLPSMask(ShuffleVectorSDNode *N) {
-  if (N->getValueType(0).getVectorNumElements() != 4)
+  EVT VT = N->getValueType(0);
+  unsigned NumElems = VT.getVectorNumElements();
+
+  if (VT.getSizeInBits() != 128)
+    return false;
+
+  if (NumElems != 4)
     return false;
 
   // Expect bit0 == 6, bit1 == 7, bit2 == 2, bit3 == 3
@@ -3173,15 +3179,19 @@ bool X86::isMOVHLPSMask(ShuffleVectorSDNode *N) {
 /// of vector_shuffle v, v, <2, 3, 2, 3>, i.e. vector_shuffle v, undef,
 /// <2, 3, 2, 3>
 bool X86::isMOVHLPS_v_undef_Mask(ShuffleVectorSDNode *N) {
-  unsigned NumElems = N->getValueType(0).getVectorNumElements();
+  EVT VT = N->getValueType(0);
+  unsigned NumElems = VT.getVectorNumElements();
+
+  if (VT.getSizeInBits() != 128)
+    return false;
 
   if (NumElems != 4)
     return false;
 
   return isUndefOrEqual(N->getMaskElt(0), 2) &&
-  isUndefOrEqual(N->getMaskElt(1), 3) &&
-  isUndefOrEqual(N->getMaskElt(2), 2) &&
-  isUndefOrEqual(N->getMaskElt(3), 3);
+         isUndefOrEqual(N->getMaskElt(1), 3) &&
+         isUndefOrEqual(N->getMaskElt(2), 2) &&
+         isUndefOrEqual(N->getMaskElt(3), 3);
 }
 
 /// isMOVLPMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -3501,6 +3511,8 @@ static unsigned getShuffleVPERMILPSImmediate(SDNode *N) {
       int MaskElt = SVOp->getMaskElt(i+(l*LaneSize));
       if (MaskElt < 0)
         continue;
+      if (MaskElt >= LaneSize)
+        MaskElt -= LaneSize;
       Mask |= MaskElt << (i*2);
     }
   }
