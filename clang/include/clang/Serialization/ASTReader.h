@@ -360,6 +360,9 @@ public:
   /// type ID, or the representation of a Type*.
   const uint32_t *TypeOffsets;
   
+  /// \brief Base type ID for types local to this module.
+  serialization::TypeID BaseTypeID;
+  
   // === Miscellaneous ===
   
   /// \brief Diagnostic IDs and their mappings that the user changed.
@@ -537,8 +540,7 @@ private:
   /// ID = (I + 1) << FastQual::Width has already been loaded
   std::vector<QualType> TypesLoaded;
 
-  typedef ContinuousRangeMap<serialization::TypeID,
-      std::pair<Module *, int32_t>, 4>
+  typedef ContinuousRangeMap<serialization::TypeID, Module *, 4>
     GlobalTypeMapType;
 
   /// \brief Mapping from global type IDs to the module in which the

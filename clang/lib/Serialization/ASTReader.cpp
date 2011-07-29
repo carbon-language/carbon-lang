@@ -2054,12 +2054,11 @@ ASTReader::ReadASTBlock(Module &F) {
       }
       F.TypeOffsets = (const uint32_t *)BlobStart;
       F.LocalNumTypes = Record[0];
-
+      F.BaseTypeID = getTotalNumTypes();
+        
       // Introduce the global -> local mapping for types within this
       // AST file.
-      GlobalTypeMap.insert(std::make_pair(getTotalNumTypes() + 1,
-                                          std::make_pair(&F,
-                                                         -getTotalNumTypes())));
+      GlobalTypeMap.insert(std::make_pair(getTotalNumTypes() + 1, &F));
       TypesLoaded.resize(TypesLoaded.size() + F.LocalNumTypes);
       break;
 
@@ -3218,8 +3217,8 @@ void ASTReader::ReadPragmaDiagnosticMappings(Diagnostic &Diag) {
 ASTReader::RecordLocation ASTReader::TypeCursorForIndex(unsigned Index) {
   GlobalTypeMapType::iterator I = GlobalTypeMap.find(Index+1);
   assert(I != GlobalTypeMap.end() && "Corrupted global type map");
-  return RecordLocation(I->second.first,
-      I->second.first->TypeOffsets[Index + I->second.second]);
+  Module *M = I->second;
+  return RecordLocation(M, M->TypeOffsets[Index - M->BaseTypeID]);
 }
 
 /// \brief Read and return the type with the given index..
@@ -4374,7 +4373,7 @@ void ASTReader::dump() {
   llvm::errs() << "*** AST File Remapping:\n";
   dumpModuleIDMap("Global bit offset map", GlobalBitOffsetsMap);
   dumpModuleIDMap("Global source location entry map", GlobalSLocEntryMap);
-  dumpModuleIDOffsetMap("Global type map", GlobalTypeMap);
+  dumpModuleIDMap("Global type map", GlobalTypeMap);
   dumpModuleIDOffsetMap("Global declaration map", GlobalDeclMap);
   dumpModuleIDOffsetMap("Global identifier map", GlobalIdentifierMap);
   dumpModuleIDOffsetMap("Global selector map", GlobalSelectorMap);
