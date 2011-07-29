@@ -686,6 +686,11 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       else
         addRegWithSubRegs(regsDefined, Reg);
 
+      // Verify SSA form.
+      if (MRI->isSSA() && TargetRegisterInfo::isVirtualRegister(Reg) &&
+          llvm::next(MRI->def_begin(Reg)) != MRI->def_end())
+        report("Multiple virtual register defs in SSA form", MO, MONum);
+
       // Check LiveInts for a live range, but only for virtual registers.
       if (LiveInts && TargetRegisterInfo::isVirtualRegister(Reg) &&
           !LiveInts->isNotInMIMap(MI)) {
