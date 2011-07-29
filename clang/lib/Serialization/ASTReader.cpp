@@ -1380,9 +1380,10 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
 SourceLocation ASTReader::getImportLocation(Module *F) {
   if (F->ImportLoc.isValid())
     return F->ImportLoc;
+  
   // Otherwise we have a PCH. It's considered to be "imported" at the first
   // location of its includer.
-  if (F->Loaders.empty() || !F->Loaders[0]) {
+  if (F->ImportedBy.empty() || !F->ImportedBy[0]) {
     // Main file is the importer. We assume that it is the first entry in the
     // entry table. We can't ask the manager, because at the time of PCH loading
     // the main file entry doesn't exist yet.
@@ -1390,7 +1391,8 @@ SourceLocation ASTReader::getImportLocation(Module *F) {
     // offsets 0 and 1.
     return SourceLocation::getFromRawEncoding(2U);
   }
-  return F->Loaders[0]->FirstLoc;
+  //return F->Loaders[0]->FirstLoc;
+  return F->ImportedBy[0]->FirstLoc;
 }
 
 /// ReadBlockAbbrevs - Enter a subblock of the specified BlockID with the
@@ -5466,8 +5468,11 @@ Module &ModuleManager::addModule(StringRef FileName, ModuleKind Type) {
   const FileEntry *Entry = FileMgr.getFile(FileName);
   Modules[Entry] = Current;
 
-  Current->Loaders.push_back(Prev);
-
+  if (Prev) {
+    Current->ImportedBy.insert(Prev);
+    Prev->Imports.insert(Current);
+  }
+  
   return *Current;
 }
 

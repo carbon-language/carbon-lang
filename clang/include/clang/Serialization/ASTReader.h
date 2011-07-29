@@ -32,6 +32,7 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Bitcode/BitstreamReader.h"
@@ -397,9 +398,11 @@ public:
   /// preprocessing record.
   unsigned NumPreallocatedPreprocessingEntities;
   
-  /// \brief All the modules that loaded this one. Can contain NULL for
-  /// directly loaded modules.
-  SmallVector<Module *, 1> Loaders;
+  /// \brief List of modules which depend on this module
+  llvm::SetVector<Module *> ImportedBy;
+  
+  /// \brief List of modules which this module depends on
+  llvm::SetVector<Module *> Imports;
 };
 
 /// \brief The manager for modules loaded by the ASTReader.
