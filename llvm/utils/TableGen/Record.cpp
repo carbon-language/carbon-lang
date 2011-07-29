@@ -443,7 +443,8 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
 void Init::dump() const { return print(errs()); }
 
 const UnsetInit *UnsetInit::get() {
-  return new UnsetInit;
+  static const UnsetInit TheInit;
+  return &TheInit;
 }
 
 const BitInit *BitInit::get(bool V) {
