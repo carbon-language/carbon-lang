@@ -156,6 +156,92 @@ ClangASTType::GetEncoding (uint32_t &count)
 }
 
 
+lldb::LanguageType
+ClangASTType::GetMinimumLanguage ()
+{
+    return ClangASTType::GetMinimumLanguage (m_type);
+}
+
+lldb::LanguageType
+ClangASTType::GetMinimumLanguage (lldb::clang_type_t clang_type)
+{
+    if (clang_type == NULL)
+        return lldb::eLanguageTypeC;
+
+    // If the type is a reference, then resolve it to what it refers to first:     
+    clang::QualType qual_type (clang::QualType::getFromOpaquePtr(clang_type).getNonReferenceType());
+    if (qual_type->isAnyPointerType())
+    {
+        if (qual_type->isObjCObjectPointerType())
+            return lldb::eLanguageTypeObjC;
+        
+        clang::QualType pointee_type (qual_type->getPointeeType());
+        if (pointee_type->getCXXRecordDeclForPointerType() != NULL)
+            return lldb::eLanguageTypeC_plus_plus;
+        if (pointee_type->isObjCObjectOrInterfaceType())
+            return lldb::eLanguageTypeObjC;
+        if (pointee_type->isObjCClassType())
+            return lldb::eLanguageTypeObjC;
+    }
+    else
+    {
+        if (qual_type->isObjCObjectOrInterfaceType())
+            return lldb::eLanguageTypeObjC;
+        if (qual_type->getAsCXXRecordDecl())
+            return lldb::eLanguageTypeC_plus_plus;
+        switch (qual_type->getTypeClass())
+        {
+        default:
+                break;
+        case clang::Type::Builtin:
+            switch (cast<clang::BuiltinType>(qual_type)->getKind())
+            {
+                default:
+                case clang::BuiltinType::Void:
+                case clang::BuiltinType::Bool:
+                case clang::BuiltinType::Char_U:
+                case clang::BuiltinType::UChar:
+                case clang::BuiltinType::WChar_U:
+                case clang::BuiltinType::Char16:
+                case clang::BuiltinType::Char32:
+                case clang::BuiltinType::UShort:
+                case clang::BuiltinType::UInt:
+                case clang::BuiltinType::ULong:
+                case clang::BuiltinType::ULongLong:
+                case clang::BuiltinType::UInt128:
+                case clang::BuiltinType::Char_S:
+                case clang::BuiltinType::SChar:
+                case clang::BuiltinType::WChar_S:
+                case clang::BuiltinType::Short:
+                case clang::BuiltinType::Int:
+                case clang::BuiltinType::Long:
+                case clang::BuiltinType::LongLong:
+                case clang::BuiltinType::Int128:
+                case clang::BuiltinType::Float:
+                case clang::BuiltinType::Double:
+                case clang::BuiltinType::LongDouble:
+                    break;
+
+                case clang::BuiltinType::NullPtr:   
+                    return eLanguageTypeC_plus_plus;
+                    
+                case clang::BuiltinType::ObjCId:
+                case clang::BuiltinType::ObjCClass:
+                case clang::BuiltinType::ObjCSel:   
+                    return eLanguageTypeObjC;
+
+                case clang::BuiltinType::Dependent:
+                case clang::BuiltinType::Overload:
+                case clang::BuiltinType::BoundMember:
+                case clang::BuiltinType::UnknownAny:
+                    break;
+            }
+            break;
+        }
+    }
+    return lldb::eLanguageTypeC;
+}
+
 lldb::Encoding
 ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
 {

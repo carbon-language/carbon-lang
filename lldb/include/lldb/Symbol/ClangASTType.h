@@ -94,6 +94,12 @@ public:
     static size_t
     GetTypeBitAlign (clang::ASTContext *ast_context, lldb::clang_type_t clang_type);
 
+    lldb::LanguageType
+    GetMinimumLanguage ();
+
+    static lldb::LanguageType
+    GetMinimumLanguage (lldb::clang_type_t clang_type);
+
     void
     DumpValue (ExecutionContext *exe_ctx,
                Stream *s,

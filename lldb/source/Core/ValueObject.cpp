@@ -1256,34 +1256,7 @@ ValueObject::Write ()
 lldb::LanguageType
 ValueObject::GetObjectRuntimeLanguage ()
 {
-    clang_type_t opaque_qual_type = GetClangType();
-    if (opaque_qual_type == NULL)
-        return lldb::eLanguageTypeC;
-    
-    // If the type is a reference, then resolve it to what it refers to first:     
-    clang::QualType qual_type (clang::QualType::getFromOpaquePtr(opaque_qual_type).getNonReferenceType());
-    if (qual_type->isAnyPointerType())
-    {
-        if (qual_type->isObjCObjectPointerType())
-            return lldb::eLanguageTypeObjC;
-
-        clang::QualType pointee_type (qual_type->getPointeeType());
-        if (pointee_type->getCXXRecordDeclForPointerType() != NULL)
-            return lldb::eLanguageTypeC_plus_plus;
-        if (pointee_type->isObjCObjectOrInterfaceType())
-            return lldb::eLanguageTypeObjC;
-        if (pointee_type->isObjCClassType())
-            return lldb::eLanguageTypeObjC;
-    }
-    else
-    {
-        if (ClangASTContext::IsObjCClassType (opaque_qual_type))
-            return lldb::eLanguageTypeObjC;
-        if (ClangASTContext::IsCXXClassType (opaque_qual_type))
-            return lldb::eLanguageTypeC_plus_plus;
-    }
-            
-    return lldb::eLanguageTypeC;
+    return ClangASTType::GetMinimumLanguage (GetClangType());
 }
 
 void
