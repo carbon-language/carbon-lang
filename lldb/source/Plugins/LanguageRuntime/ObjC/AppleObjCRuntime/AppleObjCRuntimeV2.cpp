@@ -235,7 +235,7 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
                                               Address &address)
 {
     // The Runtime is attached to a particular process, you shouldn't pass in a value from another process.
-    assert (in_value.GetUpdatePoint().GetProcess() == m_process);
+    assert (in_value.GetUpdatePoint().GetProcessSP().get() == m_process);
     
     // Make sure we can have a dynamic value before starting...
     if (CouldHaveDynamicValue (in_value))

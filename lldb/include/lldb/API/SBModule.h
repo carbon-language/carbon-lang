@@ -153,6 +153,11 @@ public:
                          const char *name, 
                          uint32_t max_matches);
     
+    lldb::SBType
+    FindFirstType (const char* name);
+    
+    lldb::SBTypeList
+    FindTypes (const char* type);
 
 private:
     friend class SBAddress;

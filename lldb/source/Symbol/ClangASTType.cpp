@@ -63,7 +63,7 @@ ClangASTType::GetTypeNameForQualType (clang::QualType qual_type)
     }
     
     // There is no call to a clang type to get the type name without the
-    // class/struct/union on the front, so lets strip it here
+    // class/struct/union/enum on the front, so lets strip it here
     const char *type_name_cstr = type_name.c_str();
     if (type_name_cstr[0] == 'c' &&
         type_name_cstr[1] == 'l' &&
@@ -93,6 +93,15 @@ ClangASTType::GetTypeNameForQualType (clang::QualType qual_type)
     {
         type_name.erase (0, 6);
     }
+    else if (type_name_cstr[0] == 'e' &&
+             type_name_cstr[1] == 'n' &&
+             type_name_cstr[2] == 'u' &&
+             type_name_cstr[3] == 'm' &&
+             type_name_cstr[4] == ' ')
+    {
+        type_name.erase (0, 5);
+    }
+
     return type_name;
 }
 
@@ -943,8 +952,11 @@ ClangASTType::GetClangTypeBitWidth ()
 uint32_t
 ClangASTType::GetClangTypeBitWidth (clang::ASTContext *ast_context, clang_type_t clang_type)
 {
-    if (ast_context && clang_type)
-        return ast_context->getTypeSize(clang::QualType::getFromOpaquePtr(clang_type));
+    if (ClangASTContext::GetCompleteType (ast_context, clang_type))
+    {
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
+        return ast_context->getTypeSize (qual_type);
+    }
     return 0;
 }
 
@@ -957,7 +969,7 @@ ClangASTType::GetTypeBitAlign ()
 size_t
 ClangASTType::GetTypeBitAlign (clang::ASTContext *ast_context, clang_type_t clang_type)
 {
-    if (ast_context && clang_type)
+    if (ClangASTContext::GetCompleteType (ast_context, clang_type))
         return ast_context->getTypeAlign(clang::QualType::getFromOpaquePtr(clang_type));
     return 0;
 }
@@ -1362,7 +1374,7 @@ ClangASTType::ReadFromMemory
 }
 
 uint32_t
-ClangASTType::GetTypeByteSize()
+ClangASTType::GetTypeByteSize() const
 {
     return GetTypeByteSize(m_ast,
                            m_type);
@@ -1379,7 +1391,7 @@ ClangASTType::GetTypeByteSize(
         clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
         return (ast_context->getTypeSize (qual_type) + 7) / 8;
     }
-    return UINT32_MAX;
+    return 0;
 }
 
 

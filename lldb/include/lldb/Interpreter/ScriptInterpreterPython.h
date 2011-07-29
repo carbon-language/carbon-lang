@@ -72,6 +72,9 @@ public:
     virtual int
     GetIndexOfChildWithName (void *implementor, const char* child_name);
     
+    virtual void
+    UpdateSynthProviderInstance (void* implementor);
+    
     virtual lldb::SBValue*
     CastPyObjectToSBValue (void* data);
     
@@ -127,7 +130,8 @@ public:
                            SWIGPythonCalculateNumChildren python_swig_calc_children,
                            SWIGPythonGetChildAtIndex python_swig_get_child_index,
                            SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
-                           SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalu);
+                           SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
+                           SWIGPythonUpdateSynthProviderInstance python_swig_update_provider);
 
 protected:
 

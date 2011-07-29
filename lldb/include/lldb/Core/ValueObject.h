@@ -197,17 +197,17 @@ public:
         
         ExecutionContextScope *
         GetExecutionContextScope ();
-        
-        Target *
-        GetTarget () const
+                
+        lldb::TargetSP
+        GetTargetSP () const
         {
-            return m_target_sp.get();
+            return m_target_sp;
         }
         
-        Process *
-        GetProcess () const
+        lldb::ProcessSP
+        GetProcessSP () const
         {
-            return m_process_sp.get();
+            return m_process_sp;
         }
                 
         // Set the EvaluationPoint to the values in exe_scope,
@@ -548,6 +548,9 @@ public:
     lldb::ValueObjectSP
     GetSyntheticExpressionPathChild(const char* expression, bool can_create);
     
+    virtual lldb::ValueObjectSP
+    GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type, bool can_create);
+    
     lldb::ValueObjectSP
     GetDynamicValue (lldb::DynamicValueType valueType);
     
@@ -755,7 +758,8 @@ protected:
                         m_is_deref_of_parent:1,
                         m_is_array_item_for_pointer:1,
                         m_is_bitfield_for_scalar:1,
-                        m_is_expression_path_child:1;
+                        m_is_expression_path_child:1,
+                        m_is_child_at_offset:1;
     
     // used to prevent endless looping into GetpPrintableRepresentation()
     uint32_t            m_dump_printable_counter;
@@ -806,12 +810,6 @@ protected:
     CalculateNumChildren() = 0;
 
     void
-    SetName (const char *name);
-
-    void
-    SetName (const ConstString &name);
-
-    void
     SetNumChildren (uint32_t num_children);
 
     void
@@ -824,6 +822,10 @@ protected:
     ClearUserVisibleData();
 
 public:
+    
+    void
+    SetName (const ConstString &name);
+    
     lldb::addr_t
     GetPointerValue (AddressType &address_type, 
                      bool scalar_is_load_address);

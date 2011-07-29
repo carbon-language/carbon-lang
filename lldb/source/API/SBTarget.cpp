@@ -38,6 +38,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/Args.h"
+#include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
@@ -877,6 +878,52 @@ SBTarget::FindFunctions (const char *name,
                                                        *sc_list);
     }
     return 0;
+}
+
+lldb::SBType
+SBTarget::FindFirstType (const char* type)
+{
+    if (m_opaque_sp)
+    {
+        size_t count = m_opaque_sp->GetImages().GetSize();
+        for (size_t idx = 0; idx < count; idx++)
+        {
+            SBType found_at_idx = GetModuleAtIndex(idx).FindFirstType(type);
+            
+            if (found_at_idx.IsValid())
+                return found_at_idx;
+        }
+    }
+    return SBType();
+}
+
+lldb::SBTypeList
+SBTarget::FindTypes (const char* type)
+{
+    
+    SBTypeList retval;
+    
+    if (m_opaque_sp)
+    {
+        ModuleList& images = m_opaque_sp->GetImages();
+        ConstString name_const(type);
+        SymbolContext sc;
+        TypeList type_list;
+        
+        uint32_t num_matches = images.FindTypes(sc,
+                                                name_const,
+                                                true,
+                                                UINT32_MAX,
+                                                type_list);
+        
+        for (size_t idx = 0; idx < num_matches; idx++)
+        {
+            TypeSP sp_at_idx = type_list.GetTypeAtIndex(idx);
+            
+            retval.AppendType(SBType(sp_at_idx));
+        }
+    }
+    return retval;
 }
 
 SBValueList

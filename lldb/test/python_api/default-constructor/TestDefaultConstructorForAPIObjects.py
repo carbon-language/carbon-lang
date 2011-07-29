@@ -294,6 +294,7 @@ class APIDefaultConstructorTestCase(TestBase):
         sb_thread.fuzz_obj(obj)
 
     @python_api_test
+    @unittest2.expectedFailure
     def test_SBType(self):
         obj = lldb.SBType()
         if self.TraceOn():
@@ -304,6 +305,7 @@ class APIDefaultConstructorTestCase(TestBase):
         sb_type.fuzz_obj(obj)
 
     @python_api_test
+    @unittest2.expectedFailure
     def test_SBTypeMember(self):
         obj = lldb.SBTypeMember()
         if self.TraceOn():

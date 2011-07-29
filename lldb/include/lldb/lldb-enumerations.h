@@ -496,19 +496,52 @@ namespace lldb {
         eFunctionNameTypeSelector   = (1u << 5)     // Find function by selector name (ObjC) names
     } FunctionNameType;
     
-    // this enum determines how a FormatNavigator picked a specific format for a datatype
-    // these values can be used together (e.g. eFormatterStrippedPointerReference | eFormatterNavigatedBaseClasses
-    // if you went from DerivedType& to BaseType to find a valid format)
+    //----------------------------------------------------------------------
+    // Ways that the FormatManager picks a particular format for a type
+    //----------------------------------------------------------------------
     typedef enum FormatterChoiceCriterion
     {
-        eFormatterDirectChoice =                  0x00000000,
-        eFormatterStrippedPointerReference =      0x00000001,
-        eFormatterNavigatedTypedefs =             0x00000002,
-        eFormatterNavigatedBaseClasses =          0x00000004,
-        eFormatterRegularExpressionSummary =      0x00000008
+        eFormatterChoiceCriterionDirectChoice =                  0x00000000,
+        eFormatterChoiceCriterionStrippedPointerReference =      0x00000001,
+        eFormatterChoiceCriterionNavigatedTypedefs =             0x00000002,
+        eFormatterChoiceCriterionNavigatedBaseClasses =          0x00000004,
+        eFormatterChoiceCriterionRegularExpressionSummary =      0x00000008
     } FormatterChoiceCriterion;
     
-
+    //----------------------------------------------------------------------
+    // Basic types enumeration for the public API SBType::GetBasicType()
+    //----------------------------------------------------------------------
+    typedef enum BasicType
+    {
+		eBasicTypeInvalid = 0,
+        eBasicTypeVoid = 1,
+        eBasicTypeChar,
+        eBasicTypeSignedChar,
+        eBasicTypeWChar,
+        eBasicTypeChar16,
+        eBasicTypeChar32,
+        eBasicTypeShort,
+        eBasicTypeUnsignedShort,
+        eBasicTypeInt,
+        eBasicTypeUnsignedInt,
+        eBasicTypeLong,
+        eBasicTypeUnsignedLong,
+        eBasicTypeLongLong,
+        eBasicTypeUnsignedLongLong,
+        eBasicTypeInt128,
+        eBasicTypeUnsignedInt128,
+        eBasicTypeBool,
+        eBasicTypeFloat,
+        eBasicTypeDouble,
+        eBasicTypeLongDouble,
+        eBasicTypeFloatComplex,
+        eBasicTypeDoubleComplex,
+        eBasicTypeLongDoubleComplex,
+        eBasicTypeObjCID,
+        eBasicTypeObjCClass,
+        eBasicTypeObjCSel
+    } BasicType;
+        
 } // namespace lldb
 
 

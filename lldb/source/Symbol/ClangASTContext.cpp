@@ -2725,7 +2725,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                                         ObjCLanguageRuntime *objc_runtime = exe_ctx->process->GetObjCLanguageRuntime();
                                         if (objc_runtime != NULL)
                                         {
-                                            ClangASTType parent_ast_type (parent_qual_type.getAsOpaquePtr(), ast);
+                                            ClangASTType parent_ast_type (ast, parent_qual_type.getAsOpaquePtr());
                                             child_byte_offset = objc_runtime->GetByteOffsetForIvar (parent_ast_type, ivar_decl->getNameAsString().c_str());
                                         }
                                     }

@@ -38,10 +38,11 @@ public:
                                                         const char *session_dictionary_name,
                                                         const lldb::ValueObjectSP& valobj_sp);
     
-    typedef uint32_t       (*SWIGPythonCalculateNumChildren)    (void *implementor);
-    typedef void*          (*SWIGPythonGetChildAtIndex)         (void *implementor, uint32_t idx);
-    typedef int            (*SWIGPythonGetIndexOfChildWithName) (void *implementor, const char* child_name);
-    typedef lldb::SBValue* (*SWIGPythonCastPyObjectToSBValue)   (void* data);
+    typedef uint32_t       (*SWIGPythonCalculateNumChildren)        (void *implementor);
+    typedef void*          (*SWIGPythonGetChildAtIndex)             (void *implementor, uint32_t idx);
+    typedef int            (*SWIGPythonGetIndexOfChildWithName)     (void *implementor, const char* child_name);
+    typedef lldb::SBValue* (*SWIGPythonCastPyObjectToSBValue)       (void* data);
+    typedef void           (*SWIGPythonUpdateSynthProviderInstance) (void* data);    
 
     typedef enum
     {
@@ -157,6 +158,11 @@ public:
         return UINT32_MAX;
     }
     
+    virtual void
+    UpdateSynthProviderInstance (void* implementor)
+    {
+    }
+        
     virtual lldb::SBValue*
     CastPyObjectToSBValue (void* data)
     {
@@ -183,7 +189,8 @@ public:
                            SWIGPythonCalculateNumChildren python_swig_calc_children,
                            SWIGPythonGetChildAtIndex python_swig_get_child_index,
                            SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
-                           SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue);
+                           SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
+                           SWIGPythonUpdateSynthProviderInstance python_swig_update_provider);
 
     static void
     TerminateInterpreter ();

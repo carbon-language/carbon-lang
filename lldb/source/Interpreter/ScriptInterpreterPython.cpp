@@ -40,6 +40,7 @@ static ScriptInterpreter::SWIGPythonCalculateNumChildren g_swig_calc_children = 
 static ScriptInterpreter::SWIGPythonGetChildAtIndex g_swig_get_child_index = NULL;
 static ScriptInterpreter::SWIGPythonGetIndexOfChildWithName g_swig_get_index_child = NULL;
 static ScriptInterpreter::SWIGPythonCastPyObjectToSBValue g_swig_cast_to_sbvalue  = NULL;
+static ScriptInterpreter::SWIGPythonUpdateSynthProviderInstance g_swig_update_provider = NULL;
 
 static int
 _check_and_flush (FILE *stream)
@@ -1307,7 +1308,7 @@ ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name
     if (!valobj.get())
         return NULL;
     
-    Target *target = valobj->GetUpdatePoint().GetTarget();
+    Target *target = valobj->GetUpdatePoint().GetTargetSP().get();
     
     if (!target)
         return NULL;
@@ -1430,7 +1431,7 @@ ScriptInterpreterPython::CallPythonScriptFunction (const char *python_function_n
     if (!valobj.get())
         return "<no object>";
         
-    Target *target = valobj->GetUpdatePoint().GetTarget();
+    Target *target = valobj->GetUpdatePoint().GetTargetSP().get();
     
     if (!target)
         return "<no target>";
@@ -1768,6 +1769,38 @@ ScriptInterpreterPython::GetIndexOfChildWithName (void *implementor, const char*
     return ret_val;
 }
 
+void
+ScriptInterpreterPython::UpdateSynthProviderInstance (void* implementor)
+{
+    if (!implementor)
+        return;
+    
+    if (!g_swig_update_provider)
+        return;
+    
+    ScriptInterpreterPython *python_interpreter = this;
+        
+    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
+    if (CurrentThreadHasPythonLock())
+    {
+        python_interpreter->EnterSession ();
+        g_swig_update_provider       (implementor);
+        python_interpreter->LeaveSession ();
+    }
+    else
+    {
+        while (!GetPythonLock (1))
+            fprintf (tmp_fh, 
+                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
+        python_interpreter->EnterSession ();
+        g_swig_update_provider       (implementor);
+        python_interpreter->LeaveSession ();
+        ReleasePythonLock ();
+    }
+    
+    return;
+}
+
 lldb::SBValue*
 ScriptInterpreterPython::CastPyObjectToSBValue (void* data)
 {
@@ -1811,7 +1844,8 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
                                                 SWIGPythonCalculateNumChildren python_swig_calc_children,
                                                 SWIGPythonGetChildAtIndex python_swig_get_child_index,
                                                 SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
-                                                SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue)
+                                                SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
+                                                SWIGPythonUpdateSynthProviderInstance python_swig_update_provider)
 {
     g_swig_init_callback = python_swig_init_callback;
     g_swig_breakpoint_callback = python_swig_breakpoint_callback;
@@ -1821,6 +1855,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
     g_swig_get_child_index = python_swig_get_child_index;
     g_swig_get_index_child = python_swig_get_index_child;
     g_swig_cast_to_sbvalue = python_swig_cast_to_sbvalue;
+    g_swig_update_provider = python_swig_update_provider;
 }
 
 void

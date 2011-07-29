@@ -40,7 +40,7 @@ ValueObjectDynamicValue::ValueObjectDynamicValue (ValueObject &parent, lldb::Dyn
     m_type_sp(),
     m_use_dynamic (use_dynamic)
 {
-    SetName (parent.GetName().AsCString());
+    SetName (parent.GetName());
 }
 
 ValueObjectDynamicValue::~ValueObjectDynamicValue()
@@ -134,7 +134,7 @@ ValueObjectDynamicValue::UpdateValue ()
     }
     
     // First make sure our Type and/or Address haven't changed:
-    Process *process = m_update_point.GetProcess();
+    Process *process = m_update_point.GetProcessSP().get();
     if (!process)
         return false;
     
@@ -201,7 +201,7 @@ ValueObjectDynamicValue::UpdateValue ()
             
         // We've moved, so we should be fine...
         m_address = dynamic_address;
-        lldb::addr_t load_address = m_address.GetLoadAddress(m_update_point.GetTarget());
+        lldb::addr_t load_address = m_address.GetLoadAddress(m_update_point.GetTargetSP().get());
         m_value.GetScalar() = load_address;
     }
     

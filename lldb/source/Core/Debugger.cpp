@@ -1004,16 +1004,28 @@ Debugger::FormatPrompt
                         switch (var_name_begin[0])
                         {
                         case '*':
-                            {
-                                if (!vobj) 
-                                    break;
-                                do_deref_pointer = true;
-                                var_name_begin++;
-                            }
-                            // Fall through...
-
                         case 'v':
+                        case 's':
                             {
+                                if (!vobj)
+                                    break;
+                                
+                                // check for *var and *svar
+                                if (*var_name_begin == '*')
+                                {
+                                    do_deref_pointer = true;
+                                    var_name_begin++;
+                                }
+                                if (*var_name_begin == 's')
+                                {
+                                    vobj = vobj->GetSyntheticValue(lldb::eUseSyntheticFilter).get();
+                                    var_name_begin++;
+                                }
+                                
+                                // should be a 'v' by now
+                                if (*var_name_begin != 'v')
+                                    break;
+                                
                                 ValueObject::ExpressionPathAftermath what_next = (do_deref_pointer ?
                                                                                   ValueObject::eDereference : ValueObject::eNothing);
                                 ValueObject::GetValueForExpressionPathOptions options;

@@ -29,9 +29,10 @@ namespace lldb_private {
 class ClangASTType
 {
 public:
-    ClangASTType (lldb::clang_type_t type, clang::ASTContext *ast_context) :
-        m_type (type),
-        m_ast  (ast_context) 
+    
+    ClangASTType (clang::ASTContext *ast_context, lldb::clang_type_t type) :
+    m_type (type),
+    m_ast  (ast_context) 
     {
     }
     
@@ -188,7 +189,7 @@ public:
     GetFormat (lldb::clang_type_t opaque_clang_qual_type);
     
     uint32_t
-    GetTypeByteSize();
+    GetTypeByteSize() const;
     
     static uint32_t
     GetTypeByteSize(clang::ASTContext *ast_context,

@@ -113,6 +113,9 @@ public:
     virtual uint32_t
     GetIndexOfChildWithName (const ConstString &name) = 0;
     
+    virtual void
+    Update() = 0;
+    
     typedef lldb::SharedPtr<SyntheticChildrenFrontEnd>::Type SharedPointer;
 
 };
@@ -238,6 +241,9 @@ public:
             return m_backend->GetSyntheticExpressionPathChild(filter->GetExpressionPathAtIndex(idx).c_str(), can_create);
         }
         
+        virtual void
+        Update() {}
+        
         virtual uint32_t
         GetIndexOfChildWithName (const ConstString &name)
         {
@@ -327,6 +333,15 @@ public:
                 return lldb::ValueObjectSP();
             
             return sb_ptr->m_opaque_sp;
+        }
+        
+        virtual void
+        Update()
+        {
+            if (m_wrapper == NULL || m_interpreter == NULL)
+                return;
+            
+            m_interpreter->UpdateSynthProviderInstance(m_wrapper);
         }
                 
         virtual uint32_t

@@ -17,6 +17,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Target.h"
 
@@ -341,4 +342,60 @@ SBModule::FindGlobalVariables (SBTarget &target, const char *name, uint32_t max_
     }
     
     return sb_value_list;
+}
+
+lldb::SBType
+SBModule::FindFirstType (const char* name_cstr)
+{
+    if (!IsValid())
+        return lldb::SBType();
+    
+    SymbolContext sc;
+    TypeList type_list;
+    uint32_t num_matches = 0;
+    ConstString name(name_cstr);
+
+    num_matches = m_opaque_sp->FindTypes(sc,
+                                         name,
+                                         false,
+                                         1,
+                                         type_list);
+    
+    if (num_matches)
+    {
+        TypeSP type_sp (type_list.GetTypeAtIndex(0));
+        return lldb::SBType(type_sp);
+    }
+    else
+        return lldb::SBType();
+}
+
+lldb::SBTypeList
+SBModule::FindTypes (const char* type)
+{
+    
+    SBTypeList retval;
+    
+    if (!IsValid())
+        return retval;
+    
+    SymbolContext sc;
+    TypeList type_list;
+    uint32_t num_matches = 0;
+    ConstString name(type);
+    
+    num_matches = m_opaque_sp->FindTypes(sc,
+                                         name,
+                                         false,
+                                         UINT32_MAX,
+                                         type_list);
+        
+    for (size_t idx = 0; idx < num_matches; idx++)
+    {
+        TypeSP sp_at_idx = type_list.GetTypeAtIndex(idx);
+        
+        retval.AppendType(SBType(sp_at_idx));
+    }
+
+    return retval;
 }

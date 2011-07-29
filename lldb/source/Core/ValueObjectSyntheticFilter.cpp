@@ -44,7 +44,7 @@ ValueObjectSynthetic::ValueObjectSynthetic (ValueObject &parent, lldb::Synthetic
     m_children_byindex(),
     m_name_toindex()
 {
-    SetName (parent.GetName().AsCString());
+    SetName (parent.GetName());
 }
 
 ValueObjectSynthetic::~ValueObjectSynthetic()
@@ -119,6 +119,10 @@ ValueObjectSynthetic::UpdateValue ()
 
     m_children_byindex.clear();
     m_name_toindex.clear();
+    
+    // let our backend do its update
+    
+    m_synth_filter->Update();
     
     SetValueIsValid(true);
     return true;

@@ -203,7 +203,22 @@ public:
     GetChildAtIndex (uint32_t idx, 
                      lldb::DynamicValueType use_dynamic,
                      bool can_create_synthetic);
+    
+    lldb::SBValue
+    CreateChildAtOffset (const char *name, uint32_t offset, const SBType& type);
+    
+    lldb::SBValue
+    SBValue::Cast(const SBType& type);
 
+    lldb::SBValue
+    CreateValueFromExpression (const char *name, const char* expression);
+
+    lldb::SBValue
+    CreateValueFromAddress(const char* name, lldb::addr_t address, const SBType& type);
+    
+    lldb::SBType
+    GetType();
+    
     %feature("docstring", "
     //------------------------------------------------------------------
     /// Returns the child member index.
@@ -257,13 +272,27 @@ public:
     void *
     GetOpaqueType();
 
-
     lldb::SBValue
     Dereference ();
 
+    lldb::SBValue
+    AddressOf();
+    
     bool
     TypeIsPointerType ();
+    
+    lldb::SBTarget
+    GetTarget();
 
+    lldb::SBProcess
+    GetProcess();
+    
+    lldb::SBThread
+    GetThread();
+    
+    lldb::SBFrame
+    GetFrame();
+    
     bool
     GetDescription (lldb::SBStream &description);
 

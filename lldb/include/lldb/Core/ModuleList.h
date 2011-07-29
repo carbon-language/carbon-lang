@@ -440,6 +440,13 @@ protected:
     collection m_modules; ///< The collection of modules.
     mutable Mutex m_modules_mutex;
 
+private:
+    uint32_t
+    FindTypes_Impl (const SymbolContext& sc, 
+                    const ConstString &name, 
+                    bool append, 
+                    uint32_t max_matches, 
+                    TypeList& types);
 };
 
 } // namespace lldb_private

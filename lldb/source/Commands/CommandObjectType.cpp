@@ -218,8 +218,8 @@ CommandObjectTypeFormatAdd::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "cascade", 'C', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
     { LLDB_OPT_SET_ALL, false, "format", 'f', required_argument, NULL, 0, eArgTypeFormat,    "The format to use to display this type."},
-    { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for pointers-to-type objects."},
-    { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for references-to-type objects."},
+    { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeNone,         "Don't use this format for pointers-to-type objects."},
+    { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeNone,         "Don't use this format for references-to-type objects."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -1074,16 +1074,16 @@ CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "category", 'w', required_argument, NULL, 0, eArgTypeName,    "Add this to the given category instead of the default one."},
     { LLDB_OPT_SET_ALL, false, "cascade", 'C', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
-    { LLDB_OPT_SET_ALL, false, "no-value", 'v', no_argument, NULL, 0, eArgTypeBoolean,         "Don't show the value, just show the summary, for this type."},
-    { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for pointers-to-type objects."},
-    { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for references-to-type objects."},
-    { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeBoolean,    "Type names are actually regular expressions."},
-    { LLDB_OPT_SET_1  , true, "inline-children", 'c', no_argument, NULL, 0, eArgTypeBoolean,    "If true, inline all child values into summary string."},
+    { LLDB_OPT_SET_ALL, false, "no-value", 'v', no_argument, NULL, 0, eArgTypeNone,         "Don't show the value, just show the summary, for this type."},
+    { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeNone,         "Don't use this format for pointers-to-type objects."},
+    { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeNone,         "Don't use this format for references-to-type objects."},
+    { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeNone,    "Type names are actually regular expressions."},
+    { LLDB_OPT_SET_1  , true, "inline-children", 'c', no_argument, NULL, 0, eArgTypeNone,    "If true, inline all child values into summary string."},
     { LLDB_OPT_SET_2  , true, "format-string", 'f', required_argument, NULL, 0, eArgTypeSummaryString,    "Format string used to display text and object contents."},
     { LLDB_OPT_SET_3, false, "python-script", 's', required_argument, NULL, 0, eArgTypeName, "Give a one-liner Python script as part of the command."},
     { LLDB_OPT_SET_3, false, "python-function", 'F', required_argument, NULL, 0, eArgTypeName, "Give the name of a Python function to use for this type."},
-    { LLDB_OPT_SET_3, false, "input-python", 'P', no_argument, NULL, 0, eArgTypeName, "Input Python code to use for this type manually."},
-    { LLDB_OPT_SET_2 | LLDB_OPT_SET_3,   false, "expand", 'e', no_argument, NULL, 0, eArgTypeBoolean,    "Expand aggregate data types to show children on separate lines."},
+    { LLDB_OPT_SET_3, false, "input-python", 'P', no_argument, NULL, 0, eArgTypeNone, "Input Python code to use for this type manually."},
+    { LLDB_OPT_SET_2 | LLDB_OPT_SET_3,   false, "expand", 'e', no_argument, NULL, 0, eArgTypeNone,    "Expand aggregate data types to show children on separate lines."},
     { LLDB_OPT_SET_2 | LLDB_OPT_SET_3,   false, "name", 'n', required_argument, NULL, 0, eArgTypeName,    "A name for this summary string."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
@@ -1249,7 +1249,7 @@ public:
 OptionDefinition
 CommandObjectTypeSummaryDelete::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "all", 'a', no_argument, NULL, 0, eArgTypeBoolean,  "Delete from every category."},
+    { LLDB_OPT_SET_1, false, "all", 'a', no_argument, NULL, 0, eArgTypeNone,  "Delete from every category."},
     { LLDB_OPT_SET_2, false, "category", 'w', required_argument, NULL, 0, eArgTypeName,  "Delete from given category."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
@@ -1375,7 +1375,7 @@ public:
 OptionDefinition
 CommandObjectTypeSummaryClear::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "all", 'a', no_argument, NULL, 0, eArgTypeBoolean,  "Clear every category."},
+    { LLDB_OPT_SET_ALL, false, "all", 'a', no_argument, NULL, 0, eArgTypeNone,  "Clear every category."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -2236,7 +2236,7 @@ public:
 OptionDefinition
 CommandObjectTypeSynthDelete::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "all", 'a', no_argument, NULL, 0, eArgTypeBoolean,  "Delete from every category."},
+    { LLDB_OPT_SET_1, false, "all", 'a', no_argument, NULL, 0, eArgTypeNone,  "Delete from every category."},
     { LLDB_OPT_SET_2, false, "category", 'w', required_argument, NULL, 0, eArgTypeName,  "Delete from given category."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
@@ -2363,7 +2363,7 @@ public:
 OptionDefinition
 CommandObjectTypeSynthClear::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "all", 'a', no_argument, NULL, 0, eArgTypeBoolean,  "Clear every category."},
+    { LLDB_OPT_SET_ALL, false, "all", 'a', no_argument, NULL, 0, eArgTypeNone,  "Clear every category."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -2377,6 +2377,9 @@ static const char *g_synth_addreader_instructions =   "Enter your Python command
                                                       "     def num_children(self):\n"
                                                       "     def get_child_at_index(self, index):\n"
                                                       "     def get_child_index(self, name):\n"
+                                                      "Optionally, you can also define a method:\n"
+                                                      "     def update(self):\n"
+                                                      "if your synthetic provider is holding on to any per-object state variables (currently, this is not implemented because of the way LLDB handles instances of SBValue and you should not rely on object persistence and per-object state)\n"
                                                       "class synthProvider:";
 
 class TypeSynthAddInputReader : public InputReaderEZ
@@ -2832,12 +2835,12 @@ OptionDefinition
 CommandObjectTypeSynthAdd::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "cascade", 'C', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
-    { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for pointers-to-type objects."},
-    { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for references-to-type objects."},
+    { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeNone,         "Don't use this format for pointers-to-type objects."},
+    { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeNone,         "Don't use this format for references-to-type objects."},
     { LLDB_OPT_SET_ALL, false, "category", 'w', required_argument, NULL, 0, eArgTypeName,         "Add this to the given category instead of the default one."},
     { LLDB_OPT_SET_1, false, "child", 'c', required_argument, NULL, 0, eArgTypeName,    "Include this expression path in the synthetic view."},
     { LLDB_OPT_SET_2, false, "python-class", 'l', required_argument, NULL, 0, eArgTypeName,    "Use this Python class to produce synthetic children."},
-    { LLDB_OPT_SET_3, false, "input-python", 'P', no_argument, NULL, 0, eArgTypeBoolean,    "Type Python code to generate a class that provides synthetic children."},
+    { LLDB_OPT_SET_3, false, "input-python", 'P', no_argument, NULL, 0, eArgTypeNone,    "Type Python code to generate a class that provides synthetic children."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 

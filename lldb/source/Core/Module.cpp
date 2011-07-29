@@ -422,7 +422,7 @@ Module::FindFunctions (const RegularExpression& regex,
 }
 
 uint32_t
-Module::FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
+Module::FindTypes_Impl (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
 {
     Timer scoped_timer(__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
     if (sc.module_sp.get() == NULL || sc.module_sp.get() == this)
@@ -432,6 +432,41 @@ Module::FindTypes (const SymbolContext& sc, const ConstString &name, bool append
             return symbols->FindTypes(sc, name, append, max_matches, types);
     }
     return 0;
+}
+
+// depending on implementation details, type lookup might fail because of
+// embedded spurious namespace:: prefixes. this call strips them, paying
+// attention to the fact that a type might have namespace'd type names as
+// arguments to templates, and those must not be stripped off
+static const char*
+StripTypeName(const char* name_cstr)
+{
+    const char* skip_namespace = strstr(name_cstr, "::");
+    const char* template_arg_char = strchr(name_cstr, '<');
+    while (skip_namespace != NULL)
+    {
+        if (template_arg_char != NULL &&
+            skip_namespace > template_arg_char) // but namespace'd template arguments are still good to go
+            break;
+        name_cstr = skip_namespace+2;
+        skip_namespace = strstr(name_cstr, "::");
+    }
+    return name_cstr;
+}
+
+uint32_t
+Module::FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
+{
+    uint32_t retval = FindTypes_Impl(sc, name, append, max_matches, types);
+    
+    if (retval == 0)
+    {
+        const char *stripped = StripTypeName(name.GetCString());
+        return FindTypes_Impl(sc, ConstString(stripped), append, max_matches, types);
+    }
+    else
+        return retval;
+    
 }
 
 //uint32_t

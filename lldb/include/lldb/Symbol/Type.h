@@ -18,7 +18,7 @@
 #include <set>
 
 namespace lldb_private {
-
+    
 class Type : public UserID
 {
 public:
@@ -293,6 +293,99 @@ private:
     ConstString m_type_name;
 };
 
+// the two classes here are used by the public API as a backend to
+// the SBType and SBTypeList classes
+    
+class TypeImpl
+{
+private:
+    std::auto_ptr<ClangASTType> m_clang_ast_type;
+    lldb::TypeSP m_lldb_type;
+    
+public:
+    
+    TypeImpl() :
+    m_clang_ast_type(NULL),
+    m_lldb_type(lldb::TypeSP())
+    {}
+    
+    TypeImpl(const TypeImpl& rhs) :
+    m_clang_ast_type(rhs.m_clang_ast_type.get()),
+    m_lldb_type(rhs.m_lldb_type)
+    {}
+    
+    TypeImpl&
+    operator = (const TypeImpl& rhs);
+    
+    bool
+    operator == (const TypeImpl& rhs)
+    {
+        return (m_clang_ast_type.get() == rhs.m_clang_ast_type.get()) &&
+                (m_lldb_type.get() == rhs.m_lldb_type.get());
+    }
+
+    bool
+    operator != (const TypeImpl& rhs)
+    {
+        return (m_clang_ast_type.get() != rhs.m_clang_ast_type.get()) ||
+        (m_lldb_type.get() != rhs.m_lldb_type.get());
+    }
+    
+    TypeImpl(const lldb_private::ClangASTType& type);
+    
+    TypeImpl(lldb::TypeSP type);
+    
+    bool
+    IsValid()
+    {
+        return (m_lldb_type.get() != NULL) || (m_clang_ast_type.get() != NULL);
+    }
+    
+    lldb_private::ClangASTType*
+    GetClangASTType()
+    {
+        return m_clang_ast_type.get();
+    }
+    
+    clang::ASTContext*
+    GetASTContext();
+    
+    lldb::clang_type_t
+    GetOpaqueQualType();    
+};
+
+class TypeListImpl
+{
+public:
+    TypeListImpl() :
+    m_content() {}
+    
+    void
+    AppendType(TypeImpl& type)
+    {
+        m_content.push_back(type);
+    }
+    
+    TypeImpl
+    GetTypeAtIndex(int index)
+    {
+        if (index < 0 || index >= GetSize())
+            return TypeImpl();
+        
+        return m_content[index];
+    }
+    
+    int
+    GetSize()
+    {
+        return m_content.size();
+    }
+    
+private:
+    std::vector<TypeImpl> m_content;
+};
+
+    
 } // namespace lldb_private
 
 #endif  // liblldb_Type_h_

@@ -11,6 +11,7 @@
 #define LLDB_SBValue_h_
 
 #include "lldb/API/SBDefines.h"
+#include "lldb/API/SBType.h"
 
 #include <stdio.h>
 
@@ -105,6 +106,18 @@ public:
 
     lldb::SBValue
     GetChildAtIndex (uint32_t idx);
+    
+    lldb::SBValue
+    CreateChildAtOffset (const char *name, uint32_t offset, const SBType& type);
+    
+    lldb::SBValue
+    Cast(const SBType& type);
+    
+    lldb::SBValue
+    CreateValueFromExpression (const char *name, const char* expression);
+    
+    lldb::SBValue
+    CreateValueFromAddress(const char* name, lldb::addr_t address, const SBType& type);
 
     //------------------------------------------------------------------
     /// Get a child value by index from a value.
@@ -179,6 +192,9 @@ public:
     // Expands nested expressions like .a->b[0].c[1]->d
     lldb::SBValue
     GetValueForExpressionPath(const char* expr_path);
+    
+    lldb::SBValue
+    AddressOf();
 
     uint32_t
     GetNumChildren ();
@@ -186,12 +202,26 @@ public:
     void *
     GetOpaqueType();
 
+    lldb::SBTarget
+    GetTarget();
+    
+    lldb::SBProcess
+    GetProcess();
+    
+    lldb::SBThread
+    GetThread();
 
+    lldb::SBFrame
+    GetFrame();
+    
     lldb::SBValue
     Dereference ();
 
     bool
     TypeIsPointerType ();
+    
+    SBType
+    GetType();
 
     bool
     GetDescription (lldb::SBStream &description);

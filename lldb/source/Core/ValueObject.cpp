@@ -20,6 +20,7 @@
 // Project includes
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectChild.h"
 #include "lldb/Core/ValueObjectConstResult.h"
@@ -89,6 +90,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_is_array_item_for_pointer(false),
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
+    m_is_child_at_offset(false),
     m_dump_printable_counter(0)
 {
     m_manager->ManageObject(this);
@@ -132,6 +134,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_is_array_item_for_pointer(false),
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
+    m_is_child_at_offset(false),
     m_dump_printable_counter(0)
 {
     m_manager = new ValueObjectManager();
@@ -203,9 +206,12 @@ ValueObject::UpdateValueIfNeeded (bool update_format)
 void
 ValueObject::UpdateFormatsIfNeeded()
 {
-    /*printf("CHECKING FOR UPDATES. I am at revision %d, while the format manager is at revision %d\n",
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+    if (log)
+        log->Printf("checking for FormatManager revisions. VO named %s is at revision %d, while the format manager is at revision %d",
+           GetName().GetCString(),
            m_last_format_mgr_revision,
-           Debugger::ValueFormats::GetCurrentRevision());*/
+           Debugger::Formatting::ValueFormats::GetCurrentRevision());
     if (HasCustomSummaryFormat() && m_update_point.GetUpdateID() != m_user_id_of_forced_summary)
     {
         ClearCustomSummaryFormat();
@@ -441,12 +447,6 @@ ValueObject::SetNumChildren (uint32_t num_children)
 }
 
 void
-ValueObject::SetName (const char *name)
-{
-    m_name.SetCString(name);
-}
-
-void
 ValueObject::SetName (const ConstString &name)
 {
     m_name = name;
@@ -640,7 +640,11 @@ ValueObject::ReadPointedString(Stream& s,
             if (exe_scope)
             {
                 Target *target = exe_scope->CalculateTarget();
-                if (target != NULL)
+                if (target == NULL)
+                {
+                    s << "<no target to read from>";
+                }
+                else
                 {
                     lldb::addr_t cstr_address = LLDB_INVALID_ADDRESS;
                     AddressType cstr_address_type = eAddressTypeInvalid;
@@ -663,7 +667,11 @@ ValueObject::ReadPointedString(Stream& s,
                         // We have a pointer
                         cstr_address = GetPointerValue (cstr_address_type, true);
                     }
-                    if (cstr_address != LLDB_INVALID_ADDRESS)
+                    if (cstr_address == LLDB_INVALID_ADDRESS)
+                    {
+                        s << "<invalid address for data>";
+                    }
+                    else
                     {
                         Address cstr_so_addr (NULL, cstr_address);
                         DataExtractor data;
@@ -695,6 +703,8 @@ ValueObject::ReadPointedString(Stream& s,
                                     s << "...";
                                 s << '"';
                             }
+                            else
+                                s << "\"<data not available>\"";
                         }
                         else
                         {
@@ -706,6 +716,8 @@ ValueObject::ReadPointedString(Stream& s,
                             
                             s << '"';
                             
+                            bool any_data = false;
+                            
                             data.SetData (&data_buffer.front(), data_buffer.size(), endian::InlHostByteOrder());
                             while ((bytes_read = target->ReadMemory (cstr_so_addr, 
                                                                      prefer_file_cache,
@@ -713,6 +725,7 @@ ValueObject::ReadPointedString(Stream& s,
                                                                      k_max_buf_size, 
                                                                      error)) > 0)
                             {
+                                any_data = true;
                                 size_t len = strlen(&data_buffer.front());
                                 if (len == 0)
                                     break;
@@ -741,6 +754,10 @@ ValueObject::ReadPointedString(Stream& s,
                                 cstr_len -= len;
                                 cstr_so_addr.Slide (k_max_buf_size);
                             }
+                            
+                            if (any_data == false)
+                                s << "<data not available>";
+                            
                             s << '"';
                         }
                     }
@@ -750,6 +767,7 @@ ValueObject::ReadPointedString(Stream& s,
     else
     {
         error.SetErrorString("impossible to read a string from this object");
+        s << "<not a string object>";
     }
 }
 
@@ -1350,7 +1368,7 @@ ValueObject::GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create)
             {
                 AddSyntheticChild(index_const_str, synthetic_child);
                 synthetic_child_sp = synthetic_child->GetSP();
-                synthetic_child_sp->SetName(index_str);
+                synthetic_child_sp->SetName(ConstString(index_str));
                 synthetic_child_sp->m_is_array_item_for_pointer = true;
             }
         }
@@ -1393,7 +1411,7 @@ ValueObject::GetSyntheticArrayMemberFromArray (int32_t index, bool can_create)
             {
                 AddSyntheticChild(index_const_str, synthetic_child);
                 synthetic_child_sp = synthetic_child->GetSP();
-                synthetic_child_sp->SetName(index_str);
+                synthetic_child_sp->SetName(ConstString(index_str));
                 synthetic_child_sp->m_is_array_item_for_pointer = true;
             }
         }
@@ -1434,10 +1452,50 @@ ValueObject::GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_cre
             {
                 AddSyntheticChild(index_const_str, synthetic_child);
                 synthetic_child_sp = synthetic_child->GetSP();
-                synthetic_child_sp->SetName(index_str);
+                synthetic_child_sp->SetName(ConstString(index_str));
                 synthetic_child_sp->m_is_bitfield_for_scalar = true;
             }
         }
+    }
+    return synthetic_child_sp;
+}
+
+lldb::ValueObjectSP
+ValueObject::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type, bool can_create)
+{
+    
+    ValueObjectSP synthetic_child_sp;
+    
+    char name_str[64];
+    snprintf(name_str, sizeof(name_str), "@%i", offset);
+    ConstString name_const_str(name_str);
+    
+    // Check if we have already created a synthetic array member in this
+    // valid object. If we have we will re-use it.
+    synthetic_child_sp = GetSyntheticChild (name_const_str);
+    
+    if (synthetic_child_sp.get())
+        return synthetic_child_sp;
+    
+    if (!can_create)
+        return lldb::ValueObjectSP();
+    
+    ValueObjectChild *synthetic_child = new ValueObjectChild(*this,
+                                                             type.GetASTContext(),
+                                                             type.GetOpaqueQualType(),
+                                                             name_const_str,
+                                                             type.GetTypeByteSize(),
+                                                             offset,
+                                                             0,
+                                                             0,
+                                                             false,
+                                                             false);
+    if (synthetic_child)
+    {
+        AddSyntheticChild(name_const_str, synthetic_child);
+        synthetic_child_sp = synthetic_child->GetSP();
+        synthetic_child_sp->SetName(name_const_str);
+        synthetic_child_sp->m_is_child_at_offset = true;
     }
     return synthetic_child_sp;
 }
@@ -1477,7 +1535,7 @@ ValueObject::GetSyntheticExpressionPathChild(const char* expression, bool can_cr
         if (synthetic_child_sp.get())
         {
             AddSyntheticChild(name_const_string, synthetic_child_sp.get());
-            synthetic_child_sp->SetName(SkipLeadingExpressionPathSeparators(expression));
+            synthetic_child_sp->SetName(ConstString(SkipLeadingExpressionPathSeparators(expression)));
             synthetic_child_sp->m_is_expression_path_child = true;
         }
     }
@@ -1508,7 +1566,7 @@ ValueObject::CalculateDynamicValue (lldb::DynamicValueType use_dynamic)
         
     if (!m_dynamic_value && !IsDynamic())
     {
-        Process *process = m_update_point.GetProcess();
+        Process *process = m_update_point.GetProcessSP().get();
         bool worth_having_dynamic_value = false;
         
         

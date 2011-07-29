@@ -21,7 +21,7 @@ template <unsigned int C> class TaggedASTType : public ClangASTType
 {
 public:
     TaggedASTType (lldb::clang_type_t type, clang::ASTContext *ast_context) :
-        ClangASTType(type, ast_context) { }
+        ClangASTType(ast_context, type) { }
     
     TaggedASTType (const TaggedASTType<C> &tw) :
         ClangASTType(tw) { }

@@ -225,7 +225,7 @@ public:
         MapValueType& entry,
         uint32_t* why = NULL)
     {
-        uint32_t value = lldb::eFormatterDirectChoice;
+        uint32_t value = lldb::eFormatterChoiceCriterionDirectChoice;
         clang::QualType type = clang::QualType::getFromOpaquePtr(vobj.GetClangType());
         bool ret = Get(vobj, type, entry, value);
         if (ret)
@@ -315,7 +315,7 @@ private:
                 log->Printf("stripping reference");
             if (Get(vobj,type.getNonReferenceType(),entry, reason) && !entry->m_skip_references)
             {
-                reason |= lldb::eFormatterStrippedPointerReference;
+                reason |= lldb::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
             }
         }
@@ -325,7 +325,7 @@ private:
                 log->Printf("stripping pointer");
             if (Get(vobj, typePtr->getPointeeType(), entry, reason) && !entry->m_skip_pointers)
             {
-                reason |= lldb::eFormatterStrippedPointerReference;
+                reason |= lldb::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
             }
         }
@@ -345,7 +345,7 @@ private:
                 return false;
             if (Get(*target, typePtr->getPointeeType(), entry, reason) && !entry->m_skip_pointers)
             {
-                reason |= lldb::eFormatterStrippedPointerReference;
+                reason |= lldb::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
             }
         }
@@ -370,7 +370,7 @@ private:
                         clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
                         if (Get(vobj, ivar_qual_type, entry, reason) && entry->m_cascades)
                         {
-                            reason |= lldb::eFormatterNavigatedBaseClasses;
+                            reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
                             return true;
                         }
                     }
@@ -399,7 +399,7 @@ private:
                         {
                             if ((Get(vobj, pos->getType(), entry, reason)) && entry->m_cascades)
                             {
-                                reason |= lldb::eFormatterNavigatedBaseClasses;
+                                reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
                                 return true;
                             }
                         }
@@ -413,7 +413,7 @@ private:
                         {
                             if ((Get(vobj, pos->getType(), entry, reason)) && entry->m_cascades)
                             {
-                                reason |= lldb::eFormatterNavigatedBaseClasses;
+                                reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
                                 return true;
                             }
                         }
@@ -429,7 +429,7 @@ private:
                 log->Printf("stripping typedef");
             if ((Get(vobj, type_tdef->getDecl()->getUnderlyingType(), entry, reason)) && entry->m_cascades)
             {
-                reason |= lldb::eFormatterNavigatedTypedefs;
+                reason |= lldb::eFormatterChoiceCriterionNavigatedTypedefs;
                 return true;
             }
         }
@@ -539,7 +539,7 @@ public:
             return true;
         bool regex = RegexSummary()->Get(vobj, entry, reason);
         if (regex && reason)
-            *reason |= lldb::eFormatterRegularExpressionSummary;
+            *reason |= lldb::eFormatterChoiceCriterionRegularExpressionSummary;
         return regex;
     }
     
@@ -775,7 +775,7 @@ public:
             lldb::SummaryFormatSP current_format;
             if (!category->Get(vobj, current_format, &reason_why))
                 continue;
-            if (reason_why == lldb::eFormatterDirectChoice)
+            if (reason_why == lldb::eFormatterChoiceCriterionDirectChoice)
             {
                 entry = current_format;
                 return true;
@@ -806,7 +806,7 @@ public:
             lldb::SyntheticChildrenSP current_format;
             if (!category->Get(vobj, current_format, &reason_why))
                 continue;
-            if (reason_why == lldb::eFormatterDirectChoice)
+            if (reason_why == lldb::eFormatterChoiceCriterionDirectChoice)
             {
                 entry = current_format;
                 return true;

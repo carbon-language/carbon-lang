@@ -9,6 +9,12 @@
 
 #include <string.h>
 
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/TemplateBase.h"
+#include "clang/AST/Type.h"
+
+#include "lldb/API/SBDefines.h"
+
 #include "lldb/API/SBType.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/ConstString.h"
@@ -18,334 +24,340 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace clang;
 
+SBType::SBType (lldb_private::ClangASTType type) :
+m_opaque_ap(new TypeImpl(ClangASTType(type.GetASTContext(),
+                                      type.GetOpaqueQualType())))
+{
+}
+
+SBType::SBType (lldb::TypeSP type) :
+m_opaque_ap(new TypeImpl(type))
+{}
+
+SBType::SBType (const SBType &rhs)
+{
+    if (rhs.m_opaque_ap.get() != NULL)
+    {
+        m_opaque_ap = std::auto_ptr<TypeImpl>(new TypeImpl(ClangASTType(rhs.m_opaque_ap->GetASTContext(),
+                                                                          rhs.m_opaque_ap->GetOpaqueQualType())));
+    }
+}
+
+SBType::SBType (clang::ASTContext *ctx, clang_type_t ty) :
+m_opaque_ap(new TypeImpl(ClangASTType(ctx, ty)))
+{
+}
+
+SBType::SBType() :
+m_opaque_ap(NULL)
+{
+}
+
+SBType::SBType (TypeImpl impl) :
+m_opaque_ap(&impl)
+{}
 
 bool
-SBType::IsPointerType (void *opaque_type)
+SBType::operator == (const lldb::SBType &rhs) const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-
-    //if (log)
-    //    log->Printf ("SBType::IsPointerType (%p)", opaque_type);
+    if (IsValid() == false)
+        return !rhs.IsValid();
     
-    bool ret_value = ClangASTContext::IsPointerType (opaque_type);
+    return  (rhs.m_opaque_ap->GetASTContext() == m_opaque_ap->GetASTContext())
+            &&
+            (rhs.m_opaque_ap->GetOpaqueQualType() == m_opaque_ap->GetOpaqueQualType());
+}
 
-    if (log)
-        log->Printf ("SBType::IsPointerType (opaque_type=%p) ==> '%s'", opaque_type, (ret_value ? "true" : "false"));
+bool
+SBType::operator != (const lldb::SBType &rhs) const
+{    
+    if (IsValid() == false)
+        return rhs.IsValid();
 
-    return ret_value;
+    return  (rhs.m_opaque_ap->GetASTContext() != m_opaque_ap->GetASTContext())
+            ||
+            (rhs.m_opaque_ap->GetOpaqueQualType() != m_opaque_ap->GetOpaqueQualType());
 }
 
 
-SBType::SBType (void *ast, void *clang_type) :
-    m_ast (ast),
-    m_type (clang_type)
+const lldb::SBType &
+SBType::operator = (const lldb::SBType &rhs)
 {
-}
-
-SBType::SBType (const SBType &rhs) :
-    m_ast (rhs.m_ast),
-    m_type (rhs.m_type)
-{
-}
-
-const SBType &
-SBType::operator =(const SBType &rhs)
-{
-    m_ast = rhs.m_ast;
-    m_type = rhs.m_type;
+    if (*this != rhs)
+    {
+        if (!rhs.IsValid())
+            m_opaque_ap.reset(NULL);
+        else
+            m_opaque_ap = std::auto_ptr<TypeImpl>(new TypeImpl(ClangASTType(rhs.m_opaque_ap->GetASTContext(),
+                                                                            rhs.m_opaque_ap->GetOpaqueQualType())));
+    }
     return *this;
 }
 
 SBType::~SBType ()
+{}
+
+lldb_private::TypeImpl &
+SBType::ref ()
 {
+    if (m_opaque_ap.get() == NULL)
+        m_opaque_ap.reset (new lldb_private::TypeImpl());
+        return *m_opaque_ap;
+}
+
+const lldb_private::TypeImpl &
+SBType::ref () const
+{
+    // "const SBAddress &addr" should already have checked "addr.IsValid()" 
+    // prior to calling this function. In case you didn't we will assert
+    // and die to let you know.
+    assert (m_opaque_ap.get());
+    return *m_opaque_ap;
 }
 
 bool
-SBType::IsValid ()
+SBType::IsValid() const
 {
-    return m_ast != NULL && m_type != NULL;
-}
-
-const char *
-SBType::GetName ()
-{
-    if (IsValid ())
-        return ClangASTType::GetConstTypeName (m_type).AsCString(NULL);
-    return NULL;
-}
-
-uint64_t
-SBType::GetByteSize()
-{
-    if (IsValid ())
-        return ClangASTType::GetClangTypeBitWidth (static_cast<clang::ASTContext *>(m_ast), m_type);
-    return NULL;
-}
-
-Encoding
-SBType::GetEncoding (uint32_t &count)
-{
-    if (IsValid ())
-        return ClangASTType::GetEncoding (m_type, count);
-    count = 0;
-    return eEncodingInvalid;
-}
-
-uint64_t
-SBType::GetNumberChildren (bool omit_empty_base_classes)
-{
-    if (IsValid ())
-        return ClangASTContext::GetNumChildren (static_cast<clang::ASTContext *>(m_ast),
-                                                m_type, 
-                                                omit_empty_base_classes);
-    return 0;
-}
-
-
-bool
-SBType::GetChildAtIndex (bool omit_empty_base_classes, uint32_t idx, SBTypeMember &member)
-{
-    void *child_clang_type = NULL;
-    bool ignore_array_bounds = false;
-    std::string child_name;
-    uint32_t child_byte_size = 0;
-    int32_t child_byte_offset = 0;
-    uint32_t child_bitfield_bit_size = 0;
-    uint32_t child_bitfield_bit_offset = 0;
-    bool child_is_base_class = false;
-    bool child_is_deref_of_parent = false;
-
-    if (IsValid ())
-    {
-
-        child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (NULL,
-                                                                      static_cast<clang::ASTContext *>(m_ast),
-                                                                      NULL,
-                                                                      m_type,
-                                                                      idx,
-                                                                      false, // transparent pointers
-                                                                      omit_empty_base_classes,
-                                                                      ignore_array_bounds,
-                                                                      child_name,
-                                                                      child_byte_size,
-                                                                      child_byte_offset,
-                                                                      child_bitfield_bit_size,
-                                                                      child_bitfield_bit_offset,
-                                                                      child_is_base_class,
-                                                                      child_is_deref_of_parent);
-        
-    }
+    if (m_opaque_ap.get() == NULL)
+        return false;
     
-    if (child_clang_type)
-    {
-        member.m_ast = m_ast;
-        member.m_parent_type = m_type;
-        member.m_member_type = child_clang_type,
-        member.SetName (child_name.c_str());
-        member.m_offset = child_byte_offset;
-        member.m_bit_size = child_bitfield_bit_size;
-        member.m_bit_offset = child_bitfield_bit_offset;
-        member.m_is_base_class = child_is_base_class;
-        member.m_is_deref_of_paremt = child_is_deref_of_parent;
-    }
-    else
-    {
-        member.Clear();
-    }
-
-    return child_clang_type != NULL;
+    return m_opaque_ap->IsValid();
 }
 
-uint32_t
-SBType::GetChildIndexForName (bool omit_empty_base_classes, const char *name)
+size_t
+SBType::GetByteSize() const
 {
-    return ClangASTContext::GetIndexOfChildWithName (static_cast<clang::ASTContext *>(m_ast),
-                                                     m_type,
-                                                     name,
-                                                     omit_empty_base_classes);
+    if (!IsValid())
+        return 0;
+    
+    return ClangASTType::GetTypeByteSize(m_opaque_ap->GetASTContext(), m_opaque_ap->GetOpaqueQualType());
+    
 }
 
 bool
-SBType::IsAPointerType ()
+SBType::IsPointerType() const
 {
-    return ClangASTContext::IsPointerType (m_type);
+    if (!IsValid())
+        return false;
+    
+    QualType qt = QualType::getFromOpaquePtr(m_opaque_ap->GetOpaqueQualType());
+    const clang::Type* typePtr = qt.getTypePtrOrNull();
+    
+    if (typePtr)
+        return typePtr->isAnyPointerType();
+    return false;
+}
+
+bool
+SBType::IsReferenceType() const
+{
+    if (!IsValid())
+        return false;
+
+    QualType qt = QualType::getFromOpaquePtr(m_opaque_ap->GetOpaqueQualType());
+    const clang::Type* typePtr = qt.getTypePtrOrNull();
+    
+    if (typePtr)
+        return typePtr->isReferenceType();
+    return false;
 }
 
 SBType
-SBType::GetPointeeType ()
+SBType::GetPointerType() const
 {
-    void *pointee_type = NULL;
-    if (IsAPointerType ())
-    {
-        pointee_type = ClangASTType::GetPointeeType (m_type);
-    }
-    return SBType (pointee_type ? m_ast : NULL, pointee_type);
+    if (!IsValid())
+        return SBType();
+
+    return SBType(m_opaque_ap->GetASTContext(),
+                  ClangASTContext::CreatePointerType(m_opaque_ap->GetASTContext(), m_opaque_ap->GetOpaqueQualType()));
 }
 
-bool
-SBType::GetDescription (SBStream &description)
+SBType
+SBType::GetPointeeType() const
 {
-    const char *name = GetName();
-    uint64_t byte_size = GetByteSize();
-    uint64_t num_children = GetNumberChildren (true);
-    bool is_ptr = IsAPointerType ();
+    if (!IsValid())
+        return SBType();
 
-    description.Printf ("type_name: %s, size: %d bytes", (name != NULL ? name : "<unknown type name>"), byte_size);
-    if (is_ptr)
-    {
-        SBType pointee_type = GetPointeeType();
-        const char *pointee_name = pointee_type.GetName();
-        description.Printf (", (* %s)", (pointee_name != NULL ? pointee_name : "<unknown type name>"));
-    }
-    else if (num_children > 0)
-    {
-        description.Printf (", %d members:\n", num_children);
-        for (uint32_t i = 0; i < num_children; ++i)
-        {
-            SBTypeMember field;
-            GetChildAtIndex (true, i, field);
-            const char *field_name = field.GetName();
-            SBType field_type = field.GetType();
-            const char *field_type_name = field_type.GetName();
-            
-            description.Printf ("     %s (type: %s", (field_name != NULL ? field_name : "<unknown member name>"), 
-                                (field_type_name != NULL ? field_type_name : "<unknown type name>"));
-
-            if (field.IsBitfield())
-            {
-                size_t width = field.GetBitfieldWidth ();
-                description.Printf (" , %d bits", (int) width);
-            }
-            description.Printf (")\n");
-        }
-    }
-    return true;
-}
-
-SBTypeMember::SBTypeMember () :
-    m_ast (NULL),
-    m_parent_type (NULL),
-    m_member_type (NULL),
-    m_member_name (NULL),
-    m_offset (0),
-    m_bit_size (0),
-    m_bit_offset (0),
-    m_is_base_class (false)
+    QualType qt = QualType::getFromOpaquePtr(m_opaque_ap->GetOpaqueQualType());
+    const clang::Type* typePtr = qt.getTypePtrOrNull();
     
-{
+    if (typePtr)
+        return SBType(m_opaque_ap->GetASTContext(),typePtr->getPointeeType().getAsOpaquePtr());
+    return SBType();
 }
 
-SBTypeMember::SBTypeMember (const SBTypeMember &rhs) :
-    m_ast (rhs.m_ast),
-    m_parent_type (rhs.m_parent_type),
-    m_member_type (rhs.m_member_type),
-    m_member_name (rhs.m_member_name),
-    m_offset (rhs.m_offset),
-    m_bit_size (rhs.m_bit_size),
-    m_bit_offset (rhs.m_bit_offset),
-    m_is_base_class (rhs.m_is_base_class)
+SBType
+SBType::GetReferenceType() const
 {
+    if (!IsValid())
+        return SBType();
+    
+    return SBType(m_opaque_ap->GetASTContext(),
+                  ClangASTContext::CreateLValueReferenceType(m_opaque_ap->GetASTContext(), m_opaque_ap->GetOpaqueQualType()));
 }
 
-const SBTypeMember&
-SBTypeMember::operator =(const SBTypeMember &rhs)
+SBType
+SBType::GetDereferencedType() const
 {
-    if (this != &rhs)
+    if (!IsValid())
+        return SBType();
+
+    QualType qt = QualType::getFromOpaquePtr(m_opaque_ap->GetOpaqueQualType());
+    
+    return SBType(m_opaque_ap->GetASTContext(),qt.getNonReferenceType().getAsOpaquePtr());
+}
+
+SBType
+SBType::GetBasicType(lldb::BasicType type) const
+{
+    
+    if (!IsValid())
+        return SBType();
+    
+    clang::CanQualType base_type_qual;
+    
+    switch (type)
     {
-        m_ast = rhs.m_ast;
-        m_parent_type = rhs.m_parent_type;
-        m_member_type = rhs.m_member_type;
-        m_member_name = rhs.m_member_name;
-        m_offset = rhs.m_offset;
-        m_bit_size = rhs.m_bit_size;
-        m_bit_offset = rhs.m_bit_offset;
-        m_is_base_class = rhs.m_is_base_class;
+        case eBasicTypeChar:
+            base_type_qual = m_opaque_ap->GetASTContext()->CharTy;
+            break;
+        case eBasicTypeSignedChar:
+            base_type_qual = m_opaque_ap->GetASTContext()->SignedCharTy;
+            break;
+        case eBasicTypeShort:
+            base_type_qual = m_opaque_ap->GetASTContext()->ShortTy;
+            break;
+        case eBasicTypeUnsignedShort:
+            base_type_qual = m_opaque_ap->GetASTContext()->UnsignedShortTy;
+            break;
+        case eBasicTypeInt:
+            base_type_qual = m_opaque_ap->GetASTContext()->IntTy;
+            break;
+        case eBasicTypeUnsignedInt:
+            base_type_qual = m_opaque_ap->GetASTContext()->UnsignedIntTy;
+            break;
+        case eBasicTypeLong:
+            base_type_qual = m_opaque_ap->GetASTContext()->LongTy;
+            break;
+        case eBasicTypeUnsignedLong:
+            base_type_qual = m_opaque_ap->GetASTContext()->UnsignedLongTy;
+            break;
+        case eBasicTypeBool:
+            base_type_qual = m_opaque_ap->GetASTContext()->BoolTy;
+            break;
+        case eBasicTypeFloat:
+            base_type_qual = m_opaque_ap->GetASTContext()->FloatTy;
+            break;
+        case eBasicTypeDouble:
+            base_type_qual = m_opaque_ap->GetASTContext()->DoubleTy;
+            break;
+        case eBasicTypeObjCID:
+            base_type_qual = m_opaque_ap->GetASTContext()->ObjCBuiltinIdTy;
+            break;
+        case eBasicTypeVoid:
+            base_type_qual = m_opaque_ap->GetASTContext()->VoidTy;
+            break;
+        case eBasicTypeWChar:
+            base_type_qual = m_opaque_ap->GetASTContext()->WCharTy;
+            break;
+        case eBasicTypeChar16:
+            base_type_qual = m_opaque_ap->GetASTContext()->Char16Ty;
+            break;
+        case eBasicTypeChar32:
+            base_type_qual = m_opaque_ap->GetASTContext()->Char32Ty;
+            break;
+        case eBasicTypeLongLong:
+            base_type_qual = m_opaque_ap->GetASTContext()->LongLongTy;
+            break;
+        case eBasicTypeUnsignedLongLong:
+            base_type_qual = m_opaque_ap->GetASTContext()->UnsignedLongLongTy;
+            break;
+        case eBasicTypeInt128:
+            base_type_qual = m_opaque_ap->GetASTContext()->Int128Ty;
+            break;
+        case eBasicTypeUnsignedInt128:
+            base_type_qual = m_opaque_ap->GetASTContext()->UnsignedInt128Ty;
+            break;
+        case eBasicTypeLongDouble:
+            base_type_qual = m_opaque_ap->GetASTContext()->LongDoubleTy;
+            break;
+        case eBasicTypeFloatComplex:
+            base_type_qual = m_opaque_ap->GetASTContext()->FloatComplexTy;
+            break;
+        case eBasicTypeDoubleComplex:
+            base_type_qual = m_opaque_ap->GetASTContext()->DoubleComplexTy;
+            break;
+        case eBasicTypeLongDoubleComplex:
+            base_type_qual = m_opaque_ap->GetASTContext()->LongDoubleComplexTy;
+            break;
+        case eBasicTypeObjCClass:
+            base_type_qual = m_opaque_ap->GetASTContext()->ObjCBuiltinClassTy;
+            break;
+        case eBasicTypeObjCSel:
+            base_type_qual = m_opaque_ap->GetASTContext()->ObjCBuiltinSelTy;
+            break;
+        default:
+            return SBType();
+    }
+    
+    return SBType(m_opaque_ap->GetASTContext(),
+                  base_type_qual.getAsOpaquePtr());
+}
+
+const char*
+SBType::GetName()
+{
+    if (!IsValid())
+        return "";
+
+    return ClangASTType::GetConstTypeName(m_opaque_ap->GetOpaqueQualType()).GetCString();
+}
+
+SBTypeList::SBTypeList() :
+m_opaque_ap(new TypeListImpl())
+{
+}
+
+SBTypeList::SBTypeList(const SBTypeList& rhs) :
+m_opaque_ap(new TypeListImpl())
+{
+    for (int j = 0; j < rhs.GetSize(); j++)
+        AppendType(rhs.GetTypeAtIndex(j));
+}
+
+SBTypeList&
+SBTypeList::operator = (const SBTypeList& rhs)
+{
+    if (m_opaque_ap.get() != rhs.m_opaque_ap.get())
+    {
+        m_opaque_ap.reset(new TypeListImpl());
+        for (int j = 0; j < rhs.GetSize(); j++)
+            AppendType(rhs.GetTypeAtIndex(j));
     }
     return *this;
 }
 
-SBTypeMember::~SBTypeMember ()
-{
-    SetName (NULL);
-}
-
 void
-SBTypeMember::SetName (const char *name)
+SBTypeList::AppendType(SBType type)
 {
-    if (m_member_name)  
-        free (m_member_name);
-    if (name && name[0])
-        m_member_name = ::strdup (name);
-    else
-        m_member_name = NULL;
-}
-
-void
-SBTypeMember::Clear()
-{
-    m_ast = NULL;
-    m_parent_type = NULL;
-    m_member_type = NULL;
-    SetName (NULL);
-    m_offset = 0;
-    m_bit_size  = 0;
-    m_bit_offset = 0;
-    m_is_base_class = false;
-}
-
-bool
-SBTypeMember::IsValid ()
-{
-    return m_member_type != NULL;
-}
-
-bool
-SBTypeMember::IsBitfield ()
-{
-    return m_bit_size != 0;
-}
-
-size_t
-SBTypeMember::GetBitfieldWidth ()
-{
-    return m_bit_size;
-}
-
-size_t
-SBTypeMember::GetBitfieldOffset ()
-{
-    return m_bit_offset;
-}
-
-bool
-SBTypeMember::IsBaseClass ()
-{
-    return m_is_base_class;
-}
-
-size_t
-SBTypeMember::GetOffset ()
-{
-    return m_offset;
+    if (type.IsValid())
+        m_opaque_ap->AppendType(*type.m_opaque_ap.get());
 }
 
 SBType
-SBTypeMember::GetType()
+SBTypeList::GetTypeAtIndex(int index) const
 {
-    return SBType (m_ast, m_member_type);
+    return SBType(m_opaque_ap->GetTypeAtIndex(index));
 }
 
-SBType
-SBTypeMember::GetParentType()
+int
+SBTypeList::GetSize() const
 {
-    return SBType (m_ast, m_parent_type);
+    return m_opaque_ap->GetSize();
 }
 
-
-const char *
-SBTypeMember::GetName ()
+SBTypeList::~SBTypeList()
 {
-    return m_member_name;
 }
-

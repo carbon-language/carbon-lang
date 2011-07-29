@@ -686,6 +686,15 @@ protected:
     SetArchitecture (const ArchSpec &new_arch);
     
 private:
+
+    uint32_t
+    FindTypes_Impl (const SymbolContext& sc, 
+                    const ConstString &name, 
+                    bool append, 
+                    uint32_t max_matches, 
+                    TypeList& types);
+
+    
     DISALLOW_COPY_AND_ASSIGN (Module);
 };
 

@@ -730,3 +730,44 @@ TypeAndOrName::IsEmpty()
     else
         return true;
 }
+
+TypeImpl::TypeImpl(const lldb_private::ClangASTType& type) :
+m_clang_ast_type(new ClangASTType(type.GetASTContext(),
+                                  type.GetOpaqueQualType())),
+m_lldb_type(lldb::TypeSP())
+{}
+
+TypeImpl::TypeImpl(lldb::TypeSP type) :
+m_clang_ast_type(new ClangASTType(type->GetClangAST(),
+                                  type->GetClangFullType())),
+m_lldb_type(type)
+{}
+
+TypeImpl&
+TypeImpl::operator = (const TypeImpl& rhs)
+{
+    if (*this != rhs)
+    {
+        m_clang_ast_type = std::auto_ptr<ClangASTType>(rhs.m_clang_ast_type.get());
+        m_lldb_type = lldb::TypeSP(rhs.m_lldb_type);
+    }
+    return *this;
+}
+
+clang::ASTContext*
+TypeImpl::GetASTContext()
+{
+    if (!IsValid())
+        return NULL;
+    
+    return m_clang_ast_type->GetASTContext();
+}
+
+lldb::clang_type_t
+TypeImpl::GetOpaqueQualType()
+{
+    if (!IsValid())
+        return NULL;
+    
+    return m_clang_ast_type->GetOpaqueQualType();
+}

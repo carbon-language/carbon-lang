@@ -331,10 +331,11 @@ LLDBSwigPythonCreateSyntheticProvider
 );
 
 
-extern "C" uint32_t       LLDBSwigPython_CalculateNumChildren    (void *implementor);
-extern "C" void*          LLDBSwigPython_GetChildAtIndex         (void *implementor, uint32_t idx);
-extern "C" int            LLDBSwigPython_GetIndexOfChildWithName (void *implementor, const char* child_name);
-extern "C" lldb::SBValue* LLDBSWIGPython_CastPyObjectToSBValue   (void* data);
+extern "C" uint32_t       LLDBSwigPython_CalculateNumChildren        (void *implementor);
+extern "C" void*          LLDBSwigPython_GetChildAtIndex             (void *implementor, uint32_t idx);
+extern "C" int            LLDBSwigPython_GetIndexOfChildWithName     (void *implementor, const char* child_name);
+extern "C" lldb::SBValue* LLDBSWIGPython_CastPyObjectToSBValue       (void* data);
+extern "C" void           LLDBSwigPython_UpdateSynthProviderInstance (void* implementor);
 
 extern "C" void init_lldb(void);
 
@@ -352,6 +353,7 @@ SBCommandInterpreter::InitializeSWIG ()
                                                   LLDBSwigPython_CalculateNumChildren,
                                                   LLDBSwigPython_GetChildAtIndex,
                                                   LLDBSwigPython_GetIndexOfChildWithName,
-                                                  LLDBSWIGPython_CastPyObjectToSBValue);
+                                                  LLDBSWIGPython_CastPyObjectToSBValue,
+                                                  LLDBSwigPython_UpdateSynthProviderInstance);
     }
 }

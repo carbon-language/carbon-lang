@@ -14,6 +14,7 @@
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBType.h"
 
 namespace lldb {
 
@@ -342,6 +343,12 @@ public:
 
     lldb::SBBroadcaster
     GetBroadcaster () const;
+    
+    lldb::SBType
+    FindFirstType (const char* type);
+    
+    lldb::SBTypeList
+    FindTypes (const char* type);
 
 #ifndef SWIG
     bool
@@ -367,6 +374,7 @@ protected:
     friend class SBProcess;
     friend class SBSymbol;
     friend class SBModule;
+    friend class SBValue;
 
     //------------------------------------------------------------------
     // Constructors are private, use static Target::Create function to

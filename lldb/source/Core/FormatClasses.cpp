@@ -171,7 +171,7 @@ m_python_class(pclass)
         return;
     }
     
-    m_interpreter = be->GetUpdatePoint().GetTarget()->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+    m_interpreter = be->GetUpdatePoint().GetTargetSP()->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
     
     if (m_interpreter == NULL)
         m_wrapper = NULL;

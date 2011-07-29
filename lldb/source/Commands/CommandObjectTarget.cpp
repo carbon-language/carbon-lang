@@ -1367,11 +1367,11 @@ LookupTypeInModule (CommandInterpreter &interpreter,
 {
     if (module && name_cstr && name_cstr[0])
     {
-        SymbolContextList sc_list;
+        /*SymbolContextList sc_list;
         
         SymbolVendor *symbol_vendor = module->GetSymbolVendor();
         if (symbol_vendor)
-        {
+        {*/
             TypeList type_list;
             uint32_t num_matches = 0;
             SymbolContext sc;
@@ -1383,7 +1383,7 @@ LookupTypeInModule (CommandInterpreter &interpreter,
             //            else
             //            {
             ConstString name(name_cstr);
-            num_matches = symbol_vendor->FindTypes(sc, name, true, UINT32_MAX, type_list);
+            num_matches = module->FindTypes(sc, name, true, UINT32_MAX, type_list);
             //            }
             
             if (num_matches)
@@ -1407,7 +1407,7 @@ LookupTypeInModule (CommandInterpreter &interpreter,
                 }
             }
             return num_matches;
-        }
+        //}
     }
     return 0;
 }

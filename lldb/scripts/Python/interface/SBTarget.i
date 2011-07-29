@@ -320,6 +320,12 @@ public:
                    uint32_t name_type_mask, // Logical OR one or more FunctionNameType enum bits
                    bool append, 
                    lldb::SBSymbolContextList& sc_list);
+    
+    lldb::SBType
+    FindFirstType (const char* type);
+    
+    lldb::SBTypeList
+    FindTypes (const char* type);
 
     %feature("docstring", "
     //------------------------------------------------------------------
