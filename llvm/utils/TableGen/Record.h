@@ -1252,39 +1252,31 @@ public:
 /// to have at least one value then a (possibly empty) list of arguments.  Each
 /// argument can have a name associated with it.
 ///
-class DagInit : public TypedInit {
+class DagInit : public TypedInit, public FoldingSetNode {
   const Init *Val;
   std::string ValName;
   std::vector<const Init*> Args;
   std::vector<std::string> ArgNames;
 
   DagInit(const Init *V, const std::string &VN,
-          const std::vector<std::pair<const Init*, std::string> > &args)
-    : TypedInit(DagRecTy::get()), Val(V), ValName(VN) {
-    Args.reserve(args.size());
-    ArgNames.reserve(args.size());
-    for (unsigned i = 0, e = args.size(); i != e; ++i) {
-      Args.push_back(args[i].first);
-      ArgNames.push_back(args[i].second);
-    }
-  }
-  DagInit(const Init *V, const std::string &VN,
-          const std::vector<const Init*> &args,
-          const std::vector<std::string> &argNames)
-    : TypedInit(DagRecTy::get()), Val(V), ValName(VN), Args(args),
-      ArgNames(argNames) { }
+          ArrayRef<const Init *> ArgRange,
+          ArrayRef<std::string> NameRange)
+      : TypedInit(DagRecTy::get()), Val(V), ValName(VN),
+          Args(ArgRange.begin(), ArgRange.end()),
+          ArgNames(NameRange.begin(), NameRange.end()) {}
 
   DagInit(const DagInit &Other);  // Do not define.
   DagInit &operator=(const DagInit &Other);  // Do not define.
 
 public:
   static const DagInit *get(const Init *V, const std::string &VN,
+                            ArrayRef<const Init *> ArgRange,
+                            ArrayRef<std::string> NameRange);
+  static const DagInit *get(const Init *V, const std::string &VN,
                             const std::vector<
                               std::pair<const Init*, std::string> > &args);
 
-  static const DagInit *get(const Init *V, const std::string &VN,
-                            const std::vector<const Init*> &args,
-                            const std::vector<std::string> &argNames);
+  void Profile(FoldingSetNodeID &ID) const;
 
   virtual const Init *convertInitializerTo(RecTy *Ty) const {
     return Ty->convertValue(this);

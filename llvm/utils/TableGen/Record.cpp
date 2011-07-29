@@ -1531,6 +1531,44 @@ const Init *FieldInit::resolveReferences(Record &R, const RecordVal *RV) const {
   return this;
 }
 
+void ProfileDagInit(FoldingSetNodeID &ID,
+                    const Init *V,
+                    const std::string &VN,
+                    ArrayRef<const Init *> ArgRange,
+                    ArrayRef<std::string> NameRange) {
+  ID.AddPointer(V);
+  ID.AddString(VN);
+
+  ArrayRef<const Init *>::iterator Arg  = ArgRange.begin();
+  ArrayRef<std::string>::iterator  Name = NameRange.begin();
+  while (Arg != ArgRange.end()) {
+    assert(Name != NameRange.end() && "Arg name underflow!");
+    ID.AddPointer(*Arg++);
+    ID.AddString(*Name++);
+  }
+  assert(Name == NameRange.end() && "Arg name overflow!");
+}
+
+const DagInit *
+DagInit::get(const Init *V, const std::string &VN,
+             ArrayRef<const Init *> ArgRange,
+             ArrayRef<std::string> NameRange) {
+  typedef FoldingSet<DagInit> Pool;
+  static Pool ThePool;  
+
+  FoldingSetNodeID ID;
+  ProfileDagInit(ID, V, VN, ArgRange, NameRange);
+
+  void *IP = 0;
+  if (const DagInit *I = ThePool.FindNodeOrInsertPos(ID, IP))
+    return I;
+
+  DagInit *I = new DagInit(V, VN, ArgRange, NameRange);
+  ThePool.InsertNode(I, IP);
+
+  return I;
+}
+
 const DagInit *
 DagInit::get(const Init *V, const std::string &VN,
              const std::vector<std::pair<const Init*, std::string> > &args) {
@@ -1550,11 +1588,8 @@ DagInit::get(const Init *V, const std::string &VN,
   return DagInit::get(V, VN, Args, Names);
 }
 
-const DagInit *
-DagInit::get(const Init *V, const std::string &VN,
-             const std::vector<const Init*> &args,
-             const std::vector<std::string> &argNames) {
-  return new DagInit(V, VN, args, argNames);
+void DagInit::Profile(FoldingSetNodeID &ID) const {
+  ProfileDagInit(ID, Val, ValName, Args, ArgNames);
 }
 
 const Init *DagInit::resolveReferences(Record &R, const RecordVal *RV) const {
