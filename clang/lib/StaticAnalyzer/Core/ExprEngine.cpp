@@ -727,7 +727,7 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       break;
 
     case Stmt::ObjCMessageExprClass:
-      VisitObjCMessageExpr(cast<ObjCMessageExpr>(S), Pred, Dst);
+      VisitObjCMessage(cast<ObjCMessageExpr>(S), Pred, Dst);
       break;
 
     case Stmt::ObjCAtThrowStmtClass: {
@@ -1459,9 +1459,8 @@ void ExprEngine::evalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
 
   if (isa<loc::ObjCPropRef>(location)) {
     loc::ObjCPropRef prop = cast<loc::ObjCPropRef>(location);
-    ExplodedNodeSet src = Pred;
     return VisitObjCMessage(ObjCPropertySetter(prop.getPropRefExpr(),
-                                               StoreE, Val), src, Dst);
+                                               StoreE, Val), Pred, Dst);
   }
 
   // Evaluate the location (checks for bad dereferences).
@@ -1489,9 +1488,8 @@ void ExprEngine::evalLoad(ExplodedNodeSet& Dst, const Expr *Ex,
 
   if (isa<loc::ObjCPropRef>(location)) {
     loc::ObjCPropRef prop = cast<loc::ObjCPropRef>(location);
-    ExplodedNodeSet src = Pred;
     return VisitObjCMessage(ObjCPropertyGetter(prop.getPropRefExpr(), Ex),
-                            src, Dst);
+                            Pred, Dst);
   }
 
   // Are we loading from a region?  This actually results in two loads; one
@@ -1913,78 +1911,19 @@ void ExprEngine::VisitObjCForCollectionStmtAux(const ObjCForCollectionStmt* S,
 // Transfer function: Objective-C message expressions.
 //===----------------------------------------------------------------------===//
 
-namespace {
-class ObjCMsgWLItem {
-public:
-  ObjCMessageExpr::const_arg_iterator I;
-  ExplodedNode *N;
-
-  ObjCMsgWLItem(const ObjCMessageExpr::const_arg_iterator &i, ExplodedNode *n)
-    : I(i), N(n) {}
-};
-} // end anonymous namespace
-
-void ExprEngine::VisitObjCMessageExpr(const ObjCMessageExpr* ME, 
-                                        ExplodedNode* Pred,
-                                        ExplodedNodeSet& Dst){
-
-  // Create a worklist to process both the arguments.
-  SmallVector<ObjCMsgWLItem, 20> WL;
-
-  // But first evaluate the receiver (if any).
-  ObjCMessageExpr::const_arg_iterator AI = ME->arg_begin(), AE = ME->arg_end();
-  if (const Expr *Receiver = ME->getInstanceReceiver()) {
-    ExplodedNodeSet Tmp;
-    Visit(Receiver, Pred, Tmp);
-
-    if (Tmp.empty())
-      return;
-
-    for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I)
-      WL.push_back(ObjCMsgWLItem(AI, *I));
-  }
-  else
-    WL.push_back(ObjCMsgWLItem(AI, Pred));
-
-  // Evaluate the arguments.
-  ExplodedNodeSet ArgsEvaluated;
-  while (!WL.empty()) {
-    ObjCMsgWLItem Item = WL.back();
-    WL.pop_back();
-
-    if (Item.I == AE) {
-      ArgsEvaluated.insert(Item.N);
-      continue;
-    }
-
-    // Evaluate the subexpression.
-    ExplodedNodeSet Tmp;
-
-    // FIXME: [Objective-C++] handle arguments that are references
-    Visit(*Item.I, Item.N, Tmp);
-
-    // Enqueue evaluating the next argument on the worklist.
-    ++(Item.I);
-    for (ExplodedNodeSet::iterator NI=Tmp.begin(), NE=Tmp.end(); NI!=NE; ++NI)
-      WL.push_back(ObjCMsgWLItem(Item.I, *NI));
-  }
-
-  // Now that the arguments are processed, handle the ObjC message.
-  VisitObjCMessage(ME, ArgsEvaluated, Dst);
-}
-
 void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
-                                  ExplodedNodeSet &Src, ExplodedNodeSet& Dst) {
+                                  ExplodedNode *Pred, ExplodedNodeSet& Dst) {
 
   // Handle the previsits checks.
-  ExplodedNodeSet DstPrevisit;
-  getCheckerManager().runCheckersForPreObjCMessage(DstPrevisit, Src, msg,*this);
+  ExplodedNodeSet dstPrevisit;
+  getCheckerManager().runCheckersForPreObjCMessage(dstPrevisit, Pred, 
+                                                   msg, *this);
 
   // Proceed with evaluate the message expression.
   ExplodedNodeSet dstEval;
 
-  for (ExplodedNodeSet::iterator DI = DstPrevisit.begin(),
-                                 DE = DstPrevisit.end(); DI != DE; ++DI) {
+  for (ExplodedNodeSet::iterator DI = dstPrevisit.begin(),
+                                 DE = dstPrevisit.end(); DI != DE; ++DI) {
 
     ExplodedNode *Pred = *DI;
     bool RaisesException = false;
