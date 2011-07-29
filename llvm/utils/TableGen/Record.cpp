@@ -1389,7 +1389,16 @@ const Init *VarInit::resolveReferences(Record &R, const RecordVal *RV) const {
 }
 
 const VarBitInit *VarBitInit::get(const TypedInit *T, unsigned B) {
-  return new VarBitInit(T, B);
+  typedef std::pair<const TypedInit *, unsigned> Key;
+  typedef DenseMap<Key, VarBitInit *> Pool;
+
+  static Pool ThePool;
+
+  Key TheKey(std::make_pair(T, B));
+
+  VarBitInit *&I = ThePool[TheKey];
+  if (!I) I = new VarBitInit(T, B);
+  return I;
 }
 
 std::string VarBitInit::getAsString() const {
