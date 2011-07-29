@@ -1295,6 +1295,11 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
         Base = bi;
         Width = 1;
         Offset = BI->getBitNum();
+      } else if (BI->getBitNum() != Offset + Width) {
+        OpInfo.addField(Base, Width, Offset);
+        Base = bi;
+        Width = 1;
+        Offset = BI->getBitNum();
       } else {
         ++Width;
       }
