@@ -24,11 +24,11 @@ using namespace llvm;
 //        a single dag, so we can do fancier things.
 
 unsigned PseudoLoweringEmitter::
-addDagOperandMapping(Record *Rec, DagInit *Dag, CodeGenInstruction &Insn,
+addDagOperandMapping(Record *Rec, const DagInit *Dag, CodeGenInstruction &Insn,
                      IndexedMap<OpData> &OperandMap, unsigned BaseIdx) {
   unsigned OpsAdded = 0;
   for (unsigned i = 0, e = Dag->getNumArgs(); i != e; ++i) {
-    if (DefInit *DI = dynamic_cast<DefInit*>(Dag->getArg(i))) {
+    if (const DefInit *DI = dynamic_cast<const DefInit*>(Dag->getArg(i))) {
       // Physical register reference. Explicit check for the special case
       // "zero_reg" definition.
       if (DI->getDef()->isSubClassOf("Register") ||
@@ -54,11 +54,11 @@ addDagOperandMapping(Record *Rec, DagInit *Dag, CodeGenInstruction &Insn,
       for (unsigned I = 0, E = Insn.Operands[i].MINumOperands; I != E; ++I)
         OperandMap[BaseIdx + i + I].Kind = OpData::Operand;
       OpsAdded += Insn.Operands[i].MINumOperands;
-    } else if (IntInit *II = dynamic_cast<IntInit*>(Dag->getArg(i))) {
+    } else if (const IntInit *II = dynamic_cast<const IntInit*>(Dag->getArg(i))) {
       OperandMap[BaseIdx + i].Kind = OpData::Imm;
       OperandMap[BaseIdx + i].Data.Imm = II->getValue();
       ++OpsAdded;
-    } else if (DagInit *SubDag = dynamic_cast<DagInit*>(Dag->getArg(i))) {
+    } else if (const DagInit *SubDag = dynamic_cast<const DagInit*>(Dag->getArg(i))) {
       // Just add the operands recursively. This is almost certainly
       // a constant value for a complex operand (> 1 MI operand).
       unsigned NewOps =
@@ -77,11 +77,11 @@ void PseudoLoweringEmitter::evaluateExpansion(Record *Rec) {
 
   // Validate that the result pattern has the corrent number and types
   // of arguments for the instruction it references.
-  DagInit *Dag = Rec->getValueAsDag("ResultInst");
+  const DagInit *Dag = Rec->getValueAsDag("ResultInst");
   assert(Dag && "Missing result instruction in pseudo expansion!");
   DEBUG(dbgs() << "  Result: " << *Dag << "\n");
 
-  DefInit *OpDef = dynamic_cast<DefInit*>(Dag->getOperator());
+  const DefInit *OpDef = dynamic_cast<const DefInit*>(Dag->getOperator());
   if (!OpDef)
     throw TGError(Rec->getLoc(), Rec->getName() +
                   " has unexpected operator type!");

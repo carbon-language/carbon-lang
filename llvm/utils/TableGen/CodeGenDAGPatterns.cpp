@@ -583,7 +583,7 @@ typedef DepVarMap::const_iterator DepVarMap_citer;
 
 static void FindDepVarsOf(TreePatternNode *N, DepVarMap &DepMap) {
   if (N->isLeaf()) {
-    if (dynamic_cast<DefInit*>(N->getLeafValue()) != NULL)
+    if (dynamic_cast<const DefInit*>(N->getLeafValue()) != NULL)
       DepMap[N->getName()]++;
   } else {
     for (size_t i = 0, e = N->getNumChildren(); i != e; ++i)
@@ -692,7 +692,7 @@ static unsigned getPatternSize(const TreePatternNode *P,
   unsigned Size = 3;  // The node itself.
   // If the root node is a ConstantSDNode, increases its size.
   // e.g. (set R32:$dst, 0).
-  if (P->isLeaf() && dynamic_cast<IntInit*>(P->getLeafValue()))
+  if (P->isLeaf() && dynamic_cast<const IntInit*>(P->getLeafValue()))
     Size += 2;
 
   // FIXME: This is a hack to statically increase the priority of patterns
@@ -716,7 +716,7 @@ static unsigned getPatternSize(const TreePatternNode *P,
         Child->getType(0) != MVT::Other)
       Size += getPatternSize(Child, CGP);
     else if (Child->isLeaf()) {
-      if (dynamic_cast<IntInit*>(Child->getLeafValue()))
+      if (dynamic_cast<const IntInit*>(Child->getLeafValue()))
         Size += 5;  // Matches a ConstantSDNode (+3) and a specific value (+2).
       else if (Child->getComplexPatternInfo(CGP))
         Size += getPatternSize(Child, CGP);
@@ -742,7 +742,7 @@ getPatternComplexity(const CodeGenDAGPatterns &CGP) const {
 std::string PatternToMatch::getPredicateCheck() const {
   std::string PredicateCheck;
   for (unsigned i = 0, e = Predicates->getSize(); i != e; ++i) {
-    if (DefInit *Pred = dynamic_cast<DefInit*>(Predicates->getElement(i))) {
+    if (const DefInit *Pred = dynamic_cast<const DefInit*>(Predicates->getElement(i))) {
       Record *Def = Pred->getDef();
       if (!Def->isSubClassOf("Predicate")) {
 #ifndef NDEBUG
@@ -866,12 +866,12 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     // The NodeToApply must be a leaf node that is a VT.  OtherOperandNum must
     // have an integer type that is smaller than the VT.
     if (!NodeToApply->isLeaf() ||
-        !dynamic_cast<DefInit*>(NodeToApply->getLeafValue()) ||
-        !static_cast<DefInit*>(NodeToApply->getLeafValue())->getDef()
+        !dynamic_cast<const DefInit*>(NodeToApply->getLeafValue()) ||
+        !static_cast<const DefInit*>(NodeToApply->getLeafValue())->getDef()
                ->isSubClassOf("ValueType"))
       TP.error(N->getOperator()->getName() + " expects a VT operand!");
     MVT::SimpleValueType VT =
-     getValueType(static_cast<DefInit*>(NodeToApply->getLeafValue())->getDef());
+     getValueType(static_cast<const DefInit*>(NodeToApply->getLeafValue())->getDef());
 
     EEVT::TypeSet TypeListTmp(VT, TP);
 
@@ -1021,10 +1021,10 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
       return PFRec->getOnlyTree()->getNumTypes();
 
     // Get the result tree.
-    DagInit *Tree = Operator->getValueAsDag("Fragment");
+    const DagInit *Tree = Operator->getValueAsDag("Fragment");
     Record *Op = 0;
-    if (Tree && dynamic_cast<DefInit*>(Tree->getOperator()))
-      Op = dynamic_cast<DefInit*>(Tree->getOperator())->getDef();
+    if (Tree && dynamic_cast<const DefInit*>(Tree->getOperator()))
+      Op = dynamic_cast<const DefInit*>(Tree->getOperator())->getDef();
     assert(Op && "Invalid Fragment");
     return GetNumNodeResults(Op, CDP);
   }
@@ -1098,8 +1098,8 @@ bool TreePatternNode::isIsomorphicTo(const TreePatternNode *N,
     return false;
 
   if (isLeaf()) {
-    if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue())) {
-      if (DefInit *NDI = dynamic_cast<DefInit*>(N->getLeafValue())) {
+    if (const DefInit *DI = dynamic_cast<const DefInit*>(getLeafValue())) {
+      if (const DefInit *NDI = dynamic_cast<const DefInit*>(N->getLeafValue())) {
         return ((DI->getDef() == NDI->getDef())
                 && (DepVars.find(getName()) == DepVars.end()
                     || getName() == N->getName()));
@@ -1155,9 +1155,9 @@ SubstituteFormalArguments(std::map<std::string, TreePatternNode*> &ArgMap) {
   for (unsigned i = 0, e = getNumChildren(); i != e; ++i) {
     TreePatternNode *Child = getChild(i);
     if (Child->isLeaf()) {
-      Init *Val = Child->getLeafValue();
-      if (dynamic_cast<DefInit*>(Val) &&
-          static_cast<DefInit*>(Val)->getDef()->getName() == "node") {
+      const Init *Val = Child->getLeafValue();
+      if (dynamic_cast<const DefInit*>(Val) &&
+          static_cast<const DefInit*>(Val)->getDef()->getName() == "node") {
         // We found a use of a formal argument, replace it with its value.
         TreePatternNode *NewChild = ArgMap[Child->getName()];
         assert(NewChild && "Couldn't find formal argument!");
@@ -1319,7 +1319,7 @@ getIntrinsicInfo(const CodeGenDAGPatterns &CDP) const {
     return 0;
 
   unsigned IID =
-    dynamic_cast<IntInit*>(getChild(0)->getLeafValue())->getValue();
+    dynamic_cast<const IntInit*>(getChild(0)->getLeafValue())->getValue();
   return &CDP.getIntrinsicInfo(IID);
 }
 
@@ -1329,7 +1329,7 @@ const ComplexPattern *
 TreePatternNode::getComplexPatternInfo(const CodeGenDAGPatterns &CGP) const {
   if (!isLeaf()) return 0;
 
-  DefInit *DI = dynamic_cast<DefInit*>(getLeafValue());
+  const DefInit *DI = dynamic_cast<const DefInit*>(getLeafValue());
   if (DI && DI->getDef()->isSubClassOf("ComplexPattern"))
     return &CGP.getComplexPattern(DI->getDef());
   return 0;
@@ -1382,7 +1382,7 @@ TreePatternNode::isCommutativeIntrinsic(const CodeGenDAGPatterns &CDP) const {
 bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
   CodeGenDAGPatterns &CDP = TP.getDAGPatterns();
   if (isLeaf()) {
-    if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue())) {
+    if (const DefInit *DI = dynamic_cast<const DefInit*>(getLeafValue())) {
       // If it's a regclass or something else known, include the type.
       bool MadeChange = false;
       for (unsigned i = 0, e = Types.size(); i != e; ++i)
@@ -1391,7 +1391,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       return MadeChange;
     }
 
-    if (IntInit *II = dynamic_cast<IntInit*>(getLeafValue())) {
+    if (const IntInit *II = dynamic_cast<const IntInit*>(getLeafValue())) {
       assert(Types.size() == 1 && "Invalid IntInit");
 
       // Int inits are always integers. :)
@@ -1651,7 +1651,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
 static bool OnlyOnRHSOfCommutative(TreePatternNode *N) {
   if (!N->isLeaf() && N->getOperator()->getName() == "imm")
     return true;
-  if (N->isLeaf() && dynamic_cast<IntInit*>(N->getLeafValue()))
+  if (N->isLeaf() && dynamic_cast<const IntInit*>(N->getLeafValue()))
     return true;
   return false;
 }
@@ -1701,14 +1701,14 @@ bool TreePatternNode::canPatternMatch(std::string &Reason,
 // TreePattern implementation
 //
 
-TreePattern::TreePattern(Record *TheRec, ListInit *RawPat, bool isInput,
+TreePattern::TreePattern(Record *TheRec, const ListInit *RawPat, bool isInput,
                          CodeGenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp){
   isInputPattern = isInput;
   for (unsigned i = 0, e = RawPat->getSize(); i != e; ++i)
     Trees.push_back(ParseTreePattern(RawPat->getElement(i), ""));
 }
 
-TreePattern::TreePattern(Record *TheRec, DagInit *Pat, bool isInput,
+TreePattern::TreePattern(Record *TheRec, const DagInit *Pat, bool isInput,
                          CodeGenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp){
   isInputPattern = isInput;
   Trees.push_back(ParseTreePattern(Pat, ""));
@@ -1739,8 +1739,8 @@ void TreePattern::ComputeNamedNodes(TreePatternNode *N) {
 }
 
 
-TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
-  if (DefInit *DI = dynamic_cast<DefInit*>(TheInit)) {
+TreePatternNode *TreePattern::ParseTreePattern(const Init *TheInit, StringRef OpName){
+  if (const DefInit *DI = dynamic_cast<const DefInit*>(TheInit)) {
     Record *R = DI->getDef();
 
     // Direct reference to a leaf DagNode or PatFrag?  Turn it into a
@@ -1748,7 +1748,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
     ///   (foo GPR, imm) -> (foo GPR, (imm))
     if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag"))
       return ParseTreePattern(new DagInit(DI, "",
-                          std::vector<std::pair<Init*, std::string> >()),
+                          std::vector<std::pair<const Init*, std::string> >()),
                               OpName);
 
     // Input argument?
@@ -1763,26 +1763,26 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
     return Res;
   }
 
-  if (IntInit *II = dynamic_cast<IntInit*>(TheInit)) {
+  if (const IntInit *II = dynamic_cast<const IntInit*>(TheInit)) {
     if (!OpName.empty())
       error("Constant int argument should not have a name!");
     return new TreePatternNode(II, 1);
   }
 
-  if (BitsInit *BI = dynamic_cast<BitsInit*>(TheInit)) {
+  if (const BitsInit *BI = dynamic_cast<const BitsInit*>(TheInit)) {
     // Turn this into an IntInit.
-    Init *II = BI->convertInitializerTo(IntRecTy::get());
-    if (II == 0 || !dynamic_cast<IntInit*>(II))
+    const Init *II = BI->convertInitializerTo(IntRecTy::get());
+    if (II == 0 || !dynamic_cast<const IntInit*>(II))
       error("Bits value must be constants!");
     return ParseTreePattern(II, OpName);
   }
 
-  DagInit *Dag = dynamic_cast<DagInit*>(TheInit);
+  const DagInit *Dag = dynamic_cast<const DagInit*>(TheInit);
   if (!Dag) {
     TheInit->dump();
     error("Pattern has unexpected init kind!");
   }
-  DefInit *OpDef = dynamic_cast<DefInit*>(Dag->getOperator());
+  const DefInit *OpDef = dynamic_cast<const DefInit*>(Dag->getOperator());
   if (!OpDef) error("Pattern has unexpected operator type!");
   Record *Operator = OpDef->getDef();
 
@@ -1947,7 +1947,7 @@ InferAllTypes(const StringMap<SmallVector<TreePatternNode*,1> > *InNamedTypes) {
           // us to match things like:
           //  def : Pat<(v1i64 (bitconvert(v2i32 DPR:$src))), (v1i64 DPR:$src)>;
           if (Nodes[i] == Trees[0] && Nodes[i]->isLeaf()) {
-            DefInit *DI = dynamic_cast<DefInit*>(Nodes[i]->getLeafValue());
+            const DefInit *DI = dynamic_cast<const DefInit*>(Nodes[i]->getLeafValue());
             if (DI && (DI->getDef()->isSubClassOf("RegisterClass") ||
                        DI->getDef()->isSubClassOf("RegisterOperand")))
               continue;
@@ -2096,7 +2096,7 @@ void CodeGenDAGPatterns::ParsePatternFragments() {
 
   // First step, parse all of the fragments.
   for (unsigned i = 0, e = Fragments.size(); i != e; ++i) {
-    DagInit *Tree = Fragments[i]->getValueAsDag("Fragment");
+    const DagInit *Tree = Fragments[i]->getValueAsDag("Fragment");
     TreePattern *P = new TreePattern(Fragments[i], Tree, true, *this);
     PatternFragments[Fragments[i]] = P;
 
@@ -2108,8 +2108,8 @@ void CodeGenDAGPatterns::ParsePatternFragments() {
       P->error("Cannot have unnamed 'node' values in pattern fragment!");
 
     // Parse the operands list.
-    DagInit *OpsList = Fragments[i]->getValueAsDag("Operands");
-    DefInit *OpsOp = dynamic_cast<DefInit*>(OpsList->getOperator());
+    const DagInit *OpsList = Fragments[i]->getValueAsDag("Operands");
+    const DefInit *OpsOp = dynamic_cast<const DefInit*>(OpsList->getOperator());
     // Special cases: ops == outs == ins. Different names are used to
     // improve readability.
     if (!OpsOp ||
@@ -2121,8 +2121,8 @@ void CodeGenDAGPatterns::ParsePatternFragments() {
     // Copy over the arguments.
     Args.clear();
     for (unsigned j = 0, e = OpsList->getNumArgs(); j != e; ++j) {
-      if (!dynamic_cast<DefInit*>(OpsList->getArg(j)) ||
-          static_cast<DefInit*>(OpsList->getArg(j))->
+      if (!dynamic_cast<const DefInit*>(OpsList->getArg(j)) ||
+          static_cast<const DefInit*>(OpsList->getArg(j))->
           getDef()->getName() != "node")
         P->error("Operands list should all be 'node' values.");
       if (OpsList->getArgName(j).empty())
@@ -2180,19 +2180,19 @@ void CodeGenDAGPatterns::ParseDefaultOperands() {
 
   // Find some SDNode.
   assert(!SDNodes.empty() && "No SDNodes parsed?");
-  Init *SomeSDNode = DefInit::get(SDNodes.begin()->first);
+  const Init *SomeSDNode = DefInit::get(SDNodes.begin()->first);
 
   for (unsigned iter = 0; iter != 2; ++iter) {
     for (unsigned i = 0, e = DefaultOps[iter].size(); i != e; ++i) {
-      DagInit *DefaultInfo = DefaultOps[iter][i]->getValueAsDag("DefaultOps");
+      const DagInit *DefaultInfo = DefaultOps[iter][i]->getValueAsDag("DefaultOps");
 
       // Clone the DefaultInfo dag node, changing the operator from 'ops' to
       // SomeSDnode so that we can parse this.
-      std::vector<std::pair<Init*, std::string> > Ops;
+      std::vector<std::pair<const Init*, std::string> > Ops;
       for (unsigned op = 0, e = DefaultInfo->getNumArgs(); op != e; ++op)
         Ops.push_back(std::make_pair(DefaultInfo->getArg(op),
                                      DefaultInfo->getArgName(op)));
-      DagInit *DI = new DagInit(SomeSDNode, "", Ops);
+      const DagInit *DI = new DagInit(SomeSDNode, "", Ops);
 
       // Create a TreePattern to parse this.
       TreePattern P(DefaultOps[iter][i], DI, false, *this);
@@ -2231,7 +2231,7 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
   // No name -> not interesting.
   if (Pat->getName().empty()) {
     if (Pat->isLeaf()) {
-      DefInit *DI = dynamic_cast<DefInit*>(Pat->getLeafValue());
+      const DefInit *DI = dynamic_cast<const DefInit*>(Pat->getLeafValue());
       if (DI && (DI->getDef()->isSubClassOf("RegisterClass") ||
                  DI->getDef()->isSubClassOf("RegisterOperand")))
         I->error("Input " + DI->getDef()->getName() + " must be named!");
@@ -2241,7 +2241,7 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
 
   Record *Rec;
   if (Pat->isLeaf()) {
-    DefInit *DI = dynamic_cast<DefInit*>(Pat->getLeafValue());
+    const DefInit *DI = dynamic_cast<const DefInit*>(Pat->getLeafValue());
     if (!DI) I->error("Input $" + Pat->getName() + " must be an identifier!");
     Rec = DI->getDef();
   } else {
@@ -2259,7 +2259,7 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
   }
   Record *SlotRec;
   if (Slot->isLeaf()) {
-    SlotRec = dynamic_cast<DefInit*>(Slot->getLeafValue())->getDef();
+    SlotRec = dynamic_cast<const DefInit*>(Slot->getLeafValue())->getDef();
   } else {
     assert(Slot->getNumChildren() == 0 && "can't be a use with children!");
     SlotRec = Slot->getOperator();
@@ -2294,7 +2294,7 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
       if (!Dest->isLeaf())
         I->error("implicitly defined value should be a register!");
 
-      DefInit *Val = dynamic_cast<DefInit*>(Dest->getLeafValue());
+      const DefInit *Val = dynamic_cast<const DefInit*>(Dest->getLeafValue());
       if (!Val || !Val->getDef()->isSubClassOf("Register"))
         I->error("implicitly defined value should be a register!");
       InstImpResults.push_back(Val->getDef());
@@ -2335,7 +2335,7 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
     if (!Dest->isLeaf())
       I->error("set destination should be a register!");
 
-    DefInit *Val = dynamic_cast<DefInit*>(Dest->getLeafValue());
+    const DefInit *Val = dynamic_cast<const DefInit*>(Dest->getLeafValue());
     if (!Val)
       I->error("set destination should be a register!");
 
@@ -2401,7 +2401,7 @@ private:
       return false;
 
     const TreePatternNode *N0 = N->getChild(0);
-    if (!N0->isLeaf() || !dynamic_cast<DefInit*>(N0->getLeafValue()))
+    if (!N0->isLeaf() || !dynamic_cast<const DefInit*>(N0->getLeafValue()))
       return false;
 
     const TreePatternNode *N1 = N->getChild(1);
@@ -2418,7 +2418,7 @@ private:
 
   void AnalyzeNode(const TreePatternNode *N) {
     if (N->isLeaf()) {
-      if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
+      if (const DefInit *DI = dynamic_cast<const DefInit*>(N->getLeafValue())) {
         Record *LeafRec = DI->getDef();
         // Handle ComplexPattern leaves.
         if (LeafRec->isSubClassOf("ComplexPattern")) {
@@ -2525,9 +2525,9 @@ void CodeGenDAGPatterns::ParseInstructions() {
   std::vector<Record*> Instrs = Records.getAllDerivedDefinitions("Instruction");
 
   for (unsigned i = 0, e = Instrs.size(); i != e; ++i) {
-    ListInit *LI = 0;
+    const ListInit *LI = 0;
 
-    if (dynamic_cast<ListInit*>(Instrs[i]->getValueInit("Pattern")))
+    if (dynamic_cast<const ListInit*>(Instrs[i]->getValueInit("Pattern")))
       LI = Instrs[i]->getValueAsListInit("Pattern");
 
     // If there is no pattern, only collect minimal information about the
@@ -2619,7 +2619,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
 
       if (i == 0)
         Res0Node = RNode;
-      Record *R = dynamic_cast<DefInit*>(RNode->getLeafValue())->getDef();
+      Record *R = dynamic_cast<const DefInit*>(RNode->getLeafValue())->getDef();
       if (R == 0)
         I->error("Operand $" + OpName + " should be a set destination: all "
                  "outputs must occur before inputs in operand list!");
@@ -2664,8 +2664,8 @@ void CodeGenDAGPatterns::ParseInstructions() {
       InstInputsCheck.erase(OpName);   // It occurred, remove from map.
 
       if (InVal->isLeaf() &&
-          dynamic_cast<DefInit*>(InVal->getLeafValue())) {
-        Record *InRec = static_cast<DefInit*>(InVal->getLeafValue())->getDef();
+          dynamic_cast<const DefInit*>(InVal->getLeafValue())) {
+        Record *InRec = static_cast<const DefInit*>(InVal->getLeafValue())->getDef();
         if (Op.Rec != InRec && !InRec->isSubClassOf("ComplexPattern"))
           I->error("Operand $" + OpName + "'s register class disagrees"
                    " between the operand and pattern");
@@ -2865,13 +2865,13 @@ void CodeGenDAGPatterns::ParsePatterns() {
 
   for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
     Record *CurPattern = Patterns[i];
-    DagInit *Tree = CurPattern->getValueAsDag("PatternToMatch");
+    const DagInit *Tree = CurPattern->getValueAsDag("PatternToMatch");
     TreePattern *Pattern = new TreePattern(CurPattern, Tree, true, *this);
 
     // Inline pattern fragments into it.
     Pattern->InlinePatternFragments();
 
-    ListInit *LI = CurPattern->getValueAsListInit("ResultInstrs");
+    const ListInit *LI = CurPattern->getValueAsListInit("ResultInstrs");
     if (LI->getSize() == 0) continue;  // no pattern.
 
     // Parse the instruction.
@@ -3183,7 +3183,7 @@ static void GenerateVariantsOf(TreePatternNode *N,
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
       TreePatternNode *Child = N->getChild(i);
       if (Child->isLeaf())
-        if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
+        if (const DefInit *DI = dynamic_cast<const DefInit*>(Child->getLeafValue())) {
           Record *RR = DI->getDef();
           if (RR->isSubClassOf("Register"))
             continue;

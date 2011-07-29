@@ -48,15 +48,15 @@ static bool ValueNotSet(bit_value_t V) {
 static int Value(bit_value_t V) {
   return ValueNotSet(V) ? -1 : (V == BIT_FALSE ? 0 : 1);
 }
-static bit_value_t bitFromBits(BitsInit &bits, unsigned index) {
-  if (BitInit *bit = dynamic_cast<BitInit*>(bits.getBit(index)))
+static bit_value_t bitFromBits(const BitsInit &bits, unsigned index) {
+  if (const BitInit *bit = dynamic_cast<const BitInit*>(bits.getBit(index)))
     return bit->getValue() ? BIT_TRUE : BIT_FALSE;
 
   // The bit is uninitialized.
   return BIT_UNSET;
 }
 // Prints the bit value for each position.
-static void dumpBits(raw_ostream &o, BitsInit &bits) {
+static void dumpBits(raw_ostream &o, const BitsInit &bits) {
   unsigned index;
 
   for (index = bits.getNumBits(); index > 0; index--) {
@@ -76,8 +76,8 @@ static void dumpBits(raw_ostream &o, BitsInit &bits) {
   }
 }
 
-static BitsInit &getBitsField(const Record &def, const char *str) {
-  BitsInit *bits = def.getValueAsBitsInit(str);
+static const BitsInit &getBitsField(const Record &def, const char *str) {
+  const BitsInit *bits = def.getValueAsBitsInit(str);
   return *bits;
 }
 
@@ -277,7 +277,7 @@ public:
 protected:
   // Populates the insn given the uid.
   void insnWithID(insn_t &Insn, unsigned Opcode) const {
-    BitsInit &Bits = getBitsField(*AllInstructions[Opcode]->TheDef, "Inst");
+    const BitsInit &Bits = getBitsField(*AllInstructions[Opcode]->TheDef, "Inst");
 
     for (unsigned i = 0; i < BitWidth; ++i)
       Insn.push_back(bitFromBits(Bits, i));
@@ -1194,7 +1194,7 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
       Def.getValueAsBit("isCodeGenOnly"))
     return false;
 
-  BitsInit &Bits = getBitsField(Def, "Inst");
+  const BitsInit &Bits = getBitsField(Def, "Inst");
   if (Bits.allInComplete()) return false;
 
   std::vector<OperandInfo> InsnOperands;
@@ -1215,9 +1215,9 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
   // Gather the outputs/inputs of the instruction, so we can find their
   // positions in the encoding.  This assumes for now that they appear in the
   // MCInst in the order that they're listed.
-  std::vector<std::pair<Init*, std::string> > InOutOperands;
-  DagInit *Out  = Def.getValueAsDag("OutOperandList");
-  DagInit *In  = Def.getValueAsDag("InOperandList");
+  std::vector<std::pair<const Init*, std::string> > InOutOperands;
+  const DagInit *Out  = Def.getValueAsDag("OutOperandList");
+  const DagInit *In  = Def.getValueAsDag("InOperandList");
   for (unsigned i = 0; i < Out->getNumArgs(); ++i)
     InOutOperands.push_back(std::make_pair(Out->getArg(i), Out->getArgName(i)));
   for (unsigned i = 0; i < In->getNumArgs(); ++i)
@@ -1235,7 +1235,7 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
   }
 
   // For each operand, see if we can figure out where it is encoded.
-  for (std::vector<std::pair<Init*, std::string> >::iterator
+  for (std::vector<std::pair<const Init*, std::string> >::iterator
        NI = InOutOperands.begin(), NE = InOutOperands.end(); NI != NE; ++NI) {
     std::string Decoder = "";
 
@@ -1244,7 +1244,7 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
     // for decoding register classes.
     // FIXME: This need to be extended to handle instructions with custom
     // decoder methods, and operands with (simple) MIOperandInfo's.
-    TypedInit *TI = dynamic_cast<TypedInit*>(NI->first);
+    const TypedInit *TI = dynamic_cast<const TypedInit*>(NI->first);
     RecordRecTy *Type = dynamic_cast<RecordRecTy*>(TI->getType());
     Record *TypeRecord = Type->getRecord();
     bool isReg = false;
@@ -1256,8 +1256,8 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
     }
 
     RecordVal *DecoderString = TypeRecord->getValue("DecoderMethod");
-    StringInit *String = DecoderString ?
-      dynamic_cast<StringInit*>(DecoderString->getValue()) : 0;
+    const StringInit *String = DecoderString ?
+      dynamic_cast<const StringInit*>(DecoderString->getValue()) : 0;
     if (!isReg && String && String->getValue() != "")
       Decoder = String->getValue();
 
@@ -1267,7 +1267,7 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
     unsigned Offset = 0;
 
     for (unsigned bi = 0; bi < Bits.getNumBits(); ++bi) {
-      VarBitInit *BI = dynamic_cast<VarBitInit*>(Bits.getBit(bi));
+      const VarBitInit *BI = dynamic_cast<const VarBitInit*>(Bits.getBit(bi));
       if (!BI) {
         if (Base != ~0U) {
           OpInfo.addField(Base, Width, Offset);
@@ -1277,8 +1277,9 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
         }
         continue;
       }
+      if (!BI) continue;
 
-      VarInit *Var = dynamic_cast<VarInit*>(BI->getVariable());
+      const VarInit *Var = dynamic_cast<const VarInit*>(BI->getVariable());
       assert(Var);
       if (Var->getName() != NI->second &&
           Var->getName() != TiedNames[NI->second]) {

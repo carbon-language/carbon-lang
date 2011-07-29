@@ -869,7 +869,7 @@ AsmMatcherInfo::getOperandClass(const CGIOperandList::OperandInfo &OI,
                                 int SubOpIdx) {
   Record *Rec = OI.Rec;
   if (SubOpIdx != -1)
-    Rec = dynamic_cast<DefInit*>(OI.MIOperandInfo->getArg(SubOpIdx))->getDef();
+    Rec = dynamic_cast<const DefInit*>(OI.MIOperandInfo->getArg(SubOpIdx))->getDef();
 
   if (Rec->isSubClassOf("RegisterOperand")) {
     // RegisterOperand may have an associated ParserMatchClass. If it does,
@@ -879,7 +879,7 @@ AsmMatcherInfo::getOperandClass(const CGIOperandList::OperandInfo &OI,
       throw "Record `" + Rec->getName() +
         "' does not have a ParserMatchClass!\n";
 
-    if (DefInit *DI= dynamic_cast<DefInit*>(R->getValue())) {
+    if (const DefInit *DI= dynamic_cast<const DefInit*>(R->getValue())) {
       Record *MatchClass = DI->getDef();
       if (ClassInfo *CI = AsmOperandClasses[MatchClass])
         return CI;
@@ -1046,9 +1046,9 @@ void AsmMatcherInfo::BuildOperandClasses() {
     ClassInfo *CI = AsmOperandClasses[*it];
     CI->Kind = ClassInfo::UserClass0 + Index;
 
-    ListInit *Supers = (*it)->getValueAsListInit("SuperClasses");
+    const ListInit *Supers = (*it)->getValueAsListInit("SuperClasses");
     for (unsigned i = 0, e = Supers->getSize(); i != e; ++i) {
-      DefInit *DI = dynamic_cast<DefInit*>(Supers->getElement(i));
+      const DefInit *DI = dynamic_cast<const DefInit*>(Supers->getElement(i));
       if (!DI) {
         PrintError((*it)->getLoc(), "Invalid super class reference!");
         continue;
@@ -1065,28 +1065,28 @@ void AsmMatcherInfo::BuildOperandClasses() {
     CI->ValueName = (*it)->getName();
 
     // Get or construct the predicate method name.
-    Init *PMName = (*it)->getValueInit("PredicateMethod");
-    if (StringInit *SI = dynamic_cast<StringInit*>(PMName)) {
+    const Init *PMName = (*it)->getValueInit("PredicateMethod");
+    if (const StringInit *SI = dynamic_cast<const StringInit*>(PMName)) {
       CI->PredicateMethod = SI->getValue();
     } else {
-      assert(dynamic_cast<UnsetInit*>(PMName) &&
+      assert(dynamic_cast<const UnsetInit*>(PMName) &&
              "Unexpected PredicateMethod field!");
       CI->PredicateMethod = "is" + CI->ClassName;
     }
 
     // Get or construct the render method name.
-    Init *RMName = (*it)->getValueInit("RenderMethod");
-    if (StringInit *SI = dynamic_cast<StringInit*>(RMName)) {
+    const Init *RMName = (*it)->getValueInit("RenderMethod");
+    if (const StringInit *SI = dynamic_cast<const StringInit*>(RMName)) {
       CI->RenderMethod = SI->getValue();
     } else {
-      assert(dynamic_cast<UnsetInit*>(RMName) &&
+      assert(dynamic_cast<const UnsetInit*>(RMName) &&
              "Unexpected RenderMethod field!");
       CI->RenderMethod = "add" + CI->ClassName + "Operands";
     }
 
     // Get the parse method name or leave it as empty.
-    Init *PRMName = (*it)->getValueInit("ParserMethod");
-    if (StringInit *SI = dynamic_cast<StringInit*>(PRMName))
+    const Init *PRMName = (*it)->getValueInit("ParserMethod");
+    if (const StringInit *SI = dynamic_cast<const StringInit*>(PRMName))
       CI->ParserMethod = SI->getValue();
 
     AsmOperandClasses[*it] = CI;

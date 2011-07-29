@@ -74,7 +74,7 @@ getCategoryFromDiagGroup(const Record *Group,
 static std::string getDiagnosticCategory(const Record *R,
                                          DiagGroupParentMap &DiagGroupParents) {
   // If the diagnostic is in a group, and that group has a category, use it.
-  if (DefInit *Group = dynamic_cast<DefInit*>(R->getValueInit("Group"))) {
+  if (const DefInit *Group = dynamic_cast<const DefInit*>(R->getValueInit("Group"))) {
     // Check the diagnostic's diag group for a category.
     std::string CatName = getCategoryFromDiagGroup(Group->getDef(),
                                                    DiagGroupParents);
@@ -159,7 +159,7 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
     OS.write_escaped(R.getValueAsString("Text")) << '"';
     
     // Warning associated with the diagnostic.
-    if (DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("Group"))) {
+    if (const DefInit *DI = dynamic_cast<const DefInit*>(R.getValueInit("Group"))) {
       OS << ", \"";
       OS.write_escaped(DI->getDef()->getValueAsString("GroupName")) << '"';
     } else {
@@ -225,7 +225,7 @@ void ClangDiagGroupsEmitter::run(raw_ostream &OS) {
     Records.getAllDerivedDefinitions("Diagnostic");
   for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
     const Record *R = Diags[i];
-    DefInit *DI = dynamic_cast<DefInit*>(R->getValueInit("Group"));
+    const DefInit *DI = dynamic_cast<const DefInit*>(R->getValueInit("Group"));
     if (DI == 0) continue;
     std::string GroupName = DI->getDef()->getValueAsString("GroupName");
     DiagsInGroup[GroupName].DiagsInGroup.push_back(R);
