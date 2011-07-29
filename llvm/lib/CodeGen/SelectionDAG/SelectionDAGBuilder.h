@@ -132,10 +132,13 @@ private:
     Constant* Low;
     Constant* High;
     MachineBasicBlock* BB;
+    uint32_t ExtraWeight;
 
-    Case() : Low(0), High(0), BB(0) { }
-    Case(Constant* low, Constant* high, MachineBasicBlock* bb) :
-      Low(low), High(high), BB(bb) { }
+    Case() : Low(0), High(0), BB(0), ExtraWeight(0) { }
+    Case(Constant* low, Constant* high, MachineBasicBlock* bb,
+         uint32_t extraweight) : Low(low), High(high), BB(bb),
+         ExtraWeight(extraweight) { }
+
     APInt size() const {
       const APInt &rHigh = cast<ConstantInt>(High)->getValue();
       const APInt &rLow  = cast<ConstantInt>(Low)->getValue();
@@ -203,20 +206,30 @@ private:
     CaseBlock(ISD::CondCode cc, const Value *cmplhs, const Value *cmprhs,
               const Value *cmpmiddle,
               MachineBasicBlock *truebb, MachineBasicBlock *falsebb,
-              MachineBasicBlock *me)
+              MachineBasicBlock *me,
+              uint32_t trueweight = 0, uint32_t falseweight = 0)
       : CC(cc), CmpLHS(cmplhs), CmpMHS(cmpmiddle), CmpRHS(cmprhs),
-        TrueBB(truebb), FalseBB(falsebb), ThisBB(me) {}
+        TrueBB(truebb), FalseBB(falsebb), ThisBB(me),
+        TrueWeight(trueweight), FalseWeight(falseweight) { }
+
     // CC - the condition code to use for the case block's setcc node
     ISD::CondCode CC;
+
     // CmpLHS/CmpRHS/CmpMHS - The LHS/MHS/RHS of the comparison to emit.
     // Emit by default LHS op RHS. MHS is used for range comparisons:
     // If MHS is not null: (LHS <= MHS) and (MHS <= RHS).
     const Value *CmpLHS, *CmpMHS, *CmpRHS;
+
     // TrueBB/FalseBB - the block to branch to if the setcc is true/false.
     MachineBasicBlock *TrueBB, *FalseBB;
+
     // ThisBB - the block into which to emit the code for the setcc and branches
     MachineBasicBlock *ThisBB;
+
+    // TrueWeight/FalseWeight - branch weights.
+    uint32_t TrueWeight, FalseWeight;
   };
+
   struct JumpTable {
     JumpTable(unsigned R, unsigned J, MachineBasicBlock *M,
               MachineBasicBlock *D): Reg(R), JTI(J), MBB(M), Default(D) {}
@@ -436,7 +449,8 @@ private:
                                 MachineBasicBlock *SwitchBB);
 
   uint32_t getEdgeWeight(MachineBasicBlock *Src, MachineBasicBlock *Dst);
-  void addSuccessorWithWeight(MachineBasicBlock *Src, MachineBasicBlock *Dst);
+  void addSuccessorWithWeight(MachineBasicBlock *Src, MachineBasicBlock *Dst,
+                              uint32_t Weight = 0);
 public:
   void visitSwitchCase(CaseBlock &CB,
                        MachineBasicBlock *SwitchBB);
