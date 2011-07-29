@@ -16,6 +16,8 @@
 #include "Error.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Format.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
@@ -455,8 +457,36 @@ const BitInit *BitInit::get(bool V) {
   return V ? &True : &False;
 }
 
+static void
+ProfileBitsInit(FoldingSetNodeID &ID, ArrayRef<const Init *> Range) {
+  ID.AddInteger(Range.size());
+
+  for (ArrayRef<const Init *>::iterator i = Range.begin(),
+         iend = Range.end();
+       i != iend;
+       ++i)
+    ID.AddPointer(*i);
+}
+
 const BitsInit *BitsInit::get(ArrayRef<const Init *> Range) {
-  return new BitsInit(Range);
+  typedef FoldingSet<BitsInit> Pool;
+  static Pool ThePool;  
+
+  FoldingSetNodeID ID;
+  ProfileBitsInit(ID, Range);
+
+  void *IP = 0;
+  if (const BitsInit *I = ThePool.FindNodeOrInsertPos(ID, IP))
+    return I;
+
+  BitsInit *I = new BitsInit(Range);
+  ThePool.InsertNode(I, IP);
+
+  return I;
+}
+
+void BitsInit::Profile(FoldingSetNodeID &ID) const {
+  ProfileBitsInit(ID, Bits);
 }
 
 const Init *

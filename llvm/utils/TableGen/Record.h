@@ -16,6 +16,7 @@
 #define RECORD_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/DataTypes.h"
@@ -648,10 +649,8 @@ public:
 /// BitsInit - { a, b, c } - Represents an initializer for a BitsRecTy value.
 /// It contains a vector of bits, whose size is determined by the type.
 ///
-class BitsInit : public Init {
+class BitsInit : public Init, public FoldingSetNode {
   std::vector<const Init*> Bits;
-
-  BitsInit(unsigned Size) : Bits(Size) {}
 
   BitsInit(ArrayRef<const Init *> Range) : Bits(Range.begin(), Range.end()) {}
 
@@ -660,6 +659,8 @@ class BitsInit : public Init {
 
 public:
   static const BitsInit *get(ArrayRef<const Init *> Range);
+
+  void Profile(FoldingSetNodeID &ID) const;
 
   unsigned getNumBits() const { return Bits.size(); }
 
