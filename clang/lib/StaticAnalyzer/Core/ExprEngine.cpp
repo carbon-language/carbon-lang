@@ -1335,23 +1335,17 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr* A,
   const Expr* Base = A->getBase()->IgnoreParens();
   const Expr* Idx  = A->getIdx()->IgnoreParens();
   
-  // Evaluate the base.
-  ExplodedNodeSet Tmp;
-  Visit(Base, Pred, Tmp);
 
-  for (ExplodedNodeSet::iterator I1=Tmp.begin(), E1=Tmp.end(); I1!=E1; ++I1) {
-    ExplodedNodeSet Tmp2;
-    Visit(Idx, *I1, Tmp2);     // Evaluate the index.
-    ExplodedNodeSet Tmp3;
-    getCheckerManager().runCheckersForPreStmt(Tmp3, Tmp2, A, *this);
+  ExplodedNodeSet checkerPreStmt;
+  getCheckerManager().runCheckersForPreStmt(checkerPreStmt, Pred, A, *this);
 
-    for (ExplodedNodeSet::iterator I2=Tmp3.begin(),E2=Tmp3.end();I2!=E2; ++I2) {
-      const GRState* state = GetState(*I2);
-      SVal V = state->getLValue(A->getType(), state->getSVal(Idx),
-                                state->getSVal(Base));
-      assert(A->isLValue());
-      MakeNode(Dst, A, *I2, state->BindExpr(A, V), ProgramPoint::PostLValueKind);
-    }
+  for (ExplodedNodeSet::iterator it = checkerPreStmt.begin(),
+                                 ei = checkerPreStmt.end(); it != ei; ++it) {
+    const GRState* state = GetState(*it);
+    SVal V = state->getLValue(A->getType(), state->getSVal(Idx),
+                              state->getSVal(Base));
+    assert(A->isLValue());
+    MakeNode(Dst, A, *it, state->BindExpr(A, V), ProgramPoint::PostLValueKind);
   }
 }
 
