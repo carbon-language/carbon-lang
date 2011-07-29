@@ -664,8 +664,15 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       // Use of a dead register.
       if (!regsLive.count(Reg)) {
         if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-          // Reserved registers may be used even when 'dead'.
-          if (!isReserved(Reg))
+          // Reserved registers may be used even when 'dead', but allocatable
+          // registers can't.
+          // We track the liveness of unreserved, unallocatable registers while
+          // the machine function is still in SSA form. That lets us check for
+          // bad EFLAGS uses. After register allocation, the unallocatable
+          // registers are probably quite wrong. For example, the x87 ST0-ST7
+          // registers don't track liveness at all.
+          if (!isReserved(Reg) &&
+              (MRI->isSSA() || TRI->isInAllocatableClass(Reg)))
             report("Using an undefined physical register", MO, MONum);
         } else {
           BBInfo &MInfo = MBBInfoMap[MI->getParent()];
