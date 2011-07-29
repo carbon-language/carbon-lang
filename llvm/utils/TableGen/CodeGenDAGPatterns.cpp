@@ -1747,9 +1747,10 @@ TreePatternNode *TreePattern::ParseTreePattern(const Init *TheInit, StringRef Op
     // TreePatternNode of its own.  For example:
     ///   (foo GPR, imm) -> (foo GPR, (imm))
     if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag"))
-      return ParseTreePattern(new DagInit(DI, "",
-                          std::vector<std::pair<const Init*, std::string> >()),
-                              OpName);
+      return ParseTreePattern(
+        DagInit::get(DI, "",
+                     std::vector<std::pair<const Init*, std::string> >()),
+        OpName);
 
     // Input argument?
     TreePatternNode *Res = new TreePatternNode(DI, 1);
@@ -1860,7 +1861,7 @@ TreePatternNode *TreePattern::ParseTreePattern(const Init *TheInit, StringRef Op
     else // Otherwise, no chain.
       Operator = getDAGPatterns().get_intrinsic_wo_chain_sdnode();
 
-    TreePatternNode *IIDNode = new TreePatternNode(new IntInit(IID), 1);
+    TreePatternNode *IIDNode = new TreePatternNode(IntInit::get(IID), 1);
     Children.insert(Children.begin(), IIDNode);
   }
 
@@ -2192,7 +2193,7 @@ void CodeGenDAGPatterns::ParseDefaultOperands() {
       for (unsigned op = 0, e = DefaultInfo->getNumArgs(); op != e; ++op)
         Ops.push_back(std::make_pair(DefaultInfo->getArg(op),
                                      DefaultInfo->getArgName(op)));
-      const DagInit *DI = new DagInit(SomeSDNode, "", Ops);
+      const DagInit *DI = DagInit::get(SomeSDNode, "", Ops);
 
       // Create a TreePattern to parse this.
       TreePattern P(DefaultOps[iter][i], DI, false, *this);
