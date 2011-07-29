@@ -589,19 +589,27 @@ public:
   /// takes 3 operands
   SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
                     SDValue Ptr, SDValue Cmp, SDValue Swp,
-                    MachinePointerInfo PtrInfo, unsigned Alignment=0);
+                    MachinePointerInfo PtrInfo, unsigned Alignment,
+                    AtomicOrdering Ordering,
+                    SynchronizationScope SynchScope);
   SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
                     SDValue Ptr, SDValue Cmp, SDValue Swp,
-                    MachineMemOperand *MMO);
+                    MachineMemOperand *MMO,
+                    AtomicOrdering Ordering,
+                    SynchronizationScope SynchScope);
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain and
   /// takes 2 operands.
   SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
                     SDValue Ptr, SDValue Val, const Value* PtrVal,
-                    unsigned Alignment = 0);
+                    unsigned Alignment,
+                    AtomicOrdering Ordering,
+                    SynchronizationScope SynchScope);
   SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
                     SDValue Ptr, SDValue Val,
-                    MachineMemOperand *MMO);
+                    MachineMemOperand *MMO,
+                    AtomicOrdering Ordering,
+                    SynchronizationScope SynchScope);
 
   /// getMemIntrinsicNode - Creates a MemIntrinsicNode that may produce a
   /// result and takes a list of operands. Opcode may be INTRINSIC_VOID,

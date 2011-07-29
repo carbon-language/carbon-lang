@@ -216,6 +216,15 @@ bool Instruction::isIdenticalToWhenDefined(const Instruction *I) const {
   if (const FenceInst *FI = dyn_cast<FenceInst>(this))
     return FI->getOrdering() == cast<FenceInst>(FI)->getOrdering() &&
            FI->getSynchScope() == cast<FenceInst>(FI)->getSynchScope();
+  if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(this))
+    return CXI->isVolatile() == cast<AtomicCmpXchgInst>(I)->isVolatile() &&
+           CXI->getOrdering() == cast<AtomicCmpXchgInst>(I)->getOrdering() &&
+           CXI->getSynchScope() == cast<AtomicCmpXchgInst>(I)->getSynchScope();
+  if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(this))
+    return RMWI->getOperation() == cast<AtomicRMWInst>(I)->getOperation() &&
+           RMWI->isVolatile() == cast<AtomicRMWInst>(I)->isVolatile() &&
+           RMWI->getOrdering() == cast<AtomicRMWInst>(I)->getOrdering() &&
+           RMWI->getSynchScope() == cast<AtomicRMWInst>(I)->getSynchScope();
 
   return true;
 }
@@ -257,8 +266,17 @@ bool Instruction::isSameOperationAs(const Instruction *I) const {
   if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(this))
     return EVI->getIndices() == cast<ExtractValueInst>(I)->getIndices();
   if (const FenceInst *FI = dyn_cast<FenceInst>(this))
-    return FI->getOrdering() == cast<FenceInst>(FI)->getOrdering() &&
-           FI->getSynchScope() == cast<FenceInst>(FI)->getSynchScope();
+    return FI->getOrdering() == cast<FenceInst>(I)->getOrdering() &&
+           FI->getSynchScope() == cast<FenceInst>(I)->getSynchScope();
+  if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(this))
+    return CXI->isVolatile() == cast<AtomicCmpXchgInst>(I)->isVolatile() &&
+           CXI->getOrdering() == cast<AtomicCmpXchgInst>(I)->getOrdering() &&
+           CXI->getSynchScope() == cast<AtomicCmpXchgInst>(I)->getSynchScope();
+  if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(this))
+    return RMWI->getOperation() == cast<AtomicRMWInst>(I)->getOperation() &&
+           RMWI->isVolatile() == cast<AtomicRMWInst>(I)->isVolatile() &&
+           RMWI->getOrdering() == cast<AtomicRMWInst>(I)->getOrdering() &&
+           RMWI->getSynchScope() == cast<AtomicRMWInst>(I)->getSynchScope();
 
   return true;
 }
@@ -292,6 +310,8 @@ bool Instruction::mayReadFromMemory() const {
   case Instruction::VAArg:
   case Instruction::Load:
   case Instruction::Fence: // FIXME: refine definition of mayReadFromMemory
+  case Instruction::AtomicCmpXchg:
+  case Instruction::AtomicRMW:
     return true;
   case Instruction::Call:
     return !cast<CallInst>(this)->doesNotAccessMemory();
@@ -310,6 +330,8 @@ bool Instruction::mayWriteToMemory() const {
   case Instruction::Fence: // FIXME: refine definition of mayWriteToMemory
   case Instruction::Store:
   case Instruction::VAArg:
+  case Instruction::AtomicCmpXchg:
+  case Instruction::AtomicRMW:
     return true;
   case Instruction::Call:
     return !cast<CallInst>(this)->onlyReadsMemory();

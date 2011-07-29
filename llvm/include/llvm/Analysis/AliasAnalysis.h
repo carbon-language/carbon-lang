@@ -342,6 +342,10 @@ public:
     case Instruction::Load:   return getModRefInfo((const LoadInst*)I,  Loc);
     case Instruction::Store:  return getModRefInfo((const StoreInst*)I, Loc);
     case Instruction::Fence:  return getModRefInfo((const FenceInst*)I, Loc);
+    case Instruction::AtomicCmpXchg:
+      return getModRefInfo((const AtomicCmpXchgInst*)I, Loc);
+    case Instruction::AtomicRMW:
+      return getModRefInfo((const AtomicRMWInst*)I, Loc);
     case Instruction::Call:   return getModRefInfo((const CallInst*)I,  Loc);
     case Instruction::Invoke: return getModRefInfo((const InvokeInst*)I,Loc);
     default:                  return NoModRef;
@@ -418,6 +422,32 @@ public:
   /// getModRefInfo (for fences) - A convenience wrapper.
   ModRefResult getModRefInfo(const FenceInst *S, const Value *P, uint64_t Size){
     return getModRefInfo(S, Location(P, Size));
+  }
+
+  /// getModRefInfo (for cmpxchges) - Return whether information about whether
+  /// a particular cmpxchg modifies or reads the specified memory location.
+  ModRefResult getModRefInfo(const AtomicCmpXchgInst *CX, const Location &Loc) {
+    // Conservatively correct.  (But there are obvious ways to be smarter.)
+    return ModRef;
+  }
+
+  /// getModRefInfo (for cmpxchges) - A convenience wrapper.
+  ModRefResult getModRefInfo(const AtomicCmpXchgInst *CX,
+                             const Value *P, unsigned Size) {
+    return getModRefInfo(CX, Location(P, Size));
+  }
+
+  /// getModRefInfo (for atomicrmws) - Return whether information about whether
+  /// a particular atomicrmw modifies or reads the specified memory location.
+  ModRefResult getModRefInfo(const AtomicRMWInst *RMW, const Location &Loc) {
+    // Conservatively correct.  (But there are obvious ways to be smarter.)
+    return ModRef;
+  }
+
+  /// getModRefInfo (for atomicrmws) - A convenience wrapper.
+  ModRefResult getModRefInfo(const AtomicRMWInst *RMW,
+                             const Value *P, unsigned Size) {
+    return getModRefInfo(RMW, Location(P, Size));
   }
 
   /// getModRefInfo (for va_args) - Return whether information about whether
