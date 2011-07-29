@@ -2489,7 +2489,8 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
         Mnemonic == "mrs" || Mnemonic == "smmls" || Mnemonic == "vabs" ||
         Mnemonic == "vcls" || Mnemonic == "vmls" || Mnemonic == "vmrs" ||
         Mnemonic == "vnmls" || Mnemonic == "vqabs" || Mnemonic == "vrecps" ||
-        Mnemonic == "vrsqrts" || (Mnemonic == "movs" && isThumb()))) {
+        Mnemonic == "vrsqrts" || Mnemonic == "srs" ||
+        (Mnemonic == "movs" && isThumb()))) {
     Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 1);
     CarrySetting = true;
   }
@@ -2540,7 +2541,8 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "dsb" || Mnemonic == "isb" || Mnemonic == "clrex" ||
       Mnemonic == "setend" ||
       ((Mnemonic == "pld" || Mnemonic == "pli") && !isThumb()) ||
-      (Mnemonic.startswith("rfe") && !isThumb()) ||
+      ((Mnemonic.startswith("rfe") || Mnemonic.startswith("srs"))
+        && !isThumb()) ||
       Mnemonic.startswith("cps") || (Mnemonic == "movs" && isThumb())) {
     CanAcceptPredicationCode = false;
   } else {

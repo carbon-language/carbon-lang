@@ -1732,8 +1732,53 @@ Lforward:
 
 
 @------------------------------------------------------------------------------
-@ FIXME: SRS
+@ SRS
 @------------------------------------------------------------------------------
+        srsda sp, #5
+        srsdb sp, #1
+        srsia sp, #0
+        srsib sp, #15
+
+        srsda sp!, #31
+        srsdb sp!, #19
+        srsia sp!, #2
+        srsib sp!, #14
+
+        srsfa sp, #11
+        srsea sp, #10
+        srsfd sp, #9
+        srsed sp, #5
+
+        srsfa sp!, #5
+        srsea sp!, #5
+        srsfd sp!, #5
+        srsed sp!, #5
+
+        srs sp, #5
+        srs sp!, #5
+
+@ CHECK: srsda	sp, #5                  @ encoding: [0x05,0x05,0x4d,0xf8]
+@ CHECK: srsdb	sp, #1                  @ encoding: [0x01,0x05,0x4d,0xf9]
+@ CHECK: srsia	sp, #0                  @ encoding: [0x00,0x05,0xcd,0xf8]
+@ CHECK: srsib	sp, #15                 @ encoding: [0x0f,0x05,0xcd,0xf9]
+
+@ CHECK: srsda	sp!, #31                @ encoding: [0x1f,0x05,0x6d,0xf8]
+@ CHECK: srsdb	sp!, #19                @ encoding: [0x13,0x05,0x6d,0xf9]
+@ CHECK: srsia	sp!, #2                 @ encoding: [0x02,0x05,0xed,0xf8]
+@ CHECK: srsib	sp!, #14                @ encoding: [0x0e,0x05,0xed,0xf9]
+
+@ CHECK: srsda	sp, #11                 @ encoding: [0x0b,0x05,0x4d,0xf8]
+@ CHECK: srsdb	sp, #10                 @ encoding: [0x0a,0x05,0x4d,0xf9]
+@ CHECK: srsia	sp, #9                  @ encoding: [0x09,0x05,0xcd,0xf8]
+@ CHECK: srsib	sp, #5                  @ encoding: [0x05,0x05,0xcd,0xf9]
+
+@ CHECK: srsda	sp!, #5                 @ encoding: [0x05,0x05,0x6d,0xf8]
+@ CHECK: srsdb	sp!, #5                 @ encoding: [0x05,0x05,0x6d,0xf9]
+@ CHECK: srsia	sp!, #5                 @ encoding: [0x05,0x05,0xed,0xf8]
+@ CHECK: srsib	sp!, #5                 @ encoding: [0x05,0x05,0xed,0xf9]
+
+@ CHECK: srsia	sp, #5                  @ encoding: [0x05,0x05,0xcd,0xf8]
+@ CHECK: srsia	sp!, #5                 @ encoding: [0x05,0x05,0xed,0xf8]
 
 
 @------------------------------------------------------------------------------

@@ -798,7 +798,7 @@ static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
 // MSR/MSRsys: Rm mask=Inst{19-16}
 // BXJ:        Rm
 // MSRi/MSRsysi: so_imm
-// SRSW/SRS: ldstm_mode:$amode mode_imm
+// SRS: mode_imm
 // RFE: Rn
 static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
@@ -858,15 +858,12 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     NumOpsAdded = 2;
     return true;
   }
-  if (Opcode == ARM::SRSW || Opcode == ARM::SRS) {
-    ARM_AM::AMSubMode SubMode = getAMSubModeForBits(getPUBits(insn));
-    MI.addOperand(MCOperand::CreateImm(ARM_AM::getAM4ModeImm(SubMode)));
-
-    if (Opcode == ARM::SRSW || Opcode == ARM::SRS)
-      MI.addOperand(MCOperand::CreateImm(slice(insn, 4, 0)));
-      MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
-                                                         decodeRn(insn))));
-    NumOpsAdded = 3;
+  if (Opcode == ARM::SRSDA || Opcode == ARM::SRSDB ||
+      Opcode == ARM::SRSIA || Opcode == ARM::SRSIB ||
+      Opcode == ARM::SRSDA_UPD || Opcode == ARM::SRSDB_UPD ||
+      Opcode == ARM::SRSIA_UPD || Opcode == ARM::SRSIB_UPD) {
+    MI.addOperand(MCOperand::CreateImm(slice(insn, 4, 0)));
+    NumOpsAdded = 1;
     return true;
   }
   if (Opcode == ARM::RFEDA || Opcode == ARM::RFEDB ||

@@ -1722,23 +1722,44 @@ def SVC : ABI<0b1111, (outs), (ins imm24b:$svc), IIC_Br, "svc", "\t$svc", []> {
 }
 
 // Store Return State
-// FIXME: This should not use submode!
-def SRSW : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, i32imm:$mode),
-                NoItinerary, "srs${amode}\tsp!, $mode", []> {
+class SRSI<bit wb, string asm>
+  : XI<(outs), (ins imm0_31:$mode), AddrModeNone, 4, IndexModeNone, BrFrm,
+       NoItinerary, asm, "", []> {
+  bits<5> mode;
   let Inst{31-28} = 0b1111;
-  let Inst{22-20} = 0b110; // W = 1
-  let Inst{19-8} = 0xd05;
-  let Inst{7-5} = 0b000;
+  let Inst{27-25} = 0b100;
+  let Inst{22} = 1;
+  let Inst{21} = wb;
+  let Inst{20} = 0;
+  let Inst{19-16} = 0b1101;  // SP
+  let Inst{15-5} = 0b00000101000;
+  let Inst{4-0} = mode;
 }
 
-def SRS  : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, i32imm:$mode),
-                NoItinerary, "srs${amode}\tsp, $mode", []> {
-  let Inst{31-28} = 0b1111;
-  let Inst{22-20} = 0b100; // W = 0
-  let Inst{19-8} = 0xd05;
-  let Inst{7-5} = 0b000;
+def SRSDA : SRSI<0, "srsda\tsp, $mode"> {
+  let Inst{24-23} = 0;
 }
-
+def SRSDA_UPD : SRSI<1, "srsda\tsp!, $mode"> {
+  let Inst{24-23} = 0;
+}
+def SRSDB : SRSI<0, "srsdb\tsp, $mode"> {
+  let Inst{24-23} = 0b10;
+}
+def SRSDB_UPD : SRSI<1, "srsdb\tsp!, $mode"> {
+  let Inst{24-23} = 0b10;
+}
+def SRSIA : SRSI<0, "srsia\tsp, $mode"> {
+  let Inst{24-23} = 0b01;
+}
+def SRSIA_UPD : SRSI<1, "srsia\tsp!, $mode"> {
+  let Inst{24-23} = 0b01;
+}
+def SRSIB : SRSI<0, "srsib\tsp, $mode"> {
+  let Inst{24-23} = 0b11;
+}
+def SRSIB_UPD : SRSI<1, "srsib\tsp!, $mode"> {
+  let Inst{24-23} = 0b11;
+}
 
 // Return From Exception
 class RFEI<bit wb, string asm>
@@ -4454,3 +4475,10 @@ def : MnemonicAlias<"rfeea", "rfedb">;
 def : MnemonicAlias<"rfefd", "rfeia">;
 def : MnemonicAlias<"rfeed", "rfeib">;
 def : MnemonicAlias<"rfe", "rfeia">;
+
+// SRS aliases
+def : MnemonicAlias<"srsfa", "srsda">;
+def : MnemonicAlias<"srsea", "srsdb">;
+def : MnemonicAlias<"srsfd", "srsia">;
+def : MnemonicAlias<"srsed", "srsib">;
+def : MnemonicAlias<"srs", "srsia">;
