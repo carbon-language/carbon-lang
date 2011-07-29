@@ -1739,19 +1739,44 @@ def SRS  : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, i32imm:$mode),
   let Inst{7-5} = 0b000;
 }
 
+
 // Return From Exception
-def RFEW : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, GPR:$base),
-                NoItinerary, "rfe${amode}\t$base!", []> {
+class RFEI<bit wb, string asm>
+  : XI<(outs), (ins GPR:$Rn), AddrModeNone, 4, IndexModeNone, BrFrm,
+       NoItinerary, asm, "", []> {
+  bits<4> Rn;
   let Inst{31-28} = 0b1111;
-  let Inst{22-20} = 0b011; // W = 1
-  let Inst{15-0} = 0x0a00;
+  let Inst{27-25} = 0b100;
+  let Inst{22} = 0;
+  let Inst{21} = wb;
+  let Inst{20} = 1;
+  let Inst{19-16} = Rn;
+  let Inst{15-0} = 0xa00;
 }
 
-def RFE  : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, GPR:$base),
-                NoItinerary, "rfe${amode}\t$base", []> {
-  let Inst{31-28} = 0b1111;
-  let Inst{22-20} = 0b001; // W = 0
-  let Inst{15-0} = 0x0a00;
+def RFEDA : RFEI<0, "rfeda\t$Rn"> {
+  let Inst{24-23} = 0;
+}
+def RFEDA_UPD : RFEI<1, "rfeda\t$Rn!"> {
+  let Inst{24-23} = 0;
+}
+def RFEDB : RFEI<0, "rfedb\t$Rn"> {
+  let Inst{24-23} = 0b10;
+}
+def RFEDB_UPD : RFEI<1, "rfedb\t$Rn!"> {
+  let Inst{24-23} = 0b10;
+}
+def RFEIA : RFEI<0, "rfeia\t$Rn"> {
+  let Inst{24-23} = 0b01;
+}
+def RFEIA_UPD : RFEI<1, "rfeia\t$Rn!"> {
+  let Inst{24-23} = 0b01;
+}
+def RFEIB : RFEI<0, "rfeib\t$Rn"> {
+  let Inst{24-23} = 0b11;
+}
+def RFEIB_UPD : RFEI<1, "rfeib\t$Rn!"> {
+  let Inst{24-23} = 0b11;
 }
 
 //===----------------------------------------------------------------------===//
@@ -4421,3 +4446,11 @@ def : InstAlias<"uxtab16${p} $Rd, $Rn, $Rm",
 def : InstAlias<"uxtb${p} $Rd, $Rm", (UXTB GPR:$Rd, GPR:$Rm, 0, pred:$p)>;
 def : InstAlias<"uxtb16${p} $Rd, $Rm", (UXTB16 GPR:$Rd, GPR:$Rm, 0, pred:$p)>;
 def : InstAlias<"uxth${p} $Rd, $Rm", (UXTH GPR:$Rd, GPR:$Rm, 0, pred:$p)>;
+
+
+// RFE aliases
+def : MnemonicAlias<"rfefa", "rfeda">;
+def : MnemonicAlias<"rfeea", "rfedb">;
+def : MnemonicAlias<"rfefd", "rfeia">;
+def : MnemonicAlias<"rfeed", "rfeib">;
+def : MnemonicAlias<"rfe", "rfeia">;

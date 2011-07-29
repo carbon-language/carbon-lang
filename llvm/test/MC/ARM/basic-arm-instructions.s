@@ -1169,6 +1169,56 @@ Lforward:
 
 
 @------------------------------------------------------------------------------
+@ RFE
+@------------------------------------------------------------------------------
+        rfeda r2
+        rfedb r3
+        rfeia r5
+        rfeib r6
+
+        rfeda r4!
+        rfedb r7!
+        rfeia r9!
+        rfeib r8!
+
+        rfefa r2
+        rfeea r3
+        rfefd r5
+        rfeed r6
+
+        rfefa r4!
+        rfeea r7!
+        rfefd r9!
+        rfeed r8!
+
+        rfe r1
+        rfe r1!
+
+@ CHECK: rfeda	r2                      @ encoding: [0x00,0x0a,0x12,0xf8]
+@ CHECK: rfedb	r3                      @ encoding: [0x00,0x0a,0x13,0xf9]
+@ CHECK: rfeia	r5                      @ encoding: [0x00,0x0a,0x95,0xf8]
+@ CHECK: rfeib	r6                      @ encoding: [0x00,0x0a,0x96,0xf9]
+
+@ CHECK: rfeda	r4!                     @ encoding: [0x00,0x0a,0x34,0xf8]
+@ CHECK: rfedb	r7!                     @ encoding: [0x00,0x0a,0x37,0xf9]
+@ CHECK: rfeia	r9!                     @ encoding: [0x00,0x0a,0xb9,0xf8]
+@ CHECK: rfeib	r8!                     @ encoding: [0x00,0x0a,0xb8,0xf9]
+
+@ CHECK: rfeda	r2                      @ encoding: [0x00,0x0a,0x12,0xf8]
+@ CHECK: rfedb	r3                      @ encoding: [0x00,0x0a,0x13,0xf9]
+@ CHECK: rfeia	r5                      @ encoding: [0x00,0x0a,0x95,0xf8]
+@ CHECK: rfeib	r6                      @ encoding: [0x00,0x0a,0x96,0xf9]
+
+@ CHECK: rfeda	r4!                     @ encoding: [0x00,0x0a,0x34,0xf8]
+@ CHECK: rfedb	r7!                     @ encoding: [0x00,0x0a,0x37,0xf9]
+@ CHECK: rfeia	r9!                     @ encoding: [0x00,0x0a,0xb9,0xf8]
+@ CHECK: rfeib	r8!                     @ encoding: [0x00,0x0a,0xb8,0xf9]
+
+@ CHECK: rfeia	r1                      @ encoding: [0x00,0x0a,0x91,0xf8]
+@ CHECK: rfeia	r1!                     @ encoding: [0x00,0x0a,0xb1,0xf8]
+
+
+@------------------------------------------------------------------------------
 @ RSB
 @------------------------------------------------------------------------------
         rsb r4, r5, #0xf000

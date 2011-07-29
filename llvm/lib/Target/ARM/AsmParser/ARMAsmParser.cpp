@@ -2540,6 +2540,7 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "dsb" || Mnemonic == "isb" || Mnemonic == "clrex" ||
       Mnemonic == "setend" ||
       ((Mnemonic == "pld" || Mnemonic == "pli") && !isThumb()) ||
+      (Mnemonic.startswith("rfe") && !isThumb()) ||
       Mnemonic.startswith("cps") || (Mnemonic == "movs" && isThumb())) {
     CanAcceptPredicationCode = false;
   } else {

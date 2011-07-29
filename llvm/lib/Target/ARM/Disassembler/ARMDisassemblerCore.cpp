@@ -799,7 +799,7 @@ static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
 // BXJ:        Rm
 // MSRi/MSRsysi: so_imm
 // SRSW/SRS: ldstm_mode:$amode mode_imm
-// RFEW/RFE: ldstm_mode:$amode Rn
+// RFE: Rn
 static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
@@ -858,17 +858,24 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     NumOpsAdded = 2;
     return true;
   }
-  if (Opcode == ARM::SRSW || Opcode == ARM::SRS ||
-      Opcode == ARM::RFEW || Opcode == ARM::RFE) {
+  if (Opcode == ARM::SRSW || Opcode == ARM::SRS) {
     ARM_AM::AMSubMode SubMode = getAMSubModeForBits(getPUBits(insn));
     MI.addOperand(MCOperand::CreateImm(ARM_AM::getAM4ModeImm(SubMode)));
 
     if (Opcode == ARM::SRSW || Opcode == ARM::SRS)
       MI.addOperand(MCOperand::CreateImm(slice(insn, 4, 0)));
-    else
       MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                          decodeRn(insn))));
     NumOpsAdded = 3;
+    return true;
+  }
+  if (Opcode == ARM::RFEDA || Opcode == ARM::RFEDB ||
+      Opcode == ARM::RFEIA || Opcode == ARM::RFEIB ||
+      Opcode == ARM::RFEDA_UPD || Opcode == ARM::RFEDB_UPD ||
+      Opcode == ARM::RFEIA_UPD || Opcode == ARM::RFEIB_UPD) {
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+                                                       decodeRn(insn))));
+    NumOpsAdded = 1;
     return true;
   }
 
