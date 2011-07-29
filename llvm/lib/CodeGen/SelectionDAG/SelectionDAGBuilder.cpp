@@ -1834,7 +1834,7 @@ void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &LP) {
   SDValue Chain = Op1.getValue(1);
 
   // Insert the EHSELECTION instruction.
-  VTs = DAG.getVTList(ValueVTs[1], MVT::Other);
+  VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
   Ops[0] = Op1;
   Ops[1] = Chain;
   SDValue Op2 = DAG.getNode(ISD::EHSELECTION, getCurDebugLoc(), VTs, Ops, 2);
