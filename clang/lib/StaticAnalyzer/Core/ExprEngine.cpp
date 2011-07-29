@@ -2019,14 +2019,13 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
 void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex, 
                            ExplodedNode *Pred, ExplodedNodeSet &Dst) {
   
-  ExplodedNodeSet S1;
-  Visit(Ex, Pred, S1);
-  ExplodedNodeSet S2;
-  getCheckerManager().runCheckersForPreStmt(S2, S1, CastE, *this);
+  ExplodedNodeSet dstPreStmt;
+  getCheckerManager().runCheckersForPreStmt(dstPreStmt, Pred, CastE, *this);
   
   if (CastE->getCastKind() == CK_LValueToRValue ||
       CastE->getCastKind() == CK_GetObjCProperty) {
-    for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I!=E; ++I) {
+    for (ExplodedNodeSet::iterator I = dstPreStmt.begin(), E = dstPreStmt.end();
+         I!=E; ++I) {
       ExplodedNode *subExprNode = *I;
       const GRState *state = GetState(subExprNode);
       evalLoad(Dst, CastE, subExprNode, state, state->getSVal(Ex));
@@ -2041,7 +2040,9 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
   if (const ExplicitCastExpr *ExCast=dyn_cast_or_null<ExplicitCastExpr>(CastE))
     T = ExCast->getTypeAsWritten();
 
-  for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
+  for (ExplodedNodeSet::iterator I = dstPreStmt.begin(), E = dstPreStmt.end();
+       I != E; ++I) {
+
     Pred = *I;
 
     switch (CastE->getCastKind()) {
