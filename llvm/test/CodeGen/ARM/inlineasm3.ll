@@ -98,3 +98,15 @@ entry:
   %0 = tail call i32 asm "movw $0, $1", "=r,j"(i32 27182) nounwind
   ret i32 %0
 }
+
+; Radar 9866494
+
+define void @t10(i8* %f, i32 %g) nounwind {
+entry:
+; CHECK: t10
+; CHECK: str r1, [r0]
+  %f.addr = alloca i8*, align 4
+  store i8* %f, i8** %f.addr, align 4
+  call void asm "str $1, $0", "=*Q,r"(i8** %f.addr, i32 %g) nounwind
+  ret void
+}

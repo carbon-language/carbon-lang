@@ -7596,6 +7596,9 @@ ARMTargetLowering::getConstraintType(const std::string &Constraint) const {
     case 'x': return C_RegisterClass;
     case 't': return C_RegisterClass;
     case 'j': return C_Other; // Constant for movw.
+      // An address with a single base register. Due to the way we
+      // currently handle addresses it is the same as an 'r' memory constraint.
+    case 'Q': return C_Memory;
     }
   } else if (Constraint.size() == 2) {
     switch (Constraint[0]) {
