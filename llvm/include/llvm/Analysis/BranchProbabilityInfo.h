@@ -33,12 +33,12 @@ class BranchProbabilityInfo : public FunctionPass {
   // weight to just "inherit" the non-zero weight of an adjacent successor.
   static const uint32_t DEFAULT_WEIGHT = 16;
 
-  typedef std::pair<BasicBlock *, BasicBlock *> Edge;
+  typedef std::pair<const BasicBlock *, const BasicBlock *> Edge;
 
   DenseMap<Edge, uint32_t> Weights;
 
   // Get sum of the block successors' weights.
-  uint32_t getSumForBlock(BasicBlock *BB) const;
+  uint32_t getSumForBlock(const BasicBlock *BB) const;
 
 public:
   static char ID;
@@ -53,13 +53,14 @@ public:
 
   // Returned value is between 1 and UINT32_MAX. Look at
   // BranchProbabilityInfo.cpp for details.
-  uint32_t getEdgeWeight(BasicBlock *Src, BasicBlock *Dst) const;
+  uint32_t getEdgeWeight(const BasicBlock *Src, const BasicBlock *Dst) const;
 
   // Look at BranchProbabilityInfo.cpp for details. Use it with caution!
-  void setEdgeWeight(BasicBlock *Src, BasicBlock *Dst, uint32_t Weight);
+  void setEdgeWeight(const BasicBlock *Src, const BasicBlock *Dst,
+                     uint32_t Weight);
 
   // A 'Hot' edge is an edge which probability is >= 80%.
-  bool isEdgeHot(BasicBlock *Src, BasicBlock *Dst) const;
+  bool isEdgeHot(const BasicBlock *Src, const BasicBlock *Dst) const;
 
   // Return a hot successor for the block BB or null if there isn't one.
   BasicBlock *getHotSucc(BasicBlock *BB) const;
@@ -67,7 +68,8 @@ public:
   // Return a probability as a fraction between 0 (0% probability) and
   // 1 (100% probability), however the value is never equal to 0, and can be 1
   // only iff SRC block has only one successor.
-  BranchProbability getEdgeProbability(BasicBlock *Src, BasicBlock *Dst) const;
+  BranchProbability getEdgeProbability(const BasicBlock *Src,
+                                       const BasicBlock *Dst) const;
 
   // Print value between 0 (0% probability) and 1 (100% probability),
   // however the value is never equal to 0, and can be 1 only iff SRC block

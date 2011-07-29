@@ -33,7 +33,7 @@ namespace {
 // private methods are hidden in the .cpp file.
 class BranchProbabilityAnalysis {
 
-  typedef std::pair<BasicBlock *, BasicBlock *> Edge;
+  typedef std::pair<const BasicBlock *, const BasicBlock *> Edge;
 
   DenseMap<Edge, uint32_t> *Weights;
 
@@ -301,11 +301,11 @@ bool BranchProbabilityInfo::runOnFunction(Function &F) {
   return BPA.runOnFunction(F);
 }
 
-uint32_t BranchProbabilityInfo::getSumForBlock(BasicBlock *BB) const {
+uint32_t BranchProbabilityInfo::getSumForBlock(const BasicBlock *BB) const {
   uint32_t Sum = 0;
 
-  for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
-    BasicBlock *Succ = *I;
+  for (succ_const_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
+    const BasicBlock *Succ = *I;
     uint32_t Weight = getEdgeWeight(BB, Succ);
     uint32_t PrevSum = Sum;
 
@@ -316,7 +316,8 @@ uint32_t BranchProbabilityInfo::getSumForBlock(BasicBlock *BB) const {
   return Sum;
 }
 
-bool BranchProbabilityInfo::isEdgeHot(BasicBlock *Src, BasicBlock *Dst) const {
+bool BranchProbabilityInfo::
+isEdgeHot(const BasicBlock *Src, const BasicBlock *Dst) const {
   // Hot probability is at least 4/5 = 80%
   uint32_t Weight = getEdgeWeight(Src, Dst);
   uint32_t Sum = getSumForBlock(Src);
@@ -353,8 +354,8 @@ BasicBlock *BranchProbabilityInfo::getHotSucc(BasicBlock *BB) const {
 }
 
 // Return edge's weight. If can't find it, return DEFAULT_WEIGHT value.
-uint32_t
-BranchProbabilityInfo::getEdgeWeight(BasicBlock *Src, BasicBlock *Dst) const {
+uint32_t BranchProbabilityInfo::
+getEdgeWeight(const BasicBlock *Src, const BasicBlock *Dst) const {
   Edge E(Src, Dst);
   DenseMap<Edge, uint32_t>::const_iterator I = Weights.find(E);
 
@@ -364,8 +365,8 @@ BranchProbabilityInfo::getEdgeWeight(BasicBlock *Src, BasicBlock *Dst) const {
   return DEFAULT_WEIGHT;
 }
 
-void BranchProbabilityInfo::setEdgeWeight(BasicBlock *Src, BasicBlock *Dst,
-                                     uint32_t Weight) {
+void BranchProbabilityInfo::
+setEdgeWeight(const BasicBlock *Src, const BasicBlock *Dst, uint32_t Weight) {
   Weights[std::make_pair(Src, Dst)] = Weight;
   DEBUG(dbgs() << "set edge " << Src->getNameStr() << " -> "
                << Dst->getNameStr() << " weight to " << Weight
@@ -374,7 +375,7 @@ void BranchProbabilityInfo::setEdgeWeight(BasicBlock *Src, BasicBlock *Dst,
 
 
 BranchProbability BranchProbabilityInfo::
-getEdgeProbability(BasicBlock *Src, BasicBlock *Dst) const {
+getEdgeProbability(const BasicBlock *Src, const BasicBlock *Dst) const {
 
   uint32_t N = getEdgeWeight(Src, Dst);
   uint32_t D = getSumForBlock(Src);
