@@ -753,7 +753,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         {
                             const uint32_t error = packet.GetU32 (&offset);
                             const uint32_t count = packet.GetByteSize() - offset;
-                            s.Printf(" (error = 0x%8.8x <0x%x>:\n", error, count); 
+                            s.Printf(" (error = 0x%8.8x:\n", error); 
                             if (count > 0)
                                 packet.Dump (&s,                        // Stream to dump to
                                              offset,                    // Offset within "packet"
@@ -770,7 +770,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         {
                             const uint32_t error = packet.GetU32 (&offset);
                             const uint32_t count = packet.GetByteSize() - offset;
-                            s.Printf(" (error = 0x%8.8x <0x%x> regs:\n", error, count); 
+                            s.Printf(" (error = 0x%8.8x regs:\n", error); 
                             if (count > 0)
                                 packet.Dump (&s,                        // Stream to dump to
                                              offset,                    // Offset within "packet"
@@ -817,7 +817,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         {
                             const uint16_t reply_port = packet.GetU16 (&offset);
                             const uint16_t exc_port = packet.GetU16 (&offset);
-                            s.Printf(" (reply_port=%u, exc_port=%u, greeting=\"%s\")", reply_port, exc_port, packet.GetCStr(&offset));
+                            s.Printf(" (reply_port = %u, exc_port = %u, greeting = \"%s\")", reply_port, exc_port, packet.GetCStr(&offset));
                         }
                         break;
                                  
@@ -845,7 +845,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         {
                             const uint32_t addr = packet.GetU32 (&offset);
                             const uint32_t size = packet.GetU32 (&offset);
-                            s.Printf(" (addr = 0x%8.8x, size=%u)", addr, size);
+                            s.Printf(" (addr = 0x%8.8x, size = %u)", addr, size);
                             m_last_read_memory_addr = addr;
                         }
                         break;
@@ -854,7 +854,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         {
                             const uint32_t addr = packet.GetU32 (&offset);
                             const uint32_t size = packet.GetU32 (&offset);
-                            s.Printf(" (addr = 0x%8.8x, size=%u, bytes:\n", addr, size);
+                            s.Printf(" (addr = 0x%8.8x, size = %u, bytes = \n", addr, size);
                             if (size > 0)
                                 DataExtractor::DumpHexBytes(&s, packet.GetData(&offset, size), size, 32, addr);
                         }
@@ -864,7 +864,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         {
                             const uint64_t addr = packet.GetU64 (&offset);
                             const uint32_t size = packet.GetU32 (&offset);
-                            s.Printf(" (addr = 0x%16.16llx, size=%u)", addr, size);
+                            s.Printf(" (addr = 0x%16.16llx, size = %u)", addr, size);
                             m_last_read_memory_addr = addr;
                         }
                         break;
@@ -873,7 +873,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         {
                             const uint64_t addr = packet.GetU64 (&offset);
                             const uint32_t size = packet.GetU32 (&offset);
-                            s.Printf(" (addr = 0x%16.16llx, size=%u, bytes:", addr, size);
+                            s.Printf(" (addr = 0x%16.16llx, size = %u, bytes = \n", addr, size);
                             if (size > 0)
                                 DataExtractor::DumpHexBytes(&s, packet.GetData(&offset, size), size, 32, addr);
                         }
@@ -883,7 +883,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                         {
                             const uint32_t cpu = packet.GetU32 (&offset);
                             const uint32_t flavor = packet.GetU32 (&offset);
-                            s.Printf(" (cpu = %u, flavor=%u)", cpu, flavor);
+                            s.Printf(" (cpu = %u, flavor = %u)", cpu, flavor);
                         }
                         break;
 
@@ -892,7 +892,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                             const uint32_t cpu = packet.GetU32 (&offset);
                             const uint32_t flavor = packet.GetU32 (&offset);
                             const uint32_t nbytes = packet.GetByteSize() - offset;
-                            s.Printf(" (cpu = %u, flavor=%u, regs:\n", cpu, flavor);
+                            s.Printf(" (cpu = %u, flavor = %u, regs = \n", cpu, flavor);
                             if (nbytes > 0)
                                 packet.Dump (&s,                        // Stream to dump to
                                              offset,                    // Offset within "packet"
@@ -975,7 +975,7 @@ CommunicationKDP::DumpPacket (Stream &s, const DataExtractor& packet)
                     case KDP_REATTACH:
                         {
                             const uint16_t reply_port = packet.GetU16 (&offset);
-                            s.Printf(" (reply_port=%u)", reply_port);
+                            s.Printf(" (reply_port = %u)", reply_port);
                         }
                         break;
                 }
@@ -1080,7 +1080,12 @@ CommunicationKDP::SendRequestBreakpoint (bool set, addr_t addr)
     
     DataExtractor reply_packet;
     if (SendRequestAndGetReply (command, request_sequence_id, request_packet, reply_packet))
-        return true;
+    {
+        uint32_t offset = 8;
+        uint32_t kdp_error = reply_packet.GetU32 (&offset);        
+        if (kdp_error == 0)
+            return true;
+    }
     return false;
 }
 
