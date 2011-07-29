@@ -714,7 +714,16 @@ const Init *OpInit::resolveListElementReference(Record &R, const RecordVal *IRV,
 }
 
 const UnOpInit *UnOpInit::get(UnaryOp opc, const Init *lhs, RecTy *Type) {
-  return new UnOpInit(opc, lhs, Type);
+  typedef std::pair<std::pair<unsigned, const Init *>, RecTy *> Key;
+
+  typedef DenseMap<Key, UnOpInit *> Pool;
+  static Pool ThePool;  
+
+  Key TheKey(std::make_pair(std::make_pair(opc, lhs), Type));
+
+  UnOpInit *&I = ThePool[TheKey];
+  if (!I) I = new UnOpInit(opc, lhs, Type);
+  return I;
 }
 
 const Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
