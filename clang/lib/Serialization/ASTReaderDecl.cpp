@@ -1406,8 +1406,8 @@ ASTReader::DeclCursorForIndex(unsigned Index, DeclID ID) {
 
   GlobalDeclMapType::iterator I = GlobalDeclMap.find(ID);
   assert(I != GlobalDeclMap.end() && "Corrupted global declaration map");
-  return RecordLocation(I->second.first, 
-                        I->second.first->DeclOffsets[Index + I->second.second]);
+  Module *M = I->second;
+  return RecordLocation(M, M->DeclOffsets[Index - M->BaseDeclID]);
 }
 
 ASTReader::RecordLocation ASTReader::getLocalBitOffset(uint64_t GlobalOffset) {

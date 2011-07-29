@@ -252,6 +252,9 @@ public:
   /// stored.
   const uint32_t *IdentifierOffsets;
   
+  /// \brief Base identifier ID for identifiers local to this module.
+  serialization::IdentID BaseIdentifierID;
+
   /// \brief Actual data for the on-disk hash table of identifiers.
   ///
   /// This pointer points into a memory buffer, where the on-disk hash
@@ -280,6 +283,10 @@ public:
   /// \brief The offset of the start of the preprocessor detail cursor.
   uint64_t PreprocessorDetailStartOffset;
   
+  /// \brief Base preprocessed entity ID for preprocessed entities local to 
+  /// this module.
+  serialization::PreprocessedEntityID BasePreprocessedEntityID;
+  
   /// \brief The number of macro definitions in this file.
   unsigned LocalNumMacroDefinitions;
   
@@ -287,6 +294,10 @@ public:
   /// record in the AST file.
   const uint32_t *MacroDefinitionOffsets;
   
+  /// \brief Base macro definition ID for macro definitions local to this 
+  /// module.
+  serialization::MacroID BaseMacroDefinitionID;
+
   // === Header search information ===
   
   /// \brief The number of local HeaderFileInfo structures.
@@ -318,6 +329,9 @@ public:
   /// where each selector resides.
   const uint32_t *SelectorOffsets;
   
+  /// \brief Base selector ID for selectors local to this module.
+  serialization::SelectorID BaseSelectorID;
+
   /// \brief A pointer to the character data that comprises the selector table
   ///
   /// The SelectorOffsets table refers into this memory.
@@ -343,14 +357,20 @@ public:
   /// \brief Offset of each declaration within the bitstream, indexed
   /// by the declaration ID (-1).
   const uint32_t *DeclOffsets;
-    
+  
+  /// \brief Base declaration ID for declarations local to this module.
+  serialization::DeclID BaseDeclID;
+
   /// \brief The number of C++ base specifier sets in this AST file.
   unsigned LocalNumCXXBaseSpecifiers;
   
   /// \brief Offset of each C++ base specifier set within the bitstream,
   /// indexed by the C++ base specifier set ID (-1).
   const uint32_t *CXXBaseSpecifiersOffsets;
-  
+
+  /// \brief Base base specifier ID for base specifiers local to this module.
+  serialization::CXXBaseSpecifiersID BaseCXXBaseSpecifiersID;
+
   // === Types ===
   
   /// \brief The number of types in this AST file.
@@ -565,13 +585,11 @@ private:
   /// = I + 1 has already been loaded.
   std::vector<Decl *> DeclsLoaded;
 
-  typedef ContinuousRangeMap<serialization::DeclID, 
-                             std::pair<Module *, int32_t>, 4> 
+  typedef ContinuousRangeMap<serialization::DeclID, Module *, 4> 
     GlobalDeclMapType;
   
   /// \brief Mapping from global declaration IDs to the module in which the
-  /// declaration resides along with the offset that should be added to the
-  /// global declaration ID to produce a local ID.
+  /// declaration resides.
   GlobalDeclMapType GlobalDeclMap;
   
   typedef std::pair<Module *, uint64_t> FileOffset;
@@ -646,8 +664,7 @@ private:
   /// been loaded.
   std::vector<IdentifierInfo *> IdentifiersLoaded;
 
-  typedef ContinuousRangeMap<serialization::IdentID, 
-                             std::pair<Module *, int32_t>, 4> 
+  typedef ContinuousRangeMap<serialization::IdentID, Module *, 4> 
     GlobalIdentifierMapType;
   
   /// \brief Mapping from global identifer IDs to the module in which the
@@ -662,8 +679,7 @@ private:
   /// been loaded.
   SmallVector<Selector, 16> SelectorsLoaded;
 
-  typedef ContinuousRangeMap<serialization::SelectorID, 
-                             std::pair<Module *, int32_t>, 4> 
+  typedef ContinuousRangeMap<serialization::SelectorID, Module *, 4> 
     GlobalSelectorMapType;
   
   /// \brief Mapping from global selector IDs to the module in which the
@@ -674,8 +690,7 @@ private:
   /// \brief The macro definitions we have already loaded.
   SmallVector<MacroDefinition *, 16> MacroDefinitionsLoaded;
 
-  typedef ContinuousRangeMap<serialization::MacroID, 
-                             std::pair<Module *, int32_t>, 4> 
+  typedef ContinuousRangeMap<serialization::MacroID, Module *, 4> 
     GlobalMacroDefinitionMapType;
   
   /// \brief Mapping from global macro definition IDs to the module in which the
@@ -688,7 +703,7 @@ private:
   /// record resides.
   llvm::DenseMap<IdentifierInfo *, uint64_t> UnreadMacroRecordOffsets;
 
-  typedef ContinuousRangeMap<unsigned, std::pair<Module *, int>, 4> 
+  typedef ContinuousRangeMap<unsigned, Module *, 4> 
     GlobalPreprocessedEntityMapType;
   
   /// \brief Mapping from global preprocessing entity IDs to the module in
@@ -696,8 +711,7 @@ private:
   /// added to the global preprocessing entitiy ID to produce a local ID.
   GlobalPreprocessedEntityMapType GlobalPreprocessedEntityMap;
   
-  typedef ContinuousRangeMap<serialization::CXXBaseSpecifiersID,
-                             std::pair<Module *, int32_t>, 4>
+  typedef ContinuousRangeMap<serialization::CXXBaseSpecifiersID, Module *, 4>
     GlobalCXXBaseSpecifiersMapType;
 
   /// \brief Mapping from global CXX base specifier IDs to the module in which

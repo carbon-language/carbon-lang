@@ -1851,11 +1851,11 @@ MacroDefinition *ASTReader::getMacroDefinition(MacroID ID) {
     GlobalMacroDefinitionMapType::iterator I =GlobalMacroDefinitionMap.find(ID);
     assert(I != GlobalMacroDefinitionMap.end() && 
            "Corrupted global macro definition map");
-    Module &F = *I->second.first;
-    unsigned Index = ID - 1 + I->second.second;
-    SavedStreamPosition SavedPosition(F.PreprocessorDetailCursor);  
-    F.PreprocessorDetailCursor.JumpToBit(F.MacroDefinitionOffsets[Index]);
-    LoadPreprocessedEntity(F);
+    Module &M = *I->second;
+    unsigned Index = ID - 1 - M.BaseMacroDefinitionID;
+    SavedStreamPosition SavedPosition(M.PreprocessorDetailCursor);  
+    M.PreprocessorDetailCursor.JumpToBit(M.MacroDefinitionOffsets[Index]);
+    LoadPreprocessedEntity(M);
   }
 
   return MacroDefinitionsLoaded[ID - 1];
@@ -2069,12 +2069,11 @@ ASTReader::ReadASTBlock(Module &F) {
       }
       F.DeclOffsets = (const uint32_t *)BlobStart;
       F.LocalNumDecls = Record[0];
+      F.BaseDeclID = getTotalNumDecls();
         
       // Introduce the global -> local mapping for declarations within this 
       // AST file.
-      GlobalDeclMap.insert(std::make_pair(getTotalNumDecls() + 1, 
-                                          std::make_pair(&F, 
-                                                         -getTotalNumDecls())));
+      GlobalDeclMap.insert(std::make_pair(getTotalNumDecls() + 1, &F));
       DeclsLoaded.resize(DeclsLoaded.size() + F.LocalNumDecls);      
       break;
 
@@ -2145,13 +2144,12 @@ ASTReader::ReadASTBlock(Module &F) {
       }
       F.IdentifierOffsets = (const uint32_t *)BlobStart;
       F.LocalNumIdentifiers = Record[0];
+      F.BaseIdentifierID = getTotalNumIdentifiers();
         
       // Introduce the global -> local mapping for identifiers within this AST
       // file
-      GlobalIdentifierMap.insert(
-                     std::make_pair(getTotalNumIdentifiers() + 1, 
-                                    std::make_pair(&F, 
-                                                   -getTotalNumIdentifiers())));
+      GlobalIdentifierMap.insert(std::make_pair(getTotalNumIdentifiers() + 1, 
+                                                &F));
       IdentifiersLoaded.resize(IdentifiersLoaded.size() +F.LocalNumIdentifiers);
       break;
 
@@ -2212,13 +2210,11 @@ ASTReader::ReadASTBlock(Module &F) {
     case SELECTOR_OFFSETS:
       F.SelectorOffsets = (const uint32_t *)BlobStart;
       F.LocalNumSelectors = Record[0];
+      F.BaseSelectorID = getTotalNumSelectors();
         
       // Introduce the global -> local mapping for identifiers within this AST
       // file
-      GlobalSelectorMap.insert(
-                     std::make_pair(getTotalNumSelectors() + 1, 
-                                    std::make_pair(&F, 
-                                                   -getTotalNumSelectors())));
+      GlobalSelectorMap.insert(std::make_pair(getTotalNumSelectors() + 1, &F));
       SelectorsLoaded.resize(SelectorsLoaded.size() + F.LocalNumSelectors);        
       break;
 
@@ -2428,16 +2424,14 @@ ASTReader::ReadASTBlock(Module &F) {
         StartingID = getTotalNumPreprocessedEntities();
       }
       
-      GlobalPreprocessedEntityMap.insert(
-                        std::make_pair(StartingID,
-                                         std::make_pair(&F, -(int)StartingID)));
+      F.BaseMacroDefinitionID = getTotalNumMacroDefinitions();
+      F.BasePreprocessedEntityID = StartingID;
 
       // Introduce the global -> local mapping for macro definitions within 
       // this AST file.
+      GlobalPreprocessedEntityMap.insert(std::make_pair(StartingID, &F));
       GlobalMacroDefinitionMap.insert(
-               std::make_pair(getTotalNumMacroDefinitions() + 1, 
-                              std::make_pair(&F, 
-                                             -getTotalNumMacroDefinitions())));
+        std::make_pair(getTotalNumMacroDefinitions() + 1, &F));
       MacroDefinitionsLoaded.resize(
                     MacroDefinitionsLoaded.size() + F.LocalNumMacroDefinitions);
       break;
@@ -2473,11 +2467,9 @@ ASTReader::ReadASTBlock(Module &F) {
       
       F.LocalNumCXXBaseSpecifiers = Record[0];
       F.CXXBaseSpecifiersOffsets = (const uint32_t *)BlobStart;
-
-      GlobalCXXBaseSpecifiersMap.insert(std::make_pair(
-                                        getTotalNumCXXBaseSpecifiers() + 1,
-                                        std::make_pair(&F,
-                                            -getTotalNumCXXBaseSpecifiers())));
+      F.BaseCXXBaseSpecifiersID = getTotalNumCXXBaseSpecifiers();
+      GlobalCXXBaseSpecifiersMap.insert(
+        std::make_pair(getTotalNumCXXBaseSpecifiers() + 1, &F));
 
       NumCXXBaseSpecifiersLoaded += F.LocalNumCXXBaseSpecifiers;
       break;
@@ -4051,10 +4043,9 @@ ASTReader::GetCXXBaseSpecifiersOffset(serialization::CXXBaseSpecifiersID ID) {
   assert (I != GlobalCXXBaseSpecifiersMap.end() &&
                                     "Corrupted global CXX base specifiers map");
   
-  return I->second.first->CXXBaseSpecifiersOffsets[ID - 1 +
-                                               I->second.second] +
-                                               I->second.first->GlobalBitOffset;
-
+  Module *M = I->second;
+  return M->CXXBaseSpecifiersOffsets[ID - 1 - M->BaseCXXBaseSpecifiersID] +
+    M->GlobalBitOffset;
 }
 
 CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
@@ -4374,14 +4365,13 @@ void ASTReader::dump() {
   dumpModuleIDMap("Global bit offset map", GlobalBitOffsetsMap);
   dumpModuleIDMap("Global source location entry map", GlobalSLocEntryMap);
   dumpModuleIDMap("Global type map", GlobalTypeMap);
-  dumpModuleIDOffsetMap("Global declaration map", GlobalDeclMap);
-  dumpModuleIDOffsetMap("Global identifier map", GlobalIdentifierMap);
-  dumpModuleIDOffsetMap("Global selector map", GlobalSelectorMap);
-  dumpModuleIDOffsetMap("Global macro definition map", 
-                        GlobalMacroDefinitionMap);
-  dumpModuleIDOffsetMap("Global preprocessed entity map", 
-                        GlobalPreprocessedEntityMap);
-  
+  dumpModuleIDMap("Global declaration map", GlobalDeclMap);
+  dumpModuleIDMap("Global C++ base specifiers map", GlobalCXXBaseSpecifiersMap);
+  dumpModuleIDMap("Global identifier map", GlobalIdentifierMap);
+  dumpModuleIDMap("Global selector map", GlobalSelectorMap);
+  dumpModuleIDMap("Global macro definition map", GlobalMacroDefinitionMap);
+  dumpModuleIDMap("Global preprocessed entity map", 
+                  GlobalPreprocessedEntityMap);
 }
 
 /// Return the amount of memory used by memory buffers, breaking down
@@ -4758,9 +4748,9 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(IdentifierID ID) {
   if (!IdentifiersLoaded[ID]) {
     GlobalIdentifierMapType::iterator I = GlobalIdentifierMap.find(ID + 1);
     assert(I != GlobalIdentifierMap.end() && "Corrupted global identifier map");
-    unsigned Index = ID + I->second.second;
-    const char *Str = I->second.first->IdentifierTableData
-                    + I->second.first->IdentifierOffsets[Index];
+    Module *M = I->second;
+    unsigned Index = ID - M->BaseIdentifierID;
+    const char *Str = M->IdentifierTableData + M->IdentifierOffsets[Index];
 
     // All of the strings in the AST file are preceded by a 16-bit length.
     // Extract that 16-bit length to avoid having to execute strlen().
@@ -4809,11 +4799,11 @@ Selector ASTReader::DecodeSelector(serialization::SelectorID ID) {
     // Load this selector from the selector table.
     GlobalSelectorMapType::iterator I = GlobalSelectorMap.find(ID);
     assert(I != GlobalSelectorMap.end() && "Corrupted global selector map");
-    Module &F = *I->second.first;
-    ASTSelectorLookupTrait Trait(*this, F);
-    unsigned Idx = ID - 1 + I->second.second;
+    Module &M = *I->second;
+    ASTSelectorLookupTrait Trait(*this, M);
+    unsigned Idx = ID - 1 - M.BaseSelectorID;
     SelectorsLoaded[ID - 1] =
-      Trait.ReadKey(F.SelectorLookupTableData + F.SelectorOffsets[Idx], 0);
+      Trait.ReadKey(M.SelectorLookupTableData + M.SelectorOffsets[Idx], 0);
     if (DeserializationListener)
       DeserializationListener->SelectorRead(ID, SelectorsLoaded[ID - 1]);
   }
