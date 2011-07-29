@@ -15,6 +15,7 @@
 #ifndef RECORD_H
 #define RECORD_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/raw_ostream.h"
@@ -784,6 +785,8 @@ public:
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
   virtual std::string getAsString() const;
+
+  ArrayRef<Init*> getValues() const { return Values; }
 
   inline iterator       begin()       { return Values.begin(); }
   inline const_iterator begin() const { return Values.begin(); }
