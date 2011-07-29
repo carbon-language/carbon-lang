@@ -1277,8 +1277,8 @@ uint32_t SelectionDAGBuilder::getEdgeWeight(MachineBasicBlock *Src,
   BranchProbabilityInfo *BPI = FuncInfo.BPI;
   if (!BPI)
     return 0;
-  BasicBlock *SrcBB = const_cast<BasicBlock*>(Src->getBasicBlock());
-  BasicBlock *DstBB = const_cast<BasicBlock*>(Dst->getBasicBlock());
+  const BasicBlock *SrcBB = Src->getBasicBlock();
+  const BasicBlock *DstBB = Dst->getBasicBlock();
   return BPI->getEdgeWeight(SrcBB, DstBB);
 }
 
