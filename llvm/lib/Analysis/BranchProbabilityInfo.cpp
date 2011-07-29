@@ -66,6 +66,12 @@ class BranchProbabilityAnalysis {
   static const uint32_t LBH_TAKEN_WEIGHT = 124;
   static const uint32_t LBH_NONTAKEN_WEIGHT = 4;
 
+  static const uint32_t RH_TAKEN_WEIGHT = 24;
+  static const uint32_t RH_NONTAKEN_WEIGHT = 8;
+
+  static const uint32_t PH_TAKEN_WEIGHT = 20;
+  static const uint32_t PH_NONTAKEN_WEIGHT = 12;
+
   // Standard weight value. Used when none of the heuristics set weight for
   // the edge.
   static const uint32_t NORMAL_WEIGHT = 16;
@@ -100,29 +106,6 @@ class BranchProbabilityAnalysis {
     return false;
   }
 
-  // Multiply Edge Weight by two.
-  void incEdgeWeight(BasicBlock *Src, BasicBlock *Dst) {
-    uint32_t Weight = BP->getEdgeWeight(Src, Dst);
-    uint32_t MaxWeight = getMaxWeightFor(Src);
-
-    if (Weight * 2 > MaxWeight)
-      BP->setEdgeWeight(Src, Dst, MaxWeight);
-    else
-      BP->setEdgeWeight(Src, Dst, Weight * 2);
-  }
-
-  // Divide Edge Weight by two.
-  void decEdgeWeight(BasicBlock *Src, BasicBlock *Dst) {
-    uint32_t Weight = BP->getEdgeWeight(Src, Dst);
-
-    assert(Weight > 0);
-    if (Weight / 2 < MIN_WEIGHT)
-      BP->setEdgeWeight(Src, Dst, MIN_WEIGHT);
-    else
-      BP->setEdgeWeight(Src, Dst, Weight / 2);
-  }
-
-
   uint32_t getMaxWeightFor(BasicBlock *BB) const {
     return UINT32_MAX / BB->getTerminator()->getNumSuccessors();
   }
@@ -152,16 +135,38 @@ bool BranchProbabilityAnalysis::calcReturnHeuristics(BasicBlock *BB){
   if (BB->getTerminator()->getNumSuccessors() == 1)
     return false;
 
-  bool Any = false;
+  SmallVector<BasicBlock *, 4> ReturningEdges;
+  SmallVector<BasicBlock *, 4> StayEdges;
+
   for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
     BasicBlock *Succ = *I;
-    if (isReturningBlock(Succ)) {
-      decEdgeWeight(BB, Succ);
-      Any = true;
+    if (isReturningBlock(Succ))
+      ReturningEdges.push_back(Succ);
+    else
+      StayEdges.push_back(Succ);
+  }
+
+  if (uint32_t numStayEdges = StayEdges.size()) {
+    uint32_t stayWeight = RH_TAKEN_WEIGHT / numStayEdges;
+    if (stayWeight < NORMAL_WEIGHT)
+      stayWeight = NORMAL_WEIGHT;
+
+    for (SmallVector<BasicBlock *, 4>::iterator I = StayEdges.begin(),
+         E = StayEdges.end(); I != E; ++I)
+      BP->setEdgeWeight(BB, *I, stayWeight);
+  }
+
+  if (uint32_t numRetEdges = ReturningEdges.size()) {
+    uint32_t retWeight = RH_NONTAKEN_WEIGHT / numRetEdges;
+    if (retWeight < MIN_WEIGHT)
+      retWeight = MIN_WEIGHT;
+    for (SmallVector<BasicBlock *, 4>::iterator I = ReturningEdges.begin(),
+         E = ReturningEdges.end(); I != E; ++I) {
+      BP->setEdgeWeight(BB, *I, retWeight);
     }
   }
 
-  return Any;
+  return ReturningEdges.size() > 0;
 }
 
 // Calculate Edge Weights using "Pointer Heuristics". Predict a comparsion
@@ -194,8 +199,8 @@ bool BranchProbabilityAnalysis::calcPointerHeuristics(BasicBlock *BB) {
   if (!isProb)
     std::swap(Taken, NonTaken);
 
-  incEdgeWeight(BB, Taken);
-  decEdgeWeight(BB, NonTaken);
+  BP->setEdgeWeight(BB, Taken, PH_TAKEN_WEIGHT);
+  BP->setEdgeWeight(BB, NonTaken, PH_NONTAKEN_WEIGHT);
   return true;
 }
 
