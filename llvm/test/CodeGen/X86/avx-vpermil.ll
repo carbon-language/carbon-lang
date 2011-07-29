@@ -14,3 +14,16 @@ entry:
   ret <4 x double> %shuffle
 }
 
+; CHECK: vpermilps
+define <8 x i32> @funcC(<8 x i32> %a) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> undef, <8 x i32> <i32 1, i32 2, i32 3, i32 1, i32 5, i32 6, i32 7, i32 5>
+  ret <8 x i32> %shuffle
+}
+
+; CHECK: vpermilpd
+define <4 x i64> @funcD(<4 x i64> %a) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <4 x i64> %a, <4 x i64> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 3>
+  ret <4 x i64> %shuffle
+}

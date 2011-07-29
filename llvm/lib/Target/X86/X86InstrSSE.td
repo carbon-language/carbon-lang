@@ -5581,6 +5581,10 @@ def : Pat<(v8f32 (X86VPermilpsy VR256:$src1, (i8 imm:$imm))),
           (VPERMILPSYri VR256:$src1, imm:$imm)>;
 def : Pat<(v4f64 (X86VPermilpdy VR256:$src1, (i8 imm:$imm))),
           (VPERMILPDYri VR256:$src1, imm:$imm)>;
+def : Pat<(v8i32 (X86VPermilpsy VR256:$src1, (i8 imm:$imm))),
+          (VPERMILPSYri VR256:$src1, imm:$imm)>;
+def : Pat<(v4i64 (X86VPermilpdy VR256:$src1, (i8 imm:$imm))),
+          (VPERMILPDYri VR256:$src1, imm:$imm)>;
 
 //===----------------------------------------------------------------------===//
 // VZERO - Zero YMM registers
