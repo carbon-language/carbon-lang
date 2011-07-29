@@ -126,18 +126,6 @@ public:
 };
 } // end anonymous namespace
 
-static bool isBlockExprInCallers(const Stmt *E, const LocationContext *LC) {
-  const LocationContext *ParentLC = LC->getParent();
-  while (ParentLC) {
-    CFG &C = *ParentLC->getCFG();
-    if (C.isBlkExpr(E))
-      return true;
-    ParentLC = ParentLC->getParent();
-  }
-
-  return false;
-}
-
 // In addition to mapping from Stmt * - > SVals in the Environment, we also
 // maintain a mapping from Stmt * -> SVals (locations) that were used during
 // a load and store.
