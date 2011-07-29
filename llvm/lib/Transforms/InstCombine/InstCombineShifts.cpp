@@ -208,11 +208,12 @@ static Value *GetShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
     return I;
     
   case Instruction::Shl: {
-    unsigned TypeWidth = I->getType()->getScalarSizeInBits();
+    BinaryOperator *BO = cast<BinaryOperator>(I);
+    unsigned TypeWidth = BO->getType()->getScalarSizeInBits();
 
     // We only accept shifts-by-a-constant in CanEvaluateShifted.
-    ConstantInt *CI = cast<ConstantInt>(I->getOperand(1));
-    
+    ConstantInt *CI = cast<ConstantInt>(BO->getOperand(1));
+
     // We can always fold shl(c1)+shl(c2) -> shl(c1+c2).
     if (isLeftShift) {
       // If this is oversized composite shift, then unsigned shifts get 0.
@@ -220,7 +221,9 @@ static Value *GetShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
       if (NewShAmt >= TypeWidth)
         return Constant::getNullValue(I->getType());
 
-      I->setOperand(1, ConstantInt::get(I->getType(), NewShAmt));
+      BO->setOperand(1, ConstantInt::get(BO->getType(), NewShAmt));
+      BO->setHasNoUnsignedWrap(false);
+      BO->setHasNoSignedWrap(false);
       return I;
     }
     
@@ -228,11 +231,11 @@ static Value *GetShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
     // zeros.
     if (CI->getValue() == NumBits) {
       APInt Mask(APInt::getLowBitsSet(TypeWidth, TypeWidth - NumBits));
-      V = IC.Builder->CreateAnd(I->getOperand(0),
-                                ConstantInt::get(I->getContext(), Mask));
+      V = IC.Builder->CreateAnd(BO->getOperand(0),
+                                ConstantInt::get(BO->getContext(), Mask));
       if (Instruction *VI = dyn_cast<Instruction>(V)) {
-        VI->moveBefore(I);
-        VI->takeName(I);
+        VI->moveBefore(BO);
+        VI->takeName(BO);
       }
       return V;
     }
@@ -240,23 +243,27 @@ static Value *GetShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
     // We turn shl(c1)+shr(c2) -> shl(c3)+and(c4), but only when we know that
     // the and won't be needed.
     assert(CI->getZExtValue() > NumBits);
-    I->setOperand(1, ConstantInt::get(I->getType(),
-                                      CI->getZExtValue() - NumBits));
-    return I;
+    BO->setOperand(1, ConstantInt::get(BO->getType(),
+                                       CI->getZExtValue() - NumBits));
+    BO->setHasNoUnsignedWrap(false);
+    BO->setHasNoSignedWrap(false);
+    return BO;
   }
   case Instruction::LShr: {
-    unsigned TypeWidth = I->getType()->getScalarSizeInBits();
+    BinaryOperator *BO = cast<BinaryOperator>(I);
+    unsigned TypeWidth = BO->getType()->getScalarSizeInBits();
     // We only accept shifts-by-a-constant in CanEvaluateShifted.
-    ConstantInt *CI = cast<ConstantInt>(I->getOperand(1));
+    ConstantInt *CI = cast<ConstantInt>(BO->getOperand(1));
     
     // We can always fold lshr(c1)+lshr(c2) -> lshr(c1+c2).
     if (!isLeftShift) {
       // If this is oversized composite shift, then unsigned shifts get 0.
       unsigned NewShAmt = NumBits+CI->getZExtValue();
       if (NewShAmt >= TypeWidth)
-        return Constant::getNullValue(I->getType());
+        return Constant::getNullValue(BO->getType());
       
-      I->setOperand(1, ConstantInt::get(I->getType(), NewShAmt));
+      BO->setOperand(1, ConstantInt::get(BO->getType(), NewShAmt));
+      BO->setIsExact(false);
       return I;
     }
     
@@ -265,7 +272,7 @@ static Value *GetShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
     if (CI->getValue() == NumBits) {
       APInt Mask(APInt::getHighBitsSet(TypeWidth, TypeWidth - NumBits));
       V = IC.Builder->CreateAnd(I->getOperand(0),
-                                ConstantInt::get(I->getContext(), Mask));
+                                ConstantInt::get(BO->getContext(), Mask));
       if (Instruction *VI = dyn_cast<Instruction>(V)) {
         VI->moveBefore(I);
         VI->takeName(I);
@@ -276,9 +283,10 @@ static Value *GetShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
     // We turn lshr(c1)+shl(c2) -> lshr(c3)+and(c4), but only when we know that
     // the and won't be needed.
     assert(CI->getZExtValue() > NumBits);
-    I->setOperand(1, ConstantInt::get(I->getType(),
-                                      CI->getZExtValue() - NumBits));
-    return I;
+    BO->setOperand(1, ConstantInt::get(BO->getType(),
+                                       CI->getZExtValue() - NumBits));
+    BO->setIsExact(false);
+    return BO;
   }
     
   case Instruction::Select:
