@@ -102,8 +102,8 @@ dumpSysPath = False
 # By default, failfast is False.  Use '-F' to overwrite it.
 failfast = False
 
-# The filter (testclass.testmethod) used to admit tests into our test suite.
-filterspec = None
+# The filters (testclass.testmethod) used to admit tests into our test suite.
+filters = []
 
 # If '-g' is specified, the filterspec is not exclusive.  If a test module does
 # not contain testclass.testmethod which matches the filterspec, the whole test
@@ -296,7 +296,7 @@ def parseOptionsAndInitTestdirs():
     global delay
     global dumpSysPath
     global failfast
-    global filterspec
+    global filters
     global fs4all
     global ignore
     global skipLongRunningTest
@@ -381,7 +381,7 @@ def parseOptionsAndInitTestdirs():
             index += 1
             if index >= len(sys.argv) or sys.argv[index].startswith('-'):
                 usage()
-            filterspec = sys.argv[index]
+            filters.append(sys.argv[index])
             index += 1
         elif sys.argv[index].startswith('-g'):
             fs4all = False
@@ -662,7 +662,7 @@ def visit(prefix, dir, names):
 
     global suite
     global regexp
-    global filterspec
+    global filters
     global fs4all
 
     for name in names:
@@ -689,7 +689,8 @@ def visit(prefix, dir, names):
 
             # Thoroughly check the filterspec against the base module and admit
             # the (base, filterspec) combination only when it makes sense.
-            if filterspec:
+            filterspec = None
+            for filterspec in filters:
                 # Optimistically set the flag to True.
                 filtered = True
                 module = __import__(base)
@@ -702,13 +703,19 @@ def visit(prefix, dir, names):
                         # The filterspec has failed.
                         filtered = False
                         break
-                # Forgo this module if the (base, filterspec) combo is invalid
-                # and no '-g' option is specified
-                if fs4all and not filtered:
-                    continue
+
+                # If we reach here, we have a good filterspec.  Add it.
+                if filtered:
+                    break
+
+            # Forgo this module if the (base, filterspec) combo is invalid
+            # and no '-g' option is specified
+            if filters and fs4all and not filtered:
+                continue
                 
             # Add either the filtered test case or the entire test class.
             if filterspec and filtered:
+                #print "adding filter spec %s to module %s" % (filterspec, module)
                 suite.addTests(
                     unittest2.defaultTestLoader.loadTestsFromName(filterspec, module))
             else:
