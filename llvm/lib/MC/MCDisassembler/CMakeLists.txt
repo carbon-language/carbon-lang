@@ -7,42 +7,15 @@ add_llvm_library(LLVMMCDisassembler
   )
 
 add_llvm_library_dependencies(LLVMMCDisassembler
-  LLVMARMAsmParser
-  LLVMARMDesc
-  LLVMARMDisassembler
-  LLVMARMInfo
-  LLVMAlphaDesc
-  LLVMAlphaInfo
-  LLVMBlackfinDesc
-  LLVMBlackfinInfo
-  LLVMCBackendInfo
-  LLVMCellSPUDesc
-  LLVMCellSPUInfo
-  LLVMCppBackendInfo
-  LLVMMBlazeAsmParser
-  LLVMMBlazeDesc
-  LLVMMBlazeDisassembler
-  LLVMMBlazeInfo
   LLVMMC
   LLVMMCParser
-  LLVMMSP430Desc
-  LLVMMSP430Info
-  LLVMMipsDesc
-  LLVMMipsInfo
-  LLVMPTXDesc
-  LLVMPTXInfo
-  LLVMPowerPCDesc
-  LLVMPowerPCInfo
-  LLVMSparcDesc
-  LLVMSparcInfo
   LLVMSupport
-  LLVMSystemZDesc
-  LLVMSystemZInfo
   LLVMTarget
-  LLVMX86AsmParser
-  LLVMX86Desc
-  LLVMX86Disassembler
-  LLVMX86Info
-  LLVMXCoreDesc
-  LLVMXCoreInfo
   )
+
+foreach(t ${LLVM_TARGETS_TO_BUILD})
+  set(td ${LLVM_MAIN_SRC_DIR}/lib/Target/${t})
+  if(EXISTS ${td}/Disassembler/CMakeLists.txt)
+    add_llvm_library_dependencies(LLVMMCDisassembler "LLVM${t}Disassembler")
+  endif()
+endforeach(t)
