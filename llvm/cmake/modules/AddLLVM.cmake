@@ -37,7 +37,7 @@ endmacro(add_llvm_library name)
 macro(add_llvm_library_dependencies name)
   # Save the dependencies of the LLVM library in a variable so that we can
   # query it when resolve llvm-config-style component -> library mappings.
-  set(LLVM_LIB_DEPS_${name} ${ARGN})
+  set_property(GLOBAL PROPERTY LLVM_LIB_DEPS_${name} ${ARGN})
 
   # Then add the actual dependencies to the library target.
   target_link_libraries(${name} ${ARGN})
