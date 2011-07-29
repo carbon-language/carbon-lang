@@ -1225,11 +1225,13 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
 
   // Search for tied operands, so that we can correctly instantiate
   // operands that are not explicitly represented in the encoding.
-  std::map<Init*, std::string> TiedNames;
+  std::map<std::string, std::string> TiedNames;
   for (unsigned i = 0; i < CGI.Operands.size(); ++i) {
     int tiedTo = CGI.Operands[i].getTiedRegister();
-    if (tiedTo != -1)
-      TiedNames[InOutOperands[i].first] = InOutOperands[tiedTo].second;
+    if (tiedTo != -1) {
+      TiedNames[InOutOperands[i].second] = InOutOperands[tiedTo].second;
+      TiedNames[InOutOperands[tiedTo].second] = InOutOperands[i].second;
+    }
   }
 
   // For each operand, see if we can figure out where it is encoded.
@@ -1265,8 +1267,6 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
     unsigned Offset = 0;
 
     for (unsigned bi = 0; bi < Bits.getNumBits(); ++bi) {
-      std::string name = NI->second;
-      std::string altname = TiedNames[NI->first];
       VarBitInit *BI = dynamic_cast<VarBitInit*>(Bits.getBit(bi));
       if (!BI) {
         if (Base != ~0U) {
@@ -1281,7 +1281,7 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
       VarInit *Var = dynamic_cast<VarInit*>(BI->getVariable());
       assert(Var);
       if (Var->getName() != NI->second &&
-          Var->getName() != TiedNames[NI->first]) {
+          Var->getName() != TiedNames[NI->second]) {
         if (Base != ~0U) {
           OpInfo.addField(Base, Width, Offset);
           Base = ~0U;
