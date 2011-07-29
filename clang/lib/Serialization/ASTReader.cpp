@@ -4339,27 +4339,6 @@ dumpModuleIDMap(StringRef Name,
   }
 }
 
-template<typename Key, typename Module, typename Adjustment, 
-         unsigned InitialCapacity>
-static void 
-dumpModuleIDOffsetMap(StringRef Name,
-                      const ContinuousRangeMap<Key, 
-                                               std::pair<Module *, 
-                                                         Adjustment>, 
-                                               InitialCapacity> &Map) {
-  if (Map.begin() == Map.end())
-    return;
-  
-  typedef ContinuousRangeMap<Key, std::pair<Module *, Adjustment>, 
-                             InitialCapacity> MapType;
-  llvm::errs() << Name << ":\n";
-  for (typename MapType::const_iterator I = Map.begin(), IEnd = Map.end(); 
-       I != IEnd; ++I) {
-    llvm::errs() << "  " << I->first << " -> (" << I->second.first->FileName
-                 << ", " << I->second.second << ")\n";
-  }
-}
-                            
 void ASTReader::dump() {
   llvm::errs() << "*** AST File Remapping:\n";
   dumpModuleIDMap("Global bit offset map", GlobalBitOffsetsMap);
