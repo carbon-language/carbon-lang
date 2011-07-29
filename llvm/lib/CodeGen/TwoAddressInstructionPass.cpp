@@ -1041,6 +1041,9 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "********** Function: " 
         << MF.getFunction()->getName() << '\n');
 
+  // This pass takes the function out of SSA form.
+  MRI->leaveSSA();
+
   // ReMatRegs - Keep track of the registers whose def's are remat'ed.
   BitVector ReMatRegs(MRI->getNumVirtRegs());
 

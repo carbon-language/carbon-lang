@@ -109,6 +109,9 @@ bool PHIElimination::runOnMachineFunction(MachineFunction &MF) {
 
   bool Changed = false;
 
+  // This pass takes the function out of SSA form.
+  MRI->leaveSSA();
+
   // Split critical edges to help the coalescer
   if (!DisableEdgeSplitting) {
     if (LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>()) {

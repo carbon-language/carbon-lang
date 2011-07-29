@@ -25,6 +25,10 @@ namespace llvm {
 /// registers, including vreg register classes, use/def chains for registers,
 /// etc.
 class MachineRegisterInfo {
+  /// IsSSA - True when the machine function is in SSA form and virtual
+  /// registers have a single def.
+  bool IsSSA;
+
   /// VRegInfo - Information we keep for each virtual register.
   ///
   /// Each element in this list contains the register class of the vreg and the
@@ -65,7 +69,23 @@ class MachineRegisterInfo {
 public:
   explicit MachineRegisterInfo(const TargetRegisterInfo &TRI);
   ~MachineRegisterInfo();
-  
+
+  //===--------------------------------------------------------------------===//
+  // Function State
+  //===--------------------------------------------------------------------===//
+
+  // isSSA - Returns true when the machine function is in SSA form. Early
+  // passes require the machine function to be in SSA form where every virtual
+  // register has a single defining instruction.
+  //
+  // The TwoAddressInstructionPass and PHIElimination passes take the machine
+  // function out of SSA form when they introduce multiple defs per virtual
+  // register.
+  bool isSSA() const { return IsSSA; }
+
+  // leaveSSA - Indicates that the machine function is no longer in SSA form.
+  void leaveSSA() { IsSSA = false; }
+
   //===--------------------------------------------------------------------===//
   // Register Info
   //===--------------------------------------------------------------------===//

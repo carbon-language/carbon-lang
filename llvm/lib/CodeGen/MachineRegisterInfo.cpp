@@ -17,7 +17,8 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI) {
+MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI)
+  : IsSSA(true) {
   VRegInfo.reserve(256);
   RegAllocHints.reserve(256);
   UsedPhysRegs.resize(TRI.getNumRegs());
