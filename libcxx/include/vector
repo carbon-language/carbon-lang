@@ -794,7 +794,7 @@ template <class _Tp, class _Allocator>
 typename vector<_Tp, _Allocator>::size_type
 vector<_Tp, _Allocator>::max_size() const _NOEXCEPT
 {
-    return _VSTD::min(__alloc_traits::max_size(this->__alloc()), numeric_limits<size_type>::max() / 2);  // end() >= begin(), always
+    return _VSTD::min<size_type>(__alloc_traits::max_size(this->__alloc()), numeric_limits<size_type>::max() / 2);  // end() >= begin(), always
 }
 
 //  Precondition:  __new_size > capacity()
@@ -809,7 +809,7 @@ vector<_Tp, _Allocator>::__recommend(size_type __new_size) const
     const size_type __cap = capacity();
     if (__cap >= __ms / 2)
         return __ms;
-    return _VSTD::max(2*__cap, __new_size);
+    return _VSTD::max<size_type>(2*__cap, __new_size);
 }
 
 //  Default constructs __n objects starting at __end_
