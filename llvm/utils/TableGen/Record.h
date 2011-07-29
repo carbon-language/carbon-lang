@@ -625,17 +625,13 @@ class BitsInit : public Init {
   std::vector<Init*> Bits;
 public:
   explicit BitsInit(unsigned Size) : Bits(Size) {}
+  BitsInit(ArrayRef<Init *> Range) : Bits(Range.begin(), Range.end()) {}
 
   unsigned getNumBits() const { return Bits.size(); }
 
   Init *getBit(unsigned Bit) const {
     assert(Bit < Bits.size() && "Bit index out of range!");
     return Bits[Bit];
-  }
-  void setBit(unsigned Bit, Init *V) {
-    assert(Bit < Bits.size() && "Bit index out of range!");
-    assert(Bits[Bit] == 0 && "Bit already set!");
-    Bits[Bit] = V;
   }
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
@@ -1175,11 +1171,6 @@ public:
   const std::string &getArgName(unsigned Num) const {
     assert(Num < ArgNames.size() && "Arg number out of range!");
     return ArgNames[Num];
-  }
-
-  void setArg(unsigned Num, Init *I) {
-    assert(Num < Args.size() && "Arg number out of range!");
-    Args[Num] = I;
   }
 
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);

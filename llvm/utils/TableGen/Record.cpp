@@ -15,6 +15,8 @@
 #include "Error.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Format.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 
 using namespace llvm;
@@ -120,18 +122,17 @@ std::string BitsRecTy::getAsString() const {
 }
 
 Init *BitsRecTy::convertValue(UnsetInit *UI) {
-  BitsInit *Ret = new BitsInit(Size);
+  SmallVector<Init *, 16> NewBits(Size);
 
   for (unsigned i = 0; i != Size; ++i)
-    Ret->setBit(i, new UnsetInit());
-  return Ret;
+    NewBits[i] = new UnsetInit();
+
+  return new BitsInit(ArrayRef<Init *>(NewBits));
 }
 
 Init *BitsRecTy::convertValue(BitInit *UI) {
   if (Size != 1) return 0;  // Can only convert single bit.
-  BitsInit *Ret = new BitsInit(1);
-  Ret->setBit(0, UI);
-  return Ret;
+  return new BitsInit(ArrayRef<Init *>(UI));
 }
 
 /// canFitInBitfield - Return true if the number of bits is large enough to hold
@@ -151,11 +152,12 @@ Init *BitsRecTy::convertValue(IntInit *II) {
   if (!canFitInBitfield(Value, Size))
     return 0;
 
-  BitsInit *Ret = new BitsInit(Size);
-  for (unsigned i = 0; i != Size; ++i)
-    Ret->setBit(i, new BitInit(Value & (1LL << i)));
+  SmallVector<Init *, 16> NewBits(Size);
 
-  return Ret;
+  for (unsigned i = 0; i != Size; ++i)
+    NewBits[i] = new BitInit(Value & (1LL << i));
+
+  return new BitsInit(ArrayRef<Init *>(NewBits));
 }
 
 Init *BitsRecTy::convertValue(BitsInit *BI) {
@@ -168,17 +170,15 @@ Init *BitsRecTy::convertValue(BitsInit *BI) {
 Init *BitsRecTy::convertValue(TypedInit *VI) {
   if (BitsRecTy *BRT = dynamic_cast<BitsRecTy*>(VI->getType()))
     if (BRT->Size == Size) {
-      BitsInit *Ret = new BitsInit(Size);
+      SmallVector<Init *, 16> NewBits(Size);
+ 
       for (unsigned i = 0; i != Size; ++i)
-        Ret->setBit(i, new VarBitInit(VI, i));
-      return Ret;
+        NewBits[i] = new VarBitInit(VI, i);
+      return new BitsInit(ArrayRef<Init *>(NewBits));
     }
 
-  if (Size == 1 && dynamic_cast<BitRecTy*>(VI->getType())) {
-    BitsInit *Ret = new BitsInit(1);
-    Ret->setBit(0, VI);
-    return Ret;
-  }
+  if (Size == 1 && dynamic_cast<BitRecTy*>(VI->getType()))
+    return new BitsInit(VI);
 
   if (TernOpInit *Tern = dynamic_cast<TernOpInit*>(VI)) {
     if (Tern->getOpcode() == TernOpInit::IF) {
@@ -194,30 +194,31 @@ Init *BitsRecTy::convertValue(TypedInit *VI) {
         int64_t RHSVal = RHSi->getValue();
 
         if (canFitInBitfield(MHSVal, Size) && canFitInBitfield(RHSVal, Size)) {
-          BitsInit *Ret = new BitsInit(Size);
+          SmallVector<Init *, 16> NewBits(Size);
 
           for (unsigned i = 0; i != Size; ++i)
-            Ret->setBit(i, new TernOpInit(TernOpInit::IF, LHS,
-                                          new IntInit((MHSVal & (1LL << i)) ? 1 : 0),
-                                          new IntInit((RHSVal & (1LL << i)) ? 1 : 0),
-                                          VI->getType()));
+            NewBits[i] =
+              new TernOpInit(TernOpInit::IF, LHS,
+                             new IntInit((MHSVal & (1LL << i)) ? 1 : 0),
+                             new IntInit((RHSVal & (1LL << i)) ? 1 : 0),
+                             VI->getType());
 
-          return Ret;
+          return new BitsInit(ArrayRef<Init *>(NewBits));
         }
       } else {
         BitsInit *MHSbs = dynamic_cast<BitsInit*>(MHS);
         BitsInit *RHSbs = dynamic_cast<BitsInit*>(RHS);
 
         if (MHSbs && RHSbs) {
-          BitsInit *Ret = new BitsInit(Size);
+          SmallVector<Init *, 16> NewBits(Size);
 
           for (unsigned i = 0; i != Size; ++i)
-            Ret->setBit(i, new TernOpInit(TernOpInit::IF, LHS,
-                                          MHSbs->getBit(i),
-                                          RHSbs->getBit(i),
-                                          VI->getType()));
+            NewBits[i] = new TernOpInit(TernOpInit::IF, LHS,
+                                        MHSbs->getBit(i),
+                                        RHSbs->getBit(i),
+                                        VI->getType());
 
-          return Ret;
+          return new BitsInit(ArrayRef<Init *>(NewBits));
         }
       }
     }
@@ -442,15 +443,14 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
 void Init::dump() const { return print(errs()); }
 
 Init *BitsInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
-  BitsInit *BI = new BitsInit(Bits.size());
+  SmallVector<Init *, 16> NewBits(Bits.size());
+
   for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
-    if (Bits[i] >= getNumBits()) {
-      delete BI;
+    if (Bits[i] >= getNumBits())
       return 0;
-    }
-    BI->setBit(i, getBit(Bits[i]));
+    NewBits[i] = getBit(Bits[i]);
   }
-  return BI;
+  return new BitsInit(ArrayRef<Init *>(NewBits));
 }
 
 std::string BitsInit::getAsString() const {
@@ -470,7 +470,7 @@ std::string BitsInit::getAsString() const {
 //
 Init *BitsInit::resolveReferences(Record &R, const RecordVal *RV) {
   bool Changed = false;
-  BitsInit *New = new BitsInit(getNumBits());
+  SmallVector<Init *, 16> NewBits(getNumBits());
 
   for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
     Init *B;
@@ -481,12 +481,12 @@ Init *BitsInit::resolveReferences(Record &R, const RecordVal *RV) {
       CurBit = CurBit->resolveReferences(R, RV);
       Changed |= B != CurBit;
     } while (B != CurBit);
-    New->setBit(i, CurBit);
+    NewBits[i] = CurBit;
   }
 
   if (Changed)
-    return New;
-  delete New;
+    return new BitsInit(ArrayRef<Init *>(NewBits));
+
   return this;
 }
 
@@ -495,16 +495,15 @@ std::string IntInit::getAsString() const {
 }
 
 Init *IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
-  BitsInit *BI = new BitsInit(Bits.size());
+  SmallVector<Init *, 16> NewBits(Bits.size());
 
   for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
-    if (Bits[i] >= 64) {
-      delete BI;
+    if (Bits[i] >= 64)
       return 0;
-    }
-    BI->setBit(i, new BitInit(Value & (INT64_C(1) << Bits[i])));
+
+    NewBits[i] = new BitInit(Value & (INT64_C(1) << Bits[i]));
   }
-  return BI;
+  return new BitsInit(ArrayRef<Init *>(NewBits));
 }
 
 Init *ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) {
@@ -1085,15 +1084,14 @@ Init *TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   if (T == 0) return 0;  // Cannot subscript a non-bits variable.
   unsigned NumBits = T->getNumBits();
 
-  BitsInit *BI = new BitsInit(Bits.size());
+  SmallVector<Init *, 16> NewBits(Bits.size());
   for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
-    if (Bits[i] >= NumBits) {
-      delete BI;
+    if (Bits[i] >= NumBits)
       return 0;
-    }
-    BI->setBit(i, new VarBitInit(this, Bits[i]));
+
+    NewBits[i] = new VarBitInit(this, Bits[i]);
   }
-  return BI;
+  return new BitsInit(ArrayRef<Init *>(NewBits));
 }
 
 Init *TypedInit::convertInitListSlice(const std::vector<unsigned> &Elements) {

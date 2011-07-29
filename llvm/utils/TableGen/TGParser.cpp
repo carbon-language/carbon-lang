@@ -116,22 +116,22 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, const std::string &ValName,
     BitsInit *BInit = dynamic_cast<BitsInit*>(BI);
     assert(BInit != 0);
 
-    BitsInit *NewVal = new BitsInit(CurVal->getNumBits());
+    SmallVector<Init *, 16> NewBits(CurVal->getNumBits());
 
     // Loop over bits, assigning values as appropriate.
     for (unsigned i = 0, e = BitList.size(); i != e; ++i) {
       unsigned Bit = BitList[i];
-      if (NewVal->getBit(Bit))
+      if (NewBits[Bit])
         return Error(Loc, "Cannot set bit #" + utostr(Bit) + " of value '" +
                      ValName + "' more than once");
-      NewVal->setBit(Bit, BInit->getBit(i));
+      NewBits[Bit] = BInit->getBit(i);
     }
 
     for (unsigned i = 0, e = CurVal->getNumBits(); i != e; ++i)
-      if (NewVal->getBit(i) == 0)
-        NewVal->setBit(i, CurVal->getBit(i));
+      if (NewBits[i] == 0)
+        NewBits[i] = CurVal->getBit(i);
 
-    V = NewVal;
+    V = new BitsInit(ArrayRef<Init *>(NewBits));
   }
 
   if (RV->setValue(V))
@@ -1127,7 +1127,8 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
     }
     Lex.Lex();  // eat the '}'
 
-    BitsInit *Result = new BitsInit(Vals.size());
+    SmallVector<Init *, 16> NewBits(Vals.size());
+
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
       Init *Bit = Vals[i]->convertInitializerTo(BitRecTy::get());
       if (Bit == 0) {
@@ -1135,9 +1136,9 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
               ") is not convertable to a bit");
         return 0;
       }
-      Result->setBit(Vals.size()-i-1, Bit);
+      NewBits[Vals.size()-i-1] = Bit;
     }
-    return Result;
+    return new BitsInit(ArrayRef<Init *>(NewBits));
   }
   case tgtok::l_square: {          // Value ::= '[' ValueList ']'
     Lex.Lex(); // eat the '['
