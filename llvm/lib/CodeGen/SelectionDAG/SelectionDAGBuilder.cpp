@@ -1822,7 +1822,7 @@ void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &LP) {
   AddLandingPadInfo(LP, MMI, MBB);
 
   SmallVector<EVT, 2> ValueVTs;
-  ComputeValueVTs(TLI, LP.getType(),ValueVTs);
+  ComputeValueVTs(TLI, LP.getType(), ValueVTs);
 
   // Insert the EXCEPTIONADDR instruction.
   assert(FuncInfo.MBB->isLandingPad() &&
@@ -1839,10 +1839,10 @@ void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &LP) {
   Ops[1] = Chain;
   SDValue Op2 = DAG.getNode(ISD::EHSELECTION, getCurDebugLoc(), VTs, Ops, 2);
   Chain = Op2.getValue(1);
+  Op2 = DAG.getSExtOrTrunc(Op2, getCurDebugLoc(), MVT::i32)
 
   Ops[0] = Op1;
   Ops[1] = Op2;
-
   SDValue Res = DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(),
                             DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
                             &Ops[0], 2);
