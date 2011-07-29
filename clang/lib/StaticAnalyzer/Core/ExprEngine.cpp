@@ -2163,35 +2163,32 @@ void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr* CL,
 void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
                                  ExplodedNodeSet& Dst) {
 
-  // The CFG has one DeclStmt per Decl.
+  // FIXME: static variables may have an initializer, but the second
+  //  time a function is called those values may not be current.
+  //  This may need to be reflected in the CFG.
+  
+  // Assumption: The CFG has one DeclStmt per Decl.
   const Decl* D = *DS->decl_begin();
 
   if (!D || !isa<VarDecl>(D))
     return;
 
-  const VarDecl* VD = dyn_cast<VarDecl>(D);
-  const Expr* InitEx = VD->getInit();
 
-  // FIXME: static variables may have an initializer, but the second
-  //  time a function is called those values may not be current.
-  ExplodedNodeSet Tmp;
+  ExplodedNodeSet dstPreVisit;
+  getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, DS, *this);
 
-  if (InitEx)
-    Visit(InitEx, Pred, Tmp);
-  else
-    Tmp.Add(Pred);
+  const VarDecl *VD = dyn_cast<VarDecl>(D);
 
-  ExplodedNodeSet Tmp2;
-  getCheckerManager().runCheckersForPreStmt(Tmp2, Tmp, DS, *this);
-
-  for (ExplodedNodeSet::iterator I=Tmp2.begin(), E=Tmp2.end(); I!=E; ++I) {
+  for (ExplodedNodeSet::iterator I = dstPreVisit.begin(), E = dstPreVisit.end();
+       I!=E; ++I)
+  {
     ExplodedNode *N = *I;
     const GRState *state = GetState(N);
 
     // Decls without InitExpr are not initialized explicitly.
     const LocationContext *LC = N->getLocationContext();
 
-    if (InitEx) {
+    if (const Expr *InitEx = VD->getInit()) {
       SVal InitVal = state->getSVal(InitEx);
 
       // We bound the temp obj region to the CXXConstructExpr. Now recover
@@ -2211,12 +2208,11 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
                                                Builder->getCurrentBlockCount());
       }
 
-      evalBind(Dst, DS, *I, state,
+      evalBind(Dst, DS, N, state,
                loc::MemRegionVal(state->getRegion(VD, LC)), InitVal, true);
     }
     else {
-      state = state->bindDeclWithNoInit(state->getRegion(VD, LC));
-      MakeNode(Dst, DS, *I, state);
+      MakeNode(Dst, DS, N, state->bindDeclWithNoInit(state->getRegion(VD, LC)));
     }
   }
 }
