@@ -20,6 +20,52 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
+//    std::string wrapper for DenseMap purposes
+//===----------------------------------------------------------------------===//
+
+/// TableGenStringKey - This is a wrapper for std::string suitable for
+/// using as a key to a DenseMap.  Because there isn't a particularly
+/// good way to indicate tombstone or empty keys for strings, we want
+/// to wrap std::string to indicate that this is a "special" string
+/// not expected to take on certain values (those of the tombstone and
+/// empty keys).  This makes things a little safer as it clarifies
+/// that DenseMap is really not appropriate for general strings.
+
+class TableGenStringKey {
+public:
+  TableGenStringKey(const std::string &str) : data(str) {}
+  TableGenStringKey(const char *str) : data(str) {}
+
+  const std::string &str() const { return data; }
+  
+private:
+  std::string data;
+};
+
+/// Specialize DenseMapInfo for TableGenStringKey.
+namespace llvm {
+
+template<> struct DenseMapInfo<TableGenStringKey> {
+  static inline TableGenStringKey getEmptyKey() {
+    TableGenStringKey Empty("<<<EMPTY KEY>>>");
+    return Empty;
+  }
+  static inline TableGenStringKey getTombstoneKey() {
+    TableGenStringKey Tombstone("<<<TOMBSTONE KEY>>>");
+    return Tombstone;
+  }
+  static unsigned getHashValue(const TableGenStringKey& Val) {
+    return HashString(Val.str());
+  }
+  static bool isEqual(const TableGenStringKey& LHS,
+                      const TableGenStringKey& RHS) {
+    return LHS.str() == RHS.str();
+  }
+};
+
+}
+
+//===----------------------------------------------------------------------===//
 //    Type implementations
 //===----------------------------------------------------------------------===//
 

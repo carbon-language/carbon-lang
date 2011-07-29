@@ -16,6 +16,7 @@
 
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/StringRef.h"
 #include <cctype>
 #include <cstdio>
