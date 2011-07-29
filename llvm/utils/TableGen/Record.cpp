@@ -583,8 +583,43 @@ const CodeInit *CodeInit::get(const std::string &V) {
   return I;
 }
 
+static void ProfileListInit(FoldingSetNodeID &ID,
+                            ArrayRef<const Init *> Range,
+                            RecTy *EltTy) {
+  ID.AddInteger(Range.size());
+  ID.AddPointer(EltTy);
+
+  for (ArrayRef<const Init *>::iterator i = Range.begin(),
+         iend = Range.end();
+       i != iend;
+       ++i)
+    ID.AddPointer(*i);
+}
+
 const ListInit *ListInit::get(ArrayRef<const Init *> Range, RecTy *EltTy) {
-  return new ListInit(Range, EltTy);
+  typedef FoldingSet<ListInit> Pool;
+  static Pool ThePool;
+
+  // Just use the FoldingSetNodeID to compute a hash.  Use a DenseMap
+  // for actual storage.
+  FoldingSetNodeID ID;
+  ProfileListInit(ID, Range, EltTy);
+
+  void *IP = 0;
+  if (const ListInit *I = ThePool.FindNodeOrInsertPos(ID, IP))
+    return I;
+
+  ListInit *I = new ListInit(Range, EltTy);
+  ThePool.InsertNode(I, IP);
+  return I;
+}
+
+void ListInit::Profile(FoldingSetNodeID &ID) const {
+  ListRecTy *ListType = dynamic_cast<ListRecTy *>(getType());
+  assert(ListType && "Bad type for ListInit!");
+  RecTy *EltTy = ListType->getElementType();
+
+  ProfileListInit(ID, Values, EltTy);
 }
 
 const Init *

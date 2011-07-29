@@ -1,3 +1,4 @@
+
 //===- Record.h - Classes to represent Table Records ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -801,15 +802,12 @@ public:
 
 /// ListInit - [AL, AH, CL] - Represent a list of defs
 ///
-class ListInit : public TypedInit {
+class ListInit : public TypedInit, public FoldingSetNode {
   std::vector<const Init*> Values;
 public:
   typedef std::vector<const Init*>::const_iterator const_iterator;
 
-  explicit ListInit(std::vector<const Init*> &Vs, RecTy *EltTy)
-    : TypedInit(ListRecTy::get(EltTy)) {
-    Values.swap(Vs);
-  }
+private:
   explicit ListInit(ArrayRef<const Init *> Range, RecTy *EltTy)
       : TypedInit(ListRecTy::get(EltTy)), Values(Range.begin(), Range.end()) {}
 
@@ -818,6 +816,8 @@ public:
 
 public:
   static const ListInit *get(ArrayRef<const Init *> Range, RecTy *EltTy);
+
+  void Profile(FoldingSetNodeID &ID) const;
 
   unsigned getSize() const { return Values.size(); }
   const Init *getElement(unsigned i) const {
