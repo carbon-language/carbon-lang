@@ -1288,6 +1288,10 @@ void Verifier::visitShuffleVectorInst(ShuffleVectorInst &SV) {
 }
 
 void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
+  Assert1(cast<PointerType>(GEP.getOperand(0)->getType())
+            ->getElementType()->isSized(),
+          "GEP into unsized type!", &GEP);
+  
   SmallVector<Value*, 16> Idxs(GEP.idx_begin(), GEP.idx_end());
   Type *ElTy =
     GetElementPtrInst::getIndexedType(GEP.getOperand(0)->getType(), Idxs);
