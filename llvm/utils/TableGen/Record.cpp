@@ -1294,7 +1294,15 @@ TypedInit::convertInitListSlice(const std::vector<unsigned> &Elements) const {
 
 
 const VarInit *VarInit::get(const std::string &VN, RecTy *T) {
-  return new VarInit(VN, T);
+  typedef std::pair<RecTy *, TableGenStringKey> Key;
+  typedef DenseMap<Key, VarInit *> Pool;
+  static Pool ThePool;
+
+  Key TheKey(std::make_pair(T, VN));
+
+  VarInit *&I = ThePool[TheKey];
+  if (!I) I = new VarInit(VN, T);
+  return I;
 }
 
 const Init *VarInit::resolveBitReference(Record &R, const RecordVal *IRV,
