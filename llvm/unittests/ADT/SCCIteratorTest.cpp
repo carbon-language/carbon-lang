@@ -33,7 +33,7 @@ public:
   class NodeSubset {
     typedef unsigned char BitVector; // Where the limitation N <= 8 comes from.
     BitVector Elements;
-    NodeSubset(BitVector e) : Elements(e) {};
+    NodeSubset(BitVector e) : Elements(e) {}
   public:
     /// NodeSubset - Default constructor, creates an empty subset.
     NodeSubset() : Elements(0) {
