@@ -48,3 +48,24 @@ bb:
   store <4 x float> %tmp20, <4 x float>* undef, align 16
   ret void
 }
+
+; PR10520, second bug. NEONMoveFixPass needs to preserve implicit operands.
+define arm_aapcs_vfpcc void @pr10520_2() nounwind align 2 {
+bb:
+  %tmp76 = shufflevector <2 x i64> zeroinitializer, <2 x i64> zeroinitializer, <1 x i32> <i32 1>
+  %tmp77 = bitcast <1 x i64> %tmp76 to <2 x float>
+  %tmp78 = shufflevector <2 x float> %tmp77, <2 x float> %tmp77, <4 x i32> zeroinitializer
+  %tmp81 = fmul <4 x float> undef, %tmp78
+  %tmp82 = fadd <4 x float> %tmp81, undef
+  %tmp85 = fadd <4 x float> %tmp82, undef
+  %tmp86 = bitcast <4 x float> %tmp85 to i128
+  %tmp136 = bitcast i128 %tmp86 to <4 x float>
+  %tmp137 = bitcast <4 x float> %tmp136 to i128
+  %tmp138 = bitcast i128 %tmp137 to <4 x float>
+  %tmp139 = bitcast <4 x float> %tmp138 to i128
+  %tmp152 = bitcast i128 %tmp139 to <4 x float>
+  %tmp153 = bitcast <4 x float> %tmp152 to i128
+  %tmp154 = bitcast i128 %tmp153 to <4 x float>
+  store <4 x float> %tmp154, <4 x float>* undef, align 16
+  ret void
+}
