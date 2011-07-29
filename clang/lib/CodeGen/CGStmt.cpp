@@ -1533,8 +1533,12 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
         llvm::Type *OutputTy = ConvertType(OutputType);
         if (isa<llvm::IntegerType>(OutputTy))
           Arg = Builder.CreateZExt(Arg, OutputTy);
-        else
+        else if (isa<llvm::PointerType>(OutputTy))
+          Arg = Builder.CreateZExt(Arg, IntPtrTy);
+        else {
+          assert(OutputTy->isFloatingPointTy() && "Unexpected output type");
           Arg = Builder.CreateFPExt(Arg, OutputTy);
+        }
       }
     }
     if (llvm::Type* AdjTy = 

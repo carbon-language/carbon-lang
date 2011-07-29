@@ -200,6 +200,15 @@ unsigned char t23(unsigned char a, unsigned char b) {
   return res;
 }
 
+void *t24(char c) {
+  void *addr;
+  // CHECK: @t24
+  // CHECK: zext i8 {{.*}} to i32
+  // CHECK-NEXT: call i8* asm "foobar"
+  __asm__ ("foobar" : "=a" (addr) : "0" (c));
+  return addr;
+}
+
 
 // PR10299 - fpsr, fpcr
 void test(void)
