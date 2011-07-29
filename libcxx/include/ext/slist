@@ -1,0 +1,128 @@
+// -*- C++ -*-
+//===----------------------------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef _LIBCPP__EXT_SLIST
+#define _LIBCPP__EXT_SLIST
+
+#include <__config>
+#include <forward_list>
+#include <iterator>
+
+#pragma GCC system_header
+
+namespace __gnu_cxx {
+
+using namespace std;
+
+template <class _Tp, class _Alloc>
+class _LIBCPP_VISIBLE slist : forward_list<_Tp, _Alloc>
+{
+public:
+    typedef forward_list<_Tp, _Alloc> __base_type;
+    using typename __base_type::value_type;
+    using typename __base_type::pointer;
+    using typename __base_type::reference;
+    using typename __base_type::const_reference;
+    using typename __base_type::size_type;
+    using typename __base_type::difference_type;
+    using typename __base_type::iterator;
+    using typename __base_type::const_iterator;
+    using __base_type::begin;
+    using __base_type::end;
+    using __base_type::max_size;
+    using __base_type::empty;
+    using __base_type::front;
+    using __base_type::push_front;
+    using __base_type::pop_front;
+    using __base_type::clear;
+    using __base_type::resize;
+    using __base_type::insert_after;
+    using __base_type::erase_after;
+    using __base_type::splice_after;
+    using __base_type::remove;
+    using __base_type::remove_if;
+    using __base_type::unique;
+    using __base_type::sort;
+    using __base_type::reverse;
+
+    _LIBCPP_INLINE_VISIBILITY
+    slist() { }
+    _LIBCPP_INLINE_VISIBILITY
+    slist(size_type __n) : __base_type(__n) { }
+    _LIBCPP_INLINE_VISIBILITY
+    slist(size_type __n, const _Tp& __t) : __base_type(__n, __t) { }
+    _LIBCPP_INLINE_VISIBILITY
+    template <typename _InputIterator>
+    slist(_InputIterator __f, _InputIterator __l) : __base_type(__f, __l) { }
+
+    _LIBCPP_INLINE_VISIBILITY
+    void swap (slist& __s) { __base_type::swap(s); }
+
+    _LIBCPP_INLINE_VISIBILITY
+    void merge (slist& __s) { __base_type::merge(s); }
+
+    _LIBCPP_INLINE_VISIBILITY
+    friend bool operator==(const slist& __l, const slist& __r)
+    {
+        return static_cast<const __base_type&>(__l) ==
+               static_cast<const __base_type&>(__r);
+    }
+    _LIBCPP_INLINE_VISIBILITY
+    friend bool operator<(const slist& __l, const slist& __r)
+    {
+        return static_cast<const __base_type&>(__l) ==
+               static_cast<const __base_type&>(__r);
+    }
+
+    _LIBCPP_INLINE_VISIBILITY
+    size_type size() const { return _VSTD::distance(begin(), end()); }
+
+    iterator previous(iterator __pos);
+    const_iterator previous(const_iterator __pos);
+
+    _LIBCPP_INLINE_VISIBILITY
+    iterator insert(iterator __pos, const _Tp& __x) { return insert(previous(__pos), __x); }
+    _LIBCPP_INLINE_VISIBILITY
+    template <class _InputIterator>
+    void insert(iterator __pos, _InputIterator __f, _InputIterator __l) { return insert(previous(__pos), __f, __l); }
+    _LIBCPP_INLINE_VISIBILITY
+    void insert(iterator __pos, size_type __n, const _Tp& __x) { return insert(previous(__pos), __n, __x); }
+
+    _LIBCPP_INLINE_VISIBILITY
+    iterator erase(iterator __pos) { return erase(previous(__pos)); } 
+    _LIBCPP_INLINE_VISIBILITY
+    iterator erase(iterator __f, iterator __l) { return erase(previous(__f), previous(__l)); }
+};
+
+template <class _Tp, class _Alloc>
+inline _LIBCPP_INLINE_VISIBILITY
+slist<_Tp, _Alloc>::iterator slist<_Tp, _Alloc>::previous(iterator __pos)
+{
+  iterator __a = begin(), __b = end();
+  while (__a != __pos)
+  {
+    __b = __a;
+    ++__a;
+  }
+  return __b;
+}
+
+template <class _Tp, class _Alloc>
+inline _LIBCPP_INLINE_VISIBILITY
+slist<_Tp, _Alloc>::const_iterator slist<_Tp, _Alloc>::previous(const_iterator __pos)
+{
+  iterator __a = begin(), __b = end();
+  while (__a != __pos)
+  {
+    __b = __a;
+    ++__a;
+  }
+  return __b;
+}
