@@ -575,7 +575,12 @@ const StringInit *StringInit::get(const std::string &V) {
 }
 
 const CodeInit *CodeInit::get(const std::string &V) {
-  return new CodeInit(V);
+  typedef StringMap<CodeInit *> Pool;
+  static Pool ThePool;
+
+  CodeInit *&I = ThePool[V];
+  if (!I) I = new CodeInit(V);
+  return I;
 }
 
 const ListInit *ListInit::get(ArrayRef<const Init *> Range, RecTy *EltTy) {
