@@ -1839,7 +1839,7 @@ void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &LP) {
   Ops[1] = Chain;
   SDValue Op2 = DAG.getNode(ISD::EHSELECTION, getCurDebugLoc(), VTs, Ops, 2);
   Chain = Op2.getValue(1);
-  Op2 = DAG.getSExtOrTrunc(Op2, getCurDebugLoc(), MVT::i32)
+  Op2 = DAG.getSExtOrTrunc(Op2, getCurDebugLoc(), MVT::i32);
 
   Ops[0] = Op1;
   Ops[1] = Op2;
