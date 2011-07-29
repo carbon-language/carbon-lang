@@ -4236,11 +4236,25 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
                                  Depth+1);
     }
     case X86ISD::VPERMILPS:
-    case X86ISD::VPERMILPSY:
-      // FIXME: Implement the other types
       ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodeVPERMILMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
+      DecodeVPERMILPSMask(4, cast<ConstantSDNode>(ImmN)->getZExtValue(),
                         ShuffleMask);
+      break;
+    case X86ISD::VPERMILPSY:
+      ImmN = N->getOperand(N->getNumOperands()-1);
+      DecodeVPERMILPSMask(8, cast<ConstantSDNode>(ImmN)->getZExtValue(),
+                        ShuffleMask);
+      break;
+    case X86ISD::VPERMILPD:
+      ImmN = N->getOperand(N->getNumOperands()-1);
+      DecodeVPERMILPDMask(2, cast<ConstantSDNode>(ImmN)->getZExtValue(),
+                        ShuffleMask);
+      break;
+    case X86ISD::VPERMILPDY:
+      ImmN = N->getOperand(N->getNumOperands()-1);
+      DecodeVPERMILPDMask(4, cast<ConstantSDNode>(ImmN)->getZExtValue(),
+                        ShuffleMask);
+      break;
     default:
       assert("not implemented for target shuffle node");
       return SDValue();
