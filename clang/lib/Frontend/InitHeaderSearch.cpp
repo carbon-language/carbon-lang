@@ -940,8 +940,24 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
                                                     const llvm::Triple &triple,
                                             const HeaderSearchOptions &HSOpts) {
   if (Lang.CPlusPlus && HSOpts.UseStandardCXXIncludes) {
-    if (HSOpts.UseLibcxx)
+    if (HSOpts.UseLibcxx) {
+      if (triple.isOSDarwin()) {
+        // On Darwin, libc++ may be installed alongside the compiler in
+        // lib/c++/v1.
+        llvm::sys::Path P(HSOpts.ResourceDir);
+        if (!P.isEmpty()) {
+          P.eraseComponent();  // Remove version from foo/lib/clang/version
+          P.eraseComponent();  // Remove clang from foo/lib/clang
+          
+          // Get foo/lib/c++/v1
+          P.appendComponent("c++");
+          P.appendComponent("v1");
+          AddPath(P.str(), CXXSystem, true, false, false, true);
+        }
+      }
+      
       AddPath("/usr/include/c++/v1", CXXSystem, true, false, false);
+    }
     else
       AddDefaultCPlusPlusIncludePaths(triple, HSOpts);
   }
