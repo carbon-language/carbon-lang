@@ -7,6 +7,8 @@ class CFStringSynthProvider:
 		self.update()
 	# children other than "content" are for debugging only and must not be used in production code
 	def num_children(self):
+		if self.invalid:
+			return 0;
 		return 6;
 	def read_unicode(self, pointer):
 		process = self.valobj.GetTarget().GetProcess()
@@ -167,7 +169,12 @@ class CFStringSynthProvider:
 					self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar));
 		cfinfo.SetFormat(11)
 		info = cfinfo.GetValue();
-		return int(info,0);
+		if info != None:
+			self.invalid = False;
+			return int(info,0);
+		else:
+			self.invalid = True;
+			return None;
 	# calculating internal flag bits of the CFString object
 	# this stuff is defined and discussed in CFString.c
 	def is_mutable(self):
@@ -196,6 +203,8 @@ class CFStringSynthProvider:
 	# useful values to get at the real data
 	def compute_flags(self):
 		self.info_bits = self.read_info_bits();
+		if self.info_bits == None:
+			return;
 		self.mutable = self.is_mutable();
 		self.inline = self.is_inline();
 		self.explicit = self.has_explicit_length();
@@ -204,3 +213,9 @@ class CFStringSynthProvider:
 	def update(self):
 		self.adjust_for_architecture();
 		self.compute_flags();
+def CFString_SummaryProvider (valobj,dict):
+	provider = CFStringSynthProvider(valobj,dict);
+	if provider.invalid == True:
+		return "<invalid object>";
+	return provider.get_child_at_index(provider.get_child_index("content")).GetSummary();
+	

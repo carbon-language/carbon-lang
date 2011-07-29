@@ -86,7 +86,7 @@ int main (int argc, const char * argv[])
     
     NSString *str4 = [NSString stringWithFormat:@"This is string number %ld right here", (long)4];
     
-    NSRect rect = NSMakeRect(1,1,5,5);
+    NSRect rect = {{1,1},{5,5}};
     
     NSString* str5 = NSStringFromRect(rect);
     
