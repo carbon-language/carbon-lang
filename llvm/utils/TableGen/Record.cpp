@@ -975,7 +975,26 @@ std::string BinOpInit::getAsString() const {
 const TernOpInit *TernOpInit::get(TernaryOp opc, const Init *lhs,
                                   const Init *mhs, const Init *rhs,
                                   RecTy *Type) {
-  return new TernOpInit(opc, lhs, mhs, rhs, Type);
+  typedef std::pair<
+    std::pair<
+      std::pair<std::pair<unsigned, RecTy *>, const Init *>,
+      const Init *
+      >,
+    const Init *
+    > Key;
+
+  typedef DenseMap<Key, TernOpInit *> Pool;
+  static Pool ThePool;
+
+  Key TheKey(std::make_pair(std::make_pair(std::make_pair(std::make_pair(opc,
+                                                                         Type),
+                                                          lhs),
+                                           mhs),
+                            rhs));
+
+  TernOpInit *&I = ThePool[TheKey];
+  if (!I) I = new TernOpInit(opc, lhs, mhs, rhs, Type);
+  return I;
 }
 
 static const Init *ForeachHelper(const Init *LHS, const Init *MHS,
