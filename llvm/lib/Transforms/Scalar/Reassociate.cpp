@@ -1130,6 +1130,7 @@ bool Reassociate::runOnFunction(Function &F) {
   // We are done with the rank map.
   RankMap.clear();
   ValueRankMap.clear();
+  DbgValues.clear();
   return MadeChange;
 }
 
