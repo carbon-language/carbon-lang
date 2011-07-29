@@ -665,6 +665,13 @@ bool DiagnosticIDs::ProcessDiag(Diagnostic &Diag) const {
     Diag.LastDiagLevel = DiagLevel;
   }
 
+  // Update counts for DiagnosticErrorTrap even if a fatal error occurred.
+  if (DiagLevel >= DiagnosticIDs::Error) {
+    ++Diag.TrapNumErrorsOccurred;
+    if (isUnrecoverable(DiagID))
+      ++Diag.TrapNumUnrecoverableErrorsOccurred;
+  }
+
   // If a fatal error has already been emitted, silence all subsequent
   // diagnostics.
   if (Diag.FatalErrorOccurred) {
@@ -685,11 +692,8 @@ bool DiagnosticIDs::ProcessDiag(Diagnostic &Diag) const {
     return false;
 
   if (DiagLevel >= DiagnosticIDs::Error) {
-    Diag.TrapErrorOccurred = true;
-    if (isUnrecoverable(DiagID)) {
-      Diag.TrapUnrecoverableErrorOccurred = true;
+    if (isUnrecoverable(DiagID))
       Diag.UnrecoverableErrorOccurred = true;
-    }
     
     if (Diag.Client->IncludeInDiagnosticCounts()) {
       Diag.ErrorOccurred = true;

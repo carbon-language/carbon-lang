@@ -255,10 +255,10 @@ private:
   /// \brief Indicates that an unrecoverable error has occurred.
   bool UnrecoverableErrorOccurred;
   
-  /// \brief Toggles for DiagnosticErrorTrap to check whether an error occurred
+  /// \brief Counts for DiagnosticErrorTrap to check whether an error occurred
   /// during a parsing section, e.g. during parsing a function.
-  bool TrapErrorOccurred;
-  bool TrapUnrecoverableErrorOccurred;
+  unsigned TrapNumErrorsOccurred;
+  unsigned TrapNumUnrecoverableErrorsOccurred;
 
   /// LastDiagLevel - This is the level of the last diagnostic emitted.  This is
   /// used to emit continuation diagnostics with the same level as the
@@ -639,6 +639,8 @@ private:
 /// queried.
 class DiagnosticErrorTrap {
   Diagnostic &Diag;
+  unsigned NumErrors;
+  unsigned NumUnrecoverableErrors;
 
 public:
   explicit DiagnosticErrorTrap(Diagnostic &Diag)
@@ -647,19 +649,19 @@ public:
   /// \brief Determine whether any errors have occurred since this
   /// object instance was created.
   bool hasErrorOccurred() const {
-    return Diag.TrapErrorOccurred;
+    return Diag.TrapNumErrorsOccurred > NumErrors;
   }
 
   /// \brief Determine whether any unrecoverable errors have occurred since this
   /// object instance was created.
   bool hasUnrecoverableErrorOccurred() const {
-    return Diag.TrapUnrecoverableErrorOccurred;
+    return Diag.TrapNumUnrecoverableErrorsOccurred > NumUnrecoverableErrors;
   }
 
   // Set to initial state of "no errors occurred".
   void reset() {
-    Diag.TrapErrorOccurred = false;
-    Diag.TrapUnrecoverableErrorOccurred = false;
+    NumErrors = Diag.TrapNumErrorsOccurred;
+    NumUnrecoverableErrors = Diag.TrapNumUnrecoverableErrorsOccurred;
   }
 };
 

@@ -171,3 +171,24 @@ namespace test9 {
     }
   }
 }
+
+// http://llvm.org/PR10462
+namespace PR10462 {
+enum MyEnum {
+  something_valid,
+  something_invalid
+};
+
+bool recurse() {
+  MyEnum K;
+  switch (K) { // expected-warning {{enumeration value 'something_invalid' not handled in switch}}
+    case something_valid:
+    case what_am_i_thinking: // expected-error {{use of undeclared identifier}}
+      int *X = 0;
+      if (recurse()) {
+      }
+
+      break;
+  }
+}
+}

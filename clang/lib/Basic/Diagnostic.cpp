@@ -92,6 +92,8 @@ void Diagnostic::Reset() {
   NumWarnings = 0;
   NumErrors = 0;
   NumErrorsSuppressed = 0;
+  TrapNumErrorsOccurred = 0;
+  TrapNumUnrecoverableErrorsOccurred = 0;
   
   CurDiagID = ~0U;
   // Set LastDiagLevel to an "unset" state. If we set it to 'Ignored', notes
