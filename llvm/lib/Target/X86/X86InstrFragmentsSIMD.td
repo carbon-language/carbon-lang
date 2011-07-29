@@ -436,11 +436,6 @@ def pshuflw : PatFrag<(ops node:$lhs, node:$rhs),
   return X86::isPSHUFLWMask(cast<ShuffleVectorSDNode>(N));
 }], SHUFFLE_get_pshuflw_imm>;
 
-def palign : PatFrag<(ops node:$lhs, node:$rhs),
-                     (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isPALIGNRMask(cast<ShuffleVectorSDNode>(N));
-}], SHUFFLE_get_palign_imm>;
-
 def vextractf128_extract : PatFrag<(ops node:$bigvec, node:$index),
                                    (extract_subvector node:$bigvec,
                                                       node:$index), [{

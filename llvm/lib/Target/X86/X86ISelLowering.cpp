@@ -3076,6 +3076,8 @@ bool X86::isPSHUFLWMask(ShuffleVectorSDNode *N) {
 static bool isPALIGNRMask(const SmallVectorImpl<int> &Mask, EVT VT,
                           bool hasSSSE3) {
   int i, e = VT.getVectorNumElements();
+  if (VT.getSizeInBits() != 128 && VT.getSizeInBits() != 64)
+    return false;
 
   // Do not handle v2i64 / v2f64 shuffles with palignr.
   if (e < 4 || !hasSSSE3)
@@ -3102,12 +3104,6 @@ static bool isPALIGNRMask(const SmallVectorImpl<int> &Mask, EVT VT,
       return false;
   }
   return true;
-}
-
-bool X86::isPALIGNRMask(ShuffleVectorSDNode *N) {
-  SmallVector<int, 8> M;
-  N->getMask(M);
-  return ::isPALIGNRMask(M, N->getValueType(0), true);
 }
 
 /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand

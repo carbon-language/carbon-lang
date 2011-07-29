@@ -421,10 +421,6 @@ namespace llvm {
     /// specifies a shuffle of elements that is suitable for input to MOVDDUP.
     bool isMOVDDUPMask(ShuffleVectorSDNode *N);
 
-    /// isPALIGNRMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to PALIGNR.
-    bool isPALIGNRMask(ShuffleVectorSDNode *N);
-
     /// isVEXTRACTF128Index - Return true if the specified
     /// EXTRACT_SUBVECTOR operand specifies a vector extract that is
     /// suitable for input to VEXTRACTF128.
