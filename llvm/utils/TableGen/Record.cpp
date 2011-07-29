@@ -21,6 +21,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 
 using namespace llvm;
 
@@ -565,7 +566,12 @@ IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
 }
 
 const StringInit *StringInit::get(const std::string &V) {
-  return new StringInit(V);
+  typedef StringMap<StringInit *> Pool;
+  static Pool ThePool;
+
+  StringInit *&I = ThePool[V];
+  if (!I) I = new StringInit(V);
+  return I;
 }
 
 const CodeInit *CodeInit::get(const std::string &V) {
