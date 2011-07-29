@@ -3488,8 +3488,12 @@ static unsigned getShuffleVPERMILPSImmediate(SDNode *N) {
   int NumLanes = VT.getSizeInBits()/128;
 
   unsigned Mask = 0;
-  for (int i = 0; i < NumElts/NumLanes /* lane size */; ++i)
-    Mask |= SVOp->getMaskElt(i) << (i*2);
+  for (int i = 0; i < NumElts/NumLanes /* lane size */; ++i) {
+    int MaskElt = SVOp->getMaskElt(i);
+    if (MaskElt < 0)
+      continue;
+    Mask |= MaskElt << (i*2);
+  }
 
   return Mask;
 }
@@ -3506,8 +3510,12 @@ static unsigned getShuffleVPERMILPDImmediate(SDNode *N) {
   unsigned Mask = 0;
   int LaneSize = NumElts/NumLanes;
   for (int l = 0; l < NumLanes; ++l)
-    for (int i = l*LaneSize; i < LaneSize*(l+1); ++i)
-      Mask |= (SVOp->getMaskElt(i)-l*LaneSize) << i;
+    for (int i = l*LaneSize; i < LaneSize*(l+1); ++i) {
+      int MaskElt = SVOp->getMaskElt(i);
+      if (MaskElt < 0)
+        continue;
+      Mask |= (MaskElt-l*LaneSize) << i;
+    }
 
   return Mask;
 }
