@@ -1786,16 +1786,9 @@ void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
 //===----------------------------------------------------------------------===//
 
 void ExprEngine::VisitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt *S,
-                                               ExplodedNode *Pred,
-                                               ExplodedNodeSet &Dst) {
-
-  // The mutex expression is a CFGElement, so we don't need to explicitly
-  // visit it since it will already be processed.
-
-  // Pre-visit the ObjCAtSynchronizedStmt.
-  ExplodedNodeSet Tmp;
-  Tmp.Add(Pred);
-  getCheckerManager().runCheckersForPreStmt(Dst, Tmp, S, *this);
+                                             ExplodedNode *Pred,
+                                             ExplodedNodeSet &Dst) {
+  getCheckerManager().runCheckersForPreStmt(Dst, Pred, S, *this);
 }
 
 //===----------------------------------------------------------------------===//
