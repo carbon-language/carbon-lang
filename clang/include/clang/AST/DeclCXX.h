@@ -1333,6 +1333,7 @@ public:
   ///   void g() &&;
   ///   void h();
   /// };
+  /// \endcode
   RefQualifierKind getRefQualifier() const {
     return getType()->getAs<FunctionProtoType>()->getRefQualifier();
   }
