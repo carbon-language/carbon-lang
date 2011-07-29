@@ -1,4 +1,3 @@
-
 //===- Record.cpp - Record implementation ---------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
