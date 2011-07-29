@@ -860,7 +860,20 @@ std::string UnOpInit::getAsString() const {
 
 const BinOpInit *BinOpInit::get(BinaryOp opc, const Init *lhs,
                                 const Init *rhs, RecTy *Type) {
-  return new BinOpInit(opc, lhs, rhs, Type);
+  typedef std::pair<
+    std::pair<std::pair<unsigned, const Init *>, const Init *>,
+    RecTy *
+    > Key;
+
+  typedef DenseMap<Key, BinOpInit *> Pool;
+  static Pool ThePool;  
+
+  Key TheKey(std::make_pair(std::make_pair(std::make_pair(opc, lhs), rhs),
+                            Type));
+
+  BinOpInit *&I = ThePool[TheKey];
+  if (!I) I = new BinOpInit(opc, lhs, rhs, Type);
+  return I;
 }
 
 const Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
