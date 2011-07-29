@@ -792,9 +792,8 @@ llvm::Value *CGObjCGNU::GetClassNamed(CGBuilderTy &Builder,
     EmitClassRef(Name);
   ClassName = Builder.CreateStructGEP(ClassName, 0);
 
-  llvm::Type *ArgTys[] = { PtrToInt8Ty };
   llvm::Constant *ClassLookupFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(IdTy, ArgTys, true),
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(IdTy, PtrToInt8Ty, true),
                               "objc_lookup_class");
   return Builder.CreateCall(ClassLookupFn, ClassName);
 }
@@ -998,13 +997,11 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
   if (isCategoryImpl) {
     llvm::Constant *classLookupFunction = 0;
     if (IsClassMessage)  {
-      llvm::Type *ArgTys[] = { PtrTy };
       classLookupFunction = CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-            IdTy, ArgTys, true), "objc_get_meta_class");
+            IdTy, PtrTy, true), "objc_get_meta_class");
     } else {
-      llvm::Type *ArgTys[] = { PtrTy };
       classLookupFunction = CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-            IdTy, ArgTys, true), "objc_get_class");
+            IdTy, PtrTy, true), "objc_get_class");
     }
     ReceiverClass = Builder.CreateCall(classLookupFunction,
         MakeConstantString(Class->getNameAsString()));
@@ -2201,9 +2198,9 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   CGBuilderTy Builder(VMContext);
   Builder.SetInsertPoint(EntryBB);
 
-  llvm::Type *ArgTys[] = { llvm::PointerType::getUnqual(ModuleTy) };
   llvm::FunctionType *FT =
-    llvm::FunctionType::get(Builder.getVoidTy(), ArgTys, true);
+    llvm::FunctionType::get(Builder.getVoidTy(),
+                            llvm::PointerType::getUnqual(ModuleTy), true);
   llvm::Value *Register = CGM.CreateRuntimeFunction(FT, "__objc_exec_class");
   Builder.CreateCall(Register, Module);
   Builder.CreateRetVoid();

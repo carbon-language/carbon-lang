@@ -29,9 +29,8 @@ using namespace CodeGen;
 static llvm::Constant *getAllocateExceptionFn(CodeGenFunction &CGF) {
   // void *__cxa_allocate_exception(size_t thrown_size);
 
-  llvm::Type *ArgTys[] = { CGF.SizeTy };
   llvm::FunctionType *FTy =
-    llvm::FunctionType::get(CGF.Int8PtrTy, ArgTys, /*IsVarArgs=*/false);
+    llvm::FunctionType::get(CGF.Int8PtrTy, CGF.SizeTy, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_allocate_exception");
 }
@@ -39,9 +38,8 @@ static llvm::Constant *getAllocateExceptionFn(CodeGenFunction &CGF) {
 static llvm::Constant *getFreeExceptionFn(CodeGenFunction &CGF) {
   // void __cxa_free_exception(void *thrown_exception);
 
-  llvm::Type *ArgTys[] = { CGF.Int8PtrTy };
   llvm::FunctionType *FTy =
-    llvm::FunctionType::get(CGF.VoidTy, ArgTys, /*IsVarArgs=*/false);
+    llvm::FunctionType::get(CGF.VoidTy, CGF.Int8PtrTy, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_free_exception");
 }
@@ -69,9 +67,8 @@ static llvm::Constant *getReThrowFn(CodeGenFunction &CGF) {
 static llvm::Constant *getGetExceptionPtrFn(CodeGenFunction &CGF) {
   // void *__cxa_get_exception_ptr(void*);
 
-  llvm::Type *ArgTys[] = { CGF.Int8PtrTy };
   llvm::FunctionType *FTy =
-    llvm::FunctionType::get(CGF.Int8PtrTy, ArgTys, /*IsVarArgs=*/false);
+    llvm::FunctionType::get(CGF.Int8PtrTy, CGF.Int8PtrTy, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_get_exception_ptr");
 }
@@ -79,9 +76,8 @@ static llvm::Constant *getGetExceptionPtrFn(CodeGenFunction &CGF) {
 static llvm::Constant *getBeginCatchFn(CodeGenFunction &CGF) {
   // void *__cxa_begin_catch(void*);
 
-  llvm::Type *ArgTys[] = { CGF.Int8PtrTy };
   llvm::FunctionType *FTy =
-    llvm::FunctionType::get(CGF.Int8PtrTy, ArgTys, /*IsVarArgs=*/false);
+    llvm::FunctionType::get(CGF.Int8PtrTy, CGF.Int8PtrTy, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_begin_catch");
 }
@@ -98,17 +94,15 @@ static llvm::Constant *getEndCatchFn(CodeGenFunction &CGF) {
 static llvm::Constant *getUnexpectedFn(CodeGenFunction &CGF) {
   // void __cxa_call_unexepcted(void *thrown_exception);
 
-  llvm::Type *ArgTys[] = { CGF.Int8PtrTy };
   llvm::FunctionType *FTy =
-    llvm::FunctionType::get(CGF.VoidTy, ArgTys, /*IsVarArgs=*/false);
+    llvm::FunctionType::get(CGF.VoidTy, CGF.Int8PtrTy, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_call_unexpected");
 }
 
 llvm::Constant *CodeGenFunction::getUnwindResumeFn() {
-  llvm::Type *ArgTys[] = { Int8PtrTy };
   llvm::FunctionType *FTy =
-    llvm::FunctionType::get(VoidTy, ArgTys, /*IsVarArgs=*/false);
+    llvm::FunctionType::get(VoidTy, Int8PtrTy, /*IsVarArgs=*/false);
 
   if (CGM.getLangOptions().SjLjExceptions)
     return CGM.CreateRuntimeFunction(FTy, "_Unwind_SjLj_Resume");
@@ -116,9 +110,8 @@ llvm::Constant *CodeGenFunction::getUnwindResumeFn() {
 }
 
 llvm::Constant *CodeGenFunction::getUnwindResumeOrRethrowFn() {
-  llvm::Type *ArgTys[] = { Int8PtrTy };
   llvm::FunctionType *FTy =
-    llvm::FunctionType::get(VoidTy, ArgTys, /*IsVarArgs=*/false);
+    llvm::FunctionType::get(VoidTy, Int8PtrTy, /*IsVarArgs=*/false);
 
   if (CGM.getLangOptions().SjLjExceptions)
     return CGM.CreateRuntimeFunction(FTy, "_Unwind_SjLj_Resume_or_Rethrow");
@@ -146,9 +139,8 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
 
 static llvm::Constant *getCatchallRethrowFn(CodeGenFunction &CGF,
                                             StringRef Name) {
-  llvm::Type *ArgTys[] = { CGF.Int8PtrTy };
   llvm::FunctionType *FTy =
-    llvm::FunctionType::get(CGF.VoidTy, ArgTys, /*IsVarArgs=*/false);
+    llvm::FunctionType::get(CGF.VoidTy, CGF.Int8PtrTy, /*IsVarArgs=*/false);
 
   return CGF.CGM.CreateRuntimeFunction(FTy, Name);
 }

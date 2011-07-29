@@ -1532,8 +1532,7 @@ CodeGenFunction::EmitARCRetainAutoreleasedReturnValue(llvm::Value *value) {
       assert(metadata->getNumOperands() <= 1);
       if (metadata->getNumOperands() == 0) {
         llvm::Value *string = llvm::MDString::get(getLLVMContext(), assembly);
-        llvm::Value *args[] = { string };
-        metadata->addOperand(llvm::MDNode::get(getLLVMContext(), args));
+        metadata->addOperand(llvm::MDNode::get(getLLVMContext(), string));
       }
     }
   }
@@ -2220,9 +2219,8 @@ void CodeGenFunction::EmitObjCAutoreleasePoolStmt(
 /// make sure it survives garbage collection until this point.
 void CodeGenFunction::EmitExtendGCLifetime(llvm::Value *object) {
   // We just use an inline assembly.
-  llvm::Type *paramTypes[] = { VoidPtrTy };
   llvm::FunctionType *extenderType
-    = llvm::FunctionType::get(VoidTy, paramTypes, /*variadic*/ false);
+    = llvm::FunctionType::get(VoidTy, VoidPtrTy, /*variadic*/ false);
   llvm::Value *extender
     = llvm::InlineAsm::get(extenderType,
                            /* assembly */ "",
