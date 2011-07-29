@@ -1721,11 +1721,10 @@ def SVC : ABI<0b1111, (outs), (ins imm24b:$svc), IIC_Br, "svc", "\t$svc", []> {
 }
 }
 
-// Store Return State is a system instruction -- for disassembly only
-let isCodeGenOnly = 1 in {  // FIXME: This should not use submode!
+// Store Return State
+// FIXME: This should not use submode!
 def SRSW : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, i32imm:$mode),
-                NoItinerary, "srs${amode}\tsp!, $mode",
-                [/* For disassembly only; pattern left blank */]> {
+                NoItinerary, "srs${amode}\tsp!, $mode", []> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b110; // W = 1
   let Inst{19-8} = 0xd05;
@@ -1733,31 +1732,27 @@ def SRSW : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, i32imm:$mode),
 }
 
 def SRS  : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, i32imm:$mode),
-                NoItinerary, "srs${amode}\tsp, $mode",
-                [/* For disassembly only; pattern left blank */]> {
+                NoItinerary, "srs${amode}\tsp, $mode", []> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b100; // W = 0
   let Inst{19-8} = 0xd05;
   let Inst{7-5} = 0b000;
 }
 
-// Return From Exception is a system instruction -- for disassembly only
+// Return From Exception
 def RFEW : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, GPR:$base),
-                NoItinerary, "rfe${amode}\t$base!",
-                [/* For disassembly only; pattern left blank */]> {
+                NoItinerary, "rfe${amode}\t$base!", []> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b011; // W = 1
   let Inst{15-0} = 0x0a00;
 }
 
 def RFE  : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, GPR:$base),
-                NoItinerary, "rfe${amode}\t$base",
-                [/* For disassembly only; pattern left blank */]> {
+                NoItinerary, "rfe${amode}\t$base", []> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b001; // W = 0
   let Inst{15-0} = 0x0a00;
 }
-} // isCodeGenOnly = 1
 
 //===----------------------------------------------------------------------===//
 //  Load / store Instructions.
