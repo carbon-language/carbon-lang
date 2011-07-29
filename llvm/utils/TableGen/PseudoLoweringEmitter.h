@@ -47,7 +47,7 @@ class PseudoLoweringEmitter : public TableGenBackend {
 
   SmallVector<PseudoExpansion, 64> Expansions;
 
-  unsigned addDagOperandMapping(Record *Rec, const DagInit *Dag,
+  unsigned addDagOperandMapping(Record *Rec, DagInit *Dag,
                                 CodeGenInstruction &Insn,
                                 IndexedMap<OpData> &OperandMap,
                                 unsigned BaseIdx);

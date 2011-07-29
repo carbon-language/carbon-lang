@@ -70,7 +70,7 @@ public:
 
     /// apply - Apply this operator to Expr's arguments and insert the result
     /// in Elts.
-    virtual void apply(SetTheory&, const DagInit *Expr, RecSet &Elts) =0;
+    virtual void apply(SetTheory&, DagInit *Expr, RecSet &Elts) =0;
   };
 
   /// Expander - A callback function that can transform a Record representing a
@@ -115,7 +115,7 @@ public:
   void addOperator(StringRef Name, Operator*);
 
   /// evaluate - Evaluate Expr and append the resulting set to Elts.
-  void evaluate(const Init *Expr, RecSet &Elts);
+  void evaluate(Init *Expr, RecSet &Elts);
 
   /// evaluate - Evaluate a sequence of Inits and append to Elts.
   template<typename Iter>

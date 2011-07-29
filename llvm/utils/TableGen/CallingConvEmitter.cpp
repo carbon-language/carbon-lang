@@ -40,7 +40,7 @@ void CallingConvEmitter::run(raw_ostream &O) {
 
 
 void CallingConvEmitter::EmitCallingConv(Record *CC, raw_ostream &O) {
-  const ListInit *CCActions = CC->getValueAsListInit("Actions");
+  ListInit *CCActions = CC->getValueAsListInit("Actions");
   Counter = 0;
 
   O << "\n\nstatic bool " << CC->getName()
@@ -67,7 +67,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
     O << IndentStr << "if (";
     
     if (Action->isSubClassOf("CCIfType")) {
-      const ListInit *VTs = Action->getValueAsListInit("VTs");
+      ListInit *VTs = Action->getValueAsListInit("VTs");
       for (unsigned i = 0, e = VTs->getSize(); i != e; ++i) {
         Record *VT = VTs->getElementAsRecord(i);
         if (i != 0) O << " ||\n    " << IndentStr;
@@ -91,7 +91,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
         << "(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State))\n"
         << IndentStr << "  return false;\n";
     } else if (Action->isSubClassOf("CCAssignToReg")) {
-      const ListInit *RegList = Action->getValueAsListInit("RegList");
+      ListInit *RegList = Action->getValueAsListInit("RegList");
       if (RegList->getSize() == 1) {
         O << IndentStr << "if (unsigned Reg = State.AllocateReg(";
         O << getQualifiedName(RegList->getElementAsRecord(0)) << ")) {\n";
@@ -112,8 +112,8 @@ void CallingConvEmitter::EmitAction(Record *Action,
       O << IndentStr << "  return false;\n";
       O << IndentStr << "}\n";
     } else if (Action->isSubClassOf("CCAssignToRegWithShadow")) {
-      const ListInit *RegList = Action->getValueAsListInit("RegList");
-      const ListInit *ShadowRegList = Action->getValueAsListInit("ShadowRegList");
+      ListInit *RegList = Action->getValueAsListInit("RegList");
+      ListInit *ShadowRegList = Action->getValueAsListInit("ShadowRegList");
       if (ShadowRegList->getSize() >0 &&
           ShadowRegList->getSize() != RegList->getSize())
         throw "Invalid length of list of shadowed registers";

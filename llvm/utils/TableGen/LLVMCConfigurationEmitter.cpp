@@ -245,7 +245,7 @@ struct OptionDescription {
   unsigned Flags;
   std::string Help;
   unsigned MultiVal;
-  const Init* InitVal;
+  Init* InitVal;
 
   OptionDescription(OptionType::OptionType t = OptionType::Switch,
                     const std::string& n = "",
@@ -589,7 +589,7 @@ Handler GetHandler(FunctionObject* Obj, const DagInit& Dag) {
 }
 
 template <class FunctionObject>
-void InvokeDagInitHandler(FunctionObject* Obj, const Init* I) {
+void InvokeDagInitHandler(FunctionObject* Obj, Init* I) {
   typedef void (FunctionObject::*Handler) (const DagInit&);
 
   const DagInit& Dag = InitPtrToDag(I);
@@ -658,7 +658,7 @@ public:
 
   /// operator() - Just forwards to the corresponding property
   /// handler.
-  void operator() (const Init* I) {
+  void operator() (Init* I) {
     InvokeDagInitHandler(this, I);
   }
 
@@ -705,10 +705,10 @@ private:
 
   void onInit (const DagInit& d) {
     CheckNumberOfArguments(d, 1);
-    const Init* i = d.getArg(0);
+    Init* i = d.getArg(0);
     const std::string& str = i->getAsString();
 
-    bool correct = optDesc_.isParameter() && dynamic_cast<const StringInit*>(i);
+    bool correct = optDesc_.isParameter() && dynamic_cast<StringInit*>(i);
     correct |= (optDesc_.isSwitch() && (str == "true" || str == "false"));
 
     if (!correct)
@@ -821,7 +821,7 @@ void CollectOptionDescriptions (const RecordVector& V,
   for (RecordVector::const_iterator B = V.begin(), E = V.end(); B!=E; ++B)
   {
     // Throws an exception if the value does not exist.
-    const ListInit* PropList = (*B)->getValueAsListInit("options");
+    ListInit* PropList = (*B)->getValueAsListInit("options");
 
     // For every option description in this list: invoke AddOption.
     std::for_each(PropList->begin(), PropList->end(), AddOption(OptDescs));
@@ -836,8 +836,8 @@ namespace ToolFlags {
 
 struct ToolDescription : public RefCountedBase<ToolDescription> {
   std::string Name;
-  const Init* CmdLine;
-  const Init* Actions;
+  Init* CmdLine;
+  Init* Actions;
   StrVector InLanguage;
   std::string InFileOption;
   std::string OutFileOption;
@@ -903,7 +903,7 @@ public:
     }
   }
 
-  void operator() (const Init* I) {
+  void operator() (Init* I) {
     InvokeDagInitHandler(this, I);
   }
 
@@ -915,9 +915,9 @@ private:
 
   void onActions (const DagInit& d) {
     CheckNumberOfArguments(d, 1);
-    const Init* Case = d.getArg(0);
+    Init* Case = d.getArg(0);
     if (typeid(*Case) != typeid(DagInit) ||
-        GetOperatorName(static_cast<const DagInit&>(*Case)) != "case")
+        GetOperatorName(static_cast<DagInit&>(*Case)) != "case")
       throw "The argument to (actions) should be a 'case' construct!";
     toolDesc_.Actions = Case;
   }
@@ -954,7 +954,7 @@ private:
       isReallyJoin = true;
     }
     else {
-      const Init* I = d.getArg(0);
+      Init* I = d.getArg(0);
       isReallyJoin = InitPtrToBool(I);
     }
 
@@ -1007,7 +1007,7 @@ void CollectToolDescriptions (const RecordVector& Tools,
          E = Tools.end(); B!=E; ++B) {
     const Record* T = *B;
     // Throws an exception if the value does not exist.
-    const ListInit* PropList = T->getValueAsListInit("properties");
+    ListInit* PropList = T->getValueAsListInit("properties");
 
     IntrusiveRefCntPtr<ToolDescription>
       ToolDesc(new ToolDescription(T->getName()));
@@ -1163,7 +1163,7 @@ void WalkCase(const Init* Case, F1 TestCallback, F2 StatementCallback,
   unsigned i = 1;
   for (DagInit::const_arg_iterator B = d.arg_begin(), E = d.arg_end();
        B != E; ++B) {
-    const Init* arg = *B;
+    Init* arg = *B;
 
     if (!even)
     {
@@ -1181,8 +1181,8 @@ void WalkCase(const Init* Case, F1 TestCallback, F2 StatementCallback,
     }
     else
     {
-      if (dynamic_cast<const DagInit*>(arg)
-          && GetOperatorName(static_cast<const DagInit&>(*arg)) == "case") {
+      if (dynamic_cast<DagInit*>(arg)
+          && GetOperatorName(static_cast<DagInit&>(*arg)) == "case") {
         // Nested 'case'.
         WalkCase(arg, TestCallback, StatementCallback, IndentLevel + Indent1);
       }
@@ -1210,7 +1210,7 @@ class ExtractOptionNames {
         ActionName == "parameter_equals" || ActionName == "element_in_list") {
       CheckNumberOfArguments(Stmt, 1);
 
-      const Init* Arg = Stmt.getArg(0);
+      Init* Arg = Stmt.getArg(0);
       if (typeid(*Arg) == typeid(StringInit))
         OptionNames_.insert(InitPtrToString(Arg));
     }
@@ -1218,7 +1218,7 @@ class ExtractOptionNames {
              ActionName == "any_not_empty" || ActionName == "any_empty" ||
              ActionName == "not_empty" || ActionName == "empty") {
       for (unsigned i = 0, NumArgs = Stmt.getNumArgs(); i < NumArgs; ++i) {
-        const Init* Arg = Stmt.getArg(i);
+        Init* Arg = Stmt.getArg(i);
         if (typeid(*Arg) == typeid(StringInit))
           OptionNames_.insert(InitPtrToString(Arg));
       }
@@ -2613,7 +2613,7 @@ void EmitPreprocessOptions (const RecordKeeper& Records,
 
   for (RecordVector::const_iterator B = OptionPreprocessors.begin(),
          E = OptionPreprocessors.end(); B!=E; ++B) {
-    const DagInit* Case = (*B)->getValueAsDag("preprocessor");
+    DagInit* Case = (*B)->getValueAsDag("preprocessor");
     EmitCaseConstructHandler(Case, Indent1,
                              EmitPreprocessOptionsCallback(OptDecs),
                              false, OptDecs, O);
@@ -2645,7 +2645,7 @@ public:
     }
   }
 
-  void operator() (const Init* I) {
+  void operator() (Init* I) {
     InvokeDagInitHandler(this, I);
   }
 
@@ -2655,7 +2655,7 @@ private:
     CheckNumberOfArguments(d, 2);
 
     const std::string& Lang = InitPtrToString(d.getArg(0));
-    const Init* Suffixes = d.getArg(1);
+    Init* Suffixes = d.getArg(1);
 
     // Second argument to lang_to_suffixes is either a single string...
     if (typeid(*Suffixes) == typeid(StringInit)) {
@@ -2688,7 +2688,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
   // Call DoEmitPopulateLanguageMap.
   for (RecordVector::const_iterator B = LangMaps.begin(),
          E = LangMaps.end(); B!=E; ++B) {
-    const ListInit* LangMap = (*B)->getValueAsListInit("map");
+    ListInit* LangMap = (*B)->getValueAsListInit("map");
     std::for_each(LangMap->begin(), LangMap->end(),
                   DoEmitPopulateLanguageMap(O));
   }
@@ -2947,7 +2947,7 @@ void FillInHookNames(const ToolDescriptions& ToolDescs,
     // Look for hook invocations in 'cmd_line'.
     if (!D.CmdLine)
       continue;
-    if (dynamic_cast<const StringInit*>(D.CmdLine))
+    if (dynamic_cast<StringInit*>(D.CmdLine))
       // This is a string.
       ExtractHookNames(HookNames, OptDescs).operator()(D.CmdLine);
     else

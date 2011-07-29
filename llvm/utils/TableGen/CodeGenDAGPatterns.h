@@ -306,7 +306,7 @@ class TreePatternNode {
 
   /// Val - The init value (e.g. the "GPRC" record, or "7") for a leaf.
   ///
-  const Init *Val;
+  Init *Val;
 
   /// Name - The name given to this node with the :$foo notation.
   ///
@@ -327,7 +327,7 @@ public:
     : Operator(Op), Val(0), TransformFn(0), Children(Ch) {
     Types.resize(NumResults);
   }
-  TreePatternNode(const Init *val, unsigned NumResults)    // leaf ctor
+  TreePatternNode(Init *val, unsigned NumResults)    // leaf ctor
     : Operator(0), Val(val), TransformFn(0) {
     Types.resize(NumResults);
   }
@@ -358,7 +358,7 @@ public:
     return Types[ResNo].isDynamicallyResolved();
   }
 
-  const Init *getLeafValue() const { assert(isLeaf()); return Val; }
+  Init *getLeafValue() const { assert(isLeaf()); return Val; }
   Record *getOperator() const { assert(!isLeaf()); return Operator; }
 
   unsigned getNumChildren() const { return Children.size(); }
@@ -517,9 +517,9 @@ public:
 
   /// TreePattern constructor - Parse the specified DagInits into the
   /// current record.
-  TreePattern(Record *TheRec, const ListInit *RawPat, bool isInput,
+  TreePattern(Record *TheRec, ListInit *RawPat, bool isInput,
               CodeGenDAGPatterns &ise);
-  TreePattern(Record *TheRec, const DagInit *Pat, bool isInput,
+  TreePattern(Record *TheRec, DagInit *Pat, bool isInput,
               CodeGenDAGPatterns &ise);
   TreePattern(Record *TheRec, TreePatternNode *Pat, bool isInput,
               CodeGenDAGPatterns &ise);
@@ -576,7 +576,7 @@ public:
   void dump() const;
 
 private:
-  TreePatternNode *ParseTreePattern(const Init *DI, StringRef OpName);
+  TreePatternNode *ParseTreePattern(Init *DI, StringRef OpName);
   void ComputeNamedNodes();
   void ComputeNamedNodes(TreePatternNode *N);
 };
@@ -631,7 +631,7 @@ public:
 /// processed to produce isel.
 class PatternToMatch {
 public:
-  PatternToMatch(Record *srcrecord, const ListInit *preds,
+  PatternToMatch(Record *srcrecord, ListInit *preds,
                  TreePatternNode *src, TreePatternNode *dst,
                  const std::vector<Record*> &dstregs,
                  unsigned complexity, unsigned uid)
@@ -639,7 +639,7 @@ public:
       Dstregs(dstregs), AddedComplexity(complexity), ID(uid) {}
 
   Record          *SrcRecord;   // Originating Record for the pattern.
-  const ListInit        *Predicates;  // Top level predicate conditions to match.
+  ListInit        *Predicates;  // Top level predicate conditions to match.
   TreePatternNode *SrcPattern;  // Source pattern to match.
   TreePatternNode *DstPattern;  // Resulting pattern.
   std::vector<Record*> Dstregs; // Physical register defs being matched.
@@ -647,7 +647,7 @@ public:
   unsigned         ID;          // Unique ID for the record.
 
   Record          *getSrcRecord()  const { return SrcRecord; }
-  const ListInit        *getPredicates() const { return Predicates; }
+  ListInit        *getPredicates() const { return Predicates; }
   TreePatternNode *getSrcPattern() const { return SrcPattern; }
   TreePatternNode *getDstPattern() const { return DstPattern; }
   const std::vector<Record*> &getDstRegs() const { return Dstregs; }

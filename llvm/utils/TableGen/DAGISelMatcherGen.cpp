@@ -203,7 +203,7 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
   assert(N->isLeaf() && "Not a leaf?");
 
   // Direct match against an integer constant.
-  if (const IntInit *II = dynamic_cast<const IntInit*>(N->getLeafValue())) {
+  if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
     // If this is the root of the dag we're matching, we emit a redundant opcode
     // check to ensure that this gets folded into the normal top-level
     // OpcodeSwitch.
@@ -215,7 +215,7 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
     return AddMatcher(new CheckIntegerMatcher(II->getValue()));
   }
 
-  const DefInit *DI = dynamic_cast<const DefInit*>(N->getLeafValue());
+  DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue());
   if (DI == 0) {
     errs() << "Unknown leaf kind: " << *DI << "\n";
     abort();
@@ -283,7 +283,7 @@ void MatcherGen::EmitOperatorMatchCode(const TreePatternNode *N,
        N->getOperator()->getName() == "or") &&
       N->getChild(1)->isLeaf() && N->getChild(1)->getPredicateFns().empty() &&
       N->getPredicateFns().empty()) {
-    if (const IntInit *II = dynamic_cast<const IntInit*>(N->getChild(1)->getLeafValue())) {
+    if (IntInit *II = dynamic_cast<IntInit*>(N->getChild(1)->getLeafValue())) {
       if (!isPowerOf2_32(II->getValue())) {  // Don't bother with single bits.
         // If this is at the root of the pattern, we emit a redundant
         // CheckOpcode so that the following checks get factored properly under
@@ -496,7 +496,7 @@ bool MatcherGen::EmitMatcherCode(unsigned Variant) {
     --RecNodeEntry;  // Entries in VariableMap are biased.
 
     const ComplexPattern &CP =
-      CGP.getComplexPattern(((const DefInit*)N->getLeafValue())->getDef());
+      CGP.getComplexPattern(((DefInit*)N->getLeafValue())->getDef());
 
     // Emit a CheckComplexPat operation, which does the match (aborting if it
     // fails) and pushes the matched operands onto the recorded nodes list.
@@ -572,14 +572,14 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
                                          SmallVectorImpl<unsigned> &ResultOps) {
   assert(N->isLeaf() && "Must be a leaf");
 
-  if (const IntInit *II = dynamic_cast<const IntInit*>(N->getLeafValue())) {
+  if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
     AddMatcher(new EmitIntegerMatcher(II->getValue(), N->getType(0)));
     ResultOps.push_back(NextRecordedOperandNo++);
     return;
   }
 
   // If this is an explicit register reference, handle it.
-  if (const DefInit *DI = dynamic_cast<const DefInit*>(N->getLeafValue())) {
+  if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
     Record *Def = DI->getDef();
     if (Def->isSubClassOf("Register")) {
       const CodeGenRegister *Reg =

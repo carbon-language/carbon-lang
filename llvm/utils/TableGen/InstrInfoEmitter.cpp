@@ -61,7 +61,7 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
     // registers in their multi-operand operands.  It may also be an anonymous
     // operand, which has a single operand, but no declared class for the
     // operand.
-    const DagInit *MIOI = Inst.Operands[i].MIOperandInfo;
+    DagInit *MIOI = Inst.Operands[i].MIOperandInfo;
 
     if (!MIOI || MIOI->getNumArgs() == 0) {
       // Single, anonymous, operand.
@@ -70,7 +70,7 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       for (unsigned j = 0, e = Inst.Operands[i].MINumOperands; j != e; ++j) {
         OperandList.push_back(Inst.Operands[i]);
 
-        Record *OpR = dynamic_cast<const DefInit*>(MIOI->getArg(j))->getDef();
+        Record *OpR = dynamic_cast<DefInit*>(MIOI->getArg(j))->getDef();
         OperandList.back().Rec = OpR;
       }
     }
@@ -295,11 +295,11 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.hasExtraDefRegAllocReq) OS << "|(1<<MCID::ExtraDefRegAllocReq)";
 
   // Emit all of the target-specific flags...
-  const BitsInit *TSF = Inst.TheDef->getValueAsBitsInit("TSFlags");
+  BitsInit *TSF = Inst.TheDef->getValueAsBitsInit("TSFlags");
   if (!TSF) throw "no TSFlags?";
   uint64_t Value = 0;
   for (unsigned i = 0, e = TSF->getNumBits(); i != e; ++i) {
-    if (const BitInit *Bit = dynamic_cast<const BitInit*>(TSF->getBit(i)))
+    if (BitInit *Bit = dynamic_cast<BitInit*>(TSF->getBit(i)))
       Value |= uint64_t(Bit->getValue()) << i;
     else
       throw "Invalid TSFlags bit in " + Inst.TheDef->getName();

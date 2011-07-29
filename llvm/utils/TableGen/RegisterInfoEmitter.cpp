@@ -166,7 +166,7 @@ RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
     if (!V || !V->getValue())
       continue;
 
-    const DefInit *DI = dynamic_cast<const DefInit*>(V->getValue());
+    DefInit *DI = dynamic_cast<DefInit*>(V->getValue());
     Record *Alias = DI->getDef();
     DwarfRegNums[Reg] = DwarfRegNums[Alias];
   }
