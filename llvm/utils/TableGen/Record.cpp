@@ -539,7 +539,12 @@ const Init *BitsInit::resolveReferences(Record &R, const RecordVal *RV) const {
 }
 
 const IntInit *IntInit::get(int64_t V) {
-  return new IntInit(V);
+  typedef DenseMap<int64_t, IntInit *> Pool;
+  static Pool ThePool;
+
+  IntInit *&I = ThePool[V];
+  if (!I) I = new IntInit(V);
+  return I;
 }
 
 std::string IntInit::getAsString() const {
