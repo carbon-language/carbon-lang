@@ -6237,6 +6237,10 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op,
                                                 SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
+
+  if (Op.getOperand(0).getValueType().getSizeInBits() != 128)
+    return SDValue();
+
   if (VT.getSizeInBits() == 8) {
     SDValue Extract = DAG.getNode(X86ISD::PEXTRB, dl, MVT::i32,
                                     Op.getOperand(0), Op.getOperand(1));
@@ -6296,36 +6300,26 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
   SDValue Vec = Op.getOperand(0);
   EVT VecVT = Vec.getValueType();
 
-  // If this is a 256-bit vector result, first extract the 128-bit
-  // vector and then extract from the 128-bit vector.
-  if (VecVT.getSizeInBits() > 128) {
+  // If this is a 256-bit vector result, first extract the 128-bit vector and
+  // then extract the element from the 128-bit vector.
+  if (VecVT.getSizeInBits() == 256) {
     DebugLoc dl = Op.getNode()->getDebugLoc();
     unsigned NumElems = VecVT.getVectorNumElements();
     SDValue Idx = Op.getOperand(1);
-
-    if (!isa<ConstantSDNode>(Idx))
-      return SDValue();
-
-    unsigned ExtractNumElems = NumElems / (VecVT.getSizeInBits() / 128);
     unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
 
     // Get the 128-bit vector.
-    bool Upper = IdxVal >= ExtractNumElems;
-    Vec = Extract128BitVector(Vec, Idx, DAG, dl);
+    bool Upper = IdxVal >= NumElems/2;
+    Vec = Extract128BitVector(Vec,
+                    DAG.getConstant(Upper ? NumElems/2 : 0, MVT::i32), DAG, dl);
 
-    // Extract from it.
-    SDValue ScaledIdx = Idx;
-    if (Upper)
-      ScaledIdx = DAG.getNode(ISD::SUB, dl, Idx.getValueType(), Idx,
-                              DAG.getConstant(ExtractNumElems,
-                                              Idx.getValueType()));
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, Op.getValueType(), Vec,
-                       ScaledIdx);
+                    Upper ? DAG.getConstant(IdxVal-NumElems/2, MVT::i32) : Idx);
   }
 
   assert(Vec.getValueSizeInBits() <= 128 && "Unexpected vector length");
 
-  if (Subtarget->hasSSE41()) {
+  if (Subtarget->hasSSE41() || Subtarget->hasAVX()) {
     SDValue Res = LowerEXTRACT_VECTOR_ELT_SSE4(Op, DAG);
     if (Res.getNode())
       return Res;
@@ -6395,6 +6389,9 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT_SSE4(SDValue Op,
   SDValue N1 = Op.getOperand(1);
   SDValue N2 = Op.getOperand(2);
 
+  if (VT.getSizeInBits() == 256)
+    return SDValue();
+
   if ((EltVT.getSizeInBits() == 8 || EltVT.getSizeInBits() == 16) &&
       isa<ConstantSDNode>(N2)) {
     unsigned Opc;
@@ -6442,35 +6439,28 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
   SDValue N1 = Op.getOperand(1);
   SDValue N2 = Op.getOperand(2);
 
-  // If this is a 256-bit vector result, first insert into a 128-bit
-  // vector and then insert into the 256-bit vector.
-  if (VT.getSizeInBits() > 128) {
+  // If this is a 256-bit vector result, first extract the 128-bit vector,
+  // insert the element into the extracted half and then place it back.
+  if (VT.getSizeInBits() == 256) {
     if (!isa<ConstantSDNode>(N2))
       return SDValue();
 
-    // Get the 128-bit vector.
+    // Get the desired 128-bit vector half.
     unsigned NumElems = VT.getVectorNumElements();
     unsigned IdxVal = cast<ConstantSDNode>(N2)->getZExtValue();
-    bool Upper = IdxVal >= NumElems / 2;
+    bool Upper = IdxVal >= NumElems/2;
+    SDValue Ins128Idx = DAG.getConstant(Upper ? NumElems/2 : 0, MVT::i32);
+    SDValue V = Extract128BitVector(N0, Ins128Idx, DAG, dl);
 
-    SDValue SubN0 = Extract128BitVector(N0, N2, DAG, dl);
+    // Insert the element into the desired half.
+    V = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, V.getValueType(), V,
+                 N1, Upper ? DAG.getConstant(IdxVal-NumElems/2, MVT::i32) : N2);
 
-    // Insert into it.
-    SDValue ScaledN2 = N2;
-    if (Upper)
-      ScaledN2 = DAG.getNode(ISD::SUB, dl, N2.getValueType(), N2,
-                             DAG.getConstant(NumElems /
-                                             (VT.getSizeInBits() / 128),
-                                             N2.getValueType()));
-    Op = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, SubN0.getValueType(), SubN0,
-                     N1, ScaledN2);
-
-    // Insert the 128-bit vector
-    // FIXME: Why UNDEF?
-    return Insert128BitVector(N0, Op, N2, DAG, dl);
+    // Insert the changed part back to the 256-bit vector
+    return Insert128BitVector(N0, V, Ins128Idx, DAG, dl);
   }
 
-  if (Subtarget->hasSSE41())
+  if (Subtarget->hasSSE41() || Subtarget->hasAVX())
     return LowerINSERT_VECTOR_ELT_SSE4(Op, DAG);
 
   if (EltVT == MVT::i8)
