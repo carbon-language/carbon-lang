@@ -749,15 +749,14 @@ public:
 class ListInit : public TypedInit {
   std::vector<Init*> Values;
 public:
-  typedef std::vector<Init*>::iterator       iterator;
   typedef std::vector<Init*>::const_iterator const_iterator;
 
   explicit ListInit(std::vector<Init*> &Vs, RecTy *EltTy)
     : TypedInit(ListRecTy::get(EltTy)) {
     Values.swap(Vs);
   }
-  explicit ListInit(iterator Start, iterator End, RecTy *EltTy)
-      : TypedInit(ListRecTy::get(EltTy)), Values(Start, End) {}
+  explicit ListInit(ArrayRef<Init *> Range, RecTy *EltTy)
+      : TypedInit(ListRecTy::get(EltTy)), Values(Range.begin(), Range.end()) {}
 
   unsigned getSize() const { return Values.size(); }
   Init *getElement(unsigned i) const {
@@ -784,9 +783,7 @@ public:
 
   ArrayRef<Init*> getValues() const { return Values; }
 
-  inline iterator       begin()       { return Values.begin(); }
   inline const_iterator begin() const { return Values.begin(); }
-  inline iterator       end  ()       { return Values.end();   }
   inline const_iterator end  () const { return Values.end();   }
 
   inline size_t         size () const { return Values.size();  }
@@ -1177,22 +1174,16 @@ public:
 
   virtual std::string getAsString() const;
 
-  typedef std::vector<Init*>::iterator             arg_iterator;
   typedef std::vector<Init*>::const_iterator       const_arg_iterator;
-  typedef std::vector<std::string>::iterator       name_iterator;
   typedef std::vector<std::string>::const_iterator const_name_iterator;
 
-  inline arg_iterator        arg_begin()       { return Args.begin(); }
   inline const_arg_iterator  arg_begin() const { return Args.begin(); }
-  inline arg_iterator        arg_end  ()       { return Args.end();   }
   inline const_arg_iterator  arg_end  () const { return Args.end();   }
 
   inline size_t              arg_size () const { return Args.size();  }
   inline bool                arg_empty() const { return Args.empty(); }
 
-  inline name_iterator       name_begin()       { return ArgNames.begin(); }
   inline const_name_iterator name_begin() const { return ArgNames.begin(); }
-  inline name_iterator       name_end  ()       { return ArgNames.end();   }
   inline const_name_iterator name_end  () const { return ArgNames.end();   }
 
   inline size_t              name_size () const { return ArgNames.size();  }

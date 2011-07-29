@@ -673,7 +673,13 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) {
         assert(0 && "Empty list in cdr");
         return 0;
       }
-      ListInit *Result = new ListInit(LHSl->begin()+1, LHSl->end(),
+      ListInit::const_iterator begin = LHSl->begin()+1;
+      ListInit::const_iterator end   = LHSl->end();
+      // We can't pass these iterators directly to ArrayRef because
+      // they are not convertible to Init **.  Fortunately,
+      // RandomAccessIterator::operator * is guaranteed to return an
+      // lvalue.
+      ListInit *Result = new ListInit(ArrayRef<Init *>(&*begin, end - begin),
                                       LHSl->getType());
       return Result;
     }
@@ -920,7 +926,7 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
       std::vector<Init *> NewOperands;
       std::vector<Init *> NewList(MHSl->begin(), MHSl->end());
 
-      for (ListInit::iterator li = NewList.begin(),
+      for (std::vector<Init *>::iterator li = NewList.begin(),
              liend = NewList.end();
            li != liend;
            ++li) {

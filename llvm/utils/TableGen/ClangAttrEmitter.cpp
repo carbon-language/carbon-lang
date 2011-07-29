@@ -27,7 +27,9 @@ getValueAsListOfStrings(Record &R, StringRef FieldName) {
   std::vector<StringRef> Strings;
   Strings.reserve(List->getSize());
 
-  for (ListInit::iterator i = List->begin(), e = List->end(); i != e; ++i) {
+  for (ListInit::const_iterator i = List->begin(), e = List->end();
+       i != e;
+       ++i) {
     assert(*i && "Got a null element in a ListInit");
     if (StringInit *S = dynamic_cast<StringInit *>(*i))
       Strings.push_back(S->getValue());
