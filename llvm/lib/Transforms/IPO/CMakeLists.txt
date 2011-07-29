@@ -20,3 +20,13 @@ add_llvm_library(LLVMipo
   StripDeadPrototypes.cpp
   StripSymbols.cpp
   )
+
+add_llvm_library_dependencies(LLVMipo
+  LLVMAnalysis
+  LLVMCore
+  LLVMScalarOpts
+  LLVMSupport
+  LLVMTarget
+  LLVMTransformUtils
+  LLVMipa
+  )

@@ -5,3 +5,9 @@ add_llvm_library(LLVMARMInfo
   )
 
 add_dependencies(LLVMARMInfo ARMCodeGenTable_gen)
+
+add_llvm_library_dependencies(LLVMARMInfo
+  LLVMMC
+  LLVMSupport
+  LLVMTarget
+  )

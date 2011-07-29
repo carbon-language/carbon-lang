@@ -22,5 +22,17 @@ add_llvm_target(SparcCodeGen
   SparcSelectionDAGInfo.cpp
   )
 
+add_llvm_library_dependencies(LLVMSparcCodeGen
+  LLVMAsmPrinter
+  LLVMCodeGen
+  LLVMCore
+  LLVMMC
+  LLVMSelectionDAG
+  LLVMSparcDesc
+  LLVMSparcInfo
+  LLVMSupport
+  LLVMTarget
+  )
+
 add_subdirectory(TargetInfo)
 add_subdirectory(MCTargetDesc)

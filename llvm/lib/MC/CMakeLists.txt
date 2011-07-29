@@ -42,5 +42,10 @@ add_llvm_library(LLVMMC
   MCTargetAsmLexer.cpp
   )
 
+add_llvm_library_dependencies(LLVMMC
+  LLVMObject
+  LLVMSupport
+  )
+
 add_subdirectory(MCParser)
 add_subdirectory(MCDisassembler)

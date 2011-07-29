@@ -17,7 +17,6 @@ install(FILES
   ${llvm_cmake_builddir}/LLVMConfig.cmake
   ${llvm_cmake_builddir}/LLVMConfigVersion.cmake
   LLVM-Config.cmake
-  LLVMLibDeps.cmake
   DESTINATION share/llvm/cmake)
 
 install(DIRECTORY .
@@ -27,7 +26,6 @@ install(DIRECTORY .
   PATTERN LLVMConfig.cmake EXCLUDE
   PATTERN LLVMConfigVersion.cmake EXCLUDE
   PATTERN LLVM-Config.cmake EXCLUDE
-  PATTERN LLVMLibDeps.cmake EXCLUDE
   PATTERN FindBison.cmake EXCLUDE
   PATTERN GetTargetTriple.cmake EXCLUDE
   PATTERN VersionFromVCS.cmake EXCLUDE

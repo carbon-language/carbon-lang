@@ -4,4 +4,10 @@ add_llvm_library(LLVMMSP430Info
   MSP430TargetInfo.cpp
   )
 
+add_llvm_library_dependencies(LLVMMSP430Info
+  LLVMMC
+  LLVMSupport
+  LLVMTarget
+  )
+
 add_dependencies(LLVMMSP430Info MSP430CodeGenTable_gen)

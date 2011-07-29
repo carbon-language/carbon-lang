@@ -20,5 +20,17 @@ add_llvm_target(SystemZCodeGen
   SystemZSelectionDAGInfo.cpp
   )
 
+add_llvm_library_dependencies(LLVMSystemZCodeGen
+  LLVMAsmPrinter
+  LLVMCodeGen
+  LLVMCore
+  LLVMMC
+  LLVMSelectionDAG
+  LLVMSupport
+  LLVMSystemZDesc
+  LLVMSystemZInfo
+  LLVMTarget
+  )
+
 add_subdirectory(TargetInfo)
 add_subdirectory(MCTargetDesc)

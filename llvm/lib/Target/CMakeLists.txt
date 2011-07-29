@@ -14,6 +14,12 @@ add_llvm_library(LLVMTarget
   TargetSubtargetInfo.cpp
   )
 
+add_llvm_library_dependencies(LLVMTarget
+  LLVMCore
+  LLVMMC
+  LLVMSupport
+  )
+
 set(LLVM_ENUM_ASM_PRINTERS "")
 set(LLVM_ENUM_ASM_PARSERS "")
 set(LLVM_ENUM_DISASSEMBLERS "")

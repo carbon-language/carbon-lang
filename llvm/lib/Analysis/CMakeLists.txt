@@ -58,4 +58,10 @@ add_llvm_library(LLVMAnalysis
   ValueTracking.cpp
   )
 
+add_llvm_library_dependencies(LLVMAnalysis
+  LLVMCore
+  LLVMSupport
+  LLVMTarget
+  )
+
 add_subdirectory(IPA)

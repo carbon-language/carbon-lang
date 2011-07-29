@@ -1,8 +1,48 @@
-
 add_llvm_library(LLVMMCDisassembler
   Disassembler.cpp
   EDDisassembler.cpp
   EDInst.cpp
   EDOperand.cpp
   EDToken.cpp
+  )
+
+add_llvm_library_dependencies(LLVMMCDisassembler
+  LLVMARMAsmParser
+  LLVMARMDesc
+  LLVMARMDisassembler
+  LLVMARMInfo
+  LLVMAlphaDesc
+  LLVMAlphaInfo
+  LLVMBlackfinDesc
+  LLVMBlackfinInfo
+  LLVMCBackendInfo
+  LLVMCellSPUDesc
+  LLVMCellSPUInfo
+  LLVMCppBackendInfo
+  LLVMMBlazeAsmParser
+  LLVMMBlazeDesc
+  LLVMMBlazeDisassembler
+  LLVMMBlazeInfo
+  LLVMMC
+  LLVMMCParser
+  LLVMMSP430Desc
+  LLVMMSP430Info
+  LLVMMipsDesc
+  LLVMMipsInfo
+  LLVMPTXDesc
+  LLVMPTXInfo
+  LLVMPowerPCDesc
+  LLVMPowerPCInfo
+  LLVMSparcDesc
+  LLVMSparcInfo
+  LLVMSupport
+  LLVMSystemZDesc
+  LLVMSystemZInfo
+  LLVMTarget
+  LLVMX86AsmParser
+  LLVMX86Desc
+  LLVMX86Disassembler
+  LLVMX86Info
+  LLVMXCoreDesc
+  LLVMXCoreInfo
   )

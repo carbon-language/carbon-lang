@@ -21,5 +21,17 @@ add_llvm_target(XCoreCodeGen
   XCoreSelectionDAGInfo.cpp
   )
 
+add_llvm_library_dependencies(LLVMXCoreCodeGen
+  LLVMAsmPrinter
+  LLVMCodeGen
+  LLVMCore
+  LLVMMC
+  LLVMSelectionDAG
+  LLVMSupport
+  LLVMTarget
+  LLVMXCoreDesc
+  LLVMXCoreInfo
+  )
+
 add_subdirectory(TargetInfo)
 add_subdirectory(MCTargetDesc)

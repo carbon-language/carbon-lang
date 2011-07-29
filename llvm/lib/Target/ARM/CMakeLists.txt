@@ -50,6 +50,20 @@ add_llvm_target(ARMCodeGen
   Thumb2SizeReduction.cpp
   )
 
+add_llvm_library_dependencies(LLVMARMCodeGen
+  LLVMARMAsmPrinter
+  LLVMARMDesc
+  LLVMARMInfo
+  LLVMAnalysis
+  LLVMAsmPrinter
+  LLVMCodeGen
+  LLVMCore
+  LLVMMC
+  LLVMSelectionDAG
+  LLVMSupport
+  LLVMTarget
+  )
+
 # workaround for hanging compilation on MSVC10
 if( MSVC_VERSION EQUAL 1600 )
 set_property(

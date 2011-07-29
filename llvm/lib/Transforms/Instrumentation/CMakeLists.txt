@@ -6,3 +6,10 @@ add_llvm_library(LLVMInstrumentation
   PathProfiling.cpp
   ProfilingUtils.cpp
   )
+
+add_llvm_library_dependencies(LLVMInstrumentation
+  LLVMAnalysis
+  LLVMCore
+  LLVMSupport
+  LLVMTransformUtils
+  )

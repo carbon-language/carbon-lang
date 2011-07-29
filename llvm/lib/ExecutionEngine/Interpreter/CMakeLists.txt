@@ -12,6 +12,14 @@ add_llvm_library(LLVMInterpreter
   Interpreter.cpp
   )
 
+add_llvm_library_dependencies(LLVMInterpreter
+  LLVMCodeGen
+  LLVMCore
+  LLVMExecutionEngine
+  LLVMSupport
+  LLVMTarget
+  )
+
 if( LLVM_ENABLE_FFI )
   target_link_libraries( LLVMInterpreter ${FFI_LIBRARY_PATH} )
 endif()

@@ -12,3 +12,12 @@ add_llvm_library(LLVMAsmPrinter
   Win64Exception.cpp
   )
 
+add_llvm_library_dependencies(LLVMAsmPrinter
+  LLVMAnalysis
+  LLVMCodeGen
+  LLVMCore
+  LLVMMC
+  LLVMMCParser
+  LLVMSupport
+  LLVMTarget
+  )
