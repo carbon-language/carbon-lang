@@ -249,14 +249,12 @@ TEST(SCCIteratorTest, AllSmallGraphs) {
   // create graphs for which every node has a self-edge.
 #define NUM_NODES 4
 #define NUM_GRAPHS (NUM_NODES * (NUM_NODES - 1))
+  typedef Graph<NUM_NODES> GT;
 
-  /// GraphDescriptor - Enumerate all graphs using NUM_GRAPHS bits.
-  unsigned GraphDescriptor = 0;
-  assert(NUM_GRAPHS <= sizeof(unsigned) * CHAR_BIT && "Too many graphs!");
-
-  do {
-    typedef Graph<NUM_NODES> GT;
-
+  /// Enumerate all graphs using NUM_GRAPHS bits.
+  assert(NUM_GRAPHS < sizeof(unsigned) * CHAR_BIT && "Too many graphs!");
+  for (unsigned GraphDescriptor = 0; GraphDescriptor < (1U << NUM_GRAPHS);
+       ++GraphDescriptor) {
     GT G;
 
     // Add edges as specified by the descriptor.
@@ -342,9 +340,7 @@ TEST(SCCIteratorTest, AllSmallGraphs) {
     // Finally, check that the nodes in some SCC are exactly those that are
     // reachable from the initial node.
     EXPECT_EQ(NodesInSomeSCC, G.NodesReachableFrom(0));
-
-    ++GraphDescriptor;
-  } while (GraphDescriptor && GraphDescriptor < (1U << NUM_GRAPHS));
+  }
 }
 
 }
