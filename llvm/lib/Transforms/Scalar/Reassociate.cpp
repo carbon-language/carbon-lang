@@ -75,6 +75,7 @@ namespace {
   class Reassociate : public FunctionPass {
     DenseMap<BasicBlock*, unsigned> RankMap;
     DenseMap<AssertingVH<>, unsigned> ValueRankMap;
+    DenseMap<Value *, DbgValueInst *> DbgValues;
     SmallVector<WeakVH, 8> RedoInsts;
     SmallVector<WeakVH, 8> DeadInsts;
     bool MadeChange;
@@ -104,6 +105,9 @@ namespace {
     void ReassociateInst(BasicBlock::iterator &BBI);
     
     void RemoveDeadBinaryOp(Value *V);
+
+    /// collectDbgValues - Collect all llvm.dbg.value intrinsics.
+    void collectDbgValues(Function &F);
   };
 }
 
@@ -344,6 +348,11 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
 void Reassociate::RewriteExprTree(BinaryOperator *I,
                                   SmallVectorImpl<ValueEntry> &Ops,
                                   unsigned i) {
+  // If this operation was representing debug info of a value then it
+  // is no longer true, so remove the dbg.value instrinsic.
+  if (DbgValueInst *DVI = DbgValues.lookup(I))
+    DeadInsts.push_back(DVI);
+
   if (i+2 == Ops.size()) {
     if (I->getOperand(0) != Ops[i].Op ||
         I->getOperand(1) != Ops[i+1].Op) {
@@ -1094,6 +1103,7 @@ Value *Reassociate::ReassociateExpression(BinaryOperator *I) {
 
 
 bool Reassociate::runOnFunction(Function &F) {
+  collectDbgValues(F);
   // Recalculate the rank map for F
   BuildRankMap(F);
 
@@ -1113,7 +1123,9 @@ bool Reassociate::runOnFunction(Function &F) {
   // Now that we're done, delete any instructions which are no longer used.
   while (!DeadInsts.empty())
     if (Value *V = DeadInsts.pop_back_val())
-      RecursivelyDeleteTriviallyDeadInstructions(V);
+      if (!RecursivelyDeleteTriviallyDeadInstructions(V))
+        if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(V))
+          DVI->eraseFromParent();
 
   // We are done with the rank map.
   RankMap.clear();
@@ -1121,3 +1133,11 @@ bool Reassociate::runOnFunction(Function &F) {
   return MadeChange;
 }
 
+/// collectDbgValues - Collect all llvm.dbg.value intrinsics.
+void Reassociate::collectDbgValues(Function &F) {
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+    for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); 
+         BI != BE; ++BI)
+      if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(BI))
+        DbgValues[DVI->getValue()] = DVI;
+}
