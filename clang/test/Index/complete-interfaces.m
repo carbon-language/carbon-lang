@@ -27,6 +27,7 @@
 // RUN: c-index-test -code-completion-at=%s:11:12 %s | FileCheck -check-prefix=CHECK-CC2 %s
 // CHECK-CC2: ObjCInterfaceDecl:{TypedText Int1}
 // CHECK-CC2-NEXT: ObjCInterfaceDecl:{TypedText Int2}
+// CHECK-CC2-NEXT: ObjCInterfaceDecl:{TypedText Int3}
 // CHECK-CC2-NEXT: ObjCInterfaceDecl:{TypedText Int4}
 // RUN: c-index-test -code-completion-at=%s:11:19 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: ObjCInterfaceDecl:{TypedText Int1}
@@ -41,3 +42,6 @@
 // CHECK-CC5: ObjCInterfaceDecl:{TypedText Int1}
 // CHECK-CC5-NEXT: ObjCInterfaceDecl:{TypedText Int3}
 // CHECK-CC5-NEXT: ObjCInterfaceDecl:{TypedText Int4}
+
+
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:11:12 %s | FileCheck -check-prefix=CHECK-CC2 %s

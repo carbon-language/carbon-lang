@@ -186,7 +186,7 @@ static unsigned getDeclShowContexts(NamedDecl *ND,
     
     // In Objective-C, you can only be a subclass of another Objective-C class
     if (isa<ObjCInterfaceDecl>(ND))
-      Contexts |= (1 << (CodeCompletionContext::CCC_ObjCSuperclass - 1));
+      Contexts |= (1 << (CodeCompletionContext::CCC_ObjCInterfaceName - 1));
 
     // Deal with tag names.
     if (isa<EnumDecl>(ND)) {
@@ -1992,7 +1992,7 @@ static void CalculateHiddenNames(const CodeCompletionContext &Context,
   case CodeCompletionContext::CCC_Name:
   case CodeCompletionContext::CCC_PotentiallyQualifiedName:
   case CodeCompletionContext::CCC_ParenthesizedExpression:
-  case CodeCompletionContext::CCC_ObjCSuperclass:
+  case CodeCompletionContext::CCC_ObjCInterfaceName:
     break;
     
   case CodeCompletionContext::CCC_EnumTag:

@@ -5325,21 +5325,23 @@ void Sema::CodeCompleteObjCInterfaceDecl(Scope *S) {
                         CodeCompletionContext::CCC_Other);
   Results.EnterNewScope();
   
-  // Add all classes.
-  AddInterfaceResults(Context.getTranslationUnitDecl(), CurContext, true,
-                      false, Results);
-
+  if (CodeCompleter->includeGlobals()) {
+    // Add all classes.
+    AddInterfaceResults(Context.getTranslationUnitDecl(), CurContext, false,
+                        false, Results);
+  }
+  
   Results.ExitScope();
-  // FIXME: Use cached global completion results.
+
   HandleCodeCompleteResults(this, CodeCompleter,
-                            CodeCompletionContext::CCC_Other,
+                            CodeCompletionContext::CCC_ObjCInterfaceName,
                             Results.data(),Results.size());
 }
 
 void Sema::CodeCompleteObjCSuperclass(Scope *S, IdentifierInfo *ClassName,
                                       SourceLocation ClassNameLoc) { 
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
-                        CodeCompletionContext::CCC_ObjCSuperclass);
+                        CodeCompletionContext::CCC_ObjCInterfaceName);
   Results.EnterNewScope();
   
   // Make sure that we ignore the class we're currently defining.
@@ -5348,14 +5350,16 @@ void Sema::CodeCompleteObjCSuperclass(Scope *S, IdentifierInfo *ClassName,
   if (CurClass && isa<ObjCInterfaceDecl>(CurClass))
     Results.Ignore(CurClass);
 
-  // Add all classes.
-  AddInterfaceResults(Context.getTranslationUnitDecl(), CurContext, false,
-                      false, Results);
-
+  if (CodeCompleter->includeGlobals()) {
+    // Add all classes.
+    AddInterfaceResults(Context.getTranslationUnitDecl(), CurContext, false,
+                        false, Results);
+  }
+  
   Results.ExitScope();
-  // FIXME: Use cached global completion results.
+
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_ObjCSuperclass,
+                            CodeCompletionContext::CCC_ObjCInterfaceName,
                             Results.data(),Results.size());
 }
 
@@ -5364,14 +5368,16 @@ void Sema::CodeCompleteObjCImplementationDecl(Scope *S) {
                         CodeCompletionContext::CCC_Other);
   Results.EnterNewScope();
 
-  // Add all unimplemented classes.
-  AddInterfaceResults(Context.getTranslationUnitDecl(), CurContext, false,
-                      true, Results);
-
+  if (CodeCompleter->includeGlobals()) {
+    // Add all unimplemented classes.
+    AddInterfaceResults(Context.getTranslationUnitDecl(), CurContext, false,
+                        true, Results);
+  }
+  
   Results.ExitScope();
-  // FIXME: Use cached global completion results.
+
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_Other,
+                            CodeCompletionContext::CCC_ObjCInterfaceName,
                             Results.data(),Results.size());
 }
 

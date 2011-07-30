@@ -438,7 +438,7 @@ static unsigned long long getContextsForContextKind(
       contexts = CXCompletionContext_ObjCClassMessage;
       break;
     }
-    case CodeCompletionContext::CCC_ObjCSuperclass: {
+    case CodeCompletionContext::CCC_ObjCInterfaceName: {
       contexts = CXCompletionContext_ObjCInterface;
       break;
     }

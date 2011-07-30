@@ -67,7 +67,7 @@ bool CodeCompletionContext::wantConstructorResults() const {
   case CCC_OtherWithMacros:
   case CCC_ObjCInstanceMessage:
   case CCC_ObjCClassMessage:
-  case CCC_ObjCSuperclass:
+  case CCC_ObjCInterfaceName:
   case CCC_ObjCCategoryName:
     return false;
   }

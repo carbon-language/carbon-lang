@@ -248,9 +248,9 @@ public:
     CCC_ObjCInstanceMessage,
     /// \brief Code completion where an Objective-C class message is expected. 
     CCC_ObjCClassMessage,
-    /// \brief Code completion where a superclass of an Objective-C class is
+    /// \brief Code completion where the name of an Objective-C class is
     /// expected.
-    CCC_ObjCSuperclass,
+    CCC_ObjCInterfaceName,
     /// \brief Code completion where an Objective-C category name is expected.
     CCC_ObjCCategoryName,
     /// \brief An unknown context, in which we are recovering from a parsing 
