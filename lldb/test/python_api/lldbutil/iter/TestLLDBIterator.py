@@ -19,16 +19,19 @@ class LLDBIteratorTestCase(TestBase):
         self.line1 = line_number('main.cpp', '// Set break point at this line.')
         self.line2 = line_number('main.cpp', '// And that line.')
 
+    @python_api_test
     def test_lldb_iter_module(self):
         """Test module_iter works correctly for SBTarget -> SBModule."""
         self.buildDefault()
         self.lldb_iter_module()
 
+    @python_api_test
     def test_lldb_iter_breakpoint(self):
         """Test breakpoint_iter works correctly for SBTarget -> SBBreakpoint."""
         self.buildDefault()
         self.lldb_iter_breakpoint()
 
+    @python_api_test
     def test_lldb_iter_frame(self):
         """Test iterator works correctly for SBProcess->SBThread->SBFrame."""
         self.buildDefault()

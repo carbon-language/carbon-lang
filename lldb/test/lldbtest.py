@@ -240,13 +240,31 @@ def python_api_test(func):
     def wrapper(self, *args, **kwargs):
         try:
             if lldb.dont_do_python_api_test:
-                self.skipTest("Skip Python API tests")
+                self.skipTest("python api tests")
         except AttributeError:
             pass
         return func(self, *args, **kwargs)
 
     # Mark this function as such to separate them from lldb command line tests.
     wrapper.__python_api_test__ = True
+    return wrapper
+
+from functools import wraps
+def benchmarks_test(func):
+    """Decorate the item as a benchmarks test."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@benchmarks_test can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            if not lldb.just_do_benchmarks_test:
+                self.skipTest("benchmarks tests")
+        except AttributeError:
+            pass
+        return func(self, *args, **kwargs)
+
+    # Mark this function as such to separate them from the regular tests.
+    wrapper.__benchmarks_test__ = True
     return wrapper
 
 class recording(StringIO.StringIO):
@@ -514,7 +532,20 @@ class TestBase(unittest2.TestCase):
                 if getattr(testMethod, "__python_api_test__", False):
                     pass
                 else:
-                    self.skipTest("Skip lldb command line test")
+                    self.skipTest("non python api test")
+        except AttributeError:
+            pass
+
+        # Benchmarks test is decorated with @benchmarks_test,
+        # which also sets the "__benchmarks_test__" attribute of the
+        # function object to True.
+        try:
+            if lldb.just_do_benchmarks_test:
+                testMethod = getattr(self, self._testMethodName)
+                if getattr(testMethod, "__benchmarks_test__", False):
+                    pass
+                else:
+                    self.skipTest("non benchmarks test")
         except AttributeError:
             pass
 

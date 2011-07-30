@@ -70,6 +70,9 @@ dont_do_python_api_test = False
 # By default, both command line and Python API tests are performed.
 just_do_python_api_test = False
 
+# By default, benchmarks tests are not run.
+just_do_benchmarks_test = False
+
 # The blacklist is optional (-b blacklistFile) and allows a central place to skip
 # testclass's and/or testclass.testmethod's.
 blacklist = None
@@ -162,6 +165,8 @@ where options:
        use @python_api_test to decorate a test case as lldb Python API test
 +a   : just do lldb Python API tests
        do not specify both '-a' and '+a' at the same time
++b   : just do benchmark tests
+       use @benchmark_test to decorate a test case as such
 -b   : read a blacklist file specified after this option
 -c   : read a config file specified after this option
        the architectures and compilers (note the plurals) specified via '-A' and '-C'
@@ -287,6 +292,7 @@ def parseOptionsAndInitTestdirs():
 
     global dont_do_python_api_test
     global just_do_python_api_test
+    global just_do_benchmarks_test
     global blacklist
     global blacklistConfig
     global configFile
@@ -346,6 +352,9 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('+a'):
             just_do_python_api_test = True
+            index += 1
+        elif sys.argv[index].startswith('+b'):
+            just_do_benchmarks_test = True
             index += 1
         elif sys.argv[index].startswith('-b'):
             # Increment by 1 to fetch the blacklist file name option argument.
@@ -815,6 +824,7 @@ lldb.blacklist = blacklist
 # Put dont/just_do_python_api_test in the lldb namespace, too.
 lldb.dont_do_python_api_test = dont_do_python_api_test
 lldb.just_do_python_api_test = just_do_python_api_test
+lldb.just_do_benchmarks_test = just_do_benchmarks_test
 
 # Turn on lldb loggings if necessary.
 lldbLoggings()

@@ -18,6 +18,7 @@ class RegistersIteratorTestCase(TestBase):
         # Find the line number to break inside main().
         self.line1 = line_number('main.cpp', '// Set break point at this line.')
 
+    @python_api_test
     def test_iter_registers(self):
         """Test iterator works correctly for lldbutil.iter_registers()."""
         self.buildDefault()
