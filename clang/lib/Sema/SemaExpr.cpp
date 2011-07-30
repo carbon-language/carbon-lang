@@ -8591,11 +8591,14 @@ ExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
           << TInfo->getTypeLoc().getSourceRange()))
       return ExprError();
 
-    if (!TInfo->getType().isPODType(Context))
+    if (!TInfo->getType().isPODType(Context)) {
       Diag(TInfo->getTypeLoc().getBeginLoc(),
-          diag::warn_second_parameter_to_va_arg_not_pod)
+           TInfo->getType()->isObjCLifetimeType()
+             ? diag::warn_second_parameter_to_va_arg_ownership_qualified
+             : diag::warn_second_parameter_to_va_arg_not_pod)
         << TInfo->getType()
         << TInfo->getTypeLoc().getSourceRange();
+    }
 
     // Check for va_arg where arguments of the given type will be promoted
     // (i.e. this va_arg is guaranteed to have undefined behavior).

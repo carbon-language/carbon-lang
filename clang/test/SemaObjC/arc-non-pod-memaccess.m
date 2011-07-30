@@ -53,3 +53,11 @@ void test(id __strong *sip, id __weak *wip, id __autoreleasing *aip,
                       // expected-note{{explicitly cast the pointer to silence this warning}}
   memmove(ptr, uip, 17);
 }
+
+void rdar9772982(int i, ...) {
+    __builtin_va_list ap;
+    
+    __builtin_va_start(ap, i);
+    __builtin_va_arg(ap, __strong id); // expected-error{{second argument to 'va_arg' is of ARC ownership-qualified type '__strong id'}}
+    __builtin_va_end(ap);
+}
