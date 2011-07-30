@@ -280,22 +280,6 @@ const FileEntry *HeaderSearch::LookupFile(
     return FileMgr.getFile(Filename, /*openFile=*/true);
   }
 
-  // If we are including a file with a quoted include "foo.h" from inside
-  // a header in a framework that is currently being built, change the include
-  // to <Foo/foo.h>, where "Foo" is the name of the framework in which the
-  // including header was found.
-  llvm::SmallString<128> ScratchFilename;
-  if (CurFileEnt && !isAngled && Filename.find('/') == StringRef::npos) {
-    HeaderFileInfo &IncludingHFI = getFileInfo(CurFileEnt);
-    if (IncludingHFI.IndexHeaderMapHeader) {
-      isAngled = true;
-      ScratchFilename += IncludingHFI.Framework;
-      ScratchFilename += '/';
-      ScratchFilename += Filename;
-      Filename = ScratchFilename;
-    }
-  }
-
   // Unless disabled, check to see if the file is in the #includer's
   // directory.  This has to be based on CurFileEnt, not CurDir, because
   // CurFileEnt could be a #include of a subdirectory (#include "foo/bar.h") and
@@ -386,6 +370,29 @@ const FileEntry *HeaderSearch::LookupFile(
     // Remember this location for the next lookup we do.
     CacheLookup.second = i;
     return FE;
+  }
+
+  // If we are including a file with a quoted include "foo.h" from inside
+  // a header in a framework that is currently being built, and we couldn't
+  // resolve "foo.h" any other way, change the include to <Foo/foo.h>, where
+  // "Foo" is the name of the framework in which the including header was found.
+  if (CurFileEnt && !isAngled && Filename.find('/') == StringRef::npos) {
+    HeaderFileInfo &IncludingHFI = getFileInfo(CurFileEnt);
+    if (IncludingHFI.IndexHeaderMapHeader) {
+      llvm::SmallString<128> ScratchFilename;
+      ScratchFilename += IncludingHFI.Framework;
+      ScratchFilename += '/';
+      ScratchFilename += Filename;
+      
+      const FileEntry *Result = LookupFile(ScratchFilename, /*isAngled=*/true,
+                                           FromDir, CurDir, CurFileEnt, 
+                                           SearchPath, RelativePath);
+      std::pair<unsigned, unsigned> &CacheLookup 
+        = LookupFileCache.GetOrCreateValue(Filename).getValue();
+      CacheLookup.second
+        = LookupFileCache.GetOrCreateValue(ScratchFilename).getValue().second;
+      return Result;
+    }
   }
 
   // Otherwise, didn't find it. Remember we didn't find this.
