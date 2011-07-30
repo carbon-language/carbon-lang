@@ -10,4 +10,4 @@ add_llvm_library_dependencies(LLVMXCoreInfo
   LLVMTarget
   )
 
-add_dependencies(LLVMXCoreInfo XCoreCodeGenTable_gen)
+add_dependencies(LLVMXCoreInfo XCoreCommonTableGen)
