@@ -2885,7 +2885,6 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_switch:      return ParseSwitch(Inst, PFS);
   case lltok::kw_indirectbr:  return ParseIndirectBr(Inst, PFS);
   case lltok::kw_invoke:      return ParseInvoke(Inst, PFS);
-  case lltok::kw_resume:      return ParseResume(Inst, PFS);
   // Binary Operators.
   case lltok::kw_add:
   case lltok::kw_sub:
@@ -2945,7 +2944,6 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_insertelement:  return ParseInsertElement(Inst, PFS);
   case lltok::kw_shufflevector:  return ParseShuffleVector(Inst, PFS);
   case lltok::kw_phi:            return ParsePHI(Inst, PFS);
-  case lltok::kw_landingpad:     return ParseLandingPad(Inst, PFS);
   case lltok::kw_call:           return ParseCall(Inst, PFS, false);
   case lltok::kw_tail:           return ParseCall(Inst, PFS, true);
   // Memory.
@@ -3255,18 +3253,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   return false;
 }
 
-/// ParseResume
-///   ::= 'resume' TypeAndValue
-bool LLParser::ParseResume(Instruction *&Inst, PerFunctionState &PFS) {
-  Value *Exn; LocTy ExnLoc;
-  LocTy Loc = Lex.getLoc();
-  if (ParseTypeAndValue(Exn, ExnLoc, PFS))
-    return true;
 
-  ResumeInst *RI = ResumeInst::Create(Context, Exn);
-  Inst = RI;
-  return false;
-}
 
 //===----------------------------------------------------------------------===//
 // Binary Operators.
@@ -3512,58 +3499,6 @@ int LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
     PN->addIncoming(PHIVals[i].first, PHIVals[i].second);
   Inst = PN;
   return AteExtraComma ? InstExtraComma : InstNormal;
-}
-
-/// ParseLandingPad
-///   ::= 'landingpad' Type 'personality' TypeAndValue 'cleanup'?
-///       (ClauseID ClauseList)+
-/// ClauseID
-///   ::= 'catch'
-///   ::= 'filter'
-/// ClauseList
-///   ::= TypeAndValue (',' TypeAndValue)*
-bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
-  Type *Ty = 0; LocTy TyLoc;
-  Value *PersFn; LocTy PersFnLoc;
-  LocTy LPLoc = Lex.getLoc();
-
-  if (ParseType(Ty, TyLoc) ||
-      ParseToken(lltok::kw_personality, "expected 'personality'") ||
-      ParseTypeAndValue(PersFn, PersFnLoc, PFS))
-    return true;
-
-  bool IsCleanup = EatIfPresent(lltok::kw_cleanup);
-
-  SmallVector<std::pair<LandingPadInst::ClauseType, Constant*>, 16> Clauses;
-  while (Lex.getKind() == lltok::kw_catch || Lex.getKind() == lltok::kw_filter){
-    LandingPadInst::ClauseType CT;
-    if (Lex.getKind() == lltok::kw_catch) {
-      CT = LandingPadInst::Catch;
-      ParseToken(lltok::kw_catch, "expected 'catch'");
-    } else {
-      CT = LandingPadInst::Filter;
-      ParseToken(lltok::kw_filter, "expected 'filter'");
-    }
-
-    do {
-      Value *V; LocTy VLoc;
-      if (ParseTypeAndValue(V, VLoc, PFS))
-        return true;
-      Clauses.push_back(std::make_pair(CT, cast<Constant>(V)));
-    } while (EatIfPresent(lltok::comma));
-  }
-
-  LandingPadInst *LP = LandingPadInst::Create(Ty, cast<Function>(PersFn),
-                                              Clauses.size());
-  LP->setCleanup(IsCleanup);
-
-  for (SmallVectorImpl<std::pair<LandingPadInst::ClauseType,
-                                 Constant*> >::iterator
-         I = Clauses.begin(), E = Clauses.end(); I != E; ++I)
-    LP->addClause(I->first, I->second);
-
-  Inst = LP;
-  return false;
 }
 
 /// ParseCall

@@ -454,37 +454,3 @@ void llvm::CopyCatchInfo(const BasicBlock *SuccBB, const BasicBlock *LPad,
       break;
   }
 }
-
-//--------- NEW EH - Begin ---------
-
-/// AddLandingPadInfo - Extract the exception handling information from the
-/// landingpad instruction and add them to the specified machine module info.
-void llvm::AddLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,
-                             MachineBasicBlock *MBB) {
-  MMI.addPersonality(MBB, I.getPersonalityFn());
-
-  if (I.isCleanup())
-    MMI.addCleanup(MBB);
-
-  for (unsigned i = 0, e = I.getNumClauses(); i != e; ) {
-    switch (I.getClauseType(i)) {
-    case LandingPadInst::Catch:
-      MMI.addCatchTypeInfo(MBB, dyn_cast<GlobalVariable>(I.getClauseValue(i)));
-      ++i;
-      break;
-    case LandingPadInst::Filter: {
-      // Add filters in a list.
-      SmallVector<const GlobalVariable*, 4> FilterList;
-      do {
-        FilterList.push_back(cast<GlobalVariable>(I.getClauseValue(i)));
-        ++i;
-      } while (i != e && I.getClauseType(i) == LandingPadInst::Filter);
-
-      MMI.addFilterTypeInfo(MBB, FilterList);
-      break;
-    }
-    }
-  }
-}
-
-//--------- NEW EH - End   ---------

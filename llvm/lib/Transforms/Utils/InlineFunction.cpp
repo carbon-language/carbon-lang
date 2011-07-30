@@ -250,33 +250,20 @@ namespace {
     PHINode *InnerSelectorPHI;
     SmallVector<Value*, 8> UnwindDestPHIValues;
 
-    // New EH:
-    BasicBlock *OuterResumeDest; //< Destination of the invoke's unwind.
-    BasicBlock *InnerResumeDest; //< Destination for the callee's resume.
-    LandingPadInst *CallerLPad;  //< LandingPadInst associated with the invoke.
-    PHINode *InnerEHValuesPHI;   //< PHI for EH values from landingpad insts.
-
   public:
-    InvokeInliningInfo(InvokeInst *II)
-      : OuterUnwindDest(II->getUnwindDest()), OuterSelector(0),
-        InnerUnwindDest(0), InnerExceptionPHI(0), InnerSelectorPHI(0),
+    InvokeInliningInfo(InvokeInst *II) :
+      OuterUnwindDest(II->getUnwindDest()), OuterSelector(0),
+      InnerUnwindDest(0), InnerExceptionPHI(0), InnerSelectorPHI(0) {
 
-        OuterResumeDest(II->getUnwindDest()), InnerResumeDest(0),
-        CallerLPad(0), InnerEHValuesPHI(0) {
-      // If there are PHI nodes in the unwind destination block, we need to keep
-      // track of which values came into them from the invoke before removing
-      // the edge from this block.
-      llvm::BasicBlock *InvokeBB = II->getParent();
-      BasicBlock::iterator I = OuterUnwindDest->begin();
-      for (; isa<PHINode>(I); ++I) {
+      // If there are PHI nodes in the unwind destination block, we
+      // need to keep track of which values came into them from the
+      // invoke before removing the edge from this block.
+      llvm::BasicBlock *invokeBB = II->getParent();
+      for (BasicBlock::iterator I = OuterUnwindDest->begin();
+             isa<PHINode>(I); ++I) {
         // Save the value to use for this edge.
-        PHINode *PHI = cast<PHINode>(I);
-        UnwindDestPHIValues.push_back(PHI->getIncomingValueForBlock(InvokeBB));
-      }
-
-      // FIXME: With the new EH, this if/dyn_cast should be a 'cast'.
-      if (LandingPadInst *LPI = dyn_cast<LandingPadInst>(I)) {
-        CallerLPad = LPI;
+        PHINode *phi = cast<PHINode>(I);
+        UnwindDestPHIValues.push_back(phi->getIncomingValueForBlock(invokeBB));
       }
     }
 
@@ -293,30 +280,21 @@ namespace {
     }
 
     BasicBlock *getInnerUnwindDest();
-    BasicBlock *getInnerUnwindDest_new();
-
-    LandingPadInst *getLandingPadInst() const { return CallerLPad; }
 
     bool forwardEHResume(CallInst *call, BasicBlock *src);
 
-    /// forwardResume - Forward the 'resume' instruction to the caller's landing
-    /// pad block. When the landing pad block has only one predecessor, this is
-    /// a simple branch. When there is more than one predecessor, we need to
-    /// split the landing pad block after the landingpad instruction and jump
-    /// to there.
-    void forwardResume(ResumeInst *RI);
-
-    /// addIncomingPHIValuesFor - Add incoming-PHI values to the unwind
-    /// destination block for the given basic block, using the values for the
-    /// original invoke's source block.
+    /// Add incoming-PHI values to the unwind destination block for
+    /// the given basic block, using the values for the original
+    /// invoke's source block.
     void addIncomingPHIValuesFor(BasicBlock *BB) const {
       addIncomingPHIValuesForInto(BB, OuterUnwindDest);
     }
+
     void addIncomingPHIValuesForInto(BasicBlock *src, BasicBlock *dest) const {
       BasicBlock::iterator I = dest->begin();
       for (unsigned i = 0, e = UnwindDestPHIValues.size(); i != e; ++i, ++I) {
-        PHINode *PHI = cast<PHINode>(I);
-        PHI->addIncoming(UnwindDestPHIValues[i], src);
+        PHINode *phi = cast<PHINode>(I);
+        phi->addIncoming(UnwindDestPHIValues[i], src);
       }
     }
   };
@@ -426,59 +404,6 @@ bool InvokeInliningInfo::forwardEHResume(CallInst *call, BasicBlock *src) {
   return true;
 }
 
-/// Get or create a target for the branch from ResumeInsts.
-BasicBlock *InvokeInliningInfo::getInnerUnwindDest_new() {
-  if (InnerResumeDest) return InnerResumeDest;
-
-  // Split the landing pad.
-  BasicBlock::iterator SplitPoint = CallerLPad; ++SplitPoint;
-  InnerResumeDest =
-    OuterResumeDest->splitBasicBlock(SplitPoint,
-                                     OuterResumeDest->getName() + ".body");
-
-  // The number of incoming edges we expect to the inner landing pad.
-  const unsigned PHICapacity = 2;
-
-  // Create corresponding new PHIs for all the PHIs in the outer landing pad.
-  BasicBlock::iterator InsertPoint = InnerResumeDest->begin();
-  BasicBlock::iterator I = OuterResumeDest->begin();
-  for (unsigned i = 0, e = UnwindDestPHIValues.size(); i != e; ++i, ++I) {
-    PHINode *OuterPHI = cast<PHINode>(I);
-    PHINode *InnerPHI = PHINode::Create(OuterPHI->getType(), PHICapacity,
-                                        OuterPHI->getName() + ".lpad-body",
-                                        InsertPoint);
-    OuterPHI->replaceAllUsesWith(InnerPHI);
-    InnerPHI->addIncoming(OuterPHI, OuterResumeDest);
-  }
-
-  // Create a PHI for the exception values.
-  InnerEHValuesPHI = PHINode::Create(CallerLPad->getType(), PHICapacity,
-                                     "eh.lpad-body", InsertPoint);
-  CallerLPad->replaceAllUsesWith(InnerEHValuesPHI);
-  InnerEHValuesPHI->addIncoming(CallerLPad, OuterResumeDest);
-
-  // All done.
-  return InnerResumeDest;
-}
-
-/// forwardResume - Forward the 'resume' instruction to the caller's landing pad
-/// block. When the landing pad block has only one predecessor, this is a simple
-/// branch. When there is more than one predecessor, we need to split the
-/// landing pad block after the landingpad instruction and jump to there.
-void InvokeInliningInfo::forwardResume(ResumeInst *RI) {
-  BasicBlock *Dest = getInnerUnwindDest_new();
-  BasicBlock *Src = RI->getParent();
-
-  BranchInst::Create(Dest, Src);
-
-  // Update the PHIs in the destination. They were inserted in an order which
-  // makes this work.
-  addIncomingPHIValuesForInto(Src, Dest);
-
-  InnerEHValuesPHI->addIncoming(RI->getOperand(0), Src);
-  RI->eraseFromParent();
-}
-
 /// [LIBUNWIND] Check whether this selector is "only cleanups":
 ///   call i32 @llvm.eh.selector(blah, blah, i32 0)
 static bool isCleanupOnlySelector(EHSelectorInst *selector) {
@@ -496,19 +421,9 @@ static bool isCleanupOnlySelector(EHSelectorInst *selector) {
 /// Returns true to indicate that the next block should be skipped.
 static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
                                                    InvokeInliningInfo &Invoke) {
-  LandingPadInst *LPI = Invoke.getLandingPadInst();
-
   for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
     Instruction *I = BBI++;
-
-    if (LPI) // FIXME: This won't be NULL in the new EH.
-      if (LandingPadInst *L = dyn_cast<LandingPadInst>(I)) {
-        unsigned NumClauses = LPI->getNumClauses();
-        L->reserveClauses(NumClauses);
-        for (unsigned i = 0; i != NumClauses; ++i)
-          L->addClause(LPI->getClauseType(i), LPI->getClauseValue(i));
-      }
-
+    
     // We only need to check for function calls: inlined invoke
     // instructions require no special handling.
     CallInst *CI = dyn_cast<CallInst>(I);
@@ -641,10 +556,6 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
       // Update any PHI nodes in the exceptional block to indicate that
       // there is now a new entry in them.
       Invoke.addIncomingPHIValuesFor(BB);
-    }
-
-    if (ResumeInst *RI = dyn_cast<ResumeInst>(BB->getTerminator())) {
-      Invoke.forwardResume(RI);
     }
   }
 
@@ -917,40 +828,6 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
     else if (CalledFunc->getGC() != Caller->getGC())
       return false;
   }
-
-  // Find the personality function used by the landing pads of the caller. If it
-  // exists, then check to see that it matches the personality function used in
-  // the callee.
-  for (Function::const_iterator
-         I = Caller->begin(), E = Caller->end(); I != E; ++I)
-    if (const InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator())) {
-      const BasicBlock *BB = II->getUnwindDest();
-      // FIXME: This 'isa' here should become go away once the new EH system is
-      // in place.
-      if (!isa<LandingPadInst>(BB->getFirstNonPHI()))
-        continue;
-      const LandingPadInst *LP = cast<LandingPadInst>(BB->getFirstNonPHI());
-      const Value *CallerPersFn = LP->getPersonalityFn();
-
-      // If the personality functions match, then we can perform the
-      // inlining. Otherwise, we can't inline.
-      // TODO: This isn't 100% true. Some personality functions are proper
-      //       supersets of others and can be used in place of the other.
-      for (Function::const_iterator
-             I = CalledFunc->begin(), E = CalledFunc->end(); I != E; ++I)
-        if (const InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator())) {
-          const BasicBlock *BB = II->getUnwindDest();
-          // FIXME: This 'if/dyn_cast' here should become a normal 'cast' once
-          // the new EH system is in place.
-          if (const LandingPadInst *LP =
-              dyn_cast<LandingPadInst>(BB->getFirstNonPHI()))
-            if (CallerPersFn != LP->getPersonalityFn())
-              return false;
-          break;
-        }
-
-      break;
-    }
 
   // Get an iterator to the last basic block in the function, which will have
   // the new function inlined after it.

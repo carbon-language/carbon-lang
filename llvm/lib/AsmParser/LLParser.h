@@ -347,7 +347,6 @@ namespace llvm {
     bool ParseSwitch(Instruction *&Inst, PerFunctionState &PFS);
     bool ParseIndirectBr(Instruction *&Inst, PerFunctionState &PFS);
     bool ParseInvoke(Instruction *&Inst, PerFunctionState &PFS);
-    bool ParseResume(Instruction *&Inst, PerFunctionState &PFS);
 
     bool ParseArithmetic(Instruction *&I, PerFunctionState &PFS, unsigned Opc,
                          unsigned OperandType);
@@ -360,7 +359,6 @@ namespace llvm {
     bool ParseInsertElement(Instruction *&I, PerFunctionState &PFS);
     bool ParseShuffleVector(Instruction *&I, PerFunctionState &PFS);
     int ParsePHI(Instruction *&I, PerFunctionState &PFS);
-    bool ParseLandingPad(Instruction *&I, PerFunctionState &PFS);
     bool ParseCall(Instruction *&I, PerFunctionState &PFS, bool isTail);
     int ParseAlloc(Instruction *&I, PerFunctionState &PFS);
     int ParseLoad(Instruction *&I, PerFunctionState &PFS, bool isVolatile);

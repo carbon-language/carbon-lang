@@ -2506,7 +2506,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
         CallStack.pop_back();  // return from fn.
         return true;  // We succeeded at evaluating this ctor!
       } else {
-        // invoke, unwind, resume, unreachable.
+        // invoke, unwind, unreachable.
         return false;  // Cannot handle this terminator.
       }
 

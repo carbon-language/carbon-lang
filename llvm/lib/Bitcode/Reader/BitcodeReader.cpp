@@ -2508,14 +2508,6 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       cast<InvokeInst>(I)->setAttributes(PAL);
       break;
     }
-    case bitc::FUNC_CODE_INST_RESUME: { // RESUME: [opval]
-      unsigned Idx = 0;
-      Value *Val = 0;
-      if (getValueTypePair(Record, Idx, NextValueNo, Val))
-        return Error("Invalid RESUME record");
-      I = ResumeInst::Create(Context, Val);
-      break;
-    }
     case bitc::FUNC_CODE_INST_UNWIND: // UNWIND
       I = new UnwindInst(Context);
       InstructionList.push_back(I);
@@ -2540,38 +2532,6 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         PN->addIncoming(V, BB);
       }
       I = PN;
-      break;
-    }
-
-    case bitc::FUNC_CODE_INST_LANDINGPAD: {
-      // LANDINGPAD: [ty, val, val, num, (id0,val0 ...)?]
-      unsigned Idx = 0;
-      if (Record.size() < 4)
-        return Error("Invalid LANDINGPAD record");
-      Type *Ty = getTypeByID(Record[Idx++]);
-      if (!Ty) return Error("Invalid LANDINGPAD record");
-      Value *PersFn = 0;
-      if (getValueTypePair(Record, Idx, NextValueNo, PersFn))
-        return Error("Invalid LANDINGPAD record");
-
-      bool IsCleanup = !!Record[Idx++];
-      unsigned NumClauses = Record[Idx++];
-      LandingPadInst *LP = LandingPadInst::Create(Ty, cast<Function>(PersFn),
-                                                  NumClauses);
-      LP->setCleanup(IsCleanup);
-      for (unsigned J = 0; J != NumClauses; ++J) {
-        LandingPadInst::ClauseType CT =
-          LandingPadInst::ClauseType(Record[Idx++]);
-        Value *Val = 0;
-        if (getValueTypePair(Record, Idx, NextValueNo, Val)) {
-          delete LP;
-          return Error("Invalid LANDINGPAD record");
-        }
-
-        LP->addClause(CT, cast<Constant>(Val));
-      }
-
-      I = LP;
       break;
     }
 

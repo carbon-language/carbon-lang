@@ -113,11 +113,9 @@ namespace {
         while (StateBB != StateE) {
           BasicBlock *CurBB = StateBB++;
 
-          // Branches and invokes do not escape, only unwind, resume, and return
-          // do.
+          // Branches and invokes do not escape, only unwind and return do.
           TerminatorInst *TI = CurBB->getTerminator();
-          if (!isa<UnwindInst>(TI) && !isa<ReturnInst>(TI) &&
-              !isa<ResumeInst>(TI))
+          if (!isa<UnwindInst>(TI) && !isa<ReturnInst>(TI))
             continue;
 
           Builder.SetInsertPoint(TI->getParent(), TI);

@@ -274,7 +274,7 @@ namespace bitc {
     FUNC_CODE_INST_UNREACHABLE = 15, // UNREACHABLE
 
     FUNC_CODE_INST_PHI         = 16, // PHI:        [ty, val0,bb0, ...]
-    FUNC_CODE_INST_RESUME      = 17, // RESUME:     [opval]
+    // 17 is unused.
     // 18 is unused.
     FUNC_CODE_INST_ALLOCA      = 19, // ALLOCA:     [instty, op, align]
     FUNC_CODE_INST_LOAD        = 20, // LOAD:       [opty, op, align, vol]
@@ -302,13 +302,11 @@ namespace bitc {
 
     FUNC_CODE_DEBUG_LOC        = 35, // DEBUG_LOC:  [Line,Col,ScopeVal, IAVal]
     FUNC_CODE_INST_FENCE       = 36, // FENCE: [ordering, synchscope]
-    FUNC_CODE_INST_LANDINGPAD  = 37, // LANDINGPAD: [ty,val,val,num,id0,val0...]
-    FUNC_CODE_INST_CMPXCHG     = 38, // CMPXCHG: [ptrty,ptr,cmp,new, align, vol,
+    FUNC_CODE_INST_CMPXCHG     = 37, // CMPXCHG: [ptrty,ptr,cmp,new, align, vol,
                                      //           ordering, synchscope]
-    FUNC_CODE_INST_ATOMICRMW   = 39  // ATOMICRMW: [ptrty,ptr,val, operation,
+    FUNC_CODE_INST_ATOMICRMW   = 38  // ATOMICRMW: [ptrty,ptr,val, operation,
                                      //             align, vol,
                                      //             ordering, synchscope]
-
   };
 } // End bitc namespace
 } // End llvm namespace

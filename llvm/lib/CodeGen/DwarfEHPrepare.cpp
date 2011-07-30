@@ -63,8 +63,6 @@ namespace {
     typedef SmallPtrSet<BasicBlock*, 8> BBSet;
     BBSet LandingPads;
 
-    bool InsertUnwindResumeCalls();
-
     bool NormalizeLandingPads();
     bool LowerUnwindsAndResumes();
     bool MoveExceptionValueCalls();
@@ -660,66 +658,12 @@ Instruction *DwarfEHPrepare::CreateExceptionValueCall(BasicBlock *BB) {
   return CallInst::Create(ExceptionValueIntrinsic, "eh.value.call", Start);
 }
 
-/// InsertUnwindResumeCalls - Convert the ResumeInsts that are still present
-/// into calls to the appropriate _Unwind_Resume function.
-bool DwarfEHPrepare::InsertUnwindResumeCalls() {
-  SmallVector<ResumeInst*, 16> Resumes;
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-    for (BasicBlock::iterator II = I->begin(), IE = I->end(); II != IE; ++II)
-      if (ResumeInst *RI = dyn_cast<ResumeInst>(II))
-        Resumes.push_back(RI);
-
-  if (Resumes.empty())
-    return false;
-
-  // Find the rewind function if we didn't already.
-  if (!RewindFunction) {
-    LLVMContext &Ctx = Resumes[0]->getContext();
-    FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
-                                          Type::getInt8PtrTy(Ctx), false);
-    const char *RewindName = TLI->getLibcallName(RTLIB::UNWIND_RESUME);
-    RewindFunction = F->getParent()->getOrInsertFunction(RewindName, FTy);
-  }
-
-  // Create the basic block where the _Unwind_Resume call will live.
-  LLVMContext &Ctx = F->getContext();
-  BasicBlock *UnwindBB = BasicBlock::Create(Ctx, "unwind_resume", F);
-  PHINode *PN = PHINode::Create(Type::getInt8PtrTy(Ctx), Resumes.size(),
-                                "exn.obj", UnwindBB);
-
-  // Extract the exception object from the ResumeInst and add it to the PHI node
-  // that feeds the _Unwind_Resume call.
-  for (SmallVectorImpl<ResumeInst*>::iterator
-         I = Resumes.begin(), E = Resumes.end(); I != E; ++I) {
-    ResumeInst *RI = *I;
-    BranchInst::Create(UnwindBB, RI->getParent());
-    ExtractValueInst *ExnObj = ExtractValueInst::Create(RI->getOperand(0),
-                                                        0, "exn.obj", RI);
-    PN->addIncoming(ExnObj, RI->getParent());
-    RI->eraseFromParent();
-  }
-
-  // Call the function.
-  CallInst *CI = CallInst::Create(RewindFunction, PN, "", UnwindBB);
-  CI->setCallingConv(TLI->getLibcallCallingConv(RTLIB::UNWIND_RESUME));
-
-  // We never expect _Unwind_Resume to return.
-  new UnreachableInst(Ctx, UnwindBB);
-  return true;
-}
-
 bool DwarfEHPrepare::runOnFunction(Function &Fn) {
   bool Changed = false;
 
   // Initialize internal state.
-  DT = &getAnalysis<DominatorTree>(); // FIXME: We won't need this with the new EH.
+  DT = &getAnalysis<DominatorTree>();
   F = &Fn;
-
-  if (InsertUnwindResumeCalls()) {
-    // FIXME: The reset of this function can go once the new EH is done.
-    LandingPads.clear();
-    return true;
-  }
 
   // Ensure that only unwind edges end at landing pads (a landing pad is a
   // basic block where an invoke unwind edge ends).

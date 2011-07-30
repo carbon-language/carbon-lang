@@ -1143,10 +1143,6 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     }
     break;
   }
-  case Instruction::Resume:
-    Code = bitc::FUNC_CODE_INST_RESUME;
-    PushValueAndType(I.getOperand(0), InstID, Vals, VE);
-    break;
   case Instruction::Unwind:
     Code = bitc::FUNC_CODE_INST_UNWIND;
     break;
@@ -1162,20 +1158,6 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
       Vals.push_back(VE.getValueID(PN.getIncomingValue(i)));
       Vals.push_back(VE.getValueID(PN.getIncomingBlock(i)));
-    }
-    break;
-  }
-
-  case Instruction::LandingPad: {
-    const LandingPadInst &LP = cast<LandingPadInst>(I);
-    Code = bitc::FUNC_CODE_INST_LANDINGPAD;
-    Vals.push_back(VE.getTypeID(LP.getType()));
-    PushValueAndType(LP.getPersonalityFn(), InstID, Vals, VE);
-    Vals.push_back(LP.isCleanup());
-    Vals.push_back(LP.getNumClauses());
-    for (unsigned I = 0, E = LP.getNumClauses(); I != E; ++I) {
-      Vals.push_back(LP.getClauseType(I));
-      PushValueAndType(LP.getClauseValue(I), InstID, Vals, VE);
     }
     break;
   }

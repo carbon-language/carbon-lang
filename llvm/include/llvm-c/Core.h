@@ -188,11 +188,7 @@ typedef enum {
   /* Atomic operators */
   LLVMFence          = 55,
   LLVMAtomicCmpXchg  = 56,
-  LLVMAtomicRMW      = 57,
-
-  /* Exception Handling Operators */
-  LLVMLandingPad     = 58,
-  LLVMResume         = 59
+  LLVMAtomicRMW      = 57
 
 } LLVMOpcode;
 
@@ -283,11 +279,6 @@ typedef enum {
   LLVMRealUNE,            /**< True if unordered or not equal */
   LLVMRealPredicateTrue   /**< Always true (always folded) */
 } LLVMRealPredicate;
-
-typedef enum {
-  LLVMCatch,              /**< A catch clause   */
-  LLVMFilter              /**< A filter clause  */
-} LLVMLandingPadClauseTy;
 
 void LLVMInitializeCore(LLVMPassRegistryRef R);
 
@@ -475,7 +466,6 @@ LLVMTypeRef LLVMX86MMXType(void);
       macro(GetElementPtrInst)              \
       macro(InsertElementInst)              \
       macro(InsertValueInst)                \
-      macro(LandingPadInst)                 \
       macro(PHINode)                        \
       macro(SelectInst)                     \
       macro(ShuffleVectorInst)              \
@@ -487,7 +477,6 @@ LLVMTypeRef LLVMX86MMXType(void);
         macro(SwitchInst)                   \
         macro(UnreachableInst)              \
         macro(UnwindInst)                   \
-        macro(ResumeInst)                   \
     macro(UnaryInstruction)                 \
       macro(AllocaInst)                     \
       macro(CastInst)                       \
@@ -836,7 +825,6 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef, LLVMValueRef Fn,
                              LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch,
                              const char *Name);
 LLVMValueRef LLVMBuildUnwind(LLVMBuilderRef);
-LLVMValueRef LLVMBuildResume(LLVMBuilderRef B, LLVMValueRef Exn);
 LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef);
 
 /* Add a case to the switch instruction */
@@ -845,13 +833,6 @@ void LLVMAddCase(LLVMValueRef Switch, LLVMValueRef OnVal,
 
 /* Add a destination to the indirectbr instruction */
 void LLVMAddDestination(LLVMValueRef IndirectBr, LLVMBasicBlockRef Dest);
-
-/* Add a clause to the landingpad instruction */
-void LLVMAddClause(LLVMValueRef LandingPad, LLVMLandingPadClauseTy ClauseTy,
-                   LLVMValueRef ClauseVal);
-
-/* Set the 'cleanup' flag in the landingpad instruction */
-void LLVMSetCleanup(LLVMValueRef LandingPad, LLVMBool Val);
 
 /* Arithmetic */
 LLVMValueRef LLVMBuildAdd(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS,

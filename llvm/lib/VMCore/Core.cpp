@@ -1683,20 +1683,8 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef B, LLVMValueRef Fn,
                                       Name));
 }
 
-LLVMValueRef LLVMBuildLandingPad(LLVMBuilderRef B, LLVMTypeRef Ty,
-                                 LLVMValueRef PersFn, unsigned NumClauses,
-                                 const char *Name) {
-  return wrap(unwrap(B)->CreateLandingPad(unwrap(Ty),
-                                          cast<Function>(unwrap(PersFn)),
-                                          NumClauses, Name));
-}
-
 LLVMValueRef LLVMBuildUnwind(LLVMBuilderRef B) {
   return wrap(unwrap(B)->CreateUnwind());
-}
-
-LLVMValueRef LLVMBuildResume(LLVMBuilderRef B, LLVMValueRef Exn) {
-  return wrap(unwrap(B)->CreateResume(unwrap(Exn)));
 }
 
 LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef B) {
@@ -1710,17 +1698,6 @@ void LLVMAddCase(LLVMValueRef Switch, LLVMValueRef OnVal,
 
 void LLVMAddDestination(LLVMValueRef IndirectBr, LLVMBasicBlockRef Dest) {
   unwrap<IndirectBrInst>(IndirectBr)->addDestination(unwrap(Dest));
-}
-
-void LLVMAddClause(LLVMValueRef LandingPad, LLVMLandingPadClauseTy ClauseTy,
-                   LLVMValueRef ClauseVal) {
-  unwrap<LandingPadInst>(LandingPad)->
-    addClause(static_cast<LandingPadInst::ClauseType>(ClauseTy),
-              cast<Constant>(unwrap(ClauseVal)));
-}
-
-void LLVMSetCleanup(LLVMValueRef LandingPad, LLVMBool Val) {
-  unwrap<LandingPadInst>(LandingPad)->setCleanup(Val);
 }
 
 /*--.. Arithmetic ..........................................................--*/
