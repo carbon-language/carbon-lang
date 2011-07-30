@@ -58,15 +58,15 @@ public:
     slist(size_type __n) : __base_type(__n) { }
     _LIBCPP_INLINE_VISIBILITY
     slist(size_type __n, const _Tp& __t) : __base_type(__n, __t) { }
-    _LIBCPP_INLINE_VISIBILITY
     template <typename _InputIterator>
+    _LIBCPP_INLINE_VISIBILITY
     slist(_InputIterator __f, _InputIterator __l) : __base_type(__f, __l) { }
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap (slist& __s) { __base_type::swap(s); }
+    void swap (slist& __s) { __base_type::swap(__s); }
 
     _LIBCPP_INLINE_VISIBILITY
-    void merge (slist& __s) { __base_type::merge(s); }
+    void merge (slist& __s) { __base_type::merge(__s); }
 
     _LIBCPP_INLINE_VISIBILITY
     friend bool operator==(const slist& __l, const slist& __r)
@@ -88,22 +88,22 @@ public:
     const_iterator previous(const_iterator __pos);
 
     _LIBCPP_INLINE_VISIBILITY
-    iterator insert(iterator __pos, const _Tp& __x) { return insert(previous(__pos), __x); }
-    _LIBCPP_INLINE_VISIBILITY
+    iterator insert(iterator __pos, const _Tp& __x) { return insert_after(previous(__pos), __x); }
     template <class _InputIterator>
-    void insert(iterator __pos, _InputIterator __f, _InputIterator __l) { return insert(previous(__pos), __f, __l); }
     _LIBCPP_INLINE_VISIBILITY
-    void insert(iterator __pos, size_type __n, const _Tp& __x) { return insert(previous(__pos), __n, __x); }
+    void insert(iterator __pos, _InputIterator __f, _InputIterator __l) { return insert_after(previous(__pos), __f, __l); }
+    _LIBCPP_INLINE_VISIBILITY
+    void insert(iterator __pos, size_type __n, const _Tp& __x) { return insert_after(previous(__pos), __n, __x); }
 
     _LIBCPP_INLINE_VISIBILITY
-    iterator erase(iterator __pos) { return erase(previous(__pos)); } 
+    iterator erase(iterator __pos) { return erase_after(previous(__pos)); } 
     _LIBCPP_INLINE_VISIBILITY
-    iterator erase(iterator __f, iterator __l) { return erase(previous(__f), previous(__l)); }
+    iterator erase(iterator __f, iterator __l) { return erase_after(previous(__f), previous(__l)); }
 };
 
 template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
-slist<_Tp, _Alloc>::iterator slist<_Tp, _Alloc>::previous(iterator __pos)
+typename slist<_Tp, _Alloc>::iterator slist<_Tp, _Alloc>::previous(iterator __pos)
 {
   iterator __a = begin(), __b = end();
   while (__a != __pos)
@@ -116,7 +116,7 @@ slist<_Tp, _Alloc>::iterator slist<_Tp, _Alloc>::previous(iterator __pos)
 
 template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
-slist<_Tp, _Alloc>::const_iterator slist<_Tp, _Alloc>::previous(const_iterator __pos)
+typename slist<_Tp, _Alloc>::const_iterator slist<_Tp, _Alloc>::previous(const_iterator __pos)
 {
   iterator __a = begin(), __b = end();
   while (__a != __pos)
@@ -126,3 +126,7 @@ slist<_Tp, _Alloc>::const_iterator slist<_Tp, _Alloc>::previous(const_iterator _
   }
   return __b;
 }
+
+}
+
+#endif
