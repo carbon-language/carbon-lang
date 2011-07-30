@@ -5824,6 +5824,7 @@ public:
   void CodeCompleteCall(Scope *S, Expr *Fn, Expr **Args, unsigned NumArgs);
   void CodeCompleteInitializer(Scope *S, Decl *D);
   void CodeCompleteReturn(Scope *S);
+  void CodeCompleteAfterIf(Scope *S);
   void CodeCompleteAssignmentRHS(Scope *S, Expr *LHS);
   
   void CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,

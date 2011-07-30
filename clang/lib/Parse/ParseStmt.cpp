@@ -953,6 +953,9 @@ StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs) {
     
     // Pop the 'else' scope if needed.
     InnerScope.Exit();
+  } else if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteAfterIf(getCurScope());
+    ConsumeCodeCompletionToken();
   }
 
   IfScope.Exit();

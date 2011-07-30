@@ -3702,6 +3702,61 @@ void Sema::CodeCompleteReturn(Scope *S) {
     CodeCompleteExpression(S, ResultType);
 }
 
+void Sema::CodeCompleteAfterIf(Scope *S) {
+  typedef CodeCompletionResult Result;
+  ResultBuilder Results(*this, CodeCompleter->getAllocator(),
+                        mapCodeCompletionContext(*this, PCC_Statement));
+  Results.setFilter(&ResultBuilder::IsOrdinaryName);
+  Results.EnterNewScope();
+  
+  CodeCompletionDeclConsumer Consumer(Results, CurContext);
+  LookupVisibleDecls(S, LookupOrdinaryName, Consumer,
+                     CodeCompleter->includeGlobals());
+  
+  AddOrdinaryNameResults(PCC_Statement, S, *this, Results);
+  
+  // "else" block
+  CodeCompletionBuilder Builder(Results.getAllocator());
+  Builder.AddTypedTextChunk("else");
+  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Builder.AddChunk(CodeCompletionString::CK_LeftBrace);
+  Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
+  Builder.AddPlaceholderChunk("statements");
+  Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
+  Builder.AddChunk(CodeCompletionString::CK_RightBrace);
+  Results.AddResult(Builder.TakeString());
+
+  // "else if" block
+  Builder.AddTypedTextChunk("else");
+  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Builder.AddTextChunk("if");
+  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+  if (getLangOptions().CPlusPlus)
+    Builder.AddPlaceholderChunk("condition");
+  else
+    Builder.AddPlaceholderChunk("expression");
+  Builder.AddChunk(CodeCompletionString::CK_RightParen);
+  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Builder.AddChunk(CodeCompletionString::CK_LeftBrace);
+  Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
+  Builder.AddPlaceholderChunk("statements");
+  Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
+  Builder.AddChunk(CodeCompletionString::CK_RightBrace);
+  Results.AddResult(Builder.TakeString());
+
+  Results.ExitScope();
+  
+  if (S->getFnParent())
+    AddPrettyFunctionResults(PP.getLangOptions(), Results);        
+  
+  if (CodeCompleter->includeMacros())
+    AddMacroResults(PP, Results);
+  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.getCompletionContext(),
+                            Results.data(),Results.size());
+}
+
 void Sema::CodeCompleteAssignmentRHS(Scope *S, ExprTy *LHS) {
   if (LHS)
     CodeCompleteExpression(S, static_cast<Expr *>(LHS)->getType());
