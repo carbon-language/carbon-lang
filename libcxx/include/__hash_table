@@ -1726,6 +1726,7 @@ template <class _Tp, class _Hash, class _Equal, class _Alloc>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_holder
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p) _NOEXCEPT
 {
+    __node_traits::destroy(__node_alloc(), __p.operator->());
     // current node
     __node_pointer __cn = const_cast<__node_pointer>(__p.__node_);
     size_type __bc = bucket_count();
