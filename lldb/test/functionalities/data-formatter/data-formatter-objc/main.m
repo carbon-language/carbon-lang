@@ -101,7 +101,7 @@ int main (int argc, const char * argv[])
     const unichar myOtherCharacters[] = {'a',' ', 'v','e','r','y',' ',
     'm','u','c','h',' ','b','o','r','i','n','g',' ','t','a','s','k',
     ' ','t','o',' ','w','r','i','t','e', ' ', 'a', ' ', 's', 't', 'r', 'i', 'n', 'g', ' ',
-    't','h','i','s',' ','w','a','y','!','!','0x03C3'};
+    't','h','i','s',' ','w','a','y','!','!',0x03C3, 0};
     NSString *str9 = [NSString stringWithCharacters: myOtherCharacters
                                              length: sizeof myOtherCharacters / sizeof *myOtherCharacters];
     

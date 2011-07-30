@@ -1,15 +1,18 @@
 # synthetic children provider for CFString
 # (and related NSString class)
 import lldb
+
 class CFStringSynthProvider:
 	def __init__(self,valobj,dict):
 		self.valobj = valobj;
 		self.update()
+
 	# children other than "content" are for debugging only and must not be used in production code
 	def num_children(self):
 		if self.invalid:
 			return 0;
 		return 6;
+
 	def read_unicode(self, pointer):
 		process = self.valobj.GetTarget().GetProcess()
 		error = lldb.SBError()
@@ -34,6 +37,7 @@ class CFStringSynthProvider:
 				value = b0 * 256 + b1
 			pystr = pystr + unichr(value)
 		return pystr
+
 	# handle the special case strings
 	# only use the custom code for the tested LP64 case
 	def handle_special(self):
@@ -45,12 +49,14 @@ class CFStringSynthProvider:
 		pystr = self.read_unicode(pointer)
 		return self.valobj.CreateValueFromExpression("content",
 			"(char*)\"" + pystr.encode('utf-8') + "\"")
+
 	# last resort call, use ObjC code to read; the final aim is to
 	# be able to strip this call away entirely and only do the read
 	# ourselves
 	def handle_unicode_string_safe(self):
 		return self.valobj.CreateValueFromExpression("content",
 			"(char*)\"" + self.valobj.GetObjectDescription() + "\"");
+
 	def handle_unicode_string(self):
 		# step 1: find offset
 		if self.inline:
@@ -80,6 +86,7 @@ class CFStringSynthProvider:
 		# step 3: return it
 		return self.valobj.CreateValueFromExpression("content",
 			"(char*)\"" + pystr.encode('utf-8') + "\"")
+
 	# we read at "the right place" into the __CFString object instead of running code
 	# we are replicating the functionality of __CFStrContents in CFString.c here
 	def handle_UTF8_inline(self):
@@ -88,10 +95,12 @@ class CFStringSynthProvider:
 			offset = offset + 1;
 		return self.valobj.CreateValueFromAddress("content",
 				offset, self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar));
+
 	def handle_UTF8_not_inline(self):
 		offset = self.size_of_cfruntime_base();
 		return self.valobj.CreateChildAtOffset("content",
 				offset,self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar).GetPointerType());
+
 	def get_child_at_index(self,index):
 		if index == 0:
 			return self.valobj.CreateValueFromExpression("mutable",
@@ -117,6 +126,7 @@ class CFStringSynthProvider:
 				return self.handle_UTF8_inline();
 			else:
 				return self.handle_UTF8_not_inline();
+
 	def get_child_index(self,name):
 		if name == "content":
 			return self.num_children() - 1;
@@ -130,17 +140,13 @@ class CFStringSynthProvider:
 			return 3;
 		if name == "special":
 			return 4;
+
 	def is_64bit(self):
-		if self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8:
-			return True;
-		else:
-			return False;
+		return self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8
+
 	def is_little_endian(self):
-		# 4 is eByteOrderLittle
-		if self.valobj.GetTarget().GetProcess().GetByteOrder() == 4:
-			return True;
-		else:
-			return False;
+		return self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle
+
 	# CFRuntimeBase is defined as having an additional
 	# 4 bytes (padding?) on LP64 architectures
 	# to get its size we add up sizeof(pointer)+4
@@ -150,6 +156,7 @@ class CFStringSynthProvider:
 			return 8+4+4;
 		else:
 			return 4+4;
+
 	# the info bits are part of the CFRuntimeBase structure
 	# to get at them we have to skip a uintptr_t and then get
 	# at the least-significant byte of a 4 byte array. If we are
@@ -163,6 +170,7 @@ class CFStringSynthProvider:
 		if self.is_little == False:
 			offset = offset + 3;
 		return offset;
+
 	def read_info_bits(self):
 		cfinfo = self.valobj.CreateChildAtOffset("cfinfo",
 					self.offset_of_info_bits(),
@@ -175,30 +183,37 @@ class CFStringSynthProvider:
 		else:
 			self.invalid = True;
 			return None;
+
 	# calculating internal flag bits of the CFString object
 	# this stuff is defined and discussed in CFString.c
 	def is_mutable(self):
 		return (self.info_bits & 1) == 1;
+
 	def is_inline(self):
 		return (self.info_bits & 0x60) == 0;
+
 	# this flag's name is ambiguous, it turns out
 	# we must skip a length byte to get at the data
 	# when this flag is False
 	def has_explicit_length(self):
 		return (self.info_bits & (1 | 4)) != 4;
+
 	# probably a subclass of NSString. obtained this from [str pathExtension]
 	# here info_bits = 0 and Unicode data at the start of the padding word
 	# in the long run using the isa value might be safer as a way to identify this
 	# instead of reading the info_bits
 	def is_special_case(self):
 		return self.info_bits == 0;
+
 	def is_unicode(self):
 		return (self.info_bits & 0x10) == 0x10;
+
 	# preparing ourselves to read into memory
 	# by adjusting architecture-specific info
 	def adjust_for_architecture(self):
 		self.lp64 = self.is_64bit();
 		self.is_little = self.is_little_endian();
+
 	# reading info bits out of the CFString and computing
 	# useful values to get at the real data
 	def compute_flags(self):
@@ -210,12 +225,14 @@ class CFStringSynthProvider:
 		self.explicit = self.has_explicit_length();
 		self.unicode = self.is_unicode();
 		self.special = self.is_special_case();
+
 	def update(self):
 		self.adjust_for_architecture();
 		self.compute_flags();
+
 def CFString_SummaryProvider (valobj,dict):
 	provider = CFStringSynthProvider(valobj,dict);
-	if provider.invalid == True:
-		return "<invalid object>";
-	return provider.get_child_at_index(provider.get_child_index("content")).GetSummary();
+	if provider.invalid == False:
+	    return provider.get_child_at_index(provider.get_child_index("content")).GetSummary();
+	return ''
 	
