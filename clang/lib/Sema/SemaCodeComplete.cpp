@@ -1933,6 +1933,28 @@ static void MaybeAddSentinel(ASTContext &Context, NamedDecl *FunctionOrMethod,
     }
 }
 
+static void appendWithSpace(std::string &Result, StringRef Text) {
+  if (!Result.empty())
+    Result += ' ';
+  Result += Text.str();
+}
+static std::string formatObjCParamQualifiers(unsigned ObjCQuals) {
+  std::string Result;
+  if (ObjCQuals & Decl::OBJC_TQ_In)
+    appendWithSpace(Result, "in");
+  else if (ObjCQuals & Decl::OBJC_TQ_Inout)
+    appendWithSpace(Result, "inout");
+  else if (ObjCQuals & Decl::OBJC_TQ_Out)
+    appendWithSpace(Result, "out");
+  if (ObjCQuals & Decl::OBJC_TQ_Bycopy)
+    appendWithSpace(Result, "bycopy");
+  else if (ObjCQuals & Decl::OBJC_TQ_Byref)
+    appendWithSpace(Result, "byref");
+  if (ObjCQuals & Decl::OBJC_TQ_Oneway)
+    appendWithSpace(Result, "oneway");
+  return Result;
+}
+
 static std::string FormatFunctionParameter(ASTContext &Context,
                                            ParmVarDecl *Param,
                                            bool SuppressName = false) {
@@ -1953,8 +1975,8 @@ static std::string FormatFunctionParameter(ASTContext &Context,
     Param->getType().getAsStringInternal(Result, Policy);
     
     if (ObjCMethodParam) {
-      Result = "(" + Result;
-      Result += ")";
+      Result = "(" + formatObjCParamQualifiers(Param->getObjCDeclQualifier())
+             + Result + ")";
       if (Param->getIdentifier() && !SuppressName)
         Result += Param->getIdentifier()->getName();
     }
@@ -2003,8 +2025,8 @@ static std::string FormatFunctionParameter(ASTContext &Context,
     Param->getType().getUnqualifiedType().getAsStringInternal(Result, Policy);
     
     if (ObjCMethodParam) {
-      Result = "(" + Result;
-      Result += ")";
+      Result = "(" + formatObjCParamQualifiers(Param->getObjCDeclQualifier())
+             + Result + ")";
       if (Param->getIdentifier())
         Result += Param->getIdentifier()->getName();
     }
@@ -2508,7 +2530,8 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
         Arg = FormatFunctionParameter(S.Context, *P, true);
       else {
         (*P)->getType().getAsStringInternal(Arg, Policy);
-        Arg = "(" + Arg + ")";
+        Arg = "(" + formatObjCParamQualifiers((*P)->getObjCDeclQualifier()) 
+            + Arg + ")";
         if (IdentifierInfo *II = (*P)->getIdentifier())
           if (DeclaringEntity || AllParametersAreInformative)
             Arg += II->getName();

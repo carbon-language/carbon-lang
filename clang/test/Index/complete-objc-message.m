@@ -181,6 +181,14 @@ void test_block_invoke(A *(^block1)(int),
   [block1(5) init];
 }
 
+@interface DO
+- (void)method:(in bycopy A*)ain result:(out byref A**)aout;
+@end
+
+void test_DO(DO *d, A* a) {
+  [d method:a aout:&a];
+}
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)}{HorizontalSpace  }{TypedText withKeyword:}{Placeholder (int)}
@@ -323,3 +331,6 @@ void test_block_invoke(A *(^block1)(int),
 // RUN: c-index-test -code-completion-at=%s:141:30 %s | FileCheck -check-prefix=CHECK-CCE %s
 
 // RUN: c-index-test -code-completion-at=%s:175:12 %s | FileCheck -check-prefix=CHECK-CLASS-RESULT %s
+
+// RUN: c-index-test -code-completion-at=%s:189:6 %s | FileCheck -check-prefix=CHECK-DISTRIB-OBJECTS %s
+// CHECK-DISTRIB-OBJECTS: ObjCInstanceMethodDecl:{ResultType void}{TypedText method:}{Placeholder (in bycopyA *)}{HorizontalSpace  }{TypedText result:}{Placeholder (out byrefA **)} (35)
