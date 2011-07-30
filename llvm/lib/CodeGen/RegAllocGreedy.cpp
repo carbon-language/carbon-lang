@@ -52,7 +52,7 @@ STATISTIC(NumGlobalSplits, "Number of split global live ranges");
 STATISTIC(NumLocalSplits,  "Number of split local live ranges");
 STATISTIC(NumEvicted,      "Number of interferences evicted");
 
-cl::opt<bool> CompactRegions("compact-regions", cl::init(true));
+cl::opt<bool> CompactRegions("compact-regions");
 
 static RegisterRegAlloc greedyRegAlloc("greedy", "greedy register allocator",
                                        createGreedyRegisterAllocator);
