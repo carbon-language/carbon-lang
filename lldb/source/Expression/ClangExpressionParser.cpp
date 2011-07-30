@@ -564,6 +564,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
                                                                jit_memory_manager,
                                                                CodeGenOpt::Less,
                                                                true,
+                                                               Reloc::Default,
                                                                CodeModel::Small));
 #else
     EngineBuilder builder(module);
