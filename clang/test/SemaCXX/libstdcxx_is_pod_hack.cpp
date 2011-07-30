@@ -27,3 +27,7 @@ struct test_is_signed {
 };
 
 bool check_signed = test_is_signed::__is_signed;
+
+#if __has_feature(is_pod)
+#  error __is_pod won't work now anyway
+#endif

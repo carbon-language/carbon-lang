@@ -639,11 +639,13 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("is_base_of", LangOpts.CPlusPlus)
            .Case("is_class", LangOpts.CPlusPlus)
            .Case("is_convertible_to", LangOpts.CPlusPlus)
-           .Case("is_empty", LangOpts.CPlusPlus)
+           .Case("is_empty", 
+                 LangOpts.CPlusPlus && II->getTokenID() != tok::identifier)
            .Case("is_enum", LangOpts.CPlusPlus)
            .Case("is_literal", LangOpts.CPlusPlus)
            .Case("is_standard_layout", LangOpts.CPlusPlus)
-           .Case("is_pod", LangOpts.CPlusPlus)
+           .Case("is_pod", 
+                 LangOpts.CPlusPlus && II->getTokenID() != tok::identifier)
            .Case("is_polymorphic", LangOpts.CPlusPlus)
            .Case("is_trivial", LangOpts.CPlusPlus)
            .Case("is_trivially_copyable", LangOpts.CPlusPlus)
