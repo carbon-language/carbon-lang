@@ -21,6 +21,7 @@
 // Project includes
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
+#include "clang/AST/Decl.h"
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Value.h"
@@ -472,21 +473,42 @@ public:
               const ConstString &name);
     
     //------------------------------------------------------------------
-    /// [Used by ClangASTSource] Fill in all the members of a (potentially
-    ///     incomplete) DeclContext.
-    ///
-    /// @param[in] ast_context
-    ///     The parser's AST context, in which the DeclContext is resident
+    /// [Used by ClangASTSource] Find all Decls in a context that match
+    /// a given criterion.
     ///
     /// @param[in] decl_context
-    ///     The DeclContext that needs to be filled in.
+    ///     The DeclContext to search.
     ///
-    /// @return
-    ///     The completed context on success; NULL otherwise.
+    /// @param[in] predicate
+    ///     Returns True if a DeclKind is desired; False if not.
+    ///
+    /// @param[in] decls
+    ///     A list to add all found Decls that have a desired DeclKind
+    ///     into.
     //------------------------------------------------------------------
-    const clang::DeclContext *
-    CompleteDeclContext (clang::ASTContext *ast_context,
-                         const clang::DeclContext *decl_context);
+    clang::ExternalLoadResult
+    FindExternalLexicalDecls (const clang::DeclContext *decl_context, 
+                              bool (*predicate)(clang::Decl::Kind),
+                              llvm::SmallVectorImpl<clang::Decl*> &decls);
+    
+    //------------------------------------------------------------------
+    /// [Used by ClangASTSource] Complete the definition of a TagDecl.
+    ///
+    /// @param[in] tag_decl
+    ///     The TagDecl to be completed.
+    //------------------------------------------------------------------
+    void
+    CompleteTagDecl (clang::TagDecl *tag_decl);
+    
+    //------------------------------------------------------------------
+    /// [Used by ClangASTSource] Complete the definition of an
+    /// ObjCInterfaceDecl.
+    ///
+    /// @param[in] tag_decl
+    ///     The ObjCInterfaceDecl to be completed.
+    //------------------------------------------------------------------
+    void
+    CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface_decl);
     
     //------------------------------------------------------------------
     /// [Used by ClangASTSource] Report whether a $__lldb variable has

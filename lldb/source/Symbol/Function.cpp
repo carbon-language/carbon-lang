@@ -17,6 +17,7 @@
 #include "lldb/Symbol/SymbolVendor.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/CanonicalType.h"
+#include "llvm/Support/Casting.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -414,7 +415,7 @@ clang_type_t
 Function::GetReturnClangType ()
 {
     clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangFullType()));
-    const clang::FunctionType *function_type = dyn_cast<clang::FunctionType> (clang_type);
+    const clang::FunctionType *function_type = llvm::dyn_cast<clang::FunctionType> (clang_type);
     if (function_type)
         return function_type->getResultType().getAsOpaquePtr();
     return NULL;
@@ -428,7 +429,7 @@ Function::GetArgumentCount ()
     if (!clang_type->isFunctionProtoType())
         return -1;
 
-    const clang::FunctionProtoType *function_proto_type = dyn_cast<clang::FunctionProtoType>(clang_type);
+    const clang::FunctionProtoType *function_proto_type = llvm::dyn_cast<clang::FunctionProtoType>(clang_type);
     if (function_proto_type != NULL)
         return function_proto_type->getNumArgs();
 
@@ -439,7 +440,7 @@ clang_type_t
 Function::GetArgumentTypeAtIndex (size_t idx)
 {
     clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangFullType()));
-    const clang::FunctionProtoType *function_proto_type = dyn_cast<clang::FunctionProtoType>(clang_type);
+    const clang::FunctionProtoType *function_proto_type = llvm::dyn_cast<clang::FunctionProtoType>(clang_type);
     if (function_proto_type)
     {
         unsigned num_args = function_proto_type->getNumArgs();
@@ -459,7 +460,7 @@ Function::IsVariadic ()
    if (!clang_type->isFunctionProtoType())
         return false;
 
-    const clang::FunctionProtoType *function_proto_type = dyn_cast<clang::FunctionProtoType>(clang_type);
+    const clang::FunctionProtoType *function_proto_type = llvm::dyn_cast<clang::FunctionProtoType>(clang_type);
     if (function_proto_type)
         return function_proto_type->isVariadic();
 

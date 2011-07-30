@@ -42,9 +42,12 @@ public:
     clang::Decl *
     CopyDecl (clang::ASTContext *src_ctx,
               clang::Decl *decl);
+        
+    void
+    CompleteTagDecl (clang::TagDecl *decl);
     
-    const clang::DeclContext *
-    CompleteDeclContext (const clang::DeclContext *decl_context);
+    void
+    CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface_decl);
     
     bool
     ResolveDeclOrigin (const clang::Decl *decl, clang::Decl **original_decl, clang::ASTContext **original_ctx)
@@ -111,12 +114,7 @@ private:
         {
         }
         
-        clang::Decl *Imported (clang::Decl *from, clang::Decl *to)
-        {
-            m_master.m_origins[to] = DeclOrigin (m_source_ctx, from);
-            
-            return clang::ASTImporter::Imported(from, to);
-        }
+        clang::Decl *Imported (clang::Decl *from, clang::Decl *to);
         
         ClangASTImporter   &m_master;
         clang::ASTContext  *m_source_ctx;
@@ -129,6 +127,8 @@ private:
     GetMinion (clang::ASTContext *source_ctx, bool minimal)
     {
         MinionMap *minions;
+        
+        minimal = true; // This override is temporary, while I sort out the attendant issues.
         
         if (minimal)
             minions = &m_minimal_minions;

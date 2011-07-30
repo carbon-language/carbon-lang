@@ -114,13 +114,13 @@ ClangASTSource::FindExternalVisibleDeclsByName
 void
 ClangASTSource::CompleteType (TagDecl *tag_decl)
 {
-    puts(__PRETTY_FUNCTION__);
+    m_decl_map.CompleteTagDecl (tag_decl);
 }
 
 void
 ClangASTSource::CompleteType (ObjCInterfaceDecl *objc_decl)
 {
-    puts(__PRETTY_FUNCTION__);
+    m_decl_map.CompleteObjCInterfaceDecl (objc_decl);
 }
 
 void 
@@ -131,7 +131,7 @@ ClangASTSource::MaterializeVisibleDecls(const DeclContext *DC)
 
 // This is used to support iterating through an entire lexical context,
 // which isn't something the debugger should ever need to do.
-bool
+clang::ExternalLoadResult
 ClangASTSource::FindExternalLexicalDecls
 (
     const DeclContext *DC, 
@@ -139,8 +139,7 @@ ClangASTSource::FindExternalLexicalDecls
     llvm::SmallVectorImpl<Decl*> &Decls
 )
 {
-	// true is for error, that's good enough for me
-	return true;
+    return m_decl_map.FindExternalLexicalDecls (DC, isKindWeWant, Decls);
 }
 
 clang::ASTContext *

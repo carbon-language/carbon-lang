@@ -189,10 +189,10 @@ public:
     GetClangDeclContextForDIEOffset (dw_offset_t die_offset);
     
     void
-    SearchNamespace (const clang::NamespaceDecl *namespace_decl, 
-                     const char *name, 
-                     llvm::SmallVectorImpl <clang::NamedDecl *> *results);
-
+    SearchDeclContext (const clang::DeclContext *decl_context, 
+                       const char *name, 
+                       llvm::SmallVectorImpl <clang::NamedDecl *> *results);
+    
     lldb_private::Flags&
     GetFlags ()
     {
@@ -317,6 +317,8 @@ protected:
     uint32_t                FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_matches, lldb_private::TypeList& types);
 
     void                    Index();
+    
+    void                    DumpIndexes();
 
     void                    SetDebugMapSymfile (SymbolFileDWARFDebugMap *debug_map_symfile)
                             {

@@ -310,24 +310,28 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     
     ValueSymbolTable& value_symbol_table = m_module->getValueSymbolTable();
     
+    std::string result_name_str;
     const char *result_name = NULL;
     
     for (ValueSymbolTable::iterator vi = value_symbol_table.begin(), ve = value_symbol_table.end();
          vi != ve;
          ++vi)
     {
-        if (strstr(vi->first(), "$__lldb_expr_result_ptr") &&
-            !strstr(vi->first(), "GV"))
+        result_name_str = vi->first().str();
+        const char *value_name = result_name_str.c_str();
+        
+        if (strstr(value_name, "$__lldb_expr_result_ptr") &&
+            !strstr(value_name, "GV"))
         {
-            result_name = vi->first();
+            result_name = value_name;
             m_result_is_pointer = true;
             break;
         }
         
-        if (strstr(vi->first(), "$__lldb_expr_result") &&
-            !strstr(vi->first(), "GV")) 
+        if (strstr(value_name, "$__lldb_expr_result") &&
+            !strstr(value_name, "GV")) 
         {
-            result_name = vi->first();
+            result_name = value_name;
             m_result_is_pointer = false;
             break;
         }
@@ -580,13 +584,13 @@ IRForTarget::RewriteObjCConstString (llvm::GlobalVariable *ns_str,
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    const Type *ns_str_ty = ns_str->getType();
+    Type *ns_str_ty = ns_str->getType();
     
-    const Type *i8_ptr_ty = Type::getInt8PtrTy(m_module->getContext());
-    const IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
+    Type *i8_ptr_ty = Type::getInt8PtrTy(m_module->getContext());
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
                                                    (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
-    const Type *i32_ty = Type::getInt32Ty(m_module->getContext());
-    const Type *i8_ty = Type::getInt8Ty(m_module->getContext());
+    Type *i32_ty = Type::getInt32Ty(m_module->getContext());
+    Type *i8_ty = Type::getInt8Ty(m_module->getContext());
     
     if (!m_CFStringCreateWithBytes)
     {
@@ -627,12 +631,16 @@ IRForTarget::RewriteObjCConstString (llvm::GlobalVariable *ns_str,
         // CFStringEncoding -> i32
         // Boolean -> i8
         
-        std::vector <const Type *> CFSCWB_arg_types;
-        CFSCWB_arg_types.push_back(i8_ptr_ty);
-        CFSCWB_arg_types.push_back(i8_ptr_ty);
-        CFSCWB_arg_types.push_back(intptr_ty);
-        CFSCWB_arg_types.push_back(i32_ty);
-        CFSCWB_arg_types.push_back(i8_ty);
+        Type *arg_type_array[5];
+        
+        arg_type_array[0] = i8_ptr_ty;
+        arg_type_array[1] = i8_ptr_ty;
+        arg_type_array[2] = intptr_ty;
+        arg_type_array[3] = i32_ty;
+        arg_type_array[4] = i8_ty;
+        
+        ArrayRef<Type *> CFSCWB_arg_types(arg_type_array, 5);
+        
         llvm::Type *CFSCWB_ty = FunctionType::get(ns_str_ty, CFSCWB_arg_types, false);
         
         // Build the constant containing the pointer to the function
@@ -645,24 +653,25 @@ IRForTarget::RewriteObjCConstString (llvm::GlobalVariable *ns_str,
     
     if (cstr)
         string_array = dyn_cast<ConstantArray>(cstr->getInitializer());
-                        
-    SmallVector <Value*, 5> CFSCWB_arguments;
-    
+                            
     Constant *alloc_arg         = Constant::getNullValue(i8_ptr_ty);
     Constant *bytes_arg         = cstr ? ConstantExpr::getBitCast(cstr, i8_ptr_ty) : Constant::getNullValue(i8_ptr_ty);
     Constant *numBytes_arg      = ConstantInt::get(intptr_ty, cstr ? string_array->getType()->getNumElements() - 1 : 0, false);
     Constant *encoding_arg      = ConstantInt::get(i32_ty, 0x0600, false); /* 0x0600 is kCFStringEncodingASCII */
     Constant *isExternal_arg    = ConstantInt::get(i8_ty, 0x0, false); /* 0x0 is false */
     
-    CFSCWB_arguments.push_back(alloc_arg);
-    CFSCWB_arguments.push_back(bytes_arg);
-    CFSCWB_arguments.push_back(numBytes_arg);
-    CFSCWB_arguments.push_back(encoding_arg);
-    CFSCWB_arguments.push_back(isExternal_arg);
+    Value *argument_array[5];
+    
+    argument_array[0] = alloc_arg;
+    argument_array[1] = bytes_arg;
+    argument_array[2] = numBytes_arg;
+    argument_array[3] = encoding_arg;
+    argument_array[4] = isExternal_arg;
+    
+    ArrayRef <Value *> CFSCWB_arguments(argument_array, 5);
     
     CallInst *CFSCWB_call = CallInst::Create(m_CFStringCreateWithBytes, 
-                                             CFSCWB_arguments.begin(),
-                                             CFSCWB_arguments.end(),
+                                             CFSCWB_arguments,
                                              "CFStringCreateWithBytes",
                                              FirstEntryInstruction);
             
@@ -707,7 +716,10 @@ IRForTarget::RewriteObjCConstStrings(Function &llvm_function)
          vi != ve;
          ++vi)
     {
-        if (strstr(vi->first(), "_unnamed_cfstring_"))
+        std::string value_name = vi->first().str();
+        const char *value_name_cstr = value_name.c_str();
+        
+        if (strstr(value_name_cstr, "_unnamed_cfstring_"))
         {
             Value *nsstring_value = vi->second;
             
@@ -860,9 +872,9 @@ IRForTarget::RewriteObjCConstStrings(Function &llvm_function)
             if (log)
             {
                 if (cstr_array)
-                    log->Printf("Found NSString constant %s, which contains \"%s\"", vi->first(), cstr_array->getAsString().c_str());
+                    log->Printf("Found NSString constant %s, which contains \"%s\"", value_name_cstr, cstr_array->getAsString().c_str());
                 else
-                    log->Printf("Found NSString constant %s, which contains \"\"", vi->first());
+                    log->Printf("Found NSString constant %s, which contains \"\"", value_name_cstr);
             }
             
             if (!cstr_array)
@@ -884,7 +896,10 @@ IRForTarget::RewriteObjCConstStrings(Function &llvm_function)
          vi != ve;
          ++vi)
     {
-        if (!strcmp(vi->first(), "__CFConstantStringClassReference"))
+        std::string value_name = vi->first().str();
+        const char *value_name_cstr = value_name.c_str();
+        
+        if (!strcmp(value_name_cstr, "__CFConstantStringClassReference"))
         {
             GlobalVariable *gv = dyn_cast<GlobalVariable>(vi->second);
             
@@ -995,29 +1010,34 @@ IRForTarget::RewriteObjCSelector (Instruction* selector_load)
         // The below code would be "more correct," but in actuality what's required is uint8_t*
         //Type *sel_type = StructType::get(m_module->getContext());
         //Type *sel_ptr_type = PointerType::getUnqual(sel_type);
-        const Type *sel_ptr_type = Type::getInt8PtrTy(m_module->getContext());
+        Type *sel_ptr_type = Type::getInt8PtrTy(m_module->getContext());
         
-        std::vector <const Type *> srN_arg_types;
-        srN_arg_types.push_back(Type::getInt8PtrTy(m_module->getContext()));
+        Type *type_array[1];
+        
+        type_array[0] = llvm::Type::getInt8PtrTy(m_module->getContext());
+        
+        ArrayRef<Type *> srN_arg_types(type_array, 1);
+        
         llvm::Type *srN_type = FunctionType::get(sel_ptr_type, srN_arg_types, false);
         
         // Build the constant containing the pointer to the function
-        const IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                                       (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+        IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
+                                                 (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
         PointerType *srN_ptr_ty = PointerType::getUnqual(srN_type);
         Constant *srN_addr_int = ConstantInt::get(intptr_ty, sel_registerName_addr, false);
         m_sel_registerName = ConstantExpr::getIntToPtr(srN_addr_int, srN_ptr_ty);
     }
     
-    SmallVector <Value*, 1> srN_arguments;
-    
+    Value *argument_array[1];
+        
     Constant *omvn_pointer = ConstantExpr::getBitCast(_objc_meth_var_name_, Type::getInt8PtrTy(m_module->getContext()));
     
-    srN_arguments.push_back(omvn_pointer);
+    argument_array[0] = omvn_pointer;
     
+    ArrayRef<Value *> srN_arguments(argument_array, 1);
+        
     CallInst *srN_call = CallInst::Create(m_sel_registerName, 
-                                          srN_arguments.begin(),
-                                          srN_arguments.end(),
+                                          srN_arguments,
                                           "sel_registerName",
                                           selector_load);
     
@@ -1338,10 +1358,10 @@ IRForTarget::HandleSymbol (Value *symbol)
     if (log)
         log->Printf("Found \"%s\" at 0x%llx", name.GetCString(), symbol_addr);
     
-    const Type *symbol_type = symbol->getType();
+    Type *symbol_type = symbol->getType();
     
-    const IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                                   (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
+                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
     
     Constant *symbol_addr_int = ConstantInt::get(intptr_ty, symbol_addr, false);
     
@@ -1398,7 +1418,7 @@ IRForTarget::MaybeHandleCall (CallInst *llvm_call_inst)
             if (!fun)
             {
                 if (m_error_stream)
-                    m_error_stream->Printf("Internal error [IRForTarget]: Called entity is a cast of something not a function\n");
+                    m_error_stream->Printf("Internal error [IRForTaget]: Called entity is a cast of something not a function\n");
             
                 return false;
             }
@@ -1495,9 +1515,9 @@ IRForTarget::MaybeHandleCall (CallInst *llvm_call_inst)
             
     if (!fun_value_ptr || !*fun_value_ptr)
     {
-        const IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                                       (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
-        const FunctionType *fun_ty = fun->getFunctionType();
+        IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
+                                                 (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+        FunctionType *fun_ty = fun->getFunctionType();
         PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
         Constant *fun_addr_int = ConstantInt::get(intptr_ty, fun_addr, false);
         fun_addr_ptr = ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
@@ -1636,7 +1656,7 @@ IRForTarget::ReplaceStrings ()
         m_data_allocator->GetStream().Write(str.c_str(), str.length() + 1);
     }
     
-    const Type *char_ptr_ty = Type::getInt8PtrTy(m_module->getContext());
+    Type *char_ptr_ty = Type::getInt8PtrTy(m_module->getContext());
     
     for (OffsetsTy::iterator oi = offsets.begin(), oe = offsets.end();
          oi != oe;
@@ -1789,7 +1809,7 @@ IRForTarget::ReplaceStaticLiterals (llvm::BasicBlock &basic_block)
             
             m_data_allocator->GetStream().Write(data.GetBytes(), operand_data_size);
             
-            const llvm::Type *fp_ptr_ty = operand_constant_fp->getType()->getPointerTo();
+            llvm::Type *fp_ptr_ty = operand_constant_fp->getType()->getPointerTo();
             
             Constant *new_pointer = BuildRelocation(fp_ptr_ty, offset);
             
@@ -1961,8 +1981,8 @@ IRForTarget::UnfoldConstant(Constant *old_constant, Value *new_constant, Instruc
                         
                         if (ptr == old_constant)
                             ptr = new_constant;
-                        
-                        SmallVector<Value*, 16> indices;
+                                                
+                        std::vector<Value*> index_vector;
                         
                         unsigned operand_index;
                         unsigned num_operands = constant_expr->getNumOperands();
@@ -1976,10 +1996,12 @@ IRForTarget::UnfoldConstant(Constant *old_constant, Value *new_constant, Instruc
                             if (operand == old_constant)
                                 operand = new_constant;
                             
-                            indices.push_back(operand);
+                            index_vector.push_back(operand);
                         }
                         
-                        GetElementPtrInst *get_element_ptr(GetElementPtrInst::Create(ptr, indices.begin(), indices.end(), "", first_entry_inst));
+                        ArrayRef <Value*> indices(index_vector);
+                        
+                        GetElementPtrInst *get_element_ptr(GetElementPtrInst::Create(ptr, indices, "", first_entry_inst));
                         
                         UnfoldConstant(constant_expr, get_element_ptr, first_entry_inst);
                     }
@@ -2107,7 +2129,7 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
     }
     
     LLVMContext &context(m_module->getContext());
-    const IntegerType *offset_type(Type::getInt32Ty(context));
+    IntegerType *offset_type(Type::getInt32Ty(context));
     
     if (!offset_type)
     {
@@ -2139,7 +2161,7 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
                         PrintValue(value, true).c_str(),
                         offset);
         
-        ConstantInt *offset_int(ConstantInt::getSigned(offset_type, offset));
+        ConstantInt *offset_int(ConstantInt::get(offset_type, offset, true));
         GetElementPtrInst *get_element_ptr = GetElementPtrInst::Create(argument, offset_int, "", FirstEntryInstruction);
                 
         Value *replacement = NULL;
@@ -2178,16 +2200,23 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
 }
 
 llvm::Constant *
-IRForTarget::BuildRelocation(const llvm::Type *type, 
+IRForTarget::BuildRelocation(llvm::Type *type, 
                              uint64_t offset)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    const IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                                   (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
+                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
     
     llvm::Constant *offset_int = ConstantInt::get(intptr_ty, offset);
-    llvm::Constant *reloc_getelementptr = ConstantExpr::getGetElementPtr(m_reloc_placeholder, &offset_int, 1);
+    
+    llvm::Constant *offset_array[1];
+    
+    offset_array[0] = offset_int;
+    
+    llvm::ArrayRef<llvm::Constant *> offsets(offset_array, 1);
+    
+    llvm::Constant *reloc_getelementptr = ConstantExpr::getGetElementPtr(m_reloc_placeholder, offsets);
     llvm::Constant *reloc_getbitcast = ConstantExpr::getBitCast(reloc_getelementptr, type);
     
     return reloc_getbitcast;
@@ -2214,8 +2243,8 @@ IRForTarget::CompleteDataAllocation ()
     if (!allocation)
         return false;
     
-    const IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                                   (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
+                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
     
     Constant *relocated_addr = ConstantInt::get(intptr_ty, (uint64_t)allocation);
     Constant *relocated_bitcast = ConstantExpr::getIntToPtr(relocated_addr, llvm::Type::getInt8PtrTy(m_module->getContext()));
@@ -2255,7 +2284,7 @@ IRForTarget::runOnModule (Module &llvm_module)
         return false;
     }
     
-    const llvm::Type *intptr_ty = Type::getInt8Ty(m_module->getContext());
+    llvm::Type *intptr_ty = Type::getInt8Ty(m_module->getContext());
     
     m_reloc_placeholder = new llvm::GlobalVariable((*m_module), 
                                                    intptr_ty,

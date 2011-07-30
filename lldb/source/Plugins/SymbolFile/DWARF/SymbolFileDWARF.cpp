@@ -22,6 +22,8 @@
 #include "clang/Basic/Specifiers.h"
 #include "clang/Sema/DeclSpec.h"
 
+#include "llvm/Support/Casting.h"
+
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegularExpression.h"
@@ -4437,16 +4439,35 @@ SymbolFileDWARF::CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDec
 }
 
 void
-SymbolFileDWARF::SearchNamespace (const clang::NamespaceDecl *namespace_decl, 
-                                  const char *name, 
-                                  llvm::SmallVectorImpl <clang::NamedDecl *> *results)
+SymbolFileDWARF::DumpIndexes ()
+{
+    StreamFile s(stdout, false);
+    
+    s.Printf ("DWARF index for (%s) '%s/%s':", 
+              GetObjectFile()->GetModule()->GetArchitecture().GetArchitectureName(),
+              GetObjectFile()->GetFileSpec().GetDirectory().AsCString(), 
+              GetObjectFile()->GetFileSpec().GetFilename().AsCString());
+    s.Printf("\nFunction basenames:\n");    m_function_basename_index.Dump (&s);
+    s.Printf("\nFunction fullnames:\n");    m_function_fullname_index.Dump (&s);
+    s.Printf("\nFunction methods:\n");      m_function_method_index.Dump (&s);
+    s.Printf("\nFunction selectors:\n");    m_function_selector_index.Dump (&s);
+    s.Printf("\nObjective C class selectors:\n");    m_objc_class_selectors_index.Dump (&s);
+    s.Printf("\nGlobals and statics:\n");   m_global_index.Dump (&s); 
+    s.Printf("\nTypes:\n");                 m_type_index.Dump (&s);
+    s.Printf("\nNamepaces:\n");             m_namespace_index.Dump (&s);
+}
+
+void
+SymbolFileDWARF::SearchDeclContext (const clang::DeclContext *decl_context, 
+                                    const char *name, 
+                                    llvm::SmallVectorImpl <clang::NamedDecl *> *results)
 {    
-    DeclContextToDIEMap::iterator iter = m_decl_ctx_to_die.find((const clang::DeclContext*)namespace_decl);
+    DeclContextToDIEMap::iterator iter = m_decl_ctx_to_die.find(decl_context);
     
     if (iter == m_decl_ctx_to_die.end())
         return;
     
-    const DWARFDebugInfoEntry *namespace_die = iter->second;
+    const DWARFDebugInfoEntry *context_die = iter->second;
     
     if (!results)
         return;
@@ -4467,7 +4488,7 @@ SymbolFileDWARF::SearchNamespace (const clang::NamespaceDecl *namespace_decl,
             compile_unit->ExtractDIEsIfNeeded (false);
             const DWARFDebugInfoEntry *die = compile_unit->GetDIEAtIndexUnchecked(die_info_array[i].die_idx);
             
-            if (die->GetParent() != namespace_die)
+            if (die->GetParent() != context_die)
                 continue;
             
             Type *matching_type = ResolveType (compile_unit, die);
@@ -4475,13 +4496,12 @@ SymbolFileDWARF::SearchNamespace (const clang::NamespaceDecl *namespace_decl,
             lldb::clang_type_t type = matching_type->GetClangFullType();
             clang::QualType qual_type = clang::QualType::getFromOpaquePtr(type);
             
-            
-            if (const clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr()))
+            if (const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr()))
             {
                 clang::TagDecl *tag_decl = tag_type->getDecl();
                 results->push_back(tag_decl);
             }
-            else if (const clang::TypedefType *typedef_type = dyn_cast<clang::TypedefType>(qual_type.getTypePtr()))
+            else if (const clang::TypedefType *typedef_type = llvm::dyn_cast<clang::TypedefType>(qual_type.getTypePtr()))
             {
                 clang::TypedefNameDecl *typedef_decl = typedef_type->getDecl();
                 results->push_back(typedef_decl); 
@@ -4498,7 +4518,5 @@ SymbolFileDWARF::FindExternalVisibleDeclsByName (void *baton,
 {
     SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;
                 
-    const clang::NamespaceDecl *DC_namespace = llvm::dyn_cast<clang::NamespaceDecl>(DC);
-    
-    symbol_file_dwarf->SearchNamespace (DC_namespace, Name.getAsString().c_str(), results);
+    symbol_file_dwarf->SearchDeclContext (DC, Name.getAsString().c_str(), results);
 }

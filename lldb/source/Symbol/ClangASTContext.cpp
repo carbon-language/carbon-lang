@@ -1607,9 +1607,10 @@ ClangASTContext::AddFieldToRecordType
                                                   SourceLocation(),
                                                   name ? &identifier_table->get(name) : NULL, // Identifier
                                                   QualType::getFromOpaquePtr(field_type), // Field type
-                                                  NULL,       // DeclaratorInfo *
+                                                  NULL,       // TInfo *
                                                   bit_width,  // BitWidth
-                                                  false);     // Mutable
+                                                  false,      // Mutable
+                                                  false);     // HasInit
 
             field->setAccess (ConvertAccessTypeToAccessSpecifier (access));
 
@@ -3170,7 +3171,7 @@ ClangASTContext::GetIndexOfChildMemberWithName
 
                     //const Decl *root_cdecl = cxx_record_decl->getCanonicalDecl();
                     // Didn't find things easily, lets let clang do its thang...
-                    IdentifierInfo & ident_ref = ast->Idents.get(name, name + strlen (name));
+                    IdentifierInfo & ident_ref = ast->Idents.get(name_sref);
                     DeclarationName decl_name(&ident_ref);
 
                     CXXBasePaths paths;
@@ -3647,6 +3648,7 @@ ClangASTContext::GetDeclContextForType (clang_type_t clang_type)
     const clang::Type::TypeClass type_class = qual_type->getTypeClass();
     switch (type_class)
     {
+    case clang::Type::UnaryTransform:           break;
     case clang::Type::FunctionNoProto:          break;
     case clang::Type::FunctionProto:            break;
     case clang::Type::IncompleteArray:          break;

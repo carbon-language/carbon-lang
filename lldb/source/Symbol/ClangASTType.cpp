@@ -194,7 +194,7 @@ ClangASTType::GetMinimumLanguage (lldb::clang_type_t clang_type)
         default:
                 break;
         case clang::Type::Builtin:
-            switch (cast<clang::BuiltinType>(qual_type)->getKind())
+          switch (llvm::cast<clang::BuiltinType>(qual_type)->getKind())
             {
                 default:
                 case clang::BuiltinType::Void:
@@ -238,7 +238,7 @@ ClangASTType::GetMinimumLanguage (lldb::clang_type_t clang_type)
             }
             break;
         case clang::Type::Typedef:
-            return GetMinimumLanguage(cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+            return GetMinimumLanguage(llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
         }
     }
     return lldb::eLanguageTypeC;
@@ -252,6 +252,9 @@ ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
 
     switch (qual_type->getTypeClass())
     {
+    case clang::Type::UnaryTransform:
+        break;
+            
     case clang::Type::FunctionNoProto:
     case clang::Type::FunctionProto:
         break;
@@ -269,7 +272,7 @@ ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
         break;
 
     case clang::Type::Builtin:
-        switch (cast<clang::BuiltinType>(qual_type)->getKind())
+        switch (llvm::cast<clang::BuiltinType>(qual_type)->getKind())
         {
         default: assert(0 && "Unknown builtin type!");
         case clang::BuiltinType::Void:
@@ -337,7 +340,7 @@ ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
     case clang::Type::Record:                   break;
     case clang::Type::Enum:                     return lldb::eEncodingSint;
     case clang::Type::Typedef:
-            return GetEncoding(cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), count);
+            return GetEncoding(llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), count);
         break;
 
     case clang::Type::DependentSizedArray:
@@ -379,6 +382,9 @@ ClangASTType::GetFormat (clang_type_t clang_type)
 
     switch (qual_type->getTypeClass())
     {
+    case clang::Type::UnaryTransform:
+        break;
+        
     case clang::Type::FunctionNoProto:
     case clang::Type::FunctionProto:
         break;
@@ -395,7 +401,7 @@ ClangASTType::GetFormat (clang_type_t clang_type)
         break;
 
     case clang::Type::Builtin:
-        switch (cast<clang::BuiltinType>(qual_type)->getKind())
+        switch (llvm::cast<clang::BuiltinType>(qual_type)->getKind())
         {
         //default: assert(0 && "Unknown builtin type!");
         case clang::BuiltinType::UnknownAny:
@@ -450,7 +456,7 @@ ClangASTType::GetFormat (clang_type_t clang_type)
     case clang::Type::Record:                   break;
     case clang::Type::Enum:                     return lldb::eFormatEnum;
     case clang::Type::Typedef:
-            return ClangASTType::GetFormat(cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+            return ClangASTType::GetFormat(llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
 
     case clang::Type::DependentSizedArray:
     case clang::Type::DependentSizedExtVector:
@@ -538,7 +544,7 @@ ClangASTType::DumpValue
     case clang::Type::Record:
         if (ClangASTContext::GetCompleteType (ast_context, clang_type))
         {
-            const clang::RecordType *record_type = cast<clang::RecordType>(qual_type.getTypePtr());
+            const clang::RecordType *record_type = llvm::cast<clang::RecordType>(qual_type.getTypePtr());
             const clang::RecordDecl *record_decl = record_type->getDecl();
             assert(record_decl);
             uint32_t field_bit_offset = 0;
@@ -547,7 +553,7 @@ ClangASTType::DumpValue
             uint32_t child_idx = 0;
 
 
-            const clang::CXXRecordDecl *cxx_record_decl = dyn_cast<clang::CXXRecordDecl>(record_decl);
+            const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
             if (cxx_record_decl)
             {
                 // We might have base classes to print out first
@@ -556,7 +562,7 @@ ClangASTType::DumpValue
                      base_class != base_class_end;
                      ++base_class)
                 {
-                    const clang::CXXRecordDecl *base_class_decl = cast<clang::CXXRecordDecl>(base_class->getType()->getAs<clang::RecordType>()->getDecl());
+                    const clang::CXXRecordDecl *base_class_decl = llvm::cast<clang::CXXRecordDecl>(base_class->getType()->getAs<clang::RecordType>()->getDecl());
 
                     // Skip empty base classes
                     if (verbose == false && ClangASTContext::RecordHasFields(base_class_decl) == false)
@@ -667,7 +673,7 @@ ClangASTType::DumpValue
     case clang::Type::Enum:
         if (ClangASTContext::GetCompleteType (ast_context, clang_type))
         {
-            const clang::EnumType *enum_type = cast<clang::EnumType>(qual_type.getTypePtr());
+            const clang::EnumType *enum_type = llvm::cast<clang::EnumType>(qual_type.getTypePtr());
             const clang::EnumDecl *enum_decl = enum_type->getDecl();
             assert(enum_decl);
             clang::EnumDecl::enumerator_iterator enum_pos, enum_end_pos;
@@ -689,7 +695,7 @@ ClangASTType::DumpValue
 
     case clang::Type::ConstantArray:
         {
-            const clang::ConstantArrayType *array = cast<clang::ConstantArrayType>(qual_type.getTypePtr());
+            const clang::ConstantArrayType *array = llvm::cast<clang::ConstantArrayType>(qual_type.getTypePtr());
             bool is_array_of_characters = false;
             clang::QualType element_qual_type = array->getElementType();
 
@@ -759,7 +765,7 @@ ClangASTType::DumpValue
 
     case clang::Type::Typedef:
         {
-            clang::QualType typedef_qual_type = cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType();
+            clang::QualType typedef_qual_type = llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType();
             lldb::Format typedef_format = ClangASTType::GetFormat(typedef_qual_type.getAsOpaquePtr());
             std::pair<uint64_t, unsigned> typedef_type_info = ast_context->getTypeInfo(typedef_qual_type);
             uint64_t typedef_byte_size = typedef_type_info.first / 8;
@@ -844,7 +850,7 @@ ClangASTType::DumpTypeValue
         {
         case clang::Type::Typedef:
             {
-                clang::QualType typedef_qual_type = cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType();
+                clang::QualType typedef_qual_type = llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType();
                 if (format == eFormatDefault)
                     format = ClangASTType::GetFormat(typedef_qual_type.getAsOpaquePtr());
                 std::pair<uint64_t, unsigned> typedef_type_info = ast_context->getTypeInfo(typedef_qual_type);
@@ -867,7 +873,7 @@ ClangASTType::DumpTypeValue
             // its enumeration string value, else just display it as requested.
             if ((format == eFormatEnum || format == eFormatDefault) && ClangASTContext::GetCompleteType (ast_context, clang_type))
             {
-                const clang::EnumType *enum_type = cast<clang::EnumType>(qual_type.getTypePtr());
+                const clang::EnumType *enum_type = llvm::cast<clang::EnumType>(qual_type.getTypePtr());
                 const clang::EnumDecl *enum_decl = enum_type->getDecl();
                 assert(enum_decl);
                 clang::EnumDecl::enumerator_iterator enum_pos, enum_end_pos;
@@ -1073,7 +1079,7 @@ bool
 ClangASTType::IsDefined (clang_type_t clang_type)
 {
     clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
-    const clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
+    const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr());
     if (tag_type)
     {
         clang::TagDecl *tag_decl = tag_type->getDecl();
@@ -1083,7 +1089,7 @@ ClangASTType::IsDefined (clang_type_t clang_type)
     }
     else
     {
-        const clang::ObjCObjectType *objc_class_type = dyn_cast<clang::ObjCObjectType>(qual_type);
+        const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type);
         if (objc_class_type)
         {
             clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
@@ -1126,7 +1132,7 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
         llvm::SmallVector<char, 1024> buf;
         llvm::raw_svector_ostream llvm_ostrm (buf);
 
-        const clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr());
+        const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr());
         if (tag_type)
         {
             clang::TagDecl *tag_decl = tag_type->getDecl();
@@ -1141,7 +1147,7 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
             case clang::Type::ObjCObject:
             case clang::Type::ObjCInterface:
                 {
-                    const clang::ObjCObjectType *objc_class_type = dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
+                    const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
                     assert (objc_class_type);
                     if (objc_class_type)
                     {

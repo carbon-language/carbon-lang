@@ -123,7 +123,6 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
         case ASTPrint:               return new ASTPrintAction();
         case ASTDumpXML:             return new ASTDumpXMLAction();
         case ASTView:                return new ASTViewAction();
-        case BoostCon:               return new BoostConAction();
         case DumpRawTokens:          return new DumpRawTokensAction();
         case DumpTokens:             return new DumpTokensAction();
         case EmitAssembly:           return new EmitAssemblyAction();
@@ -199,6 +198,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
         InitializeLLVM() {
             llvm::InitializeAllTargets();
             llvm::InitializeAllAsmPrinters();
+            llvm::InitializeAllTargetMCs();
         }
     } InitializeLLVM;
         
@@ -557,9 +557,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
     RecordingMemoryManager *jit_memory_manager = new RecordingMemoryManager();
     
     std::string error_string;
-        
-    llvm::TargetMachine::setRelocationModel(llvm::Reloc::PIC_);
-    
+            
 #if defined (USE_STANDARD_JIT)
     m_execution_engine.reset(llvm::ExecutionEngine::createJIT (module, 
                                                                &error_string, 
@@ -571,11 +569,12 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
     EngineBuilder builder(module);
     builder.setEngineKind(EngineKind::JIT)
         .setErrorStr(&error_string)
+        .setRelocationModel(llvm::Reloc::PIC_)
         .setJITMemoryManager(jit_memory_manager)
         .setOptLevel(CodeGenOpt::Less)
         .setAllocateGVsWithCode(true)
         .setCodeModel(CodeModel::Small)
-        .setUseMCJIT(true);
+    .setUseMCJIT(true);
     m_execution_engine.reset(builder.create());
 #endif
         

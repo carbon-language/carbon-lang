@@ -406,7 +406,6 @@ void ASTDumper::VisitType (const clang::Type *type)
     m_stream.Indent();  m_stream.Printf("isCanonicalUnqualified() : %s\n", SfB(type->isCanonicalUnqualified()));
     m_stream.Indent();  m_stream.Printf("isIncompleteType() : %s\n", SfB(type->isIncompleteType()));
     m_stream.Indent();  m_stream.Printf("isObjectType() : %s\n", SfB(type->isObjectType()));
-    m_stream.Indent();  m_stream.Printf("isPODType() : %s\n", SfB(type->isPODType()));
     m_stream.Indent();  m_stream.Printf("isLiteralType() : %s\n", SfB(type->isLiteralType()));
     m_stream.Indent();  m_stream.Printf("isBuiltinType() : %s\n", SfB(type->isBuiltinType()));
     m_stream.Indent();  m_stream.Printf("isPlaceholderType() : %s\n", SfB(type->isPlaceholderType()));

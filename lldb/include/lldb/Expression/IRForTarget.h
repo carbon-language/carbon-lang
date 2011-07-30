@@ -554,7 +554,7 @@ private:
     ///     The Constant for the reference, usually a ConstantExpr.
     //------------------------------------------------------------------
     llvm::Constant *
-    BuildRelocation(const llvm::Type *type, 
+    BuildRelocation(llvm::Type *type, 
                     uint64_t offset);
     
     //------------------------------------------------------------------

@@ -26,7 +26,7 @@ our @llvm_clang_slices; # paths to the single architecture static libraries (arc
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "131657";
+our $llvm_revision = "136537";
 our $llvm_source_dir = "$ENV{SRCROOT}";
 our @archs = split (/\s+/, $ENV{ARCHS});
 
@@ -51,6 +51,7 @@ our @archive_files = (
 	"$llvm_configuration/lib/libLLVMARMAsmParser.a",
 	"$llvm_configuration/lib/libLLVMARMAsmPrinter.a",
 	"$llvm_configuration/lib/libLLVMARMCodeGen.a",
+    "$llvm_configuration/lib/libLLVMARMDesc.a",
 	"$llvm_configuration/lib/libLLVMARMDisassembler.a",
 	"$llvm_configuration/lib/libLLVMARMInfo.a",
 	"$llvm_configuration/lib/libLLVMAsmParser.a",
@@ -81,6 +82,7 @@ our @archive_files = (
 	"$llvm_configuration/lib/libLLVMX86AsmParser.a",
 	"$llvm_configuration/lib/libLLVMX86AsmPrinter.a",
 	"$llvm_configuration/lib/libLLVMX86CodeGen.a",
+    "$llvm_configuration/lib/libLLVMX86Desc.a",
 	"$llvm_configuration/lib/libLLVMX86Disassembler.a",
 	"$llvm_configuration/lib/libLLVMX86Info.a",
     "$llvm_configuration/lib/libLLVMX86Utils.a",

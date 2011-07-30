@@ -141,7 +141,7 @@ public:
     //------------------------------------------------------------------
     /// Interface stub that returns true.
     //------------------------------------------------------------------
-	virtual bool 
+	virtual clang::ExternalLoadResult 
     FindExternalLexicalDecls (const clang::DeclContext *DC,
                               bool (*isKindWeWant)(clang::Decl::Kind),
                               llvm::SmallVectorImpl<clang::Decl*> &Decls);

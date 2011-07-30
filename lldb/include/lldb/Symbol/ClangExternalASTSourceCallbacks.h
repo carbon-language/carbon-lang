@@ -118,15 +118,14 @@ public:
         return;
     }
 	
-	virtual bool 
+	virtual clang::ExternalLoadResult 
     FindExternalLexicalDecls (const clang::DeclContext *decl_ctx,
                               bool (*isKindWeWant)(clang::Decl::Kind),
                               llvm::SmallVectorImpl<clang::Decl*> &decls)
     {
         // This is used to support iterating through an entire lexical context,
         // which isn't something the debugger should ever need to do.
-        // true is for error, that's good enough for me
-        return true;
+        return clang::ELR_Failure;
     }
     
     virtual clang::DeclContextLookupResult 

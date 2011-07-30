@@ -258,12 +258,14 @@ protected:
     //------------------------------------------------------------------
     llvm::Value *BuildPointerValidatorFunc(lldb::addr_t start_address)
     {
-        std::vector<const llvm::Type*> params;
-        
-        const IntegerType *intptr_ty = llvm::Type::getIntNTy(m_module.getContext(),
+        IntegerType *intptr_ty = llvm::Type::getIntNTy(m_module.getContext(),
                                                              (m_module.getPointerSize() == llvm::Module::Pointer64) ? 64 : 32);
         
-        params.push_back(GetI8PtrTy());
+        llvm::Type *param_array[1];
+        
+        param_array[0] = const_cast<llvm::PointerType*>(GetI8PtrTy());
+        
+        ArrayRef<llvm::Type*> params(param_array, 1);
         
         FunctionType *fun_ty = FunctionType::get(llvm::Type::getVoidTy(m_module.getContext()), params, true);
         PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
@@ -271,7 +273,7 @@ protected:
         return ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
     }
     
-    const PointerType *GetI8PtrTy()
+    PointerType *GetI8PtrTy()
     {
         if (!m_i8ptr_ty)
             m_i8ptr_ty = llvm::Type::getInt8PtrTy(m_module.getContext());
@@ -286,7 +288,7 @@ protected:
     llvm::Module               &m_module;               ///< The module which is being instrumented
     DynamicCheckerFunctions    &m_checker_functions;    ///< The dynamic checker functions for the process
 private:
-    const PointerType          *m_i8ptr_ty;
+    PointerType                *m_i8ptr_ty;
 };
 
 class ValidPointerChecker : public Instrumenter
@@ -332,12 +334,14 @@ private:
         
         // Insert an instruction to call the helper with the result
         
-        SmallVector <llvm::Value*, 1> args;
-        args.push_back(bit_cast);
+        llvm::Value *arg_array[1];
+        
+        arg_array[0] = bit_cast;
+        
+        llvm::ArrayRef<llvm::Value *> args(arg_array, 1);
         
         CallInst::Create(m_valid_pointer_check_func, 
-                         args.begin(),
-                         args.end(),
+                         args,
                          "",
                          inst);
             
@@ -397,12 +401,14 @@ private:
         
         // Insert an instruction to call the helper with the result
         
-        SmallVector <llvm::Value*, 1> args;
-        args.push_back(bit_cast);
+        llvm::Value *arg_array[1];
+        
+        arg_array[0] = bit_cast;
+        
+        ArrayRef<llvm::Value*> args(arg_array, 1);
         
         CallInst::Create(m_objc_object_check_func, 
-                         args.begin(),
-                         args.end(),
+                         args,
                          "",
                          inst);
         
