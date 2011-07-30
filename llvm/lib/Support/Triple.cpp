@@ -205,7 +205,8 @@ Triple::ArchType Triple::getArchTypeForDarwinArchName(StringRef Str) {
 
   // This is derived from the driver driver.
   if (Str == "arm" || Str == "armv4t" || Str == "armv5" || Str == "xscale" ||
-      Str == "armv6" || Str == "armv7")
+      Str == "armv6" || Str == "armv7" || Str == "armv7f" || Str == "armv7k" ||
+      Str == "armv7s")
     return Triple::arm;
 
   if (Str == "ptx32")
