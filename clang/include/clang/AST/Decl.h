@@ -1198,6 +1198,8 @@ public:
                              StorageClass S, StorageClass SCAsWritten,
                              Expr *DefArg);
 
+  virtual SourceRange getSourceRange() const;
+
   void setObjCMethodScopeInfo(unsigned parameterIndex) {
     ParmVarDeclBits.IsObjCMethodParam = true;
 

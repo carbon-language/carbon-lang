@@ -1388,6 +1388,16 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                              S, SCAsWritten, DefArg);
 }
 
+SourceRange ParmVarDecl::getSourceRange() const {
+  if (!hasInheritedDefaultArg()) {
+    SourceRange ArgRange = getDefaultArgRange();
+    if (ArgRange.isValid())
+      return SourceRange(getOuterLocStart(), ArgRange.getEnd());
+  }
+
+  return DeclaratorDecl::getSourceRange();
+}
+
 Expr *ParmVarDecl::getDefaultArg() {
   assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
   assert(!hasUninstantiatedDefaultArg() &&
