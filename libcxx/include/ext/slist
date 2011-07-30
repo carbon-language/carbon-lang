@@ -21,7 +21,7 @@ namespace __gnu_cxx {
 
 using namespace std;
 
-template <class _Tp, class _Alloc>
+template <class _Tp, class _Alloc = allocator<_Tp> >
 class _LIBCPP_VISIBLE slist : forward_list<_Tp, _Alloc>
 {
 public:
@@ -105,12 +105,9 @@ template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 typename slist<_Tp, _Alloc>::iterator slist<_Tp, _Alloc>::previous(iterator __pos)
 {
-  iterator __a = begin(), __b = end();
-  while (__a != __pos)
-  {
-    __b = __a;
-    ++__a;
-  }
+  iterator __a = begin(), __b = begin();
+  while (++__a != __pos)
+    ++__b;
   return __b;
 }
 
@@ -118,12 +115,9 @@ template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 typename slist<_Tp, _Alloc>::const_iterator slist<_Tp, _Alloc>::previous(const_iterator __pos)
 {
-  iterator __a = begin(), __b = end();
-  while (__a != __pos)
-  {
-    __b = __a;
-    ++__a;
-  }
+  iterator __a = begin(), __b = begin();
+  while (++__a != __pos)
+    ++__b;
   return __b;
 }
 
