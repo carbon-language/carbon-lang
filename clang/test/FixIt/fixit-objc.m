@@ -53,3 +53,17 @@ int f0(Radar7861841 *a) { return a.x; } // expected-error {{property 'x' not fou
 
 int f1(Radar7861841 *a) { return a->y; } // expected-error {{property 'y' found on object of type 'Radar7861841 *'; did you mean to access it with the "." operator?}}
 
+
+#define nil ((void*)0)
+#define NULL ((void*)0)
+
+void sentinel(int x, ...) __attribute__((sentinel)); // expected-note{{function has been explicitly marked sentinel here}}
+
+@interface Sentinel
+- (void)sentinel:(int)x, ... __attribute__((sentinel)); // expected-note{{method has been explicitly marked sentinel here}}
+@end
+
+void sentinel_test(Sentinel *a) {
+  sentinel(1, 2, 3); // expected-warning{{missing sentinel in function call}}
+  [a sentinel:1, 2, 3]; // expected-warning{{missing sentinel in method dispatch}}
+}
