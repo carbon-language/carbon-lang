@@ -368,7 +368,7 @@ ClangASTContext::ClangASTContext (const char *target_triple) :
 
 {
     if (target_triple && target_triple[0])
-        m_target_triple.assign (target_triple);
+        SetTargetTriple (target_triple);
 }
 
 //----------------------------------------------------------------------
@@ -413,13 +413,18 @@ ClangASTContext::SetTargetTriple (const char *target_triple)
 {
     Clear();
     m_target_triple.assign(target_triple);
+    if (m_target_triple.find("armv7s") == 0)
+        m_target_triple.erase(5,1);
+    else if (m_target_triple.find("armv7f") == 0)
+        m_target_triple.erase(5,1);
+    else if (m_target_triple.find("armv7k") == 0)
+        m_target_triple.erase(5,1);
 }
 
 void
 ClangASTContext::SetArchitecture (const ArchSpec &arch)
 {
-    Clear();
-    m_target_triple.assign(arch.GetTriple().str());
+    SetTargetTriple(arch.GetTriple().str().c_str());
 }
 
 bool

@@ -235,10 +235,10 @@ ClangASTType::GetMinimumLanguage (lldb::clang_type_t clang_type)
                 case clang::BuiltinType::BoundMember:
                 case clang::BuiltinType::UnknownAny:
                     break;
-                case clang::Type::Typedef:
-                    return GetMinimumLanguage(cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
             }
             break;
+        case clang::Type::Typedef:
+            return GetMinimumLanguage(cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
         }
     }
     return lldb::eLanguageTypeC;
