@@ -15,6 +15,15 @@ void f2() {
   g(nil);
 }
 
+#define variadic1(...)
+#define variadic2(args...)
+#define variadic3(args, ...)
+#define variadic4(first, second, args, ...)
+
+void test_variadic() {
+  
+}
+
 // RUN: c-index-test -code-completion-at=%s:7:1 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:7:1 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: macro definition:{TypedText FOO}{LeftParen (}{Placeholder Arg1}{Comma , }{Placeholder Arg2}{RightParen )}
@@ -25,3 +34,8 @@ void f2() {
 // RUN: c-index-test -code-completion-at=%s:15:5 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:15:5 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: macro definition:{TypedText nil} (65)
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:24:2 %s | FileCheck -check-prefix=CHECK-VARIADIC %s
+// CHECK-VARIADIC: macro definition:{TypedText variadic1}{LeftParen (}{Placeholder ...}{RightParen )} (70)
+// CHECK-VARIADIC: macro definition:{TypedText variadic2}{LeftParen (}{Placeholder args...}{RightParen )} (70)
+// CHECK-VARIADIC: macro definition:{TypedText variadic3}{LeftParen (}{Placeholder args, ...}{RightParen )} (70)
+// CHECK-VARIADIC: macro definition:{TypedText variadic4}{LeftParen (}{Placeholder first}{Comma , }{Placeholder second...}{Placeholder first, second...}{RightParen )} (70)

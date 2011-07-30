@@ -2368,19 +2368,24 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
     
     // Format a function-like macro with placeholders for the arguments.
     Result.AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
-    for (MacroInfo::arg_iterator A = MI->arg_begin(), AEnd = MI->arg_end();
-         A != AEnd; ++A) {
+    bool CombineVariadicArgument = false;
+    MacroInfo::arg_iterator A = MI->arg_begin(), AEnd = MI->arg_end();
+    if (MI->isVariadic() && AEnd - A > 1) {
+      AEnd -= 2;
+      CombineVariadicArgument = true;
+    }
+    for (MacroInfo::arg_iterator A = MI->arg_begin(); A != AEnd; ++A) {
       if (A != MI->arg_begin())
         Result.AddChunk(Chunk(CodeCompletionString::CK_Comma));
       
-      if (!MI->isVariadic() || A != AEnd - 1) {
+      if (!MI->isVariadic() || A + 1 != AEnd) {
         // Non-variadic argument.
         Result.AddPlaceholderChunk(
                             Result.getAllocator().CopyString((*A)->getName()));
         continue;
       }
       
-      // Variadic argument; cope with the different between GNU and C99
+      // Variadic argument; cope with the difference between GNU and C99
       // variadic macros, providing a single placeholder for the rest of the
       // arguments.
       if ((*A)->isStr("__VA_ARGS__"))
@@ -2390,6 +2395,18 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
         Arg += "...";
         Result.AddPlaceholderChunk(Result.getAllocator().CopyString(Arg));
       }
+    }
+     
+    if (CombineVariadicArgument) {
+      // Handle the next-to-last argument, combining it with the variadic
+      // argument.
+      std::string LastArg = (*A)->getName();
+      ++A;
+      if ((*A)->isStr("__VA_ARGS__"))
+        LastArg += ", ...";
+      else
+        LastArg += ", " + (*A)->getName().str() + "...";
+      Result.AddPlaceholderChunk(Result.getAllocator().CopyString(LastArg));
     }
     Result.AddChunk(Chunk(CodeCompletionString::CK_RightParen));
     return Result.TakeString();
