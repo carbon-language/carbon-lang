@@ -737,7 +737,15 @@ Type *InstCombiner::FindElementAtOffset(Type *Ty, int64_t Offset,
   return Ty;
 }
 
-
+static bool shouldMergeGEPs(GEPOperator &GEP, GEPOperator &Src) {
+  // If this GEP has only 0 indices, it is the same pointer as
+  // Src. If Src is not a trivial GEP too, don't combine
+  // the indices.
+  if (GEP.hasAllZeroIndices() && !Src.hasAllZeroIndices() &&
+      !Src.hasOneUse())
+    return false;
+  return true;
+}
 
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   SmallVector<Value*, 8> Ops(GEP.op_begin(), GEP.op_end());
@@ -785,21 +793,15 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // getelementptr instructions into a single instruction.
   //
   if (GEPOperator *Src = dyn_cast<GEPOperator>(PtrOp)) {
-
-    // If this GEP has only 0 indices, it is the same pointer as
-    // Src. If Src is not a trivial GEP too, don't combine
-    // the indices.
-    if (GEP.hasAllZeroIndices() && !Src->hasAllZeroIndices() &&
-        !Src->hasOneUse())
+    if (!shouldMergeGEPs(*cast<GEPOperator>(&GEP), *Src))
       return 0;
 
     // Note that if our source is a gep chain itself that we wait for that
     // chain to be resolved before we perform this transformation.  This
     // avoids us creating a TON of code in some cases.
-    //
-    if (GetElementPtrInst *SrcGEP =
-          dyn_cast<GetElementPtrInst>(Src->getOperand(0)))
-      if (SrcGEP->getNumOperands() == 2)
+    if (GEPOperator *SrcGEP =
+          dyn_cast<GEPOperator>(Src->getOperand(0)))
+      if (SrcGEP->getNumOperands() == 2 && shouldMergeGEPs(*Src, *SrcGEP))
         return 0;   // Wait until our source is folded to completion.
 
     SmallVector<Value*, 8> Indices;

@@ -472,3 +472,23 @@ entry:
 ; CHECK: @pr10322_f1
 ; CHECK: %tmp2 = getelementptr inbounds %pr10322_t* %arrayidx8, i64 0, i32 0
 }
+
+; Test that we combine the last two geps in this sequence, before we
+; would wait for gep1 and gep2 to be combined and never combine 2 and 3.
+%three_gep_t = type {i32}
+%three_gep_t2 = type {%three_gep_t}
+
+define void @three_gep_f(%three_gep_t2* %x) {
+  %gep1 = getelementptr %three_gep_t2* %x, i64 2
+  call void @three_gep_h(%three_gep_t2* %gep1)
+  %gep2 = getelementptr %three_gep_t2* %gep1, i64 0, i32 0
+  %gep3 = getelementptr %three_gep_t* %gep2, i64 0, i32 0
+  call void @three_gep_g(i32* %gep3)
+
+; CHECK: @three_gep_f
+; CHECK: %gep3 = getelementptr %three_gep_t2* %gep1, i64 0, i32 0, i32 0
+  ret void
+}
+
+declare void @three_gep_g(i32*)
+declare void @three_gep_h(%three_gep_t2*)
