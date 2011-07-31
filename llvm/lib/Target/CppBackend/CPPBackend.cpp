@@ -1064,6 +1064,11 @@ void CppWriter::printInstruction(const Instruction *I,
     }
     break;
   }
+  case Instruction::Resume: {
+    Out << "ResumeInst::Create(mod->getContext(), " << opNames[0]
+        << ", " << bbname << ");";
+    break;
+  }
   case Instruction::Invoke: {
     const InvokeInst* inv = cast<InvokeInst>(I);
     Out << "std::vector<Value*> " << iName << "_params;";

@@ -467,6 +467,7 @@ public:
 private:
   // These all get lowered before this pass.
   void visitInvoke(const InvokeInst &I);
+  void visitResume(const ResumeInst &I);
   void visitUnwind(const UnwindInst &I);
 
   void visitBinary(const User &I, unsigned OpCode);

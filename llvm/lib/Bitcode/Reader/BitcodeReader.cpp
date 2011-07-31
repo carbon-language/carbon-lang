@@ -2508,6 +2508,14 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       cast<InvokeInst>(I)->setAttributes(PAL);
       break;
     }
+    case bitc::FUNC_CODE_INST_RESUME: { // RESUME: [opval]
+      unsigned Idx = 0;
+      Value *Val = 0;
+      if (getValueTypePair(Record, Idx, NextValueNo, Val))
+        return Error("Invalid RESUME record");
+      I = ResumeInst::Create(Val);
+      break;
+    }
     case bitc::FUNC_CODE_INST_UNWIND: // UNWIND
       I = new UnwindInst(Context);
       InstructionList.push_back(I);

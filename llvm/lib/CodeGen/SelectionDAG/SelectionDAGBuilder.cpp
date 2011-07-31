@@ -1810,6 +1810,10 @@ void SelectionDAGBuilder::visitInvoke(const InvokeInst &I) {
 void SelectionDAGBuilder::visitUnwind(const UnwindInst &I) {
 }
 
+void SelectionDAGBuilder::visitResume(const ResumeInst &RI) {
+  llvm_unreachable("SelectionDAGBuilder shouldn't visit resume instructions!");
+}
+
 /// handleSmallSwitchCaseRange - Emit a series of specific tests (suitable for
 /// small case ranges).
 bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,

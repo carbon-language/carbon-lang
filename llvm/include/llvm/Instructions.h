@@ -2716,6 +2716,57 @@ private:
 };
 
 //===----------------------------------------------------------------------===//
+//                              ResumeInst Class
+//===----------------------------------------------------------------------===//
+
+//===---------------------------------------------------------------------------
+/// ResumeInst - Resume the propagation of an exception.
+///
+class ResumeInst : public TerminatorInst {
+  ResumeInst(const ResumeInst &RI);
+
+  explicit ResumeInst(Value *Exn, Instruction *InsertBefore=0);
+  ResumeInst(Value *Exn, BasicBlock *InsertAtEnd);
+protected:
+  virtual ResumeInst *clone_impl() const;
+public:
+  static ResumeInst *Create(Value *Exn, Instruction *InsertBefore = 0) {
+    return new(1) ResumeInst(Exn, InsertBefore);
+  }
+  static ResumeInst *Create(Value *Exn, BasicBlock *InsertAtEnd) {
+    return new(1) ResumeInst(Exn, InsertAtEnd);
+  }
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  /// Convenience accessor.
+  Value *getValue() const { return Op<0>(); }
+
+  unsigned getNumSuccessors() const { return 0; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ResumeInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Resume;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+private:
+  virtual BasicBlock *getSuccessorV(unsigned idx) const;
+  virtual unsigned getNumSuccessorsV() const;
+  virtual void setSuccessorV(unsigned idx, BasicBlock *B);
+};
+
+template <>
+struct OperandTraits<ResumeInst> :
+    public FixedNumOperandTraits<ResumeInst, 1> {
+};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ResumeInst, Value)
+
+//===----------------------------------------------------------------------===//
 //                           UnreachableInst Class
 //===----------------------------------------------------------------------===//
 

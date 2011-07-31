@@ -124,7 +124,7 @@ namespace lltok {
     kw_fptoui, kw_fptosi, kw_inttoptr, kw_ptrtoint, kw_bitcast,
     kw_select, kw_va_arg,
 
-    kw_ret, kw_br, kw_switch, kw_indirectbr, kw_invoke, kw_unwind,
+    kw_ret, kw_br, kw_switch, kw_indirectbr, kw_invoke, kw_unwind, kw_resume,
     kw_unreachable,
 
     kw_alloca, kw_load, kw_store, kw_fence, kw_cmpxchg, kw_atomicrmw,

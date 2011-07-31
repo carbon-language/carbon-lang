@@ -574,6 +574,41 @@ BasicBlock *UnwindInst::getSuccessorV(unsigned idx) const {
 }
 
 //===----------------------------------------------------------------------===//
+//                        ResumeInst Implementation
+//===----------------------------------------------------------------------===//
+
+ResumeInst::ResumeInst(const ResumeInst &RI)
+  : TerminatorInst(Type::getVoidTy(RI.getContext()), Instruction::Resume,
+                   OperandTraits<ResumeInst>::op_begin(this), 1) {
+  Op<0>() = RI.Op<0>();
+}
+
+ResumeInst::ResumeInst(Value *Exn, Instruction *InsertBefore)
+  : TerminatorInst(Type::getVoidTy(Exn->getContext()), Instruction::Resume,
+                   OperandTraits<ResumeInst>::op_begin(this), 1, InsertBefore) {
+  Op<0>() = Exn;
+}
+
+ResumeInst::ResumeInst(Value *Exn, BasicBlock *InsertAtEnd)
+  : TerminatorInst(Type::getVoidTy(Exn->getContext()), Instruction::Resume,
+                   OperandTraits<ResumeInst>::op_begin(this), 1, InsertAtEnd) {
+  Op<0>() = Exn;
+}
+
+unsigned ResumeInst::getNumSuccessorsV() const {
+  return getNumSuccessors();
+}
+
+void ResumeInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
+  llvm_unreachable("ResumeInst has no successors!");
+}
+
+BasicBlock *ResumeInst::getSuccessorV(unsigned idx) const {
+  llvm_unreachable("ResumeInst has no successors!");
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
 //                      UnreachableInst Implementation
 //===----------------------------------------------------------------------===//
 
@@ -3252,6 +3287,10 @@ IndirectBrInst *IndirectBrInst::clone_impl() const {
 
 InvokeInst *InvokeInst::clone_impl() const {
   return new(getNumOperands()) InvokeInst(*this);
+}
+
+ResumeInst *ResumeInst::clone_impl() const {
+  return new(1) ResumeInst(*this);
 }
 
 UnwindInst *UnwindInst::clone_impl() const {

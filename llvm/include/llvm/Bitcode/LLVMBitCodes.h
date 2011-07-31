@@ -304,9 +304,10 @@ namespace bitc {
     FUNC_CODE_INST_FENCE       = 36, // FENCE: [ordering, synchscope]
     FUNC_CODE_INST_CMPXCHG     = 37, // CMPXCHG: [ptrty,ptr,cmp,new, align, vol,
                                      //           ordering, synchscope]
-    FUNC_CODE_INST_ATOMICRMW   = 38  // ATOMICRMW: [ptrty,ptr,val, operation,
+    FUNC_CODE_INST_ATOMICRMW   = 38, // ATOMICRMW: [ptrty,ptr,val, operation,
                                      //             align, vol,
                                      //             ordering, synchscope]
+    FUNC_CODE_INST_RESUME      = 39  // RESUME:     [opval]
   };
 } // End bitc namespace
 } // End llvm namespace

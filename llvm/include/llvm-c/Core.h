@@ -188,7 +188,10 @@ typedef enum {
   /* Atomic operators */
   LLVMFence          = 55,
   LLVMAtomicCmpXchg  = 56,
-  LLVMAtomicRMW      = 57
+  LLVMAtomicRMW      = 57,
+
+  /* Exception Handling Operators */
+  LLVMResume         = 58
 
 } LLVMOpcode;
 
@@ -477,6 +480,7 @@ LLVMTypeRef LLVMX86MMXType(void);
         macro(SwitchInst)                   \
         macro(UnreachableInst)              \
         macro(UnwindInst)                   \
+        macro(ResumeInst)                   \
     macro(UnaryInstruction)                 \
       macro(AllocaInst)                     \
       macro(CastInst)                       \
@@ -825,6 +829,7 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef, LLVMValueRef Fn,
                              LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch,
                              const char *Name);
 LLVMValueRef LLVMBuildUnwind(LLVMBuilderRef);
+LLVMValueRef LLVMBuildResume(LLVMBuilderRef B, LLVMValueRef Exn);
 LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef);
 
 /* Add a case to the switch instruction */

@@ -1687,6 +1687,10 @@ LLVMValueRef LLVMBuildUnwind(LLVMBuilderRef B) {
   return wrap(unwrap(B)->CreateUnwind());
 }
 
+LLVMValueRef LLVMBuildResume(LLVMBuilderRef B, LLVMValueRef Exn) {
+  return wrap(unwrap(B)->CreateResume(unwrap(Exn)));
+}
+
 LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef B) {
   return wrap(unwrap(B)->CreateUnreachable());
 }

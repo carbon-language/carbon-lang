@@ -479,6 +479,10 @@ public:
     return Insert(new UnwindInst(Context));
   }
 
+  ResumeInst *CreateResume(Value *Exn) {
+    return Insert(ResumeInst::Create(Exn));
+  }
+
   UnreachableInst *CreateUnreachable() {
     return Insert(new UnreachableInst(Context));
   }
