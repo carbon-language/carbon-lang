@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -72,6 +73,9 @@ class BranchProbabilityAnalysis {
   static const uint32_t PH_TAKEN_WEIGHT = 20;
   static const uint32_t PH_NONTAKEN_WEIGHT = 12;
 
+  static const uint32_t ZH_TAKEN_WEIGHT = 20;
+  static const uint32_t ZH_NONTAKEN_WEIGHT = 12;
+
   // Standard weight value. Used when none of the heuristics set weight for
   // the edge.
   static const uint32_t NORMAL_WEIGHT = 16;
@@ -124,6 +128,9 @@ public:
 
   // Loop Branch Heuristics
   bool calcLoopBranchHeuristics(BasicBlock *BB);
+
+  // Zero Heurestics
+  bool calcZeroHeuristics(BasicBlock *BB);
 
   bool runOnFunction(Function &F);
 };
@@ -270,6 +277,86 @@ bool BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
   return true;
 }
 
+bool BranchProbabilityAnalysis::calcZeroHeuristics(BasicBlock *BB) {
+  BranchInst * BI = dyn_cast<BranchInst>(BB->getTerminator());
+  if (!BI || !BI->isConditional())
+    return false;
+
+  Value *Cond = BI->getCondition();
+  ICmpInst *CI = dyn_cast<ICmpInst>(Cond);
+  if (!CI)
+    return false;
+
+  Value *LHS = CI->getOperand(0);
+  Value *RHS = CI->getOperand(1);
+
+  bool hasZero = false;
+  bool lhsZero = false;
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(LHS)) {
+    hasZero = CI->isZero();
+    lhsZero = true;
+  }
+
+  if (!hasZero)
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS))
+      hasZero = CI->isZero();
+
+  if (!hasZero)
+    return false;
+
+  bool isProb;
+  switch (CI->getPredicate()) {
+  case CmpInst::ICMP_EQ:
+    // Equal to zero is not expected to be taken.
+    isProb = false;
+    break;
+
+  case CmpInst::ICMP_NE:
+    // Not equal to zero is expected.
+    isProb = true;
+    break;
+
+  case CmpInst::ICMP_ULT:
+  case CmpInst::ICMP_ULE:
+  case CmpInst::ICMP_SLT:
+  case CmpInst::ICMP_SLE:
+    // Less or equal to zero is not expected.
+    // 0 < X   ->   isProb = true
+    // 0 <= X  ->   isProb = true
+    // X < 0   ->   isProb = false
+    // X <= 0  ->   isProb = false
+    isProb = lhsZero;
+    break;
+
+  case CmpInst::ICMP_UGT:
+  case CmpInst::ICMP_UGE:
+  case CmpInst::ICMP_SGT:
+  case CmpInst::ICMP_SGE:
+    // Greater or equal to zero is expected.
+    // 0 > X   ->   isProb = false
+    // 0 >= X  ->   isProb = false
+    // X > 0   ->   isProb = true
+    // X >= 0  ->   isProb = true
+    isProb = !lhsZero;
+    break;
+
+  default:
+    return false;
+  };
+
+  BasicBlock *Taken = BI->getSuccessor(0);
+  BasicBlock *NonTaken = BI->getSuccessor(1);
+
+  if (!isProb)
+    std::swap(Taken, NonTaken);
+
+  BP->setEdgeWeight(BB, Taken, ZH_TAKEN_WEIGHT);
+  BP->setEdgeWeight(BB, NonTaken, ZH_NONTAKEN_WEIGHT);
+
+  return true;
+}
+
+
 bool BranchProbabilityAnalysis::runOnFunction(Function &F) {
 
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ) {
@@ -284,7 +371,10 @@ bool BranchProbabilityAnalysis::runOnFunction(Function &F) {
     if (calcReturnHeuristics(BB))
       continue;
 
-    calcPointerHeuristics(BB);
+    if (calcPointerHeuristics(BB))
+      continue;
+
+    calcZeroHeuristics(BB);
   }
 
   return false;
