@@ -432,9 +432,10 @@ public:
     bool __value_constructed;
 
     _LIBCPP_INLINE_VISIBILITY
-    explicit __hash_node_destructor(allocator_type& __na) _NOEXCEPT
+    explicit __hash_node_destructor(allocator_type& __na,
+                                    bool __constructed = false) _NOEXCEPT
         : __na_(__na),
-          __value_constructed(false)
+          __value_constructed(__constructed)
         {}
 
     _LIBCPP_INLINE_VISIBILITY
@@ -1753,7 +1754,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p) _NOEXCEPT
     __pn->__next_ = __cn->__next_;
     __cn->__next_ = nullptr;
     --size();
-    return __node_holder(__cn, _D(__node_alloc()));
+    return __node_holder(__cn, _D(__node_alloc(), true));
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
