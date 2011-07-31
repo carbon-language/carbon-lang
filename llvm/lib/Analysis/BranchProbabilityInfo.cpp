@@ -346,12 +346,9 @@ bool BranchProbabilityAnalysis::runOnFunction(Function &F) {
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ) {
     BasicBlock *BB = I++;
 
-    // Only LBH uses setEdgeWeight method.
     if (calcLoopBranchHeuristics(BB))
       continue;
 
-    // PH and RH use only incEdgeWeight and decEwdgeWeight methods to
-    // not efface LBH results.
     if (calcReturnHeuristics(BB))
       continue;
 
