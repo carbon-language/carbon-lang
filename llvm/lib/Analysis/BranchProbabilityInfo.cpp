@@ -304,23 +304,16 @@ bool BranchProbabilityAnalysis::calcZeroHeuristics(BasicBlock *BB) {
     isProb = true;
     break;
 
-  case CmpInst::ICMP_ULT:
-  case CmpInst::ICMP_ULE:
   case CmpInst::ICMP_SLT:
-  case CmpInst::ICMP_SLE:
     // Less or equal to zero is not expected.
     // X < 0   ->  Unlikely
-    // X <= 0  ->  Unlikely
     isProb = false;
     break;
 
   case CmpInst::ICMP_UGT:
-  case CmpInst::ICMP_UGE:
   case CmpInst::ICMP_SGT:
-  case CmpInst::ICMP_SGE:
     // Greater or equal to zero is expected.
     // X > 0   ->  Likely
-    // X >= 0  ->  Likely
     isProb = true;
     break;
 
