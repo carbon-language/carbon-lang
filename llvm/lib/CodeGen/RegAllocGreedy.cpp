@@ -1595,7 +1595,10 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   }
 
   // Write out new DBG_VALUE instructions.
-  DebugVars->emitDebugValues(VRM);
+  {
+    NamedRegionTimer T("Emit Debug Info", TimerGroupName, TimePassesIsEnabled);
+    DebugVars->emitDebugValues(VRM);
+  }
 
   // The pass output is in VirtRegMap. Release all the transient data.
   releaseMemory();
