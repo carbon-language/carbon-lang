@@ -1525,9 +1525,9 @@ any write to the same byte, except:</p>
       <var>write<sub>2</sub></var>, and <var>write<sub>2</sub></var> happens
       before <var>R<sub>byte</sub></var>, then <var>R<sub>byte</sub></var>
       does not see <var>write<sub>1</sub></var>.
-  <li>If <var>R<sub>byte</sub></var> happens before <var>write<sub>3</var>,
-      then <var>R<sub>byte</sub></var> does not see
-      <var>write<sub>3</sub></var>.
+  <li>If <var>R<sub>byte</sub></var> happens before
+      <var>write<sub>3</sub></var>, then <var>R<sub>byte</sub></var> does not
+      see <var>write<sub>3</sub></var>.
 </ul>
 
 <p>Given that definition, <var>R<sub>byte</sub></var> is defined as follows:
@@ -6156,6 +6156,8 @@ declare void @llvm.va_end(i8*)
    element.  This intrinsic is necessary because
    the <tt><a href="#int_va_start"> llvm.va_start</a></tt> intrinsic may be
    arbitrarily complex and require, for example, memory allocation.</p>
+
+</div>
 
 </div>
 
