@@ -35,13 +35,6 @@ module TargetData : sig
       See the constructor llvm::TargetData::TargetData. *)
   external as_string : t -> string = "llvm_targetdata_as_string"
 
-  (** Struct layouts are speculatively cached. If a TargetDataRef is alive when
-      types are being refined and removed, this method must be called whenever a
-      struct type is removed to avoid a dangling pointer in this cache.
-      See the method llvm::TargetData::InvalidateStructLayoutInfo. *)
-  external invalidate_struct_layout : t -> Llvm.lltype -> unit
-                                    = "llvm_targetdata_invalidate_struct_layout"
-
   (** Deallocates a TargetData.
       See the destructor llvm::TargetData::~TargetData. *)
   external dispose : t -> unit = "llvm_targetdata_dispose"

@@ -37,13 +37,6 @@ CAMLprim value llvm_targetdata_as_string(LLVMTargetDataRef TD) {
   return Copy;
 }
 
-/* TargetData.t -> Llvm.lltype -> unit */
-CAMLprim value llvm_targetdata_invalidate_struct_layout(LLVMTargetDataRef TD,
-                                                        LLVMTypeRef Ty) {
-  LLVMInvalidateStructLayout(TD, Ty);
-  return Val_unit;
-}
-
 /* TargetData.t -> unit */
 CAMLprim value llvm_targetdata_dispose(LLVMTargetDataRef TD) {
   LLVMDisposeTargetData(TD);

@@ -20,8 +20,6 @@ module TargetData = struct
   external add : t -> [<Llvm.PassManager.any] Llvm.PassManager.t -> unit
                = "llvm_targetdata_add"
   external as_string : t -> string = "llvm_targetdata_as_string"
-  external invalidate_struct_layout : t -> Llvm.lltype -> unit
-                                    = "llvm_targetdata_invalidate_struct_layout"
   external dispose : t -> unit = "llvm_targetdata_dispose"
 end
 

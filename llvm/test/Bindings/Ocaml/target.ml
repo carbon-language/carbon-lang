@@ -37,7 +37,6 @@ let test_target_data () =
   let sty = struct_type context [| i32_type; i64_type |] in
   
   ignore (TargetData.as_string td);
-  ignore (TargetData.invalidate_struct_layout td sty);
   ignore (byte_order td);
   ignore (pointer_size td);
   ignore (intptr_type td);
