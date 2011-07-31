@@ -287,21 +287,9 @@ bool BranchProbabilityAnalysis::calcZeroHeuristics(BasicBlock *BB) {
   if (!CI)
     return false;
 
-  Value *LHS = CI->getOperand(0);
   Value *RHS = CI->getOperand(1);
-
-  bool hasZero = false;
-  bool lhsZero = false;
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(LHS)) {
-    hasZero = CI->isZero();
-    lhsZero = true;
-  }
-
-  if (!hasZero)
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS))
-      hasZero = CI->isZero();
-
-  if (!hasZero)
+  ConstantInt *CV = dyn_cast<ConstantInt>(RHS);
+  if (!CV || !CV->isZero())
     return false;
 
   bool isProb;
@@ -321,11 +309,9 @@ bool BranchProbabilityAnalysis::calcZeroHeuristics(BasicBlock *BB) {
   case CmpInst::ICMP_SLT:
   case CmpInst::ICMP_SLE:
     // Less or equal to zero is not expected.
-    // 0 < X   ->   isProb = true
-    // 0 <= X  ->   isProb = true
-    // X < 0   ->   isProb = false
-    // X <= 0  ->   isProb = false
-    isProb = lhsZero;
+    // X < 0   ->  Unlikely
+    // X <= 0  ->  Unlikely
+    isProb = false;
     break;
 
   case CmpInst::ICMP_UGT:
@@ -333,11 +319,9 @@ bool BranchProbabilityAnalysis::calcZeroHeuristics(BasicBlock *BB) {
   case CmpInst::ICMP_SGT:
   case CmpInst::ICMP_SGE:
     // Greater or equal to zero is expected.
-    // 0 > X   ->   isProb = false
-    // 0 >= X  ->   isProb = false
-    // X > 0   ->   isProb = true
-    // X >= 0  ->   isProb = true
-    isProb = !lhsZero;
+    // X > 0   ->  Likely
+    // X >= 0  ->  Likely
+    isProb = true;
     break;
 
   default:
