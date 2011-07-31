@@ -1705,9 +1705,6 @@ protected:
                             MacroBuilder &Builder) const {
     // RTEMS defines; list based off of gcc output
 
-    // FIXME: Move version number handling to llvm::Triple.
-    StringRef Release = Triple.getOSName().substr(strlen("rtems"), 1);
-
     Builder.defineMacro("__rtems__");
     Builder.defineMacro("__ELF__");
   }

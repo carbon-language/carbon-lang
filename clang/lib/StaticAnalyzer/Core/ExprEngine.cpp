@@ -1661,13 +1661,6 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
 
 void ExprEngine::VisitCallExpr(const CallExpr* CE, ExplodedNode* Pred,
                                ExplodedNodeSet& dst) {
-
-  // Determine the type of function we're calling (if available).
-  const FunctionProtoType *Proto = NULL;
-  QualType FnType = CE->getCallee()->IgnoreParens()->getType();
-  if (const PointerType *FnTypePtr = FnType->getAs<PointerType>())
-    Proto = FnTypePtr->getPointeeType()->getAs<FunctionProtoType>();
-
   // Perform the previsit of the CallExpr.
   ExplodedNodeSet dstPreVisit;
   getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, CE, *this);

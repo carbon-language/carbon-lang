@@ -111,8 +111,6 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
   
   DefinedSVal retVal = cast<DefinedSVal>(X);
 
-  llvm::ImmutableList<const MemRegion*> LS = state->get<LockSet>();
-
   if (state->contains<LockSet>(lockR)) {
     if (!BT_doublelock)
       BT_doublelock.reset(new BugType("Double locking", "Lock checker"));
