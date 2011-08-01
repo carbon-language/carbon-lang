@@ -64,12 +64,12 @@ ClangExpressionDeclMap::~ClangExpressionDeclMap()
     DisableStructVars();
 }
 
-void 
+bool 
 ClangExpressionDeclMap::WillParse(ExecutionContext &exe_ctx)
 {    
     EnableParserVars();
     m_parser_vars->m_exe_ctx = &exe_ctx;
-    
+        
     if (exe_ctx.frame)
         m_parser_vars->m_sym_ctx = exe_ctx.frame->GetSymbolContext(lldb::eSymbolContextEverything);
     else if (exe_ctx.thread)
@@ -78,6 +78,11 @@ ClangExpressionDeclMap::WillParse(ExecutionContext &exe_ctx)
         m_parser_vars->m_sym_ctx = SymbolContext(exe_ctx.target->GetSP(), ModuleSP());
     if (exe_ctx.target)
         m_parser_vars->m_persistent_vars = &exe_ctx.target->GetPersistentVariables();
+    
+    if (exe_ctx.target && !exe_ctx.target->GetScratchClangASTContext())
+        return false;
+    
+    return true;
 }
 
 void 
@@ -133,6 +138,7 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
                                               const llvm::APInt& value)
 {
     assert (m_parser_vars.get());
+    
     ExecutionContext *exe_ctx = m_parser_vars->m_exe_ctx;
     ASTContext *context(exe_ctx->target->GetScratchClangASTContext()->getASTContext());
     

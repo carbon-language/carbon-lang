@@ -82,8 +82,11 @@ public:
     /// @param[in] exe_ctx
     ///     The execution context to use when finding types for variables.
     ///     Also used to find a "scratch" AST context to store result types.
+    ///
+    /// @return
+    ///     True if parsing is possible; false if it is unsafe to continue.
     //------------------------------------------------------------------
-    void
+    bool
     WillParse (ExecutionContext &exe_ctx);
     
     //------------------------------------------------------------------

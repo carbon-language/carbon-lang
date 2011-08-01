@@ -103,7 +103,11 @@ ClangUtilityFunction::Install (Stream &error_stream,
     
     m_data_allocator.reset(new ProcessDataAllocator(*exe_ctx.process));
     
-    m_expr_decl_map->WillParse(exe_ctx);
+    if (!m_expr_decl_map->WillParse(exe_ctx))
+    {
+        error_stream.PutCString ("error: current process state is unsuitable for expression parsing\n");
+        return false;
+    }
         
     ClangExpressionParser parser(exe_ctx.GetBestExecutionContextScope(), *this);
     
