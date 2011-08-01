@@ -10,4 +10,4 @@ add_llvm_library_dependencies(LLVMBlackfinInfo
   LLVMTarget
   )
 
-add_dependencies(LLVMBlackfinInfo BlackfinCodeGenTable_gen)
+add_dependencies(LLVMBlackfinInfo BlackfinCommonTableGen)

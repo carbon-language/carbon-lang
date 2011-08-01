@@ -10,4 +10,4 @@ add_llvm_library_dependencies(LLVMMipsInfo
   LLVMTarget
   )
 
-add_dependencies(LLVMMipsInfo MipsCodeGenTable_gen)
+add_dependencies(LLVMMipsInfo MipsCommonTableGen)

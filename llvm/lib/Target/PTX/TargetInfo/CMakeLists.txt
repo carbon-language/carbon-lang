@@ -10,4 +10,4 @@ add_llvm_library_dependencies(LLVMPTXInfo
   LLVMTarget
   )
 
-add_dependencies(LLVMPTXInfo PTXCodeGenTable_gen)
+add_dependencies(LLVMPTXInfo PTXCommonTableGen)

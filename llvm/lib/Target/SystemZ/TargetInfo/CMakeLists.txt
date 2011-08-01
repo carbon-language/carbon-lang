@@ -10,4 +10,4 @@ add_llvm_library_dependencies(LLVMSystemZInfo
   LLVMTarget
   )
 
-add_dependencies(LLVMSystemZInfo SystemZCodeGenTable_gen)
+add_dependencies(LLVMSystemZInfo SystemZCommonTableGen)

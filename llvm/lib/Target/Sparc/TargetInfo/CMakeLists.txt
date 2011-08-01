@@ -10,4 +10,4 @@ add_llvm_library_dependencies(LLVMSparcInfo
   LLVMTarget
   )
 
-add_dependencies(LLVMSparcInfo SparcCodeGenTable_gen)
+add_dependencies(LLVMSparcInfo SparcCommonTableGen)
