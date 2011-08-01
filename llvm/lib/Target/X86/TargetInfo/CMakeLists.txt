@@ -10,4 +10,4 @@ add_llvm_library_dependencies(LLVMX86Info
   LLVMTarget
   )
 
-add_dependencies(LLVMX86Info X86CodeGenTable_gen)
+add_dependencies(LLVMX86Info X86CommonTableGen)
