@@ -1267,8 +1267,14 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
     unsigned Offset = 0;
 
     for (unsigned bi = 0; bi < Bits.getNumBits(); ++bi) {
+      VarInit *Var = 0;
       VarBitInit *BI = dynamic_cast<VarBitInit*>(Bits.getBit(bi));
-      if (!BI) {
+      if (BI)
+        Var = dynamic_cast<VarInit*>(BI->getVariable());
+      else
+        Var = dynamic_cast<VarInit*>(Bits.getBit(bi));
+
+      if (!Var) {
         if (Base != ~0U) {
           OpInfo.addField(Base, Width, Offset);
           Base = ~0U;
@@ -1278,8 +1284,6 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
         continue;
       }
 
-      VarInit *Var = dynamic_cast<VarInit*>(BI->getVariable());
-      assert(Var);
       if (Var->getName() != NI->second &&
           Var->getName() != TiedNames[NI->second]) {
         if (Base != ~0U) {
@@ -1294,8 +1298,8 @@ static bool populateInstruction(const CodeGenInstruction &CGI,
       if (Base == ~0U) {
         Base = bi;
         Width = 1;
-        Offset = BI->getBitNum();
-      } else if (BI->getBitNum() != Offset + Width) {
+        Offset = BI ? BI->getBitNum() : 0;
+      } else if (BI && BI->getBitNum() != Offset + Width) {
         OpInfo.addField(Base, Width, Offset);
         Base = bi;
         Width = 1;
