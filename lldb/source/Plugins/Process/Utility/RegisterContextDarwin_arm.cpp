@@ -27,7 +27,6 @@
 // Project includes
 #include "ARM_GCC_Registers.h"
 #include "ARM_DWARF_Registers.h"
-#include "ProcessMacOSXLog.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -980,7 +979,7 @@ RegisterContextDarwin_arm::NumSupportedHardwareBreakpoints ()
         // Zero is reserved for the BRP count, so don't increment it if it is zero
         if (g_num_supported_hw_breakpoints > 0)
             g_num_supported_hw_breakpoints++;
-        ProcessMacOSXLog::LogIf(PD_LOG_THREAD, "DBGDIDR=0x%8.8x (number BRP pairs = %u)", register_DBGDIDR, g_num_supported_hw_breakpoints);
+//        if (log) log->Printf ("DBGDIDR=0x%8.8x (number BRP pairs = %u)", register_DBGDIDR, g_num_supported_hw_breakpoints);
 
     }
     return g_num_supported_hw_breakpoints;
@@ -1025,13 +1024,13 @@ RegisterContextDarwin_arm::SetHardwareBreakpoint (lldb::addr_t addr, size_t size
                                         byte_addr_select |  // Set the correct byte address select so we only trigger on the correct opcode
                                         S_USER |            // Which modes should this breakpoint stop in?
                                         BCR_ENABLE;         // Enable this hardware breakpoint
-                ProcessMacOSXLog::LogIf(PD_LOG_BREAKPOINTS, "RegisterContextDarwin_arm::EnableHardwareBreakpoint( addr = %8.8p, size = %u ) - BVR%u/BCR%u = 0x%8.8x / 0x%8.8x (Thumb)",
-                        addr,
-                        size,
-                        i,
-                        i,
-                        dbg.bvr[i],
-                        dbg.bcr[i]);
+//                if (log) log->Printf ("RegisterContextDarwin_arm::EnableHardwareBreakpoint( addr = %8.8p, size = %u ) - BVR%u/BCR%u = 0x%8.8x / 0x%8.8x (Thumb)",
+//                        addr,
+//                        size,
+//                        i,
+//                        i,
+//                        dbg.bvr[i],
+//                        dbg.bcr[i]);
             }
             else if (size == 4)
             {
@@ -1040,25 +1039,25 @@ RegisterContextDarwin_arm::SetHardwareBreakpoint (lldb::addr_t addr, size_t size
                                         BAS_IMVA_ALL |      // Stop on any of the four bytes following the IMVA
                                         S_USER |            // Which modes should this breakpoint stop in?
                                         BCR_ENABLE;         // Enable this hardware breakpoint
-                ProcessMacOSXLog::LogIf(PD_LOG_BREAKPOINTS, "RegisterContextDarwin_arm::EnableHardwareBreakpoint( addr = %8.8p, size = %u ) - BVR%u/BCR%u = 0x%8.8x / 0x%8.8x (ARM)",
-                        addr,
-                        size,
-                        i,
-                        i,
-                        dbg.bvr[i],
-                        dbg.bcr[i]);
+//                if (log) log->Printf ("RegisterContextDarwin_arm::EnableHardwareBreakpoint( addr = %8.8p, size = %u ) - BVR%u/BCR%u = 0x%8.8x / 0x%8.8x (ARM)",
+//                        addr,
+//                        size,
+//                        i,
+//                        i,
+//                        dbg.bvr[i],
+//                        dbg.bcr[i]);
             }
 
             kret = WriteDBG();
-            ProcessMacOSXLog::LogIf(PD_LOG_BREAKPOINTS, "RegisterContextDarwin_arm::EnableHardwareBreakpoint() WriteDBG() => 0x%8.8x.", kret);
+//            if (log) log->Printf ("RegisterContextDarwin_arm::EnableHardwareBreakpoint() WriteDBG() => 0x%8.8x.", kret);
 
             if (kret == KERN_SUCCESS)
                 return i;
         }
-        else
-        {
-            ProcessMacOSXLog::LogIf(PD_LOG_BREAKPOINTS, "RegisterContextDarwin_arm::EnableHardwareBreakpoint(addr = %8.8p, size = %u) => all hardware breakpoint resources are being used.", addr, size);
-        }
+//        else
+//        {
+//            if (log) log->Printf ("RegisterContextDarwin_arm::EnableHardwareBreakpoint(addr = %8.8p, size = %u) => all hardware breakpoint resources are being used.", addr, size);
+//        }
     }
 
     return LLDB_INVALID_INDEX32;
@@ -1075,12 +1074,12 @@ RegisterContextDarwin_arm::ClearHardwareBreakpoint (uint32_t hw_index)
         if (hw_index < num_hw_points)
         {
             dbg.bcr[hw_index] = 0;
-            ProcessMacOSXLog::LogIf(PD_LOG_BREAKPOINTS, "RegisterContextDarwin_arm::SetHardwareBreakpoint( %u ) - BVR%u = 0x%8.8x  BCR%u = 0x%8.8x",
-                    hw_index,
-                    hw_index,
-                    dbg.bvr[hw_index],
-                    hw_index,
-                    dbg.bcr[hw_index]);
+//            if (log) log->Printf ("RegisterContextDarwin_arm::SetHardwareBreakpoint( %u ) - BVR%u = 0x%8.8x  BCR%u = 0x%8.8x",
+//                    hw_index,
+//                    hw_index,
+//                    dbg.bvr[hw_index],
+//                    hw_index,
+//                    dbg.bcr[hw_index]);
 
             kret = WriteDBG();
 
@@ -1106,7 +1105,7 @@ RegisterContextDarwin_arm::NumSupportedHardwareWatchpoints ()
         uint32_t register_DBGDIDR;
         asm("mrc p14, 0, %0, c0, c0, 0" : "=r" (register_DBGDIDR));
         g_num_supported_hw_watchpoints = bits(register_DBGDIDR, 31, 28) + 1;
-        ProcessMacOSXLog::LogIf(PD_LOG_THREAD, "DBGDIDR=0x%8.8x (number WRP pairs = %u)", register_DBGDIDR, g_num_supported_hw_watchpoints);
+//        if (log) log->Printf ("DBGDIDR=0x%8.8x (number WRP pairs = %u)", register_DBGDIDR, g_num_supported_hw_watchpoints);
     }
     return g_num_supported_hw_watchpoints;
 #else
@@ -1119,7 +1118,7 @@ RegisterContextDarwin_arm::NumSupportedHardwareWatchpoints ()
 uint32_t
 RegisterContextDarwin_arm::SetHardwareWatchpoint (lldb::addr_t addr, size_t size, bool read, bool write)
 {
-    ProcessMacOSXLog::LogIf(PD_LOG_WATCHPOINTS, "RegisterContextDarwin_arm::EnableHardwareWatchpoint(addr = %8.8p, size = %u, read = %u, write = %u)", addr, size, read, write);
+//    if (log) log->Printf ("RegisterContextDarwin_arm::EnableHardwareWatchpoint(addr = %8.8p, size = %u, read = %u, write = %u)", addr, size, read, write);
 
     const uint32_t num_hw_watchpoints = NumSupportedHardwareWatchpoints();
 
@@ -1140,10 +1139,10 @@ RegisterContextDarwin_arm::SetHardwareWatchpoint (lldb::addr_t addr, size_t size
     // until the next 4 byte boundary and we need to make sure we can properly
     // encode this.
     uint32_t addr_word_offset = addr % 4;
-    ProcessMacOSXLog::LogIf(PD_LOG_WATCHPOINTS, "RegisterContextDarwin_arm::EnableHardwareWatchpoint() - addr_word_offset = 0x%8.8x", addr_word_offset);
+//    if (log) log->Printf ("RegisterContextDarwin_arm::EnableHardwareWatchpoint() - addr_word_offset = 0x%8.8x", addr_word_offset);
 
     uint32_t byte_mask = ((1u << size) - 1u) << addr_word_offset;
-    ProcessMacOSXLog::LogIf(PD_LOG_WATCHPOINTS, "RegisterContextDarwin_arm::EnableHardwareWatchpoint() - byte_mask = 0x%8.8x", byte_mask);
+//    if (log) log->Printf ("RegisterContextDarwin_arm::EnableHardwareWatchpoint() - byte_mask = 0x%8.8x", byte_mask);
     if (byte_mask > 0xfu)
         return LLDB_INVALID_INDEX32;
 
@@ -1175,14 +1174,14 @@ RegisterContextDarwin_arm::SetHardwareWatchpoint (lldb::addr_t addr, size_t size
                                     WCR_ENABLE;                 // Enable this watchpoint;
 
             kret = WriteDBG();
-            ProcessMacOSXLog::LogIf(PD_LOG_WATCHPOINTS, "RegisterContextDarwin_arm::EnableHardwareWatchpoint() WriteDBG() => 0x%8.8x.", kret);
+//            if (log) log->Printf ("RegisterContextDarwin_arm::EnableHardwareWatchpoint() WriteDBG() => 0x%8.8x.", kret);
 
             if (kret == KERN_SUCCESS)
                 return i;
         }
         else
         {
-            ProcessMacOSXLog::LogIf(PD_LOG_WATCHPOINTS, "RegisterContextDarwin_arm::EnableHardwareWatchpoint(): All hardware resources (%u) are in use.", num_hw_watchpoints);
+//            if (log) log->Printf ("RegisterContextDarwin_arm::EnableHardwareWatchpoint(): All hardware resources (%u) are in use.", num_hw_watchpoints);
         }
     }
     return LLDB_INVALID_INDEX32;
@@ -1199,12 +1198,12 @@ RegisterContextDarwin_arm::ClearHardwareWatchpoint (uint32_t hw_index)
         if (hw_index < num_hw_points)
         {
             dbg.wcr[hw_index] = 0;
-            ProcessMacOSXLog::LogIf(PD_LOG_WATCHPOINTS, "RegisterContextDarwin_arm::ClearHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
-                    hw_index,
-                    hw_index,
-                    dbg.wvr[hw_index],
-                    hw_index,
-                    dbg.wcr[hw_index]);
+//            if (log) log->Printf ("RegisterContextDarwin_arm::ClearHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
+//                    hw_index,
+//                    hw_index,
+//                    dbg.wvr[hw_index],
+//                    hw_index,
+//                    dbg.wcr[hw_index]);
 
             kret = WriteDBG();
 

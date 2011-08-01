@@ -74,7 +74,6 @@
 		2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2671A0CF13482601003A87BB /* ConnectionMachPort.cpp */; };
 		26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EED1338317700EF765A /* GDBRemoteCommunicationClient.cpp */; };
 		26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EEF1338317700EF765A /* GDBRemoteCommunicationServer.cpp */; };
-		2676045A13D49D2300AB1B6A /* ProcessControl-mig.defs in Sources */ = {isa = PBXBuildFile; fileRef = 260C89A110F57C5600BB2B04 /* ProcessControl-mig.defs */; settings = {ATTRIBUTES = (Client, Server, ); }; };
 		267C012B136880DF006E963E /* OptionGroupValueObjectDisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */; };
 		267C01371368C49C006E963E /* OptionGroupOutputFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC531368B3E4006DC050 /* OptionGroupOutputFile.cpp */; };
 		2686536C1370ACB200D186A3 /* OptionGroupBoolean.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2686536B1370ACB200D186A3 /* OptionGroupBoolean.cpp */; };
@@ -220,19 +219,6 @@
 		2689009F13353E4200698AC0 /* ProcessGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618EE5F1315B29C001D6D71 /* ProcessGDBRemote.cpp */; };
 		268900A013353E4200698AC0 /* ProcessGDBRemoteLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618EE611315B29C001D6D71 /* ProcessGDBRemoteLog.cpp */; };
 		268900A113353E4200698AC0 /* ThreadGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2618EE631315B29C001D6D71 /* ThreadGDBRemote.cpp */; };
-		268900A213353E5000698AC0 /* MachException.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C899210F57C5600BB2B04 /* MachException.cpp */; };
-		268900A313353E5000698AC0 /* MachTask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C899410F57C5600BB2B04 /* MachTask.cpp */; };
-		268900A413353E5000698AC0 /* MachThreadContext_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C899710F57C5600BB2B04 /* MachThreadContext_arm.cpp */; };
-		268900A513353E5000698AC0 /* MachThreadContext_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C899910F57C5600BB2B04 /* MachThreadContext_i386.cpp */; };
-		268900A613353E5000698AC0 /* MachThreadContext_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C899B10F57C5600BB2B04 /* MachThreadContext_x86_64.cpp */; };
-		268900A713353E5000698AC0 /* MachVMMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C899D10F57C5600BB2B04 /* MachVMMemory.cpp */; };
-		268900A813353E5000698AC0 /* MachVMRegion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C899F10F57C5600BB2B04 /* MachVMRegion.cpp */; };
-		268900A913353E5000698AC0 /* ProcessMacOSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89A310F57C5600BB2B04 /* ProcessMacOSX.cpp */; };
-		268900AA13353E5000698AC0 /* ProcessMacOSXLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89A510F57C5600BB2B04 /* ProcessMacOSXLog.cpp */; };
-		268900AB13353E5000698AC0 /* RegisterContextMach_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89A910F57C5600BB2B04 /* RegisterContextMach_arm.cpp */; };
-		268900AC13353E5000698AC0 /* RegisterContextMach_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89AB10F57C5600BB2B04 /* RegisterContextMach_i386.cpp */; };
-		268900AD13353E5000698AC0 /* RegisterContextMach_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89AD10F57C5600BB2B04 /* RegisterContextMach_x86_64.cpp */; };
-		268900AE13353E5000698AC0 /* ThreadMacOSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89AF10F57C5600BB2B04 /* ThreadMacOSX.cpp */; };
 		268900AF13353E5000698AC0 /* UnwindLLDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */; };
 		268900B013353E5000698AC0 /* RegisterContextLLDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF68D2541255416E002FF25B /* RegisterContextLLDB.cpp */; };
 		268900B413353E5000698AC0 /* RegisterContextMacOSXFrameBackchain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */; };
@@ -539,37 +525,6 @@
 		260C898610F57C5600BB2B04 /* ObjectFileELF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectFileELF.h; sourceTree = "<group>"; };
 		260C898810F57C5600BB2B04 /* ObjectFileMachO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectFileMachO.cpp; sourceTree = "<group>"; };
 		260C898910F57C5600BB2B04 /* ObjectFileMachO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectFileMachO.h; sourceTree = "<group>"; };
-		260C898D10F57C5600BB2B04 /* cc-swig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = "cc-swig"; sourceTree = "<group>"; };
-		260C898E10F57C5600BB2B04 /* config.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = config.pl; sourceTree = "<group>"; };
-		260C898F10F57C5600BB2B04 /* test-ProcessDebug.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = "test-ProcessDebug.pl"; sourceTree = "<group>"; };
-		260C899210F57C5600BB2B04 /* MachException.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachException.cpp; sourceTree = "<group>"; };
-		260C899310F57C5600BB2B04 /* MachException.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachException.h; sourceTree = "<group>"; };
-		260C899410F57C5600BB2B04 /* MachTask.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachTask.cpp; sourceTree = "<group>"; };
-		260C899510F57C5600BB2B04 /* MachTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachTask.h; sourceTree = "<group>"; };
-		260C899610F57C5600BB2B04 /* MachThreadContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachThreadContext.h; sourceTree = "<group>"; };
-		260C899710F57C5600BB2B04 /* MachThreadContext_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachThreadContext_arm.cpp; sourceTree = "<group>"; };
-		260C899810F57C5600BB2B04 /* MachThreadContext_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachThreadContext_arm.h; sourceTree = "<group>"; };
-		260C899910F57C5600BB2B04 /* MachThreadContext_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachThreadContext_i386.cpp; sourceTree = "<group>"; };
-		260C899A10F57C5600BB2B04 /* MachThreadContext_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachThreadContext_i386.h; sourceTree = "<group>"; };
-		260C899B10F57C5600BB2B04 /* MachThreadContext_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachThreadContext_x86_64.cpp; sourceTree = "<group>"; };
-		260C899C10F57C5600BB2B04 /* MachThreadContext_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachThreadContext_x86_64.h; sourceTree = "<group>"; };
-		260C899D10F57C5600BB2B04 /* MachVMMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachVMMemory.cpp; sourceTree = "<group>"; };
-		260C899E10F57C5600BB2B04 /* MachVMMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachVMMemory.h; sourceTree = "<group>"; };
-		260C899F10F57C5600BB2B04 /* MachVMRegion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachVMRegion.cpp; sourceTree = "<group>"; };
-		260C89A010F57C5600BB2B04 /* MachVMRegion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachVMRegion.h; sourceTree = "<group>"; };
-		260C89A110F57C5600BB2B04 /* ProcessControl-mig.defs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.mig; path = "ProcessControl-mig.defs"; sourceTree = "<group>"; };
-		260C89A310F57C5600BB2B04 /* ProcessMacOSX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessMacOSX.cpp; sourceTree = "<group>"; };
-		260C89A410F57C5600BB2B04 /* ProcessMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessMacOSX.h; sourceTree = "<group>"; };
-		260C89A510F57C5600BB2B04 /* ProcessMacOSXLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessMacOSXLog.cpp; sourceTree = "<group>"; };
-		260C89A610F57C5600BB2B04 /* ProcessMacOSXLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessMacOSXLog.h; sourceTree = "<group>"; };
-		260C89A910F57C5600BB2B04 /* RegisterContextMach_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextMach_arm.cpp; sourceTree = "<group>"; };
-		260C89AA10F57C5600BB2B04 /* RegisterContextMach_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextMach_arm.h; sourceTree = "<group>"; };
-		260C89AB10F57C5600BB2B04 /* RegisterContextMach_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextMach_i386.cpp; sourceTree = "<group>"; };
-		260C89AC10F57C5600BB2B04 /* RegisterContextMach_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextMach_i386.h; sourceTree = "<group>"; };
-		260C89AD10F57C5600BB2B04 /* RegisterContextMach_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextMach_x86_64.cpp; sourceTree = "<group>"; };
-		260C89AE10F57C5600BB2B04 /* RegisterContextMach_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextMach_x86_64.h; sourceTree = "<group>"; };
-		260C89AF10F57C5600BB2B04 /* ThreadMacOSX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadMacOSX.cpp; sourceTree = "<group>"; };
-		260C89B010F57C5600BB2B04 /* ThreadMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadMacOSX.h; sourceTree = "<group>"; };
 		260C89B310F57C5600BB2B04 /* DWARFAbbreviationDeclaration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DWARFAbbreviationDeclaration.cpp; sourceTree = "<group>"; };
 		260C89B410F57C5600BB2B04 /* DWARFAbbreviationDeclaration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFAbbreviationDeclaration.h; sourceTree = "<group>"; };
 		260C89B610F57C5600BB2B04 /* DWARFAttribute.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DWARFAttribute.h; sourceTree = "<group>"; };
@@ -1525,72 +1480,9 @@
 			children = (
 				4CEE62F71145F1C70064CF93 /* GDB Remote */,
 				2642FBA713D003B400ED6808 /* MacOSX-Kernel */,
-				260C898B10F57C5600BB2B04 /* MacOSX-User */,
 				26B4666E11A2080F00CF6220 /* Utility */,
 			);
 			path = Process;
-			sourceTree = "<group>";
-		};
-		260C898B10F57C5600BB2B04 /* MacOSX-User */ = {
-			isa = PBXGroup;
-			children = (
-				260C898C10F57C5600BB2B04 /* scripts */,
-				260C899010F57C5600BB2B04 /* source */,
-			);
-			path = "MacOSX-User";
-			sourceTree = "<group>";
-		};
-		260C898C10F57C5600BB2B04 /* scripts */ = {
-			isa = PBXGroup;
-			children = (
-				260C898D10F57C5600BB2B04 /* cc-swig */,
-				260C898E10F57C5600BB2B04 /* config.pl */,
-				260C898F10F57C5600BB2B04 /* test-ProcessDebug.pl */,
-			);
-			path = scripts;
-			sourceTree = "<group>";
-		};
-		260C899010F57C5600BB2B04 /* source */ = {
-			isa = PBXGroup;
-			children = (
-				260C899110F57C5600BB2B04 /* MacOSX */,
-				260C89A310F57C5600BB2B04 /* ProcessMacOSX.cpp */,
-				260C89A410F57C5600BB2B04 /* ProcessMacOSX.h */,
-				260C89A510F57C5600BB2B04 /* ProcessMacOSXLog.cpp */,
-				260C89A610F57C5600BB2B04 /* ProcessMacOSXLog.h */,
-				260C89A910F57C5600BB2B04 /* RegisterContextMach_arm.cpp */,
-				260C89AA10F57C5600BB2B04 /* RegisterContextMach_arm.h */,
-				260C89AB10F57C5600BB2B04 /* RegisterContextMach_i386.cpp */,
-				260C89AC10F57C5600BB2B04 /* RegisterContextMach_i386.h */,
-				260C89AD10F57C5600BB2B04 /* RegisterContextMach_x86_64.cpp */,
-				260C89AE10F57C5600BB2B04 /* RegisterContextMach_x86_64.h */,
-				260C89AF10F57C5600BB2B04 /* ThreadMacOSX.cpp */,
-				260C89B010F57C5600BB2B04 /* ThreadMacOSX.h */,
-			);
-			path = source;
-			sourceTree = "<group>";
-		};
-		260C899110F57C5600BB2B04 /* MacOSX */ = {
-			isa = PBXGroup;
-			children = (
-				260C899210F57C5600BB2B04 /* MachException.cpp */,
-				260C899310F57C5600BB2B04 /* MachException.h */,
-				260C899410F57C5600BB2B04 /* MachTask.cpp */,
-				260C899510F57C5600BB2B04 /* MachTask.h */,
-				260C899610F57C5600BB2B04 /* MachThreadContext.h */,
-				260C899710F57C5600BB2B04 /* MachThreadContext_arm.cpp */,
-				260C899810F57C5600BB2B04 /* MachThreadContext_arm.h */,
-				260C899910F57C5600BB2B04 /* MachThreadContext_i386.cpp */,
-				260C899A10F57C5600BB2B04 /* MachThreadContext_i386.h */,
-				260C899B10F57C5600BB2B04 /* MachThreadContext_x86_64.cpp */,
-				260C899C10F57C5600BB2B04 /* MachThreadContext_x86_64.h */,
-				260C899D10F57C5600BB2B04 /* MachVMMemory.cpp */,
-				260C899E10F57C5600BB2B04 /* MachVMMemory.h */,
-				260C899F10F57C5600BB2B04 /* MachVMRegion.cpp */,
-				260C89A010F57C5600BB2B04 /* MachVMRegion.h */,
-				260C89A110F57C5600BB2B04 /* ProcessControl-mig.defs */,
-			);
-			path = MacOSX;
 			sourceTree = "<group>";
 		};
 		260C89B110F57C5600BB2B04 /* SymbolFile */ = {
@@ -3197,19 +3089,6 @@
 				2689009F13353E4200698AC0 /* ProcessGDBRemote.cpp in Sources */,
 				268900A013353E4200698AC0 /* ProcessGDBRemoteLog.cpp in Sources */,
 				268900A113353E4200698AC0 /* ThreadGDBRemote.cpp in Sources */,
-				268900A213353E5000698AC0 /* MachException.cpp in Sources */,
-				268900A313353E5000698AC0 /* MachTask.cpp in Sources */,
-				268900A413353E5000698AC0 /* MachThreadContext_arm.cpp in Sources */,
-				268900A513353E5000698AC0 /* MachThreadContext_i386.cpp in Sources */,
-				268900A613353E5000698AC0 /* MachThreadContext_x86_64.cpp in Sources */,
-				268900A713353E5000698AC0 /* MachVMMemory.cpp in Sources */,
-				268900A813353E5000698AC0 /* MachVMRegion.cpp in Sources */,
-				268900A913353E5000698AC0 /* ProcessMacOSX.cpp in Sources */,
-				268900AA13353E5000698AC0 /* ProcessMacOSXLog.cpp in Sources */,
-				268900AB13353E5000698AC0 /* RegisterContextMach_arm.cpp in Sources */,
-				268900AC13353E5000698AC0 /* RegisterContextMach_i386.cpp in Sources */,
-				268900AD13353E5000698AC0 /* RegisterContextMach_x86_64.cpp in Sources */,
-				268900AE13353E5000698AC0 /* ThreadMacOSX.cpp in Sources */,
 				268900AF13353E5000698AC0 /* UnwindLLDB.cpp in Sources */,
 				268900B013353E5000698AC0 /* RegisterContextLLDB.cpp in Sources */,
 				268900B413353E5000698AC0 /* RegisterContextMacOSXFrameBackchain.cpp in Sources */,
@@ -3365,7 +3244,6 @@
 				265205AA13D3E3F700132FE2 /* RegisterContextKDP_i386.cpp in Sources */,
 				265205AC13D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp in Sources */,
 				2628A4D513D4977900F5487A /* ThreadKDP.cpp in Sources */,
-				2676045A13D49D2300AB1B6A /* ProcessControl-mig.defs in Sources */,
 				26D7E45D13D5E30A007FD12B /* SocketAddress.cpp in Sources */,
 				B271B11413D6139300C3FEDB /* FormatClasses.cpp in Sources */,
 				94B6E76213D88365005F417F /* ValueObjectSyntheticFilter.cpp in Sources */,
