@@ -235,7 +235,7 @@ const GlobalValue *GlobalAlias::getAliasedGlobal() const {
           CE->getOpcode() == Instruction::GetElementPtr) &&
          "Unsupported aliasee");
   
-  return dyn_cast<GlobalValue>(CE->getOperand(0));
+  return cast<GlobalValue>(CE->getOperand(0));
 }
 
 const GlobalValue *GlobalAlias::resolveAliasedGlobal(bool stopOnWeak) const {
