@@ -2453,8 +2453,8 @@ llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGenFunction &CGF,
     llvm::Value *Offset = TheModule.getGlobalVariable(name);
     if (!Offset)
       Offset = new llvm::GlobalVariable(TheModule, IntTy,
-          false, llvm::GlobalValue::CommonLinkage,
-          0, name);
+          false, llvm::GlobalValue::LinkOnceAnyLinkage,
+          llvm::Constant::getNullValue(IntTy), name);
     return CGF.Builder.CreateLoad(Offset);
   }
   uint64_t Offset = ComputeIvarBaseOffset(CGF.CGM, Interface, Ivar);
