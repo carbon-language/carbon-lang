@@ -213,7 +213,7 @@ static isl_map *getPrevectorMap(isl_ctx *ctx, int vectorDimension,
 				int scheduleDimensions,
 				int parameterDimensions,
 				int vectorWidth = 4) {
-  assert (0 <= vectorDimension < scheduleDimensions);
+  assert (0 <= vectorDimension && vectorDimension < scheduleDimensions);
 
   isl_dim *dim = isl_dim_alloc(ctx, parameterDimensions, scheduleDimensions,
 			       scheduleDimensions + 2);

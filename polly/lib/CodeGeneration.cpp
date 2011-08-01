@@ -1434,7 +1434,7 @@ class CodeGeneration : public ScopPass {
     //                        bb0
     //                         |
     //                  polly.splitBlock
-    //                     /       \
+    //                     /       \.
     //                     |     startBlock
     //                     |        |
     //               orig_scop   new_scop
