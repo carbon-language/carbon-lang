@@ -12,7 +12,6 @@ class NamespaceTestCase(TestBase):
     mydir = os.path.join("lang", "cpp", "namespace")
 
     # rdar://problem/8668674
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
         """Test that anonymous and named namespace variables display correctly."""
@@ -20,7 +19,6 @@ class NamespaceTestCase(TestBase):
         self.namespace_variable_commands()
 
     # rdar://problem/8668674
-    @unittest2.expectedFailure
     def test_with_dwarf_and_run_command(self):
         """Test that anonymous and named namespace variables display correctly."""
         self.buildDwarf()
@@ -102,9 +100,9 @@ class NamespaceTestCase(TestBase):
 
         # rdar://problem/8668674
         # expression command with fully qualified namespace for a variable does not work
-        self.expect("expression -- '::i'", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expression -- ::i", VARIABLES_DISPLAYED_CORRECTLY,
             patterns = [' = 3$'])
-        self.expect("expression -- 'A::B::j'", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expression -- A::B::j", VARIABLES_DISPLAYED_CORRECTLY,
             patterns = [' = 4$'])
 
 
