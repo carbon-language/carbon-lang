@@ -2934,6 +2934,11 @@ ABIArgInfo MipsABIInfo::classifyArgumentType(QualType Ty) const {
     if (getContext().getTypeSize(Ty) == 0)
       return ABIArgInfo::getIgnore();
 
+    // Records with non trivial destructors/constructors should not be passed
+    // by value.
+    if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty))
+      return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+
     return ABIArgInfo::getIndirect(0);
   }
 
