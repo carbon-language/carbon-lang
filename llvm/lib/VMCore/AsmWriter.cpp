@@ -1397,27 +1397,8 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
   if (Aliasee == 0) {
     TypePrinter.print(GA->getType(), Out);
     Out << " <<NULL ALIASEE>>";
-  } else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Aliasee)) {
-    TypePrinter.print(GV->getType(), Out);
-    Out << ' ';
-    PrintLLVMName(Out, GV);
-  } else if (const Function *F = dyn_cast<Function>(Aliasee)) {
-    TypePrinter.print(F->getFunctionType(), Out);
-    Out << "* ";
-
-    WriteAsOperandInternal(Out, F, &TypePrinter, &Machine, F->getParent());
-  } else if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(Aliasee)) {
-    TypePrinter.print(GA->getType(), Out);
-    Out << ' ';
-    PrintLLVMName(Out, GA);
-  } else {
-    const ConstantExpr *CE = cast<ConstantExpr>(Aliasee);
-    // The only valid GEP is an all zero GEP.
-    assert((CE->getOpcode() == Instruction::BitCast ||
-            CE->getOpcode() == Instruction::GetElementPtr) &&
-           "Unsupported aliasee");
-    writeOperand(CE, false);
-  }
+  } else
+    writeOperand(Aliasee, !isa<ConstantExpr>(Aliasee));
 
   printInfoComment(*GA);
   Out << '\n';
