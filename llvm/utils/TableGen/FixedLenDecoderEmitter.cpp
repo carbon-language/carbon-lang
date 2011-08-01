@@ -744,8 +744,8 @@ void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
   }
 
   if (Decoder != "")
-    o.indent(Indentation) << "  " << Decoder
-                          << "(MI, tmp, Address, Decoder);\n";
+    o.indent(Indentation) << "  if (!" << Decoder
+                          << "(MI, tmp, Address, Decoder)) return false;\n";
   else
     o.indent(Indentation) << "  MI.addOperand(MCOperand::CreateImm(tmp));\n";
 
