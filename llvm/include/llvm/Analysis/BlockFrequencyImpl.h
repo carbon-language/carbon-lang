@@ -49,7 +49,7 @@ class BlockFrequencyImpl {
 
   typedef GraphTraits< Inverse<BlockT *> > GT;
 
-  static const uint32_t START_FREQ = 1024;
+  const uint32_t EntryFreq;
 
   std::string getBlockName(BasicBlock *BB) const {
     return BB->getNameStr();
@@ -176,7 +176,7 @@ class BlockFrequencyImpl {
     setBlockFreq(BB, 0);
 
     if (BB == LoopHead) {
-      setBlockFreq(BB, START_FREQ);
+      setBlockFreq(BB, EntryFreq);
       return;
     }
 
@@ -211,10 +211,10 @@ class BlockFrequencyImpl {
     if (!isLoopHead)
       return;
 
-    assert(START_FREQ >= CycleProb[BB]);
+    assert(EntryFreq >= CycleProb[BB]);
     uint32_t CProb = CycleProb[BB];
-    uint32_t Numerator = START_FREQ - CProb ? START_FREQ - CProb : 1;
-    divBlockFreq(BB, BranchProbability(Numerator, START_FREQ));
+    uint32_t Numerator = EntryFreq - CProb ? EntryFreq - CProb : 1;
+    divBlockFreq(BB, BranchProbability(Numerator, EntryFreq));
   }
 
   /// doLoop - Propagate block frequency down throught the loop.
@@ -243,8 +243,8 @@ class BlockFrequencyImpl {
       if (isReachable(Pred) && isBackedge(Pred, Head)) {
         uint64_t N = getEdgeFreq(Pred, Head).getFrequency();
         uint64_t D = getBlockFreq(Head).getFrequency();
-        assert(N <= 1024 && "Backedge frequency must be <= 1024!");
-        uint64_t Res = (N * START_FREQ) / D;
+        assert(N <= EntryFreq && "Backedge frequency must be <= EntryFreq!");
+        uint64_t Res = (N * EntryFreq) / D;
 
         assert(Res <= UINT32_MAX);
         CycleProb[Head] += (uint32_t) Res;
@@ -256,6 +256,8 @@ class BlockFrequencyImpl {
 
   friend class BlockFrequencyInfo;
   friend class MachineBlockFrequencyInfo;
+
+  BlockFrequencyImpl() : EntryFreq(BlockFrequency::getEntryFrequency()) { }
 
   void doFunction(FunctionT *fn, BlockProbInfoT *bpi) {
     Fn = fn;

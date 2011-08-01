@@ -23,10 +23,12 @@ class BranchProbability;
 class BlockFrequency {
 
   uint64_t Frequency;
+  static const int64_t ENTRY_FREQ = 1024;
 
 public:
   BlockFrequency(uint64_t Freq = 0) : Frequency(Freq) { }
 
+  static uint64_t getEntryFrequency() { return ENTRY_FREQ; }
   uint64_t getFrequency() const { return Frequency; }
 
   BlockFrequency &operator*=(const BranchProbability &Prob);
