@@ -4,9 +4,9 @@ import os
 import unittest2
 import lldb
 import pexpect
-from lldbtest import *
+from lldbbench import *
 
-class RepeatedExprssCase(TestBase):
+class RepeatedExprsCase(BenchBase):
 
     mydir = os.path.join("benchmarks", "example")
 

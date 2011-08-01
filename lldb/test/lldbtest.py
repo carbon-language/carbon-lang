@@ -451,6 +451,14 @@ class Base(unittest2.TestCase):
         #import traceback
         #traceback.print_stack()
 
+        # Assign the test method name to self.testMethodName.
+        #
+        # For an example of the use of this attribute, look at test/types dir.
+        # There are a bunch of test cases under test/types and we don't want the
+        # module cacheing subsystem to be confused with executable name "a.out"
+        # used for all the test cases.
+        self.testMethodName = self._testMethodName
+
         # Python API only test is decorated with @python_api_test,
         # which also sets the "__python_api_test__" attribute of the
         # function object to True.
@@ -476,6 +484,16 @@ class Base(unittest2.TestCase):
                     self.skipTest("non benchmarks test")
         except AttributeError:
             pass
+
+        # This is for the case of directly spawning 'lldb'/'gdb' and interacting
+        # with it using pexpect.
+        self.child = None
+        self.child_prompt = "(lldb) "
+        # If the child is interacting with the embedded script interpreter,
+        # there are two exits required during tear down, first to quit the
+        # embedded script interpreter and second to quit the lldb command
+        # interpreter.
+        self.child_in_script_interpreter = False
 
         # These are for customized teardown cleanup.
         self.dict = None
@@ -561,6 +579,21 @@ class Base(unittest2.TestCase):
         """Fixture for unittest test case teardown."""
         #import traceback
         #traceback.print_stack()
+
+        # This is for the case of directly spawning 'lldb' and interacting with it
+        # using pexpect.
+        import pexpect
+        if self.child and self.child.isalive():
+            with recording(self, traceAlways) as sbuf:
+                print >> sbuf, "tearing down the child process...."
+            if self.child_in_script_interpreter:
+                self.child.sendline('quit()')
+                self.child.expect_exact(self.child_prompt)
+            self.child.sendline('quit')
+            try:
+                self.child.expect(pexpect.EOF)
+            except:
+                pass
 
         # Check and run any hook functions.
         for hook in reversed(self.hooks):
@@ -804,14 +837,6 @@ class TestBase(Base):
         # Works with the test driver to conditionally skip tests via decorators.
         Base.setUp(self)
 
-        # Assign the test method name to self.testMethodName.
-        #
-        # For an example of the use of this attribute, look at test/types dir.
-        # There are a bunch of test cases under test/types and we don't want the
-        # module cacheing subsystem to be confused with executable name "a.out"
-        # used for all the test cases.
-        self.testMethodName = self._testMethodName
-
         if "LLDB_EXEC" in os.environ:
             self.lldbExec = os.environ["LLDB_EXEC"]
 
@@ -847,15 +872,6 @@ class TestBase(Base):
         # We want our debugger to be synchronous.
         self.dbg.SetAsync(False)
 
-        # This is for the case of directly spawning 'lldb' and interacting with
-        # it using pexpect.
-        self.child = None
-        # If the child is interacting with the embedded script interpreter,
-        # there are two exits required during tear down, first to quit the
-        # embedded script interpreter and second to quit the lldb command
-        # interpreter.
-        self.child_in_script_interpreter = False
-
         # Retrieve the associated command interpreter instance.
         self.ci = self.dbg.GetCommandInterpreter()
         if not self.ci:
@@ -869,21 +885,6 @@ class TestBase(Base):
         #traceback.print_stack()
 
         Base.tearDown(self)
-
-        # This is for the case of directly spawning 'lldb' and interacting with it
-        # using pexpect.
-        import pexpect
-        if self.child and self.child.isalive():
-            with recording(self, traceAlways) as sbuf:
-                print >> sbuf, "tearing down the child process...."
-            if self.child_in_script_interpreter:
-                self.child.sendline('quit()')
-                self.child.expect_exact('(lldb) ')
-            self.child.sendline('quit')
-            try:
-                self.child.expect(pexpect.EOF)
-            except:
-                pass
 
         # Delete the target(s) from the debugger as a general cleanup step.
         # This includes terminating the process for each target, if any.
