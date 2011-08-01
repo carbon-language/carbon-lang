@@ -2841,7 +2841,10 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-o");
     // NOTE: gcc uses a temp .s file for this, but there doesn't seem
     // to be a good reason.
-    CmdArgs.push_back("/dev/null");
+    const char *TmpPath = C.getArgs().MakeArgString(
+      D.GetTemporaryPath("s"));
+    C.addTempFile(TmpPath);
+    CmdArgs.push_back(TmpPath);
 
     CmdArgs.push_back("--output-pch=");
     CmdArgs.push_back(Output.getFilename());
