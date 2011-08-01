@@ -566,7 +566,7 @@ void FilterChooser::emitTop(raw_ostream &o, unsigned Indentation,
     "static bool decode" << Namespace << "Instruction" << BitWidth
     << "(MCInst &MI, uint" << BitWidth << "_t insn, uint64_t Address, "
     << "const void *Decoder) {\n";
-  o.indent(Indentation) << "  unsigned tmp = 0;\n(void)tmp;\n";
+  o.indent(Indentation) << "  unsigned tmp = 0;\n  (void)tmp;\n";
 
   ++Indentation; ++Indentation;
   // Emits code to decode the instructions.
@@ -776,8 +776,8 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
          I = InsnOperands.begin(), E = InsnOperands.end(); I != E; ++I) {
       // If a custom instruction decoder was specified, use that.
       if (I->numFields() == 0 && I->Decoder.size()) {
-        o.indent(Indentation) << "  " << I->Decoder
-                              << "(MI, insn, Address, Decoder);\n";
+        o.indent(Indentation) << "  if (!" << I->Decoder
+                              << "(MI, insn, Address, Decoder)) return false;\n";
         break;
       }
 
