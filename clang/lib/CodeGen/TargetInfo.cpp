@@ -2904,6 +2904,7 @@ void MSP430TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
 
 namespace {
 class MipsABIInfo : public ABIInfo {
+  static const unsigned MinABIStackAlignInBytes = 4;
 public:
   MipsABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
 
@@ -2978,7 +2979,36 @@ void MipsABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
 llvm::Value* MipsABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                     CodeGenFunction &CGF) const {
-  return 0;
+  llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
+ 
+  CGBuilderTy &Builder = CGF.Builder;
+  llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP, "ap");
+  llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
+  unsigned TypeAlign = getContext().getTypeAlign(Ty) / 8;
+  llvm::Type *PTy = llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
+  llvm::Value *AddrTyped;
+
+  if (TypeAlign > MinABIStackAlignInBytes) {
+    llvm::Value *AddrAsInt32 = CGF.Builder.CreatePtrToInt(Addr, CGF.Int32Ty);
+    llvm::Value *Inc = llvm::ConstantInt::get(CGF.Int32Ty, TypeAlign - 1);
+    llvm::Value *Mask = llvm::ConstantInt::get(CGF.Int32Ty, -TypeAlign);
+    llvm::Value *Add = CGF.Builder.CreateAdd(AddrAsInt32, Inc);
+    llvm::Value *And = CGF.Builder.CreateAnd(Add, Mask);
+    AddrTyped = CGF.Builder.CreateIntToPtr(And, PTy);
+  }
+  else
+    AddrTyped = Builder.CreateBitCast(Addr, PTy);  
+
+  llvm::Value *AlignedAddr = Builder.CreateBitCast(AddrTyped, BP);
+  uint64_t Offset =
+    llvm::RoundUpToAlignment(CGF.getContext().getTypeSize(Ty) / 8, TypeAlign);
+  llvm::Value *NextAddr =
+    Builder.CreateGEP(AlignedAddr, llvm::ConstantInt::get(CGF.Int32Ty, Offset),
+                      "ap.next");
+  Builder.CreateStore(NextAddr, VAListAddrAsBPP);
+  
+  return AddrTyped;
 }
 
 bool
