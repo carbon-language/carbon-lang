@@ -35,7 +35,6 @@ class MethodReturningBOOLTestCase(TestBase):
         self.main_source = "main.m"
         self.line = line_number(self.main_source, '// Set breakpoint here.')
 
-    @unittest2.skip("rdar://problem/9691614 Expression parser crashes")
     def objc_method_ret_BOOL(self, exe_name):
         """Test that objective-c method returning BOOL works correctly."""
         exe = os.path.join(os.getcwd(), exe_name)
