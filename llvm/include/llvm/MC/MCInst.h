@@ -144,6 +144,8 @@ public:
     Operands.push_back(Op);
   }
 
+  void clear() { Operands.clear(); }
+
   void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
   void dump() const;
 
