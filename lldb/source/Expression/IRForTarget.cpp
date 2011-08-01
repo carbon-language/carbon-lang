@@ -1408,6 +1408,8 @@ IRForTarget::MaybeHandleCall (CallInst *llvm_call_inst)
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     Function *fun = llvm_call_inst->getCalledFunction();
+    
+    bool is_bitcast = false;
 
     // If the call is to something other than a plain llvm::Function, resolve which
     // Function is meant or give up.
@@ -1430,6 +1432,8 @@ IRForTarget::MaybeHandleCall (CallInst *llvm_call_inst)
             
                 return false;
             }
+            
+            is_bitcast = true;
         }
         else if (const_expr && const_expr->getOpcode() == Instruction::IntToPtr)
         {
@@ -1544,7 +1548,30 @@ IRForTarget::MaybeHandleCall (CallInst *llvm_call_inst)
     if (fun_value_ptr)
         fun_addr_ptr = *fun_value_ptr;
     
-    llvm_call_inst->setCalledFunction(fun_addr_ptr);
+    if (is_bitcast)
+    {
+        Value *val = llvm_call_inst->getCalledValue();
+        
+        ConstantExpr *const_expr = dyn_cast<ConstantExpr>(val);
+        
+        Constant *fun_addr_ptr_cst = dyn_cast<Constant>(fun_addr_ptr);
+        
+        if (!fun_addr_ptr_cst)
+        {
+            if (m_error_stream)
+                m_error_stream->Printf("Error [IRForTarget]: Non-constant source function '%s' has a constant BitCast\n", str.GetCString());
+            
+            return false;
+        }
+            
+        Constant *new_bit_cast = ConstantExpr::getBitCast(fun_addr_ptr_cst, const_expr->getType());
+        
+        llvm_call_inst->setCalledFunction(new_bit_cast);
+    }
+    else
+    {
+        llvm_call_inst->setCalledFunction(fun_addr_ptr);
+    }
     
     ConstantArray *func_name = (ConstantArray*)ConstantArray::get(m_module->getContext(), str.GetCString());
     
