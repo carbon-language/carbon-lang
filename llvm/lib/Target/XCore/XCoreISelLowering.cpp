@@ -1148,10 +1148,10 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
       int offset = 0;
       // Save remaining registers, storing higher register numbers at a higher
       // address
-      for (unsigned i = array_lengthof(ArgRegs) - 1; i >= FirstVAReg; --i) {
+      for (int i = array_lengthof(ArgRegs) - 1; i >= (int)FirstVAReg; --i) {
         // Create a stack slot
         int FI = MFI->CreateFixedObject(4, offset, true);
-        if (i == FirstVAReg) {
+        if (i == (int)FirstVAReg) {
           XFI->setVarArgsFrameIndex(FI);
         }
         offset -= StackSlotSize;
