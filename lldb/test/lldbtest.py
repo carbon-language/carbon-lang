@@ -380,6 +380,10 @@ class Base(unittest2.TestCase):
     # Keep track of the old current working directory.
     oldcwd = None
 
+    def TraceOn(self):
+        """Returns True if we are in trace mode (tracing detailed test execution)."""
+        return traceAlways
+
     @classmethod
     def setUpClass(cls):
         """
@@ -440,7 +444,10 @@ class Base(unittest2.TestCase):
             return True
 
     def setUp(self):
-        """Works with the test driver to conditionally skip tests."""
+        """Fixture for unittest test case setup.
+
+        It works with the test driver to conditionally skip tests and does other
+        initializations."""
         #import traceback
         #traceback.print_stack()
 
@@ -470,6 +477,255 @@ class Base(unittest2.TestCase):
         except AttributeError:
             pass
 
+        # These are for customized teardown cleanup.
+        self.dict = None
+        self.doTearDownCleanup = False
+        # And in rare cases where there are multiple teardown cleanups.
+        self.dicts = []
+        self.doTearDownCleanups = False
+
+        # Create a string buffer to record the session info, to be dumped into a
+        # test case specific file if test failure is encountered.
+        self.session = StringIO.StringIO()
+
+        # Optimistically set __errored__, __failed__, __expected__ to False
+        # initially.  If the test errored/failed, the session info
+        # (self.session) is then dumped into a session specific file for
+        # diagnosis.
+        self.__errored__    = False
+        self.__failed__     = False
+        self.__expected__   = False
+        # We are also interested in unexpected success.
+        self.__unexpected__ = False
+
+        # See addTearDownHook(self, hook) which allows the client to add a hook
+        # function to be run during tearDown() time.
+        self.hooks = []
+
+        # See HideStdout(self).
+        self.sys_stdout_hidden = False
+
+    def HideStdout(self):
+        """Hide output to stdout from the user.
+
+        During test execution, there might be cases where we don't want to show the
+        standard output to the user.  For example,
+
+            self.runCmd(r'''sc print "\n\n\tHello!\n"''')
+
+        tests whether command abbreviation for 'script' works or not.  There is no
+        need to show the 'Hello' output to the user as long as the 'script' command
+        succeeds and we are not in TraceOn() mode (see the '-t' option).
+
+        In this case, the test method calls self.HideStdout(self) to redirect the
+        sys.stdout to a null device, and restores the sys.stdout upon teardown.
+
+        Note that you should only call this method at most once during a test case
+        execution.  Any subsequent call has no effect at all."""
+        if self.sys_stdout_hidden:
+            return
+
+        self.sys_stdout_hidden = True
+        old_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+        def restore_stdout():
+            sys.stdout = old_stdout
+        self.addTearDownHook(restore_stdout)
+
+    # =======================================================================
+    # Methods for customized teardown cleanups as well as execution of hooks.
+    # =======================================================================
+
+    def setTearDownCleanup(self, dictionary=None):
+        """Register a cleanup action at tearDown() time with a dictinary"""
+        self.dict = dictionary
+        self.doTearDownCleanup = True
+
+    def addTearDownCleanup(self, dictionary):
+        """Add a cleanup action at tearDown() time with a dictinary"""
+        self.dicts.append(dictionary)
+        self.doTearDownCleanups = True
+
+    def addTearDownHook(self, hook):
+        """
+        Add a function to be run during tearDown() time.
+
+        Hooks are executed in a first come first serve manner.
+        """
+        if callable(hook):
+            with recording(self, traceAlways) as sbuf:
+                print >> sbuf, "Adding tearDown hook:", getsource_if_available(hook)
+            self.hooks.append(hook)
+
+    def tearDown(self):
+        """Fixture for unittest test case teardown."""
+        #import traceback
+        #traceback.print_stack()
+
+        # Check and run any hook functions.
+        for hook in reversed(self.hooks):
+            with recording(self, traceAlways) as sbuf:
+                print >> sbuf, "Executing tearDown hook:", getsource_if_available(hook)
+            hook()
+
+        del self.hooks
+
+        # Perform registered teardown cleanup.
+        if doCleanup and self.doTearDownCleanup:
+            module = builder_module()
+            if not module.cleanup(self, dictionary=self.dict):
+                raise Exception("Don't know how to do cleanup with dictionary: " + self.dict)
+
+        # In rare cases where there are multiple teardown cleanups added.
+        if doCleanup and self.doTearDownCleanups:
+            module = builder_module()
+            if self.dicts:
+                for dict in reversed(self.dicts):
+                    if not module.cleanup(self, dictionary=dict):
+                        raise Exception("Don't know how to do cleanup with dictionary: " + dict)
+
+        # Decide whether to dump the session info.
+        self.dumpSessionInfo()
+
+    # =========================================================
+    # Various callbacks to allow introspection of test progress
+    # =========================================================
+
+    def markError(self):
+        """Callback invoked when an error (unexpected exception) errored."""
+        self.__errored__ = True
+        with recording(self, False) as sbuf:
+            # False because there's no need to write "ERROR" to the stderr twice.
+            # Once by the Python unittest framework, and a second time by us.
+            print >> sbuf, "ERROR"
+
+    def markFailure(self):
+        """Callback invoked when a failure (test assertion failure) occurred."""
+        self.__failed__ = True
+        with recording(self, False) as sbuf:
+            # False because there's no need to write "FAIL" to the stderr twice.
+            # Once by the Python unittest framework, and a second time by us.
+            print >> sbuf, "FAIL"
+
+    def markExpectedFailure(self):
+        """Callback invoked when an expected failure/error occurred."""
+        self.__expected__ = True
+        with recording(self, False) as sbuf:
+            # False because there's no need to write "expected failure" to the
+            # stderr twice.
+            # Once by the Python unittest framework, and a second time by us.
+            print >> sbuf, "expected failure"
+
+    def markUnexpectedSuccess(self):
+        """Callback invoked when an unexpected success occurred."""
+        self.__unexpected__ = True
+        with recording(self, False) as sbuf:
+            # False because there's no need to write "unexpected success" to the
+            # stderr twice.
+            # Once by the Python unittest framework, and a second time by us.
+            print >> sbuf, "unexpected success"
+
+    def dumpSessionInfo(self):
+        """
+        Dump the debugger interactions leading to a test error/failure.  This
+        allows for more convenient postmortem analysis.
+
+        See also LLDBTestResult (dotest.py) which is a singlton class derived
+        from TextTestResult and overwrites addError, addFailure, and
+        addExpectedFailure methods to allow us to to mark the test instance as
+        such.
+        """
+
+        # We are here because self.tearDown() detected that this test instance
+        # either errored or failed.  The lldb.test_result singleton contains
+        # two lists (erros and failures) which get populated by the unittest
+        # framework.  Look over there for stack trace information.
+        #
+        # The lists contain 2-tuples of TestCase instances and strings holding
+        # formatted tracebacks.
+        #
+        # See http://docs.python.org/library/unittest.html#unittest.TestResult.
+        if self.__errored__:
+            pairs = lldb.test_result.errors
+            prefix = 'Error'
+        elif self.__failed__:
+            pairs = lldb.test_result.failures
+            prefix = 'Failure'
+        elif self.__expected__:
+            pairs = lldb.test_result.expectedFailures
+            prefix = 'ExpectedFailure'
+        elif self.__unexpected__:
+            prefix = "UnexpectedSuccess"
+        else:
+            # Simply return, there's no session info to dump!
+            return
+
+        if not self.__unexpected__:
+            for test, traceback in pairs:
+                if test is self:
+                    print >> self.session, traceback
+
+        dname = os.path.join(os.environ["LLDB_TEST"],
+                             os.environ["LLDB_SESSION_DIRNAME"])
+        if not os.path.isdir(dname):
+            os.mkdir(dname)
+        fname = os.path.join(dname, "%s-%s.log" % (prefix, self.id()))
+        with open(fname, "w") as f:
+            import datetime
+            print >> f, "Session info generated @", datetime.datetime.now().ctime()
+            print >> f, self.session.getvalue()
+            print >> f, "To rerun this test, issue the following command from the 'test' directory:\n"
+            print >> f, "./dotest.py %s -v -t -f %s.%s" % (self.getRunOptions(),
+                                                           self.__class__.__name__,
+                                                           self._testMethodName)
+
+    # ====================================================
+    # Config. methods supported through a plugin interface
+    # (enables reading of the current test configuration)
+    # ====================================================
+
+    def getArchitecture(self):
+        """Returns the architecture in effect the test suite is running with."""
+        module = builder_module()
+        return module.getArchitecture()
+
+    def getCompiler(self):
+        """Returns the compiler in effect the test suite is running with."""
+        module = builder_module()
+        return module.getCompiler()
+
+    def getRunOptions(self):
+        """Command line option for -A and -C to run this test again, called from
+        self.dumpSessionInfo()."""
+        arch = self.getArchitecture()
+        comp = self.getCompiler()
+        if not arch and not comp:
+            return ""
+        else:
+            return "%s %s" % ("-A "+arch if arch else "",
+                              "-C "+comp if comp else "")
+
+    # ==================================================
+    # Build methods supported through a plugin interface
+    # ==================================================
+
+    def buildDefault(self, architecture=None, compiler=None, dictionary=None):
+        """Platform specific way to build the default binaries."""
+        module = builder_module()
+        if not module.buildDefault(self, architecture, compiler, dictionary):
+            raise Exception("Don't know how to build default binary")
+
+    def buildDsym(self, architecture=None, compiler=None, dictionary=None):
+        """Platform specific way to build binaries with dsym info."""
+        module = builder_module()
+        if not module.buildDsym(self, architecture, compiler, dictionary):
+            raise Exception("Don't know how to build binary with dsym")
+
+    def buildDwarf(self, architecture=None, compiler=None, dictionary=None):
+        """Platform specific way to build binaries with dwarf maps."""
+        module = builder_module()
+        if not module.buildDwarf(self, architecture, compiler, dictionary):
+            raise Exception("Don't know how to build binary with dwarf")
 
 
 class TestBase(Base):
@@ -608,152 +864,11 @@ class TestBase(Base):
         # And the result object.
         self.res = lldb.SBCommandReturnObject()
 
-        # These are for customized teardown cleanup.
-        self.dict = None
-        self.doTearDownCleanup = False
-        # And in rare cases where there are multiple teardown cleanups.
-        self.dicts = []
-        self.doTearDownCleanups = False
-
-        # Create a string buffer to record the session info, to be dumped into a
-        # test case specific file if test failure is encountered.
-        self.session = StringIO.StringIO()
-
-        # Optimistically set __errored__, __failed__, __expected__ to False
-        # initially.  If the test errored/failed, the session info
-        # (self.session) is then dumped into a session specific file for
-        # diagnosis.
-        self.__errored__    = False
-        self.__failed__     = False
-        self.__expected__   = False
-        # We are also interested in unexpected success.
-        self.__unexpected__ = False
-
-        # See addTearDownHook(self, hook) which allows the client to add a hook
-        # function to be run during tearDown() time.
-        self.hooks = []
-
-        # See HideStdout(self).
-        self.sys_stdout_hidden = False
-
-    def markError(self):
-        """Callback invoked when an error (unexpected exception) errored."""
-        self.__errored__ = True
-        with recording(self, False) as sbuf:
-            # False because there's no need to write "ERROR" to the stderr twice.
-            # Once by the Python unittest framework, and a second time by us.
-            print >> sbuf, "ERROR"
-
-    def markFailure(self):
-        """Callback invoked when a failure (test assertion failure) occurred."""
-        self.__failed__ = True
-        with recording(self, False) as sbuf:
-            # False because there's no need to write "FAIL" to the stderr twice.
-            # Once by the Python unittest framework, and a second time by us.
-            print >> sbuf, "FAIL"
-
-    def markExpectedFailure(self):
-        """Callback invoked when an expected failure/error occurred."""
-        self.__expected__ = True
-        with recording(self, False) as sbuf:
-            # False because there's no need to write "expected failure" to the
-            # stderr twice.
-            # Once by the Python unittest framework, and a second time by us.
-            print >> sbuf, "expected failure"
-
-    def markUnexpectedSuccess(self):
-        """Callback invoked when an unexpected success occurred."""
-        self.__unexpected__ = True
-        with recording(self, False) as sbuf:
-            # False because there's no need to write "unexpected success" to the
-            # stderr twice.
-            # Once by the Python unittest framework, and a second time by us.
-            print >> sbuf, "unexpected success"
-
-    def dumpSessionInfo(self):
-        """
-        Dump the debugger interactions leading to a test error/failure.  This
-        allows for more convenient postmortem analysis.
-
-        See also LLDBTestResult (dotest.py) which is a singlton class derived
-        from TextTestResult and overwrites addError, addFailure, and
-        addExpectedFailure methods to allow us to to mark the test instance as
-        such.
-        """
-
-        # We are here because self.tearDown() detected that this test instance
-        # either errored or failed.  The lldb.test_result singleton contains
-        # two lists (erros and failures) which get populated by the unittest
-        # framework.  Look over there for stack trace information.
-        #
-        # The lists contain 2-tuples of TestCase instances and strings holding
-        # formatted tracebacks.
-        #
-        # See http://docs.python.org/library/unittest.html#unittest.TestResult.
-        if self.__errored__:
-            pairs = lldb.test_result.errors
-            prefix = 'Error'
-        elif self.__failed__:
-            pairs = lldb.test_result.failures
-            prefix = 'Failure'
-        elif self.__expected__:
-            pairs = lldb.test_result.expectedFailures
-            prefix = 'ExpectedFailure'
-        elif self.__unexpected__:
-            prefix = "UnexpectedSuccess"
-        else:
-            # Simply return, there's no session info to dump!
-            return
-
-        if not self.__unexpected__:
-            for test, traceback in pairs:
-                if test is self:
-                    print >> self.session, traceback
-
-        dname = os.path.join(os.environ["LLDB_TEST"],
-                             os.environ["LLDB_SESSION_DIRNAME"])
-        if not os.path.isdir(dname):
-            os.mkdir(dname)
-        fname = os.path.join(dname, "%s-%s.log" % (prefix, self.id()))
-        with open(fname, "w") as f:
-            import datetime
-            print >> f, "Session info generated @", datetime.datetime.now().ctime()
-            print >> f, self.session.getvalue()
-            print >> f, "To rerun this test, issue the following command from the 'test' directory:\n"
-            print >> f, "./dotest.py %s -v -t -f %s.%s" % (self.getRunOptions(),
-                                                           self.__class__.__name__,
-                                                           self._testMethodName)
-
-    def setTearDownCleanup(self, dictionary=None):
-        """Register a cleanup action at tearDown() time with a dictinary"""
-        self.dict = dictionary
-        self.doTearDownCleanup = True
-
-    def addTearDownCleanup(self, dictionary):
-        """Add a cleanup action at tearDown() time with a dictinary"""
-        self.dicts.append(dictionary)
-        self.doTearDownCleanups = True
-
-    def addTearDownHook(self, hook):
-        """
-        Add a function to be run during tearDown() time.
-
-        Hooks are executed in a first come first serve manner.
-        """
-        if callable(hook):
-            with recording(self, traceAlways) as sbuf:
-                print >> sbuf, "Adding tearDown hook:", getsource_if_available(hook)
-            self.hooks.append(hook)
-
     def tearDown(self):
         #import traceback
         #traceback.print_stack()
 
-        # Check and run any hook functions.
-        for hook in reversed(self.hooks):
-            with recording(self, traceAlways) as sbuf:
-                print >> sbuf, "Executing tearDown hook:", getsource_if_available(hook)
-            hook()
+        Base.tearDown(self)
 
         # This is for the case of directly spawning 'lldb' and interacting with it
         # using pexpect.
@@ -786,24 +901,6 @@ class TestBase(Base):
             self.dbg.DeleteTarget(target)
 
         del self.dbg
-        del self.hooks
-
-        # Perform registered teardown cleanup.
-        if doCleanup and self.doTearDownCleanup:
-            module = builder_module()
-            if not module.cleanup(self, dictionary=self.dict):
-                raise Exception("Don't know how to do cleanup with dictionary: " + self.dict)
-
-        # In rare cases where there are multiple teardown cleanups added.
-        if doCleanup and self.doTearDownCleanups:
-            module = builder_module()
-            if self.dicts:
-                for dict in reversed(self.dicts):
-                    if not module.cleanup(self, dictionary=dict):
-                        raise Exception("Don't know how to do cleanup with dictionary: " + dict)
-
-        # Decide whether to dump the session info.
-        self.dumpSessionInfo()
 
     def runCmd(self, cmd, msg=None, check=True, trace=False):
         """
@@ -940,54 +1037,6 @@ class TestBase(Base):
             print >> sbuf, str(method) + ":",  result
         return result
 
-    # ====================================================
-    # Config. methods supported through a plugin interface
-    # (enables reading of the current test configuration)
-    # ====================================================
-
-    def getArchitecture(self):
-        """Returns the architecture in effect the test suite is running with."""
-        module = builder_module()
-        return module.getArchitecture()
-
-    def getCompiler(self):
-        """Returns the compiler in effect the test suite is running with."""
-        module = builder_module()
-        return module.getCompiler()
-
-    def getRunOptions(self):
-        """Command line option for -A and -C to run this test again, called from
-        self.dumpSessionInfo()."""
-        arch = self.getArchitecture()
-        comp = self.getCompiler()
-        if not arch and not comp:
-            return ""
-        else:
-            return "%s %s" % ("-A "+arch if arch else "",
-                              "-C "+comp if comp else "")
-
-    # ==================================================
-    # Build methods supported through a plugin interface
-    # ==================================================
-
-    def buildDefault(self, architecture=None, compiler=None, dictionary=None):
-        """Platform specific way to build the default binaries."""
-        module = builder_module()
-        if not module.buildDefault(self, architecture, compiler, dictionary):
-            raise Exception("Don't know how to build default binary")
-
-    def buildDsym(self, architecture=None, compiler=None, dictionary=None):
-        """Platform specific way to build binaries with dsym info."""
-        module = builder_module()
-        if not module.buildDsym(self, architecture, compiler, dictionary):
-            raise Exception("Don't know how to build binary with dsym")
-
-    def buildDwarf(self, architecture=None, compiler=None, dictionary=None):
-        """Platform specific way to build binaries with dwarf maps."""
-        module = builder_module()
-        if not module.buildDwarf(self, architecture, compiler, dictionary):
-            raise Exception("Don't know how to build binary with dwarf")
-
     # =================================================
     # Misc. helper methods for debugging test execution
     # =================================================
@@ -1016,34 +1065,3 @@ class TestBase(Base):
             return
 
         print child
-
-    def TraceOn(self):
-        """Returns True if we are in trace mode (i.e., tracing lldb command execution)."""
-        return traceAlways
-
-    def HideStdout(self):
-        """Hide output to stdout from the user.
-
-        During test execution, there might be cases where we don't want to show the
-        standard output to the user.  For example,
-
-            self.runCmd(r'''sc print "\n\n\tHello!\n"''')
-
-        tests whether command abbreviation for 'script' works or not.  There is no
-        need to show the 'Hello' output to the user as long as the 'script' command
-        succeeds and we are not in TraceOn() mode (see the '-t' option).
-
-        In this case, the test method calls self.HideStdout(self) to redirect the
-        sys.stdout to a null device, and restores the sys.stdout upon teardown.
-
-        Note that you should only call this method at most once during a test case
-        execution.  Any subsequent call has no effect at all."""
-        if self.sys_stdout_hidden:
-            return
-
-        self.sys_stdout_hidden = True
-        old_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-        def restore_stdout():
-            sys.stdout = old_stdout
-        self.addTearDownHook(restore_stdout)
