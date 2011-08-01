@@ -231,42 +231,6 @@ def pointer_size():
     a_pointer = ctypes.c_void_p(0xffff)
     return 8 * ctypes.sizeof(a_pointer)
 
-from functools import wraps
-def python_api_test(func):
-    """Decorate the item as a Python API only test."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@python_api_test can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        try:
-            if lldb.dont_do_python_api_test:
-                self.skipTest("python api tests")
-        except AttributeError:
-            pass
-        return func(self, *args, **kwargs)
-
-    # Mark this function as such to separate them from lldb command line tests.
-    wrapper.__python_api_test__ = True
-    return wrapper
-
-from functools import wraps
-def benchmarks_test(func):
-    """Decorate the item as a benchmarks test."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@benchmarks_test can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        try:
-            if not lldb.just_do_benchmarks_test:
-                self.skipTest("benchmarks tests")
-        except AttributeError:
-            pass
-        return func(self, *args, **kwargs)
-
-    # Mark this function as such to separate them from the regular tests.
-    wrapper.__benchmarks_test__ = True
-    return wrapper
-
 class recording(StringIO.StringIO):
     """
     A nice little context manager for recording the debugger interactions into
@@ -363,79 +327,55 @@ def getsource_if_available(obj):
 def builder_module():
     return __import__("builder_" + sys.platform)
 
-class TestBase(unittest2.TestCase):
+#
+# Decorators for categorizing test cases.
+#
+
+from functools import wraps
+def python_api_test(func):
+    """Decorate the item as a Python API only test."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@python_api_test can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            if lldb.dont_do_python_api_test:
+                self.skipTest("python api tests")
+        except AttributeError:
+            pass
+        return func(self, *args, **kwargs)
+
+    # Mark this function as such to separate them from lldb command line tests.
+    wrapper.__python_api_test__ = True
+    return wrapper
+
+from functools import wraps
+def benchmarks_test(func):
+    """Decorate the item as a benchmarks test."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@benchmarks_test can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            if not lldb.just_do_benchmarks_test:
+                self.skipTest("benchmarks tests")
+        except AttributeError:
+            pass
+        return func(self, *args, **kwargs)
+
+    # Mark this function as such to separate them from the regular tests.
+    wrapper.__benchmarks_test__ = True
+    return wrapper
+
+class Base(unittest2.TestCase):
     """
-    This abstract base class is meant to be subclassed.  It provides default
-    implementations for setUpClass(), tearDownClass(), setUp(), and tearDown(),
-    among other things.
-
-    Important things for test class writers:
-
-        - Overwrite the mydir class attribute, otherwise your test class won't
-          run.  It specifies the relative directory to the top level 'test' so
-          the test harness can change to the correct working directory before
-          running your test.
-
-        - The setUp method sets up things to facilitate subsequent interactions
-          with the debugger as part of the test.  These include:
-              - populate the test method name
-              - create/get a debugger set with synchronous mode (self.dbg)
-              - get the command interpreter from with the debugger (self.ci)
-              - create a result object for use with the command interpreter
-                (self.res)
-              - plus other stuffs
-
-        - The tearDown method tries to perform some necessary cleanup on behalf
-          of the test to return the debugger to a good state for the next test.
-          These include:
-              - execute any tearDown hooks registered by the test method with
-                TestBase.addTearDownHook(); examples can be found in
-                settings/TestSettings.py
-              - kill the inferior process associated with each target, if any,
-                and, then delete the target from the debugger's target list
-              - perform build cleanup before running the next test method in the
-                same test class; examples of registering for this service can be
-                found in types/TestIntegerTypes.py with the call:
-                    - self.setTearDownCleanup(dictionary=d)
-
-        - Similarly setUpClass and tearDownClass perform classwise setup and
-          teardown fixtures.  The tearDownClass method invokes a default build
-          cleanup for the entire test class;  also, subclasses can implement the
-          classmethod classCleanup(cls) to perform special class cleanup action.
-
-        - The instance methods runCmd and expect are used heavily by existing
-          test cases to send a command to the command interpreter and to perform
-          string/pattern matching on the output of such command execution.  The
-          expect method also provides a mode to peform string/pattern matching
-          without running a command.
-
-        - The build methods buildDefault, buildDsym, and buildDwarf are used to
-          build the binaries used during a particular test scenario.  A plugin
-          should be provided for the sys.platform running the test suite.  The
-          Mac OS X implementation is located in plugins/darwin.py.
+    Abstract base for performing lldb (see TestBase) or other generic tests (see
+    BenchBase for one example).  lldbtest.Base works with the test driver to
+    accomplish things.
+    
     """
-
-    @classmethod
-    def skipLongRunningTest(cls):
-        """
-        By default, we skip long running test case.
-        This can be overridden by passing '-l' to the test driver (dotest.py).
-        """
-        if "LLDB_SKIP_LONG_RUNNING_TEST" in os.environ and "NO" == os.environ["LLDB_SKIP_LONG_RUNNING_TEST"]:
-            return False
-        else:
-            return True
-
     # The concrete subclass should override this attribute.
     mydir = None
-
-    # Maximum allowed attempts when launching the inferior process.
-    # Can be overridden by the LLDB_MAX_LAUNCH_COUNT environment variable.
-    maxLaunchCount = 3;
-
-    # Time to wait before the next launching attempt in second(s).
-    # Can be overridden by the LLDB_TIME_WAIT_NEXT_LAUNCH environment variable.
-    timeWaitNextLaunch = 1.0;
 
     # Keep track of the old current working directory.
     oldcwd = None
@@ -488,40 +428,21 @@ class TestBase(unittest2.TestCase):
             print >> sys.stderr, "Restore dir to:", cls.oldcwd
         os.chdir(cls.oldcwd)
 
-    def doDelay(self):
-        """See option -w of dotest.py."""
-        if ("LLDB_WAIT_BETWEEN_TEST_CASES" in os.environ and
-            os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] == 'YES'):
-            waitTime = 1.0
-            if "LLDB_TIME_WAIT_BETWEEN_TEST_CASES" in os.environ:
-                waitTime = float(os.environ["LLDB_TIME_WAIT_BETWEEN_TEST_CASES"])
-            time.sleep(waitTime)
+    @classmethod
+    def skipLongRunningTest(cls):
+        """
+        By default, we skip long running test case.
+        This can be overridden by passing '-l' to the test driver (dotest.py).
+        """
+        if "LLDB_SKIP_LONG_RUNNING_TEST" in os.environ and "NO" == os.environ["LLDB_SKIP_LONG_RUNNING_TEST"]:
+            return False
+        else:
+            return True
 
     def setUp(self):
+        """Works with the test driver to conditionally skip tests."""
         #import traceback
         #traceback.print_stack()
-
-        # Assign the test method name to self.testMethodName.
-        #
-        # For an example of the use of this attribute, look at test/types dir.
-        # There are a bunch of test cases under test/types and we don't want the
-        # module cacheing subsystem to be confused with executable name "a.out"
-        # used for all the test cases.
-        self.testMethodName = self._testMethodName
-
-        if "LLDB_EXEC" in os.environ:
-            self.lldbExec = os.environ["LLDB_EXEC"]
-
-        try:
-            if lldb.blacklist:
-                className = self.__class__.__name__
-                classAndMethodName = "%s.%s" % (className, self._testMethodName)
-                if className in lldb.blacklist:
-                    self.skipTest(lldb.blacklist.get(className))
-                elif classAndMethodName in lldb.blacklist:
-                    self.skipTest(lldb.blacklist.get(classAndMethodName))
-        except AttributeError:
-            pass
 
         # Python API only test is decorated with @python_api_test,
         # which also sets the "__python_api_test__" attribute of the
@@ -546,6 +467,106 @@ class TestBase(unittest2.TestCase):
                     pass
                 else:
                     self.skipTest("non benchmarks test")
+        except AttributeError:
+            pass
+
+
+
+class TestBase(Base):
+    """
+    This abstract base class is meant to be subclassed.  It provides default
+    implementations for setUpClass(), tearDownClass(), setUp(), and tearDown(),
+    among other things.
+
+    Important things for test class writers:
+
+        - Overwrite the mydir class attribute, otherwise your test class won't
+          run.  It specifies the relative directory to the top level 'test' so
+          the test harness can change to the correct working directory before
+          running your test.
+
+        - The setUp method sets up things to facilitate subsequent interactions
+          with the debugger as part of the test.  These include:
+              - populate the test method name
+              - create/get a debugger set with synchronous mode (self.dbg)
+              - get the command interpreter from with the debugger (self.ci)
+              - create a result object for use with the command interpreter
+                (self.res)
+              - plus other stuffs
+
+        - The tearDown method tries to perform some necessary cleanup on behalf
+          of the test to return the debugger to a good state for the next test.
+          These include:
+              - execute any tearDown hooks registered by the test method with
+                TestBase.addTearDownHook(); examples can be found in
+                settings/TestSettings.py
+              - kill the inferior process associated with each target, if any,
+                and, then delete the target from the debugger's target list
+              - perform build cleanup before running the next test method in the
+                same test class; examples of registering for this service can be
+                found in types/TestIntegerTypes.py with the call:
+                    - self.setTearDownCleanup(dictionary=d)
+
+        - Similarly setUpClass and tearDownClass perform classwise setup and
+          teardown fixtures.  The tearDownClass method invokes a default build
+          cleanup for the entire test class;  also, subclasses can implement the
+          classmethod classCleanup(cls) to perform special class cleanup action.
+
+        - The instance methods runCmd and expect are used heavily by existing
+          test cases to send a command to the command interpreter and to perform
+          string/pattern matching on the output of such command execution.  The
+          expect method also provides a mode to peform string/pattern matching
+          without running a command.
+
+        - The build methods buildDefault, buildDsym, and buildDwarf are used to
+          build the binaries used during a particular test scenario.  A plugin
+          should be provided for the sys.platform running the test suite.  The
+          Mac OS X implementation is located in plugins/darwin.py.
+    """
+
+    # Maximum allowed attempts when launching the inferior process.
+    # Can be overridden by the LLDB_MAX_LAUNCH_COUNT environment variable.
+    maxLaunchCount = 3;
+
+    # Time to wait before the next launching attempt in second(s).
+    # Can be overridden by the LLDB_TIME_WAIT_NEXT_LAUNCH environment variable.
+    timeWaitNextLaunch = 1.0;
+
+    def doDelay(self):
+        """See option -w of dotest.py."""
+        if ("LLDB_WAIT_BETWEEN_TEST_CASES" in os.environ and
+            os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] == 'YES'):
+            waitTime = 1.0
+            if "LLDB_TIME_WAIT_BETWEEN_TEST_CASES" in os.environ:
+                waitTime = float(os.environ["LLDB_TIME_WAIT_BETWEEN_TEST_CASES"])
+            time.sleep(waitTime)
+
+    def setUp(self):
+        #import traceback
+        #traceback.print_stack()
+
+        # Works with the test driver to conditionally skip tests via decorators.
+        Base.setUp(self)
+
+        # Assign the test method name to self.testMethodName.
+        #
+        # For an example of the use of this attribute, look at test/types dir.
+        # There are a bunch of test cases under test/types and we don't want the
+        # module cacheing subsystem to be confused with executable name "a.out"
+        # used for all the test cases.
+        self.testMethodName = self._testMethodName
+
+        if "LLDB_EXEC" in os.environ:
+            self.lldbExec = os.environ["LLDB_EXEC"]
+
+        try:
+            if lldb.blacklist:
+                className = self.__class__.__name__
+                classAndMethodName = "%s.%s" % (className, self._testMethodName)
+                if className in lldb.blacklist:
+                    self.skipTest(lldb.blacklist.get(className))
+                elif classAndMethodName in lldb.blacklist:
+                    self.skipTest(lldb.blacklist.get(classAndMethodName))
         except AttributeError:
             pass
 
