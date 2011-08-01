@@ -1570,38 +1570,6 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   Record.push_back(SourceMgr.getNextLocalOffset() - 1); // skip dummy
   Stream.EmitRecordWithBlob(SLocOffsetsAbbrev, Record, data(SLocEntryOffsets));
 
-  // If we have module dependencies, write the mapping from source locations to
-  // their containing modules, so that the reader can build the remapping.
-  if (Chain) {
-    // The map consists solely of a blob with the following format:
-    // *(offset:i32 len:i16 name:len*i8)
-    // Sorted by offset.
-    typedef std::pair<uint32_t, StringRef> ModuleOffset;
-    SmallVector<ModuleOffset, 16> Modules;
-
-    Chain->ModuleMgr.exportLookup(Modules);
-
-    Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(MODULE_OFFSET_MAP));
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
-    unsigned SLocMapAbbrev = Stream.EmitAbbrev(Abbrev);
-    llvm::SmallString<2048> Buffer;
-    {
-      llvm::raw_svector_ostream Out(Buffer);
-      for (SmallVector<ModuleOffset, 16>::iterator I = Modules.begin(),
-                                                         E = Modules.end();
-           I != E; ++I) {
-        io::Emit32(Out, I->first);
-        io::Emit16(Out, I->second.size());
-        Out.write(I->second.data(), I->second.size());
-      }
-    }
-    Record.clear();
-    Record.push_back(MODULE_OFFSET_MAP);
-    Stream.EmitRecordWithBlob(SLocMapAbbrev, Record,
-                              Buffer.data(), Buffer.size());
-  }
-
   Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(FILE_SOURCE_LOCATION_OFFSETS));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 16)); // # of slocs
@@ -2938,6 +2906,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (StatCalls && isysroot.empty())
     WriteStatCache(*StatCalls);
   WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
+  
   // Write the record of special types.
   Record.clear();
 
@@ -3069,6 +3038,40 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // done by tracking the largest ID in the chain
   WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
 
+  // Write the mapping information describing our module dependencies and how
+  // each of those modules were mapped into our own offset/ID space, so that
+  // the reader can build the appropriate mapping to its own offset/ID space.
+  
+  // If we have module dependencies, write the mapping from source locations to
+  // their containing modules, so that the reader can build the remapping.
+  // The map consists solely of a blob with the following format:
+  // *(offset:i32 len:i16 name:len*i8)
+  // Sorted by offset.
+  typedef std::pair<uint32_t, StringRef> ModuleOffset;
+  SmallVector<ModuleOffset, 16> Modules;
+  
+  Chain->ModuleMgr.exportLookup(Modules);
+  
+  llvm::BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(MODULE_OFFSET_MAP));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+  unsigned SLocMapAbbrev = Stream.EmitAbbrev(Abbrev);
+  llvm::SmallString<2048> Buffer;
+  {
+    llvm::raw_svector_ostream Out(Buffer);
+    for (SmallVector<ModuleOffset, 16>::iterator I = Modules.begin(),
+         E = Modules.end();
+         I != E; ++I) {
+      io::Emit32(Out, I->first);
+      io::Emit16(Out, I->second.size());
+      Out.write(I->second.data(), I->second.size());
+    }
+  }
+  Record.clear();
+  Record.push_back(MODULE_OFFSET_MAP);
+  Stream.EmitRecordWithBlob(SLocMapAbbrev, Record,
+                            Buffer.data(), Buffer.size());
+  
   // The special types are in the chained PCH.
 
   // We don't start with the translation unit, but with its decls that
