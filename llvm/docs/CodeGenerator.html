@@ -1830,7 +1830,7 @@ $ llc -regalloc=pbqp file.bc -o pbqp.s;
 
 <p>The compact unwind encoding is a 32-bit value, which is encoded in an
    architecture-specific way. It specifies which registers to restore and from
-   where, and how to unwind out of the funciton. When the linker creates a final
+   where, and how to unwind out of the function. When the linker creates a final
    linked image, it will create a <code>__TEXT,__unwind_info</code>
    section. This section is a small and fast way for the runtime to access
    unwind info for any given function. If we emit compact unwind info for the
