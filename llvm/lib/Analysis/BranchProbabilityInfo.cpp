@@ -142,15 +142,15 @@ bool BranchProbabilityAnalysis::calcReturnHeuristics(BasicBlock *BB){
   if (BB->getTerminator()->getNumSuccessors() == 1)
     return false;
 
-  SmallVector<BasicBlock *, 4> ReturningEdges;
-  SmallVector<BasicBlock *, 4> StayEdges;
+  SmallPtrSet<BasicBlock *, 4> ReturningEdges;
+  SmallPtrSet<BasicBlock *, 4> StayEdges;
 
   for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
     BasicBlock *Succ = *I;
     if (isReturningBlock(Succ))
-      ReturningEdges.push_back(Succ);
+      ReturningEdges.insert(Succ);
     else
-      StayEdges.push_back(Succ);
+      StayEdges.insert(Succ);
   }
 
   if (uint32_t numStayEdges = StayEdges.size()) {
@@ -158,7 +158,7 @@ bool BranchProbabilityAnalysis::calcReturnHeuristics(BasicBlock *BB){
     if (stayWeight < NORMAL_WEIGHT)
       stayWeight = NORMAL_WEIGHT;
 
-    for (SmallVector<BasicBlock *, 4>::iterator I = StayEdges.begin(),
+    for (SmallPtrSet<BasicBlock *, 4>::iterator I = StayEdges.begin(),
          E = StayEdges.end(); I != E; ++I)
       BP->setEdgeWeight(BB, *I, stayWeight);
   }
@@ -167,7 +167,7 @@ bool BranchProbabilityAnalysis::calcReturnHeuristics(BasicBlock *BB){
     uint32_t retWeight = RH_NONTAKEN_WEIGHT / numRetEdges;
     if (retWeight < MIN_WEIGHT)
       retWeight = MIN_WEIGHT;
-    for (SmallVector<BasicBlock *, 4>::iterator I = ReturningEdges.begin(),
+    for (SmallPtrSet<BasicBlock *, 4>::iterator I = ReturningEdges.begin(),
          E = ReturningEdges.end(); I != E; ++I) {
       BP->setEdgeWeight(BB, *I, retWeight);
     }
@@ -220,9 +220,9 @@ bool BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
   if (!L)
     return false;
 
-  SmallVector<BasicBlock *, 8> BackEdges;
-  SmallVector<BasicBlock *, 8> ExitingEdges;
-  SmallVector<BasicBlock *, 8> InEdges; // Edges from header to the loop.
+  SmallPtrSet<BasicBlock *, 8> BackEdges;
+  SmallPtrSet<BasicBlock *, 8> ExitingEdges;
+  SmallPtrSet<BasicBlock *, 8> InEdges; // Edges from header to the loop.
 
   bool isHeader = BB == L->getHeader();
 
@@ -230,11 +230,11 @@ bool BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
     BasicBlock *Succ = *I;
     Loop *SuccL = LI->getLoopFor(Succ);
     if (SuccL != L)
-      ExitingEdges.push_back(Succ);
+      ExitingEdges.insert(Succ);
     else if (Succ == L->getHeader())
-      BackEdges.push_back(Succ);
+      BackEdges.insert(Succ);
     else if (isHeader)
-      InEdges.push_back(Succ);
+      InEdges.insert(Succ);
   }
 
   if (uint32_t numBackEdges = BackEdges.size()) {
@@ -242,7 +242,7 @@ bool BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
     if (backWeight < NORMAL_WEIGHT)
       backWeight = NORMAL_WEIGHT;
 
-    for (SmallVector<BasicBlock *, 8>::iterator EI = BackEdges.begin(),
+    for (SmallPtrSet<BasicBlock *, 8>::iterator EI = BackEdges.begin(),
          EE = BackEdges.end(); EI != EE; ++EI) {
       BasicBlock *Back = *EI;
       BP->setEdgeWeight(BB, Back, backWeight);
@@ -254,7 +254,7 @@ bool BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
     if (inWeight < NORMAL_WEIGHT)
       inWeight = NORMAL_WEIGHT;
 
-    for (SmallVector<BasicBlock *, 8>::iterator EI = InEdges.begin(),
+    for (SmallPtrSet<BasicBlock *, 8>::iterator EI = InEdges.begin(),
          EE = InEdges.end(); EI != EE; ++EI) {
       BasicBlock *Back = *EI;
       BP->setEdgeWeight(BB, Back, inWeight);
@@ -267,7 +267,7 @@ bool BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
     if (exitWeight < MIN_WEIGHT)
       exitWeight = MIN_WEIGHT;
 
-    for (SmallVector<BasicBlock *, 8>::iterator EI = ExitingEdges.begin(),
+    for (SmallPtrSet<BasicBlock *, 8>::iterator EI = ExitingEdges.begin(),
          EE = ExitingEdges.end(); EI != EE; ++EI) {
       BasicBlock *Exiting = *EI;
       BP->setEdgeWeight(BB, Exiting, exitWeight);
