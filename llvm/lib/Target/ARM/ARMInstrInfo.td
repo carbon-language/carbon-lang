@@ -513,6 +513,12 @@ def imm0_31 : Operand<i32>, ImmLeaf<i32, [{
   let ParserMatchClass = Imm0_31AsmOperand;
 }
 
+/// imm0_255 predicate - Immediate in the range [0,255].
+def Imm0_255AsmOperand : AsmOperandClass { let Name = "Imm0_255"; }
+def imm0_255 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 256; }]> {
+  let ParserMatchClass = Imm0_255AsmOperand;
+}
+
 // imm0_65535_expr - For movt/movw - 16-bit immediate that can also reference
 // a relocatable expression.
 //
