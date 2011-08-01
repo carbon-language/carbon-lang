@@ -387,8 +387,11 @@ namespace clang {
       /// for typo correction.
       KNOWN_NAMESPACES = 46,
 
-      /// \brief Record code for the source location remapping information.
-      SOURCE_LOCATION_MAP = 47,
+      /// \brief Record code for the remapping information used to relate
+      /// loaded modules to the various offsets and IDs(e.g., source location 
+      /// offests, declaration and type IDs) that are used in that module to
+      /// refer to other modules.
+      MODULE_OFFSET_MAP = 47,
 
       /// \brief Record code for the source manager line table information,
       /// which stores information about #line directives.

@@ -2271,7 +2271,7 @@ ASTReader::ReadASTBlock(Module &F) {
       break;
     }
 
-    case SOURCE_LOCATION_MAP: {
+    case MODULE_OFFSET_MAP: {
       // Additional remapping information.
       const unsigned char *Data = (const unsigned char*)BlobStart;
       const unsigned char *DataEnd = Data + BlobLen;

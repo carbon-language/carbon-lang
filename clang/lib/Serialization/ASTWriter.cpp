@@ -1582,7 +1582,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     Chain->ModuleMgr.exportLookup(Modules);
 
     Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(SOURCE_LOCATION_MAP));
+    Abbrev->Add(BitCodeAbbrevOp(MODULE_OFFSET_MAP));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
     unsigned SLocMapAbbrev = Stream.EmitAbbrev(Abbrev);
     llvm::SmallString<2048> Buffer;
@@ -1597,7 +1597,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
       }
     }
     Record.clear();
-    Record.push_back(SOURCE_LOCATION_MAP);
+    Record.push_back(MODULE_OFFSET_MAP);
     Stream.EmitRecordWithBlob(SLocMapAbbrev, Record,
                               Buffer.data(), Buffer.size());
   }
