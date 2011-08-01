@@ -880,7 +880,7 @@ bool AsmPrinter::doFinalization(Module &M) {
          I != E; ++I) {
       MCSymbol *Name = Mang->getSymbol(I);
 
-      const GlobalValue *GV = cast<GlobalValue>(I->getAliasedGlobal());
+      const GlobalValue *GV = I->getAliasedGlobal();
       MCSymbol *Target = Mang->getSymbol(GV);
 
       if (I->hasExternalLinkage() || !MAI->getWeakRefDirective())
