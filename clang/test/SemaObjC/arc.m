@@ -614,9 +614,9 @@ int Test33(id someid) {
 @synthesize newName;
 
 @synthesize newName1;
-- (id) newName1 { return 0; } // expected-note {{method declared here}}
+- (id) newName1 { return 0; }
 
-@synthesize newName2; // expected-error {{property implementation declaration after method or function definition}}
+@synthesize newName2;
 @end
 
 void test35(void) {

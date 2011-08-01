@@ -18,23 +18,22 @@ int bar;
 @end
 
 @implementation I
-- (int) Meth { return PROP; } // expected-note 2{{'PROP' declared here}} \
-                              // expected-note 5{{method declared here}}
+- (int) Meth { return PROP; } // expected-note 2{{'PROP' declared here}}
 
-@dynamic PROP1; // expected-warning {{property implementation declaration after method or function definition}}
+@dynamic PROP1;
 - (int) Meth1 { return PROP1; }  // expected-error {{use of undeclared identifier 'PROP1'}}
 
 - (int) Meth2 { return PROP2; }  // expected-error {{use of undeclared identifier 'PROP2'}}
-@dynamic PROP2; // expected-warning {{property implementation declaration after method or function definition}}
+@dynamic PROP2;
 
 - (int) Meth3 { return PROP3; }  // expected-error {{use of undeclared identifier 'PROP3'}}
-@synthesize PROP3=IVAR; // expected-warning {{property implementation declaration after method or function definition}}
+@synthesize PROP3=IVAR;
 
 - (int) Meth4 { return PROP4; }
-@synthesize PROP4=PROP4; // expected-warning {{property implementation declaration after method or function definition}}
+@synthesize PROP4=PROP4;
 
 - (int) Meth5 { return bar; }  // expected-error {{use of undeclared identifier 'bar'}}
-@synthesize bar = _bar; // expected-warning {{property implementation declaration after method or function definition}}
+@synthesize bar = _bar;
 
 - (int) Meth6 { return bar1; }
 

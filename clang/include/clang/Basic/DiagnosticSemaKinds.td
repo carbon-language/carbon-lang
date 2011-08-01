@@ -472,10 +472,6 @@ def err_continuation_class : Error<"continuation class has no primary class">;
 def err_property_type : Error<"property cannot have array or function type %0">;
 def error_missing_property_context : Error<
   "missing context for property implementation declaration">;
-def error_property_after_method_impl : Error<
-  "property implementation declaration after method or function definition">;
-def warn_property_after_method_impl : Warning<
-  "property implementation declaration after method or function definition">;
 def error_bad_property_decl : Error<
   "property implementation must have its declaration in interface %0">;
 def error_category_property : Error<

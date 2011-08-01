@@ -111,7 +111,7 @@
 @end
 
 @implementation D
-@synthesize PROP=IVAR;
 - (int) Meth { return self.PROP; }
+@synthesize PROP=IVAR;
 @end
 

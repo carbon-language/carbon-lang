@@ -15,7 +15,7 @@
 @synthesize foo = _foo;
 @synthesize foo1;
 
-- (void)setFoo:(int)value { // expected-note 3 {{method declared here}}
+- (void)setFoo:(int)value {
     _foo = foo; // expected-error {{use of undeclared identifier 'foo'}}
 }
 
@@ -31,10 +31,10 @@
     _foo = foo3;	// OK
 }
 
-@synthesize foo2 = _foo2; // expected-warning {{property implementation declaration after method or function definition}}
-@synthesize foo3; // expected-warning {{property implementation declaration after method or function definition}}
+@synthesize foo2 = _foo2;
+@synthesize foo3;
 
-@synthesize PROP=PROP; // expected-warning {{property implementation declaration after method or function definition}}
+@synthesize PROP=PROP;
 - (void)setPROP:(int)value {
     PROP = PROP;        // OK
 }

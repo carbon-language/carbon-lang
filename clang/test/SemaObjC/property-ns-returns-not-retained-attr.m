@@ -15,7 +15,7 @@
 @synthesize newName;
 
 @synthesize newName1;
-@synthesize newName2;
 - (id) newName1 { return 0; }
 
+@synthesize newName2;
 @end

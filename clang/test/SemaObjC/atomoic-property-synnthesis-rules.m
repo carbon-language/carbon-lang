@@ -1,5 +1,4 @@
 // RUN: %clang_cc1  -fsyntax-only -verify %s
-// XFAIL: *
 
 /*
   Conditions for warning:
