@@ -4673,22 +4673,24 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   EVT ExtVT = VT.getVectorElementType();
   unsigned NumElems = Op.getNumOperands();
 
-  // All zero's:
-  //  - pxor (SSE2), xorps (SSE1), vpxor (128 AVX), xorp[s|d] (256 AVX)
-  // All one's:
-  //  - pcmpeqd (SSE2 and 128 AVX), fallback to constant pools (256 AVX)
-  if (ISD::isBuildVectorAllZeros(Op.getNode()) ||
-      ISD::isBuildVectorAllOnes(Op.getNode())) {
-    // Canonicalize this to <4 x i32> or <8 x 32> (SSE) to
-    // 1) ensure the zero vectors are CSE'd, and 2) ensure that i64 scalars are
-    // eliminated on x86-32 hosts.
+  // Vectors containing all zeros can be matched by pxor and xorps later
+  if (ISD::isBuildVectorAllZeros(Op.getNode())) {
+    // Canonicalize this to <4 x i32> to 1) ensure the zero vectors are CSE'd
+    // and 2) ensure that i64 scalars are eliminated on x86-32 hosts.
     if (Op.getValueType() == MVT::v4i32 ||
         Op.getValueType() == MVT::v8i32)
       return Op;
 
-    if (ISD::isBuildVectorAllOnes(Op.getNode()))
-      return getOnesVector(Op.getValueType(), DAG, dl);
     return getZeroVector(Op.getValueType(), Subtarget->hasSSE2(), DAG, dl);
+  }
+
+  // Vectors containing all ones can be matched by pcmpeqd on 128-bit width
+  // vectors or broken into v4i32 operations on 256-bit vectors.
+  if (ISD::isBuildVectorAllOnes(Op.getNode())) {
+    if (Op.getValueType() == MVT::v4i32)
+      return Op;
+
+    return getOnesVector(Op.getValueType(), DAG, dl);
   }
 
   unsigned EVTBits = ExtVT.getSizeInBits();
