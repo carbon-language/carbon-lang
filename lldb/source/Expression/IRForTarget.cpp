@@ -1236,7 +1236,7 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
     
     if (log)
         log->Printf("MaybeHandleVariable (%s)", PrintValue(llvm_value_ptr).c_str());
-
+        
     if (ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(llvm_value_ptr))
     {
         switch (constant_expr->getOpcode())
@@ -1324,7 +1324,12 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
                                                         llvm_value_ptr,
                                                         value_size, 
                                                         value_alignment))
-            return false;
+        {
+            if (!global_variable->hasExternalLinkage())
+                return true;
+            else
+                return false;
+        }
     }
     else if (dyn_cast<llvm::Function>(llvm_value_ptr))
     {
@@ -1403,6 +1408,9 @@ IRForTarget::MaybeHandleCall (CallInst *llvm_call_inst)
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     Function *fun = llvm_call_inst->getCalledFunction();
+
+    // If the call is to something other than a plain llvm::Function, resolve which
+    // Function is meant or give up.
     
     if (fun == NULL)
     {
@@ -1440,6 +1448,9 @@ IRForTarget::MaybeHandleCall (CallInst *llvm_call_inst)
         }
     }
     
+    // Determine the name of the called function, which is needed to find the address.
+    // Intrinsics are special-cased.
+    
     lldb_private::ConstString str;
     
     if (fun->isIntrinsic())
@@ -1471,6 +1482,8 @@ IRForTarget::MaybeHandleCall (CallInst *llvm_call_inst)
     {
         str.SetCStringWithLength (fun->getName().data(), fun->getName().size());
     }
+    
+    // Find the address of the function, and the type if possible.
     
     clang::NamedDecl *fun_decl = DeclForGlobal (fun);
     lldb::addr_t fun_addr = LLDB_INVALID_ADDRESS;
@@ -1510,6 +1523,8 @@ IRForTarget::MaybeHandleCall (CallInst *llvm_call_inst)
         
     if (log)
         log->Printf("Found \"%s\" at 0x%llx", str.GetCString(), fun_addr);
+    
+    // Construct the typed pointer to the function.
     
     Value *fun_addr_ptr = NULL;
             
