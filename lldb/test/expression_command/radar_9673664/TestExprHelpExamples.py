@@ -19,7 +19,6 @@ class Radar9673644TestCase(TestBase):
         self.line = line_number(self.main_source, '// Set breakpoint here.')
 
     # rdar://problem/9673664
-    @unittest2.expectedFailure
     def test_expr_commands(self):
         """The following expression commands should just work."""
         self.buildDefault()
@@ -35,9 +34,10 @@ class Radar9673644TestCase(TestBase):
 
         # rdar://problem/9673664 lldb expression evaluation problem
 
-        self.runCmd('expr char c[] = "foo"; c[0]')
-        # Fill in an example output here.
-        # And change self.runCmd() -> self.expect()...
+        self.expect('expr char c[] = "foo"; c[0]',
+            substrs = ["'f'"])
+        # runCmd: expr char c[] = "foo"; c[0]
+        # output: (char) $0 = 'f'
 
 
 if __name__ == '__main__':
