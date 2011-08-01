@@ -1397,8 +1397,9 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
   if (Aliasee == 0) {
     TypePrinter.print(GA->getType(), Out);
     Out << " <<NULL ALIASEE>>";
-  } else
+  } else {
     writeOperand(Aliasee, !isa<ConstantExpr>(Aliasee));
+  }
 
   printInfoComment(*GA);
   Out << '\n';
