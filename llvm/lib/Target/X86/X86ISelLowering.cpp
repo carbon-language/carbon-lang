@@ -966,6 +966,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
     setOperationAction(ISD::FP_TO_SINT,         MVT::v8i32, Legal);
     setOperationAction(ISD::SINT_TO_FP,         MVT::v8i32, Legal);
+    setOperationAction(ISD::FP_ROUND,           MVT::v4f32, Legal);
 
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4f64,  Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4i64,  Custom);

@@ -1054,6 +1054,12 @@ def : Pat<(int_x86_avx_cvtt_ps2dq_256 VR256:$src),
 def : Pat<(int_x86_avx_cvtt_ps2dq_256 (memopv8f32 addr:$src)),
           (VCVTTPS2DQYrm addr:$src)>;
 
+// Match fround for 128/256-bit conversions
+def : Pat<(v4f32 (fround (v4f64 VR256:$src))),
+          (VCVTPD2PSYrr VR256:$src)>;
+def : Pat<(v4f32 (fround (loadv4f64 addr:$src))),
+          (VCVTPD2PSYrm addr:$src)>;
+
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Compare Instructions
 //===----------------------------------------------------------------------===//
