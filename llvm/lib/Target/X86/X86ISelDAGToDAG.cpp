@@ -474,10 +474,15 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
     if (N->getOpcode() != ISD::FP_ROUND && N->getOpcode() != ISD::FP_EXTEND)
       continue;
     
-    // If the source and destination are SSE registers, then this is a legal
-    // conversion that should not be lowered.
     EVT SrcVT = N->getOperand(0).getValueType();
     EVT DstVT = N->getValueType(0);
+
+    // If any of the sources are vectors, no fp stack involved.
+    if (SrcVT.isVector() || DstVT.isVector())
+      continue;
+
+    // If the source and destination are SSE registers, then this is a legal
+    // conversion that should not be lowered.
     bool SrcIsSSE = X86Lowering.isScalarFPTypeInSSEReg(SrcVT);
     bool DstIsSSE = X86Lowering.isScalarFPTypeInSSEReg(DstVT);
     if (SrcIsSSE && DstIsSSE)

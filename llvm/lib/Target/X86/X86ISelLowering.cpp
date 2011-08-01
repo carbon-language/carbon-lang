@@ -168,8 +168,8 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
 X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   : TargetLowering(TM, createTLOF(TM)) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
-  X86ScalarSSEf64 = Subtarget->hasXMMInt();
-  X86ScalarSSEf32 = Subtarget->hasXMM();
+  X86ScalarSSEf64 = Subtarget->hasXMMInt() || Subtarget->hasAVX();
+  X86ScalarSSEf32 = Subtarget->hasXMM() || Subtarget->hasAVX();
   X86StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
 
   RegInfo = TM.getRegisterInfo();

@@ -59,8 +59,8 @@ public:
   explicit X86FastISel(FunctionLoweringInfo &funcInfo) : FastISel(funcInfo) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
     StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
-    X86ScalarSSEf64 = Subtarget->hasSSE2();
-    X86ScalarSSEf32 = Subtarget->hasSSE1();
+    X86ScalarSSEf64 = Subtarget->hasSSE2() || Subtarget->hasAVX();
+    X86ScalarSSEf32 = Subtarget->hasSSE1() || Subtarget->hasAVX();
   }
 
   virtual bool TargetSelectInstruction(const Instruction *I);
