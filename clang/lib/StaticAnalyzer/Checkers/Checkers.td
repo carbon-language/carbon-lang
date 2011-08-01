@@ -42,6 +42,8 @@ def UnixExperimental : Package<"experimental">, InPackage<Unix>,
   InGroup<AllExperimental>, Hidden;
 
 def OSX : Package<"osx">;
+def OSXExperimental : Package<"experimental">, InPackage<OSX>,
+  InGroup<AllExperimental>, Hidden;
 def Cocoa : Package<"cocoa">, InPackage<OSX>;
 def CocoaExperimental : Package<"experimental">, InPackage<Cocoa>,
   InGroup<AllExperimental>, Hidden;
@@ -275,6 +277,15 @@ def OSAtomicChecker : Checker<"AtomicCAS">,
   DescFile<"OSAtomicChecker.cpp">;
 
 } // end "macosx"
+
+let ParentPackage = OSXExperimental in {
+
+def MacOSKeychainAPIChecker : Checker<"KeychainAPI">,
+  InPackage<OSX>,
+  HelpText<"Check for proper uses of Secure Keychain APIs">,
+  DescFile<"MacOSKeychainAPIChecker.cpp">;
+
+} // end "osx.experimental"
 
 let ParentPackage = Cocoa in {
 
