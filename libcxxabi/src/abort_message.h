@@ -10,12 +10,15 @@
 #ifndef __ABORT_MESSAGE_H_
 #define __ABORT_MESSAGE_H_
 
+#include "cxxabi.h"
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-extern void abort_message(const char* format, ...) 
-            __attribute__((noreturn, format(printf, 1, 2)));
+extern LIBCXXABI_NORETURN
+       void abort_message(const char* format, ...) 
+            __attribute__((format(printf, 1, 2)));
 
 
 #ifdef __cplusplus
