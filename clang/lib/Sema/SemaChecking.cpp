@@ -3491,7 +3491,9 @@ static void CheckArrayAccess_Check(Sema &S,
     else if (size.getBitWidth() < index.getBitWidth())
       size = size.sext(index.getBitWidth());
 
-    if (index.slt(size))
+    // Don't warn for valid indexes, or arrays of size 1 (which are often
+    // tail-allocated arrays that are emulating flexible arrays in C89 code).
+    if (index.slt(size) || size == 1)
       return;
 
     S.DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
