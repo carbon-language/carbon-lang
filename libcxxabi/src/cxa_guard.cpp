@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "cxxabi.h"
+#include "abort_message.h"
 
 #include <pthread.h>
 #include <stdint.h>
@@ -50,13 +51,6 @@ void set_initialized(guard_type* guard_object) {
 }
 
 #endif
-
-
-void abort_message(const char* s)
-{
-    fputs(s, stderr);
-    ::abort();
-}
 
 pthread_mutex_t guard_mut = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  guard_cv  = PTHREAD_COND_INITIALIZER;
