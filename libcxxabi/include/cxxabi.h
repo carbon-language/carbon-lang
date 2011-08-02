@@ -18,7 +18,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define LIBCXXABI_NORETURN
+#define LIBCXXABI_NORETURN  __attribute__((noreturn))
 
 namespace std {
     class type_info; // forward declaration
