@@ -726,12 +726,10 @@ def addrmodepc : Operand<i32>,
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
-// addrmode7 := reg
-// Used by load/store exclusive instructions. Useful to enable right assembly
-// parsing and printing. Not used for any codegen matching.
+// addr_offset_none := reg
 //
 def MemMode7AsmOperand : AsmOperandClass { let Name = "MemMode7"; }
-def addrmode7 : Operand<i32> {
+def addr_offset_none : Operand<i32> {
   let PrintMethod = "printAddrMode7Operand";
   let MIOperandInfo = (ops GPR);
   let ParserMatchClass = MemMode7AsmOperand;
@@ -3753,29 +3751,30 @@ let usesCustomInserter = 1 in {
 }
 
 let mayLoad = 1 in {
-def LDREXB : AIldrex<0b10, (outs GPR:$Rt), (ins addrmode7:$addr), NoItinerary,
+def LDREXB : AIldrex<0b10, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                     NoItinerary,
                     "ldrexb", "\t$Rt, $addr", []>;
-def LDREXH : AIldrex<0b11, (outs GPR:$Rt), (ins addrmode7:$addr), NoItinerary,
+def LDREXH : AIldrex<0b11, (outs GPR:$Rt), (ins addr_offset_none:$addr), NoItinerary,
                     "ldrexh", "\t$Rt, $addr", []>;
-def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins addrmode7:$addr), NoItinerary,
+def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr), NoItinerary,
                     "ldrex", "\t$Rt, $addr", []>;
 let hasExtraDefRegAllocReq = 1 in
-  def LDREXD : AIldrex<0b01, (outs GPR:$Rt, GPR:$Rt2), (ins addrmode7:$addr),
+def LDREXD: AIldrex<0b01, (outs GPR:$Rt, GPR:$Rt2),(ins addr_offset_none:$addr),
                       NoItinerary, "ldrexd", "\t$Rt, $Rt2, $addr", []>;
 }
 
 let mayStore = 1, Constraints = "@earlyclobber $Rd" in {
-def STREXB : AIstrex<0b10, (outs GPR:$Rd), (ins GPR:$Rt, addrmode7:$addr),
+def STREXB: AIstrex<0b10, (outs GPR:$Rd), (ins GPR:$Rt, addr_offset_none:$addr),
                     NoItinerary, "strexb", "\t$Rd, $Rt, $addr", []>;
-def STREXH : AIstrex<0b11, (outs GPR:$Rd), (ins GPR:$Rt, addrmode7:$addr),
+def STREXH: AIstrex<0b11, (outs GPR:$Rd), (ins GPR:$Rt, addr_offset_none:$addr),
                     NoItinerary, "strexh", "\t$Rd, $Rt, $addr", []>;
-def STREX  : AIstrex<0b00, (outs GPR:$Rd), (ins GPR:$Rt, addrmode7:$addr),
+def STREX : AIstrex<0b00, (outs GPR:$Rd), (ins GPR:$Rt, addr_offset_none:$addr),
                     NoItinerary, "strex", "\t$Rd, $Rt, $addr", []>;
 }
 
 let hasExtraSrcRegAllocReq = 1, Constraints = "@earlyclobber $Rd" in
 def STREXD : AIstrex<0b01, (outs GPR:$Rd),
-                    (ins GPR:$Rt, GPR:$Rt2, addrmode7:$addr),
+                    (ins GPR:$Rt, GPR:$Rt2, addr_offset_none:$addr),
                     NoItinerary, "strexd", "\t$Rd, $Rt, $Rt2, $addr", []>;
 
 // Clear-Exclusive is for disassembly only.
@@ -3787,8 +3786,10 @@ def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex",
 
 // SWP/SWPB are deprecated in V6/V7.
 let mayLoad = 1, mayStore = 1 in {
-def SWP : AIswp<0, (outs GPR:$Rt), (ins GPR:$Rt2, addrmode7:$addr), "swp", []>;
-def SWPB: AIswp<1, (outs GPR:$Rt), (ins GPR:$Rt2, addrmode7:$addr), "swpb", []>;
+def SWP : AIswp<0, (outs GPR:$Rt), (ins GPR:$Rt2, addr_offset_none:$addr),
+                "swp", []>;
+def SWPB: AIswp<1, (outs GPR:$Rt), (ins GPR:$Rt2, addr_offset_none:$addr),
+                "swpb", []>;
 }
 
 //===----------------------------------------------------------------------===//
