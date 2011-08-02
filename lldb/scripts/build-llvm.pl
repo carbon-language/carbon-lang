@@ -16,10 +16,6 @@ use List::Util qw[min max];
 our $llvm_srcroot = $ENV{SCRIPT_INPUT_FILE_0};
 our $llvm_dstroot = $ENV{SCRIPT_INPUT_FILE_1};
 
-our $libedis_outfile = $ENV{SCRIPT_OUTPUT_FILE_0};
-our ($libedis_basename, $libedis_dirname) = fileparse ($libedis_outfile);
-our @libedis_slices; # Skinny mach-o slices for libEnhancedDisassembly.dylib
-
 our $llvm_clang_outfile = $ENV{SCRIPT_OUTPUT_FILE_1};
 our ($llvm_clang_basename, $llvm_clang_dirname) = fileparse ($llvm_clang_outfile);
 our @llvm_clang_slices; # paths to the single architecture static libraries (archives)
@@ -98,12 +94,6 @@ if ($ENV{CONFIGURATION} ne "BuildAndIntegration" and -e "$llvm_srcroot/lib")
 	my $llvm_dstroot_archive = "$llvm_dstroot/$llvm_clang_basename";
 	push @llvm_clang_slices, $llvm_dstroot_archive;
 	create_dstroot_file ($llvm_clang_basename, $llvm_clang_dirname, \@llvm_clang_slices, $llvm_clang_basename);
-    my $llvm_dstroot_edis = "$llvm_dstroot/$llvm_configuration/lib/libEnhancedDisassembly.dylib";
-	if (-f $llvm_dstroot_edis)
-	{
-		push @libedis_slices, $llvm_dstroot_edis;	
-		create_dstroot_file ($libedis_basename, $libedis_dirname, \@libedis_slices, $libedis_basename);	
-	} 
 	exit 0;
 }
 
@@ -123,18 +113,11 @@ if ($ENV{CONFIGURATION} eq "Debug" or $ENV{CONFIGURATION} eq "Release")
         }
 		do_command ("cd '$ENV{SRCROOT}' && unzip -q llvm.zip && touch '$llvm_zip_md5_file'", "expanding llvm.zip", 1);
     }
-
-    # We use the stuff in "lldb/llvm" for non B&I builds
-    if (!-e $libedis_outfile)
-    {
-		print "Copying '$ENV{SRCROOT}/llvm/$libedis_basename' to '$libedis_outfile'...\n";
-		do_command ("cp '$ENV{SRCROOT}/llvm/$libedis_basename' '$libedis_outfile'", "copying libedis", 1);
-    }
     exit 0;
 }
 
 # If our output file already exists then we need not generate it again.
-if (-e $llvm_clang_outfile and -e $libedis_outfile)
+if (-e $llvm_clang_outfile)
 {
 	exit 0;
 }
@@ -251,25 +234,11 @@ sub build_llvm
 		}
 
 		-f "$llvm_dstroot_arch_archive" and push @llvm_clang_slices, "$llvm_dstroot_arch_archive";
-		-f "$llvm_dstroot_arch/$llvm_configuration/lib/libEnhancedDisassembly.dylib" and push @libedis_slices, "$llvm_dstroot_arch/$llvm_configuration/lib/libEnhancedDisassembly.dylib";
 		++$arch_idx;
     }	
 
     # Combine all skinny slices of the LLVM/Clang combined archive
     create_dstroot_file ($llvm_clang_basename, $llvm_clang_dirname, \@llvm_clang_slices, $llvm_clang_basename);
-
-	if (scalar(@libedis_slices))
-	{
-		# Combine all skinny slices of the libedis in SYMROOT
-		create_dstroot_file ($libedis_basename, $libedis_dirname, \@libedis_slices, $libedis_basename);	
-
-		# Make dSYM for libedis in SYMROOT
-		do_command ("cd '$libedis_dirname' && dsymutil $libedis_basename", "making libedis dSYM", 1);			
-
-		# strip debug symbols from libedis and copy into DSTROOT
-		-d "$ENV{DSTROOT}/Developer/usr/lib" or do_command ("mkdir -p '$ENV{DSTROOT}/Developer/usr/lib'", "Making directory '$ENV{DSTROOT}/Developer/usr/lib'", 1);
-		do_command ("cd '$libedis_dirname' && strip -Sx -o '$ENV{DSTROOT}/Developer/usr/lib/$libedis_basename' '$libedis_outfile'", "Stripping libedis and copying to DSTROOT", 1);			
-	}
 }
 
 sub create_dstroot_file
