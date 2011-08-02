@@ -34,10 +34,11 @@ extern "C" {
 
 #include <pthread.h>
 #include <cstdlib>          // for calloc, free
-#include <exception>        // for std::terminate
+#include "abort_message.h"
 
-//  In general, we treat all pthread errors as fatal - our error
-//  reporting mechanism is std::terminate.
+//  In general, we treat all pthread errors as fatal.
+//  We cannot call std::terminate() because that will in turn
+//  call __cxa_get_globals() and cause infinite recursion.
 
 namespace __cxxabiv1 {
 namespace {
@@ -46,18 +47,21 @@ namespace {
 
     void destruct_ (void *p) throw () {
         std::free ( p );
-        if ( 0 != ::pthread_setspecific ( key_, NULL )) std::terminate ();
+        if ( 0 != ::pthread_setspecific ( key_, NULL ) ) 
+            abort_message("cannot zero out thread value for __cxa_get_globals()");
         }
 
     void construct_ () throw () {
-        if ( 0 != pthread_key_create ( &key_, destruct_ )) std::terminate ();
+        if ( 0 != pthread_key_create ( &key_, destruct_ ) )
+            abort_message("cannot create pthread key for __cxa_get_globals()");
         }
 }   
 
 extern "C" {
     __cxa_eh_globals * __cxa_get_globals () throw () {
     //  First time through, create the key.
-        if ( 0 != pthread_once ( &flag_, construct_ )) std::terminate ();
+        if ( 0 != pthread_once ( &flag_, construct_ ) ) 
+            abort_message("cannot run pthread_once for __cxa_get_globals()");
 
     //  Try to get the globals for this thread
         __cxa_eh_globals* retVal = __cxa_get_globals_fast ();
@@ -66,9 +70,11 @@ extern "C" {
         if ( NULL == retVal ) {
             retVal = static_cast<__cxa_eh_globals*>
                         (std::calloc (1, sizeof (__cxa_eh_globals)));
-            if ( NULL == retVal ) std::terminate ();
-            if ( 0 != pthread_setspecific ( key_, retVal )) std::terminate ();
-            }
+            if ( NULL == retVal )
+                abort_message("cannot allocate __cxa_eh_globals");
+            if ( 0 != pthread_setspecific ( key_, retVal ) )
+               abort_message("pthread_setspecific failure in __cxa_get_globals()");
+           }
         return retVal;
         }
 
