@@ -2396,6 +2396,7 @@ SymbolFileDWARF::ParseChildParameters
     DWARFCompileUnit* dwarf_cu,
     const DWARFDebugInfoEntry *parent_die,
     bool skip_artificial,
+    bool &is_static,
     TypeList* type_list,
     std::vector<clang_type_t>& function_param_types,
     std::vector<clang::ParmVarDecl*>& function_param_decls,
@@ -2481,7 +2482,7 @@ SymbolFileDWARF::ParseChildParameters
                                 const DWARFDebugInfoEntry *grandparent_die = parent_die->GetParent();
                                 if (grandparent_die && (grandparent_die->Tag() == DW_TAG_structure_type || 
                                                         grandparent_die->Tag() == DW_TAG_class_type))
-                                {
+                                {                                    
                                     LanguageType language = sc.comp_unit->GetLanguage();
                                     if (language == eLanguageTypeObjC_plus_plus || language == eLanguageTypeC_plus_plus)
                                     {
@@ -2492,10 +2493,12 @@ SymbolFileDWARF::ParseChildParameters
                                         {
                                             Type *this_type = ResolveTypeUID (param_type_die_offset);
                                             if (this_type)
-                                            {
+                                            {                              
                                                 uint32_t encoding_mask = this_type->GetEncodingMask();
                                                 if (encoding_mask & Type::eEncodingIsPointerUID)
                                                 {
+                                                    is_static = false;
+                                                    
                                                     if (encoding_mask & (1u << Type::eEncodingIsConstUID))
                                                         type_quals |= clang::Qualifiers::Const;
                                                     if (encoding_mask & (1u << Type::eEncodingIsVolatileUID))
@@ -3567,6 +3570,12 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     std::vector<clang::ParmVarDecl*> function_param_decls;
 
                     // Parse the function children for the parameters
+                    
+                    const DWARFDebugInfoEntry *class_die = die->GetParent();
+                    if (class_die && (class_die->Tag() == DW_TAG_structure_type || 
+                                      class_die->Tag() == DW_TAG_class_type))
+                        is_static = true;
+                    
                     if (die->HasChildren())
                     {
                         bool skip_artificial = true;
@@ -3574,7 +3583,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                               type_sp, 
                                               dwarf_cu, 
                                               die, 
-                                              skip_artificial, 
+                                              skip_artificial,
+                                              is_static,
                                               type_list, 
                                               function_param_types, 
                                               function_param_decls,
