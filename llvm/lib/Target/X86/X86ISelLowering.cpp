@@ -4566,42 +4566,52 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
       return SDValue();
     }
 
+    // FIXME: 256-bit vector instructions don't require a strict alignment,
+    // improve this code to support it better.
+    unsigned RequiredAlign = VT.getSizeInBits()/8;
     SDValue Chain = LD->getChain();
-    // Make sure the stack object alignment is at least 16.
+    // Make sure the stack object alignment is at least 16 or 32.
     MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
-    if (DAG.InferPtrAlignment(Ptr) < 16) {
+    if (DAG.InferPtrAlignment(Ptr) < RequiredAlign) {
       if (MFI->isFixedObjectIndex(FI)) {
         // Can't change the alignment. FIXME: It's possible to compute
         // the exact stack offset and reference FI + adjust offset instead.
         // If someone *really* cares about this. That's the way to implement it.
         return SDValue();
       } else {
-        MFI->setObjectAlignment(FI, 16);
+        MFI->setObjectAlignment(FI, RequiredAlign);
       }
     }
 
-    // (Offset % 16) must be multiple of 4. Then address is then
+    // (Offset % 16 or 32) must be multiple of 4. Then address is then
     // Ptr + (Offset & ~15).
     if (Offset < 0)
       return SDValue();
-    if ((Offset % 16) & 3)
+    if ((Offset % RequiredAlign) & 3)
       return SDValue();
-    int64_t StartOffset = Offset & ~15;
+    int64_t StartOffset = Offset & ~(RequiredAlign-1);
     if (StartOffset)
       Ptr = DAG.getNode(ISD::ADD, Ptr.getDebugLoc(), Ptr.getValueType(),
                         Ptr,DAG.getConstant(StartOffset, Ptr.getValueType()));
 
     int EltNo = (Offset - StartOffset) >> 2;
-    int Mask[4] = { EltNo, EltNo, EltNo, EltNo };
-    EVT VT = (PVT == MVT::i32) ? MVT::v4i32 : MVT::v4f32;
-    SDValue V1 = DAG.getLoad(VT, dl, Chain, Ptr,
+    int NumElems = VT.getVectorNumElements();
+
+    EVT CanonVT = VT.getSizeInBits() == 128 ? MVT::v4i32 : MVT::v8i32;
+    EVT NVT = EVT::getVectorVT(*DAG.getContext(), PVT, NumElems);
+    SDValue V1 = DAG.getLoad(NVT, dl, Chain, Ptr,
                              LD->getPointerInfo().getWithOffset(StartOffset),
                              false, false, 0);
-    // Canonicalize it to a v4i32 shuffle.
-    V1 = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, V1);
-    return DAG.getNode(ISD::BITCAST, dl, VT,
-                       DAG.getVectorShuffle(MVT::v4i32, dl, V1,
-                                            DAG.getUNDEF(MVT::v4i32),&Mask[0]));
+
+    // Canonicalize it to a v4i32 or v8i32 shuffle.
+    SmallVector<int, 8> Mask;
+    for (int i = 0; i < NumElems; ++i)
+      Mask.push_back(EltNo);
+
+    V1 = DAG.getNode(ISD::BITCAST, dl, CanonVT, V1);
+    return DAG.getNode(ISD::BITCAST, dl, NVT,
+                       DAG.getVectorShuffle(CanonVT, dl, V1,
+                                            DAG.getUNDEF(CanonVT),&Mask[0]));
   }
 
   return SDValue();
