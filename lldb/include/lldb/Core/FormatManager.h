@@ -55,7 +55,9 @@ namespace std
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Platform.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/TargetList.h"
 
@@ -189,6 +191,8 @@ private:
     typedef FormatMap<KeyType,ValueType> BackEndType;
     
     BackEndType m_format_map;
+    
+    std::string m_name;
         
 public:
     typedef typename BackEndType::MapType MapType;
@@ -201,8 +205,10 @@ public:
     
     friend class FormatCategory;
 
-    FormatNavigator(IFormatChangeListener* lst = NULL) :
-    m_format_map(lst)
+    FormatNavigator(std::string name,
+                    IFormatChangeListener* lst = NULL) :
+    m_format_map(lst),
+    m_name(name)
     {
     }
     
@@ -223,11 +229,12 @@ public:
     bool
     Get(ValueObject& vobj,
         MapValueType& entry,
+        lldb::DynamicValueType use_dynamic,
         uint32_t* why = NULL)
     {
         uint32_t value = lldb::eFormatterChoiceCriterionDirectChoice;
         clang::QualType type = clang::QualType::getFromOpaquePtr(vobj.GetClangType());
-        bool ret = Get(vobj, type, entry, value);
+        bool ret = Get(vobj, type, entry, use_dynamic, value);
         if (ret)
             entry = MapValueType(entry);
         else
@@ -267,9 +274,64 @@ private:
         return m_format_map.Get(type, entry);
     }
     
+    bool Get_ObjC(ValueObject& vobj,
+             ObjCLanguageRuntime::ObjCISA isa,
+             MapValueType& entry,
+             uint32_t& reason)
+    {
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+        if (log)
+            log->Printf("going to an Objective-C dynamic scanning");
+        Process* process = vobj.GetUpdatePoint().GetProcessSP().get();
+        ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
+        if (runtime == NULL)
+        {
+            if (log)
+                log->Printf("no valid ObjC runtime, bailing out");
+            return false;
+        }
+        if (runtime->IsValidISA(isa) == false)
+        {
+            if (log)
+                log->Printf("invalid ISA, bailing out");
+            return false;
+        }
+        ConstString name = runtime->GetActualTypeName(isa);
+        if (log)
+            log->Printf("looking for formatter for %s", name.GetCString());
+        if (Get(name.GetCString(), entry))
+        {
+            if (log)
+                log->Printf("direct match found, returning");
+            return true;
+        }
+        if (log)
+            log->Printf("no direct match");
+        ObjCLanguageRuntime::ObjCISA parent = runtime->GetParentClass(isa);
+        if (runtime->IsValidISA(parent) == false)
+        {
+            if (log)
+                log->Printf("invalid parent ISA, bailing out");
+            return false;
+        }
+        if (parent == isa)
+        {
+            if (log)
+                log->Printf("parent-child loop, bailing out");
+            return false;
+        }
+        if (Get_ObjC(vobj, parent, entry, reason))
+        {
+            reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
+            return true;
+        }
+        return false;
+    }
+    
     bool Get(ValueObject& vobj,
              clang::QualType type,
              MapValueType& entry,
+             lldb::DynamicValueType use_dynamic,
              uint32_t& reason)
     {
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
@@ -299,7 +361,10 @@ private:
                 log->Printf("appended bitfield info, final result is %s", name.GetCString());
         }
         if (log)
-            log->Printf("trying to get format for VO name %s of type %s",vobj.GetName().AsCString(),name.AsCString());
+            log->Printf("trying to get %s for VO name %s of type %s",
+                        m_name.c_str(),
+                        vobj.GetName().AsCString(),
+                        name.AsCString());
         if (Get(name.GetCString(), entry))
         {
             if (log)
@@ -313,17 +378,48 @@ private:
         {
             if (log)
                 log->Printf("stripping reference");
-            if (Get(vobj,type.getNonReferenceType(),entry, reason) && !entry->m_skip_references)
+            if (Get(vobj,type.getNonReferenceType(),entry, use_dynamic, reason) && !entry->m_skip_references)
             {
                 reason |= lldb::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
             }
         }
+        if (use_dynamic != lldb::eNoDynamicValues &&
+            typePtr == vobj.GetClangAST()->ObjCBuiltinIdTy.getTypePtr())
+        {
+            if (log)
+                log->Printf("this is an ObjC 'id', let's do dynamic search");
+            Process* process = vobj.GetUpdatePoint().GetProcessSP().get();
+            ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
+            if (runtime == NULL)
+            {
+                if (log)
+                    log->Printf("no valid ObjC runtime, skipping dynamic");
+            }
+            else
+            {
+                if (Get_ObjC(vobj, runtime->GetISA(vobj), entry, reason))
+                {
+                    reason |= lldb::eFormatterChoiceCriterionDynamicObjCHierarchy;
+                    return true;
+                }
+            }
+        }
+        else if (use_dynamic != lldb::eNoDynamicValues && log)
+        {
+            log->Printf("typename: %s, typePtr = %p, id = %p",
+                        name.AsCString(), typePtr, vobj.GetClangAST()->ObjCBuiltinIdTy.getTypePtr());
+        }
+        else if (log)
+        {
+            log->Printf("no dynamic");
+        }
         if (typePtr->isPointerType())
         {
             if (log)
                 log->Printf("stripping pointer");
-            if (Get(vobj, typePtr->getPointeeType(), entry, reason) && !entry->m_skip_pointers)
+            clang::QualType pointee = typePtr->getPointeeType();
+            if (Get(vobj, pointee, entry, use_dynamic, reason) && !entry->m_skip_pointers)
             {
                 reason |= lldb::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
@@ -331,6 +427,27 @@ private:
         }
         if (typePtr->isObjCObjectPointerType())
         {
+            if (use_dynamic != lldb::eNoDynamicValues &&
+                name.GetCString() == ConstString("id").GetCString())
+            {
+                if (log)
+                    log->Printf("this is an ObjC 'id', let's do dynamic search");
+                Process* process = vobj.GetUpdatePoint().GetProcessSP().get();
+                ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
+                if (runtime == NULL)
+                {
+                    if (log)
+                        log->Printf("no valid ObjC runtime, skipping dynamic");
+                }
+                else
+                {
+                    if (Get_ObjC(vobj, runtime->GetISA(vobj), entry, reason))
+                    {
+                        reason |= lldb::eFormatterChoiceCriterionDynamicObjCHierarchy;
+                        return true;
+                    }
+                }
+            }
             if (log)
                 log->Printf("stripping ObjC pointer");
             /*
@@ -343,7 +460,7 @@ private:
             ValueObject* target = vobj.Dereference(error).get();
             if (error.Fail() || !target)
                 return false;
-            if (Get(*target, typePtr->getPointeeType(), entry, reason) && !entry->m_skip_pointers)
+            if (Get(*target, typePtr->getPointeeType(), entry, use_dynamic, reason) && !entry->m_skip_pointers)
             {
                 reason |= lldb::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
@@ -368,7 +485,7 @@ private:
                         if (log)
                             log->Printf("got a parent class for this ObjC class");
                         clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
-                        if (Get(vobj, ivar_qual_type, entry, reason) && entry->m_cascades)
+                        if (Get(vobj, ivar_qual_type, entry, use_dynamic, reason) && entry->m_cascades)
                         {
                             reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
                             return true;
@@ -397,7 +514,7 @@ private:
                         end = record->bases_end();
                         for (pos = record->bases_begin(); pos != end; pos++)
                         {
-                            if ((Get(vobj, pos->getType(), entry, reason)) && entry->m_cascades)
+                            if ((Get(vobj, pos->getType(), entry, use_dynamic, reason)) && entry->m_cascades)
                             {
                                 reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
                                 return true;
@@ -411,7 +528,7 @@ private:
                         end = record->vbases_end();
                         for (pos = record->vbases_begin(); pos != end; pos++)
                         {
-                            if ((Get(vobj, pos->getType(), entry, reason)) && entry->m_cascades)
+                            if ((Get(vobj, pos->getType(), entry, use_dynamic, reason)) && entry->m_cascades)
                             {
                                 reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
                                 return true;
@@ -427,7 +544,7 @@ private:
         {
             if (log)
                 log->Printf("stripping typedef");
-            if ((Get(vobj, type_tdef->getDecl()->getUnderlyingType(), entry, reason)) && entry->m_cascades)
+            if ((Get(vobj, type_tdef->getDecl()->getUnderlyingType(), entry, use_dynamic, reason)) && entry->m_cascades)
             {
                 reason |= lldb::eFormatterChoiceCriterionNavigatedTypedefs;
                 return true;
@@ -495,9 +612,9 @@ public:
     
     FormatCategory(IFormatChangeListener* clist,
                    std::string name) :
-    m_summary_nav(new SummaryNavigator(clist)),
-    m_regex_summary_nav(new RegexSummaryNavigator(clist)),
-    m_filter_nav(new FilterNavigator(clist)),
+    m_summary_nav(new SummaryNavigator("summary",clist)),
+    m_regex_summary_nav(new RegexSummaryNavigator("regex-summary",clist)),
+    m_filter_nav(new FilterNavigator("filter",clist)),
     m_enabled(false),
     m_change_listener(clist),
     m_mutex(Mutex::eMutexTypeRecursive),
@@ -531,13 +648,14 @@ public:
     bool
     Get(ValueObject& vobj,
         lldb::SummaryFormatSP& entry,
+        lldb::DynamicValueType use_dynamic,
         uint32_t* reason = NULL)
     {
         if (!IsEnabled())
             return false;
-        if (Summary()->Get(vobj, entry, reason))
+        if (Summary()->Get(vobj, entry, use_dynamic, reason))
             return true;
-        bool regex = RegexSummary()->Get(vobj, entry, reason);
+        bool regex = RegexSummary()->Get(vobj, entry, use_dynamic, reason);
         if (regex && reason)
             *reason |= lldb::eFormatterChoiceCriterionRegularExpressionSummary;
         return regex;
@@ -546,11 +664,12 @@ public:
     bool
     Get(ValueObject& vobj,
         lldb::SyntheticChildrenSP& entry,
+        lldb::DynamicValueType use_dynamic,
         uint32_t* reason = NULL)
     {
         if (!IsEnabled())
             return false;
-        return (Filter()->Get(vobj, entry, reason));
+        return (Filter()->Get(vobj, entry, use_dynamic, reason));
     }
     
     // just a shortcut for Summary()->Clear; RegexSummary()->Clear()
@@ -760,43 +879,44 @@ public:
     
     bool
     Get(ValueObject& vobj,
-        lldb::SummaryFormatSP& entry)
+        lldb::SummaryFormatSP& entry,
+        lldb::DynamicValueType use_dynamic)
     {
         Mutex::Locker(m_map_mutex);
         
-        uint32_t reason_why;
-        bool first = true;
-        
+        uint32_t reason_why;        
         ActiveCategoriesIterator begin, end = m_active_categories.end();
         
         for (begin = m_active_categories.begin(); begin != end; begin++)
         {
             FormatCategory::SharedPointer category = *begin;
             lldb::SummaryFormatSP current_format;
-            if (!category->Get(vobj, current_format, &reason_why))
+            if (!category->Get(vobj, current_format, use_dynamic, &reason_why))
                 continue;
-            if (reason_why == lldb::eFormatterChoiceCriterionDirectChoice)
-            {
-                entry = current_format;
-                return true;
-            }
-            else if (first)
-            {
-                entry = current_format;
-                first = false;
-            }
+            /*if (reason_why == lldb::eFormatterChoiceCriterionDirectChoice)
+             {
+             entry = current_format;
+             return true;
+             }
+             else if (first)
+             {
+             entry = current_format;
+             first = false;
+             }*/
+            entry = current_format;
+            return true;
         }
-        return !first;
+        return false;
     }
     
     bool
     Get(ValueObject& vobj,
-        lldb::SyntheticChildrenSP& entry)
+        lldb::SyntheticChildrenSP& entry,
+        lldb::DynamicValueType use_dynamic)
     {
         Mutex::Locker(m_map_mutex);
         
         uint32_t reason_why;
-        bool first = true;
         
         ActiveCategoriesIterator begin, end = m_active_categories.end();
         
@@ -804,9 +924,9 @@ public:
         {
             FormatCategory::SharedPointer category = *begin;
             lldb::SyntheticChildrenSP current_format;
-            if (!category->Get(vobj, current_format, &reason_why))
+            if (!category->Get(vobj, current_format, use_dynamic, &reason_why))
                 continue;
-            if (reason_why == lldb::eFormatterChoiceCriterionDirectChoice)
+            /*if (reason_why == lldb::eFormatterChoiceCriterionDirectChoice)
             {
                 entry = current_format;
                 return true;
@@ -815,9 +935,11 @@ public:
             {
                 entry = current_format;
                 first = false;
-            }
+            }*/
+            entry = current_format;
+            return true;
         }
-        return !first;
+        return false;
     }
 
 };
@@ -847,7 +969,7 @@ public:
     typedef bool (*CategoryCallback)(void*, const char*, const FormatCategory::SharedPointer&);
     
     FormatManager() : 
-    m_value_nav(this),
+    m_value_nav("format",this),
     m_named_summaries_map(this),
     m_last_revision(0),
     m_categories_map(this)
@@ -941,15 +1063,17 @@ public:
     
     bool
     Get(ValueObject& vobj,
-        lldb::SummaryFormatSP& entry)
+        lldb::SummaryFormatSP& entry,
+        lldb::DynamicValueType use_dynamic)
     {
-        return m_categories_map.Get(vobj, entry);
+        return m_categories_map.Get(vobj, entry, use_dynamic);
     }
     bool
     Get(ValueObject& vobj,
-        lldb::SyntheticChildrenSP& entry)
+        lldb::SyntheticChildrenSP& entry,
+        lldb::DynamicValueType use_dynamic)
     {
-        return m_categories_map.Get(vobj, entry);
+        return m_categories_map.Get(vobj, entry, use_dynamic);
     }
 
     static bool

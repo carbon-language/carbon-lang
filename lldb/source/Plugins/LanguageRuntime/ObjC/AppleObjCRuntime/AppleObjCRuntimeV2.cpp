@@ -563,4 +563,90 @@ AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const c
     return ivar_offset;
 }
 
+lldb_private::ObjCLanguageRuntime::ObjCISA
+AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
+{
+    if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != lldb::eLanguageTypeObjC)
+        return 0;
+    
+    uint32_t offset = 0;
+    uint64_t isa_pointer = valobj.GetDataExtractor().GetPointer(&offset);
+    
+    uint8_t pointer_size = valobj.GetUpdatePoint().GetProcessSP()->GetAddressByteSize();
+    
+    Error error;
+    lldb_private::ObjCLanguageRuntime::ObjCISA isa = 
+    valobj.GetUpdatePoint().GetProcessSP()->ReadUnsignedIntegerFromMemory(isa_pointer,
+                                                                          pointer_size,
+                                                                          0,
+                                                                          error);
+    return isa;
+}
+
+ConstString
+AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA isa)
+{
+    if (!IsValidISA(isa))
+        return ConstString(NULL);
+    
+    uint8_t pointer_size = m_process->GetAddressByteSize();
+    Error error;
+    lldb::addr_t rw_pointer = isa + (4 * pointer_size);
+    //printf("rw_pointer: %llx\n", rw_pointer);
+    
+    uint64_t data_pointer =  m_process->ReadUnsignedIntegerFromMemory(rw_pointer,
+                                                                      pointer_size,
+                                                                      0,
+                                                                      error);
+    if (error.Fail())
+        return ConstString("unknown");
+    
+    data_pointer += 8;
+    //printf("data_pointer: %llx\n", data_pointer);
+    uint64_t ro_pointer = m_process->ReadUnsignedIntegerFromMemory(data_pointer,
+                                                                   pointer_size,
+                                                                   0,
+                                                                   error);
+    if (error.Fail())
+        return ConstString("unknown");
+    
+    ro_pointer += 12;
+    if (pointer_size == 8)
+        ro_pointer += 4;
+    ro_pointer += pointer_size;
+    //printf("ro_pointer: %llx\n", ro_pointer);
+    uint64_t name_pointer = m_process->ReadUnsignedIntegerFromMemory(ro_pointer,
+                                                                     pointer_size,
+                                                                     0,
+                                                                     error);
+    if (error.Fail())
+        return ConstString("unknown");
+    
+    //printf("name_pointer: %llx\n", name_pointer);
+    char* cstr = new char[512];
+    if (m_process->ReadCStringFromMemory(name_pointer, cstr, 512) > 0)
+        return ConstString(cstr);
+    else
+        return ConstString("unknown");
+}
+
+lldb_private::ObjCLanguageRuntime::ObjCISA
+AppleObjCRuntimeV2::GetParentClass(lldb_private::ObjCLanguageRuntime::ObjCISA isa)
+{
+    if (!IsValidISA(isa))
+        return 0;
+    
+    uint8_t pointer_size = m_process->GetAddressByteSize();
+    Error error;
+    lldb::addr_t parent_pointer = isa + pointer_size;
+    //printf("rw_pointer: %llx\n", rw_pointer);
+    
+    uint64_t parent_isa =  m_process->ReadUnsignedIntegerFromMemory(parent_pointer,
+                                                                    pointer_size,
+                                                                    0,
+                                                                    error);
+    if (error.Fail())
+        return 0;
+    return parent_isa;
+}
 

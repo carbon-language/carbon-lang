@@ -443,6 +443,9 @@ public:
 
     virtual const char *
     GetValueAsCString ();
+    
+    virtual unsigned long long
+    GetValueAsUnsigned();
 
     virtual bool
     SetValueFromCString (const char *value_str);
@@ -513,8 +516,11 @@ public:
     bool
     UpdateValueIfNeeded (bool update_format = true);
     
+    bool
+    UpdateValueIfNeeded (lldb::DynamicValueType use_dynamic, bool update_format = true);
+    
     void
-    UpdateFormatsIfNeeded();
+    UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic = lldb::eNoDynamicValues);
 
     DataExtractor &
     GetDataExtractor ();
@@ -640,6 +646,18 @@ public:
     }
     
     void
+    SetIsExpressionResult(bool expr)
+    {
+        m_is_expression_result = expr;
+    }
+    
+    bool
+    GetIsExpressionResult()
+    {
+        return m_is_expression_result;
+    }
+    
+    void
     SetFormat (lldb::Format format)
     {
         if (format != m_format)
@@ -677,7 +695,7 @@ public:
     lldb::SummaryFormatSP
     GetSummaryFormat()
     {
-        UpdateFormatsIfNeeded();
+        UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
         if (HasCustomSummaryFormat())
             return m_forced_summary_format;
         return m_last_summary_format;
@@ -744,6 +762,7 @@ protected:
 
     lldb::Format                m_format;
     uint32_t                    m_last_format_mgr_revision;
+    lldb::DynamicValueType      m_last_format_mgr_dynamic;
     lldb::SummaryFormatSP       m_last_summary_format;
     lldb::SummaryFormatSP       m_forced_summary_format;
     lldb::ValueFormatSP         m_last_value_format;
@@ -759,7 +778,8 @@ protected:
                         m_is_array_item_for_pointer:1,
                         m_is_bitfield_for_scalar:1,
                         m_is_expression_path_child:1,
-                        m_is_child_at_offset:1;
+                        m_is_child_at_offset:1,
+                        m_is_expression_result:1;
     
     // used to prevent endless looping into GetpPrintableRepresentation()
     uint32_t            m_dump_printable_counter;

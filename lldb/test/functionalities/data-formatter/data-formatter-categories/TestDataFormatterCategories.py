@@ -286,7 +286,7 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['ACircle',
                                'ARectangle',
                                'ACircle',
-                               'ARectangleStar'])
+                               'ARectangle'])
 
         # Check that abruptly deleting an enabled category does not crash us
         self.runCmd("type category delete RectangleCategory")

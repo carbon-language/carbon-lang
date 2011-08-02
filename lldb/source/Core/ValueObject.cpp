@@ -39,6 +39,7 @@
 
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/LanguageRuntime.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
@@ -76,6 +77,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_deref_valobj(NULL),
     m_format (eFormatDefault),
     m_last_format_mgr_revision(0),
+    m_last_format_mgr_dynamic(lldb::eNoDynamicValues),
     m_last_summary_format(),
     m_forced_summary_format(),
     m_last_value_format(),
@@ -91,6 +93,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
     m_is_child_at_offset(false),
+    m_is_expression_result(false),
     m_dump_printable_counter(0)
 {
     m_manager->ManageObject(this);
@@ -120,6 +123,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_deref_valobj(NULL),
     m_format (eFormatDefault),
     m_last_format_mgr_revision(0),
+    m_last_format_mgr_dynamic(lldb::eNoDynamicValues),
     m_last_summary_format(),
     m_forced_summary_format(),
     m_last_value_format(),
@@ -135,6 +139,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
     m_is_child_at_offset(false),
+    m_is_expression_result(false),
     m_dump_printable_counter(0)
 {
     m_manager = new ValueObjectManager();
@@ -151,9 +156,15 @@ ValueObject::~ValueObject ()
 bool
 ValueObject::UpdateValueIfNeeded (bool update_format)
 {
+    return UpdateValueIfNeeded(m_last_format_mgr_dynamic, update_format);
+}
+
+bool
+ValueObject::UpdateValueIfNeeded (lldb::DynamicValueType use_dynamic, bool update_format)
+{
     
     if (update_format)
-        UpdateFormatsIfNeeded();
+        UpdateFormatsIfNeeded(use_dynamic);
     
     // If this is a constant value, then our success is predicated on whether
     // we have an error or not
@@ -204,7 +215,7 @@ ValueObject::UpdateValueIfNeeded (bool update_format)
 }
 
 void
-ValueObject::UpdateFormatsIfNeeded()
+ValueObject::UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     if (log)
@@ -217,7 +228,8 @@ ValueObject::UpdateFormatsIfNeeded()
         ClearCustomSummaryFormat();
         m_summary_str.clear();
     }
-    if (m_last_format_mgr_revision != Debugger::Formatting::ValueFormats::GetCurrentRevision())
+    if ( (m_last_format_mgr_revision != Debugger::Formatting::ValueFormats::GetCurrentRevision()) ||
+          m_last_format_mgr_dynamic != use_dynamic)
     {
         if (m_last_summary_format.get())
             m_last_summary_format.reset((StringSummaryFormat*)NULL);
@@ -228,11 +240,12 @@ ValueObject::UpdateFormatsIfNeeded()
 
         m_synthetic_value = NULL;
         
-        Debugger::Formatting::ValueFormats::Get(*this, m_last_value_format);
-        Debugger::Formatting::GetSummaryFormat(*this, m_last_summary_format);
-        Debugger::Formatting::GetSyntheticFilter(*this, m_last_synthetic_filter);
+        Debugger::Formatting::ValueFormats::Get(*this, use_dynamic, m_last_value_format);
+        Debugger::Formatting::GetSummaryFormat(*this, use_dynamic, m_last_summary_format);
+        Debugger::Formatting::GetSyntheticFilter(*this, use_dynamic, m_last_synthetic_filter);
 
         m_last_format_mgr_revision = Debugger::Formatting::ValueFormats::GetCurrentRevision();
+        m_last_format_mgr_dynamic = use_dynamic;
 
         ClearUserVisibleData();
     }
@@ -241,14 +254,14 @@ ValueObject::UpdateFormatsIfNeeded()
 DataExtractor &
 ValueObject::GetDataExtractor ()
 {
-    UpdateValueIfNeeded();
+    UpdateValueIfNeeded(false);
     return m_data;
 }
 
 const Error &
 ValueObject::GetError()
 {
-    UpdateValueIfNeeded();
+    UpdateValueIfNeeded(false);
     return m_error;
 }
 
@@ -261,7 +274,7 @@ ValueObject::GetName() const
 const char *
 ValueObject::GetLocationAsCString ()
 {
-    if (UpdateValueIfNeeded())
+    if (UpdateValueIfNeeded(false))
     {
         if (m_location_str.empty())
         {
@@ -358,7 +371,7 @@ ValueObject::GetChildAtIndex (uint32_t idx, bool can_create)
     ValueObjectSP child_sp;
     // We may need to update our value if we are dynamic
     if (IsPossibleDynamicType ())
-        UpdateValueIfNeeded();
+        UpdateValueIfNeeded(false);
     if (idx < GetNumChildren())
     {
         // Check if we have already made the child value object?
@@ -395,7 +408,7 @@ ValueObject::GetChildMemberWithName (const ConstString &name, bool can_create)
 
     // We may need to update our value if we are dynamic
     if (IsPossibleDynamicType ())
-        UpdateValueIfNeeded();
+        UpdateValueIfNeeded(false);
 
     std::vector<uint32_t> child_indexes;
     clang::ASTContext *clang_ast = GetClangAST();
@@ -519,7 +532,7 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
 const char *
 ValueObject::GetSummaryAsCString ()
 {
-    if (UpdateValueIfNeeded ())
+    if (UpdateValueIfNeeded (m_last_format_mgr_dynamic, true))
     {        
         if (m_summary_str.empty())
         {
@@ -775,7 +788,7 @@ const char *
 ValueObject::GetObjectDescription ()
 {
     
-    if (!UpdateValueIfNeeded ())
+    if (!UpdateValueIfNeeded (m_last_format_mgr_dynamic, true))
         return NULL;
 
     if (!m_object_desc_str.empty())
@@ -826,7 +839,7 @@ ValueObject::GetValueAsCString ()
     // If our byte size is zero this is an aggregate type that has children
     if (ClangASTContext::IsAggregateType (GetClangType()) == false)
     {
-        if (UpdateValueIfNeeded())
+        if (UpdateValueIfNeeded(true))
         {
             if (m_value_str.empty())
             {
@@ -841,7 +854,7 @@ ValueObject::GetValueAsCString ()
                         clang_type_t clang_type = GetClangType ();
                         if (clang_type)
                         {
-                            if (m_last_value_format)
+                            if (m_format == lldb::eFormatDefault && m_last_value_format)
                             {
                                 m_value_str = m_last_value_format->FormatObject(GetSP());
                             }
@@ -903,6 +916,24 @@ ValueObject::GetValueAsCString ()
     if (m_value_str.empty())
         return NULL;
     return m_value_str.c_str();
+}
+
+// if > 8bytes, 0 is returned. this method should mostly be used
+// to read address values out of pointers
+unsigned long long
+ValueObject::GetValueAsUnsigned()
+{
+    // If our byte size is zero this is an aggregate type that has children
+    if (ClangASTContext::IsAggregateType (GetClangType()) == false)
+    {
+        if (UpdateValueIfNeeded(true))
+        {
+            uint32_t offset = 0;
+            return m_data.GetMaxU64(&offset,
+                                    m_data.GetByteSize());
+        }
+    }
+    return 0;
 }
 
 // this call should only return pointers to data that needs no special memory management
@@ -1092,7 +1123,7 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
 addr_t
 ValueObject::GetAddressOf (AddressType &address_type, bool scalar_is_load_address)
 {
-    if (!UpdateValueIfNeeded())
+    if (!UpdateValueIfNeeded(false))
         return LLDB_INVALID_ADDRESS;
         
     switch (m_value.GetValueType())
@@ -1124,7 +1155,7 @@ ValueObject::GetPointerValue (AddressType &address_type, bool scalar_is_load_add
     lldb::addr_t address = LLDB_INVALID_ADDRESS;
     address_type = eAddressTypeInvalid;
     
-    if (!UpdateValueIfNeeded())
+    if (!UpdateValueIfNeeded(false))
         return address;
         
     switch (m_value.GetValueType())
@@ -1161,7 +1192,7 @@ ValueObject::SetValueFromCString (const char *value_str)
 {
     // Make sure our value is up to date first so that our location and location
     // type is valid.
-    if (!UpdateValueIfNeeded())
+    if (!UpdateValueIfNeeded(false))
         return false;
 
     uint32_t count = 0;
@@ -1256,7 +1287,8 @@ ValueObject::Write ()
 lldb::LanguageType
 ValueObject::GetObjectRuntimeLanguage ()
 {
-    return ClangASTType::GetMinimumLanguage (GetClangType());
+    return ClangASTType::GetMinimumLanguage (GetClangAST(),
+                                             GetClangType());
 }
 
 void
@@ -1521,7 +1553,7 @@ ValueObject::CalculateSyntheticValue (lldb::SyntheticValueType use_synthetic)
     if (use_synthetic == lldb::eNoSyntheticFilter)
         return;
     
-    UpdateFormatsIfNeeded();
+    UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
     
     if (m_last_synthetic_filter.get() == NULL)
         return;
@@ -1601,7 +1633,7 @@ ValueObject::GetSyntheticValue (SyntheticValueType use_synthetic)
     if (use_synthetic == lldb::eNoSyntheticFilter)
         return GetSP();
     
-    UpdateFormatsIfNeeded();
+    UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
     
     if (m_last_synthetic_filter.get() == NULL)
         return GetSP();
@@ -2537,7 +2569,7 @@ ValueObject::DumpValueObject
 {
     if (valobj)
     {
-        bool update_success = valobj->UpdateValueIfNeeded ();
+        bool update_success = valobj->UpdateValueIfNeeded (use_dynamic, true);
 
         if (update_success && use_dynamic != lldb::eNoDynamicValues)
         {
@@ -2566,7 +2598,33 @@ ValueObject::DumpValueObject
 
             // Always show the type for the top level items.
             if (show_types || (curr_depth == 0 && !flat_output))
-                s.Printf("(%s) ", valobj->GetTypeName().AsCString("<invalid type>"));
+            {
+                s.Printf("(%s", valobj->GetTypeName().AsCString("<invalid type>"));
+                if (use_dynamic != lldb::eNoDynamicValues &&
+                    strcmp(valobj->GetTypeName().AsCString("NULL"), "id") == 0)
+                {
+                    Process* process = valobj->GetUpdatePoint().GetProcessSP().get();
+                    if (process == NULL)
+                        s.Printf(") ");
+                    else
+                    {
+                        ObjCLanguageRuntime *runtime = process->GetObjCLanguageRuntime();
+                        if (runtime == NULL)
+                            s.Printf(") ");
+                        else
+                        {
+                            ObjCLanguageRuntime::ObjCISA isa = runtime->GetISA(*valobj);
+                            if (!runtime->IsValidISA(isa))
+                                s.Printf(") ");
+                            else
+                                s.Printf(", dynamic type: %s) ",
+                                         runtime->GetActualTypeName(isa).GetCString());
+                        }
+                    }
+                }
+                else
+                    s.Printf(") ");
+            }
 
 
             if (flat_output)
@@ -2758,7 +2816,7 @@ ValueObject::CreateConstantValue (const ConstString &name)
 {
     ValueObjectSP valobj_sp;
     
-    if (UpdateValueIfNeeded() && m_error.Success())
+    if (UpdateValueIfNeeded(false) && m_error.Success())
     {
         ExecutionContextScope *exe_scope = GetExecutionContextScope();
         if (exe_scope)
@@ -2956,7 +3014,6 @@ ValueObject::CastPointerType (const char *name, TypeSP &type_sp)
     }
     return valobj_sp;
 }
-
 
 ValueObject::EvaluationPoint::EvaluationPoint () :
     m_thread_id (LLDB_INVALID_UID),

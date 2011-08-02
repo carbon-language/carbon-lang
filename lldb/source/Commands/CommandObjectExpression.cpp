@@ -321,6 +321,9 @@ CommandObjectExpression::EvaluateExpression
         {
             if (result_valobj_sp->GetError().Success())
             {
+                
+                result_valobj_sp.get()->SetIsExpressionResult(true);
+                
                 if (m_options.format != eFormatDefault)
                     result_valobj_sp->SetFormat (m_options.format);
 

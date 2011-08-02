@@ -505,7 +505,8 @@ namespace lldb {
         eFormatterChoiceCriterionStrippedPointerReference =      0x00000001,
         eFormatterChoiceCriterionNavigatedTypedefs =             0x00000002,
         eFormatterChoiceCriterionNavigatedBaseClasses =          0x00000004,
-        eFormatterChoiceCriterionRegularExpressionSummary =      0x00000008
+        eFormatterChoiceCriterionRegularExpressionSummary =      0x00000008,
+        eFormatterChoiceCriterionDynamicObjCHierarchy =          0x00000010
     } FormatterChoiceCriterion;
     
     //----------------------------------------------------------------------

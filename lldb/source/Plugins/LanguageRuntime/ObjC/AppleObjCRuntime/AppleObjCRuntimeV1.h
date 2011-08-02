@@ -72,6 +72,31 @@ public:
     {
         return eAppleObjC_V1;
     }
+    
+    virtual bool
+    IsValidISA(ObjCISA isa)
+    {
+        return false;
+    }
+    
+    virtual ObjCISA
+    GetISA(ValueObject& valobj)
+    {
+        return 0;
+    }
+    
+    virtual ConstString
+    GetActualTypeName(ObjCISA isa)
+    {
+        return ConstString(NULL);
+    }
+    
+    virtual ObjCISA
+    GetParentClass(ObjCISA isa)
+    {
+        return 0;
+    }
+
 protected:
     
 private:

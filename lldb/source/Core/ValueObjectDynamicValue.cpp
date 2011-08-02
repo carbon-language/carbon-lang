@@ -60,7 +60,7 @@ ValueObjectDynamicValue::GetClangType ()
 ConstString
 ValueObjectDynamicValue::GetTypeName()
 {
-    const bool success = UpdateValueIfNeeded();
+    const bool success = UpdateValueIfNeeded(false);
     if (success && m_type_sp)
         return ClangASTType::GetConstTypeName (GetClangType());
     else
@@ -70,7 +70,7 @@ ValueObjectDynamicValue::GetTypeName()
 uint32_t
 ValueObjectDynamicValue::CalculateNumChildren()
 {
-    const bool success = UpdateValueIfNeeded();
+    const bool success = UpdateValueIfNeeded(false);
     if (success && m_type_sp)
         return ClangASTContext::GetNumChildren (GetClangAST (), GetClangType(), true);
     else
@@ -90,7 +90,7 @@ ValueObjectDynamicValue::GetClangAST ()
 size_t
 ValueObjectDynamicValue::GetByteSize()
 {
-    const bool success = UpdateValueIfNeeded();
+    const bool success = UpdateValueIfNeeded(false);
     if (success && m_type_sp)
         return m_value.GetValueByteSize(GetClangAST(), NULL);
     else
@@ -109,7 +109,7 @@ ValueObjectDynamicValue::UpdateValue ()
     SetValueIsValid (false);
     m_error.Clear();
 
-    if (!m_parent->UpdateValueIfNeeded())
+    if (!m_parent->UpdateValueIfNeeded(false))
     {
         // The dynamic value failed to get an error, pass the error along
         if (m_error.Success() && m_parent->GetError().Fail())

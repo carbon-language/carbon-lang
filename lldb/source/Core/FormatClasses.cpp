@@ -21,6 +21,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/FormatClasses.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Target/StackFrame.h"
@@ -121,8 +122,29 @@ StringSummaryFormat::GetDescription()
 std::string
 ScriptSummaryFormat::FormatObject(lldb::ValueObjectSP object)
 {
+    lldb::ValueObjectSP target_object;
+    if (object->GetIsExpressionResult() &&
+        ClangASTContext::IsPointerType(object->GetClangType()) &&
+        object->GetValue().GetValueType() == Value::eValueTypeHostAddress)
+    {
+        // when using the expression parser, an additional layer of "frozen data"
+        // can be created, which is basically a byte-exact copy of the data returned
+        // by the expression, but in host memory. because Python code might need to read
+        // into the object memory in non-obvious ways, we need to hand it the target version
+        // of the expression output
+        lldb::addr_t tgt_address = object->GetValueAsUnsigned();
+        target_object = ValueObjectConstResult::Create (object->GetExecutionContextScope(),
+                                                        object->GetClangAST(),
+                                                        object->GetClangType(),
+                                                        object->GetName(),
+                                                        tgt_address,
+                                                        eAddressTypeLoad,
+                                                        object->GetUpdatePoint().GetProcessSP()->GetAddressByteSize());
+    }
+    else
+        target_object = object;
     return std::string(ScriptInterpreterPython::CallPythonScriptFunction(m_function_name.c_str(),
-                                                                         object).c_str());
+                                                                         target_object).c_str());
 }
 
 std::string
@@ -171,7 +193,26 @@ m_python_class(pclass)
         return;
     }
     
-    m_interpreter = be->GetUpdatePoint().GetTargetSP()->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+    if (be->GetIsExpressionResult() &&
+        ClangASTContext::IsPointerType(be->GetClangType()) &&
+        be->GetValue().GetValueType() == Value::eValueTypeHostAddress)
+    {
+        // when using the expression parser, an additional layer of "frozen data"
+        // can be created, which is basically a byte-exact copy of the data returned
+        // by the expression, but in host memory. because Python code might need to read
+        // into the object memory in non-obvious ways, we need to hand it the target version
+        // of the expression output
+        lldb::addr_t tgt_address = be->GetValueAsUnsigned();
+        m_backend = ValueObjectConstResult::Create (be->GetExecutionContextScope(),
+                                                    be->GetClangAST(),
+                                                    be->GetClangType(),
+                                                    be->GetName(),
+                                                    tgt_address,
+                                                    eAddressTypeLoad,
+                                                    be->GetUpdatePoint().GetProcessSP()->GetAddressByteSize());
+    }
+
+    m_interpreter = m_backend->GetUpdatePoint().GetTargetSP()->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
     
     if (m_interpreter == NULL)
         m_wrapper = NULL;

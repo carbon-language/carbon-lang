@@ -486,7 +486,7 @@ public:
         {
         public:
             static bool
-            Get(ValueObject& vobj, ValueFormat::SharedPointer &entry);
+            Get(ValueObject& vobj, lldb::DynamicValueType use_dynamic, ValueFormat::SharedPointer &entry);
             
             static void
             Add(const ConstString &type, const ValueFormat::SharedPointer &entry);
@@ -509,9 +509,11 @@ public:
 
         static bool
         GetSummaryFormat(ValueObject& vobj,
+                         lldb::DynamicValueType use_dynamic,
                          lldb::SummaryFormatSP& entry);
         static bool
         GetSyntheticFilter(ValueObject& vobj,
+                           lldb::DynamicValueType use_dynamic,
                            lldb::SyntheticChildrenSP& entry);
         
         class NamedSummaryFormats

@@ -159,11 +159,13 @@ ClangASTType::GetEncoding (uint32_t &count)
 lldb::LanguageType
 ClangASTType::GetMinimumLanguage ()
 {
-    return ClangASTType::GetMinimumLanguage (m_type);
+    return ClangASTType::GetMinimumLanguage (m_ast,
+                                             m_type);
 }
 
 lldb::LanguageType
-ClangASTType::GetMinimumLanguage (lldb::clang_type_t clang_type)
+ClangASTType::GetMinimumLanguage (clang::ASTContext *ctx,
+                                  lldb::clang_type_t clang_type)
 {
     if (clang_type == NULL)
         return lldb::eLanguageTypeC;
@@ -181,6 +183,8 @@ ClangASTType::GetMinimumLanguage (lldb::clang_type_t clang_type)
         if (pointee_type->isObjCObjectOrInterfaceType())
             return lldb::eLanguageTypeObjC;
         if (pointee_type->isObjCClassType())
+            return lldb::eLanguageTypeObjC;
+        if (pointee_type.getTypePtr() == ctx->ObjCBuiltinIdTy.getTypePtr())
             return lldb::eLanguageTypeObjC;
     }
     else
@@ -238,7 +242,8 @@ ClangASTType::GetMinimumLanguage (lldb::clang_type_t clang_type)
             }
             break;
         case clang::Type::Typedef:
-            return GetMinimumLanguage(llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+            return GetMinimumLanguage(ctx,
+                                      llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
         }
     }
     return lldb::eLanguageTypeC;

@@ -1010,22 +1010,35 @@ Debugger::FormatPrompt
                                 if (!vobj)
                                     break;
                                 
+                                if (log)
+                                    log->Printf("initial string: %s",var_name_begin);
+                                
                                 // check for *var and *svar
                                 if (*var_name_begin == '*')
                                 {
                                     do_deref_pointer = true;
                                     var_name_begin++;
                                 }
+                                
+                                if (log)
+                                    log->Printf("initial string: %s",var_name_begin);
+                                
                                 if (*var_name_begin == 's')
                                 {
                                     vobj = vobj->GetSyntheticValue(lldb::eUseSyntheticFilter).get();
                                     var_name_begin++;
                                 }
                                 
+                                if (log)
+                                    log->Printf("initial string: %s",var_name_begin);
+                                
                                 // should be a 'v' by now
                                 if (*var_name_begin != 'v')
                                     break;
                                 
+                                if (log)
+                                    log->Printf("initial string: %s",var_name_begin);
+                                                                
                                 ValueObject::ExpressionPathAftermath what_next = (do_deref_pointer ?
                                                                                   ValueObject::eDereference : ValueObject::eNothing);
                                 ValueObject::GetValueForExpressionPathOptions options;
@@ -1765,9 +1778,9 @@ Debugger::Formatting::ForceUpdate()
 }
 
 bool
-Debugger::Formatting::ValueFormats::Get(ValueObject& vobj, ValueFormat::SharedPointer &entry)
+Debugger::Formatting::ValueFormats::Get(ValueObject& vobj, lldb::DynamicValueType use_dynamic, ValueFormat::SharedPointer &entry)
 {
-    return GetFormatManager().Value().Get(vobj,entry);
+    return GetFormatManager().Value().Get(vobj,entry, use_dynamic);
 }
 
 void
@@ -1808,15 +1821,17 @@ Debugger::Formatting::ValueFormats::GetCount()
 
 bool
 Debugger::Formatting::GetSummaryFormat(ValueObject& vobj,
+                                       lldb::DynamicValueType use_dynamic,
                                        lldb::SummaryFormatSP& entry)
 {
-    return GetFormatManager().Get(vobj, entry);
+    return GetFormatManager().Get(vobj, entry, use_dynamic);
 }
 bool
 Debugger::Formatting::GetSyntheticFilter(ValueObject& vobj,
+                                         lldb::DynamicValueType use_dynamic,
                                          lldb::SyntheticChildrenSP& entry)
 {
-    return GetFormatManager().Get(vobj, entry);
+    return GetFormatManager().Get(vobj, entry, use_dynamic);
 }
 
 bool

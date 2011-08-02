@@ -164,7 +164,7 @@ class DataFormatterTestCase(TestBase):
                                'inline = ',
                                'explicit = ',
                                'content = ',
-                               'a very much boring task to write a string this way!!\\xe4\\x8c\\xb3'])
+                               'a very much boring task to write a string this way!!\\xcf\\x83'])
         
         self.expect('frame variable str10 -P 1 -Y',
                     substrs = ['mutable =',
@@ -215,7 +215,7 @@ class DataFormatterTestCase(TestBase):
         self.expect('frame variable str8',
                     substrs = ['hasVeryLongExtensionThisTime'])
         self.expect('frame variable str9',
-                    substrs = ['a very much boring task to write a string this way!!\\xe4\\x8c\\xb3'])
+                    substrs = ['a very much boring task to write a string this way!!\\xcf\\x83'])
         self.expect('frame variable str10',
                     substrs = ['This is a Unicode string \\xcf\\x83 number 4 right here'])
         self.expect('frame variable str11',
@@ -224,6 +224,25 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['a.out'])        
         self.expect('frame variable str12',
                     substrs = ['Process Name:  a.out Process Id:'])
+        self.expect('frame variable dyn_test', matching=False,
+                    substrs = ['Process Name:  a.out Process Id:'])
+        self.expect('frame variable dyn_test -d run-target',
+                    substrs = ['(id, dynamic type:',
+                               'Process Name:  a.out Process Id:'])
+
+            
+        # check that we can format stuff out of the expression parser
+        self.expect('expression ((id)@"Hello")', matching=False,
+                    substrs = ['Hello'])
+            
+        self.expect('expression -d true -- ((id)@"Hello")',
+        substrs = ['Hello'])
+
+        self.expect('expr -d true -- label1',
+            substrs = ['Process Name'])
+
+        self.expect('expr -d true -- @"Hello"',
+            substrs = ['Hello'])
 
 if __name__ == '__main__':
     import atexit

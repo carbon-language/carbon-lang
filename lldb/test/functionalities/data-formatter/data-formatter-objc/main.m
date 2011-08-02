@@ -117,6 +117,8 @@ int main (int argc, const char * argv[])
     NSString *processID = [NSString stringWithFormat:@"%d", [[NSProcessInfo processInfo] processIdentifier]];
     NSString *str12 = [NSString stringWithFormat:@"%@ %@ %@ %@", label1, processName, label2, processID];
     
+    id dyn_test = str12;
+    
     // Set break point at this line.
     [pool drain];
     return 0;

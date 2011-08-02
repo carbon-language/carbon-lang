@@ -72,6 +72,20 @@ public:
     {
         return eObjC_VersionUnknown;
     }
+        
+    typedef lldb::addr_t ObjCISA;
+    
+    virtual bool
+    IsValidISA(ObjCISA isa) = 0;
+    
+    virtual ObjCISA
+    GetISA(ValueObject& valobj) = 0;
+    
+    virtual ConstString
+    GetActualTypeName(ObjCISA isa) = 0;
+    
+    virtual ObjCISA
+    GetParentClass(ObjCISA isa) = 0;
     
     // Finds the byte offset of the child_type ivar in parent_type.  If it can't find the
     // offset, returns LLDB_INVALID_IVAR_OFFSET.
