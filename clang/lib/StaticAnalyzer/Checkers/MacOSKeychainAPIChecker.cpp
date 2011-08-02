@@ -119,10 +119,21 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
   if (idx != InvalidParamVal) {
     SVal Param = State->getSVal(CE->getArg(idx));
     if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&Param)) {
-      SymbolRef V = SM.Retrieve (State->getStore(), *X).getAsSymbol();
+      // Add the symbolic value, which represents the location of the allocated
+      // data, to the set.
+      SymbolRef V = SM.Retrieve(State->getStore(), *X).getAsSymbol();
       if (!V)
         return;
       State = State->add<AllocatedData>(V);
+
+      // We only need to track the value if the function returned noErr(0), so
+      // bind the return value of the function to 0.
+      SValBuilder &Builder = C.getSValBuilder();
+      SVal ZeroVal = Builder.makeZeroVal(Builder.getContext().CharTy);
+      State = State->BindExpr(CE, ZeroVal);
+      assert(State);
+
+      // Proceed from the new state.
       C.addTransition(State);
     }
   }

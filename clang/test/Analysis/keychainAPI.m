@@ -65,7 +65,8 @@ int foo () {
   void *outData;
 
   st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
-  SecKeychainItemFreeContent(ptr, outData);
+  if (st == noErr)
+    SecKeychainItemFreeContent(ptr, outData);
 
   return 0;
 }

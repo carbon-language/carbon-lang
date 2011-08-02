@@ -281,7 +281,7 @@ def OSAtomicChecker : Checker<"AtomicCAS">,
 let ParentPackage = OSXExperimental in {
 
 def MacOSKeychainAPIChecker : Checker<"KeychainAPI">,
-  InPackage<OSX>,
+  InPackage<OSXExperimental>,
   HelpText<"Check for proper uses of Secure Keychain APIs">,
   DescFile<"MacOSKeychainAPIChecker.cpp">;
 
