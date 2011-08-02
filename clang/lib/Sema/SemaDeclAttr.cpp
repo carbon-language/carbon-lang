@@ -237,10 +237,10 @@ static bool checkAttributeNumArgsPlusParams(Sema &S, const AttributeList &Attr,
 /// \brief Check if passed in Decl is a field or potentially shared global var
 /// \return true if the Decl is a field or potentially shared global variable
 ///
-static bool mayBeSharedVariable(Decl *D) {
+static bool mayBeSharedVariable(const Decl *D) {
   if (isa<FieldDecl>(D))
     return true;
-  if(VarDecl *vd = dyn_cast<VarDecl>(D))
+  if (const VarDecl *vd = dyn_cast<VarDecl>(D))
     return (vd->hasGlobalStorage() && !(vd->isThreadSpecified()));
 
   return false;
@@ -251,12 +251,11 @@ static bool mayBeSharedVariable(Decl *D) {
 /// Note that this function may produce an error message.
 /// \return true if the Decl is a pointer type; false otherwise
 ///
-bool checkIsPointer(Sema & S, Decl * D, const AttributeList & Attr) {
-  if(ValueDecl * vd = dyn_cast <ValueDecl>(D)) {
+static bool checkIsPointer(Sema &S, const Decl *D, const AttributeList &Attr) {
+  if (const ValueDecl *vd = dyn_cast<ValueDecl>(D)) {
     QualType QT = vd->getType();
-    if(QT->isAnyPointerType()) {
+    if (QT->isAnyPointerType())
       return true;
-    }
     S.Diag(Attr.getLoc(), diag::warn_pointer_attribute_wrong_type)
       << Attr.getName()->getName() << QT;
   } else {

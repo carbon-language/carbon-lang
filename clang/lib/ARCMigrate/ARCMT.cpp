@@ -176,7 +176,8 @@ static bool HasARCRuntime(CompilerInvocation &origCI) {
   return false;
 }
 
-CompilerInvocation *createInvocationForMigration(CompilerInvocation &origCI) {
+static CompilerInvocation *
+createInvocationForMigration(CompilerInvocation &origCI) {
   llvm::OwningPtr<CompilerInvocation> CInvok;
   CInvok.reset(new CompilerInvocation(origCI));
   CInvok->getPreprocessorOpts().ImplicitPCHInclude = std::string();
@@ -193,9 +194,9 @@ CompilerInvocation *createInvocationForMigration(CompilerInvocation &origCI) {
   return CInvok.take();
 }
 
-void emitPremigrationErrors(const CapturedDiagList &arcDiags,
-                            const DiagnosticOptions &diagOpts,
-                            Preprocessor &PP) {
+static void emitPremigrationErrors(const CapturedDiagList &arcDiags,
+                                   const DiagnosticOptions &diagOpts,
+                                   Preprocessor &PP) {
   TextDiagnosticPrinter printer(llvm::errs(), diagOpts);
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags(

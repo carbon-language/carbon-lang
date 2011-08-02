@@ -433,10 +433,11 @@ LiveVariables::computeLiveness(AnalysisContext &AC,
   return new LiveVariables(LV);
 }
 
-bool compare_entries(const CFGBlock *A, const CFGBlock *B) {
+static bool compare_entries(const CFGBlock *A, const CFGBlock *B) {
   return A->getBlockID() < B->getBlockID();
 }
-bool compare_vd_entries(const Decl *A, const Decl *B) {
+
+static bool compare_vd_entries(const Decl *A, const Decl *B) {
   SourceLocation ALoc = A->getLocStart();
   SourceLocation BLoc = B->getLocStart();
   return ALoc.getRawEncoding() < BLoc.getRawEncoding();
