@@ -457,6 +457,7 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, const SB
                                                                       GetTarget().GetProcess().GetAddressByteSize()));
         
         result_valobj_sp->SetName(ConstString(name));
+        result_valobj_sp->GetValue().SetValueType(Value::eValueTypeLoadAddress);
         result = SBValue(result_valobj_sp);
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));

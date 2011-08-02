@@ -64,7 +64,7 @@ ValueObjectSynthetic::GetClangType ()
 ConstString
 ValueObjectSynthetic::GetTypeName()
 {
-    const bool success = UpdateValueIfNeeded();
+    const bool success = UpdateValueIfNeeded(false);
     if (success && m_type_sp)
         return ClangASTType::GetConstTypeName (GetClangType());
     else
@@ -90,7 +90,7 @@ ValueObjectSynthetic::GetClangAST ()
 size_t
 ValueObjectSynthetic::GetByteSize()
 {
-    const bool success = UpdateValueIfNeeded();
+    const bool success = UpdateValueIfNeeded(false);
     if (success && m_type_sp)
         return m_value.GetValueByteSize(GetClangAST(), NULL);
     else
@@ -109,7 +109,7 @@ ValueObjectSynthetic::UpdateValue ()
     SetValueIsValid (false);
     m_error.Clear();
 
-    if (!m_parent->UpdateValueIfNeeded())
+    if (!m_parent->UpdateValueIfNeeded(false))
     {
         // our parent could not update.. as we are meaningless without a parent, just stop
         if (m_error.Success() && m_parent->GetError().Fail())

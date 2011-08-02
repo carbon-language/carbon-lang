@@ -40,6 +40,7 @@ ValueObjectDynamicValue::ValueObjectDynamicValue (ValueObject &parent, lldb::Dyn
     m_type_sp(),
     m_use_dynamic (use_dynamic)
 {
+    m_last_format_mgr_dynamic = use_dynamic;
     SetName (parent.GetName());
 }
 

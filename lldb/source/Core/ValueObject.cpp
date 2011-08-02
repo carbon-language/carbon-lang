@@ -77,7 +77,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_deref_valobj(NULL),
     m_format (eFormatDefault),
     m_last_format_mgr_revision(0),
-    m_last_format_mgr_dynamic(lldb::eNoDynamicValues),
+    m_last_format_mgr_dynamic(parent.m_last_format_mgr_dynamic),
     m_last_summary_format(),
     m_forced_summary_format(),
     m_last_value_format(),
@@ -532,7 +532,7 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
 const char *
 ValueObject::GetSummaryAsCString ()
 {
-    if (UpdateValueIfNeeded (m_last_format_mgr_dynamic, true))
+    if (UpdateValueIfNeeded (true))
     {        
         if (m_summary_str.empty())
         {
@@ -788,7 +788,7 @@ const char *
 ValueObject::GetObjectDescription ()
 {
     
-    if (!UpdateValueIfNeeded (m_last_format_mgr_dynamic, true))
+    if (!UpdateValueIfNeeded (true))
         return NULL;
 
     if (!m_object_desc_str.empty())
