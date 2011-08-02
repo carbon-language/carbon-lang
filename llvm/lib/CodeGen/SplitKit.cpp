@@ -178,12 +178,12 @@ bool SplitAnalysis::calcLiveBlockInfo() {
         return false;
     } else {
       // This block has uses. Find the first and last uses in the block.
-      BI.FirstUse = *UseI;
-      assert(BI.FirstUse >= Start);
+      BI.FirstInstr = *UseI;
+      assert(BI.FirstInstr >= Start);
       do ++UseI;
       while (UseI != UseE && *UseI < Stop);
-      BI.LastUse = UseI[-1];
-      assert(BI.LastUse < Stop);
+      BI.LastInstr = UseI[-1];
+      assert(BI.LastInstr < Stop);
 
       // LVI is the first live segment overlapping MBB.
       BI.LiveIn = LVI->start <= Start;
@@ -191,8 +191,8 @@ bool SplitAnalysis::calcLiveBlockInfo() {
       // When not live in, the first use should be a def.
       if (!BI.LiveIn) {
         assert(LVI->start == LVI->valno->def && "Dangling LiveRange start");
-        assert(LVI->start == BI.FirstUse && "First instr should be a def");
-        BI.FirstDef = BI.FirstUse;
+        assert(LVI->start == BI.FirstInstr && "First instr should be a def");
+        BI.FirstDef = BI.FirstInstr;
       }
 
       // Look for gaps in the live range.
@@ -201,7 +201,7 @@ bool SplitAnalysis::calcLiveBlockInfo() {
         SlotIndex LastStop = LVI->end;
         if (++LVI == LVE || LVI->start >= Stop) {
           BI.LiveOut = false;
-          BI.LastUse = LastStop;
+          BI.LastInstr = LastStop;
           break;
         }
 
@@ -213,12 +213,12 @@ bool SplitAnalysis::calcLiveBlockInfo() {
           // Push the Live-in part.
           BI.LiveOut = false;
           UseBlocks.push_back(BI);
-          UseBlocks.back().LastUse = LastStop;
+          UseBlocks.back().LastInstr = LastStop;
 
           // Set up BI for the live-out part.
           BI.LiveIn = false;
           BI.LiveOut = true;
-          BI.FirstUse = BI.FirstDef = LVI->start;
+          BI.FirstInstr = BI.FirstDef = LVI->start;
         }
 
         // A LiveRange that starts in the middle of the block must be a def.
@@ -1096,7 +1096,7 @@ bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {
   // Add blocks with multiple uses.
   for (unsigned i = 0, e = UseBlocks.size(); i != e; ++i) {
     const BlockInfo &BI = UseBlocks[i];
-    if (BI.FirstUse == BI.LastUse)
+    if (BI.FirstInstr == BI.LastInstr)
       continue;
     Blocks.insert(BI.MBB);
   }
@@ -1106,15 +1106,15 @@ bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {
 void SplitEditor::splitSingleBlock(const SplitAnalysis::BlockInfo &BI) {
   openIntv();
   SlotIndex LastSplitPoint = SA.getLastSplitPoint(BI.MBB->getNumber());
-  SlotIndex SegStart = enterIntvBefore(std::min(BI.FirstUse,
+  SlotIndex SegStart = enterIntvBefore(std::min(BI.FirstInstr,
     LastSplitPoint));
-  if (!BI.LiveOut || BI.LastUse < LastSplitPoint) {
-    useIntv(SegStart, leaveIntvAfter(BI.LastUse));
+  if (!BI.LiveOut || BI.LastInstr < LastSplitPoint) {
+    useIntv(SegStart, leaveIntvAfter(BI.LastInstr));
   } else {
       // The last use is after the last valid split point.
     SlotIndex SegStop = leaveIntvBefore(LastSplitPoint);
     useIntv(SegStart, SegStop);
-    overlapIntv(SegStop, BI.LastUse);
+    overlapIntv(SegStop, BI.LastInstr);
   }
 }
 
@@ -1253,7 +1253,7 @@ void SplitEditor::splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
   tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
 
   DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " [" << Start << ';' << Stop
-               << "), uses " << BI.FirstUse << '-' << BI.LastUse
+               << "), uses " << BI.FirstInstr << '-' << BI.LastInstr
                << ", reg-in " << IntvIn << ", leave before " << LeaveBefore
                << (BI.LiveOut ? ", stack-out" : ", killed in block"));
 
@@ -1261,7 +1261,7 @@ void SplitEditor::splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
   assert(BI.LiveIn && "Must be live-in");
   assert((!LeaveBefore || LeaveBefore > Start) && "Bad interference");
 
-  if (!BI.LiveOut && (!LeaveBefore || LeaveBefore >= BI.LastUse)) {
+  if (!BI.LiveOut && (!LeaveBefore || LeaveBefore >= BI.LastInstr)) {
     DEBUG(dbgs() << " before interference.\n");
     //
     //               <<<    Interference after kill.
@@ -1269,13 +1269,13 @@ void SplitEditor::splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
     //     =========        Use IntvIn everywhere.
     //
     selectIntv(IntvIn);
-    useIntv(Start, BI.LastUse);
+    useIntv(Start, BI.LastInstr);
     return;
   }
 
   SlotIndex LSP = SA.getLastSplitPoint(BI.MBB->getNumber());
 
-  if (!LeaveBefore || LeaveBefore > BI.LastUse.getBoundaryIndex()) {
+  if (!LeaveBefore || LeaveBefore > BI.LastInstr.getBoundaryIndex()) {
     //
     //               <<<    Possible interference after last use.
     //     |---o---o---|    Live-out on stack.
@@ -1286,17 +1286,17 @@ void SplitEditor::splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
     //     ============     Copy to stack after LSP, overlap IntvIn.
     //            \_____    Stack interval is live-out.
     //
-    if (BI.LastUse < LSP) {
+    if (BI.LastInstr < LSP) {
       DEBUG(dbgs() << ", spill after last use before interference.\n");
       selectIntv(IntvIn);
-      SlotIndex Idx = leaveIntvAfter(BI.LastUse);
+      SlotIndex Idx = leaveIntvAfter(BI.LastInstr);
       useIntv(Start, Idx);
       assert((!LeaveBefore || Idx <= LeaveBefore) && "Interference");
     } else {
       DEBUG(dbgs() << ", spill before last split point.\n");
       selectIntv(IntvIn);
       SlotIndex Idx = leaveIntvBefore(LSP);
-      overlapIntv(Idx, BI.LastUse);
+      overlapIntv(Idx, BI.LastInstr);
       useIntv(Start, Idx);
       assert((!LeaveBefore || Idx <= LeaveBefore) && "Interference");
     }
@@ -1310,13 +1310,13 @@ void SplitEditor::splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
   (void)LocalIntv;
   DEBUG(dbgs() << ", creating local interval " << LocalIntv << ".\n");
 
-  if (!BI.LiveOut || BI.LastUse < LSP) {
+  if (!BI.LiveOut || BI.LastInstr < LSP) {
     //
     //           <<<<<<<    Interference overlapping uses.
     //     |---o---o---|    Live-out on stack.
     //     =====----____    Leave IntvIn before interference, then spill.
     //
-    SlotIndex To = leaveIntvAfter(BI.LastUse);
+    SlotIndex To = leaveIntvAfter(BI.LastInstr);
     SlotIndex From = enterIntvBefore(LeaveBefore);
     useIntv(From, To);
     selectIntv(IntvIn);
@@ -1331,7 +1331,7 @@ void SplitEditor::splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
   //            \_____    Stack interval is live-out.
   //
   SlotIndex To = leaveIntvBefore(LSP);
-  overlapIntv(To, BI.LastUse);
+  overlapIntv(To, BI.LastInstr);
   SlotIndex From = enterIntvBefore(std::min(To, LeaveBefore));
   useIntv(From, To);
   selectIntv(IntvIn);
@@ -1345,7 +1345,7 @@ void SplitEditor::splitRegOutBlock(const SplitAnalysis::BlockInfo &BI,
   tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
 
   DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " [" << Start << ';' << Stop
-               << "), uses " << BI.FirstUse << '-' << BI.LastUse
+               << "), uses " << BI.FirstInstr << '-' << BI.LastInstr
                << ", reg-out " << IntvOut << ", enter after " << EnterAfter
                << (BI.LiveIn ? ", stack-in" : ", defined in block"));
 
@@ -1355,7 +1355,7 @@ void SplitEditor::splitRegOutBlock(const SplitAnalysis::BlockInfo &BI,
   assert(BI.LiveOut && "Must be live-out");
   assert((!EnterAfter || EnterAfter < LSP) && "Bad interference");
 
-  if (!BI.LiveIn && (!EnterAfter || EnterAfter <= BI.FirstUse)) {
+  if (!BI.LiveIn && (!EnterAfter || EnterAfter <= BI.FirstInstr)) {
     DEBUG(dbgs() << " after interference.\n");
     //
     //    >>>>             Interference before def.
@@ -1363,11 +1363,11 @@ void SplitEditor::splitRegOutBlock(const SplitAnalysis::BlockInfo &BI,
     //        =========    Use IntvOut everywhere.
     //
     selectIntv(IntvOut);
-    useIntv(BI.FirstUse, Stop);
+    useIntv(BI.FirstInstr, Stop);
     return;
   }
 
-  if (!EnterAfter || EnterAfter < BI.FirstUse.getBaseIndex()) {
+  if (!EnterAfter || EnterAfter < BI.FirstInstr.getBaseIndex()) {
     DEBUG(dbgs() << ", reload after interference.\n");
     //
     //    >>>>             Interference before def.
@@ -1375,7 +1375,7 @@ void SplitEditor::splitRegOutBlock(const SplitAnalysis::BlockInfo &BI,
     //    ____=========    Enter IntvOut before first use.
     //
     selectIntv(IntvOut);
-    SlotIndex Idx = enterIntvBefore(std::min(LSP, BI.FirstUse));
+    SlotIndex Idx = enterIntvBefore(std::min(LSP, BI.FirstInstr));
     useIntv(Idx, Stop);
     assert((!EnterAfter || Idx >= EnterAfter) && "Interference");
     return;
@@ -1396,6 +1396,6 @@ void SplitEditor::splitRegOutBlock(const SplitAnalysis::BlockInfo &BI,
   assert((!EnterAfter || Idx >= EnterAfter) && "Interference");
 
   openIntv();
-  SlotIndex From = enterIntvBefore(std::min(Idx, BI.FirstUse));
+  SlotIndex From = enterIntvBefore(std::min(Idx, BI.FirstInstr));
   useIntv(From, Idx);
 }

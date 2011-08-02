@@ -76,8 +76,8 @@ public:
   ///
   struct BlockInfo {
     MachineBasicBlock *MBB;
-    SlotIndex FirstUse;   ///< First instr using current reg.
-    SlotIndex LastUse;    ///< Last instr using current reg.
+    SlotIndex FirstInstr; ///< First instr accessing current reg.
+    SlotIndex LastInstr;  ///< Last instr accessing current reg.
     SlotIndex FirstDef;   ///< First non-phi valno->def, or SlotIndex().
     bool LiveIn;          ///< Current reg is live in.
     bool LiveOut;         ///< Current reg is live out.
@@ -85,7 +85,7 @@ public:
     /// isOneInstr - Returns true when this BlockInfo describes a single
     /// instruction.
     bool isOneInstr() const {
-      return SlotIndex::isSameInstr(FirstUse, LastUse);
+      return SlotIndex::isSameInstr(FirstInstr, LastInstr);
     }
   };
 

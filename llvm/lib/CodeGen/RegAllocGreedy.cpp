@@ -687,9 +687,9 @@ bool RAGreedy::addSplitConstraints(InterferenceCache::Cursor Intf,
     if (BI.LiveIn) {
       if (Intf.first() <= Indexes->getMBBStartIdx(BC.Number))
         BC.Entry = SpillPlacement::MustSpill, ++Ins;
-      else if (Intf.first() < BI.FirstUse)
+      else if (Intf.first() < BI.FirstInstr)
         BC.Entry = SpillPlacement::PrefSpill, ++Ins;
-      else if (Intf.first() < BI.LastUse)
+      else if (Intf.first() < BI.LastInstr)
         ++Ins;
     }
 
@@ -697,9 +697,9 @@ bool RAGreedy::addSplitConstraints(InterferenceCache::Cursor Intf,
     if (BI.LiveOut) {
       if (Intf.last() >= SA->getLastSplitPoint(BC.Number))
         BC.Exit = SpillPlacement::MustSpill, ++Ins;
-      else if (Intf.last() > BI.LastUse)
+      else if (Intf.last() > BI.LastInstr)
         BC.Exit = SpillPlacement::PrefSpill, ++Ins;
-      else if (Intf.last() > BI.FirstUse)
+      else if (Intf.last() > BI.FirstInstr)
         ++Ins;
     }
 
@@ -1216,8 +1216,10 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
   const unsigned NumGaps = Uses.size()-1;
 
   // Start and end points for the interference check.
-  SlotIndex StartIdx = BI.LiveIn ? BI.FirstUse.getBaseIndex() : BI.FirstUse;
-  SlotIndex StopIdx = BI.LiveOut ? BI.LastUse.getBoundaryIndex() : BI.LastUse;
+  SlotIndex StartIdx =
+    BI.LiveIn ? BI.FirstInstr.getBaseIndex() : BI.FirstInstr;
+  SlotIndex StopIdx =
+    BI.LiveOut ? BI.LastInstr.getBoundaryIndex() : BI.LastInstr;
 
   GapWeight.assign(NumGaps, 0.0f);
 
@@ -1227,8 +1229,8 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
            .checkInterference())
       continue;
 
-    // We know that VirtReg is a continuous interval from FirstUse to LastUse,
-    // so we don't need InterferenceQuery.
+    // We know that VirtReg is a continuous interval from FirstInstr to
+    // LastInstr, so we don't need InterferenceQuery.
     //
     // Interference that overlaps an instruction is counted in both gaps
     // surrounding the instruction. The exception is interference before
@@ -1268,8 +1270,8 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   // while only covering a single block - A phi-def can use undef values from
   // predecessors, and the block could be a single-block loop.
   // We don't bother doing anything clever about such a case, we simply assume
-  // that the interval is continuous from FirstUse to LastUse. We should make
-  // sure that we don't do anything illegal to such an interval, though.
+  // that the interval is continuous from FirstInstr to LastInstr. We should
+  // make sure that we don't do anything illegal to such an interval, though.
 
   const SmallVectorImpl<SlotIndex> &Uses = SA->UseSlots;
   if (Uses.size() <= 2)
