@@ -99,7 +99,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
   if (Triple(TT).isOSDarwin())
     return createMachOStreamer(Ctx, MAB, OS, Emitter, RelaxAll);
 
-  return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll, NoExecStack);;
+  return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll, NoExecStack);
 }
 
 static MCInstPrinter *createPPCMCInstPrinter(const Target &T,
