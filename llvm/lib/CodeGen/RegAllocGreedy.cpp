@@ -864,7 +864,6 @@ bool RAGreedy::calcCompactRegion(GlobalSplitCandidate &Cand) {
 /// SA around all use blocks instead of forming bundle regions.
 float RAGreedy::calcSpillCost() {
   float Cost = 0;
-  const LiveInterval &LI = SA->getParent();
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
   for (unsigned i = 0; i != UseBlocks.size(); ++i) {
     const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
@@ -873,16 +872,8 @@ float RAGreedy::calcSpillCost() {
     Cost += SpillPlacer->getBlockFrequency(Number);
 
     // Unless the value is redefined in the block.
-    if (BI.LiveIn && BI.LiveOut) {
-      SlotIndex Start, Stop;
-      tie(Start, Stop) = Indexes->getMBBRange(Number);
-      LiveInterval::const_iterator I = LI.find(Start);
-      assert(I != LI.end() && "Expected live-in value");
-      // Is there a different live-out value? If so, we need an extra spill
-      // instruction.
-      if (I->end < Stop)
-        Cost += SpillPlacer->getBlockFrequency(Number);
-    }
+    if (BI.LiveIn && BI.LiveOut && BI.FirstDef)
+      Cost += SpillPlacer->getBlockFrequency(Number);
   }
   return Cost;
 }
