@@ -770,14 +770,14 @@ public:
                          SynchronizationScope SynchScope = CrossThread) {
     return Insert(new FenceInst(Context, Ordering, SynchScope));
   }
-  FenceInst *CreateAtomicCmpXchg(Value *Ptr, Value *Cmp, Value *New,
-                                 AtomicOrdering Ordering,
-                                 SynchronizationScope SynchScope = CrossThread){
+  AtomicCmpXchgInst *CreateAtomicCmpXchg(Value *Ptr, Value *Cmp, Value *New,
+                                         AtomicOrdering Ordering,
+                               SynchronizationScope SynchScope = CrossThread) {
     return Insert(new AtomicCmpXchgInst(Ptr, Cmp, New, Ordering, SynchScope));
   }
-  FenceInst *CreateAtomicRMW(AtomicRMWInst::BinOp Op, Value *Ptr, Value *Val,
-                             AtomicOrdering Ordering,
-                             SynchronizationScope SynchScope = CrossThread) {
+  AtomicRMWInst *CreateAtomicRMW(AtomicRMWInst::BinOp Op, Value *Ptr, Value *Val,
+                                 AtomicOrdering Ordering,
+                               SynchronizationScope SynchScope = CrossThread) {
     return Insert(new AtomicRMWInst(Op, Ptr, Val, Ordering, SynchScope));
   }
   Value *CreateGEP(Value *Ptr, ArrayRef<Value *> IdxList,
