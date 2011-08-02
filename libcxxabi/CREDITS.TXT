@@ -17,3 +17,6 @@ E: marshall@idio.com
 E: mclow.lists@gmail.com
 E: mclow@qualcomm.com
 D: Aux Runtime and vector functionality
+
+N: Nick Kledzik
+E: kledzik@apple.com
