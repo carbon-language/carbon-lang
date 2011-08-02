@@ -7248,9 +7248,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op,
 
   // Load the 32-bit value into an XMM register.
   SDValue Load = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32,
-                             DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
-                                         Op.getOperand(0),
-                                         DAG.getIntPtrConstant(0)));
+                             Op.getOperand(0));
 
   Load = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64,
                      DAG.getNode(ISD::BITCAST, dl, MVT::v2f64, Load),

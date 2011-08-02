@@ -2884,6 +2884,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     assert(N2C && (unsigned)N2C->getZExtValue() < 2 && "Bad EXTRACT_ELEMENT!");
     assert(!N1.getValueType().isVector() && !VT.isVector() &&
            (N1.getValueType().isInteger() == VT.isInteger()) &&
+           N1.getValueType() != VT &&
            "Wrong types for EXTRACT_ELEMENT!");
 
     // EXTRACT_ELEMENT of BUILD_PAIR is often formed while legalize is expanding
