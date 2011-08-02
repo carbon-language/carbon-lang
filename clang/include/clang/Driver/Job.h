@@ -97,6 +97,9 @@ public:
   /// Add a job to the list (taking ownership).
   void addJob(Job *J) { Jobs.push_back(J); }
 
+  /// Clear the job list.
+  void clear();
+
   const list_type &getJobs() const { return Jobs; }
 
   size_type size() const { return Jobs.size(); }

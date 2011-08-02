@@ -46,6 +46,16 @@ void ArgList::append(Arg *A) {
   Args.push_back(A);
 }
 
+void ArgList::eraseArg(OptSpecifier Id) {
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+    if ((*it)->getOption().matches(Id)) {
+      Args.erase(it);
+      it = begin();
+      ie = end();
+    }
+  }
+}
+
 Arg *ArgList::getLastArgNoClaim(OptSpecifier Id) const {
   // FIXME: Make search efficient?
   for (const_reverse_iterator it = rbegin(), ie = rend(); it != ie; ++it)
@@ -190,6 +200,12 @@ void ArgList::ClaimAllArgs(OptSpecifier Id0) const {
   for (arg_iterator it = filtered_begin(Id0),
          ie = filtered_end(); it != ie; ++it)
     (*it)->claim();
+}
+
+void ArgList::ClaimAllArgs() const {
+  for (const_iterator it = begin(), ie = end(); it != ie; ++it)
+    if (!(*it)->isClaimed())
+      (*it)->claim();
 }
 
 const char *ArgList::MakeArgString(const Twine &T) const {

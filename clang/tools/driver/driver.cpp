@@ -458,9 +458,15 @@ int main(int argc_, const char **argv_) {
 
   llvm::OwningPtr<Compilation> C(TheDriver.BuildCompilation(argv));
   int Res = 0;
+  const Command *FailingCommand = 0;
   if (C.get())
-    Res = TheDriver.ExecuteCompilation(*C);
-  
+    Res = TheDriver.ExecuteCompilation(*C, FailingCommand);
+
+  // If result status is < 0, then the driver command signalled an error.
+  // In this case, generate additional diagnostic information if possible.
+  if (Res < 0)
+    TheDriver.generateCompilationDiagnostics(*C, FailingCommand);
+
   // If any timers were active but haven't been destroyed yet, print their
   // results now.  This happens in -disable-free mode.
   llvm::TimerGroup::printAll(llvm::errs());

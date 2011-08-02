@@ -60,9 +60,9 @@ Driver::Driver(StringRef ClangExecutable,
     CCLogDiagnosticsFilename(0), CCCIsCXX(false),
     CCCIsCPP(false),CCCEcho(false), CCCPrintBindings(false),
     CCPrintOptions(false), CCPrintHeaders(false), CCLogDiagnostics(false),
-    CCCGenericGCCName(""), CheckInputsExist(true), CCCUseClang(true),
-    CCCUseClangCXX(true), CCCUseClangCPP(true), CCCUsePCH(true),
-    SuppressMissingInputWarning(false) {
+    CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
+    CCCUseClang(true), CCCUseClangCXX(true), CCCUseClangCPP(true),
+    CCCUsePCH(true), SuppressMissingInputWarning(false) {
   if (IsProduction) {
     // In a "production" build, only use clang on architectures we expect to
     // work, and don't use clang C++.
@@ -367,7 +367,63 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   return C;
 }
 
-int Driver::ExecuteCompilation(const Compilation &C) const {
+// When clang crashes, produce diagnostic information including the fully 
+// preprocessed source file(s).  Request that the developer attach the 
+// diagnostic information to a bug report.
+void Driver::generateCompilationDiagnostics(Compilation &C,
+                                            const Command *FailingCommand) {
+  Diag(clang::diag::note_drv_command_failed_diag_msg)
+    << "Please submit a bug report to " BUG_REPORT_URL " and include command"
+    " line arguments and all diagnostic information.";
+
+  // Suppress driver output and emit preprocessor output to temp file.
+  CCCIsCPP = true;
+  CCGenDiagnostics = true;
+
+  // Clear stale state and suppress tool output.
+  C.initCompilationForDiagnostics();
+
+  // Construct the list of abstract actions to perform for this compilation.
+  Diags.Reset();
+  if (Host->useDriverDriver())
+    BuildUniversalActions(C.getDefaultToolChain(), C.getArgs(),
+                          C.getActions());
+  else
+    BuildActions(C.getDefaultToolChain(), C.getArgs(), C.getActions());
+
+  BuildJobs(C);
+
+  // If there were errors building the compilation, quit now.
+  if (Diags.hasErrorOccurred()) {
+    Diag(clang::diag::note_drv_command_failed_diag_msg)
+      << "Error generating preprocessed source(s).";
+    return;
+  }
+
+  // Generate preprocessed output.
+  FailingCommand = 0;
+  int Res = C.ExecuteJob(C.getJobs(), FailingCommand);
+
+  // If the command succeeded, we are done.
+  if (Res == 0) {
+    Diag(clang::diag::note_drv_command_failed_diag_msg)
+      << "Preprocessed source(s) are located at:";
+    ArgStringList Files = C.getTempFiles();
+    for (ArgStringList::const_iterator it = Files.begin(), ie = Files.end(); 
+         it != ie; ++it)
+      Diag(clang::diag::note_drv_command_failed_diag_msg) << *it;
+  } else {
+    // Failure, remove preprocessed files.
+    if (!C.getArgs().hasArg(options::OPT_save_temps))
+      C.CleanupFileList(C.getTempFiles(), true);
+
+    Diag(clang::diag::note_drv_command_failed_diag_msg)
+      << "Error generating preprocessed source(s).";
+  }
+}
+
+int Driver::ExecuteCompilation(const Compilation &C,
+                               const Command *&FailingCommand) const {
   // Just print if -### was present.
   if (C.getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
     C.PrintJob(llvm::errs(), C.getJobs(), "\n", true);
@@ -375,10 +431,9 @@ int Driver::ExecuteCompilation(const Compilation &C) const {
   }
 
   // If there were errors building the compilation, quit now.
-  if (getDiags().hasErrorOccurred())
+  if (Diags.hasErrorOccurred())
     return 1;
 
-  const Command *FailingCommand = 0;
   int Res = C.ExecuteJob(C.getJobs(), FailingCommand);
 
   // Remove temp files.
@@ -1226,7 +1281,7 @@ void Driver::BuildJobsForAction(Compilation &C,
                        A->getType(), BaseInput);
   }
 
-  if (CCCPrintBindings) {
+  if (CCCPrintBindings && !CCGenDiagnostics) {
     llvm::errs() << "# \"" << T.getToolChain().getTripleString() << '"'
                  << " - \"" << T.getName() << "\", inputs: [";
     for (unsigned i = 0, e = InputInfos.size(); i != e; ++i) {
@@ -1253,11 +1308,12 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   }
 
   // Default to writing to stdout?
-  if (AtTopLevel && isa<PreprocessJobAction>(JA))
+  if (AtTopLevel && isa<PreprocessJobAction>(JA) && !CCGenDiagnostics)
     return "-";
 
   // Output to a temporary file?
-  if (!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps)) {
+  if ((!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps)) ||
+      CCGenDiagnostics) {
     std::string TmpName =
       GetTemporaryPath(types::getTypeTempSuffix(JA.getType()));
     return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
