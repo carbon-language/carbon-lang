@@ -17,6 +17,7 @@
 #include "ToolRunner.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
