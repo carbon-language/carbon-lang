@@ -602,58 +602,37 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     // normally.
     setOperationAction(ISD::MEMBARRIER, MVT::Other, Custom);
     setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Custom);
+    setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_SWAP,      MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_SUB,  MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_AND,  MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_OR,   MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_MIN,  MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_MAX,  MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_UMIN, MVT::i32, Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_UMAX, MVT::i32, Custom);
   } else {
     // Set them all for expansion, which will force libcalls.
     setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
     setOperationAction(ISD::ATOMIC_FENCE,   MVT::Other, Expand);
-    setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_SWAP,      MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_SWAP,      MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_SWAP,      MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_SUB,  MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_SUB,  MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_SUB,  MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_AND,  MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_AND,  MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_AND,  MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_OR,   MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_OR,   MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_OR,   MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_MIN, MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_MIN, MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_MIN, MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_MAX, MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_MAX, MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_MAX, MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_UMIN, MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_UMIN, MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_UMIN, MVT::i32, Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_UMAX, MVT::i8,  Expand);
-    setOperationAction(ISD::ATOMIC_LOAD_UMAX, MVT::i16, Expand);
     setOperationAction(ISD::ATOMIC_LOAD_UMAX, MVT::i32, Expand);
     // Since the libcalls include locking, fold in the fences
     setShouldFoldAtomicFences(true);
   }
-  // 64-bit versions are always libcalls (for now)
-  setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i64, Expand);
-  setOperationAction(ISD::ATOMIC_SWAP,      MVT::i64, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_ADD,  MVT::i64, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_SUB,  MVT::i64, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_AND,  MVT::i64, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_OR,   MVT::i64, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_XOR,  MVT::i64, Expand);
-  setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i64, Expand);
 
   setOperationAction(ISD::PREFETCH,         MVT::Other, Custom);
 
@@ -2279,32 +2258,71 @@ static SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG,
                      DAG.getConstant(DMBOpt, MVT::i32));
 }
 
-
-static SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG &DAG,
-                                 const ARMSubtarget *Subtarget) {
-  // FIXME: handle "fence singlethread" more efficiently.
-  DebugLoc dl = Op.getDebugLoc();
+static SDValue getFence(SDValue InChain, DebugLoc dl, SelectionDAG &DAG,
+                        const ARMSubtarget *Subtarget) {
   if (!Subtarget->hasDataBarrier()) {
     // Some ARMv6 cpus can support data barriers with an mcr instruction.
     // Thumb1 and pre-v6 ARM mode use a libcall instead and should never get
     // here.
     assert(Subtarget->hasV6Ops() && !Subtarget->isThumb() &&
            "Unexpected ISD::MEMBARRIER encountered. Should be libcall!");
-    return DAG.getNode(ARMISD::MEMBARRIER_MCR, dl, MVT::Other, Op.getOperand(0),
+    return DAG.getNode(ARMISD::MEMBARRIER_MCR, dl, MVT::Other, InChain,
                        DAG.getConstant(0, MVT::i32));
   }
 
-  AtomicOrdering FenceOrdering = static_cast<AtomicOrdering>(
-    cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue());
-
-  ARM_MB::MemBOpt DMBOpt;
-  if (FenceOrdering == Release)
-    DMBOpt = ARM_MB::ISHST;
-  else
-    DMBOpt = ARM_MB::ISH;
-  return DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0),
-                     DAG.getConstant(DMBOpt, MVT::i32));
+  return DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other, InChain,
+                     DAG.getConstant(ARM_MB::ISH, MVT::i32));
 }
+
+static SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG &DAG,
+                                 const ARMSubtarget *Subtarget) {
+  // FIXME: handle "fence singlethread" more efficiently.
+  DebugLoc dl = Op.getDebugLoc();
+  return getFence(Op.getOperand(0), dl, DAG, Subtarget);
+}
+
+static SDValue LowerAtomicMemOp(SDValue Op, SelectionDAG &DAG,
+                                const ARMSubtarget *Subtarget) {
+  DebugLoc dl = Op.getDebugLoc();
+  int Order = cast<AtomicSDNode>(Op)->getOrdering();
+  if (Order <= Monotonic)
+    return Op;
+
+  SDValue InChain = Op.getOperand(0);
+
+  // Fence, if necessary
+  if (Order == Release || Order >= AcquireRelease)
+    InChain = getFence(InChain, dl, DAG, Subtarget);
+
+  // Rather than mess with target-specific nodes, use the target-indepedent
+  // node, and assume the DAGCombiner will not touch it post-legalize. 
+  SDValue OutVal;
+  if (Op.getOpcode() == ISD::ATOMIC_CMP_SWAP)
+    OutVal = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP, dl,
+                           cast<AtomicSDNode>(Op)->getMemoryVT(),
+                           InChain, Op.getOperand(1), Op.getOperand(2),
+                           Op.getOperand(3),
+                           cast<AtomicSDNode>(Op)->getMemOperand(),
+                           Monotonic,
+                           cast<AtomicSDNode>(Op)->getSynchScope());
+  else
+    OutVal = DAG.getAtomic(Op.getOpcode(), dl,
+                           cast<AtomicSDNode>(Op)->getMemoryVT(),
+                           InChain, Op.getOperand(1), Op.getOperand(2),
+                           cast<AtomicSDNode>(Op)->getMemOperand(),
+                           Monotonic,
+                           cast<AtomicSDNode>(Op)->getSynchScope());
+
+  SDValue OutChain = OutVal.getValue(1);
+
+  // Fence, if necessary 
+  if (Order == Acquire || Order >= AcquireRelease)
+    OutChain = getFence(OutChain, dl, DAG, Subtarget);
+
+  SDValue Ops[2] = { OutVal, OutChain };
+  return DAG.getMergeValues(Ops, 2, dl);
+}
+
 
 static SDValue LowerPREFETCH(SDValue Op, SelectionDAG &DAG,
                              const ARMSubtarget *Subtarget) {
@@ -4864,6 +4882,18 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::VASTART:       return LowerVASTART(Op, DAG);
   case ISD::MEMBARRIER:    return LowerMEMBARRIER(Op, DAG, Subtarget);
   case ISD::ATOMIC_FENCE:  return LowerATOMIC_FENCE(Op, DAG, Subtarget);
+  case ISD::ATOMIC_CMP_SWAP:
+  case ISD::ATOMIC_SWAP:
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_LOAD_SUB:
+  case ISD::ATOMIC_LOAD_AND:
+  case ISD::ATOMIC_LOAD_OR:
+  case ISD::ATOMIC_LOAD_XOR:
+  case ISD::ATOMIC_LOAD_NAND:
+  case ISD::ATOMIC_LOAD_MIN:
+  case ISD::ATOMIC_LOAD_MAX:
+  case ISD::ATOMIC_LOAD_UMIN:
+  case ISD::ATOMIC_LOAD_UMAX: return LowerAtomicMemOp(Op, DAG, Subtarget);
   case ISD::PREFETCH:      return LowerPREFETCH(Op, DAG, Subtarget);
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:    return LowerINT_TO_FP(Op, DAG);
