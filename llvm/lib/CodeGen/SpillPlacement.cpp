@@ -220,6 +220,7 @@ void SpillPlacement::addConstraints(ArrayRef<BlockConstraint> LiveBlocks) {
       0,           // DontCare,
       1,           // PrefReg,
       -1,          // PrefSpill
+      0,           // PrefBoth
       -HUGE_VALF   // MustSpill
     };
 

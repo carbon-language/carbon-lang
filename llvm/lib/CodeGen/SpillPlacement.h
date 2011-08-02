@@ -71,6 +71,7 @@ public:
     DontCare,  ///< Block doesn't care / variable not live.
     PrefReg,   ///< Block entry/exit prefers a register.
     PrefSpill, ///< Block entry/exit prefers a stack slot.
+    PrefBoth,  ///< Block entry prefers both register and stack.
     MustSpill  ///< A register is impossible, variable must be spilled.
   };
 
@@ -79,6 +80,11 @@ public:
     unsigned Number;            ///< Basic block number (from MBB::getNumber()).
     BorderConstraint Entry : 8; ///< Constraint on block entry.
     BorderConstraint Exit : 8;  ///< Constraint on block exit.
+
+    /// True when this block changes the value of the live range. This means
+    /// the block has a non-PHI def.  When this is false, a live-in value on
+    /// the stack can be live-out on the stack without inserting a spill.
+    bool ChangesValue;
   };
 
   /// prepare - Reset state and prepare for a new spill placement computation.
@@ -96,7 +102,10 @@ public:
   ///                   live out.
   void addConstraints(ArrayRef<BlockConstraint> LiveBlocks);
 
-  /// addPrefSpill - Add PrefSpill constraints to all blocks listed.
+  /// addPrefSpill - Add PrefSpill constraints to all blocks listed.  This is
+  /// equivalent to calling addConstraint with identical BlockConstraints with
+  /// Entry = Exit = PrefSpill, and ChangesValue = false.
+  ///
   /// @param Blocks Array of block numbers that prefer to spill in and out.
   void addPrefSpill(ArrayRef<unsigned> Blocks);
 
