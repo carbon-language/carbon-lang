@@ -1206,7 +1206,7 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
   const CXXDestructorDecl *Dtor = 0;
   if (const RecordType *RT = ElementType->getAs<RecordType>()) {
     CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-    if (!RD->hasTrivialDestructor()) {
+    if (RD->hasDefinition() && !RD->hasTrivialDestructor()) {
       Dtor = RD->getDestructor();
 
       if (Dtor->isVirtual()) {
