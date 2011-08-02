@@ -203,7 +203,6 @@ bool SplitAnalysis::calcLiveBlockInfo() {
           ++NumGapBlocks;
 
           // Push the Live-in part.
-          BI.LiveThrough = false;
           BI.LiveOut = false;
           UseBlocks.push_back(BI);
           UseBlocks.back().LastUse = LastStop;
@@ -215,8 +214,6 @@ bool SplitAnalysis::calcLiveBlockInfo() {
         }
       }
 
-      // Don't set LiveThrough when the block has a gap.
-      BI.LiveThrough = BI.LiveIn && BI.LiveOut;
       UseBlocks.push_back(BI);
 
       // LVI is now at LVE or LVI->end >= Stop.

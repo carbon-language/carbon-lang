@@ -78,7 +78,6 @@ public:
     MachineBasicBlock *MBB;
     SlotIndex FirstUse;   ///< First instr using current reg.
     SlotIndex LastUse;    ///< Last instr using current reg.
-    bool LiveThrough;     ///< Live in whole block (Templ 5. above).
     bool LiveIn;          ///< Current reg is live in.
     bool LiveOut;         ///< Current reg is live out.
 
