@@ -676,6 +676,7 @@ bool RAGreedy::addSplitConstraints(InterferenceCache::Cursor Intf,
     Intf.moveToBlock(BC.Number);
     BC.Entry = BI.LiveIn ? SpillPlacement::PrefReg : SpillPlacement::DontCare;
     BC.Exit = BI.LiveOut ? SpillPlacement::PrefReg : SpillPlacement::DontCare;
+    BC.ChangesValue = BI.FirstDef;
 
     if (!Intf.hasInterference())
       continue;
