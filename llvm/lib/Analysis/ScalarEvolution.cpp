@@ -3814,10 +3814,10 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 //
 
 // getExitCount - Get the expression for the number of loop iterations for which
-// this loop is guaranteed not to exit via ExitBlock. Otherwise return
+// this loop is guaranteed not to exit via ExitintBlock. Otherwise return
 // SCEVCouldNotCompute.
-const SCEV *ScalarEvolution::getExitCount(Loop *L, BasicBlock *ExitBlock) {
-  return getBackedgeTakenInfo(L).getExact(ExitBlock, this);
+const SCEV *ScalarEvolution::getExitCount(Loop *L, BasicBlock *ExitingBlock) {
+  return getBackedgeTakenInfo(L).getExact(ExitingBlock, this);
 }
 
 /// getBackedgeTakenCount - If the specified loop has a predictable
@@ -4002,7 +4002,7 @@ ScalarEvolution::BackedgeTakenInfo::getExact(ScalarEvolution *SE) const {
   if (!ExitNotTaken.isCompleteList()) return SE->getCouldNotCompute();
 
   // We need at least one computable exit.
-  if (!ExitNotTaken.ExitBlock) return SE->getCouldNotCompute();
+  if (!ExitNotTaken.ExitingBlock) return SE->getCouldNotCompute();
   assert(ExitNotTaken.ExactNotTaken && "uninitialized not-taken info");
 
   const SCEV *BECount = 0;
@@ -4021,12 +4021,12 @@ ScalarEvolution::BackedgeTakenInfo::getExact(ScalarEvolution *SE) const {
 
 /// getExact - Get the exact not taken count for this loop exit.
 const SCEV *
-ScalarEvolution::BackedgeTakenInfo::getExact(BasicBlock *ExitBlock,
+ScalarEvolution::BackedgeTakenInfo::getExact(BasicBlock *ExitingBlock,
                                              ScalarEvolution *SE) const {
   for (const ExitNotTakenInfo *ENT = &ExitNotTaken;
        ENT != 0; ENT = ENT->getNextExit()) {
 
-    if (ENT->ExitBlock == ExitBlock)
+    if (ENT->ExitingBlock == ExitingBlock)
       return ENT->ExactNotTaken;
   }
   return SE->getCouldNotCompute();
@@ -4050,7 +4050,7 @@ ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
   unsigned NumExits = ExitCounts.size();
   if (NumExits == 0) return;
 
-  ExitNotTaken.ExitBlock = ExitCounts[0].first;
+  ExitNotTaken.ExitingBlock = ExitCounts[0].first;
   ExitNotTaken.ExactNotTaken = ExitCounts[0].second;
   if (NumExits == 1) return;
 
@@ -4060,14 +4060,14 @@ ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
   ExitNotTakenInfo *PrevENT = &ExitNotTaken;
   for (unsigned i = 1; i < NumExits; ++i, PrevENT = ENT, ++ENT) {
     PrevENT->setNextExit(ENT);
-    ENT->ExitBlock = ExitCounts[i].first;
+    ENT->ExitingBlock = ExitCounts[i].first;
     ENT->ExactNotTaken = ExitCounts[i].second;
   }
 }
 
 /// clear - Invalidate this result and free the ExitNotTakenInfo array.
 void ScalarEvolution::BackedgeTakenInfo::clear() {
-  ExitNotTaken.ExitBlock = 0;
+  ExitNotTaken.ExitingBlock = 0;
   ExitNotTaken.ExactNotTaken = 0;
   delete[] ExitNotTaken.getNextExit();
 }

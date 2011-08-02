@@ -264,11 +264,11 @@ namespace llvm {
     /// ExitNotTakenInfo - Information about the number of times a particular
     /// loop exit may be reached before exiting the loop.
     struct ExitNotTakenInfo {
-      BasicBlock *ExitBlock;
+      BasicBlock *ExitingBlock;
       const SCEV *ExactNotTaken;
       PointerIntPair<ExitNotTakenInfo*, 1> NextExit;
 
-      ExitNotTakenInfo() : ExitBlock(0), ExactNotTaken(0) {}
+      ExitNotTakenInfo() : ExitingBlock(0), ExactNotTaken(0) {}
 
       /// isCompleteList - Return true if all loop exits are computable.
       bool isCompleteList() const {
@@ -309,7 +309,7 @@ namespace llvm {
       /// computed information, or whether it's all SCEVCouldNotCompute
       /// values.
       bool hasAnyInfo() const {
-        return ExitNotTaken.ExitBlock || !isa<SCEVCouldNotCompute>(Max);
+        return ExitNotTaken.ExitingBlock || !isa<SCEVCouldNotCompute>(Max);
       }
 
       /// getExact - Return an expression indicating the exact backedge-taken
@@ -321,7 +321,7 @@ namespace llvm {
       /// getExact - Return the number of times this loop exit may fall through
       /// to the back edge. The loop is guaranteed not to exit via this block
       /// before this number of iterations, but may exit via another block.
-      const SCEV *getExact(BasicBlock *ExitBlock, ScalarEvolution *SE) const;
+      const SCEV *getExact(BasicBlock *ExitingBlock, ScalarEvolution *SE) const;
 
       /// getMax - Get the max backedge taken count for the loop.
       const SCEV *getMax(ScalarEvolution *SE) const;
@@ -711,9 +711,9 @@ namespace llvm {
                                      const SCEV *LHS, const SCEV *RHS);
 
     // getExitCount - Get the expression for the number of loop iterations for
-    // which this loop is guaranteed not to exit via ExitBlock. Otherwise return
-    // SCEVCouldNotCompute.
-    const SCEV *getExitCount(Loop *L, BasicBlock *ExitBlock);
+    // which this loop is guaranteed not to exit via ExitingBlock. Otherwise
+    // return SCEVCouldNotCompute.
+    const SCEV *getExitCount(Loop *L, BasicBlock *ExitingBlock);
 
     /// getBackedgeTakenCount - If the specified loop has a predictable
     /// backedge-taken count, return it, otherwise return a SCEVCouldNotCompute
