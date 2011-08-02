@@ -3,7 +3,8 @@ set(POLLY_TEST_DIRECTORIES
   "AffineIterator"
   "CodeGen"
   "OpenMP"
-  "polybench")
+  "polybench"
+  "vect")
 
 
 set(POLLY_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
