@@ -532,6 +532,8 @@ private:
   void visitUnwindInst    (TerminatorInst &I) { /*returns void*/ }
   void visitUnreachableInst(TerminatorInst &I) { /*returns void*/ }
   void visitFenceInst     (FenceInst &I) { /*returns void*/ }
+  void visitAtomicCmpXchgInst (AtomicCmpXchgInst &I) { markOverdefined(&I); }
+  void visitAtomicRMWInst (AtomicRMWInst &I) { markOverdefined(&I); }
   void visitAllocaInst    (Instruction &I) { markOverdefined(&I); }
   void visitVAArgInst     (Instruction &I) { markAnythingOverdefined(&I); }
 
