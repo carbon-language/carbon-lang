@@ -37,7 +37,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PassManagerBuilder.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Host.h"
@@ -45,6 +44,7 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Config/config.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include <cstdlib>
 #include <unistd.h>
 #include <fcntl.h>

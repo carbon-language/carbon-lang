@@ -1,4 +1,4 @@
-//===-- llvm/Support/PassManagerBuilder.h - Build Standard Pass -*- C++ -*-===//
+// llvm/Transforms/IPO/PassManagerBuilder.h - Build Standard Pass -*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
