@@ -1365,6 +1365,9 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
   case Intrinsic::memset: {
     const MemSetInst &MSI = cast<MemSetInst>(I);
 
+    if (MSI.isVolatile())
+      return false;
+
     unsigned SizeWidth = Subtarget->is64Bit() ? 64 : 32;
     if (!MSI.getLength()->getType()->isIntegerTy(SizeWidth))
       return false;
