@@ -34,7 +34,7 @@ namespace clang {
 template <typename Int, typename V, unsigned InitialCapacity>
 class ContinuousRangeMap {
 public:
-  typedef std::pair<const Int, V> value_type;
+  typedef std::pair<Int, V> value_type;
   typedef value_type &reference;
   typedef const value_type &const_reference;
   typedef value_type *pointer;
@@ -94,7 +94,6 @@ public:
   /// from a set of values.
   class Builder {
     ContinuousRangeMap &Self;
-    SmallVector<std::pair<Int, V>, InitialCapacity> Elements;
     
     Builder(const Builder&); // DO NOT IMPLEMENT
     Builder &operator=(const Builder&); // DO NOT IMPLEMENT
@@ -103,13 +102,11 @@ public:
     explicit Builder(ContinuousRangeMap &Self) : Self(Self) { }
     
     ~Builder() {
-      std::sort(Elements.begin(), Elements.end(), Compare());
-      for (unsigned I = 0, N = Elements.size(); I != N; ++I)
-        Self.insert(Elements[I]);
+      std::sort(Self.Rep.begin(), Self.Rep.end(), Compare());
     }
     
     void insert(const value_type &Val) {
-      Elements.push_back(Val);
+      Self.Rep.push_back(Val);
     }
   };
   friend class Builder;

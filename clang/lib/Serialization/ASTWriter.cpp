@@ -2020,11 +2020,13 @@ void ASTWriter::WriteTypeDeclOffsets() {
   BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(TYPE_OFFSET));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of types
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // base type index
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // types block
   unsigned TypeOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
   Record.clear();
   Record.push_back(TYPE_OFFSET);
   Record.push_back(TypeOffsets.size());
+  Record.push_back(FirstTypeID - NUM_PREDEF_TYPE_IDS);
   Stream.EmitRecordWithBlob(TypeOffsetAbbrev, Record, data(TypeOffsets));
 
   // Write the declaration offsets array
@@ -2907,29 +2909,27 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     WriteStatCache(*StatCalls);
   WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
   
-  // Write the record of special types.
-  Record.clear();
-
-  AddTypeRef(Context.getBuiltinVaListType(), Record);
-  AddTypeRef(Context.getObjCIdType(), Record);
-  AddTypeRef(Context.getObjCSelType(), Record);
-  AddTypeRef(Context.getObjCProtoType(), Record);
-  AddTypeRef(Context.getObjCClassType(), Record);
-  AddTypeRef(Context.getRawCFConstantStringType(), Record);
-  AddTypeRef(Context.getRawObjCFastEnumerationStateType(), Record);
-  AddTypeRef(Context.getFILEType(), Record);
-  AddTypeRef(Context.getjmp_bufType(), Record);
-  AddTypeRef(Context.getsigjmp_bufType(), Record);
-  AddTypeRef(Context.ObjCIdRedefinitionType, Record);
-  AddTypeRef(Context.ObjCClassRedefinitionType, Record);
-  AddTypeRef(Context.getRawBlockdescriptorType(), Record);
-  AddTypeRef(Context.getRawBlockdescriptorExtendedType(), Record);
-  AddTypeRef(Context.ObjCSelRedefinitionType, Record);
-  AddTypeRef(Context.getRawNSConstantStringType(), Record);
-  Record.push_back(Context.isInt128Installed());
-  AddTypeRef(Context.AutoDeductTy, Record);
-  AddTypeRef(Context.AutoRRefDeductTy, Record);
-  Stream.EmitRecord(SPECIAL_TYPES, Record);
+  // Form the record of special types.
+  RecordData SpecialTypes;
+  AddTypeRef(Context.getBuiltinVaListType(), SpecialTypes);
+  AddTypeRef(Context.getObjCIdType(), SpecialTypes);
+  AddTypeRef(Context.getObjCSelType(), SpecialTypes);
+  AddTypeRef(Context.getObjCProtoType(), SpecialTypes);
+  AddTypeRef(Context.getObjCClassType(), SpecialTypes);
+  AddTypeRef(Context.getRawCFConstantStringType(), SpecialTypes);
+  AddTypeRef(Context.getRawObjCFastEnumerationStateType(), SpecialTypes);
+  AddTypeRef(Context.getFILEType(), SpecialTypes);
+  AddTypeRef(Context.getjmp_bufType(), SpecialTypes);
+  AddTypeRef(Context.getsigjmp_bufType(), SpecialTypes);
+  AddTypeRef(Context.ObjCIdRedefinitionType, SpecialTypes);
+  AddTypeRef(Context.ObjCClassRedefinitionType, SpecialTypes);
+  AddTypeRef(Context.getRawBlockdescriptorType(), SpecialTypes);
+  AddTypeRef(Context.getRawBlockdescriptorExtendedType(), SpecialTypes);
+  AddTypeRef(Context.ObjCSelRedefinitionType, SpecialTypes);
+  AddTypeRef(Context.getRawNSConstantStringType(), SpecialTypes);
+  SpecialTypes.push_back(Context.isInt128Installed());
+  AddTypeRef(Context.AutoDeductTy, SpecialTypes);
+  AddTypeRef(Context.AutoRRefDeductTy, SpecialTypes);
 
   // Keep writing types and declarations until all types and
   // declarations have been written.
@@ -2958,6 +2958,8 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   WriteCXXBaseSpecifiersOffsets();
   
+  Stream.EmitRecord(SPECIAL_TYPES, SpecialTypes);
+
   // Write the record containing external, unnamed definitions.
   if (!ExternalDefinitions.empty())
     Stream.EmitRecord(EXTERNAL_DEFINITIONS, ExternalDefinitions);
@@ -3072,7 +3074,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
       io::Emit32(Out, (*M)->BaseSelectorID);
       io::Emit32(Out, (*M)->BaseDeclID);
       io::Emit32(Out, (*M)->BaseCXXBaseSpecifiersID);
-      io::Emit32(Out, (*M)->BaseTypeID);
+      io::Emit32(Out, (*M)->GlobalBaseTypeIndex);
     }
   }
   Record.clear();

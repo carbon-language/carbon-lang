@@ -380,9 +380,26 @@ public:
   /// type ID, or the representation of a Type*.
   const uint32_t *TypeOffsets;
   
-  /// \brief Base type ID for types local to this module.
-  serialization::TypeID BaseTypeID;
+  /// \brief Base type ID for types local to this module as represented in 
+  /// the global type ID space.
+  serialization::TypeID GlobalBaseTypeIndex;
   
+  /// \brief Remapping table for type IDs in this module.
+  ContinuousRangeMap<uint32_t, int, 2> TypeRemap;
+
+  /// \brief Base type ID for types local to this module as represented in
+  /// the module's type ID space.
+  serialization::TypeID LocalBaseTypeIndex;
+
+  /// \brief Remapping table that maps from a type as represented as a module
+  /// and local type index to the index used within the current module to
+  /// refer to that same type.
+  /// 
+  /// This mapping is effectively the reverse of the normal \c TypeRemap, and
+  /// is used specifically by ASTReader::GetTypeIdx() to help map between
+  /// global type IDs and a module's view of the same type ID as a hash value.
+  llvm::DenseMap<Module *, int> ReverseTypeRemap;
+
   // === Miscellaneous ===
   
   /// \brief Diagnostic IDs and their mappings that the user changed.
@@ -1232,6 +1249,10 @@ public:
   
   /// \brief Map a local type ID within a given AST file into a global type ID.
   serialization::TypeID getGlobalTypeID(Module &F, unsigned LocalID) const;
+  
+  /// \brief Map a global type ID to an ID as it would be locally expressed
+  /// in the given model.
+  unsigned getLocalTypeID(Module &M, serialization::TypeID GlobalID);
   
   /// \brief Read a type from the current position in the given record, which 
   /// was read from the given AST file.

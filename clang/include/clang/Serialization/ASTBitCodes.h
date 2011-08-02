@@ -84,9 +84,15 @@ namespace clang {
 
       uint32_t getIndex() const { return Idx; }
       TypeID asTypeID(unsigned FastQuals) const {
+        if (Idx == uint32_t(-1))
+          return TypeID(-1);
+        
         return (Idx << Qualifiers::FastWidth) | FastQuals;
       }
       static TypeIdx fromTypeID(TypeID ID) {
+        if (ID == TypeID(-1))
+          return TypeIdx(-1);
+        
         return TypeIdx(ID >> Qualifiers::FastWidth);
       }
     };
