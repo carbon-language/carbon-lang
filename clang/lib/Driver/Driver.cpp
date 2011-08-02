@@ -373,8 +373,8 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
 void Driver::generateCompilationDiagnostics(Compilation &C,
                                             const Command *FailingCommand) {
   Diag(clang::diag::note_drv_command_failed_diag_msg)
-    << "Please submit a bug report and include command line arguments and "
-    "all diagnostic information.";
+    << "Please submit a bug report to " BUG_REPORT_URL " and include command"
+    " line arguments and all diagnostic information.";
 
   // Suppress driver output and emit preprocessor output to temp file.
   CCCIsCPP = true;

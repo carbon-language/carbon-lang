@@ -15,3 +15,6 @@
 
 /* Directories clang will search for headers. */
 #define C_INCLUDE_DIRS "${C_INCLUDE_DIRS}"
+
+/* Define default bug reporting URL. */
+#define BUG_REPORT_URL "${BUG_REPORT_URL}"
