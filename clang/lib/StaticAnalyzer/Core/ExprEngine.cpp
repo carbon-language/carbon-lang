@@ -2210,97 +2210,42 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
   }
 }
 
-namespace {
-  // This class is used by VisitInitListExpr as an item in a worklist
-  // for processing the values contained in an InitListExpr.
-class InitListWLItem {
-public:
-  llvm::ImmutableList<SVal> Vals;
-  ExplodedNode* N;
-  InitListExpr::const_reverse_iterator Itr;
-
-  InitListWLItem(ExplodedNode* n, llvm::ImmutableList<SVal> vals,
-                 InitListExpr::const_reverse_iterator itr)
-  : Vals(vals), N(n), Itr(itr) {}
-};
-}
-
-
-void ExprEngine::VisitInitListExpr(const InitListExpr* E, ExplodedNode* Pred,
-                                     ExplodedNodeSet& Dst) {
+void ExprEngine::VisitInitListExpr(const InitListExpr *IE, ExplodedNode *Pred,
+                                    ExplodedNodeSet& Dst) {
 
   const GRState* state = GetState(Pred);
-  QualType T = getContext().getCanonicalType(E->getType());
-  unsigned NumInitElements = E->getNumInits();
+  QualType T = getContext().getCanonicalType(IE->getType());
+  unsigned NumInitElements = IE->getNumInits();
 
   if (T->isArrayType() || T->isRecordType() || T->isVectorType()) {
-    llvm::ImmutableList<SVal> StartVals = getBasicVals().getEmptySValList();
+    llvm::ImmutableList<SVal> vals = getBasicVals().getEmptySValList();
 
     // Handle base case where the initializer has no elements.
     // e.g: static int* myArray[] = {};
     if (NumInitElements == 0) {
-      SVal V = svalBuilder.makeCompoundVal(T, StartVals);
-      MakeNode(Dst, E, Pred, state->BindExpr(E, V));
+      SVal V = svalBuilder.makeCompoundVal(T, vals);
+      MakeNode(Dst, IE, Pred, state->BindExpr(IE, V));
       return;
     }
 
-    // Create a worklist to process the initializers.
-    SmallVector<InitListWLItem, 10> WorkList;
-    WorkList.reserve(NumInitElements);
-    WorkList.push_back(InitListWLItem(Pred, StartVals, E->rbegin()));
-    InitListExpr::const_reverse_iterator ItrEnd = E->rend();
-    assert(!(E->rbegin() == E->rend()));
-
-    // Process the worklist until it is empty.
-    while (!WorkList.empty()) {
-      InitListWLItem X = WorkList.back();
-      WorkList.pop_back();
-
-      ExplodedNodeSet Tmp;
-      Visit(*X.Itr, X.N, Tmp);
-
-      InitListExpr::const_reverse_iterator NewItr = X.Itr + 1;
-
-      for (ExplodedNodeSet::iterator NI=Tmp.begin(),NE=Tmp.end();NI!=NE;++NI) {
-        // Get the last initializer value.
-        state = GetState(*NI);
-        SVal InitV = state->getSVal(cast<Expr>(*X.Itr));
-
-        // Construct the new list of values by prepending the new value to
-        // the already constructed list.
-        llvm::ImmutableList<SVal> NewVals =
-          getBasicVals().consVals(InitV, X.Vals);
-
-        if (NewItr == ItrEnd) {
-          // Now we have a list holding all init values. Make CompoundValData.
-          SVal V = svalBuilder.makeCompoundVal(T, NewVals);
-
-          // Make final state and node.
-          MakeNode(Dst, E, *NI, state->BindExpr(E, V));
-        }
-        else {
-          // Still some initializer values to go.  Push them onto the worklist.
-          WorkList.push_back(InitListWLItem(*NI, NewVals, NewItr));
-        }
-      }
+    for (InitListExpr::const_reverse_iterator it = IE->rbegin(),
+                                              ei = IE->rend(); it != ei; ++it) {
+      vals = getBasicVals().consVals(state->getSVal(cast<Expr>(*it)), vals);
     }
 
+    MakeNode(Dst, IE, Pred,
+             state->BindExpr(IE, svalBuilder.makeCompoundVal(T, vals)));
     return;
   }
 
   if (Loc::isLocType(T) || T->isIntegerType()) {
-    assert (E->getNumInits() == 1);
-    ExplodedNodeSet Tmp;
-    const Expr* Init = E->getInit(0);
-    Visit(Init, Pred, Tmp);
-    for (ExplodedNodeSet::iterator I=Tmp.begin(), EI=Tmp.end(); I != EI; ++I) {
-      state = GetState(*I);
-      MakeNode(Dst, E, *I, state->BindExpr(E, state->getSVal(Init)));
-    }
+    assert(IE->getNumInits() == 1);
+    const Expr *initEx = IE->getInit(0);
+    MakeNode(Dst, IE, Pred, state->BindExpr(IE, state->getSVal(initEx)));
     return;
   }
 
-  assert(0 && "unprocessed InitListExpr type");
+  llvm_unreachable("unprocessed InitListExpr type");
 }
 
 /// VisitUnaryExprOrTypeTraitExpr - Transfer function for sizeof(type).
