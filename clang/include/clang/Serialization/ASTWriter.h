@@ -72,6 +72,19 @@ public:
 
   friend class ASTDeclWriter;
 private:
+  /// \brief Map that provides the ID numbers of each type within the
+  /// output stream, plus those deserialized from a chained PCH.
+  ///
+  /// The ID numbers of types are consecutive (in order of discovery)
+  /// and start at 1. 0 is reserved for NULL. When types are actually
+  /// stored in the stream, the ID number is shifted by 2 bits to
+  /// allow for the const/volatile qualifiers.
+  ///
+  /// Keys in the map never have const/volatile qualifiers.
+  typedef llvm::DenseMap<QualType, serialization::TypeIdx, 
+                         serialization::UnsafeQualTypeDenseMapInfo>
+    TypeIdxMap;
+
   /// \brief The bitstream writer used to emit this precompiled header.
   llvm::BitstreamWriter &Stream;
 
@@ -142,7 +155,7 @@ private:
   /// allow for the const/volatile qualifiers.
   ///
   /// Keys in the map never have const/volatile qualifiers.
-  serialization::TypeIdxMap TypeIdxs;
+  TypeIdxMap TypeIdxs;
 
   /// \brief Offset of each type in the bitstream, indexed by
   /// the type's ID.

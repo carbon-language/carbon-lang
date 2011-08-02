@@ -115,18 +115,6 @@ namespace clang {
       }
     };
 
-    /// \brief Map that provides the ID numbers of each type within the
-    /// output stream, plus those deserialized from a chained PCH.
-    ///
-    /// The ID numbers of types are consecutive (in order of discovery)
-    /// and start at 1. 0 is reserved for NULL. When types are actually
-    /// stored in the stream, the ID number is shifted by 2 bits to
-    /// allow for the const/volatile qualifiers.
-    ///
-    /// Keys in the map never have const/volatile qualifiers.
-    typedef llvm::DenseMap<QualType, TypeIdx, UnsafeQualTypeDenseMapInfo>
-        TypeIdxMap;
-
     /// \brief An ID number that refers to an identifier in an AST file.
     typedef uint32_t IdentID;
 

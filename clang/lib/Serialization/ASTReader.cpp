@@ -782,17 +782,12 @@ public:
     case DeclarationName::ObjCMultiArgSelector:
       ID.AddInteger(serialization::ComputeHash(Selector(Key.Data)));
       break;
-    case DeclarationName::CXXConstructorName:
-    case DeclarationName::CXXDestructorName:
-    case DeclarationName::CXXConversionFunctionName:
-      if (TypeID(Key.Data) == TypeID(-1))
-        ID.AddInteger((TypeID)Key.Data);
-      else
-        ID.AddInteger(Reader.getLocalTypeID(F, (TypeID)Key.Data));
-      break;
     case DeclarationName::CXXOperatorName:
       ID.AddInteger((OverloadedOperatorKind)Key.Data);
       break;
+    case DeclarationName::CXXConstructorName:
+    case DeclarationName::CXXDestructorName:
+    case DeclarationName::CXXConversionFunctionName:
     case DeclarationName::CXXUsingDirective:
       break;
     }
@@ -812,18 +807,17 @@ public:
     case DeclarationName::ObjCMultiArgSelector:
       Key.Data = (uint64_t)Name.getObjCSelector().getAsOpaquePtr();
       break;
-    case DeclarationName::CXXConstructorName:
-    case DeclarationName::CXXDestructorName:
-    case DeclarationName::CXXConversionFunctionName:
-      Key.Data = Reader.GetTypeID(Name.getCXXNameType());
-      break;
     case DeclarationName::CXXOperatorName:
       Key.Data = Name.getCXXOverloadedOperator();
       break;
     case DeclarationName::CXXLiteralOperatorName:
       Key.Data = (uint64_t)Name.getCXXLiteralIdentifier();
       break;
+    case DeclarationName::CXXConstructorName:
+    case DeclarationName::CXXDestructorName:
+    case DeclarationName::CXXConversionFunctionName:
     case DeclarationName::CXXUsingDirective:
+      Key.Data = 0;
       break;
     }
 
@@ -892,18 +886,17 @@ public:
          (uint64_t)Reader.getLocalSelector(F, ReadUnalignedLE32(d))
                      .getAsOpaquePtr();
       break;
-    case DeclarationName::CXXConstructorName:
-    case DeclarationName::CXXDestructorName:
-    case DeclarationName::CXXConversionFunctionName:
-      Key.Data = Reader.getGlobalTypeID(F, ReadUnalignedLE32(d)); // TypeID
-      break;
     case DeclarationName::CXXOperatorName:
       Key.Data = *d++; // OverloadedOperatorKind
       break;
     case DeclarationName::CXXLiteralOperatorName:
       Key.Data = (uint64_t)Reader.getLocalIdentifier(F, ReadUnalignedLE32(d));
       break;
+    case DeclarationName::CXXConstructorName:
+    case DeclarationName::CXXDestructorName:
+    case DeclarationName::CXXConversionFunctionName:
     case DeclarationName::CXXUsingDirective:
+      Key.Data = 0;
       break;
     }
 
@@ -2059,16 +2052,16 @@ ASTReader::ReadASTBlock(Module &F) {
       }
       F.TypeOffsets = (const uint32_t *)BlobStart;
       F.LocalNumTypes = Record[0];
-      F.LocalBaseTypeIndex = Record[1];
-      F.GlobalBaseTypeIndex = getTotalNumTypes();
+      unsigned LocalBaseTypeIndex = Record[1];
+      F.BaseTypeIndex = getTotalNumTypes();
         
       if (F.LocalNumTypes > 0) {
         // Introduce the global -> local mapping for types within this module.
         GlobalTypeMap.insert(std::make_pair(getTotalNumTypes(), &F));
         
         // Introduce the local -> global mapping for types within this module.
-        F.TypeRemap.insert(std::make_pair(F.LocalBaseTypeIndex, 
-                             F.GlobalBaseTypeIndex - F.LocalBaseTypeIndex));
+        F.TypeRemap.insert(std::make_pair(LocalBaseTypeIndex, 
+                             F.BaseTypeIndex - LocalBaseTypeIndex));
         
         TypesLoaded.resize(TypesLoaded.size() + F.LocalNumTypes);
       }
@@ -2323,8 +2316,7 @@ ASTReader::ReadASTBlock(Module &F) {
         (void)CXXBaseSpecifiersIDOffset;
         
         TypeRemap.insert(std::make_pair(TypeIndexOffset, 
-                                    OM->GlobalBaseTypeIndex - TypeIndexOffset));
-        F.ReverseTypeRemap[OM] = TypeIndexOffset - OM->GlobalBaseTypeIndex;
+                                    OM->BaseTypeIndex - TypeIndexOffset));
       }
       break;
     }
@@ -3248,7 +3240,7 @@ ASTReader::RecordLocation ASTReader::TypeCursorForIndex(unsigned Index) {
   GlobalTypeMapType::iterator I = GlobalTypeMap.find(Index);
   assert(I != GlobalTypeMap.end() && "Corrupted global type map");
   Module *M = I->second;
-  return RecordLocation(M, M->TypeOffsets[Index - M->GlobalBaseTypeIndex]);
+  return RecordLocation(M, M->TypeOffsets[Index - M->BaseTypeIndex]);
 }
 
 /// \brief Read and return the type with the given index..
@@ -3978,7 +3970,6 @@ QualType ASTReader::GetType(TypeID ID) {
       return QualType();
 
     TypesLoaded[Index]->setFromAST();
-    TypeIdxs[TypesLoaded[Index]] = TypeIdx::fromTypeID(ID);
     if (DeserializationListener)
       DeserializationListener->TypeRead(TypeIdx::fromTypeID(ID),
                                         TypesLoaded[Index]);
@@ -4005,62 +3996,6 @@ ASTReader::getGlobalTypeID(Module &F, unsigned LocalID) const {
   
   unsigned GlobalIndex = LocalIndex + I->second;
   return (GlobalIndex << Qualifiers::FastWidth) | FastQuals;
-}
-
-unsigned ASTReader::getLocalTypeID(Module &M, serialization::TypeID GlobalID) {
-  unsigned FastQuals = GlobalID & Qualifiers::FastMask;
-  unsigned GlobalIndex = GlobalID >> Qualifiers::FastWidth;
-
-  if (GlobalIndex < NUM_PREDEF_TYPE_IDS)
-    return GlobalID;
-  
-  GlobalIndex -= NUM_PREDEF_TYPE_IDS;
-  RecordLocation Loc = TypeCursorForIndex(GlobalIndex);
-  
-  if (Loc.F == &M) {
-    // Simple case: the type ID came from the module we're asked to provide a
-    // type ID for. Shift the index appropriately;
-    unsigned LocalIndex 
-      = GlobalIndex - M.GlobalBaseTypeIndex + M.LocalBaseTypeIndex 
-      + NUM_PREDEF_TYPE_IDS ;
-    return (LocalIndex << Qualifiers::FastWidth) | FastQuals;
-  }
-
-  // Complex case: the type ID came from a module that M depends on, which may
-  // have had some remapping between the IDs used to store it in M and its
-  // location in the global space.
-  llvm::DenseMap<Module *, int>::iterator R = Loc.F->ReverseTypeRemap.find(&M);
-  if (R == Loc.F->ReverseTypeRemap.end())
-    return TypeID(-1); // FIXME: This is a terrible failure case
-  
-  unsigned LocalIndex = GlobalIndex - Loc.F->GlobalBaseTypeIndex 
-                      + R->second + NUM_PREDEF_TYPE_IDS;
-  return (LocalIndex << Qualifiers::FastWidth) | FastQuals;
-}
-
-TypeID ASTReader::GetTypeID(QualType T) const {
-  return MakeTypeID(T,
-              std::bind1st(std::mem_fun(&ASTReader::GetTypeIdx), this));
-}
-
-TypeIdx ASTReader::GetTypeIdx(QualType T) const {
-  if (T.isNull())
-    return TypeIdx();
-  assert(!T.getLocalFastQualifiers());
-
-  // FIXME: Modules can't handle this. It's even dubious with chained PCH,
-  // because the same type (say, int*) can be serialized into different
-  // PCH files within the chain, and there's no way to know which of the
-  // ID numbers we actually want.
-  TypeIdxMap::const_iterator I = TypeIdxs.find(T);
-  // GetTypeIdx is mostly used for computing the hash of DeclarationNames and
-  // comparing keys of ASTDeclContextNameLookupTable.
-  // If the type didn't come from the AST file use a specially marked index
-  // so that any hash/key comparison fail since no such index is stored
-  // in a AST file.
-  if (I == TypeIdxs.end())
-    return TypeIdx(-1);
-  return I->second;
 }
 
 TemplateArgumentLocInfo
@@ -4271,8 +4206,25 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
       continue;
 
     ASTDeclContextNameLookupTrait::data_type Data = *Pos;
-    for (; Data.first != Data.second; ++Data.first)
-      Decls.push_back(GetLocalDeclAs<NamedDecl>(*I->F, *Data.first));
+    for (; Data.first != Data.second; ++Data.first) {
+      NamedDecl *ND = GetLocalDeclAs<NamedDecl>(*I->F, *Data.first);
+      if (!ND)
+        continue;
+      
+      if (ND->getDeclName() != Name) {
+        assert(!Name.getCXXNameType().isNull() && 
+               "Name mismatch without a type");
+        continue;
+      }
+      
+      Decls.push_back(ND);
+    }
+    
+    // If we rejected all of the declarations we found, e.g., because the
+    // name didn't actually match, continue looking through DeclContexts.
+    if (Decls.empty())
+      continue;
+    
     break;
   }
 
@@ -5532,8 +5484,7 @@ Module::Module(ModuleKind Kind)
     DeclOffsets(0), BaseDeclID(0),
     LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),
     BaseCXXBaseSpecifiersID(0),
-    LocalNumTypes(0), TypeOffsets(0), GlobalBaseTypeIndex(0), 
-    LocalBaseTypeIndex(0), StatCache(0),
+    LocalNumTypes(0), TypeOffsets(0), BaseTypeIndex(0), StatCache(0),
     NumPreallocatedPreprocessingEntities(0)
 {}
 
@@ -5575,7 +5526,7 @@ void Module::dump() {
   llvm::errs() << "  Base source location offset: " << SLocEntryBaseOffset 
                << '\n';
   dumpLocalRemap("Source location offset map", SLocRemap);
-  llvm::errs() << "  Base type ID: " << GlobalBaseTypeIndex << '\n'
+  llvm::errs() << "  Base type ID: " << BaseTypeIndex << '\n'
                << "  Number of types: " << LocalNumTypes << '\n';
   dumpLocalRemap("Type ID map", TypeRemap);
 }

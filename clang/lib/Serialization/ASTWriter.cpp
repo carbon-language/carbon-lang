@@ -2464,7 +2464,6 @@ public:
     case DeclarationName::CXXConstructorName:
     case DeclarationName::CXXDestructorName:
     case DeclarationName::CXXConversionFunctionName:
-      ID.AddInteger(Writer.GetOrCreateTypeID(Name.getCXXNameType()));
       break;
     case DeclarationName::CXXOperatorName:
       ID.AddInteger(Name.getCXXOverloadedOperator());
@@ -2487,15 +2486,15 @@ public:
     case DeclarationName::ObjCZeroArgSelector:
     case DeclarationName::ObjCOneArgSelector:
     case DeclarationName::ObjCMultiArgSelector:
-    case DeclarationName::CXXConstructorName:
-    case DeclarationName::CXXDestructorName:
-    case DeclarationName::CXXConversionFunctionName:
     case DeclarationName::CXXLiteralOperatorName:
       KeyLen += 4;
       break;
     case DeclarationName::CXXOperatorName:
       KeyLen += 1;
       break;
+    case DeclarationName::CXXConstructorName:
+    case DeclarationName::CXXDestructorName:
+    case DeclarationName::CXXConversionFunctionName:
     case DeclarationName::CXXUsingDirective:
       break;
     }
@@ -2522,11 +2521,6 @@ public:
     case DeclarationName::ObjCMultiArgSelector:
       Emit32(Out, Writer.getSelectorRef(Name.getObjCSelector()));
       break;
-    case DeclarationName::CXXConstructorName:
-    case DeclarationName::CXXDestructorName:
-    case DeclarationName::CXXConversionFunctionName:
-      Emit32(Out, Writer.getTypeID(Name.getCXXNameType()));
-      break;
     case DeclarationName::CXXOperatorName:
       assert(Name.getCXXOverloadedOperator() < 0x100 && "Invalid operator ?");
       Emit8(Out, Name.getCXXOverloadedOperator());
@@ -2534,6 +2528,9 @@ public:
     case DeclarationName::CXXLiteralOperatorName:
       Emit32(Out, Writer.getIdentifierRef(Name.getCXXLiteralIdentifier()));
       break;
+    case DeclarationName::CXXConstructorName:
+    case DeclarationName::CXXDestructorName:
+    case DeclarationName::CXXConversionFunctionName:
     case DeclarationName::CXXUsingDirective:
       break;
     }
@@ -3074,7 +3071,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
       io::Emit32(Out, (*M)->BaseSelectorID);
       io::Emit32(Out, (*M)->BaseDeclID);
       io::Emit32(Out, (*M)->BaseCXXBaseSpecifiersID);
-      io::Emit32(Out, (*M)->GlobalBaseTypeIndex);
+      io::Emit32(Out, (*M)->BaseTypeIndex);
     }
   }
   Record.clear();

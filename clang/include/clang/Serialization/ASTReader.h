@@ -382,23 +382,10 @@ public:
   
   /// \brief Base type ID for types local to this module as represented in 
   /// the global type ID space.
-  serialization::TypeID GlobalBaseTypeIndex;
+  serialization::TypeID BaseTypeIndex;
   
   /// \brief Remapping table for type IDs in this module.
   ContinuousRangeMap<uint32_t, int, 2> TypeRemap;
-
-  /// \brief Base type ID for types local to this module as represented in
-  /// the module's type ID space.
-  serialization::TypeID LocalBaseTypeIndex;
-
-  /// \brief Remapping table that maps from a type as represented as a module
-  /// and local type index to the index used within the current module to
-  /// refer to that same type.
-  /// 
-  /// This mapping is effectively the reverse of the normal \c TypeRemap, and
-  /// is used specifically by ASTReader::GetTypeIdx() to help map between
-  /// global type IDs and a module's view of the same type ID as a hash value.
-  llvm::DenseMap<Module *, int> ReverseTypeRemap;
 
   // === Miscellaneous ===
   
@@ -594,17 +581,6 @@ private:
   /// type resides along with the offset that should be added to the
   /// global type ID to produce a local ID.
   GlobalTypeMapType GlobalTypeMap;
-
-  /// \brief Map that provides the ID numbers of each type within the
-  /// output stream, plus those deserialized from a chained PCH.
-  ///
-  /// The ID numbers of types are consecutive (in order of discovery)
-  /// and start at 1. 0 is reserved for NULL. When types are actually
-  /// stored in the stream, the ID number is shifted by 2 bits to
-  /// allow for the const/volatile qualifiers.
-  ///
-  /// Keys in the map never have const/volatile qualifiers.
-  serialization::TypeIdxMap TypeIdxs;
 
   /// \brief Declarations that have already been loaded from the chain.
   ///
@@ -1253,10 +1229,6 @@ public:
   /// \brief Map a local type ID within a given AST file into a global type ID.
   serialization::TypeID getGlobalTypeID(Module &F, unsigned LocalID) const;
   
-  /// \brief Map a global type ID to an ID as it would be locally expressed
-  /// in the given model.
-  unsigned getLocalTypeID(Module &M, serialization::TypeID GlobalID);
-  
   /// \brief Read a type from the current position in the given record, which 
   /// was read from the given AST file.
   QualType readType(Module &F, const RecordData &Record, unsigned &Idx) {
@@ -1266,16 +1238,6 @@ public:
     return getLocalType(F, Record[Idx++]);
   }
   
-  /// \brief Returns the type ID associated with the given type.
-  /// If the type didn't come from the AST file the ID that is returned is
-  /// marked as "doesn't exist in AST".
-  serialization::TypeID GetTypeID(QualType T) const;
-
-  /// \brief Returns the type index associated with the given type.
-  /// If the type didn't come from the AST file the index that is returned is
-  /// marked as "doesn't exist in AST".
-  serialization::TypeIdx GetTypeIdx(QualType T) const;
-
   /// \brief Map from a local declaration ID within a given module to a 
   /// global declaration ID.
   serialization::DeclID getGlobalDeclID(Module &F, unsigned LocalID) const;
