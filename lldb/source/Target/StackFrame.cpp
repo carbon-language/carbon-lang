@@ -485,6 +485,34 @@ StackFrame::GetVariableList (bool get_file_globals)
     return m_variable_list_sp.get();
 }
 
+VariableListSP
+StackFrame::GetInScopeVariableList (bool get_file_globals)
+{
+    VariableListSP var_list_sp(new VariableList);
+    GetSymbolContext (eSymbolContextCompUnit | eSymbolContextBlock);
+
+    if (m_sc.block)
+    {
+        const bool can_create = true;
+        const bool get_parent_variables = true;
+        const bool stop_if_block_is_inlined_function = true;
+        m_sc.block->AppendVariables (can_create, 
+                                     get_parent_variables,
+                                     stop_if_block_is_inlined_function,
+                                     var_list_sp.get());
+    }
+                     
+    if (m_sc.comp_unit)
+    {
+        VariableListSP global_variable_list_sp (m_sc.comp_unit->GetVariableList(true));
+        if (global_variable_list_sp)
+            var_list_sp->AddVariables (global_variable_list_sp.get());
+    }
+    
+    return var_list_sp;
+}
+
+
 ValueObjectSP
 StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, 
                                                lldb::DynamicValueType use_dynamic,
@@ -502,7 +530,10 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
         bool address_of = false;
         ValueObjectSP valobj_sp;
         const bool get_file_globals = true;
-        VariableList *variable_list = GetVariableList (get_file_globals);
+        // When looking up a variable for an expression, we need only consider the
+        // variables that are in scope.
+        VariableListSP var_list_sp (GetInScopeVariableList (get_file_globals));
+        VariableList *variable_list = var_list_sp.get();
         
         if (variable_list)
         {

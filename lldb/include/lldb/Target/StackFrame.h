@@ -101,6 +101,9 @@ public:
     VariableList *
     GetVariableList (bool get_file_globals);
 
+    lldb::VariableListSP
+    GetInScopeVariableList (bool get_file_globals);
+
     // See ExpressionPathOption enumeration for "options" values
     lldb::ValueObjectSP
     GetValueForVariableExpressionPath (const char *var_expr, 
