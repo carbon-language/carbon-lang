@@ -2975,8 +2975,8 @@ def  MVNr  : AsI1<0b1111, (outs GPR:$Rd), (ins GPR:$Rm), DPFrm, IIC_iMVNr,
   let Inst{15-12} = Rd;
   let Inst{3-0} = Rm;
 }
-def  MVNsi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_imm:$shift), DPSoRegImmFrm,
-                  IIC_iMVNsr, "mvn", "\t$Rd, $shift",
+def  MVNsi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_imm:$shift),
+                  DPSoRegImmFrm, IIC_iMVNsr, "mvn", "\t$Rd, $shift",
                   [(set GPR:$Rd, (not so_reg_imm:$shift))]>, UnaryDP {
   bits<4> Rd;
   bits<12> shift;
@@ -2987,8 +2987,8 @@ def  MVNsi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_imm:$shift), DPSoRegImmFr
   let Inst{4} = 0;
   let Inst{3-0} = shift{3-0};
 }
-def  MVNsr  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_reg:$shift), DPSoRegRegFrm,
-                  IIC_iMVNsr, "mvn", "\t$Rd, $shift",
+def  MVNsr  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_reg:$shift),
+                  DPSoRegRegFrm, IIC_iMVNsr, "mvn", "\t$Rd, $shift",
                   [(set GPR:$Rd, (not so_reg_reg:$shift))]>, UnaryDP {
   bits<4> Rd;
   bits<12> shift;
@@ -3557,12 +3557,14 @@ def MOVCCr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$false, GPR:$Rm, pred:$p),
 def MOVCCsi : ARMPseudoInst<(outs GPR:$Rd),
                            (ins GPR:$false, so_reg_imm:$shift, pred:$p),
                            4, IIC_iCMOVsr,
-  [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_reg_imm:$shift, imm:$cc, CCR:$ccr))*/]>,
+  [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_reg_imm:$shift,
+                            imm:$cc, CCR:$ccr))*/]>,
       RegConstraint<"$false = $Rd">;
 def MOVCCsr : ARMPseudoInst<(outs GPR:$Rd),
                            (ins GPR:$false, so_reg_reg:$shift, pred:$p),
                            4, IIC_iCMOVsr,
-  [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_reg_reg:$shift, imm:$cc, CCR:$ccr))*/]>,
+  [/*(set GPR:$Rd, (ARMcmov GPR:$false, so_reg_reg:$shift,
+                            imm:$cc, CCR:$ccr))*/]>,
       RegConstraint<"$false = $Rd">;
 
 
@@ -3754,8 +3756,8 @@ let mayLoad = 1 in {
 def LDREXB : AIldrex<0b10, (outs GPR:$Rt), (ins addr_offset_none:$addr),
                      NoItinerary,
                     "ldrexb", "\t$Rt, $addr", []>;
-def LDREXH : AIldrex<0b11, (outs GPR:$Rt), (ins addr_offset_none:$addr), NoItinerary,
-                    "ldrexh", "\t$Rt, $addr", []>;
+def LDREXH : AIldrex<0b11, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                     NoItinerary, "ldrexh", "\t$Rt, $addr", []>;
 def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr), NoItinerary,
                     "ldrex", "\t$Rt, $addr", []>;
 let hasExtraDefRegAllocReq = 1 in
