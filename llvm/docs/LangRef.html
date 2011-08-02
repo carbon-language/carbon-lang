@@ -202,6 +202,7 @@
           <li><a href="#i_select">'<tt>select</tt>' Instruction</a></li>
           <li><a href="#i_call">'<tt>call</tt>'  Instruction</a></li>
           <li><a href="#i_va_arg">'<tt>va_arg</tt>'  Instruction</a></li>
+          <li><a href="#i_landingpad">'<tt>landingpad</tt>' Instruction</a></li>
         </ol>
       </li>
     </ol>
@@ -3256,6 +3257,17 @@ IfUnequal:
    instruction, control is interrupted and continued at the dynamically nearest
    "exception" label.</p>
 
+<p>The '<tt>exception</tt>' label is a
+   <i><a href="ExceptionHandling.html#overview">landing pad</a></i> for the
+   exception. As such, '<tt>exception</tt>' label is required to have the
+   "<a href="#i_landingpad"><tt>landingpad</tt></a>" instruction, which contains
+   the information about about the behavior of the program after unwinding
+   happens, as its first non-PHI instruction. The restrictions on the
+   "<tt>landingpad</tt>" instruction's tightly couples it to the
+   "<tt>invoke</tt>" instruction, so that the important information contained
+   within the "<tt>landingpad</tt>" instruction can't be lost through normal
+   code motion.</p>
+
 <h5>Arguments:</h5>
 <p>This instruction requires several arguments:</p>
 
@@ -3372,17 +3384,18 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    successors.</p>
 
 <h5>Arguments:</h5>
-<p>The '<tt>resume</tt>' instruction's argument must have the same type as the
-   result of any '<tt>landingpad</tt>' instruction in the same function.</p>
+<p>The '<tt>resume</tt>' instruction requires one argument, which must have the
+   same type as the result of the '<tt>landingpad</tt>' instruction which
+   interrupted the unwinding.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>resume</tt>' instruction resumes propagation of an existing
    (in-flight) exception whose unwinding was interrupted with
-   a landingpad instruction.</p>
+   a <a href="#i_landingpad"><tt>landingpad</tt></a> instruction.</p>
 
 <h5>Example:</h5>
 <pre>
- resume { i8*, i32 } %exn
+  resume { i8*, i32 } %exn
 </pre>
 
 </div>
@@ -5967,6 +5980,79 @@ freestanding environments and non-C-based languages.</p>
 <p>Note that the code generator does not yet fully support va_arg on many
    targets. Also, it does not currently support va_arg with aggregate types on
    any target.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="i_landingpad">'<tt>landingpad</tt>' Instruction</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<pre>
+  &lt;resultval&gt; = landingpad &lt;somety&gt; personality &lt;type&gt; &lt;pers_fn&gt; cleanup? &lt;clause&gt;+
+  &lt;clause&gt; := catch &lt;type&gt; &lt;value&gt;
+  &lt;clause&gt; := filter &lt;type&gt; &lt;value&gt;
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>landingpad</tt>' instruction is used by
+   <a href="ExceptionHandling.html#overview">LLVM's exception handling
+   system</a> to specify that a basic block is a landing pad &mdash; one where
+   the exception lands, and corresponds to the code found in the
+   <i><tt>catch</tt></i> portion of a <i><tt>try/catch</tt></i> sequence. It
+   defines values supplied by the personality function (<tt>pers_fn</tt>) upon
+   re-entry to the function. The <tt>resultval</tt> has the
+   type <tt>somety</tt>.</p>
+
+<h5>Arguments:</h5>
+<p>This instruction takes a <tt>pers_fn</tt> value. This is the personality
+   function associated with the unwinding mechanism. The optional
+   <tt>cleanup</tt> flag indicates that the landing pad block is a cleanup.</p>
+
+<p>A <tt>clause</tt> begins with the clause type &mdash; <tt>catch</tt>
+   or <tt>filter</tt> &mdash; and contains a list of global variables
+   representing the "types" that may be caught or filtered respectively. The
+   '<tt>landingpad</tt>' instruction must contain <em>at least</em>
+   one <tt>clause</tt> or the <tt>cleanup</tt> flag.</p>
+
+<h5>Semantics:</h5>
+<p>The '<tt>landingpad</tt>' instruction defines the values which are set by the
+   personality function (<tt>pers_fn</tt>) upon re-entry to the function, and
+   therefore the "result type" of the <tt>landingpad</tt> instruction. As with
+   calling conventions, how the personality function results are represented in
+   LLVM IR is target specific.</p>
+
+<p>The <tt>landingpad</tt> instruction has several restrictions:</p>
+
+<ul>
+  <li>A landing pad block is a basic block which is the unwind destination of an
+      '<tt>invoke</tt>' instruction.</li>
+  <li>A landing pad block must have a '<tt>landingpad</tt>' instruction as its
+      first non-PHI instruction.</li>
+  <li>There can be only one '<tt>landingpad</tt>' instruction within the landing
+      pad block.</li>
+  <li>A basic block that is not a landing pad block may not include a
+      '<tt>landingpad</tt>' instruction.</li>
+  <li>All '<tt>landingpad</tt>' instructions in a function must have the same
+      personality function.</li>
+</ul>
+
+<h5>Example:</h5>
+<pre>
+  ;; A landing pad which can catch an integer.
+  %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+           catch i8** @_ZTIi
+  ;; A landing pad that is a cleanup.
+  %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+           cleanup  
+  ;; A landing pad which can catch an integer and can only throw a double.
+  %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+           catch i8** @_ZTIi
+           filter i8** @_ZTId
+</pre>
 
 </div>
 
