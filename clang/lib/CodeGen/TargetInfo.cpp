@@ -2575,7 +2575,6 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy) const {
 
 llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                    CodeGenFunction &CGF) const {
-  // FIXME: Need to handle alignment
   llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
 
@@ -2583,6 +2582,16 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP,
                                                        "ap");
   llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
+  // Handle address alignment for type alignment > 32 bits
+  uint64_t TyAlign = CGF.getContext().getTypeAlign(Ty) / 8;
+  if (TyAlign > 4) {
+    assert((TyAlign & (TyAlign - 1)) == 0 &&
+           "Alignment is not power of 2!");
+    llvm::Value *AddrAsInt = Builder.CreatePtrToInt(Addr, CGF.Int32Ty);
+    AddrAsInt = Builder.CreateAdd(AddrAsInt, Builder.getInt32(TyAlign - 1));
+    AddrAsInt = Builder.CreateAnd(AddrAsInt, Builder.getInt32(~(TyAlign - 1)));
+    Addr = Builder.CreateIntToPtr(AddrAsInt, BP);
+  }
   llvm::Type *PTy =
     llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
   llvm::Value *AddrTyped = Builder.CreateBitCast(Addr, PTy);
