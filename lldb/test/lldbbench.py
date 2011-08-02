@@ -91,10 +91,10 @@ class BenchBase(Base):
     def setUp(self):
         """Fixture for unittest test case setup."""
         Base.setUp(self)
-        self.swatch = Stopwatch()
+        self.stopwatch = Stopwatch()
 
     def tearDown(self):
         """Fixture for unittest test case teardown."""
         Base.tearDown(self)
-        del self.swatch
+        del self.stopwatch
 

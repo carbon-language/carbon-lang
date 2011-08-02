@@ -24,10 +24,10 @@ class RepeatedExprsCase(BenchBase):
 
     def run_lldb_repeated_exprs(self):
         for i in range(1000):
-            with self.swatch:
+            with self.stopwatch:
                 print "running "+self.testMethodName
                 print "benchmarks result for "+self.testMethodName
-        print "stopwatch:", str(self.swatch)
+        print "stopwatch:", str(self.stopwatch)
 
     def run_gdb_repeated_exprs(self):
         print "running "+self.testMethodName
