@@ -171,10 +171,7 @@ void MCStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
   assert(getCurrentSection() && "Cannot emit before setting section!");
   Symbol->setSection(*getCurrentSection());
-
-  StringRef Prefix = getContext().getAsmInfo().getPrivateGlobalPrefix();
-  if (!Symbol->getName().startswith(Prefix))
-    LastNonPrivate = Symbol;
+  LastSymbol = Symbol;
 }
 
 void MCStreamer::EmitCompactUnwindEncoding(uint32_t CompactUnwindEncoding) {
@@ -194,9 +191,19 @@ void MCStreamer::EmitCFIStartProc() {
   if (CurFrame && !CurFrame->End)
     report_fatal_error("Starting a frame before finishing the previous one!");
   MCDwarfFrameInfo Frame;
-  Frame.Begin = getContext().CreateTempSymbol();
-  Frame.Function = LastNonPrivate;
-  EmitLabel(Frame.Begin);
+
+  Frame.Function = LastSymbol;
+
+  // If the function is externally visible, we need to create a local
+  // symbol to avoid relocations.
+  StringRef Prefix = getContext().getAsmInfo().getPrivateGlobalPrefix();
+  if (LastSymbol->getName().startswith(Prefix)) {
+    Frame.Begin = LastSymbol;
+  } else {
+    Frame.Begin = getContext().CreateTempSymbol();
+    EmitLabel(Frame.Begin);
+  }
+
   FrameInfos.push_back(Frame);
 }
 

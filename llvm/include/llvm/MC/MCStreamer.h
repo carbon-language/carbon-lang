@@ -64,7 +64,7 @@ namespace llvm {
     void setCurrentW64UnwindInfo(MCWin64EHUnwindInfo *Frame);
     void EnsureValidW64UnwindInfo();
 
-    const MCSymbol* LastNonPrivate;
+    MCSymbol* LastSymbol;
 
     /// SectionStack - This is stack of current and previous section
     /// values saved by PushSection.
