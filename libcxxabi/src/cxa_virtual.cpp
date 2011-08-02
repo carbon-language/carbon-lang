@@ -8,9 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "cxxabi.h"
-
-#include <stdio.h>
-#include <stdlib.h>
+#include "abort_message.h"
 
 namespace __cxxabiv1
 {
@@ -20,14 +18,12 @@ extern "C"
 
 LIBCXXABI_NORETURN
 void __cxa_pure_virtual(void) {
-    fputs("Pure virtual function called!\n", stderr);
-    abort();
+    abort_message("Pure virtual function called!");
 }
 
 LIBCXXABI_NORETURN
 void __cxa_deleted_virtual(void) {
-    fputs("Deleted virtual function called!\n", stderr);
-    abort();
+    abort_message("Deleted virtual function called!");
 }
 
 }  // extern "C"
