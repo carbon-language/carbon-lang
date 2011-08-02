@@ -447,6 +447,9 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) +
     Fixup.getOffset();
+#if 0
+  // TODO: This is necessary on PPC32 but it must be implemented
+  // in a different way.
   switch ((unsigned)Fixup.getKind()) {
     case PPC::fixup_ppc_ha16:
     case PPC::fixup_ppc_lo16:
@@ -455,6 +458,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     default:
       break;
   }
+#endif
 
   if (!hasRelocationAddend())
     Addend = 0;
