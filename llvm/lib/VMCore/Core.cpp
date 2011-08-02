@@ -1683,10 +1683,6 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef B, LLVMValueRef Fn,
                                       Name));
 }
 
-LLVMValueRef LLVMBuildUnwind(LLVMBuilderRef B) {
-  return wrap(unwrap(B)->CreateUnwind());
-}
-
 LLVMValueRef LLVMBuildResume(LLVMBuilderRef B, LLVMValueRef Exn) {
   return wrap(unwrap(B)->CreateResume(unwrap(Exn)));
 }

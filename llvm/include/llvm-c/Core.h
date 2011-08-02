@@ -125,7 +125,7 @@ typedef enum {
   LLVMSwitch         = 3,
   LLVMIndirectBr     = 4,
   LLVMInvoke         = 5,
-  LLVMUnwind         = 6,
+  /* removed 6 due to API changes */
   LLVMUnreachable    = 7,
 
   /* Standard Binary Operators */
@@ -479,7 +479,6 @@ LLVMTypeRef LLVMX86MMXType(void);
         macro(ReturnInst)                   \
         macro(SwitchInst)                   \
         macro(UnreachableInst)              \
-        macro(UnwindInst)                   \
         macro(ResumeInst)                   \
     macro(UnaryInstruction)                 \
       macro(AllocaInst)                     \
@@ -828,7 +827,6 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef, LLVMValueRef Fn,
                              LLVMValueRef *Args, unsigned NumArgs,
                              LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch,
                              const char *Name);
-LLVMValueRef LLVMBuildUnwind(LLVMBuilderRef);
 LLVMValueRef LLVMBuildResume(LLVMBuilderRef B, LLVMValueRef Exn);
 LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef);
 

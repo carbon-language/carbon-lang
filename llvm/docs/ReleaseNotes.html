@@ -596,7 +596,7 @@ from the previous release.</p>
 <div>
 
 <p>In addition, many APIs have changed in this release.  Some of the major
-  LLVM API changes are:</p>
+   LLVM API changes are:</p>
 
 <ul>
 <li>The biggest and most pervasive change is that llvm::Type's are no longer
@@ -661,6 +661,11 @@ from the previous release.</p>
 
 <li>All forms of <code>StringMap::getOrCreateValue</code> have been remove
   except for the one which takes a <code>StringRef</code>.</li>
+
+<li>The <code>LLVMBuildUnwind</code> function from the C API was removed. The
+    LLVM <code>unwind</code> instruction has been deprecated for a long time and
+    isn't used by the current front-ends. So this was removed along with the
+    exception handling rewrite.</li>
 
 </ul>
 </div>
