@@ -3041,35 +3041,43 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the mapping information describing our module dependencies and how
   // each of those modules were mapped into our own offset/ID space, so that
   // the reader can build the appropriate mapping to its own offset/ID space.
-  
-  // If we have module dependencies, write the mapping from source locations to
-  // their containing modules, so that the reader can build the remapping.
   // The map consists solely of a blob with the following format:
-  // *(offset:i32 len:i16 name:len*i8)
-  // Sorted by offset.
-  typedef std::pair<uint32_t, StringRef> ModuleOffset;
-  SmallVector<ModuleOffset, 16> Modules;
-  
-  Chain->ModuleMgr.exportLookup(Modules);
-  
+  // *(module-name-len:i16 module-name:len*i8
+  //   source-location-offset:i32
+  //   identifier-id:i32
+  //   preprocessed-entity-id:i32
+  //   macro-definition-id:i32
+  //   selector-id:i32
+  //   declaration-id:i32
+  //   c++-base-specifiers-id:i32
+  //   type-id:i32)
+  // 
   llvm::BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(MODULE_OFFSET_MAP));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
-  unsigned SLocMapAbbrev = Stream.EmitAbbrev(Abbrev);
+  unsigned ModuleOffsetMapAbbrev = Stream.EmitAbbrev(Abbrev);
   llvm::SmallString<2048> Buffer;
   {
     llvm::raw_svector_ostream Out(Buffer);
-    for (SmallVector<ModuleOffset, 16>::iterator I = Modules.begin(),
-         E = Modules.end();
-         I != E; ++I) {
-      io::Emit32(Out, I->first);
-      io::Emit16(Out, I->second.size());
-      Out.write(I->second.data(), I->second.size());
+    for (ModuleManager::ModuleConstIterator M = Chain->ModuleMgr.begin(),
+                                         MEnd = Chain->ModuleMgr.end();
+         M != MEnd; ++M) {
+      StringRef FileName = (*M)->FileName;
+      io::Emit16(Out, FileName.size());
+      Out.write(FileName.data(), FileName.size());
+      io::Emit32(Out, (*M)->SLocEntryBaseOffset);
+      io::Emit32(Out, (*M)->BaseIdentifierID);
+      io::Emit32(Out, (*M)->BasePreprocessedEntityID);
+      io::Emit32(Out, (*M)->BaseMacroDefinitionID);
+      io::Emit32(Out, (*M)->BaseSelectorID);
+      io::Emit32(Out, (*M)->BaseDeclID);
+      io::Emit32(Out, (*M)->BaseCXXBaseSpecifiersID);
+      io::Emit32(Out, (*M)->BaseTypeID);
     }
   }
   Record.clear();
   Record.push_back(MODULE_OFFSET_MAP);
-  Stream.EmitRecordWithBlob(SLocMapAbbrev, Record,
+  Stream.EmitRecordWithBlob(ModuleOffsetMapAbbrev, Record,
                             Buffer.data(), Buffer.size());
   
   // The special types are in the chained PCH.

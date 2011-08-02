@@ -89,6 +89,30 @@ public:
 
   reference back() { return Rep.back(); }
   const_reference back() const { return Rep.back(); }
+  
+  /// \brief An object that helps properly build a continuous range map
+  /// from a set of values.
+  class Builder {
+    ContinuousRangeMap &Self;
+    SmallVector<std::pair<Int, V>, InitialCapacity> Elements;
+    
+    Builder(const Builder&); // DO NOT IMPLEMENT
+    Builder &operator=(const Builder&); // DO NOT IMPLEMENT
+    
+  public:
+    explicit Builder(ContinuousRangeMap &Self) : Self(Self) { }
+    
+    ~Builder() {
+      std::sort(Elements.begin(), Elements.end(), Compare());
+      for (unsigned I = 0, N = Elements.size(); I != N; ++I)
+        Self.insert(Elements[I]);
+    }
+    
+    void insert(const value_type &Val) {
+      Elements.push_back(Val);
+    }
+  };
+  friend class Builder;
 };
 
 }

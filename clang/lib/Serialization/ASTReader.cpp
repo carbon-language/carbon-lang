@@ -2275,19 +2275,41 @@ ASTReader::ReadASTBlock(Module &F) {
       // Additional remapping information.
       const unsigned char *Data = (const unsigned char*)BlobStart;
       const unsigned char *DataEnd = Data + BlobLen;
+      
+      // Continuous range maps we may be updating in our module.
+      ContinuousRangeMap<uint32_t, int, 2>::Builder SLocRemap(F.SLocRemap);
+      
       while(Data < DataEnd) {
-        uint32_t Offset = io::ReadUnalignedLE32(Data);
         uint16_t Len = io::ReadUnalignedLE16(Data);
         StringRef Name = StringRef((const char*)Data, Len);
+        Data += Len;
         Module *OM = ModuleMgr.lookup(Name);
         if (!OM) {
           Error("SourceLocation remap refers to unknown module");
           return Failure;
         }
-        // My Offset is mapped to OM->SLocEntryBaseOffset.
-        F.SLocRemap.insert(std::make_pair(Offset,
-                        static_cast<int>(OM->SLocEntryBaseOffset - Offset)));
-        Data += Len;
+
+        uint32_t SLocOffset = io::ReadUnalignedLE32(Data);
+        uint32_t IdentifierIDOffset = io::ReadUnalignedLE32(Data);
+        uint32_t PreprocessedEntityIDOffset = io::ReadUnalignedLE32(Data);
+        uint32_t MacroDefinitionIDOffset = io::ReadUnalignedLE32(Data);
+        uint32_t SelectorIDOffset = io::ReadUnalignedLE32(Data);
+        uint32_t DeclIDOffset = io::ReadUnalignedLE32(Data);
+        uint32_t CXXBaseSpecifiersIDOffset = io::ReadUnalignedLE32(Data);
+        uint32_t TypeIDOffset = io::ReadUnalignedLE32(Data);
+        
+        // Source location offset is mapped to OM->SLocEntryBaseOffset.
+        SLocRemap.insert(std::make_pair(SLocOffset,
+          static_cast<int>(OM->SLocEntryBaseOffset - SLocOffset)));
+        
+        // FIXME: Map other locations
+        (void)IdentifierIDOffset;
+        (void)PreprocessedEntityIDOffset;
+        (void)MacroDefinitionIDOffset;
+        (void)SelectorIDOffset;
+        (void)DeclIDOffset;
+        (void)CXXBaseSpecifiersIDOffset;
+        (void)TypeIDOffset;
       }
       break;
     }
@@ -5434,15 +5456,18 @@ Module::Module(ModuleKind Kind)
   : Kind(Kind), SizeInBits(0), LocalNumSLocEntries(0), SLocEntryBaseID(0),
     SLocEntryBaseOffset(0), SLocEntryOffsets(0),
     SLocFileOffsets(0), LocalNumIdentifiers(0), 
-    IdentifierOffsets(0), IdentifierTableData(0),
-    IdentifierLookupTable(0), LocalNumMacroDefinitions(0),
-    MacroDefinitionOffsets(0), LocalNumHeaderFileInfos(0), 
+    IdentifierOffsets(0), BaseIdentifierID(0), IdentifierTableData(0),
+    IdentifierLookupTable(0), BasePreprocessedEntityID(0),
+    LocalNumMacroDefinitions(0), MacroDefinitionOffsets(0), 
+    BaseMacroDefinitionID(0), LocalNumHeaderFileInfos(0), 
     HeaderFileInfoTableData(0), HeaderFileInfoTable(0),
     HeaderFileFrameworkStrings(0),
-    LocalNumSelectors(0), SelectorOffsets(0),
+    LocalNumSelectors(0), SelectorOffsets(0), BaseSelectorID(0),
     SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
-    DeclOffsets(0), LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),
-    LocalNumTypes(0), TypeOffsets(0), StatCache(0),
+    DeclOffsets(0), BaseDeclID(0),
+    LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),
+    BaseCXXBaseSpecifiersID(0),
+    LocalNumTypes(0), TypeOffsets(0), BaseTypeID(0), StatCache(0),
     NumPreallocatedPreprocessingEntities(0)
 {}
 
