@@ -30,13 +30,13 @@ int main(int argc, char const *argv[]) {
     }
 
     printf("Finished populating data.\n");
-    for (int i = 0; i < 1000; ++i) {
+    for (int j = 0; j < 1000; ++j) {
         bool dump = argc > 1; // Set breakpoint here.
                               // Evaluate a couple of expressions (2*1000 = 2000 exprs):
-                              // expr ptr[i]->point.x
-                              // expr ptr[i]->point.y
+                              // expr ptr[j]->point.x
+                              // expr ptr[j]->point.y
         if (dump) {
-            printf("data[%d] = %d (%d, %d)\n", i, ptr[i]->id, ptr[i]->point.x, ptr[i]->point.y);
+            printf("data[%d] = %d (%d, %d)\n", j, ptr[j]->id, ptr[j]->point.x, ptr[j]->point.y);
         }
     }
     return 0;

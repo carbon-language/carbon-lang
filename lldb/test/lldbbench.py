@@ -1,6 +1,7 @@
 import time
-from lldbtest import benchmarks_test
 from lldbtest import Base
+from lldbtest import benchmarks_test
+from lldbtest import line_number
 
 class Stopwatch(object):
     """Stopwatch provides a simple utility to start/stop your stopwatch multiple
@@ -80,7 +81,7 @@ class Stopwatch(object):
         return self.__total_elapsed__ / self.__laps__
 
     def __str__(self):
-        return "Avg: %f (Laps: %d, Total Elapsed Time: %d)" % (self.avg(),
+        return "Avg: %f (Laps: %d, Total Elapsed Time: %f)" % (self.avg(),
                                                                self.__laps__,
                                                                self.__total_elapsed__)
 

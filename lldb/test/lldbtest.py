@@ -451,6 +451,9 @@ class Base(unittest2.TestCase):
         #import traceback
         #traceback.print_stack()
 
+        if "LLDB_EXEC" in os.environ:
+            self.lldbExec = os.environ["LLDB_EXEC"]
+
         # Assign the test method name to self.testMethodName.
         #
         # For an example of the use of this attribute, look at test/types dir.
@@ -836,9 +839,6 @@ class TestBase(Base):
 
         # Works with the test driver to conditionally skip tests via decorators.
         Base.setUp(self)
-
-        if "LLDB_EXEC" in os.environ:
-            self.lldbExec = os.environ["LLDB_EXEC"]
 
         try:
             if lldb.blacklist:
