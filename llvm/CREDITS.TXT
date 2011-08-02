@@ -241,6 +241,10 @@ E: duraid@octopus.com.au
 W: http://kinoko.c.u-tokyo.ac.jp/~duraid/
 D: IA64 backend, BigBlock register allocator
 
+N: John McCall
+E: rjmccall@apple.com
+D: Clang semantic analysis and IR generation
+
 N: Michael McCracken
 E: michael.mccracken@gmail.com
 D: Line number support for llvmgcc
