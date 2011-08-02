@@ -2764,9 +2764,8 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
     if (CurrentDir.empty()) CurrentDir = ".";
   }
 
-  if (!ASTBuffers.empty()) {
-    F.Buffer.reset(ASTBuffers.back());
-    ASTBuffers.pop_back();
+  if (llvm::MemoryBuffer *Buffer = ModuleMgr.lookupBuffer(FileName)) {
+    F.Buffer.reset(Buffer);
     assert(F.Buffer && "Passed null buffer");
   } else {
     // Open the AST file.
@@ -5586,6 +5585,11 @@ Module *ModuleManager::lookup(StringRef Name) {
   return Modules[Entry];
 }
 
+llvm::MemoryBuffer *ModuleManager::lookupBuffer(StringRef Name) {
+  const FileEntry *Entry = FileMgr.getFile(Name);
+  return InMemoryBuffers[Entry];
+}
+
 /// \brief Creates a new module and adds it to the list of known modules
 Module &ModuleManager::addModule(StringRef FileName, ModuleKind Type) {
   Module *Prev = !size() ? 0 : &getLastModule();
@@ -5605,6 +5609,13 @@ Module &ModuleManager::addModule(StringRef FileName, ModuleKind Type) {
   return *Current;
 }
 
+void ModuleManager::addInMemoryBuffer(StringRef FileName, 
+  llvm::MemoryBuffer *Buffer) {
+  
+  const FileEntry *Entry = FileMgr.getVirtualFile(FileName, 
+    Buffer->getBufferSize(), 0);
+  InMemoryBuffers[Entry] = Buffer;
+}
 /// \brief Exports the list of loaded modules with their corresponding names
 void ModuleManager::exportLookup(SmallVector<ModuleOffset, 16> &Target) {
   Target.reserve(size());

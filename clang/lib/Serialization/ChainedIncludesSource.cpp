@@ -26,15 +26,18 @@
 using namespace clang;
 
 static ASTReader *createASTReader(CompilerInstance &CI,
-                                  StringRef pchFile,
-                                  llvm::MemoryBuffer **memBufs,
-                                  unsigned numBufs,
+                                  StringRef pchFile,  
+                                  SmallVector<llvm::MemoryBuffer *, 4> &memBufs,
+                                  SmallVector<std::string, 4> &bufNames,
                              ASTDeserializationListener *deserialListener = 0) {
   Preprocessor &PP = CI.getPreprocessor();
   llvm::OwningPtr<ASTReader> Reader;
   Reader.reset(new ASTReader(PP, &CI.getASTContext(), /*isysroot=*/"",
                              /*DisableValidation=*/true));
-  Reader->setASTMemoryBuffers(memBufs, numBufs);
+  for (unsigned ti = 0; ti < bufNames.size(); ++ti) {
+    StringRef sr(bufNames[ti]);
+    Reader->addInMemoryBuffer(sr, memBufs[ti]);
+  }
   Reader->setDeserializationListener(deserialListener);
   switch (Reader->ReadAST(pchFile, serialization::MK_PCH)) {
   case ASTReader::Success:
@@ -63,6 +66,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
   InputKind IK = CI.getFrontendOpts().Inputs[0].first;
 
   SmallVector<llvm::MemoryBuffer *, 4> serialBufs;
+  SmallVector<std::string, 4> serialBufNames;
 
   for (unsigned i = 0, e = includes.size(); i != e; ++i) {
     bool firstInclude = (i == 0);
@@ -125,9 +129,13 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
       llvm::raw_string_ostream os(pchName);
       os << ".pch" << i-1;
       os.flush();
+      
+      serialBufNames.push_back(pchName);
+
       llvm::OwningPtr<ExternalASTSource> Reader;
-      Reader.reset(createASTReader(*Clang, pchName, bufs.data(), bufs.size(),
-                      Clang->getASTConsumer().GetASTDeserializationListener()));
+
+      Reader.reset(createASTReader(*Clang, pchName, bufs, serialBufNames, 
+        Clang->getASTConsumer().GetASTDeserializationListener()));
       if (!Reader)
         return 0;
       Clang->getASTContext().setExternalSource(Reader);
@@ -147,9 +155,9 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
 
   assert(!serialBufs.empty());
   std::string pchName = includes.back() + ".pch-final";
+  serialBufNames.push_back(pchName);
   llvm::OwningPtr<ASTReader> Reader;
-  Reader.reset(createASTReader(CI, pchName,
-                               serialBufs.data(), serialBufs.size()));
+  Reader.reset(createASTReader(CI, pchName, serialBufs, serialBufNames));
   if (!Reader)
     return 0;
 

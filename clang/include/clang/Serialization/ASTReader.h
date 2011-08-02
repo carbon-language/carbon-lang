@@ -436,6 +436,9 @@ class ModuleManager {
   /// \brief FileManager that handles translating between filenames and
   /// FileEntry *.
   FileManager FileMgr;
+  
+  /// \brief A lookup of in-memory (virtual file) buffers
+  llvm::DenseMap<const FileEntry *, llvm::MemoryBuffer *> InMemoryBuffers;
 
 public:
   typedef SmallVector<Module*, 2>::iterator ModuleIterator;
@@ -481,12 +484,18 @@ public:
 
   /// \brief Returns the module associated with the given name
   Module *lookup(StringRef Name);
+  
+  /// \brief Returns the in-memory (virtual file) buffer with the given name
+  llvm::MemoryBuffer *lookupBuffer(StringRef Name);
 
   /// \brief Number of modules loaded
   unsigned size() const { return Chain.size(); }
 
   /// \brief Creates a new module and adds it to the list of known modules
   Module &addModule(StringRef FileName, ModuleKind Type);
+  
+  /// \brief Add an in-memory buffer the list of known buffers
+  void addInMemoryBuffer(StringRef FileName, llvm::MemoryBuffer *Buffer);
 
   /// \brief Exports the list of loaded modules with their corresponding names
   void exportLookup(SmallVector<ModuleOffset, 16> &Target);
@@ -558,10 +567,6 @@ private:
       
   /// \brief The AST consumer.
   ASTConsumer *Consumer;
-
-  /// \brief AST buffers for chained PCHs created and stored in memory.
-  /// First (not depending on another) PCH in chain is in front.
-  std::vector<llvm::MemoryBuffer *> ASTBuffers;
 
   /// \brief The module manager which manages modules and their dependencies
   ModuleManager ModuleMgr;
@@ -1138,11 +1143,9 @@ public:
   /// \brief Sets and initializes the given Context.
   void InitializeContext(ASTContext &Context);
 
-  /// \brief Set AST buffers for chained PCHs created and stored in memory.
-  /// First (not depending on another) PCH in chain is first in array.
-  void setASTMemoryBuffers(llvm::MemoryBuffer **bufs, unsigned numBufs) {
-    ASTBuffers.clear();
-    ASTBuffers.insert(ASTBuffers.begin(), bufs, bufs + numBufs);
+  /// \brief Add in-memory (virtual file) buffer.
+  void addInMemoryBuffer(StringRef &FileName, llvm::MemoryBuffer *Buffer) {
+    ModuleMgr.addInMemoryBuffer(FileName, Buffer);
   }
 
   /// \brief Retrieve the name of the named (primary) AST file
