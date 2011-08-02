@@ -78,6 +78,7 @@ public:
     MachineBasicBlock *MBB;
     SlotIndex FirstUse;   ///< First instr using current reg.
     SlotIndex LastUse;    ///< Last instr using current reg.
+    SlotIndex FirstDef;   ///< First non-phi valno->def, or SlotIndex().
     bool LiveIn;          ///< Current reg is live in.
     bool LiveOut;         ///< Current reg is live out.
 

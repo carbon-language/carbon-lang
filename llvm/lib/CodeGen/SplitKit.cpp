@@ -188,6 +188,13 @@ bool SplitAnalysis::calcLiveBlockInfo() {
       // LVI is the first live segment overlapping MBB.
       BI.LiveIn = LVI->start <= Start;
 
+      // When not live in, the first use should be a def.
+      if (!BI.LiveIn) {
+        assert(LVI->start == LVI->valno->def && "Dangling LiveRange start");
+        assert(LVI->start == BI.FirstUse && "First instr should be a def");
+        BI.FirstDef = BI.FirstUse;
+      }
+
       // Look for gaps in the live range.
       BI.LiveOut = true;
       while (LVI->end < Stop) {
@@ -197,6 +204,7 @@ bool SplitAnalysis::calcLiveBlockInfo() {
           BI.LastUse = LastStop;
           break;
         }
+
         if (LastStop < LVI->start) {
           // There is a gap in the live range. Create duplicate entries for the
           // live-in snippet and the live-out snippet.
@@ -210,8 +218,13 @@ bool SplitAnalysis::calcLiveBlockInfo() {
           // Set up BI for the live-out part.
           BI.LiveIn = false;
           BI.LiveOut = true;
-          BI.FirstUse = LVI->start;
+          BI.FirstUse = BI.FirstDef = LVI->start;
         }
+
+        // A LiveRange that starts in the middle of the block must be a def.
+        assert(LVI->start == LVI->valno->def && "Dangling LiveRange start");
+        if (!BI.FirstDef)
+          BI.FirstDef = LVI->start;
       }
 
       UseBlocks.push_back(BI);
