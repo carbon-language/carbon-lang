@@ -176,8 +176,7 @@ enum ModuleKind {
 /// Each instance of the Module class corresponds to a single AST file, which 
 /// may be a precompiled header, precompiled preamble, or an AST file of some 
 /// sort loaded as the main file, all of which are specific formulations of
-/// the general notion of a "module". A module may depend on another module
-/// (FIXME: or a set of other modules).
+/// the general notion of a "module". A module may depend on another module.
 class Module {
 public:  
   Module(ModuleKind Kind);
@@ -403,6 +402,9 @@ public:
   
   /// \brief List of modules which this module depends on
   llvm::SetVector<Module *> Imports;
+  
+  /// \brief Dump debugging output for this module.
+  void dump();
 };
 
 /// \brief The manager for modules loaded by the ASTReader.

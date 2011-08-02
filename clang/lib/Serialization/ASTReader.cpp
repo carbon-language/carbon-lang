@@ -4364,7 +4364,7 @@ dumpModuleIDMap(StringRef Name,
 }
 
 void ASTReader::dump() {
-  llvm::errs() << "*** AST File Remapping:\n";
+  llvm::errs() << "*** PCH/Module Remappings:\n";
   dumpModuleIDMap("Global bit offset map", GlobalBitOffsetsMap);
   dumpModuleIDMap("Global source location entry map", GlobalSLocEntryMap);
   dumpModuleIDMap("Global type map", GlobalTypeMap);
@@ -4375,6 +4375,12 @@ void ASTReader::dump() {
   dumpModuleIDMap("Global macro definition map", GlobalMacroDefinitionMap);
   dumpModuleIDMap("Global preprocessed entity map", 
                   GlobalPreprocessedEntityMap);
+  
+  llvm::errs() << "\n*** PCH/Modules Loaded:";
+  for (ModuleManager::ModuleConstIterator M = ModuleMgr.begin(), 
+                                       MEnd = ModuleMgr.end();
+       M != MEnd; ++M)
+    (*M)->dump();
 }
 
 /// Return the amount of memory used by memory buffers, breaking down
@@ -5475,6 +5481,40 @@ Module::~Module() {
   delete static_cast<ASTIdentifierLookupTable *>(IdentifierLookupTable);
   delete static_cast<HeaderFileInfoLookupTable *>(HeaderFileInfoTable);
   delete static_cast<ASTSelectorLookupTable *>(SelectorLookupTable);
+}
+
+template<typename Key, typename Offset, unsigned InitialCapacity>
+static void 
+dumpLocalRemap(StringRef Name,
+               const ContinuousRangeMap<Key, Offset, InitialCapacity> &Map) {
+  if (Map.begin() == Map.end())
+    return;
+  
+  typedef ContinuousRangeMap<Key, Offset, InitialCapacity> MapType;
+  llvm::errs() << "  " << Name << ":\n";
+  for (typename MapType::const_iterator I = Map.begin(), IEnd = Map.end(); 
+       I != IEnd; ++I) {
+    llvm::errs() << "    " << I->first << " -> " << I->second
+    << "\n";
+  }
+}
+
+void Module::dump() {
+  llvm::errs() << "\nModule: " << FileName << "\n";
+  if (!Imports.empty()) {
+    llvm::errs() << "  Imports: ";
+    for (unsigned I = 0, N = Imports.size(); I != N; ++I) {
+      if (I)
+        llvm::errs() << ", ";
+      llvm::errs() << Imports[I]->FileName;
+    }
+    llvm::errs() << "\n";
+  }
+  
+  // Remapping tables.
+  llvm::errs() << "  Base source location offset: " << SLocEntryBaseOffset 
+               << '\n';
+  dumpLocalRemap("Source location offset map", SLocRemap);
 }
 
 Module *ModuleManager::lookup(StringRef Name) {
