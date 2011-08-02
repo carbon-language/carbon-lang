@@ -272,6 +272,3 @@ if( CLANG_BUILT_STANDALONE AND MSVC_VERSION EQUAL 1600 )
     file(APPEND "${CLANG_SLN_FILENAME}" "\n# This should be regenerated!\n")
   endif()
 endif()
-
-set(BUG_REPORT_URL "http://llvm.org" CACHE STRING
-  "Default URL where bug reports are to be submitted.")
