@@ -290,6 +290,23 @@ enum {
   R_MICROBLAZE_COPY           = 21
 };
 
+enum {
+  R_PPC_NONE                  = 0,      /* No relocation. */
+  R_PPC_ADDR32                = 1,
+  R_PPC_ADDR24                = 2,
+  R_PPC_ADDR16                = 3,
+  R_PPC_ADDR16_LO             = 4,
+  R_PPC_ADDR16_HI             = 5,
+  R_PPC_ADDR16_HA             = 6,
+  R_PPC_ADDR14                = 7,
+  R_PPC_ADDR14_BRTAKEN        = 8,
+  R_PPC_ADDR14_BRNTAKEN       = 9,
+  R_PPC_REL24                 = 10,
+  R_PPC_REL14                 = 11,
+  R_PPC_REL14_BRTAKEN         = 12,
+  R_PPC_REL14_BRNTAKEN        = 13,
+  R_PPC_REL32                 = 26
+};
 
 // ARM Specific e_flags
 enum { EF_ARM_EABIMASK = 0xFF000000U };

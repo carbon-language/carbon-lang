@@ -10,13 +10,39 @@
 #include "llvm/MC/MCAsmBackend.h"
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCFixupKinds.h"
+#include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Object/MachOFormat.h"
+#include "llvm/Support/ELF.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
+
+static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
+  switch (Kind) {
+  default:
+    llvm_unreachable("Unknown fixup kind!");
+  case FK_Data_1:
+  case FK_Data_2:
+  case FK_Data_4:
+    return Value;
+  case PPC::fixup_ppc_brcond14:
+    return Value & 0x3ffc;
+  case PPC::fixup_ppc_br24:
+    return Value & 0x3fffffc;
+#if 0
+  case PPC::fixup_ppc_hi16:
+    return (Value >> 16) & 0xffff;
+#endif
+  case PPC::fixup_ppc_ha16:
+    return ((Value >> 16) + ((Value & 0x8000) ? 1 : 0)) & 0xffff;
+  case PPC::fixup_ppc_lo16:
+    return Value & 0xffff;
+  }
+}
 
 namespace {
 class PPCMachObjectWriter : public MCMachObjectTargetWriter {
@@ -29,6 +55,13 @@ public:
                         const MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, uint64_t &FixedValue) {}
+};
+
+class PPCELFObjectWriter : public MCELFObjectTargetWriter {
+public:
+  PPCELFObjectWriter(bool Is64Bit, Triple::OSType OSType, uint16_t EMachine,
+                     bool HasRelocationAddend, bool isLittleEndian)
+    : MCELFObjectTargetWriter(Is64Bit, OSType, EMachine, HasRelocationAddend) {}
 };
 
 class PPCAsmBackend : public MCAsmBackend {
@@ -109,6 +142,42 @@ namespace {
       return false;
     }
   };
+
+  class ELFPPCAsmBackend : public PPCAsmBackend {
+    Triple::OSType OSType;
+  public:
+    ELFPPCAsmBackend(const Target &T, Triple::OSType OSType) :
+      PPCAsmBackend(T), OSType(OSType) { }
+    
+    void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+                    uint64_t Value) const {
+      Value = adjustFixupValue(Fixup.getKind(), Value);
+      if (!Value) return;           // Doesn't change encoding.
+
+      unsigned Offset = Fixup.getOffset();
+
+      // For each byte of the fragment that the fixup touches, mask in the bits from
+      // the fixup value. The Value has been "split up" into the appropriate
+      // bitfields above.
+      for (unsigned i = 0; i != 4; ++i)
+        Data[Offset + i] |= uint8_t((Value >> ((4 - i - 1)*8)) & 0xff);
+    }
+    
+    MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+      bool is64 = getPointerSize() == 8;
+      return createELFObjectWriter(new PPCELFObjectWriter(
+                                      /*Is64Bit=*/is64,
+                                      OSType,
+                                      is64 ? ELF::EM_PPC64 : ELF::EM_PPC,                                      
+                                      /*addend*/ true, /*isLittleEndian*/ false),
+                                   OS, /*IsLittleEndian=*/false);
+    }
+    
+    virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
+      return false;
+    }
+  };
+
 } // end anonymous namespace
 
 
@@ -118,5 +187,5 @@ MCAsmBackend *llvm::createPPCAsmBackend(const Target &T, StringRef TT) {
   if (Triple(TT).isOSDarwin())
     return new DarwinPPCAsmBackend(T);
 
-  return 0;
+  return new ELFPPCAsmBackend(T, Triple(TT).getOS());
 }

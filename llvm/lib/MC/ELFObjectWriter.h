@@ -395,6 +395,21 @@ class ELFObjectWriter : public MCObjectWriter {
     
   };
 
+  //===- PPCELFObjectWriter -------------------------------------------===//
+
+  class PPCELFObjectWriter : public ELFObjectWriter {
+  public:
+    PPCELFObjectWriter(MCELFObjectTargetWriter *MOTW,
+                          raw_ostream &_OS,
+                          bool IsLittleEndian);
+
+    virtual ~PPCELFObjectWriter();
+  protected:
+    virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
+                                  bool IsPCRel, bool IsRelocWithSymbol,
+                                  int64_t Addend);
+  };
+
   //===- MBlazeELFObjectWriter -------------------------------------------===//
 
   class MBlazeELFObjectWriter : public ELFObjectWriter {
