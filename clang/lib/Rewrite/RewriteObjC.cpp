@@ -5577,12 +5577,20 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     CurrentBody = BE->getBody();
     CollectPropertySetters(CurrentBody);
     PropParentMap = 0;
+    // block literal on rhs of a property-dot-sytax assignment
+    // must be replaced by its synthesize ast so getRewrittenText
+    // works as expected. In this case, what actually ends up on RHS
+    // is the blockTranscribed which is the helper function for the
+    // block literal; as in: self.c = ^() {[ace ARR];};
+    bool saveDisableReplaceStmt = DisableReplaceStmt;
+    DisableReplaceStmt = false;
     RewriteFunctionBodyOrGlobalInitializer(BE->getBody());
+    DisableReplaceStmt = saveDisableReplaceStmt;
     CurrentBody = SaveCurrentBody;
     PropParentMap = 0;
     ImportedLocalExternalDecls.clear();
     // Now we snarf the rewritten text and stash it away for later use.
-    std::string Str = Rewrite.ConvertToString(BE->getBody());
+    std::string Str = Rewrite.getRewrittenText(BE->getSourceRange());
     RewrittenBlockExprs[BE] = Str;
 
     Stmt *blockTranscribed = SynthBlockInitExpr(BE, InnerBlockDeclRefs);
