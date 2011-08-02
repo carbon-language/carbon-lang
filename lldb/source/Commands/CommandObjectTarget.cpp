@@ -2174,6 +2174,7 @@ public:
                                 result.SetStatus (eReturnStatusFailed);
                                 return false;
                             }
+                            result.SetStatus (eReturnStatusSuccessFinishResult);
                         }
                         else
                         {
