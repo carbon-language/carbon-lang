@@ -1043,7 +1043,10 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
 
 
-static bool IsOnlyNullComparedAndFreed(const Value &V) {
+static bool IsOnlyNullComparedAndFreed(const Value &V, int Depth = 0) {
+  if (Depth == 8)
+    return false;
+
   for (Value::const_use_iterator UI = V.use_begin(), UE = V.use_end();
        UI != UE; ++UI) {
     const User *U = *UI;
@@ -1052,6 +1055,20 @@ static bool IsOnlyNullComparedAndFreed(const Value &V) {
     if (const ICmpInst *ICI = dyn_cast<ICmpInst>(U))
       if (ICI->isEquality() && isa<ConstantPointerNull>(ICI->getOperand(1)))
         continue;
+    if (const BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
+      if (IsOnlyNullComparedAndFreed(*BCI, Depth+1))
+        continue;
+    }
+    if (const GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
+      if (GEPI->hasAllZeroIndices() &&
+          IsOnlyNullComparedAndFreed(*GEPI, Depth+1))
+        continue;
+    }
+    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
+      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+          II->getIntrinsicID() == Intrinsic::lifetime_end)
+        continue;
+    }
     return false;
   }
   return true;
@@ -1064,22 +1081,29 @@ Instruction *InstCombiner::visitMalloc(Instruction &MI) {
   if (IsOnlyNullComparedAndFreed(MI)) {
     for (Value::use_iterator UI = MI.use_begin(), UE = MI.use_end();
          UI != UE;) {
-      // We can assume that every remaining use is a free call or an icmp eq/ne
-      // to null, so the cast is safe.
+      // All the users permitted by IsOnlyNullComparedAndFreed are Instructions.
       Instruction *I = cast<Instruction>(*UI);
 
       // Early increment here, as we're about to get rid of the user.
       ++UI;
 
-      if (isFreeCall(I)) {
-        EraseInstFromFunction(*cast<CallInst>(I));
-        continue;
+      if (CallInst *CI = isFreeCall(I)) {
+        if (CI != I)
+          EraseInstFromFunction(*CI);
+        EraseInstFromFunction(*I);
+      } else if (ICmpInst *C = dyn_cast<ICmpInst>(I)) {
+        ReplaceInstUsesWith(*C,
+                            ConstantInt::get(Type::getInt1Ty(C->getContext()),
+                                             C->isFalseWhenEqual()));
+        EraseInstFromFunction(*C);
+      } else if (I->getType()->isVoidTy()) {
+        // An all-zero GEP or a bitcast.
+        ReplaceInstUsesWith(*I, UndefValue::get(I->getType()));
+        EraseInstFromFunction(*I);
+      } else {
+        // A lifetime intrinsic.
+        EraseInstFromFunction(*I);
       }
-      // Again, the cast is safe.
-      ICmpInst *C = cast<ICmpInst>(I);
-      ReplaceInstUsesWith(*C, ConstantInt::get(Type::getInt1Ty(C->getContext()),
-                                               C->isFalseWhenEqual()));
-      EraseInstFromFunction(*C);
     }
     return EraseInstFromFunction(MI);
   }
