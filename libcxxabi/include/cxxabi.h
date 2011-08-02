@@ -20,6 +20,9 @@
 
 #define LIBCXXABI_NORETURN  __attribute__((noreturn))
 
+
+#ifdef __cplusplus
+
 namespace std {
     class type_info; // forward declaration
 }
@@ -183,6 +186,7 @@ extern bool __cxa_uncaught_exception() throw();
   } // extern "C"
 } // namespace __cxxabiv1
 
+#endif // __cplusplus
 
 
 #endif // __CXXABI_H 
