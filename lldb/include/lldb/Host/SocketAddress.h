@@ -16,6 +16,10 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
+#if defined(__FreeBSD__)
+#include <sys/types.h>
+#endif
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes

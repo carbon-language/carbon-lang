@@ -13,7 +13,11 @@
 #include <string>
 #include <queue>
 
+#if defined(__FreeBSD__)
+#include <readline/readline.h>
+#else
 #include <editline/readline.h>
+#endif
 #include <histedit.h>
 #include <pthread.h>
 #include <sys/time.h>

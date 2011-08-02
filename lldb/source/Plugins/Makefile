@@ -21,7 +21,7 @@ DIRS := ABI/MacOSX-arm ABI/MacOSX-i386 ABI/SysV-x86_64 Disassembler/llvm \
 	LanguageRuntime/ObjC/AppleObjCRuntime
 
 ifeq ($(HOST_OS),Darwin)
-DIRS += DynamicLoader/MacOSX-DYLD ObjectContainer/Universal-Mach-O \
+DIRS += Process/Darwin DynamicLoader/MacOSX-DYLD ObjectContainer/Universal-Mach-O \
 	ObjectFile/Mach-O SymbolVendor/MacOSX
 #DIRS += Process/MacOSX-User
 endif

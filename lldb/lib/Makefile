@@ -73,7 +73,8 @@ ifeq ($(HOST_OS),Darwin)
               lldbPluginObjectContainerUniversalMachO.a \
               lldbPluginObjectFileMachO.a \
               lldbPluginSymbolVendorMacOSX.a \
-              lldbPluginPlatformMacOSX.a
+              lldbPluginPlatformMacOSX.a \
+			  lldbPluginProcessDarwin
 endif
 
 ifeq ($(HOST_OS),Linux)
@@ -81,6 +82,11 @@ ifeq ($(HOST_OS),Linux)
               lldbPluginDynamicLoaderLinux.a \
               lldbPluginPlatformLinux.a \
               lldbHostLinux.a
+endif
+
+ifeq ($(HOST_OS),FreeBSD)
+  USEDLIBS += lldbHostFreeBSD.a \
+			  lldbPluginPlatformFreeBSD.a
 endif
 
 include $(LEVEL)/Makefile.common
@@ -108,7 +114,7 @@ ifeq ($(HOST_OS),Darwin)
     endif
 endif
 
-ifeq ($(HOST_OS), Linux)
+ifeq ($(HOST_OS),Linux)
     # Include everything from the .a's into the shared library.
     ProjLibsOptions := -Wl,--whole-archive $(ProjLibsOptions) \
                        -Wl,--no-whole-archive
@@ -116,4 +122,14 @@ ifeq ($(HOST_OS), Linux)
     LLVMLibsOptions += -Wl,--no-undefined
     # Link in python
     LD.Flags += $(PYTHON_BUILD_FLAGS) -lrt
+endif
+
+ifeq ($(HOST_OS),FreeBSD)
+    # Include everything from the .a's into the shared library.
+    ProjLibsOptions := -Wl,--whole-archive $(ProjLibsOptions) \
+                       -Wl,--no-whole-archive
+    # Don't allow unresolved symbols.
+    LLVMLibsOptions += -Wl,--no-undefined
+    # Link in python
+    LD.Flags += $(PYTHON_BUILD_FLAGS) -lrt -L/usr/local/lib -lexecinfo
 endif

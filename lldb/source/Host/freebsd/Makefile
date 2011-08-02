@@ -1,4 +1,4 @@
-##===- source/Plugins/Platform/Makefile --------------------*- Makefile -*-===##
+##===- source/Host/freebsd/Makefile --------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,21 +8,9 @@
 ##===----------------------------------------------------------------------===##
 
 LLDB_LEVEL := ../../..
+LIBRARYNAME := lldbHostFreeBSD
+BUILD_ARCHIVE = 1
 
-include $(LLDB_LEVEL)/../../Makefile.config
-
-DIRS := gdb-server
-
-ifeq ($(HOST_OS),Darwin)
-  DIRS += MacOSX
-endif
-
-ifeq ($(HOST_OS),Linux)
-  DIRS += Linux
-endif
-
-ifeq ($(HOST_OS),FreeBSD)
-  DIRS += FreeBSD
-endif
+CPPFLAGS += -I/usr/local/include
 
 include $(LLDB_LEVEL)/Makefile

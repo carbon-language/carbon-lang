@@ -43,6 +43,12 @@
 
 #include <sys/wait.h>
 
+#elif defined (__FreeBSD__)
+
+#include <sys/wait.h>
+#include <sys/sysctl.h>
+#include <pthread_np.h>
+
 #endif
 
 using namespace lldb;
@@ -357,6 +363,8 @@ Host::GetVendorString()
             g_vendor.SetCString("apple");
 #elif defined (__linux__)
         g_vendor.SetCString("gnu");
+#elif defined (__FreeBSD__)
+        g_vendor.SetCString("freebsd");
 #endif
     }
     return g_vendor;
@@ -372,6 +380,8 @@ Host::GetOSString()
         g_os_string.SetCString("darwin");
 #elif defined (__linux__)
         g_os_string.SetCString("linux");
+#elif defined (__FreeBSD__)
+        g_os_string.SetCString("freebsd");
 #endif
     }
     return g_os_string;
@@ -410,6 +420,8 @@ Host::GetCurrentThreadID()
 {
 #if defined (__APPLE__)
     return ::mach_thread_self();
+#elif defined(__FreeBSD__)
+    return lldb::tid_t(pthread_getthreadid_np());
 #else
     return lldb::tid_t(pthread_self());
 #endif
@@ -470,18 +482,16 @@ Host::WillTerminate ()
 {
 }
 
-#if !defined (__APPLE__) // see macosx/Host.mm
+#if !defined (__APPLE__) && !defined (__FreeBSD__) // see macosx/Host.mm
 void
 Host::ThreadCreated (const char *thread_name)
 {
 }
 
-void
 Host::Backtrace (Stream &strm, uint32_t max_frames)
 {
     // TODO: Is there a way to backtrace the current process on linux? Other systems?
 }
-
 
 size_t
 Host::GetEnvironment (StringList &env)
@@ -1120,9 +1130,7 @@ Host::GetGroupName (uint32_t gid, std::string &group_name)
     return NULL;
 }
 
-
-#if !defined (__APPLE__) // see macosx/Host.mm
-
+#if !defined (__APPLE__) && !defined (__FreeBSD__) // see macosx/Host.mm
 bool
 Host::GetOSBuildString (std::string &s)
 {
@@ -1136,21 +1144,27 @@ Host::GetOSKernelDescription (std::string &s)
     s.clear();
     return false;
 }
+#endif
 
+#if !defined(__APPLE__)
 uint32_t
 Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstanceInfoList &process_infos)
 {
     process_infos.Clear();
     return process_infos.GetSize();
 }
+#endif
 
+#if !defined (__APPLE__) && !defined (__FreeBSD__)
 bool
 Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
     process_info.Clear();
     return false;
 }
+#endif
 
+#if !defined (__APPLE__)
 bool
 Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
 {

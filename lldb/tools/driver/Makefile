@@ -23,3 +23,9 @@ ifeq ($(HOST_OS),Linux)
 	LD.Flags += -Wl,-rpath,$(LibDir)
 endif
 
+ifeq ($(HOST_OS),FreeBSD)
+	CPP.Flags += -I/usr/include/edit #-v
+	LD.Flags += -lEnhancedDisassembly
+	LD.Flags += -Wl,-rpath,$(LibDir)
+endif
+

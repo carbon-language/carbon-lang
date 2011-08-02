@@ -56,6 +56,10 @@
 #include "Plugins/Process/Linux/ProcessLinux.h"
 #endif
 
+#if defined (__FreeBSD__)
+#include "Plugins/Platform/FreeBSD/PlatformFreeBSD.h"
+#endif
+
 #include "Plugins/Platform/gdb-server/PlatformRemoteGDBServer.h"
 #include "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h"
 
@@ -115,6 +119,9 @@ lldb_private::Initialize ()
         PlatformLinux::Initialize();
         ProcessLinux::Initialize();
         DynamicLoaderLinuxDYLD::Initialize();
+#endif
+#if defined (__FreeBSD__)
+		PlatformFreeBSD::Initialize();
 #endif
         //----------------------------------------------------------------------
         // Platform agnostic plugins
@@ -180,6 +187,10 @@ lldb_private::Terminate ()
     PlatformLinux::Terminate();
     ProcessLinux::Terminate();
     DynamicLoaderLinuxDYLD::Terminate();
+#endif
+
+#if defined (__FreeBSD__)
+	PlatformFreeBSD::Terminate();
 #endif
     
     DynamicLoaderStatic::Terminate();

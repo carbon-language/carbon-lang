@@ -30,7 +30,6 @@ include $(LEVEL)/Makefile.common
 
 # Set Python include directory
 PYTHON_INC_DIR = $(shell python-config --includes)
-
 # Set common LLDB build flags.
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/include 
 CPP.Flags += -I$(PROJ_OBJ_DIR)/$(LLDB_LEVEL)/include
