@@ -68,9 +68,6 @@ ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
 void
 ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
 {
-    if (!exe_ctx.frame)
-        return;
-    
     VariableList *vars = exe_ctx.frame->GetVariableList(false);
     
     if (!vars)
@@ -102,6 +99,13 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
     else if (self_var.get())
     {
         m_objectivec = true;
+        
+        Type *self_type = self_var->GetType();
+                
+        if (self_type->GetClangForwardType() == self_type->GetClangASTContext().GetBuiltInType_objc_id())
+        {
+            m_objectivec = false;
+        }
     }
 }
 

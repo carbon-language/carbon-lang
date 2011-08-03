@@ -14,7 +14,6 @@ class TestObjCStaticMethod(TestBase):
     @python_api_test
 
     #<rdar://problem/9745789> "expression" can't call functions in class methods
-    @unittest2.expectedFailure
     def test_with_dsym_and_python_api(self):
         """Test calling functions in static methods."""
         self.buildDsym()
@@ -22,7 +21,6 @@ class TestObjCStaticMethod(TestBase):
 
     @python_api_test
     #<rdar://problem/9745789> "expression" can't call functions in class methods
-    @unittest2.expectedFailure
     def test_with_dwarf_and_python_api(self):
         """Test calling functions in static methods."""
         self.buildDwarf()
@@ -35,7 +33,6 @@ class TestObjCStaticMethod(TestBase):
         self.main_source = "static.m"
         self.break_line = line_number(self.main_source, '// Set breakpoint here.')
 
-    @unittest2.expectedFailure
     #rdar://problem/9745789 "expression" can't call functions in class methods
     def objc_static_method(self):
         """Test calling functions in static methods."""
@@ -66,7 +63,7 @@ class TestObjCStaticMethod(TestBase):
         cmd_value = frame.EvaluateExpression ("(char *) sel_getName (_cmd)")
         self.assertTrue (cmd_value.IsValid())
         sel_name = cmd_value.GetSummary()
-        self.assertTrue (sel_name == "doSomethingWithString:", "Got the right value for the selector as string.")
+        self.assertTrue (sel_name == "\"doSomethingWithString:\"", "Got the right value for the selector as string.")
 
 if __name__ == '__main__':
     import atexit

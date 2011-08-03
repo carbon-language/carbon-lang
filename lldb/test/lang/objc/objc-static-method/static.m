@@ -2,14 +2,17 @@
 
 @interface Foo : NSObject
 +(void) doSomethingWithString: (NSString *) string;
-
+-(void) doSomethingWithNothing;
 @end
 
 @implementation Foo
 +(void) doSomethingWithString: (NSString *) string
 {
   NSLog (@"String is: %@.", string); // Set breakpoint here.
+}
 
+-(void) doSomethingWithNothing
+{
 }
 @end
 
