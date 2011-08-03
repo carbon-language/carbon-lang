@@ -54,6 +54,6 @@ bool BlockFrequencyInfo::runOnFunction(Function &F) {
 /// that we should not rely on the value itself, but only on the comparison to
 /// the other block frequencies. We do this to avoid using of floating points.
 ///
-BlockFrequency BlockFrequencyInfo::getBlockFreq(BasicBlock *BB) {
+BlockFrequency BlockFrequencyInfo::getBlockFreq(BasicBlock *BB) const {
   return BFI->getBlockFreq(BB);
 }
