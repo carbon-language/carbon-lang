@@ -8308,13 +8308,14 @@ void Sema::ActOnLastBitfield(SourceLocation DeclLoc, Decl *EnclosingDecl,
       return;
   }
   // All conditions are met. Add a new bitfield to the tail end of ivars.
-  llvm::APInt Zero(Context.getTypeSize(Context.CharTy), 0);
-  Expr * BW = IntegerLiteral::Create(Context, Zero, Context.CharTy, DeclLoc);
+  llvm::APInt Zero(Context.getTypeSize(Context.IntTy), 0);
+  Expr * BW = IntegerLiteral::Create(Context, Zero, Context.IntTy, DeclLoc);
 
   Ivar = ObjCIvarDecl::Create(Context, cast<ObjCContainerDecl>(EnclosingDecl),
                               DeclLoc, DeclLoc, 0,
                               Context.CharTy, 
-                              Context.CreateTypeSourceInfo(Context.CharTy),
+                              Context.getTrivialTypeSourceInfo(Context.CharTy,
+                                                               DeclLoc),
                               ObjCIvarDecl::Private, BW,
                               true);
   AllIvarDecls.push_back(Ivar);
