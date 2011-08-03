@@ -241,10 +241,12 @@ void SpillPlacement::addConstraints(ArrayRef<BlockConstraint> LiveBlocks) {
 }
 
 /// addPrefSpill - Same as addConstraints(PrefSpill)
-void SpillPlacement::addPrefSpill(ArrayRef<unsigned> Blocks) {
+void SpillPlacement::addPrefSpill(ArrayRef<unsigned> Blocks, bool Strong) {
   for (ArrayRef<unsigned>::iterator I = Blocks.begin(), E = Blocks.end();
        I != E; ++I) {
     float Freq = getBlockFrequency(*I);
+    if (Strong)
+      Freq += Freq;
     unsigned ib = bundles->getBundle(*I, 0);
     unsigned ob = bundles->getBundle(*I, 1);
     activate(ib);

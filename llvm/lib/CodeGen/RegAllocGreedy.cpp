@@ -806,7 +806,9 @@ void RAGreedy::growRegion(GlobalSplitCandidate &Cand) {
     if (Cand.PhysReg)
       addThroughConstraints(Cand.Intf, NewBlocks);
     else
-      SpillPlacer->addPrefSpill(NewBlocks);
+      // Provide a strong negative bias on through blocks to prevent unwanted
+      // liveness on loop backedges.
+      SpillPlacer->addPrefSpill(NewBlocks, /* Strong= */ true);
     AddedTo = ActiveBlocks.size();
 
     // Perhaps iterating can enable more bundles?

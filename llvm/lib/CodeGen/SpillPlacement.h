@@ -107,7 +107,8 @@ public:
   /// Entry = Exit = PrefSpill, and ChangesValue = false.
   ///
   /// @param Blocks Array of block numbers that prefer to spill in and out.
-  void addPrefSpill(ArrayRef<unsigned> Blocks);
+  /// @param Strong When true, double the negative bias for these blocks.
+  void addPrefSpill(ArrayRef<unsigned> Blocks, bool Strong);
 
   /// addLinks - Add transparent blocks with the given numbers.
   void addLinks(ArrayRef<unsigned> Links);
