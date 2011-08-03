@@ -6025,6 +6025,10 @@ freestanding environments and non-C-based languages.</p>
    calling conventions, how the personality function results are represented in
    LLVM IR is target specific.</p>
 
+<p>The clauses are applied in order from top to bottom. If two
+   <tt>landingpad</tt> instructions are merged together through inlining, the
+   clauses from the calling function are prepended to the list of clauses.</p>
+
 <p>The <tt>landingpad</tt> instruction has several restrictions:</p>
 
 <ul>
