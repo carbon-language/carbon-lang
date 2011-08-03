@@ -264,7 +264,7 @@ namespace llvm {
     /// ExitNotTakenInfo - Information about the number of times a particular
     /// loop exit may be reached before exiting the loop.
     struct ExitNotTakenInfo {
-      BasicBlock *ExitingBlock;
+      AssertingVH<BasicBlock> ExitingBlock;
       const SCEV *ExactNotTaken;
       PointerIntPair<ExitNotTakenInfo*, 1> NextExit;
 

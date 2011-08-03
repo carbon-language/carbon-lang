@@ -58,7 +58,8 @@ static inline void RemapInstruction(Instruction *I,
 /// only has one predecessor, and that predecessor only has one successor.
 /// The LoopInfo Analysis that is passed will be kept consistent.
 /// Returns the new combined block.
-static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI) {
+static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI,
+                                            LPPassManager *LPM) {
   // Merge basic blocks into their predecessor if there is only one distinct
   // pred, and if there is only one distinct successor of the predecessor, and
   // if there are no PHI nodes.
@@ -90,6 +91,12 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI) {
   std::string OldName = BB->getName();
 
   // Erase basic block from the function...
+
+  // ScalarEvolution holds references to loop exit blocks.
+  if (ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>()) {
+    if (Loop *L = LI->getLoopFor(BB))
+      SE->forgetLoop(L);
+  }
   LI->removeBlock(BB);
   BB->eraseFromParent();
 
@@ -364,7 +371,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
     BranchInst *Term = cast<BranchInst>(Latches[i]->getTerminator());
     if (Term->isUnconditional()) {
       BasicBlock *Dest = Term->getSuccessor(0);
-      if (BasicBlock *Fold = FoldBlockIntoPredecessor(Dest, LI))
+      if (BasicBlock *Fold = FoldBlockIntoPredecessor(Dest, LI, LPM))
         std::replace(Latches.begin(), Latches.end(), Dest, Fold);
     }
   }
