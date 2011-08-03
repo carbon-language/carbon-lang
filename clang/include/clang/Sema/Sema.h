@@ -1785,7 +1785,8 @@ public:
                           ObjCInterfaceDecl *IDecl);
 
   typedef llvm::DenseSet<Selector, llvm::DenseMapInfo<Selector> > SelectorSet;
-
+  typedef llvm::DenseMap<Selector, ObjCMethodDecl*> ProtocolsMethodsMap;
+                         
   /// CheckProtocolMethodDefs - This routine checks unimplemented
   /// methods declared in protocol, and those referenced by it.
   /// \param IDecl - Used for checking for methods which may have been

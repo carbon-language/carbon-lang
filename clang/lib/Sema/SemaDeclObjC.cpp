@@ -1498,12 +1498,6 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
                                  IMPDecl,
                                  (*PI), IncompleteImpl, false, WarnExactMatch);
     
-    // Check for any type mismtch of methods declared in class 
-    // and methods declared in protocol. Do this only when the class
-    // is being implementaed.
-    if (isa<ObjCImplementationDecl>(IMPDecl))
-      MatchMethodsInClassAndItsProtocol(I);
-    
     // FIXME. For now, we are not checking for extact match of methods 
     // in category implementation and its primary class's super class. 
     if (!WarnExactMatch && I->getSuperClass())
@@ -1513,99 +1507,113 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
   }
 }
 
+/// MatchMethodsInClassAndOneProtocol - This routine goes thru list of methods
+/// declared in the class, and its class extensions. For each method which is
+/// also declared in one of its qualifying protocols, they must type match or
+/// it issues a warning.
 static void MatchMethodsInClassAndOneProtocol(Sema &S, 
-                                              Sema::SelectorSet &InsMap,
-                                              Sema::SelectorSet &ClsMap,
                                               const ObjCContainerDecl *IDecl,
-                                              const ObjCProtocolDecl *PDecl) {
-  if (!InsMap.empty())
-    for (ObjCInterfaceDecl::instmeth_iterator IM = PDecl->instmeth_begin(),
-         E = PDecl->instmeth_end(); IM != E; ++IM) {
-      Selector Sel = (*IM)->getSelector();
-      if (InsMap.count(Sel)) {
-        ObjCMethodDecl *ProtoMethodDecl = PDecl->getInstanceMethod(Sel);
-        ObjCMethodDecl *ClsMethodDecl = IDecl->getInstanceMethod(Sel);
-        if (ProtoMethodDecl && ClsMethodDecl)
-          S.WarnConflictingTypedMethods(
-                                      ClsMethodDecl, 
-                                      ProtoMethodDecl, true, true);
-        InsMap.erase(Sel);
-      }
-      if (InsMap.empty())
-        break;
+                              Sema::ProtocolsMethodsMap &InstMethodsInProtocols,
+                              Sema::ProtocolsMethodsMap &ClsMethodsInProtocols) {
+  for (ObjCInterfaceDecl::instmeth_iterator IM = IDecl->instmeth_begin(),
+       E = IDecl->instmeth_end(); IM != E; ++IM) {
+    Selector Sel = (*IM)->getSelector();
+    if (ObjCMethodDecl *ProtoMethodDecl = InstMethodsInProtocols[Sel]) {
+      ObjCMethodDecl *ClsMethodDecl = (*IM);
+      S.WarnConflictingTypedMethods(ClsMethodDecl, 
+                                    ProtoMethodDecl, true, true);
     }
-  if (!ClsMap.empty())
-    for (ObjCInterfaceDecl::classmeth_iterator IM = PDecl->classmeth_begin(),
-         E = PDecl->classmeth_end(); IM != E; ++IM) {
-      Selector Sel = (*IM)->getSelector();
-      if (ClsMap.count(Sel)) {
-        ObjCMethodDecl *ProtoMethodDecl = PDecl->getClassMethod(Sel);
-        ObjCMethodDecl *ClsMethodDecl = IDecl->getClassMethod(Sel);
-        if (ProtoMethodDecl && ClsMethodDecl)
-          S.WarnConflictingTypedMethods(
-                                        ClsMethodDecl, 
-                                        ProtoMethodDecl, true, true);
-        ClsMap.erase(Sel);
-      }
-      if (ClsMap.empty())
-        break;
+  }
+  for (ObjCInterfaceDecl::classmeth_iterator IM = IDecl->classmeth_begin(),
+       E = IDecl->classmeth_end(); IM != E; ++IM) {
+    Selector Sel = (*IM)->getSelector();
+    if (ObjCMethodDecl *ProtoMethodDecl = ClsMethodsInProtocols[Sel]) {
+      ObjCMethodDecl *ClsMethodDecl = (*IM);
+      S.WarnConflictingTypedMethods(ClsMethodDecl, 
+                                    ProtoMethodDecl, true, true);
     }
-  if (InsMap.empty() && ClsMap.empty())
-    return;
+  }
   
-  for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
-       PE = PDecl->protocol_end(); PI != PE; ++PI)
-    MatchMethodsInClassAndOneProtocol(S, InsMap, ClsMap, IDecl, (*PI));
+  if (const ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(IDecl)) {
+    for (const ObjCCategoryDecl *ClsExtDecl = I->getFirstClassExtension();
+         ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) 
+      MatchMethodsInClassAndOneProtocol(S, ClsExtDecl, InstMethodsInProtocols,
+                                        ClsMethodsInProtocols);
+  }
+}
+
+/// CollectMethodsInProtocols - This routine collects all methods declared
+/// in class's list and nested qualified protocols. Instance methods and 
+/// class methods have separate containers as they have identical selectors.
+static void CollectMethodsInProtocols(const ObjCContainerDecl *ContDecl,
+                              Sema::ProtocolsMethodsMap &InstMethodsInProtocols,
+                              Sema::ProtocolsMethodsMap &ClsMethodsInProtocols) {
+  if (const ObjCInterfaceDecl *CDecl = dyn_cast<ObjCInterfaceDecl>(ContDecl)) {
+    for (ObjCInterfaceDecl::all_protocol_iterator
+         PI = CDecl->all_referenced_protocol_begin(),
+         E = CDecl->all_referenced_protocol_end(); PI != E; ++PI) {
+      ObjCProtocolDecl *PDecl = (*PI);
+      
+      for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(),
+           E = PDecl->instmeth_end(); I != E; ++I) {
+        ObjCMethodDecl *method = *I;
+        ObjCMethodDecl *&ProtocolEntry = 
+          InstMethodsInProtocols[method->getSelector()];
+        if (!ProtocolEntry)
+          ProtocolEntry = method;
+      }
+      for (ObjCProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(),
+           E = PDecl->classmeth_end(); I != E; ++I) {
+        ObjCMethodDecl *method = *I;
+        ObjCMethodDecl *&ProtocolEntry = 
+          ClsMethodsInProtocols[method->getSelector()];
+        if (!ProtocolEntry)
+          ProtocolEntry = method;
+      }
+      
+      for (ObjCProtocolDecl::protocol_iterator P = PDecl->protocol_begin(),
+           PE = PDecl->protocol_end(); P != PE; ++P)
+        CollectMethodsInProtocols(*P, InstMethodsInProtocols,
+                                  ClsMethodsInProtocols);
+    }
+    if (CDecl->getSuperClass())
+      CollectMethodsInProtocols(CDecl->getSuperClass(), InstMethodsInProtocols,
+                                ClsMethodsInProtocols);
+  }
+  
+  if (const ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(ContDecl)) {
+    for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(),
+         E = PDecl->instmeth_end(); I != E; ++I) {
+      ObjCMethodDecl *method = *I;
+      ObjCMethodDecl *&ProtocolEntry = 
+        InstMethodsInProtocols[method->getSelector()];
+      if (!ProtocolEntry)
+        ProtocolEntry = method;
+    }
+    for (ObjCProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(),
+         E = PDecl->classmeth_end(); I != E; ++I) {
+      ObjCMethodDecl *method = *I;
+      ObjCMethodDecl *&ProtocolEntry = 
+        ClsMethodsInProtocols[method->getSelector()];
+      if (!ProtocolEntry)
+        ProtocolEntry = method;
+    }
+  }
+    
 }
 
 /// MatchMethodsInClassAndItsProtocol - Check that any redeclaration of
 /// method in protocol in its qualified class match in their type and
 /// issue warnings otherwise.
-void Sema::MatchMethodsInClassAndItsProtocol(const ObjCInterfaceDecl *CDecl) {
-  if (CDecl->all_referenced_protocol_begin() ==
-      CDecl->all_referenced_protocol_end())
+void Sema::MatchMethodsInClassAndItsProtocol(const ObjCInterfaceDecl *CDecl) {  
+  ProtocolsMethodsMap InstMethodsInProtocols, ClsMethodsInProtocols;
+  CollectMethodsInProtocols(CDecl, InstMethodsInProtocols,
+                            ClsMethodsInProtocols);
+  
+  if (InstMethodsInProtocols.empty() && ClsMethodsInProtocols.empty())
     return;
-  
-  SelectorSet InsMap, ClsMap;
-  for (ObjCInterfaceDecl::instmeth_iterator I = CDecl->instmeth_begin(),
-       E = CDecl->instmeth_end(); I != E; ++I)
-    if (!InsMap.count((*I)->getSelector()))
-      InsMap.insert((*I)->getSelector());
-  
-  for (ObjCInterfaceDecl::classmeth_iterator
-       I = CDecl->classmeth_begin(), E = CDecl->classmeth_end(); I != E; ++I)
-    if (!ClsMap.count((*I)->getSelector()))
-      ClsMap.insert((*I)->getSelector());
-  
-  if (!InsMap.empty() || !ClsMap.empty())
-    for (ObjCInterfaceDecl::all_protocol_iterator
-         PI = CDecl->all_referenced_protocol_begin(),
-         E = CDecl->all_referenced_protocol_end(); PI != E; ++PI)
-      MatchMethodsInClassAndOneProtocol(*this, InsMap, ClsMap, CDecl, (*PI));
-  
-  // Also for class extensions
-  if (!CDecl->getFirstClassExtension())
-    return;
-  
-  for (const ObjCCategoryDecl *ClsExtDecl = CDecl->getFirstClassExtension();
-       ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) {
-    InsMap.clear();
-    ClsMap.clear();
-    for (ObjCCategoryDecl::instmeth_iterator I = ClsExtDecl->instmeth_begin(),
-         E = ClsExtDecl->instmeth_end(); I != E; ++I)
-      if (!InsMap.count((*I)->getSelector()))
-        InsMap.insert((*I)->getSelector());
-    for (ObjCCategoryDecl::classmeth_iterator I = ClsExtDecl->classmeth_begin(),
-         E = ClsExtDecl->classmeth_end(); I != E; ++I)
-      if (!ClsMap.count((*I)->getSelector()))
-        ClsMap.insert((*I)->getSelector());
-    if (InsMap.empty() && ClsMap.empty())
-      continue;
-    for (ObjCInterfaceDecl::all_protocol_iterator
-         PI = CDecl->all_referenced_protocol_begin(),
-         E = CDecl->all_referenced_protocol_end(); PI != E; ++PI)
-      MatchMethodsInClassAndOneProtocol(*this, InsMap, ClsMap, ClsExtDecl, (*PI));
-  }
+  MatchMethodsInClassAndOneProtocol(*this, CDecl, InstMethodsInProtocols,
+                                    ClsMethodsInProtocols);
 }
 
 /// CheckCategoryVsClassMethodMatches - Checks that methods implemented in
@@ -1670,6 +1678,13 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
                              IMPDecl, CDecl,
                              IncompleteImpl, true);
+  // Check for any type mismtch of methods declared in class
+  // and methods declared in protocol. Do this only when the class
+  // is being implementaed.
+  if (isa<ObjCImplementationDecl>(IMPDecl))
+    if (const ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(CDecl))
+      MatchMethodsInClassAndItsProtocol(I);
+  
   // check all methods implemented in category against those declared
   // in its primary class.
   if (ObjCCategoryImplDecl *CatDecl = 

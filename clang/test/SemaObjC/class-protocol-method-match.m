@@ -44,3 +44,21 @@
 - (void) bak {}
 @end
 
+// rdar://6911214
+@protocol Xint
+-(void) setX: (int) arg0; // expected-note {{previous definition is here}}
++(void) setX: (int) arg0; // expected-note {{previous definition is here}}
+@end
+
+@interface A <Xint>
+@end
+
+@interface C : A
+-(void) setX: (C*) arg0; // expected-warning {{conflicting parameter types in declaration of 'setX:': 'int' vs 'C *'}}
++(void) setX: (C*) arg0; // expected-warning {{conflicting parameter types in declaration of 'setX:': 'int' vs 'C *'}}
+@end
+
+@implementation C
+-(void) setX: (C*) arg0 {}
++(void) setX: (C*) arg0 {}
+@end
