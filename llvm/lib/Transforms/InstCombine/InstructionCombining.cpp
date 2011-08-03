@@ -46,6 +46,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/PatternMatch.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm-c/Initialization.h"
@@ -1043,31 +1044,43 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
 
 
-static bool IsOnlyNullComparedAndFreed(const Value &V, int Depth = 0) {
+static bool IsOnlyNullComparedAndFreed(Value *V, SmallVector<WeakVH, 64> &Users,
+                                       int Depth = 0) {
   if (Depth == 8)
     return false;
 
-  for (Value::const_use_iterator UI = V.use_begin(), UE = V.use_end();
+  for (Value::use_iterator UI = V->use_begin(), UE = V->use_end();
        UI != UE; ++UI) {
-    const User *U = *UI;
-    if (isFreeCall(U))
+    User *U = *UI;
+    if (isFreeCall(U)) {
+      Users.push_back(U);
       continue;
-    if (const ICmpInst *ICI = dyn_cast<ICmpInst>(U))
-      if (ICI->isEquality() && isa<ConstantPointerNull>(ICI->getOperand(1)))
-        continue;
-    if (const BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
-      if (IsOnlyNullComparedAndFreed(*BCI, Depth+1))
-        continue;
     }
-    if (const GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
+    if (ICmpInst *ICI = dyn_cast<ICmpInst>(U)) {
+      if (ICI->isEquality() && isa<ConstantPointerNull>(ICI->getOperand(1))) {
+        Users.push_back(ICI);
+        continue;
+      }
+    }
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
+      if (IsOnlyNullComparedAndFreed(BCI, Users, Depth+1)) {
+        Users.push_back(BCI);
+        continue;
+      }
+    }
+    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
       if (GEPI->hasAllZeroIndices() &&
-          IsOnlyNullComparedAndFreed(*GEPI, Depth+1))
+          IsOnlyNullComparedAndFreed(GEPI, Users, Depth+1)) {
+        Users.push_back(GEPI);
         continue;
+      }
     }
-    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
       if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
-          II->getIntrinsicID() == Intrinsic::lifetime_end)
+          II->getIntrinsicID() == Intrinsic::lifetime_end) {
+        Users.push_back(II);
         continue;
+      }
     }
     return false;
   }
@@ -1078,32 +1091,20 @@ Instruction *InstCombiner::visitMalloc(Instruction &MI) {
   // If we have a malloc call which is only used in any amount of comparisons
   // to null and free calls, delete the calls and replace the comparisons with
   // true or false as appropriate.
-  if (IsOnlyNullComparedAndFreed(MI)) {
-    for (Value::use_iterator UI = MI.use_begin(), UE = MI.use_end();
-         UI != UE;) {
-      // All the users permitted by IsOnlyNullComparedAndFreed are Instructions.
-      Instruction *I = cast<Instruction>(*UI);
+  SmallVector<WeakVH, 64> Users;
+  if (IsOnlyNullComparedAndFreed(&MI, Users)) {
+    for (unsigned i = 0, e = Users.size(); i != e; ++i) {
+      Instruction *I = cast_or_null<Instruction>(&*Users[i]);
+      if (!I) continue;
 
-      // Early increment here, as we're about to get rid of the user.
-      ++UI;
-
-      if (CallInst *CI = isFreeCall(I)) {
-        if (CI != I)
-          EraseInstFromFunction(*CI);
-        EraseInstFromFunction(*I);
-      } else if (ICmpInst *C = dyn_cast<ICmpInst>(I)) {
+      if (ICmpInst *C = dyn_cast<ICmpInst>(I)) {
         ReplaceInstUsesWith(*C,
                             ConstantInt::get(Type::getInt1Ty(C->getContext()),
                                              C->isFalseWhenEqual()));
-        EraseInstFromFunction(*C);
-      } else if (I->getType()->isVoidTy()) {
-        // An all-zero GEP or a bitcast.
+      } else if (isa<BitCastInst>(I) || isa<GetElementPtrInst>(I)) {
         ReplaceInstUsesWith(*I, UndefValue::get(I->getType()));
-        EraseInstFromFunction(*I);
-      } else {
-        // A lifetime intrinsic.
-        EraseInstFromFunction(*I);
       }
+      EraseInstFromFunction(*I);
     }
     return EraseInstFromFunction(MI);
   }

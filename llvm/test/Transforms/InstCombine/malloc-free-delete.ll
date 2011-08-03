@@ -35,3 +35,14 @@ define void @test3() {
   call void @llvm.lifetime.end(i64 10, i8* %a)
   ret void
 }
+
+;; This used to crash.
+define void @test4() {
+; CHECK: @test4
+; CHECK-NEXT: ret void
+  %A = call i8* @malloc(i32 16000)
+  %B = bitcast i8* %A to double*
+  %C = bitcast double* %B to i8*
+  call void @free(i8* %C)
+  ret void
+}
