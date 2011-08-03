@@ -639,6 +639,10 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("is_base_of", LangOpts.CPlusPlus)
            .Case("is_class", LangOpts.CPlusPlus)
            .Case("is_convertible_to", LangOpts.CPlusPlus)
+            // __is_empty is available only if the horrible
+            // "struct __is_empty" parsing hack hasn't been needed in this
+            // translation unit. If it has, __is_empty reverts to a normal
+            // identifier and __has_feature(is_empty) evaluates false.
            .Case("is_empty", 
                  LangOpts.CPlusPlus && 
                  PP.getIdentifierInfo("__is_empty")->getTokenID()
@@ -646,6 +650,10 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("is_enum", LangOpts.CPlusPlus)
            .Case("is_literal", LangOpts.CPlusPlus)
            .Case("is_standard_layout", LangOpts.CPlusPlus)
+           // __is_pod is available only if the horrible
+           // "struct __is_pod" parsing hack hasn't been needed in this
+           // translation unit. If it has, __is_pod reverts to a normal
+           // identifier and __has_feature(is_pod) evaluates false.
            .Case("is_pod", 
                  LangOpts.CPlusPlus && 
                  PP.getIdentifierInfo("__is_pod")->getTokenID()
