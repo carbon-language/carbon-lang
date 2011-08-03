@@ -213,7 +213,7 @@ ReprocessLoop:
   // predecessors from outside of the loop, split the edge now.
   SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
-    
+
   SmallSetVector<BasicBlock *, 8> ExitBlockSet(ExitBlocks.begin(),
                                                ExitBlocks.end());
   for (SmallSetVector<BasicBlock *, 8>::iterator I = ExitBlockSet.begin(),
@@ -402,7 +402,7 @@ BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   }
 
   assert(!LoopBlocks.empty() && "No edges coming in from outside the loop?");
-  BasicBlock *NewBB = SplitBlockPredecessors(Exit, &LoopBlocks[0], 
+  BasicBlock *NewBB = SplitBlockPredecessors(Exit, &LoopBlocks[0],
                                              LoopBlocks.size(), ".loopexit",
                                              this);
 
@@ -467,23 +467,23 @@ void LoopSimplify::PlaceSplitBlockCarefully(BasicBlock *NewBB,
     if (&*BBI == SplitPreds[i])
       return;
   }
-  
+
   // If it isn't already after an outside block, move it after one.  This is
   // always good as it makes the uncond branch from the outside block into a
   // fall-through.
-  
+
   // Figure out *which* outside block to put this after.  Prefer an outside
   // block that neighbors a BB actually in the loop.
   BasicBlock *FoundBB = 0;
   for (unsigned i = 0, e = SplitPreds.size(); i != e; ++i) {
     Function::iterator BBI = SplitPreds[i];
-    if (++BBI != NewBB->getParent()->end() && 
+    if (++BBI != NewBB->getParent()->end() &&
         L->contains(BBI)) {
       FoundBB = SplitPreds[i];
       break;
     }
   }
-  
+
   // If our heuristic for a *good* bb to place this after doesn't find
   // anything, just pick something.  It's likely better than leaving it within
   // the loop.
@@ -544,7 +544,7 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L, LPPassManager &LPM) {
   // Make sure that NewBB is put someplace intelligent, which doesn't mess up
   // code layout too horribly.
   PlaceSplitBlockCarefully(NewBB, OuterLoopPreds, L);
-  
+
   // Create the new outer loop.
   Loop *NewOuter = new Loop();
 
