@@ -475,10 +475,6 @@ public:
                   Name);
   }
 
-  UnwindInst *CreateUnwind() {
-    return Insert(new UnwindInst(Context));
-  }
-
   ResumeInst *CreateResume(Value *Exn) {
     return Insert(ResumeInst::Create(Exn));
   }
