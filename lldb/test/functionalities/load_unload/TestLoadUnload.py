@@ -115,8 +115,8 @@ class LoadUnloadTestCase(TestBase):
         self.runCmd("process kill")
 
         # Try again with the DYLD_LIBRARY_PATH environment variable properly set.
-        os.environ[dylibPath] = new_dir
-        self.addTearDownHook(lambda: os.environ.pop(dylibPath))
+        env_cmd_string = "settings set target.process.env-vars " + dylibPath + "=" + new_dir
+        self.runCmd("env_cmd_string")
         self.runCmd("run")
         self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,
             patterns = ["frame #0.*d_function.*at d.c:%d" % self.line_d_function])
