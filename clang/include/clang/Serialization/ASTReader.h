@@ -1250,12 +1250,12 @@ public:
   Decl *GetDecl(serialization::DeclID ID);
   virtual Decl *GetExternalDecl(uint32_t ID);
 
-  /// \brief Reads a declaration with the given local ID in the give module.
+  /// \brief Reads a declaration with the given local ID in the given module.
   Decl *GetLocalDecl(Module &F, uint32_t LocalID) {
     return GetDecl(getGlobalDeclID(F, LocalID));
   }
 
-  /// \brief Reads a declaration with the given local ID in the give module.
+  /// \brief Reads a declaration with the given local ID in the given module.
   ///
   /// \returns The requested declaration, casted to the given return type.
   template<typename T>

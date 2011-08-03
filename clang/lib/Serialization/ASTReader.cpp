@@ -2937,7 +2937,7 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
   if (unsigned Jmp_buf = SpecialTypes[SPECIAL_TYPE_jmp_buf]) {
     QualType Jmp_bufType = GetType(Jmp_buf);
     if (Jmp_bufType.isNull()) {
-      Error("jmp_bug type is NULL");
+      Error("jmp_buf type is NULL");
       return;
     }
     if (const TypedefType *Typedef = Jmp_bufType->getAs<TypedefType>())
