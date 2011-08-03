@@ -143,7 +143,6 @@ void initializeLowerAtomicPass(PassRegistry&);
 void initializeLowerExpectIntrinsicPass(PassRegistry&);
 void initializeLowerIntrinsicsPass(PassRegistry&);
 void initializeLowerInvokePass(PassRegistry&);
-void initializeLowerSetJmpPass(PassRegistry&);
 void initializeLowerSwitchPass(PassRegistry&);
 void initializeMachineBlockFrequencyInfoPass(PassRegistry&);
 void initializeMachineBranchProbabilityInfoPass(PassRegistry&);

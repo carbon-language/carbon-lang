@@ -48,9 +48,6 @@ void LLVMAddGlobalOptimizerPass(LLVMPassManagerRef PM);
 /** See llvm::createIPConstantPropagationPass function. */
 void LLVMAddIPConstantPropagationPass(LLVMPassManagerRef PM);
 
-/** See llvm::createLowerSetJmpPass function. */
-void LLVMAddLowerSetJmpPass(LLVMPassManagerRef PM);
-
 /** See llvm::createPruneEHPass function. */
 void LLVMAddPruneEHPass(LLVMPassManagerRef PM);
 

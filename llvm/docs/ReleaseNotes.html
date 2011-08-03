@@ -576,14 +576,13 @@ it run faster:</p>
 
 <div>
 
-<p>If you're already an LLVM user or developer with out-of-tree changes based
-on LLVM 2.9, this section lists some "gotchas" that you may run into upgrading
-from the previous release.</p>
+<p>If you're already an LLVM user or developer with out-of-tree changes based on
+   LLVM 2.9, this section lists some "gotchas" that you may run into upgrading
+   from the previous release.</p>
 
 <ul>
-<!--
-<li></li>
--->
+  <li>The <code>LowerSetJmp</code> wasn't used effectively by any of the
+      targets and was removed.</li>
 </ul>
 
 </div>
@@ -666,6 +665,9 @@ from the previous release.</p>
     LLVM <code>unwind</code> instruction has been deprecated for a long time and
     isn't used by the current front-ends. So this was removed during the
     exception handling rewrite.</li>
+
+<li>The <code>LLVMAddLowerSetJmpPass</code> function from the C API was removed
+    because the <code>LowerSetJmp</code> pass was removed.</li>
 
 </ul>
 </div>

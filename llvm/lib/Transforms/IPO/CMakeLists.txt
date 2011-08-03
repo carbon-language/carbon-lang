@@ -13,7 +13,6 @@ add_llvm_library(LLVMipo
   Inliner.cpp
   Internalize.cpp
   LoopExtractor.cpp
-  LowerSetJmp.cpp
   MergeFunctions.cpp
   PartialInlining.cpp
   PassManagerBuilder.cpp

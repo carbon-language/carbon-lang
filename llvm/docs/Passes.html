@@ -161,7 +161,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#loop-unswitch">-loop-unswitch</a></td><td>Unswitch loops</td></tr>
 <tr><td><a href="#loweratomic">-loweratomic</a></td><td>Lower atomic intrinsics to non-atomic form</td></tr>
 <tr><td><a href="#lowerinvoke">-lowerinvoke</a></td><td>Lower invoke and unwind, for unwindless code generators</td></tr>
-<tr><td><a href="#lowersetjmp">-lowersetjmp</a></td><td>Lower Set Jump</td></tr>
 <tr><td><a href="#lowerswitch">-lowerswitch</a></td><td>Lower SwitchInst's to branches</td></tr>
 <tr><td><a href="#mem2reg">-mem2reg</a></td><td>Promote Memory to Register</td></tr>
 <tr><td><a href="#memcpyopt">-memcpyopt</a></td><td>MemCpy Optimization</td></tr>
@@ -1473,35 +1472,6 @@ if (X &lt; 3) {</pre>
   be done after the lowerinvoke pass has run (like generation of native code).
   This should not be used as a general purpose "my LLVM-to-LLVM pass doesn't
   support the invoke instruction yet" lowering pass.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<h3>
-  <a name="lowersetjmp">-lowersetjmp: Lower Set Jump</a>
-</h3>
-<div>
-  <p>
-   Lowers <tt>setjmp</tt> and <tt>longjmp</tt> to use the LLVM invoke and unwind
-   instructions as necessary.
-  </p>
-  
-  <p>
-   Lowering of <tt>longjmp</tt> is fairly trivial. We replace the call with a
-   call to the LLVM library function <tt>__llvm_sjljeh_throw_longjmp()</tt>.
-   This unwinds the stack for us calling all of the destructors for
-   objects allocated on the stack.
-  </p>
-  
-  <p>
-   At a <tt>setjmp</tt> call, the basic block is split and the <tt>setjmp</tt>
-   removed. The calls in a function that have a <tt>setjmp</tt> are converted to
-   invoke where the except part checks to see if it's a <tt>longjmp</tt>
-   exception and, if so, if it's handled in the function. If it is, then it gets
-   the value returned by the <tt>longjmp</tt> and goes to where the basic block
-   was split. <tt>invoke</tt> instructions are handled in a similar fashion with
-   the original except block being executed if it isn't a <tt>longjmp</tt>
-   except that is handled by that function.
   </p>
 </div>
 
