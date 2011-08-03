@@ -2033,11 +2033,13 @@ void ASTWriter::WriteTypeDeclOffsets() {
   Abbrev = new BitCodeAbbrev();
   Abbrev->Add(BitCodeAbbrevOp(DECL_OFFSET));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of declarations
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // base decl ID
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // declarations block
   unsigned DeclOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
   Record.clear();
   Record.push_back(DECL_OFFSET);
   Record.push_back(DeclOffsets.size());
+  Record.push_back(FirstDeclID - 1);
   Stream.EmitRecordWithBlob(DeclOffsetAbbrev, Record, data(DeclOffsets));
 }
 

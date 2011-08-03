@@ -1398,7 +1398,7 @@ static bool isConsumerInterestedIn(Decl *D) {
 
 /// \brief Get the correct cursor and offset for loading a declaration.
 ASTReader::RecordLocation
-ASTReader::DeclCursorForIndex(unsigned Index, DeclID ID) {
+ASTReader::DeclCursorForID(DeclID ID) {
   // See if there's an override.
   DeclReplacementMap::iterator It = ReplacedDecls.find(ID);
   if (It != ReplacedDecls.end())
@@ -1407,7 +1407,7 @@ ASTReader::DeclCursorForIndex(unsigned Index, DeclID ID) {
   GlobalDeclMapType::iterator I = GlobalDeclMap.find(ID);
   assert(I != GlobalDeclMap.end() && "Corrupted global declaration map");
   Module *M = I->second;
-  return RecordLocation(M, M->DeclOffsets[Index - M->BaseDeclID]);
+  return RecordLocation(M, M->DeclOffsets[ID - M->BaseDeclID - 1]);
 }
 
 ASTReader::RecordLocation ASTReader::getLocalBitOffset(uint64_t GlobalOffset) {
@@ -1438,8 +1438,9 @@ void ASTReader::loadAndAttachPreviousDecl(Decl *D, serialization::DeclID ID) {
 }
 
 /// \brief Read the declaration at the given offset from the AST file.
-Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
-  RecordLocation Loc = DeclCursorForIndex(Index, ID);
+Decl *ASTReader::ReadDeclRecord(DeclID ID) {
+  unsigned Index = ID - 1;
+  RecordLocation Loc = DeclCursorForID(ID);
   llvm::BitstreamCursor &DeclsCursor = Loc.F->DeclsCursor;
   // Keep track of where we are in the stream, then jump back there
   // after reading this declaration.
@@ -1463,7 +1464,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     assert(false && "Record cannot be de-serialized with ReadDeclRecord");
     break;
   case DECL_TRANSLATION_UNIT:
-    assert(Index == 0 && "Translation unit must be at index 0");
+    assert(Index == Loc.F->BaseDeclID && 
+           "Translation unit must be at first index in file");
     D = Context->getTranslationUnitDecl();
     break;
   case DECL_TYPEDEF:
@@ -1707,12 +1709,12 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
       DeclContextVisibleUpdates &U = I->second;
       DeclContextInfos &Infos = DeclContextOffsets[DC];
       DeclContextInfo Info;
-      Info.F = Loc.F;
       Info.LexicalDecls = 0;
       Info.NumLexicalDecls = 0;
       for (DeclContextVisibleUpdates::iterator UI = U.begin(), UE = U.end();
            UI != UE; ++UI) {
-        Info.NameLookupTableData = *UI;
+        Info.NameLookupTableData = UI->first;
+        Info.F = UI->second;
         Infos.push_back(Info);
       }
       PendingVisibleUpdates.erase(I);
@@ -1759,23 +1761,25 @@ void ASTDeclReader::UpdateDecl(Decl *D, Module &Module,
     switch ((DeclUpdateKind)Record[Idx++]) {
     case UPD_CXX_SET_DEFINITIONDATA: {
       CXXRecordDecl *RD = cast<CXXRecordDecl>(D);
-      CXXRecordDecl *DefinitionDecl = ReadDeclAs<CXXRecordDecl>(Record, Idx);
+      CXXRecordDecl *DefinitionDecl
+        = Reader.ReadDeclAs<CXXRecordDecl>(Module, Record, Idx);
       assert(!RD->DefinitionData && "DefinitionData is already set!");
       InitializeCXXDefinitionData(RD, DefinitionDecl, Record, Idx);
       break;
     }
 
     case UPD_CXX_ADDED_IMPLICIT_MEMBER:
-        cast<CXXRecordDecl>(D)->addedMember(ReadDecl(Record, Idx));
+      cast<CXXRecordDecl>(D)->addedMember(Reader.ReadDecl(Module, Record, Idx));
       break;
 
     case UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION:
       // It will be added to the template's specializations set when loaded.
-      (void)ReadDecl(Record, Idx);
+      (void)Reader.ReadDecl(Module, Record, Idx);
       break;
 
     case UPD_CXX_ADDED_ANONYMOUS_NAMESPACE: {
-      NamespaceDecl *Anon = ReadDeclAs<NamespaceDecl>(Record, Idx);
+      NamespaceDecl *Anon
+        = Reader.ReadDeclAs<NamespaceDecl>(Module, Record, Idx);
       // Guard against these being loaded out of original order. Don't use
       // getNextNamespace(), since it tries to access the context and can't in
       // the middle of deserialization.

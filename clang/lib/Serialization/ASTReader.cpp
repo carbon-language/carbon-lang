@@ -2068,21 +2068,31 @@ ASTReader::ReadASTBlock(Module &F) {
       break;
     }
         
-    case DECL_OFFSET:
+    case DECL_OFFSET: {
       if (F.LocalNumDecls != 0) {
         Error("duplicate DECL_OFFSET record in AST file");
         return Failure;
       }
       F.DeclOffsets = (const uint32_t *)BlobStart;
       F.LocalNumDecls = Record[0];
+      unsigned LocalBaseDeclID = Record[1];
       F.BaseDeclID = getTotalNumDecls();
         
-      // Introduce the global -> local mapping for declarations within this 
-      // AST file.
-      GlobalDeclMap.insert(std::make_pair(getTotalNumDecls() + 1, &F));
-      DeclsLoaded.resize(DeclsLoaded.size() + F.LocalNumDecls);      
+      if (F.LocalNumDecls > 0) {
+        // Introduce the global -> local mapping for declarations within this 
+        // module.
+        GlobalDeclMap.insert(std::make_pair(getTotalNumDecls() + 1, &F));
+        
+        // Introduce the local -> global mapping for declarations within this
+        // module.
+        F.DeclRemap.insert(std::make_pair(LocalBaseDeclID, 
+                                          F.BaseDeclID - LocalBaseDeclID));
+        
+        DeclsLoaded.resize(DeclsLoaded.size() + F.LocalNumDecls);
+      }
       break;
-
+    }
+        
     case TU_UPDATE_LEXICAL: {
       DeclContextInfo Info = {
         &F,
@@ -2096,28 +2106,28 @@ ASTReader::ReadASTBlock(Module &F) {
     }
 
     case UPDATE_VISIBLE: {
-      serialization::DeclID ID = Record[0];
+      unsigned Idx = 0;
+      serialization::DeclID ID = ReadDeclID(F, Record, Idx);
       void *Table = ASTDeclContextNameLookupTable::Create(
-                        (const unsigned char *)BlobStart + Record[1],
+                        (const unsigned char *)BlobStart + Record[Idx++],
                         (const unsigned char *)BlobStart,
                         ASTDeclContextNameLookupTrait(*this, F));
-      if (ID == 1 && Context) { // Is it the TU?
+      // FIXME: Complete hack to check for the TU
+      if (ID == (*(ModuleMgr.end() - 1))->BaseDeclID + 1 && Context) { // Is it the TU?
         DeclContextInfo Info = {
-          &F, Table, /* No lexical inforamtion */ 0, 0
+          &F, Table, /* No lexical information */ 0, 0
         };
         DeclContextOffsets[Context->getTranslationUnitDecl()].push_back(Info);
       } else
-        PendingVisibleUpdates[ID].push_back(Table);
+        PendingVisibleUpdates[ID].push_back(std::make_pair(Table, &F));
       break;
     }
 
     case REDECLS_UPDATE_LATEST: {
       assert(Record.size() % 2 == 0 && "Expected pairs of DeclIDs");
-      for (unsigned i = 0, e = Record.size(); i < e; i += 2) {
-        DeclID First = Record[i], Latest = Record[i+1];
-        assert((FirstLatestDeclIDs.find(First) == FirstLatestDeclIDs.end() ||
-                Latest > FirstLatestDeclIDs[First]) &&
-               "The new latest is supposed to come after the previous latest");
+      for (unsigned i = 0, e = Record.size(); i < e; /* in loop */) {
+        DeclID First = ReadDeclID(F, Record, i);
+        DeclID Latest = ReadDeclID(F, Record, i);
         FirstLatestDeclIDs[First] = Latest;
       }
       break;
@@ -2282,6 +2292,7 @@ ASTReader::ReadASTBlock(Module &F) {
       
       // Continuous range maps we may be updating in our module.
       ContinuousRangeMap<uint32_t, int, 2>::Builder SLocRemap(F.SLocRemap);
+      ContinuousRangeMap<uint32_t, int, 2>::Builder DeclRemap(F.DeclRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder TypeRemap(F.TypeRemap);
 
       while(Data < DataEnd) {
@@ -2312,7 +2323,9 @@ ASTReader::ReadASTBlock(Module &F) {
         (void)PreprocessedEntityIDOffset;
         (void)MacroDefinitionIDOffset;
         (void)SelectorIDOffset;
-        (void)DeclIDOffset;
+        DeclRemap.insert(std::make_pair(DeclIDOffset, 
+                                        OM->BaseDeclID - DeclIDOffset));
+        
         (void)CXXBaseSpecifiersIDOffset;
         
         TypeRemap.insert(std::make_pair(TypeIndexOffset, 
@@ -2474,8 +2487,8 @@ ASTReader::ReadASTBlock(Module &F) {
         return Failure;
       }
       for (unsigned I = 0, N = Record.size(); I != N; I += 2)
-        DeclUpdateOffsets[static_cast<DeclID>(Record[I])]
-            .push_back(std::make_pair(&F, Record[I+1]));
+        DeclUpdateOffsets[getGlobalDeclID(F, Record[I])]
+          .push_back(std::make_pair(&F, Record[I+1]));
       break;
     }
 
@@ -2485,8 +2498,8 @@ ASTReader::ReadASTBlock(Module &F) {
         return Failure;
       }
       for (unsigned I = 0, N = Record.size(); I != N; I += 2)
-        ReplacedDecls[static_cast<DeclID>(Record[I])] =
-            std::make_pair(&F, Record[I+1]);
+        ReplacedDecls[getGlobalDeclID(F, Record[I])]
+          = std::make_pair(&F, Record[I+1]);
       break;
     }
         
@@ -4090,19 +4103,30 @@ CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
 }
 
 TranslationUnitDecl *ASTReader::GetTranslationUnitDecl() {
-  if (!DeclsLoaded[0]) {
-    ReadDeclRecord(0, 1);
+  // FIXME: This routine might not even make sense when we're loading multiple
+  // unrelated AST files, since we'll have to merge the translation units
+  // somehow.
+  unsigned TranslationUnitID = (*(ModuleMgr.end() - 1))->BaseDeclID + 1;
+  if (!DeclsLoaded[TranslationUnitID - 1]) {
+    ReadDeclRecord(TranslationUnitID);
     if (DeserializationListener)
-      DeserializationListener->DeclRead(1, DeclsLoaded[0]);
+      DeserializationListener->DeclRead(TranslationUnitID, 
+                                        DeclsLoaded[TranslationUnitID - 1]);
   }
 
-  return cast<TranslationUnitDecl>(DeclsLoaded[0]);
+  return cast<TranslationUnitDecl>(DeclsLoaded[TranslationUnitID - 1]);
 }
 
 serialization::DeclID 
 ASTReader::getGlobalDeclID(Module &F, unsigned LocalID) const {
-  // FIXME: Perform local -> global remapping for declarations.
-  return LocalID;
+  if (LocalID == 0)
+    return LocalID;
+
+  ContinuousRangeMap<uint32_t, int, 2>::iterator I
+    = F.DeclRemap.find(LocalID - 1);
+  assert(I != F.DeclRemap.end() && "Invalid index into decl index remap");
+  
+  return LocalID + I->second;
 }
 
 Decl *ASTReader::GetDecl(DeclID ID) {
@@ -4116,7 +4140,7 @@ Decl *ASTReader::GetDecl(DeclID ID) {
 
   unsigned Index = ID - 1;
   if (!DeclsLoaded[Index]) {
-    ReadDeclRecord(Index, ID);
+    ReadDeclRecord(ID);
     if (DeserializationListener)
       DeserializationListener->DeclRead(ID, DeclsLoaded[Index]);
   }
@@ -5465,7 +5489,7 @@ ASTReader::~ASTReader() {
     for (DeclContextVisibleUpdates::iterator J = I->second.begin(),
                                              F = I->second.end();
          J != F; ++J)
-      delete static_cast<ASTDeclContextNameLookupTable*>(*J);
+      delete static_cast<ASTDeclContextNameLookupTable*>(J->first);
   }
 }
 
@@ -5526,9 +5550,12 @@ void Module::dump() {
   llvm::errs() << "  Base source location offset: " << SLocEntryBaseOffset 
                << '\n';
   dumpLocalRemap("Source location offset map", SLocRemap);
-  llvm::errs() << "  Base type ID: " << BaseTypeIndex << '\n'
+  llvm::errs() << "  Base type index: " << BaseTypeIndex << '\n'
                << "  Number of types: " << LocalNumTypes << '\n';
-  dumpLocalRemap("Type ID map", TypeRemap);
+  dumpLocalRemap("Type index map", TypeRemap);
+  llvm::errs() << "  Base decl ID: " << BaseDeclID << '\n'
+               << "  Number of decls: " << LocalNumDecls << '\n';
+  dumpLocalRemap("Decl ID map", DeclRemap);
 }
 
 Module *ModuleManager::lookup(StringRef Name) {
