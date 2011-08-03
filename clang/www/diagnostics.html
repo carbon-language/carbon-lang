@@ -104,10 +104,8 @@ quickly.</p>
 <h2>No Pretty Printing of Expressions in Diagnostics</h2>
 
 <p>Since Clang has range highlighting, it never needs to pretty print your code
-back out to you.  This is particularly bad in G++ (which often emits errors
-containing lowered vtable references), but even GCC can produce
-inscrutible error messages in some cases when it tries to do this.  In this
-example P and Q have type "int*":</p>
+back out to you.  GCC can produce inscrutible error messages in some cases when
+it tries to do this.  In this example P and Q have type "int*":</p>
 
 <pre>
   $ <b>gcc-4.2 -fsyntax-only t.c</b>
@@ -118,6 +116,31 @@ example P and Q have type "int*":</p>
   <font color="blue">  ~~~~~^</font>
 </pre>
 
+<p>This can be particularly bad in G++, which often emits errors
+   containing lowered vtable references.  For example:</p>
+  
+<pre>
+  $ <b>cat t.cc</b>
+  struct a {
+    virtual int bar();
+  };
+  
+  struct foo : public virtual a {
+  };
+  
+  void test(foo *P) {
+    return P->bar() + *P;
+  }
+  $ <b>gcc-4.2 t.cc</b>
+  t.cc: In function 'void test(foo*)':
+  t.cc:9: error: no match for 'operator+' in '(((a*)P) + (*(long int*)(P-&gt;foo::&lt;anonymous&gt;.a::_vptr$a + -0x00000000000000020)))-&gt;a::bar() + * P'
+  t.cc:9: error: return-statement with a value, in function returning 'void'
+  $ <b>clang t.cc</b>
+  t.cc:9:18: <font color="red">error:</font> invalid operands to binary expression ('int' and 'foo')
+  <font color="darkgreen">  return P->bar() + *P;</font>
+  <font color="blue">         ~~~~~~~~ ^ ~~</font>
+</pre>
+  
 
 <h2>Typedef Preservation and Selective Unwrapping</h2>
 
@@ -169,7 +192,7 @@ namespace myapp {
 }
 
 using namespace myapp;
-void addHTTPService(servers::Server const &server, ::services::WebService const *http) {
+void addHTTPService(servers::Server const &;amp;server, ::services::WebService const *http) {
   server += http;
 }
 </pre>
