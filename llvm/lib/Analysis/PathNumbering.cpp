@@ -387,7 +387,7 @@ void BallLarusDag::buildNode(BLBlockNodeMap& inDag, BLNodeStack& dfsStack) {
 
     TerminatorInst* terminator = currentNode->getBlock()->getTerminator();
     if(isa<ReturnInst>(terminator) || isa<UnreachableInst>(terminator)
-       || isa<ResumeInst>(terminator))
+       || isa<ResumeInst>(terminator) || isa<UnwindInst>(terminator))
       addEdge(currentNode, getExit(),0);
 
     currentNode->setColor(BallLarusNode::GRAY);
