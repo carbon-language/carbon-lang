@@ -16,6 +16,8 @@ class NonOverlappingIndexVariableCase(TestBase):
         self.lldb_avg = None
         self.gdb_avg = None
 
+    # rdar://problem/9890530
+    @unittest2.expectedFailure
     def test_eval_index_variable(self):
         """Test expressions of variable 'i' which appears in two for loops."""
         self.buildDefault()
