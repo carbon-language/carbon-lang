@@ -13,8 +13,6 @@ class NonOverlappingIndexVariableCase(TestBase):
         TestBase.setUp(self)
         self.source = 'main.cpp'
         self.line_to_break = line_number(self.source, '// Set breakpoint here.')
-        self.lldb_avg = None
-        self.gdb_avg = None
 
     # rdar://problem/9890530
     @unittest2.expectedFailure
