@@ -955,7 +955,8 @@ CompileUnit *DwarfDebug::getCompileUnit(const MDNode *N) const {
 static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
   const ConstantExpr *CE = dyn_cast_or_null<ConstantExpr>(V);
   if (!CE || CE->getNumOperands() != 3 ||
-      CE->getOpcode() != Instruction::GetElementPtr)
+      CE->getOpcode() != Instruction::GetElementPtr || 
+      !isa<PointerType>(CE->getOperand(0)->getType()))
     return NULL;
 
   // First operand points to a global value.
@@ -972,6 +973,23 @@ static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
     return NULL;
 
   return CE;
+}
+
+// getMergedGlobalElementOffset - If CE is accessing a merged global
+// then find byte offset of the element accessed by CE. This must be
+// used only CE returned by getMergedGlobalExpr(). See above.
+static uint64_t getMergedGlobalElementOffset(const TargetData &TD,
+                                             const ConstantExpr *CE) {
+  assert (getMergedGlobalExpr(CE) && "This is not a merged global!");
+  uint64_t e = cast<ConstantInt>(CE->getOperand(2))->getZExtValue();
+  if (e == 0) return 0;
+
+  uint64_t Offset = 0;
+  const PointerType *PTy = dyn_cast<PointerType>(CE->getOperand(0)->getType());
+  const StructType *STy = dyn_cast<StructType>(PTy->getElementType());
+  for (uint64_t i = 0; i != e; ++i)
+    Offset += TD.getTypeAllocSize(STy->getElementType(i));
+  return Offset;
 }
 
 /// constructGlobalVariableDIE - Construct global variable DIE.
@@ -1045,9 +1063,9 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
     TheCU->addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
     TheCU->addLabel(Block, 0, dwarf::DW_FORM_udata,
                     Asm->Mang->getSymbol(cast<GlobalValue>(CE->getOperand(0))));
-    ConstantInt *CII = cast<ConstantInt>(CE->getOperand(2));
     TheCU->addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
-    TheCU->addUInt(Block, 0, dwarf::DW_FORM_udata, CII->getZExtValue());
+    TheCU->addUInt(Block, 0, dwarf::DW_FORM_udata, 
+                   getMergedGlobalElementOffset(Asm->getTargetData(), CE));
     TheCU->addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
     TheCU->addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
   }
