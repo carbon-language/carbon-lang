@@ -670,7 +670,7 @@ namespace clang {
     /// it is created.
     enum PredefinedDeclIDs {
       /// \brief The NULL declaration.
-      PREDEF_DECL_NULL_ID       = 0,
+      PREDEF_DECL_NULL_ID       = 0
     };
 
     /// \brief The number of declaration IDs that are predefined.
