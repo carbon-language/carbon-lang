@@ -83,6 +83,11 @@ public:
         return (isa != 0);
     }
     
+    // this is not a valid ISA in the sense that no valid
+    // class pointer can live at address 1. we use it to refer to
+    // tagged types, where the ISA must be dynamically determined
+    static const ObjCISA g_objc_Tagged_ISA = 1;
+    
     virtual ObjCISA
     GetISA(ValueObject& valobj);   
     
@@ -96,6 +101,9 @@ protected:
     
 private:
     AppleObjCRuntimeV2(Process *process, ModuleSP &objc_module_sp);
+    
+    bool
+    IsTaggedPointer(lldb::addr_t ptr);
     
     bool RunFunctionToFindClassName (lldb::addr_t class_addr, Thread *thread, char *name_dst, size_t max_name_len);
     

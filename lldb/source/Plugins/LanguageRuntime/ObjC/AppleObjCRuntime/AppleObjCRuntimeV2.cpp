@@ -564,6 +564,18 @@ AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const c
     return ivar_offset;
 }
 
+// tagged pointers are marked by having their least-significant bit
+// set. this makes them "invalid" as pointers because they violate
+// the alignment requirements. this way, we can always know when
+// we are dealing with a tagged pointer, and use the lookup approach
+// that the runtime would
+bool
+AppleObjCRuntimeV2::IsTaggedPointer(lldb::addr_t ptr)
+{
+    return (ptr & 0x01);
+}
+
+
 lldb_private::ObjCLanguageRuntime::ObjCISA
 AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
 {
@@ -599,6 +611,10 @@ AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
     uint32_t offset = 0;
     uint64_t isa_pointer = valobj.GetDataExtractor().GetPointer(&offset);
     
+    // tagged pointer
+    if (IsTaggedPointer(isa_pointer))
+        return g_objc_Tagged_ISA;
+
     uint8_t pointer_size = valobj.GetUpdatePoint().GetProcessSP()->GetAddressByteSize();
     
     Error error;
@@ -617,6 +633,9 @@ AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA
 {
     if (!IsValidISA(isa))
         return ConstString(NULL);
+     
+    if (isa == g_objc_Tagged_ISA)
+        return ConstString("_lldb_Tagged_ObjC_ISA");
     
     uint8_t pointer_size = m_process->GetAddressByteSize();
     Error error;
@@ -676,6 +695,9 @@ lldb_private::ObjCLanguageRuntime::ObjCISA
 AppleObjCRuntimeV2::GetParentClass(lldb_private::ObjCLanguageRuntime::ObjCISA isa)
 {
     if (!IsValidISA(isa))
+        return 0;
+    
+    if (isa == g_objc_Tagged_ISA)
         return 0;
     
     uint8_t pointer_size = m_process->GetAddressByteSize();
