@@ -55,12 +55,12 @@ bool Loop::isLoopInvariant(Value *V) const {
 }
 
 /// hasLoopInvariantOperands - Return true if all the operands of the
-/// specified instruction are loop invariant. 
+/// specified instruction are loop invariant.
 bool Loop::hasLoopInvariantOperands(Instruction *I) const {
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
     if (!isLoopInvariant(I->getOperand(i)))
       return false;
-  
+
   return true;
 }
 
@@ -110,7 +110,7 @@ bool Loop::makeLoopInvariant(Instruction *I, bool &Changed,
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
     if (!makeLoopInvariant(I->getOperand(i), Changed, InsertPt))
       return false;
-  
+
   // Hoist.
   I->moveBefore(InsertPt);
   Changed = true;
