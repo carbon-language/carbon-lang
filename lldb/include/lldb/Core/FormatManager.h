@@ -360,12 +360,13 @@ private:
             if (log)
                 log->Printf("appended bitfield info, final result is %s", name.GetCString());
         }
+        const char* typeName = name.GetCString();
         if (log)
             log->Printf("trying to get %s for VO name %s of type %s",
                         m_name.c_str(),
                         vobj.GetName().AsCString(),
-                        name.AsCString());
-        if (Get(name.GetCString(), entry))
+                        typeName);
+        if (Get(typeName, entry))
         {
             if (log)
                 log->Printf("direct match found, returning");
@@ -385,7 +386,8 @@ private:
             }
         }
         if (use_dynamic != lldb::eNoDynamicValues &&
-            typePtr == vobj.GetClangAST()->ObjCBuiltinIdTy.getTypePtr())
+            (/*strstr(typeName, "id") == typeName ||*/
+             ClangASTType::GetMinimumLanguage(vobj.GetClangAST(), vobj.GetClangType()) == lldb::eLanguageTypeObjC))
         {
             if (log)
                 log->Printf("this is an ObjC 'id', let's do dynamic search");

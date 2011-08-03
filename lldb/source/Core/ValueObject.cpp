@@ -93,7 +93,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
     m_is_child_at_offset(false),
-    m_is_expression_result(false),
+    m_is_expression_result(parent.m_is_expression_result),
     m_dump_printable_counter(0)
 {
     m_manager->ManageObject(this);
@@ -240,7 +240,7 @@ ValueObject::UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic)
 
         m_synthetic_value = NULL;
         
-        Debugger::Formatting::ValueFormats::Get(*this, use_dynamic, m_last_value_format);
+        Debugger::Formatting::ValueFormats::Get(*this, lldb::eNoDynamicValues, m_last_value_format);
         Debugger::Formatting::GetSummaryFormat(*this, use_dynamic, m_last_summary_format);
         Debugger::Formatting::GetSyntheticFilter(*this, use_dynamic, m_last_synthetic_filter);
 
@@ -2599,23 +2599,26 @@ ValueObject::DumpValueObject
             // Always show the type for the top level items.
             if (show_types || (curr_depth == 0 && !flat_output))
             {
-                s.Printf("(%s", valobj->GetTypeName().AsCString("<invalid type>"));
-                if (use_dynamic != lldb::eNoDynamicValues &&
-                    strcmp(valobj->GetTypeName().AsCString("NULL"), "id") == 0)
+                const char* typeName = valobj->GetTypeName().AsCString("<invalid type>");
+                s.Printf("(%s", typeName);
+                // only show dynamic types if the user really wants to see types
+                if (show_types && use_dynamic != lldb::eNoDynamicValues &&
+                    (/*strstr(typeName, "id") == typeName ||*/
+                     ClangASTType::GetMinimumLanguage(valobj->GetClangAST(), valobj->GetClangType()) == lldb::eLanguageTypeObjC))
                 {
                     Process* process = valobj->GetUpdatePoint().GetProcessSP().get();
                     if (process == NULL)
-                        s.Printf(") ");
+                        s.Printf(", dynamic type: unknown) ");
                     else
                     {
                         ObjCLanguageRuntime *runtime = process->GetObjCLanguageRuntime();
                         if (runtime == NULL)
-                            s.Printf(") ");
+                            s.Printf(", dynamic type: unknown) ");
                         else
                         {
                             ObjCLanguageRuntime::ObjCISA isa = runtime->GetISA(*valobj);
                             if (!runtime->IsValidISA(isa))
-                                s.Printf(") ");
+                                s.Printf(", dynamic type: unknown) ");
                             else
                                 s.Printf(", dynamic type: %s) ",
                                          runtime->GetActualTypeName(isa).GetCString());

@@ -26,6 +26,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -566,7 +567,33 @@ AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const c
 lldb_private::ObjCLanguageRuntime::ObjCISA
 AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
 {
+    
+    if (valobj.GetIsExpressionResult() &&
+        valobj.GetValue().GetValueType() == Value::eValueTypeHostAddress)
+    {
+        // when using the expression parser, an additional layer of "frozen data"
+        // can be created, which is basically a byte-exact copy of the data returned
+        // by the expression, but in host memory. because Python code might need to read
+        // into the object memory in non-obvious ways, we need to hand it the target version
+        // of the expression output
+        lldb::addr_t tgt_address = valobj.GetValueAsUnsigned();
+        ValueObjectSP target_object = ValueObjectConstResult::Create (valobj.GetExecutionContextScope(),
+                                                                      valobj.GetClangAST(),
+                                                                      valobj.GetClangType(),
+                                                                      valobj.GetName(),
+                                                                      tgt_address,
+                                                                      eAddressTypeLoad,
+                                                                      valobj.GetUpdatePoint().GetProcessSP()->GetAddressByteSize());
+        return GetISA(*target_object);
+    }
+    
     if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != lldb::eLanguageTypeObjC)
+        return 0;
+    
+    // if we get an invalid VO (which might still happen when playing around
+    // with pointers returned by the expression parser, don't consider this
+    // a valid ObjC object)
+    if (valobj.GetValue().GetContextType() == Value::eContextTypeInvalid)
         return 0;
     
     uint32_t offset = 0;
@@ -583,6 +610,8 @@ AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
     return isa;
 }
 
+// TODO: should we have a transparent_kvo parameter here to say if we 
+// want to replace the KVO swizzled class with the actual user-level type?
 ConstString
 AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA isa)
 {
@@ -625,7 +654,20 @@ AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA
     //printf("name_pointer: %llx\n", name_pointer);
     char* cstr = new char[512];
     if (m_process->ReadCStringFromMemory(name_pointer, cstr, 512) > 0)
-        return ConstString(cstr);
+    {
+        if (::strstr(cstr, "NSKVONotify") == cstr)
+        {
+            // the ObjC runtime implements KVO by replacing the isa with a special
+            // NSKVONotifying_className that overrides the relevant methods
+            // the side effect on us is that getting the typename for a KVO-ed object
+            // will return the swizzled class instead of the actual one
+            // this swizzled class is a descendant of the real class, so just
+            // return the parent type and all should be fine
+            return GetActualTypeName(GetParentClass(isa));
+        }
+        else
+            return ConstString(cstr);
+    }
     else
         return ConstString("unknown");
 }

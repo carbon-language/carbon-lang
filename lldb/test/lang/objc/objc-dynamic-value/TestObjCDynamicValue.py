@@ -93,6 +93,14 @@ class ObjCDynamicValueTestCase(TestBase):
 
         self.expect('frame var -d run-target myObserver->_source', 'frame var finds its way into a child member',
             patterns = ['\(SourceDerived \*\)'])
+        
+        # check that our ObjC GetISA() does a good job at hiding KVO swizzled classes
+        
+        self.expect('frame var -d run-target myObserver->_source -T', 'the KVO-ed class is hidden',
+                    substrs = ['dynamic type: SourceDerived'])
+
+        self.expect('frame var -d run-target myObserver->_source -T', 'the KVO-ed class is hidden', matching = False,
+                    substrs = ['dynamic type: NSKVONotify'])
 
         # This test is not entirely related to the main thrust of this test case, but since we're here,
         # try stepping into setProperty, and make sure we get into the version in Source:

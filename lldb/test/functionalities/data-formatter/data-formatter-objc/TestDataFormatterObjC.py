@@ -226,8 +226,11 @@ class DataFormatterTestCase(TestBase):
                     substrs = ['Process Name:  a.out Process Id:'])
         self.expect('frame variable dyn_test', matching=False,
                     substrs = ['Process Name:  a.out Process Id:'])
-        self.expect('frame variable dyn_test -d run-target',
+        self.expect('frame variable dyn_test -d run-target -T',
                     substrs = ['(id, dynamic type:',
+                               'Process Name:  a.out Process Id:'])
+        self.expect('frame variable dyn_test -d run-target',
+                    substrs = ['(id)',
                                'Process Name:  a.out Process Id:'])
 
             
