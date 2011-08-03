@@ -3385,8 +3385,8 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 <h5>Arguments:</h5>
 <p>The '<tt>resume</tt>' instruction requires one argument, which must have the
-   same type as the result of the '<tt>landingpad</tt>' instruction which
-   interrupted the unwinding.</p>
+   same type as the result of any '<tt>landingpad</tt>' instruction in the same
+   function.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>resume</tt>' instruction resumes propagation of an existing
