@@ -556,6 +556,14 @@ public:
     DisableMacroExpansion = OldVal;
   }
 
+  /// LexUnexpandedNonComment - Like LexNonComment, but this disables macro
+  /// expansion of identifier tokens.
+  void LexUnexpandedNonComment(Token &Result) {
+    do
+      LexUnexpandedToken(Result);
+    while (Result.getKind() == tok::comment);
+  }
+
   /// LookAhead - This peeks ahead N tokens and returns that token without
   /// consuming any tokens.  LookAhead(0) returns the next token that would be
   /// returned by Lex(), LookAhead(1) returns the token after it, etc.  This

@@ -83,20 +83,20 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   Result.setBegin(PeekTok.getLocation());
 
   // Get the next token, don't expand it.
-  PP.LexUnexpandedToken(PeekTok);
+  PP.LexUnexpandedNonComment(PeekTok);
 
   // Two options, it can either be a pp-identifier or a (.
   SourceLocation LParenLoc;
   if (PeekTok.is(tok::l_paren)) {
     // Found a paren, remember we saw it and skip it.
     LParenLoc = PeekTok.getLocation();
-    PP.LexUnexpandedToken(PeekTok);
+    PP.LexUnexpandedNonComment(PeekTok);
   }
 
   if (PeekTok.is(tok::code_completion)) {
     if (PP.getCodeCompletionHandler())
       PP.getCodeCompletionHandler()->CodeCompleteMacroName(false);
-    PP.LexUnexpandedToken(PeekTok);
+    PP.LexUnexpandedNonComment(PeekTok);
   }
   
   // If we don't have a pp-identifier now, this is an error.
@@ -115,18 +115,22 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     PP.markMacroAsUsed(Macro);
   }
 
-  // Consume identifier.
-  Result.setEnd(PeekTok.getLocation());
-  PP.LexUnexpandedToken(PeekTok);
-
   // If we are in parens, ensure we have a trailing ).
   if (LParenLoc.isValid()) {
+    // Consume identifier.
+    Result.setEnd(PeekTok.getLocation());
+    PP.LexUnexpandedNonComment(PeekTok);
+
     if (PeekTok.isNot(tok::r_paren)) {
       PP.Diag(PeekTok.getLocation(), diag::err_pp_missing_rparen) << "defined";
       PP.Diag(LParenLoc, diag::note_matching) << "(";
       return true;
     }
     // Consume the ).
+    Result.setEnd(PeekTok.getLocation());
+    PP.LexNonComment(PeekTok);
+  } else {
+    // Consume identifier.
     Result.setEnd(PeekTok.getLocation());
     PP.LexNonComment(PeekTok);
   }
@@ -152,7 +156,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   if (PeekTok.is(tok::code_completion)) {
     if (PP.getCodeCompletionHandler())
       PP.getCodeCompletionHandler()->CodeCompletePreprocessorExpression();
-    PP.LexUnexpandedToken(PeekTok);
+    PP.LexNonComment(PeekTok);
   }
       
   // If this token's spelling is a pp-identifier, check to see if it is
@@ -712,7 +716,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   
   // Peek ahead one token.
   Token Tok;
-  Lex(Tok);
+  LexNonComment(Tok);
   
   // C99 6.10.1p3 - All expressions are evaluated as intmax_t or uintmax_t.
   unsigned BitWidth = getTargetInfo().getIntMaxTWidth();
