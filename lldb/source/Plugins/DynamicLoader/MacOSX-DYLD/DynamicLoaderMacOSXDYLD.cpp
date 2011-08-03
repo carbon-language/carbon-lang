@@ -947,6 +947,36 @@ DynamicLoaderMacOSXDYLD::InitializeFromAllImageInfos ()
                 }
             }
         }
+        
+        // Now we have one more bit of business.  If there is a library left in the images for our target that
+        // doesn't have a load address, then it must be something that we were expecting to load (for instance we
+        // read a load command for it) but it didn't in fact load - probably because DYLD_*_PATH pointed
+        // to an equivalent version.  We don't want it to stay in the target's module list or it will confuse
+        // us, so unload it here.
+        Target *target = m_process->CalculateTarget();
+        ModuleList &modules = target->GetImages();
+        ModuleList not_loaded_modules;
+        size_t num_modules = modules.GetSize();
+        for (size_t i = 0; i < num_modules; i++)
+        {
+            ModuleSP module_sp = modules.GetModuleAtIndex(i);
+            if (!module_sp->IsLoadedInTarget (target))
+            {
+                if (log)
+                {
+                    StreamString s;
+                    module_sp->GetDescription (&s);
+                    log->Printf ("Unloading pre-run module: %s.", s.GetData ());
+                }
+                not_loaded_modules.Append (module_sp);
+            }
+        }
+        
+        if (not_loaded_modules.GetSize() != 0)
+        {
+            target->ModulesDidUnload(not_loaded_modules);
+        }
+        
         return true;
     }
     else

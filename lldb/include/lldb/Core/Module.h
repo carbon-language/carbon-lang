@@ -399,6 +399,20 @@ public:
     //------------------------------------------------------------------
     bool
     IsExecutable ();
+    
+    //------------------------------------------------------------------
+    /// Tells whether this module has been loaded in the target passed in.
+    /// This call doesn't distinguish between whether the module is loaded
+    /// by the dynamic loader, or by a "target module add" type call.
+    ///
+    /// @param[in] target
+    ///    The target to check whether this is loaded in.
+    ///
+    /// @return
+    ///     \b true if it is, \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    IsLoadedInTarget (Target *target);
 
     //------------------------------------------------------------------
     /// Get the number of compile units for this module.

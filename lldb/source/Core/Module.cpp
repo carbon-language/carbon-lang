@@ -690,6 +690,29 @@ Module::IsExecutable ()
         return GetObjectFile()->IsExecutable();
 }
 
+bool
+Module::IsLoadedInTarget (Target *target)
+{
+    ObjectFile *obj_file = GetObjectFile();
+    if (obj_file)
+    {
+        SectionList *sections = obj_file->GetSectionList();
+        if (sections != NULL)
+        {
+            size_t num_sections = sections->GetSize();
+            bool loaded = false;
+            for (size_t sect_idx = 0; sect_idx < num_sections; sect_idx++)
+            {
+                SectionSP section_sp = sections->GetSectionAtIndex(sect_idx);
+                if (section_sp->GetLoadBaseAddress(target) != LLDB_INVALID_ADDRESS)
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
 bool 
 Module::SetArchitecture (const ArchSpec &new_arch)
 {
