@@ -1407,6 +1407,17 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     if (CI->getType() != NewRetTy && !CI->use_empty())
       continue;
 
+    // Get the attribute list.
+    llvm::SmallVector<llvm::AttributeWithIndex, 8> AttrVec;
+    llvm::AttrListPtr AttrList = CI->getAttributes();
+
+    // Get any return attributes.
+    llvm::Attributes RAttrs = AttrList.getRetAttributes();
+
+    // Add the return attributes.
+    if (RAttrs)
+      AttrVec.push_back(llvm::AttributeWithIndex::get(0, RAttrs));
+
     // If the function was passed too few arguments, don't transform.  If extra
     // arguments were passed, we silently drop them.  If any of the types
     // mismatch, we don't transform.
@@ -1419,9 +1430,16 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
         DontTransform = true;
         break;
       }
+
+      // Add any parameter attributes.
+      if (llvm::Attributes PAttrs = AttrList.getParamAttributes(ArgNo + 1))
+        AttrVec.push_back(llvm::AttributeWithIndex::get(ArgNo + 1, PAttrs));
     }
     if (DontTransform)
       continue;
+
+    if (llvm::Attributes FnAttrs =  AttrList.getFnAttributes())
+      AttrVec.push_back(llvm::AttributeWithIndex::get(~0, FnAttrs));
 
     // Okay, we can transform this.  Create the new call instruction and copy
     // over the required information.
@@ -1430,7 +1448,8 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     ArgList.clear();
     if (!NewCall->getType()->isVoidTy())
       NewCall->takeName(CI);
-    NewCall->setAttributes(CI->getAttributes());
+    NewCall->setAttributes(llvm::AttrListPtr::get(AttrVec.begin(),
+                                                  AttrVec.end()));
     NewCall->setCallingConv(CI->getCallingConv());
 
     // Finally, remove the old call, replacing any uses with the new one.
