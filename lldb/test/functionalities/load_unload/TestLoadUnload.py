@@ -23,7 +23,7 @@ class LoadUnloadTestCase(TestBase):
 
     @unittest2.expectedFailure
     def test_modules_search_paths(self):
-        """Test target modules list after moving libd.dylib, and verifies that it works with 'target modules search-paths add'."""
+        """Test target modules list after loading a different copy of the library libd.dylib, and verifies that it works with 'target modules search-paths add'."""
 
         # Invoke the default build rule.
         self.buildDefault()
@@ -31,22 +31,11 @@ class LoadUnloadTestCase(TestBase):
         if sys.platform.startswith("darwin"):
             dylibName = 'libd.dylib'
 
-        # Now let's move the dynamic library to a different directory than $CWD.
-
-        # The directory to relocate the dynamic library to.
-        new_dir = os.path.join(os.getcwd(), "dyld_path")
-
-        # This is the function to remove the dyld_path directory after the test.
-        def remove_dyld_dir():
-            import shutil
-            shutil.rmtree(new_dir)
+        # The directory with the the dynamic library we did not link to.
+        new_dir = os.path.join(os.getcwd(), "hidden")
 
         old_dylib = os.path.join(os.getcwd(), dylibName)
         new_dylib = os.path.join(new_dir, dylibName)
-
-        os.mkdir(new_dir)
-        os.rename(old_dylib, new_dylib)
-        self.addTearDownHook(remove_dyld_dir)
 
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
@@ -65,61 +54,63 @@ class LoadUnloadTestCase(TestBase):
         self.expect("target modules list", "LLDB successfully locates the relocated dynamic library",
             substrs = [new_dylib])
 
-    @unittest2.skip("debugserver crashes?")
+        
     def test_dyld_library_path(self):
         """Test DYLD_LIBRARY_PATH after moving libd.dylib, which defines d_function, somewhere else."""
 
         # Invoke the default build rule.
         self.buildDefault()
 
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
         if sys.platform.startswith("darwin"):
             dylibName = 'libd.dylib'
             dsymName = 'libd.dylib.dSYM'
             dylibPath = 'DYLD_LIBRARY_PATH'
 
-        # Now let's move the dynamic library to a different directory than $CWD.
-
         # The directory to relocate the dynamic library and its debugging info.
-        new_dir = os.path.join(os.getcwd(), "dyld_path")
-
-        # This is the function to remove the dyld_path directory after the test.
-        def remove_dyld_dir():
-            import shutil
-            shutil.rmtree(new_dir)
+        new_dir = os.path.join(os.getcwd(), "hidden")
 
         old_dylib = os.path.join(os.getcwd(), dylibName)
         new_dylib = os.path.join(new_dir, dylibName)
         old_dSYM = os.path.join(os.getcwd(), dsymName)
         new_dSYM = os.path.join(new_dir, dsymName)
-        #system(["ls", "-lR", "."])
-        os.mkdir(new_dir)
-        os.rename(old_dylib, new_dylib)
-        if dsymName:
-            os.rename(old_dSYM, new_dSYM)
-        self.addTearDownHook(remove_dyld_dir)
+
         #system(["ls", "-lR", "."])
 
-        # With libd.dylib moved, a.out run should fail.
-        exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
-        # Set breakpoint by function name d_function.
-        self.expect("breakpoint set -n d_function", BREAKPOINT_CREATED,
-            substrs = ["Breakpoint created",
-                       "name = 'd_function'",
-                       "locations = 0 (pending)"])
-        self.runCmd("run")
-        self.expect("process status", "Not expected to hit the d_function breakpoint",
-                    matching=False,
-            substrs = ["stop reason = breakpoint"])
-        # Kill the inferior process.
-        self.runCmd("process kill")
+        # Try running with the DYLD_LIBRARY_PATH environment variable set, make sure
+        # we pick up the hidden dylib.
 
-        # Try again with the DYLD_LIBRARY_PATH environment variable properly set.
-        env_cmd_string = 'settings set target.process.env-vars ["%s"]=%s' % (dylibPath, new_dir)
+        env_cmd_string = "settings set target.process.env-vars " + dylibPath + "=" + new_dir
+        print "Set environment to: ", env_cmd_string
         self.runCmd(env_cmd_string)
+        self.runCmd("settings show target.process.env-vars")
+
+        remove_dyld_path_cmd = "settings remove target.process.env-vars " + dylibPath
+        self.addTearDownHook(lambda: self.runCmd(remove_dyld_path_cmd))
+
+        self.expect("breakpoint set -f d.c -l %d" % self.line_d_function,
+                    BREAKPOINT_CREATED,
+                    startstr = "Breakpoint created: 1: file ='d.c', line = %d" %
+                        self.line_d_function)
+        # For now we don't track DYLD_LIBRARY_PATH, so the old library will be in
+        # the modules list.
+        self.expect("target modules list",
+            substrs = [old_dylib],
+            matching=True)
+
         self.runCmd("run")
         self.expect("thread backtrace", STOPPED_DUE_TO_BREAKPOINT,
             patterns = ["frame #0.*d_function.*at d.c:%d" % self.line_d_function])
+
+        # After run, make sure the hidden library is present, and the one we didn't 
+        # load is not.
+        self.expect("target modules list",
+            substrs = [new_dylib])
+        self.expect("target modules list",
+            substrs = [old_dylib],
+            matching=False)
 
     def test_lldb_process_load_and_unload_commands(self):
         """Test that lldb process load/unload command work correctly."""

@@ -7,11 +7,17 @@ endif
 CFLAGS ?=-arch x86_64 -gdwarf-2 -O0
 CWD := $(shell pwd)
 
+all: a.out hidden/libd.dylib
+
 a.out: main.o libd.dylib
 	$(CC) $(CFLAGS) -o a.out main.o -L. -ld
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c main.c
+
+hidden/libd.dylib: b.o
+	$(CC) $(CFLAGS) -dynamiclib -o hidden/libd.dylib d.o
+	dsymutil -o hidden/libd.dylib.dSYM hidden/libd.dylib
 
 liba.dylib: a.o libb.dylib
 	$(CC) $(CFLAGS) -dynamiclib -install_name "@executable_path/liba.dylib" -o liba.dylib a.o -L. -lb
@@ -42,4 +48,4 @@ d.o: d.c
 	$(CC) $(CFLAGS) -c d.c
 
 clean:
-	rm -rf *.o *~ *.dylib a.out *.dSYM
+	rm -rf *.o *~ *.dylib a.out *.dSYM hidden/*
