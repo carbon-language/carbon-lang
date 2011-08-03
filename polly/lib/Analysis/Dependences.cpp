@@ -102,12 +102,12 @@ bool Dependences::runOnScop(Scop &S) {
       accdom = isl_map_intersect_domain(accdom, domcp);
 
       if ((*MI)->isRead())
-        isl_union_map_add_map(sink, accdom);
+        sink = isl_union_map_add_map(sink, accdom);
       else
-        isl_union_map_add_map(must_source, accdom);
+        must_source = isl_union_map_add_map(must_source, accdom);
     }
     isl_map *scattering = isl_map_copy(Stmt->getScattering());
-    isl_union_map_add_map(schedule, scattering);
+    schedule = isl_union_map_add_map(schedule, scattering);
   }
 
   DEBUG(
@@ -167,7 +167,7 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
     else
       scattering = isl_map_copy((*NewScattering)[Stmt]);
 
-    isl_union_map_add_map(schedule, scattering);
+    schedule = isl_union_map_add_map(schedule, scattering);
   }
 
   isl_union_map *temp_must_dep, *temp_may_dep;
@@ -240,7 +240,7 @@ isl_union_map* getCombinedScheduleForDim(Scop *scop, unsigned dimLevel) {
     unsigned remainingDimensions = isl_map_n_out(scattering) - dimLevel;
     scattering = isl_map_project_out(scattering, isl_dim_out, dimLevel,
                                      remainingDimensions);
-    isl_union_map_add_map(schedule, scattering);
+    schedule = isl_union_map_add_map(schedule, scattering);
   }
 
   return schedule;
