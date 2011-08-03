@@ -106,5 +106,7 @@ int main (int argc, const char * argv[])
         SimpleWithPointers(-4,-5,'6'),
         SimpleWithPointers(-7,-8,'9')};
     
+    Simple a_simple_object(3,0.14,'E');
+    
     return 0; // Set break point at this line.
 }

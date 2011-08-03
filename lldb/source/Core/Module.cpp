@@ -700,7 +700,6 @@ Module::IsLoadedInTarget (Target *target)
         if (sections != NULL)
         {
             size_t num_sections = sections->GetSize();
-            bool loaded = false;
             for (size_t sect_idx = 0; sect_idx < num_sections; sect_idx++)
             {
                 SectionSP section_sp = sections->GetSectionAtIndex(sect_idx);

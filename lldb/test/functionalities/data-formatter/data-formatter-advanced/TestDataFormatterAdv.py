@@ -171,6 +171,24 @@ class DataFormatterTestCase(TestBase):
         self.expect("frame variable sparray",
             substrs = ['[0x0000000f,0x0000000c,0x00000009]'])
         
+        # check that we can format a variable in a summary even if a format is defined for its datatype
+        self.runCmd("type format add -f hex int")
+        self.runCmd("type summary add -f \"x=${var.x%i}\" Simple")
+
+        self.expect("frame variable a_simple_object",
+            substrs = ['x=3'])
+
+        self.expect("frame variable a_simple_object", matching=False,
+                    substrs = ['0x0'])
+
+        # now check that the default is applied if we do not hand out a format
+        self.runCmd("type summary add -f \"x=${var.x}\" Simple")
+
+        self.expect("frame variable a_simple_object", matching=False,
+                    substrs = ['x=3'])
+
+        self.expect("frame variable a_simple_object", matching=True,
+                    substrs = ['x=0x00000003'])
 
 
 if __name__ == '__main__':
