@@ -255,7 +255,7 @@ public:
   /// \brief Base identifier ID for identifiers local to this module.
   serialization::IdentID BaseIdentifierID;
 
-  /// \brief Remapping table for declaration IDs in this module.
+  /// \brief Remapping table for identifier IDs in this module.
   ContinuousRangeMap<uint32_t, int, 2> IdentifierRemap;
 
   /// \brief Actual data for the on-disk hash table of identifiers.
@@ -334,6 +334,9 @@ public:
   
   /// \brief Base selector ID for selectors local to this module.
   serialization::SelectorID BaseSelectorID;
+
+  /// \brief Remapping table for selector IDs in this module.
+  ContinuousRangeMap<uint32_t, int, 2> SelectorRemap;
 
   /// \brief A pointer to the character data that comprises the selector table
   ///

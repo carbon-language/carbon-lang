@@ -128,6 +128,9 @@ namespace clang {
     /// \brief An ID number that refers to an ObjC selctor in an AST file.
     typedef uint32_t SelectorID;
 
+    /// \brief The number of predefined selector IDs.
+    const unsigned int NUM_PREDEF_SELECTOR_IDS = 1;
+    
     /// \brief An ID number that refers to a set of CXXBaseSpecifiers in an 
     /// AST file.
     typedef uint32_t CXXBaseSpecifiersID;

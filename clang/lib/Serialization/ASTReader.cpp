@@ -2234,17 +2234,27 @@ ASTReader::ReadASTBlock(Module &F) {
         LocallyScopedExternalDecls.push_back(getGlobalDeclID(F, Record[I]));
       break;
 
-    case SELECTOR_OFFSETS:
+    case SELECTOR_OFFSETS: {
       F.SelectorOffsets = (const uint32_t *)BlobStart;
       F.LocalNumSelectors = Record[0];
+      unsigned LocalBaseSelectorID = Record[1];
       F.BaseSelectorID = getTotalNumSelectors();
         
-      // Introduce the global -> local mapping for identifiers within this AST
-      // file
-      GlobalSelectorMap.insert(std::make_pair(getTotalNumSelectors() + 1, &F));
-      SelectorsLoaded.resize(SelectorsLoaded.size() + F.LocalNumSelectors);        
-      break;
+      if (F.LocalNumSelectors > 0) {
+        // Introduce the global -> local mapping for selectors within this 
+        // module.
+        GlobalSelectorMap.insert(std::make_pair(getTotalNumSelectors()+1, &F));
+        
+        // Introduce the local -> global mapping for selectors within this 
+        // module.
+        F.SelectorRemap.insert(std::make_pair(LocalBaseSelectorID,
+                                 F.BaseSelectorID - LocalBaseSelectorID));
 
+        SelectorsLoaded.resize(SelectorsLoaded.size() + F.LocalNumSelectors);        
+      }
+      break;
+    }
+        
     case METHOD_POOL:
       F.SelectorLookupTableData = (const unsigned char *)BlobStart;
       if (Record[0])
@@ -2305,6 +2315,8 @@ ASTReader::ReadASTBlock(Module &F) {
       ContinuousRangeMap<uint32_t, int, 2>::Builder SLocRemap(F.SLocRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder 
         IdentifierRemap(F.IdentifierRemap);
+      ContinuousRangeMap<uint32_t, int, 2>::Builder 
+        SelectorRemap(F.SelectorRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder DeclRemap(F.DeclRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder TypeRemap(F.TypeRemap);
 
@@ -2337,7 +2349,8 @@ ASTReader::ReadASTBlock(Module &F) {
                          OM->BaseIdentifierID - IdentifierIDOffset));
         (void)PreprocessedEntityIDOffset;
         (void)MacroDefinitionIDOffset;
-        (void)SelectorIDOffset;
+        SelectorRemap.insert(std::make_pair(SelectorIDOffset, 
+                               OM->BaseSelectorID - SelectorIDOffset));
         DeclRemap.insert(std::make_pair(DeclIDOffset, 
                                         OM->BaseDeclID - DeclIDOffset));
         
@@ -4873,7 +4886,7 @@ Selector ASTReader::DecodeSelector(serialization::SelectorID ID) {
     assert(I != GlobalSelectorMap.end() && "Corrupted global selector map");
     Module &M = *I->second;
     ASTSelectorLookupTrait Trait(*this, M);
-    unsigned Idx = ID - 1 - M.BaseSelectorID;
+    unsigned Idx = ID - M.BaseSelectorID - NUM_PREDEF_SELECTOR_IDS;
     SelectorsLoaded[ID - 1] =
       Trait.ReadKey(M.SelectorLookupTableData + M.SelectorOffsets[Idx], 0);
     if (DeserializationListener)
@@ -4892,10 +4905,17 @@ uint32_t ASTReader::GetNumExternalSelectors() {
   return getTotalNumSelectors() + 1;
 }
 
-serialization::SelectorID 
-ASTReader::getGlobalSelectorID(Module &F, unsigned LocalID) const {
-  // FIXME: Perform local -> global remapping
-  return LocalID;
+serialization::SelectorID
+ASTReader::getGlobalSelectorID(Module &M, unsigned LocalID) const {
+  if (LocalID < NUM_PREDEF_SELECTOR_IDS)
+    return LocalID;
+  
+  ContinuousRangeMap<uint32_t, int, 2>::iterator I
+    = M.SelectorRemap.find(LocalID - NUM_PREDEF_SELECTOR_IDS);
+  assert(I != M.SelectorRemap.end() 
+         && "Invalid index into identifier index remap");
+  
+  return LocalID + I->second;
 }
 
 DeclarationName
