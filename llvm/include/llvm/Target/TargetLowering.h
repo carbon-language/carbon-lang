@@ -714,6 +714,13 @@ public:
     return ShouldFoldAtomicFences;
   }
 
+  /// getInsertFencesFor - return whether the DAG builder should automatically
+  /// insert fences and reduce ordering for atomics.
+  ///
+  bool getInsertFencesForAtomic() const {
+    return InsertFencesForAtomic;
+  }
+
   /// getPreIndexedAddressParts - returns true by value, base pointer and
   /// offset pointer and addressing mode by reference if the node's address
   /// can be legally represented as pre-indexed load / store address.
@@ -1132,6 +1139,13 @@ protected:
   /// atomic operation intrinsics includes locking. Default is false.
   void setShouldFoldAtomicFences(bool fold) {
     ShouldFoldAtomicFences = fold;
+  }
+
+  /// setInsertFencesForAtomic - Set if the the DAG builder should
+  /// automatically insert fences and reduce the order of atomic memory
+  /// operations to Monotonic.
+  void setInsertFencesForAtomic(bool fence) {
+    InsertFencesForAtomic = fence;
   }
 
 public:
@@ -1672,6 +1686,11 @@ private:
   /// be folded into the enclosed atomic intrinsic instruction by the
   /// combiner.
   bool ShouldFoldAtomicFences;
+
+  /// InsertFencesForAtomic - Whether the DAG builder should automatically
+  /// insert fences and reduce ordering for atomics.  (This will be set for
+  /// for most architectures with weak memory ordering.)
+  bool InsertFencesForAtomic;
 
   /// StackPointerRegisterToSaveRestore - If set to a physical register, this
   /// specifies the register that llvm.savestack/llvm.restorestack should save

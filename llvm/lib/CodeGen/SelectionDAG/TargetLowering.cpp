@@ -617,6 +617,7 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   PrefLoopAlignment = 0;
   MinStackArgumentAlignment = 1;
   ShouldFoldAtomicFences = false;
+  InsertFencesForAtomic = false;
 
   InitLibcallNames(LibcallRoutineNames);
   InitCmpLibcallCCs(CmpLibcallCCs);

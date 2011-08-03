@@ -401,6 +401,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   if (PPCSubTarget.isDarwin())
     setPrefFunctionAlignment(4);
 
+  setInsertFencesForAtomic(true);
+
   computeRegisterProperties();
 }
 

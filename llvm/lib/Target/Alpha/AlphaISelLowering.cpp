@@ -160,6 +160,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
 
   setMinFunctionAlignment(4);
 
+  setInsertFencesForAtomic(true);
+
   computeRegisterProperties();
 }
 
