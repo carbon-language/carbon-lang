@@ -1507,11 +1507,11 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
   }
 }
 
-/// MatchMethodsInClassAndOneProtocol - This routine goes thru list of methods
+/// MatchMethodsInClassAndProtocols - This routine goes thru list of methods
 /// declared in the class, and its class extensions. For each method which is
 /// also declared in one of its qualifying protocols, they must type match or
 /// it issues a warning.
-static void MatchMethodsInClassAndOneProtocol(Sema &S, 
+static void MatchMethodsInClassAndProtocols(Sema &S, 
                                               const ObjCContainerDecl *IDecl,
                               Sema::ProtocolsMethodsMap &InstMethodsInProtocols,
                               Sema::ProtocolsMethodsMap &ClsMethodsInProtocols) {
@@ -1537,8 +1537,31 @@ static void MatchMethodsInClassAndOneProtocol(Sema &S,
   if (const ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(IDecl)) {
     for (const ObjCCategoryDecl *ClsExtDecl = I->getFirstClassExtension();
          ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) 
-      MatchMethodsInClassAndOneProtocol(S, ClsExtDecl, InstMethodsInProtocols,
+      MatchMethodsInClassAndProtocols(S, ClsExtDecl, InstMethodsInProtocols,
                                         ClsMethodsInProtocols);
+  }
+}
+
+/// CollectMethodsInOneProtocol - This routine collects all methods declared
+/// in a given protocol.
+static void CollectMethodsInOneProtocol(const ObjCProtocolDecl *PDecl,
+                              Sema::ProtocolsMethodsMap &InstMethodsInProtocols,
+                              Sema::ProtocolsMethodsMap &ClsMethodsInProtocols) {
+  for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(),
+       E = PDecl->instmeth_end(); I != E; ++I) {
+    ObjCMethodDecl *method = *I;
+    ObjCMethodDecl *&ProtocolEntry = 
+    InstMethodsInProtocols[method->getSelector()];
+    if (!ProtocolEntry)
+      ProtocolEntry = method;
+  }
+  for (ObjCProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(),
+       E = PDecl->classmeth_end(); I != E; ++I) {
+    ObjCMethodDecl *method = *I;
+    ObjCMethodDecl *&ProtocolEntry = 
+    ClsMethodsInProtocols[method->getSelector()];
+    if (!ProtocolEntry)
+      ProtocolEntry = method;
   }
 }
 
@@ -1553,27 +1576,12 @@ static void CollectMethodsInProtocols(const ObjCContainerDecl *ContDecl,
          PI = CDecl->all_referenced_protocol_begin(),
          E = CDecl->all_referenced_protocol_end(); PI != E; ++PI) {
       ObjCProtocolDecl *PDecl = (*PI);
-      
-      for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(),
-           E = PDecl->instmeth_end(); I != E; ++I) {
-        ObjCMethodDecl *method = *I;
-        ObjCMethodDecl *&ProtocolEntry = 
-          InstMethodsInProtocols[method->getSelector()];
-        if (!ProtocolEntry)
-          ProtocolEntry = method;
-      }
-      for (ObjCProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(),
-           E = PDecl->classmeth_end(); I != E; ++I) {
-        ObjCMethodDecl *method = *I;
-        ObjCMethodDecl *&ProtocolEntry = 
-          ClsMethodsInProtocols[method->getSelector()];
-        if (!ProtocolEntry)
-          ProtocolEntry = method;
-      }
+      CollectMethodsInOneProtocol(PDecl, InstMethodsInProtocols,
+                                  ClsMethodsInProtocols);
       
       for (ObjCProtocolDecl::protocol_iterator P = PDecl->protocol_begin(),
            PE = PDecl->protocol_end(); P != PE; ++P)
-        CollectMethodsInProtocols(*P, InstMethodsInProtocols,
+        CollectMethodsInProtocols((*P), InstMethodsInProtocols,
                                   ClsMethodsInProtocols);
     }
     if (CDecl->getSuperClass())
@@ -1581,24 +1589,9 @@ static void CollectMethodsInProtocols(const ObjCContainerDecl *ContDecl,
                                 ClsMethodsInProtocols);
   }
   
-  if (const ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(ContDecl)) {
-    for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(),
-         E = PDecl->instmeth_end(); I != E; ++I) {
-      ObjCMethodDecl *method = *I;
-      ObjCMethodDecl *&ProtocolEntry = 
-        InstMethodsInProtocols[method->getSelector()];
-      if (!ProtocolEntry)
-        ProtocolEntry = method;
-    }
-    for (ObjCProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(),
-         E = PDecl->classmeth_end(); I != E; ++I) {
-      ObjCMethodDecl *method = *I;
-      ObjCMethodDecl *&ProtocolEntry = 
-        ClsMethodsInProtocols[method->getSelector()];
-      if (!ProtocolEntry)
-        ProtocolEntry = method;
-    }
-  }
+  if (const ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(ContDecl))
+    CollectMethodsInOneProtocol(PDecl, InstMethodsInProtocols,
+                                ClsMethodsInProtocols);
     
 }
 
@@ -1612,7 +1605,7 @@ void Sema::MatchMethodsInClassAndItsProtocol(const ObjCInterfaceDecl *CDecl) {
   
   if (InstMethodsInProtocols.empty() && ClsMethodsInProtocols.empty())
     return;
-  MatchMethodsInClassAndOneProtocol(*this, CDecl, InstMethodsInProtocols,
+  MatchMethodsInClassAndProtocols(*this, CDecl, InstMethodsInProtocols,
                                     ClsMethodsInProtocols);
 }
 
