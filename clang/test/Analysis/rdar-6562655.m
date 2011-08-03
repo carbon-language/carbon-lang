@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-constraints=basic -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -analyzer-constraints=basic -analyzer-store=region -verify %s
 //
 // This test case mainly checks that the retain/release checker doesn't crash
 // on this file.

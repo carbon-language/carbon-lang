@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -verify -fblocks %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,experimental.core -analyzer-store=region -verify -fblocks %s
 
 // Here is a case where a pointer is treated as integer, invalidated as an
 // integer, and then used again as a pointer.   This test just makes sure

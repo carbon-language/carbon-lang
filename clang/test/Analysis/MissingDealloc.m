@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.experimental.Dealloc '-DIBOutlet=__attribute__((iboutlet))' %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.osx.cocoa.Dealloc '-DIBOutlet=__attribute__((iboutlet))' %s -verify
 typedef signed char BOOL;
 @protocol NSObject
 - (BOOL)isEqual:(id)object;

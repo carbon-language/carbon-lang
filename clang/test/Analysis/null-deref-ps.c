@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,deadcode,core.experimental -std=gnu99 -analyzer-store=region -analyzer-constraints=range -analyzer-no-purge-dead -verify %s -Wreturn-type 
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,deadcode,core.experimental -std=gnu99 -analyzer-store=region -analyzer-constraints=range -verify %s -Wreturn-type 
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,deadcode,experimental.core -std=gnu99 -analyzer-store=region -analyzer-constraints=range -analyzer-no-purge-dead -verify %s -Wreturn-type 
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,deadcode,experimental.core -std=gnu99 -analyzer-store=region -analyzer-constraints=range -verify %s -Wreturn-type 
 
 typedef unsigned uintptr_t;
 

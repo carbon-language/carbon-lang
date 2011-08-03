@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=security.experimental.SecuritySyntactic %s -verify
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -DUSE_BUILTINS -analyzer-checker=security.experimental.SecuritySyntactic %s -verify
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -DVARIANT -analyzer-checker=security.experimental.SecuritySyntactic %s -verify
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -DUSE_BUILTINS -DVARIANT -analyzer-checker=security.experimental.SecuritySyntactic %s -verify
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=experimental.security.SecuritySyntactic %s -verify
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -DUSE_BUILTINS -analyzer-checker=experimental.security.SecuritySyntactic %s -verify
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -DVARIANT -analyzer-checker=experimental.security.SecuritySyntactic %s -verify
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -DUSE_BUILTINS -DVARIANT -analyzer-checker=experimental.security.SecuritySyntactic %s -verify
 
 #ifdef USE_BUILTINS
 # define BUILTIN(f) __builtin_ ## f

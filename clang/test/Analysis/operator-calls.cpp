@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -verify %s
 struct X0 { };
 bool operator==(const X0&, const X0&);
 

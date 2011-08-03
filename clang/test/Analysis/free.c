@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-checker=core,unix.experimental.Malloc -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-checker=core,experimental.unix.Malloc -fblocks -verify %s
 void free(void *);
 
 void t1 () {

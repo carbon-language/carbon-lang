@@ -1,8 +1,8 @@
 // NOTE: Use '-fobjc-gc' to test the analysis being run twice, and multiple reports are not issued.
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,deadcode.IdempotentOperations,core.experimental,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=basic -verify -fblocks -Wno-unreachable-code -Wno-null-dereference %s
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,deadcode.IdempotentOperations,core.experimental,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=range -verify -fblocks -Wno-unreachable-code -Wno-null-dereference %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,deadcode.IdempotentOperations,core.experimental,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=basic -verify -fblocks -Wno-unreachable-code -Wno-null-dereference %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,deadcode.IdempotentOperations,core.experimental,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=range -verify -fblocks -Wno-unreachable-code -Wno-null-dereference %s
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,deadcode.IdempotentOperations,experimental.core,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=basic -verify -fblocks -Wno-unreachable-code -Wno-null-dereference %s
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=core,deadcode.IdempotentOperations,experimental.core,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=range -verify -fblocks -Wno-unreachable-code -Wno-null-dereference %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,deadcode.IdempotentOperations,experimental.core,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=basic -verify -fblocks -Wno-unreachable-code -Wno-null-dereference %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,deadcode.IdempotentOperations,experimental.core,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=range -verify -fblocks -Wno-unreachable-code -Wno-null-dereference %s
 
 #ifndef __clang_analyzer__
 #error __clang__analyzer__ not defined

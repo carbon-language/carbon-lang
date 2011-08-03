@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i686-pc-linux-gnu -analyze -analyzer-checker=security.experimental.SecuritySyntactic %s -verify
+// RUN: %clang_cc1 -triple i686-pc-linux-gnu -analyze -analyzer-checker=experimental.security.SecuritySyntactic %s -verify
 
 // This file complements 'security-syntax-checks.m', but tests that we omit
 // specific checks on platforms where they don't make sense.

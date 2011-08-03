@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -verify %s -analyzer-constraints=basic -analyzer-store=region
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -verify %s -analyzer-constraints=range -analyzer-store=region
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -verify %s -analyzer-constraints=basic -analyzer-store=region
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -verify %s -analyzer-constraints=range -analyzer-store=region
 
 typedef struct objc_selector *SEL;
 typedef signed char BOOL;

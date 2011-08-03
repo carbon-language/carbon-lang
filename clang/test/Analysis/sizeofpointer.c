@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental.SizeofPtr -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.core.SizeofPtr -verify %s
 
 struct s {
 };

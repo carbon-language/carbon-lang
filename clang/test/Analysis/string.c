@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.experimental.CString,deadcode.experimental.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
-// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -analyzer-checker=core,unix.experimental.CString,deadcode.experimental.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
-// RUN: %clang_cc1 -analyze -DVARIANT -analyzer-checker=core,unix.experimental.CString,deadcode.experimental.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
-// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -DVARIANT -analyzer-checker=core,unix.experimental.CString,deadcode.experimental.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.unix.CString,experimental.deadcode.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
+// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -analyzer-checker=core,experimental.unix.CString,experimental.deadcode.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
+// RUN: %clang_cc1 -analyze -DVARIANT -analyzer-checker=core,experimental.unix.CString,experimental.deadcode.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
+// RUN: %clang_cc1 -analyze -DUSE_BUILTINS -DVARIANT -analyzer-checker=core,experimental.unix.CString,experimental.deadcode.UnreachableCode -analyzer-store=region -Wno-null-dereference -verify %s
 
 //===----------------------------------------------------------------------===
 // Declarations

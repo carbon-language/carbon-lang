@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,deadcode.experimental.UnreachableCode,unix.experimental.Malloc -verify -analyzer-constraints=basic %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,deadcode.experimental.UnreachableCode,unix.experimental.Malloc -verify -analyzer-constraints=range %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.deadcode.UnreachableCode,experimental.unix.Malloc -verify -analyzer-constraints=basic %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.deadcode.UnreachableCode,experimental.unix.Malloc -verify -analyzer-constraints=range %s
 
 // These are used to trigger warnings.
 typedef typeof(sizeof(int)) size_t;

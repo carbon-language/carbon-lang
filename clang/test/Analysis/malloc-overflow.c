@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-macosx10.7.0 -analyze -analyzer-checker=security.experimental.MallocOverflow -verify %s
+// RUN: %clang_cc1 -triple x86_64-apple-macosx10.7.0 -analyze -analyzer-checker=experimental.security.MallocOverflow -verify %s
 
 typedef __typeof__(sizeof(int)) size_t;
 extern void * malloc(size_t);

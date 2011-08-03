@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental %s -analyzer-store=region -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core %s -analyzer-store=region -verify
 
 unsigned foo();
 typedef struct bf { unsigned x:2; } bf;

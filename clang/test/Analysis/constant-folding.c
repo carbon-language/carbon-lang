@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,deadcode.experimental.UnreachableCode -Wno-null-dereference -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.deadcode.UnreachableCode -Wno-null-dereference -verify %s
 
 // Trigger a warning if the analyzer reaches this point in the control flow.
 #define WARN ((void)*(char*)0)

@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental.CastToStruct -analyzer-store=region -analyzer-constraints=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental.CastToStruct -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core.CastToStruct -analyzer-store=region -analyzer-constraints=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core.CastToStruct -analyzer-store=region -analyzer-constraints=range -verify %s
 
 struct s {
   int data;

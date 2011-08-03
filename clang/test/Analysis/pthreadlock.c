@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=unix.experimental.PthreadLock -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.unix.PthreadLock -verify %s
 
 // Tests performing normal locking patterns and wrong locking orders
 

@@ -19,33 +19,35 @@ def AllExperimental : CheckerGroup<"all-experimental">;
 // Packages.
 //===----------------------------------------------------------------------===//
 
+def Experimental : Package<"experimental">;
+
 def Core : Package<"core">;
 def CoreBuiltin : Package<"builtin">, InPackage<Core>;
 def CoreUninitialized  : Package<"uninitialized">, InPackage<Core>;
-def CoreExperimental : Package<"experimental">, InPackage<Core>,
+def CoreExperimental : Package<"core">, InPackage<Experimental>,
   InGroup<AllExperimental>, Hidden;
 
 def Cplusplus : Package<"cplusplus">;
-def CplusplusExperimental : Package<"experimental">, InPackage<Cplusplus>,
+def CplusplusExperimental : Package<"cplusplus">, InPackage<Experimental>,
   InGroup<AllExperimental>, Hidden;
 
 def DeadCode : Package<"deadcode">;
-def DeadCodeExperimental : Package<"experimental">, InPackage<DeadCode>,
+def DeadCodeExperimental : Package<"deadcode">, InPackage<Experimental>,
   InGroup<AllExperimental>, Hidden;
 
 def Security : Package <"security">;
-def SecurityExperimental : Package<"experimental">, InPackage<Security>,
+def SecurityExperimental : Package<"security">, InPackage<Experimental>,
   InGroup<AllExperimental>, Hidden;
 
 def Unix : Package<"unix">;
-def UnixExperimental : Package<"experimental">, InPackage<Unix>,
+def UnixExperimental : Package<"unix">, InPackage<Experimental>,
   InGroup<AllExperimental>, Hidden;
 
 def OSX : Package<"osx">;
-def OSXExperimental : Package<"experimental">, InPackage<OSX>,
+def OSXExperimental : Package<"osx">, InPackage<Experimental>,
   InGroup<AllExperimental>, Hidden;
 def Cocoa : Package<"cocoa">, InPackage<OSX>;
-def CocoaExperimental : Package<"experimental">, InPackage<Cocoa>,
+def CocoaExperimental : Package<"cocoa">, InPackage<OSXExperimental>,
   InGroup<AllExperimental>, Hidden;
 def CoreFoundation : Package<"coreFoundation">, InPackage<OSX>;
 

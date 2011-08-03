@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental,deadcode.experimental.UnreachableCode -analyzer-store=region -analyzer-constraints=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental,deadcode.experimental.UnreachableCode -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,experimental.deadcode.UnreachableCode -analyzer-store=region -analyzer-constraints=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core,experimental.deadcode.UnreachableCode -analyzer-store=region -analyzer-constraints=range -verify %s
 
 int string_literal_init() {
   char a[] = "abc";

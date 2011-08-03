@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.core -analyzer-store=region -verify %s
 //
 // This test case simply should not crash.  It evaluates the logic of not
 // using MemRegion::getRValueType in incorrect places.

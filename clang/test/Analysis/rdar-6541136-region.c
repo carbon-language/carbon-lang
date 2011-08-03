@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -analyze -analyzer-checker=core,security.experimental.ArrayBound -analyzer-store=region %s
+// RUN: %clang_cc1 -verify -analyze -analyzer-checker=core,experimental.security.ArrayBound -analyzer-store=region %s
 
 struct tea_cheese { unsigned magic; };
 typedef struct tea_cheese kernel_tea_cheese_t;
