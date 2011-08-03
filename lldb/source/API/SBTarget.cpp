@@ -918,9 +918,9 @@ SBTarget::FindTypes (const char* type)
         
         for (size_t idx = 0; idx < num_matches; idx++)
         {
-            TypeSP sp_at_idx = type_list.GetTypeAtIndex(idx);
-            
-            retval.AppendType(SBType(sp_at_idx));
+            TypeSP type_sp (type_list.GetTypeAtIndex(idx));
+            if (type_sp)
+                retval.Append(SBType(type_sp));
         }
     }
     return retval;

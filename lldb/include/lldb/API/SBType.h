@@ -11,8 +11,6 @@
 #define LLDB_SBType_h_
 
 #include "lldb/API/SBDefines.h"
-#include "lldb/Symbol/ClangASTType.h"
-#include "lldb/Symbol/Type.h"
 
 namespace lldb {
 
@@ -75,17 +73,16 @@ public:
     GetName();
         
 protected:
-    std::auto_ptr<lldb_private::TypeImpl> m_opaque_ap;
+    lldb::TypeImplSP m_opaque_sp;
     
     friend class SBModule;
     friend class SBTarget;
     friend class SBValue;
     friend class SBTypeList;
         
-    SBType (clang::ASTContext*, clang_type_t);
-    SBType (lldb_private::ClangASTType type);
-    SBType (lldb::TypeSP type);
-    SBType (lldb_private::TypeImpl impl);
+    SBType (const lldb_private::ClangASTType &);
+    SBType (const lldb::TypeSP &);
+    SBType (const lldb::TypeImplSP &);
     SBType();
     
 };
@@ -101,7 +98,7 @@ public:
     operator = (const SBTypeList& rhs);
     
     void
-    AppendType(SBType type);
+    Append (const SBType& type);
     
     SBType
     GetTypeAtIndex(int index) const;

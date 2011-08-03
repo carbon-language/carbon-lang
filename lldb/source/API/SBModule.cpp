@@ -347,27 +347,24 @@ SBModule::FindGlobalVariables (SBTarget &target, const char *name, uint32_t max_
 lldb::SBType
 SBModule::FindFirstType (const char* name_cstr)
 {
-    if (!IsValid())
-        return lldb::SBType();
-    
-    SymbolContext sc;
-    TypeList type_list;
-    uint32_t num_matches = 0;
-    ConstString name(name_cstr);
-
-    num_matches = m_opaque_sp->FindTypes(sc,
-                                         name,
-                                         false,
-                                         1,
-                                         type_list);
-    
-    if (num_matches)
+    SBType sb_type;
+    if (IsValid())
     {
-        TypeSP type_sp (type_list.GetTypeAtIndex(0));
-        return lldb::SBType(type_sp);
+        SymbolContext sc;
+        TypeList type_list;
+        uint32_t num_matches = 0;
+        ConstString name(name_cstr);
+
+        num_matches = m_opaque_sp->FindTypes(sc,
+                                             name,
+                                             false,
+                                             1,
+                                             type_list);
+        
+        if (num_matches)
+            sb_type = lldb::SBType(type_list.GetTypeAtIndex(0));
     }
-    else
-        return lldb::SBType();
+    return sb_type;
 }
 
 lldb::SBTypeList
@@ -376,25 +373,25 @@ SBModule::FindTypes (const char* type)
     
     SBTypeList retval;
     
-    if (!IsValid())
-        return retval;
-    
-    SymbolContext sc;
-    TypeList type_list;
-    uint32_t num_matches = 0;
-    ConstString name(type);
-    
-    num_matches = m_opaque_sp->FindTypes(sc,
-                                         name,
-                                         false,
-                                         UINT32_MAX,
-                                         type_list);
-        
-    for (size_t idx = 0; idx < num_matches; idx++)
+    if (IsValid())
     {
-        TypeSP sp_at_idx = type_list.GetTypeAtIndex(idx);
+        SymbolContext sc;
+        TypeList type_list;
+        uint32_t num_matches = 0;
+        ConstString name(type);
         
-        retval.AppendType(SBType(sp_at_idx));
+        num_matches = m_opaque_sp->FindTypes(sc,
+                                             name,
+                                             false,
+                                             UINT32_MAX,
+                                             type_list);
+            
+        for (size_t idx = 0; idx < num_matches; idx++)
+        {
+            TypeSP type_sp (type_list.GetTypeAtIndex(idx));
+            if (type_sp)
+                retval.Append(SBType(type_sp));
+        }
     }
 
     return retval;

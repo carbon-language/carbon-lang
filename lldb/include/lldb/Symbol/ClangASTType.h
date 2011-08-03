@@ -31,8 +31,8 @@ class ClangASTType
 public:
     
     ClangASTType (clang::ASTContext *ast_context, lldb::clang_type_t type) :
-    m_type (type),
-    m_ast  (ast_context) 
+        m_type (type),
+        m_ast  (ast_context) 
     {
     }
     
@@ -58,6 +58,12 @@ public:
         return *this;
     }
     
+    bool
+    IsValid () const
+    {
+        return m_type != NULL && m_ast != NULL;
+    }
+
     lldb::clang_type_t
     GetOpaqueQualType() const
     { 
@@ -288,6 +294,9 @@ private:
     clang::ASTContext *m_ast;
 };
     
+bool operator == (const ClangASTType &lhs, const ClangASTType &rhs);
+bool operator != (const ClangASTType &lhs, const ClangASTType &rhs);
+
     
 } // namespace lldb_private
 

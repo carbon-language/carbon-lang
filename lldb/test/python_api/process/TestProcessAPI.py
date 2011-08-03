@@ -86,11 +86,11 @@ class ProcessAPITestCase(TestBase):
         self.DebugSBValue(val)
 
         # If the variable does not have a load address, there's no sense continuing.
-        if not val.GetLocation(frame).startswith("0x"):
+        if not val.GetLocation().startswith("0x"):
             return
 
         # OK, let's get the hex location of the variable.
-        location = int(val.GetLocation(frame), 16)
+        location = int(val.GetLocation(), 16)
 
         # Due to the typemap magic (see lldb.swig), we pass in 1 to ReadMemory and
         # expect to get a Python string as the result object!
@@ -128,11 +128,11 @@ class ProcessAPITestCase(TestBase):
         self.DebugSBValue(val)
 
         # If the variable does not have a load address, there's no sense continuing.
-        if not val.GetLocation(frame).startswith("0x"):
+        if not val.GetLocation().startswith("0x"):
             return
 
         # OK, let's get the hex location of the variable.
-        location = int(val.GetLocation(frame), 16)
+        location = int(val.GetLocation(), 16)
 
         # The program logic makes the 'my_char' variable to have memory content as 'x'.
         # But we want to use the WriteMemory() API to assign 'a' to the variable.
@@ -179,11 +179,11 @@ class ProcessAPITestCase(TestBase):
         self.DebugSBValue(val)
 
         # If the variable does not have a load address, there's no sense continuing.
-        if not val.GetLocation(frame).startswith("0x"):
+        if not val.GetLocation().startswith("0x"):
             return
 
         # OK, let's get the hex location of the variable.
-        location = int(val.GetLocation(frame), 16)
+        location = int(val.GetLocation(), 16)
 
         # Note that the canonical from of the bytearray is little endian.
         from lldbutil import int_to_bytearray, bytearray_to_int
@@ -212,14 +212,14 @@ class ProcessAPITestCase(TestBase):
             self.fail("SBProcess.WriteMemory() failed")
 
         # Make sure that the val we got originally updates itself to notice the change:
-        self.expect(val.GetValue(frame),
+        self.expect(val.GetValue(),
                     "SBProcess.ReadMemory() successfully writes (int)256 to the memory location for 'my_int'",
                     exe=False,
             startstr = '256')
 
         # And for grins, get the SBValue for the global variable 'my_int' again, to make sure that also tracks the new value:
         val = frame.FindValue("my_int", lldb.eValueTypeVariableGlobal)
-        self.expect(val.GetValue(frame),
+        self.expect(val.GetValue(),
                     "SBProcess.ReadMemory() successfully writes (int)256 to the memory location for 'my_int'",
                     exe=False,
             startstr = '256')

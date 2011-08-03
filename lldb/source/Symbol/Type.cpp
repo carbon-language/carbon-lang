@@ -731,25 +731,24 @@ TypeAndOrName::IsEmpty()
         return true;
 }
 
-TypeImpl::TypeImpl(const lldb_private::ClangASTType& type) :
-m_clang_ast_type(new ClangASTType(type.GetASTContext(),
-                                  type.GetOpaqueQualType())),
-m_lldb_type(lldb::TypeSP())
+TypeImpl::TypeImpl(const lldb_private::ClangASTType& clang_ast_type) :
+    m_clang_ast_type(clang_ast_type.GetASTContext(), clang_ast_type.GetOpaqueQualType()),
+    m_type_sp()
 {}
 
-TypeImpl::TypeImpl(lldb::TypeSP type) :
-m_clang_ast_type(new ClangASTType(type->GetClangAST(),
-                                  type->GetClangFullType())),
-m_lldb_type(type)
-{}
+TypeImpl::TypeImpl(const lldb::TypeSP& type) :
+    m_clang_ast_type(type->GetClangAST(), type->GetClangFullType()),
+    m_type_sp(type)
+{
+}
 
 TypeImpl&
 TypeImpl::operator = (const TypeImpl& rhs)
 {
     if (*this != rhs)
     {
-        m_clang_ast_type = std::auto_ptr<ClangASTType>(rhs.m_clang_ast_type.get());
-        m_lldb_type = lldb::TypeSP(rhs.m_lldb_type);
+        m_clang_ast_type = rhs.m_clang_ast_type;
+        m_type_sp = rhs.m_type_sp;
     }
     return *this;
 }
@@ -760,7 +759,7 @@ TypeImpl::GetASTContext()
     if (!IsValid())
         return NULL;
     
-    return m_clang_ast_type->GetASTContext();
+    return m_clang_ast_type.GetASTContext();
 }
 
 lldb::clang_type_t
@@ -769,5 +768,5 @@ TypeImpl::GetOpaqueQualType()
     if (!IsValid())
         return NULL;
     
-    return m_clang_ast_type->GetOpaqueQualType();
+    return m_clang_ast_type.GetOpaqueQualType();
 }

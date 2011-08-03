@@ -116,7 +116,7 @@ class StaticVariableTestCase(TestBase):
                 child1_x = child1.GetChildAtIndex(0)
                 self.DebugSBValue(child1_x)
                 self.assertTrue(child1_x.GetTypeName() == 'int' and
-                                child1_x.GetValue(frame) == '11')
+                                child1_x.GetValue() == '11')
 
         # SBFrame.FindValue() should also work.
         val = frame.FindValue("A::g_points", lldb.eValueTypeVariableGlobal)

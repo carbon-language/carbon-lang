@@ -84,7 +84,7 @@ class TestObjCStepping(TestBase):
         self.assertTrue(mySource, "Found mySource local variable.")
         mySource_isa = mySource.GetChildMemberWithName ("isa")
         self.assertTrue(mySource_isa, "Found mySource->isa local variable.")
-        mySource_isa.GetValue (thread.GetFrameAtIndex(0))
+        mySource_isa.GetValue ()
 
         # Lets delete mySource so we can check that after stepping a child variable
         # with no parent persists and is useful.
@@ -125,8 +125,8 @@ class TestObjCStepping(TestBase):
         line_number = frame.GetLineEntry().GetLine()
         self.assertTrue (line_number == self.line3, "Continued to third breakpoint in main, our object should now be swizzled.")
         
-        mySource_isa.GetValue (frame)
-        did_change = mySource_isa.GetValueDidChange (frame)
+        mySource_isa.GetValue ()
+        did_change = mySource_isa.GetValueDidChange ()
 
         self.assertTrue (did_change, "The isa did indeed change, swizzled!")
 

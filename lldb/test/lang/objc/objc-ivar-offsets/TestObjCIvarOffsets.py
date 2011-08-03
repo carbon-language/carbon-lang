@@ -58,14 +58,14 @@ class TestObjCIvarOffsets(TestBase):
 
         mine_backed_int = mine.GetChildMemberWithName ("_backed_int")
         self.assertTrue(mine_backed_int, "Found mine->backed_int local variable.")
-        backed_value = int (mine_backed_int.GetValue (frame), 0)
+        backed_value = int (mine_backed_int.GetValue (), 0)
         self.assertTrue (backed_value == 1111)
         
         # Test the value object value for DerivedClass->_derived_backed_int
 
         mine_derived_backed_int = mine.GetChildMemberWithName ("_derived_backed_int")
         self.assertTrue(mine_derived_backed_int, "Found mine->derived_backed_int local variable.")
-        derived_backed_value = int (mine_derived_backed_int.GetValue (frame), 0)
+        derived_backed_value = int (mine_derived_backed_int.GetValue (), 0)
         self.assertTrue (derived_backed_value == 3333)
                                     
 if __name__ == '__main__':

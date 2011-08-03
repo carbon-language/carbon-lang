@@ -13,6 +13,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/Scalar.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/Value.h"
@@ -270,8 +271,7 @@ SBValue::GetType()
         if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
         {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
-            result = SBType(m_opaque_sp->GetClangAST(),
-                          m_opaque_sp->GetClangType());
+            result = SBType(ClangASTType (m_opaque_sp->GetClangAST(), m_opaque_sp->GetClangType()));
         }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -391,7 +391,7 @@ SBValue::CreateChildAtOffset (const char *name, uint32_t offset, const SBType& t
     {
         if (type.IsValid())
         {
-            result = SBValue(m_opaque_sp->GetSyntheticChildAtOffset(offset, *type.m_opaque_ap->GetClangASTType(), true));
+            result = SBValue(m_opaque_sp->GetSyntheticChildAtOffset(offset, type.m_opaque_sp->GetClangASTType(), true));
             result.m_opaque_sp->SetName(ConstString(name));
         }
     }
@@ -449,8 +449,8 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, const SB
         lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
         
         ValueObjectSP result_valobj_sp(ValueObjectConstResult::Create(m_opaque_sp->GetUpdatePoint().GetExecutionContextScope(),
-                                                                      real_type.m_opaque_ap->GetASTContext(),
-                                                                      real_type.m_opaque_ap->GetOpaqueQualType(),
+                                                                      real_type.m_opaque_sp->GetASTContext(),
+                                                                      real_type.m_opaque_sp->GetOpaqueQualType(),
                                                                       ConstString(name),
                                                                       buffer,
                                                                       lldb::endian::InlHostByteOrder(), 
@@ -616,6 +616,38 @@ SBValue::GetValueForExpressionPath(const char* expr_path)
         log->Printf ("SBValue(%p)::GetValueForExpressionPath (expr_path=\"%s\") => SBValue(%p)", m_opaque_sp.get(), expr_path, sb_value.get());
     
     return sb_value;
+}
+
+int64_t
+SBValue::GetValueAsSigned(int64_t fail_value)
+{
+    if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
+        {
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
+            Scalar scalar;
+            if (m_opaque_sp->ResolveValue (scalar))
+                return scalar.GetRawBits64(fail_value);
+        }
+    }
+    return fail_value;
+}
+
+uint64_t
+SBValue::GetValueAsUnsigned(uint64_t fail_value)
+{
+    if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
+        {
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
+            Scalar scalar;
+            if (m_opaque_sp->ResolveValue (scalar))
+                return scalar.GetRawBits64(fail_value);
+        }
+    }
+    return fail_value;
 }
 
 uint32_t

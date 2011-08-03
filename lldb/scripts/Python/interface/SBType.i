@@ -54,7 +54,7 @@ namespace lldb {
         SBTypeList();
         
         void
-        AppendType(SBType type);
+        Append(const SBType& type);
         
         SBType
         GetTypeAtIndex(int index);

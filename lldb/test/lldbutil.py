@@ -447,7 +447,7 @@ def get_args_as_string(frame, showFuncName=True):
     for var in vars:
         args.append("(%s)%s=%s" % (var.GetTypeName(),
                                    var.GetName(),
-                                   var.GetValue(frame)))
+                                   var.GetValue()))
     if frame.GetFunction():
         name = frame.GetFunction().GetName()
     elif frame.GetSymbol():
@@ -472,7 +472,7 @@ def print_registers(frame, string_buffer = False):
         #print >> output, value 
         print >> output, "%s (number of children = %d):" % (value.GetName(), value.GetNumChildren())
         for child in value:
-            print >> output, "Name: %s, Value: %s" % (child.GetName(), child.GetValue(frame))
+            print >> output, "Name: %s, Value: %s" % (child.GetName(), child.GetValue())
 
     if string_buffer:
         return output.getvalue()

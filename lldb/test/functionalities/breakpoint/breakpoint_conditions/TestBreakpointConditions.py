@@ -149,7 +149,7 @@ class BreakpointConditionsTestCase(TestBase):
         frame0 = thread.GetFrameAtIndex(0)
         var = frame0.FindValue('val', lldb.eValueTypeVariableArgument)
         self.assertTrue(frame0.GetLineEntry().GetLine() == self.line1 and
-                        var.GetValue(frame0) == '3')
+                        var.GetValue() == '3')
 
         # The hit count for the breakpoint should be 3.
         self.assertTrue(breakpoint.GetHitCount() == 3)

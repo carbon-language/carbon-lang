@@ -116,31 +116,31 @@ class BitfieldsTestCase(TestBase):
                         bits.GetByteSize() == 4,
                         "(Bits)bits with byte size of 4 and 8 children")
 
-        # Notice the pattern of int(b1.GetValue(frame), 0).  We pass a base of 0
+        # Notice the pattern of int(b1.GetValue(), 0).  We pass a base of 0
         # so that the proper radix is determined based on the contents of the
         # string.
         b1 = bits.GetChildAtIndex(0)
         self.DebugSBValue(b1)
         self.assertTrue(b1.GetName() == "b1" and
                         b1.GetTypeName() == "uint32_t:1" and
-                        b1.IsInScope(frame) and
-                        int(b1.GetValue(frame), 0) == 1,
+                        b1.IsInScope() and
+                        int(b1.GetValue(), 0) == 1,
                         'bits.b1 has type uint32_t:1, is in scope, and == 1')
 
         b7 = bits.GetChildAtIndex(6)
         self.DebugSBValue(b7)
         self.assertTrue(b7.GetName() == "b7" and
                         b7.GetTypeName() == "uint32_t:7" and
-                        b7.IsInScope(frame) and
-                        int(b7.GetValue(frame), 0) == 127,
+                        b7.IsInScope() and
+                        int(b7.GetValue(), 0) == 127,
                         'bits.b7 has type uint32_t:7, is in scope, and == 127')
 
         four = bits.GetChildAtIndex(7)
         self.DebugSBValue(four)
         self.assertTrue(four.GetName() == "four" and
                         four.GetTypeName() == "uint32_t:4" and
-                        four.IsInScope(frame) and
-                        int(four.GetValue(frame), 0) == 15,
+                        four.IsInScope() and
+                        int(four.GetValue(), 0) == 15,
                         'bits.four has type uint32_t:4, is in scope, and == 15')
 
         # Now kill the process, and we are done.

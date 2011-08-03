@@ -134,29 +134,29 @@ class BasicExprCommandsTestCase(TestBase):
         frame = thread.GetFrameAtIndex(0)
 
         val = frame.EvaluateExpression("2.234")
-        self.expect(val.GetValue(frame), "2.345 evaluated correctly", exe=False,
+        self.expect(val.GetValue(), "2.345 evaluated correctly", exe=False,
             startstr = "2.234")
         self.expect(val.GetTypeName(), "2.345 evaluated correctly", exe=False,
             startstr = "double")
         self.DebugSBValue(val)
 
         val = frame.EvaluateExpression("argc")
-        self.expect(val.GetValue(frame), "Argc evaluated correctly", exe=False,
+        self.expect(val.GetValue(), "Argc evaluated correctly", exe=False,
             startstr = "4")
         self.DebugSBValue(val)
 
         val = frame.EvaluateExpression("*argv[1]")
-        self.expect(val.GetValue(frame), "Argv[1] evaluated correctly", exe=False,
+        self.expect(val.GetValue(), "Argv[1] evaluated correctly", exe=False,
             startstr = "'X'")
         self.DebugSBValue(val)
 
         val = frame.EvaluateExpression("*argv[2]")
-        self.expect(val.GetValue(frame), "Argv[2] evaluated correctly", exe=False,
+        self.expect(val.GetValue(), "Argv[2] evaluated correctly", exe=False,
             startstr = "'Y'")
         self.DebugSBValue(val)
 
         val = frame.EvaluateExpression("*argv[3]")
-        self.expect(val.GetValue(frame), "Argv[3] evaluated correctly", exe=False,
+        self.expect(val.GetValue(), "Argv[3] evaluated correctly", exe=False,
             startstr = "'Z'")
         self.DebugSBValue(val)
 

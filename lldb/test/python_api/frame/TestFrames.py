@@ -77,7 +77,7 @@ class FrameAPITestCase(TestBase):
                 for val in valList:
                     argList.append("(%s)%s=%s" % (val.GetTypeName(),
                                                   val.GetName(),
-                                                  val.GetValue(frame)))
+                                                  val.GetValue()))
                 print >> session, "%s(%s)" % (name, ", ".join(argList))
                 
                 # Also check the generic pc & stack pointer.  We can't test their absolute values,
@@ -85,10 +85,10 @@ class FrameAPITestCase(TestBase):
                 gpr_reg_set = lldbutil.get_GPRs(frame)
                 pc_value = gpr_reg_set.GetChildMemberWithName("pc")
                 self.assertTrue (pc_value, "We should have a valid PC.")
-                self.assertTrue (int(pc_value.GetValue(frame), 0) == frame.GetPC(), "PC gotten as a value should equal frame's GetPC")
+                self.assertTrue (int(pc_value.GetValue(), 0) == frame.GetPC(), "PC gotten as a value should equal frame's GetPC")
                 sp_value = gpr_reg_set.GetChildMemberWithName("sp")
                 self.assertTrue (sp_value, "We should have a valid Stack Pointer.")
-                self.assertTrue (int(sp_value.GetValue(frame), 0) == frame.GetSP(), "SP gotten as a value should equal frame's GetSP")
+                self.assertTrue (int(sp_value.GetValue(), 0) == frame.GetSP(), "SP gotten as a value should equal frame's GetSP")
 
             print >> session, "---"
             process.Continue()

@@ -1606,3 +1606,17 @@ ClangASTType::RemoveFastQualifiers (lldb::clang_type_t clang_type)
     qual_type.getQualifiers().removeFastQualifiers();
     return qual_type.getAsOpaquePtr();
 }
+
+
+bool
+lldb_private::operator == (const lldb_private::ClangASTType &lhs, const lldb_private::ClangASTType &rhs)
+{
+    return lhs.GetASTContext() == rhs.GetASTContext() && lhs.GetOpaqueQualType() == rhs.GetOpaqueQualType();
+}
+
+
+bool
+lldb_private::operator != (const lldb_private::ClangASTType &lhs, const lldb_private::ClangASTType &rhs)
+{
+    return lhs.GetASTContext() != rhs.GetASTContext() || lhs.GetOpaqueQualType() != rhs.GetOpaqueQualType();
+}

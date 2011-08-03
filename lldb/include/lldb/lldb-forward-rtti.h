@@ -74,6 +74,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::ThreadPlan>::Type ThreadPlanSP;
     typedef SharedPtr<lldb_private::ThreadPlanTracer>::Type ThreadPlanTracerSP;
     typedef SharedPtr<lldb_private::Type>::Type TypeSP;
+    typedef SharedPtr<lldb_private::TypeImpl>::Type TypeImplSP;
     typedef SharedPtr<lldb_private::FuncUnwinders>::Type FuncUnwindersSP;
     typedef SharedPtr<lldb_private::UserSettingsController>::Type UserSettingsControllerSP;
     typedef SharedPtr<lldb_private::UnwindPlan>::Type UnwindPlanSP;

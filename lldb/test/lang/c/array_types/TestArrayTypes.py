@@ -161,7 +161,7 @@ class ArrayTypesTestCase(TestBase):
 
         child3 = variable.GetChildAtIndex(3)
         self.DebugSBValue(child3)
-        self.assertTrue(child3.GetSummary(frame) == '"Guten Tag"',
+        self.assertTrue(child3.GetSummary() == '"Guten Tag"',
                         'strings[3] == "Guten Tag"')
 
         # Lookup the "char_16" char array variable.
@@ -171,7 +171,7 @@ class ArrayTypesTestCase(TestBase):
                         "Variable 'char_16' should have 16 children")
 
         # Lookup the "ushort_matrix" ushort[] array variable.
-        # Notice the pattern of int(child0_2.GetValue(frame), 0).  We pass a
+        # Notice the pattern of int(child0_2.GetValue(), 0).  We pass a
         # base of 0 so that the proper radix is determined based on the contents
         # of the string.  Same applies to long().
         variable = frame.FindVariable("ushort_matrix")
@@ -184,7 +184,7 @@ class ArrayTypesTestCase(TestBase):
                         "Variable 'ushort_matrix[0]' should have 3 children")
         child0_2 = child0.GetChildAtIndex(2)
         self.DebugSBValue(child0_2)
-        self.assertTrue(int(child0_2.GetValue(frame), 0) == 3,
+        self.assertTrue(int(child0_2.GetValue(), 0) == 3,
                         "ushort_matrix[0][2] == 3")
 
         # Lookup the "long_6" char array variable.
@@ -194,7 +194,7 @@ class ArrayTypesTestCase(TestBase):
                         "Variable 'long_6' should have 6 children")
         child5 = variable.GetChildAtIndex(5)
         self.DebugSBValue(child5)
-        self.assertTrue(long(child5.GetValue(frame), 0) == 6,
+        self.assertTrue(long(child5.GetValue(), 0) == 6,
                         "long_6[5] == 6")
 
         # Last, check that "long_6" has a value type of eValueTypeVariableLocal

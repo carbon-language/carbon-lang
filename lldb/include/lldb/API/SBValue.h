@@ -71,6 +71,12 @@ public:
     const char *
     GetValue ();
 
+    int64_t
+    GetValueAsSigned(int64_t fail_value=0);
+    
+    uint64_t
+    GetValueAsUnsigned(uint64_t fail_value=0);
+
     ValueType
     GetValueType ();
 

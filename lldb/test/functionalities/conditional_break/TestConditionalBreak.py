@@ -90,7 +90,7 @@ class ConditionalBreakTestCase(TestBase):
                     # And the local variable 'val' should have a value of (int) 3.
                     val = frame1.FindVariable("val")
                     self.assertTrue(val.GetTypeName() == "int", "'val' has int type")
-                    self.assertTrue(val.GetValue(frame1) == "3", "'val' has a value of 3")
+                    self.assertTrue(val.GetValue() == "3", "'val' has a value of 3")
                     break
 
             process.Continue()

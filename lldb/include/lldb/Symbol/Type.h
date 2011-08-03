@@ -14,6 +14,7 @@
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/UserID.h"
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/Declaration.h"
 #include <set>
 
@@ -272,9 +273,12 @@ public:
     operator= (const TypeAndOrName &rhs);
     
     ConstString GetName () const;
-    lldb::TypeSP      GetTypeSP () const {
+
+    lldb::TypeSP
+    GetTypeSP () const 
+    {
         return m_type_sp;
-    };
+    }
     
     void
     SetName (ConstString &type_name_const_str);
@@ -298,21 +302,23 @@ private:
     
 class TypeImpl
 {
-private:
-    std::auto_ptr<ClangASTType> m_clang_ast_type;
-    lldb::TypeSP m_lldb_type;
-    
 public:
     
     TypeImpl() :
-    m_clang_ast_type(NULL),
-    m_lldb_type(lldb::TypeSP())
-    {}
+        m_clang_ast_type(),
+        m_type_sp()
+    {
+    }
     
     TypeImpl(const TypeImpl& rhs) :
-    m_clang_ast_type(rhs.m_clang_ast_type.get()),
-    m_lldb_type(rhs.m_lldb_type)
-    {}
+        m_clang_ast_type(rhs.m_clang_ast_type),
+        m_type_sp(rhs.m_type_sp)
+    {
+    }
+    
+    TypeImpl(const lldb_private::ClangASTType& type);
+    
+    TypeImpl(const lldb::TypeSP& type);
     
     TypeImpl&
     operator = (const TypeImpl& rhs);
@@ -320,31 +326,25 @@ public:
     bool
     operator == (const TypeImpl& rhs)
     {
-        return (m_clang_ast_type.get() == rhs.m_clang_ast_type.get()) &&
-                (m_lldb_type.get() == rhs.m_lldb_type.get());
+        return m_clang_ast_type == rhs.m_clang_ast_type && m_type_sp.get() == rhs.m_type_sp.get();
     }
 
     bool
     operator != (const TypeImpl& rhs)
     {
-        return (m_clang_ast_type.get() != rhs.m_clang_ast_type.get()) ||
-        (m_lldb_type.get() != rhs.m_lldb_type.get());
+        return m_clang_ast_type != rhs.m_clang_ast_type || m_type_sp.get() != rhs.m_type_sp.get();
     }
-    
-    TypeImpl(const lldb_private::ClangASTType& type);
-    
-    TypeImpl(lldb::TypeSP type);
     
     bool
     IsValid()
     {
-        return (m_lldb_type.get() != NULL) || (m_clang_ast_type.get() != NULL);
+        return m_type_sp.get() != NULL || m_clang_ast_type.IsValid();
     }
     
-    lldb_private::ClangASTType*
-    GetClangASTType()
+    const lldb_private::ClangASTType &
+    GetClangASTType() const
     {
-        return m_clang_ast_type.get();
+        return m_clang_ast_type;
     }
     
     clang::ASTContext*
@@ -352,37 +352,43 @@ public:
     
     lldb::clang_type_t
     GetOpaqueQualType();    
+
+private:
+    ClangASTType m_clang_ast_type;
+    lldb::TypeSP m_type_sp;
 };
 
 class TypeListImpl
 {
 public:
     TypeListImpl() :
-    m_content() {}
+        m_content() 
+    {
+    }
     
     void
-    AppendType(TypeImpl& type)
+    Append (const lldb::TypeImplSP& type)
     {
         m_content.push_back(type);
     }
     
-    TypeImpl
-    GetTypeAtIndex(int index)
+    lldb::TypeImplSP
+    GetTypeAtIndex(size_t idx)
     {
-        if (index < 0 || index >= GetSize())
-            return TypeImpl();
-        
-        return m_content[index];
+        lldb::TypeImplSP type_sp;
+        if (idx < GetSize())
+            type_sp = m_content[idx];
+        return type_sp;
     }
     
-    int
+    size_t
     GetSize()
     {
         return m_content.size();
     }
     
 private:
-    std::vector<TypeImpl> m_content;
+    std::vector<lldb::TypeImplSP> m_content;
 };
 
     

@@ -768,8 +768,8 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
     
     if (expr_log)
         expr_log->Printf("** [SBFrame::EvaluateExpression] Expression result is %s, summary %s **", 
-                         expr_result.GetValue(*this), 
-                         expr_result.GetSummary(*this));
+                         expr_result.GetValue(), 
+                         expr_result.GetSummary());
     
     if (log)
         log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p)", m_opaque_sp.get(), 

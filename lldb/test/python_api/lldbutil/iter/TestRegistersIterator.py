@@ -54,7 +54,7 @@ class RegistersIteratorTestCase(TestBase):
                     for reg in REGs:
                         self.assertTrue(reg)
                         if self.TraceOn():
-                            print "%s => %s" % (reg.GetName(), reg.GetValue(frame))
+                            print "%s => %s" % (reg.GetName(), reg.GetValue())
 
                     REGs = lldbutil.get_FPRs(frame)
                     num = len(REGs)
@@ -63,7 +63,7 @@ class RegistersIteratorTestCase(TestBase):
                     for reg in REGs:
                         self.assertTrue(reg)
                         if self.TraceOn():
-                            print "%s => %s" % (reg.GetName(), reg.GetValue(frame))
+                            print "%s => %s" % (reg.GetName(), reg.GetValue())
 
                     REGs = lldbutil.get_ESRs(frame)
                     num = len(REGs)
@@ -72,7 +72,7 @@ class RegistersIteratorTestCase(TestBase):
                     for reg in REGs:
                         self.assertTrue(reg)
                         if self.TraceOn():
-                            print "%s => %s" % (reg.GetName(), reg.GetValue(frame))
+                            print "%s => %s" % (reg.GetName(), reg.GetValue())
 
                     # And these should also work.
                     for kind in ["General Purpose Registers",
