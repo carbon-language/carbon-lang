@@ -29,6 +29,14 @@ public:
   SetType Visited;
 };
 
+/// DFSetTraits - Allow the SetType used to record depth-first search results to
+/// optionally record node postorder.
+template<class SetType>
+struct DFSetTraits {
+  static void finishPostorder(
+    typename SetType::iterator::value_type, SetType &) {}
+};
+
 template<class SetType>
 class po_iterator_storage<SetType, true> {
 public:
@@ -109,6 +117,8 @@ public:
   inline NodeType *operator->() const { return operator*(); }
 
   inline _Self& operator++() {   // Preincrement
+    DFSetTraits<SetType>::finishPostorder(VisitStack.back().first,
+                                          this->Visited);
     VisitStack.pop_back();
     if (!VisitStack.empty())
       traverseChild();
