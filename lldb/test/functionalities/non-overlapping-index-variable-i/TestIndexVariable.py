@@ -24,7 +24,8 @@ class NonOverlappingIndexVariableCase(TestBase):
 
     def eval_index_variable_i(self, exe_name):
         """Test expressions of variable 'i' which appears in two for loops."""
-        self.runCmd("file %s" % exe_name, CURRENT_EXECUTABLE_SET)
+        exe = os.path.join(os.getcwd(), exe_name)
+        self.runCmd("file %s" % exe, CURRENT_EXECUTABLE_SET)
 
         self.expect('breakpoint set -f %s -l %d' % (self.source, self.line_to_break),
                     BREAKPOINT_CREATED,
