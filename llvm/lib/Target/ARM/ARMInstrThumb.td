@@ -500,8 +500,8 @@ let isBranch = 1, isTerminator = 1 in {
     let Inst{2-0} = Rn;
   }
 
-  def tCBNZ : T1I<(outs), (ins tGPR:$cmp, t_cbtarget:$target), IIC_Br,
-                  "cbnz\t$cmp, $target", []>,
+  def tCBNZ : T1I<(outs), (ins tGPR:$Rn, t_cbtarget:$target), IIC_Br,
+                  "cbnz\t$Rn, $target", []>,
               T1Misc<{1,0,?,1,?,?,?}> {
     // A8.6.27
     bits<6> target;
