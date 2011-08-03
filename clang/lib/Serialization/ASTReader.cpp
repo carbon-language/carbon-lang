@@ -649,19 +649,19 @@ public:
                            const unsigned char* d,
                            unsigned DataLen) {
     using namespace clang::io;
-    IdentID ID = Reader.getGlobalSelectorID(F, ReadUnalignedLE32(d));
-    bool IsInteresting = ID & 0x01;
+    unsigned RawID = ReadUnalignedLE32(d);
+    bool IsInteresting = RawID & 0x01;
 
     // Wipe out the "is interesting" bit.
-    ID = ID >> 1;
+    RawID = RawID >> 1;
 
+    IdentID ID = Reader.getGlobalIdentifierID(F, RawID);
     if (!IsInteresting) {
       // For uninteresting identifiers, just build the IdentifierInfo
       // and associate it with the persistent ID.
       IdentifierInfo *II = KnownII;
       if (!II)
-        II = &Reader.getIdentifierTable().getOwn(StringRef(k.first,
-                                                                 k.second));
+        II = &Reader.getIdentifierTable().getOwn(StringRef(k.first, k.second));
       Reader.SetIdentifierInfo(ID, II);
       II->setIsFromAST();
       return II;
@@ -688,8 +688,7 @@ public:
     // the new IdentifierInfo.
     IdentifierInfo *II = KnownII;
     if (!II)
-      II = &Reader.getIdentifierTable().getOwn(StringRef(k.first,
-                                                               k.second));
+      II = &Reader.getIdentifierTable().getOwn(StringRef(k.first, k.second));
     Reader.SetIdentifierInfo(ID, II);
 
     // Set or check the various bits in the IdentifierInfo structure.
@@ -2153,22 +2152,34 @@ ASTReader::ReadASTBlock(Module &F) {
       }
       break;
 
-    case IDENTIFIER_OFFSET:
+    case IDENTIFIER_OFFSET: {
       if (F.LocalNumIdentifiers != 0) {
         Error("duplicate IDENTIFIER_OFFSET record in AST file");
         return Failure;
       }
       F.IdentifierOffsets = (const uint32_t *)BlobStart;
       F.LocalNumIdentifiers = Record[0];
+      unsigned LocalBaseIdentifierID = Record[1];
       F.BaseIdentifierID = getTotalNumIdentifiers();
         
-      // Introduce the global -> local mapping for identifiers within this AST
-      // file
-      GlobalIdentifierMap.insert(std::make_pair(getTotalNumIdentifiers() + 1, 
-                                                &F));
-      IdentifiersLoaded.resize(IdentifiersLoaded.size() +F.LocalNumIdentifiers);
+      if (F.LocalNumIdentifiers > 0) {
+        // Introduce the global -> local mapping for identifiers within this
+        // module.
+        GlobalIdentifierMap.insert(std::make_pair(getTotalNumIdentifiers() + 1, 
+                                                  &F));
+        
+        // Introduce the local -> global mapping for identifiers within this
+        // module.
+        F.IdentifierRemap.insert(
+                            std::make_pair(LocalBaseIdentifierID,
+                              F.BaseIdentifierID - LocalBaseIdentifierID));
+        
+        IdentifiersLoaded.resize(IdentifiersLoaded.size() 
+                                 + F.LocalNumIdentifiers);
+      }
       break;
-
+    }
+        
     case EXTERNAL_DEFINITIONS:
       for (unsigned I = 0, N = Record.size(); I != N; ++I)
         ExternalDefinitions.push_back(getGlobalDeclID(F, Record[I]));
@@ -2292,6 +2303,8 @@ ASTReader::ReadASTBlock(Module &F) {
       
       // Continuous range maps we may be updating in our module.
       ContinuousRangeMap<uint32_t, int, 2>::Builder SLocRemap(F.SLocRemap);
+      ContinuousRangeMap<uint32_t, int, 2>::Builder 
+        IdentifierRemap(F.IdentifierRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder DeclRemap(F.DeclRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder TypeRemap(F.TypeRemap);
 
@@ -2319,7 +2332,9 @@ ASTReader::ReadASTBlock(Module &F) {
           static_cast<int>(OM->SLocEntryBaseOffset - SLocOffset)));
         
         // FIXME: Map other locations
-        (void)IdentifierIDOffset;
+        IdentifierRemap.insert(
+          std::make_pair(IdentifierIDOffset, 
+                         OM->BaseIdentifierID - IdentifierIDOffset));
         (void)PreprocessedEntityIDOffset;
         (void)MacroDefinitionIDOffset;
         (void)SelectorIDOffset;
@@ -4824,8 +4839,15 @@ IdentifierInfo *ASTReader::getLocalIdentifier(Module &M, unsigned LocalID) {
 }
 
 IdentifierID ASTReader::getGlobalIdentifierID(Module &M, unsigned LocalID) {
-  // FIXME: Perform local-to-global remapping
-  return LocalID;
+  if (LocalID < NUM_PREDEF_IDENT_IDS)
+    return LocalID;
+  
+  ContinuousRangeMap<uint32_t, int, 2>::iterator I
+    = M.IdentifierRemap.find(LocalID - NUM_PREDEF_IDENT_IDS);
+  assert(I != M.IdentifierRemap.end() 
+         && "Invalid index into identifier index remap");
+  
+  return LocalID + I->second;
 }
 
 bool ASTReader::ReadSLocEntry(int ID) {
@@ -5556,6 +5578,9 @@ void Module::dump() {
   llvm::errs() << "  Base source location offset: " << SLocEntryBaseOffset 
                << '\n';
   dumpLocalRemap("Source location offset map", SLocRemap);
+  llvm::errs() << "  Base identifier ID: " << BaseIdentifierID << '\n'
+               << "Number of identifiers: " << LocalNumIdentifiers << '\n';
+  dumpLocalRemap("Identifier ID map", IdentifierRemap);
   llvm::errs() << "  Base type index: " << BaseTypeIndex << '\n'
                << "  Number of types: " << LocalNumTypes << '\n';
   dumpLocalRemap("Type index map", TypeRemap);

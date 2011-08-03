@@ -119,6 +119,9 @@ namespace clang {
     /// \brief An ID number that refers to an identifier in an AST file.
     typedef uint32_t IdentID;
 
+    /// \brief The number of predefined identifier IDs.
+    const unsigned int NUM_PREDEF_IDENT_IDS = 1;
+    
     /// \brief An ID number that refers to a macro in an AST file.
     typedef uint32_t MacroID;
 

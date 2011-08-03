@@ -255,6 +255,9 @@ public:
   /// \brief Base identifier ID for identifiers local to this module.
   serialization::IdentID BaseIdentifierID;
 
+  /// \brief Remapping table for declaration IDs in this module.
+  ContinuousRangeMap<uint32_t, int, 2> IdentifierRemap;
+
   /// \brief Actual data for the on-disk hash table of identifiers.
   ///
   /// This pointer points into a memory buffer, where the on-disk hash
