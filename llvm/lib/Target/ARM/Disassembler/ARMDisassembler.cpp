@@ -127,7 +127,7 @@ static unsigned decodeARMInstruction(uint32_t &insn) {
     case 2:
       switch (slice(insn, 7, 4)) {
       case 11:
-        return ARM::STRHT;
+        return slice(insn, 22, 22) ? ARM::STRHTi : ARM::STRHTr;
       default:
         break; // fallthrough
       }
@@ -135,11 +135,11 @@ static unsigned decodeARMInstruction(uint32_t &insn) {
     case 3:
       switch (slice(insn, 7, 4)) {
       case 11:
-        return ARM::LDRHT;
+        return slice(insn, 22, 22) ? ARM::LDRHTi : ARM::LDRHTr;
       case 13:
-        return ARM::LDRSBT;
+        return slice(insn, 22, 22) ? ARM::LDRSBTi : ARM::LDRSBTr;
       case 15:
-        return ARM::LDRSHT;
+        return slice(insn, 22, 22) ? ARM::LDRSHTi : ARM::LDRSHTr;
       default:
         break; // fallthrough
       }

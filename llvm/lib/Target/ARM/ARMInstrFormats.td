@@ -597,29 +597,24 @@ class AI3ldstidx<bits<4> op, bit op20, bit isLd, bit isPre, dag oops, dag iops,
 
 // FIXME: Merge with the above class when addrmode2 gets used for LDR, LDRB
 // but for now use this class for LDRSBT, LDRHT, LDSHT.
-class AI3ldstidxT<bits<4> op, bit op20, bit isLd, bit isPre, dag oops, dag iops,
+class AI3ldstidxT<bits<4> op, bit isLoad, dag oops, dag iops,
                   IndexMode im, Format f, InstrItinClass itin, string opc,
                   string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode3, 4, im, f, itin,
-      opc, asm, cstr, pattern> {
+  : I<oops, iops, AddrMode3, 4, im, f, itin, opc, asm, cstr, pattern> {
   // {13}     1 == imm8, 0 == Rm
   // {12-9}   Rn
   // {8}      isAdd
   // {7-4}    imm7_4/zero
   // {3-0}    imm3_0/Rm
-  bits<14> addr;
+  bits<4> addr;
   bits<4> Rt;
   let Inst{27-25} = 0b000;
-  let Inst{24}    = isPre;        // P bit
-  let Inst{23}    = addr{8};      // U bit
-  let Inst{22}    = addr{13};     // 1 == imm8, 0 == Rm
-  let Inst{20}    = op20;         // L bit
-  let Inst{19-16} = addr{12-9};   // Rn
+  let Inst{24}    = 0;            // P bit
+  let Inst{21}    = 1;
+  let Inst{20}    = isLoad;       // L bit
+  let Inst{19-16} = addr;         // Rn
   let Inst{15-12} = Rt;           // Rt
-  let Inst{11-8}  = addr{7-4};    // imm7_4/zero
   let Inst{7-4}   = op;
-  let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
-  let AsmMatchConverter = "cvtLdWriteBackRegAddrMode3";
 }
 
 class AI3stridx<bits<4> op, bit isByte, bit isPre, dag oops, dag iops,
@@ -690,32 +685,6 @@ class AI3stdpr<dag oops, dag iops, Format f, InstrItinClass itin,
 }
 
 // Post-indexed stores
-class AI3sthpo<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode3, 4, IndexModePost, f, itin,
-      opc, asm, cstr,pattern> {
-  // {13}     1 == imm8, 0 == Rm
-  // {12-9}   Rn
-  // {8}      isAdd
-  // {7-4}    imm7_4/zero
-  // {3-0}    imm3_0/Rm
-  bits<14> addr;
-  bits<4> Rt;
-  let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
-  let Inst{4}     = 1;
-  let Inst{5}     = 1; // H bit
-  let Inst{6}     = 0; // S bit
-  let Inst{7}     = 1;
-  let Inst{11-8}  = addr{7-4};    // imm7_4/zero
-  let Inst{15-12} = Rt;           // Rt
-  let Inst{19-16} = addr{12-9};   // Rn
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 0; // W bit
-  let Inst{22}    = addr{13};     // 1 == imm8, 0 == Rm
-  let Inst{23}    = addr{8};      // U bit
-  let Inst{24}    = 0; // P bit
-  let Inst{27-25} = 0b000;
-}
 class AI3stdpo<dag oops, dag iops, Format f, InstrItinClass itin,
              string opc, string asm, string cstr, list<dag> pattern>
   : I<oops, iops, AddrMode3, 4, IndexModePost, f, itin,

@@ -184,6 +184,10 @@ public:
   uint32_t getAddrMode2OffsetOpValue(const MCInst &MI, unsigned OpIdx,
                                      SmallVectorImpl<MCFixup> &Fixups) const;
 
+  /// getPostIdxRegOpValue - Return encoding for postidx_reg operands.
+  uint32_t getPostIdxRegOpValue(const MCInst &MI, unsigned OpIdx,
+                                SmallVectorImpl<MCFixup> &Fixups) const;
+
   /// getAddrMode3OffsetOpValue - Return encoding for am3offset operands.
   uint32_t getAddrMode3OffsetOpValue(const MCInst &MI, unsigned OpIdx,
                                      SmallVectorImpl<MCFixup> &Fixups) const;
@@ -799,6 +803,18 @@ getAddrMode2OffsetOpValue(const MCInst &MI, unsigned OpIdx,
     Binary |= getARMRegisterNumbering(MO.getReg()); // Rm is bits [3:0]
   }
   return Binary | (isAdd << 12) | (isReg << 13);
+}
+
+uint32_t ARMMCCodeEmitter::
+getPostIdxRegOpValue(const MCInst &MI, unsigned OpIdx,
+                     SmallVectorImpl<MCFixup> &Fixups) const {
+  // {4}      isAdd
+  // {3-0}    Rm
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  const MCOperand &MO1 = MI.getOperand(OpIdx+1);
+  unsigned Imm = MO1.getImm();
+  bool isAdd = ARM_AM::getAM3Op(Imm) == ARM_AM::add;
+  return getARMRegisterNumbering(MO.getReg()) | (isAdd << 4);
 }
 
 uint32_t ARMMCCodeEmitter::

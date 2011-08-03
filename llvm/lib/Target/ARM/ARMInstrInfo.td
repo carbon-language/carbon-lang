@@ -590,6 +590,7 @@ def imm1_16 : Operand<i32>, PatLeaf<(imm), [{ return Imm > 0 && Imm <= 16; }],
 // Define ARM specific addressing modes.
 // addrmode_imm12 := reg +/- imm12
 //
+def MemImm12OffsetAsmOperand : AsmOperandClass { let Name = "MemImm12Offset"; }
 def addrmode_imm12 : Operand<i32>,
                      ComplexPattern<i32, 2, "SelectAddrModeImm12", []> {
   // 12-bit immediate operand. Note that instructions using this encode
@@ -598,30 +599,58 @@ def addrmode_imm12 : Operand<i32>,
 
   let EncoderMethod = "getAddrModeImm12OpValue";
   let PrintMethod = "printAddrModeImm12Operand";
+  let ParserMatchClass = MemImm12OffsetAsmOperand;
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 // ldst_so_reg := reg +/- reg shop imm
 //
+def MemRegOffsetAsmOperand : AsmOperandClass { let Name = "MemRegOffset"; }
 def ldst_so_reg : Operand<i32>,
                   ComplexPattern<i32, 3, "SelectLdStSOReg", []> {
   let EncoderMethod = "getLdStSORegOpValue";
   // FIXME: Simplify the printer
   let PrintMethod = "printAddrMode2Operand";
-  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
+  let ParserMatchClass = MemRegOffsetAsmOperand;
+  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$shift);
 }
+
+// postidx_imm8 := +/- [0,255]
+//
+// 9 bit value:
+//  {8}       1 is imm8 is non-negative. 0 otherwise.
+//  {7-0}     [0,255] imm8 value.
+def PostIdxImm8AsmOperand : AsmOperandClass { let Name = "PostIdxImm8"; }
+def postidx_imm8 : Operand<i32> {
+  let PrintMethod = "printPostIdxImm8Operand";
+  let ParserMatchClass = PostIdxImm8AsmOperand;
+  let MIOperandInfo = (ops i32imm);
+}
+
+// postidx_reg := +/- reg
+//
+def PostIdxRegAsmOperand : AsmOperandClass {
+  let Name = "PostIdxReg";
+  let ParserMethod = "parsePostIdxReg";
+}
+def postidx_reg : Operand<i32> {
+  let EncoderMethod = "getPostIdxRegOpValue";
+  let PrintMethod = "printAddrMode3OffsetOperand";
+  let ParserMatchClass = PostIdxRegAsmOperand;
+  let MIOperandInfo = (ops GPR, i32imm);
+}
+
 
 // addrmode2 := reg +/- imm12
 //           := reg +/- reg shop imm
 //
-def MemMode2AsmOperand : AsmOperandClass {
-  let Name = "MemMode2";
-  let ParserMethod = "parseMemMode2Operand";
-}
+// FIXME: addrmode2 should be refactored the rest of the way to always
+// use explicit imm vs. reg versions above (addrmode_imm12 and ldst_so_reg).
+def AddrMode2AsmOperand : AsmOperandClass { let Name = "AddrMode2"; }
 def addrmode2 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode2", []> {
   let EncoderMethod = "getAddrMode2OpValue";
   let PrintMethod = "printAddrMode2Operand";
-  let ParserMatchClass = MemMode2AsmOperand;
+  let ParserMatchClass = AddrMode2AsmOperand;
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
 
@@ -645,15 +674,11 @@ def am2offset_imm : Operand<i32>,
 // addrmode3 := reg +/- reg
 // addrmode3 := reg +/- imm8
 //
-def MemMode3AsmOperand : AsmOperandClass {
-  let Name = "MemMode3";
-  let ParserMethod = "parseMemMode3Operand";
-}
+//def AddrMode3AsmOperand : AsmOperandClass { let Name = "AddrMode3"; }
 def addrmode3 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode3", []> {
   let EncoderMethod = "getAddrMode3OpValue";
   let PrintMethod = "printAddrMode3Operand";
-  let ParserMatchClass = MemMode3AsmOperand;
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
 
@@ -674,13 +699,13 @@ def ldstm_mode : OptionalDefOperand<OtherVT, (ops i32), (ops (i32 1))> {
 
 // addrmode5 := reg +/- imm8*4
 //
-def MemMode5AsmOperand : AsmOperandClass { let Name = "MemMode5"; }
+def AddrMode5AsmOperand : AsmOperandClass { let Name = "AddrMode5"; }
 def addrmode5 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode5", []> {
   let PrintMethod = "printAddrMode5Operand";
-  let MIOperandInfo = (ops GPR:$base, i32imm);
-  let ParserMatchClass = MemMode5AsmOperand;
   let EncoderMethod = "getAddrMode5OpValue";
+  let ParserMatchClass = AddrMode5AsmOperand;
+  let MIOperandInfo = (ops GPR:$base, i32imm);
 }
 
 // addrmode6 := reg with optional alignment
@@ -728,11 +753,11 @@ def addrmodepc : Operand<i32>,
 
 // addr_offset_none := reg
 //
-def MemMode7AsmOperand : AsmOperandClass { let Name = "MemMode7"; }
+def MemNoOffsetAsmOperand : AsmOperandClass { let Name = "MemNoOffset"; }
 def addr_offset_none : Operand<i32> {
   let PrintMethod = "printAddrMode7Operand";
-  let MIOperandInfo = (ops GPR);
-  let ParserMatchClass = MemMode7AsmOperand;
+  let ParserMatchClass = MemNoOffsetAsmOperand;
+  let MIOperandInfo = (ops GPR:$base);
 }
 
 def nohash_imm : Operand<i32> {
@@ -1822,7 +1847,7 @@ defm STRB : AI_str1<1, "strb", IIC_iStore_bh_r, IIC_iStore_bh_si,
 
 // Special LDR for loads from non-pc-relative constpools.
 let canFoldAsLoad = 1, mayLoad = 1, neverHasSideEffects = 1,
-    isReMaterializable = 1 in
+    isReMaterializable = 1, isCodeGenOnly = 1 in
 def LDRcp : AI2ldst<0b010, 1, 0, (outs GPR:$Rt), (ins addrmode_imm12:$addr),
                  AddrMode_i12, LdFrm, IIC_iLoad_r, "ldr", "\t$Rt, $addr",
                  []> {
@@ -2002,21 +2027,35 @@ def LDRBT : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
   let Inst{11-0} = addr{11-0};
   let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
 }
-def LDRSBT : AI3ldstidxT<0b1101, 1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
-             (ins addrmode3:$addr), IndexModePost, LdMiscFrm, IIC_iLoad_bh_ru,
-             "ldrsbt", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
-  let Inst{21} = 1; // overwrite
+
+multiclass AI3ldrT<bits<4> op, string opc> {
+  def i : AI3ldstidxT<op, 1, (outs GPR:$Rt, GPR:$base_wb),
+                      (ins addr_offset_none:$addr, postidx_imm8:$offset),
+                      IndexModePost, LdMiscFrm, IIC_iLoad_bh_ru, opc,
+                      "\t$Rt, $addr, $offset", "$addr.base = $base_wb", []> {
+    bits<9> offset;
+    let Inst{23} = offset{8};
+    let Inst{22} = 1;
+    let Inst{11-8} = offset{7-4};
+    let Inst{3-0} = offset{3-0};
+    let AsmMatchConverter = "cvtLdExtTWriteBackImm";
+  }
+  def r : AI3ldstidxT<op, 1, (outs GPR:$Rt, GPR:$base_wb),
+                      (ins addr_offset_none:$addr, postidx_reg:$Rm),
+                      IndexModePost, LdMiscFrm, IIC_iLoad_bh_ru, opc,
+                      "\t$Rt, $addr, $Rm", "$addr.base = $base_wb", []> {
+    bits<5> Rm;
+    let Inst{23} = Rm{4};
+    let Inst{22} = 0;
+    let Inst{11-8} = 0;
+    let Inst{3-0} = Rm{3-0};
+    let AsmMatchConverter = "cvtLdExtTWriteBackReg";
+  }
 }
-def LDRHT  : AI3ldstidxT<0b1011, 1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
-             (ins addrmode3:$addr), IndexModePost, LdMiscFrm, IIC_iLoad_bh_ru,
-             "ldrht", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
-  let Inst{21} = 1; // overwrite
-}
-def LDRSHT : AI3ldstidxT<0b1111, 1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
-             (ins addrmode3:$addr), IndexModePost, LdMiscFrm, IIC_iLoad_bh_ru,
-             "ldrsht", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
-  let Inst{21} = 1; // overwrite
-}
+
+defm LDRSBT : AI3ldrT<0b1101, "ldrsbt">;
+defm LDRHT  : AI3ldrT<0b1011, "ldrht">;
+defm LDRSHT : AI3ldrT<0b1111, "ldrsht">;
 }
 
 // Store
@@ -2156,7 +2195,7 @@ def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
 }
 } // mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1
 
-// STRT, STRBT, and STRHT are for disassembly only.
+// STRT, STRBT, and STRHT
 
 def STRTr : AI2stridxT<0, 0, (outs GPR:$Rn_wb),
                      (ins GPR:$Rt, ldst_so_reg:$addr),
@@ -2201,14 +2240,34 @@ def STRBTi : AI2stridxT<1, 0, (outs GPR:$Rn_wb),
   let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
 }
 
-
-def STRHT: AI3sthpo<(outs GPR:$base_wb), (ins GPR:$Rt, addrmode3:$addr),
-                    StMiscFrm, IIC_iStore_bh_ru,
-                    "strht", "\t$Rt, $addr", "$addr.base = $base_wb",
-                    [/* For disassembly only; pattern left blank */]> {
-  let Inst{21} = 1; // overwrite
-  let AsmMatchConverter = "cvtStWriteBackRegAddrMode3";
+multiclass AI3strT<bits<4> op, string opc> {
+  def i : AI3ldstidxT<op, 0, (outs GPR:$base_wb),
+                    (ins GPR:$Rt, addr_offset_none:$addr, postidx_imm8:$offset),
+                    IndexModePost, StMiscFrm, IIC_iStore_bh_ru, opc,
+                    "\t$Rt, $addr, $offset", "$addr.base = $base_wb", []> {
+    bits<9> offset;
+    let Inst{23} = offset{8};
+    let Inst{22} = 1;
+    let Inst{11-8} = offset{7-4};
+    let Inst{3-0} = offset{3-0};
+    let AsmMatchConverter = "cvtStExtTWriteBackImm";
+  }
+  def r : AI3ldstidxT<op, 0, (outs GPR:$base_wb),
+                      (ins GPR:$Rt, addr_offset_none:$addr, postidx_reg:$Rm),
+                      IndexModePost, StMiscFrm, IIC_iStore_bh_ru, opc,
+                      "\t$Rt, $addr, $Rm", "$addr.base = $base_wb", []> {
+    bits<5> Rm;
+    let Inst{23} = Rm{4};
+    let Inst{22} = 0;
+    let Inst{11-8} = 0;
+    let Inst{3-0} = Rm{3-0};
+    let AsmMatchConverter = "cvtStExtTWriteBackReg";
+  }
 }
+
+
+defm STRHT : AI3strT<0b1011, "strht">;
+
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
@@ -3758,8 +3817,8 @@ def LDREXB : AIldrex<0b10, (outs GPR:$Rt), (ins addr_offset_none:$addr),
                     "ldrexb", "\t$Rt, $addr", []>;
 def LDREXH : AIldrex<0b11, (outs GPR:$Rt), (ins addr_offset_none:$addr),
                      NoItinerary, "ldrexh", "\t$Rt, $addr", []>;
-def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr), NoItinerary,
-                    "ldrex", "\t$Rt, $addr", []>;
+def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr),
+                     NoItinerary, "ldrex", "\t$Rt, $addr", []>;
 let hasExtraDefRegAllocReq = 1 in
 def LDREXD: AIldrex<0b01, (outs GPR:$Rt, GPR:$Rt2),(ins addr_offset_none:$addr),
                       NoItinerary, "ldrexd", "\t$Rt, $Rt2, $addr", []>;
@@ -3844,7 +3903,7 @@ def CDP2 : ABXI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
 class ACI<dag oops, dag iops, string opc, string asm,
           IndexMode im = IndexModeNone>
   : InoP<oops, iops, AddrModeNone, 4, im, BrFrm, NoItinerary,
-         opc, asm, "", [/* For disassembly only; pattern left blank */]> {
+         opc, asm, "", []> {
   let Inst{27-25} = 0b110;
 }
 
@@ -3914,8 +3973,9 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
   }
 
   def L_POST : ACI<(outs),
-      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
-      !strconcat(!strconcat(opc, "l"), cond), "\tp$cop, cr$CRd, $addr",
+      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addr_offset_none:$addr,
+            i32imm:$offset), ops),
+      !strconcat(!strconcat(opc, "l"), cond), "\tp$cop, cr$CRd, $addr, $offset",
       IndexModePost> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 0; // P = 0
@@ -4491,3 +4551,14 @@ def : MnemonicAlias<"srsea", "srsdb">;
 def : MnemonicAlias<"srsfd", "srsia">;
 def : MnemonicAlias<"srsed", "srsib">;
 def : MnemonicAlias<"srs", "srsia">;
+
+// LDRSBT/LDRHT/LDRSHT post-index offset if optional.
+// Note that the write-back output register is a dummy operand for MC (it's
+// only meaningful for codegen), so we just pass zero here.
+// FIXME: tblgen not cooperating with argument conversions.
+//def : InstAlias<"ldrsbt${p} $Rt, $addr",
+//                (LDRSBTi GPR:$Rt, GPR:$Rt, addr_offset_none:$addr, 0,pred:$p)>;
+//def : InstAlias<"ldrht${p} $Rt, $addr",
+//                (LDRHTi GPR:$Rt, GPR:$Rt, addr_offset_none:$addr, 0, pred:$p)>;
+//def : InstAlias<"ldrsht${p} $Rt, $addr",
+//                (LDRSHTi GPR:$Rt, GPR:$Rt, addr_offset_none:$addr, 0, pred:$p)>;

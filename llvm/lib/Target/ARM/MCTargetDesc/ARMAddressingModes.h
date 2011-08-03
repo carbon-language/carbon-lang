@@ -31,7 +31,8 @@ namespace ARM_AM {
   };
 
   enum AddrOpc {
-    add = '+', sub = '-'
+    sub = 0,
+    add
   };
 
   static inline const char *getAddrOpcStr(AddrOpc Op) {

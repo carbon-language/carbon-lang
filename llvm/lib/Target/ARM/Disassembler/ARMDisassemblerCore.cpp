@@ -1393,7 +1393,7 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     if (Opcode == ARM::LDRBi12 || Opcode == ARM::LDRi12 ||
         Opcode == ARM::STRBi12 || Opcode == ARM::STRi12) {
       // Disassemble the 12-bit immediate offset, which is the second operand in
-      // $addrmode_imm12 => (ops GPR:$base, i32imm:$offsimm).    
+      // $addrmode_imm12 => (ops GPR:$base, i32imm:$offsimm).
       int Offset = AddrOpcode == ARM_AM::add ? 1 * Imm12 : -1 * Imm12;
       MI.addOperand(MCOperand::CreateImm(Offset));
     } else {
@@ -1512,34 +1512,43 @@ static bool DisassembleLdStMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   // For reg/reg form, base reg is followed by +/- reg.
   // For immediate form, it is followed by +/- imm8.
-  // See also ARMAddressingModes.h (Addressing Mode #3).
   if (OpIdx + 1 >= NumOps)
     return false;
 
-  assert((OpInfo[OpIdx].RegClass == ARM::GPRRegClassID) &&
-         (OpInfo[OpIdx+1].RegClass < 0) &&
-         "Expect 1 reg operand followed by 1 imm operand");
-
-  ARM_AM::AddrOpc AddrOpcode = getUBit(insn) ? ARM_AM::add : ARM_AM::sub;
   unsigned IndexMode =
-                 (MCID.TSFlags & ARMII::IndexModeMask) >> ARMII::IndexModeShift;
+    (MCID.TSFlags & ARMII::IndexModeMask) >> ARMII::IndexModeShift;
+  ARM_AM::AddrOpc AddrOpcode = getUBit(insn) ? ARM_AM::add : ARM_AM::sub;
   if (getAM3IBit(insn) == 1) {
-    MI.addOperand(MCOperand::CreateReg(0));
+    // FIXME: Conditional while in the midst of refactoring addrmode3. Will
+    // go away entirely when the rest are converted.
+    if (Opcode != ARM::STRHTi && Opcode != ARM::LDRSBTi &&
+        Opcode != ARM::LDRHTi && Opcode != ARM::LDRSHTi) {
+      MI.addOperand(MCOperand::CreateReg(0));
+      ++OpIdx;
+    }
 
-    // Disassemble the 8-bit immediate offset.
+    // Disassemble the 8-bit immediate offset (postidx_imm8).
     unsigned Imm4H = (insn >> ARMII::ImmHiShift) & 0xF;
     unsigned Imm4L = insn & 0xF;
-    unsigned Offset = ARM_AM::getAM3Opc(AddrOpcode, (Imm4H << 4) | Imm4L,
-                                        IndexMode);
+    unsigned Offset;
+    // FIXME: Remove the 'else' once done w/ addrmode3 refactor.
+    if (Opcode == ARM::STRHTi || Opcode == ARM::LDRSBTi ||
+        Opcode == ARM::LDRHTi || Opcode == ARM::LDRSHTi)
+      Offset = (Imm4H << 4) | Imm4L | (getUBit(insn) << 8);
+    else
+      Offset = ARM_AM::getAM3Opc(AddrOpcode, (Imm4H << 4) | Imm4L,
+                                 IndexMode);
+
     MI.addOperand(MCOperand::CreateImm(Offset));
+    ++OpIdx;
   } else {
     // Disassemble the offset reg (Rm).
+    unsigned Offset = ARM_AM::getAM3Opc(AddrOpcode, 0);
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
-    unsigned Offset = ARM_AM::getAM3Opc(AddrOpcode, 0, IndexMode);
     MI.addOperand(MCOperand::CreateImm(Offset));
+    OpIdx += 2;
   }
-  OpIdx += 2;
 
   return true;
 }

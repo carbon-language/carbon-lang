@@ -613,6 +613,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   IMM("shr_imm32");
   IMM("shr_imm64");
   IMM("t2ldrlabel");
+  IMM("postidx_imm8");
 
   MISC("brtarget", "kOperandTypeARMBranchTarget");                // ?
   MISC("uncondbrtarget", "kOperandTypeARMBranchTarget");           // ?
@@ -639,9 +640,10 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   MISC("it_pred", "kOperandTypeARMPredicate");                    // I
   MISC("addrmode_imm12", "kOperandTypeAddrModeImm12");            // R, I
   MISC("ldst_so_reg", "kOperandTypeLdStSOReg");                   // R, R, I
+  MISC("postidx_reg", "kOperandTypeARMAddrMode3Offset");          // R, I
   MISC("addrmode2", "kOperandTypeARMAddrMode2");                  // R, R, I
-  MISC("am2offset_reg", "kOperandTypeARMAddrMode2Offset");            // R, I
-  MISC("am2offset_imm", "kOperandTypeARMAddrMode2Offset");            // R, I
+  MISC("am2offset_reg", "kOperandTypeARMAddrMode2Offset");        // R, I
+  MISC("am2offset_imm", "kOperandTypeARMAddrMode2Offset");        // R, I
   MISC("addrmode3", "kOperandTypeARMAddrMode3");                  // R, R, I
   MISC("am3offset", "kOperandTypeARMAddrMode3Offset");            // R, I
   MISC("ldstm_mode", "kOperandTypeARMLdStmMode");                 // I

@@ -51,24 +51,15 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool tryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &);
   int tryParseShiftRegister(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
-  bool parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &,
-                   ARMII::AddrMode AddrMode);
+  bool parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &, StringRef Mnemonic);
   bool parsePrefix(ARMMCExpr::VariantKind &RefKind);
   const MCExpr *applyPrefixToExpr(const MCExpr *E,
                                   MCSymbolRefExpr::VariantKind Variant);
 
 
-  bool parseMemoryOffsetReg(bool &Negative,
-                            bool &OffsetRegShifted,
-                            enum ARM_AM::ShiftOpc &ShiftType,
-                            const MCExpr *&ShiftAmount,
-                            const MCExpr *&Offset,
-                            bool &OffsetIsReg,
-                            int &OffsetRegNum,
-                            SMLoc &E);
-  bool parseShift(enum ARM_AM::ShiftOpc &St,
-                  const MCExpr *&ShiftAmount, SMLoc &E);
+  bool parseMemRegOffsetShift(ARM_AM::ShiftOpc &ShiftType,
+                              unsigned &ShiftAmount);
   bool parseDirectiveWord(unsigned Size, SMLoc L);
   bool parseDirectiveThumb(SMLoc L);
   bool parseDirectiveThumbFunc(SMLoc L);
@@ -110,10 +101,6 @@ class ARMAsmParser : public MCTargetAsmParser {
     SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseMSRMaskOperand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
-  OperandMatchResultTy parseMemMode2Operand(
-    SmallVectorImpl<MCParsedAsmOperand*>&);
-  OperandMatchResultTy parseMemMode3Operand(
-    SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parsePKHImm(SmallVectorImpl<MCParsedAsmOperand*> &O,
                                    StringRef Op, int Low, int High);
   OperandMatchResultTy parsePKHLSLImm(SmallVectorImpl<MCParsedAsmOperand*> &O) {
@@ -126,17 +113,21 @@ class ARMAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy parseShifterImm(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseRotImm(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseBitfield(SmallVectorImpl<MCParsedAsmOperand*>&);
+  OperandMatchResultTy parsePostIdxReg(SmallVectorImpl<MCParsedAsmOperand*>&);
 
   // Asm Match Converter Methods
   bool cvtLdWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtStWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
-  bool cvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
-                                  const SmallVectorImpl<MCParsedAsmOperand*> &);
-  bool cvtStWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
-                                  const SmallVectorImpl<MCParsedAsmOperand*> &);
-
+  bool cvtLdExtTWriteBackImm(MCInst &Inst, unsigned Opcode,
+                             const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtLdExtTWriteBackReg(MCInst &Inst, unsigned Opcode,
+                             const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtStExtTWriteBackImm(MCInst &Inst, unsigned Opcode,
+                             const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtStExtTWriteBackReg(MCInst &Inst, unsigned Opcode,
+                             const SmallVectorImpl<MCParsedAsmOperand*> &);
 
   bool validateInstruction(MCInst &Inst,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
@@ -175,6 +166,7 @@ class ARMOperand : public MCParsedAsmOperand {
     Immediate,
     MemBarrierOpt,
     Memory,
+    PostIndexRegister,
     MSRMask,
     ProcIFlags,
     Register,
@@ -228,21 +220,20 @@ class ARMOperand : public MCParsedAsmOperand {
 
     /// Combined record for all forms of ARM address expressions.
     struct {
-      ARMII::AddrMode AddrMode;
       unsigned BaseRegNum;
-      union {
-        unsigned RegNum;     ///< Offset register num, when OffsetIsReg.
-        const MCExpr *Value; ///< Offset value, when !OffsetIsReg.
-      } Offset;
-      const MCExpr *ShiftAmount;     // used when OffsetRegShifted is true
-      enum ARM_AM::ShiftOpc ShiftType; // used when OffsetRegShifted is true
-      unsigned OffsetRegShifted : 1; // only used when OffsetIsReg is true
-      unsigned Preindexed       : 1;
-      unsigned Postindexed      : 1;
-      unsigned OffsetIsReg      : 1;
-      unsigned Negative         : 1; // only used when OffsetIsReg is true
-      unsigned Writeback        : 1;
+      // Offset is in OffsetReg or OffsetImm. If both are zero, no offset
+      // was specified.
+      const MCConstantExpr *OffsetImm;  // Offset immediate value
+      unsigned OffsetRegNum;    // Offset register num, when OffsetImm == NULL
+      ARM_AM::ShiftOpc ShiftType; // Shift type for OffsetReg
+      unsigned ShiftValue;      // shift for OffsetReg.
+      unsigned isNegative : 1;  // Negated OffsetReg? (~'U' bit)
     } Mem;
+
+    struct {
+      unsigned RegNum;
+      unsigned Imm;
+    } PostIdxReg;
 
     struct {
       bool isASR;
@@ -302,6 +293,9 @@ public:
       break;
     case Memory:
       Mem = o.Mem;
+      break;
+    case PostIndexRegister:
+      PostIdxReg = o.PostIdxReg;
       break;
     case MSRMask:
       MMask = o.MMask;
@@ -377,42 +371,6 @@ public:
     assert(Kind == MSRMask && "Invalid access!");
     return MMask.Val;
   }
-
-  /// @name Memory Operand Accessors
-  /// @{
-  ARMII::AddrMode getMemAddrMode() const {
-    return Mem.AddrMode;
-  }
-  unsigned getMemBaseRegNum() const {
-    return Mem.BaseRegNum;
-  }
-  unsigned getMemOffsetRegNum() const {
-    assert(Mem.OffsetIsReg && "Invalid access!");
-    return Mem.Offset.RegNum;
-  }
-  const MCExpr *getMemOffset() const {
-    assert(!Mem.OffsetIsReg && "Invalid access!");
-    return Mem.Offset.Value;
-  }
-  unsigned getMemOffsetRegShifted() const {
-    assert(Mem.OffsetIsReg && "Invalid access!");
-    return Mem.OffsetRegShifted;
-  }
-  const MCExpr *getMemShiftAmount() const {
-    assert(Mem.OffsetIsReg && Mem.OffsetRegShifted && "Invalid access!");
-    return Mem.ShiftAmount;
-  }
-  enum ARM_AM::ShiftOpc getMemShiftType() const {
-    assert(Mem.OffsetIsReg && Mem.OffsetRegShifted && "Invalid access!");
-    return Mem.ShiftType;
-  }
-  bool getMemPreindexed() const { return Mem.Preindexed; }
-  bool getMemPostindexed() const { return Mem.Postindexed; }
-  bool getMemOffsetIsReg() const { return Mem.OffsetIsReg; }
-  bool getMemNegative() const { return Mem.Negative; }
-  bool getMemWriteback() const { return Mem.Writeback; }
-
-  /// @}
 
   bool isCoprocNum() const { return Kind == CoprocNum; }
   bool isCoprocReg() const { return Kind == CoprocReg; }
@@ -540,101 +498,76 @@ public:
   bool isToken() const { return Kind == Token; }
   bool isMemBarrierOpt() const { return Kind == MemBarrierOpt; }
   bool isMemory() const { return Kind == Memory; }
+  bool isPostIdxReg() const { return Kind == PostIndexRegister; }
   bool isShifterImm() const { return Kind == ShifterImmediate; }
   bool isRegShiftedReg() const { return Kind == ShiftedRegister; }
   bool isRegShiftedImm() const { return Kind == ShiftedImmediate; }
   bool isRotImm() const { return Kind == RotateImmediate; }
   bool isBitfield() const { return Kind == BitfieldDescriptor; }
-  bool isMemMode2() const {
-    if (getMemAddrMode() != ARMII::AddrMode2)
+  bool isMemNoOffset() const {
+    if (Kind != Memory)
       return false;
-
-    if (getMemOffsetIsReg())
-      return true;
-
-    if (getMemNegative() &&
-        !(getMemPostindexed() || getMemPreindexed()))
-      return false;
-
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
-    if (!CE) return false;
-    int64_t Value = CE->getValue();
-
-    // The offset must be in the range 0-4095 (imm12).
-    if (Value > 4095 || Value < -4095)
-      return false;
-
-    return true;
+    // No offset of any kind.
+    return Mem.OffsetRegNum == 0 && Mem.OffsetImm == 0;
   }
-  bool isMemMode3() const {
-    if (getMemAddrMode() != ARMII::AddrMode3)
+  bool isAddrMode2() const {
+    if (Kind != Memory)
       return false;
-
-    if (getMemOffsetIsReg()) {
-      if (getMemOffsetRegShifted())
-        return false; // No shift with offset reg allowed
-      return true;
-    }
-
-    if (getMemNegative() &&
-        !(getMemPostindexed() || getMemPreindexed()))
-      return false;
-
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
-    if (!CE) return false;
-    int64_t Value = CE->getValue();
-
-    // The offset must be in the range 0-255 (imm8).
-    if (Value > 255 || Value < -255)
-      return false;
-
-    return true;
+    // Check for register offset.
+    if (Mem.OffsetRegNum) return true;
+    // Immediate offset in range [-4095, 4095].
+    if (!Mem.OffsetImm) return true;
+    int64_t Val = Mem.OffsetImm->getValue();
+    return Val > -4096 && Val < 4096;
   }
-  bool isMemMode5() const {
-    if (!isMemory() || getMemOffsetIsReg() || getMemWriteback() ||
-        getMemNegative())
+  bool isAddrMode5() const {
+    if (Kind != Memory)
       return false;
-
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
-    if (!CE) return false;
-
-    // The offset must be a multiple of 4 in the range 0-1020.
-    int64_t Value = CE->getValue();
-    return ((Value & 0x3) == 0 && Value <= 1020 && Value >= -1020);
+    // Check for register offset.
+    if (Mem.OffsetRegNum) return false;
+    // Immediate offset in range [-1020, 1020] and a multiple of 4.
+    if (!Mem.OffsetImm) return true;
+    int64_t Val = Mem.OffsetImm->getValue();
+    return Val >= -1020 && Val <= 1020 && ((Val & 3) == 0);
   }
-  bool isMemMode7() const {
-    if (!isMemory() ||
-        getMemPreindexed() ||
-        getMemPostindexed() ||
-        getMemOffsetIsReg() ||
-        getMemNegative() ||
-        getMemWriteback())
-      return false;
-
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
-    if (!CE) return false;
-
-    if (CE->getValue())
-      return false;
-
-    return true;
-  }
-  bool isMemModeRegThumb() const {
-    if (!isMemory() || !getMemOffsetIsReg() || getMemWriteback())
+  bool isMemRegOffset() const {
+    if (Kind != Memory || !Mem.OffsetRegNum)
       return false;
     return true;
   }
-  bool isMemModeImmThumb() const {
-    if (!isMemory() || getMemOffsetIsReg() || getMemWriteback())
+  bool isMemThumbRR() const {
+    // Thumb reg+reg addressing is simple. Just two registers, a base and
+    // an offset. No shifts, negations or any other complicating factors.
+    if (Kind != Memory || !Mem.OffsetRegNum || Mem.isNegative ||
+        Mem.ShiftType != ARM_AM::no_shift)
       return false;
-
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
-    if (!CE) return false;
-
-    // The offset must be a multiple of 4 in the range 0-124.
-    uint64_t Value = CE->getValue();
-    return ((Value & 0x3) == 0 && Value <= 124);
+    return true;
   }
+  bool isMemImm8Offset() const {
+    if (Kind != Memory || Mem.OffsetRegNum != 0)
+      return false;
+    // Immediate offset in range [-255, 255].
+    if (!Mem.OffsetImm) return true;
+    int64_t Val = Mem.OffsetImm->getValue();
+    return Val > -256 && Val < 256;
+  }
+  bool isMemImm12Offset() const {
+    if (Kind != Memory || Mem.OffsetRegNum != 0)
+      return false;
+    // Immediate offset in range [-4095, 4095].
+    if (!Mem.OffsetImm) return true;
+    int64_t Val = Mem.OffsetImm->getValue();
+    return Val > -4096 && Val < 4096;
+  }
+  bool isPostIdxImm8() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Val = CE->getValue();
+    return Val > -256 && Val < 256;
+  }
+
   bool isMSRMask() const { return Kind == MSRMask; }
   bool isProcIFlags() const { return Kind == ProcIFlags; }
 
@@ -822,122 +755,87 @@ public:
     Inst.addOperand(MCOperand::CreateImm(unsigned(getMemBarrierOpt())));
   }
 
-  void addMemMode7Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && isMemMode7() && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
-
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
-    (void)CE;
-    assert((CE || CE->getValue() == 0) &&
-           "No offset operand support in mode 7");
+  void addMemNoOffsetOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
   }
 
-  void addMemMode2Operands(MCInst &Inst, unsigned N) const {
-    assert(isMemMode2() && "Invalid mode or number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
-    unsigned IdxMode = (getMemPreindexed() | getMemPostindexed() << 1);
-
-    if (getMemOffsetIsReg()) {
-      Inst.addOperand(MCOperand::CreateReg(getMemOffsetRegNum()));
-
-      ARM_AM::AddrOpc AMOpc = getMemNegative() ? ARM_AM::sub : ARM_AM::add;
-      ARM_AM::ShiftOpc ShOpc = ARM_AM::no_shift;
-      int64_t ShiftAmount = 0;
-
-      if (getMemOffsetRegShifted()) {
-        ShOpc = getMemShiftType();
-        const MCConstantExpr *CE =
-                   dyn_cast<MCConstantExpr>(getMemShiftAmount());
-        ShiftAmount = CE->getValue();
-      }
-
-      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM2Opc(AMOpc, ShiftAmount,
-                                           ShOpc, IdxMode)));
-      return;
+  void addAddrMode2Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 3 && "Invalid number of operands!");
+    int32_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
+    if (!Mem.OffsetRegNum) {
+      ARM_AM::AddrOpc AddSub = Val < 0 ? ARM_AM::sub : ARM_AM::add;
+      // Special case for #-0
+      if (Val == INT32_MIN) Val = 0;
+      if (Val < 0) Val = -Val;
+      Val = ARM_AM::getAM2Opc(AddSub, Val, ARM_AM::no_shift);
+    } else {
+      // For register offset, we encode the shift type and negation flag
+      // here.
+      Val = ARM_AM::getAM2Opc(Mem.isNegative ? ARM_AM::sub : ARM_AM::add,
+                              0, Mem.ShiftType);
     }
-
-    // Create a operand placeholder to always yield the same number of operands.
-    Inst.addOperand(MCOperand::CreateReg(0));
-
-    // FIXME: #-0 is encoded differently than #0. Does the parser preserve
-    // the difference?
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
-    assert(CE && "Non-constant mode 2 offset operand!");
-    int64_t Offset = CE->getValue();
-
-    if (Offset >= 0)
-      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM2Opc(ARM_AM::add,
-                                           Offset, ARM_AM::no_shift, IdxMode)));
-    else
-      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM2Opc(ARM_AM::sub,
-                                          -Offset, ARM_AM::no_shift, IdxMode)));
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
-  void addMemMode3Operands(MCInst &Inst, unsigned N) const {
-    assert(isMemMode3() && "Invalid mode or number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
-    unsigned IdxMode = (getMemPreindexed() | getMemPostindexed() << 1);
-
-    if (getMemOffsetIsReg()) {
-      Inst.addOperand(MCOperand::CreateReg(getMemOffsetRegNum()));
-
-      ARM_AM::AddrOpc AMOpc = getMemNegative() ? ARM_AM::sub : ARM_AM::add;
-      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM3Opc(AMOpc, 0,
-                                                             IdxMode)));
-      return;
-    }
-
-    // Create a operand placeholder to always yield the same number of operands.
-    Inst.addOperand(MCOperand::CreateReg(0));
-
-    // FIXME: #-0 is encoded differently than #0. Does the parser preserve
-    // the difference?
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
-    assert(CE && "Non-constant mode 3 offset operand!");
-    int64_t Offset = CE->getValue();
-
-    if (Offset >= 0)
-      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM3Opc(ARM_AM::add,
-                                           Offset, IdxMode)));
-    else
-      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM3Opc(ARM_AM::sub,
-                                           -Offset, IdxMode)));
+  void addAddrMode5Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    // The lower two bits are always zero and as such are not encoded.
+    int32_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() / 4 : 0;
+    ARM_AM::AddrOpc AddSub = Val < 0 ? ARM_AM::sub : ARM_AM::add;
+    // Special case for #-0
+    if (Val == INT32_MIN) Val = 0;
+    if (Val < 0) Val = -Val;
+    Val = ARM_AM::getAM5Opc(AddSub, Val);
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
-  void addMemMode5Operands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && isMemMode5() && "Invalid number of operands!");
-
-    Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
-    assert(!getMemOffsetIsReg() && "Invalid mode 5 operand");
-
-    // FIXME: #-0 is encoded differently than #0. Does the parser preserve
-    // the difference?
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
-    assert(CE && "Non-constant mode 5 offset operand!");
-
-    // The MCInst offset operand doesn't include the low two bits (like
-    // the instruction encoding).
-    int64_t Offset = CE->getValue() / 4;
-    if (Offset >= 0)
-      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM5Opc(ARM_AM::add,
-                                                             Offset)));
-    else
-      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM5Opc(ARM_AM::sub,
-                                                             -Offset)));
+  void addMemImm8OffsetOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    int64_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
-  void addMemModeRegThumbOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && isMemModeRegThumb() && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
-    Inst.addOperand(MCOperand::CreateReg(getMemOffsetRegNum()));
+  void addMemImm12OffsetOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    int64_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
-  void addMemModeImmThumbOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 2 && isMemModeImmThumb() && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
-    assert(CE && "Non-constant mode offset operand!");
-    Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+  void addMemRegOffsetOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 3 && "Invalid number of operands!");
+    unsigned Val = ARM_AM::getAM2Opc(Mem.isNegative ? ARM_AM::sub : ARM_AM::add,
+                                     Mem.ShiftValue, Mem.ShiftType);
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Val));
+  }
+
+  void addMemThumbRROperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+  }
+
+  void addPostIdxImm8Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    assert(CE && "non-constant post-idx-imm8 operand!");
+    int Imm = CE->getValue();
+    bool isAdd = Imm >= 0;
+    Imm = (Imm < 0 ? -Imm : Imm) | (int)isAdd << 8;
+    Inst.addOperand(MCOperand::CreateImm(Imm));
+  }
+
+  void addPostIdxRegOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(PostIdxReg.RegNum));
+    Inst.addOperand(MCOperand::CreateImm(PostIdxReg.Imm));
   }
 
   void addMSRMaskOperands(MCInst &Inst, unsigned N) const {
@@ -1087,40 +985,30 @@ public:
     return Op;
   }
 
-  static ARMOperand *CreateMem(ARMII::AddrMode AddrMode, unsigned BaseRegNum,
-                               bool OffsetIsReg, const MCExpr *Offset,
-                               int OffsetRegNum, bool OffsetRegShifted,
-                               enum ARM_AM::ShiftOpc ShiftType,
-                               const MCExpr *ShiftAmount, bool Preindexed,
-                               bool Postindexed, bool Negative, bool Writeback,
+  static ARMOperand *CreateMem(unsigned BaseRegNum,
+                               const MCConstantExpr *OffsetImm,
+                               unsigned OffsetRegNum,
+                               ARM_AM::ShiftOpc ShiftType,
+                               unsigned ShiftValue,
+                               bool isNegative,
                                SMLoc S, SMLoc E) {
-    assert((OffsetRegNum == -1 || OffsetIsReg) &&
-           "OffsetRegNum must imply OffsetIsReg!");
-    assert((!OffsetRegShifted || OffsetIsReg) &&
-           "OffsetRegShifted must imply OffsetIsReg!");
-    assert((Offset || OffsetIsReg) &&
-           "Offset must exists unless register offset is used!");
-    assert((!ShiftAmount || (OffsetIsReg && OffsetRegShifted)) &&
-           "Cannot have shift amount without shifted register offset!");
-    assert((!Offset || !OffsetIsReg) &&
-           "Cannot have expression offset and register offset!");
-
     ARMOperand *Op = new ARMOperand(Memory);
-    Op->Mem.AddrMode = AddrMode;
     Op->Mem.BaseRegNum = BaseRegNum;
-    Op->Mem.OffsetIsReg = OffsetIsReg;
-    if (OffsetIsReg)
-      Op->Mem.Offset.RegNum = OffsetRegNum;
-    else
-      Op->Mem.Offset.Value = Offset;
-    Op->Mem.OffsetRegShifted = OffsetRegShifted;
+    Op->Mem.OffsetImm = OffsetImm;
+    Op->Mem.OffsetRegNum = OffsetRegNum;
     Op->Mem.ShiftType = ShiftType;
-    Op->Mem.ShiftAmount = ShiftAmount;
-    Op->Mem.Preindexed = Preindexed;
-    Op->Mem.Postindexed = Postindexed;
-    Op->Mem.Negative = Negative;
-    Op->Mem.Writeback = Writeback;
+    Op->Mem.ShiftValue = ShiftValue;
+    Op->Mem.isNegative = isNegative;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
 
+  static ARMOperand *CreatePostIdxReg(unsigned RegNum, unsigned Imm,
+                                      SMLoc S, SMLoc E) {
+    ARMOperand *Op = new ARMOperand(PostIndexRegister);
+    Op->PostIdxReg.RegNum = RegNum;
+    Op->PostIdxReg.Imm = Imm;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -1178,28 +1066,14 @@ void ARMOperand::print(raw_ostream &OS) const {
     break;
   case Memory:
     OS << "<memory "
-       << "am:" << ARMII::AddrModeToString(getMemAddrMode())
-       << " base:" << getMemBaseRegNum();
-    if (getMemOffsetIsReg()) {
-      OS << " offset:<register " << getMemOffsetRegNum();
-      if (getMemOffsetRegShifted()) {
-        OS << " offset-shift-type:" << getMemShiftType();
-        OS << " offset-shift-amount:" << *getMemShiftAmount();
-      }
-    } else {
-      OS << " offset:" << *getMemOffset();
-    }
-    if (getMemOffsetIsReg())
-      OS << " (offset-is-reg)";
-    if (getMemPreindexed())
-      OS << " (pre-indexed)";
-    if (getMemPostindexed())
-      OS << " (post-indexed)";
-    if (getMemNegative())
-      OS << " (negative)";
-    if (getMemWriteback())
-      OS << " (writeback)";
+       << " base:" << Mem.BaseRegNum;
     OS << ">";
+    break;
+  case PostIndexRegister:
+    OS << "post-idx register " 
+       << getAddrOpcStr(ARM_AM::getAM3Op(PostIdxReg.Imm))
+       << PostIdxReg.RegNum
+       << ">";
     break;
   case ProcIFlags: {
     OS << "<ARM_PROC::";
@@ -1280,7 +1154,7 @@ bool ARMAsmParser::ParseRegister(unsigned &RegNo,
 ///
 int ARMAsmParser::tryParseRegister() {
   const AsmToken &Tok = Parser.getTok();
-  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+  if (Tok.isNot(AsmToken::Identifier)) return -1;
 
   // FIXME: Validate register for the current architecture; we have to do
   // validation later, so maybe there is no need for this here.
@@ -1707,28 +1581,6 @@ parseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return MatchOperand_Success;
 }
 
-/// parseMemMode2Operand - Try to parse memory addressing mode 2 operand.
-ARMAsmParser::OperandMatchResultTy ARMAsmParser::
-parseMemMode2Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  assert(Parser.getTok().is(AsmToken::LBrac) && "Token is not a \"[\"");
-
-  if (parseMemory(Operands, ARMII::AddrMode2))
-    return MatchOperand_NoMatch;
-
-  return MatchOperand_Success;
-}
-
-/// parseMemMode3Operand - Try to parse memory addressing mode 3 operand.
-ARMAsmParser::OperandMatchResultTy ARMAsmParser::
-parseMemMode3Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  assert(Parser.getTok().is(AsmToken::LBrac) && "Token is not a \"[\"");
-
-  if (parseMemory(Operands, ARMII::AddrMode3))
-    return MatchOperand_NoMatch;
-
-  return MatchOperand_Success;
-}
-
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parsePKHImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands, StringRef Op,
             int Low, int High) {
@@ -1984,6 +1836,44 @@ parseBitfield(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return MatchOperand_Success;
 }
 
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+parsePostIdxReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Check for a post-index addressing register operand. Specifically:
+  // postidx_reg := '+' register
+  //              | '-' register
+  //              | register
+
+  // This method must return MatchOperand_NoMatch without consuming any tokens
+  // in the case where there is no match, as other alternatives take other
+  // parse methods.
+  AsmToken Tok = Parser.getTok();
+  SMLoc S = Tok.getLoc();
+  bool haveEaten = false;
+  unsigned Imm = ARM_AM::getAM3Opc(ARM_AM::add, 0);
+  int Reg = -1;
+  if (Tok.is(AsmToken::Plus)) {
+    Parser.Lex(); // Eat the '+' token.
+    haveEaten = true;
+  } else if (Tok.is(AsmToken::Minus)) {
+    Parser.Lex(); // Eat the '-' token.
+    Imm = ARM_AM::getAM3Opc(ARM_AM::sub, 0);
+    haveEaten = true;
+  }
+  if (Parser.getTok().is(AsmToken::Identifier))
+    Reg = tryParseRegister();
+  if (Reg == -1) {
+    if (!haveEaten)
+      return MatchOperand_NoMatch;
+    Error(Parser.getTok().getLoc(), "register expected");
+    return MatchOperand_ParseFail;
+  }
+  SMLoc E = Parser.getTok().getLoc();
+
+  Operands.push_back(ARMOperand::CreatePostIdxReg(Reg, Imm, S, E));
+
+  return MatchOperand_Success;
+}
+
 /// cvtLdWriteBackRegAddrMode2 - Convert parsed operands to MCInst.
 /// Needed here because the Asm Gen Matcher can't handle properly tied operands
 /// when they refer multiple MIOperands inside a single one.
@@ -1995,7 +1885,7 @@ cvtLdWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
   // Create a writeback register dummy placeholder.
   Inst.addOperand(MCOperand::CreateImm(0));
 
-  ((ARMOperand*)Operands[3])->addMemMode2Operands(Inst, 3);
+  ((ARMOperand*)Operands[3])->addAddrMode2Operands(Inst, 3);
   ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
 }
@@ -2008,50 +1898,90 @@ cvtStWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
                          const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Create a writeback register dummy placeholder.
   Inst.addOperand(MCOperand::CreateImm(0));
+  assert(0 && "cvtStWriteBackRegAddrMode2 not implemented yet!");
+  return true;
+}
+
+/// cvtLdExtTWriteBackImm - Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+cvtLdExtTWriteBackImm(MCInst &Inst, unsigned Opcode,
+                      const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Rt
   ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
-  ((ARMOperand*)Operands[3])->addMemMode2Operands(Inst, 3);
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateImm(0));
+  // addr
+  ((ARMOperand*)Operands[3])->addMemNoOffsetOperands(Inst, 1);
+  // offset
+  ((ARMOperand*)Operands[4])->addPostIdxImm8Operands(Inst, 1);
+  // pred
   ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
 }
 
-/// cvtLdWriteBackRegAddrMode3 - Convert parsed operands to MCInst.
+/// cvtLdExtTWriteBackReg - Convert parsed operands to MCInst.
 /// Needed here because the Asm Gen Matcher can't handle properly tied operands
 /// when they refer multiple MIOperands inside a single one.
 bool ARMAsmParser::
-cvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
-                         const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+cvtLdExtTWriteBackReg(MCInst &Inst, unsigned Opcode,
+                      const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Rt
   ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
-
   // Create a writeback register dummy placeholder.
   Inst.addOperand(MCOperand::CreateImm(0));
-
-  ((ARMOperand*)Operands[3])->addMemMode3Operands(Inst, 3);
+  // addr
+  ((ARMOperand*)Operands[3])->addMemNoOffsetOperands(Inst, 1);
+  // offset
+  ((ARMOperand*)Operands[4])->addPostIdxRegOperands(Inst, 2);
+  // pred
   ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
 }
 
-/// cvtStWriteBackRegAddrMode3 - Convert parsed operands to MCInst.
+/// cvtStExtTWriteBackImm - Convert parsed operands to MCInst.
 /// Needed here because the Asm Gen Matcher can't handle properly tied operands
 /// when they refer multiple MIOperands inside a single one.
 bool ARMAsmParser::
-cvtStWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
-                         const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+cvtStExtTWriteBackImm(MCInst &Inst, unsigned Opcode,
+                      const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Create a writeback register dummy placeholder.
   Inst.addOperand(MCOperand::CreateImm(0));
+  // Rt
   ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
-  ((ARMOperand*)Operands[3])->addMemMode3Operands(Inst, 3);
+  // addr
+  ((ARMOperand*)Operands[3])->addMemNoOffsetOperands(Inst, 1);
+  // offset
+  ((ARMOperand*)Operands[4])->addPostIdxImm8Operands(Inst, 1);
+  // pred
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
+  return true;
+}
+
+/// cvtStExtTWriteBackReg - Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+cvtStExtTWriteBackReg(MCInst &Inst, unsigned Opcode,
+                      const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateImm(0));
+  // Rt
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+  // addr
+  ((ARMOperand*)Operands[3])->addMemNoOffsetOperands(Inst, 1);
+  // offset
+  ((ARMOperand*)Operands[4])->addPostIdxRegOperands(Inst, 2);
+  // pred
   ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
 }
 
 /// Parse an ARM memory expression, return false if successful else return true
 /// or an error.  The first token must be a '[' when called.
-///
-/// TODO Only preindexing and postindexing addressing are started, unindexed
-/// with option, etc are still to do.
 bool ARMAsmParser::
-parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-            ARMII::AddrMode AddrMode = ARMII::AddrModeNone) {
+parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S, E;
   assert(Parser.getTok().is(AsmToken::LBrac) &&
          "Token is not a Left Bracket");
@@ -2059,185 +1989,114 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   Parser.Lex(); // Eat left bracket token.
 
   const AsmToken &BaseRegTok = Parser.getTok();
-  if (BaseRegTok.isNot(AsmToken::Identifier)) {
-    Error(BaseRegTok.getLoc(), "register expected");
-    return true;
-  }
   int BaseRegNum = tryParseRegister();
-  if (BaseRegNum == -1) {
-    Error(BaseRegTok.getLoc(), "register expected");
-    return true;
-  }
+  if (BaseRegNum == -1)
+    return Error(BaseRegTok.getLoc(), "register expected");
 
   // The next token must either be a comma or a closing bracket.
   const AsmToken &Tok = Parser.getTok();
   if (!Tok.is(AsmToken::Comma) && !Tok.is(AsmToken::RBrac))
-    return true;
+    return Error(Tok.getLoc(), "malformed memory operand");
 
-  bool Preindexed = false;
-  bool Postindexed = false;
-  bool OffsetIsReg = false;
-  bool Negative = false;
-  bool Writeback = false;
-  ARMOperand *WBOp = 0;
-  int OffsetRegNum = -1;
-  bool OffsetRegShifted = false;
-  enum ARM_AM::ShiftOpc ShiftType = ARM_AM::lsl;
-  const MCExpr *ShiftAmount = 0;
-  const MCExpr *Offset = 0;
-
-  // First look for preindexed address forms, that is after the "[Rn" we now
-  // have to see if the next token is a comma.
-  if (Tok.is(AsmToken::Comma)) {
-    Preindexed = true;
-    Parser.Lex(); // Eat comma token.
-
-    if (parseMemoryOffsetReg(Negative, OffsetRegShifted, ShiftType, ShiftAmount,
-                             Offset, OffsetIsReg, OffsetRegNum, E))
-      return true;
-    const AsmToken &RBracTok = Parser.getTok();
-    if (RBracTok.isNot(AsmToken::RBrac)) {
-      Error(RBracTok.getLoc(), "']' expected");
-      return true;
-    }
-    E = RBracTok.getLoc();
-    Parser.Lex(); // Eat right bracket token.
-
-    const AsmToken &ExclaimTok = Parser.getTok();
-    if (ExclaimTok.is(AsmToken::Exclaim)) {
-      // None of addrmode3 instruction uses "!"
-      if (AddrMode == ARMII::AddrMode3)
-        return true;
-
-      WBOp = ARMOperand::CreateToken(ExclaimTok.getString(),
-                                     ExclaimTok.getLoc());
-      Writeback = true;
-      Parser.Lex(); // Eat exclaim token
-    } else { // In addressing mode 2, pre-indexed mode always end with "!"
-      if (AddrMode == ARMII::AddrMode2)
-        Preindexed = false;
-    }
-  } else {
-    // The "[Rn" we have so far was not followed by a comma.
-
-    // If there's anything other than the right brace, this is a post indexing
-    // addressing form.
+  if (Tok.is(AsmToken::RBrac)) {
     E = Tok.getLoc();
     Parser.Lex(); // Eat right bracket token.
 
-    const AsmToken &NextTok = Parser.getTok();
+    Operands.push_back(ARMOperand::CreateMem(BaseRegNum, 0, 0, ARM_AM::no_shift,
+                                             0, false, S, E));
 
-    if (NextTok.isNot(AsmToken::EndOfStatement)) {
-      Postindexed = true;
-      Writeback = true;
-
-      if (NextTok.isNot(AsmToken::Comma)) {
-        Error(NextTok.getLoc(), "',' expected");
-        return true;
-      }
-
-      Parser.Lex(); // Eat comma token.
-
-      if (parseMemoryOffsetReg(Negative, OffsetRegShifted, ShiftType,
-                               ShiftAmount, Offset, OffsetIsReg, OffsetRegNum,
-                               E))
-        return true;
-    }
+    return false;
   }
 
-  // Force Offset to exist if used.
-  if (!OffsetIsReg) {
-    if (!Offset)
-      Offset = MCConstantExpr::Create(0, getContext());
-  } else {
-    if (AddrMode == ARMII::AddrMode3 && OffsetRegShifted) {
-      Error(E, "shift amount not supported");
-      return true;
-    }
-  }
+  assert(Tok.is(AsmToken::Comma) && "Lost comma in memory operand?!");
+  Parser.Lex(); // Eat the comma.
 
-  Operands.push_back(ARMOperand::CreateMem(AddrMode, BaseRegNum, OffsetIsReg,
-                                     Offset, OffsetRegNum, OffsetRegShifted,
-                                     ShiftType, ShiftAmount, Preindexed,
-                                     Postindexed, Negative, Writeback, S, E));
-  if (WBOp)
-    Operands.push_back(WBOp);
+  // If we have a '#' it's an immediate offset, else assume it's a register
+  // offset.
+  if (Parser.getTok().is(AsmToken::Hash)) {
+    Parser.Lex(); // Eat the '#'.
+    E = Parser.getTok().getLoc();
 
-  return false;
-}
+    // FIXME: Special case #-0 so we can correctly set the U bit.
 
-/// Parse the offset of a memory operand after we have seen "[Rn," or "[Rn],"
-/// we will parse the following (were +/- means that a plus or minus is
-/// optional):
-///   +/-Rm
-///   +/-Rm, shift
-///   #offset
-/// we return false on success or an error otherwise.
-bool ARMAsmParser::parseMemoryOffsetReg(bool &Negative,
-                                        bool &OffsetRegShifted,
-                                        enum ARM_AM::ShiftOpc &ShiftType,
-                                        const MCExpr *&ShiftAmount,
-                                        const MCExpr *&Offset,
-                                        bool &OffsetIsReg,
-                                        int &OffsetRegNum,
-                                        SMLoc &E) {
-  Negative = false;
-  OffsetRegShifted = false;
-  OffsetIsReg = false;
-  OffsetRegNum = -1;
-  const AsmToken &NextTok = Parser.getTok();
-  E = NextTok.getLoc();
-  if (NextTok.is(AsmToken::Plus))
-    Parser.Lex(); // Eat plus token.
-  else if (NextTok.is(AsmToken::Minus)) {
-    Negative = true;
-    Parser.Lex(); // Eat minus token
-  }
-  // See if there is a register following the "[Rn," or "[Rn]," we have so far.
-  const AsmToken &OffsetRegTok = Parser.getTok();
-  if (OffsetRegTok.is(AsmToken::Identifier)) {
-    SMLoc CurLoc = OffsetRegTok.getLoc();
-    OffsetRegNum = tryParseRegister();
-    if (OffsetRegNum != -1) {
-      OffsetIsReg = true;
-      E = CurLoc;
-    }
-  }
-
-  // If we parsed a register as the offset then there can be a shift after that.
-  if (OffsetRegNum != -1) {
-    // Look for a comma then a shift
-    const AsmToken &Tok = Parser.getTok();
-    if (Tok.is(AsmToken::Comma)) {
-      Parser.Lex(); // Eat comma token.
-
-      const AsmToken &Tok = Parser.getTok();
-      if (parseShift(ShiftType, ShiftAmount, E))
-        return Error(Tok.getLoc(), "shift expected");
-      OffsetRegShifted = true;
-    }
-  }
-  else { // the "[Rn," or "[Rn,]" we have so far was not followed by "Rm"
-    // Look for #offset following the "[Rn," or "[Rn],"
-    const AsmToken &HashTok = Parser.getTok();
-    if (HashTok.isNot(AsmToken::Hash))
-      return Error(HashTok.getLoc(), "'#' expected");
-
-    Parser.Lex(); // Eat hash token.
-
+    const MCExpr *Offset;
     if (getParser().ParseExpression(Offset))
      return true;
-    E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
+
+    // The expression has to be a constant. Memory references with relocations
+    // don't come through here, as they use the <label> forms of the relevant
+    // instructions.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Offset);
+    if (!CE)
+      return Error (E, "constant expression expected");
+
+    // Now we should have the closing ']'
+    E = Parser.getTok().getLoc();
+    if (Parser.getTok().isNot(AsmToken::RBrac))
+      return Error(E, "']' expected");
+    Parser.Lex(); // Eat right bracket token.
+
+    // Don't worry about range checking the value here. That's handled by
+    // the is*() predicates.
+    Operands.push_back(ARMOperand::CreateMem(BaseRegNum, CE, 0,
+                                             ARM_AM::no_shift, 0, false, S,E));
+
+    // If there's a pre-indexing writeback marker, '!', just add it as a token
+    // operand.
+    if (Parser.getTok().is(AsmToken::Exclaim)) {
+      Operands.push_back(ARMOperand::CreateToken("!",Parser.getTok().getLoc()));
+      Parser.Lex(); // Eat the '!'.
+    }
+
+    return false;
   }
+
+  // The register offset is optionally preceded by a '+' or '-'
+  bool isNegative = false;
+  if (Parser.getTok().is(AsmToken::Minus)) {
+    isNegative = true;
+    Parser.Lex(); // Eat the '-'.
+  } else if (Parser.getTok().is(AsmToken::Plus)) {
+    // Nothing to do.
+    Parser.Lex(); // Eat the '+'.
+  }
+
+  E = Parser.getTok().getLoc();
+  int OffsetRegNum = tryParseRegister();
+  if (OffsetRegNum == -1)
+    return Error(E, "register expected");
+
+  // If there's a shift operator, handle it.
+  ARM_AM::ShiftOpc ShiftType = ARM_AM::no_shift;
+  unsigned ShiftValue = 0;
+  if (Parser.getTok().is(AsmToken::Comma)) {
+    Parser.Lex(); // Eat the ','.
+    if (parseMemRegOffsetShift(ShiftType, ShiftValue))
+      return true;
+  }
+
+  // Now we should have the closing ']'
+  E = Parser.getTok().getLoc();
+  if (Parser.getTok().isNot(AsmToken::RBrac))
+    return Error(E, "']' expected");
+  Parser.Lex(); // Eat right bracket token.
+
+  Operands.push_back(ARMOperand::CreateMem(BaseRegNum, 0, OffsetRegNum,
+                                           ShiftType, ShiftValue, isNegative,
+                                           S, E));
+
+
+
   return false;
 }
 
-/// parseShift as one of these two:
+/// parseMemRegOffsetShift - one of these two:
 ///   ( lsl | lsr | asr | ror ) , # shift_amount
 ///   rrx
-/// and returns true if it parses a shift otherwise it returns false.
-bool ARMAsmParser::parseShift(ARM_AM::ShiftOpc &St,
-                              const MCExpr *&ShiftAmount, SMLoc &E) {
+/// return true if it parses a shift otherwise it returns false.
+bool ARMAsmParser::parseMemRegOffsetShift(ARM_AM::ShiftOpc &St,
+                                          unsigned &Amount) {
+  SMLoc Loc = Parser.getTok().getLoc();
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier))
     return true;
@@ -2253,21 +2112,35 @@ bool ARMAsmParser::parseShift(ARM_AM::ShiftOpc &St,
   else if (ShiftName == "rrx" || ShiftName == "RRX")
     St = ARM_AM::rrx;
   else
-    return true;
+    return Error(Loc, "illegal shift operator");
   Parser.Lex(); // Eat shift type token.
 
-  // Rrx stands alone.
-  if (St == ARM_AM::rrx)
-    return false;
+  // rrx stands alone.
+  Amount = 0;
+  if (St != ARM_AM::rrx) {
+    Loc = Parser.getTok().getLoc();
+    // A '#' and a shift amount.
+    const AsmToken &HashTok = Parser.getTok();
+    if (HashTok.isNot(AsmToken::Hash))
+      return Error(HashTok.getLoc(), "'#' expected");
+    Parser.Lex(); // Eat hash token.
 
-  // Otherwise, there must be a '#' and a shift amount.
-  const AsmToken &HashTok = Parser.getTok();
-  if (HashTok.isNot(AsmToken::Hash))
-    return Error(HashTok.getLoc(), "'#' expected");
-  Parser.Lex(); // Eat hash token.
-
-  if (getParser().ParseExpression(ShiftAmount))
-    return true;
+    const MCExpr *Expr;
+    if (getParser().ParseExpression(Expr))
+      return true;
+    // Range check the immediate.
+    // lsl, ror: 0 <= imm <= 31
+    // lsr, asr: 0 <= imm <= 32
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr);
+    if (!CE)
+      return Error(Loc, "shift amount must be an immediate");
+    int64_t Imm = CE->getValue();
+    if (Imm < 0 ||
+        ((St == ARM_AM::lsl || St == ARM_AM::ror) && Imm > 31) ||
+        ((St == ARM_AM::lsr || St == ARM_AM::asr) && Imm > 32))
+      return Error(Loc, "immediate shift value out of range");
+    Amount = Imm;
+  }
 
   return false;
 }
