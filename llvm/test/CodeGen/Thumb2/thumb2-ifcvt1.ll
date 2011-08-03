@@ -21,13 +21,13 @@ cond_next:
 	ret i32 %tmp15
 }
 
-; FIXME: Check for # of unconditional branch after adding branch folding post ifcvt.
 define i32 @t2(i32 %a, i32 %b) nounwind {
 entry:
+; Do not if-convert when branches go to the different loops.
 ; CHECK: t2:
-; CHECK: ite gt
-; CHECK: subgt
-; CHECK: suble
+; CHECK-NOT: ite gt
+; CHECK-NOT: subgt
+; CHECK-NOT: suble
 	%tmp1434 = icmp eq i32 %a, %b		; <i1> [#uses=1]
 	br i1 %tmp1434, label %bb17, label %bb.outer
 

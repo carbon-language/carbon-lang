@@ -22,7 +22,6 @@ bb2:                                              ; preds = %entry, %bb3
   %gotovar.4.0 = phi i8* [ %gotovar.4.0.pre, %bb3 ], [ %0, %entry ] ; <i8*> [#uses=1]
 ; ARM: bx
 ; THUMB: mov pc,
-; THUMB2: mov pc,
   indirectbr i8* %gotovar.4.0, [label %L5, label %L4, label %L3, label %L2, label %L1]
 
 bb3:                                              ; preds = %entry

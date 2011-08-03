@@ -32,15 +32,15 @@
 
 define fastcc i32 @parse_percent_token() nounwind {
 entry:
-; CHECK: ittt eq
-; CHECK: ittt eq
-; CHECK: ittt eq
-; CHECK: ittt eq
-; CHECK: ittt eq
-; CHECK: moveq r0
-; CHECK-NOT: LBB0_
-; CHECK: ldreq
-; CHECK: popeq
+; CHECK: pop
+; CHECK: pop
+; CHECK: pop
+; CHECK: pop
+; CHECK: pop
+; CHECK: pop
+; CHECK: pop
+; Do not convert into single stream code. BranchProbability Analysis assumes
+; that branches which goes to "ret" intruction have lower probabilities.
   switch i32 undef, label %bb7 [
     i32 37, label %bb43
     i32 48, label %bb5
