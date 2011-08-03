@@ -83,7 +83,8 @@ class LoadUnloadTestCase(TestBase):
         # we pick up the hidden dylib.
 
         env_cmd_string = "settings set target.process.env-vars " + dylibPath + "=" + new_dir
-        print "Set environment to: ", env_cmd_string
+        if self.TraceOn():
+            print "Set environment to: ", env_cmd_string
         self.runCmd(env_cmd_string)
         self.runCmd("settings show target.process.env-vars")
 
