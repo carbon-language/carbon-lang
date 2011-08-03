@@ -244,41 +244,33 @@ ObjectContainer *
 ObjectContainerBSDArchive::CreateInstance
 (
     Module* module,
-    DataBufferSP& dataSP,
+    DataBufferSP& data_sp,
     const FileSpec *file,
     addr_t offset,
     addr_t length)
 {
-    if (file)
+    if (file && data_sp && ObjectContainerBSDArchive::MagicBytesMatch(data_sp))
     {
-        std::string object;
-
         Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module->GetArchitecture(), module->GetModificationTime()));
-
+        
         if (archive_sp)
         {
             // We already have this archive in our cache, use it
-            std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module, dataSP, file, offset, length));
+            std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module, data_sp, file, offset, length));
             if (container_ap.get())
             {
                 container_ap->SetArchive (archive_sp);
                 return container_ap.release();
             }
         }
+        
+        // Read everything since we need that in order to index all the
+        // objects in the archive
+        data_sp = file->ReadFileContents(offset, length);
 
-        if (dataSP)
-        {
-            if (ObjectContainerBSDArchive::MagicBytesMatch(dataSP))
-            {
-                // Read everything since we need that in order to index all the
-                // objects in the archive
-                dataSP = file->ReadFileContents(offset, length);
-
-                std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module, dataSP, file, offset, length));
-                if (container_ap->ParseHeader())
-                    return container_ap.release();
-            }
-        }
+        std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module, data_sp, file, offset, length));
+        if (container_ap->ParseHeader())
+            return container_ap.release();
     }
     return NULL;
 }
