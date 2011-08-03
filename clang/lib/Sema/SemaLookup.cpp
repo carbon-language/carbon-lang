@@ -3020,7 +3020,7 @@ public:
   void FoundName(StringRef Name);
   void addKeywordResult(StringRef Keyword);
   void addName(StringRef Name, NamedDecl *ND, unsigned Distance,
-               NestedNameSpecifier *NNS=NULL);
+               NestedNameSpecifier *NNS=NULL, bool isKeyword=false);
   void addCorrection(TypoCorrection Correction);
 
   typedef TypoResultsMap::iterator result_iterator;
@@ -3099,15 +3099,17 @@ void TypoCorrectionConsumer::addKeywordResult(StringRef Keyword) {
     return;
   }
 
-  addName(Keyword, TypoCorrection::KeywordDecl(), ED);
+  addName(Keyword, NULL, ED, NULL, true);
 }
 
 void TypoCorrectionConsumer::addName(StringRef Name,
                                      NamedDecl *ND,
                                      unsigned Distance,
-                                     NestedNameSpecifier *NNS) {
-  addCorrection(TypoCorrection(&SemaRef.Context.Idents.get(Name),
-                               ND, NNS, Distance));
+                                     NestedNameSpecifier *NNS,
+                                     bool isKeyword) {
+  TypoCorrection TC(&SemaRef.Context.Idents.get(Name), ND, NNS, Distance);
+  if (isKeyword) TC.makeKeyword();
+  addCorrection(TC);
 }
 
 void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
@@ -3677,12 +3679,19 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         // We don't deal with ambiguities.
         return TypoCorrection();
 
+      case LookupResult::FoundOverloaded: {
+        // Store all of the Decls for overloaded symbols
+        for (LookupResult::iterator TRD = TmpRes.begin(),
+                                 TRDEnd = TmpRes.end();
+             TRD != TRDEnd; ++TRD)
+          I->second.addCorrectionDecl(*TRD);
+        ++I;
+        break;
+      }
+
       case LookupResult::Found:
-      case LookupResult::FoundOverloaded:
       case LookupResult::FoundUnresolvedValue:
         I->second.setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
-        // FIXME: This sets the CorrectionDecl to NULL for overloaded functions.
-        // It would be nice to find the right one with overload resolution.
         ++I;
         break;
       }
@@ -3718,11 +3727,20 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
           switch (TmpRes.getResultKind()) {
           case LookupResult::Found:
-          case LookupResult::FoundOverloaded:
           case LookupResult::FoundUnresolvedValue:
             Consumer.addName((*QRI)->getName(), TmpRes.getAsSingle<NamedDecl>(),
                              QualifiedED, NI->NameSpecifier);
             break;
+          case LookupResult::FoundOverloaded: {
+            TypoCorrection corr(&Context.Idents.get((*QRI)->getName()), NULL,
+                                NI->NameSpecifier, QualifiedED);
+            for (LookupResult::iterator TRD = TmpRes.begin(),
+                                     TRDEnd = TmpRes.end();
+                 TRD != TRDEnd; ++TRD)
+              corr.addCorrectionDecl(*TRD);
+            Consumer.addCorrection(corr);
+            break;
+          }
           case LookupResult::NotFound:
           case LookupResult::NotFoundInCurrentInstantiation:
           case LookupResult::Ambiguous:
@@ -3800,6 +3818,18 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     (void)UnqualifiedTyposCorrected[Typo];
 
   return TypoCorrection();
+}
+
+void TypoCorrection::addCorrectionDecl(NamedDecl *CDecl) {
+  if (!CDecl) return;
+
+  if (isKeyword())
+    CorrectionDecls.clear();
+
+  CorrectionDecls.push_back(CDecl);
+
+  if (!CorrectionName)
+    CorrectionName = CDecl->getDeclName();
 }
 
 std::string TypoCorrection::getAsString(const LangOptions &LO) const {

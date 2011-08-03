@@ -2236,7 +2236,8 @@ public:
                               const TemplateArgumentListInfo *&TemplateArgs);
 
   bool DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
-                           CorrectTypoContext CTC = CTC_Unknown);
+                           CorrectTypoContext CTC = CTC_Unknown,
+                           Expr **Args = 0, unsigned NumArgs = 0);
 
   ExprResult LookupInObjCMethod(LookupResult &R, Scope *S, IdentifierInfo *II,
                                 bool AllowBuiltinCreation=false);
