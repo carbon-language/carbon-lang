@@ -1044,7 +1044,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
 
 
-static bool IsOnlyNullComparedAndFreed(Value *V, SmallVector<WeakVH, 64> &Users,
+static bool IsOnlyNullComparedAndFreed(Value *V, SmallVectorImpl<WeakVH> &Users,
                                        int Depth = 0) {
   if (Depth == 8)
     return false;
@@ -1069,8 +1069,7 @@ static bool IsOnlyNullComparedAndFreed(Value *V, SmallVector<WeakVH, 64> &Users,
       }
     }
     if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
-      if (GEPI->hasAllZeroIndices() &&
-          IsOnlyNullComparedAndFreed(GEPI, Users, Depth+1)) {
+      if (IsOnlyNullComparedAndFreed(GEPI, Users, Depth+1)) {
         Users.push_back(GEPI);
         continue;
       }
