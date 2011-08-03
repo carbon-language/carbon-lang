@@ -465,11 +465,6 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
             }
         }
         
-        // Now see if we know the target triple, and if so, create our scratch AST context:
-        if (m_arch.IsValid())
-        {
-            m_scratch_ast_context_ap.reset (new ClangASTContext(m_arch.GetTriple().str().c_str()));
-        }
     }
 
     UpdateInstanceName();
@@ -911,6 +906,9 @@ Target::ImageSearchPathsChanged
 ClangASTContext *
 Target::GetScratchClangASTContext()
 {
+    // Now see if we know the target triple, and if so, create our scratch AST context:
+    if (m_scratch_ast_context_ap.get() == NULL && m_arch.IsValid())
+        m_scratch_ast_context_ap.reset (new ClangASTContext(m_arch.GetTriple().str().c_str()));
     return m_scratch_ast_context_ap.get();
 }
 
