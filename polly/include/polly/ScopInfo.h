@@ -130,6 +130,11 @@ public:
     return BaseName;
   }
 
+  /// @brief Get the new access function imported from JSCOP file
+  isl_map *getNewAccessFunction() {
+    return newAccessRelation;
+  }
+
   /// @brief Get the stride of this memory access in the specified domain
   ///        subset.
   isl_set *getStride(const isl_set *domainSubset) const;

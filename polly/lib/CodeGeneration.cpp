@@ -314,9 +314,36 @@ public:
     return vector;
   }
 
+  /// @brief Get the new operand address according to the changed access in
+  ///        JSCOP file.
+  Value *getNewAccessOperand(isl_map *newAccessRelation, Value *baseAddr,
+                             const Value *OldOperand, ValueMapT &BBMap) {
+    unsigned accessIdx = 0;
+    Value *newOperand = Builder.CreateStructGEP(baseAddr,
+                                                accessIdx, "p_newarrayidx_");
+    return newOperand;
+  }
+
+  /// @brief Generate the operand address
+  Value *generateLocationAccessed(const Instruction *Inst,
+                                  const Value *pointer, ValueMapT &BBMap ) {
+    MemoryAccess &Access = statement.getAccessFor(Inst);
+    isl_map *newAccessRelation = Access.getNewAccessFunction();
+    if (!newAccessRelation) {
+      Value *newPointer = getOperand(pointer, BBMap);
+      return newPointer;
+    }
+    
+    Value *baseAddr = const_cast<Value*>(Access.getBaseAddr());
+    Value *newPointer = getNewAccessOperand(newAccessRelation, baseAddr,
+                                            pointer, BBMap);
+    return newPointer;
+  }
+
   Value *generateScalarLoad(const LoadInst *load, ValueMapT &BBMap) {
     const Value *pointer = load->getPointerOperand();
-    Value *newPointer = getOperand(pointer, BBMap);
+    const Instruction *Inst = dyn_cast<Instruction>(load);
+    Value *newPointer = generateLocationAccessed(Inst, pointer, BBMap);
     Value *scalarLoad = Builder.CreateLoad(newPointer,
                                            load->getNameStr() + "_p_scalar_");
     return scalarLoad;
