@@ -1233,14 +1233,29 @@ PathDiagnosticPiece*
 BugReport::getEndPath(BugReporterContext& BRC,
                       const ExplodedNode* EndPathNode) {
 
-  const Stmt* S = getStmt();
+  const ProgramPoint &PP = EndPathNode->getLocation();
+  PathDiagnosticLocation L;
 
-  if (!S)
-    return NULL;
+  if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&PP)) {
+    const CFGBlock *block = BE->getBlock();
+    if (block->getBlockID() == 0) {
+      L = PathDiagnosticLocation(
+          EndPathNode->getLocationContext()->getDecl()->getBodyRBrace(),
+          BRC.getSourceManager());
+    }
+  }
+
+  if (!L.isValid()) {
+    const Stmt* S = getStmt();
+
+    if (!S)
+      return NULL;
+
+    L = PathDiagnosticLocation(S, BRC.getSourceManager());
+  }
 
   BugReport::ranges_iterator Beg, End;
   llvm::tie(Beg, End) = getRanges();
-  PathDiagnosticLocation L(S, BRC.getSourceManager());
 
   // Only add the statement itself as a range if we didn't specify any
   // special ranges for this report.
