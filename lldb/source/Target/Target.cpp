@@ -541,7 +541,7 @@ Target::ModuleAdded (ModuleSP &module_sp)
 void
 Target::ModuleUpdated (ModuleSP &old_module_sp, ModuleSP &new_module_sp)
 {
-    // A module is being added to this target for the first time
+    // A module is replacing an already added module
     ModuleList module_list;
     module_list.Append (old_module_sp);
     ModulesDidUnload (module_list);
