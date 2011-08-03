@@ -222,6 +222,10 @@ def ReturnPointerRangeChecker : Checker<"ReturnPtrRange">,
   HelpText<"Check for an out-of-bound pointer being returned to callers">,
   DescFile<"ReturnPointerRangeChecker.cpp">;
 
+def MallocOverflowSecurityChecker : Checker<"MallocOverflow">,
+  HelpText<"Check for overflows in the arguments to malloc()">,
+  DescFile<"MallocOverflowSecurityChecker.cpp">;
+
 } // end "security.experimental"
 
 //===----------------------------------------------------------------------===//
