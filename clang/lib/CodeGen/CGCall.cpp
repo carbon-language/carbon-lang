@@ -313,49 +313,64 @@ CGFunctionInfo::CGFunctionInfo(unsigned _CallingConvention,
 
 void CodeGenTypes::GetExpandedTypes(QualType type,
                      SmallVectorImpl<llvm::Type*> &expandedTypes) {
-  const RecordType *RT = type->getAsStructureType();
-  assert(RT && "Can only expand structure types.");
-  const RecordDecl *RD = RT->getDecl();
-  assert(!RD->hasFlexibleArrayMember() &&
-         "Cannot expand structure with flexible array.");
-
-  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(type)) {
+    uint64_t NumElts = AT->getSize().getZExtValue();
+    for (uint64_t Elt = 0; Elt < NumElts; ++Elt)
+      GetExpandedTypes(AT->getElementType(), expandedTypes);
+  } else if (const RecordType *RT = type->getAsStructureType()) {
+    const RecordDecl *RD = RT->getDecl();
+    assert(!RD->hasFlexibleArrayMember() &&
+           "Cannot expand structure with flexible array.");
+    for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i) {
-    const FieldDecl *FD = *i;
-    assert(!FD->isBitField() &&
-           "Cannot expand structure with bit-field members.");
-
-    QualType fieldType = FD->getType();
-    if (fieldType->isRecordType())
-      GetExpandedTypes(fieldType, expandedTypes);
-    else
-      expandedTypes.push_back(ConvertType(fieldType));
-  }
+      const FieldDecl *FD = *i;
+      assert(!FD->isBitField() &&
+             "Cannot expand structure with bit-field members.");
+      GetExpandedTypes(FD->getType(), expandedTypes);
+    }
+  } else if (const ComplexType *CT = type->getAs<ComplexType>()) {
+    llvm::Type *EltTy = ConvertType(CT->getElementType());
+    expandedTypes.push_back(EltTy);
+    expandedTypes.push_back(EltTy);
+  } else
+    expandedTypes.push_back(ConvertType(type));
 }
 
 llvm::Function::arg_iterator
 CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
                                     llvm::Function::arg_iterator AI) {
-  const RecordType *RT = Ty->getAsStructureType();
-  assert(RT && "Can only expand structure types.");
-
-  RecordDecl *RD = RT->getDecl();
   assert(LV.isSimple() &&
          "Unexpected non-simple lvalue during struct expansion.");
   llvm::Value *Addr = LV.getAddress();
-  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
-         i != e; ++i) {
-    FieldDecl *FD = *i;
-    QualType FT = FD->getType();
 
-    // FIXME: What are the right qualifiers here?
-    LValue LV = EmitLValueForField(Addr, FD, 0);
-    if (CodeGenFunction::hasAggregateLLVMType(FT)) {
-      AI = ExpandTypeFromArgs(FT, LV, AI);
-    } else {
-      EmitStoreThroughLValue(RValue::get(AI), LV);
-      ++AI;
+  if (const ConstantArrayType *AT = getContext().getAsConstantArrayType(Ty)) {
+    unsigned NumElts = AT->getSize().getZExtValue();
+    QualType EltTy = AT->getElementType();
+    for (unsigned Elt = 0; Elt < NumElts; ++Elt) {
+      llvm::Value *EltAddr = Builder.CreateConstGEP2_32(Addr, 0, Elt);
+      LValue LV = MakeAddrLValue(EltAddr, EltTy);
+      AI = ExpandTypeFromArgs(EltTy, LV, AI);
     }
+  } else if (const RecordType *RT = Ty->getAsStructureType()) {
+    RecordDecl *RD = RT->getDecl();
+    for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+         i != e; ++i) {
+      FieldDecl *FD = *i;
+      QualType FT = FD->getType();
+
+      // FIXME: What are the right qualifiers here?
+      LValue LV = EmitLValueForField(Addr, FD, 0);
+      AI = ExpandTypeFromArgs(FT, LV, AI);
+    }
+  } else if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
+    QualType EltTy = CT->getElementType();
+    llvm::Value *RealAddr = Builder.CreateStructGEP(Addr, 0, "real");
+    EmitStoreThroughLValue(RValue::get(AI++), MakeAddrLValue(RealAddr, EltTy));
+    llvm::Value *ImagAddr = Builder.CreateStructGEP(Addr, 0, "imag");
+    EmitStoreThroughLValue(RValue::get(AI++), MakeAddrLValue(ImagAddr, EltTy));
+  } else {
+    EmitStoreThroughLValue(RValue::get(AI), LV);
+    ++AI;
   }
 
   return AI;
@@ -1462,26 +1477,43 @@ static void checkArgMatches(llvm::Value *Elt, unsigned &ArgNo,
 void CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
                                        SmallVector<llvm::Value*,16> &Args,
                                        llvm::FunctionType *IRFuncTy) {
-  const RecordType *RT = Ty->getAsStructureType();
-  assert(RT && "Can only expand structure types.");
-  
-  RecordDecl *RD = RT->getDecl();
-  assert(RV.isAggregate() && "Unexpected rvalue during struct expansion");
-  llvm::Value *Addr = RV.getAggregateAddr();
-  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
-       i != e; ++i) {
-    FieldDecl *FD = *i;
-    QualType FT = FD->getType();
-    
-    // FIXME: What are the right qualifiers here?
-    LValue LV = EmitLValueForField(Addr, FD, 0);
-    if (CodeGenFunction::hasAggregateLLVMType(FT)) {
-      ExpandTypeToArgs(FT, RValue::getAggregate(LV.getAddress()),
-                       Args, IRFuncTy);
-      continue;
+  if (const ConstantArrayType *AT = getContext().getAsConstantArrayType(Ty)) {
+    unsigned NumElts = AT->getSize().getZExtValue();
+    QualType EltTy = AT->getElementType();
+    llvm::Value *Addr = RV.getAggregateAddr();
+    for (unsigned Elt = 0; Elt < NumElts; ++Elt) {
+      llvm::Value *EltAddr = Builder.CreateConstGEP2_32(Addr, 0, Elt);
+      LValue LV = MakeAddrLValue(EltAddr, EltTy);
+      RValue EltRV;
+      if (CodeGenFunction::hasAggregateLLVMType(EltTy))
+        EltRV = RValue::getAggregate(LV.getAddress());
+      else
+        EltRV = EmitLoadOfLValue(LV);
+      ExpandTypeToArgs(EltTy, EltRV, Args, IRFuncTy);
     }
+  } else if (const RecordType *RT = Ty->getAsStructureType()) {
+    RecordDecl *RD = RT->getDecl();
+    assert(RV.isAggregate() && "Unexpected rvalue during struct expansion");
+    llvm::Value *Addr = RV.getAggregateAddr();
+    for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+         i != e; ++i) {
+      FieldDecl *FD = *i;
+      QualType FT = FD->getType();
     
-    RValue RV = EmitLoadOfLValue(LV);
+      // FIXME: What are the right qualifiers here?
+      LValue LV = EmitLValueForField(Addr, FD, 0);
+      RValue FldRV;
+      if (CodeGenFunction::hasAggregateLLVMType(FT))
+        FldRV = RValue::getAggregate(LV.getAddress());
+      else
+        FldRV = EmitLoadOfLValue(LV);
+      ExpandTypeToArgs(FT, FldRV, Args, IRFuncTy);
+    }
+  } else if (isa<ComplexType>(Ty)) {
+    ComplexPairTy CV = RV.getComplexVal();
+    Args.push_back(CV.first);
+    Args.push_back(CV.second);
+  } else {
     assert(RV.isScalar() &&
            "Unexpected non-scalar rvalue during struct expansion.");
 

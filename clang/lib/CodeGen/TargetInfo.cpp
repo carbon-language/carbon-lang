@@ -2379,6 +2379,73 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
   }
 }
 
+/// isHomogeneousAggregate - Return true if a type is an AAPCS-VFP homogeneous
+/// aggregate.  If HAMembers is non-null, the number of base elements
+/// contained in the type is returned through it; this is used for the
+/// recursive calls that check aggregate component types.
+static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
+                                   ASTContext &Context,
+                                   uint64_t *HAMembers = 0) {
+  uint64_t Members;
+  if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty)) {
+    if (!isHomogeneousAggregate(AT->getElementType(), Base, Context, &Members))
+      return false;
+    Members *= AT->getSize().getZExtValue();
+  } else if (const RecordType *RT = Ty->getAs<RecordType>()) {
+    const RecordDecl *RD = RT->getDecl();
+    if (RD->isUnion() || RD->hasFlexibleArrayMember())
+      return false;
+    if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
+      if (!CXXRD->isAggregate())
+        return false;
+    }
+    Members = 0;
+    for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+         i != e; ++i) {
+      const FieldDecl *FD = *i;
+      uint64_t FldMembers;
+      if (!isHomogeneousAggregate(FD->getType(), Base, Context, &FldMembers))
+        return false;
+      Members += FldMembers;
+    }
+  } else {
+    Members = 1;
+    if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
+      Members = 2;
+      Ty = CT->getElementType();
+    }
+
+    // Homogeneous aggregates for AAPCS-VFP must have base types of float,
+    // double, or 64-bit or 128-bit vectors.
+    if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
+      if (BT->getKind() != BuiltinType::Float && 
+          BT->getKind() != BuiltinType::Double)
+        return false;
+    } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
+      unsigned VecSize = Context.getTypeSize(VT);
+      if (VecSize != 64 && VecSize != 128)
+        return false;
+    } else {
+      return false;
+    }
+
+    // The base type must be the same for all members.  Vector types of the
+    // same total size are treated as being equivalent here.
+    const Type *TyPtr = Ty.getTypePtr();
+    if (!Base)
+      Base = TyPtr;
+    if (Base != TyPtr &&
+        (!Base->isVectorType() || !TyPtr->isVectorType() ||
+         Context.getTypeSize(Base) != Context.getTypeSize(TyPtr)))
+      return false;
+  }
+
+  // Homogeneous Aggregates can have at most 4 members of the base type.
+  if (HAMembers)
+    *HAMembers = Members;
+  return (Members <= 4);
+}
+
 ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
   if (!isAggregateTypeForABI(Ty)) {
     // Treat an enum type as its underlying type.
@@ -2397,6 +2464,13 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
   // copy constructor are always indirect.
   if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty))
     return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+
+  if (getABIKind() == ARMABIInfo::AAPCS_VFP) {
+    // Homogeneous Aggregates need to be expanded.
+    const Type *Base = 0;
+    if (isHomogeneousAggregate(Ty, Base, getContext()))
+      return ABIArgInfo::getExpand();
+  }
 
   // Otherwise, pass by coercing to a structure of the appropriate size.
   //
