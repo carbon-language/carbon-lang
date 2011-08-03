@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined(__APPLE__)
 
 // C Includes
 #include <mach/thread_act.h>
@@ -68,4 +69,4 @@ RegisterContextMach_i386::DoWriteEXC (lldb::tid_t tid, int flavor, const EXC &ex
     return ::thread_set_state(tid, flavor, (thread_state_t)&exc, EXCWordCount);
 }
 
-
+#endif

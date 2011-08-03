@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined(__APPLE__)
+
 #include "RegisterContextMach_arm.h"
 
 // C Includes
@@ -82,4 +84,4 @@ RegisterContextMach_arm::DoWriteDBG (lldb::tid_t tid, int flavor, const DBG &dbg
     return ::thread_set_state(tid, flavor, (thread_state_t)&dbg, DBGWordCount);
 }
 
-
+#endif
