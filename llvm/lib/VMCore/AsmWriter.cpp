@@ -1037,26 +1037,35 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
 
   char Prefix = '%';
   int Slot;
+  // If we have a SlotTracker, use it.
   if (Machine) {
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
       Slot = Machine->getGlobalSlot(GV);
       Prefix = '@';
     } else {
       Slot = Machine->getLocalSlot(V);
+      
+      // If the local value didn't succeed, then we may be referring to a value
+      // from a different function.  Translate it, as this can happen when using
+      // address of blocks.
+      if (Slot == -1)
+        if ((Machine = createSlotTracker(V))) {
+          Slot = Machine->getLocalSlot(V);
+          delete Machine;
+        }
     }
-  } else {
-    Machine = createSlotTracker(V);
-    if (Machine) {
-      if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-        Slot = Machine->getGlobalSlot(GV);
-        Prefix = '@';
-      } else {
-        Slot = Machine->getLocalSlot(V);
-      }
-      delete Machine;
+  } else if ((Machine = createSlotTracker(V))) {
+    // Otherwise, create one to get the # and then destroy it.
+    if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+      Slot = Machine->getGlobalSlot(GV);
+      Prefix = '@';
     } else {
-      Slot = -1;
+      Slot = Machine->getLocalSlot(V);
     }
+    delete Machine;
+    Machine = 0;
+  } else {
+    Slot = -1;
   }
 
   if (Slot != -1)
