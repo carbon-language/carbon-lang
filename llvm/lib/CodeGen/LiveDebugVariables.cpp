@@ -179,6 +179,9 @@ public:
     LocMap::iterator I = locInts.find(Idx);
     if (!I.valid() || I.start() != Idx)
       I.insert(Idx, Idx.getNextSlot(), getLocationNo(LocMO));
+    else
+      // A later DBG_VALUE at the same SlotIndex overrides the old location.
+      I.setValue(getLocationNo(LocMO));
   }
 
   /// extendDef - Extend the current definition as far as possible down the
