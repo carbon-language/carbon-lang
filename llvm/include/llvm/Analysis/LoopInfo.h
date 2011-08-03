@@ -105,7 +105,7 @@ public:
     if (L == 0)    return false;
     return contains(L->getParentLoop());
   }
-    
+
   /// contains - Return true if the specified basic block is in this loop.
   ///
   bool contains(const BlockT *BB) const {
@@ -527,7 +527,7 @@ public:
   bool isLoopInvariant(Value *V) const;
 
   /// hasLoopInvariantOperands - Return true if all the operands of the
-  /// specified instruction are loop invariant. 
+  /// specified instruction are loop invariant.
   bool hasLoopInvariantOperands(Instruction *I) const;
 
   /// makeLoopInvariant - If the given value is an instruction inside of the
@@ -607,7 +607,7 @@ public:
   /// has a predecessor that is outside the loop.
   bool hasDedicatedExits() const;
 
-  /// getUniqueExitBlocks - Return all unique successor blocks of this loop. 
+  /// getUniqueExitBlocks - Return all unique successor blocks of this loop.
   /// These are the blocks _outside of the current loop_ which are branched to.
   /// This assumes that loop exits are in canonical form.
   ///
@@ -618,7 +618,7 @@ public:
   BasicBlock *getUniqueExitBlock() const;
 
   void dump() const;
-  
+
 private:
   friend class LoopInfoBase<BasicBlock, Loop>;
   explicit Loop(BasicBlock *BB) : LoopBase<BasicBlock, Loop>(BB) {}
@@ -641,7 +641,7 @@ class LoopInfoBase {
 public:
   LoopInfoBase() { }
   ~LoopInfoBase() { releaseMemory(); }
-  
+
   void releaseMemory() {
     for (typename std::vector<LoopT *>::iterator I =
          TopLevelLoops.begin(), E = TopLevelLoops.end(); I != E; ++I)
@@ -650,7 +650,7 @@ public:
     BBMap.clear();                           // Reset internal state of analysis
     TopLevelLoops.clear();
   }
-  
+
   /// iterator/begin/end - The interface to the top-level loops in the current
   /// function.
   ///
@@ -658,7 +658,7 @@ public:
   iterator begin() const { return TopLevelLoops.begin(); }
   iterator end() const { return TopLevelLoops.end(); }
   bool empty() const { return TopLevelLoops.empty(); }
-  
+
   /// getLoopFor - Return the inner most loop that BB lives in.  If a basic
   /// block is in no loop (for example the entry node), null is returned.
   ///
@@ -667,13 +667,13 @@ public:
       BBMap.find(const_cast<BlockT*>(BB));
     return I != BBMap.end() ? I->second : 0;
   }
-  
+
   /// operator[] - same as getLoopFor...
   ///
   const LoopT *operator[](const BlockT *BB) const {
     return getLoopFor(BB);
   }
-  
+
   /// getLoopDepth - Return the loop nesting level of the specified block.  A
   /// depth of 0 means the block is not inside any loop.
   ///
@@ -687,7 +687,7 @@ public:
     const LoopT *L = getLoopFor(BB);
     return L && L->getHeader() == BB;
   }
-  
+
   /// removeLoop - This removes the specified top-level loop from this loop info
   /// object.  The loop is not deleted, as it will presumably be inserted into
   /// another loop.
@@ -698,7 +698,7 @@ public:
     TopLevelLoops.erase(TopLevelLoops.begin() + (I-begin()));
     return L;
   }
-  
+
   /// changeLoopFor - Change the top-level loop that contains BB to the
   /// specified loop.  This should be used by transformations that restructure
   /// the loop hierarchy tree.
@@ -707,7 +707,7 @@ public:
     assert(OldLoop && "Block not in a loop yet!");
     OldLoop = L;
   }
-  
+
   /// changeTopLevelLoop - Replace the specified loop in the top-level loops
   /// list with the indicated loop.
   void changeTopLevelLoop(LoopT *OldLoop,
@@ -719,14 +719,14 @@ public:
     assert(NewLoop->ParentLoop == 0 && OldLoop->ParentLoop == 0 &&
            "Loops already embedded into a subloop!");
   }
-  
+
   /// addTopLevelLoop - This adds the specified loop to the collection of
   /// top-level loops.
   void addTopLevelLoop(LoopT *New) {
     assert(New->getParentLoop() == 0 && "Loop already in subloop!");
     TopLevelLoops.push_back(New);
   }
-  
+
   /// removeBlock - This method completely removes BB from all data structures,
   /// including all of the Loop objects it is nested in and our mapping from
   /// BasicBlocks to loops.
@@ -739,16 +739,16 @@ public:
       BBMap.erase(I);
     }
   }
-  
+
   // Internals
-  
+
   static bool isNotAlreadyContainedIn(const LoopT *SubLoop,
                                       const LoopT *ParentLoop) {
     if (SubLoop == 0) return true;
     if (SubLoop == ParentLoop) return false;
     return isNotAlreadyContainedIn(SubLoop->getParentLoop(), ParentLoop);
   }
-  
+
   void Calculate(DominatorTreeBase<BlockT> &DT) {
     BlockT *RootNode = DT.getRootNode()->getBlock();
 
@@ -757,7 +757,7 @@ public:
       if (LoopT *L = ConsiderForLoop(*NI, DT))
         TopLevelLoops.push_back(L);
   }
-  
+
   LoopT *ConsiderForLoop(BlockT *BB, DominatorTreeBase<BlockT> &DT) {
     if (BBMap.find(BB) != BBMap.end()) return 0;// Haven't processed this node?
 
@@ -812,9 +812,9 @@ public:
 
         // Normal case, add the block to our loop...
         L->Blocks.push_back(X);
-        
+
         typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
-        
+
         // Add all of the predecessors of X to the end of the work stack...
         TodoStack.insert(TodoStack.end(), InvBlockTraits::child_begin(X),
                          InvBlockTraits::child_end(X));
@@ -878,7 +878,7 @@ public:
 
     return L;
   }
-  
+
   /// MoveSiblingLoopInto - This method moves the NewChild loop to live inside
   /// of the NewParent Loop, instead of being a sibling of it.
   void MoveSiblingLoopInto(LoopT *NewChild,
@@ -897,7 +897,7 @@ public:
 
     InsertLoopInto(NewChild, NewParent);
   }
-  
+
   /// InsertLoopInto - This inserts loop L into the specified parent loop.  If
   /// the parent loop contains a loop which should contain L, the loop gets
   /// inserted into L instead.
@@ -918,9 +918,9 @@ public:
     Parent->SubLoops.push_back(L);
     L->ParentLoop = Parent;
   }
-  
+
   // Debugging
-  
+
   void print(raw_ostream &OS) const {
     for (unsigned i = 0; i < TopLevelLoops.size(); ++i)
       TopLevelLoops[i]->print(OS);
@@ -990,7 +990,7 @@ public:
   virtual void releaseMemory() { LI.releaseMemory(); }
 
   virtual void print(raw_ostream &O, const Module* M = 0) const;
-  
+
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
   /// removeLoop - This removes the specified top-level loop from this loop info
