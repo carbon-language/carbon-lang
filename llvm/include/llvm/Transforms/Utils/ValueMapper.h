@@ -66,12 +66,12 @@ namespace llvm {
   inline MDNode *MapValue(const MDNode *V, ValueToValueMapTy &VM,
                           RemapFlags Flags = RF_None,
                           ValueMapTypeRemapper *TypeMapper = 0) {
-    return (MDNode*)MapValue((const Value*)V, VM, Flags, TypeMapper);
+    return cast<MDNode>(MapValue((const Value*)V, VM, Flags, TypeMapper));
   }
   inline Constant *MapValue(const Constant *V, ValueToValueMapTy &VM,
                             RemapFlags Flags = RF_None,
                             ValueMapTypeRemapper *TypeMapper = 0) {
-    return (Constant*)MapValue((const Value*)V, VM, Flags, TypeMapper);
+    return cast<Constant>(MapValue((const Value*)V, VM, Flags, TypeMapper));
   }
   
 
