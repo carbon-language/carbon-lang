@@ -146,6 +146,7 @@ Align(Stream *s, const char *str, size_t opcodeColWidth, size_t operandColWidth)
         PadString(s, p.second, operandColWidth);
 }
 
+#define AlignPC(pc_val) (pc_val & 0xFFFFFFFC)
 void
 InstructionLLVM::Dump
 (
@@ -355,6 +356,11 @@ InstructionLLVM::Dump
                 const char *pos = NULL;
                 operands.Clear(); comment.Clear();
                 if (EDGetInstString(&inst_str, m_inst) == 0 && (pos = strstr(inst_str, "#")) != NULL) {
+                    if (m_arch_type == llvm::Triple::thumb && opcode.GetString() == "blx") {
+                        // A8.6.23 BLX (immediate)
+                        // Target Address = Align(PC,4) + offset value
+                        PC = AlignPC(PC);
+                    }
                     uint64_t operand_value = PC + atoi(++pos);
                     // Put the address value into the comment.
                     comment.Printf("0x%llx ", operand_value);
