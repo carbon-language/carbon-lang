@@ -56,8 +56,9 @@ namespace clang {
     /// \brief An ID number that refers to a declaration in an AST file.
     ///
     /// The ID numbers of declarations are consecutive (in order of
-    /// discovery) and start at 2. 0 is reserved for NULL, and 1 is
-    /// reserved for the translation unit declaration.
+    /// discovery), with values below NUM_PREDEF_DECL_IDS being reserved. 
+    /// At the start of a chain of precompiled headers, declaration ID 1 is 
+    /// used for the translation unit declaration.
     typedef uint32_t DeclID;
 
     /// \brief a Decl::Kind/DeclID pair.
@@ -661,6 +662,23 @@ namespace clang {
       SPECIAL_TYPE_AUTO_RREF_DEDUCT            = 18
     };
 
+    /// \brief Predefined declaration IDs.
+    ///
+    /// These declaration IDs correspond to predefined declarations in the AST
+    /// context, such as the NULL declaration ID. Such declarations are never
+    /// actually serialized, since they will be built by the AST context when 
+    /// it is created.
+    enum PredefinedDeclIDs {
+      /// \brief The NULL declaration.
+      PREDEF_DECL_NULL_ID       = 0,
+    };
+
+    /// \brief The number of declaration IDs that are predefined.
+    ///
+    /// For more information about predefined declarations, see the
+    /// \c PredefinedDeclIDs type and the PREDEF_DECL_*_ID constants.
+    const unsigned int NUM_PREDEF_DECL_IDS = 1;
+    
     /// \brief Record codes for each kind of declaration.
     ///
     /// These constants describe the declaration records that can occur within

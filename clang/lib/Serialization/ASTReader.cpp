@@ -4119,26 +4119,32 @@ TranslationUnitDecl *ASTReader::GetTranslationUnitDecl() {
 
 serialization::DeclID 
 ASTReader::getGlobalDeclID(Module &F, unsigned LocalID) const {
-  if (LocalID == 0)
+  if (LocalID < NUM_PREDEF_DECL_IDS)
     return LocalID;
 
   ContinuousRangeMap<uint32_t, int, 2>::iterator I
-    = F.DeclRemap.find(LocalID - 1);
+    = F.DeclRemap.find(LocalID - NUM_PREDEF_DECL_IDS);
   assert(I != F.DeclRemap.end() && "Invalid index into decl index remap");
   
   return LocalID + I->second;
 }
 
 Decl *ASTReader::GetDecl(DeclID ID) {
-  if (ID == 0)
+  if (ID < NUM_PREDEF_DECL_IDS) {    
+    switch ((PredefinedDeclIDs)ID) {
+    case serialization::PREDEF_DECL_NULL_ID:
+      return 0;
+    }
+    
     return 0;
-
+  }
+  
   if (ID > DeclsLoaded.size()) {
     Error("declaration ID out-of-range for AST file");
     return 0;
   }
 
-  unsigned Index = ID - 1;
+  unsigned Index = ID - NUM_PREDEF_DECL_IDS;
   if (!DeclsLoaded[Index]) {
     ReadDeclRecord(ID);
     if (DeserializationListener)
