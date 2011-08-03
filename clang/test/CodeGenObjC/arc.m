@@ -1754,3 +1754,39 @@ void test60b(void) {
   // CHECK-NEXT: call void @objc_release(i8* [[T2]])
   // CHECK-NEXT: ret void
 }
+
+// Verify that we don't try to reclaim the result of performSelector.
+// rdar://problem/9887545
+@interface Test61
+- (id) performSelector: (SEL) selector;
+- (void) test61_void;
+- (id) test61_id;
+@end
+void test61(void) {
+  // CHECK:    define void @test61()
+  // CHECK:      [[Y:%.*]] = alloca i8*, align 8
+
+  extern id test61_make(void);
+
+  // CHECK-NEXT: [[T0:%.*]] = call i8* @test61_make()
+  // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
+  // CHECK-NEXT: [[T2:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[T3:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[T4:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*, i8*)*)(i8* [[T1]], i8* [[T3]], i8* [[T2]])
+  // CHECK-NEXT: call void @objc_release(i8* [[T1]])
+  [test61_make() performSelector: @selector(test61_void)];
+
+  // CHECK-NEXT: [[T0:%.*]] = call i8* @test61_make()
+  // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
+  // CHECK-NEXT: [[T2:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[T3:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[T4:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*, i8*)*)(i8* [[T1]], i8* [[T3]], i8* [[T2]])
+  // CHECK-NEXT: [[T5:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T4]])
+  // CHECK-NEXT: store i8* [[T5]], i8** [[Y]]
+  // CHECK-NEXT: call void @objc_release(i8* [[T1]])
+  id y = [test61_make() performSelector: @selector(test61_id)];
+
+  // CHECK-NEXT: [[T0:%.*]] = load i8** [[Y]]
+  // CHECK-NEXT: call void @objc_release(i8* [[T0]])
+  // CHECK-NEXT: ret void
+}

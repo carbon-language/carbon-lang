@@ -4067,21 +4067,24 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
     // actual method.  FIXME: we should infer retention by selector in
     // cases where we don't have an actual method.
     } else {
-      Decl *D = 0;
+      ObjCMethodDecl *D = 0;
       if (ObjCMessageExpr *Send = dyn_cast<ObjCMessageExpr>(E)) {
         D = Send->getMethodDecl();
       } else {
         CastExpr *CE = cast<CastExpr>(E);
-        // FIXME. What other cast kinds to check for?
-        if (CE->getCastKind() == CK_ObjCProduceObject ||
-            CE->getCastKind() == CK_LValueToRValue)
-          return MaybeBindToTemporary(CE->getSubExpr());
         assert(CE->getCastKind() == CK_GetObjCProperty);
         const ObjCPropertyRefExpr *PRE = CE->getSubExpr()->getObjCProperty();
         D = (PRE->isImplicitProperty() ? PRE->getImplicitPropertyGetter() : 0);
       }
 
       ReturnsRetained = (D && D->hasAttr<NSReturnsRetainedAttr>());
+
+      // Don't do reclaims on performSelector calls; despite their
+      // return type, the invoked method doesn't necessarily actually
+      // return an object.
+      if (!ReturnsRetained &&
+          D && D->getMethodFamily() == OMF_performSelector)
+        return Owned(E);
     }
 
     ExprNeedsCleanups = true;
