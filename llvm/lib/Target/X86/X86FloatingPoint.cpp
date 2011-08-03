@@ -406,6 +406,10 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     if (MI->isCopy() && isFPCopy(MI))
       FPInstClass = X86II::SpecialFP;
 
+    if (MI->isImplicitDef() &&
+        X86::RFP80RegClass.contains(MI->getOperand(0).getReg()))
+      FPInstClass = X86II::SpecialFP;
+
     if (FPInstClass == X86II::NotFP)
       continue;  // Efficiently ignore non-fp insts!
 
@@ -1366,6 +1370,15 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
       // This could be made better, but would require substantial changes.
       duplicateToTop(SrcFP, DstFP, I);
     }
+    break;
+  }
+
+  case TargetOpcode::IMPLICIT_DEF: {
+    // All FP registers must be explicitly defined, so load a 0 instead.
+    unsigned Reg = MI->getOperand(0).getReg() - X86::FP0;
+    DEBUG(dbgs() << "Emitting LD_F0 for implicit FP" << Reg << '\n');
+    BuildMI(*MBB, I, MI->getDebugLoc(), TII->get(X86::LD_F0));
+    pushReg(Reg);
     break;
   }
 
