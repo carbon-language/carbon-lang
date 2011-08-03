@@ -126,6 +126,7 @@ static void replace(std::string& str, const std::string& find,
 
 static void makeIslCompatible(std::string& str) {
   replace(str, ".", "_");
+  replace(str, "\"", "_");
 }
 
 void MemoryAccess::setBaseName() {
