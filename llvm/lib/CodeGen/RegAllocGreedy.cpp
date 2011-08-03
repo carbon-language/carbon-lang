@@ -1170,6 +1170,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       Cand.IntvIdx = SE->openIntv();
       DEBUG(dbgs() << "Split for " << PrintReg(Cand.PhysReg, TRI) << " in "
                    << B << " bundles, intv " << Cand.IntvIdx << ".\n");
+      (void)B;
     }
   }
 
@@ -1182,6 +1183,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       Cand.IntvIdx = SE->openIntv();
       DEBUG(dbgs() << "Split for compact region in " << B << " bundles, intv "
                    << Cand.IntvIdx << ".\n");
+      (void)B;
     }
   }
 
