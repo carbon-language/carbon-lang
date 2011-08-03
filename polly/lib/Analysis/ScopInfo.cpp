@@ -337,8 +337,8 @@ bool MemoryAccess::isStrideOne(const isl_set *domainSubset) const {
   return isl_set_is_equal(stride, strideZero);
 }
 
-void MemoryAccess::setNewAccessFunction(isl_map *newAccessRelation) {
-  newAccessRelation = newAccessRelation;
+void MemoryAccess::setNewAccessFunction(isl_map *newAccess) {
+  newAccessRelation = newAccess;
 }
 
 //===----------------------------------------------------------------------===//

@@ -69,6 +69,7 @@ struct JSONExporter : public ScopPass {
 struct JSONImporter : public ScopPass {
   static char ID;
   Scop *S;
+  std::vector<std::string> newAccessStrings;
   explicit JSONImporter() : ScopPass(ID) {}
 
   std::string getFileName(Scop *S) const;
@@ -189,6 +190,9 @@ std::string JSONImporter::getFileName(Scop *S) const {
 
 void JSONImporter::printScop(raw_ostream &OS) const {
   S->print(OS);
+  for (std::vector<std::string>::const_iterator I = newAccessStrings.begin(),
+       E = newAccessStrings.end(); I != E; I++)
+    OS << "New access function '" << *I << "'detected in JSCOP file\n";
 }
 
 typedef Dependences::StatementToIslMapTy StatementToIslMapTy;
@@ -268,6 +272,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
       if (!isl_map_is_equal(newAccessMap, currentAccessMap)) {
         // Statistics.
         ++NewAccessMapFound;
+        newAccessStrings.push_back(accesses.asCString());	
         (*MI)->setNewAccessFunction(newAccessMap);
       }
       memoryAccessIdx++;
