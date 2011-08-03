@@ -13,6 +13,7 @@ blacklist = {'IntegerTypesExprTestCase': 'This test class crashed',
              }
 """
 
-blacklist = {'STLTestCase': '<rdar://problem/8837118> Crashed while running the entire test suite'
+blacklist = {'STLTestCase': '<rdar://problem/8837118> Crashed while running the entire test suite',
+    'LoadUnloadTestCase' : 'taking down debugserver and causing the whole test suite to hang'
              # To skip this test case: ./dotest.py -b blacklist.py -v -w 2> ~/Developer/Log/lldbtest.log
              }
