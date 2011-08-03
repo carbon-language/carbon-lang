@@ -3258,7 +3258,6 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
 ///   ::= 'resume' TypeAndValue
 bool LLParser::ParseResume(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Exn; LocTy ExnLoc;
-  LocTy Loc = Lex.getLoc();
   if (ParseTypeAndValue(Exn, ExnLoc, PFS))
     return true;
 

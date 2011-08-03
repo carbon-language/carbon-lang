@@ -5048,7 +5048,6 @@ static SDValue LowerAVXCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
 
 SDValue
 X86TargetLowering::LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const {
-  DebugLoc dl = Op.getDebugLoc();
   EVT ResVT = Op.getValueType();
 
   assert(Op.getNumOperands() == 2);
