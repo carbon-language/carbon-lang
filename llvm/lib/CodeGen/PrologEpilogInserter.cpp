@@ -54,6 +54,7 @@ INITIALIZE_PASS_END(PEI, "prologepilog",
 
 STATISTIC(NumVirtualFrameRegs, "Number of virtual frame regs encountered");
 STATISTIC(NumScavengedRegs, "Number of frame index regs scavenged");
+STATISTIC(NumBytesStackSpace, "Number of bytes used for stack in all functions");
 
 /// createPrologEpilogCodeInserter - This function returns a pass that inserts
 /// prolog and epilog code, and eliminates abstract frame references.
@@ -677,7 +678,9 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   }
 
   // Update frame info to pretend that this is part of the stack...
-  MFI->setStackSize(Offset - LocalAreaOffset);
+  int64_t StackSize = Offset - LocalAreaOffset;
+  MFI->setStackSize(StackSize);
+  NumBytesStackSpace += StackSize;
 }
 
 /// insertPrologEpilogCode - Scan the function for modified callee saved
