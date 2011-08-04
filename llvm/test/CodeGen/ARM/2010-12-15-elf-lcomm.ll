@@ -24,7 +24,7 @@
 ; OBJ-NEXT:     'st_bind', 0x0
 ; OBJ-NEXT:     'st_type', 0x1
 ; OBJ-NEXT:     'st_other', 0x00
-; OBJ-NEXT:     'st_shndx', 0x00000004
+; OBJ-NEXT:     'st_shndx', 0x0004
 
 define i32 @main(i32 %argc) nounwind {
   %1 = load i32* @sum, align 4

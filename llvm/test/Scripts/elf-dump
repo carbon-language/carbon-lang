@@ -109,7 +109,7 @@ def dumpSymtab(f, section, strtab):
         print "     ('st_bind', %s)" % common_dump.HexDump(st_bind[0], st_bind[1])
         print "     ('st_type', %s)" % common_dump.HexDump(st_type[0], st_type[1])
         print "     ('st_other', %s)" % common_dump.HexDump(f.read8(), 8)
-        print "     ('st_shndx', %s)" % common_dump.HexDump(f.read16())
+        print "     ('st_shndx', %s)" % common_dump.HexDump(f.read16(), 16)
         if f.is64Bit:
             print "     ('st_value', %s)" % common_dump.HexDump(f.read64(), 64)
             print "     ('st_size', %s)" % common_dump.HexDump(f.read64(), 64)

@@ -90,7 +90,7 @@ foo:
 // CHECK-NEXT:     ('st_bind', 0x0)
 // CHECK-NEXT:     ('st_type', 0x3)
 // CHECK-NEXT:     ('st_other', 0x00)
-// CHECK-NEXT:     ('st_shndx', 0x00000005)
+// CHECK-NEXT:     ('st_shndx', 0x0005)
 
 // Symbol number 8 is zed
 // CHECK:        # Symbol 8

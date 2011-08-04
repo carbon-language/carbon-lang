@@ -59,7 +59,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x0)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000001)
+// CHECK-NEXT:  ('st_shndx', 0x0001)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
@@ -68,7 +68,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x0)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000001)
+// CHECK-NEXT:  ('st_shndx', 0x0001)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
@@ -77,7 +77,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x0)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000001)
+// CHECK-NEXT:  ('st_shndx', 0x0001)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
@@ -86,7 +86,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x0)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000001)
+// CHECK-NEXT:  ('st_shndx', 0x0001)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
@@ -95,7 +95,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x0)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000001)
+// CHECK-NEXT:  ('st_shndx', 0x0001)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
@@ -104,7 +104,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x3)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000001)
+// CHECK-NEXT:  ('st_shndx', 0x0001)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
@@ -113,7 +113,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x3)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000003)
+// CHECK-NEXT:  ('st_shndx', 0x0003)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
@@ -122,7 +122,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x3)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000004)
+// CHECK-NEXT:  ('st_shndx', 0x0004)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
@@ -131,7 +131,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x1)
 // CHECK-NEXT:  ('st_type', 0x0)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000001)
+// CHECK-NEXT:  ('st_shndx', 0x0001)
 // CHECK-NEXT:  ('st_value', 0x0000000000000014)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
@@ -140,7 +140,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x1)
 // CHECK-NEXT:  ('st_type', 0x0)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000001)
+// CHECK-NEXT:  ('st_shndx', 0x0001)
 // CHECK-NEXT:  ('st_value', 0x0000000000000014)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
@@ -149,7 +149,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x1)
 // CHECK-NEXT:  ('st_type', 0x0)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000000)
+// CHECK-NEXT:  ('st_shndx', 0x0000)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
@@ -158,7 +158,7 @@ global1:
 // CHECK-NEXT:  ('st_bind', 0x1)
 // CHECK-NEXT:  ('st_type', 0x0)
 // CHECK-NEXT:  ('st_other', 0x00)
-// CHECK-NEXT:  ('st_shndx', 0x00000000)
+// CHECK-NEXT:  ('st_shndx', 0x0000)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
