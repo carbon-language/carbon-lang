@@ -57,6 +57,58 @@ OSStatus SecKeychainItemFreeContent (
     void *data
 );
 
+void errRetVal() {
+	unsigned int *ptr = 0;
+	OSStatus st = 0;
+	UInt32 length;
+	void *outData;
+	st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
+	if (st == GenericError) // expected-warning{{Missing a call to SecKeychainItemFreeContent}}
+		SecKeychainItemFreeContent(ptr, outData);
+}
+
+// If null is passed in, the data is not allocated, so no need for the matching free.
+void fooDoNotReportNull() {
+    unsigned int *ptr = 0;
+    OSStatus st = 0;
+    UInt32 *length = 0;
+    void **outData = 0;
+    SecKeychainItemCopyContent(2, ptr, ptr, 0, 0);
+    SecKeychainItemCopyContent(2, ptr, ptr, length, outData);
+}// no-warning
+
+void fooOnlyFree() {
+  unsigned int *ptr = 0;
+  OSStatus st = 0;
+  UInt32 length;
+  void *outData = &length;
+  SecKeychainItemFreeContent(ptr, outData);// expected-warning{{Trying to free data which has not been allocated}}
+}
+
+// Do not warn if undefined value is passed to a function.
+void fooOnlyFreeUndef() {
+  unsigned int *ptr = 0;
+  OSStatus st = 0;
+  UInt32 length;
+  void *outData;
+  SecKeychainItemFreeContent(ptr, outData);
+}// no-warning
+
+// Do not warn if the address is a parameter in the enclosing function.
+void fooOnlyFreeParam(void* X) {
+  SecKeychainItemFreeContent(X, X); 
+}// no-warning
+
+// If we are returning the value, no not report.
+void* returnContent() {
+  unsigned int *ptr = 0;
+  OSStatus st = 0;
+  UInt32 length;
+  void *outData;
+  st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
+  return outData;
+} // no-warning
+
 int foo () {
   unsigned int *ptr = 0;
   OSStatus st = 0;
@@ -69,4 +121,4 @@ int foo () {
     SecKeychainItemFreeContent(ptr, outData);
 
   return 0;
-}
+}// no-warning

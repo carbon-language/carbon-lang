@@ -15,6 +15,7 @@
 #include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
@@ -27,6 +28,8 @@ class MacOSKeychainAPIChecker : public Checker<check::PreStmt<CallExpr>,
                                                check::PreStmt<ReturnStmt>,
                                                check::PostStmt<CallExpr>,
                                                check::EndPath > {
+  mutable llvm::OwningPtr<BugType> BT;
+
 public:
   void checkPreStmt(const CallExpr *S, CheckerContext &C) const;
   void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
@@ -56,11 +59,28 @@ private:
       return 1;
     return InvalidParamVal;
   }
+
+  inline void initBugType() const {
+    if (!BT)
+      BT.reset(new BugType("Improper use of SecKeychain API", "Mac OS API"));
+  }
 };
 }
 
+struct AllocationInfo {
+  const Expr *Address;
+
+  AllocationInfo(const Expr *E) : Address(E) {}
+  bool operator==(const AllocationInfo &X) const {
+    return Address == X.Address;
+  }
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    ID.AddPointer(Address);
+  }
+};
+
 // GRState traits to store the currently allocated (and not yet freed) symbols.
-typedef llvm::ImmutableSet<SymbolRef> AllocatedSetTy;
+typedef llvm::ImmutableMap<const MemRegion*, AllocationInfo> AllocatedSetTy;
 
 namespace { struct AllocatedData {}; }
 namespace clang { namespace ento {
@@ -69,6 +89,16 @@ template<> struct GRStateTrait<AllocatedData>
   static void *GDMIndex() { static int index = 0; return &index; }
 };
 }}
+
+static bool isEnclosingFunctionParam(const Expr *E) {
+  E = E->IgnoreParenCasts();
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    const ValueDecl *VD = DRE->getDecl();
+    if (isa<ImplicitParamDecl>(VD) || isa<ParmVarDecl>(VD))
+      return true;
+  }
+  return false;
+}
 
 void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
                                            CheckerContext &C) const {
@@ -87,14 +117,30 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   // If a value has been freed, remove from the list.
   unsigned idx = getDeallocatingFunctionParam(funName);
   if (idx != InvalidParamVal) {
-    SymbolRef Param = State->getSVal(CE->getArg(idx)).getAsSymbol();
-    if (!Param)
+    const Expr *ArgExpr = CE->getArg(idx);
+    const MemRegion *Arg = State->getSVal(ArgExpr).getAsRegion();
+    if (!Arg)
       return;
-    if (!State->contains<AllocatedData>(Param)) {
-      // TODO: do we care about this?
-      assert(0 && "Trying to free data which has not been allocated yet.");
+
+    // If trying to free data which has not been allocated yet, report as bug.
+    if (State->get<AllocatedData>(Arg) == 0) {
+      // It is possible that this is a false positive - the argument might
+      // have entered as an enclosing function parameter.
+      if (isEnclosingFunctionParam(ArgExpr))
+        return;
+
+      ExplodedNode *N = C.generateNode(State);
+      if (!N)
+        return;
+      initBugType();
+      RangedBugReport *Report = new RangedBugReport(*BT,
+          "Trying to free data which has not been allocated.", N);
+      Report->addRange(ArgExpr->getSourceRange());
+      C.EmitReport(Report);
     }
-    State = State->remove<AllocatedData>(Param);
+
+    // Continue exploring from the new state.
+    State = State->remove<AllocatedData>(Arg);
     C.addTransition(State);
   }
 }
@@ -117,14 +163,20 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
   // If a value has been allocated, add it to the set for tracking.
   unsigned idx = getAllocatingFunctionParam(funName);
   if (idx != InvalidParamVal) {
-    SVal Param = State->getSVal(CE->getArg(idx));
-    if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&Param)) {
+    SVal Arg = State->getSVal(CE->getArg(idx));
+    if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&Arg)) {
       // Add the symbolic value, which represents the location of the allocated
       // data, to the set.
-      SymbolRef V = SM.Retrieve(State->getStore(), *X).getAsSymbol();
+      const MemRegion *V = SM.Retrieve(State->getStore(), *X).getAsRegion();
+      // If this is not a region, it can be:
+      //  - unknown (cannot reason about it)
+      //  - undefined (already reported by other checker)
+      //  - constant (null - should not be tracked, other - report a warning?)
+      //  - goto (should be reported by other checker)
       if (!V)
         return;
-      State = State->add<AllocatedData>(V);
+
+      State = State->set<AllocatedData>(V, AllocationInfo(CE->getArg(idx)));
 
       // We only need to track the value if the function returned noErr(0), so
       // bind the return value of the function to 0.
@@ -147,22 +199,34 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
 
   // Check  if the value is escaping through the return.
   const GRState *state = C.getState();
-  SymbolRef V = state->getSVal(retExpr).getAsSymbol();
+  const MemRegion *V = state->getSVal(retExpr).getAsRegion();
   if (!V)
     return;
-  state->remove<AllocatedData>(V);
+  state = state->remove<AllocatedData>(V);
 
+  // Proceed from the new state.
+  C.addTransition(state);
 }
 
 void MacOSKeychainAPIChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
-                                 ExprEngine &Eng) const {
+                                           ExprEngine &Eng) const {
   const GRState *state = B.getState();
   AllocatedSetTy AS = state->get<AllocatedData>();
+  ExplodedNode *N = B.generateNode(state);
+  if (!N)
+    return;
+  initBugType();
 
   // Anything which has been allocated but not freed (nor escaped) will be
   // found here, so report it.
-  if (!AS.isEmpty()) {
-    assert(0 && "TODO: Report the bug here.");
+  for (AllocatedSetTy::iterator I = AS.begin(), E = AS.end(); I != E; ++I ) {
+    RangedBugReport *Report = new RangedBugReport(*BT,
+      "Missing a call to SecKeychainItemFreeContent.", N);
+    // TODO: The report has to mention the expression which contains the
+    // allocated content as well as the point at which it has been allocated.
+    // Currently, the next line is useless.
+    Report->addRange(I->second.Address->getSourceRange());
+    Eng.getBugReporter().EmitReport(Report);
   }
 }
 
