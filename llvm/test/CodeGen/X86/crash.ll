@@ -341,3 +341,26 @@ CF77:
     br label %CF77
 }
 
+; PR10527
+define void @pr10527() nounwind uwtable {
+entry:
+  br label %"4"
+
+"3":
+  %0 = load <2 x i32>* null, align 8
+  %1 = xor <2 x i32> zeroinitializer, %0
+  %2 = and <2 x i32> %1, %6
+  %3 = or <2 x i32> undef, %2
+  %4 = and <2 x i32> %3, undef
+  store <2 x i32> %4, <2 x i32>* undef
+  %5 = load <2 x i32>* undef, align 1
+  br label %"4"
+
+"4":
+  %6 = phi <2 x i32> [ %5, %"3" ], [ zeroinitializer, %entry ]
+  %7 = icmp ult i32 undef, undef
+  br i1 %7, label %"3", label %"5"
+
+"5":
+  ret void
+}

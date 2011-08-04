@@ -12298,16 +12298,17 @@ static bool CanFoldXORWithAllOnes(const SDNode *N) {
 
   // Sometimes the operand may come from a insert_subvector building a 256-bit
   // allones vector
-  SDValue V1 = N->getOperand(0);
-  SDValue V2 = N->getOperand(1);
-
   if (VT.getSizeInBits() == 256 &&
-      N->getOpcode() == ISD::INSERT_SUBVECTOR &&
-      V1.getOpcode() == ISD::INSERT_SUBVECTOR &&
-      V1.getOperand(0).getOpcode() == ISD::UNDEF &&
-      ISD::isBuildVectorAllOnes(V1.getOperand(1).getNode()) &&
-      ISD::isBuildVectorAllOnes(V2.getNode()))
-    return true;
+      N->getOpcode() == ISD::INSERT_SUBVECTOR) {
+    SDValue V1 = N->getOperand(0);
+    SDValue V2 = N->getOperand(1);
+
+    if (V1.getOpcode() == ISD::INSERT_SUBVECTOR &&
+        V1.getOperand(0).getOpcode() == ISD::UNDEF &&
+        ISD::isBuildVectorAllOnes(V1.getOperand(1).getNode()) &&
+        ISD::isBuildVectorAllOnes(V2.getNode()))
+      return true;
+  }
 
   return false;
 }
