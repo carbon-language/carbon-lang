@@ -564,6 +564,15 @@ template<>
 bool
 FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Delete(const char* type);
 
+template<>
+bool
+FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Get(const char* key, SyntheticFilter::SharedPointer& value);
+
+template<>
+bool
+FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Delete(const char* type);
+
+    
 class CategoryMap;
     
 class FormatCategory
@@ -572,14 +581,17 @@ private:
     typedef FormatNavigator<const char*, SummaryFormat> SummaryNavigator;
     typedef FormatNavigator<lldb::RegularExpressionSP, SummaryFormat> RegexSummaryNavigator;
     typedef FormatNavigator<const char*, SyntheticFilter> FilterNavigator;
+    typedef FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter> RegexFilterNavigator;
     
     typedef SummaryNavigator::MapType SummaryMap;
     typedef RegexSummaryNavigator::MapType RegexSummaryMap;
     typedef FilterNavigator::MapType FilterMap;
+    typedef RegexFilterNavigator::MapType RegexFilterMap;
         
     SummaryNavigator::SharedPointer m_summary_nav;
     RegexSummaryNavigator::SharedPointer m_regex_summary_nav;
     FilterNavigator::SharedPointer m_filter_nav;
+    RegexFilterNavigator::SharedPointer m_regex_filter_nav;
     
     bool m_enabled;
     
@@ -611,12 +623,14 @@ public:
     typedef SummaryNavigator::SharedPointer SummaryNavigatorSP;
     typedef RegexSummaryNavigator::SharedPointer RegexSummaryNavigatorSP;
     typedef FilterNavigator::SharedPointer FilterNavigatorSP;
+    typedef RegexFilterNavigator::SharedPointer RegexFilterNavigatorSP;
     
     FormatCategory(IFormatChangeListener* clist,
                    std::string name) :
     m_summary_nav(new SummaryNavigator("summary",clist)),
     m_regex_summary_nav(new RegexSummaryNavigator("regex-summary",clist)),
     m_filter_nav(new FilterNavigator("filter",clist)),
+    m_regex_filter_nav(new RegexFilterNavigator("regex-filter",clist)),
     m_enabled(false),
     m_change_listener(clist),
     m_mutex(Mutex::eMutexTypeRecursive),
@@ -639,6 +653,12 @@ public:
     Filter()
     {
         return FilterNavigatorSP(m_filter_nav);
+    }
+    
+    RegexFilterNavigatorSP
+    RegexFilter()
+    {
+        return RegexFilterNavigatorSP(m_regex_filter_nav);
     }
     
     bool
@@ -671,7 +691,12 @@ public:
     {
         if (!IsEnabled())
             return false;
-        return (Filter()->Get(vobj, entry, use_dynamic, reason));
+        if (Filter()->Get(vobj, entry, use_dynamic, reason))
+            return true;
+        bool regex = RegexFilter()->Get(vobj, entry, use_dynamic, reason);
+        if (regex && reason)
+            *reason |= lldb::eFormatterChoiceCriterionRegularExpressionFilter;
+        return regex;
     }
     
     // just a shortcut for Summary()->Clear; RegexSummary()->Clear()

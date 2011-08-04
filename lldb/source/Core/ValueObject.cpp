@@ -941,11 +941,9 @@ ValueObject::GetValueAsUnsigned()
     return 0;
 }
 
-// this call should only return pointers to data that needs no special memory management
-// (either because they are hardcoded strings, or because they are backed by some other
-// object); returning any new()-ed or malloc()-ed data here, will lead to leaks!
-const char *
-ValueObject::GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display,
+bool
+ValueObject::GetPrintableRepresentation(Stream& s,
+                                        ValueObjectRepresentationStyle val_obj_display,
                                         lldb::Format custom_format)
 {
 
@@ -955,6 +953,7 @@ ValueObject::GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_d
         SetFormat(custom_format);
     
     const char * return_value;
+    std::auto_ptr<char> alloc_mem;
     
     switch(val_obj_display)
     {
@@ -970,6 +969,17 @@ ValueObject::GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_d
         case eDisplayLocation:
             return_value = GetLocationAsCString();
             break;
+        case eDisplayChildrenCount:
+            // keep this out of the local scope so it will only get deleted when
+            // we exit the function (..and we have a copy of the data into the Stream)
+            alloc_mem = std::auto_ptr<char>((char*)(return_value = new char[512]));
+        {
+            int count = GetNumChildren();
+            snprintf(alloc_mem.get(), 512, "%d", count);
+            break;
+        }
+        default:
+            break;
     }
     
     // this code snippet might lead to endless recursion, thus we use a RefCounter here to
@@ -983,16 +993,26 @@ ValueObject::GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_d
         {
             if (ClangASTContext::IsAggregateType (GetClangType()) == true)
             {
-                // this thing has no value
-                return_value = "<no summary defined for this datatype>";
+                // this thing has no value, and it seems to have no summary
+                // some combination of unitialized data and other factors can also
+                // raise this condition, so let's print a nice generic error message
+                return_value = "<no available summary>";
             }
             else
                 return_value = GetValueAsCString();
         }
     }
     
-    return (return_value ? return_value : "<no printable representation>");
-
+    if (return_value)
+        s.PutCString(return_value);
+    else
+        s.PutCString("<no printable representation>");
+    
+    // we should only return false here if we could not do *anything*
+    // even if we have an error message as output, that's a success
+    // from our callers' perspective, so return true
+    return true;
+    
 }
 
 bool
@@ -1116,10 +1136,7 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
             (custom_format == lldb::eFormatDefault)) // use the [] operator
             return false;
     }
-    const char *targetvalue = GetPrintableRepresentation(val_obj_display, custom_format);
-    if (targetvalue)
-        s.PutCString(targetvalue);
-    bool var_success = (targetvalue != NULL);
+    bool var_success = GetPrintableRepresentation(s, val_obj_display, custom_format);
     if (custom_format != eFormatInvalid)
         SetFormat(eFormatDefault);
     return var_success;

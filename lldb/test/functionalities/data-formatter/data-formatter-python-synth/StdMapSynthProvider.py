@@ -1,8 +1,11 @@
 import re
+
 class StdMapSynthProvider:
+
 	def __init__(self, valobj, dict):
 		self.valobj = valobj;
 		self.update()
+
 	def update(self):
 		self.Mt = self.valobj.GetChildMemberWithName('_M_t')
 		self.Mimpl = self.Mt.GetChildMemberWithName('_M_impl')
@@ -19,6 +22,7 @@ class StdMapSynthProvider:
 			self.data_type = self.Mt.GetTarget().FindFirstType(self.gcc_type_name)
 		self.data_size = self.data_type.GetByteSize()
 		self.skip_size = self.Mheader.GetType().GetByteSize()
+
 	def expand_clang_type_name(self):
 		type_name = self.Mimpl.GetType().GetName()
 		index = type_name.find("std::pair<")
@@ -35,6 +39,7 @@ class StdMapSynthProvider:
 				template_count = template_count - 1
 			index = index + 1;
 		self.clang_type_name = type_name
+
 	def expand_gcc_type_name(self):
 		type_name = self.Mt.GetType().GetName()
 		index = type_name.find("std::pair<")
@@ -54,36 +59,40 @@ class StdMapSynthProvider:
 			    index = index - 1
 			index = index + 1;
 		self.gcc_type_name = type_name
+
 	def num_children(self):
 		root_ptr_val = self.node_ptr_value(self.Mroot)
 		if root_ptr_val == 0:
 			return 0;
 		return self.Mimpl.GetChildMemberWithName('_M_node_count').GetValueAsUnsigned(0)
+
 	def get_child_index(self,name):
-		if name == "len":
-			return self.num_children();
-		else:
-			return int(name.lstrip('[').rstrip(']'))
+		return int(name.lstrip('[').rstrip(']'))
+
 	def get_child_at_index(self,index):
-		if index == self.num_children():
-			return self.valobj.CreateValueFromExpression("len",str(self.num_children()))
-		else:
-			offset = index
-			current = self.left(self.Mheader);
-			while offset > 0:
-				current = self.increment_node(current)
-				offset = offset - 1;
-			# skip all the base stuff and get at the data
-			return current.CreateChildAtOffset('['+str(index)+']',self.skip_size,self.data_type)
+		if index >= self.num_children():
+			return None;
+		offset = index
+		current = self.left(self.Mheader);
+		while offset > 0:
+			current = self.increment_node(current)
+			offset = offset - 1;
+		# skip all the base stuff and get at the data
+		return current.CreateChildAtOffset('['+str(index)+']',self.skip_size,self.data_type)
+
 	# utility functions
 	def node_ptr_value(self,node):
 		return node.GetValueAsUnsigned(0)
+
 	def right(self,node):
 		return node.GetChildMemberWithName("_M_right");
+
 	def left(self,node):
 		return node.GetChildMemberWithName("_M_left");
+
 	def parent(self,node):
 		return node.GetChildMemberWithName("_M_parent");
+
 	# from libstdc++ implementation of iterator for rbtree
 	def increment_node(self,node):
 		if self.node_ptr_value(self.right(node)) != 0:

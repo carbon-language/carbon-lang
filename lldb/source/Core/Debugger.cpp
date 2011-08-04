@@ -742,6 +742,8 @@ ScanFormatDescriptor(const char* var_name_begin,
             // if this is an S, print the summary after all
             else if (*format_name == 'S')
                 *val_obj_display = ValueObject::eDisplaySummary;
+            else if (*format_name == '#')
+                *val_obj_display = ValueObject::eDisplayChildrenCount;
             else if (log)
                 log->Printf("%s is an error, leaving the previous value alone", format_name);
         }

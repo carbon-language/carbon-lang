@@ -84,7 +84,7 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
                         s.PutCString(", ");
                     s.PutCString(child_sp.get()->GetName().AsCString());
                     s.PutChar('=');
-                    s.PutCString(child_sp.get()->GetPrintableRepresentation());
+                    child_sp.get()->GetPrintableRepresentation(s);
                 }
             }
             

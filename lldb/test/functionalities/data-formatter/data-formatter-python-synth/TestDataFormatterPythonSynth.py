@@ -191,7 +191,7 @@ class DataFormatterTestCase(TestBase):
                        'smart'])
 
         # test summaries based on synthetic children
-        self.runCmd("type summary add std::string_vect string_vect -f \"vector has ${svar.len} items\" -e")
+        self.runCmd("type summary add std::string_vect string_vect -f \"vector has ${svar%#} items\" -e")
         self.expect("frame variable strings",
                     substrs = ['vector has 3 items',
                                'goofy',
@@ -215,24 +215,24 @@ class DataFormatterTestCase(TestBase):
 
         self.runCmd("frame variable numbers_list -T")
         self.runCmd("type synth add std::int_list std::string_list int_list string_list -l StdListSynthProvider")
-        self.runCmd("type summary add std::int_list std::string_list int_list string_list -f \"list has ${svar.len} items\" -e")
+        self.runCmd("type summary add std::int_list std::string_list int_list string_list -f \"list has ${svar%#} items\" -e")
         self.runCmd("type format add -f hex int")
 
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 0x00000000 items',
+                    substrs = ['list has 0 items',
                                '{}'])
 
         self.runCmd("n")
             
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 0x00000001 items',
+                    substrs = ['list has 1 items',
                                '[0] = ',
                                '0x12345678'])
 
         self.runCmd("n");self.runCmd("n");self.runCmd("n");
 
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 0x00000004 items',
+                    substrs = ['list has 4 items',
                                '[0] = ',
                                '0x12345678',
                                '[1] =',
@@ -245,7 +245,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n");self.runCmd("n");
 
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 0x00000006 items',
+                    substrs = ['list has 6 items',
                                '[0] = ',
                                '0x12345678',
                                '0x11223344',
@@ -259,14 +259,14 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n")
             
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 0x00000000 items',
+                    substrs = ['list has 0 items',
                                '{}'])
 
 
         self.runCmd("n");self.runCmd("n");self.runCmd("n");self.runCmd("n");
             
         self.expect("frame variable numbers_list",
-                    substrs = ['list has 0x00000004 items',
+                    substrs = ['list has 4 items',
                                '[0] = ', '1',
                                '[1] = ', '2',
                                '[2] = ', '3',
@@ -305,7 +305,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("frame variable ii -T")
         
         self.runCmd("script from StdMapSynthProvider import *")
-        self.runCmd("type summary add std::intint_map intint_map -f \"map has ${svar.len} items\" -e")
+        self.runCmd("type summary add std::intint_map intint_map -f \"map has ${svar%#} items\" -e")
         self.runCmd("type synth add std::intint_map intint_map -l StdMapSynthProvider")
 
 
@@ -356,7 +356,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable si -T")
 
-        self.runCmd("type summary add std::strint_map strint_map -f \"map has ${svar.len} items\" -e")
+        self.runCmd("type summary add std::strint_map strint_map -f \"map has ${svar%#} items\" -e")
         self.runCmd("type synth add std::strint_map strint_map -l StdMapSynthProvider")
         
         self.expect('frame variable si',
@@ -400,7 +400,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable is -T")
         
-        self.runCmd("type summary add std::intstr_map intstr_map -f \"map has ${svar.len} items\" -e")
+        self.runCmd("type summary add std::intstr_map intstr_map -f \"map has ${svar%#} items\" -e")
         self.runCmd("type synth add std::intstr_map intstr_map -l StdMapSynthProvider")
 
         self.expect('frame variable is',
@@ -433,7 +433,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable ss -T")
         
-        self.runCmd("type summary add std::strstr_map strstr_map -f \"map has ${svar.len} items\" -e")
+        self.runCmd("type summary add std::strstr_map strstr_map -f \"map has ${svar%#} items\" -e")
         self.runCmd("type synth add std::strstr_map strstr_map -l StdMapSynthProvider")
 
         self.expect('frame variable ss',

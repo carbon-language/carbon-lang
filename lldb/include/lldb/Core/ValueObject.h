@@ -77,7 +77,8 @@ public:
         eDisplayValue = 1,
         eDisplaySummary,
         eDisplayLanguageSpecific,
-        eDisplayLocation
+        eDisplayLocation,
+        eDisplayChildrenCount,
     };
     
     enum ExpressionPathScanEndReason
@@ -499,8 +500,9 @@ public:
     const char *
     GetObjectDescription ();
     
-    const char *
-    GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display = eDisplaySummary,
+    bool
+    GetPrintableRepresentation(Stream& s,
+                               ValueObjectRepresentationStyle val_obj_display = eDisplaySummary,
                                lldb::Format custom_format = lldb::eFormatInvalid);
 
     bool
