@@ -132,6 +132,16 @@ protected:
   /// boundary.
   unsigned UseBitFieldTypeAlignment : 1;
 
+  /// Control whether zero length bitfields (e.g., int : 0;) force alignment of
+  /// the next bitfield.  If the alignment of the zero length bitfield is 
+  /// greater than the member that follows it, `bar', `bar' will be aligned as
+  /// the type of the zero-length bitfield.
+  unsigned UseZeroLengthBitfieldAlignment : 1;
+
+  /// If non-zero, specifies a fixed alignment value for bitfields that follow
+  /// zero length bitfield, regardless of the zero length bitfield type.
+  unsigned ZeroLengthBitfieldBoundary;
+
 public:
   IntType getSizeType() const { return SizeType; }
   IntType getIntMaxType() const { return IntMaxType; }
@@ -264,6 +274,18 @@ public:
 
   bool useBitFieldTypeAlignment() const {
     return UseBitFieldTypeAlignment;
+  }
+
+  /// useZeroLengthBitfieldAlignment() - Check whether zero length bitfields 
+  /// should force alignment of the next member.
+  bool useZeroLengthBitfieldAlignment() const {
+    return UseZeroLengthBitfieldAlignment;
+  }
+
+  /// getZeroLengthBitfieldBoundary() - Get the fixed alignment value in
+  /// bits for a member that follows zero length bitfield.
+  unsigned getZeroLengthBitfieldBoundary() const {
+    return ZeroLengthBitfieldBoundary;
   }
 
   /// hasAlignMac68kSupport - Check whether this target support '#pragma options

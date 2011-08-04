@@ -1348,6 +1348,13 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
       }
       LastFD = FD;
     }
+    else if (Context.Target.useZeroLengthBitfieldAlignment() &&
+             !Context.Target.useBitFieldTypeAlignment()) {
+      FieldDecl *FD =  (*Field);
+      if (Context.ZeroBitfieldFollowsBitfield(FD, LastFD))
+        ZeroLengthBitfield = FD;
+      LastFD = FD;
+    }
     LayoutField(*Field);
   }
   if (IsMsStruct && RemainingInAlignment &&
@@ -1442,7 +1449,7 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   // This check is needed for 'long long' in -m32 mode.
   if (IsMsStruct && (TypeSize > FieldAlign))
     FieldAlign = TypeSize;
-  
+
   if (ZeroLengthBitfield) {
     // If a zero-length bitfield is inserted after a bitfield,
     // and the alignment of the zero-length bitfield is
@@ -1559,17 +1566,29 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
       Context.getTypeInfoInChars(D->getType());
     FieldSize = FieldInfo.first;
     FieldAlign = FieldInfo.second;
-    
+
     if (ZeroLengthBitfield) {
-      // If a zero-length bitfield is inserted after a bitfield,
-      // and the alignment of the zero-length bitfield is
-      // greater than the member that follows it, `bar', `bar' 
-      // will be aligned as the type of the zero-length bitfield.
-      std::pair<CharUnits, CharUnits> FieldInfo = 
-        Context.getTypeInfoInChars(ZeroLengthBitfield->getType());
-      CharUnits ZeroLengthBitfieldAlignment = FieldInfo.second;
-      if (ZeroLengthBitfieldAlignment > FieldAlign)
-        FieldAlign = ZeroLengthBitfieldAlignment;
+      CharUnits ZeroLengthBitfieldBoundary = 
+        Context.toCharUnitsFromBits(
+          Context.Target.getZeroLengthBitfieldBoundary());
+      if (ZeroLengthBitfieldBoundary == CharUnits::Zero()) {
+        // If a zero-length bitfield is inserted after a bitfield,
+        // and the alignment of the zero-length bitfield is
+        // greater than the member that follows it, `bar', `bar' 
+        // will be aligned as the type of the zero-length bitfield.
+        std::pair<CharUnits, CharUnits> FieldInfo = 
+          Context.getTypeInfoInChars(ZeroLengthBitfield->getType());
+        CharUnits ZeroLengthBitfieldAlignment = FieldInfo.second;        
+        if (ZeroLengthBitfieldAlignment > FieldAlign)
+          FieldAlign = ZeroLengthBitfieldAlignment;
+      }
+      else if (ZeroLengthBitfieldBoundary > FieldAlign) {
+        // Align 'bar' based on a fixed alignment specified by the target.
+        assert (Context.Target.useZeroLengthBitfieldAlignment() &&
+                "ZeroLengthBitfieldBoundary should only be used in conjunction"
+                "with useZeroLengthBitfieldAlignment.");
+        FieldAlign = ZeroLengthBitfieldBoundary;
+      }
       ZeroLengthBitfield = 0;
     }
 

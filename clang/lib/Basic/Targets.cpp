@@ -1963,6 +1963,16 @@ public:
       // structures. This corresponds to PCC_BITFIELD_TYPE_MATTERS in gcc.
       UseBitFieldTypeAlignment = false;
 
+      /// Do force alignment of members that follow zero length bitfields.  If
+      /// the alignment of the zero-length bitfield is greater than the member 
+      /// that follows it, `bar', `bar' will be aligned as the  type of the 
+      /// zero length bitfield.
+      UseZeroLengthBitfieldAlignment = true;
+
+      /// gcc forces the alignment to 4 bytes, regardless of the type of the
+      /// zero length bitfield.
+      ZeroLengthBitfieldBoundary = 32;
+
       if (IsThumb) {
         // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
         // so set preferred for small types to 32.
