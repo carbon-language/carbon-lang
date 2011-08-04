@@ -462,6 +462,12 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   if (!hasRelocationAddend())
     Addend = 0;
+
+  if (is64Bit())
+    assert(isInt<64>(Addend));
+  else
+    assert(isInt<32>(Addend));
+
   ELFRelocationEntry ERE(RelocOffset, Index, Type, RelocSymbol, Addend);
   Relocations[Fragment->getParent()].push_back(ERE);
 }
