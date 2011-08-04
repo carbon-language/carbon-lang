@@ -1970,7 +1970,8 @@ public:
       UseZeroLengthBitfieldAlignment = true;
 
       /// gcc forces the alignment to 4 bytes, regardless of the type of the
-      /// zero length bitfield.
+      /// zero length bitfield.  This corresponds to EMPTY_FIELD_BOUNDARY in
+      /// gcc.
       ZeroLengthBitfieldBoundary = 32;
 
       if (IsThumb) {

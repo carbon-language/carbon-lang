@@ -284,8 +284,8 @@ public:
     return UseZeroLengthBitfieldAlignment;
   }
 
-  /// getZeroLengthBitfieldBoundary() - Get the fixed alignment value in
-  /// bits for a member that follows zero length bitfield.
+  /// getZeroLengthBitfieldBoundary() - Get the fixed alignment value in bits
+  /// for a member that follows a zero length bitfield.
   unsigned getZeroLengthBitfieldBoundary() const {
     return ZeroLengthBitfieldBoundary;
   }
