@@ -25,9 +25,9 @@ class RepeatedExprsCase(BenchBase):
 
         print
         self.run_lldb_repeated_exprs(self.exe_name, 100)
+        print "lldb benchmark:", self.stopwatch
         self.run_gdb_repeated_exprs(self.exe_name, 100)
-        print "lldb_avg: %f" % self.lldb_avg
-        print "gdb_avg: %f" % self.gdb_avg
+        print "gdb benchmark:", self.stopwatch
         print "lldb_avg/gdb_avg: %f" % (self.lldb_avg/self.gdb_avg)
 
     def run_lldb_repeated_exprs(self, exe_name, count):
