@@ -1888,7 +1888,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         return V;
       break;
     case Instruction::Shl: {
-      bool NUW = LBO->hasNoUnsignedWrap() && LBO->hasNoUnsignedWrap();
+      bool NUW = LBO->hasNoUnsignedWrap() && RBO->hasNoUnsignedWrap();
       bool NSW = LBO->hasNoSignedWrap() && RBO->hasNoSignedWrap();
       if (!NUW && !NSW)
         break;
