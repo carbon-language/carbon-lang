@@ -23,7 +23,7 @@
 ; OBJ-NEXT:     'st_size', 0x00000050
 ; OBJ-NEXT:     'st_bind', 0x0
 ; OBJ-NEXT:     'st_type', 0x1
-; OBJ-NEXT:     'st_other', 0x00000000
+; OBJ-NEXT:     'st_other', 0x00
 ; OBJ-NEXT:     'st_shndx', 0x00000004
 
 define i32 @main(i32 %argc) nounwind {

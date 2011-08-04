@@ -117,5 +117,5 @@ bar:
 // CHECK: (('st_name', 0x00000000) # ''
 // CHECK:  ('st_bind', 0x0)
 // CHECK:  ('st_type', 0x3)
-// CHECK:  ('st_other', 0x00000000)
+// CHECK:  ('st_other', 0x00)
 // CHECK:  ('st_shndx', 0x00000001)

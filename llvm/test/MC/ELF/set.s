@@ -7,7 +7,7 @@
 // CHECK:         (('st_name', 0x00000001) # 'kernbase'
 // CHECK-NEXT:     ('st_bind', 0x0)
 // CHECK-NEXT:     ('st_type', 0x0)
-// CHECK-NEXT:     ('st_other', 0x00000000)
+// CHECK-NEXT:     ('st_other', 0x00)
 // CHECK-NEXT:     ('st_shndx', 0x0000fff1)
 // CHECK-NEXT:     ('st_value', 0xffffffff80000000)
 // CHECK-NEXT:     ('st_size', 0x0000000000000000)
@@ -27,7 +27,7 @@
 // CHECK:      (('st_name', 0x0000000a) # 'bar'
 // CHECK-NEXT:  ('st_bind', 0x1)
 // CHECK-NEXT:  ('st_type', 0x0)
-// CHECK-NEXT:  ('st_other', 0x00000000)
+// CHECK-NEXT:  ('st_other', 0x00)
 // CHECK-NEXT:  ('st_shndx', 0x00000000)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)

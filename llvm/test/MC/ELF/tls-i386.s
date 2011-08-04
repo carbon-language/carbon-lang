@@ -15,7 +15,7 @@
 // CHECK-NEXT:   ('st_size', 0x00000000)
 // CHECK-NEXT:   ('st_bind', 0x1)
 // CHECK-NEXT:   ('st_type', 0x6)
-// CHECK-NEXT:   ('st_other', 0x00000000)
+// CHECK-NEXT:   ('st_other', 0x00)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 6
@@ -24,7 +24,7 @@
 // CHECK-NEXT:   ('st_size', 0x00000000)
 // CHECK-NEXT:   ('st_bind', 0x1)
 // CHECK-NEXT:   ('st_type', 0x6)
-// CHECK-NEXT:   ('st_other', 0x00000000)
+// CHECK-NEXT:   ('st_other', 0x00)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 7
@@ -33,7 +33,7 @@
 // CHECK-NEXT:   ('st_size', 0x00000000)
 // CHECK-NEXT:   ('st_bind', 0x1)
 // CHECK-NEXT:   ('st_type', 0x6)
-// CHECK-NEXT:   ('st_other', 0x00000000)
+// CHECK-NEXT:   ('st_other', 0x00)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 8
@@ -42,7 +42,7 @@
 // CHECK-NEXT:   ('st_size', 0x00000000)
 // CHECK-NEXT:   ('st_bind', 0x1)
 // CHECK-NEXT:   ('st_type', 0x6)
-// CHECK-NEXT:   ('st_other', 0x00000000)
+// CHECK-NEXT:   ('st_other', 0x00)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 9
@@ -51,7 +51,7 @@
 // CHECK-NEXT:   ('st_size', 0x00000000)
 // CHECK-NEXT:   ('st_bind', 0x1)
 // CHECK-NEXT:   ('st_type', 0x6)
-// CHECK-NEXT:   ('st_other', 0x00000000)
+// CHECK-NEXT:   ('st_other', 0x00)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 10
@@ -60,7 +60,7 @@
 // CHECK-NEXT:   ('st_size', 0x00000000)
 // CHECK-NEXT:   ('st_bind', 0x1)
 // CHECK-NEXT:   ('st_type', 0x6)
-// CHECK-NEXT:   ('st_other', 0x00000000)
+// CHECK-NEXT:   ('st_other', 0x00)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Symbol 11
@@ -69,6 +69,6 @@
 // CHECK-NEXT:   ('st_size', 0x00000000)
 // CHECK-NEXT:   ('st_bind', 0x1)
 // CHECK-NEXT:   ('st_type', 0x6)
-// CHECK-NEXT:   ('st_other', 0x00000000)
+// CHECK-NEXT:   ('st_other', 0x00)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)
 // CHECK-NEXT:  ),

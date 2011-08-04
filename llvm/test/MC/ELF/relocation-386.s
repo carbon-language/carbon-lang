@@ -175,7 +175,7 @@
 // CHECK-NEXT:  ('st_size', 0x00000000)
 // CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x6)
-// CHECK-NEXT:  ('st_other', 0x00000000)
+// CHECK-NEXT:  ('st_other', 0x00)
 // CHECK-NEXT:  ('st_shndx', 0x00000005)
 
 // Symbol 7 is section 4
@@ -185,7 +185,7 @@
 // CHECK-NEXT:  ('st_size', 0x00000000)
 // CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x3)
-// CHECK-NEXT:  ('st_other', 0x00000000)
+// CHECK-NEXT:  ('st_other', 0x00)
 // CHECK-NEXT:  ('st_shndx', 0x00000004)
 
 
