@@ -1923,7 +1923,10 @@ llvm::Constant *
 CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
   // FIXME: This can be more efficient.
   // FIXME: We shouldn't need to bitcast the constant in the wide string case.
-  llvm::Constant *C = GetAddrOfConstantString(GetStringForStringLiteral(S));
+  CharUnits Align = getContext().getTypeAlignInChars(S->getType());
+  llvm::Constant *C = GetAddrOfConstantString(GetStringForStringLiteral(S),
+                                              /* GlobalName */ 0,
+                                              Align.getQuantity());
   if (S->isWide() || S->isUTF16() || S->isUTF32()) {
     llvm::Type *DestTy =
         llvm::PointerType::getUnqual(getTypes().ConvertType(S->getType()));
@@ -1944,10 +1947,11 @@ CodeGenModule::GetAddrOfConstantStringFromObjCEncode(const ObjCEncodeExpr *E) {
 
 
 /// GenerateWritableString -- Creates storage for a string literal.
-static llvm::Constant *GenerateStringLiteral(StringRef str,
+static llvm::GlobalVariable *GenerateStringLiteral(StringRef str,
                                              bool constant,
                                              CodeGenModule &CGM,
-                                             const char *GlobalName) {
+                                             const char *GlobalName,
+                                             unsigned Alignment) {
   // Create Constant for this string literal. Don't add a '\0'.
   llvm::Constant *C =
       llvm::ConstantArray::get(CGM.getLLVMContext(), str, false);
@@ -1957,7 +1961,7 @@ static llvm::Constant *GenerateStringLiteral(StringRef str,
     new llvm::GlobalVariable(CGM.getModule(), C->getType(), constant,
                              llvm::GlobalValue::PrivateLinkage,
                              C, GlobalName);
-  GV->setAlignment(1);
+  GV->setAlignment(Alignment);
   GV->setUnnamedAddr(true);
   return GV;
 }
@@ -1971,7 +1975,8 @@ static llvm::Constant *GenerateStringLiteral(StringRef str,
 ///
 /// The result has pointer to array type.
 llvm::Constant *CodeGenModule::GetAddrOfConstantString(StringRef Str,
-                                                       const char *GlobalName) {
+                                                       const char *GlobalName,
+                                                       unsigned Alignment) {
   bool IsConstant = !Features.WritableStrings;
 
   // Get the default prefix if a name wasn't specified.
@@ -1980,27 +1985,32 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(StringRef Str,
 
   // Don't share any string literals if strings aren't constant.
   if (!IsConstant)
-    return GenerateStringLiteral(Str, false, *this, GlobalName);
+    return GenerateStringLiteral(Str, false, *this, GlobalName, Alignment);
 
-  llvm::StringMapEntry<llvm::Constant *> &Entry =
+  llvm::StringMapEntry<llvm::GlobalVariable *> &Entry =
     ConstantStringMap.GetOrCreateValue(Str);
 
-  if (Entry.getValue())
-    return Entry.getValue();
+  if (llvm::GlobalVariable *GV = Entry.getValue()) {
+    if (Alignment > GV->getAlignment()) {
+      GV->setAlignment(Alignment);
+    }
+    return GV;
+  }
 
   // Create a global variable for this.
-  llvm::Constant *C = GenerateStringLiteral(Str, true, *this, GlobalName);
-  Entry.setValue(C);
-  return C;
+  llvm::GlobalVariable *GV = GenerateStringLiteral(Str, true, *this, GlobalName, Alignment);
+  Entry.setValue(GV);
+  return GV;
 }
 
 /// GetAddrOfConstantCString - Returns a pointer to a character
 /// array containing the literal and a terminating '\0'
 /// character. The result has pointer to array type.
 llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &Str,
-                                                        const char *GlobalName){
+                                                        const char *GlobalName,
+                                                        unsigned Alignment) {
   StringRef StrWithNull(Str.c_str(), Str.size() + 1);
-  return GetAddrOfConstantString(StrWithNull, GlobalName);
+  return GetAddrOfConstantString(StrWithNull, GlobalName, Alignment);
 }
 
 /// EmitObjCPropertyImplementations - Emit information for synthesized

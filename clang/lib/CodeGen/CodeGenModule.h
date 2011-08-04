@@ -263,7 +263,7 @@ class CodeGenModule : public CodeGenTypeCache {
   std::vector<llvm::Constant*> Annotations;
 
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
-  llvm::StringMap<llvm::Constant*> ConstantStringMap;
+  llvm::StringMap<llvm::GlobalVariable*> ConstantStringMap;
   llvm::DenseMap<const Decl*, llvm::Value*> StaticLocalDeclMap;
 
   /// CXXGlobalInits - Global variables with initializers that need to run
@@ -545,7 +545,8 @@ public:
   /// \param GlobalName If provided, the name to use for the global
   /// (if one is created).
   llvm::Constant *GetAddrOfConstantString(StringRef Str,
-                                          const char *GlobalName=0);
+                                          const char *GlobalName=0,
+                                          unsigned Alignment=1);
 
   /// GetAddrOfConstantCString - Returns a pointer to a character array
   /// containing the literal and a terminating '\0' character. The result has
@@ -554,7 +555,8 @@ public:
   /// \param GlobalName If provided, the name to use for the global (if one is
   /// created).
   llvm::Constant *GetAddrOfConstantCString(const std::string &str,
-                                           const char *GlobalName=0);
+                                           const char *GlobalName=0,
+                                           unsigned Alignment=1);
   
   /// GetAddrOfCXXConstructor - Return the address of the constructor of the
   /// given type.
