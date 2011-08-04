@@ -31,7 +31,7 @@ foo2:
 // CHECK-NEXT:  ('r_addend', 0x0000000000000000)
 // CHECK-NEXT: ),
 
-// CHECK:       # Symbol 0x00000001
+// CHECK:       # Symbol 1
 // CHECK-NEXT:  (('st_name', 0x00000005) # 'bar'
 // CHECK-NEXT:   ('st_bind', 0x00000000)
 // CHECK-NEXT:   ('st_type', 0x00000000)
@@ -41,7 +41,7 @@ foo2:
 // CHECK-NEXT:   ('st_size', 0x0000000000000000)
 // CHECK-NEXT:  ),
 
-// CHECK:      # Symbol 0x00000006
+// CHECK:      # Symbol 6
 // CHECK-NEXT: (('st_name', 0x0000000e) # 'bar2'
 // CHECK-NEXT:  ('st_bind', 0x00000002)
 // CHECK-NEXT:  ('st_type', 0x00000000)

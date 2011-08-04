@@ -13,7 +13,7 @@
 // CHECK-NEXT:   ('sh_entsize', 0x00000000)
 // CHECK-NEXT:  ),
 
-// CHECK:       # Symbol 0x00000004
+// CHECK:       # Symbol 4
 // CHECK-NEXT:  (('st_name', 0x00000000) # ''
 // CHECK-NEXT:   ('st_bind', 0x00000000)
 // CHECK-NEXT:   ('st_type', 0x00000003)

@@ -9,7 +9,7 @@
 // CHECK-NEXT:    ),
 // CHECK-NEXT:   ])
 
-// CHECK:         # Symbol 0x00000005
+// CHECK:         # Symbol 5
 // CHECK-NEXT:    (('st_name', 0x00000005) # 'baz'
 // CHECK-NEXT:     ('st_bind', 0x00000001)
 // CHECK-NEXT:     ('st_type', 0x00000000)

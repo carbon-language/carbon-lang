@@ -32,6 +32,6 @@ entry:
 ; CHECK-NEXT:      'r_type', 0x0000000a
 
 ; make sure foo is thumb function: bit 0 = 1
-; CHECK:           Symbol 0x00000007
+; CHECK:           Symbol 7
 ; CHECK-NEXT:      'foo'
 ; CHECK-NEXT:      'st_value', 0x00000001

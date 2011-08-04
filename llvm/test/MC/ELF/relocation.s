@@ -113,7 +113,7 @@ bar:
 // CHECK-NEXT:  ('r_type', 0x0000000b)
 // CHECK-NEXT:  ('r_addend', 0x0000000000000000)
 
-// CHECK:   # Symbol 0x00000002
+// CHECK:   # Symbol 2
 // CHECK: (('st_name', 0x00000000) # ''
 // CHECK:  ('st_bind', 0x00000000)
 // CHECK:  ('st_type', 0x00000003)

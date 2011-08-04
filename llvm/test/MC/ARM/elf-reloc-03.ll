@@ -93,5 +93,5 @@ declare void @exit(i32) noreturn nounwind
 ;; OBJ-NEXT:     'r_sym', 0x0000000c
 ;; OBJ-NEXT:     'r_type', 0x0000002b
 
-;; OBJ:      Symbol 0x0000000c
+;; OBJ:      Symbol 12
 ;; OBJ-NEXT:    'vtable'

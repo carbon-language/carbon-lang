@@ -23,5 +23,5 @@ foo:
 // CHECK-NEXT: ('sh_entsize', 0x00000000)
 // CHECK-NEXT: ('_section_data', 'ebfeebfc ebfa')
 
-// CHECK:       # Symbol 0x00000006
+// CHECK:       # Symbol 6
 // CHECK-NEXT: (('st_name', 0x00000005) # 'foo'

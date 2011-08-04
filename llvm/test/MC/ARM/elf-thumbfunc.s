@@ -12,7 +12,7 @@ foo:
 	bx	lr
 
 @@ make sure foo is thumb function: bit 0 = 1 (st_value)
-@CHECK:           Symbol 0x00000004
+@CHECK:           Symbol 4
 @CHECK-NEXT:      'st_name', 0x00000001
 @CHECK-NEXT:      'st_value', 0x00000001
 @CHECK-NEXT:      'st_size', 0x00000000

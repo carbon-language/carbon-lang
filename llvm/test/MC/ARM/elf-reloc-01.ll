@@ -65,6 +65,6 @@ declare void @exit(i32) noreturn nounwind
 ;; OBJ-NEXT:     'r_sym', 0x00000002
 ;; OBJ-NEXT:     'r_type', 0x0000002b
 
-;; OBJ:         Symbol 0x00000002
+;; OBJ:         Symbol 2
 ;; OBJ-NEXT:    '_MergedGlobals'
 ;; OBJ-NEXT:    'st_value', 0x00000010

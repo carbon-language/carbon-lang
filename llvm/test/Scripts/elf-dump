@@ -97,7 +97,7 @@ def dumpSymtab(f, section, strtab):
 
     for index in range(entries):
         f.seek(section.sh_offset + index * section.sh_entsize)
-        print "    # Symbol %s" % common_dump.HexDump(index)
+        print "    # Symbol %s" % index
         name = f.read32()
         print "    (('st_name', %s)" % common_dump.HexDump(name), "# %r" % strtab[name]
         if not f.is64Bit:

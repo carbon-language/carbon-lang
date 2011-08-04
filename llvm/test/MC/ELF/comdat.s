@@ -42,7 +42,7 @@
 
 // Test that g1 and g2 are local, but g3 is an undefined global.
 
-// CHECK:      # Symbol 0x00000001
+// CHECK:      # Symbol 1
 // CHECK-NEXT: (('st_name', 0x00000001) # 'g1'
 // CHECK-NEXT:  ('st_bind', 0x00000000)
 // CHECK-NEXT:  ('st_type', 0x00000000)
@@ -51,7 +51,7 @@
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
-// CHECK-NEXT: # Symbol 0x00000002
+// CHECK-NEXT: # Symbol 2
 // CHECK-NEXT: (('st_name', 0x00000004) # 'g2'
 // CHECK-NEXT:  ('st_bind', 0x00000000)
 // CHECK-NEXT:  ('st_type', 0x00000000)
@@ -61,7 +61,7 @@
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
 // CHECK-NEXT: ),
 
-// CHECK:      # Symbol 0x0000000d
+// CHECK:      # Symbol 13
 // CHECK-NEXT: (('st_name', 0x00000007) # 'g3'
 // CHECK-NEXT:  ('st_bind', 0x00000001)
 // CHECK-NEXT:  ('st_type', 0x00000000)

@@ -165,11 +165,11 @@
 // CHECK:      # Section 4
 // CHECK-NEXT: (('sh_name', 0x0000000b) # '.bss'
 
-// CHECK:      # Symbol 0x00000001
+// CHECK:      # Symbol 1
 // CHECK-NEXT: (('st_name', 0x00000005) # '.Lfoo'
 
 // Symbol 4 is zed
-// CHECK:      # Symbol 0x00000004
+// CHECK:      # Symbol 4
 // CHECK-NEXT: (('st_name', 0x00000035) # 'zed'
 // CHECK-NEXT:  ('st_value', 0x00000000)
 // CHECK-NEXT:  ('st_size', 0x00000000)
@@ -179,7 +179,7 @@
 // CHECK-NEXT:  ('st_shndx', 0x00000005)
 
 // Symbol 7 is section 4
-// CHECK:      # Symbol 0x00000007
+// CHECK:      # Symbol 7
 // CHECK-NEXT: (('st_name', 0x00000000) # ''
 // CHECK-NEXT:  ('st_value', 0x00000000)
 // CHECK-NEXT:  ('st_size', 0x00000000)

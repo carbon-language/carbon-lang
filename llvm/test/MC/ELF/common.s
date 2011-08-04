@@ -33,7 +33,7 @@
         .local	common6
         .comm	common6,8,16
 
-// CHECK:      # Symbol 0x00000003
+// CHECK:      # Symbol 3
 // CHECK-NEXT: (('st_name', 0x00000011) # 'common6'
 // CHECK-NEXT:  ('st_bind', 0x00000000)
 // CHECK-NEXT:  ('st_type', 0x00000001)
@@ -77,7 +77,7 @@ foo:
 
         .comm	common5,4,4
 
-// CHECK:      # Symbol 0x00000009
+// CHECK:      # Symbol 9
 // CHECK-NEXT: (('st_name', 0x0000002d) # 'common5'
 // CHECK-NEXT:  ('st_bind', 0x00000001)
 // CHECK-NEXT:  ('st_type', 0x00000001)

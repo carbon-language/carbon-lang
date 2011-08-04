@@ -6,7 +6,7 @@
 .Lbar:
         zed = .Lfoo - .Lbar
 
-// CHECK:      # Symbol 0x00000001
+// CHECK:      # Symbol 1
 // CHECK-NEXT: (('st_name', 0x00000001) # 'zed'
 // CHECK-NEXT:  ('st_bind', 0x00000000)
 // CHECK-NEXT:  ('st_type', 0x00000000)

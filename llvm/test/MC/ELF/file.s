@@ -4,7 +4,7 @@
 
 .file "foo"
 foa:
-// CHECK:    # Symbol 0x00000001
+// CHECK:    # Symbol 1
 // CHECK-NEXT:    (('st_name', 0x00000001) # 'foo'
 // CHECK-NEXT:     ('st_bind', 0x00000000)
 // CHECK-NEXT:     ('st_type', 0x00000004)
@@ -13,7 +13,7 @@ foa:
 // CHECK-NEXT:     ('st_value', 0x0000000000000000)
 // CHECK-NEXT:     ('st_size', 0x0000000000000000)
 // CHECK-NEXT:    ),
-// CHECK-NEXT:    # Symbol 0x00000002
+// CHECK-NEXT:    # Symbol 2
 // CHECK-NEXT:    (('st_name', 0x00000005) # 'foa'
 // CHECK-NEXT:     ('st_bind', 0x00000000)
 // CHECK-NEXT:     ('st_type', 0x00000000)
