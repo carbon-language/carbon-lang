@@ -1,4 +1,4 @@
-//==--- MacOSKeychainAPIChecker.cpp -----------------------------------*- C++ -*-==//
+//==--- MacOSKeychainAPIChecker.cpp ------------------------------*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -38,27 +38,20 @@ public:
   void checkEndPath(EndOfFunctionNodeBuilder &B, ExprEngine &Eng) const;
 
 private:
-  static const unsigned InvalidParamVal = 100000;
+  /// Stores the information about the allocator and deallocator functions -
+  /// these are the functions the checker is tracking.
+  struct ADFunctionInfo {
+    const char* Name;
+    unsigned int Param;
+    unsigned int DeallocatorIdx;
+  };
+  static const unsigned InvalidIdx = 100000;
+  static const unsigned FunctionsToTrackSize = 4;
+  static const ADFunctionInfo FunctionsToTrack[FunctionsToTrackSize];
 
-  /// Given the function name, returns the index of the parameter which will
-  /// be allocated as a result of the call.
-  unsigned getAllocatingFunctionParam(StringRef Name) const {
-    if (Name == "SecKeychainItemCopyContent")
-      return 4;
-    if (Name == "SecKeychainFindGenericPassword")
-      return 6;
-    if (Name == "SecKeychainFindInternetPassword")
-      return 13;
-    return InvalidParamVal;
-  }
-
-  /// Given the function name, returns the index of the parameter which will
-  /// be freed by the function.
-  unsigned getDeallocatingFunctionParam(StringRef Name) const {
-    if (Name == "SecKeychainItemFreeContent")
-      return 1;
-    return InvalidParamVal;
-  }
+  /// Given the function name, returns the index of the allocator/deallocator
+  /// function.
+  unsigned getTrackedFunctionIndex(StringRef Name, bool IsAllocator) const;
 
   inline void initBugType() const {
     if (!BT)
@@ -67,20 +60,26 @@ private:
 };
 }
 
-struct AllocationInfo {
+/// AllocationState is a part of the checker specific state together with the
+/// MemRegion corresponding to the allocated data.
+struct AllocationState {
   const Expr *Address;
+  /// The index of the allocator function.
+  unsigned int AllocatorIdx;
 
-  AllocationInfo(const Expr *E) : Address(E) {}
-  bool operator==(const AllocationInfo &X) const {
+  AllocationState(const Expr *E, unsigned int Idx) : Address(E),
+                                                     AllocatorIdx(Idx) {}
+  bool operator==(const AllocationState &X) const {
     return Address == X.Address;
   }
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddPointer(Address);
+    ID.AddInteger(AllocatorIdx);
   }
 };
 
-// GRState traits to store the currently allocated (and not yet freed) symbols.
-typedef llvm::ImmutableMap<const MemRegion*, AllocationInfo> AllocatedSetTy;
+/// GRState traits to store the currently allocated (and not yet freed) symbols.
+typedef llvm::ImmutableMap<const MemRegion*, AllocationState> AllocatedSetTy;
 
 namespace { struct AllocatedData {}; }
 namespace clang { namespace ento {
@@ -100,6 +99,32 @@ static bool isEnclosingFunctionParam(const Expr *E) {
   return false;
 }
 
+const MacOSKeychainAPIChecker::ADFunctionInfo
+  MacOSKeychainAPIChecker::FunctionsToTrack[FunctionsToTrackSize] = {
+    {"SecKeychainItemCopyContent", 4, 3},                       // 0
+    {"SecKeychainFindGenericPassword", 6, 3},                   // 1
+    {"SecKeychainFindInternetPassword", 13, 3},                 // 2
+    {"SecKeychainItemFreeContent", 1, InvalidIdx},              // 3
+};
+
+unsigned MacOSKeychainAPIChecker::getTrackedFunctionIndex(StringRef Name,
+                                                       bool IsAllocator) const {
+  for (unsigned I = 0; I < FunctionsToTrackSize; ++I) {
+    ADFunctionInfo FI = FunctionsToTrack[I];
+    if (FI.Name != Name)
+      continue;
+    // Make sure the function is of the right type (allocator vs deallocator).
+    if (IsAllocator && (FI.DeallocatorIdx == InvalidIdx))
+      return InvalidIdx;
+    if (!IsAllocator && (FI.DeallocatorIdx != InvalidIdx))
+      return InvalidIdx;
+
+    return I;
+  }
+  // The function is not tracked.
+  return InvalidIdx;
+}
+
 void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
                                            CheckerContext &C) const {
   const GRState *State = C.getState();
@@ -115,17 +140,18 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   StringRef funName = funI->getName();
 
   // If a value has been freed, remove from the list.
-  unsigned idx = getDeallocatingFunctionParam(funName);
-  if (idx == InvalidParamVal)
+  unsigned idx = getTrackedFunctionIndex(funName, false);
+  if (idx == InvalidIdx)
     return;
 
-  const Expr *ArgExpr = CE->getArg(idx);
+  const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
   const MemRegion *Arg = State->getSVal(ArgExpr).getAsRegion();
   if (!Arg)
     return;
 
   // If trying to free data which has not been allocated yet, report as bug.
-  if (State->get<AllocatedData>(Arg) == 0) {
+  const AllocationState *AS = State->get<AllocatedData>(Arg);
+  if (!AS) {
     // It is possible that this is a false positive - the argument might
     // have entered as an enclosing function parameter.
     if (isEnclosingFunctionParam(ArgExpr))
@@ -139,9 +165,12 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
         "Trying to free data which has not been allocated.", N);
     Report->addRange(ArgExpr->getSourceRange());
     C.EmitReport(Report);
+    return;
   }
 
   // Continue exploring from the new state.
+  assert(FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx == idx &&
+    "Allocator should match the deallocator");
   State = State->remove<AllocatedData>(Arg);
   C.addTransition(State);
 }
@@ -162,11 +191,12 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
   StringRef funName = funI->getName();
 
   // If a value has been allocated, add it to the set for tracking.
-  unsigned idx = getAllocatingFunctionParam(funName);
-  if (idx == InvalidParamVal)
+  unsigned idx = getTrackedFunctionIndex(funName, true);
+  if (idx == InvalidIdx)
     return;
 
-  SVal Arg = State->getSVal(CE->getArg(idx));
+  const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
+  SVal Arg = State->getSVal(ArgExpr);
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&Arg)) {
     // Add the symbolic value, which represents the location of the allocated
     // data, to the set.
@@ -174,12 +204,13 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     // If this is not a region, it can be:
     //  - unknown (cannot reason about it)
     //  - undefined (already reported by other checker)
-    //  - constant (null - should not be tracked, other - report a warning?)
+    //  - constant (null - should not be tracked,
+    //              other constant will generate a compiler warning)
     //  - goto (should be reported by other checker)
     if (!V)
       return;
 
-    State = State->set<AllocatedData>(V, AllocationInfo(CE->getArg(idx)));
+    State = State->set<AllocatedData>(V, AllocationState(ArgExpr, idx));
 
     // We only need to track the value if the function returned noErr(0), so
     // bind the return value of the function to 0.
