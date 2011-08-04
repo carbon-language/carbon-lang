@@ -573,13 +573,13 @@ bool ASTContext::BitfieldFollowsBitfield(const FieldDecl *FD,
           LastFD->getBitWidth()->EvaluateAsInt(*this).getZExtValue());
 }
 
-bool ASTContext::NoneBitfieldFollowsBitfield(const FieldDecl *FD,
+bool ASTContext::NonBitfieldFollowsBitfield(const FieldDecl *FD,
                                          const FieldDecl *LastFD) const {
   return (!FD->isBitField() && LastFD && LastFD->isBitField() &&
           LastFD->getBitWidth()->EvaluateAsInt(*this).getZExtValue());  
 }
 
-bool ASTContext::BitfieldFollowsNoneBitfield(const FieldDecl *FD,
+bool ASTContext::BitfieldFollowsNonBitfield(const FieldDecl *FD,
                                              const FieldDecl *LastFD) const {
   return (FD->isBitField() && LastFD && !LastFD->isBitField() &&
           FD->getBitWidth()->EvaluateAsInt(*this).getZExtValue());  
