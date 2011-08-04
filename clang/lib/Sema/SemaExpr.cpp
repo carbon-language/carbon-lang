@@ -1468,8 +1468,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
             ND = Best->Function;
             break;
           default:
-            // Don't try to recover; it won't work.
-            return true;
+            break;
         }
       }
       R.addDecl(ND);
