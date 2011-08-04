@@ -896,11 +896,6 @@ bool ModuleLinker::run() {
   // Loop over all of the linked values to compute type mappings.
   computeTypeMapping();
 
-  // Remap all of the named mdnoes in Src into the DstM module. We do this
-  // after linking GlobalValues so that MDNodes that reference GlobalValues
-  // are properly remapped.
-  linkNamedMDNodes();
-
   // Insert all of the globals in src into the DstM module... without linking
   // initializers (which could refer to functions not yet mapped over).
   for (Module::global_iterator I = SrcM->global_begin(),
@@ -940,6 +935,11 @@ bool ModuleLinker::run() {
 
   // Resolve all uses of aliases with aliasees.
   linkAliasBodies();
+
+  // Remap all of the named mdnoes in Src into the DstM module. We do this
+  // after linking GlobalValues so that MDNodes that reference GlobalValues
+  // are properly remapped.
+  linkNamedMDNodes();
 
   // Now that all of the types from the source are used, resolve any structs
   // copied over to the dest that didn't exist there.
