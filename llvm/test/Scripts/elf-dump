@@ -122,11 +122,13 @@ def dumpRel(f, section, dumprela = False):
         print "    (('r_offset', %s)" % common_dump.HexDump(f.readWord())
         r_info = f.readWord()
         if f.is64Bit:
-            print "     ('r_sym', %s)" % common_dump.HexDump((r_info >> 32))
-            print "     ('r_type', %s)" % common_dump.HexDump((r_info & 0xffffffff))
+            r_sym = (r_info >> 32, 32)
+            r_type = (r_info & 0xffffffff, 32)
         else:
-            print "     ('r_sym', %s)" % common_dump.HexDump((r_info >> 8))
-            print "     ('r_type', %s)" % common_dump.HexDump((r_info & 0xff))
+            r_sym = (r_info >> 8, 24)
+            r_type = (r_info & 0xff, 8)
+        print "     ('r_sym', %s)" % common_dump.HexDump(r_sym[0], 32)
+        print "     ('r_type', %s)" % common_dump.HexDump(r_type[0], r_type[1])
         if dumprela:
             val = f.readWord()
             if f.is64Bit:

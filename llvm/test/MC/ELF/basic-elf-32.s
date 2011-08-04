@@ -44,19 +44,19 @@ main:                                   # @main
 // CHECK:   ('_relocations', [
 // CHECK:     # Relocation 0
 // CHECK:     (('r_offset', 0x00000006)
-// CHECK:      ('r_type', 0x00000001)
+// CHECK:      ('r_type', 0x01)
 // CHECK:     ),
 // CHECK:     # Relocation 1
 // CHECK:     (('r_offset', 0x0000000b)
-// CHECK:      ('r_type', 0x00000002)
+// CHECK:      ('r_type', 0x02)
 // CHECK:     ),
 // CHECK:     # Relocation 2
 // CHECK:     (('r_offset', 0x00000012)
-// CHECK:      ('r_type', 0x00000001)
+// CHECK:      ('r_type', 0x01)
 // CHECK:     ),
 // CHECK:     # Relocation 3
 // CHECK:     (('r_offset', 0x00000017)
-// CHECK:      ('r_type', 0x00000002)
+// CHECK:      ('r_type', 0x02)
 // CHECK:     ),
 // CHECK:   ])
 

@@ -30,10 +30,10 @@ barf:                                   @ @barf
 @ OBJ:              Relocation 0
 @ OBJ-NEXT:         'r_offset', 0x00000000
 @ OBJ-NEXT:         'r_sym'
-@ OBJ-NEXT:         'r_type', 0x0000002d
+@ OBJ-NEXT:         'r_type', 0x2d
 
 @ OBJ:              Relocation 1
 @ OBJ-NEXT:         'r_offset', 0x00000004
 @ OBJ-NEXT:         'r_sym'
-@ OBJ-NEXT:         'r_type', 0x0000002e
+@ OBJ-NEXT:         'r_type', 0x2e
 

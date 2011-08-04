@@ -29,7 +29,7 @@ entry:
 ; CHECK:           Relocation 0
 ; CHECK-NEXT:      'r_offset', 0x00000008
 ; CHECK-NEXT:      'r_sym', 0x00000007
-; CHECK-NEXT:      'r_type', 0x0000000a
+; CHECK-NEXT:      'r_type', 0x0a
 
 ; make sure foo is thumb function: bit 0 = 1
 ; CHECK:           Symbol 7

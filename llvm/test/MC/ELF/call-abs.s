@@ -19,6 +19,6 @@ f:                                      # @f
 // CHECK-NEXT:  # Relocation 0
 // CHECK-NEXT:  (('r_offset', 0x00000004)
 // CHECK-NEXT:   ('r_sym', 0x00000000)
-// CHECK-NEXT:   ('r_type', 0x00000002)
+// CHECK-NEXT:   ('r_type', 0x02)
 // CHECK-NEXT:  ),
 // CHECK-NEXT: ])
