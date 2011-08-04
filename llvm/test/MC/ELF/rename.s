@@ -33,7 +33,7 @@ defined3:
 // CHECK-NEXT: (('r_offset', 0x00000000)
 // CHECK-NEXT:  ('r_sym', 0x00000002)
 // CHECK-NEXT:  ('r_type', 0x0000000a)
-// CHECK-NEXT:  ('r_addend', 0x00000000)
+// CHECK-NEXT:  ('r_addend', 0x0000000000000000)
 
 // Symbol 2 is section 1
 // CHECK:      # Symbol 0x00000002

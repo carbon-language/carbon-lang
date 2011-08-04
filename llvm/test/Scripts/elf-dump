@@ -34,26 +34,14 @@ class Reader:
     def read32(self):
         return struct.unpack('><'[self.isLSB] + 'I', self.read(4))[0]
 
-    def read32S(self):
-        return struct.unpack('><'[self.isLSB] + 'i', self.read(4))[0]
-
     def read64(self):
         return struct.unpack('><'[self.isLSB] + 'Q', self.read(8))[0]
-
-    def read64S(self):
-        return struct.unpack('><'[self.isLSB] + 'q', self.read(8))[0]
 
     def readWord(self):
         if self.is64Bit:
             return self.read64()
         else:
             return self.read32()
-
-    def readWordS(self):
-        if self.is64Bit:
-            return self.read64S()
-        else:
-            return self.read32S()
 
 class StringTable:
     def __init__(self, strings):
@@ -140,7 +128,12 @@ def dumpRel(f, section, dumprela = False):
             print "     ('r_sym', %s)" % common_dump.HexDump((r_info >> 8))
             print "     ('r_type', %s)" % common_dump.HexDump((r_info & 0xff))
         if dumprela:
-            print "     ('r_addend', %s)" % common_dump.HexDump(f.readWordS())
+            val = f.readWord()
+            if f.is64Bit:
+                numBits = 64
+            else:
+                numBits = 32
+            print "     ('r_addend', %s)" % common_dump.HexDump(val, numBits)
         print "    ),"
 
 def dumpELF(path, opts):

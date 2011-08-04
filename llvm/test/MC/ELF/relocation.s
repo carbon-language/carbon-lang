@@ -63,55 +63,55 @@ bar:
 // CHECK-NEXT:  (('r_offset', 0x0000002d)
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x00000016)
-// CHECK-NEXT:   ('r_addend', 0xfffffffc)
+// CHECK-NEXT:   ('r_addend', 0xfffffffffffffffc)
 
 // CHECK:  # Relocation 0x00000007
 // CHECK-NEXT:  (('r_offset', 0x00000034)
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x00000013)
-// CHECK-NEXT:   ('r_addend', 0xfffffffc)
+// CHECK-NEXT:   ('r_addend', 0xfffffffffffffffc)
 
 // CHECK:  # Relocation 0x00000008
 // CHECK-NEXT:  (('r_offset', 0x0000003b)
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x00000017)
-// CHECK-NEXT:   ('r_addend', 0x00000000)
+// CHECK-NEXT:   ('r_addend', 0x0000000000000000)
 
 // CHECK:  # Relocation 0x00000009
 // CHECK-NEXT:  (('r_offset', 0x00000042)
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x00000014)
-// CHECK-NEXT:   ('r_addend', 0xfffffffc)
+// CHECK-NEXT:   ('r_addend', 0xfffffffffffffffc)
 
 // CHECK:  # Relocation 0x0000000a
 // CHECK-NEXT:  (('r_offset', 0x00000049)
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x00000015)
-// CHECK-NEXT:   ('r_addend', 0x00000000)
+// CHECK-NEXT:   ('r_addend', 0x0000000000000000)
 
 // CHECK: # Relocation 0x0000000b
 // CHECK-NEXT:  (('r_offset', 0x0000004e)
 // CHECK-NEXT:   ('r_sym', 0x00000002)
 // CHECK-NEXT:   ('r_type', 0x0000000b)
-// CHECK-NEXT:   ('r_addend', 0x00000000)
+// CHECK-NEXT:   ('r_addend', 0x0000000000000000)
 
 // CHECK: # Relocation 0x0000000c
 // CHECK-NEXT: (('r_offset', 0x00000055)
 // CHECK-NEXT:  ('r_sym', 0x00000006)
 // CHECK-NEXT:  ('r_type', 0x00000002)
-// CHECK-NEXT:  ('r_addend', 0xfffffffc)
+// CHECK-NEXT:  ('r_addend', 0xfffffffffffffffc)
 
 // CHECK: # Relocation 0x0000000d
 // CHECK-NEXT: (('r_offset', 0x0000005c)
 // CHECK-NEXT:  ('r_sym', 0x00000006)
 // CHECK-NEXT:  ('r_type', 0x00000002)
-// CHECK-NEXT:  ('r_addend', 0x0000005c)
+// CHECK-NEXT:  ('r_addend', 0x000000000000005c)
 
 // CHECK: # Relocation 0x0000000e
 // CHECK-NEXT: (('r_offset', 0x00000063)
 // CHECK-NEXT:  ('r_sym', 0x00000002)
 // CHECK-NEXT:  ('r_type', 0x0000000b)
-// CHECK-NEXT:  ('r_addend', 0x00000000)
+// CHECK-NEXT:  ('r_addend', 0x0000000000000000)
 
 // CHECK:   # Symbol 0x00000002
 // CHECK: (('st_name', 0x00000000) # ''

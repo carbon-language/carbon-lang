@@ -21,14 +21,14 @@ foo2:
 // CHECK-NEXT:  (('r_offset', 0x00000001)
 // CHECK-NEXT:   ('r_sym', 0x00000001)
 // CHECK-NEXT:   ('r_type', 0x00000004)
-// CHECK-NEXT:   ('r_addend', 0xfffffffc)
+// CHECK-NEXT:   ('r_addend', 0xfffffffffffffffc)
 // CHECK-NEXT:  ),
 
 // CHECK:      # Relocation 0x00000001
 // CHECK-NEXT: (('r_offset', 0x00000005)
 // CHECK-NEXT:  ('r_sym', 0x00000006)
 // CHECK-NEXT:  ('r_type', 0x00000001)
-// CHECK-NEXT:  ('r_addend', 0x00000000)
+// CHECK-NEXT:  ('r_addend', 0x0000000000000000)
 // CHECK-NEXT: ),
 
 // CHECK:       # Symbol 0x00000001

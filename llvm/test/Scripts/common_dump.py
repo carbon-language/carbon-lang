@@ -40,7 +40,8 @@ def HexDump(val, numBits=32):
     4. Do print 0x Why?
        so that they can be easily distinguished using sed/rx
     """
+    assert 0 <= val < (1 << numBits)
+
     val = val & (( 1 << numBits) - 1)
     newFmt = "0x%0" + "%d" % (numBits / 4) + "x"
     return newFmt % val
-
