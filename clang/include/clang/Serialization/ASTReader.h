@@ -377,9 +377,6 @@ public:
   /// indexed by the C++ base specifier set ID (-1).
   const uint32_t *CXXBaseSpecifiersOffsets;
 
-  /// \brief Base base specifier ID for base specifiers local to this module.
-  serialization::CXXBaseSpecifiersID BaseCXXBaseSpecifiersID;
-
   // === Types ===
   
   /// \brief The number of types in this AST file.
@@ -723,14 +720,6 @@ private:
   /// added to the global preprocessing entitiy ID to produce a local ID.
   GlobalPreprocessedEntityMapType GlobalPreprocessedEntityMap;
   
-  typedef ContinuousRangeMap<serialization::CXXBaseSpecifiersID, Module *, 4>
-    GlobalCXXBaseSpecifiersMapType;
-
-  /// \brief Mapping from global CXX base specifier IDs to the module in which
-  /// the CXX base specifier resides along with the offset that should be added
-  /// to the global CXX base specifer ID to produce a local ID.
-  GlobalCXXBaseSpecifiersMapType GlobalCXXBaseSpecifiersMap;
-
   /// \name CodeGen-relevant special data
   /// \brief Fields containing data that is relevant to CodeGen.
   //@{
@@ -1034,7 +1023,9 @@ private:
   void LoadedDecl(unsigned Index, Decl *D);
   Decl *ReadDeclRecord(serialization::DeclID ID);
   RecordLocation DeclCursorForID(serialization::DeclID ID);
+  
   RecordLocation getLocalBitOffset(uint64_t GlobalOffset);
+  uint64_t getGlobalBitOffset(Module &M, uint32_t LocalOffset);
   
   void PassInterestingDeclsToConsumer();
 
@@ -1292,9 +1283,10 @@ public:
     return cast_or_null<T>(GetDecl(ReadDeclID(F, R, I)));
   }
 
-  /// \brief Resolve a CXXBaseSpecifiers ID into an offset into the chain
-  /// of loaded AST files.
-  uint64_t GetCXXBaseSpecifiersOffset(serialization::CXXBaseSpecifiersID ID);
+  /// \brief Read a CXXBaseSpecifiers ID form the given record and
+  /// return its global bit offset.
+  uint64_t readCXXBaseSpecifiers(Module &M, const RecordData &Record, 
+                                 unsigned &Idx);
       
   virtual CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset);
       

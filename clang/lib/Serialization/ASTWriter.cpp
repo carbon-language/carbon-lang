@@ -1928,7 +1928,7 @@ void ASTWriter::WriteCXXBaseSpecifiersOffsets() {
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
   unsigned BaseSpecifierOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
   
-  // Write the selector offsets table.
+  // Write the base specifier offsets table.
   Record.clear();
   Record.push_back(CXX_BASE_SPECIFIER_OFFSETS);
   Record.push_back(CXXBaseSpecifiersOffsets.size());
@@ -2752,7 +2752,7 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
     CollectedStmts(&StmtsToEmit),
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
     NumVisibleDeclContexts(0),
-    FirstCXXBaseSpecifiersID(1), NextCXXBaseSpecifiersID(1),
+    NextCXXBaseSpecifiersID(1),
     DeclParmVarAbbrev(0), DeclContextLexicalAbbrev(0),
     DeclContextVisibleLookupAbbrev(0), UpdateVisibleAbbrev(0),
     DeclRefExprAbbrev(0), CharacterLiteralAbbrev(0),
@@ -3077,7 +3077,6 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
       io::Emit32(Out, (*M)->BaseMacroDefinitionID);
       io::Emit32(Out, (*M)->BaseSelectorID);
       io::Emit32(Out, (*M)->BaseDeclID);
-      io::Emit32(Out, (*M)->BaseCXXBaseSpecifiersID);
       io::Emit32(Out, (*M)->BaseTypeIndex);
     }
   }
@@ -3879,7 +3878,7 @@ void ASTWriter::FlushCXXBaseSpecifiers() {
     Record.clear();
     
     // Record the offset of this base-specifier set.
-    unsigned Index = CXXBaseSpecifiersToWrite[I].ID - FirstCXXBaseSpecifiersID;
+    unsigned Index = CXXBaseSpecifiersToWrite[I].ID - 1;
     if (Index == CXXBaseSpecifiersOffsets.size())
       CXXBaseSpecifiersOffsets.push_back(Stream.GetCurrentBitNo());
     else {
@@ -3998,7 +3997,6 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
          FirstIdentID == NextIdentID &&
          FirstSelectorID == NextSelectorID &&
          FirstMacroID == NextMacroID &&
-         FirstCXXBaseSpecifiersID == NextCXXBaseSpecifiersID &&
          "Setting chain after writing has started.");
 
   Chain = Reader;
@@ -4008,13 +4006,11 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
   FirstIdentID += Chain->getTotalNumIdentifiers();
   FirstSelectorID += Chain->getTotalNumSelectors();
   FirstMacroID += Chain->getTotalNumMacroDefinitions();
-  FirstCXXBaseSpecifiersID += Chain->getTotalNumCXXBaseSpecifiers();
   NextDeclID = FirstDeclID;
   NextTypeID = FirstTypeID;
   NextIdentID = FirstIdentID;
   NextSelectorID = FirstSelectorID;
   NextMacroID = FirstMacroID;
-  NextCXXBaseSpecifiersID = FirstCXXBaseSpecifiersID;
 }
 
 void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {

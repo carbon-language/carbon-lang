@@ -2336,7 +2336,6 @@ ASTReader::ReadASTBlock(Module &F) {
         uint32_t MacroDefinitionIDOffset = io::ReadUnalignedLE32(Data);
         uint32_t SelectorIDOffset = io::ReadUnalignedLE32(Data);
         uint32_t DeclIDOffset = io::ReadUnalignedLE32(Data);
-        uint32_t CXXBaseSpecifiersIDOffset = io::ReadUnalignedLE32(Data);
         uint32_t TypeIndexOffset = io::ReadUnalignedLE32(Data);
         
         // Source location offset is mapped to OM->SLocEntryBaseOffset.
@@ -2353,8 +2352,6 @@ ASTReader::ReadASTBlock(Module &F) {
                                OM->BaseSelectorID - SelectorIDOffset));
         DeclRemap.insert(std::make_pair(DeclIDOffset, 
                                         OM->BaseDeclID - DeclIDOffset));
-        
-        (void)CXXBaseSpecifiersIDOffset;
         
         TypeRemap.insert(std::make_pair(TypeIndexOffset, 
                                     OM->BaseTypeIndex - TypeIndexOffset));
@@ -2539,10 +2536,6 @@ ASTReader::ReadASTBlock(Module &F) {
       
       F.LocalNumCXXBaseSpecifiers = Record[0];
       F.CXXBaseSpecifiersOffsets = (const uint32_t *)BlobStart;
-      F.BaseCXXBaseSpecifiersID = getTotalNumCXXBaseSpecifiers();
-      GlobalCXXBaseSpecifiersMap.insert(
-        std::make_pair(getTotalNumCXXBaseSpecifiers() + 1, &F));
-
       NumCXXBaseSpecifiersLoaded += F.LocalNumCXXBaseSpecifiers;
       break;
     }
@@ -4091,20 +4084,13 @@ Decl *ASTReader::GetExternalDecl(uint32_t ID) {
   return GetDecl(ID);
 }
 
-uint64_t 
-ASTReader::GetCXXBaseSpecifiersOffset(serialization::CXXBaseSpecifiersID ID) {
-  if (ID == 0)
+uint64_t ASTReader::readCXXBaseSpecifiers(Module &M, const RecordData &Record, 
+                                          unsigned &Idx){
+  if (Idx >= Record.size())
     return 0;
-
-  GlobalCXXBaseSpecifiersMapType::iterator I =
-      GlobalCXXBaseSpecifiersMap.find(ID);
-
-  assert (I != GlobalCXXBaseSpecifiersMap.end() &&
-                                    "Corrupted global CXX base specifiers map");
   
-  Module *M = I->second;
-  return M->CXXBaseSpecifiersOffsets[ID - 1 - M->BaseCXXBaseSpecifiersID] +
-    M->GlobalBitOffset;
+  unsigned LocalID = Record[Idx++];
+  return getGlobalBitOffset(M, M.CXXBaseSpecifiersOffsets[LocalID - 1]);
 }
 
 CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
@@ -4438,7 +4424,6 @@ void ASTReader::dump() {
   dumpModuleIDMap("Global source location entry map", GlobalSLocEntryMap);
   dumpModuleIDMap("Global type map", GlobalTypeMap);
   dumpModuleIDMap("Global declaration map", GlobalDeclMap);
-  dumpModuleIDMap("Global C++ base specifiers map", GlobalCXXBaseSpecifiersMap);
   dumpModuleIDMap("Global identifier map", GlobalIdentifierMap);
   dumpModuleIDMap("Global selector map", GlobalSelectorMap);
   dumpModuleIDMap("Global macro definition map", GlobalMacroDefinitionMap);
@@ -5555,7 +5540,6 @@ Module::Module(ModuleKind Kind)
     SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
     DeclOffsets(0), BaseDeclID(0),
     LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),
-    BaseCXXBaseSpecifiersID(0),
     LocalNumTypes(0), TypeOffsets(0), BaseTypeIndex(0), StatCache(0),
     NumPreallocatedPreprocessingEntities(0)
 {}
