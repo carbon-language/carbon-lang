@@ -382,6 +382,15 @@ void ARMInstPrinter::printPostIdxImm8Operand(const MCInst *MI,
   O << '#' << ((Imm & 256) ? "" : "-") << (Imm & 0xff);
 }
 
+void ARMInstPrinter::printPostIdxImm8s4Operand(const MCInst *MI,
+                                             unsigned OpNum,
+                                             raw_ostream &O) {
+  const MCOperand &MO = MI->getOperand(OpNum);
+  unsigned Imm = MO.getImm();
+  O << '#' << ((Imm & 256) ? "" : "-") << ((Imm & 0xff) << 2);
+}
+
+
 void ARMInstPrinter::printLdStmModeOperand(const MCInst *MI, unsigned OpNum,
                                            raw_ostream &O) {
   ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MI->getOperand(OpNum)

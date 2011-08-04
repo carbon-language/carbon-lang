@@ -626,6 +626,17 @@ def postidx_imm8 : Operand<i32> {
   let MIOperandInfo = (ops i32imm);
 }
 
+// postidx_imm8s4 := +/- [0,1020]
+//
+// 9 bit value:
+//  {8}       1 is imm8 is non-negative. 0 otherwise.
+//  {7-0}     [0,255] imm8 value, scaled by 4.
+def postidx_imm8s4 : Operand<i32> {
+  let PrintMethod = "printPostIdxImm8s4Operand";
+  let MIOperandInfo = (ops i32imm);
+}
+
+
 // postidx_reg := +/- reg
 //
 def PostIdxRegAsmOperand : AsmOperandClass {
@@ -3974,7 +3985,7 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
 
   def L_POST : ACI<(outs),
       !con((ins nohash_imm:$cop, nohash_imm:$CRd, addr_offset_none:$addr,
-            i32imm:$offset), ops),
+            postidx_imm8s4:$offset), ops),
       !strconcat(!strconcat(opc, "l"), cond), "\tp$cop, cr$CRd, $addr, $offset",
       IndexModePost> {
     let Inst{31-28} = op31_28;
