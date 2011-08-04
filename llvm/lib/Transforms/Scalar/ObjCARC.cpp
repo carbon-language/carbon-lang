@@ -1316,7 +1316,7 @@ namespace {
     }
 
     void clearBottomUpPointers() {
-      PerPtrTopDown.clear();
+      PerPtrBottomUp.clear();
     }
 
     void clearTopDownPointers() {
