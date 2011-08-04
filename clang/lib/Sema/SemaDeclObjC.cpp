@@ -1281,6 +1281,35 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
   }
 }
 
+/// WarnOnMismatchedProtocolMethods - Issues warning on type mismatched 
+/// protocols methods and then returns true(matched), or false(mismatched).
+bool Sema::WarnOnMismatchedProtocolMethods(ObjCMethodDecl *ImpMethodDecl,
+                                           ObjCMethodDecl *MethodDecl) {
+  
+  bool match = CheckMethodOverrideReturn(*this, ImpMethodDecl, MethodDecl, 
+                                         true, 
+                                         true, true);
+  if (!match)
+    return false;
+  
+  for (ObjCMethodDecl::param_iterator IM = ImpMethodDecl->param_begin(),
+       IF = MethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
+       IM != EM; ++IM, ++IF) {
+    match = CheckMethodOverrideParam(*this, ImpMethodDecl, MethodDecl, *IM, *IF,
+                                     true, true, true);
+    if (!match)
+      return false;
+  }
+  
+  if (ImpMethodDecl->isVariadic() != MethodDecl->isVariadic()) {
+    Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_variadic)
+    << true;
+    Diag(MethodDecl->getLocation(), diag::note_previous_declaration);
+    return false;
+  }
+  return true;
+}
+
 /// WarnExactTypedMethods - This routine issues a warning if method
 /// implementation declaration matches exactly that of its declaration.
 void Sema::WarnExactTypedMethods(ObjCMethodDecl *ImpMethodDecl,
@@ -1565,6 +1594,41 @@ static void CollectMethodsInOneProtocol(const ObjCProtocolDecl *PDecl,
   }
 }
 
+/// CollectAllMethodsInProtocols - Helper routine to collect all methods
+/// declared in given class's immediate and nested protocols.
+static void CollectAllMethodsInProtocols(const ObjCContainerDecl *ContDecl,
+                              Sema::MethodsInProtocols &InstMethodsInProtocols,
+                              Sema::MethodsInProtocols & ClsMethodsInProtocols) {
+  if (const ObjCInterfaceDecl *CDecl = dyn_cast<ObjCInterfaceDecl>(ContDecl)) {
+    for (ObjCInterfaceDecl::all_protocol_iterator
+         PI = CDecl->all_referenced_protocol_begin(),
+         E = CDecl->all_referenced_protocol_end(); PI != E; ++PI)
+      CollectAllMethodsInProtocols(*PI, InstMethodsInProtocols, 
+                                   ClsMethodsInProtocols);
+  }
+  
+  if (const ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(ContDecl)) {
+    for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(),
+         E = PDecl->instmeth_end(); I != E; ++I) {
+      ObjCMethodDecl *method = *I;
+      InstMethodsInProtocols.push_back(Sema::PROTOCOL_METHODS(method->getSelector(), 
+                                                        method));
+    }
+    for (ObjCProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(),
+         E = PDecl->classmeth_end(); I != E; ++I) {
+      ObjCMethodDecl *method = *I;
+      ClsMethodsInProtocols.push_back(Sema::PROTOCOL_METHODS(method->getSelector(), 
+                                                       method));
+    }
+  
+    for (ObjCProtocolDecl::protocol_iterator
+         PI = PDecl->protocol_begin(),
+         E = PDecl->protocol_end(); PI != E; ++PI)
+      CollectAllMethodsInProtocols(*PI, InstMethodsInProtocols, 
+                                   ClsMethodsInProtocols);
+  }
+}
+
 /// CollectMethodsInProtocols - This routine collects all methods declared
 /// in class's list and nested qualified protocols. Instance methods and 
 /// class methods have separate containers as they have identical selectors.
@@ -1608,6 +1672,65 @@ void Sema::MatchMethodsInClassAndItsProtocol(const ObjCInterfaceDecl *CDecl) {
   MatchMethodsInClassAndProtocols(*this, CDecl, InstMethodsInProtocols,
                                     ClsMethodsInProtocols);
 }
+
+/// MatchMethodsWithIdenticalSelectors - Helper routine to go through list
+/// of identical selector lists and issue warning for any type mismatche
+/// of these methods.
+static bool MatchMethodsWithIdenticalSelectors(Sema &S,
+                                               const Sema::MethodsInProtocols Methods) {
+  bool res = true;
+  int size = Methods.size();
+  int i = 0;
+  while (i < size) {
+    int upper = i;
+    while (upper < size && 
+           (Methods[i].Sel == Methods[upper].Sel))
+      upper++;
+    if (upper > i) {
+      int lo = i;
+      int hi = upper - 1;
+      while (lo < hi) {
+        ObjCMethodDecl *targetMethod = Methods[lo].Method;
+        for (int j = lo+1; j <= hi; j++) {
+          // match two methods;
+          ObjCMethodDecl *otherMethod = Methods[j].Method;
+          if (!S.WarnOnMismatchedProtocolMethods(targetMethod, otherMethod))
+            res = false;
+        }
+        ++lo;
+      }
+    }
+    i += upper;
+  }
+  return res;
+}
+
+/// MatchIdenticalSelectorsInProtocols - Main routine to go through list of
+/// class's protocols (and their protocols) and make sure that methods
+/// type match across all protocols and issue warnings if they don't.
+/// FIXME. This may move to static analyzer if performance is proven
+/// prohibitive.
+void Sema::MatchIdenticalSelectorsInProtocols(const ObjCInterfaceDecl *CDecl) {
+  Sema::MethodsInProtocols InsMethods;
+  Sema::MethodsInProtocols ClsMethods;
+  CollectAllMethodsInProtocols(CDecl, InsMethods, ClsMethods);
+  
+  bool match = true;
+  if (!InsMethods.empty()) {
+    llvm::array_pod_sort(InsMethods.begin(), InsMethods.end());
+    if (!MatchMethodsWithIdenticalSelectors(*this, InsMethods))
+      match = false;
+  }
+  
+  if (!ClsMethods.empty()) {
+    llvm::array_pod_sort(ClsMethods.begin(), ClsMethods.end());
+    if (!MatchMethodsWithIdenticalSelectors(*this, ClsMethods))
+      match = false;
+  }
+  if (!match)
+    Diag(CDecl->getLocation() ,diag::note_class_declared);
+}
+
 
 /// CheckCategoryVsClassMethodMatches - Checks that methods implemented in
 /// category matches with those implemented in its primary class and
@@ -1675,8 +1798,10 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   // and methods declared in protocol. Do this only when the class
   // is being implementaed.
   if (isa<ObjCImplementationDecl>(IMPDecl))
-    if (const ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(CDecl))
+    if (const ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(CDecl)) {
+      MatchIdenticalSelectorsInProtocols(I);
       MatchMethodsInClassAndItsProtocol(I);
+    }
   
   // check all methods implemented in category against those declared
   // in its primary class.
