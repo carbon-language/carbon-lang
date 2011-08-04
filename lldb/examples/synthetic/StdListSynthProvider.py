@@ -23,21 +23,17 @@ class StdListSynthProvider:
         return (size - 1)
 
     def get_child_index(self,name):
-        if name == "len":
-            return self.num_children()
-        else:
-            return int(name.lstrip('[').rstrip(']'))
+        return int(name.lstrip('[').rstrip(']'))
 
     def get_child_at_index(self,index):
-        if index == self.num_children():
-            return self.valobj.CreateValueFromExpression("len",str(self.num_children()))
-        else:
-            offset = index
-            current = self.next
-            while offset > 0:
-            	current = current.GetChildMemberWithName('_M_next')
-            	offset = offset - 1
-            return current.CreateChildAtOffset('['+str(index)+']',2*current.GetType().GetByteSize(),self.data_type)
+        if index >= self.num_children():
+            return None;
+        offset = index
+        current = self.next
+        while offset > 0:
+            current = current.GetChildMemberWithName('_M_next')
+            offset = offset - 1
+        return current.CreateChildAtOffset('['+str(index)+']',2*current.GetType().GetByteSize(),self.data_type)
 
     def extract_type_name(self,name):
         self.type_name = name[16:]
