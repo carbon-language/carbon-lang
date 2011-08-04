@@ -1875,8 +1875,15 @@ const FileEntry *ASTReader::getFileEntry(StringRef filenameStrRef) {
 }
 
 MacroID ASTReader::getGlobalMacroDefinitionID(Module &M, unsigned LocalID) {
-  // FIXME: Local-to-global mapping
-  return LocalID;
+  if (LocalID < NUM_PREDEF_MACRO_IDS)
+    return LocalID;
+  
+  ContinuousRangeMap<uint32_t, int, 2>::iterator I
+    = M.MacroDefinitionRemap.find(LocalID - NUM_PREDEF_MACRO_IDS);
+  assert(I != M.MacroDefinitionRemap.end() && 
+         "Invalid index into macro definition ID remap");
+  
+  return LocalID + I->second;
 }
 
 /// \brief If we are loading a relocatable PCH file, and the filename is
@@ -2316,6 +2323,8 @@ ASTReader::ReadASTBlock(Module &F) {
       ContinuousRangeMap<uint32_t, int, 2>::Builder 
         IdentifierRemap(F.IdentifierRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder 
+        MacroDefinitionRemap(F.MacroDefinitionRemap);
+      ContinuousRangeMap<uint32_t, int, 2>::Builder 
         SelectorRemap(F.SelectorRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder DeclRemap(F.DeclRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder TypeRemap(F.TypeRemap);
@@ -2347,7 +2356,9 @@ ASTReader::ReadASTBlock(Module &F) {
           std::make_pair(IdentifierIDOffset, 
                          OM->BaseIdentifierID - IdentifierIDOffset));
         (void)PreprocessedEntityIDOffset;
-        (void)MacroDefinitionIDOffset;
+        MacroDefinitionRemap.insert(
+          std::make_pair(MacroDefinitionIDOffset,
+                         OM->BaseMacroDefinitionID - MacroDefinitionIDOffset));
         SelectorRemap.insert(std::make_pair(SelectorIDOffset, 
                                OM->BaseSelectorID - SelectorIDOffset));
         DeclRemap.insert(std::make_pair(DeclIDOffset, 
@@ -2475,7 +2486,8 @@ ASTReader::ReadASTBlock(Module &F) {
       F.MacroDefinitionOffsets = (const uint32_t *)BlobStart;
       F.NumPreallocatedPreprocessingEntities = Record[0];
       F.LocalNumMacroDefinitions = Record[1];
-
+      unsigned LocalBaseMacroID = Record[2];
+      
       // Introduce the global -> local mapping for preprocessed entities within 
       // this AST file.
       unsigned StartingID;
@@ -2492,17 +2504,27 @@ ASTReader::ReadASTBlock(Module &F) {
         // a particular allocation strategy in the preprocessing record.
         StartingID = getTotalNumPreprocessedEntities();
       }
+      GlobalPreprocessedEntityMap.insert(std::make_pair(StartingID, &F));
       
       F.BaseMacroDefinitionID = getTotalNumMacroDefinitions();
       F.BasePreprocessedEntityID = StartingID;
 
-      // Introduce the global -> local mapping for macro definitions within 
-      // this AST file.
-      GlobalPreprocessedEntityMap.insert(std::make_pair(StartingID, &F));
-      GlobalMacroDefinitionMap.insert(
-        std::make_pair(getTotalNumMacroDefinitions() + 1, &F));
-      MacroDefinitionsLoaded.resize(
+      if (F.LocalNumMacroDefinitions > 0) {
+        // Introduce the global -> local mapping for macro definitions within 
+        // this module.
+        GlobalMacroDefinitionMap.insert(
+          std::make_pair(getTotalNumMacroDefinitions() + 1, &F));
+        
+        // Introduce the local -> global mapping for macro definitions within
+        // this module.
+        F.MacroDefinitionRemap.insert(
+          std::make_pair(LocalBaseMacroID,
+                         F.BaseMacroDefinitionID - LocalBaseMacroID));
+        
+        MacroDefinitionsLoaded.resize(
                     MacroDefinitionsLoaded.size() + F.LocalNumMacroDefinitions);
+      }
+      
       break;
     }
         
@@ -5589,6 +5611,11 @@ void Module::dump() {
   llvm::errs() << "  Base type index: " << BaseTypeIndex << '\n'
                << "  Number of types: " << LocalNumTypes << '\n';
   dumpLocalRemap("Type index map", TypeRemap);
+  llvm::errs() << "  Base macro definition ID: " << BaseMacroDefinitionID 
+               << '\n'
+               << "  Number of macro definitions: " << LocalNumMacroDefinitions
+               << '\n';
+  dumpLocalRemap("Macro definition ID map", MacroDefinitionRemap);
   llvm::errs() << "  Base decl ID: " << BaseDeclID << '\n'
                << "  Number of decls: " << LocalNumDecls << '\n';
   dumpLocalRemap("Decl ID map", DeclRemap);

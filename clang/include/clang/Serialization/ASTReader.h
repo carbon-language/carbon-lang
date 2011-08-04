@@ -301,6 +301,9 @@ public:
   /// module.
   serialization::MacroID BaseMacroDefinitionID;
 
+  /// \brief Remapping table for macro definition IDs in this module.
+  ContinuousRangeMap<uint32_t, int, 2> MacroDefinitionRemap;
+
   // === Header search information ===
   
   /// \brief The number of local HeaderFileInfo structures.

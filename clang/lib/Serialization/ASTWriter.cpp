@@ -1875,6 +1875,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
     Abbrev->Add(BitCodeAbbrevOp(MACRO_DEFINITION_OFFSETS));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of records
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of macro defs
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // first macro def
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
     unsigned MacroDefOffsetAbbrev = Stream.EmitAbbrev(Abbrev);
 
@@ -1882,6 +1883,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
     Record.push_back(MACRO_DEFINITION_OFFSETS);
     Record.push_back(NumPreprocessingRecords);
     Record.push_back(MacroDefinitionOffsets.size());
+    Record.push_back(FirstMacroID - NUM_PREDEF_MACRO_IDS);
     Stream.EmitRecordWithBlob(MacroDefOffsetAbbrev, Record,
                               data(MacroDefinitionOffsets));
   }
@@ -2748,7 +2750,7 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
     FirstTypeID(NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
     FirstIdentID(NUM_PREDEF_IDENT_IDS), NextIdentID(FirstIdentID), 
     FirstSelectorID(NUM_PREDEF_SELECTOR_IDS), NextSelectorID(FirstSelectorID),
-    FirstMacroID(1), NextMacroID(FirstMacroID),
+    FirstMacroID(NUM_PREDEF_MACRO_IDS), NextMacroID(FirstMacroID),
     CollectedStmts(&StmtsToEmit),
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
     NumVisibleDeclContexts(0),
