@@ -589,6 +589,10 @@ def setupSysPath():
     elif is_exe(baiExec2):
         lldbExec = baiExec2
 
+    if lldbExec:
+        os.environ["LLDB_BUILD_DIR"] = os.path.split(lldbExec)[0]
+        print os.environ["LLDB_BUILD_DIR"]
+
     if not lldbExec:
         lldbExec = which('lldb')
 

@@ -37,9 +37,11 @@ endif
 # Change any build/tool options needed
 #----------------------------------------------------------------------
 CFLAGS ?= -gdwarf-2 -O0
+CFLAGS += $(FRAMEWORK_INCLUDES)
 CXXFLAGS +=$(CFLAGS)
 LD = $(CC)
 LDFLAGS ?= $(CFLAGS)
+LDFLAGS += $(LD_EXTRAS)
 OBJECTS =
 EXE ?= a.out
 
@@ -156,6 +158,7 @@ endif
 # the compiler -MM option. The -M option will list all system headers,
 # and the -MM option will list all non-system dependencies.
 #----------------------------------------------------------------------
+CPPFLAGS ?= $(CFLAGS)
 %.d: %.c
 	@set -e; rm -f $@; \
 	$(CC) -M $(CPPFLAGS) $< > $@.$$$$; \
