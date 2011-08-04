@@ -46,7 +46,7 @@ private:
     unsigned int DeallocatorIdx;
   };
   static const unsigned InvalidIdx = 100000;
-  static const unsigned FunctionsToTrackSize = 4;
+  static const unsigned FunctionsToTrackSize = 6;
   static const ADFunctionInfo FunctionsToTrack[FunctionsToTrackSize];
 
   /// Given the function name, returns the index of the allocator/deallocator
@@ -105,6 +105,8 @@ const MacOSKeychainAPIChecker::ADFunctionInfo
     {"SecKeychainFindGenericPassword", 6, 3},                   // 1
     {"SecKeychainFindInternetPassword", 13, 3},                 // 2
     {"SecKeychainItemFreeContent", 1, InvalidIdx},              // 3
+    {"SecKeychainItemCopyAttributesAndData", 5, 5},             // 4
+    {"SecKeychainItemFreeAttributesAndData", 1, InvalidIdx},    // 5
 };
 
 unsigned MacOSKeychainAPIChecker::getTrackedFunctionIndex(StringRef Name,
@@ -168,9 +170,25 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     return;
   }
 
+  // Check if the proper deallocator is used.
+  unsigned int PDeallocIdx = FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx;
+  if (PDeallocIdx != idx) {
+    ExplodedNode *N = C.generateSink(State);
+    if (!N)
+      return;
+    initBugType();
+
+    std::string sbuf;
+    llvm::raw_string_ostream os(sbuf);
+    os << "Allocator doesn't match the deallocator: '"
+       << FunctionsToTrack[PDeallocIdx].Name << "' should be used.";
+    RangedBugReport *Report = new RangedBugReport(*BT, os.str(), N);
+    Report->addRange(ArgExpr->getSourceRange());
+    C.EmitReport(Report);
+    return;
+  }
+
   // Continue exploring from the new state.
-  assert(FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx == idx &&
-    "Allocator should match the deallocator");
   State = State->remove<AllocatedData>(Arg);
   C.addTransition(State);
 }
@@ -210,17 +228,25 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     if (!V)
       return;
 
-    State = State->set<AllocatedData>(V, AllocationState(ArgExpr, idx));
-
     // We only need to track the value if the function returned noErr(0), so
-    // bind the return value of the function to 0.
+    // bind the return value of the function to 0 and proceed from the no error
+    // state.
     SValBuilder &Builder = C.getSValBuilder();
-    SVal ZeroVal = Builder.makeZeroVal(Builder.getContext().CharTy);
-    State = State->BindExpr(CE, ZeroVal);
-    assert(State);
+    SVal ZeroVal = Builder.makeIntVal(0, CE->getCallReturnType());
+    const GRState *NoErr = State->BindExpr(CE, ZeroVal);
+    NoErr = NoErr->set<AllocatedData>(V, AllocationState(ArgExpr, idx));
+    assert(NoErr);
+    C.addTransition(NoErr);
 
-    // Proceed from the new state.
-    C.addTransition(State);
+    // Generate a transition to explore the state space when there is an error.
+    // In this case, we do not track the allocated data.
+    SVal ReturnedError = Builder.evalBinOpNN(State, BO_NE,
+                                             cast<NonLoc>(ZeroVal),
+                                             cast<NonLoc>(State->getSVal(CE)),
+                                             CE->getCallReturnType());
+    const GRState *Err = State->assume(cast<NonLoc>(ReturnedError), true);
+    assert(Err);
+    C.addTransition(Err);
   }
 }
 
@@ -253,8 +279,13 @@ void MacOSKeychainAPIChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
   // Anything which has been allocated but not freed (nor escaped) will be
   // found here, so report it.
   for (AllocatedSetTy::iterator I = AS.begin(), E = AS.end(); I != E; ++I ) {
-    RangedBugReport *Report = new RangedBugReport(*BT,
-      "Missing a call to SecKeychainItemFreeContent.", N);
+    const ADFunctionInfo &FI = FunctionsToTrack[I->second.AllocatorIdx];
+
+    std::string sbuf;
+    llvm::raw_string_ostream os(sbuf);
+    os << "Allocated data is not released: missing a call to '"
+       << FunctionsToTrack[FI.DeallocatorIdx].Name << "'.";
+    RangedBugReport *Report = new RangedBugReport(*BT, os.str(), N);
     // TODO: The report has to mention the expression which contains the
     // allocated content as well as the point at which it has been allocated.
     // Currently, the next line is useless.
