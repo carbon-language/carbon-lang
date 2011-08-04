@@ -16,5 +16,5 @@ foo:
 @CHECK-NEXT:      'st_name', 0x00000001
 @CHECK-NEXT:      'st_value', 0x00000001
 @CHECK-NEXT:      'st_size', 0x00000000
-@CHECK-NEXT:      'st_bind', 0x00000001
+@CHECK-NEXT:      'st_bind', 0x1
 @CHECK-NEXT:      'st_type', 0x00000002

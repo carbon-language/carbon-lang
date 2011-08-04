@@ -5,4 +5,4 @@
 
 // CHECK:      # Symbol 5
 // CHECK-NEXT: (('st_name', 0x00000001) # 'foo'
-// CHECK-NEXT:  ('st_bind', 0x00000002)
+// CHECK-NEXT:  ('st_bind', 0x2)

@@ -14,7 +14,7 @@ bar:
 
 // CHECK:      # Symbol 4
 // CHECK-NEXT: (('st_name', 0x00000005) # 'bar'
-// CHECK-NEXT:  ('st_bind', 0x00000001)
+// CHECK-NEXT:  ('st_bind', 0x1)
 // CHECK-NEXT:  ('st_type', 0x00000001)
 // CHECK-NEXT:  ('st_other', 0x00000000)
 // CHECK-NEXT:  ('st_shndx', 0x00000001)
@@ -23,7 +23,7 @@ bar:
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Symbol 5
 // CHECK-NEXT: (('st_name', 0x00000001) # 'foo'
-// CHECK-NEXT:  ('st_bind', 0x00000001)
+// CHECK-NEXT:  ('st_bind', 0x1)
 // CHECK-NEXT:  ('st_type', 0x00000002)
 // CHECK-NEXT:  ('st_other', 0x00000000)
 // CHECK-NEXT:  ('st_shndx', 0x00000001)

@@ -44,7 +44,7 @@
 
 // CHECK:      # Symbol 1
 // CHECK-NEXT: (('st_name', 0x00000001) # 'g1'
-// CHECK-NEXT:  ('st_bind', 0x00000000)
+// CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x00000000)
 // CHECK-NEXT:  ('st_other', 0x00000000)
 // CHECK-NEXT:  ('st_shndx', 0x00000007)
@@ -53,7 +53,7 @@
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Symbol 2
 // CHECK-NEXT: (('st_name', 0x00000004) # 'g2'
-// CHECK-NEXT:  ('st_bind', 0x00000000)
+// CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x00000000)
 // CHECK-NEXT:  ('st_other', 0x00000000)
 // CHECK-NEXT:  ('st_shndx', 0x00000002)
@@ -63,7 +63,7 @@
 
 // CHECK:      # Symbol 13
 // CHECK-NEXT: (('st_name', 0x00000007) # 'g3'
-// CHECK-NEXT:  ('st_bind', 0x00000001)
+// CHECK-NEXT:  ('st_bind', 0x1)
 // CHECK-NEXT:  ('st_type', 0x00000000)
 // CHECK-NEXT:  ('st_other', 0x00000000)
 // CHECK-NEXT:  ('st_shndx', 0x00000000)

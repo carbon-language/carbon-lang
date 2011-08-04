@@ -36,7 +36,7 @@
 // CHECK-NEXT:  (('st_name', 0x00000001) # '.Lsym1'
 // CHECK:       # Symbol 7
 // CHECK-NEXT:  (('st_name', 0x00000008) # 'sym6'
-// CHECK-NEXT:   ('st_bind', 0x00000001)
+// CHECK-NEXT:   ('st_bind', 0x1)
 // CHECK-NEXT:   ('st_type', 0x00000001)
 // CHECK-NEXT:   ('st_other', 0x00000000)
 // CHECK-NEXT:   ('st_shndx', 0x00000000)

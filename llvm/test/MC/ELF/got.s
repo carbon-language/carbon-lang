@@ -22,4 +22,4 @@
 // CHECK-NEXT:   ])
 
 // CHECK:     (('st_name', 0x00000005) # '_GLOBAL_OFFSET_TABLE_'
-// CHECK-NEXT: ('st_bind', 0x00000001)
+// CHECK-NEXT: ('st_bind', 0x1)

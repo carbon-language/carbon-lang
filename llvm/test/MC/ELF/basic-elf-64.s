@@ -64,19 +64,19 @@ main:                                   # @main
 // CHECK:     ),
 // CHECK:   ])
 
-// CHECK: ('st_bind', 0x00000000)
+// CHECK: ('st_bind', 0x0)
 // CHECK: ('st_type', 0x00000003)
 
-// CHECK: ('st_bind', 0x00000000)
+// CHECK: ('st_bind', 0x0)
 // CHECK: ('st_type', 0x00000003)
 
-// CHECK: ('st_bind', 0x00000000)
+// CHECK: ('st_bind', 0x0)
 // CHECK: ('st_type', 0x00000003)
 
 // CHECK:   # 'main'
-// CHECK-NEXT: ('st_bind', 0x00000001)
+// CHECK-NEXT: ('st_bind', 0x1)
 // CHECK-NEXT: ('st_type', 0x00000002)
 
 // CHECK:   # 'puts'
-// CHECK-NEXT: ('st_bind', 0x00000001)
+// CHECK-NEXT: ('st_bind', 0x1)
 // CHECK-NEXT: ('st_type', 0x00000000)

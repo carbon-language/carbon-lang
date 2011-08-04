@@ -9,7 +9,7 @@
 	.comm	common1,1,1
 
 // CHECK: ('st_name', 0x00000001) # 'common1'
-// CHECK-NEXT: ('st_bind', 0x00000000)
+// CHECK-NEXT: ('st_bind', 0x0)
 // CHECK-NEXT: ('st_type', 0x00000001)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx',
@@ -23,7 +23,7 @@
 	.comm	common2,1,1
 
 // CHECK: ('st_name', 0x00000009) # 'common2'
-// CHECK-NEXT: ('st_bind', 0x00000000)
+// CHECK-NEXT: ('st_bind', 0x0)
 // CHECK-NEXT: ('st_type', 0x00000001)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx',
@@ -35,7 +35,7 @@
 
 // CHECK:      # Symbol 3
 // CHECK-NEXT: (('st_name', 0x00000011) # 'common6'
-// CHECK-NEXT:  ('st_bind', 0x00000000)
+// CHECK-NEXT:  ('st_bind', 0x0)
 // CHECK-NEXT:  ('st_type', 0x00000001)
 // CHECK-NEXT:  ('st_other', 0x00000000)
 // CHECK-NEXT:  ('st_shndx', 0x00000004)
@@ -48,7 +48,7 @@
 	.comm	common3,4,4
 
 // CHECK: ('st_name', 0x00000019) # 'common3'
-// CHECK-NEXT: ('st_bind', 0x00000001)
+// CHECK-NEXT: ('st_bind', 0x1)
 // CHECK-NEXT: ('st_type', 0x00000001)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx', 0x0000fff2)
@@ -68,7 +68,7 @@ foo:
 	.comm	common4,40,16
 
 // CHECK: ('st_name', 0x00000025) # 'common4'
-// CHECK-NEXT: ('st_bind', 0x00000001)
+// CHECK-NEXT: ('st_bind', 0x1)
 // CHECK-NEXT: ('st_type', 0x00000001)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx', 0x0000fff2)
@@ -79,7 +79,7 @@ foo:
 
 // CHECK:      # Symbol 9
 // CHECK-NEXT: (('st_name', 0x0000002d) # 'common5'
-// CHECK-NEXT:  ('st_bind', 0x00000001)
+// CHECK-NEXT:  ('st_bind', 0x1)
 // CHECK-NEXT:  ('st_type', 0x00000001)
 // CHECK-NEXT:  ('st_other', 0x00000000)
 // CHECK-NEXT:  ('st_shndx', 0x0000fff2)

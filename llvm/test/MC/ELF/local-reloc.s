@@ -23,7 +23,7 @@ foo:
 // Symbol number 2 is section number 1
 // CHECK:    # Symbol 2
 // CHECK-NEXT:    (('st_name', 0x00000000) # ''
-// CHECK-NEXT:     ('st_bind', 0x00000000)
+// CHECK-NEXT:     ('st_bind', 0x0)
 // CHECK-NEXT:     ('st_type', 0x00000003)
 // CHECK-NEXT:     ('st_other', 0x00000000)
 // CHECK-NEXT:     ('st_shndx', 0x00000001)
