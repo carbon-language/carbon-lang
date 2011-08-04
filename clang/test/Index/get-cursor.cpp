@@ -35,6 +35,14 @@ void test() {
   X foo;
 }
 
+// RUN: c-index-test -cursor-at=%s:6:4 %s | FileCheck -check-prefix=CHECK-COMPLETION-1 %s
+// CHECK-COMPLETION-1: CXXConstructor=X:6:3
+// CHECK-COMPLETION-1-NEXT: Completion string: {TypedText X}{LeftParen (}{Placeholder int}{Comma , }{Placeholder int}{RightParen )}
+
+// RUN: c-index-test -cursor-at=%s:31:16 %s | FileCheck -check-prefix=CHECK-COMPLETION-2 %s
+// CHECK-COMPLETION-2: CXXMethod=getAnotherX:31:5 (Definition)
+// CHECK-COMPLETION-2-NEXT: Completion string: {ResultType X}{TypedText getAnotherX}{LeftParen (}{RightParen )}
+
 // RUN: c-index-test -cursor-at=%s:12:20 %s | FileCheck -check-prefix=CHECK-VALUE-REF %s
 // RUN: c-index-test -cursor-at=%s:13:21 %s | FileCheck -check-prefix=CHECK-VALUE-REF %s
 // RUN: c-index-test -cursor-at=%s:13:28 %s | FileCheck -check-prefix=CHECK-VALUE-REF %s
@@ -68,3 +76,7 @@ void test() {
 
 // RUN: c-index-test -cursor-at=%s:35:5 %s | FileCheck -check-prefix=CHECK-DECL %s
 // CHECK-DECL: VarDecl=foo:35:5
+
+// RUN: c-index-test -cursor-at=%s:21:3 %s | FileCheck -check-prefix=CHECK-MEMBER %s
+// CHECK-MEMBER: FieldDecl=member:21:7 (Definition)
+// CHECK-MEMBER-NEXT: Completion string: {ResultType int}{TypedText member}

@@ -310,10 +310,24 @@ public:
     return CachedCompletionAllocator;
   }
   
+  /// \brief Retrieve the allocator used to cache global code completions.
+  /// Creates the allocator if it doesn't already exist.
+  llvm::IntrusiveRefCntPtr<GlobalCodeCompletionAllocator>
+  getCursorCompletionAllocator() {
+    if (!CursorCompletionAllocator.getPtr()) {
+      CursorCompletionAllocator = new GlobalCodeCompletionAllocator;
+    }
+    return CursorCompletionAllocator;
+  }
+  
 private:
   /// \brief Allocator used to store cached code completions.
   llvm::IntrusiveRefCntPtr<GlobalCodeCompletionAllocator>
     CachedCompletionAllocator;
+  
+  /// \brief Allocator used to store code completions for arbitrary cursors.
+  llvm::IntrusiveRefCntPtr<GlobalCodeCompletionAllocator>
+    CursorCompletionAllocator;
 
   /// \brief The set of cached code-completion results.
   std::vector<CachedCodeCompletionResult> CachedCompletionResults;

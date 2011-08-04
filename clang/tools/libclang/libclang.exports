@@ -55,6 +55,7 @@ clang_getCompletionChunkText
 clang_getCompletionPriority
 clang_getCursor
 clang_getCursorAvailability
+clang_getCursorCompletionString
 clang_getCursorDefinition
 clang_getCursorDisplayName
 clang_getCursorExtent

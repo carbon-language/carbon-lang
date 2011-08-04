@@ -577,4 +577,40 @@ unsigned clang_CXCursorSet_insert(CXCursorSet set, CXCursor cursor) {
   entry = 1;
   return flag;
 }
+  
+CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
+  enum CXCursorKind kind = clang_getCursorKind(cursor);
+  if (clang_isDeclaration(kind)) {
+    Decl *decl = getCursorDecl(cursor);
+    if (isa<NamedDecl>(decl)) {
+      NamedDecl *namedDecl = (NamedDecl *)decl;
+      ASTUnit *unit = getCursorASTUnit(cursor);
+      if (unit->hasSema()) {
+        Sema &S = unit->getSema();
+        CodeCompletionAllocator *Allocator 
+          = unit->getCursorCompletionAllocator().getPtr();
+        CodeCompletionResult Result(namedDecl);
+        CodeCompletionString *String 
+          = Result.CreateCodeCompletionString(S, *Allocator);
+        return String;
+      }
+    }
+  }
+  else if (kind == CXCursor_MacroDefinition) {
+    MacroDefinition *definition = getCursorMacroDefinition(cursor);
+    const IdentifierInfo *MacroInfo = definition->getName();
+    ASTUnit *unit = getCursorASTUnit(cursor);
+    if (unit->hasSema()) {
+      Sema &S = unit->getSema();
+      CodeCompletionAllocator *Allocator
+        = unit->getCursorCompletionAllocator().getPtr();
+      CodeCompletionResult Result((IdentifierInfo *)MacroInfo);
+      CodeCompletionString *String 
+        = Result.CreateCodeCompletionString(S, *Allocator);
+      return String;
+    }
+  }
+  return NULL;
+}
+  
 } // end: extern "C"

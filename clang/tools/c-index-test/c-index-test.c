@@ -1333,7 +1333,13 @@ int inspect_cursor_at(int argc, const char **argv) {
                                clang_getLocation(TU, file, Locations[Loc].line,
                                                  Locations[Loc].column));
       if (I + 1 == Repeats) {
+        CXCompletionString completionString = clang_getCursorCompletionString(
+                                                                        Cursor);
         PrintCursor(TU, Cursor);
+        if (completionString != NULL) {
+          printf("\nCompletion string: ");
+          print_completion_string(completionString, stdout);
+        }
         printf("\n");
         free(Locations[Loc].filename);
       }

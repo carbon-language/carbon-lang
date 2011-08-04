@@ -2899,6 +2899,18 @@ CINDEX_LINKAGE enum CXAvailabilityKind
 clang_getCompletionAvailability(CXCompletionString completion_string);
 
 /**
+ * \brief Retrieve a completion string for an arbitrary declaration or macro
+ * definition cursor.
+ *
+ * \param cursor The cursor to query.
+ *
+ * \returns A non-context-sensitive completion string for declaration and macro
+ * definition cursors, or NULL for other kinds of cursors.
+ */
+CINDEX_LINKAGE CXCompletionString
+clang_getCursorCompletionString(CXCursor cursor);
+  
+/**
  * \brief Contains the results of code-completion.
  *
  * This data structure contains the results of code completion, as

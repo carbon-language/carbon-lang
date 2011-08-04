@@ -1903,6 +1903,10 @@ bool ASTUnit::Reparse(RemappedFile *RemappedFiles, unsigned NumRemappedFiles) {
       CurrentTopLevelHashValue != CompletionCacheTopLevelHashValue)
     CacheCodeCompletionResults();
 
+  // We now need to clear out the completion allocator for
+  // clang_getCursorCompletionString; it'll be recreated if necessary.
+  CursorCompletionAllocator = 0;
+  
   return Result;
 }
 
