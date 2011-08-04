@@ -10,7 +10,7 @@
 
 // CHECK: ('st_name', 0x00000001) # 'common1'
 // CHECK-NEXT: ('st_bind', 0x0)
-// CHECK-NEXT: ('st_type', 0x00000001)
+// CHECK-NEXT: ('st_type', 0x1)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx',
 // CHECK-NEXT: ('st_value', 0x0000000000000000)
@@ -24,7 +24,7 @@
 
 // CHECK: ('st_name', 0x00000009) # 'common2'
 // CHECK-NEXT: ('st_bind', 0x0)
-// CHECK-NEXT: ('st_type', 0x00000001)
+// CHECK-NEXT: ('st_type', 0x1)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx',
 // CHECK-NEXT: ('st_value', 0x0000000000000001)
@@ -36,7 +36,7 @@
 // CHECK:      # Symbol 3
 // CHECK-NEXT: (('st_name', 0x00000011) # 'common6'
 // CHECK-NEXT:  ('st_bind', 0x0)
-// CHECK-NEXT:  ('st_type', 0x00000001)
+// CHECK-NEXT:  ('st_type', 0x1)
 // CHECK-NEXT:  ('st_other', 0x00000000)
 // CHECK-NEXT:  ('st_shndx', 0x00000004)
 // CHECK-NEXT:  ('st_value', 0x0000000000000010)
@@ -49,7 +49,7 @@
 
 // CHECK: ('st_name', 0x00000019) # 'common3'
 // CHECK-NEXT: ('st_bind', 0x1)
-// CHECK-NEXT: ('st_type', 0x00000001)
+// CHECK-NEXT: ('st_type', 0x1)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx', 0x0000fff2)
 // CHECK-NEXT: ('st_value', 0x0000000000000004)
@@ -69,7 +69,7 @@ foo:
 
 // CHECK: ('st_name', 0x00000025) # 'common4'
 // CHECK-NEXT: ('st_bind', 0x1)
-// CHECK-NEXT: ('st_type', 0x00000001)
+// CHECK-NEXT: ('st_type', 0x1)
 // CHECK-NEXT: ('st_other', 0x00000000)
 // CHECK-NEXT: ('st_shndx', 0x0000fff2)
 // CHECK-NEXT: ('st_value', 0x0000000000000010)
@@ -80,7 +80,7 @@ foo:
 // CHECK:      # Symbol 9
 // CHECK-NEXT: (('st_name', 0x0000002d) # 'common5'
 // CHECK-NEXT:  ('st_bind', 0x1)
-// CHECK-NEXT:  ('st_type', 0x00000001)
+// CHECK-NEXT:  ('st_type', 0x1)
 // CHECK-NEXT:  ('st_other', 0x00000000)
 // CHECK-NEXT:  ('st_shndx', 0x0000fff2)
 // CHECK-NEXT:  ('st_value', 0x0000000000000004)

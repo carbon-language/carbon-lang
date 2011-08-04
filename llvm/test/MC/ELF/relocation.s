@@ -116,6 +116,6 @@ bar:
 // CHECK:   # Symbol 2
 // CHECK: (('st_name', 0x00000000) # ''
 // CHECK:  ('st_bind', 0x0)
-// CHECK:  ('st_type', 0x00000003)
+// CHECK:  ('st_type', 0x3)
 // CHECK:  ('st_other', 0x00000000)
 // CHECK:  ('st_shndx', 0x00000001)
