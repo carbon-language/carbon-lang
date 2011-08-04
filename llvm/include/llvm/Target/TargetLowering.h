@@ -265,9 +265,9 @@ public:
     assert(!VT.isVector());
     while (true) {
       switch (getTypeAction(Context, VT)) {
-      case Legal:
+      case TypeLegal:
         return VT;
-      case Expand:
+      case TypeExpandInteger:
         VT = getTypeToTransformTo(Context, VT);
         break;
       default:
