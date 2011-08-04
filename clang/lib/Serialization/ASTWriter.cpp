@@ -1796,8 +1796,10 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
     InclusionAbbrev = Stream.EmitAbbrev(Abbrev);
   }
   
-  unsigned IndexBase = Chain ? PPRec.getNumLoadedPreprocessedEntities() : 0;
-  unsigned NextPreprocessorEntityID = IndexBase + 1;
+  unsigned FirstPreprocessorEntityID 
+    = (Chain ? PPRec.getNumLoadedPreprocessedEntities() : 0) 
+    + NUM_PREDEF_PP_ENTITY_IDS;
+  unsigned NextPreprocessorEntityID = FirstPreprocessorEntityID;
   RecordData Record;
   uint64_t BitsInChain = Chain? Chain->TotalModulesSizeInBits : 0;
   for (PreprocessingRecord::iterator E = PPRec.begin(Chain),
@@ -1879,6 +1881,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
     BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
     Abbrev->Add(BitCodeAbbrevOp(MACRO_DEFINITION_OFFSETS));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of records
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // first pp entity
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // # of macro defs
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32)); // first macro def
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
@@ -1887,6 +1890,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
     Record.clear();
     Record.push_back(MACRO_DEFINITION_OFFSETS);
     Record.push_back(NumPreprocessingRecords);
+    Record.push_back(FirstPreprocessorEntityID - NUM_PREDEF_PP_ENTITY_IDS);
     Record.push_back(MacroDefinitionOffsets.size());
     Record.push_back(FirstMacroID - NUM_PREDEF_MACRO_IDS);
     Stream.EmitRecordWithBlob(MacroDefOffsetAbbrev, Record,

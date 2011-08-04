@@ -290,6 +290,9 @@ public:
   /// this module.
   serialization::PreprocessedEntityID BasePreprocessedEntityID;
   
+  /// \brief Remapping table for preprocessed entity IDs in this module.
+  ContinuousRangeMap<uint32_t, int, 2> PreprocessedEntityRemap;
+
   /// \brief The number of macro definitions in this file.
   unsigned LocalNumMacroDefinitions;
   

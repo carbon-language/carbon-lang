@@ -61,6 +61,9 @@ private:
 
 public:
   void insert(const value_type &Val) {
+    if (!Rep.empty() && Rep.back() == Val)
+      return;
+
     assert((Rep.empty() || Rep.back().first < Val.first) &&
            "Must insert keys in order.");
     Rep.push_back(Val);

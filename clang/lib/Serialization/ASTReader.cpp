@@ -1643,8 +1643,12 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
 
 PreprocessedEntityID 
 ASTReader::getGlobalPreprocessedEntityID(Module &M, unsigned LocalID) {
-  // FIXME: Local-to-global mapping
-  return LocalID;
+  ContinuousRangeMap<uint32_t, int, 2>::iterator 
+    I = M.PreprocessedEntityRemap.find(LocalID - NUM_PREDEF_PP_ENTITY_IDS);
+  assert(I != M.PreprocessedEntityRemap.end() 
+         && "Invalid index into preprocessed entity index remap");
+  
+  return LocalID + I->second;
 }
 
 namespace {
@@ -2323,6 +2327,8 @@ ASTReader::ReadASTBlock(Module &F) {
       ContinuousRangeMap<uint32_t, int, 2>::Builder 
         IdentifierRemap(F.IdentifierRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder 
+        PreprocessedEntityRemap(F.PreprocessedEntityRemap);
+      ContinuousRangeMap<uint32_t, int, 2>::Builder 
         MacroDefinitionRemap(F.MacroDefinitionRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder 
         SelectorRemap(F.SelectorRemap);
@@ -2350,12 +2356,12 @@ ASTReader::ReadASTBlock(Module &F) {
         // Source location offset is mapped to OM->SLocEntryBaseOffset.
         SLocRemap.insert(std::make_pair(SLocOffset,
           static_cast<int>(OM->SLocEntryBaseOffset - SLocOffset)));
-        
-        // FIXME: Map other locations
         IdentifierRemap.insert(
           std::make_pair(IdentifierIDOffset, 
                          OM->BaseIdentifierID - IdentifierIDOffset));
-        (void)PreprocessedEntityIDOffset;
+        PreprocessedEntityRemap.insert(
+          std::make_pair(PreprocessedEntityIDOffset, 
+            OM->BasePreprocessedEntityID - PreprocessedEntityIDOffset));
         MacroDefinitionRemap.insert(
           std::make_pair(MacroDefinitionIDOffset,
                          OM->BaseMacroDefinitionID - MacroDefinitionIDOffset));
@@ -2485,11 +2491,10 @@ ASTReader::ReadASTBlock(Module &F) {
     case MACRO_DEFINITION_OFFSETS: {
       F.MacroDefinitionOffsets = (const uint32_t *)BlobStart;
       F.NumPreallocatedPreprocessingEntities = Record[0];
-      F.LocalNumMacroDefinitions = Record[1];
-      unsigned LocalBaseMacroID = Record[2];
+      unsigned LocalBasePreprocessedEntityID = Record[1];
+      F.LocalNumMacroDefinitions = Record[2];
+      unsigned LocalBaseMacroID = Record[3];
       
-      // Introduce the global -> local mapping for preprocessed entities within 
-      // this AST file.
       unsigned StartingID;
       if (PP) {
         if (!PP->getPreprocessingRecord())
@@ -2502,12 +2507,24 @@ ASTReader::ReadASTBlock(Module &F) {
       } else {
         // FIXME: We'll eventually want to kill this path, since it assumes
         // a particular allocation strategy in the preprocessing record.
-        StartingID = getTotalNumPreprocessedEntities();
+        StartingID = getTotalNumPreprocessedEntities() 
+                   - F.NumPreallocatedPreprocessingEntities;
       }
-      GlobalPreprocessedEntityMap.insert(std::make_pair(StartingID, &F));
-      
       F.BaseMacroDefinitionID = getTotalNumMacroDefinitions();
       F.BasePreprocessedEntityID = StartingID;
+
+      if (F.NumPreallocatedPreprocessingEntities > 0) {
+        // Introduce the global -> local mapping for preprocessed entities in
+        // this module.
+        GlobalPreprocessedEntityMap.insert(std::make_pair(StartingID, &F));
+       
+        // Introduce the local -> global mapping for preprocessed entities in
+        // this module.
+        F.PreprocessedEntityRemap.insert(
+          std::make_pair(LocalBasePreprocessedEntityID,
+            F.BasePreprocessedEntityID - LocalBasePreprocessedEntityID));
+      }
+      
 
       if (F.LocalNumMacroDefinitions > 0) {
         // Introduce the global -> local mapping for macro definitions within 
@@ -5606,8 +5623,13 @@ void Module::dump() {
                << '\n';
   dumpLocalRemap("Source location offset map", SLocRemap);
   llvm::errs() << "  Base identifier ID: " << BaseIdentifierID << '\n'
-               << "Number of identifiers: " << LocalNumIdentifiers << '\n';
+               << "  Number of identifiers: " << LocalNumIdentifiers << '\n';
   dumpLocalRemap("Identifier ID map", IdentifierRemap);
+  llvm::errs() << "  Base preprocessed entity ID: " << BasePreprocessedEntityID
+               << '\n'  
+               << "Number of preprocessed entities: " 
+               << NumPreallocatedPreprocessingEntities << '\n';
+  dumpLocalRemap("Preprocessed entity ID map", PreprocessedEntityRemap);
   llvm::errs() << "  Base type index: " << BaseTypeIndex << '\n'
                << "  Number of types: " << LocalNumTypes << '\n';
   dumpLocalRemap("Type index map", TypeRemap);
