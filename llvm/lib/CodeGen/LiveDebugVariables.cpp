@@ -896,6 +896,7 @@ void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
                                  const TargetInstrInfo &TII) {
   MachineBasicBlock::iterator I = findInsertLocation(MBB, Idx, LIS);
   MachineOperand &Loc = locations[LocNo];
+  ++NumInsertedDebugValues;
 
   // Frame index locations may require a target callback.
   if (Loc.isFI()) {
@@ -926,7 +927,6 @@ void UserValue::emitDebugValues(VirtRegMap *VRM, LiveIntervals &LIS,
 
     DEBUG(dbgs() << " BB#" << MBB->getNumber() << '-' << MBBEnd);
     insertDebugValue(MBB, Start, LocNo, LIS, TII);
-    ++NumInsertedDebugValues;
     // This interval may span multiple basic blocks.
     // Insert a DBG_VALUE into each one.
     while(Stop > MBBEnd) {
@@ -937,7 +937,6 @@ void UserValue::emitDebugValues(VirtRegMap *VRM, LiveIntervals &LIS,
       MBBEnd = LIS.getMBBEndIdx(MBB);
       DEBUG(dbgs() << " BB#" << MBB->getNumber() << '-' << MBBEnd);
       insertDebugValue(MBB, Start, LocNo, LIS, TII);
-      ++NumInsertedDebugValues;
     }
     DEBUG(dbgs() << '\n');
     if (MBB == MFEnd)
