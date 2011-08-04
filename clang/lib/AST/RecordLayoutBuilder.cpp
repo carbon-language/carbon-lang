@@ -1581,8 +1581,7 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
         CharUnits ZeroLengthBitfieldAlignment = FieldInfo.second;        
         if (ZeroLengthBitfieldAlignment > FieldAlign)
           FieldAlign = ZeroLengthBitfieldAlignment;
-      }
-      else if (ZeroLengthBitfieldBoundary > FieldAlign) {
+      } else if (ZeroLengthBitfieldBoundary > FieldAlign) {
         // Align 'bar' based on a fixed alignment specified by the target.
         assert(Context.Target.useZeroLengthBitfieldAlignment() &&
                "ZeroLengthBitfieldBoundary should only be used in conjunction"
