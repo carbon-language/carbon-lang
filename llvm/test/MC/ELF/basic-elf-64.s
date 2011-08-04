@@ -42,22 +42,22 @@ main:                                   # @main
 // CHECK:   # '.rela.text'
 
 // CHECK:   ('_relocations', [
-// CHECK:     # Relocation 0x00000000
+// CHECK:     # Relocation 0
 // CHECK:     (('r_offset', 0x00000005)
 // CHECK:      ('r_type', 0x0000000a)
 // CHECK:      ('r_addend', 0x0000000000000000)
 // CHECK:     ),
-// CHECK:     # Relocation 0x00000001
+// CHECK:     # Relocation 1
 // CHECK:     (('r_offset', 0x0000000a)
 // CHECK:      ('r_type', 0x00000002)
 // CHECK:      ('r_addend', 0xfffffffffffffffc)
 // CHECK:     ),
-// CHECK:     # Relocation 0x00000002
+// CHECK:     # Relocation 2
 // CHECK:     (('r_offset', 0x0000000f)
 // CHECK:      ('r_type', 0x0000000a)
 // CHECK:      ('r_addend', 0x0000000000000006)
 // CHECK:     ),
-// CHECK:     # Relocation 0x00000003
+// CHECK:     # Relocation 3
 // CHECK:     (('r_offset', 0x00000014)
 // CHECK:      ('r_type', 0x00000002)
 // CHECK:      ('r_addend', 0xfffffffffffffffc)

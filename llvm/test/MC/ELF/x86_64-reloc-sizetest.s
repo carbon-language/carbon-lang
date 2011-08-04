@@ -6,7 +6,7 @@
 L: movq $(L + 2147483648),%rax
 
 
-// CHECK:          Relocation 0x00000000
+// CHECK:          Relocation 0
 // CHECK-NEXT:     'r_offset', 0x00000003
 // CHECK-NEXT:     'r_sym'
 // CHECK-NEXT:     'r_type', 0x0000000b

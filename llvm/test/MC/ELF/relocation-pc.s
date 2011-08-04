@@ -17,13 +17,13 @@
 // CHECK-NEXT:  ('sh_addralign', 0x00000008)
 // CHECK-NEXT:  ('sh_entsize', 0x00000018)
 // CHECK-NEXT:  ('_relocations', [
-// CHECK-NEXT:   # Relocation 0x00000000
+// CHECK-NEXT:   # Relocation 0
 // CHECK-NEXT:   (('r_offset', 0x00000001)
 // CHECK-NEXT:    ('r_sym', 0x00000000)
 // CHECK-NEXT:    ('r_type', 0x0000000f)
 // CHECK-NEXT:    ('r_addend', 0x0000000000000000)
 // CHECK-NEXT:   ),
-// CHECK-NEXT:   # Relocation 0x00000001
+// CHECK-NEXT:   # Relocation 1
 // CHECK-NEXT:   (('r_offset', 0x00000003)
 // CHECK-NEXT:    ('r_sym', 0x00000000)
 // CHECK-NEXT:    ('r_type', 0x00000002)

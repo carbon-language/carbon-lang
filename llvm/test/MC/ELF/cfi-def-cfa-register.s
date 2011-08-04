@@ -31,7 +31,7 @@ f:
 // CHECK-NEXT:  ('sh_addralign', 0x00000008)
 // CHECK-NEXT:  ('sh_entsize', 0x00000018)
 // CHECK-NEXT:  ('_relocations', [
-// CHECK-NEXT:   # Relocation 0x00000000
+// CHECK-NEXT:   # Relocation 0
 // CHECK-NEXT:   (('r_offset', 0x00000020)
 // CHECK-NEXT:    ('r_sym', 0x00000002)
 // CHECK-NEXT:    ('r_type', 0x00000002)

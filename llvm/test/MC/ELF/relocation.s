@@ -23,91 +23,91 @@ bar:
 // CHECK:  # Section 1
 // CHECK: (('sh_name', 0x00000006) # '.text'
 
-// CHECK: # Relocation 0x00000000
+// CHECK: # Relocation 0
 // CHECK-NEXT:  (('r_offset', 0x00000001)
 // CHECK-NEXT:   ('r_sym', 0x00000002)
 // CHECK-NEXT:   ('r_type', 0x0000000a)
 // CHECK-NEXT:   ('r_addend',
 
-// CHECK: # Relocation 0x00000001
+// CHECK: # Relocation 1
 // CHECK-NEXT:  (('r_offset', 0x00000008)
 // CHECK-NEXT:   ('r_sym', 0x00000002)
 // CHECK-NEXT:   ('r_type', 0x0000000b)
 // CHECK-NEXT:   ('r_addend',
 
-// CHECK: # Relocation 0x00000002
+// CHECK: # Relocation 2
 // CHECK-NEXT:  (('r_offset', 0x00000013)
 // CHECK-NEXT:   ('r_sym', 0x00000002)
 // CHECK-NEXT:   ('r_type', 0x0000000b)
 // CHECK-NEXT:   ('r_addend',
 
-// CHECK: # Relocation 0x00000003
+// CHECK: # Relocation 3
 // CHECK-NEXT:  (('r_offset', 0x0000001a)
 // CHECK-NEXT:   ('r_sym', 0x00000002)
 // CHECK-NEXT:   ('r_type', 0x0000000b)
 // CHECK-NEXT:   ('r_addend',
 
-// CHECK: # Relocation 0x00000004
+// CHECK: # Relocation 4
 // CHECK-NEXT:  (('r_offset', 0x00000022)
 // CHECK-NEXT:   ('r_sym', 0x00000002)
 // CHECK-NEXT:   ('r_type', 0x0000000b)
 // CHECK-NEXT:   ('r_addend',
 
-// CHECK: # Relocation 0x00000005
+// CHECK: # Relocation 5
 // CHECK-NEXT:  (('r_offset', 0x00000026)
 // CHECK-NEXT:   ('r_sym', 0x00000002)
 // CHECK-NEXT:   ('r_type', 0x0000000a)
 // CHECK-NEXT:   ('r_addend',
 
-// CHECK: # Relocation 0x00000006
+// CHECK: # Relocation 6
 // CHECK-NEXT:  (('r_offset', 0x0000002d)
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x00000016)
 // CHECK-NEXT:   ('r_addend', 0xfffffffffffffffc)
 
-// CHECK:  # Relocation 0x00000007
+// CHECK:  # Relocation 7
 // CHECK-NEXT:  (('r_offset', 0x00000034)
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x00000013)
 // CHECK-NEXT:   ('r_addend', 0xfffffffffffffffc)
 
-// CHECK:  # Relocation 0x00000008
+// CHECK:  # Relocation 8
 // CHECK-NEXT:  (('r_offset', 0x0000003b)
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x00000017)
 // CHECK-NEXT:   ('r_addend', 0x0000000000000000)
 
-// CHECK:  # Relocation 0x00000009
+// CHECK:  # Relocation 9
 // CHECK-NEXT:  (('r_offset', 0x00000042)
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x00000014)
 // CHECK-NEXT:   ('r_addend', 0xfffffffffffffffc)
 
-// CHECK:  # Relocation 0x0000000a
+// CHECK:  # Relocation 10
 // CHECK-NEXT:  (('r_offset', 0x00000049)
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x00000015)
 // CHECK-NEXT:   ('r_addend', 0x0000000000000000)
 
-// CHECK: # Relocation 0x0000000b
+// CHECK: # Relocation 11
 // CHECK-NEXT:  (('r_offset', 0x0000004e)
 // CHECK-NEXT:   ('r_sym', 0x00000002)
 // CHECK-NEXT:   ('r_type', 0x0000000b)
 // CHECK-NEXT:   ('r_addend', 0x0000000000000000)
 
-// CHECK: # Relocation 0x0000000c
+// CHECK: # Relocation 12
 // CHECK-NEXT: (('r_offset', 0x00000055)
 // CHECK-NEXT:  ('r_sym', 0x00000006)
 // CHECK-NEXT:  ('r_type', 0x00000002)
 // CHECK-NEXT:  ('r_addend', 0xfffffffffffffffc)
 
-// CHECK: # Relocation 0x0000000d
+// CHECK: # Relocation 13
 // CHECK-NEXT: (('r_offset', 0x0000005c)
 // CHECK-NEXT:  ('r_sym', 0x00000006)
 // CHECK-NEXT:  ('r_type', 0x00000002)
 // CHECK-NEXT:  ('r_addend', 0x000000000000005c)
 
-// CHECK: # Relocation 0x0000000e
+// CHECK: # Relocation 14
 // CHECK-NEXT: (('r_offset', 0x00000063)
 // CHECK-NEXT:  ('r_sym', 0x00000002)
 // CHECK-NEXT:  ('r_type', 0x0000000b)

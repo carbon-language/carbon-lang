@@ -26,7 +26,7 @@ entry:
 
 ;  Offset     Info    Type            Sym.Value  Sym. Name
 ; 00000008  0000070a R_ARM_THM_CALL    00000001   foo
-; CHECK:           Relocation 0x00000000 
+; CHECK:           Relocation 0
 ; CHECK-NEXT:      'r_offset', 0x00000008
 ; CHECK-NEXT:      'r_sym', 0x00000007
 ; CHECK-NEXT:      'r_type', 0x0000000a

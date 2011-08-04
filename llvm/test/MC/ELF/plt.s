@@ -5,7 +5,7 @@
 	jmp	foo@PLT
 
 // CHECK:      ('_relocations', [
-// CHECK-NEXT:   # Relocation 0x00000000
+// CHECK-NEXT:   # Relocation 0
 // CHECK-NEXT:    (('r_offset',
 // CHECK-NEXT:     ('r_sym',
 // CHECK-NEXT:     ('r_type', 0x00000004)

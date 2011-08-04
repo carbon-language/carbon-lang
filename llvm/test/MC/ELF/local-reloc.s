@@ -12,7 +12,7 @@ foo:
 
 // Relocation refers to symbol number 2
 // CHECK:      ('_relocations', [
-// CHECK-NEXT:  # Relocation 0x00000000
+// CHECK-NEXT:  # Relocation 0
 // CHECK-NEXT:   (('r_offset',
 // CHECK-NEXT:    ('r_sym', 0x00000002)
 // CHECK-NEXT:    ('r_type',

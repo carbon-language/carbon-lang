@@ -118,7 +118,7 @@ def dumpRel(f, section, dumprela = False):
 
     for index in range(entries):
         f.seek(section.sh_offset + index * section.sh_entsize)
-        print "    # Relocation %s" % common_dump.HexDump(index)
+        print "    # Relocation %s" % index
         print "    (('r_offset', %s)" % common_dump.HexDump(f.readWord())
         r_info = f.readWord()
         if f.is64Bit:

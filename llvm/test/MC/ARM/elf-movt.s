@@ -27,12 +27,12 @@ barf:                                   @ @barf
 @ OBJ-NEXT:            'sh_entsize', 0x00000000
 @ OBJ-NEXT:            '_section_data', 'f00f0fe3 f40f4fe3'
 
-@ OBJ:              Relocation 0x00000000
+@ OBJ:              Relocation 0
 @ OBJ-NEXT:         'r_offset', 0x00000000
 @ OBJ-NEXT:         'r_sym'
 @ OBJ-NEXT:         'r_type', 0x0000002d
 
-@ OBJ:              Relocation 0x00000001
+@ OBJ:              Relocation 1
 @ OBJ-NEXT:         'r_offset', 0x00000004
 @ OBJ-NEXT:         'r_sym'
 @ OBJ-NEXT:         'r_type', 0x0000002e

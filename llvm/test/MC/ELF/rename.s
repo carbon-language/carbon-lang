@@ -29,7 +29,7 @@ defined3:
 // CHECK-NEXT:  ('sh_entsize', 0x00000000)
 
 // The relocation uses symbol 2
-// CHECK:      # Relocation 0x00000000
+// CHECK:      # Relocation 0
 // CHECK-NEXT: (('r_offset', 0x00000000)
 // CHECK-NEXT:  ('r_sym', 0x00000002)
 // CHECK-NEXT:  ('r_type', 0x0000000a)

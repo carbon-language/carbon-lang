@@ -32,7 +32,7 @@ foo:
 // CHECK-NEXT:   ),
 
 // Relocation 1 refers to symbol 6
-// CHECK-NEXT:  # Relocation 0x00000001
+// CHECK-NEXT:  # Relocation 1
 // CHECK-NEXT: (('r_offset',
 // CHECK-NEXT:  ('r_sym', 0x00000006)
 // CHECK-NEXT:  ('r_type', 0x0000000a)
@@ -40,7 +40,7 @@ foo:
 // CHECK-NEXT: ),
 
 // Relocation 2 refers to symbol 1
-// CHECK-NEXT:   # Relocation 0x00000002
+// CHECK-NEXT:   # Relocation 2
 // CHECK-NEXT:   (('r_offset',
 // CHECK-NEXT:    ('r_sym', 0x00000001)
 // CHECK-NEXT:    ('r_type', 0x0000000a
@@ -48,7 +48,7 @@ foo:
 // CHECK-NEXT:   ),
 
 // Relocation 3 refers to symbol 2
-// CHECK-NEXT:   # Relocation 0x00000003
+// CHECK-NEXT:   # Relocation 3
 // CHECK-NEXT:   (('r_offset',
 // CHECK-NEXT:    ('r_sym', 0x00000002)
 // CHECK-NEXT:    ('r_type', 0x00000004
@@ -56,7 +56,7 @@ foo:
 // CHECK-NEXT:   ),
 
 // Relocation 4 refers to symbol 2
-// CHECK-NEXT:   # Relocation 0x00000004
+// CHECK-NEXT:   # Relocation 4
 // CHECK-NEXT:   (('r_offset',
 // CHECK-NEXT:    ('r_sym', 0x00000002)
 // CHECK-NEXT:    ('r_type', 0x00000009
@@ -64,7 +64,7 @@ foo:
 // CHECK-NEXT:   ),
 
 // Relocation 5 refers to symbol 8
-// CHECK-NEXT:   # Relocation 0x00000005
+// CHECK-NEXT:   # Relocation 5
 // CHECK-NEXT:   (('r_offset', 0x00000023)
 // CHECK-NEXT:    ('r_sym', 0x00000008)
 // CHECK-NEXT:    ('r_type', 0x0000000b)

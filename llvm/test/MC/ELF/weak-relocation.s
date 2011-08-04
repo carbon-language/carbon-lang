@@ -7,7 +7,7 @@ foo:
 bar:
         call    foo
 
-//CHECK:        # Relocation 0x00000000
+//CHECK:        # Relocation 0
 //CHECK-NEXT:   (('r_offset', 0x00000001)
 //CHECK-NEXT:    ('r_sym', 0x00000005)
 //CHECK-NEXT:    ('r_type', 0x00000002)
