@@ -1698,7 +1698,6 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
       default: llvm_unreachable("invalid fixup kind!");
       case FK_Data_8: Type = ELF::R_X86_64_64; break;
       case X86::reloc_signed_4byte:
-        assert(isInt<32>(Target.getConstant()));
         switch (Modifier) {
         default:
           llvm_unreachable("Unimplemented");
