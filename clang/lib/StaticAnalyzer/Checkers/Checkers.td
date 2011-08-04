@@ -10,12 +10,6 @@
 include "clang/StaticAnalyzer/Checkers/CheckerBase.td"
 
 //===----------------------------------------------------------------------===//
-// Groups.
-//===----------------------------------------------------------------------===//
-
-def AllExperimental : CheckerGroup<"all-experimental">;
-
-//===----------------------------------------------------------------------===//
 // Packages.
 //===----------------------------------------------------------------------===//
 
@@ -24,31 +18,24 @@ def Experimental : Package<"experimental">;
 def Core : Package<"core">;
 def CoreBuiltin : Package<"builtin">, InPackage<Core>;
 def CoreUninitialized  : Package<"uninitialized">, InPackage<Core>;
-def CoreExperimental : Package<"core">, InPackage<Experimental>,
-  InGroup<AllExperimental>, Hidden;
+def CoreExperimental : Package<"core">, InPackage<Experimental>, Hidden;
 
 def Cplusplus : Package<"cplusplus">;
-def CplusplusExperimental : Package<"cplusplus">, InPackage<Experimental>,
-  InGroup<AllExperimental>, Hidden;
+def CplusplusExperimental : Package<"cplusplus">, InPackage<Experimental>, Hidden;
 
 def DeadCode : Package<"deadcode">;
-def DeadCodeExperimental : Package<"deadcode">, InPackage<Experimental>,
-  InGroup<AllExperimental>, Hidden;
+def DeadCodeExperimental : Package<"deadcode">, InPackage<Experimental>, Hidden;
 
 def Security : Package <"security">;
-def SecurityExperimental : Package<"security">, InPackage<Experimental>,
-  InGroup<AllExperimental>, Hidden;
+def SecurityExperimental : Package<"security">, InPackage<Experimental>, Hidden;
 
 def Unix : Package<"unix">;
-def UnixExperimental : Package<"unix">, InPackage<Experimental>,
-  InGroup<AllExperimental>, Hidden;
+def UnixExperimental : Package<"unix">, InPackage<Experimental>, Hidden;
 
 def OSX : Package<"osx">;
-def OSXExperimental : Package<"osx">, InPackage<Experimental>,
-  InGroup<AllExperimental>, Hidden;
+def OSXExperimental : Package<"osx">, InPackage<Experimental>, Hidden;
 def Cocoa : Package<"cocoa">, InPackage<OSX>;
-def CocoaExperimental : Package<"cocoa">, InPackage<OSXExperimental>,
-  InGroup<AllExperimental>, Hidden;
+def CocoaExperimental : Package<"cocoa">, InPackage<OSXExperimental>, Hidden;
 def CoreFoundation : Package<"coreFoundation">, InPackage<OSX>;
 
 def LLVM : Package<"llvm">;
