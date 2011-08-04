@@ -146,7 +146,7 @@ AsmToken AsmLexer::LexLineComment() {
   // FIXME: This is broken if we happen to a comment at the end of a file, which
   // was .included, and which doesn't end with a newline.
   int CurChar = getNextChar();
-  while (CurChar != '\n' && CurChar != '\n' && CurChar != EOF)
+  while (CurChar != '\n' && CurChar != '\r' && CurChar != EOF)
     CurChar = getNextChar();
 
   if (CurChar == EOF)
