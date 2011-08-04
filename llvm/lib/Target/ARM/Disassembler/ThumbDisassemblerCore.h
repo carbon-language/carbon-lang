@@ -1318,13 +1318,6 @@ static bool DisassembleThumb2LdStDual(MCInst &MI, unsigned Opcode,
   const MCOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
   if (!OpInfo) return false;
 
-  assert(NumOps >= 4
-         && OpInfo[0].RegClass > 0
-         && OpInfo[0].RegClass == OpInfo[1].RegClass
-         && OpInfo[2].RegClass > 0
-         && OpInfo[3].RegClass < 0
-         && "Expect >= 4 operands and first 3 as reg operands");
-
   // Thumnb allows for specifying Rt and Rt2, unlike ARM (which has Rt2==Rt+1).
   unsigned Rt  = decodeRd(insn);
   unsigned Rt2 = decodeRs(insn);
@@ -1357,20 +1350,32 @@ static bool DisassembleThumb2LdStDual(MCInst &MI, unsigned Opcode,
   // Add the <Rt> <Rt2> operands.
   unsigned RegClassPair = OpInfo[0].RegClass;
   unsigned RegClassBase = OpInfo[2].RegClass;
-  
+
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClassPair,
                                                      decodeRd(insn))));
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClassPair,
                                                      decodeRs(insn))));
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClassBase,
                                                      decodeRn(insn))));
+  unsigned Added = 4;
+  switch (MI.getOpcode()) {
+    case ARM::t2LDRD_PRE:
+    case ARM::t2LDRD_POST:
+    case ARM::t2STRD_PRE:
+    case ARM::t2STRD_POST:
+      MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClassBase,
+                                                         decodeRn(insn))));
+      Added = 5;
+    default:
+      break;
+  }
 
   // Finally add (+/-)imm8*4, depending on the U bit.
   int Offset = getImm8(insn) * 4;
   if (getUBit(insn) == 0)
     Offset = -Offset;
   MI.addOperand(MCOperand::CreateImm(Offset));
-  NumOpsAdded = 4;
+  NumOpsAdded = Added;
 
   return true;
 }

@@ -141,6 +141,7 @@ def t2addrmode_imm8s4 : Operand<i32> {
 
 def t2am_imm8s4_offset : Operand<i32> {
   let PrintMethod = "printT2AddrModeImm8s4OffsetOperand";
+  let DecoderMethod = "DecodeT2Imm8S4";
 }
 
 // t2addrmode_so_reg  := reg + (reg << imm2)
@@ -1354,19 +1355,21 @@ def t2STRHT  : T2IstT<0b01, "strht", IIC_iStore_bh_i>;
 // ldrd / strd pre / post variants
 // For disassembly only.
 
-def t2LDRD_PRE  : T2Ii8s4<1, 1, 1, (outs rGPR:$Rt, rGPR:$Rt2),
+def t2LDRD_PRE  : T2Ii8s4Tied<1, 1, 1,
+                 (outs rGPR:$Rt, rGPR:$Rt2, GPR:$wb),
                  (ins GPR:$base, t2am_imm8s4_offset:$imm), IIC_iLoad_d_ru,
                  "ldrd", "\t$Rt, $Rt2, [$base, $imm]!", []>;
 
-def t2LDRD_POST : T2Ii8s4<0, 1, 1, (outs rGPR:$Rt, rGPR:$Rt2),
+def t2LDRD_POST : T2Ii8s4Tied<0, 1, 1,
+                 (outs rGPR:$Rt, rGPR:$Rt2, GPR:$wb),
                  (ins GPR:$base, t2am_imm8s4_offset:$imm), IIC_iLoad_d_ru,
                  "ldrd", "\t$Rt, $Rt2, [$base], $imm", []>;
 
-def t2STRD_PRE  : T2Ii8s4<1, 1, 0, (outs),
+def t2STRD_PRE  : T2Ii8s4Tied<1, 1, 0, (outs GPR:$wb),
                  (ins rGPR:$Rt, rGPR:$Rt2, GPR:$base, t2am_imm8s4_offset:$imm),
                  IIC_iStore_d_ru, "strd", "\t$Rt, $Rt2, [$base, $imm]!", []>;
 
-def t2STRD_POST : T2Ii8s4<0, 1, 0, (outs),
+def t2STRD_POST : T2Ii8s4Tied<0, 1, 0, (outs GPR:$wb),
                  (ins rGPR:$Rt, rGPR:$Rt2, GPR:$base, t2am_imm8s4_offset:$imm),
                  IIC_iStore_d_ru, "strd", "\t$Rt, $Rt2, [$base], $imm", []>;
 
