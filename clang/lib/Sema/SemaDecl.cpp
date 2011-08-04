@@ -2884,22 +2884,47 @@ Sema::GetNameFromUnqualifiedId(const UnqualifiedId &Name) {
   return DeclarationNameInfo();
 }
 
+static QualType getCoreType(QualType Ty) {
+  do {
+    if (Ty->isPointerType() || Ty->isReferenceType())
+      Ty = Ty->getPointeeType();
+    else if (Ty->isArrayType())
+      Ty = Ty->castAsArrayTypeUnsafe()->getElementType();
+    else
+      return Ty.withoutLocalFastQualifiers();
+  } while (true);
+}
+
 /// isNearlyMatchingFunction - Determine whether the C++ functions
 /// Declaration and Definition are "nearly" matching. This heuristic
 /// is used to improve diagnostics in the case where an out-of-line
-/// function definition doesn't match any declaration within
-/// the class or namespace.
+/// function definition doesn't match any declaration within the class
+/// or namespace. Also sets Params to the list of indices to the
+/// parameters that differ between the declaration and the definition.
 static bool isNearlyMatchingFunction(ASTContext &Context,
                                      FunctionDecl *Declaration,
-                                     FunctionDecl *Definition) {
+                                     FunctionDecl *Definition,
+                                     llvm::SmallVectorImpl<unsigned> &Params) {
+  Params.clear();
   if (Declaration->param_size() != Definition->param_size())
     return false;
   for (unsigned Idx = 0; Idx < Declaration->param_size(); ++Idx) {
     QualType DeclParamTy = Declaration->getParamDecl(Idx)->getType();
     QualType DefParamTy = Definition->getParamDecl(Idx)->getType();
 
-    if (!Context.hasSameUnqualifiedType(DeclParamTy.getNonReferenceType(),
-                                        DefParamTy.getNonReferenceType()))
+    // The parameter types are identical
+    if (DefParamTy == DeclParamTy)
+      continue;
+
+    QualType DeclParamBaseTy = getCoreType(DeclParamTy);
+    QualType DefParamBaseTy = getCoreType(DefParamTy);
+    const IdentifierInfo *DeclTyName = DeclParamBaseTy.getBaseTypeIdentifier();
+    const IdentifierInfo *DefTyName = DefParamBaseTy.getBaseTypeIdentifier();
+
+    if (Context.hasSameUnqualifiedType(DeclParamBaseTy, DefParamBaseTy) ||
+        (DeclTyName && DeclTyName == DefTyName))
+      Params.push_back(Idx);
+    else  // The two parameters aren't even close
       return false;
   }
 
@@ -4155,14 +4180,24 @@ bool Sema::AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
 static void DiagnoseInvalidRedeclaration(Sema &S, FunctionDecl *NewFD) {
   LookupResult Prev(S, NewFD->getDeclName(), NewFD->getLocation(),
                     Sema::LookupOrdinaryName, Sema::ForRedeclaration);
+  llvm::SmallVector<unsigned, 1> MismatchedParams;
   S.LookupQualifiedName(Prev, NewFD->getDeclContext());
   assert(!Prev.isAmbiguous() &&
          "Cannot have an ambiguity in previous-declaration lookup");
   for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
        Func != FuncEnd; ++Func) {
-    if (isa<FunctionDecl>(*Func) &&
-        isNearlyMatchingFunction(S.Context, cast<FunctionDecl>(*Func), NewFD))
-      S.Diag((*Func)->getLocation(), diag::note_member_def_close_match);
+    FunctionDecl *FD = dyn_cast<FunctionDecl>(*Func);
+    if (FD && isNearlyMatchingFunction(S.Context, FD, NewFD,
+                                       MismatchedParams)) {
+      if (MismatchedParams.size() > 0) {
+        unsigned Idx = MismatchedParams.front();
+        ParmVarDecl *FDParam = FD->getParamDecl(Idx);
+        S.Diag(FDParam->getTypeSpecStartLoc(),
+               diag::note_member_def_close_param_match)
+            << Idx+1 << FDParam->getType() << NewFD->getParamDecl(Idx)->getType();
+      } else
+        S.Diag(FD->getLocation(), diag::note_member_def_close_match);
+    }
   }
 }
 

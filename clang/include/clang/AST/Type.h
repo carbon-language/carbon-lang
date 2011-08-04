@@ -503,6 +503,9 @@ public:
   
   const Type *getTypePtrOrNull() const;
 
+  /// Retrieves a pointer to the name of the base type.
+  const IdentifierInfo *getBaseTypeIdentifier() const;
+
   /// Divides a QualType into its unqualified type and a set of local
   /// qualifiers.
   SplitQualType split() const;

@@ -42,6 +42,26 @@ bool Qualifiers::isStrictSupersetOf(Qualifiers Other) const {
      (hasObjCLifetime() && !Other.hasObjCLifetime()));
 }
 
+const IdentifierInfo* QualType::getBaseTypeIdentifier() const {
+  const Type* ty = getTypePtr();
+  NamedDecl *ND = NULL;
+  if (ty->isPointerType() || ty->isReferenceType())
+    return ty->getPointeeType().getBaseTypeIdentifier();
+  else if (ty->isRecordType())
+    ND = ty->getAs<RecordType>()->getDecl();
+  else if (ty->isEnumeralType())
+    ND = ty->getAs<EnumType>()->getDecl();
+  else if (ty->getTypeClass() == Type::Typedef)
+    ND = ty->getAs<TypedefType>()->getDecl();
+  else if (ty->isArrayType())
+    return ty->castAsArrayTypeUnsafe()->
+        getElementType().getBaseTypeIdentifier();
+
+  if (ND)
+    return ND->getIdentifier();
+  return NULL;
+}
+
 bool QualType::isConstant(QualType T, ASTContext &Ctx) {
   if (T.isConstQualified())
     return true;
