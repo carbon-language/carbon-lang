@@ -3008,7 +3008,11 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
         type = Context->getObjCIdType();
       // Make sure we convert "type (^)(...)" to "type (*)(...)".
       (void)convertBlockPointerToFunctionPointer(type);
-      userExpr = NoTypeInfoCStyleCastExpr(Context, type, CK_BitCast,
+      const Expr *SubExpr = ICE->IgnoreParenImpCasts();
+      bool integral = SubExpr->getType()->isIntegralType(*Context);
+      userExpr = NoTypeInfoCStyleCastExpr(Context, type, 
+                                          (integral && type->isBooleanType()) 
+                                            ? CK_IntegralToBoolean : CK_BitCast,
                                           userExpr);
     }
     // Make id<P...> cast into an 'id' cast.
