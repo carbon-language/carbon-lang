@@ -16,7 +16,7 @@ defined3:
         .global defined1
 
 // Section 1 is .text
-// CHECK:      # Section 0x00000001
+// CHECK:      # Section 1
 // CHECK-NEXT: (('sh_name', 0x00000006) # '.text'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000006)

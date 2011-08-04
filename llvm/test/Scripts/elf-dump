@@ -205,7 +205,7 @@ def dumpELF(path, opts):
 
     print "('_sections', ["
     for index in range(e_shnum):
-        print "  # Section %s" % common_dump.HexDump(index)
+        print "  # Section %s" % index
         sections[index].dump(shstrtab, f, strtab, opts.dumpSectionData)
     print "])"
 

@@ -30,7 +30,7 @@
 // CHECK-NEXT:  ('sh_addralign', 0x00000001)
 // CHECK-NEXT:  ('sh_entsize', 0x00000000)
 // CHECK-NEXT: ),
-// CHECK-NEXT: # Section 0x0000000b
+// CHECK-NEXT: # Section 11
 // CHECK-NEXT: (('sh_name', 0x00000048) # '.fini'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000006)
@@ -42,7 +42,7 @@
 // CHECK-NEXT:  ('sh_addralign', 0x00000001)
 // CHECK-NEXT:  ('sh_entsize', 0x00000000)
 // CHECK-NEXT: ),
-// CHECK-NEXT: # Section 0x0000000c
+// CHECK-NEXT: # Section 12
 // CHECK-NEXT: (('sh_name', 0x00000076) # '.rodata'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000002)
@@ -54,7 +54,7 @@
 // CHECK-NEXT:  ('sh_addralign', 0x00000001)
 // CHECK-NEXT:  ('sh_entsize', 0x00000000)
 // CHECK-NEXT: ),
-// CHECK-NEXT: # Section 0x0000000d
+// CHECK-NEXT: # Section 13
 // CHECK-NEXT: (('sh_name', 0x00000058) # 'zed'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000000)

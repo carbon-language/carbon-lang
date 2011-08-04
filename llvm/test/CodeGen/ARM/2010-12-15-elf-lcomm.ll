@@ -15,7 +15,7 @@
 
 
 
-; OBJ:          Section 0x00000004
+; OBJ:          Section 4
 ; OBJ-NEXT:     '.bss'
 
 ; OBJ:          'array00'

@@ -20,7 +20,7 @@ bar:
         addq	$bar,%rax         # R_X86_64_32S
 
 
-// CHECK:  # Section 0x00000001
+// CHECK:  # Section 1
 // CHECK: (('sh_name', 0x00000006) # '.text'
 
 // CHECK: # Relocation 0x00000000

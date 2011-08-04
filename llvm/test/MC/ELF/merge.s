@@ -73,7 +73,7 @@ foo:
 // CHECK-NEXT:  ])
 
 // Section 5 is "sec1"
-// CHECK: # Section 0x00000005
+// CHECK: # Section 5
 // CHECK-NEXT:  (('sh_name', 0x00000035) # '.sec1'
 
 // Symbol number 1 is .Lfoo

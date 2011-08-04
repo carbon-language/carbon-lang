@@ -17,7 +17,7 @@ entry:
 ; ASM-NEXT:      .eabi_attribute 8, 1
 ; ASM-NEXT:      .eabi_attribute 9, 1
 
-; OBJ:           Section 0x00000004
+; OBJ:           Section 4
 ; OBJ-NEXT:      'sh_name', 0x0000000c
 ; OBJ-NEXT:      'sh_type', 0x70000003
 ; OBJ-NEXT:	   'sh_flags', 0x00000000

@@ -7,7 +7,7 @@
 foo:
 
 // Section number 1 is .text
-// CHECK:        # Section 0x00000001
+// CHECK:        # Section 1
 // CHECK-next:  (('sh_name', 0x00000001) # '.text'
 
 // Relocation refers to symbol number 2

@@ -1,6 +1,6 @@
 // RUN: llvm-mc -mc-no-exec-stack -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  | FileCheck  %s
 
-// CHECK:       # Section 0x00000004
+// CHECK:       # Section 4
 // CHECK-NEXT:  (('sh_name', 0x0000000c) # '.note.GNU-stack'
 // CHECK-NEXT:   ('sh_type', 0x00000001)
 // CHECK-NEXT:   ('sh_flags', 0x00000000)

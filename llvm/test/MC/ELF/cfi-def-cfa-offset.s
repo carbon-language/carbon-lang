@@ -10,7 +10,7 @@ f:
 	ret
 	.cfi_endproc
 
-// CHECK:      # Section 0x00000004
+// CHECK:      # Section 4
 // CHECK-NEXT: (('sh_name', 0x00000011) # '.eh_frame'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000002)
@@ -24,7 +24,7 @@ f:
 // CHECK-NEXT:  ('_section_data', '14000000 00000000 017a5200 01781001 1b0c0708 90010000 14000000 1c000000 00000000 0a000000 00440e10 450e0800')
 // CHECK-NEXT: ),
 
-// CHECK:       # Section 0x00000005
+// CHECK:       # Section 5
 // CHECK-NEXT: (('sh_name', 0x0000000c) # '.rela.eh_frame'
 // CHECK-NEXT:  ('sh_type', 0x00000004)
 // CHECK-NEXT:  ('sh_flags', 0x00000000)

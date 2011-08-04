@@ -3,7 +3,7 @@
 // Test that we produce the group sections and that they are a the beginning
 // of the file.
 
-// CHECK:       # Section 0x00000001
+// CHECK:       # Section 1
 // CHECK-NEXT:  (('sh_name', 0x0000001b) # '.group'
 // CHECK-NEXT:   ('sh_type', 0x00000011)
 // CHECK-NEXT:   ('sh_flags', 0x00000000)
@@ -15,7 +15,7 @@
 // CHECK-NEXT:   ('sh_addralign', 0x00000004)
 // CHECK-NEXT:   ('sh_entsize', 0x00000004)
 // CHECK-NEXT:  ),
-// CHECK-NEXT:  # Section 0x00000002
+// CHECK-NEXT:  # Section 2
 // CHECK-NEXT:  (('sh_name', 0x0000001b) # '.group'
 // CHECK-NEXT:   ('sh_type', 0x00000011)
 // CHECK-NEXT:   ('sh_flags', 0x00000000)
@@ -27,7 +27,7 @@
 // CHECK-NEXT:   ('sh_addralign', 0x00000004)
 // CHECK-NEXT:   ('sh_entsize', 0x00000004)
 // CHECK-NEXT:  ),
-// CHECK-NEXT:  # Section 0x00000003
+// CHECK-NEXT:  # Section 3
 // CHECK-NEXT:  (('sh_name', 0x0000001b) # '.group'
 // CHECK-NEXT:   ('sh_type', 0x00000011)
 // CHECK-NEXT:   ('sh_flags', 0x00000000)

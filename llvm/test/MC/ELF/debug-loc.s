@@ -7,7 +7,7 @@
 // FIXME: This size is the same as gnu as, but we can probably do a bit better.
 // FIXME2: We need a debug_line dumper so that we can test the actual contents.
 
-// CHECK:      # Section 0x00000004
+// CHECK:      # Section 4
 // CHECK-NEXT: (('sh_name', 0x00000011) # '.debug_line'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000000)

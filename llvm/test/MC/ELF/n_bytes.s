@@ -5,7 +5,7 @@
         .8byte 42, 1, 2, 3
         .int 42, 1, 2, 3
 
-// CHECK:      # Section 0x00000001
+// CHECK:      # Section 1
 // CHECK-NEXT: (('sh_name', 0x00000001) # '.text'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000006)
