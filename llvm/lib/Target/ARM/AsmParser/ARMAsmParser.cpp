@@ -520,6 +520,15 @@ public:
     int64_t Val = Mem.OffsetImm->getValue();
     return Val > -4096 && Val < 4096;
   }
+  bool isAM2OffsetImm() const {
+    if (Kind != Immediate)
+      return false;
+    // Immediate offset in range [-4095, 4095].
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Val = CE->getValue();
+    return Val > -4096 && Val < 4096;
+  }
   bool isAddrMode5() const {
     if (Kind != Memory)
       return false;
@@ -777,6 +786,20 @@ public:
     }
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
     Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Val));
+  }
+
+  void addAM2OffsetImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    assert(CE && "non-constant AM2OffsetImm operand!");
+    int32_t Val = CE->getValue();
+    ARM_AM::AddrOpc AddSub = Val < 0 ? ARM_AM::sub : ARM_AM::add;
+    // Special case for #-0
+    if (Val == INT32_MIN) Val = 0;
+    if (Val < 0) Val = -Val;
+    Val = ARM_AM::getAM2Opc(AddSub, Val, ARM_AM::no_shift);
+    Inst.addOperand(MCOperand::CreateReg(0));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
 

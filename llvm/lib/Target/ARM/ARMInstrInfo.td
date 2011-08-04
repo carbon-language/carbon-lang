@@ -673,11 +673,15 @@ def am2offset_reg : Operand<i32>,
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
+// FIXME: am2offset_imm should only need the immediate, not the GPR. Having
+// the GPR is purely vestigal at this point.
+def AM2OffsetImmAsmOperand : AsmOperandClass { let Name = "AM2OffsetImm"; }
 def am2offset_imm : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode2OffsetImm",
                 [], [SDNPWantRoot]> {
   let EncoderMethod = "getAddrMode2OffsetOpValue";
   let PrintMethod = "printAddrMode2OffsetOperand";
+  let ParserMatchClass = AM2OffsetImmAsmOperand;
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
@@ -1910,31 +1914,33 @@ multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
   }
 
   def _POST_REG : AI2ldstidx<1, isByte, 0, (outs GPR:$Rt, GPR:$Rn_wb),
-                       (ins GPR:$Rn, am2offset_reg:$offset),
+                       (ins addr_offset_none:$addr, am2offset_reg:$offset),
                        IndexModePost, LdFrm, itin,
-                       opc, "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []> {
+                       opc, "\t$Rt, $addr, $offset",
+                       "$addr.base = $Rn_wb", []> {
      // {12}     isAdd
      // {11-0}   imm12/Rm
      bits<14> offset;
-     bits<4> Rn;
+     bits<4> addr;
      let Inst{25} = 1;
      let Inst{23} = offset{12};
-     let Inst{19-16} = Rn;
+     let Inst{19-16} = addr;
      let Inst{11-0} = offset{11-0};
      let DecoderMethod = "DecodeAddrMode2IdxInstruction";
    }
 
    def _POST_IMM : AI2ldstidx<1, isByte, 0, (outs GPR:$Rt, GPR:$Rn_wb),
-                       (ins GPR:$Rn, am2offset_imm:$offset),
+                       (ins addr_offset_none:$addr, am2offset_imm:$offset),
                       IndexModePost, LdFrm, itin,
-                      opc, "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []> {
+                      opc, "\t$Rt, $addr, $offset",
+                      "$addr.base = $Rn_wb", []> {
     // {12}     isAdd
     // {11-0}   imm12/Rm
     bits<14> offset;
-    bits<4> Rn;
+    bits<4> addr;
     let Inst{25} = 0;
     let Inst{23} = offset{12};
-    let Inst{19-16} = Rn;
+    let Inst{19-16} = addr;
     let Inst{11-0} = offset{11-0};
     let DecoderMethod = "DecodeAddrMode2IdxInstruction";
   }
