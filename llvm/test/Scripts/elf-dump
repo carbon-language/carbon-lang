@@ -127,7 +127,7 @@ def dumpRel(f, section, dumprela = False):
         else:
             r_sym = (r_info >> 8, 24)
             r_type = (r_info & 0xff, 8)
-        print "     ('r_sym', %s)" % common_dump.HexDump(r_sym[0], 32)
+        print "     ('r_sym', %s)" % common_dump.HexDump(r_sym[0], r_sym[1])
         print "     ('r_type', %s)" % common_dump.HexDump(r_type[0], r_type[1])
         if dumprela:
             val = f.readWord()

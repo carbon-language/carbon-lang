@@ -62,7 +62,7 @@ declare void @exit(i32) noreturn nounwind
 
 ;; OBJ:          Relocation 1
 ;; OBJ-NEXT:     'r_offset', 
-;; OBJ-NEXT:     'r_sym', 0x00000002
+;; OBJ-NEXT:     'r_sym', 0x000002
 ;; OBJ-NEXT:     'r_type', 0x2b
 
 ;; OBJ:         Symbol 2
