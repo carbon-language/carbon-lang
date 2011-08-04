@@ -269,7 +269,6 @@ def Most : DiagGroup<"most", [
     Uninitialized,
     UnknownPragmas,
     Unused,
-    VectorConversions,
     VolatileRegisterVar,
     OverloadedVirtual
  ]>;
