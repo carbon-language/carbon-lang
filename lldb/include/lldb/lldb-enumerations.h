@@ -507,7 +507,8 @@ namespace lldb {
         eFormatterChoiceCriterionNavigatedBaseClasses =          0x00000004,
         eFormatterChoiceCriterionRegularExpressionSummary =      0x00000008,
         eFormatterChoiceCriterionRegularExpressionFilter =       0x00000008,
-        eFormatterChoiceCriterionDynamicObjCHierarchy =          0x00000010
+        eFormatterChoiceCriterionDynamicObjCHierarchy =          0x00000010,
+        eFormatterChoiceCriterionStrippedBitField =              0x00000020
     } FormatterChoiceCriterion;
     
     //----------------------------------------------------------------------

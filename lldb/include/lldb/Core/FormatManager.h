@@ -351,16 +351,28 @@ private:
             return false;
         }
         ConstString name(ClangASTType::GetTypeNameForQualType(type).c_str());
+        const char* typeName = name.GetCString();
         if (vobj.GetBitfieldBitSize() > 0)
         {
             // for bitfields, append size to the typename so one can custom format them
             StreamString sstring;
-            sstring.Printf("%s:%d",name.AsCString(),vobj.GetBitfieldBitSize());
-            name = ConstString(sstring.GetData());
+            sstring.Printf("%s:%d",typeName,vobj.GetBitfieldBitSize());
+            ConstString bitfieldname = ConstString(sstring.GetData());
             if (log)
-                log->Printf("appended bitfield info, final result is %s", name.GetCString());
+                log->Printf("appended bitfield info, final result is %s", bitfieldname.GetCString());
+            if (Get(bitfieldname.AsCString(), entry))
+            {
+                if (log)
+                    log->Printf("bitfield direct match found, returning");
+                return true;
+            }
+            else
+            {
+                reason |= lldb::eFormatterChoiceCriterionStrippedBitField;
+                if (log)
+                    log->Printf("no bitfield direct match");
+            }
         }
-        const char* typeName = name.GetCString();
         if (log)
             log->Printf("trying to get %s for VO name %s of type %s",
                         m_name.c_str(),

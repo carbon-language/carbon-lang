@@ -953,7 +953,7 @@ ValueObject::GetPrintableRepresentation(Stream& s,
         SetFormat(custom_format);
     
     const char * return_value;
-    std::auto_ptr<char> alloc_mem;
+    std::string alloc_mem;
     
     switch(val_obj_display)
     {
@@ -970,12 +970,11 @@ ValueObject::GetPrintableRepresentation(Stream& s,
             return_value = GetLocationAsCString();
             break;
         case eDisplayChildrenCount:
-            // keep this out of the local scope so it will only get deleted when
-            // we exit the function (..and we have a copy of the data into the Stream)
-            alloc_mem = std::auto_ptr<char>((char*)(return_value = new char[512]));
         {
+            alloc_mem.resize(512);
+            return_value = &alloc_mem[0];
             int count = GetNumChildren();
-            snprintf(alloc_mem.get(), 512, "%d", count);
+            snprintf((char*)return_value, 512, "%d", count);
             break;
         }
         default:
