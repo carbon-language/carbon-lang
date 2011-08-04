@@ -94,7 +94,7 @@ class CFStringSynthProvider:
 		if self.explicit == False:
 			offset = offset + 1;
 		return self.valobj.CreateValueFromAddress("content",
-				offset, self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar));
+				offset, self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar)).AddressOf();
 
 	def handle_UTF8_not_inline(self):
 		offset = self.size_of_cfruntime_base();
