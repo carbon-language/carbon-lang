@@ -619,6 +619,48 @@ SBValue::GetValueForExpressionPath(const char* expr_path)
 }
 
 int64_t
+SBValue::GetValueAsSigned(SBError& error, int64_t fail_value)
+{
+    if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
+        {
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
+            Scalar scalar;
+            if (m_opaque_sp->ResolveValue (scalar))
+                return scalar.GetRawBits64(fail_value);
+            else
+                error.SetErrorString("could not get value");
+        }
+        else
+            error.SetErrorString("could not get target");
+    }
+    error.SetErrorString("invalid SBValue");
+    return fail_value;
+}
+
+uint64_t
+SBValue::GetValueAsUnsigned(SBError& error, uint64_t fail_value)
+{
+    if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
+        {
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
+            Scalar scalar;
+            if (m_opaque_sp->ResolveValue (scalar))
+                return scalar.GetRawBits64(fail_value);
+            else
+                error.SetErrorString("could not get value");
+        }
+        else
+            error.SetErrorString("could not get target");
+    }
+    error.SetErrorString("invalid SBValue");
+    return fail_value;
+}
+
+int64_t
 SBValue::GetValueAsSigned(int64_t fail_value)
 {
     if (m_opaque_sp)

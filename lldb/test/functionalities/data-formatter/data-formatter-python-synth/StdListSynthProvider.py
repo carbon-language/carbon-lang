@@ -6,8 +6,8 @@ class StdListSynthProvider:
         self.update()
 
     def num_children(self):
-        next_val = int(self.next.GetValue(),0)
-        prev_val = int(self.prev.GetValue(),0)
+        next_val = self.next.GetValueAsUnsigned(0)
+        prev_val = self.prev.GetValueAsUnsigned(0)
         # After a std::list has been initialized, both next and prev will be non-NULL
         if next_val == 0 or prev_val == 0:
         	return 0
@@ -17,7 +17,7 @@ class StdListSynthProvider:
         	return 1
         size = 2
         current = self.next
-        while int(current.GetChildMemberWithName('_M_next').GetValue(),0) != self.node_address:
+        while current.GetChildMemberWithName('_M_next').GetValueAsUnsigned(0) != self.node_address:
         	size = size + 1
         	current = current.GetChildMemberWithName('_M_next')
         return (size - 1)
@@ -58,7 +58,7 @@ class StdListSynthProvider:
         impl = self.valobj.GetChildMemberWithName('_M_impl')
         node = impl.GetChildMemberWithName('_M_node')
         self.extract_type_name(impl.GetType().GetName())
-        self.node_address = int(self.valobj.AddressOf().GetValue(), 0)
+        self.node_address = self.valobj.AddressOf().GetValueAsUnsigned(0)
         self.next = node.GetChildMemberWithName('_M_next')
         self.prev = node.GetChildMemberWithName('_M_prev')
         self.data_type = node.GetTarget().FindFirstType(self.type_name)

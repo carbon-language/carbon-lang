@@ -331,12 +331,17 @@ ValueObject::GetValue() const
 bool
 ValueObject::ResolveValue (Scalar &scalar)
 {
-    ExecutionContext exe_ctx;
-    ExecutionContextScope *exe_scope = GetExecutionContextScope();
-    if (exe_scope)
-        exe_scope->CalculateExecutionContext(exe_ctx);
-    scalar = m_value.ResolveValue(&exe_ctx, GetClangAST ());
-    return scalar.IsValid();
+    if (UpdateValueIfNeeded(false)) // make sure that you are up to date before returning anything
+    {
+        ExecutionContext exe_ctx;
+        ExecutionContextScope *exe_scope = GetExecutionContextScope();
+        if (exe_scope)
+            exe_scope->CalculateExecutionContext(exe_ctx);
+        scalar = m_value.ResolveValue(&exe_ctx, GetClangAST ());
+        return scalar.IsValid();
+    }
+    else
+        return false;
 }
 
 bool

@@ -58,7 +58,7 @@ class StdMapSynthProvider:
 		root_ptr_val = self.node_ptr_value(self.Mroot)
 		if root_ptr_val == 0:
 			return 0;
-		return int(self.Mimpl.GetChildMemberWithName('_M_node_count').GetValue(), 0);
+		return self.Mimpl.GetChildMemberWithName('_M_node_count').GetValueAsUnsigned(0)
 	def get_child_index(self,name):
 		if name == "len":
 			return self.num_children();
@@ -77,7 +77,7 @@ class StdMapSynthProvider:
 			return current.CreateChildAtOffset('['+str(index)+']',self.skip_size,self.data_type)
 	# utility functions
 	def node_ptr_value(self,node):
-		return int(node.GetValue(),0);
+		return node.GetValueAsUnsigned(0)
 	def right(self,node):
 		return node.GetChildMemberWithName("_M_right");
 	def left(self,node):

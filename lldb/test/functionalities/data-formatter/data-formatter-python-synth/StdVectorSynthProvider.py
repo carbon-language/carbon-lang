@@ -5,9 +5,9 @@ class StdVectorSynthProvider:
         self.update()
 
     def num_children(self):
-        start_val = int(self.start.GetValue(),0)
-        finish_val = int(self.finish.GetValue(),0)
-        end_val  = int(self.end.GetValue(),0)
+        start_val = self.start.GetValueAsUnsigned(0)
+        finish_val = self.finish.GetValueAsUnsigned(0)
+        end_val  = self.end.GetValueAsUnsigned(0)
         # Before a vector has been constructed, it will contain bad values
         # so we really need to be careful about the length we return since
         # unitialized data can cause us to return a huge number. We need

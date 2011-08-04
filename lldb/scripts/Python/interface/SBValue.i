@@ -95,8 +95,14 @@ public:
     GetValue ();
 
     int64_t
-    GetValueAsSigned(int64_t fail_value=0);
+    GetValueAsSigned(SBError& error, int64_t fail_value=0);
 
+    uint64_t
+    GetValueAsUnsigned(SBError& error, uint64_t fail_value=0);
+    
+    int64_t
+    GetValueAsSigned(int64_t fail_value=0);
+    
     uint64_t
     GetValueAsUnsigned(uint64_t fail_value=0);
 

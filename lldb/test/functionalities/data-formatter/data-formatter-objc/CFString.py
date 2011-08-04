@@ -45,7 +45,7 @@ class CFStringSynthProvider:
 			# for 32bit targets, use safe ObjC code
 			return self.handle_unicode_string_safe()
 		offset = 12
-		pointer = int(self.valobj.GetValue(), 0) + offset
+		pointer = self.valobj.GetValueAsUnsigned(0) + offset
 		pystr = self.read_unicode(pointer)
 		return self.valobj.CreateValueFromExpression("content",
 			"(char*)\"" + pystr.encode('utf-8') + "\"")
@@ -60,7 +60,7 @@ class CFStringSynthProvider:
 	def handle_unicode_string(self):
 		# step 1: find offset
 		if self.inline:
-			pointer = int(self.valobj.GetValue(), 0) + self.size_of_cfruntime_base();
+			pointer = self.valobj.GetValueAsUnsigned(0) + self.size_of_cfruntime_base();
 			if self.explicit == False:
 				# untested, use the safe code path
 				return self.handle_unicode_string_safe();
@@ -76,11 +76,11 @@ class CFStringSynthProvider:
 				# for an inline string)
 				pointer = pointer + 8;
 		else:
-			pointer = int(self.valobj.GetValue(), 0) + self.size_of_cfruntime_base();
+			pointer = self.valobj.GetValueAsUnsigned(0) + self.size_of_cfruntime_base();
 			# read 8 bytes here and make an address out of them
 			vopointer = self.valobj.CreateChildAtOffset("dummy",
 				pointer,self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar).GetPointerType());
-			pointer = int(vopointer.GetValue(), 0)
+			pointer = vopointer.GetValueAsUnsigned(0)
 		# step 2: read Unicode data at pointer
 		pystr = self.read_unicode(pointer)
 		# step 3: return it
