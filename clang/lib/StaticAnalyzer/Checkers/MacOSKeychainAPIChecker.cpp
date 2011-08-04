@@ -116,33 +116,34 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
 
   // If a value has been freed, remove from the list.
   unsigned idx = getDeallocatingFunctionParam(funName);
-  if (idx != InvalidParamVal) {
-    const Expr *ArgExpr = CE->getArg(idx);
-    const MemRegion *Arg = State->getSVal(ArgExpr).getAsRegion();
-    if (!Arg)
+  if (idx == InvalidParamVal)
+    return;
+
+  const Expr *ArgExpr = CE->getArg(idx);
+  const MemRegion *Arg = State->getSVal(ArgExpr).getAsRegion();
+  if (!Arg)
+    return;
+
+  // If trying to free data which has not been allocated yet, report as bug.
+  if (State->get<AllocatedData>(Arg) == 0) {
+    // It is possible that this is a false positive - the argument might
+    // have entered as an enclosing function parameter.
+    if (isEnclosingFunctionParam(ArgExpr))
       return;
 
-    // If trying to free data which has not been allocated yet, report as bug.
-    if (State->get<AllocatedData>(Arg) == 0) {
-      // It is possible that this is a false positive - the argument might
-      // have entered as an enclosing function parameter.
-      if (isEnclosingFunctionParam(ArgExpr))
-        return;
-
-      ExplodedNode *N = C.generateNode(State);
-      if (!N)
-        return;
-      initBugType();
-      RangedBugReport *Report = new RangedBugReport(*BT,
-          "Trying to free data which has not been allocated.", N);
-      Report->addRange(ArgExpr->getSourceRange());
-      C.EmitReport(Report);
-    }
-
-    // Continue exploring from the new state.
-    State = State->remove<AllocatedData>(Arg);
-    C.addTransition(State);
+    ExplodedNode *N = C.generateNode(State);
+    if (!N)
+      return;
+    initBugType();
+    RangedBugReport *Report = new RangedBugReport(*BT,
+        "Trying to free data which has not been allocated.", N);
+    Report->addRange(ArgExpr->getSourceRange());
+    C.EmitReport(Report);
   }
+
+  // Continue exploring from the new state.
+  State = State->remove<AllocatedData>(Arg);
+  C.addTransition(State);
 }
 
 void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
@@ -162,32 +163,33 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
 
   // If a value has been allocated, add it to the set for tracking.
   unsigned idx = getAllocatingFunctionParam(funName);
-  if (idx != InvalidParamVal) {
-    SVal Arg = State->getSVal(CE->getArg(idx));
-    if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&Arg)) {
-      // Add the symbolic value, which represents the location of the allocated
-      // data, to the set.
-      const MemRegion *V = SM.Retrieve(State->getStore(), *X).getAsRegion();
-      // If this is not a region, it can be:
-      //  - unknown (cannot reason about it)
-      //  - undefined (already reported by other checker)
-      //  - constant (null - should not be tracked, other - report a warning?)
-      //  - goto (should be reported by other checker)
-      if (!V)
-        return;
+  if (idx == InvalidParamVal)
+    return;
 
-      State = State->set<AllocatedData>(V, AllocationInfo(CE->getArg(idx)));
+  SVal Arg = State->getSVal(CE->getArg(idx));
+  if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&Arg)) {
+    // Add the symbolic value, which represents the location of the allocated
+    // data, to the set.
+    const MemRegion *V = SM.Retrieve(State->getStore(), *X).getAsRegion();
+    // If this is not a region, it can be:
+    //  - unknown (cannot reason about it)
+    //  - undefined (already reported by other checker)
+    //  - constant (null - should not be tracked, other - report a warning?)
+    //  - goto (should be reported by other checker)
+    if (!V)
+      return;
 
-      // We only need to track the value if the function returned noErr(0), so
-      // bind the return value of the function to 0.
-      SValBuilder &Builder = C.getSValBuilder();
-      SVal ZeroVal = Builder.makeZeroVal(Builder.getContext().CharTy);
-      State = State->BindExpr(CE, ZeroVal);
-      assert(State);
+    State = State->set<AllocatedData>(V, AllocationInfo(CE->getArg(idx)));
 
-      // Proceed from the new state.
-      C.addTransition(State);
-    }
+    // We only need to track the value if the function returned noErr(0), so
+    // bind the return value of the function to 0.
+    SValBuilder &Builder = C.getSValBuilder();
+    SVal ZeroVal = Builder.makeZeroVal(Builder.getContext().CharTy);
+    State = State->BindExpr(CE, ZeroVal);
+    assert(State);
+
+    // Proceed from the new state.
+    C.addTransition(State);
   }
 }
 
