@@ -1589,7 +1589,7 @@ public:
   Expr *ReadSubExpr();
 
   /// \brief Reads the macro record located at the given offset.
-  PreprocessedEntity *ReadMacroRecord(Module &F, uint64_t Offset);
+  void ReadMacroRecord(Module &F, uint64_t Offset);
 
   /// \brief Reads the preprocessed entity located at the current stream
   /// position.
