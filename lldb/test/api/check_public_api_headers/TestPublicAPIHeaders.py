@@ -39,7 +39,7 @@ class SBDirCheckerCase(TestBase):
 
         public_api_dir = os.path.join(os.environ["LLDB_SRC"], "include", "lldb", "API")
 
-        # Look under the include/lldb/API directory and add #include statements for
+        # Look under the include/lldb/API directory and add #include statements
         # for all the SB API headers.
         public_headers = os.listdir(public_api_dir)
         # For different platforms, the include statement can vary.
