@@ -352,13 +352,19 @@ class TransferFunctions : public StmtVisitor<TransferFunctions> {
   /// possible to either silence the warning in some cases, or we
   /// propagate the uninitialized value.
   CastExpr *lastLoad;
+  
+  /// For some expressions, we want to ignore any post-processing after
+  /// visitation.
+  bool skipProcessUses;
+  
 public:
   TransferFunctions(CFGBlockValues &vals, const CFG &cfg,
                     AnalysisContext &ac,
                     UninitVariablesHandler *handler,
                     bool flagBlockUses)
     : vals(vals), cfg(cfg), ac(ac), handler(handler),
-      flagBlockUses(flagBlockUses), lastDR(0), lastLoad(0) {}
+      flagBlockUses(flagBlockUses), lastDR(0), lastLoad(0),
+      skipProcessUses(false) {}
   
   const CFG &getCFG() { return cfg; }
   void reportUninit(const DeclRefExpr *ex, const VarDecl *vd,
@@ -464,8 +470,9 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
           // appropriately, but we need to continue to analyze subsequent uses
           // of the variable.
           if (init == lastLoad) {
-            DeclRefExpr *DR =
-              cast<DeclRefExpr>(lastLoad->getSubExpr()->IgnoreParens());
+            DeclRefExpr *DR
+              = cast<DeclRefExpr>(lastLoad->
+                  getSubExpr()->IgnoreParenNoopCasts(ac.getASTContext()));
             if (DR->getDecl() == vd) {
               // int x = x;
               // Propagate uninitialized value, but don't immediately report
@@ -537,6 +544,9 @@ void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
       }
     }
   }
+  else if (ce->getCastKind() == CK_NoOp) {
+    skipProcessUses = true;
+  }
   else if (CStyleCastExpr *cse = dyn_cast<CStyleCastExpr>(ce)) {
     if (cse->getType()->isVoidType()) {
       // e.g. (void) x;
@@ -551,8 +561,10 @@ void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
 }
 
 void TransferFunctions::Visit(clang::Stmt *s) {
+  skipProcessUses = false;
   StmtVisitor<TransferFunctions>::Visit(s);
-  ProcessUses(s);
+  if (!skipProcessUses)
+    ProcessUses(s);
 }
 
 void TransferFunctions::ProcessUses(Stmt *s) {
@@ -568,7 +580,9 @@ void TransferFunctions::ProcessUses(Stmt *s) {
     // If we reach here, we have seen a load of an uninitialized value
     // and it hasn't been casted to void or otherwise handled.  In this
     // situation, report the incident.
-    DeclRefExpr *DR = cast<DeclRefExpr>(lastLoad->getSubExpr()->IgnoreParens());
+    DeclRefExpr *DR =
+      cast<DeclRefExpr>(lastLoad->getSubExpr()->
+                          IgnoreParenNoopCasts(ac.getASTContext()));
     VarDecl *VD = cast<VarDecl>(DR->getDecl());
     reportUninit(DR, VD, isAlwaysUninit(vals[VD]));
     lastLoad = 0;
