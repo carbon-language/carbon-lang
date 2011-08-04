@@ -272,6 +272,8 @@ public:
     return MCountName;
   }
 
+  /// useBitFieldTypeAlignment() - Check whether the alignment of bit-field 
+  /// types is respected when laying out structures.
   bool useBitFieldTypeAlignment() const {
     return UseBitFieldTypeAlignment;
   }
