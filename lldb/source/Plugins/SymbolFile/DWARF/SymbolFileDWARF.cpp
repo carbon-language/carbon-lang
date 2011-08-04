@@ -3645,6 +3645,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                       type_name_cstr,
                                                                                       clang_type,
                                                                                       accessibility);
+                                    LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(objc_method_decl), die);
                                     type_handled = objc_method_decl != NULL;
                                 }
                             }
@@ -3683,6 +3684,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                             is_static,
                                                                                             is_inline,
                                                                                             is_explicit);
+                                            LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
+
                                             type_handled = cxx_method_decl != NULL;
                                         }
                                     }

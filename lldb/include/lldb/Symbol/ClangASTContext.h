@@ -300,6 +300,13 @@ public:
                                                           is_explicit);
     }
     
+    static clang::DeclContext *
+    GetAsDeclContext (clang::CXXMethodDecl *cxx_method_decl);
+
+    static clang::DeclContext *
+    GetAsDeclContext (clang::ObjCMethodDecl *objc_method_decl);
+
+    
     static bool
     CheckOverloadedOperatorKindParameterCount (uint32_t op_kind, 
                                                uint32_t num_params);

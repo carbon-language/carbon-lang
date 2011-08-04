@@ -4912,3 +4912,15 @@ ClangASTContext::GetCompleteDecl (clang::ASTContext *ast,
     }
 }
 
+clang::DeclContext *
+ClangASTContext::GetAsDeclContext (clang::CXXMethodDecl *cxx_method_decl)
+{
+    return clang::dyn_cast<clang::DeclContext>(cxx_method_decl);
+}
+
+clang::DeclContext *
+ClangASTContext::GetAsDeclContext (clang::ObjCMethodDecl *objc_method_decl)
+{
+    return clang::dyn_cast<clang::DeclContext>(objc_method_decl);
+}
+
