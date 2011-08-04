@@ -3783,6 +3783,9 @@ def warn_unused_property_expr : Warning<
 def warn_unused_call : Warning<
   "ignoring return value of function declared with %0 attribute">,
   InGroup<UnusedValue>;
+def warn_unused_result : Warning<
+  "ignoring return value of function declared with warn_unused_result "
+  "attribute">, InGroup<DiagGroup<"unused-result">>;
 
 def err_incomplete_type_used_in_type_trait_expr : Error<
   "incomplete type %0 used in type trait expression">;

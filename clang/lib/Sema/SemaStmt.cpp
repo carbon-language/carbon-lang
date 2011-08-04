@@ -123,7 +123,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
     // a more specific message to make it clear what is happening.
     if (const Decl *FD = CE->getCalleeDecl()) {
       if (FD->getAttr<WarnUnusedResultAttr>()) {
-        Diag(Loc, diag::warn_unused_call) << R1 << R2 << "warn_unused_result";
+        Diag(Loc, diag::warn_unused_result) << R1 << R2;
         return;
       }
       if (FD->getAttr<PureAttr>()) {
@@ -142,7 +142,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
     }
     const ObjCMethodDecl *MD = ME->getMethodDecl();
     if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
-      Diag(Loc, diag::warn_unused_call) << R1 << R2 << "warn_unused_result";
+      Diag(Loc, diag::warn_unused_result) << R1 << R2;
       return;
     }
   } else if (isa<ObjCPropertyRefExpr>(E)) {
