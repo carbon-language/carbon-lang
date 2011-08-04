@@ -10,6 +10,7 @@ typedef unsigned int CFTypeRef;
 typedef unsigned int UInt16;
 typedef unsigned int SecProtocolType;
 typedef unsigned int SecAuthenticationType;
+typedef unsigned int SecKeychainAttributeInfo;
 enum {
   noErr                      = 0,
   GenericError               = 1
@@ -50,11 +51,23 @@ OSStatus SecKeychainFindInternetPassword (
     void **passwordData,
     SecKeychainItemRef *itemRef
 );
+OSStatus SecKeychainItemCopyAttributesAndData (
+   SecKeychainItemRef itemRef,
+   SecKeychainAttributeInfo *info,
+   SecItemClass *itemClass,
+   SecKeychainAttributeList **attrList,
+   UInt32 *length,
+   void **outData
+);
 
-// Function which frees data.
+// Functions which free data.
 OSStatus SecKeychainItemFreeContent (
     SecKeychainAttributeList *attrList,
     void *data
+);
+OSStatus SecKeychainItemFreeAttributesAndData (
+   SecKeychainAttributeList *attrList,
+   void *data
 );
 
 void errRetVal() {
@@ -63,8 +76,8 @@ void errRetVal() {
 	UInt32 length;
 	void *outData;
 	st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
-	if (st == GenericError) // expected-warning{{Missing a call to SecKeychainItemFreeContent}}
-		SecKeychainItemFreeContent(ptr, outData);
+	if (st == GenericError) // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeContent'.}}
+		SecKeychainItemFreeContent(ptr, outData); // expected-warning{{Trying to free data which has not been allocated.}}
 }
 
 // If null is passed in, the data is not allocated, so no need for the matching free.
@@ -74,6 +87,15 @@ void fooDoNotReportNull() {
     UInt32 *length = 0;
     void **outData = 0;
     SecKeychainItemCopyContent(2, ptr, ptr, 0, 0);
+    SecKeychainItemCopyContent(2, ptr, ptr, length, outData);
+}// no-warning
+
+void doubleAlloc() {
+    unsigned int *ptr = 0;
+    OSStatus st = 0;
+    UInt32 *length = 0;
+    void **outData = 0;
+    SecKeychainItemCopyContent(2, ptr, ptr, length, outData);
     SecKeychainItemCopyContent(2, ptr, ptr, length, outData);
 }// no-warning
 
@@ -95,8 +117,8 @@ void fooOnlyFreeUndef() {
 }// no-warning
 
 // Do not warn if the address is a parameter in the enclosing function.
-void fooOnlyFreeParam(void* X) {
-  SecKeychainItemFreeContent(X, X); 
+void fooOnlyFreeParam(void *attrList, void* X) {
+    SecKeychainItemFreeContent(attrList, X); 
 }// no-warning
 
 // If we are returning the value, no not report.
@@ -109,7 +131,46 @@ void* returnContent() {
   return outData;
 } // no-warning
 
-int foo () {
+int apiMismatch(SecKeychainItemRef itemRef, 
+         SecKeychainAttributeInfo *info,
+         SecItemClass *itemClass) {
+  OSStatus st = 0;
+  SecKeychainAttributeList *attrList;
+  UInt32 length;
+  void *outData;
+  
+  st = SecKeychainItemCopyAttributesAndData(itemRef, info, itemClass, 
+                                            &attrList, &length, &outData); 
+  if (st == noErr)
+    SecKeychainItemFreeContent(attrList, outData); // expected-warning{{Allocator doesn't match the deallocator}}
+  return 0;
+}
+
+int ErrorCodesFromDifferentAPISDoNotInterfere(SecKeychainItemRef itemRef, 
+                                              SecKeychainAttributeInfo *info,
+                                              SecItemClass *itemClass) {
+  unsigned int *ptr = 0;
+  OSStatus st = 0;
+  UInt32 length;
+  void *outData;
+  OSStatus st2 = 0;
+  SecKeychainAttributeList *attrList;
+  UInt32 length2;
+  void *outData2;
+
+  st2 = SecKeychainItemCopyAttributesAndData(itemRef, info, itemClass, 
+                                             &attrList, &length2, &outData2);
+  st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);  
+  if (st == noErr) {
+    SecKeychainItemFreeContent(ptr, outData);
+    if (st2 == noErr) {
+      SecKeychainItemFreeAttributesAndData(attrList, outData2);
+    }
+  } 
+  return 0; // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeAttributesAndData'}}
+}
+
+int foo() {
   unsigned int *ptr = 0;
   OSStatus st = 0;
 
