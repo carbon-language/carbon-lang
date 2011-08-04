@@ -448,16 +448,24 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, const SB
         
         lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
         
-        ValueObjectSP result_valobj_sp(ValueObjectConstResult::Create(m_opaque_sp->GetUpdatePoint().GetExecutionContextScope(),
-                                                                      real_type.m_opaque_sp->GetASTContext(),
-                                                                      real_type.m_opaque_sp->GetOpaqueQualType(),
-                                                                      ConstString(name),
-                                                                      buffer,
-                                                                      lldb::endian::InlHostByteOrder(), 
-                                                                      GetTarget().GetProcess().GetAddressByteSize()));
+        ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create(m_opaque_sp->GetUpdatePoint().GetExecutionContextScope(),
+                                                                          real_type.m_opaque_sp->GetASTContext(),
+                                                                          real_type.m_opaque_sp->GetOpaqueQualType(),
+                                                                          ConstString(name),
+                                                                          buffer,
+                                                                          lldb::endian::InlHostByteOrder(), 
+                                                                          GetTarget().GetProcess().GetAddressByteSize()));
         
-        result_valobj_sp->SetName(ConstString(name));
-        result_valobj_sp->GetValue().SetValueType(Value::eValueTypeLoadAddress);
+        ValueObjectSP result_valobj_sp;
+        
+        ptr_result_valobj_sp->GetValue().SetValueType(Value::eValueTypeLoadAddress);
+        if (ptr_result_valobj_sp)
+        {
+            Error err;
+            result_valobj_sp = ptr_result_valobj_sp->Dereference(err);
+            if (result_valobj_sp)
+                result_valobj_sp->SetName(ConstString(name));
+        }
         result = SBValue(result_valobj_sp);
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
