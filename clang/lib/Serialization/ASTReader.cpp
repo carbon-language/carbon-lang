@@ -1568,7 +1568,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
   switch (RecType) {
   case PPD_MACRO_EXPANSION: {
     PreprocessedEntityID GlobalID = getGlobalPreprocessedEntityID(F, Record[0]);
-    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(GlobalID))
+    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(GlobalID-1))
       return PE;
     
     MacroExpansion *ME =
@@ -1576,13 +1576,13 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
                                  SourceRange(ReadSourceLocation(F, Record[1]),
                                              ReadSourceLocation(F, Record[2])),
                                  getLocalMacroDefinition(F, Record[4]));
-    PPRec.setLoadedPreallocatedEntity(GlobalID, ME);
+    PPRec.setLoadedPreallocatedEntity(GlobalID - 1, ME);
     return ME;
   }
       
   case PPD_MACRO_DEFINITION: {
     PreprocessedEntityID GlobalID = getGlobalPreprocessedEntityID(F, Record[0]);
-    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(GlobalID))
+    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(GlobalID-1))
       return PE;
 
     unsigned MacroDefID = getGlobalMacroDefinitionID(F, Record[1]);
@@ -1602,7 +1602,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
                                             ReadSourceLocation(F, Record[2]),
                                             ReadSourceLocation(F, Record[3])));
       
-      PPRec.setLoadedPreallocatedEntity(GlobalID, MD);
+      PPRec.setLoadedPreallocatedEntity(GlobalID - 1, MD);
       MacroDefinitionsLoaded[MacroDefID - 1] = MD;
       
       if (DeserializationListener)
@@ -1614,7 +1614,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
       
   case PPD_INCLUSION_DIRECTIVE: {
     PreprocessedEntityID GlobalID = getGlobalPreprocessedEntityID(F, Record[0]);
-    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(GlobalID))
+    if (PreprocessedEntity *PE = PPRec.getLoadedPreprocessedEntity(GlobalID-1))
       return PE;
     
     const char *FullFileNameStart = BlobStart + Record[3];
@@ -1632,7 +1632,7 @@ PreprocessedEntity *ASTReader::LoadPreprocessedEntity(Module &F) {
                                        File,
                                  SourceRange(ReadSourceLocation(F, Record[1]),
                                              ReadSourceLocation(F, Record[2])));
-    PPRec.setLoadedPreallocatedEntity(GlobalID, ID);
+    PPRec.setLoadedPreallocatedEntity(GlobalID - 1, ID);
     return ID;
   }
   }

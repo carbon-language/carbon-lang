@@ -1797,11 +1797,13 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
   }
   
   unsigned IndexBase = Chain ? PPRec.getNumLoadedPreprocessedEntities() : 0;
+  unsigned NextPreprocessorEntityID = IndexBase + 1;
   RecordData Record;
   uint64_t BitsInChain = Chain? Chain->TotalModulesSizeInBits : 0;
   for (PreprocessingRecord::iterator E = PPRec.begin(Chain),
                                   EEnd = PPRec.end(Chain);
-       E != EEnd; ++E) {
+       E != EEnd; 
+       (void)++E, ++NumPreprocessingRecords, ++NextPreprocessorEntityID) {
     Record.clear();
 
     if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
@@ -1826,7 +1828,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
       } else
         MacroDefinitionOffsets.push_back(Stream.GetCurrentBitNo());
       
-      Record.push_back(IndexBase + NumPreprocessingRecords++);
+      Record.push_back(NextPreprocessorEntityID);
       Record.push_back(ID);
       AddSourceLocation(MD->getSourceRange().getBegin(), Record);
       AddSourceLocation(MD->getSourceRange().getEnd(), Record);
@@ -1842,7 +1844,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
         BitsInChain + Stream.GetCurrentBitNo());
 
     if (MacroExpansion *ME = dyn_cast<MacroExpansion>(*E)) {
-      Record.push_back(IndexBase + NumPreprocessingRecords++);
+      Record.push_back(NextPreprocessorEntityID);
       AddSourceLocation(ME->getSourceRange().getBegin(), Record);
       AddSourceLocation(ME->getSourceRange().getEnd(), Record);
       AddIdentifierRef(ME->getName(), Record);
@@ -1853,7 +1855,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
 
     if (InclusionDirective *ID = dyn_cast<InclusionDirective>(*E)) {
       Record.push_back(PPD_INCLUSION_DIRECTIVE);
-      Record.push_back(IndexBase + NumPreprocessingRecords++);
+      Record.push_back(NextPreprocessorEntityID);
       AddSourceLocation(ID->getSourceRange().getBegin(), Record);
       AddSourceLocation(ID->getSourceRange().getEnd(), Record);
       Record.push_back(ID->getFileName().size());
