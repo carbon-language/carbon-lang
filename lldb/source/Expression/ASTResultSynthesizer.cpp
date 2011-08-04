@@ -311,7 +311,12 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
     
     if (is_lvalue)
     {
-        IdentifierInfo &result_ptr_id = Ctx.Idents.get("$__lldb_expr_result_ptr");
+        IdentifierInfo *result_ptr_id;
+        
+        if (expr_type->isFunctionType())
+            result_ptr_id = &Ctx.Idents.get("$__lldb_expr_result"); // functions actually should be treated like function pointers
+        else
+            result_ptr_id = &Ctx.Idents.get("$__lldb_expr_result_ptr");
         
         QualType ptr_qual_type = Ctx.getPointerType(expr_qual_type);
         
@@ -319,7 +324,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
                                       DC,
                                       SourceLocation(),
                                       SourceLocation(),
-                                      &result_ptr_id,
+                                      result_ptr_id,
                                       ptr_qual_type,
                                       NULL,
                                       SC_Static,

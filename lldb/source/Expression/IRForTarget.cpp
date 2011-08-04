@@ -169,6 +169,146 @@ IRForTarget::HasSideEffects (llvm::Function &llvm_function)
     return false;
 }
 
+bool 
+IRForTarget::GetFunctionAddress (llvm::Function *fun,
+                                 uint64_t &fun_addr,
+                                 lldb_private::ConstString &name,
+                                 Constant **&value_ptr)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    fun_addr = LLDB_INVALID_ADDRESS;
+    name.Clear();
+    value_ptr = NULL;
+    
+    if (fun->isIntrinsic())
+    {
+        Intrinsic::ID intrinsic_id = (Intrinsic::ID)fun->getIntrinsicID();
+        
+        switch (intrinsic_id)
+        {
+        default:
+            if (log)
+                log->Printf("Unresolved intrinsic \"%s\"", Intrinsic::getName(intrinsic_id).c_str());
+                
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: Call to unhandled compiler intrinsic '%s'\n", Intrinsic::getName(intrinsic_id).c_str());
+            
+            return false;
+        case Intrinsic::memcpy:
+            {
+                static lldb_private::ConstString g_memcpy_str ("memcpy");
+                name = g_memcpy_str;
+            }
+            break;
+        }
+        
+        if (log && name)
+            log->Printf("Resolved intrinsic name \"%s\"", name.GetCString());
+    }
+    else
+    {
+        name.SetCStringWithLength (fun->getName().data(), fun->getName().size());
+    }
+    
+    // Find the address of the function.
+    
+    clang::NamedDecl *fun_decl = DeclForGlobal (fun);
+    Value **fun_value_ptr = NULL;
+    
+    if (fun_decl)
+    {
+        if (!m_decl_map->GetFunctionInfo (fun_decl, fun_value_ptr, fun_addr)) 
+        {
+            fun_value_ptr = NULL;
+            
+            if (!m_decl_map->GetFunctionAddress (name, fun_addr))
+            {
+                if (log)
+                    log->Printf("Function \"%s\" had no address", name.GetCString());
+                
+                if (m_error_stream)
+                    m_error_stream->Printf("Error [IRForTarget]: Call to a function '%s' that is not present in the target\n", name.GetCString());
+                
+                return false;
+            }
+        }
+    }
+    else 
+    {
+        if (!m_decl_map->GetFunctionAddress (name, fun_addr))
+        {
+            if (log)
+                log->Printf ("Metadataless function \"%s\" had no address", name.GetCString());
+            
+            if (m_error_stream)
+                m_error_stream->Printf("Error [IRForTarget]: Call to a symbol-only function '%s' that is not present in the target\n", name.GetCString());
+            
+            return false;
+        }
+    }
+    
+    if (log)
+        log->Printf("Found \"%s\" at 0x%llx", name.GetCString(), fun_addr);
+    
+    return true;
+}
+
+llvm::Constant *
+IRForTarget::BuildFunctionPointer (llvm::Type *type,
+                                   uint64_t ptr)
+{
+    IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
+                                             (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
+    PointerType *fun_ptr_ty = PointerType::getUnqual(type);
+    Constant *fun_addr_int = ConstantInt::get(intptr_ty, ptr, false);
+    return ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
+}
+
+bool 
+IRForTarget::ResolveFunctionPointers(llvm::Module &llvm_module,
+                                     llvm::Function &llvm_function)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    for (llvm::Module::iterator fi = llvm_module.begin();
+         fi != llvm_module.end();
+         ++fi)
+    {
+        Function *fun = fi;
+        
+        bool is_decl = fun->isDeclaration();
+        
+        if (log)
+            log->Printf("Examining %s function %s", (is_decl ? "declaration" : "non-declaration"), fun->getNameStr().c_str());
+        
+        if (!is_decl)
+            continue;
+        
+        if (fun->hasNUses(0))
+            continue; // ignore
+        
+        uint64_t addr = LLDB_INVALID_ADDRESS;
+        lldb_private::ConstString name;
+        Constant **value_ptr = NULL;
+        
+        if (!GetFunctionAddress(fun,
+                                addr,
+                                name,
+                                value_ptr))
+            return false; // GetFunctionAddress reports its own errors
+        
+        Constant *value = BuildFunctionPointer(fun->getFunctionType(), addr);
+        
+        if (value_ptr)
+            *value_ptr = value;
+        
+        fun->replaceAllUsesWith(value);
+    }
+    
+    return true;
+}
+
 clang::NamedDecl *
 IRForTarget::DeclForGlobal (GlobalValue *global_val)
 {
@@ -1403,193 +1543,6 @@ IRForTarget::MaybeHandleCallArguments (CallInst *Old)
 }
 
 bool
-IRForTarget::MaybeHandleCall (CallInst *llvm_call_inst)
-{
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-
-    Function *fun = llvm_call_inst->getCalledFunction();
-    
-    bool is_bitcast = false;
-
-    // If the call is to something other than a plain llvm::Function, resolve which
-    // Function is meant or give up.
-    
-    if (fun == NULL)
-    {
-        Value *val = llvm_call_inst->getCalledValue();
-        
-        ConstantExpr *const_expr = dyn_cast<ConstantExpr>(val);
-        LoadInst *load_inst = dyn_cast<LoadInst>(val);
-        
-        if (const_expr && const_expr->getOpcode() == Instruction::BitCast)
-        {
-            fun = dyn_cast<Function>(const_expr->getOperand(0));
-            
-            if (!fun)
-            {
-                if (m_error_stream)
-                    m_error_stream->Printf("Internal error [IRForTaget]: Called entity is a cast of something not a function\n");
-            
-                return false;
-            }
-            
-            is_bitcast = true;
-        }
-        else if (const_expr && const_expr->getOpcode() == Instruction::IntToPtr)
-        {
-            return true; // already resolved
-        }
-        else if (load_inst)
-        {
-            return true; // virtual method call
-        }
-        else
-        {
-            if (m_error_stream)
-                m_error_stream->Printf("Internal error [IRForTarget]: Called entity is not a function\n");
-            
-            return false;
-        }
-    }
-    
-    // Determine the name of the called function, which is needed to find the address.
-    // Intrinsics are special-cased.
-    
-    lldb_private::ConstString str;
-    
-    if (fun->isIntrinsic())
-    {
-        Intrinsic::ID intrinsic_id = (Intrinsic::ID)fun->getIntrinsicID();
-        
-        switch (intrinsic_id)
-        {
-        default:
-            if (log)
-                log->Printf("Unresolved intrinsic \"%s\"", Intrinsic::getName(intrinsic_id).c_str());
-            
-            if (m_error_stream)
-                m_error_stream->Printf("Internal error [IRForTarget]: Call to unhandled compiler intrinsic '%s'\n", Intrinsic::getName(intrinsic_id).c_str());
-                
-            return false;
-        case Intrinsic::memcpy:
-            {
-                static lldb_private::ConstString g_memcpy_str ("memcpy");
-                str = g_memcpy_str;
-            }
-            break;
-        }
-        
-        if (log && str)
-            log->Printf("Resolved intrinsic name \"%s\"", str.GetCString());
-    }
-    else
-    {
-        str.SetCStringWithLength (fun->getName().data(), fun->getName().size());
-    }
-    
-    // Find the address of the function, and the type if possible.
-    
-    clang::NamedDecl *fun_decl = DeclForGlobal (fun);
-    lldb::addr_t fun_addr = LLDB_INVALID_ADDRESS;
-    Value **fun_value_ptr = NULL;
-    
-    if (fun_decl)
-    {
-        if (!m_decl_map->GetFunctionInfo (fun_decl, fun_value_ptr, fun_addr)) 
-        {
-            fun_value_ptr = NULL;
-            
-            if (!m_decl_map->GetFunctionAddress (str, fun_addr))
-            {
-                if (log)
-                    log->Printf("Function \"%s\" had no address", str.GetCString());
-                
-                if (m_error_stream)
-                    m_error_stream->Printf("Error [IRForTarget]: Call to a function '%s' that is not present in the target\n", str.GetCString());
-                
-                return false;
-            }
-        }
-    }
-    else 
-    {
-        if (!m_decl_map->GetFunctionAddress (str, fun_addr))
-        {
-            if (log)
-                log->Printf ("Metadataless function \"%s\" had no address", str.GetCString());
-            
-            if (m_error_stream)
-                m_error_stream->Printf("Error [IRForTarget]: Call to a symbol-only function '%s' that is not present in the target\n", str.GetCString());
-            
-            return false;
-        }
-    }
-        
-    if (log)
-        log->Printf("Found \"%s\" at 0x%llx", str.GetCString(), fun_addr);
-    
-    // Construct the typed pointer to the function.
-    
-    Value *fun_addr_ptr = NULL;
-            
-    if (!fun_value_ptr || !*fun_value_ptr)
-    {
-        IntegerType *intptr_ty = Type::getIntNTy(m_module->getContext(),
-                                                 (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
-        FunctionType *fun_ty = fun->getFunctionType();
-        PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
-        Constant *fun_addr_int = ConstantInt::get(intptr_ty, fun_addr, false);
-        fun_addr_ptr = ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
-            
-        if (fun_value_ptr)
-            *fun_value_ptr = fun_addr_ptr;
-    }
-            
-    if (fun_value_ptr)
-        fun_addr_ptr = *fun_value_ptr;
-    
-    if (is_bitcast)
-    {
-        Value *val = llvm_call_inst->getCalledValue();
-        
-        ConstantExpr *const_expr = dyn_cast<ConstantExpr>(val);
-        
-        Constant *fun_addr_ptr_cst = dyn_cast<Constant>(fun_addr_ptr);
-        
-        if (!fun_addr_ptr_cst)
-        {
-            if (m_error_stream)
-                m_error_stream->Printf("Error [IRForTarget]: Non-constant source function '%s' has a constant BitCast\n", str.GetCString());
-            
-            return false;
-        }
-            
-        Constant *new_bit_cast = ConstantExpr::getBitCast(fun_addr_ptr_cst, const_expr->getType());
-        
-        llvm_call_inst->setCalledFunction(new_bit_cast);
-    }
-    else
-    {
-        llvm_call_inst->setCalledFunction(fun_addr_ptr);
-    }
-    
-    ConstantArray *func_name = (ConstantArray*)ConstantArray::get(m_module->getContext(), str.GetCString());
-    
-    Value *values[1];
-    values[0] = func_name;
-    ArrayRef<Value*> value_ref(values, 1);
-    
-    MDNode *func_metadata = MDNode::get(m_module->getContext(), value_ref);
-    
-    llvm_call_inst->setMetadata("lldb.call.realName", func_metadata);
-    
-    if (log)
-        log->Printf("Set metadata for %p [%d, \"%s\"]", llvm_call_inst, func_name->isString(), func_name->getAsString().c_str());
-    
-    return true;
-}
-
-bool
 IRForTarget::ResolveCalls(BasicBlock &basic_block)
 {        
     /////////////////////////////////////////////////////////////////////////
@@ -1605,10 +1558,6 @@ IRForTarget::ResolveCalls(BasicBlock &basic_block)
         Instruction &inst = *ii;
         
         CallInst *call = dyn_cast<CallInst>(&inst);
-        
-        // MaybeHandleCall handles error reporting; we are silent here
-        if (call && !MaybeHandleCall(call))
-            return false;
         
         // MaybeHandleCallArguments handles error reporting; we are silent here
         if (call && !MaybeHandleCallArguments(call))
@@ -2381,6 +2330,20 @@ IRForTarget::runOnModule (Module &llvm_module)
             log->Printf("RewriteObjCConstStrings() failed");
         
         // RewriteObjCConstStrings() reports its own errors, so we don't do so here
+        
+        return false;
+    }
+    
+    ///////////////////////////////
+    // Resolve function pointers
+    //
+    
+    if (!ResolveFunctionPointers(llvm_module, *function))
+    {
+        if (log)
+            log->Printf("ResolveFunctionPointers() failed");
+        
+        // ResolveFunctionPointers() reports its own errors, so we don't do so here
         
         return false;
     }

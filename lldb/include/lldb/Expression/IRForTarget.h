@@ -149,9 +149,71 @@ private:
     FixFunctionLinkage (llvm::Function &llvm_function);
     
     //------------------------------------------------------------------
+    /// A module-level pass to replace all function pointers with their
+    /// integer equivalents.
+    //------------------------------------------------------------------
+    
+    //------------------------------------------------------------------
+    /// The top-level pass implementation
+    ///
+    /// @param[in] llvm_module
+    ///     The module currently being processed.
+    ///
+    /// @param[in] llvm_function
+    ///     The function currently being processed.
+    ///
+    /// @return
+    ///     True on success; false otherwise.
+    //------------------------------------------------------------------
+    bool 
+    HasSideEffects (llvm::Function &llvm_function);
+    
+    //------------------------------------------------------------------
     /// A function-level pass to check whether the function has side
     /// effects.
     //------------------------------------------------------------------
+    
+    //------------------------------------------------------------------
+    /// Get the address of a fuction, and a location to put the complete
+    /// Value of the function if one is available.
+    ///
+    /// @param[in] function
+    ///     The function to find the location of.
+    ///
+    /// @param[out] ptr
+    ///     The location of the function in the target.
+    ///
+    /// @param[out] name
+    ///     The resolved name of the function (matters for intrinsics).
+    ///
+    /// @param[out] value_ptr
+    ///     A variable to put the function's completed Value* in, or NULL
+    ///     if the Value* shouldn't be stored anywhere.
+    ///
+    /// @return
+    ///     The pointer.
+    //------------------------------------------------------------------ 
+    bool 
+    GetFunctionAddress (llvm::Function *function,
+                        uint64_t &ptr,
+                        lldb_private::ConstString &name,
+                        llvm::Constant **&value_ptr);
+    
+    //------------------------------------------------------------------
+    /// Build a function pointer given a type and a raw pointer.
+    ///
+    /// @param[in] type
+    ///     The type of the function pointer to be built.
+    ///
+    /// @param[in] ptr
+    ///     The value of the pointer.
+    ///
+    /// @return
+    ///     The pointer.
+    //------------------------------------------------------------------ 
+    llvm::Constant *
+    BuildFunctionPointer (llvm::Type *type,
+                          uint64_t ptr);
     
     //------------------------------------------------------------------
     /// The top-level pass implementation
@@ -164,7 +226,8 @@ private:
     ///     be determined); false otherwise.
     //------------------------------------------------------------------
     bool 
-    HasSideEffects (llvm::Function &llvm_function);
+    ResolveFunctionPointers (llvm::Module &llvm_module,
+                             llvm::Function &llvm_function);
     
     //------------------------------------------------------------------
     /// A function-level pass to take the generated global value
@@ -382,19 +445,7 @@ private:
     MaybeHandleCallArguments (llvm::CallInst *call_inst);
     
     //------------------------------------------------------------------
-    /// Handle a single external function call
-    ///
-    /// @param[in] C
-    ///     The call instruction.
-    ///
-    /// @return
-    ///     True on success; false otherwise
-    //------------------------------------------------------------------
-    bool 
-    MaybeHandleCall (llvm::CallInst *C);
-    
-    //------------------------------------------------------------------
-    /// Resolve calls to external functions
+    /// Resolve variable references in calls to external functions
     ///
     /// @param[in] basic_block
     ///     The basic block currently being processed.
