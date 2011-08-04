@@ -3186,6 +3186,7 @@ bool ASTReader::ParseLanguageOptions(
     PARSE_LANGOPT(SpellChecking);
     PARSE_LANGOPT(MRTD);
     PARSE_LANGOPT(ObjCAutoRefCount);
+    PARSE_LANGOPT(ObjCInferRelatedReturnType);
   #undef PARSE_LANGOPT
 
     return Listener->ReadLanguageOptions(LangOpts);
