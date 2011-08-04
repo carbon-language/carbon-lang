@@ -9,7 +9,7 @@ zed:
         mov zed+(bar-foo), %eax
 
 // CHECK:       # Relocation 0
-// CHECK-NEXT:  (('r_offset', 0x00000005)
+// CHECK-NEXT:  (('r_offset', 0x0000000000000005)
 // CHECK-NEXT:   ('r_sym', 0x00000006)
 // CHECK-NEXT:   ('r_type', 0x0000000b)
 // CHECK-NEXT:   ('r_addend', 0x0000000000000001)

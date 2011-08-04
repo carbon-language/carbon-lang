@@ -65,7 +65,7 @@ foo:
 
 // Relocation 5 refers to symbol 8
 // CHECK-NEXT:   # Relocation 5
-// CHECK-NEXT:   (('r_offset', 0x00000023)
+// CHECK-NEXT:   (('r_offset', 0x0000000000000023)
 // CHECK-NEXT:    ('r_sym', 0x00000008)
 // CHECK-NEXT:    ('r_type', 0x0000000b)
 // CHECK-NEXT:    ('r_addend', 0x0000000000000000)

@@ -30,9 +30,9 @@ main:                                   # @main
 
 	.section	.note.GNU-stack,"",@progbits
 
-// CHECK: ('e_indent[EI_CLASS]', 0x00000001)
-// CHECK: ('e_indent[EI_DATA]', 0x00000001)
-// CHECK: ('e_indent[EI_VERSION]', 0x00000001)
+// CHECK: ('e_indent[EI_CLASS]', 0x01)
+// CHECK: ('e_indent[EI_DATA]', 0x01)
+// CHECK: ('e_indent[EI_VERSION]', 0x01)
 // CHECK: ('_sections', [
 // CHECK:   # Section 0
 // CHECK:   (('sh_name', 0x00000000) # ''

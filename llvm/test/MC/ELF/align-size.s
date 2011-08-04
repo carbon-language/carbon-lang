@@ -7,7 +7,7 @@
 
 // CHECK:      (('sh_name', 0x00000001) # '.text'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
-// CHECK-NEXT:  ('sh_flags', 0x00000006)
-// CHECK-NEXT:  ('sh_addr', 0x00000000)
-// CHECK-NEXT:  ('sh_offset', 0x00000040)
-// CHECK-NEXT:  ('sh_size', 0x00000008)
+// CHECK-NEXT:  ('sh_flags', 0x0000000000000006)
+// CHECK-NEXT:  ('sh_addr', 0x0000000000000000)
+// CHECK-NEXT:  ('sh_offset', 0x0000000000000040)
+// CHECK-NEXT:  ('sh_size', 0x0000000000000008)

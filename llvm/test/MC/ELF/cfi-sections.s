@@ -15,14 +15,14 @@ f2:
 
 // ELF_64:      (('sh_name', 0x00000011) # '.debug_frame'
 // ELF_64-NEXT:  ('sh_type', 0x00000001)
-// ELF_64-NEXT:  ('sh_flags', 0x00000000)
-// ELF_64-NEXT:  ('sh_addr', 0x00000000)
-// ELF_64-NEXT:  ('sh_offset', 0x00000048)
-// ELF_64-NEXT:  ('sh_size', 0x00000048)
+// ELF_64-NEXT:  ('sh_flags', 0x0000000000000000)
+// ELF_64-NEXT:  ('sh_addr', 0x0000000000000000)
+// ELF_64-NEXT:  ('sh_offset', 0x0000000000000048)
+// ELF_64-NEXT:  ('sh_size', 0x0000000000000048)
 // ELF_64-NEXT:  ('sh_link', 0x00000000)
 // ELF_64-NEXT:  ('sh_info', 0x00000000)
-// ELF_64-NEXT:  ('sh_addralign', 0x00000008)
-// ELF_64-NEXT:  ('sh_entsize', 0x00000000)
+// ELF_64-NEXT:  ('sh_addralign', 0x0000000000000008)
+// ELF_64-NEXT:  ('sh_entsize', 0x0000000000000000)
 // ELF_64-NEXT:  ('_section_data', '14000000 ffffffff 01000178 100c0708 90010000 00000000 14000000 00000000 00000000 00000000 01000000 00000000 14000000 00000000 00000000 00000000 01000000 00000000')
 
 // ELF_32:      (('sh_name', 0x00000010) # '.debug_frame'

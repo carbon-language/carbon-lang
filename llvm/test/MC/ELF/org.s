@@ -10,4 +10,4 @@ foo:
 // CHECK-NEXT: ('sh_flags',
 // CHECK-NEXT: ('sh_addr',
 // CHECK-NEXT: ('sh_offset'
-// CHECK-NEXT: ('sh_size', 0x00000014)
+// CHECK-NEXT: ('sh_size', 0x0000000000000014)

@@ -14,7 +14,7 @@
 // CHECK-NEXT:  ('sh_flags'
 // CHECK-NEXT:  ('sh_addr',
 // CHECK-NEXT:  ('sh_offset',
-// CHECK-NEXT:  ('sh_size', 0x00000009)
+// CHECK-NEXT:  ('sh_size', 0x0000000000000009)
 // CHECK-NEXT:  ('sh_link',
 // CHECK-NEXT:  ('sh_info',
 // CHECK-NEXT:  ('sh_addralign',

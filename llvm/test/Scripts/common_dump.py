@@ -31,7 +31,7 @@ def dataToHexUnified(d):
     return ''.join(bytes).strip()
 
 
-def HexDump(val, numBits=32):
+def HexDump(valPair):
     """
     1. do not print 'L'
     2. Handle negatives and large numbers by mod (2^numBits)
@@ -40,6 +40,7 @@ def HexDump(val, numBits=32):
     4. Do print 0x Why?
        so that they can be easily distinguished using sed/rx
     """
+    val, numBits = valPair
     assert 0 <= val < (1 << numBits)
 
     val = val & (( 1 << numBits) - 1)

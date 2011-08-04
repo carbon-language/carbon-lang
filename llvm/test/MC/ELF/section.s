@@ -21,63 +21,63 @@
 
 // CHECK:      (('sh_name', 0x00000012) # '.init'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
-// CHECK-NEXT:  ('sh_flags', 0x00000006)
-// CHECK-NEXT:  ('sh_addr', 0x00000000)
-// CHECK-NEXT:  ('sh_offset', 0x00000050)
-// CHECK-NEXT:  ('sh_size', 0x00000000)
+// CHECK-NEXT:  ('sh_flags', 0x0000000000000006)
+// CHECK-NEXT:  ('sh_addr', 0x0000000000000000)
+// CHECK-NEXT:  ('sh_offset', 0x0000000000000050)
+// CHECK-NEXT:  ('sh_size', 0x0000000000000000)
 // CHECK-NEXT:  ('sh_link', 0x00000000)
 // CHECK-NEXT:  ('sh_info', 0x00000000)
-// CHECK-NEXT:  ('sh_addralign', 0x00000001)
-// CHECK-NEXT:  ('sh_entsize', 0x00000000)
+// CHECK-NEXT:  ('sh_addralign', 0x0000000000000001)
+// CHECK-NEXT:  ('sh_entsize', 0x0000000000000000)
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Section 11
 // CHECK-NEXT: (('sh_name', 0x00000048) # '.fini'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
-// CHECK-NEXT:  ('sh_flags', 0x00000006)
-// CHECK-NEXT:  ('sh_addr', 0x00000000)
-// CHECK-NEXT:  ('sh_offset', 0x00000050)
-// CHECK-NEXT:  ('sh_size', 0x00000000)
+// CHECK-NEXT:  ('sh_flags', 0x0000000000000006)
+// CHECK-NEXT:  ('sh_addr', 0x0000000000000000)
+// CHECK-NEXT:  ('sh_offset', 0x0000000000000050)
+// CHECK-NEXT:  ('sh_size', 0x0000000000000000)
 // CHECK-NEXT:  ('sh_link', 0x00000000)
 // CHECK-NEXT:  ('sh_info', 0x00000000)
-// CHECK-NEXT:  ('sh_addralign', 0x00000001)
-// CHECK-NEXT:  ('sh_entsize', 0x00000000)
+// CHECK-NEXT:  ('sh_addralign', 0x0000000000000001)
+// CHECK-NEXT:  ('sh_entsize', 0x0000000000000000)
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Section 12
 // CHECK-NEXT: (('sh_name', 0x00000076) # '.rodata'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
-// CHECK-NEXT:  ('sh_flags', 0x00000002)
-// CHECK-NEXT:  ('sh_addr', 0x00000000)
-// CHECK-NEXT:  ('sh_offset', 0x00000050)
-// CHECK-NEXT:  ('sh_size', 0x00000000)
+// CHECK-NEXT:  ('sh_flags', 0x0000000000000002)
+// CHECK-NEXT:  ('sh_addr', 0x0000000000000000)
+// CHECK-NEXT:  ('sh_offset', 0x0000000000000050)
+// CHECK-NEXT:  ('sh_size', 0x0000000000000000)
 // CHECK-NEXT:  ('sh_link', 0x00000000)
 // CHECK-NEXT:  ('sh_info', 0x00000000)
-// CHECK-NEXT:  ('sh_addralign', 0x00000001)
-// CHECK-NEXT:  ('sh_entsize', 0x00000000)
+// CHECK-NEXT:  ('sh_addralign', 0x0000000000000001)
+// CHECK-NEXT:  ('sh_entsize', 0x0000000000000000)
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Section 13
 // CHECK-NEXT: (('sh_name', 0x00000058) # 'zed'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
-// CHECK-NEXT:  ('sh_flags', 0x00000000)
-// CHECK-NEXT:  ('sh_addr', 0x00000000)
-// CHECK-NEXT:  ('sh_offset', 0x00000050)
-// CHECK-NEXT:  ('sh_size', 0x00000000)
+// CHECK-NEXT:  ('sh_flags', 0x0000000000000000)
+// CHECK-NEXT:  ('sh_addr', 0x0000000000000000)
+// CHECK-NEXT:  ('sh_offset', 0x0000000000000050)
+// CHECK-NEXT:  ('sh_size', 0x0000000000000000)
 // CHECK-NEXT:  ('sh_link', 0x00000000)
 // CHECK-NEXT:  ('sh_info', 0x00000000)
-// CHECK-NEXT:  ('sh_addralign', 0x00000001)
-// CHECK-NEXT:  ('sh_entsize', 0x00000000)
+// CHECK-NEXT:  ('sh_addralign', 0x0000000000000001)
+// CHECK-NEXT:  ('sh_entsize', 0x0000000000000000)
 // CHECK-NEXT: ),
 
 .section	.note.test,"",@note
 // CHECK:       (('sh_name', 0x00000007) # '.note.test'
 // CHECK-NEXT:   ('sh_type', 0x00000007)
-// CHECK-NEXT:   ('sh_flags', 0x00000000)
-// CHECK-NEXT:   ('sh_addr', 0x00000000)
-// CHECK-NEXT:   ('sh_offset', 0x00000050)
-// CHECK-NEXT:   ('sh_size', 0x00000000)
+// CHECK-NEXT:   ('sh_flags', 0x0000000000000000)
+// CHECK-NEXT:   ('sh_addr', 0x0000000000000000)
+// CHECK-NEXT:   ('sh_offset', 0x0000000000000050)
+// CHECK-NEXT:   ('sh_size', 0x0000000000000000)
 // CHECK-NEXT:   ('sh_link', 0x00000000)
 // CHECK-NEXT:   ('sh_info', 0x00000000)
-// CHECK-NEXT:   ('sh_addralign', 0x00000001)
-// CHECK-NEXT:   ('sh_entsize', 0x00000000)
+// CHECK-NEXT:   ('sh_addralign', 0x0000000000000001)
+// CHECK-NEXT:   ('sh_entsize', 0x0000000000000000)
 // CHECK-NEXT:  ),
 
 // Test that we can parse these
@@ -92,14 +92,14 @@ bar:
 
 // CHECK:       (('sh_name', 0x0000004e) # '.eh_frame'
 // CHECK-NEXT:   ('sh_type', 0x70000001)
-// CHECK-NEXT:   ('sh_flags', 0x00000002)
-// CHECK-NEXT:   ('sh_addr', 0x00000000)
-// CHECK-NEXT:   ('sh_offset', 0x00000050)
-// CHECK-NEXT:   ('sh_size', 0x00000000)
+// CHECK-NEXT:   ('sh_flags', 0x0000000000000002)
+// CHECK-NEXT:   ('sh_addr', 0x0000000000000000)
+// CHECK-NEXT:   ('sh_offset', 0x0000000000000050)
+// CHECK-NEXT:   ('sh_size', 0x0000000000000000)
 // CHECK-NEXT:   ('sh_link', 0x00000000)
 // CHECK-NEXT:   ('sh_info', 0x00000000)
-// CHECK-NEXT:   ('sh_addralign', 0x00000001)
-// CHECK-NEXT:   ('sh_entsize', 0x00000000)
+// CHECK-NEXT:   ('sh_addralign', 0x0000000000000001)
+// CHECK-NEXT:   ('sh_entsize', 0x0000000000000000)
 // CHECK-NEXT:  ),
 
 // Test that we handle the strings like gas
