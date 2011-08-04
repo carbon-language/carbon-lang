@@ -1516,7 +1516,19 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   }
 
   // Print debug location information.
-  if (!debugLoc.isUnknown() && MF) {
+  if (isDebugValue() && getOperand(e - 1).isMetadata()) {
+    if (!HaveSemi) OS << ";"; HaveSemi = true;
+    DIVariable DV(getOperand(e - 1).getMetadata());
+    OS << " line no:" <<  DV.getLineNumber();
+    if (MDNode *InlinedAt = DV.getInlinedAt()) {
+      DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(InlinedAt);
+      if (!InlinedAtDL.isUnknown()) {
+        OS << " inlined @[ ";
+        printDebugLoc(InlinedAtDL, MF, OS);
+        OS << " ]";
+      }
+    }
+  } else if (!debugLoc.isUnknown() && MF) {
     if (!HaveSemi) OS << ";"; HaveSemi = true;
     OS << " dbg:";
     printDebugLoc(debugLoc, MF, OS);
