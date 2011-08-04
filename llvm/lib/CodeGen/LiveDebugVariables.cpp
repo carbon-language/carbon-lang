@@ -26,6 +26,7 @@
 #include "llvm/Metadata.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/IntervalMap.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -44,6 +45,7 @@ static cl::opt<bool>
 EnableLDV("live-debug-variables", cl::init(true),
           cl::desc("Enable the live debug variables pass"), cl::Hidden);
 
+STATISTIC(NumInsertedDebugValues, "Number of DBG_VALUEs inserted");
 char LiveDebugVariables::ID = 0;
 
 INITIALIZE_PASS_BEGIN(LiveDebugVariables, "livedebugvars",
@@ -924,7 +926,7 @@ void UserValue::emitDebugValues(VirtRegMap *VRM, LiveIntervals &LIS,
 
     DEBUG(dbgs() << " BB#" << MBB->getNumber() << '-' << MBBEnd);
     insertDebugValue(MBB, Start, LocNo, LIS, TII);
-
+    ++NumInsertedDebugValues;
     // This interval may span multiple basic blocks.
     // Insert a DBG_VALUE into each one.
     while(Stop > MBBEnd) {
@@ -935,6 +937,7 @@ void UserValue::emitDebugValues(VirtRegMap *VRM, LiveIntervals &LIS,
       MBBEnd = LIS.getMBBEndIdx(MBB);
       DEBUG(dbgs() << " BB#" << MBB->getNumber() << '-' << MBBEnd);
       insertDebugValue(MBB, Start, LocNo, LIS, TII);
+      ++NumInsertedDebugValues;
     }
     DEBUG(dbgs() << '\n');
     if (MBB == MFEnd)
