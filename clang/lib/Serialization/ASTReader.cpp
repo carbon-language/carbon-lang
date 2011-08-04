@@ -5621,26 +5621,37 @@ void Module::dump() {
   // Remapping tables.
   llvm::errs() << "  Base source location offset: " << SLocEntryBaseOffset 
                << '\n';
-  dumpLocalRemap("Source location offset map", SLocRemap);
+  dumpLocalRemap("Source location offset local -> global map", SLocRemap);
+  
   llvm::errs() << "  Base identifier ID: " << BaseIdentifierID << '\n'
                << "  Number of identifiers: " << LocalNumIdentifiers << '\n';
-  dumpLocalRemap("Identifier ID map", IdentifierRemap);
+  dumpLocalRemap("Identifier ID local -> global map", IdentifierRemap);
+  
+  llvm::errs() << "  Base selector ID: " << BaseSelectorID << '\n'
+               << "  Number of selectors: " << LocalNumSelectors << '\n';
+  dumpLocalRemap("Selector ID local -> global map", SelectorRemap);
+  
   llvm::errs() << "  Base preprocessed entity ID: " << BasePreprocessedEntityID
                << '\n'  
                << "Number of preprocessed entities: " 
                << NumPreallocatedPreprocessingEntities << '\n';
-  dumpLocalRemap("Preprocessed entity ID map", PreprocessedEntityRemap);
-  llvm::errs() << "  Base type index: " << BaseTypeIndex << '\n'
-               << "  Number of types: " << LocalNumTypes << '\n';
-  dumpLocalRemap("Type index map", TypeRemap);
+  dumpLocalRemap("Preprocessed entity ID local -> global map", 
+                 PreprocessedEntityRemap);
+  
   llvm::errs() << "  Base macro definition ID: " << BaseMacroDefinitionID 
                << '\n'
                << "  Number of macro definitions: " << LocalNumMacroDefinitions
                << '\n';
-  dumpLocalRemap("Macro definition ID map", MacroDefinitionRemap);
+  dumpLocalRemap("Macro definition ID local -> global map", 
+                 MacroDefinitionRemap);
+
+  llvm::errs() << "  Base type index: " << BaseTypeIndex << '\n'
+               << "  Number of types: " << LocalNumTypes << '\n';
+  dumpLocalRemap("Type index local -> global map", TypeRemap);
+    
   llvm::errs() << "  Base decl ID: " << BaseDeclID << '\n'
                << "  Number of decls: " << LocalNumDecls << '\n';
-  dumpLocalRemap("Decl ID map", DeclRemap);
+  dumpLocalRemap("Decl ID local -> global map", DeclRemap);
 }
 
 Module *ModuleManager::lookup(StringRef Name) {
