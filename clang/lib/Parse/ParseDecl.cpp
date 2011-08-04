@@ -3745,7 +3745,10 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
       // Parse trailing-return-type[opt].
       if (getLang().CPlusPlus0x && Tok.is(tok::arrow)) {
-        TrailingReturnType = ParseTrailingReturnType().get();
+        SourceRange Range;
+        TrailingReturnType = ParseTrailingReturnType(Range).get();
+        if (Range.getEnd().isValid())
+          EndLoc = Range.getEnd();
       }
     }
 

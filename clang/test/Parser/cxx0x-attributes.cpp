@@ -17,7 +17,7 @@ int comma_attr [[,]]; // expected-error {{expected identifier}}
 int scope_attr [[foo::]]; // expected-error {{expected identifier}}
 int & [[]] ref_attr = after_attr; // expected-error {{an attribute list cannot appear here}}
 class foo {
-  void after_const_attr () const [[]]; // expected-error {{expected expression}}
+  void after_const_attr () const [[]]; // expected-error {{expected body of lambda expression}} expected-error {{array has incomplete element type 'void'}}
 };
 extern "C++" [[]] { } // expected-error {{an attribute list cannot appear here}}
 [[]] template <typename T> void before_template_attr (); // expected-error {{an attribute list cannot appear here}}

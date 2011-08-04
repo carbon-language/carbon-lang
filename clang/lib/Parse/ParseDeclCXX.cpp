@@ -2442,7 +2442,7 @@ ExceptionSpecificationType Parser::ParseDynamicExceptionSpecification(
 
 /// ParseTrailingReturnType - Parse a trailing return type on a new-style
 /// function declaration.
-TypeResult Parser::ParseTrailingReturnType() {
+TypeResult Parser::ParseTrailingReturnType(SourceRange &Range) {
   assert(Tok.is(tok::arrow) && "expected arrow");
 
   ConsumeToken();
@@ -2454,8 +2454,6 @@ TypeResult Parser::ParseTrailingReturnType() {
   //
   // struct X is parsed as class definition because of the trailing
   // brace.
-
-  SourceRange Range;
   return ParseTypeName(&Range);
 }
 

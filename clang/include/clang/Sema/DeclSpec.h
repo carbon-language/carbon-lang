@@ -1828,6 +1828,53 @@ private:
   SourceLocation LastLocation;
 };
 
+/// LambdaCaptureDefault - The default, if any, capture method for a
+/// lambda expression.
+enum LambdaCaptureDefault {
+  LCD_None,
+  LCD_ByCopy,
+  LCD_ByRef
+};
+
+/// LambdaCaptureKind - The different capture forms in a lambda
+/// introducer: 'this' or a copied or referenced variable.
+enum LambdaCaptureKind {
+  LCK_This,
+  LCK_ByCopy,
+  LCK_ByRef
+};
+
+/// LambdaCapture - An individual capture in a lambda introducer.
+struct LambdaCapture {
+  LambdaCaptureKind Kind;
+  SourceLocation Loc;
+  IdentifierInfo* Id;
+
+  LambdaCapture(LambdaCaptureKind Kind,
+                     SourceLocation Loc,
+                     IdentifierInfo* Id = 0)
+    : Kind(Kind), Loc(Loc), Id(Id)
+  {}
+};
+
+/// LambdaIntroducer - Represents a complete lambda introducer.
+struct LambdaIntroducer {
+  SourceRange Range;
+  LambdaCaptureDefault Default;
+  llvm::SmallVector<LambdaCapture, 4> Captures;
+
+  LambdaIntroducer()
+    : Default(LCD_None) {}
+
+  /// addCapture - Append a capture in a lambda introducer.
+  void addCapture(LambdaCaptureKind Kind,
+                  SourceLocation Loc,
+                  IdentifierInfo* Id = 0) {
+    Captures.push_back(LambdaCapture(Kind, Loc, Id));
+  }
+
+};
+
 } // end namespace clang
 
 #endif

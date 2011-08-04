@@ -1115,6 +1115,16 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                NotCastExpr, isTypeCast);
   }
   case tok::l_square:
+    if (getLang().CPlusPlus0x) {
+      if (getLang().ObjC1) {
+        Res = TryParseLambdaExpression();
+        if (Res.isInvalid())
+          Res = ParseObjCMessageExpression();
+        break;
+      }
+      Res = ParseLambdaExpression();
+      break;
+    }
     if (getLang().ObjC1) {
       Res = ParseObjCMessageExpression();
       break;

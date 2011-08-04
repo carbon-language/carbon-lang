@@ -1186,6 +1186,17 @@ private:
                                       bool IsTypename = false);
 
   //===--------------------------------------------------------------------===//
+  // C++0x 5.1.2: Lambda expressions
+
+  // [...] () -> type {...}
+  ExprResult ParseLambdaExpression();
+  ExprResult TryParseLambdaExpression();
+  llvm::Optional<unsigned> ParseLambdaIntroducer(LambdaIntroducer &Intro);
+  bool TryParseLambdaIntroducer(LambdaIntroducer &Intro);
+  ExprResult ParseLambdaExpressionAfterIntroducer(
+               LambdaIntroducer &Intro);
+
+  //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts
   ExprResult ParseCXXCasts();
 
@@ -1226,7 +1237,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // C++0x 8: Function declaration trailing-return-type
-  TypeResult ParseTrailingReturnType();
+  TypeResult ParseTrailingReturnType(SourceRange &Range);
 
   //===--------------------------------------------------------------------===//
   // C++ 2.13.5: C++ Boolean Literals

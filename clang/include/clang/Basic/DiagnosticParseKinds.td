@@ -487,6 +487,15 @@ def err_paren_sizeof_parameter_pack : Error<
 def err_sizeof_parameter_pack : Error<
   "expected parenthesized parameter pack name in 'sizeof...' expression">;
 
+// C++0x lambda expressions
+def err_expected_comma_or_rsquare : Error<
+  "expected ',' or ']' in lambda capture list">;
+def err_this_captured_by_reference : Error<
+  "'this' cannot be captured by reference">;
+def err_expected_capture : Error<
+  "expected variable name or 'this' in lambda capture list">;
+def err_expected_lambda_body : Error<"expected body of lambda expression">;
+
 // Availability attribute
 def err_expected_version : Error<
   "expected a version of the form 'major[.minor[.subminor]]'">;

@@ -9,4 +9,5 @@ int main() {
   [a bla:0 6:7]; // expected-error {{expected ']'}}
   [A foo bar]; // expected-error {{expected ':'}}
   [A foo bar bar1]; // expected-error {{expected ':'}}
+  [] {}; // expected-error {{expected expression}}
 }
