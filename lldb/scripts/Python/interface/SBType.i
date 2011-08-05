@@ -47,6 +47,37 @@ public:
     GetName();
 };
 
+%feature("docstring",
+"Represents a list of SBTypes.  The FindTypes() method of SBTarget/SBModule
+returns a SBTypeList.
+
+SBTypeList supports SBType iteration. For example,
+
+main.cpp:
+
+class Task {
+public:
+    int id;
+    Task *next;
+    Task(int i, Task *n):
+        id(i),
+        next(n)
+    {}
+};
+
+...
+
+find_type.py:
+
+        # Get the type 'Task'.
+        type_list = target.FindTypes('Task')
+        self.assertTrue(len(type_list) == 1)
+        # To illustrate the SBType iteration.
+        for type in type_list:
+            # do something with type
+
+...
+") SBTypeList;
 class SBTypeList
 {
 public:
