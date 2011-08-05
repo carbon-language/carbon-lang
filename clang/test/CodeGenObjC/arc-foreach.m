@@ -148,3 +148,24 @@ void test2(Test2 *a) {
 // This bitcast is for the final release.
 // CHECK-LP64:      [[T0:%.*]] = bitcast [[ARRAY_T]]* [[COLL]] to i8*
 // CHECK-LP64-NEXT: call void @objc_release(i8* [[T0]])
+
+
+// Check that the 'continue' label is positioned appropriately
+// relative to the collection clenaup.
+void test3(NSArray *array) {
+  for (id x in array) {
+    if (!x) continue;
+    use(x);
+  }
+
+  // CHECK-LP64:    define void @test3(
+  // CHECK-LP64:      [[ARRAY:%.*]] = alloca [[ARRAY_T]]*, align 8
+  // CHECK-LP64-NEXT: [[X:%.*]] = alloca i8*, align 8
+  // CHECK-LP64:      [[T0:%.*]] = load i8** [[X]], align 8
+  // CHECK-LP64-NEXT: [[T1:%.*]] = icmp ne i8* [[T0]], null
+  // CHECK-LP64-NEXT: br i1 [[T1]],
+  // CHECK-LP64:      br label [[L:%[^ ]+]]
+  // CHECK-LP64:      [[T0:%.*]] = load i8** [[X]], align 8
+  // CHECK-LP64-NEXT: call void @use(i8* [[T0]])
+  // CHECK-LP64-NEXT: br label [[L]]
+}

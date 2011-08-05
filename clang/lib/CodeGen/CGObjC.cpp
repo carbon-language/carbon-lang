@@ -995,7 +995,6 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     variable = EmitAutoVarAlloca(*cast<VarDecl>(SD->getSingleDecl()));
 
   JumpDest LoopEnd = getJumpDestInCurrentScope("forcoll.end");
-  JumpDest AfterBody = getJumpDestInCurrentScope("forcoll.next");
 
   // Fast enumeration state.
   QualType StateTy = getContext().getObjCFastEnumerationStateType();
@@ -1030,6 +1029,10 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   } else {
     Collection = EmitScalarExpr(S.getCollection());
   }
+
+  // The 'continue' label needs to appear within the cleanup for the
+  // collection object.
+  JumpDest AfterBody = getJumpDestInCurrentScope("forcoll.next");
 
   // Send it our message:
   CallArgList Args;
