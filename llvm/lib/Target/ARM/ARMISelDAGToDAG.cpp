@@ -133,6 +133,7 @@ public:
                              SDValue &Offset, SDValue &Opc);
   bool SelectAddrMode2OffsetImm(SDNode *Op, SDValue N,
                              SDValue &Offset, SDValue &Opc);
+  bool SelectAddrOffsetNone(SDValue N, SDValue &Base);
   bool SelectAddrMode3(SDValue N, SDValue &Base,
                        SDValue &Offset, SDValue &Opc);
   bool SelectAddrMode3Offset(SDNode *Op, SDValue N,
@@ -772,8 +773,10 @@ bool ARMDAGToDAGISel::SelectAddrMode2OffsetImm(SDNode *Op, SDValue N,
   return false;
 }
 
-
-
+bool ARMDAGToDAGISel::SelectAddrOffsetNone(SDValue N, SDValue &Base) {
+  Base = N;
+  return true;
+}
 
 bool ARMDAGToDAGISel::SelectAddrMode3(SDValue N,
                                       SDValue &Base, SDValue &Offset,

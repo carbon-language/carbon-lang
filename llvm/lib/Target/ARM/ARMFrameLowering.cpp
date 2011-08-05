@@ -588,14 +588,8 @@ void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
       MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, TII.get(StrOpc),
                                         ARM::SP)
         .addReg(Regs[0].first, getKillRegState(Regs[0].second))
-        .addReg(ARM::SP).setMIFlags(MIFlags);
-      // ARM mode needs an extra reg0 here due to addrmode2. Will go away once
-      // that refactoring is complete (eventually).
-      if (StrOpc == ARM::STR_PRE_REG || StrOpc == ARM::STR_PRE_IMM) {
-        MIB.addReg(0);
-        MIB.addImm(ARM_AM::getAM2Opc(ARM_AM::sub, 4, ARM_AM::no_shift));
-      } else
-        MIB.addImm(-4);
+        .addReg(ARM::SP).setMIFlags(MIFlags)
+        .addImm(-4);
       AddDefaultPred(MIB);
     }
     Regs.clear();

@@ -894,7 +894,10 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
     return false;
 
   unsigned Offset = 0;
-  if (isAM2)
+  // FIXME: Loads still use a combined reg/imm offset operand. When
+  // AM2 refactoring is complete, this can go away and just always use
+  // the raw Offset value.
+  if (isAM2 && isLd)
     Offset = ARM_AM::getAM2Opc(AddSub, Bytes, ARM_AM::no_shift);
   else if (!isAM5)
     Offset = AddSub == ARM_AM::sub ? -Bytes : Bytes;
@@ -924,7 +927,10 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
         .addReg(Base).addImm(Offset).addImm(Pred).addReg(PredReg);
   } else {
     MachineOperand &MO = MI->getOperand(0);
-    if (isAM2)
+    // FIXME: post-indexed stores use am2offset_imm, which still encodes
+    // the vestigal zero-reg offset register. When that's fixed, this clause
+    // can be removed entirely.
+    if (isAM2 && NewOpc == ARM::STR_POST_IMM)
       // STR_PRE, STR_POST
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc), Base)
         .addReg(MO.getReg(), getKillRegState(MO.isKill()))

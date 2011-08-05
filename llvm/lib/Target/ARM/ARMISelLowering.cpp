@@ -5289,6 +5289,37 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     MI->dump();
     llvm_unreachable("Unexpected instr type to insert");
   }
+  case ARM::STRi_preidx:
+  case ARM::STRBi_preidx: {
+    unsigned NewOpc = MI->getOpcode() == ARM::STRr_preidx ?
+      ARM::STR_PRE_IMM : ARM::STRB_PRE_IMM;
+    // Decode the offset.
+    unsigned Offset = MI->getOperand(4).getImm();
+    bool isSub = ARM_AM::getAM2Op(Offset) == ARM_AM::sub;
+    Offset = ARM_AM::getAM2Offset(Offset);
+    if (isSub)
+      Offset = -Offset;
+
+    MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(NewOpc))
+      .addOperand(MI->getOperand(0))  // Rn_wb
+      .addOperand(MI->getOperand(1))  // Rt
+      .addOperand(MI->getOperand(2))  // Rn
+      .addImm(Offset)                 // offset (skip GPR==zero_reg)
+      .addOperand(MI->getOperand(5))  // pred
+      .addOperand(MI->getOperand(6));
+    MI->eraseFromParent();
+    return BB;
+  }
+  case ARM::STRr_preidx:
+  case ARM::STRBr_preidx: {
+    unsigned NewOpc = MI->getOpcode() == ARM::STRr_preidx ?
+      ARM::STR_PRE_REG : ARM::STRB_PRE_REG;
+    MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(NewOpc));
+    for (unsigned i = 0; i < MI->getNumOperands(); ++i)
+      MIB.addOperand(MI->getOperand(i));
+    MI->eraseFromParent();
+    return BB;
+  }
   case ARM::ATOMIC_LOAD_ADD_I8:
      return EmitAtomicBinary(MI, BB, 1, isThumb2 ? ARM::t2ADDrr : ARM::ADDrr);
   case ARM::ATOMIC_LOAD_ADD_I16:
