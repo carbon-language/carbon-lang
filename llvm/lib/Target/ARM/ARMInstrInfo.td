@@ -665,11 +665,17 @@ def addrmode2 : Operand<i32>,
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
 
+def PostIdxRegShiftedAsmOperand : AsmOperandClass {
+  let Name = "PostIdxRegShifted";
+  let ParserMethod = "parsePostIdxReg";
+}
 def am2offset_reg : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode2OffsetReg",
                 [], [SDNPWantRoot]> {
   let EncoderMethod = "getAddrMode2OffsetOpValue";
   let PrintMethod = "printAddrMode2OffsetOperand";
+  // When using this for assembly, it's always as a post-index offset.
+  let ParserMatchClass = PostIdxRegShiftedAsmOperand;
   let MIOperandInfo = (ops GPR, i32imm);
 }
 

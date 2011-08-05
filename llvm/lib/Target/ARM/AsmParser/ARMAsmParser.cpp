@@ -232,7 +232,9 @@ class ARMOperand : public MCParsedAsmOperand {
 
     struct {
       unsigned RegNum;
-      unsigned Imm;
+      bool isAdd;
+      ARM_AM::ShiftOpc ShiftTy;
+      unsigned ShiftImm;
     } PostIdxReg;
 
     struct {
@@ -498,12 +500,15 @@ public:
   bool isToken() const { return Kind == Token; }
   bool isMemBarrierOpt() const { return Kind == MemBarrierOpt; }
   bool isMemory() const { return Kind == Memory; }
-  bool isPostIdxReg() const { return Kind == PostIndexRegister; }
   bool isShifterImm() const { return Kind == ShifterImmediate; }
   bool isRegShiftedReg() const { return Kind == ShiftedRegister; }
   bool isRegShiftedImm() const { return Kind == ShiftedImmediate; }
   bool isRotImm() const { return Kind == RotateImmediate; }
   bool isBitfield() const { return Kind == BitfieldDescriptor; }
+  bool isPostIdxRegShifted() const { return Kind == PostIndexRegister; }
+  bool isPostIdxReg() const {
+    return Kind == PostIndexRegister && PostIdxReg.ShiftTy == ARM_AM::no_shift;
+  }
   bool isMemNoOffset() const {
     if (Kind != Memory)
       return false;
@@ -858,7 +863,18 @@ public:
   void addPostIdxRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(PostIdxReg.RegNum));
-    Inst.addOperand(MCOperand::CreateImm(PostIdxReg.Imm));
+    Inst.addOperand(MCOperand::CreateImm(PostIdxReg.isAdd));
+  }
+
+  void addPostIdxRegShiftedOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(PostIdxReg.RegNum));
+    // The sign, shift type, and shift amount are encoded in a single operand
+    // using the AM2 encoding helpers.
+    ARM_AM::AddrOpc opc = PostIdxReg.isAdd ? ARM_AM::add : ARM_AM::sub;
+    unsigned Imm = ARM_AM::getAM2Opc(opc, PostIdxReg.ShiftImm,
+                                     PostIdxReg.ShiftTy);
+    Inst.addOperand(MCOperand::CreateImm(Imm));
   }
 
   void addMSRMaskOperands(MCInst &Inst, unsigned N) const {
@@ -1027,11 +1043,15 @@ public:
     return Op;
   }
 
-  static ARMOperand *CreatePostIdxReg(unsigned RegNum, unsigned Imm,
+  static ARMOperand *CreatePostIdxReg(unsigned RegNum, bool isAdd,
+                                      ARM_AM::ShiftOpc ShiftTy,
+                                      unsigned ShiftImm,
                                       SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(PostIndexRegister);
     Op->PostIdxReg.RegNum = RegNum;
-    Op->PostIdxReg.Imm = Imm;
+    Op->PostIdxReg.isAdd = isAdd;
+    Op->PostIdxReg.ShiftTy = ShiftTy;
+    Op->PostIdxReg.ShiftImm = ShiftImm;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -1093,9 +1113,12 @@ void ARMOperand::print(raw_ostream &OS) const {
     OS << ">";
     break;
   case PostIndexRegister:
-    OS << "post-idx register " << (PostIdxReg.Imm ? "" : "-")
-       << PostIdxReg.RegNum
-       << ">";
+    OS << "post-idx register " << (PostIdxReg.isAdd ? "" : "-")
+       << PostIdxReg.RegNum;
+    if (PostIdxReg.ShiftTy != ARM_AM::no_shift)
+      OS << ARM_AM::getShiftOpcStr(PostIdxReg.ShiftTy) << " "
+         << PostIdxReg.ShiftImm;
+    OS << ">";
     break;
   case ProcIFlags: {
     OS << "<ARM_PROC::";
@@ -1861,9 +1884,9 @@ parseBitfield(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parsePostIdxReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Check for a post-index addressing register operand. Specifically:
-  // postidx_reg := '+' register
-  //              | '-' register
-  //              | register
+  // postidx_reg := '+' register {, shift}
+  //              | '-' register {, shift}
+  //              | register {, shift}
 
   // This method must return MatchOperand_NoMatch without consuming any tokens
   // in the case where there is no match, as other alternatives take other
@@ -1891,7 +1914,11 @@ parsePostIdxReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   }
   SMLoc E = Parser.getTok().getLoc();
 
-  Operands.push_back(ARMOperand::CreatePostIdxReg(Reg, isAdd, S, E));
+  ARM_AM::ShiftOpc ShiftTy = ARM_AM::no_shift;
+  unsigned ShiftImm = 0;
+
+  Operands.push_back(ARMOperand::CreatePostIdxReg(Reg, isAdd, ShiftTy,
+                                                  ShiftImm, S, E));
 
   return MatchOperand_Success;
 }
@@ -2107,7 +2134,12 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
                                            ShiftType, ShiftValue, isNegative,
                                            S, E));
 
-
+  // If there's a pre-indexing writeback marker, '!', just add it as a token
+  // operand.
+  if (Parser.getTok().is(AsmToken::Exclaim)) {
+    Operands.push_back(ARMOperand::CreateToken("!",Parser.getTok().getLoc()));
+    Parser.Lex(); // Eat the '!'.
+  }
 
   return false;
 }
