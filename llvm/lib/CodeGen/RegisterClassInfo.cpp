@@ -99,11 +99,16 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
   // CSR aliases go after the volatile registers, preserve the target's order.
   std::copy(CSRAlias.begin(), CSRAlias.end(), &RCI.Order[N]);
 
+  // Check if RC is a proper sub-class.
+  if (const TargetRegisterClass *Super = TRI->getLargestLegalSuperClass(RC))
+    if (Super != RC && getNumAllocatableRegs(Super) > RCI.NumRegs)
+      RCI.ProperSubClass = true;
+
   DEBUG({
     dbgs() << "AllocationOrder(" << RC->getName() << ") = [";
     for (unsigned I = 0; I != RCI.NumRegs; ++I)
       dbgs() << ' ' << PrintReg(RCI.Order[I], TRI);
-    dbgs() << " ]\n";
+    dbgs() << (RCI.ProperSubClass ? " ] (sub-class)\n" : " ]\n");
   });
 
   // RCI is now up-to-date.
