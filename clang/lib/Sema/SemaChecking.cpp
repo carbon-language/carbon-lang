@@ -319,7 +319,7 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                           TheCall->getCallee()->getLocStart());
   }
 
-  // Memset/memcpy/memmove handling
+  // Memset/memcpy/memmove/memcmp handling
   int CMF = -1;
   switch (FDecl->getBuiltinID()) {
   case Builtin::BI__builtin_memset:
@@ -340,6 +340,10 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
     CMF = CMF_Memmove;
     break;
     
+  case Builtin::BI__builtin_memcmp:
+    CMF = CMF_Memcmp;
+    break;
+    
   default:
     if (FDecl->getLinkage() == ExternalLinkage &&
         (!getLangOptions().CPlusPlus || FDecl->isExternC())) {
@@ -349,12 +353,14 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
         CMF = CMF_Memcpy;
       else if (FnInfo->isStr("memmove"))
         CMF = CMF_Memmove;
+      else if (FnInfo->isStr("memcmp"))
+        CMF = CMF_Memcmp;
     }
     break;
   }
    
   if (CMF != -1)
-    CheckMemsetcpymoveArguments(TheCall, CheckedMemoryFunction(CMF), FnInfo);
+    CheckMemaccessArguments(TheCall, CheckedMemoryFunction(CMF), FnInfo);
 
   return false;
 }
@@ -1881,12 +1887,13 @@ static QualType getSizeOfArgType(const Expr* E) {
 /// \brief Check for dangerous or invalid arguments to memset().
 ///
 /// This issues warnings on known problematic, dangerous or unspecified
-/// arguments to the standard 'memset', 'memcpy', and 'memmove' function calls.
+/// arguments to the standard 'memset', 'memcpy', 'memmove', and 'memcmp'
+/// function calls.
 ///
 /// \param Call The call expression to diagnose.
-void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
-                                       CheckedMemoryFunction CMF,
-                                       IdentifierInfo *FnName) {
+void Sema::CheckMemaccessArguments(const CallExpr *Call,
+                                   CheckedMemoryFunction CMF,
+                                   IdentifierInfo *FnName) {
   // It is possible to have a non-standard definition of memset.  Validate
   // we have enough arguments, and if not, abort further checking.
   if (Call->getNumArgs() < 3)

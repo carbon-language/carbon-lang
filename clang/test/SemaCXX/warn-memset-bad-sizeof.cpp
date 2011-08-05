@@ -3,6 +3,7 @@
 extern "C" void *memset(void *, int, unsigned);
 extern "C" void *memmove(void *s1, const void *s2, unsigned n);
 extern "C" void *memcpy(void *s1, const void *s2, unsigned n);
+extern "C" void *memcmp(void *s1, const void *s2, unsigned n);
 
 struct S {int a, b, c, d;};
 typedef S* PS;
@@ -51,6 +52,11 @@ void f(Mat m, const Foo& const_foo, char *buffer) {
   memcpy(0, &s, sizeof(&s));  // \
       // expected-warning {{argument to 'sizeof' in 'memcpy' call is the same expression as the source}}
 
+  memmove(ps, 0, sizeof(ps));  // \
+      // expected-warning {{argument to 'sizeof' in 'memmove' call is the same expression as the destination}}
+  memcmp(ps, 0, sizeof(ps));  // \
+      // expected-warning {{argument to 'sizeof' in 'memcmp' call is the same expression as the destination}}
+
   /* Shouldn't warn */
   memset((void*)&s, 0, sizeof(&s));
   memset(&s, 0, sizeof(s));
@@ -98,4 +104,11 @@ void f(Mat m, const Foo& const_foo, char *buffer) {
   // Copy to raw buffer shouldn't warn either
   memcpy(&foo, &arr, sizeof(Foo));
   memcpy(&arr, &foo, sizeof(Foo));
+}
+
+namespace ns {
+void memset(void* s, char c, int n);
+void f(int* i) {
+  memset(i, 0, sizeof(i));
+}
 }
