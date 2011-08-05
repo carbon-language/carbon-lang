@@ -1489,15 +1489,25 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   }
 
   // Then isolate blocks with multiple uses.
-  SplitAnalysis::BlockPtrSet Blocks;
-  if (SA->getMultiUseBlocks(Blocks)) {
-    LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
-    SE->reset(LREdit);
-    SE->splitSingleBlocks(Blocks);
-    setStage(NewVRegs.begin(), NewVRegs.end(), RS_Spill);
-    if (VerifyEnabled)
-      MF->verify(this, "After splitting live range around basic blocks");
+  unsigned Reg = SA->getParent().reg;
+  bool SingleInstrs = RegClassInfo.isProperSubClass(MRI->getRegClass(Reg));
+  LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
+  SE->reset(LREdit);
+  ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
+  for (unsigned i = 0; i != UseBlocks.size(); ++i) {
+    const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
+    if (SA->shouldSplitSingleBlock(BI, SingleInstrs))
+      SE->splitSingleBlock(BI);
   }
+  // No blocks were split.
+  if (LREdit.empty())
+    return 0;
+
+  // We did split for some blocks.
+  SE->finish();
+  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Spill);
+  if (VerifyEnabled)
+    MF->verify(this, "After splitting live range around basic blocks");
 
   // Don't assign any physregs.
   return 0;
