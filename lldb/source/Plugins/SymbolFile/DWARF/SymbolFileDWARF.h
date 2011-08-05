@@ -101,7 +101,8 @@ public:
     virtual lldb::clang_type_t ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_opaque_type);
 
     virtual lldb_private::Type* ResolveType (DWARFCompileUnit* cu, const DWARFDebugInfoEntry* type_die, bool assert_not_being_parsed = true);
-    virtual clang::DeclContext* GetClangDeclContextForTypeUID (lldb::user_id_t type_uid);
+    virtual clang::DeclContext* GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid);
+    virtual clang::DeclContext* GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid);
 
     virtual uint32_t        ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc);
     virtual uint32_t        ResolveSymbolContext (const lldb_private::FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, lldb_private::SymbolContextList& sc_list);
@@ -183,10 +184,16 @@ public:
     SupportedVersion(uint16_t version);
 
     clang::DeclContext *
-    GetClangDeclContextForDIE (DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die);
+    GetClangDeclContextForDIE (const lldb_private::SymbolContext &sc, DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die);
+    
+    clang::DeclContext *
+    GetClangDeclContextForDIEOffset (const lldb_private::SymbolContext &sc, dw_offset_t die_offset);
+    
+    clang::DeclContext *
+    GetClangDeclContextContainingDIE (DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die);
 
     clang::DeclContext *
-    GetClangDeclContextForDIEOffset (dw_offset_t die_offset);
+    GetClangDeclContextContainingDIEOffset (dw_offset_t die_offset);
     
     void
     SearchDeclContext (const clang::DeclContext *decl_context, 

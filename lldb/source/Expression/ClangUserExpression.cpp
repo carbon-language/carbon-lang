@@ -37,6 +37,9 @@
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanCallUserExpression.h"
 
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclObjC.h"
+
 using namespace lldb_private;
 
 ClangUserExpression::ClangUserExpression (const char *expr,
@@ -68,44 +71,46 @@ ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
 void
 ClangUserExpression::ScanContext(ExecutionContext &exe_ctx)
 {
-    VariableList *vars = exe_ctx.frame->GetVariableList(false);
-    
-    if (!vars)
+    if (!exe_ctx.frame)
         return;
     
-    lldb::VariableSP this_var(vars->FindVariable(ConstString("this")));
-    lldb::VariableSP self_var(vars->FindVariable(ConstString("self")));
+    SymbolContext sym_ctx = exe_ctx.frame->GetSymbolContext(lldb::eSymbolContextFunction);
     
-    if (this_var.get())
+    if (!sym_ctx.function)
+        return;
+    
+    clang::DeclContext *decl_context;
+    
+    if (sym_ctx.block && sym_ctx.block->GetInlinedFunctionInfo())
+        decl_context = sym_ctx.block->GetClangDeclContextForInlinedFunction();
+    else
+        decl_context = sym_ctx.function->GetClangDeclContext();
+        
+    if (!decl_context)
+        return;
+        
+    if (clang::CXXMethodDecl *method_decl = llvm::dyn_cast<clang::CXXMethodDecl>(decl_context))
     {
-        Type *this_type = this_var->GetType();
-        
-        lldb::clang_type_t pointer_target_type;
-        
-        if (ClangASTContext::IsPointerType(this_type->GetClangForwardType(),
-                                           &pointer_target_type))
+        if (method_decl->isInstance())
         {
-            TypeFromUser target_ast_type(pointer_target_type, this_type->GetClangAST());
+            m_cplusplus = true;
             
-            if (ClangASTContext::IsCXXClassType(target_ast_type.GetOpaqueQualType()))
-            {
-                m_cplusplus = true;
-            
-                if (target_ast_type.IsConst())
-                    m_const_object = true;
-            }
+            do {
+                clang::QualType this_type = method_decl->getThisType(decl_context->getParentASTContext());
+
+                const clang::PointerType *this_pointer_type = llvm::dyn_cast<clang::PointerType>(this_type.getTypePtr());
+
+                if (!this_pointer_type)
+                    break;
+                
+                clang::QualType this_pointee_type = this_pointer_type->getPointeeType();
+            } while (0);
         }
     }
-    else if (self_var.get())
+    else if (clang::ObjCMethodDecl *method_decl = llvm::dyn_cast<clang::ObjCMethodDecl>(decl_context))
     {
-        m_objectivec = true;
-        
-        Type *self_type = self_var->GetType();
-                
-        if (self_type->GetClangForwardType() == self_type->GetClangASTContext().GetBuiltInType_objc_id())
-        {
-            m_objectivec = false;
-        }
+        if (method_decl->isInstanceMethod())
+            m_objectivec = true;
     }
 }
 

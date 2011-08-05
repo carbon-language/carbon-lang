@@ -11,6 +11,7 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
 
@@ -533,6 +534,29 @@ Block::AppendVariables
             num_variables_added += parent_block->AppendVariables (can_create, get_parent_variables, stop_if_block_is_inlined_function, variable_list);
     }
     return num_variables_added;
+}
+
+clang::DeclContext *
+Block::GetClangDeclContextForInlinedFunction()
+{
+    SymbolContext sc;
+    
+    CalculateSymbolContext (&sc);
+    
+    if (!sc.module_sp)
+        return NULL;
+    
+    SymbolVendor *sym_vendor = sc.module_sp->GetSymbolVendor();
+    
+    if (!sym_vendor)
+        return NULL;
+    
+    SymbolFile *sym_file = sym_vendor->GetSymbolFile();
+    
+    if (!sym_file)
+        return NULL;
+    
+    return sym_file->GetClangDeclContextForTypeUID (sc, m_uid);
 }
 
 void

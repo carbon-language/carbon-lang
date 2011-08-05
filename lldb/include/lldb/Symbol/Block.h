@@ -336,6 +336,9 @@ public:
     {
         return m_inlineInfoSP.get();
     }
+    
+    clang::DeclContext *
+    GetClangDeclContextForInlinedFunction();
 
     //------------------------------------------------------------------
     /// Get the memory cost of this object.

@@ -1355,7 +1355,7 @@ SymbolFileDWARF::ParseChildMembers
 
 
 clang::DeclContext*
-SymbolFileDWARF::GetClangDeclContextForTypeUID (lldb::user_id_t type_uid)
+SymbolFileDWARF::GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid)
 {
     DWARFDebugInfo* debug_info = DebugInfo();
     if (debug_info)
@@ -1363,7 +1363,21 @@ SymbolFileDWARF::GetClangDeclContextForTypeUID (lldb::user_id_t type_uid)
         DWARFCompileUnitSP cu_sp;
         const DWARFDebugInfoEntry* die = debug_info->GetDIEPtr(type_uid, &cu_sp);
         if (die)
-            return GetClangDeclContextForDIE (cu_sp.get(), die);
+            return GetClangDeclContextContainingDIE (cu_sp.get(), die);
+    }
+    return NULL;
+}
+
+clang::DeclContext*
+SymbolFileDWARF::GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid)
+{
+    DWARFDebugInfo* debug_info = DebugInfo();
+    if (debug_info)
+    {
+        DWARFCompileUnitSP cu_sp;
+        const DWARFDebugInfoEntry* die = debug_info->GetDIEPtr(type_uid, &cu_sp);
+        if (die)
+            return GetClangDeclContextForDIE (sc, cu_sp.get(), die);
     }
     return NULL;
 }
@@ -2799,17 +2813,28 @@ SymbolFileDWARF::GetTypeForDIE (DWARFCompileUnit *curr_cu, const DWARFDebugInfoE
 }
 
 clang::DeclContext *
-SymbolFileDWARF::GetClangDeclContextForDIEOffset (dw_offset_t die_offset)
+SymbolFileDWARF::GetClangDeclContextContainingDIEOffset (dw_offset_t die_offset)
 {
     if (die_offset != DW_INVALID_OFFSET)
     {
         DWARFCompileUnitSP cu_sp;
         const DWARFDebugInfoEntry* die = DebugInfo()->GetDIEPtr(die_offset, &cu_sp);
-        return GetClangDeclContextForDIE (cu_sp.get(), die);
+        return GetClangDeclContextContainingDIE (cu_sp.get(), die);
     }
     return NULL;
 }
 
+clang::DeclContext *
+SymbolFileDWARF::GetClangDeclContextForDIEOffset (const SymbolContext &sc, dw_offset_t die_offset)
+{
+    if (die_offset != DW_INVALID_OFFSET)
+    {
+        DWARFCompileUnitSP cu_sp;
+        const DWARFDebugInfoEntry* die = DebugInfo()->GetDIEPtr(die_offset, &cu_sp);
+        return GetClangDeclContextForDIE (sc, cu_sp.get(), die);
+    }
+    return NULL;
+}
 
 clang::NamespaceDecl *
 SymbolFileDWARF::ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebugInfoEntry *die)
@@ -2820,7 +2845,7 @@ SymbolFileDWARF::ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebu
         if (namespace_name)
         {
             Declaration decl;   // TODO: fill in the decl object
-            clang::NamespaceDecl *namespace_decl = GetClangASTContext().GetUniqueNamespaceDeclaration (namespace_name, decl, GetClangDeclContextForDIE (curr_cu, die->GetParent()));
+            clang::NamespaceDecl *namespace_decl = GetClangASTContext().GetUniqueNamespaceDeclaration (namespace_name, decl, GetClangDeclContextContainingDIE (curr_cu, die->GetParent()));
             if (namespace_decl)
                 LinkDeclContextToDIE((clang::DeclContext*)namespace_decl, die);
             return namespace_decl;
@@ -2830,12 +2855,36 @@ SymbolFileDWARF::ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebu
 }
 
 clang::DeclContext *
-SymbolFileDWARF::GetClangDeclContextForDIE (DWARFCompileUnit *curr_cu, const DWARFDebugInfoEntry *die)
+SymbolFileDWARF::GetClangDeclContextForDIE (const SymbolContext &sc, DWARFCompileUnit *curr_cu, const DWARFDebugInfoEntry *die)
+{
+    // If this DIE has a specification, or an abstract origin, then trace to those.
+        
+    dw_offset_t die_offset = die->GetAttributeValueAsReference(this, curr_cu, DW_AT_specification, DW_INVALID_OFFSET);
+    if (die_offset != DW_INVALID_OFFSET)
+        return GetClangDeclContextForDIEOffset (sc, die_offset);
+    
+    die_offset = die->GetAttributeValueAsReference(this, curr_cu, DW_AT_abstract_origin, DW_INVALID_OFFSET);
+    if (die_offset != DW_INVALID_OFFSET)
+        return GetClangDeclContextForDIEOffset (sc, die_offset);
+    
+    // This is the DIE we want.  Parse it, then query our map.
+        
+    ParseType(sc, curr_cu, die, NULL);
+    
+    DIEToDeclContextMap::iterator pos = m_die_to_decl_ctx.find(die);
+    if (pos != m_die_to_decl_ctx.end())
+        return pos->second;
+    else
+        return NULL;
+}
+
+clang::DeclContext *
+SymbolFileDWARF::GetClangDeclContextContainingDIE (DWARFCompileUnit *curr_cu, const DWARFDebugInfoEntry *die)
 {
     if (m_clang_tu_decl == NULL)
         m_clang_tu_decl = GetClangASTContext().getASTContext()->getTranslationUnitDecl();
 
-    //printf ("SymbolFileDWARF::GetClangDeclContextForDIE ( die = 0x%8.8x )\n", die->GetOffset());
+    //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x )\n", die->GetOffset());
     const DWARFDebugInfoEntry * const decl_die = die;
     clang::DeclContext *decl_ctx = NULL;
 
@@ -2849,11 +2898,11 @@ SymbolFileDWARF::GetClangDeclContextForDIE (DWARFCompileUnit *curr_cu, const DWA
             DIEToDeclContextMap::iterator pos = m_die_to_decl_ctx.find(die);
             if (pos != m_die_to_decl_ctx.end())
             {
-                //printf ("SymbolFileDWARF::GetClangDeclContextForDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
+                //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
                 return pos->second;
             }
 
-            //printf ("SymbolFileDWARF::GetClangDeclContextForDIE ( die = 0x%8.8x ) checking parent 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
+            //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) checking parent 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
 
             switch (die->Tag())
             {
@@ -2863,10 +2912,10 @@ SymbolFileDWARF::GetClangDeclContextForDIE (DWARFCompileUnit *curr_cu, const DWA
                     if (namespace_name)
                     {
                         Declaration decl;   // TODO: fill in the decl object
-                        clang::NamespaceDecl *namespace_decl = GetClangASTContext().GetUniqueNamespaceDeclaration (namespace_name, decl, GetClangDeclContextForDIE (curr_cu, die));
+                        clang::NamespaceDecl *namespace_decl = GetClangASTContext().GetUniqueNamespaceDeclaration (namespace_name, decl, GetClangDeclContextContainingDIE (curr_cu, die));
                         if (namespace_decl)
                         {
-                            //printf ("SymbolFileDWARF::GetClangDeclContextForDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
+                            //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
                             LinkDeclContextToDIE((clang::DeclContext*)namespace_decl, die);
                         }
                         return namespace_decl;
@@ -2882,7 +2931,7 @@ SymbolFileDWARF::GetClangDeclContextForDIE (DWARFCompileUnit *curr_cu, const DWA
                     pos = m_die_to_decl_ctx.find(die);
                     if (pos != m_die_to_decl_ctx.end())
                     {
-                        //printf ("SymbolFileDWARF::GetClangDeclContextForDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
+                        //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
                         return pos->second;
                     }
                     else
@@ -2905,8 +2954,8 @@ SymbolFileDWARF::GetClangDeclContextForDIE (DWARFCompileUnit *curr_cu, const DWA
         dw_offset_t die_offset = die->GetAttributeValueAsReference(this, curr_cu, DW_AT_specification, DW_INVALID_OFFSET);
         if (die_offset != DW_INVALID_OFFSET)
         {
-            //printf ("SymbolFileDWARF::GetClangDeclContextForDIE ( die = 0x%8.8x ) check DW_AT_specification 0x%8.8x\n", decl_die->GetOffset(), die_offset);
-            decl_ctx = GetClangDeclContextForDIEOffset (die_offset);
+            //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) check DW_AT_specification 0x%8.8x\n", decl_die->GetOffset(), die_offset);
+            decl_ctx = GetClangDeclContextContainingDIEOffset (die_offset);
             if (decl_ctx != m_clang_tu_decl)
                 return decl_ctx;
         }
@@ -2914,8 +2963,8 @@ SymbolFileDWARF::GetClangDeclContextForDIE (DWARFCompileUnit *curr_cu, const DWA
         die_offset = die->GetAttributeValueAsReference(this, curr_cu, DW_AT_abstract_origin, DW_INVALID_OFFSET);
         if (die_offset != DW_INVALID_OFFSET)
         {
-            //printf ("SymbolFileDWARF::GetClangDeclContextForDIE ( die = 0x%8.8x ) check DW_AT_abstract_origin 0x%8.8x\n", decl_die->GetOffset(), die_offset);
-            decl_ctx = GetClangDeclContextForDIEOffset (die_offset);
+            //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) check DW_AT_abstract_origin 0x%8.8x\n", decl_die->GetOffset(), die_offset);
+            decl_ctx = GetClangDeclContextContainingDIEOffset (die_offset);
             if (decl_ctx != m_clang_tu_decl)
                 return decl_ctx;
         }
@@ -2923,7 +2972,7 @@ SymbolFileDWARF::GetClangDeclContextForDIE (DWARFCompileUnit *curr_cu, const DWA
         die = die->GetParent();
     }
     // Right now we have only one translation unit per module...
-    //printf ("SymbolFileDWARF::GetClangDeclContextForDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), curr_cu->GetFirstDIEOffset());
+    //printf ("SymbolFileDWARF::GetClangDeclContextContainingDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), curr_cu->GetFirstDIEOffset());
     return m_clang_tu_decl;
 }
 
@@ -3309,7 +3358,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         clang_type_was_created = true;
                         clang_type = ast.CreateRecordType (type_name_cstr, 
                                                            tag_decl_kind, 
-                                                           GetClangDeclContextForDIE (dwarf_cu, die), 
+                                                           GetClangDeclContextContainingDIE (dwarf_cu, die), 
                                                            class_language);
                     }
 
@@ -3417,7 +3466,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                                   DW_ATE_signed, 
                                                                                                   byte_size * 8);
                             clang_type = ast.CreateEnumerationType (type_name_cstr, 
-                                                                    GetClangDeclContextForDIE (dwarf_cu, die), 
+                                                                    GetClangDeclContextContainingDIE (dwarf_cu, die), 
                                                                     decl,
                                                                     enumerator_clang_type);
                         }

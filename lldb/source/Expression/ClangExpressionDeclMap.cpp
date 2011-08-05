@@ -1874,7 +1874,12 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
                                                 &pointer_target_type))
                 return;
             
-            TypeFromUser class_user_type(pointer_target_type,
+            clang::QualType pointer_target_qual_type = QualType::getFromOpaquePtr(pointer_target_type);
+            
+            if (pointer_target_qual_type.isConstQualified())
+                pointer_target_qual_type.removeLocalConst();
+            
+            TypeFromUser class_user_type(pointer_target_qual_type.getAsOpaquePtr(),
                                          this_type->GetClangAST());
 
             if (log)

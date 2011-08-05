@@ -14,6 +14,7 @@
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineTable.h"
+#include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/CanonicalType.h"
@@ -397,6 +398,29 @@ Function::MemorySize () const
 {
     size_t mem_size = sizeof(Function) + m_block.MemorySize();
     return mem_size;
+}
+
+clang::DeclContext *
+Function::GetClangDeclContext()
+{
+    SymbolContext sc;
+    
+    CalculateSymbolContext (&sc);
+    
+    if (!sc.module_sp)
+        return NULL;
+    
+    SymbolVendor *sym_vendor = sc.module_sp->GetSymbolVendor();
+    
+    if (!sym_vendor)
+        return NULL;
+    
+    SymbolFile *sym_file = sym_vendor->GetSymbolFile();
+    
+    if (!sym_file)
+        return NULL;
+    
+    return sym_file->GetClangDeclContextForTypeUID (sc, m_uid);
 }
 
 Type*

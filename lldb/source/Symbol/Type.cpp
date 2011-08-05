@@ -640,7 +640,7 @@ Type::CreateClangTypedefType (Type *typedef_type, Type *base_type)
     assert(typedef_type && base_type);
     return GetClangASTContext().CreateTypedefType (typedef_type->GetName().AsCString(), 
                                                    base_type->GetClangForwardType(), 
-                                                   typedef_type->GetSymbolFile()->GetClangDeclContextForTypeUID(typedef_type->GetID()));
+                                                   typedef_type->GetSymbolFile()->GetClangDeclContextContainingTypeUID(typedef_type->GetID()));
 }
 
 void *
