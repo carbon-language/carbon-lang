@@ -1087,6 +1087,24 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
 //                            Single Block Splitting
 //===----------------------------------------------------------------------===//
 
+bool SplitAnalysis::shouldSplitSingleBlock(const BlockInfo &BI,
+                                           bool SingleInstrs) const {
+  // Always split for multiple instructions.
+  if (!BI.isOneInstr())
+    return true;
+  // Don't split for single instructions unless explicitly requested.
+  if (!SingleInstrs)
+    return false;
+  // Splitting a live-through range always makes progress.
+  if (BI.LiveIn && BI.LiveOut)
+    return true;
+  // No point in isolating a copy. It has no register class constraints.
+  if (LIS.getInstructionFromIndex(BI.FirstInstr)->isCopyLike())
+    return false;
+  // Finally, don't isolate an end point that was created by earlier splits.
+  return isOriginalEndpoint(BI.FirstInstr);
+}
+
 /// getMultiUseBlocks - if CurLI has more than one use in a basic block, it
 /// may be an advantage to split CurLI for the duration of the block.
 bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {

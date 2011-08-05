@@ -185,6 +185,16 @@ public:
 
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
 
+  /// shouldSplitSingleBlock - Returns true if it would help to create a local
+  /// live range for the instructions in BI. There is normally no benefit to
+  /// creating a live range for a single instruction, but it does enable
+  /// register class inflation if the instruction has a restricted register
+  /// class.
+  ///
+  /// @param BI           The block to be isolated.
+  /// @param SingleInstrs True when single instructions should be isolated.
+  bool shouldSplitSingleBlock(const BlockInfo &BI, bool SingleInstrs) const;
+
   /// getMultiUseBlocks - Add basic blocks to Blocks that may benefit from
   /// having CurLI split to a new live interval. Return true if Blocks can be
   /// passed to SplitEditor::splitSingleBlocks.

@@ -942,6 +942,12 @@ void RAGreedy::splitAroundRegion(LiveRangeEdit &LREdit,
   DEBUG(dbgs() << "splitAroundRegion with " << NumGlobalIntvs << " globals.\n");
   assert(NumGlobalIntvs && "No global intervals configured");
 
+  // Isolate even single instructions when dealing with a proper sub-class.
+  // That giarantees register class inflation for the stack interval because it
+  // is all copies.
+  unsigned Reg = SA->getParent().reg;
+  bool SingleInstrs = RegClassInfo.isProperSubClass(MRI->getRegClass(Reg));
+
   // First handle all the blocks with uses.
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
   for (unsigned i = 0; i != UseBlocks.size(); ++i) {
@@ -971,7 +977,7 @@ void RAGreedy::splitAroundRegion(LiveRangeEdit &LREdit,
     // Create separate intervals for isolated blocks with multiple uses.
     if (!IntvIn && !IntvOut) {
       DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " isolated.\n");
-      if (!BI.isOneInstr())
+      if (SA->shouldSplitSingleBlock(BI, SingleInstrs))
         SE->splitSingleBlock(BI);
       continue;
     }
