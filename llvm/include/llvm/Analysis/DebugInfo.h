@@ -727,9 +727,6 @@ namespace llvm {
   DIVariable createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
                                    LLVMContext &VMContext);
 
-  /// cleanseInlinedVariable - Remove inlined scope from the variable.
-  DIVariable cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext);
-
   class DebugInfoFinder {
   public:
     /// processModule - Process entire module and collect debug info
