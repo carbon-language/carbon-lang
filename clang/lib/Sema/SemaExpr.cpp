@@ -322,6 +322,7 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   //   A glvalue of a non-function, non-array type T can be
   //   converted to a prvalue.
   if (!E->isGLValue()) return Owned(E);
+
   QualType T = E->getType();
   assert(!T.isNull() && "r-value conversion on typeless expression?");
 
@@ -364,8 +365,6 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   //   type of the lvalue.    
   if (T.hasQualifiers())
     T = T.getUnqualifiedType();
-
-  CheckArrayAccess(E);
   
   return Owned(ImplicitCastExpr::Create(Context, T, CK_LValueToRValue,
                                         E, 0, VK_RValue));
@@ -3397,6 +3396,12 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
 
       Arg = ArgExpr.takeAs<Expr>();
     }
+
+    // Check for array bounds violations for each argument to the call. This
+    // check only triggers warnings when the argument isn't a more complex Expr
+    // with its own checking, such as a BinaryOperator.
+    CheckArrayAccess(Arg);
+
     AllArgs.push_back(Arg);
   }
 
@@ -5935,6 +5940,9 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
         return QualType();
       }
 
+      // Check array bounds for pointer arithemtic
+      CheckArrayAccess(PExp, IExp);
+
       if (CompLHSTy) {
         QualType LHSTy = Context.isPromotableBitField(lex.get());
         if (LHSTy.isNull()) {
@@ -5990,6 +5998,12 @@ QualType Sema::CheckSubtractionOperands(ExprResult &lex, ExprResult &rex,
     if (rex.get()->getType()->isIntegerType()) {
       if (!checkArithmeticOpPointerOperand(*this, Loc, lex.get()))
         return QualType();
+
+      Expr *IExpr = rex.get()->IgnoreParenCasts();
+      UnaryOperator negRex(IExpr, UO_Minus, IExpr->getType(), VK_RValue,
+                           OK_Ordinary, IExpr->getExprLoc());
+      // Check array bounds for pointer arithemtic
+      CheckArrayAccess(lex.get()->IgnoreParenCasts(), &negRex);
 
       if (CompLHSTy) *CompLHSTy = lex.get()->getType();
       return lex.get()->getType();
@@ -6984,9 +6998,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, ExprResult &RHS,
     return QualType();
 
   CheckForNullPointerDereference(*this, LHS);
-  // Check for trivial buffer overflows.
-  CheckArrayAccess(LHS->IgnoreParenCasts());
-  
+
   // C99 6.5.16p3: The type of an assignment expression is the type of the
   // left operand unless the left operand has qualified type, in which case
   // it is the unqualified version of the type of the left operand.
@@ -7721,6 +7733,11 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   }
   if (ResultTy.isNull() || lhs.isInvalid() || rhs.isInvalid())
     return ExprError();
+
+  // Check for array bounds violations for both sides of the BinaryOperator
+  CheckArrayAccess(lhs.get());
+  CheckArrayAccess(rhs.get());
+
   if (CompResultTy.isNull())
     return Owned(new (Context) BinaryOperator(lhs.take(), rhs.take(), Opc,
                                               ResultTy, VK, OK, OpLoc));
@@ -8070,6 +8087,13 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
   }
   if (resultType.isNull() || Input.isInvalid())
     return ExprError();
+
+  // Check for array bounds violations in the operand of the UnaryOperator,
+  // except for the '*' and '&' operators that have to be handled specially
+  // by CheckArrayAccess (as there are special cases like &array[arraysize]
+  // that are explicitly defined as valid by the standard).
+  if (Opc != UO_AddrOf && Opc != UO_Deref)
+    CheckArrayAccess(Input.get());
 
   return Owned(new (Context) UnaryOperator(Input.take(), Opc, resultType,
                                            VK, OK, OpLoc));

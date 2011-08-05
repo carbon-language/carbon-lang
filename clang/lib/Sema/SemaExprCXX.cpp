@@ -2264,9 +2264,6 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
       if (!From->isGLValue()) break;
     }
 
-    // Check for trivial buffer overflows.
-    CheckArrayAccess(From);
-
     FromType = FromType.getUnqualifiedType();
     From = ImplicitCastExpr::Create(Context, FromType, CK_LValueToRValue,
                                     From, 0, VK_RValue);

@@ -5948,6 +5948,8 @@ public:
                                                 unsigned ByteNo) const;
 
 private:  
+  void CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
+                        bool isSubscript=false, bool AllowOnePastEnd=true);
   void CheckArrayAccess(const Expr *E);
   bool CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall);
   bool CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall);
