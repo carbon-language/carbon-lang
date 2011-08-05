@@ -48,6 +48,8 @@ private:
   static const unsigned InvalidIdx = 100000;
   static const unsigned FunctionsToTrackSize = 6;
   static const ADFunctionInfo FunctionsToTrack[FunctionsToTrackSize];
+  /// The value, which represents no error return value for allocator functions.
+  static const unsigned NoErr = 0;
 
   /// Given the function name, returns the index of the allocator/deallocator
   /// function.
@@ -66,9 +68,13 @@ struct AllocationState {
   const Expr *Address;
   /// The index of the allocator function.
   unsigned int AllocatorIdx;
+  SymbolRef RetValue;
 
-  AllocationState(const Expr *E, unsigned int Idx) : Address(E),
-                                                     AllocatorIdx(Idx) {}
+  AllocationState(const Expr *E, unsigned int Idx, SymbolRef R) :
+    Address(E),
+    AllocatorIdx(Idx),
+    RetValue(R) {}
+
   bool operator==(const AllocationState &X) const {
     return Address == X.Address;
   }
@@ -79,7 +85,8 @@ struct AllocationState {
 };
 
 /// GRState traits to store the currently allocated (and not yet freed) symbols.
-typedef llvm::ImmutableMap<const MemRegion*, AllocationState> AllocatedSetTy;
+typedef llvm::ImmutableMap<const SymbolMetadata *,
+                           AllocationState> AllocatedSetTy;
 
 namespace { struct AllocatedData {}; }
 namespace clang { namespace ento {
@@ -127,16 +134,24 @@ unsigned MacOSKeychainAPIChecker::getTrackedFunctionIndex(StringRef Name,
   return InvalidIdx;
 }
 
+static const SymbolMetadata *getSymbolMetadata(CheckerContext &C,
+                                               const MemRegion *R) {
+  QualType sizeTy = C.getSValBuilder().getContext().getSizeType();
+  return C.getSymbolManager().getMetadataSymbol(R, 0, sizeTy, 0);
+}
+
 /// Given the address expression, retrieve the value it's pointing to. Assume
 /// that value is itself an address, and return the corresponding MemRegion.
-static const MemRegion *getAsPointeeMemoryRegion(const Expr *Expr,
-                                                 CheckerContext &C) {
+static const SymbolMetadata *getAsPointeeMemoryRegion(const Expr *Expr,
+                                                      CheckerContext &C) {
   const GRState *State = C.getState();
   SVal ArgV = State->getSVal(Expr);
+
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&ArgV)) {
     StoreManager& SM = C.getStoreManager();
     const MemRegion *V = SM.Retrieve(State->getStore(), *X).getAsRegion();
-    return V;
+    if (V)
+      return getSymbolMetadata(C, V);
   }
   return 0;
 }
@@ -160,7 +175,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   idx = getTrackedFunctionIndex(funName, true);
   if (idx != InvalidIdx) {
     const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
-    if (const MemRegion *V = getAsPointeeMemoryRegion(ArgExpr, C))
+    if (const SymbolMetadata *V = getAsPointeeMemoryRegion(ArgExpr, C))
       if (const AllocationState *AS = State->get<AllocatedData>(V)) {
         ExplodedNode *N = C.generateSink(State);
         if (!N)
@@ -189,9 +204,10 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   const MemRegion *Arg = State->getSVal(ArgExpr).getAsRegion();
   if (!Arg)
     return;
+  const SymbolMetadata *ArgSM = getSymbolMetadata(C, Arg);
 
   // If trying to free data which has not been allocated yet, report as bug.
-  const AllocationState *AS = State->get<AllocatedData>(Arg);
+  const AllocationState *AS = State->get<AllocatedData>(ArgSM);
   if (!AS) {
     // It is possible that this is a false positive - the argument might
     // have entered as an enclosing function parameter.
@@ -229,7 +245,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
 
   // If a value has been freed, remove it from the list and continue exploring
   // from the new state.
-  State = State->remove<AllocatedData>(Arg);
+  State = State->remove<AllocatedData>(ArgSM);
   C.addTransition(State);
 }
 
@@ -253,7 +269,7 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     return;
 
   const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
-  if (const MemRegion *V = getAsPointeeMemoryRegion(ArgExpr, C)) {
+  if (const SymbolMetadata *V = getAsPointeeMemoryRegion(ArgExpr, C)) {
     // If the argument points to something that's not a region, it can be:
     //  - unknown (cannot reason about it)
     //  - undefined (already reported by other checker)
@@ -265,18 +281,20 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     // bind the return value of the function to 0 and proceed from the no error
     // state.
     SValBuilder &Builder = C.getSValBuilder();
-    SVal ZeroVal = Builder.makeIntVal(0, CE->getCallReturnType());
-    const GRState *NoErr = State->BindExpr(CE, ZeroVal);
+    SVal NoErrVal = Builder.makeIntVal(NoErr, CE->getCallReturnType());
+    const GRState *NoErr = State->BindExpr(CE, NoErrVal);
     // Add the symbolic value V, which represents the location of the allocated
     // data, to the set.
-    NoErr = NoErr->set<AllocatedData>(V, AllocationState(ArgExpr, idx));
+    NoErr = NoErr->set<AllocatedData>(V,
+      AllocationState(ArgExpr, idx, State->getSVal(CE).getAsSymbol()));
+
     assert(NoErr);
     C.addTransition(NoErr);
 
     // Generate a transition to explore the state space when there is an error.
     // In this case, we do not track the allocated data.
     SVal ReturnedError = Builder.evalBinOpNN(State, BO_NE,
-                                             cast<NonLoc>(ZeroVal),
+                                             cast<NonLoc>(NoErrVal),
                                              cast<NonLoc>(State->getSVal(CE)),
                                              CE->getCallReturnType());
     const GRState *Err = State->assume(cast<NonLoc>(ReturnedError), true);
@@ -296,7 +314,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
   const MemRegion *V = state->getSVal(retExpr).getAsRegion();
   if (!V)
     return;
-  state = state->remove<AllocatedData>(V);
+  state = state->remove<AllocatedData>(getSymbolMetadata(C, V));
 
   // Proceed from the new state.
   C.addTransition(state);
