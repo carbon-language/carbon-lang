@@ -323,6 +323,12 @@ SBTypeList::SBTypeList(const SBTypeList& rhs) :
         Append(rhs.GetTypeAtIndex(i));
 }
 
+bool
+SBTypeList::IsValid () const
+{
+    return (m_opaque_ap.get() != NULL);
+}
+
 SBTypeList&
 SBTypeList::operator = (const SBTypeList& rhs)
 {

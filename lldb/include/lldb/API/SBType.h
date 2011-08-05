@@ -101,6 +101,9 @@ public:
     SBTypeList&
     operator = (const SBTypeList& rhs);
     
+    bool
+    IsValid() const;
+
     void
     Append (const SBType& type);
     

@@ -156,6 +156,9 @@ class SBTypeList
 public:
     SBTypeList();
 
+    bool
+    IsValid() const;
+
     void
     Append(const SBType& type);
 
