@@ -94,21 +94,17 @@ public:
     assert(Fixup.getOffset() + Size <= DataSize &&
            "Invalid fixup offset!");
 
-    // Check that the upper bits are either all 0 or all 1's
-    switch (Size) {
-    case 1: 
-      assert((isInt<8>(Value) || isUInt<8>(Value)) && 
-             "Value does not fit in a 1Byte Reloc");
-      break;
-    case 2: 
-      assert((isInt<16>(Value) || isUInt<16>(Value)) && 
-             "Value does not fit in a 2Byte Reloc");
-      break;
-    case 4:
-      assert((isInt<32>(Value) || isUInt<32>(Value)) && 
-             "Value does not fit in a 4Byte Reloc");
-      break;
-    }
+    // Check that uppper bits are either all zeros or all ones.
+    // Specifically ignore overflow/underflow as long as the leakage is
+    // limited to the lower bits. This is to remain compatible with
+    // other assemblers.
+
+    const uint64_t Mask = ~0ULL;
+    const uint64_t UpperV = (Value >> (Size * 8));
+    const uint64_t MaskF = (Mask >> (Size * 8));
+    assert(((Size == 8) ||
+            ((UpperV & MaskF) == 0ULL) || ((UpperV & MaskF) == MaskF)) &&
+           "Value does not fit in the Fixup field");
 
     for (unsigned i = 0; i != Size; ++i)
       Data[Fixup.getOffset() + i] = uint8_t(Value >> (i * 8));
