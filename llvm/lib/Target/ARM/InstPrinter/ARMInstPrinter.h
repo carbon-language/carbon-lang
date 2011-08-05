@@ -55,6 +55,7 @@ public:
   void printAM3PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,raw_ostream &O);
   void printPostIdxImm8Operand(const MCInst *MI, unsigned OpNum,
                                raw_ostream &O);
+  void printPostIdxRegOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printPostIdxImm8s4Operand(const MCInst *MI, unsigned OpNum,
                                raw_ostream &O);
 

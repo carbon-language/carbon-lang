@@ -645,7 +645,7 @@ def PostIdxRegAsmOperand : AsmOperandClass {
 }
 def postidx_reg : Operand<i32> {
   let EncoderMethod = "getPostIdxRegOpValue";
-  let PrintMethod = "printAddrMode3OffsetOperand";
+  let PrintMethod = "printPostIdxRegOperand";
   let ParserMatchClass = PostIdxRegAsmOperand;
   let MIOperandInfo = (ops GPR, i32imm);
 }
