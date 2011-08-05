@@ -127,11 +127,26 @@ unsigned MacOSKeychainAPIChecker::getTrackedFunctionIndex(StringRef Name,
   return InvalidIdx;
 }
 
+/// Given the address expression, retrieve the value it's pointing to. Assume
+/// that value is itself an address, and return the corresponding MemRegion.
+static const MemRegion *getAsPointeeMemoryRegion(const Expr *Expr,
+                                                 CheckerContext &C) {
+  const GRState *State = C.getState();
+  SVal ArgV = State->getSVal(Expr);
+  if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&ArgV)) {
+    StoreManager& SM = C.getStoreManager();
+    const MemRegion *V = SM.Retrieve(State->getStore(), *X).getAsRegion();
+    return V;
+  }
+  return 0;
+}
+
 void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
                                            CheckerContext &C) const {
   const GRState *State = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = State->getSVal(Callee);
+  unsigned idx = InvalidIdx;
 
   const FunctionDecl *funDecl = L.getAsFunctionDecl();
   if (!funDecl)
@@ -141,8 +156,32 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     return;
   StringRef funName = funI->getName();
 
-  // If a value has been freed, remove from the list.
-  unsigned idx = getTrackedFunctionIndex(funName, false);
+  // If it is a call to an allocator function, it could be a double allocation.
+  idx = getTrackedFunctionIndex(funName, true);
+  if (idx != InvalidIdx) {
+    const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
+    if (const MemRegion *V = getAsPointeeMemoryRegion(ArgExpr, C))
+      if (const AllocationState *AS = State->get<AllocatedData>(V)) {
+        ExplodedNode *N = C.generateSink(State);
+        if (!N)
+          return;
+        initBugType();
+        std::string sbuf;
+        llvm::raw_string_ostream os(sbuf);
+        unsigned int DIdx = FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx;
+        os << "Allocated data should be released before another call to "
+           << "the allocator: missing a call to '"
+           << FunctionsToTrack[DIdx].Name
+           << "'.";
+        RangedBugReport *Report = new RangedBugReport(*BT, os.str(), N);
+        Report->addRange(ArgExpr->getSourceRange());
+        C.EmitReport(Report);
+      }
+    return;
+  }
+
+  // Is it a call to one of deallocator functions?
+  idx = getTrackedFunctionIndex(funName, false);
   if (idx == InvalidIdx)
     return;
 
@@ -188,7 +227,8 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     return;
   }
 
-  // Continue exploring from the new state.
+  // If a value has been freed, remove it from the list and continue exploring
+  // from the new state.
   State = State->remove<AllocatedData>(Arg);
   C.addTransition(State);
 }
@@ -198,7 +238,6 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
   const GRState *State = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = State->getSVal(Callee);
-  StoreManager& SM = C.getStoreManager();
 
   const FunctionDecl *funDecl = L.getAsFunctionDecl();
   if (!funDecl)
@@ -214,19 +253,13 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     return;
 
   const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
-  SVal Arg = State->getSVal(ArgExpr);
-  if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&Arg)) {
-    // Add the symbolic value, which represents the location of the allocated
-    // data, to the set.
-    const MemRegion *V = SM.Retrieve(State->getStore(), *X).getAsRegion();
-    // If this is not a region, it can be:
+  if (const MemRegion *V = getAsPointeeMemoryRegion(ArgExpr, C)) {
+    // If the argument points to something that's not a region, it can be:
     //  - unknown (cannot reason about it)
     //  - undefined (already reported by other checker)
     //  - constant (null - should not be tracked,
     //              other constant will generate a compiler warning)
     //  - goto (should be reported by other checker)
-    if (!V)
-      return;
 
     // We only need to track the value if the function returned noErr(0), so
     // bind the return value of the function to 0 and proceed from the no error
@@ -234,6 +267,8 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     SValBuilder &Builder = C.getSValBuilder();
     SVal ZeroVal = Builder.makeIntVal(0, CE->getCallReturnType());
     const GRState *NoErr = State->BindExpr(CE, ZeroVal);
+    // Add the symbolic value V, which represents the location of the allocated
+    // data, to the set.
     NoErr = NoErr->set<AllocatedData>(V, AllocationState(ArgExpr, idx));
     assert(NoErr);
     C.addTransition(NoErr);

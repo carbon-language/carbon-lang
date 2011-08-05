@@ -93,11 +93,13 @@ void fooDoNotReportNull() {
 void doubleAlloc() {
     unsigned int *ptr = 0;
     OSStatus st = 0;
-    UInt32 *length = 0;
-    void **outData = 0;
-    SecKeychainItemCopyContent(2, ptr, ptr, length, outData);
-    SecKeychainItemCopyContent(2, ptr, ptr, length, outData);
-}// no-warning
+    UInt32 length;
+    void *outData;
+    st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
+    st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData); // expected-warning {{Allocated data should be released before another call to the allocator:}}
+    if (st == noErr)
+      SecKeychainItemFreeContent(ptr, outData);
+}
 
 void fooOnlyFree() {
   unsigned int *ptr = 0;
