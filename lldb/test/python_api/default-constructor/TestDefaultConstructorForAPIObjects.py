@@ -294,26 +294,29 @@ class APIDefaultConstructorTestCase(TestBase):
         sb_thread.fuzz_obj(obj)
 
     @python_api_test
-    @unittest2.expectedFailure
     def test_SBType(self):
-        obj = lldb.SBType()
-        if self.TraceOn():
-            print obj
-        self.assertFalse(obj)
+        try:
+            obj = lldb.SBType()
+            if self.TraceOn():
+                print obj
+            self.assertFalse(obj)
+            # If we reach here, the test fails.
+            self.fail("lldb.SBType() should fail, not succeed!")
+        except:
+            # Exception is expected.
+            return
+            
+        # Unreachable code because lldb.SBType() should fail.
         # Do fuzz testing on the invalid obj, it should not crash lldb.
         import sb_type
         sb_type.fuzz_obj(obj)
 
     @python_api_test
-    @unittest2.expectedFailure
-    def test_SBTypeMember(self):
-        obj = lldb.SBTypeMember()
+    def test_SBTypeList(self):
+        obj = lldb.SBTypeList()
         if self.TraceOn():
             print obj
-        self.assertFalse(obj)
-        # Do fuzz testing on the invalid obj, it should not crash lldb.
-        import sb_typemember
-        sb_typemember.fuzz_obj(obj)
+        self.assertTrue(obj)
 
     @python_api_test
     def test_SBValue(self):
