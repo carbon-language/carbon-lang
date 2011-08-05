@@ -1060,6 +1060,17 @@ class TestBase(Base):
         err.write('\t' + "IsPointerType -> " + str(val.TypeIsPointerType()) + '\n')
         err.write('\t' + "Location      -> " + val.GetLocation()            + '\n')
 
+    def DebugSBType(self, type):
+        """Debug print a SBType object, if traceAlways is True."""
+        if not traceAlways:
+            return
+
+        err = sys.stderr
+        err.write(type.GetName() + ":\n")
+        err.write('\t' + "ByteSize        -> " + str(type.GetByteSize())     + '\n')
+        err.write('\t' + "IsPointerType   -> " + str(type.IsPointerType())   + '\n')
+        err.write('\t' + "IsReferenceType -> " + str(type.IsReferenceType()) + '\n')
+
     def DebugPExpect(self, child):
         """Debug the spwaned pexpect object."""
         if not traceAlways:

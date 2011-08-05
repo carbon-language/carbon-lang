@@ -1,5 +1,5 @@
 #
-# modify-lldb-python.py
+# modify-python-lldb.py
 #
 # This script modifies the lldb module (which was automatically generated via
 # running swig) to support iteration and/or equality operations for certain lldb
@@ -189,7 +189,8 @@ d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
 e = { 'SBAddress':    ['GetFileAddress', 'GetModule'],
       'SBBreakpoint': ['GetID'],
       'SBFileSpec':   ['GetFilename', 'GetDirectory'],
-      'SBModule':     ['GetFileSpec', 'GetUUIDString']
+      'SBModule':     ['GetFileSpec', 'GetUUIDString'],
+      'SBType':       ['GetByteSize', 'GetName']
       }
 
 def list_to_frag(list):
