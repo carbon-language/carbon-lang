@@ -9,63 +9,59 @@
 
 namespace lldb {
 
-    class SBType
-    {
-        public:
-                
-        SBType (const SBType &rhs);
-        
-        ~SBType ();
-                
-        bool
-        IsValid() const;
-        
-        size_t
-        GetByteSize() const;
-        
-        bool
-        IsPointerType() const;
-        
-        bool
-        IsReferenceType() const;
-        
-        SBType
-        GetPointerType() const;
-        
-        SBType
-        GetPointeeType() const;
-        
-        SBType
-        GetReferenceType() const;
-        
-        SBType
-        GetDereferencedType() const;
-        
-        SBType
-        GetBasicType(lldb::BasicType type) const;
-        
-        const char*
-        GetName();
-    };
-    
-    class SBTypeList
-    {
-        public:
-        SBTypeList();
-        
-        void
-        Append(const SBType& type);
-        
-        SBType
-        GetTypeAtIndex(int index);
-        
-        int
-        GetSize();
-        
-        ~SBTypeList();
-        
-        private:
-        std::auto_ptr<SBTypeListImpl> m_content;
-    };
+class SBType
+{
+public:
+    SBType (const SBType &rhs);
+
+    ~SBType ();
+
+    bool
+    IsValid() const;
+
+    size_t
+    GetByteSize() const;
+
+    bool
+    IsPointerType() const;
+
+    bool
+    IsReferenceType() const;
+
+    SBType
+    GetPointerType() const;
+
+    SBType
+    GetPointeeType() const;
+
+    SBType
+    GetReferenceType() const;
+
+    SBType
+    GetDereferencedType() const;
+
+    SBType
+    GetBasicType(lldb::BasicType type) const;
+
+    const char*
+    GetName();
+};
+
+class SBTypeList
+{
+public:
+    SBTypeList();
+
+    void
+    Append(const SBType& type);
+
+    SBType
+    GetTypeAtIndex(int index);
+
+    int
+    GetSize();
+
+    ~SBTypeList();
+};
 
 } // namespace lldb
