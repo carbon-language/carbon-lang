@@ -266,6 +266,8 @@ private:
                     SmallVectorImpl<LiveInterval*>&, unsigned = ~0u);
   unsigned tryRegionSplit(LiveInterval&, AllocationOrder&,
                           SmallVectorImpl<LiveInterval*>&);
+  unsigned tryBlockSplit(LiveInterval&, AllocationOrder&,
+                         SmallVectorImpl<LiveInterval*>&);
   unsigned tryLocalSplit(LiveInterval&, AllocationOrder&,
     SmallVectorImpl<LiveInterval*>&);
   unsigned trySplit(LiveInterval&, AllocationOrder&,
@@ -1201,6 +1203,38 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
 
 //===----------------------------------------------------------------------===//
+//                            Per-Block Splitting
+//===----------------------------------------------------------------------===//
+
+/// tryBlockSplit - Split a global live range around every block with uses. This
+/// creates a lot of local live ranges, that will be split by tryLocalSplit if
+/// they don't allocate.
+unsigned RAGreedy::tryBlockSplit(LiveInterval &VirtReg, AllocationOrder &Order,
+                                 SmallVectorImpl<LiveInterval*> &NewVRegs) {
+  assert(&SA->getParent() == &VirtReg && "Live range wasn't analyzed");
+  unsigned Reg = VirtReg.reg;
+  bool SingleInstrs = RegClassInfo.isProperSubClass(MRI->getRegClass(Reg));
+  LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
+  SE->reset(LREdit);
+  ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
+  for (unsigned i = 0; i != UseBlocks.size(); ++i) {
+    const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
+    if (SA->shouldSplitSingleBlock(BI, SingleInstrs))
+      SE->splitSingleBlock(BI);
+  }
+  // No blocks were split.
+  if (LREdit.empty())
+    return 0;
+
+  // We did split for some blocks.
+  SE->finish();
+  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Spill);
+  if (VerifyEnabled)
+    MF->verify(this, "After splitting live range around basic blocks");
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
 //                             Local Splitting
 //===----------------------------------------------------------------------===//
 
@@ -1488,29 +1522,8 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
       return PhysReg;
   }
 
-  // Then isolate blocks with multiple uses.
-  unsigned Reg = SA->getParent().reg;
-  bool SingleInstrs = RegClassInfo.isProperSubClass(MRI->getRegClass(Reg));
-  LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
-  SE->reset(LREdit);
-  ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
-  for (unsigned i = 0; i != UseBlocks.size(); ++i) {
-    const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
-    if (SA->shouldSplitSingleBlock(BI, SingleInstrs))
-      SE->splitSingleBlock(BI);
-  }
-  // No blocks were split.
-  if (LREdit.empty())
-    return 0;
-
-  // We did split for some blocks.
-  SE->finish();
-  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Spill);
-  if (VerifyEnabled)
-    MF->verify(this, "After splitting live range around basic blocks");
-
-  // Don't assign any physregs.
-  return 0;
+  // Then isolate blocks.
+  return tryBlockSplit(VirtReg, Order, NewVRegs);
 }
 
 
