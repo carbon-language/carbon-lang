@@ -90,6 +90,10 @@ public:
     return Eng.getSValBuilder();
   }
 
+  SymbolManager &getSymbolManager() {
+    return getSValBuilder().getSymbolManager();
+  }
+
   ExplodedNode *generateNode(bool autoTransition = true) {
     assert(statement && "Only transitions with statements currently supported");
     ExplodedNode *N = generateNodeImpl(statement, getState(), false,

@@ -389,6 +389,9 @@ public:
 
   const SymbolExtent *getExtentSymbol(const SubRegion *R);
 
+  /// Creates a metadata symbol associated with a specific region.
+  /// VisitCount can be used to differentiate regions corresponding to
+  /// different loop iterations, thus, making the symbol path-dependent.
   const SymbolMetadata* getMetadataSymbol(const MemRegion* R, const Stmt* S,
                                           QualType T, unsigned VisitCount,
                                           const void* SymbolTag = 0);
