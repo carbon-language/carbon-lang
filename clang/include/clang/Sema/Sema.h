@@ -493,23 +493,6 @@ public:
   /// a potentially evaluated expression.
   typedef SmallVector<std::pair<SourceLocation, Decl *>, 10>
     PotentiallyReferencedDecls;
-    
-  // FIXME. Improve on accessibility.
-  class PROTOCOL_METHODS {
-  public:
-    Selector Sel;
-    ObjCMethodDecl *Method;
-    PROTOCOL_METHODS(Selector S, ObjCMethodDecl *M) 
-        : Sel(S), Method(M) {}
-    // Allow sorting based on selector's opaque pointer.
-    bool operator<(const PROTOCOL_METHODS &b) const {
-          return Sel < b.Sel;
-    }
-  };
-
-  /// \brief The set of protocols declared in protocols qualifying a
-  /// class.
-  typedef SmallVector<PROTOCOL_METHODS, 16> MethodsInProtocols;
 
   /// \brief A set of diagnostics that may be emitted.
   typedef SmallVector<std::pair<SourceLocation, PartialDiagnostic>, 10>
@@ -1797,12 +1780,7 @@ public:
   void WarnExactTypedMethods(ObjCMethodDecl *Method,
                              ObjCMethodDecl *MethodDecl,
                              bool IsProtocolMethodDecl);
-    
-  /// WarnOnMismatchedProtocolMethods - Issues warning on type mismatched 
-  /// protocols methods and then returns true(matched), or false(mismatched).
-  bool WarnOnMismatchedProtocolMethods(ObjCMethodDecl *Method,
-                                       ObjCMethodDecl *MethodDecl);
-                            
+
   bool isPropertyReadonly(ObjCPropertyDecl *PropertyDecl,
                           ObjCInterfaceDecl *IDecl);
 
@@ -1926,16 +1904,10 @@ public:
                                   bool ImmediateClass,
                                   bool WarnExactMatch=false);
 
-  /// MatchIdenticalSelectorsInProtocols - Check that mathods with
-  /// identical selectors in all protocols of this class type match.
-  /// Issue warning if they don't.
-  void MatchIdenticalSelectorsInProtocols(const ObjCInterfaceDecl *CDecl);
-
   /// MatchMethodsInClassAndItsProtocol - Check that any redeclaration of
   /// method in protocol in its qualified class match in their type and
   /// issue warnings otherwise.
   void MatchMethodsInClassAndItsProtocol(const ObjCInterfaceDecl *CDecl);
-    
 
   /// CheckCategoryVsClassMethodMatches - Checks that methods implemented in
   /// category matches with those implemented in its primary class and
