@@ -929,38 +929,39 @@ DynamicLoaderMacOSXDYLD::InitializeFromAllImageInfos ()
 
     if (ReadAllImageInfosStructure ())
     {
-        if (m_dyld_all_image_infos.dylib_info_count > 0)
+        // Nothing to load or unload?
+        if (m_dyld_all_image_infos.dylib_info_count == 0)
+            return true;
+        
+        if (m_dyld_all_image_infos.dylib_info_addr == 0)
         {
-            if (m_dyld_all_image_infos.dylib_info_addr == 0)
+            // DYLD is updating the images now.  So we should say we have no images, and then we'll 
+            // figure it out when we hit the added breakpoint.
+            return false;
+        }
+        else
+        {
+            if (!AddModulesUsingImageInfosAddress (m_dyld_all_image_infos.dylib_info_addr, 
+                                                   m_dyld_all_image_infos.dylib_info_count))
             {
-                // DYLD is updating the images now.  So we should say we have no images, and then we'll 
-                // figure it out when we hit the added breakpoint.
-                return false;
-            }
-            else
-            {
-                if (!AddModulesUsingImageInfosAddress (m_dyld_all_image_infos.dylib_info_addr, 
-                                                       m_dyld_all_image_infos.dylib_info_count))
-                {
-                    DEBUG_PRINTF( "unable to read all data for all_dylib_infos.");
-                    m_dyld_image_infos.clear();
-                }
+                DEBUG_PRINTF( "unable to read all data for all_dylib_infos.");
+                m_dyld_image_infos.clear();
             }
         }
-        
+
         // Now we have one more bit of business.  If there is a library left in the images for our target that
         // doesn't have a load address, then it must be something that we were expecting to load (for instance we
         // read a load command for it) but it didn't in fact load - probably because DYLD_*_PATH pointed
         // to an equivalent version.  We don't want it to stay in the target's module list or it will confuse
         // us, so unload it here.
-        Target *target = m_process->CalculateTarget();
-        ModuleList &modules = target->GetImages();
+        Target &target = m_process->GetTarget();
+        ModuleList &modules = target.GetImages();
         ModuleList not_loaded_modules;
         size_t num_modules = modules.GetSize();
-        for (size_t i = 0; i < num_modules; i++)
+        for (size_t i = 1; i < num_modules; i++)
         {
             ModuleSP module_sp = modules.GetModuleAtIndex(i);
-            if (!module_sp->IsLoadedInTarget (target))
+            if (!module_sp->IsLoadedInTarget (&target))
             {
                 if (log)
                 {
@@ -974,9 +975,9 @@ DynamicLoaderMacOSXDYLD::InitializeFromAllImageInfos ()
         
         if (not_loaded_modules.GetSize() != 0)
         {
-            target->ModulesDidUnload(not_loaded_modules);
+            target.ModulesDidUnload(not_loaded_modules);
         }
-        
+
         return true;
     }
     else
@@ -1182,7 +1183,8 @@ DynamicLoaderMacOSXDYLD::UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::co
 
     if (exe_idx < image_infos.size())
     {
-        ModuleSP exe_module_sp (FindTargetModuleForDYLDImageInfo (image_infos[exe_idx], false, NULL));
+        const bool can_create = true;
+        ModuleSP exe_module_sp (FindTargetModuleForDYLDImageInfo (image_infos[exe_idx], can_create, NULL));
 
         if (!exe_module_sp)
         {
@@ -1198,7 +1200,7 @@ DynamicLoaderMacOSXDYLD::UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::co
             {
                 // Don't load dependent images since we are in dyld where we will know
                 // and find out about all images that are loaded
-                bool get_dependent_images = false;
+                const bool get_dependent_images = false;
                 m_process->GetTarget().SetExecutableModule (exe_module_sp, 
                                                             get_dependent_images);
             }

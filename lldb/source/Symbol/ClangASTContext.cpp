@@ -413,12 +413,6 @@ ClangASTContext::SetTargetTriple (const char *target_triple)
 {
     Clear();
     m_target_triple.assign(target_triple);
-    if (m_target_triple.find("armv7s") == 0)
-        m_target_triple.erase(5,1);
-    else if (m_target_triple.find("armv7f") == 0)
-        m_target_triple.erase(5,1);
-    else if (m_target_triple.find("armv7k") == 0)
-        m_target_triple.erase(5,1);
 }
 
 void

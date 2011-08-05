@@ -441,8 +441,13 @@ PlatformRemoteiOS::GetSharedModule (const FileSpec &platform_file,
     error = GetFile (platform_file, uuid_ptr, local_file);
     if (error.Success())
     {
+        
+        error = ResolveExecutable (local_file, arch, module_sp);
+    }
+    else
+    {
         const bool always_create = false;
-        error = ModuleList::GetSharedModule (local_file, 
+        error = ModuleList::GetSharedModule (platform_file, 
                                              arch, 
                                              uuid_ptr, 
                                              object_name_ptr, 
@@ -451,6 +456,7 @@ PlatformRemoteiOS::GetSharedModule (const FileSpec &platform_file,
                                              old_module_sp_ptr,
                                              did_create_ptr,
                                              always_create);
+
     }
     if (module_sp)
         module_sp->SetPlatformFileSpec(platform_file);

@@ -71,6 +71,10 @@ public:
         
     const char*
     GetName();
+    
+    // DEPRECATED: but needed for Xcode right now
+    static bool
+    IsPointerType (void * clang_type);
         
 protected:
     lldb::TypeImplSP m_opaque_sp;

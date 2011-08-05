@@ -357,3 +357,16 @@ SBTypeList::GetSize() const
 SBTypeList::~SBTypeList()
 {
 }
+
+bool
+SBType::IsPointerType (void *opaque_type)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
+    bool ret_value = ClangASTContext::IsPointerType (opaque_type);
+    
+    if (log)
+        log->Printf ("SBType::IsPointerType (opaque_type=%p) ==> '%s'", opaque_type, (ret_value ? "true" : "false"));
+    
+    return ret_value;
+}
