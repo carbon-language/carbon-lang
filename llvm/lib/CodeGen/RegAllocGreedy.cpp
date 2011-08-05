@@ -1501,6 +1501,10 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 /// @return Physreg when VirtReg may be assigned and/or new NewVRegs.
 unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
                             SmallVectorImpl<LiveInterval*>&NewVRegs) {
+  // Ranges must be Split2 or less.
+  if (getStage(VirtReg) >= RS_Spill)
+    return 0;
+
   // Local intervals are handled separately.
   if (LIS->intervalIsInOneMBB(VirtReg)) {
     NamedRegionTimer T("Local Splitting", TimerGroupName, TimePassesIsEnabled);
@@ -1509,10 +1513,6 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   }
 
   NamedRegionTimer T("Global Splitting", TimerGroupName, TimePassesIsEnabled);
-
-  // Ranges must be Split2 or less.
-  if (getStage(VirtReg) >= RS_Spill)
-    return 0;
 
   SA->analyze(&VirtReg);
 
