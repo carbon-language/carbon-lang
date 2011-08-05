@@ -33,6 +33,8 @@ _func:
         ldr r6, [r7, -r8]!
         ldr r5, [r9], r2
         ldr r4, [r3], -r6
+        ldr r3, [r8, -r2, lsl #15]
+        ldr r1, [r5], r3, asr #15
 
 @ CHECK: ldr	r3, [r8, r1]            @ encoding: [0x01,0x30,0x98,0xe7]
 @ CHECK: ldr	r2, [r5, -r3]           @ encoding: [0x03,0x20,0x15,0xe7]
@@ -40,3 +42,5 @@ _func:
 @ CHECK: ldr	r6, [r7, -r8]!          @ encoding: [0x08,0x60,0x37,0xe7]
 @ CHECK: ldr	r5, [r9], r2            @ encoding: [0x02,0x50,0x99,0xe6]
 @ CHECK: ldr	r4, [r3], -r6           @ encoding: [0x06,0x40,0x13,0xe6]
+@ CHECK: ldr	r3, [r8, -r2, lsl #15]  @ encoding: [0x82,0x37,0x18,0xe7]
+@ CHECK: ldr	r1, [r5], r3, asr #15   @ encoding: [0xc3,0x17,0x95,0xe6]

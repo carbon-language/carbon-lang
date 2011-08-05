@@ -226,7 +226,7 @@ class ARMOperand : public MCParsedAsmOperand {
       const MCConstantExpr *OffsetImm;  // Offset immediate value
       unsigned OffsetRegNum;    // Offset register num, when OffsetImm == NULL
       ARM_AM::ShiftOpc ShiftType; // Shift type for OffsetReg
-      unsigned ShiftValue;      // shift for OffsetReg.
+      unsigned ShiftImm;      // shift for OffsetReg.
       unsigned isNegative : 1;  // Negated OffsetReg? (~'U' bit)
     } Mem;
 
@@ -838,7 +838,7 @@ public:
   void addMemRegOffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
     unsigned Val = ARM_AM::getAM2Opc(Mem.isNegative ? ARM_AM::sub : ARM_AM::add,
-                                     Mem.ShiftValue, Mem.ShiftType);
+                                     Mem.ShiftImm, Mem.ShiftType);
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
     Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
@@ -1028,7 +1028,7 @@ public:
                                const MCConstantExpr *OffsetImm,
                                unsigned OffsetRegNum,
                                ARM_AM::ShiftOpc ShiftType,
-                               unsigned ShiftValue,
+                               unsigned ShiftImm,
                                bool isNegative,
                                SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(Memory);
@@ -1036,7 +1036,7 @@ public:
     Op->Mem.OffsetImm = OffsetImm;
     Op->Mem.OffsetRegNum = OffsetRegNum;
     Op->Mem.ShiftType = ShiftType;
-    Op->Mem.ShiftValue = ShiftValue;
+    Op->Mem.ShiftImm = ShiftImm;
     Op->Mem.isNegative = isNegative;
     Op->StartLoc = S;
     Op->EndLoc = E;
@@ -1916,6 +1916,11 @@ parsePostIdxReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   ARM_AM::ShiftOpc ShiftTy = ARM_AM::no_shift;
   unsigned ShiftImm = 0;
+  if (Parser.getTok().is(AsmToken::Comma)) {
+    Parser.Lex(); // Eat the ','.
+    if (parseMemRegOffsetShift(ShiftTy, ShiftImm))
+      return MatchOperand_ParseFail;
+  }
 
   Operands.push_back(ARMOperand::CreatePostIdxReg(Reg, isAdd, ShiftTy,
                                                   ShiftImm, S, E));
@@ -2117,10 +2122,10 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   // If there's a shift operator, handle it.
   ARM_AM::ShiftOpc ShiftType = ARM_AM::no_shift;
-  unsigned ShiftValue = 0;
+  unsigned ShiftImm = 0;
   if (Parser.getTok().is(AsmToken::Comma)) {
     Parser.Lex(); // Eat the ','.
-    if (parseMemRegOffsetShift(ShiftType, ShiftValue))
+    if (parseMemRegOffsetShift(ShiftType, ShiftImm))
       return true;
   }
 
@@ -2131,7 +2136,7 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   Parser.Lex(); // Eat right bracket token.
 
   Operands.push_back(ARMOperand::CreateMem(BaseRegNum, 0, OffsetRegNum,
-                                           ShiftType, ShiftValue, isNegative,
+                                           ShiftType, ShiftImm, isNegative,
                                            S, E));
 
   // If there's a pre-indexing writeback marker, '!', just add it as a token
