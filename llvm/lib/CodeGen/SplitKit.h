@@ -194,11 +194,6 @@ public:
   /// @param BI           The block to be isolated.
   /// @param SingleInstrs True when single instructions should be isolated.
   bool shouldSplitSingleBlock(const BlockInfo &BI, bool SingleInstrs) const;
-
-  /// getMultiUseBlocks - Add basic blocks to Blocks that may benefit from
-  /// having CurLI split to a new live interval. Return true if Blocks can be
-  /// passed to SplitEditor::splitSingleBlocks.
-  bool getMultiUseBlocks(BlockPtrSet &Blocks);
 };
 
 
@@ -432,10 +427,6 @@ public:
   /// uses in a single block. This is intended to be used as part of a larger
   /// split, and doesn't call finish().
   void splitSingleBlock(const SplitAnalysis::BlockInfo &BI);
-
-  /// splitSingleBlocks - Split CurLI into a separate live interval inside each
-  /// basic block in Blocks.
-  void splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks);
 
   /// splitLiveThroughBlock - Split CurLI in the given block such that it
   /// enters the block in IntvIn and leaves it in IntvOut. There may be uses in

@@ -1105,22 +1105,6 @@ bool SplitAnalysis::shouldSplitSingleBlock(const BlockInfo &BI,
   return isOriginalEndpoint(BI.FirstInstr);
 }
 
-/// getMultiUseBlocks - if CurLI has more than one use in a basic block, it
-/// may be an advantage to split CurLI for the duration of the block.
-bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {
-  // If CurLI is local to one block, there is no point to splitting it.
-  if (UseBlocks.size() <= 1)
-    return false;
-  // Add blocks with multiple uses.
-  for (unsigned i = 0, e = UseBlocks.size(); i != e; ++i) {
-    const BlockInfo &BI = UseBlocks[i];
-    if (BI.FirstInstr == BI.LastInstr)
-      continue;
-    Blocks.insert(BI.MBB);
-  }
-  return !Blocks.empty();
-}
-
 void SplitEditor::splitSingleBlock(const SplitAnalysis::BlockInfo &BI) {
   openIntv();
   SlotIndex LastSplitPoint = SA.getLastSplitPoint(BI.MBB->getNumber());
@@ -1134,19 +1118,6 @@ void SplitEditor::splitSingleBlock(const SplitAnalysis::BlockInfo &BI) {
     useIntv(SegStart, SegStop);
     overlapIntv(SegStop, BI.LastInstr);
   }
-}
-
-/// splitSingleBlocks - Split CurLI into a separate live interval inside each
-/// basic block in Blocks.
-void SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
-  DEBUG(dbgs() << "  splitSingleBlocks for " << Blocks.size() << " blocks.\n");
-  ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA.getUseBlocks();
-  for (unsigned i = 0; i != UseBlocks.size(); ++i) {
-    const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
-    if (Blocks.count(BI.MBB))
-      splitSingleBlock(BI);
-  }
-  finish();
 }
 
 
