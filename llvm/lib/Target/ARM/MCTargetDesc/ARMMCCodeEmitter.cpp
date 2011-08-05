@@ -812,8 +812,7 @@ getPostIdxRegOpValue(const MCInst &MI, unsigned OpIdx,
   // {3-0}    Rm
   const MCOperand &MO = MI.getOperand(OpIdx);
   const MCOperand &MO1 = MI.getOperand(OpIdx+1);
-  unsigned Imm = MO1.getImm();
-  bool isAdd = ARM_AM::getAM3Op(Imm) == ARM_AM::add;
+  bool isAdd = MO1.getImm() != 0;
   return getARMRegisterNumbering(MO.getReg()) | (isAdd << 4);
 }
 

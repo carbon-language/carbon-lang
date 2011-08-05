@@ -387,8 +387,7 @@ void ARMInstPrinter::printPostIdxRegOperand(const MCInst *MI, unsigned OpNum,
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
 
-  O << getAddrOpcStr(ARM_AM::getAM3Op(MO2.getImm()))
-    << getRegisterName(MO1.getReg());
+  O << (MO2.getImm() ? "" : "-") << getRegisterName(MO1.getReg());
 }
 
 void ARMInstPrinter::printPostIdxImm8s4Operand(const MCInst *MI,

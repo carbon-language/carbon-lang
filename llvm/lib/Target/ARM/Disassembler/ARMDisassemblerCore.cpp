@@ -1543,10 +1543,16 @@ static bool DisassembleLdStMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     ++OpIdx;
   } else {
     // Disassemble the offset reg (Rm).
-    unsigned Offset = ARM_AM::getAM3Opc(AddrOpcode, 0);
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
-    MI.addOperand(MCOperand::CreateImm(Offset));
+    // FIXME: Remove the 'else' once done w/ addrmode3 refactor.
+    if (Opcode == ARM::STRHTr || Opcode == ARM::LDRSBTr ||
+        Opcode == ARM::LDRHTr || Opcode == ARM::LDRSHTr)
+      MI.addOperand(MCOperand::CreateImm(getUBit(insn)));
+    else {
+      unsigned Offset = ARM_AM::getAM3Opc(AddrOpcode, 0);
+      MI.addOperand(MCOperand::CreateImm(Offset));
+    }
     OpIdx += 2;
   }
 

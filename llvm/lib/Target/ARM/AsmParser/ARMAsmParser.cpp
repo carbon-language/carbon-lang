@@ -1093,8 +1093,7 @@ void ARMOperand::print(raw_ostream &OS) const {
     OS << ">";
     break;
   case PostIndexRegister:
-    OS << "post-idx register " 
-       << getAddrOpcStr(ARM_AM::getAM3Op(PostIdxReg.Imm))
+    OS << "post-idx register " << (PostIdxReg.Imm ? "" : "-")
        << PostIdxReg.RegNum
        << ">";
     break;
@@ -1872,14 +1871,14 @@ parsePostIdxReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   AsmToken Tok = Parser.getTok();
   SMLoc S = Tok.getLoc();
   bool haveEaten = false;
-  unsigned Imm = ARM_AM::getAM3Opc(ARM_AM::add, 0);
+  bool isAdd = true;
   int Reg = -1;
   if (Tok.is(AsmToken::Plus)) {
     Parser.Lex(); // Eat the '+' token.
     haveEaten = true;
   } else if (Tok.is(AsmToken::Minus)) {
     Parser.Lex(); // Eat the '-' token.
-    Imm = ARM_AM::getAM3Opc(ARM_AM::sub, 0);
+    isAdd = false;
     haveEaten = true;
   }
   if (Parser.getTok().is(AsmToken::Identifier))
@@ -1892,7 +1891,7 @@ parsePostIdxReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   }
   SMLoc E = Parser.getTok().getLoc();
 
-  Operands.push_back(ARMOperand::CreatePostIdxReg(Reg, Imm, S, E));
+  Operands.push_back(ARMOperand::CreatePostIdxReg(Reg, isAdd, S, E));
 
   return MatchOperand_Success;
 }
