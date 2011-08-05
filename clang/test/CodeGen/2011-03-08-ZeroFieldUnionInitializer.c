@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o 0
+// RUN: %clang_cc1 -emit-llvm %s -o /dev/null
 typedef struct {
   union {
     struct { } __attribute((packed));
