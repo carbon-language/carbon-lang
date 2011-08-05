@@ -3489,6 +3489,15 @@ static void CheckArrayAccess_Check(Sema &S,
   if (!IndexExpr->isIntegerConstantExpr(index, S.Context))
     return;
 
+  const NamedDecl *ND = NULL;
+  bool IsMemberDecl = false;
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(BaseExpr))
+    ND = dyn_cast<NamedDecl>(DRE->getDecl());
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(BaseExpr)) {
+    ND = dyn_cast<NamedDecl>(ME->getMemberDecl());
+    IsMemberDecl = true;
+  }
+
   if (index.isUnsigned() || !index.isNegative()) {
     llvm::APInt size = ArrayTy->getSize();
     if (!size.isStrictlyPositive())
@@ -3498,9 +3507,19 @@ static void CheckArrayAccess_Check(Sema &S,
     else if (size.getBitWidth() < index.getBitWidth())
       size = size.sext(index.getBitWidth());
 
-    // Don't warn for valid indexes, or arrays of size 1 (which are often
-    // tail-allocated arrays that are emulating flexible arrays in C89 code).
-    if (index.slt(size) || size == 1)
+    // Don't warn for valid indexes
+    if (index.slt(size))
+      return;
+
+    // Also don't warn for arrays of size 1 which are members of some
+    // structure. These are often used to approximate flexible arrays in C89
+    // code.
+    // FIXME: We should also check whether there are any members after this
+    // member within the struct as that precludes the usage as a flexible
+    // array. We should also potentially check for an explicit '1' as opposed
+    // to a macro or template argument which might accidentally and erroneously
+    // expand to '1'.
+    if (IsMemberDecl && size == 1)
       return;
 
     S.DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
@@ -3515,11 +3534,6 @@ static void CheckArrayAccess_Check(Sema &S,
                             << IndexExpr->getSourceRange());
   }
 
-  const NamedDecl *ND = NULL;
-  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(BaseExpr))
-    ND = dyn_cast<NamedDecl>(DRE->getDecl());
-  if (const MemberExpr *ME = dyn_cast<MemberExpr>(BaseExpr))
-    ND = dyn_cast<NamedDecl>(ME->getMemberDecl());
   if (ND)
     S.DiagRuntimeBehavior(ND->getLocStart(), BaseExpr,
                           S.PDiag(diag::note_array_index_out_of_bounds)
