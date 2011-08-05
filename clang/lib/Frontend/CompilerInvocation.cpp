@@ -775,6 +775,10 @@ static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
     Res.push_back("-include");
     Res.push_back(Opts.Includes[i]);
   }
+  for (unsigned i = 0, e = Opts.Modules.size(); i != e; ++i) {
+    Res.push_back("-import_module");
+    Res.push_back(Opts.Modules[i]);
+  }
   for (unsigned i = 0, e = Opts.MacroIncludes.size(); i != e; ++i) {
     Res.push_back("-imacros");
     Res.push_back(Opts.MacroIncludes[i]);
@@ -1805,6 +1809,12 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
          ie = Args.filtered_end(); it != ie; ++it) {
     const Arg *A = *it;
     Opts.ChainedIncludes.push_back(A->getValue(Args));
+  }
+
+  for (arg_iterator it = Args.filtered_begin(OPT_import_module),
+      ie = Args.filtered_end(); it != ie; ++it) {
+    const Arg *A = *it;
+    Opts.Modules.push_back(A->getValue(Args));
   }
 
   // Include 'altivec.h' if -faltivec option present
