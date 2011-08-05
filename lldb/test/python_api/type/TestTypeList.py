@@ -100,6 +100,15 @@ class TypeAndTypeListTestCase(TestBase):
 
         self.assertTrue(task_type == task_head_pointee_type)
 
+        # We'll now get the child member 'id' from 'task_head'.
+        id = task_head.GetChildMemberWithName('id')
+        self.DebugSBValue(id)
+        id_type = id.GetType()
+        self.DebugSBType(id_type)
+
+        # SBType.GetBasicType() takes an enum 'BasicType' (lldb-enumerations.h).
+        int_type = id_type.GetBasicType(lldb.eBasicTypeInt)
+        self.assertTrue(id_type == int_type)
 
 if __name__ == '__main__':
     import atexit
