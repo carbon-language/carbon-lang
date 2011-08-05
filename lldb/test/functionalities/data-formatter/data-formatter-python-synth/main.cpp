@@ -8,10 +8,10 @@ typedef std::vector<std::string> string_vect;
 typedef std::list<int> int_list;
 typedef std::list<std::string> string_list;
 
-typedef std::map<int, int> intint_map;
-typedef std::map<std::string, int> strint_map;
-typedef std::map<int, std::string> intstr_map;
-typedef std::map<std::string, std::string> strstr_map;
+#define intint_map std::map<int, int> 
+#define strint_map std::map<std::string, int> 
+#define intstr_map std::map<int, std::string> 
+#define strstr_map std::map<std::string, std::string> 
 
 struct foo
 {

@@ -632,6 +632,17 @@ private:
     
 public:
     
+    enum FormatCategoryItem
+    {
+        eSummary =         0x0001,
+        eRegexSummary =    0x1001,
+        eFilter =          0x0002,
+        eRegexFilter =     0x1002,
+    };
+    
+    typedef uint16_t FormatCategoryItems;
+    static const uint16_t ALL_ITEM_TYPES = 0xFFFF;
+    
     typedef SummaryNavigator::SharedPointer SummaryNavigatorSP;
     typedef RegexSummaryNavigator::SharedPointer RegexSummaryNavigatorSP;
     typedef FilterNavigator::SharedPointer FilterNavigatorSP;
@@ -715,24 +726,59 @@ public:
     void
     ClearSummaries()
     {
-        m_summary_nav->Clear();
-        m_regex_summary_nav->Clear();
+        Clear(eSummary | eRegexSummary);
     }
     
     // just a shortcut for (Summary()->Delete(name) || RegexSummary()->Delete(name))
     bool
     DeleteSummaries(const char* name)
     {
-        bool del_sum = m_summary_nav->Delete(name);
-        bool del_rex = m_regex_summary_nav->Delete(name);
-        
-        return (del_sum || del_rex);
+        return Delete(name, (eSummary | eRegexSummary));
+    }
+    
+    
+    void
+    Clear(FormatCategoryItems items = ALL_ITEM_TYPES)
+    {
+        if ( (items & eSummary) )
+            m_summary_nav->Clear();
+        if ( (items & eRegexSummary) )
+            m_regex_summary_nav->Clear();
+        if ( (items & eFilter) )
+            m_filter_nav->Clear();
+        if ( (items & eRegexFilter) )
+            m_regex_filter_nav->Clear();
+    }
+    
+    bool
+    Delete(const char* name,
+           FormatCategoryItems items = ALL_ITEM_TYPES)
+    {
+        bool success = false;
+        if ( (items & eSummary) )
+            success = m_summary_nav->Delete(name) || success;
+        if ( (items & eRegexSummary) )
+            success = m_regex_summary_nav->Delete(name) || success;
+        if ( (items & eFilter) )
+            success = m_filter_nav->Delete(name) || success;
+        if ( (items & eRegexFilter) )
+            success = m_regex_filter_nav->Delete(name) || success;
+        return success;
     }
     
     uint32_t
-    GetCount()
+    GetCount(FormatCategoryItems items = ALL_ITEM_TYPES)
     {
-        return Summary()->GetCount() + RegexSummary()->GetCount();
+        uint32_t count = 0;
+        if ( (items & eSummary) )
+            count += m_summary_nav->GetCount();
+        if ( (items & eRegexSummary) )
+            count += m_regex_summary_nav->GetCount();
+        if ( (items & eFilter) )
+            count += m_filter_nav->GetCount();
+        if ( (items & eRegexFilter) )
+            count += m_regex_filter_nav->GetCount();
+        return count;
     }
     
     std::string

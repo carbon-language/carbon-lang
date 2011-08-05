@@ -300,13 +300,14 @@ class DataFormatterTestCase(TestBase):
                                '[3] = \"!!!\"'])
 
         # now std::map<K,V>
+        # also take a chance to test regex synth here
 
         self.runCmd("n")
         self.runCmd("frame variable ii -T")
         
         self.runCmd("script from StdMapSynthProvider import *")
-        self.runCmd("type summary add std::intint_map intint_map -f \"map has ${svar%#} items\" -e")
-        self.runCmd("type synth add std::intint_map intint_map -l StdMapSynthProvider")
+        self.runCmd("type summary add -x \"std::map<\" -f \"map has ${svar%#} items\" -e")
+        self.runCmd("type synth add -x \"std::map<\" -l StdMapSynthProvider")
 
 
         self.expect('frame variable ii',
@@ -356,8 +357,8 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable si -T")
 
-        self.runCmd("type summary add std::strint_map strint_map -f \"map has ${svar%#} items\" -e")
-        self.runCmd("type synth add std::strint_map strint_map -l StdMapSynthProvider")
+        #self.runCmd("type summary add std::strint_map strint_map -f \"map has ${svar%#} items\" -e")
+        #self.runCmd("type synth add std::strint_map strint_map -l StdMapSynthProvider")
         
         self.expect('frame variable si',
                     substrs = ['map has 0 items',
@@ -400,8 +401,8 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable is -T")
         
-        self.runCmd("type summary add std::intstr_map intstr_map -f \"map has ${svar%#} items\" -e")
-        self.runCmd("type synth add std::intstr_map intstr_map -l StdMapSynthProvider")
+        #self.runCmd("type summary add std::intstr_map intstr_map -f \"map has ${svar%#} items\" -e")
+        #self.runCmd("type synth add std::intstr_map intstr_map -l StdMapSynthProvider")
 
         self.expect('frame variable is',
                     substrs = ['map has 0 items',
@@ -433,8 +434,8 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable ss -T")
         
-        self.runCmd("type summary add std::strstr_map strstr_map -f \"map has ${svar%#} items\" -e")
-        self.runCmd("type synth add std::strstr_map strstr_map -l StdMapSynthProvider")
+        #self.runCmd("type summary add std::strstr_map strstr_map -f \"map has ${svar%#} items\" -e")
+        #self.runCmd("type synth add std::strstr_map strstr_map -l StdMapSynthProvider")
 
         self.expect('frame variable ss',
                     substrs = ['map has 0 items',
