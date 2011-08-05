@@ -171,7 +171,8 @@ d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
       'SBInstructionList':   ('GetSize', 'GetInstructionAtIndex'),
       'SBStringList':        ('GetSize', 'GetStringAtIndex',),
       'SBSymbolContextList': ('GetSize', 'GetContextAtIndex'),
-      'SBValueList':         ('GetSize',  'GetValueAtIndex'),
+      'SBTypeList':          ('GetSize', 'GetTypeAtIndex'),
+      'SBValueList':         ('GetSize', 'GetValueAtIndex'),
 
       'SBType':  ('GetNumberChildren', 'GetChildAtIndex'),
       'SBValue': ('GetNumChildren',    'GetChildAtIndex'),
@@ -240,7 +241,7 @@ with open(output_name, 'r') as f_in:
 class_pattern = re.compile("^class (SB.*)\(_object\):$")
 
 # The pattern for recognizing the beginning of the __init__ method definition.
-init_pattern = re.compile("^    def __init__\(self, \*args\):")
+init_pattern = re.compile("^    def __init__\(self.*\):")
 
 # The pattern for recognizing the beginning of the IsValid method definition.
 isvalid_pattern = re.compile("^    def IsValid\(")
