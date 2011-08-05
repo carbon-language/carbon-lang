@@ -1227,12 +1227,22 @@ unsigned RAGreedy::tryBlockSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     return 0;
 
   // We did split for some blocks.
-  SE->finish();
+  SmallVector<unsigned, 8> IntvMap;
+  SE->finish(&IntvMap);
 
   // Tell LiveDebugVariables about the new ranges.
   DebugVars->splitRegister(Reg, LREdit.regs());
 
-  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Spill);
+  ExtraRegInfo.resize(MRI->getNumVirtRegs());
+
+  // Sort out the new intervals created by splitting. The remainder interval
+  // goes straight to spilling, the new local ranges get to stay RS_New.
+  for (unsigned i = 0, e = LREdit.size(); i != e; ++i) {
+    LiveInterval &LI = *LREdit.get(i);
+    if (getStage(LI) == RS_New && IntvMap[i] == 0)
+      setStage(LI, RS_Spill);
+  }
+
   if (VerifyEnabled)
     MF->verify(this, "After splitting live range around basic blocks");
   return 0;
