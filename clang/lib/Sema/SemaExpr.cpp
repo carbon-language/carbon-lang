@@ -1364,8 +1364,9 @@ Sema::DecomposeUnqualifiedId(const UnqualifiedId &Id,
 ///
 /// \return false if new lookup candidates were found
 bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
-                               CorrectTypoContext CTC, Expr **Args,
-                               unsigned NumArgs) {
+                               CorrectTypoContext CTC,
+                               TemplateArgumentListInfo *ExplicitTemplateArgs,
+                               Expr **Args, unsigned NumArgs) {
   DeclarationName Name = R.getLookupName();
 
   unsigned diagnostic = diag::err_undeclared_var_use;
@@ -1458,10 +1459,13 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
                                         CDEnd = Corrected.end();
              CD != CDEnd; ++CD) {
           if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*CD))
-            AddOverloadCandidate(FD, DeclAccessPair::make(*CD, AS_none),
+            AddOverloadCandidate(FD, DeclAccessPair::make(FD, AS_none),
                                  Args, NumArgs, OCS);
-          // TODO: Handle FunctionTemplateDecl and other Decl types that
-          // support overloading and could be corrected by CorrectTypo.
+          else if (FunctionTemplateDecl *FTD =
+                   dyn_cast<FunctionTemplateDecl>(*CD))
+            AddTemplateOverloadCandidate(
+                FTD, DeclAccessPair::make(FTD, AS_none), ExplicitTemplateArgs,
+                Args, NumArgs, OCS);
         }
         switch (OCS.BestViableFunction(*this, R.getNameLoc(), Best)) {
           case OR_Success:

@@ -8221,7 +8221,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
                               ExplicitTemplateArgs, Args, NumArgs) &&
       (!EmptyLookup ||
        SemaRef.DiagnoseEmptyLookup(S, SS, R, Sema::CTC_Expression,
-                                   Args, NumArgs)))
+                                   ExplicitTemplateArgs, Args, NumArgs)))
     return ExprError();
 
   assert(!R.empty() && "lookup results empty despite recovery");
