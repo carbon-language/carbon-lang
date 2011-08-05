@@ -488,6 +488,7 @@ Host::ThreadCreated (const char *thread_name)
 {
 }
 
+void
 Host::Backtrace (Stream &strm, uint32_t max_frames)
 {
     // TODO: Is there a way to backtrace the current process on linux? Other systems?
