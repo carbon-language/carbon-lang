@@ -1256,7 +1256,7 @@ public:
   /// \brief Retrieves the canonical representation of the given
   /// calling convention.
   CallingConv getCanonicalCallConv(CallingConv CC) const {
-    if (CC == CC_C)
+    if (!LangOpts.MRTD && CC == CC_C)
       return CC_Default;
     return CC;
   }
