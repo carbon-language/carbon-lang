@@ -1624,26 +1624,29 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
     if (!TIB->isSafeToMove(TII, 0, DontMoveAcrossStore))
       break;
 
+    // Remove kills from LocalDefsSet, these registers had short live ranges.
+    for (unsigned i = 0, e = TIB->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = TIB->getOperand(i);
+      if (!MO.isReg() || !MO.isUse() || !MO.isKill())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (!Reg || !LocalDefsSet.count(Reg))
+        continue;
+      for (const unsigned *OR = TRI->getOverlaps(Reg); *OR; ++OR)
+        LocalDefsSet.erase(*OR);
+    }
+
     // Track local defs so we can update liveins.
     for (unsigned i = 0, e = TIB->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = TIB->getOperand(i);
-      if (!MO.isReg())
+      if (!MO.isReg() || !MO.isDef() || MO.isDead())
         continue;
       unsigned Reg = MO.getReg();
       if (!Reg)
         continue;
-      if (MO.isDef()) {
-        if (!MO.isDead()) {
-          LocalDefs.push_back(Reg);
-          LocalDefsSet.insert(Reg);
-          for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
-            LocalDefsSet.insert(*SR);
-        }
-      } else if (MO.isKill() && LocalDefsSet.count(Reg)) {
-        LocalDefsSet.erase(Reg);
-        for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
-          LocalDefsSet.erase(*SR);
-      }
+      LocalDefs.push_back(Reg);
+      for (const unsigned *OR = TRI->getOverlaps(Reg); *OR; ++OR)
+        LocalDefsSet.insert(*OR);
     }
 
     HasDups = true;;
