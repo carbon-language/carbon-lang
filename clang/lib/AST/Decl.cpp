@@ -2197,8 +2197,8 @@ unsigned FieldDecl::getFieldIndex() const {
 }
 
 SourceRange FieldDecl::getSourceRange() const {
-  if (isBitField())
-    return SourceRange(getInnerLocStart(), getBitWidth()->getLocEnd());
+  if (const Expr *E = InitializerOrBitWidth.getPointer())
+    return SourceRange(getInnerLocStart(), E->getLocEnd());
   return DeclaratorDecl::getSourceRange();
 }
 
