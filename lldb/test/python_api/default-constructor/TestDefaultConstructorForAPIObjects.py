@@ -316,7 +316,10 @@ class APIDefaultConstructorTestCase(TestBase):
         obj = lldb.SBTypeList()
         if self.TraceOn():
             print obj
-        self.assertTrue(obj)
+        # SBTypeList does not have IsValid() method defined.  It's always valid
+        # in a sense.  So the Python's truth value testing in turn delegates to
+        # __len__() method, which is defined for SBTypeList, and returns 0.
+        self.assertFalse(obj)
 
     @python_api_test
     def test_SBValue(self):
