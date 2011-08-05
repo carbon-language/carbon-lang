@@ -3474,6 +3474,42 @@ void Sema::CheckCastAlign(Expr *Op, QualType T, SourceRange TRange) {
     << TRange << Op->getSourceRange();
 }
 
+/// \brief Check whether this array fits the idiom of a size-one tail padded
+/// array member of a struct.
+///
+/// We avoid emitting out-of-bounds access warnings for such arrays as they are
+/// commonly used to emulate flexible arrays in C89 code.
+static bool IsTailPaddedMemberArray(Sema &S, llvm::APInt Size,
+                                    const NamedDecl *ND) {
+  if (Size != 1 || !ND) return false;
+
+  const FieldDecl *FD = dyn_cast<FieldDecl>(ND);
+  if (!FD) return false;
+
+  // Don't consider sizes resulting from macro expansions or template argument
+  // substitution to form C89 tail-padded arrays.
+  ConstantArrayTypeLoc TL =
+    cast<ConstantArrayTypeLoc>(FD->getTypeSourceInfo()->getTypeLoc());
+  const Expr *SizeExpr = dyn_cast<IntegerLiteral>(TL.getSizeExpr());
+  if (!SizeExpr || SizeExpr->getExprLoc().isMacroID())
+    return false;
+
+  const RecordDecl *RD = dyn_cast<RecordDecl>(FD->getDeclContext());
+  if (!RD || !RD->isStruct())
+    return false;
+
+  // This is annoyingly inefficient. We don't have a bi-directional iterator
+  // here so we can't walk backwards through the decls, we have to walk
+  // forward.
+  for (RecordDecl::field_iterator FI = RD->field_begin(),
+                                  FEnd = RD->field_end();
+       FI != FEnd; ++FI) {
+    if (*FI == FD)
+      return ++FI == FEnd;
+  }
+  return false;
+}
+
 static void CheckArrayAccess_Check(Sema &S,
                                    const clang::ArraySubscriptExpr *E) {
   const Expr *BaseExpr = E->getBase()->IgnoreParenImpCasts();
@@ -3490,13 +3526,10 @@ static void CheckArrayAccess_Check(Sema &S,
     return;
 
   const NamedDecl *ND = NULL;
-  bool IsMemberDecl = false;
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(BaseExpr))
     ND = dyn_cast<NamedDecl>(DRE->getDecl());
-  if (const MemberExpr *ME = dyn_cast<MemberExpr>(BaseExpr)) {
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(BaseExpr))
     ND = dyn_cast<NamedDecl>(ME->getMemberDecl());
-    IsMemberDecl = true;
-  }
 
   if (index.isUnsigned() || !index.isNegative()) {
     llvm::APInt size = ArrayTy->getSize();
@@ -3514,18 +3547,14 @@ static void CheckArrayAccess_Check(Sema &S,
     // Also don't warn for arrays of size 1 which are members of some
     // structure. These are often used to approximate flexible arrays in C89
     // code.
-    // FIXME: We should also check whether there are any members after this
-    // member within the struct as that precludes the usage as a flexible
-    // array. We should also potentially check for an explicit '1' as opposed
-    // to a macro or template argument which might accidentally and erroneously
-    // expand to '1'.
-    if (IsMemberDecl && size == 1)
+    if (IsTailPaddedMemberArray(S, size, ND))
       return;
 
     S.DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
                           S.PDiag(diag::warn_array_index_exceeds_bounds)
                             << index.toString(10, true)
                             << size.toString(10, true)
+                            << (unsigned)size.ugt(1)
                             << IndexExpr->getSourceRange());
   } else {
     S.DiagRuntimeBehavior(E->getBase()->getLocStart(), BaseExpr,
