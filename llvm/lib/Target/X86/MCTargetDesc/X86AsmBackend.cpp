@@ -102,6 +102,8 @@ public:
     const uint64_t Mask = ~0ULL;
     const uint64_t UpperV = (Value >> (Size * 8));
     const uint64_t MaskF = (Mask >> (Size * 8));
+    (void)UpperV;
+    (void)MaskF;
     assert(((Size == 8) ||
             ((UpperV & MaskF) == 0ULL) || ((UpperV & MaskF) == MaskF)) &&
            "Value does not fit in the Fixup field");
