@@ -1032,7 +1032,7 @@ void RAGreedy::splitAroundRegion(LiveRangeEdit &LREdit,
 
   SmallVector<unsigned, 8> IntvMap;
   SE->finish(&IntvMap);
-  DebugVars->splitRegister(SA->getParent().reg, LREdit.regs());
+  DebugVars->splitRegister(Reg, LREdit.regs());
 
   ExtraRegInfo.resize(MRI->getNumVirtRegs());
   unsigned OrigBlocks = SA->getNumLiveBlocks();
@@ -1228,6 +1228,10 @@ unsigned RAGreedy::tryBlockSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
   // We did split for some blocks.
   SE->finish();
+
+  // Tell LiveDebugVariables about the new ranges.
+  DebugVars->splitRegister(Reg, LREdit.regs());
+
   setStage(NewVRegs.begin(), NewVRegs.end(), RS_Spill);
   if (VerifyEnabled)
     MF->verify(this, "After splitting live range around basic blocks");
