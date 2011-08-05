@@ -2960,95 +2960,98 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
   // Load the translation unit declaration
   GetTranslationUnitDecl();
 
-  // Load the special types.
-  Context->setBuiltinVaListType(
-    GetType(SpecialTypes[SPECIAL_TYPE_BUILTIN_VA_LIST]));
-  if (unsigned Id = SpecialTypes[SPECIAL_TYPE_OBJC_ID])
-    Context->setObjCIdType(GetType(Id));
-  if (unsigned Sel = SpecialTypes[SPECIAL_TYPE_OBJC_SELECTOR])
-    Context->setObjCSelType(GetType(Sel));
-  if (unsigned Proto = SpecialTypes[SPECIAL_TYPE_OBJC_PROTOCOL])
-    Context->setObjCProtoType(GetType(Proto));
-  if (unsigned Class = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS])
-    Context->setObjCClassType(GetType(Class));
+  // FIXME: Find a better way to deal with built-in types
+  if (Context->getBuiltinVaListType().isNull()) {
+    // Load the special types.
+    Context->setBuiltinVaListType(
+      GetType(SpecialTypes[SPECIAL_TYPE_BUILTIN_VA_LIST]));
+    if (unsigned Id = SpecialTypes[SPECIAL_TYPE_OBJC_ID])
+      Context->setObjCIdType(GetType(Id));
+    if (unsigned Sel = SpecialTypes[SPECIAL_TYPE_OBJC_SELECTOR])
+      Context->setObjCSelType(GetType(Sel));
+    if (unsigned Proto = SpecialTypes[SPECIAL_TYPE_OBJC_PROTOCOL])
+      Context->setObjCProtoType(GetType(Proto));
+    if (unsigned Class = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS])
+      Context->setObjCClassType(GetType(Class));
 
-  if (unsigned String = SpecialTypes[SPECIAL_TYPE_CF_CONSTANT_STRING])
-    Context->setCFConstantStringType(GetType(String));
-  if (unsigned FastEnum
-        = SpecialTypes[SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE])
-    Context->setObjCFastEnumerationStateType(GetType(FastEnum));
-  if (unsigned File = SpecialTypes[SPECIAL_TYPE_FILE]) {
-    QualType FileType = GetType(File);
-    if (FileType.isNull()) {
-      Error("FILE type is NULL");
-      return;
-    }
-    if (const TypedefType *Typedef = FileType->getAs<TypedefType>())
-      Context->setFILEDecl(Typedef->getDecl());
-    else {
-      const TagType *Tag = FileType->getAs<TagType>();
-      if (!Tag) {
-        Error("Invalid FILE type in AST file");
+    if (unsigned String = SpecialTypes[SPECIAL_TYPE_CF_CONSTANT_STRING])
+      Context->setCFConstantStringType(GetType(String));
+    if (unsigned FastEnum
+          = SpecialTypes[SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE])
+      Context->setObjCFastEnumerationStateType(GetType(FastEnum));
+    if (unsigned File = SpecialTypes[SPECIAL_TYPE_FILE]) {
+      QualType FileType = GetType(File);
+      if (FileType.isNull()) {
+        Error("FILE type is NULL");
         return;
       }
-      Context->setFILEDecl(Tag->getDecl());
+      if (const TypedefType *Typedef = FileType->getAs<TypedefType>())
+        Context->setFILEDecl(Typedef->getDecl());
+      else {
+        const TagType *Tag = FileType->getAs<TagType>();
+        if (!Tag) {
+          Error("Invalid FILE type in AST file");
+          return;
+        }
+        Context->setFILEDecl(Tag->getDecl());
+      }
     }
-  }
-  if (unsigned Jmp_buf = SpecialTypes[SPECIAL_TYPE_jmp_buf]) {
-    QualType Jmp_bufType = GetType(Jmp_buf);
-    if (Jmp_bufType.isNull()) {
-      Error("jmp_buf type is NULL");
-      return;
-    }
-    if (const TypedefType *Typedef = Jmp_bufType->getAs<TypedefType>())
-      Context->setjmp_bufDecl(Typedef->getDecl());
-    else {
-      const TagType *Tag = Jmp_bufType->getAs<TagType>();
-      if (!Tag) {
-        Error("Invalid jmp_buf type in AST file");
+    if (unsigned Jmp_buf = SpecialTypes[SPECIAL_TYPE_jmp_buf]) {
+      QualType Jmp_bufType = GetType(Jmp_buf);
+      if (Jmp_bufType.isNull()) {
+        Error("jmp_buf type is NULL");
         return;
       }
-      Context->setjmp_bufDecl(Tag->getDecl());
+      if (const TypedefType *Typedef = Jmp_bufType->getAs<TypedefType>())
+        Context->setjmp_bufDecl(Typedef->getDecl());
+      else {
+        const TagType *Tag = Jmp_bufType->getAs<TagType>();
+        if (!Tag) {
+          Error("Invalid jmp_buf type in AST file");
+          return;
+        }
+        Context->setjmp_bufDecl(Tag->getDecl());
+      }
     }
-  }
-  if (unsigned Sigjmp_buf = SpecialTypes[SPECIAL_TYPE_sigjmp_buf]) {
-    QualType Sigjmp_bufType = GetType(Sigjmp_buf);
-    if (Sigjmp_bufType.isNull()) {
-      Error("sigjmp_buf type is NULL");
-      return;
+    if (unsigned Sigjmp_buf = SpecialTypes[SPECIAL_TYPE_sigjmp_buf]) {
+      QualType Sigjmp_bufType = GetType(Sigjmp_buf);
+      if (Sigjmp_bufType.isNull()) {
+        Error("sigjmp_buf type is NULL");
+        return;
+      }
+      if (const TypedefType *Typedef = Sigjmp_bufType->getAs<TypedefType>())
+        Context->setsigjmp_bufDecl(Typedef->getDecl());
+      else {
+        const TagType *Tag = Sigjmp_bufType->getAs<TagType>();
+        assert(Tag && "Invalid sigjmp_buf type in AST file");
+        Context->setsigjmp_bufDecl(Tag->getDecl());
+      }
     }
-    if (const TypedefType *Typedef = Sigjmp_bufType->getAs<TypedefType>())
-      Context->setsigjmp_bufDecl(Typedef->getDecl());
-    else {
-      const TagType *Tag = Sigjmp_bufType->getAs<TagType>();
-      assert(Tag && "Invalid sigjmp_buf type in AST file");
-      Context->setsigjmp_bufDecl(Tag->getDecl());
-    }
-  }
-  if (unsigned ObjCIdRedef
-        = SpecialTypes[SPECIAL_TYPE_OBJC_ID_REDEFINITION])
-    Context->ObjCIdRedefinitionType = GetType(ObjCIdRedef);
-  if (unsigned ObjCClassRedef
-      = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS_REDEFINITION])
-    Context->ObjCClassRedefinitionType = GetType(ObjCClassRedef);
-  if (unsigned String = SpecialTypes[SPECIAL_TYPE_BLOCK_DESCRIPTOR])
-    Context->setBlockDescriptorType(GetType(String));
-  if (unsigned String
-      = SpecialTypes[SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR])
-    Context->setBlockDescriptorExtendedType(GetType(String));
-  if (unsigned ObjCSelRedef
-      = SpecialTypes[SPECIAL_TYPE_OBJC_SEL_REDEFINITION])
-    Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
-  if (unsigned String = SpecialTypes[SPECIAL_TYPE_NS_CONSTANT_STRING])
-    Context->setNSConstantStringType(GetType(String));
+    if (unsigned ObjCIdRedef
+          = SpecialTypes[SPECIAL_TYPE_OBJC_ID_REDEFINITION])
+      Context->ObjCIdRedefinitionType = GetType(ObjCIdRedef);
+    if (unsigned ObjCClassRedef
+        = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS_REDEFINITION])
+      Context->ObjCClassRedefinitionType = GetType(ObjCClassRedef);
+    if (unsigned String = SpecialTypes[SPECIAL_TYPE_BLOCK_DESCRIPTOR])
+      Context->setBlockDescriptorType(GetType(String));
+    if (unsigned String
+        = SpecialTypes[SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR])
+      Context->setBlockDescriptorExtendedType(GetType(String));
+    if (unsigned ObjCSelRedef
+        = SpecialTypes[SPECIAL_TYPE_OBJC_SEL_REDEFINITION])
+      Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
+    if (unsigned String = SpecialTypes[SPECIAL_TYPE_NS_CONSTANT_STRING])
+      Context->setNSConstantStringType(GetType(String));
 
-  if (SpecialTypes[SPECIAL_TYPE_INT128_INSTALLED])
-    Context->setInt128Installed();
+    if (SpecialTypes[SPECIAL_TYPE_INT128_INSTALLED])
+      Context->setInt128Installed();
 
-  if (unsigned AutoDeduct = SpecialTypes[SPECIAL_TYPE_AUTO_DEDUCT])
-    Context->AutoDeductTy = GetType(AutoDeduct);
-  if (unsigned AutoRRefDeduct = SpecialTypes[SPECIAL_TYPE_AUTO_RREF_DEDUCT])
-    Context->AutoRRefDeductTy = GetType(AutoRRefDeduct);
+    if (unsigned AutoDeduct = SpecialTypes[SPECIAL_TYPE_AUTO_DEDUCT])
+      Context->AutoDeductTy = GetType(AutoDeduct);
+    if (unsigned AutoRRefDeduct = SpecialTypes[SPECIAL_TYPE_AUTO_RREF_DEDUCT])
+      Context->AutoRRefDeductTy = GetType(AutoRRefDeduct);
+  }
 
   ReadPragmaDiagnosticMappings(Context->getDiagnostics());
 
