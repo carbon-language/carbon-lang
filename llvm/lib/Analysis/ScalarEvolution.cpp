@@ -2051,12 +2051,13 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
         ++MaxShiftAmt;
       IntegerType *ExtTy =
         IntegerType::get(getContext(), getTypeSizeInBits(Ty) + MaxShiftAmt);
-      // {X,+,N}/C --> {X/C,+,N/C} if safe and N/C can be folded.
       if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHS))
         if (const SCEVConstant *Step =
-              dyn_cast<SCEVConstant>(AR->getStepRecurrence(*this)))
-          if (!Step->getValue()->getValue()
-                .urem(RHSC->getValue()->getValue()) &&
+            dyn_cast<SCEVConstant>(AR->getStepRecurrence(*this))) {
+          // {X,+,N}/C --> {X/C,+,N/C} if safe and N/C can be folded.
+          const APInt &StepInt = Step->getValue()->getValue();
+          const APInt &DivInt = RHSC->getValue()->getValue();
+          if (!StepInt.urem(DivInt) &&
               getZeroExtendExpr(AR, ExtTy) ==
               getAddRecExpr(getZeroExtendExpr(AR->getStart(), ExtTy),
                             getZeroExtendExpr(Step, ExtTy),
@@ -2067,6 +2068,22 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
             return getAddRecExpr(Operands, AR->getLoop(),
                                  SCEV::FlagNW);
           }
+          /// Get a canonical UDivExpr for a recurrence.
+          /// {X,+,N}/C => {Y,+,N}/C where Y=X-(X%N). Safe when C%N=0.
+          // We can currently only fold X%N if X is constant.
+          const SCEVConstant *StartC = dyn_cast<SCEVConstant>(AR->getStart());
+          if (StartC && !DivInt.urem(StepInt) &&
+              getZeroExtendExpr(AR, ExtTy) ==
+              getAddRecExpr(getZeroExtendExpr(AR->getStart(), ExtTy),
+                            getZeroExtendExpr(Step, ExtTy),
+                            AR->getLoop(), SCEV::FlagAnyWrap)) {
+            const APInt &StartInt = StartC->getValue()->getValue();
+            const APInt &StartRem = StartInt.urem(StepInt);
+            if (StartRem != 0)
+              LHS = getAddRecExpr(getConstant(StartInt - StartRem), Step,
+                                  AR->getLoop(), SCEV::FlagNW);
+          }
+        }
       // (A*B)/C --> A*(B/C) if safe and B/C can be folded.
       if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(LHS)) {
         SmallVector<const SCEV *, 4> Operands;

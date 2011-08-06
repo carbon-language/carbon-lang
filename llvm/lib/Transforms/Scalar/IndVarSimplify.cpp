@@ -70,6 +70,7 @@ STATISTIC(NumInserted    , "Number of canonical indvars added");
 STATISTIC(NumReplaced    , "Number of exit values replaced");
 STATISTIC(NumLFTR        , "Number of loop exit tests replaced");
 STATISTIC(NumElimIdentity, "Number of IV identities eliminated");
+STATISTIC(NumElimOperand,  "Number of IV operands folded into a use");
 STATISTIC(NumElimExt     , "Number of IV sign/zero extends eliminated");
 STATISTIC(NumElimRem     , "Number of IV remainder operations eliminated");
 STATISTIC(NumElimCmp     , "Number of IV comparisons eliminated");
@@ -141,6 +142,8 @@ namespace {
     void EliminateIVRemainder(BinaryOperator *Rem,
                               Value *IVOperand,
                               bool IsSigned);
+
+    bool FoldIVUser(Instruction *UseInst, Instruction *IVOperand);
 
     void SimplifyCongruentIVs(Loop *L);
 
@@ -1298,6 +1301,66 @@ bool IndVarSimplify::EliminateIVUser(Instruction *UseInst,
   return true;
 }
 
+/// FoldIVUser - Fold an IV operand into its use.  This removes increments of an
+/// aligned IV when used by a instruction that ignores the low bits.
+bool IndVarSimplify::FoldIVUser(Instruction *UseInst, Instruction *IVOperand) {
+  Value *IVSrc = 0;
+  unsigned OperIdx = 0;
+  const SCEV *FoldedExpr = 0;
+  switch (UseInst->getOpcode()) {
+  default:
+    return false;
+  case Instruction::UDiv:
+  case Instruction::LShr:
+    // We're only interested in the case where we know something about
+    // the numerator and have a constant denominator.
+    if (IVOperand != UseInst->getOperand(OperIdx) ||
+        !isa<ConstantInt>(UseInst->getOperand(1)))
+      return false;
+
+    // Attempt to fold a binary operator with constant operand.
+    // e.g. ((I + 1) >> 2) => I >> 2
+    if (IVOperand->getNumOperands() != 2 ||
+        !isa<ConstantInt>(IVOperand->getOperand(1)))
+      return false;
+
+    IVSrc = IVOperand->getOperand(0);
+    // IVSrc must be the (SCEVable) IV, since the other operand is const.
+    assert(SE->isSCEVable(IVSrc->getType()) && "Expect SCEVable IV operand");
+
+    ConstantInt *D = cast<ConstantInt>(UseInst->getOperand(1));
+    if (UseInst->getOpcode() == Instruction::LShr) {
+      // Get a constant for the divisor. See createSCEV.
+      uint32_t BitWidth = cast<IntegerType>(UseInst->getType())->getBitWidth();
+      if (D->getValue().uge(BitWidth))
+        return false;
+
+      D = ConstantInt::get(UseInst->getContext(),
+                           APInt(BitWidth, 1).shl(D->getZExtValue()));
+    }
+    FoldedExpr = SE->getUDivExpr(SE->getSCEV(IVSrc), SE->getSCEV(D));
+  }
+  // We have something that might fold it's operand. Compare SCEVs.
+  if (!SE->isSCEVable(UseInst->getType()))
+    return false;
+
+  // Bypass the operand if SCEV can prove it has no effect.
+  if (SE->getSCEV(UseInst) != FoldedExpr)
+    return false;
+
+  DEBUG(dbgs() << "INDVARS: Eliminated IV operand: " << *IVOperand
+        << " -> " << *UseInst << '\n');
+
+  UseInst->setOperand(OperIdx, IVSrc);
+  assert(SE->getSCEV(UseInst) == FoldedExpr && "bad SCEV with folded oper");
+
+  ++NumElimOperand;
+  Changed = true;
+  if (IVOperand->use_empty())
+    DeadInsts.push_back(IVOperand);
+  return true;
+}
+
 /// pushIVUsers - Add all uses of Def to the current IV's worklist.
 ///
 static void pushIVUsers(
@@ -1393,6 +1456,8 @@ void IndVarSimplify::SimplifyIVUsersNoRewrite(Loop *L, SCEVExpander &Rewriter) {
           SimpleIVUsers.pop_back_val();
         // Bypass back edges to avoid extra work.
         if (UseOper.first == CurrIV) continue;
+
+        FoldIVUser(UseOper.first, UseOper.second);
 
         if (EliminateIVUser(UseOper.first, UseOper.second)) {
           pushIVUsers(UseOper.second, Simplified, SimpleIVUsers);
