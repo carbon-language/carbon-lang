@@ -2269,24 +2269,19 @@ void ExprEngine::VisitUnaryExprOrTypeTraitExpr(
       // Get the size by getting the extent of the sub-expression.
       // First, visit the sub-expression to find its region.
       const Expr *Arg = Ex->getArgumentExpr();
-      ExplodedNodeSet Tmp;
-      Visit(Arg, Pred, Tmp);
+      const GRState *state = GetState(Pred);
+      const MemRegion *MR = state->getSVal(Arg).getAsRegion();
 
-      for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-        const GRState* state = GetState(*I);
-        const MemRegion *MR = state->getSVal(Arg).getAsRegion();
-
-        // If the subexpression can't be resolved to a region, we don't know
-        // anything about its size. Just leave the state as is and continue.
-        if (!MR) {
-          Dst.Add(*I);
-          continue;
-        }
-
-        // The result is the extent of the VLA.
-        SVal Extent = cast<SubRegion>(MR)->getExtent(svalBuilder);
-        MakeNode(Dst, Ex, *I, state->BindExpr(Ex, Extent));
+      // If the subexpression can't be resolved to a region, we don't know
+      // anything about its size. Just leave the state as is and continue.
+      if (!MR) {
+        Dst.Add(Pred);
+        return;
       }
+
+      // The result is the extent of the VLA.
+      SVal Extent = cast<SubRegion>(MR)->getExtent(svalBuilder);
+      MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, Extent));
 
       return;
     }

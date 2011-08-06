@@ -2204,6 +2204,15 @@ CFGBlock *CFGBuilder::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E,
          VA != 0; VA = FindVA(VA->getElementType().getTypePtr()))
       lastBlock = addStmt(VA->getSizeExpr());
   }
+  else {
+    // For sizeof(x), where 'x' is a VLA, we should include the computation
+    // of the lvalue of 'x'.
+    Expr *subEx = E->getArgumentExpr();
+    if (subEx->getType()->isVariableArrayType()) {
+      assert(subEx->isLValue());
+      lastBlock = addStmt(subEx);
+    }
+  }
 
   return lastBlock;
 }

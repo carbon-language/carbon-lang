@@ -146,6 +146,19 @@ public:
 };
 }
 
+static const VariableArrayType *FindVA(QualType Ty) {
+  const Type *ty = Ty.getTypePtr();
+  while (const ArrayType *VT = dyn_cast<ArrayType>(ty)) {
+    if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(VT))
+      if (VAT->getSizeExpr())
+        return VAT;
+    
+    ty = VT->getElementType().getTypePtr();
+  }
+  
+  return 0;
+}
+
 void TransferFunctions::Visit(Stmt *S) {
   if (observer)
     observer->observeStmt(S, currentBlock, val);
@@ -174,6 +187,17 @@ void TransferFunctions::Visit(Stmt *S) {
                         CE->getImplicitObjectArgument()->IgnoreParens());
       break;
     }
+    case Stmt::DeclStmtClass: {
+      const DeclStmt *DS = cast<DeclStmt>(S);
+      if (const VarDecl *VD = dyn_cast<VarDecl>(DS->getSingleDecl())) {
+        for (const VariableArrayType* VA = FindVA(VD->getType());
+             VA != 0; VA = FindVA(VA->getElementType())) {
+          val.liveStmts = LV.SSetFact.add(val.liveStmts,
+                                          VA->getSizeExpr()->IgnoreParens());
+        }
+      }
+      break;
+    }
     // FIXME: These cases eventually shouldn't be needed.
     case Stmt::ExprWithCleanupsClass: {
       S = cast<ExprWithCleanups>(S)->getSubExpr();
@@ -186,6 +210,10 @@ void TransferFunctions::Visit(Stmt *S) {
     case Stmt::MaterializeTemporaryExprClass: {
       S = cast<MaterializeTemporaryExpr>(S)->GetTemporaryExpr();
       break;
+    }
+    case Stmt::UnaryExprOrTypeTraitExprClass: {
+      // No need to unconditionally visit subexpressions.
+      return;
     }
   }
   
@@ -281,16 +309,11 @@ VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *UE)
   if (UE->getKind() != UETT_SizeOf || UE->isArgumentType())
     return;
 
-  const DeclRefExpr *DR =
-    dyn_cast<DeclRefExpr>(UE->getArgumentExpr()->IgnoreParens());
-  
-  if (!DR)
-    return;
-  
-  const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
-
-  if (VD && VD->getType()->isVariableArrayType())
-    val.liveDecls = LV.DSetFact.add(val.liveDecls, VD);
+  const Expr *subEx = UE->getArgumentExpr();
+  if (subEx->getType()->isVariableArrayType()) {
+    assert(subEx->isLValue());
+    val.liveStmts = LV.SSetFact.add(val.liveStmts, subEx->IgnoreParens());
+  }
 }
 
 void TransferFunctions::VisitUnaryOperator(UnaryOperator *UO) {
