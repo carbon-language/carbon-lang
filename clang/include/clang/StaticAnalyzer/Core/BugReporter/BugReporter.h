@@ -490,13 +490,15 @@ const Stmt *GetDenomExpr(const ExplodedNode *N);
 const Stmt *GetCalleeExpr(const ExplodedNode *N);
 const Stmt *GetRetValExpr(const ExplodedNode *N);
 
+void registerConditionVisitor(BugReporterContext &BRC);
+
 void registerTrackNullOrUndefValue(BugReporterContext& BRC, const void *stmt,
                                    const ExplodedNode* N);
 
 void registerFindLastStore(BugReporterContext& BRC, const void *memregion,
                            const ExplodedNode *N);
 
-void registerNilReceiverVisitor(BugReporterContext &BRC);
+void registerNilReceiverVisitor(BugReporterContext &BRC);  
 
 void registerVarDeclsLastStore(BugReporterContext &BRC, const void *stmt,
                                const ExplodedNode *N);

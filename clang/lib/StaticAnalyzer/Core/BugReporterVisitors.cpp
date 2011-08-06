@@ -468,3 +468,155 @@ void bugreporter::registerVarDeclsLastStore(BugReporterContext &BRC,
       WorkList.push_back(*I);
   }
 }
+
+//===----------------------------------------------------------------------===//
+// Visitor that tries to report interesting diagnostics from conditions.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class ConditionVisitor : public BugReporterVisitor {
+public:
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    static int x = 0;
+    ID.AddPointer(&x);
+  }
+
+  virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
+                                         const ExplodedNode *Prev,
+                                         BugReporterContext &BRC);
+  
+  PathDiagnosticPiece *VisitTerminator(const Stmt *Term,
+                                       const GRState *CurrentState,
+                                       const GRState *PrevState,
+                                       const CFGBlock *srcBlk,
+                                       const CFGBlock *dstBlk,
+                                       BugReporterContext &BRC);
+  
+  PathDiagnosticPiece *VisitTrueTest(const Expr *Cond,
+                                     bool tookTrue,
+                                     BugReporterContext &BRC);
+
+  PathDiagnosticPiece *VisitTrueTest(const Expr *Cond,
+                                     const DeclRefExpr *DR,
+                                     const bool tookTrue,
+                                     BugReporterContext &BRC);
+
+};
+}
+
+PathDiagnosticPiece *ConditionVisitor::VisitNode(const ExplodedNode *N,
+                                                 const ExplodedNode *Prev,
+                                                 BugReporterContext &BRC) {
+  
+  const ProgramPoint &progPoint = N->getLocation();
+  
+  // If an assumption was made on a branch, it should be caught
+  // here by looking at the state transition.
+  if (const BlockEdge *BE = dyn_cast<BlockEdge>(&progPoint)) {
+    const CFGBlock *srcBlk = BE->getSrc();
+    
+    if (const Stmt *term = srcBlk->getTerminator()) {
+      const GRState *CurrentState = N->getState();
+      const GRState *PrevState = Prev->getState();
+      if (CurrentState != PrevState)
+        return VisitTerminator(term, CurrentState, PrevState,
+                               srcBlk, BE->getDst(),
+                               BRC);
+    }
+    
+    return 0;
+  }
+    
+  return 0;
+}
+
+PathDiagnosticPiece *
+ConditionVisitor::VisitTerminator(const Stmt *Term,
+                                  const GRState *CurrentState,
+                                  const GRState *PrevState,
+                                  const CFGBlock *srcBlk,
+                                  const CFGBlock *dstBlk,
+                                  BugReporterContext &BRC) {
+
+  assert(CurrentState != PrevState);
+  const Expr *Cond = 0;
+  
+  switch (Term->getStmtClass()) {
+  default:
+    return 0;
+  case Stmt::IfStmtClass:
+    Cond = cast<IfStmt>(Term)->getCond();
+    break;
+  case Stmt::ConditionalOperatorClass:
+    Cond = cast<ConditionalOperator>(Term)->getCond();
+    break;
+  }      
+
+  assert(Cond);
+  assert(srcBlk->succ_size() == 2);
+  const bool tookTrue = *(srcBlk->succ_begin()) == dstBlk;
+  return VisitTrueTest(Cond->IgnoreParenNoopCasts(BRC.getASTContext()),
+                       tookTrue, BRC);
+}
+
+PathDiagnosticPiece *
+ConditionVisitor::VisitTrueTest(const Expr *Cond,
+                                bool tookTrue,
+                                BugReporterContext &BRC) {
+  
+  const Expr *Ex = Cond;
+  
+  while (true)
+    switch (Ex->getStmtClass()) {
+      default:
+        return 0;
+      case Stmt::DeclRefExprClass:
+        return VisitTrueTest(Cond, cast<DeclRefExpr>(Ex), tookTrue, BRC);
+      case Stmt::UnaryOperatorClass: {
+        const UnaryOperator *UO = cast<UnaryOperator>(Ex);
+        if (UO->getOpcode() == UO_LNot) {
+          tookTrue = !tookTrue;
+          Ex = UO->getSubExpr()->IgnoreParenNoopCasts(BRC.getASTContext());
+          continue;
+        }
+        return 0;
+      }
+    }
+}
+  
+PathDiagnosticPiece *
+ConditionVisitor::VisitTrueTest(const Expr *Cond,
+                                const DeclRefExpr *DR,
+                                const bool tookTrue,
+                                BugReporterContext &BRC) {
+
+  const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
+  if (!VD)
+    return 0;
+  
+  llvm::SmallString<256> Buf;
+  llvm::raw_svector_ostream Out(Buf);
+    
+  Out << "Assuming '";
+  VD->getDeclName().printName(Out);
+  Out << "' is ";
+    
+  QualType VDTy = VD->getType();
+  
+  if (VDTy->isPointerType())
+    Out << (tookTrue ? "non-null" : "null");
+  else if (VDTy->isObjCObjectPointerType())
+    Out << (tookTrue ? "non-nil" : "nil");
+  else if (VDTy->isScalarType())
+    Out << (tookTrue ? "not equal to 0" : "0");
+  else
+    return 0;
+  
+  PathDiagnosticLocation Loc(Cond, BRC.getSourceManager());
+  return new PathDiagnosticEventPiece(Loc, Out.str());
+}
+
+void bugreporter::registerConditionVisitor(BugReporterContext &BRC) {
+  BRC.addVisitor(new ConditionVisitor());
+}
+

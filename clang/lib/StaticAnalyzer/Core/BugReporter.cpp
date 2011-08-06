@@ -1619,6 +1619,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   // Register node visitors.
   R->registerInitialVisitors(PDB, N);
   bugreporter::registerNilReceiverVisitor(PDB);
+  bugreporter::registerConditionVisitor(PDB);
 
   switch (PDB.getGenerationScheme()) {
     case PathDiagnosticClient::Extensive:
