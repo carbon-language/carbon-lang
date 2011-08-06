@@ -958,7 +958,7 @@ DynamicLoaderMacOSXDYLD::InitializeFromAllImageInfos ()
         ModuleList &modules = target.GetImages();
         ModuleList not_loaded_modules;
         size_t num_modules = modules.GetSize();
-        for (size_t i = 1; i < num_modules; i++)
+        for (size_t i = 0; i < num_modules; i++)
         {
             ModuleSP module_sp = modules.GetModuleAtIndex(i);
             if (!module_sp->IsLoadedInTarget (&target))
