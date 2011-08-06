@@ -72,6 +72,24 @@ void sizeof_vla(int a) {
   }
 }
 
+void sizeof_vla_2(int a) {
+  if (a == 5) {
+    char x[a];
+    int y[sizeof(x) / sizeof(char)];
+    y[4] = 4; // no-warning
+    y[5] = 5; // expected-warning{{out-of-bound}}
+  }
+}
+
+void sizeof_vla_3(int a) {
+  if (a == 5) {
+    char x[a];
+    int y[sizeof(*&*&*&x)];
+    y[4] = 4; // no-warning
+    y[5] = 5; // expected-warning{{out-of-bound}}
+  }
+}
+
 void alloca_region(int a) {
   if (a == 5) {
     char *x = __builtin_alloca(a);
