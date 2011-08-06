@@ -3512,16 +3512,12 @@ static bool IsTailPaddedMemberArray(Sema &S, llvm::APInt Size,
   if (!RD || !RD->isStruct())
     return false;
 
-  // This is annoyingly inefficient. We don't have a bi-directional iterator
-  // here so we can't walk backwards through the decls, we have to walk
-  // forward.
-  for (RecordDecl::field_iterator FI = RD->field_begin(),
-                                  FEnd = RD->field_end();
-       FI != FEnd; ++FI) {
-    if (*FI == FD)
-      return ++FI == FEnd;
-  }
-  return false;
+  // See if this is the last field decl in the record.
+  const Decl *D = FD;
+  while ((D = D->getNextDeclInContext()))
+    if (isa<FieldDecl>(D))
+      return false;
+  return true;
 }
 
 void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
