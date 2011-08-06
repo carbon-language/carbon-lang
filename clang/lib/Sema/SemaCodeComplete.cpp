@@ -3448,10 +3448,11 @@ void Sema::CodeCompleteTypeQualifiers(DeclSpec &DS) {
 void Sema::CodeCompleteCase(Scope *S) {
   if (getCurFunction()->SwitchStack.empty() || !CodeCompleter)
     return;
-  
+
   SwitchStmt *Switch = getCurFunction()->SwitchStack.back();
-  if (!Switch->getCond()->getType()->isEnumeralType()) {
-    CodeCompleteExpressionData Data(Switch->getCond()->getType());
+  QualType type = Switch->getCond()->IgnoreImplicit()->getType();
+  if (!type->isEnumeralType()) {
+    CodeCompleteExpressionData Data(type);
     Data.IntegralConstantExpression = true;
     CodeCompleteExpression(S, Data);
     return;
@@ -3459,7 +3460,7 @@ void Sema::CodeCompleteCase(Scope *S) {
   
   // Code-complete the cases of a switch statement over an enumeration type
   // by providing the list of 
-  EnumDecl *Enum = Switch->getCond()->getType()->getAs<EnumType>()->getDecl();
+  EnumDecl *Enum = type->castAs<EnumType>()->getDecl();
   
   // Determine which enumerators we have already seen in the switch statement.
   // FIXME: Ideally, we would also be able to look *past* the code-completion

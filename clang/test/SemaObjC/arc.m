@@ -649,3 +649,16 @@ void test37(Test37 *c) {
     (void) y;
   }
 }
+
+// rdar://problem/9887979
+@interface Test38
+@property int value;
+@end
+void test38() {
+  extern Test38 *test38_helper(void);
+  switch (test38_helper().value) {
+  case 0:
+  case 1:
+    ;
+  }
+}

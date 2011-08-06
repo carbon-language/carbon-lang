@@ -407,13 +407,12 @@ static bool EqEnumVals(const std::pair<llvm::APSInt, EnumConstantDecl*>& lhs,
 
 /// GetTypeBeforeIntegralPromotion - Returns the pre-promotion type of
 /// potentially integral-promoted expression @p expr.
-static QualType GetTypeBeforeIntegralPromotion(const Expr* expr) {
-  if (const CastExpr *ImplicitCast = dyn_cast<ImplicitCastExpr>(expr)) {
-    const Expr *ExprBeforePromotion = ImplicitCast->getSubExpr();
-    QualType TypeBeforePromotion = ExprBeforePromotion->getType();
-    if (TypeBeforePromotion->isIntegralOrEnumerationType()) {
-      return TypeBeforePromotion;
-    }
+static QualType GetTypeBeforeIntegralPromotion(Expr *&expr) {
+  if (ExprWithCleanups *cleanups = dyn_cast<ExprWithCleanups>(expr))
+    expr = cleanups->getSubExpr();
+  while (ImplicitCastExpr *impcast = dyn_cast<ImplicitCastExpr>(expr)) {
+    if (impcast->getCastKind() != CK_IntegralCast) break;
+    expr = impcast->getSubExpr();
   }
   return expr->getType();
 }
@@ -446,6 +445,11 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
                                    PDiag(diag::err_switch_multiple_conversions),
                                          PDiag(diag::note_switch_conversion),
                                          PDiag(0));
+  if (CondResult.isInvalid()) return StmtError();
+  Cond = CondResult.take();
+
+  // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
+  CondResult = UsualUnaryConversions(Cond);
   if (CondResult.isInvalid()) return StmtError();
   Cond = CondResult.take();
 
@@ -482,21 +486,14 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
   SS->setBody(BodyStmt, SwitchLoc);
   getCurFunction()->SwitchStack.pop_back();
 
-  if (SS->getCond() == 0)
-    return StmtError();
-
   Expr *CondExpr = SS->getCond();
+  if (!CondExpr) return StmtError();
+
+  QualType CondType = CondExpr->getType();
+
   Expr *CondExprBeforePromotion = CondExpr;
   QualType CondTypeBeforePromotion =
-      GetTypeBeforeIntegralPromotion(CondExpr);
-
-  // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
-  ExprResult CondResult = UsualUnaryConversions(CondExpr);
-  if (CondResult.isInvalid())
-    return StmtError();
-  CondExpr = CondResult.take();
-  QualType CondType = CondExpr->getType();
-  SS->setCond(CondExpr);
+      GetTypeBeforeIntegralPromotion(CondExprBeforePromotion);
 
   // C++ 6.4.2.p2:
   // Integral promotions are performed (on the switch condition).
