@@ -1572,40 +1572,18 @@ ClangExpressionDeclMap::FindVariableInScope
 {    
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    VariableList *var_list = frame.GetVariableList(true);
+    ValueObjectSP valobj;
+    VariableSP var_sp;
+    Error err;
     
-    if (!var_list)
-        return lldb::VariableSP();
-    
-    lldb::VariableSP var_sp (var_list->FindVariable(name));
+    valobj = frame.GetValueForVariableExpressionPath(name.GetCString(), 
+                                                     eNoDynamicValues, 
+                                                     StackFrame::eExpressionPathOptionCheckPtrVsMember,
+                                                     var_sp,
+                                                     err);
         
-    const bool append = true;
-    const uint32_t max_matches = 1;
-    if (!var_sp)
-    {
-        // Look for globals elsewhere in the module for the frame
-        ModuleSP module_sp (frame.GetSymbolContext(eSymbolContextModule).module_sp);
-        if (module_sp)
-        {
-            VariableList module_globals;
-            if (module_sp->FindGlobalVariables (name, append, max_matches, module_globals))
-                var_sp = module_globals.GetVariableAtIndex (0);
-        }
-    }
-
-    if (!var_sp)
-    {
-        // Look for globals elsewhere in the program (all images)
-        TargetSP target_sp (frame.GetSymbolContext(eSymbolContextTarget).target_sp);
-        if (target_sp)
-        {
-            VariableList program_globals;
-            if (target_sp->GetImages().FindGlobalVariables (name, append, max_matches, program_globals))
-                var_sp = program_globals.GetVariableAtIndex (0);
-        }
-    }
-    
-    if (!var_sp ||
+    if (!err.Success() ||
+        !var_sp ||
         !var_sp->IsInScope(&frame) ||
         !var_sp->LocationIsValidForFrame (&frame))
         return lldb::VariableSP();
@@ -1745,10 +1723,18 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
     // doesn't start with our phony prefix of '$'
     if (name_unique_cstr[0] != '$')
     {
-        VariableSP var = FindVariableInScope(*m_parser_vars->m_exe_ctx->frame, name);
+        ValueObjectSP valobj;
+        VariableSP var;
+        Error err;
+        
+        valobj = m_parser_vars->m_exe_ctx->frame->GetValueForVariableExpressionPath(name_unique_cstr, 
+                                                                                    eNoDynamicValues, 
+                                                                                    StackFrame::eExpressionPathOptionCheckPtrVsMember,
+                                                                                    var,
+                                                                                    err);
         
         // If we found a variable in scope, no need to pull up function names
-        if (var != NULL)
+        if (err.Success() && var != NULL)
         {
             AddOneVariable(context, var);
         }

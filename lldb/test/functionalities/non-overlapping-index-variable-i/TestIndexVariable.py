@@ -15,7 +15,6 @@ class NonOverlappingIndexVariableCase(TestBase):
         self.line_to_break = line_number(self.source, '// Set breakpoint here.')
 
     # rdar://problem/9890530
-    @unittest2.expectedFailure
     def test_eval_index_variable(self):
         """Test expressions of variable 'i' which appears in two for loops."""
         self.buildDefault()
