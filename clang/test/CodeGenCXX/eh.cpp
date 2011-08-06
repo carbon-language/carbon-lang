@@ -296,10 +296,7 @@ namespace test12 {
 
       // CHECK: invoke void @_ZN6test121AD1Ev([[A]]* [[Z]])
       // CHECK: invoke void @_ZN6test121AD1Ev([[A]]* [[Y]])
-
-      // It'd be great if something eliminated this switch.
-      // CHECK:      load i32* [[CLEANUPDEST]]
-      // CHECK-NEXT: switch i32
+      // CHECK-NOT: switch
       goto success;
     }
 

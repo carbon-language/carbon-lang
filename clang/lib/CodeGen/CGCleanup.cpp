@@ -483,6 +483,49 @@ static void ForwardPrebranchedFallthrough(llvm::BasicBlock *Exit,
   }
 }
 
+/// We don't need a normal entry block for the given cleanup.
+/// Optimistic fixup branches can cause these blocks to come into
+/// existence anyway;  if so, destroy it.
+///
+/// The validity of this transformation is very much specific to the
+/// exact ways in which we form branches to cleanup entries.
+static void destroyOptimisticNormalEntry(CodeGenFunction &CGF,
+                                         EHCleanupScope &scope) {
+  llvm::BasicBlock *entry = scope.getNormalBlock();
+  if (!entry) return;
+
+  // Replace all the uses with unreachable.
+  llvm::BasicBlock *unreachableBB = CGF.getUnreachableBlock();
+  for (llvm::BasicBlock::use_iterator
+         i = entry->use_begin(), e = entry->use_end(); i != e; ) {
+    llvm::Use &use = i.getUse();
+    ++i;
+
+    use.set(unreachableBB);
+    
+    // The only uses should be fixup switches.
+    llvm::SwitchInst *si = cast<llvm::SwitchInst>(use.getUser());
+    if (si->getNumCases() == 2 && si->getDefaultDest() == unreachableBB) {
+      // Replace the switch with a branch.
+      llvm::BranchInst::Create(si->getSuccessor(1), si);
+
+      // The switch operand is a load from the cleanup-dest alloca.
+      llvm::LoadInst *condition = cast<llvm::LoadInst>(si->getCondition());
+
+      // Destroy the switch.
+      si->eraseFromParent();
+
+      // Destroy the load.
+      assert(condition->getOperand(0) == CGF.NormalCleanupDest);
+      assert(condition->use_empty());
+      condition->eraseFromParent();
+    }
+  }
+  
+  assert(entry->use_empty());
+  delete entry;
+}
+
 /// Pops a cleanup block.  If the block includes a normal cleanup, the
 /// current insertion point is threaded through the cleanup, as are
 /// any branch fixups on the cleanup.
@@ -574,6 +617,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 
   // If we don't need the cleanup at all, we're done.
   if (!RequiresNormalCleanup && !RequiresEHCleanup) {
+    destroyOptimisticNormalEntry(*this, Scope);
     EHStack.popCleanup(); // safe because there are no fixups
     assert(EHStack.getNumBranchFixups() == 0 ||
            EHStack.hasNormalCleanups());
@@ -648,6 +692,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
   }
 
   if (!RequiresNormalCleanup) {
+    destroyOptimisticNormalEntry(*this, Scope);
     EHStack.popCleanup();
   } else {
     // If we have a fallthrough and no other need for the cleanup,
@@ -655,15 +700,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
     if (HasFallthrough && !HasPrebranchedFallthrough &&
         !HasFixups && !HasExistingBranches) {
 
-      // Fixups can cause us to optimistically create a normal block,
-      // only to later have no real uses for it.  Just delete it in
-      // this case.
-      // TODO: we can potentially simplify all the uses after this.
-      if (Scope.getNormalBlock()) {
-        Scope.getNormalBlock()->replaceAllUsesWith(getUnreachableBlock());
-        delete Scope.getNormalBlock();
-      }
-
+      destroyOptimisticNormalEntry(*this, Scope);
       EHStack.popCleanup();
 
       EmitCleanup(*this, Fn, cleanupFlags, NormalActiveFlag);
