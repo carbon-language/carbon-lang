@@ -945,7 +945,7 @@ void RAGreedy::splitAroundRegion(LiveRangeEdit &LREdit,
   assert(NumGlobalIntvs && "No global intervals configured");
 
   // Isolate even single instructions when dealing with a proper sub-class.
-  // That giarantees register class inflation for the stack interval because it
+  // That guarantees register class inflation for the stack interval because it
   // is all copies.
   unsigned Reg = SA->getParent().reg;
   bool SingleInstrs = RegClassInfo.isProperSubClass(MRI->getRegClass(Reg));
