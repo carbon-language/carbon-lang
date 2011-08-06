@@ -373,10 +373,10 @@ public: // Part of public interface to class.
   /// removeDeadBindings - Scans the RegionStore of 'state' for dead values.
   ///  It returns a new Store with these values removed.
   StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
-                           SymbolReaper& SymReaper,
-                          SmallVectorImpl<const MemRegion*>& RegionRoots);
+                              SymbolReaper& SymReaper);
 
-  StoreRef enterStackFrame(const GRState *state, const StackFrameContext *frame);
+  StoreRef enterStackFrame(const GRState *state,
+                           const StackFrameContext *frame);
 
   //===------------------------------------------------------------------===//
   // Region "extents".
@@ -1774,17 +1774,16 @@ bool removeDeadBindingsWorker::UpdatePostponed() {
 
 StoreRef RegionStoreManager::removeDeadBindings(Store store,
                                                 const StackFrameContext *LCtx,
-                                                SymbolReaper& SymReaper,
-                           SmallVectorImpl<const MemRegion*>& RegionRoots)
-{
+                                                SymbolReaper& SymReaper) {
   RegionBindings B = GetRegionBindings(store);
   removeDeadBindingsWorker W(*this, StateMgr, B, SymReaper, LCtx);
   W.GenerateClusters();
 
   // Enqueue the region roots onto the worklist.
-  for (SmallVectorImpl<const MemRegion*>::iterator I=RegionRoots.begin(),
-       E=RegionRoots.end(); I!=E; ++I)
+  for (SymbolReaper::region_iterator I = SymReaper.region_begin(),
+       E = SymReaper.region_end(); I != E; ++I) {
     W.AddToWorkList(*I);
+  }
 
   do W.RunWorkList(); while (W.UpdatePostponed());
 

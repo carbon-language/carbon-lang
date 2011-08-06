@@ -146,8 +146,7 @@ public:
   const MemRegion *castRegion(const MemRegion *region, QualType CastToTy);
 
   virtual StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
-                                      SymbolReaper& SymReaper,
-                      SmallVectorImpl<const MemRegion*>& RegionRoots) = 0;
+                                      SymbolReaper& SymReaper) = 0;
 
   virtual StoreRef BindDecl(Store store, const VarRegion *VR, SVal initVal) = 0;
 

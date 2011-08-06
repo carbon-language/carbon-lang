@@ -143,8 +143,7 @@ static inline bool IsLocation(const Stmt *S) {
 Environment
 EnvironmentManager::removeDeadBindings(Environment Env,
                                        SymbolReaper &SymReaper,
-                                       const GRState *ST,
-                              SmallVectorImpl<const MemRegion*> &DRoots) {
+                                       const GRState *ST) {
 
   // We construct a new Environment object entirely, as this is cheaper than
   // individually removing all the subexpression bindings (which will greatly
@@ -175,8 +174,8 @@ EnvironmentManager::removeDeadBindings(Environment Env,
 
       // If the block expr's value is a memory region, then mark that region.
       if (isa<loc::MemRegionVal>(X)) {
-        const MemRegion* R = cast<loc::MemRegionVal>(X).getRegion();
-        DRoots.push_back(R);
+        const MemRegion *R = cast<loc::MemRegionVal>(X).getRegion();
+        SymReaper.markLive(R);
       }
 
       // Mark all symbols in the block expr's value live.

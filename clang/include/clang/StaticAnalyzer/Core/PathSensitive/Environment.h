@@ -96,8 +96,7 @@ public:
                                   SVal V);
 
   Environment removeDeadBindings(Environment Env,
-                                 SymbolReaper &SymReaper, const GRState *ST,
-                          SmallVectorImpl<const MemRegion*>& RegionRoots);
+                                 SymbolReaper &SymReaper, const GRState *ST);
 };
 
 } // end GR namespace

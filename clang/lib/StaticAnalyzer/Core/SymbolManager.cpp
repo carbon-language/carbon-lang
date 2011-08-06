@@ -253,6 +253,10 @@ void SymbolReaper::markLive(SymbolRef sym) {
   TheDead.erase(sym);
 }
 
+void SymbolReaper::markLive(const MemRegion *region) {
+  RegionRoots.insert(region);
+}
+
 void SymbolReaper::markInUse(SymbolRef sym) {
   if (isa<SymbolMetadata>(sym))
     MetadataInUse.insert(sym);
@@ -266,14 +270,17 @@ bool SymbolReaper::maybeDead(SymbolRef sym) {
   return true;
 }
 
-static bool IsLiveRegion(SymbolReaper &Reaper, const MemRegion *MR) {
+bool SymbolReaper::isLiveRegion(const MemRegion *MR) {
+  if (RegionRoots.count(MR))
+    return true;
+  
   MR = MR->getBaseRegion();
 
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR))
-    return Reaper.isLive(SR->getSymbol());
+    return isLive(SR->getSymbol());
 
   if (const VarRegion *VR = dyn_cast<VarRegion>(MR))
-    return Reaper.isLive(VR, true);
+    return isLive(VR, true);
 
   // FIXME: This is a gross over-approximation. What we really need is a way to
   // tell if anything still refers to this region. Unlike SymbolicRegions,
@@ -304,7 +311,7 @@ bool SymbolReaper::isLive(SymbolRef sym) {
   }
 
   if (const SymbolExtent *extent = dyn_cast<SymbolExtent>(sym)) {
-    if (IsLiveRegion(*this, extent->getRegion())) {
+    if (isLiveRegion(extent->getRegion())) {
       markLive(sym);
       return true;
     }
@@ -313,7 +320,7 @@ bool SymbolReaper::isLive(SymbolRef sym) {
 
   if (const SymbolMetadata *metadata = dyn_cast<SymbolMetadata>(sym)) {
     if (MetadataInUse.count(sym)) {
-      if (IsLiveRegion(*this, metadata->getRegion())) {
+      if (isLiveRegion(metadata->getRegion())) {
         markLive(sym);
         MetadataInUse.erase(sym);
         return true;

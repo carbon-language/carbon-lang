@@ -71,15 +71,13 @@ GRStateManager::removeDeadBindings(const GRState* state,
   // those around.  This code more than likely can be made faster, and the
   // frequency of which this method is called should be experimented with
   // for optimum performance.
-  SmallVector<const MemRegion*, 10> RegionRoots;
   GRState NewState = *state;
 
-  NewState.Env = EnvMgr.removeDeadBindings(NewState.Env, SymReaper,
-                                           state, RegionRoots);
+  NewState.Env = EnvMgr.removeDeadBindings(NewState.Env, SymReaper, state);
 
   // Clean up the store.
   StoreRef newStore = StoreMgr->removeDeadBindings(NewState.getStore(), LCtx,
-                                                   SymReaper, RegionRoots);
+                                                   SymReaper);
   NewState.setStore(newStore);
   SymReaper.setReapedStore(newStore);
   
