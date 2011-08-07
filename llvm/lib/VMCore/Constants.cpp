@@ -652,7 +652,7 @@ ConstantStruct::ConstantStruct(StructType *T, ArrayRef<Constant *> V)
   : Constant(T, ConstantStructVal,
              OperandTraits<ConstantStruct>::op_end(this) - V.size(),
              V.size()) {
-  assert((T->isOpaque() || V.size() == T->getNumElements()) &&
+  assert(V.size() == T->getNumElements() &&
          "Invalid initializer vector for constant structure");
   for (unsigned i = 0, e = V.size(); i != e; ++i)
     assert((T->isOpaque() || V[i]->getType() == T->getElementType(i)) &&
@@ -672,7 +672,7 @@ Constant *ConstantStruct::get(StructType *ST, ArrayRef<Constant*> V) {
   return ConstantAggregateZero::get(ST);
 }
 
-Constant* ConstantStruct::get(StructType *T, ...) {
+Constant *ConstantStruct::get(StructType *T, ...) {
   va_list ap;
   SmallVector<Constant*, 8> Values;
   va_start(ap, T);
