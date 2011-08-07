@@ -586,33 +586,32 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
   if (Scope.isEHCleanup())
     cleanupFlags.setIsEHCleanupKind();
 
-  // Even if we don't need the normal cleanup, we might still have
-  // prebranched fallthrough to worry about.
-  if (Scope.isNormalCleanup() && !RequiresNormalCleanup &&
-      HasPrebranchedFallthrough) {
-    assert(!IsActive);
-
-    llvm::BasicBlock *NormalEntry = Scope.getNormalBlock();
-
-    // If we're branching through this cleanup, just forward the
-    // prebranched fallthrough to the next cleanup, leaving the insert
-    // point in the old block.
+  // If we have a prebranched fallthrough into an inactive normal
+  // cleanup, rewrite it so that it leads to the appropriate place.
+  if (Scope.isNormalCleanup() && HasPrebranchedFallthrough && !IsActive) {
+    llvm::BasicBlock *prebranchDest;
+    
+    // If the prebranch is semantically branching through the next
+    // cleanup, just forward it to the next block, leaving the
+    // insertion point in the prebranched block.
     if (FallthroughIsBranchThrough) {
-      EHScope &S = *EHStack.find(Scope.getEnclosingNormalCleanup());
-      llvm::BasicBlock *EnclosingEntry = 
-        CreateNormalEntry(*this, cast<EHCleanupScope>(S));
+      EHScope &enclosing = *EHStack.find(Scope.getEnclosingNormalCleanup());
+      prebranchDest = CreateNormalEntry(*this, cast<EHCleanupScope>(enclosing));
 
-      ForwardPrebranchedFallthrough(FallthroughSource,
-                                    NormalEntry, EnclosingEntry);
-      assert(NormalEntry->use_empty() &&
-             "uses of entry remain after forwarding?");
-      delete NormalEntry;
-
-    // Otherwise, we're branching out;  just emit the next block.
+    // Otherwise, we need to make a new block.  If the normal cleanup
+    // isn't being used at all, we could actually reuse the normal
+    // entry block, but this is simpler, and it avoids conflicts with
+    // dead optimistic fixup branches.
     } else {
-      EmitBlock(NormalEntry);
-      SimplifyCleanupEntry(*this, NormalEntry);
+      prebranchDest = createBasicBlock("forwarded-prebranch");
+      EmitBlock(prebranchDest);
     }
+
+    llvm::BasicBlock *normalEntry = Scope.getNormalBlock();
+    assert(normalEntry && !normalEntry->use_empty());
+
+    ForwardPrebranchedFallthrough(FallthroughSource,
+                                  normalEntry, prebranchDest);
   }
 
   // If we don't need the cleanup at all, we're done.
@@ -713,18 +712,19 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 
       // I.  Set up the fallthrough edge in.
 
+    CGBuilderTy::InsertPoint savedInactiveFallthroughIP;
+
       // If there's a fallthrough, we need to store the cleanup
       // destination index.  For fall-throughs this is always zero.
       if (HasFallthrough) {
         if (!HasPrebranchedFallthrough)
           Builder.CreateStore(Builder.getInt32(0), getNormalCleanupDestSlot());
 
-      // Otherwise, clear the IP if we don't have fallthrough because
-      // the cleanup is inactive.  We don't need to save it because
-      // it's still just FallthroughSource.
+      // Otherwise, save and clear the IP if we don't have fallthrough
+      // because the cleanup is inactive.
       } else if (FallthroughSource) {
         assert(!IsActive && "source without fallthrough for active cleanup");
-        Builder.ClearInsertionPoint();
+        savedInactiveFallthroughIP = Builder.saveAndClearIP();
       }
 
       // II.  Emit the entry block.  This implicitly branches to it if
@@ -837,25 +837,14 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 
       // V.  Set up the fallthrough edge out.
       
-      // Case 1: a fallthrough source exists but shouldn't branch to
-      // the cleanup because the cleanup is inactive.
+      // Case 1: a fallthrough source exists but doesn't branch to the
+      // cleanup because the cleanup is inactive.
       if (!HasFallthrough && FallthroughSource) {
+        // Prebranched fallthrough was forwarded earlier.
+        // Non-prebranched fallthrough doesn't need to be forwarded.
+        // Either way, all we need to do is restore the IP we cleared before.
         assert(!IsActive);
-
-        // If we have a prebranched fallthrough, that needs to be
-        // forwarded to the right block.
-        if (HasPrebranchedFallthrough) {
-          llvm::BasicBlock *Next;
-          if (FallthroughIsBranchThrough) {
-            Next = BranchThroughDest;
-            assert(!FallthroughDest);
-          } else {
-            Next = FallthroughDest;
-          }
-
-          ForwardPrebranchedFallthrough(FallthroughSource, NormalEntry, Next);
-        }
-        Builder.SetInsertPoint(FallthroughSource);
+        Builder.restoreIP(savedInactiveFallthroughIP);
 
       // Case 2: a fallthrough source exists and should branch to the
       // cleanup, but we're not supposed to branch through to the next
