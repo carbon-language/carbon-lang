@@ -614,6 +614,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_default_function_template_args", LangOpts.CPlusPlus0x)
            .Case("cxx_delegating_constructors", LangOpts.CPlusPlus0x)
            .Case("cxx_deleted_functions", LangOpts.CPlusPlus0x)
+         //.Case("cxx_generalized_initializers", LangOpts.CPlusPlus0x)
            .Case("cxx_inline_namespaces", LangOpts.CPlusPlus0x)
          //.Case("cxx_lambdas", false)
            .Case("cxx_noexcept", LangOpts.CPlusPlus0x)

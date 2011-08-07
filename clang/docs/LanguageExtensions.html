@@ -45,6 +45,7 @@
     <li><a href="#cxx_default_function_template_args">C++0x default template arguments in function templates</a></li>
     <li><a href="#cxx_delegating_constructor">C++0x delegating constructors</a></li>
     <li><a href="#cxx_deleted_functions">C++0x deleted functions</a></li>
+    <li><a href="#cxx_generalized_initializers">C++0x generalized initializers</a></li>
     <li><a href="#cxx_lambdas">C++0x lambdas</a></li>
     <li><a href="#cxx_nullptr">C++0x nullptr</a></li>
     <li><a href="#cxx_override_control">C++0x override control</a></li>
@@ -475,6 +476,13 @@ support for delegating constructors is enabled.</p>
 <p>Use <tt>__has_feature(cxx_deleted_functions)</tt> or
 <tt>__has_extension(cxx_deleted_functions)</tt> to determine if support for
 deleted function definitions (with <tt>= delete</tt>) is enabled.</p>
+
+<h4 id="cxx_generalized_initializers">C++0x generalized initializers</h4>
+
+<p>Use <tt>__has_feature(cxx_generalized_initializers)</tt> to determine if
+support for generalized initializers (using braced lists and
+<tt>std::initializer_list</tt>) is enabled. clang does not currently implement
+this feature.
 
 <h4 id="cxx_lambdas">C++0x lambdas</h4>
 
