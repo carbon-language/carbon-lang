@@ -94,6 +94,7 @@ def t_cbtarget : Operand<i32> {
 
 def t_bltarget : Operand<i32> {
   let EncoderMethod = "getThumbBLTargetOpValue";
+  let DecoderMethod = "DecodeThumbBLTargetOperand";
 }
 
 def t_blxtarget : Operand<i32> {
@@ -168,6 +169,7 @@ def t_addrmode_is1 : Operand<i32>,
 def t_addrmode_sp : Operand<i32>,
                     ComplexPattern<i32, 2, "SelectThumbAddrModeSP", []> {
   let EncoderMethod = "getAddrModeThumbSPOpValue";
+  let DecoderMethod = "DecodeThumbAddrModeSP";
   let PrintMethod = "printThumbAddrModeSPOperand";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
@@ -374,7 +376,8 @@ let isCall = 1,
                   "bl${p}\t$func",
                   [(ARMtcall tglobaladdr:$func)]>,
              Requires<[IsThumb, IsNotDarwin]> {
-    bits<21> func;
+    bits<22> func;
+    let Inst{26} = func{21};
     let Inst{25-16} = func{20-11};
     let Inst{13} = 1;
     let Inst{11} = 1;
