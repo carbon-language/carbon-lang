@@ -566,6 +566,12 @@ public:
     return Val > -256 && Val < 256;
   }
   bool isMemImm12Offset() const {
+    // If we have an immediate that's not a constant, treat it as a label
+    // reference needing a fixup. If it is a constant, it's something else
+    // and we reject it.
+    if (Kind == Immediate && !isa<MCConstantExpr>(getImm()))
+      return true;
+
     if (Kind != Memory || Mem.OffsetRegNum != 0)
       return false;
     // Immediate offset in range [-4095, 4095].
@@ -830,6 +836,14 @@ public:
 
   void addMemImm12OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
+    // If this is an immediate, it's a label reference.
+    if (Kind == Immediate) {
+      addExpr(Inst, getImm());
+      Inst.addOperand(MCOperand::CreateImm(0));
+      return;
+    }
+
+    // Otherwise, it's a normal memory reg+offset.
     int64_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
