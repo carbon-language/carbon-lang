@@ -621,7 +621,7 @@ class CGObjCGNUstep : public CGObjCGNU {
         // void *__cxa_begin_catch(void *e)
         EnterCatchFn.init(&CGM, "__cxa_begin_catch", PtrTy, PtrTy, NULL);
         // void __cxa_end_catch(void)
-        EnterCatchFn.init(&CGM, "__cxa_end_catch", VoidTy, NULL);
+        ExitCatchFn.init(&CGM, "__cxa_end_catch", VoidTy, NULL);
         // void _Unwind_Resume_or_Rethrow(void*)
         ExceptionReThrowFn.init(&CGM, "_Unwind_Resume_or_Rethrow", VoidTy, PtrTy, NULL);
       }
