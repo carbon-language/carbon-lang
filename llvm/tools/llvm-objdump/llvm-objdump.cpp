@@ -248,27 +248,56 @@ static void DisassembleInput(const StringRef &Filename) {
         raw_ostream &DebugOut = nulls();
 #endif
 
-      for (Index = Start; Index < End; Index += Size) {
-        MCInst Inst;
-        if (DisAsm->getInstruction(Inst, Size, memoryObject, Index, DebugOut)) {
-          uint64_t addr;
-          if (error(i->getAddress(addr))) break;
-          outs() << format("%8x:\t", addr + Index);
-          DumpBytes(StringRef(Bytes.data() + Index, Size));
-          IP->printInst(&Inst, outs());
-          outs() << "\n";
-        } else {
-          errs() << ToolName << ": warning: invalid instruction encoding\n";
-          if (Size == 0)
-            Size = 1; // skip illegible bytes
+      if (!CFG) {
+        for (Index = Start; Index < End; Index += Size) {
+          MCInst Inst;
+          if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
+                                     DebugOut)) {
+            uint64_t addr;
+            if (error(i->getAddress(addr))) break;
+            outs() << format("%8x:\t", addr + Index);
+            DumpBytes(StringRef(Bytes.data() + Index, Size));
+            IP->printInst(&Inst, outs());
+            outs() << "\n";
+          } else {
+            errs() << ToolName << ": warning: invalid instruction encoding\n";
+            if (Size == 0)
+              Size = 1; // skip illegible bytes
+          }
         }
-      }
 
-      if (CFG) {
+      } else {
+        // Create CFG and use it for disassembly.
         MCFunction f =
           MCFunction::createFunctionFromMC(Symbols[si].second, DisAsm.get(),
                                            memoryObject, Start, End, InstrInfo,
                                            DebugOut);
+
+        for (MCFunction::iterator fi = f.begin(), fe = f.end(); fi != fe; ++fi){
+          bool hasPreds = false;
+          // Only print blocks that have predecessors.
+          // FIXME: Slow.
+          for (MCFunction::iterator pi = f.begin(), pe = f.end(); pi != pe;
+              ++pi)
+            if (pi->second.contains(&fi->second)) {
+              hasPreds = true;
+              break;
+            }
+
+          if (!hasPreds && fi != f.begin())
+            continue;
+
+          for (unsigned ii = 0, ie = fi->second.getInsts().size(); ii != ie;
+               ++ii) {
+            uint64_t addr;
+            if (error(i->getAddress(addr))) break;
+            const MCDecodedInst &Inst = fi->second.getInsts()[ii];
+            outs() << format("%8x:\t", addr + Inst.Address);
+            DumpBytes(StringRef(Bytes.data() + Inst.Address, Inst.Size));
+            IP->printInst(&Inst.Inst, outs());
+            outs() << '\n';
+          }
+        }
 
         // Start a new dot file.
         std::string Error;
