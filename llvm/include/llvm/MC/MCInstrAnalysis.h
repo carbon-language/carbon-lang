@@ -25,6 +25,8 @@ protected:
 
   MCInstrAnalysis(const MCInstrInfo *Info) : Info(Info) {}
 public:
+  virtual ~MCInstrAnalysis() {}
+
   virtual bool isBranch(const MCInst &Inst) const {
     return Info->get(Inst.getOpcode()).isBranch();
   }
