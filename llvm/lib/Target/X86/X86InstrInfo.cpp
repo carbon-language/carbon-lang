@@ -856,24 +856,6 @@ unsigned X86InstrInfo::isLoadFromStackSlotPostFE(const MachineInstr *MI,
   return 0;
 }
 
-bool X86InstrInfo::hasLoadFromStackSlot(const MachineInstr *MI,
-                                        const MachineMemOperand *&MMO,
-                                        int &FrameIndex) const {
-  for (MachineInstr::mmo_iterator o = MI->memoperands_begin(),
-         oe = MI->memoperands_end();
-       o != oe;
-       ++o) {
-    if ((*o)->isLoad() && (*o)->getValue())
-      if (const FixedStackPseudoSourceValue *Value =
-          dyn_cast<const FixedStackPseudoSourceValue>((*o)->getValue())) {
-        FrameIndex = Value->getFrameIndex();
-        MMO = *o;
-        return true;
-      }
-  }
-  return false;
-}
-
 unsigned X86InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                           int &FrameIndex) const {
   if (isFrameStoreOpcode(MI->getOpcode()))
@@ -894,24 +876,6 @@ unsigned X86InstrInfo::isStoreToStackSlotPostFE(const MachineInstr *MI,
     return hasStoreToStackSlot(MI, Dummy, FrameIndex);
   }
   return 0;
-}
-
-bool X86InstrInfo::hasStoreToStackSlot(const MachineInstr *MI,
-                                       const MachineMemOperand *&MMO,
-                                       int &FrameIndex) const {
-  for (MachineInstr::mmo_iterator o = MI->memoperands_begin(),
-         oe = MI->memoperands_end();
-       o != oe;
-       ++o) {
-    if ((*o)->isStore() && (*o)->getValue())
-      if (const FixedStackPseudoSourceValue *Value =
-          dyn_cast<const FixedStackPseudoSourceValue>((*o)->getValue())) {
-        FrameIndex = Value->getFrameIndex();
-        MMO = *o;
-        return true;
-      }
-  }
-  return false;
 }
 
 /// regIsPICBase - Return true if register is PIC base (i.e.g defined by
