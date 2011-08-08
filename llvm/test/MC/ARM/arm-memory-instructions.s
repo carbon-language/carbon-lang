@@ -89,3 +89,19 @@ _func:
 @ CHECK: ldr	r8, [r4], -r5           @ encoding: [0x05,0x80,0x14,0xe6]
 @ CHECK: ldr	r7, [r12, -r1, lsl #15] @ encoding: [0x81,0x77,0x1c,0xe7]
 @ CHECK: ldr	r5, [r2], r9, asr #15   @ encoding: [0xc9,0x57,0x92,0xe6]
+
+
+@------------------------------------------------------------------------------
+@ LDRBT
+@------------------------------------------------------------------------------
+@ FIXME: Optional offset operand.
+        ldrbt r3, [r1], #4
+        ldrbt r2, [r8], #-8
+        ldrbt r8, [r7], r6
+        ldrbt r1, [r2], -r6, lsl #12
+
+
+@ CHECK: ldrbt	r3, [r1], #4            @ encoding: [0x04,0x30,0xf1,0xe4]
+@ CHECK: ldrbt	r2, [r8], #-8           @ encoding: [0x08,0x20,0x78,0xe4]
+@ CHECK: ldrbt	r8, [r7], r6            @ encoding: [0x06,0x80,0xf7,0xe6]
+@ CHECK: ldrbt	r1, [r2], -r6, lsl #12  @ encoding: [0x06,0x16,0x72,0xe6]

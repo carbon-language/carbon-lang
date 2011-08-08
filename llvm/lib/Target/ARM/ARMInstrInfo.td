@@ -2034,20 +2034,37 @@ def LDRT : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$base_wb),
   let Inst{11-0} = addr{11-0};
   let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
 }
-def LDRBT : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
-                  (ins addrmode2:$addr), IndexModePost, LdFrm, IIC_iLoad_bh_ru,
-                  "ldrbt", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
-  // {17-14}  Rn
-  // {13}     1 == Rm, 0 == imm12
+
+def LDRBT_POST_REG : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+                     (ins addr_offset_none:$addr, am2offset_reg:$offset),
+                     IndexModePost, LdFrm, IIC_iLoad_bh_ru,
+                     "ldrbt", "\t$Rt, $addr, $offset",
+                     "$addr.base = $Rn_wb", []> {
   // {12}     isAdd
   // {11-0}   imm12/Rm
-  bits<18> addr;
-  let Inst{25} = addr{13};
-  let Inst{23} = addr{12};
+  bits<14> offset;
+  bits<4> addr;
+  let Inst{25} = 1;
+  let Inst{23} = offset{12};
   let Inst{21} = 1; // overwrite
-  let Inst{19-16} = addr{17-14};
-  let Inst{11-0} = addr{11-0};
-  let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
+  let Inst{19-16} = addr;
+  let Inst{11-0} = offset{11-0};
+}
+
+def LDRBT_POST_IMM : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+                     (ins addr_offset_none:$addr, am2offset_imm:$offset),
+                    IndexModePost, LdFrm, IIC_iLoad_bh_ru,
+                    "ldrbt", "\t$Rt, $addr, $offset",
+                    "$addr.base = $Rn_wb", []> {
+  // {12}     isAdd
+  // {11-0}   imm12/Rm
+  bits<14> offset;
+  bits<4> addr;
+  let Inst{25} = 0;
+  let Inst{23} = offset{12};
+  let Inst{21} = 1; // overwrite
+  let Inst{19-16} = addr;
+  let Inst{11-0} = offset{11-0};
 }
 
 multiclass AI3ldrT<bits<4> op, string opc> {
