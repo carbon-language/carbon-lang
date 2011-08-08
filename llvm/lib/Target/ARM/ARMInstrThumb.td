@@ -19,6 +19,13 @@ def ARMtcall : SDNode<"ARMISD::tCALL", SDT_ARMcall,
                       [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                        SDNPVariadic]>;
 
+def imm_sr : Operand<i32>, ImmLeaf<i32, [{
+  return Imm > 0 && Imm <= 32;
+}]> {
+  let EncoderMethod = "getThumbSRImmOpValue";
+  let DecoderMethod = "DecodeThumbSRImm";
+}
+
 def imm_neg_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(-(int)N->getZExtValue(), MVT::i32);
 }]>;
@@ -91,6 +98,7 @@ def t_bltarget : Operand<i32> {
 
 def t_blxtarget : Operand<i32> {
   let EncoderMethod = "getThumbBLXTargetOpValue";
+  let DecoderMethod = "DecodeThumbBLXOffset";
 }
 }
 
@@ -876,10 +884,10 @@ def tAND :                      // A8.6.12
 
 // ASR immediate
 def tASRri :                    // A8.6.14
-  T1sIGenEncodeImm<{0,1,0,?,?}, (outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm5),
+  T1sIGenEncodeImm<{0,1,0,?,?}, (outs tGPR:$Rd), (ins tGPR:$Rm, imm_sr:$imm5),
                    IIC_iMOVsi,
                    "asr", "\t$Rd, $Rm, $imm5",
-                   [(set tGPR:$Rd, (sra tGPR:$Rm, (i32 imm:$imm5)))]> {
+                   [(set tGPR:$Rd, (sra tGPR:$Rm, (i32 imm_sr:$imm5)))]> {
   bits<5> imm5;
   let Inst{10-6} = imm5;
 }
@@ -976,10 +984,10 @@ def tLSLrr :                    // A8.6.89
 
 // LSR immediate
 def tLSRri :                    // A8.6.90
-  T1sIGenEncodeImm<{0,0,1,?,?}, (outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm5),
+  T1sIGenEncodeImm<{0,0,1,?,?}, (outs tGPR:$Rd), (ins tGPR:$Rm, imm_sr:$imm5),
                    IIC_iMOVsi,
                    "lsr", "\t$Rd, $Rm, $imm5",
-                   [(set tGPR:$Rd, (srl tGPR:$Rm, (i32 imm:$imm5)))]> {
+                   [(set tGPR:$Rd, (srl tGPR:$Rm, (i32 imm_sr:$imm5)))]> {
   bits<5> imm5;
   let Inst{10-6} = imm5;
 }

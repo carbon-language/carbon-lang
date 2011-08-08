@@ -236,6 +236,8 @@ namespace {
       const {return 0; }
     uint32_t getLdStSORegOpValue(const MachineInstr &MI, unsigned OpIdx)
       const { return 0; }
+    unsigned getThumbSRImmOpValue(const MachineInstr &MI, unsigned OpIdx)
+      const { return 0; }
 
     unsigned getAddrModeImm12OpValue(const MachineInstr &MI, unsigned Op)
       const {

@@ -294,6 +294,9 @@ public:
   unsigned getShiftRight64Imm(const MCInst &MI, unsigned Op,
                               SmallVectorImpl<MCFixup> &Fixups) const;
 
+  unsigned getThumbSRImmOpValue(const MCInst &MI, unsigned Op,
+                                 SmallVectorImpl<MCFixup> &Fixups) const;
+
   unsigned NEONThumb2DataIPostEncoder(const MCInst &MI,
                                       unsigned EncodedValue) const;
   unsigned NEONThumb2LoadStorePostEncoder(const MCInst &MI,
@@ -439,6 +442,16 @@ EncodeAddrModeOpValues(const MCInst &MI, unsigned OpIdx, unsigned &Reg,
   Imm = SImm;
   return isAdd;
 }
+
+uint32_t ARMMCCodeEmitter::
+getThumbSRImmOpValue(const MCInst &MI, unsigned OpIdx,
+                        SmallVectorImpl<MCFixup> &Fixups) const {
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  assert(MO.isImm() && "Expected constant shift!");
+  int val = MO.getImm();
+  return (val == 32) ? 0 : val;
+}
+
 
 /// getBranchTargetOpValue - Helper function to get the branch target operand,
 /// which is either an immediate or requires a fixup.
