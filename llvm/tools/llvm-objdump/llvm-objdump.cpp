@@ -284,8 +284,23 @@ static void DisassembleInput(const StringRef &Filename) {
               break;
             }
 
-          if (!hasPreds && fi != f.begin())
+          // Data block.
+          if (!hasPreds && fi != f.begin()) {
+            uint64_t End = llvm::next(fi) == fe ? SectSize :
+                                                  llvm::next(fi)->first;
+            uint64_t addr;
+            if (error(i->getAddress(addr))) break;
+            outs() << "# " << End-fi->first << " bytes of data:\n";
+            for (unsigned pos = fi->first; pos != End; ++pos) {
+              outs() << format("%8x:\t", addr + pos);
+              DumpBytes(StringRef(Bytes.data() + pos, 1));
+              outs() << format("\t.byte 0x%02x\n", (uint8_t)Bytes[pos]);
+            }
             continue;
+          }
+
+          if (fi->second.contains(&fi->second))
+            outs() << "# Loop begin:\n";
 
           for (unsigned ii = 0, ie = fi->second.getInsts().size(); ii != ie;
                ++ii) {
@@ -294,6 +309,9 @@ static void DisassembleInput(const StringRef &Filename) {
             const MCDecodedInst &Inst = fi->second.getInsts()[ii];
             outs() << format("%8x:\t", addr + Inst.Address);
             DumpBytes(StringRef(Bytes.data() + Inst.Address, Inst.Size));
+            // Simple loops.
+            if (fi->second.contains(&fi->second))
+              outs() << '\t';
             IP->printInst(&Inst.Inst, outs());
             outs() << '\n';
           }
