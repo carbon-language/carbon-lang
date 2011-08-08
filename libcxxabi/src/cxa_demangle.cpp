@@ -12512,7 +12512,6 @@ __demangle_tree::__parse_type(const char* first, const char* last,
                     *__sub_end_++ = __root_;
                     if (try_to_parse_template_args)
                     {
-                        __node* temp = __root_;
                         const char* t2 = __parse_template_args(t, last);
                         if (t2 != t)
                         {
@@ -14850,55 +14849,6 @@ display(dmg_tree.__root_);
 printf("\n");
 #endif
     const size_t bs = buf == NULL ? 0 : *n;
-#if 0
-    const unsigned N = 1024;
-    char tmp[N];
-    char* f;
-    char* l;
-    if (bs < N)
-    {
-        f = tmp;
-        l = f + N;
-    }
-    else
-    {
-        f = buf;
-        l = f + bs;
-    }
-    const ptrdiff_t sz = dmg_tree.__root_->print(f, l-1);
-    if (sz > l-f-1)
-    {
-        buf = static_cast<char*>(realloc(buf, sz+1));
-        if (buf == NULL)
-        {
-            if (status)
-                *status = memory_alloc_failure;
-            return NULL;
-        }
-        if (n)
-            *n = sz+1;
-        dmg_tree.__root_->print(buf, buf+sz);
-        buf[sz] = '\0';
-        goto end;
-    }
-    f[sz] = '\0';
-    if (f != buf)
-    {
-        if (bs < sz+1)
-        {
-            buf = static_cast<char*>(realloc(buf, sz+1));
-            if (buf == NULL)
-            {
-                if (status)
-                    *status = memory_alloc_failure;
-                return NULL;
-            }
-            if (n)
-                *n = sz+1;
-        }
-        strncpy(buf, f, sz+1);
-    }
-#else
     ptrdiff_t sm = dmg_tree.__mangled_name_end_ - dmg_tree.__mangled_name_begin_;
     ptrdiff_t est = sm + 50 * (dmg_tree.__node_end_ - dmg_tree.__node_begin_);
     const unsigned N = 4096;
@@ -14937,8 +14887,6 @@ printf("\n");
         else
             *dmg_tree.__get_demangled_name(buf) = '\0';
     }
-#endif
-end:
     if (status)
         *status = success;
     return buf;

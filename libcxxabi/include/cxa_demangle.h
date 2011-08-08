@@ -18,7 +18,7 @@ namespace __cxxabiv1
 namespace __libcxxabi
 {
 
-struct __demangle_tree;
+class __demangle_tree;
 class __node;
 
 char*
