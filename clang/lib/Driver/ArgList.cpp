@@ -47,11 +47,11 @@ void ArgList::append(Arg *A) {
 }
 
 void ArgList::eraseArg(OptSpecifier Id) {
-  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+  for (iterator it = begin(), ie = end(); it != ie; ) {
     if ((*it)->getOption().matches(Id)) {
-      Args.erase(it);
-      it = begin();
-      ie = end();
+      it = Args.erase(it);
+    } else {
+      ++it;
     }
   }
 }
