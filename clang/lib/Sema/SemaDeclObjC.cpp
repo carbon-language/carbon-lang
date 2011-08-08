@@ -1311,6 +1311,9 @@ void Sema::WarnExactTypedMethods(ObjCMethodDecl *ImpMethodDecl,
     }
   if (match)
     match = (ImpMethodDecl->isVariadic() == MethodDecl->isVariadic());
+  if (match)
+    match = !(MethodDecl->isClassMethod() &&
+              MethodDecl->getSelector() == GetNullarySelector("load", Context));
   
   if (match) {
     Diag(ImpMethodDecl->getLocation(), 
