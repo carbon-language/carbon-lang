@@ -497,7 +497,8 @@ def error_synthesize_weak_non_arc_or_gc : Error<
 def err_arc_perform_selector_retains : Error<
   "performSelector names a selector which retains the object">;
 def warn_arc_perform_selector_leaks : Warning<
-  "performSelector may cause a leak because its selector is unknown">;
+  "performSelector may cause a leak because its selector is unknown">,
+  InGroup<DiagGroup<"arc-performSelector-leaks">>;
 
 def error_synthesized_ivar_yet_not_supported : Error<
   "instance variable synthesis not yet supported"
