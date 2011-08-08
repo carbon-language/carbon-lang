@@ -329,3 +329,14 @@ entry:
   %asmresult = extractvalue %complex %0, 0
   ret float %asmresult
 }
+
+; Pass the same value in two fixed stack slots.
+; CHECK: PR10602
+; CHECK: flds LCPI
+; CHECK: fld %st(0)
+; CHECK: fcomi %st(1), %st(0)
+define i32 @PR10602() nounwind ssp {
+entry:
+  %0 = tail call i32 asm "fcomi $2, $1; pushf; pop $0", "=r,{st},{st(1)},~{dirflag},~{fpsr},~{flags}"(double 2.000000e+00, double 2.000000e+00) nounwind
+  ret i32 %0
+}

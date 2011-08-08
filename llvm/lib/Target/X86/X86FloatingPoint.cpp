@@ -260,6 +260,21 @@ namespace {
       BuildMI(*MBB, I, dl, TII->get(X86::LD_Frr)).addReg(STReg);
     }
 
+    /// duplicatePendingSTBeforeKill - The instruction at I is about to kill
+    /// RegNo. If any PendingST registers still need the RegNo value, duplicate
+    /// them to new scratch registers.
+    void duplicatePendingSTBeforeKill(unsigned RegNo, MachineInstr *I) {
+      for (unsigned i = 0; i != NumPendingSTs; ++i) {
+        if (PendingST[i] != RegNo)
+          continue;
+        unsigned SR = getScratchReg();
+        DEBUG(dbgs() << "Duplicating pending ST" << i
+                     << " in FP" << RegNo << " to FP" << SR << '\n');
+        duplicateToTop(RegNo, SR, I);
+        PendingST[i] = SR;
+      }
+    }
+
     /// popStackAfter - Pop the current value off of the top of the FP stack
     /// after the specified instruction.
     void popStackAfter(MachineBasicBlock::iterator &I);
@@ -973,6 +988,9 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   unsigned Reg = getFPReg(MI->getOperand(NumOps-1));
   bool KillsSrc = MI->killsRegister(X86::FP0+Reg);
 
+  if (KillsSrc)
+    duplicatePendingSTBeforeKill(Reg, I);
+
   // FISTP64m is strange because there isn't a non-popping versions.
   // If we have one _and_ we don't want to pop the operand, duplicate the value
   // on the stack instead of moving it.  This ensure that popping the value is
@@ -1036,6 +1054,7 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
   bool KillsSrc = MI->killsRegister(X86::FP0+Reg);
 
   if (KillsSrc) {
+    duplicatePendingSTBeforeKill(Reg, I);
     // If this is the last use of the source register, just make sure it's on
     // the top of the stack.
     moveToTop(Reg, I);
@@ -1322,6 +1341,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
 
       // When the source is killed, allocate a scratch FP register.
       if (KillsSrc) {
+        duplicatePendingSTBeforeKill(SrcFP, I);
         unsigned Slot = getSlot(SrcFP);
         unsigned SR = getScratchReg();
         PendingST[DstST] = SR;
