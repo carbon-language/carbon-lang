@@ -490,6 +490,21 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   Arg *iOSSimVersion = Args.getLastArg(
     options::OPT_mios_simulator_version_min_EQ);
 
+  // If no '-miphoneos-version-min' specified, see if we can set the default
+  // based on isysroot.
+  if (!iOSVersion) {
+    if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
+      StringRef first, second;
+      StringRef isysroot = A->getValue(Args);
+      llvm::tie(first, second) = isysroot.split(StringRef("SDKs/iPhoneOS"));
+      if (second != "") {
+        const Option *O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
+        iOSVersion = Args.MakeJoinedArg(0, O, second.substr(0,3));
+        Args.append(iOSVersion);
+      }
+    }
+  }
+
   // FIXME: HACK! When compiling for the simulator we don't get a
   // '-miphoneos-version-min' to help us know whether there is an ARC runtime
   // or not; try to parse a __IPHONE_OS_VERSION_MIN_REQUIRED
