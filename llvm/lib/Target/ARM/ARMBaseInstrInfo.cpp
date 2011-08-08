@@ -810,6 +810,12 @@ ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   return 0;
 }
 
+unsigned ARMBaseInstrInfo::isStoreToStackSlotPostFE(const MachineInstr *MI,
+                                                    int &FrameIndex) const {
+  const MachineMemOperand *Dummy;
+  return MI->getDesc().mayStore() && hasStoreToStackSlot(MI, Dummy, FrameIndex);
+}
+
 void ARMBaseInstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
@@ -943,6 +949,12 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   }
 
   return 0;
+}
+
+unsigned ARMBaseInstrInfo::isLoadFromStackSlotPostFE(const MachineInstr *MI,
+                                             int &FrameIndex) const {
+  const MachineMemOperand *Dummy;
+  return MI->getDesc().mayLoad() && hasLoadFromStackSlot(MI, Dummy, FrameIndex);
 }
 
 MachineInstr*

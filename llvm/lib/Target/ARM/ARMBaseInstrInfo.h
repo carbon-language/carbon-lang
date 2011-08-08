@@ -101,6 +101,10 @@ public:
                                        int &FrameIndex) const;
   virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
                                       int &FrameIndex) const;
+  virtual unsigned isLoadFromStackSlotPostFE(const MachineInstr *MI,
+                                             int &FrameIndex) const;
+  virtual unsigned isStoreToStackSlotPostFE(const MachineInstr *MI,
+                                            int &FrameIndex) const;
 
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator I, DebugLoc DL,
