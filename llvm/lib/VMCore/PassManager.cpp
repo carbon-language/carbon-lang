@@ -1532,7 +1532,7 @@ bool FPPassManager::runOnModule(Module &M) {
   bool Changed = doInitialization(M);
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    runOnFunction(*I);
+    Changed |= runOnFunction(*I);
 
   return doFinalization(M) || Changed;
 }
