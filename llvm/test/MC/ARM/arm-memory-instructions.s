@@ -23,6 +23,13 @@ _func:
 @ CHECK: ldr	r1, [r2], #30           @ encoding: [0x1e,0x10,0x92,0xe4]
 @ CHECK: ldr	r3, [r1], #-30          @ encoding: [0x1e,0x30,0x11,0xe4]
 
+@------------------------------------------------------------------------------
+@ FIXME: LDR (literal)
+@------------------------------------------------------------------------------
+@ label operands currently assert the show-encoding asm comment helper due
+@ to the use of non-contiguous bit ranges for fixups in ARM. Once that's
+@ cleaned up, we can write useful assembly testcases for these sorts of
+@ instructions.
 
 @------------------------------------------------------------------------------
 @ LDR (register)
