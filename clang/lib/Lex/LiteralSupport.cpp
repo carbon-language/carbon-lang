@@ -964,7 +964,7 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
     const char *ThisTokEnd = ThisTokBuf+ThisTokLen-1;  // Skip end quote.
     // TODO: Input character set mapping support.
 
-    // Skip L marker for wide strings.
+    // Skip marker for wide or unicode strings.
     if (ThisTokBuf[0] == 'L' || ThisTokBuf[0] == 'u' || ThisTokBuf[0] == 'U') {
       ++ThisTokBuf;
       // Skip 8 of u8 marker for utf8 strings.
