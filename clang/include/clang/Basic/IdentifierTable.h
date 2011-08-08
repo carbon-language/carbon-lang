@@ -557,6 +557,11 @@ public:
   bool operator!=(Selector RHS) const {
     return InfoPtr != RHS.InfoPtr;
   }
+
+  bool operator < (Selector RHS) const {
+    return InfoPtr < RHS.InfoPtr;
+  }
+
   void *getAsOpaquePtr() const {
     return reinterpret_cast<void*>(InfoPtr);
   }

@@ -4,7 +4,7 @@
 @protocol Bar 
 @required
 - (unsigned char) baz; // expected-note {{previous definition is here}}
-- (char) ok;
+- (char) ok; // expected-note {{previous definition is here}}
 - (void) also_ok;
 @end
 
@@ -17,11 +17,11 @@
 
 @protocol Baz <Bar, Bar1>
 - (void) bar : (unsigned char)arg; // expected-note {{previous definition is here}}
-- (void) ok;
+- (void) ok; // expected-warning {{conflicting return type in declaration of 'ok': 'char' vs 'void'}}
 - (char) bak; // expected-note {{previous definition is here}}
 @end
 
-@interface Foo <Baz>
+@interface Foo <Baz> // expected-note {{class is declared here}}
 - (void) baz;  // expected-warning {{conflicting return type in declaration of 'baz': 'unsigned char' vs 'void'}}
 - (void) bar : (unsigned char*)arg; // expected-warning {{conflicting parameter types in declaration of 'bar:': 'unsigned char' vs 'unsigned char *'}}
 - (void) ok;
