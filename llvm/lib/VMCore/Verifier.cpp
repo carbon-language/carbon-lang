@@ -1361,7 +1361,7 @@ void Verifier::visitFenceInst(FenceInst &FI) {
   Assert1(Ordering == Acquire || Ordering == Release ||
           Ordering == AcquireRelease || Ordering == SequentiallyConsistent,
           "fence instructions may only have "
-          " acquire, release, acq_rel, or seq_cst ordering.", &FI);
+          "acquire, release, acq_rel, or seq_cst ordering.", &FI);
   visitInstruction(FI);
 }
 
