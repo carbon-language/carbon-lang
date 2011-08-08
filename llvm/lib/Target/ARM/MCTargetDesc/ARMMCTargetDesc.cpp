@@ -13,6 +13,7 @@
 
 #include "ARMMCTargetDesc.h"
 #include "ARMMCAsmInfo.h"
+#include "ARMBaseInfo.h"
 #include "InstPrinter/ARMInstPrinter.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -159,6 +160,53 @@ static MCInstPrinter *createARMMCInstPrinter(const Target &T,
   return 0;
 }
 
+namespace {
+
+class ARMMCInstrAnalysis : public MCInstrAnalysis {
+public:
+  ARMMCInstrAnalysis(const MCInstrInfo *Info) : MCInstrAnalysis(Info) {}
+  virtual bool isBranch(const MCInst &Inst) const {
+    // Don't flag "bx lr" as a branch.
+    return MCInstrAnalysis::isBranch(Inst) && (Inst.getOpcode() != ARM::BX ||
+           Inst.getOperand(0).getReg() != ARM::LR);
+  }
+
+  virtual bool isUnconditionalBranch(const MCInst &Inst) const {
+    // BCCs with the "always" predicate are unconditional branches.
+    if (Inst.getOpcode() == ARM::Bcc && Inst.getOperand(1).getImm()==ARMCC::AL)
+      return true;
+    return MCInstrAnalysis::isUnconditionalBranch(Inst);
+  }
+
+  virtual bool isConditionalBranch(const MCInst &Inst) const {
+    // BCCs with the "always" predicate are unconditional branches.
+    if (Inst.getOpcode() == ARM::Bcc && Inst.getOperand(1).getImm()==ARMCC::AL)
+      return false;
+    return MCInstrAnalysis::isConditionalBranch(Inst);
+  }
+
+  virtual bool isReturn(const MCInst &Inst) const {
+    // Recognize "bx lr" as return.
+    return Inst.getOpcode() == ARM::BX && Inst.getOperand(0).getReg()==ARM::LR;
+  }
+
+  uint64_t evaluateBranch(const MCInst &Inst, uint64_t Addr,
+                          uint64_t Size) const {
+    // We only handle PCRel branches for now.
+    if (Info->get(Inst.getOpcode()).OpInfo[0].OperandType!=MCOI::OPERAND_PCREL)
+      return -1ULL;
+
+    int64_t Imm = Inst.getOperand(0).getImm();
+    // FIXME: This is not right for thumb.
+    return Addr+Imm+8; // In ARM mode the PC is always off by 8 bytes.
+  }
+};
+
+}
+
+static MCInstrAnalysis *createARMMCInstrAnalysis(const MCInstrInfo *Info) {
+  return new ARMMCInstrAnalysis(Info);
+}
 
 // Force static initialization.
 extern "C" void LLVMInitializeARMTargetMC() {
@@ -177,6 +225,11 @@ extern "C" void LLVMInitializeARMTargetMC() {
   // Register the MC register info.
   TargetRegistry::RegisterMCRegInfo(TheARMTarget, createARMMCRegisterInfo);
   TargetRegistry::RegisterMCRegInfo(TheThumbTarget, createARMMCRegisterInfo);
+
+  TargetRegistry::RegisterMCInstrAnalysis(TheARMTarget,
+                                          createARMMCInstrAnalysis);
+  TargetRegistry::RegisterMCInstrAnalysis(TheThumbTarget,
+                                          createARMMCInstrAnalysis);
 
   // Register the MC subtarget info.
   TargetRegistry::RegisterMCSubtargetInfo(TheARMTarget,

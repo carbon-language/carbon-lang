@@ -20,6 +20,7 @@
 #define LLVM_TARGET_TARGETREGISTRY_H
 
 #include "llvm/MC/MCCodeGenInfo.h"
+#include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/ADT/Triple.h"
 #include <string>
 #include <cassert>
@@ -74,6 +75,7 @@ namespace llvm {
                                                     Reloc::Model RM,
                                                     CodeModel::Model CM);
     typedef MCInstrInfo *(*MCInstrInfoCtorFnTy)(void);
+    typedef MCInstrAnalysis *(*MCInstrAnalysisCtorFnTy)(const MCInstrInfo*Info);
     typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(StringRef TT);
     typedef MCSubtargetInfo *(*MCSubtargetInfoCtorFnTy)(StringRef TT,
                                                         StringRef CPU,
@@ -146,6 +148,10 @@ namespace llvm {
     /// MCInstrInfoCtorFn - Constructor function for this target's MCInstrInfo,
     /// if registered.
     MCInstrInfoCtorFnTy MCInstrInfoCtorFn;
+
+    /// MCInstrAnalysisCtorFn - Constructor function for this target's
+    /// MCInstrAnalysis, if registered.
+    MCInstrAnalysisCtorFnTy MCInstrAnalysisCtorFn;
 
     /// MCRegInfoCtorFn - Constructor function for this target's MCRegisterInfo,
     /// if registered.
@@ -279,6 +285,14 @@ namespace llvm {
       if (!MCInstrInfoCtorFn)
         return 0;
       return MCInstrInfoCtorFn();
+    }
+
+    /// createMCInstrAnalysis - Create a MCInstrAnalysis implementation.
+    ///
+    MCInstrAnalysis *createMCInstrAnalysis(const MCInstrInfo *Info) const {
+      if (!MCInstrAnalysisCtorFn)
+        return new MCInstrAnalysis(Info);
+      return MCInstrAnalysisCtorFn(Info);
     }
 
     /// createMCRegInfo - Create a MCRegisterInfo implementation.
@@ -555,6 +569,15 @@ namespace llvm {
       // Ignore duplicate registration.
       if (!T.MCInstrInfoCtorFn)
         T.MCInstrInfoCtorFn = Fn;
+    }
+
+    /// RegisterMCInstrAnalysis - Register a MCInstrAnalysis implementation for
+    /// the given target.
+    static void RegisterMCInstrAnalysis(Target &T,
+                                        Target::MCInstrAnalysisCtorFnTy Fn) {
+      // Ignore duplicate registration.
+      if (!T.MCInstrAnalysisCtorFn)
+        T.MCInstrAnalysisCtorFn = Fn;
     }
 
     /// RegisterMCRegInfo - Register a MCRegisterInfo implementation for the

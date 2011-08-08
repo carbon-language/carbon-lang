@@ -17,6 +17,7 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/Support/MemoryObject.h"
@@ -28,7 +29,7 @@ using namespace llvm;
 MCFunction
 MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
                                  const MemoryObject &Region, uint64_t Start,
-                                 uint64_t End, const MCInstrInfo *InstrInfo,
+                                 uint64_t End, const MCInstrAnalysis *Ana,
                                  raw_ostream &DebugOut) {
   std::set<uint64_t> Splits;
   Splits.insert(Start);
@@ -40,21 +41,17 @@ MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
     MCInst Inst;
 
     if (DisAsm->getInstruction(Inst, Size, Region, Index, DebugOut)) {
-      const MCInstrDesc &Desc = InstrInfo->get(Inst.getOpcode());
-      if (Desc.isBranch()) {
-        if (Desc.OpInfo[0].OperandType == MCOI::OPERAND_PCREL) {
-          int64_t Imm = Inst.getOperand(0).getImm();
-          // FIXME: Distinguish relocations from nop jumps.
-          if (Imm != 0) {
-            if (Index+Imm+Size >= End) {
-              Instructions.push_back(MCDecodedInst(Index, Size, Inst));
-              continue; // Skip branches that leave the function.
-            }
-            Splits.insert(Index+Imm+Size);
-          }
+      if (Ana->isBranch(Inst)) {
+        uint64_t targ = Ana->evaluateBranch(Inst, Index, Size);
+        // FIXME: Distinguish relocations from nop jumps.
+        if (targ != -1ULL && (targ == Index+Size || targ >= End)) {
+          Instructions.push_back(MCDecodedInst(Index, Size, Inst));
+          continue; // Skip branches that leave the function.
         }
+        if (targ != -1ULL)
+          Splits.insert(targ);
         Splits.insert(Index+Size);
-      } else if (Desc.isReturn()) {
+      } else if (Ana->isReturn(Inst)) {
         Splits.insert(Index+Size);
       }
 
@@ -90,26 +87,22 @@ MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
     MCBasicBlock &BB = i->second;
     if (BB.getInsts().empty()) continue;
     const MCDecodedInst &Inst = BB.getInsts().back();
-    const MCInstrDesc &Desc = InstrInfo->get(Inst.Inst.getOpcode());
 
-    if (Desc.isBranch()) {
-      // PCRel branch, we know the destination.
-      if (Desc.OpInfo[0].OperandType == MCOI::OPERAND_PCREL) {
-        int64_t Imm = Inst.Inst.getOperand(0).getImm();
-        if (Imm != 0)
-          BB.addSucc(&f.getBlockAtAddress(Inst.Address+Inst.Size+Imm));
-        // Conditional branches can also fall through to the next block.
-        if (Desc.isConditionalBranch() && llvm::next(i) != e)
-          BB.addSucc(&llvm::next(i)->second);
-      } else {
+    if (Ana->isBranch(Inst.Inst)) {
+      uint64_t targ = Ana->evaluateBranch(Inst.Inst, Inst.Address, Inst.Size);
+      if (targ == -1ULL) {
         // Indirect branch. Bail and add all blocks of the function as a
         // successor.
         for (MCFunction::iterator i = f.begin(), e = f.end(); i != e; ++i)
           BB.addSucc(&i->second);
-      }
+      } else if (targ != Inst.Address+Inst.Size)
+        BB.addSucc(&f.getBlockAtAddress(targ));
+      // Conditional branches can also fall through to the next block.
+      if (Ana->isConditionalBranch(Inst.Inst) && llvm::next(i) != e)
+        BB.addSucc(&llvm::next(i)->second);
     } else {
       // No branch. Fall through to the next block.
-      if (!Desc.isReturn() && llvm::next(i) != e)
+      if (!Ana->isReturn(Inst.Inst) && llvm::next(i) != e)
         BB.addSucc(&llvm::next(i)->second);
     }
   }

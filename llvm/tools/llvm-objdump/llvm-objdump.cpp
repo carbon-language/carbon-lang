@@ -165,6 +165,8 @@ static void DisassembleInput(const StringRef &Filename) {
     return;
   }
   const MCInstrInfo *InstrInfo = TheTarget->createMCInstrInfo();
+  OwningPtr<MCInstrAnalysis>
+    InstrAnalysis(TheTarget->createMCInstrAnalysis(InstrInfo));
 
   outs() << '\n';
   outs() << Filename
@@ -270,8 +272,8 @@ static void DisassembleInput(const StringRef &Filename) {
         // Create CFG and use it for disassembly.
         MCFunction f =
           MCFunction::createFunctionFromMC(Symbols[si].second, DisAsm.get(),
-                                           memoryObject, Start, End, InstrInfo,
-                                           DebugOut);
+                                           memoryObject, Start, End,
+                                           InstrAnalysis.get(), DebugOut);
 
         for (MCFunction::iterator fi = f.begin(), fe = f.end(); fi != fe; ++fi){
           bool hasPreds = false;

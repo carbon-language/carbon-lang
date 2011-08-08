@@ -20,7 +20,7 @@
 namespace llvm {
 
 class MCDisassembler;
-class MCInstrInfo;
+class MCInstrAnalysis;
 class MemoryObject;
 class raw_ostream;
 
@@ -68,7 +68,7 @@ public:
   static MCFunction
   createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
                        const MemoryObject &Region, uint64_t Start, uint64_t End,
-                       const MCInstrInfo *InstrInfo, raw_ostream &DebugOut);
+                       const MCInstrAnalysis *Ana, raw_ostream &DebugOut);
 
   typedef MapTy::iterator iterator;
   iterator begin() { return Blocks.begin(); }
