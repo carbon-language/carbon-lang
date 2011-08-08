@@ -174,32 +174,32 @@ public:
     return Builder.CreateShuffleVector(vector, vector, splatVector);
   }
 
-  Value* getOperand(const Value *OldOperand, ValueMapT &BBMap,
+  Value* getOperand(const Value *oldOperand, ValueMapT &BBMap,
                     ValueMapT *VectorMap = 0) {
-    const Instruction *OpInst = dyn_cast<Instruction>(OldOperand);
+    const Instruction *OpInst = dyn_cast<Instruction>(oldOperand);
 
     if (!OpInst)
-      return const_cast<Value*>(OldOperand);
+      return const_cast<Value*>(oldOperand);
 
-    if (VectorMap && VectorMap->count(OldOperand))
-      return (*VectorMap)[OldOperand];
+    if (VectorMap && VectorMap->count(oldOperand))
+      return (*VectorMap)[oldOperand];
 
     // IVS and Parameters.
-    if (VMap.count(OldOperand)) {
-      Value *NewOperand = VMap[OldOperand];
+    if (VMap.count(oldOperand)) {
+      Value *NewOperand = VMap[oldOperand];
 
       // Insert a cast if types are different
-      if (OldOperand->getType()->getScalarSizeInBits()
+      if (oldOperand->getType()->getScalarSizeInBits()
           < NewOperand->getType()->getScalarSizeInBits())
         NewOperand = Builder.CreateTruncOrBitCast(NewOperand,
-                                                   OldOperand->getType());
+                                                   oldOperand->getType());
 
       return NewOperand;
     }
 
     // Instructions calculated in the current BB.
-    if (BBMap.count(OldOperand)) {
-      return BBMap[OldOperand];
+    if (BBMap.count(oldOperand)) {
+      return BBMap[oldOperand];
     }
 
     // Ignore instructions that are referencing ops in the old BB. These
@@ -208,7 +208,7 @@ public:
     if (getRegion().contains(OpInst->getParent()))
       return NULL;
 
-    return const_cast<Value*>(OldOperand);
+    return const_cast<Value*>(oldOperand);
   }
 
   Type *getVectorPtrTy(const Value *V, int vectorWidth) {
@@ -317,7 +317,7 @@ public:
   /// @brief Get the new operand address according to the changed access in
   ///        JSCOP file.
   Value *getNewAccessOperand(isl_map *newAccessRelation, Value *baseAddr,
-                             const Value *OldOperand, ValueMapT &BBMap) {
+                             const Value *oldOperand, ValueMapT &BBMap) {
     unsigned accessIdx = 0;
     Value *newOperand = Builder.CreateStructGEP(baseAddr,
                                                 accessIdx, "p_newarrayidx_");
@@ -327,14 +327,14 @@ public:
   /// @brief Generate the operand address
   Value *generateLocationAccessed(const Instruction *Inst,
                                   const Value *pointer, ValueMapT &BBMap ) {
-    MemoryAccess &Access = statement.getAccessFor(Inst);
-    isl_map *newAccessRelation = Access.getNewAccessFunction();
+    MemoryAccess &access = statement.getAccessFor(Inst);
+    isl_map *newAccessRelation = access.getNewAccessFunction();
     if (!newAccessRelation) {
       Value *newPointer = getOperand(pointer, BBMap);
       return newPointer;
     }
     
-    Value *baseAddr = const_cast<Value*>(Access.getBaseAddr());
+    Value *baseAddr = const_cast<Value*>(access.getBaseAddr());
     Value *newPointer = getNewAccessOperand(newAccessRelation, baseAddr,
                                             pointer, BBMap);
     return newPointer;
