@@ -19,7 +19,6 @@
 #include <pthread.h>
 
 #include "cxa_exception.hpp"
-#include "cxa_exception_storage.hpp"
 
 namespace __cxxabiv1 {
 
