@@ -883,7 +883,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SINT_TO_FP,         MVT::v4i32, Legal);
   }
 
-  if (Subtarget->hasSSE41()) {
+  if (Subtarget->hasSSE41() || Subtarget->hasAVX()) {
     setOperationAction(ISD::FFLOOR,             MVT::f32,   Legal);
     setOperationAction(ISD::FCEIL,              MVT::f32,   Legal);
     setOperationAction(ISD::FTRUNC,             MVT::f32,   Legal);
@@ -922,10 +922,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
   }
 
-  if (Subtarget->hasSSE2()) {
+  if (Subtarget->hasSSE2() || Subtarget->hasAVX()) {
     setOperationAction(ISD::SRL,               MVT::v2i64, Custom);
     setOperationAction(ISD::SRL,               MVT::v4i32, Custom);
     setOperationAction(ISD::SRL,               MVT::v16i8, Custom);
+    setOperationAction(ISD::SRL,               MVT::v8i16, Custom);
 
     setOperationAction(ISD::SHL,               MVT::v2i64, Custom);
     setOperationAction(ISD::SHL,               MVT::v4i32, Custom);
@@ -935,7 +936,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SRA,               MVT::v8i16, Custom);
   }
 
-  if (Subtarget->hasSSE42())
+  if (Subtarget->hasSSE42() || Subtarget->hasAVX())
     setOperationAction(ISD::VSETCC,             MVT::v2i64, Custom);
 
   if (!UseSoftFloat && Subtarget->hasAVX()) {
@@ -974,6 +975,19 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8i32,  Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v32i8,  Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16i16, Custom);
+
+    setOperationAction(ISD::SRL,               MVT::v4i64, Custom);
+    setOperationAction(ISD::SRL,               MVT::v8i32, Custom);
+    setOperationAction(ISD::SRL,               MVT::v16i16, Custom);
+    setOperationAction(ISD::SRL,               MVT::v32i8, Custom);
+
+    setOperationAction(ISD::SHL,               MVT::v4i64, Custom);
+    setOperationAction(ISD::SHL,               MVT::v8i32, Custom);
+    setOperationAction(ISD::SHL,               MVT::v16i16, Custom);
+    setOperationAction(ISD::SHL,               MVT::v32i8, Custom);
+
+    setOperationAction(ISD::SRA,               MVT::v8i32, Custom);
+    setOperationAction(ISD::SRA,               MVT::v16i16, Custom);
 
     // Custom lower several nodes for 256-bit types.
     for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
@@ -9195,11 +9209,42 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   SDValue R = Op.getOperand(0);
   SDValue Amt = Op.getOperand(1);
-
   LLVMContext *Context = DAG.getContext();
 
-  // Must have SSE2.
-  if (!Subtarget->hasSSE2()) return SDValue();
+  if (!(Subtarget->hasSSE2() || Subtarget->hasAVX()))
+    return SDValue();
+
+  // Decompose 256-bit shifts into smaller 128-bit shifts.
+  if (VT.getSizeInBits() == 256) {
+    int NumElems = VT.getVectorNumElements();
+    MVT EltVT = VT.getVectorElementType().getSimpleVT();
+    EVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
+
+    // Extract the two vectors
+    SDValue V1 = Extract128BitVector(R, DAG.getConstant(0, MVT::i32), DAG, dl);
+    SDValue V2 = Extract128BitVector(R, DAG.getConstant(NumElems/2, MVT::i32),
+                                     DAG, dl);
+
+    // Recreate the shift amount vectors
+    SmallVector<SDValue, 4> Amt1Csts;
+    SmallVector<SDValue, 4> Amt2Csts;
+    for (int i = 0; i < NumElems/2; ++i)
+      Amt1Csts.push_back(Amt->getOperand(i));
+    for (int i = NumElems/2; i < NumElems; ++i)
+      Amt2Csts.push_back(Amt->getOperand(i));
+
+    SDValue Amt1 = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT,
+                               &Amt1Csts[0], NumElems/2);
+    SDValue Amt2 = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT,
+                               &Amt2Csts[0], NumElems/2);
+
+    // Issue new vector shifts for the smaller types
+    V1 = DAG.getNode(Op.getOpcode(), dl, NewVT, V1, Amt1);
+    V2 = DAG.getNode(Op.getOpcode(), dl, NewVT, V2, Amt2);
+
+    // Concatenate the result back
+    return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, V1, V2);
+  }
 
   // Optimize shl/srl/sra with constant shift amount.
   if (isSplatVector(Amt.getNode())) {
@@ -9250,9 +9295,6 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // Lower SHL with variable shift amount.
-  // Cannot lower SHL without SSE2 or later.
-  if (!Subtarget->hasSSE2()) return SDValue();
-
   if (VT == MVT::v4i32 && Op->getOpcode() == ISD::SHL) {
     Op = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                      DAG.getConstant(Intrinsic::x86_sse2_pslli_d, MVT::i32),
@@ -12099,7 +12141,7 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   // all elements are shifted by the same amount.  We can't do this in legalize
   // because the a constant vector is typically transformed to a constant pool
   // so we have no knowledge of the shift amount.
-  if (!Subtarget->hasSSE2())
+  if (!(Subtarget->hasSSE2() || Subtarget->hasAVX()))
     return SDValue();
 
   if (VT != MVT::v2i64 && VT != MVT::v4i32 && VT != MVT::v8i16)
