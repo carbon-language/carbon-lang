@@ -130,3 +130,14 @@ void test_noop_cast2() {
     int y = (int&)x; // expected-warning {{uninitialized when used here}}
 }
 
+// Test handling of bit casts.
+void test_bitcasts() {
+  int x = 1;
+  int y = (float &)x; // no-warning
+}
+
+void test_bitcasts_2() {
+  int x;  // expected-note {{declared here}} expected-note {{add initialization}}
+  int y = (float &)x; // expected-warning {{uninitialized when used here}}
+}
+

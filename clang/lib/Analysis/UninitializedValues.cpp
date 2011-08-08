@@ -389,6 +389,20 @@ public:
 };
 }
 
+static const Expr *stripCasts(ASTContext &C, const Expr *Ex) {
+  while (Ex) {
+    Ex = Ex->IgnoreParenNoopCasts(C);
+    if (const CastExpr *CE = dyn_cast<CastExpr>(Ex)) {
+      if (CE->getCastKind() == CK_LValueBitCast) {
+        Ex = CE->getSubExpr();
+        continue;
+      }
+    }
+    break;
+  }
+  return Ex;
+}
+
 void TransferFunctions::reportUninit(const DeclRefExpr *ex,
                                      const VarDecl *vd, bool isAlwaysUnit) {
   if (handler) handler->handleUseOfUninitVariable(ex, vd, isAlwaysUnit);
@@ -470,9 +484,9 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
           // appropriately, but we need to continue to analyze subsequent uses
           // of the variable.
           if (init == lastLoad) {
-            DeclRefExpr *DR
-              = cast<DeclRefExpr>(lastLoad->
-                  getSubExpr()->IgnoreParenNoopCasts(ac.getASTContext()));
+            const DeclRefExpr *DR
+              = cast<DeclRefExpr>(stripCasts(ac.getASTContext(),
+                                             lastLoad->getSubExpr()));
             if (DR->getDecl() == vd) {
               // int x = x;
               // Propagate uninitialized value, but don't immediately report
@@ -544,7 +558,8 @@ void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
       }
     }
   }
-  else if (ce->getCastKind() == CK_NoOp) {
+  else if (ce->getCastKind() == CK_NoOp ||
+           ce->getCastKind() == CK_LValueBitCast) {
     skipProcessUses = true;
   }
   else if (CStyleCastExpr *cse = dyn_cast<CStyleCastExpr>(ce)) {
@@ -580,10 +595,10 @@ void TransferFunctions::ProcessUses(Stmt *s) {
     // If we reach here, we have seen a load of an uninitialized value
     // and it hasn't been casted to void or otherwise handled.  In this
     // situation, report the incident.
-    DeclRefExpr *DR =
-      cast<DeclRefExpr>(lastLoad->getSubExpr()->
-                          IgnoreParenNoopCasts(ac.getASTContext()));
-    VarDecl *VD = cast<VarDecl>(DR->getDecl());
+    const DeclRefExpr *DR =
+      cast<DeclRefExpr>(stripCasts(ac.getASTContext(),
+                                   lastLoad->getSubExpr()));
+    const VarDecl *VD = cast<VarDecl>(DR->getDecl());
     reportUninit(DR, VD, isAlwaysUninit(vals[VD]));
     lastLoad = 0;
     
