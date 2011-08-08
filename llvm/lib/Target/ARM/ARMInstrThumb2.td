@@ -977,7 +977,8 @@ multiclass T2I_st<bits<2> opcod, string opc,
 class T2I_ext_rrot<bits<3> opcod, string opc, PatFrag opnode>
   : T2TwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm, rot_imm:$rot), IIC_iEXTr,
              opc, ".w\t$Rd, $Rm$rot",
-             [(set rGPR:$Rd, (opnode (rotr rGPR:$Rm, rot_imm:$rot)))]> {
+             [(set rGPR:$Rd, (opnode (rotr rGPR:$Rm, rot_imm:$rot)))]>,
+             Requires<[IsThumb2]> {
    let Inst{31-27} = 0b11111;
    let Inst{26-23} = 0b0100;
    let Inst{22-20} = opcod;
@@ -3407,9 +3408,9 @@ def t2CDP2 : T2Cop<0b1111, (outs), (ins p_imm:$cop, imm0_15:$opc1,
 // SXT/UXT with no rotate
 let AddedComplexity = 16 in {
 def : T2Pat<(and rGPR:$Rm, 0x000000FF), (t2UXTB rGPR:$Rm, 0)>,
-           Requires<[HasT2ExtractPack, IsThumb2]>;
+           Requires<[IsThumb2]>;
 def : T2Pat<(and rGPR:$Rm, 0x0000FFFF), (t2UXTH rGPR:$Rm, 0)>,
-           Requires<[HasT2ExtractPack, IsThumb2]>;
+           Requires<[IsThumb2]>;
 def : T2Pat<(and rGPR:$Rm, 0x00FF00FF), (t2UXTB16 rGPR:$Rm, 0)>,
            Requires<[HasT2ExtractPack, IsThumb2]>;
 def : T2Pat<(add rGPR:$Rn, (and rGPR:$Rm, 0x00FF)),
@@ -3421,9 +3422,9 @@ def : T2Pat<(add rGPR:$Rn, (and rGPR:$Rm, 0xFFFF)),
 }
 
 def : T2Pat<(sext_inreg rGPR:$Src, i8),  (t2SXTB rGPR:$Src, 0)>,
-           Requires<[HasT2ExtractPack, IsThumb2]>;
+           Requires<[IsThumb2]>;
 def : T2Pat<(sext_inreg rGPR:$Src, i16), (t2SXTH rGPR:$Src, 0)>,
-           Requires<[HasT2ExtractPack, IsThumb2]>;
+           Requires<[IsThumb2]>;
 def : T2Pat<(add rGPR:$Rn, (sext_inreg rGPR:$Rm, i8)),
             (t2SXTAB rGPR:$Rn, rGPR:$Rm, 0)>,
            Requires<[HasT2ExtractPack, IsThumb2]>;
