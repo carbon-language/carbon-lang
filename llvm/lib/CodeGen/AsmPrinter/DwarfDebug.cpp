@@ -149,12 +149,14 @@ public:
   DbgScope(DbgScope *P, DIDescriptor D, const MDNode *I = 0)
     : Parent(P), Desc(D), InlinedAtLocation(I), AbstractScope(false),
       LastInsn(0), FirstInsn(0),
-      DFSIn(0), DFSOut(0), IndentLevel(0) {}
+      DFSIn(0), DFSOut(0), IndentLevel(0) {
+    if (Parent)
+      Parent->addScope(this);
+  }
   virtual ~DbgScope();
 
   // Accessors.
   DbgScope *getParent()          const { return Parent; }
-  void setParent(DbgScope *P)          { Parent = P; }
   DIDescriptor getDesc()         const { return Desc; }
   const MDNode *getInlinedAt()         const { return InlinedAtLocation; }
   const MDNode *getScopeNode()         const { return Desc; }
@@ -421,11 +423,7 @@ DbgScope *DwarfDebug::getOrCreateAbstractScope(const MDNode *N) {
     DIDescriptor ParentDesc = DB.getContext();
     Parent = getOrCreateAbstractScope(ParentDesc);
   }
-
   AScope = new DbgScope(Parent, DIDescriptor(N), NULL);
-
-  if (Parent)
-    Parent->addScope(AScope);
   AScope->setAbstractScope();
   AbstractScopes[N] = AScope;
   if (DIDescriptor(N).isSubprogram())
@@ -1590,17 +1588,16 @@ void DwarfDebug::endInstruction(const MachineInstr *MI) {
 /// getOrCreateRegularScope - Create regular DbgScope.
 DbgScope *DwarfDebug::getOrCreateRegularScope(MDNode *Scope) {
   DbgScope *WScope = DbgScopeMap.lookup(Scope);
-  if (WScope)
+  if (WScope) 
     return WScope;
-  WScope = new DbgScope(NULL, DIDescriptor(Scope), NULL);
+
+  DbgScope *Parent = NULL;
+  if (DIDescriptor(Scope).isLexicalBlock())
+    Parent = getOrCreateDbgScope(DebugLoc::getFromDILexicalBlock(Scope));
+  WScope = new DbgScope(Parent, DIDescriptor(Scope), NULL);
   DbgScopeMap.insert(std::make_pair(Scope, WScope));
-  if (DIDescriptor(Scope).isLexicalBlock()) {
-    DbgScope *Parent =
-      getOrCreateDbgScope(DebugLoc::getFromDILexicalBlock(Scope));
-    WScope->setParent(Parent);
-    Parent->addScope(WScope);
-  } else if (DIDescriptor(Scope).isSubprogram()
-             && DISubprogram(Scope).describes(Asm->MF->getFunction()))
+  if (!Parent && DIDescriptor(Scope).isSubprogram()
+      && DISubprogram(Scope).describes(Asm->MF->getFunction()))
     CurrentFnDbgScope = WScope;
   
   return WScope;
@@ -1612,13 +1609,11 @@ DbgScope *DwarfDebug::getOrCreateInlinedScope(MDNode *Scope, MDNode *InlinedAt){
   if (InlinedScope)
     return InlinedScope;
 
-  InlinedScope = new DbgScope(NULL, DIDescriptor(Scope), InlinedAt);
   DebugLoc InlinedLoc = DebugLoc::getFromDILocation(InlinedAt);
+  InlinedScope = new DbgScope(getOrCreateDbgScope(InlinedLoc),
+                              DIDescriptor(Scope), InlinedAt);
   InlinedDbgScopeMap[InlinedLoc] = InlinedScope;
   DbgScopeMap[InlinedAt] = InlinedScope;
-  DbgScope *Parent = getOrCreateDbgScope(InlinedLoc);
-  InlinedScope->setParent(Parent);
-  Parent->addScope(InlinedScope);
   return InlinedScope;
 }
 
