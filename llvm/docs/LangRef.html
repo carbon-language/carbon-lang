@@ -5992,9 +5992,11 @@ freestanding environments and non-C-based languages.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;resultval&gt; = landingpad &lt;somety&gt; personality &lt;type&gt; &lt;pers_fn&gt; cleanup? &lt;clause&gt;+
+  &lt;resultval&gt; = landingpad &lt;somety&gt; personality &lt;type&gt; &lt;pers_fn&gt; &lt;clause&gt;+
+  &lt;resultval&gt; = landingpad &lt;somety&gt; personality &lt;type&gt; &lt;pers_fn&gt; cleanup &lt;clause&gt;*
+
   &lt;clause&gt; := catch &lt;type&gt; &lt;value&gt;
-  &lt;clause&gt; := filter &lt;type&gt; &lt;value&gt;
+  &lt;clause&gt; := filter &lt;type&gt; &lt;value&gt; {, &lt;type&gt; &lt;value&gt;}*
 </pre>
 
 <h5>Overview:</h5>
