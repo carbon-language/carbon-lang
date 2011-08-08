@@ -1457,14 +1457,15 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
         for (TypoCorrection::decl_iterator CD = Corrected.begin(),
                                         CDEnd = Corrected.end();
              CD != CDEnd; ++CD) {
-          if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*CD))
-            AddOverloadCandidate(FD, DeclAccessPair::make(FD, AS_none),
-                                 Args, NumArgs, OCS);
-          else if (FunctionTemplateDecl *FTD =
+          if (FunctionTemplateDecl *FTD =
                    dyn_cast<FunctionTemplateDecl>(*CD))
             AddTemplateOverloadCandidate(
                 FTD, DeclAccessPair::make(FTD, AS_none), ExplicitTemplateArgs,
                 Args, NumArgs, OCS);
+          else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*CD))
+            if (!ExplicitTemplateArgs || ExplicitTemplateArgs->size() == 0)
+              AddOverloadCandidate(FD, DeclAccessPair::make(FD, AS_none),
+                                   Args, NumArgs, OCS);
         }
         switch (OCS.BestViableFunction(*this, R.getNameLoc(), Best)) {
           case OR_Success:
