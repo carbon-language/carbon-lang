@@ -406,6 +406,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   SmallVector<ReturnInst*,16> Returns;
   SmallVector<UnwindInst*,16> Unwinds;
   SmallVector<InvokeInst*,16> Invokes;
+  SmallVector<UnreachableInst*, 16> Unreachables;
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
@@ -486,9 +487,10 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
     // Insert a load in the Catch block, and a switch on its value.  By default,
     // we go to a block that just does an unwind (which is the correct action
-    // for a standard call).
+    // for a standard call). We insert an unreachable instruction here and
+    // modify the block to jump to the correct unwinding pad later.
     BasicBlock *UnwindBB = BasicBlock::Create(F.getContext(), "unwindbb", &F);
-    Unwinds.push_back(new UnwindInst(F.getContext(), UnwindBB));
+    Unreachables.push_back(new UnreachableInst(F.getContext(), UnwindBB));
 
     Value *CatchLoad = new LoadInst(InvokeNum, "invoke.num", true, CatchBB);
     SwitchInst *CatchSwitch =
@@ -575,6 +577,12 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   for (unsigned i = 0, e = Unwinds.size(); i != e; ++i) {
     BranchInst::Create(UnwindHandler, Unwinds[i]);
     Unwinds[i]->eraseFromParent();
+  }
+
+  // Replace all inserted unreachables with a branch to the unwind handler.
+  for (unsigned i = 0, e = Unreachables.size(); i != e; ++i) {
+    BranchInst::Create(UnwindHandler, Unreachables[i]);
+    Unreachables[i]->eraseFromParent();
   }
 
   // Finally, for any returns from this function, if this function contains an
