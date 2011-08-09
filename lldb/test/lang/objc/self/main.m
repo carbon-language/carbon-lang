@@ -37,6 +37,7 @@ static int s_a = 5;
 +(int)accessStaticMember:(int)a
 {
     s_a = a; // breakpoint 2
+    return 0;
 }
 @end
 
