@@ -19,6 +19,7 @@
 #include "clang/Sema/PrettyDeclStackTrace.h"
 #include "RAIIObjectsForParser.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -121,6 +122,10 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
       // Availability attributes have their own grammar.
       if (AttrName->isStr("availability"))
         ParseAvailabilityAttribute(*AttrName, AttrNameLoc, attrs, endLoc);
+      // Thread safety attributes fit into the FIXME case above, so we
+      // just parse the arguments as a list of expressions
+      else if (IsThreadSafetyAttribute(AttrName->getName()))
+        ParseThreadSafetyAttribute(*AttrName, AttrNameLoc, attrs, endLoc);
       // check if we have a "parameterized" attribute
       else if (Tok.is(tok::l_paren)) {
         ConsumeParen(); // ignore the left paren loc for now
@@ -648,6 +653,81 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
                Changes[Deprecated],
                Changes[Obsoleted], 
                UnavailableLoc, false, false);
+}
+
+/// \brief Wrapper around a case statement checking if AttrName is
+/// one of the thread safety attributes
+bool Parser::IsThreadSafetyAttribute(llvm::StringRef AttrName){
+  return llvm::StringSwitch<bool>(AttrName)
+      .Case("guarded_by", true)
+      .Case("guarded_var", true)
+      .Case("pt_guarded_by", true)
+      .Case("pt_guarded_var", true)
+      .Case("lockable", true)
+      .Case("scoped_lockable", true)
+      .Case("no_thread_safety_analysis", true)
+      .Case("acquired_after", true)
+      .Case("acquired_before", true)
+      .Case("exclusive_lock_function", true)
+      .Case("shared_lock_function", true)
+      .Case("exclusive_trylock_function", true)
+      .Case("shared_trylock_function", true)
+      .Case("unlock_function", true)
+      .Case("lock_returned", true)
+      .Case("locks_excluded", true)
+      .Case("exclusive_locks_required", true)
+      .Case("shared_locks_required", true)
+      .Default(false);
+}
+
+/// \brief Parse the contents of thread safety attributes. These
+/// should always be parsed as an expression list.
+///
+/// We need to special case the parsing due to the fact that if the first token
+/// of the first argument is an identifier, the main parse loop will store
+/// that token as a "parameter" and the rest of
+/// the arguments will be added to a list of "arguments". However,
+/// subsequent tokens in the first argument are lost. We instead parse each
+/// argument as an expression and add all arguments to the list of "arguments".
+/// In future, we will take advantage of this special case to also
+/// deal with some argument scoping issues here (for example, referring to a
+/// function parameter in the attribute on that function).
+void Parser::ParseThreadSafetyAttribute(IdentifierInfo &AttrName,
+                                        SourceLocation AttrNameLoc,
+                                        ParsedAttributes &Attrs,
+                                        SourceLocation *EndLoc) {
+
+  if (Tok.is(tok::l_paren)) {
+    SourceLocation LeftParenLoc = Tok.getLocation();
+    ConsumeParen(); // ignore the left paren loc for now
+
+    ExprVector ArgExprs(Actions);
+    bool ArgExprsOk = true;
+
+    // now parse the list of expressions
+    while (1) {
+      ExprResult ArgExpr(ParseAssignmentExpression());
+      if (ArgExpr.isInvalid()) {
+        ArgExprsOk = false;
+        MatchRHSPunctuation(tok::r_paren, LeftParenLoc);
+        break;
+      } else {
+        ArgExprs.push_back(ArgExpr.release());
+      }
+      if (Tok.isNot(tok::comma))
+        break;
+      ConsumeToken(); // Eat the comma, move to the next argument
+    }
+    // Match the ')'.
+    if (ArgExprsOk && Tok.is(tok::r_paren)) {
+      ConsumeParen(); // ignore the right paren loc for now
+      Attrs.addNew(&AttrName, AttrNameLoc, 0, AttrNameLoc, 0, SourceLocation(),
+                   ArgExprs.take(), ArgExprs.size());
+    }
+  } else {
+    Attrs.addNew(&AttrName, AttrNameLoc, 0, AttrNameLoc,
+                 0, SourceLocation(), 0, 0);
+  }
 }
 
 void Parser::DiagnoseProhibitedAttributes(ParsedAttributesWithRange &attrs) {

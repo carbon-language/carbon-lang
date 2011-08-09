@@ -1,19 +1,48 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wthread-safety %s
 
 
-/**
- *  Helper fields
- */
+//-----------------------------------------//
+//  Helper fields
+//-----------------------------------------//
 
 class __attribute__((lockable)) Mu {
 };
 
-Mu mu1;
-Mu mu2;
+class UnlockableMu{
+};
 
-/***********************************
- *  No Thread Safety Analysis (noanal)
- ***********************************/
+class MuWrapper {
+  public:
+  Mu mu;
+  Mu getMu() {
+    return mu;
+  }
+  Mu * getMuPointer() {
+    return &mu;
+  }
+};
+
+
+class MuDoubleWrapper {
+  public:
+  MuWrapper* muWrapper;
+  MuWrapper* getWrapper() {
+    return muWrapper;
+  }
+};
+
+Mu mu1;
+UnlockableMu umu;
+Mu mu2;
+MuWrapper muWrapper;
+MuDoubleWrapper muDoubleWrapper;
+Mu* muPointer;
+Mu ** muDoublePointer = & muPointer;
+Mu& muRef = mu1;
+
+//-----------------------------------------//
+//   No Thread Safety Analysis (noanal)    //
+//-----------------------------------------//
 
 // FIXME: Right now we cannot parse attributes put on function definitions
 // We would like to patch this at some point.
@@ -53,9 +82,9 @@ void noanal_fun_params(int lvar __attribute__((no_thread_safety_analysis))); // 
   expected-warning {{'no_thread_safety_analysis' attribute only applies to functions and methods}}
 
 
-/***********************************
- *  Guarded Var Attribute (gv)
- ***********************************/
+//-----------------------------------------//
+//  Guarded Var Attribute (gv)
+//-----------------------------------------//
 
 #if !__has_attribute(guarded_var)
 #error "Should support guarded_var attribute"
@@ -89,9 +118,9 @@ int gv_testfn(int y){
   return x;
 }
 
-/***********************************
- *  Pt Guarded Var Attribute (pgv)
- ***********************************/
+//-----------------------------------------//
+//   Pt Guarded Var Attribute (pgv)
+//-----------------------------------------//
 
 //FIXME: add support for boost::scoped_ptr<int> fancyptr  and references
 
@@ -133,9 +162,9 @@ void pgv_testfn(int y){
   delete x;
 }
 
-/***********************************
- *  Lockable Attribute (l)
- ***********************************/
+//-----------------------------------------//
+//  Lockable Attribute (l)
+//-----------------------------------------//
 
 //FIXME: In future we may want to add support for structs, ObjC classes, etc.
 
@@ -175,9 +204,9 @@ void l_function_params(int lvar __attribute__((lockable))); // \
   expected-warning {{'lockable' attribute only applies to classes}}
 
 
-/***********************************
- *  Scoped Lockable Attribute (sl)
- ***********************************/
+//-----------------------------------------//
+//  Scoped Lockable Attribute (sl)
+//-----------------------------------------//
 
 #if !__has_attribute(scoped_lockable)
 #error "Should support scoped_lockable attribute"
@@ -215,11 +244,11 @@ void sl_function_params(int lvar __attribute__((scoped_lockable))); // \
   expected-warning {{'scoped_lockable' attribute only applies to classes}}
 
 
-/***********************************
- *  Guarded By Attribute (gb)
- ***********************************/
+//-----------------------------------------//
+//  Guarded By Attribute (gb)
+//-----------------------------------------//
 
-// FIXME: Would we like this attribute to take more than 1 arg?
+// FIXME: Eventually, would we like this attribute to take more than 1 arg?
 
 #if !__has_attribute(guarded_by)
 #error "Should support guarded_by attribute"
@@ -258,24 +287,36 @@ int gb_testfn(int y){
   return x;
 }
 
-//2.Deal with argument parsing:
-// grab token stream parsing from C++0x branch
-// possibly create new, more permissive category for gcc attributes
+//2. Check argument parsing.
 
-//foo
-//foo.bar
-//foo.bar->baz
-//foo.bar()->baz()->a
-//&foo
-//*foo
+// legal attribute arguments
+int gb_var_arg_1 __attribute__((guarded_by(muWrapper.mu)));
+int gb_var_arg_2 __attribute__((guarded_by(muDoubleWrapper.muWrapper->mu)));
+int gb_var_arg_3 __attribute__((guarded_by(muWrapper.getMu())));
+int gb_var_arg_4 __attribute__((guarded_by(*muWrapper.getMuPointer())));
+int gb_var_arg_5 __attribute__((guarded_by(&mu1)));
+int gb_var_arg_6 __attribute__((guarded_by(muRef)));
+int gb_var_arg_7 __attribute__((guarded_by(muDoubleWrapper.getWrapper()->getMu())));
+int gb_var_arg_8 __attribute__((guarded_by(muPointer)));
+
+
+// illegal attribute arguments
+int gb_var_arg_bad_1 __attribute__((guarded_by(1))); // \
+  expected-error {{'guarded_by' attribute requires arguments that are class type or point to class type}}
+int gb_var_arg_bad_2 __attribute__((guarded_by("mu"))); // \
+  expected-error {{'guarded_by' attribute requires arguments that are class type or point to class type}}
+int gb_var_arg_bad_3 __attribute__((guarded_by(muDoublePointer))); // \
+  expected-error {{'guarded_by' attribute requires arguments that are class type or point to class type}}
+int gb_var_arg_bad_4 __attribute__((guarded_by(umu))); // \
+  expected-error {{'guarded_by' attribute requires arguments whose type is annotated with 'lockable' attribute}}
 
 //3.
 // Thread Safety analysis tests
 
 
-/***********************************
- *  Pt Guarded By Attribute (pgb)
- ***********************************/
+//-----------------------------------------//
+//  Pt Guarded By Attribute (pgb)
+//-----------------------------------------//
 
 #if !__has_attribute(pt_guarded_by)
 #error "Should support pt_guarded_by attribute"
@@ -317,12 +358,35 @@ void pgb_testfn(int y){
   delete x;
 }
 
-/***********************************
- *  Acquired After (aa)
- ***********************************/
+//2. Check argument parsing.
+
+// legal attribute arguments
+int * pgb_var_arg_1 __attribute__((pt_guarded_by(muWrapper.mu)));
+int * pgb_var_arg_2 __attribute__((pt_guarded_by(muDoubleWrapper.muWrapper->mu)));
+int * pgb_var_arg_3 __attribute__((pt_guarded_by(muWrapper.getMu())));
+int * pgb_var_arg_4 __attribute__((pt_guarded_by(*muWrapper.getMuPointer())));
+int * pgb_var_arg_5 __attribute__((pt_guarded_by(&mu1)));
+int * pgb_var_arg_6 __attribute__((pt_guarded_by(muRef)));
+int * pgb_var_arg_7 __attribute__((pt_guarded_by(muDoubleWrapper.getWrapper()->getMu())));
+int * pgb_var_arg_8 __attribute__((pt_guarded_by(muPointer)));
+
+
+// illegal attribute arguments
+int * pgb_var_arg_bad_1 __attribute__((pt_guarded_by(1))); // \
+  expected-error {{'pt_guarded_by' attribute requires arguments that are class type or point to class type}}
+int * pgb_var_arg_bad_2 __attribute__((pt_guarded_by("mu"))); // \
+  expected-error {{'pt_guarded_by' attribute requires arguments that are class type or point to class type}}
+int * pgb_var_arg_bad_3 __attribute__((pt_guarded_by(muDoublePointer))); // \
+  expected-error {{'pt_guarded_by' attribute requires arguments that are class type or point to class type}}
+int * pgb_var_arg_bad_4 __attribute__((pt_guarded_by(umu))); // \
+  expected-error {{'pt_guarded_by' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+
+
+//-----------------------------------------//
+//  Acquired After (aa)
+//-----------------------------------------//
 
 // FIXME: Would we like this attribute to take more than 1 arg?
-// FIXME: What about pointers to locks?
 
 #if !__has_attribute(acquired_after)
 #error "Should support acquired_after attribute"
@@ -355,13 +419,34 @@ void aa_testfn(int y){
       expected-warning {{'acquired_after' attribute only applies to fields and global variables}}
 }
 
-// Note: illegal int aa_int __attribute__((acquired_after(mu1))) will
-// be taken care of by warnings that aa__int is not lockable.
+//Check argument parsing.
+
+// legal attribute arguments
+Mu aa_var_arg_1 __attribute__((acquired_after(muWrapper.mu)));
+Mu aa_var_arg_2 __attribute__((acquired_after(muDoubleWrapper.muWrapper->mu)));
+Mu aa_var_arg_3 __attribute__((acquired_after(muWrapper.getMu())));
+Mu aa_var_arg_4 __attribute__((acquired_after(*muWrapper.getMuPointer())));
+Mu aa_var_arg_5 __attribute__((acquired_after(&mu1)));
+Mu aa_var_arg_6 __attribute__((acquired_after(muRef)));
+Mu aa_var_arg_7 __attribute__((acquired_after(muDoubleWrapper.getWrapper()->getMu())));
+Mu aa_var_arg_8 __attribute__((acquired_after(muPointer)));
 
 
-/***********************************
- *  Acquired Before (ab)
- ***********************************/
+// illegal attribute arguments
+Mu aa_var_arg_bad_1 __attribute__((acquired_after(1))); // \
+  expected-error {{'acquired_after' attribute requires arguments that are class type or point to class type}}
+Mu aa_var_arg_bad_2 __attribute__((acquired_after("mu"))); // \
+  expected-error {{'acquired_after' attribute requires arguments that are class type or point to class type}}
+Mu aa_var_arg_bad_3 __attribute__((acquired_after(muDoublePointer))); // \
+  expected-error {{'acquired_after' attribute requires arguments that are class type or point to class type}}
+Mu aa_var_arg_bad_4 __attribute__((acquired_after(umu))); // \
+  expected-error {{'acquired_after' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+UnlockableMu aa_var_arg_bad_5 __attribute__((acquired_after(mu_aa))); // \
+  expected-error {{'acquired_after' attribute can only be applied in a context annotated with 'lockable' attribute}}
+
+//-----------------------------------------//
+//  Acquired Before (ab)
+//-----------------------------------------//
 
 #if !__has_attribute(acquired_before)
 #error "Should support acquired_before attribute"
@@ -397,9 +482,35 @@ void ab_testfn(int y){
 // Note: illegal int ab_int __attribute__((acquired_before(mu1))) will
 // be taken care of by warnings that ab__int is not lockable.
 
-/***********************************
- *  Exclusive Lock Function (elf)
- ***********************************/
+//Check argument parsing.
+
+// legal attribute arguments
+Mu ab_var_arg_1 __attribute__((acquired_before(muWrapper.mu)));
+Mu ab_var_arg_2 __attribute__((acquired_before(muDoubleWrapper.muWrapper->mu)));
+Mu ab_var_arg_3 __attribute__((acquired_before(muWrapper.getMu())));
+Mu ab_var_arg_4 __attribute__((acquired_before(*muWrapper.getMuPointer())));
+Mu ab_var_arg_5 __attribute__((acquired_before(&mu1)));
+Mu ab_var_arg_6 __attribute__((acquired_before(muRef)));
+Mu ab_var_arg_7 __attribute__((acquired_before(muDoubleWrapper.getWrapper()->getMu())));
+Mu ab_var_arg_8 __attribute__((acquired_before(muPointer)));
+
+
+// illegal attribute arguments
+Mu ab_var_arg_bad_1 __attribute__((acquired_before(1))); // \
+  expected-error {{'acquired_before' attribute requires arguments that are class type or point to class type}}
+Mu ab_var_arg_bad_2 __attribute__((acquired_before("mu"))); // \
+  expected-error {{'acquired_before' attribute requires arguments that are class type or point to class type}}
+Mu ab_var_arg_bad_3 __attribute__((acquired_before(muDoublePointer))); // \
+  expected-error {{'acquired_before' attribute requires arguments that are class type or point to class type}}
+Mu ab_var_arg_bad_4 __attribute__((acquired_before(umu))); // \
+  expected-error {{'acquired_before' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+UnlockableMu ab_var_arg_bad_5 __attribute__((acquired_before(mu_ab))); // \
+  expected-error {{'acquired_before' attribute can only be applied in a context annotated with 'lockable' attribute}}
+
+
+//-----------------------------------------//
+//  Exclusive Lock Function (elf)
+//-----------------------------------------//
 
 #if !__has_attribute(exclusive_lock_function)
 #error "Should support exclusive_lock_function attribute"
@@ -436,11 +547,42 @@ class __attribute__((exclusive_lock_function)) ElfTestClass { // \
 void elf_fun_params(int lvar __attribute__((exclusive_lock_function))); // \
   expected-warning {{'exclusive_lock_function' attribute only applies to functions and methods}}
 
+// Check argument parsing.
+
+// legal attribute arguments
+int elf_function_1() __attribute__((exclusive_lock_function(muWrapper.mu)));
+int elf_function_2() __attribute__((exclusive_lock_function(muDoubleWrapper.muWrapper->mu)));
+int elf_function_3() __attribute__((exclusive_lock_function(muWrapper.getMu())));
+int elf_function_4() __attribute__((exclusive_lock_function(*muWrapper.getMuPointer())));
+int elf_function_5() __attribute__((exclusive_lock_function(&mu1)));
+int elf_function_6() __attribute__((exclusive_lock_function(muRef)));
+int elf_function_7() __attribute__((exclusive_lock_function(muDoubleWrapper.getWrapper()->getMu())));
+int elf_function_8() __attribute__((exclusive_lock_function(muPointer)));
+int elf_function_9(Mu x) __attribute__((exclusive_lock_function(1)));
+int elf_function_9(Mu x, Mu y) __attribute__((exclusive_lock_function(1,2)));
 
 
-/***********************************
- *  Shared Lock Function (slf)
- ***********************************/
+// illegal attribute arguments
+int elf_function_bad_2() __attribute__((exclusive_lock_function("mu"))); // \
+  expected-error {{'exclusive_lock_function' attribute requires arguments that are class type or point to class type}}
+int elf_function_bad_3() __attribute__((exclusive_lock_function(muDoublePointer))); // \
+  expected-error {{'exclusive_lock_function' attribute requires arguments that are class type or point to class type}}
+int elf_function_bad_4() __attribute__((exclusive_lock_function(umu))); // \
+  expected-error {{'exclusive_lock_function' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+
+int elf_function_bad_1() __attribute__((exclusive_lock_function(1))); // \
+  expected-error {{'exclusive_lock_function' attribute parameter 1 is out of bounds: no parameters to index into}}
+int elf_function_bad_5(Mu x) __attribute__((exclusive_lock_function(0))); // \
+  expected-error {{'exclusive_lock_function' attribute parameter 1 is out of bounds: can only be 1, since there is one parameter}}
+int elf_function_bad_6(Mu x, Mu y) __attribute__((exclusive_lock_function(0))); // \
+  expected-error {{'exclusive_lock_function' attribute parameter 1 is out of bounds: must be between 1 and 2}}
+int elf_function_bad_7() __attribute__((exclusive_lock_function(0))); // \
+  expected-error {{'exclusive_lock_function' attribute parameter 1 is out of bounds: no parameters to index into}}
+
+
+//-----------------------------------------//
+//  Shared Lock Function (slf)
+//-----------------------------------------//
 
 #if !__has_attribute(shared_lock_function)
 #error "Should support shared_lock_function attribute"
@@ -477,10 +619,42 @@ class __attribute__((shared_lock_function)) SlfTestClass { // \
     expected-warning {{'shared_lock_function' attribute only applies to functions and methods}}
 };
 
+// Check argument parsing.
 
-/***********************************
- *  Exclusive TryLock Function (etf)
- ***********************************/
+// legal attribute arguments
+int slf_function_1() __attribute__((shared_lock_function(muWrapper.mu)));
+int slf_function_2() __attribute__((shared_lock_function(muDoubleWrapper.muWrapper->mu)));
+int slf_function_3() __attribute__((shared_lock_function(muWrapper.getMu())));
+int slf_function_4() __attribute__((shared_lock_function(*muWrapper.getMuPointer())));
+int slf_function_5() __attribute__((shared_lock_function(&mu1)));
+int slf_function_6() __attribute__((shared_lock_function(muRef)));
+int slf_function_7() __attribute__((shared_lock_function(muDoubleWrapper.getWrapper()->getMu())));
+int slf_function_8() __attribute__((shared_lock_function(muPointer)));
+int slf_function_9(Mu x) __attribute__((shared_lock_function(1)));
+int slf_function_9(Mu x, Mu y) __attribute__((shared_lock_function(1,2)));
+
+
+// illegal attribute arguments
+int slf_function_bad_2() __attribute__((shared_lock_function("mu"))); // \
+  expected-error {{'shared_lock_function' attribute requires arguments that are class type or point to class type}}
+int slf_function_bad_3() __attribute__((shared_lock_function(muDoublePointer))); // \
+  expected-error {{'shared_lock_function' attribute requires arguments that are class type or point to class type}}
+int slf_function_bad_4() __attribute__((shared_lock_function(umu))); // \
+  expected-error {{'shared_lock_function' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+
+int slf_function_bad_1() __attribute__((shared_lock_function(1))); // \
+  expected-error {{'shared_lock_function' attribute parameter 1 is out of bounds: no parameters to index into}}
+int slf_function_bad_5(Mu x) __attribute__((shared_lock_function(0))); // \
+  expected-error {{'shared_lock_function' attribute parameter 1 is out of bounds: can only be 1, since there is one parameter}}
+int slf_function_bad_6(Mu x, Mu y) __attribute__((shared_lock_function(0))); // \
+  expected-error {{'shared_lock_function' attribute parameter 1 is out of bounds: must be between 1 and 2}}
+int slf_function_bad_7() __attribute__((shared_lock_function(0))); // \
+  expected-error {{'shared_lock_function' attribute parameter 1 is out of bounds: no parameters to index into}}
+
+
+//-----------------------------------------//
+//  Exclusive TryLock Function (etf)
+//-----------------------------------------//
 
 #if !__has_attribute(exclusive_trylock_function)
 #error "Should support exclusive_trylock_function attribute"
@@ -521,11 +695,39 @@ class __attribute__((exclusive_trylock_function(1))) EtfTestClass { // \
 void etf_fun_params(int lvar __attribute__((exclusive_trylock_function(1)))); // \
   expected-warning {{'exclusive_trylock_function' attribute only applies to functions and methods}}
 
+// Check argument parsing.
+
+// legal attribute arguments
+int etf_function_1() __attribute__((exclusive_trylock_function(1, muWrapper.mu)));
+int etf_function_2() __attribute__((exclusive_trylock_function(1, muDoubleWrapper.muWrapper->mu)));
+int etf_function_3() __attribute__((exclusive_trylock_function(1, muWrapper.getMu())));
+int etf_function_4() __attribute__((exclusive_trylock_function(1, *muWrapper.getMuPointer())));
+int etf_function_5() __attribute__((exclusive_trylock_function(1, &mu1)));
+int etf_function_6() __attribute__((exclusive_trylock_function(1, muRef)));
+int etf_function_7() __attribute__((exclusive_trylock_function(1, muDoubleWrapper.getWrapper()->getMu())));
+int etf_functetfn_8() __attribute__((exclusive_trylock_function(1, muPointer)));
+int etf_function_9() __attribute__((exclusive_trylock_function(true)));
 
 
-/***********************************
- *  Shared TryLock Function (stf)
- ***********************************/
+// illegal attribute arguments
+int etf_function_bad_1() __attribute__((exclusive_trylock_function(mu1))); // \
+  expected-error {{'exclusive_trylock_function' attribute first argument must be of int or bool type}}
+int etf_function_bad_2() __attribute__((exclusive_trylock_function("mu"))); // \
+  expected-error {{'exclusive_trylock_function' attribute first argument must be of int or bool type}}
+int etf_function_bad_3() __attribute__((exclusive_trylock_function(muDoublePointer))); // \
+  expected-error {{'exclusive_trylock_function' attribute first argument must be of int or bool type}}
+
+int etf_function_bad_4() __attribute__((exclusive_trylock_function(1, "mu"))); // \
+  expected-error {{'exclusive_trylock_function' attribute requires arguments that are class type or point to class type}}
+int etf_function_bad_5() __attribute__((exclusive_trylock_function(1, muDoublePointer))); // \
+  expected-error {{'exclusive_trylock_function' attribute requires arguments that are class type or point to class type}}
+int etf_function_bad_6() __attribute__((exclusive_trylock_function(1, umu))); // \
+  expected-error {{'exclusive_trylock_function' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+
+
+//-----------------------------------------//
+//  Shared TryLock Function (stf)
+//-----------------------------------------//
 
 #if !__has_attribute(shared_trylock_function)
 #error "Should support shared_trylock_function attribute"
@@ -567,10 +769,39 @@ class __attribute__((shared_trylock_function(1))) StfTestClass { // \
     expected-warning {{'shared_trylock_function' attribute only applies to functions and methods}}
 };
 
+// Check argument parsing.
 
-/***********************************
- *  Unlock Function (uf)
- ***********************************/
+// legal attribute arguments
+int stf_function_1() __attribute__((shared_trylock_function(1, muWrapper.mu)));
+int stf_function_2() __attribute__((shared_trylock_function(1, muDoubleWrapper.muWrapper->mu)));
+int stf_function_3() __attribute__((shared_trylock_function(1, muWrapper.getMu())));
+int stf_function_4() __attribute__((shared_trylock_function(1, *muWrapper.getMuPointer())));
+int stf_function_5() __attribute__((shared_trylock_function(1, &mu1)));
+int stf_function_6() __attribute__((shared_trylock_function(1, muRef)));
+int stf_function_7() __attribute__((shared_trylock_function(1, muDoubleWrapper.getWrapper()->getMu())));
+int stf_function_8() __attribute__((shared_trylock_function(1, muPointer)));
+int stf_function_9() __attribute__((shared_trylock_function(true)));
+
+
+// illegal attribute arguments
+int stf_function_bad_1() __attribute__((shared_trylock_function(mu1))); // \
+  expected-error {{'shared_trylock_function' attribute first argument must be of int or bool type}}
+int stf_function_bad_2() __attribute__((shared_trylock_function("mu"))); // \
+  expected-error {{'shared_trylock_function' attribute first argument must be of int or bool type}}
+int stf_function_bad_3() __attribute__((shared_trylock_function(muDoublePointer))); // \
+  expected-error {{'shared_trylock_function' attribute first argument must be of int or bool type}}
+
+int stf_function_bad_4() __attribute__((shared_trylock_function(1, "mu"))); // \
+  expected-error {{'shared_trylock_function' attribute requires arguments that are class type or point to class type}}
+int stf_function_bad_5() __attribute__((shared_trylock_function(1, muDoublePointer))); // \
+  expected-error {{'shared_trylock_function' attribute requires arguments that are class type or point to class type}}
+int stf_function_bad_6() __attribute__((shared_trylock_function(1, umu))); // \
+  expected-error {{'shared_trylock_function' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+
+
+//-----------------------------------------//
+//  Unlock Function (uf)
+//-----------------------------------------//
 
 #if !__has_attribute(unlock_function)
 #error "Should support unlock_function attribute"
@@ -607,10 +838,42 @@ class __attribute__((no_thread_safety_analysis)) UfTestClass { // \
 void uf_fun_params(int lvar __attribute__((unlock_function))); // \
   expected-warning {{'unlock_function' attribute only applies to functions and methods}}
 
+// Check argument parsing.
 
-/***********************************
- *  Lock Returned (lr)
- ***********************************/
+// legal attribute arguments
+int uf_function_1() __attribute__((unlock_function(muWrapper.mu)));
+int uf_function_2() __attribute__((unlock_function(muDoubleWrapper.muWrapper->mu)));
+int uf_function_3() __attribute__((unlock_function(muWrapper.getMu())));
+int uf_function_4() __attribute__((unlock_function(*muWrapper.getMuPointer())));
+int uf_function_5() __attribute__((unlock_function(&mu1)));
+int uf_function_6() __attribute__((unlock_function(muRef)));
+int uf_function_7() __attribute__((unlock_function(muDoubleWrapper.getWrapper()->getMu())));
+int uf_function_8() __attribute__((unlock_function(muPointer)));
+int uf_function_9(Mu x) __attribute__((unlock_function(1)));
+int uf_function_9(Mu x, Mu y) __attribute__((unlock_function(1,2)));
+
+
+// illegal attribute arguments
+int uf_function_bad_2() __attribute__((unlock_function("mu"))); // \
+  expected-error {{'unlock_function' attribute requires arguments that are class type or point to class type}}
+int uf_function_bad_3() __attribute__((unlock_function(muDoublePointer))); // \
+expected-error {{'unlock_function' attribute requires arguments that are class type or point to class type}}
+int uf_function_bad_4() __attribute__((unlock_function(umu))); // \
+  expected-error {{'unlock_function' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+
+int uf_function_bad_1() __attribute__((unlock_function(1))); // \
+  expected-error {{'unlock_function' attribute parameter 1 is out of bounds: no parameters to index into}}
+int uf_function_bad_5(Mu x) __attribute__((unlock_function(0))); // \
+  expected-error {{'unlock_function' attribute parameter 1 is out of bounds: can only be 1, since there is one parameter}}
+int uf_function_bad_6(Mu x, Mu y) __attribute__((unlock_function(0))); // \
+  expected-error {{'unlock_function' attribute parameter 1 is out of bounds: must be between 1 and 2}}
+int uf_function_bad_7() __attribute__((unlock_function(0))); // \
+  expected-error {{'unlock_function' attribute parameter 1 is out of bounds: no parameters to index into}}
+
+
+//-----------------------------------------//
+//  Lock Returned (lr)
+//-----------------------------------------//
 
 #if !__has_attribute(lock_returned)
 #error "Should support lock_returned attribute"
@@ -651,9 +914,34 @@ class __attribute__((lock_returned(mu1))) LrTestClass { // \
     expected-warning {{'lock_returned' attribute only applies to functions and methods}}
 };
 
-/***********************************
- *  Locks Excluded (le)
- ***********************************/
+// Check argument parsing.
+
+// legal attribute arguments
+int lr_function_1() __attribute__((lock_returned(muWrapper.mu)));
+int lr_function_2() __attribute__((lock_returned(muDoubleWrapper.muWrapper->mu)));
+int lr_function_3() __attribute__((lock_returned(muWrapper.getMu())));
+int lr_function_4() __attribute__((lock_returned(*muWrapper.getMuPointer())));
+int lr_function_5() __attribute__((lock_returned(&mu1)));
+int lr_function_6() __attribute__((lock_returned(muRef)));
+int lr_function_7() __attribute__((lock_returned(muDoubleWrapper.getWrapper()->getMu())));
+int lr_function_8() __attribute__((lock_returned(muPointer)));
+
+
+// illegal attribute arguments
+int lr_function_bad_1() __attribute__((lock_returned(1))); // \
+  expected-error {{'lock_returned' attribute requires arguments that are class type or point to class type}}
+int lr_function_bad_2() __attribute__((lock_returned("mu"))); // \
+  expected-error {{'lock_returned' attribute requires arguments that are class type or point to class type}}
+int lr_function_bad_3() __attribute__((lock_returned(muDoublePointer))); // \
+  expected-error {{'lock_returned' attribute requires arguments that are class type or point to class type}}
+int lr_function_bad_4() __attribute__((lock_returned(umu))); // \
+  expected-error {{'lock_returned' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+
+
+
+//-----------------------------------------//
+//  Locks Excluded (le)
+//-----------------------------------------//
 
 #if !__has_attribute(locks_excluded)
 #error "Should support locks_excluded attribute"
@@ -693,10 +981,34 @@ class __attribute__((locks_excluded(mu1))) LeTestClass { // \
     expected-warning {{'locks_excluded' attribute only applies to functions and methods}}
 };
 
+// Check argument parsing.
 
-/***********************************
- *  Exclusive Locks Required (elr)
- ***********************************/
+// legal attribute arguments
+int le_function_1() __attribute__((locks_excluded(muWrapper.mu)));
+int le_function_2() __attribute__((locks_excluded(muDoubleWrapper.muWrapper->mu)));
+int le_function_3() __attribute__((locks_excluded(muWrapper.getMu())));
+int le_function_4() __attribute__((locks_excluded(*muWrapper.getMuPointer())));
+int le_function_5() __attribute__((locks_excluded(&mu1)));
+int le_function_6() __attribute__((locks_excluded(muRef)));
+int le_function_7() __attribute__((locks_excluded(muDoubleWrapper.getWrapper()->getMu())));
+int le_function_8() __attribute__((locks_excluded(muPointer)));
+
+
+// illegal attribute arguments
+int le_function_bad_1() __attribute__((locks_excluded(1))); // \
+  expected-error {{'locks_excluded' attribute requires arguments that are class type or point to class type}}
+int le_function_bad_2() __attribute__((locks_excluded("mu"))); // \
+  expected-error {{'locks_excluded' attribute requires arguments that are class type or point to class type}}
+int le_function_bad_3() __attribute__((locks_excluded(muDoublePointer))); // \
+  expected-error {{'locks_excluded' attribute requires arguments that are class type or point to class type}}
+int le_function_bad_4() __attribute__((locks_excluded(umu))); // \
+  expected-error {{'locks_excluded' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+
+
+
+//-----------------------------------------//
+//  Exclusive Locks Required (elr)
+//-----------------------------------------//
 
 #if !__has_attribute(exclusive_locks_required)
 #error "Should support exclusive_locks_required attribute"
@@ -736,9 +1048,35 @@ class __attribute__((exclusive_locks_required(mu1))) ElrTestClass { // \
     expected-warning {{'exclusive_locks_required' attribute only applies to functions and methods}}
 };
 
-/***********************************
- *  Shared Locks Required (slr)
- ***********************************/
+// Check argument parsing.
+
+// legal attribute arguments
+int elr_function_1() __attribute__((exclusive_locks_required(muWrapper.mu)));
+int elr_function_2() __attribute__((exclusive_locks_required(muDoubleWrapper.muWrapper->mu)));
+int elr_function_3() __attribute__((exclusive_locks_required(muWrapper.getMu())));
+int elr_function_4() __attribute__((exclusive_locks_required(*muWrapper.getMuPointer())));
+int elr_function_5() __attribute__((exclusive_locks_required(&mu1)));
+int elr_function_6() __attribute__((exclusive_locks_required(muRef)));
+int elr_function_7() __attribute__((exclusive_locks_required(muDoubleWrapper.getWrapper()->getMu())));
+int elr_function_8() __attribute__((exclusive_locks_required(muPointer)));
+
+
+// illegal attribute arguments
+int elr_function_bad_1() __attribute__((exclusive_locks_required(1))); // \
+  expected-error {{'exclusive_locks_required' attribute requires arguments that are class type or point to class type}}
+int elr_function_bad_2() __attribute__((exclusive_locks_required("mu"))); // \
+  expected-error {{'exclusive_locks_required' attribute requires arguments that are class type or point to class type}}
+int elr_function_bad_3() __attribute__((exclusive_locks_required(muDoublePointer))); // \
+  expected-error {{'exclusive_locks_required' attribute requires arguments that are class type or point to class type}}
+int elr_function_bad_4() __attribute__((exclusive_locks_required(umu))); // \
+  expected-error {{'exclusive_locks_required' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+
+
+
+
+//-----------------------------------------//
+//  Shared Locks Required (slr)
+//-----------------------------------------//
 
 #if !__has_attribute(shared_locks_required)
 #error "Should support shared_locks_required attribute"
@@ -777,3 +1115,27 @@ class SlrFoo {
 class __attribute__((shared_locks_required(mu1))) SlrTestClass { // \
     expected-warning {{'shared_locks_required' attribute only applies to functions and methods}}
 };
+
+// Check argument parsing.
+
+// legal attribute arguments
+int slr_function_1() __attribute__((shared_locks_required(muWrapper.mu)));
+int slr_function_2() __attribute__((shared_locks_required(muDoubleWrapper.muWrapper->mu)));
+int slr_function_3() __attribute__((shared_locks_required(muWrapper.getMu())));
+int slr_function_4() __attribute__((shared_locks_required(*muWrapper.getMuPointer())));
+int slr_function_5() __attribute__((shared_locks_required(&mu1)));
+int slr_function_6() __attribute__((shared_locks_required(muRef)));
+int slr_function_7() __attribute__((shared_locks_required(muDoubleWrapper.getWrapper()->getMu())));
+int slr_function_8() __attribute__((shared_locks_required(muPointer)));
+
+
+// illegal attribute arguments
+int slr_function_bad_1() __attribute__((shared_locks_required(1))); // \
+  expected-error {{'shared_locks_required' attribute requires arguments that are class type or point to class type}}
+int slr_function_bad_2() __attribute__((shared_locks_required("mu"))); // \
+  expected-error {{'shared_locks_required' attribute requires arguments that are class type or point to class type}}
+int slr_function_bad_3() __attribute__((shared_locks_required(muDoublePointer))); // \
+  expected-error {{'shared_locks_required' attribute requires arguments that are class type or point to class type}}
+int slr_function_bad_4() __attribute__((shared_locks_required(umu))); // \
+  expected-error {{'shared_locks_required' attribute requires arguments whose type is annotated with 'lockable' attribute}}
+

@@ -15,6 +15,7 @@
 #include "TargetAttributesSema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/SourceManager.h"
@@ -27,7 +28,7 @@ using namespace sema;
 
 /// These constants match the enumerated choices of
 /// warn_attribute_wrong_decl_type and err_attribute_wrong_decl_type.
-enum AttributeDeclType {
+enum AttributeDeclKind {
   ExpectedFunction,
   ExpectedUnion,
   ExpectedVariableOrFunction,
@@ -195,6 +196,8 @@ static inline bool isCFStringType(QualType T, ASTContext &Ctx) {
   return RD->getIdentifier() == &Ctx.Idents.get("__CFString");
 }
 
+/// \brief Check if the attribute has exactly as many args as Num. May
+/// output an error.
 static bool checkAttributeNumArgs(Sema &S, const AttributeList &Attr,
                                   unsigned int Num) {
   if (Attr.getNumArgs() != Num) {
@@ -205,28 +208,13 @@ static bool checkAttributeNumArgs(Sema &S, const AttributeList &Attr,
   return true;
 }
 
-///
-/// \brief Check the total number of argumenation, whether parsed by clang
-/// as arguments or parameters. Outputs a warning.
-/// \return false if the number of argumenation units does not match expectation
-///
-static bool checkAttributeNumArgsPlusParams(Sema &S, const AttributeList &Attr,
-                                             unsigned int Num,
-                                             bool moreok = false) {
-  unsigned int numArgsPlusParams = 0;
 
-  if (Attr.getParameterName())
-    numArgsPlusParams++;
-
-  numArgsPlusParams += Attr.getNumArgs();
-
-  if (moreok && numArgsPlusParams < Num) {
+/// \brief Check if the attribute has at least as many args as Num. May
+/// output an error.
+static bool checkAttributeAtLeastNumArgs(Sema &S, const AttributeList &Attr,
+                                  unsigned int Num) {
+  if (Attr.getNumArgs() < Num) {
     S.Diag(Attr.getLoc(), diag::err_attribute_too_few_arguments) << Num;
-    return false;
-  }
-
-  if (!moreok && numArgsPlusParams != Num) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << Num;
     return false;
   }
 
@@ -244,6 +232,12 @@ static bool mayBeSharedVariable(const Decl *D) {
     return (vd->hasGlobalStorage() && !(vd->isThreadSpecified()));
 
   return false;
+}
+
+/// \brief Check if the passed-in expression is of type int or bool.
+static bool isIntOrBool(Expr *Exp) {
+  QualType QT = Exp->getType();
+  return QT->isBooleanType() || QT->isIntegerType();
 }
 
 ///
@@ -265,6 +259,71 @@ static bool checkIsPointer(Sema &S, const Decl *D, const AttributeList &Attr) {
   return false;
 }
 
+/// \brief Checks that the passed in QualType either is of RecordType or points
+/// to RecordType. Returns the relevant RecordType, null if it does not exit.
+const RecordType *getRecordType(QualType QT) {
+    const RecordType *RT = QT->getAs<RecordType>();
+    // now check if we point to record type
+    if(!RT && QT->isPointerType()){
+        QualType PT = QT->getAs<PointerType>()->getPointeeType();
+        RT = PT->getAs<RecordType>();
+    }
+    return RT;
+}
+
+/// \brief Thread Safety Analysis: Checks that all attribute arguments, starting
+/// from Sidx, resolve to a lockable object. May flag an error.
+static bool checkAttrArgsAreLockableObjs(Sema & S, Decl *D,
+                                         const AttributeList & Attr,
+                                         int Sidx = 0,
+                                         bool ParamIdxOk = false) {
+  for(unsigned int Idx = Sidx; Idx < Attr.getNumArgs(); ++Idx) {
+    Expr *ArgExp = Attr.getArg(Idx);
+    if (ArgExp->isTypeDependent())
+      continue;
+
+    QualType Arg_QT = ArgExp->getType();
+
+    // Get record type.
+    // first see if we can just cast to record type, or point to record type
+    const RecordType *RT = getRecordType(Arg_QT);
+
+    // now check if we idx into a record type function param
+    if (!RT && ParamIdxOk) {
+      FunctionDecl *FD = dyn_cast <FunctionDecl>(D);
+      IntegerLiteral *IL = dyn_cast<IntegerLiteral>(ArgExp);
+      if(FD && IL) {
+        unsigned int NumParams = FD->getNumParams();
+        llvm::APInt ArgValue = IL->getValue();
+        uint64_t ParamIdx_from1 = ArgValue.getZExtValue();
+        uint64_t ParamIdx_from0 = ParamIdx_from1 - 1;
+        if(!ArgValue.isStrictlyPositive() || ParamIdx_from1 > NumParams) {
+          S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_range)
+            << Attr.getName() << Idx + 1 << NumParams;
+          return false;
+        }
+        Arg_QT = FD->getParamDecl(ParamIdx_from0)->getType();
+        RT = getRecordType(Arg_QT);
+      }
+    }
+
+    //  Flag error if could not get record type for this argument
+    if (!RT) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_class)
+        << Attr.getName();
+      return false;
+    }
+
+    // Flag error if the type is not lockable
+    if (!RT->getDecl()->getAttr<LockableAttr>()) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_lockable)
+        << Attr.getName();
+      return false;
+    }
+  }
+  return true;
+}
+
 //===----------------------------------------------------------------------===//
 // Attribute Implementations
 //===----------------------------------------------------------------------===//
@@ -283,7 +342,7 @@ static void handleGuardedVarAttr(Sema &S, Decl *D, const AttributeList &Attr,
   // D must be either a member field or global (potentially shared) variable.
   if (!mayBeSharedVariable(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 15; /*fields and global vars*/;
+      << Attr.getName() << ExpectedFieldOrGlobalVar;
     return;
   }
 
@@ -297,20 +356,24 @@ static void handleGuardedVarAttr(Sema &S, Decl *D, const AttributeList &Attr,
 }
 
 static void handleGuardedByAttr(Sema &S, Decl *D, const AttributeList &Attr,
-                                 bool pointer = false) {
+                                bool pointer = false) {
   assert(!Attr.isInvalid());
 
-  if (!checkAttributeNumArgsPlusParams(S, Attr, 1))
+  if (!checkAttributeNumArgs(S, Attr, 1))
     return;
 
   // D must be either a member field or global (potentially shared) variable.
   if (!mayBeSharedVariable(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 15; /*fields and global vars*/;
+      << Attr.getName() << ExpectedFieldOrGlobalVar;
     return;
   }
 
   if (pointer && !checkIsPointer(S, D, Attr))
+    return;
+
+  // check that all arguments are lockable objects
+  if (!checkAttrArgsAreLockableObjs(S, D, Attr))
     return;
 
   if (pointer)
@@ -346,7 +409,7 @@ static void handleNoThreadSafetyAttr(Sema &S, Decl *D,
   if (!checkAttributeNumArgs(S, Attr, 0))
     return;
 
-  if (!isFunction(D)) {
+  if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << ExpectedFunctionOrMethod;
     return;
@@ -360,15 +423,31 @@ static void handleAcquireOrderAttr(Sema &S, Decl *D, const AttributeList &Attr,
                                    bool before) {
   assert(!Attr.isInvalid());
 
-  if (!checkAttributeNumArgsPlusParams(S, Attr, 1, /*moreok=*/true))
+  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
     return;
 
   // D must be either a member field or global (potentially shared) variable.
-  if (!mayBeSharedVariable(D)) {
+  ValueDecl *VD = dyn_cast<ValueDecl>(D);
+  if (!VD || !mayBeSharedVariable(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
-      << Attr.getName() << 15; /*fields and global vars*/;
+      << Attr.getName() << ExpectedFieldOrGlobalVar;
     return;
   }
+
+  // Check that this attribute only applies to lockable types
+  QualType QT = VD->getType();
+  if (!QT->isDependentType()) {
+    const RecordType *RT = getRecordType(QT);
+    if (!RT || !RT->getDecl()->getAttr<LockableAttr>()) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_decl_not_lockable)
+              << Attr.getName();
+      return;
+    }
+  }
+
+  // check that all arguments are lockable objects
+  if (!checkAttrArgsAreLockableObjs(S, D, Attr))
+    return;
 
   if (before)
     D->addAttr(::new (S.Context) AcquiredBeforeAttr(Attr.getLoc(), S.Context));
@@ -377,16 +456,21 @@ static void handleAcquireOrderAttr(Sema &S, Decl *D, const AttributeList &Attr,
 }
 
 static void handleLockFunAttr(Sema &S, Decl *D, const AttributeList &Attr,
-                                   bool exclusive = false) {
+                              bool exclusive = false) {
   assert(!Attr.isInvalid());
 
   // zero or more arguments ok
 
-  if (!isFunction(D)) {
+  // check that the attribute is applied to a function
+  if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << ExpectedFunctionOrMethod;
     return;
   }
+
+  // check that all arguments are lockable objects
+  if (!checkAttrArgsAreLockableObjs(S, D, Attr, 0, /*ParamIdxOk=*/true))
+    return;
 
   if (exclusive)
     D->addAttr(::new (S.Context) ExclusiveLockFunctionAttr(Attr.getLoc(),
@@ -397,92 +481,117 @@ static void handleLockFunAttr(Sema &S, Decl *D, const AttributeList &Attr,
 }
 
 static void handleTrylockFunAttr(Sema &S, Decl *D, const AttributeList &Attr,
-                                      bool exclusive = false) {
+                                 bool exclusive = false) {
   assert(!Attr.isInvalid());
 
-  if (!checkAttributeNumArgsPlusParams(S, Attr, 1, /*moreok=*/true))
+  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
     return;
 
-  if (!isFunction(D)) {
+
+  if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << ExpectedFunctionOrMethod;
     return;
   }
+
+  if (!isIntOrBool(Attr.getArg(0))) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_first_argument_not_int_or_bool)
+        << Attr.getName();
+    return;
+  }
+
+  // check that all arguments are lockable objects
+  if (!checkAttrArgsAreLockableObjs(S, D, Attr, 1))
+    return;
 
   if (exclusive)
     D->addAttr(::new (S.Context) ExclusiveTrylockFunctionAttr(Attr.getLoc(),
-                                                           S.Context));
+                                                              S.Context));
   else
     D->addAttr(::new (S.Context) SharedTrylockFunctionAttr(Attr.getLoc(),
-                                                        S.Context));
-
+                                                           S.Context));
 }
 
 static void handleLocksRequiredAttr(Sema &S, Decl *D, const AttributeList &Attr,
-                                   bool exclusive = false) {
+                                    bool exclusive = false) {
   assert(!Attr.isInvalid());
 
-  if (!checkAttributeNumArgsPlusParams(S, Attr, 1, /*moreok=*/true))
+  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
     return;
 
-  if (!isFunction(D)) {
+  if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << ExpectedFunctionOrMethod;
     return;
   }
 
+  // check that all arguments are lockable objects
+  if (!checkAttrArgsAreLockableObjs(S, D, Attr))
+    return;
+
   if (exclusive)
     D->addAttr(::new (S.Context) ExclusiveLocksRequiredAttr(Attr.getLoc(),
-                                                           S.Context));
+                                                            S.Context));
   else
     D->addAttr(::new (S.Context) SharedLocksRequiredAttr(Attr.getLoc(),
-                                                        S.Context));
+                                                         S.Context));
 }
 
-
 static void handleUnlockFunAttr(Sema &S, Decl *D,
-                                     const AttributeList &Attr) {
+                                const AttributeList &Attr) {
   assert(!Attr.isInvalid());
 
   // zero or more arguments ok
 
-  if (!isFunction(D)) {
+  if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << ExpectedFunctionOrMethod;
     return;
   }
+
+  // check that all arguments are lockable objects
+  if (!checkAttrArgsAreLockableObjs(S, D, Attr, 0, /*ParamIdxOk=*/true))
+    return;
 
   D->addAttr(::new (S.Context) UnlockFunctionAttr(Attr.getLoc(), S.Context));
 }
 
 static void handleLockReturnedAttr(Sema &S, Decl *D,
-                                     const AttributeList &Attr) {
+                                   const AttributeList &Attr) {
   assert(!Attr.isInvalid());
 
-  if (!checkAttributeNumArgsPlusParams(S, Attr, 1))
+  if (!checkAttributeNumArgs(S, Attr, 1))
     return;
 
-  if (!isFunction(D)) {
+  if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << ExpectedFunctionOrMethod;
     return;
   }
+
+  // check that all arguments are lockable objects
+  if (!checkAttrArgsAreLockableObjs(S, D, Attr))
+    return;
 
   D->addAttr(::new (S.Context) LockReturnedAttr(Attr.getLoc(), S.Context));
 }
 
 static void handleLocksExcludedAttr(Sema &S, Decl *D,
-                                     const AttributeList &Attr) {
+                                    const AttributeList &Attr) {
   assert(!Attr.isInvalid());
 
-  if (!checkAttributeNumArgsPlusParams(S, Attr, 1, /*moreok=*/true))
+  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
     return;
 
-  if (!isFunction(D)) {
+  if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
       << Attr.getName() << ExpectedFunctionOrMethod;
     return;
   }
+
+  // check that all arguments are lockable objects
+  if (!checkAttrArgsAreLockableObjs(S, D, Attr))
+    return;
 
   D->addAttr(::new (S.Context) LocksExcludedAttr(Attr.getLoc(), S.Context));
 }

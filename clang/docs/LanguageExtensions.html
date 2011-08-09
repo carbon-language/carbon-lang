@@ -1164,12 +1164,12 @@ specify that the pointer must be dereferenced while holding some lock.</p>
 <h4 id="ts_guardedby">guarded_by(l)</h4>
 
 <p>Use <tt>__attribute__((guarded_by(l)))</tt> on a variable declaration to 
-specify that the variable must be accessed while holding lock l.</p>
+specify that the variable must be accessed while holding lock <tt>l</tt>.</p>
 
 <h4 id="ts_ptguardedby">pt_guarded_by(l)</h4>
 
 <p>Use <tt>__attribute__((pt_guarded_by(l)))</tt> on a pointer declaration to 
-specify that the pointer must be dereferenced while holding lock l.</p>
+specify that the pointer must be dereferenced while holding lock <tt>l</tt>.</p>
 
 <h4 id="ts_acquiredbefore">acquired_before(...)</h4>
 
@@ -1189,67 +1189,62 @@ least one argument.</p>
 
 <p>Use <tt>__attribute__((exclusive_lock_function(...)))</tt> on a function 
 declaration to specify that the function acquires all listed locks 
-exclusively. This attribute takes zero or more 
-arguments: either of lockable type or integers indexing into 
-function parameters of lockable type. If no arguments are given, the acquired 
-lock is implicitly <tt>this</tt> of the enclosing object.</p>
+exclusively. This attribute takes zero or more arguments: either of lockable 
+type or integers indexing into function parameters of lockable type. If no 
+arguments are given, the acquired lock is implicitly <tt>this</tt> of the 
+enclosing object.</p>
 
 <h4 id="ts_slf">shared_lock_function(...)</h4>
 
 <p>Use <tt>__attribute__((shared_lock_function(...)))</tt> on a function 
 declaration to specify that the function acquires all listed locks, although
- the locks may be shared (e.g. read locks). 
-This attribute takes zero or more 
-arguments: either of lockable type or integers indexing into 
-function parameters of lockable type. If no arguments are given, the acquired 
-lock is implicitly <tt>this</tt> of the enclosing object.</p>
+ the locks may be shared (e.g. read locks). This attribute takes zero or more 
+arguments: either of lockable type or integers indexing into function 
+parameters of lockable type. If no arguments are given, the acquired lock is 
+implicitly <tt>this</tt> of the enclosing object.</p>
 
 <h4 id="ts_etf">exclusive_trylock_function(...)</h4>
 
 <p>Use <tt>__attribute__((exclusive_lock_function(...)))</tt> on a function 
 declaration to specify that the function will try (without blocking) to acquire
-all listed locks exclusively. This attribute takes one or more 
-arguments. The first argument is an integer or boolean value specifying the 
-return value of a successful lock acquisition. The remaining arugments are 
-either of lockable type or integers indexing into 
-function parameters of lockable type. If only one argument is given, the 
-acquired lock is implicitly <tt>this</tt> of the enclosing object.</p>
+all listed locks exclusively. This attribute takes one or more arguments. The 
+first argument is an integer or boolean value specifying the return value of a 
+successful lock acquisition. The remaining arugments are either of lockable type 
+or integers indexing into function parameters of lockable type. If only one 
+argument is given, the acquired lock is implicitly <tt>this</tt> of the 
+enclosing object.</p>
 
 <h4 id="ts_stf">shared_trylock_function(...)</h4>
 
 <p>Use <tt>__attribute__((shared_lock_function(...)))</tt> on a function 
 declaration to specify that the function will try (without blocking) to acquire
-all listed locks, although
- the locks may be shared (e.g. read locks). 
-This attribute takes one or more 
-arguments. The first argument is an integer or boolean value specifying the 
-return value of a successful lock acquisition. The remaining arugments are 
-either of lockable type or integers indexing into 
+all listed locks, although the locks may be shared (e.g. read locks). This 
+attribute takes one or more arguments. The first argument is an integer or 
+boolean value specifying the return value of a successful lock acquisition. The 
+remaining arugments are either of lockable type or integers indexing into 
 function parameters of lockable type. If only one argument is given, the 
 acquired lock is implicitly <tt>this</tt> of the enclosing object.</p>
 
 <h4 id="ts_uf">unlock_function(...)</h4>
 
 <p>Use <tt>__attribute__((unlock_function(...)))</tt> on a function 
-declaration to specify that the function release all listed locks.
- This attribute takes zero or more 
-arguments: either of lockable type or integers indexing into 
-function parameters of lockable type. If no arguments are given, the acquired 
-lock is implicitly <tt>this</tt> of the enclosing object.</p>
+declaration to specify that the function release all listed locks. This 
+attribute takes zero or more arguments: either of lockable type or integers 
+indexing into function parameters of lockable type. If no arguments are given, 
+the acquired lock is implicitly <tt>this</tt> of the enclosing object.</p>
 
 <h4 id="ts_lr">lock_returned(l)</h4>
 
 <p>Use <tt>__attribute__((lock_returned(l)))</tt> on a function 
-declaration to specify that the function returns lock l (l must be of lockable 
-type). This annotation is used
-to aid in resolving lock expressions.</p>
+declaration to specify that the function returns lock <tt>l</tt> (<tt>l</tt> 
+must be of lockable type). This annotation is used to aid in resolving lock 
+expressions.</p>
 
 <h4 id="ts_le">locks_excluded(...)</h4>
 
 <p>Use <tt>__attribute__((locks_excluded(...)))</tt> on a function declaration 
-to specify that the function must not be called with the listed locks. 
-Arguments must be lockable type, and there must be at 
-least one argument.</p>
+to specify that the function must not be called with the listed locks. Arguments 
+must be lockable type, and there must be at least one argument.</p>
 
 <h4 id="ts_elr">exclusive_locks_required(...)</h4>
 

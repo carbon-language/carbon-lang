@@ -274,6 +274,9 @@ def Most : DiagGroup<"most", [
     OverloadedVirtual
  ]>;
 
+// Thread Safety warnings 
+def : DiagGroup<"thread-safety">;
+
 // -Wall is -Wmost -Wparentheses
 def : DiagGroup<"all", [Most, Parentheses]>;
 
