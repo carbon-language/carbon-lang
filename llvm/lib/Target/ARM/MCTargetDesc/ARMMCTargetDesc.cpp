@@ -165,11 +165,6 @@ namespace {
 class ARMMCInstrAnalysis : public MCInstrAnalysis {
 public:
   ARMMCInstrAnalysis(const MCInstrInfo *Info) : MCInstrAnalysis(Info) {}
-  virtual bool isBranch(const MCInst &Inst) const {
-    // Don't flag "bx lr" as a branch.
-    return MCInstrAnalysis::isBranch(Inst) && (Inst.getOpcode() != ARM::BX ||
-           Inst.getOperand(0).getReg() != ARM::LR);
-  }
 
   virtual bool isUnconditionalBranch(const MCInst &Inst) const {
     // BCCs with the "always" predicate are unconditional branches.
@@ -183,11 +178,6 @@ public:
     if (Inst.getOpcode() == ARM::Bcc && Inst.getOperand(1).getImm()==ARMCC::AL)
       return false;
     return MCInstrAnalysis::isConditionalBranch(Inst);
-  }
-
-  virtual bool isReturn(const MCInst &Inst) const {
-    // Recognize "bx lr" as return.
-    return Inst.getOpcode() == ARM::BX && Inst.getOperand(0).getReg()==ARM::LR;
   }
 
   uint64_t evaluateBranch(const MCInst &Inst, uint64_t Addr,
