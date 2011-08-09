@@ -50,6 +50,22 @@ public:
     friend class ModuleList;
     friend bool ObjectFile::SetModulesArchitecture (const ArchSpec &new_arch);
 
+	// Static functions that can track the lifetime of moodule objects.
+	// This is handy because we might have Module objects that are in
+	// shared pointers that aren't in the global module list (from 
+	// ModuleList). If this is the case we need to know about it.
+    // The modules in the global list maintained by these functions
+    // can be viewed using the "target modules list" command using the
+    // "--global" (-g for short).
+    static size_t
+    GetNumberAllocatedModules ();
+    
+    static Module *
+    GetAllocatedModuleAtIndex (size_t idx);
+
+    static Mutex &
+    GetAllocationModuleCollectionMutex();
+
     //------------------------------------------------------------------
     /// Construct with file specification and architecture.
     ///

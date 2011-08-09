@@ -20,6 +20,45 @@
 using namespace lldb;
 using namespace lldb_private;
 
+// Shared pointers to modules track module lifetimes in
+// targets and in the global module, but this collection
+// will track all module objects that are still alive
+typedef std::vector<Module *> ModuleCollection;
+
+static ModuleCollection &
+GetModuleCollection()
+{
+    static ModuleCollection g_module_collection;
+    return g_module_collection;
+}
+
+Mutex &
+Module::GetAllocationModuleCollectionMutex()
+{
+    static Mutex g_module_collection_mutex(Mutex::eMutexTypeRecursive);
+    return g_module_collection_mutex;    
+}
+
+size_t
+Module::GetNumberAllocatedModules ()
+{
+    Mutex::Locker locker (GetAllocationModuleCollectionMutex());
+    return GetModuleCollection().size();
+}
+
+Module *
+Module::GetAllocatedModuleAtIndex (size_t idx)
+{
+    Mutex::Locker locker (GetAllocationModuleCollectionMutex());
+    ModuleCollection &modules = GetModuleCollection();
+    if (idx < modules.size())
+        return modules[idx];
+    return NULL;
+}
+
+
+    
+
 Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstString *object_name, off_t object_offset) :
     m_mutex (Mutex::eMutexTypeRecursive),
     m_mod_time (file_spec.GetModificationTime()),
@@ -38,6 +77,12 @@ Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstStrin
     m_did_init_ast (false),
     m_is_dynamic_loader_module (false)
 {
+    // Scope for locker below...
+    {
+        Mutex::Locker locker (GetAllocationModuleCollectionMutex());
+        GetModuleCollection().push_back(this);
+    }
+
     if (object_name)
         m_object_name = *object_name;
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
@@ -54,6 +99,15 @@ Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstStrin
 
 Module::~Module()
 {
+    // Scope for locker below...
+    {
+        Mutex::Locker locker (GetAllocationModuleCollectionMutex());
+        ModuleCollection &modules = GetModuleCollection();
+        ModuleCollection::iterator end = modules.end();
+        ModuleCollection::iterator pos = std::find(modules.begin(), end, this);
+        if (pos != end)
+            modules.erase(pos);
+    }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Module::~Module((%s) '%s/%s%s%s%s')",

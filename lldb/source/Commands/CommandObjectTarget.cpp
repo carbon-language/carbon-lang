@@ -2467,8 +2467,8 @@ public:
     public:
         
         CommandOptions (CommandInterpreter &interpreter) :
-        Options(interpreter),
-        m_format_array()
+            Options(interpreter),
+            m_format_array()
         {
         }
         
@@ -2481,10 +2481,17 @@ public:
         SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             char short_option = (char) m_getopt_table[option_idx].val;
-            uint32_t width = 0;
-            if (option_arg)
-                width = strtoul (option_arg, NULL, 0);
-            m_format_array.push_back(std::make_pair(short_option, width));
+            if (short_option == 'g')
+            {
+                m_use_global_module_list = true;
+            }
+            else
+            {
+                uint32_t width = 0;
+                if (option_arg)
+                    width = strtoul (option_arg, NULL, 0);
+                m_format_array.push_back(std::make_pair(short_option, width));
+            }
             Error error;
             return error;
         }
@@ -2493,6 +2500,7 @@ public:
         OptionParsingStarting ()
         {
             m_format_array.clear();
+            m_use_global_module_list = false;
         }
         
         const OptionDefinition*
@@ -2508,6 +2516,7 @@ public:
         // Instance variables to hold the values for command options.
         typedef std::vector< std::pair<char, uint32_t> > FormatWidthCollection;
         FormatWidthCollection m_format_array;
+        bool m_use_global_module_list;
     };
     
     CommandObjectTargetModulesList (CommandInterpreter &interpreter) :
@@ -2548,15 +2557,35 @@ public:
             result.GetOutputStream().SetAddressByteSize(addr_byte_size);
             result.GetErrorStream().SetAddressByteSize(addr_byte_size);
             // Dump all sections for all modules images
-            const uint32_t num_modules = target->GetImages().GetSize();
+            uint32_t num_modules = 0;
+            Mutex::Locker locker;
+            if (m_options.m_use_global_module_list)
+            {
+                locker.Reset (Module::GetAllocationModuleCollectionMutex().GetMutex());
+                num_modules = Module::GetNumberAllocatedModules();
+            }
+            else
+                num_modules = target->GetImages().GetSize();
+
             if (num_modules > 0)
             {
                 Stream &strm = result.GetOutputStream();
                 
                 for (uint32_t image_idx = 0; image_idx<num_modules; ++image_idx)
                 {
-                    Module *module = target->GetImages().GetModulePointerAtIndex(image_idx);
-                    strm.Printf("[%3u] ", image_idx);
+                    Module *module;
+                    if (m_options.m_use_global_module_list)
+                    {
+                        module = Module::GetAllocatedModuleAtIndex(image_idx);
+                        ModuleSP module_sp(module->GetSP());
+                        // Show the module reference count when showing the global module index
+                        strm.Printf("[%3u] ref_count = %lu ", image_idx, module_sp ? module_sp.use_count() - 1 : 0);
+                    }
+                    else
+                    {
+                        module = target->GetImages().GetModulePointerAtIndex(image_idx);
+                        strm.Printf("[%3u] ", image_idx);
+                    }
                     
                     bool dump_object_name = false;
                     if (m_options.m_format_array.empty())
@@ -2663,6 +2692,7 @@ CommandObjectTargetModulesList::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_1, false, "basename",   'b', optional_argument, NULL, 0, eArgTypeWidth,   "Display the basename with optional width for the image object file."},
     { LLDB_OPT_SET_1, false, "symfile",    's', optional_argument, NULL, 0, eArgTypeWidth,   "Display the fullpath to the image symbol file with optional width."},
     { LLDB_OPT_SET_1, false, "symfile-basename", 'S', optional_argument, NULL, 0, eArgTypeWidth,   "Display the basename to the image symbol file with optional width."},
+    { LLDB_OPT_SET_1, false, "global",     'g', no_argument,       NULL, 0, eArgTypeNone,    "Display the modules from the global module list, not just the current target."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
