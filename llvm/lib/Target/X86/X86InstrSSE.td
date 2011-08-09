@@ -3305,6 +3305,11 @@ def CVTPD2DQrm  : S3DI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
 def CVTPD2DQrr  : S3DI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtpd2dq\t{$src, $dst|$dst, $src}", []>;
 
+def : Pat<(v4i32 (fp_to_sint (v4f64 VR256:$src))),
+          (VCVTPD2DQYrr VR256:$src)>;
+def : Pat<(v4i32 (fp_to_sint (memopv4f64 addr:$src))),
+          (VCVTPD2DQYrm addr:$src)>;
+
 // Convert Packed DW Integers to Packed Double FP
 let Predicates = [HasAVX] in {
 def VCVTDQ2PDrm  : S3SI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
@@ -3332,6 +3337,11 @@ def : Pat<(int_x86_avx_cvt_pd2dq_256 VR256:$src),
           (VCVTPD2DQYrr VR256:$src)>;
 def : Pat<(int_x86_avx_cvt_pd2dq_256 (memopv4f64 addr:$src)),
           (VCVTPD2DQYrm addr:$src)>;
+
+def : Pat<(v4f64 (sint_to_fp (v4i32 VR128:$src))),
+          (VCVTDQ2PDYrr VR128:$src)>;
+def : Pat<(v4f64 (sint_to_fp (memopv4i32 addr:$src))),
+          (VCVTDQ2PDYrm addr:$src)>;
 
 //===---------------------------------------------------------------------===//
 // SSE3 - Move Instructions

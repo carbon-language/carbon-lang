@@ -12,6 +12,18 @@ define <8 x i32> @fptosi00(<8 x float> %a) nounwind {
   ret <8 x i32> %b
 }
 
+; CHECK: vcvtdq2pd %xmm
+define <4 x double> @sitofp01(<4 x i32> %a) {
+  %b = sitofp <4 x i32> %a to <4 x double>
+  ret <4 x double> %b
+}
+
+; CHECK: vcvtpd2dqy %ymm
+define <4 x i32> @fptosi01(<4 x double> %a) {
+  %b = fptosi <4 x double> %a to <4 x i32>
+  ret <4 x i32> %b
+}
+
 ; CHECK: vcvtpd2psy %ymm
 ; CHECK-NEXT: vcvtpd2psy %ymm
 ; CHECK-NEXT: vinsertf128 $1
