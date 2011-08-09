@@ -82,14 +82,17 @@ def t_imm_s4 : Operand<i32> {
 let OperandType = "OPERAND_PCREL" in {
 def t_brtarget : Operand<OtherVT> {
   let EncoderMethod = "getThumbBRTargetOpValue";
+  let DecoderMethod = "DecodeThumbBROperand";
 }
 
 def t_bcctarget : Operand<i32> {
   let EncoderMethod = "getThumbBCCTargetOpValue";
+  let DecoderMethod = "DecodeThumbBCCTargetOperand";
 }
 
 def t_cbtarget : Operand<i32> {
   let EncoderMethod = "getThumbCBTargetOpValue";
+  let DecoderMethod = "DecodeThumbCmpBROperand";
 }
 
 def t_bltarget : Operand<i32> {
@@ -119,12 +122,14 @@ def t_addrmode_rrs1 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectThumbAddrModeRI5S1", []> {
   let EncoderMethod = "getThumbAddrModeRegRegOpValue";
   let PrintMethod = "printThumbAddrModeRROperand";
+  let DecoderMethod = "DecodeThumbAddrModeRR";
   let ParserMatchClass = t_addrmode_rr_asm_operand;
   let MIOperandInfo = (ops tGPR:$base, tGPR:$offsreg);
 }
 def t_addrmode_rrs2 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectThumbAddrModeRI5S2", []> {
   let EncoderMethod = "getThumbAddrModeRegRegOpValue";
+  let DecoderMethod = "DecodeThumbAddrModeRR";
   let PrintMethod = "printThumbAddrModeRROperand";
   let ParserMatchClass = t_addrmode_rr_asm_operand;
   let MIOperandInfo = (ops tGPR:$base, tGPR:$offsreg);
@@ -132,6 +137,7 @@ def t_addrmode_rrs2 : Operand<i32>,
 def t_addrmode_rrs4 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectThumbAddrModeRI5S4", []> {
   let EncoderMethod = "getThumbAddrModeRegRegOpValue";
+  let DecoderMethod = "DecodeThumbAddrModeRR";
   let PrintMethod = "printThumbAddrModeRROperand";
   let ParserMatchClass = t_addrmode_rr_asm_operand;
   let MIOperandInfo = (ops tGPR:$base, tGPR:$offsreg);
@@ -142,6 +148,7 @@ def t_addrmode_rrs4 : Operand<i32>,
 def t_addrmode_is4 : Operand<i32>,
                      ComplexPattern<i32, 2, "SelectThumbAddrModeImm5S4", []> {
   let EncoderMethod = "getAddrModeISOpValue";
+  let DecoderMethod = "DecodeThumbAddrModeIS";
   let PrintMethod = "printThumbAddrModeImm5S4Operand";
   let MIOperandInfo = (ops tGPR:$base, i32imm:$offsimm);
 }
@@ -151,6 +158,7 @@ def t_addrmode_is4 : Operand<i32>,
 def t_addrmode_is2 : Operand<i32>,
                      ComplexPattern<i32, 2, "SelectThumbAddrModeImm5S2", []> {
   let EncoderMethod = "getAddrModeISOpValue";
+  let DecoderMethod = "DecodeThumbAddrModeIS";
   let PrintMethod = "printThumbAddrModeImm5S2Operand";
   let MIOperandInfo = (ops tGPR:$base, i32imm:$offsimm);
 }
@@ -160,6 +168,7 @@ def t_addrmode_is2 : Operand<i32>,
 def t_addrmode_is1 : Operand<i32>,
                      ComplexPattern<i32, 2, "SelectThumbAddrModeImm5S1", []> {
   let EncoderMethod = "getAddrModeISOpValue";
+  let DecoderMethod = "DecodeThumbAddrModeIS";
   let PrintMethod = "printThumbAddrModeImm5S1Operand";
   let MIOperandInfo = (ops tGPR:$base, i32imm:$offsimm);
 }
@@ -178,6 +187,7 @@ def t_addrmode_sp : Operand<i32>,
 //
 def t_addrmode_pc : Operand<i32> {
   let EncoderMethod = "getAddrModePCOpValue";
+  let DecoderMethod = "DecodeThumbAddrModePC";
 }
 
 //===----------------------------------------------------------------------===//
@@ -259,6 +269,7 @@ def tCPS : T1I<(outs), (ins imod_op:$imod, iflags_op:$iflags),
   let Inst{4}   = imod;
   let Inst{3}   = 0;
   let Inst{2-0} = iflags;
+  let DecoderMethod = "DecodeThumbCPS";
 }
 
 // For both thumb1 and thumb2.
@@ -270,17 +281,6 @@ def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp), IIC_iALUr, "",
   bits<3> dst;
   let Inst{6-3} = 0b1111; // Rm = pc
   let Inst{2-0} = dst;
-}
-
-// PC relative add (ADR).
-def tADDrPCi : T1I<(outs tGPR:$dst), (ins t_imm_s4:$rhs), IIC_iALUi,
-                   "add\t$dst, pc, $rhs", []>,
-               T1Encoding<{1,0,1,0,0,?}> {
-  // A6.2 & A8.6.10
-  bits<3> dst;
-  bits<8> rhs;
-  let Inst{10-8} = dst;
-  let Inst{7-0}  = rhs;
 }
 
 // ADD <Rd>, sp, #<imm8>
@@ -295,6 +295,7 @@ def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, t_imm_s4:$rhs), IIC_iALUi,
   bits<8> rhs;
   let Inst{10-8} = dst;
   let Inst{7-0}  = rhs;
+  let DecoderMethod = "DecodeThumbAddSpecialReg";
 }
 
 // ADD sp, sp, #<imm7>
@@ -304,6 +305,7 @@ def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs), IIC_iALUi,
   // A6.2.5 & A8.6.8
   bits<7> rhs;
   let Inst{6-0} = rhs;
+  let DecoderMethod = "DecodeThumbAddSPImm";
 }
 
 // SUB sp, sp, #<imm7>
@@ -314,6 +316,7 @@ def tSUBspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, t_imm_s4:$rhs), IIC_iALUi,
   // A6.2.5 & A8.6.214
   bits<7> rhs;
   let Inst{6-0} = rhs;
+  let DecoderMethod = "DecodeThumbAddSPImm";
 }
 
 // ADD <Rm>, sp
@@ -325,6 +328,7 @@ def tADDrSP : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
   let Inst{7}   = dst{3};
   let Inst{6-3} = 0b1101;
   let Inst{2-0} = dst{2-0};
+  let DecoderMethod = "DecodeThumbAddSPReg";
 }
 
 // ADD sp, <Rm>
@@ -336,6 +340,7 @@ def tADDspr : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
   let Inst{7} = 1;
   let Inst{6-3} = dst;
   let Inst{2-0} = 0b101;
+  let DecoderMethod = "DecodeThumbAddSPReg";
 }
 
 //===----------------------------------------------------------------------===//
@@ -1189,6 +1194,7 @@ def tADR : T1I<(outs tGPR:$Rd), (ins t_adrlabel:$addr, pred:$p),
   bits<8> addr;
   let Inst{10-8} = Rd;
   let Inst{7-0} = addr;
+  let DecoderMethod = "DecodeThumbAddSpecialReg";
 }
 
 let neverHasSideEffects = 1, isReMaterializable = 1 in

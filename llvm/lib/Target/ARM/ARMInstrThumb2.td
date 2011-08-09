@@ -50,6 +50,7 @@ def t2_so_imm : Operand<i32>, ImmLeaf<i32, [{
   }]> {
   let ParserMatchClass = t2_so_imm_asmoperand;
   let EncoderMethod = "getT2SOImmOpValue";
+  let DecoderMethod = "DecodeT2SOImm";
 }
 
 // t2_so_imm_not - Match an immediate that is a complement
@@ -100,6 +101,7 @@ def t2addrmode_imm12 : Operand<i32>,
                        ComplexPattern<i32, 2, "SelectT2AddrModeImm12", []> {
   let PrintMethod = "printAddrModeImm12Operand";
   let EncoderMethod = "getAddrModeImm12OpValue";
+  let DecoderMethod = "DecodeT2AddrModeImm12";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
@@ -121,6 +123,7 @@ def t2addrmode_imm8 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectT2AddrModeImm8", []> {
   let PrintMethod = "printT2AddrModeImm8Operand";
   let EncoderMethod = "getT2AddrModeImm8OpValue";
+  let DecoderMethod = "DecodeT2AddrModeImm8";
   let ParserMatchClass = MemImm8OffsetAsmOperand;
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
@@ -130,12 +133,14 @@ def t2am_imm8_offset : Operand<i32>,
                                       [], [SDNPWantRoot]> {
   let PrintMethod = "printT2AddrModeImm8OffsetOperand";
   let EncoderMethod = "getT2AddrModeImm8OffsetOpValue";
+  let DecoderMethod = "DecodeT2Imm8";
 }
 
 // t2addrmode_imm8s4  := reg +/- (imm8 << 2)
 def t2addrmode_imm8s4 : Operand<i32> {
   let PrintMethod = "printT2AddrModeImm8s4Operand";
   let EncoderMethod = "getT2AddrModeImm8s4OpValue";
+  let DecoderMethod = "DecodeT2AddrModeImm8s4";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
@@ -149,6 +154,7 @@ def t2addrmode_so_reg : Operand<i32>,
                         ComplexPattern<i32, 3, "SelectT2AddrModeSoReg", []> {
   let PrintMethod = "printT2AddrModeSoRegOperand";
   let EncoderMethod = "getT2AddrModeSORegOpValue";
+  let DecoderMethod = "DecodeT2AddrModeSOReg";
   let MIOperandInfo = (ops GPR:$base, rGPR:$offsreg, i32imm:$offsimm);
 }
 
@@ -158,6 +164,7 @@ def t2addrmode_so_reg : Operand<i32>,
 //
 def t2addrmode_reg : Operand<i32> {
   let PrintMethod = "printAddrMode7Operand";
+  let DecoderMethod = "DecodeGPRRegisterClass";
   let MIOperandInfo = (ops GPR);
 }
 
@@ -892,6 +899,8 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{19-16} = addr{9-6}; // Rn
     let Inst{3-0}   = addr{5-2}; // Rm
     let Inst{5-4}   = addr{1-0}; // imm
+
+    let DecoderMethod = "DecodeT2LoadShift";
   }
 
   // FIXME: Is the pci variant actually needed?
@@ -1430,6 +1439,8 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     let Inst{19-16} = addr{9-6}; // Rn
     let Inst{3-0}   = addr{5-2}; // Rm
     let Inst{5-4}   = addr{1-0}; // imm2
+
+    let DecoderMethod = "DecodeT2LoadShift";
   }
 }
 
@@ -2994,6 +3005,8 @@ def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
   let Inst{13} = target{18};
   let Inst{21-16} = target{17-12};
   let Inst{10-0} = target{11-1};
+
+  let DecoderMethod = "DecodeThumb2BCCInstruction";
 }
 
 // Tail calls. The Darwin version of thumb tail calls uses a t2 branch, so

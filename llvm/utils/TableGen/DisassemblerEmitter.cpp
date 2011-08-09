@@ -128,12 +128,5 @@ void DisassemblerEmitter::run(raw_ostream &OS) {
     return;
   }
 
-  // Fixed-instruction-length targets use a common disassembler.
-  // ARM use its own implementation for now.
-  if (Target.getName() == "ARM") {
-    ARMDecoderEmitter(Records).run(OS);
-    return;
-  }  
-
   FixedLenDecoderEmitter(Records).run(OS);
 }

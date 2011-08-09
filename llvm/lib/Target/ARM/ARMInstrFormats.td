@@ -152,6 +152,7 @@ def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
                                      (ops (i32 14), (i32 zero_reg))> {
   let PrintMethod = "printPredicateOperand";
   let ParserMatchClass = CondCodeOperand;
+	let DecoderMethod = "DecodePredicateOperand";
 }
 
 // Conditional code result for instructions whose 's' bit is set, e.g. subs.
@@ -160,6 +161,7 @@ def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
   let EncoderMethod = "getCCOutOpValue";
   let PrintMethod = "printSBitModifierOperand";
   let ParserMatchClass = CCOutOperand;
+	let DecoderMethod = "DecodeCCOutOperand";
 }
 
 // Same as cc_out except it defaults to setting CPSR.
@@ -167,6 +169,7 @@ def s_cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 CPSR))> {
   let EncoderMethod = "getCCOutOpValue";
   let PrintMethod = "printSBitModifierOperand";
   let ParserMatchClass = CCOutOperand;
+	let DecoderMethod = "DecodeCCOutOperand";
 }
 
 // ARM special operands for disassembly only.
@@ -199,15 +202,19 @@ def msr_mask : Operand<i32> {
 //     64       64 - <imm> is encoded in imm6<5:0>
 def shr_imm8  : Operand<i32> {
   let EncoderMethod = "getShiftRight8Imm";
+  let DecoderMethod = "DecodeShiftRight8Imm";
 }
 def shr_imm16 : Operand<i32> {
   let EncoderMethod = "getShiftRight16Imm";
+  let DecoderMethod = "DecodeShiftRight16Imm";
 }
 def shr_imm32 : Operand<i32> {
   let EncoderMethod = "getShiftRight32Imm";
+  let DecoderMethod = "DecodeShiftRight32Imm";
 }
 def shr_imm64 : Operand<i32> {
   let EncoderMethod = "getShiftRight64Imm";
+  let DecoderMethod = "DecodeShiftRight64Imm";
 }
 
 //===----------------------------------------------------------------------===//
@@ -579,6 +586,8 @@ class AI3ld<bits<4> op, bit op20, dag oops, dag iops, Format f,
   let Inst{11-8}  = addr{7-4};    // imm7_4/zero
   let Inst{7-4}   = op;
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
+
+  let DecoderMethod = "DecodeAddrMode3Instruction";
 }
 
 class AI3ldstidx<bits<4> op, bit op20, bit isLd, bit isPre, dag oops, dag iops,
@@ -1265,6 +1274,7 @@ class VFPI<dag oops, dag iops, AddrMode am, int sz,
   let AsmString = !strconcat(opc, "${p}", asm);
   let Pattern = pattern;
   let PostEncoderMethod = "VFPThumb2PostEncoder";
+  let DecoderNamespace = "VFP";
   list<Predicate> Predicates = [HasVFP2];
 }
 
@@ -1280,6 +1290,7 @@ class VFPXI<dag oops, dag iops, AddrMode am, int sz,
   let AsmString = asm;
   let Pattern = pattern;
   let PostEncoderMethod = "VFPThumb2PostEncoder";
+  let DecoderNamespace = "VFP";
   list<Predicate> Predicates = [HasVFP2];
 }
 
@@ -1597,6 +1608,7 @@ class NeonI<dag oops, dag iops, AddrMode am, IndexMode im, Format f,
   let AsmString = !strconcat(opc, "${p}", ".", dt, "\t", asm);
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
+  let DecoderNamespace = "NEON";
 }
 
 // Same as NeonI except it does not have a "data type" specifier.
@@ -1609,6 +1621,7 @@ class NeonXI<dag oops, dag iops, AddrMode am, IndexMode im, Format f,
   let AsmString = !strconcat(opc, "${p}", "\t", asm);
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
+  let DecoderNamespace = "NEON";
 }
 
 class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
@@ -1700,6 +1713,7 @@ class N1ModImm<bit op23, bits<3> op21_19, bits<4> op11_8, bit op7, bit op6,
   let Inst{24}    = SIMM{7};
   let Inst{18-16} = SIMM{6-4};
   let Inst{3-0}   = SIMM{3-0};
+  let DecoderMethod = "DecodeNEONModImmInstruction";
 }
 
 // NEON 2 vector register format.

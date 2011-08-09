@@ -17,15 +17,16 @@
 #define ARMDISASSEMBLER_H
 
 #include "llvm/MC/MCDisassembler.h"
+#include <vector>
 
 namespace llvm {
   
 class MCInst;
 class MemoryObject;
 class raw_ostream;
-  
+
 struct EDInstInfo;
-  
+
 /// ARMDisassembler - ARM disassembler for all ARM platforms.
 class ARMDisassembler : public MCDisassembler {
 public:
@@ -44,38 +45,19 @@ public:
                       const MemoryObject &region,
                       uint64_t address,
                       raw_ostream &vStream) const;
-  
+
   /// getEDInfo - See MCDisassembler.
   EDInstInfo *getEDInfo() const;
 private:
 };
 
-// Forward declaration.
-class ARMBasicMCBuilder;
-
-/// Session - Keep track of the IT Block progression.
-class Session {
-  friend class ARMBasicMCBuilder;
-public:
-  Session() : ITCounter(0), ITState(0) {}
-  ~Session() {}
-  /// InitIT - Initializes ITCounter/ITState.
-  bool InitIT(unsigned short bits7_0);
-  /// UpdateIT - Updates ITCounter/ITState as IT Block progresses.
-  void UpdateIT();
-
-private:
-  unsigned ITCounter; // Possible values: 0, 1, 2, 3, 4.
-  unsigned ITState;   // A2.5.2 Consists of IT[7:5] and IT[4:0] initially.
-};
-
-/// ThumbDisassembler - Thumb disassembler for all ARM platforms.
+/// ARMDisassembler - ARM disassembler for all ARM platforms.
 class ThumbDisassembler : public MCDisassembler {
 public:
   /// Constructor     - Initializes the disassembler.
   ///
   ThumbDisassembler() :
-    MCDisassembler(), SO() {
+    MCDisassembler() {
   }
 
   ~ThumbDisassembler() {
@@ -87,13 +69,16 @@ public:
                       const MemoryObject &region,
                       uint64_t address,
                       raw_ostream &vStream) const;
-  
+
   /// getEDInfo - See MCDisassembler.
   EDInstInfo *getEDInfo() const;
 private:
-  Session SO;
+  mutable std::vector<unsigned> ITBlock;
+  void AddThumbPredicate(MCInst&) const;
+  void UpdateThumbVFPPredicate(MCInst&) const;
 };
 
+
 } // namespace llvm
-  
+
 #endif

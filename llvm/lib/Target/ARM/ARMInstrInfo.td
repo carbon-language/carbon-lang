@@ -315,6 +315,7 @@ def fsub_mlx : PatFrag<(ops node:$lhs, node:$rhs),(fsub node:$lhs, node:$rhs),[{
 def brtarget : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValue";
   let OperandType = "OPERAND_PCREL";
+  let DecoderMethod = "DecodeT2BROperand";
 }
 
 // FIXME: get rid of this one?
@@ -343,6 +344,7 @@ def bl_target : Operand<i32> {
   // Encoded the same as branch targets.
   let EncoderMethod = "getARMBranchTargetOpValue";
   let OperandType = "OPERAND_PCREL";
+	let DecoderMethod = "DecodeBLTargetOperand";
 }
 
 
@@ -352,6 +354,7 @@ def reglist : Operand<i32> {
   let EncoderMethod = "getRegisterListOpValue";
   let ParserMatchClass = RegListAsmOperand;
   let PrintMethod = "printRegisterList";
+  let DecoderMethod = "DecodeRegListOperand";
 }
 
 def DPRRegListAsmOperand : AsmOperandClass { let Name = "DPRRegList"; }
@@ -359,6 +362,7 @@ def dpr_reglist : Operand<i32> {
   let EncoderMethod = "getRegisterListOpValue";
   let ParserMatchClass = DPRRegListAsmOperand;
   let PrintMethod = "printRegisterList";
+  let DecoderMethod = "DecodeDPRRegListOperand";
 }
 
 def SPRRegListAsmOperand : AsmOperandClass { let Name = "SPRRegList"; }
@@ -366,6 +370,7 @@ def spr_reglist : Operand<i32> {
   let EncoderMethod = "getRegisterListOpValue";
   let ParserMatchClass = SPRRegListAsmOperand;
   let PrintMethod = "printRegisterList";
+  let DecoderMethod = "DecodeSPRRegListOperand";
 }
 
 // An operand for the CONSTPOOL_ENTRY pseudo-instruction.
@@ -385,6 +390,7 @@ def adrlabel : Operand<i32> {
 
 def neon_vcvt_imm32 : Operand<i32> {
   let EncoderMethod = "getNEONVcvtImm32OpValue";
+  let DecoderMethod = "DecodeVCVTImmOperand";
 }
 
 // rot_imm: An integer that encodes a rotate amount. Must be 8, 16, or 24.
@@ -431,6 +437,7 @@ def so_reg_reg : Operand<i32>,  // reg reg imm
                                 [shl, srl, sra, rotr]> {
   let EncoderMethod = "getSORegRegOpValue";
   let PrintMethod = "printSORegRegOperand";
+  let DecoderMethod = "DecodeSORegRegOperand";
   let ParserMatchClass = ShiftedRegAsmOperand;
   let MIOperandInfo = (ops GPR, GPR, i32imm);
 }
@@ -441,6 +448,7 @@ def so_reg_imm : Operand<i32>, // reg imm
                                 [shl, srl, sra, rotr]> {
   let EncoderMethod = "getSORegImmOpValue";
   let PrintMethod = "printSORegImmOperand";
+  let DecoderMethod = "DecodeSORegImmOperand";
   let ParserMatchClass = ShiftedImmAsmOperand;
   let MIOperandInfo = (ops GPR, i32imm);
 }
@@ -451,6 +459,7 @@ def shift_so_reg_reg : Operand<i32>,    // reg reg imm
                                   [shl,srl,sra,rotr]> {
   let EncoderMethod = "getSORegRegOpValue";
   let PrintMethod = "printSORegRegOperand";
+  let DecoderMethod = "DecodeSORegRegOperand";
   let MIOperandInfo = (ops GPR, GPR, i32imm);
 }
 
@@ -460,6 +469,7 @@ def shift_so_reg_imm : Operand<i32>,    // reg reg imm
                                   [shl,srl,sra,rotr]> {
   let EncoderMethod = "getSORegImmOpValue";
   let PrintMethod = "printSORegImmOperand";
+  let DecoderMethod = "DecodeSORegImmOperand";
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
@@ -472,6 +482,7 @@ def so_imm : Operand<i32>, ImmLeaf<i32, [{
   }]> {
   let EncoderMethod = "getSOImmOpValue";
   let ParserMatchClass = SOImmAsmOperand;
+	let DecoderMethod = "DecodeSOImmOperand";
 }
 
 // Break so_imm's up into two pieces.  This handles immediates with up to 16
@@ -552,6 +563,7 @@ def bf_inv_mask_imm : Operand<i32>,
 }] > {
   let EncoderMethod = "getBitfieldInvertedMaskOpValue";
   let PrintMethod = "printBitfieldInvMaskImmOperand";
+  let DecoderMethod = "DecodeBitfieldMaskOperand";
   let ParserMatchClass = BitfieldAsmOperand;
 }
 
@@ -599,6 +611,7 @@ def addrmode_imm12 : Operand<i32>,
 
   let EncoderMethod = "getAddrModeImm12OpValue";
   let PrintMethod = "printAddrModeImm12Operand";
+  let DecoderMethod = "DecodeAddrModeImm12Operand";
   let ParserMatchClass = MemImm12OffsetAsmOperand;
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
@@ -610,6 +623,7 @@ def ldst_so_reg : Operand<i32>,
   let EncoderMethod = "getLdStSORegOpValue";
   // FIXME: Simplify the printer
   let PrintMethod = "printAddrMode2Operand";
+  let DecoderMethod = "DecodeSORegMemOperand";
   let ParserMatchClass = MemRegOffsetAsmOperand;
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$shift);
 }
@@ -645,6 +659,7 @@ def PostIdxRegAsmOperand : AsmOperandClass {
 }
 def postidx_reg : Operand<i32> {
   let EncoderMethod = "getPostIdxRegOpValue";
+  let DecoderMethod = "DecodePostIdxReg";
   let PrintMethod = "printPostIdxRegOperand";
   let ParserMatchClass = PostIdxRegAsmOperand;
   let MIOperandInfo = (ops GPR, i32imm);
@@ -707,6 +722,7 @@ def am3offset : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode3Offset",
                                [], [SDNPWantRoot]> {
   let EncoderMethod = "getAddrMode3OffsetOpValue";
+  let DecoderMethod = "DecodeAddrMode3Offset";
   let PrintMethod = "printAddrMode3OffsetOperand";
   let MIOperandInfo = (ops GPR, i32imm);
 }
@@ -725,6 +741,7 @@ def addrmode5 : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode5", []> {
   let PrintMethod = "printAddrMode5Operand";
   let EncoderMethod = "getAddrMode5OpValue";
+  let DecoderMethod = "DecodeAddrMode5Operand";
   let ParserMatchClass = AddrMode5AsmOperand;
   let MIOperandInfo = (ops GPR:$base, i32imm);
 }
@@ -736,6 +753,7 @@ def addrmode6 : Operand<i32>,
   let PrintMethod = "printAddrMode6Operand";
   let MIOperandInfo = (ops GPR:$addr, i32imm);
   let EncoderMethod = "getAddrMode6AddressOpValue";
+  let DecoderMethod = "DecodeAddrMode6Operand";
 }
 
 def am6offset : Operand<i32>,
@@ -744,6 +762,7 @@ def am6offset : Operand<i32>,
   let PrintMethod = "printAddrMode6OffsetOperand";
   let MIOperandInfo = (ops GPR);
   let EncoderMethod = "getAddrMode6OffsetOpValue";
+  let DecoderMethod = "DecodeGPRRegisterClass";
 }
 
 // Special version of addrmode6 to handle alignment encoding for VST1/VLD1
@@ -778,6 +797,7 @@ def MemNoOffsetAsmOperand : AsmOperandClass { let Name = "MemNoOffset"; }
 def addr_offset_none : Operand<i32>,
                        ComplexPattern<i32, 1, "SelectAddrOffsetNone", []> {
   let PrintMethod = "printAddrMode7Operand";
+  let DecoderMethod = "DecodeAddrMode7Operand";
   let ParserMatchClass = MemNoOffsetAsmOperand;
   let MIOperandInfo = (ops GPR:$base);
 }
@@ -793,6 +813,7 @@ def CoprocNumAsmOperand : AsmOperandClass {
 def p_imm : Operand<i32> {
   let PrintMethod = "printPImmediate";
   let ParserMatchClass = CoprocNumAsmOperand;
+  let DecoderMethod = "DecodeCoprocessor";
 }
 
 def CoprocRegAsmOperand : AsmOperandClass {
@@ -1654,6 +1675,7 @@ let isBranch = 1, isTerminator = 1 in {
                [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]> {
     bits<24> target;
     let Inst{23-0} = target;
+    let DecoderMethod = "DecodeBranchImmInstruction";
   }
 
   let isBarrier = 1 in {
@@ -1917,6 +1939,7 @@ multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
     let Inst{23} = addr{12};
     let Inst{19-16} = addr{17-14};
     let Inst{11-0} = addr{11-0};
+    let DecoderMethod = "DecodeAddrMode2IdxInstruction";
     let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
   }
 
@@ -1933,6 +1956,8 @@ multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
      let Inst{23} = offset{12};
      let Inst{19-16} = addr;
      let Inst{11-0} = offset{11-0};
+
+    let DecoderMethod = "DecodeAddrMode2IdxInstruction";
    }
 
    def _POST_IMM : AI2ldstidx<1, isByte, 0, (outs GPR:$Rt, GPR:$Rn_wb),
@@ -1948,7 +1973,10 @@ multiclass AI2_ldridx<bit isByte, string opc, InstrItinClass itin> {
     let Inst{23} = offset{12};
     let Inst{19-16} = addr;
     let Inst{11-0} = offset{11-0};
+
+    let DecoderMethod = "DecodeAddrMode2IdxInstruction";
   }
+
 }
 
 let mayLoad = 1, neverHasSideEffects = 1 in {
@@ -2019,20 +2047,39 @@ def LDRD_POST: AI3ldstidx<0b1101, 0, 1, 0, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
 
 // LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT are for disassembly only.
 let mayLoad = 1, neverHasSideEffects = 1 in {
-def LDRT : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$base_wb),
-                   (ins addrmode2:$addr), IndexModePost, LdFrm, IIC_iLoad_ru,
+def LDRTr : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$base_wb),
+                   (ins ldst_so_reg:$addr), IndexModePost, LdFrm, IIC_iLoad_ru,
                    "ldrt", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
   // {17-14}  Rn
   // {13}     1 == Rm, 0 == imm12
   // {12}     isAdd
   // {11-0}   imm12/Rm
   bits<18> addr;
-  let Inst{25} = addr{13};
+  let Inst{25} = 1;
+  let Inst{23} = addr{12};
+  let Inst{21} = 1; // overwrite
+  let Inst{19-16} = addr{17-14};
+  let Inst{11-5} = addr{11-5};
+  let Inst{4} = 0;
+  let Inst{3-0} = addr{3-0};
+  let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
+}
+def LDRTi : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$base_wb),
+                   (ins addrmode_imm12:$addr), IndexModePost, LdFrm, IIC_iLoad_ru,
+                   "ldrt", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
+  // {17-14}  Rn
+  // {13}     1 == Rm, 0 == imm12
+  // {12}     isAdd
+  // {11-0}   imm12/Rm
+  bits<18> addr;
+  let Inst{25} = 0;
   let Inst{23} = addr{12};
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr{17-14};
   let Inst{11-0} = addr{11-0};
   let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
 def LDRBT_POST_REG : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
@@ -2049,6 +2096,7 @@ def LDRBT_POST_REG : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr;
   let Inst{11-0} = offset{11-0};
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
 def LDRBT_POST_IMM : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
@@ -2065,6 +2113,7 @@ def LDRBT_POST_IMM : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr;
   let Inst{11-0} = offset{11-0};
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
 multiclass AI3ldrT<bits<4> op, string opc> {
@@ -2151,6 +2200,8 @@ multiclass AI2_stridx<bit isByte, string opc, InstrItinClass itin> {
      let Inst{23} = offset{12};
      let Inst{19-16} = addr;
      let Inst{11-0} = offset{11-0};
+
+    let DecoderMethod = "DecodeAddrMode2IdxInstruction";
    }
 
    def _POST_IMM : AI2ldstidx<0, isByte, 0, (outs GPR:$Rn_wb),
@@ -2166,6 +2217,8 @@ multiclass AI2_stridx<bit isByte, string opc, InstrItinClass itin> {
     let Inst{23} = offset{12};
     let Inst{19-16} = addr;
     let Inst{11-0} = offset{11-0};
+
+    let DecoderMethod = "DecodeAddrMode2IdxInstruction";
   }
 }
 
@@ -2287,6 +2340,7 @@ def STRTr : AI2stridxT<0, 0, (outs GPR:$Rn_wb),
   let Inst{21} = 1; // overwrite
   let Inst{4} = 0;
   let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
 def STRTi : AI2stridxT<0, 0, (outs GPR:$Rn_wb),
@@ -2297,6 +2351,7 @@ def STRTi : AI2stridxT<0, 0, (outs GPR:$Rn_wb),
   let Inst{25} = 0;
   let Inst{21} = 1; // overwrite
   let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
 
@@ -2309,6 +2364,7 @@ def STRBTr : AI2stridxT<1, 0, (outs GPR:$Rn_wb),
   let Inst{21} = 1; // overwrite
   let Inst{4} = 0;
   let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
 def STRBTi : AI2stridxT<1, 0, (outs GPR:$Rn_wb),
@@ -2319,6 +2375,7 @@ def STRBTi : AI2stridxT<1, 0, (outs GPR:$Rn_wb),
   let Inst{25} = 0;
   let Inst{21} = 1; // overwrite
   let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
 multiclass AI3strT<bits<4> op, string opc> {
@@ -2373,6 +2430,8 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{24-23} = 0b01;       // Increment After
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
+
+    let DecoderMethod = "DecodeMemMultipleWritebackInstruction";
   }
   def DA :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
@@ -2389,6 +2448,8 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{24-23} = 0b00;       // Decrement After
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
+
+    let DecoderMethod = "DecodeMemMultipleWritebackInstruction";
   }
   def DB :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
@@ -2405,6 +2466,8 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{24-23} = 0b10;       // Decrement Before
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
+
+    let DecoderMethod = "DecodeMemMultipleWritebackInstruction";
   }
   def IB :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
@@ -2421,6 +2484,8 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{24-23} = 0b11;       // Increment Before
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
+
+    let DecoderMethod = "DecodeMemMultipleWritebackInstruction";
   }
 }
 
@@ -2503,8 +2568,6 @@ def MOVsi : AsI1<0b1101, (outs GPR:$Rd), (ins shift_so_reg_imm:$src),
   let Inst{3-0} = src{3-0};
   let Inst{25} = 0;
 }
-
-
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
 def MOVi : AsI1<0b1101, (outs GPR:$Rd), (ins so_imm:$imm), DPFrm, IIC_iMOVi,
@@ -3383,6 +3446,7 @@ multiclass AI_smul<string opc, PatFrag opnode> {
 
 
 multiclass AI_smla<string opc, PatFrag opnode> {
+  let DecoderMethod = "DecodeSMLAInstruction" in {
   def BB : AMulxyIa<0b0001000, 0b00, (outs GPR:$Rd),
               (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
               IIC_iMAC16, !strconcat(opc, "bb"), "\t$Rd, $Rn, $Rm, $Ra",
@@ -3425,6 +3489,7 @@ multiclass AI_smla<string opc, PatFrag opnode> {
               [(set GPR:$Rd, (add GPR:$Ra, (sra (opnode GPR:$Rn,
                                         (sra GPR:$Rm, (i32 16))), (i32 16))))]>,
             Requires<[IsARM, HasV5TE]>;
+  }
 }
 
 defm SMUL : AI_smul<"smul", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
@@ -3989,7 +4054,7 @@ class ACI<dag oops, dag iops, string opc, string asm,
 }
 
 multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
-
+  let DecoderNamespace = "Common" in {
   def _OFFSET : ACI<(outs),
       !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
       !strconcat(opc, cond), "\tp$cop, cr$CRd, $addr"> {
@@ -3998,6 +4063,7 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
     let Inst{21} = 0; // W = 0
     let Inst{22} = 0; // D = 0
     let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
   }
 
   def _PRE : ACI<(outs),
@@ -4008,6 +4074,7 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
     let Inst{21} = 1; // W = 1
     let Inst{22} = 0; // D = 0
     let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
   }
 
   def _POST : ACI<(outs),
@@ -4018,6 +4085,7 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
     let Inst{21} = 1; // W = 1
     let Inst{22} = 0; // D = 0
     let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
   }
 
   def _OPTION : ACI<(outs),
@@ -4030,6 +4098,7 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
     let Inst{21} = 0; // W = 0
     let Inst{22} = 0; // D = 0
     let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
   }
 
   def L_OFFSET : ACI<(outs),
@@ -4040,6 +4109,7 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
     let Inst{21} = 0; // W = 0
     let Inst{22} = 1; // D = 1
     let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
   }
 
   def L_PRE : ACI<(outs),
@@ -4051,6 +4121,7 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
     let Inst{21} = 1; // W = 1
     let Inst{22} = 1; // D = 1
     let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
   }
 
   def L_POST : ACI<(outs),
@@ -4063,6 +4134,7 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
     let Inst{21} = 1; // W = 1
     let Inst{22} = 1; // D = 1
     let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
   }
 
   def L_OPTION : ACI<(outs),
@@ -4076,6 +4148,8 @@ multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
     let Inst{21} = 0; // W = 0
     let Inst{22} = 1; // D = 1
     let Inst{20} = load;
+    let DecoderMethod = "DecodeCopMemInstruction";
+  }
   }
 }
 

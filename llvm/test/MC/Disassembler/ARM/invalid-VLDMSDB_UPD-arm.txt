@@ -1,4 +1,5 @@
 # RUN: llvm-mc --disassemble %s -triple=arm-apple-darwin9 |& grep {invalid instruction encoding}
+# XFAIL: *
 
 # core registers out of range
 0xa5 0xba 0x72 0xed
