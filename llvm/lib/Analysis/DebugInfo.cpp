@@ -117,7 +117,7 @@ unsigned DIVariable::getNumAddrElements() const {
 }
 
 /// getInlinedAt - If this variable is inlined then return inline location.
-MDNode *DIVariable::getInlinedAt() {
+MDNode *DIVariable::getInlinedAt() const {
   if (getVersion() <= llvm::LLVMDebugVersion9)
     return NULL;
   return dyn_cast_or_null<MDNode>(DbgNode->getOperand(7));
@@ -672,6 +672,42 @@ void DIGlobalVariable::print(raw_ostream &OS) const {
   if (isGlobalVariable())
     DIGlobalVariable(DbgNode).print(OS);
   OS << "]\n";
+}
+
+static void printDebugLoc(DebugLoc DL, raw_ostream &CommentOS,
+                          const LLVMContext &Ctx) {
+  if (!DL.isUnknown()) {          // Print source line info.
+    DIScope Scope(DL.getScope(Ctx));
+    // Omit the directory, because it's likely to be long and uninteresting.
+    if (Scope.Verify())
+      CommentOS << Scope.getFilename();
+    else
+      CommentOS << "<unknown>";
+    CommentOS << ':' << DL.getLine();
+    if (DL.getCol() != 0)
+      CommentOS << ':' << DL.getCol();
+    DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(DL.getInlinedAt(Ctx));
+    if (!InlinedAtDL.isUnknown()) {
+      CommentOS << " @[ ";
+      printDebugLoc(InlinedAtDL, CommentOS, Ctx);
+      CommentOS << " ]";
+    }
+  }
+}
+
+void DIVariable::printExtendedName(raw_ostream &OS) const {
+  const LLVMContext &Ctx = DbgNode->getContext();
+  StringRef Res = getName();
+  if (!Res.empty())
+    OS << Res << "," << getLineNumber();
+  if (MDNode *InlinedAt = getInlinedAt()) {
+    DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(InlinedAt);
+    if (!InlinedAtDL.isUnknown()) {
+      OS << " @[";
+      printDebugLoc(InlinedAtDL, OS, Ctx);
+      OS << "]";
+    }
+  }
 }
 
 /// print - Print variable.

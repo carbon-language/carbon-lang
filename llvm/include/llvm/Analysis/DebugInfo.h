@@ -615,7 +615,7 @@ namespace llvm {
     }
 
     /// getInlinedAt - If this variable is inlined then return inline location.
-    MDNode *getInlinedAt();
+    MDNode *getInlinedAt() const;
 
     /// Verify - Verify that a variable descriptor is well formed.
     bool Verify() const;
@@ -647,6 +647,8 @@ namespace llvm {
 
     /// print - print variable.
     void print(raw_ostream &OS) const;
+
+    void printExtendedName(raw_ostream &OS) const;
 
     /// dump - print variable to dbgs() with a newline.
     void dump() const;
