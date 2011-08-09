@@ -12,8 +12,17 @@
 .globl _HasAVX
 
 _HasAVX:
+#if defined (__x86_64__)
+    pushq %rbp
+    movq %rsp, %rbp
+    pushq %rbx
+#else
+    pushl %ebp
+    movl %esp, %ebp
+    pushl %ebx
+#endif
     mov $1, %eax
-    cpuid
+    cpuid                                                                       // clobbers ebx
     and $0x018000000, %ecx
     cmp $0x018000000, %ecx
     jne not_supported
@@ -27,6 +36,15 @@ _HasAVX:
 not_supported:
     mov $0, %eax
 done:
-    ret
+#if defined (__x86_64__)
+    popq %rbx
+    movq %rbp, %rsp
+    popq %rbp
+#else
+    popl %ebx
+    movl %ebp, %esp
+    popl %ebp
+#endif
+    ret                                                                         // return
 
 #endif
