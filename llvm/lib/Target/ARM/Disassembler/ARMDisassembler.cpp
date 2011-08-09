@@ -592,6 +592,9 @@ static bool DecodeQPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
 static bool DecodePredicateOperand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder) {
   if (Val == 0xF) return false;
+  // AL predicate is not allowed on Thumb1 branches.
+  if (Inst.getOpcode() == ARM::tBcc && Val == 0xE)
+    return false;
   Inst.addOperand(MCOperand::CreateImm(Val));
   if (Val == ARMCC::AL) {
     Inst.addOperand(MCOperand::CreateReg(0));
