@@ -219,8 +219,19 @@ public:
   /// Return the new register class, or NULL if no such class exists.
   /// This should only be used when the constraint is known to be trivial, like
   /// GR32 -> GR32_NOSP. Beware of increasing register pressure.
+  ///
   const TargetRegisterClass *constrainRegClass(unsigned Reg,
                                                const TargetRegisterClass *RC);
+
+  /// recomputeRegClass - Try to find a legal super-class of Reg's register
+  /// class that still satisfies the constraints from the instructions using
+  /// Reg.  Returns true if Reg was upgraded.
+  ///
+  /// This method can be used after constraints have been removed from a
+  /// virtual register, for example after removing instructions or splitting
+  /// the live range.
+  ///
+  bool recomputeRegClass(unsigned Reg, const TargetMachine&);
 
   /// createVirtualRegister - Create and return a new virtual register in the
   /// function with the specified register class.

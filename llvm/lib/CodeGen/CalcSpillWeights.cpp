@@ -185,35 +185,3 @@ void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
 
   li.weight = normalizeSpillWeight(totalWeight, li.getSize());
 }
-
-void VirtRegAuxInfo::CalculateRegClass(unsigned reg) {
-  MachineRegisterInfo &MRI = MF.getRegInfo();
-  const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
-  const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
-  const TargetRegisterClass *OldRC = MRI.getRegClass(reg);
-  const TargetRegisterClass *NewRC = TRI->getLargestLegalSuperClass(OldRC);
-
-  // Stop early if there is no room to grow.
-  if (NewRC == OldRC)
-    return;
-
-  // Accumulate constraints from all uses.
-  for (MachineRegisterInfo::reg_nodbg_iterator I = MRI.reg_nodbg_begin(reg),
-       E = MRI.reg_nodbg_end(); I != E; ++I) {
-    // TRI doesn't have accurate enough information to model this yet.
-    if (I.getOperand().getSubReg())
-      return;
-    // Inline asm instuctions don't remember their constraints.
-    if (I->isInlineAsm())
-      return;
-    const TargetRegisterClass *OpRC =
-      TII->getRegClass(I->getDesc(), I.getOperandNo(), TRI);
-    if (OpRC)
-      NewRC = getCommonSubClass(NewRC, OpRC);
-    if (!NewRC || NewRC == OldRC)
-      return;
-  }
-  DEBUG(dbgs() << "Inflating " << OldRC->getName() << ':' << PrintReg(reg)
-               << " to " << NewRC->getName() <<".\n");
-  MRI.setRegClass(reg, NewRC);
-}

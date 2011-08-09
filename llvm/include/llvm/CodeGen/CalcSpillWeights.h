@@ -49,11 +49,6 @@ namespace llvm {
                    const MachineLoopInfo &loops) :
       MF(mf), LIS(lis), Loops(loops) {}
 
-    /// CalculateRegClass - recompute the register class for reg from its uses.
-    /// Since the register class can affect the allocation hint, this function
-    /// should be called before CalculateWeightAndHint if both are called.
-    void CalculateRegClass(unsigned reg);
-
     /// CalculateWeightAndHint - (re)compute li's spill weight and allocation
     /// hint.
     void CalculateWeightAndHint(LiveInterval &li);
