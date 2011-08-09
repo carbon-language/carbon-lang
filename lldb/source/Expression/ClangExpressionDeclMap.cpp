@@ -2393,7 +2393,8 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
     
     if (!ast_type)
     {
-        log->Printf("Tried to add a type for %s, but couldn't get one", context.m_decl_name.getAsString().c_str());
+        if (log)
+            log->Printf("Tried to add a type for %s, but couldn't get one", context.m_decl_name.getAsString().c_str());
         return;
     }
     
