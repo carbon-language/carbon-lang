@@ -451,7 +451,8 @@ ProcessGDBRemote::DoLaunch
             error = StartDebugserverProcess (host_port);
             if (error.Fail())
             {
-                log->Printf("failed to start debugserver process: %s", error.AsCString());
+                if (log)
+                    log->Printf("failed to start debugserver process: %s", error.AsCString());
                 return error;
             }
 
@@ -550,7 +551,8 @@ ProcessGDBRemote::DoLaunch
                 
             if (GetID() == LLDB_INVALID_PROCESS_ID)
             {
-                log->Printf("failed to connect to debugserver: %s", error.AsCString());
+                if (log)
+                    log->Printf("failed to connect to debugserver: %s", error.AsCString());
                 KillDebugserverProcess ();
                 return error;
             }
@@ -568,7 +570,8 @@ ProcessGDBRemote::DoLaunch
         }
         else
         {
-            log->Printf("failed to connect to debugserver: %s", error.AsCString());
+            if (log)
+                log->Printf("failed to connect to debugserver: %s", error.AsCString());
         }
     }
     else
