@@ -1066,12 +1066,6 @@ Driver::MainLoop ()
         exit(5);
     }
 
-//    const char *crash_log = GetCrashLogFilename();
-//    if (crash_log)
-//    {
-//        ParseCrashLog (crash_log);
-//    }
-//
     SBCommandInterpreter sb_interpreter = m_debugger.GetCommandInterpreter();
 
     m_io_channel_ap.reset (new IOChannel(m_editline_slave_fh, editline_output_slave_fh, stdout, stderr, this));
