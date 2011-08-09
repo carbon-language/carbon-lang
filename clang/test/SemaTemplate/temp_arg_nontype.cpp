@@ -263,3 +263,60 @@ namespace PR9227 {
   void test_char_single_quote() { enable_if_char<'\''>::type i; } // expected-error{{enable_if_char<'\''>}}
   void test_char_backslash() { enable_if_char<'\\'>::type i; } // expected-error{{enable_if_char<'\\'>}}
 }
+
+namespace PR10579 {
+  namespace fcppt
+  {
+    namespace container
+    {
+      namespace bitfield
+      {
+
+        template<
+          typename Enum,
+          Enum Size
+          >
+        class basic;
+
+        template<
+          typename Enum,
+          Enum Size
+          >
+        class basic
+        {
+        public:
+          basic()
+          {
+          }
+        };
+
+      }
+    }
+  }
+
+  namespace
+  {
+
+    namespace testenum
+    {
+      enum type
+        {
+          foo,
+          bar,
+          size
+        };
+    }
+
+  }
+
+  int main()
+  {
+    typedef fcppt::container::bitfield::basic<
+    testenum::type,
+      testenum::size
+      > bitfield_foo;
+
+    bitfield_foo obj;
+  }
+
+}

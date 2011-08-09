@@ -3820,8 +3820,9 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     }
 
     Converted = TemplateArgument(Value,
-                                 ParamType->isEnumeralType() ? ParamType
-                                                             : IntegerType);
+                                 ParamType->isEnumeralType() 
+                                   ? Context.getCanonicalType(ParamType)
+                                   : IntegerType);
     return Owned(Arg);
   }
 
