@@ -25,6 +25,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Metadata.h"
 #include "llvm/Value.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -317,8 +318,10 @@ public:
 } // namespace
 
 void UserValue::print(raw_ostream &OS, const TargetMachine *TM) {
-  if (const MDString *MDS = dyn_cast<MDString>(variable->getOperand(2)))
-    OS << "!\"" << MDS->getString() << "\"\t";
+  DIVariable DV(variable);
+  OS << "!\""; 
+  DV.printExtendedName(OS);
+  OS << "\"\t";
   if (offset)
     OS << '+' << offset;
   for (LocMap::const_iterator I = locInts.begin(); I.valid(); ++I) {
