@@ -214,7 +214,7 @@ AppleObjCRuntimeV2::RunFunctionToFindClassName(lldb::addr_t object_addr, Thread 
     if (results != eExecutionCompleted)
     {
         if (log)
-        log->Printf("Error evaluating our find class name function: %d.\n", results);
+            log->Printf("Error evaluating our find class name function: %d.\n", results);
         return false;
     }
     
