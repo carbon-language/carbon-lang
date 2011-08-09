@@ -989,6 +989,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SRA,               MVT::v8i32, Custom);
     setOperationAction(ISD::SRA,               MVT::v16i16, Custom);
 
+    setOperationAction(ISD::VSETCC,            MVT::v8i32, Custom);
+    setOperationAction(ISD::VSETCC,            MVT::v4i64, Custom);
+
     // Custom lower several nodes for 256-bit types.
     for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
                   i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
@@ -7912,9 +7915,10 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
 
   if (isFP) {
     unsigned SSECC = 8;
-    EVT VT0 = Op0.getValueType();
-    assert(VT0 == MVT::v4f32 || VT0 == MVT::v2f64);
-    unsigned Opc = VT0 == MVT::v4f32 ? X86ISD::CMPPS : X86ISD::CMPPD;
+    EVT EltVT = Op0.getValueType().getVectorElementType();
+    assert(EltVT == MVT::f32 || EltVT == MVT::f64);
+
+    unsigned Opc = EltVT == MVT::f32 ? X86ISD::CMPPS : X86ISD::CMPPD;
     bool Swap = false;
 
     switch (SetCCOpcode) {
@@ -7960,6 +7964,9 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     // Handle all other FP comparisons here.
     return DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(SSECC, MVT::i8));
   }
+
+  if (!isFP && VT.getSizeInBits() == 256)
+    return SDValue();
 
   // We are handling one of the integer comparisons here.  Since SSE only has
   // GT and EQ comparisons for integer, swapping operands and multiple

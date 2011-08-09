@@ -1264,14 +1264,39 @@ let Constraints = "$src1 = $dst" in {
                  SSEPackedDouble>, TB, OpSize;
 }
 
+let Predicates = [HasSSE1] in {
 def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), VR128:$src2, imm:$cc)),
           (CMPPSrri (v4f32 VR128:$src1), (v4f32 VR128:$src2), imm:$cc)>;
 def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), (memop addr:$src2), imm:$cc)),
           (CMPPSrmi (v4f32 VR128:$src1), addr:$src2, imm:$cc)>;
+}
+
+let Predicates = [HasSSE2] in {
 def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), VR128:$src2, imm:$cc)),
           (CMPPDrri VR128:$src1, VR128:$src2, imm:$cc)>;
 def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), (memop addr:$src2), imm:$cc)),
           (CMPPDrmi VR128:$src1, addr:$src2, imm:$cc)>;
+}
+
+let Predicates = [HasAVX] in {
+def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), VR128:$src2, imm:$cc)),
+          (VCMPPSrri (v4f32 VR128:$src1), (v4f32 VR128:$src2), imm:$cc)>;
+def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), (memop addr:$src2), imm:$cc)),
+          (VCMPPSrmi (v4f32 VR128:$src1), addr:$src2, imm:$cc)>;
+def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), VR128:$src2, imm:$cc)),
+          (VCMPPDrri VR128:$src1, VR128:$src2, imm:$cc)>;
+def : Pat<(v2i64 (X86cmppd (v2f64 VR128:$src1), (memop addr:$src2), imm:$cc)),
+          (VCMPPDrmi VR128:$src1, addr:$src2, imm:$cc)>;
+
+def : Pat<(v8i32 (X86cmpps (v8f32 VR256:$src1), VR256:$src2, imm:$cc)),
+          (VCMPPSYrri (v8f32 VR256:$src1), (v8f32 VR256:$src2), imm:$cc)>;
+def : Pat<(v8i32 (X86cmpps (v8f32 VR256:$src1), (memop addr:$src2), imm:$cc)),
+          (VCMPPSYrmi (v8f32 VR256:$src1), addr:$src2, imm:$cc)>;
+def : Pat<(v4i64 (X86cmppd (v4f64 VR256:$src1), VR256:$src2, imm:$cc)),
+          (VCMPPDYrri VR256:$src1, VR256:$src2, imm:$cc)>;
+def : Pat<(v4i64 (X86cmppd (v4f64 VR256:$src1), (memop addr:$src2), imm:$cc)),
+          (VCMPPDYrmi VR256:$src1, addr:$src2, imm:$cc)>;
+}
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Shuffle Instructions
