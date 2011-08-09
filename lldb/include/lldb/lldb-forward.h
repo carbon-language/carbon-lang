@@ -104,6 +104,7 @@ class   NamedOption;
 class   PathMappingList;
 class   Platform;
 class   Process;
+class   ProcessModID;
 class   ProcessInfo;
 class   ProcessInstanceInfo;
 class   ProcessInstanceInfoList;

@@ -349,12 +349,20 @@ public:
     GetThreadID ();
 
     //------------------------------------------------------------------
-    /// Set the callback action invoked when the breakpoint is hit.  The callback
-    /// Will return a bool indicating whether the target should stop at this breakpoint or not.
+    /// Set the callback action invoked when the breakpoint is hit.  
+    /// 
     /// @param[in] callback
     ///    The method that will get called when the breakpoint is hit.
     /// @param[in] baton
     ///    A void * pointer that will get passed back to the callback function.
+    /// @param[in] is_synchronous
+    ///    If \b true the callback will be run on the private event thread
+    ///    before the stop event gets reported.  If false, the callback will get
+    ///    handled on the public event thead after the stop has been posted.
+    ///
+    /// @return
+    ///    \b true if the process should stop when you hit the breakpoint.
+    ///    \b false if it should continue.
     //------------------------------------------------------------------
     void
     SetCallback (BreakpointHitCallback callback, 

@@ -111,9 +111,6 @@ protected:
     lldb::user_id_t m_uid; ///< The user ID that uniquely identifies an object.
 };
 
-//--------------------------------------------------------------
-/// Stream the UserID object to a Stream.
-//--------------------------------------------------------------
 inline bool operator== (const UserID& lhs, const UserID& rhs)
 {
   return lhs.GetID() == rhs.GetID();
@@ -124,6 +121,9 @@ inline bool operator!= (const UserID& lhs, const UserID& rhs)
   return lhs.GetID() != rhs.GetID();
 }
 
+//--------------------------------------------------------------
+/// Stream the UserID object to a Stream.
+//--------------------------------------------------------------
 Stream& operator << (Stream& strm, const UserID& uid);
 
 } // namespace lldb_private

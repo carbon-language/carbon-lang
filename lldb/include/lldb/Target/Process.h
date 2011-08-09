@@ -911,6 +911,84 @@ protected:
 };
 
 
+// This class tracks the Modification state of the process.  Things that can currently modify
+// the program are running the program (which will up the StopID) and writing memory (which
+// will up the MemoryID.)  
+// FIXME: Should we also include modification of register states?
+
+class ProcessModID
+{
+friend bool operator== (const ProcessModID &lhs, const ProcessModID &rhs);   
+public:
+    ProcessModID () : 
+        m_stop_id (0), 
+        m_memory_id (0) 
+    {}
+    
+    ProcessModID (const ProcessModID &rhs) :
+        m_stop_id (rhs.m_stop_id),
+        m_memory_id (rhs.m_memory_id)
+    {}
+    
+    const ProcessModID & operator= (const ProcessModID &rhs)
+    {
+        if (this != &rhs)
+        {
+            m_stop_id = rhs.m_stop_id;
+            m_memory_id = rhs.m_memory_id;
+        }
+        return *this;
+    }
+    
+    ~ProcessModID () {}
+    
+    void BumpStopID () { m_stop_id++; }
+    void BumpMemoryID () { m_memory_id++; }
+    
+    uint32_t GetStopID() const { return m_stop_id; }
+    uint32_t GetMemoryID () const { return m_memory_id; }
+    
+    bool MemoryIDEqual (const ProcessModID &compare) const
+    {
+        return m_memory_id == compare.m_memory_id;
+    }
+    
+    bool StopIDEqual (const ProcessModID &compare) const
+    {
+        return m_stop_id == compare.m_stop_id;
+    }
+    
+    void SetInvalid ()
+    {
+        m_stop_id = UINT32_MAX;
+    }
+    
+    bool IsValid () const
+    {
+        return m_stop_id != UINT32_MAX;
+    }
+private:
+    uint32_t m_stop_id;
+    uint32_t m_memory_id;
+};
+inline bool operator== (const ProcessModID &lhs, const ProcessModID &rhs)
+{
+    if (lhs.StopIDEqual (rhs)
+        && lhs.MemoryIDEqual (rhs))
+        return true;
+    else
+        return false;
+}
+
+inline bool operator!= (const ProcessModID &lhs, const ProcessModID &rhs)
+{
+    if (!lhs.StopIDEqual (rhs)
+        || !lhs.MemoryIDEqual (rhs))
+        return true;
+    else
+        return false;
+}
+
 //----------------------------------------------------------------------
 /// @class Process Process.h "lldb/Target/Process.h"
 /// @brief A plug-in interface definition class for debugging a process.
@@ -924,6 +1002,10 @@ class Process :
 {
 friend class ThreadList;
 friend class ClangFunction; // For WaitForStateChangeEventsPrivate
+friend class CommandObjectProcessLaunch;
+friend class ProcessEventData;
+friend class CommandObjectBreakpointCommand;
+friend class StopInfo;
 
 public:
 
@@ -1078,6 +1160,7 @@ public:
 
         DISALLOW_COPY_AND_ASSIGN (SettingsController);
     };
+
 
 #endif
 
@@ -1909,9 +1992,6 @@ public:
                      uint32_t num_frames_with_source);
 
 protected:
-    friend class CommandObjectProcessLaunch;
-    friend class ProcessEventData;
-    friend class CommandObjectBreakpointCommand;
     
     void
     SetState (lldb::EventSP &event_sp);
@@ -1953,15 +2033,23 @@ public:
     }
 
     //------------------------------------------------------------------
-    /// Get the number of times this process has posted a stop event.
+    /// Get the Modification ID of the process.
     ///
     /// @return
-    ///     The number of times this process has stopped while being
-    ///     debugged.
+    ///     The modification ID of the process.
     //------------------------------------------------------------------
+    ProcessModID
+    GetModID () const
+    {
+        return m_mod_id;
+    }
+    
     uint32_t
-    GetStopID () const;
-
+    GetStopID () const
+    {
+        return m_mod_id.GetStopID();
+    }
+    
     //------------------------------------------------------------------
     /// Set accessor for the process exit status (return code).
     ///
@@ -2619,7 +2707,12 @@ public:
     
 protected:
     //------------------------------------------------------------------
-    // lldb::ExecutionContextScope pure virtual functions
+    // NextEventAction provides a way to register an action on the next
+    // event that is delivered to this process.  There is currently only
+    // one next event action allowed in the process at one time.  If a
+    // new "NextEventAction" is added while one is already present, the
+    // old action will be discarded (with HandleBeingUnshipped called 
+    // after it is discarded.)
     //------------------------------------------------------------------
     class NextEventAction
     {
@@ -2691,7 +2784,7 @@ protected:
     Listener                    m_private_state_listener;     // This is the listener for the private state thread.
     Predicate<bool>             m_private_state_control_wait; /// This Predicate is used to signal that a control operation is complete.
     lldb::thread_t              m_private_state_thread;  // Thread ID for the thread that watches interal state events
-    uint32_t                    m_stop_id;              ///< A count of many times the process has stopped.
+    ProcessModID                m_mod_id;              ///< Tracks the state of the process over stops and other alterations.
     uint32_t                    m_thread_index_id;      ///< Each thread is created with a 1 based index that won't get re-used.
     int                         m_exit_status;          ///< The exit status of the process, or -1 if not set.
     std::string                 m_exit_string;          ///< A textual description of why a process exited.

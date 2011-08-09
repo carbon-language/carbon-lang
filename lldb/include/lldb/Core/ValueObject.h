@@ -26,6 +26,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ExecutionContextScope.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/StackID.h"
 #include "lldb/Utility/PriorityPointerPair.h"
 #include "lldb/Utility/SharedCluster.h"
@@ -240,25 +241,25 @@ public:
         SetIsConstant ()
         {
             SetUpdated();
-            m_stop_id = LLDB_INVALID_UID;
+            m_mod_id.SetInvalid();
         }
         
         bool
         IsConstant () const
         {
-            return m_stop_id == LLDB_INVALID_UID;
+            return !m_mod_id.IsValid();
         }
         
-        lldb::user_id_t
-        GetUpdateID () const
+        ProcessModID
+        GetModID () const
         {
-            return m_stop_id;
+            return m_mod_id;
         }
 
         void
-        SetUpdateID (lldb::user_id_t new_id)
+        SetUpdateID (ProcessModID new_id)
         {
-            m_stop_id = new_id;
+            m_mod_id = new_id;
         }
         
         bool
@@ -286,11 +287,11 @@ public:
         bool
         IsValid ()
         {
-            if (m_stop_id == LLDB_INVALID_UID)
+            if (!m_mod_id.IsValid())
                 return false;
             else if (SyncWithProcessState ())
             {
-                if (m_stop_id == LLDB_INVALID_UID)
+                if (!m_mod_id.IsValid())
                     return false;
             }
             return true;
@@ -301,13 +302,11 @@ public:
         {
             // Use the stop id to mark us as invalid, leave the thread id and the stack id around for logging and
             // history purposes.
-            m_stop_id = LLDB_INVALID_UID;
+            m_mod_id.SetInvalid();
             
             // Can't update an invalid state.
             m_needs_update = false;
             
-//            m_thread_id = LLDB_INVALID_THREAD_ID;
-//            m_stack_id.Clear();
         }
         
     private:
@@ -323,7 +322,7 @@ public:
         lldb::ProcessSP  m_process_sp;
         lldb::user_id_t  m_thread_id;
         StackID          m_stack_id;
-        lldb::user_id_t  m_stop_id; // This is the stop id when this ValueObject was last evaluated.
+        ProcessModID     m_mod_id; // This is the stop id when this ValueObject was last evaluated.
     };
 
     const EvaluationPoint &
@@ -691,7 +690,7 @@ public:
     SetCustomSummaryFormat(lldb::SummaryFormatSP format)
     {
         m_forced_summary_format = format;
-        m_user_id_of_forced_summary = m_update_point.GetUpdateID();
+        m_user_id_of_forced_summary = m_update_point.GetModID();
         m_summary_str.clear();
     }
     
@@ -789,7 +788,7 @@ protected:
     lldb::SummaryFormatSP       m_forced_summary_format;
     lldb::ValueFormatSP         m_last_value_format;
     lldb::SyntheticChildrenSP   m_last_synthetic_filter;
-    lldb::user_id_t             m_user_id_of_forced_summary;
+    ProcessModID                m_user_id_of_forced_summary;
     
     bool                m_value_is_valid:1,
                         m_value_did_change:1,

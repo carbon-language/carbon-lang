@@ -82,7 +82,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_forced_summary_format(),
     m_last_value_format(),
     m_last_synthetic_filter(),
-    m_user_id_of_forced_summary(0),
+    m_user_id_of_forced_summary(),
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
@@ -128,7 +128,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_forced_summary_format(),
     m_last_value_format(),
     m_last_synthetic_filter(),
-    m_user_id_of_forced_summary(0),
+    m_user_id_of_forced_summary(),
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
@@ -223,7 +223,7 @@ ValueObject::UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic)
            GetName().GetCString(),
            m_last_format_mgr_revision,
            Debugger::Formatting::ValueFormats::GetCurrentRevision());
-    if (HasCustomSummaryFormat() && m_update_point.GetUpdateID() != m_user_id_of_forced_summary)
+    if (HasCustomSummaryFormat() && m_update_point.GetModID() != m_user_id_of_forced_summary)
     {
         ClearCustomSummaryFormat();
         m_summary_str.clear();
@@ -1236,7 +1236,21 @@ ValueObject::SetValueFromCString (const char *value_str)
             unsigned long long ull_val = strtoull(value_str, &end, 0);
             if (end && *end != '\0')
                 return false;
-            m_value.GetScalar() = ull_val;
+            Value::ValueType value_type = m_value.GetValueType();
+            switch (value_type)
+            {
+            case Value::eValueTypeLoadAddress:
+            case Value::eValueTypeHostAddress:
+                // The value in these cases lives in the data.  So update the data:
+                
+                break;
+            case Value::eValueTypeScalar:
+                m_value.GetScalar() = ull_val;
+                break;
+            case Value::eValueTypeFileAddress:    
+                // Try to convert the file address to a load address and then write the new value there.
+                break;
+            }
             // Limit the bytes in our m_data appropriately.
             m_value.GetScalar().GetData (m_data, byte_size);
         }
@@ -3093,7 +3107,7 @@ ValueObject::CastPointerType (const char *name, TypeSP &type_sp)
 
 ValueObject::EvaluationPoint::EvaluationPoint () :
     m_thread_id (LLDB_INVALID_UID),
-    m_stop_id (0)
+    m_mod_id ()
 {
 }
 
@@ -3101,7 +3115,7 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
     m_needs_update (true),
     m_first_update (true),
     m_thread_id (LLDB_INVALID_THREAD_ID),
-    m_stop_id (0)
+    m_mod_id ()
     
 {
     ExecutionContext exe_ctx;
@@ -3120,7 +3134,8 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
         
         if (m_process_sp != NULL)
         {
-            m_stop_id = m_process_sp->GetStopID();
+            m_mod_id = m_process_sp->GetModID();
+            
             Thread *thread = NULL;
             
             if (exe_ctx.thread == NULL)
@@ -3166,7 +3181,7 @@ ValueObject::EvaluationPoint::EvaluationPoint (const ValueObject::EvaluationPoin
     m_process_sp (rhs.m_process_sp),
     m_thread_id (rhs.m_thread_id),
     m_stack_id (rhs.m_stack_id),
-    m_stop_id (0)
+    m_mod_id ()
 {
 }
 
@@ -3193,7 +3208,7 @@ bool
 ValueObject::EvaluationPoint::SyncWithProcessState()
 {
     // If we're already invalid, we don't need to do anything, and nothing has changed:
-    if (m_stop_id == LLDB_INVALID_UID)
+    if (!m_mod_id.IsValid())
     {
         // Can't update with an invalid state.
         m_needs_update = false;
@@ -3205,16 +3220,17 @@ ValueObject::EvaluationPoint::SyncWithProcessState()
         return false;
         
     // If our stop id is the current stop ID, nothing has changed:
-    uint32_t cur_stop_id = m_process_sp->GetStopID();
-    if (m_stop_id == cur_stop_id)
+    ProcessModID current_mod_id = m_process_sp->GetModID();
+    
+    if (m_mod_id == current_mod_id)
         return false;
     
     // If the current stop id is 0, either we haven't run yet, or the process state has been cleared.
     // In either case, we aren't going to be able to sync with the process state.
-    if (cur_stop_id == 0)
+    if (current_mod_id.GetStopID() == 0)
         return false;
         
-    m_stop_id = cur_stop_id;
+    m_mod_id = current_mod_id;
     m_needs_update = true;
     m_exe_scope = m_process_sp.get();
     
@@ -3251,7 +3267,9 @@ ValueObject::EvaluationPoint::SetUpdated ()
     m_first_update = false;
     m_needs_update = false;
     if (m_process_sp)
-        m_stop_id = m_process_sp->GetStopID();
+    {
+        m_mod_id = m_process_sp->GetModID();
+    }
 }
         
 
@@ -3276,12 +3294,11 @@ ValueObject::EvaluationPoint::SetContext (ExecutionContextScope *exe_scope)
             // FOR NOW - assume you can't update variable objects across process boundaries.
             Process *old_process = m_process_sp.get();
             assert (process == old_process);
-            
-            lldb::user_id_t stop_id = process->GetStopID();
-            if (stop_id != m_stop_id)
+            ProcessModID current_mod_id = process->GetModID();
+            if (m_mod_id != current_mod_id)
             {
                 needs_update = true;
-                m_stop_id = stop_id;
+                m_mod_id = current_mod_id;
             }
             // See if we're switching the thread or stack context.  If no thread is given, this is
             // being evaluated in a global context.            

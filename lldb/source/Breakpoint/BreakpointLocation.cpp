@@ -224,37 +224,6 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     context->is_synchronous = true;
     should_stop = InvokeCallback (context);
     
-    // The SYNCHRONOUS callback says we should stop, next try the condition.
-    
-    if (should_stop && GetConditionText() != NULL)
-    {
-        // We need to make sure the user sees any parse errors in their condition, so we'll hook the
-        // constructor errors up to the debugger's Async I/O.
-        
-        StreamString errors;
-        ThreadPlanSP condition_plan_sp(GetThreadPlanToTestCondition(context->exe_ctx, errors));
-        
-        if (condition_plan_sp == NULL)
-        {
-            if (log)
-                log->Printf("Error evaluating condition: \"%s\"\n", errors.GetData());
-                
-            Debugger &debugger = context->exe_ctx.target->GetDebugger();
-            StreamSP error_sp = debugger.GetAsyncErrorStream ();
-            error_sp->PutCString ("Error parsing breakpoint condition:\n");
-            error_sp->PutCString (errors.GetData());
-            error_sp->EOL();                       
-            error_sp->Flush();
-
-        }
-        else
-        {
-            // Queue our condition, then continue so that we can run it.
-            context->exe_ctx.thread->QueueThreadPlan(condition_plan_sp, false);
-            should_stop = false;
-        }
-    }
-    
     if (log)
     {
         StreamString s;

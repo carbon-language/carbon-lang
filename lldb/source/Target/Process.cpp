@@ -581,7 +581,7 @@ Process::Process(Target &target, Listener &listener) :
     m_private_state_listener ("lldb.process.internal_state_listener"),
     m_private_state_control_wait(),
     m_private_state_thread (LLDB_INVALID_HOST_THREAD),
-    m_stop_id (0),
+    m_mod_id (),
     m_thread_index_id (0),
     m_exit_status (-1),
     m_exit_string (),
@@ -709,8 +709,36 @@ Process::GetNextEvent (EventSP &event_sp)
 StateType
 Process::WaitForProcessToStop (const TimeValue *timeout)
 {
-    StateType match_states[] = { eStateStopped, eStateCrashed, eStateDetached, eStateExited, eStateUnloaded };
-    return WaitForState (timeout, match_states, sizeof(match_states) / sizeof(StateType));
+    // We can't just wait for a "stopped" event, because the stopped event may have restarted the target.
+    // We have to actually check each event, and in the case of a stopped event check the restarted flag
+    // on the event.
+    EventSP event_sp;
+    StateType state = GetState();
+    // If we are exited or detached, we won't ever get back to any
+    // other valid state...
+    if (state == eStateDetached || state == eStateExited)
+        return state;
+
+    while (state != eStateInvalid)
+    {
+        state = WaitForStateChangedEvents (timeout, event_sp);
+        switch (state)
+        {
+        case eStateCrashed:
+        case eStateDetached:
+        case eStateExited:
+        case eStateUnloaded:
+            return state;
+        case eStateStopped:
+            if (Process::ProcessEventData::GetRestartedFromEvent(event_sp.get()))
+                continue;
+            else
+                return state;
+        default:
+            continue;
+        }
+    }
+    return state;
 }
 
 
@@ -1047,10 +1075,10 @@ Process::SetPrivateState (StateType new_state)
         m_private_state.SetValueNoLock (new_state);
         if (StateIsStoppedState(new_state))
         {
-            m_stop_id++;
+            m_mod_id.BumpStopID();
             m_memory_cache.Clear();
             if (log)
-                log->Printf("Process::SetPrivateState (%s) stop_id = %u", StateAsCString(new_state), m_stop_id);
+                log->Printf("Process::SetPrivateState (%s) stop_id = %u", StateAsCString(new_state), m_mod_id.GetStopID());
         }
         // Use our target to get a shared pointer to ourselves...
         m_private_state_broadcaster.BroadcastEvent (eBroadcastBitStateChanged, new ProcessEventData (GetTarget().GetProcessSP(), new_state));
@@ -1060,13 +1088,6 @@ Process::SetPrivateState (StateType new_state)
         if (log)
             log->Printf("Process::SetPrivateState (%s) state didn't change. Ignoring...", StateAsCString(new_state), StateAsCString(old_state));
     }
-}
-
-
-uint32_t
-Process::GetStopID() const
-{
-    return m_stop_id;
 }
 
 addr_t
@@ -1774,10 +1795,7 @@ Process::WriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
     if (buf == NULL || size == 0)
         return 0;
 
-    // Need to bump the stop ID after writing so that ValueObjects will know to re-read themselves.
-    // FUTURE: Doing this should be okay, but if anybody else gets upset about the stop_id changing when
-    // the target hasn't run, then we will need to add a "memory generation" as well as a stop_id...
-    m_stop_id++;
+    m_mod_id.BumpMemoryID();
 
     // We need to write any data that would go where any current software traps
     // (enabled software breakpoints) any software traps (breakpoints) that we
@@ -1910,11 +1928,12 @@ Process::AllocateMemory(size_t size, uint32_t permissions, Error &error)
     addr_t allocated_addr = DoAllocateMemory (size, permissions, error);
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
-        log->Printf("Process::AllocateMemory(size=%4zu, permissions=%s) => 0x%16.16llx (m_stop_id = %u)", 
+        log->Printf("Process::AllocateMemory(size=%4zu, permissions=%s) => 0x%16.16llx (m_stop_id = %u m_memory_id = %u)", 
                     size, 
                     GetPermissionsAsCString (permissions),
                     (uint64_t)allocated_addr,
-                    m_stop_id);
+                    m_mod_id.GetStopID(),
+                    m_mod_id.GetMemoryID());
     return allocated_addr;
 #endif
 }
@@ -1933,10 +1952,11 @@ Process::DeallocateMemory (addr_t ptr)
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
-        log->Printf("Process::DeallocateMemory(addr=0x%16.16llx) => err = %s (m_stop_id = %u)", 
+        log->Printf("Process::DeallocateMemory(addr=0x%16.16llx) => err = %s (m_stop_id = %u, m_memory_id = %u)", 
                     ptr, 
                     error.AsCString("SUCCESS"),
-                    m_stop_id);
+                    m_mod_id.GetStopID(),
+                    m_mod_id.GetMemoryID());
 #endif
     return error;
 }
@@ -2360,7 +2380,7 @@ Process::Resume ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
         log->Printf("Process::Resume() m_stop_id = %u, public state: %s private state: %s", 
-                    m_stop_id,
+                    m_mod_id.GetStopID(),
                     StateAsCString(m_public_state.GetValue()),
                     StateAsCString(m_private_state.GetValue()));
 
@@ -2944,6 +2964,10 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
         int num_threads = m_process_sp->GetThreadList().GetSize();
         int idx;
 
+        // The actions might change one of the thread's stop_info's opinions about whether we should
+        // stop the process, so we need to query that as we go.
+        bool still_should_stop = true;
+        
         for (idx = 0; idx < num_threads; ++idx)
         {
             lldb::ThreadSP thread_sp = m_process_sp->GetThreadList().GetThreadAtIndex(idx);
@@ -2952,22 +2976,39 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
             if (stop_info_sp)
             {
                 stop_info_sp->PerformAction(event_ptr);
+                // The stop action might restart the target.  If it does, then we want to mark that in the
+                // event so that whoever is receiving it will know to wait for the running event and reflect
+                // that state appropriately.
+                // We also need to stop processing actions, since they aren't expecting the target to be running.
+                if (m_process_sp->GetPrivateState() == eStateRunning)
+                {
+                    SetRestarted (true);
+                    break;
+                }
+                else if (!stop_info_sp->ShouldStop(event_ptr))
+                {
+                    still_should_stop = false;
+                }
             }
         }
-        
-        // The stop action might restart the target.  If it does, then we want to mark that in the
-        // event so that whoever is receiving it will know to wait for the running event and reflect
-        // that state appropriately.
 
-        if (m_process_sp->GetPrivateState() == eStateRunning)
-            SetRestarted(true);
-        else
+        
+        if (m_process_sp->GetPrivateState() != eStateRunning)
         {
-            // Finally, if we didn't restart, run the Stop Hooks here:
-            // They might also restart the target, so watch for that.
-            m_process_sp->GetTarget().RunStopHooks();
-            if (m_process_sp->GetPrivateState() == eStateRunning)
+            if (!still_should_stop)
+            {
+                // We've been asked to continue, so do that here.
                 SetRestarted(true);
+                m_process_sp->Resume();
+            }
+            else
+            {
+                // If we didn't restart, run the Stop Hooks here:
+                // They might also restart the target, so watch for that.
+                m_process_sp->GetTarget().RunStopHooks();
+                if (m_process_sp->GetPrivateState() == eStateRunning)
+                    SetRestarted(true);
+            }
         }
         
     }
@@ -3776,6 +3817,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (discard_on_error && thread_plan_sp)
             {
                 exe_ctx.thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
+                thread_plan_sp->SetPrivate (orig_plan_private);
             }
         }
     }
@@ -3787,6 +3829,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         if (discard_on_error && thread_plan_sp)
         {
             exe_ctx.thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
+            thread_plan_sp->SetPrivate (orig_plan_private);
         }
     }
     else
@@ -3812,6 +3855,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 if (log)
                     log->Printf("Process::RunThreadPlan(): discarding thread plan 'cause discard_on_error is set.");
                 exe_ctx.thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
+                thread_plan_sp->SetPrivate (orig_plan_private);
             }
         }
     }
