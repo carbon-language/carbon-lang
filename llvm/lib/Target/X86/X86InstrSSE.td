@@ -186,26 +186,61 @@ def : Pat<(v4f64 (scalar_to_vector FR64:$src)),
           (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)), FR64:$src, sub_sd)>;
 
 let AddedComplexity = 20 in {
+let Predicates = [HasSSE1] in {
+  // MOVSSrm zeros the high parts of the register; represent this
+  // with SUBREG_TO_REG.
+  def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector (loadf32 addr:$src))))),
+            (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), sub_ss)>;
+  def : Pat<(v4f32 (scalar_to_vector (loadf32 addr:$src))),
+            (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), sub_ss)>;
+  def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
+            (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), sub_ss)>;
+}
+let Predicates = [HasSSE2] in {
+  // MOVSDrm zeros the high parts of the register; represent this
+  // with SUBREG_TO_REG.
+  def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector (loadf64 addr:$src))))),
+            (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+  def : Pat<(v2f64 (scalar_to_vector (loadf64 addr:$src))),
+            (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+  def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
+            (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+  def : Pat<(v2f64 (X86vzmovl (bc_v2f64 (loadv4f32 addr:$src)))),
+            (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+  def : Pat<(v2f64 (X86vzload addr:$src)),
+            (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+}
+}
+
+let AddedComplexity = 20, Predicates = [HasAVX] in {
 // MOVSSrm zeros the high parts of the register; represent this
-// with SUBREG_TO_REG.
+// with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
 def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector (loadf32 addr:$src))))),
-          (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), sub_ss)>;
+          (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
 def : Pat<(v4f32 (scalar_to_vector (loadf32 addr:$src))),
-          (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), sub_ss)>;
+          (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
 def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
-          (SUBREG_TO_REG (i32 0), (MOVSSrm addr:$src), sub_ss)>;
+          (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
 // MOVSDrm zeros the high parts of the register; represent this
-// with SUBREG_TO_REG.
+// with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
 def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector (loadf64 addr:$src))))),
-          (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+          (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
 def : Pat<(v2f64 (scalar_to_vector (loadf64 addr:$src))),
-          (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+          (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
 def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
-          (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+          (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
 def : Pat<(v2f64 (X86vzmovl (bc_v2f64 (loadv4f32 addr:$src)))),
-          (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+          (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
 def : Pat<(v2f64 (X86vzload addr:$src)),
-          (SUBREG_TO_REG (i64 0), (MOVSDrm addr:$src), sub_sd)>;
+          (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
+// Represent the same patterns above but in the form they appear for
+// 256-bit types
+def : Pat<(v8f32 (X86vzmovl (insert_subvector undef,
+                 (v4f32 (scalar_to_vector (loadf32 addr:$src))), (i32 0)))),
+          (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
+def : Pat<(v4f64 (X86vzmovl (insert_subvector undef,
+                 (v2f64 (scalar_to_vector (loadf64 addr:$src))), (i32 0)))),
+          (SUBREG_TO_REG (i32 0), (VMOVSDrm addr:$src), sub_sd)>;
 }
 
 // Store scalar value to memory.
