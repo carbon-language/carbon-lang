@@ -15,7 +15,7 @@
 }
 -(id)init;
 -(void)accessMember:(int)a;
-+(int)accessStaticMember:(int)a;
++(void)accessStaticMember:(int)a;
 @end
 
 static int s_a = 5;
@@ -27,6 +27,8 @@ static int s_a = 5;
     
     if (self)
         m_a = 2;
+
+    return self;
 }
 
 -(void)accessMember:(int)a
@@ -34,10 +36,9 @@ static int s_a = 5;
     m_a = a; // breakpoint 1
 }
 
-+(int)accessStaticMember:(int)a
++(void)accessStaticMember:(int)a
 {
     s_a = a; // breakpoint 2
-    return 0;
 }
 @end
 
