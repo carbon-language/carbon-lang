@@ -1583,8 +1583,10 @@ as if it writes to the relevant surrounding bytes.
 <div class="doc_text">
 
 <p>Atomic instructions (<a href="#i_cmpxchg"><code>cmpxchg</code></a>,
-<a href="#i_atomicrmw"><code>atomicrmw</code></a>, and
-<a href="#i_fence"><code>fence</code></a>) take an ordering parameter
+<a href="#i_atomicrmw"><code>atomicrmw</code></a>,
+<a href="#i_fence"><code>fence</code></a>,
+<a href="#i_load"><code>atomic load</code></a>, and
+<a href="#i_load"><code>atomic store</code></a>) take an ordering parameter
 that determines which other atomic instructions on the same address they
 <i>synchronize with</i>.  These semantics are borrowed from Java and C++0x,
 but are somewhat more colloquial. If these descriptions aren't precise enough,
@@ -1592,11 +1594,7 @@ check those specs.  <a href="#i_fence"><code>fence</code></a> instructions
 treat these orderings somewhat differently since they don't take an address.
 See that instruction's documentation for details.</p>
 
-<!-- FIXME Note atomic load+store here once those get added. -->
-
 <dl>
-<!-- FIXME: unordered is intended to be used for atomic load and store;
-it isn't allowed for any instruction yet. -->
 <dt><code>unordered</code></dt>
 <dd>The set of values that can be read is governed by the happens-before
 partial order. A value cannot be read unless some operation wrote it.
@@ -4572,8 +4570,8 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]
-  &lt;result&gt; = volatile load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]
+  &lt;result&gt; = [volatile] load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]
+  &lt;result&gt; = atomic [volatile] load &lt;ty&gt;* &lt;pointer&gt; [singlethread] &lt;ordering&gt;, align &lt;alignment&gt;
   !&lt;index&gt; = !{ i32 1 }
 </pre>
 
@@ -4587,6 +4585,19 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    marked as <tt>volatile</tt>, then the optimizer is not allowed to modify the
    number or order of execution of this <tt>load</tt> with other <a
    href="#volatile">volatile operations</a>.</p>
+
+<p>If the <code>load</code> is marked as <code>atomic</code>, it takes an extra
+   <a href="#ordering">ordering</a> and optional <code>singlethread</code>
+   argument.  The <code>release</code> and <code>acq_rel</code> orderings are
+   not valid on <code>load</code> instructions.  Atomic loads produce <a
+   href="#memorymodel">defined</a> results when they may see multiple atomic
+   stores.  The type of the pointee must be an integer type whose bit width
+   is a power of two greater than or equal to eight and less than or equal
+   to a target-specific size limit. <code>align</code> must be explicitly 
+   specified on atomic loads, and the load has undefined behavior if the
+   alignment is not set to a value which is at least the size in bytes of
+   the pointee. <code>!nontemporal</code> does not have any defined semantics
+   for atomic loads.</p>
 
 <p>The optional constant <tt>align</tt> argument specifies the alignment of the
    operation (that is, the alignment of the memory address). A value of 0 or an
@@ -4631,8 +4642,8 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]                   <i>; yields {void}</i>
-  volatile store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]          <i>; yields {void}</i>
+  [volatile] store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]                   <i>; yields {void}</i>
+  atomic [volatile] store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt; [singlethread] &lt;ordering&gt;, align &lt;alignment&gt;             <i>; yields {void}</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -4647,6 +4658,19 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    <tt>volatile</tt>, then the optimizer is not allowed to modify the number or
    order of execution of this <tt>store</tt> with other <a
    href="#volatile">volatile operations</a>.</p>
+
+<p>If the <code>store</code> is marked as <code>atomic</code>, it takes an extra
+   <a href="#ordering">ordering</a> and optional <code>singlethread</code>
+   argument.  The <code>acquire</code> and <code>acq_rel</code> orderings aren't
+   valid on <code>store</code> instructions.  Atomic loads produce <a
+   href="#memorymodel">defined</a> results when they may see multiple atomic
+   stores. The type of the pointee must be an integer type whose bit width
+   is a power of two greater than or equal to eight and less than or equal
+   to a target-specific size limit. <code>align</code> must be explicitly 
+   specified on atomic stores, and the store has undefined behavior if the
+   alignment is not set to a value which is at least the size in bytes of
+   the pointee. <code>!nontemporal</code> does not have any defined semantics
+   for atomic stores.</p>
 
 <p>The optional constant "align" argument specifies the alignment of the
    operation (that is, the alignment of the memory address). A value of 0 or an
@@ -4729,9 +4753,6 @@ operations and/or fences.</p>
 <p>The optional "<a href="#singlethread"><code>singlethread</code></a>" argument
 specifies that the fence only synchronizes with other fences in the same
 thread.  (This is useful for interacting with signal handlers.)</p>
-
-<p>FIXME: This instruction is a work in progress; until it is finished, use
-   llvm.memory.barrier.
 
 <h5>Example:</h5>
 <pre>

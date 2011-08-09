@@ -822,6 +822,8 @@ bool AllocaInst::isStaticAlloca() const {
 void LoadInst::AssertOK() {
   assert(getOperand(0)->getType()->isPointerTy() &&
          "Ptr must have pointer type.");
+  assert(!(isAtomic() && getAlignment() == 0) &&
+         "Alignment required for atomic load");
 }
 
 LoadInst::LoadInst(Value *Ptr, const Twine &Name, Instruction *InsertBef)
@@ -829,6 +831,7 @@ LoadInst::LoadInst(Value *Ptr, const Twine &Name, Instruction *InsertBef)
                      Load, Ptr, InsertBef) {
   setVolatile(false);
   setAlignment(0);
+  setAtomic(NotAtomic);
   AssertOK();
   setName(Name);
 }
@@ -838,6 +841,7 @@ LoadInst::LoadInst(Value *Ptr, const Twine &Name, BasicBlock *InsertAE)
                      Load, Ptr, InsertAE) {
   setVolatile(false);
   setAlignment(0);
+  setAtomic(NotAtomic);
   AssertOK();
   setName(Name);
 }
@@ -848,6 +852,18 @@ LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile,
                      Load, Ptr, InsertBef) {
   setVolatile(isVolatile);
   setAlignment(0);
+  setAtomic(NotAtomic);
+  AssertOK();
+  setName(Name);
+}
+
+LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile,
+                   BasicBlock *InsertAE)
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, InsertAE) {
+  setVolatile(isVolatile);
+  setAlignment(0);
+  setAtomic(NotAtomic);
   AssertOK();
   setName(Name);
 }
@@ -858,6 +874,7 @@ LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile,
                      Load, Ptr, InsertBef) {
   setVolatile(isVolatile);
   setAlignment(Align);
+  setAtomic(NotAtomic);
   AssertOK();
   setName(Name);
 }
@@ -868,27 +885,43 @@ LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile,
                      Load, Ptr, InsertAE) {
   setVolatile(isVolatile);
   setAlignment(Align);
+  setAtomic(NotAtomic);
   AssertOK();
   setName(Name);
 }
 
-LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile,
+LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile, 
+                   unsigned Align, AtomicOrdering Order,
+                   SynchronizationScope SynchScope,
+                   Instruction *InsertBef)
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, InsertBef) {
+  setVolatile(isVolatile);
+  setAlignment(Align);
+  setAtomic(Order, SynchScope);
+  AssertOK();
+  setName(Name);
+}
+
+LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile, 
+                   unsigned Align, AtomicOrdering Order,
+                   SynchronizationScope SynchScope,
                    BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertAE) {
   setVolatile(isVolatile);
-  setAlignment(0);
+  setAlignment(Align);
+  setAtomic(Order, SynchScope);
   AssertOK();
   setName(Name);
 }
-
-
 
 LoadInst::LoadInst(Value *Ptr, const char *Name, Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertBef) {
   setVolatile(false);
   setAlignment(0);
+  setAtomic(NotAtomic);
   AssertOK();
   if (Name && Name[0]) setName(Name);
 }
@@ -898,6 +931,7 @@ LoadInst::LoadInst(Value *Ptr, const char *Name, BasicBlock *InsertAE)
                      Load, Ptr, InsertAE) {
   setVolatile(false);
   setAlignment(0);
+  setAtomic(NotAtomic);
   AssertOK();
   if (Name && Name[0]) setName(Name);
 }
@@ -908,6 +942,7 @@ LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
                    Load, Ptr, InsertBef) {
   setVolatile(isVolatile);
   setAlignment(0);
+  setAtomic(NotAtomic);
   AssertOK();
   if (Name && Name[0]) setName(Name);
 }
@@ -918,6 +953,7 @@ LoadInst::LoadInst(Value *Ptr, const char *Name, bool isVolatile,
                      Load, Ptr, InsertAE) {
   setVolatile(isVolatile);
   setAlignment(0);
+  setAtomic(NotAtomic);
   AssertOK();
   if (Name && Name[0]) setName(Name);
 }
@@ -926,7 +962,7 @@ void LoadInst::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Align <= MaximumAlignment &&
          "Alignment is greater than MaximumAlignment!");
-  setInstructionSubclassData((getSubclassDataFromInstruction() & 1) |
+  setInstructionSubclassData((getSubclassDataFromInstruction() & ~(31 << 1)) |
                              ((Log2_32(Align)+1)<<1));
   assert(getAlignment() == Align && "Alignment representation error!");
 }
@@ -942,6 +978,8 @@ void StoreInst::AssertOK() {
   assert(getOperand(0)->getType() ==
                  cast<PointerType>(getOperand(1)->getType())->getElementType()
          && "Ptr must be a pointer to Val type!");
+  assert(!(isAtomic() && getAlignment() == 0) &&
+         "Alignment required for atomic load");
 }
 
 
@@ -954,6 +992,7 @@ StoreInst::StoreInst(Value *val, Value *addr, Instruction *InsertBefore)
   Op<1>() = addr;
   setVolatile(false);
   setAlignment(0);
+  setAtomic(NotAtomic);
   AssertOK();
 }
 
@@ -966,6 +1005,7 @@ StoreInst::StoreInst(Value *val, Value *addr, BasicBlock *InsertAtEnd)
   Op<1>() = addr;
   setVolatile(false);
   setAlignment(0);
+  setAtomic(NotAtomic);
   AssertOK();
 }
 
@@ -979,6 +1019,7 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
   Op<1>() = addr;
   setVolatile(isVolatile);
   setAlignment(0);
+  setAtomic(NotAtomic);
   AssertOK();
 }
 
@@ -992,19 +1033,23 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
   Op<1>() = addr;
   setVolatile(isVolatile);
   setAlignment(Align);
+  setAtomic(NotAtomic);
   AssertOK();
 }
 
 StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
-                     unsigned Align, BasicBlock *InsertAtEnd)
+                     unsigned Align, AtomicOrdering Order,
+                     SynchronizationScope SynchScope,
+                     Instruction *InsertBefore)
   : Instruction(Type::getVoidTy(val->getContext()), Store,
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
-                InsertAtEnd) {
+                InsertBefore) {
   Op<0>() = val;
   Op<1>() = addr;
   setVolatile(isVolatile);
   setAlignment(Align);
+  setAtomic(Order, SynchScope);
   AssertOK();
 }
 
@@ -1018,6 +1063,37 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
   Op<1>() = addr;
   setVolatile(isVolatile);
   setAlignment(0);
+  setAtomic(NotAtomic);
+  AssertOK();
+}
+
+StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
+                     unsigned Align, BasicBlock *InsertAtEnd)
+  : Instruction(Type::getVoidTy(val->getContext()), Store,
+                OperandTraits<StoreInst>::op_begin(this),
+                OperandTraits<StoreInst>::operands(this),
+                InsertAtEnd) {
+  Op<0>() = val;
+  Op<1>() = addr;
+  setVolatile(isVolatile);
+  setAlignment(Align);
+  setAtomic(NotAtomic);
+  AssertOK();
+}
+
+StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
+                     unsigned Align, AtomicOrdering Order,
+                     SynchronizationScope SynchScope,
+                     BasicBlock *InsertAtEnd)
+  : Instruction(Type::getVoidTy(val->getContext()), Store,
+                OperandTraits<StoreInst>::op_begin(this),
+                OperandTraits<StoreInst>::operands(this),
+                InsertAtEnd) {
+  Op<0>() = val;
+  Op<1>() = addr;
+  setVolatile(isVolatile);
+  setAlignment(Align);
+  setAtomic(Order, SynchScope);
   AssertOK();
 }
 
@@ -1025,7 +1101,7 @@ void StoreInst::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Align <= MaximumAlignment &&
          "Alignment is greater than MaximumAlignment!");
-  setInstructionSubclassData((getSubclassDataFromInstruction() & 1) |
+  setInstructionSubclassData((getSubclassDataFromInstruction() & ~(31 << 1)) |
                              ((Log2_32(Align)+1) << 1));
   assert(getAlignment() == Align && "Alignment representation error!");
 }
@@ -3158,14 +3234,14 @@ AllocaInst *AllocaInst::clone_impl() const {
 }
 
 LoadInst *LoadInst::clone_impl() const {
-  return new LoadInst(getOperand(0),
-                      Twine(), isVolatile(),
-                      getAlignment());
+  return new LoadInst(getOperand(0), Twine(), isVolatile(),
+                      getAlignment(), getOrdering(), getSynchScope());
 }
 
 StoreInst *StoreInst::clone_impl() const {
-  return new StoreInst(getOperand(0), getOperand(1),
-                       isVolatile(), getAlignment());
+  return new StoreInst(getOperand(0), getOperand(1),isVolatile(),
+                       getAlignment(), getOrdering(), getSynchScope());
+  
 }
 
 AtomicCmpXchgInst *AtomicCmpXchgInst::clone_impl() const {

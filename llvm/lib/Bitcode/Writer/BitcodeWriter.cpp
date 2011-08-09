@@ -1175,19 +1175,34 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     break;
 
   case Instruction::Load:
-    Code = bitc::FUNC_CODE_INST_LOAD;
-    if (!PushValueAndType(I.getOperand(0), InstID, Vals, VE))  // ptr
-      AbbrevToUse = FUNCTION_INST_LOAD_ABBREV;
-
+    if (cast<LoadInst>(I).isAtomic()) {
+      Code = bitc::FUNC_CODE_INST_LOADATOMIC;
+      PushValueAndType(I.getOperand(0), InstID, Vals, VE);
+    } else {
+      Code = bitc::FUNC_CODE_INST_LOAD;
+      if (!PushValueAndType(I.getOperand(0), InstID, Vals, VE))  // ptr
+        AbbrevToUse = FUNCTION_INST_LOAD_ABBREV;
+    }
     Vals.push_back(Log2_32(cast<LoadInst>(I).getAlignment())+1);
     Vals.push_back(cast<LoadInst>(I).isVolatile());
+    if (cast<LoadInst>(I).isAtomic()) {
+      Vals.push_back(GetEncodedOrdering(cast<LoadInst>(I).getOrdering()));
+      Vals.push_back(GetEncodedSynchScope(cast<LoadInst>(I).getSynchScope()));
+    }
     break;
   case Instruction::Store:
-    Code = bitc::FUNC_CODE_INST_STORE;
+    if (cast<StoreInst>(I).isAtomic())
+      Code = bitc::FUNC_CODE_INST_STOREATOMIC;
+    else
+      Code = bitc::FUNC_CODE_INST_STORE;
     PushValueAndType(I.getOperand(1), InstID, Vals, VE);  // ptrty + ptr
     Vals.push_back(VE.getValueID(I.getOperand(0)));       // val.
     Vals.push_back(Log2_32(cast<StoreInst>(I).getAlignment())+1);
     Vals.push_back(cast<StoreInst>(I).isVolatile());
+    if (cast<StoreInst>(I).isAtomic()) {
+      Vals.push_back(GetEncodedOrdering(cast<StoreInst>(I).getOrdering()));
+      Vals.push_back(GetEncodedSynchScope(cast<StoreInst>(I).getSynchScope()));
+    }
     break;
   case Instruction::AtomicCmpXchg:
     Code = bitc::FUNC_CODE_INST_CMPXCHG;

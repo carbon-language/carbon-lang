@@ -2567,6 +2567,28 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       InstructionList.push_back(I);
       break;
     }
+    case bitc::FUNC_CODE_INST_LOADATOMIC: {
+       // LOADATOMIC: [opty, op, align, vol, ordering, synchscope]
+      unsigned OpNum = 0;
+      Value *Op;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Op) ||
+          OpNum+4 != Record.size())
+        return Error("Invalid LOADATOMIC record");
+        
+
+      AtomicOrdering Ordering = GetDecodedOrdering(Record[OpNum+2]);
+      if (Ordering == NotAtomic || Ordering == Release ||
+          Ordering == AcquireRelease)
+        return Error("Invalid LOADATOMIC record");
+      if (Ordering != NotAtomic && Record[OpNum] == 0)
+        return Error("Invalid LOADATOMIC record");
+      SynchronizationScope SynchScope = GetDecodedSynchScope(Record[OpNum+3]);
+
+      I = new LoadInst(Op, "", Record[OpNum+1], (1 << Record[OpNum]) >> 1,
+                       Ordering, SynchScope);
+      InstructionList.push_back(I);
+      break;
+    }
     case bitc::FUNC_CODE_INST_STORE: { // STORE2:[ptrty, ptr, val, align, vol]
       unsigned OpNum = 0;
       Value *Val, *Ptr;
@@ -2577,6 +2599,29 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         return Error("Invalid STORE record");
 
       I = new StoreInst(Val, Ptr, Record[OpNum+1], (1 << Record[OpNum]) >> 1);
+      InstructionList.push_back(I);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_STOREATOMIC: {
+      // STOREATOMIC: [ptrty, ptr, val, align, vol, ordering, synchscope]
+      unsigned OpNum = 0;
+      Value *Val, *Ptr;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Ptr) ||
+          getValue(Record, OpNum,
+                    cast<PointerType>(Ptr->getType())->getElementType(), Val) ||
+          OpNum+4 != Record.size())
+        return Error("Invalid STOREATOMIC record");
+
+      AtomicOrdering Ordering = GetDecodedOrdering(Record[OpNum+2]);
+      if (Ordering == NotAtomic || Ordering == Release ||
+          Ordering == AcquireRelease)
+        return Error("Invalid STOREATOMIC record");
+      SynchronizationScope SynchScope = GetDecodedSynchScope(Record[OpNum+3]);
+      if (Ordering != NotAtomic && Record[OpNum] == 0)
+        return Error("Invalid STOREATOMIC record");
+
+      I = new StoreInst(Val, Ptr, Record[OpNum+1], (1 << Record[OpNum]) >> 1,
+                        Ordering, SynchScope);
       InstructionList.push_back(I);
       break;
     }
@@ -2592,7 +2637,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           OpNum+3 != Record.size())
         return Error("Invalid CMPXCHG record");
       AtomicOrdering Ordering = GetDecodedOrdering(Record[OpNum+1]);
-      if (Ordering == NotAtomic)
+      if (Ordering == NotAtomic || Ordering == Unordered)
         return Error("Invalid CMPXCHG record");
       SynchronizationScope SynchScope = GetDecodedSynchScope(Record[OpNum+2]);
       I = new AtomicCmpXchgInst(Ptr, Cmp, New, Ordering, SynchScope);
@@ -2614,7 +2659,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           Operation > AtomicRMWInst::LAST_BINOP)
         return Error("Invalid ATOMICRMW record");
       AtomicOrdering Ordering = GetDecodedOrdering(Record[OpNum+2]);
-      if (Ordering == NotAtomic)
+      if (Ordering == NotAtomic || Ordering == Unordered)
         return Error("Invalid ATOMICRMW record");
       SynchronizationScope SynchScope = GetDecodedSynchScope(Record[OpNum+3]);
       I = new AtomicRMWInst(Operation, Ptr, Val, Ordering, SynchScope);

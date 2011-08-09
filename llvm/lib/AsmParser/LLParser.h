@@ -362,8 +362,10 @@ namespace llvm {
     int ParsePHI(Instruction *&I, PerFunctionState &PFS);
     bool ParseCall(Instruction *&I, PerFunctionState &PFS, bool isTail);
     int ParseAlloc(Instruction *&I, PerFunctionState &PFS);
-    int ParseLoad(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
-    int ParseStore(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
+    int ParseLoad(Instruction *&I, PerFunctionState &PFS,
+                  bool isAtomic, bool isVolatile);
+    int ParseStore(Instruction *&I, PerFunctionState &PFS,
+                   bool isAtomic, bool isVolatile);
     int ParseCmpXchg(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
     int ParseAtomicRMW(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
     int ParseFence(Instruction *&I, PerFunctionState &PFS);

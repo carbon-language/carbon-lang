@@ -190,6 +190,16 @@ static bool LowerFenceInst(FenceInst *FI) {
   return true;
 }
 
+static bool LowerLoadInst(LoadInst *LI) {
+  LI->setAtomic(NotAtomic);
+  return true;
+}
+
+static bool LowerStoreInst(StoreInst *SI) {
+  SI->setAtomic(NotAtomic);
+  return true;
+}
+
 namespace {
   struct LowerAtomic : public BasicBlockPass {
     static char ID;
@@ -208,6 +218,13 @@ namespace {
           Changed |= LowerAtomicCmpXchgInst(CXI);
         else if (AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(Inst))
           Changed |= LowerAtomicRMWInst(RMWI);
+        else if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+          if (LI->isAtomic())
+            LowerLoadInst(LI);
+        } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+          if (SI->isAtomic())
+            LowerStoreInst(SI);
+        }
       }
       return Changed;
     }

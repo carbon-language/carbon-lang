@@ -1659,14 +1659,18 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       Out << '%' << SlotNum << " = ";
   }
 
+  // If this is an atomic load or store, print out the atomic marker.
+  if ((isa<LoadInst>(I)  && cast<LoadInst>(I).isAtomic()) ||
+      (isa<StoreInst>(I) && cast<StoreInst>(I).isAtomic()))
+    Out << "atomic ";
+
   // If this is a volatile load or store, print out the volatile marker.
   if ((isa<LoadInst>(I)  && cast<LoadInst>(I).isVolatile()) ||
-      (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile())) {
-      Out << "volatile ";
-  } else if (isa<CallInst>(I) && cast<CallInst>(I).isTailCall()) {
-    // If this is a call, check if it's a tail call.
+      (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile()))
+    Out << "volatile ";
+  
+  if (isa<CallInst>(I) && cast<CallInst>(I).isTailCall())
     Out << "tail ";
-  }
 
   // Print out the opcode...
   Out << I.getOpcodeName();
@@ -1913,11 +1917,17 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     }
   }
 
-  // Print post operand alignment for load/store.
-  if (isa<LoadInst>(I) && cast<LoadInst>(I).getAlignment()) {
-    Out << ", align " << cast<LoadInst>(I).getAlignment();
-  } else if (isa<StoreInst>(I) && cast<StoreInst>(I).getAlignment()) {
-    Out << ", align " << cast<StoreInst>(I).getAlignment();
+  // Print atomic ordering/alignment for memory operations
+  if (const LoadInst *LI = dyn_cast<LoadInst>(&I)) {
+    if (LI->isAtomic())
+      writeAtomic(LI->getOrdering(), LI->getSynchScope());
+    if (LI->getAlignment())
+      Out << ", align " << LI->getAlignment();
+  } else if (const StoreInst *SI = dyn_cast<StoreInst>(&I)) {
+    if (SI->isAtomic())
+      writeAtomic(SI->getOrdering(), SI->getSynchScope());
+    if (SI->getAlignment())
+      Out << ", align " << SI->getAlignment();
   } else if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(&I)) {
     writeAtomic(CXI->getOrdering(), CXI->getSynchScope());
   } else if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(&I)) {

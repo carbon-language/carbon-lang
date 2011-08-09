@@ -2949,16 +2949,23 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_tail:           return ParseCall(Inst, PFS, true);
   // Memory.
   case lltok::kw_alloca:         return ParseAlloc(Inst, PFS);
-  case lltok::kw_load:           return ParseLoad(Inst, PFS, false);
-  case lltok::kw_store:          return ParseStore(Inst, PFS, false);
+  case lltok::kw_load:           return ParseLoad(Inst, PFS, false, false);
+  case lltok::kw_store:          return ParseStore(Inst, PFS, false, false);
   case lltok::kw_cmpxchg:        return ParseCmpXchg(Inst, PFS, false);
   case lltok::kw_atomicrmw:      return ParseAtomicRMW(Inst, PFS, false);
   case lltok::kw_fence:          return ParseFence(Inst, PFS);
+  case lltok::kw_atomic: {
+    bool isVolatile = EatIfPresent(lltok::kw_volatile);
+    if (EatIfPresent(lltok::kw_load))
+      return ParseLoad(Inst, PFS, true, isVolatile);
+    else if (EatIfPresent(lltok::kw_store))
+      return ParseStore(Inst, PFS, true, isVolatile);
+  }
   case lltok::kw_volatile:
     if (EatIfPresent(lltok::kw_load))
-      return ParseLoad(Inst, PFS, true);
+      return ParseLoad(Inst, PFS, false, true);
     else if (EatIfPresent(lltok::kw_store))
-      return ParseStore(Inst, PFS, true);
+      return ParseStore(Inst, PFS, false, true);
     else if (EatIfPresent(lltok::kw_cmpxchg))
       return ParseCmpXchg(Inst, PFS, true);
     else if (EatIfPresent(lltok::kw_atomicrmw))
@@ -3635,34 +3642,48 @@ int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS) {
 }
 
 /// ParseLoad
-///   ::= 'volatile'? 'load' TypeAndValue (',' OptionalInfo)?
+///   ::= 'volatile'? 'load' TypeAndValue (',' 'align' i32)?
+//    ::= 'atomic' 'volatile'? 'load' TypeAndValue 
+//        'singlethread'? AtomicOrdering (',' 'align' i32)?
 int LLParser::ParseLoad(Instruction *&Inst, PerFunctionState &PFS,
-                        bool isVolatile) {
+                        bool isAtomic, bool isVolatile) {
   Value *Val; LocTy Loc;
   unsigned Alignment = 0;
   bool AteExtraComma = false;
+  AtomicOrdering Ordering = NotAtomic;
+  SynchronizationScope Scope = CrossThread;
   if (ParseTypeAndValue(Val, Loc, PFS) ||
+      ParseScopeAndOrdering(isAtomic, Scope, Ordering) ||
       ParseOptionalCommaAlign(Alignment, AteExtraComma))
     return true;
 
   if (!Val->getType()->isPointerTy() ||
       !cast<PointerType>(Val->getType())->getElementType()->isFirstClassType())
     return Error(Loc, "load operand must be a pointer to a first class type");
+  if (isAtomic && !Alignment)
+    return Error(Loc, "atomic load must have explicit non-zero alignment");
+  if (Ordering == Release || Ordering == AcquireRelease)
+    return Error(Loc, "atomic load cannot use Release ordering");
 
-  Inst = new LoadInst(Val, "", isVolatile, Alignment);
+  Inst = new LoadInst(Val, "", isVolatile, Alignment, Ordering, Scope);
   return AteExtraComma ? InstExtraComma : InstNormal;
 }
 
 /// ParseStore
 ///   ::= 'volatile'? 'store' TypeAndValue ',' TypeAndValue (',' 'align' i32)?
+///   ::= 'atomic' 'volatile'? 'store' TypeAndValue ',' TypeAndValue
+///       'singlethread'? AtomicOrdering (',' 'align' i32)?
 int LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS,
-                         bool isVolatile) {
+                         bool isAtomic, bool isVolatile) {
   Value *Val, *Ptr; LocTy Loc, PtrLoc;
   unsigned Alignment = 0;
   bool AteExtraComma = false;
+  AtomicOrdering Ordering = NotAtomic;
+  SynchronizationScope Scope = CrossThread;
   if (ParseTypeAndValue(Val, Loc, PFS) ||
       ParseToken(lltok::comma, "expected ',' after store operand") ||
       ParseTypeAndValue(Ptr, PtrLoc, PFS) ||
+      ParseScopeAndOrdering(isAtomic, Scope, Ordering) ||
       ParseOptionalCommaAlign(Alignment, AteExtraComma))
     return true;
 
@@ -3672,8 +3693,12 @@ int LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS,
     return Error(Loc, "store operand must be a first class value");
   if (cast<PointerType>(Ptr->getType())->getElementType() != Val->getType())
     return Error(Loc, "stored value and pointer type do not match");
+  if (isAtomic && !Alignment)
+    return Error(Loc, "atomic store must have explicit non-zero alignment");
+  if (Ordering == Acquire || Ordering == AcquireRelease)
+    return Error(Loc, "atomic store cannot use Acquire ordering");
 
-  Inst = new StoreInst(Val, Ptr, isVolatile, Alignment);
+  Inst = new StoreInst(Val, Ptr, isVolatile, Alignment, Ordering, Scope);
   return AteExtraComma ? InstExtraComma : InstNormal;
 }
 

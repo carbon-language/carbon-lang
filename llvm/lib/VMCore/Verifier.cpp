@@ -1297,6 +1297,15 @@ void Verifier::visitLoadInst(LoadInst &LI) {
   Type *ElTy = PTy->getElementType();
   Assert2(ElTy == LI.getType(),
           "Load result type does not match pointer operand type!", &LI, ElTy);
+  if (LI.isAtomic()) {
+    Assert1(LI.getOrdering() != Release && LI.getOrdering() != AcquireRelease,
+            "Load cannot have Release ordering", &LI);
+    Assert1(LI.getAlignment() != 0,
+            "Atomic load must specify explicit alignment", &LI);
+  } else {
+    Assert1(LI.getSynchScope() == CrossThread,
+            "Non-atomic load cannot have SynchronizationScope specified", &LI);
+  }
   visitInstruction(LI);
 }
 
@@ -1307,6 +1316,15 @@ void Verifier::visitStoreInst(StoreInst &SI) {
   Assert2(ElTy == SI.getOperand(0)->getType(),
           "Stored value type does not match pointer operand type!",
           &SI, ElTy);
+  if (SI.isAtomic()) {
+    Assert1(SI.getOrdering() != Acquire && SI.getOrdering() != AcquireRelease,
+            "Store cannot have Acquire ordering", &SI);
+    Assert1(SI.getAlignment() != 0,
+            "Atomic store must specify explicit alignment", &SI);
+  } else {
+    Assert1(SI.getSynchScope() == CrossThread,
+            "Non-atomic store cannot have SynchronizationScope specified", &SI);
+  }
   visitInstruction(SI);
 }
 

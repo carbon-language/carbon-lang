@@ -307,7 +307,11 @@ namespace bitc {
     FUNC_CODE_INST_ATOMICRMW   = 38, // ATOMICRMW: [ptrty,ptr,val, operation,
                                      //             align, vol,
                                      //             ordering, synchscope]
-    FUNC_CODE_INST_RESUME      = 39  // RESUME:     [opval]
+    FUNC_CODE_INST_RESUME      = 39, // RESUME:     [opval]
+    FUNC_CODE_INST_LOADATOMIC  = 40, // LOAD: [opty, op, align, vol,
+                                     //        ordering, synchscope]
+    FUNC_CODE_INST_STOREATOMIC = 41  // STORE: [ptrty,ptr,val, align, vol
+                                     //         ordering, synchscope]
   };
 } // End bitc namespace
 } // End llvm namespace
