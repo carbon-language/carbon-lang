@@ -209,10 +209,17 @@ protected:
     static bool
     CPUHasAVX()
     {
+#if 0
         if (s_has_avx == kAVXUnknown)
             s_has_avx = (::HasAVX() ? kAVXPresent : kAVXNotPresent);
         
         return (s_has_avx == kAVXPresent);
+#else
+        // ::HasAVX() will cause this code to crash because the 
+        // assembly function doesn't backup and restore the registers
+        // it uses. Until this is fixed, AVX will be disabled.
+        return 0; 
+#endif
     }
 
     MachThread *m_thread;
