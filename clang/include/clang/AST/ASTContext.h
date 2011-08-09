@@ -198,8 +198,6 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   QualType ObjCConstantStringType;
   mutable RecordDecl *CFConstantStringTypeDecl;
 
-  mutable RecordDecl *NSConstantStringTypeDecl;
-
   mutable RecordDecl *ObjCFastEnumerationStateTypeDecl;
 
   /// \brief The type for the C FILE type.
@@ -822,19 +820,6 @@ public:
   // getCFConstantStringType - Return the C structure type used to represent
   // constant CFStrings.
   QualType getCFConstantStringType() const;
-
-  // getNSConstantStringType - Return the C structure type used to represent
-  // constant NSStrings.
-  QualType getNSConstantStringType() const;
-  /// Get the structure type used to representation NSStrings, or NULL
-  /// if it hasn't yet been built.
-  QualType getRawNSConstantStringType() const {
-    if (NSConstantStringTypeDecl)
-      return getTagDeclType(NSConstantStringTypeDecl);
-    return QualType();
-  }
-  void setNSConstantStringType(QualType T);
-
 
   /// Get the structure type used to representation CFStrings, or NULL
   /// if it hasn't yet been built.

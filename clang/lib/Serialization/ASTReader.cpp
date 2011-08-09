@@ -3041,8 +3041,6 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
     if (unsigned ObjCSelRedef
         = SpecialTypes[SPECIAL_TYPE_OBJC_SEL_REDEFINITION])
       Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
-    if (unsigned String = SpecialTypes[SPECIAL_TYPE_NS_CONSTANT_STRING])
-      Context->setNSConstantStringType(GetType(String));
 
     if (SpecialTypes[SPECIAL_TYPE_INT128_INSTALLED])
       Context->setInt128Installed();

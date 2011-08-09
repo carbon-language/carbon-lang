@@ -2943,7 +2943,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.getRawBlockdescriptorType(), SpecialTypes);
   AddTypeRef(Context.getRawBlockdescriptorExtendedType(), SpecialTypes);
   AddTypeRef(Context.ObjCSelRedefinitionType, SpecialTypes);
-  AddTypeRef(Context.getRawNSConstantStringType(), SpecialTypes);
   SpecialTypes.push_back(Context.isInt128Installed());
 
   // Keep writing types and declarations until all types and

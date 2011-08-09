@@ -668,10 +668,8 @@ namespace clang {
       SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR   = 13,
       /// \brief Objective-C "SEL" redefinition type
       SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 14,
-      /// \brief NSConstantString type
-      SPECIAL_TYPE_NS_CONSTANT_STRING          = 15,
       /// \brief Whether __[u]int128_t identifier is installed.
-      SPECIAL_TYPE_INT128_INSTALLED            = 16
+      SPECIAL_TYPE_INT128_INSTALLED            = 15
     };
 
     /// \brief Predefined declaration IDs.

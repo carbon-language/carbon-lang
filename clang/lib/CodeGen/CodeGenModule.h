@@ -286,6 +286,9 @@ class CodeGenModule : public CodeGenTypeCache {
   /// run on termination.
   std::vector<std::pair<llvm::WeakVH,llvm::Constant*> > CXXGlobalDtors;
 
+  /// @name Cache for Objective-C runtime types
+  /// @{
+
   /// CFConstantStringClassRef - Cached reference to the class for constant
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
@@ -293,6 +296,11 @@ class CodeGenModule : public CodeGenTypeCache {
   /// ConstantStringClassRef - Cached reference to the class for constant
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *ConstantStringClassRef;
+
+  /// \brief The LLVM type corresponding to NSConstantString.
+  llvm::StructType *NSConstantStringType;
+  
+  /// @}
 
   /// Lazily create the Objective-C runtime
   void createObjCRuntime();

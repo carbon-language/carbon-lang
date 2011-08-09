@@ -66,6 +66,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     TBAA(0),
     VTables(*this), ObjCRuntime(0), DebugInfo(0), ARCData(0), RRData(0),
     CFConstantStringClassRef(0), ConstantStringClassRef(0),
+    NSConstantStringType(0),
     VMContext(M.getContext()),
     NSConcreteGlobalBlockDecl(0), NSConcreteStackBlockDecl(0),
     NSConcreteGlobalBlock(0), NSConcreteStackBlock(0),
@@ -1800,6 +1801,16 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   return GV;
 }
 
+static RecordDecl *
+CreateRecordDecl(const ASTContext &Ctx, RecordDecl::TagKind TK,
+                 DeclContext *DC, IdentifierInfo *Id) {
+  SourceLocation Loc;
+  if (Ctx.getLangOptions().CPlusPlus)
+    return CXXRecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
+  else
+    return RecordDecl::Create(Ctx, TK, DC, Loc, Loc, Id);
+}
+
 llvm::Constant *
 CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   unsigned StringLength = 0;
@@ -1838,11 +1849,40 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
         llvm::ConstantExpr::getGetElementPtr(GV, Zeros);
     }
   }
-  
-  QualType NSTy = getContext().getNSConstantStringType();
-  
-  llvm::StructType *STy =
-  cast<llvm::StructType>(getTypes().ConvertType(NSTy));
+
+  if (!NSConstantStringType) {
+    // Construct the type for a constant NSString.
+    RecordDecl *D = CreateRecordDecl(Context, TTK_Struct, 
+                                     Context.getTranslationUnitDecl(),
+                                   &Context.Idents.get("__builtin_NSString"));
+    D->startDefinition();
+      
+    QualType FieldTypes[3];
+    
+    // const int *isa;
+    FieldTypes[0] = Context.getPointerType(Context.IntTy.withConst());
+    // const char *str;
+    FieldTypes[1] = Context.getPointerType(Context.CharTy.withConst());
+    // unsigned int length;
+    FieldTypes[2] = Context.UnsignedIntTy;
+    
+    // Create fields
+    for (unsigned i = 0; i < 3; ++i) {
+      FieldDecl *Field = FieldDecl::Create(Context, D,
+                                           SourceLocation(),
+                                           SourceLocation(), 0,
+                                           FieldTypes[i], /*TInfo=*/0,
+                                           /*BitWidth=*/0,
+                                           /*Mutable=*/false,
+                                           /*HasInit=*/false);
+      Field->setAccess(AS_public);
+      D->addDecl(Field);
+    }
+    
+    D->completeDefinition();
+    QualType NSTy = Context.getTagDeclType(D);
+    NSConstantStringType = cast<llvm::StructType>(getTypes().ConvertType(NSTy));
+  }
   
   std::vector<llvm::Constant*> Fields(3);
   
@@ -1870,7 +1910,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   Fields[2] = llvm::ConstantInt::get(Ty, StringLength);
   
   // The struct.
-  C = llvm::ConstantStruct::get(STy, Fields);
+  C = llvm::ConstantStruct::get(NSConstantStringType, Fields);
   GV = new llvm::GlobalVariable(getModule(), C->getType(), true,
                                 llvm::GlobalVariable::PrivateLinkage, C,
                                 "_unnamed_nsstring_");
