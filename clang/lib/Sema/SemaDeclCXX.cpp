@@ -6933,8 +6933,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     // explicit assignments, do so. This optimization only applies for arrays 
     // of scalars and arrays of class type with trivial copy-assignment 
     // operators.
-    if (FieldType->isArrayType() && 
-        BaseType.hasTrivialCopyAssignment(Context)) {
+    if (FieldType->isArrayType() && !FieldType.isVolatileQualified()
+        && BaseType.hasTrivialCopyAssignment(Context)) {
       // Compute the size of the memory buffer to be copied.
       QualType SizeType = Context.getSizeType();
       llvm::APInt Size(Context.getTypeSize(SizeType), 
