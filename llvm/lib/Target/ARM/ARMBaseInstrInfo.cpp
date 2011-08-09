@@ -629,9 +629,36 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   bool SPRSrc  = ARM::SPRRegClass.contains(SrcReg);
 
   unsigned Opc;
-  if (SPRDest && SPRSrc)
+  if (SPRDest && SPRSrc) {
     Opc = ARM::VMOVS;
-  else if (GPRDest && SPRSrc)
+
+    // An even S-S copy may be feeding a NEON v2f32 instruction being used for
+    // f32 operations.  In that case, it is better to copy the full D-regs with
+    // a VMOVD since that can be converted to a NEON-domain move by
+    // NEONMoveFix.cpp.  Check that MI is the original COPY instruction, and
+    // that it really defines the whole D-register.
+    if ((DestReg - ARM::S0) % 2 == 0 && (SrcReg - ARM::S0) % 2 == 0 &&
+        I != MBB.end() && I->isCopy() &&
+        I->getOperand(0).getReg() == DestReg &&
+        I->getOperand(1).getReg() == SrcReg) {
+      // I is pointing to the ortiginal COPY instruction.
+      // Find the parent D-registers.
+      const TargetRegisterInfo *TRI = &getRegisterInfo();
+      unsigned SrcD = TRI->getMatchingSuperReg(SrcReg, ARM::ssub_0,
+                                               &ARM::DPRRegClass);
+      unsigned DestD = TRI->getMatchingSuperReg(DestReg, ARM::ssub_0,
+                                                &ARM::DPRRegClass);
+      // Be careful to not clobber an INSERT_SUBREG that reads and redefines a
+      // D-register.  There must be an <imp-def> of destD, and no <imp-use>.
+      if (I->definesRegister(DestD, TRI) && !I->readsRegister(DestD, TRI)) {
+        Opc = ARM::VMOVD;
+        SrcReg = SrcD;
+        DestReg = DestD;
+        if (KillSrc)
+          KillSrc = I->killsRegister(SrcReg, TRI);
+      }
+    }
+  } else if (GPRDest && SPRSrc)
     Opc = ARM::VMOVRS;
   else if (SPRDest && GPRSrc)
     Opc = ARM::VMOVSR;
