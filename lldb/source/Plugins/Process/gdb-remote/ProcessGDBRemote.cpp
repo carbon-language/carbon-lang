@@ -435,6 +435,7 @@ ProcessGDBRemote::DoLaunch
     //  ::LogSetBitMask (GDBR_LOG_DEFAULT);
     //  ::LogSetOptions (LLDB_LOG_OPTION_THREADSAFE | LLDB_LOG_OPTION_PREPEND_TIMESTAMP | LLDB_LOG_OPTION_PREPEND_PROC_AND_THREAD);
     //  ::LogSetLogFile ("/dev/stdout");
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
     ObjectFile * object_file = module->GetObjectFile();
     if (object_file)
@@ -449,7 +450,10 @@ ProcessGDBRemote::DoLaunch
         {
             error = StartDebugserverProcess (host_port);
             if (error.Fail())
+            {
+                log->Printf("failed to start debugserver process: %s", error.AsCString());
                 return error;
+            }
 
             error = ConnectToDebugserver (connect_url);
         }
@@ -546,6 +550,7 @@ ProcessGDBRemote::DoLaunch
                 
             if (GetID() == LLDB_INVALID_PROCESS_ID)
             {
+                log->Printf("failed to connect to debugserver: %s", error.AsCString());
                 KillDebugserverProcess ();
                 return error;
             }
@@ -560,6 +565,10 @@ ProcessGDBRemote::DoLaunch
                         SetUpProcessInputReader (pty.ReleaseMasterFileDescriptor());
                 }
             }
+        }
+        else
+        {
+            log->Printf("failed to connect to debugserver: %s", error.AsCString());
         }
     }
     else

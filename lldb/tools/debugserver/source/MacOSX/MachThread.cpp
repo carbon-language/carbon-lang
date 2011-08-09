@@ -23,17 +23,28 @@ GetSequenceID()
     return ++g_nextID;
 }
 
-MachThread::MachThread (MachProcess *process, thread_t thread) :
+MachThread::MachThread (MachProcess *process, thread_t tid) :
     m_process (process),
-    m_tid (thread),
+    m_tid (tid),
     m_seq_id (GetSequenceID()),
     m_state (eStateUnloaded),
     m_state_mutex (PTHREAD_MUTEX_RECURSIVE),
-    m_breakID (INVALID_NUB_BREAK_ID),
-    m_suspendCount (0),
+    m_break_id (INVALID_NUB_BREAK_ID),
+    m_suspend_count (0),
+    m_stop_exception (),
     m_arch_ap (DNBArchProtocol::Create (this)),
-    m_reg_sets (m_arch_ap->GetRegisterSetInfo (&n_num_reg_sets))
+    m_reg_sets (NULL),
+    m_num_reg_sets (0)
+#ifdef THREAD_IDENTIFIER_INFO_COUNT
+    , m_ident_info(),
+    m_proc_threadinfo(),
+    m_dispatch_queue_name()
+#endif
 {
+    nub_size_t num_reg_sets = 0;
+    m_reg_sets = m_arch_ap->GetRegisterSetInfo (&num_reg_sets);
+    m_num_reg_sets = num_reg_sets;
+
     // Get the thread state so we know if a thread is in a state where we can't
     // muck with it and also so we get the suspend count correct in case it was
     // already suspended
@@ -56,7 +67,7 @@ MachThread::Suspend()
     {
         DNBError err(::thread_suspend (m_tid), DNBError::MachKernel);
         if (err.Success())
-            m_suspendCount++;
+            m_suspend_count++;
         if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
             err.LogThreaded("::thread_suspend (%4.4x)", m_tid);
     }
@@ -85,12 +96,12 @@ MachThread::SetSuspendCountBeforeResume(bool others_stopped)
     if (others_stopped)
     {
         times_to_resume = GetBasicInfo()->suspend_count;
-        m_suspendCount = - (times_to_resume - m_suspendCount);
+        m_suspend_count = - (times_to_resume - m_suspend_count);
     }
     else
     {
-        times_to_resume = m_suspendCount;
-        m_suspendCount = 0;
+        times_to_resume = m_suspend_count;
+        m_suspend_count = 0;
     }
 
     if (times_to_resume > 0)
@@ -105,7 +116,7 @@ MachThread::SetSuspendCountBeforeResume(bool others_stopped)
             else
             {
                 if (GetBasicInfo())
-                    times_to_resume = m_basicInfo.suspend_count;
+                    times_to_resume = m_basic_info.suspend_count;
                 else
                     times_to_resume = 0;
                 return false; // ??? 
@@ -123,32 +134,32 @@ MachThread::RestoreSuspendCountAfterStop ()
     if (ThreadIDIsValid(m_tid) == false)
         return false;
         
-    if (m_suspendCount > 0)
+    if (m_suspend_count > 0)
     {
-        while (m_suspendCount > 0)
+        while (m_suspend_count > 0)
         {
             err = ::thread_resume (m_tid);
             if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
                 err.LogThreaded("::thread_resume (%4.4x)", m_tid);
             if (err.Success())
-                --m_suspendCount;
+                --m_suspend_count;
             else
             {
                 if (GetBasicInfo())
-                    m_suspendCount = m_basicInfo.suspend_count;
+                    m_suspend_count = m_basic_info.suspend_count;
                 else
-                    m_suspendCount = 0;
+                    m_suspend_count = 0;
                 return false; // ??? 
             }
         }
     }
-    else if (m_suspendCount < 0)
+    else if (m_suspend_count < 0)
     {
-        while (m_suspendCount < 0)
+        while (m_suspend_count < 0)
         {
             err = ::thread_suspend (m_tid);
             if (err.Success())
-                ++m_suspendCount;
+                ++m_suspend_count;
             if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
                 err.LogThreaded("::thread_suspend (%4.4x)", m_tid);
         }
@@ -232,10 +243,10 @@ MachThread::InferiorThreadID() const
 bool
 MachThread::IsUserReady()
 {
-    if (m_basicInfo.run_state == 0)
+    if (m_basic_info.run_state == 0)
         GetBasicInfo ();
     
-    switch (m_basicInfo.run_state)
+    switch (m_basic_info.run_state)
     {
     default: 
     case TH_STATE_UNINTERRUPTIBLE:  
@@ -253,8 +264,8 @@ MachThread::IsUserReady()
 struct thread_basic_info *
 MachThread::GetBasicInfo ()
 {
-    if (MachThread::GetBasicInfo(m_tid, &m_basicInfo))
-        return &m_basicInfo;
+    if (MachThread::GetBasicInfo(m_tid, &m_basic_info))
+        return &m_basic_info;
     return NULL;
 }
 
@@ -326,7 +337,7 @@ MachThread::Dump(uint32_t index)
 {
     const char * thread_run_state = NULL;
 
-    switch (m_basicInfo.run_state)
+    switch (m_basic_info.run_state)
     {
     case TH_STATE_RUNNING:          thread_run_state = "running"; break;    // 1 thread is running normally
     case TH_STATE_STOPPED:          thread_run_state = "stopped"; break;    // 2 thread is stopped
@@ -342,16 +353,16 @@ MachThread::Dump(uint32_t index)
         m_tid,
         GetPC(INVALID_NUB_ADDRESS),
         GetSP(INVALID_NUB_ADDRESS),
-        m_breakID,
-        m_basicInfo.user_time.seconds,      m_basicInfo.user_time.microseconds,
-        m_basicInfo.system_time.seconds,    m_basicInfo.system_time.microseconds,
-        m_basicInfo.cpu_usage,
-        m_basicInfo.policy,
-        m_basicInfo.run_state,
+        m_break_id,
+        m_basic_info.user_time.seconds,      m_basic_info.user_time.microseconds,
+        m_basic_info.system_time.seconds,    m_basic_info.system_time.microseconds,
+        m_basic_info.cpu_usage,
+        m_basic_info.policy,
+        m_basic_info.run_state,
         thread_run_state,
-        m_basicInfo.flags,
-        m_basicInfo.suspend_count, m_suspendCount,
-        m_basicInfo.sleep_time);
+        m_basic_info.flags,
+        m_basic_info.suspend_count, m_suspend_count,
+        m_basic_info.sleep_time);
     //DumpRegisterState(0);
 }
 
@@ -480,7 +491,7 @@ MachThread::ThreadDidStop()
     RestoreSuspendCountAfterStop();
 
     // Update the basic information for a thread
-    MachThread::GetBasicInfo(m_tid, &m_basicInfo);
+    MachThread::GetBasicInfo(m_tid, &m_basic_info);
 
 #if ENABLE_AUTO_STEPPING_OVER_BP
     // See if we were at a breakpoint when we last resumed that we disabled,
@@ -490,7 +501,7 @@ MachThread::ThreadDidStop()
     if (NUB_BREAK_ID_IS_VALID(breakID))
     {
         m_process->EnableBreakpoint(breakID);
-        if (m_basicInfo.suspend_count > 0)
+        if (m_basic_info.suspend_count > 0)
         {
             SetState(eStateSuspended);
         }
@@ -513,7 +524,7 @@ MachThread::ThreadDidStop()
     }
     else
     {
-        if (m_basicInfo.suspend_count > 0)
+        if (m_basic_info.suspend_count > 0)
         {
             SetState(eStateSuspended);
         }
@@ -523,7 +534,7 @@ MachThread::ThreadDidStop()
         }
     }
 #else
-    if (m_basicInfo.suspend_count > 0)
+    if (m_basic_info.suspend_count > 0)
         SetState(eStateSuspended);
     else
         SetState(eStateStopped);
@@ -596,7 +607,7 @@ MachThread::SetState(nub_state_t state)
 uint32_t
 MachThread::GetNumRegistersInSet(int regSet) const
 {
-    if (regSet < n_num_reg_sets)
+    if (regSet < m_num_reg_sets)
         return m_reg_sets[regSet].num_registers;
     return 0;
 }
@@ -604,7 +615,7 @@ MachThread::GetNumRegistersInSet(int regSet) const
 const char *
 MachThread::GetRegisterSetName(int regSet) const
 {
-    if (regSet < n_num_reg_sets)
+    if (regSet < m_num_reg_sets)
         return m_reg_sets[regSet].name;
     return NULL;
 }
@@ -612,7 +623,7 @@ MachThread::GetRegisterSetName(int regSet) const
 const DNBRegisterInfo *
 MachThread::GetRegisterInfo(int regSet, int regIndex) const
 {
-    if (regSet < n_num_reg_sets)
+    if (regSet < m_num_reg_sets)
         if (regIndex < m_reg_sets[regSet].num_registers)
             return &m_reg_sets[regSet].registers[regIndex];
     return NULL;
@@ -622,7 +633,7 @@ MachThread::DumpRegisterState(int regSet)
 {
     if (regSet == REGISTER_SET_ALL)
     {
-        for (regSet = 1; regSet < n_num_reg_sets; regSet++)
+        for (regSet = 1; regSet < m_num_reg_sets; regSet++)
             DumpRegisterState(regSet);
     }
     else
@@ -650,7 +661,7 @@ MachThread::DumpRegisterState(int regSet)
 const DNBRegisterSetInfo *
 MachThread::GetRegisterSetInfo(nub_size_t *num_reg_sets ) const
 {
-    *num_reg_sets = n_num_reg_sets;
+    *num_reg_sets = m_num_reg_sets;
     return &m_reg_sets[0];
 }
 
