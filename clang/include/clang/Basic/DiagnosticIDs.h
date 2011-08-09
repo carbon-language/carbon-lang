@@ -195,6 +195,25 @@ public:
   /// getFullExplanation - Given a diagnostic ID, return a full explanation
   /// of the issue
   static StringRef getFullExplanation(unsigned DiagID);
+  
+  /// Iterator class used for traversing all statically declared
+  /// diagnostics.
+  class diag_iterator {
+    const void *impl;
+
+    friend class DiagnosticIDs;    
+    diag_iterator(const void *im) : impl(im) {};    
+  public:
+    diag_iterator &operator++();
+    bool operator==(const diag_iterator &x) const { return impl == x.impl; }
+    bool operator!=(const diag_iterator &x) const { return impl != x.impl; }
+    
+    llvm::StringRef getDiagName() const;
+    unsigned getDiagID() const;    
+  };
+
+  static diag_iterator diags_begin();
+  static diag_iterator diags_end();
 
 private:
   /// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.

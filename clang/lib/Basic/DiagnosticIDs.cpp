@@ -305,6 +305,35 @@ static unsigned getBuiltinDiagClass(unsigned DiagID) {
 }
 
 //===----------------------------------------------------------------------===//
+// diag_iterator
+//===----------------------------------------------------------------------===//
+
+llvm::StringRef DiagnosticIDs::diag_iterator::getDiagName() const {
+  return static_cast<const StaticDiagNameIndexRec*>(impl)->getName();
+}
+
+unsigned DiagnosticIDs::diag_iterator::getDiagID() const {
+  return static_cast<const StaticDiagNameIndexRec*>(impl)->DiagID;
+}
+
+DiagnosticIDs::diag_iterator &DiagnosticIDs::diag_iterator::operator++() {
+  const StaticDiagNameIndexRec* ptr =
+    static_cast<const StaticDiagNameIndexRec*>(impl);;
+  ++ptr;
+  impl = ptr;
+  return *this;
+}
+
+DiagnosticIDs::diag_iterator DiagnosticIDs::diags_begin() {
+  return DiagnosticIDs::diag_iterator(StaticDiagNameIndex);
+}
+
+DiagnosticIDs::diag_iterator DiagnosticIDs::diags_end() {
+  return DiagnosticIDs::diag_iterator(StaticDiagNameIndex +
+                                      StaticDiagNameIndexSize);
+}
+
+//===----------------------------------------------------------------------===//
 // Custom Diagnostic information
 //===----------------------------------------------------------------------===//
 
