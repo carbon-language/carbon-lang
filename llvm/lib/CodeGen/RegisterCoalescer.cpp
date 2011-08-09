@@ -55,6 +55,7 @@ STATISTIC(numExtends  , "Number of copies extended");
 STATISTIC(NumReMats   , "Number of instructions re-materialized");
 STATISTIC(numPeep     , "Number of identity moves eliminated after coalescing");
 STATISTIC(numAborts   , "Number of times interval joining aborted");
+STATISTIC(NumInflated , "Number of register classes inflated");
 
 static cl::opt<bool>
 EnableJoining("join-liveintervals",
@@ -1852,7 +1853,7 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
 
   // Perform a final pass over the instructions and compute spill weights
   // and remove identity moves.
-  SmallVector<unsigned, 4> DeadDefs;
+  SmallVector<unsigned, 4> DeadDefs, InflateRegs;
   for (MachineFunction::iterator mbbi = MF->begin(), mbbe = MF->end();
        mbbi != mbbe; ++mbbi) {
     MachineBasicBlock* mbb = mbbi;
@@ -1864,6 +1865,16 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
         bool DoDelete = true;
         assert(MI->isCopyLike() && "Unrecognized copy instruction");
         unsigned SrcReg = MI->getOperand(MI->isSubregToReg() ? 2 : 1).getReg();
+        unsigned DstReg = MI->getOperand(0).getReg();
+
+        // Collect candidates for register class inflation.
+        if (TargetRegisterInfo::isVirtualRegister(SrcReg) &&
+            RegClassInfo.isProperSubClass(MRI->getRegClass(SrcReg)))
+          InflateRegs.push_back(SrcReg);
+        if (TargetRegisterInfo::isVirtualRegister(DstReg) &&
+            RegClassInfo.isProperSubClass(MRI->getRegClass(DstReg)))
+          InflateRegs.push_back(DstReg);
+
         if (TargetRegisterInfo::isPhysicalRegister(SrcReg) &&
             MI->getNumOperands() > 2)
           // Do not delete extract_subreg, insert_subreg of physical
@@ -1905,8 +1916,12 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
           unsigned Reg = MO.getReg();
           if (!Reg)
             continue;
-          if (TargetRegisterInfo::isVirtualRegister(Reg))
+          if (TargetRegisterInfo::isVirtualRegister(Reg)) {
             DeadDefs.push_back(Reg);
+            // Remat may also enable register class inflation.
+            if (RegClassInfo.isProperSubClass(MRI->getRegClass(Reg)))
+              InflateRegs.push_back(Reg);
+          }
           if (MO.isDead())
             continue;
           if (TargetRegisterInfo::isPhysicalRegister(Reg) ||
@@ -1951,6 +1966,24 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
           if (LIS->hasInterval(S) && LIS->getInterval(S).liveAt(DefIdx))
             MI->addRegisterDefined(S, TRI);
       }
+    }
+  }
+
+  // After deleting a lot of copies, register classes may be less constrained.
+  // Removing sub-register opreands may alow GR32_ABCD -> GR32 and DPR_VFP2 ->
+  // DPR inflation.
+  array_pod_sort(InflateRegs.begin(), InflateRegs.end());
+  InflateRegs.erase(std::unique(InflateRegs.begin(), InflateRegs.end()),
+                    InflateRegs.end());
+  DEBUG(dbgs() << "Trying to inflate " << InflateRegs.size() << " regs.\n");
+  for (unsigned i = 0, e = InflateRegs.size(); i != e; ++i) {
+    unsigned Reg = InflateRegs[i];
+    if (MRI->reg_nodbg_empty(Reg))
+      continue;
+    if (MRI->recomputeRegClass(Reg, *TM)) {
+      DEBUG(dbgs() << PrintReg(Reg) << " inflated to "
+                   << MRI->getRegClass(Reg)->getName() << '\n');
+      ++NumInflated;
     }
   }
 

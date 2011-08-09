@@ -22,6 +22,8 @@ declare float @fabsf(float)
 ; NFP0: 	vabs.f32	s1, s1
 
 ; CORTEXA8: test:
-; CORTEXA8: 	vabs.f32	d1, d1
+; CORTEXA8:     vadd.f32        [[D1:d[0-9]+]]
+; CORTEXA8: 	vabs.f32	{{d[0-9]+}}, [[D1]]
+
 ; CORTEXA9: test:
 ; CORTEXA9: 	vabs.f32	s{{.}}, s{{.}}
