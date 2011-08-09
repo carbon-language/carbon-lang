@@ -2754,7 +2754,7 @@ void ASTWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
 }
 
 ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
-  : Stream(Stream), Chain(0), SerializationListener(0), 
+  : Stream(Stream), Context(0), Chain(0), SerializationListener(0), 
     FirstDeclID(NUM_PREDEF_DECL_IDS), NextDeclID(FirstDeclID),
     FirstTypeID(NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
     FirstIdentID(NUM_PREDEF_IDENT_IDS), NextIdentID(FirstIdentID), 
@@ -2785,10 +2785,12 @@ void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   WriteBlockInfoBlock();
 
+  Context = &SemaRef.Context;
   if (Chain)
     WriteASTChain(SemaRef, StatCalls, isysroot);
   else
     WriteASTCore(SemaRef, StatCalls, isysroot, OutputFile);
+  Context = 0;
 }
 
 template<typename Vector>
@@ -2943,8 +2945,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.ObjCSelRedefinitionType, SpecialTypes);
   AddTypeRef(Context.getRawNSConstantStringType(), SpecialTypes);
   SpecialTypes.push_back(Context.isInt128Installed());
-  AddTypeRef(Context.AutoDeductTy, SpecialTypes);
-  AddTypeRef(Context.AutoRRefDeductTy, SpecialTypes);
 
   // Keep writing types and declarations until all types and
   // declarations have been written.
@@ -3500,13 +3500,13 @@ void ASTWriter::AddTypeRef(QualType T, RecordDataImpl &Record) {
   Record.push_back(GetOrCreateTypeID(T));
 }
 
-TypeID ASTWriter::GetOrCreateTypeID(QualType T) {
-  return MakeTypeID(T,
+TypeID ASTWriter::GetOrCreateTypeID( QualType T) {
+  return MakeTypeID(*Context, T,
               std::bind1st(std::mem_fun(&ASTWriter::GetOrCreateTypeIdx), this));
 }
 
 TypeID ASTWriter::getTypeID(QualType T) const {
-  return MakeTypeID(T,
+  return MakeTypeID(*Context, T,
               std::bind1st(std::mem_fun(&ASTWriter::getTypeIdx), this));
 }
 

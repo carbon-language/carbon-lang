@@ -530,7 +530,11 @@ namespace clang {
       /// \brief The 'unknown any' placeholder type.
       PREDEF_TYPE_UNKNOWN_ANY   = 29,
       /// \brief The placeholder type for bound member functions.
-      PREDEF_TYPE_BOUND_MEMBER  = 30
+      PREDEF_TYPE_BOUND_MEMBER  = 30,
+      /// \brief The "auto" deduction type.
+      PREDEF_TYPE_AUTO_DEDUCT   = 31,
+      /// \brief The "auto &&" deduction type.
+      PREDEF_TYPE_AUTO_RREF_DEDUCT = 32
     };
 
     /// \brief The number of predefined type IDs that are reserved for
@@ -667,11 +671,7 @@ namespace clang {
       /// \brief NSConstantString type
       SPECIAL_TYPE_NS_CONSTANT_STRING          = 15,
       /// \brief Whether __[u]int128_t identifier is installed.
-      SPECIAL_TYPE_INT128_INSTALLED            = 16,
-      /// \brief Cached "auto" deduction type.
-      SPECIAL_TYPE_AUTO_DEDUCT                 = 17,
-      /// \brief Cached "auto &&" deduction type.
-      SPECIAL_TYPE_AUTO_RREF_DEDUCT            = 18
+      SPECIAL_TYPE_INT128_INSTALLED            = 16
     };
 
     /// \brief Predefined declaration IDs.

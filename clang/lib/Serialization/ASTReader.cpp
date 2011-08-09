@@ -3046,11 +3046,6 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
 
     if (SpecialTypes[SPECIAL_TYPE_INT128_INSTALLED])
       Context->setInt128Installed();
-
-    if (unsigned AutoDeduct = SpecialTypes[SPECIAL_TYPE_AUTO_DEDUCT])
-      Context->AutoDeductTy = GetType(AutoDeduct);
-    if (unsigned AutoRRefDeduct = SpecialTypes[SPECIAL_TYPE_AUTO_RREF_DEDUCT])
-      Context->AutoRRefDeductTy = GetType(AutoRRefDeduct);
   }
 
   ReadPragmaDiagnosticMappings(Context->getDiagnostics());
@@ -4033,6 +4028,11 @@ QualType ASTReader::GetType(TypeID ID) {
     case PREDEF_TYPE_OBJC_ID:       T = Context->ObjCBuiltinIdTy;    break;
     case PREDEF_TYPE_OBJC_CLASS:    T = Context->ObjCBuiltinClassTy; break;
     case PREDEF_TYPE_OBJC_SEL:      T = Context->ObjCBuiltinSelTy;   break;
+    case PREDEF_TYPE_AUTO_DEDUCT:   T = Context->getAutoDeductType(); break;
+        
+    case PREDEF_TYPE_AUTO_RREF_DEDUCT: 
+      T = Context->getAutoRRefDeductType(); 
+      break;
     }
 
     assert(!T.isNull() && "Unknown predefined type");

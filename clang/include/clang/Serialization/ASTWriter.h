@@ -88,6 +88,9 @@ private:
   /// \brief The bitstream writer used to emit this precompiled header.
   llvm::BitstreamWriter &Stream;
 
+  /// \brief The ASTContext we're writing.
+  ASTContext *Context;
+                    
   /// \brief The reader of existing AST files, if we're chaining.
   ASTReader *Chain;
 
@@ -457,7 +460,7 @@ public:
   serialization::TypeID getTypeID(QualType T) const;
 
   /// \brief Force a type to be emitted and get its index.
-  serialization::TypeIdx GetOrCreateTypeIdx(QualType T);
+  serialization::TypeIdx GetOrCreateTypeIdx( QualType T);
 
   /// \brief Determine the type index of an already-emitted type.
   serialization::TypeIdx getTypeIdx(QualType T) const;
