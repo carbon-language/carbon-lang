@@ -605,9 +605,20 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                const char *expr_prefix,
                                lldb::ValueObjectSP &result_valobj_sp)
 {
+    Error error;
+    return EvaluateWithError (exe_ctx, discard_on_error, expr_cstr, expr_prefix, result_valobj_sp, error);
+}
+
+ExecutionResults
+ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx, 
+                               bool discard_on_error,
+                               const char *expr_cstr,
+                               const char *expr_prefix,
+                               lldb::ValueObjectSP &result_valobj_sp,
+                               Error &error)
+{
     lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
-    Error error;
     ExecutionResults execution_results = eExecutionSetupError;
     
     if (exe_ctx.process == NULL || exe_ctx.process->GetState() != lldb::eStateStopped)
@@ -668,6 +679,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                 log->Printf("== [ClangUserExpression::Evaluate] Expression evaluated as a constant ==");
             
             result_valobj_sp = user_expression_sp->m_const_result->GetValueObject();
+            execution_results = eExecutionCompleted;
         }
         else
         {    

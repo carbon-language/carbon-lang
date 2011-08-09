@@ -282,6 +282,14 @@ public:
               const char *expr_cstr,
               const char *expr_prefix,
               lldb::ValueObjectSP &result_valobj_sp);
+              
+    static ExecutionResults
+    EvaluateWithError (ExecutionContext &exe_ctx, 
+              bool discard_on_error,
+              const char *expr_cstr,
+              const char *expr_prefix,
+              lldb::ValueObjectSP &result_valobj_sp,
+              Error &error);
 
 private:
     //------------------------------------------------------------------
