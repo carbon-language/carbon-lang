@@ -123,6 +123,9 @@ ClangASTType::GetConstTypeName ()
 ConstString
 ClangASTType::GetConstTypeName (clang_type_t clang_type)
 {
+    if (!clang_type)
+        return ConstString("<invalid>");
+    
     clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
     std::string type_name (GetTypeNameForQualType (qual_type));
     ConstString const_type_name;
