@@ -2,8 +2,17 @@
 
 @x = common global <8 x float> zeroinitializer, align 32
 @y = common global <4 x double> zeroinitializer, align 32
+@z = common global <4 x float> zeroinitializer, align 16
 
-define void @zero() nounwind ssp {
+define void @zero128() nounwind ssp {
+entry:
+  ; CHECK: vxorps
+  ; CHECK: vmovaps
+  store <4 x float> zeroinitializer, <4 x float>* @z, align 16
+  ret void
+}
+
+define void @zero256() nounwind ssp {
 entry:
   ; CHECK: vxorps
   ; CHECK: vmovaps
