@@ -5291,7 +5291,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   }
   case ARM::STRi_preidx:
   case ARM::STRBi_preidx: {
-    unsigned NewOpc = MI->getOpcode() == ARM::STRr_preidx ?
+    unsigned NewOpc = MI->getOpcode() == ARM::STRi_preidx ?
       ARM::STR_PRE_IMM : ARM::STRB_PRE_IMM;
     // Decode the offset.
     unsigned Offset = MI->getOperand(4).getImm();
