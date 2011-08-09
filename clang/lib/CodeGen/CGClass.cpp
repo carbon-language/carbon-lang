@@ -1258,10 +1258,8 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
     EmitCallArg(Args, *Arg, ArgType);
   }
   
-  QualType ResultType = FPT->getResultType();
-  EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args,
-                                          FPT->getExtInfo()),
-                  Callee, ReturnValueSlot(), Args, D);
+  EmitCall(CGM.getTypes().getFunctionInfo(Args, FPT), Callee,
+           ReturnValueSlot(), Args, D);
 }
 
 void

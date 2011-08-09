@@ -749,11 +749,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E,
   llvm::Value *Func = Builder.CreateLoad(FuncPtr, "tmp");
 
   const FunctionType *FuncTy = FnType->castAs<FunctionType>();
-  QualType ResultType = FuncTy->getResultType();
-
-  const CGFunctionInfo &FnInfo =
-    CGM.getTypes().getFunctionInfo(ResultType, Args,
-                                   FuncTy->getExtInfo());
+  const CGFunctionInfo &FnInfo = CGM.getTypes().getFunctionInfo(Args, FuncTy);
 
   // Cast the function pointer to the right type.
   llvm::Type *BlockFTy =
