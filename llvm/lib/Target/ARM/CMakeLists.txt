@@ -13,6 +13,7 @@ tablegen(ARMGenCallingConv.inc -gen-callingconv)
 tablegen(ARMGenSubtargetInfo.inc -gen-subtarget)
 tablegen(ARMGenEDInfo.inc -gen-enhanced-disassembly-info)
 tablegen(ARMGenDecoderTables.inc -gen-arm-decoder)
+tablegen(ARMGenDisassemblerTables.inc -gen-disassembler)
 add_public_tablegen_target(ARMCommonTableGen)
 
 add_llvm_target(ARMCodeGen
