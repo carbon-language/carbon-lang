@@ -2818,7 +2818,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
 
 #ifndef NDEBUG
   const CGFunctionInfo &CallFnInfo = 
-    CGM.getTypes().getFunctionInfo(CallArgs, FPT);
+    CGM.getTypes().getFunctionInfo(ResultType, CallArgs, FPT->getExtInfo());
   assert(CallFnInfo.getRegParm() == FnInfo.getRegParm() &&
          CallFnInfo.isNoReturn() == FnInfo.isNoReturn() &&
          CallFnInfo.getCallingConvention() == FnInfo.getCallingConvention());
