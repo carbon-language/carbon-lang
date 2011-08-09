@@ -473,9 +473,9 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, const SB
     {
         if (result.IsValid())
             log->Printf ("SBValue(%p)::GetChildFromAddress => \"%s\"", m_opaque_sp.get(), result.m_opaque_sp.get());
-            else
-                log->Printf ("SBValue(%p)::GetChildFromAddress => NULL", m_opaque_sp.get());
-                }
+        else
+            log->Printf ("SBValue(%p)::GetChildFromAddress => NULL", m_opaque_sp.get());
+    }
     return result;
 }
 
