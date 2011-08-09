@@ -697,6 +697,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     return true;
 }
 
+#if 0
 static void DebugUsers(lldb::LogSP &log, Value *value, uint8_t depth)
 {    
     if (!depth)
@@ -704,18 +705,22 @@ static void DebugUsers(lldb::LogSP &log, Value *value, uint8_t depth)
     
     depth--;
     
-    log->Printf("  <Begin %d users>", value->getNumUses());
+    if (log)
+        log->Printf("  <Begin %d users>", value->getNumUses());
     
     for (Value::use_iterator ui = value->use_begin(), ue = value->use_end();
          ui != ue;
          ++ui)
     {
-        log->Printf("  <Use %p> %s", *ui, PrintValue(*ui).c_str());
+        if (log)
+            log->Printf("  <Use %p> %s", *ui, PrintValue(*ui).c_str());
         DebugUsers(log, *ui, depth);
     }
     
-    log->Printf("  <End uses>");
+    if (log)
+        log->Printf("  <End uses>");
 }
+#endif
 
 bool 
 IRForTarget::RewriteObjCConstString (llvm::GlobalVariable *ns_str,
