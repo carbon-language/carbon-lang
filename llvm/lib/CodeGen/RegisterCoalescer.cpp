@@ -15,8 +15,9 @@
 
 #define DEBUG_TYPE "regcoalescing"
 #include "RegisterCoalescer.h"
-#include "VirtRegMap.h"
 #include "LiveDebugVariables.h"
+#include "RegisterClassInfo.h"
+#include "VirtRegMap.h"
 
 #include "llvm/Pass.h"
 #include "llvm/Value.h"
@@ -74,6 +75,127 @@ static cl::opt<bool>
 VerifyCoalescing("verify-coalescing",
          cl::desc("Verify machine instrs before and after register coalescing"),
          cl::Hidden);
+
+namespace {
+  class RegisterCoalescer : public MachineFunctionPass {
+    MachineFunction* mf_;
+    MachineRegisterInfo* mri_;
+    const TargetMachine* tm_;
+    const TargetRegisterInfo* tri_;
+    const TargetInstrInfo* tii_;
+    LiveIntervals *li_;
+    LiveDebugVariables *ldv_;
+    const MachineLoopInfo* loopInfo;
+    AliasAnalysis *AA;
+    RegisterClassInfo RegClassInfo;
+
+    /// JoinedCopies - Keep track of copies eliminated due to coalescing.
+    ///
+    SmallPtrSet<MachineInstr*, 32> JoinedCopies;
+
+    /// ReMatCopies - Keep track of copies eliminated due to remat.
+    ///
+    SmallPtrSet<MachineInstr*, 32> ReMatCopies;
+
+    /// ReMatDefs - Keep track of definition instructions which have
+    /// been remat'ed.
+    SmallPtrSet<MachineInstr*, 8> ReMatDefs;
+
+    /// joinIntervals - join compatible live intervals
+    void joinIntervals();
+
+    /// CopyCoalesceInMBB - Coalesce copies in the specified MBB, putting
+    /// copies that cannot yet be coalesced into the "TryAgain" list.
+    void CopyCoalesceInMBB(MachineBasicBlock *MBB,
+                           std::vector<MachineInstr*> &TryAgain);
+
+    /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
+    /// which are the src/dst of the copy instruction CopyMI.  This returns
+    /// true if the copy was successfully coalesced away. If it is not
+    /// currently possible to coalesce this interval, but it may be possible if
+    /// other things get coalesced, then it returns true by reference in
+    /// 'Again'.
+    bool JoinCopy(MachineInstr *TheCopy, bool &Again);
+
+    /// JoinIntervals - Attempt to join these two intervals.  On failure, this
+    /// returns false.  The output "SrcInt" will not have been modified, so we
+    /// can use this information below to update aliases.
+    bool JoinIntervals(CoalescerPair &CP);
+
+    /// AdjustCopiesBackFrom - We found a non-trivially-coalescable copy. If
+    /// the source value number is defined by a copy from the destination reg
+    /// see if we can merge these two destination reg valno# into a single
+    /// value number, eliminating a copy.
+    bool AdjustCopiesBackFrom(const CoalescerPair &CP, MachineInstr *CopyMI);
+
+    /// HasOtherReachingDefs - Return true if there are definitions of IntB
+    /// other than BValNo val# that can reach uses of AValno val# of IntA.
+    bool HasOtherReachingDefs(LiveInterval &IntA, LiveInterval &IntB,
+                              VNInfo *AValNo, VNInfo *BValNo);
+
+    /// RemoveCopyByCommutingDef - We found a non-trivially-coalescable copy.
+    /// If the source value number is defined by a commutable instruction and
+    /// its other operand is coalesced to the copy dest register, see if we
+    /// can transform the copy into a noop by commuting the definition.
+    bool RemoveCopyByCommutingDef(const CoalescerPair &CP,MachineInstr *CopyMI);
+
+    /// ReMaterializeTrivialDef - If the source of a copy is defined by a
+    /// trivial computation, replace the copy by rematerialize the definition.
+    /// If PreserveSrcInt is true, make sure SrcInt is valid after the call.
+    bool ReMaterializeTrivialDef(LiveInterval &SrcInt, bool PreserveSrcInt,
+                                 unsigned DstReg, unsigned DstSubIdx,
+                                 MachineInstr *CopyMI);
+
+    /// shouldJoinPhys - Return true if a physreg copy should be joined.
+    bool shouldJoinPhys(CoalescerPair &CP);
+
+    /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
+    /// two virtual registers from different register classes.
+    bool isWinToJoinCrossClass(unsigned SrcReg,
+                               unsigned DstReg,
+                               const TargetRegisterClass *SrcRC,
+                               const TargetRegisterClass *DstRC,
+                               const TargetRegisterClass *NewRC);
+
+    /// UpdateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
+    /// update the subregister number if it is not zero. If DstReg is a
+    /// physical register and the existing subregister number of the def / use
+    /// being updated is not zero, make sure to set it to the correct physical
+    /// subregister.
+    void UpdateRegDefsUses(const CoalescerPair &CP);
+
+    /// RemoveDeadDef - If a def of a live interval is now determined dead,
+    /// remove the val# it defines. If the live interval becomes empty, remove
+    /// it as well.
+    bool RemoveDeadDef(LiveInterval &li, MachineInstr *DefMI);
+
+    /// RemoveCopyFlag - If DstReg is no longer defined by CopyMI, clear the
+    /// VNInfo copy flag for DstReg and all aliases.
+    void RemoveCopyFlag(unsigned DstReg, const MachineInstr *CopyMI);
+
+    /// markAsJoined - Remember that CopyMI has already been joined.
+    void markAsJoined(MachineInstr *CopyMI);
+
+    /// eliminateUndefCopy - Handle copies of undef values.
+    bool eliminateUndefCopy(MachineInstr *CopyMI, const CoalescerPair &CP);
+
+  public:
+    static char ID; // Class identification, replacement for typeinfo
+    RegisterCoalescer() : MachineFunctionPass(ID) {
+      initializeRegisterCoalescerPass(*PassRegistry::getPassRegistry());
+    }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+
+    virtual void releaseMemory();
+
+    /// runOnMachineFunction - pass entry point
+    virtual bool runOnMachineFunction(MachineFunction&);
+
+    /// print - Implement the dump method.
+    virtual void print(raw_ostream &O, const Module* = 0) const;
+  };
+} /// end anonymous namespace
 
 char &llvm::RegisterCoalescerPassID = RegisterCoalescer::ID;
 
