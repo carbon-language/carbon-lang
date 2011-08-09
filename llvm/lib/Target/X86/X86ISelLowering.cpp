@@ -5940,7 +5940,9 @@ static inline unsigned getUNPCKLOpcode(EVT VT) {
   case MVT::v2i64: return X86ISD::PUNPCKLQDQ;
   case MVT::v4f32: return X86ISD::UNPCKLPS;
   case MVT::v2f64: return X86ISD::UNPCKLPD;
+  case MVT::v8i32: // Use fp unit for int unpack.
   case MVT::v8f32: return X86ISD::VUNPCKLPSY;
+  case MVT::v4i64: // Use fp unit for int unpack.
   case MVT::v4f64: return X86ISD::VUNPCKLPDY;
   case MVT::v16i8: return X86ISD::PUNPCKLBW;
   case MVT::v8i16: return X86ISD::PUNPCKLWD;
@@ -5956,7 +5958,9 @@ static inline unsigned getUNPCKHOpcode(EVT VT) {
   case MVT::v2i64: return X86ISD::PUNPCKHQDQ;
   case MVT::v4f32: return X86ISD::UNPCKHPS;
   case MVT::v2f64: return X86ISD::UNPCKHPD;
+  case MVT::v8i32: // Use fp unit for int unpack.
   case MVT::v8f32: return X86ISD::VUNPCKHPSY;
+  case MVT::v4i64: // Use fp unit for int unpack.
   case MVT::v4f64: return X86ISD::VUNPCKHPDY;
   case MVT::v16i8: return X86ISD::PUNPCKHBW;
   case MVT::v8i16: return X86ISD::PUNPCKHWD;

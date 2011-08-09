@@ -5799,17 +5799,23 @@ def : Pat<(X86Movddup (bc_v2f64
 // Shuffle with UNPCKLPS
 def : Pat<(v4f32 (X86Unpcklps VR128:$src1, (memopv4f32 addr:$src2))),
           (VUNPCKLPSrm VR128:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v8f32 (X86Unpcklpsy VR256:$src1, (memopv8f32 addr:$src2))),
-          (VUNPCKLPSYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
 def : Pat<(v4f32 (X86Unpcklps VR128:$src1, (memopv4f32 addr:$src2))),
           (UNPCKLPSrm VR128:$src1, addr:$src2)>;
 
 def : Pat<(v4f32 (X86Unpcklps VR128:$src1, VR128:$src2)),
           (VUNPCKLPSrr VR128:$src1, VR128:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v8f32 (X86Unpcklpsy VR256:$src1, VR256:$src2)),
-          (VUNPCKLPSYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
 def : Pat<(v4f32 (X86Unpcklps VR128:$src1, VR128:$src2)),
           (UNPCKLPSrr VR128:$src1, VR128:$src2)>;
+
+// Shuffle with VUNPCKHPSY
+def : Pat<(v8f32 (X86Unpcklpsy VR256:$src1, (memopv8f32 addr:$src2))),
+          (VUNPCKLPSYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
+def : Pat<(v8f32 (X86Unpcklpsy VR256:$src1, VR256:$src2)),
+          (VUNPCKLPSYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
+def : Pat<(v8i32 (X86Unpcklpsy VR256:$src1, VR256:$src2)),
+          (VUNPCKLPSYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
+def : Pat<(v8i32 (X86Unpcklpsy VR256:$src1, (memopv8i32 addr:$src2))),
+          (VUNPCKLPSYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
 
 // Shuffle with UNPCKHPS
 def : Pat<(v4f32 (X86Unpckhps VR128:$src1, (memopv4f32 addr:$src2))),
@@ -5828,20 +5834,32 @@ def : Pat<(v8f32 (X86Unpckhpsy VR256:$src1, (memopv8f32 addr:$src2))),
 def : Pat<(v8f32 (X86Unpckhpsy VR256:$src1, VR256:$src2)),
           (VUNPCKHPSYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
 
+def : Pat<(v8i32 (X86Unpckhpsy VR256:$src1, (memopv8i32 addr:$src2))),
+          (VUNPCKHPSYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
+def : Pat<(v8i32 (X86Unpckhpsy VR256:$src1, VR256:$src2)),
+          (VUNPCKHPSYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
+
 // Shuffle with UNPCKLPD
 def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, (memopv2f64 addr:$src2))),
           (VUNPCKLPDrm VR128:$src1, addr:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v4f64 (X86Unpcklpdy VR256:$src1, (memopv4f64 addr:$src2))),
-          (VUNPCKLPDYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
 def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, (memopv2f64 addr:$src2))),
           (UNPCKLPDrm VR128:$src1, addr:$src2)>;
 
 def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, VR128:$src2)),
           (VUNPCKLPDrr VR128:$src1, VR128:$src2)>, Requires<[HasAVX]>;
-def : Pat<(v4f64 (X86Unpcklpdy VR256:$src1, VR256:$src2)),
-          (VUNPCKLPDYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
 def : Pat<(v2f64 (X86Unpcklpd VR128:$src1, VR128:$src2)),
           (UNPCKLPDrr VR128:$src1, VR128:$src2)>;
+
+// Shuffle with VUNPCKLPDY
+def : Pat<(v4f64 (X86Unpcklpdy VR256:$src1, (memopv4f64 addr:$src2))),
+          (VUNPCKLPDYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
+def : Pat<(v4f64 (X86Unpcklpdy VR256:$src1, VR256:$src2)),
+          (VUNPCKLPDYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
+
+def : Pat<(v4i64 (X86Unpcklpdy VR256:$src1, (memopv4i64 addr:$src2))),
+          (VUNPCKLPDYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
+def : Pat<(v4i64 (X86Unpcklpdy VR256:$src1, VR256:$src2)),
+          (VUNPCKLPDYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
 
 // Shuffle with UNPCKHPD
 def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, (memopv2f64 addr:$src2))),
@@ -5858,6 +5876,10 @@ def : Pat<(v2f64 (X86Unpckhpd VR128:$src1, VR128:$src2)),
 def : Pat<(v4f64 (X86Unpckhpdy VR256:$src1, (memopv4f64 addr:$src2))),
           (VUNPCKHPDYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
 def : Pat<(v4f64 (X86Unpckhpdy VR256:$src1, VR256:$src2)),
+          (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
+def : Pat<(v4i64 (X86Unpckhpdy VR256:$src1, (memopv4i64 addr:$src2))),
+          (VUNPCKHPDYrm VR256:$src1, addr:$src2)>, Requires<[HasAVX]>;
+def : Pat<(v4i64 (X86Unpckhpdy VR256:$src1, VR256:$src2)),
           (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>, Requires<[HasAVX]>;
 
 // Shuffle with MOVLHPS

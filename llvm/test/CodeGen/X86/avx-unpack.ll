@@ -56,3 +56,34 @@ entry:
   ret <4 x double> %shuffle.i
 }
 
+;;;;
+;;;; Unpack versions using the fp unit for int unpacking
+;;;;
+
+; CHECK: vunpckhps
+define <8 x i32> @unpackhips1(<8 x i32> %src1, <8 x i32> %src2) nounwind uwtable readnone ssp {
+entry:
+  %shuffle.i = shufflevector <8 x i32> %src1, <8 x i32> %src2, <8 x i32> <i32 2, i32 10, i32 3, i32 11, i32 6, i32 14, i32 7, i32 15>
+  ret <8 x i32> %shuffle.i
+}
+
+; CHECK: vunpckhpd
+define <4 x i64> @unpackhipd1(<4 x i64> %src1, <4 x i64> %src2) nounwind uwtable readnone ssp {
+entry:
+  %shuffle.i = shufflevector <4 x i64> %src1, <4 x i64> %src2, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  ret <4 x i64> %shuffle.i
+}
+
+; CHECK: vunpcklps
+define <8 x i32> @unpacklops1(<8 x i32> %src1, <8 x i32> %src2) nounwind uwtable readnone ssp {
+entry:
+  %shuffle.i = shufflevector <8 x i32> %src1, <8 x i32> %src2, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 4, i32 12, i32 5, i32 13>
+  ret <8 x i32> %shuffle.i
+}
+
+; CHECK: vunpcklpd
+define <4 x i64> @unpacklopd1(<4 x i64> %src1, <4 x i64> %src2) nounwind uwtable readnone ssp {
+entry:
+  %shuffle.i = shufflevector <4 x i64> %src1, <4 x i64> %src2, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  ret <4 x i64> %shuffle.i
+}
