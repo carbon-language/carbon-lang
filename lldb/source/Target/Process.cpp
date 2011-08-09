@@ -3724,8 +3724,9 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     }
                     else
                     {
-                        log->Printf ("Process::RunThreadPlan(): halt failed, I waited and didn't get"
-                                     " a stopped event, instead got %s.", StateAsCString(stop_state));
+                        if (log)
+                            log->Printf ("Process::RunThreadPlan(): halt failed, I waited and didn't get"
+                                         " a stopped event, instead got %s.", StateAsCString(stop_state));
                         return_value = eExecutionInterrupted;
                         break;                
                     }
