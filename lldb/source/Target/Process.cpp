@@ -3436,7 +3436,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (!got_event) 
             {
                 if (log)
-                    log->Printf("Didn't get any event after initial resume, exiting.");
+                    log->PutCString("Didn't get any event after initial resume, exiting.");
 
                 errors.Printf("Didn't get any event after initial resume, exiting.");
                 return_value = eExecutionSetupError;
@@ -3455,7 +3455,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             }
         
             if (log)
-                log->Printf ("Resuming succeeded.");
+                log->PutCString ("Resuming succeeded.");
             // We need to call the function synchronously, so spin waiting for it to return.
             // If we get interrupted while executing, we're going to lose our context, and
             // won't be able to gather the result at this point.
@@ -3476,7 +3476,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         else
         {
             if (log)
-                log->Printf ("Handled an extra running event.");
+                log->PutCString ("Handled an extra running event.");
             do_resume = true;
         }
         
@@ -3516,7 +3516,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             if (stop_reason == eStopReasonPlanComplete)
                             {
                                 if (log)
-                                    log->Printf ("Execution completed successfully.");
+                                    log->PutCString ("Execution completed successfully.");
                                 // Now mark this plan as private so it doesn't get reported as the stop reason
                                 // after this point.  
                                 if (thread_plan_sp)
@@ -3526,7 +3526,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             else
                             {
                                 if (log)
-                                    log->Printf ("Thread plan didn't successfully complete.");
+                                    log->PutCString ("Thread plan didn't successfully complete.");
 
                                 return_value = eExecutionInterrupted;
                             }
@@ -3536,7 +3536,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
 
                 case lldb::eStateCrashed:
                     if (log)
-                        log->Printf ("Execution crashed.");
+                        log->PutCString ("Execution crashed.");
                     return_value = eExecutionInterrupted;
                     break;
 
@@ -3561,7 +3561,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             else
             {
                 if (log)
-                    log->Printf ("got_event was true, but the event pointer was null.  How odd...");
+                    log->PutCString ("got_event was true, but the event pointer was null.  How odd...");
                 return_value = eExecutionInterrupted;
                 break;
             }
@@ -3595,7 +3595,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (halt_error.Success())
             {
                 if (log)
-                    log->Printf ("Process::RunThreadPlan(): Halt succeeded.");
+                    log->PutCString ("Process::RunThreadPlan(): Halt succeeded.");
                     
                 // If halt succeeds, it always produces a stopped event.  Wait for that:
                 
@@ -3612,7 +3612,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         log->Printf ("Process::RunThreadPlan(): Stopped with event: %s", StateAsCString(stop_state));
                         if (stop_state == lldb::eStateStopped 
                             && Process::ProcessEventData::GetInterruptedFromEvent(event_sp.get()))
-                            log->Printf ("    Event was the Halt interruption event.");
+                            log->PutCString ("    Event was the Halt interruption event.");
                     }
                     
                     if (stop_state == lldb::eStateStopped)
@@ -3623,7 +3623,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         if (exe_ctx.thread->IsThreadPlanDone (thread_plan_sp.get()))
                         {
                             if (log)
-                                log->Printf ("Process::RunThreadPlan(): Even though we timed out, the call plan was done.  "
+                                log->PutCString ("Process::RunThreadPlan(): Even though we timed out, the call plan was done.  "
                                              "Exiting wait loop.");
                             return_value = eExecutionCompleted;
                             break;
@@ -3632,7 +3632,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         if (!try_all_threads)
                         {
                             if (log)
-                                log->Printf ("try_all_threads was false, we stopped so now we're quitting.");
+                                log->PutCString ("try_all_threads was false, we stopped so now we're quitting.");
                             return_value = eExecutionInterrupted;
                             break;
                         }
@@ -3643,7 +3643,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             first_timeout = false;
                             thread_plan_sp->SetStopOthers (false);
                             if (log)
-                                log->Printf ("Process::RunThreadPlan(): About to resume.");
+                                log->PutCString ("Process::RunThreadPlan(): About to resume.");
 
                             continue;
                         }
@@ -3651,7 +3651,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         {
                             // Running all threads failed, so return Interrupted.
                             if (log)
-                                log->Printf("Process::RunThreadPlan(): running all threads timed out.");
+                                log->PutCString("Process::RunThreadPlan(): running all threads timed out.");
                             return_value = eExecutionInterrupted;
                             break;
                         }
@@ -3659,7 +3659,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 }
                 else
                 {   if (log)
-                        log->Printf("Process::RunThreadPlan(): halt said it succeeded, but I got no event.  "
+                        log->PutCString("Process::RunThreadPlan(): halt said it succeeded, but I got no event.  "
                                 "I'm getting out of here passing Interrupted.");
                     return_value = eExecutionInterrupted;
                     break;
@@ -3680,7 +3680,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 {
                     // This is not going anywhere, bag out.
                     if (log)
-                        log->Printf ("Process::RunThreadPlan(): halt failed: and waiting for the stopped event failed.");
+                        log->PutCString ("Process::RunThreadPlan(): halt failed: and waiting for the stopped event failed.");
                     return_value = eExecutionInterrupted;
                     break;                
                 }
@@ -3688,7 +3688,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 {
                     stop_state = Process::ProcessEventData::GetStateFromEvent(event_sp.get());
                     if (log)
-                        log->Printf ("Process::RunThreadPlan(): halt failed: but then I got a stopped event.  Whatever...");
+                        log->PutCString ("Process::RunThreadPlan(): halt failed: but then I got a stopped event.  Whatever...");
                     if (stop_state == lldb::eStateStopped)
                     {
                         // Between the time we initiated the Halt and the time we delivered it, the process could have
@@ -3697,7 +3697,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         if (exe_ctx.thread->IsThreadPlanDone (thread_plan_sp.get()))
                         {
                             if (log)
-                                log->Printf ("Process::RunThreadPlan(): Even though we timed out, the call plan was done.  "
+                                log->PutCString ("Process::RunThreadPlan(): Even though we timed out, the call plan was done.  "
                                              "Exiting wait loop.");
                             return_value = eExecutionCompleted;
                             break;
@@ -3709,7 +3709,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             first_timeout = false;
                             thread_plan_sp->SetStopOthers (false);
                             if (log)
-                                log->Printf ("Process::RunThreadPlan(): About to resume.");
+                                log->PutCString ("Process::RunThreadPlan(): About to resume.");
 
                             continue;
                         }
@@ -3717,7 +3717,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         {
                             // Running all threads failed, so return Interrupted.
                             if (log)
-                                log->Printf("Process::RunThreadPlan(): running all threads timed out.");
+                                log->PutCString ("Process::RunThreadPlan(): running all threads timed out.");
                             return_value = eExecutionInterrupted;
                             break;
                         }
@@ -3747,12 +3747,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 event_sp->Dump (&s);
             else
             {
-                log->Printf ("Process::RunThreadPlan(): Stop event that interrupted us is NULL.");
+                log->PutCString ("Process::RunThreadPlan(): Stop event that interrupted us is NULL.");
             }
 
             StreamString ts;
 
-            const char *event_explanation;                
+            const char *event_explanation = NULL;                
             
             do 
             {
@@ -3813,7 +3813,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             } while (0);
             
             if (log)
-                log->Printf("Process::RunThreadPlan(): execution interrupted: %s %s", s.GetData(), event_explanation);
+            {
+                if (event_explanation)
+                    log->Printf("Process::RunThreadPlan(): execution interrupted: %s %s", s.GetData(), event_explanation);
+                else
+                    log->Printf("Process::RunThreadPlan(): execution interrupted: %s", s.GetData());
+            }                
                 
             if (discard_on_error && thread_plan_sp)
             {
@@ -3825,7 +3830,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     else if (return_value == eExecutionSetupError)
     {
         if (log)
-            log->Printf("Process::RunThreadPlan(): execution set up error.");
+            log->PutCString("Process::RunThreadPlan(): execution set up error.");
             
         if (discard_on_error && thread_plan_sp)
         {
@@ -3838,23 +3843,23 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         if (exe_ctx.thread->IsThreadPlanDone (thread_plan_sp.get()))
         {
             if (log)
-                log->Printf("Process::RunThreadPlan(): thread plan is done");
+                log->PutCString("Process::RunThreadPlan(): thread plan is done");
             return_value = eExecutionCompleted;
         }
         else if (exe_ctx.thread->WasThreadPlanDiscarded (thread_plan_sp.get()))
         {
             if (log)
-                log->Printf("Process::RunThreadPlan(): thread plan was discarded");
+                log->PutCString("Process::RunThreadPlan(): thread plan was discarded");
             return_value = eExecutionDiscarded;
         }
         else
         {
             if (log)
-                log->Printf("Process::RunThreadPlan(): thread plan stopped in mid course");
+                log->PutCString("Process::RunThreadPlan(): thread plan stopped in mid course");
             if (discard_on_error && thread_plan_sp)
             {
                 if (log)
-                    log->Printf("Process::RunThreadPlan(): discarding thread plan 'cause discard_on_error is set.");
+                    log->PutCString("Process::RunThreadPlan(): discarding thread plan 'cause discard_on_error is set.");
                 exe_ctx.thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
                 thread_plan_sp->SetPrivate (orig_plan_private);
             }
