@@ -217,12 +217,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   ValueToValueMapTy LastValueMap;
   std::vector<PHINode*> OrigPHINode;
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
-    PHINode *PN = cast<PHINode>(I);
-    OrigPHINode.push_back(PN);
-    if (Instruction *I =
-                dyn_cast<Instruction>(PN->getIncomingValueForBlock(LatchBlock)))
-      if (L->contains(I))
-        LastValueMap[I] = I;
+    OrigPHINode.push_back(cast<PHINode>(I));
   }
 
   std::vector<BasicBlock*> Headers;
