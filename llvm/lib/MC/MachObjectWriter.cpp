@@ -291,7 +291,7 @@ void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
   const MCSymbol &Symbol = Data.getSymbol();
   uint8_t Type = 0;
   uint16_t Flags = Data.getFlags();
-  uint32_t Address = 0;
+  uint64_t Address = 0;
 
   // Set the N_TYPE bits. See <mach-o/nlist.h>.
   //
