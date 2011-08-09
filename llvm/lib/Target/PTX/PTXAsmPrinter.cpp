@@ -70,6 +70,8 @@ public:
                           const char *Modifier = 0); 
   void printPredicateOperand(const MachineInstr *MI, raw_ostream &O);
 
+  void printCall(const MachineInstr *MI, raw_ostream &O);
+
   unsigned GetOrCreateSourceID(StringRef FileName,
                                StringRef DirName);
 
@@ -242,6 +244,19 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
       OutStreamer.EmitRawText(Twine(def));
     }
   }
+
+  unsigned Index = 1;
+  // Print parameter passing params
+  for (PTXMachineFunctionInfo::param_iterator
+       i = MFI->paramBegin(), e = MFI->paramEnd(); i != e; ++i) {
+    std::string def = "\t.param .b";
+    def += utostr(*i);
+    def += " __ret_";
+    def += utostr(Index);
+    Index++;
+    def += ";";
+    OutStreamer.EmitRawText(Twine(def));
+  }
 }
 
 void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
@@ -302,7 +317,11 @@ void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   printPredicateOperand(MI, OS);
 
   // Write instruction to str
-  printInstruction(MI, OS);
+  if (MI->getOpcode() == PTX::CALL) {
+    printCall(MI, OS);
+  } else {
+    printInstruction(MI, OS);
+  }
   OS << ';';
   OS.flush();
 
@@ -567,6 +586,28 @@ printPredicateOperand(const MachineInstr *MI, raw_ostream &O) {
       O << '!';
     O << getRegisterName(reg);
   }
+}
+
+void PTXAsmPrinter::
+printCall(const MachineInstr *MI, raw_ostream &O) {
+
+  O << "\tcall.uni\t";
+
+  const GlobalValue *Address = MI->getOperand(2).getGlobal();
+  O << Address->getName() << ", (";
+
+  // (0,1) : predicate register/flag
+  // (2)   : callee
+  for (unsigned i = 3; i < MI->getNumOperands(); ++i) {
+    //const MachineOperand& MO = MI->getOperand(i);
+
+    printReturnOperand(MI, i, O);
+    if (i < MI->getNumOperands()-1) {
+      O << ", ";
+    }
+  }
+
+  O << ")";
 }
 
 unsigned PTXAsmPrinter::GetOrCreateSourceID(StringRef FileName,

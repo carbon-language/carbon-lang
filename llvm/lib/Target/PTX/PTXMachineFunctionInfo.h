@@ -27,6 +27,7 @@ private:
   bool is_kernel;
   std::vector<unsigned> reg_arg, reg_local_var;
   std::vector<unsigned> reg_ret;
+  std::vector<unsigned> call_params;
   bool _isDoneAddArg;
 
 public:
@@ -56,6 +57,7 @@ public:
   typedef std::vector<unsigned>::const_iterator         reg_iterator;
   typedef std::vector<unsigned>::const_reverse_iterator reg_reverse_iterator;
   typedef std::vector<unsigned>::const_iterator         ret_iterator;
+  typedef std::vector<unsigned>::const_iterator         param_iterator;
 
   bool         argRegEmpty() const { return reg_arg.empty(); }
   int          getNumArg() const { return reg_arg.size(); }
@@ -72,6 +74,13 @@ public:
   int          getNumRet() const { return reg_ret.size(); }
   ret_iterator retRegBegin() const { return reg_ret.begin(); }
   ret_iterator retRegEnd()   const { return reg_ret.end(); }
+
+  param_iterator paramBegin() const { return call_params.begin(); }
+  param_iterator paramEnd() const { return call_params.end(); }
+  unsigned       getNextParam(unsigned size) {
+    call_params.push_back(size);
+    return call_params.size()-1;
+  }
 
   bool isArgReg(unsigned reg) const {
     return std::find(reg_arg.begin(), reg_arg.end(), reg) != reg_arg.end();

@@ -114,7 +114,12 @@ class StringRef;
                (PTXTarget >= PTX_COMPUTE_2_0 && PTXTarget < PTX_LAST_COMPUTE);
       }
 
-    void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
+      bool callsAreHandled() const {
+        return (PTXTarget >= PTX_SM_2_0 && PTXTarget < PTX_LAST_SM) ||
+               (PTXTarget >= PTX_COMPUTE_2_0 && PTXTarget < PTX_LAST_COMPUTE);
+      }
+
+      void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
   }; // class PTXSubtarget
 } // namespace llvm
 

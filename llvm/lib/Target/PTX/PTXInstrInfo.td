@@ -168,6 +168,18 @@ def MEMret : Operand<i32> {
   let MIOperandInfo = (ops i32imm);
 }
 
+// def SDT_PTXCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
+// def SDT_PTXCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+
+// def PTXcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PTXCallSeqStart,
+//                               [SDNPHasChain, SDNPOutGlue]>;
+// def PTXcallseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_PTXCallSeqEnd,
+//                               [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+
+def PTXcall : SDNode<"PTXISD::CALL", SDTNone,
+                     [SDNPHasChain, SDNPVariadic, SDNPOptInGlue, SDNPOutGlue]>;
+
+
 // Branch & call targets have OtherVT type.
 def brtarget   : Operand<OtherVT>;
 def calltarget : Operand<i32>;
@@ -1073,6 +1085,11 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   def RET  : InstPTX<(outs), (ins), "ret",  [(PTXret)]>;
 }
 
+let hasSideEffects = 1 in {
+  def CALL : InstPTX<(outs), (ins), "call", [(PTXcall)]>;
+}
+
+
 ///===- Spill Instructions ------------------------------------------------===//
 // Special instructions used for stack spilling
 def STACKSTOREI16 : InstPTX<(outs), (ins i32imm:$d, RegI16:$a),
@@ -1096,6 +1113,15 @@ def STACKLOADF32 : InstPTX<(outs), (ins RegF32:$d, i32imm:$a),
                            "mov.f32\t$d, s$a", []>;
 def STACKLOADF64 : InstPTX<(outs), (ins RegF64:$d, i32imm:$a),
                            "mov.f64\t$d, s$a", []>;
+
+
+// Call handling
+// def ADJCALLSTACKUP :
+//   InstPTX<(outs), (ins i32imm:$amt1, i32imm:$amt2), "",
+//           [(PTXcallseq_end timm:$amt1, timm:$amt2)]>;
+// def ADJCALLSTACKDOWN :
+//   InstPTX<(outs), (ins i32imm:$amt), "",
+//           [(PTXcallseq_start timm:$amt)]>;
 
 ///===- Intrinsic Instructions --------------------------------------------===//
 
