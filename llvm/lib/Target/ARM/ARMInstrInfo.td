@@ -1390,6 +1390,7 @@ class CPS<dag iops, string asm_ops>
   let Inst{4-0}   = mode;
 }
 
+let DecoderMethod = "DecodeCPSInstruction" in {
 let M = 1 in
   def CPS3p : CPS<(ins imod_op:$imod, iflags_op:$iflags, imm0_31:$mode),
                   "$imod\t$iflags, $mode">;
@@ -1398,6 +1399,7 @@ let mode = 0, M = 0 in
 
 let imod = 0, iflags = 0, M = 1 in
   def CPS1p : CPS<(ins imm0_31:$mode), "\t$mode">;
+}
 
 // Preload signals the memory system of possible future data/instruction access.
 // These are for disassembly only.

@@ -83,6 +83,8 @@ static bool DecodeMemMultipleWritebackInstruction(llvm::MCInst & Inst,
                                                   const void *Decoder);
 static bool DecodeSMLAInstruction(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static bool DecodeCPSInstruction(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 static bool DecodeAddrModeImm12Operand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static bool DecodeAddrMode5Operand(llvm::MCInst &Inst, unsigned Val,
@@ -1138,6 +1140,9 @@ static bool DecodeCPSInstruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned M = fieldFromInstruction32(Insn, 17, 1);
   unsigned iflags = fieldFromInstruction32(Insn, 6, 3);
   unsigned mode = fieldFromInstruction32(Insn, 0, 5);
+
+  // imod == '01' --> UNPREDICTABLE
+  if (imod == 1) return false;
 
   if (M && mode && imod && iflags) {
     Inst.setOpcode(ARM::CPS3p);
