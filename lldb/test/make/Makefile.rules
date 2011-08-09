@@ -38,19 +38,19 @@ endif
 #----------------------------------------------------------------------
 CFLAGS ?= -gdwarf-2 -O0
 CFLAGS += $(FRAMEWORK_INCLUDES)
-CXXFLAGS +=$(CFLAGS)
-LD = $(CC)
-LDFLAGS ?= $(CFLAGS)
-LDFLAGS += $(LD_EXTRAS)
-OBJECTS =
-EXE ?= a.out
-
 ifeq "$(OS)" "Darwin"
 	CFLAGS += -arch $(ARCH)
 	DS := /usr/bin/dsymutil
 	DSFLAGS =
 	DSYM = $(EXE).dSYM
 endif
+
+CXXFLAGS +=$(CFLAGS)
+LD = $(CC)
+LDFLAGS ?= $(CFLAGS)
+LDFLAGS += $(LD_EXTRAS)
+OBJECTS =
+EXE ?= a.out
 
 ifneq "$(DYLIB_NAME)" ""
 	ifeq "$(OS)" "Darwin"
