@@ -215,6 +215,16 @@ def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 12),
   }];
 }
 
+// GPRs without the PC.  Some ARM instructions do not allow the PC in
+// certain operand slots, particularly as the destination.  Primarily
+// useful for disassembly.
+def GPRnopc : RegisterClass<"ARM", [i32], 32, (sub GPR, PC)> {
+  let AltOrders = [(add LR, GPRnopc), (trunc GPRnopc, 8)];
+  let AltOrderSelect = [{
+      return 1 + MF.getTarget().getSubtarget<ARMSubtarget>().isThumb1Only();
+  }];
+}
+
 // restricted GPR register class. Many Thumb2 instructions allow the full
 // register range for operands, but have undefined behaviours when PC
 // or SP (R13 or R15) are used. The ARM ISA refers to these operands

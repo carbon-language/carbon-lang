@@ -28,6 +28,8 @@
 // Definitions are further down.
 static bool DecodeGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
+static bool DecodeGPRnopcRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
+                                   uint64_t Address, const void *Decoder);
 static bool DecodetGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
 static bool DecodetcGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
@@ -469,6 +471,12 @@ static bool DecodeGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   unsigned Register = GPRDecoderTable[RegNo];
   Inst.addOperand(MCOperand::CreateReg(Register));
   return true;
+}
+
+static bool DecodeGPRnopcRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
+                                       uint64_t Address, const void *Decoder) {
+  if (RegNo == 15) return false;
+  return DecodeGPRRegisterClass(Inst, RegNo, Address, Decoder);
 }
 
 static bool DecodetGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,

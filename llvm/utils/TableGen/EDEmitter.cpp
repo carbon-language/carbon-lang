@@ -555,6 +555,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
                              const std::string &name) {
   REG("GPR");
   REG("rGPR");
+  REG("GPRnopc");
   REG("tcGPR");
   REG("cc_out");
   REG("s_cc_out");

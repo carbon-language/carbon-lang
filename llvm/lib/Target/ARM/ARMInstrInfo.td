@@ -3131,10 +3131,10 @@ def BFC    : I<(outs GPR:$Rd), (ins GPR:$src, bf_inv_mask_imm:$imm),
 }
 
 // A8.6.18  BFI - Bitfield insert (Encoding A1)
-def BFI    : I<(outs GPR:$Rd), (ins GPR:$src, GPR:$Rn, bf_inv_mask_imm:$imm),
+def BFI    : I<(outs GPRnopc:$Rd), (ins GPRnopc:$src, GPR:$Rn, bf_inv_mask_imm:$imm),
                AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
                "bfi", "\t$Rd, $Rn, $imm", "$src = $Rd",
-               [(set GPR:$Rd, (ARMbfi GPR:$src, GPR:$Rn,
+               [(set GPRnopc:$Rd, (ARMbfi GPRnopc:$src, GPR:$Rn,
                                 bf_inv_mask_imm:$imm))]>,
                Requires<[IsARM, HasV6T2]> {
   bits<4> Rd;
@@ -3150,7 +3150,7 @@ def BFI    : I<(outs GPR:$Rd), (ins GPR:$src, GPR:$Rn, bf_inv_mask_imm:$imm),
 
 // GNU as only supports this form of bfi (w/ 4 arguments)
 let isAsmParserOnly = 1 in
-def BFI4p : I<(outs GPR:$Rd), (ins GPR:$src, GPR:$Rn,
+def BFI4p : I<(outs GPRnopc:$Rd), (ins GPRnopc:$src, GPR:$Rn,
                                    lsb_pos_imm:$lsb, width_imm:$width),
                AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
                "bfi", "\t$Rd, $Rn, $lsb, $width", "$src = $Rd",
