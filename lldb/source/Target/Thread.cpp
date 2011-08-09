@@ -93,13 +93,22 @@ Thread::GetStopInfo ()
     if (plan_sp)
         return StopInfo::CreateStopReasonWithPlan (plan_sp);
     else
-        return GetPrivateStopReason ();
+    {
+        if (m_actual_stop_info_sp 
+            && m_actual_stop_info_sp->IsValid()
+            && m_thread_stop_reason_stop_id == m_process.GetStopID())
+            return m_actual_stop_info_sp;
+        else
+            return GetPrivateStopReason ();
+    }
 }
 
 void
 Thread::SetStopInfo (const lldb::StopInfoSP &stop_info_sp)
 {
     m_actual_stop_info_sp = stop_info_sp;
+    if (m_actual_stop_info_sp)
+        m_actual_stop_info_sp->MakeStopInfoValid();
     m_thread_stop_reason_stop_id = GetProcess().GetStopID();
 }
 
