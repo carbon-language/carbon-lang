@@ -1859,9 +1859,9 @@ bool BitcodeReader::ParseBitcodeInto(Module *M) {
 
     if (Code != bitc::ENTER_SUBBLOCK) {
 
-      // The ranlib in xcode 4 will align archive members by appending newlines to the
-      // end of them. If this file size is a multiple of 4 but not 8, we have to read and
-      // ignore these final 4 bytes :-(
+      // The ranlib in xcode 4 will align archive members by appending newlines
+      // to the end of them. If this file size is a multiple of 4 but not 8, we
+      // have to read and ignore these final 4 bytes :-(
       if (Stream.GetAbbrevIDWidth() == 2 && Code == 2 &&
           Stream.Read(6) == 2 && Stream.Read(24) == 0xa0a0a &&
 	  Stream.AtEndOfStream())
