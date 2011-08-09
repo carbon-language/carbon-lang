@@ -470,6 +470,9 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
       HANDLE_ATTR(NoImplicitFloat);
       HANDLE_ATTR(Naked);
       HANDLE_ATTR(InlineHint);
+      HANDLE_ATTR(Hotpatch);
+      HANDLE_ATTR(UWTable);
+      HANDLE_ATTR(NonLazyBind);
 #undef HANDLE_ATTR
       if (attrs & Attribute::StackAlignment)
         Out << " | Attribute::constructStackAlignmentFromInt("
