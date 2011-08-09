@@ -935,6 +935,10 @@ def : Pat<(v4f32 (sint_to_fp (v4i32 VR128:$src))),
 def : Pat<(v4i32 (fp_to_sint (v4f32 VR128:$src))),
           (CVTTPS2DQrr VR128:$src)>, Requires<[HasSSE2]>;
 
+def : Pat<(v4f32 (sint_to_fp (v4i32 VR128:$src))),
+          (Int_VCVTDQ2PSrr VR128:$src)>, Requires<[HasAVX]>;
+def : Pat<(v4i32 (fp_to_sint (v4f32 VR128:$src))),
+          (VCVTTPS2DQrr VR128:$src)>, Requires<[HasAVX]>;
 def : Pat<(v8f32 (sint_to_fp (v8i32 VR256:$src))),
           (VCVTDQ2PSYrr VR256:$src)>, Requires<[HasAVX]>;
 def : Pat<(v8i32 (fp_to_sint (v8f32 VR256:$src))),
