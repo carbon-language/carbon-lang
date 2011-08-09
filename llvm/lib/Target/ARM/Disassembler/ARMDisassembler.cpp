@@ -1214,11 +1214,11 @@ static bool DecodeBranchImmInstruction(llvm::MCInst &Inst, unsigned Insn,
   if (pred == 0xF) {
     Inst.setOpcode(ARM::BLXi);
     imm |= fieldFromInstruction32(Insn, 24, 1) << 1;
-    Inst.addOperand(MCOperand::CreateImm(imm));
+    Inst.addOperand(MCOperand::CreateImm(SignExtend32<26>(imm)));
     return true;
   }
 
-  Inst.addOperand(MCOperand::CreateImm(imm));
+  Inst.addOperand(MCOperand::CreateImm(SignExtend32<26>(imm)));
   if (!DecodePredicateOperand(Inst, pred, Address, Decoder)) return false;
 
   return true;
