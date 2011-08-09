@@ -949,7 +949,7 @@ static bool DecodeSORegMemOperand(llvm::MCInst &Inst, unsigned Val,
   unsigned imm = fieldFromInstruction32(Val, 7, 5);
   unsigned U = fieldFromInstruction32(Val, 12, 1);
 
-  ARM_AM::ShiftOpc ShOp;
+  ARM_AM::ShiftOpc ShOp = ARM_AM::lsl;
   switch (type) {
     case 0:
       ShOp = ARM_AM::lsl;
