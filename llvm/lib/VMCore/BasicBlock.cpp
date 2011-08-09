@@ -336,8 +336,12 @@ void BasicBlock::replaceSuccessorsPhiUsesWith(BasicBlock *New) {
     return;
   for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
     BasicBlock *Succ = TI->getSuccessor(i);
-    for (iterator II = Succ->begin(); PHINode *PN = dyn_cast<PHINode>(II);
-         ++II) {
+    // N.B. Succ might not be a complete BasicBlock, so don't assume
+    // that it ends with a non-phi instruction.
+    for (iterator II = Succ->begin(), IE = Succ->end(); II != IE; ++II) {
+      PHINode *PN = dyn_cast<PHINode>(II);
+      if (!PN)
+        break;
       int i;
       while ((i = PN->getBasicBlockIndex(this)) >= 0)
         PN->setIncomingBlock(i, New);
