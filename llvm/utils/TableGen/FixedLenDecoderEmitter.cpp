@@ -821,8 +821,8 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
        I = InsnOperands.begin(), E = InsnOperands.end(); I != E; ++I) {
     // If a custom instruction decoder was specified, use that.
     if (I->numFields() == 0 && I->Decoder.size()) {
-      o.indent(Indentation) << "  " << I->Decoder
-                            << "(MI, insn, Address, Decoder);\n";
+      o.indent(Indentation) << "  if (!" << I->Decoder
+                            << "(MI, insn, Address, Decoder)) return false;\n";
       break;
     }
 
