@@ -15,6 +15,8 @@
 
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
+#include "llvm-c/Transforms/PassManagerBuilder.h"
+
 #include "llvm/PassManager.h"
 #include "llvm/DefaultPasses.h"
 #include "llvm/PassManager.h"
@@ -246,3 +248,81 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   // Now that we have optimized the program, discard unreachable functions.
   PM.add(createGlobalDCEPass());
 }
+
+LLVMPassManagerBuilderRef LLVMPassManagerBuilderCreate(void) {
+  PassManagerBuilder *PMB = new PassManagerBuilder();
+  return wrap(PMB);
+}
+
+void LLVMPassManagerBuilderDispose(LLVMPassManagerBuilderRef PMB) {
+  PassManagerBuilder *Builder = unwrap(PMB);
+  delete Builder;
+}
+
+void
+LLVMPassManagerBuilderSetOptLevel(LLVMPassManagerBuilderRef PMB,
+                                  unsigned OptLevel) {
+  PassManagerBuilder *Builder = unwrap(PMB);
+  Builder->OptLevel = OptLevel;
+}
+
+void
+LLVMPassManagerBuilderSetSizeLevel(LLVMPassManagerBuilderRef PMB,
+                                   unsigned SizeLevel) {
+  PassManagerBuilder *Builder = unwrap(PMB);
+  Builder->SizeLevel = SizeLevel;
+}
+
+void
+LLVMPassManagerBuilderSetDisableUnitAtATime(LLVMPassManagerBuilderRef PMB,
+                                            LLVMBool Value) {
+  PassManagerBuilder *Builder = unwrap(PMB);
+  Builder->DisableUnitAtATime = Value;
+}
+
+void
+LLVMPassManagerBuilderSetDisableUnrollLoops(LLVMPassManagerBuilderRef PMB,
+                                            LLVMBool Value) {
+  PassManagerBuilder *Builder = unwrap(PMB);
+  Builder->DisableUnrollLoops = Value;
+}
+
+void
+LLVMPassManagerBuilderSetDisableSimplifyLibCalls(LLVMPassManagerBuilderRef PMB,
+                                                 LLVMBool Value) {
+  PassManagerBuilder *Builder = unwrap(PMB);
+  Builder->DisableSimplifyLibCalls = Value;
+}
+
+void
+LLVMPassManagerBuilderUseInlinerWithThreshold(LLVMPassManagerBuilderRef PMB,
+                                              unsigned Threshold) {
+  PassManagerBuilder *Builder = unwrap(PMB);
+  Builder->Inliner = createFunctionInliningPass(Threshold);
+}
+
+void
+LLVMPassManagerBuilderPopulateFunctionPassManager(LLVMPassManagerBuilderRef PMB,
+                                                  LLVMPassManagerRef PM) {
+  PassManagerBuilder *Builder = unwrap(PMB);
+  FunctionPassManager *FPM = unwrap<FunctionPassManager>(PM);
+  Builder->populateFunctionPassManager(*FPM);
+}
+
+void
+LLVMPassManagerBuilderPopulateModulePassManager(LLVMPassManagerBuilderRef PMB,
+                                                LLVMPassManagerRef PM) {
+  PassManagerBuilder *Builder = unwrap(PMB);
+  PassManagerBase *MPM = unwrap(PM);
+  Builder->populateModulePassManager(*MPM);
+}
+
+void LLVMPassManagerBuilderPopulateLTOPassManager(LLVMPassManagerBuilderRef PMB,
+                                                  LLVMPassManagerRef PM,
+                                                  bool Internalize,
+                                                  bool RunInliner) {
+  PassManagerBuilder *Builder = unwrap(PMB);
+  PassManagerBase *LPM = unwrap(PM);
+  Builder->populateLTOPassManager(*LPM, Internalize, RunInliner);
+}
+
