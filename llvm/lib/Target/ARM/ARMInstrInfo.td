@@ -3814,6 +3814,7 @@ def MemBarrierOptOperand : AsmOperandClass {
 def memb_opt : Operand<i32> {
   let PrintMethod = "printMemBOption";
   let ParserMatchClass = MemBarrierOptOperand;
+  let DecoderMethod = "DecodeMemBarrierOption";
 }
 
 // memory barriers protect the atomic sequences

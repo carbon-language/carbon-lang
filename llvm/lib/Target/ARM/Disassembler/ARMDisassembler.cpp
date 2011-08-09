@@ -131,6 +131,8 @@ static bool DecodeCoprocessor(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static bool DecodeAddrMode3Offset(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static bool DecodeMemBarrierOption(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 
 
 static bool DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
@@ -2268,8 +2270,7 @@ static bool DecodeThumb2BCCInstruction(llvm::MCInst &Inst, unsigned Insn,
     }
 
     unsigned imm = fieldFromInstruction32(Insn, 0, 4);
-    Inst.addOperand(MCOperand::CreateImm(imm));
-    return true;
+    return DecodeMemBarrierOption(Inst, imm, Address, Decoder);
   }
 
   unsigned brtarget = fieldFromInstruction32(Insn, 0, 11) << 1;
@@ -2347,3 +2348,24 @@ static bool DecodeAddrMode3Offset(llvm::MCInst &Inst, unsigned Val,
 
   return true;
 }
+
+static bool DecodeMemBarrierOption(llvm::MCInst &Inst, unsigned Val,
+                                   uint64_t Address, const void *Decoder) {
+  switch (Val) {
+  default:
+    return false;
+  case 0xF: // SY
+  case 0xE: // ST
+  case 0xB: // ISH
+  case 0xA: // ISHST
+  case 0x7: // NSH
+  case 0x6: // NSHST
+  case 0x3: // OSH
+  case 0x2: // OSHST
+    break;
+  }
+
+  Inst.addOperand(MCOperand::CreateImm(Val));
+  return true;
+}
+
