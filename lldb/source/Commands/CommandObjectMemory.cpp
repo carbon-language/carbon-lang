@@ -657,10 +657,10 @@ public:
                                                   m_varobj_options.show_location,
                                                   m_varobj_options.use_objc,
                                                   m_varobj_options.use_dynamic,
-                                                  m_varobj_options.use_synth,
+                                                  m_varobj_options.be_raw ? false : m_varobj_options.use_synth,
                                                   scope_already_checked,
                                                   m_varobj_options.flat_output,
-                                                  0);
+                                                  m_varobj_options.be_raw ? UINT32_MAX : 0);
                 }
                 else
                 {

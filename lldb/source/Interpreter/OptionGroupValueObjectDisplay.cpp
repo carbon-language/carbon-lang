@@ -40,6 +40,7 @@ g_option_table[] =
     { LLDB_OPT_SET_1, false, "ptr-depth",       'P', required_argument, NULL, 0, eArgTypeCount,     "The number of pointers to be traversed when dumping values (default is zero)."},
     { LLDB_OPT_SET_1, false, "show-types",      'T', no_argument,       NULL, 0, eArgTypeNone,      "Show variable types when dumping values."},
     { LLDB_OPT_SET_1, false, "no-summary-depth",'Y', optional_argument, NULL, 0, eArgTypeCount,     "Set a depth for omitting summary information (default is 1)."},
+    { LLDB_OPT_SET_1, false, "raw-output",      'R', no_argument,       NULL, 0, eArgTypeNone,      "Don't use formatting options."},
     { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 
@@ -83,7 +84,9 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
         case 'T':   show_types   = true;  break;
         case 'L':   show_location= true;  break;
         case 'F':   flat_output  = true;  break;
-        case 'O':   use_objc = true;      break;
+        case 'O':   use_objc     = true;  break;
+        case 'R':   be_raw       = true;  break;
+            
         case 'D':
             max_depth = Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success);
             if (!success)
@@ -131,6 +134,7 @@ OptionGroupValueObjectDisplay::OptionParsingStarting (CommandInterpreter &interp
     max_depth         = UINT32_MAX;
     ptr_depth         = 0;
     use_synth         = true;
+    be_raw            = false;
     
     Target *target = interpreter.GetExecutionContext().target;
     if (target != NULL)

@@ -660,6 +660,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::OptionParsingStarting ()
     m_name = NULL;
     m_python_script = "";
     m_python_function = "";
+    m_format_string = "";
     m_is_add_script = false;
     m_category = NULL;
 }

@@ -55,6 +55,7 @@ public:
     uint32_t ptr_depth;
     lldb::DynamicValueType use_dynamic;
     bool use_synth;
+    bool be_raw;
 };
 
 } // namespace lldb_private

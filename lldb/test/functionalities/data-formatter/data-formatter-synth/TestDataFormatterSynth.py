@@ -69,7 +69,19 @@ class DataFormatterTestCase(TestBase):
         self.expect("frame variable int_bag", matching=False,
                     substrs = ['x = 6',
                                'z = 8'])
+        
+        # if we skip synth and summary show y
+        self.expect("frame variable int_bag -S false -Y1",
+                    substrs = ['x = 6',
+                               'y = 7',
+                               'z = 8'])
     
+        # if we ask for raw output same happens
+        self.expect("frame variable int_bag --raw-output",
+                    substrs = ['x = 6',
+                               'y = 7',
+                               'z = 8'])
+        
         # Summary+Synth must work together
         self.runCmd("type summary add BagOfInts -f \"y=${var.y}\" -e")
         self.expect('frame variable int_bag',

@@ -1,6 +1,12 @@
-# synthetic children provider for CFString
+# synthetic children and summary provider for CFString
 # (and related NSString class)
 import lldb
+
+def CFString_SummaryProvider (valobj,dict):
+	provider = CFStringSynthProvider(valobj,dict);
+	if provider.invalid == False:
+	    return '@'+provider.get_child_at_index(provider.get_child_index("content")).GetSummary();
+	return ''
 
 class CFStringSynthProvider:
 	def __init__(self,valobj,dict):
@@ -229,10 +235,3 @@ class CFStringSynthProvider:
 	def update(self):
 		self.adjust_for_architecture();
 		self.compute_flags();
-
-def CFString_SummaryProvider (valobj,dict):
-	provider = CFStringSynthProvider(valobj,dict);
-	if provider.invalid == False:
-	    return provider.get_child_at_index(provider.get_child_index("content")).GetSummary();
-	return ''
-	
