@@ -683,8 +683,8 @@ static bool DecodeSORegRegOperand(llvm::MCInst &Inst, unsigned Val,
   unsigned Rs = fieldFromInstruction32(Val, 8, 4);
 
   // Register-register
-  DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
-  DecodeGPRRegisterClass(Inst, Rs, Address, Decoder);
+  if (!DecodeGPRnopcRegisterClass(Inst, Rm, Address, Decoder)) return false;
+  if (!DecodeGPRnopcRegisterClass(Inst, Rs, Address, Decoder)) return false;
 
   ARM_AM::ShiftOpc Shift = ARM_AM::lsl;
   switch (type) {

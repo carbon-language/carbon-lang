@@ -439,7 +439,7 @@ def so_reg_reg : Operand<i32>,  // reg reg imm
   let PrintMethod = "printSORegRegOperand";
   let DecoderMethod = "DecodeSORegRegOperand";
   let ParserMatchClass = ShiftedRegAsmOperand;
-  let MIOperandInfo = (ops GPR, GPR, i32imm);
+  let MIOperandInfo = (ops GPRnopc, GPRnopc, i32imm);
 }
 
 def ShiftedImmAsmOperand : AsmOperandClass { let Name = "RegShiftedImm"; }
@@ -2541,9 +2541,9 @@ def MOVr_TC : AsI1<0b1101, (outs tcGPR:$Rd), (ins tcGPR:$Rm), DPFrm,
   let Inst{15-12} = Rd;
 }
 
-def MOVsr : AsI1<0b1101, (outs GPR:$Rd), (ins shift_so_reg_reg:$src),
+def MOVsr : AsI1<0b1101, (outs GPRnopc:$Rd), (ins shift_so_reg_reg:$src),
                 DPSoRegRegFrm, IIC_iMOVsr,
-                "mov", "\t$Rd, $src", [(set GPR:$Rd, shift_so_reg_reg:$src)]>,
+                "mov", "\t$Rd, $src", [(set GPRnopc:$Rd, shift_so_reg_reg:$src)]>,
                 UnaryDP {
   bits<4> Rd;
   bits<12> src;
