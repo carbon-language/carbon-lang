@@ -650,22 +650,20 @@ namespace clang {
       SPECIAL_TYPE_OBJC_CLASS                  = 4,
       /// \brief CFConstantString type
       SPECIAL_TYPE_CF_CONSTANT_STRING          = 5,
-      /// \brief Objective-C fast enumeration state type
-      SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE = 6,
       /// \brief C FILE typedef type
-      SPECIAL_TYPE_FILE                        = 7,
+      SPECIAL_TYPE_FILE                        = 6,
       /// \brief C jmp_buf typedef type
-      SPECIAL_TYPE_jmp_buf                     = 8,
+      SPECIAL_TYPE_jmp_buf                     = 7,
       /// \brief C sigjmp_buf typedef type
-      SPECIAL_TYPE_sigjmp_buf                  = 9,
+      SPECIAL_TYPE_sigjmp_buf                  = 8,
       /// \brief Objective-C "id" redefinition type
-      SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 10,
+      SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 9,
       /// \brief Objective-C "Class" redefinition type
-      SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 11,
+      SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 10,
       /// \brief Objective-C "SEL" redefinition type
-      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 12,
+      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 11,
       /// \brief Whether __[u]int128_t identifier is installed.
-      SPECIAL_TYPE_INT128_INSTALLED            = 13
+      SPECIAL_TYPE_INT128_INSTALLED            = 12
     };
 
     /// \brief Predefined declaration IDs.

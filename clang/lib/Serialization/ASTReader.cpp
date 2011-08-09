@@ -2976,9 +2976,6 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
 
     if (unsigned String = SpecialTypes[SPECIAL_TYPE_CF_CONSTANT_STRING])
       Context->setCFConstantStringType(GetType(String));
-    if (unsigned FastEnum
-          = SpecialTypes[SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE])
-      Context->setObjCFastEnumerationStateType(GetType(FastEnum));
     if (unsigned File = SpecialTypes[SPECIAL_TYPE_FILE]) {
       QualType FileType = GetType(File);
       if (FileType.isNull()) {

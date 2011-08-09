@@ -2934,7 +2934,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.getObjCProtoType(), SpecialTypes);
   AddTypeRef(Context.getObjCClassType(), SpecialTypes);
   AddTypeRef(Context.getRawCFConstantStringType(), SpecialTypes);
-  AddTypeRef(Context.getRawObjCFastEnumerationStateType(), SpecialTypes);
   AddTypeRef(Context.getFILEType(), SpecialTypes);
   AddTypeRef(Context.getjmp_bufType(), SpecialTypes);
   AddTypeRef(Context.getsigjmp_bufType(), SpecialTypes);

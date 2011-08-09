@@ -223,7 +223,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   SubstTemplateTemplateParmPacks(this_()),
   GlobalNestedNameSpecifier(0), IsInt128Installed(false),
   CFConstantStringTypeDecl(0),
-  ObjCFastEnumerationStateTypeDecl(0), FILEDecl(0), 
+  FILEDecl(0), 
   jmp_bufDecl(0), sigjmp_bufDecl(0), BlockDescriptorType(0), 
   BlockDescriptorExtendedType(0), cudaConfigureCallDecl(0),
   NullTypeSourceInfo(QualType()),
@@ -3639,40 +3639,6 @@ void ASTContext::setCFConstantStringType(QualType T) {
   CFConstantStringTypeDecl = Rec->getDecl();
 }
 
-QualType ASTContext::getObjCFastEnumerationStateType() const {
-  if (!ObjCFastEnumerationStateTypeDecl) {
-    ObjCFastEnumerationStateTypeDecl =
-      CreateRecordDecl(*this, TTK_Struct, TUDecl,
-                       &Idents.get("__objcFastEnumerationState"));
-    ObjCFastEnumerationStateTypeDecl->startDefinition();
-
-    QualType FieldTypes[] = {
-      UnsignedLongTy,
-      getPointerType(ObjCIdTypedefType),
-      getPointerType(UnsignedLongTy),
-      getConstantArrayType(UnsignedLongTy,
-                           llvm::APInt(32, 5), ArrayType::Normal, 0)
-    };
-
-    for (size_t i = 0; i < 4; ++i) {
-      FieldDecl *Field = FieldDecl::Create(*this,
-                                           ObjCFastEnumerationStateTypeDecl,
-                                           SourceLocation(),
-                                           SourceLocation(), 0,
-                                           FieldTypes[i], /*TInfo=*/0,
-                                           /*BitWidth=*/0,
-                                           /*Mutable=*/false,
-                                           /*HasInit=*/false);
-      Field->setAccess(AS_public);
-      ObjCFastEnumerationStateTypeDecl->addDecl(Field);
-    }
-
-    ObjCFastEnumerationStateTypeDecl->completeDefinition();
-  }
-
-  return getTagDeclType(ObjCFastEnumerationStateTypeDecl);
-}
-
 QualType ASTContext::getBlockDescriptorType() const {
   if (BlockDescriptorType)
     return getTagDeclType(BlockDescriptorType);
@@ -3827,12 +3793,6 @@ ASTContext::BuildByRefType(StringRef DeclName, QualType Ty) const {
   T->completeDefinition();
 
   return getPointerType(getTagDeclType(T));
-}
-
-void ASTContext::setObjCFastEnumerationStateType(QualType T) {
-  const RecordType *Rec = T->getAs<RecordType>();
-  assert(Rec && "Invalid ObjCFAstEnumerationStateType");
-  ObjCFastEnumerationStateTypeDecl = Rec->getDecl();
 }
 
 // This returns true if a type has been typedefed to BOOL:

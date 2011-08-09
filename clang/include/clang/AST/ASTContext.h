@@ -198,8 +198,6 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   QualType ObjCConstantStringType;
   mutable RecordDecl *CFConstantStringTypeDecl;
 
-  mutable RecordDecl *ObjCFastEnumerationStateTypeDecl;
-
   /// \brief The type for the C FILE type.
   TypeDecl *FILEDecl;
 
@@ -822,19 +820,6 @@ public:
   QualType getObjCConstantStringInterface() const {
     return ObjCConstantStringType;
   }
-
-  //// This gets the struct used to keep track of fast enumerations.
-  QualType getObjCFastEnumerationStateType() const;
-
-  /// Get the ObjCFastEnumerationState type, or NULL if it hasn't yet
-  /// been built.
-  QualType getRawObjCFastEnumerationStateType() const {
-    if (ObjCFastEnumerationStateTypeDecl)
-      return getTagDeclType(ObjCFastEnumerationStateTypeDecl);
-    return QualType();
-  }
-
-  void setObjCFastEnumerationStateType(QualType T);
 
   /// \brief Set the type for the C FILE type.
   void setFILEDecl(TypeDecl *FILEDecl) { this->FILEDecl = FILEDecl; }

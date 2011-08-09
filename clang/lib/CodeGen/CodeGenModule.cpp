@@ -1925,6 +1925,41 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   return GV;
 }
 
+QualType CodeGenModule::getObjCFastEnumerationStateType() {
+  if (ObjCFastEnumerationStateType.isNull()) {
+    RecordDecl *D = CreateRecordDecl(Context, TTK_Struct, 
+                                     Context.getTranslationUnitDecl(),
+                      &Context.Idents.get("__objcFastEnumerationState"));
+    D->startDefinition();
+    
+    QualType FieldTypes[] = {
+      Context.UnsignedLongTy,
+      Context.getPointerType(Context.getObjCIdType()),
+      Context.getPointerType(Context.UnsignedLongTy),
+      Context.getConstantArrayType(Context.UnsignedLongTy,
+                           llvm::APInt(32, 5), ArrayType::Normal, 0)
+    };
+    
+    for (size_t i = 0; i < 4; ++i) {
+      FieldDecl *Field = FieldDecl::Create(Context,
+                                           D,
+                                           SourceLocation(),
+                                           SourceLocation(), 0,
+                                           FieldTypes[i], /*TInfo=*/0,
+                                           /*BitWidth=*/0,
+                                           /*Mutable=*/false,
+                                           /*HasInit=*/false);
+      Field->setAccess(AS_public);
+      D->addDecl(Field);
+    }
+    
+    D->completeDefinition();
+    ObjCFastEnumerationStateType = Context.getTagDeclType(D);
+  }
+  
+  return ObjCFastEnumerationStateType;
+}
+
 /// GetStringForStringLiteral - Return the appropriate bytes for a
 /// string literal, properly padded to match the literal type.
 std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {

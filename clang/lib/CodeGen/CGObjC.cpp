@@ -997,7 +997,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   JumpDest LoopEnd = getJumpDestInCurrentScope("forcoll.end");
 
   // Fast enumeration state.
-  QualType StateTy = getContext().getObjCFastEnumerationStateType();
+  QualType StateTy = CGM.getObjCFastEnumerationStateType();
   llvm::Value *StatePtr = CreateMemTemp(StateTy, "state.ptr");
   EmitNullInitialization(StatePtr, StateTy);
 

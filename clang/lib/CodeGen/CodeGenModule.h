@@ -300,6 +300,10 @@ class CodeGenModule : public CodeGenTypeCache {
   /// \brief The LLVM type corresponding to NSConstantString.
   llvm::StructType *NSConstantStringType;
   
+  /// \brief The type used to describe the state of a fast enumeration in
+  /// Objective-C's for..in loop.
+  QualType ObjCFastEnumerationStateType;
+  
   /// @}
 
   /// Lazily create the Objective-C runtime
@@ -565,6 +569,10 @@ public:
   llvm::Constant *GetAddrOfConstantCString(const std::string &str,
                                            const char *GlobalName=0,
                                            unsigned Alignment=1);
+  
+  /// \brief Retrieve the record type that describes the state of an
+  /// Objective-C fast enumeration loop (for..in).
+  QualType getObjCFastEnumerationStateType();
   
   /// GetAddrOfCXXConstructor - Return the address of the constructor of the
   /// given type.
