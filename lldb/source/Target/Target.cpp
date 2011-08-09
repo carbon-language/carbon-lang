@@ -1035,7 +1035,8 @@ Target::EvaluateExpression
         frame->CalculateExecutionContext(exe_ctx);
         Error error;
         const uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember |
-                                           StackFrame::eExpressionPathOptionsNoFragileObjcIvar;
+                                           StackFrame::eExpressionPathOptionsNoFragileObjcIvar |
+                                           StackFrame::eExpressionPathOptionsNoSyntheticChildren;
         lldb::VariableSP var_sp;
         result_valobj_sp = frame->GetValueForVariableExpressionPath (expr_cstr, 
                                                                      use_dynamic, 

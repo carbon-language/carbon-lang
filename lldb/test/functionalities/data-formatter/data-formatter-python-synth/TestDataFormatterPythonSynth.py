@@ -164,6 +164,22 @@ class DataFormatterTestCase(TestBase):
                                '[5] = 123456',
                                '[6] = 1234567',
                                '}'])
+        
+        # check access-by-index
+        self.expect("frame variable numbers[0]",
+                    substrs = ['1']);
+        self.expect("frame variable numbers[1]",
+                    substrs = ['12']);
+        self.expect("frame variable numbers[2]",
+                    substrs = ['123']);
+        self.expect("frame variable numbers[3]",
+                    substrs = ['1234']);
+        
+        # but check that expression does not rely on us
+        # (when expression gets to call into STL code correctly, we will have to find
+        # another way to check this)
+        self.expect("expression numbers[6]", matching=False, error=True,
+            substrs = ['1234567'])
 
         # clear out the vector and see that we do the right thing once again
         self.runCmd("n")
@@ -202,6 +218,18 @@ class DataFormatterTestCase(TestBase):
 
         self.expect("frame variable strings",
                     substrs = ['vector has 4 items'])
+        
+        # check access-by-index
+        self.expect("frame variable strings[0]",
+                    substrs = ['goofy']);
+        self.expect("frame variable strings[1]",
+                    substrs = ['is']);
+        
+        # but check that expression does not rely on us
+        # (when expression gets to call into STL code correctly, we will have to find
+        # another way to check this)
+        self.expect("expression strings[0]", matching=False, error=True,
+                    substrs = ['goofy'])
 
         self.runCmd("n")
 
@@ -255,6 +283,16 @@ class DataFormatterTestCase(TestBase):
                                '0x0abcdef0',
                                '[5] =',
                                '0x0cab0cab'])
+        
+        # check access-by-index
+        self.expect("frame variable numbers_list[0]",
+                    substrs = ['0x12345678']);
+        self.expect("frame variable numbers_list[1]",
+                    substrs = ['0x11223344']);
+        
+        # but check that expression does not rely on us
+        self.expect("expression numbers_list[0]", matching=False, error=True,
+                    substrs = ['0x12345678'])
 
         self.runCmd("n")
             
@@ -298,6 +336,16 @@ class DataFormatterTestCase(TestBase):
                                '[1] = \"is\"',
                                '[2] = \"smart\"',
                                '[3] = \"!!!\"'])
+        
+        # check access-by-index
+        self.expect("frame variable text_list[0]",
+                    substrs = ['goofy']);
+        self.expect("frame variable text_list[3]",
+                    substrs = ['!!!']);
+        
+        # but check that expression does not rely on us
+        self.expect("expression text_list[0]", matching=False, error=True,
+                    substrs = ['goofy'])
 
         # now std::map<K,V>
         # also take a chance to test regex synth here
@@ -347,6 +395,18 @@ class DataFormatterTestCase(TestBase):
                                '[7] = {',
                                'first = 7',
                                'second = 1'])
+        
+        # check access-by-index
+        self.expect("frame variable ii[0]",
+                    substrs = ['first = 0',
+                               'second = 0']);
+        self.expect("frame variable ii[3]",
+                    substrs = ['first =',
+                               'second =']);
+        
+        # but check that expression does not rely on us
+        self.expect("expression ii[0]", matching=False, error=True,
+                    substrs = ['first = 0'])
 
         self.runCmd("n")
         
@@ -391,6 +451,15 @@ class DataFormatterTestCase(TestBase):
                                 '[4] = ',
                                 'first = \"four\"',
                                 'second = 4'])
+        
+        # check access-by-index
+        self.expect("frame variable si[0]",
+                    substrs = ['first = ', 'four',
+                               'second = 4']);
+        
+        # but check that expression does not rely on us
+        self.expect("expression si[0]", matching=False, error=True,
+                    substrs = ['first = ', 'zero'])
 
         self.runCmd("n")
         
@@ -424,6 +493,15 @@ class DataFormatterTestCase(TestBase):
                                '[3] = ',
                                'second = \"!!!\"',
                                'first = 3'])
+        
+        # check access-by-index
+        self.expect("frame variable is[0]",
+                    substrs = ['first = ', '0',
+                               'second =', 'goofy']);
+        
+        # but check that expression does not rely on us
+        self.expect("expression is[0]", matching=False, error=True,
+                    substrs = ['first = ', 'goofy'])
 
         self.runCmd("n")
         
@@ -457,6 +535,14 @@ class DataFormatterTestCase(TestBase):
                                '[3] = ',
                                'second = \"..is always a Mac!\"',
                                'first = \"a Mac..\"'])
+        
+        # check access-by-index
+        self.expect("frame variable ss[3]",
+                    substrs = ['gatto', 'cat']);
+        
+        # but check that expression does not rely on us
+        self.expect("expression ss[3]", matching=False, error=True,
+                    substrs = ['gatto'])
 
         self.runCmd("n")
         

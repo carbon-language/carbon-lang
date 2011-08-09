@@ -115,6 +115,8 @@ ClangASTType::GetTypeNameForOpaqueQualType (clang_type_t opaque_qual_type)
 ConstString
 ClangASTType::GetConstTypeName ()
 {
+    if (!ClangASTContext::GetCompleteType (this->m_ast, this->m_type))
+        return ConstString("<invalid>");
     return GetConstTypeName (m_type);
 }
 

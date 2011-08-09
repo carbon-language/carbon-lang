@@ -1668,6 +1668,22 @@ ValueObject::GetSyntheticValue (SyntheticValueType use_synthetic)
 }
 
 bool
+ValueObject::HasSyntheticValue()
+{
+    UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
+    
+    if (m_last_synthetic_filter.get() == NULL)
+        return false;
+    
+    CalculateSyntheticValue(lldb::eUseSyntheticFilter);
+    
+    if (m_synthetic_value)
+        return true;
+    else
+        return false;
+}
+
+bool
 ValueObject::GetBaseClassPath (Stream &s)
 {
     if (IsBaseClass())
@@ -2042,12 +2058,15 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
             {
                 if (!root_clang_type_info.Test(ClangASTContext::eTypeIsArray) && !root_clang_type_info.Test(ClangASTContext::eTypeIsPointer)) // if this is not a T[] nor a T*
                 {
-                    if (!root_clang_type_info.Test(ClangASTContext::eTypeIsScalar)) // if this is not even a scalar, this syntax is just plain wrong!
+                    if (!root_clang_type_info.Test(ClangASTContext::eTypeIsScalar)) // if this is not even a scalar...
                     {
-                        *first_unparsed = expression_cstr;
-                        *reason_to_stop = ValueObject::eRangeOperatorInvalid;
-                        *final_result = ValueObject::eInvalid;
-                        return ValueObjectSP();
+                        if (options.m_no_synthetic_children) // ...only chance left is synthetic
+                        {
+                            *first_unparsed = expression_cstr;
+                            *reason_to_stop = ValueObject::eRangeOperatorInvalid;
+                            *final_result = ValueObject::eInvalid;
+                            return ValueObjectSP();
+                        }
                     }
                     else if (!options.m_allow_bitfields_syntax) // if this is a scalar, check that we can expand bitfields
                     {
@@ -2117,6 +2136,9 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         ValueObjectSP child_valobj_sp = root->GetChildAtIndex(index, true);
                         if (!child_valobj_sp)
                             child_valobj_sp = root->GetSyntheticArrayMemberFromArray(index, true);
+                        if (!child_valobj_sp)
+                            if (root->HasSyntheticValue() && root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetNumChildren() > index)
+                                child_valobj_sp = root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildAtIndex(index, true);
                         if (child_valobj_sp)
                         {
                             root = child_valobj_sp;
@@ -2154,7 +2176,19 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         }
                         else
                         {
-                            root = root->GetSyntheticArrayMemberFromPointer(index, true);
+                            if (ClangASTType::GetMinimumLanguage(root->GetClangAST(),
+                                                                    root->GetClangType()) == lldb::eLanguageTypeObjC
+                                &&
+                                ClangASTContext::IsPointerType(ClangASTType::GetPointeeType(root->GetClangType())) == false
+                                &&
+                                root->HasSyntheticValue()
+                                &&
+                                options.m_no_synthetic_children == false)
+                            {
+                                root = root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildAtIndex(index, true);
+                            }
+                            else
+                                root = root->GetSyntheticArrayMemberFromPointer(index, true);
                             if (!root.get())
                             {
                                 *first_unparsed = expression_cstr;
@@ -2170,7 +2204,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             }
                         }
                     }
-                    else /*if (ClangASTContext::IsScalarType(root_clang_type))*/
+                    else if (ClangASTContext::IsScalarType(root_clang_type))
                     {
                         root = root->GetSyntheticBitFieldChild(index, index, true);
                         if (!root.get())
@@ -2187,6 +2221,24 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             *final_result = ValueObject::eBitfield;
                             return root;
                         }
+                    }
+                    else if (root->HasSyntheticValue() && options.m_no_synthetic_children)
+                    {
+                        root = root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildAtIndex(index, true);
+                        if (!root.get())
+                        {
+                            *first_unparsed = expression_cstr;
+                            *reason_to_stop = ValueObject::eNoSuchChild;
+                            *final_result = ValueObject::eInvalid;
+                            return ValueObjectSP();
+                        }
+                    }
+                    else
+                    {
+                        *first_unparsed = expression_cstr;
+                        *reason_to_stop = ValueObject::eNoSuchChild;
+                        *final_result = ValueObject::eInvalid;
+                        return ValueObjectSP();
                     }
                 }
                 else // we have a low and a high index

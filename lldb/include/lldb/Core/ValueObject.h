@@ -122,13 +122,16 @@ public:
         bool m_check_dot_vs_arrow_syntax;
         bool m_no_fragile_ivar;
         bool m_allow_bitfields_syntax;
+        bool m_no_synthetic_children;
         
         GetValueForExpressionPathOptions(bool dot = false,
                                          bool no_ivar = false,
-                                         bool bitfield = true) :
+                                         bool bitfield = true,
+                                         bool no_synth = false) :
             m_check_dot_vs_arrow_syntax(dot),
             m_no_fragile_ivar(no_ivar),
-            m_allow_bitfields_syntax(bitfield)
+            m_allow_bitfields_syntax(bitfield),
+            m_no_synthetic_children(no_synth)
         {
         }
         
@@ -171,6 +174,20 @@ public:
         DontAllowBitfieldSyntax()
         {
             m_allow_bitfields_syntax = false;
+            return *this;
+        }
+        
+        GetValueForExpressionPathOptions&
+        DoAllowSyntheticChildren()
+        {
+            m_no_synthetic_children = false;
+            return *this;
+        }
+        
+        GetValueForExpressionPathOptions&
+        DontAllowSyntheticChildren()
+        {
+            m_no_synthetic_children = true;
             return *this;
         }
         
@@ -564,6 +581,9 @@ public:
     
     lldb::ValueObjectSP
     GetSyntheticValue (lldb::SyntheticValueType use_synthetic);
+    
+    bool
+    HasSyntheticValue();
     
     virtual lldb::ValueObjectSP
     CreateConstantValue (const ConstString &name);

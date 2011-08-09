@@ -32,8 +32,9 @@ class StackFrame :
 public:
     enum ExpressionPathOption
     {
-        eExpressionPathOptionCheckPtrVsMember   = (1u << 0),
-        eExpressionPathOptionsNoFragileObjcIvar = (1u << 1)
+        eExpressionPathOptionCheckPtrVsMember     = (1u << 0),
+        eExpressionPathOptionsNoFragileObjcIvar   = (1u << 1),
+        eExpressionPathOptionsNoSyntheticChildren = (1u << 2)
     };
     //------------------------------------------------------------------
     // Constructors and Destructors
