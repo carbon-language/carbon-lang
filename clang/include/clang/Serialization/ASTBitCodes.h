@@ -662,14 +662,10 @@ namespace clang {
       SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 10,
       /// \brief Objective-C "Class" redefinition type
       SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 11,
-      /// \brief Block descriptor type for Blocks CodeGen
-      SPECIAL_TYPE_BLOCK_DESCRIPTOR            = 12,
-      /// \brief Block extedned descriptor type for Blocks CodeGen
-      SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR   = 13,
       /// \brief Objective-C "SEL" redefinition type
-      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 14,
+      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 12,
       /// \brief Whether __[u]int128_t identifier is installed.
-      SPECIAL_TYPE_INT128_INSTALLED            = 15
+      SPECIAL_TYPE_INT128_INSTALLED            = 13
     };
 
     /// \brief Predefined declaration IDs.

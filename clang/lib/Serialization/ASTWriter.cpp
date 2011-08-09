@@ -2940,8 +2940,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.getsigjmp_bufType(), SpecialTypes);
   AddTypeRef(Context.ObjCIdRedefinitionType, SpecialTypes);
   AddTypeRef(Context.ObjCClassRedefinitionType, SpecialTypes);
-  AddTypeRef(Context.getRawBlockdescriptorType(), SpecialTypes);
-  AddTypeRef(Context.getRawBlockdescriptorExtendedType(), SpecialTypes);
   AddTypeRef(Context.ObjCSelRedefinitionType, SpecialTypes);
   SpecialTypes.push_back(Context.isInt128Installed());
 

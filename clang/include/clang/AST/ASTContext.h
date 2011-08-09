@@ -210,9 +210,15 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   TypeDecl *sigjmp_bufDecl;
 
   /// \brief Type for the Block descriptor for Blocks CodeGen.
+  ///
+  /// Since this is only used for generation of debug info, it is not
+  /// serialized.
   mutable RecordDecl *BlockDescriptorType;
 
   /// \brief Type for the Block descriptor for Blocks CodeGen.
+  ///
+  /// Since this is only used for generation of debug info, it is not
+  /// serialized.
   mutable RecordDecl *BlockDescriptorExtendedType;
 
   /// \brief Declaration for the CUDA cudaConfigureCall function.
@@ -565,28 +571,9 @@ public:
   /// blocks.
   QualType getBlockDescriptorType() const;
 
-  // Set the type for a Block descriptor type.
-  void setBlockDescriptorType(QualType T);
-  /// Get the BlockDescriptorType type, or NULL if it hasn't yet been built.
-  QualType getRawBlockdescriptorType() {
-    if (BlockDescriptorType)
-      return getTagDeclType(BlockDescriptorType);
-    return QualType();
-  }
-
   /// This gets the struct used to keep track of the extended descriptor for
   /// pointer to blocks.
   QualType getBlockDescriptorExtendedType() const;
-
-  // Set the type for a Block descriptor extended type.
-  void setBlockDescriptorExtendedType(QualType T);
-  /// Get the BlockDescriptorExtendedType type, or NULL if it hasn't yet been
-  /// built.
-  QualType getRawBlockdescriptorExtendedType() const {
-    if (BlockDescriptorExtendedType)
-      return getTagDeclType(BlockDescriptorExtendedType);
-    return QualType();
-  }
 
   void setcudaConfigureCallDecl(FunctionDecl *FD) {
     cudaConfigureCallDecl = FD;

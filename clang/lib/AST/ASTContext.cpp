@@ -3712,12 +3712,6 @@ QualType ASTContext::getBlockDescriptorType() const {
   return getTagDeclType(BlockDescriptorType);
 }
 
-void ASTContext::setBlockDescriptorType(QualType T) {
-  const RecordType *Rec = T->getAs<RecordType>();
-  assert(Rec && "Invalid BlockDescriptorType");
-  BlockDescriptorType = Rec->getDecl();
-}
-
 QualType ASTContext::getBlockDescriptorExtendedType() const {
   if (BlockDescriptorExtendedType)
     return getTagDeclType(BlockDescriptorExtendedType);
@@ -3759,12 +3753,6 @@ QualType ASTContext::getBlockDescriptorExtendedType() const {
   BlockDescriptorExtendedType = T;
 
   return getTagDeclType(BlockDescriptorExtendedType);
-}
-
-void ASTContext::setBlockDescriptorExtendedType(QualType T) {
-  const RecordType *Rec = T->getAs<RecordType>();
-  assert(Rec && "Invalid BlockDescriptorType");
-  BlockDescriptorExtendedType = Rec->getDecl();
 }
 
 bool ASTContext::BlockRequiresCopying(QualType Ty) const {

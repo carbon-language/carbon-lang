@@ -3033,11 +3033,6 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
     if (unsigned ObjCClassRedef
         = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS_REDEFINITION])
       Context->ObjCClassRedefinitionType = GetType(ObjCClassRedef);
-    if (unsigned String = SpecialTypes[SPECIAL_TYPE_BLOCK_DESCRIPTOR])
-      Context->setBlockDescriptorType(GetType(String));
-    if (unsigned String
-        = SpecialTypes[SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR])
-      Context->setBlockDescriptorExtendedType(GetType(String));
     if (unsigned ObjCSelRedef
         = SpecialTypes[SPECIAL_TYPE_OBJC_SEL_REDEFINITION])
       Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
