@@ -40,3 +40,27 @@ define <4 x double> @mov01(<4 x double> %v, double * %ptr) nounwind {
   ret <4 x double> %i0
 }
 
+; CHECK: vmovaps  %ymm
+define void @storev16i16(<16 x i16> %a) nounwind {
+  store <16 x i16> %a, <16 x i16>* undef, align 32
+  unreachable
+}
+
+; CHECK: vmovups  %ymm
+define void @storev16i16_01(<16 x i16> %a) nounwind {
+  store <16 x i16> %a, <16 x i16>* undef, align 4
+  unreachable
+}
+
+; CHECK: vmovaps  %ymm
+define void @storev32i8(<32 x i8> %a) nounwind {
+  store <32 x i8> %a, <32 x i8>* undef, align 32
+  unreachable
+}
+
+; CHECK: vmovups  %ymm
+define void @storev32i8_01(<32 x i8> %a) nounwind {
+  store <32 x i8> %a, <32 x i8>* undef, align 4
+  unreachable
+}
+

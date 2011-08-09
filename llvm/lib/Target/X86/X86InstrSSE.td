@@ -4063,9 +4063,17 @@ let Predicates = [HasAVX] in {
             (VMOVAPSYmr addr:$dst, VR256:$src)>;
   def : Pat<(alignedstore (v8i32 VR256:$src), addr:$dst),
             (VMOVAPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(alignedstore (v16i16 VR256:$src), addr:$dst),
+            (VMOVAPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(alignedstore (v32i8 VR256:$src), addr:$dst),
+            (VMOVAPSYmr addr:$dst, VR256:$src)>;
   def : Pat<(store (v4i64 VR256:$src), addr:$dst),
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
   def : Pat<(store (v8i32 VR256:$src), addr:$dst),
+            (VMOVUPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(store (v16i16 VR256:$src), addr:$dst),
+            (VMOVUPSYmr addr:$dst, VR256:$src)>;
+  def : Pat<(store (v32i8 VR256:$src), addr:$dst),
             (VMOVUPSYmr addr:$dst, VR256:$src)>;
 }
 
