@@ -75,6 +75,8 @@ VerifyCoalescing("verify-coalescing",
          cl::desc("Verify machine instrs before and after register coalescing"),
          cl::Hidden);
 
+char &llvm::RegisterCoalescerPassID = RegisterCoalescer::ID;
+
 INITIALIZE_PASS_BEGIN(RegisterCoalescer, "simple-register-coalescing",
                       "Simple Register Coalescing", false, false)
 INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
@@ -1840,8 +1842,4 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
 /// print - Implement the dump method.
 void RegisterCoalescer::print(raw_ostream &O, const Module* m) const {
    li_->print(O, m);
-}
-
-RegisterCoalescer *llvm::createRegisterCoalescer() {
-  return new RegisterCoalescer();
 }

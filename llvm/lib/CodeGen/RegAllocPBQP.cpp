@@ -450,7 +450,7 @@ void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
   au.addPreserved<SlotIndexes>();
   au.addRequired<LiveIntervals>();
   //au.addRequiredID(SplitCriticalEdgesID);
-  au.addRequired<RegisterCoalescer>();
+  au.addRequiredID(RegisterCoalescerPassID);
   if (customPassID)
     au.addRequiredID(*customPassID);
   au.addRequired<CalculateSpillWeights>();

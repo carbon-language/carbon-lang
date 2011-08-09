@@ -22,7 +22,6 @@
 #include "SpillPlacement.h"
 #include "SplitKit.h"
 #include "VirtRegMap.h"
-#include "RegisterCoalescer.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Function.h"
@@ -324,7 +323,7 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveDebugVariables>();
   if (StrongPHIElim)
     AU.addRequiredID(StrongPHIEliminationID);
-  AU.addRequiredTransitive<RegisterCoalescer>();
+  AU.addRequiredTransitiveID(RegisterCoalescerPassID);
   AU.addRequired<CalculateSpillWeights>();
   AU.addRequired<LiveStacks>();
   AU.addPreserved<LiveStacks>();

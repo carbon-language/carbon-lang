@@ -11,7 +11,6 @@
 
 #include "Splitter.h"
 
-#include "RegisterCoalescer.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -20,6 +19,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -262,7 +262,7 @@ namespace llvm {
     au.addPreserved<MachineDominatorTree>();
     au.addRequired<MachineLoopInfo>();
     au.addPreserved<MachineLoopInfo>();
-    au.addPreserved<RegisterCoalescer>();
+    au.addPreservedID(RegisterCoalescerPassID);
     au.addPreserved<CalculateSpillWeights>();
     au.addPreserved<LiveStacks>();
     au.addRequired<SlotIndexes>();

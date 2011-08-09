@@ -20,7 +20,6 @@
 #include "RenderMachineFunction.h"
 #include "Spiller.h"
 #include "VirtRegMap.h"
-#include "RegisterCoalescer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -160,7 +159,7 @@ void RABasic::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveDebugVariables>();
   if (StrongPHIElim)
     AU.addRequiredID(StrongPHIEliminationID);
-  AU.addRequiredTransitive<RegisterCoalescer>();
+  AU.addRequiredTransitiveID(RegisterCoalescerPassID);
   AU.addRequired<CalculateSpillWeights>();
   AU.addRequired<LiveStacks>();
   AU.addPreserved<LiveStacks>();

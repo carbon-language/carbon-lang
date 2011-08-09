@@ -18,7 +18,6 @@
 #include "VirtRegRewriter.h"
 #include "RegisterClassInfo.h"
 #include "Spiller.h"
-#include "RegisterCoalescer.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
@@ -209,7 +208,7 @@ namespace {
         AU.addRequiredID(StrongPHIEliminationID);
       // Make sure PassManager knows which analyses to make available
       // to coalescing and which analyses coalescing invalidates.
-      AU.addRequiredTransitive<RegisterCoalescer>();
+      AU.addRequiredTransitiveID(RegisterCoalescerPassID);
       AU.addRequired<CalculateSpillWeights>();
       AU.addRequiredID(LiveStacksID);
       AU.addPreservedID(LiveStacksID);
