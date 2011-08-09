@@ -992,6 +992,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VSETCC,            MVT::v8i32, Custom);
     setOperationAction(ISD::VSETCC,            MVT::v4i64, Custom);
 
+    setOperationAction(ISD::SELECT,            MVT::v4f64, Custom);
+    setOperationAction(ISD::SELECT,            MVT::v4i64, Custom);
+    setOperationAction(ISD::SELECT,            MVT::v8f32, Custom);
+
     // Custom lower several nodes for 256-bit types.
     for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
                   i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
@@ -11172,6 +11176,9 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::CMOV_V4F32:
   case X86::CMOV_V2F64:
   case X86::CMOV_V2I64:
+  case X86::CMOV_V8F32:
+  case X86::CMOV_V4F64:
+  case X86::CMOV_V4I64:
   case X86::CMOV_GR16:
   case X86::CMOV_GR32:
   case X86::CMOV_RFP32:
