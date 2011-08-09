@@ -1817,7 +1817,7 @@ bool CWriter::doInitialization(Module &M) {
     Out << "\n\n/* Global Variable Declarations */\n";
     for (Module::global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I)
-      if (!I->isDeclaration()) {
+      if (I->isDeclaration()) {
         // Ignore special globals, such as debug info.
         if (getGlobalVariableClass(I))
           continue;
