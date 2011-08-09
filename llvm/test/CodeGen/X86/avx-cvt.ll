@@ -20,6 +20,12 @@ define <8 x float> @fptrunc00(<8 x double> %b) nounwind {
   ret <8 x float> %a
 }
 
+; CHECK: vcvtps2pd %xmm
+define <4 x double> @fpext00(<4 x float> %b) nounwind {
+  %a = fpext <4 x float> %b to <4 x double>
+  ret <4 x double> %a
+}
+
 ; CHECK: vcvtsi2sdq (%
 define double @funcA(i64* nocapture %e) nounwind uwtable readonly ssp {
 entry:
