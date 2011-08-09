@@ -6,13 +6,6 @@ define <8 x float> @sitofp00(<8 x i32> %a) nounwind {
   ret <8 x float> %b
 }
 
-; CHECK: vcvtdq2ps
-; CHECK-NEXT: vcvtps2pd
-define <4 x double> @sitofp01(<4 x i32> %a) {
-  %b = sitofp <4 x i32> %a to <4 x double>
-  ret <4 x double> %b
-}
-
 ; CHECK: vcvttps2dq %ymm
 define <8 x i32> @fptosi00(<8 x float> %a) nounwind {
   %b = fptosi <8 x float> %a to <8 x i32>
