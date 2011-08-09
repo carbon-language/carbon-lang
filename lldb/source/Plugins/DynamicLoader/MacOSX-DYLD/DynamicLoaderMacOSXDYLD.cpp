@@ -829,7 +829,9 @@ DynamicLoaderMacOSXDYLD::RemoveModulesUsingImageInfosAddress (lldb::addr_t image
                 ModuleSP unload_image_module_sp (FindTargetModuleForDYLDImageInfo (image_infos[idx], false, NULL));
                 if (unload_image_module_sp.get())
                 {
-                    UnloadImageLoadAddress (unload_image_module_sp.get(), image_infos[idx]);
+                    // When we unload, be sure to use the image info from the old list,
+                    // since that has sections correctly filled in.
+                    UnloadImageLoadAddress (unload_image_module_sp.get(), *pos);
                     unloaded_module_list.AppendIfNeeded (unload_image_module_sp);
                 }
                 else
