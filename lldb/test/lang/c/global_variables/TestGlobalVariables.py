@@ -71,6 +71,8 @@ class GlobalVariablesTestCase(TestBase):
         #         >
         self.expect("target variable g_marked_spot.y", VARIABLES_DISPLAYED_CORRECTLY,
                     substrs = ['g_marked_spot.y', '21'])
+        self.expect("target variable g_marked_spot.y", VARIABLES_DISPLAYED_CORRECTLY, matching=False,
+                    substrs = ["can't be resolved"])
 
 
 if __name__ == '__main__':
