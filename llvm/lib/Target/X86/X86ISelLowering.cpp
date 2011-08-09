@@ -969,6 +969,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SINT_TO_FP,         MVT::v8i32, Legal);
     setOperationAction(ISD::FP_ROUND,           MVT::v4f32, Legal);
 
+    // sint_to_fp between different vector types needs custom handling
+    setOperationAction(ISD::SINT_TO_FP,         MVT::v4i32, Custom);
+
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4f64,  Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v4i64,  Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8f32,  Custom);
@@ -7078,6 +7081,24 @@ SDValue X86TargetLowering::LowerShiftParts(SDValue Op, SelectionDAG &DAG) const 
 SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op,
                                            SelectionDAG &DAG) const {
   EVT SrcVT = Op.getOperand(0).getValueType();
+  EVT DstVT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
+
+  if (SrcVT.isVector() && DstVT.isVector()) {
+    unsigned SrcVTSize = SrcVT.getSizeInBits();
+    unsigned DstVTSize = DstVT.getSizeInBits();
+
+    // Support directly by the target
+    if (SrcVTSize == DstVTSize)
+      return Op;
+
+    // Handle v4f64 = sitofp v4i32
+    if (DstVT != MVT::v4f64 && SrcVT != MVT::v4i32)
+      return SDValue();
+
+    SDValue V = DAG.getNode(ISD::SINT_TO_FP, dl, MVT::v4f32, Op.getOperand(0));
+    return DAG.getNode(ISD::FP_EXTEND, dl, DstVT, V);
+  }
 
   if (SrcVT.isVector())
     return SDValue();
@@ -7094,7 +7115,6 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op,
     return Op;
   }
 
-  DebugLoc dl = Op.getDebugLoc();
   unsigned Size = SrcVT.getSizeInBits()/8;
   MachineFunction &MF = DAG.getMachineFunction();
   int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size, false);
