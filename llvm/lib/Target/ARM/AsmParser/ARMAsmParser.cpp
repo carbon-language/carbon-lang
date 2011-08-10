@@ -2740,9 +2740,9 @@ validateInstruction(MCInst &Inst,
                    "destination operands must be sequential");
     return false;
   }
-  case ARM::STRgD:
-  case ARM::STRgD_PRE:
-  case ARM::STRgD_POST:
+  case ARM::STRD:
+  case ARM::STRD_PRE:
+  case ARM::STRD_POST:
   case ARM::STREXD: {
     // Rt2 must be Rt + 1.
     unsigned Rt = getARMRegisterNumbering(Inst.getOperand(1).getReg());
