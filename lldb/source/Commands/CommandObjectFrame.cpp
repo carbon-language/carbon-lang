@@ -73,7 +73,6 @@ public:
         if (exe_ctx.frame)
         {
             exe_ctx.frame->DumpUsingSettingsFormat (&result.GetOutputStream());
-            result.GetOutputStream().EOL();
             result.SetStatus (eReturnStatusSuccessFinishResult);
         }
         else
