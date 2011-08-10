@@ -5,8 +5,8 @@
 define <4 x i32> @t00(<4 x i32>* %a0) nounwind ssp {
 entry:
 ; CHECK: movaps  ({{%rdi|%rcx}}), %xmm0
-; CHECK-NEXT: movaps  %xmm0, %xmm1
-; CHECK-NEXT: movlps  (%rax), %xmm1
+; CHECK: movaps  %xmm0, %xmm1
+; CHECK-NEXT: movss   %xmm2, %xmm1
 ; CHECK-NEXT: shufps  $36, %xmm1, %xmm0
   %0 = load <4 x i32>* undef, align 16
   %1 = load <4 x i32>* %a0, align 16
@@ -21,5 +21,25 @@ entry:
   %tmp93 = load double* %a0, align 8
   %vecinit94 = insertelement <2 x double> undef, double %tmp93, i32 1
   store <2 x double> %vecinit94, <2 x double>* undef
+  ret void
+}
+
+define void @t02(<8 x i32>* %source, <2 x i32>* %dest) nounwind noinline {
+entry:
+; CHECK: movaps  32({{%rdi|%rcx}}), %xmm0
+; CHECK-NEXT: movaps  48({{%rdi|%rcx}}), %xmm1
+; CHECK-NEXT: movss   %xmm1, %xmm0
+; CHECK-NEXT: movq    %xmm0, ({{%rsi|%rdx}}) 
+  %0 = bitcast <8 x i32>* %source to <4 x i32>*
+  %arrayidx = getelementptr inbounds <4 x i32>* %0, i64 3
+  %tmp2 = load <4 x i32>* %arrayidx, align 16
+  %tmp3 = extractelement <4 x i32> %tmp2, i32 0
+  %tmp5 = insertelement <2 x i32> <i32 undef, i32 0>, i32 %tmp3, i32 0
+  %arrayidx7 = getelementptr inbounds <8 x i32>* %source, i64 1
+  %1 = bitcast <8 x i32>* %arrayidx7 to <4 x i32>*
+  %tmp8 = load <4 x i32>* %1, align 16
+  %tmp9 = extractelement <4 x i32> %tmp8, i32 1
+  %tmp11 = insertelement <2 x i32> %tmp5, i32 %tmp9, i32 1
+  store <2 x i32> %tmp11, <2 x i32>* %dest, align 8
   ret void
 }
