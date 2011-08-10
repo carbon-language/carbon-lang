@@ -1944,7 +1944,7 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
 static bool
 BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                ImplicitInitializerKind ImplicitInitKind,
-                               FieldDecl *Field,
+                               FieldDecl *Field, IndirectFieldDecl *Indirect,
                                CXXCtorInitializer *&CXXMemberInit) {
   if (Field->isInvalidDecl())
     return true;
@@ -1968,7 +1968,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     CXXScopeSpec SS;
     LookupResult MemberLookup(SemaRef, Field->getDeclName(), Loc,
                               Sema::LookupMemberName);
-    MemberLookup.addDecl(Field, AS_public);
+    MemberLookup.addDecl(Indirect? cast<ValueDecl>(Indirect) : cast<ValueDecl>(Field), AS_public);
     MemberLookup.resolveKind();
     ExprResult CopyCtorArg 
       = SemaRef.BuildMemberReferenceExpr(MemberExprBase,
@@ -2027,7 +2027,10 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     // of array-subscript entities. 
     SmallVector<InitializedEntity, 4> Entities;
     Entities.reserve(1 + IndexVariables.size());
-    Entities.push_back(InitializedEntity::InitializeMember(Field));
+    if (Indirect)
+      Entities.push_back(InitializedEntity::InitializeMember(Indirect));
+    else
+      Entities.push_back(InitializedEntity::InitializeMember(Field));
     for (unsigned I = 0, N = IndexVariables.size(); I != N; ++I)
       Entities.push_back(InitializedEntity::InitializeElement(SemaRef.Context,
                                                               0,
@@ -2048,11 +2051,20 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     if (MemberInit.isInvalid())
       return true;
 
-    CXXMemberInit
-      = CXXCtorInitializer::Create(SemaRef.Context, Field, Loc, Loc,
-                                           MemberInit.takeAs<Expr>(), Loc,
-                                           IndexVariables.data(),
-                                           IndexVariables.size());
+    if (Indirect) {
+      assert(IndexVariables.size() == 0 && 
+             "Indirect field improperly initialized");
+      CXXMemberInit
+        = new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context, Indirect, 
+                                                   Loc, Loc, 
+                                                   MemberInit.takeAs<Expr>(), 
+                                                   Loc);
+    } else
+      CXXMemberInit = CXXCtorInitializer::Create(SemaRef.Context, Field, Loc, 
+                                                 Loc, MemberInit.takeAs<Expr>(), 
+                                                 Loc,
+                                                 IndexVariables.data(),
+                                                 IndexVariables.size());
     return false;
   }
 
@@ -2062,7 +2074,9 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     SemaRef.Context.getBaseElementType(Field->getType());
   
   if (FieldBaseElementType->isRecordType()) {
-    InitializedEntity InitEntity = InitializedEntity::InitializeMember(Field);
+    InitializedEntity InitEntity 
+      = Indirect? InitializedEntity::InitializeMember(Indirect)
+                : InitializedEntity::InitializeMember(Field);
     InitializationKind InitKind = 
       InitializationKind::CreateDefault(Loc);
     
@@ -2074,11 +2088,17 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     if (MemberInit.isInvalid())
       return true;
     
-    CXXMemberInit =
-      new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context,
-                                                       Field, Loc, Loc,
-                                                       MemberInit.get(),
-                                                       Loc);
+    if (Indirect)
+      CXXMemberInit = new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context,
+                                                               Indirect, Loc, 
+                                                               Loc,
+                                                               MemberInit.get(),
+                                                               Loc);
+    else
+      CXXMemberInit = new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context,
+                                                               Field, Loc, Loc,
+                                                               MemberInit.get(),
+                                                               Loc);
     return false;
   }
 
@@ -2144,7 +2164,8 @@ struct BaseAndFieldInfo {
 }
 
 static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
-                                    FieldDecl *Top, FieldDecl *Field) {
+                                    FieldDecl *Field, 
+                                    IndirectFieldDecl *Indirect = 0) {
 
   // Overwhelmingly common case: we have a direct initializer for this field.
   if (CXXCtorInitializer *Init = Info.AllBaseFields.lookup(Field)) {
@@ -2156,52 +2177,19 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
   // has a brace-or-equal-initializer, the entity is initialized as specified
   // in [dcl.init].
   if (Field->hasInClassInitializer()) {
-    Info.AllToInit.push_back(
-      new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context, Field,
-                                               SourceLocation(),
-                                               SourceLocation(), 0,
-                                               SourceLocation()));
+    CXXCtorInitializer *Init;
+    if (Indirect)
+      Init = new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context, Indirect,
+                                                      SourceLocation(),
+                                                      SourceLocation(), 0,
+                                                      SourceLocation());
+    else
+      Init = new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context, Field,
+                                                      SourceLocation(),
+                                                      SourceLocation(), 0,
+                                                      SourceLocation());
+    Info.AllToInit.push_back(Init);
     return false;
-  }
-
-  if (Info.IIK == IIK_Default && Field->isAnonymousStructOrUnion()) {
-    const RecordType *FieldClassType = Field->getType()->getAs<RecordType>();
-    assert(FieldClassType && "anonymous struct/union without record type");
-    CXXRecordDecl *FieldClassDecl
-      = cast<CXXRecordDecl>(FieldClassType->getDecl());
-
-    // Even though union members never have non-trivial default
-    // constructions in C++03, we still build member initializers for aggregate
-    // record types which can be union members, and C++0x allows non-trivial
-    // default constructors for union members, so we ensure that only one
-    // member is initialized for these.
-    if (FieldClassDecl->isUnion()) {
-      // First check for an explicit initializer for one field.
-      for (RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
-           EA = FieldClassDecl->field_end(); FA != EA; FA++) {
-        if (CXXCtorInitializer *Init = Info.AllBaseFields.lookup(*FA)) {
-          Info.AllToInit.push_back(Init);
-
-          // Once we've initialized a field of an anonymous union, the union
-          // field in the class is also initialized, so exit immediately.
-          return false;
-        } else if ((*FA)->isAnonymousStructOrUnion()) {
-          if (CollectFieldInitializer(SemaRef, Info, Top, *FA))
-            return true;
-        }
-      }
-
-      // FIXME: C++0x unrestricted unions might call a default constructor here.
-      return false;
-    } else {
-      // For structs, we simply descend through to initialize all members where
-      // necessary.
-      for (RecordDecl::field_iterator FA = FieldClassDecl->field_begin(),
-           EA = FieldClassDecl->field_end(); FA != EA; FA++) {
-        if (CollectFieldInitializer(SemaRef, Info, Top, *FA))
-          return true;
-      }
-    }
   }
 
   // Don't try to build an implicit initializer if there were semantic
@@ -2211,7 +2199,8 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
     return false;
 
   CXXCtorInitializer *Init = 0;
-  if (BuildImplicitMemberInitializer(Info.S, Info.Ctor, Info.IIK, Field, Init))
+  if (BuildImplicitMemberInitializer(Info.S, Info.Ctor, Info.IIK, Field,
+                                     Indirect, Init))
     return true;
 
   if (Init)
@@ -2239,7 +2228,20 @@ Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
 
   return false;
 }
-                               
+
+/// \brief Determine whether the given indirect field declaration is somewhere
+/// within an anonymous union.
+static bool isWithinAnonymousUnion(IndirectFieldDecl *F) {
+  for (IndirectFieldDecl::chain_iterator C = F->chain_begin(), 
+                                      CEnd = F->chain_end();
+       C != CEnd; ++C)
+    if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>((*C)->getDeclContext()))
+      if (Record->isUnion())
+        return true;
+        
+  return false;
+}
+
 bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
                                CXXCtorInitializer **Initializers,
                                unsigned NumInitializers,
@@ -2331,15 +2333,55 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
   }
 
   // Fields.
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       E = ClassDecl->field_end(); Field != E; ++Field) {
-    if ((*Field)->getType()->isIncompleteArrayType()) {
-      assert(ClassDecl->hasFlexibleArrayMember() &&
-             "Incomplete array type is not valid");
+  for (DeclContext::decl_iterator Mem = ClassDecl->decls_begin(),
+                               MemEnd = ClassDecl->decls_end();
+       Mem != MemEnd; ++Mem) {
+    if (FieldDecl *F = dyn_cast<FieldDecl>(*Mem)) {
+      if (F->getType()->isIncompleteArrayType()) {
+        assert(ClassDecl->hasFlexibleArrayMember() &&
+               "Incomplete array type is not valid");
+        continue;
+      }
+      
+      // If we're not generating the implicit copy constructor, then we'll
+      // handle anonymous struct/union fields based on their individual
+      // indirect fields.
+      if (F->isAnonymousStructOrUnion() && Info.IIK == IIK_Default)
+        continue;
+          
+      if (CollectFieldInitializer(*this, Info, F))
+        HadError = true;
       continue;
     }
-    if (CollectFieldInitializer(*this, Info, *Field, *Field))
-      HadError = true;
+    
+    // Beyond this point, we only consider default initialization.
+    if (Info.IIK != IIK_Default)
+      continue;
+    
+    if (IndirectFieldDecl *F = dyn_cast<IndirectFieldDecl>(*Mem)) {
+      if (F->getType()->isIncompleteArrayType()) {
+        assert(ClassDecl->hasFlexibleArrayMember() &&
+               "Incomplete array type is not valid");
+        continue;
+      }
+      
+      // If this field is somewhere within an anonymous union, we only 
+      // initialize it if there's an explicit initializer.
+      if (isWithinAnonymousUnion(F)) {
+        if (CXXCtorInitializer *Init
+              = Info.AllBaseFields.lookup(F->getAnonField())) {
+          Info.AllToInit.push_back(Init);
+        }
+        
+        continue;
+      }
+      
+      // Initialize each field of an anonymous struct individually.
+      if (CollectFieldInitializer(*this, Info, F->getAnonField(), F))
+        HadError = true;
+      
+      continue;        
+    }
   }
 
   NumInitializers = Info.AllToInit.size();
