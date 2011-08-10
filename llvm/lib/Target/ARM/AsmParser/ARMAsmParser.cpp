@@ -131,6 +131,8 @@ class ARMAsmParser : public MCTargetAsmParser {
                              const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtLdrdPre(MCInst &Inst, unsigned Opcode,
                   const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
+                                  const SmallVectorImpl<MCParsedAsmOperand*> &);
 
   bool validateInstruction(MCInst &Inst,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
@@ -2201,6 +2203,21 @@ cvtLdrdPre(MCInst &Inst, unsigned Opcode,
   ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
 }
+
+/// cvtLdWriteBackRegAddrMode3 - Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+cvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
+                         const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateImm(0));
+  ((ARMOperand*)Operands[3])->addAddrMode3Operands(Inst, 3);
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
+  return true;
+}
+
 
 /// Parse an ARM memory expression, return false if successful else return true
 /// or an error.  The first token must be a '[' when called.

@@ -2007,16 +2007,18 @@ multiclass AI3_ldridx<bits<4> op, bit op20, string opc, InstrItinClass itin> {
     let Inst{19-16} = addr{12-9};   // Rn
     let Inst{11-8}  = addr{7-4};    // imm7_4/zero
     let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
+    let AsmMatchConverter = "cvtLdWriteBackRegAddrMode3";
   }
   def _POST : AI3ldstidx<op, op20, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
-                        (ins GPR:$Rn, am3offset:$offset), IndexModePost,
-                        LdMiscFrm, itin,
-                        opc, "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb", []> {
+                        (ins addr_offset_none:$addr, am3offset:$offset),
+                        IndexModePost, LdMiscFrm, itin,
+                        opc, "\t$Rt, $addr, $offset", "$addr.base = $Rn_wb",
+                        []> {
     bits<10> offset;
-    bits<4> Rn;
+    bits<4> addr;
     let Inst{23}    = offset{8};      // U bit
     let Inst{22}    = offset{9};      // 1 == imm8, 0 == Rm
-    let Inst{19-16} = Rn;
+    let Inst{19-16} = addr;
     let Inst{11-8}  = offset{7-4};    // imm7_4/zero
     let Inst{3-0}   = offset{3-0};    // imm3_0/Rm
   }

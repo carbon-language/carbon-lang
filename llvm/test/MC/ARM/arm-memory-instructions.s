@@ -139,7 +139,23 @@ _func:
         ldrd r1, r2, [r8], r12
         ldrd r1, r2, [r8], -r12
 
-	ldrd	r3, r4, [r1, r3]        @ encoding: [0xd3,0x30,0x81,0xe1]
-	ldrd	r4, r5, [r7, r2]!       @ encoding: [0xd2,0x40,0xa7,0xe1]
-	ldrd	r1, r2, [r8], r12       @ encoding: [0xdc,0x10,0x88,0xe0]
-	ldrd	r1, r2, [r8], -r12      @ encoding: [0xdc,0x10,0x08,0xe0]
+@ CHECK: ldrd	r3, r4, [r1, r3]        @ encoding: [0xd3,0x30,0x81,0xe1]
+@ CHECK: ldrd	r4, r5, [r7, r2]!       @ encoding: [0xd2,0x40,0xa7,0xe1]
+@ CHECK: ldrd	r1, r2, [r8], r12       @ encoding: [0xdc,0x10,0x88,0xe0]
+@ CHECK: ldrd	r1, r2, [r8], -r12      @ encoding: [0xdc,0x10,0x08,0xe0]
+
+
+@------------------------------------------------------------------------------
+@ LDRH (immediate)
+@------------------------------------------------------------------------------
+        ldrh r3, [r4]
+        ldrh r2, [r7, #4]
+        ldrh r1, [r8, #64]!
+        ldrh r12, [sp], #4
+
+@ CHECK: ldrh	r3, [r4]                @ encoding: [0xb0,0x30,0xd4,0xe1]
+@ CHECK: ldrh	r2, [r7, #4]            @ encoding: [0xb4,0x20,0xd7,0xe1]
+@ CHECK: ldrh	r1, [r8, #64]!          @ encoding: [0xb0,0x14,0xf8,0xe1]
+@ CHECK: ldrh	r12, [sp], #4           @ encoding: [0xb4,0xc0,0xdd,0xe0]
+
+
