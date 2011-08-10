@@ -109,27 +109,11 @@ public:
   }
 };
 
-/// Define a graph of blocks within a loop. Allows LoopBlocksTraversal to
-/// use the generic po_iterator with specialized GraphTraits.
-struct LoopBlocksGraph {
-  Loop *L;
-
-  LoopBlocksGraph(Loop *Container) : L(Container) {}
-};
-
-template<> struct GraphTraits<LoopBlocksGraph> :
-    public GraphTraits<BasicBlock*> {
-
-  static BasicBlock *getEntryNode(LoopBlocksGraph G) {
-    return G.L->getHeader();
-  }
-};
-
 /// Traverse the blocks in a loop using a depth-first search.
 class LoopBlocksTraversal {
 public:
   /// Graph traversal iterator.
-  typedef po_iterator<LoopBlocksGraph, LoopBlocksTraversal, true> POTIterator;
+  typedef po_iterator<BasicBlock*, LoopBlocksTraversal, true> POTIterator;
 
 private:
   LoopBlocksDFS &DFS;
@@ -144,10 +128,12 @@ public:
   /// finishPostorder to record the DFS result.
   POTIterator begin() {
     assert(DFS.PostBlocks.empty() && "Need clear DFS result before traversing");
-    return po_ext_begin(LoopBlocksGraph(DFS.L), *this);
+    assert(DFS.L->getNumBlocks() && "po_iterator cannot handle an empty graph");
+    return po_ext_begin(DFS.L->getHeader(), *this);
   }
   POTIterator end() {
-    return po_ext_end(LoopBlocksGraph(DFS.L), *this);
+    // po_ext_end interface requires a basic block, but ignores its value.
+    return po_ext_end(DFS.L->getHeader(), *this);
   }
 
   /// Called by po_iterator upon reaching a block via a CFG edge. If this block
