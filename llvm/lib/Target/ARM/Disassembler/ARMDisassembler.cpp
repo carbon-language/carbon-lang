@@ -274,7 +274,7 @@ extern MCInstrDesc ARMInsts[];
 static void AddThumb1SBit(MCInst &MI, bool InITBlock) {
   const MCOperandInfo *OpInfo = ARMInsts[MI.getOpcode()].OpInfo;
   MCInst::iterator I = MI.begin();
-  for (unsigned i = 0; i < MI.size(); ++i, ++I) {
+  for (unsigned i = 0, e = MI.size(); i < e; ++i, ++I) {
     if (OpInfo[i].isOptionalDef() && OpInfo[i].RegClass == ARM::CCRRegClassID) {
       MI.insert(I, MCOperand::CreateReg(InITBlock ? 0 : ARM::CPSR));
       return;
@@ -304,7 +304,7 @@ void ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
   // If we're in an IT block, base the predicate on that.  Otherwise,
   // assume a predicate of AL.
   unsigned CC;
-  if (ITBlock.size()) {
+  if (!ITBlock.empty()) {
     CC = ITBlock.back();
     ITBlock.pop_back();
   } else
@@ -312,7 +312,7 @@ void ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
 
   const MCOperandInfo *OpInfo = ARMInsts[MI.getOpcode()].OpInfo;
   MCInst::iterator I = MI.begin();
-  for (unsigned i = 0; i < MI.size(); ++i, ++I) {
+  for (unsigned i = 0, e = MI.size(); i < e; ++i, ++I) {
     if (OpInfo[i].isPredicate()) {
       I = MI.insert(I, MCOperand::CreateImm(CC));
       ++I;
@@ -338,7 +338,7 @@ void ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
 // context as a post-pass.
 void ThumbDisassembler::UpdateThumbVFPPredicate(MCInst &MI) const {
   unsigned CC;
-  if (ITBlock.size()) {
+  if (!ITBlock.empty()) {
     CC = ITBlock.back();
     ITBlock.pop_back();
   } else
@@ -346,7 +346,7 @@ void ThumbDisassembler::UpdateThumbVFPPredicate(MCInst &MI) const {
 
   const MCOperandInfo *OpInfo = ARMInsts[MI.getOpcode()].OpInfo;
   MCInst::iterator I = MI.begin();
-  for (unsigned i = 0; i < MI.size(); ++i, ++I) {
+  for (unsigned i = 0, e = MI.size(); i < e; ++i, ++I) {
     if (OpInfo[i].isPredicate() ) {
       I->setImm(CC);
       ++I;
@@ -373,7 +373,7 @@ bool ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   bool result = decodeThumbInstruction16(MI, insn16, Address, this);
   if (result) {
     Size = 2;
-    bool InITBlock = ITBlock.size();
+    bool InITBlock = !ITBlock.empty();
     AddThumbPredicate(MI);
     AddThumb1SBit(MI, InITBlock);
     return true;
@@ -743,6 +743,11 @@ static bool DecodeDPRRegListOperand(llvm::MCInst &Inst, unsigned Val,
 
 static bool DecodeBitfieldMaskOperand(llvm::MCInst &Inst, unsigned Val,
                                       uint64_t Address, const void *Decoder) {
+  // This operand encodes a mask of contiguous zeros between a specified MSB
+  // and LSB.  To decode it, we create the mask of all bits MSB-and-lower,
+  // the mask of all bits LSB-and-lower, and then xor them to create
+  // the mask of that's all ones on [msb, lsb].  Finally we not it to 
+  // create the final mask.
   unsigned msb = fieldFromInstruction32(Val, 5, 5);
   unsigned lsb = fieldFromInstruction32(Val, 0, 5);
   uint32_t msb_mask = (1 << (msb+1)) - 1;
@@ -1123,7 +1128,6 @@ static bool DecodeMemMultipleWritebackInstruction(llvm::MCInst &Inst,
       case ARM::STMIB_UPD:
         Inst.setOpcode(ARM::RFEIB_UPD);
         break;
-
     }
     return DecodeRFEInstruction(Inst, Insn, Address, Decoder);
   }
@@ -1885,7 +1889,6 @@ static bool DecodeNEONModImmInstruction(llvm::MCInst &Inst, unsigned Insn,
       break;
   }
 
-
   return true;
 }
 
@@ -2107,7 +2110,7 @@ static bool DecodeT2LoadShift(llvm::MCInst &Inst, unsigned Insn,
 }
 
 static bool DecodeT2Imm8S4(llvm::MCInst &Inst, unsigned Val,
-                                   uint64_t Address, const void *Decoder) {
+                           uint64_t Address, const void *Decoder) {
   int imm = Val & 0xFF;
   if (!(Val & 0x100)) imm *= -1;
   Inst.addOperand(MCOperand::CreateImm(imm << 2));
@@ -2127,7 +2130,7 @@ static bool DecodeT2AddrModeImm8s4(llvm::MCInst &Inst, unsigned Val,
 }
 
 static bool DecodeT2Imm8(llvm::MCInst &Inst, unsigned Val,
-                                   uint64_t Address, const void *Decoder) {
+                         uint64_t Address, const void *Decoder) {
   int imm = Val & 0xFF;
   if (!(Val & 0x100)) imm *= -1;
   Inst.addOperand(MCOperand::CreateImm(imm));
@@ -2137,7 +2140,7 @@ static bool DecodeT2Imm8(llvm::MCInst &Inst, unsigned Val,
 
 
 static bool DecodeT2AddrModeImm8(llvm::MCInst &Inst, unsigned Val,
-                                   uint64_t Address, const void *Decoder) {
+                                 uint64_t Address, const void *Decoder) {
   unsigned Rn = fieldFromInstruction32(Val, 9, 4);
   unsigned imm = fieldFromInstruction32(Val, 0, 9);
 
@@ -2162,7 +2165,7 @@ static bool DecodeT2AddrModeImm8(llvm::MCInst &Inst, unsigned Val,
 
 
 static bool DecodeT2AddrModeImm12(llvm::MCInst &Inst, unsigned Val,
-                                   uint64_t Address, const void *Decoder) {
+                                  uint64_t Address, const void *Decoder) {
   unsigned Rn = fieldFromInstruction32(Val, 13, 4);
   unsigned imm = fieldFromInstruction32(Val, 0, 12);
 
@@ -2174,7 +2177,7 @@ static bool DecodeT2AddrModeImm12(llvm::MCInst &Inst, unsigned Val,
 
 
 static bool DecodeThumbAddSPImm(llvm::MCInst &Inst, uint16_t Insn,
-                                   uint64_t Address, const void *Decoder) {
+                                uint64_t Address, const void *Decoder) {
   unsigned imm = fieldFromInstruction16(Insn, 0, 7);
 
   Inst.addOperand(MCOperand::CreateReg(ARM::SP));
@@ -2185,7 +2188,7 @@ static bool DecodeThumbAddSPImm(llvm::MCInst &Inst, uint16_t Insn,
 }
 
 static bool DecodeThumbAddSPReg(llvm::MCInst &Inst, uint16_t Insn,
-                                   uint64_t Address, const void *Decoder) {
+                                uint64_t Address, const void *Decoder) {
   if (Inst.getOpcode() == ARM::tADDrSP) {
     unsigned Rdm = fieldFromInstruction16(Insn, 0, 3);
     Rdm |= fieldFromInstruction16(Insn, 7, 1) << 3;
@@ -2205,7 +2208,7 @@ static bool DecodeThumbAddSPReg(llvm::MCInst &Inst, uint16_t Insn,
 }
 
 static bool DecodeThumbCPS(llvm::MCInst &Inst, uint16_t Insn,
-                                   uint64_t Address, const void *Decoder) {
+                           uint64_t Address, const void *Decoder) {
   unsigned imod = fieldFromInstruction16(Insn, 4, 1) | 0x2;
   unsigned flags = fieldFromInstruction16(Insn, 0, 3);
 
@@ -2216,7 +2219,7 @@ static bool DecodeThumbCPS(llvm::MCInst &Inst, uint16_t Insn,
 }
 
 static bool DecodePostIdxReg(llvm::MCInst &Inst, unsigned Insn,
-                                   uint64_t Address, const void *Decoder) {
+                             uint64_t Address, const void *Decoder) {
   unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
   unsigned add = fieldFromInstruction32(Insn, 4, 1);
 
@@ -2227,7 +2230,7 @@ static bool DecodePostIdxReg(llvm::MCInst &Inst, unsigned Insn,
 }
 
 static bool DecodeThumbBLXOffset(llvm::MCInst &Inst, unsigned Val,
-                                   uint64_t Address, const void *Decoder) {
+                                 uint64_t Address, const void *Decoder) {
   Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
   return true;
 }
@@ -2242,7 +2245,7 @@ static bool DecodeCoprocessor(llvm::MCInst &Inst, unsigned Val,
 }
 
 static bool DecodeThumbSRImm(llvm::MCInst &Inst, unsigned Val,
-                              uint64_t Address, const void *Decoder) {
+                             uint64_t Address, const void *Decoder) {
   if (Val == 0)
     Inst.addOperand(MCOperand::CreateImm(32));
   else
@@ -2327,7 +2330,7 @@ static bool DecodeThumbBCCTargetOperand(llvm::MCInst &Inst, unsigned Val,
 }
 
 static bool DecodeThumbBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
-                                        uint64_t Address, const void *Decoder){
+                                       uint64_t Address, const void *Decoder){
   Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
   return true;
 }
