@@ -3239,7 +3239,7 @@ LoadInst *LoadInst::clone_impl() const {
 }
 
 StoreInst *StoreInst::clone_impl() const {
-  return new StoreInst(getOperand(0), getOperand(1),isVolatile(),
+  return new StoreInst(getOperand(0), getOperand(1), isVolatile(),
                        getAlignment(), getOrdering(), getSynchScope());
   
 }
