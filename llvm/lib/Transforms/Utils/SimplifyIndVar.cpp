@@ -86,7 +86,7 @@ namespace {
 /// aligned IV when used by a instruction that ignores the low bits.
 ///
 /// Return the operand of IVOperand for this induction variable if IVOperand can
-/// be folded (in case more folding opportunity has been exposed).
+/// be folded (in case more folding opportunities have been exposed).
 /// Otherwise return null.
 Value *SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) {
   Value *IVSrc = 0;
@@ -293,7 +293,7 @@ static void pushIVUsers(
 /// isSimpleIVUser - Return true if this instruction generates a simple SCEV
 /// expression in terms of that IV.
 ///
-/// This is similar to IVUsers' isInsteresting() but processes each instruction
+/// This is similar to IVUsers' isInteresting() but processes each instruction
 /// non-recursively when the operand is already known to be a simpleIVUser.
 ///
 static bool isSimpleIVUser(Instruction *I, const Loop *L, ScalarEvolution *SE) {

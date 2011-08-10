@@ -133,7 +133,7 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI,
 /// removed from the LoopPassManager as well. LPM can also be NULL.
 ///
 /// This utility preserves LoopInfo. If DominatorTree or ScalarEvolution are
-/// available it must also preseve those analyses.
+/// available it must also preserve those analyses.
 bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
                       unsigned TripMultiple, LoopInfo *LI, LPPassManager *LPM) {
   BasicBlock *Preheader = L->getLoopPreheader();
@@ -380,7 +380,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   }
 
   // FIXME: Reconstruct dom info, because it is not preserved properly.
-  // Incrementally updating domtree after loop unrolling woud be easy.
+  // Incrementally updating domtree after loop unrolling would be easy.
   if (DominatorTree *DT = LPM->getAnalysisIfAvailable<DominatorTree>())
     DT->runOnFunction(*L->getHeader()->getParent());
 
