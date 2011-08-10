@@ -739,6 +739,7 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
     
     LogSP expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
+    ExecutionResults exe_results;
     SBValue expr_result;
     if (log)
         log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\")...", m_opaque_sp.get(), expr);
@@ -754,7 +755,6 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
         Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
                                              expr, fetch_dynamic_value, frame_description.GetString().c_str());
 
-        ExecutionResults exe_results;
         const bool unwind_on_error = true;
         const bool keep_in_memory = false;
 
@@ -772,9 +772,10 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
                          expr_result.GetSummary());
     
     if (log)
-        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p)", m_opaque_sp.get(), 
+        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p) (execution result=%d)", m_opaque_sp.get(), 
                      expr, 
-                     expr_result.get());
+                     expr_result.get(),
+                     exe_results);
 
     return expr_result;
 }

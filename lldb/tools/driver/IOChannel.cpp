@@ -411,7 +411,7 @@ IOChannel::Run ()
                 else if (event_type & Driver::eBroadcastBitThreadShouldExit)
                 {
                     done = true;
-                    break;
+                    continue;
                 }
             }
             else if (event.BroadcasterMatchesRef (interpreter_broadcaster))
@@ -437,7 +437,7 @@ IOChannel::Run ()
                 if (event_type & IOChannel::eBroadcastBitThreadShouldExit)
                 {
                     done = true;
-                    break;
+                    continue;
                 }
             }
         }

@@ -554,8 +554,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                             else if (file.ResolveExecutableLocation())
                             {
                                 char path[PATH_MAX];
-                                int path_len;
-                                file.GetPath (path, path_len);
+                                file.GetPath (path, sizeof(path));
                                 m_option_data.m_args.push_back (path);
                             }
                             else
@@ -584,8 +583,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                             else if (file.ResolveExecutableLocation())
                             {
                                 char final_path[PATH_MAX];
-                                size_t path_len;
-                                file.GetPath (final_path, path_len);
+                                file.GetPath (final_path, sizeof(final_path));
                                 std::string path_str (final_path);
                                 m_option_data.m_source_command_files.push_back (path_str);
                             }
@@ -1225,7 +1223,6 @@ Driver::MainLoop ()
                                 done = true;
                                 if (event_type & IOChannel::eBroadcastBitThreadDidExit)
                                     iochannel_thread_exited = true;
-                                break;
                             }
                             else
                                 done = HandleIOEvent (event);
