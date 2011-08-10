@@ -708,9 +708,13 @@ public:
   /// specified loop.  This should be used by transformations that restructure
   /// the loop hierarchy tree.
   void changeLoopFor(BlockT *BB, LoopT *L) {
-    LoopT *&OldLoop = BBMap[BB];
-    assert(OldLoop && "Block not in a loop yet!");
-    OldLoop = L;
+    if (!L) {
+      typename DenseMap<BlockT *, LoopT *>::iterator I = BBMap.find(BB);
+      if (I != BBMap.end())
+        BBMap.erase(I);
+      return;
+    }
+    BBMap[BB] = L;
   }
 
   /// changeTopLevelLoop - Replace the specified loop in the top-level loops
@@ -1028,6 +1032,12 @@ public:
   void removeBlock(BasicBlock *BB) {
     LI.removeBlock(BB);
   }
+
+  /// updateUnloop - Update LoopInfo after removing the last backedge from a
+  /// loop--now the "unloop". This updates the loop forest and parent loops for
+  /// each block so that Unloop is no longer referenced, but the caller must
+  /// actually delete the Unloop object.
+  void updateUnloop(Loop *Unloop);
 
   /// replacementPreservesLCSSAForm - Returns true if replacing From with To
   /// everywhere is guaranteed to preserve LCSSA form.
