@@ -242,3 +242,39 @@ _func:
 @ CHECK: ldrsbt	r3, [r8], #-12          @ encoding: [0xdc,0x30,0x78,0xe0]
 @ CHECK: ldrsbt	r8, [r9], r5            @ encoding: [0xd5,0x80,0xb9,0xe0]
 @ CHECK: ldrsbt	r2, [r1], -r4           @ encoding: [0xd4,0x20,0x31,0xe0]
+
+
+@------------------------------------------------------------------------------
+@ LDRSH (immediate)
+@------------------------------------------------------------------------------
+        ldrsh r5, [r9]
+        ldrsh r4, [r5, #7]
+        ldrsh r3, [r6, #55]!
+        ldrsh r2, [r7], #-9
+
+@ CHECK: ldrsh	r5, [r9]                @ encoding: [0xf0,0x50,0xd9,0xe1]
+@ CHECK: ldrsh	r4, [r5, #7]            @ encoding: [0xf7,0x40,0xd5,0xe1]
+@ CHECK: ldrsh	r3, [r6, #55]!          @ encoding: [0xf7,0x33,0xf6,0xe1]
+@ CHECK: ldrsh	r2, [r7], #-9           @ encoding: [0xf9,0x20,0x57,0xe0]
+
+
+@------------------------------------------------------------------------------
+@ FIXME: LDRSH (label)
+@------------------------------------------------------------------------------
+
+
+@------------------------------------------------------------------------------
+@ LDRSH (register)
+@------------------------------------------------------------------------------
+        ldrsh r3, [r1, r5]
+        ldrsh r4, [r6, r1]!
+        ldrsh r5, [r3, -r6]!
+        ldrsh r6, [r9], r8
+        ldrsh r7, [r8], -r3
+
+@ CHECK: ldrsh	r3, [r1, r5]            @ encoding: [0xf5,0x30,0x91,0xe1]
+@ CHECK: ldrsh	r4, [r6, r1]!           @ encoding: [0xf1,0x40,0xb6,0xe1]
+@ CHECK: ldrsh	r5, [r3, -r6]!          @ encoding: [0xf6,0x50,0x33,0xe1]
+@ CHECK: ldrsh	r6, [r9], r8            @ encoding: [0xf8,0x60,0x99,0xe0]
+@ CHECK: ldrsh	r7, [r8], -r3           @ encoding: [0xf3,0x70,0x18,0xe0]
+
