@@ -249,12 +249,32 @@ bool ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   MI.clear();
-  result = decodeNEONInstruction32(MI, insn, Address, this);
+  result = decodeNEONDataInstruction32(MI, insn, Address, this);
   if (result) {
+    Size = 4;
     // Add a fake predicate operand, because we share these instruction
     // definitions with Thumb2 where these instructions are predicable.
     if (!DecodePredicateOperand(MI, 0xE, Address, this)) return false;
+    return true;
+  }
+
+  MI.clear();
+  result = decodeNEONLoadStoreInstruction32(MI, insn, Address, this);
+  if (result) {
     Size = 4;
+    // Add a fake predicate operand, because we share these instruction
+    // definitions with Thumb2 where these instructions are predicable.
+    if (!DecodePredicateOperand(MI, 0xE, Address, this)) return false;
+    return true;
+  }
+
+  MI.clear();
+  result = decodeNEONDupInstruction32(MI, insn, Address, this);
+  if (result) {
+    Size = 4;
+    // Add a fake predicate operand, because we share these instruction
+    // definitions with Thumb2 where these instructions are predicable.
+    if (!DecodePredicateOperand(MI, 0xE, Address, this)) return false;
     return true;
   }
 
@@ -434,6 +454,14 @@ bool ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   MI.clear();
+  result = decodeCommonInstruction32(MI, insn32, Address, this);
+  if (result) {
+    Size = 4;
+    AddThumbPredicate(MI);
+    return true;
+  }
+
+  MI.clear();
   result = decodeVFPInstruction32(MI, insn32, Address, this);
   if (result) {
     Size = 4;
@@ -442,7 +470,29 @@ bool ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   MI.clear();
-  result = decodeCommonInstruction32(MI, insn32, Address, this);
+  if (fieldFromInstruction32(insn32, 24, 4) == 0xF) {
+    uint32_t NEONDataInsn = insn32;
+    NEONDataInsn &= 0xF0FFFFFF; // Clear bits 27-24
+    NEONDataInsn |= (NEONDataInsn & 0x10000000) >> 4; // Move bit 28 to bit 24
+    NEONDataInsn |= 0x12000000; // Set bits 28 and 25
+    result = decodeNEONDataInstruction32(MI, NEONDataInsn, Address, this);
+    if (result) {
+      Size = 4;
+      AddThumbPredicate(MI);
+      return true;
+    }
+  }
+
+  MI.clear();
+  result = decodeNEONLoadStoreInstruction32(MI, insn32, Address, this);
+  if (result) {
+    Size = 4;
+    AddThumbPredicate(MI);
+    return true;
+  }
+
+  MI.clear();
+  result = decodeNEONDupInstruction32(MI, insn32, Address, this);
   if (result) {
     Size = 4;
     AddThumbPredicate(MI);

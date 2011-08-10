@@ -1608,7 +1608,7 @@ class NeonI<dag oops, dag iops, AddrMode am, IndexMode im, Format f,
   let AsmString = !strconcat(opc, "${p}", ".", dt, "\t", asm);
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
-  let DecoderNamespace = "NEON";
+  let DecoderNamespace = "NEONData";
 }
 
 // Same as NeonI except it does not have a "data type" specifier.
@@ -1621,7 +1621,7 @@ class NeonXI<dag oops, dag iops, AddrMode am, IndexMode im, Format f,
   let AsmString = !strconcat(opc, "${p}", "\t", asm);
   let Pattern = pattern;
   list<Predicate> Predicates = [HasNEON];
-  let DecoderNamespace = "NEON";
+  let DecoderNamespace = "NEONData";
 }
 
 class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
@@ -1636,6 +1636,7 @@ class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
   let Inst{7-4}   = op7_4;
 
   let PostEncoderMethod = "NEONThumb2LoadStorePostEncoder";
+  let DecoderNamespace = "NEONLoadStore";
 
   bits<5> Vd;
   bits<6> Rn;
@@ -1911,6 +1912,7 @@ class NVLaneOp<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
   list<Predicate> Predicates = [HasNEON];
 
   let PostEncoderMethod = "NEONThumb2DupPostEncoder";
+  let DecoderNamespace = "NEONDup";
 
   bits<5> V;
   bits<4> R;
