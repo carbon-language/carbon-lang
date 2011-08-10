@@ -344,7 +344,7 @@ def bl_target : Operand<i32> {
   // Encoded the same as branch targets.
   let EncoderMethod = "getARMBranchTargetOpValue";
   let OperandType = "OPERAND_PCREL";
-	let DecoderMethod = "DecodeBLTargetOperand";
+  let DecoderMethod = "DecodeBLTargetOperand";
 }
 
 
@@ -482,7 +482,7 @@ def so_imm : Operand<i32>, ImmLeaf<i32, [{
   }]> {
   let EncoderMethod = "getSOImmOpValue";
   let ParserMatchClass = SOImmAsmOperand;
-	let DecoderMethod = "DecodeSOImmOperand";
+  let DecoderMethod = "DecodeSOImmOperand";
 }
 
 // Break so_imm's up into two pieces.  This handles immediates with up to 16
