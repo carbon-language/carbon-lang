@@ -3553,6 +3553,7 @@ void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
       // Make sure we're comparing apples to apples when comparing index to size
       uint64_t ptrarith_typesize = Context.getTypeSize(EffectiveType);
       uint64_t array_typesize = Context.getTypeSize(BaseType);
+      // Handle ptrarith_typesize being zero, such as when casting to void*
       if (!ptrarith_typesize) ptrarith_typesize = 1;
       if (ptrarith_typesize != array_typesize) {
         // There's a cast to a different size type involved
