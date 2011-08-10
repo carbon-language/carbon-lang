@@ -3509,9 +3509,12 @@ static bool isVPERMILPSMask(const SmallVectorImpl<int> &Mask, EVT VT,
   int LaneSize = NumElts/NumLanes;
   for (int i = 0; i < LaneSize; ++i) {
     int HighElt = i+LaneSize;
-    if (Mask[i] < 0 && (isUndefOrInRange(Mask[HighElt], LaneSize, NumElts)))
-      continue;
-    if (Mask[HighElt] < 0 && (isUndefOrInRange(Mask[i], 0, LaneSize)))
+    bool HighValid = isUndefOrInRange(Mask[HighElt], LaneSize, NumElts);
+    bool LowValid = isUndefOrInRange(Mask[i], 0, LaneSize);
+
+    if (!HighValid || !LowValid)
+      return false;
+    if (Mask[i] < 0 || Mask[HighElt] < 0)
       continue;
     if (Mask[HighElt]-Mask[i] != LaneSize)
       return false;
