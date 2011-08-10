@@ -21,6 +21,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Support/Debug.h"
@@ -225,11 +226,25 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   Headers.push_back(Header);
   Latches.push_back(LatchBlock);
 
+  // The current on-the-fly SSA update requires blocks to be processed in
+  // reverse postorder so that LastValueMap contains the correct value at each
+  // exit.
+  LoopBlocksDFS DFS(L);
+  {
+    // Traverse the loop blocks using depth-first search to record RPO numbers
+    // for each block in the DFS result.
+    LoopBlocksTraversal Traversal(DFS, LI);
+    for (LoopBlocksTraversal::POTIterator POI = Traversal.begin(),
+           POE = Traversal.end(); POI != POE; ++POI);
+  }
+  // Stash the DFS iterators before adding blocks to the loop.
+  LoopBlocksDFS::RPOIterator BlockBegin = DFS.beginRPO();
+  LoopBlocksDFS::RPOIterator BlockEnd = DFS.endRPO();
+
   for (unsigned It = 1; It != Count; ++It) {
     std::vector<BasicBlock*> NewBlocks;
 
-    for (std::vector<BasicBlock*>::iterator BB = LoopBlocks.begin(),
-         E = LoopBlocks.end(); BB != E; ++BB) {
+    for (LoopBlocksDFS::RPOIterator BB = BlockBegin; BB != BlockEnd; ++BB) {
       ValueToValueMapTy VMap;
       BasicBlock *New = CloneBasicBlock(*BB, VMap, "." + Twine(It));
       Header->getParent()->getBasicBlockList().push_back(New);
@@ -255,34 +270,26 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
 
       L->addBasicBlockToLoop(New, LI->getBase());
 
-      // Add phi entries for newly created values to all exit blocks except
-      // the successor of the latch block.  The successor of the exit block will
-      // be updated specially after unrolling all the way.
-      if (*BB != LatchBlock)
-        for (succ_iterator SI = succ_begin(*BB), SE = succ_end(*BB); SI != SE;
-             ++SI)
-          if (!L->contains(*SI))
-            for (BasicBlock::iterator BBI = (*SI)->begin();
-                 PHINode *phi = dyn_cast<PHINode>(BBI); ++BBI) {
-              Value *Incoming = phi->getIncomingValueForBlock(*BB);
-              phi->addIncoming(Incoming, New);
-            }
-
+      // Add phi entries for newly created values to all exit blocks.
+      for (succ_iterator SI = succ_begin(*BB), SE = succ_end(*BB);
+           SI != SE; ++SI) {
+        if (L->contains(*SI))
+          continue;
+        for (BasicBlock::iterator BBI = (*SI)->begin();
+             PHINode *phi = dyn_cast<PHINode>(BBI); ++BBI) {
+          Value *Incoming = phi->getIncomingValueForBlock(*BB);
+          ValueToValueMapTy::iterator It = LastValueMap.find(Incoming);
+          if (It != LastValueMap.end())
+            Incoming = It->second;
+          phi->addIncoming(Incoming, New);
+        }
+      }
       // Keep track of new headers and latches as we create them, so that
       // we can insert the proper branches later.
       if (*BB == Header)
         Headers.push_back(New);
-      if (*BB == LatchBlock) {
+      if (*BB == LatchBlock)
         Latches.push_back(New);
-
-        // Also, clear out the new latch's back edge so that it doesn't look
-        // like a new loop, so that it's amenable to being merged with adjacent
-        // blocks later on.
-        TerminatorInst *Term = New->getTerminator();
-        assert(L->contains(Term->getSuccessor(!ContinueOnTrue)));
-        assert(Term->getSuccessor(ContinueOnTrue) == LoopExit);
-        Term->setSuccessor(!ContinueOnTrue, NULL);
-      }
 
       NewBlocks.push_back(New);
     }
@@ -294,35 +301,23 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
         ::RemapInstruction(I, LastValueMap);
   }
 
-  // The latch block exits the loop.  If there are any PHI nodes in the
-  // successor blocks, update them to use the appropriate values computed as the
-  // last iteration of the loop.
-  if (Count != 1) {
-    BasicBlock *LastIterationBB = cast<BasicBlock>(LastValueMap[LatchBlock]);
-    for (succ_iterator SI = succ_begin(LatchBlock), SE = succ_end(LatchBlock);
-         SI != SE; ++SI) {
-      for (BasicBlock::iterator BBI = (*SI)->begin();
-           PHINode *PN = dyn_cast<PHINode>(BBI); ++BBI) {
-        Value *InVal = PN->removeIncomingValue(LatchBlock, false);
-        // If this value was defined in the loop, take the value defined by the
-        // last iteration of the loop.
-        if (Instruction *InValI = dyn_cast<Instruction>(InVal)) {
-          if (L->contains(InValI))
-            InVal = LastValueMap[InVal];
-        }
-        PN->addIncoming(InVal, LastIterationBB);
-      }
-    }
-  }
-
-  // Now, if we're doing complete unrolling, loop over the PHI nodes in the
-  // original block, setting them to their incoming values.
-  if (CompletelyUnroll) {
-    BasicBlock *Preheader = L->getLoopPreheader();
-    for (unsigned i = 0, e = OrigPHINode.size(); i != e; ++i) {
-      PHINode *PN = OrigPHINode[i];
+  // Loop over the PHI nodes in the original block, setting incoming values.
+  for (unsigned i = 0, e = OrigPHINode.size(); i != e; ++i) {
+    PHINode *PN = OrigPHINode[i];
+    if (CompletelyUnroll) {
       PN->replaceAllUsesWith(PN->getIncomingValueForBlock(Preheader));
       Header->getInstList().erase(PN);
+    }
+    else if (Count > 1) {
+      Value *InVal = PN->removeIncomingValue(LatchBlock, false);
+      // If this value was defined in the loop, take the value defined by the
+      // last iteration of the loop.
+      if (Instruction *InValI = dyn_cast<Instruction>(InVal)) {
+        if (L->contains(InValI))
+          InVal = LastValueMap[InVal];
+      }
+      assert(Latches.back() == LastValueMap[LatchBlock] && "bad last latch");
+      PN->addIncoming(InVal, Latches.back());
     }
   }
 
@@ -355,6 +350,19 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
       // iteration.
       Term->setSuccessor(!ContinueOnTrue, Dest);
     } else {
+      // Remove phi operands at this loop exit
+      if (Dest != LoopExit) {
+        BasicBlock *BB = Latches[i];
+        for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
+             SI != SE; ++SI) {
+          if (*SI == Headers[i])
+            continue;
+          for (BasicBlock::iterator BBI = (*SI)->begin();
+               PHINode *Phi = dyn_cast<PHINode>(BBI); ++BBI) {
+            Phi->removeIncomingValue(BB, false);
+          }
+        }
+      }
       // Replace the conditional branch with an unconditional one.
       BranchInst::Create(Dest, Term);
       Term->eraseFromParent();
