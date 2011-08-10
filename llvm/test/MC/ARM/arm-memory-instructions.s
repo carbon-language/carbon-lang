@@ -230,3 +230,15 @@ _func:
 @ CHECK: ldrsb	r4, [r3], -r2           @ encoding: [0xd2,0x40,0x13,0xe0]
 
 
+@------------------------------------------------------------------------------
+@ LDRSBT
+@------------------------------------------------------------------------------
+        ldrsbt r5, [r6], #1
+        ldrsbt r3, [r8], #-12
+        ldrsbt r8, [r9], r5
+        ldrsbt r2, [r1], -r4
+
+@ CHECK: ldrsbt	r5, [r6], #1            @ encoding: [0xd1,0x50,0xf6,0xe0]
+@ CHECK: ldrsbt	r3, [r8], #-12          @ encoding: [0xdc,0x30,0x78,0xe0]
+@ CHECK: ldrsbt	r8, [r9], r5            @ encoding: [0xd5,0x80,0xb9,0xe0]
+@ CHECK: ldrsbt	r2, [r1], -r4           @ encoding: [0xd4,0x20,0x31,0xe0]
