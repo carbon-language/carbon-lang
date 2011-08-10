@@ -1690,6 +1690,9 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
     return true;
 
   if (CurMultiClass == 0)  // Def's in multiclasses aren't really defs.
+    // See Record::setName().  This resolve step will see any new name
+    // for the def that might have been created when resolving
+    // inheritance, values and arguments above.
     CurRec->resolveReferences();
 
   // If ObjectBody has template arguments, it's an error.
@@ -2102,6 +2105,9 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
 
   if (!CurMultiClass)
     for (unsigned i = 0, e = NewRecDefs.size(); i != e; ++i)
+      // See Record::setName().  This resolve step will see any new
+      // name for the def that might have been created when resolving
+      // inheritance, values and arguments above.
       NewRecDefs[i]->resolveReferences();
 
   if (Lex.getCode() != tgtok::semi)

@@ -1373,7 +1373,7 @@ class Record {
 
   // Unique record ID.
   unsigned ID;
-  std::string Name;
+  Init *Name;
   SMLoc Loc;
   std::vector<std::string> TemplateArgs;
   std::vector<RecordVal> Values;
@@ -1384,11 +1384,13 @@ class Record {
 
   DefInit *TheInit;
 
+  void checkName();
+
 public:
 
   // Constructs a record.
   explicit Record(const std::string &N, SMLoc loc, RecordKeeper &records) :
-    ID(LastID++), Name(N), Loc(loc), TrackedRecords(records), TheInit(0) {}
+    ID(LastID++), Name(StringInit::get(N)), Loc(loc), TrackedRecords(records), TheInit(0) {}
   ~Record() {}
 
 
@@ -1397,7 +1399,8 @@ public:
 
   unsigned getID() const { return ID; }
 
-  const std::string &getName() const { return Name; }
+  const std::string &getName() const;
+  void setName(Init *Name);               // Also updates RecordKeeper.
   void setName(const std::string &Name);  // Also updates RecordKeeper.
 
   SMLoc getLoc() const { return Loc; }

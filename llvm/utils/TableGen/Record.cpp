@@ -14,6 +14,7 @@
 #include "Record.h"
 #include "Error.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -1638,22 +1639,61 @@ void RecordVal::print(raw_ostream &OS, bool PrintSem) const {
 
 unsigned Record::LastID = 0;
 
+void Record::checkName() {
+  // Ensure the record name has string type.
+  const TypedInit *TypedName = dynamic_cast<const TypedInit *>(Name);
+  assert(TypedName && "Record name is not typed!");
+  RecTy *Type = TypedName->getType();
+  if (dynamic_cast<StringRecTy *>(Type) == 0) {
+    llvm_unreachable("Record name is not a string!");
+  }
+}
+
 DefInit *Record::getDefInit() {
   if (!TheInit)
     TheInit = new DefInit(this, new RecordRecTy(this));
   return TheInit;
 }
 
-void Record::setName(const std::string &Name) {
-  if (TrackedRecords.getDef(getName()) == this) {
-    TrackedRecords.removeDef(getName());
-    this->Name = Name;
+const std::string &Record::getName() const {
+  const StringInit *NameString =
+    dynamic_cast<const StringInit *>(Name);
+  assert(NameString && "Record name is not a string!");
+  return NameString->getValue();
+}
+
+void Record::setName(Init *NewName) {
+  if (TrackedRecords.getDef(Name->getAsUnquotedString()) == this) {
+    TrackedRecords.removeDef(Name->getAsUnquotedString());
+    Name = NewName;
     TrackedRecords.addDef(this);
   } else {
-    TrackedRecords.removeClass(getName());
-    this->Name = Name;
+    TrackedRecords.removeClass(Name->getAsUnquotedString());
+    Name = NewName;
     TrackedRecords.addClass(this);
   }
+  checkName();
+  // Since the Init for the name was changed, see if we can resolve
+  // any of it using members of the Record.
+  Init *ComputedName = Name->resolveReferences(*this, 0);
+  if (ComputedName != Name) {
+    setName(ComputedName);
+  }
+  // DO NOT resolve record values to the name at this point because
+  // there might be default values for arguments of this def.  Those
+  // arguments might not have been resolved yet so we don't want to
+  // prematurely assume values for those arguments were not passed to
+  // this def.
+  //
+  // Nonetheless, it may be that some of this Record's values
+  // reference the record name.  Indeed, the reason for having the
+  // record name be an Init is to provide this flexibility.  The extra
+  // resolve steps after completely instantiating defs takes care of
+  // this.  See TGParser::ParseDef and TGParser::ParseDefm.
+}
+
+void Record::setName(const std::string &Name) {
+  setName(StringInit::get(Name));
 }
 
 /// resolveReferencesTo - If anything in this record refers to RV, replace the
