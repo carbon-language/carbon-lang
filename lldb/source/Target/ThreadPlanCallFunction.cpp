@@ -69,7 +69,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
 
     if (!executableModuleSP)
     {
-        log->Printf ("Can't execute code without an executable module.");
+        if (log)
+            log->Printf ("Can't execute code without an executable module.");
         return;
     }
     else
@@ -77,15 +78,17 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
         ObjectFile *objectFile = executableModuleSP->GetObjectFile();
         if (!objectFile)
         {
-            log->Printf ("Could not find object file for module \"%s\".", 
-                         executableModuleSP->GetFileSpec().GetFilename().AsCString());
+            if (log)
+                log->Printf ("Could not find object file for module \"%s\".", 
+                             executableModuleSP->GetFileSpec().GetFilename().AsCString());
             return;
         }
         m_start_addr = objectFile->GetEntryPointAddress();
         if (!m_start_addr.IsValid())
         {
-            log->Printf ("Could not find entry point address for executable module \"%s\".", 
-                         executableModuleSP->GetFileSpec().GetFilename().AsCString());
+            if (log)
+                log->Printf ("Could not find entry point address for executable module \"%s\".", 
+                             executableModuleSP->GetFileSpec().GetFilename().AsCString());
             return;
         }
     }
@@ -182,7 +185,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     
     if (!executableModuleSP)
     {
-        log->Printf ("Can't execute code without an executable module.");
+        if (log)
+            log->Printf ("Can't execute code without an executable module.");
         return;
     }
     else
@@ -190,8 +194,9 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
         ObjectFile *objectFile = executableModuleSP->GetObjectFile();
         if (!objectFile)
         {
-            log->Printf ("Could not find object file for module \"%s\".", 
-                         executableModuleSP->GetFileSpec().GetFilename().AsCString());
+            if (log)
+                log->Printf ("Could not find object file for module \"%s\".", 
+                             executableModuleSP->GetFileSpec().GetFilename().AsCString());
             return;
         }
         m_start_addr = objectFile->GetEntryPointAddress();
