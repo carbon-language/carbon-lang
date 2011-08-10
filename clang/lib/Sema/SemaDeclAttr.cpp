@@ -1504,7 +1504,7 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
   AvailabilityChange Obsoleted = Attr.getAvailabilityObsoleted();
   bool IsUnavailable = Attr.getUnavailableLoc().isValid();
 
-  // Ensure that Introduced < Deprecated < Obsoleted (although not all
+  // Ensure that Introduced <= Deprecated <= Obsoleted (although not all
   // of these steps are needed).
   if (Introduced.isValid() && Deprecated.isValid() &&
       !(Introduced.Version <= Deprecated.Version)) {
