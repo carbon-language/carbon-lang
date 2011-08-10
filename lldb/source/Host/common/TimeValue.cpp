@@ -8,12 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/TimeValue.h"
-#include <stddef.h>
 
 // C Includes
+#include <stddef.h>
+#include <time.h>
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/Stream.h"
+
 
 using namespace lldb_private;
 
@@ -62,6 +65,14 @@ TimeValue::GetAsMicroSecondsSinceJan1_1970() const
 {
     return m_nano_seconds / NanoSecPerMicroSec;
 }
+
+uint64_t
+TimeValue::GetAsSecondsSinceJan1_1970() const
+{
+    return m_nano_seconds / NanoSecPerSec;
+}
+
+
 
 struct timespec
 TimeValue::GetAsTimeSpec () const
@@ -130,6 +141,28 @@ TimeValue::operator=(const TimeValue& rhs)
     return *this;
 }
 
+void
+TimeValue::Dump (Stream *s, uint32_t width) const
+{
+    if (s == NULL)
+        return;
+
+    char time_buf[32];
+    time_t time = GetAsSecondsSinceJan1_1970();
+    char *time_cstr = ::ctime_r(&time, time_buf);
+    if (time_cstr)
+    {
+        char *newline = ::strpbrk(time_cstr, "\n\r");
+        if (newline)
+            *newline = '\0';
+        if (width > 0)
+            s->Printf("%-*s", width, time_cstr);
+        else
+            s->PutCString(time_cstr);
+    }
+    else if (width > 0)
+        s->Printf("%-*s", width, "");
+}
 
 bool
 lldb_private::operator == (const TimeValue &lhs, const TimeValue &rhs)

@@ -1331,7 +1331,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         if (stop_info_sp)
                         {
                             stop_info_sp->SetDescription (description.c_str());
-            }
+                        }
                         else
                         {
                             gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithException (*thread_sp, description.c_str()));

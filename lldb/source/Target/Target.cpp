@@ -145,6 +145,29 @@ Target::GetSP()
     return m_debugger.GetTargetList().GetTargetSP(this);
 }
 
+void
+Target::Destroy()
+{
+    Mutex::Locker locker (m_mutex);
+    DeleteCurrentProcess ();
+    m_platform_sp.reset();
+    m_arch.Clear();
+    m_images.Clear();
+    m_section_load_list.Clear();
+    const bool notify = false;
+    m_breakpoint_list.RemoveAll(notify);
+    m_internal_breakpoint_list.RemoveAll(notify);
+    m_last_created_breakpoint.reset();
+    m_search_filter_sp.reset();
+    m_image_search_paths.Clear(notify);
+    m_scratch_ast_context_ap.reset();
+    m_persistent_variables.Clear();
+    m_stop_hooks.clear();
+    m_stop_hook_next_id = 0;
+    m_suppress_stop_hooks = false;
+}
+
+
 BreakpointList &
 Target::GetBreakpointList(bool internal)
 {

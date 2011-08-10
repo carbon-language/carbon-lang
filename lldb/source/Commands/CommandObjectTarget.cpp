@@ -400,6 +400,101 @@ public:
     }
 };
 
+#pragma mark CommandObjectTargetSelect
+
+//----------------------------------------------------------------------
+// "target delete"
+//----------------------------------------------------------------------
+
+class CommandObjectTargetDelete : public CommandObject
+{
+public:
+    CommandObjectTargetDelete (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "target delete",
+                   "Delete one or more targets by target index.",
+                   NULL,
+                   0)
+    {
+    }
+    
+    virtual
+    ~CommandObjectTargetDelete ()
+    {
+    }
+    
+    virtual bool
+    Execute (Args& args, CommandReturnObject &result)
+    {
+        const size_t argc = args.GetArgumentCount();
+        std::vector<TargetSP> delete_target_list;
+        TargetList &target_list = m_interpreter.GetDebugger().GetTargetList();
+        bool success = true;
+        TargetSP target_sp;
+        if (argc > 0)
+        {
+            const uint32_t num_targets = target_list.GetNumTargets();
+            for (uint32_t arg_idx = 0; success && arg_idx < argc; ++arg_idx)
+            {
+                const char *target_idx_arg = args.GetArgumentAtIndex(arg_idx);
+                uint32_t target_idx = Args::StringToUInt32 (target_idx_arg, UINT32_MAX, 0, &success);
+                if (success)
+                {
+                    if (target_idx < num_targets)
+                    {     
+                        target_sp = target_list.GetTargetAtIndex (target_idx);
+                        if (target_sp)
+                        {
+                            delete_target_list.push_back (target_sp);
+                            continue;
+                        }
+                    }
+                    result.AppendErrorWithFormat ("target index %u is out of range, valid target indexes are 0 - %u\n", 
+                                                  target_idx,
+                                                  num_targets - 1);
+                    result.SetStatus (eReturnStatusFailed);
+                    success = false;
+                }
+                else
+                {
+                    result.AppendErrorWithFormat("invalid target index '%s'\n", target_idx_arg);
+                    result.SetStatus (eReturnStatusFailed);
+                    success = false;
+                }
+            }
+            
+        }
+        else
+        {
+            target_sp = target_list.GetSelectedTarget();
+            if (target_sp)
+            {
+                delete_target_list.push_back (target_sp);
+            }
+            else
+            {
+                result.AppendErrorWithFormat("no target is currently selected\n");
+                result.SetStatus (eReturnStatusFailed);
+                success = false;
+            }
+        }
+        if (success)
+        {
+            const size_t num_targets_to_delete = delete_target_list.size();
+            for (size_t idx = 0; idx < num_targets_to_delete; ++idx)
+            {
+                target_sp = delete_target_list[idx];
+                target_list.DeleteTarget(target_sp);
+                target_sp->Destroy();
+            }
+            result.GetOutputStream().Printf("%u targets deleted.\n", (uint32_t)num_targets_to_delete);
+            result.SetStatus(eReturnStatusSuccessFinishResult);
+        }
+        
+        return result.Succeeded();
+    }
+};
+
 
 #pragma mark CommandObjectTargetVariable
 
@@ -991,7 +1086,10 @@ DumpModuleArchitecture (Stream &strm, Module *module, bool full_triple, uint32_t
 static void
 DumpModuleUUID (Stream &strm, Module *module)
 {
-    module->GetUUID().Dump (&strm);
+    if (module->GetUUID().IsValid())
+        module->GetUUID().Dump (&strm);
+    else
+        strm.PutCString("                                    ");
 }
 
 static uint32_t
@@ -2545,7 +2643,8 @@ public:
              CommandReturnObject &result)
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-        if (target == NULL)
+        const bool use_global_module_list = m_options.m_use_global_module_list;
+        if (target == NULL && use_global_module_list == false)
         {
             result.AppendError ("invalid target, create a debug target using the 'target create' command");
             result.SetStatus (eReturnStatusFailed);
@@ -2553,13 +2652,16 @@ public:
         }
         else
         {
-            uint32_t addr_byte_size = target->GetArchitecture().GetAddressByteSize();
-            result.GetOutputStream().SetAddressByteSize(addr_byte_size);
-            result.GetErrorStream().SetAddressByteSize(addr_byte_size);
+            if (target)
+            {
+                uint32_t addr_byte_size = target->GetArchitecture().GetAddressByteSize();
+                result.GetOutputStream().SetAddressByteSize(addr_byte_size);
+                result.GetErrorStream().SetAddressByteSize(addr_byte_size);
+            }
             // Dump all sections for all modules images
             uint32_t num_modules = 0;
             Mutex::Locker locker;
-            if (m_options.m_use_global_module_list)
+            if (use_global_module_list)
             {
                 locker.Reset (Module::GetAllocationModuleCollectionMutex().GetMutex());
                 num_modules = Module::GetNumberAllocatedModules();
@@ -2573,20 +2675,21 @@ public:
                 
                 for (uint32_t image_idx = 0; image_idx<num_modules; ++image_idx)
                 {
+                    ModuleSP module_sp;
                     Module *module;
-                    if (m_options.m_use_global_module_list)
+                    if (use_global_module_list)
                     {
                         module = Module::GetAllocatedModuleAtIndex(image_idx);
-                        ModuleSP module_sp(module->GetSP());
-                        // Show the module reference count when showing the global module index
-                        strm.Printf("[%3u] ref_count = %lu ", image_idx, module_sp ? module_sp.use_count() - 1 : 0);
+                        module_sp = module->GetSP();
                     }
                     else
                     {
-                        module = target->GetImages().GetModulePointerAtIndex(image_idx);
-                        strm.Printf("[%3u] ", image_idx);
+                        module_sp = target->GetImages().GetModuleAtIndex(image_idx);
+                        module = module_sp.get();
                     }
-                    
+
+                    strm.Printf("[%3u] ", image_idx);
+
                     bool dump_object_name = false;
                     if (m_options.m_format_array.empty())
                     {
@@ -2626,27 +2729,50 @@ public:
                                     dump_object_name = true;
                                     break;
                                     
+                                case 'r':
+                                    {
+                                        uint32_t ref_count = 0;
+                                        if (module_sp)
+                                        {
+                                            // Take one away to make sure we don't count our local "module_sp"
+                                            ref_count = module_sp.use_count() - 1;
+                                        }
+                                        if (width)
+                                            strm.Printf("{%*u}", width, ref_count);
+                                        else
+                                            strm.Printf("{%u}", ref_count);
+                                    }
+                                    break;
+
                                 case 's':
                                 case 'S':
-                                {
-                                    SymbolVendor *symbol_vendor = module->GetSymbolVendor();
-                                    if (symbol_vendor)
                                     {
-                                        SymbolFile *symbol_file = symbol_vendor->GetSymbolFile();
-                                        if (symbol_file)
+                                        SymbolVendor *symbol_vendor = module->GetSymbolVendor();
+                                        if (symbol_vendor)
                                         {
-                                            if (format_char == 'S')
-                                                DumpBasename(strm, &symbol_file->GetObjectFile()->GetFileSpec(), width);
-                                            else
-                                                DumpFullpath (strm, &symbol_file->GetObjectFile()->GetFileSpec(), width);
-                                            dump_object_name = true;
-                                            break;
+                                            SymbolFile *symbol_file = symbol_vendor->GetSymbolFile();
+                                            if (symbol_file)
+                                            {
+                                                if (format_char == 'S')
+                                                    DumpBasename(strm, &symbol_file->GetObjectFile()->GetFileSpec(), width);
+                                                else
+                                                    DumpFullpath (strm, &symbol_file->GetObjectFile()->GetFileSpec(), width);
+                                                dump_object_name = true;
+                                                break;
+                                            }
                                         }
+                                        strm.Printf("%.*s", width, "<NONE>");
                                     }
-                                    strm.Printf("%.*s", width, "<NONE>");
-                                }
                                     break;
                                     
+                                case 'm':
+                                    module->GetModificationTime().Dump(&strm, width);
+                                    break;
+
+                                case 'p':
+                                    strm.Printf("%p", module);
+                                    break;
+
                                 case 'u':
                                     DumpModuleUUID(strm, module);
                                     break;
@@ -2669,7 +2795,10 @@ public:
             }
             else
             {
-                result.AppendError ("the target has no associated executable images");
+                if (use_global_module_list)
+                    result.AppendError ("the global module list is empty");
+                else
+                    result.AppendError ("the target has no associated executable images");
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
@@ -2692,6 +2821,9 @@ CommandObjectTargetModulesList::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_1, false, "basename",   'b', optional_argument, NULL, 0, eArgTypeWidth,   "Display the basename with optional width for the image object file."},
     { LLDB_OPT_SET_1, false, "symfile",    's', optional_argument, NULL, 0, eArgTypeWidth,   "Display the fullpath to the image symbol file with optional width."},
     { LLDB_OPT_SET_1, false, "symfile-basename", 'S', optional_argument, NULL, 0, eArgTypeWidth,   "Display the basename to the image symbol file with optional width."},
+    { LLDB_OPT_SET_1, false, "mod-time",   'm', optional_argument, NULL, 0, eArgTypeWidth,   "Display the modification time with optional width of the module."},
+    { LLDB_OPT_SET_1, false, "ref-count",  'r', optional_argument, NULL, 0, eArgTypeWidth,   "Display the reference count if the module is still in the shared module cache."},
+    { LLDB_OPT_SET_1, false, "pointer",    'p', optional_argument, NULL, 0, eArgTypeNone,    "Display the module pointer."},
     { LLDB_OPT_SET_1, false, "global",     'g', no_argument,       NULL, 0, eArgTypeNone,    "Display the modules from the global module list, not just the current target."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
@@ -3811,6 +3943,7 @@ CommandObjectMultiwordTarget::CommandObjectMultiwordTarget (CommandInterpreter &
 {
     
     LoadSubCommand ("create",    CommandObjectSP (new CommandObjectTargetCreate (interpreter)));
+    LoadSubCommand ("delete",    CommandObjectSP (new CommandObjectTargetDelete (interpreter)));
     LoadSubCommand ("list",      CommandObjectSP (new CommandObjectTargetList   (interpreter)));
     LoadSubCommand ("select",    CommandObjectSP (new CommandObjectTargetSelect (interpreter)));
     LoadSubCommand ("stop-hook", CommandObjectSP (new CommandObjectMultiwordTargetStopHooks (interpreter)));

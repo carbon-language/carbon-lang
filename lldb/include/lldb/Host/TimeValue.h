@@ -23,6 +23,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/lldb-private.h"
 
 namespace lldb_private {
 
@@ -57,6 +58,9 @@ public:
     uint64_t
     GetAsMicroSecondsSinceJan1_1970() const;
 
+    uint64_t
+    GetAsSecondsSinceJan1_1970() const;
+
     struct timespec
     GetAsTimeSpec () const;
 
@@ -77,6 +81,9 @@ public:
 
     static TimeValue
     Now();
+    
+    void
+    Dump (Stream *s, uint32_t width = 0) const;
 
 protected:
     //------------------------------------------------------------------

@@ -263,13 +263,32 @@ DynamicLoaderMacOSXDYLD::FindTargetModuleForDYLDImageInfo (const DYLDImageInfo &
 
         module_sp = target_images.FindFirstModuleForFileSpec (image_info.file_spec, &arch, NULL);
 
-        if (can_create && !module_sp)
+        if (can_create)
         {
-            module_sp = m_process->GetTarget().GetSharedModule (image_info.file_spec,
-                                                                arch,
-                                                                image_info_uuid_is_valid ? &image_info.uuid : NULL);
-            if (did_create_ptr)
-                *did_create_ptr = module_sp;
+            if (module_sp)
+            {
+                if (image_info.UUIDValid())
+                {
+                    if (module_sp->GetUUID() != image_info.uuid)
+                        module_sp.reset();
+                }
+                else
+                {
+                    // No UUID, we must rely upon the cached module modification 
+                    // time and the modification time of the file on disk
+                    if (module_sp->GetModificationTime() != module_sp->GetFileSpec().GetModificationTime())
+                        module_sp.reset();
+                }
+            }
+            
+            if (!module_sp)
+            {
+                module_sp = m_process->GetTarget().GetSharedModule (image_info.file_spec,
+                                                                    arch,
+                                                                    image_info_uuid_is_valid ? &image_info.uuid : NULL);
+                if (did_create_ptr)
+                    *did_create_ptr = module_sp;
+            }
         }
     }
     return module_sp;

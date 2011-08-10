@@ -381,6 +381,12 @@ public:
         return var_sp;
     }
     
+    void
+    Clear()
+    {
+        m_variables.clear();
+    }
+
 private:
     std::vector <lldb::ClangExpressionVariableSP> m_variables;
 };

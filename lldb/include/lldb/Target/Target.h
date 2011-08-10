@@ -199,6 +199,9 @@ public:
 
     lldb::TargetSP
     GetSP();
+    
+    void
+    Destroy();
 
     //------------------------------------------------------------------
     // This part handles the breakpoints.

@@ -1446,7 +1446,7 @@ GDBRemoteCommunicationClient::TestPacketSpeed (const uint32_t num_packets)
                 end_time = TimeValue::Now();
                 total_time_nsec = end_time.GetAsNanoSecondsSinceJan1_1970() - start_time.GetAsNanoSecondsSinceJan1_1970();
                 packets_per_second = (((float)num_packets)/(float)total_time_nsec) * (float)TimeValue::NanoSecPerSec;
-                printf ("%u qSpeedTest(send=%-5u, recv=%-5u) in %llu.%09.9llu sec for %f packets/sec.\n", 
+                printf ("%u qSpeedTest(send=%-5u, recv=%-5u) in %llu.%9.9llu sec for %f packets/sec.\n", 
                         num_packets, 
                         send_size,
                         recv_size,
@@ -1470,7 +1470,7 @@ GDBRemoteCommunicationClient::TestPacketSpeed (const uint32_t num_packets)
         end_time = TimeValue::Now();
         total_time_nsec = end_time.GetAsNanoSecondsSinceJan1_1970() - start_time.GetAsNanoSecondsSinceJan1_1970();
         packets_per_second = (((float)num_packets)/(float)total_time_nsec) * (float)TimeValue::NanoSecPerSec;
-        printf ("%u 'qC' packets packets in 0x%llu%09.9llu sec for %f packets/sec.\n", 
+        printf ("%u 'qC' packets packets in 0x%llu%9.9llu sec for %f packets/sec.\n", 
                 num_packets, 
                 total_time_nsec / TimeValue::NanoSecPerSec, 
                 total_time_nsec % TimeValue::NanoSecPerSec, 

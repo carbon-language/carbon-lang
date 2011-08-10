@@ -756,7 +756,10 @@ ModuleList::GetSharedModule
         else
         {
             module_sp.reset (new Module (in_file_spec, arch, object_name_ptr, object_offset));
-            if (module_sp)
+            // Make sure there are a module and an object file since we can specify
+            // a valid file path with an architecture that might not be in that file.
+            // By getting the object file we can guarantee that the architecture matches
+            if (module_sp && module_sp->GetObjectFile())
             {
                 // If we get in here we got the correct arch, now we just need
                 // to verify the UUID if one was given
@@ -766,7 +769,7 @@ ModuleList::GetSharedModule
                 {
                     if (did_create_ptr)
                         *did_create_ptr = true;
-
+                    
                     shared_module_list.Append(module_sp);
                     return error;
                 }
@@ -844,7 +847,10 @@ ModuleList::GetSharedModule
         if (module_sp.get() == NULL)
         {
             module_sp.reset (new Module (file_spec, arch, object_name_ptr, object_offset));
-            if (module_sp)
+            // Make sure there are a module and an object file since we can specify
+            // a valid file path with an architecture that might not be in that file.
+            // By getting the object file we can guarantee that the architecture matches
+            if (module_sp && module_sp->GetObjectFile())
             {
                 if (did_create_ptr)
                     *did_create_ptr = true;
