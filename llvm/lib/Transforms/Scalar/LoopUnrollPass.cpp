@@ -79,6 +79,7 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
+      AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
       // FIXME: Loop unroll requires LCSSA. And LCSSA requires dom info.
       // If loop unroll does not preserve dom info then LCSSA pass on next
@@ -187,12 +188,8 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   // Unroll the loop.
-  Function *F = L->getHeader()->getParent();
   if (!UnrollLoop(L, Count, TripCount, TripMultiple, LI, &LPM))
     return false;
 
-  // FIXME: Reconstruct dom info, because it is not preserved properly.
-  if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>())
-    DT->runOnFunction(*F);
   return true;
 }

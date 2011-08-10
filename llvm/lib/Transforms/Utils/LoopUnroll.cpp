@@ -29,6 +29,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/SimplifyIndVar.h"
 using namespace llvm;
 
 // TODO: Should these be here or in LoopUnroll?
@@ -130,6 +131,9 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI,
 ///
 /// If a LoopPassManager is passed in, and the loop is fully removed, it will be
 /// removed from the LoopPassManager as well. LPM can also be NULL.
+///
+/// This utility preserves LoopInfo. If DominatorTree or ScalarEvolution are
+/// available it must also preseve those analyses.
 bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
                       unsigned TripMultiple, LoopInfo *LI, LPPassManager *LPM) {
   BasicBlock *Preheader = L->getLoopPreheader();
@@ -163,7 +167,8 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
 
   // Notify ScalarEvolution that the loop will be substantially changed,
   // if not outright eliminated.
-  if (ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>())
+  ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>();
+  if (SE)
     SE->forgetLoop(L);
 
   if (TripCount != 0)
@@ -372,6 +377,24 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
       if (BasicBlock *Fold = FoldBlockIntoPredecessor(Dest, LI, LPM))
         std::replace(Latches.begin(), Latches.end(), Dest, Fold);
     }
+  }
+
+  // FIXME: Reconstruct dom info, because it is not preserved properly.
+  // Incrementally updating domtree after loop unrolling woud be easy.
+  if (DominatorTree *DT = LPM->getAnalysisIfAvailable<DominatorTree>())
+    DT->runOnFunction(*L->getHeader()->getParent());
+
+  // Simplify any new induction variables in the partially unrolled loop.
+  if (SE && !CompletelyUnroll) {
+    SmallVector<WeakVH, 16> DeadInsts;
+    simplifyLoopIVs(L, SE, LPM, DeadInsts);
+
+    // Aggressively clean up dead instructions that simplifyLoopIVs already
+    // identified. Any remaining should be cleaned up below.
+    while (!DeadInsts.empty())
+      if (Instruction *Inst =
+          dyn_cast_or_null<Instruction>(&*DeadInsts.pop_back_val()))
+        RecursivelyDeleteTriviallyDeadInstructions(Inst);
   }
 
   // At this point, the code is well formed.  We now do a quick sweep over the
