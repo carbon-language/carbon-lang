@@ -159,3 +159,19 @@ _func:
 @ CHECK: ldrh	r12, [sp], #4           @ encoding: [0xb4,0xc0,0xdd,0xe0]
 
 
+@------------------------------------------------------------------------------
+@ LDRH (register)
+@------------------------------------------------------------------------------
+        ldrh r6, [r5, r4]
+        ldrh r3, [r8, r11]!
+        ldrh r1, [r2, -r1]!
+        ldrh r9, [r7], r2
+        ldrh r4, [r3], -r2
+
+@ CHECK: ldrh	r6, [r5, r4]            @ encoding: [0xb4,0x60,0x95,0xe1]
+@ CHECK: ldrh	r3, [r8, r11]!          @ encoding: [0xbb,0x30,0xb8,0xe1]
+@ CHECK: ldrh	r1, [r2, -r1]!          @ encoding: [0xb1,0x10,0x32,0xe1]
+@ CHECK: ldrh	r9, [r7], r2            @ encoding: [0xb2,0x90,0x97,0xe0]
+@ CHECK: ldrh	r4, [r3], -r2           @ encoding: [0xb2,0x40,0x13,0xe0]
+
+
