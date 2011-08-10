@@ -21,6 +21,7 @@ add_llvm_library(LLVMTransformUtils
   PromoteMemoryToRegister.cpp
   SSAUpdater.cpp
   SimplifyCFG.cpp
+  SimplifyIndVar.cpp
   SimplifyInstructions.cpp
   UnifyFunctionExitNodes.cpp
   Utils.cpp
