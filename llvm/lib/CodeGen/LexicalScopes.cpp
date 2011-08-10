@@ -221,11 +221,12 @@ void LexicalScopes::constructScopeNest(LexicalScope *Scope) {
   }
 }
 
-/// assignInstructionRanges - Find ranges of instructions covered by each lexical 
-/// scope.
+/// assignInstructionRanges - Find ranges of instructions covered by each
+/// lexical scope.
 void LexicalScopes::
 assignInstructionRanges(SmallVectorImpl<InsnRange> &MIRanges,
-                    DenseMap<const MachineInstr *, LexicalScope *> &MI2ScopeMap) {
+                    DenseMap<const MachineInstr *, LexicalScope *> &MI2ScopeMap)
+{
   
   LexicalScope *PrevLexicalScope = NULL;
   for (SmallVectorImpl<InsnRange>::const_iterator RI = MIRanges.begin(),
@@ -248,7 +249,8 @@ assignInstructionRanges(SmallVectorImpl<InsnRange> &MIRanges,
 /// have machine instructions that belong to lexical scope identified by 
 /// DebugLoc.
 void LexicalScopes::
-getMachineBasicBlocks(DebugLoc DL, SmallPtrSet<const MachineBasicBlock*, 4> &MBBs) {
+getMachineBasicBlocks(DebugLoc DL, 
+                      SmallPtrSet<const MachineBasicBlock*, 4> &MBBs) {
   MBBs.clear();
   LexicalScope *Scope = getOrCreateLexicalScope(DL);
   if (!Scope)

@@ -199,7 +199,8 @@ DIE *DwarfDebug::createSubprogramDIE(DISubprogram SP) {
 
   StringRef LinkageName = SP.getLinkageName();
   if (!LinkageName.empty())
-    SPCU->addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
+    SPCU->addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, 
+                    dwarf::DW_FORM_string,
                     getRealLinkageName(LinkageName));
 
   // If this DIE is going to refer declaration info using AT_specification
@@ -372,7 +373,8 @@ DIE *DwarfDebug::constructLexicalScopeDIE(LexicalScope *Scope) {
     // .debug_range as a uint, size 4, for now. emitDIE will handle
     // DW_AT_ranges appropriately.
     TheCU->addUInt(ScopeDIE, dwarf::DW_AT_ranges, dwarf::DW_FORM_data4,
-                   DebugRangeSymbols.size() * Asm->getTargetData().getPointerSize());
+                   DebugRangeSymbols.size() 
+                   * Asm->getTargetData().getPointerSize());
     for (SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin(),
          RE = Ranges.end(); RI != RE; ++RI) {
       DebugRangeSymbols.push_back(getLabelBeforeInsn(RI->first));
@@ -439,7 +441,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(LexicalScope *Scope) {
     // .debug_range as a uint, size 4, for now. emitDIE will handle
     // DW_AT_ranges appropriately.
     TheCU->addUInt(ScopeDIE, dwarf::DW_AT_ranges, dwarf::DW_FORM_data4,
-                   DebugRangeSymbols.size() * Asm->getTargetData().getPointerSize());
+                   DebugRangeSymbols.size() 
+                   * Asm->getTargetData().getPointerSize());
     for (SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin(),
          RE = Ranges.end(); RI != RE; ++RI) {
       DebugRangeSymbols.push_back(getLabelBeforeInsn(RI->first));
@@ -448,8 +451,10 @@ DIE *DwarfDebug::constructInlinedScopeDIE(LexicalScope *Scope) {
     DebugRangeSymbols.push_back(NULL);
     DebugRangeSymbols.push_back(NULL);
   } else {
-    TheCU->addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, StartLabel);
-    TheCU->addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr, EndLabel);
+    TheCU->addLabel(ScopeDIE, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr, 
+                    StartLabel);
+    TheCU->addLabel(ScopeDIE, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr, 
+                    EndLabel);
   }
 
   InlinedSubprogramDIEs.insert(OriginDIE);
@@ -550,8 +555,9 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, LexicalScope *Scope) {
 
   unsigned Offset = DV->getDotDebugLocOffset();
   if (Offset != ~0U) {
-    VariableCU->addLabel(VariableDie, dwarf::DW_AT_location, dwarf::DW_FORM_data4,
-             Asm->GetTempSymbol("debug_loc", Offset));
+    VariableCU->addLabel(VariableDie, dwarf::DW_AT_location,
+                         dwarf::DW_FORM_data4,
+                         Asm->GetTempSymbol("debug_loc", Offset));
     DV->setDIE(VariableDie);
     UseDotDebugLocEntry.insert(VariableDie);
     return VariableDie;
@@ -749,7 +755,8 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
 
   StringRef Flags = DIUnit.getFlags();
   if (!Flags.empty())
-    NewCU->addString(Die, dwarf::DW_AT_APPLE_flags, dwarf::DW_FORM_string, Flags);
+    NewCU->addString(Die, dwarf::DW_AT_APPLE_flags, dwarf::DW_FORM_string, 
+                     Flags);
   
   unsigned RVer = DIUnit.getRunTimeVersion();
   if (RVer)
@@ -874,7 +881,8 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
       TheCU->addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
                   dwarf::DW_FORM_ref4, VariableDIE);
       TheCU->addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
-      TheCU->addUInt(VariableDIE, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
+      TheCU->addUInt(VariableDIE, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag,
+                     1);
       TheCU->addDie(VariableSpecDIE);
     } else {
       TheCU->addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
@@ -1035,7 +1043,8 @@ void DwarfDebug::endModule() {
       if (!NMD) continue;
       unsigned E = NMD->getNumOperands();
       if (!E) continue;
-      LexicalScope *Scope = new LexicalScope(NULL, DIDescriptor(SP), NULL, false);
+      LexicalScope *Scope = new LexicalScope(NULL, DIDescriptor(SP), NULL, 
+                                             false);
       DeadFnScopeMap[SP] = Scope;
       SmallVector<DbgVariable *, 8> Variables;
       for (unsigned I = 0; I != E; ++I) {
@@ -1428,10 +1437,10 @@ void DwarfDebug::endInstruction(const MachineInstr *MI) {
 }
 
 /// identifyScopeMarkers() -
-/// Each LexicalScope has first instruction and last instruction to mark beginning
-/// and end of a scope respectively. Create an inverse map that list scopes
-/// starts (and ends) with an instruction. One instruction may start (or end)
-/// multiple scopes. Ignore scopes that are not reachable.
+/// Each LexicalScope has first instruction and last instruction to mark
+/// beginning and end of a scope respectively. Create an inverse map that list
+/// scopes starts (and ends) with an instruction. One instruction may start (or
+/// end) multiple scopes. Ignore scopes that are not reachable.
 void DwarfDebug::identifyScopeMarkers() {
   SmallVector<LexicalScope *, 4> WorkList;
   WorkList.push_back(LScopes.getCurrentFunctionScope());
@@ -1617,7 +1626,8 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     const MachineInstr *Prev = History.back();
     if (Prev->isDebugValue() && isDbgValueInDefinedReg(Prev)) {
       const MachineBasicBlock *PrevMBB = Prev->getParent();
-      MachineBasicBlock::const_iterator LastMI = PrevMBB->getLastNonDebugInstr();
+      MachineBasicBlock::const_iterator LastMI = 
+        PrevMBB->getLastNonDebugInstr();
       if (LastMI == PrevMBB->end())
         // Drop DBG_VALUE for empty range.
         History.pop_back();
@@ -1698,9 +1708,9 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   
   if (!DisableFramePointerElim(*MF)) {
     LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
-    getCompileUnit(FnScope->getScopeNode())->addUInt(CurFnDIE, 
-                                                     dwarf::DW_AT_APPLE_omit_frame_ptr,
-                                                     dwarf::DW_FORM_flag, 1);
+    CompileUnit *TheCU = getCompileUnit(FnScope->getScopeNode());
+    TheCU->addUInt(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr,
+                   dwarf::DW_FORM_flag, 1);
   }
   DebugFrames.push_back(FunctionDebugFrameInfo(Asm->getFunctionNumber(),
                                                MMI->getFrameMoves()));

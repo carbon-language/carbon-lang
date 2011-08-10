@@ -64,8 +64,8 @@ public:
   /// getCurrentFunctionScope - Return lexical scope for the current function.
   LexicalScope *getCurrentFunctionScope() const { return CurrentFnLexicalScope;}
 
-  /// getMachineBasicBlocks - Populate given set using machine basic blocks which
-  /// have machine instructions that belong to lexical scope identified by 
+  /// getMachineBasicBlocks - Populate given set using machine basic blocks
+  /// which have machine instructions that belong to lexical scope identified by
   /// DebugLoc.
   void getMachineBasicBlocks(DebugLoc DL,
                              SmallPtrSet<const MachineBasicBlock*, 4> &MBBs);
