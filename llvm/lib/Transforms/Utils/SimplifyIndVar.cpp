@@ -73,7 +73,7 @@ namespace {
     /// all simplicitions to users of an IV.
     void simplifyUsers(PHINode *CurrIV, IVVisitor *V = NULL);
 
-    bool foldIVUser(Instruction *UseInst, Instruction *IVOperand);
+    Value *foldIVUser(Instruction *UseInst, Instruction *IVOperand);
 
     bool eliminateIVUser(Instruction *UseInst, Instruction *IVOperand);
     void eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand);
@@ -84,26 +84,30 @@ namespace {
 
 /// foldIVUser - Fold an IV operand into its use.  This removes increments of an
 /// aligned IV when used by a instruction that ignores the low bits.
-bool SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) {
+///
+/// Return the operand of IVOperand for this induction variable if IVOperand can
+/// be folded (in case more folding opportunity has been exposed).
+/// Otherwise return null.
+Value *SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) {
   Value *IVSrc = 0;
   unsigned OperIdx = 0;
   const SCEV *FoldedExpr = 0;
   switch (UseInst->getOpcode()) {
   default:
-    return false;
+    return 0;
   case Instruction::UDiv:
   case Instruction::LShr:
     // We're only interested in the case where we know something about
     // the numerator and have a constant denominator.
     if (IVOperand != UseInst->getOperand(OperIdx) ||
         !isa<ConstantInt>(UseInst->getOperand(1)))
-      return false;
+      return 0;
 
     // Attempt to fold a binary operator with constant operand.
     // e.g. ((I + 1) >> 2) => I >> 2
     if (IVOperand->getNumOperands() != 2 ||
         !isa<ConstantInt>(IVOperand->getOperand(1)))
-      return false;
+      return 0;
 
     IVSrc = IVOperand->getOperand(0);
     // IVSrc must be the (SCEVable) IV, since the other operand is const.
@@ -114,7 +118,7 @@ bool SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) {
       // Get a constant for the divisor. See createSCEV.
       uint32_t BitWidth = cast<IntegerType>(UseInst->getType())->getBitWidth();
       if (D->getValue().uge(BitWidth))
-        return false;
+        return 0;
 
       D = ConstantInt::get(UseInst->getContext(),
                            APInt(BitWidth, 1).shl(D->getZExtValue()));
@@ -123,11 +127,11 @@ bool SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) {
   }
   // We have something that might fold it's operand. Compare SCEVs.
   if (!SE->isSCEVable(UseInst->getType()))
-    return false;
+    return 0;
 
   // Bypass the operand if SCEV can prove it has no effect.
   if (SE->getSCEV(UseInst) != FoldedExpr)
-    return false;
+    return 0;
 
   DEBUG(dbgs() << "INDVARS: Eliminated IV operand: " << *IVOperand
         << " -> " << *UseInst << '\n');
@@ -139,7 +143,7 @@ bool SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) {
   Changed = true;
   if (IVOperand->use_empty())
     DeadInsts.push_back(IVOperand);
-  return true;
+  return IVSrc;
 }
 
 /// eliminateIVComparison - SimplifyIVUsers helper for eliminating useless
@@ -337,10 +341,20 @@ void SimplifyIndvar::simplifyUsers(PHINode *CurrIV, IVVisitor *V) {
     // Bypass back edges to avoid extra work.
     if (UseOper.first == CurrIV) continue;
 
-    foldIVUser(UseOper.first, UseOper.second);
+    Instruction *IVOperand = UseOper.second;
+    for (unsigned N = 0; IVOperand; ++N) {
+      assert(N <= Simplified.size() && "runaway iteration");
 
-    if (eliminateIVUser(UseOper.first, UseOper.second)) {
-      pushIVUsers(UseOper.second, Simplified, SimpleIVUsers);
+      Value *NewOper = foldIVUser(UseOper.first, IVOperand);
+      if (!NewOper)
+        break; // done folding
+      IVOperand = dyn_cast<Instruction>(NewOper);
+    }
+    if (!IVOperand)
+      continue;
+
+    if (eliminateIVUser(UseOper.first, IVOperand)) {
+      pushIVUsers(IVOperand, Simplified, SimpleIVUsers);
       continue;
     }
     CastInst *Cast = dyn_cast<CastInst>(UseOper.first);
