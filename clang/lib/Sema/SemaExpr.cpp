@@ -7776,32 +7776,28 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
       (BinOp::isComparisonOp(rhsopc) || BinOp::isBitwiseOp(rhsopc)))
     return;
 
-  if (BinOp::isComparisonOp(lhsopc)) {
-    Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
-        << SourceRange(lhs->getLocStart(), OpLoc)
-        << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(lhsopc);
-    SuggestParentheses(Self, OpLoc,
-      Self.PDiag(diag::note_precedence_bitwise_silence)
-          << BinOp::getOpcodeStr(lhsopc),
-      lhs->getSourceRange());
-    SuggestParentheses(Self, OpLoc,
-      Self.PDiag(diag::note_precedence_bitwise_first)
-          << BinOp::getOpcodeStr(Opc),
-      SourceRange(cast<BinOp>(lhs)->getRHS()->getLocStart(), rhs->getLocEnd()));
-  } else if (BinOp::isComparisonOp(rhsopc)) {
-    Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
-        << SourceRange(OpLoc, rhs->getLocEnd())
-        << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(rhsopc);
-    SuggestParentheses(Self, OpLoc,
-      Self.PDiag(diag::note_precedence_bitwise_silence)
-          << BinOp::getOpcodeStr(rhsopc),
-      rhs->getSourceRange());
-    SuggestParentheses(Self, OpLoc,
-      Self.PDiag(diag::note_precedence_bitwise_first)
-        << BinOp::getOpcodeStr(Opc),
-      SourceRange(lhs->getLocStart(), 
-                  cast<BinOp>(rhs)->getLHS()->getLocStart()));
-  }
+  bool isLeftComp = BinOp::isComparisonOp(lhsopc);
+  bool isRightComp = BinOp::isComparisonOp(rhsopc);
+  if (!isLeftComp && !isRightComp) return;
+
+  SourceRange DiagRange = isLeftComp ? SourceRange(lhs->getLocStart(), OpLoc)
+                                     : SourceRange(OpLoc, rhs->getLocEnd());
+  std::string OpStr = isLeftComp ? BinOp::getOpcodeStr(lhsopc)
+                                 : BinOp::getOpcodeStr(rhsopc);
+  SourceRange ParensRange = isLeftComp ?
+      SourceRange(cast<BinOp>(lhs)->getRHS()->getLocStart(),
+                  rhs->getLocEnd())
+    : SourceRange(lhs->getLocStart(),
+                  cast<BinOp>(rhs)->getLHS()->getLocStart());
+
+  Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
+    << DiagRange << BinOp::getOpcodeStr(Opc) << OpStr;
+  SuggestParentheses(Self, OpLoc,
+    Self.PDiag(diag::note_precedence_bitwise_silence) << OpStr,
+    rhs->getSourceRange());
+  SuggestParentheses(Self, OpLoc,
+    Self.PDiag(diag::note_precedence_bitwise_first) << BinOp::getOpcodeStr(Opc),
+    ParensRange);
 }
 
 /// \brief It accepts a '&' expr that is inside a '|' one.
