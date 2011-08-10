@@ -1,39 +1,39 @@
-// RUN: %clang_cc1  -fsyntax-only -verify %s
+// RUN: %clang_cc1  -Woverriding-method-mismatch -fsyntax-only -verify %s
 // rdar://6191214
 
 @protocol Xint
--(void) setX: (int) arg0; // expected-note 3 {{previous definition is here}}
-+(int) C; // expected-note 3 {{previous definition is here}}
+-(void) setX: (int) arg0; // expected-note {{previous declaration is here}}
++(int) C; // expected-note {{previous declaration is here}}
 @end
 
 @protocol Xfloat
--(void) setX: (float) arg0; // expected-warning 3 {{conflicting parameter types in declaration of 'setX:': 'int' vs 'float'}}
-+(float) C; // expected-warning 3 {{conflicting return type in declaration of 'C': 'int' vs 'float'}}
+-(void) setX: (float) arg0; // expected-note 2 {{previous declaration is here}}
++(float) C;		    // expected-note 2 {{previous declaration is here}}
 @end
 
-@interface A <Xint, Xfloat> // expected-note {{class is declared here}}
+@interface A <Xint, Xfloat>
 @end
 
 @implementation A
--(void) setX: (int) arg0 { }
-+(int) C {return 0; }
+-(void) setX: (int) arg0 { } // expected-warning {{conflicting parameter types in declaration of 'setX:': 'float' vs 'int'}}
++(int) C {return 0; } // expected-warning {{conflicting return type in declaration of 'C': 'float' vs 'int'}}
 @end
 
-@interface B <Xfloat, Xint> // expected-note {{class is declared here}}
+@interface B <Xfloat, Xint>
 @end
 
 @implementation B 
--(void) setX: (float) arg0 { }
-+ (float) C {return 0.0; }
+-(void) setX: (float) arg0 { } // expected-warning {{conflicting parameter types in declaration of 'setX:': 'int' vs 'float'}}
++ (float) C {return 0.0; } // expected-warning {{conflicting return type in declaration of 'C': 'int' vs 'float'}}
 @end
 
 @protocol Xint_float<Xint, Xfloat>
 @end
 
-@interface C<Xint_float> // expected-note {{class is declared here}}
+@interface C<Xint_float>
 @end
 
 @implementation C
--(void) setX: (int) arg0 { }
-+ (int) C {return 0;}
+-(void) setX: (int) arg0 { } // expected-warning {{conflicting parameter types in declaration of 'setX:': 'float' vs 'int'}}
++ (int) C {return 0;} // expected-warning {{conflicting return type in declaration of 'C': 'float' vs 'int'}}
 @end
