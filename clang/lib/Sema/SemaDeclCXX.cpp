@@ -2155,7 +2155,8 @@ struct BaseAndFieldInfo {
   BaseAndFieldInfo(Sema &S, CXXConstructorDecl *Ctor, bool ErrorsInInits)
     : S(S), Ctor(Ctor), AnyErrorsInInits(ErrorsInInits) {
     // FIXME: Handle implicit move constructors.
-    if (Ctor->isImplicit() && Ctor->isCopyConstructor())
+    if ((Ctor->isImplicit() || Ctor->isDefaulted()) && 
+        Ctor->isCopyConstructor())
       IIK = IIK_Copy;
     else
       IIK = IIK_Default;
