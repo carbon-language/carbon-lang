@@ -138,14 +138,16 @@ instructions has been clarified in the IR.</p>
    those optimizations useful.</p>
 
 <p>Acquire provides a barrier of the sort necessary to acquire a lock to access
-   other memory with normal loads and stores.  This corresponds to the 
-   C++0x/C1x <code>memory_order_acquire</code>.  This is a low-level 
+   other memory with normal loads and stores. This corresponds to the 
+   C++0x/C1x <code>memory_order_acquire</code>. It should also be used for
+   C++0x/C1x <code>memory_order_consume</code>. This is a low-level 
    synchronization primitive. In general, optimizers should treat this like
    a nothrow call.</p>
 
 <p>Release is similar to Acquire, but with a barrier of the sort necessary to
-   release a lock.This corresponds to the C++0x/C1x
-   <code>memory_order_release</code>.</p>
+   release a lock. This corresponds to the C++0x/C1x
+   <code>memory_order_release</code>. In general, optimizers should treat this
+   like a nothrow call.</p>
 
 <p>AcquireRelease (<code>acq_rel</code> in IR) provides both an Acquire and a Release barrier.
    This corresponds to the C++0x/C1x <code>memory_order_acq_rel</code>. In general,
@@ -171,8 +173,9 @@ instructions has been clarified in the IR.</p>
 
 <p><code>cmpxchg</code> and <code>atomicrmw</code> are essentially like an
    atomic load followed by an atomic store (where the store is conditional for
-   <code>cmpxchg</code>), but no other memory operation operation can happen
-   between the load and store.</p>
+   <code>cmpxchg</code>), but no other memory operation can happen between
+   the load and store.  Note that our cmpxchg does not have quite as many
+   options for making cmpxchg weaker as the C++0x version.</p>
 
 <p>A <code>fence</code> provides Acquire and/or Release ordering which is not
    part of another operation; it is normally used along with Monotonic memory
@@ -203,7 +206,7 @@ instructions has been clarified in the IR.</p>
       Unordered. This would be checked, for example, by LICM before hoisting
       an operation.
   <li>mayReadFromMemory()/mayWriteToMemory(): Existing predicate, but note
-      that they returns true for any operation which is volatile or at least
+      that they return true for any operation which is volatile or at least
       Monotonic.
   <li>Alias analysis: Note that AA will return ModRef for anything Acquire or
       Release, and for the address accessed by any Monotonic operation.
