@@ -222,11 +222,6 @@ public:
 
   const CoreEngine &getCoreEngine() const { return Engine; }
 
-protected:
-  const GRState* GetState(ExplodedNode* N) {
-    return N == EntryNode ? CleanedState : N->getState();
-  }
-
 public:
   ExplodedNode* MakeNode(ExplodedNodeSet& Dst, const Stmt* S, 
                          ExplodedNode* Pred, const GRState* St,
