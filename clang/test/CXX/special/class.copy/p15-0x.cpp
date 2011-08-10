@@ -8,4 +8,11 @@ namespace PR10622 {
   void find_or_insert(const foo& __obj) {
     foo x(__obj);
   }
+
+  struct bar : foo {
+    bar(const bar&) = default;
+  };
+  void test_bar(const bar &obj) {
+    bar obj2(obj);
+  }
 }
