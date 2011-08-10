@@ -469,14 +469,34 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
 
       return false;
     }
+    case 'R': // The most significant register of a pair.
+    case 'Q': { // The least significant register of a pair.
+      if (OpNum == 0)
+        return true;
+      const MachineOperand &FlagsOP = MI->getOperand(OpNum - 1);
+      if (!FlagsOP.isImm())
+        return true;
+      unsigned Flags = FlagsOP.getImm();
+      unsigned NumVals = InlineAsm::getNumOperandRegisters(Flags);
+      if (NumVals != 2)
+        return true;
+      unsigned RegOp = ExtraCode[0] == 'Q' ? OpNum : OpNum + 1;
+      if (RegOp >= MI->getNumOperands())
+        return true;
+      const MachineOperand &MO = MI->getOperand(RegOp);
+      if (!MO.isReg())
+        return true;
+      unsigned Reg = MO.getReg();
+      O << ARMInstPrinter::getRegisterName(Reg);
+      return false;
+    }
+
     // These modifiers are not yet supported.
     case 'p': // The high single-precision register of a VFP double-precision
               // register.
     case 'e': // The low doubleword register of a NEON quad register.
     case 'f': // The high doubleword register of a NEON quad register.
     case 'h': // A range of VFP/NEON registers suitable for VLD1/VST1.
-    case 'Q': // The least significant register of a pair.
-    case 'R': // The most significant register of a pair.
     case 'H': // The highest-numbered register of a pair.
       return true;
     }
