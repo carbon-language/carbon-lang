@@ -12574,14 +12574,91 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
 /// PerformSTORECombine - Do target-specific dag combines on STORE nodes.
 static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
                                    const X86Subtarget *Subtarget) {
+  StoreSDNode *St = cast<StoreSDNode>(N);
+  EVT VT = St->getValue().getValueType();
+  EVT StVT = St->getMemoryVT();
+  DebugLoc dl = St->getDebugLoc();
+
+  // Optimize trunc store (of multiple scalars) to shuffle and store.
+  // First, pack all of the elements in one place. Next, store to memory
+  // in fewer chunks.
+  if (St->isTruncatingStore() && VT.isVector()) {
+    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+    unsigned NumElems = VT.getVectorNumElements();
+    assert(StVT != VT && "Cannot truncate to the same type");
+    unsigned FromSz = VT.getVectorElementType().getSizeInBits();
+    unsigned ToSz = StVT.getVectorElementType().getSizeInBits();
+
+    // From, To sizes and ElemCount must be pow of two
+    if (!isPowerOf2_32(NumElems * FromSz * ToSz)) return SDValue();
+    // We are going to use the original vector elt for storing.
+    // accumulated smaller vector elements must be a multiple of bigger size.
+    if (0 != (NumElems * ToSz) % FromSz) return SDValue();
+    unsigned SizeRatio  = FromSz / ToSz;
+
+    assert(SizeRatio * NumElems * ToSz == VT.getSizeInBits());
+
+    // Create a type on which we perform the shuffle
+    EVT WideVecVT = EVT::getVectorVT(*DAG.getContext(),
+            StVT.getScalarType(), NumElems*SizeRatio);
+
+    assert(WideVecVT.getSizeInBits() == VT.getSizeInBits());
+
+    SDValue WideVec = DAG.getNode(ISD::BITCAST, dl, WideVecVT, St->getValue());
+    SmallVector<int, 8> ShuffleVec(NumElems * SizeRatio, -1);
+    for (unsigned i = 0; i < NumElems; i++ ) ShuffleVec[i] = i * SizeRatio;
+
+    // Can't shuffle using an illegal type
+    if (!TLI.isTypeLegal(WideVecVT)) return SDValue();
+
+    SDValue Shuff = DAG.getVectorShuffle(WideVecVT, dl, WideVec,
+                                DAG.getUNDEF(WideVec.getValueType()),
+                                ShuffleVec.data());
+    // At this point all of the data is stored at the bottom of the
+    // register. We now need to save it to mem.
+
+    // Find the largest store unit
+    MVT StoreType = MVT::i8;
+    for (unsigned tp = MVT::FIRST_INTEGER_VALUETYPE;
+         tp < MVT::LAST_INTEGER_VALUETYPE; ++tp) {
+      MVT Tp = (MVT::SimpleValueType)tp;
+      if (TLI.isTypeLegal(Tp) && StoreType.getSizeInBits() < NumElems * ToSz)
+        StoreType = Tp;
+    }
+
+    // Bitcast the original vector into a vector of store-size units
+    EVT StoreVecVT = EVT::getVectorVT(*DAG.getContext(),
+            StoreType, VT.getSizeInBits()/EVT(StoreType).getSizeInBits());
+    assert(StoreVecVT.getSizeInBits() == VT.getSizeInBits());
+    SDValue ShuffWide = DAG.getNode(ISD::BITCAST, dl, StoreVecVT, Shuff);
+    SmallVector<SDValue, 8> Chains;
+    SDValue Increment = DAG.getConstant(StoreType.getSizeInBits()/8,
+                                        TLI.getPointerTy());
+    SDValue Ptr = St->getBasePtr();
+
+    // Perform one or more big stores into memory.
+    for (unsigned i = 0; i < (ToSz*NumElems)/StoreType.getSizeInBits() ; i++) {
+      SDValue SubVec = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+                                   StoreType, ShuffWide,
+                                   DAG.getIntPtrConstant(i));
+      SDValue Ch = DAG.getStore(St->getChain(), dl, SubVec, Ptr,
+                                St->getPointerInfo(), St->isVolatile(),
+                                St->isNonTemporal(), St->getAlignment());
+      Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr, Increment);
+      Chains.push_back(Ch);
+    }
+
+    return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &Chains[0],
+                               Chains.size());
+  }
+
+
   // Turn load->store of MMX types into GPR load/stores.  This avoids clobbering
   // the FP state in cases where an emms may be missing.
   // A preferable solution to the general problem is to figure out the right
   // places to insert EMMS.  This qualifies as a quick hack.
 
   // Similarly, turn load->store of i64 into double load/stores in 32-bit mode.
-  StoreSDNode *St = cast<StoreSDNode>(N);
-  EVT VT = St->getValue().getValueType();
   if (VT.getSizeInBits() != 64)
     return SDValue();
 
