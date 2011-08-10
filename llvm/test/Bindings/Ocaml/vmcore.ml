@@ -898,14 +898,6 @@ let test_builder () =
     ignore (build_invoke fn [| p1; p2 |] bb04 bb00 "build_invoke" b)
   end;
   
-  group "unwind"; begin
-    (* RUN: grep {unwind} < %t.ll
-     *)
-    let bb05 = append_block context "Bb05" fn in
-    let b = builder_at_end context bb05 in
-    ignore (build_unwind b)
-  end;
-  
   group "unreachable"; begin
     (* RUN: grep {unreachable} < %t.ll
      *)

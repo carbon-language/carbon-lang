@@ -1213,11 +1213,6 @@ CAMLprim LLVMValueRef llvm_build_invoke_bc(value Args[], int NumArgs) {
 }
 
 /* llbuilder -> llvalue */
-CAMLprim LLVMValueRef llvm_build_unwind(value B) {
-  return LLVMBuildUnwind(Builder_val(B));
-}
-
-/* llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_unreachable(value B) {
   return LLVMBuildUnreachable(Builder_val(B));
 }

@@ -1616,12 +1616,6 @@ val build_invoke : llvalue -> llvalue array -> llbasicblock ->
                         llbasicblock -> string -> llbuilder -> llvalue
 
 
-(** [build_unwind b] creates an
-    [unwind]
-    instruction at the position specified by the instruction builder [b].
-    See the method [llvm::LLVMBuilder::CreateUnwind]. *)
-val build_unwind : llbuilder -> llvalue
-
 (** [build_unreachable b] creates an
     [unreachable]
     instruction at the position specified by the instruction builder [b].

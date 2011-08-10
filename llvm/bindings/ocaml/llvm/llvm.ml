@@ -820,7 +820,6 @@ external add_destination : llvalue -> llbasicblock -> unit
 external build_invoke : llvalue -> llvalue array -> llbasicblock ->
                         llbasicblock -> string -> llbuilder -> llvalue
                       = "llvm_build_invoke_bc" "llvm_build_invoke_nat"
-external build_unwind : llbuilder -> llvalue = "llvm_build_unwind"
 external build_unreachable : llbuilder -> llvalue = "llvm_build_unreachable"
 
 (*--... Arithmetic .........................................................--*)
