@@ -1973,7 +1973,7 @@ class CommandObjectTypeSynthList : public CommandObject
 public:
     CommandObjectTypeSynthList (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
-                   "type synth list",
+                   "type synthetic list",
                    "Show a list of current synthetic providers.",
                    NULL), m_options(interpreter)
     {
@@ -2180,7 +2180,7 @@ private:
 public:
     CommandObjectTypeSynthDelete (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
-                   "type synth delete",
+                   "type synthetic delete",
                    "Delete an existing synthetic provider for a type.",
                    NULL), m_options(interpreter)
     {
@@ -2340,7 +2340,7 @@ private:
 public:
     CommandObjectTypeSynthClear (CommandInterpreter &interpreter) :
     CommandObject (interpreter,
-                   "type synth clear",
+                   "type synthetic clear",
                    "Delete all existing synthetic providers.",
                    NULL), m_options(interpreter)
     {
@@ -2711,7 +2711,7 @@ CommandObjectTypeSynthAdd::Execute_PythonClass (Args& command, CommandReturnObje
     
 CommandObjectTypeSynthAdd::CommandObjectTypeSynthAdd (CommandInterpreter &interpreter) :
 CommandObject (interpreter,
-               "type synth add",
+               "type synthetic add",
                "Add a new synthetic provider for a type.",
                NULL), m_options (interpreter)
 {
@@ -2816,9 +2816,9 @@ class CommandObjectTypeSynth : public CommandObjectMultiword
 public:
     CommandObjectTypeSynth (CommandInterpreter &interpreter) :
     CommandObjectMultiword (interpreter,
-                            "type synth",
+                            "type synthetic",
                             "A set of commands for operating on synthetic type representations",
-                            "type synth [<sub-command-options>] ")
+                            "type synthetic [<sub-command-options>] ")
     {
         LoadSubCommand ("add",           CommandObjectSP (new CommandObjectTypeSynthAdd (interpreter)));
         LoadSubCommand ("clear",         CommandObjectSP (new CommandObjectTypeSynthClear (interpreter)));
@@ -2887,7 +2887,7 @@ CommandObjectType::CommandObjectType (CommandInterpreter &interpreter) :
     LoadSubCommand ("category",  CommandObjectSP (new CommandObjectTypeCategory (interpreter)));
     LoadSubCommand ("format",    CommandObjectSP (new CommandObjectTypeFormat (interpreter)));
     LoadSubCommand ("summary",   CommandObjectSP (new CommandObjectTypeSummary (interpreter)));
-    LoadSubCommand ("synth",     CommandObjectSP (new CommandObjectTypeSynth (interpreter)));
+    LoadSubCommand ("synthetic",     CommandObjectSP (new CommandObjectTypeSynth (interpreter)));
 }
 
 
