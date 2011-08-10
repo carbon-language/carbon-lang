@@ -818,6 +818,17 @@ DIVariable llvm::createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
   return DIVariable(MDNode::get(VMContext, Elts));
 }
 
+/// cleanseInlinedVariable - Remove inlined scope from the variable.
+DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
+  SmallVector<Value *, 16> Elts;
+  // Insert inlined scope as 7th element.
+  for (unsigned i = 0, e = DV->getNumOperands(); i != e; ++i)
+    i == 7 ? 
+      Elts.push_back(llvm::Constant::getNullValue(Type::getInt32Ty(VMContext))):
+      Elts.push_back(DV->getOperand(i));
+  return DIVariable(MDNode::get(VMContext, Elts));
+}
+
 //===----------------------------------------------------------------------===//
 // DebugInfoFinder implementations.
 //===----------------------------------------------------------------------===//
