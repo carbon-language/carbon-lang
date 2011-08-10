@@ -418,7 +418,8 @@ MachProcess::DoSIGSTOP (bool clear_bps_and_wps, uint32_t *thread_idx_ptr)
     {
         DisableAllBreakpoints (true);
         DisableAllWatchpoints (true);
-        clear_bps_and_wps = false;
+        // Silence static analyzer.
+        // clear_bps_and_wps = false;
     }
     uint32_t thread_idx = m_thread_list.GetThreadIndexForThreadStoppedWithSignal (SIGSTOP);
     if (thread_idx_ptr)

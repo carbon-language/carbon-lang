@@ -1003,7 +1003,7 @@ main (int argc, char *argv[])
 
             case 'g':
                 debug = 1;
-                DNBLogSetDebug(1);
+                DNBLogSetDebug(debug);
                 break;
 
             case 't':
