@@ -230,13 +230,8 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   // reverse postorder so that LastValueMap contains the correct value at each
   // exit.
   LoopBlocksDFS DFS(L);
-  {
-    // Traverse the loop blocks using depth-first search to record RPO numbers
-    // for each block in the DFS result.
-    LoopBlocksTraversal Traversal(DFS, LI);
-    for (LoopBlocksTraversal::POTIterator POI = Traversal.begin(),
-           POE = Traversal.end(); POI != POE; ++POI);
-  }
+  DFS.perform(LI);
+
   // Stash the DFS iterators before adding blocks to the loop.
   LoopBlocksDFS::RPOIterator BlockBegin = DFS.beginRPO();
   LoopBlocksDFS::RPOIterator BlockEnd = DFS.endRPO();

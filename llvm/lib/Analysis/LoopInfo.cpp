@@ -18,6 +18,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
@@ -417,3 +418,15 @@ void LoopInfo::print(raw_ostream &OS, const Module*) const {
   LI.print(OS);
 }
 
+//===----------------------------------------------------------------------===//
+// LoopBlocksDFS implementation
+//
+
+/// Traverse the loop blocks and store the DFS result.
+/// Useful for clients that just want the final DFS result and don't need to
+/// visit blocks during the initial traversal.
+void LoopBlocksDFS::perform(LoopInfo *LI) {
+  LoopBlocksTraversal Traversal(*this, LI);
+  for (LoopBlocksTraversal::POTIterator POI = Traversal.begin(),
+         POE = Traversal.end(); POI != POE; ++POI) ;
+}

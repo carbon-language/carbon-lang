@@ -61,6 +61,9 @@ public:
 
   Loop *getLoop() const { return L; }
 
+  /// Traverse the loop blocks and store the DFS result.
+  void perform(LoopInfo *LI);
+
   /// Return true if postorder numbers are assigned to all loop blocks.
   bool isComplete() const { return PostBlocks.size() == L->getNumBlocks(); }
 
