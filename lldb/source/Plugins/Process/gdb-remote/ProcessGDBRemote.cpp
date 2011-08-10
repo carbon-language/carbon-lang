@@ -531,7 +531,6 @@ ProcessGDBRemote::DoLaunch
 
             const uint32_t old_packet_timeout = m_gdb_comm.SetPacketTimeout (10);
             int arg_packet_err = m_gdb_comm.SendArgumentsPacket (argv);
-            m_gdb_comm.SetPacketTimeout (old_packet_timeout);
             if (arg_packet_err == 0)
             {
                 std::string error_str;
@@ -548,6 +547,8 @@ ProcessGDBRemote::DoLaunch
             {
                 error.SetErrorStringWithFormat("'A' packet returned an error: %i.\n", arg_packet_err);
             }
+            
+            m_gdb_comm.SetPacketTimeout (old_packet_timeout);
                 
             if (GetID() == LLDB_INVALID_PROCESS_ID)
             {
