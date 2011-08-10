@@ -175,3 +175,17 @@ _func:
 @ CHECK: ldrh	r4, [r3], -r2           @ encoding: [0xb2,0x40,0x13,0xe0]
 
 
+@------------------------------------------------------------------------------
+@ LDRHT
+@------------------------------------------------------------------------------
+        ldrht r9, [r7], #128
+        ldrht r4, [r3], #-75
+        ldrht r9, [r7], r2
+        ldrht r4, [r3], -r2
+
+@ CHECK: ldrht	r9, [r7], #128          @ encoding: [0xb0,0x98,0xf7,0xe0]
+@ CHECK: ldrht	r4, [r3], #-75          @ encoding: [0xbb,0x44,0x73,0xe0]
+@ CHECK: ldrht	r9, [r7], r2            @ encoding: [0xb2,0x90,0xb7,0xe0]
+@ CHECK: ldrht	r4, [r3], -r2           @ encoding: [0xb2,0x40,0x33,0xe0]
+
+
