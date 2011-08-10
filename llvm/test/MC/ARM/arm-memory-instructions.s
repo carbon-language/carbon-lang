@@ -278,3 +278,18 @@ _func:
 @ CHECK: ldrsh	r6, [r9], r8            @ encoding: [0xf8,0x60,0x99,0xe0]
 @ CHECK: ldrsh	r7, [r8], -r3           @ encoding: [0xf3,0x70,0x18,0xe0]
 
+
+@------------------------------------------------------------------------------
+@ LDRSHT
+@------------------------------------------------------------------------------
+        ldrsht r5, [r6], #1
+        ldrsht r3, [r8], #-12
+        ldrsht r8, [r9], r5
+        ldrsht r2, [r1], -r4
+
+@ CHECK: ldrsht	r5, [r6], #1            @ encoding: [0xf1,0x50,0xf6,0xe0]
+@ CHECK: ldrsht	r3, [r8], #-12          @ encoding: [0xfc,0x30,0x78,0xe0]
+@ CHECK: ldrsht	r8, [r9], r5            @ encoding: [0xf5,0x80,0xb9,0xe0]
+@ CHECK: ldrsht	r2, [r1], -r4           @ encoding: [0xf4,0x20,0x31,0xe0]
+
+
