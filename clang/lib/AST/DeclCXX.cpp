@@ -35,7 +35,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     Abstract(false), IsStandardLayout(true), HasNoNonEmptyBases(true),
     HasPrivateFields(false), HasProtectedFields(false), HasPublicFields(false),
     HasMutableFields(false), HasTrivialDefaultConstructor(true),
-    HasConstExprNonCopyMoveConstructor(false), HasTrivialCopyConstructor(true),
+    HasConstexprNonCopyMoveConstructor(false), HasTrivialCopyConstructor(true),
     HasTrivialMoveConstructor(true), HasTrivialCopyAssignment(true),
     HasTrivialMoveAssignment(true), HasTrivialDestructor(true),
     HasNonLiteralTypeFieldsOrBases(false), ComputedVisibleConversions(false),
@@ -544,11 +544,10 @@ NotASpecialMember:;
         }
       }
     }
-    if (Constructor->isConstExpr() &&
-        !Constructor->isCopyOrMoveConstructor()) {
-      // Record if we see any constexpr constructors which are niether copy
+    if (Constructor->isConstexpr() && !Constructor->isCopyOrMoveConstructor()) {
+      // Record if we see any constexpr constructors which are neither copy
       // nor move constructors.
-      data().HasConstExprNonCopyMoveConstructor = true;
+      data().HasConstexprNonCopyMoveConstructor = true;
     }
 
     // C++ [dcl.init.aggr]p1:

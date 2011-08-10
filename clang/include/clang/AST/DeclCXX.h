@@ -363,10 +363,10 @@ class CXXRecordDecl : public RecordDecl {
     ///        default constructor.
     bool HasTrivialDefaultConstructor : 1;
 
-    /// HasConstExprNonCopyMoveConstructor - True when this class has at least
+    /// HasConstexprNonCopyMoveConstructor - True when this class has at least
     /// one constexpr constructor which is neither the copy nor move
     /// constructor.
-    bool HasConstExprNonCopyMoveConstructor : 1;
+    bool HasConstexprNonCopyMoveConstructor : 1;
 
     /// HasTrivialCopyConstructor - True when this class has a trivial copy
     /// constructor.
@@ -889,10 +889,10 @@ public:
              data().DeclaredDefaultConstructor);
   }
 
-  // hasConstExprNonCopyMoveConstructor - Whether this class has at least one
+  // hasConstexprNonCopyMoveConstructor - Whether this class has at least one
   // constexpr constructor other than the copy or move constructors
-  bool hasConstExprNonCopyMoveConstructor() const {
-    return data().HasConstExprNonCopyMoveConstructor;
+  bool hasConstexprNonCopyMoveConstructor() const {
+    return data().HasConstexprNonCopyMoveConstructor;
   }
 
   // hasTrivialCopyConstructor - Whether this class has a trivial copy

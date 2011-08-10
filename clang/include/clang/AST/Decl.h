@@ -1604,7 +1604,7 @@ public:
 
   /// Whether this is a constexpr function or constexpr constructor.
   // FIXME: C++0x: Implement tracking of the constexpr specifier.
-  bool isConstExpr() const { return false; }
+  bool isConstexpr() const { return false; }
 
   /// Whether this templated function will be late parsed.
   bool isLateTemplateParsed() const { return IsLateTemplateParsed; }

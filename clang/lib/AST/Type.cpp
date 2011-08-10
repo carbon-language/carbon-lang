@@ -1144,7 +1144,7 @@ bool Type::isLiteralType() const {
       //       constructor or constructor template that is not a copy or move
       //       constructor, and
       if (!ClassDecl->isAggregate() &&
-          !ClassDecl->hasConstExprNonCopyMoveConstructor())
+          !ClassDecl->hasConstexprNonCopyMoveConstructor())
         return false;
       //    -- all non-static data members and base classes of literal types
       if (ClassDecl->hasNonLiteralTypeFieldsOrBases()) return false;
