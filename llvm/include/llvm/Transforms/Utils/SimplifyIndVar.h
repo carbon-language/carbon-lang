@@ -39,18 +39,18 @@ public:
 
 /// simplifyUsersOfIV - Simplify instructions that use this induction variable
 /// by using ScalarEvolution to analyze the IV's recurrence.
-bool simplifyUsersOfIV(PHINode *CurrIV, LPPassManager *LPM,
+bool simplifyUsersOfIV(PHINode *CurrIV, ScalarEvolution *SE, LPPassManager *LPM,
                        SmallVectorImpl<WeakVH> &Dead, IVVisitor *V = NULL);
 
 /// SimplifyLoopIVs - Simplify users of induction variables within this
 /// loop. This does not actually change or add IVs.
-bool simplifyLoopIVs(Loop *L, LPPassManager *LPM,
+bool simplifyLoopIVs(Loop *L, ScalarEvolution *SE, LPPassManager *LPM,
                      SmallVectorImpl<WeakVH> &Dead);
 
 /// simplifyIVUsers - Simplify instructions recorded by the IVUsers pass.
 /// This is a legacy implementation to reproduce the behavior of the
 /// IndVarSimplify pass prior to DisableIVRewrite.
-bool simplifyIVUsers(IVUsers *IU, LPPassManager *LPM,
+bool simplifyIVUsers(IVUsers *IU, ScalarEvolution *SE, LPPassManager *LPM,
                      SmallVectorImpl<WeakVH> &Dead);
 
 } // namespace llvm

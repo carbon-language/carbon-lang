@@ -1192,7 +1192,7 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
       // Information about sign/zero extensions of CurrIV.
       WideIVVisitor WIV(SE, TD);
 
-      Changed |= simplifyUsersOfIV(CurrIV, &LPM, DeadInsts, &WIV);
+      Changed |= simplifyUsersOfIV(CurrIV, SE, &LPM, DeadInsts, &WIV);
 
       if (WIV.WI.WidestNativeType) {
         WideIVMap[CurrIV] = WIV.WI;
@@ -1831,7 +1831,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Eliminate redundant IV users.
   if (!DisableIVRewrite)
-    Changed |= simplifyIVUsers(IU, &LPM, DeadInsts);
+    Changed |= simplifyIVUsers(IU, SE, &LPM, DeadInsts);
 
   // Eliminate redundant IV cycles.
   if (DisableIVRewrite)

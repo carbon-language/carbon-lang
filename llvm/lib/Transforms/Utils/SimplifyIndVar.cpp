@@ -54,16 +54,16 @@ namespace {
     bool Changed;
 
   public:
-    SimplifyIndvar(Loop *Loop, LPPassManager *LPM,
+    SimplifyIndvar(Loop *Loop, ScalarEvolution *SE, LPPassManager *LPM,
                    SmallVectorImpl<WeakVH> &Dead, IVUsers *IVU = NULL) :
       L(Loop),
       LI(LPM->getAnalysisIfAvailable<LoopInfo>()),
-      SE(LPM->getAnalysisIfAvailable<ScalarEvolution>()),
+      SE(SE),
       IU(IVU),
       TD(LPM->getAnalysisIfAvailable<TargetData>()),
       DeadInsts(Dead),
       Changed(false) {
-      assert(LI && SE && "IV simplification requires ScalarEvolution");
+      assert(LI && "IV simplification requires LoopInfo");
     }
 
     bool hasChanged() const { return Changed; }
@@ -372,22 +372,22 @@ namespace llvm {
 
 /// simplifyUsersOfIV - Simplify instructions that use this induction variable
 /// by using ScalarEvolution to analyze the IV's recurrence.
-bool simplifyUsersOfIV(PHINode *CurrIV, LPPassManager *LPM,
+bool simplifyUsersOfIV(PHINode *CurrIV, ScalarEvolution *SE, LPPassManager *LPM,
                        SmallVectorImpl<WeakVH> &Dead, IVVisitor *V)
 {
   LoopInfo *LI = &LPM->getAnalysis<LoopInfo>();
-  SimplifyIndvar SIV(LI->getLoopFor(CurrIV->getParent()), LPM, Dead);
+  SimplifyIndvar SIV(LI->getLoopFor(CurrIV->getParent()), SE, LPM, Dead);
   SIV.simplifyUsers(CurrIV, V);
   return SIV.hasChanged();
 }
 
 /// simplifyLoopIVs - Simplify users of induction variables within this
 /// loop. This does not actually change or add IVs.
-bool simplifyLoopIVs(Loop *L, LPPassManager *LPM,
+bool simplifyLoopIVs(Loop *L, ScalarEvolution *SE, LPPassManager *LPM,
                      SmallVectorImpl<WeakVH> &Dead) {
   bool Changed = false;
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I) {
-    Changed |= simplifyUsersOfIV(cast<PHINode>(I), LPM, Dead);
+    Changed |= simplifyUsersOfIV(cast<PHINode>(I), SE, LPM, Dead);
   }
   return Changed;
 }
@@ -397,9 +397,9 @@ bool simplifyLoopIVs(Loop *L, LPPassManager *LPM,
 ///
 /// This is the old approach to IV simplification to be replaced by
 /// SimplifyLoopIVs.
-bool simplifyIVUsers(IVUsers *IU, LPPassManager *LPM,
+bool simplifyIVUsers(IVUsers *IU, ScalarEvolution *SE, LPPassManager *LPM,
                      SmallVectorImpl<WeakVH> &Dead) {
-  SimplifyIndvar SIV(IU->getLoop(), LPM, Dead);
+  SimplifyIndvar SIV(IU->getLoop(), SE, LPM, Dead);
 
   // Each round of simplification involves a round of eliminating operations
   // followed by a round of widening IVs. A single IVUsers worklist is used
