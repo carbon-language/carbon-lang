@@ -2082,7 +2082,8 @@ def LDRTr : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$base_wb),
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 def LDRTi : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$base_wb),
-                   (ins addrmode_imm12:$addr), IndexModePost, LdFrm, IIC_iLoad_ru,
+                   (ins addrmode_imm12:$addr),
+                   IndexModePost, LdFrm, IIC_iLoad_ru,
                    "ldrt", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
   // {17-14}  Rn
   // {13}     1 == Rm, 0 == imm12
@@ -2557,8 +2558,8 @@ def MOVr_TC : AsI1<0b1101, (outs tcGPR:$Rd), (ins tcGPR:$Rm), DPFrm,
 
 def MOVsr : AsI1<0b1101, (outs GPRnopc:$Rd), (ins shift_so_reg_reg:$src),
                 DPSoRegRegFrm, IIC_iMOVsr,
-                "mov", "\t$Rd, $src", [(set GPRnopc:$Rd, shift_so_reg_reg:$src)]>,
-                UnaryDP {
+                "mov", "\t$Rd, $src",
+                [(set GPRnopc:$Rd, shift_so_reg_reg:$src)]>, UnaryDP {
   bits<4> Rd;
   bits<12> src;
   let Inst{15-12} = Rd;
@@ -2619,7 +2620,8 @@ def MOVi16_ga_pcrel : PseudoInst<(outs GPR:$Rd),
                                 (ins i32imm:$addr, pclabel:$id), IIC_iMOVi, []>;
 
 let Constraints = "$src = $Rd" in {
-def MOVTi16 : AI1<0b1010, (outs GPRnopc:$Rd), (ins GPR:$src, imm0_65535_expr:$imm),
+def MOVTi16 : AI1<0b1010, (outs GPRnopc:$Rd),
+                  (ins GPR:$src, imm0_65535_expr:$imm),
                   DPFrm, IIC_iMOVi,
                   "movt", "\t$Rd, $imm",
                   [(set GPRnopc:$Rd,
@@ -3156,12 +3158,12 @@ def BFC    : I<(outs GPR:$Rd), (ins GPR:$src, bf_inv_mask_imm:$imm),
 }
 
 // A8.6.18  BFI - Bitfield insert (Encoding A1)
-def BFI    : I<(outs GPRnopc:$Rd), (ins GPRnopc:$src, GPR:$Rn, bf_inv_mask_imm:$imm),
-               AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
-               "bfi", "\t$Rd, $Rn, $imm", "$src = $Rd",
-               [(set GPRnopc:$Rd, (ARMbfi GPRnopc:$src, GPR:$Rn,
-                                bf_inv_mask_imm:$imm))]>,
-               Requires<[IsARM, HasV6T2]> {
+def BFI:I<(outs GPRnopc:$Rd), (ins GPRnopc:$src, GPR:$Rn, bf_inv_mask_imm:$imm),
+          AddrMode1, 4, IndexModeNone, DPFrm, IIC_iUNAsi,
+          "bfi", "\t$Rd, $Rn, $imm", "$src = $Rd",
+          [(set GPRnopc:$Rd, (ARMbfi GPRnopc:$src, GPR:$Rn,
+                           bf_inv_mask_imm:$imm))]>,
+          Requires<[IsARM, HasV6T2]> {
   bits<4> Rd;
   bits<4> Rn;
   bits<10> imm;
@@ -3516,8 +3518,8 @@ multiclass AI_smla<string opc, PatFrag opnode> {
               (ins GPRnopc:$Rn, GPRnopc:$Rm, GPR:$Ra),
               IIC_iMAC16, !strconcat(opc, "wt"), "\t$Rd, $Rn, $Rm, $Ra",
               [(set GPRnopc:$Rd,
-                    (add GPR:$Ra, (sra (opnode GPRnopc:$Rn,
-                                       (sra GPRnopc:$Rm, (i32 16))), (i32 16))))]>,
+                 (add GPR:$Ra, (sra (opnode GPRnopc:$Rn,
+                                    (sra GPRnopc:$Rm, (i32 16))), (i32 16))))]>,
             Requires<[IsARM, HasV5TE]>;
   }
 }
@@ -3615,10 +3617,10 @@ defm SMLS : AI_smld<1, "smls">;
 
 multiclass AI_sdml<bit sub, string opc> {
 
-  def D : AMulDualI<0, sub, 0, (outs GPRnopc:$Rd), (ins GPRnopc:$Rn, GPRnopc:$Rm),
-                    NoItinerary, !strconcat(opc, "d"), "\t$Rd, $Rn, $Rm">;
-  def DX : AMulDualI<0, sub, 1, (outs GPRnopc:$Rd), (ins GPRnopc:$Rn, GPRnopc:$Rm),
-                    NoItinerary, !strconcat(opc, "dx"), "\t$Rd, $Rn, $Rm">;
+  def D:AMulDualI<0, sub, 0, (outs GPRnopc:$Rd), (ins GPRnopc:$Rn, GPRnopc:$Rm),
+                  NoItinerary, !strconcat(opc, "d"), "\t$Rd, $Rn, $Rm">;
+  def DX:AMulDualI<0, sub, 1, (outs GPRnopc:$Rd),(ins GPRnopc:$Rn, GPRnopc:$Rm),
+                  NoItinerary, !strconcat(opc, "dx"), "\t$Rd, $Rn, $Rm">;
 }
 
 defm SMUA : AI_sdml<0, "smua">;
