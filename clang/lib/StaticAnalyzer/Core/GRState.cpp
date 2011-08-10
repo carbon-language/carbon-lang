@@ -81,8 +81,7 @@ GRStateManager::removeDeadBindings(const GRState* state,
   NewState.setStore(newStore);
   SymReaper.setReapedStore(newStore);
   
-  state = getPersistentState(NewState);
-  return ConstraintMgr->removeDeadBindings(state, SymReaper);
+  return getPersistentState(NewState);
 }
 
 const GRState *GRStateManager::MarshalState(const GRState *state,
@@ -336,6 +335,14 @@ void GRStateManager::recycleUnusedStates() {
     state->~GRState();
   }
   recentlyAllocatedStates.clear();
+}
+
+const GRState* GRStateManager::getPersistentStateWithGDM(
+                                                     const GRState *FromState,
+                                                     const GRState *GDMState) {
+  GRState NewState = *FromState;
+  NewState.GDM = GDMState->GDM;
+  return getPersistentState(NewState);
 }
 
 const GRState* GRStateManager::getPersistentState(GRState& State) {

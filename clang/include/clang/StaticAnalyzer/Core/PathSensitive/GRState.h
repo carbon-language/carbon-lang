@@ -540,7 +540,17 @@ public:
   }
 
   const GRState* getPersistentState(GRState& Impl);
-  
+  const GRState* getPersistentStateWithGDM(const GRState *FromState,
+                                           const GRState *GDMState);
+
+  bool haveEqualEnvironments(const GRState * S1, const GRState * S2) {
+    return S1->Env == S2->Env;
+  }
+
+  bool haveEqualStores(const GRState * S1, const GRState * S2) {
+    return S1->store == S2->store;
+  }
+
   /// Periodically called by ExprEngine to recycle GRStates that were
   /// created but never used for creating an ExplodedNode.
   void recycleUnusedStates();
@@ -690,7 +700,7 @@ inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {
 
 inline SVal GRState::getSVal(const Stmt* Ex, bool useOnlyDirectBindings) const{
   return Env.getSVal(Ex, *getStateManager().svalBuilder,
-		     useOnlyDirectBindings);
+                     useOnlyDirectBindings);
 }
 
 inline SVal GRState::getSValAsScalarOrLoc(const Stmt *S) const {
