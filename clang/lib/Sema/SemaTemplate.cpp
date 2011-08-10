@@ -344,10 +344,12 @@ void Sema::LookupTemplateName(LookupResult &Found,
     if (FoundOuter.empty()) {
       //   - if the name is not found, the name found in the class of the
       //     object expression is used, otherwise
-    } else if (!FoundOuter.getAsSingle<ClassTemplateDecl>()) {
+    } else if (!FoundOuter.getAsSingle<ClassTemplateDecl>() ||
+               FoundOuter.isAmbiguous()) {
       //   - if the name is found in the context of the entire
       //     postfix-expression and does not name a class template, the name
       //     found in the class of the object expression is used, otherwise
+      FoundOuter.clear();
     } else if (!Found.isSuppressingDiagnostics()) {
       //   - if the name found is a class template, it must refer to the same
       //     entity as the one found in the class of the object expression,

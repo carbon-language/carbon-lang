@@ -44,3 +44,21 @@ void resolves_to_different() {
     v.set<double>(3.2);
   }
 }
+
+namespace rdar9915664 {
+  struct A {
+    template<typename T> void a();
+  };
+
+  struct B : A { };
+
+  struct C : A { };
+
+  struct D : B, C {
+    A &getA() { return static_cast<B&>(*this); }
+
+    void test_a() {
+      getA().a<int>();
+    }
+  };
+}
