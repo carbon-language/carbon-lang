@@ -1177,10 +1177,10 @@ static bool DecodeSMLAInstruction(llvm::MCInst &Inst, unsigned Insn,
   if (pred == 0xF)
     return DecodeCPSInstruction(Inst, Insn, Address, Decoder);
 
-  DecodeGPRRegisterClass(Inst, Rd, Address, Decoder);
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
-  DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
-  DecodeGPRRegisterClass(Inst, Ra, Address, Decoder);
+  DecodeGPRnopcRegisterClass(Inst, Rd, Address, Decoder);
+  DecodeGPRnopcRegisterClass(Inst, Rn, Address, Decoder);
+  DecodeGPRnopcRegisterClass(Inst, Rm, Address, Decoder);
+  DecodeGPRnopcRegisterClass(Inst, Ra, Address, Decoder);
 
   return true;
 }
