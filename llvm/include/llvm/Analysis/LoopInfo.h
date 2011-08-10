@@ -134,9 +134,9 @@ public:
   block_iterator block_begin() const { return Blocks.begin(); }
   block_iterator block_end() const { return Blocks.end(); }
 
-  /// getNumBlocks - Get the number of blocks in this loop.
+  /// getNumBlocks - Get the number of blocks in this loop in constant time.
   unsigned getNumBlocks() const {
-    return std::distance(block_begin(), block_end());
+    return Blocks.size();
   }
 
   /// isLoopExiting - True if terminator in the block can branch to another
