@@ -2063,39 +2063,40 @@ def LDRD_POST: AI3ldstidx<0b1101, 0, 1, 0, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
 
 // LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT are for disassembly only.
 let mayLoad = 1, neverHasSideEffects = 1 in {
-def LDRTr : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$base_wb),
-                   (ins ldst_so_reg:$addr), IndexModePost, LdFrm, IIC_iLoad_ru,
-                   "ldrt", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
-  // {17-14}  Rn
-  // {13}     1 == Rm, 0 == imm12
+
+def LDRT_POST_REG : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+                    (ins addr_offset_none:$addr, am2offset_reg:$offset),
+                    IndexModePost, LdFrm, IIC_iLoad_ru,
+                    "ldrt", "\t$Rt, $addr, $offset",
+                    "$addr.base = $Rn_wb", []> {
   // {12}     isAdd
   // {11-0}   imm12/Rm
-  bits<18> addr;
+  bits<14> offset;
+  bits<4> addr;
   let Inst{25} = 1;
-  let Inst{23} = addr{12};
+  let Inst{23} = offset{12};
   let Inst{21} = 1; // overwrite
-  let Inst{19-16} = addr{17-14};
-  let Inst{11-5} = addr{11-5};
+  let Inst{19-16} = addr;
+  let Inst{11-5} = offset{11-5};
   let Inst{4} = 0;
-  let Inst{3-0} = addr{3-0};
-  let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
+  let Inst{3-0} = offset{3-0};
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
-def LDRTi : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$base_wb),
-                   (ins addrmode_imm12:$addr),
+
+def LDRT_POST_IMM : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+                    (ins addr_offset_none:$addr, am2offset_imm:$offset),
                    IndexModePost, LdFrm, IIC_iLoad_ru,
-                   "ldrt", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
-  // {17-14}  Rn
-  // {13}     1 == Rm, 0 == imm12
+                   "ldrt", "\t$Rt, $addr, $offset",
+                   "$addr.base = $Rn_wb", []> {
   // {12}     isAdd
   // {11-0}   imm12/Rm
-  bits<18> addr;
+  bits<14> offset;
+  bits<4> addr;
   let Inst{25} = 0;
-  let Inst{23} = addr{12};
+  let Inst{23} = offset{12};
   let Inst{21} = 1; // overwrite
-  let Inst{19-16} = addr{17-14};
-  let Inst{11-0} = addr{11-0};
-  let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
+  let Inst{19-16} = addr;
+  let Inst{11-0} = offset{11-0};
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 

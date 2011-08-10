@@ -953,8 +953,8 @@ static bool DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::LDR_PRE:
     case ARM::LDRBT_POST_REG:
     case ARM::LDRBT_POST_IMM:
-    case ARM::LDRTr:
-    case ARM::LDRTi:
+    case ARM::LDRT_POST_REG:
+    case ARM::LDRT_POST_IMM:
       DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
       break;
     default:
