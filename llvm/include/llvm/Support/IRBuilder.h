@@ -1145,7 +1145,7 @@ public:
 
   CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Args,
                        const Twine &Name = "") {
-    return Insert(CallInst::Create(Callee, Args, Name));
+    return Insert(CallInst::Create(Callee, Args), Name);
   }
 
   Value *CreateSelect(Value *C, Value *True, Value *False,
