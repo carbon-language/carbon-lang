@@ -330,6 +330,11 @@ private:
         if (RE->getDecl() != Ivar)
           return true;
 
+      if (ObjCMessageExpr *
+            ME = dyn_cast<ObjCMessageExpr>(E->getRHS()->IgnoreParenCasts()))
+        if (ME->getMethodFamily() == OMF_retain)
+          return false;
+
       ImplicitCastExpr *implCE = dyn_cast<ImplicitCastExpr>(E->getRHS());
       while (implCE && implCE->getCastKind() ==  CK_BitCast)
         implCE = dyn_cast<ImplicitCastExpr>(implCE->getSubExpr());
