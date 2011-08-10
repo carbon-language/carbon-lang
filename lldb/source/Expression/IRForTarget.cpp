@@ -1634,19 +1634,42 @@ IRForTarget::ReplaceStrings ()
         
         Constant *gc = gv->getInitializer();
         
-        ConstantArray *gc_array = dyn_cast<ConstantArray>(gc);
+        std::string str;
         
-        if (!gc_array)
-            continue;
+        if (gc->isNullValue())
+        {
+            Type *gc_type = gc->getType();
+            
+            ArrayType *gc_array_type = dyn_cast<ArrayType>(gc_type);
+            
+            if (!gc_array_type)
+                continue;
+            
+            Type *gc_element_type = gc_array_type->getElementType();
+            
+            IntegerType *gc_integer_type = dyn_cast<IntegerType>(gc_element_type);
+            
+            if (gc_integer_type->getBitWidth() != 8)
+                continue;
+            
+            str = "";
+        }
+        else
+        {
+            ConstantArray *gc_array = dyn_cast<ConstantArray>(gc);
+
+            if (!gc_array)
+                continue;
         
-        if (!gc_array->isCString())
-            continue;
+            if (!gc_array->isCString())
+                continue;
         
-        if (log)
-            log->Printf("Found a GlobalVariable with string initializer %s", PrintValue(gc).c_str());
+            if (log)
+                log->Printf("Found a GlobalVariable with string initializer %s", PrintValue(gc).c_str());
         
-        std::string str = gc_array->getAsString();
-        
+            str = gc_array->getAsString();
+        }
+            
         offsets[gv] = m_data_allocator->GetStream().GetSize();
         
         m_data_allocator->GetStream().Write(str.c_str(), str.length() + 1);
@@ -1686,7 +1709,10 @@ IRForTarget::ReplaceStrings ()
                     return false;
                 }
                 
-                const_expr->replaceAllUsesWith(new_initializer);
+                Constant *bit_cast = ConstantExpr::getBitCast(new_initializer, const_expr->getOperand(0)->getType());
+                Constant *new_gep = const_expr->getWithOperandReplaced(0, bit_cast);
+                
+                const_expr->replaceAllUsesWith(new_gep);
             }
             else if (store_inst)
             {
