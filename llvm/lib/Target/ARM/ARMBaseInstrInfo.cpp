@@ -711,82 +711,84 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                             MFI.getObjectSize(FI),
                             Align);
 
-  // tGPR is used sometimes in ARM instructions that need to avoid using
-  // certain registers.  Just treat it as GPR here. Likewise, rGPR.
-  if (RC == ARM::tGPRRegisterClass || RC == ARM::tcGPRRegisterClass
-      || RC == ARM::rGPRRegisterClass)
-    RC = ARM::GPRRegisterClass;
-
-  switch (RC->getID()) {
-  case ARM::GPRRegClassID:
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::STRi12))
+  switch (RC->getSize()) {
+    case 4:
+      if (ARM::GPRRegClass.hasSubClassEq(RC)) {
+        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::STRi12))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
-    break;
-  case ARM::SPRRegClassID:
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTRS))
+      } else if (ARM::SPRRegClass.hasSubClassEq(RC)) {
+        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTRS))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
-    break;
-  case ARM::DPRRegClassID:
-  case ARM::DPR_VFP2RegClassID:
-  case ARM::DPR_8RegClassID:
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTRD))
+      } else
+        llvm_unreachable("Unknown reg class!");
+      break;
+    case 8:
+      if (ARM::DPRRegClass.hasSubClassEq(RC)) {
+        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTRD))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
-    break;
-  case ARM::QPRRegClassID:
-  case ARM::QPR_VFP2RegClassID:
-  case ARM::QPR_8RegClassID:
-    if (Align >= 16 && getRegisterInfo().needsStackRealignment(MF)) {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1q64Pseudo))
+      } else
+        llvm_unreachable("Unknown reg class!");
+      break;
+    case 16:
+      if (ARM::QPRRegClass.hasSubClassEq(RC)) {
+        if (Align >= 16 && getRegisterInfo().needsStackRealignment(MF)) {
+          AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1q64Pseudo))
                      .addFrameIndex(FI).addImm(16)
                      .addReg(SrcReg, getKillRegState(isKill))
                      .addMemOperand(MMO));
-    } else {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMQIA))
+        } else {
+          AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMQIA))
                      .addReg(SrcReg, getKillRegState(isKill))
                      .addFrameIndex(FI)
                      .addMemOperand(MMO));
-    }
-    break;
-  case ARM::QQPRRegClassID:
-  case ARM::QQPR_VFP2RegClassID:
-    if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
-      // FIXME: It's possible to only store part of the QQ register if the
-      // spilled def has a sub-register index.
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1d64QPseudo))
+        }
+      } else
+        llvm_unreachable("Unknown reg class!");
+      break;
+    case 32:
+      if (ARM::QQPRRegClass.hasSubClassEq(RC)) {
+        if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
+          // FIXME: It's possible to only store part of the QQ register if the
+          // spilled def has a sub-register index.
+          AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1d64QPseudo))
                      .addFrameIndex(FI).addImm(16)
                      .addReg(SrcReg, getKillRegState(isKill))
                      .addMemOperand(MMO));
-    } else {
-      MachineInstrBuilder MIB =
-        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMDIA))
+        } else {
+          MachineInstrBuilder MIB =
+          AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMDIA))
                        .addFrameIndex(FI))
-        .addMemOperand(MMO);
-      MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
-      MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
-      MIB = AddDReg(MIB, SrcReg, ARM::dsub_2, 0, TRI);
-            AddDReg(MIB, SrcReg, ARM::dsub_3, 0, TRI);
-    }
-    break;
-  case ARM::QQQQPRRegClassID: {
-    MachineInstrBuilder MIB =
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMDIA))
-                     .addFrameIndex(FI))
-      .addMemOperand(MMO);
-    MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::dsub_2, 0, TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::dsub_3, 0, TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::dsub_4, 0, TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::dsub_5, 0, TRI);
-    MIB = AddDReg(MIB, SrcReg, ARM::dsub_6, 0, TRI);
-          AddDReg(MIB, SrcReg, ARM::dsub_7, 0, TRI);
-    break;
-  }
-  default:
-    llvm_unreachable("Unknown regclass!");
+                       .addMemOperand(MMO);
+          MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
+          MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
+          MIB = AddDReg(MIB, SrcReg, ARM::dsub_2, 0, TRI);
+                AddDReg(MIB, SrcReg, ARM::dsub_3, 0, TRI);
+        }
+      } else
+        llvm_unreachable("Unknown reg class!");
+      break;
+    case 64:
+      if (ARM::QQQQPRRegClass.hasSubClassEq(RC)) {
+        MachineInstrBuilder MIB =
+          AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VSTMDIA))
+                         .addFrameIndex(FI))
+                         .addMemOperand(MMO);
+        MIB = AddDReg(MIB, SrcReg, ARM::dsub_0, getKillRegState(isKill), TRI);
+        MIB = AddDReg(MIB, SrcReg, ARM::dsub_1, 0, TRI);
+        MIB = AddDReg(MIB, SrcReg, ARM::dsub_2, 0, TRI);
+        MIB = AddDReg(MIB, SrcReg, ARM::dsub_3, 0, TRI);
+        MIB = AddDReg(MIB, SrcReg, ARM::dsub_4, 0, TRI);
+        MIB = AddDReg(MIB, SrcReg, ARM::dsub_5, 0, TRI);
+        MIB = AddDReg(MIB, SrcReg, ARM::dsub_6, 0, TRI);
+              AddDReg(MIB, SrcReg, ARM::dsub_7, 0, TRI);
+      } else
+        llvm_unreachable("Unknown reg class!");
+      break;
+    default:
+      llvm_unreachable("Unknown reg class!");
   }
 }
 
@@ -860,72 +862,75 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                             MFI.getObjectSize(FI),
                             Align);
 
-  // tGPR is used sometimes in ARM instructions that need to avoid using
-  // certain registers.  Just treat it as GPR here.
-  if (RC == ARM::tGPRRegisterClass || RC == ARM::tcGPRRegisterClass
-      || RC == ARM::rGPRRegisterClass)
-    RC = ARM::GPRRegisterClass;
+  switch (RC->getSize()) {
+  case 4:
+    if (ARM::GPRRegClass.hasSubClassEq(RC)) {
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::LDRi12), DestReg)
+                   .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
 
-  switch (RC->getID()) {
-  case ARM::GPRRegClassID:
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::LDRi12), DestReg)
+    } else if (ARM::SPRRegClass.hasSubClassEq(RC)) {
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDRS), DestReg)
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
+    } else
+      llvm_unreachable("Unknown reg class!");
     break;
-  case ARM::SPRRegClassID:
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDRS), DestReg)
+  case 8:
+    if (ARM::DPRRegClass.hasSubClassEq(RC)) {
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDRD), DestReg)
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
+    } else
+      llvm_unreachable("Unknown reg class!");
     break;
-  case ARM::DPRRegClassID:
-  case ARM::DPR_VFP2RegClassID:
-  case ARM::DPR_8RegClassID:
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDRD), DestReg)
-                   .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
-    break;
-  case ARM::QPRRegClassID:
-  case ARM::QPR_VFP2RegClassID:
-  case ARM::QPR_8RegClassID:
-    if (Align >= 16 && getRegisterInfo().needsStackRealignment(MF)) {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1q64Pseudo), DestReg)
+  case 16:
+    if (ARM::QPRRegClass.hasSubClassEq(RC)) {
+      if (Align >= 16 && getRegisterInfo().needsStackRealignment(MF)) {
+        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1q64Pseudo), DestReg)
                      .addFrameIndex(FI).addImm(16)
                      .addMemOperand(MMO));
-    } else {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMQIA), DestReg)
-                     .addFrameIndex(FI)
-                     .addMemOperand(MMO));
-    }
+      } else {
+        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMQIA), DestReg)
+                       .addFrameIndex(FI)
+                       .addMemOperand(MMO));
+      }
+    } else
+      llvm_unreachable("Unknown reg class!");
     break;
-  case ARM::QQPRRegClassID:
-  case ARM::QQPR_VFP2RegClassID:
-    if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1d64QPseudo), DestReg)
+  case 32:
+    if (ARM::QQPRRegClass.hasSubClassEq(RC)) {
+      if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
+        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1d64QPseudo), DestReg)
                      .addFrameIndex(FI).addImm(16)
                      .addMemOperand(MMO));
-    } else {
-      MachineInstrBuilder MIB =
+      } else {
+        MachineInstrBuilder MIB =
         AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMDIA))
                        .addFrameIndex(FI))
-        .addMemOperand(MMO);
+                       .addMemOperand(MMO);
+        MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
+        MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
+        MIB = AddDReg(MIB, DestReg, ARM::dsub_2, RegState::Define, TRI);
+              AddDReg(MIB, DestReg, ARM::dsub_3, RegState::Define, TRI);
+      }
+    } else
+      llvm_unreachable("Unknown reg class!");
+    break;
+  case 64:
+    if (ARM::QQQQPRRegClass.hasSubClassEq(RC)) {
+      MachineInstrBuilder MIB =
+      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMDIA))
+                     .addFrameIndex(FI))
+                     .addMemOperand(MMO);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
       MIB = AddDReg(MIB, DestReg, ARM::dsub_2, RegState::Define, TRI);
-            AddDReg(MIB, DestReg, ARM::dsub_3, RegState::Define, TRI);
-    }
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_3, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_4, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_5, RegState::Define, TRI);
+      MIB = AddDReg(MIB, DestReg, ARM::dsub_6, RegState::Define, TRI);
+      AddDReg(MIB, DestReg, ARM::dsub_7, RegState::Define, TRI);
+    } else
+      llvm_unreachable("Unknown reg class!");
     break;
-  case ARM::QQQQPRRegClassID: {
-    MachineInstrBuilder MIB =
-      AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLDMDIA))
-                     .addFrameIndex(FI))
-      .addMemOperand(MMO);
-    MIB = AddDReg(MIB, DestReg, ARM::dsub_0, RegState::Define, TRI);
-    MIB = AddDReg(MIB, DestReg, ARM::dsub_1, RegState::Define, TRI);
-    MIB = AddDReg(MIB, DestReg, ARM::dsub_2, RegState::Define, TRI);
-    MIB = AddDReg(MIB, DestReg, ARM::dsub_3, RegState::Define, TRI);
-    MIB = AddDReg(MIB, DestReg, ARM::dsub_4, RegState::Define, TRI);
-    MIB = AddDReg(MIB, DestReg, ARM::dsub_5, RegState::Define, TRI);
-    MIB = AddDReg(MIB, DestReg, ARM::dsub_6, RegState::Define, TRI);
-    AddDReg(MIB, DestReg, ARM::dsub_7, RegState::Define, TRI);
-    break;
-  }
   default:
     llvm_unreachable("Unknown regclass!");
   }
