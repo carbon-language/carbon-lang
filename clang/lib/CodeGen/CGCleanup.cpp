@@ -712,7 +712,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 
       // I.  Set up the fallthrough edge in.
 
-    CGBuilderTy::InsertPoint savedInactiveFallthroughIP;
+      CGBuilderTy::InsertPoint savedInactiveFallthroughIP;
 
       // If there's a fallthrough, we need to store the cleanup
       // destination index.  For fall-throughs this is always zero.
