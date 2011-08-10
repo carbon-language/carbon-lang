@@ -105,3 +105,17 @@ _func:
 @ CHECK: ldrbt	r2, [r8], #-8           @ encoding: [0x08,0x20,0x78,0xe4]
 @ CHECK: ldrbt	r8, [r7], r6            @ encoding: [0x06,0x80,0xf7,0xe6]
 @ CHECK: ldrbt	r1, [r2], -r6, lsl #12  @ encoding: [0x06,0x16,0x72,0xe6]
+
+
+@------------------------------------------------------------------------------
+@ LDRD (immediate)
+@------------------------------------------------------------------------------
+        ldrd r3, r4, [r5]
+        ldrd r7, r8, [r2, #15]
+        ldrd r1, r2, [r9, #32]!
+        ldrd r6, r7, [r1], #8
+
+@ CHECK: ldrd	r3, r4, [r5]            @ encoding: [0xd0,0x30,0xc5,0xe1]
+@ CHECK: ldrd	r7, r8, [r2, #15]       @ encoding: [0xdf,0x70,0xc2,0xe1]
+@ CHECK: ldrd	r1, r2, [r9, #32]!      @ encoding: [0xd0,0x12,0xe9,0xe1]
+@ CHECK: ldrd	r6, r7, [r1], #8        @ encoding: [0xd8,0x60,0xc1,0xe0]

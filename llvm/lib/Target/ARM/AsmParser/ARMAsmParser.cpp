@@ -128,6 +128,8 @@ class ARMAsmParser : public MCTargetAsmParser {
                              const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtStExtTWriteBackReg(MCInst &Inst, unsigned Opcode,
                              const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtLdrdPre(MCInst &Inst, unsigned Opcode,
+                  const SmallVectorImpl<MCParsedAsmOperand*> &);
 
   bool validateInstruction(MCInst &Inst,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
@@ -534,6 +536,29 @@ public:
     int64_t Val = CE->getValue();
     return Val > -4096 && Val < 4096;
   }
+  bool isAddrMode3() const {
+    if (Kind != Memory)
+      return false;
+    // No shifts are legal for AM3.
+    if (Mem.ShiftType != ARM_AM::no_shift) return false;
+    // Check for register offset.
+    if (Mem.OffsetRegNum) return true;
+    // Immediate offset in range [-255, 255].
+    if (!Mem.OffsetImm) return true;
+    int64_t Val = Mem.OffsetImm->getValue();
+    return Val > -256 && Val < 256;
+  }
+  bool isAM3Offset() const {
+    if (Kind != Immediate && Kind != PostIndexRegister)
+      return false;
+    if (Kind == PostIndexRegister)
+      return PostIdxReg.ShiftTy == ARM_AM::no_shift;
+    // Immediate offset in range [-255, 255].
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Val = CE->getValue();
+    return Val > -256 && Val < 256;
+  }
   bool isAddrMode5() const {
     if (Kind != Memory)
       return false;
@@ -804,6 +829,46 @@ public:
     assert(N == 2 && "Invalid number of operands!");
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     assert(CE && "non-constant AM2OffsetImm operand!");
+    int32_t Val = CE->getValue();
+    ARM_AM::AddrOpc AddSub = Val < 0 ? ARM_AM::sub : ARM_AM::add;
+    // Special case for #-0
+    if (Val == INT32_MIN) Val = 0;
+    if (Val < 0) Val = -Val;
+    Val = ARM_AM::getAM2Opc(AddSub, Val, ARM_AM::no_shift);
+    Inst.addOperand(MCOperand::CreateReg(0));
+    Inst.addOperand(MCOperand::CreateImm(Val));
+  }
+
+  void addAddrMode3Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 3 && "Invalid number of operands!");
+    int32_t Val = Mem.OffsetImm ? Mem.OffsetImm->getValue() : 0;
+    if (!Mem.OffsetRegNum) {
+      ARM_AM::AddrOpc AddSub = Val < 0 ? ARM_AM::sub : ARM_AM::add;
+      // Special case for #-0
+      if (Val == INT32_MIN) Val = 0;
+      if (Val < 0) Val = -Val;
+      Val = ARM_AM::getAM3Opc(AddSub, Val);
+    } else {
+      // For register offset, we encode the shift type and negation flag
+      // here.
+      Val = ARM_AM::getAM3Opc(Mem.isNegative ? ARM_AM::sub : ARM_AM::add, 0);
+    }
+    Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
+    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateImm(Val));
+  }
+
+  void addAM3OffsetOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    if (Kind == PostIndexRegister) {
+      int32_t Val =
+        ARM_AM::getAM3Opc(PostIdxReg.isAdd ? ARM_AM::add : ARM_AM::sub, 0);
+      Inst.addOperand(MCOperand::CreateReg(PostIdxReg.RegNum));
+      Inst.addOperand(MCOperand::CreateImm(Val));
+    }
+
+    // Constant offset.
+    const MCConstantExpr *CE = static_cast<const MCConstantExpr*>(getImm());
     int32_t Val = CE->getValue();
     ARM_AM::AddrOpc AddSub = Val < 0 ? ARM_AM::sub : ARM_AM::add;
     // Special case for #-0
@@ -2046,6 +2111,24 @@ cvtStExtTWriteBackReg(MCInst &Inst, unsigned Opcode,
   return true;
 }
 
+/// cvtLdrdPre - Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+cvtLdrdPre(MCInst &Inst, unsigned Opcode,
+           const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Rt, Rt2
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addRegOperands(Inst, 1);
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateImm(0));
+  // addr
+  ((ARMOperand*)Operands[4])->addAddrMode3Operands(Inst, 3);
+  // pred
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
+  return true;
+}
+
 /// Parse an ARM memory expression, return false if successful else return true
 /// or an error.  The first token must be a '[' when called.
 bool ARMAsmParser::
@@ -2645,6 +2728,9 @@ bool ARMAsmParser::
 validateInstruction(MCInst &Inst,
                     const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   switch (Inst.getOpcode()) {
+  case ARM::LDRD:
+  case ARM::LDRD_PRE:
+  case ARM::LDRD_POST:
   case ARM::LDREXD: {
     // Rt2 must be Rt + 1.
     unsigned Rt = getARMRegisterNumbering(Inst.getOperand(0).getReg());
@@ -2654,6 +2740,9 @@ validateInstruction(MCInst &Inst,
                    "destination operands must be sequential");
     return false;
   }
+  case ARM::STRgD:
+  case ARM::STRgD_PRE:
+  case ARM::STRgD_POST:
   case ARM::STREXD: {
     // Rt2 must be Rt + 1.
     unsigned Rt = getARMRegisterNumbering(Inst.getOperand(1).getReg());

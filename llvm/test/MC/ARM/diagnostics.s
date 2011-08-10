@@ -283,3 +283,17 @@
 @ CHECK-ERRORS: error: bitfield width must be in range [1,32-lsb]
 @ CHECK-ERRORS:         ubfxgt r4, r5, #16, #17
 @ CHECK-ERRORS:                             ^
+
+        @ Out of order Rt/Rt2 operands for ldrd
+        ldrd  r4, r3, [r8]
+        ldrd  r4, r3, [r8, #8]!
+        ldrd  r4, r3, [r8], #8
+@ CHECK-ERRORS: error: destination operands must be sequential
+@ CHECK-ERRORS:         ldrd  r4, r3, [r8]
+@ CHECK-ERRORS:                   ^
+@ CHECK-ERRORS: error: destination operands must be sequential
+@ CHECK-ERRORS:         ldrd  r4, r3, [r8, #8]!
+@ CHECK-ERRORS:                   ^
+@ CHECK-ERRORS: error: destination operands must be sequential
+@ CHECK-ERRORS:         ldrd  r4, r3, [r8], #8
+@ CHECK-ERRORS:                   ^

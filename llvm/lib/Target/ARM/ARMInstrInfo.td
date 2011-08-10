@@ -710,20 +710,26 @@ def am2offset_imm : Operand<i32>,
 // addrmode3 := reg +/- reg
 // addrmode3 := reg +/- imm8
 //
-//def AddrMode3AsmOperand : AsmOperandClass { let Name = "AddrMode3"; }
+// FIXME: split into imm vs. reg versions.
+def AddrMode3AsmOperand : AsmOperandClass { let Name = "AddrMode3"; }
 def addrmode3 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode3", []> {
   let EncoderMethod = "getAddrMode3OpValue";
   let PrintMethod = "printAddrMode3Operand";
+  let ParserMatchClass = AddrMode3AsmOperand;
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
 
+// FIXME: split into imm vs. reg versions.
+// FIXME: parser method to handle +/- register.
+def AM3OffsetAsmOperand : AsmOperandClass { let Name = "AM3Offset"; }
 def am3offset : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode3Offset",
                                [], [SDNPWantRoot]> {
   let EncoderMethod = "getAddrMode3OffsetOpValue";
   let DecoderMethod = "DecodeAddrMode3Offset";
   let PrintMethod = "printAddrMode3OffsetOperand";
+  let ParserMatchClass = AM3OffsetAsmOperand;
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
@@ -2030,20 +2036,22 @@ def LDRD_PRE : AI3ldstidx<0b1101, 0, 1, 1, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
   let Inst{11-8}  = addr{7-4};    // imm7_4/zero
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
   let DecoderMethod = "DecodeAddrMode3Instruction";
+  let AsmMatchConverter = "cvtLdrdPre";
 }
 def LDRD_POST: AI3ldstidx<0b1101, 0, 1, 0, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
-                          (ins GPR:$Rn, am3offset:$offset), IndexModePost,
-                          LdMiscFrm, IIC_iLoad_d_ru,
-                          "ldrd", "\t$Rt, $Rt2, [$Rn], $offset",
-                          "$Rn = $Rn_wb", []> {
+                          (ins addr_offset_none:$addr, am3offset:$offset),
+                          IndexModePost, LdMiscFrm, IIC_iLoad_d_ru,
+                          "ldrd", "\t$Rt, $Rt2, $addr, $offset",
+                          "$addr.base = $Rn_wb", []> {
   bits<10> offset;
-  bits<4> Rn;
+  bits<4> addr;
   let Inst{23}    = offset{8};      // U bit
   let Inst{22}    = offset{9};      // 1 == imm8, 0 == Rm
-  let Inst{19-16} = Rn;
+  let Inst{19-16} = addr;
   let Inst{11-8}  = offset{7-4};    // imm7_4/zero
   let Inst{3-0}   = offset{3-0};    // imm3_0/Rm
   let DecoderMethod = "DecodeAddrMode3Instruction";
+//  let AsmMatchConverter = "cvtLdrdPost";
 }
 } // hasExtraDefRegAllocReq = 1
 } // mayLoad = 1, neverHasSideEffects = 1
