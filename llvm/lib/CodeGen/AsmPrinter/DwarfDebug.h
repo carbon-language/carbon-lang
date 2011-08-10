@@ -15,6 +15,7 @@
 #define CODEGEN_ASMPRINTER_DWARFDEBUG_H__
 
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/LexicalScopes.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "DIE.h"
@@ -30,7 +31,6 @@ namespace llvm {
 
 class CompileUnit;
 class DbgConcreteScope;
-class DbgScope;
 class DbgVariable;
 class MachineFrameInfo;
 class MachineModuleInfo;
@@ -192,33 +192,18 @@ class DwarfDebug {
   ///
   UniqueVector<const MCSection*> SectionMap;
 
-  /// CurrentFnDbgScope - Top level scope for the current function.
-  ///
-  DbgScope *CurrentFnDbgScope;
-  
   /// CurrentFnArguments - List of Arguments (DbgValues) for current function.
   SmallVector<DbgVariable *, 8> CurrentFnArguments;
 
-  /// DbgScopeMap - Tracks the scopes in the current function.  Owns the
-  /// contained DbgScope*s.
-  DenseMap<const MDNode *, DbgScope *> DbgScopeMap;
-
-  /// InlinedDbgScopeMap - Tracks inlined function scopes in current function.
-  DenseMap<DebugLoc, DbgScope *> InlinedDbgScopeMap;
-
-  /// AbstractScopes - Tracks the abstract scopes a module. These scopes are
-  /// not included DbgScopeMap.  AbstractScopes owns its DbgScope*s.
-  DenseMap<const MDNode *, DbgScope *> AbstractScopes;
+  LexicalScopes LScopes;
 
   /// AbstractSPDies - Collection of abstract subprogram DIEs.
   DenseMap<const MDNode *, DIE *> AbstractSPDies;
 
-  /// AbstractScopesList - Tracks abstract scopes constructed while processing
-  /// a function. This list is cleared during endFunction().
-  SmallVector<DbgScope *, 4>AbstractScopesList;
+  /// ScopeVariables - Collection of dbg variables of a scope.
+  DenseMap<LexicalScope *, SmallVector<DbgVariable *, 8> > ScopeVariables;
 
-  /// AbstractVariables - Collection on abstract variables.  Owned by the
-  /// DbgScopes in AbstractScopes.
+  /// AbstractVariables - Collection on abstract variables.
   DenseMap<const MDNode *, DbgVariable *> AbstractVariables;
 
   /// DbgVariableToFrameIndexMap - Tracks frame index used to find 
@@ -316,11 +301,7 @@ private:
   ///
   void assignAbbrevNumber(DIEAbbrev &Abbrev);
 
-  /// getOrCreateDbgScope - Create DbgScope for the scope.
-  DbgScope *getOrCreateDbgScope(DebugLoc DL);
-  DbgScope *getOrCreateRegularScope(MDNode *Scope);
-  DbgScope *getOrCreateInlinedScope(MDNode *Scope, MDNode *InlinedAt);
-  DbgScope *getOrCreateAbstractScope(const MDNode *N);
+  void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
 
   /// findAbstractVariable - Find abstract variable associated with Var.
   DbgVariable *findAbstractVariable(DIVariable &Var, DebugLoc Loc);
@@ -333,18 +314,18 @@ private:
 
   /// constructLexicalScope - Construct new DW_TAG_lexical_block 
   /// for this scope and attach DW_AT_low_pc/DW_AT_high_pc labels.
-  DIE *constructLexicalScopeDIE(DbgScope *Scope);
+  DIE *constructLexicalScopeDIE(LexicalScope *Scope);
 
   /// constructInlinedScopeDIE - This scope represents inlined body of
   /// a function. Construct DIE to represent this concrete inlined copy
   /// of the function.
-  DIE *constructInlinedScopeDIE(DbgScope *Scope);
+  DIE *constructInlinedScopeDIE(LexicalScope *Scope);
 
   /// constructVariableDIE - Construct a DIE for the given DbgVariable.
-  DIE *constructVariableDIE(DbgVariable *DV, DbgScope *S);
+  DIE *constructVariableDIE(DbgVariable *DV, LexicalScope *S);
 
   /// constructScopeDIE - Construct a DIE for this scope.
-  DIE *constructScopeDIE(DbgScope *Scope);
+  DIE *constructScopeDIE(LexicalScope *Scope);
 
   /// EmitSectionLabels - Emit initial Dwarf sections with a label at
   /// the start of each one.
@@ -449,23 +430,16 @@ private:
   /// is found. Update FI to hold value of the index.
   bool findVariableFrameIndex(const DbgVariable *V, int *FI);
 
-  /// findDbgScope - Find DbgScope for the debug loc.
-  DbgScope *findDbgScope(DebugLoc DL);
-
   /// identifyScopeMarkers() - Indentify instructions that are marking
   /// beginning of or end of a scope.
   void identifyScopeMarkers();
 
-  /// extractScopeInformation - Scan machine instructions in this function
-  /// and collect DbgScopes. Return true, if atleast one scope was found.
-  bool extractScopeInformation();
-  
   /// addCurrentFnArgument - If Var is an current function argument that add
   /// it in CurrentFnArguments list.
   bool addCurrentFnArgument(const MachineFunction *MF,
-                            DbgVariable *Var, DbgScope *Scope);
+                            DbgVariable *Var, LexicalScope *Scope);
 
-  /// collectVariableInfo - Populate DbgScope entries with variables' info.
+  /// collectVariableInfo - Populate LexicalScope entries with variables' info.
   void collectVariableInfo(const MachineFunction *,
                            SmallPtrSet<const MDNode *, 16> &ProcessedVars);
   
