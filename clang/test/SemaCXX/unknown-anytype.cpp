@@ -34,3 +34,14 @@ namespace test3 {
     ((void(void)) foo)(); // expected-error {{variable 'foo' with unknown type cannot be given a function type}}
   }
 }
+
+// rdar://problem/9899447
+namespace test4 {
+  extern __unknown_anytype test0(...);
+  extern __unknown_anytype test1(...);
+
+  void test() {
+    void (*fn)(int) = (void(*)(int)) test0;
+    int x = (int) test1; // expected-error {{function 'test1' with unknown type must be given a function type}}
+  }
+}

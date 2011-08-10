@@ -9819,9 +9819,19 @@ ExprResult RebuildUnknownAnyExpr::resolveDecl(Expr *expr, ValueDecl *decl) {
 
   //  - functions
   if (FunctionDecl *fn = dyn_cast<FunctionDecl>(decl)) {
-    // This is true because FunctionDecls must always have function
-    // type, so we can't be resolving the entire thing at once.
-    assert(type->isFunctionType());
+    if (const PointerType *ptr = type->getAs<PointerType>()) {
+      DestType = ptr->getPointeeType();
+      ExprResult result = resolveDecl(expr, decl);
+      if (result.isInvalid()) return ExprError();
+      return S.ImpCastExprToType(result.take(), type,
+                                 CK_FunctionToPointerDecay, VK_RValue);
+    }
+
+    if (!type->isFunctionType()) {
+      S.Diag(expr->getExprLoc(), diag::err_unknown_any_function)
+        << decl << expr->getSourceRange();
+      return ExprError();
+    }
 
     if (CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(fn))
       if (method->isInstance()) {

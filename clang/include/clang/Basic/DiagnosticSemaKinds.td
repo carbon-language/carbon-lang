@@ -4500,6 +4500,8 @@ def err_unknown_any_addrof : Error<
   "can only be cast to a pointer type">;
 def err_unknown_any_var_function_type : Error<
   "variable %0 with unknown type cannot be given a function type">;
+def err_unknown_any_function : Error<
+  "function %0 with unknown type must be given a function type">;
 
 def err_filter_expression_integral : Error<
   "filter expression type should be an integral value not %0">;
