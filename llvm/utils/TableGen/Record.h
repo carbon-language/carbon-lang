@@ -506,6 +506,11 @@ public:
 
   /// getAsString - Convert this value to a string form.
   virtual std::string getAsString() const = 0;
+  /// getAsUnquotedString - Convert this value to a string form,
+  /// without adding quote markers.  This primaruly affects
+  /// StringInits where we will not surround the string value with
+  /// quotes.
+  virtual std::string getAsUnquotedString() const { return getAsString(); }  
 
   /// dump - Debugging method that may be called through a debugger, just
   /// invokes print on stderr.
@@ -757,6 +762,7 @@ public:
   }
 
   virtual std::string getAsString() const { return "\"" + Value + "\""; }
+  virtual std::string getAsUnquotedString() const { return Value; }
 
   /// resolveBitReference - This method is used to implement
   /// VarBitInit::resolveReferences.  If the bit is able to be resolved, we
