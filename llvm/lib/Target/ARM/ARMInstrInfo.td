@@ -722,7 +722,10 @@ def addrmode3 : Operand<i32>,
 
 // FIXME: split into imm vs. reg versions.
 // FIXME: parser method to handle +/- register.
-def AM3OffsetAsmOperand : AsmOperandClass { let Name = "AM3Offset"; }
+def AM3OffsetAsmOperand : AsmOperandClass {
+  let Name = "AM3Offset";
+  let ParserMethod = "parseAM3Offset";
+}
 def am3offset : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode3Offset",
                                [], [SDNPWantRoot]> {

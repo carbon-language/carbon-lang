@@ -114,6 +114,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy parseRotImm(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseBitfield(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parsePostIdxReg(SmallVectorImpl<MCParsedAsmOperand*>&);
+  OperandMatchResultTy parseAM3Offset(SmallVectorImpl<MCParsedAsmOperand*>&);
 
   // Asm Match Converter Methods
   bool cvtLdWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
@@ -557,7 +558,8 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Val = CE->getValue();
-    return Val > -256 && Val < 256;
+    // Special case, #-0 is INT32_MIN.
+    return (Val > -256 && Val < 256) || Val == INT32_MIN;
   }
   bool isAddrMode5() const {
     if (Kind != Memory)
@@ -865,6 +867,7 @@ public:
         ARM_AM::getAM3Opc(PostIdxReg.isAdd ? ARM_AM::add : ARM_AM::sub, 0);
       Inst.addOperand(MCOperand::CreateReg(PostIdxReg.RegNum));
       Inst.addOperand(MCOperand::CreateImm(Val));
+      return;
     }
 
     // Constant offset.
@@ -874,7 +877,7 @@ public:
     // Special case for #-0
     if (Val == INT32_MIN) Val = 0;
     if (Val < 0) Val = -Val;
-    Val = ARM_AM::getAM2Opc(AddSub, Val, ARM_AM::no_shift);
+    Val = ARM_AM::getAM3Opc(AddSub, Val);
     Inst.addOperand(MCOperand::CreateReg(0));
     Inst.addOperand(MCOperand::CreateImm(Val));
   }
@@ -2003,6 +2006,76 @@ parsePostIdxReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   Operands.push_back(ARMOperand::CreatePostIdxReg(Reg, isAdd, ShiftTy,
                                                   ShiftImm, S, E));
+
+  return MatchOperand_Success;
+}
+
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+parseAM3Offset(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Check for a post-index addressing register operand. Specifically:
+  // am3offset := '+' register
+  //              | '-' register
+  //              | register
+  //              | # imm
+  //              | # + imm
+  //              | # - imm
+
+  // This method must return MatchOperand_NoMatch without consuming any tokens
+  // in the case where there is no match, as other alternatives take other
+  // parse methods.
+  AsmToken Tok = Parser.getTok();
+  SMLoc S = Tok.getLoc();
+
+  // Do immediates first, as we always parse those if we have a '#'.
+  if (Parser.getTok().is(AsmToken::Hash)) {
+    Parser.Lex(); // Eat the '#'.
+    // Explicitly look for a '-', as we need to encode negative zero
+    // differently.
+    bool isNegative = Parser.getTok().is(AsmToken::Minus);
+    const MCExpr *Offset;
+    if (getParser().ParseExpression(Offset))
+      return MatchOperand_ParseFail;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Offset);
+    if (!CE) {
+      Error(S, "constant expression expected");
+      return MatchOperand_ParseFail;
+    }
+    SMLoc E = Tok.getLoc();
+    // Negative zero is encoded as the flag value INT32_MIN.
+    int32_t Val = CE->getValue();
+    if (isNegative && Val == 0)
+      Val = INT32_MIN;
+
+    Operands.push_back(
+      ARMOperand::CreateImm(MCConstantExpr::Create(Val, getContext()), S, E));
+
+    return MatchOperand_Success;
+  }
+
+
+  bool haveEaten = false;
+  bool isAdd = true;
+  int Reg = -1;
+  if (Tok.is(AsmToken::Plus)) {
+    Parser.Lex(); // Eat the '+' token.
+    haveEaten = true;
+  } else if (Tok.is(AsmToken::Minus)) {
+    Parser.Lex(); // Eat the '-' token.
+    isAdd = false;
+    haveEaten = true;
+  }
+  if (Parser.getTok().is(AsmToken::Identifier))
+    Reg = tryParseRegister();
+  if (Reg == -1) {
+    if (!haveEaten)
+      return MatchOperand_NoMatch;
+    Error(Parser.getTok().getLoc(), "register expected");
+    return MatchOperand_ParseFail;
+  }
+  SMLoc E = Parser.getTok().getLoc();
+
+  Operands.push_back(ARMOperand::CreatePostIdxReg(Reg, isAdd, ARM_AM::no_shift,
+                                                  0, S, E));
 
   return MatchOperand_Success;
 }

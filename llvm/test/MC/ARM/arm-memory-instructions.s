@@ -114,8 +114,28 @@ _func:
         ldrd r7, r8, [r2, #15]
         ldrd r1, r2, [r9, #32]!
         ldrd r6, r7, [r1], #8
+        ldrd r1, r2, [r8], #0
+        ldrd r1, r2, [r8], #+0
+        ldrd r1, r2, [r8], #-0
 
 @ CHECK: ldrd	r3, r4, [r5]            @ encoding: [0xd0,0x30,0xc5,0xe1]
 @ CHECK: ldrd	r7, r8, [r2, #15]       @ encoding: [0xdf,0x70,0xc2,0xe1]
 @ CHECK: ldrd	r1, r2, [r9, #32]!      @ encoding: [0xd0,0x12,0xe9,0xe1]
 @ CHECK: ldrd	r6, r7, [r1], #8        @ encoding: [0xd8,0x60,0xc1,0xe0]
+@ CHECK: ldrd	r1, r2, [r8], #0        @ encoding: [0xd0,0x10,0xc8,0xe0]
+@ CHECK: ldrd	r1, r2, [r8], #0        @ encoding: [0xd0,0x10,0xc8,0xe0]
+@ CHECK: ldrd	r1, r2, [r8], #-0       @ encoding: [0xd0,0x10,0x48,0xe0]
+
+
+@------------------------------------------------------------------------------
+@ LDRD (register)
+@------------------------------------------------------------------------------
+        ldrd r3, r4, [r1, r3]
+        ldrd r4, r5, [r7, r2]!
+        ldrd r1, r2, [r8], r12
+        ldrd r1, r2, [r8], -r12
+
+	ldrd	r3, r4, [r1, r3]        @ encoding: [0xd3,0x30,0x81,0xe1]
+	ldrd	r4, r5, [r7, r2]!       @ encoding: [0xd2,0x40,0xa7,0xe1]
+	ldrd	r1, r2, [r8], r12       @ encoding: [0xdc,0x10,0x88,0xe0]
+	ldrd	r1, r2, [r8], -r12      @ encoding: [0xdc,0x10,0x08,0xe0]
