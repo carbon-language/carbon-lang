@@ -1507,7 +1507,7 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
   // Ensure that Introduced < Deprecated < Obsoleted (although not all
   // of these steps are needed).
   if (Introduced.isValid() && Deprecated.isValid() &&
-      !(Introduced.Version < Deprecated.Version)) {
+      !(Introduced.Version <= Deprecated.Version)) {
     S.Diag(Introduced.KeywordLoc, diag::warn_availability_version_ordering)
       << 1 << PlatformName << Deprecated.Version.getAsString()
       << 0 << Introduced.Version.getAsString();
@@ -1515,7 +1515,7 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
   }
 
   if (Introduced.isValid() && Obsoleted.isValid() &&
-      !(Introduced.Version < Obsoleted.Version)) {
+      !(Introduced.Version <= Obsoleted.Version)) {
     S.Diag(Introduced.KeywordLoc, diag::warn_availability_version_ordering)
       << 2 << PlatformName << Obsoleted.Version.getAsString()
       << 0 << Introduced.Version.getAsString();
@@ -1523,7 +1523,7 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
   }
 
   if (Deprecated.isValid() && Obsoleted.isValid() &&
-      !(Deprecated.Version < Obsoleted.Version)) {
+      !(Deprecated.Version <= Obsoleted.Version)) {
     S.Diag(Deprecated.KeywordLoc, diag::warn_availability_version_ordering)
       << 2 << PlatformName << Obsoleted.Version.getAsString()
       << 1 << Deprecated.Version.getAsString();
