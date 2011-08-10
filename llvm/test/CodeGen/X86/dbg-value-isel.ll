@@ -29,8 +29,8 @@ entry:
 get_local_id.exit:                                ; preds = %4
   %6 = phi i32 [ %5, %4 ]
   call void @llvm.dbg.value(metadata !{i32 %6}, i64 0, metadata !10), !dbg !12
-  %7 = call <4 x i32> @__amdil_get_global_id_int() nounwind
-  %8 = extractelement <4 x i32> %7, i32 0
+  %7 = call <4 x i32> @__amdil_get_global_id_int() nounwind, !dbg !12
+  %8 = extractelement <4 x i32> %7, i32 0, !dbg !12
   br label %9
 
 ; <label>:9                                       ; preds = %get_local_id.exit

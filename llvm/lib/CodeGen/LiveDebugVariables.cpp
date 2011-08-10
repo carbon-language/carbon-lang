@@ -28,6 +28,7 @@
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/LexicalScopes.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -201,7 +202,8 @@ public:
   void extendDef(SlotIndex Idx, unsigned LocNo,
                  LiveInterval *LI, const VNInfo *VNI,
                  SmallVectorImpl<SlotIndex> *Kills,
-                 LiveIntervals &LIS, MachineDominatorTree &MDT);
+                 LiveIntervals &LIS, MachineDominatorTree &MDT,
+                 LexicalScopes &LS);
 
   /// addDefsFromCopies - The value in LI/LocNo may be copies to other
   /// registers. Determine if any of the copies are available at the kill
@@ -219,7 +221,8 @@ public:
   /// computeIntervals - Compute the live intervals of all locations after
   /// collecting all their def points.
   void computeIntervals(MachineRegisterInfo &MRI,
-                        LiveIntervals &LIS, MachineDominatorTree &MDT);
+                        LiveIntervals &LIS, MachineDominatorTree &MDT,
+                        LexicalScopes &LS);
 
   /// renameRegister - Update locations to rewrite OldReg as NewReg:SubIdx.
   void renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx,
@@ -253,6 +256,7 @@ class LDVImpl {
   LocMap::Allocator allocator;
   MachineFunction *MF;
   LiveIntervals *LIS;
+  LexicalScopes LS;
   MachineDominatorTree *MDT;
   const TargetRegisterInfo *TRI;
 
@@ -455,10 +459,12 @@ bool LDVImpl::collectDebugValues(MachineFunction &mf) {
 void UserValue::extendDef(SlotIndex Idx, unsigned LocNo,
                           LiveInterval *LI, const VNInfo *VNI,
                           SmallVectorImpl<SlotIndex> *Kills,
-                          LiveIntervals &LIS, MachineDominatorTree &MDT) {
+                          LiveIntervals &LIS, MachineDominatorTree &MDT,
+                          LexicalScopes &LS) {
   SmallVector<SlotIndex, 16> Todo;
   Todo.push_back(Idx);
-
+  SmallPtrSet<const MachineBasicBlock *, 4> LBlocks;
+  LS.getMachineBasicBlocks(dl, LBlocks);
   do {
     SlotIndex Start = Todo.pop_back_val();
     MachineBasicBlock *MBB = LIS.getMBBFromIndex(Start);
@@ -505,8 +511,11 @@ void UserValue::extendDef(SlotIndex Idx, unsigned LocNo,
       continue;
     const std::vector<MachineDomTreeNode*> &Children =
       MDT.getNode(MBB)->getChildren();
-    for (unsigned i = 0, e = Children.size(); i != e; ++i)
-      Todo.push_back(LIS.getMBBStartIdx(Children[i]->getBlock()));
+    for (unsigned i = 0, e = Children.size(); i != e; ++i) {
+      MachineBasicBlock *MBB = Children[i]->getBlock();
+      if (LBlocks.count(MBB) != 0 || LS.dominates(dl, MBB))
+        Todo.push_back(LIS.getMBBStartIdx(MBB));
+    }
   } while (!Todo.empty());
 }
 
@@ -586,7 +595,8 @@ UserValue::addDefsFromCopies(LiveInterval *LI, unsigned LocNo,
 void
 UserValue::computeIntervals(MachineRegisterInfo &MRI,
                             LiveIntervals &LIS,
-                            MachineDominatorTree &MDT) {
+                            MachineDominatorTree &MDT,
+                            LexicalScopes &LS) {
   SmallVector<std::pair<SlotIndex, unsigned>, 16> Defs;
 
   // Collect all defs to be extended (Skipping undefs).
@@ -605,10 +615,10 @@ UserValue::computeIntervals(MachineRegisterInfo &MRI,
       LiveInterval *LI = &LIS.getInterval(Loc.getReg());
       const VNInfo *VNI = LI->getVNInfoAt(Idx);
       SmallVector<SlotIndex, 16> Kills;
-      extendDef(Idx, LocNo, LI, VNI, &Kills, LIS, MDT);
+      extendDef(Idx, LocNo, LI, VNI, &Kills, LIS, MDT, LS);
       addDefsFromCopies(LI, LocNo, Kills, Defs, MRI, LIS);
     } else
-      extendDef(Idx, LocNo, 0, 0, 0, LIS, MDT);
+      extendDef(Idx, LocNo, 0, 0, 0, LIS, MDT, LS);
   }
 
   // Finally, erase all the undefs.
@@ -621,7 +631,7 @@ UserValue::computeIntervals(MachineRegisterInfo &MRI,
 
 void LDVImpl::computeIntervals() {
   for (unsigned i = 0, e = userValues.size(); i != e; ++i) {
-    userValues[i]->computeIntervals(MF->getRegInfo(), *LIS, *MDT);
+    userValues[i]->computeIntervals(MF->getRegInfo(), *LIS, *MDT, LS);
     userValues[i]->mapVirtRegs(this);
   }
 }
@@ -632,6 +642,7 @@ bool LDVImpl::runOnMachineFunction(MachineFunction &mf) {
   MDT = &pass.getAnalysis<MachineDominatorTree>();
   TRI = mf.getTarget().getRegisterInfo();
   clear();
+  LS.initialize(mf);
   DEBUG(dbgs() << "********** COMPUTING LIVE DEBUG VARIABLES: "
                << ((Value*)mf.getFunction())->getName()
                << " **********\n");
@@ -639,6 +650,7 @@ bool LDVImpl::runOnMachineFunction(MachineFunction &mf) {
   bool Changed = collectDebugValues(mf);
   computeIntervals();
   DEBUG(print(dbgs()));
+  LS.releaseMemory();
   return Changed;
 }
 
