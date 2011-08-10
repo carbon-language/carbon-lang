@@ -604,7 +604,7 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
       Sema &S = unit->getSema();
       CodeCompletionAllocator *Allocator
         = unit->getCursorCompletionAllocator().getPtr();
-      CodeCompletionResult Result((IdentifierInfo *)MacroInfo);
+      CodeCompletionResult Result(const_cast<IdentifierInfo *>(MacroInfo));
       CodeCompletionString *String 
         = Result.CreateCodeCompletionString(S, *Allocator);
       return String;
