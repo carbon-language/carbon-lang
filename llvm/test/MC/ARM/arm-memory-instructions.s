@@ -334,3 +334,41 @@ _func:
 @ CHECK: str	r3, [r4, -r2, lsl #2]   @ encoding: [0x02,0x31,0x04,0xe7]
 @ CHECK: str	r2, [r7], r3, asr #24   @ encoding: [0x43,0x2c,0x87,0xe6]
 
+
+@------------------------------------------------------------------------------
+@ STRB (immediate)
+@------------------------------------------------------------------------------
+        strb r9, [r2]
+        strb r7, [r1, #3]
+        strb r6, [r4, #405]!
+        strb r5, [r7], #72
+        strb r1, [sp], #-1
+
+@ CHECK: strb	r9, [r2]                @ encoding: [0x00,0x90,0xc2,0xe5]
+@ CHECK: strb	r7, [r1, #3]            @ encoding: [0x03,0x70,0xc1,0xe5]
+@ CHECK: strb	r6, [r4, #405]!         @ encoding: [0x95,0x61,0xe4,0xe5]
+@ CHECK: strb	r5, [r7], #72           @ encoding: [0x48,0x50,0xc7,0xe4]
+@ CHECK: strb	r1, [sp], #-1           @ encoding: [0x01,0x10,0x4d,0xe4]
+
+
+@------------------------------------------------------------------------------
+@ STRB (register)
+@------------------------------------------------------------------------------
+        strb r1, [r2, r9]
+        strb r2, [r3, -r8]
+        strb r3, [r4, r7]!
+        strb r4, [r5, -r6]!
+        strb r5, [r6], r5
+        strb r6, [r2], -r4
+        strb r7, [r12, -r3, lsl #5]
+        strb sp, [r7], r2, asr #12
+
+@ CHECK: strb	r1, [r2, r9]            @ encoding: [0x09,0x10,0xc2,0xe7]
+@ CHECK: strb	r2, [r3, -r8]           @ encoding: [0x08,0x20,0x43,0xe7]
+@ CHECK: strb	r3, [r4, r7]!           @ encoding: [0x07,0x30,0xe4,0xe7]
+@ CHECK: strb	r4, [r5, -r6]!          @ encoding: [0x06,0x40,0x65,0xe7]
+@ CHECK: strb	r5, [r6], r5            @ encoding: [0x05,0x50,0xc6,0xe6]
+@ CHECK: strb	r6, [r2], -r4           @ encoding: [0x04,0x60,0x42,0xe6]
+@ CHECK: strb	r7, [r12, -r3, lsl #5]  @ encoding: [0x83,0x72,0x4c,0xe7]
+@ CHECK: strb	sp, [r7], r2, asr #12   @ encoding: [0x42,0xd6,0xc7,0xe6]
+
