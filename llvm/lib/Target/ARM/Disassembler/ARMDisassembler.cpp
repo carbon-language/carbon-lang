@@ -978,6 +978,8 @@ static bool DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
   else if (!P && writeback)
     idx_mode = ARMII::IndexModePost;
 
+  if (writeback && (Rn == 15 || Rn == Rt)) return false; // UNPREDICTABLE
+
   if (reg) {
     if (!DecodeGPRnopcRegisterClass(Inst, Rm, Address, Decoder)) return false;
     ARM_AM::ShiftOpc Opc = ARM_AM::lsl;
