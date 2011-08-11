@@ -2191,11 +2191,12 @@ multiclass AI2_stridx<bit isByte, string opc, InstrItinClass itin> {
     let Inst{23}    = addr{12};     // U (add = ('U' == 1))
     let Inst{19-16} = addr{16-13};  // Rn
     let Inst{11-0}  = addr{11-0};   // imm12
-    let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
+    let AsmMatchConverter = "cvtStWriteBackRegAddrModeImm12";
   }
 
   def _PRE_REG  : AI2ldstidx<0, isByte, 1, (outs GPR:$Rn_wb),
-                      (ins GPR:$Rt, addrmode2:$addr), IndexModePre, StFrm, itin,
+                      (ins GPR:$Rt, ldst_so_reg:$addr),
+                      IndexModePre, StFrm, itin,
                       opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
     bits<17> addr;
     let Inst{25} = 1;

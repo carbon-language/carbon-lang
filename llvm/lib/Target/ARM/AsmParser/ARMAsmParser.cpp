@@ -119,6 +119,8 @@ class ARMAsmParser : public MCTargetAsmParser {
   // Asm Match Converter Methods
   bool cvtLdWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtStWriteBackRegAddrModeImm12(MCInst &Inst, unsigned Opcode,
+                                  const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtStWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtLdExtTWriteBackImm(MCInst &Inst, unsigned Opcode,
@@ -2100,6 +2102,20 @@ cvtLdWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
   return true;
 }
 
+/// cvtStWriteBackRegAddrModeImm12 - Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+cvtStWriteBackRegAddrModeImm12(MCInst &Inst, unsigned Opcode,
+                         const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateImm(0));
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addMemImm12OffsetOperands(Inst, 2);
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
+  return true;
+}
+
 /// cvtStWriteBackRegAddrMode2 - Convert parsed operands to MCInst.
 /// Needed here because the Asm Gen Matcher can't handle properly tied operands
 /// when they refer multiple MIOperands inside a single one.
@@ -2108,7 +2124,9 @@ cvtStWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
                          const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Create a writeback register dummy placeholder.
   Inst.addOperand(MCOperand::CreateImm(0));
-  assert(0 && "cvtStWriteBackRegAddrMode2 not implemented yet!");
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addAddrMode2Operands(Inst, 3);
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
 }
 

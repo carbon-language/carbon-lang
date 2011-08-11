@@ -293,3 +293,17 @@ _func:
 @ CHECK: ldrsht	r2, [r1], -r4           @ encoding: [0xf4,0x20,0x31,0xe0]
 
 
+@------------------------------------------------------------------------------
+@ STR (immediate)
+@------------------------------------------------------------------------------
+        str r8, [r12]
+        str r7, [r1, #12]
+        str r3, [r5, #40]!
+        str r9, [sp], #4095
+        str r1, [r7], #-128
+
+@ CHECK: str	r8, [r12]               @ encoding: [0x00,0x80,0x8c,0xe5]
+@ CHECK: str	r7, [r1, #12]           @ encoding: [0x0c,0x70,0x81,0xe5]
+@ CHECK: str	r3, [r5, #40]!          @ encoding: [0x28,0x30,0xa5,0xe5]
+@ CHECK: str	r9, [sp], #4095         @ encoding: [0xff,0x9f,0x8d,0xe4]
+@ CHECK: str	r1, [r7], #-128         @ encoding: [0x80,0x10,0x07,0xe4]
