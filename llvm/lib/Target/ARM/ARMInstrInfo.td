@@ -2058,8 +2058,8 @@ defm LDR  : AI2_ldridx<0, "ldr", IIC_iLoad_ru>;
 defm LDRB : AI2_ldridx<1, "ldrb", IIC_iLoad_bh_ru>;
 }
 
-multiclass AI3_ldridx<bits<4> op, bit op20, string opc, InstrItinClass itin> {
-  def _PRE  : AI3ldstidx<op, op20, 1, 1, (outs GPR:$Rt, GPR:$Rn_wb),
+multiclass AI3_ldridx<bits<4> op, string opc, InstrItinClass itin> {
+  def _PRE  : AI3ldstidx<op, 1, 1, (outs GPR:$Rt, GPR:$Rn_wb),
                         (ins addrmode3:$addr), IndexModePre,
                         LdMiscFrm, itin,
                         opc, "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
@@ -2071,7 +2071,7 @@ multiclass AI3_ldridx<bits<4> op, bit op20, string opc, InstrItinClass itin> {
     let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
     let AsmMatchConverter = "cvtLdWriteBackRegAddrMode3";
   }
-  def _POST : AI3ldstidx<op, op20, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
+  def _POST : AI3ldstidx<op, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
                         (ins addr_offset_none:$addr, am3offset:$offset),
                         IndexModePost, LdMiscFrm, itin,
                         opc, "\t$Rt, $addr, $offset", "$addr.base = $Rn_wb",
@@ -2087,11 +2087,11 @@ multiclass AI3_ldridx<bits<4> op, bit op20, string opc, InstrItinClass itin> {
 }
 
 let mayLoad = 1, neverHasSideEffects = 1 in {
-defm LDRH  : AI3_ldridx<0b1011, 1, "ldrh", IIC_iLoad_bh_ru>;
-defm LDRSH : AI3_ldridx<0b1111, 1, "ldrsh", IIC_iLoad_bh_ru>;
-defm LDRSB : AI3_ldridx<0b1101, 1, "ldrsb", IIC_iLoad_bh_ru>;
+defm LDRH  : AI3_ldridx<0b1011, "ldrh", IIC_iLoad_bh_ru>;
+defm LDRSH : AI3_ldridx<0b1111, "ldrsh", IIC_iLoad_bh_ru>;
+defm LDRSB : AI3_ldridx<0b1101, "ldrsb", IIC_iLoad_bh_ru>;
 let hasExtraDefRegAllocReq = 1 in {
-def LDRD_PRE : AI3ldstidx<0b1101, 0, 1, 1, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
+def LDRD_PRE : AI3ldstidx<0b1101, 0, 1, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
                           (ins addrmode3:$addr), IndexModePre,
                           LdMiscFrm, IIC_iLoad_d_ru,
                           "ldrd", "\t$Rt, $Rt2, $addr!",
@@ -2105,7 +2105,7 @@ def LDRD_PRE : AI3ldstidx<0b1101, 0, 1, 1, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
   let DecoderMethod = "DecodeAddrMode3Instruction";
   let AsmMatchConverter = "cvtLdrdPre";
 }
-def LDRD_POST: AI3ldstidx<0b1101, 0, 1, 0, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
+def LDRD_POST: AI3ldstidx<0b1101, 0, 0, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
                           (ins addr_offset_none:$addr, am3offset:$offset),
                           IndexModePost, LdMiscFrm, IIC_iLoad_d_ru,
                           "ldrd", "\t$Rt, $Rt2, $addr, $offset",
@@ -2370,7 +2370,7 @@ def STRH_POST: AI3stridx<0b1011, 0, 0, (outs GPR:$Rn_wb),
                                         GPR:$Rn, am3offset:$offset))]>;
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
-def STRD_PRE : AI3ldstidx<0b1111, 0, 1, 1, (outs GPR:$Rn_wb),
+def STRD_PRE : AI3ldstidx<0b1111, 0, 1, (outs GPR:$Rn_wb),
                           (ins GPR:$Rt, GPR:$Rt2, addrmode3:$addr),
                           IndexModePre, StMiscFrm, IIC_iStore_d_ru,
                           "strd", "\t$Rt, $Rt2, $addr!",
@@ -2385,7 +2385,7 @@ def STRD_PRE : AI3ldstidx<0b1111, 0, 1, 1, (outs GPR:$Rn_wb),
   let AsmMatchConverter = "cvtStrdPre";
 }
 
-def STRD_POST: AI3ldstidx<0b1111, 0, 1, 0, (outs GPR:$Rn_wb),
+def STRD_POST: AI3ldstidx<0b1111, 0, 0, (outs GPR:$Rn_wb),
                           (ins GPR:$Rt, GPR:$Rt2, addr_offset_none:$addr,
                                am3offset:$offset),
                           IndexModePost, StMiscFrm, IIC_iStore_d_ru,

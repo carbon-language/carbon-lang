@@ -591,7 +591,7 @@ class AI3ld<bits<4> op, bit op20, dag oops, dag iops, Format f,
   let DecoderMethod = "DecodeAddrMode3Instruction";
 }
 
-class AI3ldstidx<bits<4> op, bit op20, bit isLd, bit isPre, dag oops, dag iops,
+class AI3ldstidx<bits<4> op, bit op20, bit isPre, dag oops, dag iops,
                 IndexMode im, Format f, InstrItinClass itin, string opc,
                 string asm, string cstr, list<dag> pattern>
   : I<oops, iops, AddrMode3, 4, im, f, itin,
