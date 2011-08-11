@@ -451,6 +451,14 @@ Platform::ResolveExecutable (const FileSpec &exe_file,
     return error;
 }
 
+bool
+Platform::ResolveRemotePath (const FileSpec &platform_path,
+                             FileSpec &resolved_platform_path)
+{
+    resolved_platform_path = platform_path;
+    return resolved_platform_path.ResolvePath();
+}
+
 
 const ArchSpec &
 Platform::GetSystemArchitecture()

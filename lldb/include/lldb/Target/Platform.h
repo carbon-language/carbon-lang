@@ -110,6 +110,15 @@ namespace lldb_private {
                            const ArchSpec &arch,
                            lldb::ModuleSP &module_sp);
 
+        //------------------------------------------------------------------
+        /// Resolves the FileSpec to a (possibly) remote path. Remote
+        /// platforms must override this to resolve to a path on the remote
+        /// side.
+        //------------------------------------------------------------------
+        virtual bool
+        ResolveRemotePath (const FileSpec &platform_path,
+                           FileSpec &resolved_platform_path);
+
         bool
         GetOSVersion (uint32_t &major, 
                       uint32_t &minor, 

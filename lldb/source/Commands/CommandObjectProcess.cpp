@@ -1172,6 +1172,7 @@ public:
             Error error;
             const char *image_path = command.GetArgumentAtIndex(i);
             FileSpec image_spec (image_path, false);
+            process->GetTarget().GetPlatform()->ResolveRemotePath(image_spec, image_spec);
             uint32_t image_token = process->LoadImage(image_spec, error);
             if (image_token != LLDB_INVALID_IMAGE_TOKEN)
             {
