@@ -523,6 +523,11 @@ LLDBSwigPython_UpdateSynthProviderInstance
     // other synth provider calls are mandatory, so we want to fail in a very obvious way if they are missing!
     PyObject* pmeth  = PyObject_GetAttrString(implementor, callee_name);
 
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
+    }
+
     if (pmeth == NULL || pmeth == Py_None)
     {
         Py_XDECREF(pmeth);
@@ -531,8 +536,18 @@ LLDBSwigPython_UpdateSynthProviderInstance
 
     if (PyCallable_Check(pmeth) == 0)
     {
+        if (PyErr_Occurred())
+        {
+            PyErr_Clear();
+        }
+
         Py_XDECREF(pmeth);
         return;
+    }
+
+    if (PyErr_Occurred())
+    {
+        PyErr_Clear();
     }
 
     Py_XDECREF(pmeth);
