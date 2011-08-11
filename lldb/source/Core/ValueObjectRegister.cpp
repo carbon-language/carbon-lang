@@ -210,7 +210,7 @@ ValueObjectRegisterSet::UpdateValue ()
 ValueObject *
 ValueObjectRegisterSet::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
 {
-    ValueObject *valobj;
+    ValueObject *valobj = NULL;
     if (m_reg_ctx_sp && m_reg_set)
     {
         const uint32_t num_children = GetNumChildren();
