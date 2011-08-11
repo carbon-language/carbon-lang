@@ -700,7 +700,7 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
     PyObject *globals = PyModule_GetDict (mainmod);
     PyObject *locals = NULL;
     PyObject *py_error = NULL;
-    bool ret_success;
+    bool ret_success = false;
     bool should_decrement_locals = false;
     int success;
     
