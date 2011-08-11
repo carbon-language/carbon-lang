@@ -2966,13 +2966,13 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
     Context->setBuiltinVaListType(
       GetType(SpecialTypes[SPECIAL_TYPE_BUILTIN_VA_LIST]));
     if (unsigned Id = SpecialTypes[SPECIAL_TYPE_OBJC_ID])
-      Context->setObjCIdType(GetType(Id));
+      Context->ObjCIdTypedefType = GetType(Id);
     if (unsigned Sel = SpecialTypes[SPECIAL_TYPE_OBJC_SELECTOR])
-      Context->setObjCSelType(GetType(Sel));
+      Context->ObjCSelTypedefType = GetType(Sel);
     if (unsigned Proto = SpecialTypes[SPECIAL_TYPE_OBJC_PROTOCOL])
-      Context->setObjCProtoType(GetType(Proto));
+      Context->ObjCProtoType = GetType(Proto);
     if (unsigned Class = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS])
-      Context->setObjCClassType(GetType(Class));
+      Context->ObjCClassTypedefType = GetType(Class);
 
     if (unsigned String = SpecialTypes[SPECIAL_TYPE_CF_CONSTANT_STRING])
       Context->setCFConstantStringType(GetType(String));

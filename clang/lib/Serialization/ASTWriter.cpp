@@ -2929,10 +2929,10 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Form the record of special types.
   RecordData SpecialTypes;
   AddTypeRef(Context.getBuiltinVaListType(), SpecialTypes);
-  AddTypeRef(Context.getObjCIdType(), SpecialTypes);
-  AddTypeRef(Context.getObjCSelType(), SpecialTypes);
-  AddTypeRef(Context.getObjCProtoType(), SpecialTypes);
-  AddTypeRef(Context.getObjCClassType(), SpecialTypes);
+  AddTypeRef(Context.ObjCIdTypedefType, SpecialTypes);
+  AddTypeRef(Context.ObjCSelTypedefType, SpecialTypes);
+  AddTypeRef(Context.ObjCProtoType, SpecialTypes);
+  AddTypeRef(Context.ObjCClassTypedefType, SpecialTypes);
   AddTypeRef(Context.getRawCFConstantStringType(), SpecialTypes);
   AddTypeRef(Context.getFILEType(), SpecialTypes);
   AddTypeRef(Context.getjmp_bufType(), SpecialTypes);
