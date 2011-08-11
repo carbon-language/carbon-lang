@@ -614,11 +614,6 @@ multiclass sse12_cvt_sint_3addr<bits<8> opc, RegisterClass SrcRC,
               [(set DstRC:$dst, (Int DstRC:$src1, (ld_frag addr:$src2)))]>;
 }
 
-defm Int_VCVTSS2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse_cvtss2si,
-                      f32mem, load, "cvtss2si">, XS, VEX;
-defm Int_VCVTSS2SI64 : sse12_cvt_sint<0x2D, VR128, GR64,
-                        int_x86_sse_cvtss2si64, f32mem, load, "cvtss2si">,
-                        XS, VEX, VEX_W;
 defm Int_VCVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
                       f128mem, load, "cvtsd2si">, XD, VEX;
 defm Int_VCVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64,
@@ -633,10 +628,6 @@ defm VCVTSD2SI_alt : sse12_cvt_s_np<0x2D, FR64, GR32, f64mem,
                       "cvtsd2si\t{$src, $dst|$dst, $src}">, XD, VEX;
 defm VCVTSD2SI64   : sse12_cvt_s_np<0x2D, FR64, GR64, f64mem,
                       "cvtsd2si\t{$src, $dst|$dst, $src}">, XD, VEX, VEX_W;
-defm Int_CVTSS2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse_cvtss2si,
-                      f32mem, load, "cvtss2si">, XS;
-defm Int_CVTSS2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse_cvtss2si64,
-                      f32mem, load, "cvtss2si{q}">, XS, REX_W;
 defm CVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
                 f128mem, load, "cvtsd2si{l}">, XD;
 defm CVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse2_cvtsd2si64,
@@ -706,6 +697,7 @@ defm VCVTDQ2PSY  : sse12_cvt_p<0x5B, VR256, VR256, undef, i256mem, load,
                                "cvtdq2ps\t{$src, $dst|$dst, $src}",
                                SSEPackedSingle>, TB, VEX;
 }
+
 let Pattern = []<dag> in {
 defm CVTSS2SI : sse12_cvt_s<0x2D, FR32, GR32, undef, f32mem, load /*dummy*/,
                           "cvtss2si{l}\t{$src, $dst|$dst, $src}">, XS;
@@ -714,6 +706,28 @@ defm CVTSS2SI64 : sse12_cvt_s<0x2D, FR32, GR64, undef, f32mem, load /*dummy*/,
 defm CVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, undef, i128mem, load /*dummy*/,
                             "cvtdq2ps\t{$src, $dst|$dst, $src}",
                             SSEPackedSingle>, TB; /* PD SSE3 form is avaiable */
+}
+
+let Predicates = [HasSSE1] in {
+  def : Pat<(int_x86_sse_cvtss2si VR128:$src),
+            (CVTSS2SIrr (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+  def : Pat<(int_x86_sse_cvtss2si (load addr:$src)),
+            (CVTSS2SIrm addr:$src)>;
+  def : Pat<(int_x86_sse_cvtss2si64 VR128:$src),
+            (CVTSS2SI64rr (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+  def : Pat<(int_x86_sse_cvtss2si64 (load addr:$src)),
+            (CVTSS2SI64rm addr:$src)>;
+}
+
+let Predicates = [HasAVX] in {
+  def : Pat<(int_x86_sse_cvtss2si VR128:$src),
+            (VCVTSS2SIrr (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+  def : Pat<(int_x86_sse_cvtss2si (load addr:$src)),
+            (VCVTSS2SIrm addr:$src)>;
+  def : Pat<(int_x86_sse_cvtss2si64 VR128:$src),
+            (VCVTSS2SI64rr (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
+  def : Pat<(int_x86_sse_cvtss2si64 (load addr:$src)),
+            (VCVTSS2SI64rm addr:$src)>;
 }
 
 /// SSE 2 Only

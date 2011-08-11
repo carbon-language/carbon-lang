@@ -397,8 +397,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::Int_CVTSI2SS64rr,X86::Int_CVTSI2SS64rm, 0 },
     { X86::Int_CVTSI2SSrr,  X86::Int_CVTSI2SSrm, 0 },
     { X86::Int_CVTSS2SDrr,  X86::Int_CVTSS2SDrm, 0 },
-    { X86::Int_CVTSS2SI64rr,X86::Int_CVTSS2SI64rm, 0 },
-    { X86::Int_CVTSS2SIrr,  X86::Int_CVTSS2SIrm, 0 },
     { X86::CVTTPD2DQrr,     X86::CVTTPD2DQrm, 16 },
     { X86::CVTTPS2DQrr,     X86::CVTTPS2DQrm, 16 },
     { X86::Int_CVTTSD2SI64rr,X86::Int_CVTTSD2SI64rm, 0 },
