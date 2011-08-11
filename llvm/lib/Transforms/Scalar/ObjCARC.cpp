@@ -1194,10 +1194,6 @@ namespace {
       if (RefCount != 0) --RefCount;
     }
 
-    void ClearRefCount() {
-      RefCount = 0;
-    }
-
     bool IsKnownIncremented() const {
       return RefCount > 0;
     }
@@ -1364,7 +1360,7 @@ void BBState::MergePred(const BBState &Other) {
                              /*TopDown=*/true);
   }
 
-  // For each entry in our set, if the other set doens't have an entry with the
+  // For each entry in our set, if the other set doesn't have an entry with the
   // same key, force it to merge with an empty entry.
   for (ptr_iterator MI = top_down_ptr_begin(),
        ME = top_down_ptr_end(); MI != ME; ++MI)
@@ -1389,7 +1385,7 @@ void BBState::MergeSucc(const BBState &Other) {
                              /*TopDown=*/false);
   }
 
-  // For each entry in our set, if the other set doens't have an entry
+  // For each entry in our set, if the other set doesn't have an entry
   // with the same key, force it to merge with an empty entry.
   for (ptr_iterator MI = bottom_up_ptr_begin(),
        ME = bottom_up_ptr_end(); MI != ME; ++MI)
