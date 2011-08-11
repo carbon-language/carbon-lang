@@ -2351,23 +2351,43 @@ def STRBr_preidx: ARMPseudoInst<(outs GPR:$Rn_wb),
                4, IIC_iStore_ru,
             [(set GPR:$Rn_wb,
                   (pre_truncsti8 GPR:$Rt, GPR:$Rn, am2offset_reg:$offset))]>;
+def STRH_preidx: ARMPseudoInst<(outs GPR:$Rn_wb),
+               (ins GPR:$Rt, GPR:$Rn, am3offset:$offset, pred:$p),
+               4, IIC_iStore_ru,
+            [(set GPR:$Rn_wb,
+                  (pre_truncsti16 GPR:$Rt, GPR:$Rn, am3offset:$offset))]>;
 }
 
-def STRH_PRE : AI3stridx<0b1011, 0, 1, (outs GPR:$Rn_wb),
-                     (ins GPR:$Rt, GPR:$Rn, am3offset:$offset),
-                     IndexModePre, StMiscFrm, IIC_iStore_ru,
-                     "strh", "\t$Rt, [$Rn, $offset]!",
-                     "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
-                     [(set GPR:$Rn_wb,
-                      (pre_truncsti16 GPR:$Rt, GPR:$Rn, am3offset:$offset))]>;
 
-def STRH_POST: AI3stridx<0b1011, 0, 0, (outs GPR:$Rn_wb),
-                     (ins GPR:$Rt, GPR:$Rn, am3offset:$offset),
-                     IndexModePost, StMiscFrm, IIC_iStore_bh_ru,
-                     "strh", "\t$Rt, [$Rn], $offset",
-                     "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
-                     [(set GPR:$Rn_wb, (post_truncsti16 GPR:$Rt,
-                                        GPR:$Rn, am3offset:$offset))]>;
+
+def STRH_PRE  : AI3ldstidx<0b1011, 0, 1, (outs GPR:$Rn_wb),
+                           (ins GPR:$Rt, addrmode3:$addr), IndexModePre,
+                           StMiscFrm, IIC_iStore_bh_ru,
+                           "strh", "\t$Rt, $addr!", "$addr.base = $Rn_wb", []> {
+  bits<14> addr;
+  let Inst{23}    = addr{8};      // U bit
+  let Inst{22}    = addr{13};     // 1 == imm8, 0 == Rm
+  let Inst{19-16} = addr{12-9};   // Rn
+  let Inst{11-8}  = addr{7-4};    // imm7_4/zero
+  let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
+  let AsmMatchConverter = "cvtStWriteBackRegAddrMode3";
+}
+
+def STRH_POST : AI3ldstidx<0b1011, 0, 0, (outs GPR:$Rn_wb),
+                       (ins GPR:$Rt, addr_offset_none:$addr, am3offset:$offset),
+                       IndexModePost, StMiscFrm, IIC_iStore_bh_ru,
+                       "strh", "\t$Rt, $addr, $offset", "$addr.base = $Rn_wb",
+                   [(set GPR:$Rn_wb, (post_truncsti16 GPR:$Rt,
+                                                      addr_offset_none:$addr,
+                                                      am3offset:$offset))]> {
+  bits<10> offset;
+  bits<4> addr;
+  let Inst{23}    = offset{8};      // U bit
+  let Inst{22}    = offset{9};      // 1 == imm8, 0 == Rm
+  let Inst{19-16} = addr;
+  let Inst{11-8}  = offset{7-4};    // imm7_4/zero
+  let Inst{3-0}   = offset{3-0};    // imm3_0/Rm
+}
 
 let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 def STRD_PRE : AI3ldstidx<0b1111, 0, 1, (outs GPR:$Rn_wb),

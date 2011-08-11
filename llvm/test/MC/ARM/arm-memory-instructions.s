@@ -428,3 +428,37 @@ _func:
 @ CHECK: strd	r6, r7, [r5], r8        @ encoding: [0xf8,0x60,0x85,0xe0]
 @ CHECK: strd	r5, r6, [r12], -r10     @ encoding: [0xfa,0x50,0x0c,0xe0]
 
+
+@------------------------------------------------------------------------------
+@ STRH (immediate)
+@------------------------------------------------------------------------------
+        strh r3, [r4]
+        strh r2, [r7, #4]
+        strh r1, [r8, #64]!
+        strh r12, [sp], #4
+
+@ CHECK: strh	r3, [r4]                @ encoding: [0xb0,0x30,0xc4,0xe1]
+@ CHECK: strh	r2, [r7, #4]            @ encoding: [0xb4,0x20,0xc7,0xe1]
+@ CHECK: strh	r1, [r8, #64]!          @ encoding: [0xb0,0x14,0xe8,0xe1]
+@ CHECK: strh	r12, [sp], #4           @ encoding: [0xb4,0xc0,0xcd,0xe0]
+
+
+@------------------------------------------------------------------------------
+@ FIXME: STRH (label)
+@------------------------------------------------------------------------------
+
+
+@------------------------------------------------------------------------------
+@ STRH (register)
+@------------------------------------------------------------------------------
+        strh r6, [r5, r4]
+        strh r3, [r8, r11]!
+        strh r1, [r2, -r1]!
+        strh r9, [r7], r2
+        strh r4, [r3], -r2
+
+@ CHECK: strh	r6, [r5, r4]            @ encoding: [0xb4,0x60,0x85,0xe1]
+@ CHECK: strh	r3, [r8, r11]!          @ encoding: [0xbb,0x30,0xa8,0xe1]
+@ CHECK: strh	r1, [r2, -r1]!          @ encoding: [0xb1,0x10,0x22,0xe1]
+@ CHECK: strh	r9, [r7], r2            @ encoding: [0xb2,0x90,0x87,0xe0]
+@ CHECK: strh	r4, [r3], -r2           @ encoding: [0xb2,0x40,0x03,0xe0]

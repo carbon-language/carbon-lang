@@ -123,6 +123,8 @@ class ARMAsmParser : public MCTargetAsmParser {
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtStWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtStWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
+                                  const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtLdExtTWriteBackImm(MCInst &Inst, unsigned Opcode,
                              const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtLdExtTWriteBackReg(MCInst &Inst, unsigned Opcode,
@@ -2128,6 +2130,20 @@ cvtStWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
   Inst.addOperand(MCOperand::CreateImm(0));
   ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
   ((ARMOperand*)Operands[3])->addAddrMode2Operands(Inst, 3);
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
+  return true;
+}
+
+/// cvtStWriteBackRegAddrMode3 - Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+cvtStWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
+                         const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateImm(0));
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addAddrMode3Operands(Inst, 3);
   ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
 }

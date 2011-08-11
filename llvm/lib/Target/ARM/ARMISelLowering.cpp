@@ -5311,9 +5311,15 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return BB;
   }
   case ARM::STRr_preidx:
-  case ARM::STRBr_preidx: {
-    unsigned NewOpc = MI->getOpcode() == ARM::STRr_preidx ?
-      ARM::STR_PRE_REG : ARM::STRB_PRE_REG;
+  case ARM::STRBr_preidx:
+  case ARM::STRH_preidx: {
+    unsigned NewOpc;
+    switch (MI->getOpcode()) {
+    default: llvm_unreachable("unexpected opcode!");
+    case ARM::STRr_preidx: NewOpc = ARM::STR_PRE_REG; break;
+    case ARM::STRBr_preidx: NewOpc = ARM::STRB_PRE_REG; break;
+    case ARM::STRH_preidx: NewOpc = ARM::STRH_PRE; break;
+    }
     MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(NewOpc));
     for (unsigned i = 0; i < MI->getNumOperands(); ++i)
       MIB.addOperand(MI->getOperand(i));
