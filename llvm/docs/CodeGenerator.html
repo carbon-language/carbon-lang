@@ -114,6 +114,7 @@
       <li><a href="#ppc_prolog">Prolog/Epilog</a></li>
       <li><a href="#ppc_dynamic">Dynamic Allocation</a></li>
       </ul></li>
+    <li><a href="#ptx">The PTX backend</a></li>
     </ul></li>
 
 </ol>
@@ -2911,6 +2912,70 @@ MOVSX32rm16 -&gt; movsx, 32-bit register, 16-bit memory
 <p><i>TODO - More to come.</i></p>
 
 </div>
+
+</div>
+
+<!-- ======================================================================= -->
+<h3>
+  <a name="ptx">The PTX backend</a>
+</h3>
+
+<div>
+
+<p>The PTX code generator lives in the lib/Target/PTX directory. It is
+  currently a work-in-progress, but already supports most of the code
+  generation functionality needed to generate correct PTX kernels for
+  CUDA devices.</p>
+
+<p>The code generator can target PTX 2.0+, and shader model 1.0+.  The
+  PTX ISA Reference Manual is used as the primary source of ISA
+  information, though an effort is made to make the output of the code
+  generator match the output of the NVidia nvcc compiler, whenever
+  possible.</p>
+
+<p>Code Generator Options:</p>
+<table border="1" cellspacing="0">
+  <tr>
+    <th>Option</th>
+    <th>Description</th>
+ </tr>
+   <tr>
+     <td><code>double</code></td>
+     <td align="left">If enabled, the map_f64_to_f32 directive is
+       disabled in the PTX output, allowing native double-precision
+       arithmetic</td>
+  </tr>
+  <tr>
+    <td><code>no-fma</code></td>
+    <td align="left">Disable generation of Fused-Multiply Add
+      instructions, which may be beneficial for some devices</td>
+  </tr>
+  <tr>
+    <td><code>smxy / computexy</code></td>
+    <td align="left">Set shader model/compute capability to x.y,
+    e.g. sm20 or compute13</td>
+  </tr>
+</table>
+
+<p>Working:</p>
+<ul>
+  <li>Arithmetic instruction selection (including combo FMA)</li>
+  <li>Bitwise instruction selection</li>
+  <li>Control-flow instruction selection</li>
+  <li>Function calls (only on SM 2.0+ and no return arguments)</li>
+  <li>Addresses spaces (0 = global, 1 = constant, 2 = local, 4 =
+  shared)</li>
+  <li>Thread synchronization (bar.sync)</li>
+  <li>Special register reads ([N]TID, [N]CTAID, PMx, CLOCK, etc.)</li>
+</ul>
+
+<p>In Progress:</p>
+<ul>
+  <li>Robust call instruction selection</li>
+  <li>Stack frame allocation</li>
+  <li>Device-specific instruction scheduling optimizations</li>
+</ul>
+
 
 </div>
 
