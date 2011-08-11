@@ -380,13 +380,10 @@ my %UniqueOptions = (
 
 my %LangsAccepted = (
   "objective-c" => 1,
-  "c" => 1
+  "c" => 1,
+  "c++" => 1,
+  "objective-c++" => 1
 );
-
-if (defined $ENV{'CCC_ANALYZER_CPLUSPLUS'}) {
-  $LangsAccepted{"c++"} = 1;
-  $LangsAccepted{"objective-c++"} = 1;
-}
 
 ##----------------------------------------------------------------------------##
 #  Main Logic.
