@@ -953,9 +953,9 @@ static bool ShouldTryAgainWithRedefinitionType(Sema &S, ExprResult &base) {
 
   QualType redef;
   if (ty->isObjCId()) {
-    redef = S.Context.ObjCIdRedefinitionType;
+    redef = S.Context.getObjCIdRedefinitionType();
   } else if (ty->isObjCClass()) {
-    redef = S.Context.ObjCClassRedefinitionType;
+    redef = S.Context.getObjCClassRedefinitionType();
   } else {
     return false;
   }
@@ -1322,8 +1322,9 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
   // not just a pointer to builtin-sel again.
   if (IsArrow &&
       BaseType->isSpecificBuiltinType(BuiltinType::ObjCSel) &&
-      !Context.ObjCSelRedefinitionType->isObjCSelType()) {
-    BaseExpr = ImpCastExprToType(BaseExpr.take(), Context.ObjCSelRedefinitionType,
+      !Context.getObjCSelRedefinitionType()->isObjCSelType()) {
+    BaseExpr = ImpCastExprToType(BaseExpr.take(), 
+                                 Context.getObjCSelRedefinitionType(),
                                  CK_BitCast);
     return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
                             ObjCImpDecl, HasTemplateArgs);

@@ -95,7 +95,6 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
                             &Context.Idents.get("SEL"), SelInfo);
     PushOnScopeChains(SelTypedef, TUScope);
     Context.setObjCSelType(Context.getTypeDeclType(SelTypedef));
-    Context.ObjCSelRedefinitionType = Context.getObjCSelType();
   }
 
   // Synthesize "@class Protocol;
@@ -118,7 +117,6 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
                             &Context.Idents.get("id"), IdInfo);
     PushOnScopeChains(IdTypedef, TUScope);
     Context.setObjCIdType(Context.getTypeDeclType(IdTypedef));
-    Context.ObjCIdRedefinitionType = Context.getObjCIdType();
   }
   // Create the built-in typedef for 'Class'.
   if (Context.getObjCClassType().isNull()) {
@@ -131,7 +129,6 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
                             &Context.Idents.get("Class"), ClassInfo);
     PushOnScopeChains(ClassTypedef, TUScope);
     Context.setObjCClassType(Context.getTypeDeclType(ClassTypedef));
-    Context.ObjCClassRedefinitionType = Context.getObjCClassType();
   }  
 }
 

@@ -4728,34 +4728,34 @@ QualType Sema::FindCompositeObjCPointerType(ExprResult &LHS, ExprResult &RHS,
   // to the pseudo-builtin, because that will be implicitly cast back to the
   // redefinition type if an attempt is made to access its fields.
   if (LHSTy->isObjCClassType() &&
-      (Context.hasSameType(RHSTy, Context.ObjCClassRedefinitionType))) {
+      (Context.hasSameType(RHSTy, Context.getObjCClassRedefinitionType()))) {
     RHS = ImpCastExprToType(RHS.take(), LHSTy, CK_BitCast);
     return LHSTy;
   }
   if (RHSTy->isObjCClassType() &&
-      (Context.hasSameType(LHSTy, Context.ObjCClassRedefinitionType))) {
+      (Context.hasSameType(LHSTy, Context.getObjCClassRedefinitionType()))) {
     LHS = ImpCastExprToType(LHS.take(), RHSTy, CK_BitCast);
     return RHSTy;
   }
   // And the same for struct objc_object* / id
   if (LHSTy->isObjCIdType() &&
-      (Context.hasSameType(RHSTy, Context.ObjCIdRedefinitionType))) {
+      (Context.hasSameType(RHSTy, Context.getObjCIdRedefinitionType()))) {
     RHS = ImpCastExprToType(RHS.take(), LHSTy, CK_BitCast);
     return LHSTy;
   }
   if (RHSTy->isObjCIdType() &&
-      (Context.hasSameType(LHSTy, Context.ObjCIdRedefinitionType))) {
+      (Context.hasSameType(LHSTy, Context.getObjCIdRedefinitionType()))) {
     LHS = ImpCastExprToType(LHS.take(), RHSTy, CK_BitCast);
     return RHSTy;
   }
   // And the same for struct objc_selector* / SEL
   if (Context.isObjCSelType(LHSTy) &&
-      (Context.hasSameType(RHSTy, Context.ObjCSelRedefinitionType))) {
+      (Context.hasSameType(RHSTy, Context.getObjCSelRedefinitionType()))) {
     RHS = ImpCastExprToType(RHS.take(), LHSTy, CK_BitCast);
     return LHSTy;
   }
   if (Context.isObjCSelType(RHSTy) &&
-      (Context.hasSameType(LHSTy, Context.ObjCSelRedefinitionType))) {
+      (Context.hasSameType(LHSTy, Context.getObjCSelRedefinitionType()))) {
     LHS = ImpCastExprToType(LHS.take(), RHSTy, CK_BitCast);
     return RHSTy;
   }
@@ -5340,7 +5340,8 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
 
       //  - conversions from 'Class' to the redefinition type
       if (rhsType->isObjCClassType() &&
-          Context.hasSameType(lhsType, Context.ObjCClassRedefinitionType)) {
+          Context.hasSameType(lhsType, 
+                              Context.getObjCClassRedefinitionType())) {
         Kind = CK_BitCast;
         return Compatible;
       }
@@ -5421,7 +5422,8 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
 
       //  - conversions to 'Class' from its redefinition type
       if (lhsType->isObjCClassType() &&
-          Context.hasSameType(rhsType, Context.ObjCClassRedefinitionType)) {
+          Context.hasSameType(rhsType, 
+                              Context.getObjCClassRedefinitionType())) {
         Kind = CK_BitCast;
         return Compatible;
       }

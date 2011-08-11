@@ -195,6 +195,12 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   /// ObjCClassType - another pseudo built-in typedef type (set by Sema).
   QualType ObjCClassTypedefType;
 
+  // Typedefs which may be provided defining the structure of Objective-C
+  // pseudo-builtins
+  QualType ObjCIdRedefinitionType;
+  QualType ObjCClassRedefinitionType;
+  QualType ObjCSelRedefinitionType;
+
   QualType ObjCConstantStringType;
   mutable RecordDecl *CFConstantStringTypeDecl;
 
@@ -322,7 +328,9 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   const LangAS::Map &AddrSpaceMap;
 
   friend class ASTDeclReader;
-
+  friend class ASTReader;
+  friend class ASTWriter;
+  
 public:
   const TargetInfo &Target;
   IdentifierTable &Idents;
@@ -332,12 +340,6 @@ public:
   llvm::OwningPtr<ExternalASTSource> ExternalSource;
   ASTMutationListener *Listener;
   clang::PrintingPolicy PrintingPolicy;
-
-  // Typedefs which may be provided defining the structure of Objective-C
-  // pseudo-builtins
-  QualType ObjCIdRedefinitionType;
-  QualType ObjCClassRedefinitionType;
-  QualType ObjCSelRedefinitionType;
 
   SourceManager& getSourceManager() { return SourceMgr; }
   const SourceManager& getSourceManager() const { return SourceMgr; }
@@ -819,6 +821,46 @@ public:
   void setObjCConstantStringInterface(ObjCInterfaceDecl *Decl);
   QualType getObjCConstantStringInterface() const {
     return ObjCConstantStringType;
+  }
+
+  /// \brief Retrieve the type that 'id' has been defined to, which may be
+  /// different from the built-in 'id' if 'id' has been typedef'd.
+  QualType getObjCIdRedefinitionType() const {
+    if (ObjCIdRedefinitionType.isNull())
+      return getObjCIdType();
+    return ObjCIdRedefinitionType;
+  }
+  
+  /// \brief Set the user-written type that redefines 'id'.
+  void setObjCIdRedefinitionType(QualType RedefType) {
+    ObjCIdRedefinitionType = RedefType;
+  }
+
+  /// \brief Retrieve the type that 'Class' has been defined to, which may be
+  /// different from the built-in 'Class' if 'Class' has been typedef'd.
+  QualType getObjCClassRedefinitionType() const {
+    if (ObjCClassRedefinitionType.isNull())
+      return getObjCClassType();
+    return ObjCClassRedefinitionType;
+  }
+  
+  /// \brief Set the user-written type that redefines 'SEL'.
+  void setObjCClassRedefinitionType(QualType RedefType) {
+    ObjCClassRedefinitionType = RedefType;
+  }
+
+  /// \brief Retrieve the type that 'SEL' has been defined to, which may be
+  /// different from the built-in 'SEL' if 'SEL' has been typedef'd.
+  QualType getObjCSelRedefinitionType() const {
+    if (ObjCSelRedefinitionType.isNull())
+      return getObjCSelType();
+    return ObjCSelRedefinitionType;
+  }
+
+  
+  /// \brief Set the user-written type that redefines 'SEL'.
+  void setObjCSelRedefinitionType(QualType RedefType) {
+    ObjCSelRedefinitionType = RedefType;
   }
 
   /// \brief Set the type for the C FILE type.
