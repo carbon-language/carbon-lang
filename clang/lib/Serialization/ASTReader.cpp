@@ -2960,28 +2960,48 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
   // Load the translation unit declaration
   GetTranslationUnitDecl();
 
-  // FIXME: Find a better way to deal with built-in types
+  // FIXME: Find a better way to deal with collisions between these
+  // built-in types. Right now, we just ignore the problem.
+  
+  // Load the special types.
   if (Context->getBuiltinVaListType().isNull()) {
-    // Load the special types.
     Context->setBuiltinVaListType(
       GetType(SpecialTypes[SPECIAL_TYPE_BUILTIN_VA_LIST]));
-    if (unsigned Id = SpecialTypes[SPECIAL_TYPE_OBJC_ID])
+  }
+  
+  if (unsigned Id = SpecialTypes[SPECIAL_TYPE_OBJC_ID]) {
+    if (Context->ObjCIdTypedefType.isNull())
       Context->ObjCIdTypedefType = GetType(Id);
-    if (unsigned Sel = SpecialTypes[SPECIAL_TYPE_OBJC_SELECTOR])
+  }
+  
+  if (unsigned Sel = SpecialTypes[SPECIAL_TYPE_OBJC_SELECTOR]) {
+    if (Context->ObjCSelTypedefType.isNull())
       Context->ObjCSelTypedefType = GetType(Sel);
-    if (unsigned Proto = SpecialTypes[SPECIAL_TYPE_OBJC_PROTOCOL])
+  }
+  
+  if (unsigned Proto = SpecialTypes[SPECIAL_TYPE_OBJC_PROTOCOL]) {
+    if (Context->ObjCProtoType.isNull())
       Context->ObjCProtoType = GetType(Proto);
-    if (unsigned Class = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS])
+  }
+  
+  if (unsigned Class = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS]) {
+    if (Context->ObjCClassTypedefType.isNull()) 
       Context->ObjCClassTypedefType = GetType(Class);
+  }
 
-    if (unsigned String = SpecialTypes[SPECIAL_TYPE_CF_CONSTANT_STRING])
+  if (unsigned String = SpecialTypes[SPECIAL_TYPE_CF_CONSTANT_STRING]) {
+    if (!Context->CFConstantStringTypeDecl)
       Context->setCFConstantStringType(GetType(String));
-    if (unsigned File = SpecialTypes[SPECIAL_TYPE_FILE]) {
-      QualType FileType = GetType(File);
-      if (FileType.isNull()) {
-        Error("FILE type is NULL");
-        return;
-      }
+  }
+  
+  if (unsigned File = SpecialTypes[SPECIAL_TYPE_FILE]) {
+    QualType FileType = GetType(File);
+    if (FileType.isNull()) {
+      Error("FILE type is NULL");
+      return;
+    }
+    
+    if (!Context->FILEDecl) {
       if (const TypedefType *Typedef = FileType->getAs<TypedefType>())
         Context->setFILEDecl(Typedef->getDecl());
       else {
@@ -2993,12 +3013,16 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
         Context->setFILEDecl(Tag->getDecl());
       }
     }
-    if (unsigned Jmp_buf = SpecialTypes[SPECIAL_TYPE_jmp_buf]) {
-      QualType Jmp_bufType = GetType(Jmp_buf);
-      if (Jmp_bufType.isNull()) {
-        Error("jmp_buf type is NULL");
-        return;
-      }
+  }
+  
+  if (unsigned Jmp_buf = SpecialTypes[SPECIAL_TYPE_jmp_buf]) {
+    QualType Jmp_bufType = GetType(Jmp_buf);
+    if (Jmp_bufType.isNull()) {
+      Error("jmp_buf type is NULL");
+      return;
+    }
+    
+    if (!Context->jmp_bufDecl) {
       if (const TypedefType *Typedef = Jmp_bufType->getAs<TypedefType>())
         Context->setjmp_bufDecl(Typedef->getDecl());
       else {
@@ -3010,12 +3034,16 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
         Context->setjmp_bufDecl(Tag->getDecl());
       }
     }
-    if (unsigned Sigjmp_buf = SpecialTypes[SPECIAL_TYPE_sigjmp_buf]) {
-      QualType Sigjmp_bufType = GetType(Sigjmp_buf);
-      if (Sigjmp_bufType.isNull()) {
-        Error("sigjmp_buf type is NULL");
-        return;
-      }
+  }
+  
+  if (unsigned Sigjmp_buf = SpecialTypes[SPECIAL_TYPE_sigjmp_buf]) {
+    QualType Sigjmp_bufType = GetType(Sigjmp_buf);
+    if (Sigjmp_bufType.isNull()) {
+      Error("sigjmp_buf type is NULL");
+      return;
+    }
+    
+    if (!Context->sigjmp_bufDecl) {
       if (const TypedefType *Typedef = Sigjmp_bufType->getAs<TypedefType>())
         Context->setsigjmp_bufDecl(Typedef->getDecl());
       else {
@@ -3024,19 +3052,28 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
         Context->setsigjmp_bufDecl(Tag->getDecl());
       }
     }
-    if (unsigned ObjCIdRedef
-          = SpecialTypes[SPECIAL_TYPE_OBJC_ID_REDEFINITION])
-      Context->ObjCIdRedefinitionType = GetType(ObjCIdRedef);
-    if (unsigned ObjCClassRedef
-        = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS_REDEFINITION])
-      Context->ObjCClassRedefinitionType = GetType(ObjCClassRedef);
-    if (unsigned ObjCSelRedef
-        = SpecialTypes[SPECIAL_TYPE_OBJC_SEL_REDEFINITION])
-      Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
-
-    if (SpecialTypes[SPECIAL_TYPE_INT128_INSTALLED])
-      Context->setInt128Installed();
   }
+
+  if (unsigned ObjCIdRedef
+        = SpecialTypes[SPECIAL_TYPE_OBJC_ID_REDEFINITION]) {
+    if (Context->ObjCIdRedefinitionType.isNull())
+      Context->ObjCIdRedefinitionType = GetType(ObjCIdRedef);
+  }
+
+  if (unsigned ObjCClassRedef
+        = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS_REDEFINITION]) {
+    if (Context->ObjCClassRedefinitionType.isNull())
+      Context->ObjCClassRedefinitionType = GetType(ObjCClassRedef);
+  }
+
+  if (unsigned ObjCSelRedef
+        = SpecialTypes[SPECIAL_TYPE_OBJC_SEL_REDEFINITION]) {
+    if (Context->ObjCSelRedefinitionType.isNull())
+      Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
+  }
+
+  if (SpecialTypes[SPECIAL_TYPE_INT128_INSTALLED])
+    Context->setInt128Installed();
 
   ReadPragmaDiagnosticMappings(Context->getDiagnostics());
 
