@@ -625,7 +625,7 @@ def ldst_so_reg : Operand<i32>,
   let PrintMethod = "printAddrMode2Operand";
   let DecoderMethod = "DecodeSORegMemOperand";
   let ParserMatchClass = MemRegOffsetAsmOperand;
-  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$shift);
+  let MIOperandInfo = (ops GPR:$base, GPRnopc:$offsreg, i32imm:$shift);
 }
 
 // postidx_imm8 := +/- [0,255]

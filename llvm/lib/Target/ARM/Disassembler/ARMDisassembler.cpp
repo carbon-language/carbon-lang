@@ -979,7 +979,7 @@ static bool DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
     idx_mode = ARMII::IndexModePost;
 
   if (reg) {
-    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
+    if (!DecodeGPRnopcRegisterClass(Inst, Rm, Address, Decoder)) return false;
     ARM_AM::ShiftOpc Opc = ARM_AM::lsl;
     switch( fieldFromInstruction32(Insn, 5, 2)) {
       case 0:
