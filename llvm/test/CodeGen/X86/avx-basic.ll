@@ -42,3 +42,11 @@ allocas:
   store <8 x i32> <i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1>, <8 x i32>* %ptr2vec615, align 32
   ret void
 }
+
+;;; Just make sure this doesn't crash
+; CHECK: _ISelCrash
+define <4 x i64> @ISelCrash(<4 x i64> %a) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <4 x i64> %a, <4 x i64> undef, <4 x i32> <i32 2, i32 3, i32 4, i32 4>
+  ret <4 x i64> %shuffle
+}

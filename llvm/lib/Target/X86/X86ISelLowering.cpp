@@ -3863,7 +3863,10 @@ static void CommuteVectorShuffleMask(SmallVectorImpl<int> &Mask, EVT VT) {
 /// V1 (and in order), and the upper half elements should come from the upper
 /// half of V2 (and in order).
 static bool ShouldXformToMOVHLPS(ShuffleVectorSDNode *Op) {
-  if (Op->getValueType(0).getVectorNumElements() != 4)
+  EVT VT = Op->getValueType(0);
+  if (VT.getSizeInBits() != 128)
+    return false;
+  if (VT.getVectorNumElements() != 4)
     return false;
   for (unsigned i = 0, e = 2; i != e; ++i)
     if (!isUndefOrEqual(Op->getMaskElt(i), i+2))
@@ -3895,6 +3898,10 @@ static bool isScalarLoadToVector(SDNode *N, LoadSDNode **LD = NULL) {
 /// MOVLP, it must be either a vector load or a scalar load to vector.
 static bool ShouldXformToMOVLP(SDNode *V1, SDNode *V2,
                                ShuffleVectorSDNode *Op) {
+  EVT VT = Op->getValueType(0);
+  if (VT.getSizeInBits() != 128)
+    return false;
+
   if (!ISD::isNON_EXTLoad(V1) && !isScalarLoadToVector(V1))
     return false;
   // Is V2 is a vector load, don't do this transformation. We will try to use
@@ -3902,7 +3909,7 @@ static bool ShouldXformToMOVLP(SDNode *V1, SDNode *V2,
   if (ISD::isNON_EXTLoad(V2))
     return false;
 
-  unsigned NumElems = Op->getValueType(0).getVectorNumElements();
+  unsigned NumElems = VT.getVectorNumElements();
 
   if (NumElems != 2 && NumElems != 4)
     return false;
