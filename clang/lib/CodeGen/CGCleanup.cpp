@@ -119,16 +119,30 @@ char *EHScopeStack::allocate(size_t Size) {
 }
 
 EHScopeStack::stable_iterator
-EHScopeStack::getEnclosingEHCleanup(iterator it) const {
-  assert(it != end());
-  do {
-    if (isa<EHCleanupScope>(*it)) {
-      if (cast<EHCleanupScope>(*it).isEHCleanup())
-        return stabilize(it);
-      return cast<EHCleanupScope>(*it).getEnclosingEHCleanup();
+EHScopeStack::getInnermostActiveNormalCleanup() const {
+  for (stable_iterator si = getInnermostNormalCleanup(), se = stable_end();
+         si != se; ) {
+    EHCleanupScope &cleanup = cast<EHCleanupScope>(*find(si));
+    if (cleanup.isActive()) return si;
+    si = cleanup.getEnclosingNormalCleanup();
+  }
+  return stable_end();
+}
+
+EHScopeStack::stable_iterator EHScopeStack::getInnermostActiveEHScope() const {
+  for (stable_iterator si = getInnermostEHScope(), se = stable_end();
+         si != se; ) {
+    // Skip over inactive cleanups.
+    EHCleanupScope *cleanup = dyn_cast<EHCleanupScope>(&*find(si));
+    if (cleanup && !cleanup->isActive()) {
+      si = cleanup->getEnclosingEHScope();
+      continue;
     }
-    ++it;
-  } while (it != end());
+
+    // All other scopes are always active.
+    return si;
+  }
+
   return stable_end();
 }
 
@@ -146,11 +160,11 @@ void *EHScopeStack::pushCleanup(CleanupKind Kind, size_t Size) {
                                 Size,
                                 BranchFixups.size(),
                                 InnermostNormalCleanup,
-                                InnermostEHCleanup);
+                                InnermostEHScope);
   if (IsNormalCleanup)
     InnermostNormalCleanup = stable_begin();
   if (IsEHCleanup)
-    InnermostEHCleanup = stable_begin();
+    InnermostEHScope = stable_begin();
 
   return Scope->getCleanupBuffer();
 }
@@ -161,10 +175,8 @@ void EHScopeStack::popCleanup() {
   assert(isa<EHCleanupScope>(*begin()));
   EHCleanupScope &Cleanup = cast<EHCleanupScope>(*begin());
   InnermostNormalCleanup = Cleanup.getEnclosingNormalCleanup();
-  InnermostEHCleanup = Cleanup.getEnclosingEHCleanup();
+  InnermostEHScope = Cleanup.getEnclosingEHScope();
   StartOfData += Cleanup.getAllocatedSize();
-
-  if (empty()) NextEHDestIndex = FirstEHDestIndex;
 
   // Destroy the cleanup.
   Cleanup.~EHCleanupScope();
@@ -182,37 +194,35 @@ void EHScopeStack::popCleanup() {
   }
 }
 
-EHFilterScope *EHScopeStack::pushFilter(unsigned NumFilters) {
-  char *Buffer = allocate(EHFilterScope::getSizeForNumFilters(NumFilters));
-  CatchDepth++;
-  return new (Buffer) EHFilterScope(NumFilters);
+EHFilterScope *EHScopeStack::pushFilter(unsigned numFilters) {
+  assert(getInnermostEHScope() == stable_end());
+  char *buffer = allocate(EHFilterScope::getSizeForNumFilters(numFilters));
+  EHFilterScope *filter = new (buffer) EHFilterScope(numFilters);
+  InnermostEHScope = stable_begin();
+  return filter;
 }
 
 void EHScopeStack::popFilter() {
   assert(!empty() && "popping exception stack when not empty");
 
-  EHFilterScope &Filter = cast<EHFilterScope>(*begin());
-  StartOfData += EHFilterScope::getSizeForNumFilters(Filter.getNumFilters());
+  EHFilterScope &filter = cast<EHFilterScope>(*begin());
+  StartOfData += EHFilterScope::getSizeForNumFilters(filter.getNumFilters());
 
-  if (empty()) NextEHDestIndex = FirstEHDestIndex;
-
-  assert(CatchDepth > 0 && "mismatched filter push/pop");
-  CatchDepth--;
+  InnermostEHScope = filter.getEnclosingEHScope();
 }
 
-EHCatchScope *EHScopeStack::pushCatch(unsigned NumHandlers) {
-  char *Buffer = allocate(EHCatchScope::getSizeForNumHandlers(NumHandlers));
-  CatchDepth++;
-  EHCatchScope *Scope = new (Buffer) EHCatchScope(NumHandlers);
-  for (unsigned I = 0; I != NumHandlers; ++I)
-    Scope->getHandlers()[I].Index = getNextEHDestIndex();
-  return Scope;
+EHCatchScope *EHScopeStack::pushCatch(unsigned numHandlers) {
+  char *buffer = allocate(EHCatchScope::getSizeForNumHandlers(numHandlers));
+  EHCatchScope *scope =
+    new (buffer) EHCatchScope(numHandlers, InnermostEHScope);
+  InnermostEHScope = stable_begin();
+  return scope;
 }
 
 void EHScopeStack::pushTerminate() {
   char *Buffer = allocate(EHTerminateScope::getSize());
-  CatchDepth++;
-  new (Buffer) EHTerminateScope(getNextEHDestIndex());
+  new (Buffer) EHTerminateScope(InnermostEHScope);
+  InnermostEHScope = stable_begin();
 }
 
 /// Remove any 'null' fixups on the stack.  However, we can't pop more
@@ -384,17 +394,6 @@ static llvm::BasicBlock *CreateNormalEntry(CodeGenFunction &CGF,
   return Entry;
 }
 
-static llvm::BasicBlock *CreateEHEntry(CodeGenFunction &CGF,
-                                       EHCleanupScope &Scope) {
-  assert(Scope.isEHCleanup());
-  llvm::BasicBlock *Entry = Scope.getEHBlock();
-  if (!Entry) {
-    Entry = CGF.createBasicBlock("eh.cleanup");
-    Scope.setEHBlock(Entry);
-  }
-  return Entry;
-}
-
 /// Attempts to reduce a cleanup's entry block to a fallthrough.  This
 /// is basically llvm::MergeBlockIntoPredecessor, except
 /// simplified/optimized for the tighter constraints on cleanup blocks.
@@ -544,7 +543,10 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 
   // Check whether we need an EH cleanup.  This is only true if we've
   // generated a lazy EH cleanup block.
-  bool RequiresEHCleanup = Scope.hasEHBranches();
+  llvm::BasicBlock *EHEntry = Scope.getCachedEHDispatchBlock();
+  assert(Scope.hasEHBranches() == (EHEntry != 0));
+  bool RequiresEHCleanup = (EHEntry != 0);
+  EHScopeStack::stable_iterator EHParent = Scope.getEnclosingEHScope();
 
   // Check the three conditions which might require a normal cleanup:
 
@@ -579,12 +581,6 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
       (HasFixups || HasExistingBranches || HasFallthrough)) {
     RequiresNormalCleanup = true;
   }
-
-  EHScopeStack::Cleanup::Flags cleanupFlags;
-  if (Scope.isNormalCleanup())
-    cleanupFlags.setIsNormalCleanupKind();
-  if (Scope.isEHCleanup())
-    cleanupFlags.setIsEHCleanupKind();
 
   // If we have a prebranched fallthrough into an inactive normal
   // cleanup, rewrite it so that it leads to the appropriate place.
@@ -634,61 +630,11 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
   EHScopeStack::Cleanup *Fn =
     reinterpret_cast<EHScopeStack::Cleanup*>(CleanupBuffer.data());
 
-  // We want to emit the EH cleanup after the normal cleanup, but go
-  // ahead and do the setup for the EH cleanup while the scope is still
-  // alive.
-  llvm::BasicBlock *EHEntry = 0;
-  SmallVector<llvm::Instruction*, 2> EHInstsToAppend;
-  if (RequiresEHCleanup) {
-    EHEntry = CreateEHEntry(*this, Scope);
-
-    // Figure out the branch-through dest if necessary.
-    llvm::BasicBlock *EHBranchThroughDest = 0;
-    if (Scope.hasEHBranchThroughs()) {
-      assert(Scope.getEnclosingEHCleanup() != EHStack.stable_end());
-      EHScope &S = *EHStack.find(Scope.getEnclosingEHCleanup());
-      EHBranchThroughDest = CreateEHEntry(*this, cast<EHCleanupScope>(S));
-    }
-
-    // If we have exactly one branch-after and no branch-throughs, we
-    // can dispatch it without a switch.
-    if (!Scope.hasEHBranchThroughs() &&
-        Scope.getNumEHBranchAfters() == 1) {
-      assert(!EHBranchThroughDest);
-
-      // TODO: remove the spurious eh.cleanup.dest stores if this edge
-      // never went through any switches.
-      llvm::BasicBlock *BranchAfterDest = Scope.getEHBranchAfterBlock(0);
-      EHInstsToAppend.push_back(llvm::BranchInst::Create(BranchAfterDest));
-    
-    // Otherwise, if we have any branch-afters, we need a switch.
-    } else if (Scope.getNumEHBranchAfters()) {
-      // The default of the switch belongs to the branch-throughs if
-      // they exist.
-      llvm::BasicBlock *Default =
-        (EHBranchThroughDest ? EHBranchThroughDest : getUnreachableBlock());
-
-      const unsigned SwitchCapacity = Scope.getNumEHBranchAfters();
-
-      llvm::LoadInst *Load =
-        new llvm::LoadInst(getEHCleanupDestSlot(), "cleanup.dest");
-      llvm::SwitchInst *Switch =
-        llvm::SwitchInst::Create(Load, Default, SwitchCapacity);
-
-      EHInstsToAppend.push_back(Load);
-      EHInstsToAppend.push_back(Switch);
-
-      for (unsigned I = 0, E = Scope.getNumEHBranchAfters(); I != E; ++I)
-        Switch->addCase(Scope.getEHBranchAfterIndex(I),
-                        Scope.getEHBranchAfterBlock(I));
-
-    // Otherwise, we have only branch-throughs; jump to the next EH
-    // cleanup.
-    } else {
-      assert(EHBranchThroughDest);
-      EHInstsToAppend.push_back(llvm::BranchInst::Create(EHBranchThroughDest));
-    }
-  }
+  EHScopeStack::Cleanup::Flags cleanupFlags;
+  if (Scope.isNormalCleanup())
+    cleanupFlags.setIsNormalCleanupKind();
+  if (Scope.isEHCleanup())
+    cleanupFlags.setIsEHCleanupKind();
 
   if (!RequiresNormalCleanup) {
     destroyOptimisticNormalEntry(*this, Scope);
@@ -890,10 +836,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
     cleanupFlags.setIsForEHCleanup();
     EmitCleanup(*this, Fn, cleanupFlags, EHActiveFlag);
 
-    // Append the prepared cleanup prologue from above.
-    llvm::BasicBlock *EHExit = Builder.GetInsertBlock();
-    for (unsigned I = 0, E = EHInstsToAppend.size(); I != E; ++I)
-      EHExit->getInstList().push_back(EHInstsToAppend[I]);
+    Builder.CreateBr(getEHDispatchBlock(EHParent));
 
     Builder.restoreIP(SavedIP);
 
@@ -1005,64 +948,6 @@ void CodeGenFunction::EmitBranchThroughCleanup(JumpDest Dest) {
   Builder.ClearInsertionPoint();
 }
 
-void CodeGenFunction::EmitBranchThroughEHCleanup(UnwindDest Dest) {
-  // We should never get invalid scope depths for an UnwindDest; that
-  // implies that the destination wasn't set up correctly.
-  assert(Dest.getScopeDepth().isValid() && "invalid scope depth on EH dest?");
-
-  if (!HaveInsertPoint())
-    return;
-
-  // Create the branch.
-  llvm::BranchInst *BI = Builder.CreateBr(Dest.getBlock());
-
-  // Calculate the innermost active cleanup.
-  EHScopeStack::stable_iterator
-    InnermostCleanup = EHStack.getInnermostActiveEHCleanup();
-
-  // If the destination is in the same EH cleanup scope as us, we
-  // don't need to thread through anything.
-  if (InnermostCleanup.encloses(Dest.getScopeDepth())) {
-    Builder.ClearInsertionPoint();
-    return;
-  }
-  assert(InnermostCleanup != EHStack.stable_end());
-
-  // Store the index at the start.
-  llvm::ConstantInt *Index = Builder.getInt32(Dest.getDestIndex());
-  new llvm::StoreInst(Index, getEHCleanupDestSlot(), BI);
-
-  // Adjust BI to point to the first cleanup block.
-  {
-    EHCleanupScope &Scope =
-      cast<EHCleanupScope>(*EHStack.find(InnermostCleanup));
-    BI->setSuccessor(0, CreateEHEntry(*this, Scope));
-  }
-  
-  // Add this destination to all the scopes involved.
-  for (EHScopeStack::stable_iterator
-         I = InnermostCleanup, E = Dest.getScopeDepth(); ; ) {
-    assert(E.strictlyEncloses(I));
-    EHCleanupScope &Scope = cast<EHCleanupScope>(*EHStack.find(I));
-    assert(Scope.isEHCleanup());
-    I = Scope.getEnclosingEHCleanup();
-
-    // If this is the last cleanup we're propagating through, add this
-    // as a branch-after.
-    if (I == E) {
-      Scope.addEHBranchAfter(Index, Dest.getBlock());
-      break;
-    }
-
-    // Otherwise, add it as a branch-through.  If this isn't new
-    // information, all the rest of the work has been done before.
-    if (!Scope.addEHBranchThrough(Dest.getBlock()))
-      break;
-  }
-  
-  Builder.ClearInsertionPoint();
-}
-
 static bool IsUsedAsNormalCleanup(EHScopeStack &EHStack,
                                   EHScopeStack::stable_iterator C) {
   // If we needed a normal block for any reason, that counts.
@@ -1083,18 +968,21 @@ static bool IsUsedAsNormalCleanup(EHScopeStack &EHStack,
 }
 
 static bool IsUsedAsEHCleanup(EHScopeStack &EHStack,
-                              EHScopeStack::stable_iterator C) {
+                              EHScopeStack::stable_iterator cleanup) {
   // If we needed an EH block for any reason, that counts.
-  if (cast<EHCleanupScope>(*EHStack.find(C)).getEHBlock())
+  if (EHStack.find(cleanup)->hasEHBranches())
     return true;
 
   // Check whether any enclosed cleanups were needed.
   for (EHScopeStack::stable_iterator
-         I = EHStack.getInnermostEHCleanup(); I != C; ) {
-    assert(C.strictlyEncloses(I));
-    EHCleanupScope &S = cast<EHCleanupScope>(*EHStack.find(I));
-    if (S.getEHBlock()) return true;
-    I = S.getEnclosingEHCleanup();
+         i = EHStack.getInnermostEHScope(); i != cleanup; ) {
+    assert(cleanup.strictlyEncloses(i));
+
+    EHScope &scope = *EHStack.find(i);
+    if (scope.hasEHBranches())
+      return true;
+
+    i = scope.getEnclosingEHScope();
   }
 
   return false;
@@ -1188,11 +1076,4 @@ llvm::Value *CodeGenFunction::getNormalCleanupDestSlot() {
     NormalCleanupDest =
       CreateTempAlloca(Builder.getInt32Ty(), "cleanup.dest.slot");
   return NormalCleanupDest;
-}
-
-llvm::Value *CodeGenFunction::getEHCleanupDestSlot() {
-  if (!EHCleanupDest)
-    EHCleanupDest =
-      CreateTempAlloca(Builder.getInt32Ty(), "eh.cleanup.dest.slot");
-  return EHCleanupDest;
 }

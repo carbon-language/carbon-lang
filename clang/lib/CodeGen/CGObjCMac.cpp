@@ -2753,7 +2753,6 @@ void FragileHazards::collectLocals() {
   llvm::DenseSet<llvm::Value*> AllocasToIgnore;
   addIfPresent(AllocasToIgnore, CGF.ReturnValue);
   addIfPresent(AllocasToIgnore, CGF.NormalCleanupDest);
-  addIfPresent(AllocasToIgnore, CGF.EHCleanupDest);
 
   // Collect all the allocas currently in the function.  This is
   // probably way too aggressive.

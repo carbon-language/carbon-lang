@@ -286,6 +286,23 @@ void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
   Builder.ClearInsertionPoint();
 }
 
+void CodeGenFunction::EmitBlockAfterUses(llvm::BasicBlock *block) {
+  bool inserted = false;
+  for (llvm::BasicBlock::use_iterator
+         i = block->use_begin(), e = block->use_end(); i != e; ++i) {
+    if (llvm::Instruction *insn = dyn_cast<llvm::Instruction>(*i)) {
+      CurFn->getBasicBlockList().insertAfter(insn->getParent(), block);
+      inserted = true;
+      break;
+    }
+  }
+
+  if (!inserted)
+    CurFn->getBasicBlockList().push_back(block);
+
+  Builder.SetInsertPoint(block);
+}
+
 CodeGenFunction::JumpDest
 CodeGenFunction::getJumpDestForLabel(const LabelDecl *D) {
   JumpDest &Dest = LabelMap[D];

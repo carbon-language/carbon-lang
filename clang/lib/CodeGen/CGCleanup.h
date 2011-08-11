@@ -29,25 +29,102 @@ namespace CodeGen {
 /// A protected scope for zero-cost EH handling.
 class EHScope {
   llvm::BasicBlock *CachedLandingPad;
+  llvm::BasicBlock *CachedEHDispatchBlock;
 
-  unsigned K : 2;
+  EHScopeStack::stable_iterator EnclosingEHScope;
+
+  class CommonBitFields {
+    friend class EHScope;
+    unsigned Kind : 2;
+  };
+  enum { NumCommonBits = 2 };
 
 protected:
-  enum { BitsRemaining = 30 };
+  class CatchBitFields {
+    friend class EHCatchScope;
+    unsigned : NumCommonBits;
+
+    unsigned NumHandlers : 32 - NumCommonBits;
+  };
+
+  class CleanupBitFields {
+    friend class EHCleanupScope;
+    unsigned : NumCommonBits;
+
+    /// Whether this cleanup needs to be run along normal edges.
+    unsigned IsNormalCleanup : 1;
+
+    /// Whether this cleanup needs to be run along exception edges.
+    unsigned IsEHCleanup : 1;
+
+    /// Whether this cleanup is currently active.
+    unsigned IsActive : 1;
+
+    /// Whether the normal cleanup should test the activation flag.
+    unsigned TestFlagInNormalCleanup : 1;
+
+    /// Whether the EH cleanup should test the activation flag.
+    unsigned TestFlagInEHCleanup : 1;
+
+    /// The amount of extra storage needed by the Cleanup.
+    /// Always a multiple of the scope-stack alignment.
+    unsigned CleanupSize : 12;
+
+    /// The number of fixups required by enclosing scopes (not including
+    /// this one).  If this is the top cleanup scope, all the fixups
+    /// from this index onwards belong to this scope.
+    unsigned FixupDepth : 32 - 17 - NumCommonBits; // currently 13    
+  };
+
+  class FilterBitFields {
+    friend class EHFilterScope;
+    unsigned : NumCommonBits;
+
+    unsigned NumFilters : 32 - NumCommonBits;
+  };
+
+  union {
+    CommonBitFields CommonBits;
+    CatchBitFields CatchBits;
+    CleanupBitFields CleanupBits;
+    FilterBitFields FilterBits;
+  };
 
 public:
   enum Kind { Cleanup, Catch, Terminate, Filter };
 
-  EHScope(Kind K) : CachedLandingPad(0), K(K) {}
+  EHScope(Kind kind, EHScopeStack::stable_iterator enclosingEHScope)
+    : CachedLandingPad(0), CachedEHDispatchBlock(0),
+      EnclosingEHScope(enclosingEHScope) {
+    CommonBits.Kind = kind;
+  }
 
-  Kind getKind() const { return static_cast<Kind>(K); }
+  Kind getKind() const { return static_cast<Kind>(CommonBits.Kind); }
 
   llvm::BasicBlock *getCachedLandingPad() const {
     return CachedLandingPad;
   }
 
-  void setCachedLandingPad(llvm::BasicBlock *Block) {
-    CachedLandingPad = Block;
+  void setCachedLandingPad(llvm::BasicBlock *block) {
+    CachedLandingPad = block;
+  }
+
+  llvm::BasicBlock *getCachedEHDispatchBlock() const {
+    return CachedEHDispatchBlock;
+  }
+
+  void setCachedEHDispatchBlock(llvm::BasicBlock *block) {
+    CachedEHDispatchBlock = block;
+  }
+
+  bool hasEHBranches() const {
+    if (llvm::BasicBlock *block = getCachedEHDispatchBlock())
+      return !block->use_empty();
+    return false;
+  }
+
+  EHScopeStack::stable_iterator getEnclosingEHScope() const {
+    return EnclosingEHScope;
   }
 };
 
@@ -57,8 +134,6 @@ public:
 /// Objective C @finally blocks are represented using a cleanup scope
 /// after the catch scope.
 class EHCatchScope : public EHScope {
-  unsigned NumHandlers : BitsRemaining;
-
   // In effect, we have a flexible array member
   //   Handler Handlers[0];
   // But that's only standard in C99, not C++, so we have to do
@@ -73,8 +148,7 @@ public:
     /// The catch handler for this type.
     llvm::BasicBlock *Block;
 
-    /// The unwind destination index for this handler.
-    unsigned Index;
+    bool isCatchAll() const { return Type == 0; }
   };
 
 private:
@@ -93,12 +167,14 @@ public:
     return sizeof(EHCatchScope) + N * sizeof(Handler);
   }
 
-  EHCatchScope(unsigned NumHandlers)
-    : EHScope(Catch), NumHandlers(NumHandlers) {
+  EHCatchScope(unsigned numHandlers,
+               EHScopeStack::stable_iterator enclosingEHScope)
+    : EHScope(Catch, enclosingEHScope) {
+    CatchBits.NumHandlers = numHandlers;
   }
 
   unsigned getNumHandlers() const {
-    return NumHandlers;
+    return CatchBits.NumHandlers;
   }
 
   void setCatchAllHandler(unsigned I, llvm::BasicBlock *Block) {
@@ -127,43 +203,15 @@ public:
 
 /// A cleanup scope which generates the cleanup blocks lazily.
 class EHCleanupScope : public EHScope {
-  /// Whether this cleanup needs to be run along normal edges.
-  bool IsNormalCleanup : 1;
-
-  /// Whether this cleanup needs to be run along exception edges.
-  bool IsEHCleanup : 1;
-
-  /// Whether this cleanup is currently active.
-  bool IsActive : 1;
-
-  /// Whether the normal cleanup should test the activation flag.
-  bool TestFlagInNormalCleanup : 1;
-
-  /// Whether the EH cleanup should test the activation flag.
-  bool TestFlagInEHCleanup : 1;
-
-  /// The amount of extra storage needed by the Cleanup.
-  /// Always a multiple of the scope-stack alignment.
-  unsigned CleanupSize : 12;
-
-  /// The number of fixups required by enclosing scopes (not including
-  /// this one).  If this is the top cleanup scope, all the fixups
-  /// from this index onwards belong to this scope.
-  unsigned FixupDepth : BitsRemaining - 17; // currently 13
-
   /// The nearest normal cleanup scope enclosing this one.
   EHScopeStack::stable_iterator EnclosingNormal;
 
-  /// The nearest EH cleanup scope enclosing this one.
+  /// The nearest EH scope enclosing this one.
   EHScopeStack::stable_iterator EnclosingEH;
 
   /// The dual entry/exit block along the normal edge.  This is lazily
   /// created if needed before the cleanup is popped.
   llvm::BasicBlock *NormalBlock;
-
-  /// The dual entry/exit block along the EH edge.  This is lazily
-  /// created if needed before the cleanup is popped.
-  llvm::BasicBlock *EHBlock;
 
   /// An optional i1 variable indicating whether this cleanup has been
   /// activated yet.
@@ -180,15 +228,6 @@ class EHCleanupScope : public EHScope {
     /// Normal branch-afters.
     SmallVector<std::pair<llvm::BasicBlock*,llvm::ConstantInt*>, 4>
       BranchAfters;
-
-    /// The destinations of EH branch-afters and branch-throughs.
-    /// TODO: optimize for the extremely common case of a single
-    /// branch-through.
-    llvm::SmallPtrSet<llvm::BasicBlock*, 4> EHBranches;
-
-    /// EH branch-afters.
-    SmallVector<std::pair<llvm::BasicBlock*,llvm::ConstantInt*>, 4>
-    EHBranchAfters;
   };
   mutable struct ExtInfo *ExtInfo;
 
@@ -210,56 +249,64 @@ public:
   }
 
   size_t getAllocatedSize() const {
-    return sizeof(EHCleanupScope) + CleanupSize;
+    return sizeof(EHCleanupScope) + CleanupBits.CleanupSize;
   }
 
-  EHCleanupScope(bool IsNormal, bool IsEH, bool IsActive,
-                 unsigned CleanupSize, unsigned FixupDepth,
-                 EHScopeStack::stable_iterator EnclosingNormal,
-                 EHScopeStack::stable_iterator EnclosingEH)
-    : EHScope(EHScope::Cleanup),
-      IsNormalCleanup(IsNormal), IsEHCleanup(IsEH), IsActive(IsActive),
-      TestFlagInNormalCleanup(false), TestFlagInEHCleanup(false),
-      CleanupSize(CleanupSize), FixupDepth(FixupDepth),
-      EnclosingNormal(EnclosingNormal), EnclosingEH(EnclosingEH),
-      NormalBlock(0), EHBlock(0), ActiveFlag(0), ExtInfo(0)
-  {
-    assert(this->CleanupSize == CleanupSize && "cleanup size overflow");
+  EHCleanupScope(bool isNormal, bool isEH, bool isActive,
+                 unsigned cleanupSize, unsigned fixupDepth,
+                 EHScopeStack::stable_iterator enclosingNormal,
+                 EHScopeStack::stable_iterator enclosingEH)
+    : EHScope(EHScope::Cleanup, enclosingEH), EnclosingNormal(enclosingNormal),
+      NormalBlock(0), ActiveFlag(0), ExtInfo(0) {
+    CleanupBits.IsNormalCleanup = isNormal;
+    CleanupBits.IsEHCleanup = isEH;
+    CleanupBits.IsActive = isActive;
+    CleanupBits.TestFlagInNormalCleanup = false;
+    CleanupBits.TestFlagInEHCleanup = false;
+    CleanupBits.CleanupSize = cleanupSize;
+    CleanupBits.FixupDepth = fixupDepth;
+
+    assert(CleanupBits.CleanupSize == cleanupSize && "cleanup size overflow");
   }
 
   ~EHCleanupScope() {
     delete ExtInfo;
   }
 
-  bool isNormalCleanup() const { return IsNormalCleanup; }
+  bool isNormalCleanup() const { return CleanupBits.IsNormalCleanup; }
   llvm::BasicBlock *getNormalBlock() const { return NormalBlock; }
   void setNormalBlock(llvm::BasicBlock *BB) { NormalBlock = BB; }
 
-  bool isEHCleanup() const { return IsEHCleanup; }
-  llvm::BasicBlock *getEHBlock() const { return EHBlock; }
-  void setEHBlock(llvm::BasicBlock *BB) { EHBlock = BB; }
+  bool isEHCleanup() const { return CleanupBits.IsEHCleanup; }
+  llvm::BasicBlock *getEHBlock() const { return getCachedEHDispatchBlock(); }
+  void setEHBlock(llvm::BasicBlock *BB) { setCachedEHDispatchBlock(BB); }
 
-  bool isActive() const { return IsActive; }
-  void setActive(bool A) { IsActive = A; }
+  bool isActive() const { return CleanupBits.IsActive; }
+  void setActive(bool A) { CleanupBits.IsActive = A; }
 
   llvm::AllocaInst *getActiveFlag() const { return ActiveFlag; }
   void setActiveFlag(llvm::AllocaInst *Var) { ActiveFlag = Var; }
 
-  void setTestFlagInNormalCleanup() { TestFlagInNormalCleanup = true; }
-  bool shouldTestFlagInNormalCleanup() const { return TestFlagInNormalCleanup; }
+  void setTestFlagInNormalCleanup() {
+    CleanupBits.TestFlagInNormalCleanup = true;
+  }
+  bool shouldTestFlagInNormalCleanup() const {
+    return CleanupBits.TestFlagInNormalCleanup;
+  }
 
-  void setTestFlagInEHCleanup() { TestFlagInEHCleanup = true; }
-  bool shouldTestFlagInEHCleanup() const { return TestFlagInEHCleanup; }
+  void setTestFlagInEHCleanup() {
+    CleanupBits.TestFlagInEHCleanup = true;
+  }
+  bool shouldTestFlagInEHCleanup() const {
+    return CleanupBits.TestFlagInEHCleanup;
+  }
 
-  unsigned getFixupDepth() const { return FixupDepth; }
+  unsigned getFixupDepth() const { return CleanupBits.FixupDepth; }
   EHScopeStack::stable_iterator getEnclosingNormalCleanup() const {
     return EnclosingNormal;
   }
-  EHScopeStack::stable_iterator getEnclosingEHCleanup() const {
-    return EnclosingEH;
-  }
 
-  size_t getCleanupSize() const { return CleanupSize; }
+  size_t getCleanupSize() const { return CleanupBits.CleanupSize; }
   void *getCleanupBuffer() { return this + 1; }
 
   EHScopeStack::Cleanup *getCleanup() {
@@ -327,41 +374,6 @@ public:
     return (ExtInfo->BranchAfters.size() != ExtInfo->Branches.size());
   }
 
-  // Same stuff, only for EH branches instead of normal branches.
-  // It's quite possible that we could find a better representation
-  // for this.
-
-  bool hasEHBranches() const { return ExtInfo && !ExtInfo->EHBranches.empty(); }
-  void addEHBranchAfter(llvm::ConstantInt *Index,
-                        llvm::BasicBlock *Block) {
-    struct ExtInfo &ExtInfo = getExtInfo();
-    if (ExtInfo.EHBranches.insert(Block))
-      ExtInfo.EHBranchAfters.push_back(std::make_pair(Block, Index));
-  }
-
-  unsigned getNumEHBranchAfters() const {
-    return ExtInfo ? ExtInfo->EHBranchAfters.size() : 0;
-  }
-
-  llvm::BasicBlock *getEHBranchAfterBlock(unsigned I) const {
-    assert(I < getNumEHBranchAfters());
-    return ExtInfo->EHBranchAfters[I].first;
-  }
-
-  llvm::ConstantInt *getEHBranchAfterIndex(unsigned I) const {
-    assert(I < getNumEHBranchAfters());
-    return ExtInfo->EHBranchAfters[I].second;
-  }
-
-  bool addEHBranchThrough(llvm::BasicBlock *Block) {
-    return getExtInfo().EHBranches.insert(Block);
-  }
-
-  bool hasEHBranchThroughs() const {
-    if (!ExtInfo) return false;
-    return (ExtInfo->EHBranchAfters.size() != ExtInfo->EHBranches.size());
-  }
-
   static bool classof(const EHScope *Scope) {
     return (Scope->getKind() == Cleanup);
   }
@@ -373,8 +385,6 @@ public:
 ///
 /// This is used to implement C++ exception specifications.
 class EHFilterScope : public EHScope {
-  unsigned NumFilters : BitsRemaining;
-
   // Essentially ends in a flexible array member:
   // llvm::Value *FilterTypes[0];
 
@@ -387,42 +397,42 @@ class EHFilterScope : public EHScope {
   }
 
 public:
-  EHFilterScope(unsigned NumFilters) :
-    EHScope(Filter), NumFilters(NumFilters) {}
-
-  static size_t getSizeForNumFilters(unsigned NumFilters) {
-    return sizeof(EHFilterScope) + NumFilters * sizeof(llvm::Value*);
+  EHFilterScope(unsigned numFilters)
+    : EHScope(Filter, EHScopeStack::stable_end()) {
+    FilterBits.NumFilters = numFilters;
   }
 
-  unsigned getNumFilters() const { return NumFilters; }
-
-  void setFilter(unsigned I, llvm::Value *FilterValue) {
-    assert(I < getNumFilters());
-    getFilters()[I] = FilterValue;
+  static size_t getSizeForNumFilters(unsigned numFilters) {
+    return sizeof(EHFilterScope) + numFilters * sizeof(llvm::Value*);
   }
 
-  llvm::Value *getFilter(unsigned I) const {
-    assert(I < getNumFilters());
-    return getFilters()[I];
+  unsigned getNumFilters() const { return FilterBits.NumFilters; }
+
+  void setFilter(unsigned i, llvm::Value *filterValue) {
+    assert(i < getNumFilters());
+    getFilters()[i] = filterValue;
   }
 
-  static bool classof(const EHScope *Scope) {
-    return Scope->getKind() == Filter;
+  llvm::Value *getFilter(unsigned i) const {
+    assert(i < getNumFilters());
+    return getFilters()[i];
+  }
+
+  static bool classof(const EHScope *scope) {
+    return scope->getKind() == Filter;
   }
 };
 
 /// An exceptions scope which calls std::terminate if any exception
 /// reaches it.
 class EHTerminateScope : public EHScope {
-  unsigned DestIndex : BitsRemaining;
 public:
-  EHTerminateScope(unsigned Index) : EHScope(Terminate), DestIndex(Index) {}
+  EHTerminateScope(EHScopeStack::stable_iterator enclosingEHScope)
+    : EHScope(Terminate, enclosingEHScope) {}
   static size_t getSize() { return sizeof(EHTerminateScope); }
 
-  unsigned getDestIndex() const { return DestIndex; }
-
-  static bool classof(const EHScope *Scope) {
-    return Scope->getKind() == Terminate;
+  static bool classof(const EHScope *scope) {
+    return scope->getKind() == Terminate;
   }
 };
 
@@ -498,26 +508,17 @@ inline EHScopeStack::iterator EHScopeStack::end() const {
 inline void EHScopeStack::popCatch() {
   assert(!empty() && "popping exception stack when not empty");
 
-  assert(isa<EHCatchScope>(*begin()));
-  StartOfData += EHCatchScope::getSizeForNumHandlers(
-                          cast<EHCatchScope>(*begin()).getNumHandlers());
-
-  if (empty()) NextEHDestIndex = FirstEHDestIndex;
-
-  assert(CatchDepth > 0 && "mismatched catch/terminate push/pop");
-  CatchDepth--;
+  EHCatchScope &scope = cast<EHCatchScope>(*begin());
+  InnermostEHScope = scope.getEnclosingEHScope();
+  StartOfData += EHCatchScope::getSizeForNumHandlers(scope.getNumHandlers());
 }
 
 inline void EHScopeStack::popTerminate() {
   assert(!empty() && "popping exception stack when not empty");
 
-  assert(isa<EHTerminateScope>(*begin()));
+  EHTerminateScope &scope = cast<EHTerminateScope>(*begin());
+  InnermostEHScope = scope.getEnclosingEHScope();
   StartOfData += EHTerminateScope::getSize();
-
-  if (empty()) NextEHDestIndex = FirstEHDestIndex;
-
-  assert(CatchDepth > 0 && "mismatched catch/terminate push/pop");
-  CatchDepth--;
 }
 
 inline EHScopeStack::iterator EHScopeStack::find(stable_iterator sp) const {
@@ -530,28 +531,6 @@ inline EHScopeStack::stable_iterator
 EHScopeStack::stabilize(iterator ir) const {
   assert(StartOfData <= ir.Ptr && ir.Ptr <= EndOfBuffer);
   return stable_iterator(EndOfBuffer - ir.Ptr);
-}
-
-inline EHScopeStack::stable_iterator
-EHScopeStack::getInnermostActiveNormalCleanup() const {
-  for (EHScopeStack::stable_iterator
-         I = getInnermostNormalCleanup(), E = stable_end(); I != E; ) {
-    EHCleanupScope &S = cast<EHCleanupScope>(*find(I));
-    if (S.isActive()) return I;
-    I = S.getEnclosingNormalCleanup();
-  }
-  return stable_end();
-}
-
-inline EHScopeStack::stable_iterator
-EHScopeStack::getInnermostActiveEHCleanup() const {
-  for (EHScopeStack::stable_iterator
-         I = getInnermostEHCleanup(), E = stable_end(); I != E; ) {
-    EHCleanupScope &S = cast<EHCleanupScope>(*find(I));
-    if (S.isActive()) return I;
-    I = S.getEnclosingEHCleanup();
-  }
-  return stable_end();
 }
 
 }

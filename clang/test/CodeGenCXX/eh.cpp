@@ -32,7 +32,6 @@ void test2() {
 // CHECK:     define void @_Z5test2v()
 // CHECK:       [[EXNVAR:%.*]] = alloca i8*
 // CHECK-NEXT:  [[SELECTORVAR:%.*]] = alloca i32
-// CHECK-NEXT:  [[CLEANUPDESTVAR:%.*]] = alloca i32
 // CHECK-NEXT:  [[EXNOBJ:%.*]] = call i8* @__cxa_allocate_exception(i64 16)
 // CHECK-NEXT:  [[EXN:%.*]] = bitcast i8* [[EXNOBJ]] to [[DSTAR:%[^*]*\*]]
 // CHECK-NEXT:  invoke void @_ZN7test2_DC1ERKS_([[DSTAR]] [[EXN]], [[DSTAR]] @d2)
@@ -107,7 +106,6 @@ namespace test7 {
 // CHECK:      [[CAUGHTEXNVAR:%.*]] = alloca i8*
 // CHECK-NEXT: [[SELECTORVAR:%.*]] = alloca i32
 // CHECK-NEXT: [[INTCATCHVAR:%.*]] = alloca i32
-// CHECK-NEXT: [[EHCLEANUPDESTVAR:%.*]] = alloca i32
     try {
       try {
 // CHECK-NEXT: [[EXNALLOC:%.*]] = call i8* @__cxa_allocate_exception
@@ -118,24 +116,28 @@ namespace test7 {
       }
 
 // CHECK:      [[CAUGHTEXN:%.*]] = call i8* @llvm.eh.exception()
-// CHECK-NEXT: store i8* [[CAUGHTEXN]], i8** [[CAUGHTEXNVAR]]
 // CHECK-NEXT: [[SELECTOR:%.*]] = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* [[CAUGHTEXN]], i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*), i8* null)
+// CHECK-NEXT: store i8* [[CAUGHTEXN]], i8** [[CAUGHTEXNVAR]]
 // CHECK-NEXT: store i32 [[SELECTOR]], i32* [[SELECTORVAR]]
-// CHECK-NEXT: call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*))
-// CHECK-NEXT: icmp eq
+// CHECK-NEXT: br label
+// CHECK:      [[SELECTOR:%.*]] = load i32* [[SELECTORVAR]]
+// CHECK-NEXT: [[T0:%.*]] = call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*))
+// CHECK-NEXT: icmp eq i32 [[SELECTOR]], [[T0]]
 // CHECK-NEXT: br i1
-// CHECK:      load i8** [[CAUGHTEXNVAR]]
-// CHECK-NEXT: call i8* @__cxa_begin_catch
-// CHECK:      invoke void @__cxa_rethrow
+// CHECK:      [[T0:%.*]] = load i8** [[CAUGHTEXNVAR]]
+// CHECK-NEXT: [[T1:%.*]] = call i8* @__cxa_begin_catch(i8* [[T0]])
+// CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to i32*
+// CHECK-NEXT: [[T3:%.*]] = load i32* [[T2]]
+// CHECK-NEXT: store i32 [[T3]], i32* {{%.*}}, align 4
+// CHECK-NEXT: invoke void @__cxa_rethrow
       catch (int) {
         throw;
       }
     }
 // CHECK:      [[CAUGHTEXN:%.*]] = call i8* @llvm.eh.exception()
-// CHECK-NEXT: store i8* [[CAUGHTEXN]], i8** [[CAUGHTEXNVAR]]
 // CHECK-NEXT: [[SELECTOR:%.*]] = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* [[CAUGHTEXN]], i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* null)
+// CHECK-NEXT: store i8* [[CAUGHTEXN]], i8** [[CAUGHTEXNVAR]]
 // CHECK-NEXT: store i32 [[SELECTOR]], i32* [[SELECTORVAR]]
-// CHECK-NEXT: store i32 1, i32* [[EHCLEANUPDESTVAR]]
 // CHECK-NEXT: call void @__cxa_end_catch()
 // CHECK-NEXT: br label
 // CHECK:      load i8** [[CAUGHTEXNVAR]]
@@ -186,15 +188,14 @@ namespace test9 {
   // CHECK:      invoke void @_ZN5test96opaqueEv()
     opaque();
   } catch (int x) {
+  // CHECK:      call i8* @llvm.eh.exception
+  // CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
+
   // CHECK:      call i8* @__cxa_begin_catch
   // CHECK:      invoke void @_ZN5test96opaqueEv()
   // CHECK:      invoke void @__cxa_rethrow()
     opaque();
   }
-
-  // landing pad from first call to invoke
-  // CHECK:      call i8* @llvm.eh.exception
-  // CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
 }
 
 // __cxa_end_catch can throw for some kinds of caught exceptions.
@@ -406,7 +407,6 @@ namespace test16 {
     // CHECK-NEXT: [[TEMP:%.*]] = alloca [[A:%.*]],
     // CHECK-NEXT: [[EXNSLOT:%.*]] = alloca i8*
     // CHECK-NEXT: [[SELECTORSLOT:%.*]] = alloca i32
-    // CHECK-NEXT: [[EHDEST:%.*]] = alloca i32
     // CHECK-NEXT: [[TEMP_ACTIVE:%.*]] = alloca i1
 
     cond() ? throw B(A()) : foo();

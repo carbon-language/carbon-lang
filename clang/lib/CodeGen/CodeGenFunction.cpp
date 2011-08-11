@@ -32,8 +32,8 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   : CodeGenTypeCache(cgm), CGM(cgm),
     Target(CGM.getContext().Target), Builder(cgm.getModule().getContext()),
     AutoreleaseResult(false), BlockInfo(0), BlockPointer(0),
-    NormalCleanupDest(0), EHCleanupDest(0), NextCleanupDestIndex(1),
-    ExceptionSlot(0), EHSelectorSlot(0),
+    NormalCleanupDest(0), NextCleanupDestIndex(1),
+    EHResumeBlock(0), ExceptionSlot(0), EHSelectorSlot(0),
     DebugInfo(0), DisableDebugInfo(false), DidCallStackSave(false),
     IndirectBranch(0), SwitchInsn(0), CaseRangeBlock(0), UnreachableBlock(0),
     CXXThisDecl(0), CXXThisValue(0), CXXVTTDecl(0), CXXVTTValue(0),
@@ -189,7 +189,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
     }
   }
 
-  EmitIfUsed(*this, RethrowBlock.getBlock());
+  EmitIfUsed(*this, EHResumeBlock);
   EmitIfUsed(*this, TerminateLandingPad);
   EmitIfUsed(*this, TerminateHandler);
   EmitIfUsed(*this, UnreachableBlock);

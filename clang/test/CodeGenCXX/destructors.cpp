@@ -237,7 +237,6 @@ namespace test5 {
   // CHECK:      [[ELEMS:%.*]] = alloca [5 x [[A:%.*]]], align
   // CHECK-NEXT: [[EXN:%.*]] = alloca i8*
   // CHECK-NEXT: [[SEL:%.*]] = alloca i32
-  // CHECK-NEXT: [[EHCLEANUP:%.*]] = alloca i32
   // CHECK-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [5 x [[A]]]* [[ELEMS]], i32 0, i32 0
   // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 5
   // CHECK-NEXT: br label

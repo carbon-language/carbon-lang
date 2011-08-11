@@ -16,7 +16,6 @@ namespace test0 {
   // CHECK-NEXT: [[ENDVAR:%.*]] = alloca [[A]]*
   // CHECK-NEXT: [[EXN:%.*]] = alloca i8*
   // CHECK-NEXT: [[SEL:%.*]] = alloca i32
-  // CHECK-NEXT: [[CLEANUP:%.*]] = alloca i32
 
   // Initialize.
   // CHECK-NEXT: [[E_BEGIN:%.*]] = getelementptr inbounds [10 x [[A]]]* [[AS]], i64 0, i64 0
@@ -100,7 +99,6 @@ namespace test1 {
   // CHECK:      [[V:%.*]] = alloca [[B:%.*]], align 4
   // CHECK-NEXT: alloca i8*
   // CHECK-NEXT: alloca i32
-  // CHECK-NEXT: alloca i32
   // CHECK-NEXT: [[X:%.*]] = getelementptr inbounds [[B]]* [[V]], i32 0, i32 0
   // CHECK-NEXT: call void @_ZN5test11AC1Ei([[A:%.*]]* [[X]], i32 5)
   // CHECK-NEXT: [[Y:%.*]] = getelementptr inbounds [[B]]* [[V]], i32 0, i32 1
@@ -128,7 +126,6 @@ namespace test2 {
     // CHECK:    define void @_ZN5test24testEv()
     // CHECK:      [[V:%.*]] = alloca [4 x [7 x [[A:%.*]]]], align 1
     // CHECK-NEXT: alloca i8*
-    // CHECK-NEXT: alloca i32
     // CHECK-NEXT: alloca i32
 
     // Main initialization loop.

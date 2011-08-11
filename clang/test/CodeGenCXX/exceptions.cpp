@@ -276,7 +276,6 @@ namespace test5 {
   // CHECK-NEXT: [[SELECTORSLOT:%.*]] = alloca i32
   // CHECK-NEXT: [[A:%.*]] = alloca [[A_T:%.*]], align 1
   // CHECK-NEXT: [[T:%.*]] = alloca [[T_T:%.*]], align 1
-  // CHECK-NEXT: alloca i32
   // CHECK-NEXT: invoke void @_ZN5test53fooEv()
   // CHECK:      [[EXN:%.*]] = load i8** [[EXNSLOT]]
   // CHECK-NEXT: [[ADJ:%.*]] = call i8* @__cxa_get_exception_ptr(i8* [[EXN]])
@@ -324,7 +323,6 @@ namespace test7 {
     // CHECK:      [[OUTER_NEW:%.*]] = alloca i1
     // CHECK-NEXT: alloca [[A:%.*]],
     // CHECK-NEXT: alloca i8*
-    // CHECK-NEXT: alloca i32
     // CHECK-NEXT: alloca i32
     // CHECK-NEXT: [[OUTER_A:%.*]] = alloca i1
     // CHECK-NEXT: alloca i8*

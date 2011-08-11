@@ -211,7 +211,7 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
 
   // Leave the try.
   if (S.getNumCatchStmts())
-    CGF.EHStack.popCatch();
+    CGF.popCatchScope();
 
   // Remember where we were.
   CGBuilderTy::InsertPoint SavedIP = CGF.Builder.saveAndClearIP();
