@@ -839,10 +839,11 @@ multiclass T2I_cmp_irs<bits<4> opcod, string opc,
 
 /// T2I_ld - Defines a set of (op r, {imm12|imm8|so_reg}) load patterns.
 multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
-                  InstrItinClass iii, InstrItinClass iis, PatFrag opnode> {
-  def i12 : T2Ii12<(outs GPR:$Rt), (ins t2addrmode_imm12:$addr), iii,
+                  InstrItinClass iii, InstrItinClass iis, RegisterClass target,
+                  PatFrag opnode> {
+  def i12 : T2Ii12<(outs target:$Rt), (ins t2addrmode_imm12:$addr), iii,
                    opc, ".w\t$Rt, $addr",
-                   [(set GPR:$Rt, (opnode t2addrmode_imm12:$addr))]> {
+                   [(set target:$Rt, (opnode t2addrmode_imm12:$addr))]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-25} = 0b00;
     let Inst{24} = signed;
@@ -859,9 +860,9 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{23}    = addr{12};    // U
     let Inst{11-0}  = addr{11-0};  // imm
   }
-  def i8  : T2Ii8 <(outs GPR:$Rt), (ins t2addrmode_imm8:$addr), iii,
+  def i8  : T2Ii8 <(outs target:$Rt), (ins t2addrmode_imm8:$addr), iii,
                    opc, "\t$Rt, $addr",
-                   [(set GPR:$Rt, (opnode t2addrmode_imm8:$addr))]> {
+                   [(set target:$Rt, (opnode t2addrmode_imm8:$addr))]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-25} = 0b00;
     let Inst{24} = signed;
@@ -881,9 +882,9 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{9}     = addr{8};    // U
     let Inst{7-0}   = addr{7-0};  // imm
   }
-  def s   : T2Iso <(outs GPR:$Rt), (ins t2addrmode_so_reg:$addr), iis,
+  def s   : T2Iso <(outs target:$Rt), (ins t2addrmode_so_reg:$addr), iis,
                    opc, ".w\t$Rt, $addr",
-                   [(set GPR:$Rt, (opnode t2addrmode_so_reg:$addr))]> {
+                   [(set target:$Rt, (opnode t2addrmode_so_reg:$addr))]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-25} = 0b00;
     let Inst{24} = signed;
@@ -904,9 +905,9 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
   }
 
   // FIXME: Is the pci variant actually needed?
-  def pci : T2Ipc <(outs GPR:$Rt), (ins t2ldrlabel:$addr), iii,
+  def pci : T2Ipc <(outs target:$Rt), (ins t2ldrlabel:$addr), iii,
                    opc, ".w\t$Rt, $addr",
-                   [(set GPR:$Rt, (opnode (ARMWrapper tconstpool:$addr)))]> {
+                   [(set target:$Rt, (opnode (ARMWrapper tconstpool:$addr)))]> {
     let isReMaterializable = 1;
     let Inst{31-27} = 0b11111;
     let Inst{26-25} = 0b00;
@@ -924,10 +925,11 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
 
 /// T2I_st - Defines a set of (op r, {imm12|imm8|so_reg}) store patterns.
 multiclass T2I_st<bits<2> opcod, string opc,
-                  InstrItinClass iii, InstrItinClass iis, PatFrag opnode> {
-  def i12 : T2Ii12<(outs), (ins GPR:$Rt, t2addrmode_imm12:$addr), iii,
+                  InstrItinClass iii, InstrItinClass iis, RegisterClass target,
+                  PatFrag opnode> {
+  def i12 : T2Ii12<(outs), (ins target:$Rt, t2addrmode_imm12:$addr), iii,
                    opc, ".w\t$Rt, $addr",
-                   [(opnode GPR:$Rt, t2addrmode_imm12:$addr)]> {
+                   [(opnode target:$Rt, t2addrmode_imm12:$addr)]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-23} = 0b0001;
     let Inst{22-21} = opcod;
@@ -942,9 +944,9 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{23}    = addr{12};    // U
     let Inst{11-0}  = addr{11-0};  // imm
   }
-  def i8  : T2Ii8 <(outs), (ins GPR:$Rt, t2addrmode_imm8:$addr), iii,
+  def i8  : T2Ii8 <(outs), (ins target:$Rt, t2addrmode_imm8:$addr), iii,
                    opc, "\t$Rt, $addr",
-                   [(opnode GPR:$Rt, t2addrmode_imm8:$addr)]> {
+                   [(opnode target:$Rt, t2addrmode_imm8:$addr)]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-23} = 0b0000;
     let Inst{22-21} = opcod;
@@ -962,9 +964,9 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{9}     = addr{8};    // U
     let Inst{7-0}   = addr{7-0};  // imm
   }
-  def s   : T2Iso <(outs), (ins GPR:$Rt, t2addrmode_so_reg:$addr), iis,
+  def s   : T2Iso <(outs), (ins target:$Rt, t2addrmode_so_reg:$addr), iis,
                    opc, ".w\t$Rt, $addr",
-                   [(opnode GPR:$Rt, t2addrmode_so_reg:$addr)]> {
+                   [(opnode target:$Rt, t2addrmode_so_reg:$addr)]> {
     let Inst{31-27} = 0b11111;
     let Inst{26-23} = 0b0000;
     let Inst{22-21} = opcod;
@@ -1118,20 +1120,20 @@ def t2LEApcrelJT : t2PseudoInst<(outs rGPR:$Rd),
 
 // Load
 let canFoldAsLoad = 1, isReMaterializable = 1  in
-defm t2LDR   : T2I_ld<0, 0b10, "ldr", IIC_iLoad_i, IIC_iLoad_si,
+defm t2LDR   : T2I_ld<0, 0b10, "ldr", IIC_iLoad_i, IIC_iLoad_si, GPR,
                       UnOpFrag<(load node:$Src)>>;
 
 // Loads with zero extension
 defm t2LDRH  : T2I_ld<0, 0b01, "ldrh", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
-                      UnOpFrag<(zextloadi16 node:$Src)>>;
+                      rGPR, UnOpFrag<(zextloadi16 node:$Src)>>;
 defm t2LDRB  : T2I_ld<0, 0b00, "ldrb", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
-                      UnOpFrag<(zextloadi8  node:$Src)>>;
+                      rGPR, UnOpFrag<(zextloadi8  node:$Src)>>;
 
 // Loads with sign extension
 defm t2LDRSH : T2I_ld<1, 0b01, "ldrsh", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
-                      UnOpFrag<(sextloadi16 node:$Src)>>;
+                      rGPR, UnOpFrag<(sextloadi16 node:$Src)>>;
 defm t2LDRSB : T2I_ld<1, 0b00, "ldrsb", IIC_iLoad_bh_i, IIC_iLoad_bh_si,
-                      UnOpFrag<(sextloadi8  node:$Src)>>;
+                      rGPR, UnOpFrag<(sextloadi8  node:$Src)>>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 // Load doubleword
@@ -1274,12 +1276,12 @@ def t2LDRSBT : T2IldT<1, 0b00, "ldrsbt", IIC_iLoad_bh_i>;
 def t2LDRSHT : T2IldT<1, 0b01, "ldrsht", IIC_iLoad_bh_i>;
 
 // Store
-defm t2STR :T2I_st<0b10,"str", IIC_iStore_i, IIC_iStore_si,
+defm t2STR :T2I_st<0b10,"str", IIC_iStore_i, IIC_iStore_si, GPR,
                    BinOpFrag<(store node:$LHS, node:$RHS)>>;
 defm t2STRB:T2I_st<0b00,"strb", IIC_iStore_bh_i, IIC_iStore_bh_si,
-                   BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
+                   rGPR, BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
 defm t2STRH:T2I_st<0b01,"strh", IIC_iStore_bh_i, IIC_iStore_bh_si,
-                   BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
+                   rGPR, BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 
 // Store doubleword
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
@@ -1288,53 +1290,53 @@ def t2STRDi8 : T2Ii8s4<1, 0, 0, (outs),
                IIC_iStore_d_r, "strd", "\t$Rt, $Rt2, $addr", []>;
 
 // Indexed stores
-def t2STR_PRE  : T2Iidxldst<0, 0b10, 0, 1, (outs GPR:$base_wb),
-                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
+def t2STR_PRE  : T2Iidxldst<0, 0b10, 0, 1, (outs GPRnopc:$base_wb),
+                            (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_iu,
                          "str", "\t$Rt, [$Rn, $addr]!",
                          "$Rn = $base_wb,@earlyclobber $base_wb",
-             [(set GPR:$base_wb,
-                   (pre_store GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
+             [(set GPRnopc:$base_wb,
+                   (pre_store rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STR_POST : T2Iidxldst<0, 0b10, 0, 0, (outs GPR:$base_wb),
-                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
+def t2STR_POST : T2Iidxldst<0, 0b10, 0, 0, (outs GPRnopc:$base_wb),
+                            (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_iu,
                           "str", "\t$Rt, [$Rn], $addr",
                           "$Rn = $base_wb,@earlyclobber $base_wb",
-             [(set GPR:$base_wb,
-                  (post_store GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
+             [(set GPRnopc:$base_wb,
+                  (post_store rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRH_PRE  : T2Iidxldst<0, 0b01, 0, 1, (outs GPR:$base_wb),
-                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
+def t2STRH_PRE  : T2Iidxldst<0, 0b01, 0, 1, (outs GPRnopc:$base_wb),
+                            (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_iu,
                         "strh", "\t$Rt, [$Rn, $addr]!",
                         "$Rn = $base_wb,@earlyclobber $base_wb",
-        [(set GPR:$base_wb,
-              (pre_truncsti16 GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
+        [(set GPRnopc:$base_wb,
+              (pre_truncsti16 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRH_POST : T2Iidxldst<0, 0b01, 0, 0, (outs GPR:$base_wb),
-                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
+def t2STRH_POST : T2Iidxldst<0, 0b01, 0, 0, (outs GPRnopc:$base_wb),
+                            (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_bh_iu,
                          "strh", "\t$Rt, [$Rn], $addr",
                          "$Rn = $base_wb,@earlyclobber $base_wb",
-       [(set GPR:$base_wb,
-             (post_truncsti16 GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
+       [(set GPRnopc:$base_wb,
+             (post_truncsti16 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRB_PRE  : T2Iidxldst<0, 0b00, 0, 1, (outs GPR:$base_wb),
-                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
+def t2STRB_PRE  : T2Iidxldst<0, 0b00, 0, 1, (outs GPRnopc:$base_wb),
+                            (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_bh_iu,
                         "strb", "\t$Rt, [$Rn, $addr]!",
                         "$Rn = $base_wb,@earlyclobber $base_wb",
-         [(set GPR:$base_wb,
-               (pre_truncsti8 GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
+         [(set GPRnopc:$base_wb,
+               (pre_truncsti8 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
-def t2STRB_POST : T2Iidxldst<0, 0b00, 0, 0, (outs GPR:$base_wb),
-                            (ins GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr),
+def t2STRB_POST : T2Iidxldst<0, 0b00, 0, 0, (outs GPRnopc:$base_wb),
+                            (ins rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_bh_iu,
                          "strb", "\t$Rt, [$Rn], $addr",
                          "$Rn = $base_wb,@earlyclobber $base_wb",
-        [(set GPR:$base_wb,
-              (post_truncsti8 GPR:$Rt, GPR:$Rn, t2am_imm8_offset:$addr))]>;
+        [(set GPRnopc:$base_wb,
+              (post_truncsti8 rGPR:$Rt, GPRnopc:$Rn, t2am_imm8_offset:$addr))]>;
 
 // STRT, STRBT, STRHT all have offset mode (PUW=0b110) and are for disassembly
 // only.
