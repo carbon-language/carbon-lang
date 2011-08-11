@@ -22,6 +22,10 @@ int main() {
   // CHECK-CPP0X: private unnamed_addr constant [12 x i8] c"4\12\00\00\0B\F0\10\00\00\00\00\00", align 4
   const wchar_t *bar = L"\u1234\U0010F00B";
 
+  // CHECK-C: private unnamed_addr constant [12 x i8] c"4\12\00\00\0C\F0\10\00\00\00\00\00", align 4
+  // CHECK-CPP0X: private unnamed_addr constant [12 x i8] c"4\12\00\00\0C\F0\10\00\00\00\00\00", align 4
+  const wchar_t *baz = L"\u1234" "\U0010F00C";
+
 #if __cplusplus >= 201103L
   // CHECK-CPP0X: private unnamed_addr constant [12 x i8] c"C\00\00\00D\00\00\00\00\00\00\00", align 4
   const char32_t *c = U"CD";
@@ -29,12 +33,19 @@ int main() {
   // CHECK-CPP0X: private unnamed_addr constant [12 x i8] c"5\12\00\00\0C\F0\10\00\00\00\00\00", align 4
   const char32_t *d = U"\u1235\U0010F00C";
 
+  // CHECK-CPP0X: private unnamed_addr constant [12 x i8] c"5\12\00\00\0B\F0\10\00\00\00\00\00", align 4
+  const char32_t *o = "\u1235" U"\U0010F00B";
+
   // CHECK-CPP0X: private unnamed_addr constant [6 x i8] c"E\00F\00\00\00", align 2
   const char16_t *e = u"EF";
 
   // This should convert to utf16.
   // CHECK-CPP0X: private unnamed_addr constant [10 x i8] c" \11 \02\C8\DB0\DC\00\00", align 2
   const char16_t *f = u"\u1120\u0220\U00102030";
+
+  // This should convert to utf16.
+  // CHECK-CPP0X: private unnamed_addr constant [10 x i8] c" \11 \03\C8\DB0\DC\00\00", align 2
+  const char16_t *p = u"\u1120\u0320" "\U00102030";
 
   // CHECK-CPP0X: private unnamed_addr constant [4 x i8] c"def\00", align 1
   const char *g = u8"def";
@@ -60,6 +71,10 @@ int main() {
   // CHECK-CPP0X: private unnamed_addr constant [8 x i8] c"abc\0Adef\00", align 1
   const char *n = R"(abc
 def)";
+
+  // CHECK-CPP0X: private unnamed_addr constant [11 x i8] c"abc\0Adefghi\00", align 1
+  const char *q = R"(abc
+def)" "ghi";
 
 #endif
 }
