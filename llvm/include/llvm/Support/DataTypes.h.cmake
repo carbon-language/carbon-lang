@@ -131,7 +131,8 @@ typedef signed int ssize_t;
 # define INT32_MAX 2147483647
 #endif
 #ifndef INT32_MIN
-# define INT32_MIN -2147483648
+/* MSC treats -2147483648 as -(2147483648U). */
+# define INT32_MIN (-INT32_MAX - 1)
 #endif
 #ifndef UINT32_MAX
 # define UINT32_MAX 4294967295U
