@@ -945,8 +945,8 @@ static bool DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::STR_POST_REG:
     case ARM::STRB_POST_IMM:
     case ARM::STRB_POST_REG:
-    case ARM::STRTr:
-    case ARM::STRTi:
+    case ARM::STRT_POST_REG:
+    case ARM::STRT_POST_IMM:
     case ARM::STRBT_POST_REG:
     case ARM::STRBT_POST_IMM:
       if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
