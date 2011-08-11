@@ -143,6 +143,9 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
 
     case clang::Type::Typedef:
         return GetCompleteQualType (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType());
+    
+    case clang::Type::Elaborated:
+        return GetCompleteQualType (ast, cast<ElaboratedType>(qual_type)->getNamedType());
 
     default:
         break;
@@ -1143,6 +1146,9 @@ ClangASTContext::SetHasExternalStorage (clang_type_t clang_type, bool has_extern
 
     case clang::Type::Typedef:
         return ClangASTContext::SetHasExternalStorage (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), has_extern);
+    
+    case clang::Type::Elaborated:
+        return ClangASTContext::SetHasExternalStorage (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(), has_extern);
 
     default:
         break;
@@ -2131,7 +2137,10 @@ ClangASTContext::GetTypeInfo
             *pointee_or_element_clang_type = cast<EnumType>(qual_type)->getDecl()->getIntegerType().getAsOpaquePtr();
         return eTypeIsEnumeration | eTypeHasValue;
 
-    case clang::Type::Elaborated:                       return 0;
+    case clang::Type::Elaborated:
+        return ClangASTContext::GetTypeInfo (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                             ast, 
+                                             pointee_or_element_clang_type);
     case clang::Type::ExtVector:                        return eTypeHasChildren | eTypeIsVector;
     case clang::Type::FunctionProto:                    return eTypeIsFuncPrototype | eTypeHasValue;
     case clang::Type::FunctionNoProto:                  return eTypeIsFuncPrototype | eTypeHasValue;
@@ -2205,7 +2214,8 @@ ClangASTContext::IsAggregateType (clang_type_t clang_type)
     case clang::Type::ObjCObject:
     case clang::Type::ObjCInterface:
         return true;
-
+    case clang::Type::Elaborated:
+        return ClangASTContext::IsAggregateType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
     case clang::Type::Typedef:
         return ClangASTContext::IsAggregateType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
 
@@ -2374,6 +2384,12 @@ ClangASTContext::GetNumChildren (clang::ASTContext *ast, clang_type_t clang_type
                                                         cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), 
                                                         omit_empty_base_classes);
         break;
+        
+    case clang::Type::Elaborated:
+        num_children = ClangASTContext::GetNumChildren (ast, 
+                                                        cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                                        omit_empty_base_classes);
+        break;
 
     default:
         break;
@@ -2453,12 +2469,12 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
     case clang::Type::UnresolvedUsing:          return 0;
     case clang::Type::Paren:                    return 0;
     case clang::Type::Typedef:                  return ClangASTContext::GetNumPointeeChildren (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+    case clang::Type::Elaborated:               return ClangASTContext::GetNumPointeeChildren (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
     case clang::Type::TypeOfExpr:               return 0;
     case clang::Type::TypeOf:                   return 0;
     case clang::Type::Decltype:                 return 0;
     case clang::Type::Record:                   return 0;
     case clang::Type::Enum:                     return 1;
-    case clang::Type::Elaborated:               return 1;
     case clang::Type::TemplateTypeParm:         return 1;
     case clang::Type::SubstTemplateTypeParm:    return 1;
     case clang::Type::TemplateSpecialization:   return 1;
@@ -2933,6 +2949,23 @@ ClangASTContext::GetChildClangTypeAtIndex
                                              child_is_base_class,
                                              child_is_deref_of_parent);
             break;
+    
+        case clang::Type::Elaborated:
+            return GetChildClangTypeAtIndex (exe_ctx,
+                                             ast,
+                                             parent_name,
+                                             cast<ElaboratedType>(parent_qual_type)->getNamedType().getAsOpaquePtr(),
+                                             idx,
+                                             transparent_pointers,
+                                             omit_empty_base_classes,
+                                             ignore_array_bounds,
+                                             child_name,
+                                             child_byte_size,
+                                             child_byte_offset,
+                                             child_bitfield_bit_size,
+                                             child_bitfield_bit_offset,
+                                             child_is_base_class,
+                                             child_is_deref_of_parent); 
 
         default:
             break;
@@ -3665,7 +3698,7 @@ ClangASTContext::GetDeclContextForType (clang_type_t clang_type)
     case clang::Type::Record:                   return cast<RecordType>(qual_type)->getDecl();
     case clang::Type::Enum:                     return cast<EnumType>(qual_type)->getDecl();
     case clang::Type::Typedef:                  return ClangASTContext::GetDeclContextForType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
-
+    case clang::Type::Elaborated:               return ClangASTContext::GetDeclContextForType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
     case clang::Type::TypeOfExpr:               break;
     case clang::Type::TypeOf:                   break;
     case clang::Type::Decltype:                 break;
@@ -3678,7 +3711,6 @@ ClangASTContext::GetDeclContextForType (clang_type_t clang_type)
     case clang::Type::PackExpansion:            break;
     case clang::Type::UnresolvedUsing:          break;
     case clang::Type::Paren:                    break;
-    case clang::Type::Elaborated:               break;
     case clang::Type::Attributed:               break;
     case clang::Type::Auto:                     break;
     case clang::Type::InjectedClassName:        break;
@@ -4119,7 +4151,10 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
                 
             case clang::Type::Typedef:
                 return ClangASTContext::IsPossibleDynamicType (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), dynamic_pointee_type);
-                
+            
+            case clang::Type::Elaborated:
+                return ClangASTContext::IsPossibleDynamicType (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(), dynamic_pointee_type);
+            
             default:
                 break;
         }
@@ -4249,6 +4284,9 @@ ClangASTContext::IsPossibleCPlusPlusDynamicType (clang::ASTContext *ast, clang_t
 
             case clang::Type::Typedef:
                 return ClangASTContext::IsPossibleCPlusPlusDynamicType (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), dynamic_pointee_type);
+
+            case clang::Type::Elaborated:
+                return ClangASTContext::IsPossibleCPlusPlusDynamicType (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
 
             default:
                 break;
@@ -4386,6 +4424,8 @@ ClangASTContext::IsPointerOrReferenceType (clang_type_t clang_type, clang_type_t
         return true;
     case clang::Type::Typedef:
         return ClangASTContext::IsPointerOrReferenceType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+    case clang::Type::Elaborated:
+        return ClangASTContext::IsPointerOrReferenceType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
     default:
         break;
     }
@@ -4452,6 +4492,8 @@ ClangASTContext::IsPointerType (clang_type_t clang_type, clang_type_t *target_ty
             return true;
         case clang::Type::Typedef:
             return ClangASTContext::IsPointerType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), target_type);
+        case clang::Type::Elaborated:
+            return ClangASTContext::IsPointerType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(), target_type);
         default:
             break;
         }
@@ -4636,6 +4678,8 @@ ClangASTContext::IsFunctionPointerType (clang_type_t clang_type)
             break;
         case clang::Type::Typedef:
             return ClangASTContext::IsFunctionPointerType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+        case clang::Type::Elaborated:
+            return ClangASTContext::IsFunctionPointerType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
 
         case clang::Type::LValueReference:
         case clang::Type::RValueReference:
@@ -4669,7 +4713,9 @@ ClangASTContext::GetArraySize (clang_type_t clang_type)
 
         case clang::Type::Typedef:
             return ClangASTContext::GetArraySize(cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
-            break;
+            
+        case clang::Type::Elaborated:
+            return ClangASTContext::GetArraySize(cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
                 
         default:
             break;
@@ -4723,6 +4769,11 @@ ClangASTContext::IsArrayType (clang_type_t clang_type, clang_type_t*member_type,
     case clang::Type::Typedef:
         return ClangASTContext::IsArrayType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
                                              member_type, 
+                                             size);
+    
+    case clang::Type::Elaborated:
+        return ClangASTContext::IsArrayType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                             member_type,
                                              size);
     }
     return false;

@@ -2012,13 +2012,8 @@ ClangExpressionDeclMap::FindExternalLexicalDecls (const DeclContext *decl_contex
     {
         ExternalASTSource *external_source = original_ctx->getExternalSource();
         
-        if (!external_source)
-            return ELR_Failure;
-        
-        if (!original_tag_decl)
-            return ELR_Failure;
-        
-        external_source->CompleteType (original_tag_decl);
+        if (external_source)
+            external_source->CompleteType (original_tag_decl);
     }
     
     DeclContext *original_decl_context = dyn_cast<DeclContext>(original_decl);
