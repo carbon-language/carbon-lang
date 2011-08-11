@@ -333,7 +333,7 @@ public:
       Value *newPointer = getOperand(pointer, BBMap);
       return newPointer;
     }
-    
+
     Value *baseAddr = const_cast<Value*>(access.getBaseAddr());
     Value *newPointer = getNewAccessOperand(newAccessRelation, baseAddr,
                                             pointer, BBMap);
