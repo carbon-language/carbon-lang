@@ -72,23 +72,23 @@ _func:
 @------------------------------------------------------------------------------
 @ LDRB (register)
 @------------------------------------------------------------------------------
-        ldr r9, [r8, r5]
-        ldr r1, [r5, -r1]
-        ldr r3, [r5, r2]!
-        ldr r6, [r9, -r3]!
-        ldr r2, [r1], r4
-        ldr r8, [r4], -r5
-        ldr r7, [r12, -r1, lsl #15]
-        ldr r5, [r2], r9, asr #15
+        ldrb r9, [r8, r5]
+        ldrb r1, [r5, -r1]
+        ldrb r3, [r5, r2]!
+        ldrb r6, [r9, -r3]!
+        ldrb r2, [r1], r4
+        ldrb r8, [r4], -r5
+        ldrb r7, [r12, -r1, lsl #15]
+        ldrb r5, [r2], r9, asr #15
 
-@ CHECK: ldr	r9, [r8, r5]            @ encoding: [0x05,0x90,0x98,0xe7]
-@ CHECK: ldr	r1, [r5, -r1]           @ encoding: [0x01,0x10,0x15,0xe7]
-@ CHECK: ldr	r3, [r5, r2]!           @ encoding: [0x02,0x30,0xb5,0xe7]
-@ CHECK: ldr	r6, [r9, -r3]!          @ encoding: [0x03,0x60,0x39,0xe7]
-@ CHECK: ldr	r2, [r1], r4            @ encoding: [0x04,0x20,0x91,0xe6]
-@ CHECK: ldr	r8, [r4], -r5           @ encoding: [0x05,0x80,0x14,0xe6]
-@ CHECK: ldr	r7, [r12, -r1, lsl #15] @ encoding: [0x81,0x77,0x1c,0xe7]
-@ CHECK: ldr	r5, [r2], r9, asr #15   @ encoding: [0xc9,0x57,0x92,0xe6]
+@ CHECK: ldrb	r9, [r8, r5]            @ encoding: [0x05,0x90,0xd8,0xe7]
+@ CHECK: ldrb	r1, [r5, -r1]           @ encoding: [0x01,0x10,0x55,0xe7]
+@ CHECK: ldrb	r3, [r5, r2]!           @ encoding: [0x02,0x30,0xf5,0xe7]
+@ CHECK: ldrb	r6, [r9, -r3]!          @ encoding: [0x03,0x60,0x79,0xe7]
+@ CHECK: ldrb	r2, [r1], r4            @ encoding: [0x04,0x20,0xd1,0xe6]
+@ CHECK: ldrb	r8, [r4], -r5           @ encoding: [0x05,0x80,0x54,0xe6]
+@ CHECK: ldrb	r7, [r12, -r1, lsl #15] @ encoding: [0x81,0x77,0x5c,0xe7]
+@ CHECK: ldrb	r5, [r2], r9, asr #15   @ encoding: [0xc9,0x57,0xd2,0xe6]
 
 
 @------------------------------------------------------------------------------
