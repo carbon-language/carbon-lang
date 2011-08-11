@@ -2491,6 +2491,7 @@ static bool DecodeDoubleRegExclusive(llvm::MCInst &Inst, unsigned Insn,
   unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
   unsigned Rt = fieldFromInstruction32(Insn, 0, 4);
   unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned pred = fieldFromInstruction32(Insn, 28, 4);
 
   if (Inst.getOpcode() == ARM::STREXD)
     if (!DecoderGPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
@@ -2501,6 +2502,7 @@ static bool DecodeDoubleRegExclusive(llvm::MCInst &Inst, unsigned Insn,
   if (!DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)) return false;
   if (!DecodeGPRRegisterClass(Inst, Rt+1, Address, Decoder)) return false;
   if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  if (!DecodePredicateOperand(Inst, pred, Address, Decoder)) return false;
 
   return true;
 }
