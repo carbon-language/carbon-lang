@@ -181,32 +181,6 @@ LiveIntervalUnion::Query::firstInterference() {
   return FirstInterference;
 }
 
-// Treat the result as an iterator and advance to the next interfering pair
-// of segments. This is a plain iterator with no filter.
-bool LiveIntervalUnion::Query::nextInterference(InterferenceResult &IR) const {
-  assert(isInterference(IR) && "iteration past end of interferences");
-
-  // Advance either the VirtReg or LiveUnion segment to ensure that we visit all
-  // unique overlapping pairs.
-  if (IR.VirtRegI->end < IR.LiveUnionI.stop()) {
-    if (++IR.VirtRegI == VirtReg->end())
-      return false;
-  }
-  else {
-    if (!(++IR.LiveUnionI).valid()) {
-      IR.VirtRegI = VirtReg->end();
-      return false;
-    }
-  }
-  // Short-circuit findIntersection() if possible.
-  if (overlap(*IR.VirtRegI, IR.LiveUnionI))
-    return true;
-
-  // Find the next intersection.
-  findIntersection(IR);
-  return isInterference(IR);
-}
-
 // Scan the vector of interfering virtual registers in this union. Assume it's
 // quite small.
 bool LiveIntervalUnion::Query::isSeenInterference(LiveInterval *VirtReg) const {
@@ -226,6 +200,8 @@ bool LiveIntervalUnion::Query::isSeenInterference(LiveInterval *VirtReg) const {
 // For comments on how to speed it up, see Query::findIntersection().
 unsigned LiveIntervalUnion::Query::
 collectInterferingVRegs(unsigned MaxInterferingRegs) {
+  if (InterferingVRegs.size() >= MaxInterferingRegs)
+    return InterferingVRegs.size();
   InterferenceResult IR = firstInterference();
   LiveInterval::iterator VirtRegEnd = VirtReg->end();
   LiveInterval *RecentInterferingVReg = NULL;

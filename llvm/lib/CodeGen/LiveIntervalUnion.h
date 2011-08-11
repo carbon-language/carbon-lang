@@ -188,7 +188,7 @@ public:
     }
 
     // Does this live virtual register interfere with the union?
-    bool checkInterference() { return isInterference(firstInterference()); }
+    bool checkInterference() { return collectInterferingVRegs(1); }
 
     // Count the virtual registers in this union that interfere with this
     // query's live virtual register, up to maxInterferingRegs.
@@ -218,17 +218,7 @@ public:
 
     // Private interface for queries
     const InterferenceResult &firstInterference();
-    bool nextInterference(InterferenceResult &IR) const;
     void findIntersection(InterferenceResult &IR) const;
-
-    bool isInterference(const InterferenceResult &IR) const {
-      if (IR.VirtRegI != VirtReg->end()) {
-        assert(overlap(*IR.VirtRegI, IR.LiveUnionI) &&
-               "invalid segment iterators");
-        return true;
-      }
-      return false;
-    }
   };
 };
 
