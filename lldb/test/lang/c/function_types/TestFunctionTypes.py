@@ -84,8 +84,13 @@ class FunctionTypesTestCase(TestBase):
         self.expect("expr string_not_empty",
                     substrs = ['(int (*)(const char *)) $0 = ', '(a.out`'])
 
+        if sys.platform.startswith("darwin"):
+            regexps = ['lib.*\.dylib`printf']
+        else:
+            regexps = ['printf']
         self.expect("expr (int (*)(const char*, ...))printf",
-                    substrs = ['(int (*)(const char *, ...)) $1 = ', '(libSystem.'])
+                    substrs = ['(int (*)(const char *, ...)) $1 = '],
+                    patterns = regexps)
 
         self.expect("expr $1(\"Hello world\\n\")",
                     startstr = '(int) $2 = 12')
