@@ -941,6 +941,8 @@ static bool DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
   switch (Inst.getOpcode()) {
     case ARM::STR_POST_IMM:
     case ARM::STR_POST_REG:
+    case ARM::STRB_POST_IMM:
+    case ARM::STRB_POST_REG:
     case ARM::STRTr:
     case ARM::STRTi:
     case ARM::STRBT_POST_REG:
@@ -957,6 +959,8 @@ static bool DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
   switch (Inst.getOpcode()) {
     case ARM::LDR_POST_IMM:
     case ARM::LDR_POST_REG:
+    case ARM::LDRB_POST_IMM:
+    case ARM::LDRB_POST_REG:
     case ARM::LDR_PRE:
     case ARM::LDRBT_POST_REG:
     case ARM::LDRBT_POST_IMM:
