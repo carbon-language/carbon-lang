@@ -945,17 +945,17 @@ ClangASTType::DumpTypeValue
                     case eFormatCharArray:
                     case eFormatBytes:
                     case eFormatBytesWithASCII:
-                        item_count = (byte_size * item_count);
+                        item_count = byte_size;
                         byte_size = 1; 
                         break;
 
                     case eFormatUnicode16:
-                        item_count = (byte_size * item_count) / 2; 
+                        item_count = byte_size / 2; 
                         byte_size = 2; 
                         break;
 
                     case eFormatUnicode32:
-                        item_count = (byte_size * item_count) / 4; 
+                        item_count = byte_size / 4; 
                         byte_size = 4; 
                         break;
                 }
