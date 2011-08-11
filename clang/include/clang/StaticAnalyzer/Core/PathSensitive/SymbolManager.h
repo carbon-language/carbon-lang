@@ -91,6 +91,7 @@ public:
 };
 
 typedef const SymbolData* SymbolRef;
+typedef llvm::SmallVector<SymbolRef, 1> SymbolRefSmallVectorTy;
 
 /// A symbol representing the value of a MemRegion.
 class SymbolRegionValue : public SymbolData {
@@ -357,8 +358,12 @@ public:
 
 class SymbolManager {
   typedef llvm::FoldingSet<SymExpr> DataSetTy;
+  typedef llvm::DenseMap<SymbolRef, SymbolRefSmallVectorTy> SymbolDependTy;
 
   DataSetTy DataSet;
+  /// Stores the extra dependencies between symbols: the data should be kept
+  /// alive as long as the key is live.
+  SymbolDependTy SymbolDependencies;
   unsigned SymbolCounter;
   llvm::BumpPtrAllocator& BPAlloc;
   BasicValueFactory &BV;
@@ -412,6 +417,16 @@ public:
   QualType getType(const SymExpr *SE) const {
     return SE->getType(Ctx);
   }
+
+  /// \brief Add artificial symbol dependency.
+  ///
+  /// The dependent symbol should stay alive as long as the primary is alive.
+  void addSymbolDependency(const SymbolRef Primary, const SymbolRef Dependent);
+
+  /// \brief Drop all user-added dependencies on the primary symbol.
+  void removeSymbolDependencies(const SymbolRef Primary);
+
+  const SymbolRefSmallVectorTy *getDependentSymbols(const SymbolRef Primary);
 
   ASTContext &getContext() { return Ctx; }
   BasicValueFactory &getBasicVals() { return BV; }
@@ -495,6 +510,10 @@ public:
   /// \brief Set to the value of the symbolic store after
   /// StoreManager::removeDeadBindings has been called.
   void setReapedStore(StoreRef st) { reapedStore = st; }
+
+private:
+  /// Mark the symbols dependent on the input symbol as live.
+  void markDependentsLive(SymbolRef sym);
 };
 
 class SymbolVisitor {

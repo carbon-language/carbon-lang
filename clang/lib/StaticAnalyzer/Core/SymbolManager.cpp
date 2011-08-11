@@ -248,9 +248,36 @@ bool SymbolManager::canSymbolicate(QualType T) {
   return false;
 }
 
+void SymbolManager::addSymbolDependency(const SymbolRef Primary,
+                                        const SymbolRef Dependent) {
+  SymbolDependencies[Primary].push_back(Dependent);
+}
+
+void SymbolManager::removeSymbolDependencies(const SymbolRef Primary) {
+  SymbolDependencies.erase(Primary);
+}
+
+const SymbolRefSmallVectorTy *SymbolManager::getDependentSymbols(
+                                                     const SymbolRef Primary) {
+  SymbolDependTy::const_iterator I = SymbolDependencies.find(Primary);
+  if (I == SymbolDependencies.end())
+    return 0;
+  return &I->second;
+}
+
+void SymbolReaper::markDependentsLive(SymbolRef sym) {
+  if (const SymbolRefSmallVectorTy *Deps = SymMgr.getDependentSymbols(sym)) {
+    for (SymbolRefSmallVectorTy::const_iterator I = Deps->begin(),
+                                                E = Deps->end(); I != E; ++I) {
+      markLive(*I);
+    }
+  }
+}
+
 void SymbolReaper::markLive(SymbolRef sym) {
   TheLiving.insert(sym);
   TheDead.erase(sym);
+  markDependentsLive(sym);
 }
 
 void SymbolReaper::markLive(const MemRegion *region) {
@@ -299,8 +326,10 @@ bool SymbolReaper::isLiveRegion(const MemRegion *MR) {
 }
 
 bool SymbolReaper::isLive(SymbolRef sym) {
-  if (TheLiving.count(sym))
+  if (TheLiving.count(sym)) {
+    markDependentsLive(sym);
     return true;
+  }
 
   if (const SymbolDerived *derived = dyn_cast<SymbolDerived>(sym)) {
     if (isLive(derived->getParentSymbol())) {
