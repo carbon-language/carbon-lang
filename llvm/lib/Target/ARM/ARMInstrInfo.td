@@ -1411,8 +1411,8 @@ def WFI : AI<(outs), (ins), MiscFrm, NoItinerary, "wfi", "",
   let Inst{7-0} = 0b00000011;
 }
 
-def SEL : AI<(outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm, NoItinerary, "sel",
-             "\t$dst, $a, $b", []>, Requires<[IsARM, HasV6]> {
+def SEL : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm, NoItinerary, "sel",
+             "\t$Rd, $Rn, $Rm", []>, Requires<[IsARM, HasV6]> {
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rm;
