@@ -457,7 +457,7 @@ ArchSpec::SetTriple (const llvm::Triple &triple)
 bool
 ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
 {
-    if (triple_cstr || triple_cstr[0])
+    if (triple_cstr && !triple_cstr[0])
     {
         llvm::StringRef triple_stref (triple_cstr);
         if (triple_stref.startswith (LLDB_ARCH_DEFAULT))
