@@ -2832,9 +2832,9 @@ void CFRefCount::evalCall(ExplodedNodeSet& Dst,
 
   assert(Summ);
   evalSummary(Dst, Eng, Builder, CE,
-              CallOrObjCMessage(CE, Builder.GetState(Pred)),
+              CallOrObjCMessage(CE, Pred->getState()),
               InstanceReceiver(), *Summ,L.getAsRegion(),
-              Pred, Builder.GetState(Pred));
+              Pred, Pred->getState());
 }
 
 void CFRefCount::evalObjCMessage(ExplodedNodeSet& Dst,
@@ -2850,7 +2850,7 @@ void CFRefCount::evalObjCMessage(ExplodedNodeSet& Dst,
 
   assert(Summ && "RetainSummary is null");
   evalSummary(Dst, Eng, Builder, msg.getOriginExpr(),
-              CallOrObjCMessage(msg, Builder.GetState(Pred)),
+              CallOrObjCMessage(msg, Pred->getState()),
               InstanceReceiver(msg, Pred->getLocationContext()), *Summ, NULL,
               Pred, state);
 }
@@ -2919,7 +2919,7 @@ void CFRefCount::evalReturn(ExplodedNodeSet& Dst,
   if (!RetE)
     return;
 
-  const GRState *state = Builder.GetState(Pred);
+  const GRState *state = Pred->getState();
   SymbolRef Sym = state->getSValAsScalarOrLoc(RetE).getAsLocSymbol();
 
   if (!Sym)

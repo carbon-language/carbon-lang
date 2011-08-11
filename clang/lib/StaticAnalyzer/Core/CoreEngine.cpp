@@ -487,7 +487,6 @@ StmtNodeBuilder::StmtNodeBuilder(const CFGBlock* b, unsigned idx,
     PurgingDeadSymbols(false), BuildSinks(false), hasGeneratedNode(false),
     PointKind(ProgramPoint::PostStmtKind), Tag(0) {
   Deferred.insert(N);
-  CleanedState = Pred->getState();
 }
 
 StmtNodeBuilder::~StmtNodeBuilder() {

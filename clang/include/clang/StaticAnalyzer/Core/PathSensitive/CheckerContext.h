@@ -71,7 +71,7 @@ public:
   ExplodedNodeSet &getNodeSet() { return Dst; }
   StmtNodeBuilder &getNodeBuilder() { return B; }
   ExplodedNode *&getPredecessor() { return Pred; }
-  const GRState *getState() { return ST ? ST : B.GetState(Pred); }
+  const GRState *getState() { return ST ? ST : Pred->getState(); }
   const Stmt *getStmt() const { return statement; }
 
   ASTContext &getASTContext() {
@@ -151,7 +151,7 @@ public:
     assert(state);
     // If the 'state' is not new, we need to check if the cached state 'ST'
     // is new.
-    if (state != getState() || (ST && ST != B.GetState(Pred)))
+    if (state != getState() || (ST && ST != Pred->getState()))
       // state is new or equals to ST.
       generateNode(state, true, tag);
     else

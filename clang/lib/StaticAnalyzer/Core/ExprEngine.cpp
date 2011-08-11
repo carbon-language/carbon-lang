@@ -1592,7 +1592,7 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
   }
 
   ExplodedNodeSet Src;
-  if (Builder->GetState(Pred) == state) {
+  if (Pred->getState() == state) {
     Src.Add(Pred);
   } else {
     // Associate this new state with an ExplodedNode.
@@ -2017,7 +2017,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
         Builder->BuildSinks = true;
 
       // Dispatch to plug-in transfer function.
-      evalObjCMessage(dstEval, msg, Pred, Builder->GetState(Pred));
+      evalObjCMessage(dstEval, msg, Pred, Pred->getState());
     }
 
     // Handle the case where no nodes where generated.  Auto-generate that

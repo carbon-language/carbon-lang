@@ -172,9 +172,6 @@ public:
   ProgramPoint::Kind PointKind;
   const void *Tag;
 
-  const GRState* CleanedState;
-
-
   typedef llvm::SmallPtrSet<ExplodedNode*,5> DeferredTy;
   DeferredTy Deferred;
 
@@ -190,10 +187,6 @@ public:
 
   // FIXME: This should not be exposed.
   WorkList *getWorkList() { return Eng.WList; }
-
-  void SetCleanedState(const GRState* St) {
-    CleanedState = St;
-  }
 
   BlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
 
@@ -251,13 +244,6 @@ public:
   const CFGBlock* getBlock() const { return &B; }
 
   unsigned getIndex() const { return Idx; }
-
-  const GRState* GetState(ExplodedNode* Pred) const {
-    if (Pred == getPredecessor())
-      return CleanedState;
-    else
-      return Pred->getState();
-  }
 
   ExplodedNode* MakeNode(ExplodedNodeSet& Dst, const Stmt* S, 
                          ExplodedNode* Pred, const GRState* St) {
