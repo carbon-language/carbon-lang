@@ -307,3 +307,30 @@ _func:
 @ CHECK: str	r3, [r5, #40]!          @ encoding: [0x28,0x30,0xa5,0xe5]
 @ CHECK: str	r9, [sp], #4095         @ encoding: [0xff,0x9f,0x8d,0xe4]
 @ CHECK: str	r1, [r7], #-128         @ encoding: [0x80,0x10,0x07,0xe4]
+
+
+@------------------------------------------------------------------------------
+@ FIXME: STR (literal)
+@------------------------------------------------------------------------------
+
+@------------------------------------------------------------------------------
+@ STR (register)
+@------------------------------------------------------------------------------
+        str r9, [r6, r3]
+        str r8, [r0, -r2]
+        str r7, [r1, r6]!
+        str r6, [sp, -r1]!
+        str r5, [r3], r9
+        str r4, [r2], -r5
+        str r3, [r4, -r2, lsl #2]
+        str r2, [r7], r3, asr #24
+
+@ CHECK: str	r9, [r6, r3]            @ encoding: [0x03,0x90,0x86,0xe7]
+@ CHECK: str	r8, [r0, -r2]           @ encoding: [0x02,0x80,0x00,0xe7]
+@ CHECK: str	r7, [r1, r6]!           @ encoding: [0x06,0x70,0xa1,0xe7]
+@ CHECK: str	r6, [sp, -r1]!          @ encoding: [0x01,0x60,0x2d,0xe7]
+@ CHECK: str	r5, [r3], r9            @ encoding: [0x09,0x50,0x83,0xe6]
+@ CHECK: str	r4, [r2], -r5           @ encoding: [0x05,0x40,0x02,0xe6]
+@ CHECK: str	r3, [r4, -r2, lsl #2]   @ encoding: [0x02,0x31,0x04,0xe7]
+@ CHECK: str	r2, [r7], r3, asr #24   @ encoding: [0x43,0x2c,0x87,0xe6]
+
