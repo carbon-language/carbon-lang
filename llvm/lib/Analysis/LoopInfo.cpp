@@ -471,8 +471,8 @@ void UnloopUpdater::updateBlockParents() {
 /// nested within unloop.
 void UnloopUpdater::updateSubloopParents() {
   while (!Unloop->empty()) {
-    Loop *Subloop = *(Unloop->end()-1);
-    Unloop->removeChildLoop(Unloop->end()-1);
+    Loop *Subloop = *llvm::prior(Unloop->end());
+    Unloop->removeChildLoop(llvm::prior(Unloop->end()));
 
     assert(SubloopParents.count(Subloop) && "DFS failed to visit subloop");
     if (SubloopParents[Subloop])
@@ -487,8 +487,8 @@ void UnloopUpdater::updateSubloopParents() {
 /// For subloop blocks, simply update SubloopParents and return NULL.
 Loop *UnloopUpdater::getNearestLoop(BasicBlock *BB, Loop *BBLoop) {
 
-  // Initialy for blocks directly contained by Unloop, NearLoop == Unloop and is
-  // considered uninitialized.
+  // Initially for blocks directly contained by Unloop, NearLoop == Unloop and
+  // is considered uninitialized.
   Loop *NearLoop = BBLoop;
 
   Loop *Subloop = 0;
@@ -562,7 +562,7 @@ bool LoopInfo::runOnFunction(Function &) {
 
 /// updateUnloop - The last backedge has been removed from a loop--now the
 /// "unloop". Find a new parent for the blocks contained within unloop and
-/// update the loop tree. We don't necessarilly have valid dominators at this
+/// update the loop tree. We don't necessarily have valid dominators at this
 /// point, but LoopInfo is still valid except for the removal of this loop.
 ///
 /// Note that Unloop may now be an empty loop. Calling Loop::getHeader without
@@ -595,7 +595,7 @@ void LoopInfo::updateUnloop(Loop *Unloop) {
 
     // Move all of the subloops to the top-level.
     while (!Unloop->empty())
-      LI.addTopLevelLoop(Unloop->removeChildLoop(Unloop->end()-1));
+      LI.addTopLevelLoop(Unloop->removeChildLoop(llvm::prior(Unloop->end())));
 
     return;
   }
