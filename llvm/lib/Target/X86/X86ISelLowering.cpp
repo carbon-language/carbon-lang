@@ -6758,12 +6758,17 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const {
   CodeModel::Model M = getTargetMachine().getCodeModel();
 
   if (Subtarget->isPICStyleRIPRel() &&
-      (M == CodeModel::Small || M == CodeModel::Kernel))
+      (M == CodeModel::Small || M == CodeModel::Kernel)) {
+    if (Subtarget->isTargetDarwin() || Subtarget->isTargetELF())
+      OpFlag = X86II::MO_GOTPCREL;
     WrapperKind = X86ISD::WrapperRIP;
-  else if (Subtarget->isPICStyleGOT())
-    OpFlag = X86II::MO_GOTOFF;
-  else if (Subtarget->isPICStyleStubPIC())
-    OpFlag = X86II::MO_PIC_BASE_OFFSET;
+  } else if (Subtarget->isPICStyleGOT()) {
+    OpFlag = X86II::MO_GOT;
+  } else if (Subtarget->isPICStyleStubPIC()) {
+    OpFlag = X86II::MO_DARWIN_NONLAZY_PIC_BASE;
+  } else if (Subtarget->isPICStyleStubNoDynamic()) {
+    OpFlag = X86II::MO_DARWIN_NONLAZY;
+  }
 
   SDValue Result = DAG.getTargetExternalSymbol(Sym, getPointerTy(), OpFlag);
 
@@ -6779,6 +6784,12 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const {
                                      DebugLoc(), getPointerTy()),
                          Result);
   }
+
+  // For symbols that require a load from a stub to get the address, emit the
+  // load.
+  if (isGlobalStubReference(OpFlag))
+    Result = DAG.getLoad(getPointerTy(), DL, DAG.getEntryNode(), Result,
+                         MachinePointerInfo::getGOT(), false, false, 0);
 
   return Result;
 }
