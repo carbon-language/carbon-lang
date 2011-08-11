@@ -1046,18 +1046,18 @@ void DwarfDebug::endModule() {
       LexicalScope *Scope = new LexicalScope(NULL, DIDescriptor(SP), NULL, 
                                              false);
       DeadFnScopeMap[SP] = Scope;
-      SmallVector<DbgVariable *, 8> Variables;
+      SmallVector<DbgVariable, 8> Variables;
       for (unsigned I = 0; I != E; ++I) {
         DIVariable DV(NMD->getOperand(I));
         if (!DV.Verify()) continue;
-        Variables.push_back(new DbgVariable(DV));
+        Variables.push_back(DbgVariable(DV));
       }
 
       // Construct subprogram DIE and add variables DIEs.
       constructSubprogramDIE(SP);
       DIE *ScopeDIE = getCompileUnit(SP)->getDIE(SP);
       for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
-        if (DIE *VariableDIE = constructVariableDIE(Variables[i], Scope))
+        if (DIE *VariableDIE = constructVariableDIE(&Variables[i], Scope))
           ScopeDIE->addChild(VariableDIE);
       }
     }
