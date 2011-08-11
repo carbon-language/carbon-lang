@@ -11548,6 +11548,38 @@ bool X86TargetLowering::isGAPlusOffset(SDNode *N,
   return TargetLowering::isGAPlusOffset(N, GA, Offset);
 }
 
+/// isShuffleHigh128VectorInsertLow - Checks whether the shuffle node is the
+/// same as extracting the high 128-bit part of 256-bit vector and then
+/// inserting the result into the low part of a new 256-bit vector
+static bool isShuffleHigh128VectorInsertLow(ShuffleVectorSDNode *SVOp) {
+  EVT VT = SVOp->getValueType(0);
+  int NumElems = VT.getVectorNumElements();
+
+  // vector_shuffle <4, 5, 6, 7, u, u, u, u> or <2, 3, u, u>
+  for (int i = 0, j = NumElems/2; i < NumElems/2; ++i, ++j)
+    if (!isUndefOrEqual(SVOp->getMaskElt(i), j) ||
+        SVOp->getMaskElt(j) >= 0)
+      return false;
+
+  return true;
+}
+
+/// isShuffleLow128VectorInsertHigh - Checks whether the shuffle node is the
+/// same as extracting the low 128-bit part of 256-bit vector and then
+/// inserting the result into the high part of a new 256-bit vector
+static bool isShuffleLow128VectorInsertHigh(ShuffleVectorSDNode *SVOp) {
+  EVT VT = SVOp->getValueType(0);
+  int NumElems = VT.getVectorNumElements();
+
+  // vector_shuffle <u, u, u, u, 0, 1, 2, 3> or <u, u, 0, 1>
+  for (int i = NumElems/2, j = 0; i < NumElems; ++i, ++j)
+    if (!isUndefOrEqual(SVOp->getMaskElt(i), j) ||
+        SVOp->getMaskElt(j) >= 0)
+      return false;
+
+  return true;
+}
+
 /// PerformShuffleCombine256 - Performs shuffle combines for 256-bit vectors.
 static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
                                         TargetLowering::DAGCombinerInfo &DCI) {
@@ -11556,6 +11588,7 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
   EVT VT = SVOp->getValueType(0);
+  int NumElems = VT.getVectorNumElements();
 
   if (V1.getOpcode() == ISD::CONCAT_VECTORS &&
       V2.getOpcode() == ISD::CONCAT_VECTORS) {
@@ -11580,7 +11613,6 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
     // To match the shuffle mask, the first half of the mask should
     // be exactly the first vector, and all the rest a splat with the
     // first element of the second one.
-    int NumElems = VT.getVectorNumElements();
     for (int i = 0; i < NumElems/2; ++i)
       if (!isUndefOrEqual(SVOp->getMaskElt(i), i) ||
           !isUndefOrEqual(SVOp->getMaskElt(i+NumElems/2), NumElems))
@@ -11591,6 +11623,27 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
     SDValue Zeros = getZeroVector(VT, true /* HasSSE2 */, DAG, dl);
     SDValue InsV = Insert128BitVector(Zeros, V1.getOperand(0),
                          DAG.getConstant(0, MVT::i32), DAG, dl);
+    return DCI.CombineTo(N, InsV);
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Combine some shuffles into subvector extracts and inserts:
+  //
+
+  // vector_shuffle <4, 5, 6, 7, u, u, u, u> or <2, 3, u, u>
+  if (isShuffleHigh128VectorInsertLow(SVOp)) {
+    SDValue V = Extract128BitVector(V1, DAG.getConstant(NumElems/2, MVT::i32),
+                                    DAG, dl);
+    SDValue InsV = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT),
+                                      V, DAG.getConstant(0, MVT::i32), DAG, dl);
+    return DCI.CombineTo(N, InsV);
+  }
+
+  // vector_shuffle <u, u, u, u, 0, 1, 2, 3> or <u, u, 0, 1>
+  if (isShuffleLow128VectorInsertHigh(SVOp)) {
+    SDValue V = Extract128BitVector(V1, DAG.getConstant(0, MVT::i32), DAG, dl);
+    SDValue InsV = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT),
+                             V, DAG.getConstant(NumElems/2, MVT::i32), DAG, dl);
     return DCI.CombineTo(N, InsV);
   }
 
