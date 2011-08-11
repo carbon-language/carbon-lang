@@ -25,6 +25,16 @@ using namespace llvm;
 #define GET_INSTRUCTION_NAME
 #include "ARMGenAsmWriter.inc"
 
+/// translateShiftImm - Convert shift immediate from 0-31 to 1-32 for printing.
+///
+/// getSORegOffset returns an integer from 0-31, but '0' should actually be printed
+/// 32 as the immediate shouldbe within the range 1-32.
+static unsigned translateShiftImm(unsigned imm) {
+  if (imm == 0)
+    return 32;
+  return imm;
+}
+
 StringRef ARMInstPrinter::getOpcodeName(unsigned Opcode) const {
   return getInstructionName(Opcode);
 }
@@ -72,7 +82,7 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     if (ARM_AM::getSORegShOp(MO2.getImm()) == ARM_AM::rrx)
       return;
 
-    O << ", #" << ARM_AM::getSORegOffset(MO2.getImm());
+    O << ", #" << translateShiftImm(ARM_AM::getSORegOffset(MO2.getImm()));
     return;
   }
 
@@ -211,7 +221,7 @@ void ARMInstPrinter::printSORegImmOperand(const MCInst *MI, unsigned OpNum,
   O << ", " << ARM_AM::getShiftOpcStr(ShOpc);
   if (ShOpc == ARM_AM::rrx)
     return;
-  O << " #" << ARM_AM::getSORegOffset(MO2.getImm());
+  O << " #" << translateShiftImm(ARM_AM::getSORegOffset(MO2.getImm()));
 }
 
 
@@ -722,7 +732,7 @@ void ARMInstPrinter::printT2SOOperand(const MCInst *MI, unsigned OpNum,
   ARM_AM::ShiftOpc ShOpc = ARM_AM::getSORegShOp(MO2.getImm());
   O << ", " << ARM_AM::getShiftOpcStr(ShOpc);
   if (ShOpc != ARM_AM::rrx)
-    O << " #" << ARM_AM::getSORegOffset(MO2.getImm());
+    O << " #" << translateShiftImm(ARM_AM::getSORegOffset(MO2.getImm()));
 }
 
 void ARMInstPrinter::printAddrModeImm12Operand(const MCInst *MI, unsigned OpNum,
