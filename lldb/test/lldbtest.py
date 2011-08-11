@@ -701,6 +701,12 @@ class Base(unittest2.TestCase):
                 if test is self:
                     print >> self.session, traceback
 
+        testMethod = getattr(self, self._testMethodName)
+        if getattr(testMethod, "__benchmarks_test__", False):
+            benchmarks = True
+        else:
+            benchmarks = False
+
         dname = os.path.join(os.environ["LLDB_TEST"],
                              os.environ["LLDB_SESSION_DIRNAME"])
         if not os.path.isdir(dname):
@@ -711,7 +717,8 @@ class Base(unittest2.TestCase):
             print >> f, "Session info generated @", datetime.datetime.now().ctime()
             print >> f, self.session.getvalue()
             print >> f, "To rerun this test, issue the following command from the 'test' directory:\n"
-            print >> f, "./dotest.py %s -v -t -f %s.%s" % (self.getRunOptions(),
+            print >> f, "./dotest.py %s -v %s -f %s.%s" % (self.getRunOptions(),
+                                                           ('+b' if benchmarks else '-t'),
                                                            self.__class__.__name__,
                                                            self._testMethodName)
 
