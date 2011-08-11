@@ -114,7 +114,7 @@ declare i8* @_ZNK18G__FastAllocString4dataEv() nounwind
 define i32 @test7({i32,i32,i32}* %tmp1, i32 %tmp71, i32 %tmp63) nounwind  {
 ; X64: test7:
 ; X64:    movl	8({{%rdi|%rcx}}), %eax
-; X64     movl	$4, 8({{%rdi|%rcx}})
+; X64:     movl	$4, 8({{%rdi|%rcx}})
 
 
   %tmp29 = getelementptr inbounds {i32,i32,i32}* %tmp1, i32 0, i32 2
