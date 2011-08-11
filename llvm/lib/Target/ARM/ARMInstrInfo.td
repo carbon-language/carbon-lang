@@ -1379,32 +1379,28 @@ PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
            [(ARMcallseq_start timm:$amt)]>;
 }
 
-def NOP : AI<(outs), (ins), MiscFrm, NoItinerary, "nop", "",
-             [/* For disassembly only; pattern left blank */]>,
+def NOP : AI<(outs), (ins), MiscFrm, NoItinerary, "nop", "", []>,
           Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
   let Inst{15-8} = 0b11110000;
   let Inst{7-0} = 0b00000000;
 }
 
-def YIELD : AI<(outs), (ins), MiscFrm, NoItinerary, "yield", "",
-             [/* For disassembly only; pattern left blank */]>,
+def YIELD : AI<(outs), (ins), MiscFrm, NoItinerary, "yield", "", []>,
           Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
   let Inst{15-8} = 0b11110000;
   let Inst{7-0} = 0b00000001;
 }
 
-def WFE : AI<(outs), (ins), MiscFrm, NoItinerary, "wfe", "",
-             [/* For disassembly only; pattern left blank */]>,
+def WFE : AI<(outs), (ins), MiscFrm, NoItinerary, "wfe", "", []>,
           Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
   let Inst{15-8} = 0b11110000;
   let Inst{7-0} = 0b00000010;
 }
 
-def WFI : AI<(outs), (ins), MiscFrm, NoItinerary, "wfi", "",
-             [/* For disassembly only; pattern left blank */]>,
+def WFI : AI<(outs), (ins), MiscFrm, NoItinerary, "wfi", "", []>,
           Requires<[IsARM, HasV6T2]> {
   let Inst{27-16} = 0b001100100000;
   let Inst{15-8} = 0b11110000;
@@ -1474,7 +1470,6 @@ let imod = 0, iflags = 0, M = 1 in
 }
 
 // Preload signals the memory system of possible future data/instruction access.
-// These are for disassembly only.
 multiclass APreLoad<bits<1> read, bits<1> data, string opc> {
 
   def i12 : AXI<(outs), (ins addrmode_imm12:$addr), MiscFrm, IIC_Preload,
@@ -1848,11 +1843,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   }
 }
 
-
-
-
-
-// Secure Monitor Call is a system instruction -- for disassembly only
+// Secure Monitor Call is a system instruction.
 def SMC : ABI<0b0001, (outs), (ins imm0_15:$opt), NoItinerary, "smc", "\t$opt",
               []> {
   bits<4> opt;
@@ -2894,11 +2885,8 @@ def RSBri : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
   let Inst{11-0} = imm;
 }
 
-// The reg/reg form is only defined for the disassembler; for codegen it is
-// equivalent to SUBrr.
 def RSBrr : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
-                 IIC_iALUr, "rsb", "\t$Rd, $Rn, $Rm",
-                 [/* For disassembly only; pattern left blank */]> {
+                 IIC_iALUr, "rsb", "\t$Rd, $Rn, $Rm", []> {
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rm;
@@ -2946,8 +2934,7 @@ def RSBSri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                  4, IIC_iALUi,
                  [(set GPR:$Rd, (subc so_imm:$imm, GPR:$Rn))]>;
 def RSBSrr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
-                 4, IIC_iALUr,
-                 [/* For disassembly only; pattern left blank */]>;
+                 4, IIC_iALUr, []>;
 def RSBSrsi : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg_imm:$shift),
                  4, IIC_iALUsr,
                  [(set GPR:$Rd, (subc so_reg_imm:$shift, GPR:$Rn))]>;
@@ -2969,11 +2956,8 @@ def RSCri : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
   let Inst{19-16} = Rn;
   let Inst{11-0} = imm;
 }
-// The reg/reg form is only defined for the disassembler; for codegen it is
-// equivalent to SUBrr.
 def RSCrr : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
-                 DPFrm, IIC_iALUr, "rsc", "\t$Rd, $Rn, $Rm",
-                 [/* For disassembly only; pattern left blank */]> {
+                 DPFrm, IIC_iALUr, "rsc", "\t$Rd, $Rn, $Rm", []> {
   bits<4> Rd;
   bits<4> Rn;
   bits<4> Rm;
@@ -3127,7 +3111,7 @@ def UHSAX   : AAI<0b01100111, 0b11110101, "uhsax">;
 def UHSUB16 : AAI<0b01100111, 0b11110111, "uhsub16">;
 def UHSUB8  : AAI<0b01100111, 0b11111111, "uhsub8">;
 
-// Unsigned Sum of Absolute Differences [and Accumulate] -- for disassembly only
+// Unsigned Sum of Absolute Differences [and Accumulate].
 
 def USAD8  : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
                 MulFrm /* for convenience */, NoItinerary, "usad8",
@@ -3159,7 +3143,7 @@ def USADA8 : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
   let Inst{3-0} = Rn;
 }
 
-// Signed/Unsigned saturate -- for disassembly only
+// Signed/Unsigned saturate
 
 def SSAT : AI<(outs GPRnopc:$Rd),
               (ins imm1_32:$sat_imm, GPRnopc:$Rn, shift_imm:$sh),
@@ -3208,8 +3192,7 @@ def USAT : AI<(outs GPRnopc:$Rd),
 
 def USAT16 : AI<(outs GPRnopc:$Rd),
                 (ins imm0_15:$sat_imm, GPRnopc:$Rn), SatFrm,
-                NoItinerary, "usat16", "\t$Rd, $sat_imm, $Rn",
-                [/* For disassembly only; pattern left blank */]> {
+                NoItinerary, "usat16", "\t$Rd, $sat_imm, $Rn", []> {
   bits<4> Rd;
   bits<4> sat_imm;
   bits<4> Rn;
@@ -3506,8 +3489,7 @@ def SMMUL : AMul2I <0b0111010, 0b0001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
 }
 
 def SMMULR : AMul2I <0b0111010, 0b0011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
-               IIC_iMUL32, "smmulr", "\t$Rd, $Rn, $Rm",
-               [/* For disassembly only; pattern left blank */]>,
+               IIC_iMUL32, "smmulr", "\t$Rd, $Rn, $Rm", []>,
             Requires<[IsARM, HasV6]> {
   let Inst{15-12} = 0b1111;
 }
@@ -3520,8 +3502,7 @@ def SMMLA : AMul2Ia <0b0111010, 0b0001, (outs GPR:$Rd),
 
 def SMMLAR : AMul2Ia <0b0111010, 0b0011, (outs GPR:$Rd),
                (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
-               IIC_iMAC32, "smmlar", "\t$Rd, $Rn, $Rm, $Ra",
-               [/* For disassembly only; pattern left blank */]>,
+               IIC_iMAC32, "smmlar", "\t$Rd, $Rn, $Rm, $Ra", []>,
             Requires<[IsARM, HasV6]>;
 
 def SMMLS : AMul2Ia <0b0111010, 0b1101, (outs GPR:$Rd),
@@ -3532,8 +3513,7 @@ def SMMLS : AMul2Ia <0b0111010, 0b1101, (outs GPR:$Rd),
 
 def SMMLSR : AMul2Ia <0b0111010, 0b1111, (outs GPR:$Rd),
                (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
-               IIC_iMAC32, "smmlsr", "\t$Rd, $Rn, $Rm, $Ra",
-               [/* For disassembly only; pattern left blank */]>,
+               IIC_iMAC32, "smmlsr", "\t$Rd, $Rn, $Rm, $Ra", []>,
             Requires<[IsARM, HasV6]>;
 
 multiclass AI_smul<string opc, PatFrag opnode> {
@@ -3630,32 +3610,28 @@ multiclass AI_smla<string opc, PatFrag opnode> {
 defm SMUL : AI_smul<"smul", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 defm SMLA : AI_smla<"smla", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 
-// Halfword multiply accumulate long: SMLAL<x><y> -- for disassembly only
+// Halfword multiply accumulate long: SMLAL<x><y>.
 def SMLALBB : AMulxyI64<0b0001010, 0b00, (outs GPRnopc:$RdLo, GPRnopc:$RdHi),
                       (ins GPRnopc:$Rn, GPRnopc:$Rm),
-                      IIC_iMAC64, "smlalbb", "\t$RdLo, $RdHi, $Rn, $Rm",
-                      [/* For disassembly only; pattern left blank */]>,
+                      IIC_iMAC64, "smlalbb", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
               Requires<[IsARM, HasV5TE]>;
 
 def SMLALBT : AMulxyI64<0b0001010, 0b10, (outs GPRnopc:$RdLo, GPRnopc:$RdHi),
                       (ins GPRnopc:$Rn, GPRnopc:$Rm),
-                      IIC_iMAC64, "smlalbt", "\t$RdLo, $RdHi, $Rn, $Rm",
-                      [/* For disassembly only; pattern left blank */]>,
+                      IIC_iMAC64, "smlalbt", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
               Requires<[IsARM, HasV5TE]>;
 
 def SMLALTB : AMulxyI64<0b0001010, 0b01, (outs GPRnopc:$RdLo, GPRnopc:$RdHi),
                       (ins GPRnopc:$Rn, GPRnopc:$Rm),
-                      IIC_iMAC64, "smlaltb", "\t$RdLo, $RdHi, $Rn, $Rm",
-                      [/* For disassembly only; pattern left blank */]>,
+                      IIC_iMAC64, "smlaltb", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
               Requires<[IsARM, HasV5TE]>;
 
 def SMLALTT : AMulxyI64<0b0001010, 0b11, (outs GPRnopc:$RdLo, GPRnopc:$RdHi),
                       (ins GPRnopc:$Rn, GPRnopc:$Rm),
-                      IIC_iMAC64, "smlaltt", "\t$RdLo, $RdHi, $Rn, $Rm",
-                      [/* For disassembly only; pattern left blank */]>,
+                      IIC_iMAC64, "smlaltt", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
               Requires<[IsARM, HasV5TE]>;
 
-// Helper class for AI_smld -- for disassembly only
+// Helper class for AI_smld.
 class AMulDualIbase<bit long, bit sub, bit swap, dag oops, dag iops,
                     InstrItinClass itin, string opc, string asm>
   : AI<oops, iops, MulFrm, itin, opc, asm, []>, Requires<[IsARM, HasV6]> {
@@ -4126,9 +4102,7 @@ def STREXD : AIstrex<0b01, (outs GPR:$Rd),
   let DecoderMethod = "DecodeDoubleRegExclusive";
 }
 
-// Clear-Exclusive is for disassembly only.
-def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex",
-                [/* For disassembly only; pattern left blank */]>,
+def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex", []>,
             Requires<[IsARM, HasV7]>  {
   let Inst{31-0} = 0b11110101011111111111000000011111;
 }
@@ -4301,7 +4275,7 @@ defm STC  : LdStCop<{?,?,?,?}, 0, (ins pred:$p), "stc",  "${p}">;
 defm STC2 : LdStCop<0b1111,    0, (ins),         "stc2", "">;
 
 //===----------------------------------------------------------------------===//
-// Move between coprocessor and ARM core register -- for disassembly only
+// Move between coprocessor and ARM core register.
 //
 
 class MovRCopro<string opc, bit direction, dag oops, dag iops,
@@ -4378,8 +4352,7 @@ def : ARMV5TPat<(int_arm_mrc2 imm:$cop, imm:$opc1, imm:$CRn,
                               imm:$CRm, imm:$opc2),
                 (MRC2 imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2)>;
 
-class MovRRCopro<string opc, bit direction,
-                 list<dag> pattern = [/* For disassembly only */]>
+class MovRRCopro<string opc, bit direction, list<dag> pattern = []>
   : ABI<0b1100, (outs), (ins p_imm:$cop, imm0_15:$opc1,
         GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
         NoItinerary, opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm", pattern> {
@@ -4404,8 +4377,7 @@ def MCRR : MovRRCopro<"mcrr", 0 /* from ARM core register to coprocessor */,
                                      imm:$CRm)]>;
 def MRRC : MovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
 
-class MovRRCopro2<string opc, bit direction,
-                  list<dag> pattern = [/* For disassembly only */]>
+class MovRRCopro2<string opc, bit direction, list<dag> pattern = []>
   : ABXI<0b1100, (outs), (ins p_imm:$cop, imm0_15:$opc1,
          GPR:$Rt, GPR:$Rt2, c_imm:$CRm), NoItinerary,
          !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
