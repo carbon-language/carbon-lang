@@ -124,16 +124,6 @@ public:
     // Public default ctor.
     InterferenceResult(): VirtRegI(), LiveUnionI() {}
 
-    /// start - Return the start of the current overlap.
-    SlotIndex start() const {
-      return std::max(VirtRegI->start, LiveUnionI.start());
-    }
-
-    /// stop - Return the end of the current overlap.
-    SlotIndex stop() const {
-      return std::min(VirtRegI->end, LiveUnionI.stop());
-    }
-
     /// interference - Return the register that is interfering here.
     LiveInterval *interference() const { return LiveUnionI.value(); }
 
@@ -145,15 +135,6 @@ public:
 
     // Access the LiveUnion segment.
     const SegmentIter &liveUnionPos() const { return LiveUnionI; }
-
-    bool operator==(const InterferenceResult &IR) const {
-      return VirtRegI == IR.VirtRegI && LiveUnionI == IR.LiveUnionI;
-    }
-    bool operator!=(const InterferenceResult &IR) const {
-      return !operator==(IR);
-    }
-
-    void print(raw_ostream &OS, const TargetRegisterInfo *TRI) const;
   };
 
   /// Query interferences between a single live virtual register and a live
@@ -249,7 +230,6 @@ public:
     /// Loop.
     bool checkLoopInterference(MachineLoopRange*);
 
-    void print(raw_ostream &OS, const TargetRegisterInfo *TRI);
   private:
     Query(const Query&);          // DO NOT IMPLEMENT
     void operator=(const Query&); // DO NOT IMPLEMENT
