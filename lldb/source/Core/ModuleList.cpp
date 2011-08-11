@@ -113,9 +113,9 @@ size_t
 ModuleList::RemoveOrphans ()
 {
     Mutex::Locker locker(m_modules_mutex);
-    collection::reverse_iterator pos = m_modules.rbegin();
+    collection::iterator pos = m_modules.begin();
     size_t remove_count = 0;
-    while (pos != m_modules.rend())
+    while (pos != m_modules.end())
     {
         if (pos->unique())
         {

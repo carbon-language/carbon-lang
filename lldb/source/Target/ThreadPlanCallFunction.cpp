@@ -80,7 +80,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
         {
             if (log)
                 log->Printf ("Could not find object file for module \"%s\".", 
-                             executableModuleSP->GetFileSpec().GetFilename().AsCString());
+                             exe_module->GetFileSpec().GetFilename().AsCString());
             return;
         }
         m_start_addr = objectFile->GetEntryPointAddress();
@@ -88,7 +88,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
         {
             if (log)
                 log->Printf ("Could not find entry point address for executable module \"%s\".", 
-                             executableModuleSP->GetFileSpec().GetFilename().AsCString());
+                             exe_module->GetFileSpec().GetFilename().AsCString());
             return;
         }
     }
@@ -196,7 +196,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
         {
             if (log)
                 log->Printf ("Could not find object file for module \"%s\".", 
-                             executableModuleSP->GetFileSpec().GetFilename().AsCString());
+                             exe_module->GetFileSpec().GetFilename().AsCString());
             return;
         }
         m_start_addr = objectFile->GetEntryPointAddress();
