@@ -133,6 +133,8 @@ class ARMAsmParser : public MCTargetAsmParser {
                              const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtLdrdPre(MCInst &Inst, unsigned Opcode,
                   const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool cvtStrdPre(MCInst &Inst, unsigned Opcode,
+                  const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool cvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
 
@@ -2224,6 +2226,24 @@ cvtLdrdPre(MCInst &Inst, unsigned Opcode,
   return true;
 }
 
+/// cvtStrdPre - Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+cvtStrdPre(MCInst &Inst, unsigned Opcode,
+           const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateImm(0));
+  // Rt, Rt2
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addRegOperands(Inst, 1);
+  // addr
+  ((ARMOperand*)Operands[4])->addAddrMode3Operands(Inst, 3);
+  // pred
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
+  return true;
+}
+
 /// cvtLdWriteBackRegAddrMode3 - Convert parsed operands to MCInst.
 /// Needed here because the Asm Gen Matcher can't handle properly tied operands
 /// when they refer multiple MIOperands inside a single one.
@@ -2850,7 +2870,15 @@ validateInstruction(MCInst &Inst,
                    "destination operands must be sequential");
     return false;
   }
-  case ARM::STRD:
+  case ARM::STRD: {
+    // Rt2 must be Rt + 1.
+    unsigned Rt = getARMRegisterNumbering(Inst.getOperand(0).getReg());
+    unsigned Rt2 = getARMRegisterNumbering(Inst.getOperand(1).getReg());
+    if (Rt2 != Rt + 1)
+      return Error(Operands[3]->getStartLoc(),
+                   "source operands must be sequential");
+    return false;
+  }
   case ARM::STRD_PRE:
   case ARM::STRD_POST:
   case ARM::STREXD: {
@@ -2858,7 +2886,7 @@ validateInstruction(MCInst &Inst,
     unsigned Rt = getARMRegisterNumbering(Inst.getOperand(1).getReg());
     unsigned Rt2 = getARMRegisterNumbering(Inst.getOperand(2).getReg());
     if (Rt2 != Rt + 1)
-      return Error(Operands[4]->getStartLoc(),
+      return Error(Operands[3]->getStartLoc(),
                    "source operands must be sequential");
     return false;
   }
