@@ -830,7 +830,7 @@ public:
       // For register offset, we encode the shift type and negation flag
       // here.
       Val = ARM_AM::getAM2Opc(Mem.isNegative ? ARM_AM::sub : ARM_AM::add,
-                              0, Mem.ShiftType);
+                              Mem.ShiftImm, Mem.ShiftType);
     }
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
     Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
