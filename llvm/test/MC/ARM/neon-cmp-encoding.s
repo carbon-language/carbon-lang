@@ -1,11 +1,4 @@
 @ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding < %s | FileCheck %s
-@ XFAIL: *
-
-@ FIXME: We cannot currently test the following instructions, which are 
-@ currently marked as for-disassembly only in the .td files:
-@  - VCEQz
-@  - VCGEz, VCLEz
-@  - VCGTz, VCLTz
 
 @ CHECK: vceq.i8	d16, d16, d17           @ encoding: [0xb1,0x08,0x40,0xf3]
 	vceq.i8	d16, d16, d17

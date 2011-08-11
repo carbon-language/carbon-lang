@@ -2865,6 +2865,21 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     Operands.erase(Operands.begin() + 1);
     delete Op;
   }
+
+  // The vector-compare-to-zero instructions have a literal token "#0" at
+  // the end that comes to here as an immediate operand. Convert it to a
+  // token to play nicely with the matcher.
+  if ((Mnemonic == "vceq" || Mnemonic == "vcge" || Mnemonic == "vcgt" ||
+      Mnemonic == "vcle" || Mnemonic == "vclt") && Operands.size() == 6 &&
+      static_cast<ARMOperand*>(Operands[5])->isImm()) {
+    ARMOperand *Op = static_cast<ARMOperand*>(Operands[5]);
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op->getImm());
+    if (CE && CE->getValue() == 0) {
+      Operands.erase(Operands.begin() + 5);
+      Operands.push_back(ARMOperand::CreateToken("#0", Op->getStartLoc()));
+      delete Op;
+    }
+  }
   return false;
 }
 
