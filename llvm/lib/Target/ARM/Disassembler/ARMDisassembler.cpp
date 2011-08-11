@@ -133,6 +133,8 @@ static bool DecodeAddrMode3Offset(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static bool DecodeMemBarrierOption(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static bool DecodeMSRMask(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 
 
 static bool DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
@@ -759,6 +761,8 @@ static bool DecodeSORegRegOperand(llvm::MCInst &Inst, unsigned Val,
 
 static bool DecodeRegListOperand(llvm::MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
+  // Empty register lists are not allowed.
+  if (CountPopulation_32(Val) == 0) return false;
   for (unsigned i = 0; i < 16; ++i) {
     if (Val & (1 << i)) {
       if (!DecodeGPRRegisterClass(Inst, i, Address, Decoder)) return false;
@@ -2467,3 +2471,9 @@ static bool DecodeMemBarrierOption(llvm::MCInst &Inst, unsigned Val,
   return true;
 }
 
+static bool DecodeMSRMask(llvm::MCInst &Inst, unsigned Val,
+                          uint64_t Address, const void *Decoder) {
+  if (!Val) return false;
+  Inst.addOperand(MCOperand::CreateImm(Val));
+  return true;
+}

@@ -189,6 +189,7 @@ def MSRMaskOperand : AsmOperandClass {
 }
 def msr_mask : Operand<i32> {
   let PrintMethod = "printMSRMaskOperand";
+  let DecoderMethod = "DecodeMSRMask";
   let ParserMatchClass = MSRMaskOperand;
 }
 
