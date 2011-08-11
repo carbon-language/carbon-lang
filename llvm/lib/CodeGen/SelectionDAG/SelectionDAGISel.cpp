@@ -754,6 +754,11 @@ bool SelectionDAGISel::TryToFoldFastISelLoad(const LoadInst *LI,
     TheUser = TheUser->use_back();
   }
   
+  // If we didn't find the fold instruction, then we failed to collapse the
+  // sequence.
+  if (TheUser != FoldInst)
+    return false;
+  
   // Don't try to fold volatile loads.  Target has to deal with alignment
   // constraints.
   if (LI->isVolatile()) return false;
