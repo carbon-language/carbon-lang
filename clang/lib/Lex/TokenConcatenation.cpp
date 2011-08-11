@@ -19,7 +19,7 @@ using namespace clang;
 
 /// IsStringPrefix - Return true if Str is a string prefix.
 /// 'L', 'u', 'U', or 'u8'. Including raw versions.
-static bool IsStringPrefix(const StringRef &Str, bool CPlusPlus0x) {
+static bool IsStringPrefix(StringRef Str, bool CPlusPlus0x) {
 
   if (Str[0] == 'L' ||
       (CPlusPlus0x && (Str[0] == 'u' || Str[0] == 'U' || Str[0] == 'R'))) {

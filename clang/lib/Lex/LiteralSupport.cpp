@@ -1119,7 +1119,7 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
 
 /// copyStringFragment - This function copies from Start to End into ResultPtr.
 /// Performs widening for multi-byte characters.
-void StringLiteralParser::CopyStringFragment(const StringRef &Fragment) {
+void StringLiteralParser::CopyStringFragment(StringRef Fragment) {
   // Copy the character span over.
   if (CharByteWidth == 1) {
     memcpy(ResultPtr, Fragment.data(), Fragment.size());
