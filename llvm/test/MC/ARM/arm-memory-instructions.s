@@ -462,3 +462,16 @@ _func:
 @ CHECK: strh	r1, [r2, -r1]!          @ encoding: [0xb1,0x10,0x22,0xe1]
 @ CHECK: strh	r9, [r7], r2            @ encoding: [0xb2,0x90,0x87,0xe0]
 @ CHECK: strh	r4, [r3], -r2           @ encoding: [0xb2,0x40,0x03,0xe0]
+
+@------------------------------------------------------------------------------
+@ STRHT
+@------------------------------------------------------------------------------
+        strht r2, [r5], #76
+        strht r8, [r1], #-25
+        strht r5, [r3], r4
+        strht r6, [r8], -r0
+
+@ CHECK: strht	r2, [r5], #76           @ encoding: [0xbc,0x24,0xe5,0xe0]
+@ CHECK: strht	r8, [r1], #-25          @ encoding: [0xb9,0x81,0x61,0xe0]
+@ CHECK: strht	r5, [r3], r4            @ encoding: [0xb4,0x50,0xa3,0xe0]
+@ CHECK: strht	r6, [r8], -r0           @ encoding: [0xb0,0x60,0x28,0xe0]
