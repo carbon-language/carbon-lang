@@ -1071,8 +1071,7 @@ Lforward:
         push {r7}
         push {r7, r8, r9, r10}
 
-@ FIXME: push of a single register should encode as "str r7, [sp, #-4]!"
-@ CHECK-FIXME: push	{r7}                    @ encoding: [0x04,0x70,0x2d,0xe5]
+@ CHECK: push	{r7}                    @ encoding: [0x04,0x70,0x2d,0xe5]
 @ CHECK: push	{r7, r8, r9, r10}       @ encoding: [0x80,0x07,0x2d,0xe9]
 
 

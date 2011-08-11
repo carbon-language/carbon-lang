@@ -88,6 +88,13 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     printRegisterList(MI, 4, O);
     return;
   }
+  if (Opcode == ARM::STR_PRE_IMM && MI->getOperand(2).getReg() == ARM::SP &&
+      MI->getOperand(3).getImm() == -4) {
+    O << '\t' << "push";
+    printPredicateOperand(MI, 4, O);
+    O << "\t{" << getRegisterName(MI->getOperand(1).getReg()) << "}";
+    return;
+  }
 
   // A8.6.122 POP
   if ((Opcode == ARM::LDMIA_UPD || Opcode == ARM::t2LDMIA_UPD) &&

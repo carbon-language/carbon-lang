@@ -2879,6 +2879,22 @@ processInstruction(MCInst &Inst,
       Inst = TmpInst;
     }
     break;
+  case ARM::STMDB_UPD:
+    // If this is a store of a single register via a 'push', then we should use
+    // a pre-indexed STR instruction instead, per the ARM ARM.
+    if (static_cast<ARMOperand*>(Operands[0])->getToken() == "push" &&
+        Inst.getNumOperands() == 5) {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::STR_PRE_IMM);
+      TmpInst.addOperand(Inst.getOperand(0)); // Rn_wb
+      TmpInst.addOperand(Inst.getOperand(4)); // Rt
+      TmpInst.addOperand(Inst.getOperand(1)); // addrmode_imm12
+      TmpInst.addOperand(MCOperand::CreateImm(-4));
+      TmpInst.addOperand(Inst.getOperand(2)); // CondCode
+      TmpInst.addOperand(Inst.getOperand(3));
+      Inst = TmpInst;
+    }
+    break;
   }
 }
 
