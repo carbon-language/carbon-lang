@@ -2314,8 +2314,8 @@ Lforward:
         usat16	r2, #2, r7
         usat16	r3, #15, r5
 
-@ CHECK: usat16	r2, #2, r7              @ encoding: [0x32,0x2f,0xe2,0xe6]
-@ CHECK: usat16	r3, #15, r5             @ encoding: [0x33,0x3f,0xef,0xe6]
+@ CHECK: usat16	r2, #2, r7              @ encoding: [0x37,0x2f,0xe2,0xe6]
+@ CHECK: usat16	r3, #15, r5             @ encoding: [0x35,0x3f,0xef,0xe6]
 
 
 @------------------------------------------------------------------------------
