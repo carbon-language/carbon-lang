@@ -547,7 +547,8 @@ let mayStore = 1, Constraints = "$src = $dst" in
 
 /// Jump and Branch Instructions
 def J       : JumpFJ<0x02, "j">;
-def JR      : JumpFR<0x00, 0x08, "jr">;
+let isIndirectBranch = 1 in
+  def JR      : JumpFR<0x00, 0x08, "jr">;
 def JAL     : JumpLink<0x03, "jal">;
 def JALR    : JumpLinkReg<0x00, 0x09, "jalr">;
 def BEQ     : CBranch<0x04, "beq", seteq>;
