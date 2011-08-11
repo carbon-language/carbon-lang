@@ -4307,7 +4307,10 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   // There might be visible decls in multiple parts of the chain, for the TU
   // and namespaces. For any given name, the last available results replace
   // all earlier ones. For this reason, we walk in reverse.
-  DeclContextInfos &Infos = DeclContextOffsets[DC];
+  // Copy the DeclContextInfos vector instead of using a reference to the
+  // vector stored in the map, because DeclContextOffsets can change while
+  // we load declarations with GetLocalDeclAs.
+  DeclContextInfos Infos = DeclContextOffsets[DC];
   for (DeclContextInfos::reverse_iterator I = Infos.rbegin(), E = Infos.rend();
        I != E; ++I) {
     if (!I->NameLookupTableData)
