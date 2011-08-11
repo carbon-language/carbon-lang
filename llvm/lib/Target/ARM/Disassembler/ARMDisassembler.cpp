@@ -698,7 +698,7 @@ static bool DecodeSORegImmOperand(llvm::MCInst &Inst, unsigned Val,
   unsigned imm = fieldFromInstruction32(Val, 7, 5);
 
   // Register-immediate
-  DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
 
   ARM_AM::ShiftOpc Shift = ARM_AM::lsl;
   switch (type) {
@@ -760,8 +760,9 @@ static bool DecodeSORegRegOperand(llvm::MCInst &Inst, unsigned Val,
 static bool DecodeRegListOperand(llvm::MCInst &Inst, unsigned Val,
                                  uint64_t Address, const void *Decoder) {
   for (unsigned i = 0; i < 16; ++i) {
-    if (Val & (1 << i))
-      DecodeGPRRegisterClass(Inst, i, Address, Decoder);
+    if (Val & (1 << i)) {
+      if (!DecodeGPRRegisterClass(Inst, i, Address, Decoder)) return false;
+    }
   }
 
   return true;
@@ -772,9 +773,10 @@ static bool DecodeSPRRegListOperand(llvm::MCInst &Inst, unsigned Val,
   unsigned Vd = fieldFromInstruction32(Val, 8, 4);
   unsigned regs = Val & 0xFF;
 
-  DecodeSPRRegisterClass(Inst, Vd, Address, Decoder);
-  for (unsigned i = 0; i < (regs - 1); ++i)
-    DecodeSPRRegisterClass(Inst, ++Vd, Address, Decoder);
+  if (!DecodeSPRRegisterClass(Inst, Vd, Address, Decoder)) return false;
+  for (unsigned i = 0; i < (regs - 1); ++i) {
+    if (!DecodeSPRRegisterClass(Inst, ++Vd, Address, Decoder)) return false;
+  }
 
   return true;
 }
@@ -784,9 +786,10 @@ static bool DecodeDPRRegListOperand(llvm::MCInst &Inst, unsigned Val,
   unsigned Vd = fieldFromInstruction32(Val, 8, 4);
   unsigned regs = (Val & 0xFF) / 2;
 
-  DecodeDPRRegisterClass(Inst, Vd, Address, Decoder);
-  for (unsigned i = 0; i < (regs - 1); ++i)
-    DecodeDPRRegisterClass(Inst, ++Vd, Address, Decoder);
+  if (!DecodeDPRRegisterClass(Inst, Vd, Address, Decoder)) return false;
+  for (unsigned i = 0; i < (regs - 1); ++i) {
+    if (!DecodeDPRRegisterClass(Inst, ++Vd, Address, Decoder)) return false;
+  }
 
   return true;
 }
@@ -841,7 +844,7 @@ static bool DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   Inst.addOperand(MCOperand::CreateImm(coproc));
   Inst.addOperand(MCOperand::CreateImm(CRd));
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
   switch (Inst.getOpcode()) {
     case ARM::LDC_OPTION:
     case ARM::LDCL_OPTION:
@@ -938,13 +941,13 @@ static bool DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::STRTi:
     case ARM::STRBTr:
     case ARM::STRBTi:
-      DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+      if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
       break;
     default:
       break;
   }
 
-  DecodeGPRRegisterClass(Inst, Rt, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)) return false;
 
   // On loads, the writeback operand comes after Rt.
   switch (Inst.getOpcode()) {
@@ -955,13 +958,14 @@ static bool DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::LDRBT_POST_IMM:
     case ARM::LDRT_POST_REG:
     case ARM::LDRT_POST_IMM:
-      DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+      if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+        return false;
       break;
     default:
       break;
   }
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
 
   ARM_AM::AddrOpc Op = ARM_AM::add;
   if (!fieldFromInstruction32(Insn, 23, 1))
@@ -975,7 +979,7 @@ static bool DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
     idx_mode = ARMII::IndexModePost;
 
   if (reg) {
-    DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
     ARM_AM::ShiftOpc Opc = ARM_AM::lsl;
     switch( fieldFromInstruction32(Insn, 5, 2)) {
       case 0:
@@ -1032,8 +1036,8 @@ static bool DecodeSORegMemOperand(llvm::MCInst &Inst, unsigned Val,
       break;
   }
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
-  DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
   unsigned shift;
   if (U)
     shift = ARM_AM::getAM2Opc(ARM_AM::add, imm, ShOp);
@@ -1068,14 +1072,16 @@ static bool DecodeAddrMode3Instruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::STRD:
     case ARM::STRD_PRE:
     case ARM::STRD_POST:
-      DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+      if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+        return false;
       break;
     default:
       break;
     }
   }
 
-  DecodeGPRRegisterClass(Inst, Rt, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rt, Address, Decoder))
+    return false;
   switch (Inst.getOpcode()) {
     case ARM::STRD:
     case ARM::STRD_PRE:
@@ -1083,7 +1089,8 @@ static bool DecodeAddrMode3Instruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::LDRD:
     case ARM::LDRD_PRE:
     case ARM::LDRD_POST:
-      DecodeGPRRegisterClass(Inst, Rt+1, Address, Decoder);
+      if (!DecodeGPRRegisterClass(Inst, Rt+1, Address, Decoder))
+        return false;
       break;
     default:
       break;
@@ -1097,20 +1104,23 @@ static bool DecodeAddrMode3Instruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::LDRD_POST:
     case ARM::LDRHTr:
     case ARM::LDRSBTr:
-      DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+      if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+        return false;
       break;
     default:
       break;
     }
   }
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+    return false;
 
   if (type) {
     Inst.addOperand(MCOperand::CreateReg(0));
     Inst.addOperand(MCOperand::CreateImm(U | (imm << 4) | Rm));
   } else {
-    DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder))
+      return false;
     Inst.addOperand(MCOperand::CreateImm(U));
   }
 
@@ -1140,7 +1150,7 @@ static bool DecodeRFEInstruction(llvm::MCInst &Inst, unsigned Insn,
   }
 
   Inst.addOperand(MCOperand::CreateImm(mode));
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
 
   return true;
 }
@@ -1182,10 +1192,11 @@ static bool DecodeMemMultipleWritebackInstruction(llvm::MCInst &Inst,
     return DecodeRFEInstruction(Inst, Insn, Address, Decoder);
   }
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder); // Tied
-  if (!DecodePredicateOperand(Inst, pred, Address, Decoder)) return false;
-  DecodeRegListOperand(Inst, reglist, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)   ||
+      !DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)   || // Tied
+      !DecodePredicateOperand(Inst, pred, Address, Decoder) ||
+      !DecodeRegListOperand(Inst, reglist, Address, Decoder))
+    return false;
 
   return true;
 }
@@ -1231,10 +1242,11 @@ static bool DecodeSMLAInstruction(llvm::MCInst &Inst, unsigned Insn,
   if (pred == 0xF)
     return DecodeCPSInstruction(Inst, Insn, Address, Decoder);
 
-  DecodeGPRnopcRegisterClass(Inst, Rd, Address, Decoder);
-  DecodeGPRnopcRegisterClass(Inst, Rn, Address, Decoder);
-  DecodeGPRnopcRegisterClass(Inst, Rm, Address, Decoder);
-  DecodeGPRnopcRegisterClass(Inst, Ra, Address, Decoder);
+  if (!DecodeGPRnopcRegisterClass(Inst, Rd, Address, Decoder) ||
+      !DecodeGPRnopcRegisterClass(Inst, Rn, Address, Decoder) ||
+      !DecodeGPRnopcRegisterClass(Inst, Rm, Address, Decoder) ||
+      !DecodeGPRnopcRegisterClass(Inst, Ra, Address, Decoder))
+    return false;
 
   return true;
 }
@@ -1245,7 +1257,8 @@ static bool DecodeAddrModeImm12Operand(llvm::MCInst &Inst, unsigned Val,
   unsigned imm = fieldFromInstruction32(Val, 0, 12);
   unsigned Rn = fieldFromInstruction32(Val, 13, 4);
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+    return false;
 
   if (!add) imm *= -1;
   if (imm == 0 && !add) imm = INT32_MIN;
@@ -1260,7 +1273,8 @@ static bool DecodeAddrMode5Operand(llvm::MCInst &Inst, unsigned Val,
   unsigned U = fieldFromInstruction32(Val, 8, 1);
   unsigned imm = fieldFromInstruction32(Val, 0, 8);
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+    return false;
 
   if (U)
     Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM5Opc(ARM_AM::add, imm)));
@@ -1305,7 +1319,8 @@ static bool DecodeAddrMode6Operand(llvm::MCInst &Inst, unsigned Val,
   unsigned Rm = fieldFromInstruction32(Val, 0, 4);
   unsigned align = fieldFromInstruction32(Val, 4, 2);
 
-  DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder))
+    return false;
   if (!align)
     Inst.addOperand(MCOperand::CreateImm(0));
   else
@@ -1324,7 +1339,7 @@ static bool DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
 
   // First output register
-  DecodeDPRRegisterClass(Inst, Rd, Address, Decoder);
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
 
   // Second output register
   switch (Inst.getOpcode()) {
@@ -1376,7 +1391,7 @@ static bool DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VLD4d8_UPD:
     case ARM::VLD4d16_UPD:
     case ARM::VLD4d32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+1)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+1)%32, Address, Decoder)) return false;
       break;
     case ARM::VLD2b8:
     case ARM::VLD2b16:
@@ -1396,7 +1411,7 @@ static bool DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VLD4q8_UPD:
     case ARM::VLD4q16_UPD:
     case ARM::VLD4q32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+2)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+2)%32, Address, Decoder)) return false;
     default:
       break;
   }
@@ -1437,7 +1452,7 @@ static bool DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VLD4d8_UPD:
     case ARM::VLD4d16_UPD:
     case ARM::VLD4d32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+2)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+2)%32, Address, Decoder)) return false;
       break;
     case ARM::VLD3q8:
     case ARM::VLD3q16:
@@ -1451,7 +1466,7 @@ static bool DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VLD4q8_UPD:
     case ARM::VLD4q16_UPD:
     case ARM::VLD4q32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+4)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+4)%32, Address, Decoder)) return false;
       break;
     default:
       break;
@@ -1479,7 +1494,7 @@ static bool DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VLD4d8_UPD:
     case ARM::VLD4d16_UPD:
     case ARM::VLD4d32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+3)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+3)%32, Address, Decoder)) return false;
       break;
     case ARM::VLD4q8:
     case ARM::VLD4q16:
@@ -1487,7 +1502,7 @@ static bool DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VLD4q8_UPD:
     case ARM::VLD4q16_UPD:
     case ARM::VLD4q32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+6)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+6)%32, Address, Decoder)) return false;
       break;
     default:
       break;
@@ -1532,20 +1547,22 @@ static bool DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VLD4q8_UPD:
     case ARM::VLD4q16_UPD:
     case ARM::VLD4q32_UPD:
-      DecodeGPRRegisterClass(Inst, wb, Address, Decoder);
+      if (!DecodeGPRRegisterClass(Inst, wb, Address, Decoder)) return false;
       break;
     default:
       break;
   }
 
   // AddrMode6 Base (register+alignment)
-  DecodeAddrMode6Operand(Inst, Rn, Address, Decoder);
+  if (!DecodeAddrMode6Operand(Inst, Rn, Address, Decoder)) return false;
 
   // AddrMode6 Offset (register)
   if (Rm == 0xD)
     Inst.addOperand(MCOperand::CreateReg(0));
-  else if (Rm != 0xF)
-    DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+  else if (Rm != 0xF) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder))
+      return false;
+  }
 
   return true;
 }
@@ -1598,23 +1615,25 @@ static bool DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST4q8_UPD:
     case ARM::VST4q16_UPD:
     case ARM::VST4q32_UPD:
-      DecodeGPRRegisterClass(Inst, wb, Address, Decoder);
+      if (!DecodeGPRRegisterClass(Inst, wb, Address, Decoder))
+        return false;
       break;
     default:
       break;
   }
 
   // AddrMode6 Base (register+alignment)
-  DecodeAddrMode6Operand(Inst, Rn, Address, Decoder);
+  if (!DecodeAddrMode6Operand(Inst, Rn, Address, Decoder)) return false;
 
   // AddrMode6 Offset (register)
   if (Rm == 0xD)
     Inst.addOperand(MCOperand::CreateReg(0));
-  else if (Rm != 0xF)
-    DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+  else if (Rm != 0xF) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
+  }
 
   // First input register
-  DecodeDPRRegisterClass(Inst, Rd, Address, Decoder);
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
 
   // Second input register
   switch (Inst.getOpcode()) {
@@ -1666,7 +1685,7 @@ static bool DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST4d8_UPD:
     case ARM::VST4d16_UPD:
     case ARM::VST4d32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+1)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+1)%32, Address, Decoder)) return false;
       break;
     case ARM::VST2b8:
     case ARM::VST2b16:
@@ -1686,7 +1705,7 @@ static bool DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST4q8_UPD:
     case ARM::VST4q16_UPD:
     case ARM::VST4q32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+2)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+2)%32, Address, Decoder)) return false;
       break;
     default:
       break;
@@ -1728,7 +1747,7 @@ static bool DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST4d8_UPD:
     case ARM::VST4d16_UPD:
     case ARM::VST4d32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+2)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+2)%32, Address, Decoder)) return false;
       break;
     case ARM::VST3q8:
     case ARM::VST3q16:
@@ -1742,7 +1761,7 @@ static bool DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST4q8_UPD:
     case ARM::VST4q16_UPD:
     case ARM::VST4q32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+4)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+4)%32, Address, Decoder)) return false;
       break;
     default:
       break;
@@ -1770,7 +1789,7 @@ static bool DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST4d8_UPD:
     case ARM::VST4d16_UPD:
     case ARM::VST4d32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+3)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+3)%32, Address, Decoder)) return false;
       break;
     case ARM::VST4q8:
     case ARM::VST4q16:
@@ -1778,7 +1797,7 @@ static bool DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST4q8_UPD:
     case ARM::VST4q16_UPD:
     case ARM::VST4q32_UPD:
-      DecodeDPRRegisterClass(Inst, (Rd+6)%32, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, (Rd+6)%32, Address, Decoder)) return false;
       break;
     default:
       break;
@@ -1799,17 +1818,22 @@ static bool DecodeVLD1DupInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   align *= (1 << size);
 
-  DecodeDPRRegisterClass(Inst, Rd, Address, Decoder);
-  if (regs == 2) DecodeDPRRegisterClass(Inst, (Rd+1)%32, Address, Decoder);
-  if (Rm == 0xD) DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (regs == 2) {
+    if (!DecodeDPRRegisterClass(Inst, (Rd+1)%32, Address, Decoder)) return false;
+  }
+  if (Rm == 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  }
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
   Inst.addOperand(MCOperand::CreateImm(align));
 
   if (Rm == 0xD)
     Inst.addOperand(MCOperand::CreateReg(0));
-  else if (Rm != 0xF)
-    DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+  else if (Rm != 0xF) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
+  }
 
   return true;
 }
@@ -1825,17 +1849,20 @@ static bool DecodeVLD2DupInstruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned inc = fieldFromInstruction32(Insn, 5, 1) + 1;
   align *= 2*size;
 
-  DecodeDPRRegisterClass(Inst, Rd, Address, Decoder);
-  DecodeDPRRegisterClass(Inst, (Rd+inc)%32, Address, Decoder);
-  if (Rm == 0xD) DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, (Rd+inc)%32, Address, Decoder)) return false;
+  if (Rm == 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  }
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
   Inst.addOperand(MCOperand::CreateImm(align));
 
   if (Rm == 0xD)
     Inst.addOperand(MCOperand::CreateReg(0));
-  else if (Rm != 0xF)
-    DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+  else if (Rm != 0xF) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
+  }
 
   return true;
 }
@@ -1848,18 +1875,22 @@ static bool DecodeVLD3DupInstruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
   unsigned inc = fieldFromInstruction32(Insn, 5, 1) + 1;
 
-  DecodeDPRRegisterClass(Inst, Rd, Address, Decoder);
-  DecodeDPRRegisterClass(Inst, (Rd+inc)%32, Address, Decoder);
-  DecodeDPRRegisterClass(Inst, (Rd+2*inc)%32, Address, Decoder);
-  if (Rm == 0xD) DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)          ||
+      !DecodeDPRRegisterClass(Inst, (Rd+inc)%32, Address, Decoder) ||
+      !DecodeDPRRegisterClass(Inst, (Rd+2*inc)%32, Address, Decoder))
+    return false;
+  if (Rm == 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  }
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
   Inst.addOperand(MCOperand::CreateImm(0));
 
   if (Rm == 0xD)
     Inst.addOperand(MCOperand::CreateReg(0));
-  else if (Rm != 0xF)
-    DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+  else if (Rm != 0xF) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
+  }
 
   return true;
 }
@@ -1887,19 +1918,23 @@ static bool DecodeVLD4DupInstruction(llvm::MCInst &Inst, unsigned Insn,
     }
   }
 
-  DecodeDPRRegisterClass(Inst, Rd, Address, Decoder);
-  DecodeDPRRegisterClass(Inst, (Rd+inc)%32, Address, Decoder);
-  DecodeDPRRegisterClass(Inst, (Rd+2*inc)%32, Address, Decoder);
-  DecodeDPRRegisterClass(Inst, (Rd+3*inc)%32, Address, Decoder);
-  if (Rm == 0xD) DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)            ||
+      !DecodeDPRRegisterClass(Inst, (Rd+inc)%32, Address, Decoder)   ||
+      !DecodeDPRRegisterClass(Inst, (Rd+2*inc)%32, Address, Decoder) ||
+      !DecodeDPRRegisterClass(Inst, (Rd+3*inc)%32, Address, Decoder))
+    return false;
+  if (Rm == 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  }
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
   Inst.addOperand(MCOperand::CreateImm(align));
 
   if (Rm == 0xD)
     Inst.addOperand(MCOperand::CreateReg(0));
-  else if (Rm != 0xF)
-    DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+  else if (Rm != 0xF) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
+  }
 
   return true;
 }
@@ -1915,10 +1950,11 @@ static bool DecodeNEONModImmInstruction(llvm::MCInst &Inst, unsigned Insn,
   imm |= fieldFromInstruction32(Insn, 5, 1) << 12;
   unsigned Q = fieldFromInstruction32(Insn, 6, 1);
 
-  if (Q)
-    DecodeQPRRegisterClass(Inst, Rd, Address, Decoder);
-  else
-    DecodeDPRRegisterClass(Inst, Rd, Address, Decoder);
+  if (Q) {
+    if (!DecodeQPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  } else {
+    if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  }
 
   Inst.addOperand(MCOperand::CreateImm(imm));
 
@@ -1927,13 +1963,13 @@ static bool DecodeNEONModImmInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VORRiv2i32:
     case ARM::VBICiv4i16:
     case ARM::VBICiv2i32:
-      DecodeDPRRegisterClass(Inst, Rd, Address, Decoder);
+      if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
       break;
     case ARM::VORRiv8i16:
     case ARM::VORRiv4i32:
     case ARM::VBICiv8i16:
     case ARM::VBICiv4i32:
-      DecodeQPRRegisterClass(Inst, Rd, Address, Decoder);
+      if (!DecodeQPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
       break;
     default:
       break;
@@ -1950,8 +1986,8 @@ static bool DecodeVSHLMaxInstruction(llvm::MCInst &Inst, unsigned Insn,
   Rm |= fieldFromInstruction32(Insn, 5, 1) << 4;
   unsigned size = fieldFromInstruction32(Insn, 18, 2);
 
-  DecodeQPRRegisterClass(Inst, Rd, Address, Decoder);
-  DecodeDPRRegisterClass(Inst, Rm, Address, Decoder);
+  if (!DecodeQPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
   Inst.addOperand(MCOperand::CreateImm(8 << size));
 
   return true;
@@ -1992,13 +2028,16 @@ static bool DecodeTBLInstruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned op = fieldFromInstruction32(Insn, 6, 1);
   unsigned length = fieldFromInstruction32(Insn, 8, 2) + 1;
 
-  DecodeDPRRegisterClass(Inst, Rd, Address, Decoder);
-  if (op) DecodeDPRRegisterClass(Inst, Rd, Address, Decoder); // Writeback
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (op) {
+    if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false; // Writeback
+  }
 
-  for (unsigned i = 0; i < length; ++i)
-    DecodeDPRRegisterClass(Inst, (Rn+i)%32, Address, Decoder);
+  for (unsigned i = 0; i < length; ++i) {
+    if (!DecodeDPRRegisterClass(Inst, (Rn+i)%32, Address, Decoder)) return false;
+  }
 
-  DecodeDPRRegisterClass(Inst, Rm, Address, Decoder);
+  if (!DecodeDPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
 
   return true;
 }
@@ -2033,7 +2072,7 @@ static bool DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
   unsigned dst = fieldFromInstruction16(Insn, 8, 3);
   unsigned imm = fieldFromInstruction16(Insn, 0, 8);
 
-  DecodetGPRRegisterClass(Inst, dst, Address, Decoder);
+  if (!DecodetGPRRegisterClass(Inst, dst, Address, Decoder)) return false;
 
   if (Inst.getOpcode() == ARM::tADR)
     Inst.addOperand(MCOperand::CreateReg(ARM::PC));
@@ -2069,8 +2108,9 @@ static bool DecodeThumbAddrModeRR(llvm::MCInst &Inst, unsigned Val,
   unsigned Rn = fieldFromInstruction32(Val, 0, 3);
   unsigned Rm = fieldFromInstruction32(Val, 3, 3);
 
-  DecodetGPRRegisterClass(Inst, Rn, Address, Decoder);
-  DecodetGPRRegisterClass(Inst, Rm, Address, Decoder);
+  if (!DecodetGPRRegisterClass(Inst, Rn, Address, Decoder) ||
+      !DecodetGPRRegisterClass(Inst, Rm, Address, Decoder))
+    return false;
 
   return true;
 }
@@ -2080,7 +2120,7 @@ static bool DecodeThumbAddrModeIS(llvm::MCInst &Inst, unsigned Val,
   unsigned Rn = fieldFromInstruction32(Val, 0, 3);
   unsigned imm = fieldFromInstruction32(Val, 3, 5);
 
-  DecodetGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodetGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
   Inst.addOperand(MCOperand::CreateImm(imm));
 
   return true;
@@ -2107,8 +2147,9 @@ static bool DecodeT2AddrModeSOReg(llvm::MCInst &Inst, unsigned Val,
   unsigned Rm = fieldFromInstruction32(Val, 2, 4);
   unsigned imm = fieldFromInstruction32(Val, 0, 2);
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
-  DecoderGPRRegisterClass(Inst, Rm, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder) ||
+      !DecoderGPRRegisterClass(Inst, Rm, Address, Decoder))
+    return false;
   Inst.addOperand(MCOperand::CreateImm(imm));
 
   return true;
@@ -2118,7 +2159,7 @@ static bool DecodeT2LoadShift(llvm::MCInst &Inst, unsigned Insn,
                               uint64_t Address, const void *Decoder) {
   if (Inst.getOpcode() != ARM::t2PLDs) {
     unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
-    DecodeGPRRegisterClass(Inst, Rt, Address, Decoder);
+    if (!DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)) return false;
   }
 
   unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
@@ -2173,8 +2214,9 @@ static bool DecodeT2AddrModeImm8s4(llvm::MCInst &Inst, unsigned Val,
   unsigned Rn = fieldFromInstruction32(Val, 9, 4);
   unsigned imm = fieldFromInstruction32(Val, 0, 9);
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
-  DecodeT2Imm8S4(Inst, imm, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder) ||
+      !DecodeT2Imm8S4(Inst, imm, Address, Decoder))
+    return false;
 
   return true;
 }
@@ -2207,8 +2249,9 @@ static bool DecodeT2AddrModeImm8(llvm::MCInst &Inst, unsigned Val,
       break;
   }
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
-  DecodeT2Imm8(Inst, imm, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder) ||
+      !DecodeT2Imm8(Inst, imm, Address, Decoder))
+    return false;
 
   return true;
 }
@@ -2219,7 +2262,7 @@ static bool DecodeT2AddrModeImm12(llvm::MCInst &Inst, unsigned Val,
   unsigned Rn = fieldFromInstruction32(Val, 13, 4);
   unsigned imm = fieldFromInstruction32(Val, 0, 12);
 
-  DecodeGPRRegisterClass(Inst, Rn, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
   Inst.addOperand(MCOperand::CreateImm(imm));
 
   return true;
@@ -2243,15 +2286,15 @@ static bool DecodeThumbAddSPReg(llvm::MCInst &Inst, uint16_t Insn,
     unsigned Rdm = fieldFromInstruction16(Insn, 0, 3);
     Rdm |= fieldFromInstruction16(Insn, 7, 1) << 3;
 
-    DecodeGPRRegisterClass(Inst, Rdm, Address, Decoder);
+    if (!DecodeGPRRegisterClass(Inst, Rdm, Address, Decoder)) return false;
     Inst.addOperand(MCOperand::CreateReg(ARM::SP));
-    DecodeGPRRegisterClass(Inst, Rdm, Address, Decoder);
+    if (!DecodeGPRRegisterClass(Inst, Rdm, Address, Decoder)) return false;
   } else if (Inst.getOpcode() == ARM::tADDspr) {
     unsigned Rm = fieldFromInstruction16(Insn, 3, 4);
 
     Inst.addOperand(MCOperand::CreateReg(ARM::SP));
     Inst.addOperand(MCOperand::CreateReg(ARM::SP));
-    DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
   }
 
   return true;
@@ -2273,7 +2316,7 @@ static bool DecodePostIdxReg(llvm::MCInst &Inst, unsigned Insn,
   unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
   unsigned add = fieldFromInstruction32(Insn, 4, 1);
 
-  DecodeGPRRegisterClass(Inst, Rm, Address, Decoder);
+  if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)) return false;
   Inst.addOperand(MCOperand::CreateImm(add));
 
   return true;
@@ -2332,8 +2375,8 @@ static bool DecodeThumb2BCCInstruction(llvm::MCInst &Inst, unsigned Insn,
   brtarget |= fieldFromInstruction32(Insn, 16, 6) << 12;
   brtarget |= fieldFromInstruction32(Insn, 26, 1) << 20;
 
-  DecodeT2BROperand(Inst, brtarget, Address, Decoder);
-  if (!DecodePredicateOperand(Inst, pred, Address, Decoder))
+  if (!DecodeT2BROperand(Inst, brtarget, Address, Decoder) ||
+      !DecodePredicateOperand(Inst, pred, Address, Decoder))
     return false;
 
   return true;
@@ -2392,7 +2435,7 @@ static bool DecodeAddrMode3Offset(llvm::MCInst &Inst, unsigned Val,
   unsigned imm = fieldFromInstruction32(Val, 0, 8);
 
   if (!isImm) {
-    DecodeGPRRegisterClass(Inst, imm, Address, Decoder);
+    if (!DecodeGPRRegisterClass(Inst, imm, Address, Decoder)) return false;
     Inst.addOperand(MCOperand::CreateImm(!isAdd << 8));
   } else {
     Inst.addOperand(MCOperand::CreateReg(0));
