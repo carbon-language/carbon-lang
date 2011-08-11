@@ -16,13 +16,13 @@ use List::Util qw[min max];
 our $llvm_srcroot = $ENV{SCRIPT_INPUT_FILE_0};
 our $llvm_dstroot = $ENV{SCRIPT_INPUT_FILE_1};
 
-our $llvm_clang_outfile = $ENV{SCRIPT_OUTPUT_FILE_1};
+our $llvm_clang_outfile = $ENV{SCRIPT_OUTPUT_FILE_0};
 our ($llvm_clang_basename, $llvm_clang_dirname) = fileparse ($llvm_clang_outfile);
 our @llvm_clang_slices; # paths to the single architecture static libraries (archives)
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "136552";
+our $llvm_revision = "137311";
 our $llvm_source_dir = "$ENV{SRCROOT}";
 our @archs = split (/\s+/, $ENV{ARCHS});
 

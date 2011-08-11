@@ -2842,7 +2842,6 @@
 			);
 			name = "Build llvm and clang";
 			outputPaths = (
-				"$(CONFIGURATION_BUILD_DIR)/libEnhancedDisassembly.dylib",
 				"$(LLVM_BUILD_DIR)/libllvmclang.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;

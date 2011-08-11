@@ -90,7 +90,6 @@ if (@ARGV == 4)
 	}
 
 	do_command ("cp '$llvm_build_dir/libllvmclang.a' '$llvm_checkpoint_dir'", "Copying libllvmclang.a", 1);
-	do_command ("cp '$lldb_build_dir/libEnhancedDisassembly.dylib' '$llvm_checkpoint_dir'", "Copying libEnhancedDisassembly.dylib", 1);
 	do_command ("rm -rf '$llvm_zip_file'", "Removing old llvm checkpoint file '$llvm_zip_file'", 1);
 	do_command ("(cd '$temp_dir' ; zip -r '$llvm_zip_file' 'llvm')", "Zipping llvm checkpoint directory '$llvm_checkpoint_dir' to '$llvm_zip_file'", 1);
 }
