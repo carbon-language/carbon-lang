@@ -1811,7 +1811,7 @@ Error
 Scalar::SetValueFromCString (const char *value_str, Encoding encoding, uint32_t byte_size)
 {
     Error error;
-    if (value_str == NULL && value_str[0] == '\0')
+    if (value_str == NULL || value_str[0] == '\0')
     {
         error.SetErrorString ("Invalid c-string value string.");
         return error;
