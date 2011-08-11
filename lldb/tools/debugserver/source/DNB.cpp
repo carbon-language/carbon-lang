@@ -302,7 +302,7 @@ DNBProcessAttach (nub_process_t attach_pid, struct timespec *timeout, char *err_
     if (err_str && err_len > 0)
         err_str[0] = '\0';
 
-    pid_t pid;
+    pid_t pid = INVALID_NUB_PROCESS;
     MachProcessSP processSP(new MachProcess);
     if (processSP.get())
     {
