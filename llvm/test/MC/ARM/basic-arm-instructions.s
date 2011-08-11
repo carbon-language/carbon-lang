@@ -664,9 +664,6 @@ Lforward:
 @ CHECK: ldmda r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x32,0xe8]
 @ CHECK: ldmdb r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x32,0xe9]
 
-@------------------------------------------------------------------------------
-@ FIXME: LDR*
-@------------------------------------------------------------------------------
 
 @------------------------------------------------------------------------------
 @ LDREX/LDREXB/LDREXH/LDREXD
@@ -1064,8 +1061,7 @@ Lforward:
         pop {r7}
         pop {r7, r8, r9, r10}
 
-@ FIXME: pop of a single register should encode as "ldr r7, [sp], #4"
-@ CHECK-FIXME: pop	{r7}                    @ encoding: [0x04,0x70,0x9d,0xe4]
+@ CHECK: pop	{r7}                    @ encoding: [0x04,0x70,0x9d,0xe4]
 @ CHECK: pop	{r7, r8, r9, r10}       @ encoding: [0x80,0x07,0xbd,0xe8]
 
 

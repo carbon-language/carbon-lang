@@ -100,6 +100,14 @@ void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {
     printRegisterList(MI, 4, O);
     return;
   }
+  if (Opcode == ARM::LDR_POST_IMM && MI->getOperand(2).getReg() == ARM::SP &&
+      MI->getOperand(4).getImm() == 4) {
+    O << '\t' << "pop";
+    printPredicateOperand(MI, 5, O);
+    O << "\t{" << getRegisterName(MI->getOperand(0).getReg()) << "}";
+    return;
+  }
+
 
   // A8.6.355 VPUSH
   if ((Opcode == ARM::VSTMSDB_UPD || Opcode == ARM::VSTMDDB_UPD) &&

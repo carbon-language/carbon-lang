@@ -136,6 +136,8 @@ class ARMAsmParser : public MCTargetAsmParser {
 
   bool validateInstruction(MCInst &Inst,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
+  void processInstruction(MCInst &Inst,
+                          const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
 
 public:
   ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
@@ -2856,6 +2858,30 @@ validateInstruction(MCInst &Inst,
   return false;
 }
 
+void ARMAsmParser::
+processInstruction(MCInst &Inst,
+                   const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  switch (Inst.getOpcode()) {
+  case ARM::LDMIA_UPD:
+    // If this is a load of a single register via a 'pop', then we should use
+    // a post-indexed LDR instruction instead, per the ARM ARM.
+    if (static_cast<ARMOperand*>(Operands[0])->getToken() == "pop" &&
+        Inst.getNumOperands() == 5) {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::LDR_POST_IMM);
+      TmpInst.addOperand(Inst.getOperand(4)); // Rt
+      TmpInst.addOperand(Inst.getOperand(0)); // Rn_wb
+      TmpInst.addOperand(Inst.getOperand(1)); // Rn
+      TmpInst.addOperand(MCOperand::CreateReg(0));  // am2offset
+      TmpInst.addOperand(MCOperand::CreateImm(4));
+      TmpInst.addOperand(Inst.getOperand(2)); // CondCode
+      TmpInst.addOperand(Inst.getOperand(3));
+      Inst = TmpInst;
+    }
+    break;
+  }
+}
+
 bool ARMAsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -2870,6 +2896,10 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     // so check them here.
     if (validateInstruction(Inst, Operands))
       return true;
+
+    // Some instructions need post-processing to, for example, tweak which
+    // encoding is selected.
+    processInstruction(Inst, Operands);
 
     Out.EmitInstruction(Inst);
     return false;
