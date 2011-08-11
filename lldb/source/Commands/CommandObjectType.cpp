@@ -637,7 +637,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx
             m_is_add_script = true;
             break;
         case 'w':
-            m_category = ConstString(option_arg).GetCString();
+            m_category = std::string(option_arg);
             break;
         default:
             error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
@@ -662,7 +662,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::OptionParsingStarting ()
     m_python_function = "";
     m_format_string = "";
     m_is_add_script = false;
-    m_category = NULL;
+    m_category = "default";
 }
 
 void
@@ -1036,11 +1036,11 @@ bool
 CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
                                         SummaryFormatSP entry,
                                         SummaryFormatType type,
-                                        const char* category_name,
+                                        std::string category_name,
                                         Error* error)
 {
     lldb::FormatCategorySP category;
-    Debugger::Formatting::Categories::Get(ConstString(category_name), category);
+    Debugger::Formatting::Categories::Get(ConstString(category_name.c_str()), category);
     
     if (type == eRegexSummary)
     {
@@ -2518,7 +2518,7 @@ public:
         
         
         lldb::FormatCategorySP category;
-        Debugger::Formatting::Categories::Get(ConstString(options->m_category), category);
+        Debugger::Formatting::Categories::Get(ConstString(options->m_category.c_str()), category);
         
         for (size_t i = 0; i < options->m_target_types.GetSize(); i++) {
             const char *type_name = options->m_target_types.GetStringAtIndex(i);
@@ -2632,7 +2632,7 @@ CommandObjectTypeSynthAdd::Execute_ChildrenList (Args& command, CommandReturnObj
     // now I have a valid provider, let's add it to every type
     
     lldb::FormatCategorySP category;
-    Debugger::Formatting::Categories::Get(ConstString(m_options.m_category), category);
+    Debugger::Formatting::Categories::Get(ConstString(m_options.m_category.c_str()), category);
     
     for (size_t i = 0; i < argc; i++) {
         const char* typeA = command.GetArgumentAtIndex(i);
@@ -2686,7 +2686,7 @@ CommandObjectTypeSynthAdd::Execute_PythonClass (Args& command, CommandReturnObje
     // now I have a valid provider, let's add it to every type
     
     lldb::FormatCategorySP category;
-    Debugger::Formatting::Categories::Get(ConstString(m_options.m_category), category);
+    Debugger::Formatting::Categories::Get(ConstString(m_options.m_category.c_str()), category);
     
     for (size_t i = 0; i < argc; i++) {
         const char* typeA = command.GetArgumentAtIndex(i);
@@ -2731,11 +2731,11 @@ bool
 CommandObjectTypeSynthAdd::AddSynth(const ConstString& type_name,
          SyntheticChildrenSP entry,
          SynthFormatType type,
-         const char* category_name,
+         std::string category_name,
          Error* error)
 {
     lldb::FormatCategorySP category;
-    Debugger::Formatting::Categories::Get(ConstString(category_name), category);
+    Debugger::Formatting::Categories::Get(ConstString(category_name.c_str()), category);
     
     if (type == eRegexSynth)
     {

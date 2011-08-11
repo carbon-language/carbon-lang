@@ -41,7 +41,7 @@ public:
     
     ConstString* m_name;
     
-    const char* m_category;
+    std::string m_category;
     
     ScriptAddOptions(bool sptr,
                      bool sref,
@@ -51,7 +51,7 @@ public:
                      bool onel,
                      bool regx,
                      ConstString* name,
-                     const char* catg) :
+                     std::string catg) :
     m_skip_pointers(sptr),
     m_skip_references(sref),
     m_cascade(casc),
@@ -82,13 +82,13 @@ public:
     StringList m_user_source;
     StringList m_target_types;
 
-    const char* m_category;
+    std::string m_category;
     
     SynthAddOptions(bool sptr,
                      bool sref,
                      bool casc,
                      bool regx,
-                     const char* catg) :
+                     std::string catg) :
     m_skip_pointers(sptr),
     m_skip_references(sref),
     m_cascade(casc),
@@ -160,7 +160,7 @@ private:
         std::string m_python_script;
         std::string m_python_function;
         bool m_is_add_script;
-        const char* m_category;
+        std::string m_category;
     };
     
     CommandOptions m_options;
@@ -203,7 +203,7 @@ public:
     AddSummary(const ConstString& type_name,
                lldb::SummaryFormatSP entry,
                SummaryFormatType type,
-               const char* category,
+               std::string category,
                Error* error = NULL);
 };
     
@@ -257,7 +257,7 @@ private:
                     m_skip_references = true;
                     break;
                 case 'w':
-                    m_category = ConstString(option_arg).GetCString();
+                    m_category = std::string(option_arg);
                     break;
                 case 'x':
                     m_regex = true;
@@ -277,7 +277,7 @@ private:
             m_class_name = "";
             m_skip_pointers = false;
             m_skip_references = false;
-            m_category = NULL;
+            m_category = "default";
             m_expr_paths.clear();
             is_class_based = false;
             handwrite_python = false;
@@ -303,7 +303,7 @@ private:
         std::string m_class_name;
         bool m_input_python;
         option_vector m_expr_paths;
-        const char* m_category;
+        std::string m_category;
         
         bool is_class_based;
         
@@ -354,7 +354,7 @@ public:
     AddSynth(const ConstString& type_name,
              lldb::SyntheticChildrenSP entry,
              SynthFormatType type,
-             const char* category_name,
+             std::string category_name,
              Error* error);
 };
 
