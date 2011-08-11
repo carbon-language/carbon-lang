@@ -59,7 +59,6 @@ public:
   // LiveIntervalUnions share an external allocator.
   typedef LiveSegments::Allocator Allocator;
 
-  class InterferenceResult;
   class Query;
 
 private:
@@ -105,37 +104,6 @@ public:
   // Verify the live intervals in this union and add them to the visited set.
   void verify(LiveVirtRegBitSet& VisitedVRegs);
 #endif
-
-  /// Cache a single interference test result in the form of two intersecting
-  /// segments. This allows efficiently iterating over the interferences. The
-  /// iteration logic is handled by LiveIntervalUnion::Query which may
-  /// filter interferences depending on the type of query.
-  class InterferenceResult {
-    friend class Query;
-
-    LiveInterval::iterator VirtRegI; // current position in VirtReg
-    SegmentIter LiveUnionI;          // current position in LiveUnion
-
-    // Internal ctor.
-    InterferenceResult(LiveInterval::iterator VRegI, SegmentIter UnionI)
-      : VirtRegI(VRegI), LiveUnionI(UnionI) {}
-
-  public:
-    // Public default ctor.
-    InterferenceResult(): VirtRegI(), LiveUnionI() {}
-
-    /// interference - Return the register that is interfering here.
-    LiveInterval *interference() const { return LiveUnionI.value(); }
-
-    // Note: this interface provides raw access to the iterators because the
-    // result has no way to tell if it's valid to dereference them.
-
-    // Access the VirtReg segment.
-    LiveInterval::iterator virtRegPos() const { return VirtRegI; }
-
-    // Access the LiveUnion segment.
-    const SegmentIter &liveUnionPos() const { return LiveUnionI; }
-  };
 
   /// Query interferences between a single live virtual register and a live
   /// interval union.
