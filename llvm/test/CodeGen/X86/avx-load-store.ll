@@ -64,3 +64,17 @@ define void @storev32i8_01(<32 x i8> %a) nounwind {
   unreachable
 }
 
+; It is faster to make two saves, if the data is already in XMM registers. For
+; example, after making an integer operation.
+; CHECK: _double_save
+; CHECK-NOT: vinsertf128 $1
+; CHECK-NOT: vinsertf128 $0
+; CHECK: vmovaps %xmm
+; CHECK: vmovaps %xmm
+define void @double_save(<4 x i32> %A, <4 x i32> %B, <8 x i32>* %P) nounwind ssp {
+entry:
+  %Z = shufflevector <4 x i32>%A, <4 x i32>%B, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  store <8 x i32> %Z, <8 x i32>* %P, align 16
+  ret void
+}
+
