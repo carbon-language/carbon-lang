@@ -17,39 +17,53 @@
 using namespace clang;
 
 
+/// IsStringPrefix - Return true if Str is a string prefix.
+/// 'L', 'u', 'U', or 'u8'. Including raw versions.
+static bool IsStringPrefix(const StringRef &Str, bool CPlusPlus0x) {
+
+  if (Str[0] == 'L' ||
+      (CPlusPlus0x && (Str[0] == 'u' || Str[0] == 'U' || Str[0] == 'R'))) {
+
+    if (Str.size() == 1)
+      return true; // "L", "u", "U", and "R"
+
+    // Check for raw flavors. Need to make sure the first character wasn't
+    // already R. Need CPlusPlus0x check for "LR".
+    if (Str[1] == 'R' && Str[0] != 'R' && Str.size() == 2 && CPlusPlus0x)
+      return true; // "LR", "uR", "UR"
+
+    // Check for "u8" and "u8R"
+    if (Str[0] == 'u' && Str[1] == '8') {
+      if (Str.size() == 2) return true; // "u8"
+      if (Str.size() == 3 && Str[2] == 'R') return true; // "u8R"
+    }
+  }
+
+  return false;
+}
+
 /// IsIdentifierStringPrefix - Return true if the spelling of the token
-/// is literally 'L', 'u', 'U', or 'u8'.
+/// is literally 'L', 'u', 'U', or 'u8'. Including raw versions.
 bool TokenConcatenation::IsIdentifierStringPrefix(const Token &Tok) const {
   const LangOptions &LangOpts = PP.getLangOptions();
 
   if (!Tok.needsCleaning()) {
-    if (Tok.getLength() != 1 && Tok.getLength() != 2)
+    if (Tok.getLength() < 1 || Tok.getLength() > 3)
       return false;
     SourceManager &SM = PP.getSourceManager();
     const char *Ptr = SM.getCharacterData(SM.getSpellingLoc(Tok.getLocation()));
-    if (Tok.getLength() == 1)
-      return Ptr[0] == 'L' ||
-             (LangOpts.CPlusPlus0x && (Ptr[0] == 'u' || Ptr[0] == 'U'));
-    if (Tok.getLength() == 2)
-      return LangOpts.CPlusPlus0x && Ptr[0] == 'u' && Ptr[1] == '8';
+    return IsStringPrefix(StringRef(Ptr, Tok.getLength()),
+                          LangOpts.CPlusPlus0x);
   }
 
   if (Tok.getLength() < 256) {
     char Buffer[256];
     const char *TokPtr = Buffer;
     unsigned length = PP.getSpelling(Tok, TokPtr);
-    if (length == 1)
-      return TokPtr[0] == 'L' ||
-             (LangOpts.CPlusPlus0x && (TokPtr[0] == 'u' || TokPtr[0] == 'U'));
-    if (length == 2)
-      return LangOpts.CPlusPlus0x && TokPtr[0] == 'u' && TokPtr[1] == '8';
-    return false;
+    return IsStringPrefix(StringRef(TokPtr, length), LangOpts.CPlusPlus0x);
   }
 
-  std::string TokStr = PP.getSpelling(Tok);
-  return TokStr == "L" || (LangOpts.CPlusPlus0x && (TokStr == "u8" ||
-                                                    TokStr == "u" ||
-                                                    TokStr == "U"));
+  return IsStringPrefix(StringRef(PP.getSpelling(Tok)), LangOpts.CPlusPlus0x);
 }
 
 TokenConcatenation::TokenConcatenation(Preprocessor &pp) : PP(pp) {

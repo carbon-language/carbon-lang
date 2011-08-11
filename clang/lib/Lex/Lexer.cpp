@@ -33,6 +33,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cctype>
+#include <cstring>
 using namespace clang;
 
 static void InitCharacterInfo();
@@ -760,7 +761,8 @@ enum {
   CHAR_LETTER   = 0x04,  // a-z,A-Z
   CHAR_NUMBER   = 0x08,  // 0-9
   CHAR_UNDER    = 0x10,  // _
-  CHAR_PERIOD   = 0x20   // .
+  CHAR_PERIOD   = 0x20,  // .
+  CHAR_RAWDEL   = 0x40   // {}[]#<>%:;?*+-/^&|~!=,"'
 };
 
 // Statically initialize CharInfo table based on ASCII character set
@@ -785,20 +787,20 @@ static const unsigned char CharInfo[256] =
    0           , 0           , 0           , 0           ,
 //32 SP         33  !         34  "         35  #
 //36  $         37  %         38  &         39  '
-   CHAR_HORZ_WS, 0           , 0           , 0           ,
-   0           , 0           , 0           , 0           ,
+   CHAR_HORZ_WS, CHAR_RAWDEL , CHAR_RAWDEL , CHAR_RAWDEL ,
+   0           , CHAR_RAWDEL , CHAR_RAWDEL , CHAR_RAWDEL ,
 //40  (         41  )         42  *         43  +
 //44  ,         45  -         46  .         47  /
-   0           , 0           , 0           , 0           ,
-   0           , 0           , CHAR_PERIOD , 0           ,
+   0           , 0           , CHAR_RAWDEL , CHAR_RAWDEL ,
+   CHAR_RAWDEL , CHAR_RAWDEL , CHAR_PERIOD , CHAR_RAWDEL ,
 //48  0         49  1         50  2         51  3
 //52  4         53  5         54  6         55  7
    CHAR_NUMBER , CHAR_NUMBER , CHAR_NUMBER , CHAR_NUMBER ,
    CHAR_NUMBER , CHAR_NUMBER , CHAR_NUMBER , CHAR_NUMBER ,
 //56  8         57  9         58  :         59  ;
 //60  <         61  =         62  >         63  ?
-   CHAR_NUMBER , CHAR_NUMBER , 0           , 0           ,
-   0           , 0           , 0           , 0           ,
+   CHAR_NUMBER , CHAR_NUMBER , CHAR_RAWDEL , CHAR_RAWDEL ,
+   CHAR_RAWDEL , CHAR_RAWDEL , CHAR_RAWDEL , CHAR_RAWDEL ,
 //64  @         65  A         66  B         67  C
 //68  D         69  E         70  F         71  G
    0           , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
@@ -813,8 +815,8 @@ static const unsigned char CharInfo[256] =
    CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
 //88  X         89  Y         90  Z         91  [
 //92  \         93  ]         94  ^         95  _
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , 0           ,
-   0           , 0           , 0           , CHAR_UNDER  ,
+   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_RAWDEL ,
+   0           , CHAR_RAWDEL , CHAR_RAWDEL , CHAR_UNDER  ,
 //96  `         97  a         98  b         99  c
 //100  d       101  e        102  f        103  g
    0           , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
@@ -828,9 +830,9 @@ static const unsigned char CharInfo[256] =
    CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
    CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_LETTER ,
 //120  x       121  y        122  z        123  {
-//124  |        125  }        126  ~        127 DEL
-   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , 0           ,
-   0           , 0           , 0           , 0
+//124  |       125  }        126  ~        127 DEL
+   CHAR_LETTER , CHAR_LETTER , CHAR_LETTER , CHAR_RAWDEL ,
+   CHAR_RAWDEL , CHAR_RAWDEL , CHAR_RAWDEL , 0
 };
 
 static void InitCharacterInfo() {
@@ -885,6 +887,14 @@ static inline bool isWhitespace(unsigned char c) {
 /// preprocessing number, which is [a-zA-Z0-9_.].
 static inline bool isNumberBody(unsigned char c) {
   return (CharInfo[c] & (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER|CHAR_PERIOD)) ?
+    true : false;
+}
+
+/// isRawStringDelimBody - Return true if this is the body character of a
+/// raw string delimiter.
+static inline bool isRawStringDelimBody(unsigned char c) {
+  return (CharInfo[c] &
+          (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER|CHAR_PERIOD|CHAR_RAWDEL)) ?
     true : false;
 }
 
@@ -1358,6 +1368,78 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr,
     Diag(NulCharacter, diag::null_in_string);
 
   // Update the location of the token as well as the BufferPtr instance var.
+  const char *TokStart = BufferPtr;
+  FormTokenWithChars(Result, CurPtr, Kind);
+  Result.setLiteralData(TokStart);
+}
+
+/// LexRawStringLiteral - Lex the remainder of a raw string literal, after
+/// having lexed R", LR", u8R", uR", or UR".
+void Lexer::LexRawStringLiteral(Token &Result, const char *CurPtr,
+                                tok::TokenKind Kind) {
+  // This function doesn't use getAndAdvanceChar because C++0x [lex.pptoken]p3:
+  //  Between the initial and final double quote characters of the raw string,
+  //  any transformations performed in phases 1 and 2 (trigraphs,
+  //  universal-character-names, and line splicing) are reverted.
+
+  unsigned PrefixLen = 0;
+
+  while (PrefixLen != 16 && isRawStringDelimBody(CurPtr[PrefixLen]))
+    ++PrefixLen;
+
+  // If the last character was not a '(', then we didn't lex a valid delimiter.
+  if (CurPtr[PrefixLen] != '(') {
+    if (!isLexingRawMode()) {
+      const char *PrefixEnd = &CurPtr[PrefixLen];
+      if (PrefixLen == 16) {
+        Diag(PrefixEnd, diag::err_raw_delim_too_long);
+      } else {
+        Diag(PrefixEnd, diag::err_invalid_char_raw_delim)
+          << StringRef(PrefixEnd, 1);
+      }
+    }
+
+    // Search for the next '"' in hopes of salvaging the lexer. Unfortunately,
+    // it's possible the '"' was intended to be part of the raw string, but
+    // there's not much we can do about that.
+    while (1) {
+      char C = *CurPtr++;
+
+      if (C == '"')
+        break;
+      if (C == 0 && CurPtr-1 == BufferEnd) {
+        --CurPtr;
+        break;
+      }
+    }
+
+    FormTokenWithChars(Result, CurPtr, tok::unknown);
+    return;
+  }
+
+  // Save prefix and move CurPtr past it
+  const char *Prefix = CurPtr;
+  CurPtr += PrefixLen + 1; // skip over prefix and '('
+
+  while (1) {
+    char C = *CurPtr++;
+
+    if (C == ')') {
+      // Check for prefix match and closing quote.
+      if (strncmp(CurPtr, Prefix, PrefixLen) == 0 && CurPtr[PrefixLen] == '"') {
+        CurPtr += PrefixLen + 1; // skip over prefix and '"'
+        break;
+      }
+    } else if (C == 0 && CurPtr-1 == BufferEnd) { // End of file.
+      if (!isLexingRawMode())
+        Diag(BufferPtr, diag::err_unterminated_raw_string)
+          << StringRef(Prefix, PrefixLen);
+      FormTokenWithChars(Result, CurPtr-1, tok::unknown);
+      return;
+    }
+  }
+
+  // Update the location of token as well as BufferPtr.
   const char *TokStart = BufferPtr;
   FormTokenWithChars(Result, CurPtr, Kind);
   Result.setLiteralData(TokStart);
@@ -2262,12 +2344,36 @@ LexNextToken:
         return LexCharConstant(Result, ConsumeChar(CurPtr, SizeTmp, Result),
                                tok::utf16_char_constant);
 
-      // UTF-8 string literal
-      if (Char == '8' && getCharAndSize(CurPtr + SizeTmp, SizeTmp2) == '"')
-        return LexStringLiteral(Result,
-                              ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
-                                          SizeTmp2, Result),
-                              tok::utf8_string_literal);
+      // UTF-16 raw string literal
+      if (Char == 'R' && getCharAndSize(CurPtr + SizeTmp, SizeTmp2) == '"')
+        return LexRawStringLiteral(Result,
+                               ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
+                                           SizeTmp2, Result),
+                               tok::utf16_string_literal);
+
+      if (Char == '8') {
+        char Char2 = getCharAndSize(CurPtr + SizeTmp, SizeTmp2);
+
+        // UTF-8 string literal
+        if (Char2 == '"')
+          return LexStringLiteral(Result,
+                               ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
+                                           SizeTmp2, Result),
+                               tok::utf8_string_literal);
+
+        if (Char2 == 'R') {
+          unsigned SizeTmp3;
+          char Char3 = getCharAndSize(CurPtr + SizeTmp + SizeTmp2, SizeTmp3);
+          // UTF-8 raw string literal
+          if (Char3 == '"') {
+            return LexRawStringLiteral(Result,
+                   ConsumeChar(ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
+                                           SizeTmp2, Result),
+                               SizeTmp3, Result),
+                   tok::utf8_string_literal);
+          }
+        }
+      }
     }
 
     // treat u like the start of an identifier.
@@ -2289,9 +2395,32 @@ LexNextToken:
       if (Char == '\'')
         return LexCharConstant(Result, ConsumeChar(CurPtr, SizeTmp, Result),
                                tok::utf32_char_constant);
+
+      // UTF-32 raw string literal
+      if (Char == 'R' && getCharAndSize(CurPtr + SizeTmp, SizeTmp2) == '"')
+        return LexRawStringLiteral(Result,
+                               ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
+                                           SizeTmp2, Result),
+                               tok::utf32_string_literal);
     }
 
     // treat U like the start of an identifier.
+    return LexIdentifier(Result, CurPtr);
+
+  case 'R': // Identifier or C++0x raw string literal
+    // Notify MIOpt that we read a non-whitespace/non-comment token.
+    MIOpt.ReadToken();
+
+    if (Features.CPlusPlus0x) {
+      Char = getCharAndSize(CurPtr, SizeTmp);
+
+      if (Char == '"')
+        return LexRawStringLiteral(Result,
+                                   ConsumeChar(CurPtr, SizeTmp, Result),
+                                   tok::string_literal);
+    }
+
+    // treat R like the start of an identifier.
     return LexIdentifier(Result, CurPtr);
 
   case 'L':   // Identifier (Loony) or wide literal (L'x' or L"xyz").
@@ -2304,6 +2433,14 @@ LexNextToken:
       return LexStringLiteral(Result, ConsumeChar(CurPtr, SizeTmp, Result),
                               tok::wide_string_literal);
 
+    // Wide raw string literal.
+    if (Features.CPlusPlus0x && Char == 'R' &&
+        getCharAndSize(CurPtr + SizeTmp, SizeTmp2) == '"')
+      return LexRawStringLiteral(Result,
+                               ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
+                                           SizeTmp2, Result),
+                               tok::wide_string_literal);
+
     // Wide character constant.
     if (Char == '\'')
       return LexCharConstant(Result, ConsumeChar(CurPtr, SizeTmp, Result),
@@ -2313,7 +2450,7 @@ LexNextToken:
   // C99 6.4.2: Identifiers.
   case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
   case 'H': case 'I': case 'J': case 'K':    /*'L'*/case 'M': case 'N':
-  case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T':    /*'U'*/
+  case 'O': case 'P': case 'Q':    /*'R'*/case 'S': case 'T':    /*'U'*/
   case 'V': case 'W': case 'X': case 'Y': case 'Z':
   case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
   case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':

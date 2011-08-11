@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm %s -o - | FileCheck -check-prefix=C %s
 // RUN: %clang_cc1 -x c++ -triple i386-unknown-unknown -emit-llvm %s -o - | FileCheck -check-prefix=C %s
-// RUN: %clang_cc1 -x c++ -std=c++0x -triple i386-unknown-unknown -emit-llvm %s -o - | FileCheck -check-prefix=C %s
+// RUN: %clang_cc1 -x c++ -std=c++0x -triple i386-unknown-unknown -emit-llvm %s -o - | FileCheck -check-prefix=CPP0X %s
 
 #include <stddef.h>
 
@@ -38,5 +38,28 @@ int main() {
 
   // CHECK-CPP0X: private unnamed_addr constant [4 x i8] c"def\00", align 1
   const char *g = u8"def";
+
+  // CHECK-CPP0X: private unnamed_addr constant [4 x i8] c"ghi\00", align 1
+  const char *h = R"foo(ghi)foo";
+
+  // CHECK-CPP0X: private unnamed_addr constant [4 x i8] c"jkl\00", align 1
+  const char *i = u8R"bar(jkl)bar";
+
+  // CHECK-CPP0X: private unnamed_addr constant [6 x i8] c"G\00H\00\00\00", align 2
+  const char16_t *j = uR"foo(GH)foo";
+
+  // CHECK-CPP0X: private unnamed_addr constant [12 x i8] c"I\00\00\00J\00\00\00\00\00\00\00", align 4
+  const char32_t *k = UR"bar(IJ)bar";
+
+  // CHECK-CPP0X: private unnamed_addr constant [12 x i8] c"K\00\00\00L\00\00\00\00\00\00\00", align 4
+  const wchar_t *l = LR"bar(KL)bar";
+
+  // CHECK-CPP0X: private unnamed_addr constant [9 x i8] c"abc\5Cndef\00", align 1
+  const char *m = R"(abc\ndef)";
+
+  // CHECK-CPP0X: private unnamed_addr constant [8 x i8] c"abc\0Adef\00", align 1
+  const char *n = R"(abc
+def)";
+
 #endif
 }

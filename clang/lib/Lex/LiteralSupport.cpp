@@ -713,6 +713,38 @@ NumericLiteralParser::GetFloatValue(llvm::APFloat &Result) {
 }
 
 
+///       character-literal: [C++0x lex.ccon]
+///         ' c-char-sequence '
+///         u' c-char-sequence '
+///         U' c-char-sequence '
+///         L' c-char-sequence '
+///       c-char-sequence:
+///         c-char
+///         c-char-sequence c-char
+///       c-char:
+///         any member of the source character set except the single-quote ',
+///           backslash \, or new-line character
+///         escape-sequence
+///         universal-character-name
+///       escape-sequence: [C++0x lex.ccon]
+///         simple-escape-sequence
+///         octal-escape-sequence
+///         hexadecimal-escape-sequence
+///       simple-escape-sequence:
+///         one of \’ \" \? \\ \a \b \f \n \r \t \v
+///       octal-escape-sequence:
+///         \ octal-digit
+///         \ octal-digit octal-digit
+///         \ octal-digit octal-digit octal-digit
+///       hexadecimal-escape-sequence:
+///         \x hexadecimal-digit
+///         hexadecimal-escape-sequence hexadecimal-digit
+///       universal-character-name:
+///         \u hex-quad
+///         \U hex-quad hex-quad
+///       hex-quad:
+///         hex-digit hex-digit hex-digit hex-digit
+///
 CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
                                      SourceLocation Loc, Preprocessor &PP,
                                      tok::TokenKind kind) {
@@ -825,34 +857,52 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 }
 
 
-///       string-literal: [C99 6.4.5]
-///          " [s-char-sequence] "
-///         L" [s-char-sequence] "
+///       string-literal: [C++0x lex.string]
+///         encoding-prefix " [s-char-sequence] "
+///         encoding-prefix R raw-string
+///       encoding-prefix:
+///         u8
+///         u
+///         U
+///         L
 ///       s-char-sequence:
 ///         s-char
 ///         s-char-sequence s-char
 ///       s-char:
-///         any source character except the double quote ",
-///           backslash \, or newline character
-///         escape-character
+///         any member of the source character set except the double-quote ",
+///           backslash \, or new-line character
+///         escape-sequence
 ///         universal-character-name
-///       escape-character: [C99 6.4.4.4]
-///         \ escape-code
-///         universal-character-name
-///       escape-code:
-///         character-escape-code
-///         octal-escape-code
-///         hex-escape-code
-///       character-escape-code: one of
-///         n t b r f v a
-///         \ ' " ?
-///       octal-escape-code:
-///         octal-digit
-///         octal-digit octal-digit
-///         octal-digit octal-digit octal-digit
-///       hex-escape-code:
-///         x hex-digit
-///         hex-escape-code hex-digit
+///       raw-string:
+///         " d-char-sequence ( r-char-sequence ) d-char-sequence "
+///       r-char-sequence:
+///         r-char
+///         r-char-sequence r-char
+///       r-char:
+///         any member of the source character set, except a right parenthesis )
+///           followed by the initial d-char-sequence (which may be empty)
+///           followed by a double quote ".
+///       d-char-sequence:
+///         d-char
+///         d-char-sequence d-char
+///       d-char:
+///         any member of the basic source character set except:
+///           space, the left parenthesis (, the right parenthesis ),
+///           the backslash \, and the control characters representing horizontal
+///           tab, vertical tab, form feed, and newline.
+///       escape-sequence: [C++0x lex.ccon]
+///         simple-escape-sequence
+///         octal-escape-sequence
+///         hexadecimal-escape-sequence
+///       simple-escape-sequence:
+///         one of \’ \" \? \\ \a \b \f \n \r \t \v
+///       octal-escape-sequence:
+///         \ octal-digit
+///         \ octal-digit octal-digit
+///         \ octal-digit octal-digit octal-digit
+///       hexadecimal-escape-sequence:
+///         \x hexadecimal-digit
+///         hexadecimal-escape-sequence hexadecimal-digit
 ///       universal-character-name:
 ///         \u hex-quad
 ///         \U hex-quad hex-quad
@@ -972,64 +1022,69 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
         ++ThisTokBuf;
     }
 
-    assert(ThisTokBuf[0] == '"' && "Expected quote, lexer broken?");
-    ++ThisTokBuf;
+    // Check for raw string
+    if (ThisTokBuf[0] == 'R') {
+      ThisTokBuf += 2; // skip R"
 
-    // Check if this is a pascal string
-    if (Features.PascalStrings && ThisTokBuf + 1 != ThisTokEnd &&
-        ThisTokBuf[0] == '\\' && ThisTokBuf[1] == 'p') {
-
-      // If the \p sequence is found in the first token, we have a pascal string
-      // Otherwise, if we already have a pascal string, ignore the first \p
-      if (i == 0) {
+      const char *Prefix = ThisTokBuf;
+      while (ThisTokBuf[0] != '(')
         ++ThisTokBuf;
-        Pascal = true;
-      } else if (Pascal)
-        ThisTokBuf += 2;
-    }
+      ++ThisTokBuf; // skip '('
 
-    while (ThisTokBuf != ThisTokEnd) {
-      // Is this a span of non-escape characters?
-      if (ThisTokBuf[0] != '\\') {
-        const char *InStart = ThisTokBuf;
-        do {
+      // remove same number of characters from the end
+      if (ThisTokEnd >= ThisTokBuf + (ThisTokBuf - Prefix))
+        ThisTokEnd -= (ThisTokBuf - Prefix);
+
+      // Copy the string over
+      CopyStringFragment(StringRef(ThisTokBuf, ThisTokEnd - ThisTokBuf));
+    } else {
+      assert(ThisTokBuf[0] == '"' && "Expected quote, lexer broken?");
+      ++ThisTokBuf; // skip "
+
+      // Check if this is a pascal string
+      if (Features.PascalStrings && ThisTokBuf + 1 != ThisTokEnd &&
+          ThisTokBuf[0] == '\\' && ThisTokBuf[1] == 'p') {
+
+        // If the \p sequence is found in the first token, we have a pascal string
+        // Otherwise, if we already have a pascal string, ignore the first \p
+        if (i == 0) {
           ++ThisTokBuf;
-        } while (ThisTokBuf != ThisTokEnd && ThisTokBuf[0] != '\\');
+          Pascal = true;
+        } else if (Pascal)
+          ThisTokBuf += 2;
+      }
 
-        // Copy the character span over.
-        unsigned Len = ThisTokBuf-InStart;
-        if (CharByteWidth == 1) {
-          memcpy(ResultPtr, InStart, Len);
-          ResultPtr += Len;
-        } else {
-          // Note: our internal rep of wide char tokens is always little-endian.
-          for (; Len; --Len, ++InStart) {
-            *ResultPtr++ = InStart[0];
-            // Add zeros at the end.
-            for (unsigned i = 1, e = CharByteWidth; i != e; ++i)
-              *ResultPtr++ = 0;
-          }
+      while (ThisTokBuf != ThisTokEnd) {
+        // Is this a span of non-escape characters?
+        if (ThisTokBuf[0] != '\\') {
+          const char *InStart = ThisTokBuf;
+          do {
+            ++ThisTokBuf;
+          } while (ThisTokBuf != ThisTokEnd && ThisTokBuf[0] != '\\');
+
+          // Copy the character span over.
+          CopyStringFragment(StringRef(InStart, ThisTokBuf - InStart));
+          continue;
         }
-        continue;
-      }
-      // Is this a Universal Character Name escape?
-      if (ThisTokBuf[1] == 'u' || ThisTokBuf[1] == 'U') {
-        EncodeUCNEscape(ThisTokBuf, ThisTokEnd, ResultPtr,
-                        hadError, FullSourceLoc(StringToks[i].getLocation(),SM),
-                        CharByteWidth, Diags, Features);
-        continue;
-      }
-      // Otherwise, this is a non-UCN escape character.  Process it.
-      unsigned ResultChar =
-        ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
-                          FullSourceLoc(StringToks[i].getLocation(), SM),
-                          CharByteWidth*8, Diags);
+        // Is this a Universal Character Name escape?
+        if (ThisTokBuf[1] == 'u' || ThisTokBuf[1] == 'U') {
+          EncodeUCNEscape(ThisTokBuf, ThisTokEnd, ResultPtr,
+                          hadError, FullSourceLoc(StringToks[i].getLocation(),SM),
+                          CharByteWidth, Diags, Features);
+          continue;
+        }
+        // Otherwise, this is a non-UCN escape character.  Process it.
+        unsigned ResultChar =
+          ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
+                            FullSourceLoc(StringToks[i].getLocation(), SM),
+                            CharByteWidth*8, Diags);
 
-      // Note: our internal rep of wide char tokens is always little-endian.
-      *ResultPtr++ = ResultChar & 0xFF;
+        // Note: our internal rep of wide char tokens is always little-endian.
+        *ResultPtr++ = ResultChar & 0xFF;
 
-      for (unsigned i = 1, e = CharByteWidth; i != e; ++i)
-        *ResultPtr++ = ResultChar >> i*8;
+        for (unsigned i = 1, e = CharByteWidth; i != e; ++i)
+          *ResultPtr++ = ResultChar >> i*8;
+      }
     }
   }
 
@@ -1058,6 +1113,25 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
         << (Features.CPlusPlus ? 2 : Features.C99 ? 1 : 0)
         << SourceRange(StringToks[0].getLocation(),
                        StringToks[NumStringToks-1].getLocation());
+  }
+}
+
+
+/// copyStringFragment - This function copies from Start to End into ResultPtr.
+/// Performs widening for multi-byte characters.
+void StringLiteralParser::CopyStringFragment(const StringRef &Fragment) {
+  // Copy the character span over.
+  if (CharByteWidth == 1) {
+    memcpy(ResultPtr, Fragment.data(), Fragment.size());
+    ResultPtr += Fragment.size();
+  } else {
+    // Note: our internal rep of wide char tokens is always little-endian.
+    for (StringRef::iterator I=Fragment.begin(), E=Fragment.end(); I!=E; ++I) {
+      *ResultPtr++ = *I;
+      // Add zeros at the end.
+      for (unsigned i = 1, e = CharByteWidth; i != e; ++i)
+        *ResultPtr++ = 0;
+    }
   }
 }
 

@@ -485,6 +485,8 @@ private:
   void LexNumericConstant    (Token &Result, const char *CurPtr);
   void LexStringLiteral      (Token &Result, const char *CurPtr,
                               tok::TokenKind Kind);
+  void LexRawStringLiteral   (Token &Result, const char *CurPtr,
+                              tok::TokenKind Kind);
   void LexAngledStringLiteral(Token &Result, const char *CurPtr);
   void LexCharConstant       (Token &Result, const char *CurPtr,
                               tok::TokenKind Kind);

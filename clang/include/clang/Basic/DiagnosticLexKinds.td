@@ -55,6 +55,15 @@ def err_unterminated___pragma : Error<"missing terminating ')' character">;
 
 def err_conflict_marker : Error<"version control conflict marker in file">;
 
+def err_raw_delim_too_long : Error<
+  "raw string delimiter longer than 16 characters"
+  "; use PREFIX( )PREFIX to delimit raw string">;
+def err_invalid_char_raw_delim : Error<
+  "invalid character '%0' character in raw string delimiter"
+  "; use PREFIX( )PREFIX to delimit raw string">;
+def err_unterminated_raw_string : Error<
+  "raw string missing terminating delimiter )%0\"">;
+
 def ext_multichar_character_literal : ExtWarn<
   "multi-character character constant">, InGroup<MultiChar>;
 def ext_four_char_character_literal : Extension<
