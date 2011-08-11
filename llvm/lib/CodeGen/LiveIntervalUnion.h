@@ -142,7 +142,8 @@ public:
   class Query {
     LiveIntervalUnion *LiveUnion;
     LiveInterval *VirtReg;
-    InterferenceResult FirstInterference;
+    LiveInterval::iterator VirtRegI; // current position in VirtReg
+    SegmentIter LiveUnionI;          // current position in LiveUnion
     SmallVector<LiveInterval*,4> InterferingVRegs;
     bool CheckedFirstInterference;
     bool SeenAllInterferences;
@@ -217,8 +218,7 @@ public:
     void operator=(const Query&); // DO NOT IMPLEMENT
 
     // Private interface for queries
-    const InterferenceResult &firstInterference();
-    void findIntersection(InterferenceResult &IR) const;
+    void findIntersection();
   };
 };
 
