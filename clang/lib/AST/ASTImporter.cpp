@@ -59,6 +59,7 @@ namespace {
     QualType VisitFunctionNoProtoType(const FunctionNoProtoType *T);
     QualType VisitFunctionProtoType(const FunctionProtoType *T);
     // FIXME: UnresolvedUsingType
+    QualType VisitParenType(const ParenType *T);
     QualType VisitTypedefType(const TypedefType *T);
     QualType VisitTypeOfExprType(const TypeOfExprType *T);
     // FIXME: DependentTypeOfExprType
@@ -1548,6 +1549,14 @@ QualType ASTNodeImporter::VisitFunctionProtoType(const FunctionProtoType *T) {
        
   return Importer.getToContext().getFunctionType(ToResultType, ArgTypes.data(),
                                                  ArgTypes.size(), EPI);
+}
+
+QualType ASTNodeImporter::VisitParenType(const ParenType *T) {
+  QualType ToInnerType = Importer.Import(T->getInnerType());
+  if (ToInnerType.isNull())
+    return QualType();
+    
+  return Importer.getToContext().getParenType(ToInnerType);
 }
 
 QualType ASTNodeImporter::VisitTypedefType(const TypedefType *T) {
