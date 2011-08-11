@@ -3191,8 +3191,8 @@ def USAT : AI<(outs GPRnopc:$Rd),
 }
 
 def USAT16 : AI<(outs GPRnopc:$Rd),
-                (ins imm0_15:$sat_imm, GPRnopc:$a), SatFrm,
-                NoItinerary, "usat16", "\t$Rd, $sat_imm, $a",
+                (ins imm0_15:$sat_imm, GPRnopc:$Rn), SatFrm,
+                NoItinerary, "usat16", "\t$Rd, $sat_imm, $Rn",
                 [/* For disassembly only; pattern left blank */]> {
   bits<4> Rd;
   bits<4> sat_imm;
