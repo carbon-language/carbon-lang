@@ -795,7 +795,7 @@ ScanBracketedRange(const char* var_name_begin,
             *index_lower = ::strtoul (*open_bracket_position+1, &end, 0);
             *index_higher = *index_lower;
             if (log)
-                log->Printf("[%d] detected, high index is same",index_lower);
+                log->Printf("[%d] detected, high index is same", *index_lower);
         }
         else if (*close_bracket_position && *close_bracket_position < var_name_end)
         {
@@ -803,7 +803,7 @@ ScanBracketedRange(const char* var_name_begin,
             *index_lower = ::strtoul (*open_bracket_position+1, &end, 0);
             *index_higher = ::strtoul (*separator_position+1, &end, 0);
             if (log)
-                log->Printf("[%d-%d] detected",index_lower,index_higher);
+                log->Printf("[%d-%d] detected", *index_lower, *index_higher);
         }
         else
         {
@@ -1044,7 +1044,7 @@ Debugger::FormatPrompt
                                 ValueObject::ExpressionPathAftermath what_next = (do_deref_pointer ?
                                                                                   ValueObject::eDereference : ValueObject::eNothing);
                                 ValueObject::GetValueForExpressionPathOptions options;
-                                options.DontCheckDotVsArrowSyntax().DoAllowBitfieldSyntax().DoAllowFragileIVar();
+                                options.DontCheckDotVsArrowSyntax().DoAllowBitfieldSyntax().DoAllowFragileIVar().DoAllowSyntheticChildren();
                                 ValueObject::ValueObjectRepresentationStyle val_obj_display = ValueObject::eDisplaySummary;
                                 ValueObject* target = NULL;
                                 lldb::Format custom_format = eFormatInvalid;

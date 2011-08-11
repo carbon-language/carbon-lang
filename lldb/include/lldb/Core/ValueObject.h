@@ -581,7 +581,7 @@ public:
     lldb::ValueObjectSP
     GetSyntheticValue (lldb::SyntheticValueType use_synthetic);
     
-    bool
+    virtual bool
     HasSyntheticValue();
     
     virtual lldb::ValueObjectSP

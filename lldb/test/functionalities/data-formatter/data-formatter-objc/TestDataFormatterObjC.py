@@ -194,6 +194,10 @@ class DataFormatterTestCase(TestBase):
                                'content = ',
                                'Process Name:  a.out Process Id:'])
         
+        # check that access to synthetic children by name works
+        self.expect("frame variable str12->mutable",
+            substrs = ['(int) mutable = 0'])
+        
         # delete the synth and set a summary
         self.runCmd("type synth delete NSString")
         self.runCmd("type summary add -F CFString_SummaryProvider NSString")

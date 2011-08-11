@@ -65,6 +65,18 @@ public:
     IsInScope ();
     
     virtual bool
+    HasSyntheticValue()
+    {
+        return true;    // we are our own synthetic value
+    }
+    
+    virtual void
+    CalculateSyntheticValue (lldb::SyntheticValueType use_synthetic)
+    {
+        m_synthetic_value = this;
+    }
+    
+    virtual bool
     IsDynamic ()
     {
         if (m_parent)

@@ -70,10 +70,34 @@ class DataFormatterTestCase(TestBase):
                                'fake_a = 16777216',
                                'a = 0']);
 
-        # check that we do not get the extra vars and that we cache results
+        # check that we do not get the extra vars
         self.expect("frame variable f00_1", matching=False,
-                    substrs = ['looking for',
-                               'b = 1']);
+                    substrs = ['b = 1']);
+        
+        # check access to members by name
+        self.expect('frame variable f00_1.fake_a',
+                substrs = ['16777216'])
+        
+        # check access to members by index
+        self.expect('frame variable f00_1[1]',
+                    substrs = ['16777216'])
+        
+        # put synthetic children in summary in several combinations
+        self.runCmd("type summary add -f \"fake_a=${svar.fake_a}\" foo")
+        self.expect('frame variable f00_1',
+                    substrs = ['fake_a=16777216'])
+        self.runCmd("type summary add -f \"fake_a=${var.fake_a}\" foo")
+        self.expect('frame variable f00_1',
+                    substrs = ['fake_a=16777216'])
+        self.runCmd("type summary add -f \"fake_a=${var[1]}\" foo")
+        self.expect('frame variable f00_1',
+                    substrs = ['fake_a=16777216'])
+        self.runCmd("type summary add -f \"fake_a=${svar[1]}\" foo")
+        self.expect('frame variable f00_1',
+            substrs = ['fake_a=16777216'])
+        
+        # clear the summary
+        self.runCmd("type summary delete foo")
 
         # check that the caching does not span beyond the stopoint
         self.runCmd("n")
@@ -150,6 +174,20 @@ class DataFormatterTestCase(TestBase):
                                '[2] = 123',
                                '[3] = 1234',
                                '}'])
+        
+        # check access to synthetic children
+        self.runCmd("type summary add -f \"item 0 is ${var[0]}\" std::int_vect int_vect")
+        self.expect('frame variable numbers',
+                    substrs = ['item 0 is 1']);
+        
+        self.runCmd("type summary add -f \"item 0 is ${svar[0]}\" std::int_vect int_vect")
+        #import time
+        #time.sleep(19)
+        self.expect('frame variable numbers',
+                    substrs = ['item 0 is 1']);
+        # move on with synths
+        self.runCmd("type summary delete std::int_vect")
+        self.runCmd("type summary delete int_vect")
 
         # add some more data
         self.runCmd("n");self.runCmd("n");self.runCmd("n");

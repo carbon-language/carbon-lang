@@ -641,23 +641,28 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                             child_valobj_sp = valobj_sp->GetChildMemberWithName (child_name, true);
                             if (!child_valobj_sp)
                             {
-                                // No child member with name "child_name"
-                                valobj_sp->GetExpressionPath (var_expr_path_strm, false);
-                                if (child_name)
+                                if (no_synth_child == false)
+                                    child_valobj_sp = valobj_sp->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildMemberWithName (child_name, true);
+                                
+                                if (no_synth_child || !child_valobj_sp)
                                 {
-                                    error.SetErrorStringWithFormat ("\"%s\" is not a member of \"(%s) %s\"", 
-                                                                    child_name.GetCString(), 
-                                                                    valobj_sp->GetTypeName().AsCString("<invalid type>"),
-                                                                    var_expr_path_strm.GetString().c_str());
+                                    // No child member with name "child_name"
+                                    valobj_sp->GetExpressionPath (var_expr_path_strm, false);
+                                    if (child_name)
+                                    {
+                                        error.SetErrorStringWithFormat ("\"%s\" is not a member of \"(%s) %s\"", 
+                                                                        child_name.GetCString(), 
+                                                                        valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                        var_expr_path_strm.GetString().c_str());
+                                    }
+                                    else
+                                    {
+                                        error.SetErrorStringWithFormat ("incomplete expression path after \"%s\" in \"%s\"",
+                                                                        var_expr_path_strm.GetString().c_str(),
+                                                                        var_expr_cstr);
+                                    }
+                                    return ValueObjectSP();
                                 }
-                                else
-                                {
-                                    error.SetErrorStringWithFormat ("incomplete expression path after \"%s\" in \"%s\"",
-                                                                    var_expr_path_strm.GetString().c_str(),
-                                                                    var_expr_cstr);
-                                }
-
-                                return ValueObjectSP();
                             }
                             // Remove the child name from the path
                             var_path.erase(0, child_name.GetLength());

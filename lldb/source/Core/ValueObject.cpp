@@ -2032,13 +2032,28 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                 if (!next_separator) // if no other separator just expand this last layer
                 {
                     child_name.SetCString (expression_cstr);
-                    root = root->GetChildMemberWithName(child_name, true);
-                    if (root.get()) // we know we are done, so just return
+                    ValueObjectSP child_valobj_sp = root->GetChildMemberWithName(child_name, true);
+                    
+                    if (child_valobj_sp.get()) // we know we are done, so just return
                     {
                         *first_unparsed = '\0';
                         *reason_to_stop = ValueObject::eEndOfString;
                         *final_result = ValueObject::ePlain;
-                        return root;
+                        return child_valobj_sp;
+                    }
+                    else if (options.m_no_synthetic_children == false) // let's try with synthetic children
+                    {
+                        child_valobj_sp = root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildMemberWithName(child_name, true);
+                    }
+                    
+                    // if we are here and options.m_no_synthetic_children is true, child_valobj_sp is going to be a NULL SP,
+                    // so we hit the "else" branch, and return an error
+                    if(child_valobj_sp.get()) // if it worked, just return
+                    {
+                        *first_unparsed = '\0';
+                        *reason_to_stop = ValueObject::eEndOfString;
+                        *final_result = ValueObject::ePlain;
+                        return child_valobj_sp;
                     }
                     else
                     {
@@ -2051,9 +2066,24 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                 else // other layers do expand
                 {
                     child_name.SetCStringWithLength(expression_cstr, next_separator - expression_cstr);
-                    root = root->GetChildMemberWithName(child_name, true);
-                    if (root.get()) // store the new root and move on
+                    ValueObjectSP child_valobj_sp = root->GetChildMemberWithName(child_name, true);
+                    if (child_valobj_sp.get()) // store the new root and move on
                     {
+                        root = child_valobj_sp;
+                        *first_unparsed = next_separator;
+                        *final_result = ValueObject::ePlain;
+                        continue;
+                    }
+                    else if (options.m_no_synthetic_children == false) // let's try with synthetic children
+                    {
+                        child_valobj_sp = root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildMemberWithName(child_name, true);
+                    }
+                    
+                    // if we are here and options.m_no_synthetic_children is true, child_valobj_sp is going to be a NULL SP,
+                    // so we hit the "else" branch, and return an error
+                    if(child_valobj_sp.get()) // if it worked, move on
+                    {
+                        root = child_valobj_sp;
                         *first_unparsed = next_separator;
                         *final_result = ValueObject::ePlain;
                         continue;
@@ -2236,7 +2266,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             return root;
                         }
                     }
-                    else if (root->HasSyntheticValue() && options.m_no_synthetic_children)
+                    else if (root->HasSyntheticValue() && options.m_no_synthetic_children == false)
                     {
                         root = root->GetSyntheticValue(lldb::eUseSyntheticFilter)->GetChildAtIndex(index, true);
                         if (!root.get())
@@ -2245,6 +2275,12 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             *reason_to_stop = ValueObject::eNoSuchChild;
                             *final_result = ValueObject::eInvalid;
                             return ValueObjectSP();
+                        }
+                        else
+                        {
+                            *first_unparsed = end+1; // skip ]
+                            *final_result = ValueObject::ePlain;
+                            continue;
                         }
                     }
                     else
