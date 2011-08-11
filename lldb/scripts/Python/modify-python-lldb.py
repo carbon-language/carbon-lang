@@ -95,7 +95,7 @@ linked_list_iter_def = '''
         Return True if val is invalid or it corresponds to a null pointer.
         Otherwise, return False.
         """
-        if not val or int(val.GetValue(), 0) == 0:
+        if not val or val.GetValueAsUnsigned() == 0:
             return True
         else:
             return False
@@ -127,8 +127,10 @@ linked_list_iter_def = '''
         for t in task_head.linked_list_iter('next'):
             print t
         """
+        if end_of_list_test(self):
+            return
+        item = self
         try:
-            item = self.GetChildMemberWithName(next_item_name)
             while not end_of_list_test(item):
                 yield item
                 # Prepare for the next iteration.

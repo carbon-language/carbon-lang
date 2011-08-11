@@ -21,14 +21,14 @@ public:
 
 int main (int argc, char const *argv[])
 {
-    Task *task_head = new Task(-1, NULL);
+    Task *task_head = NULL;
     Task *task1 = new Task(1, NULL);
     Task *task2 = new Task(2, NULL);
     Task *task3 = new Task(3, NULL); // Orphaned.
     Task *task4 = new Task(4, NULL);
     Task *task5 = new Task(5, NULL);
 
-    task_head->next = task1;
+    task_head = task1;
     task1->next = task2;
     task2->next = task4;
     task4->next = task5;
@@ -43,7 +43,7 @@ int main (int argc, char const *argv[])
     printf("We have a total number of %d tasks\n", total);
 
     // This corresponds to an empty task list.
-    Task *empty_task_head = new Task(-1, NULL);
+    Task *empty_task_head = NULL;
 
     return 0; // Break at this line
 }
