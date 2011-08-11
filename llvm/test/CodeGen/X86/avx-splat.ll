@@ -77,3 +77,13 @@ __load_and_broadcast_32.exit1249:                 ; preds = %load.i1247, %for_ex
   ret void
 }
 
+; CHECK: vpshufd  $0
+; CHECK-NEXT: vinsertf128 $1
+define <8 x float> @funcF(i32* %ptr) nounwind {
+  %val = load i32* %ptr, align 4
+  %ret6 = insertelement <8 x i32> undef, i32 %val, i32 6
+  %ret7 = insertelement <8 x i32> %ret6, i32 %val, i32 7
+  %tmp = bitcast <8 x i32> %ret7 to <8 x float>
+  ret <8 x float> %tmp
+}
+

@@ -4125,15 +4125,15 @@ static SDValue PromoteVectorToScalarSplat(ShuffleVectorSDNode *SV,
   int NumElems = SrcVT.getVectorNumElements();
 
   assert(SrcVT.is256BitVector() && "unknown howto handle vector type");
+  assert(SV->isSplat() && "shuffle must be a splat");
 
-  SmallVector<int, 4> Mask;
-  for (int i = 0; i < NumElems/2; ++i)
-    Mask.push_back(SV->getMaskElt(i));
+  int SplatIdx = SV->getSplatIndex();
+  const int Mask[4] = { SplatIdx, SplatIdx, SplatIdx, SplatIdx };
 
   EVT SVT = EVT::getVectorVT(*DAG.getContext(), SrcVT.getVectorElementType(),
                              NumElems/2);
   SDValue SV1 = DAG.getVectorShuffle(SVT, dl, V1.getOperand(1),
-                                     DAG.getUNDEF(SVT), &Mask[0]);
+                                     DAG.getUNDEF(SVT), Mask);
   SDValue InsV = Insert128BitVector(DAG.getUNDEF(SrcVT), SV1,
                                     DAG.getConstant(0, MVT::i32), DAG, dl);
 
