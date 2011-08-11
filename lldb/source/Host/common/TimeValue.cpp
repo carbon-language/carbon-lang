@@ -12,6 +12,7 @@
 // C Includes
 #include <stddef.h>
 #include <time.h>
+#include <cstring>
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
