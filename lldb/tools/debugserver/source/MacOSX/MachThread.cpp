@@ -119,7 +119,6 @@ MachThread::SetSuspendCountBeforeResume(bool others_stopped)
                     times_to_resume = m_basic_info.suspend_count;
                 else
                     times_to_resume = 0;
-                return false; // ??? 
             }
         }
     }
@@ -161,7 +160,10 @@ MachThread::RestoreSuspendCountAfterStop ()
             if (err.Success())
                 ++m_suspend_count;
             if (DNBLogCheckLogBit(LOG_THREAD) || err.Fail())
+            {
                 err.LogThreaded("::thread_suspend (%4.4x)", m_tid);
+                return false;
+            }
         }
     }
     return true;
