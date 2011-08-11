@@ -2122,9 +2122,8 @@ def LDRD_POST: AI3ldstidx<0b1101, 0, 0, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
 } // hasExtraDefRegAllocReq = 1
 } // mayLoad = 1, neverHasSideEffects = 1
 
-// LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT are for disassembly only.
+// LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT.
 let mayLoad = 1, neverHasSideEffects = 1 in {
-
 def LDRT_POST_REG : AI2ldstidx<1, 0, 0, (outs GPR:$Rt, GPR:$Rn_wb),
                     (ins addr_offset_none:$addr, am2offset_reg:$offset),
                     IndexModePost, LdFrm, IIC_iLoad_ru,
