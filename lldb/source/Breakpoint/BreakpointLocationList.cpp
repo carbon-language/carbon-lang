@@ -95,20 +95,11 @@ BreakpointLocationList::FindInModule (Module *module,
 
     for (pos = m_locations.begin(); pos != end; ++pos)
     {
-        bool seen = false;
         BreakpointLocationSP break_loc = (*pos);
         const Section *section = break_loc->GetAddress().GetSection();
-        if (section)
+        if (section && section->GetModule() == module)
         {
-            if (section->GetModule() == module)
-            {
-                if (!seen)
-                {
-                    seen = true;
-                    bp_loc_list.Add (break_loc);
-                }
-
-            }
+            bp_loc_list.Add (break_loc);
         }
     }
     return bp_loc_list.GetSize() - orig_size;
