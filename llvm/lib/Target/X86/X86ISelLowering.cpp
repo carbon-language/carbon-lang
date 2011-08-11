@@ -12589,6 +12589,29 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
   EVT VT = St->getValue().getValueType();
   EVT StVT = St->getMemoryVT();
   DebugLoc dl = St->getDebugLoc();
+  SDValue StoredVal = St->getOperand(1);
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  // If we are saving a concatination of two XMM registers, perform two stores.
+  if (VT.getSizeInBits() == 256 &&
+    StoredVal.getNode()->getOpcode() == ISD::CONCAT_VECTORS &&
+    StoredVal.getNumOperands() == 2) {
+
+    SDValue Value0 = StoredVal.getOperand(0);
+    SDValue Value1 = StoredVal.getOperand(1);
+
+    SDValue Stride = DAG.getConstant(16, TLI.getPointerTy());
+    SDValue Ptr0 = St->getBasePtr();
+    SDValue Ptr1 = DAG.getNode(ISD::ADD, dl, Ptr0.getValueType(), Ptr0, Stride);
+
+    SDValue Ch0 = DAG.getStore(St->getChain(), dl, Value0, Ptr0,
+                                St->getPointerInfo(), St->isVolatile(),
+                                St->isNonTemporal(), St->getAlignment());
+    SDValue Ch1 = DAG.getStore(St->getChain(), dl, Value1, Ptr1,
+                                St->getPointerInfo(), St->isVolatile(),
+                                St->isNonTemporal(), St->getAlignment());
+    return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Ch0, Ch1);
+  }
 
   // Optimize trunc store (of multiple scalars) to shuffle and store.
   // First, pack all of the elements in one place. Next, store to memory
