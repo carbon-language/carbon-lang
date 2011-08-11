@@ -411,6 +411,8 @@ public:
 
   void updateBlockParents();
 
+  void removeBlocksFromAncestors();
+
   void updateSubloopParents();
 
 protected:
@@ -463,6 +465,31 @@ void UnloopUpdater::updateBlockParents() {
         LI->changeLoopFor(*POI, NL);
         Changed = true;
       }
+    }
+  }
+}
+
+/// removeBlocksFromAncestors - Remove unloop's blocks from all ancestors below
+/// their new parents.
+void UnloopUpdater::removeBlocksFromAncestors() {
+  // Remove unloop's blocks from all ancestors below their new parents.
+  for (Loop::block_iterator BI = Unloop->block_begin(),
+         BE = Unloop->block_end(); BI != BE; ++BI) {
+    Loop *NewParent = LI->getLoopFor(*BI);
+    // If this block is an immediate subloop, remove all blocks (including
+    // nested subloops) from ancestors below the new parent loop.
+    // Otherwise, if this block is in a nested subloop, skip it.
+    if (SubloopParents.count(NewParent))
+      NewParent = SubloopParents[NewParent];
+    else if (Unloop->contains(NewParent))
+      continue;
+
+    // Remove blocks from former Ancestors except Unloop itself which will be
+    // deleted.
+    for (Loop *OldParent = Unloop->getParentLoop(); OldParent != NewParent;
+         OldParent = OldParent->getParentLoop()) {
+      assert(OldParent && "new loop is not an ancestor of the original");
+      OldParent->removeBlockFromLoop(*BI);
     }
   }
 }
@@ -605,22 +632,8 @@ void LoopInfo::updateUnloop(Loop *Unloop) {
   UnloopUpdater Updater(Unloop, this);
   Updater.updateBlockParents();
 
-  // Remove unloop's blocks from all ancestors below their new parents.
-  for (Loop::block_iterator BI = Unloop->block_begin(),
-         BE = Unloop->block_end(); BI != BE; ++BI) {
-    Loop *NewParent = getLoopFor(*BI);
-    // If this block is in a subloop, skip it.
-    if (Unloop->contains(NewParent))
-      continue;
-
-    // Remove blocks from former Ancestors except Unloop itself which will be
-    // deleted.
-    for (Loop *OldParent = Unloop->getParentLoop(); OldParent != NewParent;
-         OldParent = OldParent->getParentLoop()) {
-      assert(OldParent && "new loop is not an ancestor of the original");
-      OldParent->removeBlockFromLoop(*BI);
-    }
-  }
+  // Remove blocks from former ancestor loops.
+  Updater.removeBlocksFromAncestors();
 
   // Add direct subloops as children in their new parent loop.
   Updater.updateSubloopParents();
