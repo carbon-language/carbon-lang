@@ -1260,6 +1260,8 @@ static bool DecodeSMLAInstruction(llvm::MCInst &Inst, unsigned Insn,
       !DecodeGPRnopcRegisterClass(Inst, Ra, Address, Decoder))
     return false;
 
+  if (!DecodePredicateOperand(Inst, pred, Address, Decoder)) return false;
+
   return true;
 }
 
