@@ -7626,9 +7626,10 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
             !LeftType->canDecayToPointerType() &&
             !RightType->isAnyPointerType() &&
             !RightType->canDecayToPointerType()) {
-          Diag(OpLoc, diag::warn_null_in_arithmetic_operation)
-            << (LeftNull ? lhs.get()->getSourceRange()
-                         : rhs.get()->getSourceRange());
+          Diag(OpLoc, diag::warn_null_in_comparison_operation)
+            << LeftNull /* LHS is NULL */
+            << (LeftNull ? rhs.get()->getType() : lhs.get()->getType())
+            << lhs.get()->getSourceRange() << rhs.get()->getSourceRange();
         }
       }
     }
