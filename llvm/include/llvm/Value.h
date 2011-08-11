@@ -183,7 +183,7 @@ public:
   bool isUsedInBasicBlock(const BasicBlock *BB) const;
 
   /// getNumUses - This method computes the number of uses of this Value.  This
-  /// is a linear time operation.  Use hasOneUse, hasNUses, or hasMoreThanNUses
+  /// is a linear time operation.  Use hasOneUse, hasNUses, or hasNUsesOrMore
   /// to check for specific values.
   unsigned getNumUses() const;
 
