@@ -127,6 +127,20 @@ class ValueAsLinkedListTestCase(TestBase):
 
         self.assertTrue(len(list) == 0)
 
+        # Get variable 'task_evil'.
+        task_evil = frame0.FindVariable('task_evil')
+        self.assertTrue(task_evil, VALID_VARIABLE)
+        self.DebugSBValue(task_evil)
+
+        list = []
+        # There 3 iterable items from task_evil.linked_list_iter(). :-)
+        for t in task_evil.linked_list_iter('next'):
+            if self.TraceOn():
+                print cvf.format(t)
+            list.append(int(t.GetChildMemberWithName("id").GetValue()))
+
+        self.assertTrue(len(list) == 3)
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

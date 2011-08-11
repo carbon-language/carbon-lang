@@ -112,6 +112,8 @@ linked_list_iter_def = '''
         end-of-list test function which takes an SBValue for an item and returns
         True if EOL is reached and False if not.
 
+        linked_list_iter() also detects infinite loop and bails out early.
+
         The end_of_list_test arg, if omitted, defaults to the __eol_test__
         function above.
 
@@ -130,8 +132,10 @@ linked_list_iter_def = '''
         if end_of_list_test(self):
             return
         item = self
+        visited = set()
         try:
-            while not end_of_list_test(item):
+            while not end_of_list_test(item) and not item.GetValueAsUnsigned() in visited:
+                visited.add(item.GetValueAsUnsigned())
                 yield item
                 # Prepare for the next iteration.
                 item = item.GetChildMemberWithName(next_item_name)

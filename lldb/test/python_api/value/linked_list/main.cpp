@@ -45,5 +45,12 @@ int main (int argc, char const *argv[])
     // This corresponds to an empty task list.
     Task *empty_task_head = NULL;
 
+    Task *task_evil = new Task(1, NULL);
+    Task *task_2 = new Task(2, NULL);
+    Task *task_3 = new Task(3, NULL);
+    task_evil->next = task_2;
+    task_2->next = task_3;
+    task_3->next = task_evil; // In order to cause inifinite loop. :-)
+
     return 0; // Break at this line
 }
