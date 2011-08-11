@@ -375,7 +375,7 @@ DNBDataRef::Get_SLEB128 (offset_t *offset_ptr) const
         int size = sizeof (uint32_t) * 8;
         const uint8_t *src = m_start + *offset_ptr;
 
-        uint8_t byte;
+        uint8_t byte = 0;
         int bytecount = 0;
 
         while (src < m_end)
