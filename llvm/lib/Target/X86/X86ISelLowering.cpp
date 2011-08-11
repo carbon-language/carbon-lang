@@ -12593,6 +12593,9 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   // If we are saving a concatination of two XMM registers, perform two stores.
+  // This is better in Sandy Bridge cause one 256-bit mem op is done via two
+  // 128-bit ones. If in the future the cost becomes only one memory access the
+  // first version would be better.
   if (VT.getSizeInBits() == 256 &&
     StoredVal.getNode()->getOpcode() == ISD::CONCAT_VECTORS &&
     StoredVal.getNumOperands() == 2) {
