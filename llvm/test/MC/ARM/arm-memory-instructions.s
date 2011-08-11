@@ -375,3 +375,17 @@ _func:
 @ CHECK: strb	r7, [r12, -r3, lsl #5]  @ encoding: [0x83,0x72,0x4c,0xe7]
 @ CHECK: strb	sp, [r7], r2, asr #12   @ encoding: [0x42,0xd6,0xc7,0xe6]
 
+
+@------------------------------------------------------------------------------
+@ STRBT
+@------------------------------------------------------------------------------
+@ FIXME: Optional offset operand.
+        strbt r6, [r2], #12
+        strbt r5, [r6], #-13
+        strbt r4, [r9], r5
+        strbt r3, [r8], -r2, lsl #3
+
+@ CHECK: strbt	r6, [r2], #12           @ encoding: [0x0c,0x60,0xe2,0xe4]
+@ CHECK: strbt	r5, [r6], #-13          @ encoding: [0x0d,0x50,0x66,0xe4]
+@ CHECK: strbt	r4, [r9], r5            @ encoding: [0x05,0x40,0xe9,0xe6]
+@ CHECK: strbt	r3, [r8], -r2, lsl #3   @ encoding: [0x82,0x31,0x68,0xe6]

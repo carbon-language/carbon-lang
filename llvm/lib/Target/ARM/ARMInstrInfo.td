@@ -2350,6 +2350,42 @@ def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
 
 // STRT, STRBT, and STRHT
 
+def STRBT_POST_REG : AI2ldstidx<0, 1, 0, (outs GPR:$Rn_wb),
+                   (ins GPR:$Rt, addr_offset_none:$addr, am2offset_reg:$offset),
+                   IndexModePost, StFrm, IIC_iStore_bh_ru,
+                   "strbt", "\t$Rt, $addr, $offset",
+                   "$addr.base = $Rn_wb", []> {
+  // {12}     isAdd
+  // {11-0}   imm12/Rm
+  bits<14> offset;
+  bits<4> addr;
+  let Inst{25} = 1;
+  let Inst{23} = offset{12};
+  let Inst{21} = 1; // overwrite
+  let Inst{19-16} = addr;
+  let Inst{11-5} = offset{11-5};
+  let Inst{4} = 0;
+  let Inst{3-0} = offset{3-0};
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
+}
+
+def STRBT_POST_IMM : AI2ldstidx<0, 1, 0, (outs GPR:$Rn_wb),
+                   (ins GPR:$Rt, addr_offset_none:$addr, am2offset_imm:$offset),
+                   IndexModePost, StFrm, IIC_iStore_bh_ru,
+                   "strbt", "\t$Rt, $addr, $offset",
+                   "$addr.base = $Rn_wb", []> {
+  // {12}     isAdd
+  // {11-0}   imm12/Rm
+  bits<14> offset;
+  bits<4> addr;
+  let Inst{25} = 0;
+  let Inst{23} = offset{12};
+  let Inst{21} = 1; // overwrite
+  let Inst{19-16} = addr;
+  let Inst{11-0} = offset{11-0};
+  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
+}
+
 def STRTr : AI2stridxT<0, 0, (outs GPR:$Rn_wb),
                      (ins GPR:$Rt, ldst_so_reg:$addr),
                      IndexModePost, StFrm, IIC_iStore_ru,
@@ -2367,30 +2403,6 @@ def STRTi : AI2stridxT<0, 0, (outs GPR:$Rn_wb),
                      IndexModePost, StFrm, IIC_iStore_ru,
                      "strt", "\t$Rt, $addr", "$addr.base = $Rn_wb",
                      [/* For disassembly only; pattern left blank */]> {
-  let Inst{25} = 0;
-  let Inst{21} = 1; // overwrite
-  let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
-  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
-}
-
-
-def STRBTr : AI2stridxT<1, 0, (outs GPR:$Rn_wb),
-                      (ins GPR:$Rt, ldst_so_reg:$addr),
-                      IndexModePost, StFrm, IIC_iStore_bh_ru,
-                      "strbt", "\t$Rt, $addr", "$addr.base = $Rn_wb",
-                      [/* For disassembly only; pattern left blank */]> {
-  let Inst{25} = 1;
-  let Inst{21} = 1; // overwrite
-  let Inst{4} = 0;
-  let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
-  let DecoderMethod = "DecodeAddrMode2IdxInstruction";
-}
-
-def STRBTi : AI2stridxT<1, 0, (outs GPR:$Rn_wb),
-                      (ins GPR:$Rt, addrmode_imm12:$addr),
-                      IndexModePost, StFrm, IIC_iStore_bh_ru,
-                      "strbt", "\t$Rt, $addr", "$addr.base = $Rn_wb",
-                      [/* For disassembly only; pattern left blank */]> {
   let Inst{25} = 0;
   let Inst{21} = 1; // overwrite
   let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
