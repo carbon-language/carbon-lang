@@ -104,9 +104,9 @@ bool
 ProcessGDBRemote::CanDebug (Target &target, bool plugin_specified_by_name)
 {
     // For now we are just making sure the file exists for a given module
-    ModuleSP exe_module_sp(target.GetExecutableModule());
-    if (exe_module_sp.get())
-        return exe_module_sp->GetFileSpec().Exists();
+    Module *exe_module = target.GetExecutableModulePointer();
+    if (exe_module)
+        return exe_module->GetFileSpec().Exists();
     // However, if there is no executable module, we return true since we might be preparing to attach.
     return true;
 }

@@ -65,9 +65,9 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     
     m_function_sp = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
     
-    ModuleSP executableModuleSP (target.GetExecutableModule());
+    Module *exe_module = target.GetExecutableModulePointer();
 
-    if (!executableModuleSP)
+    if (exe_module == NULL)
     {
         if (log)
             log->Printf ("Can't execute code without an executable module.");
@@ -75,7 +75,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     }
     else
     {
-        ObjectFile *objectFile = executableModuleSP->GetObjectFile();
+        ObjectFile *objectFile = exe_module->GetObjectFile();
         if (!objectFile)
         {
             if (log)
@@ -181,9 +181,9 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     
     m_function_sp = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
     
-    ModuleSP executableModuleSP (target.GetExecutableModule());
+    Module *exe_module = target.GetExecutableModulePointer();
     
-    if (!executableModuleSP)
+    if (exe_module == NULL)
     {
         if (log)
             log->Printf ("Can't execute code without an executable module.");
@@ -191,7 +191,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     }
     else
     {
-        ObjectFile *objectFile = executableModuleSP->GetObjectFile();
+        ObjectFile *objectFile = exe_module->GetObjectFile();
         if (!objectFile)
         {
             if (log)
@@ -204,7 +204,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
         {
             if (log)
                 log->Printf ("Could not find entry point address for executable module \"%s\".", 
-                             executableModuleSP->GetFileSpec().GetFilename().AsCString());
+                             exe_module->GetFileSpec().GetFilename().AsCString());
             return;
         }
     }

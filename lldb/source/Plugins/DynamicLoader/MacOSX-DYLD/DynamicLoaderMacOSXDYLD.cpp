@@ -89,7 +89,7 @@ DynamicLoaderMacOSXDYLD::CreateInstance (Process* process, bool force)
     if (!create)
     {
         create = true;
-        Module* exe_module = process->GetTarget().GetExecutableModule().get();
+        Module* exe_module = process->GetTarget().GetExecutableModulePointer();
         if (exe_module)
         {
             ObjectFile *object_file = exe_module->GetObjectFile();
@@ -225,7 +225,7 @@ DynamicLoaderMacOSXDYLD::LocateDYLD()
     }
 
     // Check some default values
-    Module *executable = m_process->GetTarget().GetExecutableModule().get();
+    Module *executable = m_process->GetTarget().GetExecutableModulePointer();
 
     if (executable)
     {
@@ -267,7 +267,7 @@ DynamicLoaderMacOSXDYLD::FindTargetModuleForDYLDImageInfo (const DYLDImageInfo &
         {
             if (module_sp)
             {
-                if (image_info.UUIDValid())
+                if (image_info_uuid_is_valid)
                 {
                     if (module_sp->GetUUID() != image_info.uuid)
                         module_sp.reset();
@@ -1217,7 +1217,7 @@ DynamicLoaderMacOSXDYLD::UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::co
         
         if (exe_module_sp)
         {
-            if (exe_module_sp.get() != m_process->GetTarget().GetExecutableModule().get())
+            if (exe_module_sp.get() != m_process->GetTarget().GetExecutableModulePointer())
             {
                 // Don't load dependent images since we are in dyld where we will know
                 // and find out about all images that are loaded

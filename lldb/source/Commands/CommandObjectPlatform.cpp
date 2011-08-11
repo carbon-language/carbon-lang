@@ -374,17 +374,16 @@ public:
             Error error;
             const uint32_t argc = args.GetArgumentCount();
             Target *target = m_interpreter.GetExecutionContext().target;
-            ModuleSP exe_module_sp;
             if (target)
             {
-                exe_module_sp = target->GetExecutableModule();
-                if (exe_module_sp)
+                Module *exe_module = target->GetExecutableModulePointer();
+                if (exe_module)
                 {
-                    m_options.launch_info.GetExecutableFile () = exe_module_sp->GetFileSpec();
+                    m_options.launch_info.GetExecutableFile () = exe_module->GetFileSpec();
                     char exe_path[PATH_MAX];
                     if (m_options.launch_info.GetExecutableFile ().GetPath (exe_path, sizeof(exe_path)))
                         m_options.launch_info.GetArguments().AppendArgument (exe_path);
-                    m_options.launch_info.GetArchitecture() = exe_module_sp->GetArchitecture();
+                    m_options.launch_info.GetArchitecture() = exe_module->GetArchitecture();
                 }
             }
 

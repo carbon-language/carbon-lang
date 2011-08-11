@@ -108,6 +108,28 @@ ModuleList::Remove (ModuleSP &module_sp)
     return false;
 }
 
+
+size_t
+ModuleList::RemoveOrphans ()
+{
+    Mutex::Locker locker(m_modules_mutex);
+    collection::reverse_iterator pos = m_modules.rbegin();
+    size_t remove_count = 0;
+    while (pos != m_modules.rend())
+    {
+        if (pos->unique())
+        {
+            pos = m_modules.erase (pos);
+            ++remove_count;
+        }
+        else
+        {
+            ++pos;
+        }
+    }
+    return remove_count;
+}
+
 size_t
 ModuleList::Remove (ModuleList &module_list)
 {
@@ -678,6 +700,12 @@ ModuleList::FindSharedModules
 {
     ModuleList &shared_module_list = GetSharedModuleList ();
     return shared_module_list.FindModules (&in_file_spec, &arch, uuid_ptr, object_name_ptr, matching_module_list);
+}
+
+uint32_t
+ModuleList::RemoveOrphanSharedModules ()
+{
+    return GetSharedModuleList ().RemoveOrphans();    
 }
 
 Error

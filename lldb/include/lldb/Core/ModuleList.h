@@ -363,6 +363,9 @@ public:
     size_t
     Remove (ModuleList &module_list);
     
+    size_t
+    RemoveOrphans ();
+
     bool
     ResolveFileAddress (lldb::addr_t vm_addr,
                         Address& so_addr);
@@ -427,6 +430,9 @@ public:
                        const lldb_private::UUID *uuid_ptr,
                        const ConstString *object_name_ptr,
                        ModuleList &matching_module_list);
+
+    static uint32_t
+    RemoveOrphanSharedModules ();
 
 protected:
     //------------------------------------------------------------------

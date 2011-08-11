@@ -98,8 +98,9 @@ Target::Dump (Stream *s, lldb::DescriptionLevel description_level)
     }
     else
     {
-        if (GetExecutableModule())
-            s->PutCString (GetExecutableModule()->GetFileSpec().GetFilename().GetCString());
+        Module *exe_module = GetExecutableModulePointer();
+        if (exe_module)
+            s->PutCString (exe_module->GetFileSpec().GetFilename().GetCString());
         else
             s->PutCString ("No executable module.");
     }
@@ -437,10 +438,13 @@ Target::EnableBreakpointByID (break_id_t break_id)
 ModuleSP
 Target::GetExecutableModule ()
 {
-    ModuleSP executable_sp;
-    if (m_images.GetSize() > 0)
-        executable_sp = m_images.GetModuleAtIndex(0);
-    return executable_sp;
+    return m_images.GetModuleAtIndex(0);
+}
+
+Module*
+Target::GetExecutableModulePointer ()
+{
+    return m_images.GetModulePointerAtIndex(0);
 }
 
 void
@@ -915,14 +919,11 @@ Target::ImageSearchPathsChanged
 )
 {
     Target *target = (Target *)baton;
-    if (target->m_images.GetSize() > 1)
+    ModuleSP exe_module_sp (target->GetExecutableModule());
+    if (exe_module_sp)
     {
-        ModuleSP exe_module_sp (target->GetExecutableModule());
-        if (exe_module_sp)
-        {
-            target->m_images.Clear();
-            target->SetExecutableModule (exe_module_sp, true);
-        }
+        target->m_images.Clear();
+        target->SetExecutableModule (exe_module_sp, true);
     }
 }
 
@@ -1013,14 +1014,13 @@ Target::UpdateInstanceName ()
 {
     StreamString sstr;
     
-    ModuleSP module_sp = GetExecutableModule();
-    if (module_sp)
+    Module *exe_module = GetExecutableModulePointer();
+    if (exe_module)
     {
         sstr.Printf ("%s_%s", 
-                     module_sp->GetFileSpec().GetFilename().AsCString(), 
-                     module_sp->GetArchitecture().GetArchitectureName());
-        GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
-                                                         sstr.GetData());
+                     exe_module->GetFileSpec().GetFilename().AsCString(), 
+                     exe_module->GetArchitecture().GetArchitectureName());
+        GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(), sstr.GetData());
     }
 }
 

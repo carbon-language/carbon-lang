@@ -148,15 +148,15 @@ TargetList::FindTargetWithExecutableAndArchitecture
     collection::const_iterator pos, end = m_target_list.end();
     for (pos = m_target_list.begin(); pos != end; ++pos)
     {
-        ModuleSP module_sp ((*pos)->GetExecutableModule());
+        Module *exe_module = (*pos)->GetExecutableModulePointer();
 
-        if (module_sp)
+        if (exe_module)
         {
-            if (FileSpec::Equal (exe_file_spec, module_sp->GetFileSpec(), full_match))
+            if (FileSpec::Equal (exe_file_spec, exe_module->GetFileSpec(), full_match))
             {
                 if (exe_arch_ptr)
                 {
-                    if (*exe_arch_ptr != module_sp->GetArchitecture())
+                    if (*exe_arch_ptr != exe_module->GetArchitecture())
                         continue;
                 }
                 target_sp = *pos;

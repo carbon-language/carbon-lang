@@ -306,7 +306,6 @@ CommandObjectBreakpointSet::Execute
     else if  (!m_options.m_func_regexp.empty())
         break_type = eSetTypeFunctionRegexp;
 
-    ModuleSP module_sp = target->GetExecutableModule();
     Breakpoint *bp = NULL;
     FileSpec module_spec;
     bool use_module = false;

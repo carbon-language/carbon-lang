@@ -26,6 +26,7 @@
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/OptionGroupArchitecture.h"
+#include "lldb/Interpreter/OptionGroupBoolean.h"
 #include "lldb/Interpreter/OptionGroupFile.h"
 #include "lldb/Interpreter/OptionGroupVariable.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
@@ -52,11 +53,11 @@ DumpTargetInfo (uint32_t target_idx, Target *target, const char *prefix_cstr, bo
 {
     const ArchSpec &target_arch = target->GetArchitecture();
     
-    ModuleSP exe_module_sp (target->GetExecutableModule ());
+    Module *exe_module = target->GetExecutableModulePointer();
     char exe_path[PATH_MAX];
     bool exe_valid = false;
-    if (exe_module_sp)
-        exe_valid = exe_module_sp->GetFileSpec().GetPath (exe_path, sizeof(exe_path));
+    if (exe_module)
+        exe_valid = exe_module->GetFileSpec().GetPath (exe_path, sizeof(exe_path));
     
     if (!exe_valid)
         ::strcpy (exe_path, "<none>");
@@ -410,12 +411,16 @@ class CommandObjectTargetDelete : public CommandObject
 {
 public:
     CommandObjectTargetDelete (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "target delete",
-                   "Delete one or more targets by target index.",
-                   NULL,
-                   0)
+        CommandObject (interpreter,
+                       "target delete",
+                       "Delete one or more targets by target index.",
+                       NULL,
+                       0),
+        m_option_group (interpreter),
+        m_cleanup_option (LLDB_OPT_SET_1, false, "clean", 'c', 0, eArgTypeNone, "Perform extra cleanup to minimize memory consumption after deleting the target.", false)
     {
+        m_option_group.Append (&m_cleanup_option, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Finalize();
     }
     
     virtual
@@ -487,12 +492,28 @@ public:
                 target_list.DeleteTarget(target_sp);
                 target_sp->Destroy();
             }
+            // If "--clean" was specified, prune any orphaned shared modules from
+            // the global shared module list
+            if (m_cleanup_option.GetOptionValue ())
+            {
+                ModuleList::RemoveOrphanSharedModules();
+            }
             result.GetOutputStream().Printf("%u targets deleted.\n", (uint32_t)num_targets_to_delete);
             result.SetStatus(eReturnStatusSuccessFinishResult);
         }
         
         return result.Succeeded();
     }
+    
+    Options *
+    GetOptions ()
+    {
+        return &m_option_group;
+    }
+
+protected:
+    OptionGroupOptions m_option_group;
+    OptionGroupBoolean m_cleanup_option;
 };
 
 

@@ -2019,7 +2019,7 @@ Process::Launch
     m_dyld_ap.reset();
     m_process_input_reader.reset();
 
-    Module *exe_module = m_target.GetExecutableModule().get();
+    Module *exe_module = m_target.GetExecutableModulePointer();
     if (exe_module)
     {
         char local_exec_file_path[PATH_MAX];
@@ -2327,8 +2327,7 @@ Process::CompleteAttach ()
         ModuleSP module_sp (modules.GetModuleAtIndex(i));
         if (module_sp && module_sp->IsExecutable())
         {
-            ModuleSP target_exe_module_sp (m_target.GetExecutableModule());
-            if (target_exe_module_sp != module_sp)
+            if (m_target.GetExecutableModulePointer() != module_sp.get())
                 m_target.SetExecutableModule (module_sp, false);
             break;
         }
@@ -3319,11 +3318,11 @@ Process::GetSettingsController ()
 void
 Process::UpdateInstanceName ()
 {
-    ModuleSP module_sp = GetTarget().GetExecutableModule();
-    if (module_sp)
+    Module *module = GetTarget().GetExecutableModulePointer();
+    if (module)
     {
         StreamString sstr;
-        sstr.Printf ("%s", module_sp->GetFileSpec().GetFilename().AsCString());
+        sstr.Printf ("%s", module->GetFileSpec().GetFilename().AsCString());
                     
         GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
                                                          sstr.GetData());

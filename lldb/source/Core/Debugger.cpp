@@ -1256,17 +1256,17 @@ Debugger::FormatPrompt
                                              (::strncmp (var_name_begin, "file.basename}", strlen("file.basename}")) == 0) ||
                                              (::strncmp (var_name_begin, "file.fullpath}", strlen("file.fullpath}")) == 0))
                                     {
-                                        ModuleSP exe_module_sp (exe_ctx->process->GetTarget().GetExecutableModule());
-                                        if (exe_module_sp)
+                                        Module *exe_module = exe_ctx->process->GetTarget().GetExecutableModulePointer();
+                                        if (exe_module)
                                         {
                                             if (var_name_begin[0] == 'n' || var_name_begin[5] == 'f')
                                             {
-                                                format_file_spec.GetFilename() = exe_module_sp->GetFileSpec().GetFilename();
+                                                format_file_spec.GetFilename() = exe_module->GetFileSpec().GetFilename();
                                                 var_success = format_file_spec;
                                             }
                                             else
                                             {
-                                                format_file_spec = exe_module_sp->GetFileSpec();
+                                                format_file_spec = exe_module->GetFileSpec();
                                                 var_success = format_file_spec;
                                             }
                                         }

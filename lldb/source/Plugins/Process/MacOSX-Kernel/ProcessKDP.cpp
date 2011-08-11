@@ -59,14 +59,14 @@ bool
 ProcessKDP::CanDebug(Target &target, bool plugin_specified_by_name)
 {
     // For now we are just making sure the file exists for a given module
-    ModuleSP exe_module_sp(target.GetExecutableModule());
-    if (exe_module_sp.get())
+    Module *exe_module = target.GetExecutableModulePointer();
+    if (exe_module)
     {
         const llvm::Triple &triple_ref = target.GetArchitecture().GetTriple();
         if (triple_ref.getOS() == llvm::Triple::Darwin && 
             triple_ref.getVendor() == llvm::Triple::Apple)
         {
-            ObjectFile *exe_objfile = exe_module_sp->GetObjectFile();
+            ObjectFile *exe_objfile = exe_module->GetObjectFile();
             if (exe_objfile->GetType() == ObjectFile::eTypeExecutable && 
                 exe_objfile->GetStrata() == ObjectFile::eStrataKernel)
                 return true;

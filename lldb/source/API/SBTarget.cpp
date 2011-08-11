@@ -459,9 +459,9 @@ SBTarget::GetExecutable ()
     SBFileSpec exe_file_spec;
     if (m_opaque_sp)
     {
-        ModuleSP exe_module_sp (m_opaque_sp->GetExecutableModule ());
-        if (exe_module_sp)
-            exe_file_spec.SetFileSpec (exe_module_sp->GetFileSpec());
+        Module *exe_module = m_opaque_sp->GetExecutableModulePointer();
+        if (exe_module)
+            exe_file_spec.SetFileSpec (exe_module->GetFileSpec());
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));

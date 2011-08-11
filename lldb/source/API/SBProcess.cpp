@@ -804,7 +804,7 @@ SBProcess::GetDescription (SBStream &description)
     {
         char path[PATH_MAX];
         GetTarget().GetExecutable().GetPath (path, sizeof(path));
-        Module *exe_module = m_opaque_sp->GetTarget().GetExecutableModule ().get();
+        Module *exe_module = m_opaque_sp->GetTarget().GetExecutableModulePointer();
         const char *exe_name = NULL;
         if (exe_module)
             exe_name = exe_module->GetFileSpec().GetFilename().AsCString();

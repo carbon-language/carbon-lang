@@ -52,7 +52,7 @@ DynamicLoaderMacOSXKernel::CreateInstance (Process* process, bool force)
     bool create = force;
     if (!create)
     {
-        Module* exe_module = process->GetTarget().GetExecutableModule().get();
+        Module* exe_module = process->GetTarget().GetExecutableModulePointer();
         if (exe_module)
         {
             ObjectFile *object_file = exe_module->GetObjectFile();

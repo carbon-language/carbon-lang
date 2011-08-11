@@ -117,12 +117,12 @@ ThreadPlanAssemblyTracer::InitializeTracer()
     
     m_abi = process.GetABI().get();
     
-    ModuleSP exe_module_sp (target.GetExecutableModule());
+    Module *exe_module = target.GetExecutableModulePointer();
     
-    if (exe_module_sp)
+    if (exe_module)
     {
-        m_intptr_type = TypeFromUser(exe_module_sp->GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, arch.GetAddressByteSize() * 8),
-                                     exe_module_sp->GetClangASTContext().getASTContext());
+        m_intptr_type = TypeFromUser(exe_module->GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, arch.GetAddressByteSize() * 8),
+                                     exe_module->GetClangASTContext().getASTContext());
     }
     
     const unsigned int buf_size = 32;

@@ -347,6 +347,9 @@ public:
     lldb::ModuleSP
     GetExecutableModule ();
 
+    Module*
+    GetExecutableModulePointer ();
+
     //------------------------------------------------------------------
     /// Set the main executable module.
     ///
