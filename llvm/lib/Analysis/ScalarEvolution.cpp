@@ -3830,6 +3830,63 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 //                   Iteration Count Computation Code
 //
 
+/// getSmallConstantTripCount - Returns the maximum trip count of this loop as a
+/// normal unsigned value, if possible. Returns 0 if the trip count is unknown
+/// or not constant. Will also return 0 if the maximum trip count is very large
+/// (>= 2^32)
+unsigned ScalarEvolution::getSmallConstantTripCount(Loop *L,
+                                                    BasicBlock *ExitBlock) {
+  const SCEVConstant *ExitCount =
+    dyn_cast<SCEVConstant>(getExitCount(L, ExitBlock));
+  if (!ExitCount)
+    return 0;
+
+  ConstantInt *ExitConst = ExitCount->getValue();
+
+  // Guard against huge trip counts.
+  if (ExitConst->getValue().getActiveBits() > 32)
+    return 0;
+
+  // In case of integer overflow, this returns 0, which is correct.
+  return ((unsigned)ExitConst->getZExtValue()) + 1;
+}
+
+/// getSmallConstantTripMultiple - Returns the largest constant divisor of the
+/// trip count of this loop as a normal unsigned value, if possible. This
+/// means that the actual trip count is always a multiple of the returned
+/// value (don't forget the trip count could very well be zero as well!).
+///
+/// Returns 1 if the trip count is unknown or not guaranteed to be the
+/// multiple of a constant (which is also the case if the trip count is simply
+/// constant, use getSmallConstantTripCount for that case), Will also return 1
+/// if the trip count is very large (>= 2^32).
+unsigned ScalarEvolution::getSmallConstantTripMultiple(Loop *L,
+                                                       BasicBlock *ExitBlock) {
+  const SCEV *ExitCount = getExitCount(L, ExitBlock);
+  if (ExitCount == getCouldNotCompute())
+    return 1;
+
+  // Get the trip count from the BE count by adding 1.
+  const SCEV *TCMul = getAddExpr(ExitCount,
+                                 getConstant(ExitCount->getType(), 1));
+  // FIXME: SCEV distributes multiplication as V1*C1 + V2*C1. We could attempt
+  // to factor simple cases.
+  if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(TCMul))
+    TCMul = Mul->getOperand(0);
+
+  const SCEVConstant *MulC = dyn_cast<SCEVConstant>(TCMul);
+  if (!MulC)
+    return 1;
+
+  ConstantInt *Result = MulC->getValue();
+
+  // Guard against huge trip counts.
+  if (!Result || Result->getValue().getActiveBits() > 32)
+    return 1;
+
+  return (unsigned)Result->getZExtValue();
+}
+
 // getExitCount - Get the expression for the number of loop iterations for which
 // this loop is guaranteed not to exit via ExitintBlock. Otherwise return
 // SCEVCouldNotCompute.

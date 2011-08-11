@@ -39,6 +39,11 @@ UnrollAllowPartial("unroll-allow-partial", cl::init(false), cl::Hidden,
   cl::desc("Allows loops to be partially unrolled until "
            "-unroll-threshold loop size is reached."));
 
+// Temporary flag to be made default shortly.
+static cl::opt<bool>
+UnrollWithSCEV("unroll-scev", cl::init(false), cl::Hidden,
+  cl::desc("Use ScalarEvolution to analyze loop trip counts for unrolling"));
+
 namespace {
   class LoopUnroll : public LoopPass {
   public:
@@ -121,6 +126,7 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls) {
 
 bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   LoopInfo *LI = &getAnalysis<LoopInfo>();
+  ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
 
   BasicBlock *Header = L->getHeader();
   DEBUG(dbgs() << "Loop Unroll: F[" << Header->getParent()->getName()
@@ -136,14 +142,24 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
       Header->getParent()->hasFnAttr(Attribute::OptimizeForSize))
     Threshold = OptSizeUnrollThreshold;
 
-  // Find trip count
-  unsigned TripCount = L->getSmallConstantTripCount();
-
-  // Find trip multiple if count is not available
+  // Find trip count and trip multiple if count is not available
+  unsigned TripCount = 0;
   unsigned TripMultiple = 1;
-  if (TripCount == 0)
-    TripMultiple = L->getSmallConstantTripMultiple();
-
+  if (UnrollWithSCEV) {
+    // Find "latch trip count". UnrollLoop assumes that control cannot exit
+    // via the loop latch on any iteration prior to TripCount. The loop may exit
+    // early via an earlier branch.
+    BasicBlock *LatchBlock = L->getLoopLatch();
+    if (LatchBlock) {
+      TripCount = SE->getSmallConstantTripCount(L, LatchBlock);
+      TripMultiple = SE->getSmallConstantTripMultiple(L, LatchBlock);
+    }
+  }
+  else {
+    TripCount = L->getSmallConstantTripCount();
+    if (TripCount == 0)
+      TripMultiple = L->getSmallConstantTripMultiple();
+  }
   // Automatically select an unroll count.
   unsigned Count = CurrentCount;
   if (Count == 0) {

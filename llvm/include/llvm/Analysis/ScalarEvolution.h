@@ -507,7 +507,8 @@ namespace llvm {
     /// FoundLHS, and FoundRHS is true.
     bool isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
                                      const SCEV *LHS, const SCEV *RHS,
-                                     const SCEV *FoundLHS, const SCEV *FoundRHS);
+                                     const SCEV *FoundLHS,
+                                     const SCEV *FoundRHS);
 
     /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
     /// in the header of its containing loop, we know the loop executes a
@@ -709,6 +710,18 @@ namespace llvm {
     /// to eliminate casts.
     bool isLoopBackedgeGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
                                      const SCEV *LHS, const SCEV *RHS);
+
+    /// getSmallConstantTripCount - Returns the maximum trip count of this loop
+    /// as a normal unsigned value, if possible. Returns 0 if the trip count is
+    /// unknown or not constant.
+    unsigned getSmallConstantTripCount(Loop *L, BasicBlock *ExitBlock);
+
+    /// getSmallConstantTripMultiple - Returns the largest constant divisor of
+    /// the trip count of this loop as a normal unsigned value, if
+    /// possible. This means that the actual trip count is always a multiple of
+    /// the returned value (don't forget the trip count could very well be zero
+    /// as well!).
+    unsigned getSmallConstantTripMultiple(Loop *L, BasicBlock *ExitBlock);
 
     // getExitCount - Get the expression for the number of loop iterations for
     // which this loop is guaranteed not to exit via ExitingBlock. Otherwise
