@@ -91,7 +91,6 @@ BreakpointIDList::AddBreakpointID (const char *bp_id_str)
 bool
 BreakpointIDList::FindBreakpointID (BreakpointID &bp_id, uint32_t *position)
 {
-    bool success = false;
     BreakpointIDArray::iterator tmp_pos;
 
     for (size_t i = 0; i < m_breakpoint_ids.size(); ++i)
@@ -100,7 +99,6 @@ BreakpointIDList::FindBreakpointID (BreakpointID &bp_id, uint32_t *position)
         if (tmp_id.GetBreakpointID() == bp_id.GetBreakpointID()
             && tmp_id.GetLocationID() == bp_id.GetLocationID())
         {
-            success = true;
             *position = i;
             return true;
         }
