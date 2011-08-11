@@ -429,7 +429,6 @@ RNBRemote::GetPacket (std::string &packet_payload, RNBRemote::Packet& packet_inf
             return err;
 
         const nub_event_t events_to_wait_for = RNBContext::event_read_packet_available | RNBContext::event_read_thread_exiting;
-        set_events = 0;
 
         while ((set_events = events.WaitForSetEvents(events_to_wait_for)) != 0)
         {
@@ -2068,7 +2067,7 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
         // Output the T packet with the thread
         ostrm << 'T';
         int signum = tid_stop_info.details.signal.signo;
-        DNBLogThreadedIf (LOG_RNB_PROC, "%8d %s got signal signo = %u, exc_type = %u", (uint32_t)m_comm.Timer().ElapsedMicroSeconds(true), __FUNCTION__, tid_stop_info.details.signal.signo, tid_stop_info.details.exception.type);
+        DNBLogThreadedIf (LOG_RNB_PROC, "%8d %s got signal signo = %u, exc_type = %u", (uint32_t)m_comm.Timer().ElapsedMicroSeconds(true), __FUNCTION__, signum, tid_stop_info.details.exception.type);
 
         // Translate any mach exceptions to gdb versions, unless they are
         // common exceptions like a breakpoint or a soft signal.
