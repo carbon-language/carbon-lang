@@ -15,8 +15,8 @@
 <ol>
   <li><a href="#introduction">Introduction</a></li>
   <li><a href="#loadstore">Load and store</a></li>
-  <li><a href="#ordering">Atomic orderings</a></li>
   <li><a href="#otherinst">Other atomic instructions</a></li>
+  <li><a href="#ordering">Atomic orderings</a></li>
   <li><a href="#iropt">Atomics and IR optimization</a></li>
   <li><a href="#codegen">Atomics and Codegen</a></li>
 </ol>
@@ -43,13 +43,26 @@ instructions has been clarified in the IR.</p>
 <p>The atomic instructions are designed specifically to provide readable IR and
    optimized code generation for the following:</p>
 <ul>
-  <li>The new C++0x <code>&lt;atomic&gt;</code> header.</li>
+  <li>The new C++0x <code>&lt;atomic&gt;</code> header.
+      (<a href="http://www.open-std.org/jtc1/sc22/wg21/">C++0x draft available here</a>.)
+      (<a href="http://www.open-std.org/jtc1/sc22/wg14/">C1x draft available here</a>)</li>
   <li>Proper semantics for Java-style memory, for both <code>volatile</code> and
-      regular shared variables.</li>
-  <li>gcc-compatible <code>__sync_*</code> builtins.</li>
+      regular shared variables.
+      (<a href="http://java.sun.com/docs/books/jls/third_edition/html/memory.html">Java Specification</a>)</li>
+  <li>gcc-compatible <code>__sync_*</code> builtins.
+      (<a href="http://gcc.gnu.org/onlinedocs/gcc/Atomic-Builtins.html">Description</a>)</li>
   <li>Other scenarios with atomic semantics, including <code>static</code>
       variables with non-trivial constructors in C++.</li>
 </ul>
+
+<p>Atomic and volatile in the IR are orthogonal; "volatile" is the C/C++
+   volatile, which ensures that every volatile load and store happens and is
+   performed in the stated order.  A couple examples: if a
+   SequentiallyConsistent store is immediately followed by another
+   SequentiallyConsistent store to the same address, the first store can
+   be erased. This transformation is not allowed for a pair of volatile
+   stores. On the other hand, a non-volatile non-atomic load can be moved
+   across a volatile load freely, but not an Acquire load.</p>
 
 <p>This document is intended to provide a guide to anyone either writing a
    frontend for LLVM or working on optimization passes for LLVM with a guide
@@ -78,88 +91,19 @@ instructions has been clarified in the IR.</p>
    in general.)</p>
 
 <p>From the optimizer's point of view, the rule is that if there
-   are not any instructions with atomic ordering involved, concurrency does not
-   matter, with one exception: if a variable might be visible to another
+   are not any instructions with atomic ordering involved, concurrency does
+   not matter, with one exception: if a variable might be visible to another
    thread or signal handler, a store cannot be inserted along a path where it
-   might not execute otherwise. Note that speculative loads are allowed;
-   a load which is part of a race returns <code>undef</code>, but is not
-   undefined behavior.</p>
+   might not execute otherwise. For example, suppose LICM wants to take all the
+   loads and stores in a loop to and from a particular address and promote them
+   to registers. LICM is not allowed to insert an unconditional store after
+   the loop with the computed value unless a store unconditionally executes
+   within the loop. Note that speculative loads are allowed; a load which
+   is part of a race returns <code>undef</code>, but does not have undefined
+   behavior.</p>
 
 <p>For cases where simple loads and stores are not sufficient, LLVM provides
    atomic loads and stores with varying levels of guarantees.</p>
-
-</div>
-
-<!-- *********************************************************************** -->
-<h2>
-  <a name="ordering">Atomic orderings</a>
-</h2>
-<!-- *********************************************************************** -->
-
-<div>
-
-<p>In order to achieve a balance between performance and necessary guarantees,
-   there are six levels of atomicity. They are listed in order of strength;
-   each level includes all the guarantees of the previous level except for
-   Acquire/Release.</p>
-
-<p>Unordered is the lowest level of atomicity. It essentially guarantees that
-   races produce somewhat sane results instead of having undefined behavior. 
-   This is intended to match the Java memory model for shared variables. It 
-   cannot be used for synchronization, but is useful for Java and other 
-   "safe" languages which need to guarantee that the generated code never 
-   exhibits undefined behavior.  Note that this guarantee is cheap on common
-   platforms for loads of a native width, but can be expensive or unavailable
-   for wider loads, like a 64-bit load on ARM. (A frontend for a "safe"
-   language would normally split a 64-bit load on ARM into two 32-bit
-   unordered loads.) In terms of the optimizer, this prohibits any
-   transformation that transforms a single load into multiple loads, 
-   transforms a store into multiple stores, narrows a store, or stores a
-   value which would not be stored otherwise.  Some examples of unsafe
-   optimizations are narrowing an assignment into a bitfield, rematerializing
-   a load, and turning loads and stores into a memcpy call. Reordering 
-   unordered operations is safe, though, and optimizers should take 
-   advantage of that because unordered operations are common in
-   languages that need them.</p>
-
-<p>Monotonic is the weakest level of atomicity that can be used in
-   synchronization primitives, although it does not provide any general
-   synchronization. It essentially guarantees that if you take all the
-   operations affecting a specific address, a consistent ordering exists.
-   This corresponds to the C++0x/C1x <code>memory_order_relaxed</code>; see 
-   those standards for the exact definition.  If you are writing a frontend, do
-   not use the low-level synchronization primitives unless you are compiling
-   a language which requires it or are sure a given pattern is correct. In
-   terms of the optimizer, this can be treated as a read+write on the relevant 
-   memory location (and alias analysis will take advantage of that).  In 
-   addition, it is legal to reorder non-atomic and Unordered loads around 
-   Monotonic loads. CSE/DSE and a few other optimizations are allowed, but
-   Monotonic operations are unlikely to be used in ways which would make
-   those optimizations useful.</p>
-
-<p>Acquire provides a barrier of the sort necessary to acquire a lock to access
-   other memory with normal loads and stores. This corresponds to the 
-   C++0x/C1x <code>memory_order_acquire</code>. It should also be used for
-   C++0x/C1x <code>memory_order_consume</code>. This is a low-level 
-   synchronization primitive. In general, optimizers should treat this like
-   a nothrow call.</p>
-
-<p>Release is similar to Acquire, but with a barrier of the sort necessary to
-   release a lock. This corresponds to the C++0x/C1x
-   <code>memory_order_release</code>. In general, optimizers should treat this
-   like a nothrow call.</p>
-
-<p>AcquireRelease (<code>acq_rel</code> in IR) provides both an Acquire and a Release barrier.
-   This corresponds to the C++0x/C1x <code>memory_order_acq_rel</code>. In general,
-   optimizers should treat this like a nothrow call.</p>
-
-<p>SequentiallyConsistent (<code>seq_cst</code> in IR) provides Acquire and/or
-   Release semantics, and in addition guarantees a total ordering exists with
-   all other SequentiallyConsistent operations. This corresponds to the
-   C++0x/C1x <code>memory_order_seq_cst</code>, and Java volatile.  The intent
-   of this ordering level is to provide a programming model which is relatively
-   easy to understand. In general, optimizers should treat this like a
-   nothrow call.</p>
 
 </div>
 
@@ -186,6 +130,228 @@ instructions has been clarified in the IR.</p>
    target to some degree; atomic instructions are guaranteed to be lock-free,
    and therefore an instruction which is wider than the target natively supports
    can be impossible to generate.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<h2>
+  <a name="ordering">Atomic orderings</a>
+</h2>
+<!-- *********************************************************************** -->
+
+<div>
+
+<p>In order to achieve a balance between performance and necessary guarantees,
+   there are six levels of atomicity. They are listed in order of strength;
+   each level includes all the guarantees of the previous level except for
+   Acquire/Release.</p>
+
+<!-- ======================================================================= -->
+<h3>
+     <a name="o_unordered">Unordered</a>
+</h3>
+
+<div>
+
+<p>Unordered is the lowest level of atomicity. It essentially guarantees that
+   races produce somewhat sane results instead of having undefined behavior.
+   It also guarantees the operation to be lock-free, so it do not depend on
+   the data being part of a special atomic structure or depend on a separate
+   per-process global lock.  Note that code generation will fail for
+   unsupported atomic operations; if you need such an operation, use explicit
+   locking.</p>
+
+<dl>
+  <dt>Relevant standard</dt>
+  <dd>This is intended to match the Java memory model for shared
+      variables.</dd>
+  <dt>Notes for frontends</dt>
+  <dd>This cannot be used for synchronization, but is useful for Java and
+      other "safe" languages which need to guarantee that the generated
+      code never exhibits undefined behavior. Note that this guarantee
+      is cheap on common platforms for loads of a native width, but can
+      be expensive or unavailable for wider loads, like a 64-bit store
+      on ARM. (A frontend for Java or other "safe" languages would normally
+      split a 64-bit store on ARM into two 32-bit unordered stores.)
+  <dt>Notes for optimizers</dt>
+  <dd>In terms of the optimizer, this prohibits any transformation that
+      transforms a single load into multiple loads, transforms a store
+      into multiple stores, narrows a store, or stores a value which
+      would not be stored otherwise.  Some examples of unsafe optimizations
+      are narrowing an assignment into a bitfield, rematerializing
+      a load, and turning loads and stores into a memcpy call. Reordering
+      unordered operations is safe, though, and optimizers should take 
+      advantage of that because unordered operations are common in
+      languages that need them.</dd>
+  <dt>Notes for code generation</dt>
+  <dd>These operations are required to be atomic in the sense that if you
+      use unordered loads and unordered stores, a load cannot see a value
+      which was never stored.  A normal load or store instruction is usually
+      sufficient, but note that an unordered load or store cannot
+      be split into multiple instructions (or an instruction which
+      does multiple memory operations, like <code>LDRD</code> on ARM).</dd>
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<h3>
+     <a name="o_monotonic">Monotonic</a>
+</h3>
+
+<div>
+
+<p>Monotonic is the weakest level of atomicity that can be used in
+   synchronization primitives, although it does not provide any general
+   synchronization. It essentially guarantees that if you take all the
+   operations affecting a specific address, a consistent ordering exists.
+
+<dl>
+  <dt>Relevant standard</dt>
+  <dd>This corresponds to the C++0x/C1x <code>memory_order_relaxed</code>;
+     see those standards for the exact definition.
+  <dt>Notes for frontends</dt>
+  <dd>If you are writing a frontend which uses this directly, use with caution.
+      The guarantees in terms of synchronization are very weak, so make
+      sure these are only used in a pattern which you know is correct.
+      Generally, these would either be used for atomic operations which
+      do not protect other memory (like an atomic counter), or along with
+      a <code>fence</code>.</dd>
+  <dt>Notes for optimizers</dt>
+  <dd>In terms of the optimizer, this can be treated as a read+write on the
+      relevant memory location (and alias analysis will take advantage of
+      that). In addition, it is legal to reorder non-atomic and Unordered
+      loads around Monotonic loads. CSE/DSE and a few other optimizations
+      are allowed, but Monotonic operations are unlikely to be used in ways
+      which would make those optimizations useful.</dd>
+  <dt>Notes for code generation</dt>
+  <dd>Code generation is essentially the same as that for unordered for loads
+     and stores.  No fences is required.  <code>cmpxchg</code> and 
+     <code>atomicrmw</code> are required to appear as a single operation.</dd>
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<h3>
+     <a name="o_acquire">Acquire</a>
+</h3>
+
+<div>
+
+<p>Acquire provides a barrier of the sort necessary to acquire a lock to access
+   other memory with normal loads and stores.
+
+<dl>
+  <dt>Relevant standard</dt>
+  <dd>This corresponds to the C++0x/C1x <code>memory_order_acquire</code>. It
+      should also be used for C++0x/C1x <code>memory_order_consume</code>.
+  <dt>Notes for frontends</dt>
+  <dd>If you are writing a frontend which uses this directly, use with caution.
+      Acquire only provides a semantic guarantee when paired with a Release
+      operation.</dd>
+  <dt>Notes for optimizers</dt>
+  <dd>In general, optimizers should treat this like a nothrow call; the
+      the possible optimizations are usually not interesting.</dd>
+  <dt>Notes for code generation</dt>
+  <dd>Architectures with weak memory ordering (essentially everything relevant
+      today except x86 and SPARC) require some sort of fence to maintain
+      the Acquire semantics.  The precise fences required varies widely by
+      architecture, but for a simple implementation, most architectures provide
+      a barrier which is strong enough for everything (<code>dmb</code> on ARM,
+      <code>sync</code> on PowerPC, etc.).  Putting such a fence after the
+      equivalent Monotonic operation is sufficient to maintain Acquire
+      semantics for a memory operation.</dd>
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<h3>
+     <a name="o_acquire">Release</a>
+</h3>
+
+<div>
+
+<p>Release is similar to Acquire, but with a barrier of the sort necessary to
+   release a lock.
+
+<dl>
+  <dt>Relevant standard</dt>
+  <dd>This corresponds to the C++0x/C1x <code>memory_order_release</code>.</dd>
+  <dt>Notes for frontends</dt>
+  <dd>If you are writing a frontend which uses this directly, use with caution.
+      Release only provides a semantic guarantee when paired with a Acquire
+      operation.</dd>
+  <dt>Notes for optimizers</dt>
+  <dd>In general, optimizers should treat this like a nothrow call; the
+      the possible optimizations are usually not interesting.</dd>
+  <dt>Notes for code generation</dt>
+  <dd>Similarly to Acquire, a fence after the relevant operation is usually
+      sufficient; see the section on Acquire.  Note that a store-store fence
+      is not sufficient to implement Release semantics; store-store fences
+      are generally not exposed to IR because they are extremely difficult to
+      use correctly.</dd>
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<h3>
+     <a name="o_acqrel">AcquireRelease</a>
+</h3>
+
+<div>
+
+<p>AcquireRelease (<code>acq_rel</code> in IR) provides both an Acquire and a
+   Release barrier (for fences and operations which both read and write memory).
+
+<dl>
+  <dt>Relevant standard</dt>
+  <dd>This corresponds to the C++0x/C1x <code>memory_order_acq_rel</code>.
+  <dt>Notes for frontends</dt>
+  <dd>If you are writing a frontend which uses this directly, use with caution.
+      Acquire only provides a semantic guarantee when paired with a Release
+      operation, and vice versa.</dd>
+  <dt>Notes for optimizers</dt>
+  <dd>In general, optimizers should treat this like a nothrow call; the
+      the possible optimizations are usually not interesting.</dd>
+  <dt>Notes for code generation</dt>
+  <dd>This operation has Acquire and Release semantics; see the sections on
+      Acquire and Release.</p>
+</dl>
+
+</div>
+
+<!-- ======================================================================= -->
+<h3>
+     <a name="o_seqcst">SequentiallyConsistent</a>
+</h3>
+
+<div>
+
+<p>SequentiallyConsistent (<code>seq_cst</code> in IR) provides Acquire and/or
+   Release semantics, and in addition guarantees a total ordering exists with
+   all other SequentiallyConsistent operations.
+
+<dl>
+  <dt>Relevant standard</dt>
+  <dd>This corresponds to the C++0x/C1x <code>memory_order_seq_cst</code>,
+      Java volatile, and the gcc-compatible <code>__sync_*</code> builtins
+      which do not specify otherwise.
+  <dt>Notes for frontends</dt>
+  <dd>If a frontend is exposing atomic operations, these are much easier to
+      reason about for the programmer than other kinds of operations, and using
+      them is generally a practical performance tradeoff.</dd>
+  <dt>Notes for optimizers</dt>
+  <dd>In general, optimizers should treat this like a nothrow call; the
+      the possible optimizations are usually not interesting.</dd>
+  <dt>Notes for code generation</dt>
+  <dd>SequentiallyConsistent operations generally require the strongest
+      barriers supported by the architecture.</dd>
+</dl>
+
+</div>
 
 </div>
 
@@ -257,6 +423,15 @@ instructions has been clarified in the IR.</p>
    handles anything marked volatile very conservatively.  This should get
    fixed at some point.</p>
 
+<p>Common architectures have some way of representing at least a pointer-sized
+   lock-free <code>cmpxchg</code>; such an operation can be used to implement
+   all the other atomic operations which can be represented in IR up to that
+   size.  Backends are expected to implement all those operations, but not
+   operations which cannot be implemented in a lock-free manner.  It is
+   expected that backends will give an error when given an operation which
+   cannot be implemented.  (The LLVM code generator is not very helpful here
+   at the moment, but hopefully that will change.)</p>
+
 <p>The implementation of atomics on LL/SC architectures (like ARM) is currently
    a bit of a mess; there is a lot of copy-pasted code across targets, and
    the representation is relatively unsuited to optimization (it would be nice
@@ -278,8 +453,11 @@ instructions has been clarified in the IR.</p>
 <p>On ARM, MIPS, and many other RISC architectures, Acquire, Release, and
    SequentiallyConsistent semantics require barrier instructions
    for every such operation. Loads and stores generate normal instructions.
-   <code>atomicrmw</code> and <code>cmpxchg</code> generate LL/SC loops.</p>
-
+   <code>cmpxchg</code> and <code>atomicrmw</code> can be represented using
+   a loop with LL/SC-style instructions which take some sort of exclusive
+   lock on a cache line  (<code>LDREX</code> and <code>STREX</code> on
+   ARM, etc.). At the moment, the IR does not provide any way to represent a
+   weak <code>cmpxchg</code> which would not require a loop.</p>
 </div>
 
 <!-- *********************************************************************** -->
