@@ -4066,11 +4066,11 @@ static SDValue getUnpackh(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
   return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
 }
 
-// PromoteSplatv8v16 - All i16 and i8 vector types can't be used directly by
+// PromoteSplati8i16 - All i16 and i8 vector types can't be used directly by
 // a generic shuffle instruction because the target has no such instructions.
 // Generate shuffles which repeat i16 and i8 several times until they can be
 // represented by v4f32 and then be manipulated by target suported shuffles.
-static SDValue PromoteSplatv8v16(SDValue V, SelectionDAG &DAG, int &EltNo) {
+static SDValue PromoteSplati8i16(SDValue V, SelectionDAG &DAG, int &EltNo) {
   EVT VT = V.getValueType();
   int NumElems = VT.getVectorNumElements();
   DebugLoc dl = V.getDebugLoc();
@@ -4162,8 +4162,9 @@ static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
   }
 
   // Make this 128-bit vector duplicate i8 and i16 elements
-  if (NumElems > 4)
-    V1 = PromoteSplatv8v16(V1, DAG, EltNo);
+  EVT EltVT = SrcVT.getVectorElementType();
+  if (NumElems > 4 && (EltVT == MVT::i8 || EltVT == MVT::i16))
+    V1 = PromoteSplati8i16(V1, DAG, EltNo);
 
   // Recreate the 256-bit vector and place the same 128-bit vector
   // into the low and high part. This is necessary because we want
@@ -6027,8 +6028,7 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
       return PromoteVectorToScalarSplat(SVOp, DAG);
 
     // Handle splats by matching through known shuffle masks
-    if ((VT.is128BitVector() && NumElem <= 4) ||
-        (VT.is256BitVector() && NumElem <= 8))
+    if (VT.is128BitVector() && NumElem <= 4)
       return SDValue();
 
     // All i16 and i8 vector types can't be used directly by a generic shuffle

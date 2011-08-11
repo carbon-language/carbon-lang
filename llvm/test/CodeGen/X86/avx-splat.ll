@@ -51,8 +51,9 @@ entry:
 ; To:
 ;   shuffle (vload ptr)), undef, <1, 1, 1, 1>
 ; CHECK: vmovaps
-; CHECK-NEXT: vpextrd
-define void @funcE() nounwind {
+; CHECK-NEXT: vinsertf128  $1
+; CHECK-NEXT: vpermilps $-1
+define <8 x float> @funcE() nounwind {
 allocas:
   %udx495 = alloca [18 x [18 x float]], align 32
   br label %for_test505.preheader
@@ -74,7 +75,7 @@ load.i1247:                                       ; preds = %for_exit499
 
 __load_and_broadcast_32.exit1249:                 ; preds = %load.i1247, %for_exit499
   %load_broadcast12281250 = phi <8 x float> [ %phitmp, %load.i1247 ], [ undef, %for_exit499 ]
-  ret void
+  ret <8 x float> %load_broadcast12281250
 }
 
 ; CHECK: vpshufd  $0
@@ -85,5 +86,22 @@ define <8 x float> @funcF(i32* %ptr) nounwind {
   %ret7 = insertelement <8 x i32> %ret6, i32 %val, i32 7
   %tmp = bitcast <8 x i32> %ret7 to <8 x float>
   ret <8 x float> %tmp
+}
+
+; CHECK: vinsertf128  $1
+; CHECK-NEXT: vpermilps  $0
+define <8 x float> @funcG(<8 x float> %a) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <8 x float> %a, <8 x float> undef, <8 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
+  ret <8 x float> %shuffle
+}
+
+; CHECK: vextractf128  $1
+; CHECK-NEXT: vinsertf128  $1
+; CHECK-NEXT: vpermilps  $85
+define <8 x float> @funcH(<8 x float> %a) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <8 x float> %a, <8 x float> undef, <8 x i32> <i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5>
+  ret <8 x float> %shuffle
 }
 
