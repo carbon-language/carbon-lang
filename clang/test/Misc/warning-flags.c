@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (313):
+CHECK: Warnings without flags (312):
 CHECK-NEXT:   auto_storage_class
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
@@ -158,7 +158,6 @@ CHECK-NEXT:   warn_c_kext
 CHECK-NEXT:   warn_call_to_pure_virtual_member_function_from_ctor_dtor
 CHECK-NEXT:   warn_call_wrong_number_of_arguments
 CHECK-NEXT:   warn_case_empty_range
-CHECK-NEXT:   warn_cfstring_truncated
 CHECK-NEXT:   warn_char_constant_too_large
 CHECK-NEXT:   warn_class_method_not_found
 CHECK-NEXT:   warn_cmdline_missing_macro_defs
