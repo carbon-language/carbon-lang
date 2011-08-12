@@ -769,12 +769,11 @@ const GRState *CStringChecker::InvalidateBuffer(CheckerContext &C,
 
 bool CStringChecker::SummarizeRegion(raw_ostream& os, ASTContext& Ctx,
                                      const MemRegion *MR) {
-  const TypedRegion *TR = dyn_cast<TypedRegion>(MR);
   const TypedValueRegion *TVR = dyn_cast<TypedValueRegion>(MR);
 
-  switch (TR->getKind()) {
+  switch (MR->getKind()) {
   case MemRegion::FunctionTextRegionKind: {
-    const FunctionDecl *FD = cast<FunctionTextRegion>(TR)->getDecl();
+    const FunctionDecl *FD = cast<FunctionTextRegion>(MR)->getDecl();
     if (FD)
       os << "the address of the function '" << FD << "'";
     else

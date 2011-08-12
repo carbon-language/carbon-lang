@@ -100,8 +100,8 @@ public:
     END_DECL_REGIONS = ObjCIvarRegionKind,
     CXXTempObjectRegionKind,
     CXXBaseObjectRegionKind,
-    END_TYPED_REGIONS = CXXBaseObjectRegionKind,
-    END_TYPED_VALUE_REGIONS = CXXBaseObjectRegionKind
+    END_TYPED_VALUE_REGIONS = CXXBaseObjectRegionKind,
+    END_TYPED_REGIONS = CXXBaseObjectRegionKind
   };
     
 private:
