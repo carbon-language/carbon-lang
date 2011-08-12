@@ -392,6 +392,20 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   InputList Inputs;
   BuildInputs(C.getDefaultToolChain(), C.getArgs(), Inputs);
 
+  // Remove any inputs from the input list that cannot be preprocessed.
+  for (InputList::iterator it = Inputs.begin(), ie = Inputs.end(); it != ie;) {
+    if (types::getPreprocessedType(it->first) == types::TY_INVALID) {
+      it = Inputs.erase(it);
+      ie = Inputs.end();
+    } else
+      ++it;
+  }
+  if (Inputs.empty()) {
+    Diag(clang::diag::note_drv_command_failed_diag_msg)
+      << "Error generating preprocessed source(s) - no preprocessable inputs.";
+    return;
+  }
+
   // Construct the list of abstract actions to perform for this compilation.
   if (Host->useDriverDriver())
     BuildUniversalActions(C.getDefaultToolChain(), C.getArgs(),
