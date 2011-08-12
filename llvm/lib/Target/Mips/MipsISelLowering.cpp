@@ -195,6 +195,11 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setExceptionSelectorRegister(Mips::A1);
 }
 
+bool MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
+  // FIXME: allow unaligned memory accesses for other types too.
+  return VT.getSimpleVT().SimpleTy == MVT::i32; 
+}
+
 MVT::SimpleValueType MipsTargetLowering::getSetCCResultType(EVT VT) const {
   return MVT::i32;
 }
@@ -1685,6 +1690,7 @@ WriteByValArg(SDValue& Chain, DebugLoc dl,
   unsigned NumWords = (Flags.getByValSize() + 3) / 4;
   unsigned LastWord = FirstWord + NumWords;
   unsigned CurWord;
+  unsigned ByValAlign = Flags.getByValAlign();
 
   // copy the first 4 words of byval arg to registers A0 - A3
   for (CurWord = FirstWord; CurWord < std::min(LastWord, O32IntRegsSize);
@@ -1694,7 +1700,8 @@ WriteByValArg(SDValue& Chain, DebugLoc dl,
                                                   MVT::i32));
     SDValue LoadVal = DAG.getLoad(MVT::i32, dl, Chain, LoadPtr,
                                   MachinePointerInfo(),
-                                  false, false, 0);
+                                  false, false, std::min(ByValAlign,
+                                                         (unsigned )4));
     MemOpChains.push_back(LoadVal.getValue(1));
     unsigned DstReg = O32IntRegs[CurWord];
     RegsToPass.push_back(std::make_pair(DstReg, LoadVal));
@@ -1710,7 +1717,7 @@ WriteByValArg(SDValue& Chain, DebugLoc dl,
     SDValue Dst = DAG.getFrameIndex(LastFI, PtrType);
     Chain = DAG.getMemcpy(Chain, dl, Dst, Src,
                           DAG.getConstant(SizeInBytes, MVT::i32),
-                          /*Align*/4,
+                          /*Align*/ByValAlign,
                           /*isVolatile=*/false, /*AlwaysInline=*/false,
                           MachinePointerInfo(0), MachinePointerInfo(0));
     MemOpChains.push_back(Chain);

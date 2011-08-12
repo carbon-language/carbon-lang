@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInst.h"
@@ -54,6 +55,22 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MipsMCInstLower MCInstLowering(Mang, *MF, *this);
   MCInst TmpInst0;
   MCInstLowering.Lower(MI, TmpInst0);
+  unsigned Opc = MI->getOpcode();
+  
+  // Convert aligned loads/stores to their unaligned counterparts.
+  // FIXME: expand other unaligned memory accesses too.
+  if ((Opc == Mips::LW || Opc == Mips::SW) && !MI->memoperands_empty() &&
+      (*MI->memoperands_begin())->getAlignment() < 4) {
+    MCInst Directive;
+    Directive.setOpcode(Mips::MACRO);
+    OutStreamer.EmitInstruction(Directive);
+    TmpInst0.setOpcode(Opc == Mips::LW ? Mips::ULW : Mips::USW);
+    OutStreamer.EmitInstruction(TmpInst0);
+    Directive.setOpcode(Mips::NOMACRO);
+    OutStreamer.EmitInstruction(Directive);
+    return;
+  }
+
   OutStreamer.EmitInstruction(TmpInst0);
 }
 
