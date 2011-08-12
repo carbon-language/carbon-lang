@@ -70,6 +70,14 @@ h4, .doc_subsubsection { margin: 2.0em 0.5em 0.5em 0.5em;
                   display: table;
                 }
 
+blockquote pre {
+        padding: 1em 2em 1em 1em;
+        border: solid 1px gray;
+        background: #eeeeee;
+        margin: 0 1em 0 1em;
+        display: table;
+}
+
 h2+div, h2+p {text-align: left; padding-left: 20pt; padding-right: 10pt;}
 h3+div, h3+p {text-align: left; padding-left: 20pt; padding-right: 10pt;}
 h4+div, h4+p {text-align: left; padding-left: 20pt; padding-right: 10pt;}
