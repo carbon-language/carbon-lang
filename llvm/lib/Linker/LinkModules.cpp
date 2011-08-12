@@ -139,7 +139,7 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
       return false;
   } else if (StructType *DSTy = dyn_cast<StructType>(DstTy)) {
     StructType *SSTy = cast<StructType>(SrcTy);
-    if (DSTy->isAnonymous() != SSTy->isAnonymous() ||
+    if (DSTy->isLiteral() != SSTy->isLiteral() ||
         DSTy->isPacked() != SSTy->isPacked())
       return false;
   } else if (ArrayType *DATy = dyn_cast<ArrayType>(DstTy)) {
@@ -223,7 +223,7 @@ Type *TypeMapTy::getImpl(Type *Ty) {
   
   // If this is not a named struct type, then just map all of the elements and
   // then rebuild the type from inside out.
-  if (!isa<StructType>(Ty) || cast<StructType>(Ty)->isAnonymous()) {
+  if (!isa<StructType>(Ty) || cast<StructType>(Ty)->isLiteral()) {
     // If there are no element types to map, then the type is itself.  This is
     // true for the anonymous {} struct, things like 'float', integers, etc.
     if (Ty->getNumContainedTypes() == 0)
@@ -302,7 +302,7 @@ Type *TypeMapTy::getImpl(Type *Ty) {
   // Otherwise we create a new type and resolve its body later.  This will be
   // resolved by the top level of get().
   DefinitionsToResolve.push_back(STy);
-  return *Entry = StructType::createNamed(STy->getContext(), "");
+  return *Entry = StructType::create(STy->getContext());
 }
 
 
