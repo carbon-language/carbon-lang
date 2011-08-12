@@ -392,7 +392,7 @@ StructType *StructType::get(LLVMContext &Context, ArrayRef<Type*> ETypes,
   
   // Value not found.  Create a new type!
   ST = new (Context.pImpl->TypeAllocator) StructType(Context);
-  ST->setSubclassData(SCDB_IsAnonymous);  // Anonymous struct.
+  ST->setSubclassData(SCDB_IsLiteral);  // Literal struct.
   ST->setBody(ETypes, isPacked);
   return ST;
 }
@@ -478,6 +478,48 @@ StructType *StructType::get(Type *type, ...) {
   return llvm::StructType::get(Ctx, StructFields);
 }
 
+StructType *StructType::create(LLVMContext &Context, ArrayRef<Type*> Elements,
+                               StringRef Name, bool isPacked) {
+  StructType *ST = createNamed(Context, Name);
+  ST->setBody(Elements, isPacked);
+  return ST;
+}
+
+StructType *StructType::create(LLVMContext &Context, ArrayRef<Type*> Elements) {
+  return create(Context, Elements, StringRef());
+}
+
+
+StructType *StructType::create(ArrayRef<Type*> Elements, StringRef Name,
+                               bool isPacked) {
+  assert(!Elements.empty() &&
+         "This method may not be invoked with an empty list");
+  return create(Elements[0]->getContext(), Elements, Name, isPacked);
+}
+
+StructType *StructType::create(ArrayRef<Type*> Elements) {
+  assert(!Elements.empty() &&
+         "This method may not be invoked with an empty list");
+  return create(Elements[0]->getContext(), Elements, StringRef());
+}
+
+StructType *StructType::create(StringRef Name, Type *type, ...) {
+  assert(type != 0 && "Cannot create a struct type with no elements with this");
+  LLVMContext &Ctx = type->getContext();
+  va_list ap;
+  SmallVector<llvm::Type*, 8> StructFields;
+  va_start(ap, type);
+  while (type) {
+    StructFields.push_back(type);
+    type = va_arg(ap, llvm::Type*);
+  }
+  return llvm::StructType::create(Ctx, StructFields, Name);
+}
+
+
+
+
+
 StructType *StructType::createNamed(LLVMContext &Context, StringRef Name,
                                     ArrayRef<Type*> Elements, bool isPacked) {
   StructType *ST = createNamed(Context, Name);
@@ -506,7 +548,7 @@ StructType *StructType::createNamed(StringRef Name, Type *type, ...) {
 }
 
 StringRef StructType::getName() const {
-  assert(!isAnonymous() && "Anonymous structs never have names");
+  assert(!isLiteral() && "Literal structs never have names");
   if (SymbolTableEntry == 0) return StringRef();
   
   return ((StringMapEntry<StructType*> *)SymbolTableEntry)->getKey();

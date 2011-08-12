@@ -166,10 +166,25 @@ public:
 };
 
 
-/// StructType - Class to represent struct types, both normal and packed.
-/// Besides being optionally packed, structs can be either "anonymous" or may
-/// have an identity.  Anonymous structs are uniqued by structural equivalence,
-/// but types are each unique when created, and optionally have a name.
+/// StructType - Class to represent struct types.  There are two different kinds
+/// of struct types: Literal structs and Identified structs.
+///
+/// Literal struct types (e.g. { i32, i32 }) are uniqued structurally, and must
+/// always have a body when created.  You can get one of these by using one of
+/// the StructType::get() forms.
+///  
+/// Identified structs (e.g. %foo or %42) may optionally have a name and are not
+/// uniqued.  The names for identified structs are managed at the LLVMContext
+/// level, so there can only be a single identified struct with a given name in
+/// a particular LLVMContext.  Identified structs may also optionally be opaque
+/// (have no body specified).  You get one of these by using one of the
+/// StructType::create() forms.
+///
+/// Independent of what kind of struct you have, the body of a struct type are
+/// laid out in memory consequtively with the elements directly one after the
+/// other (if the struct is packed) or (if not packed) with padding between the
+/// elements as defined by TargetData (which is required to match what the code
+/// generator for a target expects).
 ///
 class StructType : public CompositeType {
   StructType(const StructType &);                   // Do not implement
@@ -180,13 +195,13 @@ class StructType : public CompositeType {
     // This is the contents of the SubClassData field.
     SCDB_HasBody = 1,
     SCDB_Packed = 2,
-    SCDB_IsAnonymous = 4
+    SCDB_IsLiteral = 4
   };
   
   /// SymbolTableEntry - For a named struct that actually has a name, this is a
   /// pointer to the symbol table entry (maintained by LLVMContext) for the
-  /// struct.  This is null if the type is an anonymous struct or if it is
-  /// a named type that has an empty name.
+  /// struct.  This is null if the type is an literal struct or if it is
+  /// a identified type that has an empty name.
   /// 
   void *SymbolTableEntry;
 public:
@@ -194,10 +209,26 @@ public:
     delete [] ContainedTys; // Delete the body.
   }
 
-  /// StructType::createNamed - This creates a named struct with no body
-  /// specified.  If the name is empty, it creates an unnamed struct, which has
-  /// a unique identity but no actual name.
-  static StructType *createNamed(LLVMContext &Context, StringRef Name);
+  /// StructType::create - This creates an identified struct.
+  static StructType *create(LLVMContext &Context, StringRef Name);
+  static StructType *create(LLVMContext &Context);
+  
+  static StructType *create(ArrayRef<Type*> Elements,
+                            StringRef Name,
+                            bool isPacked = false);
+  static StructType *create(ArrayRef<Type*> Elements);
+  static StructType *create(LLVMContext &Context,
+                            ArrayRef<Type*> Elements,
+                            StringRef Name,
+                            bool isPacked = false);
+  static StructType *create(LLVMContext &Context, ArrayRef<Type*> Elements);
+  static StructType *create(StringRef Name, Type *elt1, ...) END_WITH_NULL;
+
+  
+  // FIXME: Remove these.
+  bool isAnonymous() const {return (getSubclassData() & SCDB_IsLiteral) != 0;}
+  static StructType *createNamed(LLVMContext &Context,
+                                 StringRef Name);
   
   static StructType *createNamed(StringRef Name, ArrayRef<Type*> Elements,
                                  bool isPacked = false);
@@ -207,7 +238,7 @@ public:
   static StructType *createNamed(StringRef Name, Type *elt1, ...) END_WITH_NULL;
 
   /// StructType::get - This static method is the primary way to create a
-  /// StructType.
+  /// literal StructType.
   static StructType *get(LLVMContext &Context, ArrayRef<Type*> Elements,
                          bool isPacked = false);
 
@@ -223,9 +254,9 @@ public:
 
   bool isPacked() const { return (getSubclassData() & SCDB_Packed) != 0; }
   
-  /// isAnonymous - Return true if this type is uniqued by structural
-  /// equivalence, false if it has an identity.
-  bool isAnonymous() const {return (getSubclassData() & SCDB_IsAnonymous) != 0;}
+  /// isLiteral - Return true if this type is uniqued by structural
+  /// equivalence, false if it is a struct definition.
+  bool isLiteral() const {return (getSubclassData() & SCDB_IsLiteral) != 0;}
   
   /// isOpaque - Return true if this is a type with an identity that has no body
   /// specified yet.  These prints as 'opaque' in .ll files.
@@ -236,15 +267,15 @@ public:
   
   /// getName - Return the name for this struct type if it has an identity.
   /// This may return an empty string for an unnamed struct type.  Do not call
-  /// this on an anonymous type.
+  /// this on an literal type.
   StringRef getName() const;
   
   /// setName - Change the name of this type to the specified name, or to a name
-  /// with a suffix if there is a collision.  Do not call this on an anonymous
+  /// with a suffix if there is a collision.  Do not call this on an literal
   /// type.
   void setName(StringRef Name);
 
-  /// setBody - Specify a body for an opaque type.
+  /// setBody - Specify a body for an opaque identified type.
   void setBody(ArrayRef<Type*> Elements, bool isPacked = false);
   void setBody(Type *elt1, ...) END_WITH_NULL;
   

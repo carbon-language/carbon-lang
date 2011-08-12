@@ -2031,20 +2031,22 @@ in signal handlers).</p>
   
 <p>Structures may optionally be "packed" structures, which indicate that the 
   alignment of the struct is one byte, and that there is no padding between
-  the elements.  In non-packed structs, padding between field types is defined
-  by the target data string to match the underlying processor.</p>
+  the elements.  In non-packed structs, padding between field types is inserted
+  as defined by the TargetData string in the module, which is required to match
+  what the underlying processor expects.</p>
 
-<p>Structures can either be "anonymous" or "named".  An anonymous structure is
-  defined inline with other types (e.g. <tt>{i32, i32}*</tt>) and a named types
-  are always defined at the top level with a name.  Anonmyous types are uniqued
-  by their contents and can never be recursive since there is no way to write
-  one.  Named types can be recursive.
+<p>Structures can either be "literal" or "identified".  A literal structure is
+  defined inline with other types (e.g. <tt>{i32, i32}*</tt>) whereas identified
+  types are always defined at the top level with a name.  Literal types are
+  uniqued by their contents and can never be recursive or opaque since there is
+  no way to write one.  Named types can be recursive, can be opaqued, and are
+  never uniqued.
 </p>
   
 <h5>Syntax:</h5>
 <pre>
-  %T1 = type { &lt;type list&gt; }     <i>; Named normal struct type</i>
-  %T2 = type &lt;{ &lt;type list&gt; }&gt;   <i>; Named packed struct type</i>
+  %T1 = type { &lt;type list&gt; }     <i>; Identified normal struct type</i>
+  %T2 = type &lt;{ &lt;type list&gt; }&gt;   <i>; Identified packed struct type</i>
 </pre>
   
 <h5>Examples:</h5>
