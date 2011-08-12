@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_SA_CORE_CHECKER
 #define LLVM_CLANG_SA_CORE_CHECKER
 
+#include "clang/Analysis/ProgramPoint.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "llvm/Support/Casting.h"
@@ -329,6 +330,11 @@ public:
 
 } // end eval namespace
 
+class CheckerBase : public ProgramPointTag {
+public:
+  StringRef getTagDescription() const;
+};
+  
 template <typename CHECK1, typename CHECK2=check::_VoidCheck,
           typename CHECK3=check::_VoidCheck, typename CHECK4=check::_VoidCheck,
           typename CHECK5=check::_VoidCheck, typename CHECK6=check::_VoidCheck,
@@ -341,7 +347,9 @@ template <>
 class Checker<check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
                 check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
                 check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
-                check::_VoidCheck, check::_VoidCheck, check::_VoidCheck> {
+                check::_VoidCheck, check::_VoidCheck, check::_VoidCheck> 
+  : public CheckerBase 
+{
 public:
   static void _register(void *checker, CheckerManager &mgr) { }
 };

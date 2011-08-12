@@ -28,7 +28,7 @@ class CheckerContext {
   ExprEngine &Eng;
   ExplodedNode *Pred;
   SaveAndRestore<bool> OldSink;
-  const void *checkerTag;
+  const ProgramPointTag *checkerTag;
   SaveAndRestore<ProgramPoint::Kind> OldPointKind;
   SaveOr OldHasGen;
   const GRState *ST;
@@ -39,7 +39,7 @@ public:
 public:
   CheckerContext(ExplodedNodeSet &dst, StmtNodeBuilder &builder,
                  ExprEngine &eng, ExplodedNode *pred,
-                 const void *tag, ProgramPoint::Kind K,
+                 const ProgramPointTag *tag, ProgramPoint::Kind K,
                  bool *respondsToCB = 0,
                  const Stmt *stmt = 0, const GRState *st = 0)
     : Dst(dst), B(builder), Eng(eng), Pred(pred),
@@ -104,7 +104,7 @@ public:
   }
   
   ExplodedNode *generateNode(const Stmt *stmt, const GRState *state,
-                             bool autoTransition = true, const void *tag = 0) {
+                             bool autoTransition = true, const ProgramPointTag *tag = 0) {
     assert(state);
     ExplodedNode *N = generateNodeImpl(stmt, state, false,
                                        tag ? tag : checkerTag);
@@ -123,7 +123,7 @@ public:
   }
 
   ExplodedNode *generateNode(const GRState *state, bool autoTransition = true,
-                             const void *tag = 0) {
+                             const ProgramPointTag *tag = 0) {
     assert(statement && "Only transitions with statements currently supported");
     ExplodedNode *N = generateNodeImpl(statement, state, false,
                                        tag ? tag : checkerTag);
@@ -147,7 +147,7 @@ public:
     Dst.Add(node);
   }
   
-  void addTransition(const GRState *state, const void *tag = 0) {
+  void addTransition(const GRState *state, const ProgramPointTag *tag = 0) {
     assert(state);
     // If the 'state' is not new, we need to check if the cached state 'ST'
     // is new.
@@ -168,7 +168,7 @@ public:
 
 private:
   ExplodedNode *generateNodeImpl(const Stmt* stmt, const GRState *state,
-                             bool markAsSink, const void *tag) {
+                             bool markAsSink, const ProgramPointTag *tag) {
     ExplodedNode *node = B.generateNode(stmt, state, Pred, tag);
     if (markAsSink && node)
       node->markAsSink();

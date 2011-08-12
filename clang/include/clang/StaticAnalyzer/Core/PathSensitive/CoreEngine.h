@@ -24,6 +24,8 @@
 
 namespace clang {
 
+class ProgramPointTag;
+  
 namespace ento {
 
 //===----------------------------------------------------------------------===//
@@ -170,7 +172,7 @@ public:
   bool BuildSinks;
   bool hasGeneratedNode;
   ProgramPoint::Kind PointKind;
-  const void *Tag;
+  const ProgramPointTag *Tag;
 
   typedef llvm::SmallPtrSet<ExplodedNode*,5> DeferredTy;
   DeferredTy Deferred;
@@ -203,7 +205,7 @@ public:
 
   ExplodedNode* generateNode(const Stmt *S, const GRState *St,
                              ExplodedNode *Pred, ProgramPoint::Kind K,
-                             const void *tag = 0) {
+                             const ProgramPointTag *tag = 0) {
     hasGeneratedNode = true;
 
     if (PurgingDeadSymbols)
@@ -213,7 +215,8 @@ public:
   }
 
   ExplodedNode* generateNode(const Stmt *S, const GRState *St,
-                             ExplodedNode *Pred, const void *tag = 0) {
+                             ExplodedNode *Pred,
+                             const ProgramPointTag *tag = 0) {
     return generateNode(S, St, Pred, PointKind, tag);
   }
 
@@ -230,7 +233,7 @@ public:
   ExplodedNode*
   generateNodeInternal(const Stmt* S, const GRState* State, ExplodedNode* Pred,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
-                   const void *tag = 0);
+                   const ProgramPointTag *tag = 0);
 
   /// getStmt - Return the current block-level expression associated with
   ///  this builder.
@@ -367,7 +370,7 @@ class SwitchNodeBuilder {
 
 public:
   SwitchNodeBuilder(ExplodedNode* pred, const CFGBlock* src,
-                      const Expr* condition, CoreEngine* eng)
+                    const Expr* condition, CoreEngine* eng)
   : Eng(*eng), Src(src), Condition(condition), Pred(pred) {}
 
   class iterator {
@@ -443,7 +446,7 @@ public:
     : GenericNodeBuilderImpl(eng, pr, p) {}
 
   ExplodedNode *generateNode(const GRState *state, ExplodedNode *pred,
-                             const void *tag, bool asSink) {
+                             const ProgramPointTag *tag, bool asSink) {
     return generateNodeImpl(state, pred, cast<PP_T>(pp).withTag(tag),
                             asSink);
   }
@@ -455,19 +458,19 @@ class EndOfFunctionNodeBuilder {
   CoreEngine &Eng;
   const CFGBlock& B;
   ExplodedNode* Pred;
-  void *Tag;
+  const ProgramPointTag *Tag;
 
 public:
   bool hasGeneratedNode;
 
 public:
   EndOfFunctionNodeBuilder(const CFGBlock* b, ExplodedNode* N, CoreEngine* e,
-                           void *checkerTag = 0)
-    : Eng(*e), B(*b), Pred(N), Tag(checkerTag), hasGeneratedNode(false) {}
+                           const ProgramPointTag *tag = 0)
+    : Eng(*e), B(*b), Pred(N), Tag(tag), hasGeneratedNode(false) {}
 
   ~EndOfFunctionNodeBuilder();
 
-  EndOfFunctionNodeBuilder withCheckerTag(void *tag) {
+  EndOfFunctionNodeBuilder withCheckerTag(const ProgramPointTag *tag) {
     return EndOfFunctionNodeBuilder(&B, Pred, &Eng, tag);
   }
 
@@ -486,7 +489,7 @@ public:
   }
 
   ExplodedNode* generateNode(const GRState* State, ExplodedNode *P = 0,
-                             const void *tag = 0);
+                             const ProgramPointTag *tag = 0);
 
   void GenerateCallExitNode(const GRState *state);
 

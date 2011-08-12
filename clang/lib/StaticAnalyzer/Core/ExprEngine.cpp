@@ -243,7 +243,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
                                 "Error evaluating statement");
 
   // A tag to track convenience transitions, which can be removed at cleanup.
-  static unsigned tag;
+  static SimpleProgramPointTag cleanupTag("ExprEngine : Clean Node");
   Builder = &builder;
   EntryNode = builder.getPredecessor();
 
@@ -273,7 +273,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
     // up. Since no symbols are dead, we can optimize and not clean out
     // the constraint manager.
     CleanedNode =
-      Builder->generateNode(currentStmt, CleanedState, EntryNode, &tag);
+      Builder->generateNode(currentStmt, CleanedState, EntryNode, &cleanupTag);
     Tmp.Add(CleanedNode);
 
   } else {
@@ -318,7 +318,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S, StmtNodeBuilder& builder) {
         StateMgr.getPersistentStateWithGDM(CleanedState, CheckerState);
       ExplodedNode *CleanedNode = Builder->generateNode(currentStmt,
                                                         CleanedCheckerSt, *I,
-                                                        &tag);
+                                                        &cleanupTag);
       Tmp.Add(CleanedNode);
     }
   }
@@ -835,8 +835,7 @@ void ExprEngine::processCFGBlockEntrance(ExplodedNodeSet &dstNodes,
   if (nodeBuilder.getBlockCounter().getNumVisited(
                        pred->getLocationContext()->getCurrentStackFrame(), 
                        block->getBlockID()) >= AMgr.getMaxVisit()) {
-
-    static int tag = 0;
+    static SimpleProgramPointTag tag("ExprEngine : Block count exceeded");
     nodeBuilder.generateNode(pred->getState(), pred, &tag, true);
   }
 }
@@ -846,10 +845,11 @@ void ExprEngine::processCFGBlockEntrance(ExplodedNodeSet &dstNodes,
 //===----------------------------------------------------------------------===//
 
 ExplodedNode* ExprEngine::MakeNode(ExplodedNodeSet& Dst, const Stmt* S,
-                                     ExplodedNode* Pred, const GRState* St,
-                                     ProgramPoint::Kind K, const void *tag) {
+                                   ExplodedNode* Pred, const GRState* St,
+                                   ProgramPoint::Kind K,
+                                   const ProgramPointTag *tag) {
   assert (Builder && "StmtNodeBuilder not present.");
-  SaveAndRestore<const void*> OldTag(Builder->Tag);
+  SaveAndRestore<const ProgramPointTag*> OldTag(Builder->Tag);
   Builder->Tag = tag;
   return Builder->MakeNode(Dst, S, Pred, St, K);
 }
@@ -1476,7 +1476,7 @@ void ExprEngine::evalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
                              const Expr* LocationE,
                              ExplodedNode* Pred,
                              const GRState* state, SVal location, SVal Val,
-                             const void *tag) {
+                             const ProgramPointTag *tag) {
 
   assert(Builder && "StmtNodeBuilder must be defined.");
 
@@ -1510,7 +1510,7 @@ void ExprEngine::evalStore(ExplodedNodeSet& Dst, const Expr *AssignE,
 void ExprEngine::evalLoad(ExplodedNodeSet& Dst, const Expr *Ex,
                             ExplodedNode* Pred,
                             const GRState* state, SVal location,
-                            const void *tag, QualType LoadTy) {
+                            const ProgramPointTag *tag, QualType LoadTy) {
   assert(!isa<NonLoc>(location) && "location cannot be a NonLoc.");
 
   if (isa<loc::ObjCPropRef>(location)) {
@@ -1527,7 +1527,8 @@ void ExprEngine::evalLoad(ExplodedNodeSet& Dst, const Expr *Ex,
 
     QualType ValTy = TR->getValueType();
     if (const ReferenceType *RT = ValTy->getAs<ReferenceType>()) {
-      static int loadReferenceTag = 0;
+      static SimpleProgramPointTag
+             loadReferenceTag("ExprEngine : Load Reference");
       ExplodedNodeSet Tmp;
       evalLoadCommon(Tmp, Ex, Pred, state, location, &loadReferenceTag,
                      getContext().getPointerType(RT->getPointeeType()));
@@ -1548,7 +1549,7 @@ void ExprEngine::evalLoad(ExplodedNodeSet& Dst, const Expr *Ex,
 void ExprEngine::evalLoadCommon(ExplodedNodeSet& Dst, const Expr *Ex,
                                   ExplodedNode* Pred,
                                   const GRState* state, SVal location,
-                                  const void *tag, QualType LoadTy) {
+                                  const ProgramPointTag *tag, QualType LoadTy) {
 
   // Evaluate the location (checks for bad dereferences).
   ExplodedNodeSet Tmp;
@@ -1584,7 +1585,7 @@ void ExprEngine::evalLoadCommon(ExplodedNodeSet& Dst, const Expr *Ex,
 void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
                                 ExplodedNode* Pred,
                                 const GRState* state, SVal location,
-                                const void *tag, bool isLoad) {
+                                const ProgramPointTag *tag, bool isLoad) {
   // Early checks for performance reason.
   if (location.isUnknown()) {
     Dst.Add(Pred);
@@ -1603,7 +1604,11 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
     // "p = 0" is not noted as "Null pointer value stored to 'p'" but
     // instead "int *p" is noted as
     // "Variable 'p' initialized to a null pointer value"
-    ExplodedNode *N = Builder->generateNode(S, state, Pred, this);
+    
+    // FIXME: why is 'tag' not used instead of etag?
+    static SimpleProgramPointTag etag("ExprEngine: Location");
+
+    ExplodedNode *N = Builder->generateNode(S, state, Pred, &etag);
     Src.Add(N ? N : Pred);
   }
   getCheckerManager().runCheckersForLocation(Dst, Src, location, isLoad, S,
@@ -2653,7 +2658,7 @@ void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
     // Record the returned expression in the state. It will be used in
     // processCallExit to bind the return value to the call expr.
     {
-      static int tag = 0;
+      static SimpleProgramPointTag tag("ExprEngine: ReturnStmt");
       const GRState *state = Pred->getState();
       state = state->set<ReturnExpr>(RetE);
       Pred = Builder->generateNode(RetE, state, Pred, &tag);
@@ -3024,7 +3029,13 @@ struct DOTGraphTraits<ExplodedNode*> :
     Out << "\\|StateID: " << (void*) state
         << " NodeID: " << (void*) N << "\\|";
     state->printDOT(Out, *N->getLocationContext()->getCFG());
-    Out << "\\l";
+
+    Out << "\\l";    
+
+    if (const ProgramPointTag *tag = Loc.getTag()) {
+      Out << "\\|Tag: " << tag->getTagDescription(); 
+      Out << "\\l";
+    }
     return Out.str();
   }
 };

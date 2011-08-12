@@ -226,7 +226,7 @@ public:
   ExplodedNode* MakeNode(ExplodedNodeSet& Dst, const Stmt* S, 
                          ExplodedNode* Pred, const GRState* St,
                          ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
-                         const void *tag = 0);
+                         const ProgramPointTag *tag = 0);
 
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.
@@ -430,24 +430,24 @@ public:
   // same as state->getLValue(Ex).
   /// Simulate a read of the result of Ex.
   void evalLoad(ExplodedNodeSet& Dst, const Expr* Ex, ExplodedNode* Pred,
-                const GRState* St, SVal location, const void *tag = 0,
+                const GRState* St, SVal location, const ProgramPointTag *tag = 0,
                 QualType LoadTy = QualType());
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
   void evalStore(ExplodedNodeSet& Dst, const Expr* AssignE, const Expr* StoreE,
                  ExplodedNode* Pred, const GRState* St, SVal TargetLV, SVal Val,
-                 const void *tag = 0);
+                 const ProgramPointTag *tag = 0);
 private:
   void evalLoadCommon(ExplodedNodeSet& Dst, const Expr* Ex, ExplodedNode* Pred,
-                      const GRState* St, SVal location, const void *tag,
+                      const GRState* St, SVal location, const ProgramPointTag *tag,
                       QualType LoadTy);
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
   void evalLocation(ExplodedNodeSet &Dst, const Stmt *S, ExplodedNode* Pred,
                     const GRState* St, SVal location,
-                    const void *tag, bool isLoad);
+                    const ProgramPointTag *tag, bool isLoad);
 
   bool InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, ExplodedNode *Pred);
   

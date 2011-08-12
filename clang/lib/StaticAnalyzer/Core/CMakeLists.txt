@@ -12,6 +12,7 @@ add_clang_library(clangStaticAnalyzerCore
   BugReporterVisitors.cpp
   CFRefCount.cpp
   CXXExprEngine.cpp
+  Checker.cpp
   CheckerContext.cpp
   CheckerHelpers.cpp
   CheckerManager.cpp

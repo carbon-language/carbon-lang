@@ -27,6 +27,7 @@ namespace clang {
   class CallExpr;
 
 namespace ento {
+  class CheckerBase;
   class ExprEngine;
   class AnalysisManager;
   class BugReporter;
@@ -55,8 +56,8 @@ class CheckerFn<RET(P1, P2, P3, P4)> {
   typedef RET (*Func)(void *, P1, P2, P3, P4);
   Func Fn;
 public:
-  void *Checker;
-  CheckerFn(void *checker, Func fn) : Fn(fn), Checker(checker) { }
+  CheckerBase *Checker;
+  CheckerFn(CheckerBase *checker, Func fn) : Fn(fn), Checker(checker) { }
   RET operator()(P1 p1, P2 p2, P3 p3, P4 p4) const { 
     return Fn(Checker, p1, p2, p3, p4);
   } 
@@ -67,8 +68,8 @@ class CheckerFn<RET(P1, P2, P3)> {
   typedef RET (*Func)(void *, P1, P2, P3);
   Func Fn;
 public:
-  void *Checker;
-  CheckerFn(void *checker, Func fn) : Fn(fn), Checker(checker) { }
+  CheckerBase *Checker;
+  CheckerFn(CheckerBase *checker, Func fn) : Fn(fn), Checker(checker) { }
   RET operator()(P1 p1, P2 p2, P3 p3) const { return Fn(Checker, p1, p2, p3); } 
 };
 
@@ -77,8 +78,8 @@ class CheckerFn<RET(P1, P2)> {
   typedef RET (*Func)(void *, P1, P2);
   Func Fn;
 public:
-  void *Checker;
-  CheckerFn(void *checker, Func fn) : Fn(fn), Checker(checker) { }
+  CheckerBase *Checker;
+  CheckerFn(CheckerBase *checker, Func fn) : Fn(fn), Checker(checker) { }
   RET operator()(P1 p1, P2 p2) const { return Fn(Checker, p1, p2); } 
 };
 
@@ -87,8 +88,8 @@ class CheckerFn<RET(P1)> {
   typedef RET (*Func)(void *, P1);
   Func Fn;
 public:
-  void *Checker;
-  CheckerFn(void *checker, Func fn) : Fn(fn), Checker(checker) { }
+  CheckerBase *Checker;
+  CheckerFn(CheckerBase *checker, Func fn) : Fn(fn), Checker(checker) { }
   RET operator()(P1 p1) const { return Fn(Checker, p1); } 
 };
 
@@ -97,8 +98,8 @@ class CheckerFn<RET()> {
   typedef RET (*Func)(void *);
   Func Fn;
 public:
-  void *Checker;
-  CheckerFn(void *checker, Func fn) : Fn(fn), Checker(checker) { }
+  CheckerBase *Checker;
+  CheckerFn(CheckerBase *checker, Func fn) : Fn(fn), Checker(checker) { }
   RET operator()() const { return Fn(Checker); } 
 };
 
@@ -115,8 +116,8 @@ public:
 
   const LangOptions &getLangOptions() const { return LangOpts; }
 
-  typedef void *CheckerRef;
-  typedef void *CheckerTag;
+  typedef CheckerBase *CheckerRef;
+  typedef const void *CheckerTag;
   typedef CheckerFn<void ()> CheckerDtor;
 
 //===----------------------------------------------------------------------===//

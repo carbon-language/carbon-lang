@@ -24,7 +24,7 @@ CheckerContext::~CheckerContext() {
   // add it as a transition.
   if (Dst.size() == size && !B.BuildSinks && !B.hasGeneratedNode) {
     if (ST && ST != Pred->getState()) {
-      static int autoTransitionTag = 0;
+      static SimpleProgramPointTag autoTransitionTag("CheckerContext : auto");
       addTransition(ST, &autoTransitionTag);
     }
     else

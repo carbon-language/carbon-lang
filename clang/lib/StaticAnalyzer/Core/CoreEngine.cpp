@@ -546,7 +546,8 @@ ExplodedNode* StmtNodeBuilder::MakeNode(ExplodedNodeSet& Dst, const Stmt* S,
 }
 
 static ProgramPoint GetProgramPoint(const Stmt *S, ProgramPoint::Kind K,
-                                    const LocationContext *LC, const void *tag){
+                                    const LocationContext *LC,
+                                    const ProgramPointTag *tag){
   switch (K) {
     default:
       assert(false && "Unhandled ProgramPoint kind");    
@@ -571,11 +572,12 @@ static ProgramPoint GetProgramPoint(const Stmt *S, ProgramPoint::Kind K,
 
 ExplodedNode*
 StmtNodeBuilder::generateNodeInternal(const Stmt* S, const GRState* state,
-                                        ExplodedNode* Pred,
-                                        ProgramPoint::Kind K,
-                                        const void *tag) {
+                                      ExplodedNode* Pred,
+                                      ProgramPoint::Kind K,
+                                      const ProgramPointTag *tag) {
   
-  const ProgramPoint &L = GetProgramPoint(S, K, Pred->getLocationContext(),tag);
+  const ProgramPoint &L = GetProgramPoint(S, K, Pred->getLocationContext(),
+                                          tag);
   return generateNodeInternal(L, state, Pred);
 }
 
@@ -732,7 +734,8 @@ EndOfFunctionNodeBuilder::~EndOfFunctionNodeBuilder() {
 
 ExplodedNode*
 EndOfFunctionNodeBuilder::generateNode(const GRState* State,
-                                       ExplodedNode* P, const void *tag) {
+                                       ExplodedNode* P,
+                                       const ProgramPointTag *tag) {
   hasGeneratedNode = true;
   bool IsNew;
 

@@ -88,11 +88,11 @@ namespace {
 class GenericNodeBuilderRefCount {
   StmtNodeBuilder *SNB;
   const Stmt *S;
-  const void *tag;
+  const ProgramPointTag *tag;
   EndOfFunctionNodeBuilder *ENB;
 public:
   GenericNodeBuilderRefCount(StmtNodeBuilder &snb, const Stmt *s,
-                     const void *t)
+                     const ProgramPointTag *t)
   : SNB(&snb), S(s), tag(t), ENB(0) {}
 
   GenericNodeBuilderRefCount(EndOfFunctionNodeBuilder &enb)
@@ -1671,9 +1671,11 @@ public:
   BugType *overAutorelease;
   BugType *returnNotOwnedForOwned;
   BugReporter *BR;
+  
+  llvm::DenseMap<SymbolRef, const SimpleProgramPointTag*> DeadSymbolTags;
 
-  const GRState * Update(const GRState * state, SymbolRef sym, RefVal V, ArgEffect E,
-                    RefVal::Kind& hasErr);
+  const GRState * Update(const GRState * state, SymbolRef sym, RefVal V,
+                         ArgEffect E, RefVal::Kind& hasErr);
 
   void ProcessNonLeakError(ExplodedNodeSet& Dst,
                            StmtNodeBuilder& Builder,
@@ -1699,7 +1701,11 @@ public:
       leakWithinFunction(0), leakAtReturn(0), overAutorelease(0),
       returnNotOwnedForOwned(0), BR(0) {}
 
-  virtual ~CFRefCount() {}
+  virtual ~CFRefCount() {
+    for (llvm::DenseMap<SymbolRef, const SimpleProgramPointTag *>::iterator
+         it = DeadSymbolTags.begin(), ei = DeadSymbolTags.end(); it != ei; ++it)
+      delete it->second;
+  }
 
   void RegisterChecks(ExprEngine &Eng);
 
@@ -1757,6 +1763,8 @@ public:
                                const GRState* state,
                                SymbolReaper& SymReaper);
 
+  const ProgramPointTag *getDeadSymbolTag(SymbolRef sym);
+  
   std::pair<ExplodedNode*, const GRState *>
   HandleAutoreleaseCounts(const GRState * state, GenericNodeBuilderRefCount Bd,
                           ExplodedNode* Pred, ExprEngine &Eng,
@@ -2968,7 +2976,7 @@ void CFRefCount::evalReturn(ExplodedNodeSet& Dst,
     return;
 
   // Update the autorelease counts.
-  static unsigned autoreleasetag = 0;
+  static SimpleProgramPointTag autoreleasetag("CFRefCount : Autorelease");
   GenericNodeBuilderRefCount Bd(Builder, S, &autoreleasetag);
   bool stop = false;
   llvm::tie(Pred, state) = HandleAutoreleaseCounts(state , Bd, Pred, Eng, Sym,
@@ -3031,7 +3039,8 @@ void CFRefCount::evalReturnWithRetEffect(ExplodedNodeSet &Dst,
 
       if (hasError) {
         // Generate an error node.
-        static int ReturnOwnLeakTag = 0;
+        static SimpleProgramPointTag
+               ReturnOwnLeakTag("CFRefCount : ReturnsOwnLeak");
         state = state->set<RefBindings>(Sym, X);
         ExplodedNode *N =
           Builder.generateNode(PostStmt(S, Pred->getLocationContext(),
@@ -3051,8 +3060,8 @@ void CFRefCount::evalReturnWithRetEffect(ExplodedNodeSet &Dst,
     if (RE.isOwned()) {
       // Trying to return a not owned object to a caller expecting an
       // owned object.
-
-      static int ReturnNotOwnedForOwnedTag = 0;
+      static SimpleProgramPointTag
+             ReturnNotOwnedForOwnedTag("CFRefCount : ReturnNotOwnedForOwned");
       state = state->set<RefBindings>(Sym, X ^ RefVal::ErrorReturnedNotOwned);
       if (ExplodedNode *N =
           Builder.generateNode(PostStmt(S, Pred->getLocationContext(),
@@ -3375,6 +3384,17 @@ void CFRefCount::evalEndPath(ExprEngine& Eng,
   ProcessLeaks(state, Leaked, Bd, Eng, Pred);
 }
 
+const ProgramPointTag *CFRefCount::getDeadSymbolTag(SymbolRef sym) {
+  const SimpleProgramPointTag *&tag = DeadSymbolTags[sym];
+  if (!tag) {
+    llvm::SmallString<128> buf;
+    llvm::raw_svector_ostream out(buf);
+    out << "CFRefCount : Dead Symbol : " << sym->getSymbolID();
+    tag = new SimpleProgramPointTag(out.str());
+  }
+  return tag;  
+}
+
 void CFRefCount::evalDeadSymbols(ExplodedNodeSet& Dst,
                                  ExprEngine& Eng,
                                  StmtNodeBuilder& Builder,
@@ -3391,7 +3411,7 @@ void CFRefCount::evalDeadSymbols(ExplodedNodeSet& Dst,
     if (const RefVal* T = B.lookup(Sym)){
       // Use the symbol as the tag.
       // FIXME: This might not be as unique as we would like.
-      GenericNodeBuilderRefCount Bd(Builder, S, Sym);
+      GenericNodeBuilderRefCount Bd(Builder, S, getDeadSymbolTag(Sym));
       bool stop = false;
       llvm::tie(Pred, state) = HandleAutoreleaseCounts(state, Bd, Pred, Eng,
                                                        Sym, *T, stop);
@@ -3409,7 +3429,7 @@ void CFRefCount::evalDeadSymbols(ExplodedNodeSet& Dst,
         state = HandleSymbolDeath(state, *I, *T, Leaked);
   }
 
-  static unsigned LeakPPTag = 0;
+  static SimpleProgramPointTag LeakPPTag("CFRefCount : Leak");
   {
     GenericNodeBuilderRefCount Bd(Builder, S, &LeakPPTag);
     Pred = ProcessLeaks(state, Leaked, Bd, Eng, Pred);
