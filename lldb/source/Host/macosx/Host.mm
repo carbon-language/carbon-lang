@@ -951,7 +951,7 @@ GetMacOSXProcessCPUType (ProcessInstanceInfo &process_info)
         mib[mib_len] = process_info.GetProcessID();
         mib_len++;
     
-        cpu_type_t cpu, sub;
+        cpu_type_t cpu, sub = 0;
         size_t cpu_len = sizeof(cpu);
         if (::sysctl (mib, mib_len, &cpu, &cpu_len, 0, 0) == 0)
         {
