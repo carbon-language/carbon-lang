@@ -16,12 +16,16 @@ class ObjCDynamicValueTestCase(TestBase):
     @python_api_test
     def test_get_dynamic_objc_vals_with_dsym(self):
         """Test fetching ObjC dynamic values."""
+        if self.getArchitecture() == 'i386':
+            self.skipTest("Dynamic types for ObjC V1 runtime not implemented")
         self.buildDsym()
         self.do_get_dynamic_vals()
 
     @python_api_test
     def test_get_objc_dynamic_vals_with_dwarf(self):
         """Test fetching ObjC dynamic values."""
+        if self.getArchitecture() == 'i386':
+            self.skipTest("Dynamic types for ObjC V1 runtime not implemented")
         self.buildDwarf()
         self.do_get_dynamic_vals()
 
