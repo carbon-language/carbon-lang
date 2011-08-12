@@ -664,6 +664,7 @@ class AI3str<bits<4> op, dag oops, dag iops, Format f, InstrItinClass itin,
   let Inst{11-8}  = addr{7-4};    // imm7_4/zero
   let Inst{7-4}   = op;
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
+  let DecoderMethod = "DecodeAddrMode3Instruction";
 }
 
 // Pre-indexed stores

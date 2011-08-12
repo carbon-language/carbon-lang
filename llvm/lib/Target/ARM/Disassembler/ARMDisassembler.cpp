@@ -1090,6 +1090,9 @@ static bool DecodeAddrMode3Instruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::STRD:
     case ARM::STRD_PRE:
     case ARM::STRD_POST:
+    case ARM::STRH:
+    case ARM::STRH_PRE:
+    case ARM::STRH_POST:
       if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
         return false;
       break;
