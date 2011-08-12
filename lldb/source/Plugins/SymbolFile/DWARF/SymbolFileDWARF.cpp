@@ -1022,7 +1022,7 @@ SymbolFileDWARF::ParseFunctionBlocks
         switch (tag)
         {
         case DW_TAG_inlined_subroutine:
-        case DW_TAG_subprogram:
+        //case DW_TAG_subprogram:
         case DW_TAG_lexical_block:
             {
                 DWARFDebugRanges::RangeList ranges;
