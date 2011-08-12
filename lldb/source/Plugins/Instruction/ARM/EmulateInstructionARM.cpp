@@ -11640,7 +11640,7 @@ EmulateInstructionARM::EmulateVST1Multiple (const uint32_t opcode, ARMEncoding e
                     
                 // alignment = if align == Ô00Õ then 1 else 4 << UInt(align);
                 if (align == 0)
-                    alignment = 0;
+                    alignment = 1;
                 else
                     alignment = 4 << align;
                     
