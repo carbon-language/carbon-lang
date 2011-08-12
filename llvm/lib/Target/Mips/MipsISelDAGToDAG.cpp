@@ -417,15 +417,8 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
       if (Node->getValueType(0) == MVT::f64 && CN->isExactlyValue(+0.0)) {
         SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                         Mips::ZERO, MVT::i32);
-        SDValue Undef = SDValue(
-          CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, dl, MVT::f64), 0);
-        SDNode *MTC = CurDAG->getMachineNode(Mips::MTC1, dl, MVT::f32, Zero);
-        SDValue I0 = CurDAG->getTargetInsertSubreg(Mips::sub_fpeven, dl,
-                            MVT::f64, Undef, SDValue(MTC, 0));
-        SDValue I1 = CurDAG->getTargetInsertSubreg(Mips::sub_fpodd, dl,
-                            MVT::f64, I0, SDValue(MTC, 0));
-        ReplaceUses(SDValue(Node, 0), I1);
-        return I1.getNode();
+        return CurDAG->getMachineNode(Mips::BuildPairF64, dl, MVT::f64, Zero,
+                                      Zero);
       }
       break;
     }
