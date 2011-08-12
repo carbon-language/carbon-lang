@@ -3554,6 +3554,16 @@ bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
       return true;
     }
 
+    // A 'catch' type expects a non-array constant. A filter clause expects an
+    // array constant.
+    if (CT == LandingPadInst::Catch) {
+      if (isa<ArrayType>(V->getType()))
+        Error(VLoc, "'catch' clause has an invalid type");
+    } else {
+      if (!isa<ArrayType>(V->getType()))
+        Error(VLoc, "'filter' clause has an invalid type");
+    }
+
     LP->addClause(V);
   }
 
