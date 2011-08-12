@@ -851,7 +851,7 @@ DWARFCompileUnit::Index
                         }
                         else
                         {
-                            if (mangled_cstr && specification_die_offset != DW_INVALID_OFFSET)
+                            if (specification_die_offset != DW_INVALID_OFFSET)
                             {
                                 const DWARFDebugInfoEntry *specification_die = m_dwarf2Data->DebugInfo()->GetDIEPtr (specification_die_offset, NULL);
                                 if (specification_die)

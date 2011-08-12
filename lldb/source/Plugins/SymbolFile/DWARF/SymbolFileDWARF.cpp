@@ -664,23 +664,35 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
     if (die->Tag() != DW_TAG_subprogram)
         return NULL;
 
-    const DWARFDebugInfoEntry *parent_die = die->GetParent();
-    switch (parent_die->Tag())
-    {
-    case DW_TAG_structure_type:
-    case DW_TAG_class_type:
-        // We have methods of a class or struct
-        {
-            Type *class_type = ResolveType (dwarf_cu, parent_die);
-            if (class_type)
-                class_type->GetClangFullType();
-        }
-        break;
+    clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIE (dwarf_cu, die);
+    const clang::Decl::Kind containing_decl_kind = containing_decl_ctx->getDeclKind();
 
-    default:
-        // Parse the function prototype as a type that can then be added to concrete function instance
-        ParseTypes (sc, dwarf_cu, die, false, false);
-        break;
+    switch (containing_decl_kind)
+    {
+        case clang::Decl::Record:
+        case clang::Decl::CXXRecord:
+        case clang::Decl::ObjCClass:
+        case clang::Decl::ObjCImplementation:
+        case clang::Decl::ObjCInterface:
+            // We have methods of a class or struct
+            {
+                const DWARFDebugInfoEntry *containing_decl_die = m_decl_ctx_to_die[containing_decl_ctx];
+                assert (containing_decl_die);
+                Type *class_type = ResolveType (dwarf_cu, containing_decl_die);
+                if (class_type)
+                    class_type->GetClangFullType();
+                // Make sure the class definition contains the funciton DIE
+                // we wanted to parse. If it does, we are done. Else, we need 
+                // to fall through and parse the function DIE stil...
+                if (containing_decl_die->Contains (die))
+                    break; // DIE has been parsed, we are done
+            }
+            // Fall through...
+
+        default:
+            // Parse the function prototype as a type that can then be added to concrete function instance
+            ParseTypes (sc, dwarf_cu, die, false, false);
+            break;
     }
     
     //FixupTypes();
@@ -2403,19 +2415,17 @@ SymbolFileDWARF::FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_ma
 
 
 size_t
-SymbolFileDWARF::ParseChildParameters
-(
-    const SymbolContext& sc,
-    TypeSP& type_sp,
-    DWARFCompileUnit* dwarf_cu,
-    const DWARFDebugInfoEntry *parent_die,
-    bool skip_artificial,
-    bool &is_static,
-    TypeList* type_list,
-    std::vector<clang_type_t>& function_param_types,
-    std::vector<clang::ParmVarDecl*>& function_param_decls,
-    unsigned &type_quals
-)
+SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
+                                       clang::DeclContext *containing_decl_ctx,
+                                       TypeSP& type_sp,
+                                       DWARFCompileUnit* dwarf_cu,
+                                       const DWARFDebugInfoEntry *parent_die,
+                                       bool skip_artificial,
+                                       bool &is_static,
+                                       TypeList* type_list,
+                                       std::vector<clang_type_t>& function_param_types,
+                                       std::vector<clang::ParmVarDecl*>& function_param_decls,
+                                       unsigned &type_quals)
 {
     if (parent_die == NULL)
         return 0;
@@ -2493,31 +2503,25 @@ SymbolFileDWARF::ParseChildParameters
                             // Ugly, but that
                             if (arg_idx == 0)
                             {
-                                const DWARFDebugInfoEntry *grandparent_die = parent_die->GetParent();
-                                if (grandparent_die && (grandparent_die->Tag() == DW_TAG_structure_type || 
-                                                        grandparent_die->Tag() == DW_TAG_class_type))
+                                if (containing_decl_ctx->getDeclKind() == clang::Decl::CXXRecord)
                                 {                                    
-                                    LanguageType language = sc.comp_unit->GetLanguage();
-                                    if (language == eLanguageTypeObjC_plus_plus || language == eLanguageTypeC_plus_plus)
+                                    // Often times compilers omit the "this" name for the
+                                    // specification DIEs, so we can't rely upon the name
+                                    // being in the formal parameter DIE...
+                                    if (name == NULL || ::strcmp(name, "this")==0)
                                     {
-                                        // Often times compilers omit the "this" name for the
-                                        // specification DIEs, so we can't rely upon the name
-                                        // being in the formal parameter DIE...
-                                        if (name == NULL || ::strcmp(name, "this")==0)
-                                        {
-                                            Type *this_type = ResolveTypeUID (param_type_die_offset);
-                                            if (this_type)
-                                            {                              
-                                                uint32_t encoding_mask = this_type->GetEncodingMask();
-                                                if (encoding_mask & Type::eEncodingIsPointerUID)
-                                                {
-                                                    is_static = false;
-                                                    
-                                                    if (encoding_mask & (1u << Type::eEncodingIsConstUID))
-                                                        type_quals |= clang::Qualifiers::Const;
-                                                    if (encoding_mask & (1u << Type::eEncodingIsVolatileUID))
-                                                        type_quals |= clang::Qualifiers::Volatile;
-                                                }
+                                        Type *this_type = ResolveTypeUID (param_type_die_offset);
+                                        if (this_type)
+                                        {                              
+                                            uint32_t encoding_mask = this_type->GetEncodingMask();
+                                            if (encoding_mask & Type::eEncodingIsPointerUID)
+                                            {
+                                                is_static = false;
+                                                
+                                                if (encoding_mask & (1u << Type::eEncodingIsConstUID))
+                                                    type_quals |= clang::Qualifiers::Const;
+                                                if (encoding_mask & (1u << Type::eEncodingIsVolatileUID))
+                                                    type_quals |= clang::Qualifiers::Volatile;
                                             }
                                         }
                                     }
@@ -3620,15 +3624,20 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                     // Parse the function children for the parameters
                     
-                    const DWARFDebugInfoEntry *class_die = die->GetParent();
-                    if (class_die && (class_die->Tag() == DW_TAG_structure_type || 
-                                      class_die->Tag() == DW_TAG_class_type))
+                    clang::DeclContext *containing_decl_ctx = GetClangDeclContextContainingDIE (dwarf_cu, die);
+                    const clang::Decl::Kind containing_decl_kind = containing_decl_ctx->getDeclKind();
+
+                    const bool is_cxx_method = containing_decl_kind == clang::Decl::CXXRecord;
+                    // Start off static. This will be set to false in ParseChildParameters(...)
+                    // if we find a "this" paramters as the first parameter
+                    if (is_cxx_method)
                         is_static = true;
                     
                     if (die->HasChildren())
                     {
                         bool skip_artificial = true;
                         ParseChildParameters (sc, 
+                                              containing_decl_ctx,
                                               type_sp, 
                                               dwarf_cu, 
                                               die, 
@@ -3650,7 +3659,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     if (type_name_cstr)
                     {
                         bool type_handled = false;
-                        const DWARFDebugInfoEntry *parent_die = die->GetParent();
                         if (tag == DW_TAG_subprogram)
                         {
                             if (type_name_cstr[1] == '[' && (type_name_cstr[0] == '-' || type_name_cstr[0] == '+'))
@@ -3698,13 +3706,12 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     type_handled = objc_method_decl != NULL;
                                 }
                             }
-                            else if (parent_die->Tag() == DW_TAG_class_type ||
-                                     parent_die->Tag() == DW_TAG_structure_type)
+                            else if (is_cxx_method)
                             {
                                 // Look at the parent of this DIE and see if is is
                                 // a class or struct and see if this is actually a
                                 // C++ method
-                                Type *class_type = ResolveType (dwarf_cu, parent_die);
+                                Type *class_type = ResolveType (dwarf_cu, m_decl_ctx_to_die[containing_decl_ctx]);
                                 if (class_type)
                                 {
                                     clang_type_t class_opaque_type = class_type->GetClangForwardType();

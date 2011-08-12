@@ -278,6 +278,7 @@ protected:
 
     size_t                  ParseChildParameters(
                                 const lldb_private::SymbolContext& sc,
+                                clang::DeclContext *containing_decl_ctx,
                                 lldb::TypeSP& type_sp,
                                 DWARFCompileUnit* dwarf_cu,
                                 const DWARFDebugInfoEntry *parent_die,

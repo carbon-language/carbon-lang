@@ -109,6 +109,7 @@ public:
                 {
                 }
 
+    bool        Contains (const DWARFDebugInfoEntry *die) const;
 
     void        BuildAddressRangeTable(
                     SymbolFileDWARF* dwarf2Data,

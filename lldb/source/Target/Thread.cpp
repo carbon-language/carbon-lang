@@ -1116,14 +1116,14 @@ Thread::GetStatus (Stream &strm, uint32_t start_frame, uint32_t num_frames, uint
     size_t num_frames_shown = 0;
     strm.Indent();
     strm.Printf("%c ", GetProcess().GetThreadList().GetSelectedThread().get() == this ? '*' : ' ');
-
-    StackFrameSP frame_sp = GetStackFrameAtIndex(start_frame);
-    SymbolContext frame_sc(frame_sp->GetSymbolContext (eSymbolContextLineEntry));
-    if (frame_sc.line_entry.line != 0 &&
-        frame_sc.line_entry.file &&
-        GetProcess().GetTarget().GetDebugger().GetUseExternalEditor())
+    if (GetProcess().GetTarget().GetDebugger().GetUseExternalEditor())
     {
-        Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
+        StackFrameSP frame_sp = GetStackFrameAtIndex(start_frame);
+        SymbolContext frame_sc(frame_sp->GetSymbolContext (eSymbolContextLineEntry));
+        if (frame_sc.line_entry.line != 0 && frame_sc.line_entry.file)
+        {
+            Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
+        }
     }
     
     DumpUsingSettingsFormat (strm, start_frame);
