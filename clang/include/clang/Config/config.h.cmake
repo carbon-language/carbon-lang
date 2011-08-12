@@ -1,3 +1,6 @@
+/* Bug report URL. */
+#define BUG_REPORT_URL "${BUG_REPORT_URL}"
+
 /* Relative directory for resource files */
 #define CLANG_RESOURCE_DIR "${CLANG_RESOURCE_DIR}"
 
@@ -13,8 +16,5 @@
 /* Directory with the libstdc++ headers. */
 #define CXX_INCLUDE_ROOT "${CXX_INCLUDE_ROOT}"
 
-/* Directories clang will search for headers. */
+/* Directories clang will search for headers */
 #define C_INCLUDE_DIRS "${C_INCLUDE_DIRS}"
-
-/* Define default bug reporting URL. */
-#define BUG_REPORT_URL "${BUG_REPORT_URL}"
