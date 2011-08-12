@@ -98,12 +98,12 @@ static unsigned findDeadCallerSavedReg(MachineBasicBlock &MBB,
     return 0;
 
   static const unsigned CallerSavedRegs32Bit[] = {
-    X86::EAX, X86::EDX, X86::ECX
+    X86::EAX, X86::EDX, X86::ECX, 0
   };
 
   static const unsigned CallerSavedRegs64Bit[] = {
     X86::RAX, X86::RDX, X86::RCX, X86::RSI, X86::RDI,
-    X86::R8,  X86::R9,  X86::R10, X86::R11
+    X86::R8,  X86::R9,  X86::R10, X86::R11, 0
   };
 
   unsigned Opc = MBBI->getOpcode();
