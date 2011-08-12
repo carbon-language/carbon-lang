@@ -2952,6 +2952,7 @@ SymbolFileDWARF::GetClangDeclContextContainingDIE (DWARFCompileUnit *curr_cu, co
                         if (type)
                         {
                             decl_ctx = ClangASTContext::GetDeclContextForType (type->GetClangForwardType ());
+                            LinkDeclContextToDIE (decl_ctx, die);
                             if (decl_ctx)
                                 return decl_ctx;
                         }
