@@ -412,13 +412,6 @@ void StructType::setBody(ArrayRef<Type*> Elements, bool isPacked) {
   NumContainedTys = Elements.size();
 }
 
-StructType *StructType::createNamed(LLVMContext &Context, StringRef Name) {
-  StructType *ST = new (Context.pImpl->TypeAllocator) StructType(Context);
-  if (!Name.empty())
-    ST->setName(Name);
-  return ST;
-}
-
 void StructType::setName(StringRef Name) {
   if (Name == getName()) return;
 
@@ -528,7 +521,7 @@ StructType *StructType::create(StringRef Name, Type *type, ...) {
 }
 
 
-
+#if 1
 
 StructType *StructType::createNamed(LLVMContext &Context, StringRef Name,
                                     ArrayRef<Type*> Elements, bool isPacked) {
@@ -536,6 +529,14 @@ StructType *StructType::createNamed(LLVMContext &Context, StringRef Name,
   ST->setBody(Elements, isPacked);
   return ST;
 }
+
+StructType *StructType::createNamed(LLVMContext &Context, StringRef Name) {
+  StructType *ST = new (Context.pImpl->TypeAllocator) StructType(Context);
+  if (!Name.empty())
+    ST->setName(Name);
+  return ST;
+}
+
 
 StructType *StructType::createNamed(StringRef Name, ArrayRef<Type*> Elements,
                                     bool isPacked) {
@@ -556,6 +557,7 @@ StructType *StructType::createNamed(StringRef Name, Type *type, ...) {
   }
   return llvm::StructType::createNamed(Ctx, Name, StructFields);
 }
+#endif
 
 StringRef StructType::getName() const {
   assert(!isLiteral() && "Literal structs never have names");

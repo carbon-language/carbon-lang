@@ -224,7 +224,7 @@ public:
   static StructType *create(LLVMContext &Context, ArrayRef<Type*> Elements);
   static StructType *create(StringRef Name, Type *elt1, ...) END_WITH_NULL;
 
-  
+#if 1
   // FIXME: Remove these.
   bool isAnonymous() const {return (getSubclassData() & SCDB_IsLiteral) != 0;}
   static StructType *createNamed(LLVMContext &Context,
@@ -236,7 +236,8 @@ public:
                                  ArrayRef<Type*> Elements,
                                  bool isPacked = false);
   static StructType *createNamed(StringRef Name, Type *elt1, ...) END_WITH_NULL;
-
+#endif
+  
   /// StructType::get - This static method is the primary way to create a
   /// literal StructType.
   static StructType *get(LLVMContext &Context, ArrayRef<Type*> Elements,
