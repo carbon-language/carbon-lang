@@ -256,6 +256,13 @@ getMachineBasicBlocks(DebugLoc DL,
   if (!Scope)
     return;
   
+  if (Scope == CurrentFnLexicalScope) {
+    for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
+         I != E; ++I)
+      MBBs.insert(I);
+    return;
+  }
+
   SmallVector<InsnRange, 4> &InsnRanges = Scope->getRanges();
   for (SmallVector<InsnRange, 4>::iterator I = InsnRanges.begin(),
          E = InsnRanges.end(); I != E; ++I) {
@@ -270,6 +277,11 @@ bool LexicalScopes::dominates(DebugLoc DL, MachineBasicBlock *MBB) {
   LexicalScope *Scope = getOrCreateLexicalScope(DL);
   if (!Scope)
     return false;
+
+  // Current function scope covers all basic blocks in the function.
+  if (Scope == CurrentFnLexicalScope && MBB->getParent() == MF)
+    return true;
+
   bool Result = false;
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
        I != E; ++I) {
