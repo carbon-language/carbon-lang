@@ -330,9 +330,10 @@ instructions has been clarified in the IR.</p>
 
 <div>
 
-<p>SequentiallyConsistent (<code>seq_cst</code> in IR) provides Acquire and/or
-   Release semantics, and in addition guarantees a total ordering exists with
-   all other SequentiallyConsistent operations.
+<p>SequentiallyConsistent (<code>seq_cst</code> in IR) provides
+   Acquire semantics for loads and Release semantics for
+   stores. Additionally, it guarantees that a total ordering exists
+   between all SequentiallyConsistent operations.
 
 <dl>
   <dt>Relevant standard</dt>
@@ -344,11 +345,17 @@ instructions has been clarified in the IR.</p>
       reason about for the programmer than other kinds of operations, and using
       them is generally a practical performance tradeoff.</dd>
   <dt>Notes for optimizers</dt>
-  <dd>In general, optimizers should treat this like a nothrow call; the
-      the possible optimizations are usually not interesting.</dd>
+  <dd>In general, optimizers should treat this like a nothrow call.
+      However, optimizers may improve performance by reordering a
+      store followed by a load unless both operations are sequentially
+      consistent.</dd>
   <dt>Notes for code generation</dt>
-  <dd>SequentiallyConsistent operations generally require the strongest
-      barriers supported by the architecture.</dd>
+  <dd>SequentiallyConsistent loads minimally require the same barriers
+    as Acquire operations and SequeuentiallyConsistent stores require
+    Release barriers. Additionally, the code generator must enforce
+    ordering between SequeuentiallyConsistent stores followed by
+    SequeuentiallyConsistent loads. On common architectures, this
+    requires emitting a full fence after SequeuentiallyConsistent stores.</dd>
 </dl>
 
 </div>
