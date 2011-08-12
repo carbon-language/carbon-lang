@@ -2985,6 +2985,9 @@ void SelectionDAGBuilder::visitExtractValue(const ExtractValueInst &I) {
                            &Values[0], NumValValues));
 }
 
+void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &I) {
+}
+
 void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
   SDValue N = getValue(I.getOperand(0));
   Type *Ty = I.getOperand(0)->getType();

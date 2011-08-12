@@ -6022,7 +6022,7 @@ freestanding environments and non-C-based languages.</p>
   &lt;resultval&gt; = landingpad &lt;somety&gt; personality &lt;type&gt; &lt;pers_fn&gt; cleanup &lt;clause&gt;*
 
   &lt;clause&gt; := catch &lt;type&gt; &lt;value&gt;
-  &lt;clause&gt; := filter &lt;type&gt; &lt;value&gt; {, &lt;type&gt; &lt;value&gt;}*
+  &lt;clause&gt; := filter &lt;array constant type&gt; &lt;array constant&gt;
 </pre>
 
 <h5>Overview:</h5>
@@ -6041,9 +6041,11 @@ freestanding environments and non-C-based languages.</p>
    <tt>cleanup</tt> flag indicates that the landing pad block is a cleanup.</p>
 
 <p>A <tt>clause</tt> begins with the clause type &mdash; <tt>catch</tt>
-   or <tt>filter</tt> &mdash; and contains a list of global variables
-   representing the "types" that may be caught or filtered respectively. The
-   '<tt>landingpad</tt>' instruction must contain <em>at least</em>
+   or <tt>filter</tt> &mdash; and contains the global variable representing the
+   "type" that may be caught or filtered respectively. Unlike the
+   <tt>catch</tt> clause, the <tt>filter</tt> clause takes an array constant as
+   its argument. Use "<tt>[0 x i8**] undef</tt>" for a filter which cannot
+   throw. The '<tt>landingpad</tt>' instruction must contain <em>at least</em>
    one <tt>clause</tt> or the <tt>cleanup</tt> flag.</p>
 
 <h5>Semantics:</h5>
@@ -6079,11 +6081,11 @@ freestanding environments and non-C-based languages.</p>
            catch i8** @_ZTIi
   ;; A landing pad that is a cleanup.
   %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
-           cleanup  
+           cleanup
   ;; A landing pad which can catch an integer and can only throw a double.
   %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
            catch i8** @_ZTIi
-           filter i8** @_ZTId
+           filter [1 x i8**] [@_ZTId]
 </pre>
 
 </div>

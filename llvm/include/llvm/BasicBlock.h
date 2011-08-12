@@ -22,6 +22,7 @@
 
 namespace llvm {
 
+class LandingPadInst;
 class TerminatorInst;
 class LLVMContext;
 class BlockAddress;
@@ -257,6 +258,14 @@ public:
   /// replaceSuccessorsPhiUsesWith - Update all phi nodes in all our successors
   /// to refer to basic block New instead of to us.
   void replaceSuccessorsPhiUsesWith(BasicBlock *New);
+
+  /// isLandingPad - Return true if this basic block is a landing pad. I.e.,
+  /// it's the destination of the 'unwind' edge of an invoke instruction.
+  bool isLandingPad() const;
+
+  /// getLandingPadInst() - Return the landingpad instruction associated with
+  /// the landing pad.
+  LandingPadInst *getLandingPadInst();
 
 private:
   /// AdjustBlockAddressRefCount - BasicBlock stores the number of BlockAddress

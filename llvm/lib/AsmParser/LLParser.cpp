@@ -2945,6 +2945,7 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_insertelement:  return ParseInsertElement(Inst, PFS);
   case lltok::kw_shufflevector:  return ParseShuffleVector(Inst, PFS);
   case lltok::kw_phi:            return ParsePHI(Inst, PFS);
+  case lltok::kw_landingpad:     return ParseLandingPad(Inst, PFS);
   case lltok::kw_call:           return ParseCall(Inst, PFS, false);
   case lltok::kw_tail:           return ParseCall(Inst, PFS, true);
   // Memory.
@@ -3517,6 +3518,47 @@ int LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
     PN->addIncoming(PHIVals[i].first, PHIVals[i].second);
   Inst = PN;
   return AteExtraComma ? InstExtraComma : InstNormal;
+}
+
+/// ParseLandingPad
+///   ::= 'landingpad' Type 'personality' TypeAndValue 'cleanup'? Clause+
+/// Clause
+///   ::= 'catch' TypeAndValue
+///   ::= 'filter'
+///   ::= 'filter' TypeAndValue ( ',' TypeAndValue )*
+bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
+  Type *Ty = 0; LocTy TyLoc;
+  Value *PersFn; LocTy PersFnLoc;
+  LocTy LPLoc = Lex.getLoc();
+
+  if (ParseType(Ty, TyLoc) ||
+      ParseToken(lltok::kw_personality, "expected 'personality'") ||
+      ParseTypeAndValue(PersFn, PersFnLoc, PFS))
+    return true;
+
+  LandingPadInst *LP = LandingPadInst::Create(Ty, PersFn, 0);
+  LP->setCleanup(EatIfPresent(lltok::kw_cleanup));
+
+  while (Lex.getKind() == lltok::kw_catch || Lex.getKind() == lltok::kw_filter){
+    LandingPadInst::ClauseType CT;
+    if (EatIfPresent(lltok::kw_catch))
+      CT = LandingPadInst::Catch;
+    else if (EatIfPresent(lltok::kw_filter))
+      CT = LandingPadInst::Filter;
+    else
+      return TokError("expected 'catch' or 'filter' clause type");
+
+    Value *V; LocTy VLoc;
+    if (ParseTypeAndValue(V, VLoc, PFS)) {
+      delete LP;
+      return true;
+    }
+
+    LP->addClause(V);
+  }
+
+  Inst = LP;
+  return false;
 }
 
 /// ParseCall

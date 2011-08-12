@@ -195,6 +195,7 @@ public:
   RetTy visitShuffleVectorInst(ShuffleVectorInst &I) { DELEGATE(Instruction); }
   RetTy visitExtractValueInst(ExtractValueInst &I)  { DELEGATE(Instruction);}
   RetTy visitInsertValueInst(InsertValueInst &I)    { DELEGATE(Instruction); }
+  RetTy visitLandingPadInst(LandingPadInst &I)      { DELEGATE(Instruction); }
 
   // Next level propagators: If the user does not overload a specific
   // instruction type, they can overload one of these to get the whole class

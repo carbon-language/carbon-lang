@@ -2106,6 +2106,111 @@ struct OperandTraits<PHINode> : public HungoffOperandTraits<2> {
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(PHINode, Value)
 
+//===----------------------------------------------------------------------===//
+//                           LandingPadInst Class
+//===----------------------------------------------------------------------===//
+
+//===---------------------------------------------------------------------------
+/// LandingPadInst - The landingpad instruction holds all of the information
+/// necessary to generate correct exception handling. The landingpad instruction
+/// cannot be moved from the top of a landing pad block, which itself is
+/// accessible only from the 'unwind' edge of an invoke. This uses the
+/// SubclassData field in Value to store whether or not the landingpad is a
+/// cleanup.
+///
+class LandingPadInst : public Instruction {
+  /// ReservedSpace - The number of operands actually allocated.  NumOperands is
+  /// the number actually in use.
+  unsigned ReservedSpace;
+  LandingPadInst(const LandingPadInst &LP);
+public:
+  enum ClauseType { Catch, Filter };
+private:
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  // Allocate space for exactly zero operands.
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
+  void growOperands(unsigned Size);
+  void init(Value *PersFn, unsigned NumReservedValues, const Twine &NameStr);
+
+  explicit LandingPadInst(Type *RetTy, Value *PersonalityFn,
+                          unsigned NumReservedValues, const Twine &NameStr,
+                          Instruction *InsertBefore);
+  explicit LandingPadInst(Type *RetTy, Value *PersonalityFn,
+                          unsigned NumReservedValues, const Twine &NameStr,
+                          BasicBlock *InsertAtEnd);
+protected:
+  virtual LandingPadInst *clone_impl() const;
+public:
+  /// Constructors - NumReservedClauses is a hint for the number of incoming
+  /// clauses that this landingpad will have (use 0 if you really have no idea).
+  static LandingPadInst *Create(Type *RetTy, Value *PersonalityFn,
+                                unsigned NumReservedClauses,
+                                const Twine &NameStr = "",
+                                Instruction *InsertBefore = 0);
+  static LandingPadInst *Create(Type *RetTy, Value *PersonalityFn,
+                                unsigned NumReservedClauses,
+                                const Twine &NameStr, BasicBlock *InsertAtEnd);
+  ~LandingPadInst();
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  /// getPersonalityFn - Get the personality function associated with this
+  /// landing pad.
+  Value *getPersonalityFn() const { return getOperand(0); }
+
+  /// isCleanup - Return 'true' if this landingpad instruction is a
+  /// cleanup. I.e., it should be run when unwinding even if its landing pad
+  /// doesn't catch the exception.
+  bool isCleanup() const { return getSubclassDataFromInstruction() & 1; }
+
+  /// setCleanup - Indicate that this landingpad instruction is a cleanup.
+  void setCleanup(bool V) {
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~1) |
+                               (V ? 1 : 0));
+  }
+
+  /// addClause - Add a catch or filter clause to the landing pad.
+  void addClause(Value *ClauseVal);
+
+  /// getClause - Get the value of the clause at index Idx. Use isCatch/isFilter
+  /// to determine what type of clause this is.
+  Value *getClause(unsigned Idx) const { return OperandList[Idx + 1]; }
+
+  /// isCatch - Return 'true' if the clause and index Idx is a catch clause.
+  bool isCatch(unsigned Idx) const {
+    return !isa<ArrayType>(OperandList[Idx + 1]->getType());
+  }
+
+  /// isFilter - Return 'true' if the clause and index Idx is a filter clause.
+  bool isFilter(unsigned Idx) const {
+    return isa<ArrayType>(OperandList[Idx + 1]->getType());
+  }
+
+  /// getNumClauses - Get the number of clauses for this landing pad.
+  unsigned getNumClauses() const { return getNumOperands() - 1; }
+
+  /// reserveClauses - Grow the size of the operand list to accomodate the new
+  /// number of clauses.
+  void reserveClauses(unsigned Size) { growOperands(Size); }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const LandingPadInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::LandingPad;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+template <>
+struct OperandTraits<LandingPadInst> : public HungoffOperandTraits<2> {
+};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(LandingPadInst, Value)
 
 //===----------------------------------------------------------------------===//
 //                               ReturnInst Class
@@ -2694,6 +2799,10 @@ public:
   void setUnwindDest(BasicBlock *B) {
     Op<-1>() = reinterpret_cast<Value*>(B);
   }
+
+  /// getLandingPadInst - Get the landingpad instruction from the landing pad
+  /// block (the unwind destination).
+  LandingPadInst *getLandingPadInst() const;
 
   BasicBlock *getSuccessor(unsigned i) const {
     assert(i < 2 && "Successor # out of range for invoke!");

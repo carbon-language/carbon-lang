@@ -1748,6 +1748,24 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     writeOperand(I.getOperand(1), true);
     for (const unsigned *i = IVI->idx_begin(), *e = IVI->idx_end(); i != e; ++i)
       Out << ", " << *i;
+  } else if (const LandingPadInst *LPI = dyn_cast<LandingPadInst>(&I)) {
+    Out << ' ';
+    TypePrinter.print(I.getType(), Out);
+    Out << " personality ";
+    writeOperand(I.getOperand(0), true); Out << '\n';
+
+    if (LPI->isCleanup())
+      Out << "          cleanup";
+
+    for (unsigned i = 0, e = LPI->getNumClauses(); i != e; ++i) {
+      if (i != 0 || LPI->isCleanup()) Out << "\n";
+      if (LPI->isCatch(i))
+        Out << "          catch ";
+      else
+        Out << "          filter ";
+
+      writeOperand(LPI->getClause(i), true);
+    }
   } else if (isa<ReturnInst>(I) && !Operand) {
     Out << " void";
   } else if (const CallInst *CI = dyn_cast<CallInst>(&I)) {

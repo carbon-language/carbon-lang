@@ -2543,6 +2543,44 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       break;
     }
 
+    case bitc::FUNC_CODE_INST_LANDINGPAD: {
+      // LANDINGPAD: [ty, val, val, num, (id0,val0 ...)?]
+      unsigned Idx = 0;
+      if (Record.size() < 4)
+        return Error("Invalid LANDINGPAD record");
+      Type *Ty = getTypeByID(Record[Idx++]);
+      if (!Ty) return Error("Invalid LANDINGPAD record");
+      Value *PersFn = 0;
+      if (getValueTypePair(Record, Idx, NextValueNo, PersFn))
+        return Error("Invalid LANDINGPAD record");
+
+      bool IsCleanup = !!Record[Idx++];
+      unsigned NumClauses = Record[Idx++];
+      LandingPadInst *LP = LandingPadInst::Create(Ty, PersFn, NumClauses);
+      LP->setCleanup(IsCleanup);
+      for (unsigned J = 0; J != NumClauses; ++J) {
+        LandingPadInst::ClauseType CT =
+          LandingPadInst::ClauseType(Record[Idx++]); (void)CT;
+        Value *Val;
+
+        if (getValueTypePair(Record, Idx, NextValueNo, Val)) {
+          delete LP;
+          return Error("Invalid LANDINGPAD record");
+        }
+
+        assert((CT != LandingPadInst::Catch ||
+                !isa<ArrayType>(Val->getType())) &&
+               "Catch clause has a invalid type!");
+        assert((CT != LandingPadInst::Filter ||
+                isa<ArrayType>(Val->getType())) &&
+               "Filter clause has invalid type!");
+        LP->addClause(Val);
+      }
+
+      I = LP;
+      break;
+    }
+
     case bitc::FUNC_CODE_INST_ALLOCA: { // ALLOCA: [instty, opty, op, align]
       if (Record.size() != 4)
         return Error("Invalid ALLOCA record");

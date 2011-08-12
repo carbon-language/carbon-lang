@@ -191,7 +191,8 @@ typedef enum {
   LLVMAtomicRMW      = 57,
 
   /* Exception Handling Operators */
-  LLVMResume         = 58
+  LLVMResume         = 58,
+  LLVMLandingPad     = 59
 
 } LLVMOpcode;
 
@@ -282,6 +283,11 @@ typedef enum {
   LLVMRealUNE,            /**< True if unordered or not equal */
   LLVMRealPredicateTrue   /**< Always true (always folded) */
 } LLVMRealPredicate;
+
+typedef enum {
+  LLVMLandingPadCatch,    /**< A catch clause   */
+  LLVMLandingPadFilter    /**< A filter clause  */
+} LLVMLandingPadClauseTy;
 
 void LLVMInitializeCore(LLVMPassRegistryRef R);
 
@@ -469,6 +475,7 @@ LLVMTypeRef LLVMX86MMXType(void);
       macro(GetElementPtrInst)              \
       macro(InsertElementInst)              \
       macro(InsertValueInst)                \
+      macro(LandingPadInst)                 \
       macro(PHINode)                        \
       macro(SelectInst)                     \
       macro(ShuffleVectorInst)              \
@@ -836,6 +843,12 @@ void LLVMAddCase(LLVMValueRef Switch, LLVMValueRef OnVal,
 
 /* Add a destination to the indirectbr instruction */
 void LLVMAddDestination(LLVMValueRef IndirectBr, LLVMBasicBlockRef Dest);
+
+/* Add a catch or filter clause to the landingpad instruction */
+void LLVMAddClause(LLVMValueRef LandingPad, LLVMValueRef ClauseVal);
+
+/* Set the 'cleanup' flag in the landingpad instruction */
+void LLVMSetCleanup(LLVMValueRef LandingPad, LLVMBool Val);
 
 /* Arithmetic */
 LLVMValueRef LLVMBuildAdd(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS,

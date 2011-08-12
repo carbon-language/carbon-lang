@@ -172,7 +172,8 @@ HANDLE_OTHER_INST(55, InsertElement, InsertElementInst)  // insert into vector
 HANDLE_OTHER_INST(56, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
 HANDLE_OTHER_INST(57, ExtractValue, ExtractValueInst)// extract from aggregate
 HANDLE_OTHER_INST(58, InsertValue, InsertValueInst)  // insert into aggregate
-  LAST_OTHER_INST(58)
+HANDLE_OTHER_INST(59, LandingPad, LandingPadInst)  // Landing pad instruction.
+  LAST_OTHER_INST(59)
 
 #undef  FIRST_TERM_INST
 #undef HANDLE_TERM_INST

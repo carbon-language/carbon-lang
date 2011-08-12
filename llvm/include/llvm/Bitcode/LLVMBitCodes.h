@@ -308,9 +308,10 @@ namespace bitc {
                                      //             align, vol,
                                      //             ordering, synchscope]
     FUNC_CODE_INST_RESUME      = 39, // RESUME:     [opval]
-    FUNC_CODE_INST_LOADATOMIC  = 40, // LOAD: [opty, op, align, vol,
+    FUNC_CODE_INST_LANDINGPAD  = 40, // LANDINGPAD: [ty,val,val,num,id0,val0...]
+    FUNC_CODE_INST_LOADATOMIC  = 41, // LOAD: [opty, op, align, vol,
                                      //        ordering, synchscope]
-    FUNC_CODE_INST_STOREATOMIC = 41  // STORE: [ptrty,ptr,val, align, vol
+    FUNC_CODE_INST_STOREATOMIC = 42  // STORE: [ptrty,ptr,val, align, vol
                                      //         ordering, synchscope]
   };
 } // End bitc namespace

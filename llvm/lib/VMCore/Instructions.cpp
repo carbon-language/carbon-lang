@@ -166,6 +166,88 @@ Value *PHINode::hasConstantValue() const {
   return ConstantValue;
 }
 
+//===----------------------------------------------------------------------===//
+//                       LandingPadInst Implementation
+//===----------------------------------------------------------------------===//
+
+LandingPadInst::LandingPadInst(Type *RetTy, Value *PersonalityFn,
+                               unsigned NumReservedValues, const Twine &NameStr,
+                               Instruction *InsertBefore)
+  : Instruction(RetTy, Instruction::LandingPad, 0, 0, InsertBefore) {
+  init(PersonalityFn, 1 + NumReservedValues, NameStr);
+}
+
+LandingPadInst::LandingPadInst(Type *RetTy, Value *PersonalityFn,
+                               unsigned NumReservedValues, const Twine &NameStr,
+                               BasicBlock *InsertAtEnd)
+  : Instruction(RetTy, Instruction::LandingPad, 0, 0, InsertAtEnd) {
+  init(PersonalityFn, 1 + NumReservedValues, NameStr);
+}
+
+LandingPadInst::LandingPadInst(const LandingPadInst &LP)
+  : Instruction(LP.getType(), Instruction::LandingPad,
+                allocHungoffUses(LP.getNumOperands()), LP.getNumOperands()),
+    ReservedSpace(LP.getNumOperands()) {
+  Use *OL = OperandList, *InOL = LP.OperandList;
+  for (unsigned I = 0, E = ReservedSpace; I != E; ++I)
+    OL[I] = InOL[I];
+
+  setCleanup(LP.isCleanup());
+}
+
+LandingPadInst::~LandingPadInst() {
+  dropHungoffUses();
+}
+
+LandingPadInst *LandingPadInst::Create(Type *RetTy, Value *PersonalityFn,
+                                       unsigned NumReservedClauses,
+                                       const Twine &NameStr,
+                                       Instruction *InsertBefore) {
+  return new LandingPadInst(RetTy, PersonalityFn, NumReservedClauses, NameStr,
+                            InsertBefore);
+}
+
+LandingPadInst *LandingPadInst::Create(Type *RetTy, Value *PersonalityFn,
+                                       unsigned NumReservedClauses,
+                                       const Twine &NameStr,
+                                       BasicBlock *InsertAtEnd) {
+  return new LandingPadInst(RetTy, PersonalityFn, NumReservedClauses, NameStr,
+                            InsertAtEnd);
+}
+
+void LandingPadInst::init(Value *PersFn, unsigned NumReservedValues,
+                          const Twine &NameStr) {
+  ReservedSpace = NumReservedValues;
+  NumOperands = 1;
+  OperandList = allocHungoffUses(ReservedSpace);
+  OperandList[0] = PersFn;
+  setName(NameStr);
+  setCleanup(false);
+}
+
+/// growOperands - grow operands - This grows the operand list in response to a
+/// push_back style of operation. This grows the number of ops by 2 times.
+void LandingPadInst::growOperands(unsigned Size) {
+  unsigned e = getNumOperands();
+  if (ReservedSpace >= e + Size) return;
+  ReservedSpace = (e + Size / 2) * 2;
+
+  Use *NewOps = allocHungoffUses(ReservedSpace);
+  Use *OldOps = OperandList;
+  for (unsigned i = 0; i != e; ++i)
+      NewOps[i] = OldOps[i];
+
+  OperandList = NewOps;
+  Use::zap(OldOps, OldOps + e, true);
+}
+
+void LandingPadInst::addClause(Value *Val) {
+  unsigned OpNo = getNumOperands();
+  growOperands(1);
+  assert(OpNo < ReservedSpace && "Growing didn't work!");
+  ++NumOperands;
+  OperandList[OpNo] = Val;
+}
 
 //===----------------------------------------------------------------------===//
 //                        CallInst Implementation
@@ -494,6 +576,9 @@ void InvokeInst::removeAttribute(unsigned i, Attributes attr) {
   setAttributes(PAL);
 }
 
+LandingPadInst *InvokeInst::getLandingPadInst() const {
+  return cast<LandingPadInst>(getUnwindDest()->getFirstNonPHI());
+}
 
 //===----------------------------------------------------------------------===//
 //                        ReturnInst Implementation
@@ -3342,6 +3427,10 @@ ShuffleVectorInst *ShuffleVectorInst::clone_impl() const {
 
 PHINode *PHINode::clone_impl() const {
   return new PHINode(*this);
+}
+
+LandingPadInst *LandingPadInst::clone_impl() const {
+  return new LandingPadInst(*this);
 }
 
 ReturnInst *ReturnInst::clone_impl() const {
