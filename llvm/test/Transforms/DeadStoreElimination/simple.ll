@@ -42,20 +42,20 @@ define i32 @test3(i32* %g_addr) nounwind {
 
 define void @test4(i32* %Q) {
         %a = load i32* %Q
-        volatile store i32 %a, i32* %Q
+        store volatile i32 %a, i32* %Q
         ret void
 ; CHECK: @test4
 ; CHECK-NEXT: load i32
-; CHECK-NEXT: volatile store
+; CHECK-NEXT: store volatile
 ; CHECK-NEXT: ret void
 }
 
 define void @test5(i32* %Q) {
-        %a = volatile load i32* %Q
+        %a = load volatile i32* %Q
         store i32 %a, i32* %Q
         ret void
 ; CHECK: @test5
-; CHECK-NEXT: volatile load
+; CHECK-NEXT: load volatile
 ; CHECK-NEXT: ret void
 }
 

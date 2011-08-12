@@ -11,14 +11,14 @@ entry:
         br i1 %0, label %bb, label %return
 
 bb:             ; preds = %entry
-        %1 = volatile load i32* null
+        %1 = load volatile i32* null
         unreachable
         
         br label %return
 return:         ; preds = %entry
         ret void
 ; CHECK: @test1
-; CHECK: volatile load
+; CHECK: load volatile
 }
 
 ; rdar://7958343
@@ -35,10 +35,10 @@ entry:
 ; PR7369
 define void @test3() nounwind {
 entry:
-        volatile store i32 4, i32* null
+        store volatile i32 4, i32* null
         ret void
 
 ; CHECK: @test3
-; CHECK: volatile store i32 4, i32* null
+; CHECK: store volatile i32 4, i32* null
 ; CHECK: ret
 }

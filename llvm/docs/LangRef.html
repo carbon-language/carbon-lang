@@ -4572,8 +4572,8 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = [volatile] load &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]
-  &lt;result&gt; = atomic [volatile] load &lt;ty&gt;* &lt;pointer&gt; [singlethread] &lt;ordering&gt;, align &lt;alignment&gt;
+  &lt;result&gt; = load [volatile] &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]
+  &lt;result&gt; = load atomic [volatile] &lt;ty&gt;* &lt;pointer&gt; [singlethread] &lt;ordering&gt;, align &lt;alignment&gt;
   !&lt;index&gt; = !{ i32 1 }
 </pre>
 
@@ -4644,8 +4644,8 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  [volatile] store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]                   <i>; yields {void}</i>
-  atomic [volatile] store &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt; [singlethread] &lt;ordering&gt;, align &lt;alignment&gt;             <i>; yields {void}</i>
+  store [volatile] &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]                   <i>; yields {void}</i>
+  store atomic [volatile] &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt; [singlethread] &lt;ordering&gt;, align &lt;alignment&gt;             <i>; yields {void}</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -4774,7 +4774,7 @@ thread.  (This is useful for interacting with signal handlers.)</p>
 
 <h5>Syntax:</h5>
 <pre>
-  [volatile] cmpxchg &lt;ty&gt;* &lt;pointer&gt;, &lt;ty&gt; &lt;cmp&gt;, &lt;ty&gt; &lt;new&gt; [singlethread] &lt;ordering&gt;                   <i>; yields {ty}</i>
+  cmpxchg [volatile] &lt;ty&gt;* &lt;pointer&gt;, &lt;ty&gt; &lt;cmp&gt;, &lt;ty&gt; &lt;new&gt; [singlethread] &lt;ordering&gt;                   <i>; yields {ty}</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -4857,7 +4857,7 @@ done:
 
 <h5>Syntax:</h5>
 <pre>
-  [volatile] atomicrmw &lt;operation&gt; &lt;ty&gt;* &lt;pointer&gt;, &lt;ty&gt; &lt;value&gt; [singlethread] &lt;ordering&gt;                   <i>; yields {ty}</i>
+  atomicrmw [volatile] &lt;operation&gt; &lt;ty&gt;* &lt;pointer&gt;, &lt;ty&gt; &lt;value&gt; [singlethread] &lt;ordering&gt;                   <i>; yields {ty}</i>
 </pre>
 
 <h5>Overview:</h5>

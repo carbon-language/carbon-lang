@@ -1658,22 +1658,24 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     else
       Out << '%' << SlotNum << " = ";
   }
-
-  // If this is an atomic load or store, print out the atomic marker.
-  if ((isa<LoadInst>(I)  && cast<LoadInst>(I).isAtomic()) ||
-      (isa<StoreInst>(I) && cast<StoreInst>(I).isAtomic()))
-    Out << "atomic ";
-
-  // If this is a volatile load or store, print out the volatile marker.
-  if ((isa<LoadInst>(I)  && cast<LoadInst>(I).isVolatile()) ||
-      (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile()))
-    Out << "volatile ";
   
   if (isa<CallInst>(I) && cast<CallInst>(I).isTailCall())
     Out << "tail ";
 
   // Print out the opcode...
   Out << I.getOpcodeName();
+
+  // If this is an atomic load or store, print out the atomic marker.
+  if ((isa<LoadInst>(I)  && cast<LoadInst>(I).isAtomic()) ||
+      (isa<StoreInst>(I) && cast<StoreInst>(I).isAtomic()))
+    Out << " atomic";
+
+  // If this is a volatile operation, print out the volatile marker.
+  if ((isa<LoadInst>(I)  && cast<LoadInst>(I).isVolatile()) ||
+      (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile()) ||
+      (isa<AtomicCmpXchgInst>(I) && cast<AtomicCmpXchgInst>(I).isVolatile()) ||
+      (isa<AtomicRMWInst>(I) && cast<AtomicRMWInst>(I).isVolatile()))
+    Out << " volatile";
 
   // Print out optimization information.
   WriteOptimizationInfo(Out, &I);

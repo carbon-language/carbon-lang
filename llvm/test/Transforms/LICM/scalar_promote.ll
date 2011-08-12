@@ -65,7 +65,7 @@ Loop:
 	br i1 true, label %Out, label %Loop
         
 ; CHECK: Loop:
-; CHECK-NEXT: volatile load
+; CHECK-NEXT: load volatile
 
 Out:		; preds = %Loop
 	ret void

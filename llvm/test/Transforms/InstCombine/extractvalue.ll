@@ -96,7 +96,7 @@ define i32 @nogep-multiuse({i32, i32}* %pair) {
 }
 
 ; CHECK: define i32 @nogep-volatile
-; CHECK-NEXT: volatile load {{.*}} %pair
+; CHECK-NEXT: load volatile {{.*}} %pair
 ; CHECK-NEXT: extractvalue
 ; CHECK-NEXT: ret
 define i32 @nogep-volatile({i32, i32}* %pair) {

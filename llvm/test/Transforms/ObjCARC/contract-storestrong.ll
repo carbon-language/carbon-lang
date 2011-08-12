@@ -25,7 +25,7 @@ entry:
 ;      CHECK: define void @test1(i8* %p) {
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %p) nounwind
-; CHECK-NEXT:   %tmp = volatile load i8** @x, align 8
+; CHECK-NEXT:   %tmp = load volatile i8** @x, align 8
 ; CHECK-NEXT:   store i8* %0, i8** @x, align 8
 ; CHECK-NEXT:   tail call void @objc_release(i8* %tmp) nounwind
 ; CHECK-NEXT:   ret void
@@ -45,7 +45,7 @@ entry:
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %p) nounwind
 ; CHECK-NEXT:   %tmp = load i8** @x, align 8
-; CHECK-NEXT:   volatile store i8* %0, i8** @x, align 8
+; CHECK-NEXT:   store volatile i8* %0, i8** @x, align 8
 ; CHECK-NEXT:   tail call void @objc_release(i8* %tmp) nounwind
 ; CHECK-NEXT:   ret void
 ; CHECK-NEXT: }

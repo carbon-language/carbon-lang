@@ -152,9 +152,9 @@ entry:
   ret void
 ; CHECK: @powi
 ; CHECK: %A = fdiv double 1.0{{.*}}, %V
-; CHECK: volatile store double %A, 
-; CHECK: volatile store double 1.0 
-; CHECK: volatile store double %V
+; CHECK: store volatile double %A, 
+; CHECK: store volatile double 1.0 
+; CHECK: store volatile double %V
 }
 
 define i32 @cttz(i32 %a) {
@@ -194,11 +194,11 @@ entry:
 ; CHECK: @cmp.simplify
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: %lz.cmp = icmp eq i32 %a, 0
-; CHECK-NEXT: volatile store i1 %lz.cmp, i1* %c
+; CHECK-NEXT: store volatile i1 %lz.cmp, i1* %c
 ; CHECK-NEXT: %tz.cmp = icmp ne i32 %a, 0
-; CHECK-NEXT: volatile store i1 %tz.cmp, i1* %c
+; CHECK-NEXT: store volatile i1 %tz.cmp, i1* %c
 ; CHECK-NEXT: %pop.cmp = icmp eq i32 %b, 0
-; CHECK-NEXT: volatile store i1 %pop.cmp, i1* %c
+; CHECK-NEXT: store volatile i1 %pop.cmp, i1* %c
 }
 
 

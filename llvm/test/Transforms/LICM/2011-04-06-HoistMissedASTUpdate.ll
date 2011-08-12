@@ -15,7 +15,7 @@ for.body4.lr.ph:
   br label %for.body4
 
 ; CHECK: for.body4:
-; CHECK: volatile load i16* @g_39
+; CHECK: load volatile i16* @g_39
 
 for.body4:
   %l_612.11 = phi i32* [ undef, %for.body4.lr.ph ], [ %call19, %for.body4 ]

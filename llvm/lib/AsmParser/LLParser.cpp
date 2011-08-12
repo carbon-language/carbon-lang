@@ -2950,27 +2950,17 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_tail:           return ParseCall(Inst, PFS, true);
   // Memory.
   case lltok::kw_alloca:         return ParseAlloc(Inst, PFS);
-  case lltok::kw_load:           return ParseLoad(Inst, PFS, false, false);
-  case lltok::kw_store:          return ParseStore(Inst, PFS, false, false);
-  case lltok::kw_cmpxchg:        return ParseCmpXchg(Inst, PFS, false);
-  case lltok::kw_atomicrmw:      return ParseAtomicRMW(Inst, PFS, false);
+  case lltok::kw_load:           return ParseLoad(Inst, PFS, false);
+  case lltok::kw_store:          return ParseStore(Inst, PFS, false);
+  case lltok::kw_cmpxchg:        return ParseCmpXchg(Inst, PFS);
+  case lltok::kw_atomicrmw:      return ParseAtomicRMW(Inst, PFS);
   case lltok::kw_fence:          return ParseFence(Inst, PFS);
-  case lltok::kw_atomic: {
-    bool isVolatile = EatIfPresent(lltok::kw_volatile);
-    if (EatIfPresent(lltok::kw_load))
-      return ParseLoad(Inst, PFS, true, isVolatile);
-    else if (EatIfPresent(lltok::kw_store))
-      return ParseStore(Inst, PFS, true, isVolatile);
-  }
   case lltok::kw_volatile:
+    // For compatibility; canonical location is after load
     if (EatIfPresent(lltok::kw_load))
-      return ParseLoad(Inst, PFS, false, true);
+      return ParseLoad(Inst, PFS, true);
     else if (EatIfPresent(lltok::kw_store))
-      return ParseStore(Inst, PFS, false, true);
-    else if (EatIfPresent(lltok::kw_cmpxchg))
-      return ParseCmpXchg(Inst, PFS, true);
-    else if (EatIfPresent(lltok::kw_atomicrmw))
-      return ParseAtomicRMW(Inst, PFS, true);
+      return ParseStore(Inst, PFS, true);
     else
       return TokError("expected 'load' or 'store'");
   case lltok::kw_getelementptr: return ParseGetElementPtr(Inst, PFS);
@@ -3694,16 +3684,34 @@ int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS) {
 }
 
 /// ParseLoad
-///   ::= 'volatile'? 'load' TypeAndValue (',' 'align' i32)?
-//    ::= 'atomic' 'volatile'? 'load' TypeAndValue 
-//        'singlethread'? AtomicOrdering (',' 'align' i32)?
+///   ::= 'load' 'volatile'? TypeAndValue (',' 'align' i32)?
+///   ::= 'load' 'atomic' 'volatile'? TypeAndValue 
+///       'singlethread'? AtomicOrdering (',' 'align' i32)?
+///   Compatibility:
+///   ::= 'volatile' 'load' TypeAndValue (',' 'align' i32)?
 int LLParser::ParseLoad(Instruction *&Inst, PerFunctionState &PFS,
-                        bool isAtomic, bool isVolatile) {
+                        bool isVolatile) {
   Value *Val; LocTy Loc;
   unsigned Alignment = 0;
   bool AteExtraComma = false;
+  bool isAtomic = false;
   AtomicOrdering Ordering = NotAtomic;
   SynchronizationScope Scope = CrossThread;
+
+  if (Lex.getKind() == lltok::kw_atomic) {
+    if (isVolatile)
+      return TokError("mixing atomic with old volatile placement");
+    isAtomic = true;
+    Lex.Lex();
+  }
+
+  if (Lex.getKind() == lltok::kw_volatile) {
+    if (isVolatile)
+      return TokError("duplicate volatile before and after store");
+    isVolatile = true;
+    Lex.Lex();
+  }
+
   if (ParseTypeAndValue(Val, Loc, PFS) ||
       ParseScopeAndOrdering(isAtomic, Scope, Ordering) ||
       ParseOptionalCommaAlign(Alignment, AteExtraComma))
@@ -3722,16 +3730,35 @@ int LLParser::ParseLoad(Instruction *&Inst, PerFunctionState &PFS,
 }
 
 /// ParseStore
-///   ::= 'volatile'? 'store' TypeAndValue ',' TypeAndValue (',' 'align' i32)?
-///   ::= 'atomic' 'volatile'? 'store' TypeAndValue ',' TypeAndValue
+
+///   ::= 'store' 'volatile'? TypeAndValue ',' TypeAndValue (',' 'align' i32)?
+///   ::= 'store' 'atomic' 'volatile'? TypeAndValue ',' TypeAndValue
 ///       'singlethread'? AtomicOrdering (',' 'align' i32)?
+///   Compatibility:
+///   ::= 'volatile' 'store' TypeAndValue ',' TypeAndValue (',' 'align' i32)?
 int LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS,
-                         bool isAtomic, bool isVolatile) {
+                         bool isVolatile) {
   Value *Val, *Ptr; LocTy Loc, PtrLoc;
   unsigned Alignment = 0;
   bool AteExtraComma = false;
+  bool isAtomic = false;
   AtomicOrdering Ordering = NotAtomic;
   SynchronizationScope Scope = CrossThread;
+
+  if (Lex.getKind() == lltok::kw_atomic) {
+    if (isVolatile)
+      return TokError("mixing atomic with old volatile placement");
+    isAtomic = true;
+    Lex.Lex();
+  }
+
+  if (Lex.getKind() == lltok::kw_volatile) {
+    if (isVolatile)
+      return TokError("duplicate volatile before and after store");
+    isVolatile = true;
+    Lex.Lex();
+  }
+
   if (ParseTypeAndValue(Val, Loc, PFS) ||
       ParseToken(lltok::comma, "expected ',' after store operand") ||
       ParseTypeAndValue(Ptr, PtrLoc, PFS) ||
@@ -3755,14 +3782,18 @@ int LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS,
 }
 
 /// ParseCmpXchg
-///   ::= 'volatile'? 'cmpxchg' TypeAndValue ',' TypeAndValue ',' TypeAndValue
-///        'singlethread'? AtomicOrdering
-int LLParser::ParseCmpXchg(Instruction *&Inst, PerFunctionState &PFS,
-                           bool isVolatile) {
+///   ::= 'cmpxchg' 'volatile'? TypeAndValue ',' TypeAndValue ',' TypeAndValue
+///       'singlethread'? AtomicOrdering
+int LLParser::ParseCmpXchg(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Ptr, *Cmp, *New; LocTy PtrLoc, CmpLoc, NewLoc;
   bool AteExtraComma = false;
   AtomicOrdering Ordering = NotAtomic;
   SynchronizationScope Scope = CrossThread;
+  bool isVolatile = false;
+
+  if (EatIfPresent(lltok::kw_volatile))
+    isVolatile = true;
+
   if (ParseTypeAndValue(Ptr, PtrLoc, PFS) ||
       ParseToken(lltok::comma, "expected ',' after cmpxchg address") ||
       ParseTypeAndValue(Cmp, CmpLoc, PFS) ||
@@ -3794,15 +3825,19 @@ int LLParser::ParseCmpXchg(Instruction *&Inst, PerFunctionState &PFS,
 }
 
 /// ParseAtomicRMW
-///   ::= 'volatile'? 'atomicrmw' BinOp TypeAndValue ',' TypeAndValue
-///        'singlethread'? AtomicOrdering
-int LLParser::ParseAtomicRMW(Instruction *&Inst, PerFunctionState &PFS,
-                             bool isVolatile) {
+///   ::= 'atomicrmw' 'volatile'? BinOp TypeAndValue ',' TypeAndValue
+///       'singlethread'? AtomicOrdering
+int LLParser::ParseAtomicRMW(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Ptr, *Val; LocTy PtrLoc, ValLoc;
   bool AteExtraComma = false;
   AtomicOrdering Ordering = NotAtomic;
   SynchronizationScope Scope = CrossThread;
+  bool isVolatile = false;
   AtomicRMWInst::BinOp Operation;
+
+  if (EatIfPresent(lltok::kw_volatile))
+    isVolatile = true;
+
   switch (Lex.getKind()) {
   default: return TokError("expected binary operation in atomicrmw");
   case lltok::kw_xchg: Operation = AtomicRMWInst::Xchg; break;

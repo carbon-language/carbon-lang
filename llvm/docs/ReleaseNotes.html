@@ -583,6 +583,10 @@ it run faster:</p>
 <ul>
   <li>The <code>LowerSetJmp</code> pass wasn't used effectively by any
       target and has been removed.</li>
+  <li>The syntax of volatile loads and stores in IR has been changed to
+      "<code>load volatile</code>"/"<code>store volatile</code>".  The old
+      syntax ("<code>volatile load</code>"/"<code>volatile store</code>")
+      is still accepted, but is now considered deprecated.</li>
 </ul>
 
 </div>
