@@ -3018,15 +3018,24 @@ public:
         lldb::FormatCategorySP category;
         Debugger::Formatting::Categories::Get(ConstString(options->m_category.c_str()), category);
         
+        Error error;
+        
         for (size_t i = 0; i < options->m_target_types.GetSize(); i++) {
             const char *type_name = options->m_target_types.GetStringAtIndex(i);
             ConstString typeCS(type_name);
             if (typeCS)
-                CommandObjectTypeSynthAdd::AddSynth(typeCS,
-                                                    synth_provider,
-                                                    options->m_regex ? CommandObjectTypeSynthAdd::eRegexSynth : CommandObjectTypeSynthAdd::eRegularSynth,
-                                                    options->m_category,
-                                                    NULL);
+            {
+                if (!CommandObjectTypeSynthAdd::AddSynth(typeCS,
+                                                        synth_provider,
+                                                        options->m_regex ? CommandObjectTypeSynthAdd::eRegexSynth : CommandObjectTypeSynthAdd::eRegularSynth,
+                                                        options->m_category,
+                                                        &error))
+                {
+                    out_stream->Printf("%s\n", error.AsCString());
+                    out_stream->Flush();
+                    return;
+                }
+            }
             else
             {
                 out_stream->Printf ("Internal error #6: no script attached.\n");
@@ -3126,15 +3135,24 @@ CommandObjectTypeSynthAdd::Execute_PythonClass (Args& command, CommandReturnObje
     lldb::FormatCategorySP category;
     Debugger::Formatting::Categories::Get(ConstString(m_options.m_category.c_str()), category);
     
+    Error error;
+    
     for (size_t i = 0; i < argc; i++) {
         const char* typeA = command.GetArgumentAtIndex(i);
         ConstString typeCS(typeA);
         if (typeCS)
-            AddSynth(typeCS,
-                     entry,
-                     m_options.m_regex ? eRegexSynth : eRegularSynth,
-                     m_options.m_category,
-                     NULL);
+        {
+            if (!AddSynth(typeCS,
+                          entry,
+                          m_options.m_regex ? eRegexSynth : eRegularSynth,
+                          m_options.m_category,
+                          &error))
+            {
+                result.AppendError(error.AsCString());
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
         else
         {
             result.AppendError("empty typenames not allowed");
@@ -3174,6 +3192,15 @@ CommandObjectTypeSynthAdd::AddSynth(const ConstString& type_name,
 {
     lldb::FormatCategorySP category;
     Debugger::Formatting::Categories::Get(ConstString(category_name.c_str()), category);
+    
+    if (category->AnyMatches(type_name,
+                             FormatCategory::eFilter | FormatCategory::eRegexFilter,
+                             false))
+    {
+        if (error)
+            error->SetErrorStringWithFormat("cannot add synthetic for type %s when filter is defined in same category!", type_name.AsCString());
+        return false;
+    }
     
     if (type == eRegexSynth)
     {
@@ -3327,23 +3354,32 @@ private:
         return &m_options;
     }
     
-    enum SynthFormatType
+    enum FilterFormatType
     {
-        eRegularSynth,
-        eRegexSynth,
+        eRegularFilter,
+        eRegexFilter,
     };
     
     bool
-    AddSynth(const ConstString& type_name,
-             SyntheticChildrenSP entry,
-             SynthFormatType type,
-             std::string category_name,
-             Error* error)
+    AddFilter(const ConstString& type_name,
+              SyntheticChildrenSP entry,
+              FilterFormatType type,
+              std::string category_name,
+              Error* error)
     {
         lldb::FormatCategorySP category;
         Debugger::Formatting::Categories::Get(ConstString(category_name.c_str()), category);
         
-        if (type == eRegexSynth)
+        if (category->AnyMatches(type_name,
+                                 FormatCategory::eSynth | FormatCategory::eRegexSynth,
+                                 false))
+        {
+            if (error)
+                error->SetErrorStringWithFormat("cannot add filter for type %s when synthetic is defined in same category!", type_name.AsCString());
+            return false;
+        }
+        
+        if (type == eRegexFilter)
         {
             RegularExpressionSP typeRX(new RegularExpression());
             if (!typeRX->Compile(type_name.GetCString()))
@@ -3430,15 +3466,24 @@ public:
         lldb::FormatCategorySP category;
         Debugger::Formatting::Categories::Get(ConstString(m_options.m_category.c_str()), category);
         
+        Error error;
+        
         for (size_t i = 0; i < argc; i++) {
             const char* typeA = command.GetArgumentAtIndex(i);
             ConstString typeCS(typeA);
             if (typeCS)
-                AddSynth(typeCS,
-                         entry,
-                         m_options.m_regex ? eRegexSynth : eRegularSynth,
-                         m_options.m_category,
-                         NULL);
+            {
+                if (!AddFilter(typeCS,
+                          entry,
+                          m_options.m_regex ? eRegexFilter : eRegularFilter,
+                          m_options.m_category,
+                          &error))
+                {
+                    result.AppendError(error.AsCString());
+                    result.SetStatus(eReturnStatusFailed);
+                    return false;
+                }
+            }
             else
             {
                 result.AppendError("empty typenames not allowed");

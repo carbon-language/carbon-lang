@@ -1837,11 +1837,25 @@ Debugger::Formatting::GetSummaryFormat(ValueObject& vobj,
     return GetFormatManager().Get(vobj, entry, use_dynamic);
 }
 bool
-Debugger::Formatting::GetSyntheticFilter(ValueObject& vobj,
-                                         lldb::DynamicValueType use_dynamic,
-                                         lldb::SyntheticChildrenSP& entry)
+Debugger::Formatting::GetSyntheticChildren(ValueObject& vobj,
+                                           lldb::DynamicValueType use_dynamic,
+                                           lldb::SyntheticChildrenSP& entry)
 {
     return GetFormatManager().Get(vobj, entry, use_dynamic);
+}
+
+bool
+Debugger::Formatting::AnyMatches(ConstString type_name,
+                                 FormatCategory::FormatCategoryItems items,
+                                 bool only_enabled,
+                                 const char** matching_category,
+                                 FormatCategory::FormatCategoryItems* matching_type)
+{
+    return GetFormatManager().AnyMatches(type_name,
+                                         items,
+                                         only_enabled,
+                                         matching_category,
+                                         matching_type);
 }
 
 bool

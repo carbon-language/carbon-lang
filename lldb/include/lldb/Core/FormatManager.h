@@ -608,8 +608,10 @@ class CategoryMap;
 class FormatCategory
 {
 private:
+    
     typedef FormatNavigator<const char*, SummaryFormat> SummaryNavigator;
     typedef FormatNavigator<lldb::RegularExpressionSP, SummaryFormat> RegexSummaryNavigator;
+    
     typedef FormatNavigator<const char*, SyntheticFilter> FilterNavigator;
     typedef FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter> RegexFilterNavigator;
     
@@ -654,6 +656,15 @@ private:
     }
     
     friend class CategoryMap;
+    
+    friend class FormatNavigator<const char*, SummaryFormat>;
+    friend class FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>;
+
+    friend class FormatNavigator<const char*, SyntheticFilter>;
+    friend class FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>;
+
+    friend class FormatNavigator<const char*, SyntheticScriptProvider>;
+    friend class FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>;
     
 public:
     
@@ -824,17 +835,17 @@ public:
     void
     Clear(FormatCategoryItems items = ALL_ITEM_TYPES)
     {
-        if ( (items & eSummary) )
+        if ( (items & eSummary) == eSummary )
             m_summary_nav->Clear();
-        if ( (items & eRegexSummary) )
+        if ( (items & eRegexSummary) == eRegexSummary )
             m_regex_summary_nav->Clear();
-        if ( (items & eFilter) )
+        if ( (items & eFilter)  == eFilter )
             m_filter_nav->Clear();
-        if ( (items & eRegexFilter) )
+        if ( (items & eRegexFilter) == eRegexFilter )
             m_regex_filter_nav->Clear();
-        if ( (items & eSynth) )
+        if ( (items & eSynth)  == eSynth )
             m_synth_nav->Clear();
-        if ( (items & eRegexSynth) )
+        if ( (items & eRegexSynth) == eRegexSynth )
             m_regex_synth_nav->Clear();
     }
     
@@ -843,17 +854,17 @@ public:
            FormatCategoryItems items = ALL_ITEM_TYPES)
     {
         bool success = false;
-        if ( (items & eSummary) )
+        if ( (items & eSummary) == eSummary )
             success = m_summary_nav->Delete(name) || success;
-        if ( (items & eRegexSummary) )
+        if ( (items & eRegexSummary) == eRegexSummary )
             success = m_regex_summary_nav->Delete(name) || success;
-        if ( (items & eFilter) )
+        if ( (items & eFilter)  == eFilter )
             success = m_filter_nav->Delete(name) || success;
-        if ( (items & eRegexFilter) )
+        if ( (items & eRegexFilter) == eRegexFilter )
             success = m_regex_filter_nav->Delete(name) || success;
-        if ( (items & eSynth) )
+        if ( (items & eSynth)  == eSynth )
             success = m_synth_nav->Delete(name) || success;
-        if ( (items & eRegexSynth) )
+        if ( (items & eRegexSynth) == eRegexSynth )
             success = m_regex_synth_nav->Delete(name) || success;
         return success;
     }
@@ -862,17 +873,17 @@ public:
     GetCount(FormatCategoryItems items = ALL_ITEM_TYPES)
     {
         uint32_t count = 0;
-        if ( (items & eSummary) )
+        if ( (items & eSummary) == eSummary )
             count += m_summary_nav->GetCount();
-        if ( (items & eRegexSummary) )
+        if ( (items & eRegexSummary) == eRegexSummary )
             count += m_regex_summary_nav->GetCount();
-        if ( (items & eFilter) )
+        if ( (items & eFilter)  == eFilter )
             count += m_filter_nav->GetCount();
-        if ( (items & eRegexFilter) )
+        if ( (items & eRegexFilter) == eRegexFilter )
             count += m_regex_filter_nav->GetCount();
-        if ( (items & eSynth) )
+        if ( (items & eSynth)  == eSynth )
             count += m_synth_nav->GetCount();
-        if ( (items & eRegexSynth) )
+        if ( (items & eRegexSynth) == eRegexSynth )
             count += m_regex_synth_nav->GetCount();
         return count;
     }
@@ -881,6 +892,89 @@ public:
     GetName()
     {
         return m_name;
+    }
+    
+    bool
+    AnyMatches(ConstString type_name,
+               FormatCategoryItems items = ALL_ITEM_TYPES,
+               bool only_enabled = true,
+               const char** matching_category = NULL,
+               FormatCategoryItems* matching_type = NULL)
+    {
+        if (!IsEnabled() && only_enabled)
+            return false;
+        
+        SummaryFormat::SharedPointer summary;
+        SyntheticFilter::SharedPointer filter;
+        SyntheticScriptProvider::SharedPointer synth;
+        
+        if ( (items & eSummary) == eSummary )
+        {
+            if (m_summary_nav->Get(type_name.AsCString(), summary))
+            {
+                if (matching_category)
+                    *matching_category = m_name.c_str();
+                if (matching_type)
+                    *matching_type = eSummary;
+                return true;
+            }
+        }
+        if ( (items & eRegexSummary) == eRegexSummary )
+        {
+            if (m_regex_summary_nav->Get(type_name.AsCString(), summary))
+            {
+                if (matching_category)
+                    *matching_category = m_name.c_str();
+                if (matching_type)
+                    *matching_type = eRegexSummary;
+                return true;
+            }
+        }
+        if ( (items & eFilter)  == eFilter )
+        {
+            if (m_filter_nav->Get(type_name.AsCString(), filter))
+            {
+                if (matching_category)
+                    *matching_category = m_name.c_str();
+                if (matching_type)
+                    *matching_type = eFilter;
+                return true;
+            }
+        }
+        if ( (items & eRegexFilter) == eRegexFilter )
+        {
+            if (m_regex_filter_nav->Get(type_name.AsCString(), filter))
+            {
+                if (matching_category)
+                    *matching_category = m_name.c_str();
+                if (matching_type)
+                    *matching_type = eRegexFilter;
+                return true;
+            }
+        }
+        if ( (items & eSynth)  == eSynth )
+        {
+            if (m_synth_nav->Get(type_name.AsCString(), synth))
+            {
+                if (matching_category)
+                    *matching_category = m_name.c_str();
+                if (matching_type)
+                    *matching_type = eSynth;
+                return true;
+            }
+        }
+        if ( (items & eRegexSynth) == eRegexSynth )
+        {
+            if (m_regex_synth_nav->Get(type_name.AsCString(), synth))
+            {
+                if (matching_category)
+                    *matching_category = m_name.c_str();
+                if (matching_type)
+                    *matching_type = eRegexSynth;
+                return true;
+            }
+        }
+        return false;
     }
     
     typedef lldb::SharedPtr<FormatCategory>::Type SharedPointer;
@@ -1050,6 +1144,28 @@ public:
                 }
             }
         }
+    }
+    
+    bool
+    AnyMatches(ConstString type_name,
+               FormatCategory::FormatCategoryItems items = FormatCategory::ALL_ITEM_TYPES,
+               bool only_enabled = true,
+               const char** matching_category = NULL,
+               FormatCategory::FormatCategoryItems* matching_type = NULL)
+    {
+        Mutex::Locker(m_map_mutex);
+        
+        MapIterator pos, end = m_map.end();
+        for (pos = m_map.begin(); pos != end; pos++)
+        {
+            if (pos->second->AnyMatches(type_name,
+                                        items,
+                                        only_enabled,
+                                        matching_category,
+                                        matching_type))
+                return true;
+        }
+        return false;
     }
     
     uint32_t
@@ -1264,6 +1380,20 @@ public:
         lldb::DynamicValueType use_dynamic)
     {
         return m_categories_map.Get(vobj, entry, use_dynamic);
+    }
+    
+    bool
+    AnyMatches(ConstString type_name,
+               FormatCategory::FormatCategoryItems items = FormatCategory::ALL_ITEM_TYPES,
+               bool only_enabled = true,
+               const char** matching_category = NULL,
+               FormatCategory::FormatCategoryItems* matching_type = NULL)
+    {
+        return m_categories_map.AnyMatches(type_name,
+                                           items,
+                                           only_enabled,
+                                           matching_category,
+                                           matching_type);
     }
 
     static bool

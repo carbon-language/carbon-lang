@@ -512,9 +512,16 @@ public:
                          lldb::DynamicValueType use_dynamic,
                          lldb::SummaryFormatSP& entry);
         static bool
-        GetSyntheticFilter(ValueObject& vobj,
-                           lldb::DynamicValueType use_dynamic,
-                           lldb::SyntheticChildrenSP& entry);
+        GetSyntheticChildren(ValueObject& vobj,
+                             lldb::DynamicValueType use_dynamic,
+                             lldb::SyntheticChildrenSP& entry);
+        
+        static bool
+        AnyMatches(ConstString type_name,
+                   FormatCategory::FormatCategoryItems items = FormatCategory::ALL_ITEM_TYPES,
+                   bool only_enabled = true,
+                   const char** matching_category = NULL,
+                   FormatCategory::FormatCategoryItems* matching_type = NULL);
         
         class NamedSummaryFormats
         {

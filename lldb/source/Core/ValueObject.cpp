@@ -243,7 +243,7 @@ ValueObject::UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic)
         
         Debugger::Formatting::ValueFormats::Get(*this, lldb::eNoDynamicValues, m_last_value_format);
         Debugger::Formatting::GetSummaryFormat(*this, use_dynamic, m_last_summary_format);
-        Debugger::Formatting::GetSyntheticFilter(*this, use_dynamic, m_last_synthetic_filter);
+        Debugger::Formatting::GetSyntheticChildren(*this, use_dynamic, m_last_synthetic_filter);
 
         m_last_format_mgr_revision = Debugger::Formatting::ValueFormats::GetCurrentRevision();
         m_last_format_mgr_dynamic = use_dynamic;
