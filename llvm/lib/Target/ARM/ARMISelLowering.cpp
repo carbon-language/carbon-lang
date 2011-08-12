@@ -5300,13 +5300,15 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     if (isSub)
       Offset = -Offset;
 
+    MachineMemOperand *MMO = *MI->memoperands_begin();
     MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(NewOpc))
       .addOperand(MI->getOperand(0))  // Rn_wb
       .addOperand(MI->getOperand(1))  // Rt
       .addOperand(MI->getOperand(2))  // Rn
       .addImm(Offset)                 // offset (skip GPR==zero_reg)
       .addOperand(MI->getOperand(5))  // pred
-      .addOperand(MI->getOperand(6));
+      .addOperand(MI->getOperand(6))
+      .addMemOperand(MMO);
     MI->eraseFromParent();
     return BB;
   }
