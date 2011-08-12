@@ -287,10 +287,10 @@ instructions has been clarified in the IR.</p>
   <dd>In general, optimizers should treat this like a nothrow call; the
       the possible optimizations are usually not interesting.</dd>
   <dt>Notes for code generation</dt>
-  <dd>Similarly to Acquire, a fence after the relevant operation is usually
-      sufficient; see the section on Acquire.  Note that a store-store fence
-      is not sufficient to implement Release semantics; store-store fences
-      are generally not exposed to IR because they are extremely difficult to
+  <dd>See the section on Acquire; a fence before the relevant operation is
+      usually sufficient for Release.  Note that a store-store fence is not
+      sufficient to implement Release semantics; store-store fences are
+      generally not exposed to IR because they are extremely difficult to
       use correctly.</dd>
 </dl>
 
