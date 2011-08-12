@@ -640,30 +640,28 @@ namespace clang {
     enum SpecialTypeIDs {
       /// \brief __builtin_va_list
       SPECIAL_TYPE_BUILTIN_VA_LIST             = 0,
-      /// \brief Objective-C "id" type
-      SPECIAL_TYPE_OBJC_ID                     = 1,
       /// \brief Objective-C selector type
-      SPECIAL_TYPE_OBJC_SELECTOR               = 2,
+      SPECIAL_TYPE_OBJC_SELECTOR               = 1,
       /// \brief Objective-C Protocol type
-      SPECIAL_TYPE_OBJC_PROTOCOL               = 3,
+      SPECIAL_TYPE_OBJC_PROTOCOL               = 2,
       /// \brief Objective-C Class type
-      SPECIAL_TYPE_OBJC_CLASS                  = 4,
+      SPECIAL_TYPE_OBJC_CLASS                  = 3,
       /// \brief CFConstantString type
-      SPECIAL_TYPE_CF_CONSTANT_STRING          = 5,
+      SPECIAL_TYPE_CF_CONSTANT_STRING          = 4,
       /// \brief C FILE typedef type
-      SPECIAL_TYPE_FILE                        = 6,
+      SPECIAL_TYPE_FILE                        = 5,
       /// \brief C jmp_buf typedef type
-      SPECIAL_TYPE_jmp_buf                     = 7,
+      SPECIAL_TYPE_jmp_buf                     = 6,
       /// \brief C sigjmp_buf typedef type
-      SPECIAL_TYPE_sigjmp_buf                  = 8,
+      SPECIAL_TYPE_sigjmp_buf                  = 7,
       /// \brief Objective-C "id" redefinition type
-      SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 9,
+      SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 8,
       /// \brief Objective-C "Class" redefinition type
-      SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 10,
+      SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 9,
       /// \brief Objective-C "SEL" redefinition type
-      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 11,
+      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 10,
       /// \brief Whether __[u]int128_t identifier is installed.
-      SPECIAL_TYPE_INT128_INSTALLED            = 12
+      SPECIAL_TYPE_INT128_INSTALLED            = 11
     };
 
     /// \brief Predefined declaration IDs.
@@ -677,14 +675,17 @@ namespace clang {
       PREDEF_DECL_NULL_ID       = 0,
       
       /// \brief The translation unit.
-      PREDEF_DECL_TRANSLATION_UNIT_ID = 1
+      PREDEF_DECL_TRANSLATION_UNIT_ID = 1,
+      
+      /// \brief The Objective-C 'id' type.
+      PREDEF_DECL_OBJC_ID_ID = 2
     };
 
     /// \brief The number of declaration IDs that are predefined.
     ///
     /// For more information about predefined declarations, see the
     /// \c PredefinedDeclIDs type and the PREDEF_DECL_*_ID constants.
-    const unsigned int NUM_PREDEF_DECL_IDS = 2;
+    const unsigned int NUM_PREDEF_DECL_IDS = 3;
     
     /// \brief Record codes for each kind of declaration.
     ///

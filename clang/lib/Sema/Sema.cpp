@@ -106,18 +106,7 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
     Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
     PushOnScopeChains(ProtocolDecl, TUScope, false);
   }
-  // Create the built-in typedef for 'id'.
-  if (Context.getObjCIdType().isNull()) {
-    QualType T = Context.getObjCObjectType(Context.ObjCBuiltinIdTy, 0, 0);
-    T = Context.getObjCObjectPointerType(T);
-    TypeSourceInfo *IdInfo = Context.getTrivialTypeSourceInfo(T);
-    TypedefDecl *IdTypedef
-      = TypedefDecl::Create(Context, CurContext,
-                            SourceLocation(), SourceLocation(),
-                            &Context.Idents.get("id"), IdInfo);
-    PushOnScopeChains(IdTypedef, TUScope);
-    Context.setObjCIdType(Context.getTypeDeclType(IdTypedef));
-  }
+  
   // Create the built-in typedef for 'Class'.
   if (Context.getObjCClassType().isNull()) {
     QualType T = Context.getObjCObjectType(Context.ObjCBuiltinClassTy, 0, 0);
@@ -178,6 +167,15 @@ void Sema::Initialize() {
   if (ExternalSemaSource *ExternalSema
       = dyn_cast_or_null<ExternalSemaSource>(Context.getExternalSource()))
     ExternalSema->InitializeSema(*this);
+
+  // Initialize predefined Objective-C types:
+  if (PP.getLangOptions().ObjC1) {
+    // If 'id' does not yet refer to any declarations, make it refer to the
+    // predefined 'id'.
+    DeclarationName Id = &Context.Idents.get("id");
+    if (IdentifierResolver::begin(Id) == IdentifierResolver::end())
+      PushOnScopeChains(Context.getObjCIdDecl(), TUScope);
+  }
 }
 
 Sema::~Sema() {

@@ -2808,7 +2808,9 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Set up predefined declaration IDs.
   DeclIDs[Context.getTranslationUnitDecl()] = PREDEF_DECL_TRANSLATION_UNIT_ID;
-
+  if (Context.ObjCIdDecl)
+    DeclIDs[Context.ObjCIdDecl] = PREDEF_DECL_OBJC_ID_ID;
+          
   if (!Chain) {
     // Make sure that we emit IdentifierInfos (and any attached
     // declarations) for builtins. We don't need to do this when we're
@@ -3015,7 +3017,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Form the record of special types.
   RecordData SpecialTypes;
   AddTypeRef(Context.getBuiltinVaListType(), SpecialTypes);
-  AddTypeRef(Context.ObjCIdTypedefType, SpecialTypes);
   AddTypeRef(Context.ObjCSelTypedefType, SpecialTypes);
   AddTypeRef(Context.ObjCProtoType, SpecialTypes);
   AddTypeRef(Context.ObjCClassTypedefType, SpecialTypes);

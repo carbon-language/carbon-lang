@@ -182,9 +182,9 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   /// a builtin that takes a valist is encountered.
   QualType BuiltinVaListType;
 
-  /// ObjCIdType - a pseudo built-in typedef type (set by Sema).
-  QualType ObjCIdTypedefType;
-
+  /// \brief The typedef for the predefined 'id' type.
+  mutable TypedefDecl *ObjCIdDecl;
+  
   /// ObjCSelType - another pseudo built-in typedef type (set by Sema).
   QualType ObjCSelTypedefType;
 
@@ -952,11 +952,16 @@ public:
   bool isInt128Installed() const { return IsInt128Installed; }
   void setInt128Installed() { IsInt128Installed = true; }
 
+  /// \brief Retrieve the typedef corresponding to the predefined 'id' type
+  /// in Objective-C.
+  TypedefDecl *getObjCIdDecl() const;
+  
   /// This setter/getter represents the ObjC 'id' type. It is setup lazily, by
   /// Sema.  id is always a (typedef for a) pointer type, a pointer to a struct.
-  QualType getObjCIdType() const { return ObjCIdTypedefType; }
-  void setObjCIdType(QualType T);
-
+  QualType getObjCIdType() const {
+    return getTypeDeclType(getObjCIdDecl());
+  }
+  
   void setObjCSelType(QualType T);
   QualType getObjCSelType() const { return ObjCSelTypedefType; }
 
@@ -1415,7 +1420,7 @@ public:
   bool typesAreBlockPointerCompatible(QualType, QualType); 
 
   bool isObjCIdType(QualType T) const {
-    return T == ObjCIdTypedefType;
+    return T == getObjCIdType();
   }
   bool isObjCClassType(QualType T) const {
     return T == ObjCClassTypedefType;
