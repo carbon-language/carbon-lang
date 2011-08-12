@@ -17,10 +17,10 @@ using namespace diagtool;
 
 int main(int argc, char *argv[]) {
   if (argc > 1)
-    if (DiagTool *tool = diagTools.getTool(argv[1]))
+    if (DiagTool *tool = diagTools->getTool(argv[1]))
       return tool->run(argc - 1, &argv[2], llvm::errs());
 
   llvm::errs() << "usage: diagtool <command> [<args>]\n\n";
-  diagTools.printCommands(llvm::errs());
+  diagTools->printCommands(llvm::errs());
   return 1;    
 }

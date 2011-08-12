@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ManagedStatic.h"
 #include <string>
 
 
@@ -45,12 +46,12 @@ public:
   void printCommands(llvm::raw_ostream &out);  
 };
 
-extern DiagTools diagTools;
-  
+extern llvm::ManagedStatic<DiagTools> diagTools;
+
 template <typename DIAGTOOL>
 class RegisterDiagTool {
 public:
-  RegisterDiagTool() { diagTools.registerTool(new DIAGTOOL()); }
+  RegisterDiagTool() { diagTools->registerTool(new DIAGTOOL()); }
 };
 
 } // end diagtool namespace

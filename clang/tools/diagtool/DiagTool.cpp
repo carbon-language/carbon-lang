@@ -64,5 +64,5 @@ void DiagTools::printCommands(llvm::raw_ostream &out) {
 }
 
 namespace diagtool {
-  DiagTools diagTools;
+  llvm::ManagedStatic<DiagTools> diagTools;
 }

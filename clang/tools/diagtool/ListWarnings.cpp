@@ -50,7 +50,7 @@ int ListWarnings::run(unsigned int argc, char **argv, llvm::raw_ostream &out) {
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> Diags(new DiagnosticIDs);
   Diagnostic D(Diags);
   
-  std::vector<Entry> Flagged, Unflagged;;
+  std::vector<Entry> Flagged, Unflagged;
   llvm::StringMap<std::vector<unsigned> > flagHistogram;
   
   for (DiagnosticIDs::diag_iterator di = DiagnosticIDs::diags_begin(),
