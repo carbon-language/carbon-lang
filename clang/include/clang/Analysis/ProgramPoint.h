@@ -387,6 +387,7 @@ public:
   virtual StringRef getTagDescription() const = 0;    
 
 protected:
+  /// Used to implement 'classof' in subclasses.
   const void *getTagKind() { return TagKind; }
   
 private:
