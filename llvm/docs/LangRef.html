@@ -4954,7 +4954,7 @@ specified by the <var>operation</var> argument:</p>
    When indexing into a (optionally packed) structure, only <tt>i32</tt>
    integer <b>constants</b> are allowed.  When indexing into an array, pointer
    or vector, integers of any width are allowed, and they are not required to be
-   constant.</p>
+   constant.  These integers are treated as signed values where relevant.</p>
 
 <p>For example, let's consider a C code fragment and how it gets compiled to
    LLVM:</p>
@@ -5020,18 +5020,20 @@ entry:
    base pointer is not an <i>in bounds</i> address of an allocated object,
    or if any of the addresses that would be formed by successive addition of
    the offsets implied by the indices to the base address with infinitely
-   precise arithmetic are not an <i>in bounds</i> address of that allocated
-   object. The <i>in bounds</i> addresses for an allocated object are all
-   the addresses that point into the object, plus the address one byte past
-   the end.</p>
+   precise signed arithmetic are not an <i>in bounds</i> address of that
+   allocated object. The <i>in bounds</i> addresses for an allocated object
+   are all the addresses that point into the object, plus the address one
+   byte past the end.</p>
 
 <p>If the <tt>inbounds</tt> keyword is not present, the offsets are added to
-   the base address with silently-wrapping two's complement arithmetic, and
-   the result value of the <tt>getelementptr</tt> may be outside the object
-   pointed to by the base pointer. The result value may not necessarily be
-   used to access memory though, even if it happens to point into allocated
-   storage. See the <a href="#pointeraliasing">Pointer Aliasing Rules</a>
-   section for more information.</p>
+   the base address with silently-wrapping two's complement arithmetic. If the
+   offsets have a different width from the pointer, they are sign-extended or
+   truncated to the width of the pointer. The result value of the
+   <tt>getelementptr</tt> may be outside the object pointed to by the base
+   pointer. The result value may not necessarily be used to access memory
+   though, even if it happens to point into allocated storage. See the
+   <a href="#pointeraliasing">Pointer Aliasing Rules</a> section for more
+   information.</p>
 
 <p>The getelementptr instruction is often confusing.  For some more insight into
    how it works, see <a href="GetElementPtr.html">the getelementptr FAQ</a>.</p>
