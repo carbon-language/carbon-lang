@@ -373,8 +373,6 @@ private:
 
   void WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                     StringRef isysroot, const std::string &OutputFile);
-  void WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
-                     StringRef isysroot);
   
 public:
   /// \brief Create a new precompiled header writer that outputs to
