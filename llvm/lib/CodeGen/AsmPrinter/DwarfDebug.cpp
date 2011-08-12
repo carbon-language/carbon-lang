@@ -1680,10 +1680,10 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   collectVariableInfo(MF, ProcessedVars);
   
   // Construct abstract scopes.
-  SmallVector<LexicalScope *, 4> &AList = LScopes.getAbstractScopesList();
-  for (SmallVector<LexicalScope *, 4>::iterator AI = AList.begin(),
-         AE = AList.end(); AI != AE; ++AI) {
-    DISubprogram SP((*AI)->getScopeNode());
+  ArrayRef<LexicalScope *> AList = LScopes.getAbstractScopesList();
+  for (unsigned i = 0, e = AList.size(); i != e; ++i) {
+    LexicalScope *AScope = AList[i];
+    DISubprogram SP(AScope->getScopeNode());
     if (SP.Verify()) {
       // Collect info for variables that were optimized out.
       StringRef FName = SP.getLinkageName();
@@ -1700,8 +1700,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
         }
       }
     }
-    if (ProcessedSPNodes.count((*AI)->getScopeNode()) == 0)
-      constructScopeDIE(*AI);
+    if (ProcessedSPNodes.count(AScope->getScopeNode()) == 0)
+      constructScopeDIE(AScope);
   }
   
   DIE *CurFnDIE = constructScopeDIE(LScopes.getCurrentFunctionScope());

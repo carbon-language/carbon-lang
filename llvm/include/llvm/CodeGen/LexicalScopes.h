@@ -18,6 +18,7 @@
 #define LLVM_CODEGEN_LEXICALSCOPES_H
 
 #include "llvm/Metadata.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -79,7 +80,7 @@ public:
   LexicalScope *findLexicalScope(DebugLoc DL);
 
   /// getAbstractScopesList - Return a reference to list of abstract scopes.
-  SmallVector<LexicalScope *, 4> &getAbstractScopesList() {
+  ArrayRef<LexicalScope *> getAbstractScopesList() const {
     return AbstractScopesList;
   }
 
