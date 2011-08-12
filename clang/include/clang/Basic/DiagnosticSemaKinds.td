@@ -4265,7 +4265,8 @@ def warn_comparison_always : Warning<
 
 def warn_stringcompare : Warning<
   "result of comparison against %select{a string literal|@encode}0 is "
-  "unspecified (use strncmp instead)">;
+  "unspecified (use strncmp instead)">,
+  InGroup<DiagGroup<"string-compare">>;
 
 // Generic selections.
 def err_assoc_type_incomplete : Error<

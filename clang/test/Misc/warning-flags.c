@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (314):
+CHECK: Warnings without flags (313):
 CHECK-NEXT:   auto_storage_class
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
@@ -305,7 +305,6 @@ CHECK-NEXT:   warn_shift_negative
 CHECK-NEXT:   warn_standalone_specifier
 CHECK-NEXT:   warn_static_inline_explicit_inst_ignored
 CHECK-NEXT:   warn_static_non_static
-CHECK-NEXT:   warn_stringcompare
 CHECK-NEXT:   warn_template_export_unsupported
 CHECK-NEXT:   warn_template_spec_extra_headers
 CHECK-NEXT:   warn_tentative_incomplete_array
