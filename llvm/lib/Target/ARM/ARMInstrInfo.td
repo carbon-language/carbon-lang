@@ -2164,7 +2164,9 @@ def LDRBT_POST_REG : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
   let Inst{23} = offset{12};
   let Inst{21} = 1; // overwrite
   let Inst{19-16} = addr;
-  let Inst{11-0} = offset{11-0};
+  let Inst{11-5} = offset{11-5};
+  let Inst{4} = 0;
+  let Inst{3-0} = offset{3-0};
   let DecoderMethod = "DecodeAddrMode2IdxInstruction";
 }
 
