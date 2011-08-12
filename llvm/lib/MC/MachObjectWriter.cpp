@@ -595,9 +595,13 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
       return false;
   }
 
-  const MCFragment &FA = *Asm.getSymbolData(SA).getFragment();
+  const MCFragment *FA = Asm.getSymbolData(SA).getFragment();
 
-  A_Base = FA.getAtom();
+  // Bail if the symbol has no fragment.
+  if (!FA)
+    return false;
+
+  A_Base = FA->getAtom();
   if (!A_Base)
     return false;
 
