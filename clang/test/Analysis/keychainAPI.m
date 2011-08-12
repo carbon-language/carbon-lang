@@ -133,6 +133,17 @@ void* returnContent() {
   return outData;
 } // no-warning
 
+// Password was passed in as an argument and does nt have to be deleted.
+OSStatus getPasswordAndItem(void** password, UInt32* passwordLength) {
+    OSStatus err;
+    SecKeychainItemRef item;
+    err = SecKeychainFindGenericPassword(0, 3, "xx",
+                                         3, "xx",
+                                         passwordLength, password,
+                                         &item);
+    return err;
+} // no-warning
+
 int apiMismatch(SecKeychainItemRef itemRef, 
          SecKeychainAttributeInfo *info,
          SecItemClass *itemClass) {

@@ -349,6 +349,11 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     return;
 
   const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
+  // If the argument entered as an enclosing function parameter, skip it to
+  // avoid false positives.
+  if (isEnclosingFunctionParam(ArgExpr))
+    return;
+
   if (SymbolRef V = getAsPointeeSymbol(ArgExpr, C)) {
     // If the argument points to something that's not a symbolic region, it
     // can be:
