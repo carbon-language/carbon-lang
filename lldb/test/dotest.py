@@ -521,7 +521,7 @@ def setupSysPath():
     global svn_info
 
     # Get the directory containing the current script.
-    if "DOTEST_PROFILE" in os.environ and "DOTEST_SCRIPT_DIR" in os.environ:
+    if ("DOTEST_PROFILE" in os.environ or "DOTEST_PDB" in os.environ) and "DOTEST_SCRIPT_DIR" in os.environ:
         scriptPath = os.environ["DOTEST_SCRIPT_DIR"]
     else:
         scriptPath = sys.path[0]
