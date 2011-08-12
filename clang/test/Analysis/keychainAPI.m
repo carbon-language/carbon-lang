@@ -71,13 +71,13 @@ OSStatus SecKeychainItemFreeAttributesAndData (
 );
 
 void errRetVal() {
-	unsigned int *ptr = 0;
-	OSStatus st = 0;
-	UInt32 length;
-	void *outData;
-	st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
-	if (st == GenericError) // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeContent'.}}
-		SecKeychainItemFreeContent(ptr, outData); // expected-warning{{Trying to free data which has not been allocated.}}
+  unsigned int *ptr = 0;
+  OSStatus st = 0;
+  UInt32 length;
+  void *outData;
+  st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
+  if (st == GenericError) // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeContent'.}}
+    SecKeychainItemFreeContent(ptr, outData); // expected-warning{{Call to free data when error was returned during allocation.}}
 }
 
 // If null is passed in, the data is not allocated, so no need for the matching free.
@@ -123,7 +123,7 @@ void fooOnlyFreeParam(void *attrList, void* X) {
     SecKeychainItemFreeContent(attrList, X); 
 }// no-warning
 
-// If we are returning the value, no not report.
+// If we are returning the value, do not report.
 void* returnContent() {
   unsigned int *ptr = 0;
   OSStatus st = 0;
@@ -177,11 +177,15 @@ int foo() {
   OSStatus st = 0;
 
   UInt32 length;
-  void *outData;
+  void *outData[5];
 
-  st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
-  if (st == noErr)
-    SecKeychainItemFreeContent(ptr, outData);
-
+  st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &(outData[3]));
+  if (length == 5) {
+    if (st == noErr)
+      SecKeychainItemFreeContent(ptr, outData[3]);
+  }
+  if (length) { // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeContent'.}}
+    length++;
+  }
   return 0;
 }// no-warning
