@@ -326,7 +326,7 @@ void ValueEnumerator::EnumerateType(Type *Ty) {
   // don't recursively visit it.  This is safe because we allow forward
   // references of these in the bitcode reader.
   if (StructType *STy = dyn_cast<StructType>(Ty))
-    if (!STy->isAnonymous())
+    if (!STy->isLiteral())
       *TypeID = ~0U;
   
   // Enumerate all of the subtypes before we enumerate this type.  This ensures

@@ -127,7 +127,7 @@ bool LowerInvoke::doInitialization(Module &M) {
     JBSize = JBSize ? JBSize : 200;
     Type *JmpBufTy = ArrayType::get(VoidPtrTy, JBSize);
 
-    JBLinkTy = StructType::createNamed(M.getContext(), "llvm.sjljeh.jmpbufty");
+    JBLinkTy = StructType::create(M.getContext(), "llvm.sjljeh.jmpbufty");
     Type *Elts[] = { JmpBufTy, PointerType::getUnqual(JBLinkTy) };
     JBLinkTy->setBody(Elts);
 

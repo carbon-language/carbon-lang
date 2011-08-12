@@ -180,7 +180,7 @@ static void StripTypeNames(Module &M, bool PreserveDbgInfo) {
 
   for (unsigned i = 0, e = StructTypes.size(); i != e; ++i) {
     StructType *STy = StructTypes[i];
-    if (STy->isAnonymous() || STy->getName().empty()) continue;
+    if (STy->isLiteral() || STy->getName().empty()) continue;
     
     if (PreserveDbgInfo && STy->getName().startswith("llvm.dbg"))
       continue;

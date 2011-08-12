@@ -1263,7 +1263,7 @@ bool LLParser::ParseType(Type *&Result, bool AllowVoid) {
     // If the type hasn't been defined yet, create a forward definition and
     // remember where that forward def'n was seen (in case it never is defined).
     if (Entry.first == 0) {
-      Entry.first = StructType::createNamed(Context, Lex.getStrVal());
+      Entry.first = StructType::create(Context, Lex.getStrVal());
       Entry.second = Lex.getLoc();
     }
     Result = Entry.first;
@@ -1280,7 +1280,7 @@ bool LLParser::ParseType(Type *&Result, bool AllowVoid) {
     // If the type hasn't been defined yet, create a forward definition and
     // remember where that forward def'n was seen (in case it never is defined).
     if (Entry.first == 0) {
-      Entry.first = StructType::createNamed(Context, "");
+      Entry.first = StructType::create(Context);
       Entry.second = Lex.getLoc();
     }
     Result = Entry.first;
@@ -1502,7 +1502,7 @@ bool LLParser::ParseStructDefinition(SMLoc TypeLoc, StringRef Name,
     
     // If this type number has never been uttered, create it.
     if (Entry.first == 0)
-      Entry.first = StructType::createNamed(Context, Name);
+      Entry.first = StructType::create(Context, Name);
     ResultTy = Entry.first;
     return false;
   }
@@ -1528,7 +1528,7 @@ bool LLParser::ParseStructDefinition(SMLoc TypeLoc, StringRef Name,
   
   // If this type number has never been uttered, create it.
   if (Entry.first == 0)
-    Entry.first = StructType::createNamed(Context, Name);
+    Entry.first = StructType::create(Context, Name);
   
   StructType *STy = cast<StructType>(Entry.first);
  

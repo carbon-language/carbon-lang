@@ -303,7 +303,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
            E = ST->element_end(); I != E; ++I)
         TypeVals.push_back(VE.getTypeID(*I));
       
-      if (ST->isAnonymous()) {
+      if (ST->isLiteral()) {
         Code = bitc::TYPE_CODE_STRUCT_ANON;
         AbbrevToUse = StructAnonAbbrev;
       } else {
