@@ -157,9 +157,7 @@ void ASTDeclWriter::VisitDecl(Decl *D) {
 }
 
 void ASTDeclWriter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
-  VisitDecl(D);
-  Writer.AddDeclRef(D->getAnonymousNamespace(), Record);
-  Code = serialization::DECL_TRANSLATION_UNIT;
+  llvm_unreachable("Translation units aren't directly serialized");
 }
 
 void ASTDeclWriter::VisitNamedDecl(NamedDecl *D) {
@@ -819,7 +817,7 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
     // anonymous namespace.
     Decl *Parent = cast<Decl>(
         D->getParent()->getRedeclContext()->getPrimaryContext());
-    if (Parent->getPCHLevel() > 0) {
+    if (Parent->getPCHLevel() > 0 || isa<TranslationUnitDecl>(Parent)) {
       ASTWriter::UpdateRecord &Record = Writer.DeclUpdates[Parent];
       Record.push_back(UPD_CXX_ADDED_ANONYMOUS_NAMESPACE);
       Writer.AddDeclRef(D, Record);

@@ -2091,7 +2091,8 @@ ASTReader::ReadASTBlock(Module &F) {
       if (F.LocalNumDecls > 0) {
         // Introduce the global -> local mapping for declarations within this 
         // module.
-        GlobalDeclMap.insert(std::make_pair(getTotalNumDecls() + 1, &F));
+        GlobalDeclMap.insert(
+          std::make_pair(getTotalNumDecls() + NUM_PREDEF_DECL_IDS, &F));
         
         // Introduce the local -> global mapping for declarations within this
         // module.
@@ -2110,8 +2111,12 @@ ASTReader::ReadASTBlock(Module &F) {
         reinterpret_cast<const KindDeclIDPair *>(BlobStart),
         static_cast<unsigned int>(BlobLen / sizeof(KindDeclIDPair))
       };
-      DeclContextOffsets[Context ? Context->getTranslationUnitDecl() : 0]
-        .push_back(Info);
+
+      DeclContext *TU = Context ? Context->getTranslationUnitDecl() : 0;
+      DeclContextOffsets[TU].push_back(Info);
+      if (TU)
+        TU->setHasExternalLexicalStorage(true);
+
       break;
     }
 
@@ -2123,11 +2128,14 @@ ASTReader::ReadASTBlock(Module &F) {
                         (const unsigned char *)BlobStart,
                         ASTDeclContextNameLookupTrait(*this, F));
       // FIXME: Complete hack to check for the TU
-      if (ID == (*(ModuleMgr.end() - 1))->BaseDeclID + 1 && Context) { // Is it the TU?
+      if (ID == PREDEF_DECL_TRANSLATION_UNIT_ID && Context) { // Is it the TU?
         DeclContextInfo Info = {
           &F, Table, /* No lexical information */ 0, 0
         };
-        DeclContextOffsets[Context->getTranslationUnitDecl()].push_back(Info);
+
+        DeclContext *TU = Context->getTranslationUnitDecl();
+        DeclContextOffsets[TU].push_back(Info);
+        TU->setHasExternalVisibleStorage(true);
       } else
         PendingVisibleUpdates[ID].push_back(std::make_pair(Table, &F));
       break;
@@ -2948,17 +2956,27 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
   
   // If we have an update block for the TU waiting, we have to add it before
   // deserializing the decl.
+  TranslationUnitDecl *TU = Ctx.getTranslationUnitDecl();
   DeclContextOffsetsMap::iterator DCU = DeclContextOffsets.find(0);
   if (DCU != DeclContextOffsets.end()) {
     // Insertion could invalidate map, so grab vector.
     DeclContextInfos T;
     T.swap(DCU->second);
     DeclContextOffsets.erase(DCU);
-    DeclContextOffsets[Ctx.getTranslationUnitDecl()].swap(T);
+    DeclContextOffsets[TU].swap(T);
   }
+  
+  // If there's a listener, notify them that we "read" the translation unit.
+  if (DeserializationListener)
+    DeserializationListener->DeclRead(PREDEF_DECL_TRANSLATION_UNIT_ID, TU);
 
-  // Load the translation unit declaration
-  GetTranslationUnitDecl();
+  // Make sure we load the declaration update records for the translation unit,
+  // if there are any.
+  loadDeclUpdateRecords(PREDEF_DECL_TRANSLATION_UNIT_ID, TU);
+  
+  // Note that the translation unit has external lexical and visible storage.
+  TU->setHasExternalLexicalStorage(true);
+  TU->setHasExternalVisibleStorage(true);
 
   // FIXME: Find a better way to deal with collisions between these
   // built-in types. Right now, we just ignore the problem.
@@ -4186,21 +4204,6 @@ CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
   return Bases;
 }
 
-TranslationUnitDecl *ASTReader::GetTranslationUnitDecl() {
-  // FIXME: This routine might not even make sense when we're loading multiple
-  // unrelated AST files, since we'll have to merge the translation units
-  // somehow.
-  unsigned TranslationUnitID = (*(ModuleMgr.end() - 1))->BaseDeclID + 1;
-  if (!DeclsLoaded[TranslationUnitID - 1]) {
-    ReadDeclRecord(TranslationUnitID);
-    if (DeserializationListener)
-      DeserializationListener->DeclRead(TranslationUnitID, 
-                                        DeclsLoaded[TranslationUnitID - 1]);
-  }
-
-  return cast<TranslationUnitDecl>(DeclsLoaded[TranslationUnitID - 1]);
-}
-
 serialization::DeclID 
 ASTReader::getGlobalDeclID(Module &F, unsigned LocalID) const {
   if (LocalID < NUM_PREDEF_DECL_IDS)
@@ -4216,20 +4219,25 @@ ASTReader::getGlobalDeclID(Module &F, unsigned LocalID) const {
 Decl *ASTReader::GetDecl(DeclID ID) {
   if (ID < NUM_PREDEF_DECL_IDS) {    
     switch ((PredefinedDeclIDs)ID) {
-    case serialization::PREDEF_DECL_NULL_ID:
+    case PREDEF_DECL_NULL_ID:
       return 0;
+        
+    case PREDEF_DECL_TRANSLATION_UNIT_ID:
+      assert(Context && "No context available?");
+      return Context->getTranslationUnitDecl();
     }
     
     return 0;
   }
   
-  if (ID > DeclsLoaded.size()) {
+  unsigned Index = ID - NUM_PREDEF_DECL_IDS;
+
+  if (Index > DeclsLoaded.size()) {
     Error("declaration ID out-of-range for AST file");
     return 0;
   }
-
-  unsigned Index = ID - NUM_PREDEF_DECL_IDS;
-  if (!DeclsLoaded[Index]) {
+  
+if (!DeclsLoaded[Index]) {
     ReadDeclRecord(ID);
     if (DeserializationListener)
       DeserializationListener->DeclRead(ID, DeclsLoaded[Index]);
@@ -5666,7 +5674,7 @@ void Module::dump() {
   
   llvm::errs() << "  Base preprocessed entity ID: " << BasePreprocessedEntityID
                << '\n'  
-               << "Number of preprocessed entities: " 
+               << "  Number of preprocessed entities: " 
                << NumPreallocatedPreprocessingEntities << '\n';
   dumpLocalRemap("Preprocessed entity ID local -> global map", 
                  PreprocessedEntityRemap);

@@ -674,14 +674,17 @@ namespace clang {
     /// it is created.
     enum PredefinedDeclIDs {
       /// \brief The NULL declaration.
-      PREDEF_DECL_NULL_ID       = 0
+      PREDEF_DECL_NULL_ID       = 0,
+      
+      /// \brief The translation unit.
+      PREDEF_DECL_TRANSLATION_UNIT_ID = 1
     };
 
     /// \brief The number of declaration IDs that are predefined.
     ///
     /// For more information about predefined declarations, see the
     /// \c PredefinedDeclIDs type and the PREDEF_DECL_*_ID constants.
-    const unsigned int NUM_PREDEF_DECL_IDS = 1;
+    const unsigned int NUM_PREDEF_DECL_IDS = 2;
     
     /// \brief Record codes for each kind of declaration.
     ///
@@ -690,10 +693,8 @@ namespace clang {
     /// constant describes a record for a specific declaration class
     /// in the AST.
     enum DeclCode {
-      /// \brief A TranslationUnitDecl record.
-      DECL_TRANSLATION_UNIT = 50,
       /// \brief A TypedefDecl record.
-      DECL_TYPEDEF,
+      DECL_TYPEDEF = 51,
       /// \brief A TypeAliasDecl record.
       DECL_TYPEALIAS,
       /// \brief An EnumDecl record.

@@ -243,8 +243,7 @@ void ASTDeclReader::VisitDecl(Decl *D) {
 }
 
 void ASTDeclReader::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
-  VisitDecl(TU);
-  TU->setAnonymousNamespace(ReadDeclAs<NamespaceDecl>(Record, Idx));
+  llvm_unreachable("Translation units are not serialized");
 }
 
 void ASTDeclReader::VisitNamedDecl(NamedDecl *ND) {
@@ -1444,7 +1443,7 @@ void ASTReader::loadAndAttachPreviousDecl(Decl *D, serialization::DeclID ID) {
 
 /// \brief Read the declaration at the given offset from the AST file.
 Decl *ASTReader::ReadDeclRecord(DeclID ID) {
-  unsigned Index = ID - 1;
+  unsigned Index = ID - NUM_PREDEF_DECL_IDS;
   RecordLocation Loc = DeclCursorForID(ID);
   llvm::BitstreamCursor &DeclsCursor = Loc.F->DeclsCursor;
   // Keep track of where we are in the stream, then jump back there
@@ -1467,11 +1466,6 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   case DECL_CONTEXT_LEXICAL:
   case DECL_CONTEXT_VISIBLE:
     assert(false && "Record cannot be de-serialized with ReadDeclRecord");
-    break;
-  case DECL_TRANSLATION_UNIT:
-    assert(Index == Loc.F->BaseDeclID && 
-           "Translation unit must be at first index in file");
-    D = Context->getTranslationUnitDecl();
     break;
   case DECL_TYPEDEF:
     D = TypedefDecl::Create(*Context, 0, SourceLocation(), SourceLocation(),
@@ -1727,6 +1721,20 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   }
   assert(Idx == Record.size());
 
+  // Load any relevant update records.
+  loadDeclUpdateRecords(ID, D);
+  
+  // If we have deserialized a declaration that has a definition the
+  // AST consumer might need to know about, queue it.
+  // We don't pass it to the consumer immediately because we may be in recursive
+  // loading, and some declarations may still be initializing.
+  if (isConsumerInterestedIn(D))
+    InterestingDecls.push_back(D);
+
+  return D;
+}
+
+void ASTReader::loadDeclUpdateRecords(serialization::DeclID ID, Decl *D) {
   // The declaration may have been modified by files later in the chain.
   // If this is the case, read the record containing the updates from each file
   // and pass it to ASTDeclReader to make the modifications.
@@ -1734,7 +1742,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   if (UpdI != DeclUpdateOffsets.end()) {
     FileOffsetsTy &UpdateOffsets = UpdI->second;
     for (FileOffsetsTy::iterator
-           I = UpdateOffsets.begin(), E = UpdateOffsets.end(); I != E; ++I) {
+         I = UpdateOffsets.begin(), E = UpdateOffsets.end(); I != E; ++I) {
       Module *F = I->first;
       uint64_t Offset = I->second;
       llvm::BitstreamCursor &Cursor = F->DeclsCursor;
@@ -1745,19 +1753,14 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
       unsigned RecCode = Cursor.ReadRecord(Code, Record);
       (void)RecCode;
       assert(RecCode == DECL_UPDATES && "Expected DECL_UPDATES record!");
+      
+      unsigned Idx = 0;
+      ASTDeclReader Reader(*this, *F, Cursor, ID, Record, Idx);
       Reader.UpdateDecl(D, *F, Record);
     }
   }
-
-  // If we have deserialized a declaration that has a definition the
-  // AST consumer might need to know about, queue it.
-  // We don't pass it to the consumer immediately because we may be in recursive
-  // loading, and some declarations may still be initializing.
-  if (isConsumerInterestedIn(D))
-    InterestingDecls.push_back(D);
-
-  return D;
 }
+
 
 void ASTDeclReader::UpdateDecl(Decl *D, Module &Module,
                                const RecordData &Record) {
