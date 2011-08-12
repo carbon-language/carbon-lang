@@ -31,6 +31,28 @@ class MacOSKeychainAPIChecker : public Checker<check::PreStmt<CallExpr>,
   mutable llvm::OwningPtr<BugType> BT;
 
 public:
+  /// AllocationState is a part of the checker specific state together with the
+  /// MemRegion corresponding to the allocated data.
+  struct AllocationState {
+    const Expr *Address;
+    /// The index of the allocator function.
+    unsigned int AllocatorIdx;
+    SymbolRef RetValue;
+
+    AllocationState(const Expr *E, unsigned int Idx, SymbolRef R) :
+      Address(E),
+      AllocatorIdx(Idx),
+      RetValue(R) {}
+
+    bool operator==(const AllocationState &X) const {
+      return Address == X.Address;
+    }
+    void Profile(llvm::FoldingSetNodeID &ID) const {
+      ID.AddPointer(Address);
+      ID.AddInteger(AllocatorIdx);
+    }
+  };
+
   void checkPreStmt(const CallExpr *S, CheckerContext &C) const;
   void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
   void checkPostStmt(const CallExpr *S, CheckerContext &C) const;
@@ -62,31 +84,11 @@ private:
 };
 }
 
-/// AllocationState is a part of the checker specific state together with the
-/// MemRegion corresponding to the allocated data.
-struct AllocationState {
-  const Expr *Address;
-  /// The index of the allocator function.
-  unsigned int AllocatorIdx;
-  SymbolRef RetValue;
-
-  AllocationState(const Expr *E, unsigned int Idx, SymbolRef R) :
-    Address(E),
-    AllocatorIdx(Idx),
-    RetValue(R) {}
-
-  bool operator==(const AllocationState &X) const {
-    return Address == X.Address;
-  }
-  void Profile(llvm::FoldingSetNodeID &ID) const {
-    ID.AddPointer(Address);
-    ID.AddInteger(AllocatorIdx);
-  }
-};
-
 /// GRState traits to store the currently allocated (and not yet freed) symbols.
-typedef llvm::ImmutableMap<const SymbolMetadata *,
-                           AllocationState> AllocatedSetTy;
+/// This is a map from the allocated content symbol to the corresponding
+/// AllocationState.
+typedef llvm::ImmutableMap<SymbolRef,
+                       MacOSKeychainAPIChecker::AllocationState> AllocatedSetTy;
 
 namespace { struct AllocatedData {}; }
 namespace clang { namespace ento {
@@ -134,16 +136,25 @@ unsigned MacOSKeychainAPIChecker::getTrackedFunctionIndex(StringRef Name,
   return InvalidIdx;
 }
 
-static const SymbolMetadata *getSymbolMetadata(CheckerContext &C,
-                                               const MemRegion *R) {
-  QualType sizeTy = C.getSValBuilder().getContext().getSizeType();
-  return C.getSymbolManager().getMetadataSymbol(R, 0, sizeTy, 0);
+static SymbolRef getSymbolForRegion(CheckerContext &C,
+                                   const MemRegion *R) {
+  if (!isa<SymbolicRegion>(R))
+    return 0;
+  return cast<SymbolicRegion>(R)->getSymbol();
 }
 
+static bool isBadDeallocationArgument(const MemRegion *Arg) {
+  if (isa<AllocaRegion>(Arg) ||
+      isa<BlockDataRegion>(Arg) ||
+      isa<TypedRegion>(Arg)) {
+    return true;
+  }
+  return false;
+}
 /// Given the address expression, retrieve the value it's pointing to. Assume
-/// that value is itself an address, and return the corresponding MemRegion.
-static const SymbolMetadata *getAsPointeeMemoryRegion(const Expr *Expr,
-                                                      CheckerContext &C) {
+/// that value is itself an address, and return the corresponding symbol.
+static SymbolRef getAsPointeeSymbol(const Expr *Expr,
+                                    CheckerContext &C) {
   const GRState *State = C.getState();
   SVal ArgV = State->getSVal(Expr);
 
@@ -151,7 +162,7 @@ static const SymbolMetadata *getAsPointeeMemoryRegion(const Expr *Expr,
     StoreManager& SM = C.getStoreManager();
     const MemRegion *V = SM.Retrieve(State->getStore(), *X).getAsRegion();
     if (V)
-      return getSymbolMetadata(C, V);
+      return getSymbolForRegion(C, V);
   }
   return 0;
 }
@@ -175,7 +186,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   idx = getTrackedFunctionIndex(funName, true);
   if (idx != InvalidIdx) {
     const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
-    if (const SymbolMetadata *V = getAsPointeeMemoryRegion(ArgExpr, C))
+    if (SymbolRef V = getAsPointeeSymbol(ArgExpr, C))
       if (const AllocationState *AS = State->get<AllocatedData>(V)) {
         ExplodedNode *N = C.generateSink(State);
         if (!N)
@@ -200,15 +211,28 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   if (idx == InvalidIdx)
     return;
 
+  // Check the argument to the deallocator.
   const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
-  const MemRegion *Arg = State->getSVal(ArgExpr).getAsRegion();
+  SVal ArgSVal = State->getSVal(ArgExpr);
+
+  // Undef is reported by another checker.
+  if (ArgSVal.isUndef())
+    return;
+
+  const MemRegion *Arg = ArgSVal.getAsRegion();
   if (!Arg)
     return;
-  const SymbolMetadata *ArgSM = getSymbolMetadata(C, Arg);
+
+  SymbolRef ArgSM = getSymbolForRegion(C, Arg);
+  bool RegionArgIsBad = ArgSM ? false : isBadDeallocationArgument(Arg);
+  // If the argument is coming from the heap, globals, or unknown, do not
+  // report it.
+  if (!ArgSM && !RegionArgIsBad)
+    return;
 
   // If trying to free data which has not been allocated yet, report as bug.
   const AllocationState *AS = State->get<AllocatedData>(ArgSM);
-  if (!AS) {
+  if (!AS || RegionArgIsBad) {
     // It is possible that this is a false positive - the argument might
     // have entered as an enclosing function parameter.
     if (isEnclosingFunctionParam(ArgExpr))
@@ -243,8 +267,8 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     return;
   }
 
-  // If a value has been freed, remove it from the list and continue exploring
-  // from the new state.
+  // The call is deallocating a value we previously allocated, so remove it
+  // from the next state.
   State = State->remove<AllocatedData>(ArgSM);
   C.addTransition(State);
 }
@@ -269,14 +293,15 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     return;
 
   const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
-  if (const SymbolMetadata *V = getAsPointeeMemoryRegion(ArgExpr, C)) {
-    // If the argument points to something that's not a region, it can be:
+  if (SymbolRef V = getAsPointeeSymbol(ArgExpr, C)) {
+    // If the argument points to something that's not a symbolic region, it
+    // can be:
     //  - unknown (cannot reason about it)
     //  - undefined (already reported by other checker)
     //  - constant (null - should not be tracked,
     //              other constant will generate a compiler warning)
     //  - goto (should be reported by other checker)
-
+    
     // We only need to track the value if the function returned noErr(0), so
     // bind the return value of the function to 0 and proceed from the no error
     // state.
@@ -285,8 +310,9 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     const GRState *NoErr = State->BindExpr(CE, NoErrVal);
     // Add the symbolic value V, which represents the location of the allocated
     // data, to the set.
-    NoErr = NoErr->set<AllocatedData>(V,
-      AllocationState(ArgExpr, idx, State->getSVal(CE).getAsSymbol()));
+    SymbolRef RetStatusSymbol = State->getSVal(CE).getAsSymbol();
+    NoErr = NoErr->set<AllocatedData>(V, AllocationState(ArgExpr, idx, 
+                                                         RetStatusSymbol));
 
     assert(NoErr);
     C.addTransition(NoErr);
@@ -314,7 +340,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
   const MemRegion *V = state->getSVal(retExpr).getAsRegion();
   if (!V)
     return;
-  state = state->remove<AllocatedData>(getSymbolMetadata(C, V));
+  state = state->remove<AllocatedData>(getSymbolForRegion(C, V));
 
   // Proceed from the new state.
   C.addTransition(state);
