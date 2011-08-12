@@ -251,8 +251,10 @@ instructions has been clarified in the IR.</p>
       Acquire only provides a semantic guarantee when paired with a Release
       operation.</dd>
   <dt>Notes for optimizers</dt>
-  <dd>In general, optimizers should treat this like a nothrow call; the
-      the possible optimizations are usually not interesting.</dd>
+  <dd>Optimizers not aware of atomics can treat this like a nothrow call.
+      Tt is also possible to move stores from before an Acquire load
+      or read-modify-write operation to after it, and move non-Acquire
+      loads from before an Acquire operation to after it.</dd>
   <dt>Notes for code generation</dt>
   <dd>Architectures with weak memory ordering (essentially everything relevant
       today except x86 and SPARC) require some sort of fence to maintain
@@ -284,11 +286,13 @@ instructions has been clarified in the IR.</p>
       Release only provides a semantic guarantee when paired with a Acquire
       operation.</dd>
   <dt>Notes for optimizers</dt>
-  <dd>In general, optimizers should treat this like a nothrow call; the
-      the possible optimizations are usually not interesting.</dd>
+  <dd>Optimizers not aware of atomics can treat this like a nothrow call.
+      It is also possible to move loads from after a Release store
+      or read-modify-write operation to before it, and move non-Release
+      stores from after an Release operation to before it.</dd>
   <dt>Notes for code generation</dt>
   <dd>See the section on Acquire; a fence before the relevant operation is
-      usually sufficient for Release.  Note that a store-store fence is not
+      usually sufficient for Release. Note that a store-store fence is not
       sufficient to implement Release semantics; store-store fences are
       generally not exposed to IR because they are extremely difficult to
       use correctly.</dd>
@@ -345,17 +349,18 @@ instructions has been clarified in the IR.</p>
       reason about for the programmer than other kinds of operations, and using
       them is generally a practical performance tradeoff.</dd>
   <dt>Notes for optimizers</dt>
-  <dd>In general, optimizers should treat this like a nothrow call.
-      However, optimizers may improve performance by reordering a
-      store followed by a load unless both operations are sequentially
-      consistent.</dd>
+  <dd>Optimizers not aware of atomics can treat this like a nothrow call.
+      For SequentiallyConsistent loads and stores, the same reorderings are
+      allowed as for Acquire loads and Release stores, except that
+      SequentiallyConsistent operations may not be reordered.</dd>
   <dt>Notes for code generation</dt>
   <dd>SequentiallyConsistent loads minimally require the same barriers
-    as Acquire operations and SequeuentiallyConsistent stores require
-    Release barriers. Additionally, the code generator must enforce
-    ordering between SequeuentiallyConsistent stores followed by
-    SequeuentiallyConsistent loads. On common architectures, this
-    requires emitting a full fence after SequeuentiallyConsistent stores.</dd>
+     as Acquire operations and SequeuentiallyConsistent stores require
+     Release barriers. Additionally, the code generator must enforce
+     ordering between SequeuentiallyConsistent stores followed by
+     SequeuentiallyConsistent loads. This is usually done by emitting
+     either a full fence before the loads or a full fence after the
+     stores; which is preferred varies by architecture.</dd>
 </dl>
 
 </div>
