@@ -171,7 +171,7 @@ void TypePrinting::incorporateTypes(const Module &M) {
     StructType *STy = *I;
     
     // Ignore anonymous types.
-    if (STy->isAnonymous())
+    if (STy->isLiteral())
       continue;
     
     if (STy->getName().empty())
@@ -221,7 +221,7 @@ void TypePrinting::print(Type *Ty, raw_ostream &OS) {
   case Type::StructTyID: {
     StructType *STy = cast<StructType>(Ty);
     
-    if (STy->isAnonymous())
+    if (STy->isLiteral())
       return printStructBody(STy, OS);
 
     if (!STy->getName().empty())
@@ -2024,7 +2024,7 @@ void Type::print(raw_ostream &OS) const {
   
   // If the type is a named struct type, print the body as well.
   if (StructType *STy = dyn_cast<StructType>(const_cast<Type*>(this)))
-    if (!STy->isAnonymous()) {
+    if (!STy->isLiteral()) {
       OS << " = type ";
       TP.printStructBody(STy, OS);
     }

@@ -299,7 +299,7 @@ LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes,
 
 LLVMTypeRef LLVMStructCreateNamed(LLVMContextRef C, const char *Name)
 {
-  return wrap(StructType::createNamed(*unwrap(C), Name));
+  return wrap(StructType::create(*unwrap(C), Name));
 }
 
 void LLVMStructSetBody(LLVMTypeRef StructTy, LLVMTypeRef *ElementTypes,

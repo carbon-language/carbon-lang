@@ -363,7 +363,7 @@ static std::string CBEMangle(const std::string &S) {
 }
 
 std::string CWriter::getStructName(StructType *ST) {
-  if (!ST->isAnonymous() && !ST->getName().empty())
+  if (!ST->isLiteral() && !ST->getName().empty())
     return CBEMangle("l_"+ST->getName().str());
   
   return "l_unnamed_" + utostr(UnnamedStructIDs[ST]);
@@ -2052,7 +2052,7 @@ void CWriter::printModuleTypes() {
   for (unsigned i = 0, e = StructTypes.size(); i != e; ++i) {
     StructType *ST = StructTypes[i];
 
-    if (ST->isAnonymous() || ST->getName().empty())
+    if (ST->isLiteral() || ST->getName().empty())
       UnnamedStructIDs[ST] = NextTypeID++;
 
     std::string Name = getStructName(ST);

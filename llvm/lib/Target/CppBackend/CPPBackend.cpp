@@ -533,9 +533,9 @@ void CppWriter::printType(Type* Ty) {
   }
   case Type::StructTyID: {
     StructType* ST = cast<StructType>(Ty);
-    if (!ST->isAnonymous()) {
+    if (!ST->isLiteral()) {
       Out << "StructType *" << typeName << " = ";
-      Out << "StructType::createNamed(mod->getContext(), \"";
+      Out << "StructType::create(mod->getContext(), \"";
       printEscapedString(ST->getName());
       Out << "\");";
       nl(Out);
@@ -556,7 +556,7 @@ void CppWriter::printType(Type* Ty) {
       nl(Out);
     }
 
-    if (ST->isAnonymous()) {
+    if (ST->isLiteral()) {
       Out << "StructType *" << typeName << " = ";
       Out << "StructType::get(" << "mod->getContext(), ";
     } else {
