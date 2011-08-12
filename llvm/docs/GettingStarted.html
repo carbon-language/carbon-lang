@@ -814,6 +814,19 @@ cd llvm/tools
 git clone http://llvm.org/git/clang.git
 </pre>
 
+<p>
+Since the upstream repository is in Subversion, you should use
+<tt>&quot;git pull --rebase&quot;</tt>
+instead of <tt>&quot;git pull&quot;</tt> to avoid generating a non-linear
+history in your clone.
+To configure <tt>&quot;git pull&quot;</tt> to pass <tt>--rebase</tt> by default
+on the master branch, run the following command:
+</p>
+
+<pre class="doc_code">
+git config branch.master.rebase true
+</pre>
+
 <h4>For developers to work with git-svn</h4>
 <div>
 
