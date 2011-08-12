@@ -139,6 +139,11 @@ static bool DecodeDoubleRegLoad(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static bool DecodeDoubleRegStore(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static bool DecodeSTRPreImm(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static bool DecodeSTRPreReg(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+
 
 static bool DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
                                uint64_t Address, const void *Decoder);
@@ -2524,4 +2529,40 @@ static bool DecodeDoubleRegStore(llvm::MCInst &Inst, unsigned Insn,
   return true;
 }
 
+static bool DecodeSTRPreImm(llvm::MCInst &Inst, unsigned Insn,
+                            uint64_t Address, const void *Decoder) {
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
+  unsigned imm = fieldFromInstruction32(Insn, 0, 12);
+  imm |= fieldFromInstruction32(Insn, 16, 4) << 13;
+  imm |= fieldFromInstruction32(Insn, 23, 1) << 12;
+  unsigned pred = fieldFromInstruction32(Insn, 28, 4);
 
+  if (Rn == 0xF || Rn == Rt) return false; // UNPREDICTABLE
+
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  if (!DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)) return false;
+  if (!DecodeAddrModeImm12Operand(Inst, imm, Address, Decoder)) return false;
+  if (!DecodePredicateOperand(Inst, pred, Address, Decoder)) return false;
+
+  return true;
+}
+
+static bool DecodeSTRPreReg(llvm::MCInst &Inst, unsigned Insn,
+                            uint64_t Address, const void *Decoder) {
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
+  unsigned imm = fieldFromInstruction32(Insn, 0, 12);
+  imm |= fieldFromInstruction32(Insn, 16, 4) << 13;
+  imm |= fieldFromInstruction32(Insn, 23, 1) << 12;
+  unsigned pred = fieldFromInstruction32(Insn, 28, 4);
+
+  if (Rn == 0xF || Rn == Rt) return false; // UNPREDICTABLE
+
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  if (!DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)) return false;
+  if (!DecodeSORegMemOperand(Inst, imm, Address, Decoder)) return false;
+  if (!DecodePredicateOperand(Inst, pred, Address, Decoder)) return false;
+
+  return true;
+}

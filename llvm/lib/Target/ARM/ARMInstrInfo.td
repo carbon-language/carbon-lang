@@ -2243,6 +2243,7 @@ multiclass AI2_stridx<bit isByte, string opc, InstrItinClass itin> {
     let Inst{19-16} = addr{16-13};  // Rn
     let Inst{11-0}  = addr{11-0};   // imm12
     let AsmMatchConverter = "cvtStWriteBackRegAddrModeImm12";
+    let DecoderMethod = "DecodeSTRPreImm";
   }
 
   def _PRE_REG  : AI2ldstidx<0, isByte, 1, (outs GPR:$Rn_wb),
@@ -2256,6 +2257,7 @@ multiclass AI2_stridx<bit isByte, string opc, InstrItinClass itin> {
     let Inst{11-0}  = addr{11-0};
     let Inst{4}     = 0;           // Inst{4} = 0
     let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
+    let DecoderMethod = "DecodeSTRPreReg";
   }
   def _POST_REG : AI2ldstidx<0, isByte, 0, (outs GPR:$Rn_wb),
                 (ins GPR:$Rt, addr_offset_none:$addr, am2offset_reg:$offset),
