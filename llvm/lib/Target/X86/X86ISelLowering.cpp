@@ -3035,9 +3035,9 @@ static bool isUndefOrEqual(int Val, int CmpVal) {
   return false;
 }
 
-/// isUndefOrInRange - Return true if every element in Mask, begining from
-/// position Pos and ending in Pos+Size, falls within the specified sequential
-/// range (L, L+Pos]. or is undef.
+/// isSequentialOrUndefInRange - Return true if every element in Mask, begining
+/// from position Pos and ending in Pos+Size, falls within the specified
+/// sequential range (L, L+Pos]. or is undef.
 static bool isSequentialOrUndefInRange(const SmallVectorImpl<int> &Mask,
                                        int Pos, int Size, int Low) {
   for (int i = Pos, e = Pos+Size; i != e; ++i, ++Low)
