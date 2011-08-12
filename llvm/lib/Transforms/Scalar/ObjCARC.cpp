@@ -1925,12 +1925,19 @@ void
 ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV) {
   // Check for a return of the pointer value.
   const Value *Ptr = GetObjCArg(AutoreleaseRV);
-  for (Value::const_use_iterator UI = Ptr->use_begin(), UE = Ptr->use_end();
-       UI != UE; ++UI) {
-    const User *I = *UI;
-    if (isa<ReturnInst>(I) || GetBasicInstructionClass(I) == IC_RetainRV)
-      return;
-  }
+  SmallVector<const Value *, 2> Users;
+  Users.push_back(Ptr);
+  do {
+    Ptr = Users.pop_back_val();
+    for (Value::const_use_iterator UI = Ptr->use_begin(), UE = Ptr->use_end();
+         UI != UE; ++UI) {
+      const User *I = *UI;
+      if (isa<ReturnInst>(I) || GetBasicInstructionClass(I) == IC_RetainRV)
+        return;
+      if (isa<BitCastInst>(I))
+        Users.push_back(I);
+    }
+  } while (!Users.empty());
 
   Changed = true;
   ++NumPeeps;

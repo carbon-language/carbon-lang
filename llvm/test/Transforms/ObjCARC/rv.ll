@@ -329,3 +329,14 @@ define void @test23(i8* %p) {
   call i8* @objc_autoreleaseReturnValue(i8* %p)
   ret void
 }
+
+; Don't convert autoreleaseRV to autorelease if the result is returned,
+; even through a bitcast.
+
+; CHECK: define {}* @test24(
+; CHECK: tail call i8* @objc_autoreleaseReturnValue(i8* %p)
+define {}* @test24(i8* %p) {
+  %t = call i8* @objc_autoreleaseReturnValue(i8* %p)
+  %s = bitcast i8* %p to {}*
+  ret {}* %s
+}
