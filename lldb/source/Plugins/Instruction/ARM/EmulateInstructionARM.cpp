@@ -794,7 +794,9 @@ EmulateInstructionARM::EmulateMOVRdImm (const uint32_t opcode, const ARMEncoding
     {
         uint32_t Rd; // the destination register
         uint32_t imm32; // the immediate value to be written to Rd
-        uint32_t carry; // the carry bit after ThumbExpandImm_C or ARMExpandImm_C.
+        uint32_t carry = 0; // the carry bit after ThumbExpandImm_C or ARMExpandImm_C.
+                            // for setflags == false, this value is a don't care
+                            // initialized to 0 to silence the static analyzer
         bool setflags;
         switch (encoding) {
             case eEncodingT1:
@@ -12004,7 +12006,7 @@ EmulateInstructionARM::EmulateVLD1SingleAll (const uint32_t opcode, const ARMEnc
         if (!success)
             return false;
         
-        uint64_t replicated_element;
+        uint64_t replicated_element = 0;
         uint32_t esize = ebytes * 8;
         for (int e = 0; e < elements; ++e)
             replicated_element = (replicated_element << esize) | Bits64 (word, esize - 1, 0);
@@ -13048,9 +13050,7 @@ EmulateInstructionARM::CPSRWriteByInstr (uint32_t value, uint32_t bytemask, bool
 {
     bool privileged = CurrentModeIsPrivileged();
 
-    uint32_t tmp_cpsr = 0;
-        
-    tmp_cpsr = tmp_cpsr | (Bits32 (m_opcode_cpsr, 23, 20) << 20);
+    uint32_t tmp_cpsr = Bits32 (m_opcode_cpsr, 23, 20) << 20;
                   
     if (BitIsSet (bytemask, 3))
     {
