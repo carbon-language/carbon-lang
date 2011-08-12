@@ -191,8 +191,8 @@ int LocalScope::const_iterator::distance(LocalScope::const_iterator L) {
   int D = 0;
   const_iterator F = *this;
   while (F.Scope != L.Scope) {
-    assert (F != const_iterator()
-        && "L iterator is not reachable from F iterator.");
+    if (F == const_iterator())
+      return D;
     D += F.VarIter;
     F = F.Scope->Prev;
   }
@@ -816,10 +816,12 @@ void CFGBuilder::addLocalScopeAndDtors(Stmt* S) {
 /// performed in place specified with iterator.
 void CFGBuilder::insertAutomaticObjDtors(CFGBlock* Blk, CFGBlock::iterator I,
     LocalScope::const_iterator B, LocalScope::const_iterator E, Stmt* S) {
-  BumpVectorContext& C = cfg->getBumpVectorContext();
-  I = Blk->beginAutomaticObjDtorsInsert(I, B.distance(E), C);
-  while (B != E)
-    I = Blk->insertAutomaticObjDtor(I, *B++, S);
+  if (int Cnt = B.distance(E)) {
+    BumpVectorContext& C = cfg->getBumpVectorContext();
+    I = Blk->beginAutomaticObjDtorsInsert(I, Cnt, C);
+    while (B != E)
+      I = Blk->insertAutomaticObjDtor(I, *B++, S);
+  }
 }
 
 /// appendAutomaticObjDtors - Append destructor CFGElements for variables with
