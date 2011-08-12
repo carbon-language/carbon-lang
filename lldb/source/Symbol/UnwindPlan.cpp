@@ -106,14 +106,14 @@ UnwindPlan::Row::RegisterLocation::Dump (Stream &s, const UnwindPlan* unwind_pla
                         if (cfa_reg_info)
                             s.Printf (" (%s%+d)",  cfa_reg_info->name, offset); 
                         else
-                            s.Printf (" (reg(%u)%+d)",  cfa_reg_info->name, offset); 
+                            s.Printf (" (reg(%u)%+d)",  cfa_reg, offset); 
                     }
                     else
                     {
                         if (cfa_reg_info)
                             s.Printf ("%s",  cfa_reg_info->name); 
                         else
-                            s.Printf ("reg(%u)",  cfa_reg_info->name); 
+                            s.Printf ("reg(%u)",  cfa_reg); 
                         if (offset != 0)
                             s.Printf ("%+d", offset);
                     }
