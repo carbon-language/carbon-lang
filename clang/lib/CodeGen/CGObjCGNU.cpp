@@ -1235,8 +1235,7 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const StringRef &ClassName,
                                                          Methods);
 
   // Structure containing list pointer, array and array count
-  llvm::StructType *ObjCMethodListTy =
-    llvm::StructType::createNamed(VMContext, "");
+  llvm::StructType *ObjCMethodListTy = llvm::StructType::create(VMContext);
   llvm::Type *NextPtrTy = llvm::PointerType::getUnqual(ObjCMethodListTy);
   ObjCMethodListTy->setBody(
       NextPtrTy,

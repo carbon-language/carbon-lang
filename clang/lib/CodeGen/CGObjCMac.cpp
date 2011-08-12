@@ -4157,8 +4157,8 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   //   char *name;
   //   char *attributes;
   // }
-  PropertyTy = llvm::StructType::createNamed("struct._prop_t",
-                                             Int8PtrTy, Int8PtrTy, NULL);
+  PropertyTy = llvm::StructType::create("struct._prop_t",
+                                        Int8PtrTy, Int8PtrTy, NULL);
 
   // struct _prop_list_t {
   //   uint32_t entsize;      // sizeof(struct _prop_t)
@@ -4166,10 +4166,8 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   //   struct _prop_t prop_list[count_of_properties];
   // }
   PropertyListTy =
-    llvm::StructType::createNamed("struct._prop_list_t",
-                                  IntTy, IntTy,
-                                  llvm::ArrayType::get(PropertyTy, 0),
-                                  NULL);
+    llvm::StructType::create("struct._prop_list_t", IntTy, IntTy,
+                             llvm::ArrayType::get(PropertyTy, 0), NULL);
   // struct _prop_list_t *
   PropertyListPtrTy = llvm::PointerType::getUnqual(PropertyListTy);
 
@@ -4178,12 +4176,12 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   //   char *method_type;
   //   char *_imp;
   // }
-  MethodTy = llvm::StructType::createNamed("struct._objc_method",
-                                           SelectorPtrTy, Int8PtrTy, Int8PtrTy,
-                                           NULL);
+  MethodTy = llvm::StructType::create("struct._objc_method",
+                                      SelectorPtrTy, Int8PtrTy, Int8PtrTy,
+                                      NULL);
 
   // struct _objc_cache *
-  CacheTy = llvm::StructType::createNamed(VMContext, "struct._objc_cache");
+  CacheTy = llvm::StructType::create(VMContext, "struct._objc_cache");
   CachePtrTy = llvm::PointerType::getUnqual(CacheTy);
     
 }
@@ -4195,18 +4193,17 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   char *types;
   // }
   MethodDescriptionTy =
-    llvm::StructType::createNamed("struct._objc_method_description",
-                                  SelectorPtrTy, Int8PtrTy, NULL);
+    llvm::StructType::create("struct._objc_method_description",
+                             SelectorPtrTy, Int8PtrTy, NULL);
 
   // struct _objc_method_description_list {
   //   int count;
   //   struct _objc_method_description[1];
   // }
   MethodDescriptionListTy =
-    llvm::StructType::createNamed("struct._objc_method_description_list",
-                                  IntTy,
-                                  llvm::ArrayType::get(MethodDescriptionTy, 0),
-                                  NULL);
+    llvm::StructType::create("struct._objc_method_description_list",
+                             IntTy,
+                             llvm::ArrayType::get(MethodDescriptionTy, 0),NULL);
 
   // struct _objc_method_description_list *
   MethodDescriptionListPtrTy =
@@ -4221,12 +4218,10 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   struct _objc_property_list *instance_properties;
   // }
   ProtocolExtensionTy =
-    llvm::StructType::createNamed("struct._objc_protocol_extension",
-                                  IntTy,
-                                  MethodDescriptionListPtrTy,
-                                  MethodDescriptionListPtrTy,
-                                  PropertyListPtrTy,
-                                  NULL);
+    llvm::StructType::create("struct._objc_protocol_extension",
+                             IntTy, MethodDescriptionListPtrTy,
+                             MethodDescriptionListPtrTy, PropertyListPtrTy,
+                             NULL);
 
   // struct _objc_protocol_extension *
   ProtocolExtensionPtrTy = llvm::PointerType::getUnqual(ProtocolExtensionTy);
@@ -4234,10 +4229,10 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   // Handle recursive construction of Protocol and ProtocolList types
 
   ProtocolTy =
-    llvm::StructType::createNamed(VMContext, "struct._objc_protocol");
+    llvm::StructType::create(VMContext, "struct._objc_protocol");
 
   ProtocolListTy =
-    llvm::StructType::createNamed(VMContext, "struct._objc_protocol_list");
+    llvm::StructType::create(VMContext, "struct._objc_protocol_list");
   ProtocolListTy->setBody(llvm::PointerType::getUnqual(ProtocolListTy),
                           LongTy,
                           llvm::ArrayType::get(ProtocolTy, 0),
@@ -4268,26 +4263,26 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   char *ivar_type;
   //   int  ivar_offset;
   // }
-  IvarTy = llvm::StructType::createNamed("struct._objc_ivar",
-                                         Int8PtrTy, Int8PtrTy, IntTy, NULL);
+  IvarTy = llvm::StructType::create("struct._objc_ivar",
+                                    Int8PtrTy, Int8PtrTy, IntTy, NULL);
 
   // struct _objc_ivar_list *
   IvarListTy =
-    llvm::StructType::createNamed(VMContext, "struct._objc_ivar_list");
+    llvm::StructType::create(VMContext, "struct._objc_ivar_list");
   IvarListPtrTy = llvm::PointerType::getUnqual(IvarListTy);
 
   // struct _objc_method_list *
   MethodListTy =
-    llvm::StructType::createNamed(VMContext, "struct._objc_method_list");
+    llvm::StructType::create(VMContext, "struct._objc_method_list");
   MethodListPtrTy = llvm::PointerType::getUnqual(MethodListTy);
 
   // struct _objc_class_extension *
   ClassExtensionTy =
-    llvm::StructType::createNamed("struct._objc_class_extension",
-                                  IntTy, Int8PtrTy, PropertyListPtrTy, NULL);
+    llvm::StructType::create("struct._objc_class_extension",
+                             IntTy, Int8PtrTy, PropertyListPtrTy, NULL);
   ClassExtensionPtrTy = llvm::PointerType::getUnqual(ClassExtensionTy);
 
-  ClassTy = llvm::StructType::createNamed(VMContext, "struct._objc_class");
+  ClassTy = llvm::StructType::create(VMContext, "struct._objc_class");
 
   // struct _objc_class {
   //   Class isa;
@@ -4328,10 +4323,10 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   struct _objc_property_list *instance_properties;// category's @property
   // }
   CategoryTy =
-    llvm::StructType::createNamed("struct._objc_category",
-                                  Int8PtrTy, Int8PtrTy, MethodListPtrTy,
-                                  MethodListPtrTy, ProtocolListPtrTy,
-                                  IntTy, PropertyListPtrTy, NULL);
+    llvm::StructType::create("struct._objc_category",
+                             Int8PtrTy, Int8PtrTy, MethodListPtrTy,
+                             MethodListPtrTy, ProtocolListPtrTy,
+                             IntTy, PropertyListPtrTy, NULL);
 
   // Global metadata structures
 
@@ -4343,9 +4338,9 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   char *defs[cls_def_cnt + cat_def_cnt];
   // }
   SymtabTy =
-    llvm::StructType::createNamed("struct._objc_symtab",
-                                  LongTy, SelectorPtrTy, ShortTy, ShortTy,
-                                  llvm::ArrayType::get(Int8PtrTy, 0), NULL);
+    llvm::StructType::create("struct._objc_symtab",
+                             LongTy, SelectorPtrTy, ShortTy, ShortTy,
+                             llvm::ArrayType::get(Int8PtrTy, 0), NULL);
   SymtabPtrTy = llvm::PointerType::getUnqual(SymtabTy);
 
   // struct _objc_module {
@@ -4355,8 +4350,8 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   struct _objc_symtab* symtab;
   //  }
   ModuleTy =
-    llvm::StructType::createNamed("struct._objc_module",
-                                  LongTy, LongTy, Int8PtrTy, SymtabPtrTy, NULL);
+    llvm::StructType::create("struct._objc_module",
+                             LongTy, LongTy, Int8PtrTy, SymtabPtrTy, NULL);
 
 
   // FIXME: This is the size of the setjmp buffer and should be target
@@ -4368,7 +4363,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
     llvm::Type::getInt8PtrTy(VMContext), 4);
 
   ExceptionDataTy =
-    llvm::StructType::createNamed("struct._objc_exception_data",
+    llvm::StructType::create("struct._objc_exception_data",
                          llvm::ArrayType::get(llvm::Type::getInt32Ty(VMContext),
                                               SetJmpBufferSize),
                          StackPtrTy, NULL);
@@ -4383,10 +4378,8 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   struct _objc_method method_list[method_count];
   // }
   MethodListnfABITy =
-    llvm::StructType::createNamed("struct.__method_list_t",
-                                  IntTy, IntTy,
-                                  llvm::ArrayType::get(MethodTy, 0),
-                                  NULL);
+    llvm::StructType::create("struct.__method_list_t", IntTy, IntTy,
+                             llvm::ArrayType::get(MethodTy, 0), NULL);
   // struct method_list_t *
   MethodListnfABIPtrTy = llvm::PointerType::getUnqual(MethodListnfABITy);
 
@@ -4405,20 +4398,14 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
 
   // Holder for struct _protocol_list_t *
   ProtocolListnfABITy =
-    llvm::StructType::createNamed(VMContext, "struct._objc_protocol_list");
+    llvm::StructType::create(VMContext, "struct._objc_protocol_list");
 
   ProtocolnfABITy =
-    llvm::StructType::createNamed("struct._protocol_t",
-                                  ObjectPtrTy, Int8PtrTy,
-                              llvm::PointerType::getUnqual(ProtocolListnfABITy),
-                                  MethodListnfABIPtrTy,
-                                  MethodListnfABIPtrTy,
-                                  MethodListnfABIPtrTy,
-                                  MethodListnfABIPtrTy,
-                                  PropertyListPtrTy,
-                                  IntTy,
-                                  IntTy,
-                                  NULL);
+    llvm::StructType::create("struct._protocol_t", ObjectPtrTy, Int8PtrTy,
+                             llvm::PointerType::getUnqual(ProtocolListnfABITy),
+                             MethodListnfABIPtrTy, MethodListnfABIPtrTy,
+                             MethodListnfABIPtrTy, MethodListnfABIPtrTy,
+                             PropertyListPtrTy, IntTy, IntTy, NULL);
 
   // struct _protocol_t*
   ProtocolnfABIPtrTy = llvm::PointerType::getUnqual(ProtocolnfABITy);
@@ -4442,13 +4429,9 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   uint32_t size;
   // }
   IvarnfABITy =
-    llvm::StructType::createNamed("struct._ivar_t",
-                                  llvm::PointerType::getUnqual(LongTy),
-                                  Int8PtrTy,
-                                  Int8PtrTy,
-                                  IntTy,
-                                  IntTy,
-                                  NULL);
+    llvm::StructType::create("struct._ivar_t",
+                             llvm::PointerType::getUnqual(LongTy),
+                             Int8PtrTy, Int8PtrTy, IntTy, IntTy, NULL);
 
   // struct _ivar_list_t {
   //   uint32 entsize;  // sizeof(struct _ivar_t)
@@ -4456,10 +4439,8 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   struct _iver_t list[count];
   // }
   IvarListnfABITy =
-    llvm::StructType::createNamed("struct._ivar_list_t",
-                                  IntTy, IntTy,
-                                  llvm::ArrayType::get(IvarnfABITy, 0),
-                                  NULL);
+    llvm::StructType::create("struct._ivar_list_t", IntTy, IntTy,
+                             llvm::ArrayType::get(IvarnfABITy, 0), NULL);
 
   IvarListnfABIPtrTy = llvm::PointerType::getUnqual(IvarListnfABITy);
 
@@ -4478,18 +4459,12 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   // }
 
   // FIXME. Add 'reserved' field in 64bit abi mode!
-  ClassRonfABITy = llvm::StructType::createNamed("struct._class_ro_t",
-                                                 IntTy,
-                                                 IntTy,
-                                                 IntTy,
-                                                 Int8PtrTy,
-                                                 Int8PtrTy,
-                                                 MethodListnfABIPtrTy,
-                                                 ProtocolListnfABIPtrTy,
-                                                 IvarListnfABIPtrTy,
-                                                 Int8PtrTy,
-                                                 PropertyListPtrTy,
-                                                 NULL);
+  ClassRonfABITy = llvm::StructType::create("struct._class_ro_t",
+                                            IntTy, IntTy, IntTy, Int8PtrTy,
+                                            Int8PtrTy, MethodListnfABIPtrTy,
+                                            ProtocolListnfABIPtrTy,
+                                            IvarListnfABIPtrTy,
+                                            Int8PtrTy, PropertyListPtrTy, NULL);
 
   // ImpnfABITy - LLVM for id (*)(id, SEL, ...)
   llvm::Type *params[] = { ObjectPtrTy, SelectorPtrTy };
@@ -4504,7 +4479,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   struct class_ro_t *ro;
   // }
 
-  ClassnfABITy = llvm::StructType::createNamed(VMContext, "struct._class_t");
+  ClassnfABITy = llvm::StructType::create(VMContext, "struct._class_t");
   ClassnfABITy->setBody(llvm::PointerType::getUnqual(ClassnfABITy),
                         llvm::PointerType::getUnqual(ClassnfABITy),
                         CachePtrTy,
@@ -4523,14 +4498,13 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   const struct _protocol_list_t * const protocols;
   //   const struct _prop_list_t * const properties;
   // }
-  CategorynfABITy = llvm::StructType::createNamed("struct._category_t",
-                                                  Int8PtrTy,
-                                                  ClassnfABIPtrTy,
-                                                  MethodListnfABIPtrTy,
-                                                  MethodListnfABIPtrTy,
-                                                  ProtocolListnfABIPtrTy,
-                                                  PropertyListPtrTy,
-                                                  NULL);
+  CategorynfABITy = llvm::StructType::create("struct._category_t",
+                                             Int8PtrTy, ClassnfABIPtrTy,
+                                             MethodListnfABIPtrTy,
+                                             MethodListnfABIPtrTy,
+                                             ProtocolListnfABIPtrTy,
+                                             PropertyListPtrTy,
+                                             NULL);
 
   // New types for nonfragile abi messaging.
   CodeGen::CodeGenTypes &Types = CGM.getTypes();
@@ -4566,8 +4540,8 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   SEL name;
   // };
   SuperMessageRefTy =
-    llvm::StructType::createNamed("struct._super_message_ref_t",
-                                  ImpnfABITy, SelectorPtrTy, NULL);
+    llvm::StructType::create("struct._super_message_ref_t",
+                             ImpnfABITy, SelectorPtrTy, NULL);
 
   // SuperMessageRefPtrTy - LLVM for struct _super_message_ref_t*
   SuperMessageRefPtrTy = llvm::PointerType::getUnqual(SuperMessageRefTy);
@@ -4579,11 +4553,9 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   Class        cls;
   // };
   EHTypeTy =
-    llvm::StructType::createNamed("struct._objc_typeinfo",
-                                  llvm::PointerType::getUnqual(Int8PtrTy),
-                                  Int8PtrTy,
-                                  ClassnfABIPtrTy,
-                                  NULL);
+    llvm::StructType::create("struct._objc_typeinfo",
+                             llvm::PointerType::getUnqual(Int8PtrTy),
+                             Int8PtrTy, ClassnfABIPtrTy, NULL);
   EHTypePtrTy = llvm::PointerType::getUnqual(EHTypeTy);
 }
 

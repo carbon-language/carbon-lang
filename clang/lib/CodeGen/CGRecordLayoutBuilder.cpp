@@ -735,8 +735,8 @@ CGRecordLayoutBuilder::ComputeNonVirtualBaseType(const CXXRecordDecl *RD) {
   }
 
   
-  BaseSubobjectType = llvm::StructType::createNamed(Types.getLLVMContext(), "",
-                                                    FieldTypes, Packed);
+  BaseSubobjectType = llvm::StructType::create(Types.getLLVMContext(),
+                                               FieldTypes, "", Packed);
   Types.addRecordTypeName(RD, BaseSubobjectType, ".base");
 
   // Pull the padding back off.

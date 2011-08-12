@@ -510,7 +510,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     // these.
     llvm::Type *&T = InterfaceTypes[cast<ObjCInterfaceType>(Ty)];
     if (!T)
-      T = llvm::StructType::createNamed(getLLVMContext(), "");
+      T = llvm::StructType::create(getLLVMContext());
     ResultType = T;
     break;
   }
@@ -567,7 +567,7 @@ llvm::StructType *CodeGenTypes::ConvertRecordDeclType(const RecordDecl *RD) {
 
   // If we don't have a StructType at all yet, create the forward declaration.
   if (Entry == 0) {
-    Entry = llvm::StructType::createNamed(getLLVMContext(), "");
+    Entry = llvm::StructType::create(getLLVMContext());
     addRecordTypeName(RD, Entry, "");
   }
   llvm::StructType *Ty = Entry;

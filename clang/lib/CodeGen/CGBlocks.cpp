@@ -681,8 +681,8 @@ llvm::Type *CodeGenModule::getBlockDescriptorType() {
   //   const char *layout;      // reserved
   // };
   BlockDescriptorType =
-    llvm::StructType::createNamed("struct.__block_descriptor",
-                                  UnsignedLongTy, UnsignedLongTy, NULL);
+    llvm::StructType::create("struct.__block_descriptor",
+                             UnsignedLongTy, UnsignedLongTy, NULL);
 
   // Now form a pointer to that.
   BlockDescriptorType = llvm::PointerType::getUnqual(BlockDescriptorType);
@@ -703,13 +703,9 @@ llvm::Type *CodeGenModule::getGenericBlockLiteralType() {
   //   struct __block_descriptor *__descriptor;
   // };
   GenericBlockLiteralType =
-    llvm::StructType::createNamed("struct.__block_literal_generic",
-                                  VoidPtrTy,
-                                  IntTy,
-                                  IntTy,
-                                  VoidPtrTy,
-                                  BlockDescPtrTy,
-                                  NULL);
+    llvm::StructType::create("struct.__block_literal_generic",
+                             VoidPtrTy, IntTy, IntTy, VoidPtrTy,
+                             BlockDescPtrTy, NULL);
 
   return GenericBlockLiteralType;
 }
@@ -1664,8 +1660,8 @@ llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
   SmallVector<llvm::Type *, 8> types;
   
   llvm::StructType *ByRefType =
-    llvm::StructType::createNamed(getLLVMContext(),
-                                "struct.__block_byref_" + D->getNameAsString());
+    llvm::StructType::create(getLLVMContext(),
+                             "struct.__block_byref_" + D->getNameAsString());
   
   // void *__isa;
   types.push_back(Int8PtrTy);
