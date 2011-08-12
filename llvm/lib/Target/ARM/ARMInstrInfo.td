@@ -730,7 +730,6 @@ def am3offset : Operand<i32>,
                 ComplexPattern<i32, 2, "SelectAddrMode3Offset",
                                [], [SDNPWantRoot]> {
   let EncoderMethod = "getAddrMode3OffsetOpValue";
-  let DecoderMethod = "DecodeAddrMode3Offset";
   let PrintMethod = "printAddrMode3OffsetOperand";
   let ParserMatchClass = AM3OffsetAsmOperand;
   let MIOperandInfo = (ops GPR, i32imm);
@@ -2061,6 +2060,7 @@ multiclass AI3_ldridx<bits<4> op, string opc, InstrItinClass itin> {
     let Inst{11-8}  = addr{7-4};    // imm7_4/zero
     let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
     let AsmMatchConverter = "cvtLdWriteBackRegAddrMode3";
+    let DecoderMethod = "DecodeAddrMode3Instruction";
   }
   def _POST : AI3ldstidx<op, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
                         (ins addr_offset_none:$addr, am3offset:$offset),
@@ -2074,6 +2074,7 @@ multiclass AI3_ldridx<bits<4> op, string opc, InstrItinClass itin> {
     let Inst{19-16} = addr;
     let Inst{11-8}  = offset{7-4};    // imm7_4/zero
     let Inst{3-0}   = offset{3-0};    // imm3_0/Rm
+    let DecoderMethod = "DecodeAddrMode3Instruction";
   }
 }
 

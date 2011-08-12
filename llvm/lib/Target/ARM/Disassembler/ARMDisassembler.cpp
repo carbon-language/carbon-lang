@@ -129,8 +129,6 @@ static bool DecodePostIdxReg(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static bool DecodeCoprocessor(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
-static bool DecodeAddrMode3Offset(llvm::MCInst &Inst, unsigned Insn,
-                               uint64_t Address, const void *Decoder);
 static bool DecodeMemBarrierOption(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static bool DecodeMSRMask(llvm::MCInst &Inst, unsigned Insn,
@@ -970,6 +968,7 @@ static bool DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::LDRB_POST_IMM:
     case ARM::LDRB_POST_REG:
     case ARM::LDR_PRE:
+    case ARM::LDRB_PRE:
     case ARM::LDRBT_POST_REG:
     case ARM::LDRBT_POST_IMM:
     case ARM::LDRT_POST_REG:
@@ -1123,6 +1122,15 @@ static bool DecodeAddrMode3Instruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::LDRD:
     case ARM::LDRD_PRE:
     case ARM::LDRD_POST:
+    case ARM::LDRH:
+    case ARM::LDRH_PRE:
+    case ARM::LDRH_POST:
+    case ARM::LDRSH:
+    case ARM::LDRSH_PRE:
+    case ARM::LDRSH_POST:
+    case ARM::LDRSB:
+    case ARM::LDRSB_PRE:
+    case ARM::LDRSB_POST:
     case ARM::LDRHTr:
     case ARM::LDRSBTr:
       if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
@@ -2448,23 +2456,6 @@ static bool DecodeThumbBCCTargetOperand(llvm::MCInst &Inst, unsigned Val,
 static bool DecodeThumbBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
                                        uint64_t Address, const void *Decoder){
   Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
-  return true;
-}
-
-static bool DecodeAddrMode3Offset(llvm::MCInst &Inst, unsigned Val,
-                                  uint64_t Address, const void *Decoder) {
-  bool isImm = fieldFromInstruction32(Val, 9, 1);
-  bool isAdd = fieldFromInstruction32(Val, 8, 1);
-  unsigned imm = fieldFromInstruction32(Val, 0, 8);
-
-  if (!isImm) {
-    if (!DecodeGPRRegisterClass(Inst, imm, Address, Decoder)) return false;
-    Inst.addOperand(MCOperand::CreateImm(!isAdd << 8));
-  } else {
-    Inst.addOperand(MCOperand::CreateReg(0));
-    Inst.addOperand(MCOperand::CreateImm(imm | (!isAdd << 8)));
-  }
-
   return true;
 }
 
