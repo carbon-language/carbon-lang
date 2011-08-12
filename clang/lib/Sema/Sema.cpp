@@ -60,39 +60,17 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
 
   VAListTagName = PP.getIdentifierInfo("__va_list_tag");
 
-  if (!Context.isInt128Installed() && // May be set by ASTReader.
-      PP.getTargetInfo().getPointerWidth(0) >= 64) {
-    TypeSourceInfo *TInfo;
-
-    // Install [u]int128_t for 64-bit targets.
-    TInfo = Context.getTrivialTypeSourceInfo(Context.Int128Ty);
-    PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
-                                          SourceLocation(),
-                                          SourceLocation(),
-                                          &Context.Idents.get("__int128_t"),
-                                          TInfo), TUScope);
-
-    TInfo = Context.getTrivialTypeSourceInfo(Context.UnsignedInt128Ty);
-    PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
-                                          SourceLocation(),
-                                          SourceLocation(),
-                                          &Context.Idents.get("__uint128_t"),
-                                          TInfo), TUScope);
-    Context.setInt128Installed();
+  if (PP.getLangOptions().ObjC1) {
+    // Synthesize "@class Protocol;
+    if (Context.getObjCProtoType().isNull()) {
+      ObjCInterfaceDecl *ProtocolDecl =
+        ObjCInterfaceDecl::Create(Context, CurContext, SourceLocation(),
+                                  &Context.Idents.get("Protocol"),
+                                  SourceLocation(), true);
+      Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
+      PushOnScopeChains(ProtocolDecl, TUScope, false);
+    }  
   }
-
-
-  if (!PP.getLangOptions().ObjC1) return;
-
-  // Synthesize "@class Protocol;
-  if (Context.getObjCProtoType().isNull()) {
-    ObjCInterfaceDecl *ProtocolDecl =
-      ObjCInterfaceDecl::Create(Context, CurContext, SourceLocation(),
-                                &Context.Idents.get("Protocol"),
-                                SourceLocation(), true);
-    Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
-    PushOnScopeChains(ProtocolDecl, TUScope, false);
-  }  
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
@@ -141,6 +119,20 @@ void Sema::Initialize() {
   if (ExternalSemaSource *ExternalSema
       = dyn_cast_or_null<ExternalSemaSource>(Context.getExternalSource()))
     ExternalSema->InitializeSema(*this);
+
+  // Initialize predefined 128-bit integer types, if needed.
+  if (PP.getTargetInfo().getPointerWidth(0) >= 64) {
+    // If either of the 128-bit integer types are unavailable to name lookup,
+    // define them now.
+    DeclarationName Int128 = &Context.Idents.get("__int128_t");
+    if (IdentifierResolver::begin(Int128) == IdentifierResolver::end())
+      PushOnScopeChains(Context.getInt128Decl(), TUScope);
+
+    DeclarationName UInt128 = &Context.Idents.get("__uint128_t");
+    if (IdentifierResolver::begin(UInt128) == IdentifierResolver::end())
+      PushOnScopeChains(Context.getUInt128Decl(), TUScope);
+  }
+  
 
   // Initialize predefined Objective-C types:
   if (PP.getLangOptions().ObjC1) {

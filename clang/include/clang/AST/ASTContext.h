@@ -174,9 +174,12 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   TemplateTemplateParmDecl *
     getCanonicalTemplateTemplateParmDecl(TemplateTemplateParmDecl *TTP) const;
 
-  /// \brief Whether __[u]int128_t identifier is installed.
-  bool IsInt128Installed;
+  /// \brief The typedef for the __int128_t type.
+  mutable TypedefDecl *Int128Decl;
 
+  /// \brief The typedef for the __uint128_t type.
+  mutable TypedefDecl *UInt128Decl;
+  
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
   /// a builtin that takes a valist is encountered.
@@ -499,6 +502,12 @@ public:
   void PrintStats() const;
   const std::vector<Type*>& getTypes() const { return Types; }
 
+  /// \brief Retrieve the declaration for the 128-bit signed integer type.
+  TypedefDecl *getInt128Decl() const;
+
+  /// \brief Retrieve the declaration for the 128-bit unsigned integer type.
+  TypedefDecl *getUInt128Decl() const;
+  
   //===--------------------------------------------------------------------===//
   //                           Type Constructors
   //===--------------------------------------------------------------------===//
@@ -946,10 +955,6 @@ public:
   /// getObjCEncodingTypeSize returns size of type for objective-c encoding
   /// purpose in characters.
   CharUnits getObjCEncodingTypeSize(QualType t) const;
-
-  /// \brief Whether __[u]int128_t identifier is installed.
-  bool isInt128Installed() const { return IsInt128Installed; }
-  void setInt128Installed() { IsInt128Installed = true; }
 
   /// \brief Retrieve the typedef corresponding to the predefined 'id' type
   /// in Objective-C.

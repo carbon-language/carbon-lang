@@ -221,7 +221,8 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   TemplateSpecializationTypes(this_()),
   DependentTemplateSpecializationTypes(this_()),
   SubstTemplateTemplateParmPacks(this_()),
-  GlobalNestedNameSpecifier(0), IsInt128Installed(false),
+  GlobalNestedNameSpecifier(0), 
+  Int128Decl(0), UInt128Decl(0),
   ObjCIdDecl(0), ObjCSelDecl(0), ObjCClassDecl(0),
   CFConstantStringTypeDecl(0),
   FILEDecl(0), 
@@ -346,6 +347,33 @@ void ASTContext::PrintStats() const {
   BumpAlloc.PrintStats();
 }
 
+TypedefDecl *ASTContext::getInt128Decl() const {
+  if (!Int128Decl) {
+    TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(Int128Ty);
+    Int128Decl = TypedefDecl::Create(const_cast<ASTContext &>(*this), 
+                                     getTranslationUnitDecl(),
+                                     SourceLocation(),
+                                     SourceLocation(),
+                                     &Idents.get("__int128_t"),
+                                     TInfo);
+  }
+  
+  return Int128Decl;
+}
+
+TypedefDecl *ASTContext::getUInt128Decl() const {
+  if (!UInt128Decl) {
+    TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(UnsignedInt128Ty);
+    UInt128Decl = TypedefDecl::Create(const_cast<ASTContext &>(*this), 
+                                     getTranslationUnitDecl(),
+                                     SourceLocation(),
+                                     SourceLocation(),
+                                     &Idents.get("__uint128_t"),
+                                     TInfo);
+  }
+  
+  return UInt128Decl;
+}
 
 void ASTContext::InitBuiltinType(CanQualType &R, BuiltinType::Kind K) {
   BuiltinType *Ty = new (*this, TypeAlignment) BuiltinType(K);

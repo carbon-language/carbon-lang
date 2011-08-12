@@ -2814,6 +2814,10 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     DeclIDs[Context.ObjCSelDecl] = PREDEF_DECL_OBJC_SEL_ID;
   if (Context.ObjCClassDecl)
     DeclIDs[Context.ObjCClassDecl] = PREDEF_DECL_OBJC_CLASS_ID;
+  if (Context.Int128Decl)
+    DeclIDs[Context.Int128Decl] = PREDEF_DECL_INT_128_ID;
+  if (Context.UInt128Decl)
+    DeclIDs[Context.UInt128Decl] = PREDEF_DECL_UNSIGNED_INT_128_ID;
   
   if (!Chain) {
     // Make sure that we emit IdentifierInfos (and any attached
@@ -3029,7 +3033,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.ObjCIdRedefinitionType, SpecialTypes);
   AddTypeRef(Context.ObjCClassRedefinitionType, SpecialTypes);
   AddTypeRef(Context.ObjCSelRedefinitionType, SpecialTypes);
-  SpecialTypes.push_back(Context.isInt128Installed());
   
   // Keep writing types and declarations until all types and
   // declarations have been written.

@@ -655,9 +655,7 @@ namespace clang {
       /// \brief Objective-C "Class" redefinition type
       SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 7,
       /// \brief Objective-C "SEL" redefinition type
-      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 8,
-      /// \brief Whether __[u]int128_t identifier is installed.
-      SPECIAL_TYPE_INT128_INSTALLED            = 9
+      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 8
     };
 
     /// \brief Predefined declaration IDs.
@@ -680,14 +678,20 @@ namespace clang {
       PREDEF_DECL_OBJC_SEL_ID = 3,
       
       /// \brief The Objective-C 'Class' type.
-      PREDEF_DECL_OBJC_CLASS_ID = 4
+      PREDEF_DECL_OBJC_CLASS_ID = 4,
+      
+      /// \brief The signed 128-bit integer type.
+      PREDEF_DECL_INT_128_ID = 5,
+
+      /// \brief The unsigned 128-bit integer type.
+      PREDEF_DECL_UNSIGNED_INT_128_ID = 6
     };
 
     /// \brief The number of declaration IDs that are predefined.
     ///
     /// For more information about predefined declarations, see the
     /// \c PredefinedDeclIDs type and the PREDEF_DECL_*_ID constants.
-    const unsigned int NUM_PREDEF_DECL_IDS = 5;
+    const unsigned int NUM_PREDEF_DECL_IDS = 7;
     
     /// \brief Record codes for each kind of declaration.
     ///

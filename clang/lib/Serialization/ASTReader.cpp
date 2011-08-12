@@ -3075,9 +3075,6 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
       Context->ObjCSelRedefinitionType = GetType(ObjCSelRedef);
   }
 
-  if (SpecialTypes[SPECIAL_TYPE_INT128_INSTALLED])
-    Context->setInt128Installed();
-
   ReadPragmaDiagnosticMappings(Context->getDiagnostics());
 
   // If there were any CUDA special declarations, deserialize them.
@@ -4222,6 +4219,14 @@ Decl *ASTReader::GetDecl(DeclID ID) {
     case PREDEF_DECL_OBJC_CLASS_ID:
       assert(Context && "No context available?");
       return Context->getObjCClassDecl();
+        
+    case PREDEF_DECL_INT_128_ID:
+      assert(Context && "No context available?");
+      return Context->getInt128Decl();
+
+    case PREDEF_DECL_UNSIGNED_INT_128_ID:
+      assert(Context && "No context available?");
+      return Context->getUInt128Decl();
     }
     
     return 0;
