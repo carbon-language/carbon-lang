@@ -1098,16 +1098,16 @@ static Sequence MergeSeqs(Sequence A, Sequence B, bool TopDown) {
   if (A == S_None || B == S_None)
     return S_None;
 
-  // Note that we can't merge S_CanRelease and S_Use.
   if (A > B) std::swap(A, B);
   if (TopDown) {
     // Choose the side which is further along in the sequence.
-    if (A == S_Retain && (B == S_CanRelease || B == S_Use))
+    if ((A == S_Retain || A == S_CanRelease) &&
+        (B == S_CanRelease || B == S_Use))
       return B;
   } else {
     // Choose the side which is further along in the sequence.
     if ((A == S_Use || A == S_CanRelease) &&
-        (B == S_Release || B == S_Stop || B == S_MovableRelease))
+        (B == S_Use || B == S_Release || B == S_Stop || B == S_MovableRelease))
       return A;
     // If both sides are releases, choose the more conservative one.
     if (A == S_Stop && (B == S_Release || B == S_MovableRelease))
@@ -1185,6 +1185,10 @@ namespace {
     RRInfo RRI;
 
     PtrState() : RefCount(0), Seq(S_None) {}
+
+    void SetAtLeastOneRefCount()  {
+      if (RefCount == 0) RefCount = 1;
+    }
 
     void IncrementRefCount() {
       if (RefCount != UINT_MAX) ++RefCount;
@@ -1329,6 +1333,12 @@ namespace {
     /// after both the top-down and bottom-up traversals are complete.
     unsigned GetAllPathCount() const {
       return TopDownPathCount * BottomUpPathCount;
+    }
+
+    /// IsVisitedTopDown - Test whether the block for this BBState has been
+    /// visited by the top-down portion of the algorithm.
+    bool isVisitedTopDown() const {
+      return TopDownPathCount != 0;
     }
   };
 }
@@ -2143,41 +2153,49 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       const TerminatorInst *TI = cast<TerminatorInst>(&BB->back());
       bool SomeSuccHasSame = false;
       bool AllSuccsHaveSame = true;
-      for (succ_const_iterator SI(TI), SE(TI, false); SI != SE; ++SI)
-        switch (BBStates[*SI].getPtrBottomUpState(Arg).GetSeq()) {
+      PtrState &S = MyStates.getPtrTopDownState(Arg);
+      for (succ_const_iterator SI(TI), SE(TI, false); SI != SE; ++SI) {
+        PtrState &SuccS = BBStates[*SI].getPtrBottomUpState(Arg);
+        switch (SuccS.GetSeq()) {
         case S_None:
-        case S_CanRelease:
-          MyStates.getPtrTopDownState(Arg).ClearSequenceProgress();
-          SomeSuccHasSame = false;
-          break;
+        case S_CanRelease: {
+          if (!S.RRI.KnownIncremented && !SuccS.RRI.KnownIncremented)
+            S.ClearSequenceProgress();
+          continue;
+        }
         case S_Use:
           SomeSuccHasSame = true;
           break;
         case S_Stop:
         case S_Release:
         case S_MovableRelease:
-          AllSuccsHaveSame = false;
+          if (!S.RRI.KnownIncremented && !SuccS.RRI.KnownIncremented)
+            AllSuccsHaveSame = false;
           break;
         case S_Retain:
           llvm_unreachable("bottom-up pointer in retain state!");
         }
+      }
       // If the state at the other end of any of the successor edges
       // matches the current state, require all edges to match. This
       // guards against loops in the middle of a sequence.
       if (SomeSuccHasSame && !AllSuccsHaveSame)
-        MyStates.getPtrTopDownState(Arg).ClearSequenceProgress();
+        S.ClearSequenceProgress();
     }
     case S_CanRelease: {
       const Value *Arg = I->first;
       const TerminatorInst *TI = cast<TerminatorInst>(&BB->back());
       bool SomeSuccHasSame = false;
       bool AllSuccsHaveSame = true;
-      for (succ_const_iterator SI(TI), SE(TI, false); SI != SE; ++SI)
-        switch (BBStates[*SI].getPtrBottomUpState(Arg).GetSeq()) {
-        case S_None:
-          MyStates.getPtrTopDownState(Arg).ClearSequenceProgress();
-          SomeSuccHasSame = false;
-          break;
+      PtrState &S = MyStates.getPtrTopDownState(Arg);
+      for (succ_const_iterator SI(TI), SE(TI, false); SI != SE; ++SI) {
+        PtrState &SuccS = BBStates[*SI].getPtrBottomUpState(Arg);
+        switch (SuccS.GetSeq()) {
+        case S_None: {
+          if (!S.RRI.KnownIncremented && !SuccS.RRI.KnownIncremented)
+            S.ClearSequenceProgress();
+          continue;
+        }
         case S_CanRelease:
           SomeSuccHasSame = true;
           break;
@@ -2185,16 +2203,18 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
         case S_Release:
         case S_MovableRelease:
         case S_Use:
-          AllSuccsHaveSame = false;
+          if (!S.RRI.KnownIncremented && !SuccS.RRI.KnownIncremented)
+            AllSuccsHaveSame = false;
           break;
         case S_Retain:
           llvm_unreachable("bottom-up pointer in retain state!");
         }
+      }
       // If the state at the other end of any of the successor edges
       // matches the current state, require all edges to match. This
       // guards against loops in the middle of a sequence.
       if (SomeSuccHasSame && !AllSuccsHaveSame)
-        MyStates.getPtrTopDownState(Arg).ClearSequenceProgress();
+        S.ClearSequenceProgress();
     }
     }
 }
@@ -2218,6 +2238,8 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       if (Succ == BB)
         continue;
       DenseMap<const BasicBlock *, BBState>::iterator I = BBStates.find(Succ);
+      // If we haven't seen this node yet, then we've found a CFG cycle.
+      // Be optimistic here; it's CheckForCFGHazards' job detect trouble.
       if (I == BBStates.end())
         continue;
       MyStates.InitFromSucc(I->second);
@@ -2270,6 +2292,7 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
 
       PtrState &S = MyStates.getPtrBottomUpState(Arg);
       S.DecrementRefCount();
+      S.SetAtLeastOneRefCount();
 
       switch (S.GetSeq()) {
       case S_Stop:
@@ -2316,27 +2339,24 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       PtrState &S = MI->second;
       Sequence Seq = S.GetSeq();
 
-      // Check for possible retains and releases.
-      if (CanAlterRefCount(Inst, Ptr, PA, Class)) {
-        // Check for a retain (we're going bottom-up here).
-        S.DecrementRefCount();
-
-        // Check for a release.
-        if (!IsRetain(Class) && Class != IC_RetainBlock)
-          switch (Seq) {
-          case S_Use:
-            S.SetSeq(S_CanRelease);
-            continue;
-          case S_CanRelease:
-          case S_Release:
-          case S_MovableRelease:
-          case S_Stop:
-          case S_None:
-            break;
-          case S_Retain:
-            llvm_unreachable("bottom-up pointer in retain state!");
-          }
-      }
+      // Check for possible releases. Note that we don't have to update
+      // S's RefCount because any reference count modifications would be
+      // done through a different provenance.
+      if (!IsRetain(Class) && Class != IC_RetainBlock &&
+          CanAlterRefCount(Inst, Ptr, PA, Class))
+        switch (Seq) {
+        case S_Use:
+          S.SetSeq(S_CanRelease);
+          continue;
+        case S_CanRelease:
+        case S_Release:
+        case S_MovableRelease:
+        case S_Stop:
+        case S_None:
+          break;
+        case S_Retain:
+          llvm_unreachable("bottom-up pointer in retain state!");
+        }
 
       // Check for possible direct uses.
       switch (Seq) {
@@ -2389,14 +2409,18 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
       if (Pred == BB)
         continue;
       DenseMap<const BasicBlock *, BBState>::iterator I = BBStates.find(Pred);
-      if (I == BBStates.end())
+      assert(I != BBStates.end());
+      // If we haven't seen this node yet, then we've found a CFG cycle.
+      // Be optimistic here; it's CheckForCFGHazards' job detect trouble.
+      if (!I->second.isVisitedTopDown())
         continue;
       MyStates.InitFromPred(I->second);
       while (PI != PE) {
         Pred = *PI++;
         if (Pred != BB) {
           I = BBStates.find(Pred);
-          if (I != BBStates.end())
+          assert(I != BBStates.end());
+          if (I->second.isVisitedTopDown())
             MyStates.MergePred(I->second);
         }
       }
@@ -2437,6 +2461,7 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
         S.RRI.Calls.insert(Inst);
       }
 
+      S.SetAtLeastOneRefCount();
       S.IncrementRefCount();
       break;
     }
@@ -2488,13 +2513,11 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
       PtrState &S = MI->second;
       Sequence Seq = S.GetSeq();
 
-      // Check for possible releases.
+      // Check for possible releases. Note that we don't have to update
+      // S's RefCount because any reference count modifications would be
+      // done through a different provenance.
       if (!IsRetain(Class) && Class != IC_RetainBlock &&
-          CanAlterRefCount(Inst, Ptr, PA, Class)) {
-        // Check for a release.
-        S.DecrementRefCount();
-
-        // Check for a release.
+          CanAlterRefCount(Inst, Ptr, PA, Class))
         switch (Seq) {
         case S_Retain:
           S.SetSeq(S_CanRelease);
@@ -2514,7 +2537,6 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
         case S_MovableRelease:
           llvm_unreachable("top-down pointer in release state!");
         }
-      }
 
       // Check for possible direct uses.
       switch (Seq) {
@@ -2818,6 +2840,13 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
       RetainsToMove.ReverseInsertPts.clear();
       ReleasesToMove.ReverseInsertPts.clear();
       NewCount = 0;
+    } else {
+      // Determine whether the new insertion points we computed preserve the
+      // balance of retain and release calls through the program.
+      // TODO: If the fully aggressive solution isn't valid, try to find a
+      // less aggressive solution which is.
+      if (NewDelta != 0)
+        goto next_retain;
     }
 
     // Determine whether the original call points are balanced in the retain and
@@ -2826,13 +2855,6 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
     // TODO: It's theoretically possible to do code motion in this case, as
     // long as the existing imbalances are maintained.
     if (OldDelta != 0)
-      goto next_retain;
-
-    // Determine whether the new insertion points we computed preserve the
-    // balance of retain and release calls through the program.
-    // TODO: If the fully aggressive solution isn't valid, try to find a
-    // less aggressive solution which is.
-    if (NewDelta != 0)
       goto next_retain;
 
     // Ok, everything checks out and we're all set. Let's move some code!
