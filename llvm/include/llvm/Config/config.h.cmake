@@ -5,6 +5,27 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+/* Bug report URL. */
+#define BUG_REPORT_URL "${BUG_REPORT_URL}"
+
+/* Relative directory for resource files */
+#define CLANG_RESOURCE_DIR "${CLANG_RESOURCE_DIR}"
+
+/* 32 bit multilib directory. */
+#define CXX_INCLUDE_32BIT_DIR "${CXX_INCLUDE_32BIT_DIR}"
+
+/* 64 bit multilib directory. */
+#define CXX_INCLUDE_64BIT_DIR "${CXX_INCLUDE_64BIT_DIR}"
+
+/* Arch the libstdc++ headers. */
+#define CXX_INCLUDE_ARCH "${CXX_INCLUDE_ARCH}"
+
+/* Directory with the libstdc++ headers. */
+#define CXX_INCLUDE_ROOT "${CXX_INCLUDE_ROOT}"
+
+/* Directories clang will search for headers */
+#define C_INCLUDE_DIRS "${C_INCLUDE_DIRS}"
+
 /* Define if CBE is enabled for printf %a output */
 #cmakedefine ENABLE_CBE_PRINTF_A ${ENABLE_CBE_PRINTF_A}
 
@@ -516,34 +537,34 @@
 #undef HOST_LINK_VERSION
 
 /* Installation directory for binary executables */
-#undef LLVM_BINDIR
+#cmakedefine LLVM_BINDIR "${LLVM_BINDIR}"
 
 /* Time at which LLVM was configured */
-#undef LLVM_CONFIGTIME
+#cmakedefine LLVM_CONFIGTIME "${LLVM_CONFIGTIME}"
+
+/* Installation directory for data files */
+#cmakedefine LLVM_DATADIR "${LLVM_DATADIR}"
 
 /* Installation directory for documentation */
-#undef LLVM_DATADIR
-
-/* Installation directory for documentation */
-#undef LLVM_DOCSDIR
+#cmakedefine LLVM_DOCSDIR "${LLVM_DOCSDIR}"
 
 /* Installation directory for config files */
-#undef LLVM_ETCDIR
+#cmakedefine LLVM_ETCDIR "${LLVM_ETCDIR}"
 
 /* Host triple we were built on */
 #cmakedefine LLVM_HOSTTRIPLE "${LLVM_HOSTTRIPLE}"
 
 /* Installation directory for include files */
-#undef LLVM_INCLUDEDIR
+#cmakedefine LLVM_INCLUDEDIR "${LLVM_INCLUDEDIR}"
 
 /* Installation directory for .info files */
-#undef LLVM_INFODIR
+#cmakedefine LLVM_INFODIR "${LLVM_INFODIR}"
 
 /* Installation directory for libraries */
-#undef LLVM_LIBDIR
+#cmakedefine LLVM_LIBDIR "${LLVM_LIBDIR}"
 
 /* Installation directory for man pages */
-#undef LLVM_MANDIR
+#cmakedefine LLVM_MANDIR "${LLVM_MANDIR}"
 
 /* Build multithreading support into LLVM */
 #cmakedefine LLVM_MULTITHREADED ${LLVM_MULTITHREADED}
@@ -551,17 +572,20 @@
 /* LLVM architecture name for the native architecture, if available */
 #cmakedefine LLVM_NATIVE_ARCH ${LLVM_NATIVE_ARCH}
 
+/* LLVM name for the native AsmParser init function, if available */
+#cmakedefine LLVM_NATIVE_ASMPARSER LLVMInitialize${LLVM_NATIVE_ARCH}AsmParser
+
 /* LLVM name for the native AsmPrinter init function, if available */
 #cmakedefine LLVM_NATIVE_ASMPRINTER LLVMInitialize${LLVM_NATIVE_ARCH}AsmPrinter
-
-/* LLVM name for the native TargetMC init function, if available */
-#cmakedefine LLVM_NATIVE_TARGETMC LLVMInitialize${LLVM_NATIVE_ARCH}TargetMC
 
 /* LLVM name for the native Target init function, if available */
 #cmakedefine LLVM_NATIVE_TARGET LLVMInitialize${LLVM_NATIVE_ARCH}Target
 
 /* LLVM name for the native TargetInfo init function, if available */
 #cmakedefine LLVM_NATIVE_TARGETINFO LLVMInitialize${LLVM_NATIVE_ARCH}TargetInfo
+
+/* LLVM name for the native target MC init function, if available */
+#cmakedefine LLVM_NATIVE_TARGETMC LLVMInitialize${LLVM_NATIVE_ARCH}TargetMC
 
 /* Define if this is Unixish platform */
 #cmakedefine LLVM_ON_UNIX ${LLVM_ON_UNIX}
@@ -582,7 +606,7 @@
 #cmakedefine LLVM_PATH_FDP "${LLVM_PATH_FDP}"
 
 /* Define to path to Graphviz program if found or 'echo Graphviz' otherwise */
-#undef LLVM_PATH_GRAPHVIZ
+#cmakedefine LLVM_PATH_GRAPHVIZ "${LLVM_PATH_GRAPHVIZ}"
 
 /* Define to path to gv program if found or 'echo gv' otherwise */
 #cmakedefine LLVM_PATH_GV "${LLVM_PATH_GV}"
