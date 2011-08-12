@@ -50,9 +50,9 @@ void ArgList::eraseArg(OptSpecifier Id) {
   for (iterator it = begin(), ie = end(); it != ie; ) {
     if ((*it)->getOption().matches(Id)) {
       it = Args.erase(it);
-    } else {
+      ie = end();
+    } else
       ++it;
-    }
   }
 }
 
