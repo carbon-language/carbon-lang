@@ -827,6 +827,73 @@ on the master branch, run the following command:
 git config branch.master.rebase true
 </pre>
 
+<h4>Sending patches with Git</h4>
+<div>
+<p>
+Please read <a href="DeveloperPolicy.html#patches">Developer Policy</a>, too.
+</p>
+
+<p>
+Assume <tt>master</tt> points the upstream and <tt>mybranch</tt> points your
+working branch, and <tt>mybranch</tt> is rebased onto <tt>master</tt>.
+At first you may check sanity of whitespaces:
+</p>
+
+<pre class="doc_code">
+git diff --check master..mybranch
+</pre>
+
+<p>
+The easiest way to generate a patch is as below:
+</p>
+
+<pre class="doc_code">
+git diff master..mybranch &gt; /path/to/mybranch.diff
+</pre>
+
+<p>
+It is a little different from svn-generated diff. git-diff-generated diff has
+prefixes like <tt>a/</tt> and <tt>b/</tt>. Don't worry, most developers might
+know it could be accepted with <tt>patch -p1 -N</tt>.
+</p>
+
+<p>
+But you may generate patchset with git-format-patch. It generates
+by-each-commit patchset. To generate patch files to attach to your article:
+</p>
+
+<pre class="doc_code">
+git format-patch --no-attach master..mybranch -o /path/to/your/patchset
+</pre>
+
+<p>
+If you would like to send patches directly, you may use git-send-email or
+git-imap-send. Here is an example to generate the patchset in Gmail's [Drafts].
+</p>
+
+<pre class="doc_code">
+git format-patch --attach master..mybranch --stdout | git imap-send
+</pre>
+
+<p>
+Then, your .git/config should have [imap] sections.
+</p>
+
+<pre class="doc_code">
+[imap]
+        host = imaps://imap.gmail.com
+        user = <em>your.gmail.account</em>@gmail.com
+        pass = <em>himitsu!</em>
+        port = 993
+        sslverify = false
+; in English
+        folder = "[Gmail]/Drafts"
+; example for Japanese, "Modified UTF-7" encoded.
+        folder = "[Gmail]/&amp;Tgtm+DBN-"
+</pre>
+
+</div>
+
 <h4>For developers to work with git-svn</h4>
 <div>
 
