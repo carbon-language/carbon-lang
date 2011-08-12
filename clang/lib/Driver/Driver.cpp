@@ -25,7 +25,6 @@
 #include "clang/Driver/Options.h"
 #include "clang/Driver/Tool.h"
 #include "clang/Driver/ToolChain.h"
-#include "clang/Driver/Types.h"
 
 #include "clang/Basic/Version.h"
 
@@ -350,12 +349,17 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   if (!HandleImmediateArgs(*C))
     return C;
 
+  // Construct the list of inputs.
+  InputList Inputs;
+  BuildInputs(C->getDefaultToolChain(), C->getArgs(), Inputs);
+
   // Construct the list of abstract actions to perform for this compilation.
   if (Host->useDriverDriver())
     BuildUniversalActions(C->getDefaultToolChain(), C->getArgs(),
-                          C->getActions());
+                          Inputs, C->getActions());
   else
-    BuildActions(C->getDefaultToolChain(), C->getArgs(), C->getActions());
+    BuildActions(C->getDefaultToolChain(), C->getArgs(), Inputs,
+                 C->getActions());
 
   if (CCCPrintActions) {
     PrintActions(*C);
@@ -382,14 +386,19 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
 
   // Clear stale state and suppress tool output.
   C.initCompilationForDiagnostics();
+  Diags.Reset();
+
+  // Construct the list of inputs.
+  InputList Inputs;
+  BuildInputs(C.getDefaultToolChain(), C.getArgs(), Inputs);
 
   // Construct the list of abstract actions to perform for this compilation.
-  Diags.Reset();
   if (Host->useDriverDriver())
     BuildUniversalActions(C.getDefaultToolChain(), C.getArgs(),
-                          C.getActions());
+                          Inputs, C.getActions());
   else
-    BuildActions(C.getDefaultToolChain(), C.getArgs(), C.getActions());
+    BuildActions(C.getDefaultToolChain(), C.getArgs(), Inputs,
+                 C.getActions());
 
   BuildJobs(C);
 
@@ -703,6 +712,7 @@ static bool ContainsCompileOrAssembleAction(const Action *A) {
 
 void Driver::BuildUniversalActions(const ToolChain &TC,
                                    const DerivedArgList &Args,
+                                   const InputList &BAInputs,
                                    ActionList &Actions) const {
   llvm::PrettyStackTraceString CrashInfo("Building universal build actions");
   // Collect the list of architectures. Duplicates are allowed, but should only
@@ -747,7 +757,7 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
   }
 
   ActionList SingleActions;
-  BuildActions(TC, Args, SingleActions);
+  BuildActions(TC, Args, BAInputs, SingleActions);
 
   // Add in arch bindings for every top level action, as well as lipo and
   // dsymutil steps if needed.
@@ -797,18 +807,15 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
   }
 }
 
-void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
-                          ActionList &Actions) const {
-  llvm::PrettyStackTraceString CrashInfo("Building compilation actions");
-  // Start by constructing the list of inputs and their types.
-
+// Construct a the list of inputs and their types.
+void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
+                         InputList &Inputs) const {
   // Track the current user specified (-x) input. We also explicitly track the
   // argument used to set the type; we only want to claim the type when we
   // actually use it, so we warn about unused -x arguments.
   types::ID InputType = types::TY_Nothing;
   Arg *InputTypeArg = 0;
 
-  SmallVector<std::pair<types::ID, const Arg*>, 16> Inputs;
   for (ArgList::const_iterator it = Args.begin(), ie = Args.end();
        it != ie; ++it) {
     Arg *A = *it;
@@ -912,7 +919,6 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
       }
     }
   }
-
   if (CCCIsCPP && Inputs.empty()) {
     // If called as standalone preprocessor, stdin is processed
     // if no other input is present.
@@ -921,6 +927,11 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
     A->claim();
     Inputs.push_back(std::make_pair(types::TY_C, A));
   }
+}
+
+void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
+                          const InputList &Inputs, ActionList &Actions) const {
+  llvm::PrettyStackTraceString CrashInfo("Building compilation actions");
 
   if (!SuppressMissingInputWarning && Inputs.empty()) {
     Diag(clang::diag::err_drv_no_input_files);
