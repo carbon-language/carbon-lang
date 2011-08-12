@@ -84,19 +84,6 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
 
   if (!PP.getLangOptions().ObjC1) return;
 
-  // Built-in ObjC types may already be set by ASTReader (hence isNull checks).
-  if (Context.getObjCSelType().isNull()) {
-    // Create the built-in typedef for 'SEL'.
-    QualType SelT = Context.getPointerType(Context.ObjCBuiltinSelTy);
-    TypeSourceInfo *SelInfo = Context.getTrivialTypeSourceInfo(SelT);
-    TypedefDecl *SelTypedef
-      = TypedefDecl::Create(Context, CurContext,
-                            SourceLocation(), SourceLocation(),
-                            &Context.Idents.get("SEL"), SelInfo);
-    PushOnScopeChains(SelTypedef, TUScope);
-    Context.setObjCSelType(Context.getTypeDeclType(SelTypedef));
-  }
-
   // Synthesize "@class Protocol;
   if (Context.getObjCProtoType().isNull()) {
     ObjCInterfaceDecl *ProtocolDecl =
@@ -157,6 +144,12 @@ void Sema::Initialize() {
 
   // Initialize predefined Objective-C types:
   if (PP.getLangOptions().ObjC1) {
+    // If 'SEL' does not yet refer to any declarations, make it refer to the
+    // predefined 'SEL'.
+    DeclarationName SEL = &Context.Idents.get("SEL");
+    if (IdentifierResolver::begin(SEL) == IdentifierResolver::end())
+      PushOnScopeChains(Context.getObjCSelDecl(), TUScope);
+
     // If 'id' does not yet refer to any declarations, make it refer to the
     // predefined 'id'.
     DeclarationName Id = &Context.Idents.get("id");

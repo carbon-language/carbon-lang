@@ -222,7 +222,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   DependentTemplateSpecializationTypes(this_()),
   SubstTemplateTemplateParmPacks(this_()),
   GlobalNestedNameSpecifier(0), IsInt128Installed(false),
-  ObjCIdDecl(0), ObjCClassDecl(0),
+  ObjCIdDecl(0), ObjCSelDecl(0), ObjCClassDecl(0),
   CFConstantStringTypeDecl(0),
   FILEDecl(0), 
   jmp_bufDecl(0), sigjmp_bufDecl(0), BlockDescriptorType(0), 
@@ -429,9 +429,6 @@ void ASTContext::InitBuiltinTypes() {
   LongDoubleComplexTy = getComplexType(LongDoubleTy);
 
   BuiltinVaListType = QualType();
-
-  // "Builtin" typedefs set by Sema::ActOnTranslationUnitScope().
-  ObjCSelTypedefType = QualType();
 
   // Builtin types for 'id', 'Class', and 'SEL'.
   InitBuiltinType(ObjCBuiltinIdTy, BuiltinType::ObjCId);
@@ -4632,8 +4629,16 @@ TypedefDecl *ASTContext::getObjCIdDecl() const {
   return ObjCIdDecl;
 }
 
-void ASTContext::setObjCSelType(QualType T) {
-  ObjCSelTypedefType = T;
+TypedefDecl *ASTContext::getObjCSelDecl() const {
+  if (!ObjCSelDecl) {
+    QualType SelT = getPointerType(ObjCBuiltinSelTy);
+    TypeSourceInfo *SelInfo = getTrivialTypeSourceInfo(SelT);
+    ObjCSelDecl = TypedefDecl::Create(const_cast<ASTContext &>(*this),
+                                      getTranslationUnitDecl(),
+                                      SourceLocation(), SourceLocation(),
+                                      &Idents.get("SEL"), SelInfo);
+  }
+  return ObjCSelDecl;
 }
 
 void ASTContext::setObjCProtoType(QualType QT) {

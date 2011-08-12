@@ -2987,11 +2987,6 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
       GetType(SpecialTypes[SPECIAL_TYPE_BUILTIN_VA_LIST]));
   }
   
-  if (unsigned Sel = SpecialTypes[SPECIAL_TYPE_OBJC_SELECTOR]) {
-    if (Context->ObjCSelTypedefType.isNull())
-      Context->ObjCSelTypedefType = GetType(Sel);
-  }
-  
   if (unsigned Proto = SpecialTypes[SPECIAL_TYPE_OBJC_PROTOCOL]) {
     if (Context->ObjCProtoType.isNull())
       Context->ObjCProtoType = GetType(Proto);
@@ -4219,6 +4214,10 @@ Decl *ASTReader::GetDecl(DeclID ID) {
     case PREDEF_DECL_OBJC_ID_ID:
       assert(Context && "No context available?");
       return Context->getObjCIdDecl();
+
+    case PREDEF_DECL_OBJC_SEL_ID:
+      assert(Context && "No context available?");
+      return Context->getObjCSelDecl();
 
     case PREDEF_DECL_OBJC_CLASS_ID:
       assert(Context && "No context available?");

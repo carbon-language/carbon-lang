@@ -185,10 +185,9 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   /// \brief The typedef for the predefined 'id' type.
   mutable TypedefDecl *ObjCIdDecl;
   
-  /// ObjCSelType - another pseudo built-in typedef type (set by Sema).
-  QualType ObjCSelTypedefType;
+  /// \brief The typedef for the predefined 'SEL' type.
+  mutable TypedefDecl *ObjCSelDecl;
 
-  /// ObjCProtoType - another pseudo built-in typedef type (set by Sema).
   QualType ObjCProtoType;
   const RecordType *ProtoStructType;
 
@@ -961,9 +960,16 @@ public:
   QualType getObjCIdType() const {
     return getTypeDeclType(getObjCIdDecl());
   }
+
+  /// \brief Retrieve the typedef corresponding to the predefined 'SEL' type
+  /// in Objective-C.
+  TypedefDecl *getObjCSelDecl() const;
   
-  void setObjCSelType(QualType T);
-  QualType getObjCSelType() const { return ObjCSelTypedefType; }
+  /// \brief Retrieve the type that corresponds to the predefined Objective-C
+  /// 'SEL' type.
+  QualType getObjCSelType() const { 
+    return getTypeDeclType(getObjCSelDecl());
+  }
 
   void setObjCProtoType(QualType QT);
   QualType getObjCProtoType() const { return ObjCProtoType; }
@@ -1431,7 +1437,7 @@ public:
     return T == getObjCClassType();
   }
   bool isObjCSelType(QualType T) const {
-    return T == ObjCSelTypedefType;
+    return T == getObjCSelType();
   }
   bool QualifiedIdConformsQualifiedId(QualType LHS, QualType RHS);
   bool ObjCQualifiedIdTypesAreCompatible(QualType LHS, QualType RHS,
