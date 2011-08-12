@@ -130,7 +130,7 @@ public:
   DefinedOrUnknownSVal makeZeroVal(QualType type);
 
   /// getRegionValueSymbolVal - make a unique symbol for value of region.
-  DefinedOrUnknownSVal getRegionValueSymbolVal(const TypedRegion *region);
+  DefinedOrUnknownSVal getRegionValueSymbolVal(const TypedValueRegion *region);
 
   DefinedOrUnknownSVal getConjuredSymbolVal(const void *symbolTag,
                                             const Expr *expr, unsigned count);
@@ -139,7 +139,7 @@ public:
                                             unsigned count);
 
   DefinedOrUnknownSVal getDerivedRegionValueSymbolVal(
-      SymbolRef parentSymbol, const TypedRegion *region);
+      SymbolRef parentSymbol, const TypedValueRegion *region);
 
   DefinedSVal getMetadataSymbolVal(
       const void *symbolTag, const MemRegion *region,
@@ -154,7 +154,8 @@ public:
     return nonloc::CompoundVal(BasicVals.getCompoundValData(type, vals));
   }
 
-  NonLoc makeLazyCompoundVal(const StoreRef &store, const TypedRegion *region) {
+  NonLoc makeLazyCompoundVal(const StoreRef &store, 
+                             const TypedValueRegion *region) {
     return nonloc::LazyCompoundVal(
         BasicVals.getLazyCompoundValData(store, region));
   }

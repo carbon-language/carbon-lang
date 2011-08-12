@@ -106,8 +106,8 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
   // LoadTy specifying can be omitted. But we put it here to emphasize the 
   // semantics.
   QualType LoadTy;
-  if (const TypedRegion *TR =
-      dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
+  if (const TypedValueRegion *TR =
+      dyn_cast_or_null<TypedValueRegion>(location.getAsRegion())) {
     LoadTy = TR->getValueType();
   }
   Engine.evalLoad(Tmp, theValueExpr, C.getPredecessor(), 
@@ -159,8 +159,8 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
       SVal val = stateEqual->getSVal(newValueExpr);
 
       // Handle implicit value casts.
-      if (const TypedRegion *R =
-          dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
+      if (const TypedValueRegion *R =
+          dyn_cast_or_null<TypedValueRegion>(location.getAsRegion())) {
         val = svalBuilder.evalCast(val,R->getValueType(), newValueExpr->getType());
       }
 

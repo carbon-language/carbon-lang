@@ -87,7 +87,7 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
 
   // Handle casts from compatible types.
   if (R->isBoundable())
-    if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
+    if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(R)) {
       QualType ObjTy = Ctx.getCanonicalType(TR->getValueType());
       if (CanonPointeeTy == ObjTy)
         return R;
@@ -157,7 +157,7 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
         // Edge case: we are at 0 bytes off the beginning of baseR.  We
         // check to see if type we are casting to is the same as the base
         // region.  If so, just return the base region.
-        if (const TypedRegion *TR = dyn_cast<TypedRegion>(baseR)) {
+        if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(baseR)) {
           QualType ObjTy = Ctx.getCanonicalType(TR->getValueType());
           QualType CanonPointeeTy = Ctx.getCanonicalType(PointeeTy);
           if (CanonPointeeTy == ObjTy)
@@ -211,7 +211,7 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
 /// CastRetrievedVal - Used by subclasses of StoreManager to implement
 ///  implicit casts that arise from loads from regions that are reinterpreted
 ///  as another region.
-SVal StoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
+SVal StoreManager::CastRetrievedVal(SVal V, const TypedValueRegion *R,
                                     QualType castTy, bool performTestOnly) {
   
   if (castTy.isNull())

@@ -290,7 +290,7 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
   if (!LV)
     return;
 
-  const TypedRegion* R = dyn_cast<TypedRegion>(LV->stripCasts());
+  const TypedValueRegion* R = dyn_cast<TypedValueRegion>(LV->stripCasts());
   if (!R)
     return;
 

@@ -90,7 +90,7 @@ void SymbolRegionValue::dumpToStream(raw_ostream& os) const {
 }
 
 const SymbolRegionValue*
-SymbolManager::getRegionValueSymbol(const TypedRegion* R) {
+SymbolManager::getRegionValueSymbol(const TypedValueRegion* R) {
   llvm::FoldingSetNodeID profile;
   SymbolRegionValue::Profile(profile, R);
   void* InsertPos;
@@ -125,7 +125,7 @@ SymbolManager::getConjuredSymbol(const Stmt* E, QualType T, unsigned Count,
 
 const SymbolDerived*
 SymbolManager::getDerivedSymbol(SymbolRef parentSymbol,
-                                const TypedRegion *R) {
+                                const TypedValueRegion *R) {
 
   llvm::FoldingSetNodeID profile;
   SymbolDerived::Profile(profile, parentSymbol, R);

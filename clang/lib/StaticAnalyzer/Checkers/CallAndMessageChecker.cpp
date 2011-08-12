@@ -116,7 +116,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
                              MemRegionManager &mrMgr, Store s)
       : C(c), StoreMgr(storeMgr), MrMgr(mrMgr), store(s) {}
 
-      bool Find(const TypedRegion *R) {
+      bool Find(const TypedValueRegion *R) {
         QualType T = R->getValueType();
         if (const RecordType *RT = T->getAsStructureType()) {
           const RecordDecl *RD = RT->getDecl()->getDefinition();

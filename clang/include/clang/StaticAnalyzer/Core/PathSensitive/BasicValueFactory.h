@@ -49,17 +49,17 @@ public:
 
 class LazyCompoundValData : public llvm::FoldingSetNode {
   StoreRef store;
-  const TypedRegion *region;
+  const TypedValueRegion *region;
 public:
-  LazyCompoundValData(const StoreRef &st, const TypedRegion *r)
+  LazyCompoundValData(const StoreRef &st, const TypedValueRegion *r)
     : store(st), region(r) {}
 
   const void *getStore() const { return store.getStore(); }
-  const TypedRegion *getRegion() const { return region; }
+  const TypedValueRegion *getRegion() const { return region; }
 
   static void Profile(llvm::FoldingSetNodeID& ID,
                       const StoreRef &store,
-                      const TypedRegion *region);
+                      const TypedValueRegion *region);
 
   void Profile(llvm::FoldingSetNodeID& ID) { Profile(ID, store, region); }
 };
@@ -176,7 +176,7 @@ public:
                                             llvm::ImmutableList<SVal> Vals);
 
   const LazyCompoundValData *getLazyCompoundValData(const StoreRef &store,
-                                                    const TypedRegion *region);
+                                            const TypedValueRegion *region);
 
   llvm::ImmutableList<SVal> getEmptySValList() {
     return SValListFactory.getEmptyList();

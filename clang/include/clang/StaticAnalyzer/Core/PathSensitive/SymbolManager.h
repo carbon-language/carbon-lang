@@ -37,7 +37,7 @@ namespace ento {
   class BasicValueFactory;
   class MemRegion;
   class SubRegion;
-  class TypedRegion;
+  class TypedValueRegion;
   class VarRegion;
 
 class SymExpr : public llvm::FoldingSetNode {
@@ -95,15 +95,15 @@ typedef llvm::SmallVector<SymbolRef, 2> SymbolRefSmallVectorTy;
 
 /// A symbol representing the value of a MemRegion.
 class SymbolRegionValue : public SymbolData {
-  const TypedRegion *R;
+  const TypedValueRegion *R;
 
 public:
-  SymbolRegionValue(SymbolID sym, const TypedRegion *r)
+  SymbolRegionValue(SymbolID sym, const TypedValueRegion *r)
     : SymbolData(RegionValueKind, sym), R(r) {}
 
-  const TypedRegion* getRegion() const { return R; }
+  const TypedValueRegion* getRegion() const { return R; }
 
-  static void Profile(llvm::FoldingSetNodeID& profile, const TypedRegion* R) {
+  static void Profile(llvm::FoldingSetNodeID& profile, const TypedValueRegion* R) {
     profile.AddInteger((unsigned) RegionValueKind);
     profile.AddPointer(R);
   }
@@ -166,21 +166,21 @@ public:
 /// symbolic value.
 class SymbolDerived : public SymbolData {
   SymbolRef parentSymbol;
-  const TypedRegion *R;
+  const TypedValueRegion *R;
 
 public:
-  SymbolDerived(SymbolID sym, SymbolRef parent, const TypedRegion *r)
+  SymbolDerived(SymbolID sym, SymbolRef parent, const TypedValueRegion *r)
     : SymbolData(DerivedKind, sym), parentSymbol(parent), R(r) {}
 
   SymbolRef getParentSymbol() const { return parentSymbol; }
-  const TypedRegion *getRegion() const { return R; }
+  const TypedValueRegion *getRegion() const { return R; }
 
   QualType getType(ASTContext&) const;
 
   void dumpToStream(raw_ostream &os) const;
 
   static void Profile(llvm::FoldingSetNodeID& profile, SymbolRef parent,
-                      const TypedRegion *r) {
+                      const TypedValueRegion *r) {
     profile.AddInteger((unsigned) DerivedKind);
     profile.AddPointer(r);
     profile.AddPointer(parent);
@@ -380,7 +380,7 @@ public:
   static bool canSymbolicate(QualType T);
 
   /// \brief Make a unique symbol for MemRegion R according to its kind.
-  const SymbolRegionValue* getRegionValueSymbol(const TypedRegion* R);
+  const SymbolRegionValue* getRegionValueSymbol(const TypedValueRegion* R);
 
   const SymbolConjured* getConjuredSymbol(const Stmt* E, QualType T,
                                           unsigned VisitCount,
@@ -392,7 +392,7 @@ public:
   }
 
   const SymbolDerived *getDerivedSymbol(SymbolRef parentSymbol,
-                                        const TypedRegion *R);
+                                        const TypedValueRegion *R);
 
   const SymbolExtent *getExtentSymbol(const SubRegion *R);
 

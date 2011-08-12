@@ -770,8 +770,7 @@ const GRState *CStringChecker::InvalidateBuffer(CheckerContext &C,
 bool CStringChecker::SummarizeRegion(raw_ostream& os, ASTContext& Ctx,
                                      const MemRegion *MR) {
   const TypedRegion *TR = dyn_cast<TypedRegion>(MR);
-  if (!TR)
-    return false;
+  const TypedValueRegion *TVR = dyn_cast<TypedValueRegion>(MR);
 
   switch (TR->getKind()) {
   case MemRegion::FunctionTextRegionKind: {
@@ -790,16 +789,16 @@ bool CStringChecker::SummarizeRegion(raw_ostream& os, ASTContext& Ctx,
     return true;
   case MemRegion::CXXThisRegionKind:
   case MemRegion::CXXTempObjectRegionKind:
-    os << "a C++ temp object of type " << TR->getValueType().getAsString();
+    os << "a C++ temp object of type " << TVR->getValueType().getAsString();
     return true;
   case MemRegion::VarRegionKind:
-    os << "a variable of type" << TR->getValueType().getAsString();
+    os << "a variable of type" << TVR->getValueType().getAsString();
     return true;
   case MemRegion::FieldRegionKind:
-    os << "a field of type " << TR->getValueType().getAsString();
+    os << "a field of type " << TVR->getValueType().getAsString();
     return true;
   case MemRegion::ObjCIvarRegionKind:
-    os << "an instance variable of type " << TR->getValueType().getAsString();
+    os << "an instance variable of type " << TVR->getValueType().getAsString();
     return true;
   default:
     return false;

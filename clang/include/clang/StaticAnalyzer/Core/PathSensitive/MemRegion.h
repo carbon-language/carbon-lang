@@ -82,12 +82,13 @@ public:
     // Untyped regions.
     SymbolicRegionKind,
     AllocaRegionKind,
+    BlockDataRegionKind,
     // Typed regions.
     BEG_TYPED_REGIONS,
     FunctionTextRegionKind = BEG_TYPED_REGIONS,
     BlockTextRegionKind,
-    BlockDataRegionKind,
-    CompoundLiteralRegionKind,
+    BEG_TYPED_VALUE_REGIONS,
+    CompoundLiteralRegionKind = BEG_TYPED_VALUE_REGIONS,
     CXXThisRegionKind,
     StringRegionKind,
     ElementRegionKind,
@@ -99,7 +100,8 @@ public:
     END_DECL_REGIONS = ObjCIvarRegionKind,
     CXXTempObjectRegionKind,
     CXXBaseObjectRegionKind,
-    END_TYPED_REGIONS = CXXBaseObjectRegionKind
+    END_TYPED_REGIONS = CXXBaseObjectRegionKind,
+    END_TYPED_VALUE_REGIONS = CXXBaseObjectRegionKind
   };
     
 private:
@@ -353,6 +355,26 @@ protected:
   TypedRegion(const MemRegion* sReg, Kind k) : SubRegion(sReg, k) {}
 
 public:
+  virtual QualType getLocationType() const = 0;
+
+  QualType getDesugaredLocationType(ASTContext &Context) const {
+    return getLocationType().getDesugaredType(Context);
+  }
+
+  bool isBoundable() const { return true; }
+
+  static bool classof(const MemRegion* R) {
+    unsigned k = R->getKind();
+    return k >= BEG_TYPED_REGIONS && k <= END_TYPED_REGIONS;
+  }
+};
+
+/// TypedValueRegion - An abstract class representing regions having a typed value.
+class TypedValueRegion : public TypedRegion {
+protected:
+  TypedValueRegion(const MemRegion* sReg, Kind k) : TypedRegion(sReg, k) {}
+
+public:
   virtual QualType getValueType() const = 0;
 
   virtual QualType getLocationType() const {
@@ -369,15 +391,9 @@ public:
     return T.getTypePtrOrNull() ? T.getDesugaredType(Context) : T;
   }
 
-  QualType getDesugaredLocationType(ASTContext &Context) const {
-    return getLocationType().getDesugaredType(Context);
-  }
-
-  bool isBoundable() const { return true; }
-
   static bool classof(const MemRegion* R) {
     unsigned k = R->getKind();
-    return k >= BEG_TYPED_REGIONS && k <= END_TYPED_REGIONS;
+    return k >= BEG_TYPED_VALUE_REGIONS && k <= END_TYPED_VALUE_REGIONS;
   }
 };
 
@@ -386,11 +402,6 @@ class CodeTextRegion : public TypedRegion {
 protected:
   CodeTextRegion(const MemRegion *sreg, Kind k) : TypedRegion(sreg, k) {}
 public:
-  QualType getValueType() const {
-    assert(0 && "Do not get the object type of a CodeTextRegion.");
-    return QualType();
-  }
-  
   bool isBoundable() const { return false; }
     
   static bool classof(const MemRegion* R) {
@@ -566,13 +577,13 @@ public:
 };
 
 /// StringRegion - Region associated with a StringLiteral.
-class StringRegion : public TypedRegion {
+class StringRegion : public TypedValueRegion {
   friend class MemRegionManager;
   const StringLiteral* Str;
 protected:
 
   StringRegion(const StringLiteral* str, const MemRegion* sreg)
-    : TypedRegion(sreg, StringRegionKind), Str(str) {}
+    : TypedValueRegion(sreg, StringRegionKind), Str(str) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID,
                             const StringLiteral* Str,
@@ -604,13 +615,13 @@ public:
 /// CompoundLiteralRegion - A memory region representing a compound literal.
 ///   Compound literals are essentially temporaries that are stack allocated
 ///   or in the global constant pool.
-class CompoundLiteralRegion : public TypedRegion {
+class CompoundLiteralRegion : public TypedValueRegion {
 private:
   friend class MemRegionManager;
   const CompoundLiteralExpr* CL;
 
   CompoundLiteralRegion(const CompoundLiteralExpr* cl, const MemRegion* sReg)
-    : TypedRegion(sReg, CompoundLiteralRegionKind), CL(cl) {}
+    : TypedValueRegion(sReg, CompoundLiteralRegionKind), CL(cl) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID,
                             const CompoundLiteralExpr* CL,
@@ -633,12 +644,12 @@ public:
   }
 };
 
-class DeclRegion : public TypedRegion {
+class DeclRegion : public TypedValueRegion {
 protected:
   const Decl* D;
 
   DeclRegion(const Decl* d, const MemRegion* sReg, Kind k)
-    : TypedRegion(sReg, k), D(d) {}
+    : TypedValueRegion(sReg, k), D(d) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Decl* D,
                       const MemRegion* superRegion, Kind k);
@@ -689,11 +700,11 @@ public:
 /// CXXThisRegion - Represents the region for the implicit 'this' parameter
 ///  in a call to a C++ method.  This region doesn't represent the object
 ///  referred to by 'this', but rather 'this' itself.
-class CXXThisRegion : public TypedRegion {
+class CXXThisRegion : public TypedValueRegion {
   friend class MemRegionManager;
   CXXThisRegion(const PointerType *thisPointerTy,
                 const MemRegion *sReg)
-    : TypedRegion(sReg, CXXThisRegionKind), ThisPointerTy(thisPointerTy) {}
+    : TypedValueRegion(sReg, CXXThisRegionKind), ThisPointerTy(thisPointerTy) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID &ID,
                             const PointerType *PT,
@@ -792,14 +803,14 @@ public:
   void dump() const;
 };
 
-class ElementRegion : public TypedRegion {
+class ElementRegion : public TypedValueRegion {
   friend class MemRegionManager;
 
   QualType ElementType;
   NonLoc Index;
 
   ElementRegion(QualType elementType, NonLoc Idx, const MemRegion* sReg)
-    : TypedRegion(sReg, ElementRegionKind),
+    : TypedValueRegion(sReg, ElementRegionKind),
       ElementType(elementType), Index(Idx) {
     assert((!isa<nonloc::ConcreteInt>(&Idx) ||
            cast<nonloc::ConcreteInt>(&Idx)->getValue().isSigned()) &&
@@ -833,13 +844,13 @@ public:
 };
 
 // C++ temporary object associated with an expression.
-class CXXTempObjectRegion : public TypedRegion {
+class CXXTempObjectRegion : public TypedValueRegion {
   friend class MemRegionManager;
 
   Expr const *Ex;
 
   CXXTempObjectRegion(Expr const *E, MemRegion const *sReg) 
-    : TypedRegion(sReg, CXXTempObjectRegionKind), Ex(E) {}
+    : TypedValueRegion(sReg, CXXTempObjectRegionKind), Ex(E) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID &ID,
                             Expr const *E, const MemRegion *sReg);
@@ -860,13 +871,13 @@ public:
 
 // CXXBaseObjectRegion represents a base object within a C++ object. It is 
 // identified by the base class declaration and the region of its parent object.
-class CXXBaseObjectRegion : public TypedRegion {
+class CXXBaseObjectRegion : public TypedValueRegion {
   friend class MemRegionManager;
 
   const CXXRecordDecl *decl;
 
   CXXBaseObjectRegion(const CXXRecordDecl *d, const MemRegion *sReg)
-    : TypedRegion(sReg, CXXBaseObjectRegionKind), decl(d) {}
+    : TypedValueRegion(sReg, CXXBaseObjectRegionKind), decl(d) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID &ID,
                             const CXXRecordDecl *decl, const MemRegion *sReg);

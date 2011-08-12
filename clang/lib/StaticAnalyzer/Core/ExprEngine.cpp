@@ -1522,8 +1522,8 @@ void ExprEngine::evalLoad(ExplodedNodeSet& Dst, const Expr *Ex,
   // Are we loading from a region?  This actually results in two loads; one
   // to fetch the address of the referenced value and one to fetch the
   // referenced value.
-  if (const TypedRegion *TR =
-        dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
+  if (const TypedValueRegion *TR =
+        dyn_cast_or_null<TypedValueRegion>(location.getAsRegion())) {
 
     QualType ValTy = TR->getValueType();
     if (const ReferenceType *RT = ValTy->getAs<ReferenceType>()) {
@@ -1894,7 +1894,8 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt* S,
     const GRState *noElems = state->BindExpr(S, FalseV);
     
     if (loc::MemRegionVal *MV = dyn_cast<loc::MemRegionVal>(&elementV))
-      if (const TypedRegion *R = dyn_cast<TypedRegion>(MV->getRegion())) {
+      if (const TypedValueRegion *R = 
+            dyn_cast<TypedValueRegion>(MV->getRegion())) {
         // FIXME: The proper thing to do is to really iterate over the
         //  container.  We will do this with dispatch logic to the store.
         //  For now, just 'conjure' up a symbolic value.

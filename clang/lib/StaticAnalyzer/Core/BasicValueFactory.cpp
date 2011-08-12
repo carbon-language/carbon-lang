@@ -27,7 +27,7 @@ void CompoundValData::Profile(llvm::FoldingSetNodeID& ID, QualType T,
 
 void LazyCompoundValData::Profile(llvm::FoldingSetNodeID& ID,
                                   const StoreRef &store,
-                                  const TypedRegion *region) {
+                                  const TypedValueRegion *region) {
   ID.AddPointer(store.getStore());
   ID.AddPointer(region);
 }
@@ -128,7 +128,7 @@ BasicValueFactory::getCompoundValData(QualType T,
 
 const LazyCompoundValData*
 BasicValueFactory::getLazyCompoundValData(const StoreRef &store,
-                                          const TypedRegion *region) {
+                                          const TypedValueRegion *region) {
   llvm::FoldingSetNodeID ID;
   LazyCompoundValData::Profile(ID, store, region);
   void* InsertPos;

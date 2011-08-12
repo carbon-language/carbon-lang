@@ -288,9 +288,9 @@ public: // Part of public interface to class.
   }
 
   /// BindStruct - Bind a compound value to a structure.
-  StoreRef BindStruct(Store store, const TypedRegion* R, SVal V);
+  StoreRef BindStruct(Store store, const TypedValueRegion* R, SVal V);
 
-  StoreRef BindArray(Store store, const TypedRegion* R, SVal V);
+  StoreRef BindArray(Store store, const TypedValueRegion* R, SVal V);
 
   /// KillStruct - Set the entire struct to unknown.
   StoreRef KillStruct(Store store, const TypedRegion* R, SVal DefaultVal);
@@ -335,9 +335,9 @@ public: // Part of public interface to class.
 
   SVal RetrieveVar(Store store, const VarRegion *R);
 
-  SVal RetrieveLazySymbol(const TypedRegion *R);
+  SVal RetrieveLazySymbol(const TypedValueRegion *R);
 
-  SVal RetrieveFieldOrElementCommon(Store store, const TypedRegion *R,
+  SVal RetrieveFieldOrElementCommon(Store store, const TypedValueRegion *R,
                                     QualType Ty, const MemRegion *superR);
   
   SVal RetrieveLazyBinding(const MemRegion *lazyBindingRegion,
@@ -348,15 +348,16 @@ public: // Part of public interface to class.
   /// struct s x, y;
   /// x = y;
   /// y's value is retrieved by this method.
-  SVal RetrieveStruct(Store store, const TypedRegion* R);
+  SVal RetrieveStruct(Store store, const TypedValueRegion* R);
 
-  SVal RetrieveArray(Store store, const TypedRegion* R);
+  SVal RetrieveArray(Store store, const TypedValueRegion* R);
 
   /// Used to lazily generate derived symbols for bindings that are defined
   ///  implicitly by default bindings in a super region.
   Optional<SVal> RetrieveDerivedDefaultValue(RegionBindings B,
                                              const MemRegion *superR,
-                                             const TypedRegion *R, QualType Ty);
+                                             const TypedValueRegion *R, 
+                                             QualType Ty);
 
   /// Get the state and region whose binding this region R corresponds to.
   std::pair<Store, const MemRegion*>
@@ -683,7 +684,7 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   if (!baseR->isBoundable())
     return;
 
-  const TypedRegion *TR = cast<TypedRegion>(baseR);
+  const TypedValueRegion *TR = cast<TypedValueRegion>(baseR);
   QualType T = TR->getValueType();
 
     // Invalidate the binding.
@@ -805,7 +806,7 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
     return UnknownVal();
 
   const MemRegion* R = cast<loc::MemRegionVal>(&Array)->getRegion();
-  const TypedRegion* ArrayR = dyn_cast<TypedRegion>(R);
+  const TypedValueRegion* ArrayR = dyn_cast<TypedValueRegion>(R);
 
   if (!ArrayR)
     return UnknownVal();
@@ -854,7 +855,7 @@ Optional<SVal> RegionStoreManager::getDirectBinding(RegionBindings B,
 Optional<SVal> RegionStoreManager::getDefaultBinding(RegionBindings B,
                                                      const MemRegion *R) {
   if (R->isBoundable())
-    if (const TypedRegion *TR = dyn_cast<TypedRegion>(R))
+    if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(R))
       if (TR->getValueType()->isUnionType())
         return UnknownVal();
 
@@ -898,7 +899,7 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
 
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument
   //  instead of 'Loc', and have the other Loc cases handled at a higher level.
-  const TypedRegion *R = cast<TypedRegion>(MR);
+  const TypedValueRegion *R = cast<TypedValueRegion>(MR);
   QualType RTy = R->getValueType();
 
   // FIXME: We should eventually handle funny addressing.  e.g.:
@@ -1074,7 +1075,8 @@ SVal RegionStoreManager::RetrieveElement(Store store,
   if (!O.getRegion())
     return UnknownVal();
   
-  if (const TypedRegion *baseR = dyn_cast_or_null<TypedRegion>(O.getRegion())) {
+  if (const TypedValueRegion *baseR = 
+        dyn_cast_or_null<TypedValueRegion>(O.getRegion())) {
     QualType baseT = baseR->getValueType();
     if (baseT->isScalarType()) {
       QualType elemT = R->getElementType();
@@ -1112,7 +1114,7 @@ SVal RegionStoreManager::RetrieveField(Store store,
 Optional<SVal>
 RegionStoreManager::RetrieveDerivedDefaultValue(RegionBindings B,
                                                 const MemRegion *superR,
-                                                const TypedRegion *R,
+                                                const TypedValueRegion *R,
                                                 QualType Ty) {
 
   if (const Optional<SVal> &D = getDefaultBinding(B, superR)) {
@@ -1146,7 +1148,7 @@ SVal RegionStoreManager::RetrieveLazyBinding(const MemRegion *lazyBindingRegion,
 }
                                         
 SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
-                                                      const TypedRegion *R,
+                                                      const TypedValueRegion *R,
                                                       QualType Ty,
                                                       const MemRegion *superR) {
 
@@ -1181,7 +1183,8 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
     if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
       // Currently we don't reason specially about Clang-style vectors.  Check
       // if superR is a vector and if so return Unknown.
-      if (const TypedRegion *typedSuperR = dyn_cast<TypedRegion>(superR)) {
+      if (const TypedValueRegion *typedSuperR = 
+            dyn_cast<TypedValueRegion>(superR)) {
         if (typedSuperR->getValueType()->isVectorType())
           return UnknownVal();
       }
@@ -1270,18 +1273,20 @@ SVal RegionStoreManager::RetrieveVar(Store store, const VarRegion *R) {
   return UndefinedVal();
 }
 
-SVal RegionStoreManager::RetrieveLazySymbol(const TypedRegion *R) {
+SVal RegionStoreManager::RetrieveLazySymbol(const TypedValueRegion *R) {
   // All other values are symbolic.
   return svalBuilder.getRegionValueSymbolVal(R);
 }
 
-SVal RegionStoreManager::RetrieveStruct(Store store, const TypedRegion* R) {
+SVal RegionStoreManager::RetrieveStruct(Store store, 
+                                        const TypedValueRegion* R) {
   QualType T = R->getValueType();
   assert(T->isStructureOrClassType());
   return svalBuilder.makeLazyCompoundVal(StoreRef(store, *this), R);
 }
 
-SVal RegionStoreManager::RetrieveArray(Store store, const TypedRegion * R) {
+SVal RegionStoreManager::RetrieveArray(Store store, 
+                                       const TypedValueRegion * R) {
   assert(Ctx.getAsConstantArrayType(R->getValueType()));
   return svalBuilder.makeLazyCompoundVal(StoreRef(store, *this), R);
 }
@@ -1325,14 +1330,14 @@ StoreRef RegionStoreManager::Bind(Store store, Loc L, SVal V) {
   const MemRegion *R = cast<loc::MemRegionVal>(L).getRegion();
 
   // Check if the region is a struct region.
-  if (const TypedRegion* TR = dyn_cast<TypedRegion>(R))
+  if (const TypedValueRegion* TR = dyn_cast<TypedValueRegion>(R))
     if (TR->getValueType()->isStructureOrClassType())
       return BindStruct(store, TR, V);
 
   if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
     if (ER->getIndex().isZeroConstant()) {
-      if (const TypedRegion *superR =
-            dyn_cast<TypedRegion>(ER->getSuperRegion())) {
+      if (const TypedValueRegion *superR =
+            dyn_cast<TypedValueRegion>(ER->getSuperRegion())) {
         QualType superTy = superR->getValueType();
         // For now, just invalidate the fields of the struct/union/class.
         // This is for test rdar_test_7185607 in misc-ps-region-store.m.
@@ -1412,7 +1417,7 @@ StoreRef RegionStoreManager::setImplicitDefaultValue(Store store,
                              V).getRootWithoutRetain(), *this);
 }
 
-StoreRef RegionStoreManager::BindArray(Store store, const TypedRegion* R,
+StoreRef RegionStoreManager::BindArray(Store store, const TypedValueRegion* R,
                                        SVal Init) {
 
   const ArrayType *AT =cast<ArrayType>(Ctx.getCanonicalType(R->getValueType()));
@@ -1471,7 +1476,7 @@ StoreRef RegionStoreManager::BindArray(Store store, const TypedRegion* R,
   return newStore;
 }
 
-StoreRef RegionStoreManager::BindStruct(Store store, const TypedRegion* R,
+StoreRef RegionStoreManager::BindStruct(Store store, const TypedValueRegion* R,
                                         SVal V) {
 
   if (!Features.supportsFields())
