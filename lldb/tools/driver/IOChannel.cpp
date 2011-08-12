@@ -503,6 +503,15 @@ IOChannel::OutWrite (const char *buffer, size_t len, bool asynchronous)
     if (len == 0)
         return;
 
+    // We're in the process of exiting -- IOChannel::Run() has already completed
+    // and set m_driver to NULL - it is time for us to leave now.  We might not
+    // print the final ^D to stdout in this case.  We need to do some re-work on
+    // how the I/O streams are managed at some point.
+    if (m_driver == NULL)
+    {
+        return;
+    }
+
     // Use the mutex to make sure OutWrite and ErrWrite do not interfere with each other's output.
     IOLocker locker (m_output_mutex);
     if (m_driver->EditlineReaderIsTop() && asynchronous)
