@@ -576,14 +576,14 @@
 /* LLVM name for the native AsmPrinter init function, if available */
 #undef LLVM_NATIVE_ASMPRINTER
 
-/* LLVM name for the native TargetMC init function, if available */
-#undef LLVM_NATIVE_TARGETMC
-
 /* LLVM name for the native Target init function, if available */
 #undef LLVM_NATIVE_TARGET
 
 /* LLVM name for the native TargetInfo init function, if available */
 #undef LLVM_NATIVE_TARGETINFO
+
+/* LLVM name for the native target MC init function, if available */
+#undef LLVM_NATIVE_TARGETMC
 
 /* Define if this is Unixish platform */
 #undef LLVM_ON_UNIX

@@ -1472,7 +1472,7 @@ Optional Packages:
   --with-binutils-include Specify path to binutils/include/ containing
                           plugin-api.h file for gold plugin.
   --with-bug-report-url   Specify the URL where bug reports should be
-                          submitted (default=http://llvm.org)
+                          submitted (default=http://llvm.org/bugs/)
   --with-tclinclude       directory where tcl headers are
   --with-llvmcc=<name>    Choose the LLVM capable compiler to use (llvm-gcc,
                           clang, or none; default=check)
@@ -5527,7 +5527,7 @@ fi
 if test "${with_bug_report_url+set}" = set; then
   withval=$with_bug_report_url;
 else
-  withval="http://llvm.org"
+  withval="http://llvm.org/bugs/"
 fi
 
 
@@ -11612,7 +11612,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11621 "configure"
+#line 11615 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
