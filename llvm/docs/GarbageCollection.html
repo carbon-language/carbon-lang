@@ -290,10 +290,8 @@ doing so is very simple. (This code is heavily commented to help you
 understand the data structure, but there are only 20 lines of meaningful
 code.)</p>
 
-</div>
-
-<div class="doc_code"><pre
->/// @brief The map for a single function's stack frame. One of these is
+<pre class="doc_code">
+/// @brief The map for a single function's stack frame. One of these is
 ///        compiled as constant data into the executable for each function.
 /// 
 /// Storage of metadata values is elided if the %metadata parameter to
@@ -338,7 +336,9 @@ void visitGCRoots(void (*Visitor)(void **Root, const void *Meta)) {
     for (unsigned e = R->Map->NumRoots; i != e; ++i)
       Visitor(&amp;R->Roots[i], NULL);
   }
-}</pre></div>
+}</pre>
+
+</div>
 
 <!-- ======================================================================= -->
 <h3>
@@ -395,11 +395,11 @@ program.</p>
   <a name="gcattr">Specifying GC code generation: <tt>gc "..."</tt></a>
 </h3>
 
+<div>
+
 <div class="doc_code"><tt>
   define <i>ty</i> @<i>name</i>(...) <span style="text-decoration: underline">gc "<i>name</i>"</span> { ...
 </tt></div>
-
-<div>
 
 <p>The <tt>gc</tt> function attribute is used to specify the desired GC style
 to the compiler. Its programmatic equivalent is the <tt>setGC</tt> method of
@@ -420,11 +420,11 @@ programs that use different garbage collection algorithms (or none at all).</p>
   <a name="gcroot">Identifying GC roots on the stack: <tt>llvm.gcroot</tt></a>
 </h3>
 
+<div>
+
 <div class="doc_code"><tt>
   void @llvm.gcroot(i8** %ptrloc, i8* %metadata)
 </tt></div>
-
-<div>
 
 <p>The <tt>llvm.gcroot</tt> intrinsic is used to inform LLVM that a stack
 variable references an object on the heap and is to be tracked for garbage
@@ -453,7 +453,7 @@ the stack frame.</p>
 
 <p>Consider the following fragment of Java code:</p>
 
-<pre>
+<pre class="doc_code">
        {
          Object X;   // A null-initialized reference to an object
          ...
@@ -463,7 +463,7 @@ the stack frame.</p>
 <p>This block (which may be located in the middle of a function or in a loop
 nest), could be compiled to this LLVM code:</p>
 
-<pre>
+<pre class="doc_code">
 Entry:
    ;; In the entry block for the function, allocate the
    ;; stack space for X, which is an LLVM pointer.
@@ -537,11 +537,11 @@ are used.</p>
   <a name="gcwrite">Write barrier: <tt>llvm.gcwrite</tt></a>
 </h4>
 
+<div>
+
 <div class="doc_code"><tt>
 void @llvm.gcwrite(i8* %value, i8* %object, i8** %derived)
 </tt></div>
-
-<div>
 
 <p>For write barriers, LLVM provides the <tt>llvm.gcwrite</tt> intrinsic
 function. It has exactly the same semantics as a non-volatile <tt>store</tt> to
@@ -559,11 +559,11 @@ implement reference counting.</p>
   <a name="gcread">Read barrier: <tt>llvm.gcread</tt></a>
 </h4>
 
+<div>
+
 <div class="doc_code"><tt>
 i8* @llvm.gcread(i8* %object, i8** %derived)<br>
 </tt></div>
-
-<div>
 
 <p>For read barriers, LLVM provides the <tt>llvm.gcread</tt> intrinsic function.
 It has exactly the same semantics as a non-volatile <tt>load</tt> from the
