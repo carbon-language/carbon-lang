@@ -1291,8 +1291,7 @@ void DAGTypeLegalizer::FloatExpandSetCCOperands(SDValue &NewLHS,
   GetExpandedFloat(NewLHS, LHSLo, LHSHi);
   GetExpandedFloat(NewRHS, RHSLo, RHSHi);
 
-  EVT VT = NewLHS.getValueType();
-  assert(VT == MVT::ppcf128 && "Unsupported setcc type!");
+  assert(NewLHS.getValueType() == MVT::ppcf128 && "Unsupported setcc type!");
 
   // FIXME:  This generated code sucks.  We want to generate
   //         FCMPU crN, hi1, hi2
@@ -1445,6 +1444,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_STORE(SDNode *N, unsigned OpNo) {
                                      ST->getValue().getValueType());
   assert(NVT.isByteSized() && "Expanded type not byte sized!");
   assert(ST->getMemoryVT().bitsLE(NVT) && "Float type not round?");
+  (void)NVT;
 
   SDValue Lo, Hi;
   GetExpandedOp(ST->getValue(), Lo, Hi);

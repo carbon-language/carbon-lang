@@ -463,6 +463,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     GroupName = "Instruction Selection and Scheduling";
   std::string BlockName;
   int BlockNumber = -1;
+  (void)BlockNumber;
 #ifdef NDEBUG
   if (ViewDAGCombine1 || ViewLegalizeTypesDAGs || ViewLegalizeDAGs ||
       ViewDAGCombine2 || ViewDAGCombineLT || ViewISelDAGs || ViewSchedDAGs ||

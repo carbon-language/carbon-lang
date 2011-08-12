@@ -832,6 +832,7 @@ APFloat::incrementSignificand()
 
   /* Our callers should never cause us to overflow.  */
   assert(carry == 0);
+  (void)carry;
 }
 
 /* Add the significand of the RHS.  Returns the carry flag.  */
@@ -926,6 +927,7 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
     APFloat extendedAddend(*addend);
     status = extendedAddend.convert(extendedSemantics, rmTowardZero, &ignored);
     assert(status == opOK);
+    (void)status;
     lost_fraction = addOrSubtractSignificand(extendedAddend, false);
 
     /* Restore our state.  */
@@ -1389,6 +1391,7 @@ APFloat::addOrSubtractSignificand(const APFloat &rhs, bool subtract)
     /* The code above is intended to ensure that no borrow is
        necessary.  */
     assert(!carry);
+    (void)carry;
   } else {
     if (bits > 0) {
       APFloat temp_rhs(rhs);
@@ -1402,6 +1405,7 @@ APFloat::addOrSubtractSignificand(const APFloat &rhs, bool subtract)
 
     /* We have a guard bit; generating a carry cannot happen.  */
     assert(!carry);
+    (void)carry;
   }
 
   return lost_fraction;

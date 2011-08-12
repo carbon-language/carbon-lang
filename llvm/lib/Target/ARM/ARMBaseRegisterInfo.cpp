@@ -1130,6 +1130,7 @@ ARMBaseRegisterInfo::resolveFrameIndex(MachineBasicBlock::iterator I,
     Done = rewriteT2FrameIndex(MI, i, BaseReg, Off, TII);
   }
   assert (Done && "Unable to resolve frame index!");
+  (void)Done;
 }
 
 bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,

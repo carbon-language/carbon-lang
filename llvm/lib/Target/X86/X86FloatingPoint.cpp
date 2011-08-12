@@ -480,6 +480,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
       }
       dumpStack();
     );
+    (void)PrevMI;
 
     Changed = true;
   }

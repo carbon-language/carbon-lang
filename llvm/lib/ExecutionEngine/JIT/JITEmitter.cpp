@@ -668,6 +668,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
     DEBUG(dbgs() << "JIT: Lazily resolving function '" << F->getName()
           << "' In stub ptr = " << Stub << " actual ptr = "
           << ActualPtr << "\n");
+    (void)ActualPtr;
 
     Result = JR->TheJIT->getPointerToFunction(F);
   }

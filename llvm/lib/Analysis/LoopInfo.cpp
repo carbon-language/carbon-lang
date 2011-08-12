@@ -612,8 +612,8 @@ void LoopInfo::updateUnloop(Loop *Unloop) {
     }
 
     // Remove the loop from the top-level LoopInfo object.
-    for (LoopInfo::iterator I = LI.begin(), E = LI.end();; ++I) {
-      assert(I != E && "Couldn't find loop");
+    for (LoopInfo::iterator I = LI.begin();; ++I) {
+      assert(I != LI.end() && "Couldn't find loop");
       if (*I == Unloop) {
         LI.removeLoop(I);
         break;
@@ -640,8 +640,8 @@ void LoopInfo::updateUnloop(Loop *Unloop) {
 
   // Remove unloop from its parent loop.
   Loop *ParentLoop = Unloop->getParentLoop();
-  for (Loop::iterator I = ParentLoop->begin(), E = ParentLoop->end();; ++I) {
-    assert(I != E && "Couldn't find loop");
+  for (Loop::iterator I = ParentLoop->begin();; ++I) {
+    assert(I != ParentLoop->end() && "Couldn't find loop");
     if (*I == Unloop) {
       ParentLoop->removeChildLoop(I);
       break;

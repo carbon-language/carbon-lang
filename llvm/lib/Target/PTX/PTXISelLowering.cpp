@@ -361,9 +361,9 @@ PTXTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   MachineFunction& MF = DAG.getMachineFunction();
   PTXMachineFunctionInfo *MFI = MF.getInfo<PTXMachineFunctionInfo>();
-  const PTXSubtarget& ST = getTargetMachine().getSubtarget<PTXSubtarget>();
 
-  assert(ST.callsAreHandled() && "Calls are not handled for the target device");
+  assert(getTargetMachine().getSubtarget<PTXSubtarget>().callsAreHandled() &&
+         "Calls are not handled for the target device");
 
   // Is there a more "LLVM"-way to create a variable-length array of values?
   SDValue* ops = new SDValue[OutVals.size() + 2];

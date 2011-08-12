@@ -231,6 +231,7 @@ public:
     }
 
     assert(Removed && "Register is not used by this instruction!");
+    (void)Removed;
     return true;
   }
 
@@ -265,6 +266,7 @@ public:
       }
     }
     assert(Removed && "Register is not defined by this instruction!");
+    (void)Removed;
     return true;
   }
   

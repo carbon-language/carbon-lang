@@ -206,6 +206,7 @@ void RegScavenger::forward() {
             break;
           }
         assert(SubUsed && "Using an undefined register!");
+        (void)SubUsed;
       }
       assert((!EarlyClobberRegs.test(Reg) || MI->isRegTiedToDefOperand(i)) &&
              "Using an early clobbered register!");

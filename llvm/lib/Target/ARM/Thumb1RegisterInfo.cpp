@@ -544,9 +544,9 @@ Thumb1RegisterInfo::resolveFrameIndex(MachineBasicBlock::iterator I,
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
-  bool Done = false;
-  Done = rewriteFrameIndex(MI, i, BaseReg, Off, TII);
+  bool Done = rewriteFrameIndex(MI, i, BaseReg, Off, TII);
   assert (Done && "Unable to resolve frame index!");
+  (void)Done;
 }
 
 /// saveScavengerRegister - Spill the register so it can be used by the

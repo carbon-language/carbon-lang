@@ -140,6 +140,7 @@ void SUnit::removePred(const SDep &D) {
           break;
         }
       assert(FoundSucc && "Mismatching preds / succs lists!");
+      (void)FoundSucc;
       Preds.erase(I);
       // Update the bookkeeping.
       if (P.getKind() == SDep::Data) {

@@ -743,6 +743,7 @@ void LoopSimplify::verifyAnalysis() const {
       }
     assert(HasIndBrPred &&
            "LoopSimplify has no excuse for missing loop header info!");
+    (void)HasIndBrPred;
   }
 
   // Indirectbr can interfere with exit block canonicalization.
@@ -757,5 +758,6 @@ void LoopSimplify::verifyAnalysis() const {
       }
     assert(HasIndBrExiting &&
            "LoopSimplify has no excuse for missing exit block info!");
+    (void)HasIndBrExiting;
   }
 }

@@ -1969,6 +1969,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_VSETCC(SDNode *N) {
   assert(InOp1.getValueType() == WidenInVT &&
          InOp2.getValueType() == WidenInVT &&
          "Input not widened to expected type!");
+  (void)WidenInVT;
   return DAG.getNode(ISD::VSETCC, N->getDebugLoc(),
                      WidenVT, InOp1, InOp2, N->getOperand(2));
 }

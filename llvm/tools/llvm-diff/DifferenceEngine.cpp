@@ -195,12 +195,12 @@ class FunctionDifferenceEngine {
     DifferenceEngine::Context C(Engine, L, R);
 
     BasicBlock::iterator LI = L->begin(), LE = L->end();
-    BasicBlock::iterator RI = R->begin(), RE = R->end();
+    BasicBlock::iterator RI = R->begin();
 
     llvm::SmallVector<std::pair<Instruction*,Instruction*>, 20> TentativePairs;
 
     do {
-      assert(LI != LE && RI != RE);
+      assert(LI != LE && RI != R->end());
       Instruction *LeftI = &*LI, *RightI = &*RI;
 
       // If the instructions differ, start the more sophisticated diff

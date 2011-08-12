@@ -2728,6 +2728,7 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG)
   // the type to extend from needs to be i64 or i32.
   assert((OpVT == MVT::i128 && (Op0VT == MVT::i64 || Op0VT == MVT::i32)) &&
           "LowerSIGN_EXTEND: input and/or output operand have wrong size");
+  (void)OpVT;
 
   // Create shuffle mask
   unsigned mask1 = 0x10101010; // byte 0 - 3 and 4 - 7

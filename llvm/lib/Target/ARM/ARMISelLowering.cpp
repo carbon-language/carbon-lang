@@ -2983,8 +2983,8 @@ static SDValue LowerVectorINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
 
-  EVT OperandVT = Op.getOperand(0).getValueType();
-  assert(OperandVT == MVT::v4i16 && "Invalid type for custom lowering!");
+  assert(Op.getOperand(0).getValueType() == MVT::v4i16 &&
+         "Invalid type for custom lowering!");
   if (VT != MVT::v4f32)
     return DAG.UnrollVectorOp(Op.getNode());
 

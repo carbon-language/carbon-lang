@@ -350,6 +350,7 @@ bool CGPassManager::RefreshCallGraph(CallGraphSCC &CurSCC,
            dbgs() << "CGSCCPASSMGR: SCC Refresh didn't change call graph.\n";
          }
         );
+  (void)MadeChange;
 
   return DevirtualizedCall;
 }
