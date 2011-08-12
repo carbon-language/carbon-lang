@@ -660,6 +660,14 @@ public:
                 result.SetStatus (eReturnStatusSuccessFinishResult);
             }
         }
+        
+        if (m_interpreter.TruncationWarningNecessary())
+        {
+            result.GetOutputStream().Printf(m_interpreter.TruncationWarningText(),
+                                            m_cmd_name.c_str());
+            m_interpreter.TruncationWarningGiven();
+        }
+        
         return result.Succeeded();
     }
 protected:

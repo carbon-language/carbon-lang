@@ -31,6 +31,7 @@
 
 #include "lldb/Host/Endian.h"
 
+#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
 
 #include "lldb/Symbol/ClangASTType.h"
@@ -2915,7 +2916,10 @@ ValueObject::DumpValueObject
                         if (!flat_output)
                         {
                             if (print_dotdotdot)
+                            {
+                                valobj->GetUpdatePoint().GetTargetSP()->GetDebugger().GetCommandInterpreter().ChildrenTruncated();
                                 s.Indent("...\n");
+                            }
                             s.IndentLess();
                             s.Indent("}\n");
                         }

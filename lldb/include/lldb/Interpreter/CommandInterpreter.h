@@ -39,6 +39,13 @@ public:
         eBroadcastBitAsynchronousOutputData = (1 << 3),
         eBroadcastBitAsynchronousErrorData  = (1 << 4)
     };
+    
+    enum ChildrenTruncatedWarningStatus // tristate boolean to manage children truncation warning
+    {
+        eNoTruncation = 0, // never truncated
+        eUnwarnedTruncation = 1, // truncated but did not notify
+        eWarnedTruncation = 2 // truncated and notified
+    };
 
     void
     SourceInitFile (bool in_cwd, 
@@ -385,6 +392,31 @@ public:
     
     void
     SetBatchCommandMode (bool value) { m_batch_command_mode = value; }
+    
+    void
+    ChildrenTruncated()
+    {
+        if (m_truncation_warning == eNoTruncation)
+            m_truncation_warning = eUnwarnedTruncation;
+    }
+    
+    bool
+    TruncationWarningNecessary()
+    {
+        return (m_truncation_warning == eUnwarnedTruncation);
+    }
+    
+    void
+    TruncationWarningGiven()
+    {
+        m_truncation_warning = eWarnedTruncation;
+    }
+    
+    const char *
+    TruncationWarningText()
+    {
+        return "*** Some of your variables have more members than the debugger will show by default. To show all of them, you can either use the --show-all-children option to %s or raise the limit by changing the target.max-children-count setting.\n";
+    }
 
 protected:
     friend class Debugger;
@@ -411,6 +443,7 @@ private:
     char m_comment_char;
     char m_repeat_char;
     bool m_batch_command_mode;
+    ChildrenTruncatedWarningStatus m_truncation_warning;    // Whether we truncated children and whether the user has been told
 };
 
 
