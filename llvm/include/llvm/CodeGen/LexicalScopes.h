@@ -209,7 +209,7 @@ public:
   }
 
   /// dominates - Return true if current scope dominsates given lexical scope.
-  bool dominates(const LexicalScope *S) {
+  bool dominates(const LexicalScope *S) const {
     if (S == this)
       return true;
     if (DFSIn < S->getDFSIn() && DFSOut > S->getDFSOut())
