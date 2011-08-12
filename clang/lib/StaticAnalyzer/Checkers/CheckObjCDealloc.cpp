@@ -27,9 +27,9 @@
 using namespace clang;
 using namespace ento;
 
-static bool scan_dealloc(Stmt* S, Selector Dealloc) {
+static bool scan_dealloc(Stmt *S, Selector Dealloc) {
 
-  if (ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(S))
+  if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S))
     if (ME->getSelector() == Dealloc) {
       switch (ME->getReceiverKind()) {
       case ObjCMessageExpr::Instance: return false;
@@ -48,26 +48,26 @@ static bool scan_dealloc(Stmt* S, Selector Dealloc) {
   return false;
 }
 
-static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
-                              const ObjCPropertyDecl* PD,
+static bool scan_ivar_release(Stmt *S, ObjCIvarDecl *ID,
+                              const ObjCPropertyDecl *PD,
                               Selector Release,
                               IdentifierInfo* SelfII,
-                              ASTContext& Ctx) {
+                              ASTContext &Ctx) {
 
   // [mMyIvar release]
-  if (ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(S))
+  if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S))
     if (ME->getSelector() == Release)
       if (ME->getInstanceReceiver())
-        if (Expr* Receiver = ME->getInstanceReceiver()->IgnoreParenCasts())
-          if (ObjCIvarRefExpr* E = dyn_cast<ObjCIvarRefExpr>(Receiver))
+        if (Expr *Receiver = ME->getInstanceReceiver()->IgnoreParenCasts())
+          if (ObjCIvarRefExpr *E = dyn_cast<ObjCIvarRefExpr>(Receiver))
             if (E->getDecl() == ID)
               return true;
 
   // [self setMyIvar:nil];
-  if (ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(S))
+  if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S))
     if (ME->getInstanceReceiver())
-      if (Expr* Receiver = ME->getInstanceReceiver()->IgnoreParenCasts())
-        if (DeclRefExpr* E = dyn_cast<DeclRefExpr>(Receiver))
+      if (Expr *Receiver = ME->getInstanceReceiver()->IgnoreParenCasts())
+        if (DeclRefExpr *E = dyn_cast<DeclRefExpr>(Receiver))
           if (E->getDecl()->getIdentifier() == SelfII)
             if (ME->getMethodDecl() == PD->getSetterMethodDecl() &&
                 ME->getNumArgs() == 1 &&
@@ -78,7 +78,7 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
   // self.myIvar = nil;
   if (BinaryOperator* BO = dyn_cast<BinaryOperator>(S))
     if (BO->isAssignmentOp())
-      if (ObjCPropertyRefExpr* PRE =
+      if (ObjCPropertyRefExpr *PRE =
            dyn_cast<ObjCPropertyRefExpr>(BO->getLHS()->IgnoreParenCasts()))
         if (PRE->isExplicitProperty() && PRE->getExplicitProperty() == PD)
             if (BO->getRHS()->isNullPointerConstant(Ctx, 
@@ -96,13 +96,13 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
   return false;
 }
 
-static void checkObjCDealloc(const ObjCImplementationDecl* D,
+static void checkObjCDealloc(const ObjCImplementationDecl *D,
                              const LangOptions& LOpts, BugReporter& BR) {
 
   assert (LOpts.getGCMode() != LangOptions::GCOnly);
 
-  ASTContext& Ctx = BR.getContext();
-  const ObjCInterfaceDecl* ID = D->getClassInterface();
+  ASTContext &Ctx = BR.getContext();
+  const ObjCInterfaceDecl *ID = D->getClassInterface();
 
   // Does the class contain any ivars that are pointers (or id<...>)?
   // If not, skip the check entirely.
@@ -114,7 +114,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl* D,
   for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(), E=ID->ivar_end();
        I!=E; ++I) {
 
-    ObjCIvarDecl* ID = *I;
+    ObjCIvarDecl *ID = *I;
     QualType T = ID->getType();
 
     if (!T->isObjCObjectPointerType() ||
@@ -154,7 +154,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl* D,
   // Get the "dealloc" selector.
   IdentifierInfo* II = &Ctx.Idents.get("dealloc");
   Selector S = Ctx.Selectors.getSelector(0, &II);
-  ObjCMethodDecl* MD = 0;
+  ObjCMethodDecl *MD = 0;
 
   // Scan the instance methods for "dealloc".
   for (ObjCImplementationDecl::instmeth_iterator I = D->instmeth_begin(),
@@ -213,7 +213,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl* D,
     if ((*I)->getPropertyImplementation() != ObjCPropertyImplDecl::Synthesize)
       continue;
 
-    ObjCIvarDecl* ID = (*I)->getPropertyIvarDecl();
+    ObjCIvarDecl *ID = (*I)->getPropertyIvarDecl();
     if (!ID)
       continue;
 
@@ -221,7 +221,7 @@ static void checkObjCDealloc(const ObjCImplementationDecl* D,
     if (!T->isObjCObjectPointerType()) // Skip non-pointer ivars
       continue;
 
-    const ObjCPropertyDecl* PD = (*I)->getPropertyDecl();
+    const ObjCPropertyDecl *PD = (*I)->getPropertyDecl();
     if (!PD)
       continue;
 

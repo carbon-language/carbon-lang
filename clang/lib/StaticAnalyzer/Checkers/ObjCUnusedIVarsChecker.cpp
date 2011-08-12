@@ -29,7 +29,7 @@ using namespace ento;
 enum IVarState { Unused, Used };
 typedef llvm::DenseMap<const ObjCIvarDecl*,IVarState> IvarUsageMap;
 
-static void Scan(IvarUsageMap& M, const Stmt* S) {
+static void Scan(IvarUsageMap& M, const Stmt *S) {
   if (!S)
     return;
 
@@ -51,11 +51,11 @@ static void Scan(IvarUsageMap& M, const Stmt* S) {
     Scan(M, *I);
 }
 
-static void Scan(IvarUsageMap& M, const ObjCPropertyImplDecl* D) {
+static void Scan(IvarUsageMap& M, const ObjCPropertyImplDecl *D) {
   if (!D)
     return;
 
-  const ObjCIvarDecl* ID = D->getPropertyIvarDecl();
+  const ObjCIvarDecl *ID = D->getPropertyIvarDecl();
 
   if (!ID)
     return;
@@ -65,7 +65,7 @@ static void Scan(IvarUsageMap& M, const ObjCPropertyImplDecl* D) {
     I->second = Used;
 }
 
-static void Scan(IvarUsageMap& M, const ObjCContainerDecl* D) {
+static void Scan(IvarUsageMap& M, const ObjCContainerDecl *D) {
   // Scan the methods for accesses.
   for (ObjCContainerDecl::instmeth_iterator I = D->instmeth_begin(),
        E = D->instmeth_end(); I!=E; ++I)
@@ -102,14 +102,14 @@ static void Scan(IvarUsageMap &M, const DeclContext *C, const FileID FID,
 static void checkObjCUnusedIvar(const ObjCImplementationDecl *D,
                                 BugReporter &BR) {
 
-  const ObjCInterfaceDecl* ID = D->getClassInterface();
+  const ObjCInterfaceDecl *ID = D->getClassInterface();
   IvarUsageMap M;
 
   // Iterate over the ivars.
   for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(),
         E=ID->ivar_end(); I!=E; ++I) {
 
-    const ObjCIvarDecl* ID = *I;
+    const ObjCIvarDecl *ID = *I;
 
     // Ignore ivars that...
     // (a) aren't private

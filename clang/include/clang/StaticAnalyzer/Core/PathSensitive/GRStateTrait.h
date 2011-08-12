@@ -40,10 +40,10 @@ namespace ento {
     typedef Data                              value_type;
     typedef const value_type*                 lookup_type;
 
-    static inline data_type MakeData(void* const* p) {
+    static inline data_type MakeData(void *const* p) {
       return p ? data_type((typename data_type::TreeTy*) *p) : data_type(0);
     }
-    static inline void* MakeVoidPtr(data_type B) {
+    static inline void *MakeVoidPtr(data_type B) {
       return B.getRoot();
     }
     static lookup_type Lookup(data_type B, key_type K) {
@@ -57,15 +57,15 @@ namespace ento {
       return F.remove(B, K);
     }
 
-    static inline context_type MakeContext(void* p) {
+    static inline context_type MakeContext(void *p) {
       return *((typename data_type::Factory*) p);
     }
 
-    static void* CreateContext(llvm::BumpPtrAllocator& Alloc) {
+    static void *CreateContext(llvm::BumpPtrAllocator& Alloc) {
       return new typename data_type::Factory(Alloc);
     }
 
-    static void DeleteContext(void* Ctx) {
+    static void DeleteContext(void *Ctx) {
       delete (typename data_type::Factory*) Ctx;
     }
   };
@@ -79,11 +79,11 @@ namespace ento {
     typedef typename data_type::Factory&      context_type;
     typedef Key                               key_type;
 
-    static inline data_type MakeData(void* const* p) {
+    static inline data_type MakeData(void *const* p) {
       return p ? data_type((typename data_type::TreeTy*) *p) : data_type(0);
     }
 
-    static inline void* MakeVoidPtr(data_type B) {
+    static inline void *MakeVoidPtr(data_type B) {
       return B.getRoot();
     }
 
@@ -99,15 +99,15 @@ namespace ento {
       return B.contains(K);
     }
 
-    static inline context_type MakeContext(void* p) {
+    static inline context_type MakeContext(void *p) {
       return *((typename data_type::Factory*) p);
     }
 
-    static void* CreateContext(llvm::BumpPtrAllocator& Alloc) {
+    static void *CreateContext(llvm::BumpPtrAllocator& Alloc) {
       return new typename data_type::Factory(Alloc);
     }
 
-    static void DeleteContext(void* Ctx) {
+    static void DeleteContext(void *Ctx) {
       delete (typename data_type::Factory*) Ctx;
     }
   };
@@ -128,24 +128,24 @@ namespace ento {
       return L.contains(K);
     }
 
-    static inline data_type MakeData(void* const* p) {
+    static inline data_type MakeData(void *const* p) {
       return p ? data_type((const llvm::ImmutableListImpl<T>*) *p)
                : data_type(0);
     }
 
-    static inline void* MakeVoidPtr(data_type D) {
+    static inline void *MakeVoidPtr(data_type D) {
       return  (void*) D.getInternalPointer();
     }
 
-    static inline context_type MakeContext(void* p) {
+    static inline context_type MakeContext(void *p) {
       return *((typename data_type::Factory*) p);
     }
 
-    static void* CreateContext(llvm::BumpPtrAllocator& Alloc) {
+    static void *CreateContext(llvm::BumpPtrAllocator& Alloc) {
       return new typename data_type::Factory(Alloc);
     }
 
-    static void DeleteContext(void* Ctx) {
+    static void DeleteContext(void *Ctx) {
       delete (typename data_type::Factory*) Ctx;
     }
   };
@@ -154,7 +154,7 @@ namespace ento {
   template <> struct GRStatePartialTrait<bool> {
     typedef bool data_type;
 
-    static inline data_type MakeData(void* const* p) {
+    static inline data_type MakeData(void *const* p) {
       return p ? (data_type) (uintptr_t) *p
                : data_type();
     }
@@ -167,7 +167,7 @@ namespace ento {
   template <> struct GRStatePartialTrait<unsigned> {
     typedef unsigned data_type;
 
-    static inline data_type MakeData(void* const* p) {
+    static inline data_type MakeData(void *const* p) {
       return p ? (data_type) (uintptr_t) *p
                : data_type();
     }

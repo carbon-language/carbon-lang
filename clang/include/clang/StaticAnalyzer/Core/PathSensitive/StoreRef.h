@@ -23,7 +23,7 @@ namespace ento {
 ///  locations to values.  At a high-level, it represents the symbolic
 ///  memory model.  Different subclasses of StoreManager may choose
 ///  different types to represent the locations and values.
-typedef const void* Store;
+typedef const void *Store;
   
 class StoreManager;
   

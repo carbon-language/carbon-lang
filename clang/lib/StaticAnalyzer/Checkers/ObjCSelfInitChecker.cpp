@@ -110,7 +110,7 @@ namespace clang {
 namespace ento {
   template<>
   struct GRStateTrait<SelfFlag> : public GRStatePartialTrait<SelfFlag> {
-    static void* GDMIndex() { static int index = 0; return &index; }
+    static void *GDMIndex() { static int index = 0; return &index; }
   };
   template <>
   struct GRStateTrait<CalledInit> : public GRStatePartialTrait<bool> {
@@ -315,9 +315,9 @@ static bool shouldRunOnFunctionOrMethod(const NamedDecl *ND) {
 
   // self = [super init] applies only to NSObject subclasses.
   // For instance, NSProxy doesn't implement -init.
-  ASTContext& Ctx = MD->getASTContext();
+  ASTContext &Ctx = MD->getASTContext();
   IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
-  ObjCInterfaceDecl* ID = MD->getClassInterface()->getSuperClass();
+  ObjCInterfaceDecl *ID = MD->getClassInterface()->getSuperClass();
   for ( ; ID ; ID = ID->getSuperClass()) {
     IdentifierInfo *II = ID->getIdentifier();
 

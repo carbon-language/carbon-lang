@@ -84,13 +84,13 @@ public:
 
   /// getEdgeData - Retrieves the dataflow values associated with a
   ///  CFG edge.
-  ValTy& getEdgeData(const BlockEdge& E) {
+  ValTy& getEdgeData(const BlockEdge &E) {
     typename EdgeDataMapTy::iterator I = EdgeDataMap.find(E);
     assert (I != EdgeDataMap.end() && "No data associated with Edge.");
     return I->second;
   }
 
-  const ValTy& getEdgeData(const BlockEdge& E) const {
+  const ValTy& getEdgeData(const BlockEdge &E) const {
     return reinterpret_cast<DataflowValues*>(this)->getEdgeData(E);
   }
 
@@ -98,13 +98,13 @@ public:
   ///  specified CFGBlock.  If the dataflow analysis is a forward analysis,
   ///  this data is associated with the END of the block.  If the analysis
   ///  is a backwards analysis, it is associated with the ENTRY of the block.
-  ValTy& getBlockData(const CFGBlock* B) {
+  ValTy& getBlockData(const CFGBlock *B) {
     typename BlockDataMapTy::iterator I = BlockDataMap.find(B);
     assert (I != BlockDataMap.end() && "No data associated with block.");
     return I->second;
   }
 
-  const ValTy& getBlockData(const CFGBlock* B) const {
+  const ValTy& getBlockData(const CFGBlock *B) const {
     return const_cast<DataflowValues*>(this)->getBlockData(B);
   }
 
@@ -114,14 +114,14 @@ public:
   ///  If the analysis is a backwards analysis, it is associated with
   ///  the point after a Stmt.  This data is only computed for block-level
   ///  expressions, and only when requested when the analysis is executed.
-  ValTy& getStmtData(const Stmt* S) {
+  ValTy& getStmtData(const Stmt *S) {
     assert (StmtDataMap && "Dataflow values were not computed for statements.");
     typename StmtDataMapTy::iterator I = StmtDataMap->find(S);
     assert (I != StmtDataMap->end() && "No data associated with statement.");
     return I->second;
   }
 
-  const ValTy& getStmtData(const Stmt* S) const {
+  const ValTy& getStmtData(const Stmt *S) const {
     return const_cast<DataflowValues*>(this)->getStmtData(S);
   }
 

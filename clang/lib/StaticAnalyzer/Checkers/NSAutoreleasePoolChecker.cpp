@@ -53,7 +53,7 @@ void NSAutoreleasePoolChecker::checkPreObjCMessage(ObjCMessage msg,
   
   if (!PT)
     return;  
-  const ObjCInterfaceDecl* OD = PT->getInterfaceDecl();
+  const ObjCInterfaceDecl *OD = PT->getInterfaceDecl();
   if (!OD)
     return;  
   if (!OD->getIdentifier()->getName().equals("NSAutoreleasePool"))

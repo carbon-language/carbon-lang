@@ -115,14 +115,14 @@ public:
 
   // Forwarding methods to SymbolManager.
 
-  const SymbolConjured* getConjuredSymbol(const Stmt* stmt, QualType type,
+  const SymbolConjured* getConjuredSymbol(const Stmt *stmt, QualType type,
                                           unsigned visitCount,
-                                          const void* symbolTag = 0) {
+                                          const void *symbolTag = 0) {
     return SymMgr.getConjuredSymbol(stmt, type, visitCount, symbolTag);
   }
 
-  const SymbolConjured* getConjuredSymbol(const Expr* expr, unsigned visitCount,
-                                          const void* symbolTag = 0) {
+  const SymbolConjured* getConjuredSymbol(const Expr *expr, unsigned visitCount,
+                                          const void *symbolTag = 0) {
     return SymMgr.getConjuredSymbol(expr, visitCount, symbolTag);
   }
 

@@ -35,12 +35,12 @@ namespace clang {
 namespace ento {
 template<>
 struct GRStateTrait<ConstNotEq> : public GRStatePartialTrait<ConstNotEqTy> {
-  static inline void* GDMIndex() { return &ConstNotEqIndex; }
+  static inline void *GDMIndex() { return &ConstNotEqIndex; }
 };
 
 template<>
 struct GRStateTrait<ConstEq> : public GRStatePartialTrait<ConstEqTy> {
-  static inline void* GDMIndex() { return &ConstEqIndex; }
+  static inline void *GDMIndex() { return &ConstEqIndex; }
 };
 }
 }
@@ -56,43 +56,43 @@ public:
     : SimpleConstraintManager(subengine), 
       ISetFactory(statemgr.getAllocator()) {}
 
-  const GRState *assumeSymNE(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymNE(const GRState *state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymEQ(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymEQ(const GRState *state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymLT(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymLT(const GRState *state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymGT(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymGT(const GRState *state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymGE(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymGE(const GRState *state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymLE(const GRState* state, SymbolRef sym,
+  const GRState *assumeSymLE(const GRState *state, SymbolRef sym,
                              const llvm::APSInt& V,
                              const llvm::APSInt& Adjustment);
 
-  const GRState* AddEQ(const GRState* state, SymbolRef sym, const llvm::APSInt& V);
+  const GRState *AddEQ(const GRState *state, SymbolRef sym, const llvm::APSInt& V);
 
-  const GRState* AddNE(const GRState* state, SymbolRef sym, const llvm::APSInt& V);
+  const GRState *AddNE(const GRState *state, SymbolRef sym, const llvm::APSInt& V);
 
-  const llvm::APSInt* getSymVal(const GRState* state, SymbolRef sym) const;
-  bool isNotEqual(const GRState* state, SymbolRef sym, const llvm::APSInt& V)
+  const llvm::APSInt* getSymVal(const GRState *state, SymbolRef sym) const;
+  bool isNotEqual(const GRState *state, SymbolRef sym, const llvm::APSInt& V)
       const;
-  bool isEqual(const GRState* state, SymbolRef sym, const llvm::APSInt& V)
+  bool isEqual(const GRState *state, SymbolRef sym, const llvm::APSInt& V)
       const;
 
-  const GRState* removeDeadBindings(const GRState* state, SymbolReaper& SymReaper);
+  const GRState *removeDeadBindings(const GRState *state, SymbolReaper& SymReaper);
 
-  void print(const GRState* state, raw_ostream& Out,
+  void print(const GRState *state, raw_ostream &Out,
              const char* nl, const char *sep);
 };
 
@@ -229,13 +229,13 @@ BasicConstraintManager::assumeSymLE(const GRState *state, SymbolRef sym,
   return state;
 }
 
-const GRState* BasicConstraintManager::AddEQ(const GRState* state, SymbolRef sym,
+const GRState *BasicConstraintManager::AddEQ(const GRState *state, SymbolRef sym,
                                              const llvm::APSInt& V) {
   // Create a new state with the old binding replaced.
   return state->set<ConstEq>(sym, &state->getBasicVals().getValue(V));
 }
 
-const GRState* BasicConstraintManager::AddNE(const GRState* state, SymbolRef sym,
+const GRState *BasicConstraintManager::AddNE(const GRState *state, SymbolRef sym,
                                              const llvm::APSInt& V) {
 
   // First, retrieve the NE-set associated with the given symbol.
@@ -249,13 +249,13 @@ const GRState* BasicConstraintManager::AddNE(const GRState* state, SymbolRef sym
   return state->set<ConstNotEq>(sym, S);
 }
 
-const llvm::APSInt* BasicConstraintManager::getSymVal(const GRState* state,
+const llvm::APSInt* BasicConstraintManager::getSymVal(const GRState *state,
                                                       SymbolRef sym) const {
   const ConstEqTy::data_type* T = state->get<ConstEq>(sym);
   return T ? *T : NULL;
 }
 
-bool BasicConstraintManager::isNotEqual(const GRState* state, SymbolRef sym,
+bool BasicConstraintManager::isNotEqual(const GRState *state, SymbolRef sym,
                                         const llvm::APSInt& V) const {
 
   // Retrieve the NE-set associated with the given symbol.
@@ -265,7 +265,7 @@ bool BasicConstraintManager::isNotEqual(const GRState* state, SymbolRef sym,
   return T ? T->contains(&state->getBasicVals().getValue(V)) : false;
 }
 
-bool BasicConstraintManager::isEqual(const GRState* state, SymbolRef sym,
+bool BasicConstraintManager::isEqual(const GRState *state, SymbolRef sym,
                                      const llvm::APSInt& V) const {
   // Retrieve the EQ-set associated with the given symbol.
   const ConstEqTy::data_type* T = state->get<ConstEq>(sym);
@@ -276,7 +276,7 @@ bool BasicConstraintManager::isEqual(const GRState* state, SymbolRef sym,
 /// Scan all symbols referenced by the constraints. If the symbol is not alive
 /// as marked in LSymbols, mark it as dead in DSymbols.
 const GRState*
-BasicConstraintManager::removeDeadBindings(const GRState* state,
+BasicConstraintManager::removeDeadBindings(const GRState *state,
                                            SymbolReaper& SymReaper) {
 
   ConstEqTy CE = state->get<ConstEq>();
@@ -301,7 +301,7 @@ BasicConstraintManager::removeDeadBindings(const GRState* state,
   return state->set<ConstNotEq>(CNE);
 }
 
-void BasicConstraintManager::print(const GRState* state, raw_ostream& Out,
+void BasicConstraintManager::print(const GRState *state, raw_ostream &Out,
                                    const char* nl, const char *sep) {
   // Print equality constraints.
 

@@ -94,7 +94,7 @@ BindingKey BindingKey::Make(const MemRegion *R, Kind k) {
 
 namespace llvm {
   static inline
-  raw_ostream& operator<<(raw_ostream& os, BindingKey K) {
+  raw_ostream &operator<<(raw_ostream &os, BindingKey K) {
     os << '(' << K.getRegion() << ',' << K.getOffset()
        << ',' << (K.isDirect() ? "direct" : "default")
        << ')';
@@ -278,7 +278,7 @@ public: // Part of public interface to class.
     return StoreRef(addBinding(B, R, BindingKey::Default, V).getRootWithoutRetain(), *this);
   }
 
-  StoreRef BindCompoundLiteral(Store store, const CompoundLiteralExpr* CL,
+  StoreRef BindCompoundLiteral(Store store, const CompoundLiteralExpr *CL,
                                const LocationContext *LC, SVal V);
 
   StoreRef BindDecl(Store store, const VarRegion *VR, SVal InitVal);
@@ -395,7 +395,7 @@ public: // Part of public interface to class.
     return RegionBindings(static_cast<const RegionBindings::TreeTy*>(store));
   }
 
-  void print(Store store, raw_ostream& Out, const char* nl,
+  void print(Store store, raw_ostream &Out, const char* nl,
              const char *sep);
 
   void iterBindings(Store store, BindingsHandler& f) {
@@ -1486,7 +1486,7 @@ StoreRef RegionStoreManager::BindStruct(Store store, const TypedValueRegion* R,
   assert(T->isStructureOrClassType());
 
   const RecordType* RT = T->getAs<RecordType>();
-  RecordDecl* RD = RT->getDecl();
+  RecordDecl *RD = RT->getDecl();
 
   if (!RD->isDefinition())
     return StoreRef(store, *this);
@@ -1858,7 +1858,7 @@ StoreRef RegionStoreManager::enterStackFrame(const GRState *state,
 // Utility methods.
 //===----------------------------------------------------------------------===//
 
-void RegionStoreManager::print(Store store, raw_ostream& OS,
+void RegionStoreManager::print(Store store, raw_ostream &OS,
                                const char* nl, const char *sep) {
   RegionBindings B = GetRegionBindings(store);
   OS << "Store (direct and default bindings):" << nl;

@@ -57,7 +57,7 @@ const ElementRegion *StoreManager::GetElementZeroRegion(const MemRegion *R,
 
 const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy) {
 
-  ASTContext& Ctx = StateMgr.getContext();
+  ASTContext &Ctx = StateMgr.getContext();
 
   // Handle casts to Objective-C objects.
   if (CastToTy->isObjCObjectPointerType())
@@ -237,7 +237,7 @@ SVal StoreManager::CastRetrievedVal(SVal V, const TypedValueRegion *R,
   return V;
 }
 
-SVal StoreManager::getLValueFieldOrIvar(const Decl* D, SVal Base) {
+SVal StoreManager::getLValueFieldOrIvar(const Decl *D, SVal Base) {
   if (Base.isUnknownOrUndef())
     return Base;
 

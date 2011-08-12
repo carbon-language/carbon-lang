@@ -143,7 +143,7 @@ SVal::symbol_iterator::symbol_iterator(const SymExpr *SE) {
   while (!isa<SymbolData>(itr.back())) expand();
 }
 
-SVal::symbol_iterator& SVal::symbol_iterator::operator++() {
+SVal::symbol_iterator &SVal::symbol_iterator::operator++() {
   assert(!itr.empty() && "attempting to iterate on an 'end' iterator");
   assert(isa<SymbolData>(itr.back()));
   itr.pop_back();
@@ -267,7 +267,7 @@ SVal loc::ConcreteInt::evalBinOp(BasicValueFactory& BasicVals,
 
 void SVal::dump() const { dumpToStream(llvm::errs()); }
 
-void SVal::dumpToStream(raw_ostream& os) const {
+void SVal::dumpToStream(raw_ostream &os) const {
   switch (getBaseKind()) {
     case UnknownKind:
       os << "Unknown";
@@ -286,7 +286,7 @@ void SVal::dumpToStream(raw_ostream& os) const {
   }
 }
 
-void NonLoc::dumpToStream(raw_ostream& os) const {
+void NonLoc::dumpToStream(raw_ostream &os) const {
   switch (getSubKind()) {
     case nonloc::ConcreteIntKind: {
       const nonloc::ConcreteInt& C = *cast<nonloc::ConcreteInt>(this);
@@ -341,7 +341,7 @@ void NonLoc::dumpToStream(raw_ostream& os) const {
   }
 }
 
-void Loc::dumpToStream(raw_ostream& os) const {
+void Loc::dumpToStream(raw_ostream &os) const {
   switch (getSubKind()) {
     case loc::ConcreteIntKind:
       os << cast<loc::ConcreteInt>(this)->getValue().getZExtValue() << " (Loc)";

@@ -27,9 +27,9 @@ class StackFrameContext;
 namespace ento {
 
 class BlockCounter {
-  void* Data;
+  void *Data;
 
-  BlockCounter(void* D) : Data(D) {}
+  BlockCounter(void *D) : Data(D) {}
 
 public:
   BlockCounter() : Data(0) {}
@@ -38,7 +38,7 @@ public:
                          unsigned BlockID) const;
 
   class Factory {
-    void* F;
+    void *F;
   public:
     Factory(llvm::BumpPtrAllocator& Alloc);
     ~Factory();

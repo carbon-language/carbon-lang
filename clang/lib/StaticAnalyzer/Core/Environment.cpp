@@ -18,7 +18,7 @@
 using namespace clang;
 using namespace ento;
 
-SVal Environment::lookupExpr(const Stmt* E) const {
+SVal Environment::lookupExpr(const Stmt *E) const {
   const SVal* X = ExprBindings.lookup(E);
   if (X) {
     SVal V = *X;

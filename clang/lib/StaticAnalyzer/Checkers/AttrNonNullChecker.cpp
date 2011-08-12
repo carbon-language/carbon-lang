@@ -38,7 +38,7 @@ void AttrNonNullChecker::checkPreStmt(const CallExpr *CE,
   // Check if the callee has a 'nonnull' attribute.
   SVal X = state->getSVal(CE->getCallee());
 
-  const FunctionDecl* FD = X.getAsFunctionDecl();
+  const FunctionDecl *FD = X.getAsFunctionDecl();
   if (!FD)
     return;
 

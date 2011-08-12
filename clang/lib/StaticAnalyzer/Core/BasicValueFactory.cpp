@@ -70,7 +70,7 @@ BasicValueFactory::~BasicValueFactory() {
 
 const llvm::APSInt& BasicValueFactory::getValue(const llvm::APSInt& X) {
   llvm::FoldingSetNodeID ID;
-  void* InsertPos;
+  void *InsertPos;
   typedef llvm::FoldingSetNodeWrapper<llvm::APSInt> FoldNodeTy;
 
   X.Profile(ID);
@@ -113,7 +113,7 @@ BasicValueFactory::getCompoundValData(QualType T,
 
   llvm::FoldingSetNodeID ID;
   CompoundValData::Profile(ID, T, Vals);
-  void* InsertPos;
+  void *InsertPos;
 
   CompoundValData* D = CompoundValDataSet.FindNodeOrInsertPos(ID, InsertPos);
 
@@ -131,7 +131,7 @@ BasicValueFactory::getLazyCompoundValData(const StoreRef &store,
                                           const TypedValueRegion *region) {
   llvm::FoldingSetNodeID ID;
   LazyCompoundValData::Profile(ID, store, region);
-  void* InsertPos;
+  void *InsertPos;
 
   LazyCompoundValData *D =
     LazyCompoundValDataSet.FindNodeOrInsertPos(ID, InsertPos);
@@ -243,7 +243,7 @@ BasicValueFactory::getPersistentSValWithData(const SVal& V, uintptr_t Data) {
   if (!PersistentSVals) PersistentSVals = new PersistentSValsTy();
 
   llvm::FoldingSetNodeID ID;
-  void* InsertPos;
+  void *InsertPos;
   V.Profile(ID);
   ID.AddPointer((void*) Data);
 
@@ -268,7 +268,7 @@ BasicValueFactory::getPersistentSValPair(const SVal& V1, const SVal& V2) {
   if (!PersistentSValPairs) PersistentSValPairs = new PersistentSValPairsTy();
 
   llvm::FoldingSetNodeID ID;
-  void* InsertPos;
+  void *InsertPos;
   V1.Profile(ID);
   V2.Profile(ID);
 

@@ -88,7 +88,7 @@ public:
 
   virtual ~DeadStoreObs() {}
 
-  void Report(const VarDecl* V, DeadStoreKind dsk,
+  void Report(const VarDecl *V, DeadStoreKind dsk,
               SourceLocation L, SourceRange R) {
     if (Escaped.count(V))
       return;
@@ -135,7 +135,7 @@ public:
     BR.EmitBasicReport(BugType, "Dead store", msg, L, R);
   }
 
-  void CheckVarDecl(const VarDecl* VD, const Expr* Ex, const Expr* Val,
+  void CheckVarDecl(const VarDecl *VD, const Expr *Ex, const Expr *Val,
                     DeadStoreKind dsk,
                     const LiveVariables::LivenessValues &Live) {
 
@@ -152,17 +152,17 @@ public:
              Val->getSourceRange());
   }
 
-  void CheckDeclRef(const DeclRefExpr* DR, const Expr* Val, DeadStoreKind dsk,
+  void CheckDeclRef(const DeclRefExpr *DR, const Expr *Val, DeadStoreKind dsk,
                     const LiveVariables::LivenessValues& Live) {
-    if (const VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
       CheckVarDecl(VD, DR, Val, dsk, Live);
   }
 
-  bool isIncrement(VarDecl* VD, const BinaryOperator* B) {
+  bool isIncrement(VarDecl *VD, const BinaryOperator* B) {
     if (B->isCompoundAssignmentOp())
       return true;
 
-    const Expr* RHS = B->getRHS()->IgnoreParenCasts();
+    const Expr *RHS = B->getRHS()->IgnoreParenCasts();
     const BinaryOperator* BRHS = dyn_cast<BinaryOperator>(RHS);
 
     if (!BRHS)
@@ -181,7 +181,7 @@ public:
     return false;
   }
 
-  virtual void observeStmt(const Stmt* S, const CFGBlock *block,
+  virtual void observeStmt(const Stmt *S, const CFGBlock *block,
                            const LiveVariables::LivenessValues &Live) {
 
     currentBlock = block;
@@ -195,7 +195,7 @@ public:
     if (const BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
       if (!B->isAssignmentOp()) return; // Skip non-assignments.
 
-      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()))
+      if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(B->getLHS()))
         if (VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
           // Special case: check for assigning null to a pointer.
           //  This is a common form of defensive programming.
@@ -206,10 +206,10 @@ public:
               return;
           }
 
-          Expr* RHS = B->getRHS()->IgnoreParenCasts();
+          Expr *RHS = B->getRHS()->IgnoreParenCasts();
           // Special case: self-assignments.  These are often used to shut up
           //  "unused variable" compiler warnings.
-          if (DeclRefExpr* RhsDR = dyn_cast<DeclRefExpr>(RHS))
+          if (DeclRefExpr *RhsDR = dyn_cast<DeclRefExpr>(RHS))
             if (VD == dyn_cast<VarDecl>(RhsDR->getDecl()))
               return;
 
@@ -231,16 +231,16 @@ public:
 
       const Expr *Ex = U->getSubExpr()->IgnoreParenCasts();
 
-      if (const DeclRefExpr* DR = dyn_cast<DeclRefExpr>(Ex))
+      if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Ex))
         CheckDeclRef(DR, U, DeadIncrement, Live);
     }
-    else if (const DeclStmt* DS = dyn_cast<DeclStmt>(S))
+    else if (const DeclStmt *DS = dyn_cast<DeclStmt>(S))
       // Iterate through the decls.  Warn if any initializers are complex
       // expressions that are not live (never used).
       for (DeclStmt::const_decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
            DI != DE; ++DI) {
 
-        VarDecl* V = dyn_cast<VarDecl>(*DI);
+        VarDecl *V = dyn_cast<VarDecl>(*DI);
 
         if (!V)
           continue;
@@ -251,7 +251,7 @@ public:
           if (V->getType()->getAs<ReferenceType>())
             return;
             
-          if (Expr* E = V->getInit()) {
+          if (Expr *E = V->getInit()) {
             while (ExprWithCleanups *exprClean = dyn_cast<ExprWithCleanups>(E))
               E = exprClean->getSubExpr();
             
@@ -321,10 +321,10 @@ public:
   void VisitUnaryOperator(UnaryOperator* U) {
     // Check for '&'.  Any VarDecl whose value has its address-taken we
     // treat as escaped.
-    Expr* E = U->getSubExpr()->IgnoreParenCasts();
+    Expr *E = U->getSubExpr()->IgnoreParenCasts();
     if (U->getOpcode() == UO_AddrOf)
-      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E))
-        if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {
+      if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E))
+        if (VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
           Escaped.insert(VD);
           return;
         }

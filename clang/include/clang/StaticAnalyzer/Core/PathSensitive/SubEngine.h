@@ -46,7 +46,7 @@ class SubEngine {
 public:
   virtual ~SubEngine() {}
 
-  virtual const GRState* getInitialState(const LocationContext *InitLoc) = 0;
+  virtual const GRState *getInitialState(const LocationContext *InitLoc) = 0;
 
   virtual AnalysisManager &getAnalysisManager() = 0;
 
@@ -64,7 +64,7 @@ public:
 
   /// Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
-  virtual void processBranch(const Stmt* Condition, const Stmt* Term,
+  virtual void processBranch(const Stmt *Condition, const Stmt *Term,
                              BranchNodeBuilder& builder) = 0;
 
   /// Called by CoreEngine.  Used to generate successor
@@ -87,12 +87,12 @@ public:
 
   /// Called by ConstraintManager. Used to call checker-specific
   /// logic for handling assumptions on symbolic values.
-  virtual const GRState* processAssume(const GRState *state,
+  virtual const GRState *processAssume(const GRState *state,
                                        SVal cond, bool assumption) = 0;
 
   /// wantsRegionChangeUpdate - Called by GRStateManager to determine if a
   ///  region change should trigger a processRegionChanges update.
-  virtual bool wantsRegionChangeUpdate(const GRState* state) = 0;
+  virtual bool wantsRegionChangeUpdate(const GRState *state) = 0;
 
   /// processRegionChanges - Called by GRStateManager whenever a change is made
   ///  to the store. Used to update checkers that track region values.
@@ -104,7 +104,7 @@ public:
 
 
   inline const GRState *
-  processRegionChange(const GRState* state,
+  processRegionChange(const GRState *state,
                       const MemRegion* MR) {
     return processRegionChanges(state, 0, &MR, &MR+1);
   }

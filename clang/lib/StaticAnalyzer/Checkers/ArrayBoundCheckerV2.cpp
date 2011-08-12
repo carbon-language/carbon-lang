@@ -58,7 +58,7 @@ public:
                                          SVal location);
 
   void dump() const;
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 };
 }
 
@@ -194,7 +194,7 @@ void RegionRawOffsetV2::dump() const {
   dumpToStream(llvm::errs());
 }
 
-void RegionRawOffsetV2::dumpToStream(raw_ostream& os) const {
+void RegionRawOffsetV2::dumpToStream(raw_ostream &os) const {
   os << "raw_offset_v2{" << getRegion() << ',' << getByteOffset() << '}';
 }
 

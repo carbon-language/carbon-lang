@@ -48,11 +48,11 @@ public:
 
 typedef llvm::ImmutableMap<CountKey, unsigned> CountMap;
 
-static inline CountMap GetMap(void* D) {
+static inline CountMap GetMap(void *D) {
   return CountMap(static_cast<CountMap::TreeTy*>(D));
 }
 
-static inline CountMap::Factory& GetFactory(void* F) {
+static inline CountMap::Factory& GetFactory(void *F) {
   return *static_cast<CountMap::Factory*>(F);
 }
 

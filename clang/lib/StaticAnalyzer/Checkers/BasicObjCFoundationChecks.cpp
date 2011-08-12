@@ -148,7 +148,7 @@ public:
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 
 private:
-  void EmitError(const TypedRegion* R, const Expr* Ex,
+  void EmitError(const TypedRegion* R, const Expr *Ex,
                 uint64_t SourceSize, uint64_t TargetSize, uint64_t NumberKind);
 };
 } // end anonymous namespace
@@ -194,7 +194,7 @@ namespace {
   };
 }
 
-static Optional<uint64_t> GetCFNumberSize(ASTContext& Ctx, uint64_t i) {
+static Optional<uint64_t> GetCFNumberSize(ASTContext &Ctx, uint64_t i) {
   static const unsigned char FixedSize[] = { 8, 16, 32, 64, 32, 64 };
 
   if (i < kCFNumberCharType)
@@ -248,10 +248,10 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
 
 void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
                                          CheckerContext &C) const {
-  const Expr* Callee = CE->getCallee();
+  const Expr *Callee = CE->getCallee();
   const GRState *state = C.getState();
   SVal CallV = state->getSVal(Callee);
-  const FunctionDecl* FD = CallV.getAsFunctionDecl();
+  const FunctionDecl *FD = CallV.getAsFunctionDecl();
 
   if (!FD)
     return;
@@ -351,21 +351,21 @@ class CFRetainReleaseChecker : public Checker< check::PreStmt<CallExpr> > {
   mutable IdentifierInfo *Retain, *Release;
 public:
   CFRetainReleaseChecker(): Retain(0), Release(0) {}
-  void checkPreStmt(const CallExpr* CE, CheckerContext& C) const;
+  void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 };
 } // end anonymous namespace
 
 
-void CFRetainReleaseChecker::checkPreStmt(const CallExpr* CE,
-                                          CheckerContext& C) const {
+void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
+                                          CheckerContext &C) const {
   // If the CallExpr doesn't have exactly 1 argument just give up checking.
   if (CE->getNumArgs() != 1)
     return;
 
   // Get the function declaration of the callee.
-  const GRState* state = C.getState();
+  const GRState *state = C.getState();
   SVal X = state->getSVal(CE->getCallee());
-  const FunctionDecl* FD = X.getAsFunctionDecl();
+  const FunctionDecl *FD = X.getAsFunctionDecl();
 
   if (!FD)
     return;

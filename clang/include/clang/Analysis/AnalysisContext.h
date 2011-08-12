@@ -221,7 +221,7 @@ public:
                             ContextKind ck,
                             AnalysisContext *ctx,
                             const LocationContext *parent,
-                            const void* data);
+                            const void *data);
 };
 
 class StackFrameContext : public LocationContext {
@@ -260,7 +260,7 @@ public:
     ID.AddInteger(idx);
   }
 
-  static bool classof(const LocationContext* Ctx) {
+  static bool classof(const LocationContext *Ctx) {
     return Ctx->getKind() == StackFrame;
   }
 };
@@ -283,7 +283,7 @@ public:
     ProfileCommon(ID, Scope, ctx, parent, s);
   }
 
-  static bool classof(const LocationContext* Ctx) {
+  static bool classof(const LocationContext *Ctx) {
     return Ctx->getKind() == Scope;
   }
 };
@@ -311,7 +311,7 @@ public:
     ProfileCommon(ID, Block, ctx, parent, bd);
   }
 
-  static bool classof(const LocationContext* Ctx) {
+  static bool classof(const LocationContext *Ctx) {
     return Ctx->getKind() == Block;
   }
 };

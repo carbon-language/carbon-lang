@@ -34,7 +34,7 @@ class DataflowWorkListTy {
 public:
   /// enqueue - Add a block to the worklist.  Blocks already on the
   ///  worklist are not added a second time.
-  void enqueue(const CFGBlock* B) {
+  void enqueue(const CFGBlock *B) {
     unsigned char &x = BlockSet[B];
     if (x == 1)
       return;
@@ -43,7 +43,7 @@ public:
   }
 
   /// dequeue - Remove a block from the worklist.
-  const CFGBlock* dequeue() {
+  const CFGBlock *dequeue() {
     assert(!BlockQueue.empty());
     const CFGBlock *B = BlockQueue.back();
     BlockQueue.pop_back();
@@ -69,20 +69,20 @@ template <> struct ItrTraits<forward_analysis_tag> {
   typedef CFGBlock::const_succ_iterator NextBItr;
   typedef CFGBlock::const_iterator      StmtItr;
 
-  static PrevBItr PrevBegin(const CFGBlock* B) { return B->pred_begin(); }
-  static PrevBItr PrevEnd(const CFGBlock* B) { return B->pred_end(); }
+  static PrevBItr PrevBegin(const CFGBlock *B) { return B->pred_begin(); }
+  static PrevBItr PrevEnd(const CFGBlock *B) { return B->pred_end(); }
 
-  static NextBItr NextBegin(const CFGBlock* B) { return B->succ_begin(); }
-  static NextBItr NextEnd(const CFGBlock* B) { return B->succ_end(); }
+  static NextBItr NextBegin(const CFGBlock *B) { return B->succ_begin(); }
+  static NextBItr NextEnd(const CFGBlock *B) { return B->succ_end(); }
 
-  static StmtItr StmtBegin(const CFGBlock* B) { return B->begin(); }
-  static StmtItr StmtEnd(const CFGBlock* B) { return B->end(); }
+  static StmtItr StmtBegin(const CFGBlock *B) { return B->begin(); }
+  static StmtItr StmtEnd(const CFGBlock *B) { return B->end(); }
 
-  static BlockEdge PrevEdge(const CFGBlock* B, const CFGBlock* Prev) {
+  static BlockEdge PrevEdge(const CFGBlock *B, const CFGBlock *Prev) {
     return BlockEdge(Prev, B, 0);
   }
 
-  static BlockEdge NextEdge(const CFGBlock* B, const CFGBlock* Next) {
+  static BlockEdge NextEdge(const CFGBlock *B, const CFGBlock *Next) {
     return BlockEdge(B, Next, 0);
   }
 };
@@ -92,20 +92,20 @@ template <> struct ItrTraits<backward_analysis_tag> {
   typedef CFGBlock::const_pred_iterator    NextBItr;
   typedef CFGBlock::const_reverse_iterator StmtItr;
 
-  static PrevBItr PrevBegin(const CFGBlock* B) { return B->succ_begin(); }
-  static PrevBItr PrevEnd(const CFGBlock* B) { return B->succ_end(); }
+  static PrevBItr PrevBegin(const CFGBlock *B) { return B->succ_begin(); }
+  static PrevBItr PrevEnd(const CFGBlock *B) { return B->succ_end(); }
 
-  static NextBItr NextBegin(const CFGBlock* B) { return B->pred_begin(); }
-  static NextBItr NextEnd(const CFGBlock* B) { return B->pred_end(); }
+  static NextBItr NextBegin(const CFGBlock *B) { return B->pred_begin(); }
+  static NextBItr NextEnd(const CFGBlock *B) { return B->pred_end(); }
 
-  static StmtItr StmtBegin(const CFGBlock* B) { return B->rbegin(); }
-  static StmtItr StmtEnd(const CFGBlock* B) { return B->rend(); }
+  static StmtItr StmtBegin(const CFGBlock *B) { return B->rbegin(); }
+  static StmtItr StmtEnd(const CFGBlock *B) { return B->rend(); }
 
-  static BlockEdge PrevEdge(const CFGBlock* B, const CFGBlock* Prev) {
+  static BlockEdge PrevEdge(const CFGBlock *B, const CFGBlock *Prev) {
     return BlockEdge(B, Prev, 0);
   }
 
-  static BlockEdge NextEdge(const CFGBlock* B, const CFGBlock* Next) {
+  static BlockEdge NextEdge(const CFGBlock *B, const CFGBlock *Next) {
     return BlockEdge(Next, B, 0);
   }
 };
@@ -162,7 +162,7 @@ public:
   ///  dataflow values using runOnCFG, as runOnBlock is intended to
   ///  only be used for querying the dataflow values within a block
   ///  with and Observer object.
-  void runOnBlock(const CFGBlock* B, bool recordStmtValues) {
+  void runOnBlock(const CFGBlock *B, bool recordStmtValues) {
     BlockDataMapTy& M = D.getBlockDataMap();
     typename BlockDataMapTy::iterator I = M.find(B);
 
@@ -172,13 +172,13 @@ public:
     }
   }
 
-  void runOnBlock(const CFGBlock& B, bool recordStmtValues) {
+  void runOnBlock(const CFGBlock &B, bool recordStmtValues) {
     runOnBlock(&B, recordStmtValues);
   }
-  void runOnBlock(CFG::iterator& I, bool recordStmtValues) {
+  void runOnBlock(CFG::iterator &I, bool recordStmtValues) {
     runOnBlock(*I, recordStmtValues);
   }
-  void runOnBlock(CFG::const_iterator& I, bool recordStmtValues) {
+  void runOnBlock(CFG::const_iterator &I, bool recordStmtValues) {
     runOnBlock(*I, recordStmtValues);
   }
 
@@ -199,7 +199,7 @@ private:
     EnqueueBlocksOnWorklist(cfg, AnalysisDirTag());
 
     while (!WorkList.isEmpty()) {
-      const CFGBlock* B = WorkList.dequeue();
+      const CFGBlock *B = WorkList.dequeue();
       ProcessMerge(cfg, B);
       ProcessBlock(B, recordStmtValues, AnalysisDirTag());
       UpdateEdges(cfg, B, TF.getVal());
@@ -222,7 +222,7 @@ private:
       WorkList.enqueue(&**I);
   }
 
-  void ProcessMerge(CFG& cfg, const CFGBlock* B) {
+  void ProcessMerge(CFG& cfg, const CFGBlock *B) {
     ValTy& V = TF.getVal();
     TF.SetTopValue(V);
 
@@ -270,7 +270,7 @@ private:
   }
 
   /// ProcessBlock - Process the transfer functions for a given block.
-  void ProcessBlock(const CFGBlock* B, bool recordStmtValues,
+  void ProcessBlock(const CFGBlock *B, bool recordStmtValues,
                     dataflow::forward_analysis_tag) {
 
     TF.setCurrentBlock(B);
@@ -284,7 +284,7 @@ private:
     TF.VisitTerminator(const_cast<CFGBlock*>(B));
   }
 
-  void ProcessBlock(const CFGBlock* B, bool recordStmtValues,
+  void ProcessBlock(const CFGBlock *B, bool recordStmtValues,
                     dataflow::backward_analysis_tag) {
 
     TF.setCurrentBlock(B);
@@ -298,12 +298,12 @@ private:
     }
   }
 
-  void ProcessStmt(const Stmt* S, bool record, dataflow::forward_analysis_tag) {
+  void ProcessStmt(const Stmt *S, bool record, dataflow::forward_analysis_tag) {
     if (record) D.getStmtDataMap()[S] = TF.getVal();
     TF.BlockStmt_Visit(const_cast<Stmt*>(S));
   }
 
-  void ProcessStmt(const Stmt* S, bool record, dataflow::backward_analysis_tag){
+  void ProcessStmt(const Stmt *S, bool record, dataflow::backward_analysis_tag){
     TF.BlockStmt_Visit(const_cast<Stmt*>(S));
     if (record) D.getStmtDataMap()[S] = TF.getVal();
   }
@@ -312,14 +312,14 @@ private:
   ///   block, update the dataflow value associated with the block's
   ///   outgoing/incoming edges (depending on whether we do a
   //    forward/backward analysis respectively)
-  void UpdateEdges(CFG& cfg, const CFGBlock* B, ValTy& V) {
+  void UpdateEdges(CFG& cfg, const CFGBlock *B, ValTy& V) {
     for (NextBItr I=ItrTraits::NextBegin(B), E=ItrTraits::NextEnd(B); I!=E; ++I)
       if (CFGBlock *NextBlk = *I)
         UpdateEdgeValue(ItrTraits::NextEdge(B, NextBlk),V, NextBlk);
   }
 
   /// UpdateEdgeValue - Update the value associated with a given edge.
-  void UpdateEdgeValue(BlockEdge E, ValTy& V, const CFGBlock* TargetBlock) {
+  void UpdateEdgeValue(BlockEdge E, ValTy& V, const CFGBlock *TargetBlock) {
     EdgeDataMapTy& M = D.getEdgeDataMap();
     typename EdgeDataMapTy::iterator I = M.find(E);
 

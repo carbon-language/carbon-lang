@@ -36,7 +36,7 @@ class BugType;
 class BugReporter;
 class ExprEngine;
 
-TransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
+TransferFuncs* MakeCFRefCountTF(ASTContext &Ctx, bool GCEnabled,
                                   const LangOptions& lopts);
 
 void RegisterCallInliner(ExprEngine &Eng);

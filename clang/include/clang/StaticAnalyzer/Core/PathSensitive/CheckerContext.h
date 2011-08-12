@@ -167,7 +167,7 @@ public:
   }
 
 private:
-  ExplodedNode *generateNodeImpl(const Stmt* stmt, const GRState *state,
+  ExplodedNode *generateNodeImpl(const Stmt *stmt, const GRState *state,
                              bool markAsSink, const ProgramPointTag *tag) {
     ExplodedNode *node = B.generateNode(stmt, state, Pred, tag);
     if (markAsSink && node)
@@ -175,7 +175,7 @@ private:
     return node;
   }
 
-  ExplodedNode *generateNodeImpl(const Stmt* stmt, const GRState *state,
+  ExplodedNode *generateNodeImpl(const Stmt *stmt, const GRState *state,
                                  ExplodedNode *pred, bool markAsSink) {
    ExplodedNode *node = B.generateNode(stmt, state, pred, checkerTag);
     if (markAsSink && node)

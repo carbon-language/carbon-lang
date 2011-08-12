@@ -109,7 +109,7 @@ public:
                                          const GRState *state,
                                          const Expr *Ex, SVal V);
 
-  static bool SummarizeRegion(raw_ostream& os, ASTContext& Ctx,
+  static bool SummarizeRegion(raw_ostream &os, ASTContext &Ctx,
                               const MemRegion *MR);
 
   // Re-usable checks
@@ -767,7 +767,7 @@ const GRState *CStringChecker::InvalidateBuffer(CheckerContext &C,
   return state->unbindLoc(*L);
 }
 
-bool CStringChecker::SummarizeRegion(raw_ostream& os, ASTContext& Ctx,
+bool CStringChecker::SummarizeRegion(raw_ostream &os, ASTContext &Ctx,
                                      const MemRegion *MR) {
   const TypedValueRegion *TVR = dyn_cast<TypedValueRegion>(MR);
 

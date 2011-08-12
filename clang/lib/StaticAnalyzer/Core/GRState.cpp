@@ -35,7 +35,7 @@ GRState::GRState(GRStateManager *mgr, const Environment& env,
   stateMgr->getStoreManager().incrementReferenceCount(store);
 }
 
-GRState::GRState(const GRState& RHS)
+GRState::GRState(const GRState &RHS)
     : llvm::FoldingSetNode(),
       stateMgr(RHS.stateMgr),
       Env(RHS.Env),
@@ -61,7 +61,7 @@ GRStateManager::~GRStateManager() {
 }
 
 const GRState*
-GRStateManager::removeDeadBindings(const GRState* state,
+GRStateManager::removeDeadBindings(const GRState *state,
                                    const StackFrameContext *LCtx,
                                    SymbolReaper& SymReaper) {
 
@@ -95,7 +95,7 @@ const GRState *GRStateManager::MarshalState(const GRState *state,
   return getPersistentState(State);
 }
 
-const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,
+const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr *CL,
                                             const LocationContext *LC,
                                             SVal V) const {
   const StoreRef &newStore = 
@@ -246,7 +246,7 @@ SVal GRState::getSVal(Loc location, QualType T) const {
   return V;
 }
 
-const GRState *GRState::BindExpr(const Stmt* S, SVal V, bool Invalidate) const{
+const GRState *GRState::BindExpr(const Stmt *S, SVal V, bool Invalidate) const{
   Environment NewEnv = getStateManager().EnvMgr.bindExpr(Env, S, V,
                                                          Invalidate);
   if (NewEnv == Env)
@@ -315,7 +315,7 @@ const GRState *GRState::assumeInBound(DefinedOrUnknownSVal Idx,
   return CM.assume(this, cast<DefinedSVal>(inBound), Assumption);
 }
 
-const GRState* GRStateManager::getInitialState(const LocationContext *InitLoc) {
+const GRState *GRStateManager::getInitialState(const LocationContext *InitLoc) {
   GRState State(this,
                 EnvMgr.getInitialEnvironment(),
                 StoreMgr->getInitialStore(InitLoc),
@@ -337,7 +337,7 @@ void GRStateManager::recycleUnusedStates() {
   recentlyAllocatedStates.clear();
 }
 
-const GRState* GRStateManager::getPersistentStateWithGDM(
+const GRState *GRStateManager::getPersistentStateWithGDM(
                                                      const GRState *FromState,
                                                      const GRState *GDMState) {
   GRState NewState = *FromState;
@@ -345,13 +345,13 @@ const GRState* GRStateManager::getPersistentStateWithGDM(
   return getPersistentState(NewState);
 }
 
-const GRState* GRStateManager::getPersistentState(GRState& State) {
+const GRState *GRStateManager::getPersistentState(GRState &State) {
 
   llvm::FoldingSetNodeID ID;
   State.Profile(ID);
-  void* InsertPos;
+  void *InsertPos;
 
-  if (GRState* I = StateSet.FindNodeOrInsertPos(ID, InsertPos))
+  if (GRState *I = StateSet.FindNodeOrInsertPos(ID, InsertPos))
     return I;
 
   GRState *newState = 0;
@@ -368,7 +368,7 @@ const GRState* GRStateManager::getPersistentState(GRState& State) {
   return newState;
 }
 
-const GRState* GRState::makeWithStore(const StoreRef &store) const {
+const GRState *GRState::makeWithStore(const StoreRef &store) const {
   GRState NewSt = *this;
   NewSt.setStore(store);
   return getStateManager().getPersistentState(NewSt);
@@ -392,7 +392,7 @@ static bool IsEnvLoc(const Stmt *S) {
   return (bool) (((uintptr_t) S) & 0x1);
 }
 
-void GRState::print(raw_ostream& Out, CFG &C, const char* nl,
+void GRState::print(raw_ostream &Out, CFG &C, const char* nl,
                     const char* sep) const {
   // Print the store.
   GRStateManager &Mgr = getStateManager();
@@ -467,7 +467,7 @@ void GRState::print(raw_ostream& Out, CFG &C, const char* nl,
   }
 }
 
-void GRState::printDOT(raw_ostream& Out, CFG &C) const {
+void GRState::printDOT(raw_ostream &Out, CFG &C) const {
   print(Out, C, "\\l", "\\|");
 }
 
@@ -479,13 +479,13 @@ void GRState::printStdErr(CFG &C) const {
 // Generic Data Map.
 //===----------------------------------------------------------------------===//
 
-void* const* GRState::FindGDM(void* K) const {
+void *const* GRState::FindGDM(void *K) const {
   return GDM.lookup(K);
 }
 
 void*
-GRStateManager::FindGDMContext(void* K,
-                               void* (*CreateContext)(llvm::BumpPtrAllocator&),
+GRStateManager::FindGDMContext(void *K,
+                               void *(*CreateContext)(llvm::BumpPtrAllocator&),
                                void (*DeleteContext)(void*)) {
 
   std::pair<void*, void (*)(void*)>& p = GDMContexts[K];
@@ -497,7 +497,7 @@ GRStateManager::FindGDMContext(void* K,
   return p.first;
 }
 
-const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){
+const GRState *GRStateManager::addGDM(const GRState *St, void *Key, void *Data){
   GRState::GenericDataMap M1 = St->getGDM();
   GRState::GenericDataMap M2 = GDMFactory.add(M1, Key, Data);
 

@@ -303,7 +303,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
     // have the "use of undefined value" be smarter about where the
     // undefined value came from.
     if (C.getPredecessor()->getParentMap().isConsumedExpr(msg.getOriginExpr())){
-      if (ExplodedNode* N = C.generateSink(state))
+      if (ExplodedNode *N = C.generateSink(state))
         emitNilReceiverBug(C, msg, N);
       return;
     }
@@ -328,7 +328,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
            Ctx.LongDoubleTy == CanRetTy ||
            Ctx.LongLongTy == CanRetTy ||
            Ctx.UnsignedLongLongTy == CanRetTy))) {
-      if (ExplodedNode* N = C.generateSink(state))
+      if (ExplodedNode *N = C.generateSink(state))
         emitNilReceiverBug(C, msg, N);
       return;
     }

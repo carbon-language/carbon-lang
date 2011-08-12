@@ -37,7 +37,7 @@ bool OSAtomicChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);
 
-  const FunctionDecl* FD = L.getAsFunctionDecl();
+  const FunctionDecl *FD = L.getAsFunctionDecl();
   if (!FD)
     return false;
 

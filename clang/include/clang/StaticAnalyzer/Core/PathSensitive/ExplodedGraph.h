@@ -67,7 +67,7 @@ class ExplodedNode : public llvm::FoldingSetNode {
       return P & 0x1;
     }
 
-    void* getPtr() const {
+    void *getPtr() const {
       assert (!getFlag());
       return reinterpret_cast<void*>(P & ~Mask);
     }
@@ -87,7 +87,7 @@ class ExplodedNode : public llvm::FoldingSetNode {
 
     bool empty() const { return (P & ~Mask) == 0; }
 
-    void addNode(ExplodedNode* N, ExplodedGraph &G);
+    void addNode(ExplodedNode *N, ExplodedGraph &G);
 
     void replaceNode(ExplodedNode *node);
 
@@ -106,7 +106,7 @@ class ExplodedNode : public llvm::FoldingSetNode {
   const ProgramPoint Location;
 
   /// State - The state associated with this node.
-  const GRState* State;
+  const GRState *State;
 
   /// Preds - The predecessors of this node.
   NodeGroup Preds;
@@ -116,7 +116,7 @@ class ExplodedNode : public llvm::FoldingSetNode {
 
 public:
 
-  explicit ExplodedNode(const ProgramPoint& loc, const GRState* state)
+  explicit ExplodedNode(const ProgramPoint &loc, const GRState *state)
     : Location(loc), State(state) {
     const_cast<GRState*>(State)->incrementReferenceCount();
   }
@@ -142,13 +142,13 @@ public:
     return *getLocationContext()->getLiveVariables(); 
   }
 
-  const GRState* getState() const { return State; }
+  const GRState *getState() const { return State; }
 
   template <typename T>
   const T* getLocationAs() const { return llvm::dyn_cast<T>(&Location); }
 
   static void Profile(llvm::FoldingSetNodeID &ID,
-                      const ProgramPoint& Loc, const GRState* state) {
+                      const ProgramPoint &Loc, const GRState *state) {
     ID.Add(Loc);
     ID.AddPointer(state);
   }
@@ -159,7 +159,7 @@ public:
 
   /// addPredeccessor - Adds a predecessor to the current node, and
   ///  in tandem add this node as a successor of the other node.
-  void addPredecessor(ExplodedNode* V, ExplodedGraph &G);
+  void addPredecessor(ExplodedNode *V, ExplodedGraph &G);
 
   unsigned succ_size() const { return Succs.size(); }
   unsigned pred_size() const { return Preds.size(); }
@@ -169,11 +169,11 @@ public:
   bool isSink() const { return Succs.getFlag(); }
   void markAsSink() { Succs.setFlag(); }
 
-  ExplodedNode* getFirstPred() {
+  ExplodedNode *getFirstPred() {
     return pred_empty() ? NULL : *(pred_begin());
   }
 
-  const ExplodedNode* getFirstPred() const {
+  const ExplodedNode *getFirstPred() const {
     return const_cast<ExplodedNode*>(this)->getFirstPred();
   }
 
@@ -210,7 +210,7 @@ public:
   class Auditor {
   public:
     virtual ~Auditor();
-    virtual void AddEdge(ExplodedNode* Src, ExplodedNode* Dst) = 0;
+    virtual void AddEdge(ExplodedNode *Src, ExplodedNode *Dst) = 0;
   };
 
   static void SetAuditor(Auditor* A);
@@ -226,7 +226,7 @@ class InterExplodedGraphMap {
   friend class ExplodedGraph;
 
 public:
-  ExplodedNode* getMappedNode(const ExplodedNode* N) const;
+  ExplodedNode *getMappedNode(const ExplodedNode *N) const;
 
   InterExplodedGraphMap() {}
   virtual ~InterExplodedGraphMap() {}
@@ -275,7 +275,7 @@ public:
   ///  this pair exists, it is created.  IsNew is set to true if
   ///  the node was freshly created.
 
-  ExplodedNode* getNode(const ProgramPoint& L, const GRState *State,
+  ExplodedNode *getNode(const ProgramPoint &L, const GRState *State,
                         bool* IsNew = 0);
 
   ExplodedGraph* MakeEmptyGraph() const {
@@ -283,13 +283,13 @@ public:
   }
 
   /// addRoot - Add an untyped node to the set of roots.
-  ExplodedNode* addRoot(ExplodedNode* V) {
+  ExplodedNode *addRoot(ExplodedNode *V) {
     Roots.push_back(V);
     return V;
   }
 
   /// addEndOfPath - Add an untyped node to the set of EOP nodes.
-  ExplodedNode* addEndOfPath(ExplodedNode* V) {
+  ExplodedNode *addEndOfPath(ExplodedNode *V) {
     EndNodes.push_back(V);
     return V;
   }
@@ -368,18 +368,18 @@ class ExplodedNodeSet {
   ImplTy Impl;
 
 public:
-  ExplodedNodeSet(ExplodedNode* N) {
+  ExplodedNodeSet(ExplodedNode *N) {
     assert (N && !static_cast<ExplodedNode*>(N)->isSink());
     Impl.insert(N);
   }
 
   ExplodedNodeSet() {}
 
-  inline void Add(ExplodedNode* N) {
+  inline void Add(ExplodedNode *N) {
     if (N && !static_cast<ExplodedNode*>(N)->isSink()) Impl.insert(N);
   }
 
-  ExplodedNodeSet& operator=(const ExplodedNodeSet &X) {
+  ExplodedNodeSet &operator=(const ExplodedNodeSet &X) {
     Impl = X.Impl;
     return *this;
   }

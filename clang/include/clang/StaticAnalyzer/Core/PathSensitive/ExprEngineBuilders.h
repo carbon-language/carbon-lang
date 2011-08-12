@@ -25,9 +25,9 @@ class StmtNodeBuilderRef {
   ExplodedNodeSet &Dst;
   StmtNodeBuilder &B;
   ExprEngine& Eng;
-  ExplodedNode* Pred;
-  const GRState* state;
-  const Stmt* stmt;
+  ExplodedNode *Pred;
+  const GRState *state;
+  const Stmt *stmt;
   const unsigned OldSize;
   const bool AutoCreateNode;
   SaveAndRestore<bool> OldSink;
@@ -42,9 +42,9 @@ private:
   StmtNodeBuilderRef(ExplodedNodeSet &dst,
                        StmtNodeBuilder &builder,
                        ExprEngine& eng,
-                       ExplodedNode* pred,
+                       ExplodedNode *pred,
                        const GRState *st,
-                       const Stmt* s, bool auto_create_node)
+                       const Stmt *s, bool auto_create_node)
   : Dst(dst), B(builder), Eng(eng), Pred(pred),
     state(st), stmt(s), OldSize(Dst.size()), AutoCreateNode(auto_create_node),
     OldSink(B.BuildSinks), OldHasGen(B.hasGeneratedNode) {}
@@ -68,7 +68,7 @@ public:
     return Eng.getStateManager();
   }
 
-  ExplodedNode* MakeNode(const GRState* state) {
+  ExplodedNode *MakeNode(const GRState *state) {
     return B.MakeNode(Dst, const_cast<Stmt*>(stmt), Pred, state);
   }
 };

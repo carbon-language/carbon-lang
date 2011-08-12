@@ -102,7 +102,7 @@ void ChrootChecker::Chdir(CheckerContext &C, const CallExpr *CE) const {
   GRStateManager &Mgr = state->getStateManager();
 
   // If there are no jail state in the GDM, just return.
-  const void* k = state->FindGDM(ChrootChecker::getTag());
+  const void *k = state->FindGDM(ChrootChecker::getTag());
   if (!k)
     return;
 
@@ -143,7 +143,7 @@ void ChrootChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
     return;
   
   // If jail state is ROOT_CHANGED, generate BugReport.
-  void* const* k = state->FindGDM(ChrootChecker::getTag());
+  void *const* k = state->FindGDM(ChrootChecker::getTag());
   if (k)
     if (isRootChanged((intptr_t) *k))
       if (ExplodedNode *N = C.generateNode()) {

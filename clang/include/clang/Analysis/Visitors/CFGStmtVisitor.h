@@ -33,7 +33,7 @@ static_cast<ImplClass*>(this)->BlockStmt_Visit ## CLASS(static_cast<CLASS*>(S));
 
 template <typename ImplClass, typename RetTy=void>
 class CFGStmtVisitor : public StmtVisitor<ImplClass,RetTy> {
-  Stmt* CurrentBlkStmt;
+  Stmt *CurrentBlkStmt;
 
   struct NullifyStmt {
     Stmt*& S;
@@ -45,9 +45,9 @@ class CFGStmtVisitor : public StmtVisitor<ImplClass,RetTy> {
 public:
   CFGStmtVisitor() : CurrentBlkStmt(NULL) {}
 
-  Stmt* getCurrentBlkStmt() const { return CurrentBlkStmt; }
+  Stmt *getCurrentBlkStmt() const { return CurrentBlkStmt; }
 
-  RetTy Visit(Stmt* S) {
+  RetTy Visit(Stmt *S) {
     if (S == CurrentBlkStmt ||
         !static_cast<ImplClass*>(this)->getCFG().isBlkExpr(S))
       return StmtVisitor<ImplClass,RetTy>::Visit(S);
@@ -67,7 +67,7 @@ public:
   /// the list of statements in a CFGBlock.  For substatements, or when there
   /// is no implementation provided for a BlockStmt_XXX method, we default
   /// to using StmtVisitor's Visit method.
-  RetTy BlockStmt_Visit(Stmt* S) {
+  RetTy BlockStmt_Visit(Stmt *S) {
     CurrentBlkStmt = S;
     NullifyStmt cleanup(CurrentBlkStmt);
 
@@ -106,23 +106,23 @@ public:
   DEFAULT_BLOCKSTMT_VISIT(ConditionalOperator)
   DEFAULT_BLOCKSTMT_VISIT(BinaryConditionalOperator)
 
-  RetTy BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
+  RetTy BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
     return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(S);
   }
 
-  RetTy BlockStmt_VisitCXXForRangeStmt(CXXForRangeStmt* S) {
+  RetTy BlockStmt_VisitCXXForRangeStmt(CXXForRangeStmt *S) {
     return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(S);
   }
 
-  RetTy BlockStmt_VisitImplicitControlFlowExpr(Expr* E) {
+  RetTy BlockStmt_VisitImplicitControlFlowExpr(Expr *E) {
     return static_cast<ImplClass*>(this)->BlockStmt_VisitExpr(E);
   }
 
-  RetTy BlockStmt_VisitExpr(Expr* E) {
+  RetTy BlockStmt_VisitExpr(Expr *E) {
     return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(E);
   }
 
-  RetTy BlockStmt_VisitStmt(Stmt* S) {
+  RetTy BlockStmt_VisitStmt(Stmt *S) {
     return static_cast<ImplClass*>(this)->Visit(S);
   }
 
@@ -141,14 +141,14 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// VisitChildren: Call "Visit" on each child of S.
-  void VisitChildren(Stmt* S) {
+  void VisitChildren(Stmt *S) {
 
     switch (S->getStmtClass()) {
       default:
         break;
 
       case Stmt::StmtExprClass: {
-        CompoundStmt* CS = cast<StmtExpr>(S)->getSubStmt();
+        CompoundStmt *CS = cast<StmtExpr>(S)->getSubStmt();
         if (CS->body_empty()) return;
         static_cast<ImplClass*>(this)->Visit(CS->body_back());
         return;

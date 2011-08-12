@@ -48,7 +48,7 @@ namespace clang {
 namespace ento {
 template <> struct GRStateTrait<LockSet> :
   public GRStatePartialTrait<llvm::ImmutableList<const MemRegion*> > {
-    static void* GDMIndex() { static int x = 0; return &x; }
+    static void *GDMIndex() { static int x = 0; return &x; }
 };
 } // end GR namespace
 } // end clang namespace

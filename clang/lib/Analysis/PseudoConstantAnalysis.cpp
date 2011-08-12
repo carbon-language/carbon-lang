@@ -83,7 +83,7 @@ void PseudoConstantAnalysis::RunAnalysis() {
   WorkList.push_back(DeclBody);
 
   while (!WorkList.empty()) {
-    const Stmt* Head = WorkList.front();
+    const Stmt *Head = WorkList.front();
     WorkList.pop_front();
 
     if (const Expr *Ex = dyn_cast<Expr>(Head))

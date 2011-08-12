@@ -47,9 +47,9 @@ template <typename T> struct GRStatePartialTrait;
 
 template <typename T> struct GRStateTrait {
   typedef typename T::data_type data_type;
-  static inline void* GDMIndex() { return &T::TagInt; }
-  static inline void* MakeVoidPtr(data_type D) { return (void*) D; }
-  static inline data_type MakeData(void* const* P) {
+  static inline void *GDMIndex() { return &T::TagInt; }
+  static inline void *MakeVoidPtr(data_type D) { return (void*) D; }
+  static inline data_type MakeData(void *const* P) {
     return P ? (data_type) *P : (data_type) 0;
   }
 };
@@ -99,7 +99,7 @@ public:
     
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
-  GRState(const GRState& RHS);
+  GRState(const GRState &RHS);
   
   ~GRState();
 
@@ -126,7 +126,7 @@ public:
   /// Profile - Profile the contents of a GRState object for use in a
   ///  FoldingSet.  Two GRState objects are considered equal if they
   ///  have the same Environment, Store, and GenericDataMap.
-  static void Profile(llvm::FoldingSetNodeID& ID, const GRState* V) {
+  static void Profile(llvm::FoldingSetNodeID& ID, const GRState *V) {
     V->Env.Profile(ID);
     ID.AddPointer(V->store);
     V->GDM.Profile(ID);
@@ -191,7 +191,7 @@ public:
 
   /// BindCompoundLiteral - Return the state that has the bindings currently
   ///  in this state plus the bindings for the CompoundLiteral.
-  const GRState *bindCompoundLiteral(const CompoundLiteralExpr* CL,
+  const GRState *bindCompoundLiteral(const CompoundLiteralExpr *CL,
                                      const LocationContext *LC,
                                      SVal V) const;
 
@@ -259,7 +259,7 @@ public:
   const llvm::APSInt *getSymVal(SymbolRef sym) const;
 
   /// Returns the SVal bound to the statement 'S' in the state's environment.
-  SVal getSVal(const Stmt* S, bool useOnlyDirectBindings = false) const;
+  SVal getSVal(const Stmt *S, bool useOnlyDirectBindings = false) const;
   
   SVal getSValAsScalarOrLoc(const Stmt *Ex) const;
 
@@ -293,7 +293,7 @@ public:
   // Accessing the Generic Data Map (GDM).
   //==---------------------------------------------------------------------==//
 
-  void* const* FindGDM(void* K) const;
+  void *const* FindGDM(void *K) const;
 
   template<typename T>
   const GRState *add(typename GRStateTrait<T>::key_type K) const;
@@ -307,7 +307,7 @@ public:
   template<typename T>
   typename GRStateTrait<T>::lookup_type
   get(typename GRStateTrait<T>::key_type key) const {
-    void* const* d = FindGDM(GRStateTrait<T>::GDMIndex());
+    void *const* d = FindGDM(GRStateTrait<T>::GDMIndex());
     return GRStateTrait<T>::Lookup(GRStateTrait<T>::MakeData(d), key);
   }
 
@@ -338,7 +338,7 @@ public:
 
   template<typename T>
   bool contains(typename GRStateTrait<T>::key_type key) const {
-    void* const* d = FindGDM(GRStateTrait<T>::GDMIndex());
+    void *const* d = FindGDM(GRStateTrait<T>::GDMIndex());
     return GRStateTrait<T>::Contains(GRStateTrait<T>::MakeData(d), key);
   }
 
@@ -346,17 +346,17 @@ public:
   class Printer {
   public:
     virtual ~Printer() {}
-    virtual void Print(raw_ostream& Out, const GRState* state,
+    virtual void Print(raw_ostream &Out, const GRState *state,
                        const char* nl, const char* sep) = 0;
   };
 
   // Pretty-printing.
-  void print(raw_ostream& Out, CFG &C, const char *nl = "\n",
+  void print(raw_ostream &Out, CFG &C, const char *nl = "\n",
              const char *sep = "") const;
 
   void printStdErr(CFG &C) const;
 
-  void printDOT(raw_ostream& Out, CFG &C) const;
+  void printDOT(raw_ostream &Out, CFG &C) const;
 
 private:
   /// Increments the number of times this state is referenced by ExplodeNodes.
@@ -381,7 +381,7 @@ class GRStateSet {
 public:
   GRStateSet() {}
 
-  inline void Add(const GRState* St) {
+  inline void Add(const GRState *St) {
     Impl.insert(St);
   }
 
@@ -394,11 +394,11 @@ public:
   inline iterator end() const { return Impl.end();   }
 
   class AutoPopulate {
-    GRStateSet& S;
+    GRStateSet &S;
     unsigned StartSize;
-    const GRState* St;
+    const GRState *St;
   public:
-    AutoPopulate(GRStateSet& s, const GRState* st)
+    AutoPopulate(GRStateSet &s, const GRState *st)
       : S(s), StartSize(S.size()), St(st) {}
 
     ~AutoPopulate() {
@@ -450,7 +450,7 @@ private:
   std::vector<GRState *> freeStates;
 
 public:
-  GRStateManager(ASTContext& Ctx,
+  GRStateManager(ASTContext &Ctx,
                  StoreManagerCreator CreateStoreManager,
                  ConstraintManagerCreator CreateConstraintManager,
                  llvm::BumpPtrAllocator& alloc,
@@ -464,7 +464,7 @@ public:
     ConstraintMgr.reset((*CreateConstraintManager)(*this, subeng));
   }
 
-  GRStateManager(ASTContext& Ctx,
+  GRStateManager(ASTContext &Ctx,
                  StoreManagerCreator CreateStoreManager,
                  ConstraintManager* ConstraintManagerPtr,
                  llvm::BumpPtrAllocator& alloc)
@@ -515,7 +515,7 @@ public:
   ConstraintManager& getConstraintManager() { return *ConstraintMgr; }
   SubEngine* getOwningEngine() { return Eng; }
 
-  const GRState* removeDeadBindings(const GRState* St,
+  const GRState *removeDeadBindings(const GRState *St,
                                     const StackFrameContext *LCtx,
                                     SymbolReaper& SymReaper);
 
@@ -530,17 +530,17 @@ public:
   }
 
   // Methods that manipulate the GDM.
-  const GRState* addGDM(const GRState* St, void* Key, void* Data);
+  const GRState *addGDM(const GRState *St, void *Key, void *Data);
   const GRState *removeGDM(const GRState *state, void *Key);
 
   // Methods that query & manipulate the Store.
 
-  void iterBindings(const GRState* state, StoreManager::BindingsHandler& F) {
+  void iterBindings(const GRState *state, StoreManager::BindingsHandler& F) {
     StoreMgr->iterBindings(state->getStore(), F);
   }
 
-  const GRState* getPersistentState(GRState& Impl);
-  const GRState* getPersistentStateWithGDM(const GRState *FromState,
+  const GRState *getPersistentState(GRState &Impl);
+  const GRState *getPersistentStateWithGDM(const GRState *FromState,
                                            const GRState *GDMState);
 
   bool haveEqualEnvironments(const GRState * S1, const GRState * S2) {
@@ -575,13 +575,13 @@ public:
 
   // Trait based GDM dispatch.
   template <typename T>
-  const GRState* set(const GRState* st, typename GRStateTrait<T>::data_type D) {
+  const GRState *set(const GRState *st, typename GRStateTrait<T>::data_type D) {
     return addGDM(st, GRStateTrait<T>::GDMIndex(),
                   GRStateTrait<T>::MakeVoidPtr(D));
   }
 
   template<typename T>
-  const GRState* set(const GRState* st,
+  const GRState *set(const GRState *st,
                      typename GRStateTrait<T>::key_type K,
                      typename GRStateTrait<T>::value_type V,
                      typename GRStateTrait<T>::context_type C) {
@@ -591,7 +591,7 @@ public:
   }
 
   template <typename T>
-  const GRState* add(const GRState* st,
+  const GRState *add(const GRState *st,
                      typename GRStateTrait<T>::key_type K,
                      typename GRStateTrait<T>::context_type C) {
     return addGDM(st, GRStateTrait<T>::GDMIndex(),
@@ -599,7 +599,7 @@ public:
   }
 
   template <typename T>
-  const GRState* remove(const GRState* st,
+  const GRState *remove(const GRState *st,
                         typename GRStateTrait<T>::key_type K,
                         typename GRStateTrait<T>::context_type C) {
 
@@ -612,24 +612,24 @@ public:
     return removeGDM(st, GRStateTrait<T>::GDMIndex());
   }
 
-  void* FindGDMContext(void* index,
-                       void* (*CreateContext)(llvm::BumpPtrAllocator&),
+  void *FindGDMContext(void *index,
+                       void *(*CreateContext)(llvm::BumpPtrAllocator&),
                        void  (*DeleteContext)(void*));
 
   template <typename T>
   typename GRStateTrait<T>::context_type get_context() {
-    void* p = FindGDMContext(GRStateTrait<T>::GDMIndex(),
+    void *p = FindGDMContext(GRStateTrait<T>::GDMIndex(),
                              GRStateTrait<T>::CreateContext,
                              GRStateTrait<T>::DeleteContext);
 
     return GRStateTrait<T>::MakeContext(p);
   }
 
-  const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) {
+  const llvm::APSInt* getSymVal(const GRState *St, SymbolRef sym) {
     return ConstraintMgr->getSymVal(St, sym);
   }
 
-  void EndPath(const GRState* St) {
+  void EndPath(const GRState *St) {
     ConstraintMgr->EndPath(St);
   }
 };
@@ -666,7 +666,7 @@ inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
   return !isa<Loc>(LV) ? this : bindLoc(cast<Loc>(LV), V);
 }
 
-inline Loc GRState::getLValue(const VarDecl* VD,
+inline Loc GRState::getLValue(const VarDecl *VD,
                                const LocationContext *LC) const {
   return getStateManager().StoreMgr->getLValueVar(VD, LC);
 }
@@ -684,7 +684,7 @@ inline SVal GRState::getLValue(const ObjCIvarDecl *D, SVal Base) const {
   return getStateManager().StoreMgr->getLValueIvar(D, Base);
 }
 
-inline SVal GRState::getLValue(const FieldDecl* D, SVal Base) const {
+inline SVal GRState::getLValue(const FieldDecl *D, SVal Base) const {
   return getStateManager().StoreMgr->getLValueField(D, Base);
 }
 
@@ -698,7 +698,7 @@ inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {
   return getStateManager().getSymVal(this, sym);
 }
 
-inline SVal GRState::getSVal(const Stmt* Ex, bool useOnlyDirectBindings) const{
+inline SVal GRState::getSVal(const Stmt *Ex, bool useOnlyDirectBindings) const{
   return Env.getSVal(Ex, *getStateManager().svalBuilder,
                      useOnlyDirectBindings);
 }

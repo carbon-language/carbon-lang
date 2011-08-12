@@ -68,25 +68,25 @@ class BasicValueFactory {
   typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<llvm::APSInt> >
           APSIntSetTy;
 
-  ASTContext& Ctx;
+  ASTContext &Ctx;
   llvm::BumpPtrAllocator& BPAlloc;
 
   APSIntSetTy   APSIntSet;
-  void*         PersistentSVals;
-  void*         PersistentSValPairs;
+  void *        PersistentSVals;
+  void *        PersistentSValPairs;
 
   llvm::ImmutableList<SVal>::Factory SValListFactory;
   llvm::FoldingSet<CompoundValData>  CompoundValDataSet;
   llvm::FoldingSet<LazyCompoundValData> LazyCompoundValDataSet;
 
 public:
-  BasicValueFactory(ASTContext& ctx, llvm::BumpPtrAllocator& Alloc)
+  BasicValueFactory(ASTContext &ctx, llvm::BumpPtrAllocator& Alloc)
   : Ctx(ctx), BPAlloc(Alloc), PersistentSVals(0), PersistentSValPairs(0),
     SValListFactory(Alloc) {}
 
   ~BasicValueFactory();
 
-  ASTContext& getContext() const { return Ctx; }
+  ASTContext &getContext() const { return Ctx; }
 
   const llvm::APSInt& getValue(const llvm::APSInt& X);
   const llvm::APSInt& getValue(const llvm::APInt& X, bool isUnsigned);

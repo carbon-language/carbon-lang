@@ -53,7 +53,7 @@ public:
     return "HTMLDiagnostics";
   }
 
-  unsigned ProcessMacroPiece(raw_ostream& os,
+  unsigned ProcessMacroPiece(raw_ostream &os,
                              const PathDiagnosticMacroPiece& P,
                              unsigned num);
 
@@ -504,7 +504,7 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
 #endif
 }
 
-static void EmitAlphaCounter(raw_ostream& os, unsigned n) {
+static void EmitAlphaCounter(raw_ostream &os, unsigned n) {
   unsigned x = n % ('z' - 'a');
   n /= 'z' - 'a';
 
@@ -514,7 +514,7 @@ static void EmitAlphaCounter(raw_ostream& os, unsigned n) {
   os << char('a' + x);
 }
 
-unsigned HTMLDiagnostics::ProcessMacroPiece(raw_ostream& os,
+unsigned HTMLDiagnostics::ProcessMacroPiece(raw_ostream &os,
                                             const PathDiagnosticMacroPiece& P,
                                             unsigned num) {
 

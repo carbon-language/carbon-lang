@@ -204,7 +204,7 @@ void LocationContext::ProfileCommon(llvm::FoldingSetNodeID &ID,
                                     ContextKind ck,
                                     AnalysisContext *ctx,
                                     const LocationContext *parent,
-                                    const void* data) {
+                                    const void *data) {
   ID.AddInteger(ck);
   ID.AddPointer(ctx);
   ID.AddPointer(parent);

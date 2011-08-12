@@ -505,8 +505,8 @@ void IteratorsChecker::checkPreStmt(const CXXOperatorCallExpr *OCE,
 // uninitialized ones as Undefined.
 void IteratorsChecker::checkPreStmt(const DeclStmt *DS,
                                     CheckerContext &C) const {
-  const Decl* D = *DS->decl_begin();
-  const VarDecl* VD = dyn_cast<VarDecl>(D);
+  const Decl *D = *DS->decl_begin();
+  const VarDecl *VD = dyn_cast<VarDecl>(D);
   // Only care about iterators.
   if (getTemplateKind(VD->getType()) != VectorIteratorKind)
     return;
@@ -520,7 +520,7 @@ void IteratorsChecker::checkPreStmt(const DeclStmt *DS,
   state = state->set<IteratorState>(MR, RefState::getUndefined());
 
   // if there is an initializer, handle marking Valid if a proper initializer
-  const Expr* InitEx = VD->getInit();
+  const Expr *InitEx = VD->getInit();
   if (InitEx) {
     // FIXME: This is too syntactic.  Since 'InitEx' will be analyzed first
     // it should resolve to an SVal that we can check for validity

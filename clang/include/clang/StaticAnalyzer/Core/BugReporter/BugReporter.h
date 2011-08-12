@@ -50,9 +50,9 @@ class BugType;
 class BugReporterVisitor : public llvm::FoldingSetNode {
 public:
   virtual ~BugReporterVisitor();
-  virtual PathDiagnosticPiece* VisitNode(const ExplodedNode* N,
-                                         const ExplodedNode* PrevN,
-                                         BugReporterContext& BRC) = 0;
+  virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
+                                         const ExplodedNode *PrevN,
+                                         BugReporterContext &BRC) = 0;
 
   virtual bool isOwnedByReporterContext() { return true; }
   virtual void Profile(llvm::FoldingSetNodeID &ID) const = 0;
@@ -82,7 +82,7 @@ public:
   public:
     virtual ~NodeResolver() {}
     virtual const ExplodedNode*
-            getOriginalNode(const ExplodedNode* N) = 0;
+            getOriginalNode(const ExplodedNode *N) = 0;
   };
 
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode)
@@ -101,13 +101,13 @@ public:
   BugType& getBugType() { return BT; }
 
   // FIXME: Perhaps this should be moved into a subclass?
-  const ExplodedNode* getErrorNode() const { return ErrorNode; }
+  const ExplodedNode *getErrorNode() const { return ErrorNode; }
 
   // FIXME: Do we need this?  Maybe getLocation() should return a ProgramPoint
   // object.
   // FIXME: If we do need it, we can probably just make it private to
   // BugReporter.
-  const Stmt* getStmt() const;
+  const Stmt *getStmt() const;
 
   const StringRef getDescription() const { return Description; }
 
@@ -121,8 +121,8 @@ public:
   }
 
   // FIXME: Perhaps move this into a subclass.
-  virtual PathDiagnosticPiece* getEndPath(BugReporterContext& BRC,
-                                          const ExplodedNode* N);
+  virtual PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
+                                          const ExplodedNode *N);
 
   /// getLocation - Return the "definitive" location of the reported bug.
   ///  While a bug can span an entire path, usually there is a specific
@@ -135,12 +135,12 @@ public:
   /// getRanges - Returns the source ranges associated with this bug.
   virtual std::pair<ranges_iterator, ranges_iterator> getRanges() const;
 
-  virtual PathDiagnosticPiece* VisitNode(const ExplodedNode* N,
-                                         const ExplodedNode* PrevN,
-                                         BugReporterContext& BR);
+  virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
+                                         const ExplodedNode *PrevN,
+                                         BugReporterContext &BR);
 
-  virtual void registerInitialVisitors(BugReporterContext& BRC,
-                                       const ExplodedNode* N) {}
+  virtual void registerInitialVisitors(BugReporterContext &BRC,
+                                       const ExplodedNode *N) {}
 };
 
 //===----------------------------------------------------------------------===//
@@ -166,9 +166,9 @@ public:
     std::list<BugReport*>::iterator impl;
   public:
     iterator(std::list<BugReport*>::iterator i) : impl(i) {}
-    iterator& operator++() { ++impl; return *this; }
-    bool operator==(const iterator& I) const { return I.impl == impl; }
-    bool operator!=(const iterator& I) const { return I.impl != impl; }
+    iterator &operator++() { ++impl; return *this; }
+    bool operator==(const iterator &I) const { return I.impl == impl; }
+    bool operator!=(const iterator &I) const { return I.impl != impl; }
     BugReport* operator*() const { return *impl; }
     BugReport* operator->() const { return *impl; }
   };
@@ -177,9 +177,9 @@ public:
     std::list<BugReport*>::const_iterator impl;
   public:
     const_iterator(std::list<BugReport*>::const_iterator i) : impl(i) {}
-    const_iterator& operator++() { ++impl; return *this; }
-    bool operator==(const const_iterator& I) const { return I.impl == impl; }
-    bool operator!=(const const_iterator& I) const { return I.impl != impl; }
+    const_iterator &operator++() { ++impl; return *this; }
+    bool operator==(const const_iterator &I) const { return I.impl == impl; }
+    bool operator!=(const const_iterator &I) const { return I.impl != impl; }
     const BugReport* operator*() const { return *impl; }
     const BugReport* operator->() const { return *impl; }
   };
@@ -253,7 +253,7 @@ public:
 
   ~EnhancedBugReport() {}
 
-  void registerInitialVisitors(BugReporterContext& BRC, const ExplodedNode* N) {
+  void registerInitialVisitors(BugReporterContext &BRC, const ExplodedNode *N) {
     for (Creators::iterator I = creators.begin(), E = creators.end(); I!=E; ++I)
       I->first(BRC, I->second, N);
   }
@@ -272,7 +272,7 @@ public:
   virtual ~BugReporterData();
   virtual Diagnostic& getDiagnostic() = 0;
   virtual PathDiagnosticClient* getPathDiagnosticClient() = 0;
-  virtual ASTContext& getASTContext() = 0;
+  virtual ASTContext &getASTContext() = 0;
   virtual SourceManager& getSourceManager() = 0;
 };
 
@@ -321,7 +321,7 @@ public:
   EQClasses_iterator EQClasses_begin() { return EQClasses.begin(); }
   EQClasses_iterator EQClasses_end() { return EQClasses.end(); }
 
-  ASTContext& getContext() { return D.getASTContext(); }
+  ASTContext &getContext() { return D.getASTContext(); }
 
   SourceManager& getSourceManager() { return D.getSourceManager(); }
 
@@ -450,7 +450,7 @@ public:
     return getStateManager().getSValBuilder();
   }
 
-  ASTContext& getASTContext() {
+  ASTContext &getASTContext() {
     return BR.getContext();
   }
 
@@ -492,10 +492,10 @@ const Stmt *GetRetValExpr(const ExplodedNode *N);
 
 void registerConditionVisitor(BugReporterContext &BRC);
 
-void registerTrackNullOrUndefValue(BugReporterContext& BRC, const void *stmt,
-                                   const ExplodedNode* N);
+void registerTrackNullOrUndefValue(BugReporterContext &BRC, const void *stmt,
+                                   const ExplodedNode *N);
 
-void registerFindLastStore(BugReporterContext& BRC, const void *memregion,
+void registerFindLastStore(BugReporterContext &BRC, const void *memregion,
                            const ExplodedNode *N);
 
 void registerNilReceiverVisitor(BugReporterContext &BRC);  

@@ -255,7 +255,7 @@ public:
                               GraphExpander *defaultEval = 0);
   
   /// \brief Run checkers for the entire Translation Unit.
-  void runCheckersOnEndOfTranslationUnit(const TranslationUnitDecl* TU,
+  void runCheckersOnEndOfTranslationUnit(const TranslationUnitDecl *TU,
                                          AnalysisManager &mgr,
                                          BugReporter &BR);
 

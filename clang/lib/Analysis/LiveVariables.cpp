@@ -38,7 +38,7 @@ namespace {
   };
 }
 
-static LiveVariablesImpl &getImpl(void* x) {
+static LiveVariablesImpl &getImpl(void *x) {
   return *((LiveVariablesImpl *) x);
 }
 
@@ -236,7 +236,7 @@ void TransferFunctions::VisitBinaryOperator(BinaryOperator *B) {
     // Assigning to a variable?
     Expr *LHS = B->getLHS()->IgnoreParens();
     
-    if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS))
+    if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(LHS))
       if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
         // Assignments to references don't kill the ref's address
         if (VD->getType()->isReferenceType())
@@ -274,7 +274,7 @@ void TransferFunctions::VisitDeclRefExpr(DeclRefExpr *DR) {
 void TransferFunctions::VisitDeclStmt(DeclStmt *DS) {
   for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE = DS->decl_end();
        DI != DE; ++DI)
-    if (VarDecl* VD = dyn_cast<VarDecl>(*DI)) {
+    if (VarDecl *VD = dyn_cast<VarDecl>(*DI)) {
       if (!isAlwaysAlive(VD))
         val.liveDecls = LV.DSetFact.remove(val.liveDecls, VD);
     }

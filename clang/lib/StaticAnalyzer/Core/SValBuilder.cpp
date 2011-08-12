@@ -147,7 +147,7 @@ SValBuilder::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
   return nonloc::SymbolVal(sym);
 }
 
-DefinedSVal SValBuilder::getFunctionPointer(const FunctionDecl* func) {
+DefinedSVal SValBuilder::getFunctionPointer(const FunctionDecl *func) {
   return loc::MemRegionVal(MemMgr.getFunctionTextRegion(func));
 }
 

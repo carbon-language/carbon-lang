@@ -73,7 +73,7 @@ public:
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
   virtual StoreRef BindCompoundLiteral(Store store,
-                                       const CompoundLiteralExpr* cl,
+                                       const CompoundLiteralExpr *cl,
                                        const LocationContext *LC, SVal v) = 0;
 
   /// getInitialStore - Returns the initial "empty" store representing the
@@ -97,16 +97,16 @@ public:
     return svalBuilder.makeLoc(MRMgr.getStringRegion(S));
   }
 
-  Loc getLValueCompoundLiteral(const CompoundLiteralExpr* CL,
+  Loc getLValueCompoundLiteral(const CompoundLiteralExpr *CL,
                                const LocationContext *LC) {
     return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC));
   }
 
-  virtual SVal getLValueIvar(const ObjCIvarDecl* decl, SVal base) {
+  virtual SVal getLValueIvar(const ObjCIvarDecl *decl, SVal base) {
     return getLValueFieldOrIvar(decl, base);
   }
 
-  virtual SVal getLValueField(const FieldDecl* D, SVal Base) {
+  virtual SVal getLValueField(const FieldDecl *D, SVal Base) {
     return getLValueFieldOrIvar(D, Base);
   }
 
@@ -199,7 +199,7 @@ public:
   virtual StoreRef enterStackFrame(const GRState *state,
                                    const StackFrameContext *frame);
 
-  virtual void print(Store store, raw_ostream& Out,
+  virtual void print(Store store, raw_ostream &Out,
                      const char* nl, const char *sep) = 0;
 
   class BindingsHandler {
@@ -223,7 +223,7 @@ protected:
                         QualType castTy, bool performTestOnly = true);
 
 private:
-  SVal getLValueFieldOrIvar(const Decl* decl, SVal base);
+  SVal getLValueFieldOrIvar(const Decl *decl, SVal base);
 };
 
 

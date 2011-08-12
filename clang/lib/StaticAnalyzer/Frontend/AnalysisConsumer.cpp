@@ -62,7 +62,7 @@ namespace {
 
 class AnalysisConsumer : public ASTConsumer {
 public:
-  ASTContext* Ctx;
+  ASTContext *Ctx;
   const Preprocessor &PP;
   const std::string OutDir;
   AnalyzerOptions Opts;
@@ -187,7 +187,7 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
       case Decl::CXXConversion:
       case Decl::CXXMethod:
       case Decl::Function: {
-        FunctionDecl* FD = cast<FunctionDecl>(D);
+        FunctionDecl *FD = cast<FunctionDecl>(D);
         // We skip function template definitions, as their semantics is
         // only determined when they are instantiated.
         if (FD->isThisDeclarationADefinition() &&
@@ -203,7 +203,7 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
        
       case Decl::ObjCCategoryImpl:
       case Decl::ObjCImplementation: {
-        ObjCImplDecl* ID = cast<ObjCImplDecl>(*I);
+        ObjCImplDecl *ID = cast<ObjCImplDecl>(*I);
         HandleCode(ID);
         
         for (ObjCContainerDecl::method_iterator MI = ID->meth_begin(), 
@@ -391,12 +391,12 @@ class UbigraphViz : public ExplodedNode::Auditor {
   VMap M;
 
 public:
-  UbigraphViz(raw_ostream* out, llvm::sys::Path& dir,
+  UbigraphViz(raw_ostream *out, llvm::sys::Path& dir,
               llvm::sys::Path& filename);
 
   ~UbigraphViz();
 
-  virtual void AddEdge(ExplodedNode* Src, ExplodedNode* Dst);
+  virtual void AddEdge(ExplodedNode *Src, ExplodedNode *Dst);
 };
 
 } // end anonymous namespace
@@ -426,7 +426,7 @@ static ExplodedNode::Auditor* CreateUbiViz() {
   return new UbigraphViz(Stream.take(), Dir, Filename);
 }
 
-void UbigraphViz::AddEdge(ExplodedNode* Src, ExplodedNode* Dst) {
+void UbigraphViz::AddEdge(ExplodedNode *Src, ExplodedNode *Dst) {
 
   assert (Src != Dst && "Self-edges are not allowed.");
 
@@ -460,7 +460,7 @@ void UbigraphViz::AddEdge(ExplodedNode* Src, ExplodedNode* Dst) {
        << ", ('arrow','true'), ('oriented', 'true'))\n";
 }
 
-UbigraphViz::UbigraphViz(raw_ostream* out, llvm::sys::Path& dir,
+UbigraphViz::UbigraphViz(raw_ostream *out, llvm::sys::Path& dir,
                          llvm::sys::Path& filename)
   : Out(out), Dir(dir), Filename(filename), Cntr(0) {
 

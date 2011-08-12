@@ -28,25 +28,25 @@ class UndefBranchChecker : public Checker<check::BranchCondition> {
 
   struct FindUndefExpr {
     GRStateManager& VM;
-    const GRState* St;
+    const GRState *St;
 
-    FindUndefExpr(GRStateManager& V, const GRState* S) : VM(V), St(S) {}
+    FindUndefExpr(GRStateManager& V, const GRState *S) : VM(V), St(S) {}
 
-    const Expr* FindExpr(const Expr* Ex) {
+    const Expr *FindExpr(const Expr *Ex) {
       if (!MatchesCriteria(Ex))
         return 0;
 
       for (Stmt::const_child_iterator I = Ex->child_begin(), 
                                       E = Ex->child_end();I!=E;++I)
-        if (const Expr* ExI = dyn_cast_or_null<Expr>(*I)) {
-          const Expr* E2 = FindExpr(ExI);
+        if (const Expr *ExI = dyn_cast_or_null<Expr>(*I)) {
+          const Expr *E2 = FindExpr(ExI);
           if (E2) return E2;
         }
 
       return Ex;
     }
 
-    bool MatchesCriteria(const Expr* Ex) { return St->getSVal(Ex).isUndef(); }
+    bool MatchesCriteria(const Expr *Ex) { return St->getSVal(Ex).isUndef(); }
   };
 
 public:
@@ -75,7 +75,7 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
       // subexpressions and roughly look for the most nested subexpression
       // that binds to Undefined.  We then highlight that expression's range.
       BlockEdge B = cast<BlockEdge>(N->getLocation());
-      const Expr* Ex = cast<Expr>(B.getSrc()->getTerminatorCondition());
+      const Expr *Ex = cast<Expr>(B.getSrc()->getTerminatorCondition());
       assert (Ex && "Block must have a terminator.");
 
       // Get the predecessor node and check if is a PostStmt with the Stmt
@@ -89,9 +89,9 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
       // had to already be undefined.
       ExplodedNode *PrevN = *N->pred_begin();
       ProgramPoint P = PrevN->getLocation();
-      const GRState* St = N->getState();
+      const GRState *St = N->getState();
 
-      if (PostStmt* PS = dyn_cast<PostStmt>(&P))
+      if (PostStmt *PS = dyn_cast<PostStmt>(&P))
         if (PS->getStmt() == Ex)
           St = PrevN->getState();
 

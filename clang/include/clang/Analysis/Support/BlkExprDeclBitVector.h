@@ -62,16 +62,16 @@ struct DeclBitVector_Types {
     AnalysisDataTy() : NDecls(0) {}
     virtual ~AnalysisDataTy() {}
 
-    bool isTracked(const NamedDecl* SD) { return DMap.find(SD) != DMap.end(); }
+    bool isTracked(const NamedDecl *SD) { return DMap.find(SD) != DMap.end(); }
 
-    Idx getIdx(const NamedDecl* SD) const {
+    Idx getIdx(const NamedDecl *SD) const {
       DMapTy::const_iterator I = DMap.find(SD);
       return I == DMap.end() ? Idx() : Idx(I->second);
     }
 
     unsigned getNumDecls() const { return NDecls; }
 
-    void Register(const NamedDecl* SD) {
+    void Register(const NamedDecl *SD) {
       if (!isTracked(SD)) DMap[SD] = NDecls++;
     }
 
@@ -117,11 +117,11 @@ struct DeclBitVector_Types {
     }
 
     llvm::BitVector::reference
-    operator()(const NamedDecl* ND, const AnalysisDataTy& AD) {
+    operator()(const NamedDecl *ND, const AnalysisDataTy& AD) {
       return getBit(AD.getIdx(ND));
     }
 
-    bool operator()(const NamedDecl* ND, const AnalysisDataTy& AD) const {
+    bool operator()(const NamedDecl *ND, const AnalysisDataTy& AD) const {
       return getBit(AD.getIdx(ND));
     }
 
@@ -171,14 +171,14 @@ struct StmtDeclBitVector_Types {
   //===--------------------------------------------------------------------===//
 
   class AnalysisDataTy : public DeclBitVector_Types::AnalysisDataTy {
-    ASTContext* ctx;
+    ASTContext *ctx;
     CFG* cfg;
   public:
     AnalysisDataTy() : ctx(0), cfg(0) {}
     virtual ~AnalysisDataTy() {}
 
-    void setContext(ASTContext& c) { ctx = &c; }
-    ASTContext& getContext() {
+    void setContext(ASTContext &c) { ctx = &c; }
+    ASTContext &getContext() {
       assert(ctx && "ASTContext should not be NULL.");
       return *ctx;
     }
@@ -186,10 +186,10 @@ struct StmtDeclBitVector_Types {
     void setCFG(CFG& c) { cfg = &c; }
     CFG& getCFG() { assert(cfg && "CFG should not be NULL."); return *cfg; }
 
-    bool isTracked(const Stmt* S) { return cfg->isBlkExpr(S); }
+    bool isTracked(const Stmt *S) { return cfg->isBlkExpr(S); }
     using DeclBitVector_Types::AnalysisDataTy::isTracked;
 
-    unsigned getIdx(const Stmt* S) const {
+    unsigned getIdx(const Stmt *S) const {
       CFG::BlkExprNumTy I = cfg->getBlkExprNum(S);
       assert(I && "Stmtession not tracked for bitvector.");
       return I;
@@ -248,11 +248,11 @@ struct StmtDeclBitVector_Types {
     }
 
     llvm::BitVector::reference
-    operator()(const Stmt* S, const AnalysisDataTy& AD) {
+    operator()(const Stmt *S, const AnalysisDataTy& AD) {
       return BlkExprBV[AD.getIdx(S)];
     }
     const llvm::BitVector::reference
-    operator()(const Stmt* S, const AnalysisDataTy& AD) const {
+    operator()(const Stmt *S, const AnalysisDataTy& AD) const {
       return const_cast<ValTy&>(*this)(S,AD);
     }
 

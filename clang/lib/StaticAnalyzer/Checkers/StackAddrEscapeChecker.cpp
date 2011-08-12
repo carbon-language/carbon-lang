@@ -50,7 +50,7 @@ SourceRange StackAddrEscapeChecker::GenName(raw_ostream &os,
   
   // Check if the region is a compound literal.
   if (const CompoundLiteralRegion* CR = dyn_cast<CompoundLiteralRegion>(R)) { 
-    const CompoundLiteralExpr* CL = CR->getLiteralExpr();
+    const CompoundLiteralExpr *CL = CR->getLiteralExpr();
     os << "stack memory associated with a compound literal "
           "declared on line "
         << SM.getExpansionLineNumber(CL->getLocStart())
@@ -58,7 +58,7 @@ SourceRange StackAddrEscapeChecker::GenName(raw_ostream &os,
     range = CL->getSourceRange();
   }
   else if (const AllocaRegion* AR = dyn_cast<AllocaRegion>(R)) {
-    const Expr* ARE = AR->getExpr();
+    const Expr *ARE = AR->getExpr();
     SourceLocation L = ARE->getLocStart();
     range = ARE->getSourceRange();    
     os << "stack memory allocated by call to alloca() on line "

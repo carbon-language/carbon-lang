@@ -137,7 +137,7 @@ public:
   /// Compute the offset within the top level memory object.
   RegionOffset getAsOffset() const;
 
-  virtual void dumpToStream(raw_ostream& os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
 
   void dump() const;
 
@@ -198,7 +198,7 @@ class StaticGlobalSpaceRegion : public GlobalsSpaceRegion {
 public:
   void Profile(llvm::FoldingSetNodeID &ID) const;
   
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
   const CodeTextRegion *getCodeRegion() const { return CR; }
 
@@ -215,7 +215,7 @@ class NonStaticGlobalSpaceRegion : public GlobalsSpaceRegion {
   
 public:
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
   static bool classof(const MemRegion *R) {
     return R->getKind() == NonStaticGlobalSpaceRegionKind;
@@ -324,14 +324,14 @@ class AllocaRegion : public SubRegion {
 protected:
   unsigned Cnt; // Block counter.  Used to distinguish different pieces of
                 // memory allocated by alloca at the same call site.
-  const Expr* Ex;
+  const Expr *Ex;
 
-  AllocaRegion(const Expr* ex, unsigned cnt, const MemRegion *superRegion)
+  AllocaRegion(const Expr *ex, unsigned cnt, const MemRegion *superRegion)
     : SubRegion(superRegion, AllocaRegionKind), Cnt(cnt), Ex(ex) {}
 
 public:
 
-  const Expr* getExpr() const { return Ex; }
+  const Expr *getExpr() const { return Ex; }
 
   bool isBoundable() const { return true; }
 
@@ -339,10 +339,10 @@ public:
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Expr* Ex,
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Expr *Ex,
                             unsigned Cnt, const MemRegion *superRegion);
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == AllocaRegionKind;
@@ -414,7 +414,7 @@ public:
 class FunctionTextRegion : public CodeTextRegion {
   const FunctionDecl *FD;
 public:
-  FunctionTextRegion(const FunctionDecl* fd, const MemRegion* sreg)
+  FunctionTextRegion(const FunctionDecl *fd, const MemRegion* sreg)
     : CodeTextRegion(sreg, FunctionTextRegionKind), FD(fd) {}
   
   QualType getLocationType() const {
@@ -425,7 +425,7 @@ public:
     return FD;
   }
     
-  virtual void dumpToStream(raw_ostream& os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
   
   void Profile(llvm::FoldingSetNodeID& ID) const;
   
@@ -466,7 +466,7 @@ public:
 
   AnalysisContext *getAnalysisContext() const { return AC; }
     
-  virtual void dumpToStream(raw_ostream& os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
   
   void Profile(llvm::FoldingSetNodeID& ID) const;
   
@@ -519,7 +519,7 @@ public:
     bool operator!=(const referenced_vars_iterator &I) const {
       return I.R != R;
     }
-    referenced_vars_iterator& operator++() {
+    referenced_vars_iterator &operator++() {
       ++R;
       return *this;
     }
@@ -528,7 +528,7 @@ public:
   referenced_vars_iterator referenced_vars_begin() const;
   referenced_vars_iterator referenced_vars_end() const;  
     
-  virtual void dumpToStream(raw_ostream& os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
     
   void Profile(llvm::FoldingSetNodeID& ID) const;
     
@@ -569,7 +569,7 @@ public:
                             SymbolRef sym,
                             const MemRegion* superRegion);
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == SymbolicRegionKind;
@@ -605,7 +605,7 @@ public:
     ProfileRegion(ID, Str, superRegion);
   }
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == StringRegionKind;
@@ -618,13 +618,13 @@ public:
 class CompoundLiteralRegion : public TypedValueRegion {
 private:
   friend class MemRegionManager;
-  const CompoundLiteralExpr* CL;
+  const CompoundLiteralExpr *CL;
 
-  CompoundLiteralRegion(const CompoundLiteralExpr* cl, const MemRegion* sReg)
+  CompoundLiteralRegion(const CompoundLiteralExpr *cl, const MemRegion* sReg)
     : TypedValueRegion(sReg, CompoundLiteralRegionKind), CL(cl) {}
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID,
-                            const CompoundLiteralExpr* CL,
+                            const CompoundLiteralExpr *CL,
                             const MemRegion* superRegion);
 public:
   QualType getValueType() const {
@@ -635,9 +635,9 @@ public:
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
-  const CompoundLiteralExpr* getLiteralExpr() const { return CL; }
+  const CompoundLiteralExpr *getLiteralExpr() const { return CL; }
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == CompoundLiteralRegionKind;
@@ -646,16 +646,16 @@ public:
 
 class DeclRegion : public TypedValueRegion {
 protected:
-  const Decl* D;
+  const Decl *D;
 
-  DeclRegion(const Decl* d, const MemRegion* sReg, Kind k)
+  DeclRegion(const Decl *d, const MemRegion* sReg, Kind k)
     : TypedValueRegion(sReg, k), D(d) {}
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Decl* D,
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Decl *D,
                       const MemRegion* superRegion, Kind k);
 
 public:
-  const Decl* getDecl() const { return D; }
+  const Decl *getDecl() const { return D; }
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
   DefinedOrUnknownSVal getExtent(SValBuilder &svalBuilder) const;
@@ -670,10 +670,10 @@ class VarRegion : public DeclRegion {
   friend class MemRegionManager;
 
   // Constructors and private methods.
-  VarRegion(const VarDecl* vd, const MemRegion* sReg)
+  VarRegion(const VarDecl *vd, const MemRegion* sReg)
     : DeclRegion(vd, sReg, VarRegionKind) {}
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const VarDecl* VD,
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const VarDecl *VD,
                             const MemRegion *superRegion) {
     DeclRegion::ProfileRegion(ID, VD, superRegion, VarRegionKind);
   }
@@ -690,7 +690,7 @@ public:
     return getDecl()->getType();
   }
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == VarRegionKind;
@@ -717,7 +717,7 @@ public:
     return QualType(ThisPointerTy, 0);
   }
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
   
   static bool classof(const MemRegion* R) {
     return R->getKind() == CXXThisRegionKind;
@@ -730,14 +730,14 @@ private:
 class FieldRegion : public DeclRegion {
   friend class MemRegionManager;
 
-  FieldRegion(const FieldDecl* fd, const MemRegion* sReg)
+  FieldRegion(const FieldDecl *fd, const MemRegion* sReg)
     : DeclRegion(fd, sReg, FieldRegionKind) {}
 
 public:
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
-  const FieldDecl* getDecl() const { return cast<FieldDecl>(D); }
+  const FieldDecl *getDecl() const { return cast<FieldDecl>(D); }
 
   QualType getValueType() const {
     // FIXME: We can cache this if needed.
@@ -746,7 +746,7 @@ public:
 
   DefinedOrUnknownSVal getExtent(SValBuilder &svalBuilder) const;
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const FieldDecl* FD,
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const FieldDecl *FD,
                             const MemRegion* superRegion) {
     DeclRegion::ProfileRegion(ID, FD, superRegion, FieldRegionKind);
   }
@@ -760,19 +760,19 @@ class ObjCIvarRegion : public DeclRegion {
 
   friend class MemRegionManager;
 
-  ObjCIvarRegion(const ObjCIvarDecl* ivd, const MemRegion* sReg)
+  ObjCIvarRegion(const ObjCIvarDecl *ivd, const MemRegion* sReg)
     : DeclRegion(ivd, sReg, ObjCIvarRegionKind) {}
 
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const ObjCIvarDecl* ivd,
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID, const ObjCIvarDecl *ivd,
                             const MemRegion* superRegion) {
     DeclRegion::ProfileRegion(ID, ivd, superRegion, ObjCIvarRegionKind);
   }
 
 public:
-  const ObjCIvarDecl* getDecl() const { return cast<ObjCIvarDecl>(D); }
+  const ObjCIvarDecl *getDecl() const { return cast<ObjCIvarDecl>(D); }
   QualType getValueType() const { return getDecl()->getType(); }
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == ObjCIvarRegionKind;
@@ -799,7 +799,7 @@ public:
   CharUnits getOffset() const { return Offset; }
   const MemRegion *getRegion() const { return Region; }
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
   void dump() const;
 };
 
@@ -834,7 +834,7 @@ public:
   /// Compute the offset within the array. The array might also be a subobject.
   RegionRawOffset getAsArrayOffset() const;
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
@@ -860,7 +860,7 @@ public:
     return Ex->getType();
   }
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) const;
 
@@ -887,7 +887,7 @@ public:
 
   QualType getValueType() const;
 
-  void dumpToStream(raw_ostream& os) const;
+  void dumpToStream(raw_ostream &os) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) const;
 
@@ -961,13 +961,13 @@ public:
   const MemSpaceRegion *getCodeRegion();
 
   /// getAllocaRegion - Retrieve a region associated with a call to alloca().
-  const AllocaRegion *getAllocaRegion(const Expr* Ex, unsigned Cnt,
+  const AllocaRegion *getAllocaRegion(const Expr *Ex, unsigned Cnt,
                                       const LocationContext *LC);
 
   /// getCompoundLiteralRegion - Retrieve the region associated with a
   ///  given CompoundLiteral.
   const CompoundLiteralRegion*
-  getCompoundLiteralRegion(const CompoundLiteralExpr* CL,
+  getCompoundLiteralRegion(const CompoundLiteralExpr *CL,
                            const LocationContext *LC);
   
   /// getCXXThisRegion - Retrieve the [artificial] region associated with the
@@ -1004,7 +1004,7 @@ public:
   ///  a specified FieldDecl.  'superRegion' corresponds to the containing
   ///  memory region (which typically represents the memory representing
   ///  a structure or class).
-  const FieldRegion *getFieldRegion(const FieldDecl* fd,
+  const FieldRegion *getFieldRegion(const FieldDecl *fd,
                                     const MemRegion* superRegion);
 
   const FieldRegion *getFieldRegionWithSuper(const FieldRegion *FR,
@@ -1016,7 +1016,7 @@ public:
   ///   a specified Objective-c instance variable.  'superRegion' corresponds
   ///   to the containing region (which typically represents the Objective-C
   ///   object).
-  const ObjCIvarRegion *getObjCIvarRegion(const ObjCIvarDecl* ivd,
+  const ObjCIvarRegion *getObjCIvarRegion(const ObjCIvarDecl *ivd,
                                           const MemRegion* superRegion);
 
   const CXXTempObjectRegion *getCXXTempObjectRegion(Expr const *Ex,
@@ -1079,7 +1079,7 @@ private:
 // Out-of-line member definitions.
 //===----------------------------------------------------------------------===//
 
-inline ASTContext& MemRegion::getContext() const {
+inline ASTContext &MemRegion::getContext() const {
   return getMemRegionManager()->getContext();
 }
   
@@ -1092,7 +1092,7 @@ inline ASTContext& MemRegion::getContext() const {
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
-static inline raw_ostream& operator<<(raw_ostream& os,
+static inline raw_ostream &operator<<(raw_ostream &os,
                                       const clang::ento::MemRegion* R) {
   R->dumpToStream(os);
   return os;

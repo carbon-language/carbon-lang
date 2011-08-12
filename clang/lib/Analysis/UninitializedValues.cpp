@@ -408,8 +408,8 @@ void TransferFunctions::reportUninit(const DeclRefExpr *ex,
   if (handler) handler->handleUseOfUninitVariable(ex, vd, isAlwaysUnit);
 }
 
-FindVarResult TransferFunctions::findBlockVarDecl(Expr* ex) {
-  if (DeclRefExpr* dr = dyn_cast<DeclRefExpr>(ex->IgnoreParenCasts()))
+FindVarResult TransferFunctions::findBlockVarDecl(Expr *ex) {
+  if (DeclRefExpr *dr = dyn_cast<DeclRefExpr>(ex->IgnoreParenCasts()))
     if (VarDecl *vd = dyn_cast<VarDecl>(dr->getDecl()))
       if (isTrackedVar(vd))
         return FindVarResult(vd, dr);  
@@ -419,9 +419,9 @@ FindVarResult TransferFunctions::findBlockVarDecl(Expr* ex) {
 void TransferFunctions::VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs) {
   // This represents an initialization of the 'element' value.
   Stmt *element = fs->getElement();
-  const VarDecl* vd = 0;
+  const VarDecl *vd = 0;
   
-  if (DeclStmt* ds = dyn_cast<DeclStmt>(element)) {
+  if (DeclStmt *ds = dyn_cast<DeclStmt>(element)) {
     vd = cast<VarDecl>(ds->getSingleDecl());
     if (!isTrackedVar(vd))
       vd = 0;
@@ -509,7 +509,7 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
 void TransferFunctions::VisitBinaryOperator(clang::BinaryOperator *bo) {
   if (bo->isAssignmentOp()) {
     const FindVarResult &res = findBlockVarDecl(bo->getLHS());
-    if (const VarDecl* vd = res.getDecl()) {
+    if (const VarDecl *vd = res.getDecl()) {
       ValueVector::reference val = vals[vd];
       if (isUninitialized(val)) {
         if (bo->getOpcode() != BO_Assign)

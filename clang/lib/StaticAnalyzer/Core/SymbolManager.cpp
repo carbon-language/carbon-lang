@@ -25,7 +25,7 @@ void SymExpr::dump() const {
   dumpToStream(llvm::errs());
 }
 
-static void print(raw_ostream& os, BinaryOperator::Opcode Op) {
+static void print(raw_ostream &os, BinaryOperator::Opcode Op) {
   switch (Op) {
     default:
       assert(false && "operator printing not implemented");
@@ -49,7 +49,7 @@ static void print(raw_ostream& os, BinaryOperator::Opcode Op) {
   }
 }
 
-void SymIntExpr::dumpToStream(raw_ostream& os) const {
+void SymIntExpr::dumpToStream(raw_ostream &os) const {
   os << '(';
   getLHS()->dumpToStream(os);
   os << ") ";
@@ -58,7 +58,7 @@ void SymIntExpr::dumpToStream(raw_ostream& os) const {
   if (getRHS().isUnsigned()) os << 'U';
 }
 
-void SymSymExpr::dumpToStream(raw_ostream& os) const {
+void SymSymExpr::dumpToStream(raw_ostream &os) const {
   os << '(';
   getLHS()->dumpToStream(os);
   os << ") ";
@@ -67,25 +67,25 @@ void SymSymExpr::dumpToStream(raw_ostream& os) const {
   os << ')';
 }
 
-void SymbolConjured::dumpToStream(raw_ostream& os) const {
+void SymbolConjured::dumpToStream(raw_ostream &os) const {
   os << "conj_$" << getSymbolID() << '{' << T.getAsString() << '}';
 }
 
-void SymbolDerived::dumpToStream(raw_ostream& os) const {
+void SymbolDerived::dumpToStream(raw_ostream &os) const {
   os << "derived_$" << getSymbolID() << '{'
      << getParentSymbol() << ',' << getRegion() << '}';
 }
 
-void SymbolExtent::dumpToStream(raw_ostream& os) const {
+void SymbolExtent::dumpToStream(raw_ostream &os) const {
   os << "extent_$" << getSymbolID() << '{' << getRegion() << '}';
 }
 
-void SymbolMetadata::dumpToStream(raw_ostream& os) const {
+void SymbolMetadata::dumpToStream(raw_ostream &os) const {
   os << "meta_$" << getSymbolID() << '{'
      << getRegion() << ',' << T.getAsString() << '}';
 }
 
-void SymbolRegionValue::dumpToStream(raw_ostream& os) const {
+void SymbolRegionValue::dumpToStream(raw_ostream &os) const {
   os << "reg_$" << getSymbolID() << "<" << R << ">";
 }
 
@@ -93,7 +93,7 @@ const SymbolRegionValue*
 SymbolManager::getRegionValueSymbol(const TypedValueRegion* R) {
   llvm::FoldingSetNodeID profile;
   SymbolRegionValue::Profile(profile, R);
-  void* InsertPos;
+  void *InsertPos;
   SymExpr *SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
   if (!SD) {
     SD = (SymExpr*) BPAlloc.Allocate<SymbolRegionValue>();
@@ -106,12 +106,12 @@ SymbolManager::getRegionValueSymbol(const TypedValueRegion* R) {
 }
 
 const SymbolConjured*
-SymbolManager::getConjuredSymbol(const Stmt* E, QualType T, unsigned Count,
-                                 const void* SymbolTag) {
+SymbolManager::getConjuredSymbol(const Stmt *E, QualType T, unsigned Count,
+                                 const void *SymbolTag) {
 
   llvm::FoldingSetNodeID profile;
   SymbolConjured::Profile(profile, E, T, Count, SymbolTag);
-  void* InsertPos;
+  void *InsertPos;
   SymExpr *SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
   if (!SD) {
     SD = (SymExpr*) BPAlloc.Allocate<SymbolConjured>();
@@ -129,7 +129,7 @@ SymbolManager::getDerivedSymbol(SymbolRef parentSymbol,
 
   llvm::FoldingSetNodeID profile;
   SymbolDerived::Profile(profile, parentSymbol, R);
-  void* InsertPos;
+  void *InsertPos;
   SymExpr *SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
   if (!SD) {
     SD = (SymExpr*) BPAlloc.Allocate<SymbolDerived>();
@@ -145,7 +145,7 @@ const SymbolExtent*
 SymbolManager::getExtentSymbol(const SubRegion *R) {
   llvm::FoldingSetNodeID profile;
   SymbolExtent::Profile(profile, R);
-  void* InsertPos;
+  void *InsertPos;
   SymExpr *SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
   if (!SD) {
     SD = (SymExpr*) BPAlloc.Allocate<SymbolExtent>();
@@ -158,12 +158,12 @@ SymbolManager::getExtentSymbol(const SubRegion *R) {
 }
 
 const SymbolMetadata*
-SymbolManager::getMetadataSymbol(const MemRegion* R, const Stmt* S, QualType T,
-                                 unsigned Count, const void* SymbolTag) {
+SymbolManager::getMetadataSymbol(const MemRegion* R, const Stmt *S, QualType T,
+                                 unsigned Count, const void *SymbolTag) {
 
   llvm::FoldingSetNodeID profile;
   SymbolMetadata::Profile(profile, R, S, T, Count, SymbolTag);
-  void* InsertPos;
+  void *InsertPos;
   SymExpr *SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
   if (!SD) {
     SD = (SymExpr*) BPAlloc.Allocate<SymbolMetadata>();
@@ -215,11 +215,11 @@ QualType SymbolConjured::getType(ASTContext&) const {
   return T;
 }
 
-QualType SymbolDerived::getType(ASTContext& Ctx) const {
+QualType SymbolDerived::getType(ASTContext &Ctx) const {
   return R->getValueType();
 }
 
-QualType SymbolExtent::getType(ASTContext& Ctx) const {
+QualType SymbolExtent::getType(ASTContext &Ctx) const {
   return Ctx.getSizeType();
 }
 
@@ -227,7 +227,7 @@ QualType SymbolMetadata::getType(ASTContext&) const {
   return T;
 }
 
-QualType SymbolRegionValue::getType(ASTContext& C) const {
+QualType SymbolRegionValue::getType(ASTContext &C) const {
   return R->getValueType();
 }
 
@@ -382,7 +382,7 @@ bool SymbolReaper::isLive(SymbolRef sym) {
   return isa<SymbolRegionValue>(sym);
 }
 
-bool SymbolReaper::isLive(const Stmt* ExprVal) const {
+bool SymbolReaper::isLive(const Stmt *ExprVal) const {
   return LCtx->getAnalysisContext()->getRelaxedLiveVariables()->
       isLive(Loc, ExprVal);
 }

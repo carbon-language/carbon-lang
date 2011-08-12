@@ -28,20 +28,20 @@ class ExplodedNode;
 class ExplodedNodeImpl;
 
 class WorkListUnit {
-  ExplodedNode* node;
+  ExplodedNode *node;
   BlockCounter counter;
-  const CFGBlock* block;
+  const CFGBlock *block;
   unsigned blockIdx; // This is the index of the next statement.
 
 public:
-  WorkListUnit(ExplodedNode* N, BlockCounter C,
-               const CFGBlock* B, unsigned idx)
+  WorkListUnit(ExplodedNode *N, BlockCounter C,
+               const CFGBlock *B, unsigned idx)
   : node(N),
     counter(C),
     block(B),
     blockIdx(idx) {}
 
-  explicit WorkListUnit(ExplodedNode* N, BlockCounter C)
+  explicit WorkListUnit(ExplodedNode *N, BlockCounter C)
   : node(N),
     counter(C),
     block(NULL),
