@@ -770,6 +770,12 @@ class Base(unittest2.TestCase):
         if not module.buildDwarf(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build binary with dwarf")
 
+    def cleanup(self, dictionary=None):
+        """Platform specific way to do cleanup after build."""
+        module = builder_module()
+        if not module.cleanup(self, dictionary):
+            raise Exception("Don't know how to do cleanup")
+
 
 class TestBase(Base):
     """
