@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (316):
+CHECK: Warnings without flags (314):
 CHECK-NEXT:   auto_storage_class
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
@@ -222,7 +222,6 @@ CHECK-NEXT:   warn_integer_too_large_for_signed
 CHECK-NEXT:   warn_invalid_asm_cast_lvalue
 CHECK-NEXT:   warn_ivar_use_hidden
 CHECK-NEXT:   warn_label_attribute_not_unused
-CHECK-NEXT:   warn_main_one_arg
 CHECK-NEXT:   warn_many_braces_around_scalar_init
 CHECK-NEXT:   warn_maynot_respond
 CHECK-NEXT:   warn_member_extra_qualification
@@ -330,7 +329,6 @@ CHECK-NEXT:   warn_unknown_method_family
 CHECK-NEXT:   warn_unkwown_analyzer_checker
 CHECK-NEXT:   warn_unterminated_char
 CHECK-NEXT:   warn_unterminated_string
-CHECK-NEXT:   warn_unusual_main_decl
 CHECK-NEXT:   warn_use_out_of_scope_declaration
 CHECK-NEXT:   warn_weak_identifier_undeclared
 CHECK-NEXT:   warn_weak_import
