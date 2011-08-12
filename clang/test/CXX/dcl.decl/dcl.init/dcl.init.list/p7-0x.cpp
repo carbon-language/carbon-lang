@@ -138,6 +138,12 @@ void shrink_int() {
   Agg<int> i2 = {0x7FFFFFFFU};  // OK
   Agg<int> i3 = {0x80000000U};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
   Agg<unsigned int> i4 = {-0x80000000L};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+
+  // Bool is also an integer type, but conversions to it are a different AST
+  // node.
+  Agg<bool> b1 = {0};  // OK
+  Agg<bool> b2 = {1};  // OK
+  Agg<bool> b3 = {-1};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
 }
 
 // Be sure that type- and value-dependent expressions in templates get the error

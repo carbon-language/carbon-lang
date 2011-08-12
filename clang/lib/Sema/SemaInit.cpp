@@ -2321,6 +2321,7 @@ bool InitializationSequence::endsWithNarrowing(ASTContext &Ctx,
   //   the source is a constant expression and the actual value after
   //   conversion will fit into the target type and will produce the original
   //   value when converted back to the original type.
+  case ICK_Boolean_Conversion:  // Bools are integers too.
   case ICK_Integral_Conversion: {
     assert(FromType->isIntegralOrUnscopedEnumerationType());
     assert(ToType->isIntegralOrUnscopedEnumerationType());
