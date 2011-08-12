@@ -220,4 +220,24 @@ void DecodeVPERMILPDMask(unsigned NumElts, unsigned Imm,
   }
 }
 
+void DecodeVPERM2F128Mask(EVT VT, unsigned Imm,
+                          SmallVectorImpl<unsigned> &ShuffleMask) {
+  unsigned HalfSize = VT.getVectorNumElements()/2;
+  unsigned FstHalfBegin = (Imm & 0x3) * HalfSize;
+  unsigned SndHalfBegin = ((Imm >> 4) & 0x3) * HalfSize;
+
+  for (int i = FstHalfBegin, e = FstHalfBegin+HalfSize; i != e; ++i)
+    ShuffleMask.push_back(i);
+  for (int i = SndHalfBegin, e = SndHalfBegin+HalfSize; i != e; ++i)
+    ShuffleMask.push_back(i);
+}
+
+void DecodeVPERM2F128Mask(unsigned Imm,
+                          SmallVectorImpl<unsigned> &ShuffleMask) {
+  // VPERM2F128 is used by any 256-bit EVT, but X86InstComments only
+  // has information about the instruction and not the types. So for
+  // instruction comments purpose, assume the 256-bit vector is v4i64.
+  return DecodeVPERM2F128Mask(MVT::v4i64, Imm, ShuffleMask);
+}
+
 } // llvm namespace

@@ -97,6 +97,11 @@ void DecodeVPERMILPSMask(unsigned NElts, unsigned Imm,
 void DecodeVPERMILPDMask(unsigned NElts, unsigned Imm,
                         SmallVectorImpl<unsigned> &ShuffleMask);
 
+void DecodeVPERM2F128Mask(unsigned Imm,
+                          SmallVectorImpl<unsigned> &ShuffleMask);
+void DecodeVPERM2F128Mask(EVT VT, unsigned Imm,
+                          SmallVectorImpl<unsigned> &ShuffleMask);
+
 } // llvm namespace
 
 #endif

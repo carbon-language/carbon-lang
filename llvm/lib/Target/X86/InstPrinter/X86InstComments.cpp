@@ -225,6 +225,11 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
                         ShuffleMask);
     Src1Name = getRegName(MI->getOperand(0).getReg());
     break;
+  case X86::VPERM2F128rr:
+    DecodeVPERM2F128Mask(MI->getOperand(3).getImm(), ShuffleMask);
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    break;
   }
 
 

@@ -158,6 +158,8 @@ def X86VPermilpsy : SDNode<"X86ISD::VPERMILPSY", SDTShuff2OpI>;
 def X86VPermilpd  : SDNode<"X86ISD::VPERMILPD", SDTShuff2OpI>;
 def X86VPermilpdy : SDNode<"X86ISD::VPERMILPDY", SDTShuff2OpI>;
 
+def X86VPerm2f128 : SDNode<"X86ISD::VPERM2F128", SDTShuff3OpI>;
+
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns
 //===----------------------------------------------------------------------===//

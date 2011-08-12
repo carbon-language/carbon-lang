@@ -275,6 +275,7 @@ namespace llvm {
       VPERMILPSY,
       VPERMILPD,
       VPERMILPDY,
+      VPERM2F128,
 
       // VASTART_SAVE_XMM_REGS - Save xmm argument registers to the stack,
       // according to %al. An operator is needed so that this can be expanded
