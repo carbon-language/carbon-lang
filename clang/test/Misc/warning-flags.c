@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (317):
+CHECK: Warnings without flags (316):
 CHECK-NEXT:   auto_storage_class
 CHECK-NEXT:   backslash_newline_space
 CHECK-NEXT:   charize_microsoft_ext
@@ -318,7 +318,6 @@ CHECK-NEXT:   warn_transparent_union_nonpointer
 CHECK-NEXT:   warn_typecheck_cond_incompatible_pointers
 CHECK-NEXT:   warn_typecheck_cond_pointer_integer_mismatch
 CHECK-NEXT:   warn_typecheck_function_qualifiers
-CHECK-NEXT:   warn_typename_missing
 CHECK-NEXT:   warn_ucn_escape_too_large
 CHECK-NEXT:   warn_ucn_not_valid_in_c89
 CHECK-NEXT:   warn_unavailable_fwdclass_message
