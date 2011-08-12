@@ -46,8 +46,6 @@ public:
         if (m_allocation)
             m_process.DeallocateMemory(m_allocation);
         
-        m_allocation = 0;
-        
         m_allocation = m_process.AllocateMemory(m_stream_string.GetSize(), lldb::ePermissionsReadable | lldb::ePermissionsWritable, err);
         
         if (!err.Success())
