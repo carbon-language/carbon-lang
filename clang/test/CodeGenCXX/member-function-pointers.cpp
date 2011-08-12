@@ -33,7 +33,7 @@ void f() {
   pa = 0;
 
   // Is this okay?  What are LLVM's volatile semantics for structs?
-  // CHECK: volatile store { i64, i64 } zeroinitializer, { i64, i64 }* @vpa
+  // CHECK: store volatile { i64, i64 } zeroinitializer, { i64, i64 }* @vpa
   vpa = 0;
 
   // CHECK: [[TMP:%.*]] = load { i64, i64 }* @pa, align 8

@@ -21,9 +21,9 @@ void f0() {
 // CHECK: define void @f1()
 // CHECK:      [[x_1:%.*]] = alloca i32, align 4
 // CHECK-NEXT: [[y_1:%.*]] = alloca i32, align 4
-// CHECK-NEXT: volatile store i32 1, i32* [[x_1]]
-// CHECK-NEXT: volatile store i32 1, i32* [[x_1]]
-// CHECK-NEXT: volatile store i32 1, i32* [[y_1]]
+// CHECK-NEXT: store volatile i32 1, i32* [[x_1]]
+// CHECK-NEXT: store volatile i32 1, i32* [[x_1]]
+// CHECK-NEXT: store volatile i32 1, i32* [[y_1]]
 // CHECK: }
 void f1() {
   volatile int x, y;

@@ -118,7 +118,7 @@ int atomic(void) {
   // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
   
   __sync_lock_release(&val);
-  // CHECK: volatile store i32 0, i32* 
+  // CHECK: store volatile i32 0, i32* 
   
   __sync_synchronize ();
   // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
@@ -130,7 +130,7 @@ int atomic(void) {
 void release_return(int *lock) {
   // Ensure this is actually returning void all the way through.
   return __sync_lock_release(lock);
-  // CHECK: volatile store i32 0, i32* 
+  // CHECK: store volatile i32 0, i32* 
 }
 
 

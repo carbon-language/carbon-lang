@@ -26,8 +26,8 @@ void test() {
   i;
 
   (float)(ci);
-  // CHECK-NEXT: volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
+  // CHECK-NEXT: load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
   // CHECK-NEXT: sitofp [[INT]]
 
   // These are not uses in C++:
@@ -37,202 +37,202 @@ void test() {
   (void)a;
 
   (void)(ci=ci);
-  // CHECK-NEXT: [[R:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: [[I:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
-  // CHECK-NEXT: volatile store [[INT]] [[R]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: volatile store [[INT]] [[I]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: [[R:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
+  // CHECK-NEXT: [[I:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: store volatile [[INT]] [[R]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
+  // CHECK-NEXT: store volatile [[INT]] [[I]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
 
   (void)(i=j);
-  // CHECK-NEXT: [[T:%.*]] = volatile load [[INT]]* @j
-  // CHECK-NEXT: volatile store [[INT]] [[T]], [[INT]]* @i
+  // CHECK-NEXT: [[T:%.*]] = load volatile [[INT]]* @j
+  // CHECK-NEXT: store volatile [[INT]] [[T]], [[INT]]* @i
 
   ci+=ci;
-  // CHECK-NEXT: [[R1:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: [[I1:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
-  // CHECK-NEXT: [[R2:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: [[I2:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: [[R1:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
+  // CHECK-NEXT: [[I1:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: [[R2:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
+  // CHECK-NEXT: [[I2:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
   // Not sure why they're ordered this way.
   // CHECK-NEXT: [[R:%.*]] = add [[INT]] [[R2]], [[R1]]
   // CHECK-NEXT: [[I:%.*]] = add [[INT]] [[I2]], [[I1]]
-  // CHECK-NEXT: volatile store [[INT]] [[R]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: volatile store [[INT]] [[I]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: store volatile [[INT]] [[R]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
+  // CHECK-NEXT: store volatile [[INT]] [[I]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
 
-  // Note that C++ requires an extra volatile load over C from the LHS of the '+'.
+  // Note that C++ requires an extra load volatile over C from the LHS of the '+'.
   (ci += ci) + ci;
-  // CHECK-NEXT: [[R1:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: [[I1:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
-  // CHECK-NEXT: [[R2:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: [[I2:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: [[R1:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
+  // CHECK-NEXT: [[I1:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: [[R2:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
+  // CHECK-NEXT: [[I2:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
   // CHECK-NEXT: [[R:%.*]] = add [[INT]] [[R2]], [[R1]]
   // CHECK-NEXT: [[I:%.*]] = add [[INT]] [[I2]], [[I1]]
-  // CHECK-NEXT: volatile store [[INT]] [[R]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: volatile store [[INT]] [[I]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
-  // CHECK-NEXT: [[R1:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: [[I1:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
-  // CHECK-NEXT: [[R2:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
-  // CHECK-NEXT: [[I2:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: store volatile [[INT]] [[R]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
+  // CHECK-NEXT: store volatile [[INT]] [[I]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: [[R1:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
+  // CHECK-NEXT: [[I1:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: [[R2:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 0)
+  // CHECK-NEXT: [[I2:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
   // These additions can be elided.
   // CHECK-NEXT: add [[INT]] [[R1]], [[R2]]
   // CHECK-NEXT: add [[INT]] [[I1]], [[I2]]
 
   asm("nop"); // CHECK-NEXT: call void asm
 
-  // Extra volatile load in C++.
+  // Extra load volatile in C++.
   (i += j) + k;
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: add nsw [[INT]]
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: add nsw [[INT]]
 
   asm("nop"); // CHECK-NEXT: call void asm
 
-  // Extra volatile load in C++.
+  // Extra load volatile in C++.
   (i += j) + 1;
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: add nsw [[INT]]
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: add nsw [[INT]]
 
   asm("nop"); // CHECK-NEXT: call void asm
 
   ci+ci;
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: add [[INT]]
   // CHECK-NEXT: add [[INT]]
 
   __real i;
 
   +ci;
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
 
   asm("nop"); // CHECK-NEXT: call void asm
 
   (void)(i=i);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
 
   (float)(i=i);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: sitofp
 
   (void)i;
 
   i=i;
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
 
-  // Extra volatile load in C++.
+  // Extra load volatile in C++.
   i=i=i;
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
 
   (void)__builtin_choose_expr(0, i=i, j=j);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
 
   k ? (i=i) : (j=j);
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: icmp
   // CHECK-NEXT: br i1
-  // CHECK: volatile load
-  // CHECK-NEXT: volatile store
+  // CHECK: load volatile
+  // CHECK-NEXT: store volatile
   // CHECK-NEXT: br label
-  // CHECK: volatile load
-  // CHECK-NEXT: volatile store
+  // CHECK: load volatile
+  // CHECK-NEXT: store volatile
   // CHECK-NEXT: br label
   // CHECK:      phi
 
   (void)(i,(i=i));
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
 
   i=i,k;
-  // CHECK-NEXT: volatile load [[INT]]* @i
-  // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @i
+  // CHECK-NEXT: load volatile [[INT]]* @i
+  // CHECK-NEXT: store volatile {{.*}}, [[INT]]* @i
 
   (i=j,k=j);
-  // CHECK-NEXT: volatile load [[INT]]* @j
-  // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @i
-  // CHECK-NEXT: volatile load [[INT]]* @j
-  // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @k
+  // CHECK-NEXT: load volatile [[INT]]* @j
+  // CHECK-NEXT: store volatile {{.*}}, [[INT]]* @i
+  // CHECK-NEXT: load volatile [[INT]]* @j
+  // CHECK-NEXT: store volatile {{.*}}, [[INT]]* @k
 
   (i=j,k);
-  // CHECK-NEXT: volatile load [[INT]]* @j
-  // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @i
+  // CHECK-NEXT: load volatile [[INT]]* @j
+  // CHECK-NEXT: store volatile {{.*}}, [[INT]]* @i
 
   (i,j);
 
   // Extra load in C++.
   i=c=k;
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: trunc
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: sext
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: store volatile
 
   i+=k;
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: add nsw [[INT]]
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: store volatile
 
   ci;
 
   asm("nop"); // CHECK-NEXT: call void asm
 
   (int)ci;
-  // CHECK-NEXT: volatile load {{.*}} @ci, i32 0, i32 0
-  // CHECK-NEXT: volatile load {{.*}} @ci, i32 0, i32 1
+  // CHECK-NEXT: load volatile {{.*}} @ci, i32 0, i32 0
+  // CHECK-NEXT: load volatile {{.*}} @ci, i32 0, i32 1
 
   (bool)ci;
-  // CHECK-NEXT: volatile load {{.*}} @ci, i32 0, i32 0
-  // CHECK-NEXT: volatile load {{.*}} @ci, i32 0, i32 1
+  // CHECK-NEXT: load volatile {{.*}} @ci, i32 0, i32 0
+  // CHECK-NEXT: load volatile {{.*}} @ci, i32 0, i32 1
   // CHECK-NEXT: icmp ne
   // CHECK-NEXT: icmp ne
   // CHECK-NEXT: or i1
 
   ci=ci;
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: store volatile
 
   asm("nop"); // CHECK-NEXT: call void asm
 
   // Extra load in C++.
   ci=ci=ci;
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: store volatile
 
   __imag ci = __imag ci = __imag ci;
-  // CHECK-NEXT: [[T:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
-  // CHECK-NEXT: volatile store [[INT]] [[T]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
-  // CHECK-NEXT: [[T:%.*]] = volatile load [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
-  // CHECK-NEXT: volatile store [[INT]] [[T]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: [[T:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: store volatile [[INT]] [[T]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: [[T:%.*]] = load volatile [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
+  // CHECK-NEXT: store volatile [[INT]] [[T]], [[INT]]* getelementptr inbounds ([[CINT]]* @ci, i32 0, i32 1)
 
   __real (i = j);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
 
   __imag i;
   
@@ -258,95 +258,95 @@ void test() {
   // Not a use.  gcc got this wrong in 4.2 and omitted the side effects
   // entirely, but it is fixed in 4.4.0.
   __imag (i = j);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
 
   // C++ does an extra load here.  Note that we have to do full loads.
   (float)(ci=ci);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: sitofp
 
   // Not a use, bug?  gcc treats this as not a use, that's probably a
   // bug due to tree folding ignoring volatile.
   (int)(ci=ci);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
 
   // A use.
   (float)(i=i);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: sitofp
 
   // A use.  gcc treats this as not a use, that's probably a bug due to tree
   // folding ignoring volatile.
   (int)(i=i);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
 
   // A use.
   -(i=j);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: sub
 
   // A use.  gcc treats this a not a use, that's probably a bug due to tree
   // folding ignoring volatile.
   +(i=k);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
 
   // A use. gcc treats this a not a use, that's probably a bug due to tree
   // folding ignoring volatile.
   __real (ci=ci);
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile store
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: store volatile
 
   // A use.
   i + 0;
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: add
 
   // A use.
   (i=j) + i;
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: add
 
   // A use.  gcc treats this as not a use, that's probably a bug due to tree
   // folding ignoring volatile.
   (i=j) + 0;
-  // CHECK-NEXT: volatile load
-  // CHECK-NEXT: volatile store
-  // CHECK-NEXT: volatile load
+  // CHECK-NEXT: load volatile
+  // CHECK-NEXT: store volatile
+  // CHECK-NEXT: load volatile
   // CHECK-NEXT: add
 
   (i,j)=k;
-  // CHECK-NEXT: volatile load [[INT]]* @k
-  // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @j
+  // CHECK-NEXT: load volatile [[INT]]* @k
+  // CHECK-NEXT: store volatile {{.*}}, [[INT]]* @j
 
   (j=k,i)=i;
-  // CHECK-NEXT: volatile load [[INT]]* @i
-  // CHECK-NEXT: volatile load [[INT]]* @k
-  // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @j
-  // CHECK-NEXT: volatile store {{.*}}, [[INT]]* @i
+  // CHECK-NEXT: load volatile [[INT]]* @i
+  // CHECK-NEXT: load volatile [[INT]]* @k
+  // CHECK-NEXT: store volatile {{.*}}, [[INT]]* @j
+  // CHECK-NEXT: store volatile {{.*}}, [[INT]]* @i
 
   // CHECK-NEXT: ret void
 }
