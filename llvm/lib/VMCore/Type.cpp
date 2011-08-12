@@ -487,7 +487,7 @@ StructType *StructType::get(Type *type, ...) {
 
 StructType *StructType::create(LLVMContext &Context, ArrayRef<Type*> Elements,
                                StringRef Name, bool isPacked) {
-  StructType *ST = createNamed(Context, Name);
+  StructType *ST = create(Context, Name);
   ST->setBody(Elements, isPacked);
   return ST;
 }
@@ -497,7 +497,7 @@ StructType *StructType::create(LLVMContext &Context, ArrayRef<Type*> Elements) {
 }
 
 StructType *StructType::create(LLVMContext &Context) {
-  return create(Context, ArrayRef<Type*>(), StringRef());
+  return create(Context, StringRef());
 }
 
 
@@ -526,7 +526,6 @@ StructType *StructType::create(StringRef Name, Type *type, ...) {
   }
   return llvm::StructType::create(Ctx, StructFields, Name);
 }
-
 
 
 
