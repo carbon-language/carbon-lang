@@ -244,8 +244,7 @@ protected:
                                                  DWARFCompileUnit* dwarf_cu,
                                                  const DWARFDebugInfoEntry *die,
                                                  lldb::addr_t subprogram_low_pc,
-                                                 bool parse_siblings,
-                                                 bool parse_children);
+                                                 uint32_t depth);
     size_t                  ParseTypes (const lldb_private::SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool parse_siblings, bool parse_children);
     lldb::TypeSP            ParseType (const lldb_private::SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool *type_is_new);
 

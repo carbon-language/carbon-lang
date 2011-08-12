@@ -1010,8 +1010,7 @@ SymbolFileDWARF::ParseFunctionBlocks
     DWARFCompileUnit* dwarf_cu,
     const DWARFDebugInfoEntry *die,
     addr_t subprogram_low_pc,
-    bool parse_siblings,
-    bool parse_children
+    uint32_t depth
 )
 {
     size_t blocks_added = 0;
@@ -1025,20 +1024,27 @@ SymbolFileDWARF::ParseFunctionBlocks
         case DW_TAG_subprogram:
         case DW_TAG_lexical_block:
             {
-                DWARFDebugRanges::RangeList ranges;
-                const char *name = NULL;
-                const char *mangled_name = NULL;
                 Block *block = NULL;
-                if (tag != DW_TAG_subprogram)
+                if (tag == DW_TAG_subprogram)
+                {
+                    // Skip any DW_TAG_subprogram DIEs that are inside
+                    // of a normal or inlined functions. These will be 
+                    // parsed on their own as separate entities.
+
+                    if (depth > 0)
+                        break;
+
+                    block = parent_block;
+                }
+                else
                 {
                     BlockSP block_sp(new Block (die->GetOffset()));
                     parent_block->AddChild(block_sp);
                     block = block_sp.get();
                 }
-                else
-                {
-                    block = parent_block;
-                }
+                DWARFDebugRanges::RangeList ranges;
+                const char *name = NULL;
+                const char *mangled_name = NULL;
 
                 int decl_file = 0;
                 int decl_line = 0;
@@ -1094,15 +1100,14 @@ SymbolFileDWARF::ParseFunctionBlocks
 
                     ++blocks_added;
 
-                    if (parse_children && die->HasChildren())
+                    if (die->HasChildren())
                     {
                         blocks_added += ParseFunctionBlocks (sc, 
                                                              block, 
                                                              dwarf_cu, 
                                                              die->GetFirstChild(), 
                                                              subprogram_low_pc, 
-                                                             true, 
-                                                             true);
+                                                             depth + 1);
                     }
                 }
             }
@@ -1111,10 +1116,14 @@ SymbolFileDWARF::ParseFunctionBlocks
             break;
         }
 
-        if (parse_siblings)
-            die = die->GetSibling();
-        else
+        // Only parse siblings of the block if we are not at depth zero. A depth
+        // of zero indicates we are currently parsing the top level 
+        // DW_TAG_subprogram DIE
+        
+        if (depth == 0)
             die = NULL;
+        else
+            die = die->GetSibling();
     }
     return blocks_added;
 }
@@ -4020,7 +4029,7 @@ SymbolFileDWARF::ParseFunctionBlocks (const SymbolContext &sc)
         const DWARFDebugInfoEntry *function_die = dwarf_cu->GetDIEPtr(function_die_offset);
         if (function_die)
         {
-            ParseFunctionBlocks(sc, &sc.function->GetBlock (false), dwarf_cu, function_die, LLDB_INVALID_ADDRESS, false, true);
+            ParseFunctionBlocks(sc, &sc.function->GetBlock (false), dwarf_cu, function_die, LLDB_INVALID_ADDRESS, 0);
         }
     }
 
