@@ -461,6 +461,13 @@ void StructType::setName(StringRef Name) {
 //===----------------------------------------------------------------------===//
 // StructType Helper functions.
 
+StructType *StructType::create(LLVMContext &Context, StringRef Name) {
+  StructType *ST = new (Context.pImpl->TypeAllocator) StructType(Context);
+  if (!Name.empty())
+    ST->setName(Name);
+  return ST;
+}
+
 StructType *StructType::get(LLVMContext &Context, bool isPacked) {
   return get(Context, llvm::ArrayRef<Type*>(), isPacked);
 }
@@ -487,6 +494,10 @@ StructType *StructType::create(LLVMContext &Context, ArrayRef<Type*> Elements,
 
 StructType *StructType::create(LLVMContext &Context, ArrayRef<Type*> Elements) {
   return create(Context, Elements, StringRef());
+}
+
+StructType *StructType::create(LLVMContext &Context) {
+  return create(Context, ArrayRef<Type*>(), StringRef());
 }
 
 

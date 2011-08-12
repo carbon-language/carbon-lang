@@ -256,7 +256,7 @@ public:
   
   /// isLiteral - Return true if this type is uniqued by structural
   /// equivalence, false if it is a struct definition.
-  bool isLiteral() const {return (getSubclassData() & SCDB_IsLiteral) != 0;}
+  bool isLiteral() const { return (getSubclassData() & SCDB_IsLiteral) != 0; }
   
   /// isOpaque - Return true if this is a type with an identity that has no body
   /// specified yet.  These prints as 'opaque' in .ll files.
