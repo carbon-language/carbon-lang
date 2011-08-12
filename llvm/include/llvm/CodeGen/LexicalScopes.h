@@ -44,7 +44,7 @@ typedef std::pair<const MachineInstr *, const MachineInstr *> InsnRange;
 class LexicalScopes {
 public:
   LexicalScopes() : MF(NULL),  CurrentFnLexicalScope(NULL) { }
-  ~LexicalScopes();
+  virtual ~LexicalScopes();
 
   /// initialize - Scan machine function and constuct lexical scope nest.
   virtual void initialize(const MachineFunction &);
