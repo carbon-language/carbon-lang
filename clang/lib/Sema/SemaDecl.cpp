@@ -4371,11 +4371,10 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
       isVirtualOkay = true;
     } else if (DC->isRecord()) {
-      // If the of the function is the same as the name of the record, then this
-      // must be an invalid constructor that has a return type.
+      // If the name of the function is the same as the name of the record,
+      // then this must be an invalid constructor that has a return type.
       // (The parser checks for a return type and makes the declarator a
       // constructor if it has no return type).
-      // must have an invalid constructor that has a return type
       if (Name.getAsIdentifierInfo() &&
           Name.getAsIdentifierInfo() == cast<CXXRecordDecl>(DC)->getIdentifier()){
         Diag(D.getIdentifierLoc(), diag::err_constructor_return_type)
@@ -6590,8 +6589,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     if (FD && isa<CXXConstructorDecl>(FD) && isa<CXXTryStmt>(Body))
       DiagnoseReturnInConstructorExceptionHandler(cast<CXXTryStmt>(Body));
     
-    // Verify that that gotos and switch cases don't jump into scopes illegally.
-    // Verify that that gotos and switch cases don't jump into scopes illegally.
+    // Verify that gotos and switch cases don't jump into scopes illegally.
     if (getCurFunction()->NeedsScopeChecking() &&
         !dcl->isInvalidDecl() &&
         !hasAnyUnrecoverableErrorsInThisFunction())
