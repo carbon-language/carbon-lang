@@ -111,12 +111,14 @@ public:
     virtual void TracingEnded ();
     virtual void Log();
 private:
-    void InitializeTracer();
     
-    Process                &m_process;
-    Target                 &m_target;
-    Disassembler           *m_disassembler;
-    const ABI              *m_abi;
+    Disassembler *
+    GetDisassembler ();
+
+    TypeFromUser
+    GetIntPointerType();
+
+    std::auto_ptr<Disassembler> m_disassembler_ap;
     TypeFromUser            m_intptr_type;
     std::vector<RegisterValue> m_register_values;
     lldb::DataBufferSP      m_buffer_sp;

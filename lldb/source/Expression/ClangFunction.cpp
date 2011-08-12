@@ -386,11 +386,9 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
 {
     // FIXME: Use the errors Stream for better error reporting.
 
-    Process *process = exe_ctx.process;
-
-    if (process == NULL)
+    if (exe_ctx.thread == NULL)
     {
-        errors.Printf("Can't call a function without a process.");
+        errors.Printf("Can't call a function without a valid thread.");
         return NULL;
     }
 

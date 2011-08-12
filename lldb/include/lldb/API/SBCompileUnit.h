@@ -61,6 +61,7 @@ public:
     GetDescription (lldb::SBStream &description);
 
 private:
+    friend class SBAddress;
     friend class SBFrame;
     friend class SBSymbolContext;
 

@@ -116,6 +116,9 @@ public:
     virtual void
     CalculateSymbolContext (SymbolContext* sc);
 
+    virtual Module *
+    CalculateSymbolContextModule ();
+
     void
     GetDescription (Stream *s);
 

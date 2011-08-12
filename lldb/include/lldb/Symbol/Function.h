@@ -422,6 +422,15 @@ public:
     virtual void
     CalculateSymbolContext(SymbolContext* sc);
 
+    virtual Module *
+    CalculateSymbolContextModule ();
+    
+    virtual CompileUnit *
+    CalculateSymbolContextCompileUnit ();
+    
+    virtual Function *
+    CalculateSymbolContextFunction ();
+
     const AddressRange &
     GetAddressRange()
     {

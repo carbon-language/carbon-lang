@@ -366,6 +366,22 @@ Symbol::CalculateSymbolContext (SymbolContext *sc)
     sc->module_sp.reset();
 }
 
+Module *
+Symbol::CalculateSymbolContextModule ()
+{
+    const AddressRange *range = GetAddressRangePtr();
+    if (range)
+        return range->GetBaseAddress().GetModule ();
+    return NULL;
+}
+
+Symbol *
+Symbol::CalculateSymbolContextSymbol ()
+{
+    return this;
+}
+
+
 void
 Symbol::DumpSymbolContext (Stream *s)
 {

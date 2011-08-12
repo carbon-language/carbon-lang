@@ -228,4 +228,62 @@ SBAddress::GetModule ()
     return sb_module;
 }
 
+SBSymbolContext
+SBAddress::GetSymbolContext (uint32_t resolve_scope)
+{
+    SBSymbolContext sb_sc;
+    if (m_opaque_ap.get())
+        m_opaque_ap->CalculateSymbolContext (&sb_sc.ref(), resolve_scope);
+    return sb_sc;
+}
+
+SBCompileUnit
+SBAddress::GetCompileUnit ()
+{
+    SBCompileUnit sb_comp_unit;
+    if (m_opaque_ap.get())
+        sb_comp_unit.reset(m_opaque_ap->CalculateSymbolContextCompileUnit());
+    return sb_comp_unit;
+}
+
+SBFunction
+SBAddress::GetFunction ()
+{
+    SBFunction sb_function;
+    if (m_opaque_ap.get())
+        sb_function.reset(m_opaque_ap->CalculateSymbolContextFunction());
+    return sb_function;
+}
+
+SBBlock
+SBAddress::GetBlock ()
+{
+    SBBlock sb_block;
+    if (m_opaque_ap.get())
+        sb_block.reset(m_opaque_ap->CalculateSymbolContextBlock());
+    return sb_block;
+}
+
+SBSymbol
+SBAddress::GetSymbol ()
+{
+    SBSymbol sb_symbol;
+    if (m_opaque_ap.get())
+        sb_symbol.reset(m_opaque_ap->CalculateSymbolContextSymbol());
+    return sb_symbol;
+}
+
+SBLineEntry
+SBAddress::GetLineEntry ()
+{
+    SBLineEntry sb_line_entry;
+    if (m_opaque_ap.get())
+    {
+        LineEntry line_entry;
+        if (m_opaque_ap->CalculateSymbolContextLineEntry (line_entry))
+            sb_line_entry.SetLineEntry (line_entry);
+    }
+    return sb_line_entry;
+}
+
 

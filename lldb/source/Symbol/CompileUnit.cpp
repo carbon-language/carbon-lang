@@ -57,6 +57,18 @@ CompileUnit::CalculateSymbolContext(SymbolContext* sc)
     GetModule()->CalculateSymbolContext(sc);
 }
 
+Module *
+CompileUnit::CalculateSymbolContextModule ()
+{
+    return GetModule();
+}
+
+CompileUnit *
+CompileUnit::CalculateSymbolContextCompileUnit ()
+{
+    return this;
+}
+
 void
 CompileUnit::DumpSymbolContext(Stream *s)
 {

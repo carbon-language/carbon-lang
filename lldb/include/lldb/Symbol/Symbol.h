@@ -175,6 +175,12 @@ public:
     virtual void
     CalculateSymbolContext (SymbolContext *sc);
 
+    virtual Module *
+    CalculateSymbolContextModule ();
+    
+    virtual Symbol *
+    CalculateSymbolContextSymbol ();
+
     //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::DumpSymbolContext(Stream*)
     ///

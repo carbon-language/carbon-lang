@@ -87,6 +87,37 @@ public:
     virtual void
     CalculateSymbolContext (SymbolContext *sc) = 0;
 
+
+    virtual Module *
+    CalculateSymbolContextModule ()
+    {
+        return NULL;
+    }
+
+    virtual CompileUnit *
+    CalculateSymbolContextCompileUnit ()
+    {
+        return NULL;
+    }
+
+    virtual Function *
+    CalculateSymbolContextFunction ()
+    {
+        return NULL;
+    }
+
+    virtual Block *
+    CalculateSymbolContextBlock ()
+    {
+        return NULL;
+    }
+
+    virtual Symbol *
+    CalculateSymbolContextSymbol ()
+    {
+        return NULL;
+    }
+
     //------------------------------------------------------------------
     /// Dump the object's symbolc context to the stream \a s.
     ///

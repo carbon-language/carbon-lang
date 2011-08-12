@@ -386,6 +386,31 @@ Function::CalculateSymbolContext(SymbolContext* sc)
     m_comp_unit->CalculateSymbolContext(sc);
 }
 
+Module *
+Function::CalculateSymbolContextModule ()
+{
+    return this->GetCompileUnit()->GetModule();
+}
+
+CompileUnit *
+Function::CalculateSymbolContextCompileUnit ()
+{
+    return this->GetCompileUnit();
+}
+
+Function *
+Function::CalculateSymbolContextFunction ()
+{
+    return this;
+}
+
+//Symbol *
+//Function::CalculateSymbolContextSymbol ()
+//{
+//    return // TODO: find the symbol for the function???
+//}
+
+
 void
 Function::DumpSymbolContext(Stream *s)
 {

@@ -496,8 +496,27 @@ public:
     ///
     /// @see SymbolContextScope::CalculateSymbolContext(SymbolContext*)
     //------------------------------------------------------------------
-    void
-    CalculateSymbolContext (SymbolContext *sc);
+    uint32_t
+    CalculateSymbolContext (SymbolContext *sc, 
+                            uint32_t resolve_scope = lldb::eSymbolContextEverything);
+
+    Module *
+    CalculateSymbolContextModule ();
+    
+    CompileUnit *
+    CalculateSymbolContextCompileUnit ();
+    
+    Function *
+    CalculateSymbolContextFunction ();
+    
+    Block *
+    CalculateSymbolContextBlock ();
+
+    Symbol *
+    CalculateSymbolContextSymbol ();
+
+    bool
+    CalculateSymbolContextLineEntry (LineEntry &line_entry);
 
 protected:
     //------------------------------------------------------------------

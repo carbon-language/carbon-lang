@@ -214,6 +214,12 @@ Module::CalculateSymbolContext(SymbolContext* sc)
     sc->module_sp = GetSP();
 }
 
+Module *
+Module::CalculateSymbolContextModule ()
+{
+    return this;
+}
+
 void
 Module::DumpSymbolContext(Stream *s)
 {

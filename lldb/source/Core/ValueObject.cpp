@@ -3260,31 +3260,35 @@ ValueObject::EvaluationPoint::GetExecutionContextScope ()
 bool
 ValueObject::EvaluationPoint::SyncWithProcessState()
 {
-    // If we're already invalid, we don't need to do anything, and nothing has changed:
-    if (!m_mod_id.IsValid())
-    {
-        // Can't update with an invalid state.
-        m_needs_update = false;
-        return false;
-    }
-    
     // If we don't have a process nothing can change.
     if (!m_process_sp)
+    {
+        m_exe_scope = m_target_sp.get();
         return false;
+    }
         
     // If our stop id is the current stop ID, nothing has changed:
     ProcessModID current_mod_id = m_process_sp->GetModID();
     
-    if (m_mod_id == current_mod_id)
-        return false;
-    
     // If the current stop id is 0, either we haven't run yet, or the process state has been cleared.
     // In either case, we aren't going to be able to sync with the process state.
     if (current_mod_id.GetStopID() == 0)
+    {
+        m_exe_scope = m_target_sp.get();
         return false;
+    }
         
-    m_mod_id = current_mod_id;
-    m_needs_update = true;
+    if (m_mod_id.IsValid())
+    {
+        if (m_mod_id == current_mod_id)
+        {
+            // Everything is already up to date in this object, no need do 
+            // update the execution context scope.
+            return false;
+        }
+        m_mod_id = current_mod_id;
+        m_needs_update = true;        
+    }
     m_exe_scope = m_process_sp.get();
     
     // Something has changed, so we will return true.  Now make sure the thread & frame still exist, and if either
@@ -3317,12 +3321,10 @@ ValueObject::EvaluationPoint::SyncWithProcessState()
 void
 ValueObject::EvaluationPoint::SetUpdated ()
 {
+    // this will update the execution context scope and the m_mod_id
+    SyncWithProcessState();
     m_first_update = false;
     m_needs_update = false;
-    if (m_process_sp)
-    {
-        m_mod_id = m_process_sp->GetModID();
-    }
 }
         
 

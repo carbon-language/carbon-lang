@@ -707,6 +707,33 @@ ModuleList::RemoveOrphanSharedModules ()
 {
     return GetSharedModuleList ().RemoveOrphans();    
 }
+//#define ENABLE_MODULE_SP_LOGGING
+#if defined (ENABLE_MODULE_SP_LOGGING)
+#include "lldb/Core/StreamFile.h"
+#include "lldb/Host/Host.h"
+static void 
+ModuleSharedPtrLogger(void* p, const ModuleSP& sp, bool will_decrement)
+{
+    if (sp.get())
+    {
+        const char *module_basename = sp->GetFileSpec().GetFilename().GetCString();
+        // If "p" is set, then it is the basename of a module to watch for. This
+        // basename MUST be uniqued first by getting it from a ConstString or this
+        // won't work.
+        if (p && p != module_basename)
+        {
+            return;
+        }
+        long use_count = sp.use_count();
+        if (will_decrement)
+            --use_count;
+
+        printf("\nModuleSP(%p): %c %p {%lu} %s/%s\n", &sp, will_decrement ? '-' : '+', sp.get(), use_count, sp->GetFileSpec().GetDirectory().GetCString(), module_basename);
+        StreamFile stdout_strm(stdout, false);
+        Host::Backtrace (stdout_strm, 512);
+    }
+}
+#endif
 
 Error
 ModuleList::GetSharedModule
@@ -783,7 +810,12 @@ ModuleList::GetSharedModule
             return error;
         else
         {
+#if defined ENABLE_MODULE_SP_LOGGING
+            ModuleSP logging_module_sp (new Module (in_file_spec, arch, object_name_ptr, object_offset), ModuleSharedPtrLogger, (void *)ConstString("a.out").GetCString());
+            module_sp = logging_module_sp;
+#else
             module_sp.reset (new Module (in_file_spec, arch, object_name_ptr, object_offset));
+#endif
             // Make sure there are a module and an object file since we can specify
             // a valid file path with an architecture that might not be in that file.
             // By getting the object file we can guarantee that the architecture matches
@@ -874,7 +906,12 @@ ModuleList::GetSharedModule
 
         if (module_sp.get() == NULL)
         {
+#if defined ENABLE_MODULE_SP_LOGGING
+            ModuleSP logging_module_sp (new Module (file_spec, arch, object_name_ptr, object_offset), ModuleSharedPtrLogger, 0);
+            module_sp = logging_module_sp;
+#else
             module_sp.reset (new Module (file_spec, arch, object_name_ptr, object_offset));
+#endif
             // Make sure there are a module and an object file since we can specify
             // a valid file path with an architecture that might not be in that file.
             // By getting the object file we can guarantee that the architecture matches

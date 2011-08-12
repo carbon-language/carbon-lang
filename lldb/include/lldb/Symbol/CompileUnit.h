@@ -127,6 +127,12 @@ public:
     virtual void
     CalculateSymbolContext(SymbolContext* sc);
 
+    virtual Module *
+    CalculateSymbolContextModule ();
+    
+    virtual CompileUnit *
+    CalculateSymbolContextCompileUnit ();
+
     //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::DumpSymbolContext(Stream*)
     ///

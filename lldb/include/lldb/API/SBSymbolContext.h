@@ -48,6 +48,7 @@ public:
     GetDescription (lldb::SBStream &description);
 
 protected:
+    friend class SBAddress;
     friend class SBFrame;
     friend class SBModule;
     friend class SBThread;

@@ -91,44 +91,46 @@ ThreadPlanTracer::TracerExplainsStop ()
 
 ThreadPlanAssemblyTracer::ThreadPlanAssemblyTracer (Thread &thread, lldb::StreamSP &stream_sp) :
     ThreadPlanTracer (thread, stream_sp),
-    m_process(thread.GetProcess()),
-    m_target(thread.GetProcess().GetTarget())
+    m_disassembler_ap (),
+    m_intptr_type (),
+    m_register_values ()
 {
-    InitializeTracer ();
 }
 
 ThreadPlanAssemblyTracer::ThreadPlanAssemblyTracer (Thread &thread) :
     ThreadPlanTracer (thread),
-    m_process(thread.GetProcess()),
-    m_target(thread.GetProcess().GetTarget())
+    m_disassembler_ap (),
+    m_intptr_type (),
+    m_register_values ()
 {
-    InitializeTracer ();
 }
 
-void
-ThreadPlanAssemblyTracer::InitializeTracer()
+Disassembler *
+ThreadPlanAssemblyTracer::GetDisassembler ()
 {
-    Process &process = m_thread.GetProcess();
-    Target &target = process.GetTarget();
-    
-    ArchSpec arch(target.GetArchitecture());
-    
-    m_disassembler = Disassembler::FindPlugin(arch, NULL);
-    
-    m_abi = process.GetABI().get();
-    
-    Module *exe_module = target.GetExecutableModulePointer();
-    
-    if (exe_module)
-    {
-        m_intptr_type = TypeFromUser(exe_module->GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, arch.GetAddressByteSize() * 8),
-                                     exe_module->GetClangASTContext().getASTContext());
-    }
-    
-    const unsigned int buf_size = 32;
-    
-    m_buffer_sp.reset(new DataBufferHeap(buf_size, 0));
+    if (m_disassembler_ap.get() == NULL)
+        m_disassembler_ap.reset(Disassembler::FindPlugin(m_thread.GetProcess().GetTarget().GetArchitecture(), NULL));
+    return m_disassembler_ap.get();
 }
+
+TypeFromUser
+ThreadPlanAssemblyTracer::GetIntPointerType()
+{
+    if (!m_intptr_type.IsValid ())
+    {
+        Target &target = m_thread.GetProcess().GetTarget();
+        Module *exe_module = target.GetExecutableModulePointer();
+        
+        if (exe_module)
+        {
+            m_intptr_type = TypeFromUser(exe_module->GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, m_thread.GetProcess().GetAddressByteSize() * 8),
+                                         exe_module->GetClangASTContext().getASTContext());
+        }        
+    }
+    return m_intptr_type;
+}
+
+
 
 ThreadPlanAssemblyTracer::~ThreadPlanAssemblyTracer()
 {
@@ -171,33 +173,33 @@ ThreadPlanAssemblyTracer::Log ()
     RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
     
     lldb::addr_t pc = reg_ctx->GetPC();
+    Process &process = m_thread.GetProcess();
     Address pc_addr;
     bool addr_valid = false;
-
-    addr_valid = m_process.GetTarget().GetSectionLoadList().ResolveLoadAddress (pc, pc_addr);
+    uint8_t buffer[16] = {0}; // Must be big enough for any single instruction
+    addr_valid = process.GetTarget().GetSectionLoadList().ResolveLoadAddress (pc, pc_addr);
     
     pc_addr.Dump(stream, &m_thread, Address::DumpStyleResolvedDescription, Address::DumpStyleModuleWithFileAddress);
     stream->PutCString (" ");
     
-    if (m_disassembler)
+    Disassembler *disassembler = GetDisassembler();
+    if (disassembler)
     {        
-        ::memset(m_buffer_sp->GetBytes(), 0, m_buffer_sp->GetByteSize());
-        
         Error err;
-        m_process.ReadMemory(pc, m_buffer_sp->GetBytes(), m_buffer_sp->GetByteSize(), err);
+        process.ReadMemory(pc, buffer, sizeof(buffer), err);
         
         if (err.Success())
         {
-            DataExtractor extractor(m_buffer_sp,
-                                    m_process.GetByteOrder(),
-                                    m_process.GetAddressByteSize());
+            DataExtractor extractor(buffer, sizeof(buffer), 
+                                    process.GetByteOrder(), 
+                                    process.GetAddressByteSize());
             
             if (addr_valid)
-                m_disassembler->DecodeInstructions (pc_addr, extractor, 0, 1, false);
+                disassembler->DecodeInstructions (pc_addr, extractor, 0, 1, false);
             else
-                m_disassembler->DecodeInstructions (Address (NULL, pc), extractor, 0, 1, false);
+                disassembler->DecodeInstructions (Address (NULL, pc), extractor, 0, 1, false);
             
-            InstructionList &instruction_list = m_disassembler->GetInstructionList();
+            InstructionList &instruction_list = disassembler->GetInstructionList();
             const uint32_t max_opcode_byte_size = instruction_list.GetMaxOpcocdeByteSize();
 
             if (instruction_list.GetSize())
@@ -215,7 +217,10 @@ ThreadPlanAssemblyTracer::Log ()
         }
     }
     
-    if (m_abi && m_intptr_type.GetOpaqueQualType())
+    const ABI *abi = process.GetABI().get();
+    TypeFromUser intptr_type = GetIntPointerType();
+    
+    if (abi && intptr_type.IsValid())
     {
         ValueList value_list;
         const int num_args = 1;
@@ -224,11 +229,11 @@ ThreadPlanAssemblyTracer::Log ()
         {
             Value value;
             value.SetValueType (Value::eValueTypeScalar);
-            value.SetContext (Value::eContextTypeClangType, m_intptr_type.GetOpaqueQualType());
+            value.SetContext (Value::eContextTypeClangType, intptr_type.GetOpaqueQualType());
             value_list.PushValue (value);
         }
         
-        if (m_abi->GetArgumentValues (m_thread, value_list))
+        if (abi->GetArgumentValues (m_thread, value_list))
         {                
             for (int arg_index = 0; arg_index < num_args; ++arg_index)
             {

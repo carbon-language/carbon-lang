@@ -51,7 +51,8 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_state_mutex (Mutex::eMutexTypeRecursive),
     m_plan_stack (),
     m_completed_plan_stack(),
-    m_curr_frames_ap (),
+    m_curr_frames_sp (),
+    m_prev_frames_sp (),
     m_resume_signal (LLDB_INVALID_SIGNAL_NUMBER),
     m_resume_state (eStateRunning),
     m_unwinder_ap (),
@@ -916,9 +917,9 @@ Thread::CalculateExecutionContext (ExecutionContext &exe_ctx)
 StackFrameList &
 Thread::GetStackFrameList ()
 {
-    if (m_curr_frames_ap.get() == NULL)
-        m_curr_frames_ap.reset (new StackFrameList (*this, m_prev_frames_sp, true));
-    return *m_curr_frames_ap;
+    if (!m_curr_frames_sp)
+        m_curr_frames_sp.reset (new StackFrameList (*this, m_prev_frames_sp, true));
+    return *m_curr_frames_sp;
 }
 
 
@@ -933,13 +934,9 @@ Thread::GetStackFrameCount()
 void
 Thread::ClearStackFrames ()
 {
-    if (m_curr_frames_ap.get() && m_curr_frames_ap->GetNumFrames (false) > 1)
-        m_prev_frames_sp.reset (m_curr_frames_ap.release());
-    else
-        m_curr_frames_ap.release();
-
-//    StackFrameList::Merge (m_curr_frames_ap, m_prev_frames_sp);
-//    assert (m_curr_frames_ap.get() == NULL);
+    if (m_curr_frames_sp && m_curr_frames_sp->GetNumFrames (false) > 1)
+        m_prev_frames_sp.swap (m_curr_frames_sp);
+    m_curr_frames_sp.reset();
 }
 
 lldb::StackFrameSP

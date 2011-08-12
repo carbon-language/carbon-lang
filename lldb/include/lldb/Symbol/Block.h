@@ -107,6 +107,18 @@ public:
     virtual void
     CalculateSymbolContext(SymbolContext* sc);
 
+    virtual Module *
+    CalculateSymbolContextModule ();
+
+    virtual CompileUnit *
+    CalculateSymbolContextCompileUnit ();
+
+    virtual Function *
+    CalculateSymbolContextFunction ();
+
+    virtual Block *
+    CalculateSymbolContextBlock ();
+
     //------------------------------------------------------------------
     /// Check if an offset is in one of the block offset ranges.
     ///

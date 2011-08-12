@@ -79,6 +79,7 @@ protected:
 #endif
     
 private:
+    friend class SBAddress;
     friend class SBFrame;
     friend class SBModule;
     friend class SBSymbolContext;

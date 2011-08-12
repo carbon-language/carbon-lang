@@ -475,12 +475,12 @@ private:
             }
             if (log)
                 log->Printf("stripping ObjC pointer");
-            /*
-             for some reason, C++ can quite easily obtain the type hierarchy for a ValueObject
-             even if the VO represent a pointer-to-class, as long as the typePtr is right
-             Objective-C on the other hand cannot really complete an @interface when
-             the VO refers to a pointer-to-@interface
-             */
+            
+            // For some reason, C++ can quite easily obtain the type hierarchy for a ValueObject
+            // even if the VO represent a pointer-to-class, as long as the typePtr is right
+            // Objective-C on the other hand cannot really complete an @interface when
+            // the VO refers to a pointer-to-@interface
+
             Error error;
             ValueObject* target = vobj.Dereference(error).get();
             if (error.Fail() || !target)

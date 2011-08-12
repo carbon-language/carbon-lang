@@ -727,20 +727,115 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     return true;
 }
 
-void
-Address::CalculateSymbolContext (SymbolContext *sc)
+uint32_t
+Address::CalculateSymbolContext (SymbolContext *sc, uint32_t resolve_scope)
 {
     sc->Clear();
     // Absolute addresses don't have enough information to reconstruct even their target.
-    if (m_section == NULL)
-        return;
-
-    if (m_section->GetModule())
+    if (m_section)
     {
-        sc->module_sp = m_section->GetModule()->GetSP();
-        if (sc->module_sp)
-            sc->module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextEverything, *sc);
+        Module *address_module = m_section->GetModule();
+        if (address_module)
+        {
+            sc->module_sp = address_module->GetSP();
+            if (sc->module_sp)
+                return sc->module_sp->ResolveSymbolContextForAddress (*this, resolve_scope, *sc);
+        }
     }
+    return 0;
+}
+
+Module *
+Address::CalculateSymbolContextModule ()
+{
+    if (m_section)
+        return m_section->GetModule();
+    return NULL;
+}
+
+CompileUnit *
+Address::CalculateSymbolContextCompileUnit ()
+{
+    if (m_section)
+    {
+        SymbolContext sc;
+        sc.module_sp = m_section->GetModule()->GetSP();
+        if (sc.module_sp)
+        {
+            sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextCompUnit, sc);
+            return sc.comp_unit;
+        }
+    }
+    return NULL;
+}
+
+Function *
+Address::CalculateSymbolContextFunction ()
+{
+    if (m_section)
+    {
+        SymbolContext sc;
+        sc.module_sp = m_section->GetModule()->GetSP();
+        if (sc.module_sp)
+        {
+            sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextFunction, sc);
+            return sc.function;
+        }
+    }
+    return NULL;
+}
+
+Block *
+Address::CalculateSymbolContextBlock ()
+{
+    if (m_section)
+    {
+        SymbolContext sc;
+        sc.module_sp = m_section->GetModule()->GetSP();
+        if (sc.module_sp)
+        {
+            sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextBlock, sc);
+            return sc.block;
+        }
+    }
+    return NULL;
+}
+
+Symbol *
+Address::CalculateSymbolContextSymbol ()
+{
+    if (m_section)
+    {
+        SymbolContext sc;
+        sc.module_sp = m_section->GetModule()->GetSP();
+        if (sc.module_sp)
+        {
+            sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextSymbol, sc);
+            return sc.symbol;
+        }
+    }
+    return NULL;
+}
+
+bool
+Address::CalculateSymbolContextLineEntry (LineEntry &line_entry)
+{
+    if (m_section)
+    {
+        SymbolContext sc;
+        sc.module_sp = m_section->GetModule()->GetSP();
+        if (sc.module_sp)
+        {
+            sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextLineEntry, sc);
+            if (sc.line_entry.IsValid())
+            {
+                line_entry = sc.line_entry;
+                return true;
+            }
+        }
+    }
+    line_entry.Clear();
+    return false;
 }
 
 int

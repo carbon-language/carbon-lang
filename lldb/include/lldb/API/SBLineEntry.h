@@ -67,6 +67,7 @@ protected:
     get ();
     
 private:
+    friend class SBAddress;
     friend class SBCompileUnit;
     friend class SBFrame;
     friend class SBSymbolContext;

@@ -152,6 +152,36 @@ Block::CalculateSymbolContext (SymbolContext* sc)
     sc->block = this;
 }
 
+Module *
+Block::CalculateSymbolContextModule ()
+{
+    if (m_parent_scope)
+        return m_parent_scope->CalculateSymbolContextModule ();
+    return NULL;
+}
+
+CompileUnit *
+Block::CalculateSymbolContextCompileUnit ()
+{
+    if (m_parent_scope)
+        return m_parent_scope->CalculateSymbolContextCompileUnit ();
+    return NULL;
+}
+
+Function *
+Block::CalculateSymbolContextFunction ()
+{
+    if (m_parent_scope)
+        return m_parent_scope->CalculateSymbolContextFunction ();
+    return NULL;
+}
+
+Block *
+Block::CalculateSymbolContextBlock ()
+{
+    return this;
+}
+
 void
 Block::DumpStopContext 
 (
@@ -225,12 +255,11 @@ Block::DumpStopContext
         }
         else if (child_inline_call_site)
         {
-            SymbolContext sc;
-            CalculateSymbolContext(&sc);
-            if (sc.function)
+            Function *function = CalculateSymbolContextFunction();
+            if (function)
             {
                 s->EOL();
-                s->Indent (sc.function->GetMangled().GetName().AsCString());
+                s->Indent (function->GetMangled().GetName().AsCString());
                 if (child_inline_call_site && child_inline_call_site->IsValid())
                 {
                     s->PutCString(" at ");
@@ -245,10 +274,9 @@ Block::DumpStopContext
 void
 Block::DumpSymbolContext(Stream *s)
 {
-    SymbolContext sc;
-    CalculateSymbolContext(&sc);
-    if (sc.function)
-        sc.function->DumpSymbolContext(s);
+    Function *function = CalculateSymbolContextFunction();
+    if (function)
+        function->DumpSymbolContext(s);
     s->Printf(", Block{0x%8.8x}", GetID());
 }
 
@@ -297,12 +325,7 @@ Block *
 Block::GetParent () const
 {
     if (m_parent_scope)
-    {
-        SymbolContext sc;
-        m_parent_scope->CalculateSymbolContext(&sc);
-        if (sc.block)
-            return sc.block;
-    }
+        return m_parent_scope->CalculateSymbolContextBlock();
     return NULL;
 }
 
@@ -346,11 +369,10 @@ Block::GetRangeContainingOffset (const addr_t offset, VMRange &range)
 bool
 Block::GetRangeContainingAddress (const Address& addr, AddressRange &range)
 {
-    SymbolContext sc;
-    CalculateSymbolContext(&sc);
-    if (sc.function)
+    Function *function = CalculateSymbolContextFunction();
+    if (function)
     {
-        const AddressRange &func_range = sc.function->GetAddressRange();
+        const AddressRange &func_range = function->GetAddressRange();
         if (addr.GetSection() == func_range.GetBaseAddress().GetSection())
         {
             const addr_t addr_offset = addr.GetOffset();
@@ -379,11 +401,10 @@ Block::GetRangeAtIndex (uint32_t range_idx, AddressRange &range)
 {
     if (range_idx < m_ranges.size())
     {
-        SymbolContext sc;
-        CalculateSymbolContext(&sc);
-        if (sc.function)
+        Function *function = CalculateSymbolContextFunction();
+        if (function)
         {
-            range.GetBaseAddress() = sc.function->GetAddressRange().GetBaseAddress();
+            range.GetBaseAddress() = function->GetAddressRange().GetBaseAddress();
             range.GetBaseAddress().Slide(m_ranges[range_idx].GetBaseAddress ());
             range.SetByteSize (m_ranges[range_idx].GetByteSize());
             return true;
@@ -398,11 +419,10 @@ Block::GetStartAddress (Address &addr)
     if (m_ranges.empty())
         return false;
 
-    SymbolContext sc;
-    CalculateSymbolContext(&sc);
-    if (sc.function)
+    Function *function = CalculateSymbolContextFunction();
+    if (function)
     {
-        addr = sc.function->GetAddressRange().GetBaseAddress();
+        addr = function->GetAddressRange().GetBaseAddress();
         addr.Slide(m_ranges.front().GetBaseAddress ());
         return true;
     }

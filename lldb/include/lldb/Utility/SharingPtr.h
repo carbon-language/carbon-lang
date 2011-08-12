@@ -441,6 +441,97 @@ const_pointer_cast(const SharingPtr<U>& r)
     return SharingPtr<T>(r, const_cast<T*>(r.get()));
 }
 
+template <class T>
+class LoggingSharingPtr
+    : public SharingPtr<T>
+{
+    typedef SharingPtr<T> base;
+
+public:
+    typedef void (*Callback)(void*, const LoggingSharingPtr&, bool action);
+    // action:  false means increment just happened
+    //          true  means decrement is about to happen
+
+private:
+    Callback cb_;
+    void* baton_;
+
+public:
+    LoggingSharingPtr() : cb_(0), baton_(0) {}
+    LoggingSharingPtr(Callback cb, void* baton)
+        : cb_(cb), baton_(baton)
+    {
+        if (cb_)
+            cb_(baton_, *this, false);
+    }
+
+    template <class Y>
+    LoggingSharingPtr(Y* p)
+        : base(p), cb_(0), baton_(0) {}
+
+    template <class Y>
+    LoggingSharingPtr(Y* p, Callback cb, void* baton)
+        : base(p), cb_(cb), baton_(baton)
+    {
+        if (cb_)
+            cb_(baton_, *this, false);
+    }
+
+    ~LoggingSharingPtr()
+    {
+        if (cb_)
+            cb_(baton_, *this, true);
+    }
+
+    LoggingSharingPtr(const LoggingSharingPtr& p)
+        : base(p), cb_(p.cb_), baton_(p.baton_)
+    {
+        if (cb_)
+            cb_(baton_, *this, false);
+    }
+
+    LoggingSharingPtr& operator=(const LoggingSharingPtr& p)
+    {
+        if (cb_)
+            cb_(baton_, *this, true);
+        base::operator=(p);
+        cb_ = p.cb_;
+        baton_ = p.baton_;
+        if (cb_)
+            cb_(baton_, *this, false);
+        return *this;
+    }
+
+    void reset()
+    {
+        if (cb_)
+            cb_(baton_, *this, true);
+        base::reset();
+    }
+
+    template <class Y>
+    void reset(Y* p)
+    {
+        if (cb_)
+            cb_(baton_, *this, true);
+        base::reset(p);
+        if (cb_)
+            cb_(baton_, *this, false);
+    }
+
+    void SetCallback(Callback cb, void* baton)
+    {
+        cb_ = cb;
+        baton_ = baton;
+    }
+
+    void ClearCallback()
+    {
+        cb_ = 0;
+        baton_ = 0;
+    }
+};
+
 } // namespace lldb
 
 #endif  // utility_SharingPtr_h_

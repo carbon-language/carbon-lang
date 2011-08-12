@@ -781,7 +781,7 @@ protected:
     plan_stack          m_plan_stack;       ///< The stack of plans this thread is executing.
     plan_stack          m_completed_plan_stack;  ///< Plans that have been completed by this stop.  They get deleted when the thread resumes.
     plan_stack          m_discarded_plan_stack;  ///< Plans that have been discarded by this stop.  They get deleted when the thread resumes.
-    std::auto_ptr<StackFrameList> m_curr_frames_ap; ///< The stack frames that get lazily populated after a thread stops.
+    lldb::StackFrameListSP m_curr_frames_sp; ///< The stack frames that get lazily populated after a thread stops.
     lldb::StackFrameListSP m_prev_frames_sp; ///< The previous stack frames from the last time this thread stopped.
     int                 m_resume_signal;    ///< The signal that should be used when continuing this thread.
     lldb::StateType     m_resume_state;     ///< The state that indicates what this thread should do when the process is resumed.
