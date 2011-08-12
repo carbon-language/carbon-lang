@@ -717,21 +717,20 @@ def visit(prefix, dir, names):
                         filtered = False
                         break
 
-                # If we reach here, we have a good filterspec.  Add it.
+                # If filtered, we have a good filterspec.  Add it.
                 if filtered:
-                    break
+                    #print "adding filter spec %s to module %s" % (filterspec, module)
+                    suite.addTests(
+                        unittest2.defaultTestLoader.loadTestsFromName(filterspec, module))
+                    continue
 
             # Forgo this module if the (base, filterspec) combo is invalid
             # and no '-g' option is specified
             if filters and fs4all and not filtered:
                 continue
                 
-            # Add either the filtered test case or the entire test class.
-            if filterspec and filtered:
-                #print "adding filter spec %s to module %s" % (filterspec, module)
-                suite.addTests(
-                    unittest2.defaultTestLoader.loadTestsFromName(filterspec, module))
-            else:
+            # Add either the filtered test case(s) (which is done before) or the entire test class.
+            if not filterspec or not filtered:
                 # A simple case of just the module name.  Also the failover case
                 # from the filterspec branch when the (base, filterspec) combo
                 # doesn't make sense.
