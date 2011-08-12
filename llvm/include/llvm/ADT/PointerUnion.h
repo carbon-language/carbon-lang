@@ -108,7 +108,11 @@ namespace llvm {
     
     /// isNull - Return true if the pointer held in the union is null,
     /// regardless of which type it is.
-    bool isNull() const { return Val.getPointer() == 0; }
+    bool isNull() const {
+      // Convert from the void* to one of the pointer types, to make sure that
+      // we recursively strip off low bits if we have a nested PointerUnion.
+      return !PointerLikeTypeTraits<PT1>::getFromVoidPointer(Val.getPointer());
+    }
     operator bool() const { return !isNull(); }
 
     /// is<T>() return true if the Union currently holds the type matching T.
