@@ -2994,6 +2994,8 @@ public:
                                  CodeGenFunction &CGF) const;
 };
 
+const unsigned MipsABIInfo::MinABIStackAlignInBytes;
+
 class MIPSTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   MIPSTargetCodeGenInfo(CodeGenTypes &CGT)
