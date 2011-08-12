@@ -144,6 +144,7 @@ types::ID types::lookupTypeForExtension(const char *Ext) {
            .Case("F", TY_Fortran)
            .Case("s", TY_PP_Asm)
            .Case("S", TY_Asm)
+           .Case("o", TY_Object)
            .Case("ii", TY_PP_CXX)
            .Case("mi", TY_PP_ObjC)
            .Case("mm", TY_ObjCXX)
