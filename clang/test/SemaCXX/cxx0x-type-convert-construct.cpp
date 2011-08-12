@@ -9,7 +9,7 @@ void f() {
   Ustr = U"a UTF-32 string"; // expected-error {{assigning to 'char32_t *' from incompatible type 'const char32_t [16]'}}
 
   char *Rstr;
-  Rstr = "a raw string"; // expected-warning{{conversion from string literal to 'char *' is deprecated}}
+  Rstr = R"foo(a raw string)foo"; // expected-warning{{conversion from string literal to 'char *' is deprecated}}
   wchar_t *LRstr;
   LRstr = LR"foo(a wide raw string)foo"; // expected-warning{{conversion from string literal to 'wchar_t *' is deprecated}}
   char *u8Rstr;
