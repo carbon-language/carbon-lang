@@ -373,7 +373,7 @@ RegisterValue::SetValueFromCString (const RegisterInfo *reg_info, const char *va
         return error;
     }
 
-    if (value_str == NULL && value_str[0] == '\0')
+    if (value_str == NULL || value_str[0] == '\0')
     {
         error.SetErrorString ("Invalid c-string value string.");
         return error;
