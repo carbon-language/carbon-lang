@@ -86,6 +86,12 @@ public:
         return m_source_map;
     }
     
+    uint32_t
+    GetMaximumNumberOfChildrenToDisplay()
+    {
+        return m_max_children_display;
+    }
+    
 protected:
 
     void
@@ -100,6 +106,7 @@ protected:
     int                m_prefer_dynamic_value;
     OptionValueBoolean m_skip_prologue;
     PathMappingList m_source_map;
+    uint32_t m_max_children_display;
     
 
 };

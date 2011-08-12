@@ -1200,6 +1200,8 @@ Debugger::FormatPrompt
                                     if (index_higher < 0)
                                         index_higher = vobj->GetNumChildren() - 1;
                                     
+                                    uint32_t max_num_children = target->GetUpdatePoint().GetTargetSP()->GetMaximumNumberOfChildrenToDisplay();
+                                    
                                     for (;index_lower<=index_higher;index_lower++)
                                     {
                                         ValueObject* item = ExpandIndexedExpression(target,
@@ -1222,6 +1224,12 @@ Debugger::FormatPrompt
                                             var_success &= item->DumpPrintableRepresentation(s,val_obj_display, custom_format);
                                         else
                                             var_success &= FormatPrompt(special_directions, sc, exe_ctx, addr, s, NULL, item);
+                                        
+                                        if (--max_num_children == 0)
+                                        {
+                                            s.PutCString(", ...");
+                                            break;
+                                        }
                                         
                                         if (index_lower < index_higher)
                                             s.PutChar(',');

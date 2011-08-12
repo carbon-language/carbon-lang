@@ -74,6 +74,9 @@ public:
     virtual
     ~IFormatChangeListener() {}
     
+    virtual uint32_t
+    GetCurrentRevision() = 0;
+    
 };
     
 template<typename KeyType, typename ValueType>
@@ -120,6 +123,11 @@ public:
     Add(KeyType name,
         const ValueSP& entry)
     {
+        if (listener)
+            entry->m_my_revision = listener->GetCurrentRevision();
+        else
+            entry->m_my_revision = 0;
+
         Mutex::Locker(m_map_mutex);
         m_map[name] = entry;
         if (listener)
@@ -208,7 +216,8 @@ public:
     FormatNavigator(std::string name,
                     IFormatChangeListener* lst = NULL) :
     m_format_map(lst),
-    m_name(name)
+    m_name(name),
+    m_id_cs(ConstString("id"))
     {
     }
     
@@ -265,6 +274,8 @@ public:
 private:
     
     DISALLOW_COPY_AND_ASSIGN(FormatNavigator);
+    
+    ConstString m_id_cs;
     
     // using const char* instead of MapKeyType is necessary here
     // to make the partial template specializations below work
@@ -442,7 +453,7 @@ private:
         if (typePtr->isObjCObjectPointerType())
         {
             if (use_dynamic != lldb::eNoDynamicValues &&
-                name.GetCString() == ConstString("id").GetCString())
+                name.GetCString() == m_id_cs.GetCString())
             {
                 if (log)
                     log->Printf("this is an ObjC 'id', let's do dynamic search");
@@ -584,6 +595,13 @@ template<>
 bool
 FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Delete(const char* type);
 
+template<>
+bool
+FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Get(const char* key, SyntheticFilter::SharedPointer& value);
+
+template<>
+bool
+FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Delete(const char* type);
     
 class CategoryMap;
     
@@ -595,16 +613,23 @@ private:
     typedef FormatNavigator<const char*, SyntheticFilter> FilterNavigator;
     typedef FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter> RegexFilterNavigator;
     
+    typedef FormatNavigator<const char*, SyntheticScriptProvider> SynthNavigator;
+    typedef FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider> RegexSynthNavigator;
+
     typedef SummaryNavigator::MapType SummaryMap;
     typedef RegexSummaryNavigator::MapType RegexSummaryMap;
     typedef FilterNavigator::MapType FilterMap;
     typedef RegexFilterNavigator::MapType RegexFilterMap;
-        
+    typedef SynthNavigator::MapType SynthMap;
+    typedef RegexSynthNavigator::MapType RegexSynthMap;
+
     SummaryNavigator::SharedPointer m_summary_nav;
     RegexSummaryNavigator::SharedPointer m_regex_summary_nav;
     FilterNavigator::SharedPointer m_filter_nav;
     RegexFilterNavigator::SharedPointer m_regex_filter_nav;
-    
+    SynthNavigator::SharedPointer m_synth_nav;
+    RegexSynthNavigator::SharedPointer m_regex_synth_nav;
+
     bool m_enabled;
     
     IFormatChangeListener* m_change_listener;
@@ -638,6 +663,8 @@ public:
         eRegexSummary =    0x1001,
         eFilter =          0x0002,
         eRegexFilter =     0x1002,
+        eSynth =           0x0004,
+        eRegexSynth =      0x1004,
     };
     
     typedef uint16_t FormatCategoryItems;
@@ -647,13 +674,17 @@ public:
     typedef RegexSummaryNavigator::SharedPointer RegexSummaryNavigatorSP;
     typedef FilterNavigator::SharedPointer FilterNavigatorSP;
     typedef RegexFilterNavigator::SharedPointer RegexFilterNavigatorSP;
-    
+    typedef SynthNavigator::SharedPointer SynthNavigatorSP;
+    typedef RegexSynthNavigator::SharedPointer RegexSynthNavigatorSP;
+
     FormatCategory(IFormatChangeListener* clist,
                    std::string name) :
     m_summary_nav(new SummaryNavigator("summary",clist)),
     m_regex_summary_nav(new RegexSummaryNavigator("regex-summary",clist)),
     m_filter_nav(new FilterNavigator("filter",clist)),
     m_regex_filter_nav(new RegexFilterNavigator("regex-filter",clist)),
+    m_synth_nav(new SynthNavigator("synth",clist)),
+    m_regex_synth_nav(new RegexSynthNavigator("regex-synth",clist)),
     m_enabled(false),
     m_change_listener(clist),
     m_mutex(Mutex::eMutexTypeRecursive),
@@ -682,6 +713,18 @@ public:
     RegexFilter()
     {
         return RegexFilterNavigatorSP(m_regex_filter_nav);
+    }
+    
+    SynthNavigatorSP
+    Synth()
+    {
+        return SynthNavigatorSP(m_synth_nav);
+    }
+    
+    RegexSynthNavigatorSP
+    RegexSynth()
+    {
+        return RegexSynthNavigatorSP(m_regex_synth_nav);
     }
     
     bool
@@ -714,12 +757,53 @@ public:
     {
         if (!IsEnabled())
             return false;
-        if (Filter()->Get(vobj, entry, use_dynamic, reason))
+        SyntheticFilter::SharedPointer filter;
+        SyntheticScriptProvider::SharedPointer synth;
+        bool regex_filter, regex_synth;
+        uint32_t reason_filter;
+        uint32_t reason_synth;
+        
+        bool pick_synth = false;
+        
+        // first find both Filter and Synth, and then check which is most recent
+        
+        if (!Filter()->Get(vobj, filter, use_dynamic, &reason_filter))
+            regex_filter = RegexFilter()->Get(vobj, filter, use_dynamic, &reason_filter);
+        
+        if (!Synth()->Get(vobj, synth, use_dynamic, &reason_synth))
+            regex_synth = RegexSynth()->Get(vobj, synth, use_dynamic, &reason_synth);
+        
+        if (!filter.get() && !synth.get())
+            return false;
+        
+        else if (!filter.get() && synth.get())
+            pick_synth = true;
+
+        else if (filter.get() && !synth.get())
+            pick_synth = false;
+        
+        else /*if (filter.get() && synth.get())*/
+        {
+            if (filter->m_my_revision > synth->m_my_revision)
+                pick_synth = false;
+            else
+                pick_synth = true;
+        }
+        
+        if (pick_synth)
+        {
+            if (regex_synth && reason)
+                *reason |= lldb::eFormatterChoiceCriterionRegularExpressionFilter;
+            entry = synth;
             return true;
-        bool regex = RegexFilter()->Get(vobj, entry, use_dynamic, reason);
-        if (regex && reason)
-            *reason |= lldb::eFormatterChoiceCriterionRegularExpressionFilter;
-        return regex;
+        }
+        else
+        {
+            if (regex_filter && reason)
+                *reason |= lldb::eFormatterChoiceCriterionRegularExpressionFilter;
+            entry = filter;
+            return true;
+        }
     }
     
     // just a shortcut for Summary()->Clear; RegexSummary()->Clear()
@@ -748,6 +832,10 @@ public:
             m_filter_nav->Clear();
         if ( (items & eRegexFilter) )
             m_regex_filter_nav->Clear();
+        if ( (items & eSynth) )
+            m_synth_nav->Clear();
+        if ( (items & eRegexSynth) )
+            m_regex_synth_nav->Clear();
     }
     
     bool
@@ -763,6 +851,10 @@ public:
             success = m_filter_nav->Delete(name) || success;
         if ( (items & eRegexFilter) )
             success = m_regex_filter_nav->Delete(name) || success;
+        if ( (items & eSynth) )
+            success = m_synth_nav->Delete(name) || success;
+        if ( (items & eRegexSynth) )
+            success = m_regex_synth_nav->Delete(name) || success;
         return success;
     }
     
@@ -778,6 +870,10 @@ public:
             count += m_filter_nav->GetCount();
         if ( (items & eRegexFilter) )
             count += m_regex_filter_nav->GetCount();
+        if ( (items & eSynth) )
+            count += m_synth_nav->GetCount();
+        if ( (items & eRegexSynth) )
+            count += m_regex_synth_nav->GetCount();
         return count;
     }
     
@@ -1048,7 +1144,12 @@ private:
     const char* m_system_category_name;
         
     typedef CategoryMap::MapType::iterator CategoryMapIterator;
-        
+    
+    ConstString m_default_cs;
+    ConstString m_system_cs;
+    ConstString m_charstar_cs;
+    ConstString m_constcharstar_cs;
+
 public:
     
     typedef bool (*CategoryCallback)(void*, const char*, const FormatCategory::SharedPointer&);
@@ -1057,13 +1158,17 @@ public:
     m_value_nav("format",this),
     m_named_summaries_map(this),
     m_last_revision(0),
-    m_categories_map(this)
+    m_categories_map(this),
+    m_default_cs(ConstString("default")),
+    m_system_cs(ConstString("system")), 
+    m_charstar_cs(ConstString("char *")),
+    m_constcharstar_cs(ConstString("const char *"))
     {
         
         // build default categories
         
-        m_default_category_name = ConstString("default").GetCString();
-        m_system_category_name = ConstString("system").GetCString();
+        m_default_category_name = m_default_cs.GetCString();
+        m_system_category_name = m_system_cs.GetCString();
 
         // add some default stuff
         // most formats, summaries, ... actually belong to the users' lldbinit file rather than here
@@ -1087,8 +1192,8 @@ public:
         lldb::RegularExpressionSP any_size_char_arr(new RegularExpression("char \\[[0-9]+\\]"));
         
         
-        Category(m_system_category_name)->Summary()->Add(ConstString("char *").GetCString(), string_format);
-        Category(m_system_category_name)->Summary()->Add(ConstString("const char *").GetCString(), string_format);
+        Category(m_system_category_name)->Summary()->Add(m_charstar_cs.GetCString(), string_format);
+        Category(m_system_category_name)->Summary()->Add(m_constcharstar_cs.GetCString(), string_format);
         Category(m_system_category_name)->RegexSummary()->Add(any_size_char_arr, string_array_format);
         
         Category(m_default_category_name); // this call is there to force LLDB into creating an empty "default" category
@@ -1184,7 +1289,7 @@ public:
     }
     
     uint32_t
-    GetCurrentRevision() const
+    GetCurrentRevision()
     {
         return m_last_revision;
     }

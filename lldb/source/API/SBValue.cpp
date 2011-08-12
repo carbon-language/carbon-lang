@@ -934,6 +934,7 @@ SBValue::GetDescription (SBStream &description)
         bool flat_output = false;
         bool use_synthetic = true;
         uint32_t no_summary_depth = 0;
+        bool ignore_cap = false;
         ValueObject::DumpValueObject (description.ref(), 
                                       m_opaque_sp.get(), 
                                       m_opaque_sp->GetName().GetCString(), 
@@ -946,7 +947,8 @@ SBValue::GetDescription (SBStream &description)
                                       use_synthetic,
                                       scope_already_checked, 
                                       flat_output,
-                                      no_summary_depth);
+                                      no_summary_depth,
+                                      ignore_cap);
     }
     else
         description.Printf ("No value");

@@ -214,7 +214,6 @@ private:
     
     class CommandOptions : public Options
     {
-        typedef std::vector<std::string> option_vector;
     public:
         
         CommandOptions (CommandInterpreter &interpreter) :
@@ -238,10 +237,6 @@ private:
                     m_cascade = Args::StringToBoolean(option_arg, true, &success);
                     if (!success)
                         error.SetErrorStringWithFormat("Invalid value for cascade: %s.\n", option_arg);
-                    break;
-                case 'c':
-                    m_expr_paths.push_back(option_arg);
-                    has_child_list = true;
                     break;
                 case 'P':
                     handwrite_python = true;
@@ -278,10 +273,8 @@ private:
             m_skip_pointers = false;
             m_skip_references = false;
             m_category = "default";
-            m_expr_paths.clear();
             is_class_based = false;
             handwrite_python = false;
-            has_child_list = false;
             m_regex = false;
         }
         
@@ -302,18 +295,14 @@ private:
         bool m_skip_pointers;
         std::string m_class_name;
         bool m_input_python;
-        option_vector m_expr_paths;
         std::string m_category;
         
         bool is_class_based;
         
         bool handwrite_python;
-        
-        bool has_child_list;
-        
+                
         bool m_regex;
         
-        typedef option_vector::iterator ExpressionPathsIterator;
     };
     
     CommandOptions m_options;
@@ -329,10 +318,10 @@ private:
                          CommandReturnObject &result);    
     bool
     Execute_HandwritePython (Args& command, CommandReturnObject &result);    
-    bool
-    Execute_ChildrenList (Args& command, CommandReturnObject &result);    
+
     bool
     Execute_PythonClass (Args& command, CommandReturnObject &result);
+    
     bool
     Execute (Args& command, CommandReturnObject &result);
     

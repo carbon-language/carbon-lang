@@ -2687,7 +2687,8 @@ ValueObject::DumpValueObject
     bool use_synth,
     bool scope_already_checked,
     bool flat_output,
-    uint32_t omit_summary_depth
+    uint32_t omit_summary_depth,
+    bool ignore_cap
 )
 {
     if (valobj)
@@ -2864,7 +2865,8 @@ ValueObject::DumpValueObject
                     ValueObjectSP synth_vobj = valobj->GetSyntheticValue(use_synth ?
                                                                          lldb::eUseSyntheticFilter : 
                                                                          lldb::eNoSyntheticFilter);
-                    const uint32_t num_children = synth_vobj->GetNumChildren();
+                    uint32_t num_children = synth_vobj->GetNumChildren();
+                    bool print_dotdotdot = false;
                     if (num_children)
                     {
                         if (flat_output)
@@ -2877,6 +2879,14 @@ ValueObject::DumpValueObject
                             if (print_valobj)
                                 s.PutCString(is_ref ? ": {\n" : " {\n");
                             s.IndentMore();
+                        }
+                        
+                        uint32_t max_num_children = valobj->GetUpdatePoint().GetTargetSP()->GetMaximumNumberOfChildrenToDisplay();
+                        
+                        if (num_children > max_num_children && !ignore_cap)
+                        {
+                            num_children = max_num_children;
+                            print_dotdotdot = true;
                         }
 
                         for (uint32_t idx=0; idx<num_children; ++idx)
@@ -2897,12 +2907,15 @@ ValueObject::DumpValueObject
                                                  use_synth,
                                                  true,
                                                  flat_output,
-                                                 omit_summary_depth > 1 ? omit_summary_depth - 1 : 0);
+                                                 omit_summary_depth > 1 ? omit_summary_depth - 1 : 0,
+                                                 ignore_cap);
                             }
                         }
 
                         if (!flat_output)
                         {
+                            if (print_dotdotdot)
+                                s.Indent("...\n");
                             s.IndentLess();
                             s.Indent("}\n");
                         }

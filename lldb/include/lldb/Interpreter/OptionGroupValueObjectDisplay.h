@@ -56,6 +56,7 @@ public:
     lldb::DynamicValueType use_dynamic;
     bool use_synth;
     bool be_raw;
+    bool ignore_cap;
 };
 
 } // namespace lldb_private

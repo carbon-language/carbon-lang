@@ -1578,6 +1578,7 @@ Target::SettingsController::CreateInstanceSettings (const char *instance_name)
 #define TSC_PREFER_DYNAMIC    "prefer-dynamic-value"
 #define TSC_SKIP_PROLOGUE     "skip-prologue"
 #define TSC_SOURCE_MAP        "source-map"
+#define TSC_MAX_CHILDREN      "max-children-count"
 
 
 static const ConstString &
@@ -1615,6 +1616,12 @@ GetSettingNameForSkipPrologue ()
     return g_const_string;
 }
 
+static const ConstString &
+GetSettingNameForMaxChildren ()
+{
+    static ConstString g_const_string (TSC_MAX_CHILDREN);
+    return g_const_string;
+}
 
 
 bool
@@ -1668,7 +1675,8 @@ TargetInstanceSettings::TargetInstanceSettings
     m_expr_prefix_contents_sp (),
     m_prefer_dynamic_value (2),
     m_skip_prologue (true, true),
-    m_source_map (NULL, NULL)
+    m_source_map (NULL, NULL),
+    m_max_children_display(256)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -1694,7 +1702,8 @@ TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rh
     m_expr_prefix_contents_sp (rhs.m_expr_prefix_contents_sp),
     m_prefer_dynamic_value (rhs.m_prefer_dynamic_value),
     m_skip_prologue (rhs.m_skip_prologue),
-    m_source_map (rhs.m_source_map)
+    m_source_map (rhs.m_source_map),
+    m_max_children_display(rhs.m_max_children_display)
 {
     if (m_instance_name != InstanceSettings::GetDefaultName())
     {
@@ -1771,6 +1780,13 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
     {
         err = UserSettingsController::UpdateBooleanOptionValue (value, op, m_skip_prologue);
     }
+    else if (var_name == GetSettingNameForMaxChildren())
+    {
+        bool ok;
+        uint32_t new_value = Args::StringToUInt32(value, 0, 10, &ok);
+        if (ok)
+            m_max_children_display = new_value;
+    }
     else if (var_name == GetSettingNameForSourcePathMap ())
     {
         switch (op)
@@ -1841,6 +1857,7 @@ TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &ne
     m_expr_prefix_contents_sp   = new_settings_ptr->m_expr_prefix_contents_sp;
     m_prefer_dynamic_value      = new_settings_ptr->m_prefer_dynamic_value;
     m_skip_prologue             = new_settings_ptr->m_skip_prologue;
+    m_max_children_display      = new_settings_ptr->m_max_children_display;
 }
 
 bool
@@ -1869,6 +1886,12 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     }
     else if (var_name == GetSettingNameForSourcePathMap ())
     {
+    }
+    else if (var_name == GetSettingNameForMaxChildren())
+    {
+        StreamString count_str;
+        count_str.Printf ("%d", m_max_children_display);
+        value.AppendString (count_str.GetData());
     }
     else 
     {
@@ -1923,5 +1946,6 @@ Target::SettingsController::instance_settings_table[] =
     { TSC_PREFER_DYNAMIC, eSetVarTypeEnum   , NULL          , g_dynamic_value_types, false, false, "Should printed values be shown as their dynamic value." },
     { TSC_SKIP_PROLOGUE , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Skip function prologues when setting breakpoints by name." },
     { TSC_SOURCE_MAP    , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Source path remappings to use when locating source files from debug information." },
+    { TSC_MAX_CHILDREN  , eSetVarTypeInt    , "256"         , NULL,                  true,  false, "Maximum number of children to expand in any level of depth." },
     { NULL              , eSetVarTypeNone   , NULL          , NULL,                  false, false, NULL }
 };

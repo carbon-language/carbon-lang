@@ -319,8 +319,8 @@ class DataFormatterTestCase(TestBase):
                                'AShape',
                                'ARectangleStar'])
 
-        # check that synthetic children work into categories
-        self.runCmd("type synth add Rectangle --child w --category RectangleCategory")
+        # check that filters work into categories
+        self.runCmd("type filter add Rectangle --child w --category RectangleCategory")
         self.runCmd("type category enable RectangleCategory")
         self.runCmd("type summary add Rectangle -f \" \" -e --category RectangleCategory")
         self.expect('frame variable r2',
@@ -332,7 +332,7 @@ class DataFormatterTestCase(TestBase):
         # Now delete all categories
         self.runCmd("type category delete CircleCategory RectangleStarCategory BaseCategory RectangleCategory")
 
-        # last of all, check that a deleted category with synth does not blow us up
+        # last of all, check that a deleted category with filter does not blow us up
         self.expect('frame variable r2',
                     substrs = ['w = 9',
                                'h = 16'])

@@ -49,6 +49,8 @@ class DataFormatterTestCase(TestBase):
         def cleanup():
             self.runCmd('type format clear', check=False)
             self.runCmd('type summary clear', check=False)
+            self.runCmd("settings set target.max-children-count 256", check=False)
+
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
@@ -189,6 +191,94 @@ class DataFormatterTestCase(TestBase):
 
         self.expect("frame variable a_simple_object", matching=True,
                     substrs = ['x=0x00000003'])
+
+        # check that we can correctly cap the number of children shown
+        self.runCmd("settings set target.max-children-count 5")
+
+        self.expect('frame variable a_long_guy', matching=True,
+            substrs = ['a_1',
+                       'b_1',
+                       'c_1',
+                       'd_1',
+                       'e_1',
+                       '...'])
+
+        # check that no further stuff is printed (not ALL values are checked!)
+        self.expect('frame variable a_long_guy', matching=False,
+                    substrs = ['f_1',
+                               'g_1',
+                               'h_1',
+                               'i_1',
+                               'j_1',
+                               'q_1',
+                               'a_2',
+                               'f_2',
+                               't_2',
+                               'w_2'])
+
+        self.runCmd("settings set target.max-children-count 1")
+        self.expect('frame variable a_long_guy', matching=True,
+                    substrs = ['a_1',
+                               '...'])
+        self.expect('frame variable a_long_guy', matching=False,
+                    substrs = ['b_1',
+                               'c_1',
+                               'd_1',
+                               'e_1'])
+        self.expect('frame variable a_long_guy', matching=False,
+                    substrs = ['f_1',
+                               'g_1',
+                               'h_1',
+                               'i_1',
+                               'j_1',
+                               'q_1',
+                               'a_2',
+                               'f_2',
+                               't_2',
+                               'w_2'])
+
+        self.runCmd("settings set target.max-children-count 30")
+        self.expect('frame variable a_long_guy', matching=True,
+                    substrs = ['a_1',
+                               'b_1',
+                               'c_1',
+                               'd_1',
+                               'e_1',
+                               'z_1',
+                               'a_2',
+                               'b_2',
+                               'c_2',
+                               'd_2',
+                               '...'])
+        self.expect('frame variable a_long_guy', matching=False,
+                    substrs = ['e_2',
+                               'n_2',
+                               'r_2',
+                               'i_2',
+                               'k_2',
+                               'o_2'])
+
+        # override the cap 
+        self.expect('frame variable a_long_guy --show-all-children', matching=True,
+                    substrs = ['a_1',
+                               'b_1',
+                               'c_1',
+                               'd_1',
+                               'e_1',
+                               'z_1',
+                               'a_2',
+                               'b_2',
+                               'c_2',
+                               'd_2'])
+        self.expect('frame variable a_long_guy --show-all-children', matching=True,
+                    substrs = ['e_2',
+                               'n_2',
+                               'r_2',
+                               'i_2',
+                               'k_2',
+                               'o_2'])
+        self.expect('frame variable a_long_guy -A', matching=False,
+                    substrs = ['...'])
 
 
 if __name__ == '__main__':

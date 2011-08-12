@@ -631,7 +631,8 @@ public:
                      bool use_synthetic,
                      bool scope_already_checked,
                      bool flat_output,
-                     uint32_t omit_summary_depth);
+                     uint32_t omit_summary_depth,
+                     bool ignore_cap);
     
     // returns true if this is a char* or a char[]
     // if it is a char* and check_pointer is true,

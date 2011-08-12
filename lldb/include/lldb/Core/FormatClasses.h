@@ -40,6 +40,7 @@ namespace lldb_private {
 
 struct ValueFormat
 {
+    uint32_t m_my_revision;
     bool m_cascades;
     bool m_skip_pointers;
     bool m_skip_references;
@@ -123,6 +124,7 @@ public:
 class SyntheticChildren
 {
 public:
+    uint32_t m_my_revision;
     bool m_cascades;
     bool m_skip_pointers;
     bool m_skip_references;
@@ -156,6 +158,9 @@ public:
     {
         return m_skip_references;
     }
+    
+    virtual bool
+    IsScripted() = 0;
     
     virtual std::string
     GetDescription() = 0;
@@ -205,6 +210,12 @@ public:
     GetExpressionPathAtIndex(int i) const
     {
         return m_expression_paths[i];
+    }
+    
+    bool
+    IsScripted()
+    {
+        return false;
     }
     
     std::string
@@ -289,6 +300,12 @@ public:
     std::string
     GetDescription();
     
+    bool
+    IsScripted()
+    {
+        return true;
+    }
+    
     class FrontEnd : public SyntheticChildrenFrontEnd
     {
     private:
@@ -367,6 +384,7 @@ public:
 
 struct SummaryFormat
 {
+    uint32_t m_my_revision;
     bool m_cascades;
     bool m_skip_pointers;
     bool m_skip_references;

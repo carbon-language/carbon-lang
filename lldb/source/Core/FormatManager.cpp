@@ -230,6 +230,44 @@ FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Delete(const char* 
     return false;
 }
 
+template<>
+bool
+FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Get(const char* key, SyntheticFilter::SharedPointer& value)
+{
+    Mutex::Locker(m_format_map.mutex());
+    MapIterator pos, end = m_format_map.map().end();
+    for (pos = m_format_map.map().begin(); pos != end; pos++)
+    {
+        lldb::RegularExpressionSP regex = pos->first;
+        if (regex->Execute(key))
+        {
+            value = pos->second;
+            return true;
+        }
+    }
+    return false;
+}
+
+template<>
+bool
+FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Delete(const char* type)
+{
+    Mutex::Locker(m_format_map.mutex());
+    MapIterator pos, end = m_format_map.map().end();
+    for (pos = m_format_map.map().begin(); pos != end; pos++)
+    {
+        lldb::RegularExpressionSP regex = pos->first;
+        if ( ::strcmp(type,regex->GetText()) == 0)
+        {
+            m_format_map.map().erase(pos);
+            if (m_format_map.listener)
+                m_format_map.listener->Changed();
+            return true;
+        }
+    }
+    return false;
+}
+
 lldb::Format
 FormatManager::GetSingleItemFormat(lldb::Format vector_format)
 {

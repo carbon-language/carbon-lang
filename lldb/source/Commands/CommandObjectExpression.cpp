@@ -340,7 +340,8 @@ CommandObjectExpression::EvaluateExpression
                                               true,                     // Use synthetic children if available
                                               true,                     // Scope is already checked. Const results are always in scope.
                                               false,                    // Don't flatten output
-                                              0);                       // Always use summaries (you might want an option --no-summary like there is for frame variable)
+                                              0,                        // Always use summaries (you might want an option --no-summary like there is for frame variable)
+                                              false);                   // Do not show more children than settings allow
                 if (result)
                     result->SetStatus (eReturnStatusSuccessFinishResult);
             }

@@ -49,7 +49,9 @@ class DataFormatterTestCase(TestBase):
         def cleanup():
             self.runCmd('type format clear', check=False)
             self.runCmd('type summary clear', check=False)
+            self.runCmd('type filter clear', check=False)
             self.runCmd('type synth clear', check=False)
+            self.runCmd("settings set target.max-children-count 256", check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
@@ -114,18 +116,75 @@ class DataFormatterTestCase(TestBase):
                                'fake_a = 16777217',
                                'a = 280']);
         
+        # check that capping works for synthetic children as well
+        self.runCmd("settings set target.max-children-count 2", check=False)
+        
+        self.expect("frame variable f00_1",
+                    substrs = ['...',
+                               'fake_a = 16777217',
+                               'a = 280']);
+        
+        self.expect("frame variable f00_1", matching=False,
+                    substrs = ['r = 33']);
+
+        
+        self.runCmd("settings set target.max-children-count 256", check=False)
+
         # check that expanding a pointer does the right thing
         self.expect("frame variable -P 1 f00_ptr",
             substrs = ['r = 45',
                        'fake_a = 218103808',
                        'a = 12'])
         
+        # now mix synth and filter and check consistent output
+        self.runCmd("type filter add foo --child b --child j")
+        self.expect('frame variable f00_1',
+            substrs = ['b = 1',
+                       'j = 17'])
+        self.expect("frame variable -P 1 f00_ptr", matching=False,
+                    substrs = ['r = 45',
+                               'fake_a = 218103808',
+                               'a = 12'])
+        
+        # now add the synth again to see that it prevails
+        self.runCmd("type synth add -l fooSynthProvider foo")
+        self.expect('frame variable f00_1', matching=False,
+                    substrs = ['b = 1',
+                               'j = 17'])
+        self.expect("frame variable -P 1 f00_ptr", 
+                    substrs = ['r = 45',
+                               'fake_a = 218103808',
+                               'a = 12'])
+
+        # check the listing
+        self.expect('type synth list',
+                    substrs = ['foo',
+                               'Python class fooSynthProvider'])
+        self.expect('type filter list',
+                    substrs = ['foo',
+                               '.b',
+                               '.j'])
+        
         # delete the synth and check that we get good output
         self.runCmd("type synth delete foo")
+        
+        # first let the filter win
+        self.expect('frame variable f00_1',
+                        substrs = ['b = 1',
+                                   'j = 17'])
+        self.expect("frame variable -P 1 f00_ptr", matching=False,
+                    substrs = ['r = 45',
+                               'fake_a = 218103808',
+                               'a = 12'])
+
+        # then delete the filter
+        self.runCmd("type filter delete foo")
+        
+        # and show real children        
         self.expect("frame variable f00_1",
                     substrs = ['a = 280',
                                'b = 1',
-                               'r = 33']);
+                               'j = 17']);
 
         self.expect("frame variable f00_1", matching=False,
                 substrs = ['fake_a = '])

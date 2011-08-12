@@ -660,7 +660,8 @@ public:
                                                   m_varobj_options.be_raw ? false : m_varobj_options.use_synth,
                                                   scope_already_checked,
                                                   m_varobj_options.flat_output,
-                                                  m_varobj_options.be_raw ? UINT32_MAX : 0);
+                                                  m_varobj_options.be_raw ? UINT32_MAX : m_varobj_options.no_summary_depth,
+                                                  m_varobj_options.be_raw ? true : m_varobj_options.ignore_cap);
                 }
                 else
                 {

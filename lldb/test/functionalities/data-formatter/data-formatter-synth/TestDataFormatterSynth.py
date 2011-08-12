@@ -49,13 +49,13 @@ class DataFormatterTestCase(TestBase):
         def cleanup():
             self.runCmd('type format clear', check=False)
             self.runCmd('type summary clear', check=False)
-            self.runCmd('type synth clear', check=False)
+            self.runCmd('type filter clear', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
         # Pick some values and check that the basics work
-        self.runCmd("type synth add BagOfInts --child x --child z")
+        self.runCmd("type filter add BagOfInts --child x --child z")
         self.expect("frame variable int_bag",
             substrs = ['x = 6',
                        'z = 8'])
@@ -102,14 +102,14 @@ class DataFormatterTestCase(TestBase):
                                'z = 8'])
 
         # Delete synth and check that the view reflects it immediately
-        self.runCmd("type synth delete BagOfInts")
+        self.runCmd("type filter delete BagOfInts")
         self.expect("frame variable int_bag",
                     substrs = ['x = 6',
                                'y = 7',
                                'z = 8'])
 
         # Add the synth again and check that it's honored deeper in the hierarchy
-        self.runCmd("type synth add BagOfInts --child x --child z")
+        self.runCmd("type filter add BagOfInts --child x --child z")
         self.expect('frame variable bag_bag',
             substrs = ['x = y=70 {',
                        'x = 69',
@@ -122,25 +122,25 @@ class DataFormatterTestCase(TestBase):
                                'y = 67'])
 
         # Check that a synth can expand nested stuff
-        self.runCmd("type synth add BagOfBags --child x.y --child y.z")
+        self.runCmd("type filter add BagOfBags --child x.y --child y.z")
         self.expect('frame variable bag_bag',
                     substrs = ['x.y = 70',
                                'y.z = 68'])
 
         # ...even if we get -> and . wrong
-        self.runCmd("type synth add BagOfBags --child x.y --child \"y->z\"")
+        self.runCmd("type filter add BagOfBags --child x.y --child \"y->z\"")
         self.expect('frame variable bag_bag',
                     substrs = ['x.y = 70',
                                'y->z = 68'])
 
         # ...even bitfields
-        self.runCmd("type synth add BagOfBags --child x.y --child \"y->z[1-2]\"")
+        self.runCmd("type filter add BagOfBags --child x.y --child \"y->z[1-2]\"")
         self.expect('frame variable bag_bag -T',
                     substrs = ['x.y = 70',
                                '(int:2) y->z[1-2] = 2'])
 
         # ...even if we format the bitfields
-        self.runCmd("type synth add BagOfBags --child x.y --child \"y->y[0-0]\"")
+        self.runCmd("type filter add BagOfBags --child x.y --child \"y->y[0-0]\"")
         self.runCmd("type format add \"int:1\" -f bool")
         self.expect('frame variable bag_bag -T',
                     substrs = ['x.y = 70',
@@ -154,7 +154,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("type summary delete BagOfBags")
 
         # now check we are dynamic (and arrays work)
-        self.runCmd("type synth add Plenty --child bitfield --child array[0] --child array[2]")
+        self.runCmd("type filter add Plenty --child bitfield --child array[0] --child array[2]")
         self.expect('frame variable plenty_of_stuff',
             substrs = ['bitfield = 1',
                        'array[0] = 5',
@@ -191,7 +191,7 @@ class DataFormatterTestCase(TestBase):
                                'z = 7'])
 
         # but not if we don't want to
-        self.runCmd("type synth add BagOfInts --child x --child z -p")
+        self.runCmd("type filter add BagOfInts --child x --child z -p")
         self.expect('frame variable plenty_of_stuff.some_values -P1',
                     substrs = ['(BagOfInts *) plenty_of_stuff.some_values',
                                'x = 5',
@@ -199,7 +199,7 @@ class DataFormatterTestCase(TestBase):
                                'z = 7'])
 
         # check we're dynamic even if nested
-        self.runCmd("type synth add BagOfBags --child x.z")
+        self.runCmd("type filter add BagOfBags --child x.z")
         self.expect('frame variable bag_bag',
             substrs = ['x.z = 71'])
 
