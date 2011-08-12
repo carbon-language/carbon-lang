@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 // C++0x [basic.lookup.classref]p3:
-//   If the unqualified-id is ∼type-name, the type-name is looked up in the 
+//   If the unqualified-id is ~type-name, the type-name is looked up in the 
 //   context of the entire postfix-expression. If the type T of the object 
 //   expression is of a class type C, the type-name is also looked up in the 
 //   scope of class C. At least one of the lookups shall find a name that 

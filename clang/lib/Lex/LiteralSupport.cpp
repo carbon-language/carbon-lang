@@ -731,7 +731,7 @@ NumericLiteralParser::GetFloatValue(llvm::APFloat &Result) {
 ///         octal-escape-sequence
 ///         hexadecimal-escape-sequence
 ///       simple-escape-sequence:
-///         one of \’ \" \? \\ \a \b \f \n \r \t \v
+///         one of \' \" \? \\ \a \b \f \n \r \t \v
 ///       octal-escape-sequence:
 ///         \ octal-digit
 ///         \ octal-digit octal-digit
@@ -895,7 +895,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 ///         octal-escape-sequence
 ///         hexadecimal-escape-sequence
 ///       simple-escape-sequence:
-///         one of \’ \" \? \\ \a \b \f \n \r \t \v
+///         one of \' \" \? \\ \a \b \f \n \r \t \v
 ///       octal-escape-sequence:
 ///         \ octal-digit
 ///         \ octal-digit octal-digit

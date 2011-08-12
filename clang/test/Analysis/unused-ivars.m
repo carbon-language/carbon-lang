@@ -97,7 +97,7 @@ int radar_7254495(RDar7254495 *a) {
 @end
 //===----------------------------------------------------------------------===//
 // <rdar://problem/8481311> Unused bitfield ivars trigger cause weird
-// diagnostic: "Instance variable '' in class…"
+// diagnostic: "Instance variable '' in class..."
 //===----------------------------------------------------------------------===//
 
 @interface RDar8481311 {

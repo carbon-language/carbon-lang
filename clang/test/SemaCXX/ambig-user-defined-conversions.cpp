@@ -53,7 +53,7 @@ namespace test1 {
     E b;
     f1(b);  // expected-error {{call to 'f1' is ambiguous}}	
             // ambiguous because b -> C via constructor and
-            // b → A via constructor or conversion function.
+            // b -> A via constructor or conversion function.
   }
 }
 

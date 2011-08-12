@@ -22,7 +22,7 @@ static void func() {
   Whatever *y;
 
   // GCC allows this, with the following warning: 
-  //   instance variable ‘isa’ is @protected; this will be a hard error in the future
+  //   instance variable 'isa' is @protected; this will be a hard error in the future
   //
   // FIXME: see if we can avoid the 2 warnings that follow the error.
   [(*y).isa self]; // expected-error {{instance variable 'isa' is protected}} \

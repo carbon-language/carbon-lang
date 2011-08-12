@@ -136,7 +136,7 @@ void conv_ptr_1()
 
 void expr_6()
 {
-    // expr/6: If an expression initially has the type “reference to T”
+    // expr/6: If an expression initially has the type "reference to T"
     // (8.3.2, 8.5.3), ... the expression is an lvalue.
     int x = 0;
     int& referenceToInt = x;
@@ -310,9 +310,9 @@ void expr_sub_1(int* pointer)
 {
     // expr.sub/1 A postfix expression followed by an expression in
     // square brackets is a postfix expression. One of the expressions
-    // shall have the type “pointer to T” and the other shall have
+    // shall have the type "pointer to T" and the other shall have
     // enumeration or integral type. The result is an lvalue of type
-    // “T.”
+    // "T."
     ASSERT_LVALUE(pointer[1]);
     
     // The expression E1[E2] is identical (by definition) to *((E1)+(E2)).
@@ -348,32 +348,32 @@ void expr_ref_4()
 {
     // Applies to expressions of the form E1.E2
     
-    // If E2 is declared to have type “reference to T”, then E1.E2 is
+    // If E2 is declared to have type "reference to T", then E1.E2 is
     // an lvalue;.... Otherwise, one of the following rules applies.
     ASSERT_LVALUE(Class().staticReferenceDataMember);
     ASSERT_LVALUE(Class().referenceDataMember);
     
-    // — If E2 is a static data member, and the type of E2 is T, then
+    // - If E2 is a static data member, and the type of E2 is T, then
     // E1.E2 is an lvalue; ...
     ASSERT_LVALUE(Class().staticNonreferenceDataMember);
     ASSERT_LVALUE(Class().staticReferenceDataMember);
 
 
-    // — If E2 is a non-static data member, ... If E1 is an lvalue,
+    // - If E2 is a non-static data member, ... If E1 is an lvalue,
     // then E1.E2 is an lvalue...
     Class lvalue;
     ASSERT_LVALUE(lvalue.dataMember);
     ASSERT_RVALUE(Class().dataMember);
 
-    // — If E1.E2 refers to a static member function, ... then E1.E2
+    // - If E1.E2 refers to a static member function, ... then E1.E2
     // is an lvalue
     ASSERT_LVALUE(Class().StaticMemberFunction);
     
-    // — Otherwise, if E1.E2 refers to a non-static member function,
+    // - Otherwise, if E1.E2 refers to a non-static member function,
     // then E1.E2 is not an lvalue.
     //ASSERT_RVALUE(Class().NonstaticMemberFunction);
 
-    // — If E2 is a member enumerator, and the type of E2 is T, the
+    // - If E2 is a member enumerator, and the type of E2 is T, the
     // expression E1.E2 is not an lvalue. The type of E1.E2 is T.
     ASSERT_RVALUE(Class().Enumerator);
     ASSERT_RVALUE(lvalue.Enumerator);
@@ -404,8 +404,8 @@ void expr_dynamic_cast_2()
 
 void expr_dynamic_cast_5()
 {
-    // expr.dynamic.cast/5: If T is “reference to cv1 B” and v has type
-    // “cv2 D” such that B is a base class of D, the result is an
+    // expr.dynamic.cast/5: If T is "reference to cv1 B" and v has type
+    // "cv2 D" such that B is a base class of D, the result is an
     // lvalue for the unique B sub-object of the D object referred
     // to by v.
     typedef BaseClass B;
@@ -416,13 +416,13 @@ void expr_dynamic_cast_5()
 
 // expr.dynamic.cast/8: The run-time check logically executes as follows:
 //
-// — If, in the most derived object pointed (referred) to by v, v
+// - If, in the most derived object pointed (referred) to by v, v
 // points (refers) to a public base class subobject of a T object, and
 // if only one object of type T is derived from the sub-object pointed
 // (referred) to by v, the result is a pointer (an lvalue referring)
 // to that T object.
 //
-// — Otherwise, if v points (refers) to a public base class sub-object
+// - Otherwise, if v points (refers) to a public base class sub-object
 // of the most derived object, and the type of the most derived object
 // has a base class, of type T, that is unambiguous and public, the
 // result is a pointer (an lvalue referring) to the T sub-object of
@@ -525,7 +525,7 @@ void expr_cond(bool cond)
     // conversions are performed on the second and third operands, and one
     // of the following shall hold:
     //
-    // — The second or the third operand (but not both) is a
+    // - The second or the third operand (but not both) is a
     // throw-expression (15.1); the result is of the type of the other and
     // is an rvalue.
 
@@ -535,7 +535,7 @@ void expr_cond(bool cond)
     ASSERT_RVALUE(cond ? throw 1 : classLvalue);
     ASSERT_RVALUE(cond ? classLvalue : throw 1);
 
-    // — Both the second and the third operands have type void; the result
+    // - Both the second and the third operands have type void; the result
     // is of type void and is an rvalue. [Note: this includes the case
     // where both operands are throw-expressions. ]
     ASSERT_RVALUE(cond ? (void)1 : (void)0);
