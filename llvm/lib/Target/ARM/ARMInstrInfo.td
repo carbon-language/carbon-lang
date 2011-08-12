@@ -4082,7 +4082,7 @@ def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr),
 let hasExtraDefRegAllocReq = 1 in
 def LDREXD: AIldrex<0b01, (outs GPR:$Rt, GPR:$Rt2),(ins addr_offset_none:$addr),
                       NoItinerary, "ldrexd", "\t$Rt, $Rt2, $addr", []> {
-  let DecoderMethod = "DecodeDoubleRegExclusive";
+  let DecoderMethod = "DecodeDoubleRegLoad";
 }
 }
 
@@ -4099,7 +4099,7 @@ let hasExtraSrcRegAllocReq = 1, Constraints = "@earlyclobber $Rd" in
 def STREXD : AIstrex<0b01, (outs GPR:$Rd),
                     (ins GPR:$Rt, GPR:$Rt2, addr_offset_none:$addr),
                     NoItinerary, "strexd", "\t$Rd, $Rt, $Rt2, $addr", []> {
-  let DecoderMethod = "DecodeDoubleRegExclusive";
+  let DecoderMethod = "DecodeDoubleRegStore";
 }
 
 def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex", []>,

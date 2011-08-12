@@ -135,9 +135,10 @@ static bool DecodeMemBarrierOption(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static bool DecodeMSRMask(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
-static bool DecodeDoubleRegExclusive(llvm::MCInst &Inst, unsigned Insn,
+static bool DecodeDoubleRegLoad(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
-
+static bool DecodeDoubleRegStore(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 
 static bool DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
                                uint64_t Address, const void *Decoder);
@@ -2486,15 +2487,31 @@ static bool DecodeMSRMask(llvm::MCInst &Inst, unsigned Val,
   return true;
 }
 
-static bool DecodeDoubleRegExclusive(llvm::MCInst &Inst, unsigned Insn,
+static bool DecodeDoubleRegLoad(llvm::MCInst &Inst, unsigned Insn,
+                                          uint64_t Address, const void *Decoder) {
+  unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned pred = fieldFromInstruction32(Insn, 28, 4);
+
+  if ((Rt & 1) || Rt == 0xE || Rn == 0xF) return false;
+
+  if (!DecodeGPRRegisterClass(Inst, Rt, Address, Decoder)) return false;
+  if (!DecodeGPRRegisterClass(Inst, Rt+1, Address, Decoder)) return false;
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  if (!DecodePredicateOperand(Inst, pred, Address, Decoder)) return false;
+
+  return true;
+}
+
+
+static bool DecodeDoubleRegStore(llvm::MCInst &Inst, unsigned Insn,
                                           uint64_t Address, const void *Decoder) {
   unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
   unsigned Rt = fieldFromInstruction32(Insn, 0, 4);
   unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
   unsigned pred = fieldFromInstruction32(Insn, 28, 4);
 
-  if (Inst.getOpcode() == ARM::STREXD)
-    if (!DecoderGPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecoderGPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
 
   if ((Rt & 1) || Rt == 0xE || Rn == 0xF) return false;
   if (Rd == Rn || Rd == Rt || Rd == Rt+1) return false;
