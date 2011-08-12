@@ -7364,6 +7364,108 @@ public:
         return n + sz1 + sz2;
     }
 
+    virtual char* get_demangled_name(char* buf) const
+    {
+        if (__size_)
+        {
+            const char* t = buf;
+            buf = __right_->first_demangled_name(buf);
+            if (buf != t && (__left_ == NULL ||
+                            !__right_->__left_->is_reference_or_pointer_to_function_or_array()))
+                *buf++ = ' ';
+        }
+        else
+        {
+            strncpy(buf, "auto ", 5);
+            buf += 5;
+        }
+        if (__left_)
+            buf = __left_->first_demangled_name(buf);
+        buf = __right_->second_demangled_name(buf);
+        if (!__size_)
+        {
+            *buf++ = '-';
+            *buf++ = '>';
+            buf = __right_->first_demangled_name(buf);
+        }
+        return buf;
+    }
+
+    virtual size_t size() const
+    {
+        if (__cached_size_ == -1)
+        {
+            size_t off = 0;
+            if (__size_)
+            {
+                off = __right_->first_size();
+                if (off > 0 && (__left_ == NULL ||
+                                !__right_->__left_->is_reference_or_pointer_to_function_or_array()))
+                    ++off;
+            }
+            else
+                off = 5;
+            if (__left_)
+                off += __left_->first_size();
+            off += __right_->second_size();
+            if (!__size_)
+            {
+                off += 2;
+                off += __right_->first_size();
+            }
+            const_cast<long&>(__cached_size_) = off;
+        }
+        return __cached_size_;
+    }
+
+    virtual ptrdiff_t print(char* f, char* l) const
+    {
+        const ptrdiff_t r = l - f;
+        ptrdiff_t n = 0;
+        ptrdiff_t sz1 = 0;
+        ptrdiff_t sz2 = 0;
+        if (__size_)
+        {
+            sz1 = __right_->print_first(f, l);
+            if (sz1 != 0 && (__left_ == NULL ||
+                            !__right_->__left_->is_reference_or_pointer_to_function_or_array()))
+            {
+                ++n;
+                if (r >= sz1 + 1)
+                    f[sz1] = ' ';
+            }
+        }
+        else
+        {
+            n = 5;
+            if (r >= 5)
+            {
+                char* t = f;
+                *t++ = 'a';
+                *t++ = 'u';
+                *t++ = 't';
+                *t++ = 'o';
+                *t++ = ' ';
+            }
+        }
+        if (__left_)
+            sz2 = __left_->print_first(f + std::min(n + sz1, r), l);
+        n += sz1 + sz2;
+        sz2 = 0;
+        sz1 = __right_->print_second(f+std::min(r, n), l);
+        if (!__size_)
+        {
+            if (r > n+sz1+1)
+            {
+                f[n+sz1]   = '-';
+                f[n+sz1+1] = '>';
+            }
+            n += 2;
+            sz2 = __right_->print_first(f+std::min(r, n+sz1), l);
+        }
+        return n + sz1 + sz2;
+    }
+
     virtual bool is_function() const
     {
         return true;
