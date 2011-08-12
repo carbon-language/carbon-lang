@@ -1342,11 +1342,6 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
       // Install the built-in type for 'SEL', ignoring the current definition.
       New->setTypeForDecl(Context.getObjCSelType().getTypePtr());
       return;
-    case 8:
-      if (!TypeID->isStr("Protocol"))
-        break;
-      Context.setObjCProtoType(New->getUnderlyingType());
-      return;
     }
     // Fall through - the typedef name was not a builtin type.
   }
