@@ -202,7 +202,7 @@ public:
     const void *impl;
 
     friend class DiagnosticIDs;    
-    diag_iterator(const void *im) : impl(im) {};    
+    diag_iterator(const void *im) : impl(im) {}
   public:
     diag_iterator &operator++();
     bool operator==(const diag_iterator &x) const { return impl == x.impl; }
