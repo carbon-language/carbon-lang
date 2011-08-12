@@ -1429,7 +1429,7 @@ public:
     NumPropertyAttrsBits = 12
   };
 
-  enum SetterKind { Assign, Retain, Copy };
+  enum SetterKind { Assign, Retain, Copy, Weak };
   enum PropertyControl { None, Required, Optional };
 private:
   SourceLocation AtLoc;   // location of @property
@@ -1509,6 +1509,8 @@ public:
       return Retain;
     if (PropertyAttributes & OBJC_PR_copy)
       return Copy;
+    if (PropertyAttributes & OBJC_PR_weak)
+      return Weak;
     return Assign;
   }
 

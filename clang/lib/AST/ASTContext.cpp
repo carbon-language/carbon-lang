@@ -4078,6 +4078,7 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
     case ObjCPropertyDecl::Assign: break;
     case ObjCPropertyDecl::Copy:   S += ",C"; break;
     case ObjCPropertyDecl::Retain: S += ",&"; break;
+    case ObjCPropertyDecl::Weak:   S += ",W"; break;
     }
   }
 
