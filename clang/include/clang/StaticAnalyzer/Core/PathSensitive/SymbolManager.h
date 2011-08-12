@@ -91,7 +91,7 @@ public:
 };
 
 typedef const SymbolData* SymbolRef;
-typedef llvm::SmallVector<SymbolRef, 1> SymbolRefSmallVectorTy;
+typedef llvm::SmallVector<SymbolRef, 2> SymbolRefSmallVectorTy;
 
 /// A symbol representing the value of a MemRegion.
 class SymbolRegionValue : public SymbolData {
@@ -358,7 +358,7 @@ public:
 
 class SymbolManager {
   typedef llvm::FoldingSet<SymExpr> DataSetTy;
-  typedef llvm::DenseMap<SymbolRef, SymbolRefSmallVectorTy> SymbolDependTy;
+  typedef llvm::DenseMap<SymbolRef, SymbolRefSmallVectorTy*> SymbolDependTy;
 
   DataSetTy DataSet;
   /// Stores the extra dependencies between symbols: the data should be kept
@@ -372,7 +372,8 @@ class SymbolManager {
 public:
   SymbolManager(ASTContext& ctx, BasicValueFactory &bv,
                 llvm::BumpPtrAllocator& bpalloc)
-    : SymbolCounter(0), BPAlloc(bpalloc), BV(bv), Ctx(ctx) {}
+    : SymbolDependencies(16), SymbolCounter(0),
+      BPAlloc(bpalloc), BV(bv), Ctx(ctx) {}
 
   ~SymbolManager();
 
@@ -423,9 +424,6 @@ public:
   /// The dependent symbol should stay alive as long as the primary is alive.
   void addSymbolDependency(const SymbolRef Primary, const SymbolRef Dependent);
 
-  /// \brief Drop all user-added dependencies on the primary symbol.
-  void removeSymbolDependencies(const SymbolRef Primary);
-
   const SymbolRefSmallVectorTy *getDependentSymbols(const SymbolRef Primary);
 
   ASTContext &getContext() { return Ctx; }
@@ -433,10 +431,16 @@ public:
 };
 
 class SymbolReaper {
+  enum SymbolStatus {
+    NotProcessed,
+    HaveMarkedDependents
+  };
+
   typedef llvm::DenseSet<SymbolRef> SymbolSetTy;
+  typedef llvm::DenseMap<SymbolRef, SymbolStatus> SymbolMapTy;
   typedef llvm::DenseSet<const MemRegion *> RegionSetTy;
 
-  SymbolSetTy TheLiving;
+  SymbolMapTy TheLiving;
   SymbolSetTy MetadataInUse;
   SymbolSetTy TheDead;
 

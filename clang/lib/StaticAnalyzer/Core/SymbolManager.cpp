@@ -231,7 +231,13 @@ QualType SymbolRegionValue::getType(ASTContext& C) const {
   return R->getValueType();
 }
 
-SymbolManager::~SymbolManager() {}
+SymbolManager::~SymbolManager() {
+  for (SymbolDependTy::const_iterator I = SymbolDependencies.begin(),
+       E = SymbolDependencies.end(); I != E; ++I) {
+    delete I->second;
+  }
+
+}
 
 bool SymbolManager::canSymbolicate(QualType T) {
   T = T.getCanonicalType();
@@ -250,11 +256,15 @@ bool SymbolManager::canSymbolicate(QualType T) {
 
 void SymbolManager::addSymbolDependency(const SymbolRef Primary,
                                         const SymbolRef Dependent) {
-  SymbolDependencies[Primary].push_back(Dependent);
-}
-
-void SymbolManager::removeSymbolDependencies(const SymbolRef Primary) {
-  SymbolDependencies.erase(Primary);
+  SymbolDependTy::iterator I = SymbolDependencies.find(Primary);
+  SymbolRefSmallVectorTy *dependencies = 0;
+  if (I == SymbolDependencies.end()) {
+    dependencies = new SymbolRefSmallVectorTy();
+    SymbolDependencies[Primary] = dependencies;
+  } else {
+    dependencies = I->second;
+  }
+  dependencies->push_back(Dependent);
 }
 
 const SymbolRefSmallVectorTy *SymbolManager::getDependentSymbols(
@@ -262,20 +272,29 @@ const SymbolRefSmallVectorTy *SymbolManager::getDependentSymbols(
   SymbolDependTy::const_iterator I = SymbolDependencies.find(Primary);
   if (I == SymbolDependencies.end())
     return 0;
-  return &I->second;
+  return I->second;
 }
 
 void SymbolReaper::markDependentsLive(SymbolRef sym) {
+  // Do not mark dependents more then once.
+  SymbolMapTy::iterator LI = TheLiving.find(sym);
+  assert(LI != TheLiving.end() && "The primary symbol is not live.");
+  if (LI->second == HaveMarkedDependents)
+    return;
+  LI->second = HaveMarkedDependents;
+
   if (const SymbolRefSmallVectorTy *Deps = SymMgr.getDependentSymbols(sym)) {
     for (SymbolRefSmallVectorTy::const_iterator I = Deps->begin(),
                                                 E = Deps->end(); I != E; ++I) {
+      if (TheLiving.find(*I) != TheLiving.end())
+        continue;
       markLive(*I);
     }
   }
 }
 
 void SymbolReaper::markLive(SymbolRef sym) {
-  TheLiving.insert(sym);
+  TheLiving[sym] = NotProcessed;
   TheDead.erase(sym);
   markDependentsLive(sym);
 }
