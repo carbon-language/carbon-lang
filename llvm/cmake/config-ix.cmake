@@ -198,11 +198,6 @@ if( LLVM_USING_GLIBC )
   add_llvm_definitions( -D_GNU_SOURCE )
 endif()
 
-# Type checks
-check_type_exists(std::bidirectional_iterator<int,int> "iterator;iostream" HAVE_BI_ITERATOR)
-check_type_exists(std::iterator<int,int,int> iterator HAVE_STD_ITERATOR)
-check_type_exists(std::forward_iterator<int,int> iterator HAVE_FWD_ITERATOR)
-
 set(headers "")
 if (HAVE_SYS_TYPES_H)
   set(headers ${headers} "sys/types.h")
