@@ -343,6 +343,9 @@ public:
         return m_update_point.GetExecutionContextScope();
     }
     
+    void
+    SetNeedsUpdate ();
+    
     virtual ~ValueObject();
 
     //------------------------------------------------------------------
@@ -542,9 +545,6 @@ public:
 
     DataExtractor &
     GetDataExtractor ();
-
-    bool
-    Write ();
 
     lldb::ValueObjectSP
     GetSP ()

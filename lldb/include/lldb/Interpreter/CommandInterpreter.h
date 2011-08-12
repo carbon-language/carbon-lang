@@ -346,6 +346,12 @@ public:
         m_skip_lldbinit_files = skip_lldbinit_files;
     }
 
+    void
+    SkipAppInitFiles (bool skip_app_init_files)
+    {
+        m_skip_app_init_files = m_skip_lldbinit_files;
+    }
+
     bool
     GetSynchronous ();
     
@@ -433,6 +439,7 @@ private:
     ExecutionContext m_exe_ctx;                 // The current execution context to use when handling commands
     bool m_synchronous_execution;
     bool m_skip_lldbinit_files;
+    bool m_skip_app_init_files;
     CommandObject::CommandMap m_command_dict;   // Stores basic built-in commands (they cannot be deleted, removed or overwritten).
     CommandObject::CommandMap m_alias_dict;     // Stores user aliases/abbreviations for commands
     CommandObject::CommandMap m_user_dict;      // Stores user-defined commands

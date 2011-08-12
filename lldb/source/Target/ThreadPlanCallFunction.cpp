@@ -45,6 +45,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_valid (false),
     m_stop_other_threads (stop_other_threads),
+    m_function_addr (function),
     m_function_sp (NULL),
     m_process (thread.GetProcess()),
     m_thread (thread),
@@ -108,7 +109,6 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     // Now set the thread state to "no reason" so we don't run with whatever signal was outstanding...
     thread.SetStopInfoToNothing();
     
-    m_function_addr = function;
     addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(&target);
         
     if (this_arg && cmd_arg)
@@ -161,6 +161,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_valid (false),
     m_stop_other_threads (stop_other_threads),
+    m_function_addr (function),
     m_function_sp(NULL),
     m_process (thread.GetProcess()),
     m_thread (thread),
@@ -224,7 +225,6 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     // Now set the thread state to "no reason" so we don't run with whatever signal was outstanding...
     thread.SetStopInfoToNothing();
     
-    m_function_addr = function;
     addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(&target);
     
     if (!abi->PrepareTrivialCall (thread, 

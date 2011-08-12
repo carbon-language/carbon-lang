@@ -68,6 +68,7 @@ CommandInterpreter::CommandInterpreter
     m_debugger (debugger),
     m_synchronous_execution (synchronous_execution),
     m_skip_lldbinit_files (false),
+    m_skip_app_init_files (false),
     m_script_interpreter_ap (),
     m_comment_char ('#'),
     m_repeat_char ('!'),
@@ -1762,11 +1763,37 @@ void
 CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
 {
     // Don't parse any .lldbinit files if we were asked not to
-    if (m_skip_lldbinit_files)
+    if (m_skip_lldbinit_files && m_skip_app_init_files)
         return;
 
     const char *init_file_path = in_cwd ? "./.lldbinit" : "~/.lldbinit";
-    FileSpec init_file (init_file_path, true);
+
+    std::string app_specific_init;
+    
+    if (!m_skip_app_init_files)
+    {
+        FileSpec host_spec = Host::GetProgramFileSpec();
+        const char *host_name = host_spec.GetFilename().AsCString();
+    
+        if (host_name != NULL && strcmp (host_name, "lldb") != 0)
+        {
+            app_specific_init += init_file_path;
+            app_specific_init += "-";
+            app_specific_init += host_name;
+        }
+    }
+    
+    FileSpec init_file;
+    if (!app_specific_init.empty())
+    {
+        init_file.SetFile (app_specific_init.c_str(), true);
+    }
+    
+    if (!m_skip_lldbinit_files && !init_file.Exists())
+    {
+        init_file.SetFile (init_file_path, true);
+    }
+    
     // If the file exists, tell HandleCommand to 'source' it; this will do the actual broadcasting
     // of the commands back to any appropriate listener (see CommandObjectSource::Execute for more details).
 

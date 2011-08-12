@@ -252,6 +252,15 @@ ValueObject::UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic)
     }
 }
 
+void
+ValueObject::SetNeedsUpdate ()
+{
+    m_update_point.SetNeedsUpdate();
+    // We have to clear the value string here so ConstResult children will notice if their values are
+    // changed by hand (i.e. with SetValueAsCString).
+    m_value_str.clear();
+}
+
 DataExtractor &
 ValueObject::GetDataExtractor ()
 {
@@ -338,7 +347,8 @@ ValueObject::ResolveValue (Scalar &scalar)
         ExecutionContextScope *exe_scope = GetExecutionContextScope();
         if (exe_scope)
             exe_scope->CalculateExecutionContext(exe_ctx);
-        scalar = m_value.ResolveValue(&exe_ctx, GetClangAST ());
+        Value tmp_value(m_value);
+        scalar = tmp_value.ResolveValue(&exe_ctx, GetClangAST ());
         return scalar.IsValid();
     }
     else
@@ -1220,104 +1230,83 @@ ValueObject::SetValueFromCString (const char *value_str)
     uint32_t count = 0;
     lldb::Encoding encoding = ClangASTType::GetEncoding (GetClangType(), count);
 
-    char *end = NULL;
     const size_t byte_size = GetByteSize();
-    switch (encoding)
-    {
-    case eEncodingInvalid:
-        return false;
 
-    case eEncodingUint:
-        if (byte_size > sizeof(unsigned long long))
+    Value::ValueType value_type = m_value.GetValueType();
+    
+    if (value_type == Value::eValueTypeScalar)
+    {
+        // If the value is already a scalar, then let the scalar change itself:
+        m_value.GetScalar().SetValueFromCString (value_str, encoding, byte_size);
+    }
+    else if (byte_size <= Scalar::GetMaxByteSize())
+    {
+        // If the value fits in a scalar, then make a new scalar and again let the
+        // scalar code do the conversion, then figure out where to put the new value.
+        Scalar new_scalar;
+        Error error;
+        error = new_scalar.SetValueFromCString (value_str, encoding, byte_size);
+        if (error.Success())
         {
-            return false;
-        }
-        else
-        {
-            unsigned long long ull_val = strtoull(value_str, &end, 0);
-            if (end && *end != '\0')
-                return false;
-            Value::ValueType value_type = m_value.GetValueType();
             switch (value_type)
             {
-            case Value::eValueTypeLoadAddress:
-            case Value::eValueTypeHostAddress:
-                // The value in these cases lives in the data.  So update the data:
-                
+                case Value::eValueTypeLoadAddress:
+                {
+                    // If it is a load address, then the scalar value is the storage location
+                    // of the data, and we have to shove this value down to that load location.
+                    ProcessSP process_sp = GetUpdatePoint().GetProcessSP();
+                    if (process_sp)
+                    {
+                        lldb::addr_t target_addr = m_value.GetScalar().GetRawBits64(LLDB_INVALID_ADDRESS);
+                        size_t bytes_written = process_sp->WriteScalarToMemory (target_addr, 
+                                                                            new_scalar, 
+                                                                            byte_size, 
+                                                                            error);
+                        if (!error.Success() || bytes_written != byte_size)
+                            return false;                            
+                    }
+                }
                 break;
-            case Value::eValueTypeScalar:
-                m_value.GetScalar() = ull_val;
+                case Value::eValueTypeHostAddress:
+                {
+                    // If it is a host address, then we stuff the scalar as a DataBuffer into the Value's data.
+                    DataExtractor new_data;
+                    new_data.SetByteOrder (m_data.GetByteOrder());
+                    
+                    DataBufferSP buffer_sp (new DataBufferHeap(byte_size, 0));
+                    m_data.SetData(buffer_sp, 0);
+                    bool success = new_scalar.GetData(new_data);
+                    if (success)
+                    {
+                        new_data.CopyByteOrderedData(0, 
+                                                     byte_size, 
+                                                     const_cast<uint8_t *>(m_data.GetDataStart()), 
+                                                     byte_size, 
+                                                     m_data.GetByteOrder());
+                    }
+                    m_value.GetScalar() = (uintptr_t)m_data.GetDataStart();
+                    
+                }
                 break;
-            case Value::eValueTypeFileAddress:    
-                // Try to convert the file address to a load address and then write the new value there.
-                break;
+                case Value::eValueTypeFileAddress:
+                case Value::eValueTypeScalar:
+                break;    
             }
-            // Limit the bytes in our m_data appropriately.
-            m_value.GetScalar().GetData (m_data, byte_size);
-        }
-        break;
-
-    case eEncodingSint:
-        if (byte_size > sizeof(long long))
-        {
-            return false;
         }
         else
         {
-            long long sll_val = strtoll(value_str, &end, 0);
-            if (end && *end != '\0')
-                return false;
-            m_value.GetScalar() = sll_val;
-            // Limit the bytes in our m_data appropriately.
-            m_value.GetScalar().GetData (m_data, byte_size);
+            return false;
         }
-        break;
-
-    case eEncodingIEEE754:
-        {
-            const off_t byte_offset = GetByteOffset();
-            uint8_t *dst = const_cast<uint8_t *>(m_data.PeekData(byte_offset, byte_size));
-            if (dst != NULL)
-            {
-                // We are decoding a float into host byte order below, so make
-                // sure m_data knows what it contains.
-                m_data.SetByteOrder(lldb::endian::InlHostByteOrder());
-                const size_t converted_byte_size = ClangASTContext::ConvertStringToFloatValue (
-                                                        GetClangAST(),
-                                                        GetClangType(),
-                                                        value_str,
-                                                        dst,
-                                                        byte_size);
-
-                if (converted_byte_size == byte_size)
-                {
-                }
-            }
-        }
-        break;
-
-    case eEncodingVector:
-        return false;
-
-    default:
+    }
+    else
+    {
+        // We don't support setting things bigger than a scalar at present.
         return false;
     }
-
-    // If we have made it here the value is in m_data and we should write it
-    // out to the target
-    return Write ();
-}
-
-bool
-ValueObject::Write ()
-{
-    // Clear the update ID so the next time we try and read the value
-    // we try and read it again.
-    m_update_point.SetNeedsUpdate();
-
-    // TODO: when Value has a method to write a value back, call it from here.
-    return false;
-
+    
+    // If we have reached this point, then we have successfully changed the value.
+    SetNeedsUpdate();
+    return true;
 }
 
 lldb::LanguageType

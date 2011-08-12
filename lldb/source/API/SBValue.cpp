@@ -629,6 +629,7 @@ SBValue::GetValueForExpressionPath(const char* expr_path)
 int64_t
 SBValue::GetValueAsSigned(SBError& error, int64_t fail_value)
 {
+    error.Clear();
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
@@ -650,6 +651,7 @@ SBValue::GetValueAsSigned(SBError& error, int64_t fail_value)
 uint64_t
 SBValue::GetValueAsUnsigned(SBError& error, uint64_t fail_value)
 {
+    error.Clear();
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTargetSP())

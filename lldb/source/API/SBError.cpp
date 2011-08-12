@@ -86,7 +86,7 @@ bool
 SBError::Success () const
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    bool ret_value = false;
+    bool ret_value = true;
     if (m_opaque_ap.get())
         ret_value = m_opaque_ap->Success();
 

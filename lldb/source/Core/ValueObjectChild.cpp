@@ -150,7 +150,7 @@ ValueObjectChild::UpdateValue ()
                         else
                         {
                             // Set this object's scalar value to the address of its
-                            // value be adding its byte offset to the parent address
+                            // value by adding its byte offset to the parent address
                             m_value.GetScalar() += GetByteOffset();
                         }
                     }

@@ -385,4 +385,22 @@ ValueObjectRegister::UpdateValue ()
     return false;
 }
 
+bool
+ValueObjectRegister::SetValueFromCString (const char *value_str)
+{
+    // The new value will be in the m_data.  Copy that into our register value.
+    Error error = m_reg_value.SetValueFromCString (&m_reg_info, value_str); 
+    if (error.Success())
+    {
+        if (m_reg_ctx_sp->WriteRegister (&m_reg_info, m_reg_value))
+        {
+            SetNeedsUpdate();
+            return true;
+        }
+        else
+            return false;
+    }
+    else
+        return false;
+}
 

@@ -95,7 +95,7 @@ void
 BreakpointSite::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
     if (level != lldb::eDescriptionLevelBrief)
-        s->Printf ("breakpoint site: %d ", GetID());
+        s->Printf ("breakpoint site: %d at 0x%8.8llx", GetID(), GetLoadAddress());
     m_owners.GetDescription (s, level);
 }
 

@@ -149,6 +149,13 @@ SBDebugger::SkipLLDBInitFiles (bool b)
         m_opaque_sp->GetCommandInterpreter().SkipLLDBInitFiles (b);
 }
 
+void
+SBDebugger::SkipAppInitFiles (bool b)
+{
+    if (m_opaque_sp)
+        m_opaque_sp->GetCommandInterpreter().SkipAppInitFiles (b);
+}
+
 // Shouldn't really be settable after initialization as this could cause lots of problems; don't want users
 // trying to switch modes in the middle of a debugging session.
 void
