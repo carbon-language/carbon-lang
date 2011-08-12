@@ -2544,28 +2544,42 @@ ObjCARCOpt::Visit(Function &F,
                   DenseMap<const BasicBlock *, BBState> &BBStates,
                   MapVector<Value *, RRInfo> &Retains,
                   DenseMap<Value *, RRInfo> &Releases) {
-  // Use postorder for bottom-up, and reverse-postorder for top-down, because we
+  // Use reverse-postorder on the reverse CFG for bottom-up, because we
   // magically know that loops will be well behaved, i.e. they won't repeatedly
-  // call retain on a single pointer without doing a release.
+  // call retain on a single pointer without doing a release. We can't use
+  // ReversePostOrderTraversal here because we want to walk up from each
+  // function exit point.
+  SmallPtrSet<BasicBlock *, 16> Visited;
+  SmallVector<std::pair<BasicBlock *, pred_iterator>, 16> Stack;
+  SmallVector<BasicBlock *, 16> Order;
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    BasicBlock *BB = I;
+    if (BB->getTerminator()->getNumSuccessors() == 0)
+      Stack.push_back(std::make_pair(BB, pred_begin(BB)));
+  }
+  while (!Stack.empty()) {
+    pred_iterator End = pred_end(Stack.back().first);
+    while (Stack.back().second != End) {
+      BasicBlock *BB = *Stack.back().second++;
+      if (Visited.insert(BB))
+        Stack.push_back(std::make_pair(BB, pred_begin(BB)));
+    }
+    Order.push_back(Stack.pop_back_val().first);
+  }
   bool BottomUpNestingDetected = false;
-  SmallVector<BasicBlock *, 8> PostOrder;
-  for (po_iterator<Function *> I = po_begin(&F), E = po_end(&F); I != E; ++I) {
-    BasicBlock *BB = *I;
-    PostOrder.push_back(BB);
-
+  while (!Order.empty()) {
+    BasicBlock *BB = Order.pop_back_val();
     BottomUpNestingDetected |= VisitBottomUp(BB, BBStates, Retains);
   }
 
-  // Iterate through the post-order in reverse order, achieving a
-  // reverse-postorder traversal. We don't use the ReversePostOrderTraversal
-  // class here because it works by computing its own full postorder iteration,
-  // recording the sequence, and playing it back in reverse. Since we're already
-  // doing a full iteration above, we can just record the sequence manually and
-  // avoid the cost of having ReversePostOrderTraversal compute it.
+  // Use regular reverse-postorder for top-down.
   bool TopDownNestingDetected = false;
-  for (SmallVectorImpl<BasicBlock *>::const_reverse_iterator
-       RI = PostOrder.rbegin(), RE = PostOrder.rend(); RI != RE; ++RI)
-    TopDownNestingDetected |= VisitTopDown(*RI, BBStates, Releases);
+  typedef ReversePostOrderTraversal<Function *> RPOTType;
+  RPOTType RPOT(&F);
+  for (RPOTType::rpo_iterator I = RPOT.begin(), E = RPOT.end(); I != E; ++I) {
+    BasicBlock *BB = *I;
+    TopDownNestingDetected |= VisitTopDown(BB, BBStates, Releases);
+  }
 
   return TopDownNestingDetected && BottomUpNestingDetected;
 }
