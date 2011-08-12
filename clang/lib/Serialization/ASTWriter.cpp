@@ -2810,7 +2810,9 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   DeclIDs[Context.getTranslationUnitDecl()] = PREDEF_DECL_TRANSLATION_UNIT_ID;
   if (Context.ObjCIdDecl)
     DeclIDs[Context.ObjCIdDecl] = PREDEF_DECL_OBJC_ID_ID;
-          
+  if (Context.ObjCClassDecl)
+    DeclIDs[Context.ObjCClassDecl] = PREDEF_DECL_OBJC_CLASS_ID;
+  
   if (!Chain) {
     // Make sure that we emit IdentifierInfos (and any attached
     // declarations) for builtins. We don't need to do this when we're
@@ -3019,7 +3021,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.getBuiltinVaListType(), SpecialTypes);
   AddTypeRef(Context.ObjCSelTypedefType, SpecialTypes);
   AddTypeRef(Context.ObjCProtoType, SpecialTypes);
-  AddTypeRef(Context.ObjCClassTypedefType, SpecialTypes);
   AddTypeRef(Context.getRawCFConstantStringType(), SpecialTypes);
   AddTypeRef(Context.getFILEType(), SpecialTypes);
   AddTypeRef(Context.getjmp_bufType(), SpecialTypes);

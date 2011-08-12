@@ -2997,11 +2997,6 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
       Context->ObjCProtoType = GetType(Proto);
   }
   
-  if (unsigned Class = SpecialTypes[SPECIAL_TYPE_OBJC_CLASS]) {
-    if (Context->ObjCClassTypedefType.isNull()) 
-      Context->ObjCClassTypedefType = GetType(Class);
-  }
-
   if (unsigned String = SpecialTypes[SPECIAL_TYPE_CF_CONSTANT_STRING]) {
     if (!Context->CFConstantStringTypeDecl)
       Context->setCFConstantStringType(GetType(String));
@@ -4224,6 +4219,10 @@ Decl *ASTReader::GetDecl(DeclID ID) {
     case PREDEF_DECL_OBJC_ID_ID:
       assert(Context && "No context available?");
       return Context->getObjCIdDecl();
+
+    case PREDEF_DECL_OBJC_CLASS_ID:
+      assert(Context && "No context available?");
+      return Context->getObjCClassDecl();
     }
     
     return 0;

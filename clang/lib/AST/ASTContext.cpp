@@ -222,7 +222,8 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   DependentTemplateSpecializationTypes(this_()),
   SubstTemplateTemplateParmPacks(this_()),
   GlobalNestedNameSpecifier(0), IsInt128Installed(false),
-  ObjCIdDecl(0), CFConstantStringTypeDecl(0),
+  ObjCIdDecl(0), ObjCClassDecl(0),
+  CFConstantStringTypeDecl(0),
   FILEDecl(0), 
   jmp_bufDecl(0), sigjmp_bufDecl(0), BlockDescriptorType(0), 
   BlockDescriptorExtendedType(0), cudaConfigureCallDecl(0),
@@ -430,7 +431,6 @@ void ASTContext::InitBuiltinTypes() {
   BuiltinVaListType = QualType();
 
   // "Builtin" typedefs set by Sema::ActOnTranslationUnitScope().
-  ObjCClassTypedefType = QualType();
   ObjCSelTypedefType = QualType();
 
   // Builtin types for 'id', 'Class', and 'SEL'.
@@ -4640,8 +4640,18 @@ void ASTContext::setObjCProtoType(QualType QT) {
   ObjCProtoType = QT;
 }
 
-void ASTContext::setObjCClassType(QualType T) {
-  ObjCClassTypedefType = T;
+TypedefDecl *ASTContext::getObjCClassDecl() const {
+  if (!ObjCClassDecl) {
+    QualType T = getObjCObjectType(ObjCBuiltinClassTy, 0, 0);
+    T = getObjCObjectPointerType(T);
+    TypeSourceInfo *ClassInfo = getTrivialTypeSourceInfo(T);
+    ObjCClassDecl = TypedefDecl::Create(const_cast<ASTContext &>(*this),
+                                        getTranslationUnitDecl(),
+                                        SourceLocation(), SourceLocation(),
+                                        &Idents.get("Class"), ClassInfo);
+  }
+  
+  return ObjCClassDecl;
 }
 
 void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {

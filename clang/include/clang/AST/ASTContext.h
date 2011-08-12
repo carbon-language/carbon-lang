@@ -192,9 +192,9 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   QualType ObjCProtoType;
   const RecordType *ProtoStructType;
 
-  /// ObjCClassType - another pseudo built-in typedef type (set by Sema).
-  QualType ObjCClassTypedefType;
-
+  /// \brief The typedef for the predefined 'Class' type.
+  mutable TypedefDecl *ObjCClassDecl;
+  
   // Typedefs which may be provided defining the structure of Objective-C
   // pseudo-builtins
   QualType ObjCIdRedefinitionType;
@@ -968,11 +968,16 @@ public:
   void setObjCProtoType(QualType QT);
   QualType getObjCProtoType() const { return ObjCProtoType; }
 
+  /// \brief Retrieve the typedef declaration corresponding to the predefined
+  /// Objective-C 'Class' type.
+  TypedefDecl *getObjCClassDecl() const;
+  
   /// This setter/getter repreents the ObjC 'Class' type. It is setup lazily, by
   /// Sema.  'Class' is always a (typedef for a) pointer type, a pointer to a
   /// struct.
-  QualType getObjCClassType() const { return ObjCClassTypedefType; }
-  void setObjCClassType(QualType T);
+  QualType getObjCClassType() const { 
+    return getTypeDeclType(getObjCClassDecl());
+  }
 
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
@@ -1423,7 +1428,7 @@ public:
     return T == getObjCIdType();
   }
   bool isObjCClassType(QualType T) const {
-    return T == ObjCClassTypedefType;
+    return T == getObjCClassType();
   }
   bool isObjCSelType(QualType T) const {
     return T == ObjCSelTypedefType;

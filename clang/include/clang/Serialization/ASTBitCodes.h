@@ -644,24 +644,22 @@ namespace clang {
       SPECIAL_TYPE_OBJC_SELECTOR               = 1,
       /// \brief Objective-C Protocol type
       SPECIAL_TYPE_OBJC_PROTOCOL               = 2,
-      /// \brief Objective-C Class type
-      SPECIAL_TYPE_OBJC_CLASS                  = 3,
       /// \brief CFConstantString type
-      SPECIAL_TYPE_CF_CONSTANT_STRING          = 4,
+      SPECIAL_TYPE_CF_CONSTANT_STRING          = 3,
       /// \brief C FILE typedef type
-      SPECIAL_TYPE_FILE                        = 5,
+      SPECIAL_TYPE_FILE                        = 4,
       /// \brief C jmp_buf typedef type
-      SPECIAL_TYPE_jmp_buf                     = 6,
+      SPECIAL_TYPE_jmp_buf                     = 5,
       /// \brief C sigjmp_buf typedef type
-      SPECIAL_TYPE_sigjmp_buf                  = 7,
+      SPECIAL_TYPE_sigjmp_buf                  = 6,
       /// \brief Objective-C "id" redefinition type
-      SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 8,
+      SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 7,
       /// \brief Objective-C "Class" redefinition type
-      SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 9,
+      SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 8,
       /// \brief Objective-C "SEL" redefinition type
-      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 10,
+      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 9,
       /// \brief Whether __[u]int128_t identifier is installed.
-      SPECIAL_TYPE_INT128_INSTALLED            = 11
+      SPECIAL_TYPE_INT128_INSTALLED            = 10
     };
 
     /// \brief Predefined declaration IDs.
@@ -678,14 +676,17 @@ namespace clang {
       PREDEF_DECL_TRANSLATION_UNIT_ID = 1,
       
       /// \brief The Objective-C 'id' type.
-      PREDEF_DECL_OBJC_ID_ID = 2
+      PREDEF_DECL_OBJC_ID_ID = 2,
+      
+      /// \brief The Objective-C 'Class' type.
+      PREDEF_DECL_OBJC_CLASS_ID = 3
     };
 
     /// \brief The number of declaration IDs that are predefined.
     ///
     /// For more information about predefined declarations, see the
     /// \c PredefinedDeclIDs type and the PREDEF_DECL_*_ID constants.
-    const unsigned int NUM_PREDEF_DECL_IDS = 3;
+    const unsigned int NUM_PREDEF_DECL_IDS = 4;
     
     /// \brief Record codes for each kind of declaration.
     ///

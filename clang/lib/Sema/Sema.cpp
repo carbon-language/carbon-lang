@@ -105,19 +105,6 @@ void Sema::ActOnTranslationUnitScope(Scope *S) {
                                 SourceLocation(), true);
     Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
     PushOnScopeChains(ProtocolDecl, TUScope, false);
-  }
-  
-  // Create the built-in typedef for 'Class'.
-  if (Context.getObjCClassType().isNull()) {
-    QualType T = Context.getObjCObjectType(Context.ObjCBuiltinClassTy, 0, 0);
-    T = Context.getObjCObjectPointerType(T);
-    TypeSourceInfo *ClassInfo = Context.getTrivialTypeSourceInfo(T);
-    TypedefDecl *ClassTypedef
-      = TypedefDecl::Create(Context, CurContext,
-                            SourceLocation(), SourceLocation(),
-                            &Context.Idents.get("Class"), ClassInfo);
-    PushOnScopeChains(ClassTypedef, TUScope);
-    Context.setObjCClassType(Context.getTypeDeclType(ClassTypedef));
   }  
 }
 
@@ -175,6 +162,11 @@ void Sema::Initialize() {
     DeclarationName Id = &Context.Idents.get("id");
     if (IdentifierResolver::begin(Id) == IdentifierResolver::end())
       PushOnScopeChains(Context.getObjCIdDecl(), TUScope);
+    
+    // Create the built-in typedef for 'Class'.
+    DeclarationName Class = &Context.Idents.get("Class");
+    if (IdentifierResolver::begin(Class) == IdentifierResolver::end())
+      PushOnScopeChains(Context.getObjCClassDecl(), TUScope);
   }
 }
 
