@@ -19,11 +19,14 @@
 
 int main()
 {
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         typedef std::discrete_distribution<> D;
-        D d;
+        D d = {1., 2.};
         std::vector<double> p = d.probabilities();
-        assert(p.size() == 1);
+        assert(p.size() == 2);
         assert(p[0] == 1);
+        assert(p[1] == 2);
     }
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

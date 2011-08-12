@@ -16,6 +16,8 @@
 #include <initializer_list>
 #include <cassert>
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 struct A
 {
     A(std::initializer_list<int> il)
@@ -30,9 +32,11 @@ struct A
     }
 };
 
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     A test1 = {3, 2, 1};
 #endif
 }

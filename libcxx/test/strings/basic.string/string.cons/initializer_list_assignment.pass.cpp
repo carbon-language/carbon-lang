@@ -16,11 +16,11 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         std::string s;
         s = {'a', 'b', 'c'};
         assert(s == "abc");
     }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

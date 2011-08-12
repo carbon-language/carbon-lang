@@ -16,7 +16,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     std::vector<int> d;
     d.assign({3, 4, 5, 6});
     assert(d.size() == 4);
@@ -24,5 +24,5 @@ int main()
     assert(d[1] == 4);
     assert(d[2] == 5);
     assert(d[3] == 6);
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

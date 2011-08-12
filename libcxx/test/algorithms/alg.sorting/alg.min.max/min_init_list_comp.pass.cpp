@@ -19,7 +19,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     int i = std::min({2, 3, 1}, std::greater<int>());
     assert(i == 3);
     i = std::min({2, 1, 3}, std::greater<int>());
@@ -32,5 +32,5 @@ int main()
     assert(i == 3);
     i = std::min({1, 3, 2}, std::greater<int>());
     assert(i == 3);
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

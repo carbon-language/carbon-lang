@@ -684,12 +684,14 @@ public:
         _NOEXCEPT_(is_nothrow_move_constructible<__table>::value);
     unordered_map(unordered_map&& __u, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     unordered_map(initializer_list<value_type> __il);
     unordered_map(initializer_list<value_type> __il, size_type __n,
                   const hasher& __hf = hasher(), const key_equal& __eql = key_equal());
     unordered_map(initializer_list<value_type> __il, size_type __n,
                   const hasher& __hf, const key_equal& __eql,
                   const allocator_type& __a);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     // ~unordered_map() = default;
     _LIBCPP_INLINE_VISIBILITY
     unordered_map& operator=(const unordered_map& __u)
@@ -701,7 +703,9 @@ public:
     unordered_map& operator=(unordered_map&& __u)
         _NOEXCEPT_(is_nothrow_move_assignable<__table>::value);
 #endif
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     unordered_map& operator=(initializer_list<value_type> __il);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     allocator_type get_allocator() const _NOEXCEPT
@@ -788,9 +792,11 @@ public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _InputIterator>
         void insert(_InputIterator __first, _InputIterator __last);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     void insert(initializer_list<value_type> __il)
         {insert(__il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     iterator erase(const_iterator __p) {return __table_.erase(__p.__i_);}
@@ -986,6 +992,8 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
         initializer_list<value_type> __il)
@@ -1013,6 +1021,8 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_map(
     insert(__il.begin(), __il.end());
 }
 
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
@@ -1027,6 +1037,8 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::operator=(unordered_map&& __u)
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>&
@@ -1036,6 +1048,8 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::operator=(
     __table_.__assign_unique(__il.begin(), __il.end());
     return *this;
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #ifndef _LIBCPP_HAS_NO_VARIADICS
@@ -1292,6 +1306,7 @@ public:
         _NOEXCEPT_(is_nothrow_move_constructible<__table>::value);
     unordered_multimap(unordered_multimap&& __u, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     unordered_multimap(initializer_list<value_type> __il);
     unordered_multimap(initializer_list<value_type> __il, size_type __n,
                        const hasher& __hf = hasher(),
@@ -1299,6 +1314,7 @@ public:
     unordered_multimap(initializer_list<value_type> __il, size_type __n,
                        const hasher& __hf, const key_equal& __eql,
                        const allocator_type& __a);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     // ~unordered_multimap() = default;
     _LIBCPP_INLINE_VISIBILITY
     unordered_multimap& operator=(const unordered_multimap& __u)
@@ -1310,7 +1326,9 @@ public:
     unordered_multimap& operator=(unordered_multimap&& __u)
         _NOEXCEPT_(is_nothrow_move_assignable<__table>::value);
 #endif
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     unordered_multimap& operator=(initializer_list<value_type> __il);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     allocator_type get_allocator() const _NOEXCEPT
@@ -1393,9 +1411,11 @@ public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _InputIterator>
         void insert(_InputIterator __first, _InputIterator __last);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     void insert(initializer_list<value_type> __il)
         {insert(__il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     iterator erase(const_iterator __p) {return __table_.erase(__p.__i_);}
@@ -1582,6 +1602,8 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_multimap(
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_multimap(
         initializer_list<value_type> __il)
@@ -1609,6 +1631,8 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::unordered_multimap(
     insert(__il.begin(), __il.end());
 }
 
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
@@ -1623,6 +1647,8 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::operator=(unordered_multima
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>&
@@ -1632,6 +1658,8 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::operator=(
     __table_.__assign_multi(__il.begin(), __il.end());
     return *this;
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #ifndef _LIBCPP_HAS_NO_VARIADICS

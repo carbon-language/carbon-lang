@@ -20,7 +20,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     typedef test_compare<std::less<int> > Cmp;
     typedef test_allocator<int> A;
     typedef std::set<int, Cmp, A> C;
@@ -37,5 +37,5 @@ int main()
     assert(*++i == V(6));
     assert(m.key_comp() == Cmp(10));
     assert(m.get_allocator() == A(4));
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

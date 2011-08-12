@@ -22,7 +22,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         typedef std::unordered_multiset<int> C;
         typedef int P;
@@ -43,5 +43,5 @@ int main()
         assert(c.count(3) == 1);
         assert(c.count(4) == 1);
     }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

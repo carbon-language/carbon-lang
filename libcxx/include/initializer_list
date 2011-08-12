@@ -51,6 +51,8 @@ template<class E> const E* end(initializer_list<E> il) noexcept;
 namespace std  // purposefully not versioned
 {
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template<class _E>
 class _LIBCPP_VISIBLE initializer_list
 {
@@ -93,6 +95,8 @@ end(initializer_list<_E> __il) _NOEXCEPT
 {
     return __il.end();
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 }  // std
 

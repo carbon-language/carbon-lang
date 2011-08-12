@@ -16,7 +16,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         typedef int T;
         typedef std::forward_list<T> C;
@@ -26,5 +26,5 @@ int main()
             assert(*i == n);
         assert(n == 10);
     }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

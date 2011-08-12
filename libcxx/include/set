@@ -437,6 +437,7 @@ public:
     set(set&& __s, const allocator_type& __a);
 #endif
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     set(initializer_list<value_type> __il, const value_compare& __comp = value_compare())
         : __tree_(__comp)
@@ -458,6 +459,7 @@ public:
             __tree_.__assign_unique(__il.begin(), __il.end());
             return *this;
         }
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
@@ -542,9 +544,11 @@ public:
                 __tree_.__insert_unique(__e, *__f);
         }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     void insert(initializer_list<value_type> __il)
         {insert(__il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     iterator  erase(const_iterator __p) {return __tree_.erase(__p);}
@@ -771,6 +775,7 @@ public:
     multiset(multiset&& __s, const allocator_type& __a);
 #endif
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     multiset(initializer_list<value_type> __il, const value_compare& __comp = value_compare())
         : __tree_(__comp)
@@ -792,6 +797,7 @@ public:
             __tree_.__assign_multi(__il.begin(), __il.end());
             return *this;
         }
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
@@ -876,9 +882,11 @@ public:
                 __tree_.__insert_multi(__e, *__f);
         }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     void insert(initializer_list<value_type> __il)
         {insert(__il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     iterator  erase(const_iterator __p) {return __tree_.erase(__p);}

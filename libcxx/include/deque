@@ -1204,12 +1204,16 @@ public:
               typename enable_if<__is_input_iterator<_InputIter>::value>::type* = 0);
     deque(const deque& __c);
     deque(const deque& __c, const allocator_type& __a);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     deque(initializer_list<value_type> __il);
     deque(initializer_list<value_type> __il, const allocator_type& __a);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     deque& operator=(const deque& __c);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     deque& operator=(initializer_list<value_type> __il) {assign(__il); return *this;}
+#endif   // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     deque(deque&& __c) _NOEXCEPT_(is_nothrow_move_constructible<__base>::value);
@@ -1227,8 +1231,10 @@ public:
         void assign(_RAIter __f, _RAIter __l,
                     typename enable_if<__is_random_access_iterator<_RAIter>::value>::type* = 0);
     void assign(size_type __n, const value_type& __v);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     void assign(initializer_list<value_type> __il) {assign(__il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     allocator_type get_allocator() const _NOEXCEPT;
 
@@ -1313,9 +1319,11 @@ public:
     template <class _BiIter>
         iterator insert (const_iterator __p, _BiIter __f, _BiIter __l,
                          typename enable_if<__is_bidirectional_iterator<_BiIter>::value>::type* = 0);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __p, initializer_list<value_type> __il)
         {return insert(__p, __il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     void pop_front();
     void pop_back();
     iterator erase(const_iterator __p);
@@ -1452,6 +1460,8 @@ deque<_Tp, _Allocator>::deque(const deque& __c, const allocator_type& __a)
     __append(__c.begin(), __c.end());
 }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Tp, class _Allocator>
 deque<_Tp, _Allocator>::deque(initializer_list<value_type> __il)
 {
@@ -1464,6 +1474,8 @@ deque<_Tp, _Allocator>::deque(initializer_list<value_type> __il, const allocator
 {
     __append(__il.begin(), __il.end());
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Tp, class _Allocator>
 deque<_Tp, _Allocator>&

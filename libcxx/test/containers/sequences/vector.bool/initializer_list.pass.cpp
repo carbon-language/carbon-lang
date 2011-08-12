@@ -16,12 +16,12 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     std::vector<int> d = {true, false, false, true};
     assert(d.size() == 4);
     assert(d[0] == true);
     assert(d[1] == false);
     assert(d[2] == false);
     assert(d[3] == true);
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

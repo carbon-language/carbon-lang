@@ -16,11 +16,11 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         std::string s("123def456");
         s.replace(s.cbegin() + 3, s.cbegin() + 6, {'a', 'b', 'c'});
         assert(s == "123abc456");
     }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

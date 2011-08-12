@@ -580,8 +580,10 @@ public:
         : base(_VSTD::move(__x)) {}
     forward_list(forward_list&& __x, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     forward_list(initializer_list<value_type> __il);
     forward_list(initializer_list<value_type> __il, const allocator_type& __a);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     // ~forward_list() = default;
 
@@ -592,7 +594,9 @@ public:
              __node_traits::propagate_on_container_move_assignment::value &&
              is_nothrow_move_assignable<allocator_type>::value);
 #endif
+#ifndef  _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     forward_list& operator=(initializer_list<value_type> __il);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     template <class _InputIterator>
         typename enable_if
@@ -602,7 +606,9 @@ public:
         >::type
         assign(_InputIterator __f, _InputIterator __l);
     void assign(size_type __n, const value_type& __v);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     void assign(initializer_list<value_type> __il);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     allocator_type get_allocator() const _NOEXCEPT
@@ -677,8 +683,10 @@ public:
             iterator
         >::type
         insert_after(const_iterator __p, _InputIterator __f, _InputIterator __l);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     iterator insert_after(const_iterator __p, initializer_list<value_type> __il)
         {return insert_after(__p, __il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     iterator erase_after(const_iterator __p);
     iterator erase_after(const_iterator __f, const_iterator __l);
@@ -843,6 +851,8 @@ forward_list<_Tp, _Alloc>::forward_list(forward_list&& __x,
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Tp, class _Alloc>
 forward_list<_Tp, _Alloc>::forward_list(initializer_list<value_type> __il)
 {
@@ -856,6 +866,8 @@ forward_list<_Tp, _Alloc>::forward_list(initializer_list<value_type> __il,
 {
     insert_after(cbefore_begin(), __il.begin(), __il.end());
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Tp, class _Alloc>
 forward_list<_Tp, _Alloc>&
@@ -910,6 +922,8 @@ forward_list<_Tp, _Alloc>::operator=(forward_list&& __x)
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 forward_list<_Tp, _Alloc>&
@@ -918,6 +932,8 @@ forward_list<_Tp, _Alloc>::operator=(initializer_list<value_type> __il)
     assign(__il.begin(), __il.end());
     return *this;
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Tp, class _Alloc>
 template <class _InputIterator>
@@ -954,6 +970,8 @@ forward_list<_Tp, _Alloc>::assign(size_type __n, const value_type& __v)
         erase_after(__i, __e);
 }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 void
@@ -961,6 +979,8 @@ forward_list<_Tp, _Alloc>::assign(initializer_list<value_type> __il)
 {
     assign(__il.begin(), __il.end());
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #ifndef _LIBCPP_HAS_NO_VARIADICS

@@ -365,6 +365,7 @@ public:
         _NOEXCEPT_(is_nothrow_move_constructible<__table>::value);
     unordered_set(unordered_set&& __u, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     unordered_set(initializer_list<value_type> __il);
     unordered_set(initializer_list<value_type> __il, size_type __n,
                   const hasher& __hf = hasher(),
@@ -372,6 +373,7 @@ public:
     unordered_set(initializer_list<value_type> __il, size_type __n,
                   const hasher& __hf, const key_equal& __eql,
                   const allocator_type& __a);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     // ~unordered_set() = default;
     _LIBCPP_INLINE_VISIBILITY
     unordered_set& operator=(const unordered_set& __u)
@@ -383,7 +385,9 @@ public:
     unordered_set& operator=(unordered_set&& __u)
         _NOEXCEPT_(is_nothrow_move_assignable<__table>::value);
 #endif
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     unordered_set& operator=(initializer_list<value_type> __il);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     allocator_type get_allocator() const _NOEXCEPT
@@ -437,9 +441,11 @@ public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _InputIterator>
         void insert(_InputIterator __first, _InputIterator __last);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     void insert(initializer_list<value_type> __il)
         {insert(__il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     iterator erase(const_iterator __p) {return __table_.erase(__p);}
@@ -607,6 +613,8 @@ unordered_set<_Value, _Hash, _Pred, _Alloc>::unordered_set(
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 unordered_set<_Value, _Hash, _Pred, _Alloc>::unordered_set(
         initializer_list<value_type> __il)
@@ -634,6 +642,8 @@ unordered_set<_Value, _Hash, _Pred, _Alloc>::unordered_set(
     insert(__il.begin(), __il.end());
 }
 
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
@@ -648,6 +658,8 @@ unordered_set<_Value, _Hash, _Pred, _Alloc>::operator=(unordered_set&& __u)
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 unordered_set<_Value, _Hash, _Pred, _Alloc>&
@@ -657,6 +669,8 @@ unordered_set<_Value, _Hash, _Pred, _Alloc>::operator=(
     __table_.__assign_unique(__il.begin(), __il.end());
     return *this;
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 template <class _InputIterator>
@@ -763,6 +777,7 @@ public:
         _NOEXCEPT_(is_nothrow_move_constructible<__table>::value);
     unordered_multiset(unordered_multiset&& __u, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     unordered_multiset(initializer_list<value_type> __il);
     unordered_multiset(initializer_list<value_type> __il, size_type __n,
                        const hasher& __hf = hasher(),
@@ -770,6 +785,7 @@ public:
     unordered_multiset(initializer_list<value_type> __il, size_type __n,
                        const hasher& __hf, const key_equal& __eql,
                        const allocator_type& __a);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     // ~unordered_multiset() = default;
     _LIBCPP_INLINE_VISIBILITY
     unordered_multiset& operator=(const unordered_multiset& __u)
@@ -781,7 +797,9 @@ public:
     unordered_multiset& operator=(unordered_multiset&& __u)
         _NOEXCEPT_(is_nothrow_move_assignable<__table>::value);
 #endif
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     unordered_multiset& operator=(initializer_list<value_type> __il);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     allocator_type get_allocator() const _NOEXCEPT
@@ -833,9 +851,11 @@ public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _InputIterator>
         void insert(_InputIterator __first, _InputIterator __last);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     void insert(initializer_list<value_type> __il)
         {insert(__il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     iterator erase(const_iterator __p) {return __table_.erase(__p);}
@@ -1004,6 +1024,8 @@ unordered_multiset<_Value, _Hash, _Pred, _Alloc>::unordered_multiset(
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 unordered_multiset<_Value, _Hash, _Pred, _Alloc>::unordered_multiset(
         initializer_list<value_type> __il)
@@ -1031,6 +1053,8 @@ unordered_multiset<_Value, _Hash, _Pred, _Alloc>::unordered_multiset(
     insert(__il.begin(), __il.end());
 }
 
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
@@ -1046,6 +1070,8 @@ unordered_multiset<_Value, _Hash, _Pred, _Alloc>::operator=(
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 inline
 unordered_multiset<_Value, _Hash, _Pred, _Alloc>&
@@ -1055,6 +1081,8 @@ unordered_multiset<_Value, _Hash, _Pred, _Alloc>::operator=(
     __table_.__assign_multi(__il.begin(), __il.end());
     return *this;
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Value, class _Hash, class _Pred, class _Alloc>
 template <class _InputIterator>

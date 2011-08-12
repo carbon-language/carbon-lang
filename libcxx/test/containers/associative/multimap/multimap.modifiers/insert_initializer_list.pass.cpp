@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     typedef std::multimap<int, double> C;
     typedef C::value_type V;
     C m =
@@ -49,5 +49,5 @@ int main()
     assert(*++i == V(3, 1));
     assert(*++i == V(3, 2));
     assert(*++i == V(3, 1.5));
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

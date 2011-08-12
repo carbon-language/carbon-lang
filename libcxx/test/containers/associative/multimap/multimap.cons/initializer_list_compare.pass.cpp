@@ -19,7 +19,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     typedef test_compare<std::less<int> > Cmp;
     typedef std::multimap<int, double, Cmp> C;
     typedef C::value_type V;
@@ -50,5 +50,5 @@ int main()
     assert(*++i == V(3, 1.5));
     assert(*++i == V(3, 2));
     assert(m.key_comp() == Cmp(4));
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

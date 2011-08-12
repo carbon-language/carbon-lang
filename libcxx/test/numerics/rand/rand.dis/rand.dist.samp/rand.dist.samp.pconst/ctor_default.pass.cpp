@@ -19,6 +19,7 @@
 
 int main()
 {
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         typedef std::piecewise_constant_distribution<> D;
         D d;
@@ -30,4 +31,5 @@ int main()
         assert(dn.size() == 1);
         assert(dn[0] == 1);
     }
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

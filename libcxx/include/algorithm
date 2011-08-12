@@ -2233,6 +2233,8 @@ min(const _Tp& __a, const _Tp& __b)
     return _VSTD::min(__a, __b, __less<_Tp>());
 }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template<class _Tp, class _Compare>
 inline _LIBCPP_INLINE_VISIBILITY
 _Tp
@@ -2248,6 +2250,8 @@ min(initializer_list<_Tp> __t)
 {
     return *_VSTD::min_element(__t.begin(), __t.end());
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 // max_element
 
@@ -2293,6 +2297,8 @@ max(const _Tp& __a, const _Tp& __b)
     return _VSTD::max(__a, __b, __less<_Tp>());
 }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template<class _Tp, class _Compare>
 inline _LIBCPP_INLINE_VISIBILITY
 _Tp
@@ -2308,6 +2314,8 @@ max(initializer_list<_Tp> __t)
 {
     return *_VSTD::max_element(__t.begin(), __t.end());
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 // minmax_element
 
@@ -2388,6 +2396,8 @@ minmax(const _Tp& __a, const _Tp& __b)
     return _VSTD::minmax(__a, __b, __less<_Tp>());
 }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template<class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 pair<_Tp, _Tp>
@@ -2407,6 +2417,8 @@ minmax(initializer_list<_Tp> __t, _Compare __comp)
                            _VSTD::minmax_element(__t.begin(), __t.end(), __comp);
     return pair<_Tp, _Tp>(*__p.first, *__p.second);
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 // random_shuffle
 

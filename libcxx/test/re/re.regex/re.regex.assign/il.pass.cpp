@@ -18,10 +18,10 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     std::regex r2;
     r2 = {'(', 'a', '(', '[', 'b', 'c', ']', ')', ')'};
     assert(r2.flags() == std::regex::ECMAScript);
     assert(r2.mark_count() == 2);
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

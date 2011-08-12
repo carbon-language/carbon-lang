@@ -798,8 +798,10 @@ public:
     valarray(const valarray& __v);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     valarray(valarray&& __v);
-    valarray(initializer_list<value_type> __il);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+    valarray(initializer_list<value_type> __il);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     valarray(const slice_array<value_type>& __sa);
     valarray(const gslice_array<value_type>& __ga);
     valarray(const mask_array<value_type>& __ma);
@@ -810,8 +812,10 @@ public:
     valarray& operator=(const valarray& __v);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     valarray& operator=(valarray&& __v);
-    valarray& operator=(initializer_list<value_type>);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+    valarray& operator=(initializer_list<value_type>);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     valarray& operator=(const value_type& __x);
     valarray& operator=(const slice_array<value_type>& __sa);
     valarray& operator=(const gslice_array<value_type>& __ga);
@@ -2708,6 +2712,10 @@ valarray<_Tp>::valarray(valarray&& __v)
     __v.__begin_ = __v.__end_ = nullptr;
 }
 
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Tp>
 valarray<_Tp>::valarray(initializer_list<value_type> __il)
     : __begin_(0),
@@ -2734,7 +2742,7 @@ valarray<_Tp>::valarray(initializer_list<value_type> __il)
     }
 }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Tp>
 valarray<_Tp>::valarray(const slice_array<value_type>& __sa)
@@ -2884,6 +2892,10 @@ valarray<_Tp>::operator=(valarray&& __v)
     return *this;
 }
 
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 valarray<_Tp>&
@@ -2895,7 +2907,7 @@ valarray<_Tp>::operator=(initializer_list<value_type> __il)
     return *this;
 }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY

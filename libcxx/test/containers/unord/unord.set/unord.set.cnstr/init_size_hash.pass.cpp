@@ -25,7 +25,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         typedef std::unordered_set<int,
                                    test_hash<std::hash<int> >,
@@ -59,5 +59,5 @@ int main()
         assert(c.load_factor() == (float)c.size()/c.bucket_count());
         assert(c.max_load_factor() == 1);
     }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

@@ -577,8 +577,10 @@ public:
     list(const list& __c);
     list(const list& __c, const allocator_type& __a);
     list& operator=(const list& __c);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     list(initializer_list<value_type> __il);
     list(initializer_list<value_type> __il, const allocator_type& __a);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     list(list&& __c)
         _NOEXCEPT_(is_nothrow_move_constructible<__node_allocator>::value);
@@ -588,17 +590,21 @@ public:
             __node_alloc_traits::propagate_on_container_move_assignment::value &&
             is_nothrow_move_assignable<__node_allocator>::value);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     list& operator=(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end()); return *this;}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     template <class _InpIter>
         void assign(_InpIter __f, _InpIter __l,
              typename enable_if<__is_input_iterator<_InpIter>::value>::type* = 0);
     void assign(size_type __n, const value_type& __x);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     void assign(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     allocator_type get_allocator() const _NOEXCEPT;
 
@@ -673,9 +679,11 @@ public:
     template <class _InpIter>
         iterator insert(const_iterator __p, _InpIter __f, _InpIter __l,
              typename enable_if<__is_input_iterator<_InpIter>::value>::type* = 0);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __p, initializer_list<value_type> __il)
         {return insert(__p, __il.begin(), __il.end());}
+#endif   // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     void swap(list& __c)
@@ -830,6 +838,8 @@ list<_Tp, _Alloc>::list(const list& __c, const allocator_type& __a)
         push_back(*__i);
 }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Tp, class _Alloc>
 list<_Tp, _Alloc>::list(initializer_list<value_type> __il, const allocator_type& __a)
     : base(__a)
@@ -846,6 +856,8 @@ list<_Tp, _Alloc>::list(initializer_list<value_type> __il)
             __e = __il.end(); __i != __e; ++__i)
         push_back(*__i);
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY

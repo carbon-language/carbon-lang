@@ -19,7 +19,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         typedef std::discrete_distribution<> D;
         D d = {};
@@ -77,5 +77,5 @@ int main()
         assert(p[1] == 0);
         assert(p[2] == 1);
     }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

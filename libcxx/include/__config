@@ -160,6 +160,10 @@ typedef __char32_t char32_t;
 #define _LIBCPP_HAS_NO_TRAILING_RETURN
 #endif
 
+#if !(__has_feature(cxx_generalized_initializers))
+#define _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+#endif
+
 // Objective-C++ features (opt-in)
 #if __has_feature(objc_arc)
 #define _LIBCPP_HAS_OBJC_ARC
@@ -244,6 +248,7 @@ namespace std {
 #define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_VARIADICS
+#define _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 #endif  // !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 4)
 
 #if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 6)

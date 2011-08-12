@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         std::string s = {'a', 'b', 'c'};
         assert(s == "abc");
@@ -28,5 +28,5 @@ int main()
         s = {L'a', L'b', L'c'};
         assert(s == L"abc");
     }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

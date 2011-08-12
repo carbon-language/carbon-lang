@@ -24,7 +24,7 @@ double f(double x)
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         typedef std::piecewise_linear_distribution<> D;
         typedef D::param_type P;
@@ -79,5 +79,5 @@ int main()
         assert(dn[1] == 0.125);
         assert(dn[2] == 0.175);
     }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

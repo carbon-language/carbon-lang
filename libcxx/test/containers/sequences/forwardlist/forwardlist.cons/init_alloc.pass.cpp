@@ -18,7 +18,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     {
         typedef int T;
         typedef test_allocator<T> A;
@@ -30,5 +30,5 @@ int main()
         assert(n == 10);
         assert(c.get_allocator() == A(14));
     }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

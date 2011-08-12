@@ -774,6 +774,18 @@ public:
     map(map&& __m, const allocator_type& __a);
 
     _LIBCPP_INLINE_VISIBILITY
+    map& operator=(map&& __m)
+        _NOEXCEPT_(is_nothrow_move_assignable<__base>::value)
+        {
+            __tree_ = _VSTD::move(__m.__tree_);
+            return *this;
+        }
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
+    _LIBCPP_INLINE_VISIBILITY
     map(initializer_list<value_type> __il, const key_compare& __comp = key_compare())
         : __tree_(__vc(__comp))
         {
@@ -788,21 +800,13 @@ public:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    map& operator=(map&& __m)
-        _NOEXCEPT_(is_nothrow_move_assignable<__base>::value)
-        {
-            __tree_ = _VSTD::move(__m.__tree_);
-            return *this;
-        }
-
-    _LIBCPP_INLINE_VISIBILITY
     map& operator=(initializer_list<value_type> __il)
         {
             __tree_.__assign_unique(__il.begin(), __il.end());
             return *this;
         }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     explicit map(const allocator_type& __a)
@@ -943,9 +947,13 @@ public:
                 insert(__e.__i_, *__f);
         }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
     _LIBCPP_INLINE_VISIBILITY
     void insert(initializer_list<value_type> __il)
         {insert(__il.begin(), __il.end());}
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     iterator erase(const_iterator __p) {return __tree_.erase(__p.__i_);}
@@ -1523,6 +1531,18 @@ public:
     multimap(multimap&& __m, const allocator_type& __a);
 
     _LIBCPP_INLINE_VISIBILITY
+    multimap& operator=(multimap&& __m)
+        _NOEXCEPT_(is_nothrow_move_assignable<__base>::value)
+        {
+            __tree_ = _VSTD::move(__m.__tree_);
+            return *this;
+        }
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
+    _LIBCPP_INLINE_VISIBILITY
     multimap(initializer_list<value_type> __il, const key_compare& __comp = key_compare())
         : __tree_(__vc(__comp))
         {
@@ -1537,20 +1557,13 @@ public:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    multimap& operator=(multimap&& __m)
-        _NOEXCEPT_(is_nothrow_move_assignable<__base>::value)
-        {
-            __tree_ = _VSTD::move(__m.__tree_);
-            return *this;
-        }
-
-    _LIBCPP_INLINE_VISIBILITY
     multimap& operator=(initializer_list<value_type> __il)
         {
             __tree_.__assign_multi(__il.begin(), __il.end());
             return *this;
         }
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     explicit multimap(const allocator_type& __a)
@@ -1679,9 +1692,13 @@ public:
                 __tree_.__insert_multi(__e.__i_, *__f);
         }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
     _LIBCPP_INLINE_VISIBILITY
     void insert(initializer_list<value_type> __il)
         {insert(__il.begin(), __il.end());}
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     iterator erase(const_iterator __p) {return __tree_.erase(__p.__i_);}

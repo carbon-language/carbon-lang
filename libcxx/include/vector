@@ -532,10 +532,12 @@ public:
     template <class _ForwardIterator>
         vector(_ForwardIterator __first, _ForwardIterator __last, const allocator_type& __a,
                typename enable_if<__is_forward_iterator<_ForwardIterator>::value>::type* = 0);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     vector(initializer_list<value_type> __il);
     _LIBCPP_INLINE_VISIBILITY
     vector(initializer_list<value_type> __il, const allocator_type& __a);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 #ifdef _LIBCPP_DEBUG
     _LIBCPP_INLINE_VISIBILITY
     ~vector() {__invalidate_all_iterators();}
@@ -557,9 +559,11 @@ public:
              __alloc_traits::propagate_on_container_move_assignment::value &&
              is_nothrow_move_assignable<allocator_type>::value);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     vector& operator=(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end()); return *this;}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     template <class _InputIterator>
         typename enable_if
@@ -578,9 +582,11 @@ public:
         assign(_ForwardIterator __first, _ForwardIterator __last);
 
     void assign(size_type __n, const_reference __u);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     void assign(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY
     allocator_type get_allocator() const _NOEXCEPT
@@ -681,9 +687,11 @@ public:
             iterator
         >::type
         insert(const_iterator __position, _ForwardIterator __first, _ForwardIterator __last);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __position, initializer_list<value_type> __il)
         {return insert(__position, __il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY iterator erase(const_iterator __position);
     iterator erase(const_iterator __first, const_iterator __last);
@@ -1056,6 +1064,8 @@ vector<_Tp, _Allocator>::vector(vector&& __x, const allocator_type& __a)
     }
 }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 vector<_Tp, _Allocator>::vector(initializer_list<value_type> __il)
@@ -1078,6 +1088,8 @@ vector<_Tp, _Allocator>::vector(initializer_list<value_type> __il, const allocat
         __construct_at_end(__il.begin(), __il.end());
     }
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Tp, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
@@ -1854,8 +1866,10 @@ public:
     vector(const vector& __v);
     vector(const vector& __v, const allocator_type& __a);
     vector& operator=(const vector& __v);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     vector(initializer_list<value_type> __il);
     vector(initializer_list<value_type> __il, const allocator_type& __a);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
@@ -1868,9 +1882,11 @@ public:
              __alloc_traits::propagate_on_container_move_assignment::value &&
              is_nothrow_move_assignable<allocator_type>::value);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     vector& operator=(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end()); return *this;}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     template <class _InputIterator>
         typename enable_if
@@ -1889,9 +1905,11 @@ public:
         assign(_ForwardIterator __first, _ForwardIterator __last);
 
     void assign(size_type __n, const value_type& __x);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     void assign(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY allocator_type get_allocator() const _NOEXCEPT
         {return allocator_type(this->__alloc());}
@@ -1979,9 +1997,11 @@ public:
             iterator
         >::type
         insert(const_iterator __position, _ForwardIterator __first, _ForwardIterator __last);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __position, initializer_list<value_type> __il)
         {return insert(__position, __il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     _LIBCPP_INLINE_VISIBILITY iterator erase(const_iterator __position);
     iterator erase(const_iterator __first, const_iterator __last);
@@ -2351,6 +2371,8 @@ vector<bool, _Allocator>::vector(_ForwardIterator __first, _ForwardIterator __la
     }
 }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template <class _Allocator>
 vector<bool, _Allocator>::vector(initializer_list<value_type> __il)
     : __begin_(0),
@@ -2378,6 +2400,8 @@ vector<bool, _Allocator>::vector(initializer_list<value_type> __il, const alloca
         __construct_at_end(__il.begin(), __il.end());
     }
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _Allocator>
 vector<bool, _Allocator>::~vector()

@@ -20,7 +20,7 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     typedef std::pair<const int, double> V;
     typedef test_compare<std::less<int> > C;
     typedef test_allocator<std::pair<const int, double> > A;
@@ -42,5 +42,5 @@ int main()
     assert(*next(m.begin(), 2) == V(3, 1));
     assert(m.key_comp() == C(3));
     assert(m.get_allocator() == A(6));
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

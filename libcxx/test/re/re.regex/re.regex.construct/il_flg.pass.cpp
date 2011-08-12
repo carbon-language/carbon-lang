@@ -17,7 +17,7 @@
 #include <regex>
 #include <cassert>
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 void
 test(std::initializer_list<char> il, std::regex_constants::syntax_option_type f, unsigned mc)
@@ -27,11 +27,11 @@ test(std::initializer_list<char> il, std::regex_constants::syntax_option_type f,
     assert(r.mark_count() == mc);
 }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     std::string s1("\\(a\\)");
     std::string s2("\\(a[bc]\\)");
     std::string s3("\\(a\\([bc]\\)\\)");
@@ -66,5 +66,5 @@ int main()
     test({'\\', '(', 'a', '[', 'b', 'c', ']', '\\', ')'}, std::regex_constants::egrep, 0);
     test({'\\', '(', 'a', '\\', '(', '[', 'b', 'c', ']', '\\', ')', '\\', ')'}, std::regex_constants::egrep, 0);
     test({'(', 'a', '(', '[', 'b', 'c', ']', ')', ')'}, std::regex_constants::egrep, 2);
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

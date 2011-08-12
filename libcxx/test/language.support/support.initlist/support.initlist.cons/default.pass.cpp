@@ -18,6 +18,8 @@ struct A {};
 
 int main()
 {
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     std::initializer_list<A> il;
     assert(il.size() == 0);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 }

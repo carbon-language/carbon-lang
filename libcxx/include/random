@@ -3399,9 +3399,11 @@ public:
     // constructors
     _LIBCPP_INLINE_VISIBILITY
     seed_seq() {}
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     template<class _Tp>
         _LIBCPP_INLINE_VISIBILITY
         seed_seq(initializer_list<_Tp> __il) {init(__il.begin(), __il.end());}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     template<class _InputIterator>
         _LIBCPP_INLINE_VISIBILITY
@@ -5715,9 +5717,11 @@ public:
             _LIBCPP_INLINE_VISIBILITY
             param_type(_InputIterator __f, _InputIterator __l)
             : __p_(__f, __l) {__init();}
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
         _LIBCPP_INLINE_VISIBILITY
         param_type(initializer_list<double> __wl)
             : __p_(__wl.begin(), __wl.end()) {__init();}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
         template<class _UnaryOperation>
             param_type(size_t __nw, double __xmin, double __xmax,
                        _UnaryOperation __fw);
@@ -5760,9 +5764,11 @@ public:
         _LIBCPP_INLINE_VISIBILITY
         discrete_distribution(_InputIterator __f, _InputIterator __l)
             : __p_(__f, __l) {}
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     _LIBCPP_INLINE_VISIBILITY
     discrete_distribution(initializer_list<double> __wl)
         : __p_(__wl) {}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     template<class _UnaryOperation>
         _LIBCPP_INLINE_VISIBILITY
         discrete_distribution(size_t __nw, double __xmin, double __xmax,
@@ -5942,8 +5948,10 @@ public:
         template<class _InputIteratorB, class _InputIteratorW>
             param_type(_InputIteratorB __fB, _InputIteratorB __lB,
                        _InputIteratorW __fW);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
         template<class _UnaryOperation>
             param_type(initializer_list<result_type> __bl, _UnaryOperation __fw);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
         template<class _UnaryOperation>
             param_type(size_t __nw, result_type __xmin, result_type __xmax,
                        _UnaryOperation __fw);
@@ -5993,11 +6001,13 @@ public:
                                         _InputIteratorW __fW)
         : __p_(__fB, __lB, __fW) {}
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     template<class _UnaryOperation>
         _LIBCPP_INLINE_VISIBILITY
         piecewise_constant_distribution(initializer_list<result_type> __bl,
                                         _UnaryOperation __fw)
         : __p_(__bl, __fw) {}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     template<class _UnaryOperation>
         _LIBCPP_INLINE_VISIBILITY
@@ -6127,6 +6137,8 @@ piecewise_constant_distribution<_RealType>::param_type::param_type(
     }
 }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template<class _RealType>
 template<class _UnaryOperation>
 piecewise_constant_distribution<_RealType>::param_type::param_type(
@@ -6149,6 +6161,8 @@ piecewise_constant_distribution<_RealType>::param_type::param_type(
         __init();
     }
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template<class _RealType>
 template<class _UnaryOperation>
@@ -6258,8 +6272,10 @@ public:
         template<class _InputIteratorB, class _InputIteratorW>
             param_type(_InputIteratorB __fB, _InputIteratorB __lB,
                        _InputIteratorW __fW);
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
         template<class _UnaryOperation>
             param_type(initializer_list<result_type> __bl, _UnaryOperation __fw);
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
         template<class _UnaryOperation>
             param_type(size_t __nw, result_type __xmin, result_type __xmax,
                        _UnaryOperation __fw);
@@ -6309,11 +6325,13 @@ public:
                                       _InputIteratorW __fW)
         : __p_(__fB, __lB, __fW) {}
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
     template<class _UnaryOperation>
         _LIBCPP_INLINE_VISIBILITY
         piecewise_linear_distribution(initializer_list<result_type> __bl,
                                       _UnaryOperation __fw)
         : __p_(__bl, __fw) {}
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
     template<class _UnaryOperation>
         _LIBCPP_INLINE_VISIBILITY
@@ -6447,6 +6465,8 @@ piecewise_linear_distribution<_RealType>::param_type::param_type(
     }
 }
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
+
 template<class _RealType>
 template<class _UnaryOperation>
 piecewise_linear_distribution<_RealType>::param_type::param_type(
@@ -6469,6 +6489,8 @@ piecewise_linear_distribution<_RealType>::param_type::param_type(
         __init();
     }
 }
+
+#endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template<class _RealType>
 template<class _UnaryOperation>
