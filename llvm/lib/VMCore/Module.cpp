@@ -32,25 +32,10 @@ using namespace llvm;
 // Methods to implement the globals and functions lists.
 //
 
-GlobalVariable *ilist_traits<GlobalVariable>::createSentinel() {
-  GlobalVariable *Ret = new GlobalVariable(Type::getInt32Ty(getGlobalContext()),
-                                           false, GlobalValue::ExternalLinkage);
-  // This should not be garbage monitored.
-  LeakDetector::removeGarbageObject(Ret);
-  return Ret;
-}
-GlobalAlias *ilist_traits<GlobalAlias>::createSentinel() {
-  GlobalAlias *Ret = new GlobalAlias(Type::getInt32Ty(getGlobalContext()),
-                                     GlobalValue::ExternalLinkage);
-  // This should not be garbage monitored.
-  LeakDetector::removeGarbageObject(Ret);
-  return Ret;
-}
-
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file.
-template class llvm::SymbolTableListTraits<GlobalVariable, Module>;
 template class llvm::SymbolTableListTraits<Function, Module>;
+template class llvm::SymbolTableListTraits<GlobalVariable, Module>;
 template class llvm::SymbolTableListTraits<GlobalAlias, Module>;
 
 //===----------------------------------------------------------------------===//
@@ -552,5 +537,3 @@ namespace {
 void Module::findUsedStructTypes(std::vector<StructType*> &StructTypes) const {
   TypeFinder(StructTypes).run(*this);
 }
-
-

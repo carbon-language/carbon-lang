@@ -50,17 +50,35 @@ template<> struct ilist_traits<Function>
 private:
   mutable ilist_node<Function> Sentinel;
 };
+
 template<> struct ilist_traits<GlobalVariable>
   : public SymbolTableListTraits<GlobalVariable, Module> {
   // createSentinel is used to create a node that marks the end of the list.
-  static GlobalVariable *createSentinel();
-  static void destroySentinel(GlobalVariable *GV) { delete GV; }
+  GlobalVariable *createSentinel() const {
+    return static_cast<GlobalVariable*>(&Sentinel);
+  }
+  static void destroySentinel(GlobalVariable*) {}
+
+  GlobalVariable *provideInitialHead() const { return createSentinel(); }
+  GlobalVariable *ensureHead(GlobalVariable*) const { return createSentinel(); }
+  static void noteHead(GlobalVariable*, GlobalVariable*) {}
+private:
+  mutable ilist_node<GlobalVariable> Sentinel;
 };
+
 template<> struct ilist_traits<GlobalAlias>
   : public SymbolTableListTraits<GlobalAlias, Module> {
   // createSentinel is used to create a node that marks the end of the list.
-  static GlobalAlias *createSentinel();
-  static void destroySentinel(GlobalAlias *GA) { delete GA; }
+  GlobalAlias *createSentinel() const {
+    return static_cast<GlobalAlias*>(&Sentinel);
+  }
+  static void destroySentinel(GlobalAlias*) {}
+
+  GlobalAlias *provideInitialHead() const { return createSentinel(); }
+  GlobalAlias *ensureHead(GlobalAlias*) const { return createSentinel(); }
+  static void noteHead(GlobalAlias*, GlobalAlias*) {}
+private:
+  mutable ilist_node<GlobalAlias> Sentinel;
 };
 
 template<> struct ilist_traits<NamedMDNode>
