@@ -1,4 +1,4 @@
-// RUN: %llvmgxx -S %s -o - | grep {volatile load}
+// RUN: %llvmgxx -S %s -o - | grep {load volatile}
 // PR3320
 
 void test(volatile int *a) {
