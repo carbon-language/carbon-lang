@@ -166,7 +166,8 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 #endif
 
   // Search the diagnostic table with a binary search.
-  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0,0 };
+  StaticDiagInfoRec Find = { static_cast<unsigned short>(DiagID),
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
   const StaticDiagInfoRec *Found =
     std::lower_bound(StaticDiagInfo, StaticDiagInfo + StaticDiagInfoSize, Find);
@@ -269,7 +270,10 @@ unsigned DiagnosticIDs::getIdFromName(StringRef Name) {
   
   if (Name.empty()) { return diag::DIAG_UPPER_LIMIT; }
   
-  StaticDiagNameIndexRec Find = { Name.data(), 0, Name.size() };
+  assert(Name.size() == static_cast<uint8_t>(Name.size()) &&
+         "Name is too long");
+  StaticDiagNameIndexRec Find = { Name.data(), 0,
+                                  static_cast<uint8_t>(Name.size()) };
   
   const StaticDiagNameIndexRec *Found =
     std::lower_bound( StaticDiagNameIndex, StaticDiagNameIndexEnd, Find);
