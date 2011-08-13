@@ -135,14 +135,25 @@ void* returnContent() {
 
 // Password was passed in as an argument and does nt have to be deleted.
 OSStatus getPasswordAndItem(void** password, UInt32* passwordLength) {
-    OSStatus err;
-    SecKeychainItemRef item;
-    err = SecKeychainFindGenericPassword(0, 3, "xx",
-                                         3, "xx",
-                                         passwordLength, password,
-                                         &item);
-    return err;
+  OSStatus err;
+  SecKeychainItemRef item;
+  err = SecKeychainFindGenericPassword(0, 3, "xx", 3, "xx",
+                                       passwordLength, password, &item);
+  return err;
 } // no-warning
+
+// Make sure we do not report an error if we call free only if password != 0.
+OSStatus testSecKeychainFindGenericPassword(UInt32* passwordLength) {
+  OSStatus err;
+  SecKeychainItemRef item;
+  void *password;
+  err = SecKeychainFindGenericPassword(0, 3, "xx", 3, "xx",
+                                       passwordLength, &password, &item);
+  if (err == noErr && password) {
+    SecKeychainItemFreeContent(0, password);
+  }
+  return err;
+}
 
 int apiMismatch(SecKeychainItemRef itemRef, 
          SecKeychainAttributeInfo *info,
@@ -183,14 +194,18 @@ int ErrorCodesFromDifferentAPISDoNotInterfere(SecKeychainItemRef itemRef,
   return 0; // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeAttributesAndData'}}
 }
 
-int foo() {
+int foo(CFTypeRef keychainOrArray, SecProtocolType protocol, 
+        SecAuthenticationType authenticationType, SecKeychainItemRef *itemRef) {
   unsigned int *ptr = 0;
   OSStatus st = 0;
 
   UInt32 length;
   void *outData[5];
 
-  st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &(outData[3]));
+  st = SecKeychainFindInternetPassword(keychainOrArray, 
+                                       16, "server", 16, "domain", 16, "account",
+                                       16, "path", 222, protocol, authenticationType,
+                                       &length, &(outData[3]), itemRef);
   if (length == 5) {
     if (st == noErr)
       SecKeychainItemFreeContent(ptr, outData[3]);
