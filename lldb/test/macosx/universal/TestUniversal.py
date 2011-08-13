@@ -16,7 +16,7 @@ class UniversalTestCase(TestBase):
         self.line = line_number('main.c', '// Set break point at this line.')
 
     # rdar://problem/8972204 AddressByteSize of 32-bit process should be 4, got 8 instead.
-    @unittest2.skipUnless(sys.platform.startswith("darwin") and os.uname()[4]=='i386',
+    @unittest2.skipUnless(sys.platform.startswith("darwin") and os.uname()[4] in ['i386', 'x86_64'],
                           "requires Darwin & i386")
     def test_process_launch_for_universal(self):
         """Test process launch of a universal binary."""
