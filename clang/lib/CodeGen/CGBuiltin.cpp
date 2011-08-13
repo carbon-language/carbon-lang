@@ -1239,6 +1239,37 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   for (unsigned i = 0, e = E->getNumArgs() - 1; i != e; i++)
     Ops.push_back(EmitScalarExpr(E->getArg(i)));
 
+  // vget_lane and vset_lane are not overloaded and do not have an extra
+  // argument that specifies the vector type.
+  switch (BuiltinID) {
+  default: break;
+  case ARM::BI__builtin_neon_vget_lane_i8:
+  case ARM::BI__builtin_neon_vget_lane_i16:
+  case ARM::BI__builtin_neon_vget_lane_i32:
+  case ARM::BI__builtin_neon_vget_lane_i64:
+  case ARM::BI__builtin_neon_vget_lane_f32:
+  case ARM::BI__builtin_neon_vgetq_lane_i8:
+  case ARM::BI__builtin_neon_vgetq_lane_i16:
+  case ARM::BI__builtin_neon_vgetq_lane_i32:
+  case ARM::BI__builtin_neon_vgetq_lane_i64:
+  case ARM::BI__builtin_neon_vgetq_lane_f32:
+    return Builder.CreateExtractElement(Ops[0], EmitScalarExpr(E->getArg(1)),
+                                        "vget_lane");
+  case ARM::BI__builtin_neon_vset_lane_i8:
+  case ARM::BI__builtin_neon_vset_lane_i16:
+  case ARM::BI__builtin_neon_vset_lane_i32:
+  case ARM::BI__builtin_neon_vset_lane_i64:
+  case ARM::BI__builtin_neon_vset_lane_f32:
+  case ARM::BI__builtin_neon_vsetq_lane_i8:
+  case ARM::BI__builtin_neon_vsetq_lane_i16:
+  case ARM::BI__builtin_neon_vsetq_lane_i32:
+  case ARM::BI__builtin_neon_vsetq_lane_i64:
+  case ARM::BI__builtin_neon_vsetq_lane_f32:
+    Ops.push_back(EmitScalarExpr(E->getArg(2)));
+    return Builder.CreateInsertElement(Ops[1], Ops[0], Ops[2], "vset_lane");
+  }
+
+  // Get the last argument, which specifies the vector type.
   llvm::APSInt Result;
   const Expr *Arg = E->getArg(E->getNumArgs()-1);
   if (!Arg->isIntegerConstantExpr(Result, getContext()))
@@ -1381,18 +1412,6 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Value *SV = llvm::ConstantVector::get(Indices);
     return Builder.CreateShuffleVector(Ops[0], Ops[1], SV, "vext");
   }
-  case ARM::BI__builtin_neon_vget_lane_i8:
-  case ARM::BI__builtin_neon_vget_lane_i16:
-  case ARM::BI__builtin_neon_vget_lane_i32:
-  case ARM::BI__builtin_neon_vget_lane_i64:
-  case ARM::BI__builtin_neon_vget_lane_f32:
-  case ARM::BI__builtin_neon_vgetq_lane_i8:
-  case ARM::BI__builtin_neon_vgetq_lane_i16:
-  case ARM::BI__builtin_neon_vgetq_lane_i32:
-  case ARM::BI__builtin_neon_vgetq_lane_i64:
-  case ARM::BI__builtin_neon_vgetq_lane_f32:
-    return Builder.CreateExtractElement(Ops[0], EmitScalarExpr(E->getArg(1)),
-                                        "vget_lane");
   case ARM::BI__builtin_neon_vhadd_v:
   case ARM::BI__builtin_neon_vhaddq_v:
     Int = usgn ? Intrinsic::arm_neon_vhaddu : Intrinsic::arm_neon_vhadds;
@@ -1722,18 +1741,6 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vrsubhn_v:
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vrsubhn, Ty),
                         Ops, "vrsubhn");
-  case ARM::BI__builtin_neon_vset_lane_i8:
-  case ARM::BI__builtin_neon_vset_lane_i16:
-  case ARM::BI__builtin_neon_vset_lane_i32:
-  case ARM::BI__builtin_neon_vset_lane_i64:
-  case ARM::BI__builtin_neon_vset_lane_f32:
-  case ARM::BI__builtin_neon_vsetq_lane_i8:
-  case ARM::BI__builtin_neon_vsetq_lane_i16:
-  case ARM::BI__builtin_neon_vsetq_lane_i32:
-  case ARM::BI__builtin_neon_vsetq_lane_i64:
-  case ARM::BI__builtin_neon_vsetq_lane_f32:
-    Ops.push_back(EmitScalarExpr(E->getArg(2)));
-    return Builder.CreateInsertElement(Ops[1], Ops[0], Ops[2], "vset_lane");
   case ARM::BI__builtin_neon_vshl_v:
   case ARM::BI__builtin_neon_vshlq_v:
     Int = usgn ? Intrinsic::arm_neon_vshiftu : Intrinsic::arm_neon_vshifts;
