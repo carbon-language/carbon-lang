@@ -1322,6 +1322,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       .Case("objective-c-cpp-output", IK_PreprocessedObjC)
       .Case("objc-cpp-output", IK_PreprocessedObjC)
       .Case("objective-c++-cpp-output", IK_PreprocessedObjCXX)
+      .Case("objc++-cpp-output", IK_PreprocessedObjCXX)
       .Case("c-header", IK_C)
       .Case("objective-c-header", IK_ObjC)
       .Case("c++-header", IK_CXX)
