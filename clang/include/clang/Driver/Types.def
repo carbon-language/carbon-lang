@@ -44,10 +44,12 @@ TYPE("c",                        C,            PP_C,            0,       "u")
 TYPE("cl",                       CL,           PP_C,            0,       "u")
 TYPE("cuda",                     CUDA,         PP_CXX,          0,       "u")
 TYPE("objective-c-cpp-output",   PP_ObjC,      INVALID,         "mi",    "u")
+TYPE("objc-cpp-output",          PP_ObjC_Alias, INVALID,        "mi",    "u")
 TYPE("objective-c",              ObjC,         PP_ObjC,         0,       "u")
 TYPE("c++-cpp-output",           PP_CXX,       INVALID,         "ii",    "u")
 TYPE("c++",                      CXX,          PP_CXX,          0,       "u")
 TYPE("objective-c++-cpp-output", PP_ObjCXX,    INVALID,         "mii",   "u")
+TYPE("objc++-cpp-output",        PP_ObjCXX_Alias, INVALID,      "mii",   "u")
 TYPE("objective-c++",            ObjCXX,       PP_ObjCXX,       0,       "u")
 
 // C family input files to precompile.

@@ -2400,13 +2400,15 @@ const char *darwin::CC1::getCC1Name(types::ID Type) const {
   case types::TY_PP_C: case types::TY_PP_CHeader:
     return "cc1";
   case types::TY_ObjC: case types::TY_ObjCHeader:
-  case types::TY_PP_ObjC: case types::TY_PP_ObjCHeader:
+  case types::TY_PP_ObjC: case types::TY_PP_ObjC_Alias:
+  case types::TY_PP_ObjCHeader:
     return "cc1obj";
   case types::TY_CXX: case types::TY_CXXHeader:
   case types::TY_PP_CXX: case types::TY_PP_CXXHeader:
     return "cc1plus";
   case types::TY_ObjCXX: case types::TY_ObjCXXHeader:
-  case types::TY_PP_ObjCXX: case types::TY_PP_ObjCXXHeader:
+  case types::TY_PP_ObjCXX: case types::TY_PP_ObjCXX_Alias:
+  case types::TY_PP_ObjCXXHeader:
     return "cc1objplus";
   }
 }
