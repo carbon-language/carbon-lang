@@ -260,6 +260,7 @@ Debugger::~Debugger ()
             process_sp->Destroy();
     }
     DisconnectInput();
+    printf("\n\n\nDebugger::~Debugger\n\n\n");
 }
 
 
