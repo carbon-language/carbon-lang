@@ -211,7 +211,8 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA,
         types::isCXX(Inputs[0]->getType()) &&
         getTriple().getOS() == llvm::Triple::Darwin &&
         getTriple().getArch() == llvm::Triple::x86 &&
-        C.getArgs().getLastArg(options::OPT_fapple_kext))
+        (C.getArgs().getLastArg(options::OPT_fapple_kext) ||
+         C.getArgs().getLastArg(options::OPT_mkernel)))
       Key = JA.getKind();
     else
       Key = Action::AnalyzeJobClass;
