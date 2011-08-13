@@ -83,7 +83,7 @@ static OptionDefinition g_options[] =
 
 Driver::Driver () :
     SBBroadcaster ("Driver"),
-    m_debugger (SBDebugger::Create()),
+    m_debugger (SBDebugger::Create(false)),
     m_editline_pty (),
     m_editline_slave_fh (NULL),
     m_editline_reader (),
@@ -478,6 +478,15 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
         }
     }
 
+    // This is kind of a pain, but since we make the debugger in the Driver's constructor, we can't
+    // know at that point whether we should read in init files yet.  So we don't read them in in the
+    // Driver constructor, then set the flags back to "read them in" here, and then if we see the
+    // "-n" flag, we'll turn it off again.  Finally we have to read them in by hand later in the
+    // main loop.
+    
+    m_debugger.SkipLLDBInitFiles (false);
+    m_debugger.SkipAppInitFiles (false);
+
     // Prepare for & make calls to getopt_long.
 #if __GLIBC__
     optind = 0;
@@ -542,6 +551,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
 
                     case 'n':
                         m_debugger.SkipLLDBInitFiles (true);
+                        m_debugger.SkipAppInitFiles (true);
                         break;
 
                     case 'f':

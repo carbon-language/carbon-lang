@@ -25,8 +25,12 @@ public:
     static void
     Terminate();
     
+    // Deprecated, use the one that takes a source_init_files bool.
     static lldb::SBDebugger
     Create();
+
+    static lldb::SBDebugger
+    Create(bool source_init_files);
 
     static void
     Destroy (lldb::SBDebugger &debugger);
