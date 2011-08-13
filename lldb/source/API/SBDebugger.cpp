@@ -71,7 +71,7 @@ SBDebugger::Clear ()
 SBDebugger
 SBDebugger::Create()
 {
-    return SBDebugger::Create(true);
+    return SBDebugger::Create(false);
 }
 
 SBDebugger

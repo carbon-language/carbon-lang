@@ -3359,20 +3359,21 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         return eExecutionSetupError;
     }
     
-    // Save this value for restoration of the execution context after we run
+    // Save the thread & frame from the exe_ctx for restoration after we run
     const uint32_t thread_idx_id = exe_ctx.thread->GetIndexID();
+    StackID ctx_frame_id = exe_ctx.thread->GetSelectedFrame()->GetStackID();
 
     // N.B. Running the target may unset the currently selected thread and frame.  We don't want to do that either, 
     // so we should arrange to reset them as well.
     
     lldb::ThreadSP selected_thread_sp = exe_ctx.process->GetThreadList().GetSelectedThread();
-    lldb::StackFrameSP selected_frame_sp;
     
-    uint32_t selected_tid; 
+    uint32_t selected_tid;
+    StackID selected_stack_id;
     if (selected_thread_sp != NULL)
     {
         selected_tid = selected_thread_sp->GetIndexID();
-        selected_frame_sp = selected_thread_sp->GetSelectedFrame();
+        selected_stack_id = selected_thread_sp->GetSelectedFrame()->GetStackID();
     }
     else
     {
@@ -3866,20 +3867,25 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     }
                 
     // Thread we ran the function in may have gone away because we ran the target
-    // Check that it's still there.
+    // Check that it's still there, and if it is put it back in the context.  Also restore the
+    // frame in the context if it is still present.
     exe_ctx.thread = exe_ctx.process->GetThreadList().FindThreadByIndexID(thread_idx_id, true).get();
     if (exe_ctx.thread)
-        exe_ctx.frame = exe_ctx.thread->GetStackFrameAtIndex(0).get();
+    {
+        exe_ctx.frame = exe_ctx.thread->GetFrameWithStackID (ctx_frame_id).get();
+    }
     
     // Also restore the current process'es selected frame & thread, since this function calling may
     // be done behind the user's back.
     
     if (selected_tid != LLDB_INVALID_THREAD_ID)
     {
-        if (exe_ctx.process->GetThreadList().SetSelectedThreadByIndexID (selected_tid))
+        if (exe_ctx.process->GetThreadList().SetSelectedThreadByIndexID (selected_tid) && selected_stack_id.IsValid())
         {
             // We were able to restore the selected thread, now restore the frame:
-            exe_ctx.process->GetThreadList().GetSelectedThread()->SetSelectedFrame(selected_frame_sp.get());
+            StackFrameSP old_frame_sp = exe_ctx.process->GetThreadList().GetSelectedThread()->GetFrameWithStackID(selected_stack_id);
+            if (old_frame_sp)
+                exe_ctx.process->GetThreadList().GetSelectedThread()->SetSelectedFrame(old_frame_sp.get());
         }
     }
     
