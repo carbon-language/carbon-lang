@@ -15,6 +15,25 @@ class UniversalTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
 
+    @python_api_test
+    @unittest2.skipUnless(sys.platform.startswith("darwin") and os.uname()[4] in ['i386', 'x86_64'],
+                          "requires Darwin & i386")
+    def test_sbdebugger_create_target_with_file_and_target_triple(self):
+        """Test the SBDebugger.CreateTargetWithFileAndTargetTriple() API."""
+        # Invoke the default build rule.
+        self.buildDefault()
+
+        # Note that "testit" is a universal binary.
+        exe = os.path.join(os.getcwd(), "testit")
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTargetWithFileAndTargetTriple(exe, "i386-apple-darwin")
+        self.assertTrue(target, VALID_TARGET)
+
+        # Now launch the process, and do not stop at entry point.
+        process = target.LaunchSimple(None, None, os.getcwd())
+        self.assertTrue(process, PROCESS_IS_VALID)
+
     # rdar://problem/8972204 AddressByteSize of 32-bit process should be 4, got 8 instead.
     @unittest2.skipUnless(sys.platform.startswith("darwin") and os.uname()[4] in ['i386', 'x86_64'],
                           "requires Darwin & i386")
