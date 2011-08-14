@@ -153,9 +153,9 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   llvm::DenseMap<const VarDecl*, Expr*> BlockVarCopyInits;
     
   /// \brief Mapping from class scope functions specialization to their
-  ///  templateS pattern.
+  ///  template patterns.
   llvm::DenseMap<const FunctionDecl*, FunctionDecl*>
-    ClassScopeSpecilizationPattern;
+    ClassScopeSpecializationPattern;
 
   /// \brief Representation of a "canonical" template template parameter that
   /// is used in canonical template names.

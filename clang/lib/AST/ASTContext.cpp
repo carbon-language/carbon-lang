@@ -522,8 +522,8 @@ FunctionDecl *ASTContext::getClassScopeSpecializationPattern(
                                                      const FunctionDecl *FD){
   assert(FD && "Specialization is 0");
   llvm::DenseMap<const FunctionDecl*, FunctionDecl *>::const_iterator Pos
-    = ClassScopeSpecilizationPattern.find(FD);
-  if (Pos == ClassScopeSpecilizationPattern.end())
+    = ClassScopeSpecializationPattern.find(FD);
+  if (Pos == ClassScopeSpecializationPattern.end())
     return 0;
 
   return Pos->second;
@@ -533,7 +533,7 @@ void ASTContext::setClassScopeSpecializationPattern(FunctionDecl *FD,
                                         FunctionDecl *Pattern) {
   assert(FD && "Specialization is 0");
   assert(Pattern && "Class scope specialization pattern is 0");
-  ClassScopeSpecilizationPattern[FD] = Pattern;
+  ClassScopeSpecializationPattern[FD] = Pattern;
 }
 
 NamedDecl *
@@ -6458,5 +6458,5 @@ size_t ASTContext::getSideTableAllocatedMemory() const {
     + llvm::capacity_in_bytes(OverriddenMethods)
     + llvm::capacity_in_bytes(Types)
     + llvm::capacity_in_bytes(VariableArrayTypes)
-    + llvm::capacity_in_bytes(ClassScopeSpecilizationPattern);
+    + llvm::capacity_in_bytes(ClassScopeSpecializationPattern);
 }
