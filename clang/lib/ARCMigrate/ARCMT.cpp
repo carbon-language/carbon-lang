@@ -153,7 +153,7 @@ static bool HasARCRuntime(CompilerInvocation &origCI) {
       continue;
     if (!define.startswith(SimulatorVersionDefineName()))
       continue;
-    unsigned Major, Minor, Micro;
+    unsigned Major = 0, Minor = 0, Micro = 0;
     if (GetVersionFromSimulatorDefine(define, Major, Minor, Micro) &&
         Major < 10 && Minor < 100 && Micro < 100)
       return Major >= 5;

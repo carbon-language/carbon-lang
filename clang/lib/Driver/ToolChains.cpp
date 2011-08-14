@@ -515,7 +515,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
            ie = Args.filtered_end(); it != ie; ++it) {
       StringRef define = (*it)->getValue(Args);
       if (define.startswith(SimulatorVersionDefineName())) {
-        unsigned Major, Minor, Micro;
+        unsigned Major = 0, Minor = 0, Micro = 0;
         if (GetVersionFromSimulatorDefine(define, Major, Minor, Micro) &&
             Major < 10 && Minor < 100 && Micro < 100) {
           ARCRuntimeForSimulator = Major < 5 ? ARCSimulator_NoARCRuntime
