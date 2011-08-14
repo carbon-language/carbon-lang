@@ -2097,6 +2097,58 @@ public:
   friend class ASTDeclWriter;
 };
 
+/// Declaration of a function specialization at template class scope.
+/// This is a non standard extension needed to support MSVC.
+/// For example:
+/// template <class T>
+/// class A {
+///    template <class U> void foo(U a) { }
+///    template<> void foo(int a) { }
+/// }
+///
+/// "template<> foo(int a)" will be saved in Specialization as a normal
+/// CXXMethodDecl. Then during an instantiation of class A, it will be
+/// transformed into an actual function specialization.
+class ClassScopeFunctionSpecializationDecl : public Decl {
+private:
+  ClassScopeFunctionSpecializationDecl(DeclContext *DC, SourceLocation Loc,
+                                       CXXMethodDecl *FD)
+    : Decl(Decl::ClassScopeFunctionSpecialization, DC, Loc),
+      Specialization(FD) {}
+
+  ClassScopeFunctionSpecializationDecl(EmptyShell Empty)
+    : Decl(Decl::ClassScopeFunctionSpecialization, Empty) {}
+
+  CXXMethodDecl *Specialization;
+
+public:
+  CXXMethodDecl *getSpecialization() const { return Specialization; }
+
+  static ClassScopeFunctionSpecializationDecl *Create(ASTContext &C,
+                                                      DeclContext *DC,
+                                                      SourceLocation Loc,
+                                                      CXXMethodDecl *FD) {
+    return new (C) ClassScopeFunctionSpecializationDecl(DC , Loc, FD);
+  }
+
+  static ClassScopeFunctionSpecializationDecl *Create(ASTContext &Context,
+                                                      EmptyShell Empty) {
+    return new (Context)ClassScopeFunctionSpecializationDecl(0,
+                                                         SourceLocation(), 0);
+  }
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) {
+    return K == Decl::ClassScopeFunctionSpecialization;
+  }
+  static bool classof(const ClassScopeFunctionSpecializationDecl *D) {
+    return true;
+  }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
+};
+
 /// Implementation of inline functions that require the template declarations
 inline AnyFunctionDecl::AnyFunctionDecl(FunctionTemplateDecl *FTD)
   : Function(FTD) { }

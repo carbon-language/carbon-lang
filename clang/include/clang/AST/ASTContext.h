@@ -152,6 +152,11 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   /// \brief Mapping from __block VarDecls to their copy initialization expr.
   llvm::DenseMap<const VarDecl*, Expr*> BlockVarCopyInits;
     
+  /// \brief Mapping from class scope functions specialization to their
+  ///  templateS pattern.
+  llvm::DenseMap<const FunctionDecl*, FunctionDecl*>
+    ClassScopeSpecilizationPattern;
+
   /// \brief Representation of a "canonical" template template parameter that
   /// is used in canonical template names.
   class CanonicalTemplateTemplateParm : public llvm::FoldingSetNode {
@@ -381,6 +386,11 @@ public:
   /// from which it was instantiated.
   MemberSpecializationInfo *getInstantiatedFromStaticDataMember(
                                                            const VarDecl *Var);
+
+  FunctionDecl *getClassScopeSpecializationPattern(const FunctionDecl *FD);
+
+  void setClassScopeSpecializationPattern(FunctionDecl *FD,
+                                          FunctionDecl *Pattern);
 
   /// \brief Note that the static data member \p Inst is an instantiation of
   /// the static data member template \p Tmpl of a class template.

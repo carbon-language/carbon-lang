@@ -4511,9 +4511,18 @@ static bool CheckTemplateSpecializationScope(Sema &S,
   }
 
   if (S.CurContext->isRecord() && !IsPartialSpecialization) {
-    S.Diag(Loc, diag::err_template_spec_decl_class_scope)
-      << Specialized;
-    return true;
+    if (S.getLangOptions().Microsoft) {
+      // Do not warn for class scope explicit specialization during
+      // instantiation, warning was already emitted during pattern
+      // semantic analysis.
+      if (!S.ActiveTemplateInstantiations.size())
+        S.Diag(Loc, diag::ext_function_specialization_in_class)
+          << Specialized;
+    } else {
+      S.Diag(Loc, diag::err_template_spec_decl_class_scope)
+        << Specialized;
+      return true;
+    }
   }
 
   // C++ [temp.class.spec]p6:

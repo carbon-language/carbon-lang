@@ -4048,6 +4048,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::StaticAssert:
   case Decl::Block:
   case Decl::Label:  // FIXME: Is this right??
+  case Decl::ClassScopeFunctionSpecialization:
     return C;
 
   // Declaration kinds that don't make any sense here, but are

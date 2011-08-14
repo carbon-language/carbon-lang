@@ -826,7 +826,10 @@ namespace clang {
       DECL_INDIRECTFIELD,
       /// \brief A NonTypeTemplateParmDecl record that stores an expanded
       /// non-type template parameter pack.
-      DECL_EXPANDED_NON_TYPE_TEMPLATE_PARM_PACK
+      DECL_EXPANDED_NON_TYPE_TEMPLATE_PARM_PACK,
+      /// \brief A ClassScopeFunctionSpecializationDecl record a class scope
+      /// function specialization. (Microsoft extension).
+      DECL_CLASS_SCOPE_FUNCTION_SPECIALIZATION
     };
 
     /// \brief Record codes for each kind of statement or expression.

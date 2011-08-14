@@ -8652,10 +8652,11 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
   }
 
   bool Redeclaration = false;
+  bool AddToScope = true;
   NamedDecl *ND = ActOnFunctionDeclarator(DCScope, D, DC, T, TInfo, Previous,
                                           move(TemplateParams),
                                           IsDefinition,
-                                          Redeclaration);
+                                          Redeclaration, AddToScope);
   if (!ND) return 0;
 
   assert(ND->getDeclContext() == DC);

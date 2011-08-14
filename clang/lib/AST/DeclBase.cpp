@@ -493,6 +493,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case UsingDirective:
     case ClassTemplateSpecialization:
     case ClassTemplatePartialSpecialization:
+    case ClassScopeFunctionSpecialization:
     case ObjCImplementation:
     case ObjCCategory:
     case ObjCCategoryImpl:

@@ -518,6 +518,24 @@ ASTContext::setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl,
     = new (*this) MemberSpecializationInfo(Tmpl, TSK, PointOfInstantiation);
 }
 
+FunctionDecl *ASTContext::getClassScopeSpecializationPattern(
+                                                     const FunctionDecl *FD){
+  assert(FD && "Specialization is 0");
+  llvm::DenseMap<const FunctionDecl*, FunctionDecl *>::const_iterator Pos
+    = ClassScopeSpecilizationPattern.find(FD);
+  if (Pos == ClassScopeSpecilizationPattern.end())
+    return 0;
+
+  return Pos->second;
+}
+
+void ASTContext::setClassScopeSpecializationPattern(FunctionDecl *FD,
+                                        FunctionDecl *Pattern) {
+  assert(FD && "Specialization is 0");
+  assert(Pattern && "Class scope specialization pattern is 0");
+  ClassScopeSpecilizationPattern[FD] = Pattern;
+}
+
 NamedDecl *
 ASTContext::getInstantiatedFromUsingDecl(UsingDecl *UUD) {
   llvm::DenseMap<UsingDecl *, NamedDecl *>::const_iterator Pos
@@ -6439,5 +6457,6 @@ size_t ASTContext::getSideTableAllocatedMemory() const {
     + llvm::capacity_in_bytes(InstantiatedFromUnnamedFieldDecl)
     + llvm::capacity_in_bytes(OverriddenMethods)
     + llvm::capacity_in_bytes(Types)
-    + llvm::capacity_in_bytes(VariableArrayTypes);
+    + llvm::capacity_in_bytes(VariableArrayTypes)
+    + llvm::capacity_in_bytes(ClassScopeSpecilizationPattern);
 }

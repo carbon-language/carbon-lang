@@ -1568,6 +1568,10 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     D = ClassTemplatePartialSpecializationDecl::Create(*Context,
                                                        Decl::EmptyShell());
     break;
+  case DECL_CLASS_SCOPE_FUNCTION_SPECIALIZATION:
+    D = ClassScopeFunctionSpecializationDecl::Create(*Context,
+                                                     Decl::EmptyShell());
+    break;
   case DECL_FUNCTION_TEMPLATE:
       D = FunctionTemplateDecl::Create(*Context, Decl::EmptyShell());
     break;

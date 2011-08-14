@@ -2028,6 +2028,9 @@ def err_not_class_template_specialization : Error<
   "parameter}0">;
 def err_function_specialization_in_class : Error<
   "cannot specialize a function %0 within class scope">;
+def ext_function_specialization_in_class : ExtWarn<
+  "explicit specialization of %0 within class scope in a Microsoft extension">,
+  InGroup<Microsoft>;
 def ext_explicit_specialization_storage_class : ExtWarn<
   "explicit specialization cannot have a storage class">;
 def err_explicit_specialization_inconsistent_storage_class : Error<

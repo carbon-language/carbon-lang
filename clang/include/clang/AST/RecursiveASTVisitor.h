@@ -1114,6 +1114,10 @@ DEF_TRAVERSE_DECL(FriendTemplateDecl, {
     }
   })
 
+DEF_TRAVERSE_DECL(ClassScopeFunctionSpecializationDecl, {
+  TRY_TO(TraverseDecl(D->getSpecialization()));
+ })
+
 DEF_TRAVERSE_DECL(LinkageSpecDecl, { })
 
 DEF_TRAVERSE_DECL(ObjCClassDecl, {

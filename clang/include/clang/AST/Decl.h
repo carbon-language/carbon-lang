@@ -1851,7 +1851,11 @@ public:
   bool isFunctionTemplateSpecialization() const {
     return getPrimaryTemplate() != 0;
   }
-       
+
+  /// \brief Retrieve the class scope template pattern that this function
+  ///  template specialization is instantiated from.
+  FunctionDecl *getClassScopeSpecializationPattern() const;
+
   /// \brief If this function is actually a function template specialization,
   /// retrieve information about this function template specialization. 
   /// Otherwise, returns NULL.

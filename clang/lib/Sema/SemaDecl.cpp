@@ -1722,9 +1722,16 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       // Preserve triviality.
       NewMethod->setTrivial(OldMethod->isTrivial());
 
+      // MSVC allows explicit template specialization at class scope:
+      // 2 CXMethodDecls referring to the same function will be injected.
+      // We don't want a redeclartion error.
+      bool IsClassScopeExplicitSpecialization =
+                              OldMethod->isFunctionTemplateSpecialization() &&
+                              NewMethod->isFunctionTemplateSpecialization();
       bool isFriend = NewMethod->getFriendObjectKind();
 
-      if (!isFriend && NewMethod->getLexicalDeclContext()->isRecord()) {
+      if (!isFriend && NewMethod->getLexicalDeclContext()->isRecord() &&
+          !IsClassScopeExplicitSpecialization) {
         //    -- Member function declarations with the same name and the
         //       same parameter types cannot be overloaded if any of them
         //       is a static member function declaration.
@@ -3226,6 +3233,7 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
     Previous.clear();
 
   bool Redeclaration = false;
+  bool AddToScope = true;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
     if (TemplateParamLists.size()) {
       Diag(D.getIdentifierLoc(), diag::err_template_typedef);
@@ -3236,7 +3244,8 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   } else if (R->isFunctionType()) {
     New = ActOnFunctionDeclarator(S, D, DC, R, TInfo, Previous,
                                   move(TemplateParamLists),
-                                  IsFunctionDefinition, Redeclaration);
+                                  IsFunctionDefinition, Redeclaration,
+                                  AddToScope);
   } else {
     New = ActOnVariableDeclarator(S, D, DC, R, TInfo, Previous,
                                   move(TemplateParamLists),
@@ -3248,7 +3257,8 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
 
   // If this has an identifier and is not an invalid redeclaration or 
   // function template specialization, add it to the scope stack.
-  if (New->getDeclName() && !(Redeclaration && New->isInvalidDecl()))
+  if (New->getDeclName() && AddToScope &&
+       !(Redeclaration && New->isInvalidDecl()))
     PushOnScopeChains(New, S);
 
   return New;
@@ -4201,7 +4211,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                               QualType R, TypeSourceInfo *TInfo,
                               LookupResult &Previous,
                               MultiTemplateParamsArg TemplateParamLists,
-                              bool IsFunctionDefinition, bool &Redeclaration) {
+                              bool IsFunctionDefinition, bool &Redeclaration,
+                              bool &AddToScope) {
   assert(R.getTypePtr()->isFunctionType());
 
   // TODO: consider using NameInfo for diagnostic.
@@ -4266,6 +4277,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   FunctionTemplateDecl *FunctionTemplate = 0;
   bool isExplicitSpecialization = false;
   bool isFunctionTemplateSpecialization = false;
+  bool isDependentClassScopeExplicitSpecialization = false;
 
   if (!getLangOptions().CPlusPlus) {
     // Determine whether the function was written with a
@@ -4769,10 +4781,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     } else if (isFunctionTemplateSpecialization) {
       if (CurContext->isDependentContext() && CurContext->isRecord() 
           && !isFriend) {
-        Diag(NewFD->getLocation(), diag::err_function_specialization_in_class)
+        isDependentClassScopeExplicitSpecialization = true;
+        Diag(NewFD->getLocation(), getLangOptions().Microsoft ? 
+          diag::ext_function_specialization_in_class :
+          diag::err_function_specialization_in_class)
           << NewFD->getDeclName();
-        NewFD->setInvalidDecl();
-        return 0;
       } else if (CheckFunctionTemplateSpecialization(NewFD,
                                   (HasExplicitTemplateArgs ? &TemplateArgs : 0),
                                                      Previous))
@@ -4802,8 +4815,9 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     }
 
     // Perform semantic checking on the function declaration.
-    CheckFunctionDeclaration(S, NewFD, Previous, isExplicitSpecialization,
-                             Redeclaration);
+    if (!isDependentClassScopeExplicitSpecialization)
+      CheckFunctionDeclaration(S, NewFD, Previous, isExplicitSpecialization,
+                               Redeclaration);
 
     assert((NewFD->isInvalidDecl() || !Redeclaration ||
             Previous.getResultKind() != LookupResult::FoundOverloaded) &&
@@ -4984,6 +4998,18 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           Context.setcudaConfigureCallDecl(NewFD);
         }
       }
+  
+  // Here we have an function template explicit specialization at class scope.
+  // The actually specialization will be postponed to template instatiation
+  // time via the ClassScopeFunctionSpecializationDecl node.
+  if (isDependentClassScopeExplicitSpecialization) {
+    ClassScopeFunctionSpecializationDecl *NewSpec =
+                         ClassScopeFunctionSpecializationDecl::Create(
+                                Context, CurContext,  SourceLocation(), 
+                                cast<CXXMethodDecl>(NewFD));
+    CurContext->addDecl(NewSpec);
+    AddToScope = false;
+  }
 
   return NewFD;
 }

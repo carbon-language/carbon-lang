@@ -350,7 +350,8 @@ namespace clang {
                             TemplateParameterList *TemplateParams = 0);
     Decl *VisitCXXRecordDecl(CXXRecordDecl *D);
     Decl *VisitCXXMethodDecl(CXXMethodDecl *D,
-                             TemplateParameterList *TemplateParams = 0);
+                             TemplateParameterList *TemplateParams = 0,
+                             bool IsClassScopeSpecialization = false);
     Decl *VisitCXXConstructorDecl(CXXConstructorDecl *D);
     Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
     Decl *VisitCXXConversionDecl(CXXConversionDecl *D);
@@ -367,6 +368,8 @@ namespace clang {
     Decl *VisitUsingShadowDecl(UsingShadowDecl *D);
     Decl *VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D);
     Decl *VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
+    Decl *VisitClassScopeFunctionSpecializationDecl(
+                                      ClassScopeFunctionSpecializationDecl *D);
 
     // Base case. FIXME: Remove once we can instantiate everything.
     Decl *VisitDecl(Decl *D) {

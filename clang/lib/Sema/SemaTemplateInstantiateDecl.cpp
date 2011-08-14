@@ -1288,7 +1288,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
 
 Decl *
 TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
-                                      TemplateParameterList *TemplateParams) {
+                                      TemplateParameterList *TemplateParams,
+                                      bool IsClassScopeSpecialization) {
   FunctionTemplateDecl *FunctionTemplate = D->getDescribedFunctionTemplate();
   void *InsertPos = 0;
   if (FunctionTemplate && !TemplateParams) {
@@ -1493,7 +1494,8 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   }
 
   bool Redeclaration = false;
-  SemaRef.CheckFunctionDeclaration(0, Method, Previous, false, Redeclaration);
+  if (!IsClassScopeSpecialization)
+    SemaRef.CheckFunctionDeclaration(0, Method, Previous, false, Redeclaration);
 
   if (D->isPure())
     SemaRef.CheckPureMethod(Method, SourceRange());
@@ -1512,7 +1514,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                             : Method);
     if (isFriend)
       Record->makeDeclVisibleInContext(DeclToAdd);
-    else
+    else if (!IsClassScopeSpecialization)
       Owner->addDecl(DeclToAdd);
   }
 
@@ -1905,6 +1907,29 @@ Decl * TemplateDeclInstantiator
     SemaRef.Context.setInstantiatedFromUsingDecl(cast<UsingDecl>(UD), D);
 
   return UD;
+}
+
+
+Decl *TemplateDeclInstantiator::VisitClassScopeFunctionSpecializationDecl(
+                                     ClassScopeFunctionSpecializationDecl *Decl) {
+  CXXMethodDecl *OldFD = Decl->getSpecialization();
+  CXXMethodDecl *NewFD = cast<CXXMethodDecl>(VisitCXXMethodDecl(OldFD, 0, true));
+
+  LookupResult Previous(SemaRef, NewFD->getNameInfo(), Sema::LookupOrdinaryName,
+                        Sema::ForRedeclaration);
+
+  SemaRef.LookupQualifiedName(Previous, SemaRef.CurContext);
+  if (SemaRef.CheckFunctionTemplateSpecialization(NewFD, 0, Previous)) {
+    NewFD->setInvalidDecl();
+    return NewFD;
+  }
+
+  // Associate the specialization with the pattern.
+  FunctionDecl *Specialization = cast<FunctionDecl>(Previous.getFoundDecl());
+  assert(Specialization && "Class scope Specialization is null");
+  SemaRef.Context.setClassScopeSpecializationPattern(Specialization, OldFD);
+
+  return NewFD;
 }
 
 Decl *Sema::SubstDecl(Decl *D, DeclContext *Owner,
@@ -2335,8 +2360,10 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (Function->isInvalidDecl() || Function->isDefined())
     return;
 
-  // Never instantiate an explicit specialization.
-  if (Function->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+  // Never instantiate an explicit specialization except if it is a class scope
+  // explicit specialization.
+  if (Function->getTemplateSpecializationKind() == TSK_ExplicitSpecialization &&
+      !Function->getClassScopeSpecializationPattern())
     return;
 
   // Find the function body that we'll be substituting.
