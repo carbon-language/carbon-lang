@@ -7,7 +7,7 @@ public:
     A(U p) {
 	}
 	template <>
-    A(int p) { // expected-warning{{explicit specialization of 'A' within class scope in a Microsoft extension}}
+    A(int p) { // expected-warning{{explicit specialization of 'A' within class scope is a Microsoft extension}}
 	}
 	
 	template <class U>
@@ -15,7 +15,7 @@ public:
 	}
 
 	template <>
-    void f(int p) { // expected-warning{{explicit specialization of 'f' within class scope in a Microsoft extension}}
+    void f(int p) { // expected-warning{{explicit specialization of 'f' within class scope is a Microsoft extension}}
 	}
 
 	void f(int p) { 
@@ -41,7 +41,7 @@ public:
     B(U p) { 
 	}
 	template <>
-    B(int p) { // expected-warning{{explicit specialization of 'B<T>' within class scope in a Microsoft extension}}
+    B(int p) { // expected-warning{{explicit specialization of 'B<T>' within class scope is a Microsoft extension}}
 	}
 	
 	template <class U>
@@ -51,7 +51,7 @@ public:
 
 
     template <>
-    void f(int p) { // expected-warning{{explicit specialization of 'f' within class scope in a Microsoft extension}}
+    void f(int p) { // expected-warning{{explicit specialization of 'f' within class scope is a Microsoft extension}}
 	  T a = 3;
 	}
 
