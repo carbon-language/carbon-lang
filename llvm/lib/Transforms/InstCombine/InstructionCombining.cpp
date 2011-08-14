@@ -108,6 +108,44 @@ bool InstCombiner::ShouldChangeType(Type *From, Type *To) const {
   return true;
 }
 
+// Return true, if No Signed Wrap should be maintained for I.
+// The No Signed Wrap flag can be kept if the operation "B (I.getOpcode) C",
+// where both B and C should be ConstantInts, results in a constant that does
+// not overflow. This function only handles the Add and Sub opcodes. For
+// all other opcodes, the function conservatively returns false.
+static bool MaintainNoSignedWrap(BinaryOperator &I, Value *B, Value *C) {
+  OverflowingBinaryOperator *OBO = dyn_cast<OverflowingBinaryOperator>(&I);
+  if (!OBO || !OBO->hasNoSignedWrap()) {
+    return false;
+  }
+
+  // We reason about Add and Sub Only.
+  Instruction::BinaryOps Opcode = I.getOpcode();
+  if (Opcode != Instruction::Add && 
+      Opcode != Instruction::Sub) {
+    return false;
+  }
+
+  ConstantInt *CB = dyn_cast<ConstantInt>(B);
+  ConstantInt *CC = dyn_cast<ConstantInt>(C);
+
+  if (!CB || !CC) {
+    return false;
+  }
+
+  const APInt &BVal = CB->getValue();
+  const APInt &CVal = CC->getValue();
+  bool Overflow = false;
+
+  if (Opcode == Instruction::Add) {
+    BVal.sadd_ov(CVal, Overflow);
+  } else {
+    BVal.ssub_ov(CVal, Overflow);
+  }
+
+  return !Overflow;
+}
+
 
 /// SimplifyAssociativeOrCommutative - This performs a few simplifications for
 /// operators which are associative or commutative:
@@ -159,7 +197,13 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           I.setOperand(1, V);
           // Conservatively clear the optional flags, since they may not be
           // preserved by the reassociation.
-          I.clearSubclassOptionalData();
+          if (MaintainNoSignedWrap(I, B, C)) {
+            I.clearSubclassOptionalData();
+            I.setHasNoSignedWrap(true);
+          } else {
+            I.clearSubclassOptionalData();
+          }
+            
           Changed = true;
           ++NumReassoc;
           continue;
@@ -241,14 +285,21 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
         Constant *C2 = cast<Constant>(Op1->getOperand(1));
 
         Constant *Folded = ConstantExpr::get(Opcode, C1, C2);
-        Instruction *New = BinaryOperator::Create(Opcode, A, B);
+        BinaryOperator *New = BinaryOperator::Create(Opcode, A, B);
         InsertNewInstWith(New, I);
         New->takeName(Op1);
         I.setOperand(0, New);
         I.setOperand(1, Folded);
         // Conservatively clear the optional flags, since they may not be
         // preserved by the reassociation.
-        I.clearSubclassOptionalData();
+        if (MaintainNoSignedWrap(I, C1, C2)) {
+          I.clearSubclassOptionalData();
+          I.setHasNoSignedWrap(true);
+          New->setHasNoSignedWrap(true);
+        } else {
+          I.clearSubclassOptionalData();
+        }
+
         Changed = true;
         continue;
       }

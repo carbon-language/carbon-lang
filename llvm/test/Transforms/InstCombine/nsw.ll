@@ -37,3 +37,19 @@ define i64 @shl1(i64 %X, i64* %P) nounwind {
   %B = shl i64 %A, 8
   ret i64 %B
 }
+
+; CHECK: @preserve1
+; CHECK: add nsw i32 %x, 5
+define i32 @preserve1(i32 %x) nounwind {
+  %add = add nsw i32 %x, 2
+  %add3 = add nsw i32 %add, 3
+  ret i32 %add3
+}
+
+; CHECK: @nopreserve1
+; CHECK: add i8 %x, -126
+define i8 @nopreserve1(i8 %x) nounwind {
+  %add = add nsw i8 %x, 127
+  %add3 = add nsw i8 %add, 3
+  ret i8 %add3
+}
