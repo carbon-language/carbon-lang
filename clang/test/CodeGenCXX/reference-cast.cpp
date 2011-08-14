@@ -181,3 +181,14 @@ unsigned pr10592(const int &v) {
   // CHECK-NEXT: ret i32 [[VVAL_I]]
   return static_cast<const unsigned &>(v);
 }
+
+namespace PR10650 {
+  struct Helper {
+    unsigned long long id();
+  };
+  unsigned long long test(Helper *obj) {
+    return static_cast<const unsigned long long&>(obj->id());
+  }
+  // CHECK: define i64 @_ZN7PR106504testEPNS_6HelperE
+  // CHECK: store i64
+}

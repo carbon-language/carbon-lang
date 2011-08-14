@@ -344,8 +344,7 @@ public:
     
   // C++
   Value *VisitMaterializeTemporaryExpr(const MaterializeTemporaryExpr *E) {
-    RValue RV = CGF.EmitLoadOfLValue(CGF.EmitLValue(E->GetTemporaryExpr()));
-    return RV.getScalarVal();
+    return EmitLoadOfLValue(E);
   }
     
   Value *VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
