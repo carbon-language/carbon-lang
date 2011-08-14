@@ -294,14 +294,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
         I.setOperand(1, Folded);
         // Conservatively clear the optional flags, since they may not be
         // preserved by the reassociation.
-        if (MaintainNoSignedWrap(I, C1, C2) && Op0->hasNoSignedWrap() &&
-	    Op1->hasNoSignedWrap()) {
-          New->setHasNoSignedWrap(true);
-          I.clearSubclassOptionalData();
-          I.setHasNoSignedWrap(true);
-        } else {
-          I.clearSubclassOptionalData();
-        }
+        I.clearSubclassOptionalData();
 
         Changed = true;
         continue;

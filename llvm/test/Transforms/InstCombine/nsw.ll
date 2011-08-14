@@ -46,16 +46,6 @@ define i32 @preserve1(i32 %x) nounwind {
   ret i32 %add3
 }
 
-; CHECK: @preserve2
-; CHECK: add nsw i8 %A, %B
-; CHECK: add nsw i8
-define i8 @preserve2(i8 %A, i8 %B) nounwind {
-  %x = add nsw i8 %A, 10
-  %y = add nsw i8 %B, 10
-  %add = add nsw i8 %x, %y
-  ret i8 %add
-}
-
 ; CHECK: @nopreserve1
 ; CHECK: add i8 %x, -126
 define i8 @nopreserve1(i8 %x) nounwind {
@@ -78,6 +68,16 @@ define i8 @nopreserve2(i8 %x) nounwind {
 define i8 @nopreserve3(i8 %A, i8 %B) nounwind {
   %x = add i8 %A, 10
   %y = add i8 %B, 10
+  %add = add nsw i8 %x, %y
+  ret i8 %add
+}
+
+; CHECK: @nopreserve4
+; CHECK: add i8 %A, %B
+; CHECK: add i8
+define i8 @nopreserve4(i8 %A, i8 %B) nounwind {
+  %x = add nsw i8 %A, 10
+  %y = add nsw i8 %B, 10
   %add = add nsw i8 %x, %y
   ret i8 %add
 }
