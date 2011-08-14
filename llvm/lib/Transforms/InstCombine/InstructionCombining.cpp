@@ -146,7 +146,6 @@ static bool MaintainNoSignedWrap(BinaryOperator &I, Value *B, Value *C) {
   return !Overflow;
 }
 
-
 /// SimplifyAssociativeOrCommutative - This performs a few simplifications for
 /// operators which are associative or commutative:
 //
@@ -197,7 +196,10 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
           I.setOperand(1, V);
           // Conservatively clear the optional flags, since they may not be
           // preserved by the reassociation.
-          if (MaintainNoSignedWrap(I, B, C)) {
+          if (MaintainNoSignedWrap(I, B, C) &&
+	      (!Op0 || (isa<BinaryOperator>(Op0) && Op0->hasNoSignedWrap()))) {
+            // Note: this is only valid because SimplifyBinOp doesn't look at
+            // the operands to Op0.
             I.clearSubclassOptionalData();
             I.setHasNoSignedWrap(true);
           } else {
@@ -292,10 +294,11 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
         I.setOperand(1, Folded);
         // Conservatively clear the optional flags, since they may not be
         // preserved by the reassociation.
-        if (MaintainNoSignedWrap(I, C1, C2)) {
+        if (MaintainNoSignedWrap(I, C1, C2) && Op0->hasNoSignedWrap() &&
+	    Op1->hasNoSignedWrap()) {
+          New->setHasNoSignedWrap(true);
           I.clearSubclassOptionalData();
           I.setHasNoSignedWrap(true);
-          New->setHasNoSignedWrap(true);
         } else {
           I.clearSubclassOptionalData();
         }
