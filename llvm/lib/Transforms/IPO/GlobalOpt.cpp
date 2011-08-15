@@ -195,12 +195,12 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
       }
       if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
         GS.isLoaded = true;
-        if (LI->isVolatile()) return true;  // Don't hack on volatile loads.
+        if (!LI->isSimple()) return true;  // Don't hack on volatile loads.
       } else if (const StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // Don't allow a store OF the address, only stores TO the address.
         if (SI->getOperand(0) == V) return true;
 
-        if (SI->isVolatile()) return true;  // Don't hack on volatile stores.
+        if (!SI->isSimple()) return true;  // Don't hack on volatile stores.
 
         // If this is a direct store to the global (i.e., the global is a scalar
         // value, not an aggregate), keep more specific information about
@@ -2333,7 +2333,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
     Constant *InstResult = 0;
 
     if (StoreInst *SI = dyn_cast<StoreInst>(CurInst)) {
-      if (SI->isVolatile()) return false;  // no volatile accesses.
+      if (!SI->isSimple()) return false;  // no volatile accesses.
       Constant *Ptr = getVal(Values, SI->getOperand(1));
       if (!isSimpleEnoughPointerToCommit(Ptr))
         // If this is too complex for us to commit, reject it.
@@ -2410,7 +2410,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
         ConstantExpr::getGetElementPtr(P, GEPOps,
                                        cast<GEPOperator>(GEP)->isInBounds());
     } else if (LoadInst *LI = dyn_cast<LoadInst>(CurInst)) {
-      if (LI->isVolatile()) return false;  // no volatile accesses.
+      if (!LI->isSimple()) return false;  // no volatile accesses.
       InstResult = ComputeLoadResult(getVal(Values, LI->getOperand(0)),
                                      MutatedMemory);
       if (InstResult == 0) return false; // Could not evaluate load.

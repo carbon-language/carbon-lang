@@ -382,7 +382,8 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
     User *U = *UI;
     Operands.clear();
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
-      if (LI->isVolatile()) return false;  // Don't hack volatile loads
+      // Don't hack volatile/atomic loads
+      if (!LI->isSimple()) return false;
       Loads.push_back(LI);
       // Direct loads are equivalent to a GEP with a zero index and then a load.
       Operands.push_back(0);
@@ -410,7 +411,8 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
       for (Value::use_iterator UI = GEP->use_begin(), E = GEP->use_end();
            UI != E; ++UI)
         if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
-          if (LI->isVolatile()) return false;  // Don't hack volatile loads
+          // Don't hack volatile/atomic loads
+          if (!LI->isSimple()) return false;
           Loads.push_back(LI);
         } else {
           // Other uses than load?

@@ -305,10 +305,14 @@ bool FunctionComparator::isEquivalentOperation(const Instruction *I1,
   // Check special state that is a part of some instructions.
   if (const LoadInst *LI = dyn_cast<LoadInst>(I1))
     return LI->isVolatile() == cast<LoadInst>(I2)->isVolatile() &&
-           LI->getAlignment() == cast<LoadInst>(I2)->getAlignment();
+           LI->getAlignment() == cast<LoadInst>(I2)->getAlignment() &&
+           LI->getOrdering() == cast<LoadInst>(I2)->getOrdering() &&
+           LI->getSynchScope() == cast<LoadInst>(I2)->getSynchScope();
   if (const StoreInst *SI = dyn_cast<StoreInst>(I1))
     return SI->isVolatile() == cast<StoreInst>(I2)->isVolatile() &&
-           SI->getAlignment() == cast<StoreInst>(I2)->getAlignment();
+           SI->getAlignment() == cast<StoreInst>(I2)->getAlignment() &&
+           SI->getOrdering() == cast<StoreInst>(I2)->getOrdering() &&
+           SI->getSynchScope() == cast<StoreInst>(I2)->getSynchScope();
   if (const CmpInst *CI = dyn_cast<CmpInst>(I1))
     return CI->getPredicate() == cast<CmpInst>(I2)->getPredicate();
   if (const CallInst *CI = dyn_cast<CallInst>(I1))

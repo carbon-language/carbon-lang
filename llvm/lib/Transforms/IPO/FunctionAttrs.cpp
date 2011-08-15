@@ -164,14 +164,14 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
         continue;
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         // Ignore non-volatile loads from local memory.
-        if (!LI->isVolatile()) {
+        if (LI->isUnordered()) {
           AliasAnalysis::Location Loc = AA->getLocation(LI);
           if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
             continue;
         }
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // Ignore non-volatile stores to local memory.
-        if (!SI->isVolatile()) {
+        if (SI->isUnordered()) {
           AliasAnalysis::Location Loc = AA->getLocation(SI);
           if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
             continue;
