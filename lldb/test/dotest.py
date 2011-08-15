@@ -1023,6 +1023,14 @@ for ia in range(len(archs) if iterArchs else 1):
                 if method:
                     method()
 
+            def addSkip(self, test, reason):
+                global sdir_has_content
+                sdir_has_content = True
+                super(LLDBTestResult, self).addSkip(test, reason)
+                method = getattr(test, "markSkippedTest", None)
+                if method:
+                    method()
+
             def addUnexpectedSuccess(self, test):
                 global sdir_has_content
                 sdir_has_content = True

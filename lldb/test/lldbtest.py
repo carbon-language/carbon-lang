@@ -652,6 +652,15 @@ class Base(unittest2.TestCase):
             # Once by the Python unittest framework, and a second time by us.
             print >> sbuf, "expected failure"
 
+    def markSkippedTest(self):
+        """Callback invoked when a test is skipped."""
+        self.__skipped__ = True
+        with recording(self, False) as sbuf:
+            # False because there's no need to write "skipped test" to the
+            # stderr twice.
+            # Once by the Python unittest framework, and a second time by us.
+            print >> sbuf, "skipped test"
+
     def markUnexpectedSuccess(self):
         """Callback invoked when an unexpected success occurred."""
         self.__unexpected__ = True
@@ -690,13 +699,15 @@ class Base(unittest2.TestCase):
         elif self.__expected__:
             pairs = lldb.test_result.expectedFailures
             prefix = 'ExpectedFailure'
+        elif self.__skipped__:
+            prefix = 'SkippedTest'
         elif self.__unexpected__:
             prefix = "UnexpectedSuccess"
         else:
             # Simply return, there's no session info to dump!
             return
 
-        if not self.__unexpected__:
+        if not self.__unexpected__ and not self.__skipped__:
             for test, traceback in pairs:
                 if test is self:
                     print >> self.session, traceback
