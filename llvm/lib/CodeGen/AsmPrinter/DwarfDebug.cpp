@@ -574,6 +574,63 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
   return;
 }
 
+/// collectInfoFromNamedMDNodes - Collect debug info from named mdnodes such
+/// as llvm.dbg.enum and llvm.dbg.ty
+void DwarfDebug::collectInfoFromNamedMDNodes(Module *M) {
+  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.enum"))
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+      DIType Ty(NMD->getOperand(i));
+      getCompileUnit(Ty)->getOrCreateTypeDIE(Ty);
+    }
+  
+  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.ty"))
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+      DIType Ty(NMD->getOperand(i));
+      getCompileUnit(Ty)->getOrCreateTypeDIE(Ty);
+    }
+}
+
+/// collectLegacyDebugInfo - Collect debug info using DebugInfoFinder.
+/// FIXME - Remove this when dragon-egg and llvm-gcc switch to DIBuilder.
+bool DwarfDebug::collectLegacyDebugInfo(Module *M) {
+  DebugInfoFinder DbgFinder;
+  DbgFinder.processModule(*M);
+  
+  bool HasDebugInfo = false;
+  // Scan all the compile-units to see if there are any marked as the main
+  // unit. If not, we do not generate debug info.
+  for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
+         E = DbgFinder.compile_unit_end(); I != E; ++I) {
+    if (DICompileUnit(*I).isMain()) {
+      HasDebugInfo = true;
+      break;
+    }
+  }
+  if (!HasDebugInfo) return false;
+  
+  // Create all the compile unit DIEs.
+  for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
+         E = DbgFinder.compile_unit_end(); I != E; ++I)
+    constructCompileUnit(*I);
+  
+  // Create DIEs for each global variable.
+  for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
+         E = DbgFinder.global_variable_end(); I != E; ++I) {
+    const MDNode *N = *I;
+    if (DIGlobalVariable(N).getVersion() <= LLVMDebugVersion9)
+      constructGlobalVariableDIE(getCompileUnit(N), N);
+  }
+  
+  // Create DIEs for each subprogram.
+  for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
+         E = DbgFinder.subprogram_end(); I != E; ++I) {
+    const MDNode *N = *I;
+    constructSubprogramDIE(getCompileUnit(N), N);
+  }
+
+  return HasDebugInfo;
+}
+
 /// beginModule - Emit all Dwarf sections that should come prior to the
 /// content. Create global DIEs and emit initial debug info sections.
 /// This is invoked by the target AsmPrinter.
@@ -608,62 +665,16 @@ void DwarfDebug::beginModule(Module *M) {
         constructSubprogramDIE(getCompileUnit(N), N);
       }
     
-  } else {
+  } else if (!collectLegacyDebugInfo(M))
+    return;
 
-    DebugInfoFinder DbgFinder;
-    DbgFinder.processModule(*M);
-    
-    bool HasDebugInfo = false;
-    // Scan all the compile-units to see if there are any marked as the main
-    // unit. If not, we do not generate debug info.
-    for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
-           E = DbgFinder.compile_unit_end(); I != E; ++I) {
-      if (DICompileUnit(*I).isMain()) {
-        HasDebugInfo = true;
-        break;
-      }
-    }
-    if (!HasDebugInfo) return;
-    
-    // Create all the compile unit DIEs.
-    for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
-           E = DbgFinder.compile_unit_end(); I != E; ++I)
-      constructCompileUnit(*I);
-    
-    // Create DIEs for each global variable.
-    for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
-           E = DbgFinder.global_variable_end(); I != E; ++I) {
-      const MDNode *N = *I;
-      if (DIGlobalVariable(N).getVersion() <= LLVMDebugVersion9)
-        constructGlobalVariableDIE(getCompileUnit(N), N);
-    }
-    
-    // Create DIEs for each subprogram.
-    for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
-           E = DbgFinder.subprogram_end(); I != E; ++I) {
-      const MDNode *N = *I;
-      constructSubprogramDIE(getCompileUnit(N), N);
-    }
-  }
+  collectInfoFromNamedMDNodes(M);
   
   // Tell MMI that we have debug info.
   MMI->setDebugInfoAvailability(true);
   
   // Emit initial sections.
   EmitSectionLabels();
-
-  //getOrCreateTypeDIE
-  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.enum"))
-    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      DIType Ty(NMD->getOperand(i));
-      getCompileUnit(Ty)->getOrCreateTypeDIE(Ty);
-    }
-
-  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.ty"))
-    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-      DIType Ty(NMD->getOperand(i));
-      getCompileUnit(Ty)->getOrCreateTypeDIE(Ty);
-    }
 
   // Prime section data.
   SectionMap.insert(Asm->getObjFileLowering().getTextSection());

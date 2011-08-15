@@ -468,6 +468,14 @@ public:
   DwarfDebug(AsmPrinter *A, Module *M);
   ~DwarfDebug();
 
+  /// collectInfoFromNamedMDNodes - Collect debug info from named mdnodes such
+  /// as llvm.dbg.enum and llvm.dbg.ty
+  void collectInfoFromNamedMDNodes(Module *M);
+
+  /// collectLegacyDebugInfo - Collect debug info using DebugInfoFinder.
+  /// FIXME - Remove this when dragon-egg and llvm-gcc switch to DIBuilder.
+  bool collectLegacyDebugInfo(Module *M);
+
   /// beginModule - Emit all Dwarf sections that should come prior to the
   /// content.
   void beginModule(Module *M);
