@@ -22,6 +22,16 @@ template <typename T> class SmallVectorImpl;
 
 /// MCTargetAsmParser - Generic interface to target specific assembly parsers.
 class MCTargetAsmParser : public MCAsmParserExtension {
+public:
+  enum MatchResultTy {
+    Match_ConversionFail,
+    Match_InvalidOperand,
+    Match_MissingFeature,
+    Match_MnemonicFail,
+    Match_Success
+  };
+
+private:
   MCTargetAsmParser(const MCTargetAsmParser &);   // DO NOT IMPLEMENT
   void operator=(const MCTargetAsmParser &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.

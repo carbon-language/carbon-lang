@@ -2174,13 +2174,6 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  // This should be included into the middle of the declaration of\n";
   OS << "  // your subclasses implementation of MCTargetAsmParser.\n";
   OS << "  unsigned ComputeAvailableFeatures(uint64_t FeatureBits) const;\n";
-  OS << "  enum MatchResultTy {\n";
-  OS << "    Match_ConversionFail,\n";
-  OS << "    Match_InvalidOperand,\n";
-  OS << "    Match_MissingFeature,\n";
-  OS << "    Match_MnemonicFail,\n";
-  OS << "    Match_Success\n";
-  OS << "  };\n";
   OS << "  bool ConvertToMCInst(unsigned Kind, MCInst &Inst, "
      << "unsigned Opcode,\n"
      << "                       const SmallVectorImpl<MCParsedAsmOperand*> "
