@@ -314,13 +314,44 @@ public:
     return vector;
   }
 
+  /// @brief Get the memory access offset to be added to the base address
+  std::vector <Value*> getMemoryAccessIndex(isl_map *accessRelation,
+                                            Value *baseAddr) {
+    isl_int offsetMPZ;
+    isl_int_init(offsetMPZ);
+
+    assert((isl_map_dim(accessRelation, isl_dim_out) == 1)
+           && "Only single dimensional access functions supported");
+
+    if (isl_map_plain_is_fixed(accessRelation, isl_dim_out,
+                               0, &offsetMPZ) == -1)
+      errs() << "Only fixed value access functions supported\n";
+
+    // Convert the offset from MPZ to Value*.
+    APInt offset = APInt_from_MPZ(offsetMPZ);
+    Value *offsetValue = ConstantInt::get(Builder.getContext(), offset);
+    PointerType *baseAddrType = dyn_cast<PointerType>(baseAddr->getType());
+    Type *arrayType = baseAddrType->getElementType();
+    Type *arrayElementType = dyn_cast<ArrayType>(arrayType)->getElementType();
+    offsetValue = Builder.CreateSExtOrBitCast(offsetValue, arrayElementType);
+
+    std::vector<Value*> indexArray;
+    Value *nullValue = Constant::getNullValue(arrayElementType);
+    indexArray.push_back(nullValue);
+    indexArray.push_back(offsetValue);
+
+    isl_int_clear(offsetMPZ);
+    return indexArray;
+  }
+
   /// @brief Get the new operand address according to the changed access in
   ///        JSCOP file.
   Value *getNewAccessOperand(isl_map *newAccessRelation, Value *baseAddr,
                              const Value *oldOperand, ValueMapT &BBMap) {
-    unsigned accessIdx = 0;
-    Value *newOperand = Builder.CreateStructGEP(baseAddr,
-                                                accessIdx, "p_newarrayidx_");
+    std::vector<Value*> indexArray = getMemoryAccessIndex(newAccessRelation,
+                                                          baseAddr);
+    Value *newOperand = Builder.CreateGEP(baseAddr, indexArray,
+                                          "p_newarrayidx_");
     return newOperand;
   }
 
@@ -328,7 +359,12 @@ public:
   Value *generateLocationAccessed(const Instruction *Inst,
                                   const Value *pointer, ValueMapT &BBMap ) {
     MemoryAccess &access = statement.getAccessFor(Inst);
+    isl_map *currentAccessRelation = access.getAccessFunction();
     isl_map *newAccessRelation = access.getNewAccessFunction();
+
+    assert(isl_map_has_equal_dim(currentAccessRelation, newAccessRelation)
+           && "Current and new access function dimensions differ");
+
     if (!newAccessRelation) {
       Value *newPointer = getOperand(pointer, BBMap);
       return newPointer;

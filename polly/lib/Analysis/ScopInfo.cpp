@@ -112,6 +112,7 @@ static isl_map *getValueOf(const SCEVAffFunc &AffFunc,
 
 MemoryAccess::~MemoryAccess() {
   isl_map_free(getAccessFunction());
+  isl_map_free(newAccessRelation);
 }
 
 static void replace(std::string& str, const std::string& find,
