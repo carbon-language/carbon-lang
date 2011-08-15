@@ -182,8 +182,8 @@ static StringRef getRealLinkageName(StringRef LinkageName) {
 /// attach appropriate DW_AT_low_pc and DW_AT_high_pc attributes.
 /// If there are global variables in this scope then create and insert
 /// DIEs for these variables.
-DIE *DwarfDebug::updateSubprogramScopeDIE(const MDNode *SPNode) {
-  CompileUnit *SPCU = getCompileUnit(SPNode);
+DIE *DwarfDebug::updateSubprogramScopeDIE(CompileUnit *SPCU,
+                                          const MDNode *SPNode) {
   DIE *SPDie = SPCU->getDIE(SPNode);
 
   assert(SPDie && "Unable to find subprogram DIE!");
@@ -246,7 +246,8 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(const MDNode *SPNode) {
 
 /// constructLexicalScope - Construct new DW_TAG_lexical_block
 /// for this scope and attach DW_AT_low_pc/DW_AT_high_pc labels.
-DIE *DwarfDebug::constructLexicalScopeDIE(LexicalScope *Scope) {
+DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU, 
+                                          LexicalScope *Scope) {
 
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_lexical_block);
   if (Scope->isAbstractScope())
@@ -256,7 +257,6 @@ DIE *DwarfDebug::constructLexicalScopeDIE(LexicalScope *Scope) {
   if (Ranges.empty())
     return 0;
 
-  CompileUnit *TheCU = getCompileUnit(Scope->getScopeNode());
   SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin();
   if (Ranges.size() > 1) {
     // .debug_range section has not been laid out yet. Emit offset in
@@ -292,7 +292,8 @@ DIE *DwarfDebug::constructLexicalScopeDIE(LexicalScope *Scope) {
 /// constructInlinedScopeDIE - This scope represents inlined body of
 /// a function. Construct DIE to represent this concrete inlined copy
 /// of the function.
-DIE *DwarfDebug::constructInlinedScopeDIE(LexicalScope *Scope) {
+DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
+                                          LexicalScope *Scope) {
 
   const SmallVector<InsnRange, 4> &Ranges = Scope->getRanges();
   assert (Ranges.empty() == false
@@ -302,7 +303,6 @@ DIE *DwarfDebug::constructInlinedScopeDIE(LexicalScope *Scope) {
     return NULL;
   DIScope DS(Scope->getScopeNode());
   DISubprogram InlinedSP = getDISubprogram(DS);
-  CompileUnit *TheCU = getCompileUnit(InlinedSP);
   DIE *OriginDIE = TheCU->getDIE(InlinedSP);
   if (!OriginDIE) {
     DEBUG(dbgs() << "Unable to find original DIE for inlined subprogram.");
@@ -399,23 +399,23 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   DIScope DS(Scope->getScopeNode());
   DIE *ScopeDIE = NULL;
   if (Scope->getInlinedAt())
-    ScopeDIE = constructInlinedScopeDIE(Scope);
+    ScopeDIE = constructInlinedScopeDIE(TheCU, Scope);
   else if (DS.isSubprogram()) {
     ProcessedSPNodes.insert(DS);
     if (Scope->isAbstractScope()) {
-      ScopeDIE = getCompileUnit(DS)->getDIE(DS);
+      ScopeDIE = TheCU->getDIE(DS);
       // Note down abstract DIE.
       if (ScopeDIE)
         AbstractSPDies.insert(std::make_pair(DS, ScopeDIE));
     }
     else
-      ScopeDIE = updateSubprogramScopeDIE(DS);
+      ScopeDIE = updateSubprogramScopeDIE(TheCU, DS);
   }
   else {
     // There is no need to emit empty lexical block DIE.
     if (Children.empty())
       return NULL;
-    ScopeDIE = constructLexicalScopeDIE(Scope);
+    ScopeDIE = constructLexicalScopeDIE(TheCU, Scope);
   }
   
   if (!ScopeDIE) return NULL;
@@ -426,7 +426,7 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
     ScopeDIE->addChild(*I);
 
   if (DS.isSubprogram())
-    getCompileUnit(DS)->addPubTypes(DISubprogram(DS));
+   TheCU->addPubTypes(DISubprogram(DS));
 
  return ScopeDIE;
 }

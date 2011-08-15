@@ -314,16 +314,16 @@ private:
   /// attach appropriate DW_AT_low_pc and DW_AT_high_pc attributes.
   /// If there are global variables in this scope then create and insert
   /// DIEs for these variables.
-  DIE *updateSubprogramScopeDIE(const MDNode *SPNode);
+  DIE *updateSubprogramScopeDIE(CompileUnit *SPCU, const MDNode *SPNode);
 
   /// constructLexicalScope - Construct new DW_TAG_lexical_block 
   /// for this scope and attach DW_AT_low_pc/DW_AT_high_pc labels.
-  DIE *constructLexicalScopeDIE(LexicalScope *Scope);
+  DIE *constructLexicalScopeDIE(CompileUnit *TheCU, LexicalScope *Scope);
 
   /// constructInlinedScopeDIE - This scope represents inlined body of
   /// a function. Construct DIE to represent this concrete inlined copy
   /// of the function.
-  DIE *constructInlinedScopeDIE(LexicalScope *Scope);
+  DIE *constructInlinedScopeDIE(CompileUnit *TheCU, LexicalScope *Scope);
 
   /// constructVariableDIE - Construct a DIE for the given DbgVariable.
   DIE *constructVariableDIE(DbgVariable *DV, LexicalScope *S);
