@@ -1,4 +1,4 @@
-; RUN: llc %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a9 -O0
+; RUN: llc %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a9 -O0 -o -
 ; The following test is supposed to produce a VMOVQQQQ pseudo instruction.
 ; Make sure that it gets expanded; otherwise, the compile fails when trying
 ; to print the pseudo-instruction.
