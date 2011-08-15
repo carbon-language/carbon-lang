@@ -485,6 +485,7 @@ static bool UseMacro(const std::string &proto) {
 /// defined as a macro should be accessed directly instead of being first
 /// assigned to a local temporary.
 static bool MacroArgUsedDirectly(const std::string &proto, unsigned i) {
+  // True for constant ints (i), pointers (p) and const pointers (c).
   return (proto[i] == 'i' || proto[i] == 'p' || proto[i] == 'c');
 }
 
@@ -525,23 +526,15 @@ static std::string GenMacroLocals(const std::string &proto, StringRef typestr) {
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
     // Do not create a temporary for an immediate argument.
     // That would defeat the whole point of using a macro!
-    if (proto[i] == 'i')
+    // FIXME: For other (non-immediate) arguments that are used directly, a
+    // local temporary (or some other method) is still needed to get the
+    // correct type checking, even if that temporary is not used for anything.
+    // This is omitted for now because it turns out the the use of
+    // "__extension__" in the macro disables any warnings from the pointer
+    // assignment.
+    if (MacroArgUsedDirectly(proto, i))
       continue;
     generatedLocal = true;
-
-    // For other (non-immediate) arguments that are used directly, a local
-    // temporary is still needed to get the correct type checking, even though
-    // that temporary is not used for anything.
-    if (MacroArgUsedDirectly(proto, i)) {
-      s += TypeString(proto[i], typestr) + " __";
-      s.push_back(arg);
-      s += "_ = (__";
-      s.push_back(arg);
-      s += "); (void)__";
-      s.push_back(arg);
-      s += "_; ";
-      continue;
-    }
 
     s += TypeString(proto[i], typestr) + " __";
     s.push_back(arg);
