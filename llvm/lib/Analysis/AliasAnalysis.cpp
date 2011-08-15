@@ -268,8 +268,8 @@ AliasAnalysis::getLocationForDest(const MemIntrinsic *MTI) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(const LoadInst *L, const Location &Loc) {
-  // Be conservative in the face of volatile.
-  if (L->isVolatile())
+  // Be conservative in the face of volatile/atomic.
+  if (!L->isUnordered())
     return ModRef;
 
   // If the load address doesn't alias the given address, it doesn't read
@@ -283,8 +283,8 @@ AliasAnalysis::getModRefInfo(const LoadInst *L, const Location &Loc) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(const StoreInst *S, const Location &Loc) {
-  // Be conservative in the face of volatile.
-  if (S->isVolatile())
+  // Be conservative in the face of volatile/atomic.
+  if (!S->isUnordered())
     return ModRef;
 
   // If the store address cannot alias the pointer in question, then the

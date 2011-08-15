@@ -102,12 +102,21 @@ bool MemDepPrinter::runOnFunction(Function &F) {
     } else {
       SmallVector<NonLocalDepResult, 4> NLDI;
       if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
-        // FIXME: Volatile is not handled properly here.
+        if (!LI->isUnordered()) {
+          // FIXME: Handle atomic/volatile loads.
+          Deps[Inst].insert(std::make_pair(InstAndClobberFlag(0, false),
+                                           static_cast<BasicBlock *>(0)));
+          continue;
+        }
         AliasAnalysis::Location Loc = AA.getLocation(LI);
-        MDA.getNonLocalPointerDependency(Loc, !LI->isVolatile(),
-                                         LI->getParent(), NLDI);
+        MDA.getNonLocalPointerDependency(Loc, true, LI->getParent(), NLDI);
       } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-        // FIXME: Volatile is not handled properly here.
+        if (!LI->isUnordered()) {
+          // FIXME: Handle atomic/volatile stores.
+          Deps[Inst].insert(std::make_pair(InstAndClobberFlag(0, false),
+                                           static_cast<BasicBlock *>(0)));
+          continue;
+        }
         AliasAnalysis::Location Loc = AA.getLocation(SI);
         MDA.getNonLocalPointerDependency(Loc, false, SI->getParent(), NLDI);
       } else if (VAArgInst *VI = dyn_cast<VAArgInst>(Inst)) {
