@@ -706,8 +706,11 @@ private:
     /// \brief Whether this variable is an ARC pseudo-__strong
     /// variable;  see isARCPseudoStrong() for details.
     unsigned ARCPseudoStrong : 1;
+
+    /// \brief Whether this variable is (C++0x) constexpr.
+    unsigned IsConstexpr : 1;
   };
-  enum { NumVarDeclBits = 13 }; // one reserved bit
+  enum { NumVarDeclBits = 13 };
 
   friend class ASTDeclReader;
   friend class StmtIteratorBase;
@@ -1128,6 +1131,10 @@ public:
   bool isARCPseudoStrong() const { return VarDeclBits.ARCPseudoStrong; }
   void setARCPseudoStrong(bool ps) { VarDeclBits.ARCPseudoStrong = ps; }
   
+  /// Whether this variable is (C++0x) constexpr.
+  bool isConstexpr() const { return VarDeclBits.IsConstexpr; }
+  void setConstexpr(bool IC) { VarDeclBits.IsConstexpr = IC; }
+
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member
   /// from which it was instantiated.
@@ -1396,6 +1403,7 @@ private:
   bool IsExplicitlyDefaulted : 1; //sunk from CXXMethodDecl
   bool HasImplicitReturnZero : 1;
   bool IsLateTemplateParsed : 1;
+  bool IsConstexpr : 1;
 
   /// \brief End part of this FunctionDecl's source range.
   ///
@@ -1468,7 +1476,8 @@ protected:
   FunctionDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
                const DeclarationNameInfo &NameInfo,
                QualType T, TypeSourceInfo *TInfo,
-               StorageClass S, StorageClass SCAsWritten, bool isInlineSpecified)
+               StorageClass S, StorageClass SCAsWritten, bool isInlineSpecified,
+               bool isConstexprSpecified)
     : DeclaratorDecl(DK, DC, NameInfo.getLoc(), NameInfo.getName(), T, TInfo,
                      StartLoc),
       DeclContext(DK),
@@ -1479,7 +1488,7 @@ protected:
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
       IsDefaulted(false), IsExplicitlyDefaulted(false),
       HasImplicitReturnZero(false), IsLateTemplateParsed(false),
-      EndRangeLoc(NameInfo.getEndLoc()),
+      IsConstexpr(isConstexprSpecified), EndRangeLoc(NameInfo.getEndLoc()),
       TemplateOrSpecialization(),
       DNLoc(NameInfo.getInfo()) {}
 
@@ -1502,11 +1511,13 @@ public:
                               StorageClass SC = SC_None,
                               StorageClass SCAsWritten = SC_None,
                               bool isInlineSpecified = false,
-                              bool hasWrittenPrototype = true) {
+                              bool hasWrittenPrototype = true,
+                              bool isConstexprSpecified = false) {
     DeclarationNameInfo NameInfo(N, NLoc);
     return FunctionDecl::Create(C, DC, StartLoc, NameInfo, T, TInfo,
                                 SC, SCAsWritten,
-                                isInlineSpecified, hasWrittenPrototype);
+                                isInlineSpecified, hasWrittenPrototype,
+                                isConstexprSpecified);
   }
 
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC,
@@ -1516,7 +1527,8 @@ public:
                               StorageClass SC = SC_None,
                               StorageClass SCAsWritten = SC_None,
                               bool isInlineSpecified = false,
-                              bool hasWrittenPrototype = true);
+                              bool hasWrittenPrototype = true,
+                              bool isConstexprSpecified = false);
 
   DeclarationNameInfo getNameInfo() const {
     return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
@@ -1602,10 +1614,6 @@ public:
   bool isPure() const { return IsPure; }
   void setPure(bool P = true);
 
-  /// Whether this is a constexpr function or constexpr constructor.
-  // FIXME: C++0x: Implement tracking of the constexpr specifier.
-  bool isConstexpr() const { return false; }
-
   /// Whether this templated function will be late parsed.
   bool isLateTemplateParsed() const { return IsLateTemplateParsed; }
   void setLateTemplateParsed(bool ILT = true) { IsLateTemplateParsed = ILT; }
@@ -1647,6 +1655,10 @@ public:
   /// previous declaration.
   bool hasInheritedPrototype() const { return HasInheritedPrototype; }
   void setHasInheritedPrototype(bool P = true) { HasInheritedPrototype = P; }
+
+  /// Whether this is a (C++0x) constexpr function or constexpr constructor.
+  bool isConstexpr() const { return IsConstexpr; }
+  void setConstexpr(bool IC) { IsConstexpr = IC; }
 
   /// \brief Whether this function has been deleted.
   ///

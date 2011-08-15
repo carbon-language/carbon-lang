@@ -1105,7 +1105,7 @@ bool Type::isLiteralType() const {
   // C++0x [basic.types]p10:
   //   A type is a literal type if it is:
   //   [...]
-  //   -- an array of literal type
+  //   -- an array of literal type.
   // Extension: variable arrays cannot be literal types, since they're
   // runtime-sized.
   if (isVariableArrayType())
@@ -1125,33 +1125,41 @@ bool Type::isLiteralType() const {
   // C++0x [basic.types]p10:
   //   A type is a literal type if it is:
   //    -- a scalar type; or
-  // As an extension, Clang treats vector types as Scalar types.
-  if (BaseTy->isScalarType() || BaseTy->isVectorType()) return true;
+  // As an extension, Clang treats vector types as literal types.
+  if (BaseTy->isScalarType() || BaseTy->isVectorType())
+    return true;
   //    -- a reference type; or
-  if (BaseTy->isReferenceType()) return true;
+  if (BaseTy->isReferenceType())
+    return true;
   //    -- a class type that has all of the following properties:
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
     if (const CXXRecordDecl *ClassDecl =
         dyn_cast<CXXRecordDecl>(RT->getDecl())) {
       //    -- a trivial destructor,
-      if (!ClassDecl->hasTrivialDestructor()) return false;
+      if (!ClassDecl->hasTrivialDestructor())
+        return false;
+
       //    -- every constructor call and full-expression in the
       //       brace-or-equal-initializers for non-static data members (if any)
       //       is a constant expression,
-      // FIXME: C++0x: Clang doesn't yet support non-static data member
-      // declarations with initializers, or constexprs.
+      // We deliberately do not implement this restriction. It isn't necessary
+      // and doesn't make any sense.
+
       //    -- it is an aggregate type or has at least one constexpr
       //       constructor or constructor template that is not a copy or move
       //       constructor, and
       if (!ClassDecl->isAggregate() &&
           !ClassDecl->hasConstexprNonCopyMoveConstructor())
         return false;
+
       //    -- all non-static data members and base classes of literal types
-      if (ClassDecl->hasNonLiteralTypeFieldsOrBases()) return false;
+      if (ClassDecl->hasNonLiteralTypeFieldsOrBases())
+        return false;
     }
 
     return true;
   }
+
   return false;
 }
 

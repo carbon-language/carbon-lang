@@ -1070,11 +1070,15 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                                          TemplateArgs);
   }
 
+  bool isConstexpr = D->isConstexpr();
+  // FIXME: check whether the instantiation produces a constexpr function.
+
   FunctionDecl *Function =
       FunctionDecl::Create(SemaRef.Context, DC, D->getInnerLocStart(),
                            D->getLocation(), D->getDeclName(), T, TInfo,
                            D->getStorageClass(), D->getStorageClassAsWritten(),
-                           D->isInlineSpecified(), D->hasWrittenPrototype());
+                           D->isInlineSpecified(), D->hasWrittenPrototype(),
+                           isConstexpr);
 
   if (QualifierLoc)
     Function->setQualifierInfo(QualifierLoc);
@@ -1383,6 +1387,9 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     if (!DC) return 0;
   }
 
+  bool isConstexpr = D->isConstexpr();
+  // FIXME: check whether the instantiation produces a constexpr function.
+
   // Build the instantiated method declaration.
   CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
   CXXMethodDecl *Method = 0;
@@ -1395,7 +1402,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                         StartLoc, NameInfo, T, TInfo,
                                         Constructor->isExplicit(),
                                         Constructor->isInlineSpecified(),
-                                        false);
+                                        false, isConstexpr);
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
                                        StartLoc, NameInfo, T, TInfo,
@@ -1406,14 +1413,14 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                        StartLoc, NameInfo, T, TInfo,
                                        Conversion->isInlineSpecified(),
                                        Conversion->isExplicit(),
-                                       Conversion->getLocEnd());
+                                       isConstexpr, Conversion->getLocEnd());
   } else {
     Method = CXXMethodDecl::Create(SemaRef.Context, Record,
                                    StartLoc, NameInfo, T, TInfo,
                                    D->isStatic(),
                                    D->getStorageClassAsWritten(),
                                    D->isInlineSpecified(),
-                                   D->getLocEnd());
+                                   isConstexpr, D->getLocEnd());
   }
 
   if (QualifierLoc)

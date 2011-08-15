@@ -890,7 +890,7 @@ public:
   }
 
   // hasConstexprNonCopyMoveConstructor - Whether this class has at least one
-  // constexpr constructor other than the copy or move constructors
+  // constexpr constructor other than the copy or move constructors.
   bool hasConstexprNonCopyMoveConstructor() const {
     return data().HasConstexprNonCopyMoveConstructor;
   }
@@ -1237,10 +1237,10 @@ protected:
                 const DeclarationNameInfo &NameInfo,
                 QualType T, TypeSourceInfo *TInfo,
                 bool isStatic, StorageClass SCAsWritten, bool isInline,
-                SourceLocation EndLocation)
+                bool isConstexpr, SourceLocation EndLocation)
     : FunctionDecl(DK, RD, StartLoc, NameInfo, T, TInfo,
                    (isStatic ? SC_Static : SC_None),
-                   SCAsWritten, isInline) {
+                   SCAsWritten, isInline, isConstexpr) {
       if (EndLocation.isValid())
         setRangeEnd(EndLocation);
     }
@@ -1253,6 +1253,7 @@ public:
                                bool isStatic,
                                StorageClass SCAsWritten,
                                bool isInline,
+                               bool isConstexpr,
                                SourceLocation EndLocation);
 
   bool isStatic() const { return getStorageClass() == SC_Static; }
@@ -1631,9 +1632,9 @@ class CXXConstructorDecl : public CXXMethodDecl {
                      const DeclarationNameInfo &NameInfo,
                      QualType T, TypeSourceInfo *TInfo,
                      bool isExplicitSpecified, bool isInline, 
-                     bool isImplicitlyDeclared)
+                     bool isImplicitlyDeclared, bool isConstexpr)
     : CXXMethodDecl(CXXConstructor, RD, StartLoc, NameInfo, T, TInfo, false,
-                    SC_None, isInline, SourceLocation()),
+                    SC_None, isInline, isConstexpr, SourceLocation()),
       IsExplicitSpecified(isExplicitSpecified), ImplicitlyDefined(false),
       CtorInitializers(0), NumCtorInitializers(0) {
     setImplicit(isImplicitlyDeclared);
@@ -1646,7 +1647,8 @@ public:
                                     const DeclarationNameInfo &NameInfo,
                                     QualType T, TypeSourceInfo *TInfo,
                                     bool isExplicit,
-                                    bool isInline, bool isImplicitlyDeclared);
+                                    bool isInline, bool isImplicitlyDeclared,
+                                    bool isConstexpr);
 
   /// isExplicitSpecified - Whether this constructor declaration has the
   /// 'explicit' keyword specified.
@@ -1854,7 +1856,7 @@ class CXXDestructorDecl : public CXXMethodDecl {
                     QualType T, TypeSourceInfo *TInfo,
                     bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXDestructor, RD, StartLoc, NameInfo, T, TInfo, false,
-                    SC_None, isInline, SourceLocation()),
+                    SC_None, isInline, /*isConstexpr=*/false, SourceLocation()),
       ImplicitlyDefined(false), OperatorDelete(0) {
     setImplicit(isImplicitlyDeclared);
   }
@@ -1917,9 +1919,9 @@ class CXXConversionDecl : public CXXMethodDecl {
                     const DeclarationNameInfo &NameInfo,
                     QualType T, TypeSourceInfo *TInfo,
                     bool isInline, bool isExplicitSpecified,
-                    SourceLocation EndLocation)
+                    bool isConstexpr, SourceLocation EndLocation)
     : CXXMethodDecl(CXXConversion, RD, StartLoc, NameInfo, T, TInfo, false,
-                    SC_None, isInline, EndLocation),
+                    SC_None, isInline, isConstexpr, EndLocation),
       IsExplicitSpecified(isExplicitSpecified) { }
 
 public:
@@ -1929,6 +1931,7 @@ public:
                                    const DeclarationNameInfo &NameInfo,
                                    QualType T, TypeSourceInfo *TInfo,
                                    bool isInline, bool isExplicit,
+                                   bool isConstexpr,
                                    SourceLocation EndLocation);
 
   /// IsExplicitSpecified - Whether this conversion function declaration is 

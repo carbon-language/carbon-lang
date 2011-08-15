@@ -447,6 +447,7 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->IsDefaulted = Record[Idx++];
   FD->IsExplicitlyDefaulted = Record[Idx++];
   FD->HasImplicitReturnZero = Record[Idx++];
+  FD->IsConstexpr = Record[Idx++];
   FD->EndRangeLoc = ReadSourceLocation(Record, Idx);
 
   // Read in the parameters.
@@ -1538,7 +1539,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   case DECL_CXX_METHOD:
     D = CXXMethodDecl::Create(*Context, 0, SourceLocation(),
                               DeclarationNameInfo(), QualType(), 0,
-                              false, SC_None, false, SourceLocation());
+                              false, SC_None, false, false, SourceLocation());
     break;
   case DECL_CXX_CONSTRUCTOR:
     D = CXXConstructorDecl::Create(*Context, Decl::EmptyShell());

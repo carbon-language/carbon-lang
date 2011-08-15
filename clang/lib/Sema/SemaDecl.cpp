@@ -2229,6 +2229,20 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
            << DS.getSourceRange();
   }
 
+  if (DS.isConstexprSpecified()) {
+    // C++0x [dcl.constexpr]p1: constexpr can only be applied to declarations
+    // and definitions of functions and variables.
+    if (Tag)
+      Diag(DS.getConstexprSpecLoc(), diag::err_constexpr_tag)
+        << (DS.getTypeSpecType() == DeclSpec::TST_class ? 0 :
+            DS.getTypeSpecType() == DeclSpec::TST_struct ? 1 :
+            DS.getTypeSpecType() == DeclSpec::TST_union ? 2 : 3);
+    else
+      Diag(DS.getConstexprSpecLoc(), diag::err_constexpr_no_declarators);
+    // Don't emit warnings after this error.
+    return TagD;
+  }
+
   if (DS.isFriendSpecified()) {
     // If we're dealing with a decl but not a TagDecl, assume that
     // whatever routines created it handled the friendship aspect.
@@ -3434,6 +3448,9 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
+  if (D.getDeclSpec().isConstexprSpecified())
+    Diag(D.getDeclSpec().getConstexprSpecLoc(), diag::err_invalid_constexpr)
+      << 1;
 
   if (D.getName().Kind != UnqualifiedId::IK_Identifier) {
     Diag(D.getName().StartLocation, diag::err_typedef_not_identifier)
@@ -3766,6 +3783,11 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       NewVD->setTemplateParameterListsInfo(Context,
                                            TemplateParamLists.size(),
                                            TemplateParamLists.release());
+    }
+
+    if (D.getDeclSpec().isConstexprSpecified()) {
+      // FIXME: check this is a valid use of constexpr.
+      NewVD->setConstexpr(true);
     }
   }
 
@@ -4304,6 +4326,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     isFriend = D.getDeclSpec().isFriendSpecified();
     bool isVirtual = D.getDeclSpec().isVirtualSpecified();
     bool isExplicit = D.getDeclSpec().isExplicitSpecified();
+    bool isConstexpr = D.getDeclSpec().isConstexprSpecified();
     bool isVirtualOkay = false;
 
     // Check that the return type is not an abstract class type.
@@ -4330,7 +4353,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                          D.getSourceRange().getBegin(),
                                          NameInfo, R, TInfo,
                                          isExplicit, isInline,
-                                         /*isImplicitlyDeclared=*/false);
+                                         /*isImplicitlyDeclared=*/false,
+                                         isConstexpr);
 
       NewFD = NewCD;
     } else if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
@@ -4364,7 +4388,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         NewFD = FunctionDecl::Create(Context, DC, D.getSourceRange().getBegin(),
                                      D.getIdentifierLoc(), Name, R, TInfo,
                                      SC, SCAsWritten, isInline,
-                                     /*hasPrototype=*/true);
+                                     /*hasPrototype=*/true, isConstexpr);
         D.setInvalidType();
       }
     } else if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
@@ -4378,7 +4402,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
                                         D.getSourceRange().getBegin(),
                                         NameInfo, R, TInfo,
-                                        isInline, isExplicit,
+                                        isInline, isExplicit, isConstexpr,
                                         SourceLocation());
 
       isVirtualOkay = true;
@@ -4416,6 +4440,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                                D.getSourceRange().getBegin(),
                                                NameInfo, R, TInfo,
                                                isStatic, SCAsWritten, isInline,
+                                               isConstexpr,
                                                SourceLocation());
       NewFD = NewMD;
 
@@ -4426,7 +4451,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       //   - we're in C++ (where every function has a prototype),
       NewFD = FunctionDecl::Create(Context, DC, D.getSourceRange().getBegin(),
                                    NameInfo, R, TInfo, SC, SCAsWritten, isInline,
-                                   true/*HasPrototype*/);
+                                   true/*HasPrototype*/, isConstexpr);
     }
 
     if (isFriend && !isInline && IsFunctionDefinition) {
@@ -4589,6 +4614,23 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           << FixItHint::CreateRemoval(D.getDeclSpec().getExplicitSpecLoc());
       }      
     }
+
+    if (isConstexpr) {
+      // C++0x [dcl.constexpr]p2: constexpr functions and constexpr constructors
+      // are implicitly inline.
+      NewFD->setImplicitlyInline();
+
+      // FIXME: If this is a redeclaration, check the original declaration was
+      // marked constepr.
+
+      // C++0x [dcl.constexpr]p3: functions declared constexpr are required to
+      // be either constructors or to return a literal type. Therefore,
+      // destructors cannot be declared constexpr.
+      if (isa<CXXDestructorDecl>(NewFD))
+        Diag(D.getDeclSpec().getConstexprSpecLoc(),
+             diag::err_constexpr_dtor);
+    }
+
 
     // Filter out previous declarations that don't match the scope.
     FilterLookupForScope(Previous, DC, S, NewFD->hasLinkage(),
@@ -6105,6 +6147,9 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
 
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
+  if (D.getDeclSpec().isConstexprSpecified())
+    Diag(D.getDeclSpec().getConstexprSpecLoc(), diag::err_invalid_constexpr)
+      << 0;
 
   DiagnoseFunctionSpecifiers(D);
 
@@ -7813,6 +7858,9 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
 
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
+  if (D.getDeclSpec().isConstexprSpecified())
+    Diag(D.getDeclSpec().getConstexprSpecLoc(), diag::err_invalid_constexpr)
+      << 2;
   
   // Check to see if this name was declared as a member previously
   LookupResult Previous(*this, II, Loc, LookupMemberName, ForRedeclaration);
