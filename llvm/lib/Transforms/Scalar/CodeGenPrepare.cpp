@@ -411,6 +411,7 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
 
     if (!InsertedCast) {
       BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
+      if (isa<LandingPadInst>(InsertPt)) ++InsertPt;
 
       InsertedCast =
         CastInst::Create(CI->getOpcode(), CI->getOperand(0), CI->getType(), "",
