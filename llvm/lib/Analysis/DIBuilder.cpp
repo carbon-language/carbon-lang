@@ -31,6 +31,10 @@ static Constant *GetTagConstant(LLVMContext &VMContext, unsigned Tag) {
 DIBuilder::DIBuilder(Module &m)
   : M(m), VMContext(M.getContext()), TheCU(0), DeclareFn(0), ValueFn(0) {}
 
+/// finalize - Construct any deferred debug info descriptors.
+void DIBuilder::finalize() {
+}
+
 /// createCompileUnit - A CompileUnit provides an anchor for all debugging
 /// information generated during this instance of compilation.
 void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename, 

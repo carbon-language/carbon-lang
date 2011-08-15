@@ -59,6 +59,9 @@ namespace llvm {
     const MDNode *getCU() { return TheCU; }
     enum ComplexAddrKind { OpPlus=1, OpDeref };
 
+    /// finalize - Construct any deferred debug info descriptors.
+    void finalize();
+
     /// createCompileUnit - A CompileUnit provides an anchor for all debugging
     /// information generated during this instance of compilation.
     /// @param Lang     Source programming language, eg. dwarf::DW_LANG_C99

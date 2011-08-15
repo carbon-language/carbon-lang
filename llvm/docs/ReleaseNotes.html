@@ -673,6 +673,10 @@ it run faster:</p>
 <li>The <code>LLVMAddLowerSetJmpPass</code> function from the C API was removed
     because the <code>LowerSetJmp</code> pass was removed.</li>
 
+<li>The <code>DIBuilder</code> interface used by front ends to encode debugging 
+    information in the LLVM IR now expects clients to use <code>DIBuilder::finalize()</code>
+    at the end of translation unit to complete debugging information encoding.</li>
+
 </ul>
 </div>
 
