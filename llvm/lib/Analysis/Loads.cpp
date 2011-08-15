@@ -188,12 +188,16 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
     
     --ScanFrom;
     // If this is a load of Ptr, the loaded value is available.
+    // (This is true even if the load is volatile or atomic, although
+    // those cases are unlikely.)
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
       if (AreEquivalentAddressValues(LI->getOperand(0), Ptr))
         return LI;
     
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       // If this is a store through Ptr, the value is available!
+      // (This is true even if the store is volatile or atomic, although
+      // those cases are unlikely.)
       if (AreEquivalentAddressValues(SI->getOperand(1), Ptr))
         return SI->getOperand(0);
       
