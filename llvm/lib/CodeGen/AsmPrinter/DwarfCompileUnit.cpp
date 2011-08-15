@@ -564,7 +564,7 @@ void CompileUnit::addToContextOwner(DIE *Die, DIDescriptor Context) {
     DIE *ContextDIE = getOrCreateNameSpace(DINameSpace(Context));
     ContextDIE->addChild(Die);
   } else if (Context.isSubprogram()) {
-    DIE *ContextDIE = DD->createSubprogramDIE(DISubprogram(Context));
+    DIE *ContextDIE = getOrCreateSubprogramDIE(DISubprogram(Context));
     ContextDIE->addChild(Die);
   } else if (DIE *ContextDIE = getDIE(Context))
     ContextDIE->addChild(Die);
@@ -761,7 +761,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       DIE *ElemDie = NULL;
       if (Element.isSubprogram()) {
         DISubprogram SP(Element);
-        ElemDie = DD->createSubprogramDIE(DISubprogram(Element));
+        ElemDie = getOrCreateSubprogramDIE(DISubprogram(Element));
         if (SP.isProtected())
           addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
                   dwarf::DW_ACCESS_protected);
@@ -889,6 +889,111 @@ DIE *CompileUnit::getOrCreateNameSpace(DINameSpace NS) {
   return NDie;
 }
 
+/// getRealLinkageName - If special LLVM prefix that is used to inform the asm
+/// printer to not emit usual symbol prefix before the symbol name is used then
+/// return linkage name after skipping this special LLVM prefix.
+static StringRef getRealLinkageName(StringRef LinkageName) {
+  char One = '\1';
+  if (LinkageName.startswith(StringRef(&One, 1)))
+    return LinkageName.substr(1);
+  return LinkageName;
+}
+
+/// getOrCreateSubprogramDIE - Create new DIE using SP.
+DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
+  DIE *SPDie = getDIE(SP);
+  if (SPDie)
+    return SPDie;
+
+  SPDie = new DIE(dwarf::DW_TAG_subprogram);
+  
+  // DW_TAG_inlined_subroutine may refer to this DIE.
+  insertDIE(SP, SPDie);
+  
+  // Add to context owner.
+  addToContextOwner(SPDie, SP.getContext());
+
+  // Add function template parameters.
+  addTemplateParams(*SPDie, SP.getTemplateParams());
+
+  StringRef LinkageName = SP.getLinkageName();
+  if (!LinkageName.empty())
+    addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, 
+                    dwarf::DW_FORM_string,
+                    getRealLinkageName(LinkageName));
+
+  // If this DIE is going to refer declaration info using AT_specification
+  // then there is no need to add other attributes.
+  if (SP.getFunctionDeclaration().isSubprogram())
+    return SPDie;
+
+  // Constructors and operators for anonymous aggregates do not have names.
+  if (!SP.getName().empty())
+    addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, 
+                    SP.getName());
+
+  addSourceLine(SPDie, SP);
+
+  if (SP.isPrototyped()) 
+    addUInt(SPDie, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
+
+  // Add Return Type.
+  DICompositeType SPTy = SP.getType();
+  DIArray Args = SPTy.getTypeArray();
+  unsigned SPTag = SPTy.getTag();
+
+  if (Args.getNumElements() == 0 || SPTag != dwarf::DW_TAG_subroutine_type)
+    addType(SPDie, SPTy);
+  else
+    addType(SPDie, DIType(Args.getElement(0)));
+
+  unsigned VK = SP.getVirtuality();
+  if (VK) {
+    addUInt(SPDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_flag, VK);
+    DIEBlock *Block = getDIEBlock();
+    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
+    addUInt(Block, 0, dwarf::DW_FORM_udata, SP.getVirtualIndex());
+    addBlock(SPDie, dwarf::DW_AT_vtable_elem_location, 0, Block);
+    ContainingTypeMap.insert(std::make_pair(SPDie,
+                                            SP.getContainingType()));
+  }
+
+  if (!SP.isDefinition()) {
+    addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
+    
+    // Add arguments. Do not add arguments for subprogram definition. They will
+    // be handled while processing variables.
+    DICompositeType SPTy = SP.getType();
+    DIArray Args = SPTy.getTypeArray();
+    unsigned SPTag = SPTy.getTag();
+
+    if (SPTag == dwarf::DW_TAG_subroutine_type)
+      for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
+        DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
+        DIType ATy = DIType(DIType(Args.getElement(i)));
+        addType(Arg, ATy);
+        if (ATy.isArtificial())
+          addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
+        SPDie->addChild(Arg);
+      }
+  }
+
+  if (SP.isArtificial())
+    addUInt(SPDie, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
+
+  if (!SP.isLocalToUnit())
+    addUInt(SPDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
+
+  if (SP.isOptimized())
+    addUInt(SPDie, dwarf::DW_AT_APPLE_optimized, dwarf::DW_FORM_flag, 1);
+
+  if (unsigned isa = Asm->getISAEncoding()) {
+    addUInt(SPDie, dwarf::DW_AT_APPLE_isa, dwarf::DW_FORM_flag, isa);
+  }
+
+  return SPDie;
+}
+
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
 void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy){
   DIE *DW_Subrange = new DIE(dwarf::DW_TAG_subrange_type);
@@ -951,6 +1056,20 @@ DIE *CompileUnit::constructEnumTypeDIE(DIEnumerator ETy) {
   int64_t Value = ETy.getEnumValue();
   addSInt(Enumerator, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, Value);
   return Enumerator;
+}
+
+/// constructContainingTypeDIEs - Construct DIEs for types that contain
+/// vtables.
+void CompileUnit::constructContainingTypeDIEs() {
+  for (DenseMap<DIE *, const MDNode *>::iterator CI = ContainingTypeMap.begin(),
+         CE = ContainingTypeMap.end(); CI != CE; ++CI) {
+    DIE *SPDie = CI->first;
+    const MDNode *N = CI->second;
+    if (!N) continue;
+    DIE *NDie = getDIE(N);
+    if (!NDie) continue;
+    addDIEEntry(SPDie, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4, NDie);
+  }
 }
 
 /// createMemberDIE - Create new member DIE.

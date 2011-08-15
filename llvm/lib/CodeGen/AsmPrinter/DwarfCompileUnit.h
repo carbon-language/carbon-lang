@@ -67,6 +67,11 @@ class CompileUnit {
   /// DIEBlocks - A list of all the DIEBlocks in use.
   std::vector<DIEBlock *> DIEBlocks;
 
+  /// ContainingTypeMap - This map is used to keep track of subprogram DIEs that
+  /// need DW_AT_containing_type attribute. This attribute points to a DIE that
+  /// corresponds to the MDNode mapped with the subprogram DIE.
+  DenseMap<DIE *, const MDNode *> ContainingTypeMap;
+
 public:
   CompileUnit(unsigned I, DIE *D, AsmPrinter *A, DwarfDebug *DW);
   ~CompileUnit();
@@ -226,6 +231,9 @@ public:
   /// getOrCreateNameSpace - Create a DIE for DINameSpace.
   DIE *getOrCreateNameSpace(DINameSpace NS);
 
+  /// getOrCreateSubprogramDIE - Create new DIE using SP.
+  DIE *getOrCreateSubprogramDIE(DISubprogram SP);
+
   /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
   /// given DIType.
   DIE *getOrCreateTypeDIE(DIType Ty);
@@ -265,6 +273,10 @@ public:
 
   /// constructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
   DIE *constructEnumTypeDIE(DIEnumerator ETy);
+
+  /// constructContainingTypeDIEs - Construct DIEs for types that contain
+  /// vtables.
+  void constructContainingTypeDIEs();
 
   /// createMemberDIE - Create new member DIE.
   DIE *createMemberDIE(DIDerivedType DT);

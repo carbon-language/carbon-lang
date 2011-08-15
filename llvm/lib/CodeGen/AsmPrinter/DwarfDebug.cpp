@@ -179,102 +179,6 @@ static StringRef getRealLinkageName(StringRef LinkageName) {
   return LinkageName;
 }
 
-/// createSubprogramDIE - Create new DIE using SP.
-DIE *DwarfDebug::createSubprogramDIE(DISubprogram SP) {
-  CompileUnit *SPCU = getCompileUnit(SP);
-  DIE *SPDie = SPCU->getDIE(SP);
-  if (SPDie)
-    return SPDie;
-
-  SPDie = new DIE(dwarf::DW_TAG_subprogram);
-  
-  // DW_TAG_inlined_subroutine may refer to this DIE.
-  SPCU->insertDIE(SP, SPDie);
-  
-  // Add to context owner.
-  SPCU->addToContextOwner(SPDie, SP.getContext());
-
-  // Add function template parameters.
-  SPCU->addTemplateParams(*SPDie, SP.getTemplateParams());
-
-  StringRef LinkageName = SP.getLinkageName();
-  if (!LinkageName.empty())
-    SPCU->addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, 
-                    dwarf::DW_FORM_string,
-                    getRealLinkageName(LinkageName));
-
-  // If this DIE is going to refer declaration info using AT_specification
-  // then there is no need to add other attributes.
-  if (SP.getFunctionDeclaration().isSubprogram())
-    return SPDie;
-
-  // Constructors and operators for anonymous aggregates do not have names.
-  if (!SP.getName().empty())
-    SPCU->addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, 
-                    SP.getName());
-
-  SPCU->addSourceLine(SPDie, SP);
-
-  if (SP.isPrototyped()) 
-    SPCU->addUInt(SPDie, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
-
-  // Add Return Type.
-  DICompositeType SPTy = SP.getType();
-  DIArray Args = SPTy.getTypeArray();
-  unsigned SPTag = SPTy.getTag();
-
-  if (Args.getNumElements() == 0 || SPTag != dwarf::DW_TAG_subroutine_type)
-    SPCU->addType(SPDie, SPTy);
-  else
-    SPCU->addType(SPDie, DIType(Args.getElement(0)));
-
-  unsigned VK = SP.getVirtuality();
-  if (VK) {
-    SPCU->addUInt(SPDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_flag, VK);
-    DIEBlock *Block = SPCU->getDIEBlock();
-    SPCU->addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
-    SPCU->addUInt(Block, 0, dwarf::DW_FORM_udata, SP.getVirtualIndex());
-    SPCU->addBlock(SPDie, dwarf::DW_AT_vtable_elem_location, 0, Block);
-    ContainingTypeMap.insert(std::make_pair(SPDie,
-                                            SP.getContainingType()));
-  }
-
-  if (!SP.isDefinition()) {
-    SPCU->addUInt(SPDie, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag, 1);
-    
-    // Add arguments. Do not add arguments for subprogram definition. They will
-    // be handled while processing variables.
-    DICompositeType SPTy = SP.getType();
-    DIArray Args = SPTy.getTypeArray();
-    unsigned SPTag = SPTy.getTag();
-
-    if (SPTag == dwarf::DW_TAG_subroutine_type)
-      for (unsigned i = 1, N =  Args.getNumElements(); i < N; ++i) {
-        DIE *Arg = new DIE(dwarf::DW_TAG_formal_parameter);
-        DIType ATy = DIType(DIType(Args.getElement(i)));
-        SPCU->addType(Arg, ATy);
-        if (ATy.isArtificial())
-          SPCU->addUInt(Arg, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
-        SPDie->addChild(Arg);
-      }
-  }
-
-  if (SP.isArtificial())
-    SPCU->addUInt(SPDie, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
-
-  if (!SP.isLocalToUnit())
-    SPCU->addUInt(SPDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
-
-  if (SP.isOptimized())
-    SPCU->addUInt(SPDie, dwarf::DW_AT_APPLE_optimized, dwarf::DW_FORM_flag, 1);
-
-  if (unsigned isa = Asm->getISAEncoding()) {
-    SPCU->addUInt(SPDie, dwarf::DW_AT_APPLE_isa, dwarf::DW_FORM_flag, isa);
-  }
-
-  return SPDie;
-}
-
 /// isSubprogramContext - Return true if Context is either a subprogram
 /// or another context nested inside a subprogram.
 static bool isSubprogramContext(const MDNode *Context) {
@@ -303,7 +207,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(const MDNode *SPNode) {
   if (SPDecl.isSubprogram())
     // Refer function declaration directly.
     SPCU->addDIEEntry(SPDie, dwarf::DW_AT_specification, dwarf::DW_FORM_ref4,
-                      createSubprogramDIE(SPDecl));
+                      SPCU->getOrCreateSubprogramDIE(SPDecl));
   else {
     // There is not any need to generate specification DIE for a function
     // defined at compile unit level. If a function is defined inside another
@@ -922,7 +826,7 @@ void DwarfDebug::constructSubprogramDIE(const MDNode *N) {
     // class type.
     return;
 
-  DIE *SubprogramDie = createSubprogramDIE(SP);
+  DIE *SubprogramDie = TheCU->getOrCreateSubprogramDIE(SP);
 
   // Add to map.
   TheCU->insertDIE(N, SubprogramDie);
@@ -1070,15 +974,12 @@ void DwarfDebug::endModule() {
     FirstCU->addUInt(ISP, dwarf::DW_AT_inline, 0, dwarf::DW_INL_inlined);
   }
 
-  for (DenseMap<DIE *, const MDNode *>::iterator CI = ContainingTypeMap.begin(),
-         CE = ContainingTypeMap.end(); CI != CE; ++CI) {
-    DIE *SPDie = CI->first;
-    const MDNode *N = dyn_cast_or_null<MDNode>(CI->second);
-    if (!N) continue;
-    DIE *NDie = getCompileUnit(N)->getDIE(N);
-    if (!NDie) continue;
-    getCompileUnit(N)->addDIEEntry(SPDie, dwarf::DW_AT_containing_type, 
-                                   dwarf::DW_FORM_ref4, NDie);
+  // Emit DW_AT_containing_type attribute to connect types with their
+  // vtable holding type.
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator CUI = CUMap.begin(),
+         CUE = CUMap.end(); CUI != CUE; ++CUI) {
+    CompileUnit *TheCU = CUI->second;
+    TheCU->constructContainingTypeDIEs();
   }
 
   // Standard sections final addresses.
