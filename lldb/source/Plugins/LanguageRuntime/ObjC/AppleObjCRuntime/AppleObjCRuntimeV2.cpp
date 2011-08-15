@@ -94,7 +94,9 @@ const char *AppleObjCRuntimeV2::g_objc_class_data_section_name = "__objc_data";
 AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process, ModuleSP &objc_module_sp) : 
     lldb_private::AppleObjCRuntime (process),
     m_get_class_name_args(LLDB_INVALID_ADDRESS),
-    m_get_class_name_args_mutex(Mutex::eMutexTypeNormal)
+    m_get_class_name_args_mutex(Mutex::eMutexTypeNormal),
+    m_isa_to_name_cache(),
+    m_isa_to_parent_cache()
 {
     m_has_object_getClass = (objc_module_sp->FindFirstSymbolWithNameAndType(ConstString("gdb_object_getClass")) != NULL);
 }
@@ -637,6 +639,12 @@ AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA
     if (isa == g_objc_Tagged_ISA)
         return ConstString("_lldb_Tagged_ObjC_ISA");
     
+    ISAToNameIterator found = m_isa_to_name_cache.find(isa);
+    ISAToNameIterator end = m_isa_to_name_cache.end();
+    
+    if (found != end)
+        return found->second;
+    
     uint8_t pointer_size = m_process->GetAddressByteSize();
     Error error;
     lldb::addr_t rw_pointer = isa + (4 * pointer_size);
@@ -682,10 +690,16 @@ AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA
             // will return the swizzled class instead of the actual one
             // this swizzled class is a descendant of the real class, so just
             // return the parent type and all should be fine
-            return GetActualTypeName(GetParentClass(isa));
+            ConstString class_name = GetActualTypeName(GetParentClass(isa));
+            m_isa_to_name_cache[isa] = class_name;
+            return class_name;
         }
         else
-            return ConstString(cstr);
+        {
+            ConstString class_name = ConstString(cstr);
+            m_isa_to_name_cache[isa] = class_name;
+            return class_name;
+        }
     }
     else
         return ConstString("unknown");
@@ -700,6 +714,12 @@ AppleObjCRuntimeV2::GetParentClass(lldb_private::ObjCLanguageRuntime::ObjCISA is
     if (isa == g_objc_Tagged_ISA)
         return 0;
     
+    ISAToParentIterator found = m_isa_to_parent_cache.find(isa);
+    ISAToParentIterator end = m_isa_to_parent_cache.end();
+    
+    if (found != end)
+        return found->second;
+    
     uint8_t pointer_size = m_process->GetAddressByteSize();
     Error error;
     lldb::addr_t parent_pointer = isa + pointer_size;
@@ -711,6 +731,9 @@ AppleObjCRuntimeV2::GetParentClass(lldb_private::ObjCLanguageRuntime::ObjCISA is
                                                                     error);
     if (error.Fail())
         return 0;
+    
+    m_isa_to_parent_cache[isa] = parent_isa;
+    
     return parent_isa;
 }
 

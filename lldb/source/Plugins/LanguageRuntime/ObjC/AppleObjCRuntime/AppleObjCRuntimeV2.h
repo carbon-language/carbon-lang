@@ -12,6 +12,9 @@
 
 // C Includes
 // C++ Includes
+
+#include <map>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
@@ -100,6 +103,13 @@ public:
 protected:
     
 private:
+    
+    typedef std::map<ObjCISA,ConstString> ISAToNameCache;
+    typedef std::map<ObjCISA,ObjCISA> ISAToParentCache;
+    
+    typedef ISAToNameCache::iterator ISAToNameIterator;
+    typedef ISAToParentCache::iterator ISAToParentIterator;
+    
     AppleObjCRuntimeV2(Process *process, ModuleSP &objc_module_sp);
     
     bool
@@ -112,6 +122,9 @@ private:
     std::auto_ptr<ClangUtilityFunction> m_get_class_name_code;
     lldb::addr_t                        m_get_class_name_args;
     Mutex                               m_get_class_name_args_mutex;
+    
+    ISAToNameCache                      m_isa_to_name_cache;
+    ISAToParentCache                    m_isa_to_parent_cache;
     
     static const char *g_find_class_name_function_name;
     static const char *g_find_class_name_function_body;
