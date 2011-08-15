@@ -268,3 +268,6 @@
 
 # CHECK:	vadd.f32	q0, q1, q2
 0x02 0xef 0x44 0x0d
+
+# CHECK:        ldrsb   r1, [r0, r0]
+0x01 0x56

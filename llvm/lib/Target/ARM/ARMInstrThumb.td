@@ -113,6 +113,7 @@ def t_addrmode_rr : Operand<i32>,
                     ComplexPattern<i32, 2, "SelectThumbAddrModeRR", []> {
   let EncoderMethod = "getThumbAddrModeRegRegOpValue";
   let PrintMethod = "printThumbAddrModeRROperand";
+  let DecoderMethod = "DecodeThumbAddrModeRR";
   let MIOperandInfo = (ops tGPR:$base, tGPR:$offsreg);
 }
 
@@ -620,17 +621,17 @@ defm tLDRH : thumb_ld_rr_ri_enc<0b101, 0b1000, t_addrmode_rrs2,
 
 let AddedComplexity = 10 in
 def tLDRSB :                    // A8.6.80
-  T1pILdStEncode<0b011, (outs tGPR:$dst), (ins t_addrmode_rr:$addr),
+  T1pILdStEncode<0b011, (outs tGPR:$Rt), (ins t_addrmode_rr:$addr),
                  AddrModeT1_1, IIC_iLoad_bh_r,
-                 "ldrsb", "\t$dst, $addr",
-                 [(set tGPR:$dst, (sextloadi8 t_addrmode_rr:$addr))]>;
+                 "ldrsb", "\t$Rt, $addr",
+                 [(set tGPR:$Rt, (sextloadi8 t_addrmode_rr:$addr))]>;
 
 let AddedComplexity = 10 in
 def tLDRSH :                    // A8.6.84
-  T1pILdStEncode<0b111, (outs tGPR:$dst), (ins t_addrmode_rr:$addr),
+  T1pILdStEncode<0b111, (outs tGPR:$Rt), (ins t_addrmode_rr:$addr),
                  AddrModeT1_2, IIC_iLoad_bh_r,
-                 "ldrsh", "\t$dst, $addr",
-                 [(set tGPR:$dst, (sextloadi16 t_addrmode_rr:$addr))]>;
+                 "ldrsh", "\t$Rt, $addr",
+                 [(set tGPR:$Rt, (sextloadi16 t_addrmode_rr:$addr))]>;
 
 let canFoldAsLoad = 1 in
 def tLDRspi : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
