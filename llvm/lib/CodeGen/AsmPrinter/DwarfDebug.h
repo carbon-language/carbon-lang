@@ -132,7 +132,7 @@ public:
   // AbsVar may be NULL.
   DbgVariable(DIVariable V, DbgVariable *AV) 
     : Var(V), TheDIE(0), DotDebugLocOffset(~0U), AbsVar(AV), MInsn(0),
-      FrameIndex(~0U) {}
+      FrameIndex(~0) {}
 
   // Accessors.
   DIVariable getVariable()           const { return Var; }

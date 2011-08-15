@@ -467,7 +467,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, LexicalScope *Scope) {
   } else {
     // .. else use frame index.
     int FI = DV->getFrameIndex();
-    if (FI != ~0U) {
+    if (FI != ~0) {
       unsigned FrameReg = 0;
       const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
       int Offset = 
