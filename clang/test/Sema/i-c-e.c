@@ -53,7 +53,8 @@ char z[__builtin_constant_p(4) ? 1 : -1];
 // Comma tests
 int comma1[0?1,2:3];  // expected-warning {{expression result unused}}
 int comma2[1||(1,2)]; // expected-warning {{expression result unused}} \
-                      // expected-warning {{use of logical || with constant operand}}
+                      // expected-warning {{use of logical '||' with constant operand}} \
+                      // expected-note {{use '|' for a bitwise operation}}
 int comma3[(1,2)]; // expected-warning {{size of static array must be an integer constant expression}} \
 					// expected-warning {{expression result unused}}
 

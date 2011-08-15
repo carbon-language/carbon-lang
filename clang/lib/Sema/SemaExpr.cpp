@@ -6719,9 +6719,24 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
           (Result.Val.getInt() != 0 && Result.Val.getInt() != 1)) {
         Diag(Loc, diag::warn_logical_instead_of_bitwise)
           << rex.get()->getSourceRange()
-          << (Opc == BO_LAnd ? "&&" : "||")
-          << (Opc == BO_LAnd ? "&" : "|");
-    }
+          << (Opc == BO_LAnd ? "&&" : "||");
+        // Suggest replacing the logical operator with the bitwise version
+        Diag(Loc, diag::note_logical_instead_of_bitwise_change_operator)
+            << (Opc == BO_LAnd ? "&" : "|")
+            << FixItHint::CreateReplacement(SourceRange(
+                Loc, Lexer::getLocForEndOfToken(Loc, 0, getSourceManager(),
+                                                getLangOptions())),
+                                            Opc == BO_LAnd ? "&" : "|");
+        if (Opc == BO_LAnd)
+          // Suggest replacing "Foo() && kNonZero" with "Foo()"
+          Diag(Loc, diag::note_logical_instead_of_bitwise_remove_constant)
+              << FixItHint::CreateRemoval(
+                  SourceRange(
+                      Lexer::getLocForEndOfToken(lex.get()->getLocEnd(),
+                                                 0, getSourceManager(),
+                                                 getLangOptions()),
+                      rex.get()->getLocEnd()));
+      }
   }
   
   if (!Context.getLangOptions().CPlusPlus) {

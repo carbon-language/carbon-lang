@@ -2940,8 +2940,12 @@ def note_precedence_conditional_silence : Note<
   "place parentheses around the '%0' expression to silence this warning">;
 
 def warn_logical_instead_of_bitwise : Warning<
-  "use of logical %0 with constant operand; switch to bitwise %1 or "
-  "remove constant">, InGroup<DiagGroup<"constant-logical-operand">>;
+  "use of logical '%0' with constant operand">,
+  InGroup<DiagGroup<"constant-logical-operand">>;
+def note_logical_instead_of_bitwise_change_operator : Note<
+  "use '%0' for a bitwise operation">;
+def note_logical_instead_of_bitwise_remove_constant : Note<
+  "remove constant to silence this warning">;
 
 def warn_bitwise_and_in_bitwise_or : Warning<
   "'&' within '|'">, InGroup<BitwiseOpParentheses>;
