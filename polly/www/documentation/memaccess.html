@@ -85,6 +85,24 @@ We need to detect this access function change.
 <h3>Step 2</h3>
 Update the code generation module to reflect the access function change made
 in Step 1.
+<h3>Step 2.1 Code generation for a constant</h3>
+In the JSCOP file an access function which has variables is changed to a
+constant. Code is generated to reflect this change. Let the content of original
+JSCOP file be:
+<pre>
+"accesses" : [{
+        "kind" : "read",
+                 "relation" : "{ Stmt_for_body[i0] -> MemRef_A[i0] }"
+}]
+</pre>
+The transformed JSCOP file is:
+<pre>
+"accesses" : [{
+        "kind" : "read",
+                 "relation" : "{ Stmt_for_body[i0] -> MemRef_A[10] }"
+}]
+</pre>
+Code is generated for this change.
 </div>
 </body>
 </html>
