@@ -143,6 +143,15 @@ public:
     
     return dwarf::DW_TAG_variable;
   }
+  /// isArtificial - Return true if DbgVariable is artificial.
+  bool isArtificial()                const {
+    if (Var.isArtificial())
+      return true;
+    if (Var.getTag() == dwarf::DW_TAG_arg_variable
+        && getType().isArtificial())
+      return true;
+    return false;
+  }
   bool variableHasComplexAddress()   const {
     assert(Var.Verify() && "Invalid complex DbgVariable!");
     return Var.hasComplexAddress();

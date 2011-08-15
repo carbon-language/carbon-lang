@@ -401,11 +401,8 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, LexicalScope *Scope) {
     VariableCU->addType(VariableDie, DV->getType());
   }
 
-  if (Tag == dwarf::DW_TAG_formal_parameter && DV->getType().isArtificial())
-    VariableCU->addUInt(VariableDie, dwarf::DW_AT_artificial, 
-                        dwarf::DW_FORM_flag, 1);
-  else if (DIVariable(DV->getVariable()).isArtificial())
-    VariableCU->addUInt(VariableDie, dwarf::DW_AT_artificial, 
+  if (DV->isArtificial())
+    VariableCU->addUInt(VariableDie, dwarf::DW_AT_artificial,
                         dwarf::DW_FORM_flag, 1);
 
   if (Scope->isAbstractScope()) {
