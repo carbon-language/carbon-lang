@@ -26,7 +26,7 @@ class MCTargetAsmParser : public MCAsmParserExtension {
   void operator=(const MCTargetAsmParser &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
   MCTargetAsmParser();
- 
+
   /// AvailableFeatures - The current set of available features.
   unsigned AvailableFeatures;
 
@@ -66,18 +66,18 @@ public:
   ///
   /// \param DirectiveID - the identifier token of the directive.
   virtual bool ParseDirective(AsmToken DirectiveID) = 0;
-  
+
   /// MatchAndEmitInstruction - Recognize a series of operands of a parsed
   /// instruction as an actual MCInst and emit it to the specified MCStreamer.
   /// This returns false on success and returns true on failure to match.
   ///
   /// On failure, the target parser is responsible for emitting a diagnostic
   /// explaining the match failure.
-  virtual bool 
+  virtual bool
   MatchAndEmitInstruction(SMLoc IDLoc,
                           SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                           MCStreamer &Out) = 0;
-  
+
 };
 
 } // End llvm namespace
