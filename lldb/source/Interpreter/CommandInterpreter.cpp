@@ -72,7 +72,8 @@ CommandInterpreter::CommandInterpreter
     m_script_interpreter_ap (),
     m_comment_char ('#'),
     m_repeat_char ('!'),
-    m_batch_command_mode (false)
+    m_batch_command_mode (false),
+    m_truncation_warning(eNoTruncation)
 {
     const char *dbg_name = debugger.GetInstanceName().AsCString();
     std::string lang_name = ScriptInterpreter::LanguageToString (script_language);
