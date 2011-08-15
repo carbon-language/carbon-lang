@@ -3461,8 +3461,8 @@ def UMAAL : AMul1I <0b0000010, (outs GPR:$RdLo, GPR:$RdHi),
   bits<4> RdHi;
   bits<4> Rm;
   bits<4> Rn;
-  let Inst{19-16} = RdLo;
-  let Inst{15-12} = RdHi;
+  let Inst{19-16} = RdHi;
+  let Inst{15-12} = RdLo;
   let Inst{11-8}  = Rm;
   let Inst{3-0}   = Rn;
 }

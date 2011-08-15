@@ -2197,8 +2197,8 @@ Lforward:
         umaal r3, r4, r5, r6
         umaallt r3, r4, r5, r6
 
-@ CHECK: umaal	r3, r4, r5, r6          @ encoding: [0x95,0x46,0x43,0xe0]
-@ CHECK: umaallt	r3, r4, r5, r6  @ encoding: [0x95,0x46,0x43,0xb0]
+@ CHECK: umaal	r3, r4, r5, r6          @ encoding: [0x95,0x36,0x44,0xe0]
+@ CHECK: umaallt	r3, r4, r5, r6          @ encoding: [0x95,0x36,0x44,0xb0]
 
 
 @------------------------------------------------------------------------------
