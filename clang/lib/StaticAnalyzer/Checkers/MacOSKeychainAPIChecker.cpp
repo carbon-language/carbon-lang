@@ -234,8 +234,8 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
         if (!N)
           return;
         initBugType();
-        std::string sbuf;
-        llvm::raw_string_ostream os(sbuf);
+        llvm::SmallString<128> sbuf;
+        llvm::raw_svector_ostream os(sbuf);
         unsigned int DIdx = FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx;
         os << "Allocated data should be released before another call to "
            << "the allocator: missing a call to '"
@@ -272,7 +272,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   if (!ArgSM && !RegionArgIsBad)
     return;
 
-  // If trying to free data which has not been allocated yet, report as bug.
+  // If trying to free data which has not been allocated yet, report as a bug.
   const AllocationState *AS = State->get<AllocatedData>(ArgSM);
   if (!AS || RegionArgIsBad) {
     // It is possible that this is a false positive - the argument might
@@ -299,8 +299,8 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
       return;
     initBugType();
 
-    std::string sbuf;
-    llvm::raw_string_ostream os(sbuf);
+    llvm::SmallString<80> sbuf;
+    llvm::raw_svector_ostream os(sbuf);
     os << "Allocator doesn't match the deallocator: '"
        << FunctionsToTrack[PDeallocIdx].Name << "' should be used.";
     RangedBugReport *Report = new RangedBugReport(*BT, os.str(), N);
@@ -402,8 +402,8 @@ RangedBugReport *MacOSKeychainAPIChecker::
                                          ExplodedNode *N) const {
   const ADFunctionInfo &FI = FunctionsToTrack[AS.AllocatorIdx];
   initBugType();
-  std::string sbuf;
-  llvm::raw_string_ostream os(sbuf);
+  llvm::SmallString<70> sbuf;
+  llvm::raw_svector_ostream os(sbuf);
   os << "Allocated data is not released: missing a call to '"
       << FunctionsToTrack[FI.DeallocatorIdx].Name << "'.";
   RangedBugReport *Report = new RangedBugReport(*BT, os.str(), N);
