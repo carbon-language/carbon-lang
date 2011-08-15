@@ -13,6 +13,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 
 #include "DWARFDebugAbbrev.h"
 #include "DWARFDebugAranges.h"
@@ -791,51 +792,22 @@ DWARFCompileUnit::Index
             {
                 if (name)
                 {
-                    if ((name[0] == '-' || name[0] == '+') && name[1] == '[')
+                    ConstString objc_class_name;
+                    ConstString objc_method_name;
+                    ConstString objc_base_name;
+                    if (ObjCLanguageRuntime::ParseMethodName (name,
+                                                              &objc_class_name,
+                                                              &objc_method_name,
+                                                              &objc_base_name))
                     {
-                        int name_len = strlen (name);
-                        // Objective C methods must have at least:
-                        //      "-[" or "+[" prefix
-                        //      One character for a class name
-                        //      One character for the space between the class name
-                        //      One character for the method name
-                        //      "]" suffix
-                        if (name_len >= 6 && name[name_len - 1] == ']')
+                        objc_class_selectors.Insert(objc_class_name, die_info);
+                        
+                        func_selectors.Insert (objc_method_name, die_info);
+                        
+                        if (!objc_base_name.IsEmpty())
                         {
-                            const char *method_name = strchr (name, ' ');
-                            if (method_name)
-                            {
-                                ConstString class_name (name + 2, method_name - name - 2);
-                                
-                                // Keep a map of the objective C class name to all selector
-                                // DIEs
-                                objc_class_selectors.Insert(class_name, die_info);
-                                
-                                // Skip the space
-                                ++method_name;
-                                // Extract the objective C basename and add it to the
-                                // accelerator tables
-                                size_t method_name_len = name_len - (method_name - name) - 1;                                
-                                func_selectors.Insert (ConstString (method_name, method_name_len), die_info);
-                                
-                                // Also see if this is a "category" on our class.  If so strip off the category name,
-                                // and add the class name without it to the basename table. 
-                                
-                                const char *first_paren = (char *) memchr (name, '(', method_name - name);
-                                if (first_paren)
-                                {
-                                    const char *second_paren = (char *) memchr (first_paren, ')', method_name - first_paren);
-                                    if (second_paren)
-                                    {
-                                        std::string buffer (name, first_paren - name);
-                                        buffer.append (second_paren + 1);
-                                        ConstString uncategoried_name (buffer.c_str());
-                                        func_basenames.Insert (uncategoried_name, die_info);
-                                        func_fullnames.Insert (uncategoried_name, die_info);
-
-                                    }
-                                }
-                            }
+                                func_basenames.Insert (objc_base_name, die_info);
+                                func_fullnames.Insert (objc_base_name, die_info);
                         }
                     }
                     // If we have a mangled name, then the DW_AT_name attribute
@@ -853,7 +825,8 @@ DWARFCompileUnit::Index
                         {
                             if (specification_die_offset != DW_INVALID_OFFSET)
                             {
-                                const DWARFDebugInfoEntry *specification_die = m_dwarf2Data->DebugInfo()->GetDIEPtr (specification_die_offset, NULL);
+                                const DWARFDebugInfoEntry *specification_die 
+                                        = m_dwarf2Data->DebugInfo()->GetDIEPtr (specification_die_offset, NULL);
                                 if (specification_die)
                                 {
                                     parent = specification_die->GetParent();

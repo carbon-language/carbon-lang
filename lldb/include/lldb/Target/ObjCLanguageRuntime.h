@@ -93,6 +93,12 @@ public:
     virtual size_t
     GetByteOffsetForIvar (ClangASTType &parent_qual_type, const char *ivar_name);
     
+    // If the passed in "name" is an ObjC method, return true.  Also, fill in any of the
+    // sub-parts that are passed in non-NULL.  The base_name means the name stripped of
+    // category attributes.
+    static bool
+    ParseMethodName (const char *name, ConstString *class_name, ConstString *method_name, ConstString *base_name);
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ObjCLanguageRuntime can see and modify these

@@ -100,3 +100,66 @@ ObjCLanguageRuntime::GetByteOffsetForIvar (ClangASTType &parent_qual_type, const
     return LLDB_INVALID_IVAR_OFFSET;
 }
 
+
+bool
+ObjCLanguageRuntime::ParseMethodName (const char *name, 
+                                      ConstString *class_name, 
+                                      ConstString *method_name, 
+                                      ConstString *base_name)
+{
+    if (class_name) { class_name->Clear(); }
+    if (method_name) { method_name->Clear(); }
+    if (base_name) { base_name->Clear(); }
+    
+    if (name && (name[0] == '-' || name[0] == '+') && name[1] == '[')
+    {
+        int name_len = strlen (name);
+        // Objective C methods must have at least:
+        //      "-[" or "+[" prefix
+        //      One character for a class name
+        //      One character for the space between the class name
+        //      One character for the method name
+        //      "]" suffix
+        if (name_len >= 6 && name[name_len - 1] == ']')
+        {
+            const char *method_name_ptr;
+            method_name_ptr = strchr (name, ' ');
+            if (method_name_ptr)
+            {
+                if (class_name)
+                    class_name->SetCStringWithLength (name + 2, method_name_ptr - name - 2);
+                
+                // Skip the space
+                ++method_name_ptr;
+                // Extract the objective C basename and add it to the
+                // accelerator tables
+                size_t method_name_len = name_len - (method_name_ptr - name) - 1;
+                if (method_name)
+                    method_name->SetCStringWithLength (method_name_ptr, method_name_len);                                
+                
+                // Also see if this is a "category" on our class.  If so strip off the category name,
+                // and add the class name without it to the basename table. 
+                
+                if (base_name)
+                {
+                    const char *first_paren = (char *) memchr (name, '(', method_name_ptr - name);
+                    if (first_paren)
+                    {
+                        const char *second_paren = (char *) memchr (first_paren, ')', method_name_ptr - first_paren);
+                        if (second_paren)
+                        {
+                            std::string buffer (name, first_paren - name);
+                            buffer.append (second_paren + 1);
+                            base_name->SetCString (buffer.c_str());
+
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+    else
+        return false;
+}

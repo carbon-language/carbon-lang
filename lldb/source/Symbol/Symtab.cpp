@@ -14,6 +14,7 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Symtab.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -308,6 +309,20 @@ Symtab::InitNameIndexes()
             entry.cstring = mangled.GetDemangledName().GetCString();
             if (entry.cstring && entry.cstring[0])
                 m_name_to_index.Append (entry);
+                
+            // If the demangled name turns out to be an ObjC name, and
+            // is a category name, add the version without categories to the index too.
+            ConstString objc_base_name;
+            if (ObjCLanguageRuntime::ParseMethodName (entry.cstring,
+                                                      NULL,
+                                                      NULL,
+                                                      &objc_base_name)
+                && !objc_base_name.IsEmpty())
+            {
+                entry.cstring = objc_base_name.GetCString();
+                m_name_to_index.Append (entry);
+            }
+                                                        
         }
         m_name_to_index.Sort();
     }
