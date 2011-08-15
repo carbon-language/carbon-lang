@@ -240,7 +240,7 @@ class InstTemplate<AddrMode am, int sz, IndexMode im,
   // If this is a pseudo instruction, mark it isCodeGenOnly.
   let isCodeGenOnly = !eq(!cast<string>(f), "Pseudo");
 
-  // The layout of TSFlags should be kept in sync with ARMBaseInstrInfo.h.
+  // The layout of TSFlags should be kept in sync with ARMBaseInfo.h.
   let TSFlags{4-0}   = AM.Value;
   let TSFlags{6-5}   = IndexModeBits;
   let TSFlags{12-7} = Form;
