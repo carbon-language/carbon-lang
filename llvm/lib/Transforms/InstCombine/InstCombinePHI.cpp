@@ -286,7 +286,12 @@ static bool isSafeAndProfitableToSinkLoad(LoadInst *L) {
 
 Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
   LoadInst *FirstLI = cast<LoadInst>(PN.getIncomingValue(0));
-  
+
+  // FIXME: This is overconservative; this transform is allowed in some cases
+  // for atomic operations.
+  if (FirstLI->isAtomic())
+    return 0;
+
   // When processing loads, we need to propagate two bits of information to the
   // sunk load: whether it is volatile, and what its alignment is.  We currently
   // don't sink loads when some have their alignment specified and some don't.

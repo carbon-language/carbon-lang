@@ -132,6 +132,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
         LoadInst *NewLoad = 
           IC.Builder->CreateLoad(CastOp, LI.isVolatile(), CI->getName());
         NewLoad->setAlignment(LI.getAlignment());
+        NewLoad->setAtomic(LI.getOrdering(), LI.getSynchScope());
         // Now cast the result of the load.
         return new BitCastInst(NewLoad, LI.getType());
       }
@@ -162,8 +163,9 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     if (Instruction *Res = InstCombineLoadCast(*this, LI, TD))
       return Res;
 
-  // None of the following transforms are legal for volatile loads.
-  if (LI.isVolatile()) return 0;
+  // None of the following transforms are legal for volatile/atomic loads.
+  // FIXME: Some of it is okay for atomic loads; needs refactoring.
+  if (!LI.isSimple()) return 0;
   
   // Do really simple store-to-load forwarding and load CSE, to catch cases
   // where there are several consecutive memory accesses to the same location,
@@ -368,21 +370,6 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   Value *Val = SI.getOperand(0);
   Value *Ptr = SI.getOperand(1);
 
-  // If the RHS is an alloca with a single use, zapify the store, making the
-  // alloca dead.
-  if (!SI.isVolatile()) {
-    if (Ptr->hasOneUse()) {
-      if (isa<AllocaInst>(Ptr)) 
-        return EraseInstFromFunction(SI);
-      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr)) {
-        if (isa<AllocaInst>(GEP->getOperand(0))) {
-          if (GEP->getOperand(0)->hasOneUse())
-            return EraseInstFromFunction(SI);
-        }
-      }
-    }
-  }
-
   // Attempt to improve the alignment.
   if (TD) {
     unsigned KnownAlign =
@@ -396,6 +383,23 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
       SI.setAlignment(KnownAlign);
     else if (StoreAlign == 0)
       SI.setAlignment(EffectiveStoreAlign);
+  }
+
+  // Don't hack volatile/atomic stores.
+  // FIXME: Some bits are legal for atomic stores; needs refactoring.
+  if (!SI.isSimple()) return 0;
+
+  // If the RHS is an alloca with a single use, zapify the store, making the
+  // alloca dead.
+  if (Ptr->hasOneUse()) {
+    if (isa<AllocaInst>(Ptr)) 
+      return EraseInstFromFunction(SI);
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr)) {
+      if (isa<AllocaInst>(GEP->getOperand(0))) {
+        if (GEP->getOperand(0)->hasOneUse())
+          return EraseInstFromFunction(SI);
+      }
+    }
   }
 
   // Do really simple DSE, to catch cases where there are several consecutive
@@ -415,8 +419,8 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     
     if (StoreInst *PrevSI = dyn_cast<StoreInst>(BBI)) {
       // Prev store isn't volatile, and stores to the same location?
-      if (!PrevSI->isVolatile() &&equivalentAddressValues(PrevSI->getOperand(1),
-                                                          SI.getOperand(1))) {
+      if (PrevSI->isSimple() && equivalentAddressValues(PrevSI->getOperand(1),
+                                                        SI.getOperand(1))) {
         ++NumDeadStore;
         ++BBI;
         EraseInstFromFunction(*PrevSI);
@@ -430,7 +434,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     // then *this* store is dead (X = load P; store X -> P).
     if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
       if (LI == Val && equivalentAddressValues(LI->getOperand(0), Ptr) &&
-          !SI.isVolatile())
+          LI->isSimple())
         return EraseInstFromFunction(SI);
       
       // Otherwise, this is a load from some other location.  Stores before it
@@ -442,9 +446,6 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     if (BBI->mayWriteToMemory() || BBI->mayReadFromMemory())
       break;
   }
-  
-  
-  if (SI.isVolatile()) return 0;  // Don't hack volatile stores.
 
   // store X, null    -> turns into 'unreachable' in SimplifyCFG
   if (isa<ConstantPointerNull>(Ptr) && SI.getPointerAddressSpace() == 0) {
@@ -547,11 +548,11 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
         return false;
       --BBI;
     }
-    // If this isn't a store, isn't a store to the same location, or if the
-    // alignments differ, bail out.
+    // If this isn't a store, isn't a store to the same location, or is not the
+    // right kind of store, bail out.
     OtherStore = dyn_cast<StoreInst>(BBI);
     if (!OtherStore || OtherStore->getOperand(1) != SI.getOperand(1) ||
-        OtherStore->getAlignment() != SI.getAlignment())
+        !SI.isSameOperationAs(OtherStore))
       return false;
   } else {
     // Otherwise, the other block ended with a conditional branch. If one of the
@@ -567,7 +568,7 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
       // Check to see if we find the matching store.
       if ((OtherStore = dyn_cast<StoreInst>(BBI))) {
         if (OtherStore->getOperand(1) != SI.getOperand(1) ||
-            OtherStore->getAlignment() != SI.getAlignment())
+            !SI.isSameOperationAs(OtherStore))
           return false;
         break;
       }
@@ -601,8 +602,10 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   // insert it.
   BBI = DestBB->getFirstNonPHI();
   StoreInst *NewSI = new StoreInst(MergedVal, SI.getOperand(1),
-                                   OtherStore->isVolatile(),
-                                   SI.getAlignment());
+                                   SI.isVolatile(),
+                                   SI.getAlignment(),
+                                   SI.getOrdering(),
+                                   SI.getSynchScope());
   InsertNewInstBefore(NewSI, *BBI);
   NewSI->setDebugLoc(OtherStore->getDebugLoc()); 
 

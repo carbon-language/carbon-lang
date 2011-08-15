@@ -1379,7 +1379,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
     // load from a GEP. This reduces the size of the load.
     // FIXME: If a load is used only by extractvalue instructions then this
     //        could be done regardless of having multiple uses.
-    if (!L->isVolatile() && L->hasOneUse()) {
+    if (L->isSimple() && L->hasOneUse()) {
       // extractvalue has integer indices, getelementptr has Value*s. Convert.
       SmallVector<Value*, 4> Indices;
       // Prefix an i32 0 since we need the first element.
