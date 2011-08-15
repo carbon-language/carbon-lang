@@ -99,9 +99,6 @@ bool Loop::makeLoopInvariant(Instruction *I, bool &Changed,
     return false;
   if (I->mayReadFromMemory())
     return false;
-  // The landingpad instruction is immobile.
-  if (isa<LandingPadInst>(I))
-    return false;
   // Determine the insertion point, unless one was given.
   if (!InsertPt) {
     BasicBlock *Preheader = getLoopPreheader();
