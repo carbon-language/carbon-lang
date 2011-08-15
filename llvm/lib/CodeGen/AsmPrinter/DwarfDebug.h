@@ -234,10 +234,6 @@ class DwarfDebug {
   /// DotDebugLocEntries - Collection of DotDebugLocEntry.
   SmallVector<DotDebugLocEntry, 4> DotDebugLocEntries;
 
-  /// UseDotDebugLocEntry - DW_AT_location attributes for the DIEs in this set
-  /// idetifies corresponding .debug_loc entry offset.
-  SmallPtrSet<const DIE *, 4> UseDotDebugLocEntry;
-
   /// InliendSubprogramDIEs - Collection of subprgram DIEs that are marked
   /// (at the end of the module) as DW_AT_inline.
   SmallPtrSet<DIE *, 4> InlinedSubprogramDIEs;

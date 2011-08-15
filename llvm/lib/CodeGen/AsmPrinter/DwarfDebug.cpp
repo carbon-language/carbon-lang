@@ -412,7 +412,6 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, LexicalScope *Scope) {
                          dwarf::DW_FORM_data4,
                          Asm->GetTempSymbol("debug_loc", Offset));
     DV->setDIE(VariableDie);
-    UseDotDebugLocEntry.insert(VariableDie);
     return VariableDie;
   }
 
@@ -1676,10 +1675,9 @@ void DwarfDebug::emitDIE(DIE *Die) {
       break;
     }
     case dwarf::DW_AT_location: {
-      if (UseDotDebugLocEntry.count(Die) != 0) {
-        DIELabel *L = cast<DIELabel>(Values[i]);
+      if (DIELabel *L = dyn_cast<DIELabel>(Values[i]))
         Asm->EmitLabelDifference(L->getValue(), DwarfDebugLocSectionSym, 4);
-      } else
+      else
         Values[i]->EmitValue(Asm, Form);
       break;
     }
