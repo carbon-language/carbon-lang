@@ -141,6 +141,22 @@ static bool DecodeSTRPreImm(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static bool DecodeSTRPreReg(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
+static bool DecodeVLD1LN(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static bool DecodeVLD2LN(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static bool DecodeVLD3LN(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static bool DecodeVLD4LN(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static bool DecodeVST1LN(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static bool DecodeVST2LN(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static bool DecodeVST3LN(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
+static bool DecodeVST4LN(llvm::MCInst &Inst, unsigned Insn,
+                               uint64_t Address, const void *Decoder);
 
 
 static bool DecodeThumbAddSpecialReg(llvm::MCInst &Inst, uint16_t Insn,
@@ -2560,3 +2576,447 @@ static bool DecodeSTRPreReg(llvm::MCInst &Inst, unsigned Insn,
 
   return true;
 }
+
+static bool DecodeVLD1LN(llvm::MCInst &Inst, unsigned Insn,
+                         uint64_t Address, const void *Decoder) {
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
+  unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
+  Rd |= fieldFromInstruction32(Insn, 22, 1) << 4;
+  unsigned size = fieldFromInstruction32(Insn, 10, 2);
+
+  unsigned align = 0;
+  unsigned index = 0;
+  switch (size) {
+    default:
+      return false;
+    case 0:
+      if (fieldFromInstruction32(Insn, 4, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 5, 3);
+      break;
+    case 1:
+      if (fieldFromInstruction32(Insn, 5, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 6, 2);
+      if (fieldFromInstruction32(Insn, 4, 1))
+        align = 2;
+      break;
+    case 2:
+      if (fieldFromInstruction32(Insn, 6, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 7, 1);
+      if (fieldFromInstruction32(Insn, 4, 2) != 0)
+        align = 4;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (Rm != 0xF) { // Writeback
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+      return false;
+  }
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(align));
+  if (Rm != 0xF && Rm != 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder))
+      return false;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(index));
+
+  return true;
+}
+
+static bool DecodeVST1LN(llvm::MCInst &Inst, unsigned Insn,
+                         uint64_t Address, const void *Decoder) {
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
+  unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
+  Rd |= fieldFromInstruction32(Insn, 22, 1) << 4;
+  unsigned size = fieldFromInstruction32(Insn, 10, 2);
+
+  unsigned align = 0;
+  unsigned index = 0;
+  switch (size) {
+    default:
+      return false;
+    case 0:
+      if (fieldFromInstruction32(Insn, 4, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 5, 3);
+      break;
+    case 1:
+      if (fieldFromInstruction32(Insn, 5, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 6, 2);
+      if (fieldFromInstruction32(Insn, 4, 1))
+        align = 2;
+      break;
+    case 2:
+      if (fieldFromInstruction32(Insn, 6, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 7, 1);
+      if (fieldFromInstruction32(Insn, 4, 2) != 0)
+        align = 4;
+  }
+
+  if (Rm != 0xF) { // Writeback
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+      return false;
+  }
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(align));
+  if (Rm != 0xF && Rm != 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder))
+      return false;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(index));
+
+  return true;
+}
+
+
+static bool DecodeVLD2LN(llvm::MCInst &Inst, unsigned Insn,
+                         uint64_t Address, const void *Decoder) {
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
+  unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
+  Rd |= fieldFromInstruction32(Insn, 22, 1) << 4;
+  unsigned size = fieldFromInstruction32(Insn, 10, 2);
+
+  unsigned align = 0;
+  unsigned index = 0;
+  unsigned inc = 1;
+  switch (size) {
+    default:
+      return false;
+    case 0:
+      index = fieldFromInstruction32(Insn, 5, 3);
+      if (fieldFromInstruction32(Insn, 4, 1))
+        align = 2;
+      break;
+    case 1:
+      index = fieldFromInstruction32(Insn, 6, 2);
+      if (fieldFromInstruction32(Insn, 4, 1))
+        align = 4;
+      if (fieldFromInstruction32(Insn, 5, 1))
+        inc = 2;
+      break;
+    case 2:
+      if (fieldFromInstruction32(Insn, 5, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 7, 1);
+      if (fieldFromInstruction32(Insn, 4, 1) != 0)
+        align = 8;
+      if (fieldFromInstruction32(Insn, 6, 1))
+        inc = 2;
+      break;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+inc, Address, Decoder)) return false;
+  if (Rm != 0xF) { // Writeback
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+      return false;
+  }
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(align));
+  if (Rm != 0xF && Rm != 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder))
+      return false;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+inc, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(index));
+
+  return true;
+}
+
+static bool DecodeVST2LN(llvm::MCInst &Inst, unsigned Insn,
+                         uint64_t Address, const void *Decoder) {
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
+  unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
+  Rd |= fieldFromInstruction32(Insn, 22, 1) << 4;
+  unsigned size = fieldFromInstruction32(Insn, 10, 2);
+
+  unsigned align = 0;
+  unsigned index = 0;
+  unsigned inc = 1;
+  switch (size) {
+    default:
+      return false;
+    case 0:
+      index = fieldFromInstruction32(Insn, 5, 3);
+      if (fieldFromInstruction32(Insn, 4, 1))
+        align = 2;
+      break;
+    case 1:
+      index = fieldFromInstruction32(Insn, 6, 2);
+      if (fieldFromInstruction32(Insn, 4, 1))
+        align = 4;
+      if (fieldFromInstruction32(Insn, 5, 1))
+        inc = 2;
+      break;
+    case 2:
+      if (fieldFromInstruction32(Insn, 5, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 7, 1);
+      if (fieldFromInstruction32(Insn, 4, 1) != 0)
+        align = 8;
+      if (fieldFromInstruction32(Insn, 6, 1))
+        inc = 2;
+      break;
+  }
+
+  if (Rm != 0xF) { // Writeback
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+      return false;
+  }
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(align));
+  if (Rm != 0xF && Rm != 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder))
+      return false;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+inc, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(index));
+
+  return true;
+}
+
+
+static bool DecodeVLD3LN(llvm::MCInst &Inst, unsigned Insn,
+                         uint64_t Address, const void *Decoder) {
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
+  unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
+  Rd |= fieldFromInstruction32(Insn, 22, 1) << 4;
+  unsigned size = fieldFromInstruction32(Insn, 10, 2);
+
+  unsigned align = 0;
+  unsigned index = 0;
+  unsigned inc = 1;
+  switch (size) {
+    default:
+      return false;
+    case 0:
+      if (fieldFromInstruction32(Insn, 4, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 5, 3);
+      break;
+    case 1:
+      if (fieldFromInstruction32(Insn, 4, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 6, 2);
+      if (fieldFromInstruction32(Insn, 5, 1))
+        inc = 2;
+      break;
+    case 2:
+      if (fieldFromInstruction32(Insn, 4, 2))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 7, 1);
+      if (fieldFromInstruction32(Insn, 6, 1))
+        inc = 2;
+      break;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+inc, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+2*inc, Address, Decoder)) return false;
+
+  if (Rm != 0xF) { // Writeback
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+      return false;
+  }
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(align));
+  if (Rm != 0xF && Rm != 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder))
+      return false;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+inc, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+2*inc, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(index));
+
+  return true;
+}
+
+static bool DecodeVST3LN(llvm::MCInst &Inst, unsigned Insn,
+                         uint64_t Address, const void *Decoder) {
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
+  unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
+  Rd |= fieldFromInstruction32(Insn, 22, 1) << 4;
+  unsigned size = fieldFromInstruction32(Insn, 10, 2);
+
+  unsigned align = 0;
+  unsigned index = 0;
+  unsigned inc = 1;
+  switch (size) {
+    default:
+      return false;
+    case 0:
+      if (fieldFromInstruction32(Insn, 4, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 5, 3);
+      break;
+    case 1:
+      if (fieldFromInstruction32(Insn, 4, 1))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 6, 2);
+      if (fieldFromInstruction32(Insn, 5, 1))
+        inc = 2;
+      break;
+    case 2:
+      if (fieldFromInstruction32(Insn, 4, 2))
+        return false; // UNDEFINED
+      index = fieldFromInstruction32(Insn, 7, 1);
+      if (fieldFromInstruction32(Insn, 6, 1))
+        inc = 2;
+      break;
+  }
+
+  if (Rm != 0xF) { // Writeback
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+      return false;
+  }
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(align));
+  if (Rm != 0xF && Rm != 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder))
+      return false;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+inc, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+2*inc, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(index));
+
+  return true;
+}
+
+
+static bool DecodeVLD4LN(llvm::MCInst &Inst, unsigned Insn,
+                         uint64_t Address, const void *Decoder) {
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
+  unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
+  Rd |= fieldFromInstruction32(Insn, 22, 1) << 4;
+  unsigned size = fieldFromInstruction32(Insn, 10, 2);
+
+  unsigned align = 0;
+  unsigned index = 0;
+  unsigned inc = 1;
+  switch (size) {
+    default:
+      return false;
+    case 0:
+      if (fieldFromInstruction32(Insn, 4, 1))
+        align = 4;
+      index = fieldFromInstruction32(Insn, 5, 3);
+      break;
+    case 1:
+      if (fieldFromInstruction32(Insn, 4, 1))
+        align = 8;
+      index = fieldFromInstruction32(Insn, 6, 2);
+      if (fieldFromInstruction32(Insn, 5, 1))
+        inc = 2;
+      break;
+    case 2:
+      if (fieldFromInstruction32(Insn, 4, 2))
+        align = 4 << fieldFromInstruction32(Insn, 4, 2);
+      index = fieldFromInstruction32(Insn, 7, 1);
+      if (fieldFromInstruction32(Insn, 6, 1))
+        inc = 2;
+      break;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+inc, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+2*inc, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+3*inc, Address, Decoder)) return false;
+
+  if (Rm != 0xF) { // Writeback
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+      return false;
+  }
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(align));
+  if (Rm != 0xF && Rm != 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder))
+      return false;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+inc, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+2*inc, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+3*inc, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(index));
+
+  return true;
+}
+
+static bool DecodeVST4LN(llvm::MCInst &Inst, unsigned Insn,
+                         uint64_t Address, const void *Decoder) {
+  unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
+  unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
+  unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
+  Rd |= fieldFromInstruction32(Insn, 22, 1) << 4;
+  unsigned size = fieldFromInstruction32(Insn, 10, 2);
+
+  unsigned align = 0;
+  unsigned index = 0;
+  unsigned inc = 1;
+  switch (size) {
+    default:
+      return false;
+    case 0:
+      if (fieldFromInstruction32(Insn, 4, 1))
+        align = 4;
+      index = fieldFromInstruction32(Insn, 5, 3);
+      break;
+    case 1:
+      if (fieldFromInstruction32(Insn, 4, 1))
+        align = 8;
+      index = fieldFromInstruction32(Insn, 6, 2);
+      if (fieldFromInstruction32(Insn, 5, 1))
+        inc = 2;
+      break;
+    case 2:
+      if (fieldFromInstruction32(Insn, 4, 2))
+        align = 4 << fieldFromInstruction32(Insn, 4, 2);
+      index = fieldFromInstruction32(Insn, 7, 1);
+      if (fieldFromInstruction32(Insn, 6, 1))
+        inc = 2;
+      break;
+  }
+
+  if (Rm != 0xF) { // Writeback
+    if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder))
+      return false;
+  }
+  if (!DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(align));
+  if (Rm != 0xF && Rm != 0xD) {
+    if (!DecodeGPRRegisterClass(Inst, Rm, Address, Decoder))
+      return false;
+  }
+
+  if (!DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+inc, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+2*inc, Address, Decoder)) return false;
+  if (!DecodeDPRRegisterClass(Inst, Rd+3*inc, Address, Decoder)) return false;
+  Inst.addOperand(MCOperand::CreateImm(index));
+
+  return true;
+}
+

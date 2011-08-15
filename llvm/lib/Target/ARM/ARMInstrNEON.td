@@ -547,6 +547,7 @@ class VLD1LN<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
                                          (i32 (LoadOp addrmode6:$Rn)),
                                          imm:$lane))]> {
   let Rm = 0b1111;
+  let DecoderMethod = "DecodeVLD1LN";
 }
 class VLD1LN32<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
              PatFrag LoadOp>
@@ -558,6 +559,7 @@ class VLD1LN32<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
                                          (i32 (LoadOp addrmode6oneL32:$Rn)),
                                          imm:$lane))]> {
   let Rm = 0b1111;
+  let DecoderMethod = "DecodeVLD1LN";
 }
 class VLD1QLNPseudo<ValueType Ty, PatFrag LoadOp> : VLDQLNPseudo<IIC_VLD1ln> {
   let Pattern = [(set QPR:$dst, (vector_insert (Ty QPR:$src),
@@ -597,7 +599,9 @@ class VLD1LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
           (ins addrmode6:$Rn, am6offset:$Rm,
            DPR:$src, nohash_imm:$lane), IIC_VLD1lnu, "vld1", Dt,
           "\\{$Vd[$lane]\\}, $Rn$Rm",
-          "$src = $Vd, $Rn.addr = $wb", []>;
+          "$src = $Vd, $Rn.addr = $wb", []> {
+  let DecoderMethod = "DecodeVLD1LN";
+}
 
 def VLD1LNd8_UPD  : VLD1LNWB<0b0000, {?,?,?,0}, "8"> {
   let Inst{7-5} = lane{2-0};
@@ -624,6 +628,7 @@ class VLD2LN<bits<4> op11_8, bits<4> op7_4, string Dt>
           "$src1 = $Vd, $src2 = $dst2", []> {
   let Rm = 0b1111;
   let Inst{4}   = Rn{4};
+  let DecoderMethod = "DecodeVLD2LN";
 }
 
 def VLD2LNd8  : VLD2LN<0b0001, {?,?,?,?}, "8"> {
@@ -659,6 +664,7 @@ class VLD2LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
           "\\{$Vd[$lane], $dst2[$lane]\\}, $Rn$Rm",
           "$src1 = $Vd, $src2 = $dst2, $Rn.addr = $wb", []> {
   let Inst{4}   = Rn{4};
+  let DecoderMethod = "DecodeVLD2LN";
 }
 
 def VLD2LNd8_UPD  : VLD2LNWB<0b0001, {?,?,?,?}, "8"> {
@@ -693,6 +699,7 @@ class VLD3LN<bits<4> op11_8, bits<4> op7_4, string Dt>
           "\\{$Vd[$lane], $dst2[$lane], $dst3[$lane]\\}, $Rn",
           "$src1 = $Vd, $src2 = $dst2, $src3 = $dst3", []> {
   let Rm = 0b1111;
+  let DecoderMethod = "DecodeVLD3LN";
 }
 
 def VLD3LNd8  : VLD3LN<0b0010, {?,?,?,0}, "8"> {
@@ -729,7 +736,9 @@ class VLD3LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
           IIC_VLD3lnu, "vld3", Dt,
           "\\{$Vd[$lane], $dst2[$lane], $dst3[$lane]\\}, $Rn$Rm",
           "$src1 = $Vd, $src2 = $dst2, $src3 = $dst3, $Rn.addr = $wb",
-          []>;
+          []> {
+  let DecoderMethod = "DecodeVLD3LN";
+}
 
 def VLD3LNd8_UPD  : VLD3LNWB<0b0010, {?,?,?,0}, "8"> {
   let Inst{7-5} = lane{2-0};
@@ -765,6 +774,7 @@ class VLD4LN<bits<4> op11_8, bits<4> op7_4, string Dt>
           "$src1 = $Vd, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4", []> {
   let Rm = 0b1111;
   let Inst{4}   = Rn{4};
+  let DecoderMethod = "DecodeVLD4LN";
 }
 
 def VLD4LNd8  : VLD4LN<0b0011, {?,?,?,?}, "8"> {
@@ -805,6 +815,7 @@ class VLD4LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
 "$src1 = $Vd, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4, $Rn.addr = $wb",
           []> {
   let Inst{4}   = Rn{4};
+  let DecoderMethod = "DecodeVLD4LN"  ;
 }
 
 def VLD4LNd8_UPD  : VLD4LNWB<0b0011, {?,?,?,?}, "8"> {
@@ -1424,6 +1435,7 @@ class VST1LN<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
           IIC_VST1ln, "vst1", Dt, "\\{$Vd[$lane]\\}, $Rn", "",
           [(StoreOp (ExtractOp (Ty DPR:$Vd), imm:$lane), addrmode6:$Rn)]> {
   let Rm = 0b1111;
+  let DecoderMethod = "DecodeVST1LN";
 }
 class VST1LN32<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
              PatFrag StoreOp, SDNode ExtractOp>
@@ -1432,6 +1444,7 @@ class VST1LN32<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
           IIC_VST1ln, "vst1", Dt, "\\{$Vd[$lane]\\}, $Rn", "",
           [(StoreOp (ExtractOp (Ty DPR:$Vd), imm:$lane), addrmode6oneL32:$Rn)]>{
   let Rm = 0b1111;
+  let DecoderMethod = "DecodeVST1LN";
 }
 class VST1QLNPseudo<ValueType Ty, PatFrag StoreOp, SDNode ExtractOp>
   : VSTQLNPseudo<IIC_VST1ln> {
@@ -1472,7 +1485,9 @@ class VST1LNWB<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
           "\\{$Vd[$lane]\\}, $Rn$Rm",
           "$Rn.addr = $wb",
           [(set GPR:$wb, (StoreOp (ExtractOp (Ty DPR:$Vd), imm:$lane),
-                                  addrmode6:$Rn, am6offset:$Rm))]>;
+                                  addrmode6:$Rn, am6offset:$Rm))]> {
+  let DecoderMethod = "DecodeVST1LN";
+}
 class VST1QLNWBPseudo<ValueType Ty, PatFrag StoreOp, SDNode ExtractOp>
   : VSTQLNWBPseudo<IIC_VST1lnu> {
   let Pattern = [(set GPR:$wb, (StoreOp (ExtractOp (Ty QPR:$src), imm:$lane),
@@ -1508,6 +1523,7 @@ class VST2LN<bits<4> op11_8, bits<4> op7_4, string Dt>
           "", []> {
   let Rm = 0b1111;
   let Inst{4}   = Rn{4};
+  let DecoderMethod = "DecodeVST2LN";
 }
 
 def VST2LNd8  : VST2LN<0b0001, {?,?,?,?}, "8"> {
@@ -1545,6 +1561,7 @@ class VST2LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
           "\\{$src1[$lane], $src2[$lane]\\}, $addr$offset",
           "$addr.addr = $wb", []> {
   let Inst{4}   = Rn{4};
+  let DecoderMethod = "DecodeVST2LN";
 }
 
 def VST2LNd8_UPD  : VST2LNWB<0b0001, {?,?,?,?}, "8"> {
@@ -1578,6 +1595,7 @@ class VST3LN<bits<4> op11_8, bits<4> op7_4, string Dt>
            nohash_imm:$lane), IIC_VST3ln, "vst3", Dt,
           "\\{$Vd[$lane], $src2[$lane], $src3[$lane]\\}, $Rn", "", []> {
   let Rm = 0b1111;
+  let DecoderMethod = "DecodeVST3LN";
 }
 
 def VST3LNd8  : VST3LN<0b0010, {?,?,?,0}, "8"> {
@@ -1612,7 +1630,9 @@ class VST3LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
            DPR:$Vd, DPR:$src2, DPR:$src3, nohash_imm:$lane),
           IIC_VST3lnu, "vst3", Dt,
           "\\{$Vd[$lane], $src2[$lane], $src3[$lane]\\}, $Rn$Rm",
-          "$Rn.addr = $wb", []>;
+          "$Rn.addr = $wb", []> {
+  let DecoderMethod = "DecodeVST3LN";
+}
 
 def VST3LNd8_UPD  : VST3LNWB<0b0010, {?,?,?,0}, "8"> {
   let Inst{7-5} = lane{2-0};
@@ -1647,6 +1667,7 @@ class VST4LN<bits<4> op11_8, bits<4> op7_4, string Dt>
           "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
+  let DecoderMethod = "DecodeVST4LN";
 }
 
 def VST4LNd8  : VST4LN<0b0011, {?,?,?,?}, "8"> {
@@ -1685,6 +1706,7 @@ class VST4LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
   "\\{$Vd[$lane], $src2[$lane], $src3[$lane], $src4[$lane]\\}, $Rn$Rm",
           "$Rn.addr = $wb", []> {
   let Inst{4} = Rn{4};
+  let DecoderMethod = "DecodeVST4LN";
 }
 
 def VST4LNd8_UPD  : VST4LNWB<0b0011, {?,?,?,?}, "8"> {
