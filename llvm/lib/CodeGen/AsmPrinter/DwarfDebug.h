@@ -416,10 +416,10 @@ private:
   CompileUnit *getCompileUnit(const MDNode *N) const;
 
   /// constructGlobalVariableDIE - Construct global variable DIE.
-  void constructGlobalVariableDIE(const MDNode *N);
+  void constructGlobalVariableDIE(CompileUnit *TheCU, const MDNode *N);
 
   /// construct SubprogramDIE - Construct subprogram DIE.
-  void constructSubprogramDIE(const MDNode *N);
+  void constructSubprogramDIE(CompileUnit *TheCU, const MDNode *N);
 
   /// recordSourceLine - Register a source line with debug info. Returns the
   /// unique label that was emitted and which provides correspondence to

@@ -539,28 +539,22 @@ CompileUnit *DwarfDebug::getCompileUnit(const MDNode *N) const {
 }
 
 /// constructGlobalVariableDIE - Construct global variable DIE.
-void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
+void DwarfDebug::constructGlobalVariableDIE(CompileUnit *TheCU,
+                                            const MDNode *N) {
   DIGlobalVariable GV(N);
 
   // If debug information is malformed then ignore it.
   if (GV.Verify() == false)
     return;
 
-  // Check for pre-existence.
-  CompileUnit *TheCU = getCompileUnit(N);
   TheCU->createGlobalVariableDIE(N);
   return;
 }
 
 /// construct SubprogramDIE - Construct subprogram DIE.
-void DwarfDebug::constructSubprogramDIE(const MDNode *N) {
+void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU, 
+                                        const MDNode *N) {
   DISubprogram SP(N);
-
-  // Check for pre-existence.
-  CompileUnit *TheCU = getCompileUnit(N);
-  if (TheCU->getDIE(N))
-    return;
-
   if (!SP.isDefinition())
     // This is a method declaration which will be handled while constructing
     // class type.
@@ -603,12 +597,16 @@ void DwarfDebug::beginModule(Module *M) {
       constructCompileUnit(CU_Nodes->getOperand(i));
 
     if (GV_Nodes)
-      for (unsigned i = 0, e = GV_Nodes->getNumOperands(); i != e; ++i)
-        constructGlobalVariableDIE(GV_Nodes->getOperand(i));
+      for (unsigned i = 0, e = GV_Nodes->getNumOperands(); i != e; ++i) {
+        const MDNode *N = GV_Nodes->getOperand(i);
+        constructGlobalVariableDIE(getCompileUnit(N), N);
+      }
 
     if (SP_Nodes)
-      for (unsigned i = 0, e = SP_Nodes->getNumOperands(); i != e; ++i)
-        constructSubprogramDIE(SP_Nodes->getOperand(i));
+      for (unsigned i = 0, e = SP_Nodes->getNumOperands(); i != e; ++i) {
+        const MDNode *N = SP_Nodes->getOperand(i);
+        constructSubprogramDIE(getCompileUnit(N), N);
+      }
     
   } else {
 
@@ -634,13 +632,18 @@ void DwarfDebug::beginModule(Module *M) {
     
     // Create DIEs for each global variable.
     for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
-           E = DbgFinder.global_variable_end(); I != E; ++I)
-      constructGlobalVariableDIE(*I);
+           E = DbgFinder.global_variable_end(); I != E; ++I) {
+      const MDNode *N = *I;
+      if (DIGlobalVariable(N).getVersion() <= LLVMDebugVersion9)
+        constructGlobalVariableDIE(getCompileUnit(N), N);
+    }
     
     // Create DIEs for each subprogram.
     for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
-           E = DbgFinder.subprogram_end(); I != E; ++I)
-      constructSubprogramDIE(*I);
+           E = DbgFinder.subprogram_end(); I != E; ++I) {
+      const MDNode *N = *I;
+      constructSubprogramDIE(getCompileUnit(N), N);
+    }
   }
   
   // Tell MMI that we have debug info.
@@ -698,8 +701,8 @@ void DwarfDebug::endModule() {
       }
 
       // Construct subprogram DIE and add variables DIEs.
-      constructSubprogramDIE(SP);
       CompileUnit *SPCU = getCompileUnit(SP);
+      constructSubprogramDIE(SPCU, SP);
       DIE *ScopeDIE = SPCU->getDIE(SP);
       for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
         if (DIE *VariableDIE = 
