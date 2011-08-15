@@ -126,8 +126,6 @@ void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
 void AliasSet::addUnknownInst(Instruction *I, AliasAnalysis &AA) {
   UnknownInsts.push_back(I);
 
-  if (!I->mayReadOrWriteMemory())
-    return;
   if (!I->mayWriteToMemory()) {
     AliasTy = MayAlias;
     AccessTy |= Refs;
@@ -297,22 +295,28 @@ bool AliasSetTracker::add(Value *Ptr, uint64_t Size, const MDNode *TBAAInfo) {
 
 
 bool AliasSetTracker::add(LoadInst *LI) {
+  if (LI->getOrdering() > Monotonic) return addUnknown(LI);
+  AliasSet::AccessType ATy = AliasSet::Refs;
+  if (!LI->isUnordered()) ATy = AliasSet::ModRef;
   bool NewPtr;
   AliasSet &AS = addPointer(LI->getOperand(0),
                             AA.getTypeStoreSize(LI->getType()),
                             LI->getMetadata(LLVMContext::MD_tbaa),
-                            AliasSet::Refs, NewPtr);
+                            ATy, NewPtr);
   if (LI->isVolatile()) AS.setVolatile();
   return NewPtr;
 }
 
 bool AliasSetTracker::add(StoreInst *SI) {
+  if (SI->getOrdering() > Monotonic) return addUnknown(SI);
+  AliasSet::AccessType ATy = AliasSet::Mods;
+  if (!SI->isUnordered()) ATy = AliasSet::ModRef;
   bool NewPtr;
   Value *Val = SI->getOperand(0);
   AliasSet &AS = addPointer(SI->getOperand(1),
                             AA.getTypeStoreSize(Val->getType()),
                             SI->getMetadata(LLVMContext::MD_tbaa),
-                            AliasSet::Mods, NewPtr);
+                            ATy, NewPtr);
   if (SI->isVolatile()) AS.setVolatile();
   return NewPtr;
 }
