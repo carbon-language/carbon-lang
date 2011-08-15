@@ -328,6 +328,22 @@ void DIType::replaceAllUsesWith(MDNode *D) {
   }
 }
 
+/// isUnsignedDIType - Return true if type encoding is unsigned.
+bool DIType::isUnsignedDIType() {
+  DIDerivedType DTy(DbgNode);
+  if (DTy.Verify())
+    return DTy.getTypeDerivedFrom().isUnsignedDIType();
+
+  DIBasicType BTy(DbgNode);
+  if (BTy.Verify()) {
+    unsigned Encoding = BTy.getEncoding();
+    if (Encoding == dwarf::DW_ATE_unsigned ||
+        Encoding == dwarf::DW_ATE_unsigned_char)
+      return true;
+  }
+  return false;
+}
+
 /// Verify - Verify that a compile unit is well formed.
 bool DICompileUnit::Verify() const {
   if (!DbgNode)
@@ -1014,3 +1030,17 @@ DICompositeType llvm::getDICompositeType(DIType T) {
 
   return DICompositeType();
 }
+
+/// isSubprogramContext - Return true if Context is either a subprogram
+/// or another context nested inside a subprogram.
+bool llvm::isSubprogramContext(const MDNode *Context) {
+  if (!Context)
+    return false;
+  DIDescriptor D(Context);
+  if (D.isSubprogram())
+    return true;
+  if (D.isType())
+    return isSubprogramContext(DIType(Context).getContext());
+  return false;
+}
+

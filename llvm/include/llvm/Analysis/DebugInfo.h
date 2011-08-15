@@ -291,6 +291,9 @@ namespace llvm {
       return getFieldAs<DIFile>(3).getFilename();
     }
 
+    /// isUnsignedDIType - Return true if type encoding is unsigned.
+    bool isUnsignedDIType();
+
     /// replaceAllUsesWith - Replace all uses of debug info referenced by
     /// this descriptor.
     void replaceAllUsesWith(DIDescriptor &D);
@@ -713,6 +716,10 @@ namespace llvm {
 
   /// getDICompositeType - Find underlying composite type.
   DICompositeType getDICompositeType(DIType T);
+
+  /// isSubprogramContext - Return true if Context is either a subprogram
+  /// or another context nested inside a subprogram.
+  bool isSubprogramContext(const MDNode *Context);
 
   /// getOrInsertFnSpecificMDNode - Return a NameMDNode that is suitable
   /// to hold function specific information.

@@ -250,6 +250,9 @@ public:
   /// information entry.
   DIEEntry *createDIEEntry(DIE *Entry);
 
+  /// createGlobalVariableDIE - create global variable DIE.
+  void createGlobalVariableDIE(const MDNode *N);
+
   void addPubTypes(DISubprogram SP);
 
   /// constructTypeDIE - Construct basic type die from DIBasicType.

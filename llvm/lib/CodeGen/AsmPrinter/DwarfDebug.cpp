@@ -24,7 +24,6 @@
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -177,19 +176,6 @@ static StringRef getRealLinkageName(StringRef LinkageName) {
   if (LinkageName.startswith(StringRef(&One, 1)))
     return LinkageName.substr(1);
   return LinkageName;
-}
-
-/// isSubprogramContext - Return true if Context is either a subprogram
-/// or another context nested inside a subprogram.
-static bool isSubprogramContext(const MDNode *Context) {
-  if (!Context)
-    return false;
-  DIDescriptor D(Context);
-  if (D.isSubprogram())
-    return true;
-  if (D.isType())
-    return isSubprogramContext(DIType(Context).getContext());
-  return false;
 }
 
 /// updateSubprogramScopeDIE - Find DIE for the given subprogram and
@@ -385,22 +371,6 @@ DIE *DwarfDebug::constructInlinedScopeDIE(LexicalScope *Scope) {
   return ScopeDIE;
 }
 
-/// isUnsignedDIType - Return true if type encoding is unsigned.
-static bool isUnsignedDIType(DIType Ty) {
-  DIDerivedType DTy(Ty);
-  if (DTy.Verify())
-    return isUnsignedDIType(DTy.getTypeDerivedFrom());
-
-  DIBasicType BTy(Ty);
-  if (BTy.Verify()) {
-    unsigned Encoding = BTy.getEncoding();
-    if (Encoding == dwarf::DW_ATE_unsigned ||
-        Encoding == dwarf::DW_ATE_unsigned_char)
-      return true;
-  }
-  return false;
-}
-
 /// constructVariableDIE - Construct a DIE for the given DbgVariable.
 DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, LexicalScope *Scope) {
   StringRef Name = DV->getName();
@@ -504,7 +474,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, LexicalScope *Scope) {
         updated =
           VariableCU->addConstantValue(VariableDie, 
                                        DVInsn->getOperand(0).getCImm(),
-                                       isUnsignedDIType(DV->getType()));
+                                       DV->getType().isUnsignedDIType());
     } else {
       VariableCU->addVariableAddress(DV, VariableDie, 
                                      Asm->getDebugValueLocation(DVInsn));
@@ -701,33 +671,6 @@ CompileUnit *DwarfDebug::getCompileUnit(const MDNode *N) const {
   return I->second;
 }
 
-// Return const expression if value is a GEP to access merged global
-// constant. e.g.
-// i8* getelementptr ({ i8, i8, i8, i8 }* @_MergedGlobals, i32 0, i32 0)
-static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
-  const ConstantExpr *CE = dyn_cast_or_null<ConstantExpr>(V);
-  if (!CE || CE->getNumOperands() != 3 ||
-      CE->getOpcode() != Instruction::GetElementPtr)
-    return NULL;
-
-  // First operand points to a global struct.
-  Value *Ptr = CE->getOperand(0);
-  if (!isa<GlobalValue>(Ptr) ||
-      !isa<StructType>(cast<PointerType>(Ptr->getType())->getElementType()))
-    return NULL;
-
-  // Second operand is zero.
-  const ConstantInt *CI = dyn_cast_or_null<ConstantInt>(CE->getOperand(1));
-  if (!CI || !CI->isZero())
-    return NULL;
-
-  // Third operand is offset.
-  if (!isa<ConstantInt>(CE->getOperand(2)))
-    return NULL;
-
-  return CE;
-}
-
 /// constructGlobalVariableDIE - Construct global variable DIE.
 void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
   DIGlobalVariable GV(N);
@@ -738,77 +681,7 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
 
   // Check for pre-existence.
   CompileUnit *TheCU = getCompileUnit(N);
-  if (TheCU->getDIE(GV))
-    return;
-
-  DIType GTy = GV.getType();
-  DIE *VariableDIE = new DIE(GV.getTag());
-
-  bool isGlobalVariable = GV.getGlobal() != NULL;
-
-  // Add name.
-  TheCU->addString(VariableDIE, dwarf::DW_AT_name, dwarf::DW_FORM_string,
-                   GV.getDisplayName());
-  StringRef LinkageName = GV.getLinkageName();
-  if (!LinkageName.empty() && isGlobalVariable)
-    TheCU->addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name, 
-                     dwarf::DW_FORM_string,
-                     getRealLinkageName(LinkageName));
-  // Add type.
-  TheCU->addType(VariableDIE, GTy);
-
-  // Add scoping info.
-  if (!GV.isLocalToUnit()) {
-    TheCU->addUInt(VariableDIE, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
-    // Expose as global. 
-    TheCU->addGlobal(GV.getName(), VariableDIE);
-  }
-  // Add line number info.
-  TheCU->addSourceLine(VariableDIE, GV);
-  // Add to map.
-  TheCU->insertDIE(N, VariableDIE);
-  // Add to context owner.
-  DIDescriptor GVContext = GV.getContext();
-  TheCU->addToContextOwner(VariableDIE, GVContext);
-  // Add location.
-  if (isGlobalVariable) {
-    DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-    TheCU->addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-    TheCU->addLabel(Block, 0, dwarf::DW_FORM_udata,
-             Asm->Mang->getSymbol(GV.getGlobal()));
-    // Do not create specification DIE if context is either compile unit
-    // or a subprogram.
-    if (GV.isDefinition() && !GVContext.isCompileUnit() &&
-        !GVContext.isFile() && !isSubprogramContext(GVContext)) {
-      // Create specification DIE.
-      DIE *VariableSpecDIE = new DIE(dwarf::DW_TAG_variable);
-      TheCU->addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
-                  dwarf::DW_FORM_ref4, VariableDIE);
-      TheCU->addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
-      TheCU->addUInt(VariableDIE, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag,
-                     1);
-      TheCU->addDie(VariableSpecDIE);
-    } else {
-      TheCU->addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
-    } 
-  } else if (const ConstantInt *CI = 
-             dyn_cast_or_null<ConstantInt>(GV.getConstant()))
-    TheCU->addConstantValue(VariableDIE, CI, isUnsignedDIType(GTy));
-  else if (const ConstantExpr *CE = getMergedGlobalExpr(N->getOperand(11))) {
-    // GV is a merged global.
-    DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-    Value *Ptr = CE->getOperand(0);
-    TheCU->addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-    TheCU->addLabel(Block, 0, dwarf::DW_FORM_udata,
-                    Asm->Mang->getSymbol(cast<GlobalValue>(Ptr)));
-    TheCU->addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
-    SmallVector<Value*, 3> Idx(CE->op_begin()+1, CE->op_end());
-    TheCU->addUInt(Block, 0, dwarf::DW_FORM_udata, 
-                   Asm->getTargetData().getIndexedOffset(Ptr->getType(), Idx));
-    TheCU->addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus);
-    TheCU->addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
-  }
-
+  TheCU->createGlobalVariableDIE(N);
   return;
 }
 
