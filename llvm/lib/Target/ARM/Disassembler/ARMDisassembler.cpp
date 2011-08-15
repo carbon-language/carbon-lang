@@ -1094,6 +1094,21 @@ static bool DecodeAddrMode3Instruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned P = fieldFromInstruction32(Insn, 24, 1);
 
   bool writeback = (W == 1) | (P == 0);
+
+  // For {LD,ST}RD, Rt must be even, else undefined.
+  switch (Inst.getOpcode()) {
+    case ARM::STRD:
+    case ARM::STRD_PRE:
+    case ARM::STRD_POST:
+    case ARM::LDRD:
+    case ARM::LDRD_PRE:
+    case ARM::LDRD_POST:
+      if (Rt & 0x1) return false;
+      break;
+  default:
+    break;
+  }
+
   if (writeback) { // Writeback
     if (P)
       U |= ARMII::IndexModePre << 9;
