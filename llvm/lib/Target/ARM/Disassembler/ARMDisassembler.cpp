@@ -494,7 +494,28 @@ bool ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   MI.clear();
+  result = decodeNEONDupInstruction32(MI, insn32, Address, this);
+  if (result) {
+    Size = 4;
+    AddThumbPredicate(MI);
+    return true;
+  }
+
+  if (fieldFromInstruction32(insn32, 24, 8) == 0xF9) {
+    MI.clear();
+    uint32_t NEONLdStInsn = insn32;
+    NEONLdStInsn &= 0xF0FFFFFF;
+    NEONLdStInsn |= 0x04000000;
+    result = decodeNEONLoadStoreInstruction32(MI, NEONLdStInsn, Address, this);
+    if (result) {
+      Size = 4;
+      AddThumbPredicate(MI);
+      return true;
+    }
+  }
+
   if (fieldFromInstruction32(insn32, 24, 4) == 0xF) {
+    MI.clear();
     uint32_t NEONDataInsn = insn32;
     NEONDataInsn &= 0xF0FFFFFF; // Clear bits 27-24
     NEONDataInsn |= (NEONDataInsn & 0x10000000) >> 4; // Move bit 28 to bit 24
@@ -505,22 +526,6 @@ bool ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
       AddThumbPredicate(MI);
       return true;
     }
-  }
-
-  MI.clear();
-  result = decodeNEONLoadStoreInstruction32(MI, insn32, Address, this);
-  if (result) {
-    Size = 4;
-    AddThumbPredicate(MI);
-    return true;
-  }
-
-  MI.clear();
-  result = decodeNEONDupInstruction32(MI, insn32, Address, this);
-  if (result) {
-    Size = 4;
-    AddThumbPredicate(MI);
-    return true;
   }
 
   return false;

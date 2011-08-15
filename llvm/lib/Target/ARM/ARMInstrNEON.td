@@ -966,7 +966,7 @@ class VLD3DUP<bits<4> op7_4, string Dt>
           (ins addrmode6dup:$Rn), IIC_VLD3dup,
           "vld3", Dt, "\\{$Vd[], $dst2[], $dst3[]\\}, $Rn", "", []> {
   let Rm = 0b1111;
-  let Inst{4} = Rn{4};
+  let Inst{4} = 0;
   let DecoderMethod = "DecodeVLD3DupInstruction";
 }
 
@@ -989,7 +989,7 @@ class VLD3DUPWB<bits<4> op7_4, string Dt>
           (ins addrmode6dup:$Rn, am6offset:$Rm), IIC_VLD3dupu,
           "vld3", Dt, "\\{$Vd[], $dst2[], $dst3[]\\}, $Rn$Rm",
           "$Rn.addr = $wb", []> {
-  let Inst{4} = Rn{4};
+  let Inst{4} = 0;
   let DecoderMethod = "DecodeVLD3DupInstruction";
 }
 
