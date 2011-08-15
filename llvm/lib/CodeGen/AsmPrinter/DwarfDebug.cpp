@@ -417,10 +417,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, LexicalScope *Scope) {
   }
 
   // Check if variable is described by a  DBG_VALUE instruction.
-  DenseMap<const DbgVariable *, const MachineInstr *>::iterator DVI =
-    DbgVariableToDbgInstMap.find(DV);
-  if (DVI != DbgVariableToDbgInstMap.end()) {
-    const MachineInstr *DVInsn = DVI->second;
+  if (const MachineInstr *DVInsn = DV->getMInsn()) {
     bool updated = false;
     if (DVInsn->getNumOperands() == 3) {
       if (DVInsn->getOperand(0).isReg()) {
@@ -467,17 +464,17 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, LexicalScope *Scope) {
     }
     DV->setDIE(VariableDie);
     return VariableDie;
-  }
-
-  // .. else use frame index, if available.
-  int FI = 0;
-  if (findVariableFrameIndex(DV, &FI)) {
-    unsigned FrameReg = 0;
-    const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
-    int Offset = 
-      TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
-    MachineLocation Location(FrameReg, Offset);
-    VariableCU->addVariableAddress(DV, VariableDie, Location);
+  } else {
+    // .. else use frame index.
+    int FI = DV->getFrameIndex();
+    if (FI != ~0U) {
+      unsigned FrameReg = 0;
+      const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
+      int Offset = 
+        TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
+      MachineLocation Location(FrameReg, Offset);
+      VariableCU->addVariableAddress(DV, VariableDie, Location);
+    }
   }
 
   DV->setDIE(VariableDie);
@@ -953,11 +950,11 @@ DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction *MF,
 
     DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.second);
     DbgVariable *RegVar = new DbgVariable(DV, AbsDbgVariable);
-    recordVariableFrameIndex(RegVar, VP.first);
+    RegVar->setFrameIndex(VP.first);
     if (!addCurrentFnArgument(MF, RegVar, Scope))
       addScopeVariable(Scope, RegVar);
     if (AbsDbgVariable)
-      recordVariableFrameIndex(AbsDbgVariable, VP.first);
+      AbsDbgVariable->setFrameIndex(VP.first);
   }
 }
 
@@ -1046,12 +1043,12 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
     if (!addCurrentFnArgument(MF, RegVar, Scope))
       addScopeVariable(Scope, RegVar);
     if (AbsVar)
-      DbgVariableToDbgInstMap[AbsVar] = MInsn;
+      AbsVar->setMInsn(MInsn);
 
     // Simple ranges that are fully coalesced.
     if (History.size() <= 1 || (History.size() == 2 &&
                                 MInsn->isIdenticalTo(History.back()))) {
-      DbgVariableToDbgInstMap[RegVar] = MInsn;
+      RegVar->setMInsn(MInsn);
       continue;
     }
 
@@ -1471,32 +1468,12 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     DeleteContainerPointers(I->second);
   ScopeVariables.clear();
   DeleteContainerPointers(CurrentFnArguments);
-  DbgVariableToFrameIndexMap.clear();
-  DbgVariableToDbgInstMap.clear();
   UserVariables.clear();
   DbgValues.clear();
   AbstractVariables.clear();
   LabelsBeforeInsn.clear();
   LabelsAfterInsn.clear();
   PrevLabel = NULL;
-}
-
-/// recordVariableFrameIndex - Record a variable's index.
-void DwarfDebug::recordVariableFrameIndex(const DbgVariable *V, int Index) {
-  assert (V && "Invalid DbgVariable!");
-  DbgVariableToFrameIndexMap[V] = Index;
-}
-
-/// findVariableFrameIndex - Return true if frame index for the variable
-/// is found. Update FI to hold value of the index.
-bool DwarfDebug::findVariableFrameIndex(const DbgVariable *V, int *FI) {
-  assert (V && "Invalid DbgVariable!");
-  DenseMap<const DbgVariable *, int>::iterator I =
-    DbgVariableToFrameIndexMap.find(V);
-  if (I == DbgVariableToFrameIndexMap.end())
-    return false;
-  *FI = I->second;
-  return true;
 }
 
 /// recordSourceLine - Register a source line with debug info. Returns the

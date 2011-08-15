@@ -126,10 +126,13 @@ class DbgVariable {
   DIE *TheDIE;                       // Variable DIE.
   unsigned DotDebugLocOffset;        // Offset in DotDebugLocEntries.
   DbgVariable *AbsVar;               // Corresponding Abstract variable, if any.
+  const MachineInstr *MInsn;         // DBG_VALUE instruction of the variable.
+  int FrameIndex;
 public:
   // AbsVar may be NULL.
   DbgVariable(DIVariable V, DbgVariable *AV) 
-    : Var(V), TheDIE(0), DotDebugLocOffset(~0U), AbsVar(AV) {}
+    : Var(V), TheDIE(0), DotDebugLocOffset(~0U), AbsVar(AV), MInsn(0),
+      FrameIndex(~0U) {}
 
   // Accessors.
   DIVariable getVariable()           const { return Var; }
@@ -139,6 +142,10 @@ public:
   unsigned getDotDebugLocOffset()    const { return DotDebugLocOffset; }
   StringRef getName()                const { return Var.getName(); }
   DbgVariable *getAbstractVariable() const { return AbsVar; }
+  const MachineInstr *getMInsn()     const { return MInsn; }
+  void setMInsn(const MachineInstr *M)     { MInsn = M; }
+  int getFrameIndex()                const { return FrameIndex; }
+  void setFrameIndex(int FI)               { FrameIndex = FI; }
   // Translate tag to proper Dwarf tag.  
   unsigned getTag()                  const { 
     if (Var.getTag() == dwarf::DW_TAG_arg_variable)
@@ -223,14 +230,6 @@ class DwarfDebug {
 
   /// AbstractVariables - Collection on abstract variables.
   DenseMap<const MDNode *, DbgVariable *> AbstractVariables;
-
-  /// DbgVariableToFrameIndexMap - Tracks frame index used to find 
-  /// variable's value.
-  DenseMap<const DbgVariable *, int> DbgVariableToFrameIndexMap;
-
-  /// DbgVariableToDbgInstMap - Maps DbgVariable to corresponding DBG_VALUE
-  /// machine instruction.
-  DenseMap<const DbgVariable *, const MachineInstr *> DbgVariableToDbgInstMap;
 
   /// DotDebugLocEntries - Collection of DotDebugLocEntry.
   SmallVector<DotDebugLocEntry, 4> DotDebugLocEntries;
@@ -432,13 +431,6 @@ private:
   void recordSourceLine(unsigned Line, unsigned Col, const MDNode *Scope,
                         unsigned Flags);
   
-  /// recordVariableFrameIndex - Record a variable's index.
-  void recordVariableFrameIndex(const DbgVariable *V, int Index);
-
-  /// findVariableFrameIndex - Return true if frame index for the variable
-  /// is found. Update FI to hold value of the index.
-  bool findVariableFrameIndex(const DbgVariable *V, int *FI);
-
   /// identifyScopeMarkers() - Indentify instructions that are marking
   /// beginning of or end of a scope.
   void identifyScopeMarkers();
