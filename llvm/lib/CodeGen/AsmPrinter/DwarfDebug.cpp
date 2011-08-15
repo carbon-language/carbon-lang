@@ -383,21 +383,15 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, LexicalScope *Scope) {
   // Define variable debug information entry.
   DIE *VariableDie = new DIE(Tag);
   CompileUnit *VariableCU = getCompileUnit(DV->getVariable());
-  DIE *AbsDIE = NULL;
-  DenseMap<const DbgVariable *, const DbgVariable *>::iterator
-    V2AVI = VarToAbstractVarMap.find(DV);
-  if (V2AVI != VarToAbstractVarMap.end())
-    AbsDIE = V2AVI->second->getDIE();
-
+  DbgVariable *AbsVar = DV->getAbstractVariable();
+  DIE *AbsDIE = AbsVar ? AbsVar->getDIE() : NULL;
   if (AbsDIE)
     VariableCU->addDIEEntry(VariableDie, dwarf::DW_AT_abstract_origin,
-                       dwarf::DW_FORM_ref4, AbsDIE);
+                            dwarf::DW_FORM_ref4, AbsDIE);
   else {
-    VariableCU->addString(VariableDie, dwarf::DW_AT_name, dwarf::DW_FORM_string,
-                          Name);
+    VariableCU->addString(VariableDie, dwarf::DW_AT_name, 
+                          dwarf::DW_FORM_string, Name);
     VariableCU->addSourceLine(VariableDie, DV->getVariable());
-
-    // Add variable type.
     VariableCU->addType(VariableDie, DV->getType());
   }
 
@@ -812,7 +806,7 @@ void DwarfDebug::endModule() {
       for (unsigned I = 0; I != E; ++I) {
         DIVariable DV(NMD->getOperand(I));
         if (!DV.Verify()) continue;
-        Variables.push_back(DbgVariable(DV));
+        Variables.push_back(DbgVariable(DV, NULL));
       }
 
       // Construct subprogram DIE and add variables DIEs.
@@ -907,7 +901,7 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
   if (!Scope)
     return NULL;
 
-  AbsDbgVariable = new DbgVariable(Var);
+  AbsDbgVariable = new DbgVariable(Var, NULL);
   addScopeVariable(Scope, AbsDbgVariable);
   AbstractVariables[Var] = AbsDbgVariable;
   return AbsDbgVariable;
@@ -958,14 +952,12 @@ DwarfDebug::collectVariableInfoFromMMITable(const MachineFunction *MF,
       continue;
 
     DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.second);
-    DbgVariable *RegVar = new DbgVariable(DV);
+    DbgVariable *RegVar = new DbgVariable(DV, AbsDbgVariable);
     recordVariableFrameIndex(RegVar, VP.first);
     if (!addCurrentFnArgument(MF, RegVar, Scope))
       addScopeVariable(Scope, RegVar);
-    if (AbsDbgVariable) {
+    if (AbsDbgVariable)
       recordVariableFrameIndex(AbsDbgVariable, VP.first);
-      VarToAbstractVarMap[RegVar] = AbsDbgVariable;
-    }
   }
 }
 
@@ -1049,13 +1041,12 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
 
     Processed.insert(DV);
     assert(MInsn->isDebugValue() && "History must begin with debug value");
-    DbgVariable *RegVar = new DbgVariable(DV);
+    DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc());
+    DbgVariable *RegVar = new DbgVariable(DV, AbsVar);
     if (!addCurrentFnArgument(MF, RegVar, Scope))
       addScopeVariable(Scope, RegVar);
-    if (DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc())) {
+    if (AbsVar)
       DbgVariableToDbgInstMap[AbsVar] = MInsn;
-      VarToAbstractVarMap[RegVar] = AbsVar;
-    }
 
     // Simple ranges that are fully coalesced.
     if (History.size() <= 1 || (History.size() == 2 &&
@@ -1113,7 +1104,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       if (!DV || !Processed.insert(DV))
         continue;
       if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext()))
-        addScopeVariable(Scope, new DbgVariable(DV));
+        addScopeVariable(Scope, new DbgVariable(DV, NULL));
     }
   }
 }
@@ -1455,7 +1446,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
           if (!DV || !ProcessedVars.insert(DV))
             continue;
           if (LexicalScope *Scope = LScopes.findAbstractScope(DV.getContext()))
-            addScopeVariable(Scope, new DbgVariable(DV));
+            addScopeVariable(Scope, new DbgVariable(DV, NULL));
         }
       }
     }
@@ -1481,7 +1472,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   ScopeVariables.clear();
   DeleteContainerPointers(CurrentFnArguments);
   DbgVariableToFrameIndexMap.clear();
-  VarToAbstractVarMap.clear();
   DbgVariableToDbgInstMap.clear();
   UserVariables.clear();
   DbgValues.clear();

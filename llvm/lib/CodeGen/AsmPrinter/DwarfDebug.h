@@ -125,9 +125,11 @@ class DbgVariable {
   DIVariable Var;                    // Variable Descriptor.
   DIE *TheDIE;                       // Variable DIE.
   unsigned DotDebugLocOffset;        // Offset in DotDebugLocEntries.
+  DbgVariable *AbsVar;               // Corresponding Abstract variable, if any.
 public:
   // AbsVar may be NULL.
-  DbgVariable(DIVariable V) : Var(V), TheDIE(0), DotDebugLocOffset(~0U) {}
+  DbgVariable(DIVariable V, DbgVariable *AV) 
+    : Var(V), TheDIE(0), DotDebugLocOffset(~0U), AbsVar(AV) {}
 
   // Accessors.
   DIVariable getVariable()           const { return Var; }
@@ -136,6 +138,7 @@ public:
   void setDotDebugLocOffset(unsigned O)    { DotDebugLocOffset = O; }
   unsigned getDotDebugLocOffset()    const { return DotDebugLocOffset; }
   StringRef getName()                const { return Var.getName(); }
+  DbgVariable *getAbstractVariable() const { return AbsVar; }
   // Translate tag to proper Dwarf tag.  
   unsigned getTag()                  const { 
     if (Var.getTag() == dwarf::DW_TAG_arg_variable)
@@ -235,10 +238,6 @@ class DwarfDebug {
   /// UseDotDebugLocEntry - DW_AT_location attributes for the DIEs in this set
   /// idetifies corresponding .debug_loc entry offset.
   SmallPtrSet<const DIE *, 4> UseDotDebugLocEntry;
-
-  /// VarToAbstractVarMap - Maps DbgVariable with corresponding Abstract
-  /// DbgVariable, if any.
-  DenseMap<const DbgVariable *, const DbgVariable *> VarToAbstractVarMap;
 
   /// InliendSubprogramDIEs - Collection of subprgram DIEs that are marked
   /// (at the end of the module) as DW_AT_inline.
