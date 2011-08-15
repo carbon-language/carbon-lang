@@ -25,88 +25,98 @@ static const uint64_t kOurExceptionClass          = 0x434C4E47432B2B00; // CLNGC
 static const uint64_t kOurDependentExceptionClass = 0x434C4E47432B2B01; // CLNGC++\1
                                                     
 //  Utility routines
-static __cxa_exception *exception_from_thrown_object ( void *p ) throw () {
-    return ((__cxa_exception *) p ) - 1;
-    }
+static __cxa_exception *exception_from_thrown_object(void *p) throw() {
+    return ((__cxa_exception *) p) - 1;
+}
     
-static void * thrown_object_from_exception ( void *p ) throw () {
-    return (void *) (((__cxa_exception *) p ) + 1 );
-    }
+static void * thrown_object_from_exception(void *p) throw() {
+    return (void *) (((__cxa_exception *) p) + 1 );
+}
 
-static size_t object_size_from_exception_size ( size_t size ) throw () {
+static size_t object_size_from_exception_size(size_t size) throw() {
     return size + sizeof (__cxa_exception);
-    }
+}
 
 //  Get the exception object from the unwind pointer.
 //  Relies on the structure layout, where the unwind pointer is right in
 //  front of the user's exception object
 static __cxa_exception *
-exception_from_exception_object ( void *ptr ) throw () {
-    _Unwind_Exception *p = reinterpret_cast<_Unwind_Exception *> ( ptr );
-    return exception_from_thrown_object ( p + 1 );
-    }
+exception_from_exception_object(void *ptr) throw() {
+    _Unwind_Exception *p = reinterpret_cast<_Unwind_Exception *>(ptr);
+    return exception_from_thrown_object(p + 1 );
+}
 
-static void setExceptionClass ( _Unwind_Exception *unwind ) throw () {
+static void setExceptionClass(_Unwind_Exception *unwind) throw() {
     unwind->exception_class = kOurExceptionClass;
-    }
+}
 
-static void setDependentExceptionClass ( _Unwind_Exception *unwind ) throw () {
+static void setDependentExceptionClass(_Unwind_Exception *unwind) throw() {
     unwind->exception_class = kOurDependentExceptionClass;
-    }
+}
 
 //  Is it one of ours?
-static bool isOurExceptionClass ( _Unwind_Exception *unwind ) throw () {
-    return ( unwind->exception_class == kOurExceptionClass ) ||
-                ( unwind->exception_class == kOurDependentExceptionClass );
-    }
+static bool isOurExceptionClass(_Unwind_Exception *unwind) throw() {
+    return(unwind->exception_class == kOurExceptionClass)||
+               (unwind->exception_class == kOurDependentExceptionClass);
+}
 
-static bool isDependentException ( _Unwind_Exception *unwind ) throw () {
-    return ( unwind->exception_class & 0xFF ) == 0x01;
-    }
+static bool isDependentException(_Unwind_Exception *unwind) throw() {
+    return (unwind->exception_class & 0xFF) == 0x01;
+}
+
+//	TODO: This needs to be atomic
+static int incrementHandlerCount(__cxa_exception *exception) throw() {
+	return ++exception->handlerCount;
+}
+
+//	TODO: This needs to be atomic
+static int decrementHandlerCount(__cxa_exception *exception) throw() {
+	return --exception->handlerCount;
+}
 
 #include "fallback_malloc.cpp"
 
 //  Allocate some memory from _somewhere_
-static void *do_malloc ( size_t size ) throw () {
-    void *ptr = std::malloc ( size );
-    if ( NULL == ptr )  // if malloc fails, fall back to emergency stash
-        ptr = fallback_malloc ( size );
+static void *do_malloc(size_t size) throw() {
+    void *ptr = std::malloc(size);
+    if (NULL == ptr) // if malloc fails, fall back to emergency stash
+        ptr = fallback_malloc(size);
     return ptr;
-    }
+}
 
 //  Didn't know you could "return <expression>" from a void function, did you?
 //  Well, you can, if the type of the expression is "void" also.
-static void do_free ( void *ptr ) throw () {
-    return is_fallback_ptr ( ptr ) ? fallback_free ( ptr ) : std::free ( ptr );
-    }
+static void do_free(void *ptr) throw() {
+    return is_fallback_ptr(ptr) ? fallback_free(ptr) : std::free(ptr);
+}
 
 /*  Howard says:
     If reason isn't _URC_FOREIGN_EXCEPTION_CAUGHT, then the terminateHandler
     stored in exc is called.  Otherwise the exceptionDestructor stored in 
     exc is called, and then the memory for the exception is deallocated.
 */
-static void exception_cleanup_func ( _Unwind_Reason_Code reason, struct _Unwind_Exception* exc ) {
-    __cxa_exception *exception = exception_from_exception_object ( exc );
-    if ( _URC_FOREIGN_EXCEPTION_CAUGHT != reason )
+static void exception_cleanup_func(_Unwind_Reason_Code reason, struct _Unwind_Exception* exc) {
+    __cxa_exception *exception = exception_from_exception_object(exc);
+    if (_URC_FOREIGN_EXCEPTION_CAUGHT != reason)
         exception->terminateHandler ();
         
-    void * thrown_object = thrown_object_from_exception ( exception );
-    if ( NULL != exception->exceptionDestructor )
-        exception->exceptionDestructor ( thrown_object );
-    __cxa_free_exception( thrown_object );
-    }
+    void * thrown_object = thrown_object_from_exception(exception);
+    if (NULL != exception->exceptionDestructor)
+        exception->exceptionDestructor(thrown_object);
+    __cxa_free_exception(thrown_object);
+}
 
-static LIBCXXABI_NORETURN void failed_throw ( __cxa_exception *exception ) throw () {
+static LIBCXXABI_NORETURN void failed_throw(__cxa_exception *exception) throw() {
 //  Section 2.5.3 says:
 //      * For purposes of this ABI, several things are considered exception handlers:
 //      ** A terminate() call due to a throw.
 //  and
 //      * Upon entry, Following initialization of the catch parameter, 
 //          a handler must call:
-//      * void *__cxa_begin_catch ( void *exceptionObject );
-    (void) __cxa_begin_catch ( &exception->unwindHeader );
-    std::terminate ();
-    }
+//      * void *__cxa_begin_catch(void *exceptionObject );
+    (void) __cxa_begin_catch(&exception->unwindHeader);
+    std::terminate();
+}
 
 extern "C" {
 
@@ -116,41 +126,41 @@ extern "C" {
 //  std::terminate. Return a pointer to the memory to be used for the
 //  user's exception object.
 void * __cxa_allocate_exception (size_t thrown_size) throw() {
-    size_t actual_size = object_size_from_exception_size ( thrown_size );
-    void *ptr = do_malloc ( actual_size );
-    if ( NULL == ptr )
-        std::terminate ();
-    std::memset ( ptr, 0, actual_size );
-    return thrown_object_from_exception ( ptr );
-    }
+    size_t actual_size = object_size_from_exception_size(thrown_size);
+    void *ptr = do_malloc(actual_size);
+    if (NULL == ptr)
+        std::terminate();
+    std::memset(ptr, 0, actual_size);
+    return thrown_object_from_exception(ptr);
+}
 
 
 //  Free a __cxa_exception object allocated with __cxa_allocate_exception.
 void __cxa_free_exception (void * thrown_exception) throw() {
-    do_free ( exception_from_thrown_object ( thrown_exception ));
-    }
+    do_free(exception_from_thrown_object(thrown_exception));
+}
 
 
 //  This function shall allocate a __cxa_dependent_exception and
 //  return a pointer to it. (Really to the object, not past its' end).
 //  Otherwise, it will work like __cxa_allocate_exception.
 void * __cxa_allocate_dependent_exception () throw() {
-    size_t actual_size = sizeof ( __cxa_dependent_exception );
-    void *ptr = do_malloc ( actual_size );
-    if ( NULL == ptr )
-        std::terminate ();
-    std::memset ( ptr, 0, actual_size );
+    size_t actual_size = sizeof(__cxa_dependent_exception);
+    void *ptr = do_malloc(actual_size);
+    if (NULL == ptr)
+        std::terminate();
+    std::memset(ptr, 0, actual_size);
 //  bookkeeping here ?
     return ptr;
-    }
+}
 
 
 //  This function shall free a dependent_exception.
 //  It does not affect the reference count of the primary exception.
 void __cxa_free_dependent_exception (void * dependent_exception) throw() {
 //  I'm pretty sure there's no bookkeeping here
-    do_free ( dependent_exception );
-    }
+    do_free(dependent_exception);
+}
 
 
 // 2.4.3 Throwing the Exception Object
@@ -181,29 +191,29 @@ exception.
 */
 LIBCXXABI_NORETURN void 
 __cxa_throw(void * thrown_exception, std::type_info * tinfo, void (*dest)(void *)) {
-    __cxa_eh_globals *globals = __cxa_get_globals ();
-    __cxa_exception *exception = exception_from_thrown_object ( thrown_exception );
+    __cxa_eh_globals *globals = __cxa_get_globals();
+    __cxa_exception *exception = exception_from_thrown_object(thrown_exception);
     
     exception->unexpectedHandler = __cxxabiapple::__cxa_unexpected_handler;
     exception->terminateHandler  = __cxxabiapple::__cxa_terminate_handler;
     exception->exceptionType = tinfo;
     exception->exceptionDestructor = dest;
-    setExceptionClass ( &exception->unwindHeader );
+    setExceptionClass(&exception->unwindHeader);
     exception->referenceCount = 1;  // This is a newly allocated exception, no need for thread safety.
     globals->uncaughtExceptions += 1;   // Not atomically, since globals are thread-local
 
     exception->unwindHeader.exception_cleanup = exception_cleanup_func;
-    _Unwind_RaiseException ( &exception->unwindHeader );
+    _Unwind_RaiseException(&exception->unwindHeader);
     
 //  If we get here, some kind of unwinding error has occurred.
-    failed_throw ( exception );
-    }
+    failed_throw(exception);
+}
 
 
 // 2.5.3 Exception Handlers
 extern void * __cxa_get_exception_ptr(void * exceptionObject) throw() {
-    return exception_from_exception_object ( exceptionObject );
-    }
+    return exception_from_exception_object(exceptionObject);
+}
     
 
 /*
@@ -215,26 +225,26 @@ This routine:
 * Returns the adjusted pointer to the exception object.
 */
 void * __cxa_begin_catch(void * exceptionObject) throw() {
-    __cxa_eh_globals *globals = __cxa_get_globals ();
-    __cxa_exception *exception = exception_from_exception_object ( exceptionObject );
+    __cxa_eh_globals *globals = __cxa_get_globals();
+    __cxa_exception *exception = exception_from_exception_object(exceptionObject);
 
 //  TODO add stuff for dependent exceptions.
 
 //  TODO - should this be atomic?
 //  Increment the handler count, removing the flag about being rethrown
-//  assert ( exception->handlerCount != 0 );
+//  assert(exception->handlerCount != 0);
     exception->handlerCount = exception->handlerCount < 0 ?
         -exception->handlerCount + 1 : exception->handlerCount + 1;
 
 //  place the exception on the top of the stack if it's not there.
-    if ( exception != globals->caughtExceptions ) {
+    if (exception != globals->caughtExceptions) {
         exception->nextException = globals->caughtExceptions;
         globals->caughtExceptions = exception;
-        }
+    }
         
     globals->uncaughtExceptions -= 1;   // Not atomically, since globals are thread-local
-    return thrown_object_from_exception ( exception );
-    }
+    return thrown_object_from_exception(exception);
+}
 
 
 /*
@@ -247,42 +257,41 @@ This routine:
 * Destroys the exception if the handler count goes to zero, and the exception was not re-thrown by throw.
 */
 void __cxa_end_catch() {
-    __cxa_eh_globals *globals = __cxa_get_globals ();
+    __cxa_eh_globals *globals = __cxa_get_globals();
     __cxa_exception *current_exception = globals->caughtExceptions;
     
-    if ( NULL != current_exception ) {
-        if ( current_exception->handlerCount < 0 ) {
+    if (NULL != current_exception) {
+        if (current_exception->handlerCount < 0) {
         //  The exception has been rethrown
-            current_exception->handlerCount += 1;       // TODO: should be atomic?
-            if ( 0 == current_exception->handlerCount )
+            if (0 == incrementHandlerCount(current_exception)) {
                 globals->caughtExceptions = current_exception->nextException;
             //	Howard says: If the exception has been rethrown, don't destroy.
-            }
+        	}
+        }
         else {
-            current_exception->handlerCount -= 1;       // TODO: should be atomic?
-            if ( 0 == current_exception->handlerCount ) {
+            if (0 == decrementHandlerCount(current_exception)) {
             //  Remove from the chain of uncaught exceptions
                 globals->caughtExceptions = current_exception->nextException;
-                if ( !isDependentException ( &current_exception->unwindHeader ))
-                    _Unwind_DeleteException ( &current_exception->unwindHeader );
+                if (!isDependentException(&current_exception->unwindHeader))
+                    _Unwind_DeleteException(&current_exception->unwindHeader);
                 else {
                 //  TODO: deal with a dependent exception
-                    }
                 }
-            }       
-        }
+            }
+        }       
     }
+}
 
 
 std::type_info * __cxa_current_exception_type() {
 //  get the current exception
-    __cxa_eh_globals *globals = __cxa_get_globals ();
+    __cxa_eh_globals *globals = __cxa_get_globals();
     __cxa_exception *current_exception = globals->caughtExceptions;
-    if ( NULL == current_exception )
+    if (NULL == current_exception)
         return NULL;        //  No current exception
 //  TODO add stuff for dependent exceptions.
     return current_exception->exceptionType;
-    }
+}
 
 // 2.5.4 Rethrowing Exceptions
 /*  This routine 
@@ -295,24 +304,24 @@ std::type_info * __cxa_current_exception_type() {
   call _Unwind_Resume() to continue unwinding.
 */
 extern LIBCXXABI_NORETURN void __cxa_rethrow() {
-    __cxa_eh_globals *globals = __cxa_get_globals ();
-    __cxa_exception *exception = exception_from_exception_object ( globals->caughtExceptions );
+    __cxa_eh_globals *globals = __cxa_get_globals();
+    __cxa_exception *exception = exception_from_exception_object(globals->caughtExceptions );
 
-    if ( NULL == exception )    // there's no current exception!
+    if (NULL == exception)   // there's no current exception!
         std::terminate ();
 
 //  Mark the exception as being rethrown
-    exception->handlerCount = -exception->handlerCount ;
+    exception->handlerCount = -exception->handlerCount ;	// TODO: Atomic
     
 #if __arm__
-    (void) _Unwind_SjLj_Resume_or_Rethrow ( &exception->unwindHeader );
+    (void) _Unwind_SjLj_Resume_or_Rethrow(&exception->unwindHeader);
 #else
-    (void) _Unwind_Resume_or_Rethrow      ( &exception->unwindHeader );
+    (void) _Unwind_Resume_or_Rethrow     (&exception->unwindHeader);
 #endif
 
 //  If we get here, some kind of unwinding error has occurred.
-    failed_throw ( exception );
-    }
+    failed_throw(exception);
+}
 
 }  // extern "C"
 
