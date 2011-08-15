@@ -538,6 +538,10 @@ class InjectedClassNameTypeLoc :
     public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                      InjectedClassNameTypeLoc,
                                      InjectedClassNameType> {
+public:
+  CXXRecordDecl *getDecl() const {
+    return getTypePtr()->getDecl();
+  }
 };
 
 /// \brief Wrapper for source info for unresolved typename using decls.
@@ -1408,6 +1412,8 @@ public:
 class DecltypeTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                          DecltypeTypeLoc,
                                                          DecltypeType> {
+public:
+  Expr *getUnderlyingExpr() const { return getTypePtr()->getUnderlyingExpr(); }
 };
 
 struct UnaryTransformTypeLocInfo {

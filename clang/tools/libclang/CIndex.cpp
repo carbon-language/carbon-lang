@@ -333,36 +333,15 @@ public:
   bool VisitTemplateArgumentLoc(const TemplateArgumentLoc &TAL);
   
   // Type visitors
-  bool VisitQualifiedTypeLoc(QualifiedTypeLoc TL);
-  bool VisitBuiltinTypeLoc(BuiltinTypeLoc TL);
-  bool VisitTypedefTypeLoc(TypedefTypeLoc TL);
-  bool VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL);
+#define ABSTRACT_TYPELOC(CLASS, PARENT)
+#define TYPELOC(CLASS, PARENT) \
+  bool Visit##CLASS##TypeLoc(CLASS##TypeLoc TyLoc);
+#include "clang/AST/TypeLocNodes.def"
+
   bool VisitTagTypeLoc(TagTypeLoc TL);
-  bool VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL);
-  bool VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL);
-  bool VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL);
-  bool VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL);
-  bool VisitParenTypeLoc(ParenTypeLoc TL);
-  bool VisitPointerTypeLoc(PointerTypeLoc TL);
-  bool VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL);
-  bool VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL);
-  bool VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL);
-  bool VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL);
-  bool VisitAttributedTypeLoc(AttributedTypeLoc TL);
-  bool VisitFunctionTypeLoc(FunctionTypeLoc TL, bool SkipResultType = false);
   bool VisitArrayTypeLoc(ArrayTypeLoc TL);
-  bool VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL);
-  // FIXME: Implement visitors here when the unimplemented TypeLocs get
-  // implemented
-  bool VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL);
-  bool VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL);
-  bool VisitTypeOfTypeLoc(TypeOfTypeLoc TL);
-  bool VisitUnaryTransformTypeLoc(UnaryTransformTypeLoc TL);
-  bool VisitDependentNameTypeLoc(DependentNameTypeLoc TL);
-  bool VisitDependentTemplateSpecializationTypeLoc(
-                                    DependentTemplateSpecializationTypeLoc TL);
-  bool VisitElaboratedTypeLoc(ElaboratedTypeLoc TL);
-  
+  bool VisitFunctionTypeLoc(FunctionTypeLoc TL, bool SkipResultType = false);
+
   // Data-recursive visitor functions.
   bool IsInRegionOfInterest(CXCursor C);
   bool RunVisitorWorkList(VisitorWorkList &WL);
@@ -1614,6 +1593,38 @@ bool CursorVisitor::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
 bool CursorVisitor::VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL) {
   return Visit(TL.getPatternLoc());
 }
+
+bool CursorVisitor::VisitDecltypeTypeLoc(DecltypeTypeLoc TL) {
+  if (Expr *E = TL.getUnderlyingExpr())
+    return Visit(MakeCXCursor(E, StmtParent, TU));
+
+  return false;
+}
+
+bool CursorVisitor::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {
+  return Visit(MakeCursorTypeRef(TL.getDecl(), TL.getNameLoc(), TU));
+}
+
+#define DEFAULT_TYPELOC_IMPL(CLASS, PARENT) \
+bool CursorVisitor::Visit##CLASS##TypeLoc(CLASS##TypeLoc TL) { \
+  return Visit##PARENT##Loc(TL); \
+}
+
+DEFAULT_TYPELOC_IMPL(Complex, Type)
+DEFAULT_TYPELOC_IMPL(ConstantArray, ArrayType)
+DEFAULT_TYPELOC_IMPL(IncompleteArray, ArrayType)
+DEFAULT_TYPELOC_IMPL(VariableArray, ArrayType)
+DEFAULT_TYPELOC_IMPL(DependentSizedArray, ArrayType)
+DEFAULT_TYPELOC_IMPL(DependentSizedExtVector, Type)
+DEFAULT_TYPELOC_IMPL(Vector, Type)
+DEFAULT_TYPELOC_IMPL(ExtVector, VectorType)
+DEFAULT_TYPELOC_IMPL(FunctionProto, FunctionType)
+DEFAULT_TYPELOC_IMPL(FunctionNoProto, FunctionType)
+DEFAULT_TYPELOC_IMPL(Record, TagType)
+DEFAULT_TYPELOC_IMPL(Enum, TagType)
+DEFAULT_TYPELOC_IMPL(SubstTemplateTypeParm, Type)
+DEFAULT_TYPELOC_IMPL(SubstTemplateTypeParmPack, Type)
+DEFAULT_TYPELOC_IMPL(Auto, Type)
 
 bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
   // Visit the nested-name-specifier, if present.

@@ -846,7 +846,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "unsigned" [88:14 - 88:22] NonTypeTemplateParameter=N:88:23 (Definition)
 // CHECK-tokens: Identifier: "N" [88:23 - 88:24] NonTypeTemplateParameter=N:88:23 (Definition)
 // CHECK-tokens: Punctuation: ">" [88:25 - 88:26] FunctionTemplate=Case:88:42 (Definition)
-// CHECK-tokens: Identifier: "StringSwitch" [88:27 - 88:39] FunctionTemplate=Case:88:42 (Definition)
+// CHECK-tokens: Identifier: "StringSwitch" [88:27 - 88:39] TypeRef=StringSwitch<T, R>:83:47
 // CHECK-tokens: Punctuation: "&" [88:40 - 88:41] FunctionTemplate=Case:88:42 (Definition)
 // CHECK-tokens: Identifier: "Case" [88:42 - 88:46] FunctionTemplate=Case:88:42 (Definition)
 // CHECK-tokens: Punctuation: "(" [88:46 - 88:47] FunctionTemplate=Case:88:42 (Definition)
