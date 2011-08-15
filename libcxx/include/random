@@ -2562,8 +2562,11 @@ subtract_with_carry_engine<_UIntType, __w, __s, __r>::seed(result_type __sd,
     linear_congruential_engine<result_type, 40014u, 0u, 2147483563u>
         __e(__sd == 0u ? default_seed : __sd);
     for (size_t __i = 0; __i < __r; ++__i)
+    {
+        result_type __e0 = __e();
         __x_[__i] = static_cast<result_type>(
-                                    (__e() + ((uint64_t)__e() << 32)) & _Max);
+                                    (__e0 + ((uint64_t)__e() << 32)) & _Max);
+    }
     __c_ = __x_[__r-1] == 0;
     __i_ = 0;
 }
