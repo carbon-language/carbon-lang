@@ -553,6 +553,19 @@ public:
     void
     DumpValueObject (Stream &s, VariableSP &var_sp, ValueObjectSP &valobj_sp, const char *root_name)
     {
+        ValueObject::DumpValueObjectOptions options;
+        
+        options.SetPointerDepth(m_varobj_options.ptr_depth)
+               .SetMaximumDepth(m_varobj_options.max_depth)
+               .SetShowTypes(m_varobj_options.show_types)
+               .SetShowLocation(m_varobj_options.show_location)
+               .SetUseObjectiveC(m_varobj_options.use_objc)
+               .SetUseDynamicType(m_varobj_options.use_dynamic)
+               .SetUseSyntheticValue((lldb::SyntheticValueType)m_varobj_options.use_synth)
+               .SetFlatOutput(m_varobj_options.flat_output)
+               .SetOmitSummaryDepth(m_varobj_options.no_summary_depth)
+               .SetIgnoreCap(m_varobj_options.ignore_cap);
+                
         if (m_option_variable.format != eFormatDefault)
             valobj_sp->SetFormat (m_option_variable.format);
         
@@ -597,18 +610,7 @@ public:
         ValueObject::DumpValueObject (s, 
                                       valobj_sp.get(), 
                                       root_name,
-                                      m_varobj_options.ptr_depth, 
-                                      0, 
-                                      m_varobj_options.max_depth, 
-                                      m_varobj_options.show_types,
-                                      m_varobj_options.show_location,
-                                      m_varobj_options.use_objc,
-                                      m_varobj_options.use_dynamic,
-                                      m_varobj_options.be_raw ? false : m_varobj_options.use_synth,
-                                      false,
-                                      m_varobj_options.flat_output,
-                                      m_varobj_options.be_raw ? UINT32_MAX : m_varobj_options.no_summary_depth,
-                                      m_varobj_options.be_raw ? true : m_varobj_options.ignore_cap);                                        
+                                      options);                                        
 
     }
     

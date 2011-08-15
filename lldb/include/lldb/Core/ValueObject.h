@@ -201,6 +201,139 @@ public:
         }
 
     };
+    
+    struct DumpValueObjectOptions
+    {
+        uint32_t m_ptr_depth;
+        uint32_t m_max_depth;
+        bool m_show_types;
+        bool m_show_location;
+        bool m_use_objc;
+        lldb::DynamicValueType m_use_dynamic;
+        lldb::SyntheticValueType m_use_synthetic;
+        bool m_scope_already_checked;
+        bool m_flat_output;
+        uint32_t m_omit_summary_depth;
+        bool m_ignore_cap;
+        
+        DumpValueObjectOptions() :
+        m_ptr_depth(0),
+        m_max_depth(UINT32_MAX),
+        m_show_types(false),
+        m_show_location(false),
+        m_use_objc(false),
+        m_use_dynamic(lldb::eNoDynamicValues),
+        m_use_synthetic(lldb::eUseSyntheticFilter),
+        m_scope_already_checked(false),
+        m_flat_output(false),
+        m_omit_summary_depth(0),
+        m_ignore_cap(false)
+        {}
+        
+        static const DumpValueObjectOptions
+        DefaultOptions()
+        {
+            static DumpValueObjectOptions g_default_options;
+            
+            return g_default_options;
+        }
+        
+        DumpValueObjectOptions&
+        SetPointerDepth(uint32_t depth = 0)
+        {
+            m_ptr_depth = depth;
+            return *this;
+        }
+        
+        DumpValueObjectOptions&
+        SetMaximumDepth(uint32_t depth = 0)
+        {
+            m_max_depth = depth;
+            return *this;
+        }
+        
+        DumpValueObjectOptions&
+        SetShowTypes(bool show = false)
+        {
+            m_show_types = show;
+            return *this;
+        }
+        
+        DumpValueObjectOptions&
+        SetShowLocation(bool show = false)
+        {
+            m_show_location = show;
+            return *this;
+        }
+
+        DumpValueObjectOptions&
+        SetUseObjectiveC(bool use = false)
+        {
+            m_use_objc = use;
+            return *this;
+        }
+        
+        DumpValueObjectOptions&
+        SetUseDynamicType(lldb::DynamicValueType dyn = lldb::eNoDynamicValues)
+        {
+            m_use_dynamic = dyn;
+            return *this;
+        }
+        
+        DumpValueObjectOptions&
+        SetUseSyntheticValue(lldb::SyntheticValueType syn = lldb::eUseSyntheticFilter)
+        {
+            m_use_synthetic = syn;
+            return *this;
+        }
+
+        DumpValueObjectOptions&
+        SetScopeChecked(bool check = true)
+        {
+            m_scope_already_checked = check;
+            return *this;
+        }
+        
+        DumpValueObjectOptions&
+        SetFlatOutput(bool flat = false)
+        {
+            m_flat_output = flat;
+            return *this;
+        }
+        
+        DumpValueObjectOptions&
+        SetOmitSummaryDepth(uint32_t depth = 0)
+        {
+            m_omit_summary_depth = depth;
+            return *this;
+        }
+        
+        DumpValueObjectOptions&
+        SetIgnoreCap(bool ignore = false)
+        {
+            m_ignore_cap = ignore;
+            return *this;
+        }
+
+        DumpValueObjectOptions&
+        SetRawDisplay(bool raw = false)
+        {
+            if (raw)
+            {
+                SetUseSyntheticValue(lldb::eNoSyntheticFilter);
+                SetOmitSummaryDepth(UINT32_MAX);
+                SetIgnoreCap(true);
+            }
+            else
+            {
+                SetUseSyntheticValue(lldb::eUseSyntheticFilter);
+                SetOmitSummaryDepth(0);
+                SetIgnoreCap(false);
+            }
+            return *this;
+        }
+
+    };
 
     class EvaluationPoint 
     {
@@ -601,8 +734,8 @@ public:
     CastPointerType (const char *name,
                      lldb::TypeSP &type_sp);
 
-    // The backing bits of this value object were updated, clear any value
-    // values, summaries or descriptions so we refetch them.
+    // The backing bits of this value object were updated, clear any
+    // descriptive string, so we know we have to refetch them
     virtual void
     ValueUpdated ()
     {
@@ -616,7 +749,88 @@ public:
     {
         return false;
     }
+    
+    static void
+    DumpValueObject (Stream &s,
+                     ValueObject *valobj)
+    {
+        
+        if (!valobj)
+            return;
+        
+        ValueObject::DumpValueObject(s,
+                                     valobj,
+                                     DumpValueObjectOptions::DefaultOptions());
+    }
+    
+    static void
+    DumpValueObject (Stream &s,
+                     ValueObject *valobj,
+                     const char *root_valobj_name)
+    {
+        
+        if (!valobj)
+            return;
+        
+        ValueObject::DumpValueObject(s,
+                                     valobj,
+                                     root_valobj_name,
+                                     DumpValueObjectOptions::DefaultOptions());
+    }
 
+    static void
+    DumpValueObject (Stream &s,
+                     ValueObject *valobj,
+                     const DumpValueObjectOptions& options)
+    {
+        
+        if (!valobj)
+            return;
+        
+        ValueObject::DumpValueObject(s,
+                                     valobj,
+                                     valobj->GetName().AsCString(),
+                                     options.m_ptr_depth,
+                                     0,
+                                     options.m_max_depth,
+                                     options.m_show_types,
+                                     options.m_show_location,
+                                     options.m_use_objc,
+                                     options.m_use_dynamic,
+                                     options.m_use_synthetic,
+                                     options.m_scope_already_checked,
+                                     options.m_flat_output,
+                                     options.m_omit_summary_depth,
+                                     options.m_ignore_cap);
+    }
+                     
+    static void
+    DumpValueObject (Stream &s,
+                     ValueObject *valobj,
+                     const char *root_valobj_name,
+                     const DumpValueObjectOptions& options)
+    {
+        
+        if (!valobj)
+            return;
+        
+        ValueObject::DumpValueObject(s,
+                                     valobj,
+                                     root_valobj_name,
+                                     options.m_ptr_depth,
+                                     0,
+                                     options.m_max_depth,
+                                     options.m_show_types,
+                                     options.m_show_location,
+                                     options.m_use_objc,
+                                     options.m_use_dynamic,
+                                     options.m_use_synthetic,
+                                     options.m_scope_already_checked,
+                                     options.m_flat_output,
+                                     options.m_omit_summary_depth,
+                                     options.m_ignore_cap);
+    }
+    
     static void
     DumpValueObject (Stream &s,
                      ValueObject *valobj,

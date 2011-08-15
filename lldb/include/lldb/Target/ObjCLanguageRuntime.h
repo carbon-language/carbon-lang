@@ -154,7 +154,9 @@ private:
     typedef std::map<ClassAndSel,lldb::addr_t> MsgImplMap;
     MsgImplMap m_impl_cache;
     
+protected:
     typedef std::map<lldb::addr_t,TypeAndOrName> ClassNameMap;
+    typedef ClassNameMap::iterator ClassNameIterator;
     ClassNameMap m_class_name_cache;
 
     DISALLOW_COPY_AND_ASSIGN (ObjCLanguageRuntime);

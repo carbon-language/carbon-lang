@@ -326,8 +326,8 @@ namespace lldb {
     
     typedef enum SyntheticValueType
     {
-        eNoSyntheticFilter = 0,
-        eUseSyntheticFilter = 1
+        eNoSyntheticFilter = false,
+        eUseSyntheticFilter = true
     } SyntheticValueType;
     
     typedef enum AccessType

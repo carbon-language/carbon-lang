@@ -442,7 +442,23 @@ public:
             SummaryFormatSP summary_format_sp;
             if (!m_option_variable.summary.empty())
                 Debugger::Formatting::NamedSummaryFormats::Get(ConstString(m_option_variable.summary.c_str()), summary_format_sp);
+            
+            ValueObject::DumpValueObjectOptions options;
+            
+            options.SetPointerDepth(m_varobj_options.ptr_depth)
+                   .SetMaximumDepth(m_varobj_options.max_depth)
+                   .SetShowTypes(m_varobj_options.show_types)
+                   .SetShowLocation(m_varobj_options.show_location)
+                   .SetUseObjectiveC(m_varobj_options.use_objc)
+                   .SetUseDynamicType(m_varobj_options.use_dynamic)
+                   .SetUseSyntheticValue((lldb::SyntheticValueType)m_varobj_options.use_synth)
+                   .SetFlatOutput(m_varobj_options.flat_output)
+                   .SetOmitSummaryDepth(m_varobj_options.no_summary_depth)
+                   .SetIgnoreCap(m_varobj_options.ignore_cap);
 
+            if (m_varobj_options.be_raw)
+                options.SetRawDisplay(true);
+            
             if (variable_list)
             {
                 if (command.GetArgumentCount() > 0)
@@ -453,8 +469,6 @@ public:
                     // variable objects from them...
                     for (idx = 0; (name_cstr = command.GetArgumentAtIndex(idx)) != NULL; ++idx)
                     {
-                        uint32_t ptr_depth = m_varobj_options.ptr_depth;
-                        
                         if (m_option_variable.use_regex)
                         {
                             const uint32_t regex_start_index = regex_var_list.GetSize();
@@ -490,20 +504,8 @@ public:
                                                 if (summary_format_sp)
                                                     valobj_sp->SetCustomSummaryFormat(summary_format_sp);
                                                 ValueObject::DumpValueObject (result.GetOutputStream(), 
-                                                                              valobj_sp.get(), 
-                                                                              var_sp->GetName().AsCString(), 
-                                                                              m_varobj_options.ptr_depth, 
-                                                                              0, 
-                                                                              m_varobj_options.max_depth, 
-                                                                              m_varobj_options.show_types,
-                                                                              m_varobj_options.show_location,
-                                                                              m_varobj_options.use_objc,
-                                                                              m_varobj_options.use_dynamic,
-                                                                              m_varobj_options.be_raw ? false : m_varobj_options.use_synth,
-                                                                              false,
-                                                                              m_varobj_options.flat_output,
-                                                                              m_varobj_options.be_raw ? UINT32_MAX : m_varobj_options.no_summary_depth,
-                                                                              m_varobj_options.be_raw ? true : m_varobj_options.ignore_cap);                                        
+                                                                              valobj_sp.get(),
+                                                                              options);                                        
                                             }
                                         }
                                     }
@@ -545,19 +547,8 @@ public:
                                     valobj_sp->SetCustomSummaryFormat(summary_format_sp);
                                 ValueObject::DumpValueObject (result.GetOutputStream(), 
                                                               valobj_sp.get(), 
-                                                              valobj_sp->GetParent() ? name_cstr : NULL, 
-                                                              ptr_depth, 
-                                                              0, 
-                                                              m_varobj_options.max_depth, 
-                                                              m_varobj_options.show_types,
-                                                              m_varobj_options.show_location,
-                                                              m_varobj_options.use_objc,
-                                                              m_varobj_options.use_dynamic,
-                                                              m_varobj_options.be_raw ? false : m_varobj_options.use_synth,
-                                                              false,
-                                                              m_varobj_options.flat_output,
-                                                              m_varobj_options.be_raw ? UINT32_MAX : m_varobj_options.no_summary_depth,
-                                                              m_varobj_options.be_raw ? true : m_varobj_options.ignore_cap);
+                                                              valobj_sp->GetParent() ? name_cstr : NULL,
+                                                              options);
                             }
                             else
                             {
@@ -638,19 +629,8 @@ public:
                                             valobj_sp->SetCustomSummaryFormat(summary_format_sp);
                                         ValueObject::DumpValueObject (result.GetOutputStream(), 
                                                                       valobj_sp.get(), 
-                                                                      name_cstr, 
-                                                                      m_varobj_options.ptr_depth, 
-                                                                      0, 
-                                                                      m_varobj_options.max_depth, 
-                                                                      m_varobj_options.show_types,
-                                                                      m_varobj_options.show_location,
-                                                                      m_varobj_options.use_objc,
-                                                                      m_varobj_options.use_dynamic, 
-                                                                      m_varobj_options.be_raw ? false : m_varobj_options.use_synth,
-                                                                      false,
-                                                                      m_varobj_options.flat_output,
-                                                                      m_varobj_options.be_raw ? UINT32_MAX : m_varobj_options.no_summary_depth,
-                                                                      m_varobj_options.be_raw ? true : m_varobj_options.ignore_cap);                                        
+                                                                      name_cstr,
+                                                                      options);                                        
                                     }
                                 }
                             }

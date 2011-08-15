@@ -925,7 +925,7 @@ SBValue::GetDescription (SBStream &description)
 {
     if (m_opaque_sp)
     {
-        uint32_t ptr_depth = 0;
+        /*uint32_t ptr_depth = 0;
         uint32_t curr_depth = 0;
         uint32_t max_depth = UINT32_MAX;
         bool show_types = false;
@@ -936,21 +936,9 @@ SBValue::GetDescription (SBStream &description)
         bool flat_output = false;
         bool use_synthetic = true;
         uint32_t no_summary_depth = 0;
-        bool ignore_cap = false;
+        bool ignore_cap = false;*/
         ValueObject::DumpValueObject (description.ref(), 
-                                      m_opaque_sp.get(), 
-                                      m_opaque_sp->GetName().GetCString(), 
-                                      ptr_depth, 
-                                      curr_depth, 
-                                      max_depth, 
-                                      show_types, show_location, 
-                                      use_objc, 
-                                      use_dynamic,
-                                      use_synthetic,
-                                      scope_already_checked, 
-                                      flat_output,
-                                      no_summary_depth,
-                                      ignore_cap);
+                                      m_opaque_sp.get());
     }
     else
         description.Printf ("No value");
