@@ -104,9 +104,9 @@ private:
 };
 }
 
-/// ProgramState traits to store the currently allocated (and not yet freed) symbols.
-/// This is a map from the allocated content symbol to the corresponding
-/// AllocationState.
+/// ProgramState traits to store the currently allocated (and not yet freed)
+/// symbols. This is a map from the allocated content symbol to the
+/// corresponding AllocationState.
 typedef llvm::ImmutableMap<SymbolRef,
                        MacOSKeychainAPIChecker::AllocationState> AllocatedSetTy;
 
@@ -230,7 +230,10 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
     if (SymbolRef V = getAsPointeeSymbol(ArgExpr, C))
       if (const AllocationState *AS = State->get<AllocatedData>(V)) {
-        ExplodedNode *N = C.generateSink(State);
+        // Remove the value from the state. The new symbol will be added for
+        // tracking when the second allocator is processed in checkPostStmt().
+        State = State->remove<AllocatedData>(V);
+        ExplodedNode *N = C.generateNode(State);
         if (!N)
           return;
         initBugType();
@@ -273,6 +276,8 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     return;
 
   // If trying to free data which has not been allocated yet, report as a bug.
+  // TODO: We might want a more precise diagnostic for double free
+  // (that would involve tracking all the freed symbols in the checker state).
   const AllocationState *AS = State->get<AllocatedData>(ArgSM);
   if (!AS || RegionArgIsBad) {
     // It is possible that this is a false positive - the argument might
@@ -291,10 +296,16 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     return;
   }
 
-  // Check if the proper deallocator is used.
+  // The call is deallocating a value we previously allocated, so remove it
+  // from the next state.
+  State = State->remove<AllocatedData>(ArgSM);
+
+  // Check if the proper deallocator is used. If not, report, but also stop 
+  // tracking the allocated symbol to avoid reporting a missing free after the
+  // deallocator mismatch error.
   unsigned int PDeallocIdx = FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx;
   if (PDeallocIdx != idx) {
-    ExplodedNode *N = C.generateSink(State);
+    ExplodedNode *N = C.generateNode(State);
     if (!N)
       return;
     initBugType();
@@ -308,10 +319,6 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     C.EmitReport(Report);
     return;
   }
-
-  // The call is deallocating a value we previously allocated, so remove it
-  // from the next state.
-  State = State->remove<AllocatedData>(ArgSM);
 
   // If the return status is undefined or is error, report a bad call to free.
   if (!definitelyDidnotReturnError(AS->RetValue, State, C.getSValBuilder())) {
