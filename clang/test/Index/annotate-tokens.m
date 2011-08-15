@@ -137,6 +137,11 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 @property (readonly, atomic) Foo *abah;
 @end
 
+@interface rdar9535717 {
+  __weak Foo *foo;
+}
+@end
+
 // RUN: c-index-test -test-annotate-tokens=%s:1:1:118:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
 // CHECK: Keyword: "interface" [1:2 - 1:11] ObjCInterfaceDecl=Foo:1:12
@@ -561,3 +566,11 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK-PROP-AFTER-METHOD: Identifier: "abah" [137:35 - 137:39] ObjCPropertyDecl=abah:137:35
 // CHECK-PROP-AFTER-METHOD: Punctuation: ";" [137:39 - 137:40] ObjCInterfaceDecl=Rdar8062781:134:12
 // CHECK-PROP-AFTER-METHOD: Punctuation: "@" [138:1 - 138:2] ObjCInterfaceDecl=Rdar8062781:134:12
+
+// RUN: c-index-test -test-annotate-tokens=%s:141:1:142:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck -check-prefix=CHECK-WITH-WEAK %s
+// CHECK-WITH-WEAK: Identifier: "__weak" [141:3 - 141:9] macro expansion=__weak:137:9
+// CHECK-WITH-WEAK: Identifier: "Foo" [141:10 - 141:13] ObjCClassRef=Foo:1:12
+// CHECK-WITH-WEAK: Punctuation: "*" [141:14 - 141:15] ObjCIvarDecl=foo:141:15 (Definition)
+// CHECK-WITH-WEAK: Identifier: "foo" [141:15 - 141:18] ObjCIvarDecl=foo:141:15 (Definition)
+// CHECK-WITH-WEAK: Punctuation: ";" [141:18 - 141:19] ObjCInterfaceDecl=rdar9535717:140:12
+// CHECK-WITH-WEAK: Punctuation: "}" [142:1 - 142:2] ObjCInterfaceDecl=rdar9535717:140:12

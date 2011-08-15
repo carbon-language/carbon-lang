@@ -348,6 +348,7 @@ public:
   bool VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL);
   bool VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL);
   bool VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL);
+  bool VisitAttributedTypeLoc(AttributedTypeLoc TL);
   bool VisitFunctionTypeLoc(FunctionTypeLoc TL, bool SkipResultType = false);
   bool VisitArrayTypeLoc(ArrayTypeLoc TL);
   bool VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL);
@@ -1519,6 +1520,10 @@ bool CursorVisitor::VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL) {
 
 bool CursorVisitor::VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL) {
   return Visit(TL.getPointeeLoc());
+}
+
+bool CursorVisitor::VisitAttributedTypeLoc(AttributedTypeLoc TL) {
+  return Visit(TL.getModifiedLoc());
 }
 
 bool CursorVisitor::VisitFunctionTypeLoc(FunctionTypeLoc TL, 
