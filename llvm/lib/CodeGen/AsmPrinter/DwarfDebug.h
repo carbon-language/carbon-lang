@@ -329,7 +329,7 @@ private:
   DIE *constructVariableDIE(DbgVariable *DV, LexicalScope *S);
 
   /// constructScopeDIE - Construct a DIE for this scope.
-  DIE *constructScopeDIE(LexicalScope *Scope);
+  DIE *constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope);
 
   /// EmitSectionLabels - Emit initial Dwarf sections with a label at
   /// the start of each one.

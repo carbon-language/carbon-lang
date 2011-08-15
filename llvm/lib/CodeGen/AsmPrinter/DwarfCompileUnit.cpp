@@ -1181,6 +1181,114 @@ void CompileUnit::constructContainingTypeDIEs() {
   }
 }
 
+/// constructVariableDIE - Construct a DIE for the given DbgVariable.
+DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
+  StringRef Name = DV->getName();
+  if (Name.empty())
+    return NULL;
+
+  // Translate tag to proper Dwarf tag.
+  unsigned Tag = DV->getTag();
+
+  // Define variable debug information entry.
+  DIE *VariableDie = new DIE(Tag);
+  DbgVariable *AbsVar = DV->getAbstractVariable();
+  DIE *AbsDIE = AbsVar ? AbsVar->getDIE() : NULL;
+  if (AbsDIE)
+    addDIEEntry(VariableDie, dwarf::DW_AT_abstract_origin,
+                            dwarf::DW_FORM_ref4, AbsDIE);
+  else {
+    addString(VariableDie, dwarf::DW_AT_name, 
+                          dwarf::DW_FORM_string, Name);
+    addSourceLine(VariableDie, DV->getVariable());
+    addType(VariableDie, DV->getType());
+  }
+
+  if (DV->isArtificial())
+    addUInt(VariableDie, dwarf::DW_AT_artificial,
+                        dwarf::DW_FORM_flag, 1);
+
+  if (isScopeAbstract) {
+    DV->setDIE(VariableDie);
+    return VariableDie;
+  }
+
+  // Add variable address.
+
+  unsigned Offset = DV->getDotDebugLocOffset();
+  if (Offset != ~0U) {
+    addLabel(VariableDie, dwarf::DW_AT_location,
+                         dwarf::DW_FORM_data4,
+                         Asm->GetTempSymbol("debug_loc", Offset));
+    DV->setDIE(VariableDie);
+    return VariableDie;
+  }
+
+  // Check if variable is described by a  DBG_VALUE instruction.
+  if (const MachineInstr *DVInsn = DV->getMInsn()) {
+    bool updated = false;
+    if (DVInsn->getNumOperands() == 3) {
+      if (DVInsn->getOperand(0).isReg()) {
+        const MachineOperand RegOp = DVInsn->getOperand(0);
+        const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
+        if (DVInsn->getOperand(1).isImm() &&
+            TRI->getFrameRegister(*Asm->MF) == RegOp.getReg()) {
+          unsigned FrameReg = 0;
+          const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
+          int Offset = 
+            TFI->getFrameIndexReference(*Asm->MF, 
+                                        DVInsn->getOperand(1).getImm(), 
+                                        FrameReg);
+          MachineLocation Location(FrameReg, Offset);
+          addVariableAddress(DV, VariableDie, Location);
+          
+        } else if (RegOp.getReg())
+          addVariableAddress(DV, VariableDie, 
+                                         MachineLocation(RegOp.getReg()));
+        updated = true;
+      }
+      else if (DVInsn->getOperand(0).isImm())
+        updated = 
+          addConstantValue(VariableDie, DVInsn->getOperand(0),
+                                       DV->getType());
+      else if (DVInsn->getOperand(0).isFPImm())
+        updated =
+          addConstantFPValue(VariableDie, DVInsn->getOperand(0));
+      else if (DVInsn->getOperand(0).isCImm())
+        updated =
+          addConstantValue(VariableDie, 
+                                       DVInsn->getOperand(0).getCImm(),
+                                       DV->getType().isUnsignedDIType());
+    } else {
+      addVariableAddress(DV, VariableDie, 
+                                     Asm->getDebugValueLocation(DVInsn));
+      updated = true;
+    }
+    if (!updated) {
+      // If variableDie is not updated then DBG_VALUE instruction does not
+      // have valid variable info.
+      delete VariableDie;
+      return NULL;
+    }
+    DV->setDIE(VariableDie);
+    return VariableDie;
+  } else {
+    // .. else use frame index.
+    int FI = DV->getFrameIndex();
+    if (FI != ~0) {
+      unsigned FrameReg = 0;
+      const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
+      int Offset = 
+        TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
+      MachineLocation Location(FrameReg, Offset);
+      addVariableAddress(DV, VariableDie, Location);
+    }
+  }
+
+  DV->setDIE(VariableDie);
+  return VariableDie;
+}
+
 /// createMemberDIE - Create new member DIE.
 DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
   DIE *MemberDie = new DIE(DT.getTag());

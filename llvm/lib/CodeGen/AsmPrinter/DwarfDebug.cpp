@@ -371,118 +371,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(LexicalScope *Scope) {
   return ScopeDIE;
 }
 
-/// constructVariableDIE - Construct a DIE for the given DbgVariable.
-DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, LexicalScope *Scope) {
-  StringRef Name = DV->getName();
-  if (Name.empty())
-    return NULL;
-
-  // Translate tag to proper Dwarf tag.
-  unsigned Tag = DV->getTag();
-
-  // Define variable debug information entry.
-  DIE *VariableDie = new DIE(Tag);
-  CompileUnit *VariableCU = getCompileUnit(DV->getVariable());
-  DbgVariable *AbsVar = DV->getAbstractVariable();
-  DIE *AbsDIE = AbsVar ? AbsVar->getDIE() : NULL;
-  if (AbsDIE)
-    VariableCU->addDIEEntry(VariableDie, dwarf::DW_AT_abstract_origin,
-                            dwarf::DW_FORM_ref4, AbsDIE);
-  else {
-    VariableCU->addString(VariableDie, dwarf::DW_AT_name, 
-                          dwarf::DW_FORM_string, Name);
-    VariableCU->addSourceLine(VariableDie, DV->getVariable());
-    VariableCU->addType(VariableDie, DV->getType());
-  }
-
-  if (DV->isArtificial())
-    VariableCU->addUInt(VariableDie, dwarf::DW_AT_artificial,
-                        dwarf::DW_FORM_flag, 1);
-
-  if (Scope->isAbstractScope()) {
-    DV->setDIE(VariableDie);
-    return VariableDie;
-  }
-
-  // Add variable address.
-
-  unsigned Offset = DV->getDotDebugLocOffset();
-  if (Offset != ~0U) {
-    VariableCU->addLabel(VariableDie, dwarf::DW_AT_location,
-                         dwarf::DW_FORM_data4,
-                         Asm->GetTempSymbol("debug_loc", Offset));
-    DV->setDIE(VariableDie);
-    return VariableDie;
-  }
-
-  // Check if variable is described by a  DBG_VALUE instruction.
-  if (const MachineInstr *DVInsn = DV->getMInsn()) {
-    bool updated = false;
-    if (DVInsn->getNumOperands() == 3) {
-      if (DVInsn->getOperand(0).isReg()) {
-        const MachineOperand RegOp = DVInsn->getOperand(0);
-        const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
-        if (DVInsn->getOperand(1).isImm() &&
-            TRI->getFrameRegister(*Asm->MF) == RegOp.getReg()) {
-          unsigned FrameReg = 0;
-          const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
-          int Offset = 
-            TFI->getFrameIndexReference(*Asm->MF, 
-                                        DVInsn->getOperand(1).getImm(), 
-                                        FrameReg);
-          MachineLocation Location(FrameReg, Offset);
-          VariableCU->addVariableAddress(DV, VariableDie, Location);
-          
-        } else if (RegOp.getReg())
-          VariableCU->addVariableAddress(DV, VariableDie, 
-                                         MachineLocation(RegOp.getReg()));
-        updated = true;
-      }
-      else if (DVInsn->getOperand(0).isImm())
-        updated = 
-          VariableCU->addConstantValue(VariableDie, DVInsn->getOperand(0),
-                                       DV->getType());
-      else if (DVInsn->getOperand(0).isFPImm())
-        updated =
-          VariableCU->addConstantFPValue(VariableDie, DVInsn->getOperand(0));
-      else if (DVInsn->getOperand(0).isCImm())
-        updated =
-          VariableCU->addConstantValue(VariableDie, 
-                                       DVInsn->getOperand(0).getCImm(),
-                                       DV->getType().isUnsignedDIType());
-    } else {
-      VariableCU->addVariableAddress(DV, VariableDie, 
-                                     Asm->getDebugValueLocation(DVInsn));
-      updated = true;
-    }
-    if (!updated) {
-      // If variableDie is not updated then DBG_VALUE instruction does not
-      // have valid variable info.
-      delete VariableDie;
-      return NULL;
-    }
-    DV->setDIE(VariableDie);
-    return VariableDie;
-  } else {
-    // .. else use frame index.
-    int FI = DV->getFrameIndex();
-    if (FI != ~0) {
-      unsigned FrameReg = 0;
-      const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
-      int Offset = 
-        TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
-      MachineLocation Location(FrameReg, Offset);
-      VariableCU->addVariableAddress(DV, VariableDie, Location);
-    }
-  }
-
-  DV->setDIE(VariableDie);
-  return VariableDie;
-
-}
-
 /// constructScopeDIE - Construct a DIE for this scope.
-DIE *DwarfDebug::constructScopeDIE(LexicalScope *Scope) {
+DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   if (!Scope || !Scope->getScopeNode())
     return NULL;
 
@@ -492,17 +382,19 @@ DIE *DwarfDebug::constructScopeDIE(LexicalScope *Scope) {
   if (LScopes.isCurrentFunctionScope(Scope))
     for (unsigned i = 0, N = CurrentFnArguments.size(); i < N; ++i)
       if (DbgVariable *ArgDV = CurrentFnArguments[i])
-        if (DIE *Arg = constructVariableDIE(ArgDV, Scope))
+        if (DIE *Arg = 
+            TheCU->constructVariableDIE(ArgDV, Scope->isAbstractScope()))
           Children.push_back(Arg);
 
   // Collect lexical scope childrens first.
   const SmallVector<DbgVariable *, 8> &Variables = ScopeVariables.lookup(Scope);
   for (unsigned i = 0, N = Variables.size(); i < N; ++i)
-    if (DIE *Variable = constructVariableDIE(Variables[i], Scope))
+    if (DIE *Variable = 
+        TheCU->constructVariableDIE(Variables[i], Scope->isAbstractScope()))
       Children.push_back(Variable);
   const SmallVector<LexicalScope *, 4> &Scopes = Scope->getChildren();
   for (unsigned j = 0, M = Scopes.size(); j < M; ++j)
-    if (DIE *Nested = constructScopeDIE(Scopes[j]))
+    if (DIE *Nested = constructScopeDIE(TheCU, Scopes[j]))
       Children.push_back(Nested);
   DIScope DS(Scope->getScopeNode());
   DIE *ScopeDIE = NULL;
@@ -807,9 +699,11 @@ void DwarfDebug::endModule() {
 
       // Construct subprogram DIE and add variables DIEs.
       constructSubprogramDIE(SP);
-      DIE *ScopeDIE = getCompileUnit(SP)->getDIE(SP);
+      CompileUnit *SPCU = getCompileUnit(SP);
+      DIE *ScopeDIE = SPCU->getDIE(SP);
       for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
-        if (DIE *VariableDIE = constructVariableDIE(&Variables[i], Scope))
+        if (DIE *VariableDIE = 
+            SPCU->constructVariableDIE(&Variables[i], Scope->isAbstractScope()))
           ScopeDIE->addChild(VariableDIE);
       }
     }
@@ -1425,6 +1319,9 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   SmallPtrSet<const MDNode *, 16> ProcessedVars;
   collectVariableInfo(MF, ProcessedVars);
   
+  LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
+  CompileUnit *TheCU = getCompileUnit(FnScope->getScopeNode());
+
   // Construct abstract scopes.
   ArrayRef<LexicalScope *> AList = LScopes.getAbstractScopesList();
   for (unsigned i = 0, e = AList.size(); i != e; ++i) {
@@ -1447,17 +1344,15 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
       }
     }
     if (ProcessedSPNodes.count(AScope->getScopeNode()) == 0)
-      constructScopeDIE(AScope);
+      constructScopeDIE(TheCU, AScope);
   }
   
-  DIE *CurFnDIE = constructScopeDIE(LScopes.getCurrentFunctionScope());
+  DIE *CurFnDIE = constructScopeDIE(TheCU, FnScope);
   
-  if (!DisableFramePointerElim(*MF)) {
-    LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
-    CompileUnit *TheCU = getCompileUnit(FnScope->getScopeNode());
+  if (!DisableFramePointerElim(*MF))
     TheCU->addUInt(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr,
                    dwarf::DW_FORM_flag, 1);
-  }
+
   DebugFrames.push_back(FunctionDebugFrameInfo(Asm->getFunctionNumber(),
                                                MMI->getFrameMoves()));
 

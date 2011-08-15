@@ -281,6 +281,9 @@ public:
   /// vtables.
   void constructContainingTypeDIEs();
 
+  /// constructVariableDIE - Construct a DIE for the given DbgVariable.
+  DIE *constructVariableDIE(DbgVariable *DV, bool isScopeAbstract);
+
   /// createMemberDIE - Create new member DIE.
   DIE *createMemberDIE(DIDerivedType DT);
 
