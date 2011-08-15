@@ -14,6 +14,7 @@
 #include <string>
 
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/MathExtras.h"
 
 #include "lldb/Core/DataExtractor.h"
@@ -1357,9 +1358,7 @@ DumpAPInt (Stream *s, const DataExtractor &data, uint32_t offset, uint32_t byte_
     else
         return offset;
 
-    llvm::APInt apint (byte_size * 8, 
-                       uint64_array.size(), 
-                       uint64_array.data());
+    llvm::APInt apint (byte_size * 8, llvm::ArrayRef<uint64_t>(uint64_array));
  
     std::string apint_str(apint.toString(radix, is_signed));
     switch (radix)
