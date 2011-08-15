@@ -25,36 +25,41 @@ namespace clang {
 
 namespace ento {
 
-class GRState;
-class GRStateManager;
+class ProgramState;
+class ProgramStateManager;
 class SubEngine;
 class SVal;
 
 class ConstraintManager {
 public:
   virtual ~ConstraintManager();
-  virtual const GRState *assume(const GRState *state, DefinedSVal Cond,
-                                bool Assumption) = 0;
+  virtual const ProgramState *assume(const ProgramState *state,
+                                     DefinedSVal Cond,
+                                     bool Assumption) = 0;
 
-  std::pair<const GRState*, const GRState*> assumeDual(const GRState *state,
-                                                       DefinedSVal Cond) {
+  std::pair<const ProgramState*, const ProgramState*>
+    assumeDual(const ProgramState *state, DefinedSVal Cond)
+  {
     return std::make_pair(assume(state, Cond, true),
                           assume(state, Cond, false));
   }
 
-  virtual const llvm::APSInt* getSymVal(const GRState *state,
+  virtual const llvm::APSInt* getSymVal(const ProgramState *state,
                                         SymbolRef sym) const = 0;
 
-  virtual bool isEqual(const GRState *state, SymbolRef sym,
+  virtual bool isEqual(const ProgramState *state,
+                       SymbolRef sym,
                        const llvm::APSInt& V) const = 0;
 
-  virtual const GRState *removeDeadBindings(const GRState *state,
-                                            SymbolReaper& SymReaper) = 0;
+  virtual const ProgramState *removeDeadBindings(const ProgramState *state,
+                                                 SymbolReaper& SymReaper) = 0;
 
-  virtual void print(const GRState *state, raw_ostream &Out,
-                     const char* nl, const char *sep) = 0;
+  virtual void print(const ProgramState *state,
+                     raw_ostream &Out,
+                     const char* nl,
+                     const char *sep) = 0;
 
-  virtual void EndPath(const GRState *state) {}
+  virtual void EndPath(const ProgramState *state) {}
 
   /// canReasonAbout - Not all ConstraintManagers can accurately reason about
   ///  all SVal values.  This method returns true if the ConstraintManager can
@@ -64,9 +69,9 @@ public:
   virtual bool canReasonAbout(SVal X) const = 0;
 };
 
-ConstraintManager* CreateBasicConstraintManager(GRStateManager& statemgr,
+ConstraintManager* CreateBasicConstraintManager(ProgramStateManager& statemgr,
                                                 SubEngine &subengine);
-ConstraintManager* CreateRangeConstraintManager(GRStateManager& statemgr,
+ConstraintManager* CreateRangeConstraintManager(ProgramStateManager& statemgr,
                                                 SubEngine &subengine);
 
 } // end GR namespace

@@ -38,7 +38,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
                                      CheckerContext &C) const {
 
   const Expr *Ex = S->getSynchExpr();
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   SVal V = state->getSVal(Ex);
 
   // Uninitialized value used for the mutex?
@@ -59,7 +59,7 @@ void ObjCAtSyncChecker::checkPreStmt(const ObjCAtSynchronizedStmt *S,
     return;
 
   // Check for null mutexes.
-  const GRState *notNullState, *nullState;
+  const ProgramState *notNullState, *nullState;
   llvm::tie(notNullState, nullState) = state->assume(cast<DefinedSVal>(V));
 
   if (nullState) {

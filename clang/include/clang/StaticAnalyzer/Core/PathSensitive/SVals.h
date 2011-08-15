@@ -29,12 +29,12 @@ namespace ento {
 
 class CompoundValData;
 class LazyCompoundValData;
-class GRState;
+class ProgramState;
 class BasicValueFactory;
 class MemRegion;
 class TypedRegion;
 class MemRegionManager;
-class GRStateManager;
+class ProgramStateManager;
 class SValBuilder;
 
 /// SVal - This represents a symbolic expression, which can be either

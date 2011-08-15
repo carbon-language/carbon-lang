@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines BasicConstraintManager, a class that tracks simple
-//  equality and inequality constraints on symbolic values of GRState.
+//  equality and inequality constraints on symbolic values of ProgramState.
 //
 //===----------------------------------------------------------------------===//
 
 #include "SimpleConstraintManager.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/TransferFuncs.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -25,7 +25,7 @@ using namespace ento;
 namespace { class ConstNotEq {}; }
 namespace { class ConstEq {}; }
 
-typedef llvm::ImmutableMap<SymbolRef,GRState::IntSetTy> ConstNotEqTy;
+typedef llvm::ImmutableMap<SymbolRef,ProgramState::IntSetTy> ConstNotEqTy;
 typedef llvm::ImmutableMap<SymbolRef,const llvm::APSInt*> ConstEqTy;
 
 static int ConstEqIndex = 0;
@@ -34,12 +34,13 @@ static int ConstNotEqIndex = 0;
 namespace clang {
 namespace ento {
 template<>
-struct GRStateTrait<ConstNotEq> : public GRStatePartialTrait<ConstNotEqTy> {
+struct ProgramStateTrait<ConstNotEq> :
+  public ProgramStatePartialTrait<ConstNotEqTy> {
   static inline void *GDMIndex() { return &ConstNotEqIndex; }
 };
 
 template<>
-struct GRStateTrait<ConstEq> : public GRStatePartialTrait<ConstEqTy> {
+struct ProgramStateTrait<ConstEq> : public ProgramStatePartialTrait<ConstEqTy> {
   static inline void *GDMIndex() { return &ConstEqIndex; }
 };
 }
@@ -50,62 +51,81 @@ namespace {
 // constants and integer variables.
 class BasicConstraintManager
   : public SimpleConstraintManager {
-  GRState::IntSetTy::Factory ISetFactory;
+  ProgramState::IntSetTy::Factory ISetFactory;
 public:
-  BasicConstraintManager(GRStateManager &statemgr, SubEngine &subengine)
+  BasicConstraintManager(ProgramStateManager &statemgr, SubEngine &subengine)
     : SimpleConstraintManager(subengine), 
       ISetFactory(statemgr.getAllocator()) {}
 
-  const GRState *assumeSymNE(const GRState *state, SymbolRef sym,
-                             const llvm::APSInt& V,
-                             const llvm::APSInt& Adjustment);
+  const ProgramState *assumeSymNE(const ProgramState *state,
+                                  SymbolRef sym,
+                                  const llvm::APSInt& V,
+                                  const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymEQ(const GRState *state, SymbolRef sym,
-                             const llvm::APSInt& V,
-                             const llvm::APSInt& Adjustment);
+  const ProgramState *assumeSymEQ(const ProgramState *state,
+                                  SymbolRef sym,
+                                  const llvm::APSInt& V,
+                                  const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymLT(const GRState *state, SymbolRef sym,
-                             const llvm::APSInt& V,
-                             const llvm::APSInt& Adjustment);
+  const ProgramState *assumeSymLT(const ProgramState *state,
+                                  SymbolRef sym,
+                                  const llvm::APSInt& V,
+                                  const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymGT(const GRState *state, SymbolRef sym,
-                             const llvm::APSInt& V,
-                             const llvm::APSInt& Adjustment);
+  const ProgramState *assumeSymGT(const ProgramState *state,
+                                  SymbolRef sym,
+                                  const llvm::APSInt& V,
+                                  const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymGE(const GRState *state, SymbolRef sym,
-                             const llvm::APSInt& V,
-                             const llvm::APSInt& Adjustment);
+  const ProgramState *assumeSymGE(const ProgramState *state,
+                                  SymbolRef sym,
+                                  const llvm::APSInt& V,
+                                  const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymLE(const GRState *state, SymbolRef sym,
-                             const llvm::APSInt& V,
-                             const llvm::APSInt& Adjustment);
+  const ProgramState *assumeSymLE(const ProgramState *state,
+                                  SymbolRef sym,
+                                  const llvm::APSInt& V,
+                                  const llvm::APSInt& Adjustment);
 
-  const GRState *AddEQ(const GRState *state, SymbolRef sym, const llvm::APSInt& V);
+  const ProgramState *AddEQ(const ProgramState *state,
+                            SymbolRef sym,
+                            const llvm::APSInt& V);
 
-  const GRState *AddNE(const GRState *state, SymbolRef sym, const llvm::APSInt& V);
+  const ProgramState *AddNE(const ProgramState *state,
+                            SymbolRef sym,
+                            const llvm::APSInt& V);
 
-  const llvm::APSInt* getSymVal(const GRState *state, SymbolRef sym) const;
-  bool isNotEqual(const GRState *state, SymbolRef sym, const llvm::APSInt& V)
-      const;
-  bool isEqual(const GRState *state, SymbolRef sym, const llvm::APSInt& V)
-      const;
+  const llvm::APSInt* getSymVal(const ProgramState *state,
+                                SymbolRef sym) const;
 
-  const GRState *removeDeadBindings(const GRState *state, SymbolReaper& SymReaper);
+  bool isNotEqual(const ProgramState *state,
+                  SymbolRef sym,
+                  const llvm::APSInt& V) const;
 
-  void print(const GRState *state, raw_ostream &Out,
-             const char* nl, const char *sep);
+  bool isEqual(const ProgramState *state,
+               SymbolRef sym,
+               const llvm::APSInt& V) const;
+
+  const ProgramState *removeDeadBindings(const ProgramState *state,
+                                         SymbolReaper& SymReaper);
+
+  void print(const ProgramState *state,
+             raw_ostream &Out,
+             const char* nl,
+             const char *sep);
 };
 
 } // end anonymous namespace
 
-ConstraintManager* ento::CreateBasicConstraintManager(GRStateManager& statemgr,
-                                                       SubEngine &subengine) {
+ConstraintManager*
+ento::CreateBasicConstraintManager(ProgramStateManager& statemgr,
+                                   SubEngine &subengine) {
   return new BasicConstraintManager(statemgr, subengine);
 }
 
-
-const GRState*
-BasicConstraintManager::assumeSymNE(const GRState *state, SymbolRef sym,
+const ProgramState*
+BasicConstraintManager::assumeSymNE(const ProgramState *state,
+                                    SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // First, determine if sym == X, where X+Adjustment != V.
@@ -124,8 +144,9 @@ BasicConstraintManager::assumeSymNE(const GRState *state, SymbolRef sym,
   return AddNE(state, sym, Adjusted);
 }
 
-const GRState*
-BasicConstraintManager::assumeSymEQ(const GRState *state, SymbolRef sym,
+const ProgramState*
+BasicConstraintManager::assumeSymEQ(const ProgramState *state,
+                                    SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // First, determine if sym == X, where X+Adjustment != V.
@@ -145,8 +166,9 @@ BasicConstraintManager::assumeSymEQ(const GRState *state, SymbolRef sym,
 }
 
 // The logic for these will be handled in another ConstraintManager.
-const GRState*
-BasicConstraintManager::assumeSymLT(const GRState *state, SymbolRef sym,
+const ProgramState*
+BasicConstraintManager::assumeSymLT(const ProgramState *state,
+                                    SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // Is 'V' the smallest possible value?
@@ -159,8 +181,9 @@ BasicConstraintManager::assumeSymLT(const GRState *state, SymbolRef sym,
   return assumeSymNE(state, sym, V, Adjustment);
 }
 
-const GRState*
-BasicConstraintManager::assumeSymGT(const GRState *state, SymbolRef sym,
+const ProgramState*
+BasicConstraintManager::assumeSymGT(const ProgramState *state,
+                                    SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // Is 'V' the largest possible value?
@@ -173,8 +196,9 @@ BasicConstraintManager::assumeSymGT(const GRState *state, SymbolRef sym,
   return assumeSymNE(state, sym, V, Adjustment);
 }
 
-const GRState*
-BasicConstraintManager::assumeSymGE(const GRState *state, SymbolRef sym,
+const ProgramState*
+BasicConstraintManager::assumeSymGE(const ProgramState *state,
+                                    SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // Reject a path if the value of sym is a constant X and !(X+Adj >= V).
@@ -201,8 +225,9 @@ BasicConstraintManager::assumeSymGE(const GRState *state, SymbolRef sym,
   return state;
 }
 
-const GRState*
-BasicConstraintManager::assumeSymLE(const GRState *state, SymbolRef sym,
+const ProgramState*
+BasicConstraintManager::assumeSymLE(const ProgramState *state,
+                                    SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
   // Reject a path if the value of sym is a constant X and !(X+Adj <= V).
@@ -229,18 +254,20 @@ BasicConstraintManager::assumeSymLE(const GRState *state, SymbolRef sym,
   return state;
 }
 
-const GRState *BasicConstraintManager::AddEQ(const GRState *state, SymbolRef sym,
+const ProgramState *BasicConstraintManager::AddEQ(const ProgramState *state,
+                                                  SymbolRef sym,
                                              const llvm::APSInt& V) {
   // Create a new state with the old binding replaced.
   return state->set<ConstEq>(sym, &state->getBasicVals().getValue(V));
 }
 
-const GRState *BasicConstraintManager::AddNE(const GRState *state, SymbolRef sym,
-                                             const llvm::APSInt& V) {
+const ProgramState *BasicConstraintManager::AddNE(const ProgramState *state,
+                                                  SymbolRef sym,
+                                                  const llvm::APSInt& V) {
 
   // First, retrieve the NE-set associated with the given symbol.
   ConstNotEqTy::data_type* T = state->get<ConstNotEq>(sym);
-  GRState::IntSetTy S = T ? *T : ISetFactory.getEmptySet();
+  ProgramState::IntSetTy S = T ? *T : ISetFactory.getEmptySet();
 
   // Now add V to the NE set.
   S = ISetFactory.add(S, &state->getBasicVals().getValue(V));
@@ -249,13 +276,14 @@ const GRState *BasicConstraintManager::AddNE(const GRState *state, SymbolRef sym
   return state->set<ConstNotEq>(sym, S);
 }
 
-const llvm::APSInt* BasicConstraintManager::getSymVal(const GRState *state,
+const llvm::APSInt* BasicConstraintManager::getSymVal(const ProgramState *state,
                                                       SymbolRef sym) const {
   const ConstEqTy::data_type* T = state->get<ConstEq>(sym);
   return T ? *T : NULL;
 }
 
-bool BasicConstraintManager::isNotEqual(const GRState *state, SymbolRef sym,
+bool BasicConstraintManager::isNotEqual(const ProgramState *state,
+                                        SymbolRef sym,
                                         const llvm::APSInt& V) const {
 
   // Retrieve the NE-set associated with the given symbol.
@@ -265,7 +293,8 @@ bool BasicConstraintManager::isNotEqual(const GRState *state, SymbolRef sym,
   return T ? T->contains(&state->getBasicVals().getValue(V)) : false;
 }
 
-bool BasicConstraintManager::isEqual(const GRState *state, SymbolRef sym,
+bool BasicConstraintManager::isEqual(const ProgramState *state,
+                                     SymbolRef sym,
                                      const llvm::APSInt& V) const {
   // Retrieve the EQ-set associated with the given symbol.
   const ConstEqTy::data_type* T = state->get<ConstEq>(sym);
@@ -275,8 +304,8 @@ bool BasicConstraintManager::isEqual(const GRState *state, SymbolRef sym,
 
 /// Scan all symbols referenced by the constraints. If the symbol is not alive
 /// as marked in LSymbols, mark it as dead in DSymbols.
-const GRState*
-BasicConstraintManager::removeDeadBindings(const GRState *state,
+const ProgramState*
+BasicConstraintManager::removeDeadBindings(const ProgramState *state,
                                            SymbolReaper& SymReaper) {
 
   ConstEqTy CE = state->get<ConstEq>();
@@ -301,7 +330,8 @@ BasicConstraintManager::removeDeadBindings(const GRState *state,
   return state->set<ConstNotEq>(CNE);
 }
 
-void BasicConstraintManager::print(const GRState *state, raw_ostream &Out,
+void BasicConstraintManager::print(const ProgramState *state,
+                                   raw_ostream &Out,
                                    const char* nl, const char *sep) {
   // Print equality constraints.
 
@@ -324,7 +354,7 @@ void BasicConstraintManager::print(const GRState *state, raw_ostream &Out,
       Out << nl << " $" << I.getKey() << " : ";
       bool isFirst = true;
 
-      GRState::IntSetTy::iterator J = I.getData().begin(),
+      ProgramState::IntSetTy::iterator J = I.getData().begin(),
                                   EJ = I.getData().end();
 
       for ( ; J != EJ; ++J) {

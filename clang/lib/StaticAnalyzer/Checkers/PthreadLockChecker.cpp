@@ -17,7 +17,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "llvm/ADT/ImmutableList.h"
 
 using namespace clang;
@@ -46,8 +46,8 @@ public:
 namespace { class LockSet {}; }
 namespace clang {
 namespace ento {
-template <> struct GRStateTrait<LockSet> :
-  public GRStatePartialTrait<llvm::ImmutableList<const MemRegion*> > {
+template <> struct ProgramStateTrait<LockSet> :
+  public ProgramStatePartialTrait<llvm::ImmutableList<const MemRegion*> > {
     static void *GDMIndex() { static int x = 0; return &x; }
 };
 } // end GR namespace
@@ -56,7 +56,7 @@ template <> struct GRStateTrait<LockSet> :
 
 void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
                                        CheckerContext &C) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   const FunctionDecl *FD = state->getSVal(Callee).getAsFunctionDecl();
 
@@ -103,7 +103,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
   if (!lockR)
     return;
   
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   
   SVal X = state->getSVal(CE);
   if (X.isUnknownOrUndef())
@@ -125,10 +125,10 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
     return;
   }
 
-  const GRState *lockSucc = state;
+  const ProgramState *lockSucc = state;
   if (isTryLock) {
     // Bifurcate the state, and allow a mode where the lock acquisition fails.
-    const GRState *lockFail;
+    const ProgramState *lockFail;
     switch (semantics) {
     case PthreadSemantics:
       llvm::tie(lockFail, lockSucc) = state->assume(retVal);    
@@ -166,7 +166,7 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
   if (!lockR)
     return;
   
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   llvm::ImmutableList<const MemRegion*> LS = state->get<LockSet>();
 
   // FIXME: Better analysis requires IPA for wrappers.

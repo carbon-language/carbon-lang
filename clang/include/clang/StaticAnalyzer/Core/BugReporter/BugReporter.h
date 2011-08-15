@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines BugReporter, a utility class for generating
-//  PathDiagnostics for analyses based on GRState.
+//  PathDiagnostics for analyses based on ProgramState.
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,7 +16,7 @@
 #define LLVM_CLANG_GR_BUGREPORTER
 
 #include "clang/Basic/SourceLocation.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/ImmutableSet.h"
@@ -40,7 +40,7 @@ class ExplodedGraph;
 class BugReporter;
 class BugReporterContext;
 class ExprEngine;
-class GRState;
+class ProgramState;
 class BugType;
 
 //===----------------------------------------------------------------------===//
@@ -392,7 +392,7 @@ public:
 
   /// getStateManager - Return the state manager used by the analysis
   ///  engine.
-  GRStateManager &getStateManager();
+  ProgramStateManager &getStateManager();
 
   virtual void GeneratePathDiagnostic(PathDiagnostic &pathDiagnostic,
                      SmallVectorImpl<BugReport*> &bugReports);
@@ -442,7 +442,7 @@ public:
     return BR.isNotable(Sym);
   }
 
-  GRStateManager& getStateManager() {
+  ProgramStateManager& getStateManager() {
     return BR.getStateManager();
   }
 

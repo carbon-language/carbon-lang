@@ -31,7 +31,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/Support/Casting.h"
 #include "clang/Analysis/Support/BumpVector.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 
 namespace clang {
 
@@ -106,7 +106,7 @@ class ExplodedNode : public llvm::FoldingSetNode {
   const ProgramPoint Location;
 
   /// State - The state associated with this node.
-  const GRState *State;
+  const ProgramState *State;
 
   /// Preds - The predecessors of this node.
   NodeGroup Preds;
@@ -116,13 +116,13 @@ class ExplodedNode : public llvm::FoldingSetNode {
 
 public:
 
-  explicit ExplodedNode(const ProgramPoint &loc, const GRState *state)
+  explicit ExplodedNode(const ProgramPoint &loc, const ProgramState *state)
     : Location(loc), State(state) {
-    const_cast<GRState*>(State)->incrementReferenceCount();
+    const_cast<ProgramState*>(State)->incrementReferenceCount();
   }
   
   ~ExplodedNode() {
-    const_cast<GRState*>(State)->decrementReferenceCount();
+    const_cast<ProgramState*>(State)->decrementReferenceCount();
   }
 
   /// getLocation - Returns the edge associated with the given node.
@@ -142,13 +142,13 @@ public:
     return *getLocationContext()->getLiveVariables(); 
   }
 
-  const GRState *getState() const { return State; }
+  const ProgramState *getState() const { return State; }
 
   template <typename T>
   const T* getLocationAs() const { return llvm::dyn_cast<T>(&Location); }
 
   static void Profile(llvm::FoldingSetNodeID &ID,
-                      const ProgramPoint &Loc, const GRState *state) {
+                      const ProgramPoint &Loc, const ProgramState *state) {
     ID.Add(Loc);
     ID.AddPointer(state);
   }
@@ -275,7 +275,7 @@ public:
   ///  this pair exists, it is created.  IsNew is set to true if
   ///  the node was freshly created.
 
-  ExplodedNode *getNode(const ProgramPoint &L, const GRState *State,
+  ExplodedNode *getNode(const ProgramPoint &L, const ProgramState *State,
                         bool* IsNew = 0);
 
   ExplodedGraph* MakeEmptyGraph() const {

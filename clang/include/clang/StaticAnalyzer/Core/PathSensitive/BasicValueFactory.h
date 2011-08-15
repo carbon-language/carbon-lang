@@ -27,7 +27,7 @@ namespace clang {
 
 namespace ento {
 
-  class GRState;
+class ProgramState;
 
 class CompoundValData : public llvm::FoldingSetNode {
   QualType T;

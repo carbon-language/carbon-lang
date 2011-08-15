@@ -16,7 +16,7 @@
 #define LLVM_CLANG_STATICANALYZER_PATHSENSITIVE_OBJCMESSAGE
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/AST/ExprObjC.h"
 
 namespace clang {
@@ -118,7 +118,7 @@ public:
      return isPropertySetter() ? 1 : 0;
    }
 
-   SVal getArgSVal(unsigned i, const GRState *state) const {
+   SVal getArgSVal(unsigned i, const ProgramState *state) const {
      assert(isValid() && "This ObjCMessage is uninitialized!");
      assert(i < getNumArgs() && "Invalid index for argument");
      if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
@@ -170,11 +170,11 @@ public:
 class CallOrObjCMessage {
   const CallExpr *CallE;
   ObjCMessage Msg;
-  const GRState *State;
+  const ProgramState *State;
 public:
-  CallOrObjCMessage(const CallExpr *callE, const GRState *state)
+  CallOrObjCMessage(const CallExpr *callE, const ProgramState *state)
     : CallE(callE), State(state) {}
-  CallOrObjCMessage(const ObjCMessage &msg, const GRState *state)
+  CallOrObjCMessage(const ObjCMessage &msg, const ProgramState *state)
     : CallE(0), Msg(msg), State(state) {}
 
   QualType getResultType(ASTContext &ctx) const;

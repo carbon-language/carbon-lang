@@ -79,7 +79,8 @@ private:
   /// usually because it could not reason about something.
   BlocksAborted blocksAborted;
 
-  void generateNode(const ProgramPoint &Loc, const GRState *State,
+  void generateNode(const ProgramPoint &Loc,
+                    const ProgramState *State,
                     ExplodedNode *Pred);
 
   void HandleBlockEdge(const BlockEdge &E, ExplodedNode *Pred);
@@ -126,9 +127,10 @@ public:
   /// ExecuteWorkList - Run the worklist algorithm for a maximum number of
   ///  steps.  Returns true if there is still simulation state on the worklist.
   bool ExecuteWorkList(const LocationContext *L, unsigned Steps,
-                       const GRState *InitState);
-  void ExecuteWorkListWithInitialState(const LocationContext *L, unsigned Steps,
-                                       const GRState *InitState, 
+                       const ProgramState *InitState);
+  void ExecuteWorkListWithInitialState(const LocationContext *L,
+                                       unsigned Steps,
+                                       const ProgramState *InitState, 
                                        ExplodedNodeSet &Dst);
 
   // Functions for external checking of whether we have unfinished work
@@ -165,7 +167,7 @@ class StmtNodeBuilder {
   const CFGBlock &B;
   const unsigned Idx;
   ExplodedNode *Pred;
-  GRStateManager& Mgr;
+  ProgramStateManager& Mgr;
 
 public:
   bool PurgingDeadSymbols;
@@ -180,8 +182,11 @@ public:
   void GenerateAutoTransition(ExplodedNode *N);
 
 public:
-  StmtNodeBuilder(const CFGBlock *b, unsigned idx, ExplodedNode *N,
-                    CoreEngine* e, GRStateManager &mgr);
+  StmtNodeBuilder(const CFGBlock *b,
+                  unsigned idx,
+                  ExplodedNode *N,
+                  CoreEngine* e,
+                  ProgramStateManager &mgr);
 
   ~StmtNodeBuilder();
 
@@ -198,13 +203,17 @@ public:
                                            B.getBlockID());
   }
 
-  ExplodedNode *generateNode(PostStmt PP,const GRState *St,ExplodedNode *Pred) {
+  ExplodedNode *generateNode(PostStmt PP,
+                             const ProgramState *St,
+                             ExplodedNode *Pred) {
     hasGeneratedNode = true;
     return generateNodeInternal(PP, St, Pred);
   }
 
-  ExplodedNode *generateNode(const Stmt *S, const GRState *St,
-                             ExplodedNode *Pred, ProgramPoint::Kind K,
+  ExplodedNode *generateNode(const Stmt *S,
+                             const ProgramState *St,
+                             ExplodedNode *Pred,
+                             ProgramPoint::Kind K,
                              const ProgramPointTag *tag = 0) {
     hasGeneratedNode = true;
 
@@ -214,26 +223,31 @@ public:
     return generateNodeInternal(S, St, Pred, K, tag ? tag : Tag);
   }
 
-  ExplodedNode *generateNode(const Stmt *S, const GRState *St,
+  ExplodedNode *generateNode(const Stmt *S,
+                             const ProgramState *St,
                              ExplodedNode *Pred,
                              const ProgramPointTag *tag = 0) {
     return generateNode(S, St, Pred, PointKind, tag);
   }
 
-  ExplodedNode *generateNode(const ProgramPoint &PP, const GRState *State,
+  ExplodedNode *generateNode(const ProgramPoint &PP,
+                             const ProgramState *State,
                              ExplodedNode *Pred) {
     hasGeneratedNode = true;
     return generateNodeInternal(PP, State, Pred);
   }
 
   ExplodedNode*
-  generateNodeInternal(const ProgramPoint &PP, const GRState *State,
+  generateNodeInternal(const ProgramPoint &PP,
+                       const ProgramState *State,
                        ExplodedNode *Pred);
 
   ExplodedNode*
-  generateNodeInternal(const Stmt *S, const GRState *State, ExplodedNode *Pred,
-                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
-                   const ProgramPointTag *tag = 0);
+  generateNodeInternal(const Stmt *S,
+                       const ProgramState *State,
+                       ExplodedNode *Pred,
+                       ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
+                       const ProgramPointTag *tag = 0);
 
   /// getStmt - Return the current block-level expression associated with
   ///  this builder.
@@ -248,16 +262,23 @@ public:
 
   unsigned getIndex() const { return Idx; }
 
-  ExplodedNode *MakeNode(ExplodedNodeSet &Dst, const Stmt *S, 
-                         ExplodedNode *Pred, const GRState *St) {
+  ExplodedNode *MakeNode(ExplodedNodeSet &Dst,
+                         const Stmt *S, 
+                         ExplodedNode *Pred,
+                         const ProgramState *St) {
     return MakeNode(Dst, S, Pred, St, PointKind);
   }
 
-  ExplodedNode *MakeNode(ExplodedNodeSet &Dst, const Stmt *S,ExplodedNode *Pred,
-                         const GRState *St, ProgramPoint::Kind K);
+  ExplodedNode *MakeNode(ExplodedNodeSet &Dst,
+                         const Stmt *S,
+                         ExplodedNode *Pred,
+                         const ProgramState *St,
+                         ProgramPoint::Kind K);
 
-  ExplodedNode *MakeSinkNode(ExplodedNodeSet &Dst, const Stmt *S,
-                       ExplodedNode *Pred, const GRState *St) {
+  ExplodedNode *MakeSinkNode(ExplodedNodeSet &Dst,
+                             const Stmt *S,
+                             ExplodedNode *Pred,
+                             const ProgramState *St) {
     bool Tmp = BuildSinks;
     BuildSinks = true;
     ExplodedNode *N = MakeNode(Dst, S, Pred, St);
@@ -296,9 +317,9 @@ public:
 
   BlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
 
-  ExplodedNode *generateNode(const Stmt *Condition, const GRState *State);
+  ExplodedNode *generateNode(const Stmt *Condition, const ProgramState *State);
 
-  ExplodedNode *generateNode(const GRState *State, bool branch);
+  ExplodedNode *generateNode(const ProgramState *State, bool branch);
 
   const CFGBlock *getTargetBlock(bool branch) const {
     return branch ? DstT : DstF;
@@ -315,7 +336,7 @@ public:
     return branch ? !InFeasibleTrue : !InFeasibleFalse;
   }
 
-  const GRState *getState() const {
+  const ProgramState *getState() const {
     return getPredecessor()->getState();
   }
 };
@@ -354,12 +375,13 @@ public:
   iterator begin() { return iterator(DispatchBlock.succ_begin()); }
   iterator end() { return iterator(DispatchBlock.succ_end()); }
 
-  ExplodedNode *generateNode(const iterator &I, const GRState *State,
+  ExplodedNode *generateNode(const iterator &I,
+                             const ProgramState *State,
                              bool isSink = false);
 
   const Expr *getTarget() const { return E; }
 
-  const GRState *getState() const { return Pred->State; }
+  const ProgramState *getState() const { return Pred->State; }
 };
 
 class SwitchNodeBuilder {
@@ -400,14 +422,15 @@ public:
     return llvm::cast<SwitchStmt>(Src->getTerminator());
   }
 
-  ExplodedNode *generateCaseStmtNode(const iterator &I, const GRState *State);
+  ExplodedNode *generateCaseStmtNode(const iterator &I,
+                                     const ProgramState *State);
 
-  ExplodedNode *generateDefaultCaseNode(const GRState *State,
+  ExplodedNode *generateDefaultCaseNode(const ProgramState *State,
                                         bool isSink = false);
 
   const Expr *getCondition() const { return Condition; }
 
-  const GRState *getState() const { return Pred->State; }
+  const ProgramState *getState() const { return Pred->State; }
 };
 
 class GenericNodeBuilderImpl {
@@ -417,8 +440,10 @@ protected:
   ProgramPoint pp;
   SmallVector<ExplodedNode*, 2> sinksGenerated;  
 
-  ExplodedNode *generateNodeImpl(const GRState *state, ExplodedNode *pred,
-                                 ProgramPoint programPoint, bool asSink);
+  ExplodedNode *generateNodeImpl(const ProgramState *state,
+                                 ExplodedNode *pred,
+                                 ProgramPoint programPoint,
+                                 bool asSink);
 
   GenericNodeBuilderImpl(CoreEngine &eng, ExplodedNode *pr, ProgramPoint p)
     : engine(eng), pred(pr), pp(p), hasGeneratedNode(false) {}
@@ -445,7 +470,7 @@ public:
   GenericNodeBuilder(CoreEngine &eng, ExplodedNode *pr, const PP_T &p)
     : GenericNodeBuilderImpl(eng, pr, p) {}
 
-  ExplodedNode *generateNode(const GRState *state, ExplodedNode *pred,
+  ExplodedNode *generateNode(const ProgramState *state, ExplodedNode *pred,
                              const ProgramPointTag *tag, bool asSink) {
     return generateNodeImpl(state, pred, cast<PP_T>(pp).withTag(tag),
                             asSink);
@@ -488,14 +513,15 @@ public:
                                            B.getBlockID());
   }
 
-  ExplodedNode *generateNode(const GRState *State, ExplodedNode *P = 0,
+  ExplodedNode *generateNode(const ProgramState *State,
+                             ExplodedNode *P = 0,
                              const ProgramPointTag *tag = 0);
 
-  void GenerateCallExitNode(const GRState *state);
+  void GenerateCallExitNode(const ProgramState *state);
 
   const CFGBlock *getBlock() const { return &B; }
 
-  const GRState *getState() const {
+  const ProgramState *getState() const {
     return getPredecessor()->getState();
   }
 };
@@ -524,7 +550,7 @@ public:
                          const CFGBlock *blk, unsigned idx)
     : Eng(eng), Pred(pred), CE(s), CalleeCtx(callee), Block(blk), Index(idx) {}
 
-  const GRState *getState() const { return Pred->getState(); }
+  const ProgramState *getState() const { return Pred->getState(); }
 
   const LocationContext *getLocationContext() const { 
     return Pred->getLocationContext();
@@ -538,7 +564,7 @@ public:
 
   unsigned getIndex() const { return Index; }
 
-  void generateNode(const GRState *state);
+  void generateNode(const ProgramState *state);
 };
 
 class CallExitNodeBuilder {
@@ -551,9 +577,9 @@ public:
 
   const ExplodedNode *getPredecessor() const { return Pred; }
 
-  const GRState *getState() const { return Pred->getState(); }
+  const ProgramState *getState() const { return Pred->getState(); }
 
-  void generateNode(const GRState *state);
+  void generateNode(const ProgramState *state);
 }; 
 
 } // end GR namespace

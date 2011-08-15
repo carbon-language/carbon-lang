@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/AST/Stmt.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DenseMap.h"
@@ -103,8 +103,8 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
       continue;
 
     // Conditions 5, 6, and 7.
-    const GRState *state = node->getState();
-    const GRState *pred_state = pred->getState();    
+    const ProgramState *state = node->getState();
+    const ProgramState *pred_state = pred->getState();    
     if (state->store != pred_state->store || state->GDM != pred_state->GDM ||
         progPoint.getLocationContext() != pred->getLocationContext())
       continue;
@@ -216,7 +216,7 @@ ExplodedNode** ExplodedNode::NodeGroup::end() const {
 }
 
 ExplodedNode *ExplodedGraph::getNode(const ProgramPoint &L,
-                                     const GRState *State, bool* IsNew) {
+                                     const ProgramState *State, bool* IsNew) {
   // Profile 'State' to determine if we already have an existing node.
   llvm::FoldingSetNodeID profile;
   void *InsertPos = 0;

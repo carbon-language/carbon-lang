@@ -20,7 +20,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Type.h"
@@ -117,16 +117,28 @@ public:
                     CheckerContext &C) const;
 
 private:
-  const GRState *handleAssign(const GRState *state, const Expr *lexp,
-      const Expr *rexp, const LocationContext *LC) const;
-  const GRState *handleAssign(const GRState *state, const MemRegion *MR,
-      const Expr *rexp, const LocationContext *LC) const;
-  const GRState *invalidateIterators(const GRState *state, const MemRegion *MR,
-      const MemberExpr *ME) const;
+  const ProgramState *handleAssign(const ProgramState *state,
+                                   const Expr *lexp,
+                                   const Expr *rexp,
+                                   const LocationContext *LC) const;
+
+  const ProgramState *handleAssign(const ProgramState *state,
+                                   const MemRegion *MR,
+                                   const Expr *rexp,
+                                   const LocationContext *LC) const;
+
+  const ProgramState *invalidateIterators(const ProgramState *state,
+                                          const MemRegion *MR,
+                                          const MemberExpr *ME) const;
+
   void checkExpr(CheckerContext &C, const Expr *E) const;
+
   void checkArgs(CheckerContext &C, const CallExpr *CE) const;
-  const MemRegion *getRegion(const GRState *state, const Expr *E,
-      const LocationContext *LC) const;
+
+  const MemRegion *getRegion(const ProgramState *state,
+                             const Expr *E,
+                             const LocationContext *LC) const;
+
   const DeclRefExpr *getDeclRefExpr(const Expr *E) const;
 };
 
@@ -139,8 +151,8 @@ public:
 namespace clang {
   namespace ento {
     template <>
-    struct GRStateTrait<IteratorState> 
-      : public GRStatePartialTrait<IteratorState::EntryMap> {
+    struct ProgramStateTrait<IteratorState> 
+      : public ProgramStatePartialTrait<IteratorState::EntryMap> {
       static void *GDMIndex() { return IteratorsChecker::getTag(); }
     };
   }
@@ -215,7 +227,7 @@ static RefKind getTemplateKind(QualType T) {
 
 // Iterate through our map and invalidate any iterators that were
 // initialized fromt the specified instance MemRegion.
-const GRState *IteratorsChecker::invalidateIterators(const GRState *state,
+const ProgramState *IteratorsChecker::invalidateIterators(const ProgramState *state,
                           const MemRegion *MR, const MemberExpr *ME) const {
   IteratorState::EntryMap Map = state->get<IteratorState>();
   if (Map.isEmpty())
@@ -234,7 +246,7 @@ const GRState *IteratorsChecker::invalidateIterators(const GRState *state,
 }
 
 // Handle assigning to an iterator where we don't have the LValue MemRegion.
-const GRState *IteratorsChecker::handleAssign(const GRState *state,
+const ProgramState *IteratorsChecker::handleAssign(const ProgramState *state,
     const Expr *lexp, const Expr *rexp, const LocationContext *LC) const {
   // Skip the cast if present.
   if (const MaterializeTemporaryExpr *M 
@@ -259,7 +271,7 @@ const GRState *IteratorsChecker::handleAssign(const GRState *state,
 }
 
 // handle assigning to an iterator
-const GRState *IteratorsChecker::handleAssign(const GRState *state,
+const ProgramState *IteratorsChecker::handleAssign(const ProgramState *state,
     const MemRegion *MR, const Expr *rexp, const LocationContext *LC) const {
   // Assume unknown until we find something definite.
   state = state->set<IteratorState>(MR, RefState::getUnknown());
@@ -364,7 +376,7 @@ const DeclRefExpr *IteratorsChecker::getDeclRefExpr(const Expr *E) const {
 }
 
 // Get the MemRegion associated with the expresssion.
-const MemRegion *IteratorsChecker::getRegion(const GRState *state,
+const MemRegion *IteratorsChecker::getRegion(const ProgramState *state,
     const Expr *E, const LocationContext *LC) const {
   const DeclRefExpr *DRE = getDeclRefExpr(E);
   if (!DRE)
@@ -382,7 +394,7 @@ const MemRegion *IteratorsChecker::getRegion(const GRState *state,
 // use those nodes.  We also cannot create multiple nodes at one ProgramPoint
 // with the same tag.
 void IteratorsChecker::checkExpr(CheckerContext &C, const Expr *E) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const MemRegion *MR = getRegion(state, E,
                    C.getPredecessor()->getLocationContext());
   if (!MR)
@@ -455,7 +467,7 @@ void IteratorsChecker::checkPreStmt(const CXXOperatorCallExpr *OCE,
                                     CheckerContext &C) const
 {
   const LocationContext *LC = C.getPredecessor()->getLocationContext();
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   OverloadedOperatorKind Kind = OCE->getOperator();
   if (Kind == OO_Equal) {
     checkExpr(C, OCE->getArg(1));
@@ -512,7 +524,7 @@ void IteratorsChecker::checkPreStmt(const DeclStmt *DS,
     return;
 
   // Get the MemRegion associated with the iterator and mark it as Undefined.
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   Loc VarLoc = state->getLValue(VD, C.getPredecessor()->getLocationContext());
   const MemRegion *MR = VarLoc.getAsRegion();
   if (!MR)
@@ -544,8 +556,8 @@ void IteratorsChecker::checkPreStmt(const DeclStmt *DS,
 
 namespace { struct CalledReserved {}; }
 namespace clang { namespace ento {
-template<> struct GRStateTrait<CalledReserved> 
-    :  public GRStatePartialTrait<llvm::ImmutableSet<const MemRegion*> > {
+template<> struct ProgramStateTrait<CalledReserved> 
+    :  public ProgramStatePartialTrait<llvm::ImmutableSet<const MemRegion*> > {
   static void *GDMIndex() { static int index = 0; return &index; }
 };
 }}
@@ -571,7 +583,7 @@ void IteratorsChecker::checkPreStmt(const CXXMemberCallExpr *MCE,
     return;
   // If we are calling a function that invalidates iterators, mark them
   // appropriately by finding matching instances.
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   StringRef mName = ME->getMemberDecl()->getName();
   if (llvm::StringSwitch<bool>(mName)
       .Cases("insert", "reserve", "push_back", true)

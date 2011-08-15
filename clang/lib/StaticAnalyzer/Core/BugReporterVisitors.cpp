@@ -17,7 +17,7 @@
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 
 using namespace clang;
 using namespace ento;
@@ -311,7 +311,7 @@ void bugreporter::registerTrackNullOrUndefValue(BugReporterContext &BRC,
   if (!S)
     return;
 
-  GRStateManager &StateMgr = BRC.getStateManager();
+  ProgramStateManager &StateMgr = BRC.getStateManager();
   
   // Walk through nodes until we get one that matches the statement
   // exactly.
@@ -327,7 +327,7 @@ void bugreporter::registerTrackNullOrUndefValue(BugReporterContext &BRC,
   if (!N)
     return;
   
-  const GRState *state = N->getState();
+  const ProgramState *state = N->getState();
 
   // Walk through lvalue-to-rvalue conversions.  
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S)) {
@@ -374,7 +374,7 @@ void bugreporter::registerFindLastStore(BugReporterContext &BRC,
   if (!R)
     return;
 
-  const GRState *state = N->getState();
+  const ProgramState *state = N->getState();
   SVal V = state->getSVal(R);
 
   if (V.isUnknown())
@@ -407,7 +407,7 @@ public:
     const Expr *Receiver = ME->getInstanceReceiver();
     if (!Receiver)
       return 0;
-    const GRState *state = N->getState();
+    const ProgramState *state = N->getState();
     const SVal &V = state->getSVal(Receiver);
     const DefinedOrUnknownSVal *DV = dyn_cast<DefinedOrUnknownSVal>(&V);
     if (!DV)
@@ -446,8 +446,8 @@ void bugreporter::registerVarDeclsLastStore(BugReporterContext &BRC,
     const Stmt *Head = WorkList.front();
     WorkList.pop_front();
 
-    GRStateManager &StateMgr = BRC.getStateManager();
-    const GRState *state = N->getState();
+    ProgramStateManager &StateMgr = BRC.getStateManager();
+    const ProgramState *state = N->getState();
 
     if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Head)) {
       if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
@@ -486,8 +486,8 @@ public:
                                          BugReporterContext &BRC);
   
   PathDiagnosticPiece *VisitTerminator(const Stmt *Term,
-                                       const GRState *CurrentState,
-                                       const GRState *PrevState,
+                                       const ProgramState *CurrentState,
+                                       const ProgramState *PrevState,
                                        const CFGBlock *srcBlk,
                                        const CFGBlock *dstBlk,
                                        BugReporterContext &BRC);
@@ -516,8 +516,8 @@ PathDiagnosticPiece *ConditionVisitor::VisitNode(const ExplodedNode *N,
     const CFGBlock *srcBlk = BE->getSrc();
     
     if (const Stmt *term = srcBlk->getTerminator()) {
-      const GRState *CurrentState = N->getState();
-      const GRState *PrevState = Prev->getState();
+      const ProgramState *CurrentState = N->getState();
+      const ProgramState *PrevState = Prev->getState();
       if (CurrentState != PrevState)
         return VisitTerminator(term, CurrentState, PrevState,
                                srcBlk, BE->getDst(),
@@ -532,8 +532,8 @@ PathDiagnosticPiece *ConditionVisitor::VisitNode(const ExplodedNode *N,
 
 PathDiagnosticPiece *
 ConditionVisitor::VisitTerminator(const Stmt *Term,
-                                  const GRState *CurrentState,
-                                  const GRState *PrevState,
+                                  const ProgramState *CurrentState,
+                                  const ProgramState *PrevState,
                                   const CFGBlock *srcBlk,
                                   const CFGBlock *dstBlk,
                                   BugReporterContext &BRC) {

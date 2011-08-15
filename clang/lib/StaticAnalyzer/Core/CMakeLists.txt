@@ -20,12 +20,12 @@ add_clang_library(clangStaticAnalyzerCore
   Environment.cpp
   ExplodedGraph.cpp
   ExprEngine.cpp
-  GRState.cpp
   HTMLDiagnostics.cpp
   MemRegion.cpp
   ObjCMessage.cpp
   PathDiagnostic.cpp
   PlistDiagnostics.cpp
+  ProgramState.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp
   SValBuilder.cpp

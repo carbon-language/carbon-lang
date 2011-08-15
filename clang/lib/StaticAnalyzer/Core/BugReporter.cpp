@@ -346,9 +346,9 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
 // ScanNotableSymbols: closure-like callback for scanning Store bindings.
 //===----------------------------------------------------------------------===//
 
-static const VarDecl*
-GetMostRecentVarDeclBinding(const ExplodedNode *N,
-                            GRStateManager& VMgr, SVal X) {
+static const VarDecl* GetMostRecentVarDeclBinding(const ExplodedNode *N,
+                                                  ProgramStateManager& VMgr,
+                                                  SVal X) {
 
   for ( ; N ; N = N->pred_empty() ? 0 : *N->pred_begin()) {
 
@@ -383,19 +383,29 @@ class NotableSymbolHandler
 : public StoreManager::BindingsHandler {
 
   SymbolRef Sym;
-  const GRState *PrevSt;
+  const ProgramState *PrevSt;
   const Stmt *S;
-  GRStateManager& VMgr;
+  ProgramStateManager& VMgr;
   const ExplodedNode *Pred;
   PathDiagnostic& PD;
   BugReporter& BR;
 
 public:
 
-  NotableSymbolHandler(SymbolRef sym, const GRState *prevst, const Stmt *s,
-                       GRStateManager& vmgr, const ExplodedNode *pred,
-                       PathDiagnostic& pd, BugReporter& br)
-  : Sym(sym), PrevSt(prevst), S(s), VMgr(vmgr), Pred(pred), PD(pd), BR(br) {}
+  NotableSymbolHandler(SymbolRef sym,
+                       const ProgramState *prevst,
+                       const Stmt *s,
+                       ProgramStateManager& vmgr,
+                       const ExplodedNode *pred,
+                       PathDiagnostic& pd,
+                       BugReporter& br)
+  : Sym(sym),
+    PrevSt(prevst),
+    S(s),
+    VMgr(vmgr),
+    Pred(pred),
+    PD(pd),
+    BR(br) {}
 
   bool HandleBinding(StoreManager& SMgr, Store store, const MemRegion* R,
                      SVal V) {
@@ -466,14 +476,14 @@ static void HandleNotableSymbol(const ExplodedNode *N,
                                 PathDiagnostic& PD) {
 
   const ExplodedNode *Pred = N->pred_empty() ? 0 : *N->pred_begin();
-  const GRState *PrevSt = Pred ? Pred->getState() : 0;
+  const ProgramState *PrevSt = Pred ? Pred->getState() : 0;
 
   if (!PrevSt)
     return;
 
   // Look at the region bindings of the current state that map to the
   // specified symbol.  Are any of them not in the previous state?
-  GRStateManager& VMgr = cast<GRBugReporter>(BR).getStateManager();
+  ProgramStateManager& VMgr = cast<GRBugReporter>(BR).getStateManager();
   NotableSymbolHandler H(Sym, PrevSt, S, VMgr, Pred, PD, BR);
   cast<GRBugReporter>(BR).getStateManager().iterBindings(N->getState(), H);
 }
@@ -1314,7 +1324,7 @@ BugReporterData::~BugReporterData() {}
 
 ExplodedGraph &GRBugReporter::getGraph() { return Eng.getGraph(); }
 
-GRStateManager&
+ProgramStateManager&
 GRBugReporter::getStateManager() { return Eng.getStateManager(); }
 
 BugReporter::~BugReporter() { FlushReports(); }

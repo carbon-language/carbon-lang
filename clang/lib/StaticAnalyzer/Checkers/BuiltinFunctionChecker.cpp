@@ -31,7 +31,7 @@ public:
 
 bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
                                       CheckerContext &C) const{
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);
   const FunctionDecl *FD = L.getAsFunctionDecl();

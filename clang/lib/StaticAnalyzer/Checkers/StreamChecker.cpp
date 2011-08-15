@@ -16,8 +16,8 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
 #include "llvm/ADT/ImmutableMap.h"
 
@@ -96,9 +96,9 @@ private:
 
   void OpenFileAux(CheckerContext &C, const CallExpr *CE) const;
   
-  const GRState *CheckNullStream(SVal SV, const GRState *state, 
+  const ProgramState *CheckNullStream(SVal SV, const ProgramState *state, 
                                  CheckerContext &C) const;
-  const GRState *CheckDoubleClose(const CallExpr *CE, const GRState *state, 
+  const ProgramState *CheckDoubleClose(const CallExpr *CE, const ProgramState *state, 
                                  CheckerContext &C) const;
 };
 
@@ -107,15 +107,15 @@ private:
 namespace clang {
 namespace ento {
   template <>
-  struct GRStateTrait<StreamState> 
-    : public GRStatePartialTrait<llvm::ImmutableMap<SymbolRef, StreamState> > {
+  struct ProgramStateTrait<StreamState> 
+    : public ProgramStatePartialTrait<llvm::ImmutableMap<SymbolRef, StreamState> > {
     static void *GDMIndex() { static int x; return &x; }
   };
 }
 }
 
 bool StreamChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);
   const FunctionDecl *FD = L.getAsFunctionDecl();
@@ -221,7 +221,7 @@ void StreamChecker::Tmpfile(CheckerContext &C, const CallExpr *CE) const {
 }
 
 void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
   SValBuilder &svalBuilder = C.getSValBuilder();
   DefinedSVal RetVal =
@@ -231,7 +231,7 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
   ConstraintManager &CM = C.getConstraintManager();
   // Bifurcate the state into two: one with a valid FILE* pointer, the other
   // with a NULL.
-  const GRState *stateNotNull, *stateNull;
+  const ProgramState *stateNotNull, *stateNull;
   llvm::tie(stateNotNull, stateNull) = CM.assumeDual(state, RetVal);
   
   if (SymbolRef Sym = RetVal.getAsSymbol()) {
@@ -247,25 +247,25 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
 }
 
 void StreamChecker::Fclose(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = CheckDoubleClose(CE, C.getState(), C);
+  const ProgramState *state = CheckDoubleClose(CE, C.getState(), C);
   if (state)
     C.addTransition(state);
 }
 
 void StreamChecker::Fread(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
     return;
 }
 
 void StreamChecker::Fwrite(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
     return;
 }
 
 void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (!(state = CheckNullStream(state->getSVal(CE->getArg(0)), state, C)))
     return;
   // Check the legality of the 'whence' argument of 'fseek'.
@@ -291,61 +291,61 @@ void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
 }
 
 void StreamChecker::Ftell(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Rewind(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Fgetpos(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Fsetpos(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Clearerr(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Feof(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Ferror(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
 void StreamChecker::Fileno(CheckerContext &C, const CallExpr *CE) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
     return;
 }
 
-const GRState *StreamChecker::CheckNullStream(SVal SV, const GRState *state,
+const ProgramState *StreamChecker::CheckNullStream(SVal SV, const ProgramState *state,
                                     CheckerContext &C) const {
   const DefinedSVal *DV = dyn_cast<DefinedSVal>(&SV);
   if (!DV)
     return 0;
 
   ConstraintManager &CM = C.getConstraintManager();
-  const GRState *stateNotNull, *stateNull;
+  const ProgramState *stateNotNull, *stateNull;
   llvm::tie(stateNotNull, stateNull) = CM.assumeDual(state, *DV);
 
   if (!stateNotNull && stateNull) {
@@ -361,8 +361,8 @@ const GRState *StreamChecker::CheckNullStream(SVal SV, const GRState *state,
   return stateNotNull;
 }
 
-const GRState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
-                                               const GRState *state,
+const ProgramState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
+                                               const ProgramState *state,
                                                CheckerContext &C) const {
   SymbolRef Sym = state->getSVal(CE->getArg(0)).getAsSymbol();
   if (!Sym)
@@ -399,7 +399,7 @@ void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   for (SymbolReaper::dead_iterator I = SymReaper.dead_begin(),
          E = SymReaper.dead_end(); I != E; ++I) {
     SymbolRef Sym = *I;
-    const GRState *state = C.getState();
+    const ProgramState *state = C.getState();
     const StreamState *SS = state->get<StreamState>(Sym);
     if (!SS)
       return;
@@ -420,7 +420,7 @@ void StreamChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 
 void StreamChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
                                  ExprEngine &Eng) const {
-  const GRState *state = B.getState();
+  const ProgramState *state = B.getState();
   typedef llvm::ImmutableMap<SymbolRef, StreamState> SymMap;
   SymMap M = state->get<StreamState>();
   
@@ -445,7 +445,7 @@ void StreamChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
   if (!RetE)
     return;
   
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   SymbolRef Sym = state->getSVal(RetE).getAsSymbol();
   
   if (!Sym)

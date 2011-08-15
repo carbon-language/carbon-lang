@@ -20,7 +20,7 @@ The analyzer is inspired by several foundational research papers ([1],
 In a nutshell, the analyzer is basically a source code simulator that
 traces out possible paths of execution.  The state of the program
 (values of variables and expressions) is encapsulated by the state
-(GRState).  A location in the program is called a program point
+(ProgramState).  A location in the program is called a program point
 (ProgramPoint), and the combination of state and program point is a
 node in an exploded graph (ExplodedGraph).  The term "exploded" comes
 from exploding the control-flow edges in the control-flow graph (CFG).
@@ -39,7 +39,7 @@ then bifurcating the state: on the true branch the conditions of the
 branch are assumed to be true and on the false branch the conditions
 of the branch are assumed to be false.  Such "assumptions" create
 constraints on the values of the program, and those constraints are
-recorded in the GRState object (and are manipulated by the
+recorded in the ProgramState object (and are manipulated by the
 ConstraintManager).  If assuming the conditions of a branch would
 cause the constraints to be unsatisfiable, the branch is considered
 infeasible and that path is not taken.  This is how we get
@@ -49,9 +49,9 @@ would get generated, the path "caches out" and we simply reuse the
 existing node.  Thus the ExplodedGraph is not a DAG; it can contain
 cycles as paths loop back onto each other and cache out.
 
-GRState and ExplodedNodes are basically immutable once created.  Once
-one creates a GRState, you need to create a new one to get a new
-GRState.  This immutability is key since the ExplodedGraph represents
+ProgramState and ExplodedNodes are basically immutable once created.  Once
+one creates a ProgramState, you need to create a new one to get a new
+ProgramState.  This immutability is key since the ExplodedGraph represents
 the behavior of the analyzed program from the entry point.  To
 represent these efficiently, we use functional data structures (e.g.,
 ImmutableMaps) which share data between instances.
@@ -62,7 +62,7 @@ For example, the PreVisitCallExpr() method is called by GRExprEngine
 to tell the Checker that we are about to analyze a CallExpr, and the
 checker is asked to check for any preconditions that might not be
 satisfied.  The checker can do nothing, or it can generate a new
-GRState and ExplodedNode which contains updated checker state.  If it
+ProgramState and ExplodedNode which contains updated checker state.  If it
 finds a bug, it can tell the BugReporter object about the bug,
 providing it an ExplodedNode which is the last node in the path that
 triggered the problem.

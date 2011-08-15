@@ -228,7 +228,7 @@ public:
 
 class LiveSymbols {
   template <typename CHECKER>
-  static void _checkLiveSymbols(void *checker, const GRState *state,
+  static void _checkLiveSymbols(void *checker, const ProgramState *state,
                                 SymbolReaper &SR) {
     ((const CHECKER *)checker)->checkLiveSymbols(state, SR);
   }
@@ -258,15 +258,18 @@ public:
 
 class RegionChanges {
   template <typename CHECKER>
-  static const GRState *_checkRegionChanges(void *checker, const GRState *state,
-                            const StoreManager::InvalidatedSymbols *invalidated,
-                                            const MemRegion * const *Begin,
-                                            const MemRegion * const *End) {
+  static const ProgramState *
+  _checkRegionChanges(void *checker,
+                      const ProgramState *state,
+                      const StoreManager::InvalidatedSymbols *invalidated,
+                      const MemRegion * const *Begin,
+                      const MemRegion * const *End) {
     return ((const CHECKER *)checker)->checkRegionChanges(state, invalidated,
                                                           Begin, End);
   }
   template <typename CHECKER>
-  static bool _wantsRegionChangeUpdate(void *checker, const GRState *state) {
+  static bool _wantsRegionChangeUpdate(void *checker,
+                                       const ProgramState *state) {
     return ((const CHECKER *)checker)->wantsRegionChangeUpdate(state);
   }
 
@@ -301,8 +304,10 @@ namespace eval {
 
 class Assume {
   template <typename CHECKER>
-  static const GRState *_evalAssume(void *checker, const GRState *state,
-                                    const SVal &cond, bool assumption) {
+  static const ProgramState *_evalAssume(void *checker,
+                                         const ProgramState *state,
+                                         const SVal &cond,
+                                         bool assumption) {
     return ((const CHECKER *)checker)->evalAssume(state, cond, assumption);
   }
 

@@ -37,7 +37,7 @@ namespace ento {
   class ExplodedNode;
   class ExplodedNodeSet;
   class ExplodedGraph;
-  class GRState;
+  class ProgramState;
   class EndOfFunctionNodeBuilder;
   class BranchNodeBuilder;
   class MemRegion;
@@ -225,7 +225,7 @@ public:
                                      BranchNodeBuilder &B, ExprEngine &Eng);
 
   /// \brief Run checkers for live symbols.
-  void runCheckersForLiveSymbols(const GRState *state,
+  void runCheckersForLiveSymbols(const ProgramState *state,
                                  SymbolReaper &SymReaper);
 
   /// \brief Run checkers for dead symbols.
@@ -235,17 +235,17 @@ public:
                                  ExprEngine &Eng);
 
   /// \brief True if at least one checker wants to check region changes.
-  bool wantsRegionChangeUpdate(const GRState *state);
+  bool wantsRegionChangeUpdate(const ProgramState *state);
 
   /// \brief Run checkers for region changes.
-  const GRState *
-  runCheckersForRegionChanges(const GRState *state,
+  const ProgramState *
+  runCheckersForRegionChanges(const ProgramState *state,
                             const StoreManager::InvalidatedSymbols *invalidated,
                               const MemRegion * const *Begin,
                               const MemRegion * const *End);
 
   /// \brief Run checkers for handling assumptions on symbolic values.
-  const GRState *runCheckersForEvalAssume(const GRState *state,
+  const ProgramState *runCheckersForEvalAssume(const ProgramState *state,
                                           SVal Cond, bool Assumption);
 
   /// \brief Run checkers for evaluating a call.
@@ -301,18 +301,18 @@ public:
   typedef CheckerFn<void (SymbolReaper &, CheckerContext &)>
       CheckDeadSymbolsFunc;
   
-  typedef CheckerFn<void (const GRState *,SymbolReaper &)> CheckLiveSymbolsFunc;
+  typedef CheckerFn<void (const ProgramState *,SymbolReaper &)> CheckLiveSymbolsFunc;
   
-  typedef CheckerFn<const GRState * (const GRState *,
+  typedef CheckerFn<const ProgramState * (const ProgramState *,
                                 const StoreManager::InvalidatedSymbols *symbols,
                                      const MemRegion * const *begin,
                                      const MemRegion * const *end)>
       CheckRegionChangesFunc;
   
-  typedef CheckerFn<bool (const GRState *)> WantsRegionChangeUpdateFunc;
+  typedef CheckerFn<bool (const ProgramState *)> WantsRegionChangeUpdateFunc;
   
-  typedef CheckerFn<const GRState * (const GRState *,
-                                     const SVal &cond, bool assumption)>
+  typedef CheckerFn<const ProgramState * (const ProgramState *,
+                                          const SVal &cond, bool assumption)>
       EvalAssumeFunc;
   
   typedef CheckerFn<bool (const CallExpr *, CheckerContext &)>

@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_GR_TRANSFERFUNCS
 #define LLVM_CLANG_GR_TRANSFERFUNCS
 
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include <vector>
@@ -36,7 +36,7 @@ public:
   TransferFuncs() {}
   virtual ~TransferFuncs() {}
 
-  virtual void RegisterPrinters(std::vector<GRState::Printer*>& Printers) {}
+  virtual void RegisterPrinters(std::vector<ProgramState::Printer*>& Printers) {}
   virtual void RegisterChecks(ExprEngine& Eng) {}
 
 
@@ -53,7 +53,7 @@ public:
                                StmtNodeBuilder& Builder,
                                ObjCMessage msg,
                                ExplodedNode *Pred,
-                               const GRState *state) {}
+                               const ProgramState *state) {}
 
   // Stores.
 
@@ -69,7 +69,7 @@ public:
                                ExprEngine& Engine,
                                StmtNodeBuilder& Builder,
                                ExplodedNode *Pred,
-                               const GRState *state,
+                               const ProgramState *state,
                                SymbolReaper& SymReaper) {}
 
   // Return statements.
@@ -80,7 +80,7 @@ public:
                           ExplodedNode *Pred) {}
 
   // Assumptions.
-  virtual const GRState *evalAssume(const GRState *state,
+  virtual const ProgramState *evalAssume(const ProgramState *state,
                                     SVal Cond, bool Assumption) {
     return state;
   }  

@@ -17,7 +17,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
@@ -134,7 +134,7 @@ void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
 void StackAddrEscapeChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
                                         ExprEngine &Eng) const {
 
-  const GRState *state = B.getState();
+  const ProgramState *state = B.getState();
 
   // Iterate over all bindings to global variables and see if it contains
   // a memory region in the stack space.

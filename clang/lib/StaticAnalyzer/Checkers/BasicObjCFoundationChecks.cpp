@@ -20,7 +20,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
 #include "clang/AST/DeclObjC.h"
@@ -249,7 +249,7 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
 void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
                                          CheckerContext &C) const {
   const Expr *Callee = CE->getCallee();
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   SVal CallV = state->getSVal(Callee);
   const FunctionDecl *FD = CallV.getAsFunctionDecl();
 
@@ -363,7 +363,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
     return;
 
   // Get the function declaration of the callee.
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   SVal X = state->getSVal(CE->getCallee());
   const FunctionDecl *FD = X.getAsFunctionDecl();
 
@@ -400,7 +400,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
   DefinedOrUnknownSVal ArgIsNull = svalBuilder.evalEQ(state, zero, *DefArgVal);
 
   // Are they equal?
-  const GRState *stateTrue, *stateFalse;
+  const ProgramState *stateTrue, *stateFalse;
   llvm::tie(stateTrue, stateFalse) = state->assume(ArgIsNull);
 
   if (stateTrue && !stateFalse) {
@@ -586,7 +586,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
 
   // Verify that all arguments have Objective-C types.
   llvm::Optional<ExplodedNode*> errorNode;
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   
   for (unsigned I = variadicArgsBegin; I != variadicArgsEnd; ++I) {
     QualType ArgTy = msg.getArgType(I);

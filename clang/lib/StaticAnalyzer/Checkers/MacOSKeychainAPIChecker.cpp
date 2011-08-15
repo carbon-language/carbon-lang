@@ -17,8 +17,8 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 
 using namespace clang;
 using namespace ento;
@@ -90,13 +90,13 @@ private:
 
   /// Check if RetSym evaluates to an error value in the current state.
   bool definitelyReturnedError(SymbolRef RetSym,
-                               const GRState *State,
+                               const ProgramState *State,
                                SValBuilder &Builder,
                                bool noError = false) const;
 
   /// Check if RetSym evaluates to a NoErr value in the current state.
   bool definitelyDidnotReturnError(SymbolRef RetSym,
-                                   const GRState *State,
+                                   const ProgramState *State,
                                    SValBuilder &Builder) const {
     return definitelyReturnedError(RetSym, State, Builder, true);
   }
@@ -104,7 +104,7 @@ private:
 };
 }
 
-/// GRState traits to store the currently allocated (and not yet freed) symbols.
+/// ProgramState traits to store the currently allocated (and not yet freed) symbols.
 /// This is a map from the allocated content symbol to the corresponding
 /// AllocationState.
 typedef llvm::ImmutableMap<SymbolRef,
@@ -112,8 +112,8 @@ typedef llvm::ImmutableMap<SymbolRef,
 
 namespace { struct AllocatedData {}; }
 namespace clang { namespace ento {
-template<> struct GRStateTrait<AllocatedData>
-    :  public GRStatePartialTrait<AllocatedSetTy > {
+template<> struct ProgramStateTrait<AllocatedData>
+    :  public ProgramStatePartialTrait<AllocatedSetTy > {
   static void *GDMIndex() { static int index = 0; return &index; }
 };
 }}
@@ -175,7 +175,7 @@ static bool isBadDeallocationArgument(const MemRegion *Arg) {
 /// that value is itself an address, and return the corresponding symbol.
 static SymbolRef getAsPointeeSymbol(const Expr *Expr,
                                     CheckerContext &C) {
-  const GRState *State = C.getState();
+  const ProgramState *State = C.getState();
   SVal ArgV = State->getSVal(Expr);
 
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&ArgV)) {
@@ -194,14 +194,14 @@ static SymbolRef getAsPointeeSymbol(const Expr *Expr,
 // If noError, returns true iff (1).
 // If !noError, returns true iff (2).
 bool MacOSKeychainAPIChecker::definitelyReturnedError(SymbolRef RetSym,
-                                                      const GRState *State,
+                                                      const ProgramState *State,
                                                       SValBuilder &Builder,
                                                       bool noError) const {
   DefinedOrUnknownSVal NoErrVal = Builder.makeIntVal(NoErr,
     Builder.getSymbolManager().getType(RetSym));
   DefinedOrUnknownSVal NoErr = Builder.evalEQ(State, NoErrVal,
                                                      nonloc::SymbolVal(RetSym));
-  const GRState *ErrState = State->assume(NoErr, noError);
+  const ProgramState *ErrState = State->assume(NoErr, noError);
   if (ErrState == State) {
     return true;
   }
@@ -211,7 +211,7 @@ bool MacOSKeychainAPIChecker::definitelyReturnedError(SymbolRef RetSym,
 
 void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
                                            CheckerContext &C) const {
-  const GRState *State = C.getState();
+  const ProgramState *State = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = State->getSVal(Callee);
   unsigned idx = InvalidIdx;
@@ -331,7 +331,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
 
 void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
                                             CheckerContext &C) const {
-  const GRState *State = C.getState();
+  const ProgramState *State = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = State->getSVal(Callee);
 
@@ -385,7 +385,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
     return;
 
   // Check  if the value is escaping through the return.
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const MemRegion *V = state->getSVal(retExpr).getAsRegion();
   if (!V)
     return;
@@ -413,7 +413,7 @@ RangedBugReport *MacOSKeychainAPIChecker::
 
 void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
                                                CheckerContext &C) const {
-  const GRState *State = C.getState();
+  const ProgramState *State = C.getState();
   AllocatedSetTy ASet = State->get<AllocatedData>();
   if (ASet.isEmpty())
     return;
@@ -451,7 +451,7 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
 // TODO: Remove this after we ensure that checkDeadSymbols are always called.
 void MacOSKeychainAPIChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
                                            ExprEngine &Eng) const {
-  const GRState *state = B.getState();
+  const ProgramState *state = B.getState();
   AllocatedSetTy AS = state->get<AllocatedData>();
   if (AS.isEmpty())
     return;

@@ -25,7 +25,7 @@ namespace clang {
 
 namespace ento {
 
-class GRState;
+class ProgramState;
 
 class SValBuilder {
 protected:
@@ -40,7 +40,7 @@ protected:
   /// Manages the creation of memory regions.
   MemRegionManager MemMgr;
 
-  GRStateManager &StateMgr;
+  ProgramStateManager &StateMgr;
 
   /// The scalar type to use for array indices.
   const QualType ArrayIndexTy;
@@ -56,7 +56,7 @@ public:
 
 public:
   SValBuilder(llvm::BumpPtrAllocator &alloc, ASTContext &context,
-              GRStateManager &stateMgr)
+              ProgramStateManager &stateMgr)
     : Context(context), BasicVals(context, alloc),
       SymMgr(context, BasicVals, alloc),
       MemMgr(context, alloc),
@@ -72,29 +72,29 @@ public:
 
   virtual SVal evalComplement(NonLoc val) = 0;
 
-  virtual SVal evalBinOpNN(const GRState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpNN(const ProgramState *state, BinaryOperator::Opcode op,
                            NonLoc lhs, NonLoc rhs, QualType resultTy) = 0;
 
-  virtual SVal evalBinOpLL(const GRState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpLL(const ProgramState *state, BinaryOperator::Opcode op,
                            Loc lhs, Loc rhs, QualType resultTy) = 0;
 
-  virtual SVal evalBinOpLN(const GRState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpLN(const ProgramState *state, BinaryOperator::Opcode op,
                            Loc lhs, NonLoc rhs, QualType resultTy) = 0;
 
   /// getKnownValue - evaluates a given SVal. If the SVal has only one possible
   ///  (integer) value, that value is returned. Otherwise, returns NULL.
-  virtual const llvm::APSInt *getKnownValue(const GRState *state, SVal val) = 0;
+  virtual const llvm::APSInt *getKnownValue(const ProgramState *state, SVal val) = 0;
   
-  SVal evalBinOp(const GRState *state, BinaryOperator::Opcode op,
+  SVal evalBinOp(const ProgramState *state, BinaryOperator::Opcode op,
                  SVal lhs, SVal rhs, QualType type);
   
-  DefinedOrUnknownSVal evalEQ(const GRState *state, DefinedOrUnknownSVal lhs,
+  DefinedOrUnknownSVal evalEQ(const ProgramState *state, DefinedOrUnknownSVal lhs,
                               DefinedOrUnknownSVal rhs);
 
   ASTContext &getContext() { return Context; }
   const ASTContext &getContext() const { return Context; }
 
-  GRStateManager &getStateManager() { return StateMgr; }
+  ProgramStateManager &getStateManager() { return StateMgr; }
   
   QualType getConditionType() const {
     return  getContext().IntTy;
@@ -255,7 +255,7 @@ public:
 
 SValBuilder* createSimpleSValBuilder(llvm::BumpPtrAllocator &alloc,
                                      ASTContext &context,
-                                     GRStateManager &stateMgr);
+                                     ProgramStateManager &stateMgr);
 
 } // end GR namespace
 

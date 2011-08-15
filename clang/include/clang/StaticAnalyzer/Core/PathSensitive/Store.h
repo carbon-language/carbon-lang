@@ -29,20 +29,20 @@ class StackFrameContext;
 
 namespace ento {
 
-class GRState;
-class GRStateManager;
+class ProgramState;
+class ProgramStateManager;
 class SubRegionMap;
 
 class StoreManager {
 protected:
   SValBuilder &svalBuilder;
-  GRStateManager &StateMgr;
+  ProgramStateManager &StateMgr;
 
   /// MRMgr - Manages region objects associated with this StoreManager.
   MemRegionManager &MRMgr;
   ASTContext &Ctx;
 
-  StoreManager(GRStateManager &stateMgr);
+  StoreManager(ProgramStateManager &stateMgr);
 
 public:
   virtual ~StoreManager() {}
@@ -60,7 +60,7 @@ public:
   /// \param[in] state The analysis state.
   /// \param[in] loc The symbolic memory location.
   /// \param[in] val The value to bind to location \c loc.
-  /// \return A pointer to a GRState object that contains the same bindings as
+  /// \return A pointer to a ProgramState object that contains the same bindings as
   ///   \c state with the addition of having the value specified by \c val bound
   ///   to the location given for \c loc.
   virtual StoreRef Bind(Store store, Loc loc, SVal val) = 0;
@@ -114,7 +114,7 @@ public:
 
   // FIXME: This should soon be eliminated altogether; clients should deal with
   // region extents directly.
-  virtual DefinedOrUnknownSVal getSizeInElements(const GRState *state, 
+  virtual DefinedOrUnknownSVal getSizeInElements(const ProgramState *state, 
                                                  const MemRegion *region,
                                                  QualType EleTy) {
     return UnknownVal();
@@ -130,12 +130,12 @@ public:
   }
 
   class CastResult {
-    const GRState *state;
+    const ProgramState *state;
     const MemRegion *region;
   public:
-    const GRState *getState() const { return state; }
+    const ProgramState *getState() const { return state; }
     const MemRegion* getRegion() const { return region; }
-    CastResult(const GRState *s, const MemRegion* r = 0) : state(s), region(r){}
+    CastResult(const ProgramState *s, const MemRegion* r = 0) : state(s), region(r){}
   };
 
   const ElementRegion *GetElementZeroRegion(const MemRegion *R, QualType T);
@@ -196,7 +196,7 @@ public:
 
   /// enterStackFrame - Let the StoreManager to do something when execution
   /// engine is about to execute into a callee.
-  virtual StoreRef enterStackFrame(const GRState *state,
+  virtual StoreRef enterStackFrame(const ProgramState *state,
                                    const StackFrameContext *frame);
 
   virtual void print(Store store, raw_ostream &Out,
@@ -271,9 +271,9 @@ public:
   virtual bool iterSubRegions(const MemRegion *region, Visitor& V) const = 0;
 };
 
-// FIXME: Do we need to pass GRStateManager anymore?
-StoreManager *CreateRegionStoreManager(GRStateManager& StMgr);
-StoreManager *CreateFieldsOnlyRegionStoreManager(GRStateManager& StMgr);
+// FIXME: Do we need to pass ProgramStateManager anymore?
+StoreManager *CreateRegionStoreManager(ProgramStateManager& StMgr);
+StoreManager *CreateFieldsOnlyRegionStoreManager(ProgramStateManager& StMgr);
 
 } // end GR namespace
 

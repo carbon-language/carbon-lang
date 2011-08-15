@@ -27,10 +27,10 @@ class UndefBranchChecker : public Checker<check::BranchCondition> {
   mutable llvm::OwningPtr<BuiltinBug> BT;
 
   struct FindUndefExpr {
-    GRStateManager& VM;
-    const GRState *St;
+    ProgramStateManager& VM;
+    const ProgramState *St;
 
-    FindUndefExpr(GRStateManager& V, const GRState *S) : VM(V), St(S) {}
+    FindUndefExpr(ProgramStateManager& V, const ProgramState *S) : VM(V), St(S) {}
 
     const Expr *FindExpr(const Expr *Ex) {
       if (!MatchesCriteria(Ex))
@@ -59,7 +59,7 @@ public:
 void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
                                               BranchNodeBuilder &Builder,
                                               ExprEngine &Eng) const {
-  const GRState *state = Builder.getState();
+  const ProgramState *state = Builder.getState();
   SVal X = state->getSVal(Condition);
   if (X.isUndef()) {
     ExplodedNode *N = Builder.generateNode(state, true);
@@ -89,7 +89,7 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
       // had to already be undefined.
       ExplodedNode *PrevN = *N->pred_begin();
       ProgramPoint P = PrevN->getLocation();
-      const GRState *St = N->getState();
+      const ProgramState *St = N->getState();
 
       if (PostStmt *PS = dyn_cast<PostStmt>(&P))
         if (PS->getStmt() == Ex)

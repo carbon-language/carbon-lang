@@ -20,8 +20,8 @@
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/ImmutableMap.h"
@@ -196,7 +196,7 @@ class RegionStoreManager : public StoreManager {
   RegionBindings::Factory RBFactory;
 
 public:
-  RegionStoreManager(GRStateManager& mgr, const RegionStoreFeatures &f)
+  RegionStoreManager(ProgramStateManager& mgr, const RegionStoreFeatures &f)
     : StoreManager(mgr),
       Features(f),
       RBFactory(mgr.getAllocator()) {}
@@ -376,7 +376,7 @@ public: // Part of public interface to class.
   StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
                               SymbolReaper& SymReaper);
 
-  StoreRef enterStackFrame(const GRState *state,
+  StoreRef enterStackFrame(const ProgramState *state,
                            const StackFrameContext *frame);
 
   //===------------------------------------------------------------------===//
@@ -384,7 +384,7 @@ public: // Part of public interface to class.
   //===------------------------------------------------------------------===//
 
   // FIXME: This method will soon be eliminated; see the note in Store.h.
-  DefinedOrUnknownSVal getSizeInElements(const GRState *state,
+  DefinedOrUnknownSVal getSizeInElements(const ProgramState *state,
                                          const MemRegion* R, QualType EleTy);
 
   //===------------------------------------------------------------------===//
@@ -419,12 +419,12 @@ public: // Part of public interface to class.
 // RegionStore creation.
 //===----------------------------------------------------------------------===//
 
-StoreManager *ento::CreateRegionStoreManager(GRStateManager& StMgr) {
+StoreManager *ento::CreateRegionStoreManager(ProgramStateManager& StMgr) {
   RegionStoreFeatures F = maximal_features_tag();
   return new RegionStoreManager(StMgr, F);
 }
 
-StoreManager *ento::CreateFieldsOnlyRegionStoreManager(GRStateManager &StMgr) {
+StoreManager *ento::CreateFieldsOnlyRegionStoreManager(ProgramStateManager &StMgr) {
   RegionStoreFeatures F = minimal_features_tag();
   F.enableFields(true);
   return new RegionStoreManager(StMgr, F);
@@ -480,7 +480,7 @@ protected:
   const bool includeGlobals;
 
 public:
-  ClusterAnalysis(RegionStoreManager &rm, GRStateManager &StateMgr,
+  ClusterAnalysis(RegionStoreManager &rm, ProgramStateManager &StateMgr,
                   RegionBindings b, const bool includeGlobals)
     : RM(rm), Ctx(StateMgr.getContext()),
       svalBuilder(StateMgr.getSValBuilder()),
@@ -593,7 +593,7 @@ class invalidateRegionsWorker : public ClusterAnalysis<invalidateRegionsWorker>
   StoreManager::InvalidatedRegions *Regions;
 public:
   invalidateRegionsWorker(RegionStoreManager &rm,
-                          GRStateManager &stateMgr,
+                          ProgramStateManager &stateMgr,
                           RegionBindings b,
                           const Expr *ex, unsigned count,
                           StoreManager::InvalidatedSymbols &is,
@@ -766,7 +766,7 @@ StoreRef RegionStoreManager::invalidateRegions(Store store,
 // Extents for regions.
 //===----------------------------------------------------------------------===//
 
-DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const GRState *state,
+DefinedOrUnknownSVal RegionStoreManager::getSizeInElements(const ProgramState *state,
                                                            const MemRegion *R,
                                                            QualType EleTy) {
   SVal Size = cast<SubRegion>(R)->getExtent(svalBuilder);
@@ -1644,7 +1644,7 @@ class removeDeadBindingsWorker :
   const StackFrameContext *CurrentLCtx;
 
 public:
-  removeDeadBindingsWorker(RegionStoreManager &rm, GRStateManager &stateMgr,
+  removeDeadBindingsWorker(RegionStoreManager &rm, ProgramStateManager &stateMgr,
                            RegionBindings b, SymbolReaper &symReaper,
                            const StackFrameContext *LCtx)
     : ClusterAnalysis<removeDeadBindingsWorker>(rm, stateMgr, b,
@@ -1819,7 +1819,7 @@ StoreRef RegionStoreManager::removeDeadBindings(Store store,
 }
 
 
-StoreRef RegionStoreManager::enterStackFrame(const GRState *state,
+StoreRef RegionStoreManager::enterStackFrame(const ProgramState *state,
                                              const StackFrameContext *frame) {
   FunctionDecl const *FD = cast<FunctionDecl>(frame->getDecl());
   FunctionDecl::param_const_iterator PI = FD->param_begin(), 

@@ -12,17 +12,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/AST/CharUnits.h"
 
 using namespace clang;
 using namespace ento;
 
-StoreManager::StoreManager(GRStateManager &stateMgr)
+StoreManager::StoreManager(ProgramStateManager &stateMgr)
   : svalBuilder(stateMgr.getSValBuilder()), StateMgr(stateMgr),
     MRMgr(svalBuilder.getRegionManager()), Ctx(stateMgr.getContext()) {}
 
-StoreRef StoreManager::enterStackFrame(const GRState *state,
+StoreRef StoreManager::enterStackFrame(const ProgramState *state,
                                        const StackFrameContext *frame) {
   return StoreRef(state->getStore(), *this);
 }

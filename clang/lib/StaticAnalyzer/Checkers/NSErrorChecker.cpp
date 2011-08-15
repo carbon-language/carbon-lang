@@ -19,7 +19,7 @@
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Decl.h"
@@ -166,18 +166,18 @@ typedef llvm::ImmutableMap<SymbolRef, unsigned> ErrorOutFlag;
 namespace clang {
 namespace ento {
   template <>
-  struct GRStateTrait<NSErrorOut> : public GRStatePartialTrait<ErrorOutFlag> {  
+  struct ProgramStateTrait<NSErrorOut> : public ProgramStatePartialTrait<ErrorOutFlag> {  
     static void *GDMIndex() { static int index = 0; return &index; }
   };
   template <>
-  struct GRStateTrait<CFErrorOut> : public GRStatePartialTrait<ErrorOutFlag> {  
+  struct ProgramStateTrait<CFErrorOut> : public ProgramStatePartialTrait<ErrorOutFlag> {  
     static void *GDMIndex() { static int index = 0; return &index; }
   };
 }
 }
 
 template <typename T>
-static bool hasFlag(SVal val, const GRState *state) {
+static bool hasFlag(SVal val, const ProgramState *state) {
   if (SymbolRef sym = val.getAsSymbol())
     if (const unsigned *attachedFlags = state->get<T>(sym))
       return *attachedFlags;
@@ -185,7 +185,7 @@ static bool hasFlag(SVal val, const GRState *state) {
 }
 
 template <typename T>
-static void setFlag(const GRState *state, SVal val, CheckerContext &C) {
+static void setFlag(const ProgramState *state, SVal val, CheckerContext &C) {
   // We tag the symbol that the SVal wraps.
   if (SymbolRef sym = val.getAsSymbol())
     C.addTransition(state->set<T>(sym, true));
@@ -214,7 +214,7 @@ void NSOrCFErrorDerefChecker::checkLocation(SVal loc, bool isLoad,
     return;
 
   ASTContext &Ctx = C.getASTContext();
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
 
   // If we are loading from NSError**/CFErrorRef* parameter, mark the resulting
   // SVal so that we can later check it when handling the
@@ -247,7 +247,7 @@ void NSOrCFErrorDerefChecker::checkEvent(ImplicitNullDerefEvent event) const {
     return;
 
   SVal loc = event.Location;
-  const GRState *state = event.SinkNode->getState();
+  const ProgramState *state = event.SinkNode->getState();
   BugReporter &BR = *event.BR;
 
   bool isNSError = hasFlag<NSErrorOut>(loc, state);

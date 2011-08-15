@@ -44,7 +44,7 @@ void FixedAddressChecker::checkPreStmt(const BinaryOperator *B,
   if (!T->isPointerType())
     return;
 
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
 
   SVal RV = state->getSVal(B->getRHS());
 

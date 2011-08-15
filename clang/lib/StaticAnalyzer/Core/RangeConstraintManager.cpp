@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines RangeConstraintManager, a class that tracks simple
-//  equality and inequality constraints on symbolic values of GRState.
+//  equality and inequality constraints on symbolic values of ProgramState.
 //
 //===----------------------------------------------------------------------===//
 
 #include "SimpleConstraintManager.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/TransferFuncs.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -196,8 +196,8 @@ typedef llvm::ImmutableMap<SymbolRef,RangeSet> ConstraintRangeTy;
 namespace clang {
 namespace ento {
 template<>
-struct GRStateTrait<ConstraintRange>
-  : public GRStatePartialTrait<ConstraintRangeTy> {
+struct ProgramStateTrait<ConstraintRange>
+  : public ProgramStatePartialTrait<ConstraintRangeTy> {
   static inline void *GDMIndex() { return &ConstraintRangeIndex; }
 };
 }
@@ -205,46 +205,46 @@ struct GRStateTrait<ConstraintRange>
 
 namespace {
 class RangeConstraintManager : public SimpleConstraintManager{
-  RangeSet GetRange(const GRState *state, SymbolRef sym);
+  RangeSet GetRange(const ProgramState *state, SymbolRef sym);
 public:
   RangeConstraintManager(SubEngine &subengine)
     : SimpleConstraintManager(subengine) {}
 
-  const GRState *assumeSymNE(const GRState *state, SymbolRef sym,
+  const ProgramState *assumeSymNE(const ProgramState *state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymEQ(const GRState *state, SymbolRef sym,
+  const ProgramState *assumeSymEQ(const ProgramState *state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymLT(const GRState *state, SymbolRef sym,
+  const ProgramState *assumeSymLT(const ProgramState *state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymGT(const GRState *state, SymbolRef sym,
+  const ProgramState *assumeSymGT(const ProgramState *state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymGE(const GRState *state, SymbolRef sym,
+  const ProgramState *assumeSymGE(const ProgramState *state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
-  const GRState *assumeSymLE(const GRState *state, SymbolRef sym,
+  const ProgramState *assumeSymLE(const ProgramState *state, SymbolRef sym,
                              const llvm::APSInt& Int,
                              const llvm::APSInt& Adjustment);
 
-  const llvm::APSInt* getSymVal(const GRState *St, SymbolRef sym) const;
+  const llvm::APSInt* getSymVal(const ProgramState *St, SymbolRef sym) const;
 
   // FIXME: Refactor into SimpleConstraintManager?
-  bool isEqual(const GRState *St, SymbolRef sym, const llvm::APSInt& V) const {
+  bool isEqual(const ProgramState *St, SymbolRef sym, const llvm::APSInt& V) const {
     const llvm::APSInt *i = getSymVal(St, sym);
     return i ? *i == V : false;
   }
 
-  const GRState *removeDeadBindings(const GRState *St, SymbolReaper& SymReaper);
+  const ProgramState *removeDeadBindings(const ProgramState *St, SymbolReaper& SymReaper);
 
-  void print(const GRState *St, raw_ostream &Out,
+  void print(const ProgramState *St, raw_ostream &Out,
              const char* nl, const char *sep);
 
 private:
@@ -253,12 +253,12 @@ private:
 
 } // end anonymous namespace
 
-ConstraintManager* ento::CreateRangeConstraintManager(GRStateManager&,
+ConstraintManager* ento::CreateRangeConstraintManager(ProgramStateManager&,
                                                     SubEngine &subeng) {
   return new RangeConstraintManager(subeng);
 }
 
-const llvm::APSInt* RangeConstraintManager::getSymVal(const GRState *St,
+const llvm::APSInt* RangeConstraintManager::getSymVal(const ProgramState *St,
                                                       SymbolRef sym) const {
   const ConstraintRangeTy::data_type *T = St->get<ConstraintRange>(sym);
   return T ? T->getConcreteValue() : NULL;
@@ -266,8 +266,8 @@ const llvm::APSInt* RangeConstraintManager::getSymVal(const GRState *St,
 
 /// Scan all symbols referenced by the constraints. If the symbol is not alive
 /// as marked in LSymbols, mark it as dead in DSymbols.
-const GRState*
-RangeConstraintManager::removeDeadBindings(const GRState *state,
+const ProgramState*
+RangeConstraintManager::removeDeadBindings(const ProgramState *state,
                                            SymbolReaper& SymReaper) {
 
   ConstraintRangeTy CR = state->get<ConstraintRange>();
@@ -283,7 +283,7 @@ RangeConstraintManager::removeDeadBindings(const GRState *state,
 }
 
 RangeSet
-RangeConstraintManager::GetRange(const GRState *state, SymbolRef sym) {
+RangeConstraintManager::GetRange(const ProgramState *state, SymbolRef sym) {
   if (ConstraintRangeTy::data_type* V = state->get<ConstraintRange>(sym))
     return *V;
 
@@ -306,8 +306,8 @@ RangeConstraintManager::GetRange(const GRState *state, SymbolRef sym) {
 // As an example, the range [UINT_MAX-1, 3) contains five values: UINT_MAX-1,
 // UINT_MAX, 0, 1, and 2.
 
-const GRState*
-RangeConstraintManager::assumeSymNE(const GRState *state, SymbolRef sym,
+const ProgramState*
+RangeConstraintManager::assumeSymNE(const ProgramState *state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   BasicValueFactory &BV = state->getBasicVals();
@@ -323,8 +323,8 @@ RangeConstraintManager::assumeSymNE(const GRState *state, SymbolRef sym,
   return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
 }
 
-const GRState*
-RangeConstraintManager::assumeSymEQ(const GRState *state, SymbolRef sym,
+const ProgramState*
+RangeConstraintManager::assumeSymEQ(const ProgramState *state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   // [Int-Adjustment, Int-Adjustment]
@@ -334,8 +334,8 @@ RangeConstraintManager::assumeSymEQ(const GRState *state, SymbolRef sym,
   return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
 }
 
-const GRState*
-RangeConstraintManager::assumeSymLT(const GRState *state, SymbolRef sym,
+const ProgramState*
+RangeConstraintManager::assumeSymLT(const ProgramState *state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   BasicValueFactory &BV = state->getBasicVals();
@@ -355,8 +355,8 @@ RangeConstraintManager::assumeSymLT(const GRState *state, SymbolRef sym,
   return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
 }
 
-const GRState*
-RangeConstraintManager::assumeSymGT(const GRState *state, SymbolRef sym,
+const ProgramState*
+RangeConstraintManager::assumeSymGT(const ProgramState *state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   BasicValueFactory &BV = state->getBasicVals();
@@ -376,8 +376,8 @@ RangeConstraintManager::assumeSymGT(const GRState *state, SymbolRef sym,
   return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
 }
 
-const GRState*
-RangeConstraintManager::assumeSymGE(const GRState *state, SymbolRef sym,
+const ProgramState*
+RangeConstraintManager::assumeSymGE(const ProgramState *state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   BasicValueFactory &BV = state->getBasicVals();
@@ -398,8 +398,8 @@ RangeConstraintManager::assumeSymGE(const GRState *state, SymbolRef sym,
   return New.isEmpty() ? NULL : state->set<ConstraintRange>(sym, New);
 }
 
-const GRState*
-RangeConstraintManager::assumeSymLE(const GRState *state, SymbolRef sym,
+const ProgramState*
+RangeConstraintManager::assumeSymLE(const ProgramState *state, SymbolRef sym,
                                     const llvm::APSInt& Int,
                                     const llvm::APSInt& Adjustment) {
   BasicValueFactory &BV = state->getBasicVals();
@@ -424,7 +424,7 @@ RangeConstraintManager::assumeSymLE(const GRState *state, SymbolRef sym,
 // Pretty-printing.
 //===------------------------------------------------------------------------===/
 
-void RangeConstraintManager::print(const GRState *St, raw_ostream &Out,
+void RangeConstraintManager::print(const ProgramState *St, raw_ostream &Out,
                                    const char* nl, const char *sep) {
 
   ConstraintRangeTy Ranges = St->get<ConstraintRange>();

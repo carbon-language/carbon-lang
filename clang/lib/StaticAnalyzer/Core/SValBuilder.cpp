@@ -15,7 +15,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SValBuilder.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/BasicValueFactory.h"
 
 using namespace clang;
@@ -162,7 +162,7 @@ DefinedSVal SValBuilder::getBlockPointer(const BlockDecl *block,
 
 //===----------------------------------------------------------------------===//
 
-SVal SValBuilder::evalBinOp(const GRState *state, BinaryOperator::Opcode op,
+SVal SValBuilder::evalBinOp(const ProgramState *state, BinaryOperator::Opcode op,
                             SVal lhs, SVal rhs, QualType type) {
 
   if (lhs.isUndef() || rhs.isUndef())
@@ -190,7 +190,7 @@ SVal SValBuilder::evalBinOp(const GRState *state, BinaryOperator::Opcode op,
   return evalBinOpNN(state, op, cast<NonLoc>(lhs), cast<NonLoc>(rhs), type);
 }
 
-DefinedOrUnknownSVal SValBuilder::evalEQ(const GRState *state,
+DefinedOrUnknownSVal SValBuilder::evalEQ(const ProgramState *state,
                                          DefinedOrUnknownSVal lhs,
                                          DefinedOrUnknownSVal rhs) {
   return cast<DefinedOrUnknownSVal>(evalBinOp(state, BO_EQ, lhs, rhs,

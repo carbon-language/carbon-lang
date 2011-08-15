@@ -186,7 +186,7 @@
 		1AC1A7E71299A285006FBC77 /* GRExprEngineExperimentalChecks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = GRExprEngineExperimentalChecks.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AC1A7E81299A285006FBC77 /* GRExprEngineExperimentalChecks.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = GRExprEngineExperimentalChecks.h; sourceTree = "<group>"; tabWidth = 2; };
 		1AC1A7E91299A285006FBC77 /* GRExprEngineInternalChecks.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = GRExprEngineInternalChecks.h; sourceTree = "<group>"; tabWidth = 2; };
-		1AC1A7EA1299A285006FBC77 /* GRState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = GRState.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1AC1A7EA1299A285006FBC77 /* ProgramState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = ProgramState.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AC1A7EB1299A285006FBC77 /* HTMLDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = HTMLDiagnostics.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AC1A7EC1299A285006FBC77 /* IdempotentOperationChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = IdempotentOperationChecker.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AC1A7ED1299A285006FBC77 /* LLVMConventionsChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = LLVMConventionsChecker.cpp; sourceTree = "<group>"; tabWidth = 2; };
@@ -268,7 +268,7 @@
 		3551068F0E9A857C006A4E44 /* ParsePragma.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ParsePragma.h; path = lib/Parse/ParsePragma.h; sourceTree = "<group>"; tabWidth = 2; };
 		3552E7540E520D80003A8CA5 /* PPCaching.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCaching.cpp; sourceTree = "<group>"; };
 		3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCMac.cpp; path = lib/CodeGen/CGObjCMac.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		3553EB9A0E5F7089007D7359 /* GRStateTrait.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRStateTrait.h; path = clang/Analysis/PathSensitive/GRStateTrait.h; sourceTree = "<group>"; };
+		3553EB9A0E5F7089007D7359 /* ProgramStateTrait.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProgramStateTrait.h; path = clang/Analysis/PathSensitive/ProgramStateTrait.h; sourceTree = "<group>"; };
 		35544B8B0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateInstantiate.cpp; path = lib/Sema/SemaTemplateInstantiate.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaOverload.cpp; path = lib/Sema/SemaOverload.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		3558F76F0E267C9A00A5B0DF /* Store.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Store.h; path = clang/Analysis/PathSensitive/Store.h; sourceTree = "<group>"; };
@@ -276,7 +276,7 @@
 		357EA27C0F2526F300439B60 /* SemaLookup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaLookup.cpp; path = lib/Sema/SemaLookup.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35847BE30CC7DB9000C40FFF /* StmtIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = StmtIterator.h; path = clang/AST/StmtIterator.h; sourceTree = "<group>"; tabWidth = 2; };
 		358D23090E8BEB850003DDCC /* DeclGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = DeclGroup.h; path = clang/AST/DeclGroup.h; sourceTree = "<group>"; tabWidth = 2; };
-		358F514F0E529A87007F2102 /* GRState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRState.h; path = clang/Analysis/PathSensitive/GRState.h; sourceTree = "<group>"; };
+		358F514F0E529A87007F2102 /* ProgramState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProgramState.h; path = clang/Analysis/PathSensitive/ProgramState.h; sourceTree = "<group>"; };
 		3591853E0EFB1088000039AF /* SemaTemplate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplate.cpp; path = lib/Sema/SemaTemplate.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		359378FF0DA486490043B19C /* BugReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BugReporter.h; path = clang/Analysis/PathSensitive/BugReporter.h; sourceTree = "<group>"; };
 		3598EBEB0EDE23EF0070CA16 /* PTHManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTHManager.h; sourceTree = "<group>"; };
@@ -452,7 +452,7 @@
 		BBA5AB611309C2FA000B38F1 /* Environment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Environment.cpp; sourceTree = "<group>"; };
 		BBA5AB621309C2FA000B38F1 /* ExplodedGraph.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExplodedGraph.cpp; sourceTree = "<group>"; };
 		BBA5AB631309C2FA000B38F1 /* FlatStore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FlatStore.cpp; sourceTree = "<group>"; };
-		BBA5AB641309C2FA000B38F1 /* GRState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GRState.cpp; sourceTree = "<group>"; };
+		BBA5AB641309C2FA000B38F1 /* ProgramState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProgramState.cpp; sourceTree = "<group>"; };
 		BBA5AB651309C2FA000B38F1 /* HTMLDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HTMLDiagnostics.cpp; sourceTree = "<group>"; };
 		BBA5AB671309C2FA000B38F1 /* MemRegion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MemRegion.cpp; sourceTree = "<group>"; };
 		BBA5AB681309C2FA000B38F1 /* ObjCMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjCMessage.cpp; sourceTree = "<group>"; };
@@ -856,7 +856,7 @@
 				1AC1A7E71299A285006FBC77 /* GRExprEngineExperimentalChecks.cpp */,
 				1AC1A7E81299A285006FBC77 /* GRExprEngineExperimentalChecks.h */,
 				1AC1A7E91299A285006FBC77 /* GRExprEngineInternalChecks.h */,
-				1AC1A7EA1299A285006FBC77 /* GRState.cpp */,
+				1AC1A7EA1299A285006FBC77 /* ProgramState.cpp */,
 				1AC1A7EB1299A285006FBC77 /* HTMLDiagnostics.cpp */,
 				1AC1A7EC1299A285006FBC77 /* IdempotentOperationChecker.cpp */,
 				1AC1A7ED1299A285006FBC77 /* LLVMConventionsChecker.cpp */,
@@ -1235,7 +1235,7 @@
 				BBA5AB611309C2FA000B38F1 /* Environment.cpp */,
 				BBA5AB621309C2FA000B38F1 /* ExplodedGraph.cpp */,
 				BBA5AB631309C2FA000B38F1 /* FlatStore.cpp */,
-				BBA5AB641309C2FA000B38F1 /* GRState.cpp */,
+				BBA5AB641309C2FA000B38F1 /* ProgramState.cpp */,
 				BBA5AB651309C2FA000B38F1 /* HTMLDiagnostics.cpp */,
 				BBA5AB671309C2FA000B38F1 /* MemRegion.cpp */,
 				BBA5AB681309C2FA000B38F1 /* ObjCMessage.cpp */,
@@ -1340,8 +1340,8 @@
 				DE41211F0D7F1BBE0080F80A /* GRBlockCounter.h */,
 				DE4121230D7F1BBE0080F80A /* GRCoreEngine.h */,
 				DE4121210D7F1BBE0080F80A /* GRExprEngine.h */,
-				358F514F0E529A87007F2102 /* GRState.h */,
-				3553EB9A0E5F7089007D7359 /* GRStateTrait.h */,
+				358F514F0E529A87007F2102 /* ProgramState.h */,
+				3553EB9A0E5F7089007D7359 /* ProgramStateTrait.h */,
 				35F8D0CA0D9B7E8200D91C5E /* GRSimpleAPICheck.h */,
 				DE4121220D7F1BBE0080F80A /* GRTransferFuncs.h */,
 				DE41211D0D7F1BBE0080F80A /* GRWorkList.h */,

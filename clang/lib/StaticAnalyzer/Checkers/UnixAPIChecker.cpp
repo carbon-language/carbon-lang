@@ -73,7 +73,7 @@ void UnixAPIChecker::CheckOpen(CheckerContext &C, const CallExpr *CE) const {
   }
 
   // Look at the 'oflags' argument for the O_CREAT flag.
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
 
   if (CE->getNumArgs() < 2) {
     // The frontend should issue a warning for this case, so this is a sanity
@@ -101,7 +101,7 @@ void UnixAPIChecker::CheckOpen(CheckerContext &C, const CallExpr *CE) const {
   DefinedSVal maskedFlags = cast<DefinedSVal>(maskedFlagsUC);
 
   // Check if maskedFlags is non-zero.
-  const GRState *trueState, *falseState;
+  const ProgramState *trueState, *falseState;
   llvm::tie(trueState, falseState) = state->assume(maskedFlags);
 
   // Only emit an error if the value of 'maskedFlags' is properly
@@ -140,7 +140,7 @@ void UnixAPIChecker::CheckPthreadOnce(CheckerContext &C,
 
   // Check if the first argument is stack allocated.  If so, issue a warning
   // because that's likely to be bad news.
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const MemRegion *R = state->getSVal(CE->getArg(0)).getAsRegion();
   if (!R || !isa<StackSpaceRegion>(R->getMemorySpace()))
     return;
@@ -182,13 +182,13 @@ void UnixAPIChecker::CheckMallocZero(CheckerContext &C,
     return;
 
   // Check if the allocation size is 0.
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   SVal argVal = state->getSVal(CE->getArg(0));
 
   if (argVal.isUnknownOrUndef())
     return;
   
-  const GRState *trueState, *falseState;
+  const ProgramState *trueState, *falseState;
   llvm::tie(trueState, falseState) = state->assume(cast<DefinedSVal>(argVal));
   
   // Is the value perfectly constrained to zero?
@@ -225,7 +225,7 @@ void UnixAPIChecker::CheckMallocZero(CheckerContext &C,
 void UnixAPIChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
   // Get the callee.  All the functions we care about are C functions
   // with simple identifiers.
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   const FunctionDecl *Fn = state->getSVal(Callee).getAsFunctionDecl();
 

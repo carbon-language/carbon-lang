@@ -35,7 +35,7 @@ public:
 
 void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
                                        CheckerContext &C) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   if (state->getSVal(B).isUndef()) {
     // Generate an error node.
     ExplodedNode *N = C.generateSink();

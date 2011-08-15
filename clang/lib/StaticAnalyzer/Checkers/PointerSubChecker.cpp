@@ -39,7 +39,7 @@ void PointerSubChecker::checkPreStmt(const BinaryOperator *B,
   if (B->getOpcode() != BO_Sub)
     return;
 
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   SVal LV = state->getSVal(B->getLHS());
   SVal RV = state->getSVal(B->getRHS());
 

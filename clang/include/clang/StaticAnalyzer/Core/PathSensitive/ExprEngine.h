@@ -19,7 +19,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SubEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CoreEngine.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/TransferFuncs.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
@@ -49,7 +49,7 @@ class ExprEngine : public SubEngine {
   StmtNodeBuilder* Builder;
 
   /// StateMgr - Object that manages the data for all created states.
-  GRStateManager StateMgr;
+  ProgramStateManager StateMgr;
 
   /// SymMgr - Object that manages the symbol information.
   SymbolManager& SymMgr;
@@ -62,7 +62,7 @@ class ExprEngine : public SubEngine {
 
   /// CleanedState - The state for EntryNode "cleaned" of all dead
   ///  variables and symbols (as determined by a liveness analysis).
-  const GRState *CleanedState;
+  const ProgramState *CleanedState;
 
   /// currentStmt - The current block-level statement.
   const Stmt *currentStmt;
@@ -94,7 +94,7 @@ public:
   /// of the function are added into the Dst set, which represent the exit
   /// state of the function call.
   void ExecuteWorkListWithInitialState(const LocationContext *L, unsigned Steps,
-                                       const GRState *InitState, 
+                                       const ProgramState *InitState, 
                                        ExplodedNodeSet &Dst) {
     Engine.ExecuteWorkListWithInitialState(L, Steps, InitState, Dst);
   }
@@ -127,7 +127,7 @@ public:
 
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
-  const GRState *getInitialState(const LocationContext *InitLoc);
+  const ProgramState *getInitialState(const LocationContext *InitLoc);
 
   ExplodedGraph& getGraph() { return G; }
   const ExplodedGraph& getGraph() const { return G; }
@@ -181,21 +181,21 @@ public:
 
   /// evalAssume - Callback function invoked by the ConstraintManager when
   ///  making assumptions about state values.
-  const GRState *processAssume(const GRState *state, SVal cond,bool assumption);
+  const ProgramState *processAssume(const ProgramState *state, SVal cond,bool assumption);
 
-  /// wantsRegionChangeUpdate - Called by GRStateManager to determine if a
+  /// wantsRegionChangeUpdate - Called by ProgramStateManager to determine if a
   ///  region change should trigger a processRegionChanges update.
-  bool wantsRegionChangeUpdate(const GRState *state);
+  bool wantsRegionChangeUpdate(const ProgramState *state);
 
-  /// processRegionChanges - Called by GRStateManager whenever a change is made
+  /// processRegionChanges - Called by ProgramStateManager whenever a change is made
   ///  to the store. Used to update checkers that track region values.
-  const GRState *
-  processRegionChanges(const GRState *state,
+  const ProgramState *
+  processRegionChanges(const ProgramState *state,
                        const StoreManager::InvalidatedSymbols *invalidated,
                        const MemRegion * const *Begin,
                        const MemRegion * const *End);
 
-  virtual GRStateManager& getStateManager() { return StateMgr; }
+  virtual ProgramStateManager& getStateManager() { return StateMgr; }
 
   StoreManager& getStoreManager() { return StateMgr.getStoreManager(); }
 
@@ -224,7 +224,7 @@ public:
 
 public:
   ExplodedNode *MakeNode(ExplodedNodeSet &Dst, const Stmt *S, 
-                         ExplodedNode *Pred, const GRState *St,
+                         ExplodedNode *Pred, const ProgramState *St,
                          ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                          const ProgramPointTag *tag = 0);
 
@@ -391,35 +391,35 @@ public:
 
 public:
 
-  SVal evalBinOp(const GRState *state, BinaryOperator::Opcode op,
+  SVal evalBinOp(const ProgramState *state, BinaryOperator::Opcode op,
                  NonLoc L, NonLoc R, QualType T) {
     return svalBuilder.evalBinOpNN(state, op, L, R, T);
   }
 
-  SVal evalBinOp(const GRState *state, BinaryOperator::Opcode op,
+  SVal evalBinOp(const ProgramState *state, BinaryOperator::Opcode op,
                  NonLoc L, SVal R, QualType T) {
     return R.isValid() ? svalBuilder.evalBinOpNN(state,op,L, cast<NonLoc>(R), T) : R;
   }
 
-  SVal evalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
+  SVal evalBinOp(const ProgramState *ST, BinaryOperator::Opcode Op,
                  SVal LHS, SVal RHS, QualType T) {
     return svalBuilder.evalBinOp(ST, Op, LHS, RHS, T);
   }
   
 protected:
   void evalObjCMessage(ExplodedNodeSet &Dst, const ObjCMessage &msg, 
-                       ExplodedNode *Pred, const GRState *state) {
+                       ExplodedNode *Pred, const ProgramState *state) {
     assert (Builder && "StmtNodeBuilder must be defined.");
     getTF().evalObjCMessage(Dst, *this, *Builder, msg, Pred, state);
   }
 
-  const GRState *MarkBranch(const GRState *St, const Stmt *Terminator,
+  const ProgramState *MarkBranch(const ProgramState *St, const Stmt *Terminator,
                             bool branchTaken);
 
   /// evalBind - Handle the semantics of binding a value to a specific location.
   ///  This method is used by evalStore, VisitDeclStmt, and others.
   void evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE, ExplodedNode *Pred,
-                const GRState *St, SVal location, SVal Val,
+                const ProgramState *St, SVal location, SVal Val,
                 bool atDeclInit = false);
 
 public:
@@ -430,23 +430,23 @@ public:
   // same as state->getLValue(Ex).
   /// Simulate a read of the result of Ex.
   void evalLoad(ExplodedNodeSet &Dst, const Expr *Ex, ExplodedNode *Pred,
-                const GRState *St, SVal location, const ProgramPointTag *tag = 0,
+                const ProgramState *St, SVal location, const ProgramPointTag *tag = 0,
                 QualType LoadTy = QualType());
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
   void evalStore(ExplodedNodeSet &Dst, const Expr *AssignE, const Expr *StoreE,
-                 ExplodedNode *Pred, const GRState *St, SVal TargetLV, SVal Val,
+                 ExplodedNode *Pred, const ProgramState *St, SVal TargetLV, SVal Val,
                  const ProgramPointTag *tag = 0);
 private:
   void evalLoadCommon(ExplodedNodeSet &Dst, const Expr *Ex, ExplodedNode *Pred,
-                      const GRState *St, SVal location, const ProgramPointTag *tag,
+                      const ProgramState *St, SVal location, const ProgramPointTag *tag,
                       QualType LoadTy);
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
   void evalLocation(ExplodedNodeSet &Dst, const Stmt *S, ExplodedNode *Pred,
-                    const GRState *St, SVal location,
+                    const ProgramState *St, SVal location,
                     const ProgramPointTag *tag, bool isLoad);
 
   bool InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, ExplodedNode *Pred);

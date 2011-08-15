@@ -14,7 +14,7 @@
 
 #include "SimpleConstraintManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 
 namespace clang {
 
@@ -56,7 +56,7 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
   return true;
 }
 
-const GRState *SimpleConstraintManager::assume(const GRState *state,
+const ProgramState *SimpleConstraintManager::assume(const ProgramState *state,
                                                DefinedSVal Cond,
                                                bool Assumption) {
   if (isa<NonLoc>(Cond))
@@ -65,13 +65,13 @@ const GRState *SimpleConstraintManager::assume(const GRState *state,
     return assume(state, cast<Loc>(Cond), Assumption);
 }
 
-const GRState *SimpleConstraintManager::assume(const GRState *state, Loc cond,
+const ProgramState *SimpleConstraintManager::assume(const ProgramState *state, Loc cond,
                                                bool assumption) {
   state = assumeAux(state, cond, assumption);
   return SU.processAssume(state, cond, assumption);
 }
 
-const GRState *SimpleConstraintManager::assumeAux(const GRState *state,
+const ProgramState *SimpleConstraintManager::assumeAux(const ProgramState *state,
                                                   Loc Cond, bool Assumption) {
 
   BasicValueFactory &BasicVals = state->getBasicVals();
@@ -113,7 +113,7 @@ const GRState *SimpleConstraintManager::assumeAux(const GRState *state,
   } // end switch
 }
 
-const GRState *SimpleConstraintManager::assume(const GRState *state,
+const ProgramState *SimpleConstraintManager::assume(const ProgramState *state,
                                                NonLoc cond,
                                                bool assumption) {
   state = assumeAux(state, cond, assumption);
@@ -135,7 +135,7 @@ static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
   }
 }
 
-const GRState *SimpleConstraintManager::assumeAux(const GRState *state,
+const ProgramState *SimpleConstraintManager::assumeAux(const ProgramState *state,
                                                   NonLoc Cond,
                                                   bool Assumption) {
 
@@ -202,7 +202,7 @@ const GRState *SimpleConstraintManager::assumeAux(const GRState *state,
   } // end switch
 }
 
-const GRState *SimpleConstraintManager::assumeSymRel(const GRState *state,
+const ProgramState *SimpleConstraintManager::assumeSymRel(const ProgramState *state,
                                                      const SymExpr *LHS,
                                                      BinaryOperator::Opcode op,
                                                      const llvm::APSInt& Int) {
@@ -256,7 +256,7 @@ const GRState *SimpleConstraintManager::assumeSymRel(const GRState *state,
   // be of the same type as the symbol, which is not always correct. Really the
   // comparisons should be performed using the Int's type, then mapped back to
   // the symbol's range of values.
-  GRStateManager &StateMgr = state->getStateManager();
+  ProgramStateManager &StateMgr = state->getStateManager();
   ASTContext &Ctx = StateMgr.getContext();
 
   QualType T = Sym->getType(Ctx);

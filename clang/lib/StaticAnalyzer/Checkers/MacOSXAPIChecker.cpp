@@ -20,7 +20,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -56,7 +56,7 @@ void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
 
   // Check if the first argument is stack allocated.  If so, issue a warning
   // because that's likely to be bad news.
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const MemRegion *R = state->getSVal(CE->getArg(0)).getAsRegion();
   if (!R || !isa<StackSpaceRegion>(R->getMemorySpace()))
     return;
@@ -94,7 +94,7 @@ void MacOSXAPIChecker::checkPreStmt(const CallExpr *CE,
                                     CheckerContext &C) const {
   // FIXME: This sort of logic is common to several checkers, including
   // UnixAPIChecker, PthreadLockChecker, and CStringChecker.  Should refactor.
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   const FunctionDecl *Fn = state->getSVal(Callee).getAsFunctionDecl();
 

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/SValBuilder.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 
 using namespace clang;
 using namespace ento;
@@ -25,22 +25,22 @@ protected:
 
 public:
   SimpleSValBuilder(llvm::BumpPtrAllocator &alloc, ASTContext &context,
-                    GRStateManager &stateMgr)
+                    ProgramStateManager &stateMgr)
                     : SValBuilder(alloc, context, stateMgr) {}
   virtual ~SimpleSValBuilder() {}
 
   virtual SVal evalMinus(NonLoc val);
   virtual SVal evalComplement(NonLoc val);
-  virtual SVal evalBinOpNN(const GRState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpNN(const ProgramState *state, BinaryOperator::Opcode op,
                            NonLoc lhs, NonLoc rhs, QualType resultTy);
-  virtual SVal evalBinOpLL(const GRState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpLL(const ProgramState *state, BinaryOperator::Opcode op,
                            Loc lhs, Loc rhs, QualType resultTy);
-  virtual SVal evalBinOpLN(const GRState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpLN(const ProgramState *state, BinaryOperator::Opcode op,
                            Loc lhs, NonLoc rhs, QualType resultTy);
 
   /// getKnownValue - evaluates a given SVal. If the SVal has only one possible
   ///  (integer) value, that value is returned. Otherwise, returns NULL.
-  virtual const llvm::APSInt *getKnownValue(const GRState *state, SVal V);
+  virtual const llvm::APSInt *getKnownValue(const ProgramState *state, SVal V);
   
   SVal MakeSymIntVal(const SymExpr *LHS, BinaryOperator::Opcode op,
                      const llvm::APSInt &RHS, QualType resultTy);
@@ -49,7 +49,7 @@ public:
 
 SValBuilder *ento::createSimpleSValBuilder(llvm::BumpPtrAllocator &alloc,
                                            ASTContext &context,
-                                           GRStateManager &stateMgr) {
+                                           ProgramStateManager &stateMgr) {
   return new SimpleSValBuilder(alloc, context, stateMgr);
 }
 
@@ -270,7 +270,7 @@ SVal SimpleSValBuilder::MakeSymIntVal(const SymExpr *LHS,
   return makeNonLoc(LHS, op, RHS, resultTy);
 }
 
-SVal SimpleSValBuilder::evalBinOpNN(const GRState *state,
+SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
                                   BinaryOperator::Opcode op,
                                   NonLoc lhs, NonLoc rhs,
                                   QualType resultTy)  {
@@ -539,7 +539,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const GRState *state,
 }
 
 // FIXME: all this logic will change if/when we have MemRegion::getLocation().
-SVal SimpleSValBuilder::evalBinOpLL(const GRState *state,
+SVal SimpleSValBuilder::evalBinOpLL(const ProgramState *state,
                                   BinaryOperator::Opcode op,
                                   Loc lhs, Loc rhs,
                                   QualType resultTy) {
@@ -836,7 +836,7 @@ SVal SimpleSValBuilder::evalBinOpLL(const GRState *state,
   }
 }
 
-SVal SimpleSValBuilder::evalBinOpLN(const GRState *state,
+SVal SimpleSValBuilder::evalBinOpLN(const ProgramState *state,
                                   BinaryOperator::Opcode op,
                                   Loc lhs, NonLoc rhs, QualType resultTy) {
   
@@ -930,7 +930,7 @@ SVal SimpleSValBuilder::evalBinOpLN(const GRState *state,
   return UnknownVal();  
 }
 
-const llvm::APSInt *SimpleSValBuilder::getKnownValue(const GRState *state,
+const llvm::APSInt *SimpleSValBuilder::getKnownValue(const ProgramState *state,
                                                    SVal V) {
   if (V.isUnknownOrUndef())
     return NULL;

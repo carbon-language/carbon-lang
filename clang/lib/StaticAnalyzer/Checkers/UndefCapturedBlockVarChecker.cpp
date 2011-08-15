@@ -55,7 +55,7 @@ UndefCapturedBlockVarChecker::checkPostStmt(const BlockExpr *BE,
   if (!BE->getBlockDecl()->hasCaptures())
     return;
 
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const BlockDataRegion *R =
     cast<BlockDataRegion>(state->getSVal(BE).getAsRegion());
 

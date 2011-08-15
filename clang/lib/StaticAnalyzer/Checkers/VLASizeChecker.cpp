@@ -49,7 +49,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
 
   // FIXME: Handle multi-dimensional VLAs.
   const Expr *SE = VLA->getSizeExpr();
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   SVal sizeV = state->getSVal(SE);
 
   if (sizeV.isUndef()) {
@@ -78,7 +78,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   // Check if the size is zero.
   DefinedSVal sizeD = cast<DefinedSVal>(sizeV);
 
-  const GRState *stateNotZero, *stateZero;
+  const ProgramState *stateNotZero, *stateZero;
   llvm::tie(stateNotZero, stateZero) = state->assume(sizeD);
 
   if (stateZero && !stateNotZero) {

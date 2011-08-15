@@ -44,7 +44,7 @@ void CastSizeChecker::checkPreStmt(const CastExpr *CE,CheckerContext &C) const {
   if (ToPointeeTy->isIncompleteType())
     return;
 
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const MemRegion *R = state->getSVal(E).getAsRegion();
   if (R == 0)
     return;

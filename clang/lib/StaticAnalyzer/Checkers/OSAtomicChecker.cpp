@@ -33,7 +33,7 @@ private:
 }
 
 bool OSAtomicChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);
 
@@ -92,7 +92,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
   
   // Load 'theValue'.
   ExprEngine &Engine = C.getEngine();
-  const GRState *state = C.getState();
+  const ProgramState *state = C.getState();
   ExplodedNodeSet Tmp;
   SVal location = state->getSVal(theValueExpr);
   // Here we should use the value type of the region as the load type, because
@@ -123,7 +123,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
        I != E; ++I) {
 
     ExplodedNode *N = *I;
-    const GRState *stateLoad = N->getState();
+    const ProgramState *stateLoad = N->getState();
 
     // Use direct bindings from the environment since we are forcing a load
     // from a location that the Environment would typically not be used
@@ -148,7 +148,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
     DefinedOrUnknownSVal Cmp =
       svalBuilder.evalEQ(stateLoad,theValueVal,oldValueVal);
 
-    const GRState *stateEqual = stateLoad->assume(Cmp, true);
+    const ProgramState *stateEqual = stateLoad->assume(Cmp, true);
 
     // Were they equal?
     if (stateEqual) {
@@ -178,7 +178,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
       for (ExplodedNodeSet::iterator I2 = TmpStore.begin(),
            E2 = TmpStore.end(); I2 != E2; ++I2) {
         ExplodedNode *predNew = *I2;
-        const GRState *stateNew = predNew->getState();
+        const ProgramState *stateNew = predNew->getState();
         // Check for 'void' return type if we have a bogus function prototype.
         SVal Res = UnknownVal();
         QualType T = CE->getType();
@@ -189,7 +189,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
     }
 
     // Were they not equal?
-    if (const GRState *stateNotEqual = stateLoad->assume(Cmp, false)) {
+    if (const ProgramState *stateNotEqual = stateLoad->assume(Cmp, false)) {
       // Check for 'void' return type if we have a bogus function prototype.
       SVal Res = UnknownVal();
       QualType T = CE->getType();
