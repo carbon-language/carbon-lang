@@ -781,7 +781,6 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
     case options::OPT_fapple_kext:
       DAL->append(A);
       DAL->AddFlagArg(A, Opts.getOption(options::OPT_static));
-      DAL->AddFlagArg(A, Opts.getOption(options::OPT_static));
       break;
 
     case options::OPT_dependency_file:
