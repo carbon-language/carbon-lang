@@ -627,25 +627,6 @@ class AI3ldstidxT<bits<4> op, bit isLoad, dag oops, dag iops,
   let Inst{7-4}   = op;
 }
 
-class AI3stridx<bits<4> op, bit isByte, bit isPre, dag oops, dag iops,
-                IndexMode im, Format f, InstrItinClass itin, string opc,
-                string asm, string cstr, list<dag> pattern>
-  : AI2ldstidx<0, isByte, isPre, oops, iops, im, f, itin, opc, asm, cstr,
-               pattern> {
-  // AM3 store w/ two operands: (GPR, am3offset)
-  bits<14> offset;
-  bits<4> Rt;
-  bits<4> Rn;
-  let Inst{27-25} = 0b000;
-  let Inst{23}    = offset{8};
-  let Inst{22}    = offset{9};
-  let Inst{19-16} = Rn;
-  let Inst{15-12} = Rt;           // Rt
-  let Inst{11-8}  = offset{7-4};  // imm7_4/zero
-  let Inst{7-4}   = op;
-  let Inst{3-0}   = offset{3-0};  // imm3_0/Rm
-}
-
 // stores
 class AI3str<bits<4> op, dag oops, dag iops, Format f, InstrItinClass itin,
              string opc, string asm, list<dag> pattern>
@@ -667,20 +648,6 @@ class AI3str<bits<4> op, dag oops, dag iops, Format f, InstrItinClass itin,
   let DecoderMethod = "DecodeAddrMode3Instruction";
 }
 
-// Pre-indexed stores
-class AI3sthpr<dag oops, dag iops, Format f, InstrItinClass itin,
-               string opc, string asm, string cstr, list<dag> pattern>
-  : I<oops, iops, AddrMode3, 4, IndexModePre, f, itin,
-      opc, asm, cstr, pattern> {
-  let Inst{4}     = 1;
-  let Inst{5}     = 1; // H bit
-  let Inst{6}     = 0; // S bit
-  let Inst{7}     = 1;
-  let Inst{20}    = 0; // L bit
-  let Inst{21}    = 1; // W bit
-  let Inst{24}    = 1; // P bit
-  let Inst{27-25} = 0b000;
-}
 // addrmode4 instructions
 class AXI4<dag oops, dag iops, IndexMode im, Format f, InstrItinClass itin,
            string asm, string cstr, list<dag> pattern>
