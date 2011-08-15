@@ -42,3 +42,46 @@ entry:
 ; CHECK: store volatile i32 4, i32* null
 ; CHECK: ret
 }
+
+; Check store before unreachable.
+define void @test4(i1 %C, i32* %P) {
+; CHECK: @test4
+; CHECK: entry:
+; CHECK-NEXT: br i1 %C
+entry:
+  br i1 %C, label %T, label %F
+T:
+  store volatile i32 0, i32* %P
+  unreachable
+F:
+  ret void
+}
+
+; Check cmpxchg before unreachable.
+define void @test5(i1 %C, i32* %P) {
+; CHECK: @test5
+; CHECK: entry:
+; CHECK-NEXT: br i1 %C
+entry:
+  br i1 %C, label %T, label %F
+T:
+  cmpxchg volatile i32* %P, i32 0, i32 1 seq_cst
+  unreachable
+F:
+  ret void
+}
+
+; Check atomicrmw before unreachable.
+define void @test6(i1 %C, i32* %P) {
+; CHECK: @test6
+; CHECK: entry:
+; CHECK-NEXT: br i1 %C
+entry:
+  br i1 %C, label %T, label %F
+T:
+  atomicrmw volatile xchg i32* %P, i32 0 seq_cst
+  unreachable
+F:
+  ret void
+}
+

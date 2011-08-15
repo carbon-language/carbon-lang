@@ -2244,18 +2244,34 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
   while (UI != BB->begin()) {
     BasicBlock::iterator BBI = UI;
     --BBI;
-    // Do not delete instructions that can have side effects, like calls
-    // (which may never return) and volatile loads and stores.
+    // Do not delete instructions that can have side effects which might cause
+    // the unreachable to not be reachable; specifically, calls and volatile
+    // operations may have this effect.
     if (isa<CallInst>(BBI) && !isa<DbgInfoIntrinsic>(BBI)) break;
-    
-    if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
-      if (SI->isVolatile())
+
+    if (BBI->mayHaveSideEffects()) {
+      if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
+        if (SI->isVolatile())
+          break;
+      } else if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
+        if (LI->isVolatile())
+          break;
+      } else if (AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(BBI)) {
+        if (RMWI->isVolatile())
+          break;
+      } else if (AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(BBI)) {
+        if (CXI->isVolatile())
+          break;
+      } else if (!isa<FenceInst>(BBI) && !isa<VAArgInst>(BBI) &&
+                 !isa<LandingPadInst>(BBI)) {
         break;
-    
-    if (LoadInst *LI = dyn_cast<LoadInst>(BBI))
-      if (LI->isVolatile())
-        break;
-    
+      }
+      // Note that deleting LandingPad's here is in fact okay, although it
+      // involves a bit of subtle reasoning. If this inst is a LandingPad,
+      // all the predecessors of this block will be the unwind edges of Invokes,
+      // and we can therefore guaranteed this block will be erased.
+    }
+
     // Delete this instruction (any uses are guaranteed to be dead)
     if (!BBI->use_empty())
       BBI->replaceAllUsesWith(UndefValue::get(BBI->getType()));
