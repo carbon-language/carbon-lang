@@ -125,6 +125,8 @@ void CodeGenModule::createObjCRuntime() {
 }
 
 void CodeGenModule::Release() {
+  if (DebugInfo)
+    DebugInfo->finalize();
   EmitDeferred();
   EmitCXXGlobalInitFunc();
   EmitCXXGlobalDtorFunc();

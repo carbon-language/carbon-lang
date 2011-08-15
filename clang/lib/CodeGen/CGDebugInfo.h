@@ -152,6 +152,7 @@ class CGDebugInfo {
 public:
   CGDebugInfo(CodeGenModule &CGM);
   ~CGDebugInfo();
+  void finalize() { DBuilder.finalize(); }
 
   /// setLocation - Update the current source location. If \arg loc is
   /// invalid it is ignored.
