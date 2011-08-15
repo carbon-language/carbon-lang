@@ -3609,11 +3609,11 @@ TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
     ICS.Standard.ObjCLifetimeConversionBinding = false;
   } else if (ICS.isUserDefined()) {
     ICS.UserDefined.After.ReferenceBinding = true;
-    ICS.Standard.IsLvalueReference = !isRValRef;
-    ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
-    ICS.Standard.BindsToRvalue = true;
-    ICS.Standard.BindsImplicitObjectArgumentWithoutRefQualifier = false;
-    ICS.Standard.ObjCLifetimeConversionBinding = false;
+    ICS.UserDefined.After.IsLvalueReference = !isRValRef;
+    ICS.UserDefined.After.BindsToFunctionLvalue = T2->isFunctionType();
+    ICS.UserDefined.After.BindsToRvalue = true;
+    ICS.UserDefined.After.BindsImplicitObjectArgumentWithoutRefQualifier = false;
+    ICS.UserDefined.After.ObjCLifetimeConversionBinding = false;
   }
 
   return ICS;

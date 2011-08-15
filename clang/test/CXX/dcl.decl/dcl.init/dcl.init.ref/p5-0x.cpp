@@ -162,3 +162,18 @@ namespace argument_passing {
   }
 
 }
+
+namespace pr10644 {
+  struct string {
+    string(const char* __s);
+  };
+  class map {
+    int& operator[](const string& __k);
+  public:
+    int& operator[](const string&& __k);
+  };
+  void foo() {
+    static map key_map;
+    key_map["line"];
+  }
+}
