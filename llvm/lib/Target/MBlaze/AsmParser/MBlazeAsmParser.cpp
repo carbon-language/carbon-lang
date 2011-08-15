@@ -323,6 +323,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   unsigned ErrorInfo;
 
   switch (MatchInstructionImpl(Operands, Inst, ErrorInfo)) {
+  default: break;
   case Match_Success:
     Out.EmitInstruction(Inst);
     return false;

@@ -2179,7 +2179,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "                       const SmallVectorImpl<MCParsedAsmOperand*> "
      << "&Operands);\n";
   OS << "  bool MnemonicIsValid(StringRef Mnemonic);\n";
-  OS << "  MatchResultTy MatchInstructionImpl(\n";
+  OS << "  unsigned MatchInstructionImpl(\n";
   OS << "    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
   OS << "    MCInst &Inst, unsigned &ErrorInfo);\n";
 
@@ -2321,7 +2321,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "}\n\n";
 
   // Finally, build the match function.
-  OS << Target.getName() << ClassName << "::MatchResultTy "
+  OS << "unsigned "
      << Target.getName() << ClassName << "::\n"
      << "MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
      << " &Operands,\n";
@@ -2348,7 +2348,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  }\n\n";
 
   OS << "  // Some state to try to produce better error messages.\n";
-  OS << "  bool HadMatchOtherThanFeatures = false;\n\n";
+  OS << "  bool HadMatchOtherThanFeatures = false;\n";
+  OS << "  unsigned RetCode = Match_InvalidOperand;\n";
   OS << "  // Set ErrorInfo to the operand that mismatches if it is\n";
   OS << "  // wrong for all instances of the instruction.\n";
   OS << "  ErrorInfo = ~0U;\n";
@@ -2404,6 +2405,17 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "      return Match_ConversionFail;\n";
   OS << "\n";
 
+  // Verify the instruction with the target-specific match predicate function.
+  OS << "    // We have a potential match. Check the target predicate to\n"
+     << "    // handle any context sensitive constraints.\n"
+     << "    unsigned MatchResult;\n"
+     << "    if ((MatchResult = checkTargetMatchPredicate(Inst)) !="
+     << " Match_Success) {\n"
+     << "      Inst.clear();\n"
+     << "      RetCode = MatchResult;\n"
+     << "      continue;\n"
+     << "    }\n\n";
+
   // Call the post-processing function, if used.
   std::string InsnCleanupFn =
     AsmParser->getValueAsString("AsmParserInstCleanup");
@@ -2415,7 +2427,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "  // Okay, we had no match.  Try to return a useful error code.\n";
   OS << "  if (HadMatchOtherThanFeatures) return Match_MissingFeature;\n";
-  OS << "  return Match_InvalidOperand;\n";
+  OS << "  return RetCode;\n";
   OS << "}\n\n";
 
   if (Info.OperandMatchInfo.size())

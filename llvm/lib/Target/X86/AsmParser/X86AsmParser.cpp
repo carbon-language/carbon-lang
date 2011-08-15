@@ -981,6 +981,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
 
   // First, try a direct match.
   switch (MatchInstructionImpl(Operands, Inst, OrigErrorInfo)) {
+  default: break;
   case Match_Success:
     Out.EmitInstruction(Inst);
     return false;
@@ -1019,7 +1020,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   // Check for the various suffix matches.
   Tmp[Base.size()] = Suffixes[0];
   unsigned ErrorInfoIgnore;
-  MatchResultTy Match1, Match2, Match3, Match4;
+  unsigned Match1, Match2, Match3, Match4;
   
   Match1 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore);
   Tmp[Base.size()] = Suffixes[1];

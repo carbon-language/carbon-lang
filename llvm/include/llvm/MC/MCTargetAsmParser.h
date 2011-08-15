@@ -18,6 +18,7 @@ class StringRef;
 class SMLoc;
 class AsmToken;
 class MCParsedAsmOperand;
+class MCInst;
 template <typename T> class SmallVectorImpl;
 
 /// MCTargetAsmParser - Generic interface to target specific assembly parsers.
@@ -28,7 +29,8 @@ public:
     Match_InvalidOperand,
     Match_MissingFeature,
     Match_MnemonicFail,
-    Match_Success
+    Match_Success,
+    FIRST_TARGET_MATCH_RESULT_TY
   };
 
 private:
@@ -87,6 +89,12 @@ public:
   MatchAndEmitInstruction(SMLoc IDLoc,
                           SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                           MCStreamer &Out) = 0;
+
+  /// checkTargetMatchPredicate - Validate the instruction match against
+  /// any complex target predicates not expressible via match classes.
+  virtual unsigned checkTargetMatchPredicate(MCInst &Inst) {
+    return Match_Success;
+  }
 
 };
 
