@@ -469,7 +469,7 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
 
     if (!InsertedCmp) {
       BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
-
+      if (isa<LandingPadInst>(InsertPt)) ++InsertPt; // Skip landingpad inst.
       InsertedCmp =
         CmpInst::Create(CI->getOpcode(),
                         CI->getPredicate(),  CI->getOperand(0),
@@ -561,10 +561,13 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
           (DVI->getParent() != VI->getParent() || DT->dominates(DVI, VI))) {
         DEBUG(dbgs() << "Moving Debug Value before :\n" << *DVI << ' ' << *VI);
         DVI->removeFromParent();
-        if (isa<PHINode>(VI))
-          DVI->insertBefore(VI->getParent()->getFirstNonPHI());
-        else
+        if (isa<PHINode>(VI)) {
+          BasicBlock::iterator InsertPt = VI->getParent()->getFirstNonPHI();
+          if (isa<LandingPadInst>(InsertPt)) ++InsertPt;
+          DVI->insertBefore(InsertPt);
+        } else {
           DVI->insertAfter(VI);
+        }
         return true;
       }
 
@@ -1061,7 +1064,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
 
     if (!InsertedTrunc) {
       BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
-
+      if (isa<LandingPadInst>(InsertPt)) ++InsertPt;
       InsertedTrunc = new TruncInst(I, Src->getType(), "", InsertPt);
     }
 
