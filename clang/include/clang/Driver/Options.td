@@ -319,7 +319,7 @@ def fno_gnu89_inline : Flag<"-fno-gnu89-inline">, Group<f_Group>;
 def fgnu_runtime : Flag<"-fgnu-runtime">, Group<f_Group>;
 def fheinous_gnu_extensions : Flag<"-fheinous-gnu-extensions">;
 def filelist : Separate<"-filelist">, Flags<[LinkerInput]>;
-def findirect_virtual_calls : Flag<"-findirect-virtual-calls">, Group<f_Group>;
+def findirect_virtual_calls : Flag<"-findirect-virtual-calls">, Alias<fapple_kext>;
 def finline_functions : Flag<"-finline-functions">, Group<clang_ignored_f_Group>;
 def finline : Flag<"-finline">, Group<clang_ignored_f_Group>;
 def finstrument_functions : Flag<"-finstrument-functions">, Group<f_Group>;
@@ -470,7 +470,7 @@ def Wlarger_than_ : Joined<"-Wlarger-than-">, Alias<Wlarger_than>;
 def Wframe_larger_than : Separate<"-Wframe-larger-than">, Group<clang_ignored_f_Group>;
 def Wframe_larger_than_EQ : Joined<"-Wframe-larger-than=">, Alias<Wframe_larger_than>;
 
-def fterminated_vtables : Flag<"-fterminated-vtables">, Group<f_Group>;
+def fterminated_vtables : Flag<"-fterminated-vtables">, Alias<fapple_kext>;
 def fthreadsafe_statics : Flag<"-fthreadsafe-statics">, Group<f_Group>;
 def ftime_report : Flag<"-ftime-report">, Group<f_Group>;
 def ftrapv : Flag<"-ftrapv">, Group<f_Group>;

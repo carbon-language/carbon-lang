@@ -800,12 +800,6 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
              Opts.getOption(options::OPT_feliminate_unused_debug_symbols));
       break;
 
-    case options::OPT_fterminated_vtables:
-    case options::OPT_findirect_virtual_calls:
-      DAL->AddFlagArg(A, Opts.getOption(options::OPT_fapple_kext));
-      DAL->AddFlagArg(A, Opts.getOption(options::OPT_static));
-      break;
-
     case options::OPT_shared:
       DAL->AddFlagArg(A, Opts.getOption(options::OPT_dynamiclib));
       break;
