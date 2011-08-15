@@ -136,7 +136,13 @@ public:
   void setDotDebugLocOffset(unsigned O)    { DotDebugLocOffset = O; }
   unsigned getDotDebugLocOffset()    const { return DotDebugLocOffset; }
   StringRef getName()                const { return Var.getName(); }
-  unsigned getTag()                  const { return Var.getTag(); }
+  // Translate tag to proper Dwarf tag.  
+  unsigned getTag()                  const { 
+    if (Var.getTag() == dwarf::DW_TAG_arg_variable)
+      return dwarf::DW_TAG_formal_parameter;
+    
+    return dwarf::DW_TAG_variable;
+  }
   bool variableHasComplexAddress()   const {
     assert(Var.Verify() && "Invalid complex DbgVariable!");
     return Var.hasComplexAddress();
