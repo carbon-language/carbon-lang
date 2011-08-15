@@ -271,3 +271,6 @@
 
 # CHECK:        ldrsb   r1, [r0, r0]
 0x01 0x56
+
+# CHECK:        ldrsh   r1, [r0, r0]
+0x01 0x5E
