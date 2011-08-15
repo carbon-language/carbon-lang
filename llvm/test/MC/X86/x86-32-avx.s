@@ -479,6 +479,14 @@
 // CHECK: encoding: [0xc5,0xf9,0x50,0xc2]
           vmovmskpd  %xmm2, %eax
 
+// CHECK: vmovmskps  %ymm2, %eax
+// CHECK: encoding: [0xc5,0xfc,0x50,0xc2]
+          vmovmskps  %ymm2, %eax
+
+// CHECK: vmovmskpd  %ymm2, %eax
+// CHECK: encoding: [0xc5,0xfd,0x50,0xc2]
+          vmovmskpd  %ymm2, %eax
+
 // CHECK: vcmpss  $0, %xmm1, %xmm2, %xmm3
 // CHECK: encoding: [0xc5,0xea,0xc2,0xd9,0x00]
           vcmpeqss   %xmm1, %xmm2, %xmm3
