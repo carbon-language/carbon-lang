@@ -11737,7 +11737,8 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
 
 /// PerformShuffleCombine - Performs several different shuffle combines.
 static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
-                                     TargetLowering::DAGCombinerInfo &DCI) {
+                                     TargetLowering::DAGCombinerInfo &DCI,
+                                     const X86Subtarget *Subtarget) {
   DebugLoc dl = N->getDebugLoc();
   EVT VT = N->getValueType(0);
 
@@ -11746,8 +11747,9 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   if (!DCI.isBeforeLegalize() && !TLI.isTypeLegal(VT.getVectorElementType()))
     return SDValue();
 
-  // Only handle pure VECTOR_SHUFFLE nodes.
-  if (VT.getSizeInBits() == 256 && N->getOpcode() == ISD::VECTOR_SHUFFLE)
+  // Combine 256-bit vector shuffles. This is only profitable when in AVX mode
+  if (Subtarget->hasAVX() && VT.getSizeInBits() == 256 &&
+      N->getOpcode() == ISD::VECTOR_SHUFFLE)
     return PerformShuffleCombine256(N, DAG, DCI);
 
   // Only handle 128 wide vector from here on.
@@ -13220,7 +13222,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::VPERMILPD:
   case X86ISD::VPERMILPDY:
   case X86ISD::VPERM2F128:
-  case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI);
+  case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI,Subtarget);
   }
 
   return SDValue();
