@@ -86,11 +86,15 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
        UI != UE; ++UI) {   // Loop over all of the uses of the alloca
     const User *U = *UI;
     if (const LoadInst *LI = dyn_cast<LoadInst>(U)) {
+      // Note that atomic loads can be transformed; atomic semantics do
+      // not have any meaning for a local alloca.
       if (LI->isVolatile())
         return false;
     } else if (const StoreInst *SI = dyn_cast<StoreInst>(U)) {
       if (SI->getOperand(0) == AI)
         return false;   // Don't allow a store OF the AI, only INTO the AI.
+      // Note that atomic stores can be transformed; atomic semantics do
+      // not have any meaning for a local alloca.
       if (SI->isVolatile())
         return false;
     } else if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
