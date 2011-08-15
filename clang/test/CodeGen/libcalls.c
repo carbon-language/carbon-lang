@@ -24,9 +24,9 @@ void test_sqrt(float a0, double a1, long double a2) {
 // CHECK-YES: declare float @sqrtf(float)
 // CHECK-YES: declare double @sqrt(double)
 // CHECK-YES: declare x86_fp80 @sqrtl(x86_fp80)
-// CHECK-NO: declare float @sqrtf(float) readnone
-// CHECK-NO: declare double @sqrt(double) readnone
-// CHECK-NO: declare x86_fp80 @sqrtl(x86_fp80) readnone
+// CHECK-NO: declare float @sqrtf(float) nounwind readnone
+// CHECK-NO: declare double @sqrt(double) nounwind readnone
+// CHECK-NO: declare x86_fp80 @sqrtl(x86_fp80) nounwind readnone
 
 // CHECK-YES: define void @test_pow
 // CHECK-NO: define void @test_pow

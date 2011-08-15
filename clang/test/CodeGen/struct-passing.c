@@ -16,8 +16,8 @@ void __attribute__((pure)) f5(T1 a);
 
 void *ps[] = { f0, f1, f2, f3, f4, f5 };
 
-// CHECK: declare i32 @f0() readnone
-// CHECK: declare i32 @f1() readonly
+// CHECK: declare i32 @f0() nounwind readnone
+// CHECK: declare i32 @f1() nounwind readonly
 // CHECK: declare void @f2({{.*}} sret)
 // CHECK: declare void @f3({{.*}} sret)
 // CHECK: declare void @f4({{.*}} byval align 4)

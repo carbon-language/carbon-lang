@@ -739,10 +739,15 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     if (TargetDecl->hasAttr<NoReturnAttr>())
       FuncAttrs |= llvm::Attribute::NoReturn;
-    if (TargetDecl->hasAttr<ConstAttr>())
+
+    // 'const' and 'pure' attribute functions are also nounwind.
+    if (TargetDecl->hasAttr<ConstAttr>()) {
       FuncAttrs |= llvm::Attribute::ReadNone;
-    else if (TargetDecl->hasAttr<PureAttr>())
+      FuncAttrs |= llvm::Attribute::NoUnwind;
+    } else if (TargetDecl->hasAttr<PureAttr>()) {
       FuncAttrs |= llvm::Attribute::ReadOnly;
+      FuncAttrs |= llvm::Attribute::NoUnwind;
+    }
     if (TargetDecl->hasAttr<MallocAttr>())
       RetAttrs |= llvm::Attribute::NoAlias;
   }
