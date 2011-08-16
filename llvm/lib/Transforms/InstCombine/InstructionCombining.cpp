@@ -1435,8 +1435,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
         return false;
   }
 
-  BasicBlock::iterator InsertPos = DestBlock->getFirstNonPHI();
-  if (isa<LandingPadInst>(InsertPos)) ++InsertPos; // Skip landingpad inst.
+  BasicBlock::iterator InsertPos = DestBlock->getFirstInsertionPt();
   I->moveBefore(InsertPos);
   ++NumSunkInst;
   return true;

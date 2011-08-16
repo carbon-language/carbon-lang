@@ -410,9 +410,7 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
     CastInst *&InsertedCast = InsertedCasts[UserBB];
 
     if (!InsertedCast) {
-      BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
-      if (isa<LandingPadInst>(InsertPt)) ++InsertPt;
-
+      BasicBlock::iterator InsertPt = UserBB->getFirstInsertionPt();
       InsertedCast =
         CastInst::Create(CI->getOpcode(), CI->getOperand(0), CI->getType(), "",
                          InsertPt);
@@ -468,8 +466,7 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
     CmpInst *&InsertedCmp = InsertedCmps[UserBB];
 
     if (!InsertedCmp) {
-      BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
-      if (isa<LandingPadInst>(InsertPt)) ++InsertPt; // Skip landingpad inst.
+      BasicBlock::iterator InsertPt = UserBB->getFirstInsertionPt();
       InsertedCmp =
         CmpInst::Create(CI->getOpcode(),
                         CI->getPredicate(),  CI->getOperand(0),
@@ -561,13 +558,10 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
           (DVI->getParent() != VI->getParent() || DT->dominates(DVI, VI))) {
         DEBUG(dbgs() << "Moving Debug Value before :\n" << *DVI << ' ' << *VI);
         DVI->removeFromParent();
-        if (isa<PHINode>(VI)) {
-          BasicBlock::iterator InsertPt = VI->getParent()->getFirstNonPHI();
-          if (isa<LandingPadInst>(InsertPt)) ++InsertPt;
-          DVI->insertBefore(InsertPt);
-        } else {
+        if (isa<PHINode>(VI))
+          DVI->insertBefore(VI->getParent()->getFirstInsertionPt());
+        else
           DVI->insertAfter(VI);
-        }
         return true;
       }
 
@@ -1063,8 +1057,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
     Instruction *&InsertedTrunc = InsertedTruncs[UserBB];
 
     if (!InsertedTrunc) {
-      BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
-      if (isa<LandingPadInst>(InsertPt)) ++InsertPt;
+      BasicBlock::iterator InsertPt = UserBB->getFirstInsertionPt();
       InsertedTrunc = new TruncInst(I, Src->getType(), "", InsertPt);
     }
 
