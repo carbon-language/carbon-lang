@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMFixupKinds.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
@@ -20,6 +21,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -35,11 +37,22 @@ public:
 };
 
 class ARMAsmBackend : public MCAsmBackend {
+  const MCSubtargetInfo* STI;
   bool isThumbMode;  // Currently emitting Thumb code.
 public:
-  ARMAsmBackend(const Target &T) : MCAsmBackend(), isThumbMode(false) {}
+  ARMAsmBackend(const Target &T, const StringRef TT)
+    : MCAsmBackend(), STI(ARM_MC::createARMMCSubtargetInfo(TT, "", "")),
+      isThumbMode(false) {}
+
+  ~ARMAsmBackend() {
+    delete STI;
+  }
 
   unsigned getNumFixupKinds() const { return ARM::NumTargetFixupKinds; }
+
+  bool hasNOP() const {
+    return (STI->getFeatureBits() & ARM::HasV6T2Ops) != 0;
+  }
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[ARM::NumTargetFixupKinds] = {
@@ -122,20 +135,28 @@ void ARMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
 }
 
 bool ARMAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
+  const uint16_t Thumb1_16bitNopEncoding = 0x46c0; // using MOV r8,r8
+  const uint16_t Thumb2_16bitNopEncoding = 0xbf00; // NOP
+  const uint32_t ARMv4_NopEncoding = 0xe1a0000; // using MOV r0,r0
+  const uint32_t ARMv6T2_NopEncoding = 0xe3207800; // NOP
   if (isThumb()) {
-    // FIXME: 0xbf00 is the ARMv7 value. For v6 and before, we'll need to
-    // use 0x46c0 (which is a 'mov r8, r8' insn).
+    const uint16_t nopEncoding = hasNOP() ? Thumb2_16bitNopEncoding
+                                          : Thumb1_16bitNopEncoding;
     uint64_t NumNops = Count / 2;
     for (uint64_t i = 0; i != NumNops; ++i)
-      OW->Write16(0xbf00);
+      OW->Write16(nopEncoding);
     if (Count & 1)
       OW->Write8(0);
     return true;
   }
   // ARM mode
+  const uint32_t nopEncoding = hasNOP() ? ARMv6T2_NopEncoding
+                                        : ARMv4_NopEncoding;
   uint64_t NumNops = Count / 4;
   for (uint64_t i = 0; i != NumNops; ++i)
-    OW->Write32(0xe1a00000);
+    OW->Write32(nopEncoding);
+  // FIXME: should this function return false when unable to write exactly
+  // 'Count' bytes with NOP encodings?
   switch (Count % 4) {
   default: break; // No leftover bytes to write
   case 1: OW->Write8(0); break;
@@ -381,8 +402,9 @@ namespace {
 class ELFARMAsmBackend : public ARMAsmBackend {
 public:
   Triple::OSType OSType;
-  ELFARMAsmBackend(const Target &T, Triple::OSType _OSType)
-    : ARMAsmBackend(T), OSType(_OSType) { }
+  ELFARMAsmBackend(const Target &T, const StringRef TT,
+                   Triple::OSType _OSType)
+    : ARMAsmBackend(T, TT), OSType(_OSType) { }
 
   void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const;
@@ -413,8 +435,9 @@ void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
 class DarwinARMAsmBackend : public ARMAsmBackend {
 public:
   const object::mach::CPUSubtypeARM Subtype;
-  DarwinARMAsmBackend(const Target &T, object::mach::CPUSubtypeARM st)
-    : ARMAsmBackend(T), Subtype(st) { }
+  DarwinARMAsmBackend(const Target &T, const StringRef TT,
+                      object::mach::CPUSubtypeARM st)
+    : ARMAsmBackend(T, TT), Subtype(st) { }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createARMMachObjectWriter(OS, /*Is64Bit=*/false,
@@ -497,18 +520,18 @@ MCAsmBackend *llvm::createARMAsmBackend(const Target &T, StringRef TT) {
   if (TheTriple.isOSDarwin()) {
     if (TheTriple.getArchName() == "armv4t" ||
         TheTriple.getArchName() == "thumbv4t")
-      return new DarwinARMAsmBackend(T, object::mach::CSARM_V4T);
+      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V4T);
     else if (TheTriple.getArchName() == "armv5e" ||
         TheTriple.getArchName() == "thumbv5e")
-      return new DarwinARMAsmBackend(T, object::mach::CSARM_V5TEJ);
+      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V5TEJ);
     else if (TheTriple.getArchName() == "armv6" ||
         TheTriple.getArchName() == "thumbv6")
-      return new DarwinARMAsmBackend(T, object::mach::CSARM_V6);
-    return new DarwinARMAsmBackend(T, object::mach::CSARM_V7);
+      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V6);
+    return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V7);
   }
 
   if (TheTriple.isOSWindows())
     assert(0 && "Windows not supported on ARM");
 
-  return new ELFARMAsmBackend(T, Triple(TT).getOS());
+  return new ELFARMAsmBackend(T, TT, Triple(TT).getOS());
 }
