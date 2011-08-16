@@ -143,12 +143,22 @@ OSStatus getPasswordAndItem(void** password, UInt32* passwordLength) {
 } // no-warning
 
 // Make sure we do not report an error if we call free only if password != 0.
-OSStatus testSecKeychainFindGenericPassword(UInt32* passwordLength) {
+// Also, do not report double allocation if first allocation returned an error.
+OSStatus testSecKeychainFindGenericPassword(UInt32* passwordLength,
+                        CFTypeRef keychainOrArray, SecProtocolType protocol, 
+                        SecAuthenticationType authenticationType) {
   OSStatus err;
   SecKeychainItemRef item;
   void *password;
   err = SecKeychainFindGenericPassword(0, 3, "xx", 3, "xx",
                                        passwordLength, &password, &item);
+  if( err == GenericError ) {
+    err = SecKeychainFindInternetPassword(keychainOrArray, 
+                                  16, "server", 16, "domain", 16, "account",
+                                  16, "path", 222, protocol, authenticationType,
+                                  passwordLength, &(password), 0);
+  }
+
   if (err == noErr && password) {
     SecKeychainItemFreeContent(0, password);
   }

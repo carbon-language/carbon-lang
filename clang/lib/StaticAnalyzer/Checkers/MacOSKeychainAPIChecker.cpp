@@ -230,23 +230,25 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
     if (SymbolRef V = getAsPointeeSymbol(ArgExpr, C))
       if (const AllocationState *AS = State->get<AllocatedData>(V)) {
-        // Remove the value from the state. The new symbol will be added for
-        // tracking when the second allocator is processed in checkPostStmt().
-        State = State->remove<AllocatedData>(V);
-        ExplodedNode *N = C.generateNode(State);
-        if (!N)
-          return;
-        initBugType();
-        llvm::SmallString<128> sbuf;
-        llvm::raw_svector_ostream os(sbuf);
-        unsigned int DIdx = FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx;
-        os << "Allocated data should be released before another call to "
-           << "the allocator: missing a call to '"
-           << FunctionsToTrack[DIdx].Name
-           << "'.";
-        RangedBugReport *Report = new RangedBugReport(*BT, os.str(), N);
-        Report->addRange(ArgExpr->getSourceRange());
-        C.EmitReport(Report);
+        if (!definitelyReturnedError(AS->RetValue, State, C.getSValBuilder())) {
+          // Remove the value from the state. The new symbol will be added for
+          // tracking when the second allocator is processed in checkPostStmt().
+          State = State->remove<AllocatedData>(V);
+          ExplodedNode *N = C.generateNode(State);
+          if (!N)
+            return;
+          initBugType();
+          llvm::SmallString<128> sbuf;
+          llvm::raw_svector_ostream os(sbuf);
+          unsigned int DIdx = FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx;
+          os << "Allocated data should be released before another call to "
+              << "the allocator: missing a call to '"
+              << FunctionsToTrack[DIdx].Name
+              << "'.";
+          RangedBugReport *Report = new RangedBugReport(*BT, os.str(), N);
+          Report->addRange(ArgExpr->getSourceRange());
+          C.EmitReport(Report);
+        }
       }
     return;
   }
