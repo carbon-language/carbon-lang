@@ -125,8 +125,6 @@ void CodeGenModule::createObjCRuntime() {
 }
 
 void CodeGenModule::Release() {
-  if (DebugInfo)
-    DebugInfo->finalize();
   EmitDeferred();
   EmitCXXGlobalInitFunc();
   EmitCXXGlobalDtorFunc();
@@ -145,6 +143,9 @@ void CodeGenModule::Release() {
 
   if (getCodeGenOpts().EmitGcovArcs || getCodeGenOpts().EmitGcovNotes)
     EmitCoverageFile();
+
+  if (DebugInfo)
+    DebugInfo->finalize();
 }
 
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
