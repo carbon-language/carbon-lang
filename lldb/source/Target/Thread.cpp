@@ -1116,10 +1116,13 @@ Thread::GetStatus (Stream &strm, uint32_t start_frame, uint32_t num_frames, uint
     if (GetProcess().GetTarget().GetDebugger().GetUseExternalEditor())
     {
         StackFrameSP frame_sp = GetStackFrameAtIndex(start_frame);
-        SymbolContext frame_sc(frame_sp->GetSymbolContext (eSymbolContextLineEntry));
-        if (frame_sc.line_entry.line != 0 && frame_sc.line_entry.file)
+        if (frame_sp)
         {
-            Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
+            SymbolContext frame_sc(frame_sp->GetSymbolContext (eSymbolContextLineEntry));
+            if (frame_sc.line_entry.line != 0 && frame_sc.line_entry.file)
+            {
+                Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
+            }
         }
     }
     
