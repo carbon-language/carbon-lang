@@ -240,6 +240,8 @@ class recording(StringIO.StringIO):
     def __init__(self, test, trace):
         """Create a StringIO instance; record the session obj and trace flag."""
         StringIO.StringIO.__init__(self)
+        # The test might not have undergone the 'setUp(self)' phase yet, so that
+        # the attribute 'session' might not even exist yet.
         self.session = getattr(test, "session", None) if test else None
         self.trace = trace
 
