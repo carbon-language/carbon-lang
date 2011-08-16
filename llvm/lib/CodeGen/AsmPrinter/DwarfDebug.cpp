@@ -617,8 +617,7 @@ bool DwarfDebug::collectLegacyDebugInfo(Module *M) {
   for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
          E = DbgFinder.global_variable_end(); I != E; ++I) {
     const MDNode *N = *I;
-    if (DIGlobalVariable(N).getVersion() <= LLVMDebugVersion9)
-      constructGlobalVariableDIE(getCompileUnit(N), N);
+    constructGlobalVariableDIE(getCompileUnit(N), N);
   }
   
   // Create DIEs for each subprogram.
