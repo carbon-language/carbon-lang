@@ -380,6 +380,9 @@ public:
   ///  with those assumptions.
   void evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src, 
                          const Expr *Ex);
+  
+  std::pair<const ProgramPointTag *, const ProgramPointTag*>
+    getEagerlyAssumeTags();
 
   SVal evalMinus(SVal X) {
     return X.isValid() ? svalBuilder.evalMinus(cast<NonLoc>(X)) : X;
