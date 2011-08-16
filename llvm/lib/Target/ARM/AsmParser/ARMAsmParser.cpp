@@ -147,6 +147,8 @@ class ARMAsmParser : public MCTargetAsmParser {
                            const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
   void processInstruction(MCInst &Inst,
                           const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
+  bool shouldOmitCCOutOperand(StringRef Mnemonic,
+                              SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
 public:
   enum ARMMatchResultTy {
@@ -2739,6 +2741,25 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       CanAcceptPredicationCode = false;
 }
 
+bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
+                               SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+
+  // The 'mov' mnemonic is special. One variant has a cc_out operand, while
+  // another does not. Specifically, the MOVW instruction does not. So we
+  // special case it here and remove the defaulted (non-setting) cc_out
+  // operand if that's the instruction we're trying to match.
+  //
+  // We do this as post-processing of the explicit operands rather than just
+  // conditionally adding the cc_out in the first place because we need
+  // to check the type of the parsed immediate operand.
+  if (Mnemonic == "mov" && Operands.size() > 4 &&
+      !static_cast<ARMOperand*>(Operands[4])->isARMSOImm() &&
+      static_cast<ARMOperand*>(Operands[4])->isImm0_65535Expr() &&
+      static_cast<ARMOperand*>(Operands[1])->getReg() == 0)
+    return true;
+  return false;
+}
+
 /// Parse an arm instruction mnemonic followed by its operands.
 bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
@@ -2845,19 +2866,13 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
 
   Parser.Lex(); // Consume the EndOfStatement
 
-
-  // The 'mov' mnemonic is special. One variant has a cc_out operand, while
-  // another does not. Specifically, the MOVW instruction does not. So we
-  // special case it here and remove the defaulted (non-setting) cc_out
-  // operand if that's the instruction we're trying to match.
-  //
-  // We do this post-processing of the explicit operands rather than just
-  // conditionally adding the cc_out in the first place because we need
-  // to check the type of the parsed immediate operand.
-  if (Mnemonic == "mov" && Operands.size() > 4 &&
-      !static_cast<ARMOperand*>(Operands[4])->isARMSOImm() &&
-      static_cast<ARMOperand*>(Operands[4])->isImm0_65535Expr() &&
-      static_cast<ARMOperand*>(Operands[1])->getReg() == 0) {
+  // Some instructions, mostly Thumb, have forms for the same mnemonic that
+  // do and don't have a cc_out optional-def operand. With some spot-checks
+  // of the operand list, we can figure out which variant we're trying to
+  // parse and adjust accordingly before actually matching. Reason number
+  // #317 the table driven matcher doesn't fit well with the ARM instruction
+  // set.
+  if (shouldOmitCCOutOperand(Mnemonic, Operands)) {
     ARMOperand *Op = static_cast<ARMOperand*>(Operands[1]);
     Operands.erase(Operands.begin() + 1);
     delete Op;
