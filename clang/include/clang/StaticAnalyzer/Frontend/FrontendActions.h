@@ -26,7 +26,7 @@ protected:
                                          StringRef InFile);
 };
 
-void printCheckerHelp(raw_ostream &OS);
+void printCheckerHelp(raw_ostream &OS, ArrayRef<std::string> plugins);
 
 } // end GR namespace
 

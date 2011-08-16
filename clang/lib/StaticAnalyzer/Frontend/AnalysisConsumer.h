@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_GR_ANALYSISCONSUMER_H
 #define LLVM_CLANG_GR_ANALYSISCONSUMER_H
 
+#include "clang/Basic/LLVM.h"
 #include <string>
 
 namespace clang {
@@ -32,7 +33,8 @@ class CheckerManager;
 /// options.)
 ASTConsumer* CreateAnalysisConsumer(const Preprocessor &pp,
                                     const std::string &output,
-                                    const AnalyzerOptions& Opts);
+                                    const AnalyzerOptions& opts,
+                                    ArrayRef<std::string> plugins);
 
 } // end GR namespace
 

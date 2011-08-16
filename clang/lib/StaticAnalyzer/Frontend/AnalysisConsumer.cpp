@@ -66,6 +66,7 @@ public:
   const Preprocessor &PP;
   const std::string OutDir;
   AnalyzerOptions Opts;
+  ArrayRef<std::string> Plugins;
 
   // PD is owned by AnalysisManager.
   PathDiagnosticClient *PD;
@@ -78,9 +79,9 @@ public:
 
   AnalysisConsumer(const Preprocessor& pp,
                    const std::string& outdir,
-                   const AnalyzerOptions& opts)
-    : Ctx(0), PP(pp), OutDir(outdir),
-      Opts(opts), PD(0) {
+                   const AnalyzerOptions& opts,
+                   ArrayRef<std::string> plugins)
+    : Ctx(0), PP(pp), OutDir(outdir), Opts(opts), Plugins(plugins), PD(0) {
     DigestAnalyzerOptions();
   }
 
@@ -143,8 +144,8 @@ public:
 
   virtual void Initialize(ASTContext &Context) {
     Ctx = &Context;
-    checkerMgr.reset(registerCheckers(Opts, PP.getLangOptions(),
-                                      PP.getDiagnostics()));
+    checkerMgr.reset(createCheckerManager(Opts, PP.getLangOptions(), Plugins,
+                                          PP.getDiagnostics()));
     Mgr.reset(new AnalysisManager(*Ctx, PP.getDiagnostics(),
                                   PP.getLangOptions(), PD,
                                   CreateStoreMgr, CreateConstraintMgr,
@@ -366,14 +367,13 @@ static void ActionObjCMemChecker(AnalysisConsumer &C, AnalysisManager& mgr,
 //===----------------------------------------------------------------------===//
 
 ASTConsumer* ento::CreateAnalysisConsumer(const Preprocessor& pp,
-                                           const std::string& OutDir,
-                                           const AnalyzerOptions& Opts) {
-  llvm::OwningPtr<AnalysisConsumer> C(new AnalysisConsumer(pp, OutDir, Opts));
-
-  // Last, disable the effects of '-Werror' when using the AnalysisConsumer.
+                                          const std::string& outDir,
+                                          const AnalyzerOptions& opts,
+                                          ArrayRef<std::string> plugins) {
+  // Disable the effects of '-Werror' when using the AnalysisConsumer.
   pp.getDiagnostics().setWarningsAsErrors(false);
 
-  return C.take();
+  return new AnalysisConsumer(pp, outDir, opts, plugins);
 }
 
 //===----------------------------------------------------------------------===//

@@ -16,6 +16,7 @@ add_clang_library(clangStaticAnalyzerCore
   CheckerContext.cpp
   CheckerHelpers.cpp
   CheckerManager.cpp
+  CheckerRegistry.cpp
   CoreEngine.cpp
   Environment.cpp
   ExplodedGraph.cpp

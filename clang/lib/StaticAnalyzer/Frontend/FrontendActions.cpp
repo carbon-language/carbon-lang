@@ -17,6 +17,7 @@ ASTConsumer *AnalysisAction::CreateASTConsumer(CompilerInstance &CI,
                                                StringRef InFile) {
   return CreateAnalysisConsumer(CI.getPreprocessor(),
                                 CI.getFrontendOpts().OutputFile,
-                                CI.getAnalyzerOpts());
+                                CI.getAnalyzerOpts(),
+                                CI.getFrontendOpts().Plugins);
 }
 

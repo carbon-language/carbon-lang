@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
-#include "clang/StaticAnalyzer/Core/CheckerProvider.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/Analysis/ProgramPoint.h"
@@ -541,9 +540,6 @@ CheckerManager::~CheckerManager() {
   for (unsigned i = 0, e = CheckerDtors.size(); i != e; ++i)
     CheckerDtors[i]();
 }
-
-// Anchor for the vtable.
-CheckerProvider::~CheckerProvider() { }
 
 // Anchor for the vtable.
 GraphExpander::~GraphExpander() { }
