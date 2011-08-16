@@ -361,16 +361,14 @@ Function::Dump(Stream *s, bool show_context) const
 
     m_mangled.Dump(s);
 
-//  FunctionInfo::Dump(s);
     if (m_type)
     {
-        *s << ", type = " << (void*)m_type;
-        /// << " (";
-        ///m_type->DumpTypeName(s);
-        ///s->PutChar(')');
+        s->Printf(", type = %.*p", (int)sizeof(void*) * 2, m_type);
     }
     else if (m_type_uid != LLDB_INVALID_UID)
-        *s << ", type_uid = " << m_type_uid;
+    {
+        s->Printf(", type_uid = 0x%8.8x", m_type_uid);
+    }
 
     s->EOL();
     // Dump the root object
