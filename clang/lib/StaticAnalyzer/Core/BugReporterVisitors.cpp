@@ -676,7 +676,7 @@ ConditionVisitor::VisitTrueTest(const Expr *Cond,
       case BO_LT: Op = BO_GE; break;
       case BO_GT: Op = BO_LE; break;
       case BO_LE: Op = BO_GT; break;
-      case BO_GE: Op = BO_GE; break;
+      case BO_GE: Op = BO_LT; break;
       default:
         return 0;
     }
