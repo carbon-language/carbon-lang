@@ -65,7 +65,7 @@ typedef struct
                                              // pass it.
 } OptionDefinition;
 
-
+#define LLDB_2_TO_4 LLDB_OPT_SET_2|LLDB_OPT_SET_3|LLDB_OPT_SET_4
 static OptionDefinition g_options[] =
 {
     { LLDB_OPT_SET_1,                   true , "help"           , 'h', no_argument      , NULL,  eArgTypeNone, "Prints out the usage information for the LLDB debugger." },
@@ -75,8 +75,8 @@ static OptionDefinition g_options[] =
     { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false, "debug"          , 'd', no_argument      , NULL,  eArgTypeNone,"Tells the debugger to print out extra information for debugging itself." },
     { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false, "source"         , 's', required_argument, NULL,  eArgTypeFilename, "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
     { LLDB_OPT_SET_3,                   true , "file"           , 'f', required_argument, NULL,  eArgTypeFilename, "Tells the debugger to use the file <filename> as the program to be debugged." },
-    { LLDB_OPT_SET_ALL,                 false, "editor"         , 'e', no_argument      , NULL,  eArgTypeNone, "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
-    { LLDB_OPT_SET_ALL,                 false, "no-lldbinit"    , 'n', no_argument      , NULL,  eArgTypeNone, "Do not automatically parse any '.lldbinit' files." },
+    { LLDB_2_TO_4,                      false, "editor"         , 'e', no_argument      , NULL,  eArgTypeNone, "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
+    { LLDB_2_TO_4,                      false, "no-lldbinit"    , 'n', no_argument      , NULL,  eArgTypeNone, "Do not automatically parse any '.lldbinit' files." },
     { 0,                                false, NULL             , 0  , 0                , NULL,  eArgTypeNone, NULL }
 };
 
@@ -227,6 +227,7 @@ ShowUsage (FILE *out, OptionDefinition *option_table, Driver::OptionData data)
         if (opt_set > 0)
             fprintf (out, "\n");
         fprintf (out, "%*s%s", indent_level, "", name);
+        bool is_help_line = false;
         
         for (uint32_t i = 0; i < num_options; ++i)
         {
@@ -234,6 +235,11 @@ ShowUsage (FILE *out, OptionDefinition *option_table, Driver::OptionData data)
             {
                 CommandArgumentType arg_type = option_table[i].argument_type;
                 const char *arg_name = SBCommandInterpreter::GetArgumentTypeAsCString (arg_type);
+                // This is a bit of a hack, but there's no way to say certain options don't have arguments yet...
+                // so we do it by hand here.
+                if (option_table[i].short_option == 'h')
+                    is_help_line = true;
+                    
                 if (option_table[i].required)
                 {
                     if (option_table[i].option_has_arg == required_argument)
@@ -254,6 +260,8 @@ ShowUsage (FILE *out, OptionDefinition *option_table, Driver::OptionData data)
                 }
             }
         }
+        if (!is_help_line)
+            fprintf (out, " [[--] <PROGRAM-ARG-1> [<PROGRAM_ARG-2> ...]]");
     }
 
     fprintf (out, "\n\n");
