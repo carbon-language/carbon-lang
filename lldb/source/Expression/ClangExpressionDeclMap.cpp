@@ -497,6 +497,21 @@ ClangExpressionDeclMap::GetFunctionInfo
     return true;
 }
 
+static void
+FindCodeSymbolInContext
+(
+    const ConstString &name,
+    SymbolContext &sym_ctx,
+    SymbolContextList &sc_list
+)
+{
+    if (sym_ctx.module_sp)
+       sym_ctx.module_sp->FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list);
+    
+    if (!sc_list.GetSize())
+        sym_ctx.target_sp->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeCode, sc_list);
+}
+
 bool
 ClangExpressionDeclMap::GetFunctionAddress 
 (
@@ -515,10 +530,9 @@ ClangExpressionDeclMap::GetFunctionAddress
         return false;
 
     SymbolContextList sc_list;
-    const bool include_symbols = true;
-    const bool append = false;
-    m_parser_vars->m_sym_ctx.FindFunctionsByName(name, include_symbols, append, sc_list);
     
+    FindCodeSymbolInContext(name, m_parser_vars->m_sym_ctx, sc_list);
+        
     if (!sc_list.GetSize())
     {
         // We occasionally get debug information in which a const function is reported 
@@ -536,7 +550,7 @@ ClangExpressionDeclMap::GetFunctionAddress
             
             ConstString const_name(const_name_scratch.c_str());
                         
-            m_parser_vars->m_sym_ctx.FindFunctionsByName(const_name, include_symbols, append, sc_list);
+            FindCodeSymbolInContext(name, m_parser_vars->m_sym_ctx, sc_list);
             
             if (log)
                 log->Printf("Found %d results with const name %s", sc_list.GetSize(), const_name.GetCString());
