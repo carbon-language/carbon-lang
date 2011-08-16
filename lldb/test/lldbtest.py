@@ -240,7 +240,7 @@ class recording(StringIO.StringIO):
     def __init__(self, test, trace):
         """Create a StringIO instance; record the session obj and trace flag."""
         StringIO.StringIO.__init__(self)
-        self.session = test.session if test else None
+        self.session = getattr(test, "session", None) if test else None
         self.trace = trace
 
     def __enter__(self):
