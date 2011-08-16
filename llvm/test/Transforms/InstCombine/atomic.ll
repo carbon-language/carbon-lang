@@ -13,3 +13,12 @@ define i32* @test1(i8** %p) {
   ret i32* %r
 }
 
+define i32 @test2(i32* %p) {
+; CHECK: define i32 @test2
+; CHECK: %x = load atomic i32* %p seq_cst, align 4
+; CHECK: shl i32 %x, 1
+  %x = load atomic i32* %p seq_cst, align 4
+  %y = load i32* %p, align 4
+  %z = add i32 %x, %y
+  ret i32 %z
+}
