@@ -167,6 +167,7 @@ static const ArchDefinitionEntry g_macho_arch_entries[] =
     { ArchSpec::eCore_x86_32_i486sx   , llvm::MachO::CPUTypeI386      , 0x84    },
     { ArchSpec::eCore_x86_32_i386     , llvm::MachO::CPUTypeI386      , CPU_ANY },
     { ArchSpec::eCore_x86_64_x86_64   , llvm::MachO::CPUTypeX86_64    , 3       },
+    { ArchSpec::eCore_x86_64_x86_64   , llvm::MachO::CPUTypeX86_64    , 4       },
     { ArchSpec::eCore_x86_64_x86_64   , llvm::MachO::CPUTypeX86_64    , CPU_ANY }
 };
 static const ArchDefinition g_macho_arch_def = {
