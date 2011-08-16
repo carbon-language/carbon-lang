@@ -9425,8 +9425,7 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
   unsigned diagnostic = diag::warn_condition_is_assignment;
   bool IsOrAssign = false;
 
-  if (isa<BinaryOperator>(E)) {
-    BinaryOperator *Op = cast<BinaryOperator>(E);
+  if (BinaryOperator *Op = dyn_cast<BinaryOperator>(E)) {
     if (Op->getOpcode() != BO_Assign && Op->getOpcode() != BO_OrAssign)
       return;
 
@@ -9447,8 +9446,7 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
     }
 
     Loc = Op->getOperatorLoc();
-  } else if (isa<CXXOperatorCallExpr>(E)) {
-    CXXOperatorCallExpr *Op = cast<CXXOperatorCallExpr>(E);
+  } else if (CXXOperatorCallExpr *Op = dyn_cast<CXXOperatorCallExpr>(E)) {
     if (Op->getOperator() != OO_Equal && Op->getOperator() != OO_PipeEqual)
       return;
 
