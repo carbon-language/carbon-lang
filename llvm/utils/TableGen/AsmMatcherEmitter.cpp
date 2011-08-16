@@ -2349,6 +2349,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   OS << "  // Some state to try to produce better error messages.\n";
   OS << "  bool HadMatchOtherThanFeatures = false;\n";
+  OS << "  bool HadMatchOtherThanPredicate = false;\n";
   OS << "  unsigned RetCode = Match_InvalidOperand;\n";
   OS << "  // Set ErrorInfo to the operand that mismatches if it is\n";
   OS << "  // wrong for all instances of the instruction.\n";
@@ -2413,6 +2414,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << " Match_Success) {\n"
      << "      Inst.clear();\n"
      << "      RetCode = MatchResult;\n"
+     << "      HadMatchOtherThanPredicate = true;\n"
      << "      continue;\n"
      << "    }\n\n";
 
@@ -2426,8 +2428,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  }\n\n";
 
   OS << "  // Okay, we had no match.  Try to return a useful error code.\n";
-  OS << "  if (HadMatchOtherThanFeatures) return Match_MissingFeature;\n";
-  OS << "  return RetCode;\n";
+  OS << "  if (HadMatchOtherThanPredicate || !HadMatchOtherThanFeatures)";
+  OS << " return RetCode;\n";
+  OS << "  return Match_MissingFeature;\n";
   OS << "}\n\n";
 
   if (Info.OperandMatchInfo.size())
