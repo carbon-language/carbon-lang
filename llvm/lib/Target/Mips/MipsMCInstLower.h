@@ -37,6 +37,7 @@ public:
 private:
   MCOperand LowerSymbolOperand(const MachineOperand &MO,
                                MachineOperandType MOTy, unsigned Offset) const;
+  MCOperand LowerOperand(const MachineOperand& MO) const;
 };
 }
 

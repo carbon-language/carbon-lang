@@ -83,36 +83,39 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
                                                            Ctx));
 }
 
+MCOperand MipsMCInstLower::LowerOperand(const MachineOperand& MO) const {
+  MachineOperandType MOTy = MO.getType();
+  
+  switch (MOTy) {
+  default:
+    assert(0 && "unknown operand type");
+    break;
+  case MachineOperand::MO_Register:
+    // Ignore all implicit register operands.
+    if (MO.isImplicit()) break;
+    return MCOperand::CreateReg(MO.getReg());
+  case MachineOperand::MO_Immediate:
+    return MCOperand::CreateImm(MO.getImm());
+  case MachineOperand::MO_MachineBasicBlock:
+  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_ExternalSymbol:
+  case MachineOperand::MO_JumpTableIndex:
+  case MachineOperand::MO_ConstantPoolIndex:
+  case MachineOperand::MO_BlockAddress:
+    return LowerSymbolOperand(MO, MOTy, 0);
+ }
+
+  return MCOperand();
+}
+
 void MipsMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
   
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    MCOperand MCOp;
-    MachineOperandType MOTy = MO.getType();
+    MCOperand MCOp = LowerOperand(MO);
 
-    switch (MOTy) {
-    default:
-      MI->dump();
-      llvm_unreachable("unknown operand type");
-    case MachineOperand::MO_Register:
-      // Ignore all implicit register operands.
-      if (MO.isImplicit()) continue;
-      MCOp = MCOperand::CreateReg(MO.getReg());
-      break;
-    case MachineOperand::MO_Immediate:
-      MCOp = MCOperand::CreateImm(MO.getImm());
-      break;
-    case MachineOperand::MO_MachineBasicBlock:
-    case MachineOperand::MO_GlobalAddress:
-    case MachineOperand::MO_ExternalSymbol:
-    case MachineOperand::MO_JumpTableIndex:
-    case MachineOperand::MO_ConstantPoolIndex:
-    case MachineOperand::MO_BlockAddress:
-      MCOp = LowerSymbolOperand(MO, MOTy, 0);
-      break;
-    }
-    
-    OutMI.addOperand(MCOp);
+    if (MCOp.isValid())
+      OutMI.addOperand(MCOp);
   }
 }
