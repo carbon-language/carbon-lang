@@ -384,6 +384,12 @@ namespace ARMII {
     // a 16-bit Thumb instruction if certain conditions are met.
     Xform16Bit    = 1 << 14,
 
+    // ThumbArithFlagSetting - The instruction is a 16-bit flag setting Thumb
+    // instruction. Used by the parser to determine whether to require the 'S'
+    // suffix on the mnemonic (when not in an IT block) or preclude it (when
+    // in an IT block).
+    ThumbArithFlagSetting = 1 << 18,
+
     //===------------------------------------------------------------------===//
     // Code domain.
     DomainShift   = 15,

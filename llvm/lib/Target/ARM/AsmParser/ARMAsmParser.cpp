@@ -78,6 +78,9 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool isThumbOne() const {
     return isThumb() && (STI.getFeatureBits() & ARM::FeatureThumb2) == 0;
   }
+  bool isThumbTwo() const {
+    return isThumb() && (STI.getFeatureBits() & ARM::FeatureThumb2);
+  }
   void SwitchMode() {
     unsigned FB = ComputeAvailableFeatures(STI.ToggleFeature(ARM::ModeThumb));
     setAvailableFeatures(FB);
@@ -146,6 +149,10 @@ class ARMAsmParser : public MCTargetAsmParser {
                           const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
 
 public:
+  enum ARMMatchResultTy {
+    Match_RequiresITBlock = FIRST_TARGET_MATCH_RESULT_TY
+  };
+
   ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
     : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
@@ -159,6 +166,8 @@ public:
   bool ParseInstruction(StringRef Name, SMLoc NameLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands);
   bool ParseDirective(AsmToken DirectiveID);
+
+  unsigned checkTargetMatchPredicate(MCInst &Inst);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -2975,6 +2984,44 @@ processInstruction(MCInst &Inst,
   }
 }
 
+// FIXME: We would really prefer to have MCInstrInfo (the wrapper around
+// the ARMInsts array) instead. Getting that here requires awkward
+// API changes, though. Better way?
+namespace llvm {
+extern MCInstrDesc ARMInsts[];
+}
+static MCInstrDesc &getInstDesc(unsigned Opcode) {
+  return ARMInsts[Opcode];
+}
+
+unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
+  // 16-bit thumb arithmetic instructions either require or preclude the 'S'
+  // suffix depending on whether they're in an IT block or not.
+  MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
+  if (MCID.TSFlags & ARMII::ThumbArithFlagSetting) {
+    assert(MCID.hasOptionalDef() &&
+           "optionally flag setting instruction missing optional def operand");
+    assert(MCID.NumOperands == Inst.getNumOperands() &&
+           "operand count mismatch!");
+    // Find the optional-def operand (cc_out).
+    unsigned OpNo;
+    for (OpNo = 0;
+         !MCID.OpInfo[OpNo].isOptionalDef() && OpNo < MCID.NumOperands;
+         ++OpNo)
+      ;
+    // If we're parsing Thumb1, reject it completely.
+    if (isThumbOne() && Inst.getOperand(OpNo).getReg() != ARM::CPSR)
+      return Match_MnemonicFail;
+    // If we're parsing Thumb2, which form is legal depends on whether we're
+    // in an IT block.
+    // FIXME: We don't yet do IT blocks, so just always consider it to be
+    // that we aren't in one until we do.
+    if (isThumbTwo() && Inst.getOperand(OpNo).getReg() != ARM::CPSR)
+      return Match_RequiresITBlock;
+  }
+  return Match_Success;
+}
+
 bool ARMAsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -3013,9 +3060,11 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     return Error(ErrorLoc, "invalid operand for instruction");
   }
   case Match_MnemonicFail:
-    return Error(IDLoc, "unrecognized instruction mnemonic");
+    return Error(IDLoc, "invalid instruction");
   case Match_ConversionFail:
     return Error(IDLoc, "unable to convert operands to instruction");
+  case Match_RequiresITBlock:
+    return Error(IDLoc, "instruction only valid inside IT block");
   }
 
   llvm_unreachable("Implement any new match types added!");

@@ -236,6 +236,10 @@ class InstTemplate<AddrMode am, int sz, IndexMode im,
   Domain D = d;
   bit isUnaryDataProc = 0;
   bit canXformTo16Bit = 0;
+  // The instruction is a 16-bit flag setting Thumb instruction. Used
+  // by the parser to determine whether to require the 'S' suffix on the
+  // mnemonic (when not in an IT block) or preclude it (when in an IT block).
+  bit thumbArithFlagSetting = 0;
 
   // If this is a pseudo instruction, mark it isCodeGenOnly.
   let isCodeGenOnly = !eq(!cast<string>(f), "Pseudo");
@@ -247,6 +251,7 @@ class InstTemplate<AddrMode am, int sz, IndexMode im,
   let TSFlags{13}    = isUnaryDataProc;
   let TSFlags{14}    = canXformTo16Bit;
   let TSFlags{17-15} = D.Value;
+  let TSFlags{18}    = thumbArithFlagSetting;
 
   let Constraints = cstr;
   let Itinerary = itin;
@@ -895,6 +900,7 @@ class Thumb1sI<dag oops, dag iops, AddrMode am, int sz,
   let InOperandList = !con(iops, (ins pred:$p));
   let AsmString = !strconcat(opc, "${s}${p}", asm);
   let Pattern = pattern;
+  let thumbArithFlagSetting = 1;
   list<Predicate> Predicates = [IsThumb, IsThumb1Only];
 }
 

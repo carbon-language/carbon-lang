@@ -5,8 +5,8 @@
 .thumb_func x
 .code 16
 x:
-      add r0, r1, r2
+      adds r0, r1, r2
       .align 4
-      add r0, r1, r2
+      adds r0, r1, r2
 
 @ CHECK: ('_section_data', '8818c046 c046c046 c046c046 c046c046 8818')
