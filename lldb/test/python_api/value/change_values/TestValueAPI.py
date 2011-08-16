@@ -117,7 +117,6 @@ class ChangeValueAPITestCase(TestBase):
         thread.StepOver()
         expected_value = "Val - 12345 Mine - 55, 98765, 55555555. Ptr - 66, 98765, 66666666"
         stdout = process.GetSTDOUT(1000)
-        print stdout
         self.assertTrue (expected_value in stdout, "STDOUT showed changed values.")
 
         # Finally, change the stack pointer to 0, and we should not make it to our end breakpoint.
@@ -127,10 +126,9 @@ class ChangeValueAPITestCase(TestBase):
         self.assertTrue (sp_value.IsValid(), "Got a stack pointer value")
         result = sp_value.SetValueFromCString("1")
         self.assertTrue (result, "Setting sp returned true.")
-        # GetValueAsUnsigned doesn't work for register value objects yet. 
-        # actual_value = sp_value.GetValueAsUnsigned (error, 0)
-        # self.assertTrue (error.Success(), "Got a changed value for sp")
-        # self.assertTrue (actual_value == 1, "Got the right changed value for sp.")
+        actual_value = sp_value.GetValueAsUnsigned (error, 0)
+        self.assertTrue (error.Success(), "Got a changed value for sp")
+        self.assertTrue (actual_value == 1, "Got the right changed value for sp.")
         
         process.Continue()
 
