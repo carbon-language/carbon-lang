@@ -1445,53 +1445,77 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         }
         continue;
       }
-      
+
       LatticeVal &LV = getValueState(I);
       if (!LV.isUndefined()) continue;
 
-      // No instructions using structs need disambiguation.
-      if (I->getOperand(0)->getType()->isStructTy())
-        continue;
-
-      // Get the lattice values of the first two operands for use below.
       LatticeVal Op0LV = getValueState(I->getOperand(0));
       LatticeVal Op1LV;
-      if (I->getNumOperands() == 2) {
-        // No instructions using structs need disambiguation.
-        if (I->getOperand(1)->getType()->isStructTy())
-          continue;
-        
-        // If this is a two-operand instruction, and if both operands are
-        // undefs, the result stays undef.
+      if (I->getNumOperands() == 2)
         Op1LV = getValueState(I->getOperand(1));
-        if (Op0LV.isUndefined() && Op1LV.isUndefined())
-          continue;
-      }
-      
       // If this is an instructions whose result is defined even if the input is
       // not fully defined, propagate the information.
       Type *ITy = I->getType();
       switch (I->getOpcode()) {
-      default: break;          // Leave the instruction as an undef.
+      case Instruction::ExtractValue:
+        break; // Extract of undef -> undef
+      case Instruction::Add:
+      case Instruction::Sub:
+      case Instruction::Trunc:
+      case Instruction::FPTrunc:
+      case Instruction::BitCast:
+        break; // Any undef -> undef
+      case Instruction::FSub:
+      case Instruction::FAdd:
+      case Instruction::FMul:
+      case Instruction::FDiv:
+      case Instruction::FRem:
+        // Floating-point binary operation: be conservative.
+        if (Op0LV.isUndefined() && Op1LV.isUndefined())
+          markForcedConstant(I, Constant::getNullValue(ITy));
+        else
+          markOverdefined(I);
+        return true;
       case Instruction::ZExt:
-        // After a zero extend, we know the top part is zero.  SExt doesn't have
-        // to be handled here, because we don't know whether the top part is 1's
-        // or 0's.
-      case Instruction::SIToFP:  // some FP values are not possible, just use 0.
-      case Instruction::UIToFP:  // some FP values are not possible, just use 0.
+      case Instruction::SExt:
+      case Instruction::FPToUI:
+      case Instruction::FPToSI:
+      case Instruction::FPExt:
+      case Instruction::PtrToInt:
+      case Instruction::IntToPtr:
+      case Instruction::SIToFP:
+      case Instruction::UIToFP:
+        // undef -> 0; some outputs are impossible
         markForcedConstant(I, Constant::getNullValue(ITy));
         return true;
       case Instruction::Mul:
       case Instruction::And:
+        // Both operands undef -> undef
+        if (Op0LV.isUndefined() && Op1LV.isUndefined())
+          break;
         // undef * X -> 0.   X could be zero.
         // undef & X -> 0.   X could be zero.
         markForcedConstant(I, Constant::getNullValue(ITy));
         return true;
 
       case Instruction::Or:
+        // Both operands undef -> undef
+        if (Op0LV.isUndefined() && Op1LV.isUndefined())
+          break;
         // undef | X -> -1.   X could be -1.
         markForcedConstant(I, Constant::getAllOnesValue(ITy));
         return true;
+
+      case Instruction::Xor:
+        // undef ^ undef -> 0; strictly speaking, this is not strictly
+        // necessary, but we try to be nice to people who expect this
+        // behavior in simple cases
+        if (Op0LV.isUndefined() && Op1LV.isUndefined()) {
+          markForcedConstant(I, Constant::getNullValue(ITy));
+          return true;
+        }
+        // undef ^ X -> undef
+        break;
 
       case Instruction::SDiv:
       case Instruction::UDiv:
@@ -1507,26 +1531,24 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         return true;
         
       case Instruction::AShr:
-        // undef >>s X -> undef.  No change.
-        if (Op0LV.isUndefined()) break;
-        
-        // X >>s undef -> X.  X could be 0, X could have the high-bit known set.
-        if (Op0LV.isConstant())
-          markForcedConstant(I, Op0LV.getConstant());
-        else
-          markOverdefined(I);
+        // X >>a undef -> undef.
+        if (Op1LV.isUndefined()) break;
+
+        // undef >>a X -> all ones
+        markForcedConstant(I, Constant::getAllOnesValue(ITy));
         return true;
       case Instruction::LShr:
       case Instruction::Shl:
-        // undef >> X -> undef.  No change.
-        // undef << X -> undef.  No change.
-        if (Op0LV.isUndefined()) break;
-        
-        // X >> undef -> 0.  X could be 0.
-        // X << undef -> 0.  X could be 0.
+        // X << undef -> undef.
+        // X >> undef -> undef.
+        if (Op1LV.isUndefined()) break;
+
+        // undef << X -> 0
+        // undef >> X -> 0
         markForcedConstant(I, Constant::getNullValue(ITy));
         return true;
       case Instruction::Select:
+        Op1LV = getValueState(I->getOperand(1));
         // undef ? X : Y  -> X or Y.  There could be commonality between X/Y.
         if (Op0LV.isUndefined()) {
           if (!Op1LV.isConstant())  // Pick the constant one if there is any.
@@ -1546,9 +1568,19 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         else
           markOverdefined(I);
         return true;
-      case Instruction::Call:
-        // If a call has an undef result, it is because it is constant foldable
-        // but one of the inputs was undef.  Just force the result to
+      case Instruction::Load:
+        // A load here means one of two things: a load of undef from a global,
+        // a load from an unknown pointer.  Either way, having it return undef
+        // is okay.
+        break;
+      case Instruction::ICmp:
+        // X == undef -> undef.  Other comparisons get more complicated.
+        if (cast<ICmpInst>(I)->isEquality())
+          break;
+        markOverdefined(I);
+        return true;
+      default:
+        // If we don't know what should happen here, conservatively mark it
         // overdefined.
         markOverdefined(I);
         return true;
