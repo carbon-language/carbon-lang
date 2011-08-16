@@ -248,3 +248,27 @@ SBCommandReturnObject::SetImmediateErrorFile (FILE *fh)
     if (m_opaque_ap.get())
         m_opaque_ap->SetImmediateErrorFile (fh);
 }
+
+void
+SBCommandReturnObject::PutCString(const char* string, int len)
+{
+    if (m_opaque_ap.get())
+    {
+        m_opaque_ap->AppendMessage(string, len);
+    }
+}
+
+size_t
+SBCommandReturnObject::Printf(const char* format, ...)
+{
+    if (m_opaque_ap.get())
+    {
+        va_list args;
+        va_start (args, format);
+        size_t result = m_opaque_ap->GetOutputStream().PrintfVarArg(format, args);
+        va_end (args);
+        return result;
+    }
+    return 0;
+}
+

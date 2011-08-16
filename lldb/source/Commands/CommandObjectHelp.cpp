@@ -49,7 +49,6 @@ CommandObjectHelp::~CommandObjectHelp()
 {
 }
 
-
 bool
 CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
 {

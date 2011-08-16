@@ -49,7 +49,7 @@ public:
                                                                      lldb::DebuggerSP& debugger,
                                                                      const char* args,
                                                                      std::string& err_msg,
-                                                                     lldb::SBStream& stream);
+                                                                     lldb_private::CommandReturnObject& cmd_retobj);
 
     typedef enum
     {
@@ -186,7 +186,7 @@ public:
     virtual bool
     RunScriptBasedCommand(const char* impl_function,
                           const char* args,
-                          lldb::SBStream& stream,
+                          lldb_private::CommandReturnObject& cmd_retobj,
                           Error& error)
     {
         return false;

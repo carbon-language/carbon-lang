@@ -34,7 +34,7 @@ class AbbreviationsTestCase(TestBase):
                     startstr = "The following is a list of built-in, permanent debugger commands:")
 
 
-        self.expect("com s ./change_prompt.lldb",
+        self.expect("com sou ./change_prompt.lldb",
                     patterns = ["Executing commands in '.*change_prompt.lldb'"])
 
         self.expect("settings show prompt",

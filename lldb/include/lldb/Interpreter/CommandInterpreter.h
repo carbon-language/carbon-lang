@@ -46,6 +46,14 @@ public:
         eUnwarnedTruncation = 1, // truncated but did not notify
         eWarnedTruncation = 2 // truncated and notified
     };
+    
+    enum CommandTypes
+    {
+        eCommandTypesBuiltin = 0x0001,  // native commands such as "frame"
+        eCommandTypesUserDef = 0x0002,  // scripted commands
+        eCommandTypesAliases = 0x0004,  // aliases such as "po"
+        eCommandTypesAllThem = 0xFFFF   // all commands
+    };
 
     void
     SourceInitFile (bool in_cwd, 
@@ -62,6 +70,11 @@ public:
     AddCommand (const char *name, 
                 const lldb::CommandObjectSP &cmd_sp,
                 bool can_replace);
+    
+    bool
+    AddUserCommand (const char *name, 
+                    const lldb::CommandObjectSP &cmd_sp,
+                    bool can_replace);
     
     lldb::CommandObjectSP
     GetCommandSPExact (const char *cmd, 
@@ -93,6 +106,12 @@ public:
 
     bool
     RemoveUser (const char *alias_name);
+    
+    void
+    RemoveAllUser ()
+    {
+        m_user_dict.clear();
+    }
 
     OptionArgVectorSP
     GetAliasOptions (const char *alias_name);
@@ -239,7 +258,8 @@ public:
                                           StringList &matches);
 
     void
-    GetHelp (CommandReturnObject &result);
+    GetHelp (CommandReturnObject &result,
+             CommandTypes types = eCommandTypesAllThem);
 
     void
     GetAliasHelp (const char *alias_name, 

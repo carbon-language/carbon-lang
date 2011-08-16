@@ -264,7 +264,7 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["source"]    = CommandObjectSP (new CommandObjectMultiwordSource (*this));
     m_command_dict["target"]    = CommandObjectSP (new CommandObjectMultiwordTarget (*this));
     m_command_dict["thread"]    = CommandObjectSP (new CommandObjectMultiwordThread (*this));
-    m_command_dict["type"]    = CommandObjectSP (new CommandObjectType (*this));
+    m_command_dict["type"]      = CommandObjectSP (new CommandObjectType (*this));
     m_command_dict["version"]   = CommandObjectSP (new CommandObjectVersion (*this));
 
     std::auto_ptr<CommandObjectRegexCommand>
@@ -457,6 +457,24 @@ CommandInterpreter::AddCommand (const char *name, const lldb::CommandObjectSP &c
     return false;
 }
 
+bool
+CommandInterpreter::AddUserCommand (const char *name, 
+                                    const lldb::CommandObjectSP &cmd_sp,
+                                    bool can_replace)
+{
+    if (name && name[0])
+    {
+        std::string name_sstr(name);
+        if (!can_replace)
+        {
+            if (m_user_dict.find (name_sstr) != m_user_dict.end())
+                return false;
+        }
+        m_user_dict[name_sstr] = cmd_sp;
+        return true;
+    }
+    return false;
+}
 
 CommandObjectSP
 CommandInterpreter::GetCommandSPExact (const char *cmd_cstr, bool include_aliases)
@@ -682,21 +700,28 @@ CommandInterpreter::FindLongestCommandWord (CommandObject::CommandMap &dict)
 }
 
 void
-CommandInterpreter::GetHelp (CommandReturnObject &result)
+CommandInterpreter::GetHelp (CommandReturnObject &result,
+                             CommandTypes cmd_types)
 {
     CommandObject::CommandMap::const_iterator pos;
-    result.AppendMessage("The following is a list of built-in, permanent debugger commands:");
-    result.AppendMessage("");
     uint32_t max_len = FindLongestCommandWord (m_command_dict);
-
-    for (pos = m_command_dict.begin(); pos != m_command_dict.end(); ++pos)
+    
+    if ( (cmd_types & eCommandTypesBuiltin) == eCommandTypesBuiltin )
     {
-        OutputFormattedHelpText (result.GetOutputStream(), pos->first.c_str(), "--", pos->second->GetHelp(),
-                                 max_len);
-    }
-    result.AppendMessage("");
+    
+        result.AppendMessage("The following is a list of built-in, permanent debugger commands:");
+        result.AppendMessage("");
 
-    if (m_alias_dict.size() > 0)
+        for (pos = m_command_dict.begin(); pos != m_command_dict.end(); ++pos)
+        {
+            OutputFormattedHelpText (result.GetOutputStream(), pos->first.c_str(), "--", pos->second->GetHelp(),
+                                     max_len);
+        }
+        result.AppendMessage("");
+
+    }
+
+    if (m_alias_dict.size() > 0 && ( (cmd_types & eCommandTypesAliases) == eCommandTypesAliases ))
     {
         result.AppendMessage("The following is a list of your current command abbreviations "
                              "(see 'help command alias' for more info):");
@@ -718,13 +743,15 @@ CommandInterpreter::GetHelp (CommandReturnObject &result)
         result.AppendMessage("");
     }
 
-    if (m_user_dict.size() > 0)
+    if (m_user_dict.size() > 0 && ( (cmd_types & eCommandTypesUserDef) == eCommandTypesUserDef ))
     {
         result.AppendMessage ("The following is a list of your current user-defined commands:");
         result.AppendMessage("");
+        max_len = FindLongestCommandWord (m_user_dict);
         for (pos = m_user_dict.begin(); pos != m_user_dict.end(); ++pos)
         {
-            result.AppendMessageWithFormat ("%s  --  %s\n", pos->first.c_str(), pos->second->GetHelp());
+            OutputFormattedHelpText (result.GetOutputStream(), pos->first.c_str(), "--", pos->second->GetHelp(),
+                                     max_len);
         }
         result.AppendMessage("");
     }

@@ -84,7 +84,7 @@ public:
     virtual bool
     RunScriptBasedCommand(const char* impl_function,
                           const char* args,
-                          lldb::SBStream& stream,
+                          lldb_private::CommandReturnObject& cmd_retobj,
                           Error& error);
     
     bool

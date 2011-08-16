@@ -135,10 +135,10 @@ class AliasTestCase(TestBase):
         self.expect('welcome Enrico',
             substrs = ['Hello Enrico, welcome to LLDB']);
 
-        self.runCmd("command unalias welcome");
+        self.runCmd("command script delete welcome");
 
         self.expect('welcome Enrico', matching=False, error=True,
-                    substrs = ['Hello Enrico, welcome to LLDB']);
+                substrs = ['Hello Enrico, welcome to LLDB']);
 
         self.expect('targetname',
             substrs = ['a.out'])
@@ -146,7 +146,7 @@ class AliasTestCase(TestBase):
         self.expect('targetname fail', error=True,
                     substrs = ['a test for error in command'])
 
-        self.expect('help',
+        self.expect('command script list',
             substrs = ['targetname',
                        'Run Python function target_name_impl'])
 
@@ -155,6 +155,14 @@ class AliasTestCase(TestBase):
                                'This command takes \'raw\' input',
                                'quote stuff'])
 
+        self.expect("longwait",
+                    substrs = ['Done; if you saw the delays I am doing OK'])
+
+        self.runCmd("command script clear")
+
+        self.expect('command script list', matching=False,
+                    substrs = ['targetname',
+                               'longwait'])
 
 if __name__ == '__main__':
     import atexit

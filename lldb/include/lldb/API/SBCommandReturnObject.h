@@ -76,6 +76,12 @@ public:
     void
     SetImmediateErrorFile (FILE *fh);
     
+    void
+    PutCString(const char* string, int len = -1);
+    
+    size_t
+    Printf(const char* format, ...);
+    
 protected:
     friend class SBCommandInterpreter;
     friend class SBOptions;

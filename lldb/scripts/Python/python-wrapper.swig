@@ -590,19 +590,21 @@ LLDBSwigPythonCallCommand
     lldb::DebuggerSP& debugger,
     const char* args,
     std::string& err_msg,
-    lldb::SBStream& stream
+    lldb_private::CommandReturnObject& cmd_retobj
 )
 {
+
+    not_owning_ap<lldb_private::CommandReturnObject> auto_cmd_retobj(&cmd_retobj);
 
     bool retval = false;
 
     PyObject *DebuggerObj_PyObj = SWIG_NewPointerObj((void *) &debugger, SWIGTYPE_p_lldb__SBDebugger, 0);
-    PyObject *StreamObj_PyObj = SWIG_NewPointerObj((void *) &stream, SWIGTYPE_p_lldb__SBStream, 0);
+    PyObject *CmdRetObj_PyObj = SWIG_NewPointerObj((void *) &auto_cmd_retobj, SWIGTYPE_p_lldb__SBCommandReturnObject, 0);
 
     if (DebuggerObj_PyObj == NULL)
         return retval;
         
-    if (StreamObj_PyObj == NULL)
+    if (CmdRetObj_PyObj == NULL)
         return retval;
 
     if (!python_function_name || !session_dictionary_name)
@@ -676,7 +678,7 @@ LLDBSwigPythonCallCommand
                 
                 PyTuple_SetItem (pargs, 0, DebuggerObj_PyObj);  // This "steals" a reference to DebuggerObj_PyObj
                 PyTuple_SetItem (pargs, 1, PyString_FromString(args));
-                PyTuple_SetItem (pargs, 2, StreamObj_PyObj);  // This "steals" a reference to StreamObj_PyObj
+                PyTuple_SetItem (pargs, 2, CmdRetObj_PyObj);  // This "steals" a reference to CmdRetObj_PyObj
                 PyTuple_SetItem (pargs, 3, session_dict); // This "steals" a reference to session_dict
                 pvalue = PyObject_CallObject (pfunc, pargs);
                 Py_DECREF (pargs);

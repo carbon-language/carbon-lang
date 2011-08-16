@@ -15,7 +15,6 @@
 #include "llvm/ADT/StringRef.h"
 
 // Project includes
-#include "CommandObjectPythonFunction.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/InputReaderEZ.h"
@@ -311,128 +310,12 @@ CommandObjectCommandsSource::CommandOptions::g_option_table[] =
 
 static const char *g_python_command_instructions =   "Enter your Python command(s). Type 'DONE' to end.\n"
                                                      "You must define a Python function with this signature:\n"
-                                                     "def my_command_impl(debugger, args, stream, dict):";
+                                                     "def my_command_impl(debugger, args, result, dict):";
 
 
 class CommandObjectCommandsAlias : public CommandObject
 {
     
-    class PythonAliasReader : public InputReaderEZ
-    {
-    private:
-        CommandInterpreter& m_interpreter;
-        std::string m_cmd_name;
-        StringList m_user_input;
-        DISALLOW_COPY_AND_ASSIGN (PythonAliasReader);
-    public:
-        PythonAliasReader(Debugger& debugger,
-                          CommandInterpreter& interpreter,
-                          std::string cmd_name) : 
-        InputReaderEZ(debugger),
-        m_interpreter(interpreter),
-        m_cmd_name(cmd_name),
-        m_user_input()
-        {}
-        
-        virtual
-        ~PythonAliasReader()
-        {
-        }
-        
-        virtual void ActivateHandler(HandlerData& data)
-        {
-            StreamSP out_stream = data.GetOutStream();
-            bool batch_mode = data.GetBatchMode();
-            if (!batch_mode)
-            {
-                out_stream->Printf ("%s\n", g_python_command_instructions);
-                if (data.reader.GetPrompt())
-                    out_stream->Printf ("%s", data.reader.GetPrompt());
-                out_stream->Flush();
-            }
-        }
-        
-        virtual void ReactivateHandler(HandlerData& data)
-        {
-            StreamSP out_stream = data.GetOutStream();
-            bool batch_mode = data.GetBatchMode();
-            if (data.reader.GetPrompt() && !batch_mode)
-            {
-                out_stream->Printf ("%s", data.reader.GetPrompt());
-                out_stream->Flush();
-            }
-        }
-        virtual void GotTokenHandler(HandlerData& data)
-        {
-            StreamSP out_stream = data.GetOutStream();
-            bool batch_mode = data.GetBatchMode();
-            if (data.bytes && data.bytes_len)
-            {
-                m_user_input.AppendString(data.bytes, data.bytes_len);
-            }
-            if (!data.reader.IsDone() && data.reader.GetPrompt() && !batch_mode)
-            {
-                out_stream->Printf ("%s", data.reader.GetPrompt());
-                out_stream->Flush();
-            }
-        }
-        virtual void InterruptHandler(HandlerData& data)
-        {
-            StreamSP out_stream = data.GetOutStream();
-            bool batch_mode = data.GetBatchMode();
-            data.reader.SetIsDone (true);
-            if (!batch_mode)
-            {
-                out_stream->Printf ("Warning: No command attached to breakpoint.\n");
-                out_stream->Flush();
-            }
-        }
-        virtual void EOFHandler(HandlerData& data)
-        {
-            data.reader.SetIsDone (true);
-        }
-        virtual void DoneHandler(HandlerData& data)
-        {
-            StreamSP out_stream = data.GetOutStream();
-            
-            ScriptInterpreter *interpreter = data.reader.GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
-            if (!interpreter)
-            {
-                out_stream->Printf ("Internal error #1: no script attached.\n");
-                out_stream->Flush();
-                return;
-            }
-            StringList funct_name_sl;
-            if (!interpreter->GenerateScriptAliasFunction (m_user_input, 
-                                                           funct_name_sl))
-            {
-                out_stream->Printf ("Internal error #2: no script attached.\n");
-                out_stream->Flush();
-                return;
-            }
-            if (funct_name_sl.GetSize() == 0)
-            {
-                out_stream->Printf ("Internal error #3: no script attached.\n");
-                out_stream->Flush();
-                return;
-            }
-            const char *funct_name = funct_name_sl.GetStringAtIndex(0);
-            if (!funct_name || !funct_name[0])
-            {
-                out_stream->Printf ("Internal error #4: no script attached.\n");
-                out_stream->Flush();
-                return;
-            }
-            
-            // everything should be fine now, let's add this alias
-            
-            CommandObjectSP command_obj_sp(new CommandObjectPythonFunction(m_interpreter,
-                                                                           m_cmd_name,
-                                                                           funct_name));
-                        
-            m_interpreter.AddAlias(m_cmd_name.c_str(), command_obj_sp);
-        }
-    };
     
 public:
     CommandObjectCommandsAlias (CommandInterpreter &interpreter) :
@@ -552,98 +435,6 @@ public:
         
         const std::string alias_command = args.GetArgumentAtIndex (0);
         
-        if (
-            (strcmp("--python",alias_command.c_str()) == 0) ||
-            (strcmp("-P",alias_command.c_str()) == 0)
-            )
-        {
-            
-            if (argc < 3)
-            {
-                // this is a definition of the form
-                // command alias --python foo_cmd
-                // and the user will type foo_cmd_impl by hand
-                std::string cmd_name = args.GetArgumentAtIndex(1);
-                // Verify that the command is alias-able.
-                if (m_interpreter.CommandExists (cmd_name.c_str()))
-                {
-                    result.AppendErrorWithFormat ("'%s' is a permanent debugger command and cannot be redefined.\n",
-                                                  cmd_name.c_str());
-                    result.SetStatus (eReturnStatusFailed);
-                    return false;
-                }
-                if (m_interpreter.AliasExists (cmd_name.c_str())
-                    || m_interpreter.UserCommandExists (cmd_name.c_str()))
-                {
-                    result.AppendWarningWithFormat ("Overwriting existing definition for '%s'.\n",
-                                                    cmd_name.c_str());
-                }
-                
-                                
-                InputReaderSP reader_sp (new PythonAliasReader (m_interpreter.GetDebugger(),
-                                                                m_interpreter,
-                                                                cmd_name));
-                
-                if (reader_sp)
-                {
-                    
-                    InputReaderEZ::InitializationParameters ipr;
-                    
-                    Error err (reader_sp->Initialize (ipr.SetBaton(NULL).SetPrompt("     ")));
-                    if (err.Success())
-                    {
-                        m_interpreter.GetDebugger().PushInputReader (reader_sp);
-                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                    }
-                    else
-                    {
-                        result.AppendError (err.AsCString());
-                        result.SetStatus (eReturnStatusFailed);
-                    }
-                }
-                else
-                {
-                    result.AppendError("out of memory");
-                    result.SetStatus (eReturnStatusFailed);
-                }
-                
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                return result.Succeeded();
-            }
-            else
-            {
-                // this is a definition of the form
-                // command alias --python foo_cmd funct_impl_foo
-                std::string cmd_name = args.GetArgumentAtIndex(1);
-                std::string funct_name = args.GetArgumentAtIndex(2);
-                
-                // Verify that the command is alias-able.
-                if (m_interpreter.CommandExists (cmd_name.c_str()))
-                {
-                    result.AppendErrorWithFormat ("'%s' is a permanent debugger command and cannot be redefined.\n",
-                                                  cmd_name.c_str());
-                    result.SetStatus (eReturnStatusFailed);
-                    return false;
-                }
-                
-                CommandObjectSP command_obj_sp(new CommandObjectPythonFunction(m_interpreter,
-                                                                               cmd_name,
-                                                                               funct_name));
-                
-                if (m_interpreter.AliasExists (cmd_name.c_str())
-                    || m_interpreter.UserCommandExists (cmd_name.c_str()))
-                {
-                    result.AppendWarningWithFormat ("Overwriting existing definition for '%s'.\n",
-                                                    cmd_name.c_str());
-                }
-                
-                m_interpreter.AddAlias(cmd_name.c_str(), command_obj_sp);
-                
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                return result.Succeeded();
-            }
-        }
-
         // Strip the new alias name off 'raw_command_string'  (leave it on args, which gets passed to 'Execute', which
         // does the stripping itself.
         size_t pos = raw_command_string.find (alias_command);
@@ -1348,6 +1139,535 @@ CommandObjectCommandsAddRegex::CommandOptions::g_option_table[] =
 };
 
 
+class CommandObjectPythonFunction : public CommandObject
+{
+private:
+    std::string m_function_name;
+    
+public:
+    
+    CommandObjectPythonFunction (CommandInterpreter &interpreter,
+                                 std::string name,
+                                 std::string funct) :
+    CommandObject (interpreter,
+                   name.c_str(),
+                   (std::string("Run Python function ") + funct).c_str(),
+                   NULL),
+    m_function_name(funct)
+    {
+    }
+    
+    virtual
+    ~CommandObjectPythonFunction ()
+    {
+    }
+    
+    virtual bool
+    ExecuteRawCommandString (const char *raw_command_line, CommandReturnObject &result)
+    {
+        ScriptInterpreter* scripter = m_interpreter.GetScriptInterpreter();
+        
+        Error error;
+        
+        if (!scripter || scripter->RunScriptBasedCommand(m_function_name.c_str(),
+                                                         raw_command_line,
+                                                         result,
+                                                         error) == false)
+        {
+            result.AppendError(error.AsCString());
+            result.SetStatus(eReturnStatusFailed);
+        }
+        else
+            result.SetStatus(eReturnStatusSuccessFinishNoResult);
+        
+        return result.Succeeded();
+    }
+    
+    virtual bool
+    WantsRawCommandString ()
+    {
+        return true;
+    }
+    
+    bool
+    Execute (Args& command,
+             CommandReturnObject &result)
+    {
+        std::string cmd_string;
+        command.GetCommandString(cmd_string);
+        return ExecuteRawCommandString(cmd_string.c_str(), result);
+    }
+    
+    virtual bool
+    IsRemovable() { return true; }
+    
+};
+
+
+//-------------------------------------------------------------------------
+// CommandObjectCommandsScriptAdd
+//-------------------------------------------------------------------------
+
+class CommandObjectCommandsScriptAdd : public CommandObject
+{
+private:
+    
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions (CommandInterpreter &interpreter) :
+        Options (interpreter)
+        {
+        }
+        
+        virtual
+        ~CommandOptions (){}
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            
+            switch (short_option)
+            {
+                case 'f':
+                    m_funct_name = std::string(option_arg);
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        OptionParsingStarting ()
+        {
+            m_funct_name = "";
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        std::string m_funct_name;
+    };
+    
+    CommandOptions m_options;
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+    class PythonAliasReader : public InputReaderEZ
+    {
+    private:
+        CommandInterpreter& m_interpreter;
+        std::string m_cmd_name;
+        StringList m_user_input;
+        DISALLOW_COPY_AND_ASSIGN (PythonAliasReader);
+    public:
+        PythonAliasReader(Debugger& debugger,
+                          CommandInterpreter& interpreter,
+                          std::string cmd_name) : 
+        InputReaderEZ(debugger),
+        m_interpreter(interpreter),
+        m_cmd_name(cmd_name),
+        m_user_input()
+        {}
+        
+        virtual
+        ~PythonAliasReader()
+        {
+        }
+        
+        virtual void ActivateHandler(HandlerData& data)
+        {
+            StreamSP out_stream = data.GetOutStream();
+            bool batch_mode = data.GetBatchMode();
+            if (!batch_mode)
+            {
+                out_stream->Printf ("%s\n", g_python_command_instructions);
+                if (data.reader.GetPrompt())
+                    out_stream->Printf ("%s", data.reader.GetPrompt());
+                out_stream->Flush();
+            }
+        }
+        
+        virtual void ReactivateHandler(HandlerData& data)
+        {
+            StreamSP out_stream = data.GetOutStream();
+            bool batch_mode = data.GetBatchMode();
+            if (data.reader.GetPrompt() && !batch_mode)
+            {
+                out_stream->Printf ("%s", data.reader.GetPrompt());
+                out_stream->Flush();
+            }
+        }
+        virtual void GotTokenHandler(HandlerData& data)
+        {
+            StreamSP out_stream = data.GetOutStream();
+            bool batch_mode = data.GetBatchMode();
+            if (data.bytes && data.bytes_len)
+            {
+                m_user_input.AppendString(data.bytes, data.bytes_len);
+            }
+            if (!data.reader.IsDone() && data.reader.GetPrompt() && !batch_mode)
+            {
+                out_stream->Printf ("%s", data.reader.GetPrompt());
+                out_stream->Flush();
+            }
+        }
+        virtual void InterruptHandler(HandlerData& data)
+        {
+            StreamSP out_stream = data.GetOutStream();
+            bool batch_mode = data.GetBatchMode();
+            data.reader.SetIsDone (true);
+            if (!batch_mode)
+            {
+                out_stream->Printf ("Warning: No command attached to breakpoint.\n");
+                out_stream->Flush();
+            }
+        }
+        virtual void EOFHandler(HandlerData& data)
+        {
+            data.reader.SetIsDone (true);
+        }
+        virtual void DoneHandler(HandlerData& data)
+        {
+            StreamSP out_stream = data.GetOutStream();
+            
+            ScriptInterpreter *interpreter = data.reader.GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+            if (!interpreter)
+            {
+                out_stream->Printf ("Internal error #1: no script attached.\n");
+                out_stream->Flush();
+                return;
+            }
+            StringList funct_name_sl;
+            if (!interpreter->GenerateScriptAliasFunction (m_user_input, 
+                                                           funct_name_sl))
+            {
+                out_stream->Printf ("Internal error #2: no script attached.\n");
+                out_stream->Flush();
+                return;
+            }
+            if (funct_name_sl.GetSize() == 0)
+            {
+                out_stream->Printf ("Internal error #3: no script attached.\n");
+                out_stream->Flush();
+                return;
+            }
+            const char *funct_name = funct_name_sl.GetStringAtIndex(0);
+            if (!funct_name || !funct_name[0])
+            {
+                out_stream->Printf ("Internal error #4: no script attached.\n");
+                out_stream->Flush();
+                return;
+            }
+            
+            // everything should be fine now, let's add this alias
+            
+            CommandObjectSP command_obj_sp(new CommandObjectPythonFunction(m_interpreter,
+                                                                           m_cmd_name,
+                                                                           funct_name));
+            
+            if (!m_interpreter.AddUserCommand(m_cmd_name.c_str(), command_obj_sp, true))
+            {
+                out_stream->Printf ("Internal error #5: no script attached.\n");
+                out_stream->Flush();
+                return;
+            }
+        }
+    };
+    
+public:
+    CommandObjectCommandsScriptAdd(CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "command script add",
+                   "Add a scripted function as an LLDB command.",
+                   NULL),
+    m_options (interpreter)
+    {
+        CommandArgumentEntry arg1;
+        CommandArgumentData cmd_arg;
+        
+        // Define the first (and only) variant of this arg.
+        cmd_arg.arg_type = eArgTypeCommandName;
+        cmd_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg1.push_back (cmd_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg1);
+    }
+    
+    ~CommandObjectCommandsScriptAdd ()
+    {
+    }
+    
+    bool
+    Execute
+    (
+     Args& args,
+     CommandReturnObject &result
+     )
+    {
+        size_t argc = args.GetArgumentCount();
+        
+        if (argc != 1)
+        {
+            result.AppendError ("'command script add' requires one argument");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        std::string cmd_name = args.GetArgumentAtIndex(0);
+        
+        if (m_options.m_funct_name.empty())
+        {
+            InputReaderSP reader_sp (new PythonAliasReader (m_interpreter.GetDebugger(),
+                                                            m_interpreter,
+                                                            cmd_name));
+            
+            if (reader_sp)
+            {
+                
+                InputReaderEZ::InitializationParameters ipr;
+                
+                Error err (reader_sp->Initialize (ipr.SetBaton(NULL).SetPrompt("     ")));
+                if (err.Success())
+                {
+                    m_interpreter.GetDebugger().PushInputReader (reader_sp);
+                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                }
+                else
+                {
+                    result.AppendError (err.AsCString());
+                    result.SetStatus (eReturnStatusFailed);
+                }
+            }
+            else
+            {
+                result.AppendError("out of memory");
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            CommandObjectSP new_cmd(new CommandObjectPythonFunction(m_interpreter, cmd_name, m_options.m_funct_name));
+            if (m_interpreter.AddUserCommand(cmd_name.c_str(), new_cmd, true))
+            {
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            }
+            else
+            {
+                result.AppendError("cannot add command");
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+
+        return result.Succeeded();
+        
+    }
+};
+
+OptionDefinition
+CommandObjectCommandsScriptAdd::CommandOptions::g_option_table[] =
+{
+    { LLDB_OPT_SET_1, false, "function", 'f', required_argument, NULL, 0, eArgTypeName,        "Name of a Python function to use."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectCommandsScriptList
+//-------------------------------------------------------------------------
+
+class CommandObjectCommandsScriptList : public CommandObject
+{
+private:
+        
+public:
+    CommandObjectCommandsScriptList(CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "command script list",
+                   "List defined scripted commands.",
+                   NULL)
+    {
+    }
+    
+    ~CommandObjectCommandsScriptList ()
+    {
+    }
+    
+    bool
+    Execute
+    (
+     Args& args,
+     CommandReturnObject &result
+     )
+    {
+        
+        m_interpreter.GetHelp(result,
+                              CommandInterpreter::eCommandTypesUserDef);
+        
+        result.SetStatus (eReturnStatusSuccessFinishResult);
+        
+        return true;
+        
+        
+    }
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectCommandsScriptClear
+//-------------------------------------------------------------------------
+
+class CommandObjectCommandsScriptClear : public CommandObject
+{
+private:
+    
+public:
+    CommandObjectCommandsScriptClear(CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "command script clear",
+                   "Delete all scripted commands.",
+                   NULL)
+    {
+    }
+    
+    ~CommandObjectCommandsScriptClear ()
+    {
+    }
+    
+    bool
+    Execute
+    (
+     Args& args,
+     CommandReturnObject &result
+     )
+    {
+        
+        m_interpreter.RemoveAllUser();
+        
+        result.SetStatus (eReturnStatusSuccessFinishResult);
+        
+        return true;
+        
+        
+    }
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectCommandsScriptDelete
+//-------------------------------------------------------------------------
+
+class CommandObjectCommandsScriptDelete : public CommandObject
+{
+private:
+    
+public:
+    CommandObjectCommandsScriptDelete(CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "command script delete",
+                   "Delete a scripted command.",
+                   NULL)
+    {
+        CommandArgumentEntry arg1;
+        CommandArgumentData cmd_arg;
+        
+        // Define the first (and only) variant of this arg.
+        cmd_arg.arg_type = eArgTypeCommandName;
+        cmd_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg1.push_back (cmd_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg1);
+    }
+    
+    ~CommandObjectCommandsScriptDelete ()
+    {
+    }
+    
+    bool
+    Execute
+    (
+     Args& args,
+     CommandReturnObject &result
+     )
+    {
+        
+        size_t argc = args.GetArgumentCount();
+        
+        if (argc != 1)
+        {
+            result.AppendError ("'command script delete' requires one argument");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
+        const char* cmd_name = args.GetArgumentAtIndex(0);
+        
+        if (cmd_name && *cmd_name && m_interpreter.HasUserCommands() && m_interpreter.UserCommandExists(cmd_name))
+        {
+            m_interpreter.RemoveUser(cmd_name);
+            result.SetStatus (eReturnStatusSuccessFinishResult);
+        }
+        else
+        {
+            result.AppendErrorWithFormat ("command %s not found", cmd_name);
+            result.SetStatus (eReturnStatusFailed);
+        }
+        
+        return result.Succeeded();
+        
+    }
+};
+
+#pragma mark CommandObjectMultiwordCommandsScript
+
+//-------------------------------------------------------------------------
+// CommandObjectMultiwordCommandsScript
+//-------------------------------------------------------------------------
+
+class CommandObjectMultiwordCommandsScript : public CommandObjectMultiword
+{
+public:
+    CommandObjectMultiwordCommandsScript (CommandInterpreter &interpreter) :
+    CommandObjectMultiword (interpreter,
+                            "command script",
+                            "A set of commands for managing or customizing script commands.",
+                            "command script <subcommand> [<subcommand-options>]")
+    {
+        LoadSubCommand ("add",  CommandObjectSP (new CommandObjectCommandsScriptAdd (interpreter)));
+        LoadSubCommand ("delete",   CommandObjectSP (new CommandObjectCommandsScriptDelete (interpreter)));
+        LoadSubCommand ("clear", CommandObjectSP (new CommandObjectCommandsScriptClear (interpreter)));
+        LoadSubCommand ("list",   CommandObjectSP (new CommandObjectCommandsScriptList (interpreter)));
+    }
+
+    ~CommandObjectMultiwordCommandsScript ()
+    {
+    }
+    
+};
+
+
 #pragma mark CommandObjectMultiwordCommands
 
 //-------------------------------------------------------------------------
@@ -1365,6 +1685,7 @@ CommandObjectMultiwordCommands::CommandObjectMultiwordCommands (CommandInterpret
     LoadSubCommand ("unalias", CommandObjectSP (new CommandObjectCommandsUnalias (interpreter)));
     LoadSubCommand ("regex",   CommandObjectSP (new CommandObjectCommandsAddRegex (interpreter)));
     LoadSubCommand ("history",   CommandObjectSP (new CommandObjectCommandsHistory (interpreter)));
+    LoadSubCommand ("script",   CommandObjectSP (new CommandObjectMultiwordCommandsScript (interpreter)));
 }
 
 CommandObjectMultiwordCommands::~CommandObjectMultiwordCommands ()

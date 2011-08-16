@@ -1,5 +1,6 @@
 script import sys, os
 script sys.path.append(os.path.join(os.getcwd(), os.pardir))
 script from welcome import *
-command alias --python welcome welcome_impl
-command alias --python targetname target_name_impl
+command script add welcome --function welcome_impl
+command script add targetname --function target_name_impl
+command script add longwait --function print_wait_impl

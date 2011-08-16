@@ -120,6 +120,12 @@ public:
     virtual bool
     IsCrossRefObject () { return false; }
     
+    // override this to return true if you want to enable the user to delete
+    // the Command object from the Command dictionary (aliases have their own
+    // deletion scheme, so they do not need to care about this)
+    virtual bool
+    IsRemovable() { return false; }
+    
     bool
     IsAlias () { return m_is_alias; }
     

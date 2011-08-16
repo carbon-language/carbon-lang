@@ -1909,7 +1909,7 @@ ScriptInterpreterPython::CastPyObjectToSBValue (void* data)
 bool
 ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                                const char* args,
-                                               lldb::SBStream& stream,
+                                               lldb_private::CommandReturnObject& cmd_retobj,
                                                Error& error)
 {
     if (!impl_function)
@@ -1941,7 +1941,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                              debugger_sp,
                                              args,
                                              err_msg,
-                                             stream);
+                                             cmd_retobj);
         python_interpreter->LeaveSession ();
     }
     else
@@ -1955,7 +1955,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
                                              debugger_sp,
                                              args,
                                              err_msg,
-                                             stream);
+                                             cmd_retobj);
         python_interpreter->LeaveSession ();
         ReleasePythonLock ();
     }
