@@ -23,7 +23,14 @@ no_trace = False
 
 # To be filled with the filterspecs found in the session logs.
 redo_specs = []
+
+# There is a known bug with respect to comp_specs and arch_specs, in that if we
+# encountered "-C clang" and "-C gcc" when visiting the session files, both
+# compilers will end up in the invocation of the test driver when rerunning.
+# That is: ./dotest -v -C clang^gcc ... -f ...".  Ditto for "-A" flags.
+# The "-C compiler" for comp_specs.
 comp_specs = set()
+# The "-A arch" for arch_specs.
 arch_specs = set()
 
 def usage():
