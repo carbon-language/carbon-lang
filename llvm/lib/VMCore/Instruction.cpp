@@ -357,7 +357,7 @@ bool Instruction::mayWriteToMemory() const {
 bool Instruction::mayThrow() const {
   if (const CallInst *CI = dyn_cast<CallInst>(this))
     return !CI->doesNotThrow();
-  return false;
+  return isa<ResumeInst>(this);
 }
 
 /// isAssociative - Return true if the instruction is associative:
