@@ -145,6 +145,15 @@ public:
     return const_cast<BasicBlock*>(this)->getFirstNonPHIOrDbgOrLifetime();
   }
 
+  /// getFirstInsertionPt - Returns an iterator to the first instruction in this
+  /// block that is suitable for inserting a non-PHI instruction. In particular,
+  /// it skips all PHIs and LandingPad instructions. Returns 0 if there are no
+  /// non-PHI instructions.
+  iterator getFirstInsertionPt();
+  const_iterator getFirstInsertionPt() const {
+    return const_cast<BasicBlock*>(this)->getFirstInsertionPt();
+  }
+
   /// removeFromParent - This method unlinks 'this' from the containing
   /// function, but does not delete it.
   ///

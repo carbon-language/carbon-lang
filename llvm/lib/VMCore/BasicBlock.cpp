@@ -167,6 +167,12 @@ Instruction* BasicBlock::getFirstNonPHIOrDbgOrLifetime() {
   return &*i;
 }
 
+BasicBlock::iterator BasicBlock::getFirstInsertionPt() {
+  iterator InsertPt = getFirstNonPHI();
+  if (isa<LandingPadInst>(InsertPt)) ++InsertPt;
+  return InsertPt;
+}
+
 void BasicBlock::dropAllReferences() {
   for(iterator I = begin(), E = end(); I != E; ++I)
     I->dropAllReferences();
