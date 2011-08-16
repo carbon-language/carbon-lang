@@ -405,6 +405,8 @@
 		94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94611EB113CCA4A4003A22AF /* RefCounter.cpp */; };
 		9463D4CD13B1798800C230D4 /* CommandObjectType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9463D4CC13B1798800C230D4 /* CommandObjectType.cpp */; };
 		9467E65213C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */; };
+		94A075BB13F9F58500D97961 /* CommandObjectPythonFunction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A075B913F9F58500D97961 /* CommandObjectPythonFunction.cpp */; };
+		94A075BC13F9F58500D97961 /* CommandObjectPythonFunction.h in Headers */ = {isa = PBXBuildFile; fileRef = 94A075BA13F9F58500D97961 /* CommandObjectPythonFunction.h */; };
 		94B6E76213D88365005F417F /* ValueObjectSyntheticFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94B6E76113D88362005F417F /* ValueObjectSyntheticFilter.cpp */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
@@ -1174,6 +1176,8 @@
 		9463D4CE13B179A500C230D4 /* CommandObjectType.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CommandObjectType.h; path = source/Commands/CommandObjectType.h; sourceTree = "<group>"; };
 		9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeHierarchyNavigator.cpp; path = source/Symbol/TypeHierarchyNavigator.cpp; sourceTree = "<group>"; };
 		9467E65413C3D98900B3B6F3 /* TypeHierarchyNavigator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TypeHierarchyNavigator.h; path = include/lldb/Symbol/TypeHierarchyNavigator.h; sourceTree = "<group>"; };
+		94A075B913F9F58500D97961 /* CommandObjectPythonFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectPythonFunction.cpp; path = source/Commands/CommandObjectPythonFunction.cpp; sourceTree = "<group>"; };
+		94A075BA13F9F58500D97961 /* CommandObjectPythonFunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectPythonFunction.h; path = source/Commands/CommandObjectPythonFunction.h; sourceTree = "<group>"; };
 		94A9112B13D5DEF80046D8A6 /* FormatClasses.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FormatClasses.h; path = include/lldb/Core/FormatClasses.h; sourceTree = "<group>"; };
 		94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FormatClasses.cpp; path = source/Core/FormatClasses.cpp; sourceTree = "<group>"; };
 		94B6E76013D8833C005F417F /* ValueObjectSyntheticFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectSyntheticFilter.h; path = include/lldb/Core/ValueObjectSyntheticFilter.h; sourceTree = "<group>"; };
@@ -2123,6 +2127,8 @@
 				26879CE71333F58B0012C1F8 /* CommandObjectPlatform.cpp */,
 				26BC7D1F10F1B76300F91463 /* CommandObjectProcess.h */,
 				26BC7E3810F1B84700F91463 /* CommandObjectProcess.cpp */,
+				94A075BA13F9F58500D97961 /* CommandObjectPythonFunction.h */,
+				94A075B913F9F58500D97961 /* CommandObjectPythonFunction.cpp */,
 				26BC7D2010F1B76300F91463 /* CommandObjectQuit.h */,
 				26BC7E3910F1B84700F91463 /* CommandObjectQuit.cpp */,
 				26BC7D2210F1B76300F91463 /* CommandObjectRegister.h */,
@@ -2658,6 +2664,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94A075BC13F9F58500D97961 /* CommandObjectPythonFunction.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3250,6 +3257,7 @@
 				26D7E45D13D5E30A007FD12B /* SocketAddress.cpp in Sources */,
 				B271B11413D6139300C3FEDB /* FormatClasses.cpp in Sources */,
 				94B6E76213D88365005F417F /* ValueObjectSyntheticFilter.cpp in Sources */,
+				94A075BB13F9F58500D97961 /* CommandObjectPythonFunction.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

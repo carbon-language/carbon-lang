@@ -582,4 +582,144 @@ LLDBSWIGPython_CastPyObjectToSBValue
     return sb_ptr;
 }
 
+SWIGEXPORT bool
+LLDBSwigPythonCallCommand 
+(
+    const char *python_function_name,
+    const char *session_dictionary_name,
+    lldb::DebuggerSP& debugger,
+    const char* args,
+    std::string& err_msg,
+    lldb::SBStream& stream
+)
+{
+
+    bool retval = false;
+
+    PyObject *DebuggerObj_PyObj = SWIG_NewPointerObj((void *) &debugger, SWIGTYPE_p_lldb__SBDebugger, 0);
+    PyObject *StreamObj_PyObj = SWIG_NewPointerObj((void *) &stream, SWIGTYPE_p_lldb__SBStream, 0);
+
+    if (DebuggerObj_PyObj == NULL)
+        return retval;
+        
+    if (StreamObj_PyObj == NULL)
+        return retval;
+
+    if (!python_function_name || !session_dictionary_name)
+        return retval;
+
+    PyObject *pmodule, *main_dict, *session_dict, *pfunc;
+    PyObject *pargs, *pvalue;
+    
+    pmodule = PyImport_AddModule ("__main__");
+    if (pmodule != NULL)
+    {
+        main_dict = PyModule_GetDict (pmodule);
+        if (main_dict != NULL)
+        {
+            PyObject *key, *value;
+            Py_ssize_t pos = 0;
+             
+            // Find the current session's dictionary in the main module's dictionary.
+
+            if (PyDict_Check (main_dict))
+            {
+                session_dict = NULL;   
+                while (PyDict_Next (main_dict, &pos, &key, &value))
+                {
+                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
+                    // them now so that Python's garbage collector doesn't collect them out from under us.
+                    Py_INCREF (key);
+                    Py_INCREF (value);
+                    if (strcmp (PyString_AsString (key), session_dictionary_name) == 0)
+                    {
+                        session_dict = value;
+                        break;
+                    }
+                }
+            }
+            
+            if (!session_dict || !PyDict_Check (session_dict))
+                return retval;
+                
+            // Find the function we need to call in the current session's dictionary.
+
+            pos = 0;
+            pfunc = NULL;
+            while (PyDict_Next (session_dict, &pos, &key, &value))
+            {
+                if (PyString_Check (key))
+                {
+                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
+                    // them now so that Python's garbage collector doesn't collect them out from under us.
+                    Py_INCREF (key);
+                    Py_INCREF (value);
+                    if (strcmp (PyString_AsString (key), python_function_name) == 0)
+                    {
+                        pfunc = value;
+                        break;
+                    }
+                }
+            }
+
+            // Set up the arguments and call the function.
+                
+            if (pfunc && PyCallable_Check (pfunc))
+            {
+                pargs = PyTuple_New (4);
+                if (pargs == NULL)
+                {
+                    if (PyErr_Occurred())
+                        PyErr_Clear();
+                    return retval;
+                }
+                
+                PyTuple_SetItem (pargs, 0, DebuggerObj_PyObj);  // This "steals" a reference to DebuggerObj_PyObj
+                PyTuple_SetItem (pargs, 1, PyString_FromString(args));
+                PyTuple_SetItem (pargs, 2, StreamObj_PyObj);  // This "steals" a reference to StreamObj_PyObj
+                PyTuple_SetItem (pargs, 3, session_dict); // This "steals" a reference to session_dict
+                pvalue = PyObject_CallObject (pfunc, pargs);
+                Py_DECREF (pargs);
+                
+                if (pvalue != NULL)
+                {
+                    if (pvalue == Py_None) // no error
+                    {
+                        err_msg.clear();
+                        retval = true;
+                    }
+                    else // return value is an error string
+                    {
+                        err_msg.assign(PyString_AsString(pvalue));
+                        retval = false;
+                    }
+                    Py_DECREF (pvalue);
+                }
+                else if (PyErr_Occurred ())
+                {
+                    PyErr_Print();
+                    PyErr_Clear();
+                }
+                Py_INCREF (session_dict);
+            }
+            else if (PyErr_Occurred())
+            {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+        }
+        else if (PyErr_Occurred())
+        {
+            PyErr_Print();
+            PyErr_Clear();
+        }
+    }
+    else if (PyErr_Occurred ())
+    {
+        PyErr_Print();
+        PyErr_Clear ();
+    }
+    return retval;
+}
+
 %}

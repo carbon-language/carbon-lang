@@ -130,6 +130,30 @@ class AliasTestCase(TestBase):
                      substrs = [ "use of undeclared identifier 'f'",
                                  "1 errors parsing expression" ])
 
+        self.runCmd("command source py_import")
+
+        self.expect('welcome Enrico',
+            substrs = ['Hello Enrico, welcome to LLDB']);
+
+        self.runCmd("command unalias welcome");
+
+        self.expect('welcome Enrico', matching=False, error=True,
+                    substrs = ['Hello Enrico, welcome to LLDB']);
+
+        self.expect('targetname',
+            substrs = ['a.out'])
+
+        self.expect('targetname fail', error=True,
+                    substrs = ['a test for error in command'])
+
+        self.expect('help',
+            substrs = ['targetname',
+                       'Run Python function target_name_impl'])
+
+        self.expect("help targetname",
+                    substrs = ['Run Python function target_name_imp',
+                               'This command takes \'raw\' input',
+                               'quote stuff'])
 
 
 if __name__ == '__main__':

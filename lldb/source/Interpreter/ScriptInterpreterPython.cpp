@@ -41,6 +41,7 @@ static ScriptInterpreter::SWIGPythonGetChildAtIndex g_swig_get_child_index = NUL
 static ScriptInterpreter::SWIGPythonGetIndexOfChildWithName g_swig_get_index_child = NULL;
 static ScriptInterpreter::SWIGPythonCastPyObjectToSBValue g_swig_cast_to_sbvalue  = NULL;
 static ScriptInterpreter::SWIGPythonUpdateSynthProviderInstance g_swig_update_provider = NULL;
+static ScriptInterpreter::SWIGPythonCallCommand g_swig_call_command = NULL;
 
 static int
 _check_and_flush (FILE *stream)
@@ -765,6 +766,12 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
                     success = PyArg_Parse (py_return, format, (char **) &ret_value);
                     break;
                 }
+                case eCharStrOrNone: // char* or NULL if py_return == Py_None
+                {
+                    const char format[3] = "z";
+                    success = PyArg_Parse (py_return, format, (char **) &ret_value);
+                    break;
+                }
                 case eBool:
                 {
                     const char format[2] = "b";
@@ -1249,6 +1256,70 @@ ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, Str
     output.AppendString (auto_generated_function_name.c_str());
     return true;
 }
+
+bool
+ScriptInterpreterPython::GenerateScriptAliasFunction (StringList &user_input, StringList &output)
+{
+    static int num_created_functions = 0;
+    user_input.RemoveBlankLines ();
+    int num_lines = user_input.GetSize ();
+    StreamString sstr;
+    
+    // Check to see if we have any data; if not, just return.
+    if (user_input.GetSize() == 0)
+        return false;
+    
+    // Take what the user wrote, wrap it all up inside one big auto-generated Python function, passing in the
+    // ValueObject as parameter to the function.
+    
+    sstr.Printf ("lldb_autogen_python_cmd_alias_func_%d", num_created_functions);
+    ++num_created_functions;
+    std::string auto_generated_function_name = sstr.GetData();
+    
+    sstr.Clear();
+    StringList auto_generated_function;
+    
+    // Create the function name & definition string.
+    
+    sstr.Printf ("def %s (debugger, args, dict):", auto_generated_function_name.c_str());
+    auto_generated_function.AppendString (sstr.GetData());
+    
+    // Pre-pend code for setting up the session dictionary.
+    
+    auto_generated_function.AppendString ("     global_dict = globals()");   // Grab the global dictionary
+    auto_generated_function.AppendString ("     new_keys = dict.keys()");    // Make a list of keys in the session dict
+    auto_generated_function.AppendString ("     old_keys = global_dict.keys()"); // Save list of keys in global dict
+    auto_generated_function.AppendString ("     global_dict.update (dict)"); // Add the session dictionary to the 
+    // global dictionary.
+    
+    // Wrap everything up inside the function, increasing the indentation.
+    
+    for (int i = 0; i < num_lines; ++i)
+    {
+        sstr.Clear ();
+        sstr.Printf ("     %s", user_input.GetStringAtIndex (i));
+        auto_generated_function.AppendString (sstr.GetData());
+    }
+    
+    // Append code to clean up the global dictionary and update the session dictionary (all updates in the function
+    // got written to the values in the global dictionary, not the session dictionary).
+    
+    auto_generated_function.AppendString ("     for key in new_keys:");  // Iterate over all the keys from session dict
+    auto_generated_function.AppendString ("         dict[key] = global_dict[key]");  // Update session dict values
+    auto_generated_function.AppendString ("         if key not in old_keys:");       // If key was not originally in global dict
+    auto_generated_function.AppendString ("             del global_dict[key]");      //  ...then remove key/value from global dict
+    
+    // Verify that the results are valid Python.
+    
+    if (!ExportFunctionDefinitionToInterpreter (auto_generated_function))
+        return false;
+    
+    // Store the name of the auto-generated function to be called.
+    
+    output.AppendString (auto_generated_function_name.c_str());
+    return true;
+}
+
 
 bool
 ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, StringList &output)
@@ -1835,6 +1906,72 @@ ScriptInterpreterPython::CastPyObjectToSBValue (void* data)
     return ret_val;
 }
 
+bool
+ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
+                                               const char* args,
+                                               lldb::SBStream& stream,
+                                               Error& error)
+{
+    if (!impl_function)
+    {
+        error.SetErrorString("no function to execute");
+        return false;
+    }
+    
+    if (!g_swig_call_command)
+    {
+        error.SetErrorString("no helper function to run scripted commands");
+        return false;
+    }
+    
+    ScriptInterpreterPython *python_interpreter = this;
+    
+    lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().GetSP();
+    
+    bool ret_val;
+    
+    std::string err_msg;
+    
+    FILE *tmp_fh = (python_interpreter->m_dbg_stdout ? python_interpreter->m_dbg_stdout : stdout);
+    if (CurrentThreadHasPythonLock())
+    {
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_call_command       (impl_function,
+                                             python_interpreter->m_dictionary_name.c_str(),
+                                             debugger_sp,
+                                             args,
+                                             err_msg,
+                                             stream);
+        python_interpreter->LeaveSession ();
+    }
+    else
+    {
+        while (!GetPythonLock (1))
+            fprintf (tmp_fh, 
+                     "Python interpreter locked on another thread; waiting to acquire lock...\n");
+        python_interpreter->EnterSession ();
+        ret_val = g_swig_call_command       (impl_function,
+                                             python_interpreter->m_dictionary_name.c_str(),
+                                             debugger_sp,
+                                             args,
+                                             err_msg,
+                                             stream);
+        python_interpreter->LeaveSession ();
+        ReleasePythonLock ();
+    }
+    
+    if (!ret_val)
+        error.SetErrorString(err_msg.c_str());
+    else
+        error.Clear();
+    
+    return ret_val;
+
+    
+    return true;
+    
+}
+
 
 void
 ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
@@ -1845,7 +1982,8 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
                                                 SWIGPythonGetChildAtIndex python_swig_get_child_index,
                                                 SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
                                                 SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
-                                                SWIGPythonUpdateSynthProviderInstance python_swig_update_provider)
+                                                SWIGPythonUpdateSynthProviderInstance python_swig_update_provider,
+                                                SWIGPythonCallCommand python_swig_call_command)
 {
     g_swig_init_callback = python_swig_init_callback;
     g_swig_breakpoint_callback = python_swig_breakpoint_callback;
@@ -1856,6 +1994,7 @@ ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_ini
     g_swig_get_index_child = python_swig_get_index_child;
     g_swig_cast_to_sbvalue = python_swig_cast_to_sbvalue;
     g_swig_update_provider = python_swig_update_provider;
+    g_swig_call_command = python_swig_call_command;
 }
 
 void

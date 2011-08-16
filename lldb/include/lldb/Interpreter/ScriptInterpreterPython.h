@@ -59,6 +59,9 @@ public:
     bool
     GenerateTypeScriptFunction (const char* oneliner, StringList &output);
     
+    virtual bool
+    GenerateScriptAliasFunction (StringList &input, StringList &output);
+    
     void*
     CreateSyntheticScriptedProvider (std::string class_name,
                                      lldb::ValueObjectSP valobj);
@@ -77,6 +80,12 @@ public:
     
     virtual lldb::SBValue*
     CastPyObjectToSBValue (void* data);
+    
+    virtual bool
+    RunScriptBasedCommand(const char* impl_function,
+                          const char* args,
+                          lldb::SBStream& stream,
+                          Error& error);
     
     bool
     GenerateFunction(std::string& signature, StringList &input, StringList &output);
@@ -131,7 +140,8 @@ public:
                            SWIGPythonGetChildAtIndex python_swig_get_child_index,
                            SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
                            SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
-                           SWIGPythonUpdateSynthProviderInstance python_swig_update_provider);
+                           SWIGPythonUpdateSynthProviderInstance python_swig_update_provider,
+                           SWIGPythonCallCommand python_swig_call_command);
 
 protected:
 

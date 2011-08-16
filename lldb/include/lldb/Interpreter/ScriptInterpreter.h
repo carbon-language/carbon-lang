@@ -43,6 +43,13 @@ public:
     typedef int            (*SWIGPythonGetIndexOfChildWithName)     (void *implementor, const char* child_name);
     typedef lldb::SBValue* (*SWIGPythonCastPyObjectToSBValue)       (void* data);
     typedef void           (*SWIGPythonUpdateSynthProviderInstance) (void* data);    
+    
+    typedef bool           (*SWIGPythonCallCommand)                 (const char *python_function_name,
+                                                                     const char *session_dictionary_name,
+                                                                     lldb::DebuggerSP& debugger,
+                                                                     const char* args,
+                                                                     std::string& err_msg,
+                                                                     lldb::SBStream& stream);
 
     typedef enum
     {
@@ -58,7 +65,8 @@ public:
         eLongLongUnsigned,
         eFloat,
         eDouble,
-        eChar
+        eChar,
+        eCharStrOrNone,
     } ReturnType;
 
 
@@ -98,6 +106,12 @@ public:
     
     virtual bool
     GenerateTypeScriptFunction (StringList &input, StringList &output)
+    {
+        return false;
+    }
+    
+    virtual bool
+    GenerateScriptAliasFunction (StringList &input, StringList &output)
     {
         return false;
     }
@@ -168,6 +182,15 @@ public:
     {
         return NULL;
     }
+    
+    virtual bool
+    RunScriptBasedCommand(const char* impl_function,
+                          const char* args,
+                          lldb::SBStream& stream,
+                          Error& error)
+    {
+        return false;
+    }
 
     const char *
     GetScriptInterpreterPtyName ();
@@ -178,7 +201,7 @@ public:
 	CommandInterpreter &
 	GetCommandInterpreter ();
 
-     static std::string
+    static std::string
     LanguageToString (lldb::ScriptLanguage language);
     
     static void
@@ -190,7 +213,8 @@ public:
                            SWIGPythonGetChildAtIndex python_swig_get_child_index,
                            SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
                            SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
-                           SWIGPythonUpdateSynthProviderInstance python_swig_update_provider);
+                           SWIGPythonUpdateSynthProviderInstance python_swig_update_provider,
+                           SWIGPythonCallCommand python_swig_call_command);
 
     static void
     TerminateInterpreter ();
