@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.osx.KeychainAPI %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=osx.SecKeychainAPI %s -verify
 
 // Fake typedefs.
 typedef unsigned int OSStatus;

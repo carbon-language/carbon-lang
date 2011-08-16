@@ -269,16 +269,12 @@ def OSAtomicChecker : Checker<"AtomicCAS">,
   HelpText<"Evaluate calls to OSAtomic functions">,
   DescFile<"OSAtomicChecker.cpp">;
 
-} // end "macosx"
-
-let ParentPackage = OSXExperimental in {
-
-def MacOSKeychainAPIChecker : Checker<"KeychainAPI">,
-  InPackage<OSXExperimental>,
+def MacOSKeychainAPIChecker : Checker<"SecKeychainAPI">,
+  InPackage<OSX>,
   HelpText<"Check for proper uses of Secure Keychain APIs">,
   DescFile<"MacOSKeychainAPIChecker.cpp">;
 
-} // end "osx.experimental"
+} // end "macosx"
 
 let ParentPackage = Cocoa in {
 
