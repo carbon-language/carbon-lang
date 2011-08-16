@@ -160,7 +160,7 @@ class ClassTypesTestCase(TestBase):
         #
         # Break on the ctor function of class C.
         self.expect("breakpoint set -M C", BREAKPOINT_CREATED,
-            startstr = "Breakpoint created: 1: name = 'C', locations = 1")
+            startstr = "Breakpoint created: 1: name = 'C'")
 
         self.runCmd("run", RUN_SUCCEEDED)
 
