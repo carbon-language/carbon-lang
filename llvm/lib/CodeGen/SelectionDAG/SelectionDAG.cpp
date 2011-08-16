@@ -928,13 +928,6 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, EVT VT, bool isT) {
   assert(Val.getBitWidth() == EltVT.getSizeInBits() &&
          "APInt size does not match type size!");
 
-  // In some cases the vector type is legal but the element type is illegal.
-  // In this case, promote the inserted value. The type does not need to match
-  // the vector element type. Any extra bits introduced will be
-  // truncated away.
-  if (VT.isVector())
-    EltVT = TLI.getTypeToTransformTo(*getContext(), EltVT);
-
   unsigned Opc = isT ? ISD::TargetConstant : ISD::Constant;
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
