@@ -582,6 +582,10 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
   }
   
   if (SwitchInst *SI = dyn_cast<SwitchInst>(&TI)) {
+    if (TI.getNumSuccessors() < 2) {
+      Succs[0] = true;
+      return;
+    }
     LatticeVal SCValue = getValueState(SI->getCondition());
     ConstantInt *CI = SCValue.getConstantInt();
     
@@ -642,6 +646,9 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
     return true;
   
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+    if (SI->getNumSuccessors() < 2)
+      return true;
+
     LatticeVal SCValue = getValueState(SI->getCondition());
     ConstantInt *CI = SCValue.getConstantInt();
     
