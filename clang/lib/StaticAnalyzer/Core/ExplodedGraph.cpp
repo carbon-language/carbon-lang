@@ -93,10 +93,9 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
     ProgramPoint progPoint = node->getLocation();
     if (!isa<PostStmt>(progPoint))
       continue;
-
     // Condition 4.
     PostStmt ps = cast<PostStmt>(progPoint);
-    if (ps.getTag() || isa<PostStmtCustom>(ps))
+    if (ps.getTag())
       continue;
 
     if (isa<BinaryOperator>(ps.getStmt()))

@@ -1761,11 +1761,11 @@ void ExprEngine::VisitObjCPropertyRefExpr(const ObjCPropertyRefExpr *Ex,
 // Transfer function: Objective-C ivar references.
 //===----------------------------------------------------------------------===//
 
-static std::pair<const void*,const void*> EagerlyAssumeTag
-  = std::pair<const void*,const void*>(&EagerlyAssumeTag,static_cast<void*>(0));
-
 void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
                                      const Expr *Ex) {
+  
+  static SimpleProgramPointTag EagerlyAssumeTag("ExprEngine : Eagerly Assume");
+  
   for (ExplodedNodeSet::iterator I=Src.begin(), E=Src.end(); I!=E; ++I) {
     ExplodedNode *Pred = *I;
 
@@ -1783,20 +1783,16 @@ void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
     if (nonloc::SymExprVal *SEV = dyn_cast<nonloc::SymExprVal>(&V)) {
       // First assume that the condition is true.
       if (const ProgramState *stateTrue = state->assume(*SEV, true)) {
-        stateTrue = stateTrue->BindExpr(Ex,
-                                        svalBuilder.makeIntVal(1U, Ex->getType()));
-        Dst.Add(Builder->generateNode(PostStmtCustom(Ex,
-                                &EagerlyAssumeTag, Pred->getLocationContext()),
-                                      stateTrue, Pred));
+        SVal Val = svalBuilder.makeIntVal(1U, Ex->getType());        
+        stateTrue = stateTrue->BindExpr(Ex, Val);
+        Dst.Add(Builder->generateNode(Ex, stateTrue, Pred, &EagerlyAssumeTag));
       }
 
       // Next, assume that the condition is false.
       if (const ProgramState *stateFalse = state->assume(*SEV, false)) {
-        stateFalse = stateFalse->BindExpr(Ex,
-                                          svalBuilder.makeIntVal(0U, Ex->getType()));
-        Dst.Add(Builder->generateNode(PostStmtCustom(Ex, &EagerlyAssumeTag,
-                                                   Pred->getLocationContext()),
-                                      stateFalse, Pred));
+        SVal Val = svalBuilder.makeIntVal(0U, Ex->getType());
+        stateFalse = stateFalse->BindExpr(Ex, Val);
+        Dst.Add(Builder->generateNode(Ex, stateFalse, Pred, &EagerlyAssumeTag));
       }
     }
     else

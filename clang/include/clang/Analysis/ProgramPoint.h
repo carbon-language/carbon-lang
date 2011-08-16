@@ -45,7 +45,6 @@ public:
               PreStoreKind,
               PostStoreKind,
               PostPurgeDeadSymbolsKind,
-              PostStmtCustomKind,
               PostConditionKind,
               PostLValueKind,
               PostInitializerKind,
@@ -204,27 +203,6 @@ public:
   static bool classof(const ProgramPoint* Location) {
     unsigned k = Location->getKind();
     return k >= MinPostStmtKind && k <= MaxPostStmtKind;
-  }
-};
-
-class PostStmtCustom : public PostStmt {
-public:
-  PostStmtCustom(const Stmt *S,
-                 const std::pair<const void*, const void*>* TaggedData,\
-                 const LocationContext *L)
-    : PostStmt(S, TaggedData, PostStmtCustomKind, L) {}
-
-  const std::pair<const void*, const void*>& getTaggedPair() const {
-    return
-      *reinterpret_cast<const std::pair<const void*, const void*>*>(getData2());
-  }
-
-  const void *getTag() const { return getTaggedPair().first; }
-
-  const void *getTaggedData() const { return getTaggedPair().second; }
-
-  static bool classof(const ProgramPoint* Location) {
-    return Location->getKind() == PostStmtCustomKind;
   }
 };
 
