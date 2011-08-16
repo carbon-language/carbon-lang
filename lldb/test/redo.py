@@ -28,6 +28,7 @@ redo_specs = []
 # encountered "-C clang" and "-C gcc" when visiting the session files, both
 # compilers will end up in the invocation of the test driver when rerunning.
 # That is: ./dotest -v -C clang^gcc ... -f ...".  Ditto for "-A" flags.
+
 # The "-C compiler" for comp_specs.
 comp_specs = set()
 # The "-A arch" for arch_specs.
