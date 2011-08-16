@@ -414,3 +414,30 @@ void TestAssignIntoSymbolicOffset::test(int x, int y) {
   }
 }
 
+// Test loads from static fields.  This previously triggered an uninitialized
+// value warning.
+class ClassWithStatic {
+public:
+    static const unsigned value = 1;
+};
+
+int rdar9948787_negative() {
+    ClassWithStatic classWithStatic;
+    unsigned value = classWithStatic.value;
+    if (value == 1)
+      return 1;
+    int *p = 0;
+    *p = 0xDEADBEEF; // no-warning
+    return 0;
+}
+
+int rdar9948787_positive() {
+    ClassWithStatic classWithStatic;
+    unsigned value = classWithStatic.value;
+    if (value == 0)
+      return 1;
+    int *p = 0;
+    *p = 0xDEADBEEF; // expected-warning {{null}}
+    return 0;
+}
+

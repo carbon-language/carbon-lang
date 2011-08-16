@@ -1380,7 +1380,14 @@ void ExprEngine::VisitLvalArraySubscriptExpr(const ArraySubscriptExpr *A,
 void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
                                  ExplodedNodeSet &Dst) {
 
-  FieldDecl *field = dyn_cast<FieldDecl>(M->getMemberDecl());
+  Decl *member = M->getMemberDecl();
+  if (VarDecl *VD = dyn_cast<VarDecl>(member)) {
+    assert(M->isLValue());
+    VisitCommonDeclRefExpr(M, VD, Pred, Dst);
+    return;
+  }
+  
+  FieldDecl *field = dyn_cast<FieldDecl>(member);
   if (!field) // FIXME: skipping member expressions for non-fields
     return;
 
