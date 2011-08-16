@@ -902,6 +902,7 @@ class Thumb1sI<dag oops, dag iops, AddrMode am, int sz,
   let Pattern = pattern;
   let thumbArithFlagSetting = 1;
   list<Predicate> Predicates = [IsThumb, IsThumb1Only];
+  let DecoderNamespace = "ThumbSBit";
 }
 
 class T1sI<dag oops, dag iops, InstrItinClass itin,

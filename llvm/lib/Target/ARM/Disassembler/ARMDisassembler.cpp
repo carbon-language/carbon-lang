@@ -417,6 +417,14 @@ bool ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   bool result = decodeThumbInstruction16(MI, insn16, Address, this);
   if (result) {
     Size = 2;
+    AddThumbPredicate(MI);
+    return true;
+  }
+
+  MI.clear();
+  result = decodeThumbSBitInstruction16(MI, insn16, Address, this);
+  if (result) {
+    Size = 2;
     bool InITBlock = !ITBlock.empty();
     AddThumbPredicate(MI);
     AddThumb1SBit(MI, InITBlock);
