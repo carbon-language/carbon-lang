@@ -18,6 +18,7 @@
 #include "MipsInstrInfo.h"
 #include "MipsMachineFunction.h"
 #include "MipsMCInstLower.h"
+#include "MipsMCSymbolRefExpr.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
@@ -36,6 +37,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -53,9 +55,26 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
 
   MipsMCInstLower MCInstLowering(Mang, *MF, *this);
+  unsigned Opc = MI->getOpcode();
+
+  // If target is Mips1, expand double precision load/store to two single
+  // precision loads/stores (and delay slot if MI is a load).
+  if (Subtarget->isMips1() && (Opc == Mips::LDC1 || Opc == Mips::SDC1)) {
+    SmallVector<MCInst, 4> MCInsts;
+    const unsigned* SubReg = 
+      TM.getRegisterInfo()->getSubRegisters(MI->getOperand(0).getReg());
+    MCInstLowering.LowerMips1F64LoadStore(MI, Opc, MCInsts,
+                                          Subtarget->isLittle(), SubReg);
+    
+    for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
+         I != MCInsts.end(); ++I)
+      OutStreamer.EmitInstruction(*I);
+
+    return;
+  }
+
   MCInst TmpInst0;
   MCInstLowering.Lower(MI, TmpInst0);
-  unsigned Opc = MI->getOpcode();
   
   // Convert aligned loads/stores to their unaligned counterparts.
   // FIXME: expand other unaligned memory accesses too.

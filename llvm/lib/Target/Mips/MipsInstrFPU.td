@@ -190,7 +190,7 @@ def FMOV_D32 : FFR<0x11, 0b000110, 0x1, (outs AFGR64:$fd), (ins AFGR64:$fs),
                    "mov.d\t$fd, $fs", []>;
 
 /// Floating Point Memory Instructions
-let Predicates = [IsNotSingleFloat, IsNotMipsI] in {
+let Predicates = [IsNotSingleFloat] in {
   def LDC1 : FFI<0b110101, (outs AFGR64:$ft), (ins mem:$addr),
                  "ldc1\t$ft, $addr", [(set AFGR64:$ft, (load addr:$addr))]>;
 

@@ -83,6 +83,50 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
                                                            Ctx));
 }
 
+// If target is Mips1, expand double precision load/store to two single
+// precision loads/stores.
+// 
+//  ldc1 $f0, lo($CPI0_0)($5) gets expanded to the following two instructions:
+//  (little endian)
+//   lwc1 $f0, lo($CPI0_0)($5) and
+//   lwc1 $f1, lo($CPI0_0+4)($5)
+//  (big endian)
+//   lwc1 $f1, lo($CPI0_0)($5) and
+//   lwc1 $f0, lo($CPI0_0+4)($5)
+void MipsMCInstLower::LowerMips1F64LoadStore(const MachineInstr *MI,
+                                             unsigned Opc,
+                                             SmallVector<MCInst, 4>& MCInsts,
+                                             bool isLittle,
+                                             const unsigned *SubReg) const {
+  MCInst InstLo, InstHi, DelaySlot;
+  unsigned SingleOpc = (Opc == Mips::LDC1 ? Mips::LWC1 : Mips::SWC1);
+  unsigned RegLo = isLittle ? *SubReg : *(SubReg + 1);
+  unsigned RegHi = isLittle ? *(SubReg + 1) : *SubReg;
+  const MachineOperand &MO1 = MI->getOperand(1);
+  const MachineOperand &MO2 = MI->getOperand(2);
+
+  InstLo.setOpcode(SingleOpc);
+  InstLo.addOperand(MCOperand::CreateReg(RegLo));
+  InstLo.addOperand(LowerOperand(MO1));
+  InstLo.addOperand(LowerOperand(MO2));
+  MCInsts.push_back(InstLo);
+
+  InstHi.setOpcode(SingleOpc);
+  InstHi.addOperand(MCOperand::CreateReg(RegHi));
+  InstHi.addOperand(LowerOperand(MO1));
+  if (MO2.isImm())// The offset of addr operand is an immediate: e.g. 0($sp)
+    InstHi.addOperand(MCOperand::CreateImm(MO2.getImm() + 4));
+  else// Otherwise, the offset must be a symbol: e.g. lo($CPI0_0)($5)
+    InstHi.addOperand(LowerSymbolOperand(MO2, MO2.getType(), 4));
+  MCInsts.push_back(InstHi);
+
+  // Need to insert a NOP in LWC1's delay slot.
+  if (SingleOpc == Mips::LWC1) {
+    DelaySlot.setOpcode(Mips::NOP);
+    MCInsts.push_back(DelaySlot);
+  }
+}
+
 MCOperand MipsMCInstLower::LowerOperand(const MachineOperand& MO) const {
   MachineOperandType MOTy = MO.getType();
   

@@ -25,7 +25,7 @@ entry:
 define double @sel2_1(i32 %s, double %f0, double %f1) nounwind readnone {
 entry:
 ; CHECK-MIPS32R2: movn.d
-; CHECK-MIPS1: beq
+; CHECK-MIPS1: bne
   %tobool = icmp ne i32 %s, 0
   %cond = select i1 %tobool, double %f0, double %f1
   ret double %cond

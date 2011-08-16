@@ -175,21 +175,9 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     BuildMI(MBB, I, DL, get(Mips::SWC1)).addReg(SrcReg, getKillRegState(isKill))
                                         .addFrameIndex(FI).addImm(0);
   else if (RC == Mips::AFGR64RegisterClass) {
-    if (!TM.getSubtarget<MipsSubtarget>().isMips1()) {
-      BuildMI(MBB, I, DL, get(Mips::SDC1))
-        .addReg(SrcReg, getKillRegState(isKill))
-        .addFrameIndex(FI).addImm(0);
-    } else {
-      const TargetRegisterInfo *TRI =
-        MBB.getParent()->getTarget().getRegisterInfo();
-      const unsigned *SubSet = TRI->getSubRegisters(SrcReg);
-      BuildMI(MBB, I, DL, get(Mips::SWC1))
-        .addReg(SubSet[0], getKillRegState(isKill))
-        .addFrameIndex(FI).addImm(0);
-      BuildMI(MBB, I, DL, get(Mips::SWC1))
-        .addReg(SubSet[1], getKillRegState(isKill))
-        .addFrameIndex(FI).addImm(4);
-    }
+    BuildMI(MBB, I, DL, get(Mips::SDC1))
+      .addReg(SrcReg, getKillRegState(isKill))
+      .addFrameIndex(FI).addImm(0);
   } else
     llvm_unreachable("Register class not handled!");
 }
@@ -208,17 +196,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   else if (RC == Mips::FGR32RegisterClass)
     BuildMI(MBB, I, DL, get(Mips::LWC1), DestReg).addFrameIndex(FI).addImm(0);
   else if (RC == Mips::AFGR64RegisterClass) {
-    if (!TM.getSubtarget<MipsSubtarget>().isMips1()) {
-      BuildMI(MBB, I, DL, get(Mips::LDC1), DestReg).addFrameIndex(FI).addImm(0);
-    } else {
-      const TargetRegisterInfo *TRI =
-        MBB.getParent()->getTarget().getRegisterInfo();
-      const unsigned *SubSet = TRI->getSubRegisters(DestReg);
-      BuildMI(MBB, I, DL, get(Mips::LWC1), SubSet[0])
-        .addFrameIndex(FI).addImm(0);
-      BuildMI(MBB, I, DL, get(Mips::LWC1), SubSet[1])
-        .addFrameIndex(FI).addImm(4);
-    }
+    BuildMI(MBB, I, DL, get(Mips::LDC1), DestReg).addFrameIndex(FI).addImm(0);
   } else
     llvm_unreachable("Register class not handled!");
 }
