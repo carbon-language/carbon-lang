@@ -2757,6 +2757,15 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
       static_cast<ARMOperand*>(Operands[4])->isImm0_65535Expr() &&
       static_cast<ARMOperand*>(Operands[1])->getReg() == 0)
     return true;
+
+  // Register-register 'add' for thumb does not have a cc_out operand
+  // when there are only two register operands.
+  if (isThumb() && Mnemonic == "add" && Operands.size() == 5 &&
+      static_cast<ARMOperand*>(Operands[3])->isReg() &&
+      static_cast<ARMOperand*>(Operands[4])->isReg() &&
+      static_cast<ARMOperand*>(Operands[1])->getReg() == 0)
+    return true;
+
   return false;
 }
 
