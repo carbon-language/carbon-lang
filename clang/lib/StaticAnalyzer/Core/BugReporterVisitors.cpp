@@ -507,7 +507,7 @@ public:
                                      const bool tookTrue,
                                      BugReporterContext &BRC);
   
-  void patternMatch(const Expr *Ex,
+  bool patternMatch(const Expr *Ex,
                     llvm::raw_ostream &Out,
                     BugReporterContext &BRC);
 };
@@ -615,15 +615,19 @@ ConditionVisitor::VisitTrueTest(const Expr *Cond,
   }
 }
 
-void ConditionVisitor::patternMatch(const Expr *Ex, llvm::raw_ostream &Out,
+bool ConditionVisitor::patternMatch(const Expr *Ex, llvm::raw_ostream &Out,
                                     BugReporterContext &BRC) {
   const Expr *OriginalExpr = Ex;
   Ex = Ex->IgnoreParenCasts();
 
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Ex)) {
-    if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
-      Out << VD->getDeclName().getAsString();
-    return;
+    const bool quotes = isa<VarDecl>(DR->getDecl());
+    if (quotes)
+      Out << '\'';
+    Out << DR->getDecl()->getDeclName().getAsString();
+    if (quotes)
+      Out << '\'';
+    return quotes;
   }
   
   if (const IntegerLiteral *IL = dyn_cast<IntegerLiteral>(Ex)) {
@@ -631,19 +635,21 @@ void ConditionVisitor::patternMatch(const Expr *Ex, llvm::raw_ostream &Out,
     if (OriginalTy->isPointerType()) {
       if (IL->getValue() == 0) {
         Out << "null";
-        return;
+        return false;
       }
     }
     else if (OriginalTy->isObjCObjectPointerType()) {
       if (IL->getValue() == 0) {
         Out << "nil";
-        return;
+        return false;
       }
     }
     
     Out << IL->getValue();
-    return;
+    return false;
   }
+  
+  return false;
 }
 
 PathDiagnosticPiece *
@@ -652,23 +658,38 @@ ConditionVisitor::VisitTrueTest(const Expr *Cond,
                                 const bool tookTrue,
                                 BugReporterContext &BRC) {
   
+  bool shouldInvert = false;
+  
   llvm::SmallString<128> LhsString, RhsString;
   {
     llvm::raw_svector_ostream OutLHS(LhsString), OutRHS(RhsString);  
-    patternMatch(BExpr->getLHS(), OutLHS, BRC);
-    patternMatch(BExpr->getRHS(), OutRHS, BRC);
+    const bool isVarLHS = patternMatch(BExpr->getLHS(), OutLHS, BRC);
+    const bool isVarRHS = patternMatch(BExpr->getRHS(), OutRHS, BRC);
+    
+    shouldInvert = !isVarLHS && isVarRHS;    
   }
   
   if (LhsString.empty() || RhsString.empty())
     return 0;
 
+  // Should we invert the strings if the LHS is not a variable name?
+  
   llvm::SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
-  Out << "Assuming " << LhsString << " is ";
+  Out << "Assuming " << (shouldInvert ? RhsString : LhsString) << " is ";
 
   // Do we need to invert the opcode?
   BinaryOperator::Opcode Op = BExpr->getOpcode();
-  
+    
+  if (shouldInvert)
+    switch (Op) {
+      default: break;
+      case BO_LT: Op = BO_GT; break;
+      case BO_GT: Op = BO_LT; break;
+      case BO_LE: Op = BO_GE; break;
+      case BO_GE: Op = BO_LE; break;
+    }
+
   if (!tookTrue)
     switch (Op) {
       case BO_EQ: Op = BO_NE; break;
@@ -693,7 +714,7 @@ ConditionVisitor::VisitTrueTest(const Expr *Cond,
       break;
   }
   
-  Out << RhsString;
+  Out << (shouldInvert ? LhsString : RhsString);
 
   PathDiagnosticLocation Loc(Cond, BRC.getSourceManager());
   return new PathDiagnosticEventPiece(Loc, Out.str());
