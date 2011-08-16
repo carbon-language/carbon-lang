@@ -601,6 +601,7 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   // Advance to a place where it is safe to insert the new store and
   // insert it.
   BBI = DestBB->getFirstNonPHI();
+  if (isa<LandingPadInst>(BBI)) ++BBI;
   StoreInst *NewSI = new StoreInst(MergedVal, SI.getOperand(1),
                                    SI.isVolatile(),
                                    SI.getAlignment(),

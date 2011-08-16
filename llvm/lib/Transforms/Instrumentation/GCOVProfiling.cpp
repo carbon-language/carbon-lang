@@ -505,7 +505,9 @@ bool GCOVProfiler::emitProfileArcs(DebugInfoFinder &DIF) {
       }
       for (int i = 0, e = ComplexEdgeSuccs.size(); i != e; ++i) {
         // call runtime to perform increment
-        IRBuilder<> Builder(ComplexEdgeSuccs[i+1]->getFirstNonPHI());
+        BasicBlock::iterator InsertPt = ComplexEdgeSuccs[i+1]->getFirstNonPHI();
+        if (isa<LandingPadInst>(InsertPt)) ++InsertPt;
+        IRBuilder<> Builder(InsertPt);
         Value *CounterPtrArray =
             Builder.CreateConstInBoundsGEP2_64(EdgeTable, 0,
                                                i * ComplexEdgePreds.size());
