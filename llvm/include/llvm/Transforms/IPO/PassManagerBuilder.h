@@ -98,6 +98,10 @@ private:
 public:
   PassManagerBuilder();
   ~PassManagerBuilder();
+  /// Adds an extension that will be used by all PassManagerBuilder instances.
+  /// This is intended to be used by plugins, to register a set of
+  /// optimisations to run automatically.
+  static void addGlobalExtension(ExtensionPointTy Ty, ExtensionFn Fn);
   void addExtension(ExtensionPointTy Ty, ExtensionFn Fn);
 
 private:
@@ -115,6 +119,15 @@ public:
   void populateLTOPassManager(PassManagerBase &PM, bool Internalize,
                               bool RunInliner);
 };
-
+/// Registers a function for adding a standard set of passes.  This should be
+/// used by optimizer plugins to allow all front ends to transparently use
+/// them.  Create a static instance of this class in your plugin, providing a
+/// private function that the PassManagerBuilder can use to add your passes.
+struct RegisterStandardPasses {
+  RegisterStandardPasses(PassManagerBuilder::ExtensionPointTy Ty,
+                         PassManagerBuilder::ExtensionFn Fn) {
+    PassManagerBuilder::addGlobalExtension(Ty, Fn);
+  }
+};
 } // end namespace llvm
 #endif

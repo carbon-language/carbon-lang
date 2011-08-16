@@ -25,6 +25,8 @@
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
 
@@ -43,12 +45,25 @@ PassManagerBuilder::~PassManagerBuilder() {
   delete Inliner;
 }
 
+/// Set of global extensions, automatically added as part of the standard set.
+static ManagedStatic<SmallVector<std::pair<PassManagerBuilder::ExtensionPointTy,
+   PassManagerBuilder::ExtensionFn>, 8> > GlobalExtensions;
+
+void PassManagerBuilder::addGlobalExtension(
+    PassManagerBuilder::ExtensionPointTy Ty,
+    PassManagerBuilder::ExtensionFn Fn) {
+  GlobalExtensions->push_back(std::make_pair(Ty, Fn));
+}
+
 void PassManagerBuilder::addExtension(ExtensionPointTy Ty, ExtensionFn Fn) {
   Extensions.push_back(std::make_pair(Ty, Fn));
 }
 
 void PassManagerBuilder::addExtensionsToPM(ExtensionPointTy ETy,
                                            PassManagerBase &PM) const {
+  for (unsigned i = 0, e = GlobalExtensions->size(); i != e; ++i)
+    if ((*GlobalExtensions)[i].first == ETy)
+      (*GlobalExtensions)[i].second(*this, PM);
   for (unsigned i = 0, e = Extensions.size(); i != e; ++i)
     if (Extensions[i].first == ETy)
       Extensions[i].second(*this, PM);
