@@ -23,6 +23,8 @@ no_trace = False
 
 # To be filled with the filterspecs found in the session logs.
 redo_specs = []
+comp_specs = set()
+arch_specs = set()
 
 def usage():
     print"""\
@@ -49,10 +51,17 @@ def where(session_dir, test_dir):
 
 # This is the pattern for the line from the log file to redo a test.
 # We want the filter spec.
-pattern = re.compile("^\./dotest\.py.*-f (.*)$")
+filter_pattern = re.compile("^\./dotest\.py.*-f (.*)$")
+comp_pattern = re.compile(" -C ([^ ]+) ")
+arch_pattern = re.compile(" -A ([^ ]+) ")
 def redo(suffix, dir, names):
     """Visitor function for os.path.walk(path, visit, arg)."""
     global redo_specs
+    global comp_specs
+    global arch_specs
+    global filter_pattern
+    global comp_pattern
+    global arch_pattern
 
     for name in names:
         if name.endswith(suffix):
@@ -61,11 +70,17 @@ def redo(suffix, dir, names):
                 with open(os.path.join(dir, name), 'r') as log:
                     content = log.read()
                     for line in content.splitlines():
-                        match = pattern.match(line)
+                        match = filter_pattern.match(line)
                         if match:
                             filterspec = match.group(1)
                             print "adding filterspec:", filterspec
                             redo_specs.append(filterspec)
+                            comp = comp_pattern.search(line)
+                            if comp:
+                                comp_specs.add(comp.group(1))
+                            arch = arch_pattern.search(line)
+                            if arch:
+                                arch_specs.add(arch.group(1))                                
             else:
                 continue
 
@@ -104,8 +119,14 @@ def main():
     os.chdir(test_dir)
     os.path.walk(session_dir_path, redo, ".log")
 
-    command = "./dotest.py -v %s -f " % ("" if no_trace else "-t")
     filters = " -f ".join(redo_specs)
+    compilers = (" -C %s" % "^".join(comp_specs)) if comp_specs else None
+    archs = (" -A %s" % "^".join(arch_specs)) if arch_specs else None
+
+    command = "./dotest.py %s %s -v %s -f " % (compilers if compilers else "",
+                                               archs if archs else "",
+                                               "" if no_trace else "-t")
+
 
     print "Running %s" % (command + filters)
     os.system(command + filters)
