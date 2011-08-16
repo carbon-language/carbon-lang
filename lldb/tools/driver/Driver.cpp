@@ -306,8 +306,13 @@ ShowUsage (FILE *out, OptionDefinition *option_table, Driver::OptionData data)
 
     indent_level -= 5;
 
-    fprintf (out, "\n%*s('%s <filename>' also works, to specify the file to be debugged.)\n\n",
-             indent_level, "", name);
+    fprintf (out, "\n%*s(If you don't provide -f then the first argument will be the file to be debugged"
+                  "\n%*s so '%s -- <filename> [<ARG1> [<ARG2>]]' also works."
+                  "\n%*s Remember to end the options with \"--\" if any of your arguments have a \"-\" in them.)\n\n",
+             indent_level, "", 
+             indent_level, "",
+             name, 
+             indent_level, "");
 }
 
 void
