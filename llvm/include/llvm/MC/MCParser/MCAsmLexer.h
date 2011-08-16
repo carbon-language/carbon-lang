@@ -17,7 +17,6 @@
 namespace llvm {
 class MCAsmLexer;
 class MCInst;
-class Target;
 
 /// AsmToken - Target independent representation for an assembler token.
 class AsmToken {
