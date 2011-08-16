@@ -108,10 +108,11 @@ ValueObjectChild::UpdateValue ()
 
             if (ClangASTContext::IsPointerOrReferenceType (parent->GetClangType()))
             {
-                uint32_t offset = 0;
-                m_value.GetScalar() = parent->GetDataExtractor().GetPointer(&offset);
+                const bool scalar_is_load_address = true;
+                AddressType address_type;
 
-                lldb::addr_t addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+                lldb::addr_t addr = parent->GetPointerValue (address_type, scalar_is_load_address);
+                m_value.GetScalar() = addr;
 
                 if (addr == LLDB_INVALID_ADDRESS)
                 {
