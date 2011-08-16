@@ -29,10 +29,10 @@ MipsMCInstLower::MipsMCInstLower(Mangler *mang, const MachineFunction &mf,
   : Ctx(mf.getContext()), Mang(mang), AsmPrinter(asmprinter) {}
 
 MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
-                                              MachineOperandType MOTy) const {
+                                              MachineOperandType MOTy,
+                                              unsigned Offset) const {
   MipsMCSymbolRefExpr::VariantKind Kind;
   const MCSymbol *Symbol;
-  int Offset = 0;
 
   switch(MO.getTargetFlags()) {
   default:                  assert(0 && "Invalid target flag!");
@@ -72,7 +72,7 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     case MachineOperand::MO_ConstantPoolIndex:
       Symbol = AsmPrinter.GetCPISymbol(MO.getIndex());
       if (MO.getOffset())
-        Offset = MO.getOffset();  
+        Offset += MO.getOffset();  
       break;
 
     default:
@@ -109,7 +109,7 @@ void MipsMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_JumpTableIndex:
     case MachineOperand::MO_ConstantPoolIndex:
     case MachineOperand::MO_BlockAddress:
-      MCOp = LowerSymbolOperand(MO, MOTy);
+      MCOp = LowerSymbolOperand(MO, MOTy, 0);
       break;
     }
     
