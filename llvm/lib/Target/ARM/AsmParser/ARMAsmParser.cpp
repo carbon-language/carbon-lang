@@ -2962,6 +2962,7 @@ validateInstruction(MCInst &Inst,
     if (widthm1 >= 32 - lsb)
       return Error(Operands[5]->getStartLoc(),
                    "bitfield width must be in range [1,32-lsb]");
+    return false;
   }
   }
 
