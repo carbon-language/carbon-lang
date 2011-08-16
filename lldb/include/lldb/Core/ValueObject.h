@@ -640,7 +640,7 @@ public:
     Value &
     GetValue();
 
-    bool
+    virtual bool
     ResolveValue (Scalar &scalar);
     
     const char *

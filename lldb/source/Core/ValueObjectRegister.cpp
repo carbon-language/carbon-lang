@@ -404,3 +404,12 @@ ValueObjectRegister::SetValueFromCString (const char *value_str)
         return false;
 }
 
+bool
+ValueObjectRegister::ResolveValue (Scalar &scalar)
+{
+    if (UpdateValueIfNeeded(false)) // make sure that you are up to date before returning anything
+        return m_reg_value.GetScalarValue(scalar);
+    return false;
+}
+
+
