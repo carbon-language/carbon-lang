@@ -518,6 +518,8 @@ class Base(unittest2.TestCase):
         self.__expected__   = False
         # We are also interested in unexpected success.
         self.__unexpected__ = False
+        # And skipped tests.
+        self.__skipped__ = False
 
         # See addTearDownHook(self, hook) which allows the client to add a hook
         # function to be run during tearDown() time.
