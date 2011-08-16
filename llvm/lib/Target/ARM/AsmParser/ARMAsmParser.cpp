@@ -81,6 +81,9 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool isThumbTwo() const {
     return isThumb() && (STI.getFeatureBits() & ARM::FeatureThumb2);
   }
+  bool hasV6Ops() const {
+    return STI.getFeatureBits() & ARM::HasV6Ops;
+  }
   void SwitchMode() {
     unsigned FB = ComputeAvailableFeatures(STI.ToggleFeature(ARM::ModeThumb));
     setAvailableFeatures(FB);
@@ -152,7 +155,9 @@ class ARMAsmParser : public MCTargetAsmParser {
 
 public:
   enum ARMMatchResultTy {
-    Match_RequiresITBlock = FIRST_TARGET_MATCH_RESULT_TY
+    Match_RequiresITBlock = FIRST_TARGET_MATCH_RESULT_TY,
+    Match_RequiresV6,
+    Match_RequiresThumb2
   };
 
   ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
@@ -2714,6 +2719,8 @@ getMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "rsb" || Mnemonic == "rsc" || Mnemonic == "orn" ||
       Mnemonic == "sbc" || Mnemonic == "mla" || Mnemonic == "umull" ||
       Mnemonic == "eor" || Mnemonic == "smlal" ||
+      // FIXME: We need a better way. This really confused Thumb2
+      // parsing for 'mov'.
       (Mnemonic == "mov" && !isThumbOne())) {
     CanAcceptCarrySet = true;
   } else {
@@ -3022,7 +3029,8 @@ static MCInstrDesc &getInstDesc(unsigned Opcode) {
 unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
   // 16-bit thumb arithmetic instructions either require or preclude the 'S'
   // suffix depending on whether they're in an IT block or not.
-  MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
+  unsigned Opc = Inst.getOpcode();
+  MCInstrDesc &MCID = getInstDesc(Opc);
   if (MCID.TSFlags & ARMII::ThumbArithFlagSetting) {
     assert(MCID.hasOptionalDef() &&
            "optionally flag setting instruction missing optional def operand");
@@ -3044,6 +3052,17 @@ unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
     if (isThumbTwo() && Inst.getOperand(OpNo).getReg() != ARM::CPSR)
       return Match_RequiresITBlock;
   }
+  // Some high-register supporting Thumb1 encodings only allow both registers
+  // to be from r0-r7 when in Thumb2.
+  else if (Opc == ARM::tADDhirr && isThumbOne() &&
+           isARMLowRegister(Inst.getOperand(1).getReg()) &&
+           isARMLowRegister(Inst.getOperand(2).getReg()))
+    return Match_RequiresThumb2;
+  // Others only require ARMv6 or later.
+  else if (Opc == ARM::tMOVr && isThumbOne() &&
+           isARMLowRegister(Inst.getOperand(0).getReg()) &&
+           isARMLowRegister(Inst.getOperand(1).getReg()))
+    return Match_RequiresV6;
   return Match_Success;
 }
 
@@ -3090,6 +3109,10 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     return Error(IDLoc, "unable to convert operands to instruction");
   case Match_RequiresITBlock:
     return Error(IDLoc, "instruction only valid inside IT block");
+  case Match_RequiresV6:
+    return Error(IDLoc, "instruction variant requires ARMv6 or later");
+  case Match_RequiresThumb2:
+    return Error(IDLoc, "instruction variant requires Thumb2");
   }
 
   llvm_unreachable("Implement any new match types added!");

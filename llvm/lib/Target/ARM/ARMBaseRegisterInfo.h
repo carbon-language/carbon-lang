@@ -33,19 +33,6 @@ namespace ARMRI {
   };
 }
 
-/// isARMLowRegister - Returns true if the register is low register r0-r7.
-///
-static inline bool isARMLowRegister(unsigned Reg) {
-  using namespace ARM;
-  switch (Reg) {
-  case R0:  case R1:  case R2:  case R3:
-  case R4:  case R5:  case R6:  case R7:
-    return true;
-  default:
-    return false;
-  }
-}
-
 /// isARMArea1Register - Returns true if the register is a low register (r0-r7)
 /// or a stack/pc register that we should push/pop.
 static inline bool isARMArea1Register(unsigned Reg, bool isDarwin) {

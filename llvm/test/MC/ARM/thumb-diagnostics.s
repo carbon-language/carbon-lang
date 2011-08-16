@@ -8,3 +8,13 @@
 @ CHECK-ERRORS: error: invalid instruction
 @ CHECK-ERRORS:         add r1, r2, r3
 @ CHECK-ERRORS:         ^
+
+@ Instructions which require v6+ for both registers to be low regs.
+        add r2, r3
+        mov r2, r3
+@ CHECK-ERRORS: error: instruction variant requires Thumb2
+@ CHECK-ERRORS:         add r2, r3
+@ CHECK-ERRORS:         ^
+@ CHECK-ERRORS: error: instruction variant requires ARMv6 or later
+@ CHECK-ERRORS:         mov r2, r3
+@ CHECK-ERRORS:         ^
