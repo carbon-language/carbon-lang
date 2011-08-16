@@ -7657,7 +7657,7 @@ EmulateInstructionARM::EmulateLDRSHRegister (const uint32_t opcode, const ARMEnc
                 break;
                   
             default:
-                break;
+                return false;
         }
                   
         uint64_t Rm = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + m, 0, &success);
@@ -11960,10 +11960,10 @@ EmulateInstructionARM::EmulateVLD1SingleAll (const uint32_t opcode, const ARMEnc
                 if (n == 15)
                     return false;
             }
-                break;
+            break;
                 
             default:
-                break;
+                return false;
         }
         
         RegisterInfo base_reg;
