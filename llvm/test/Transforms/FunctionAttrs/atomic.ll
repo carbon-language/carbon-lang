@@ -13,7 +13,7 @@ entry:
 
 ; A function with an Acquire load is not readonly.
 define i32 @test2(i32* %x) uwtable ssp {
-; CHECK: define i32 @test2(i32 %x) uwtable ssp {
+; CHECK: define i32 @test2(i32* nocapture %x) uwtable ssp {
 entry:
   %r = load atomic i32* %x seq_cst, align 4
   ret i32 %r
