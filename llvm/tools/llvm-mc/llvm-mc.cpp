@@ -413,8 +413,8 @@ static int AssembleInput(const char *ProgName) {
     Str.reset(createLoggingStreamer(Str.take(), errs()));
   }
 
-  OwningPtr<MCAsmParser> Parser(createMCAsmParser(*TheTarget, SrcMgr, Ctx,
-                                                   *Str.get(), *MAI));
+  OwningPtr<MCAsmParser> Parser(createMCAsmParser(SrcMgr, Ctx,
+                                                  *Str.get(), *MAI));
   OwningPtr<MCTargetAsmParser> TAP(TheTarget->createMCAsmParser(*STI, *Parser));
   if (!TAP) {
     errs() << ProgName

@@ -24,7 +24,6 @@ class MCTargetAsmParser;
 class SMLoc;
 class SourceMgr;
 class StringRef;
-class Target;
 class Twine;
 
 /// MCAsmParser - Generic assembler parser interface, for use by target specific
@@ -131,7 +130,7 @@ public:
 };
 
 /// \brief Create an MCAsmParser instance.
-MCAsmParser *createMCAsmParser(const Target &, SourceMgr &, MCContext &,
+MCAsmParser *createMCAsmParser(SourceMgr &, MCContext &,
                                MCStreamer &, const MCAsmInfo &);
 
 } // End llvm namespace

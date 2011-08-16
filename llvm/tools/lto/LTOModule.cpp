@@ -619,7 +619,7 @@ bool LTOModule::addAsmGlobalSymbols(MCContext &Context) {
   MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(inlineAsm);
   SourceMgr SrcMgr;
   SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
-  OwningPtr<MCAsmParser> Parser(createMCAsmParser(_target->getTarget(), SrcMgr,
+  OwningPtr<MCAsmParser> Parser(createMCAsmParser(SrcMgr,
                                                   Context, *Streamer,
                                                   *_target->getMCAsmInfo()));
   OwningPtr<MCSubtargetInfo> STI(_target->getTarget().

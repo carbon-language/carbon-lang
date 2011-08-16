@@ -116,7 +116,7 @@ private:
   unsigned HadError : 1;
 
 public:
-  AsmParser(const Target &T, SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
+  AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI);
   ~AsmParser();
 
@@ -338,7 +338,7 @@ extern MCAsmParserExtension *createCOFFAsmParser();
 
 enum { DEFAULT_ADDRSPACE = 0 };
 
-AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
+AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx,
                      MCStreamer &_Out, const MCAsmInfo &_MAI)
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
     GenericParser(new GenericAsmParser), PlatformParser(0),
@@ -2713,8 +2713,8 @@ bool GenericAsmParser::ParseDirectiveLEB128(StringRef DirName, SMLoc) {
 
 
 /// \brief Create an MCAsmParser instance.
-MCAsmParser *llvm::createMCAsmParser(const Target &T, SourceMgr &SM,
+MCAsmParser *llvm::createMCAsmParser(SourceMgr &SM,
                                      MCContext &C, MCStreamer &Out,
                                      const MCAsmInfo &MAI) {
-  return new AsmParser(T, SM, C, Out, MAI);
+  return new AsmParser(SM, C, Out, MAI);
 }

@@ -109,7 +109,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode) const {
   // Tell SrcMgr about this buffer, it takes ownership of the buffer.
   SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
 
-  OwningPtr<MCAsmParser> Parser(createMCAsmParser(TM.getTarget(), SrcMgr,
+  OwningPtr<MCAsmParser> Parser(createMCAsmParser(SrcMgr,
                                                   OutContext, OutStreamer,
                                                   *MAI));
 
