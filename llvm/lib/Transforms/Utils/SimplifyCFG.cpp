@@ -2269,7 +2269,7 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
       // Note that deleting LandingPad's here is in fact okay, although it
       // involves a bit of subtle reasoning. If this inst is a LandingPad,
       // all the predecessors of this block will be the unwind edges of Invokes,
-      // and we can therefore guaranteed this block will be erased.
+      // and we can therefore guarantee this block will be erased.
     }
 
     // Delete this instruction (any uses are guaranteed to be dead)
