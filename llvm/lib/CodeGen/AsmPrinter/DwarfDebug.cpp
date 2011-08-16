@@ -465,7 +465,7 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName,
 
 /// constructCompileUnit - Create new CompileUnit for the given
 /// metadata node with tag DW_TAG_compile_unit.
-void DwarfDebug::constructCompileUnit(const MDNode *N) {
+CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
   StringRef Dir = DIUnit.getDirectory();
@@ -507,35 +507,7 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
   if (!FirstCU)
     FirstCU = NewCU;
   CUMap.insert(std::make_pair(N, NewCU));
-}
-
-/// getCompileUnit - Get CompileUnit DIE.
-CompileUnit *DwarfDebug::getCompileUnit(const MDNode *N) const {
-  assert (N && "Invalid DwarfDebug::getCompileUnit argument!");
-  DIDescriptor D(N);
-  const MDNode *CUNode = NULL;
-  if (D.isCompileUnit())
-    CUNode = N;
-  else if (D.isSubprogram())
-    CUNode = DISubprogram(N).getCompileUnit();
-  else if (D.isType())
-    CUNode = DIType(N).getCompileUnit();
-  else if (D.isGlobalVariable())
-    CUNode = DIGlobalVariable(N).getCompileUnit();
-  else if (D.isVariable())
-    CUNode = DIVariable(N).getCompileUnit();
-  else if (D.isNameSpace())
-    CUNode = DINameSpace(N).getCompileUnit();
-  else if (D.isFile())
-    CUNode = DIFile(N).getCompileUnit();
-  else
-    return FirstCU;
-
-  DenseMap<const MDNode *, CompileUnit *>::const_iterator I
-    = CUMap.find(CUNode);
-  if (I == CUMap.end())
-    return FirstCU;
-  return I->second;
+  return NewCU;
 }
 
 /// constructGlobalVariableDIE - Construct global variable DIE.
@@ -571,22 +543,39 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
   // Expose as global.
   TheCU->addGlobal(SP.getName(), SubprogramDie);
 
+  SPMap[N] = TheCU;
   return;
 }
 
 /// collectInfoFromNamedMDNodes - Collect debug info from named mdnodes such
 /// as llvm.dbg.enum and llvm.dbg.ty
 void DwarfDebug::collectInfoFromNamedMDNodes(Module *M) {
+  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.sp"))
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+      const MDNode *N = NMD->getOperand(i);
+      if (CompileUnit *CU = CUMap.lookup(DISubprogram(N).getCompileUnit()))
+        constructSubprogramDIE(CU, N);
+    }
+  
+  if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.gv"))
+    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+      const MDNode *N = NMD->getOperand(i);
+      if (CompileUnit *CU = CUMap.lookup(DIGlobalVariable(N).getCompileUnit()))
+        constructGlobalVariableDIE(CU, N);
+    }
+  
   if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.enum"))
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
       DIType Ty(NMD->getOperand(i));
-      getCompileUnit(Ty)->getOrCreateTypeDIE(Ty);
+      if (CompileUnit *CU = CUMap.lookup(Ty.getCompileUnit()))
+        CU->getOrCreateTypeDIE(Ty);
     }
   
   if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.ty"))
     for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
       DIType Ty(NMD->getOperand(i));
-      getCompileUnit(Ty)->getOrCreateTypeDIE(Ty);
+      if (CompileUnit *CU = CUMap.lookup(Ty.getCompileUnit()))
+        CU->getOrCreateTypeDIE(Ty);
     }
 }
 
@@ -617,14 +606,16 @@ bool DwarfDebug::collectLegacyDebugInfo(Module *M) {
   for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
          E = DbgFinder.global_variable_end(); I != E; ++I) {
     const MDNode *N = *I;
-    constructGlobalVariableDIE(getCompileUnit(N), N);
+    if (CompileUnit *CU = CUMap.lookup(DIGlobalVariable(N).getCompileUnit()))
+      constructGlobalVariableDIE(CU, N);
   }
-  
+    
   // Create DIEs for each subprogram.
   for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
          E = DbgFinder.subprogram_end(); I != E; ++I) {
     const MDNode *N = *I;
-    constructSubprogramDIE(getCompileUnit(N), N);
+    if (CompileUnit *CU = CUMap.lookup(DISubprogram(N).getCompileUnit()))
+      constructSubprogramDIE(CU, N);
   }
 
   return HasDebugInfo;
@@ -641,29 +632,22 @@ void DwarfDebug::beginModule(Module *M) {
   // module using debug info finder to collect debug info.
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (CU_Nodes) {
-
-    NamedMDNode *GV_Nodes = M->getNamedMetadata("llvm.dbg.gv");
-    NamedMDNode *SP_Nodes = M->getNamedMetadata("llvm.dbg.sp");
-    if (!GV_Nodes && !SP_Nodes)
-      // If there are not any global variables or any functions then
-      // there is not any debug info in this module.
-      return;
-
-    for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i)
-      constructCompileUnit(CU_Nodes->getOperand(i));
-
-    if (GV_Nodes)
-      for (unsigned i = 0, e = GV_Nodes->getNumOperands(); i != e; ++i) {
-        const MDNode *N = GV_Nodes->getOperand(i);
-        constructGlobalVariableDIE(getCompileUnit(N), N);
-      }
-
-    if (SP_Nodes)
-      for (unsigned i = 0, e = SP_Nodes->getNumOperands(); i != e; ++i) {
-        const MDNode *N = SP_Nodes->getOperand(i);
-        constructSubprogramDIE(getCompileUnit(N), N);
-      }
-    
+    for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
+      DICompileUnit CUNode(CU_Nodes->getOperand(i));
+      CompileUnit *CU = constructCompileUnit(CUNode);
+      DIArray GVs = CUNode.getGlobalVariables();
+      for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i)
+        constructGlobalVariableDIE(CU, GVs.getElement(i));
+      DIArray SPs = CUNode.getSubprograms();
+      for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
+        constructSubprogramDIE(CU, SPs.getElement(i));
+      DIArray EnumTypes = CUNode.getEnumTypes();
+      for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i)
+        CU->getOrCreateTypeDIE(EnumTypes.getElement(i));
+      DIArray RetainedTypes = CUNode.getRetainedTypes();
+      for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i)
+        CU->getOrCreateTypeDIE(RetainedTypes.getElement(i));
+    }
   } else if (!collectLegacyDebugInfo(M))
     return;
 
@@ -685,39 +669,44 @@ void DwarfDebug::endModule() {
   if (!FirstCU) return;
   const Module *M = MMI->getModule();
   DenseMap<const MDNode *, LexicalScope *> DeadFnScopeMap;
-  if (NamedMDNode *AllSPs = M->getNamedMetadata("llvm.dbg.sp")) {
-    for (unsigned SI = 0, SE = AllSPs->getNumOperands(); SI != SE; ++SI) {
-      if (ProcessedSPNodes.count(AllSPs->getOperand(SI)) != 0) continue;
-      DISubprogram SP(AllSPs->getOperand(SI));
-      if (!SP.Verify()) continue;
 
-      // Collect info for variables that were optimized out.
-      if (!SP.isDefinition()) continue;
-      StringRef FName = SP.getLinkageName();
-      if (FName.empty())
-        FName = SP.getName();
-      NamedMDNode *NMD = getFnSpecificMDNode(*(MMI->getModule()), FName);
-      if (!NMD) continue;
-      unsigned E = NMD->getNumOperands();
-      if (!E) continue;
-      LexicalScope *Scope = new LexicalScope(NULL, DIDescriptor(SP), NULL, 
-                                             false);
-      DeadFnScopeMap[SP] = Scope;
-      SmallVector<DbgVariable, 8> Variables;
-      for (unsigned I = 0; I != E; ++I) {
-        DIVariable DV(NMD->getOperand(I));
-        if (!DV.Verify()) continue;
-        Variables.push_back(DbgVariable(DV, NULL));
-      }
-
-      // Construct subprogram DIE and add variables DIEs.
-      CompileUnit *SPCU = getCompileUnit(SP);
-      constructSubprogramDIE(SPCU, SP);
-      DIE *ScopeDIE = SPCU->getDIE(SP);
-      for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
-        if (DIE *VariableDIE = 
-            SPCU->constructVariableDIE(&Variables[i], Scope->isAbstractScope()))
-          ScopeDIE->addChild(VariableDIE);
+  // Collect info for variables that were optimized out.
+  if (NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu")) {
+    for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
+      DICompileUnit TheCU(CU_Nodes->getOperand(i));
+      DIArray Subprograms = TheCU.getSubprograms();
+      for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
+        DISubprogram SP(Subprograms.getElement(i));
+        if (ProcessedSPNodes.count(SP) != 0) continue;
+        if (!SP.Verify()) continue;
+        if (!SP.isDefinition()) continue;
+        StringRef FName = SP.getLinkageName();
+        if (FName.empty())
+          FName = SP.getName();
+        NamedMDNode *NMD = getFnSpecificMDNode(*(MMI->getModule()), FName);
+        if (!NMD) continue;
+        unsigned E = NMD->getNumOperands();
+        if (!E) continue;
+        LexicalScope *Scope = 
+          new LexicalScope(NULL, DIDescriptor(SP), NULL, false);
+        DeadFnScopeMap[SP] = Scope;
+        
+        // Construct subprogram DIE and add variables DIEs.
+        SmallVector<DbgVariable, 8> Variables;
+        for (unsigned I = 0; I != E; ++I) {
+          DIVariable DV(NMD->getOperand(I));
+          if (!DV.Verify()) continue;
+          Variables.push_back(DbgVariable(DV, NULL));
+        }
+        CompileUnit *SPCU = CUMap.lookup(TheCU);
+        assert (SPCU && "Unable to find Compile Unit!");
+        constructSubprogramDIE(SPCU, SP);
+        DIE *ScopeDIE = SPCU->getDIE(SP);
+        for (unsigned i = 0, N = Variables.size(); i < N; ++i) {
+          if (DIE *VariableDIE = 
+              SPCU->constructVariableDIE(&Variables[i], Scope->isAbstractScope()))
+            ScopeDIE->addChild(VariableDIE);
+        }
       }
     }
   }
@@ -784,6 +773,7 @@ void DwarfDebug::endModule() {
 
   // clean up.
   DeleteContainerSeconds(DeadFnScopeMap);
+  SPMap.clear();
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I)
     delete I->second;
@@ -1333,7 +1323,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   collectVariableInfo(MF, ProcessedVars);
   
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
-  CompileUnit *TheCU = getCompileUnit(FnScope->getScopeNode());
+  CompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
+  assert (TheCU && "Unable to find compile unit!");
 
   // Construct abstract scopes.
   ArrayRef<LexicalScope *> AList = LScopes.getAbstractScopesList();

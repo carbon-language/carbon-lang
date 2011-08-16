@@ -236,7 +236,7 @@ public:
 
   /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
   /// given DIType.
-  DIE *getOrCreateTypeDIE(DIType Ty);
+  DIE *getOrCreateTypeDIE(const MDNode *N);
 
   /// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE 
   /// for the given DITemplateTypeParameter.

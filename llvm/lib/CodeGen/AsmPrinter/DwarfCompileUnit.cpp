@@ -577,7 +577,10 @@ void CompileUnit::addToContextOwner(DIE *Die, DIDescriptor Context) {
 
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
 /// given DIType.
-DIE *CompileUnit::getOrCreateTypeDIE(DIType Ty) {
+DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
+  DIType Ty(TyNode);
+  if (!Ty.Verify())
+    return NULL;
   DIE *TyDIE = getDIE(Ty);
   if (TyDIE)
     return TyDIE;
@@ -629,7 +632,8 @@ void CompileUnit::addType(DIE *Entity, DIType Ty) {
 void CompileUnit::addGlobalType(DIType Ty) {
   DIDescriptor Context = Ty.getContext();
   if (Ty.isCompositeType() && !Ty.getName().empty() && !Ty.isForwardDecl() 
-      && (Context.isCompileUnit() || Context.isFile() || Context.isNameSpace()))
+      && (!Context || Context.isCompileUnit() || Context.isFile() 
+          || Context.isNameSpace()))
     if (DIEEntry *Entry = getDIEEntry(Ty))
       GlobalTypes[Ty.getName()] = Entry->getEntry();
 }
@@ -1358,7 +1362,7 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
             dwarf::DW_ACCESS_private);
   // Otherwise C++ member and base classes are considered public.
-  else if (DT.getCompileUnit().getLanguage() == dwarf::DW_LANG_C_plus_plus)
+  else 
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
             dwarf::DW_ACCESS_public);
   if (DT.isVirtual())

@@ -192,7 +192,12 @@ class DwarfDebug {
   //
 
   CompileUnit *FirstCU;
+
+  /// Maps MDNode with its corresponding CompileUnit.
   DenseMap <const MDNode *, CompileUnit *> CUMap;
+
+  /// Maps subprogram MDNode with its corresponding CompileUnit.
+  DenseMap <const MDNode *, CompileUnit *> SPMap;
 
   /// AbbreviationsSet - Used to uniquely define abbreviations.
   ///
@@ -410,10 +415,7 @@ private:
 
   /// constructCompileUnit - Create new CompileUnit for the given 
   /// metadata node with tag DW_TAG_compile_unit.
-  void constructCompileUnit(const MDNode *N);
-
-  /// getCompielUnit - Get CompileUnit DIE.
-  CompileUnit *getCompileUnit(const MDNode *N) const;
+  CompileUnit *constructCompileUnit(const MDNode *N);
 
   /// constructGlobalVariableDIE - Construct global variable DIE.
   void constructGlobalVariableDIE(CompileUnit *TheCU, const MDNode *N);

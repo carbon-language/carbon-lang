@@ -182,6 +182,11 @@ namespace llvm {
     StringRef getFlags() const       { return getStringField(8);   }
     unsigned getRunTimeVersion() const { return getUnsignedField(9); }
 
+    DIArray getEnumTypes() const;
+    DIArray getRetainedTypes() const;
+    DIArray getSubprograms() const;
+    DIArray getGlobalVariables() const;
+
     /// Verify - Verify that a compile unit is well formed.
     bool Verify() const;
 
@@ -201,7 +206,10 @@ namespace llvm {
     }
     StringRef getFilename() const  { return getStringField(1);   }
     StringRef getDirectory() const { return getStringField(2);   }
-    DICompileUnit getCompileUnit() const{ return getFieldAs<DICompileUnit>(3); }
+    DICompileUnit getCompileUnit() const{ 
+      assert (getVersion() <= LLVMDebugVersion10  && "Invalid CompileUnit!");
+      return getFieldAs<DICompileUnit>(3); 
+    }
   };
 
   /// DIEnumerator - A wrapper for an enumerator (e.g. X and Y in 'enum {X,Y}').
@@ -237,6 +245,7 @@ namespace llvm {
     DIScope getContext() const          { return getFieldAs<DIScope>(1); }
     StringRef getName() const           { return getStringField(2);     }
     DICompileUnit getCompileUnit() const{ 
+      assert (getVersion() <= LLVMDebugVersion10 && "Invalid getCompileUnit!");
      if (getVersion() == llvm::LLVMDebugVersion7)
        return getFieldAs<DICompileUnit>(3);
      
@@ -450,6 +459,7 @@ namespace llvm {
     StringRef getDisplayName() const  { return getStringField(4); }
     StringRef getLinkageName() const  { return getStringField(5); }
     DICompileUnit getCompileUnit() const{ 
+      assert (getVersion() <= LLVMDebugVersion10 && "Invalid getCompileUnit!");
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getFieldAs<DICompileUnit>(6);
 
@@ -560,6 +570,7 @@ namespace llvm {
     StringRef getDisplayName() const  { return getStringField(4); }
     StringRef getLinkageName() const  { return getStringField(5); }
     DICompileUnit getCompileUnit() const{ 
+      assert (getVersion() <= LLVMDebugVersion10 && "Invalid getCompileUnit!");
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getFieldAs<DICompileUnit>(6);
 
@@ -595,6 +606,7 @@ namespace llvm {
     DIScope getContext() const          { return getFieldAs<DIScope>(1); }
     StringRef getName() const           { return getStringField(2);     }
     DICompileUnit getCompileUnit() const{ 
+      assert (getVersion() <= LLVMDebugVersion10 && "Invalid getCompileUnit!");
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getFieldAs<DICompileUnit>(3);
 
@@ -687,6 +699,7 @@ namespace llvm {
       return getFieldAs<DIFile>(3).getFilename();
     }
     DICompileUnit getCompileUnit() const{ 
+      assert (getVersion() <= LLVMDebugVersion10 && "Invalid getCompileUnit!");
       if (getVersion() == llvm::LLVMDebugVersion7)
         return getFieldAs<DICompileUnit>(3);
 
