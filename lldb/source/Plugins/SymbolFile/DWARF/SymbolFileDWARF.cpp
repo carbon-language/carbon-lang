@@ -3539,6 +3539,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     bool is_static = false;
                     bool is_virtual = false;
                     bool is_explicit = false;
+                    dw_offset_t specification_die_offset = DW_INVALID_OFFSET;
+                    dw_offset_t abstract_origin_die_offset = DW_INVALID_OFFSET;
 
                     unsigned type_quals = 0;
                     clang::StorageClass storage = clang::SC_None;//, Extern, Static, PrivateExtern
@@ -3582,6 +3584,15 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     }
                                     break;
 
+                                case DW_AT_specification:
+                                    specification_die_offset = form_value.Reference(dwarf_cu);
+                                    break;
+
+                                case DW_AT_abstract_origin:
+                                    abstract_origin_die_offset = form_value.Reference(dwarf_cu);
+                                    break;
+
+
                                 case DW_AT_allocated:
                                 case DW_AT_associated:
                                 case DW_AT_address_class:
@@ -3600,13 +3611,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_AT_recursive:
                                 case DW_AT_return_addr:
                                 case DW_AT_segment:
-                                case DW_AT_specification:
                                 case DW_AT_start_scope:
                                 case DW_AT_static_link:
                                 case DW_AT_trampoline:
                                 case DW_AT_visibility:
                                 case DW_AT_vtable_elem_location:
-                                case DW_AT_abstract_origin:
                                 case DW_AT_description:
                                 case DW_AT_sibling:
                                     break;
@@ -3724,35 +3733,56 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 Type *class_type = ResolveType (dwarf_cu, m_decl_ctx_to_die[containing_decl_ctx]);
                                 if (class_type)
                                 {
-                                    clang_type_t class_opaque_type = class_type->GetClangForwardType();
-                                    if (ClangASTContext::IsCXXClassType (class_opaque_type))
+                                    if (specification_die_offset != DW_INVALID_OFFSET)
                                     {
-                                        // Neither GCC 4.2 nor clang++ currently set a valid accessibility
-                                        // in the DWARF for C++ methods... Default to public for now...
-                                        if (accessibility == eAccessNone)
-                                            accessibility = eAccessPublic;
-                                        
-                                        if (!is_static && !die->HasChildren())
+                                        // If we have a specification, then the function type should have been
+                                        // made with the specification and not with this die.
+                                        DWARFCompileUnitSP spec_cu_sp;
+                                        const DWARFDebugInfoEntry* spec_die = DebugInfo()->GetDIEPtr(specification_die_offset, &spec_cu_sp);
+                                        if (m_die_to_decl_ctx[spec_die] == NULL)
+                                            fprintf (stderr,"warning: 0x%8.8x: DW_AT_specification(0x%8.8x) has no decl\n", die->GetOffset(), specification_die_offset);
+                                        type_handled = true;
+                                    }
+                                    else if (abstract_origin_die_offset != DW_INVALID_OFFSET)
+                                    {
+                                        DWARFCompileUnitSP abs_cu_sp;
+                                        const DWARFDebugInfoEntry* abs_die = DebugInfo()->GetDIEPtr(abstract_origin_die_offset, &abs_cu_sp);
+                                        if (m_die_to_decl_ctx[abs_die] == NULL)
+                                            fprintf (stderr,"warning: 0x%8.8x: DW_AT_abstract_origin(0x%8.8x) has no decl\n", die->GetOffset(), abstract_origin_die_offset);
+                                        type_handled = true;
+                                    }
+                                    else
+                                    {
+                                        clang_type_t class_opaque_type = class_type->GetClangForwardType();
+                                        if (ClangASTContext::IsCXXClassType (class_opaque_type))
                                         {
-                                            // We have a C++ member function with no children (this pointer!)
-                                            // and clang will get mad if we try and make a function that isn't
-                                            // well formed in the DWARF, so we will just skip it...
-                                            type_handled = true;
-                                        }
-                                        else
-                                        {
-                                            clang::CXXMethodDecl *cxx_method_decl;
-                                            cxx_method_decl = ast.AddMethodToCXXRecordType (class_opaque_type, 
-                                                                                            type_name_cstr,
-                                                                                            clang_type,
-                                                                                            accessibility,
-                                                                                            is_virtual,
-                                                                                            is_static,
-                                                                                            is_inline,
-                                                                                            is_explicit);
-                                            LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
+                                            // Neither GCC 4.2 nor clang++ currently set a valid accessibility
+                                            // in the DWARF for C++ methods... Default to public for now...
+                                            if (accessibility == eAccessNone)
+                                                accessibility = eAccessPublic;
+                                            
+                                            if (!is_static && !die->HasChildren())
+                                            {
+                                                // We have a C++ member function with no children (this pointer!)
+                                                // and clang will get mad if we try and make a function that isn't
+                                                // well formed in the DWARF, so we will just skip it...
+                                                type_handled = true;
+                                            }
+                                            else
+                                            {
+                                                clang::CXXMethodDecl *cxx_method_decl;
+                                                cxx_method_decl = ast.AddMethodToCXXRecordType (class_opaque_type, 
+                                                                                                type_name_cstr,
+                                                                                                clang_type,
+                                                                                                accessibility,
+                                                                                                is_virtual,
+                                                                                                is_static,
+                                                                                                is_inline,
+                                                                                                is_explicit);
+                                                LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
 
-                                            type_handled = cxx_method_decl != NULL;
+                                                type_handled = cxx_method_decl != NULL;
+                                            }
                                         }
                                     }
                                 }
