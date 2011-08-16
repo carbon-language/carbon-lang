@@ -3013,6 +3013,11 @@ processInstruction(MCInst &Inst,
       Inst = TmpInst;
     }
     break;
+  case ARM::tADDi8:
+    // If the immediate is in the range 0-7, we really wanted tADDi3.
+    if (Inst.getOperand(3).getImm() < 8)
+      Inst.setOpcode(ARM::tADDi3);
+    break;
   }
 }
 
