@@ -3027,6 +3027,17 @@ static bool isUndefOrInRange(int Val, int Low, int Hi) {
   return (Val < 0) || (Val >= Low && Val < Hi);
 }
 
+/// isUndefOrInRange - Return true if every element in Mask, begining
+/// from position Pos and ending in Pos+Size, falls within the specified
+/// range (L, L+Pos]. or is undef.
+static bool isUndefOrInRange(const SmallVectorImpl<int> &Mask,
+                             int Pos, int Size, int Low, int Hi) {
+  for (int i = Pos, e = Pos+Size; i != e; ++i)
+    if (!isUndefOrInRange(Mask[i], Low, Hi))
+      return false;
+  return true;
+}
+
 /// isUndefOrEqual - Val is either less than zero (undef) or equal to the
 /// specified value.
 static bool isUndefOrEqual(int Val, int CmpVal) {
@@ -5666,10 +5677,95 @@ static SDValue getVZextMovL(EVT VT, EVT OpVT,
                                              OpVT, SrcOp)));
 }
 
+/// areShuffleHalvesWithinDisjointLanes - Check whether each half of a vector
+/// shuffle node referes to only one lane in the sources.
+static bool areShuffleHalvesWithinDisjointLanes(ShuffleVectorSDNode *SVOp) {
+  EVT VT = SVOp->getValueType(0);
+  int NumElems = VT.getVectorNumElements();
+  int HalfSize = NumElems/2;
+  SmallVector<int, 16> M;
+  SVOp->getMask(M);
+  bool MatchA = false, MatchB = false;
+
+  for (int l = 0; l < NumElems*2; l += HalfSize) {
+    if (isUndefOrInRange(M, 0, HalfSize, l, l+HalfSize)) {
+      MatchA = true;
+      break;
+    }
+  }
+
+  for (int l = 0; l < NumElems*2; l += HalfSize) {
+    if (isUndefOrInRange(M, HalfSize, HalfSize, l, l+HalfSize)) {
+      MatchB = true;
+      break;
+    }
+  }
+
+  return MatchA && MatchB;
+}
+
 /// LowerVECTOR_SHUFFLE_256 - Handle all 256-bit wide vectors shuffles
 /// which could not be matched by any known target speficic shuffle
 static SDValue
 LowerVECTOR_SHUFFLE_256(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
+  if (areShuffleHalvesWithinDisjointLanes(SVOp)) {
+    // If each half of a vector shuffle node referes to only one lane in the
+    // source vectors, extract each used 128-bit lane and shuffle them using
+    // 128-bit shuffles. Then, concatenate the results. Otherwise leave
+    // the work to the legalizer.
+    DebugLoc dl = SVOp->getDebugLoc();
+    EVT VT = SVOp->getValueType(0);
+    int NumElems = VT.getVectorNumElements();
+    int HalfSize = NumElems/2;
+
+    // Extract the reference for each half
+    int FstVecExtractIdx = 0, SndVecExtractIdx = 0;
+    int FstVecOpNum = 0, SndVecOpNum = 0;
+    for (int i = 0; i < HalfSize; ++i) {
+      int Elt = SVOp->getMaskElt(i);
+      if (SVOp->getMaskElt(i) < 0)
+        continue;
+      FstVecOpNum = Elt/NumElems;
+      FstVecExtractIdx = Elt % NumElems < HalfSize ? 0 : HalfSize;
+      break;
+    }
+    for (int i = HalfSize; i < NumElems; ++i) {
+      int Elt = SVOp->getMaskElt(i);
+      if (SVOp->getMaskElt(i) < 0)
+        continue;
+      SndVecOpNum = Elt/NumElems;
+      SndVecExtractIdx = Elt % NumElems < HalfSize ? 0 : HalfSize;
+      break;
+    }
+
+    // Extract the subvectors
+    SDValue V1 = Extract128BitVector(SVOp->getOperand(FstVecOpNum),
+                      DAG.getConstant(FstVecExtractIdx, MVT::i32), DAG, dl);
+    SDValue V2 = Extract128BitVector(SVOp->getOperand(SndVecOpNum),
+                      DAG.getConstant(SndVecExtractIdx, MVT::i32), DAG, dl);
+
+    // Generate 128-bit shuffles
+    SmallVector<int, 16> MaskV1, MaskV2;
+    for (int i = 0; i < HalfSize; ++i) {
+      int Elt = SVOp->getMaskElt(i);
+      MaskV1.push_back(Elt < 0 ? Elt : Elt % HalfSize);
+    }
+    for (int i = HalfSize; i < NumElems; ++i) {
+      int Elt = SVOp->getMaskElt(i);
+      MaskV2.push_back(Elt < 0 ? Elt : Elt % HalfSize);
+    }
+
+    EVT NVT = V1.getValueType();
+    V1 = DAG.getVectorShuffle(NVT, dl, V1, DAG.getUNDEF(NVT), &MaskV1[0]);
+    V2 = DAG.getVectorShuffle(NVT, dl, V2, DAG.getUNDEF(NVT), &MaskV2[0]);
+
+    // Concatenate the result back
+    SDValue V = Insert128BitVector(DAG.getNode(ISD::UNDEF, dl, VT), V1,
+                                   DAG.getConstant(0, MVT::i32), DAG, dl);
+    return Insert128BitVector(V, V2, DAG.getConstant(NumElems/2, MVT::i32),
+                              DAG, dl);
+  }
+
   return SDValue();
 }
 

@@ -50,3 +50,46 @@ entry:
   %shuffle = shufflevector <4 x i64> %a, <4 x i64> undef, <4 x i32> <i32 2, i32 3, i32 4, i32 4>
   ret <4 x i64> %shuffle
 }
+
+;;;
+;;; Check that some 256-bit vectors are xformed into 128 ops
+; CHECK: _A
+; CHECK: vshufpd $1
+; CHECK-NEXT: vextractf128 $1
+; CHECK-NEXT: vshufpd $1
+; CHECK-NEXT: vinsertf128 $1
+define <4 x i64> @A(<4 x i64> %a, <4 x i64> %b) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 1, i32 0, i32 7, i32 6>
+  ret <4 x i64> %shuffle
+}
+
+; CHECK: vpunpckhqdq
+; CHECK-NEXT: vextractf128  $1
+; CHECK-NEXT: movlhps
+; CHECK-NEXT: vinsertf128 $1
+define <4 x i64> @B(<4 x i64> %a, <4 x i64> %b) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 1, i32 undef, i32 undef, i32 6>
+  ret <4 x i64> %shuffle
+}
+
+; CHECK: movlhps
+; CHECK-NEXT: vextractf128  $1
+; CHECK-NEXT: movlhps
+; CHECK-NEXT: vinsertf128 $1
+define <4 x i64> @C(<4 x i64> %a, <4 x i64> %b) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 undef, i32 0, i32 undef, i32 6>
+  ret <4 x i64> %shuffle
+}
+
+; CHECK: vpshufd $-96
+; CHECK: vpshufd $-6
+; CHECK: vinsertf128 $1
+define <8 x i32> @D(<8 x i32> %a, <8 x i32> %b) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 0, i32 0, i32 2, i32 2, i32 10, i32 10, i32 11, i32 11>
+  ret <8 x i32> %shuffle
+}
+
