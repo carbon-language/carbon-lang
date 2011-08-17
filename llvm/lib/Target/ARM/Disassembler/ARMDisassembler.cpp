@@ -41,8 +41,9 @@ typedef llvm::MCDisassembler::DecodeStatus DecodeStatus;
 // Definitions are further down.
 static DecodeStatus DecodeGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeGPRnopcRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                   uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeGPRnopcRegisterClass(llvm::MCInst &Inst,
+                                               unsigned RegNo, uint64_t Address,
+                                               const void *Decoder);
 static DecodeStatus DecodetGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
 static DecodeStatus DecodetcGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
@@ -55,8 +56,10 @@ static DecodeStatus DecodeDPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeDPR_8RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeDPR_VFP2RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                   uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeDPR_VFP2RegisterClass(llvm::MCInst &Inst,
+                                                unsigned RegNo,
+                                                uint64_t Address,
+                                                const void *Decoder);
 static DecodeStatus DecodeQPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
 
@@ -79,11 +82,13 @@ static DecodeStatus DecodeBitfieldMaskOperand(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
-                               uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst,
+                                                  unsigned Insn,
+                                                  uint64_t Address,
+                                                  const void *Decoder);
 static DecodeStatus DecodeSORegMemOperand(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeAddrMode3Instruction(llvm::MCInst &Inst, unsigned Insn,
+static DecodeStatus DecodeAddrMode3Instruction(llvm::MCInst &Inst,unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeSORegImmOperand(llvm::MCInst &Inst, unsigned Insn,
                                uint64_t Address, const void *Decoder);
@@ -104,7 +109,7 @@ static DecodeStatus DecodeAddrMode5Operand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeAddrMode7Operand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeBranchImmInstruction(llvm::MCInst &Inst, unsigned Insn,
+static DecodeStatus DecodeBranchImmInstruction(llvm::MCInst &Inst,unsigned Insn,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVCVTImmOperand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
@@ -122,7 +127,7 @@ static DecodeStatus DecodeVLD3DupInstruction(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVLD4DupInstruction(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeNEONModImmInstruction(llvm::MCInst &Inst, unsigned Val,
+static DecodeStatus DecodeNEONModImmInstruction(llvm::MCInst &Inst,unsigned Val,
                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeVSHLMaxInstruction(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
@@ -214,7 +219,7 @@ static DecodeStatus DecodeThumb2BCCInstruction(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2SOImm(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeThumbBCCTargetOperand(llvm::MCInst &Inst, unsigned Val,
+static DecodeStatus DecodeThumbBCCTargetOperand(llvm::MCInst &Inst,unsigned Val,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeThumbBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
@@ -243,7 +248,8 @@ EDInstInfo *ThumbDisassembler::getEDInfo() const {
 
 DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                              const MemoryObject &Region,
-                                             uint64_t Address,raw_ostream &os) const {
+                                             uint64_t Address,
+                                             raw_ostream &os) const {
   uint8_t bytes[4];
 
   // We want to read exactly 4 bytes of data.
@@ -419,7 +425,8 @@ void ThumbDisassembler::UpdateThumbVFPPredicate(MCInst &MI) const {
 
 DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                                const MemoryObject &Region,
-                                               uint64_t Address,raw_ostream &os) const {
+                                               uint64_t Address,
+                                               raw_ostream &os) const {
   uint8_t bytes[4];
 
   // We want to read exactly 2 bytes of data.
@@ -577,8 +584,9 @@ static DecodeStatus DecodeGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return Success;
 }
 
-static DecodeStatus DecodeGPRnopcRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                       uint64_t Address, const void *Decoder) {
+static DecodeStatus
+DecodeGPRnopcRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
+                           uint64_t Address, const void *Decoder) {
   if (RegNo == 15) return Fail;
   return DecodeGPRRegisterClass(Inst, RegNo, Address, Decoder);
 }
@@ -626,7 +634,7 @@ static DecodeStatus DecoderGPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return DecodeGPRRegisterClass(Inst, RegNo, Address, Decoder);
 }
 
-static const unsigned SPRDecoderTable[] = { 
+static const unsigned SPRDecoderTable[] = {
      ARM::S0,  ARM::S1,  ARM::S2,  ARM::S3,
      ARM::S4,  ARM::S5,  ARM::S6,  ARM::S7,
      ARM::S8,  ARM::S9, ARM::S10, ARM::S11,
@@ -647,7 +655,7 @@ static DecodeStatus DecodeSPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return Success;
 }
 
-static const unsigned DPRDecoderTable[] = { 
+static const unsigned DPRDecoderTable[] = {
      ARM::D0,  ARM::D1,  ARM::D2,  ARM::D3,
      ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7,
      ARM::D8,  ARM::D9, ARM::D10, ARM::D11,
@@ -675,14 +683,15 @@ static DecodeStatus DecodeDPR_8RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return DecodeDPRRegisterClass(Inst, RegNo, Address, Decoder);
 }
 
-static DecodeStatus DecodeDPR_VFP2RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                                   uint64_t Address, const void *Decoder) {
+static DecodeStatus
+DecodeDPR_VFP2RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
+                            uint64_t Address, const void *Decoder) {
   if (RegNo > 15)
     return Fail;
   return DecodeDPRRegisterClass(Inst, RegNo, Address, Decoder);
 }
 
-static const unsigned QPRDecoderTable[] = { 
+static const unsigned QPRDecoderTable[] = {
      ARM::Q0,  ARM::Q1,  ARM::Q2,  ARM::Q3,
      ARM::Q4,  ARM::Q5,  ARM::Q6,  ARM::Q7,
      ARM::Q8,  ARM::Q9, ARM::Q10, ARM::Q11,
@@ -859,7 +868,7 @@ static DecodeStatus DecodeBitfieldMaskOperand(llvm::MCInst &Inst, unsigned Val,
   // This operand encodes a mask of contiguous zeros between a specified MSB
   // and LSB.  To decode it, we create the mask of all bits MSB-and-lower,
   // the mask of all bits LSB-and-lower, and then xor them to create
-  // the mask of that's all ones on [msb, lsb].  Finally we not it to 
+  // the mask of that's all ones on [msb, lsb].  Finally we not it to
   // create the final mask.
   unsigned msb = fieldFromInstruction32(Val, 5, 5);
   unsigned lsb = fieldFromInstruction32(Val, 0, 5);
@@ -984,8 +993,9 @@ static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
   return S;
 }
 
-static DecodeStatus DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
-                                  uint64_t Address, const void *Decoder) {
+static DecodeStatus
+DecodeAddrMode2IdxInstruction(llvm::MCInst &Inst, unsigned Insn,
+                              uint64_t Address, const void *Decoder) {
   DecodeStatus S = Success;
 
   unsigned Rn = fieldFromInstruction32(Insn, 16, 4);
@@ -1120,8 +1130,9 @@ static DecodeStatus DecodeSORegMemOperand(llvm::MCInst &Inst, unsigned Val,
   return S;
 }
 
-static DecodeStatus DecodeAddrMode3Instruction(llvm::MCInst &Inst, unsigned Insn,
-                                  uint64_t Address, const void *Decoder) {
+static DecodeStatus
+DecodeAddrMode3Instruction(llvm::MCInst &Inst, unsigned Insn,
+                           uint64_t Address, const void *Decoder) {
   DecodeStatus S = Success;
 
   unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
@@ -1392,8 +1403,9 @@ static DecodeStatus DecodeAddrMode7Operand(llvm::MCInst &Inst, unsigned Val,
   return DecodeGPRRegisterClass(Inst, Val, Address, Decoder);
 }
 
-static DecodeStatus DecodeBranchImmInstruction(llvm::MCInst &Inst, unsigned Insn,
-                                   uint64_t Address, const void *Decoder) {
+static DecodeStatus
+DecodeBranchImmInstruction(llvm::MCInst &Inst, unsigned Insn,
+                           uint64_t Address, const void *Decoder) {
   DecodeStatus S = Success;
 
   unsigned pred = fieldFromInstruction32(Insn, 28, 4);
@@ -2053,8 +2065,9 @@ static DecodeStatus DecodeVLD4DupInstruction(llvm::MCInst &Inst, unsigned Insn,
   return S;
 }
 
-static DecodeStatus DecodeNEONModImmInstruction(llvm::MCInst &Inst, unsigned Insn,
-                                        uint64_t Address, const void *Decoder) {
+static DecodeStatus
+DecodeNEONModImmInstruction(llvm::MCInst &Inst, unsigned Insn,
+                            uint64_t Address, const void *Decoder) {
   DecodeStatus S = Success;
 
   unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
@@ -2472,8 +2485,9 @@ static DecodeStatus DecodeCoprocessor(llvm::MCInst &Inst, unsigned Val,
   return Success;
 }
 
-static DecodeStatus DecodeThumb2BCCInstruction(llvm::MCInst &Inst, unsigned Insn,
-                                       uint64_t Address, const void *Decoder) {
+static DecodeStatus
+DecodeThumb2BCCInstruction(llvm::MCInst &Inst, unsigned Insn,
+                           uint64_t Address, const void *Decoder) {
   DecodeStatus S = Success;
 
   unsigned pred = fieldFromInstruction32(Insn, 22, 4);
@@ -2543,8 +2557,9 @@ static DecodeStatus DecodeT2SOImm(llvm::MCInst &Inst, unsigned Val,
   return Success;
 }
 
-static DecodeStatus DecodeThumbBCCTargetOperand(llvm::MCInst &Inst, unsigned Val,
-                                        uint64_t Address, const void *Decoder){
+static DecodeStatus
+DecodeThumbBCCTargetOperand(llvm::MCInst &Inst, unsigned Val,
+                            uint64_t Address, const void *Decoder){
   Inst.addOperand(MCOperand::CreateImm(Val << 1));
   return Success;
 }
@@ -2583,7 +2598,7 @@ static DecodeStatus DecodeMSRMask(llvm::MCInst &Inst, unsigned Val,
 }
 
 static DecodeStatus DecodeDoubleRegLoad(llvm::MCInst &Inst, unsigned Insn,
-                                          uint64_t Address, const void *Decoder) {
+                                        uint64_t Address, const void *Decoder) {
   DecodeStatus S = Success;
 
   unsigned Rt = fieldFromInstruction32(Insn, 12, 4);
@@ -2602,7 +2617,7 @@ static DecodeStatus DecodeDoubleRegLoad(llvm::MCInst &Inst, unsigned Insn,
 
 
 static DecodeStatus DecodeDoubleRegStore(llvm::MCInst &Inst, unsigned Insn,
-                                          uint64_t Address, const void *Decoder) {
+                                         uint64_t Address, const void *Decoder){
   DecodeStatus S = Success;
 
   unsigned Rd = fieldFromInstruction32(Insn, 12, 4);
