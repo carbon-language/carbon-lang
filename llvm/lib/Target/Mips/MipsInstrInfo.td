@@ -405,6 +405,19 @@ class ReadHardware: FR<0x1f, 0x3b, (outs CPURegs:$dst), (ins HWRegs:$src),
   let shamt = 0;
 }
 
+// Ext and Ins
+class ExtIns<bits<6> _funct, string instr_asm, dag ins,
+             list<dag> pattern, InstrItinClass itin>:
+  FR<0x1f, _funct, (outs CPURegs:$rt), ins,
+     !strconcat(instr_asm, "\t$rt, $rs, $pos, $size"), pattern, itin> {
+  bits<5> src;
+  bits<5> pos;
+  bits<5> size;
+  let rs = src;
+  let rd = size;
+  let shamt = pos;
+}
+
 // Atomic instructions with 2 source operands (ATOMIC_SWAP & ATOMIC_LOAD_*).
 class Atomic2Ops<PatFrag Op, string Opstr> :
   MipsPseudo<(outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
@@ -677,20 +690,19 @@ def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul, 1>, Requires<[IsMips32]>;
 def RDHWR : ReadHardware;
 
 let Predicates = [IsMips32r2] in {
-  def Ext : ExtIns<0b000000, "ext", (outs CPURegs:$dst),
-                   (ins CPURegs:$src, uimm16:$size, uimm16:$pos),
-                   [(set CPURegs:$dst,
-                     (MipsExt CPURegs:$src, immZExt5:$size, immZExt5:$pos))],
-                   NoItinerary>;
-  let Constraints = "$src1 = $dst" in
-  def Ins : ExtIns<0b000100, "ins",
-                   (outs CPURegs:$dst),
-                   (ins CPURegs:$src, uimm16:$size, uimm16:$pos,
-                    CPURegs:$src1),
-                   [(set CPURegs:$dst,
-                     (MipsIns CPURegs:$src, immZExt5:$size, immZExt5:$pos,
-                      CPURegs:$src1))],
-                   NoItinerary>;
+
+def EXT : ExtIns<0, "ext", (ins CPURegs:$rs, uimm16:$pos, uimm16:$size),
+                 [(set CPURegs:$rt, 
+                   (MipsExt CPURegs:$rs, immZExt5:$pos, immZExt5:$size))],
+                 NoItinerary>;
+
+let Constraints = "$src = $rt" in
+def INS : ExtIns<4, "ins",
+                 (ins CPURegs:$rs, uimm16:$pos, uimm16:$size, CPURegs:$src),
+                 [(set CPURegs:$rt, 
+                   (MipsIns CPURegs:$rs, immZExt5:$pos, immZExt5:$size,
+                    CPURegs:$src))],
+                 NoItinerary>;
 }
 
 //===----------------------------------------------------------------------===//

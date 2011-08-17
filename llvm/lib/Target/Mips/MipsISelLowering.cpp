@@ -558,8 +558,8 @@ static SDValue PerformANDCombine(SDNode *N, SelectionDAG& DAG,
 
   return DAG.getNode(MipsISD::Ext, N->getDebugLoc(), MVT::i32,
                      ShiftRight.getOperand(0),
-                     DAG.getConstant(SMSize, MVT::i32),
-                     DAG.getConstant(Pos, MVT::i32));
+                     DAG.getConstant(Pos, MVT::i32),
+                     DAG.getConstant(SMSize, MVT::i32));
 }
   
 static SDValue PerformORCombine(SDNode *N, SelectionDAG& DAG,
@@ -613,8 +613,8 @@ static SDValue PerformORCombine(SDNode *N, SelectionDAG& DAG,
   
   return DAG.getNode(MipsISD::Ins, N->getDebugLoc(), MVT::i32,
                      Shl.getOperand(0),
-                     DAG.getConstant(SMSize0, MVT::i32),
                      DAG.getConstant(SMPos0, MVT::i32),
+                     DAG.getConstant(SMSize0, MVT::i32),
                      And0.getOperand(0));  
 }
   
