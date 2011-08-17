@@ -900,8 +900,8 @@ void ARMInstPrinter::printRotImmOperand(const MCInst *MI, unsigned OpNum,
   O << ", ror #";
   switch (Imm) {
   default: assert (0 && "illegal ror immediate!");
-  case 1: O << "8\n"; break;
-  case 2: O << "16\n"; break;
-  case 3: O << "24\n"; break;
+  case 1: O << "8"; break;
+  case 2: O << "16"; break;
+  case 3: O << "24"; break;
   }
 }
