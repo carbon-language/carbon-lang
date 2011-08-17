@@ -4205,8 +4205,7 @@ static SDValue getLegalSplat(SelectionDAG &DAG, SDValue V, int EltNo) {
   return DAG.getNode(ISD::BITCAST, dl, VT, V);
 }
 
-/// PromoteSplat - Promote a splat of v4i32, v8i16 or v16i8 to v4f32 and
-/// v8i32, v16i16 or v32i8 to v8f32.
+/// PromoteSplat - Splat is promoted to target supported vector shuffles.
 static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
   EVT SrcVT = SV->getValueType(0);
   SDValue V1 = SV->getOperand(0);
@@ -4225,7 +4224,11 @@ static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
       EltNo -= NumElems/2;
   }
 
-  // Make this 128-bit vector duplicate i8 and i16 elements
+  // All i16 and i8 vector types can't be used directly by a generic shuffle
+  // instruction because the target has no such instruction. Generate shuffles
+  // which repeat i16 and i8 several times until they fit in i32, and then can
+  // be manipulated by target suported shuffles. After the insertion of the
+  // necessary shuffles, the result is bitcasted back to v4f32 or v8f32.
   EVT EltVT = SrcVT.getVectorElementType();
   if (NumElems > 4 && (EltVT == MVT::i8 || EltVT == MVT::i16))
     V1 = PromoteSplati8i16(V1, DAG, EltNo);
@@ -6175,11 +6178,7 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
     if (VT.is128BitVector() && NumElem <= 4)
       return SDValue();
 
-    // All i16 and i8 vector types can't be used directly by a generic shuffle
-    // instruction because the target has no such instruction. Generate shuffles
-    // which repeat i16 and i8 several times until they fit in i32, and then can
-    // be manipulated by target suported shuffles. After the insertion of the
-    // necessary shuffles, the result is bitcasted back to v4f32 or v8f32.
+    // All remaning splats are promoted to target supported vector shuffles.
     return PromoteSplat(SVOp, DAG);
   }
 
