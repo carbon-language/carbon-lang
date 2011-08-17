@@ -215,8 +215,42 @@ CCKEXT_ARM_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 	unorddf2 \
 	unordsf2
 
-FUNCTIONS.cc_kext.armv6 := $(CCKEXT_ARM_FUNCTIONS)
-FUNCTIONS.cc_kext.armv7 := $(CCKEXT_ARM_FUNCTIONS)
+CCKEXT_ARMVFP_FUNCTIONS := $(CCKEXT_ARM_FUNCTIONS) \
+	adddf3vfp \
+	addsf3vfp \
+	divdf3vfp \
+	divsf3vfp \
+	eqdf2vfp \
+	eqsf2vfp \
+	extendsfdf2vfp \
+	fixdfsivfp \
+	fixsfsivfp \
+	fixunsdfsivfp \
+	fixunssfsivfp \
+	floatsidfvfp \
+	floatsisfvfp \
+	floatunssidfvfp \
+	floatunssisfvfp \
+	gedf2vfp \
+	gesf2vfp \
+	gtdf2vfp \
+	gtsf2vfp \
+	ledf2vfp \
+	lesf2vfp \
+	ltdf2vfp \
+	ltsf2vfp \
+	muldf3vfp \
+	mulsf3vfp \
+	nedf2vfp \
+	nesf2vfp \
+	subdf3vfp \
+	subsf3vfp \
+	truncdfsf2vfp \
+	unorddf2vfp \
+	unordsf2vfp
+
+FUNCTIONS.cc_kext.armv6 := $(CCKEXT_ARMVFP_FUNCTIONS)
+FUNCTIONS.cc_kext.armv7 := $(CCKEXT_ARMVFP_FUNCTIONS)
 
 CCKEXT_X86_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 	divxc3 \
