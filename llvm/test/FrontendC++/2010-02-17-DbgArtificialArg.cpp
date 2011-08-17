@@ -1,5 +1,4 @@
-// RUN: %llvmgcc -g -S %s -o - | FileCheck %s
-// Here, second to last argument "i32 64" indicates that artificial type is set.                                               
+// RUN: %llvmgcc -g -S %s -dA -fverbose-asm -o - | %llc -asm-verbose | FileCheck %s
 // Test to artificial attribute attahed to "this" pointer type.
 // Radar 7655792 and 7655002
 
@@ -10,7 +9,12 @@ public:
 
 int foo() {
   A a;
-  // Matching "i32 64, metadata !<number>} ; [ DW_TAG_pointer_type ]"
-  // CHECK: i32 64, metadata {{![0-9]+\} ; \[ DW_TAG_pointer_type \]}}
+//CHECK:        .ascii   "this"                 ## DW_AT_name
+//CHECK-NEXT:        .byte   0
+//CHECK-NEXT:        ## DW_AT_decl_file
+//CHECK-NEXT:        ## DW_AT_decl_line
+//CHECK-NEXT:        ## DW_AT_type
+//CHECK-NEXT:        ## DW_AT_artificial
+
   return a.fn1(1);
 }
