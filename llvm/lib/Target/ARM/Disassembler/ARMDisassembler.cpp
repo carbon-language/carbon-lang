@@ -210,8 +210,6 @@ static DecodeStatus DecodeThumbBLXOffset(llvm::MCInst &Inst, unsigned Insn,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2AddrModeImm12(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
-static DecodeStatus DecodeThumbSRImm(llvm::MCInst &Inst, unsigned Val,
-                                uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeThumb2BCCInstruction(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeT2SOImm(llvm::MCInst &Inst, unsigned Val,
@@ -2471,15 +2469,6 @@ static DecodeStatus DecodeCoprocessor(llvm::MCInst &Inst, unsigned Val,
     return Fail;
 
   Inst.addOperand(MCOperand::CreateImm(Val));
-  return Success;
-}
-
-static DecodeStatus DecodeThumbSRImm(llvm::MCInst &Inst, unsigned Val,
-                             uint64_t Address, const void *Decoder) {
-  if (Val == 0)
-    Inst.addOperand(MCOperand::CreateImm(32));
-  else
-    Inst.addOperand(MCOperand::CreateImm(Val));
   return Success;
 }
 

@@ -482,6 +482,14 @@ public:
     int64_t Value = CE->getValue();
     return Value >= 0 && Value <= 0xffffff;
   }
+  bool isImmThumbSR() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value > 0 && Value < 33;
+  }
   bool isPKHLSLImm() const {
     if (Kind != Immediate)
       return false;
@@ -792,6 +800,15 @@ public:
   void addImm24bitOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
+  }
+
+  void addImmThumbSROperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // The constant encodes as the immediate, except for 32, which encodes as
+    // zero.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    unsigned Imm = CE->getValue();
+    Inst.addOperand(MCOperand::CreateImm((Imm == 32 ? 0 : Imm)));
   }
 
   void addPKHLSLImmOperands(MCInst &Inst, unsigned N) const {

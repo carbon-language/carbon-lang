@@ -639,7 +639,13 @@ void ARMInstPrinter::printPCLabel(const MCInst *MI, unsigned OpNum,
 
 void ARMInstPrinter::printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum,
                                             raw_ostream &O) {
-  O << "#" <<  MI->getOperand(OpNum).getImm() * 4;
+  O << "#" << MI->getOperand(OpNum).getImm() * 4;
+}
+
+void ARMInstPrinter::printThumbSRImm(const MCInst *MI, unsigned OpNum,
+                                     raw_ostream &O) {
+  unsigned Imm = MI->getOperand(OpNum).getImm();
+  O << "#" << (Imm == 0 ? 32 : Imm);
 }
 
 void ARMInstPrinter::printThumbITMask(const MCInst *MI, unsigned OpNum,

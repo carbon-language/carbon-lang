@@ -74,6 +74,7 @@ public:
   void printPKHASRShiftImm(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 
   void printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printThumbSRImm(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printThumbITMask(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printThumbAddrModeRROperand(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);

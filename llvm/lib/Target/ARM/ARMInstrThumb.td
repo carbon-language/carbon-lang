@@ -19,11 +19,17 @@ def ARMtcall : SDNode<"ARMISD::tCALL", SDT_ARMcall,
                       [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                        SDNPVariadic]>;
 
-def imm_sr : Operand<i32>, ImmLeaf<i32, [{
+def imm_sr_XFORM: SDNodeXForm<imm, [{
+  unsigned Imm = N->getZExtValue();
+  return CurDAG->getTargetConstant((Imm == 32 ? 0 : Imm), MVT::i32);
+}]>;
+def ThumbSRImmAsmOperand: AsmOperandClass { let Name = "ImmThumbSR"; }
+def imm_sr : Operand<i32>, PatLeaf<(imm), [{
+  uint64_t Imm = N->getZExtValue();
   return Imm > 0 && Imm <= 32;
-}]> {
-  let EncoderMethod = "getThumbSRImmOpValue";
-  let DecoderMethod = "DecodeThumbSRImm";
+}], imm_sr_XFORM> {
+  let PrintMethod = "printThumbSRImm";
+  let ParserMatchClass = ThumbSRImmAsmOperand;
 }
 
 def imm_neg_XFORM : SDNodeXForm<imm, [{

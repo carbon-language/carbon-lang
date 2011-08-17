@@ -443,16 +443,6 @@ EncodeAddrModeOpValues(const MCInst &MI, unsigned OpIdx, unsigned &Reg,
   return isAdd;
 }
 
-uint32_t ARMMCCodeEmitter::
-getThumbSRImmOpValue(const MCInst &MI, unsigned OpIdx,
-                        SmallVectorImpl<MCFixup> &Fixups) const {
-  const MCOperand &MO = MI.getOperand(OpIdx);
-  assert(MO.isImm() && "Expected constant shift!");
-  int val = MO.getImm();
-  return (val == 32) ? 0 : val;
-}
-
-
 /// getBranchTargetOpValue - Helper function to get the branch target operand,
 /// which is either an immediate or requires a fixup.
 static uint32_t getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
