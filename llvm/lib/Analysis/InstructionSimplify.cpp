@@ -1348,11 +1348,6 @@ static Value *SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
     std::swap(Op0, Op1);
   }
 
-  // A ^ A = 0
-  // Do this first so that we catch the undef ^ undef "idiom".
-  if (Op0 == Op1)
-    return Constant::getNullValue(Op0->getType());
-
   // A ^ undef -> undef
   if (match(Op1, m_Undef()))
     return Op1;
@@ -1360,6 +1355,10 @@ static Value *SimplifyXorInst(Value *Op0, Value *Op1, const TargetData *TD,
   // A ^ 0 = A
   if (match(Op1, m_Zero()))
     return Op0;
+
+  // A ^ A = 0
+  if (Op0 == Op1)
+    return Constant::getNullValue(Op0->getType());
 
   // A ^ ~A  =  ~A ^ A  =  -1
   if (match(Op0, m_Not(m_Specific(Op1))) ||
