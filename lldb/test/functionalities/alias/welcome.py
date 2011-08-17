@@ -1,6 +1,10 @@
 import sys
 
 def welcome_impl(debugger, args, result, dict):
+    """
+        Just a docstring for welcome_impl
+        A command that says hello to LLDB users
+    """
     result.Printf('Hello ' + args + ', welcome to LLDB');
     return None;
 

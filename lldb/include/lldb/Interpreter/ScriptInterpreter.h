@@ -191,6 +191,12 @@ public:
     {
         return false;
     }
+    
+    virtual std::string
+    GetDocumentationForItem(const char* item)
+    {
+        return std::string("");
+    }
 
     const char *
     GetScriptInterpreterPtyName ();

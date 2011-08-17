@@ -109,6 +109,9 @@ public:
     static std::string
     CallPythonScriptFunction (const char *python_function_name,
                               lldb::ValueObjectSP valobj);
+    
+    virtual std::string
+    GetDocumentationForItem(const char* item);
 
     void
     CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,

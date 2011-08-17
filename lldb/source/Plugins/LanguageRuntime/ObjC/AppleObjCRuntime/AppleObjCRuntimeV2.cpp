@@ -568,9 +568,9 @@ AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const c
 
 // tagged pointers are marked by having their least-significant bit
 // set. this makes them "invalid" as pointers because they violate
-// the alignment requirements. this way, we can always know when
-// we are dealing with a tagged pointer, and use the lookup approach
-// that the runtime would
+// the alignment requirements. of course, this detection algorithm
+// is not accurate (it might become better by incorporating further
+// knowledge about the internals of tagged pointers)
 bool
 AppleObjCRuntimeV2::IsTaggedPointer(lldb::addr_t ptr)
 {
@@ -578,6 +578,9 @@ AppleObjCRuntimeV2::IsTaggedPointer(lldb::addr_t ptr)
 }
 
 
+// this code relies on the assumption that an Objective-C object always starts
+// with an ISA at offset 0. an ISA is effectively a pointer to an instance of
+// struct class_t in the ObjCv2 runtime
 lldb_private::ObjCLanguageRuntime::ObjCISA
 AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
 {
@@ -587,8 +590,8 @@ AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
     {
         // when using the expression parser, an additional layer of "frozen data"
         // can be created, which is basically a byte-exact copy of the data returned
-        // by the expression, but in host memory. because Python code might need to read
-        // into the object memory in non-obvious ways, we need to hand it the target version
+        // by the expression, but in host memory. because this code reads memory without
+        // taking the debug-info-provided object layout, we need to hand it the target version
         // of the expression output
         lldb::addr_t tgt_address = valobj.GetValueAsUnsigned();
         ValueObjectSP target_object = ValueObjectConstResult::Create (valobj.GetExecutionContextScope(),
@@ -647,9 +650,20 @@ AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA
     
     uint8_t pointer_size = m_process->GetAddressByteSize();
     Error error;
+    
+    /*
+     struct class_t *isa;
+     struct class_t *superclass;
+     Cache cache;
+     IMP *vtable;
+-->     uintptr_t data_NEVER_USE;
+     WARNING: this data_NEVER_USE pointer might one day contain flags in the least-significant bits
+     currently, rdar://problem/8955342 prevents the runtime from doing so
+     it presently is just a pointer to a class_rw_t
+     */
+    
     lldb::addr_t rw_pointer = isa + (4 * pointer_size);
     //printf("rw_pointer: %llx\n", rw_pointer);
-    
     uint64_t data_pointer =  m_process->ReadUnsignedIntegerFromMemory(rw_pointer,
                                                                       pointer_size,
                                                                       0,
@@ -657,6 +671,12 @@ AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA
     if (error.Fail())
         return ConstString("unknown");
     
+    /*
+     uint32_t flags;
+     uint32_t version;
+     
+-->     const class_ro_t *ro;
+     */
     data_pointer += 8;
     //printf("data_pointer: %llx\n", data_pointer);
     uint64_t ro_pointer = m_process->ReadUnsignedIntegerFromMemory(data_pointer,
@@ -666,6 +686,18 @@ AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA
     if (error.Fail())
         return ConstString("unknown");
     
+    /*
+     uint32_t flags;
+     uint32_t instanceStart;
+     uint32_t instanceSize;
+     #ifdef __LP64__
+     uint32_t reserved;
+     #endif
+     
+     const uint8_t * ivarLayout;
+     
+-->     const char * name;
+     */
     ro_pointer += 12;
     if (pointer_size == 8)
         ro_pointer += 4;
@@ -722,6 +754,10 @@ AppleObjCRuntimeV2::GetParentClass(lldb_private::ObjCLanguageRuntime::ObjCISA is
     
     uint8_t pointer_size = m_process->GetAddressByteSize();
     Error error;
+    /*
+     struct class_t *isa;
+-->     struct class_t *superclass;
+     */
     lldb::addr_t parent_pointer = isa + pointer_size;
     //printf("rw_pointer: %llx\n", rw_pointer);
     

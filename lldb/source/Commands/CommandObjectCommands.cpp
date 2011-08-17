@@ -24,6 +24,8 @@
 #include "lldb/Interpreter/CommandObjectRegexCommand.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/ScriptInterpreter.h"
+#include "lldb/Interpreter/ScriptInterpreterPython.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -1155,6 +1157,13 @@ public:
                    NULL),
     m_function_name(funct)
     {
+        ScriptInterpreter* scripter = m_interpreter.GetScriptInterpreter();
+        if (scripter)
+        {
+            std::string docstring = scripter->GetDocumentationForItem(funct.c_str());
+            if (!docstring.empty())
+                SetHelpLong(docstring);
+        }
     }
     
     virtual
@@ -1427,6 +1436,14 @@ public:
      CommandReturnObject &result
      )
     {
+        
+        if (m_interpreter.GetDebugger().GetScriptLanguage() != lldb::eScriptLanguagePython)
+        {
+            result.AppendError ("only scripting language supported for scripted commands is currently Python");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        
         size_t argc = args.GetArgumentCount();
         
         if (argc != 1)

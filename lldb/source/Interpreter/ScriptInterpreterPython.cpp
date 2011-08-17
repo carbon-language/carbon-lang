@@ -763,13 +763,13 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
                 case eCharPtr: // "char *"
                 {
                     const char format[3] = "s#";
-                    success = PyArg_Parse (py_return, format, (char **) &ret_value);
+                    success = PyArg_Parse (py_return, format, (char **) ret_value);
                     break;
                 }
                 case eCharStrOrNone: // char* or NULL if py_return == Py_None
                 {
                     const char format[3] = "z";
-                    success = PyArg_Parse (py_return, format, (char **) &ret_value);
+                    success = PyArg_Parse (py_return, format, (char **) ret_value);
                     break;
                 }
                 case eBool:
@@ -1972,6 +1972,26 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
     
 }
 
+// in Python, a special attribute __doc__ contains the docstring
+// for an object (function, method, class, ...) if any is defined
+// Otherwise, the attribute's value is None
+std::string
+ScriptInterpreterPython::GetDocumentationForItem(const char* item)
+{
+    std::string command(item);
+    command += ".__doc__";
+    
+    char* result_ptr = NULL; // Python is going to point this to valid data if ExecuteOneLineWithReturn returns successfully
+    
+    if (ExecuteOneLineWithReturn (command.c_str(),
+                                 ScriptInterpreter::eCharStrOrNone,
+                                 &result_ptr) && result_ptr)
+    {
+        return std::string(result_ptr);
+    }
+    else
+        return std::string("");
+}
 
 void
 ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_init_callback,

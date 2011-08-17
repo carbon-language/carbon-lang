@@ -134,6 +134,10 @@ class AliasTestCase(TestBase):
 
         self.expect('welcome Enrico',
             substrs = ['Hello Enrico, welcome to LLDB']);
+                
+        self.expect("help welcome",
+                    substrs = ['Just a docstring for welcome_impl',
+                               'A command that says hello to LLDB users'])
 
         self.runCmd("command script delete welcome");
 

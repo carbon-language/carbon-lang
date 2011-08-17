@@ -112,6 +112,9 @@ public:
     SetHelpLong (const char * str);
 
     void
+    SetHelpLong (std::string str);
+
+    void
     SetSyntax (const char *str);
 
     virtual void
