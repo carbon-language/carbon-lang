@@ -323,8 +323,8 @@ CHECK-NEXT:   warn_undef_interface_suggest
 CHECK-NEXT:   warn_undef_protocolref
 CHECK-NEXT:   warn_undefined_internal
 CHECK-NEXT:   warn_uninit_val
+CHECK-NEXT:   warn_unknown_analyzer_checker
 CHECK-NEXT:   warn_unknown_method_family
-CHECK-NEXT:   warn_unkwown_analyzer_checker
 CHECK-NEXT:   warn_unterminated_char
 CHECK-NEXT:   warn_unterminated_string
 CHECK-NEXT:   warn_use_out_of_scope_declaration
