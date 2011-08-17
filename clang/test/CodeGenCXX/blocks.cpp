@@ -121,11 +121,9 @@ namespace test4 {
   // CHECK: define void @_ZN5test44testEv()
   // CHECK: define internal void @__test_block_invoke
   // CHECK:      [[TMP:%.*]] = alloca [[A:%.*]], align 1
-  // CHECK-NEXT: alloca i32
   // CHECK-NEXT: bitcast i8*
   // CHECK-NEXT: call void @_ZN5test41AC1Ev([[A]]* [[TMP]])
   // CHECK-NEXT: call void @_ZN5test43fooENS_1AE([[A]]* [[TMP]])
-  // CHECK-NEXT: store i32 1,
   // CHECK-NEXT: call void @_ZN5test41AD1Ev([[A]]* [[TMP]])
   // CHECK-NEXT: ret void
 }
