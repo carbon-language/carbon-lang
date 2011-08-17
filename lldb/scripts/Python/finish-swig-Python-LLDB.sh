@@ -165,18 +165,18 @@ else
     fi
 fi
 
-# Copy the OSX C++ STL formatters over to the framework Python directory
-if [ -f "${SRC_ROOT}/source/osxcpp.py" ]
+# Copy the C++ STL formatters over to the framework Python directory
+if [ -f "${SRC_ROOT}/examples/synthetic/gnu_libstdcpp.py" ]
 then
     if [ $Debug == 1 ]
     then
-        echo "Copying osxcpp.py to ${framework_python_dir}"
+        echo "Copying gnu_libstdcpp.py to ${framework_python_dir}"
     fi
-    cp "${SRC_ROOT}/source/osxcpp.py" "${framework_python_dir}"
+    cp "${SRC_ROOT}/examples/synthetic/gnu_libstdcpp.py" "${framework_python_dir}"
 else
     if [ $Debug == 1 ]
     then
-        echo "Unable to find ${SRC_ROOT}/source/osxcpp.py"
+        echo "Unable to find ${SRC_ROOT}/examples/synthetic/gnu_libstdcpp.py"
     fi
 fi
 

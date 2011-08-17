@@ -227,23 +227,23 @@ public:
         m_format_map.Add(type,entry);
     }
     
-    // using const char* instead of MapKeyType is necessary here
+    // using ConstString instead of MapKeyType is necessary here
     // to make the partial template specializations below work
     bool
-    Delete(const char *type)
+    Delete(ConstString type)
     {
         return m_format_map.Delete(type);
     }
         
     bool
-    Get(ValueObject& vobj,
+    Get(ValueObject& valobj,
         MapValueType& entry,
         lldb::DynamicValueType use_dynamic,
         uint32_t* why = NULL)
     {
         uint32_t value = lldb::eFormatterChoiceCriterionDirectChoice;
-        clang::QualType type = clang::QualType::getFromOpaquePtr(vobj.GetClangType());
-        bool ret = Get(vobj, type, entry, use_dynamic, value);
+        clang::QualType type = clang::QualType::getFromOpaquePtr(valobj.GetClangType());
+        bool ret = Get(valobj, type, entry, use_dynamic, value);
         if (ret)
             entry = MapValueType(entry);
         else
@@ -277,15 +277,15 @@ private:
     
     ConstString m_id_cs;
     
-    // using const char* instead of MapKeyType is necessary here
+    // using ConstString instead of MapKeyType is necessary here
     // to make the partial template specializations below work
     bool
-    Get(const char* type, MapValueType& entry)
+    Get(ConstString type, MapValueType& entry)
     {
         return m_format_map.Get(type, entry);
     }
     
-    bool Get_ObjC(ValueObject& vobj,
+    bool Get_ObjC(ValueObject& valobj,
              ObjCLanguageRuntime::ObjCISA isa,
              MapValueType& entry,
              uint32_t& reason)
@@ -293,7 +293,7 @@ private:
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
         if (log)
             log->Printf("going to an Objective-C dynamic scanning");
-        Process* process = vobj.GetUpdatePoint().GetProcessSP().get();
+        Process* process = valobj.GetUpdatePoint().GetProcessSP().get();
         ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
         if (runtime == NULL)
         {
@@ -310,7 +310,7 @@ private:
         ConstString name = runtime->GetActualTypeName(isa);
         if (log)
             log->Printf("looking for formatter for %s", name.GetCString());
-        if (Get(name.GetCString(), entry))
+        if (Get(name, entry))
         {
             if (log)
                 log->Printf("direct match found, returning");
@@ -331,7 +331,7 @@ private:
                 log->Printf("parent-child loop, bailing out");
             return false;
         }
-        if (Get_ObjC(vobj, parent, entry, reason))
+        if (Get_ObjC(valobj, parent, entry, reason))
         {
             reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
             return true;
@@ -339,7 +339,7 @@ private:
         return false;
     }
     
-    bool Get(ValueObject& vobj,
+    bool Get(ValueObject& valobj,
              clang::QualType type,
              MapValueType& entry,
              lldb::DynamicValueType use_dynamic,
@@ -361,17 +361,16 @@ private:
                 log->Printf("type is NULL, returning");
             return false;
         }
-        ConstString name(ClangASTType::GetTypeNameForQualType(type).c_str());
-        const char* typeName = name.GetCString();
-        if (vobj.GetBitfieldBitSize() > 0)
+        ConstString typeName(ClangASTType::GetTypeNameForQualType(type).c_str());
+        if (valobj.GetBitfieldBitSize() > 0)
         {
             // for bitfields, append size to the typename so one can custom format them
             StreamString sstring;
-            sstring.Printf("%s:%d",typeName,vobj.GetBitfieldBitSize());
+            sstring.Printf("%s:%d",typeName.AsCString(),valobj.GetBitfieldBitSize());
             ConstString bitfieldname = ConstString(sstring.GetData());
             if (log)
                 log->Printf("appended bitfield info, final result is %s", bitfieldname.GetCString());
-            if (Get(bitfieldname.AsCString(), entry))
+            if (Get(bitfieldname, entry))
             {
                 if (log)
                     log->Printf("bitfield direct match found, returning");
@@ -387,8 +386,8 @@ private:
         if (log)
             log->Printf("trying to get %s for VO name %s of type %s",
                         m_name.c_str(),
-                        vobj.GetName().AsCString(),
-                        typeName);
+                        valobj.GetName().AsCString(),
+                        typeName.AsCString());
         if (Get(typeName, entry))
         {
             if (log)
@@ -402,7 +401,7 @@ private:
         {
             if (log)
                 log->Printf("stripping reference");
-            if (Get(vobj,type.getNonReferenceType(),entry, use_dynamic, reason) && !entry->m_skip_references)
+            if (Get(valobj,type.getNonReferenceType(),entry, use_dynamic, reason) && !entry->m_skip_references)
             {
                 reason |= lldb::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
@@ -410,11 +409,11 @@ private:
         }
         if (use_dynamic != lldb::eNoDynamicValues &&
             (/*strstr(typeName, "id") == typeName ||*/
-             ClangASTType::GetMinimumLanguage(vobj.GetClangAST(), vobj.GetClangType()) == lldb::eLanguageTypeObjC))
+             ClangASTType::GetMinimumLanguage(valobj.GetClangAST(), valobj.GetClangType()) == lldb::eLanguageTypeObjC))
         {
             if (log)
                 log->Printf("this is an ObjC 'id', let's do dynamic search");
-            Process* process = vobj.GetUpdatePoint().GetProcessSP().get();
+            Process* process = valobj.GetUpdatePoint().GetProcessSP().get();
             ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
             if (runtime == NULL)
             {
@@ -423,7 +422,7 @@ private:
             }
             else
             {
-                if (Get_ObjC(vobj, runtime->GetISA(vobj), entry, reason))
+                if (Get_ObjC(valobj, runtime->GetISA(valobj), entry, reason))
                 {
                     reason |= lldb::eFormatterChoiceCriterionDynamicObjCHierarchy;
                     return true;
@@ -433,7 +432,7 @@ private:
         else if (use_dynamic != lldb::eNoDynamicValues && log)
         {
             log->Printf("typename: %s, typePtr = %p, id = %p",
-                        name.AsCString(), typePtr, vobj.GetClangAST()->ObjCBuiltinIdTy.getTypePtr());
+                        typeName.AsCString(), typePtr, valobj.GetClangAST()->ObjCBuiltinIdTy.getTypePtr());
         }
         else if (log)
         {
@@ -444,7 +443,7 @@ private:
             if (log)
                 log->Printf("stripping pointer");
             clang::QualType pointee = typePtr->getPointeeType();
-            if (Get(vobj, pointee, entry, use_dynamic, reason) && !entry->m_skip_pointers)
+            if (Get(valobj, pointee, entry, use_dynamic, reason) && !entry->m_skip_pointers)
             {
                 reason |= lldb::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
@@ -453,11 +452,11 @@ private:
         if (typePtr->isObjCObjectPointerType())
         {
             if (use_dynamic != lldb::eNoDynamicValues &&
-                name.GetCString() == m_id_cs.GetCString())
+                typeName == m_id_cs)
             {
                 if (log)
                     log->Printf("this is an ObjC 'id', let's do dynamic search");
-                Process* process = vobj.GetUpdatePoint().GetProcessSP().get();
+                Process* process = valobj.GetUpdatePoint().GetProcessSP().get();
                 ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
                 if (runtime == NULL)
                 {
@@ -466,7 +465,7 @@ private:
                 }
                 else
                 {
-                    if (Get_ObjC(vobj, runtime->GetISA(vobj), entry, reason))
+                    if (Get_ObjC(valobj, runtime->GetISA(valobj), entry, reason))
                     {
                         reason |= lldb::eFormatterChoiceCriterionDynamicObjCHierarchy;
                         return true;
@@ -482,7 +481,7 @@ private:
             // the VO refers to a pointer-to-@interface
 
             Error error;
-            ValueObject* target = vobj.Dereference(error).get();
+            ValueObject* target = valobj.Dereference(error).get();
             if (error.Fail() || !target)
                 return false;
             if (Get(*target, typePtr->getPointeeType(), entry, use_dynamic, reason) && !entry->m_skip_pointers)
@@ -496,8 +495,8 @@ private:
         {
             if (log)
                 log->Printf("working with ObjC");
-            clang::ASTContext *ast = vobj.GetClangAST();
-            if (ClangASTContext::GetCompleteType(ast, vobj.GetClangType()) && !objc_class_type->isObjCId())
+            clang::ASTContext *ast = valobj.GetClangAST();
+            if (ClangASTContext::GetCompleteType(ast, valobj.GetClangType()) && !objc_class_type->isObjCId())
             {
                 clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
                 if (class_interface_decl)
@@ -510,7 +509,7 @@ private:
                         if (log)
                             log->Printf("got a parent class for this ObjC class");
                         clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
-                        if (Get(vobj, ivar_qual_type, entry, use_dynamic, reason) && entry->m_cascades)
+                        if (Get(valobj, ivar_qual_type, entry, use_dynamic, reason) && entry->m_cascades)
                         {
                             reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
                             return true;
@@ -528,7 +527,7 @@ private:
             if (record)
             {
                 if (!record->hasDefinition())
-                    ClangASTContext::GetCompleteType(vobj.GetClangAST(), vobj.GetClangType());
+                    ClangASTContext::GetCompleteType(valobj.GetClangAST(), valobj.GetClangType());
                 if (record->hasDefinition())
                 {
                     clang::CXXRecordDecl::base_class_iterator pos,end;
@@ -539,7 +538,7 @@ private:
                         end = record->bases_end();
                         for (pos = record->bases_begin(); pos != end; pos++)
                         {
-                            if ((Get(vobj, pos->getType(), entry, use_dynamic, reason)) && entry->m_cascades)
+                            if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->m_cascades)
                             {
                                 reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
                                 return true;
@@ -553,7 +552,7 @@ private:
                         end = record->vbases_end();
                         for (pos = record->vbases_begin(); pos != end; pos++)
                         {
-                            if ((Get(vobj, pos->getType(), entry, use_dynamic, reason)) && entry->m_cascades)
+                            if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->m_cascades)
                             {
                                 reason |= lldb::eFormatterChoiceCriterionNavigatedBaseClasses;
                                 return true;
@@ -569,7 +568,7 @@ private:
         {
             if (log)
                 log->Printf("stripping typedef");
-            if ((Get(vobj, type_tdef->getDecl()->getUnderlyingType(), entry, use_dynamic, reason)) && entry->m_cascades)
+            if ((Get(valobj, type_tdef->getDecl()->getUnderlyingType(), entry, use_dynamic, reason)) && entry->m_cascades)
             {
                 reason |= lldb::eFormatterChoiceCriterionNavigatedTypedefs;
                 return true;
@@ -581,27 +580,27 @@ private:
 
 template<>
 bool
-FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Get(const char* key, SummaryFormat::SharedPointer& value);
+FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Get(ConstString key, SummaryFormat::SharedPointer& value);
 
 template<>
 bool
-FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Delete(const char* type);
+FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Delete(ConstString type);
 
 template<>
 bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Get(const char* key, SyntheticFilter::SharedPointer& value);
+FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Get(ConstString key, SyntheticFilter::SharedPointer& value);
 
 template<>
 bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Delete(const char* type);
+FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>::Delete(ConstString type);
 
 template<>
 bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Get(const char* key, SyntheticFilter::SharedPointer& value);
+FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Get(ConstString key, SyntheticFilter::SharedPointer& value);
 
 template<>
 bool
-FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Delete(const char* type);
+FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>::Delete(ConstString type);
     
 class CategoryMap;
     
@@ -609,13 +608,13 @@ class FormatCategory
 {
 private:
     
-    typedef FormatNavigator<const char*, SummaryFormat> SummaryNavigator;
+    typedef FormatNavigator<ConstString, SummaryFormat> SummaryNavigator;
     typedef FormatNavigator<lldb::RegularExpressionSP, SummaryFormat> RegexSummaryNavigator;
     
-    typedef FormatNavigator<const char*, SyntheticFilter> FilterNavigator;
+    typedef FormatNavigator<ConstString, SyntheticFilter> FilterNavigator;
     typedef FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter> RegexFilterNavigator;
     
-    typedef FormatNavigator<const char*, SyntheticScriptProvider> SynthNavigator;
+    typedef FormatNavigator<ConstString, SyntheticScriptProvider> SynthNavigator;
     typedef FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider> RegexSynthNavigator;
 
     typedef SummaryNavigator::MapType SummaryMap;
@@ -657,13 +656,13 @@ private:
     
     friend class CategoryMap;
     
-    friend class FormatNavigator<const char*, SummaryFormat>;
+    friend class FormatNavigator<ConstString, SummaryFormat>;
     friend class FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>;
 
-    friend class FormatNavigator<const char*, SyntheticFilter>;
+    friend class FormatNavigator<ConstString, SyntheticFilter>;
     friend class FormatNavigator<lldb::RegularExpressionSP, SyntheticFilter>;
 
-    friend class FormatNavigator<const char*, SyntheticScriptProvider>;
+    friend class FormatNavigator<ConstString, SyntheticScriptProvider>;
     friend class FormatNavigator<lldb::RegularExpressionSP, SyntheticScriptProvider>;
     
 public:
@@ -745,23 +744,23 @@ public:
     }
         
     bool
-    Get(ValueObject& vobj,
+    Get(ValueObject& valobj,
         lldb::SummaryFormatSP& entry,
         lldb::DynamicValueType use_dynamic,
         uint32_t* reason = NULL)
     {
         if (!IsEnabled())
             return false;
-        if (Summary()->Get(vobj, entry, use_dynamic, reason))
+        if (Summary()->Get(valobj, entry, use_dynamic, reason))
             return true;
-        bool regex = RegexSummary()->Get(vobj, entry, use_dynamic, reason);
+        bool regex = RegexSummary()->Get(valobj, entry, use_dynamic, reason);
         if (regex && reason)
             *reason |= lldb::eFormatterChoiceCriterionRegularExpressionSummary;
         return regex;
     }
     
     bool
-    Get(ValueObject& vobj,
+    Get(ValueObject& valobj,
         lldb::SyntheticChildrenSP& entry,
         lldb::DynamicValueType use_dynamic,
         uint32_t* reason = NULL)
@@ -778,11 +777,11 @@ public:
         
         // first find both Filter and Synth, and then check which is most recent
         
-        if (!Filter()->Get(vobj, filter, use_dynamic, &reason_filter))
-            regex_filter = RegexFilter()->Get(vobj, filter, use_dynamic, &reason_filter);
+        if (!Filter()->Get(valobj, filter, use_dynamic, &reason_filter))
+            regex_filter = RegexFilter()->Get(valobj, filter, use_dynamic, &reason_filter);
         
-        if (!Synth()->Get(vobj, synth, use_dynamic, &reason_synth))
-            regex_synth = RegexSynth()->Get(vobj, synth, use_dynamic, &reason_synth);
+        if (!Synth()->Get(valobj, synth, use_dynamic, &reason_synth))
+            regex_synth = RegexSynth()->Get(valobj, synth, use_dynamic, &reason_synth);
         
         if (!filter.get() && !synth.get())
             return false;
@@ -826,7 +825,7 @@ public:
     
     // just a shortcut for (Summary()->Delete(name) || RegexSummary()->Delete(name))
     bool
-    DeleteSummaries(const char* name)
+    DeleteSummaries(ConstString name)
     {
         return Delete(name, (eSummary | eRegexSummary));
     }
@@ -850,7 +849,7 @@ public:
     }
     
     bool
-    Delete(const char* name,
+    Delete(ConstString name,
            FormatCategoryItems items = ALL_ITEM_TYPES)
     {
         bool success = false;
@@ -910,7 +909,7 @@ public:
         
         if ( (items & eSummary) == eSummary )
         {
-            if (m_summary_nav->Get(type_name.AsCString(), summary))
+            if (m_summary_nav->Get(type_name, summary))
             {
                 if (matching_category)
                     *matching_category = m_name.c_str();
@@ -921,7 +920,7 @@ public:
         }
         if ( (items & eRegexSummary) == eRegexSummary )
         {
-            if (m_regex_summary_nav->Get(type_name.AsCString(), summary))
+            if (m_regex_summary_nav->Get(type_name, summary))
             {
                 if (matching_category)
                     *matching_category = m_name.c_str();
@@ -932,7 +931,7 @@ public:
         }
         if ( (items & eFilter)  == eFilter )
         {
-            if (m_filter_nav->Get(type_name.AsCString(), filter))
+            if (m_filter_nav->Get(type_name, filter))
             {
                 if (matching_category)
                     *matching_category = m_name.c_str();
@@ -943,7 +942,7 @@ public:
         }
         if ( (items & eRegexFilter) == eRegexFilter )
         {
-            if (m_regex_filter_nav->Get(type_name.AsCString(), filter))
+            if (m_regex_filter_nav->Get(type_name, filter))
             {
                 if (matching_category)
                     *matching_category = m_name.c_str();
@@ -954,7 +953,7 @@ public:
         }
         if ( (items & eSynth)  == eSynth )
         {
-            if (m_synth_nav->Get(type_name.AsCString(), synth))
+            if (m_synth_nav->Get(type_name, synth))
             {
                 if (matching_category)
                     *matching_category = m_name.c_str();
@@ -965,7 +964,7 @@ public:
         }
         if ( (items & eRegexSynth) == eRegexSynth )
         {
-            if (m_regex_synth_nav->Get(type_name.AsCString(), synth))
+            if (m_regex_synth_nav->Get(type_name, synth))
             {
                 if (matching_category)
                     *matching_category = m_name.c_str();
@@ -1175,7 +1174,7 @@ public:
     }
     
     bool
-    Get(ValueObject& vobj,
+    Get(ValueObject& valobj,
         lldb::SummaryFormatSP& entry,
         lldb::DynamicValueType use_dynamic)
     {
@@ -1188,7 +1187,7 @@ public:
         {
             FormatCategory::SharedPointer category = *begin;
             lldb::SummaryFormatSP current_format;
-            if (!category->Get(vobj, current_format, use_dynamic, &reason_why))
+            if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
                 continue;
             /*if (reason_why == lldb::eFormatterChoiceCriterionDirectChoice)
              {
@@ -1207,7 +1206,7 @@ public:
     }
     
     bool
-    Get(ValueObject& vobj,
+    Get(ValueObject& valobj,
         lldb::SyntheticChildrenSP& entry,
         lldb::DynamicValueType use_dynamic)
     {
@@ -1221,7 +1220,7 @@ public:
         {
             FormatCategory::SharedPointer category = *begin;
             lldb::SyntheticChildrenSP current_format;
-            if (!category->Get(vobj, current_format, use_dynamic, &reason_why))
+            if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
                 continue;
             /*if (reason_why == lldb::eFormatterChoiceCriterionDirectChoice)
             {
@@ -1246,10 +1245,10 @@ class FormatManager : public IFormatChangeListener
 {
 private:
     
-    typedef FormatNavigator<const char*, ValueFormat> ValueNavigator;
+    typedef FormatNavigator<ConstString, ValueFormat> ValueNavigator;
 
     typedef ValueNavigator::MapType ValueMap;
-    typedef FormatMap<const char*, SummaryFormat> NamedSummariesMap;
+    typedef FormatMap<ConstString, SummaryFormat> NamedSummariesMap;
         
     ValueNavigator m_value_nav;
     NamedSummariesMap m_named_summaries_map;
@@ -1258,68 +1257,19 @@ private:
     
     const char* m_default_category_name;
     const char* m_system_category_name;
+    const char* m_gnu_cpp_category_name;
         
     typedef CategoryMap::MapType::iterator CategoryMapIterator;
     
     ConstString m_default_cs;
     ConstString m_system_cs;
-    ConstString m_charstar_cs;
-    ConstString m_constcharstar_cs;
+    ConstString m_gnu_stdcpp_cs;
 
 public:
     
     typedef bool (*CategoryCallback)(void*, const char*, const FormatCategory::SharedPointer&);
     
-    FormatManager() : 
-    m_value_nav("format",this),
-    m_named_summaries_map(this),
-    m_last_revision(0),
-    m_categories_map(this),
-    m_default_cs(ConstString("default")),
-    m_system_cs(ConstString("system")), 
-    m_charstar_cs(ConstString("char *")),
-    m_constcharstar_cs(ConstString("const char *"))
-    {
-        
-        // build default categories
-        
-        m_default_category_name = m_default_cs.GetCString();
-        m_system_category_name = m_system_cs.GetCString();
-
-        // add some default stuff
-        // most formats, summaries, ... actually belong to the users' lldbinit file rather than here
-        SummaryFormat::SharedPointer string_format(new StringSummaryFormat(false,
-                                                                           true,
-                                                                           false,
-                                                                           true,
-                                                                           false,
-                                                                           false,
-                                                                           "${var%s}"));
-        
-        
-        SummaryFormat::SharedPointer string_array_format(new StringSummaryFormat(false,
-                                                                                 true,
-                                                                                 false,
-                                                                                 false,
-                                                                                 false,
-                                                                                 false,
-                                                                                 "${var%s}"));
-        
-        lldb::RegularExpressionSP any_size_char_arr(new RegularExpression("char \\[[0-9]+\\]"));
-        
-        
-        Category(m_system_category_name)->Summary()->Add(m_charstar_cs.GetCString(), string_format);
-        Category(m_system_category_name)->Summary()->Add(m_constcharstar_cs.GetCString(), string_format);
-        Category(m_system_category_name)->RegexSummary()->Add(any_size_char_arr, string_array_format);
-        
-        Category(m_default_category_name); // this call is there to force LLDB into creating an empty "default" category
-        
-        // the order of these two calls IS important, if you invert it "system" summaries will prevail over the user's
-        EnableCategory(m_system_category_name);
-        EnableCategory(m_default_category_name);
-        
-    }
-
+    FormatManager();
     
     CategoryMap& Categories() { return m_categories_map; }
     ValueNavigator& Value() { return m_value_nav; }
@@ -1368,18 +1318,18 @@ public:
     }
     
     bool
-    Get(ValueObject& vobj,
+    Get(ValueObject& valobj,
         lldb::SummaryFormatSP& entry,
         lldb::DynamicValueType use_dynamic)
     {
-        return m_categories_map.Get(vobj, entry, use_dynamic);
+        return m_categories_map.Get(valobj, entry, use_dynamic);
     }
     bool
-    Get(ValueObject& vobj,
+    Get(ValueObject& valobj,
         lldb::SyntheticChildrenSP& entry,
         lldb::DynamicValueType use_dynamic)
     {
-        return m_categories_map.Get(vobj, entry, use_dynamic);
+        return m_categories_map.Get(valobj, entry, use_dynamic);
     }
     
     bool
@@ -1430,6 +1380,117 @@ public:
 
 };
 
+class DataVisualization
+{
+public:
+    
+    // use this call to force the FM to consider itself updated even when there is no apparent reason for that
+    static void
+    ForceUpdate();
+    
+    class ValueFormats
+    {
+    public:
+        static bool
+        Get(ValueObject& valobj, lldb::DynamicValueType use_dynamic, ValueFormat::SharedPointer &entry);
+        
+        static void
+        Add(const ConstString &type, const ValueFormat::SharedPointer &entry);
+        
+        static bool
+        Delete(const ConstString &type);
+        
+        static void
+        Clear();
+        
+        static void
+        LoopThrough(ValueFormat::ValueCallback callback, void* callback_baton);
+        
+        static uint32_t
+        GetCurrentRevision();
+        
+        static uint32_t
+        GetCount();
+    };
+    
+    static bool
+    GetSummaryFormat(ValueObject& valobj,
+                     lldb::DynamicValueType use_dynamic,
+                     lldb::SummaryFormatSP& entry);
+    static bool
+    GetSyntheticChildren(ValueObject& valobj,
+                         lldb::DynamicValueType use_dynamic,
+                         lldb::SyntheticChildrenSP& entry);
+    
+    static bool
+    AnyMatches(ConstString type_name,
+               FormatCategory::FormatCategoryItems items = FormatCategory::ALL_ITEM_TYPES,
+               bool only_enabled = true,
+               const char** matching_category = NULL,
+               FormatCategory::FormatCategoryItems* matching_type = NULL);
+    
+    class NamedSummaryFormats
+    {
+    public:
+        static bool
+        Get(const ConstString &type, lldb::SummaryFormatSP &entry);
+        
+        static void
+        Add(const ConstString &type, const lldb::SummaryFormatSP &entry);
+        
+        static bool
+        Delete(const ConstString &type);
+        
+        static void
+        Clear();
+        
+        static void
+        LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton);
+        
+        static uint32_t
+        GetCurrentRevision();
+        
+        static uint32_t
+        GetCount();
+    };
+    
+    class Categories
+    {
+    public:
+        
+        static bool
+        Get(const ConstString &category, lldb::FormatCategorySP &entry);
+        
+        static void
+        Add(const ConstString &category);
+        
+        static bool
+        Delete(const ConstString &category);
+        
+        static void
+        Clear();
+        
+        static void
+        Clear(ConstString &category);
+        
+        static void
+        Enable(ConstString& category);
+        
+        static void
+        Disable(ConstString& category);
+        
+        static void
+        LoopThrough(FormatManager::CategoryCallback callback, void* callback_baton);
+        
+        static uint32_t
+        GetCurrentRevision();
+        
+        static uint32_t
+        GetCount();
+    };
+};
+
+    
 } // namespace lldb_private
 
 #endif	// lldb_FormatManager_h_

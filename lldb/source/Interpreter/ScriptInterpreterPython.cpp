@@ -174,7 +174,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     PyRun_SimpleString (run_string.GetData());
     
     run_string.Clear();
-    run_string.Printf ("run_one_line (%s, 'from osxcpp import *')", m_dictionary_name.c_str(),
+    run_string.Printf ("run_one_line (%s, 'from gnu_libstdcpp import *')", m_dictionary_name.c_str(),
                        interpreter.GetDebugger().GetID());
     PyRun_SimpleString (run_string.GetData());
     

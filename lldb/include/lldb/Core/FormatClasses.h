@@ -57,7 +57,7 @@ struct ValueFormat
     }
     
     typedef lldb::SharedPtr<ValueFormat>::Type SharedPointer;
-    typedef bool(*ValueCallback)(void*, const char*, const ValueFormat::SharedPointer&);
+    typedef bool(*ValueCallback)(void*, ConstString, const ValueFormat::SharedPointer&);
     
     ~ValueFormat()
     {
@@ -169,7 +169,7 @@ public:
     GetFrontEnd(lldb::ValueObjectSP backend) = 0;
     
     typedef lldb::SharedPtr<SyntheticChildren>::Type SharedPointer;
-    typedef bool(*SyntheticChildrenCallback)(void*, const char*, const SyntheticChildren::SharedPointer&);
+    typedef bool(*SyntheticChildrenCallback)(void*, ConstString, const SyntheticChildren::SharedPointer&);
     
 };
 
@@ -453,7 +453,7 @@ struct SummaryFormat
     GetDescription() = 0;
     
     typedef lldb::SharedPtr<SummaryFormat>::Type SharedPointer;
-    typedef bool(*SummaryCallback)(void*, const char*, const SummaryFormat::SharedPointer&);
+    typedef bool(*SummaryCallback)(void*, ConstString, const SummaryFormat::SharedPointer&);
     typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const SummaryFormat::SharedPointer&);
     
 };

@@ -54,7 +54,7 @@ class DataFormatterTestCase(TestBase):
         self.addTearDownHook(cleanup)
 
         # Setup the summaries for this scenario
-        self.runCmd("type summary add -f \"${var._M_dataplus._M_p}\" std::string") # This works fine on OSX 10.6.8, if it differs on your implementation, submit a patch to adapt it to your C++ stdlib
+        #self.runCmd("type summary add -f \"${var._M_dataplus._M_p}\" std::string")
         self.runCmd("type summary add -f \"Level 1\" \"DeepData_1\"")
         self.runCmd("type summary add -f \"Level 2\" \"DeepData_2\" -e")
         self.runCmd("type summary add -f \"Level 3\" \"DeepData_3\"")

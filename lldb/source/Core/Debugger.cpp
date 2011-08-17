@@ -82,7 +82,6 @@ Debugger::Initialize ()
     if (g_shared_debugger_refcount == 0)
     {
         lldb_private::Initialize();
-        Debugger::FormatManagerInitialize();
     }
     g_shared_debugger_refcount++;
 
@@ -96,7 +95,6 @@ Debugger::Terminate ()
         g_shared_debugger_refcount--;
         if (g_shared_debugger_refcount == 0)
         {
-            Debugger::FormatManagerTerminate();
             lldb_private::WillTerminate();
             lldb_private::Terminate();
 
@@ -829,7 +827,7 @@ ScanBracketedRange(const char* var_name_begin,
 
 
 static ValueObjectSP
-ExpandExpressionPath(ValueObject* vobj,
+ExpandExpressionPath(ValueObject* valobj,
                      StackFrame* frame,
                      bool* do_deref_pointer,
                      const char* var_name_begin,
@@ -846,7 +844,7 @@ ExpandExpressionPath(ValueObject* vobj,
             log->Printf("been told to deref_pointer by caller");
         sstring.PutChar('*');
     }
-    else if (vobj->IsDereferenceOfParent() && ClangASTContext::IsPointerType(vobj->GetParent()->GetClangType()) && !vobj->IsArrayItemForPointer())
+    else if (valobj->IsDereferenceOfParent() && ClangASTContext::IsPointerType(valobj->GetParent()->GetClangType()) && !valobj->IsArrayItemForPointer())
     {
         if (log)
             log->Printf("decided to deref_pointer myself");
@@ -854,7 +852,7 @@ ExpandExpressionPath(ValueObject* vobj,
         *do_deref_pointer = true;
     }
 
-    vobj->GetExpressionPath(sstring, true, ValueObject::eHonorPointers);
+    valobj->GetExpressionPath(sstring, true, ValueObject::eHonorPointers);
     if (log)
         log->Printf("expression path to expand in phase 0: %s",sstring.GetData());
     sstring.PutRawBytes(var_name_begin+3, var_name_final-var_name_begin-3);
@@ -870,7 +868,7 @@ ExpandExpressionPath(ValueObject* vobj,
 }
 
 static ValueObjectSP
-ExpandIndexedExpression(ValueObject* vobj,
+ExpandIndexedExpression(ValueObject* valobj,
                         uint32_t index,
                         StackFrame* frame,
                         bool deref_pointer)
@@ -886,7 +884,7 @@ ExpandIndexedExpression(ValueObject* vobj,
     ValueObject::ExpressionPathEndResultType final_value_type;
     ValueObject::ExpressionPathScanEndReason reason_to_stop;
     ValueObject::ExpressionPathAftermath what_next = (deref_pointer ? ValueObject::eDereference : ValueObject::eNothing);
-    ValueObjectSP item = vobj->GetValueForExpressionPath (ptr_deref_buffer.get(),
+    ValueObjectSP item = valobj->GetValueForExpressionPath (ptr_deref_buffer.get(),
                                                           &first_unparsed,
                                                           &reason_to_stop,
                                                           &final_value_type,
@@ -918,19 +916,19 @@ Debugger::FormatPrompt
     const Address *addr,
     Stream &s,
     const char **end,
-    ValueObject* vobj
+    ValueObject* valobj
 )
 {
-    ValueObject* realvobj = NULL; // makes it super-easy to parse pointers
+    ValueObject* realvalobj = NULL; // makes it super-easy to parse pointers
     bool success = true;
     const char *p;
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     for (p = format; *p != '\0'; ++p)
     {
-        if (realvobj)
+        if (realvalobj)
         {
-            vobj = realvobj;
-            realvobj = NULL;
+            valobj = realvalobj;
+            realvalobj = NULL;
         }
         size_t non_special_chars = ::strcspn (p, "${}\\");
         if (non_special_chars > 0)
@@ -959,7 +957,7 @@ Debugger::FormatPrompt
 
             ++p;  // Skip the '{'
             
-            if (FormatPrompt (p, sc, exe_ctx, addr, sub_strm, &p, vobj))
+            if (FormatPrompt (p, sc, exe_ctx, addr, sub_strm, &p, valobj))
             {
                 // The stream had all it needed
                 s.Write(sub_strm.GetData(), sub_strm.GetSize());
@@ -1011,7 +1009,7 @@ Debugger::FormatPrompt
                         case 'v':
                         case 's':
                             {
-                                if (!vobj)
+                                if (!valobj)
                                     break;
                                 
                                 if (log)
@@ -1029,7 +1027,7 @@ Debugger::FormatPrompt
                                 
                                 if (*var_name_begin == 's')
                                 {
-                                    vobj = vobj->GetSyntheticValue(lldb::eUseSyntheticFilter).get();
+                                    valobj = valobj->GetSyntheticValue(lldb::eUseSyntheticFilter).get();
                                     var_name_begin++;
                                 }
                                 
@@ -1058,18 +1056,18 @@ Debugger::FormatPrompt
                                 bool is_array_range = false;
                                 const char* first_unparsed;
 
-                                if (!vobj) break;
-                                // simplest case ${var}, just print vobj's value
+                                if (!valobj) break;
+                                // simplest case ${var}, just print valobj's value
                                 if (::strncmp (var_name_begin, "var}", strlen("var}")) == 0)
                                 {
-                                    target = vobj;
+                                    target = valobj;
                                     val_obj_display = ValueObject::eDisplayValue;
                                 }
                                 else if (::strncmp(var_name_begin,"var%",strlen("var%")) == 0)
                                 {
                                     // this is a variable with some custom format applied to it
                                     const char* percent_position;
-                                    target = vobj;
+                                    target = valobj;
                                     val_obj_display = ValueObject::eDisplayValue;
                                     ScanFormatDescriptor (var_name_begin,
                                                           var_name_end,
@@ -1111,7 +1109,7 @@ Debugger::FormatPrompt
                                     if (log)
                                         log->Printf("symbol to expand: %s",expr_path.get());
                                     
-                                    target = vobj->GetValueForExpressionPath(expr_path.get(),
+                                    target = valobj->GetValueForExpressionPath(expr_path.get(),
                                                                              &first_unparsed,
                                                                              &reason_to_stop,
                                                                              &final_value_type,
@@ -1200,7 +1198,7 @@ Debugger::FormatPrompt
                                     var_success = true;
 
                                     if (index_higher < 0)
-                                        index_higher = vobj->GetNumChildren() - 1;
+                                        index_higher = valobj->GetNumChildren() - 1;
                                     
                                     uint32_t max_num_children = target->GetUpdatePoint().GetTargetSP()->GetMaximumNumberOfChildrenToDisplay();
                                     
@@ -1774,267 +1772,6 @@ Debugger::FormatPrompt
     if (end) 
         *end = p;
     return success;
-}
-
-
-static FormatManager&
-GetFormatManager() {
-    static FormatManager g_format_manager;
-    return g_format_manager;
-}
-
-// The platform should be responsible for initializing its own formatters
-// (e.g. to handle versioning, different runtime libraries, ...)
-// Currently, basic formatters for std:: objects as implemented by
-// the GNU libstdc++ are defined regardless, and enabled by default
-// This is going to be moved to some platform-dependent location
-// (in the meanwhile, these formatters should work for Mac OS X & Linux)
-void
-Debugger::FormatManagerInitialize()
-{
-    static bool g_initialized = false;
-    
-    if (!g_initialized)
-    {
-        g_initialized = true;
-        ConstString gnulib("gnu-libstdc++");
-        FormatManager& format_mgr = GetFormatManager();
-        lldb::FormatCategorySP osxcpp = format_mgr.Category(gnulib.AsCString());
-        osxcpp->Summary()->Add(ConstString("std::string").AsCString(),
-                               SummaryFormatSP(new StringSummaryFormat(true,
-                                                                       false,
-                                                                       false,
-                                                                       true,
-                                                                       true,
-                                                                       false,
-                                                                       "${var._M_dataplus._M_p}")));
-        osxcpp->Summary()->Add(ConstString("std::basic_string<char>").AsCString(),
-                               SummaryFormatSP(new StringSummaryFormat(true,
-                                                                       false,
-                                                                       false,
-                                                                       true,
-                                                                       true,
-                                                                       false,
-                                                                       "${var._M_dataplus._M_p}")));
-        osxcpp->Summary()->Add(ConstString("std::basic_string<char,std::char_traits<char>,std::allocator<char> >").AsCString(),
-                               SummaryFormatSP(new StringSummaryFormat(true,
-                                                                       false,
-                                                                       false,
-                                                                       true,
-                                                                       true,
-                                                                       false,
-                                                                       "${var._M_dataplus._M_p}")));
-        osxcpp->RegexSynth()->Add(RegularExpressionSP(new RegularExpression("std::vector<")),
-                                    SyntheticChildrenSP(new SyntheticScriptProvider(true,
-                                                                                    false,
-                                                                                    false,
-                                                                                    "StdVectorSynthProvider")));
-        osxcpp->RegexSynth()->Add(RegularExpressionSP(new RegularExpression("std::map<")),
-                                    SyntheticChildrenSP(new SyntheticScriptProvider(true,
-                                                                                    false,
-                                                                                    false,
-                                                                                    "StdMapSynthProvider")));
-        osxcpp->RegexSynth()->Add(RegularExpressionSP(new RegularExpression("std::list<")),
-                                    SyntheticChildrenSP(new SyntheticScriptProvider(true,
-                                                                                    false,
-                                                                                    false,
-                                                                                    "StdListSynthProvider")));
-        
-        format_mgr.EnableCategory(gnulib.AsCString());
-        
-    }
-}
-
-void
-Debugger::FormatManagerTerminate()
-{}
-
-void
-Debugger::Formatting::ForceUpdate()
-{
-    GetFormatManager().Changed();
-}
-
-bool
-Debugger::Formatting::ValueFormats::Get(ValueObject& vobj, lldb::DynamicValueType use_dynamic, ValueFormat::SharedPointer &entry)
-{
-    return GetFormatManager().Value().Get(vobj,entry, use_dynamic);
-}
-
-void
-Debugger::Formatting::ValueFormats::Add(const ConstString &type, const ValueFormat::SharedPointer &entry)
-{
-    GetFormatManager().Value().Add(type.AsCString(),entry);
-}
-
-bool
-Debugger::Formatting::ValueFormats::Delete(const ConstString &type)
-{
-    return GetFormatManager().Value().Delete(type.AsCString());
-}
-
-void
-Debugger::Formatting::ValueFormats::Clear()
-{
-    GetFormatManager().Value().Clear();
-}
-
-void
-Debugger::Formatting::ValueFormats::LoopThrough(ValueFormat::ValueCallback callback, void* callback_baton)
-{
-    GetFormatManager().Value().LoopThrough(callback, callback_baton);
-}
-
-uint32_t
-Debugger::Formatting::ValueFormats::GetCurrentRevision()
-{
-    return GetFormatManager().GetCurrentRevision();
-}
-
-uint32_t
-Debugger::Formatting::ValueFormats::GetCount()
-{
-    return GetFormatManager().Value().GetCount();
-}
-
-bool
-Debugger::Formatting::GetSummaryFormat(ValueObject& vobj,
-                                       lldb::DynamicValueType use_dynamic,
-                                       lldb::SummaryFormatSP& entry)
-{
-    return GetFormatManager().Get(vobj, entry, use_dynamic);
-}
-bool
-Debugger::Formatting::GetSyntheticChildren(ValueObject& vobj,
-                                           lldb::DynamicValueType use_dynamic,
-                                           lldb::SyntheticChildrenSP& entry)
-{
-    return GetFormatManager().Get(vobj, entry, use_dynamic);
-}
-
-bool
-Debugger::Formatting::AnyMatches(ConstString type_name,
-                                 FormatCategory::FormatCategoryItems items,
-                                 bool only_enabled,
-                                 const char** matching_category,
-                                 FormatCategory::FormatCategoryItems* matching_type)
-{
-    return GetFormatManager().AnyMatches(type_name,
-                                         items,
-                                         only_enabled,
-                                         matching_category,
-                                         matching_type);
-}
-
-bool
-Debugger::Formatting::Categories::Get(const ConstString &category, lldb::FormatCategorySP &entry)
-{
-    entry = GetFormatManager().Category(category.GetCString());
-    return true;
-}
-
-void
-Debugger::Formatting::Categories::Add(const ConstString &category)
-{
-    GetFormatManager().Category(category.GetCString());
-}
-
-bool
-Debugger::Formatting::Categories::Delete(const ConstString &category)
-{
-    GetFormatManager().DisableCategory(category.GetCString());
-    return GetFormatManager().Categories().Delete(category.GetCString());
-}
-
-void
-Debugger::Formatting::Categories::Clear()
-{
-    GetFormatManager().Categories().Clear();
-}
-
-void
-Debugger::Formatting::Categories::Clear(ConstString &category)
-{
-    GetFormatManager().Category(category.GetCString())->ClearSummaries();
-}
-
-void
-Debugger::Formatting::Categories::Enable(ConstString& category)
-{
-    if (GetFormatManager().Category(category.GetCString())->IsEnabled() == false)
-        GetFormatManager().EnableCategory(category.GetCString());
-    else
-    {
-        GetFormatManager().DisableCategory(category.GetCString());
-        GetFormatManager().EnableCategory(category.GetCString());
-    }
-}
-
-void
-Debugger::Formatting::Categories::Disable(ConstString& category)
-{
-    if (GetFormatManager().Category(category.GetCString())->IsEnabled() == true)
-        GetFormatManager().DisableCategory(category.GetCString());
-}
-
-void
-Debugger::Formatting::Categories::LoopThrough(FormatManager::CategoryCallback callback, void* callback_baton)
-{
-    GetFormatManager().LoopThroughCategories(callback, callback_baton);
-}
-
-uint32_t
-Debugger::Formatting::Categories::GetCurrentRevision()
-{
-    return GetFormatManager().GetCurrentRevision();
-}
-
-uint32_t
-Debugger::Formatting::Categories::GetCount()
-{
-    return GetFormatManager().Categories().GetCount();
-}
-
-bool
-Debugger::Formatting::NamedSummaryFormats::Get(const ConstString &type, SummaryFormat::SharedPointer &entry)
-{
-    return GetFormatManager().NamedSummary().Get(type.AsCString(),entry);
-}
-
-void
-Debugger::Formatting::NamedSummaryFormats::Add(const ConstString &type, const SummaryFormat::SharedPointer &entry)
-{
-    GetFormatManager().NamedSummary().Add(type.AsCString(),entry);
-}
-
-bool
-Debugger::Formatting::NamedSummaryFormats::Delete(const ConstString &type)
-{
-    return GetFormatManager().NamedSummary().Delete(type.AsCString());
-}
-
-void
-Debugger::Formatting::NamedSummaryFormats::Clear()
-{
-    GetFormatManager().NamedSummary().Clear();
-}
-
-void
-Debugger::Formatting::NamedSummaryFormats::LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton)
-{
-    GetFormatManager().NamedSummary().LoopThrough(callback, callback_baton);
-}
-
-uint32_t
-Debugger::Formatting::NamedSummaryFormats::GetCurrentRevision()
-{
-    return GetFormatManager().GetCurrentRevision();
-}
-
-uint32_t
-Debugger::Formatting::NamedSummaryFormats::GetCount()
-{
-    return GetFormatManager().NamedSummary().GetCount();
 }
 
 #pragma mark Debugger::SettingsController

@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/FormatManager.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/Timer.h"
@@ -441,7 +442,7 @@ public:
             
             SummaryFormatSP summary_format_sp;
             if (!m_option_variable.summary.empty())
-                Debugger::Formatting::NamedSummaryFormats::Get(ConstString(m_option_variable.summary.c_str()), summary_format_sp);
+                DataVisualization::NamedSummaryFormats::Get(ConstString(m_option_variable.summary.c_str()), summary_format_sp);
             
             ValueObject::DumpValueObjectOptions options;
             

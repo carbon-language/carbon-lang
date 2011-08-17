@@ -20,6 +20,7 @@
 // Project includes
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/FormatManager.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectChild.h"
@@ -223,13 +224,13 @@ ValueObject::UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic)
         log->Printf("checking for FormatManager revisions. VO named %s is at revision %d, while the format manager is at revision %d",
            GetName().GetCString(),
            m_last_format_mgr_revision,
-           Debugger::Formatting::ValueFormats::GetCurrentRevision());
+           DataVisualization::ValueFormats::GetCurrentRevision());
     if (HasCustomSummaryFormat() && m_update_point.GetModID() != m_user_id_of_forced_summary)
     {
         ClearCustomSummaryFormat();
         m_summary_str.clear();
     }
-    if ( (m_last_format_mgr_revision != Debugger::Formatting::ValueFormats::GetCurrentRevision()) ||
+    if ( (m_last_format_mgr_revision != DataVisualization::ValueFormats::GetCurrentRevision()) ||
           m_last_format_mgr_dynamic != use_dynamic)
     {
         if (m_last_summary_format.get())
@@ -241,11 +242,11 @@ ValueObject::UpdateFormatsIfNeeded(lldb::DynamicValueType use_dynamic)
 
         m_synthetic_value = NULL;
         
-        Debugger::Formatting::ValueFormats::Get(*this, lldb::eNoDynamicValues, m_last_value_format);
-        Debugger::Formatting::GetSummaryFormat(*this, use_dynamic, m_last_summary_format);
-        Debugger::Formatting::GetSyntheticChildren(*this, use_dynamic, m_last_synthetic_filter);
+        DataVisualization::ValueFormats::Get(*this, lldb::eNoDynamicValues, m_last_value_format);
+        DataVisualization::GetSummaryFormat(*this, use_dynamic, m_last_summary_format);
+        DataVisualization::GetSyntheticChildren(*this, use_dynamic, m_last_synthetic_filter);
 
-        m_last_format_mgr_revision = Debugger::Formatting::ValueFormats::GetCurrentRevision();
+        m_last_format_mgr_revision = DataVisualization::ValueFormats::GetCurrentRevision();
         m_last_format_mgr_dynamic = use_dynamic;
 
         ClearUserVisibleData();
@@ -2852,10 +2853,10 @@ ValueObject::DumpValueObject
                 
                 if (print_children && (!entry || entry->DoesPrintChildren() || !sum_cstr))
                 {
-                    ValueObjectSP synth_vobj = valobj->GetSyntheticValue(use_synth ?
+                    ValueObjectSP synth_valobj = valobj->GetSyntheticValue(use_synth ?
                                                                          lldb::eUseSyntheticFilter : 
                                                                          lldb::eNoSyntheticFilter);
-                    uint32_t num_children = synth_vobj->GetNumChildren();
+                    uint32_t num_children = synth_valobj->GetNumChildren();
                     bool print_dotdotdot = false;
                     if (num_children)
                     {
@@ -2881,7 +2882,7 @@ ValueObject::DumpValueObject
 
                         for (uint32_t idx=0; idx<num_children; ++idx)
                         {
-                            ValueObjectSP child_sp(synth_vobj->GetChildAtIndex(idx, true));
+                            ValueObjectSP child_sp(synth_valobj->GetChildAtIndex(idx, true));
                             if (child_sp.get())
                             {
                                 DumpValueObject (s,

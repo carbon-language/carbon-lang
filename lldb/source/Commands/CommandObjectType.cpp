@@ -199,7 +199,7 @@ public:
             const char* typeA = command.GetArgumentAtIndex(i);
             ConstString typeCS(typeA);
             if (typeCS)
-                Debugger::Formatting::ValueFormats::Add(typeCS, entry);
+                DataVisualization::ValueFormats::Add(typeCS, entry);
             else
             {
                 result.AppendError("empty typenames not allowed");
@@ -276,7 +276,7 @@ public:
         }
         
         
-        if (Debugger::Formatting::ValueFormats::Delete(typeCS))
+        if (DataVisualization::ValueFormats::Delete(typeCS))
         {
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
@@ -314,7 +314,7 @@ public:
     bool
     Execute (Args& command, CommandReturnObject &result)
     {
-        Debugger::Formatting::ValueFormats::Clear();
+        DataVisualization::ValueFormats::Clear();
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
@@ -325,7 +325,7 @@ public:
 // CommandObjectTypeFormatList
 //-------------------------------------------------------------------------
 
-bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, const char* type, const ValueFormat::SharedPointer& entry);
+bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const ValueFormat::SharedPointer& entry);
 
 class CommandObjectTypeFormatList;
 
@@ -375,7 +375,7 @@ public:
         }
         else
             param = new CommandObjectTypeFormatList_LoopCallbackParam(this,&result);
-        Debugger::Formatting::ValueFormats::LoopThrough(CommandObjectTypeFormatList_LoopCallback, param);
+        DataVisualization::ValueFormats::LoopThrough(CommandObjectTypeFormatList_LoopCallback, param);
         delete param;
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
@@ -384,14 +384,14 @@ public:
 private:
     
     bool
-    LoopCallback (const char* type,
+    LoopCallback (ConstString type,
                   const ValueFormat::SharedPointer& entry,
                   RegularExpression* regex,
                   CommandReturnObject *result)
     {
-        if (regex == NULL || regex->Execute(type)) 
+        if (regex == NULL || regex->Execute(type.AsCString())) 
         {
-            result->GetOutputStream().Printf ("%s: %s%s%s%s\n", type, 
+            result->GetOutputStream().Printf ("%s: %s%s%s%s\n", type.AsCString(), 
                                               FormatManager::GetFormatAsCString (entry->m_format),
                                               entry->m_cascades ? "" : " (not cascading)",
                                               entry->m_skip_pointers ? " (skip pointers)" : "",
@@ -400,14 +400,14 @@ private:
         return true;
     }
     
-    friend bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, const char* type, const ValueFormat::SharedPointer& entry);
+    friend bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const ValueFormat::SharedPointer& entry);
     
 };
 
 bool
 CommandObjectTypeFormatList_LoopCallback (
                                     void* pt2self,
-                                    const char* type,
+                                    ConstString type,
                                     const ValueFormat::SharedPointer& entry)
 {
     CommandObjectTypeFormatList_LoopCallbackParam* param = (CommandObjectTypeFormatList_LoopCallbackParam*)pt2self;
@@ -971,23 +971,23 @@ CommandObject (interpreter,
                 "};\n"
                 "AnotherDemo *another_object = new AnotherDemo('E',42,3.14);\n"
                 "\n"
-                "type summary add -f \"the answer is ${*var.ptr}\" JustADemo\n"
+                "type summary add --summary-string \"the answer is ${*var.ptr}\" JustADemo\n"
                 "when typing frame variable object you will get \"the answer is 42\"\n"
-                "type summary add -f \"the answer is ${*var.ptr}, and the question is ${var.value}\" JustADemo\n"
+                "type summary add --summary-string \"the answer is ${*var.ptr}, and the question is ${var.value}\" JustADemo\n"
                 "when typing frame variable object you will get \"the answer is 42 and the question is 3.14\"\n"
                 "\n"
                 "Alternatively, you could also say\n"
-                "type summary add -f \"${var%V} -> ${*var}\" \"int *\"\n"
+                "type summary add --summary-string \"${var%V} -> ${*var}\" \"int *\"\n"
                 "and replace the above summary string with\n"
-                "type summary add -f \"the answer is ${var.ptr}, and the question is ${var.value}\" JustADemo\n"
+                "type summary add --summary-string \"the answer is ${var.ptr}, and the question is ${var.value}\" JustADemo\n"
                 "to obtain a similar result\n"
                 "\n"
                 "To add a summary valid for both JustADemo and AnotherDemo you can use the scoping operator, as in:\n"
-                "type summary add -f \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes\n"
+                "type summary add --summary-string \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes\n"
                 "\n"
                 "This will be used for both variables of type JustADemo and AnotherDemo. To prevent this, change the -C to read -C no\n"
                 "If you do not want pointers to be shown using that summary, you can use the -p option, as in:\n"
-                "type summary add -f \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes -p\n"
+                "type summary add --summary-string \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes -p\n"
                 "A similar option -r exists for references.\n"
                 "\n"
                 "If you simply want a one-line summary of the content of your variable, without typing an explicit string to that effect\n"
@@ -997,7 +997,7 @@ CommandObject (interpreter,
                 "the output being similar to (ptr=0xsomeaddress, value=3.14)\n"
                 "\n"
                 "If you want to display some summary text, but also expand the structure of your object, you can add the -e option, as in:\n"
-                "type summary add -e -f \"*ptr = ${*var.ptr}\" JustADemo\n"
+                "type summary add -e --summary-string \"*ptr = ${*var.ptr}\" JustADemo\n"
                 "Here the value of the int* is displayed, followed by the standard LLDB sequence of children objects, one per line.\n"
                 "to get an output like:\n"
                 "\n"
@@ -1005,9 +1005,6 @@ CommandObject (interpreter,
                 " ptr = 0xsomeaddress\n"
                 " value = 3.14\n"
                 "}\n"
-                "\n"
-                "A command you may definitely want to try if you're doing C++ debugging is:\n"
-                "type summary add -f \"${var._M_dataplus._M_p}\" std::string\n"
                 "\n"
                 "You can also add Python summaries, in which case you will use lldb public API to gather information from your variables"
                 "and elaborate them to a meaningful summary inside a script written in Python. The variable object will be passed to your"
@@ -1040,7 +1037,7 @@ CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
                                         Error* error)
 {
     lldb::FormatCategorySP category;
-    Debugger::Formatting::Categories::Get(ConstString(category_name.c_str()), category);
+    DataVisualization::Categories::Get(ConstString(category_name.c_str()), category);
     
     if (type == eRegexSummary)
     {
@@ -1052,7 +1049,7 @@ CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
             return false;
         }
         
-        category->RegexSummary()->Delete(type_name.GetCString());
+        category->RegexSummary()->Delete(type_name);
         category->RegexSummary()->Add(typeRX, entry);
         
         return true;
@@ -1060,12 +1057,12 @@ CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
     else if (type == eNamedSummary)
     {
         // system named summaries do not exist (yet?)
-        Debugger::Formatting::NamedSummaryFormats::Add(type_name,entry);
+        DataVisualization::NamedSummaryFormats::Add(type_name,entry);
         return true;
     }
     else
     {
-        category->Summary()->Add(type_name.GetCString(), entry);
+        category->Summary()->Add(type_name, entry);
         return true;
     }
 }    
@@ -1080,7 +1077,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeNone,         "Don't use this format for references-to-type objects."},
     { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeNone,    "Type names are actually regular expressions."},
     { LLDB_OPT_SET_1  , true, "inline-children", 'c', no_argument, NULL, 0, eArgTypeNone,    "If true, inline all child values into summary string."},
-    { LLDB_OPT_SET_2  , true, "format-string", 'f', required_argument, NULL, 0, eArgTypeSummaryString,    "Format string used to display text and object contents."},
+    { LLDB_OPT_SET_2  , true, "summary-string", 'f', required_argument, NULL, 0, eArgTypeSummaryString,    "Summary string used to display text and object contents."},
     { LLDB_OPT_SET_3, false, "python-script", 's', required_argument, NULL, 0, eArgTypeName, "Give a one-liner Python script as part of the command."},
     { LLDB_OPT_SET_3, false, "python-function", 'F', required_argument, NULL, 0, eArgTypeName, "Give the name of a Python function to use for this type."},
     { LLDB_OPT_SET_3, false, "input-python", 'P', no_argument, NULL, 0, eArgTypeNone, "Input Python code to use for this type manually."},
@@ -1168,8 +1165,8 @@ private:
                         const char* cate_name,
                         const FormatCategory::SharedPointer& cate)
     {
-        const char* name = (const char*)param;
-        cate->Delete(name, FormatCategory::eSummary | FormatCategory::eRegexSummary);
+        ConstString *name = (ConstString*)param;
+        cate->Delete(*name, FormatCategory::eSummary | FormatCategory::eRegexSummary);
         return true;
     }
 
@@ -1220,16 +1217,16 @@ public:
         
         if (m_options.m_delete_all)
         {
-            Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, (void*)typeCS.GetCString());
+            DataVisualization::Categories::LoopThrough(PerCategoryCallback, (void*)typeCS.GetCString());
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
         }
         
         lldb::FormatCategorySP category;
-        Debugger::Formatting::Categories::Get(ConstString(m_options.m_category.c_str()), category);
+        DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
         
-        bool delete_category = category->DeleteSummaries(typeCS.GetCString());
-        bool delete_named = Debugger::Formatting::NamedSummaryFormats::Delete(typeCS);
+        bool delete_category = category->DeleteSummaries(typeCS);
+        bool delete_named = DataVisualization::NamedSummaryFormats::Delete(typeCS);
         
         if (delete_category || delete_named)
         {
@@ -1348,7 +1345,7 @@ public:
     {
         
         if (m_options.m_delete_all)
-            Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, NULL);
+            DataVisualization::Categories::LoopThrough(PerCategoryCallback, NULL);
         
         else
         {        
@@ -1357,14 +1354,14 @@ public:
             {
                 const char* cat_name = command.GetArgumentAtIndex(0);
                 ConstString cat_nameCS(cat_name);
-                Debugger::Formatting::Categories::Get(cat_nameCS, category);
+                DataVisualization::Categories::Get(cat_nameCS, category);
             }
             else
-                Debugger::Formatting::Categories::Get(ConstString(NULL), category);
+                DataVisualization::Categories::Get(ConstString(NULL), category);
             category->ClearSummaries();
         }
         
-        Debugger::Formatting::NamedSummaryFormats::Clear();
+        DataVisualization::NamedSummaryFormats::Clear();
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
@@ -1383,7 +1380,7 @@ CommandObjectTypeSummaryClear::CommandOptions::g_option_table[] =
 // CommandObjectTypeSummaryList
 //-------------------------------------------------------------------------
 
-bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, const char* type, const StringSummaryFormat::SharedPointer& entry);
+bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, ConstString type, const StringSummaryFormat::SharedPointer& entry);
 bool CommandObjectTypeRXSummaryList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const StringSummaryFormat::SharedPointer& entry);
 
 class CommandObjectTypeSummaryList;
@@ -1502,9 +1499,9 @@ public:
         else
             param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result,NULL,cate_regex);
         
-        Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback,param);
+        DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
                 
-        if (Debugger::Formatting::NamedSummaryFormats::GetCount() > 0)
+        if (DataVisualization::NamedSummaryFormats::GetCount() > 0)
         {
             result.GetOutputStream().Printf("Named summaries:\n");
             if (argc == 1) {
@@ -1514,7 +1511,7 @@ public:
             }
             else
                 param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result);
-            Debugger::Formatting::NamedSummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
+            DataVisualization::NamedSummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
             delete param;
         }
         
@@ -1558,6 +1555,7 @@ private:
         }
         return true;
     }
+
     
     bool
     LoopCallback (const char* type,
@@ -1570,18 +1568,18 @@ private:
         return true;
     }
     
-    friend bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, const char* type, const SummaryFormat::SharedPointer& entry);
+    friend bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, ConstString type, const SummaryFormat::SharedPointer& entry);
     friend bool CommandObjectTypeRXSummaryList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SummaryFormat::SharedPointer& entry);
 };
 
 bool
 CommandObjectTypeSummaryList_LoopCallback (
                                           void* pt2self,
-                                          const char* type,
+                                          ConstString type,
                                           const SummaryFormat::SharedPointer& entry)
 {
     CommandObjectTypeSummaryList_LoopCallbackParam* param = (CommandObjectTypeSummaryList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(type, entry, param->regex, param->result);
+    return param->self->LoopCallback(type.AsCString(), entry, param->regex, param->result);
 }
 
 bool
@@ -1653,7 +1651,7 @@ public:
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }
-            Debugger::Formatting::Categories::Enable(typeCS);
+            DataVisualization::Categories::Enable(typeCS);
         }
         
         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -1717,7 +1715,7 @@ public:
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }
-            if (!Debugger::Formatting::Categories::Delete(typeCS))
+            if (!DataVisualization::Categories::Delete(typeCS))
                 success = false; // keep deleting even if we hit an error
         }
         if (success)
@@ -1787,7 +1785,7 @@ public:
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }
-            Debugger::Formatting::Categories::Disable(typeCS);
+            DataVisualization::Categories::Disable(typeCS);
         }
 
         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -1876,7 +1874,7 @@ public:
         CommandObjectTypeCategoryList_CallbackParam param(&result,
                                                           regex);
         
-        Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, &param);
+        DataVisualization::Categories::LoopThrough(PerCategoryCallback, &param);
         
         if (regex)
             delete regex;
@@ -1891,7 +1889,7 @@ public:
 // CommandObjectTypeFilterList
 //-------------------------------------------------------------------------
 
-bool CommandObjectTypeFilterList_LoopCallback(void* pt2self, const char* type, const SyntheticChildren::SharedPointer& entry);
+bool CommandObjectTypeFilterList_LoopCallback(void* pt2self, ConstString type, const SyntheticChildren::SharedPointer& entry);
 bool CommandObjectTypeFilterRXList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SyntheticChildren::SharedPointer& entry);
 
 class CommandObjectTypeFilterList;
@@ -2010,7 +2008,7 @@ public:
         else
             param = new CommandObjectTypeFilterList_LoopCallbackParam(this,&result,NULL,cate_regex);
         
-        Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback,param);
+        DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
         
         if (cate_regex)
             delete cate_regex;
@@ -2065,17 +2063,17 @@ private:
         return true;
     }
     
-    friend bool CommandObjectTypeFilterList_LoopCallback(void* pt2self, const char* type, const SyntheticChildren::SharedPointer& entry);
+    friend bool CommandObjectTypeFilterList_LoopCallback(void* pt2self, ConstString type, const SyntheticChildren::SharedPointer& entry);
     friend bool CommandObjectTypeFilterRXList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SyntheticChildren::SharedPointer& entry);
 };
 
 bool
 CommandObjectTypeFilterList_LoopCallback (void* pt2self,
-                                         const char* type,
+                                         ConstString type,
                                          const SyntheticChildren::SharedPointer& entry)
 {
     CommandObjectTypeFilterList_LoopCallbackParam* param = (CommandObjectTypeFilterList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(type, entry, param->regex, param->result);
+    return param->self->LoopCallback(type.AsCString(), entry, param->regex, param->result);
 }
 
 bool
@@ -2099,7 +2097,7 @@ CommandObjectTypeFilterList::CommandOptions::g_option_table[] =
 // CommandObjectTypeSynthList
 //-------------------------------------------------------------------------
 
-bool CommandObjectTypeSynthList_LoopCallback(void* pt2self, const char* type, const SyntheticChildren::SharedPointer& entry);
+bool CommandObjectTypeSynthList_LoopCallback(void* pt2self, ConstString type, const SyntheticChildren::SharedPointer& entry);
 bool CommandObjectTypeSynthRXList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SyntheticChildren::SharedPointer& entry);
 
 class CommandObjectTypeSynthList;
@@ -2218,7 +2216,7 @@ public:
         else
             param = new CommandObjectTypeSynthList_LoopCallbackParam(this,&result,NULL,cate_regex);
         
-        Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback,param);
+        DataVisualization::Categories::LoopThrough(PerCategoryCallback,param);
                 
         if (cate_regex)
             delete cate_regex;
@@ -2273,17 +2271,17 @@ private:
         return true;
     }
     
-    friend bool CommandObjectTypeSynthList_LoopCallback(void* pt2self, const char* type, const SyntheticChildren::SharedPointer& entry);
+    friend bool CommandObjectTypeSynthList_LoopCallback(void* pt2self, ConstString type, const SyntheticChildren::SharedPointer& entry);
     friend bool CommandObjectTypeSynthRXList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SyntheticChildren::SharedPointer& entry);
 };
 
 bool
 CommandObjectTypeSynthList_LoopCallback (void* pt2self,
-                                         const char* type,
+                                         ConstString type,
                                          const SyntheticChildren::SharedPointer& entry)
 {
     CommandObjectTypeSynthList_LoopCallbackParam* param = (CommandObjectTypeSynthList_LoopCallbackParam*)pt2self;
-    return param->self->LoopCallback(type, entry, param->regex, param->result);
+    return param->self->LoopCallback(type.AsCString(), entry, param->regex, param->result);
 }
 
 bool
@@ -2381,8 +2379,8 @@ private:
                         const char* cate_name,
                         const FormatCategory::SharedPointer& cate)
     {
-        const char* name = (const char*)param;
-        return cate->Delete(name, FormatCategory::eFilter | FormatCategory::eRegexFilter);
+        ConstString *name = (ConstString*)param;
+        return cate->Delete(*name, FormatCategory::eFilter | FormatCategory::eRegexFilter);
     }
     
 public:
@@ -2432,16 +2430,16 @@ public:
         
         if (m_options.m_delete_all)
         {
-            Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, (void*)typeCS.GetCString());
+            DataVisualization::Categories::LoopThrough(PerCategoryCallback, (void*)&typeCS);
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
         }
         
         lldb::FormatCategorySP category;
-        Debugger::Formatting::Categories::Get(ConstString(m_options.m_category.c_str()), category);
+        DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
         
-        bool delete_category = category->Filter()->Delete(typeCS.GetCString());
-        delete_category = category->RegexFilter()->Delete(typeCS.GetCString()) || delete_category;
+        bool delete_category = category->Filter()->Delete(typeCS);
+        delete_category = category->RegexFilter()->Delete(typeCS) || delete_category;
         
         if (delete_category)
         {
@@ -2544,8 +2542,8 @@ private:
                         const char* cate_name,
                         const FormatCategory::SharedPointer& cate)
     {
-        const char* name = (const char*)param;
-        return cate->Delete(name, FormatCategory::eSynth | FormatCategory::eRegexSynth);
+        ConstString* name = (ConstString*)param;
+        return cate->Delete(*name, FormatCategory::eSynth | FormatCategory::eRegexSynth);
     }
     
 public:
@@ -2595,16 +2593,16 @@ public:
         
         if (m_options.m_delete_all)
         {
-            Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, (void*)typeCS.GetCString());
+            DataVisualization::Categories::LoopThrough(PerCategoryCallback, (void*)&typeCS);
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
         }
         
         lldb::FormatCategorySP category;
-        Debugger::Formatting::Categories::Get(ConstString(m_options.m_category.c_str()), category);
+        DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
         
-        bool delete_category = category->Synth()->Delete(typeCS.GetCString());
-        delete_category = category->RegexSynth()->Delete(typeCS.GetCString()) || delete_category;
+        bool delete_category = category->Synth()->Delete(typeCS);
+        delete_category = category->RegexSynth()->Delete(typeCS) || delete_category;
         
         if (delete_category)
         {
@@ -2726,7 +2724,7 @@ public:
     {
         
         if (m_options.m_delete_all)
-            Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, NULL);
+            DataVisualization::Categories::LoopThrough(PerCategoryCallback, NULL);
         
         else
         {        
@@ -2735,10 +2733,10 @@ public:
             {
                 const char* cat_name = command.GetArgumentAtIndex(0);
                 ConstString cat_nameCS(cat_name);
-                Debugger::Formatting::Categories::Get(cat_nameCS, category);
+                DataVisualization::Categories::Get(cat_nameCS, category);
             }
             else
-                Debugger::Formatting::Categories::Get(ConstString(NULL), category);
+                DataVisualization::Categories::Get(ConstString(NULL), category);
             category->Filter()->Clear();
             category->RegexFilter()->Clear();
         }
@@ -2853,7 +2851,7 @@ public:
     {
         
         if (m_options.m_delete_all)
-            Debugger::Formatting::Categories::LoopThrough(PerCategoryCallback, NULL);
+            DataVisualization::Categories::LoopThrough(PerCategoryCallback, NULL);
         
         else
         {        
@@ -2862,10 +2860,10 @@ public:
             {
                 const char* cat_name = command.GetArgumentAtIndex(0);
                 ConstString cat_nameCS(cat_name);
-                Debugger::Formatting::Categories::Get(cat_nameCS, category);
+                DataVisualization::Categories::Get(cat_nameCS, category);
             }
             else
-                Debugger::Formatting::Categories::Get(ConstString(NULL), category);
+                DataVisualization::Categories::Get(ConstString(NULL), category);
             category->Synth()->Clear();
             category->RegexSynth()->Clear();
         }
@@ -3016,7 +3014,7 @@ public:
         
         
         lldb::FormatCategorySP category;
-        Debugger::Formatting::Categories::Get(ConstString(options->m_category.c_str()), category);
+        DataVisualization::Categories::Get(ConstString(options->m_category.c_str()), category);
         
         Error error;
         
@@ -3133,7 +3131,7 @@ CommandObjectTypeSynthAdd::Execute_PythonClass (Args& command, CommandReturnObje
     // now I have a valid provider, let's add it to every type
     
     lldb::FormatCategorySP category;
-    Debugger::Formatting::Categories::Get(ConstString(m_options.m_category.c_str()), category);
+    DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
     
     Error error;
     
@@ -3191,7 +3189,7 @@ CommandObjectTypeSynthAdd::AddSynth(const ConstString& type_name,
          Error* error)
 {
     lldb::FormatCategorySP category;
-    Debugger::Formatting::Categories::Get(ConstString(category_name.c_str()), category);
+    DataVisualization::Categories::Get(ConstString(category_name.c_str()), category);
     
     if (category->AnyMatches(type_name,
                              FormatCategory::eFilter | FormatCategory::eRegexFilter,
@@ -3212,14 +3210,14 @@ CommandObjectTypeSynthAdd::AddSynth(const ConstString& type_name,
             return false;
         }
         
-        category->RegexSynth()->Delete(type_name.GetCString());
+        category->RegexSynth()->Delete(type_name);
         category->RegexSynth()->Add(typeRX, entry);
         
         return true;
     }
     else
     {
-        category->Synth()->Add(type_name.GetCString(), entry);
+        category->Synth()->Add(type_name, entry);
         return true;
     }
 }
@@ -3368,7 +3366,7 @@ private:
               Error* error)
     {
         lldb::FormatCategorySP category;
-        Debugger::Formatting::Categories::Get(ConstString(category_name.c_str()), category);
+        DataVisualization::Categories::Get(ConstString(category_name.c_str()), category);
         
         if (category->AnyMatches(type_name,
                                  FormatCategory::eSynth | FormatCategory::eRegexSynth,
@@ -3389,14 +3387,14 @@ private:
                 return false;
             }
             
-            category->RegexFilter()->Delete(type_name.GetCString());
+            category->RegexFilter()->Delete(type_name);
             category->RegexFilter()->Add(typeRX, entry);
             
             return true;
         }
         else
         {
-            category->Filter()->Add(type_name.GetCString(), entry);
+            category->Filter()->Add(type_name, entry);
             return true;
         }
     }
@@ -3464,7 +3462,7 @@ public:
         // now I have a valid provider, let's add it to every type
         
         lldb::FormatCategorySP category;
-        Debugger::Formatting::Categories::Get(ConstString(m_options.m_category.c_str()), category);
+        DataVisualization::Categories::Get(ConstString(m_options.m_category.c_str()), category);
         
         Error error;
         

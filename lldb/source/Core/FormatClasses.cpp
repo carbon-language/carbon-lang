@@ -69,15 +69,15 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
     
     if (m_show_members_oneliner)
     {
-        ValueObjectSP synth_vobj = object->GetSyntheticValue(lldb::eUseSyntheticFilter);
-        const uint32_t num_children = synth_vobj->GetNumChildren();
+        ValueObjectSP synth_valobj = object->GetSyntheticValue(lldb::eUseSyntheticFilter);
+        const uint32_t num_children = synth_valobj->GetNumChildren();
         if (num_children)
         {
             s.PutChar('(');
             
             for (uint32_t idx=0; idx<num_children; ++idx)
             {
-                lldb::ValueObjectSP child_sp(synth_vobj->GetChildAtIndex(idx, true));
+                lldb::ValueObjectSP child_sp(synth_valobj->GetChildAtIndex(idx, true));
                 if (child_sp.get())
                 {
                     if (idx)
