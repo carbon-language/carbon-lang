@@ -953,56 +953,58 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
         ObjCPropertyDecl::OBJC_PR_readonly) {
       Out << (first ? ' ' : ',') << "readonly";
       first = false;
-  }
+    }
 
-  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter) {
-    Out << (first ? ' ' : ',') << "getter = "
-        << PDecl->getGetterName().getAsString();
-    first = false;
-  }
-  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter) {
-    Out << (first ? ' ' : ',') << "setter = "
-        << PDecl->getSetterName().getAsString();
-    first = false;
-  }
+    if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter) {
+      Out << (first ? ' ' : ',') << "getter = "
+          << PDecl->getGetterName().getAsString();
+      first = false;
+    }
+    if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter) {
+      Out << (first ? ' ' : ',') << "setter = "
+          << PDecl->getSetterName().getAsString();
+      first = false;
+    }
 
-  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_assign) {
-    Out << (first ? ' ' : ',') << "assign";
-    first = false;
-  }
+    if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_assign) {
+      Out << (first ? ' ' : ',') << "assign";
+      first = false;
+    }
 
-  if (PDecl->getPropertyAttributes() &
-      ObjCPropertyDecl::OBJC_PR_readwrite) {
-    Out << (first ? ' ' : ',') << "readwrite";
-    first = false;
-  }
+    if (PDecl->getPropertyAttributes() &
+        ObjCPropertyDecl::OBJC_PR_readwrite) {
+      Out << (first ? ' ' : ',') << "readwrite";
+      first = false;
+    }
 
-  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_retain) {
-    Out << (first ? ' ' : ',') << "retain";
-    first = false;
-  }
+    if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_retain) {
+      Out << (first ? ' ' : ',') << "retain";
+      first = false;
+    }
 
-  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_strong) {
-    Out << (first ? ' ' : ',') << "strong";
-    first = false;
-  }
+    if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_strong) {
+      Out << (first ? ' ' : ',') << "strong";
+      first = false;
+    }
 
-  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_copy) {
-    Out << (first ? ' ' : ',') << "copy";
-    first = false;
-  }
+    if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_copy) {
+      Out << (first ? ' ' : ',') << "copy";
+      first = false;
+    }
 
-  if (PDecl->getPropertyAttributes() &
-      ObjCPropertyDecl::OBJC_PR_nonatomic) {
-    Out << (first ? ' ' : ',') << "nonatomic";
-    first = false;
-  }
-  if (PDecl->getPropertyAttributes() &
-      ObjCPropertyDecl::OBJC_PR_atomic) {
-    Out << (first ? ' ' : ',') << "atomic";
-    first = false;
-  }
-  Out << " )";
+    if (PDecl->getPropertyAttributes() &
+        ObjCPropertyDecl::OBJC_PR_nonatomic) {
+      Out << (first ? ' ' : ',') << "nonatomic";
+      first = false;
+    }
+    if (PDecl->getPropertyAttributes() &
+        ObjCPropertyDecl::OBJC_PR_atomic) {
+      Out << (first ? ' ' : ',') << "atomic";
+      first = false;
+    }
+    
+    (void) first; // Silence dead store warning due to idiomatic code.
+    Out << " )";
   }
   Out << ' ' << PDecl->getType().getAsString(Policy) << ' ' << PDecl;
 }
