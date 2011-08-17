@@ -30,4 +30,4 @@ _func:
         add r2, r8
 
 @ CHECK: adds	r1, r2, r3              @ encoding: [0xd1,0x18]
-  CHECK: add	r2, r8                  @ encoding: [0x42,0x44]
+@ CHECK: add	r2, r8                  @ encoding: [0x42,0x44]
