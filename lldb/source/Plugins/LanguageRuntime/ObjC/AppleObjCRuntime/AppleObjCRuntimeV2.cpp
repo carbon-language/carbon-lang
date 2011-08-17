@@ -656,10 +656,7 @@ AppleObjCRuntimeV2::GetActualTypeName(lldb_private::ObjCLanguageRuntime::ObjCISA
      struct class_t *superclass;
      Cache cache;
      IMP *vtable;
--->     uintptr_t data_NEVER_USE;
-     WARNING: this data_NEVER_USE pointer might one day contain flags in the least-significant bits
-     currently, rdar://problem/8955342 prevents the runtime from doing so
-     it presently is just a pointer to a class_rw_t
+-->     class_rw_t data;
      */
     
     lldb::addr_t rw_pointer = isa + (4 * pointer_size);

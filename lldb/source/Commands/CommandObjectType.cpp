@@ -1538,7 +1538,7 @@ private:
         CommandReturnObject* result = param->result;
         
         // if the category is disabled or empty and there is no regex, just skip it
-        if ((cate->IsEnabled() == false || cate->GetCount() == 0) && param->cate_regex == NULL)
+        if ((cate->IsEnabled() == false || cate->GetCount(FormatCategory::eSummary | FormatCategory::eRegexSummary) == 0) && param->cate_regex == NULL)
             return true;
         
         // if we have a regex and this category does not match it, just skip it
@@ -2032,7 +2032,7 @@ private:
         CommandReturnObject* result = param->result;
         
         // if the category is disabled or empty and there is no regex, just skip it
-        if ((cate->IsEnabled() == false || cate->Filter()->GetCount() == 0) && param->cate_regex == NULL)
+        if ((cate->IsEnabled() == false || cate->GetCount(FormatCategory::eFilter | FormatCategory::eRegexFilter) == 0) && param->cate_regex == NULL)
             return true;
         
         // if we have a regex and this category does not match it, just skip it
@@ -2240,7 +2240,7 @@ private:
         CommandReturnObject* result = param->result;
         
         // if the category is disabled or empty and there is no regex, just skip it
-        if ((cate->IsEnabled() == false || cate->Synth()->GetCount() == 0) && param->cate_regex == NULL)
+        if ((cate->IsEnabled() == false || cate->GetCount(FormatCategory::eSynth | FormatCategory::eRegexSynth) == 0) && param->cate_regex == NULL)
             return true;
         
         // if we have a regex and this category does not match it, just skip it

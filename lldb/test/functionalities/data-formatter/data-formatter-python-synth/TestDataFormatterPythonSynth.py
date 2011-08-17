@@ -222,9 +222,9 @@ class DataFormatterTestCase(TestBase):
         
         
         # std::vector
-        self.runCmd("script from StdVectorSynthProvider import *")
-        self.runCmd("type synth add -l StdVectorSynthProvider std::int_vect int_vect")
-        self.runCmd("type synth add -l StdVectorSynthProvider std::string_vect string_vect")
+        #self.runCmd("script from StdVectorSynthProvider import *")
+        #self.runCmd("type synth add -l StdVectorSynthProvider std::int_vect int_vect")
+        #self.runCmd("type synth add -l StdVectorSynthProvider std::string_vect string_vect")
 
         self.runCmd("n")
 
@@ -351,12 +351,12 @@ class DataFormatterTestCase(TestBase):
             substrs = ['vector has 0 items'])
 
         # now test std::list
-        self.runCmd("script from StdListSynthProvider import *")
+        #self.runCmd("script from StdListSynthProvider import *")
 
         self.runCmd("n")
 
         self.runCmd("frame variable numbers_list -T")
-        self.runCmd("type synth add std::int_list std::string_list int_list string_list -l StdListSynthProvider")
+        #self.runCmd("type synth add std::int_list std::string_list int_list string_list -l StdListSynthProvider")
         self.runCmd("type summary add std::int_list std::string_list int_list string_list -f \"list has ${svar%#} items\" -e")
         self.runCmd("type format add -f hex int")
 
@@ -467,13 +467,13 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("n")
         self.runCmd("frame variable ii -T")
         
-        self.runCmd("script from StdMapSynthProvider import *")
+        #self.runCmd("script from StdMapSynthProvider import *")
         self.runCmd("type summary add -x \"std::map<\" -f \"map has ${svar%#} items\" -e") 
         
         #import time
         #time.sleep(30)
         
-        self.runCmd("type synth add -x \"std::map<\" -l StdMapSynthProvider")
+        #self.runCmd("type synth add -x \"std::map<\" -l StdMapSynthProvider")
 
 
         self.expect('frame variable ii',

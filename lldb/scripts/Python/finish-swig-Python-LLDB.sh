@@ -165,5 +165,20 @@ else
     fi
 fi
 
+# Copy the OSX C++ STL formatters over to the framework Python directory
+if [ -f "${SRC_ROOT}/source/osxcpp.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying osxcpp.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/source/osxcpp.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/source/osxcpp.py"
+    fi
+fi
+
 exit 0
 

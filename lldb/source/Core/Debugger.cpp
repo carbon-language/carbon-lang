@@ -82,6 +82,7 @@ Debugger::Initialize ()
     if (g_shared_debugger_refcount == 0)
     {
         lldb_private::Initialize();
+        Debugger::FormatManagerInitialize();
     }
     g_shared_debugger_refcount++;
 
@@ -95,6 +96,7 @@ Debugger::Terminate ()
         g_shared_debugger_refcount--;
         if (g_shared_debugger_refcount == 0)
         {
+            Debugger::FormatManagerTerminate();
             lldb_private::WillTerminate();
             lldb_private::Terminate();
 
@@ -1780,6 +1782,72 @@ GetFormatManager() {
     static FormatManager g_format_manager;
     return g_format_manager;
 }
+
+// The platform should be responsible for initializing its own formatters
+// (e.g. to handle versioning, different runtime libraries, ...)
+// Currently, basic formatters for std:: objects as implemented by
+// the GNU libstdc++ are defined regardless, and enabled by default
+// This is going to be moved to some platform-dependent location
+// (in the meanwhile, these formatters should work for Mac OS X & Linux)
+void
+Debugger::FormatManagerInitialize()
+{
+    static bool g_initialized = false;
+    
+    if (!g_initialized)
+    {
+        g_initialized = true;
+        ConstString gnulib("gnu-libstdc++");
+        FormatManager& format_mgr = GetFormatManager();
+        lldb::FormatCategorySP osxcpp = format_mgr.Category(gnulib.AsCString());
+        osxcpp->Summary()->Add(ConstString("std::string").AsCString(),
+                               SummaryFormatSP(new StringSummaryFormat(true,
+                                                                       false,
+                                                                       false,
+                                                                       true,
+                                                                       true,
+                                                                       false,
+                                                                       "${var._M_dataplus._M_p}")));
+        osxcpp->Summary()->Add(ConstString("std::basic_string<char>").AsCString(),
+                               SummaryFormatSP(new StringSummaryFormat(true,
+                                                                       false,
+                                                                       false,
+                                                                       true,
+                                                                       true,
+                                                                       false,
+                                                                       "${var._M_dataplus._M_p}")));
+        osxcpp->Summary()->Add(ConstString("std::basic_string<char,std::char_traits<char>,std::allocator<char> >").AsCString(),
+                               SummaryFormatSP(new StringSummaryFormat(true,
+                                                                       false,
+                                                                       false,
+                                                                       true,
+                                                                       true,
+                                                                       false,
+                                                                       "${var._M_dataplus._M_p}")));
+        osxcpp->RegexSynth()->Add(RegularExpressionSP(new RegularExpression("std::vector<")),
+                                    SyntheticChildrenSP(new SyntheticScriptProvider(true,
+                                                                                    false,
+                                                                                    false,
+                                                                                    "StdVectorSynthProvider")));
+        osxcpp->RegexSynth()->Add(RegularExpressionSP(new RegularExpression("std::map<")),
+                                    SyntheticChildrenSP(new SyntheticScriptProvider(true,
+                                                                                    false,
+                                                                                    false,
+                                                                                    "StdMapSynthProvider")));
+        osxcpp->RegexSynth()->Add(RegularExpressionSP(new RegularExpression("std::list<")),
+                                    SyntheticChildrenSP(new SyntheticScriptProvider(true,
+                                                                                    false,
+                                                                                    false,
+                                                                                    "StdListSynthProvider")));
+        
+        format_mgr.EnableCategory(gnulib.AsCString());
+        
+    }
+}
+
+void
+Debugger::FormatManagerTerminate()
+{}
 
 void
 Debugger::Formatting::ForceUpdate()

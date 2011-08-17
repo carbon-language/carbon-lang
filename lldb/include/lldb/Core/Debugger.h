@@ -271,6 +271,12 @@ public:
     SettingsTerminate ();
     
     static void
+    FormatManagerInitialize();
+    
+    static void
+    FormatManagerTerminate();
+    
+    static void
     Destroy (lldb::DebuggerSP &debugger_sp);
 
     ~Debugger ();

@@ -173,6 +173,11 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
                        interpreter.GetDebugger().GetID());
     PyRun_SimpleString (run_string.GetData());
     
+    run_string.Clear();
+    run_string.Printf ("run_one_line (%s, 'from osxcpp import *')", m_dictionary_name.c_str(),
+                       interpreter.GetDebugger().GetID());
+    PyRun_SimpleString (run_string.GetData());
+    
     if (m_dbg_stdout != NULL)
     {
         m_new_sysout = PyFile_FromFile (m_dbg_stdout, (char *) "", (char *) "w", _check_and_flush);
