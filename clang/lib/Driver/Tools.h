@@ -178,6 +178,7 @@ namespace darwin {
     const char *getCC1Name(types::ID Type) const;
 
     void AddCC1Args(const ArgList &Args, ArgStringList &CmdArgs) const;
+    void RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const;
     void AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
                            const InputInfoList &Inputs,
                            const ArgStringList &OutputArgs) const;

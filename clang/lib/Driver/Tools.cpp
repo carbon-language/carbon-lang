@@ -2446,6 +2446,18 @@ darwin::CC1::getDependencyFileName(const ArgList &Args,
   return Args.MakeArgString(Res + ".d");
 }
 
+void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
+  for (ArgStringList::iterator it = CmdArgs.begin(), ie = CmdArgs.end(); 
+       it != ie;) {
+    if (!strcmp(*it, "-Wno-self-assign")) {
+      it = CmdArgs.erase(it);
+      it = CmdArgs.end();
+    }
+    else
+      ++it;
+  }
+}
+
 void darwin::CC1::AddCC1Args(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
@@ -2852,6 +2864,8 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--output-pch=");
     CmdArgs.push_back(Output.getFilename());
   }
+
+  RemoveCC1UnsupportedArgs(CmdArgs);
 
   const char *CC1Name = getCC1Name(Inputs[0].getType());
   const char *Exec =
