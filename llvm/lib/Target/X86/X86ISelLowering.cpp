@@ -6151,6 +6151,48 @@ static inline unsigned getVPERMILOpcode(EVT VT) {
   return 0;
 }
 
+/// isVectorBroadcast - Check if the node chain is suitable to be xformed to
+/// a vbroadcast node. The nodes are suitable whenever we can fold a load coming
+/// from a 32 or 64 bit scalar. Update Op to the desired load to be folded.
+static bool isVectorBroadcast(SDValue &Op) {
+  EVT VT = Op.getValueType();
+  bool Is256 = VT.getSizeInBits() == 256;
+
+  assert((VT.getSizeInBits() == 128 || Is256) &&
+         "Unsupported type for vbroadcast node");
+
+  SDValue V = Op;
+  if (V.hasOneUse() && V.getOpcode() == ISD::BITCAST)
+    V = V.getOperand(0);
+
+  if (Is256 && !(V.hasOneUse() &&
+                 V.getOpcode() == ISD::INSERT_SUBVECTOR &&
+                 V.getOperand(0).getOpcode() == ISD::UNDEF))
+    return false;
+
+  if (Is256)
+    V = V.getOperand(1);
+  if (V.hasOneUse() && V.getOpcode() != ISD::SCALAR_TO_VECTOR)
+    return false;
+
+  // Check the source scalar_to_vector type. 256-bit broadcasts are
+  // supported for 32/64-bit sizes, while 128-bit ones are only supported
+  // for 32-bit scalars.
+  unsigned ScalarSize = V.getOperand(0).getValueType().getSizeInBits();
+  if (ScalarSize != 32 && ScalarSize != 64)
+    return false;
+  if (!Is256 && ScalarSize == 64)
+    return false;
+
+  V = V.getOperand(0);
+  if (!MayFoldLoad(V))
+    return false;
+
+  // Return the load node
+  Op = V;
+  return true;
+}
+
 static
 SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
                                const TargetLowering &TLI,
@@ -6173,6 +6215,10 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
     // this be moved to DAGCombine instead?
     if (NumElem <= 4 && CanXFormVExtractWithShuffleIntoLoad(Op, DAG, TLI))
       return Op;
+
+    // Use vbroadcast whenever the splat comes from a foldable load
+    if (Subtarget->hasAVX() && isVectorBroadcast(V1))
+      return DAG.getNode(X86ISD::VBROADCAST, dl, VT, V1);
 
     // Handle splats by matching through known shuffle masks
     if (VT.is128BitVector() && NumElem <= 4)
@@ -10189,6 +10235,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PUNPCKHWD:          return "X86ISD::PUNPCKHWD";
   case X86ISD::PUNPCKHDQ:          return "X86ISD::PUNPCKHDQ";
   case X86ISD::PUNPCKHQDQ:         return "X86ISD::PUNPCKHQDQ";
+  case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
   case X86ISD::VPERMILPS:          return "X86ISD::VPERMILPS";
   case X86ISD::VPERMILPSY:         return "X86ISD::VPERMILPSY";
   case X86ISD::VPERMILPD:          return "X86ISD::VPERMILPD";
