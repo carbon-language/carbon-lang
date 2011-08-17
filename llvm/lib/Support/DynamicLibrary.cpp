@@ -50,6 +50,8 @@ void llvm::sys::DynamicLibrary::AddSymbol(StringRef symbolName,
   (*ExplicitSymbols)[symbolName] = symbolValue;
 }
 
+char llvm::sys::DynamicLibrary::Invalid = 0;
+
 #ifdef LLVM_ON_WIN32
 
 #include "Windows/DynamicLibrary.inc"
