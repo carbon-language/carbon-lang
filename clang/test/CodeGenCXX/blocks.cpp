@@ -104,3 +104,29 @@ namespace test3 {
     consume(^{ (void) b; });
   }
 }
+
+// rdar://problem/9971485
+namespace test4 {
+  struct A {
+    A();
+    ~A();
+  };
+
+  void foo(A a);
+
+  void test() {
+    extern void consume(void(^)());
+    consume(^{ return foo(A()); });
+  }
+  // CHECK: define void @_ZN5test44testEv()
+  // CHECK: define internal void @__test_block_invoke
+  // CHECK:      [[TMP:%.*]] = alloca [[A:%.*]], align 1
+  // CHECK-NEXT: alloca i32
+  // CHECK-NEXT: bitcast i8*
+  // CHECK-NEXT: call void @_ZN5test41AC1Ev([[A]]* [[TMP]])
+  // CHECK-NEXT: call void @_ZN5test43fooENS_1AE([[A]]* [[TMP]])
+  // CHECK-NEXT: store i32 1,
+  // CHECK-NEXT: call void @_ZN5test41AD1Ev([[A]]* [[TMP]])
+  // CHECK-NEXT: ret void
+}
+
