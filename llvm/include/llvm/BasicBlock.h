@@ -147,8 +147,7 @@ public:
 
   /// getFirstInsertionPt - Returns an iterator to the first instruction in this
   /// block that is suitable for inserting a non-PHI instruction. In particular,
-  /// it skips all PHIs and LandingPad instructions. Returns 0 if there are no
-  /// non-PHI instructions.
+  /// it skips all PHIs and LandingPad instructions.
   iterator getFirstInsertionPt();
   const_iterator getFirstInsertionPt() const {
     return const_cast<BasicBlock*>(this)->getFirstInsertionPt();
