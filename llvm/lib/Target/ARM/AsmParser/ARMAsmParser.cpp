@@ -2693,7 +2693,7 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
   // Next, determine if we have a carry setting bit. We explicitly ignore all
   // the instructions we know end in 's'.
   if (Mnemonic.endswith("s") &&
-      !(Mnemonic == "asrs" || Mnemonic == "cps" || Mnemonic == "mls" ||
+      !(Mnemonic == "cps" || Mnemonic == "mls" ||
         Mnemonic == "mrs" || Mnemonic == "smmls" || Mnemonic == "vabs" ||
         Mnemonic == "vcls" || Mnemonic == "vmls" || Mnemonic == "vmrs" ||
         Mnemonic == "vnmls" || Mnemonic == "vqabs" || Mnemonic == "vrecps" ||

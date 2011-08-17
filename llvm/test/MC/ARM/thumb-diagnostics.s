@@ -18,3 +18,14 @@
 @ CHECK-ERRORS: error: instruction variant requires ARMv6 or later
 @ CHECK-ERRORS:         mov r2, r3
 @ CHECK-ERRORS:         ^
+
+
+@ Out of range immediates for ASR instruction.
+        asrs r2, r3, #33
+        asrs r2, r3, #0
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         asrs r2, r3, #33
+@ CHECK-ERRORS:                      ^
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS:         asrs r2, r3, #0
+@ CHECK-ERRORS:                      ^
