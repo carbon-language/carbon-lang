@@ -100,8 +100,8 @@ void AttrNonNullChecker::checkPreStmt(const CallExpr *CE,
           BT.reset(new BugType("Argument with 'nonnull' attribute passed null",
                                "API"));
 
-        EnhancedBugReport *R =
-          new EnhancedBugReport(*BT,
+        BugReport *R =
+          new BugReport(*BT,
                                 "Null pointer passed as an argument to a "
                                 "'nonnull' parameter", errorNode);
 

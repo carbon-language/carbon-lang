@@ -84,9 +84,8 @@ private:
       BT.reset(new BugType("Improper use of SecKeychain API", "Mac OS API"));
   }
 
-  RangedBugReport *generateAllocatedDataNotReleasedReport(
-                                                      const AllocationState &AS,
-                                                      ExplodedNode *N) const;
+  BugReport *generateAllocatedDataNotReleasedReport(const AllocationState &AS,
+                                                    ExplodedNode *N) const;
 
   /// Check if RetSym evaluates to an error value in the current state.
   bool definitelyReturnedError(SymbolRef RetSym,
@@ -245,7 +244,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
               << "the allocator: missing a call to '"
               << FunctionsToTrack[DIdx].Name
               << "'.";
-          RangedBugReport *Report = new RangedBugReport(*BT, os.str(), N);
+          BugReport *Report = new BugReport(*BT, os.str(), N);
           Report->addRange(ArgExpr->getSourceRange());
           C.EmitReport(Report);
         }
@@ -291,7 +290,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     if (!N)
       return;
     initBugType();
-    RangedBugReport *Report = new RangedBugReport(*BT,
+    BugReport *Report = new BugReport(*BT,
         "Trying to free data which has not been allocated.", N);
     Report->addRange(ArgExpr->getSourceRange());
     C.EmitReport(Report);
@@ -316,7 +315,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     llvm::raw_svector_ostream os(sbuf);
     os << "Allocator doesn't match the deallocator: '"
        << FunctionsToTrack[PDeallocIdx].Name << "' should be used.";
-    RangedBugReport *Report = new RangedBugReport(*BT, os.str(), N);
+    BugReport *Report = new BugReport(*BT, os.str(), N);
     Report->addRange(ArgExpr->getSourceRange());
     C.EmitReport(Report);
     return;
@@ -328,7 +327,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     if (!N)
       return;
     initBugType();
-    RangedBugReport *Report = new RangedBugReport(*BT,
+    BugReport *Report = new BugReport(*BT,
         "Call to free data when error was returned during allocation.", N);
     Report->addRange(ArgExpr->getSourceRange());
     C.EmitReport(Report);
@@ -406,7 +405,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
 
 // TODO: The report has to mention the expression which contains the
 // allocated content as well as the point at which it has been allocated.
-RangedBugReport *MacOSKeychainAPIChecker::
+BugReport *MacOSKeychainAPIChecker::
   generateAllocatedDataNotReleasedReport(const AllocationState &AS,
                                          ExplodedNode *N) const {
   const ADFunctionInfo &FI = FunctionsToTrack[AS.AllocatorIdx];
@@ -415,7 +414,7 @@ RangedBugReport *MacOSKeychainAPIChecker::
   llvm::raw_svector_ostream os(sbuf);
   os << "Allocated data is not released: missing a call to '"
       << FunctionsToTrack[FI.DeallocatorIdx].Name << "'.";
-  RangedBugReport *Report = new RangedBugReport(*BT, os.str(), N);
+  BugReport *Report = new BugReport(*BT, os.str(), N);
   Report->addRange(AS.Address->getSourceRange());
   return Report;
 }

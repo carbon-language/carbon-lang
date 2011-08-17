@@ -99,7 +99,7 @@ void StackAddrEscapeChecker::EmitStackError(CheckerContext &C, const MemRegion *
   llvm::raw_svector_ostream os(buf);
   SourceRange range = GenName(os, R, C.getSourceManager());
   os << " returned to caller";
-  RangedBugReport *report = new RangedBugReport(*BT_returnstack, os.str(), N);
+  BugReport *report = new BugReport(*BT_returnstack, os.str(), N);
   report->addRange(RetE->getSourceRange());
   if (range.isValid())
     report->addRange(range);
@@ -204,7 +204,7 @@ void StackAddrEscapeChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
     const VarRegion *VR = cast<VarRegion>(cb.V[i].first->getBaseRegion());
     os << VR->getDecl()->getNameAsString() 
        << "' upon returning to the caller.  This will be a dangling reference";
-    RangedBugReport *report = new RangedBugReport(*BT_stackleak, os.str(), N);
+    BugReport *report = new BugReport(*BT_stackleak, os.str(), N);
     if (range.isValid())
       report->addRange(range);
 

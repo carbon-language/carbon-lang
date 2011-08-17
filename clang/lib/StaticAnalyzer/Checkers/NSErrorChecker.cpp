@@ -277,7 +277,7 @@ void NSOrCFErrorDerefChecker::checkEvent(ImplicitNullDerefEvent event) const {
     bug = new NSErrorDerefBug();
   else
     bug = new CFErrorDerefBug();
-  EnhancedBugReport *report = new EnhancedBugReport(*bug, os.str(),
+  BugReport *report = new BugReport(*bug, os.str(),
                                                     event.SinkNode);
   BR.EmitReport(report);
 }

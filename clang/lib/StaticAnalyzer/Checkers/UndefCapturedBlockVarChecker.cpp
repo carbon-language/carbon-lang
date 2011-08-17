@@ -87,7 +87,7 @@ UndefCapturedBlockVarChecker::checkPostStmt(const BlockExpr *BE,
         os << "Variable '" << VD->getName() 
            << "' is uninitialized when captured by block";
 
-        EnhancedBugReport *R = new EnhancedBugReport(*BT, os.str(), N);
+        BugReport *R = new BugReport(*BT, os.str(), N);
         if (const Expr *Ex = FindBlockDeclRefExpr(BE->getBody(), VD))
           R->addRange(Ex->getSourceRange());
         R->addVisitorCreator(bugreporter::registerFindLastStore, VR);

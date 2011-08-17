@@ -60,8 +60,8 @@ void DivZeroChecker::checkPreStmt(const BinaryOperator *B,
       if (!BT)
         BT.reset(new BuiltinBug("Division by zero"));
 
-      EnhancedBugReport *R = 
-        new EnhancedBugReport(*BT, BT->getDescription(), N);
+      BugReport *R = 
+        new BugReport(*BT, BT->getDescription(), N);
 
       R->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                            bugreporter::GetDenomExpr(N));

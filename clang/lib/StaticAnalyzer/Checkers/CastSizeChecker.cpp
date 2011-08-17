@@ -72,7 +72,7 @@ void CastSizeChecker::checkPreStmt(const CastExpr *CE,CheckerContext &C) const {
         BT.reset(new BuiltinBug("Cast region with wrong size.",
                             "Cast a region whose size is not a multiple of the"
                             " destination type size."));
-      RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription(),
+      BugReport *R = new BugReport(*BT, BT->getDescription(),
                                                errorNode);
       R->addRange(CE->getSourceRange());
       C.EmitReport(R);

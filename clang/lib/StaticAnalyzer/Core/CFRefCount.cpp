@@ -1959,28 +1959,28 @@ namespace {
   // Bug Reports.  //
   //===---------===//
 
-  class CFRefReport : public RangedBugReport {
+  class CFRefReport : public BugReport {
   protected:
     SymbolRef Sym;
     const CFRefCount &TF;
   public:
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
                 ExplodedNode *n, SymbolRef sym)
-      : RangedBugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {}
+      : BugReport(D, D.getDescription(), n), Sym(sym), TF(tf) {}
 
     CFRefReport(CFRefBug& D, const CFRefCount &tf,
                 ExplodedNode *n, SymbolRef sym, StringRef endText)
-      : RangedBugReport(D, D.getDescription(), endText, n), Sym(sym), TF(tf) {}
+      : BugReport(D, D.getDescription(), endText, n), Sym(sym), TF(tf) {}
 
     virtual ~CFRefReport() {}
 
     CFRefBug& getBugType() const {
-      return (CFRefBug&) RangedBugReport::getBugType();
+      return (CFRefBug&) BugReport::getBugType();
     }
 
-    virtual std::pair<ranges_iterator, ranges_iterator> getRanges() const {
+    virtual std::pair<ranges_iterator, ranges_iterator> getRanges() {
       if (!getBugType().isLeak())
-        return RangedBugReport::getRanges();
+        return BugReport::getRanges();
       else
         return std::make_pair(ranges_iterator(), ranges_iterator());
     }
@@ -2368,7 +2368,7 @@ CFRefReport::getEndPath(BugReporterContext &BRC,
   // Tell the BugReporterContext to report cases when the tracked symbol is
   // assigned to different variables, etc.
   BRC.addNotableSymbol(Sym);
-  return RangedBugReport::getEndPath(BRC, EndN);
+  return BugReport::getEndPath(BRC, EndN);
 }
 
 PathDiagnosticPiece*

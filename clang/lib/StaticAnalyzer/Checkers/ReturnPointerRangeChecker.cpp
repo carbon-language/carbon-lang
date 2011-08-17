@@ -78,8 +78,8 @@ void ReturnPointerRangeChecker::checkPreStmt(const ReturnStmt *RS,
     // reference is outside the range.
 
     // Generate a report for this bug.
-    RangedBugReport *report = 
-      new RangedBugReport(*BT, BT->getDescription(), N);
+    BugReport *report = 
+      new BugReport(*BT, BT->getDescription(), N);
 
     report->addRange(RetE->getSourceRange());
     C.EmitReport(report);

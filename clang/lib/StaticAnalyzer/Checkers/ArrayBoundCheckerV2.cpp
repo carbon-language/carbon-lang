@@ -187,7 +187,7 @@ void ArrayBoundCheckerV2::reportOOB(CheckerContext &checkerContext,
      << (kind == OOB_Precedes ? "(accessed memory precedes memory block)"
                               : "(access exceeds upper limit of memory block)");
 
-  checkerContext.EmitReport(new RangedBugReport(*BT, os.str(), errorNode));
+  checkerContext.EmitReport(new BugReport(*BT, os.str(), errorNode));
 }
 
 void RegionRawOffsetV2::dump() const {

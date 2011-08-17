@@ -56,7 +56,7 @@ void PointerArithChecker::checkPreStmt(const BinaryOperator *B,
                             "Pointer arithmetic done on non-array variables "
                             "means reliance on memory layout, which is "
                             "dangerous."));
-      RangedBugReport *R = new RangedBugReport(*BT, BT->getDescription(), N);
+      BugReport *R = new BugReport(*BT, BT->getDescription(), N);
       R->addRange(B->getSourceRange());
       C.EmitReport(R);
     }

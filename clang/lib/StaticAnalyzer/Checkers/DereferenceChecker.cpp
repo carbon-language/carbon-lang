@@ -73,8 +73,8 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad,
       if (!BT_undef)
         BT_undef.reset(new BuiltinBug("Dereference of undefined pointer value"));
 
-      EnhancedBugReport *report =
-        new EnhancedBugReport(*BT_undef, BT_undef->getDescription(), N);
+      BugReport *report =
+        new BugReport(*BT_undef, BT_undef->getDescription(), N);
       report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue,
                                 bugreporter::GetDerefExpr(N));
       C.EmitReport(report);
@@ -157,8 +157,8 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad,
           break;
       }
 
-      EnhancedBugReport *report =
-        new EnhancedBugReport(*BT_null,
+      BugReport *report =
+        new BugReport(*BT_null,
                               buf.empty() ? BT_null->getDescription():buf.str(),
                               N);
 

@@ -422,7 +422,7 @@ void IteratorsChecker::checkExpr(CheckerContext &C, const Expr *E) const {
                     "container to its container";
       }
 
-      EnhancedBugReport *R = new EnhancedBugReport(*BT_Invalid, msg, N);
+      BugReport *R = new BugReport(*BT_Invalid, msg, N);
       R->addRange(getDeclRefExpr(E)->getSourceRange());
       C.EmitReport(R);
     }
@@ -434,7 +434,7 @@ void IteratorsChecker::checkExpr(CheckerContext &C, const Expr *E) const {
         const_cast<IteratorsChecker*>(this)->BT_Undefined =
           new BuiltinBug("Use of iterator that is not defined");
 
-      EnhancedBugReport *R = new EnhancedBugReport(*BT_Undefined,
+      BugReport *R = new BugReport(*BT_Undefined,
                                            BT_Undefined->getDescription(), N);
       R->addRange(getDeclRefExpr(E)->getSourceRange());
       C.EmitReport(R);
@@ -503,8 +503,8 @@ void IteratorsChecker::checkPreStmt(const CXXOperatorCallExpr *OCE,
               new BuiltinBug(
                       "Cannot compare iterators from different containers");
 
-          EnhancedBugReport *R = new EnhancedBugReport(*BT_Incompatible,
-                                         BT_Incompatible->getDescription(), N);
+          BugReport *R = new BugReport(*BT_Incompatible,
+                                        BT_Incompatible->getDescription(), N);
           R->addRange(OCE->getSourceRange());
           C.EmitReport(R);
         }

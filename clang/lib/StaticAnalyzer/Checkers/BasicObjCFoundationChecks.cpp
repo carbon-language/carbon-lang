@@ -92,7 +92,7 @@ void NilArgChecker::WarnNilArg(CheckerContext &C,
     os << "Argument to '" << GetReceiverNameType(msg) << "' method '"
        << msg.getSelector().getAsString() << "' cannot be nil";
 
-    RangedBugReport *R = new RangedBugReport(*BT, os.str(), N);
+    BugReport *R = new BugReport(*BT, os.str(), N);
     R->addRange(msg.getArgSourceRange(Arg));
     C.EmitReport(R);
   }
@@ -335,7 +335,7 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
     if (!BT)
       BT.reset(new APIMisuse("Bad use of CFNumberCreate"));
     
-    RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
+    BugReport *report = new BugReport(*BT, os.str(), N);
     report->addRange(CE->getArg(2)->getSourceRange());
     C.EmitReport(report);
   }
@@ -412,7 +412,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
                             ? "Null pointer argument in call to CFRetain"
                             : "Null pointer argument in call to CFRelease";
 
-    EnhancedBugReport *report = new EnhancedBugReport(*BT, description, N);
+    BugReport *report = new BugReport(*BT, description, N);
     report->addRange(Arg->getSourceRange());
     report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, Arg);
     C.EmitReport(report);
@@ -471,7 +471,7 @@ void ClassReleaseChecker::checkPreObjCMessage(ObjCMessage msg,
           "of class '" << Class->getName()
        << "' and not the class directly";
   
-    RangedBugReport *report = new RangedBugReport(*BT, os.str(), N);
+    BugReport *report = new BugReport(*BT, os.str(), N);
     report->addRange(msg.getSourceRange());
     C.EmitReport(report);
   }
@@ -629,7 +629,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
       << "' should be an Objective-C pointer type, not '" 
       << ArgTy.getAsString() << "'";
 
-    RangedBugReport *R = new RangedBugReport(*BT, os.str(),
+    BugReport *R = new BugReport(*BT, os.str(),
                                              errorNode.getValue());
     R->addRange(msg.getArgSourceRange(I));
     C.EmitReport(R);

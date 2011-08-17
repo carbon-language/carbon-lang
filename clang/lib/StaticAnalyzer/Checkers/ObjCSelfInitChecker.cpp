@@ -179,8 +179,8 @@ static void checkForInvalidSelf(const Expr *E, CheckerContext &C,
   if (!N)
     return;
 
-  EnhancedBugReport *report =
-    new EnhancedBugReport(*new InitSelfBug(), errorStr, N);
+  BugReport *report =
+    new BugReport(*new InitSelfBug(), errorStr, N);
   C.EmitReport(report);
 }
 

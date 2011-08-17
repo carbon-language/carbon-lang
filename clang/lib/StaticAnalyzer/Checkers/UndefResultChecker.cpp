@@ -71,7 +71,7 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
          << BinaryOperator::getOpcodeStr(B->getOpcode())
          << "' expression is undefined";
     }
-    EnhancedBugReport *report = new EnhancedBugReport(*BT, OS.str(), N);
+    BugReport *report = new BugReport(*BT, OS.str(), N);
     if (Ex) {
       report->addRange(Ex->getSourceRange());
       report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, Ex);

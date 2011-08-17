@@ -228,7 +228,7 @@ const ProgramState *CStringChecker::checkNonNull(CheckerContext &C,
 
     // Generate a report for this bug.
     BuiltinBug *BT = static_cast<BuiltinBug*>(BT_Null.get());
-    EnhancedBugReport *report = new EnhancedBugReport(*BT, os.str(), N);
+    BugReport *report = new BugReport(*BT, os.str(), N);
 
     report->addRange(S->getSourceRange());
     report->addVisitorCreator(bugreporter::registerTrackNullOrUndefValue, S);
@@ -286,9 +286,9 @@ const ProgramState *CStringChecker::CheckLocation(CheckerContext &C,
     BuiltinBug *BT = static_cast<BuiltinBug*>(BT_Bounds.get());
 
     // Generate a report for this bug.
-    RangedBugReport *report;
+    BugReport *report;
     if (warningMsg) {
-      report = new RangedBugReport(*BT, warningMsg, N);
+      report = new BugReport(*BT, warningMsg, N);
     } else {
       assert(CurrentFunctionDescription);
       assert(CurrentFunctionDescription[0] != '\0');
@@ -298,7 +298,7 @@ const ProgramState *CStringChecker::CheckLocation(CheckerContext &C,
       os << (char)toupper(CurrentFunctionDescription[0])
          << &CurrentFunctionDescription[1]
          << " accesses out-of-bound array element";
-      report = new RangedBugReport(*BT, os.str(), N);      
+      report = new BugReport(*BT, os.str(), N);      
     }
 
     // FIXME: It would be nice to eventually make this diagnostic more clear,
@@ -508,8 +508,8 @@ void CStringChecker::emitOverlapBug(CheckerContext &C, const ProgramState *state
     BT_Overlap.reset(new BugType("Unix API", "Improper arguments"));
 
   // Generate a report for this bug.
-  RangedBugReport *report = 
-    new RangedBugReport(*BT_Overlap,
+  BugReport *report = 
+    new BugReport(*BT_Overlap,
       "Arguments must not be overlapping buffers", N);
   report->addRange(First->getSourceRange());
   report->addRange(Second->getSourceRange());
@@ -672,7 +672,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, const ProgramState *&st
            << "', which is not a null-terminated string";
 
         // Generate a report for this bug.
-        EnhancedBugReport *report = new EnhancedBugReport(*BT_NotCString,
+        BugReport *report = new BugReport(*BT_NotCString,
                                                           os.str(), N);
 
         report->addRange(Ex->getSourceRange());
@@ -733,7 +733,7 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, const ProgramState *&st
         os << "not a null-terminated string";
 
       // Generate a report for this bug.
-      EnhancedBugReport *report = new EnhancedBugReport(*BT_NotCString,
+      BugReport *report = new BugReport(*BT_NotCString,
                                                         os.str(), N);
 
       report->addRange(Ex->getSourceRange());

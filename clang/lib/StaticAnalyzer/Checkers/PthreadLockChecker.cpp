@@ -117,7 +117,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
     ExplodedNode *N = C.generateSink();
     if (!N)
       return;
-    EnhancedBugReport *report = new EnhancedBugReport(*BT_doublelock,
+    BugReport *report = new BugReport(*BT_doublelock,
                                                       "This lock has already "
                                                       "been acquired", N);
     report->addRange(CE->getArg(0)->getSourceRange());
@@ -181,7 +181,7 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
     ExplodedNode *N = C.generateSink();
     if (!N)
       return;
-    EnhancedBugReport *report = new EnhancedBugReport(*BT_lor,
+    BugReport *report = new BugReport(*BT_lor,
                                                       "This was not the most "
                                                       "recently acquired lock. "
                                                       "Possible lock order "
