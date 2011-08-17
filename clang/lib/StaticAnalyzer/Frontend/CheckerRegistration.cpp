@@ -56,7 +56,8 @@ ClangCheckerRegistry::ClangCheckerRegistry(ArrayRef<std::string> plugins) {
 
     // Register its checkers.
     RegisterCheckersFn registerPluginCheckers =
-      (RegisterCheckersFn) lib.getAddressOfSymbol("clang_registerCheckers");
+      (RegisterCheckersFn) (intptr_t) lib.getAddressOfSymbol(
+                                                      "clang_registerCheckers");
     if (registerPluginCheckers)
       registerPluginCheckers(*this);
   }
