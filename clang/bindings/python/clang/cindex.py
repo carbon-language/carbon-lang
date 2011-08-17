@@ -112,7 +112,7 @@ class SourceLocation(Structure):
             f, l, c, o = c_object_p(), c_uint(), c_uint(), c_uint()
             SourceLocation_loc(self, byref(f), byref(l), byref(c), byref(o))
             f = File(f) if f else None
-            self._data = (f, int(l.value), int(c.value), int(c.value))
+            self._data = (f, int(l.value), int(c.value), int(o.value))
         return self._data
 
     @property
