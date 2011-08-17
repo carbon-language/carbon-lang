@@ -1,4 +1,5 @@
-// RUN: %llvmgcc -g -S %s -dA -fverbose-asm -o - | %llc -asm-verbose | FileCheck %s
+// RUN: %llvmgcc -g -S %s -dA -fverbose-asm -o %t
+// RUN: llc -asm-verbose < %t | FileCheck %s
 // Test to artificial attribute attahed to "this" pointer type.
 // Radar 7655792 and 7655002
 
