@@ -76,3 +76,15 @@ _func:
         asrs r5, r2
 
 @ CHECK: asrs	r5, r2                  @ encoding: [0x15,0x41]
+
+
+@------------------------------------------------------------------------------
+@ B
+@------------------------------------------------------------------------------
+        b _baz
+        beq _bar
+
+@ CHECK: b	_baz                    @ encoding: [A,0xe0'A']
+             @   fixup A - offset: 0, value: _baz, kind: fixup_arm_thumb_br
+@ CHECK: beq	_bar                    @ encoding: [A,0xd0]
+             @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_bcc
