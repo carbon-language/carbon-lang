@@ -238,19 +238,24 @@ protected:
   // Width of instructions
   unsigned BitWidth;
 
+  // Parent emitter
+  const FixedLenDecoderEmitter *Emitter;
+
 public:
   FilterChooser(const FilterChooser &FC) :
     AllInstructions(FC.AllInstructions), Opcodes(FC.Opcodes),
       Operands(FC.Operands), Filters(FC.Filters),
       FilterBitValues(FC.FilterBitValues), Parent(FC.Parent),
-      BestIndex(FC.BestIndex), BitWidth(FC.BitWidth) { }
+    BestIndex(FC.BestIndex), BitWidth(FC.BitWidth),
+    Emitter(FC.Emitter) { }
 
   FilterChooser(const std::vector<const CodeGenInstruction*> &Insts,
                 const std::vector<unsigned> &IDs,
     std::map<unsigned, std::vector<OperandInfo> > &Ops,
-                unsigned BW) :
+                unsigned BW,
+                const FixedLenDecoderEmitter *E) :
       AllInstructions(Insts), Opcodes(IDs), Operands(Ops), Filters(),
-      Parent(NULL), BestIndex(-1), BitWidth(BW) {
+      Parent(NULL), BestIndex(-1), BitWidth(BW), Emitter(E) {
     for (unsigned i = 0; i < BitWidth; ++i)
       FilterBitValues.push_back(BIT_UNFILTERED);
 
@@ -264,7 +269,8 @@ public:
                 FilterChooser &parent) :
       AllInstructions(Insts), Opcodes(IDs), Operands(Ops),
       Filters(), FilterBitValues(ParentFilterBitValues),
-      Parent(&parent), BestIndex(-1), BitWidth(parent.BitWidth) {
+      Parent(&parent), BestIndex(-1), BitWidth(parent.BitWidth),
+      Emitter(parent.Emitter) {
     doFilter();
   }
 
@@ -563,17 +569,17 @@ unsigned Filter::usefulness() const {
 void FilterChooser::emitTop(raw_ostream &o, unsigned Indentation,
                             std::string Namespace) {
   o.indent(Indentation) <<
-    "static bool decode" << Namespace << "Instruction" << BitWidth
+    "static MCDisassembler::DecodeStatus decode" << Namespace << "Instruction" << BitWidth
     << "(MCInst &MI, uint" << BitWidth << "_t insn, uint64_t Address, "
     << "const void *Decoder) {\n";
-  o.indent(Indentation) << "  unsigned tmp = 0;\n  (void)tmp;\n";
+  o.indent(Indentation) << "  unsigned tmp = 0;\n  (void)tmp;\n" << Emitter->Locals << "\n";
 
   ++Indentation; ++Indentation;
   // Emits code to decode the instructions.
   emit(o, Indentation);
 
   o << '\n';
-  o.indent(Indentation) << "return false;\n";
+  o.indent(Indentation) << "return " << Emitter->ReturnFail << ";\n";
   --Indentation; --Indentation;
 
   o.indent(Indentation) << "}\n";
@@ -744,8 +750,8 @@ void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
   }
 
   if (Decoder != "")
-    o.indent(Indentation) << "  if (!" << Decoder
-                          << "(MI, tmp, Address, Decoder)) return false;\n";
+    o.indent(Indentation) << "  " << Emitter->GuardPrefix << Decoder
+                          << "(MI, tmp, Address, Decoder)" << Emitter->GuardPostfix << "\n";
   else
     o.indent(Indentation) << "  MI.addOperand(MCOperand::CreateImm(tmp));\n";
 
@@ -776,15 +782,15 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
          I = InsnOperands.begin(), E = InsnOperands.end(); I != E; ++I) {
       // If a custom instruction decoder was specified, use that.
       if (I->numFields() == 0 && I->Decoder.size()) {
-        o.indent(Indentation) << "  if (!" << I->Decoder
-                              << "(MI, insn, Address, Decoder)) return false;\n";
+        o.indent(Indentation) << "  " << Emitter->GuardPrefix << I->Decoder
+                              << "(MI, insn, Address, Decoder)" << Emitter->GuardPostfix << "\n";
         break;
       }
 
       emitBinaryParser(o, Indentation, *I);
     }
 
-    o.indent(Indentation) << "  return true; // " << nameWithID(Opc)
+    o.indent(Indentation) << "  return " << Emitter->ReturnOK << "; // " << nameWithID(Opc)
                           << '\n';
     o.indent(Indentation) << "}\n";
     return true;
@@ -821,14 +827,14 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
        I = InsnOperands.begin(), E = InsnOperands.end(); I != E; ++I) {
     // If a custom instruction decoder was specified, use that.
     if (I->numFields() == 0 && I->Decoder.size()) {
-      o.indent(Indentation) << "  if (!" << I->Decoder
-                            << "(MI, insn, Address, Decoder)) return false;\n";
+      o.indent(Indentation) << "  " << Emitter->GuardPrefix << I->Decoder
+                            << "(MI, insn, Address, Decoder)" << Emitter->GuardPostfix << "\n";
       break;
     }
 
     emitBinaryParser(o, Indentation, *I);
   }
-  o.indent(Indentation) << "  return true; // " << nameWithID(Opc)
+  o.indent(Indentation) << "  return " << Emitter->ReturnOK << "; // " << nameWithID(Opc)
                         << '\n';
   o.indent(Indentation) << "}\n";
 
@@ -1426,7 +1432,7 @@ void FixedLenDecoderEmitter::run(raw_ostream &o)
 
     // Emit the decoder for this namespace+width combination.
     FilterChooser FC(NumberedInstructions, I->second, Operands,
-                     8*I->first.second);
+                     8*I->first.second, this);
     FC.emitTop(o, 0, I->first.first);
   }
 

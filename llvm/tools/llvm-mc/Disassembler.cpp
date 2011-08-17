@@ -65,15 +65,26 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
   for (Index = 0; Index < Bytes.size(); Index += Size) {
     MCInst Inst;
 
-    if (DisAsm.getInstruction(Inst, Size, memoryObject, Index,
-                               /*REMOVE*/ nulls())) {
-      Printer.printInst(&Inst, Out);
-      Out << "\n";
-    } else {
+    MCDisassembler::DecodeStatus S;
+    S = DisAsm.getInstruction(Inst, Size, memoryObject, Index,
+                              /*REMOVE*/ nulls());
+    switch (S) {
+    case MCDisassembler::Fail:
       SM.PrintMessage(SMLoc::getFromPointer(Bytes[Index].second),
                       "invalid instruction encoding", "warning");
       if (Size == 0)
         Size = 1; // skip illegible bytes
+      break;
+
+    case MCDisassembler::SoftFail:
+      SM.PrintMessage(SMLoc::getFromPointer(Bytes[Index].second),
+                      "potentially undefined instruction encoding", "warning");
+      // Fall through
+
+    case MCDisassembler::Success:
+      Printer.printInst(&Inst, Out);
+      Out << "\n";
+      break;
     }
   }
 

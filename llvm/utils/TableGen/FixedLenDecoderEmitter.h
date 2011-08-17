@@ -49,9 +49,16 @@ struct OperandInfo {
 
 class FixedLenDecoderEmitter : public TableGenBackend {
 public:
-  FixedLenDecoderEmitter(RecordKeeper &R) :
+  FixedLenDecoderEmitter(RecordKeeper &R,
+                         std::string GPrefix  = "if (",
+                         std::string GPostfix = " == MCDisassembler::Fail) return MCDisassembler::Fail;",
+                         std::string ROK      = "MCDisassembler::Success",
+                         std::string RFail    = "MCDisassembler::Fail",
+                         std::string L        = "") :
     Records(R), Target(R),
-    NumberedInstructions(Target.getInstructionsByEnumValue()) {}
+    NumberedInstructions(Target.getInstructionsByEnumValue()),
+    GuardPrefix(GPrefix), GuardPostfix(GPostfix),
+    ReturnOK(ROK), ReturnFail(RFail), Locals(L) {}
 
   // run - Output the code emitter
   void run(raw_ostream &o);
@@ -62,7 +69,10 @@ private:
   std::vector<const CodeGenInstruction*> NumberedInstructions;
   std::vector<unsigned> Opcodes;
   std::map<unsigned, std::vector<OperandInfo> > Operands;
-
+public:
+  std::string GuardPrefix, GuardPostfix;
+  std::string ReturnOK, ReturnFail;
+  std::string Locals;
 };
 
 } // end llvm namespace

@@ -112,11 +112,11 @@ public:
   ~X86GenericDisassembler();
 
   /// getInstruction - See MCDisassembler.
-  bool getInstruction(MCInst &instr,
-                      uint64_t &size,
-                      const MemoryObject &region,
-                      uint64_t address,
-                      raw_ostream &vStream) const;
+  DecodeStatus getInstruction(MCInst &instr,
+                              uint64_t &size,
+                              const MemoryObject &region,
+                              uint64_t address,
+                              raw_ostream &vStream) const;
 
   /// getEDInfo - See MCDisassembler.
   EDInstInfo *getEDInfo() const;

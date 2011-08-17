@@ -128,5 +128,15 @@ void DisassemblerEmitter::run(raw_ostream &OS) {
     return;
   }
 
+  // ARM and Thumb have a CHECK() macro to deal with DecodeStatuses.
+  if (Target.getName() == "ARM" ||
+      Target.getName() == "Thumb") {
+    FixedLenDecoderEmitter(Records,
+                           "CHECK(S, ", ");",
+                           "S", "Fail",
+                           "DecodeStatus S = Success;\n(void)S;").run(OS);
+    return;
+  }
+
   FixedLenDecoderEmitter(Records).run(OS);
 }

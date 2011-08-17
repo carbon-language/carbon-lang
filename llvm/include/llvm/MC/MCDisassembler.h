@@ -25,6 +25,34 @@ struct EDInstInfo;
 ///   and provides an array of assembly instructions.
 class MCDisassembler {
 public:
+  /// Ternary decode status. Most backends will just use Fail and
+  /// Success, however some have a concept of an instruction with
+  /// understandable semantics but which is architecturally
+  /// incorrect. An example of this is ARM UNPREDICTABLE instructions
+  /// which are disassemblable but cause undefined behaviour.
+  ///
+  /// Because it makes sense to disassemble these instructions, there
+  /// is a "soft fail" failure mode that indicates the MCInst& is
+  /// valid but architecturally incorrect.
+  ///
+  /// The enum numbers are deliberately chosen such that reduction
+  /// from Success->SoftFail ->Fail can be done with a simple
+  /// bitwise-AND:
+  ///
+  ///   LEFT & TOP =  | Success       Unpredictable   Fail
+  ///   --------------+-----------------------------------
+  ///   Success       | Success       Unpredictable   Fail
+  ///   Unpredictable | Unpredictable Unpredictable   Fail
+  ///   Fail          | Fail          Fail            Fail
+  ///
+  /// An easy way of encoding this is as 0b11, 0b01, 0b00 for
+  /// Success, SoftFail, Fail respectively.
+  enum DecodeStatus {
+    Fail = 0,
+    SoftFail = 1,
+    Success = 3
+  };
+
   /// Constructor     - Performs initial setup for the disassembler.
   MCDisassembler() : GetOpInfo(0), DisInfo(0), Ctx(0) {}
   
@@ -41,8 +69,11 @@ public:
   /// @param address  - The address, in the memory space of region, of the first
   ///                   byte of the instruction.
   /// @param vStream  - The stream to print warnings and diagnostic messages on.
-  /// @return         - True if the instruction is valid; false otherwise.
-  virtual bool          getInstruction(MCInst& instr,
+  /// @return         - MCDisassembler::Success if the instruction is valid,
+  ///                   MCDisassembler::SoftFail if the instruction was 
+  ///                                            disassemblable but invalid,
+  ///                   MCDisassembler::Fail if the instruction was invalid.
+  virtual DecodeStatus  getInstruction(MCInst& instr,
                                        uint64_t& size,
                                        const MemoryObject &region,
                                        uint64_t address,
