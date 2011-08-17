@@ -32,13 +32,18 @@ namespace sys {
   /// Note: there is currently no interface for temporarily loading a library,
   /// or for unloading libraries when the LLVM library is unloaded.
   class DynamicLibrary {
+    // Placeholder whose address represents an invalid library.
+    // We use this instead of NULL or a pointer-int pair because the OS library
+    // might define 0 or 1 to be "special" handles, such as "search all".
+    static const char Invalid;
+
     // Opaque data used to interface with OS-specific dynamic library handling.
     void *Data;
 
-    explicit DynamicLibrary(void *data = 0) : Data(data) {}
+    explicit DynamicLibrary(void *data = &Invalid) : Data(data) {}
   public:
     /// Returns true if the object refers to a valid library.
-    bool isValid() { return Data != 0; }
+    bool isValid() { return Data != &Invalid; }
 
     /// Searches through the library for the symbol \p symbolName. If it is
     /// found, the address of that symbol is returned. If not, NULL is returned.
