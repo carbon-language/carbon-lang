@@ -9449,17 +9449,26 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
                                      DAG, dl);
 
     // Recreate the shift amount vectors
-    SmallVector<SDValue, 4> Amt1Csts;
-    SmallVector<SDValue, 4> Amt2Csts;
-    for (int i = 0; i < NumElems/2; ++i)
-      Amt1Csts.push_back(Amt->getOperand(i));
-    for (int i = NumElems/2; i < NumElems; ++i)
-      Amt2Csts.push_back(Amt->getOperand(i));
+    SDValue Amt1, Amt2;
+    if (Amt.getOpcode() == ISD::BUILD_VECTOR) {
+      // Constant shift amount
+      SmallVector<SDValue, 4> Amt1Csts;
+      SmallVector<SDValue, 4> Amt2Csts;
+      for (int i = 0; i < NumElems/2; ++i)
+        Amt1Csts.push_back(Amt->getOperand(i));
+      for (int i = NumElems/2; i < NumElems; ++i)
+        Amt2Csts.push_back(Amt->getOperand(i));
 
-    SDValue Amt1 = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT,
-                               &Amt1Csts[0], NumElems/2);
-    SDValue Amt2 = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT,
-                               &Amt2Csts[0], NumElems/2);
+      Amt1 = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT,
+                                 &Amt1Csts[0], NumElems/2);
+      Amt2 = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT,
+                                 &Amt2Csts[0], NumElems/2);
+    } else {
+      // Variable shift amount
+      Amt1 = Extract128BitVector(Amt, DAG.getConstant(0, MVT::i32), DAG, dl);
+      Amt2 = Extract128BitVector(Amt, DAG.getConstant(NumElems/2, MVT::i32),
+                                 DAG, dl);
+    }
 
     // Issue new vector shifts for the smaller types
     V1 = DAG.getNode(Op.getOpcode(), dl, NewVT, V1, Amt1);
