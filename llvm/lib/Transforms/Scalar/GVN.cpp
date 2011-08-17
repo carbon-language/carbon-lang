@@ -1446,8 +1446,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   for (unsigned i = 0, e = UnavailableBlocks.size(); i != e; ++i)
     Blockers.insert(UnavailableBlocks[i]);
 
-  // Lets find first basic block with more than one predecessor.  Walk backwards
-  // through predecessors if needed.
+  // Let's find the first basic block with more than one predecessor.  Walk
+  // backwards through predecessors if needed.
   BasicBlock *LoadBB = LI->getParent();
   BasicBlock *TmpBB = LoadBB;
 
@@ -1519,10 +1519,19 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
               << Pred->getName() << "': " << *LI << '\n');
         return false;
       }
+
+      if (LoadBB->isLandingPad()) {
+        DEBUG(dbgs()
+              << "COULD NOT PRE LOAD BECAUSE OF LANDING PAD CRITICAL EDGE '"
+              << Pred->getName() << "': " << *LI << '\n');
+        return false;
+      }
+
       unsigned SuccNum = GetSuccessorNumber(Pred, LoadBB);
       NeedToSplit.push_back(std::make_pair(Pred->getTerminator(), SuccNum));
     }
   }
+
   if (!NeedToSplit.empty()) {
     toSplit.append(NeedToSplit.begin(), NeedToSplit.end());
     return false;
@@ -2070,6 +2079,9 @@ bool GVN::performPRE(Function &F) {
 
     // Nothing to PRE in the entry block.
     if (CurrentBlock == &F.getEntryBlock()) continue;
+
+    // Don't perform PRE on a landing pad.
+    if (CurrentBlock->isLandingPad()) continue;
 
     for (BasicBlock::iterator BI = CurrentBlock->begin(),
          BE = CurrentBlock->end(); BI != BE; ) {
