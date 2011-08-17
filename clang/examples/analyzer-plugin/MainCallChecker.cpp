@@ -34,7 +34,7 @@ void MainCallChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const 
       return;
 
     if (!BT)
-      BT.reset(new BuiltinBug("call to main"));
+      BT.reset(new BugType("call to main", "example analyzer plugin"));
 
     RangedBugReport *report = new RangedBugReport(*BT, BT->getName(), N);
     report->addRange(Callee->getSourceRange());
