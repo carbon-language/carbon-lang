@@ -17,6 +17,8 @@ void test() {
   x != 7; // expected-warning {{inequality comparison as an unused top-level statement}} \
           // expected-note {{cast this comparison to void to silence this warning}} \
           // expected-note {{use '|=' to turn this inequality comparison into an or-assignment}}
+  7 == x; // expected-warning {{equality comparison as an unused top-level statement}} \
+          // expected-note {{cast this comparison to void to silence this warning}}
   p == p; // expected-warning {{equality comparison as an unused top-level statement}} \
           // expected-note {{cast this comparison to void to silence this warning}} \
           // expected-note {{use '=' to turn this equality comparison into an assignment}} \
@@ -30,6 +32,8 @@ void test() {
   a != b; // expected-warning {{inequality comparison as an unused top-level statement}} \
           // expected-note {{cast this comparison to void to silence this warning}} \
           // expected-note {{use '|=' to turn this inequality comparison into an or-assignment}}
+  A() == b; // expected-warning {{equality comparison as an unused top-level statement}} \
+            // expected-note {{cast this comparison to void to silence this warning}}
   if (42) x == 7; // expected-warning {{equality comparison as an unused top-level statement}} \
                   // expected-note {{cast this comparison to void to silence this warning}} \
                   // expected-note {{use '=' to turn this equality comparison into an assignment}}

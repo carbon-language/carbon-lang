@@ -147,21 +147,23 @@ static void DiagnoseTopLevelComparison(Sema &S, const Stmt *Statement) {
   }
 
   SourceLocation Loc;
-  bool IsNotEqual = false;
+  bool IsNotEqual, CanAssign;
 
   if (const BinaryOperator *Op = dyn_cast<BinaryOperator>(E)) {
     if (Op->getOpcode() != BO_EQ && Op->getOpcode() != BO_NE)
       return;
 
-    IsNotEqual = Op->getOpcode() == BO_NE;
     Loc = Op->getOperatorLoc();
+    IsNotEqual = Op->getOpcode() == BO_NE;
+    CanAssign = Op->getLHS()->IgnoreParenImpCasts()->isLValue();
   } else if (const CXXOperatorCallExpr *Op = dyn_cast<CXXOperatorCallExpr>(E)) {
     if (Op->getOperator() != OO_EqualEqual &&
         Op->getOperator() != OO_ExclaimEqual)
       return;
 
-    IsNotEqual = Op->getOperator() == OO_ExclaimEqual;
     Loc = Op->getOperatorLoc();
+    IsNotEqual = Op->getOperator() == OO_ExclaimEqual;
+    CanAssign = Op->getArg(0)->IgnoreParenImpCasts()->isLValue();
   } else {
     // Not a typo-prone comparison.
     return;
@@ -181,12 +183,16 @@ static void DiagnoseTopLevelComparison(Sema &S, const Stmt *Statement) {
         << FixItHint::CreateInsertion(Open, "(void)(")
         << FixItHint::CreateInsertion(Close, ")");
 
-  if (IsNotEqual)
-    S.Diag(Loc, diag::note_inequality_comparison_to_or_assign)
-      << FixItHint::CreateReplacement(Loc, "|=");
-  else
-    S.Diag(Loc, diag::note_equality_comparison_to_assign)
-      << FixItHint::CreateReplacement(Loc, "=");
+  // If the LHS is a plausible entity to assign to, provide a fixit hint to
+  // correct common typos.
+  if (CanAssign) {
+    if (IsNotEqual)
+      S.Diag(Loc, diag::note_inequality_comparison_to_or_assign)
+        << FixItHint::CreateReplacement(Loc, "|=");
+    else
+      S.Diag(Loc, diag::note_equality_comparison_to_assign)
+        << FixItHint::CreateReplacement(Loc, "=");
+  }
 }
 
 void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
