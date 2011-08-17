@@ -21,6 +21,7 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/DynamicLibrary.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -32,15 +33,19 @@ using llvm::sys::DynamicLibrary;
 namespace {
 class ClangCheckerRegistry : public CheckerRegistry {
   typedef void (*RegisterCheckersFn)(CheckerRegistry &);
-public:
-  ClangCheckerRegistry(ArrayRef<std::string> plugins);
 
   static bool isCompatibleAPIVersion(const char *versionString);
+  static void warnIncompatible(Diagnostic *diags, StringRef pluginPath,
+                               const char *pluginAPIVersion);
+
+public:
+  ClangCheckerRegistry(ArrayRef<std::string> plugins, Diagnostic *diags = 0);
 };
   
 } // end anonymous namespace
 
-ClangCheckerRegistry::ClangCheckerRegistry(ArrayRef<std::string> plugins) {
+ClangCheckerRegistry::ClangCheckerRegistry(ArrayRef<std::string> plugins,
+                                           Diagnostic *diags) {
   registerBuiltinCheckers(*this);
 
   for (ArrayRef<std::string>::iterator i = plugins.begin(), e = plugins.end();
@@ -51,8 +56,10 @@ ClangCheckerRegistry::ClangCheckerRegistry(ArrayRef<std::string> plugins) {
     // See if it's compatible with this build of clang.
     const char *pluginAPIVersion =
       (const char *) lib.getAddressOfSymbol("clang_analyzerAPIVersionString");
-    if (!isCompatibleAPIVersion(pluginAPIVersion))
+    if (!isCompatibleAPIVersion(pluginAPIVersion)) {
+      warnIncompatible(diags, *i, pluginAPIVersion);
       continue;
+    }
 
     // Register its checkers.
     RegisterCheckersFn registerPluginCheckers =
@@ -73,8 +80,22 @@ bool ClangCheckerRegistry::isCompatibleAPIVersion(const char *versionString) {
   if (strcmp(versionString, CLANG_ANALYZER_API_VERSION_STRING) == 0)
     return true;
 
-  // FIXME: Should we emit a diagnostic if the version doesn't match?
   return false;
+}
+
+void ClangCheckerRegistry::warnIncompatible(Diagnostic *diags,
+                                            StringRef pluginPath,
+                                            const char *pluginAPIVersion) {
+  if (!diags)
+    return;
+  if (!pluginAPIVersion)
+    return;
+
+  diags->Report(diag::warn_incompatible_analyzer_plugin_api)
+      << llvm::sys::path::filename(pluginPath);
+  diags->Report(diag::note_incompatible_analyzer_plugin_api)
+      << CLANG_ANALYZER_API_VERSION_STRING
+      << pluginAPIVersion;
 }
 
 
@@ -90,7 +111,8 @@ CheckerManager *ento::createCheckerManager(const AnalyzerOptions &opts,
     checkerOpts.push_back(CheckerOptInfo(opt.first.c_str(), opt.second));
   }
 
-  ClangCheckerRegistry(plugins).initializeManager(*checkerMgr, checkerOpts);
+  ClangCheckerRegistry allCheckers(plugins, &diags);
+  allCheckers.initializeManager(*checkerMgr, checkerOpts);
   checkerMgr->finishedCheckerRegistration();
 
   for (unsigned i = 0, e = checkerOpts.size(); i != e; ++i) {

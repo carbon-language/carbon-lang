@@ -293,4 +293,8 @@ def warn_unknown_warning_specifier : Warning<
 
 def warn_unkwown_analyzer_checker : Warning<
     "no analyzer checkers are associated with '%0'">;
+def warn_incompatible_analyzer_plugin_api : Warning<
+    "checker plugin '%0' is not compatible with this version of the analyzer">;
+def note_incompatible_analyzer_plugin_api : Note<
+    "current API version is '%0', but plugin was compiled with version '%1'">;
 }
