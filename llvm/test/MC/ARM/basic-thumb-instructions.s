@@ -88,3 +88,11 @@ _func:
              @   fixup A - offset: 0, value: _baz, kind: fixup_arm_thumb_br
 @ CHECK: beq	_bar                    @ encoding: [A,0xd0]
              @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_bcc
+
+
+@------------------------------------------------------------------------------
+@ BICS
+@------------------------------------------------------------------------------
+        bics r1, r6
+
+@ CHECK: bics	r1, r6                  @ encoding: [0xb1,0x43]
