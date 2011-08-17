@@ -101,6 +101,10 @@ void cxstring::disposeCXStringBuf(CXStringBuf *buf) {
     static_cast<CXStringPool*>(buf->TU->StringPool)->push_back(buf);
 }
 
+bool cxstring::isManagedByPool(CXString str) {
+  return ((CXStringFlag) str.private_flags) == CXS_StringBuf;
+}
+
 //===----------------------------------------------------------------------===//
 // libClang public APIs.
 //===----------------------------------------------------------------------===//

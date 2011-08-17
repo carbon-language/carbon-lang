@@ -47,6 +47,9 @@ CXStringBuf *getCXStringBuf(CXTranslationUnit TU);
  
 void disposeCXStringBuf(CXStringBuf *buf);
 
+/// \brief Returns true if the CXString data is managed by a pool.
+bool isManagedByPool(CXString str);
+
 }
 }
 

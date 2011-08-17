@@ -16,6 +16,7 @@
 #include "CXTranslationUnit.h"
 #include "CXString.h"
 #include "CXCursor.h"
+#include "CXString.h"
 #include "CIndexDiagnostic.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
@@ -541,8 +542,20 @@ namespace {
         CXCursorKind cursorKind = clang_getCursorKind(cursor);
         CXString cursorUSR = clang_getCursorUSR(cursor);
         
+        // Normally, clients of CXString shouldn't care whether or not
+        // a CXString is managed by a pool or by explicitly malloc'ed memory.
+        // However, there are cases when AllocatedResults outlives the
+        // CXTranslationUnit.  This is a workaround that failure mode.
+        if (cxstring::isManagedByPool(cursorUSR)) {
+          CXString heapStr =
+            cxstring::createCXString(clang_getCString(cursorUSR), true);
+          clang_disposeString(cursorUSR);
+          cursorUSR = heapStr;
+        }
+        
         AllocatedResults.ContainerKind = cursorKind;
         AllocatedResults.ContainerUSR = cursorUSR;
+        
         const Type *type = baseType.getTypePtrOrNull();
         if (type != NULL) {
           AllocatedResults.ContainerIsIncomplete = type->isIncompleteType();
