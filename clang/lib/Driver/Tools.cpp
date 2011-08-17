@@ -2451,7 +2451,7 @@ void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
        it != ie;) {
     if (!strcmp(*it, "-Wno-self-assign")) {
       it = CmdArgs.erase(it);
-      it = CmdArgs.end();
+      ie = CmdArgs.end();
     }
     else
       ++it;
