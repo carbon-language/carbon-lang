@@ -4746,12 +4746,6 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   const enum CXCursorKind cursorK = clang_getCursorKind(cursor);
   if (cursorK >= CXCursor_FirstDecl && cursorK <= CXCursor_LastDecl) {
     Decl *D = cxcursor::getCursorDecl(cursor);
-    // Don't visit synthesized ObjC methods, since they have no syntatic
-    // representation in the source.
-    if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-      if (MD->isSynthesized())
-        return CXChildVisit_Continue;
-    }
     
     SourceLocation StartLoc;
     if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
