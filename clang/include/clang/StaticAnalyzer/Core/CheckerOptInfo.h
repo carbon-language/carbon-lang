@@ -15,6 +15,10 @@
 namespace clang {
 namespace ento {
 
+/// Represents a request to include or exclude a checker or package from a
+/// specific analysis run.
+///
+/// \sa CheckerRegistry::initializeManager
 class CheckerOptInfo {
   StringRef Name;
   bool Enable;
