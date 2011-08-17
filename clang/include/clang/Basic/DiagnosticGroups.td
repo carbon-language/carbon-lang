@@ -146,6 +146,7 @@ def : DiagGroup<"strict-prototypes">;
 def StrictSelector : DiagGroup<"strict-selector-match">;
 def SwitchEnum     : DiagGroup<"switch-enum">;
 def Switch         : DiagGroup<"switch", [SwitchEnum]>;
+def TopLevelComparison : DiagGroup<"top-level-comparison">;
 def Trigraphs      : DiagGroup<"trigraphs">;
 
 def : DiagGroup<"type-limits">;
@@ -278,8 +279,8 @@ def Most : DiagGroup<"most", [
 // Thread Safety warnings 
 def : DiagGroup<"thread-safety">;
 
-// -Wall is -Wmost -Wparentheses
-def : DiagGroup<"all", [Most, Parentheses]>;
+// -Wall is -Wmost -Wparentheses -Wtop-level-comparison
+def : DiagGroup<"all", [Most, Parentheses, TopLevelComparison]>;
 
 // Aliases.
 def : DiagGroup<"", [Extra]>;                   // -W = -Wextra
