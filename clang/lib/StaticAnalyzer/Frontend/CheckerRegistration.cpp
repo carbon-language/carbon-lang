@@ -20,19 +20,62 @@
 #include "clang/Frontend/AnalyzerOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 
 using namespace clang;
 using namespace ento;
+using llvm::sys::DynamicLibrary;
 
-static void registerCheckers(CheckerRegistry &registry,
-                             ArrayRef<std::string> plugins) {
-  registerBuiltinCheckers(registry);
+namespace {
+class ClangCheckerRegistry : public CheckerRegistry {
+  typedef void (*RegisterCheckersFn)(CheckerRegistry &);
+public:
+  ClangCheckerRegistry(ArrayRef<std::string> plugins);
 
-  // FIXME: register plugins.
+  static bool isCompatibleAPIVersion(const char *versionString);
+};
+  
+} // end anonymous namespace
+
+ClangCheckerRegistry::ClangCheckerRegistry(ArrayRef<std::string> plugins) {
+  registerBuiltinCheckers(*this);
+
+  for (ArrayRef<std::string>::iterator i = plugins.begin(), e = plugins.end();
+       i != e; ++i) {
+    // Get access to the plugin.
+    DynamicLibrary lib = DynamicLibrary::getPermanentLibrary(i->c_str());
+
+    // See if it's compatible with this build of clang.
+    const char *pluginAPIVersion =
+      (const char *) lib.getAddressOfSymbol("clang_analyzerAPIVersionString");
+    if (!isCompatibleAPIVersion(pluginAPIVersion))
+      continue;
+
+    // Register its checkers.
+    RegisterCheckersFn registerPluginCheckers =
+      (RegisterCheckersFn) lib.getAddressOfSymbol("clang_registerCheckers");
+    if (registerPluginCheckers)
+      registerPluginCheckers(*this);
+  }
 }
+
+bool ClangCheckerRegistry::isCompatibleAPIVersion(const char *versionString) {
+  // If the version string is null, it's not an analyzer plugin.
+  if (versionString == 0)
+    return false;
+
+  // For now, none of the static analyzer API is considered stable.
+  // Versions must match exactly.
+  if (strcmp(versionString, CLANG_ANALYZER_API_VERSION_STRING) == 0)
+    return true;
+
+  // FIXME: Should we emit a diagnostic if the version doesn't match?
+  return false;
+}
+
 
 CheckerManager *ento::createCheckerManager(const AnalyzerOptions &opts,
                                            const LangOptions &langOpts,
@@ -46,10 +89,7 @@ CheckerManager *ento::createCheckerManager(const AnalyzerOptions &opts,
     checkerOpts.push_back(CheckerOptInfo(opt.first.c_str(), opt.second));
   }
 
-  CheckerRegistry allCheckers;
-  registerCheckers(allCheckers, plugins);
-  allCheckers.initializeManager(*checkerMgr, checkerOpts);
-
+  ClangCheckerRegistry(plugins).initializeManager(*checkerMgr, checkerOpts);
   checkerMgr->finishedCheckerRegistration();
 
   for (unsigned i = 0, e = checkerOpts.size(); i != e; ++i) {
@@ -65,7 +105,5 @@ void ento::printCheckerHelp(raw_ostream &out, ArrayRef<std::string> plugins) {
   out << "OVERVIEW: Clang Static Analyzer Checkers List\n\n";
   out << "USAGE: -analyzer-checker <CHECKER or PACKAGE,...>\n\n";
 
-  CheckerRegistry allCheckers;
-  registerCheckers(allCheckers, plugins);
-  allCheckers.printHelp(out);
+  ClangCheckerRegistry(plugins).printHelp(out);
 }

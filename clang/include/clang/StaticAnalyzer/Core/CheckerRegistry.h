@@ -17,6 +17,15 @@
 namespace clang {
 namespace ento {
 
+#ifndef CLANG_ANALYZER_API_VERSION_STRING
+// FIXME: The Clang version string is not particularly granular;
+// the analyzer infrastructure can change a lot between releases.
+// Unfortunately, this string has to be statically embedded in each plugin,
+// so we can't just use the functions defined in Version.h.
+#include "clang/Basic/Version.h"
+#define CLANG_ANALYZER_API_VERSION_STRING CLANG_VERSION_STRING
+#endif
+
 class CheckerOptInfo;
 
 class CheckerRegistry {
