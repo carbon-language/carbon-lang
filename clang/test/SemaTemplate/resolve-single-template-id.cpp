@@ -44,9 +44,10 @@ int main()
   !oneT<int>;  // expected-warning {{expression result unused}}
   +oneT<int>;  // expected-warning {{expression result unused}}
   -oneT<int>;  //expected-error {{invalid argument type}}
-  oneT<int> == 0;   // expected-warning {{expression result unused}}
-  0 == oneT<int>;   // expected-warning {{expression result unused}}
-  0 != oneT<int>;    // expected-warning {{expression result unused}}
+  oneT<int> == 0;   // expected-warning {{equality comparison result unused}} \
+                    // expected-note {{use '=' to turn this equality comparison into an assignment}}
+  0 == oneT<int>;   // expected-warning {{equality comparison result unused}}
+  0 != oneT<int>;    // expected-warning {{inequality comparison result unused}}
   (false ? one : oneT<int>);   // expected-warning {{expression result unused}}
   void (*p1)(int); p1 = oneT<int>;
   
@@ -67,7 +68,8 @@ int main()
 
   two < two; //expected-error {{cannot resolve overloaded function 'two' from context}}
   twoT<int> < twoT<int>; //expected-error {{cannot resolve overloaded function 'twoT' from context}}
-  oneT<int> == 0;   // expected-warning {{expression result unused}}
+  oneT<int> == 0;   // expected-warning {{equality comparison result unused}} \
+                    // expected-note {{use '=' to turn this equality comparison into an assignment}}
 
 }
 

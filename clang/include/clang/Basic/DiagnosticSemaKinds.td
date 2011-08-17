@@ -3627,15 +3627,6 @@ def note_equality_comparison_to_assign : Note<
 def note_equality_comparison_silence : Note<
   "remove extraneous parentheses around the comparison to silence this warning">;
 
-def warn_comparison_top_level_stmt : Warning<
-  "%select{equality|inequality}0 comparison as an unused top-level statement">,
-  InGroup<TopLevelComparison>, DefaultIgnore;
-def note_inequality_comparison_to_or_assign : Note<
-  "use '|=' to turn this inequality comparison into an or-assignment">;
-def note_top_level_comparison_void_cast_silence : Note<
-  "cast this comparison to void to silence this warning">;
-
-
 def warn_synthesized_ivar_access : Warning<
   "direct access of synthesized ivar by using property access %0">,
   InGroup<NonfragileAbi2>, DefaultIgnore;
@@ -3884,6 +3875,11 @@ def warn_unused_call : Warning<
 def warn_unused_result : Warning<
   "ignoring return value of function declared with warn_unused_result "
   "attribute">, InGroup<DiagGroup<"unused-result">>;
+def warn_unused_comparison : Warning<
+  "%select{equality|inequality}0 comparison result unused">,
+  InGroup<UnusedComparison>;
+def note_inequality_comparison_to_or_assign : Note<
+  "use '|=' to turn this inequality comparison into an or-assignment">;
 
 def err_incomplete_type_used_in_type_trait_expr : Error<
   "incomplete type %0 used in type trait expression">;

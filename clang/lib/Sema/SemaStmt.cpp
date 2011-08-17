@@ -92,66 +92,17 @@ void Sema::ActOnForEachDeclStmt(DeclGroupPtrTy dg) {
   }
 }
 
-/// \brief Diagnose '==' and '!=' in top-level statements as likely
-/// typos for '=' or '|=' (resp.).
-///
-/// This function looks through common stand-alone statements to dig out the
-/// substatement of interest. It should be viable to call on any direct member
-/// of a CompoundStmt.
+/// \brief Diagnose unused '==' and '!=' as likely typos for '=' or '|='.
 ///
 /// Adding a cast to void (or other expression wrappers) will prevent the
 /// warning from firing.
-static void DiagnoseTopLevelComparison(Sema &S, const Stmt *Statement) {
-  if (!Statement) return;
-  const Expr *E = dyn_cast<Expr>(Statement);
-  if (!E) {
-    // Descend to sub-statements where they remain "top-level" in that they're
-    // unused.
-    switch (Statement->getStmtClass()) {
-    default:
-      // Skip statements which don't have a direct substatement of interest.
-      // Compound statements are handled by the caller.
-      return;
-
-    case Stmt::CaseStmtClass:
-    case Stmt::DefaultStmtClass:
-      DiagnoseTopLevelComparison(S, cast<SwitchCase>(Statement)->getSubStmt());
-      return;
-    case Stmt::LabelStmtClass:
-      DiagnoseTopLevelComparison(S, cast<LabelStmt>(Statement)->getSubStmt());
-      return;
-
-    case Stmt::DoStmtClass:
-      DiagnoseTopLevelComparison(S, cast<DoStmt>(Statement)->getBody());
-      return;
-    case Stmt::IfStmtClass: {
-      const IfStmt *If = cast<IfStmt>(Statement);
-      DiagnoseTopLevelComparison(S, If->getThen());
-      DiagnoseTopLevelComparison(S, If->getElse());
-      return;
-    }
-    case Stmt::ForStmtClass: {
-      const ForStmt *ForLoop = cast<ForStmt>(Statement);
-      DiagnoseTopLevelComparison(S, ForLoop->getInit());
-      DiagnoseTopLevelComparison(S, ForLoop->getInc());
-      DiagnoseTopLevelComparison(S, ForLoop->getBody());
-      return;
-    }
-    case Stmt::SwitchStmtClass:
-      DiagnoseTopLevelComparison(S, cast<SwitchStmt>(Statement)->getBody());
-      return;
-    case Stmt::WhileStmtClass:
-      DiagnoseTopLevelComparison(S, cast<WhileStmt>(Statement)->getBody());
-      return;
-    }
-  }
-
+static bool DiagnoseUnusedComparison(Sema &S, const Expr *E) {
   SourceLocation Loc;
   bool IsNotEqual, CanAssign;
 
   if (const BinaryOperator *Op = dyn_cast<BinaryOperator>(E)) {
     if (Op->getOpcode() != BO_EQ && Op->getOpcode() != BO_NE)
-      return;
+      return false;
 
     Loc = Op->getOperatorLoc();
     IsNotEqual = Op->getOpcode() == BO_NE;
@@ -159,29 +110,23 @@ static void DiagnoseTopLevelComparison(Sema &S, const Stmt *Statement) {
   } else if (const CXXOperatorCallExpr *Op = dyn_cast<CXXOperatorCallExpr>(E)) {
     if (Op->getOperator() != OO_EqualEqual &&
         Op->getOperator() != OO_ExclaimEqual)
-      return;
+      return false;
 
     Loc = Op->getOperatorLoc();
     IsNotEqual = Op->getOperator() == OO_ExclaimEqual;
     CanAssign = Op->getArg(0)->IgnoreParenImpCasts()->isLValue();
   } else {
     // Not a typo-prone comparison.
-    return;
+    return false;
   }
 
   // Suppress warnings when the operator, suspicious as it may be, comes from
   // a macro expansion.
   if (Loc.isMacroID())
-    return;
+    return false;
 
-  S.Diag(Loc, diag::warn_comparison_top_level_stmt)
+  S.Diag(Loc, diag::warn_unused_comparison)
     << (unsigned)IsNotEqual << E->getSourceRange();
-
-  SourceLocation Open = E->getSourceRange().getBegin();
-  SourceLocation Close = S.PP.getLocForEndOfToken(E->getSourceRange().getEnd());
-  S.Diag(Loc, diag::note_top_level_comparison_void_cast_silence)
-        << FixItHint::CreateInsertion(Open, "(void)(")
-        << FixItHint::CreateInsertion(Close, ")");
 
   // If the LHS is a plausible entity to assign to, provide a fixit hint to
   // correct common typos.
@@ -193,6 +138,8 @@ static void DiagnoseTopLevelComparison(Sema &S, const Stmt *Statement) {
       S.Diag(Loc, diag::note_equality_comparison_to_assign)
         << FixItHint::CreateReplacement(Loc, "=");
   }
+
+  return true;
 }
 
 void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
@@ -216,6 +163,9 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
     E = Temps->getSubExpr();
   if (const CXXBindTemporaryExpr *TempExpr = dyn_cast<CXXBindTemporaryExpr>(E))
     E = TempExpr->getSubExpr();
+
+  if (DiagnoseUnusedComparison(*this, E))
+    return;
 
   E = E->IgnoreParenImpCasts();
   if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
@@ -303,10 +253,6 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
     if (isStmtExpr && i == NumElts - 1)
       continue;
 
-    // FIXME: It'd be nice to not show both of these. The first is a more
-    // precise (and more likely to be enabled) warning. We should suppress the
-    // second when the first fires.
-    DiagnoseTopLevelComparison(*this, Elts[i]);
     DiagnoseUnusedExprResult(Elts[i]);
   }
 
