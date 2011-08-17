@@ -58,6 +58,8 @@ public:
   virtual void Profile(llvm::FoldingSetNodeID &ID) const = 0;
 };
 
+/// This class provides an interface through which checkers can create
+/// individual bug reports.
 class BugReport : public BugReporterVisitor {
 public:
   class NodeResolver {
@@ -85,6 +87,8 @@ protected:
   Creators creators;
 
   /// Profile to identify equivalent bug reports for error report coalescing.
+  /// Reports are uniqued to ensure that we do not emit multiple diagnostics
+  /// for each bug.
   virtual void Profile(llvm::FoldingSetNodeID& hash) const;
 
   const Stmt *getStmt() const;
