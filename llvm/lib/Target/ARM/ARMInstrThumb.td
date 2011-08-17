@@ -216,39 +216,33 @@ def tADJCALLSTACKDOWN :
             Requires<[IsThumb, IsThumb1Only]>;
 }
 
-// T1Disassembly - A simple class to make encoding some disassembly patterns
-// easier and less verbose.
-class T1Disassembly<bits<2> op1, bits<8> op2>
+class T1SystemEncoding<bits<8> opc>
   : T1Encoding<0b101111> {
-  let Inst{9-8} = op1;
-  let Inst{7-0} = op2;
+  let Inst{9-8} = 0b11;
+  let Inst{7-0} = opc;
 }
 
-def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "",
-                [/* For disassembly only; pattern left blank */]>,
-           T1Disassembly<0b11, 0x00>; // A8.6.110
+def tNOP : T1pI<(outs), (ins), NoItinerary, "nop", "", []>,
+           T1SystemEncoding<0x00>; // A8.6.110
 
-def tYIELD : T1pI<(outs), (ins), NoItinerary, "yield", "",
-                  [/* For disassembly only; pattern left blank */]>,
-           T1Disassembly<0b11, 0x10>; // A8.6.410
+def tYIELD : T1pI<(outs), (ins), NoItinerary, "yield", "", []>,
+           T1SystemEncoding<0x10>; // A8.6.410
 
-def tWFE : T1pI<(outs), (ins), NoItinerary, "wfe", "",
-                [/* For disassembly only; pattern left blank */]>,
-           T1Disassembly<0b11, 0x20>; // A8.6.408
+def tWFE : T1pI<(outs), (ins), NoItinerary, "wfe", "", []>,
+           T1SystemEncoding<0x20>; // A8.6.408
 
-def tWFI : T1pI<(outs), (ins), NoItinerary, "wfi", "",
-                [/* For disassembly only; pattern left blank */]>,
-           T1Disassembly<0b11, 0x30>; // A8.6.409
+def tWFI : T1pI<(outs), (ins), NoItinerary, "wfi", "", []>,
+           T1SystemEncoding<0x30>; // A8.6.409
 
-def tSEV : T1pI<(outs), (ins), NoItinerary, "sev", "",
-                [/* For disassembly only; pattern left blank */]>,
-           T1Disassembly<0b11, 0x40>; // A8.6.157
+def tSEV : T1pI<(outs), (ins), NoItinerary, "sev", "", []>,
+           T1SystemEncoding<0x40>; // A8.6.157
 
-// The i32imm operand $val can be used by a debugger to store more information
+// The imm operand $val can be used by a debugger to store more information
 // about the breakpoint.
-def tBKPT : T1I<(outs), (ins i32imm:$val), NoItinerary, "bkpt\t$val",
-                [/* For disassembly only; pattern left blank */]>,
-           T1Disassembly<0b10, {?,?,?,?,?,?,?,?}> {
+def tBKPT : T1I<(outs), (ins imm0_255:$val), NoItinerary, "bkpt\t$val",
+                []>,
+           T1Encoding<0b101111> {
+  let Inst{9-8} = 0b10;
   // A8.6.22
   bits<8> val;
   let Inst{7-0} = val;
