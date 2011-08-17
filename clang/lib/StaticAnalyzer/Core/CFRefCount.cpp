@@ -1452,8 +1452,6 @@ RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
 
 void RetainSummaryManager::InitializeClassMethodSummaries() {
   assert(ScratchArgs.isEmpty());
-  RetainSummary* Summ = getPersistentSummary(ObjCAllocRetE);
-
   // Create the [NSAssertionHandler currentHander] summary.
   addClassMethSummary("NSAssertionHandler", "currentHandler",
                 getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::ObjC)));
@@ -1469,7 +1467,8 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   // used for delegates that can release the object.  When we have better
   // inter-procedural analysis we can potentially do something better.  This
   // workaround is to remove false positives.
-  Summ = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, StopTracking);
+  RetainSummary *Summ =
+    getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, StopTracking);
   IdentifierInfo *NSObjectII = &Ctx.Idents.get("NSObject");
   addClsMethSummary(NSObjectII, Summ, "performSelector", "withObject",
                     "afterDelay", NULL);

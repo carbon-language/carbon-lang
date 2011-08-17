@@ -2109,8 +2109,8 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     llvm::Type *PtrTy = Int8PtrTy;
     Value *One = llvm::ConstantInt::get(Int32Ty, 1);
     Value *Tmp = Builder.CreateAlloca(Int32Ty, One, "tmp");
-    One = Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_stmxcsr),
-                             Builder.CreateBitCast(Tmp, PtrTy));
+    Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_stmxcsr),
+                       Builder.CreateBitCast(Tmp, PtrTy));
     return Builder.CreateLoad(Tmp, "stmxcsr");
   }
   case X86::BI__builtin_ia32_cmppd: {

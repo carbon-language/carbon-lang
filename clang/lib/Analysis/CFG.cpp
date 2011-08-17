@@ -1807,7 +1807,6 @@ CFGBlock *CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
 
   // Build the condition blocks.
   CFGBlock *ExitConditionBlock = createBlock(false);
-  CFGBlock *EntryConditionBlock = ExitConditionBlock;
 
   // Set the terminator for the "exit" condition block.
   ExitConditionBlock->setTerminator(S);
@@ -1821,7 +1820,8 @@ CFGBlock *CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   // Walk the 'element' expression to see if there are any side-effects.  We
   // generate new blocks as necessary.  We DON'T add the statement by default to
   // the CFG unless it contains control-flow.
-  EntryConditionBlock = Visit(S->getElement(), AddStmtChoice::NotAlwaysAdd);
+  CFGBlock *EntryConditionBlock = Visit(S->getElement(),
+                                        AddStmtChoice::NotAlwaysAdd);
   if (Block) {
     if (badCFG)
       return 0;
