@@ -1418,7 +1418,8 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   assert(I->hasOneUse() && "Invariants didn't hold!");
 
   // Cannot move control-flow-involving, volatile loads, vaarg, etc.
-  if (isa<PHINode>(I) || I->mayHaveSideEffects() || isa<TerminatorInst>(I))
+  if (isa<PHINode>(I) || isa<LandingPadInst>(I) || I->mayHaveSideEffects() ||
+      isa<TerminatorInst>(I))
     return false;
 
   // Do not sink alloca instructions out of the entry block.

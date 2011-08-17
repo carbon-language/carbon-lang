@@ -320,7 +320,6 @@ bool Instruction::mayReadFromMemory() const {
   case Instruction::Fence: // FIXME: refine definition of mayReadFromMemory
   case Instruction::AtomicCmpXchg:
   case Instruction::AtomicRMW:
-  case Instruction::LandingPad:
     return true;
   case Instruction::Call:
     return !cast<CallInst>(this)->doesNotAccessMemory();
@@ -341,7 +340,6 @@ bool Instruction::mayWriteToMemory() const {
   case Instruction::VAArg:
   case Instruction::AtomicCmpXchg:
   case Instruction::AtomicRMW:
-  case Instruction::LandingPad:
     return true;
   case Instruction::Call:
     return !cast<CallInst>(this)->onlyReadsMemory();
