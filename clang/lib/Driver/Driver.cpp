@@ -126,13 +126,13 @@ phases::ID Driver::getFinalPhase(const DerivedArgList &DAL, Arg **FinalPhaseArg)
 const {
   Arg *PhaseArg = 0;
   phases::ID FinalPhase;
-  
+
   // -{E,M,MM} only run the preprocessor.
   if (CCCIsCPP ||
       (PhaseArg = DAL.getLastArg(options::OPT_E)) ||
       (PhaseArg = DAL.getLastArg(options::OPT_M, options::OPT_MM))) {
     FinalPhase = phases::Preprocess;
-    
+
     // -{fsyntax-only,-analyze,emit-ast,S} only run up to the compiler.
   } else if ((PhaseArg = DAL.getLastArg(options::OPT_fsyntax_only)) ||
              (PhaseArg = DAL.getLastArg(options::OPT_rewrite_objc)) ||
@@ -234,14 +234,14 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
   }
 #endif
 
-  // If -fapple-kext has been specified, add -kext to linker command if not 
+  // If -fapple-kext has been specified, add -kext to linker command if not
   // already done so.  Also check to make sure we're actually linking.
   if (Args.hasArg(options::OPT_fapple_kext) && getFinalPhase(*DAL) ==
       phases::Link) {
     bool add_kext = true;
     std::vector<std::string> LinkerArgs =
       Args.getAllArgValues(options::OPT_Xlinker);
-    for (std::vector<std::string>::iterator it = LinkerArgs.begin(), 
+    for (std::vector<std::string>::iterator it = LinkerArgs.begin(),
            ie = LinkerArgs.end(); it != ie; it++)
       if (*it == "-kext") {
         add_kext = false;
@@ -257,7 +257,7 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
 Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   llvm::PrettyStackTraceString CrashInfo("Compilation construction");
 
-  // FIXME: Handle environment options which effect driver behavior, somewhere
+  // FIXME: Handle environment options which affect driver behavior, somewhere
   // (client?). GCC_EXEC_PREFIX, COMPILER_PATH, LIBRARY_PATH, LPATH,
   // CC_PRINT_OPTIONS.
 
@@ -371,8 +371,8 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   return C;
 }
 
-// When clang crashes, produce diagnostic information including the fully 
-// preprocessed source file(s).  Request that the developer attach the 
+// When clang crashes, produce diagnostic information including the fully
+// preprocessed source file(s).  Request that the developer attach the
 // diagnostic information to a bug report.
 void Driver::generateCompilationDiagnostics(Compilation &C,
                                             const Command *FailingCommand) {
@@ -432,7 +432,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     Diag(clang::diag::note_drv_command_failed_diag_msg)
       << "Preprocessed source(s) are located at:";
     ArgStringList Files = C.getTempFiles();
-    for (ArgStringList::const_iterator it = Files.begin(), ie = Files.end(); 
+    for (ArgStringList::const_iterator it = Files.begin(), ie = Files.end();
          it != ie; ++it)
       Diag(clang::diag::note_drv_command_failed_diag_msg) << *it;
   } else {
@@ -1370,7 +1370,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     NamedOutput = C.getArgs().MakeArgString(Suffixed.c_str());
   }
 
-  // If we're saving temps and the temp filename conflicts with the input 
+  // If we're saving temps and the temp filename conflicts with the input
   // filename, then avoid overwriting input file.
   if (!AtTopLevel && C.getArgs().hasArg(options::OPT_save_temps) &&
     NamedOutput == BaseName) {
