@@ -1189,7 +1189,7 @@ let usesCustomInserter = 1 in  // Expanded after instruction selection.
 // assembler.
 
 def tADR : T1I<(outs tGPR:$Rd), (ins t_adrlabel:$addr, pred:$p),
-               IIC_iALUi, "adr{$p}\t$Rd, #$addr", []>,
+               IIC_iALUi, "adr{$p}\t$Rd, $addr", []>,
                T1Encoding<{1,0,1,0,0,?}> {
   bits<3> Rd;
   bits<8> addr;
