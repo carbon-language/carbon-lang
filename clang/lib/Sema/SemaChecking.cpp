@@ -319,7 +319,7 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                           TheCall->getCallee()->getLocStart());
   }
 
-  // Memset/memcpy/memmove/memcmp handling
+  // Builtin handling
   int CMF = -1;
   switch (FDecl->getBuiltinID()) {
   case Builtin::BI__builtin_memset:
@@ -338,6 +338,11 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   case Builtin::BI__builtin___memmove_chk:
   case Builtin::BImemmove:
     CMF = CMF_Memmove;
+    break;
+
+  case Builtin::BIstrlcpy:
+  case Builtin::BIstrlcat:
+    CheckStrlcpycatArguments(TheCall, FnInfo);
     break;
     
   case Builtin::BI__builtin_memcmp:
@@ -359,6 +364,7 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
     break;
   }
    
+  // Memset/memcpy/memmove handling
   if (CMF != -1)
     CheckMemaccessArguments(TheCall, CheckedMemoryFunction(CMF), FnInfo);
 
@@ -1987,6 +1993,95 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
           << FixItHint::CreateInsertion(ArgRange.getBegin(), "(void*)"));
       break;
     }
+  }
+}
+
+// A little helper routine: ignore addition and subtraction of integer literals.
+// This intentionally does not ignore all integer constant expressions because
+// we don't want to remove sizeof().
+static const Expr *ignoreLiteralAdditions(const Expr *Ex, ASTContext &Ctx) {
+  Ex = Ex->IgnoreParenCasts();
+
+  for (;;) {
+    const BinaryOperator * BO = dyn_cast<BinaryOperator>(Ex);
+    if (!BO || !BO->isAdditiveOp())
+      break;
+
+    const Expr *RHS = BO->getRHS()->IgnoreParenCasts();
+    const Expr *LHS = BO->getLHS()->IgnoreParenCasts();
+    
+    if (isa<IntegerLiteral>(RHS))
+      Ex = LHS;
+    else if (isa<IntegerLiteral>(LHS))
+      Ex = RHS;
+    else
+      break;
+  }
+
+  return Ex;
+}
+
+// Warn if the user has made the 'size' argument to strlcpy or strlcat
+// be the size of the source, instead of the destination.
+void Sema::CheckStrlcpycatArguments(const CallExpr *Call,
+                                    IdentifierInfo *FnName) {
+
+  // Don't crash if the user has the wrong number of arguments
+  if (Call->getNumArgs() != 3)
+    return;
+
+  const Expr *SrcArg = ignoreLiteralAdditions(Call->getArg(1), Context);
+  const Expr *SizeArg = ignoreLiteralAdditions(Call->getArg(2), Context);
+  const Expr *CompareWithSrc = NULL;
+  
+  // Look for 'strlcpy(dst, x, sizeof(x))'
+  if (const Expr *Ex = getSizeOfExprArg(SizeArg))
+    CompareWithSrc = Ex;
+  else {
+    // Look for 'strlcpy(dst, x, strlen(x))'
+    if (const CallExpr *SizeCall = dyn_cast<CallExpr>(SizeArg)) {
+      if (SizeCall->isBuiltinCall(Context) == Builtin::BIstrlen
+          && SizeCall->getNumArgs() == 1)
+        CompareWithSrc = ignoreLiteralAdditions(SizeCall->getArg(0), Context);
+    }
+  }
+
+  if (!CompareWithSrc)
+    return;
+
+  // Determine if the argument to sizeof/strlen is equal to the source
+  // argument.  In principle there's all kinds of things you could do
+  // here, for instance creating an == expression and evaluating it with
+  // EvaluateAsBooleanCondition, but this uses a more direct technique:
+  const DeclRefExpr *SrcArgDRE = dyn_cast<DeclRefExpr>(SrcArg);
+  if (!SrcArgDRE)
+    return;
+  
+  const DeclRefExpr *CompareWithSrcDRE = dyn_cast<DeclRefExpr>(CompareWithSrc);
+  if (!CompareWithSrcDRE || 
+      SrcArgDRE->getDecl() != CompareWithSrcDRE->getDecl())
+    return;
+  
+  const Expr *OriginalSizeArg = Call->getArg(2);
+  Diag(CompareWithSrcDRE->getLocStart(), diag::warn_strlcpycat_wrong_size)
+    << OriginalSizeArg->getSourceRange() << FnName;
+  
+  // Output a FIXIT hint if the destination is an array (rather than a
+  // pointer to an array).  This could be enhanced to handle some
+  // pointers if we know the actual size, like if DstArg is 'array+2'
+  // we could say 'sizeof(array)-2'.
+  const Expr *DstArg = Call->getArg(0)->IgnoreParenImpCasts();
+  
+  if (DstArg->getType()->isArrayType()) {
+    llvm::SmallString<128> sizeString;
+    llvm::raw_svector_ostream OS(sizeString);
+    OS << "sizeof(";
+    DstArg->printPretty(OS, Context, 0, Context.PrintingPolicy);
+    OS << ")";
+    
+    Diag(OriginalSizeArg->getLocStart(), diag::note_strlcpycat_wrong_size)
+      << FixItHint::CreateReplacement(OriginalSizeArg->getSourceRange(),
+                                      OS.str());
   }
 }
 

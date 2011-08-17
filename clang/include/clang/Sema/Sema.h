@@ -5973,6 +5973,9 @@ private:
   void CheckMemaccessArguments(const CallExpr *Call, CheckedMemoryFunction CMF,
                                IdentifierInfo *FnName);
 
+  void CheckStrlcpycatArguments(const CallExpr *Call,
+                                IdentifierInfo *FnName);
+
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
