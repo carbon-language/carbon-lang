@@ -83,7 +83,10 @@ namespace llvm {
 
       DynAlloc,
 
-      Sync
+      Sync,
+
+      Ext,
+      Ins
     };
   }
 
@@ -134,6 +137,8 @@ namespace llvm {
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG& DAG) const;
     SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG& DAG) const;
+    SDValue LowerAND(SDValue Op, SelectionDAG& DAG) const;
+    SDValue LowerOR(SDValue Op, SelectionDAG& DAG) const;
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,

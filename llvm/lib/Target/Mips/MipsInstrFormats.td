@@ -102,6 +102,28 @@ class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
   let Inst{25-0} = addr;
 }
 
+// Ext and Ins
+class ExtIns<bits<6> _funct, string instr_asm, dag Outs, dag Ins,
+             list<dag> pattern, InstrItinClass itin>:
+  MipsInst<Outs, Ins, !strconcat(instr_asm, "\t$dst, $src, $pos, $size"),
+           pattern, itin>
+{
+  bits<5>  rt;
+  bits<5>  rs;
+  bits<5>  sz;
+  bits<5>  pos;
+  bits<6>  funct;
+
+  let opcode = 0x1f;
+  let funct  = _funct;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = sz;
+  let Inst{10-6}  = pos;
+  let Inst{5-0}   = funct;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS

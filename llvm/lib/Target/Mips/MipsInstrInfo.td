@@ -43,6 +43,12 @@ def SDT_MipsDynAlloc    : SDTypeProfile<1, 1, [SDTCisVT<0, i32>,
                                                SDTCisVT<1, iPTR>]>;
 def SDT_Sync             : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 
+def SDT_Ext : SDTypeProfile<1, 3, [SDTCisVT<0, i32>, SDTCisSameAs<0, 1>,
+                                   SDTCisInt<2>, SDTCisSameAs<2, 3>]>;
+def SDT_Ins : SDTypeProfile<1, 4, [SDTCisVT<0, i32>, SDTCisSameAs<0, 1>,
+                                   SDTCisInt<2>, SDTCisSameAs<2, 3>,
+                                   SDTCisSameAs<0, 4>]>;
+
 // Call
 def MipsJmpLink : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink,
                          [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
@@ -108,6 +114,9 @@ def MipsDynAlloc  : SDNode<"MipsISD::DynAlloc", SDT_MipsDynAlloc,
                            [SDNPHasChain, SDNPInGlue]>;
 
 def MipsSync : SDNode<"MipsISD::Sync", SDT_Sync, [SDNPHasChain]>;
+
+def MipsExt :  SDNode<"MipsISD::Ext", SDT_Ext>;
+def MipsIns :  SDNode<"MipsISD::Ins", SDT_Ins>;
 
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
@@ -660,6 +669,23 @@ def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul, 1>, Requires<[IsMips32]>;
 
 def RDHWR : ReadHardware;
+
+let Predicates = [IsMips32r2] in {
+  def Ext : ExtIns<0b000000, "ext", (outs CPURegs:$dst),
+                   (ins CPURegs:$src, uimm16:$size, uimm16:$pos),
+                   [(set CPURegs:$dst,
+                     (MipsExt CPURegs:$src, immZExt5:$size, immZExt5:$pos))],
+                   NoItinerary>;
+  let Constraints = "$src1 = $dst" in
+  def Ins : ExtIns<0b000100, "ins",
+                   (outs CPURegs:$dst),
+                   (ins CPURegs:$src, uimm16:$size, uimm16:$pos,
+                    CPURegs:$src1),
+                   [(set CPURegs:$dst,
+                     (MipsIns CPURegs:$src, immZExt5:$size, immZExt5:$pos,
+                      CPURegs:$src1))],
+                   NoItinerary>;
+}
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions

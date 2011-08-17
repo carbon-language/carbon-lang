@@ -35,6 +35,24 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
+namespace {
+  // If I is a shifted mask, set the size (Size) and the first bit of the 
+  // mask (Pos), and return true.
+  bool IsShiftedMask(uint64_t I, unsigned SizeInBits, uint64_t &Pos,
+                     uint64_t &Size) {
+    assert(SizeInBits == 32 || SizeInBits == 64);
+    bool Is32Bits = (SizeInBits == 32);
+
+    if ((Is32Bits == 32 && !isShiftedMask_32(I)) ||
+        (!Is32Bits && !isShiftedMask_64(I)))
+      return false;
+
+    Size = Is32Bits ? CountPopulation_32(I) : CountPopulation_64(I);
+    Pos = Is32Bits ? CountTrailingZeros_32(I) : CountTrailingZeros_64(I);
+    return true;
+  }
+}
+
 const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   case MipsISD::JmpLink:           return "MipsISD::JmpLink";
@@ -62,6 +80,8 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::WrapperPIC:        return "MipsISD::WrapperPIC";
   case MipsISD::DynAlloc:          return "MipsISD::DynAlloc";
   case MipsISD::Sync:              return "MipsISD::Sync";
+  case MipsISD::Ext:               return "MipsISD::Ext";
+  case MipsISD::Ins:               return "MipsISD::Ins";
   default:                         return NULL;
   }
 }
@@ -111,6 +131,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::BRCOND,             MVT::Other, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Custom);
   setOperationAction(ISD::VASTART,            MVT::Other, Custom);
+  setOperationAction(ISD::AND,                MVT::i32,   Custom);
+  setOperationAction(ISD::OR,                 MVT::i32,   Custom);
 
   setOperationAction(ISD::SDIV, MVT::i32, Expand);
   setOperationAction(ISD::SREM, MVT::i32, Expand);
@@ -539,6 +561,8 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
     case ISD::MEMBARRIER:         return LowerMEMBARRIER(Op, DAG);
     case ISD::ATOMIC_FENCE:       return LowerATOMIC_FENCE(Op, DAG);
+    case ISD::AND:                return LowerAND(Op, DAG);
+    case ISD::OR:                 return LowerOR(Op, DAG);
   }
   return SDValue();
 }
@@ -1554,6 +1578,98 @@ SDValue MipsTargetLowering::LowerATOMIC_FENCE(SDValue Op,
   DebugLoc dl = Op.getDebugLoc();
   return DAG.getNode(MipsISD::Sync, dl, MVT::Other, Op.getOperand(0),
                      DAG.getConstant(SType, MVT::i32));
+}
+
+SDValue MipsTargetLowering::LowerAND(SDValue Op, SelectionDAG& DAG) const {
+  // Pattern match EXT.
+  //  $dst = and ((sra or srl) $src , pos), (2**size - 1)
+  //  => ext $dst, $src, size, pos
+  if (!Subtarget->isMips32r2())
+    return Op;
+
+  SDValue ShiftRight = Op.getOperand(0), Mask = Op.getOperand(1);
+  
+  // Op's first operand must be a shift right.
+  if (ShiftRight.getOpcode() != ISD::SRA && ShiftRight.getOpcode() != ISD::SRL)
+    return Op;
+
+  // The second operand of the shift must be an immediate.
+  uint64_t Pos;
+  ConstantSDNode *CN;
+  if (!(CN = dyn_cast<ConstantSDNode>(ShiftRight.getOperand(1))))
+    return Op;
+  
+  Pos = CN->getZExtValue();
+
+  uint64_t SMPos, SMSize;
+  // Op's second operand must be a shifted mask.
+  if (!(CN = dyn_cast<ConstantSDNode>(Mask)) ||
+      !IsShiftedMask(CN->getZExtValue(), 32, SMPos, SMSize))
+    return Op;
+
+  // Return if the shifted mask does not start at bit 0 or the sum of its size
+  // and Pos exceeds the word's size.
+  if (SMPos != 0 || Pos + SMSize > 32)
+    return Op;
+
+  return DAG.getNode(MipsISD::Ext, Op.getDebugLoc(), MVT::i32,
+                     ShiftRight.getOperand(0),
+                     DAG.getConstant(SMSize, MVT::i32),
+                     DAG.getConstant(Pos, MVT::i32));
+}
+
+SDValue MipsTargetLowering::LowerOR(SDValue Op, SelectionDAG& DAG) const {
+  // Pattern match INS.
+  //  $dst = or (and $src1 , mask0), (and (shl $src, pos), mask1),
+  //  where mask1 = (2**size - 1) << pos, mask0 = ~mask1 
+  //  => ins $dst, $src, size, pos
+  if (!Subtarget->isMips32r2())
+    return Op;
+
+  SDValue And0 = Op.getOperand(0), And1 = Op.getOperand(1);
+  uint64_t SMPos0, SMSize0, SMPos1, SMSize1;
+  ConstantSDNode *CN;
+
+  // See if Op's first operand matches (and $src1 , mask0).
+  if (And0.getOpcode() != ISD::AND)
+    return Op;
+
+  if (!(CN = dyn_cast<ConstantSDNode>(And0.getOperand(1))) ||
+      !IsShiftedMask(~CN->getZExtValue(), 32, SMPos0, SMSize0))
+    return Op;
+
+  // See if Op's second operand matches (and (shl $src, pos), mask1).
+  if (And1.getOpcode() != ISD::AND)
+    return Op;
+  
+  if (!(CN = dyn_cast<ConstantSDNode>(And1.getOperand(1))) ||
+      !IsShiftedMask(CN->getZExtValue(), CN->getValueSizeInBits(0), SMPos1,
+                     SMSize1))
+    return Op;
+
+  // The shift masks must have the same position and size.
+  if (SMPos0 != SMPos1 || SMSize0 != SMSize1)
+    return Op;
+
+  SDValue Shl = And1.getOperand(0);
+  if (Shl.getOpcode() != ISD::SHL)
+    return Op;
+
+  if (!(CN = dyn_cast<ConstantSDNode>(Shl.getOperand(1))))
+    return Op;
+
+  unsigned Shamt = CN->getZExtValue();
+
+  // Return if the shift amount and the first bit position of mask are not the
+  // same.  
+  if (Shamt != SMPos0)
+    return Op;
+  
+  return DAG.getNode(MipsISD::Ins, Op.getDebugLoc(), MVT::i32,
+                     Shl.getOperand(0),
+                     DAG.getConstant(SMSize0, MVT::i32),
+                     DAG.getConstant(SMPos0, MVT::i32),
+                     And0.getOperand(0));  
 }
 
 //===----------------------------------------------------------------------===//
