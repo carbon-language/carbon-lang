@@ -403,9 +403,7 @@ void SourceManager::clearIDTables() {
 
   // Use up FileID #0 as an invalid expansion.
   NextLocalOffset = 0;
-  // The highest possible offset is 2^31-1, so CurrentLoadedOffset starts at
-  // 2^31.
-  CurrentLoadedOffset = 1U << 31U;
+  CurrentLoadedOffset = MaxLoadedOffset;
   createExpansionLoc(SourceLocation(),SourceLocation(),SourceLocation(), 1);
 }
 
@@ -1303,8 +1301,8 @@ static llvm::Optional<ino_t> getActualFileInode(const FileEntry *File) {
 ///
 /// If the source file is included multiple times, the source location will
 /// be based upon an arbitrary inclusion.
-SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
-                                          unsigned Line, unsigned Col) {
+SourceLocation SourceManager::translateFileLineCol(const FileEntry *SourceFile,
+                                                  unsigned Line, unsigned Col) {
   assert(SourceFile && "Null source file!");
   assert(Line && Col && "Line and column should start from 1!");
 
@@ -1454,6 +1452,77 @@ SourceLocation SourceManager::getLocation(const FileEntry *SourceFile,
   return getLocForStartOfFile(FirstFID).getFileLocWithOffset(FilePos + Col - 1);
 }
 
+/// \brief If \arg Loc points inside a function macro argument, the returned
+/// location will be the macro location in which the argument was expanded.
+/// If a macro argument is used multiple times, the expanded location will
+/// be at the first expansion of the argument.
+/// e.g.
+///   MY_MACRO(foo);
+///             ^
+/// Passing a file location pointing at 'foo', will yield a macro location
+/// where 'foo' was expanded into.
+SourceLocation SourceManager::getMacroArgExpandedLocation(SourceLocation Loc) {
+  if (Loc.isInvalid())
+    return Loc;
+  
+  FileID FID = getFileID(Loc);
+  if (FID.isInvalid())
+    return Loc;
+
+  int ID = FID.ID;
+  while (1) {
+    ++ID;
+    // Stop if there are no more FileIDs to check.
+    if (ID > 0) {
+      if (unsigned(ID) >= local_sloc_entry_size())
+        return Loc;
+    } else if (ID == -1) {
+      return Loc;
+    }
+
+    const SrcMgr::SLocEntry &Entry = getSLocEntryByID(ID);
+    if (Entry.isFile()) {
+      if (Entry.getFile().getIncludeLoc().isValid() &&
+          !isBeforeInTranslationUnit(Entry.getFile().getIncludeLoc(), Loc))
+        return Loc;
+      continue;
+    }
+  
+    if (isBeforeInTranslationUnit(Loc,
+                                  Entry.getExpansion().getExpansionLocStart()))
+      return Loc;
+    if (!Entry.getExpansion().isMacroArgExpansion())
+      continue;
+
+    // This is a macro argument expansion. See if Loc points in the argument
+    // that was lexed.
+
+    SourceLocation SpellLoc = Entry.getExpansion().getSpellingLoc();
+    unsigned NextOffset;
+    if (ID > 0) {
+      if (unsigned(ID+1) == local_sloc_entry_size())
+        NextOffset = getNextLocalOffset();
+      else
+        NextOffset = getLocalSLocEntry(ID+1).getOffset();
+    } else {
+      if (ID+1 == -1)
+        NextOffset = MaxLoadedOffset;
+      else
+        NextOffset = getSLocEntry(FileID::get(ID+1)).getOffset();
+    }
+    unsigned EntrySize = NextOffset - Entry.getOffset() - 1;
+    unsigned BeginOffs = SpellLoc.getOffset();
+    unsigned EndOffs = BeginOffs + EntrySize;
+    if (BeginOffs <= Loc.getOffset() && Loc.getOffset() < EndOffs) {
+      SourceLocation ExpandLoc = SourceLocation::getMacroLoc(Entry.getOffset());
+      // Replace current Loc with the expanded location and continue.
+      // The expanded argument may end up being passed to another function macro
+      // and relexed again.
+      Loc = ExpandLoc.getFileLocWithOffset(Loc.getOffset()-BeginOffs);
+    }
+  }
+}
+
 /// Given a decomposed source location, move it up the include/expansion stack
 /// to the parent source location.  If this is possible, return the decomposed
 /// version of the parent in Loc and return false.  If Loc is the top-level
@@ -1557,7 +1626,7 @@ void SourceManager::PrintStats() const {
                << NextLocalOffset << "B of Sloc address space used.\n";
   llvm::errs() << LoadedSLocEntryTable.size()
                << " loaded SLocEntries allocated, "
-               << (1U << 31U) - CurrentLoadedOffset
+               << MaxLoadedOffset - CurrentLoadedOffset
                << "B of Sloc address space used.\n";
   
   unsigned NumLineNumsComputed = 0;

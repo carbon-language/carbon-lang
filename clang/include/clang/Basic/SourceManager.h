@@ -489,6 +489,10 @@ class SourceManager : public llvm::RefCountedBase<SourceManager> {
   /// not have been loaded, so that value would be unknown.
   unsigned CurrentLoadedOffset;
 
+  /// \brief The highest possible offset is 2^31-1, so CurrentLoadedOffset
+  /// starts at 2^31.
+  static const unsigned MaxLoadedOffset = 1U << 31U;
+
   /// \brief A bitmap that indicates whether the entries of LoadedSLocEntryTable
   /// have already been loaded from the external source.
   ///
@@ -1001,8 +1005,33 @@ public:
   ///
   /// If the source file is included multiple times, the source location will
   /// be based upon the first inclusion.
+  ///
+  /// If the location points inside a function macro argument, the returned
+  /// location will be the macro location in which the argument was expanded.
+  /// \sa getMacroArgExpandedLocation
   SourceLocation getLocation(const FileEntry *SourceFile,
-                             unsigned Line, unsigned Col);
+                             unsigned Line, unsigned Col) {
+    SourceLocation Loc = translateFileLineCol(SourceFile, Line, Col);
+    return getMacroArgExpandedLocation(Loc);
+  }
+  
+  /// \brief Get the source location for the given file:line:col triplet.
+  ///
+  /// If the source file is included multiple times, the source location will
+  /// be based upon the first inclusion.
+  SourceLocation translateFileLineCol(const FileEntry *SourceFile,
+                                      unsigned Line, unsigned Col);
+
+  /// \brief If \arg Loc points inside a function macro argument, the returned
+  /// location will be the macro location in which the argument was expanded.
+  /// If a macro argument is used multiple times, the expanded location will
+  /// be at the first expansion of the argument.
+  /// e.g.
+  ///   MY_MACRO(foo);
+  ///             ^
+  /// Passing a file location pointing at 'foo', will yield a macro location
+  /// where 'foo' was expanded into.
+  SourceLocation getMacroArgExpandedLocation(SourceLocation Loc);
 
   /// \brief Determines the order of 2 source locations in the translation unit.
   ///
