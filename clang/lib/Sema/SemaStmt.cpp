@@ -1740,49 +1740,49 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // Otherwise, verify that this result type matches the previous one.  We are
   // pickier with blocks than for normal functions because we don't have GCC
   // compatibility to worry about here.
-  ReturnStmt *Result = 0;
   const VarDecl *NRVOCandidate = 0;
-  if (CurBlock->ReturnType->isVoidType()) {
-    if (RetValExp && !RetValExp->isTypeDependent() &&
-        (!getLangOptions().CPlusPlus || !RetValExp->getType()->isVoidType())) {
+  if (FnRetType->isDependentType()) {
+    // Delay processing for now.  TODO: there are lots of dependent
+    // types we can conclusively prove aren't void.
+  } else if (FnRetType->isVoidType()) {
+    if (RetValExp &&
+        !(getLangOptions().CPlusPlus &&
+          (RetValExp->isTypeDependent() ||
+           RetValExp->getType()->isVoidType()))) {
       Diag(ReturnLoc, diag::err_return_block_has_expr);
       RetValExp = 0;
     }
   } else if (!RetValExp) {
-    if (!CurBlock->ReturnType->isDependentType())
-      return StmtError(Diag(ReturnLoc, diag::err_block_return_missing_expr));
-  } else {
-    if (!FnRetType->isDependentType() && !RetValExp->isTypeDependent()) {
-      // we have a non-void block with an expression, continue checking
+    return StmtError(Diag(ReturnLoc, diag::err_block_return_missing_expr));
+  } else if (!RetValExp->isTypeDependent()) {
+    // we have a non-void block with an expression, continue checking
 
-      // C99 6.8.6.4p3(136): The return statement is not an assignment. The
-      // overlap restriction of subclause 6.5.16.1 does not apply to the case of
-      // function return.
+    // C99 6.8.6.4p3(136): The return statement is not an assignment. The
+    // overlap restriction of subclause 6.5.16.1 does not apply to the case of
+    // function return.
 
-      // In C++ the return statement is handled via a copy initialization.
-      // the C version of which boils down to CheckSingleAssignmentConstraints.
-      NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
-      InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc,
-                                                                     FnRetType,
+    // In C++ the return statement is handled via a copy initialization.
+    // the C version of which boils down to CheckSingleAssignmentConstraints.
+    NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
+    InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc,
+                                                                   FnRetType,
                                                            NRVOCandidate != 0);
-      ExprResult Res = PerformMoveOrCopyInitialization(Entity, NRVOCandidate,
-                                                       FnRetType, RetValExp);
-      if (Res.isInvalid()) {
-        // FIXME: Cleanup temporaries here, anyway?
-        return StmtError();
-      }
-      RetValExp = Res.take();
-
-      if (RetValExp)
-        CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
+    ExprResult Res = PerformMoveOrCopyInitialization(Entity, NRVOCandidate,
+                                                     FnRetType, RetValExp);
+    if (Res.isInvalid()) {
+      // FIXME: Cleanup temporaries here, anyway?
+      return StmtError();
     }
+    RetValExp = Res.take();
+    CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
   }
 
   if (RetValExp) {
     CheckImplicitConversions(RetValExp, ReturnLoc);
     RetValExp = MaybeCreateExprWithCleanups(RetValExp);
   }
-  Result = new (Context) ReturnStmt(ReturnLoc, RetValExp, NRVOCandidate);
+  ReturnStmt *Result = new (Context) ReturnStmt(ReturnLoc, RetValExp,
+                                                NRVOCandidate);
 
   // If we need to check for the named return value optimization, save the
   // return statement in our scope for later processing.
