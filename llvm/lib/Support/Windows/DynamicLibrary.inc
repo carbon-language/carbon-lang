@@ -63,7 +63,7 @@ extern "C" {
 #endif
         stricmp(ModuleName, "msvcrt20") != 0 &&
         stricmp(ModuleName, "msvcrt40") != 0) {
-      OpenedHandles->push_back((HMODULE)ModuleBase);
+      OpenedHandles->insert((HMODULE)ModuleBase);
     }
     return TRUE;
   }
@@ -86,7 +86,7 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
   HMODULE a_handle = LoadLibrary(filename);
 
   if (a_handle == 0) {
-    MakeErrMsg(ErrMsg, std::string(filename) + ": Can't open : ");
+    MakeErrMsg(errMsg, std::string(filename) + ": Can't open : ");
     return DynamicLibrary();
   }
 
