@@ -218,8 +218,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
 }
 
 bool MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
-  // FIXME: allow unaligned memory accesses for other types too.
-  return VT.getSimpleVT().SimpleTy == MVT::i32; 
+  MVT::SimpleValueType SVT = VT.getSimpleVT().SimpleTy;
+  return SVT == MVT::i32 || SVT == MVT::i16; 
 }
 
 MVT::SimpleValueType MipsTargetLowering::getSetCCResultType(EVT VT) const {

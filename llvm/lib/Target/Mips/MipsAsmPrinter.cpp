@@ -77,17 +77,28 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MCInstLowering.Lower(MI, TmpInst0);
   
   // Convert aligned loads/stores to their unaligned counterparts.
-  // FIXME: expand other unaligned memory accesses too.
-  if ((Opc == Mips::LW || Opc == Mips::SW) && !MI->memoperands_empty() &&
-      (*MI->memoperands_begin())->getAlignment() < 4) {
-    MCInst Directive;
-    Directive.setOpcode(Mips::MACRO);
-    OutStreamer.EmitInstruction(Directive);
-    TmpInst0.setOpcode(Opc == Mips::LW ? Mips::ULW : Mips::USW);
-    OutStreamer.EmitInstruction(TmpInst0);
-    Directive.setOpcode(Mips::NOMACRO);
-    OutStreamer.EmitInstruction(Directive);
-    return;
+  if (!MI->memoperands_empty()) {
+    unsigned NaturalAlignment, UnalignedOpc;
+    
+    switch (Opc) {
+    case Mips::LW:  NaturalAlignment = 4; UnalignedOpc = Mips::ULW;  break;
+    case Mips::SW:  NaturalAlignment = 4; UnalignedOpc = Mips::USW;  break;
+    case Mips::LH:  NaturalAlignment = 2; UnalignedOpc = Mips::ULH;  break;
+    case Mips::LHu: NaturalAlignment = 2; UnalignedOpc = Mips::ULHu; break;
+    case Mips::SH:  NaturalAlignment = 2; UnalignedOpc = Mips::USH;  break;
+    default:        NaturalAlignment = 0;
+    }
+
+    if ((*MI->memoperands_begin())->getAlignment() < NaturalAlignment) {
+      MCInst Directive;
+      Directive.setOpcode(Mips::MACRO);
+      OutStreamer.EmitInstruction(Directive);
+      TmpInst0.setOpcode(UnalignedOpc);
+      OutStreamer.EmitInstruction(TmpInst0);
+      Directive.setOpcode(Mips::NOMACRO);
+      OutStreamer.EmitInstruction(Directive);
+      return;
+    }
   }
 
   OutStreamer.EmitInstruction(TmpInst0);

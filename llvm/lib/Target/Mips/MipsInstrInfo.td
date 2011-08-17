@@ -483,12 +483,18 @@ let usesCustomInserter = 1 in {
   def ATOMIC_CMP_SWAP_I32  : AtomicCmpSwap<atomic_cmp_swap_32, "32">;
 }
 
-// Unaligned memory load and store.
+// Unaligned loads and stores.
 // Replaces LW or SW during MCInstLowering if memory access is unaligned.
 def ULW :
   MipsPseudo<(outs CPURegs:$dst), (ins mem:$addr), "ulw\t$dst, $addr", []>;
+def ULH :
+  MipsPseudo<(outs CPURegs:$dst), (ins mem:$addr), "ulh\t$dst, $addr", []>;
+def ULHu :
+  MipsPseudo<(outs CPURegs:$dst), (ins mem:$addr), "ulhu\t$dst, $addr", []>;
 def USW : 
   MipsPseudo<(outs), (ins CPURegs:$dst, mem:$addr), "usw\t$dst, $addr", []>;
+def USH : 
+  MipsPseudo<(outs), (ins CPURegs:$dst, mem:$addr), "ush\t$dst, $addr", []>;
 
 //===----------------------------------------------------------------------===//
 // Instruction definition
