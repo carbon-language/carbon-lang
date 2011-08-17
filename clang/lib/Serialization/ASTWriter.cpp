@@ -1540,7 +1540,8 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
       const SrcMgr::ExpansionInfo &Expansion = SLoc->getExpansion();
       Record.push_back(Expansion.getSpellingLoc().getRawEncoding());
       Record.push_back(Expansion.getExpansionLocStart().getRawEncoding());
-      Record.push_back(Expansion.getExpansionLocEnd().getRawEncoding());
+      Record.push_back(Expansion.isMacroArgExpansion() ? 0
+                             : Expansion.getExpansionLocEnd().getRawEncoding());
 
       // Compute the token length for this macro expansion.
       unsigned NextOffset = SourceMgr.getNextLocalOffset();
