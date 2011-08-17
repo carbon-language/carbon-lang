@@ -3497,13 +3497,6 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
   // cursor.
   if (cursor.kind == CXCursor_MacroExpansion && Data->PointsAtMacroArgExpansion)
     return CXChildVisit_Recurse;
-  
-  if (clang_isDeclaration(cursor.kind)) {
-    // Avoid having the synthesized methods override the property decls.
-    if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(getCursorDecl(cursor)))
-      if (MD->isSynthesized())
-        return CXChildVisit_Break;
-  }
 
   if (clang_isExpression(cursor.kind) &&
       clang_isDeclaration(BestCursor->kind)) {

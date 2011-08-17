@@ -2466,7 +2466,8 @@ Decl *Sema::ActOnMethodDeclaration(
                            ResultTInfo,
                            cast<DeclContext>(ClassDecl),
                            MethodType == tok::minus, isVariadic,
-                           false, false,
+                           /*isSynthesized=*/false,
+                           /*isImplicitlyDeclared=*/false, /*isDefined=*/false,
                            MethodDeclKind == tok::objc_optional 
                              ? ObjCMethodDecl::Optional
                              : ObjCMethodDecl::Required,

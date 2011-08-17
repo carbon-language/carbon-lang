@@ -2138,8 +2138,10 @@ void CodeGenModule::EmitObjCIvarInitializations(ObjCImplementationDecl *D) {
     Selector cxxSelector = getContext().Selectors.getSelector(0, &II);
     ObjCMethodDecl *DTORMethod =
       ObjCMethodDecl::Create(getContext(), D->getLocation(), D->getLocation(),
-                             cxxSelector, getContext().VoidTy, 0, D, true,
-                             false, true, false, ObjCMethodDecl::Required);
+                             cxxSelector, getContext().VoidTy, 0, D,
+                             /*isInstance=*/true, /*isVariadic=*/false,
+                          /*isSynthesized=*/true, /*isImplicitlyDeclared=*/true,
+                             /*isDefined=*/false, ObjCMethodDecl::Required);
     D->addInstanceMethod(DTORMethod);
     CodeGenFunction(*this).GenerateObjCCtorDtorMethod(D, DTORMethod, false);
     D->setHasCXXStructors(true);
@@ -2157,7 +2159,11 @@ void CodeGenModule::EmitObjCIvarInitializations(ObjCImplementationDecl *D) {
                                                 D->getLocation(),
                                                 D->getLocation(), cxxSelector,
                                                 getContext().getObjCIdType(), 0, 
-                                                D, true, false, true, false,
+                                                D, /*isInstance=*/true,
+                                                /*isVariadic=*/false,
+                                                /*isSynthesized=*/true,
+                                                /*isImplicitlyDeclared=*/true,
+                                                /*isDefined=*/false,
                                                 ObjCMethodDecl::Required);
   D->addInstanceMethod(CTORMethod);
   CodeGenFunction(*this).GenerateObjCCtorDtorMethod(D, CTORMethod, true);

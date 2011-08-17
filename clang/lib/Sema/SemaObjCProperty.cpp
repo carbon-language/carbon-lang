@@ -1489,8 +1489,9 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
 
     GetterMethod = ObjCMethodDecl::Create(Context, Loc, Loc,
                              property->getGetterName(),
-                             property->getType(), 0, CD, true, false, true, 
-                             false,
+                             property->getType(), 0, CD, /*isInstance=*/true,
+                             /*isVariadic=*/false, /*isSynthesized=*/true,
+                             /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
                              (property->getPropertyImplementation() ==
                               ObjCPropertyDecl::Optional) ?
                              ObjCMethodDecl::Optional :
@@ -1526,7 +1527,10 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
       SetterMethod =
         ObjCMethodDecl::Create(Context, Loc, Loc,
                                property->getSetterName(), Context.VoidTy, 0,
-                               CD, true, false, true, false,
+                               CD, /*isInstance=*/true, /*isVariadic=*/false,
+                               /*isSynthesized=*/true,
+                               /*isImplicitlyDeclared=*/true,
+                               /*isDefined=*/false,
                                (property->getPropertyImplementation() ==
                                 ObjCPropertyDecl::Optional) ?
                                 ObjCMethodDecl::Optional :

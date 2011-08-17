@@ -2928,6 +2928,7 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
                              D->isInstanceMethod(),
                              D->isVariadic(),
                              D->isSynthesized(),
+                             D->isImplicit(),
                              D->isDefined(),
                              D->getImplementationControl(),
                              D->hasRelatedResultType());
