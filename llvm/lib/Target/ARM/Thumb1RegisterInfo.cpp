@@ -264,8 +264,7 @@ void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
       if (NeedPred)
         MIB = AddDefaultPred(MIB);
       MIB.setMIFlags(MIFlags);
-    }
-    else {
+    } else {
       bool isKill = BaseReg != ARM::SP;
       MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg);
       if (NeedCC)
