@@ -583,7 +583,10 @@ def imm1_32_XFORM: SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant((int)N->getZExtValue() - 1, MVT::i32);
 }]>;
 def Imm1_32AsmOperand: AsmOperandClass { let Name = "Imm1_32"; }
-def imm1_32 : Operand<i32>, PatLeaf<(imm), [{ return Imm > 0 && Imm <= 32; }],
+def imm1_32 : Operand<i32>, PatLeaf<(imm), [{
+   uint64_t Imm = N->getZExtValue();
+   return Imm > 0 && Imm <= 32;
+ }],
     imm1_32_XFORM> {
   let PrintMethod = "printImmPlusOneOperand";
   let ParserMatchClass = Imm1_32AsmOperand;
