@@ -240,7 +240,8 @@ void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
       Bytes -= ThisVal;
       const MCInstrDesc &MCID = TII.get(isSub ? ARM::tSUBi3 : ARM::tADDi3);
       const MachineInstrBuilder MIB =
-        AddDefaultT1CC(BuildMI(MBB, MBBI, dl, MCID, DestReg).setMIFlags(MIFlags));
+        AddDefaultT1CC(BuildMI(MBB, MBBI, dl, MCID, DestReg)
+                         .setMIFlags(MIFlags));
       AddDefaultPred(MIB.addReg(BaseReg, RegState::Kill).addImm(ThisVal));
     } else {
       AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), DestReg)
