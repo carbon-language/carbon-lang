@@ -1059,16 +1059,12 @@ void ASTDeclWriter::VisitClassTemplateSpecializationDecl(
   llvm::PointerUnion<ClassTemplateDecl *,
                      ClassTemplatePartialSpecializationDecl *> InstFrom
     = D->getSpecializedTemplateOrPartial();
-  Decl *InstFromD;
-  if (InstFrom.is<ClassTemplateDecl *>()) {
-    InstFromD = InstFrom.get<ClassTemplateDecl *>();
+  if (Decl *InstFromD = InstFrom.dyn_cast<ClassTemplateDecl *>()) {
     Writer.AddDeclRef(InstFromD, Record);
   } else {
-    InstFromD = InstFrom.get<ClassTemplatePartialSpecializationDecl *>();
-    Writer.AddDeclRef(InstFromD, Record);
+    Writer.AddDeclRef(InstFrom.get<ClassTemplatePartialSpecializationDecl *>(),
+                      Record);
     Writer.AddTemplateArgumentList(&D->getTemplateInstantiationArgs(), Record);
-    InstFromD = cast<ClassTemplatePartialSpecializationDecl>(InstFromD)->
-                    getSpecializedTemplate();
   }
 
   // Explicit info.
