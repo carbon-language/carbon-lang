@@ -434,7 +434,6 @@ public:
   const FileSystemOptions &getFileSystemOpts() const { return FileSystemOpts; }
 
   const std::string &getOriginalSourceFileName();
-  const std::string &getASTFileName();
 
   /// \brief Add a temporary file that the ASTUnit depends on.
   ///

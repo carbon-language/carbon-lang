@@ -1131,10 +1131,8 @@ public:
     ModuleMgr.addInMemoryBuffer(FileName, Buffer);
   }
 
-  /// \brief Retrieve the name of the named (primary) AST file
-  const std::string &getFileName() const {
-    return ModuleMgr.getPrimaryModule().FileName;
-  }
+  /// \brief Retrieve the module manager.
+  ModuleManager &getModuleManager() { return ModuleMgr; }
 
   /// \brief Retrieve the name of the original source file name
   const std::string &getOriginalSourceFile() { return OriginalFileName; }

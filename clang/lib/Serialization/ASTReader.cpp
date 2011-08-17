@@ -2033,25 +2033,25 @@ ASTReader::ReadASTBlock(Module &F) {
       break;
     }
 
-    case CHAINED_METADATA: {
-      if (!First) {
-        Error("CHAINED_METADATA is not first record in block");
-        return Failure;
-      }
-      if (Record[0] != VERSION_MAJOR && !DisableValidation) {
-        Diag(Record[0] < VERSION_MAJOR? diag::warn_pch_version_too_old
-                                           : diag::warn_pch_version_too_new);
-        return IgnorePCH;
-      }
+    case IMPORTS: {
+      // Load each of the imported PCH files. 
+      unsigned Idx = 0, N = Record.size();
+      while (Idx < N) {
+        // Read information about the AST file.
+        ModuleKind ImportedKind = (ModuleKind)Record[Idx++];
+        unsigned Length = Record[Idx++];
+        llvm::SmallString<128> ImportedFile(Record.begin() + Idx,
+                                            Record.begin() + Idx + Length);
+        Idx += Length;
 
-      // Load the chained file, which is always a PCH file.
-      // FIXME: This could end up being a module.
-      switch(ReadASTCore(StringRef(BlobStart, BlobLen), MK_PCH)) {
-      case Failure: return Failure;
-        // If we have to ignore the dependency, we'll have to ignore this too.
-      case IgnorePCH: return IgnorePCH;
-      case Success: break;
-      }     
+        // Load the AST file.
+        switch(ReadASTCore(ImportedFile, ImportedKind)) {
+        case Failure: return Failure;
+          // If we have to ignore the dependency, we'll have to ignore this too.
+        case IgnorePCH: return IgnorePCH;
+        case Success: break;
+        }
+      }
       break;
     }
 

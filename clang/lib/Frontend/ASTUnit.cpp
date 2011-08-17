@@ -473,11 +473,6 @@ const std::string &ASTUnit::getOriginalSourceFileName() {
   return OriginalSourceFile;
 }
 
-const std::string &ASTUnit::getASTFileName() {
-  assert(isMainFileAST() && "Not an ASTUnit from an AST file!");
-  return static_cast<ASTReader *>(Ctx->getExternalSource())->getFileName();
-}
-
 llvm::MemoryBuffer *ASTUnit::getBufferForFile(StringRef Filename,
                                               std::string *ErrorStr) {
   assert(FileMgr);

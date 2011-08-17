@@ -317,9 +317,9 @@ namespace clang {
       /// \brief Record code for the array of dynamic classes.
       DYNAMIC_CLASSES = 25,
 
-      /// \brief Record code for the chained AST metadata, including the
-      /// AST file version and the name of the PCH this depends on.
-      CHAINED_METADATA = 26,
+      /// \brief Record code for the list of other AST files imported by
+      /// this AST file.
+      IMPORTS = 26,
 
       /// \brief Record code for referenced selector pool.
       REFERENCED_SELECTOR_POOL = 27,
