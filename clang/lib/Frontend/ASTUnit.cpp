@@ -2063,8 +2063,7 @@ void AugmentedCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &S,
   bool AddedResult = false;
   unsigned InContexts  
     = (Context.getKind() == CodeCompletionContext::CCC_Recovery? NormalContexts
-                                            : (1 << (Context.getKind() - 1)));
-
+                                        : (1ULL << (Context.getKind() - 1)));
   // Contains the set of names that are hidden by "local" completion results.
   llvm::StringSet<llvm::BumpPtrAllocator> HiddenNames;
   typedef CodeCompletionResult Result;
