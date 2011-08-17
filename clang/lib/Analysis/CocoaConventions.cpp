@@ -152,8 +152,7 @@ bool coreFoundation::followsCreateRule(StringRef functionName) {
     }
     else if (suffix.startswith("opy")) {
       it += 3;
-    }
-    else {
+    } else {
       // Keep scanning.
       continue;
     }

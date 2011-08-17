@@ -758,8 +758,7 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCContainerDecl *DC,
         ID = IM->getClassInterface();
         if (BW)
           IM->setHasSynthBitfield(true);
-      }
-      else {
+      } else {
         ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(DC);
         ID = CD->getClassInterface();
         if (BW)

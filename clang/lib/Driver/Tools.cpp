@@ -2438,11 +2438,10 @@ darwin::CC1::getDependencyFileName(const ArgList &Args,
 
   if (Arg *OutputOpt = Args.getLastArg(options::OPT_o)) {
     std::string Str(OutputOpt->getValue(Args));
-
     Res = Str.substr(0, Str.rfind('.'));
-  } else
+  } else {
     Res = darwin::CC1::getBaseInputStem(Args, Inputs);
-
+  }
   return Args.MakeArgString(Res + ".d");
 }
 
@@ -2452,9 +2451,9 @@ void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
     if (!strcmp(*it, "-Wno-self-assign")) {
       it = CmdArgs.erase(it);
       ie = CmdArgs.end();
-    }
-    else
+    } else {
       ++it;
+    }
   }
 }
 

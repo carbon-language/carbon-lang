@@ -1116,8 +1116,7 @@ void ASTContext::DeepCollectObjCIvars(const ObjCInterfaceDecl *OI,
     for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
          E = OI->ivar_end(); I != E; ++I)
       Ivars.push_back(*I);
-  }
-  else {
+  } else {
     ObjCInterfaceDecl *IDecl = const_cast<ObjCInterfaceDecl *>(OI);
     for (const ObjCIvarDecl *Iv = IDecl->all_declared_ivar_begin(); Iv; 
          Iv= Iv->getNextIvar())
@@ -2762,8 +2761,7 @@ QualType ASTContext::getTypeOfExprType(Expr *tofExpr) const {
       // typeof(expr) type. Use that as our canonical type.
       toe = new (*this, TypeAlignment) TypeOfExprType(tofExpr,
                                           QualType((TypeOfExprType*)Canon, 0));
-    }
-    else {
+    } else {
       // Build a new, canonical typeof(expr) type.
       Canon
         = new (*this, TypeAlignment) DependentTypeOfExprType(*this, tofExpr);
@@ -2846,8 +2844,7 @@ QualType ASTContext::getDecltypeType(Expr *e) const {
       // decltype type. Use that as our canonical type.
       dt = new (*this, TypeAlignment) DecltypeType(e, DependentTy,
                                        QualType((DecltypeType*)Canon, 0));
-    }
-    else {
+    } else {
       // Build a new, canonical typeof(expr) type.
       Canon = new (*this, TypeAlignment) DependentDecltypeType(*this, e);
       DependentDecltypeTypes.InsertNode(Canon, InsertPos);
@@ -5246,8 +5243,7 @@ void getIntersectionOfProtocols(ASTContext &Context,
     for (unsigned i = 0; i < RHSNumProtocols; ++i)
       if (InheritedProtocolSet.count(RHSProtocols[i]))
         IntersectionOfProtocols.push_back(RHSProtocols[i]);
-  }
-  else {
+  } else {
     llvm::SmallPtrSet<ObjCProtocolDecl *, 8> RHSInheritedProtocols;
     Context.CollectInheritedProtocols(RHS->getInterface(),
                                       RHSInheritedProtocols);

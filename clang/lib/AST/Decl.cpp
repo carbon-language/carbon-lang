@@ -1003,8 +1003,7 @@ void DeclaratorDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
     }
     // Set qualifier info.
     getExtInfo()->QualifierLoc = QualifierLoc;
-  }
-  else {
+  } else {
     // Here Qualifier == 0, i.e., we are removing the qualifier (if any).
     if (hasExtInfo()) {
       if (getExtInfo()->NumTemplParamLists == 0) {
@@ -2290,8 +2289,7 @@ void TagDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
       TypedefNameDeclOrQualifier = new (getASTContext()) ExtInfo;
     // Set qualifier info.
     getExtInfo()->QualifierLoc = QualifierLoc;
-  }
-  else {
+  } else {
     // Here Qualifier == 0, i.e., we are removing the qualifier (if any).
     if (hasExtInfo()) {
       if (getExtInfo()->NumTemplParamLists == 0) {

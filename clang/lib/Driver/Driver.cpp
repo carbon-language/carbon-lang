@@ -397,8 +397,9 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     if (types::getPreprocessedType(it->first) == types::TY_INVALID) {
       it = Inputs.erase(it);
       ie = Inputs.end();
-    } else
+    } else {
       ++it;
+    }
   }
   if (Inputs.empty()) {
     Diag(clang::diag::note_drv_command_failed_diag_msg)

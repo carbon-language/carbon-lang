@@ -425,8 +425,7 @@ void TransferFunctions::VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs) {
     vd = cast<VarDecl>(ds->getSingleDecl());
     if (!isTrackedVar(vd))
       vd = 0;
-  }
-  else {
+  } else {
     // Initialize the value of the reference variable.
     const FindVarResult &res = findBlockVarDecl(cast<Expr>(element));
     vd = res.getDecl();
@@ -642,8 +641,7 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
       vals.mergeIntoScratch(*(vB.second ? vB.second : vB.first), false);
       valsAB.first = vA.first;
       valsAB.second = &vals.getScratch();
-    }
-    else {
+    } else {
       // Merge the 'T' bits from the first and second.
       assert(b->getOpcode() == BO_LOr);
       vals.mergeIntoScratch(*vA.first, true);
