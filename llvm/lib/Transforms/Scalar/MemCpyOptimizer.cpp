@@ -384,7 +384,7 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
     
     if (StoreInst *NextStore = dyn_cast<StoreInst>(BI)) {
       // If this is a store, see if we can merge it in.
-      if (NextStore->isVolatile()) break;
+      if (!NextStore->isSimple()) break;
     
       // Check to see if this stored value is of the same byte-splattable value.
       if (ByteVal != isBytewiseValue(NextStore->getOperand(0)))
@@ -479,7 +479,7 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
 
 
 bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
-  if (SI->isVolatile()) return false;
+  if (!SI->isSimple()) return false;
   
   if (TD == 0) return false;
 
@@ -487,7 +487,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
   // happen to be using a load-store pair to implement it, rather than
   // a memcpy.
   if (LoadInst *LI = dyn_cast<LoadInst>(SI->getOperand(0))) {
-    if (!LI->isVolatile() && LI->hasOneUse() &&
+    if (LI->isSimple() && LI->hasOneUse() &&
         LI->getParent() == SI->getParent()) {
       MemDepResult ldep = MD->getDependency(LI);
       CallInst *C = 0;

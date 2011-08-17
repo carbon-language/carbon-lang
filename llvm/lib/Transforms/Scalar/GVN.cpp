@@ -982,8 +982,8 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
   unsigned SrcValSize = TD.getTypeStoreSize(SrcVal->getType());
   unsigned LoadSize = TD.getTypeStoreSize(LoadTy);
   if (Offset+LoadSize > SrcValSize) {
-    assert(!SrcVal->isVolatile() && "Cannot widen volatile load!");
-    assert(isa<IntegerType>(SrcVal->getType())&&"Can't widen non-integer load");
+    assert(SrcVal->isSimple() && "Cannot widen volatile/atomic load!");
+    assert(SrcVal->getType()->isIntegerTy() && "Can't widen non-integer load");
     // If we have a load/load clobber an DepLI can be widened to cover this
     // load, then we should widen it to the next power of 2 size big enough!
     unsigned NewLoadSize = Offset+LoadSize;
@@ -1669,7 +1669,7 @@ bool GVN::processLoad(LoadInst *L) {
   if (!MD)
     return false;
 
-  if (L->isVolatile())
+  if (!L->isSimple())
     return false;
 
   if (L->use_empty()) {

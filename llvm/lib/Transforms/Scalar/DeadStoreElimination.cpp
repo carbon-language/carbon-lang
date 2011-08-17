@@ -213,9 +213,9 @@ getLocForRead(Instruction *Inst, AliasAnalysis &AA) {
 /// isRemovable - If the value of this instruction and the memory it writes to
 /// is unused, may we delete this instruction?
 static bool isRemovable(Instruction *I) {
-  // Don't remove volatile stores.
+  // Don't remove volatile/atomic stores.
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
-    return !SI->isVolatile();
+    return SI->isUnordered();
   
   IntrinsicInst *II = cast<IntrinsicInst>(I);
   switch (II->getIntrinsicID()) {
@@ -447,7 +447,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       if (LoadInst *DepLoad = dyn_cast<LoadInst>(InstDep.getInst())) {
         if (SI->getPointerOperand() == DepLoad->getPointerOperand() &&
-            SI->getOperand(0) == DepLoad && !SI->isVolatile()) {
+            SI->getOperand(0) == DepLoad && isRemovable(SI)) {
           DEBUG(dbgs() << "DSE: Remove Store Of Load from same pointer:\n  "
                        << "LOAD: " << *DepLoad << "\n  STORE: " << *SI << '\n');
           
@@ -670,6 +670,8 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     
     // If we encounter a use of the pointer, it is no longer considered dead
     if (LoadInst *L = dyn_cast<LoadInst>(BBI)) {
+      if (!L->isUnordered()) // Be conservative with atomic/volatile load
+        break;
       LoadedLoc = AA->getLocation(L);
     } else if (VAArgInst *V = dyn_cast<VAArgInst>(BBI)) {
       LoadedLoc = AA->getLocation(V);
