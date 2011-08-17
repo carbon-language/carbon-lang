@@ -65,6 +65,8 @@ namespace clang {
                                             ClassTemplateSpecializationDecl *D);
     void VisitClassTemplatePartialSpecializationDecl(
                                      ClassTemplatePartialSpecializationDecl *D);
+    void VisitClassScopeFunctionSpecializationDecl(
+                                       ClassScopeFunctionSpecializationDecl *D);
     void VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
     void VisitValueDecl(ValueDecl *D);
     void VisitEnumConstantDecl(EnumConstantDecl *D);
@@ -1108,6 +1110,14 @@ void ASTDeclWriter::VisitClassTemplatePartialSpecializationDecl(
 
   Code = serialization::DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION;
 }
+
+void ASTDeclWriter::VisitClassScopeFunctionSpecializationDecl(
+                                    ClassScopeFunctionSpecializationDecl *D) {
+  VisitDecl(D);
+  Writer.AddDeclRef(D->getSpecialization(), Record);
+  Code = serialization::DECL_CLASS_SCOPE_FUNCTION_SPECIALIZATION;
+}
+
 
 void ASTDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   VisitRedeclarableTemplateDecl(D);

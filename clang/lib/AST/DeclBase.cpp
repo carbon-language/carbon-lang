@@ -628,7 +628,8 @@ void Decl::CheckAccessDeclContext() const {
       isa<ParmVarDecl>(this) ||
       // FIXME: a ClassTemplateSpecialization or CXXRecordDecl can have
       // AS_none as access specifier.
-      isa<CXXRecordDecl>(this))
+      isa<CXXRecordDecl>(this) ||
+      isa<ClassScopeFunctionSpecializationDecl>(this))
     return;
 
   assert(Access != AS_none &&
