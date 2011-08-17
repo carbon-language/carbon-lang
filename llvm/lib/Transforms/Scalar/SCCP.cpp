@@ -1436,7 +1436,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         // Only a few things that can be structs matter for undef.  Just send
         // all their results to overdefined.  We could be more precise than this
         // but it isn't worth bothering.
-        if (isa<CallInst>(I) || isa<SelectInst>(I)) {
+        if (!isa<ExtractValueInst>(I) && !isa<InsertValueInst>(I)) {
           for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
             LatticeVal &LV = getStructValueState(I, i);
             if (LV.isUndefined())
@@ -1449,16 +1449,31 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
       LatticeVal &LV = getValueState(I);
       if (!LV.isUndefined()) continue;
 
+      // extractvalue is safe; check here because the argument is a struct.
+      if (isa<ExtractValueInst>(I))
+        continue;
+
+      // Compute the operand LatticeVals, for convenience below.
+      // Anything taking a struct is conservatively assumed to require
+      // overdefined markings.
+      if (I->getOperand(0)->getType()->isStructTy()) {
+        markOverdefined(I);
+        return true;
+      }
       LatticeVal Op0LV = getValueState(I->getOperand(0));
       LatticeVal Op1LV;
-      if (I->getNumOperands() == 2)
+      if (I->getNumOperands() == 2) {
+        if (I->getOperand(1)->getType()->isStructTy()) {
+          markOverdefined(I);
+          return true;
+        }
+
         Op1LV = getValueState(I->getOperand(1));
+      }
       // If this is an instructions whose result is defined even if the input is
       // not fully defined, propagate the information.
       Type *ITy = I->getType();
       switch (I->getOpcode()) {
-      case Instruction::ExtractValue:
-        break; // Extract of undef -> undef
       case Instruction::Add:
       case Instruction::Sub:
       case Instruction::Trunc:

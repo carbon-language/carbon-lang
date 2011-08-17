@@ -161,3 +161,12 @@ define i1 @test9() {
 ; CHECK: @test9
 ; CHECK: icmp ugt
 }
+
+; Make sure we handle extractvalue
+define i64 @test10() { 
+entry:
+  %e = extractvalue { i64, i64 } undef, 1
+  ret i64 %e
+; CHECK: @test10
+; CHECK: ret i64 undef
+}
