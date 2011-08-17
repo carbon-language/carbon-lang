@@ -29,3 +29,13 @@
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS:         asrs r2, r3, #0
 @ CHECK-ERRORS:                      ^
+
+@ Out of range immediates for BKPT instruction.
+        bkpt #256
+        bkpt #-1
+error: invalid operand for instruction
+        bkpt #256
+             ^
+error: invalid operand for instruction
+        bkpt #-1
+             ^
