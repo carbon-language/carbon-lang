@@ -329,17 +329,18 @@ extern MCInstrDesc ARMInsts[];
 // that as a post-pass.
 static void AddThumb1SBit(MCInst &MI, bool InITBlock) {
   const MCOperandInfo *OpInfo = ARMInsts[MI.getOpcode()].OpInfo;
+  unsigned short NumOps = ARMInsts[MI.getOpcode()].NumOperands;
   MCInst::iterator I = MI.begin();
-  for (unsigned i = 0, e = MI.size(); i < e; ++i, ++I) {
+  for (unsigned i = 0; i < NumOps; ++i, ++I) {
+    if (I == MI.end()) break;
     if (OpInfo[i].isOptionalDef() && OpInfo[i].RegClass == ARM::CCRRegClassID) {
+      if (i > 0 && OpInfo[i-1].isPredicate()) continue;
       MI.insert(I, MCOperand::CreateReg(InITBlock ? 0 : ARM::CPSR));
       return;
     }
   }
 
-  if (OpInfo[MI.size()].isOptionalDef() &&
-      OpInfo[MI.size()].RegClass == ARM::CCRRegClassID)
-    MI.insert(MI.end(), MCOperand::CreateReg(InITBlock ? 0 : ARM::CPSR));
+  MI.insert(I, MCOperand::CreateReg(InITBlock ? 0 : ARM::CPSR));
 }
 
 // Most Thumb instructions don't have explicit predicates in the
@@ -367,8 +368,10 @@ void ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
     CC = ARMCC::AL;
 
   const MCOperandInfo *OpInfo = ARMInsts[MI.getOpcode()].OpInfo;
+  unsigned short NumOps = ARMInsts[MI.getOpcode()].NumOperands;
   MCInst::iterator I = MI.begin();
-  for (unsigned i = 0, e = MI.size(); i < e; ++i, ++I) {
+  for (unsigned i = 0; i < NumOps; ++i, ++I) {
+    if (I == MI.end()) break;
     if (OpInfo[i].isPredicate()) {
       I = MI.insert(I, MCOperand::CreateImm(CC));
       ++I;
@@ -380,11 +383,12 @@ void ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
     }
   }
 
-  MI.insert(MI.end(), MCOperand::CreateImm(CC));
+  I = MI.insert(I, MCOperand::CreateImm(CC));
+  ++I;
   if (CC == ARMCC::AL)
-    MI.insert(MI.end(), MCOperand::CreateReg(0));
+    MI.insert(I, MCOperand::CreateReg(0));
   else
-    MI.insert(MI.end(), MCOperand::CreateReg(ARM::CPSR));
+    MI.insert(I, MCOperand::CreateReg(ARM::CPSR));
 }
 
 // Thumb VFP instructions are a special case.  Because we share their
