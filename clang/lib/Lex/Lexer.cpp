@@ -416,9 +416,10 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   return TheTok.getLength();
 }
 
-SourceLocation Lexer::GetBeginningOfToken(SourceLocation Loc,
-                                          const SourceManager &SM,
-                                          const LangOptions &LangOpts) {
+static SourceLocation getBeginningOfFileToken(SourceLocation Loc,
+                                              const SourceManager &SM,
+                                              const LangOptions &LangOpts) {
+  assert(Loc.isFileID());
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   if (LocInfo.first.isInvalid())
     return Loc;
@@ -473,6 +474,25 @@ SourceLocation Lexer::GetBeginningOfToken(SourceLocation Loc,
   
   // We've passed our source location; just return the original source location.
   return Loc;
+}
+
+SourceLocation Lexer::GetBeginningOfToken(SourceLocation Loc,
+                                          const SourceManager &SM,
+                                          const LangOptions &LangOpts) {
+ if (Loc.isFileID())
+   return getBeginningOfFileToken(Loc, SM, LangOpts);
+ 
+ if (!SM.isMacroArgExpansion(Loc))
+   return Loc;
+
+ SourceLocation FileLoc = SM.getSpellingLoc(Loc);
+ SourceLocation BeginFileLoc = getBeginningOfFileToken(FileLoc, SM, LangOpts);
+ std::pair<FileID, unsigned> FileLocInfo = SM.getDecomposedLoc(FileLoc);
+ std::pair<FileID, unsigned> BeginFileLocInfo= SM.getDecomposedLoc(BeginFileLoc);
+ assert(FileLocInfo.first == BeginFileLocInfo.first &&
+        FileLocInfo.second >= BeginFileLocInfo.second);
+ return Loc.getFileLocWithOffset(SM.getDecomposedLoc(BeginFileLoc).second -
+                                 SM.getDecomposedLoc(FileLoc).second);
 }
 
 namespace {
