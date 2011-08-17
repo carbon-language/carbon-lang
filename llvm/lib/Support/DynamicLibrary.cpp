@@ -9,28 +9,26 @@
 //
 //  This header file implements the operating system DynamicLibrary concept.
 //
-// FIXME: This file leaks the ExplicitSymbols and OpenedHandles vector, and is
-// not thread safe!
+// FIXME: This file leaks ExplicitSymbols and OpenedHandles!
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Config/config.h"
 #include <cstdio>
 #include <cstring>
-#include <map>
-#include <vector>
 
 // Collection of symbol name/value pairs to be searched prior to any libraries.
-static std::map<std::string, void*> *ExplicitSymbols = 0;
+static llvm::StringMap<void *> *ExplicitSymbols = 0;
 
 namespace {
 
 struct ExplicitSymbolsDeleter {
   ~ExplicitSymbolsDeleter() {
-    if (ExplicitSymbols)
-      delete ExplicitSymbols;
+    delete ExplicitSymbols;
   }
 };
 
@@ -38,10 +36,17 @@ struct ExplicitSymbolsDeleter {
 
 static ExplicitSymbolsDeleter Dummy;
 
-void llvm::sys::DynamicLibrary::AddSymbol(const char* symbolName,
+
+static llvm::sys::SmartMutex<true>& getMutex() {
+  static llvm::sys::SmartMutex<true> HandlesMutex;
+  return HandlesMutex;
+}
+
+void llvm::sys::DynamicLibrary::AddSymbol(StringRef symbolName,
                                           void *symbolValue) {
+  SmartScopedLock<true> lock(getMutex());
   if (ExplicitSymbols == 0)
-    ExplicitSymbols = new std::map<std::string, void*>();
+    ExplicitSymbols = new llvm::StringMap<void*>();
   (*ExplicitSymbols)[symbolName] = symbolValue;
 }
 
@@ -61,66 +66,77 @@ using namespace llvm::sys;
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
-static std::vector<void *> *OpenedHandles = 0;
+static DenseSet<void *> *OpenedHandles = 0;
 
-
-static SmartMutex<true>& getMutex() {
-  static SmartMutex<true> HandlesMutex;
-  return HandlesMutex;
-}
-
-
-bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
-                                            std::string *ErrMsg) {
-  void *H = dlopen(Filename, RTLD_LAZY|RTLD_GLOBAL);
-  if (H == 0) {
-    if (ErrMsg) *ErrMsg = dlerror();
-    return true;
+DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
+                                                   std::string *errMsg) {
+  void *handle = dlopen(filename, RTLD_LAZY|RTLD_GLOBAL);
+  if (handle == 0) {
+    if (errMsg) *errMsg = dlerror();
+    return DynamicLibrary();
   }
+
 #ifdef __CYGWIN__
   // Cygwin searches symbols only in the main
   // with the handle of dlopen(NULL, RTLD_GLOBAL).
-  if (Filename == NULL)
-    H = RTLD_DEFAULT;
+  if (filename == NULL)
+    handle = RTLD_DEFAULT;
 #endif
-  SmartScopedLock<true> Lock(getMutex());
+
+  SmartScopedLock<true> lock(getMutex());
   if (OpenedHandles == 0)
-    OpenedHandles = new std::vector<void *>();
-  OpenedHandles->push_back(H);
-  return false;
+    OpenedHandles = new DenseSet<void *>();
+
+  // If we've already loaded this library, dlclose() the handle in order to
+  // keep the internal refcount at +1.
+  if (!OpenedHandles->insert(handle).second)
+    dlclose(handle);
+
+  return DynamicLibrary(handle);
 }
+
+void *DynamicLibrary::getAddressOfSymbol(const char *symbolName) {
+  if (!isValid())
+    return NULL;
+  return dlsym(Data, symbolName);
+}
+
 #else
 
 using namespace llvm;
 using namespace llvm::sys;
 
-bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
-                                            std::string *ErrMsg) {
-  if (ErrMsg) *ErrMsg = "dlopen() not supported on this platform";
-  return true;
+DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
+                                                   std::string *errMsg) {
+  if (errMsg) *errMsg = "dlopen() not supported on this platform";
+  return DynamicLibrary();
 }
+
+void *DynamicLibrary::getAddressOfSymbol(const char *symbolName) {
+  return NULL;
+}
+
 #endif
 
 namespace llvm {
 void *SearchForAddressOfSpecialSymbol(const char* symbolName);
 }
 
-void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
+void* DynamicLibrary::SearchForAddressOfSymbol(const char *symbolName) {
+  SmartScopedLock<true> Lock(getMutex());
+
   // First check symbols added via AddSymbol().
   if (ExplicitSymbols) {
-    std::map<std::string, void *>::iterator I =
-      ExplicitSymbols->find(symbolName);
-    std::map<std::string, void *>::iterator E = ExplicitSymbols->end();
+    StringMap<void *>::iterator i = ExplicitSymbols->find(symbolName);
 
-    if (I != E)
-      return I->second;
+    if (i != ExplicitSymbols->end())
+      return i->second;
   }
 
 #if HAVE_DLFCN_H
   // Now search the libraries.
-  SmartScopedLock<true> Lock(getMutex());
   if (OpenedHandles) {
-    for (std::vector<void *>::iterator I = OpenedHandles->begin(),
+    for (DenseSet<void *>::iterator I = OpenedHandles->begin(),
          E = OpenedHandles->end(); I != E; ++I) {
       //lt_ptr ptr = lt_dlsym(*I, symbolName);
       void *ptr = dlsym(*I, symbolName);

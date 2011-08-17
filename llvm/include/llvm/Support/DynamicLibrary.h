@@ -28,36 +28,57 @@ namespace sys {
   /// It also allows for symbols to be defined which don't live in any library,
   /// but rather the main program itself, useful on Windows where the main
   /// executable cannot be searched.
+  ///
+  /// Note: there is currently no interface for temporarily loading a library,
+  /// or for unloading libraries when the LLVM library is unloaded.
   class DynamicLibrary {
-    DynamicLibrary(); // DO NOT IMPLEMENT
+    // Opaque data used to interface with OS-specific dynamic library handling.
+    void *Data;
+
+    explicit DynamicLibrary(void *data = 0) : Data(data) {}
   public:
-    /// This function allows a library to be loaded without instantiating a
-    /// DynamicLibrary object. Consequently, it is marked as being permanent
-    /// and will only be unloaded when the program terminates.  This returns
-    /// false on success or returns true and fills in *ErrMsg on failure.
+    /// Returns true if the object refers to a valid library.
+    bool isValid() { return Data != 0; }
+
+    /// Searches through the library for the symbol \p symbolName. If it is
+    /// found, the address of that symbol is returned. If not, NULL is returned.
+    /// Note that NULL will also be returned if the library failed to load.
+    /// Use isValid() to distinguish these cases if it is important.
+    /// Note that this will \e not search symbols explicitly registered by
+    /// AddSymbol().
+    void *getAddressOfSymbol(const char *symbolName);
+
+    /// This function permanently loads the dynamic library at the given path.
+    /// The library will only be unloaded when the program terminates.
+    /// This returns a valid DynamicLibrary instance on success and an invalid
+    /// instance on failure (see isValid()). \p *errMsg will only be modified
+    /// if the library fails to load.
+    ///
+    /// It is safe to call this function multiple times for the same library.
     /// @brief Open a dynamic library permanently.
+    static DynamicLibrary getPermanentLibrary(const char *filename,
+                                              std::string *errMsg = 0);
+
+    /// This function permanently loads the dynamic library at the given path.
+    /// Use this instead of getPermanentLibrary() when you won't need to get
+    /// symbols from the library itself.
     ///
-    /// NOTE: This function is not thread safe.
-    ///
-    static bool LoadLibraryPermanently(const char *filename,
-                                       std::string *ErrMsg = 0);
+    /// It is safe to call this function multiple times for the same library.
+    static bool LoadLibraryPermanently(const char *Filename,
+                                       std::string *ErrMsg = 0) {
+      return !getPermanentLibrary(Filename, ErrMsg).isValid();
+    }
 
     /// This function will search through all previously loaded dynamic
-    /// libraries for the symbol \p symbolName. If it is found, the addressof
+    /// libraries for the symbol \p symbolName. If it is found, the address of
     /// that symbol is returned. If not, null is returned. Note that this will
-    /// search permanently loaded libraries (LoadLibraryPermanently) as well
-    /// as ephemerally loaded libraries (constructors).
+    /// search permanently loaded libraries (getPermanentLibrary()) as well
+    /// as explicitly registered symbols (AddSymbol()).
     /// @throws std::string on error.
     /// @brief Search through libraries for address of a symbol
-    ///
-    /// NOTE: This function is not thread safe.
-    ///
     static void *SearchForAddressOfSymbol(const char *symbolName);
 
     /// @brief Convenience function for C++ophiles.
-    ///
-    /// NOTE: This function is not thread safe.
-    ///
     static void *SearchForAddressOfSymbol(const std::string &symbolName) {
       return SearchForAddressOfSymbol(symbolName.c_str());
     }
@@ -66,18 +87,7 @@ namespace sys {
     /// value \p symbolValue.  These symbols are searched before any
     /// libraries.
     /// @brief Add searchable symbol/value pair.
-    ///
-    /// NOTE: This function is not thread safe.
-    ///
-    static void AddSymbol(const char *symbolName, void *symbolValue);
-
-    /// @brief Convenience function for C++ophiles.
-    ///
-    /// NOTE: This function is not thread safe.
-    ///
-    static void AddSymbol(const std::string &symbolName, void *symbolValue) {
-      AddSymbol(symbolName.c_str(), symbolValue);
-    }
+    static void AddSymbol(StringRef symbolName, void *symbolValue);
   };
 
 } // End sys namespace
