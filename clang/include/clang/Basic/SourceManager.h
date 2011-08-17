@@ -367,7 +367,11 @@ class IsBeforeInTranslationUnitCache {
   /// L/R QueryFID - These are the FID's of the cached query.  If these match up
   /// with a subsequent query, the result can be reused.
   FileID LQueryFID, RQueryFID;
-  
+
+  /// \brief True if LQueryFID was created before RQueryFID. This is used
+  /// to compare macro expansion locations.
+  bool IsLQFIDBeforeRQFID;
+
   /// CommonFID - This is the file found in common between the two #include
   /// traces.  It is the nearest common ancestor of the #include tree.
   FileID CommonFID;
@@ -392,13 +396,27 @@ public:
     // use the #include loc in the common file.
     if (LQueryFID != CommonFID) LOffset = LCommonOffset;
     if (RQueryFID != CommonFID) ROffset = RCommonOffset;
+
+    // It is common for multiple macro expansions to be "included" from the same
+    // location (expansion location), in which case use the order of the FileIDs
+    // to determine which came first.
+    if (LOffset == ROffset && LQueryFID != CommonFID && RQueryFID != CommonFID)
+      return IsLQFIDBeforeRQFID;
+
     return LOffset < ROffset;
   }
   
   // Set up a new query.
-  void setQueryFIDs(FileID LHS, FileID RHS) {
+  void setQueryFIDs(FileID LHS, FileID RHS, bool isLFIDBeforeRFID) {
+    assert(LHS != RHS);
     LQueryFID = LHS;
     RQueryFID = RHS;
+    IsLQFIDBeforeRQFID = isLFIDBeforeRFID;
+  }
+
+  void clear() {
+    LQueryFID = RQueryFID = FileID();
+    IsLQFIDBeforeRQFID = false;
   }
   
   void setCommonLoc(FileID commonFID, unsigned lCommonOffset,

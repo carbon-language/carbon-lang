@@ -1484,11 +1484,6 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   if (LHS == RHS)
     return false;
 
-  // If both locations are macro expansions, the order of their offsets reflect
-  // the order that the tokens, pointed to by these locations, were expanded
-  // (during parsing each token that is expanded by a macro, expands the
-  // SLocEntries).
-
   std::pair<FileID, unsigned> LOffs = getDecomposedLoc(LHS);
   std::pair<FileID, unsigned> ROffs = getDecomposedLoc(RHS);
 
@@ -1502,7 +1497,8 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
     return IsBeforeInTUCache.getCachedResult(LOffs.second, ROffs.second);
 
   // Okay, we missed in the cache, start updating the cache for this query.
-  IsBeforeInTUCache.setQueryFIDs(LOffs.first, ROffs.first);
+  IsBeforeInTUCache.setQueryFIDs(LOffs.first, ROffs.first,
+                          /*isLFIDBeforeRFID=*/LOffs.first.ID < ROffs.first.ID);
 
   // We need to find the common ancestor. The only way of doing this is to
   // build the complete include chain for one and then walking up the chain
@@ -1534,7 +1530,7 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   // This can happen if a location is in a built-ins buffer.
   // But see PR5662.
   // Clear the lookup cache, it depends on a common location.
-  IsBeforeInTUCache.setQueryFIDs(FileID(), FileID());
+  IsBeforeInTUCache.clear();
   bool LIsBuiltins = strcmp("<built-in>",
                             getBuffer(LOffs.first)->getBufferIdentifier()) == 0;
   bool RIsBuiltins = strcmp("<built-in>",
