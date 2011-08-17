@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-unused %s
 
 // Tests that overload resolution is treated as an unevaluated context.
 // PR5541

@@ -19,13 +19,13 @@ void test() {
   p == p; // expected-warning {{equality comparison result unused}} \
           // expected-note {{use '=' to turn this equality comparison into an assignment}} \
           // expected-warning {{self-comparison always evaluates to true}}
-  a == a; // FIXME: missing-warning {{equality comparison result unused}} \
-          // FIXME: missing-note {{use '=' to turn this equality comparison into an assignment}}
-  a == b; // FIXME: missing-warning {{equality comparison result unused}} \
-          // FIXME: missing-note {{use '=' to turn this equality comparison into an assignment}}
-  a != b; // FIXME: missing-warning {{inequality comparison result unused}} \
-          // FIXME: missing-note {{use '|=' to turn this inequality comparison into an or-assignment}}
-  A() == b; // FIXME: missing-warning {{equality comparison result unused}}
+  a == a; // expected-warning {{equality comparison result unused}} \
+          // expected-note {{use '=' to turn this equality comparison into an assignment}}
+  a == b; // expected-warning {{equality comparison result unused}} \
+          // expected-note {{use '=' to turn this equality comparison into an assignment}}
+  a != b; // expected-warning {{inequality comparison result unused}} \
+          // expected-note {{use '|=' to turn this inequality comparison into an or-assignment}}
+  A() == b; // expected-warning {{equality comparison result unused}}
   if (42) x == 7; // expected-warning {{equality comparison result unused}} \
                   // expected-note {{use '=' to turn this equality comparison into an assignment}}
   else if (42) x == 7; // expected-warning {{equality comparison result unused}} \

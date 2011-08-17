@@ -1524,8 +1524,21 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     R2 = cast<ArraySubscriptExpr>(this)->getRHS()->getSourceRange();
     return true;
 
+  case CXXOperatorCallExprClass: {
+    // We warn about operator== and operator!= even when user-defined operator
+    // overloads as there is no reasonable way to define these such that they
+    // have non-trivial, desirable side-effects. See the -Wunused-comparison
+    // warning: these operators are commonly typo'ed, and so warning on them
+    // provides additional value as well. If this list is updated,
+    // DiagnoseUnusedComparison should be as well.
+    const CXXOperatorCallExpr *Op = cast<CXXOperatorCallExpr>(this);
+    if (Op->getOperator() == OO_EqualEqual ||
+        Op->getOperator() == OO_ExclaimEqual)
+      return true;
+
+    // Fallthrough for generic call handling.
+  }
   case CallExprClass:
-  case CXXOperatorCallExprClass:
   case CXXMemberCallExprClass: {
     // If this is a direct call, get the callee.
     const CallExpr *CE = cast<CallExpr>(this);
