@@ -889,6 +889,10 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
     AddGnuCPlusPlusIncludePaths(
         "/usr/lib/gcc/x86_64-pc-linux-gnu/4.4.3/include/g++-v4",
         "x86_64-pc-linux-gnu", "32", "", triple);
+    // Gentoo amd64 gcc 4.3.4
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/lib/gcc/x86_64-pc-linux-gnu/4.3.4/include/g++-v4",
+        "x86_64-pc-linux-gnu", "", "", triple);
     // Gentoo amd64 gcc 4.3.2
     AddGnuCPlusPlusIncludePaths(
         "/usr/lib/gcc/x86_64-pc-linux-gnu/4.3.2/include/g++-v4",
