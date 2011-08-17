@@ -4205,34 +4205,6 @@ static SDValue getLegalSplat(SelectionDAG &DAG, SDValue V, int EltNo) {
   return DAG.getNode(ISD::BITCAST, dl, VT, V);
 }
 
-/// PromoteVectorToScalarSplat - Since there's no native support for
-/// scalar_to_vector for 256-bit AVX, a 128-bit scalar_to_vector +
-/// INSERT_SUBVECTOR is generated. Recognize this idiom and do the
-/// shuffle before the insertion, this yields less instructions in the end.
-static SDValue PromoteVectorToScalarSplat(ShuffleVectorSDNode *SV,
-                                          SelectionDAG &DAG) {
-  EVT SrcVT = SV->getValueType(0);
-  SDValue V1 = SV->getOperand(0);
-  DebugLoc dl = SV->getDebugLoc();
-  int NumElems = SrcVT.getVectorNumElements();
-
-  assert(SrcVT.is256BitVector() && "unknown howto handle vector type");
-  assert(SV->isSplat() && "shuffle must be a splat");
-
-  int SplatIdx = SV->getSplatIndex();
-  const int Mask[4] = { SplatIdx, SplatIdx, SplatIdx, SplatIdx };
-
-  EVT SVT = EVT::getVectorVT(*DAG.getContext(), SrcVT.getVectorElementType(),
-                             NumElems/2);
-  SDValue SV1 = DAG.getVectorShuffle(SVT, dl, V1.getOperand(1),
-                                     DAG.getUNDEF(SVT), Mask);
-  SDValue InsV = Insert128BitVector(DAG.getUNDEF(SrcVT), SV1,
-                                    DAG.getConstant(0, MVT::i32), DAG, dl);
-
-  return Insert128BitVector(InsV, SV1,
-                       DAG.getConstant(NumElems/2, MVT::i32), DAG, dl);
-}
-
 /// PromoteSplat - Promote a splat of v4i32, v8i16 or v16i8 to v4f32 and
 /// v8i32, v16i16 or v32i8 to v8f32.
 static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
@@ -6198,16 +6170,6 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
     // this be moved to DAGCombine instead?
     if (NumElem <= 4 && CanXFormVExtractWithShuffleIntoLoad(Op, DAG, TLI))
       return Op;
-
-    // Since there's no native support for scalar_to_vector for 256-bit AVX, a
-    // 128-bit scalar_to_vector + INSERT_SUBVECTOR is generated. Recognize this
-    // idiom and do the shuffle before the insertion, this yields less
-    // instructions in the end.
-    if (VT.is256BitVector() &&
-        V1.getOpcode() == ISD::INSERT_SUBVECTOR &&
-        V1.getOperand(0).getOpcode() == ISD::UNDEF &&
-        V1.getOperand(1).getOpcode() == ISD::SCALAR_TO_VECTOR)
-      return PromoteVectorToScalarSplat(SVOp, DAG);
 
     // Handle splats by matching through known shuffle masks
     if (VT.is128BitVector() && NumElem <= 4)
