@@ -1311,7 +1311,10 @@ BugReport::getRanges() {
 }
 
 SourceLocation BugReport::getLocation() const {
-  if (ErrorNode)
+  if (ErrorNode) {
+    (Location.isInvalid() &&
+     "Either Location or ErrorNode should be specified but not both.");
+
     if (const Stmt *S = GetCurrentOrPreviousStmt(ErrorNode)) {
       // For member expressions, return the location of the '.' or '->'.
       if (const MemberExpr *ME = dyn_cast<MemberExpr>(S))
@@ -1322,6 +1325,11 @@ SourceLocation BugReport::getLocation() const {
 
       return S->getLocStart();
     }
+
+  } else {
+    assert(Location.isValid());
+    return Location;
+  }
 
   return FullSourceLoc();
 }
@@ -1933,7 +1941,7 @@ void BugReporter::EmitBasicReport(StringRef name,
   // 'BT' is owned by BugReporter.
   BugType *BT = getBugTypeForName(name, category);
   FullSourceLoc L = getContext().getFullLoc(Loc);
-  BugReport *R = new DiagBugReport(*BT, str, L);
+  BugReport *R = new BugReport(*BT, str, L);
   for ( ; NumRanges > 0 ; --NumRanges, ++RBeg) R->addRange(*RBeg);
   EmitReport(R);
 }

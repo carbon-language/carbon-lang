@@ -79,6 +79,7 @@ protected:
   BugType& BT;
   std::string ShortDescription;
   std::string Description;
+  FullSourceLoc Location;
   const ExplodedNode *ErrorNode;
   SmallVector<SourceRange, 4> Ranges;
   Creators creators;
@@ -96,6 +97,9 @@ public:
             const ExplodedNode *errornode)
   : BT(bt), ShortDescription(shortDesc), Description(desc),
     ErrorNode(errornode) {}
+
+  BugReport(BugType& bt, StringRef desc, FullSourceLoc l)
+    : BT(bt), Description(desc), Location(l), ErrorNode(0) {}
 
   virtual ~BugReport();
 
@@ -418,25 +422,6 @@ public:
   }
 
   virtual BugReport::NodeResolver& getNodeResolver() = 0;
-};
-
-class DiagBugReport : public BugReport {
-  std::list<std::string> Strs;
-  FullSourceLoc L;
-public:
-  DiagBugReport(BugType& D, StringRef desc, FullSourceLoc l) :
-  BugReport(D, desc, 0), L(l) {}
-
-  virtual ~DiagBugReport() {}
-
-  // FIXME: Move out-of-line (virtual function).
-  SourceLocation getLocation() const { return L; }
-
-  void addString(StringRef s) { Strs.push_back(s); }
-
-  typedef std::list<std::string>::const_iterator str_iterator;
-  str_iterator str_begin() const { return Strs.begin(); }
-  str_iterator str_end() const { return Strs.end(); }
 };
 
 //===----------------------------------------------------------------------===//
