@@ -3476,17 +3476,27 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
 
 struct GetCursorData {
   SourceLocation TokenBeginLoc;
+  bool PointsAtMacroArgExpansion;
   CXCursor &BestCursor;
 
-  GetCursorData(SourceLocation tokenBegin, CXCursor &outputCursor)
-    : TokenBeginLoc(tokenBegin), BestCursor(outputCursor) { }
+  GetCursorData(SourceManager &SM,
+                SourceLocation tokenBegin, CXCursor &outputCursor)
+    : TokenBeginLoc(tokenBegin), BestCursor(outputCursor) {
+    PointsAtMacroArgExpansion = SM.isMacroArgExpansion(tokenBegin);
+  }
 };
 
-enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
-                                         CXCursor parent,
-                                         CXClientData client_data) {
+static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
+                                                CXCursor parent,
+                                                CXClientData client_data) {
   GetCursorData *Data = static_cast<GetCursorData *>(client_data);
   CXCursor *BestCursor = &Data->BestCursor;
+
+  // If we point inside a macro argument we should provide info of what the
+  // token is so use the actual cursor, don't replace it with a macro expansion
+  // cursor.
+  if (cursor.kind == CXCursor_MacroExpansion && Data->PointsAtMacroArgExpansion)
+    return CXChildVisit_Recurse;
   
   if (clang_isDeclaration(cursor.kind)) {
     // Avoid having the synthesized methods override the property decls.
@@ -3552,7 +3562,7 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
     // FIXME: Would be great to have a "hint" cursor, then walk from that
     // hint cursor upward until we find a cursor whose source range encloses
     // the region of interest, rather than starting from the translation unit.
-    GetCursorData ResultData(SLoc, Result);
+    GetCursorData ResultData(CXXUnit->getSourceManager(), SLoc, Result);
     CXCursor Parent = clang_getTranslationUnitCursor(TU);
     CursorVisitor CursorVis(TU, GetCursorVisitor, &ResultData,
                             Decl::MaxPCHLevel, true, SourceLocation(SLoc));
