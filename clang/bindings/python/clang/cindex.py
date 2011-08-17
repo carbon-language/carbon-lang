@@ -634,6 +634,14 @@ class Cursor(Structure):
         """
         return Cursor_extent(self)
 
+    @property
+    def type(self):
+        """
+        Retrieve the type (if any) of of the entity pointed at by the
+        cursor.
+        """
+        return Cursor_type(self)
+
     def get_children(self):
         """Return an iterator for accessing the children of this cursor."""
 
@@ -655,6 +663,165 @@ class Cursor(Structure):
         if res == Cursor_null():
             return None
         return res
+
+
+### Type Kinds ###
+
+class TypeKind(object):
+    """
+    Describes the kind of type.
+    """
+
+    # The unique kind objects, indexed by id.
+    _kinds = []
+    _name_map = None
+
+    def __init__(self, value):
+        if value >= len(TypeKind._kinds):
+            TypeKind._kinds += [None] * (value - len(TypeKind._kinds) + 1)
+        if TypeKind._kinds[value] is not None:
+            raise ValueError,'TypeKind already loaded'
+        self.value = value
+        TypeKind._kinds[value] = self
+        TypeKind._name_map = None
+
+    def from_param(self):
+        return self.value
+
+    @property
+    def name(self):
+        """Get the enumeration name of this cursor kind."""
+        if self._name_map is None:
+            self._name_map = {}
+            for key,value in TypeKind.__dict__.items():
+                if isinstance(value,TypeKind):
+                    self._name_map[value] = key
+        return self._name_map[self]
+
+    @staticmethod
+    def from_id(id):
+        if id >= len(TypeKind._kinds) or TypeKind._kinds[id] is None:
+            raise ValueError,'Unknown cursor kind'
+        return TypeKind._kinds[id]
+
+    def __repr__(self):
+        return 'TypeKind.%s' % (self.name,)
+
+
+
+TypeKind.INVALID = TypeKind(0)
+TypeKind.UNEXPOSED = TypeKind(1)
+TypeKind.VOID = TypeKind(2)
+TypeKind.BOOL = TypeKind(3)
+TypeKind.CHAR_U = TypeKind(4)
+TypeKind.UCHAR = TypeKind(5)
+TypeKind.CHAR16 = TypeKind(6)
+TypeKind.CHAR32 = TypeKind(7)
+TypeKind.USHORT = TypeKind(8)
+TypeKind.UINT = TypeKind(9)
+TypeKind.ULONG = TypeKind(10)
+TypeKind.ULONGLONG = TypeKind(11)
+TypeKind.UINT128 = TypeKind(12)
+TypeKind.CHAR_S = TypeKind(13)
+TypeKind.SCHAR = TypeKind(14)
+TypeKind.WCHAR = TypeKind(15)
+TypeKind.SHORT = TypeKind(16)
+TypeKind.INT = TypeKind(17)
+TypeKind.LONG = TypeKind(18)
+TypeKind.LONGLONG = TypeKind(19)
+TypeKind.INT128 = TypeKind(20)
+TypeKind.FLOAT = TypeKind(21)
+TypeKind.DOUBLE = TypeKind(22)
+TypeKind.LONGDOUBLE = TypeKind(23)
+TypeKind.NULLPTR = TypeKind(24)
+TypeKind.OVERLOAD = TypeKind(25)
+TypeKind.DEPENDENT = TypeKind(26)
+TypeKind.OBJCID = TypeKind(27)
+TypeKind.OBJCCLASS = TypeKind(28)
+TypeKind.OBJCSEL = TypeKind(29)
+TypeKind.COMPLEX = TypeKind(100)
+TypeKind.POINTER = TypeKind(101)
+TypeKind.BLOCKPOINTER = TypeKind(102)
+TypeKind.LVALUEREFERENCE = TypeKind(103)
+TypeKind.RVALUEREFERENCE = TypeKind(104)
+TypeKind.RECORD = TypeKind(105)
+TypeKind.ENUM = TypeKind(106)
+TypeKind.TYPEDEF = TypeKind(107)
+TypeKind.OBJCINTERFACE = TypeKind(108)
+TypeKind.OBJCOBJECTPOINTER = TypeKind(109)
+TypeKind.FUNCTIONNOPROTO = TypeKind(110)
+TypeKind.FUNCTIONPROTO = TypeKind(111)
+
+
+class Type(Structure):
+    """
+    The type of an element in the abstract syntax tree.
+    """
+    _fields_ = [("_kind_id", c_int), ("data", c_void_p * 2)]
+
+    @property
+    def kind(self):
+        """Return the kind of this type."""
+        return TypeKind.from_id(self._kind_id)
+
+    @staticmethod
+    def from_result(res, fn, args):
+        assert isinstance(res, Type)
+        return res
+
+    def get_canonical(self):
+        """
+        Return the canonical type for a Type.
+
+        Clang's type system explicitly models typedefs and all the
+        ways a specific type can be represented.  The canonical type
+        is the underlying type with all the "sugar" removed.  For
+        example, if 'T' is a typedef for 'int', the canonical type for
+        'T' would be 'int'.
+        """
+        return Type_get_canonical(self)
+
+    def is_const_qualified(self):
+        """
+        Determine whether a Type has the "const" qualifier set,
+        without looking through typedefs that may have added "const"
+        at a different level.
+        """
+        return Type_is_const_qualified(self)
+
+    def is_volatile_qualified(self):
+        """
+        Determine whether a Type has the "volatile" qualifier set,
+        without looking through typedefs that may have added
+        "volatile" at a different level.
+        """
+        return Type_is_volatile_qualified(self)
+
+    def is_restrict_qualified(self):
+        """
+        Determine whether a Type has the "restrict" qualifier set,
+        without looking through typedefs that may have added
+        "restrict" at a different level.
+        """
+        return Type_is_restrict_qualified(self)
+
+    def get_pointee(self):
+        """
+        For pointer types, returns the type of the pointee.
+        """
+        return Type_get_pointee(self)
+
+    def get_declaration(self):
+        """
+        Return the cursor for the declaration of the given type.
+        """
+        return Type_get_declaration(self)
+
+    def get_result(self):
+        """
+        Retrieve the result type associated with a function type.
+        """
+        return Type_get_result(self)
 
 ## CIndex Objects ##
 
@@ -1210,10 +1377,49 @@ Cursor_ref.argtypes = [Cursor]
 Cursor_ref.restype = Cursor
 Cursor_ref.errcheck = Cursor.from_result
 
+Cursor_type = lib.clang_getCursorType
+Cursor_type.argtypes = [Cursor]
+Cursor_type.restype = Type
+Cursor_type.errcheck = Type.from_result
+
 Cursor_visit_callback = CFUNCTYPE(c_int, Cursor, Cursor, py_object)
 Cursor_visit = lib.clang_visitChildren
 Cursor_visit.argtypes = [Cursor, Cursor_visit_callback, py_object]
 Cursor_visit.restype = c_uint
+
+# Type Functions
+Type_get_canonical = lib.clang_getCanonicalType
+Type_get_canonical.argtypes = [Type]
+Type_get_canonical.restype = Type
+Type_get_canonical.errcheck = Type.from_result
+
+Type_is_const_qualified = lib.clang_isConstQualifiedType
+Type_is_const_qualified.argtypes = [Type]
+Type_is_const_qualified.restype = bool
+
+Type_is_volatile_qualified = lib.clang_isVolatileQualifiedType
+Type_is_volatile_qualified.argtypes = [Type]
+Type_is_volatile_qualified.restype = bool
+
+Type_is_restrict_qualified = lib.clang_isRestrictQualifiedType
+Type_is_restrict_qualified.argtypes = [Type]
+Type_is_restrict_qualified.restype = bool
+
+Type_get_pointee = lib.clang_getPointeeType
+Type_get_pointee.argtypes = [Type]
+Type_get_pointee.restype = Type
+Type_get_pointee.errcheck = Type.from_result
+
+Type_get_declaration = lib.clang_getTypeDeclaration
+Type_get_declaration.argtypes = [Type]
+Type_get_declaration.restype = Cursor
+Type_get_declaration.errcheck = Cursor.from_result
+
+Type_get_result = lib.clang_getResultType
+Type_get_result.argtypes = [Type]
+Type_get_result.restype = Type
+Type_get_result.errcheck = Type.from_result
+
 
 # Index Functions
 Index_create = lib.clang_createIndex
@@ -1313,6 +1519,6 @@ _clang_getCompletionPriority.restype = c_int
 
 ###
 
-__all__ = ['Index', 'TranslationUnit', 'Cursor', 'CursorKind',
+__all__ = ['Index', 'TranslationUnit', 'Cursor', 'CursorKind', 'Type', 'TypeKind',
            'Diagnostic', 'FixIt', 'CodeCompletionResults', 'SourceRange',
            'SourceLocation', 'File']

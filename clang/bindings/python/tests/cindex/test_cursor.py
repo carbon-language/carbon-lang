@@ -1,4 +1,4 @@
-from clang.cindex import Index, CursorKind
+from clang.cindex import Index, CursorKind, TypeKind
 
 kInput = """\
 // FIXME: Find nicer way to drop builtins and other cruft.
@@ -47,8 +47,10 @@ def test_get_children():
     assert len(s0_nodes) == 2
     assert s0_nodes[0].kind == CursorKind.FIELD_DECL
     assert s0_nodes[0].spelling == 'a'
+    assert s0_nodes[0].type.kind == TypeKind.INT
     assert s0_nodes[1].kind == CursorKind.FIELD_DECL
     assert s0_nodes[1].spelling == 'b'
+    assert s0_nodes[1].type.kind == TypeKind.INT
 
     assert tu_nodes[1].kind == CursorKind.STRUCT_DECL
     assert tu_nodes[1].spelling == 's1'
