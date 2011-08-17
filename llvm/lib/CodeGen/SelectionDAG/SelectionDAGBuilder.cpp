@@ -1814,6 +1814,45 @@ void SelectionDAGBuilder::visitResume(const ResumeInst &RI) {
   llvm_unreachable("SelectionDAGBuilder shouldn't visit resume instructions!");
 }
 
+void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &LP) {
+  assert(FuncInfo.MBB->isLandingPad() &&
+         "Call to landingpad not in landing pad!");
+
+  MachineBasicBlock *MBB = FuncInfo.MBB;
+  MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
+  AddLandingPadInfo(LP, MMI, MBB);
+
+  SmallVector<EVT, 2> ValueVTs;
+  ComputeValueVTs(TLI, LP.getType(), ValueVTs);
+
+  // Insert the EXCEPTIONADDR instruction.
+  assert(FuncInfo.MBB->isLandingPad() &&
+         "Call to eh.exception not in landing pad!");
+  SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
+  SDValue Ops[2];
+  Ops[0] = DAG.getRoot();
+  SDValue Op1 = DAG.getNode(ISD::EXCEPTIONADDR, getCurDebugLoc(), VTs, Ops, 1);
+  SDValue Chain = Op1.getValue(1);
+
+  // Insert the EHSELECTION instruction.
+  VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
+  Ops[0] = Op1;
+  Ops[1] = Chain;
+  SDValue Op2 = DAG.getNode(ISD::EHSELECTION, getCurDebugLoc(), VTs, Ops, 2);
+  Chain = Op2.getValue(1);
+  Op2 = DAG.getSExtOrTrunc(Op2, getCurDebugLoc(), MVT::i32);
+
+  Ops[0] = Op1;
+  Ops[1] = Op2;
+  SDValue Res = DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(),
+                            DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
+                            &Ops[0], 2);
+
+  std::pair<SDValue, SDValue> RetPair = std::make_pair(Res, Chain);
+  setValue(&LP, RetPair.first);
+  DAG.setRoot(RetPair.second);
+}
+
 /// handleSmallSwitchCaseRange - Emit a series of specific tests (suitable for
 /// small case ranges).
 bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
@@ -2983,9 +3022,6 @@ void SelectionDAGBuilder::visitExtractValue(const ExtractValueInst &I) {
   setValue(&I, DAG.getNode(ISD::MERGE_VALUES, getCurDebugLoc(),
                            DAG.getVTList(&ValValueVTs[0], NumValValues),
                            &Values[0], NumValValues));
-}
-
-void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &I) {
 }
 
 void SelectionDAGBuilder::visitGetElementPtr(const User &I) {

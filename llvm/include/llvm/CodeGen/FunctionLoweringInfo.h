@@ -221,6 +221,11 @@ void AddCatchInfo(const CallInst &I,
 void CopyCatchInfo(const BasicBlock *SuccBB, const BasicBlock *LPad,
                    MachineModuleInfo *MMI, FunctionLoweringInfo &FLI);
 
+/// AddLandingPadInfo - Extract the exception handling information from the
+/// landingpad instruction and add them to the specified machine module info.
+void AddLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,
+                       MachineBasicBlock *MBB);
+
 } // end namespace llvm
 
 #endif
