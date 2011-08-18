@@ -2451,7 +2451,7 @@ void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
     const char *Option = *it;
 
     // We only remove warning options.
-    if (!strncmp(Option, "-W", 2)) {
+    if (strncmp(Option, "-W", 2)) {
       ++it;
       continue;
     }
