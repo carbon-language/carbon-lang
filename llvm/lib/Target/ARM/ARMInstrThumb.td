@@ -490,31 +490,6 @@ let isBranch = 1, isTerminator = 1 in
   let Inst{7-0} = target;
 }
 
-// Compare and branch on zero / non-zero
-let isBranch = 1, isTerminator = 1 in {
-  def tCBZ  : T1I<(outs), (ins tGPR:$Rn, t_cbtarget:$target), IIC_Br,
-                  "cbz\t$Rn, $target", []>,
-              T1Misc<{0,0,?,1,?,?,?}> {
-    // A8.6.27
-    bits<6> target;
-    bits<3> Rn;
-    let Inst{9}   = target{5};
-    let Inst{7-3} = target{4-0};
-    let Inst{2-0} = Rn;
-  }
-
-  def tCBNZ : T1I<(outs), (ins tGPR:$Rn, t_cbtarget:$target), IIC_Br,
-                  "cbnz\t$Rn, $target", []>,
-              T1Misc<{1,0,?,1,?,?,?}> {
-    // A8.6.27
-    bits<6> target;
-    bits<3> Rn;
-    let Inst{9}   = target{5};
-    let Inst{7-3} = target{4-0};
-    let Inst{2-0} = Rn;
-  }
-}
-
 // Tail calls
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // Darwin versions.
