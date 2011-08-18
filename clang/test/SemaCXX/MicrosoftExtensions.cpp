@@ -81,6 +81,10 @@ struct M {
     float __stdcall subtractP(); 
 };
 
+// __unaligned handling
+typedef char __unaligned *aligned_type;
+
+
 template<typename T> void h1(T (__stdcall M::* const )()) { }
 
 void m1() {

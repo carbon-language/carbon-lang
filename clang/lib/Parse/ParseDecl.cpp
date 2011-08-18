@@ -302,7 +302,8 @@ void Parser::ParseMicrosoftTypeAttributes(ParsedAttributes &attrs) {
   // FIXME: Allow Sema to distinguish between these and real attributes!
   while (Tok.is(tok::kw___fastcall) || Tok.is(tok::kw___stdcall) ||
          Tok.is(tok::kw___thiscall) || Tok.is(tok::kw___cdecl)   ||
-         Tok.is(tok::kw___ptr64) || Tok.is(tok::kw___w64)) {
+         Tok.is(tok::kw___ptr64) || Tok.is(tok::kw___w64) ||
+         Tok.is(tok::kw___unaligned)) {
     IdentifierInfo *AttrName = Tok.getIdentifierInfo();
     SourceLocation AttrNameLoc = ConsumeToken();
     if (Tok.is(tok::kw___ptr64) || Tok.is(tok::kw___w64))
@@ -1726,6 +1727,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw___stdcall:
     case tok::kw___fastcall:
     case tok::kw___thiscall:
+    case tok::kw___unaligned:
       ParseMicrosoftTypeAttributes(DS.getAttributes());
       continue;
 
@@ -2274,6 +2276,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
   case tok::kw___stdcall:
   case tok::kw___fastcall:
   case tok::kw___thiscall:
+  case tok::kw___unaligned:
     ParseMicrosoftTypeAttributes(DS.getAttributes());
     return true;
 
@@ -2982,6 +2985,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw___w64:
   case tok::kw___ptr64:
   case tok::kw___pascal:
+  case tok::kw___unaligned:
 
   case tok::kw___private:
   case tok::kw___local:
@@ -3129,6 +3133,7 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw___ptr64:
   case tok::kw___forceinline:
   case tok::kw___pascal:
+  case tok::kw___unaligned:
 
   case tok::kw___private:
   case tok::kw___local:
@@ -3264,6 +3269,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
     case tok::kw___stdcall:
     case tok::kw___fastcall:
     case tok::kw___thiscall:
+    case tok::kw___unaligned:
       if (VendorAttributesAllowed) {
         ParseMicrosoftTypeAttributes(DS.getAttributes());
         continue;
@@ -3676,7 +3682,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   // Eat any Microsoft extensions.
   if  (Tok.is(tok::kw___cdecl) || Tok.is(tok::kw___stdcall) ||
        Tok.is(tok::kw___thiscall) || Tok.is(tok::kw___fastcall) ||
-       Tok.is(tok::kw___w64) || Tok.is(tok::kw___ptr64)) {
+       Tok.is(tok::kw___w64) || Tok.is(tok::kw___ptr64) ||
+       Tok.is(tok::kw___unaligned)) {
     ParseMicrosoftTypeAttributes(attrs);
   }
   // Eat any Borland extensions.

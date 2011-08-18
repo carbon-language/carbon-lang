@@ -405,6 +405,7 @@ KEYWORD(__stdcall                   , KEYALL)
 KEYWORD(__fastcall                  , KEYALL)
 KEYWORD(__thiscall                  , KEYALL)
 KEYWORD(__forceinline               , KEYALL)
+KEYWORD(__unaligned                 , KEYMS)
 
 // OpenCL-specific keywords
 KEYWORD(__kernel                    , KEYOPENCL)
