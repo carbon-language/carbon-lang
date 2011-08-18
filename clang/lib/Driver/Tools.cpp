@@ -2448,7 +2448,11 @@ darwin::CC1::getDependencyFileName(const ArgList &Args,
 void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
   for (ArgStringList::iterator it = CmdArgs.begin(), ie = CmdArgs.end(); 
        it != ie;) {
-    if (!strcmp(*it, "-Wno-self-assign")) {
+    if (!strcmp(*it, "-Wno-self-assign") ||
+	!strcmp(*it, "-Wno-c++0x-extensions") ||
+	!strcmp(*it, "-Wc++0x-extensions") ||
+	!strcmp(*it, "-Wno-sign-conversion") ||
+	!strcmp(*it, "-Wsign-conversion")) {
       it = CmdArgs.erase(it);
       ie = CmdArgs.end();
     } else {
