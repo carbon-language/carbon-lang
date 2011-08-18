@@ -392,15 +392,27 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   InputList Inputs;
   BuildInputs(C.getDefaultToolChain(), C.getArgs(), Inputs);
 
-  // Remove any inputs from the input list that cannot be preprocessed.
   for (InputList::iterator it = Inputs.begin(), ie = Inputs.end(); it != ie;) {
-    if (types::getPreprocessedType(it->first) == types::TY_INVALID) {
+    bool IgnoreInput = false;
+
+    // Ignore input from stdin or any inputs that cannot be preprocessed.
+    if (!strcmp(it->second->getValue(C.getArgs()), "-")) {
+      Diag(clang::diag::note_drv_command_failed_diag_msg)
+        << "Error generating preprocessed source(s) - ignoring input from stdin"
+        ".";
+      IgnoreInput = true;
+    } else if (types::getPreprocessedType(it->first) == types::TY_INVALID) {
+      IgnoreInput = true;
+    }
+
+    if (IgnoreInput) {
       it = Inputs.erase(it);
       ie = Inputs.end();
     } else {
       ++it;
     }
   }
+
   if (Inputs.empty()) {
     Diag(clang::diag::note_drv_command_failed_diag_msg)
       << "Error generating preprocessed source(s) - no preprocessable inputs.";
