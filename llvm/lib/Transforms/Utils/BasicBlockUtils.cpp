@@ -317,9 +317,8 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
 /// UpdateAnalysisInformation - Update DominatorTree, LoopInfo, and LCCSA
 /// analysis information.
 static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
-                                      BasicBlock *const *Preds,
-                                      unsigned NumPreds, Pass *P,
-                                      bool &HasLoopExit) {
+                                      ArrayRef<BasicBlock *> Preds,
+                                      Pass *P, bool &HasLoopExit) {
   if (!P) return;
 
   LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>();
@@ -331,18 +330,20 @@ static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
   bool IsLoopEntry = !!L;
   bool SplitMakesNewLoopHeader = false;
   if (LI) {
-    for (unsigned i = 0; i != NumPreds; ++i) {
+    for (ArrayRef<BasicBlock*>::iterator
+           i = Preds.begin(), e = Preds.end(); i != e; ++i) {
+      BasicBlock *Pred = *i;
       // If we need to preserve LCSSA, determine if any of the preds is a loop
       // exit.
       if (PreserveLCSSA)
-        if (Loop *PL = LI->getLoopFor(Preds[i]))
+        if (Loop *PL = LI->getLoopFor(Pred))
           if (!PL->contains(OldBB))
             HasLoopExit = true;
 
       // If we need to preserve LoopInfo, note whether any of the preds crosses
       // an interesting loop boundary.
       if (!L) continue;
-      if (L->contains(Preds[i]))
+      if (L->contains(Pred))
         IsLoopEntry = false;
       else
         SplitMakesNewLoopHeader = true;
@@ -362,8 +363,10 @@ static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
     // loops enclose them, and select the most-nested loop which contains the
     // loop containing the block being split.
     Loop *InnermostPredLoop = 0;
-    for (unsigned i = 0; i != NumPreds; ++i)
-      if (Loop *PredLoop = LI->getLoopFor(Preds[i])) {
+    for (ArrayRef<BasicBlock*>::iterator
+           i = Preds.begin(), e = Preds.end(); i != e; ++i) {
+      BasicBlock *Pred = *i;
+      if (Loop *PredLoop = LI->getLoopFor(Pred)) {
         // Seek a loop which actually contains the block being split (to avoid
         // adjacent loops).
         while (PredLoop && !PredLoop->contains(OldBB))
@@ -375,6 +378,7 @@ static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
              InnermostPredLoop->getLoopDepth() < PredLoop->getLoopDepth()))
           InnermostPredLoop = PredLoop;
       }
+    }
 
     if (InnermostPredLoop)
       InnermostPredLoop->addBasicBlockToLoop(NewBB, LI->getBase());
@@ -430,7 +434,8 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
 
   // Update DominatorTree, LoopInfo, and LCCSA analysis information.
   bool HasLoopExit = false;
-  UpdateAnalysisInformation(BB, NewBB, Preds, NumPreds, P, HasLoopExit);
+  UpdateAnalysisInformation(BB, NewBB, ArrayRef<BasicBlock*>(Preds, NumPreds),
+                            P, HasLoopExit);
 
   // Otherwise, create a new PHI node in NewBB for each PHI node in BB.
   AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : 0;
