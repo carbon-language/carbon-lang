@@ -116,9 +116,9 @@ void test() {
 // CHECK: Identifier: "k" [16:7 - 16:8] VarDecl=k:16:7 (Definition)
 // CHECK: Punctuation: "=" [16:9 - 16:10] VarDecl=k:16:7 (Definition)
 // CHECK: Identifier: "REVERSE_MACRO" [16:11 - 16:24] macro expansion=REVERSE_MACRO:10:9
-// CHECK: Punctuation: "(" [16:24 - 16:25] UnexposedStmt=
+// CHECK: Punctuation: "(" [16:24 - 16:25]
 // CHECK: Identifier: "t" [16:25 - 16:26] DeclRefExpr=t:15:7
-// CHECK: Punctuation: "," [16:26 - 16:27] UnexposedStmt=
+// CHECK: Punctuation: "," [16:26 - 16:27]
 // CHECK: Identifier: "z" [16:27 - 16:28] DeclRefExpr=z:14:7
 // CHECK: Punctuation: ")" [16:28 - 16:29] UnexposedStmt=
 // CHECK: Punctuation: ";" [16:29 - 16:30] UnexposedStmt=
@@ -126,9 +126,9 @@ void test() {
 // CHECK: Identifier: "j" [17:7 - 17:8] VarDecl=j:17:7 (Definition)
 // CHECK: Punctuation: "=" [17:9 - 17:10] VarDecl=j:17:7 (Definition)
 // CHECK: Identifier: "TWICE_MACRO" [17:11 - 17:22] macro expansion=TWICE_MACRO:11:9
-// CHECK: Punctuation: "(" [17:22 - 17:23] UnexposedStmt=
+// CHECK: Punctuation: "(" [17:22 - 17:23]
 // CHECK: Identifier: "k" [17:23 - 17:24] DeclRefExpr=k:16:7
-// CHECK: Punctuation: "+" [17:25 - 17:26] UnexposedStmt=
+// CHECK: Punctuation: "+" [17:25 - 17:26] UnexposedExpr=
 // CHECK: Identifier: "k" [17:27 - 17:28] DeclRefExpr=k:16:7
 // CHECK: Punctuation: ")" [17:28 - 17:29] UnexposedStmt=
 // CHECK: Punctuation: ";" [17:29 - 17:30] UnexposedStmt=
@@ -173,11 +173,11 @@ void test() {
 // CHECK: Identifier: "fun_with_macro_bodies" [25:3 - 25:24] macro expansion=fun_with_macro_bodies:21:9
 // CHECK: Punctuation: "(" [25:24 - 25:25] UnexposedStmt=
 // CHECK: Identifier: "x" [25:25 - 25:26] DeclRefExpr=x:24:7
-// CHECK: Punctuation: "," [25:26 - 25:27] UnexposedStmt=
+// CHECK: Punctuation: "," [25:26 - 25:27]
 // CHECK: Punctuation: "{" [25:28 - 25:29] UnexposedStmt=
 // CHECK: Keyword: "int" [25:30 - 25:33] UnexposedStmt=
 // CHECK: Identifier: "z" [25:34 - 25:35] VarDecl=z:25:34 (Definition)
-// CHECK: Punctuation: "=" [25:36 - 25:37] UnexposedStmt=
+// CHECK: Punctuation: "=" [25:36 - 25:37] VarDecl=z:25:34 (Definition)
 // CHECK: Identifier: "x" [25:38 - 25:39] DeclRefExpr=x:24:7
 // CHECK: Punctuation: ";" [25:39 - 25:40] UnexposedStmt=
 // CHECK: Punctuation: "++" [25:41 - 25:43] UnexposedExpr=
