@@ -26,3 +26,30 @@ void f(void)
   strlcpy((*s5)->f2[x], s2, sizeof(s2)); // expected-warning {{size argument in 'strlcpy' call appears to be size of the source; expected the size of the destination}} expected-note {{change size argument to be the size of the destination}}
   strlcpy(s1+3, s2, sizeof(s2)); // expected-warning {{size argument in 'strlcpy' call appears to be size of the source; expected the size of the destination}}
 }
+
+// Don't issue FIXIT for flexible arrays.
+struct S {
+  int y; 
+  char x[];
+};
+
+void flexible_arrays(struct S *s) {
+  char str[] = "hi";
+  strlcpy(s->x, str, sizeof(str));  // expected-warning {{size argument in 'strlcpy' call appears to be size of the source; expected the size of the destination}}
+}
+
+// Don't issue FIXIT for destinations of size 1.
+void size_1() {
+  char z[1];
+  char str[] = "hi";
+
+  strlcpy(z, str, sizeof(str));  // expected-warning {{size argument in 'strlcpy' call appears to be size of the source; expected the size of the destination}}
+}
+
+// Support VLAs.
+void vlas(int size) {
+  char z[size];
+  char str[] = "hi";
+
+  strlcpy(z, str, sizeof(str)); // expected-warning {{size argument in 'strlcpy' call appears to be size of the source; expected the size of the destination}} expected-note {{change size argument to be the size of the destination}}
+}

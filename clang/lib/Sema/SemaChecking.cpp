@@ -2071,18 +2071,26 @@ void Sema::CheckStrlcpycatArguments(const CallExpr *Call,
   // pointers if we know the actual size, like if DstArg is 'array+2'
   // we could say 'sizeof(array)-2'.
   const Expr *DstArg = Call->getArg(0)->IgnoreParenImpCasts();
+  QualType DstArgTy = DstArg->getType();
   
-  if (DstArg->getType()->isArrayType()) {
-    llvm::SmallString<128> sizeString;
-    llvm::raw_svector_ostream OS(sizeString);
-    OS << "sizeof(";
-    DstArg->printPretty(OS, Context, 0, Context.PrintingPolicy);
-    OS << ")";
-    
-    Diag(OriginalSizeArg->getLocStart(), diag::note_strlcpycat_wrong_size)
-      << FixItHint::CreateReplacement(OriginalSizeArg->getSourceRange(),
-                                      OS.str());
+  // Only handle constant-sized or VLAs, but not flexible members.
+  if (const ConstantArrayType *CAT = Context.getAsConstantArrayType(DstArgTy)) {
+    // Only issue the FIXIT for arrays of size > 1.
+    if (CAT->getSize().getSExtValue() <= 1)
+      return;
+  } else if (!DstArgTy->isVariableArrayType()) {
+    return;
   }
+
+  llvm::SmallString<128> sizeString;
+  llvm::raw_svector_ostream OS(sizeString);
+  OS << "sizeof(";
+  DstArg->printPretty(OS, Context, 0, Context.PrintingPolicy);
+  OS << ")";
+  
+  Diag(OriginalSizeArg->getLocStart(), diag::note_strlcpycat_wrong_size)
+    << FixItHint::CreateReplacement(OriginalSizeArg->getSourceRange(),
+                                    OS.str());
 }
 
 //===--- CHECK: Return Address of Stack Variable --------------------------===//
