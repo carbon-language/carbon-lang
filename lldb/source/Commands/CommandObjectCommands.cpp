@@ -351,11 +351,19 @@ public:
     user can now use 'bfl' instead.  The '%1' and '%2' are positional placeholders \n\
     for the actual arguments that will be passed when the alias command is used. \n\
     The number in the placeholder refers to the position/order the actual value \n\
-    occupies when the alias is used.  So all the occurrences of '%1' in the alias \n\
+    occupies when the alias is used.  All the occurrences of '%1' in the alias \n\
     will be replaced with the first argument, all the occurrences of '%2' in the \n\
     alias will be replaced with the second argument, and so on.  This also allows \n\
     actual arguments to be used multiple times within an alias (see 'process \n\
-    launch' example below).  So in the 'bfl' case, the actual file value will be \n\
+    launch' example below).  \n\
+    Note: the positional arguments must substitute as whole words in the resultant\n\
+    command, so you can't at present do something like:\n\
+    \n\
+    commands alias bcppfl breakpoint set -f %1.cpp -l %2\n\
+    \n\
+    to get the file extension \".cpp\" automatically appended.  For more complex\n\
+    aliasing, use the \"command regex\" command instead.\n\
+    \nSo in the 'bfl' case, the actual file value will be \n\
     filled in with the first argument following 'bfl' and the actual line number \n\
     value will be filled in with the second argument.  The user would use this \n\
     alias as follows: \n\
