@@ -1030,26 +1030,26 @@ static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
 
 /// createGlobalVariableDIE - create global variable DIE.
 void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
-  DIGlobalVariable GV(N);
-
   // Check for pre-existence.
-  if (getDIE(GV))
+  if (getDIE(N))
     return;
 
-  DIType GTy = GV.getType();
+  DIGlobalVariable GV(N);
   DIE *VariableDIE = new DIE(GV.getTag());
-
-  bool isGlobalVariable = GV.getGlobal() != NULL;
+  // Add to map.
+  insertDIE(N, VariableDIE);
 
   // Add name.
   addString(VariableDIE, dwarf::DW_AT_name, dwarf::DW_FORM_string,
                    GV.getDisplayName());
   StringRef LinkageName = GV.getLinkageName();
+  bool isGlobalVariable = GV.getGlobal() != NULL;
   if (!LinkageName.empty() && isGlobalVariable)
     addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name, 
                      dwarf::DW_FORM_string,
                      getRealLinkageName(LinkageName));
   // Add type.
+  DIType GTy = GV.getType();
   addType(VariableDIE, GTy);
 
   // Add scoping info.
@@ -1060,8 +1060,6 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   }
   // Add line number info.
   addSourceLine(VariableDIE, GV);
-  // Add to map.
-  insertDIE(N, VariableDIE);
   // Add to context owner.
   DIDescriptor GVContext = GV.getContext();
   addToContextOwner(VariableDIE, GVContext);
