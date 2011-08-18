@@ -46,6 +46,14 @@ class SCEVAffFunc {
   LnrTransSet LnrTrans;
 
 public:
+  // The scalar evolution expression from which we derived this affine
+  // expression.
+  //
+  // We will use it to directly translation from scalar expressions to the
+  // corresponding isl objects. As soon as this finished, most of SCEVAffFunc
+  // can be removed.
+  const SCEV *OriginalSCEV;
+
   // The type of the scev affine function
   enum SCEVAffFuncType {
     None = 0,
@@ -72,11 +80,10 @@ public:
 
   /// @brief Create a new SCEV affine function with memory access type or
   ///        condition type
-
-  explicit SCEVAffFunc(SCEVAffFuncType Type, unsigned elemBytes = 0,
-                       Value* baseAddr = 0)
-    : TransComp(0), BaseAddr(baseAddr), ElemBytes(elemBytes),
-      FuncType(Type), has_sign(true) {}
+  explicit SCEVAffFunc(SCEVAffFuncType Type, const SCEV *OriginalSCEV,
+                       unsigned elemBytes = 0)
+    : TransComp(0), OriginalSCEV(OriginalSCEV), BaseAddr(0),
+      ElemBytes(elemBytes), FuncType(Type), has_sign(true) {}
 
   /// @brief Construct a new SCEVAffFunc from a SCEV
   ///

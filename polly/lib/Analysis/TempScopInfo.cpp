@@ -42,6 +42,8 @@ SCEVAffFunc::SCEVAffFunc(const SCEV *S, SCEVAffFuncType Type, Region &R,
   assert(S && "S can not be null!");
   assert(!isa<SCEVCouldNotCompute>(S) && "Non affine function in Scop");
 
+  OriginalSCEV = S;
+
   for (AffineSCEVIterator I = affine_begin(S, SE), E = affine_end();
        I != E; ++I) {
     // The constant part must be a SCEVConstant.
@@ -294,7 +296,7 @@ bool TempScopInfo::isReduction(BasicBlock &BB) {
   return false;
 }
 
-void TempScopInfo::buildAccessFunctions(Region &R, ParamSetType &Params,
+void TempScopInfo::buildAccessFunctions(Region &R, ParamSetType &Parameter,
                                         BasicBlock &BB) {
   AccFuncSetType Functions;
 
@@ -313,10 +315,11 @@ void TempScopInfo::buildAccessFunctions(Region &R, ParamSetType &Params,
         Type = SCEVAffFunc::WriteMem;
       }
 
-      Functions.push_back(std::make_pair(SCEVAffFunc(Type, Size), &Inst));
+      const SCEV *AccessFunction = SE->getSCEV(getPointerOperand(Inst));
+      Functions.push_back(
+        std::make_pair(SCEVAffFunc(Type, AccessFunction, Size), &Inst));
 
-      Value *Ptr = getPointerOperand(Inst);
-      buildAffineFunction(SE->getSCEV(Ptr), Functions.back().first, R, Params);
+      buildAffineFunction(AccessFunction, Functions.back().first, R, Parameter);
     }
   }
 
@@ -341,8 +344,8 @@ void TempScopInfo::buildLoopBounds(TempScop &Scop) {
     if (LoopBounds.find(L) != LoopBounds.end())
       continue;
 
-    LoopBounds[L] = SCEVAffFunc(SCEVAffFunc::Eq);
     const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
+    LoopBounds[L] = SCEVAffFunc(SCEVAffFunc::Eq, LoopCount);
     buildAffineFunction(LoopCount, LoopBounds[L], Scop.getMaxRegion(),
                         Scop.getParamSet());
 
