@@ -2448,18 +2448,19 @@ darwin::CC1::getDependencyFileName(const ArgList &Args,
 void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
   for (ArgStringList::iterator it = CmdArgs.begin(), ie = CmdArgs.end(); 
        it != ie;) {
-    const char *Option = *it;
+
+    StringRef Option = *it;
 
     // We only remove warning options.
-    if (strncmp(Option, "-W", 2)) {
+    if (!Option.startswith("-W")) {
       ++it;
       continue;
     }
 
-    if (strncmp(Option, "-Wno-", 5))
-      Option = &Option[2];
+    if (Option.startswith("-Wno-"))
+      Option = Option.substr(5);
     else
-      Option = &Option[5];
+      Option = Option.substr(2);
 
     bool RemoveOption = llvm::StringSwitch<bool>(Option)
       .Case("address-of-temporary", true)
