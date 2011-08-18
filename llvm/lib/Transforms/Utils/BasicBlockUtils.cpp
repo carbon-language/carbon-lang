@@ -389,6 +389,56 @@ static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
   }
 }
 
+/// UpdatePHINodes - Update the PHI nodes in OrigBB to include the values coming
+/// from NewBB. This also updates AliasAnalysis, if available.
+static void UpdatePHINodes(BasicBlock *OrigBB, BasicBlock *NewBB,
+                           ArrayRef<BasicBlock*> Preds, BranchInst *BI,
+                           Pass *P, bool HasLoopExit) {
+  // Otherwise, create a new PHI node in NewBB for each PHI node in OrigBB.
+  AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : 0;
+  for (BasicBlock::iterator I = OrigBB->begin(); isa<PHINode>(I); ) {
+    PHINode *PN = cast<PHINode>(I++);
+
+    // Check to see if all of the values coming in are the same.  If so, we
+    // don't need to create a new PHI node, unless it's needed for LCSSA.
+    Value *InVal = 0;
+    if (!HasLoopExit) {
+      InVal = PN->getIncomingValueForBlock(Preds[0]);
+      for (unsigned i = 1, e = Preds.size(); i != e; ++i)
+        if (InVal != PN->getIncomingValueForBlock(Preds[i])) {
+          InVal = 0;
+          break;
+        }
+    }
+
+    if (InVal) {
+      // If all incoming values for the new PHI would be the same, just don't
+      // make a new PHI.  Instead, just remove the incoming values from the old
+      // PHI.
+      for (unsigned i = 0, e = Preds.size(); i != e; ++i)
+        PN->removeIncomingValue(Preds[i], false);
+    } else {
+      // If the values coming into the block are not the same, we need a PHI.
+      // Create the new PHI node, insert it into NewBB at the end of the block
+      PHINode *NewPHI =
+        PHINode::Create(PN->getType(), Preds.size(), PN->getName() + ".ph", BI);
+      if (AA) AA->copyValue(PN, NewPHI);
+      
+      // Move all of the PHI values for 'Preds' to the new PHI.
+      for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
+        Value *V = PN->removeIncomingValue(Preds[i], false);
+        NewPHI->addIncoming(V, Preds[i]);
+      }
+
+      InVal = NewPHI;
+    }
+
+    // Add an incoming value to the PHI node in the loop for the preheader
+    // edge.
+    PN->addIncoming(InVal, NewBB);
+  }
+}
+
 /// SplitBlockPredecessors - This method transforms BB by introducing a new
 /// basic block into the function, and moving some of the predecessors of BB to
 /// be predecessors of the new block.  The new predecessors are indicated by the
@@ -437,49 +487,9 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   UpdateAnalysisInformation(BB, NewBB, ArrayRef<BasicBlock*>(Preds, NumPreds),
                             P, HasLoopExit);
 
-  // Otherwise, create a new PHI node in NewBB for each PHI node in BB.
-  AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : 0;
-  for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ) {
-    PHINode *PN = cast<PHINode>(I++);
-    
-    // Check to see if all of the values coming in are the same.  If so, we
-    // don't need to create a new PHI node, unless it's needed for LCSSA.
-    Value *InVal = 0;
-    if (!HasLoopExit) {
-      InVal = PN->getIncomingValueForBlock(Preds[0]);
-      for (unsigned i = 1; i != NumPreds; ++i)
-        if (InVal != PN->getIncomingValueForBlock(Preds[i])) {
-          InVal = 0;
-          break;
-        }
-    }
-
-    if (InVal) {
-      // If all incoming values for the new PHI would be the same, just don't
-      // make a new PHI.  Instead, just remove the incoming values from the old
-      // PHI.
-      for (unsigned i = 0; i != NumPreds; ++i)
-        PN->removeIncomingValue(Preds[i], false);
-    } else {
-      // If the values coming into the block are not the same, we need a PHI.
-      // Create the new PHI node, insert it into NewBB at the end of the block
-      PHINode *NewPHI =
-        PHINode::Create(PN->getType(), NumPreds, PN->getName()+".ph", BI);
-      if (AA) AA->copyValue(PN, NewPHI);
-      
-      // Move all of the PHI values for 'Preds' to the new PHI.
-      for (unsigned i = 0; i != NumPreds; ++i) {
-        Value *V = PN->removeIncomingValue(Preds[i], false);
-        NewPHI->addIncoming(V, Preds[i]);
-      }
-      InVal = NewPHI;
-    }
-    
-    // Add an incoming value to the PHI node in the loop for the preheader
-    // edge.
-    PN->addIncoming(InVal, NewBB);
-  }
-
+  // Update the PHI nodes in BB with the values coming from NewBB.
+  UpdatePHINodes(BB, NewBB, ArrayRef<BasicBlock*>(Preds, NumPreds), BI,
+                 P, HasLoopExit);
   return NewBB;
 }
 
