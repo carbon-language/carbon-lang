@@ -5145,7 +5145,7 @@ static void DiagnoseNarrowingInInitList(
     bool Constant, const APValue &ConstantValue) {
   if (Constant) {
     S.Diag(InitE->getLocStart(),
-           S.getLangOptions().CPlusPlus0x
+           S.getLangOptions().CPlusPlus0x && !S.getLangOptions().Microsoft
            ? diag::err_init_list_constant_narrowing
            : diag::warn_init_list_constant_narrowing)
       << InitE->getSourceRange()
@@ -5153,7 +5153,7 @@ static void DiagnoseNarrowingInInitList(
       << EntityType;
   } else
     S.Diag(InitE->getLocStart(),
-           S.getLangOptions().CPlusPlus0x
+           S.getLangOptions().CPlusPlus0x && !S.getLangOptions().Microsoft
            ? diag::err_init_list_variable_narrowing
            : diag::warn_init_list_variable_narrowing)
       << InitE->getSourceRange()
