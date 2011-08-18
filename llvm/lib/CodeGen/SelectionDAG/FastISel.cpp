@@ -66,17 +66,22 @@ using namespace llvm;
 void FastISel::startNewBlock() {
   LocalValueMap.clear();
 
-  // Start out as null, meaining no local-value instructions have
-  // been emitted.
-  LastLocalValue = 0;
+  EmitStartPt = 0;
 
-  // Advance the last local value past any EH_LABEL instructions.
+  // Advance the emit start point past any EH_LABEL instructions.
   MachineBasicBlock::iterator
     I = FuncInfo.MBB->begin(), E = FuncInfo.MBB->end();
   while (I != E && I->getOpcode() == TargetOpcode::EH_LABEL) {
-    LastLocalValue = I;
+    EmitStartPt = I;
     ++I;
   }
+  LastLocalValue = EmitStartPt;
+}
+
+void FastISel::flushLocalValueMap() {
+  LocalValueMap.clear();
+  LastLocalValue = EmitStartPt;
+  recomputeInsertPt();
 }
 
 bool FastISel::hasTrivialKill(const Value *V) const {
@@ -644,6 +649,16 @@ bool FastISel::SelectCall(const User *I) {
     return true;
   }
   }
+
+  // Usually, it does not make sense to initialize a value,
+  // make an unrelated function call and use the value, because
+  // it tends to be spilled on the stack. So, we move the pointer
+  // to the last local value to the beginning of the block, so that
+  // all the values which have already been materialized,
+  // appear after the call. It also makes sense to skip intrinsics
+  // since they tend to be inlined.
+  if (!isa<IntrinsicInst>(F))
+    flushLocalValueMap();
 
   // An arbitrary call. Bail.
   return false;

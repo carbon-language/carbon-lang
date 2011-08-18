@@ -260,3 +260,26 @@ define void @test21(double* %p1) {
 ; CHECK-NOT: pxor
 ; CHECK: movsd	LCPI
 }
+
+; Check that immediate arguments to a function
+; do not cause massive spilling and are used
+; as immediates just before the call.
+define void @test22() nounwind {
+entry:
+  call void @foo22(i32 0)
+  call void @foo22(i32 1)
+  call void @foo22(i32 2)
+  call void @foo22(i32 3)
+  ret void
+; CHECK: test22:
+; CHECK: movl	$0, %edi
+; CHECK: callq	_foo22
+; CHECK: movl	$1, %edi
+; CHECK: callq	_foo22
+; CHECK: movl	$2, %edi
+; CHECK: callq	_foo22
+; CHECK: movl	$3, %edi
+; CHECK: callq	_foo22
+}
+
+declare void @foo22(i32)
