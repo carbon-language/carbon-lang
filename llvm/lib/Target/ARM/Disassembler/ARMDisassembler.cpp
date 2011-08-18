@@ -1317,27 +1317,34 @@ static DecodeStatus DecodeCPSInstruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned iflags = fieldFromInstruction32(Insn, 6, 3);
   unsigned mode = fieldFromInstruction32(Insn, 0, 5);
 
-  // imod == '01' --> UNPREDICTABLE
-  if (imod == 1) return Fail;
+  DecodeStatus S = Success;
 
-  if (M && mode && imod && iflags) {
+  // imod == '01' --> UNPREDICTABLE
+  // NOTE: Even though this is technically UNPREDICTABLE, we choose to
+  // return failure here.  The '01' imod value is unprintable, so there's
+  // nothing useful we could do even if we returned UNPREDICTABLE.
+
+  if (imod == 1) CHECK(S, Fail);
+
+  if (imod && M) {
     Inst.setOpcode(ARM::CPS3p);
     Inst.addOperand(MCOperand::CreateImm(imod));
     Inst.addOperand(MCOperand::CreateImm(iflags));
     Inst.addOperand(MCOperand::CreateImm(mode));
-    return Success;
-  } else if (!mode && !M) {
+  } else if (imod && !M) {
     Inst.setOpcode(ARM::CPS2p);
     Inst.addOperand(MCOperand::CreateImm(imod));
     Inst.addOperand(MCOperand::CreateImm(iflags));
-    return Success;
-  } else if (!imod && !iflags && M) {
+    if (mode) CHECK(S, Unpredictable);
+  } else if (!imod && M) {
     Inst.setOpcode(ARM::CPS1p);
     Inst.addOperand(MCOperand::CreateImm(mode));
-    return Success;
-  }
+    if (iflags) CHECK(S, Unpredictable);
+  } else
+    // imod == '00' && M == '0' --> UNPREDICTABLE
+    CHECK(S, Unpredictable);
 
-  return Fail;
+  return S;
 }
 
 static DecodeStatus DecodeSMLAInstruction(llvm::MCInst &Inst, unsigned Insn,
@@ -2649,7 +2656,7 @@ static DecodeStatus DecodeSTRPreImm(llvm::MCInst &Inst, unsigned Insn,
   imm |= fieldFromInstruction32(Insn, 23, 1) << 12;
   unsigned pred = fieldFromInstruction32(Insn, 28, 4);
 
-  if (Rn == 0xF || Rn == Rt) return Unpredictable; // UNPREDICTABLE
+  if (Rn == 0xF || Rn == Rt) CHECK(S, Unpredictable);
 
   CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   CHECK(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder));
@@ -2670,7 +2677,7 @@ static DecodeStatus DecodeSTRPreReg(llvm::MCInst &Inst, unsigned Insn,
   imm |= fieldFromInstruction32(Insn, 23, 1) << 12;
   unsigned pred = fieldFromInstruction32(Insn, 28, 4);
 
-  if (Rn == 0xF || Rn == Rt) return Unpredictable; // UNPREDICTABLE
+  if (Rn == 0xF || Rn == Rt) CHECK(S, Unpredictable);
 
   CHECK(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder));
   CHECK(S, DecodeGPRRegisterClass(Inst, Rt, Address, Decoder));
