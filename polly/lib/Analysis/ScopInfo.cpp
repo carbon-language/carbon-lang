@@ -619,114 +619,60 @@ void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
   }
 }
 
-static isl_map *MapValueToLHS(isl_dim *Model) {
-  std::string MapString;
-  isl_map *Map;
+isl_set *ScopStmt::toConditionSet(const Comparison &Comp, isl_dim *dim) const {
+  isl_pw_aff *LHS = SCEVAffinator::getPwAff(this, Comp.getLHS()->OriginalSCEV,
+                                            0);
+  isl_pw_aff *RHS = SCEVAffinator::getPwAff(this, Comp.getRHS()->OriginalSCEV,
+                                            0);
 
-  MapString = "{[i0] -> [i0, o1]}";
-  Map = isl_map_read_from_str(isl_dim_get_ctx(Model), MapString.c_str(), -1);
-  return isl_map_align_params(Map, Model);
-}
+  isl_set *set;
 
-static isl_map *MapValueToRHS(isl_dim *Model) {
-  std::string MapString;
-  isl_map *Map;
-
-  MapString = "{[i0] -> [o0, i0]}";
-  Map = isl_map_read_from_str(isl_dim_get_ctx(Model), MapString.c_str(), -1);
-  return isl_map_align_params(Map, Model);
-}
-
-static isl_set *getComparison(isl_dim *Model, const ICmpInst::Predicate Pred) {
-  std::string SetString;
-
-  switch (Pred) {
+  switch (Comp.getPred()) {
   case ICmpInst::ICMP_EQ:
-    SetString = "{[i0, i1] : i0 = i1}";
+    set = isl_pw_aff_eq_set(LHS, RHS);
     break;
   case ICmpInst::ICMP_NE:
-    SetString = "{[i0, i1] : i0 + 1 <= i1; [i0, i1] : i0 - 1 >= i1}";
+    set = isl_pw_aff_ne_set(LHS, RHS);
     break;
   case ICmpInst::ICMP_SLT:
-    SetString = "{[i0, i1] : i0 + 1 <= i1}";
-    break;
-  case ICmpInst::ICMP_ULT:
-    SetString = "{[i0, i1] : i0 + 1 <= i1}";
-    break;
-  case ICmpInst::ICMP_SGT:
-    SetString = "{[i0, i1] : i0 >= i1 + 1}";
-    break;
-  case ICmpInst::ICMP_UGT:
-    SetString = "{[i0, i1] : i0 >= i1 + 1}";
+    set = isl_pw_aff_lt_set(LHS, RHS);
     break;
   case ICmpInst::ICMP_SLE:
-    SetString = "{[i0, i1] : i0 <= i1}";
+    set = isl_pw_aff_le_set(LHS, RHS);
     break;
-  case ICmpInst::ICMP_ULE:
-    SetString = "{[i0, i1] : i0 <= i1}";
+  case ICmpInst::ICMP_SGT:
+    set = isl_pw_aff_gt_set(LHS, RHS);
     break;
   case ICmpInst::ICMP_SGE:
-    SetString = "{[i0, i1] : i0 >= i1}";
+    set = isl_pw_aff_ge_set(LHS, RHS);
     break;
+  case ICmpInst::ICMP_ULT:
+  case ICmpInst::ICMP_UGT:
+  case ICmpInst::ICMP_ULE:
   case ICmpInst::ICMP_UGE:
-    SetString = "{[i0, i1] : i0 >= i1}";
-    break;
+    llvm_unreachable("Unsigned comparisons not yet supported");
   default:
     llvm_unreachable("Non integer predicate not supported");
   }
 
-  isl_set *Set = isl_set_read_from_str(isl_dim_get_ctx(Model),
-                                       SetString.c_str(), -1);
-  return isl_set_align_params(Set, Model);
+  set = isl_set_set_tuple_name(set, isl_dim_get_tuple_name(dim, isl_dim_set));
+
+  return set;
 }
 
-static isl_set *compareValues(isl_map *LeftValue, isl_map *RightValue,
-                              const ICmpInst::Predicate Predicate) {
-  isl_dim *Model = isl_map_get_dim(LeftValue);
-
-  isl_map *MapToLHS = MapValueToLHS(isl_dim_copy(Model));
-  isl_map *MapToRHS = MapValueToRHS(isl_dim_copy(Model));
-
-  isl_map *LeftValueAtLHS = isl_map_apply_range(LeftValue, MapToLHS);
-  isl_map *RightValueAtRHS = isl_map_apply_range(RightValue, MapToRHS);
-
-  isl_map *BothValues = isl_map_intersect(LeftValueAtLHS, RightValueAtRHS);
-  isl_set *Comparison = getComparison(isl_dim_copy(Model), Predicate);
-
-  isl_map *ComparedValues = isl_map_intersect_range(BothValues, Comparison);
-  return isl_map_domain(ComparedValues);
-}
-
-isl_set *ScopStmt::toConditionSet(const Comparison &Comp, isl_dim *dim) const {
-  isl_map *LHSValue = getValueOf(*Comp.getLHS(), this, dim);
-  isl_map *RHSValue = getValueOf(*Comp.getRHS(), this, dim);
-
-  return compareValues(LHSValue, RHSValue, Comp.getPred());
-}
-
-isl_set *ScopStmt::toUpperLoopBound(const SCEVAffFunc &UpperBound, isl_dim *dim,
+isl_set *ScopStmt::toUpperLoopBound(const SCEVAffFunc &UpperBound, isl_dim *Dim,
 				    unsigned BoundedDimension) const {
-  // Set output dimension to bounded dimension.
-  isl_dim *RHSDim = isl_dim_alloc(Parent.getCtx(), 0, getNumIterators(), 1);
-  RHSDim = isl_dim_set_tuple_name(RHSDim, isl_dim_in, getBaseName());
-  isl_constraint *c = isl_equality_alloc(isl_dim_copy(RHSDim));
-  isl_int v;
-  isl_int_init(v);
-  isl_int_set_si(v, 1);
-  isl_constraint_set_coefficient(c, isl_dim_in, BoundedDimension, v);
-  isl_int_set_si(v, -1);
-  isl_constraint_set_coefficient(c, isl_dim_out, 0, v);
-  isl_int_clear(v);
-  isl_basic_map *bmap = isl_basic_map_universe(RHSDim);
-  bmap = isl_basic_map_add_constraint(bmap, c);
-
-  isl_map *LHSValue = isl_map_from_basic_map(bmap);
-  isl_dim *Model = isl_set_get_dim(getParent()->getContext());
-  LHSValue = isl_map_align_params(LHSValue, Model);
-
-  isl_map *RHSValue = getValueOf(UpperBound, this, dim);
-
-  return compareValues(LHSValue, RHSValue, ICmpInst::ICMP_SLE);
+  // FIXME: We should choose a consistent scheme of when to name the dimensions.
+  isl_dim *UnnamedDim = isl_dim_copy(Dim);
+  UnnamedDim = isl_dim_set_tuple_name(UnnamedDim, isl_dim_set, 0);
+  isl_local_space *LocalSpace = isl_local_space_from_dim (UnnamedDim);
+  isl_aff *LAff = isl_aff_set_coefficient_si (isl_aff_zero (LocalSpace),
+                                              isl_dim_set, BoundedDimension, 1);
+  isl_pw_aff *BoundedDim = isl_pw_aff_from_aff(LAff);
+  isl_pw_aff *Bound = SCEVAffinator::getPwAff(this, UpperBound.OriginalSCEV, 0);
+  isl_set *set = isl_pw_aff_le_set(BoundedDim, Bound);
+  set = isl_set_set_tuple_name(set, isl_dim_get_tuple_name(Dim, isl_dim_set));
+  return set;
 }
 
 void ScopStmt::buildIterationDomainFromLoops(TempScop &tempScop) {
