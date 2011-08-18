@@ -3039,6 +3039,7 @@ processInstruction(MCInst &Inst,
     // If the conditional is AL, we really want tB.
     if (Inst.getOperand(1).getImm() == ARMCC::AL)
       Inst.setOpcode(ARM::tB);
+    break;
   }
 }
 
