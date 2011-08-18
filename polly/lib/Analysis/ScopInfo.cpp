@@ -67,21 +67,46 @@ static std::string convertInt(int number)
   return returnvalue;
 }
 
+static isl_set *set_remove_dim_ids(isl_set *set) {
+  isl_ctx *ctx = isl_set_get_ctx(set);
+  int numParams = isl_set_n_param(set);
+  isl_printer *p = isl_printer_to_str(ctx);
+  isl_set *new_set;
+  char *str;
+  const char *name = isl_set_get_tuple_name(set);
+
+  p = isl_printer_set_output_format (p, ISL_FORMAT_EXT_POLYLIB);
+  p = isl_printer_print_set(p, set);
+
+  str = isl_printer_get_str (p);
+  new_set = isl_set_read_from_str (ctx, str, numParams);
+  new_set = isl_set_set_tuple_name(new_set, name);
+  free (str);
+  isl_set_free (set);
+  isl_printer_free (p);
+  return new_set;
+}
+
 static isl_map *map_remove_dim_ids(isl_map *map) {
   isl_ctx *ctx = isl_map_get_ctx(map);
   int numParams = isl_map_n_param(map);
   isl_printer *p = isl_printer_to_str(ctx);
   char *str;
+  isl_map *new_map;
+  const char *name_in = isl_map_get_tuple_name(map, isl_dim_in);
+  const char *name_out = isl_map_get_tuple_name(map, isl_dim_out);
 
   p = isl_printer_set_output_format (p, ISL_FORMAT_EXT_POLYLIB);
   p = isl_printer_print_map(p, map);
-  isl_map_free (map);
 
   str = isl_printer_get_str (p);
-  map = isl_map_read_from_str (ctx, str, numParams);
+  new_map = isl_map_read_from_str (ctx, str, numParams);
+  new_map = isl_map_set_tuple_name(new_map, isl_dim_in, name_in);
+  new_map = isl_map_set_tuple_name(new_map, isl_dim_out, name_out);
+  isl_map_free (map);
   free (str);
   isl_printer_free (p);
-  return map;
+  return new_map;
 }
 
 /// Translate a SCEVExpression into an isl_pw_aff object.
@@ -289,20 +314,8 @@ static isl_map *getValueOf(const SCEVAffFunc &AffFunc,
   isl_map *Map = isl_map_from_pw_aff(Affine);
   isl_dim *CtxDim = isl_set_get_dim(Statement->getParent()->getContext());
 
-  int i = 0;
-  for (Scop::const_param_iterator PI = Statement->getParent()->param_begin(),
-       PE = Statement->getParent()->param_end(); PI != PE; ++PI) {
-    const SCEV *scev = *PI;
-    isl_id *id = isl_id_alloc(isl_dim_get_ctx(CtxDim),
-                              ("p" + convertInt(i)).c_str(),
-                              (void *) scev);
-    CtxDim = isl_dim_set_dim_id(CtxDim, isl_dim_param, i, id);
-    i++;
-  }
-
   isl_map_align_params(Map, CtxDim);
   const char *dimname = isl_dim_get_tuple_name(dim, isl_dim_set);
-  Map = map_remove_dim_ids(Map);
   Map = isl_map_set_tuple_name(Map, isl_dim_in, dimname);
   return Map;
 }
@@ -372,7 +385,7 @@ MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
 
   // Devide the access function by the size of the elements in the function.
   isl_dim *dim2 = isl_dim_alloc(Statement->getIslContext(),
-                                    Statement->getNumParams(), 1, 1);
+                                0, 1, 1);
   isl_basic_map *bmap = isl_basic_map_universe(isl_dim_copy(dim2));
   isl_constraint *c = isl_equality_alloc(dim2);
   isl_int v;
@@ -385,10 +398,16 @@ MemoryAccess::MemoryAccess(const SCEVAffFunc &AffFunc, ScopStmt *Statement) {
   bmap = isl_basic_map_add_constraint(bmap, c);
   isl_map* dataSizeMap = isl_map_from_basic_map(bmap);
 
+  isl_dim *Model = isl_set_get_dim(Statement->getParent()->getContext());
+  dataSizeMap = isl_map_align_params(dataSizeMap, Model);
+
   AccessRelation = isl_map_apply_range(AccessRelation, dataSizeMap);
 
   AccessRelation = isl_map_set_tuple_name(AccessRelation, isl_dim_out,
                                           getBaseName().c_str());
+
+  // FIXME: Temporarily remove dimension ids.
+  AccessRelation = map_remove_dim_ids(AccessRelation);
 }
 
 MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement) {
@@ -600,26 +619,25 @@ void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
   }
 }
 
-static isl_map *MapValueToLHS(isl_ctx *Context, unsigned ParameterNumber) {
+static isl_map *MapValueToLHS(isl_dim *Model) {
   std::string MapString;
   isl_map *Map;
 
   MapString = "{[i0] -> [i0, o1]}";
-  Map = isl_map_read_from_str(Context, MapString.c_str(), -1);
-  return isl_map_add_dims(Map, isl_dim_param, ParameterNumber);
+  Map = isl_map_read_from_str(isl_dim_get_ctx(Model), MapString.c_str(), -1);
+  return isl_map_align_params(Map, Model);
 }
 
-static isl_map *MapValueToRHS(isl_ctx *Context, unsigned ParameterNumber) {
+static isl_map *MapValueToRHS(isl_dim *Model) {
   std::string MapString;
   isl_map *Map;
 
   MapString = "{[i0] -> [o0, i0]}";
-  Map = isl_map_read_from_str(Context, MapString.c_str(), -1);
-  return isl_map_add_dims(Map, isl_dim_param, ParameterNumber);
+  Map = isl_map_read_from_str(isl_dim_get_ctx(Model), MapString.c_str(), -1);
+  return isl_map_align_params(Map, Model);
 }
 
-static isl_set *getComparison(isl_ctx *Context, const ICmpInst::Predicate Pred,
-                              unsigned ParameterNumber) {
+static isl_set *getComparison(isl_dim *Model, const ICmpInst::Predicate Pred) {
   std::string SetString;
 
   switch (Pred) {
@@ -657,23 +675,23 @@ static isl_set *getComparison(isl_ctx *Context, const ICmpInst::Predicate Pred,
     llvm_unreachable("Non integer predicate not supported");
   }
 
-  isl_set *Set = isl_set_read_from_str(Context, SetString.c_str(), -1);
-  return isl_set_add_dims(Set, isl_dim_param, ParameterNumber);
+  isl_set *Set = isl_set_read_from_str(isl_dim_get_ctx(Model),
+                                       SetString.c_str(), -1);
+  return isl_set_align_params(Set, Model);
 }
 
 static isl_set *compareValues(isl_map *LeftValue, isl_map *RightValue,
                               const ICmpInst::Predicate Predicate) {
-  isl_ctx *Context = isl_map_get_ctx(LeftValue);
-  unsigned NumberOfParameters = isl_map_n_param(LeftValue);
+  isl_dim *Model = isl_map_get_dim(LeftValue);
 
-  isl_map *MapToLHS = MapValueToLHS(Context, NumberOfParameters);
-  isl_map *MapToRHS = MapValueToRHS(Context, NumberOfParameters);
+  isl_map *MapToLHS = MapValueToLHS(isl_dim_copy(Model));
+  isl_map *MapToRHS = MapValueToRHS(isl_dim_copy(Model));
 
   isl_map *LeftValueAtLHS = isl_map_apply_range(LeftValue, MapToLHS);
   isl_map *RightValueAtRHS = isl_map_apply_range(RightValue, MapToRHS);
 
   isl_map *BothValues = isl_map_intersect(LeftValueAtLHS, RightValueAtRHS);
-  isl_set *Comparison = getComparison(Context, Predicate, NumberOfParameters);
+  isl_set *Comparison = getComparison(isl_dim_copy(Model), Predicate);
 
   isl_map *ComparedValues = isl_map_intersect_range(BothValues, Comparison);
   return isl_map_domain(ComparedValues);
@@ -689,8 +707,7 @@ isl_set *ScopStmt::toConditionSet(const Comparison &Comp, isl_dim *dim) const {
 isl_set *ScopStmt::toUpperLoopBound(const SCEVAffFunc &UpperBound, isl_dim *dim,
 				    unsigned BoundedDimension) const {
   // Set output dimension to bounded dimension.
-  isl_dim *RHSDim = isl_dim_alloc(Parent.getCtx(), getNumParams(),
-                                  getNumIterators(), 1);
+  isl_dim *RHSDim = isl_dim_alloc(Parent.getCtx(), 0, getNumIterators(), 1);
   RHSDim = isl_dim_set_tuple_name(RHSDim, isl_dim_in, getBaseName());
   isl_constraint *c = isl_equality_alloc(isl_dim_copy(RHSDim));
   isl_int v;
@@ -704,6 +721,8 @@ isl_set *ScopStmt::toUpperLoopBound(const SCEVAffFunc &UpperBound, isl_dim *dim,
   bmap = isl_basic_map_add_constraint(bmap, c);
 
   isl_map *LHSValue = isl_map_from_basic_map(bmap);
+  isl_dim *Model = isl_set_get_dim(getParent()->getContext());
+  LHSValue = isl_map_align_params(LHSValue, Model);
 
   isl_map *RHSValue = getValueOf(UpperBound, this, dim);
 
@@ -711,11 +730,12 @@ isl_set *ScopStmt::toUpperLoopBound(const SCEVAffFunc &UpperBound, isl_dim *dim,
 }
 
 void ScopStmt::buildIterationDomainFromLoops(TempScop &tempScop) {
-  isl_dim *dim = isl_dim_set_alloc(Parent.getCtx(), getNumParams(),
+  isl_dim *dim = isl_dim_set_alloc(Parent.getCtx(), 0,
                                    getNumIterators());
   dim = isl_dim_set_tuple_name(dim, isl_dim_set, getBaseName());
 
   Domain = isl_set_universe(isl_dim_copy(dim));
+  Domain = isl_set_align_params(Domain, isl_set_get_dim(Parent.getContext()));
 
   isl_int v;
   isl_int_init(v);
@@ -797,6 +817,10 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop,
   buildAccesses(tempScop, CurRegion);
 
   IsReduction = tempScop.is_Reduction(*BB);
+
+  // FIXME: Temporarily remove dimension ids.
+  Scattering = map_remove_dim_ids(Scattering);
+  Domain = set_remove_dim_ids(Domain);
 }
 
 ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
@@ -953,6 +977,17 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution)
 
   isl_dim *dim = isl_dim_set_alloc(ctx, getNumParams(), 0);
 
+  int i = 0;
+  for (ParamSetType::iterator PI = Params.begin(), PE = Params.end();
+       PI != PE; ++PI) {
+    const SCEV *scev = *PI;
+    isl_id *id = isl_id_alloc(ctx,
+                              ("p" + convertInt(i)).c_str(),
+                              (void *) scev);
+    dim = isl_dim_set_dim_id(dim, isl_dim_param, i, id);
+    i++;
+  }
+
   // TODO: Insert relations between parameters.
   // TODO: Insert constraints on parameters.
   Context = isl_set_universe (dim);
@@ -966,6 +1001,9 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution)
   // traversing the region tree.
   buildScop(tempScop, getRegion(), NestLoops, Scatter, LI);
   Stmts.push_back(new ScopStmt(*this, Scatter));
+
+  // FIXME: Temporarily remove dimension ids
+  Context = set_remove_dim_ids(Context);
 
   assert(NestLoops.empty() && "NestLoops not empty at top level!");
 }
