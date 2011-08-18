@@ -22,7 +22,9 @@ our @llvm_clang_slices; # paths to the single architecture static libraries (arc
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "137311";
+our $llvm_revision = "137143";
+our $clang_revision = "137311";
+
 our $llvm_source_dir = "$ENV{SRCROOT}";
 our @archs = split (/\s+/, $ENV{ARCHS});
 
@@ -139,21 +141,21 @@ sub parallel_guess
 sub build_llvm
 {
 	#my $extra_svn_options = $debug ? "" : "--quiet";
-	my $svn_options = "--quiet --revision $llvm_revision";
+	my $svn_options = "--quiet";
 	if (-d "$llvm_source_dir/llvm")
 	{
 		print "Using existing llvm sources in: '$llvm_source_dir/llvm'\n";
 		# print "Updating llvm to revision $llvm_revision\n";
-		# do_command ("cd '$llvm_source_dir/llvm' && svn update $svn_options", "updating llvm from repository", 1);
+		# do_command ("cd '$llvm_source_dir/llvm' && svn update $svn_options --revision $llvm_revision", "updating llvm from repository", 1);
 		# print "Updating clang to revision $llvm_revision\n";
-		# do_command ("cd '$llvm_source_dir/llvm/tools/clang' && svn update $svn_options", "updating clang from repository", 1);
+		# do_command ("cd '$llvm_source_dir/llvm/tools/clang' && svn update $svn_options --revision $clang_revision", "updating clang from repository", 1);
 	}
 	else
 	{
 		print "Checking out llvm sources from revision $llvm_revision...\n";
-		do_command ("cd '$llvm_source_dir' && svn co $svn_options http://llvm.org/svn/llvm-project/llvm/trunk llvm", "checking out llvm from repository", 1); 
-		print "Checking out clang sources from revision $llvm_revision...\n";
-		do_command ("cd '$llvm_source_dir/llvm/tools' && svn co $svn_options http://llvm.org/svn/llvm-project/cfe/trunk clang", "checking out clang from repository", 1);
+		do_command ("cd '$llvm_source_dir' && svn co $svn_options --revision $llvm_revision http://llvm.org/svn/llvm-project/llvm/trunk llvm", "checking out llvm from repository", 1); 
+		print "Checking out clang sources from revision $clang_revision...\n";
+		do_command ("cd '$llvm_source_dir/llvm/tools' && svn co $svn_options --revision $clang_revision http://llvm.org/svn/llvm-project/cfe/trunk clang", "checking out clang from repository", 1);
 		print "Removing the llvm/test directory...\n";
 		do_command ("cd '$llvm_source_dir' && rm -rf llvm/test", "removing test directory", 1); 
 	}
