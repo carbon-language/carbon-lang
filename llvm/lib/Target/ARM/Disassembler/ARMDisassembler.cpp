@@ -927,6 +927,8 @@ static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::STC2L_OPTION:
     case ARM::LDCL_POST:
     case ARM::STCL_POST:
+    case ARM::LDC2L_POST:
+    case ARM::STC2L_POST:
       break;
     default:
       Inst.addOperand(MCOperand::CreateReg(0));
@@ -946,6 +948,8 @@ static DecodeStatus DecodeCopMemInstruction(llvm::MCInst &Inst, unsigned Insn,
   switch (Inst.getOpcode()) {
     case ARM::LDCL_POST:
     case ARM::STCL_POST:
+    case ARM::LDC2L_POST:
+    case ARM::STC2L_POST:
       imm |= U << 8;
     case ARM::LDC_OPTION:
     case ARM::LDCL_OPTION:
