@@ -159,3 +159,21 @@ entry:
   %2 = bitcast <8 x i32> %and.i to <8 x float>
   ret <8 x float> %2
 }
+
+;;; Test that basic 2 x i64 logic use the integer version on AVX
+
+; CHECK: vpandn  %xmm
+define <2 x i64> @vpandn(<2 x i64> %a, <2 x i64> %b) nounwind uwtable readnone ssp {
+entry:
+  %y = xor <2 x i64> %a, <i64 -1, i64 -1>
+  %x = and <2 x i64> %a, %y
+  ret <2 x i64> %x
+}
+
+; CHECK: vpand %xmm
+define <2 x i64> @vpand(<2 x i64> %a, <2 x i64> %b) nounwind uwtable readnone ssp {
+entry:
+  %x = and <2 x i64> %a, %b
+  ret <2 x i64> %x
+}
+

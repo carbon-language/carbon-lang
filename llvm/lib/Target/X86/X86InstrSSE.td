@@ -1613,21 +1613,22 @@ let neverHasSideEffects = 1, Pattern = []<dag>, isCommutable = 0 in
 ///
 multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
                                    SDNode OpNode> {
-  let Pattern = []<dag> in {
-    defm V#NAME#PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
-         !strconcat(OpcodeStr, "ps"), f128mem,
-         [(set VR128:$dst, (v2i64 (OpNode VR128:$src1, VR128:$src2)))],
-         [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
-                                   (memopv2i64 addr:$src2)))], 0>, VEX_4V;
+  // In AVX no need to add a pattern for 128-bit logical rr ps, because they
+  // are all promoted to v2i64, and the patterns are covered by the int
+  // version. This is needed in SSE only, because v2i64 isn't supported on
+  // SSE1, but only on SSE2.
+  defm V#NAME#PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
+       !strconcat(OpcodeStr, "ps"), f128mem, [],
+       [(set VR128:$dst, (OpNode (bc_v2i64 (v4f32 VR128:$src1)),
+                                 (memopv2i64 addr:$src2)))], 0>, VEX_4V;
 
-    defm V#NAME#PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
-         !strconcat(OpcodeStr, "pd"), f128mem,
-         [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                   (bc_v2i64 (v2f64 VR128:$src2))))],
-         [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
-                                   (memopv2i64 addr:$src2)))], 0>,
-                                                   OpSize, VEX_4V;
-  }
+  defm V#NAME#PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
+       !strconcat(OpcodeStr, "pd"), f128mem,
+       [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                 (bc_v2i64 (v2f64 VR128:$src2))))],
+       [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
+                                 (memopv2i64 addr:$src2)))], 0>,
+                                                 OpSize, VEX_4V;
   let Constraints = "$src1 = $dst" in {
     defm PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
          !strconcat(OpcodeStr, "ps"), f128mem,
@@ -2546,15 +2547,14 @@ let ExeDomain = SSEPackedInt in {
   def VPANDNrr : PDI<0xDF, MRMSrcReg,
                     (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                     "vpandn\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (v2i64 (and (vnot VR128:$src1),
-                                              VR128:$src2)))]>, VEX_4V;
+                    [(set VR128:$dst,
+                          (v2i64 (X86andnp VR128:$src1, VR128:$src2)))]>,VEX_4V;
 
   def VPANDNrm : PDI<0xDF, MRMSrcMem,
                     (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                     "vpandn\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst, (v2i64 (and (vnot VR128:$src1),
-                                              (memopv2i64 addr:$src2))))]>,
-                                              VEX_4V;
+                    [(set VR128:$dst, (X86andnp VR128:$src1,
+                                            (memopv2i64 addr:$src2)))]>, VEX_4V;
 }
 }
 
