@@ -24,6 +24,8 @@ let TargetPrefix = "xcore" in {  // All intrinsics start with "llvm.xcore.".
   def int_xcore_getid : Intrinsic<[llvm_i32_ty],[],[IntrNoMem]>;
   def int_xcore_getps : Intrinsic<[llvm_i32_ty],[llvm_i32_ty]>;
   def int_xcore_setps : Intrinsic<[],[llvm_i32_ty, llvm_i32_ty]>;
+  def int_xcore_geted : Intrinsic<[llvm_i32_ty],[]>;
+  def int_xcore_getet : Intrinsic<[llvm_i32_ty],[]>;
   def int_xcore_setsr : Intrinsic<[],[llvm_i32_ty]>;
   def int_xcore_clrsr : Intrinsic<[],[llvm_i32_ty]>;
 
@@ -66,6 +68,8 @@ let TargetPrefix = "xcore" in {  // All intrinsics start with "llvm.xcore.".
                                   [NoCapture<0>]>;
   def int_xcore_setv : Intrinsic<[],[llvm_anyptr_ty, llvm_ptr_ty],
                                  [NoCapture<0>]>;
+  def int_xcore_setev : Intrinsic<[],[llvm_anyptr_ty, llvm_ptr_ty],
+                                  [NoCapture<0>]>;
   def int_xcore_eeu : Intrinsic<[],[llvm_anyptr_ty], [NoCapture<0>]>;
   def int_xcore_setclk : Intrinsic<[],[llvm_anyptr_ty, llvm_anyptr_ty],
                                    [NoCapture<0>, NoCapture<1>]>;

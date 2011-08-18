@@ -995,10 +995,15 @@ def FREER_1r : _F1R<(outs), (ins GRRegs:$r),
                "freer res[$r]",
                [(int_xcore_freer GRRegs:$r)]>;
 
-let Uses=[R11] in
+let Uses=[R11] in {
 def SETV_1r : _F1R<(outs), (ins GRRegs:$r),
-               "setv res[$r], r11",
-               [(int_xcore_setv GRRegs:$r, R11)]>;
+                   "setv res[$r], r11",
+                   [(int_xcore_setv GRRegs:$r, R11)]>;
+
+def SETEV_1r : _F1R<(outs), (ins GRRegs:$r),
+                    "setev res[$r], r11",
+                    [(int_xcore_setev GRRegs:$r, R11)]>;
+}
 
 def EEU_1r : _F1R<(outs), (ins GRRegs:$r),
                "eeu res[$r]",
@@ -1006,15 +1011,24 @@ def EEU_1r : _F1R<(outs), (ins GRRegs:$r),
 
 // Zero operand short
 // TODO freet, ldspc, stspc, ldssr, stssr, ldsed, stsed,
-// stet, geted, getet, getkep, getksp, setkep, getid, kret, dcall, dret,
+// stet, getkep, getksp, setkep, getid, kret, dcall, dret,
 // dentsp, drestsp
 
 def CLRE_0R : _F0R<(outs), (ins), "clre", [(int_xcore_clre)]>;
 
-let Defs = [R11] in
+let Defs = [R11] in {
 def GETID_0R : _F0R<(outs), (ins),
-                 "get r11, id",
-                 [(set R11, (int_xcore_getid))]>;
+                    "get r11, id",
+                    [(set R11, (int_xcore_getid))]>;
+
+def GETED_0R : _F0R<(outs), (ins),
+                    "get r11, ed",
+                    [(set R11, (int_xcore_geted))]>;
+
+def GETET_0R : _F0R<(outs), (ins),
+                    "get r11, et",
+                    [(set R11, (int_xcore_getet))]>;
+}
 
 def SSYNC_0r : _F0R<(outs), (ins),
                     "ssync",
