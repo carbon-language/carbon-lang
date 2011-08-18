@@ -3519,7 +3519,6 @@ int LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
 bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
   Type *Ty = 0; LocTy TyLoc;
   Value *PersFn; LocTy PersFnLoc;
-  LocTy LPLoc = Lex.getLoc();
 
   if (ParseType(Ty, TyLoc) ||
       ParseToken(lltok::kw_personality, "expected 'personality'") ||
