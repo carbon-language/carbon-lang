@@ -398,9 +398,6 @@ BasicBlock *LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 /// blocks.  This method is used to split exit blocks that have predecessors
 /// outside of the loop.
 BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
-  // Don't split a landing pad block.
-  if (Exit->isLandingPad()) return 0;
-
   SmallVector<BasicBlock*, 8> LoopBlocks;
   for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit); I != E; ++I) {
     BasicBlock *P = *I;
@@ -749,10 +746,9 @@ void LoopSimplify::verifyAnalysis() const {
     (void)HasIndBrPred;
   }
 
-  // Indirectbr and LandingPad can interfere with exit block canonicalization.
+  // Indirectbr can interfere with exit block canonicalization.
   if (!L->hasDedicatedExits()) {
     bool HasIndBrExiting = false;
-    bool HasLPadExiting = false;
     SmallVector<BasicBlock*, 8> ExitingBlocks;
     L->getExitingBlocks(ExitingBlocks);
     for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i) {
@@ -760,18 +756,10 @@ void LoopSimplify::verifyAnalysis() const {
         HasIndBrExiting = true;
         break;
       }
-      if (const InvokeInst *II =
-          dyn_cast<InvokeInst>(ExitingBlocks[i]->getTerminator())) {
-        if (L->contains(II->getNormalDest()) &&
-            !L->contains(II->getUnwindDest())) {
-          HasLPadExiting = true;
-          break;
-        }
-      }
     }
 
-    assert((HasIndBrExiting || HasLPadExiting) &&
+    assert(HasIndBrExiting &&
            "LoopSimplify has no excuse for missing exit block info!");
-    (void)HasIndBrExiting; (void)HasLPadExiting;
+    (void)HasIndBrExiting;
   }
 }
