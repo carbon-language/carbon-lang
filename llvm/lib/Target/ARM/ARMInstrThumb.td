@@ -910,7 +910,7 @@ def tCMNz :                     // A8.6.33
 
 // CMP immediate
 let isCompare = 1, Defs = [CPSR] in {
-def tCMPi8 : T1pI<(outs), (ins tGPR:$Rn, i32imm:$imm8), IIC_iCMPi,
+def tCMPi8 : T1pI<(outs), (ins tGPR:$Rn, imm0_255:$imm8), IIC_iCMPi,
                   "cmp", "\t$Rn, $imm8",
                   [(ARMcmp tGPR:$Rn, imm0_255:$imm8)]>,
              T1General<{1,0,1,?,?}> {
