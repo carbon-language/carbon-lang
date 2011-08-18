@@ -314,13 +314,12 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
   return New;
 }
 
-namespace {
-
 /// UpdateAnalysisInformation - Update DominatorTree, LoopInfo, and LCCSA
 /// analysis information.
-void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
-                               BasicBlock *const *Preds,
-                               unsigned NumPreds, Pass *P, bool &HasLoopExit) {
+static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
+                                      BasicBlock *const *Preds,
+                                      unsigned NumPreds, Pass *P,
+                                      bool &HasLoopExit) {
   if (!P) return;
 
   LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>();
@@ -385,8 +384,6 @@ void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
       L->moveToHeader(NewBB);
   }
 }
-
-} // end anonymous namespace
 
 /// SplitBlockPredecessors - This method transforms BB by introducing a new
 /// basic block into the function, and moving some of the predecessors of BB to
