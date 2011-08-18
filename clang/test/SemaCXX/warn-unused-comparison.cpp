@@ -44,18 +44,18 @@ void test() {
                // expected-note {{use '=' to turn this equality comparison into an assignment}}
     x == 7; // expected-warning {{equality comparison result unused}} \
             // expected-note {{use '=' to turn this equality comparison into an assignment}}
-  switch (42) default: x == 7; // FIXME: missing-warning {{equality comparison result unused}} \
-                               // FIXME: missing-note {{use '=' to turn this equality comparison into an assignment}}
-  switch (42) case 42: x == 7; // FIXME: missing-warning {{equality comparison result unused}} \
-                               // FIXME: missing-note {{use '=' to turn this equality comparison into an assignment}}
+  switch (42) default: x == 7; // expected-warning {{equality comparison result unused}} \
+                               // expected-note {{use '=' to turn this equality comparison into an assignment}}
+  switch (42) case 42: x == 7; // expected-warning {{equality comparison result unused}} \
+                               // expected-note {{use '=' to turn this equality comparison into an assignment}}
   switch (42) {
     case 1:
     case 2:
     default:
     case 3:
     case 4:
-      x == 7; // FIXME: missing-warning {{equality comparison result unused}} \
-              // FIXME: missing-note {{use '=' to turn this equality comparison into an assignment}}
+      x == 7; // expected-warning {{equality comparison result unused}} \
+              // expected-note {{use '=' to turn this equality comparison into an assignment}}
   }
 
   (void)(x == 7);

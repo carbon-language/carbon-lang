@@ -291,6 +291,8 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, Expr *LHSVal,
 
 /// ActOnCaseStmtBody - This installs a statement as the body of a case.
 void Sema::ActOnCaseStmtBody(Stmt *caseStmt, Stmt *SubStmt) {
+  DiagnoseUnusedExprResult(SubStmt);
+
   CaseStmt *CS = static_cast<CaseStmt*>(caseStmt);
   CS->setSubStmt(SubStmt);
 }
@@ -298,6 +300,8 @@ void Sema::ActOnCaseStmtBody(Stmt *caseStmt, Stmt *SubStmt) {
 StmtResult
 Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
                        Stmt *SubStmt, Scope *CurScope) {
+  DiagnoseUnusedExprResult(SubStmt);
+
   if (getCurFunction()->SwitchStack.empty()) {
     Diag(DefaultLoc, diag::err_default_not_in_switch);
     return Owned(SubStmt);

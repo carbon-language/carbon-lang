@@ -79,7 +79,7 @@ int test7(int i) {
     case false ? 1 : 2:
     true ? 1 : 2:  // expected-error {{expected 'case' keyword before expression}}
     case 10:
-      14 ? 3 : 4;
+      14 ? 3 : 4;  // expected-warning {{expression result unused}}
     default:
       return 1;
   }
