@@ -4235,7 +4235,8 @@ static void DiagnoseInvalidRedeclaration(Sema &S, FunctionDecl *NewFD,
     }
   // If the qualified name lookup yielded nothing, try typo correction
   } else if ((Correction = S.CorrectTypo(Prev.getLookupNameInfo(),
-                                         Prev.getLookupKind(), 0, 0, DC))) {
+                                         Prev.getLookupKind(), 0, 0, DC)) &&
+             Correction.getCorrection() != Name) {
     DiagMsg = isFriendDecl ? diag::err_no_matching_local_friend_suggest
                            : diag::err_member_def_does_not_match_suggest;
     for (TypoCorrection::decl_iterator CDecl = Correction.begin(),
