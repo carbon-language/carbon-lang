@@ -358,7 +358,23 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
         if (CodeComplete)
           CodeComplete->CodeCompleteMacroArgument(MacroName.getIdentifierInfo(),
                                                   MI, NumActuals);
-        LexUnexpandedToken(Tok);
+
+        // Add the code-completion token and finish the lexing normally so that
+        // normal code-completion occurs again with the expanded tokens.
+        ArgTokens.push_back(Tok);
+        // Add a marker EOF token to the end of the token list.
+        Token EOFTok;
+        EOFTok.startToken();
+        EOFTok.setKind(tok::eof);
+        EOFTok.setLocation(Tok.getLocation());
+        EOFTok.setLength(0);
+        ArgTokens.push_back(EOFTok);
+        ++NumActuals;
+        // "Fill out" the other arguments.
+        for (; NumActuals < MI->getNumArgs(); ++NumActuals)
+          ArgTokens.push_back(EOFTok);
+        return MacroArgs::create(MI, ArgTokens.data(), ArgTokens.size(),
+                                 /*isVarargsElided=*/false, *this);
       }
       
       if (Tok.is(tok::eof) || Tok.is(tok::eod)) { // "#if f(<eof>" & "#if f(\n"

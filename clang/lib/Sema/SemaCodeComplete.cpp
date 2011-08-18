@@ -6857,9 +6857,8 @@ void Sema::CodeCompletePreprocessorMacroArgument(Scope *S,
   // FIXME: In the future, we could provide "overload" results, much like we
   // do for function calls.
   
-  CodeCompleteOrdinaryName(S,
-                           S->getFnParent()? Sema::PCC_RecoveryInFunction 
-                                           : Sema::PCC_Namespace);
+  // Now just ignore this. There will be another code-completion callback
+  // for the expanded tokens.
 }
 
 void Sema::CodeCompleteNaturalLanguage() {
