@@ -1274,31 +1274,65 @@ static DecodeStatus DecodeMemMultipleWritebackInstruction(llvm::MCInst &Inst,
 
   if (pred == 0xF) {
     switch (Inst.getOpcode()) {
-      case ARM::STMDA:
+      case ARM::LDMDA:
         Inst.setOpcode(ARM::RFEDA);
         break;
-      case ARM::STMDA_UPD:
+      case ARM::LDMDA_UPD:
         Inst.setOpcode(ARM::RFEDA_UPD);
         break;
-      case ARM::STMDB:
+      case ARM::LDMDB:
         Inst.setOpcode(ARM::RFEDB);
         break;
-      case ARM::STMDB_UPD:
+      case ARM::LDMDB_UPD:
         Inst.setOpcode(ARM::RFEDB_UPD);
         break;
-      case ARM::STMIA:
+      case ARM::LDMIA:
         Inst.setOpcode(ARM::RFEIA);
         break;
-      case ARM::STMIA_UPD:
+      case ARM::LDMIA_UPD:
         Inst.setOpcode(ARM::RFEIA_UPD);
         break;
-      case ARM::STMIB:
+      case ARM::LDMIB:
         Inst.setOpcode(ARM::RFEIB);
         break;
-      case ARM::STMIB_UPD:
+      case ARM::LDMIB_UPD:
         Inst.setOpcode(ARM::RFEIB_UPD);
         break;
+      case ARM::STMDA:
+        Inst.setOpcode(ARM::SRSDA);
+        break;
+      case ARM::STMDA_UPD:
+        Inst.setOpcode(ARM::SRSDA_UPD);
+        break;
+      case ARM::STMDB:
+        Inst.setOpcode(ARM::SRSDB);
+        break;
+      case ARM::STMDB_UPD:
+        Inst.setOpcode(ARM::SRSDB_UPD);
+        break;
+      case ARM::STMIA:
+        Inst.setOpcode(ARM::SRSIA);
+        break;
+      case ARM::STMIA_UPD:
+        Inst.setOpcode(ARM::SRSIA_UPD);
+        break;
+      case ARM::STMIB:
+        Inst.setOpcode(ARM::SRSIB);
+        break;
+      case ARM::STMIB_UPD:
+        Inst.setOpcode(ARM::SRSIB_UPD);
+        break;
+      default:
+        CHECK(S, Fail);
     }
+
+    // For stores (which become SRS's, the only operand is the mode.
+    if (fieldFromInstruction32(Insn, 20, 1) == 0) {
+      Inst.addOperand(
+          MCOperand::CreateImm(fieldFromInstruction32(Insn, 0, 4)));
+      return S;
+    }
+
     return DecodeRFEInstruction(Inst, Insn, Address, Decoder);
   }
 
