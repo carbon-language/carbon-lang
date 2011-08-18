@@ -111,7 +111,7 @@ static isl_map *getValueOf(const SCEVAffFunc &AffFunc,
 //===----------------------------------------------------------------------===//
 
 MemoryAccess::~MemoryAccess() {
-  isl_map_free(getAccessFunction());
+  isl_map_free(AccessRelation);
   isl_map_free(newAccessRelation);
 }
 
